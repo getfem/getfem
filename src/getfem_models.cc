@@ -2406,19 +2406,20 @@ namespace getfem {
       // cout << "generic assembly " << version << endl;
       ga_workspace workspace(*this);
 
-      std::map<std::pair<const mesh *, size_type>,  mesh_region> mpi_reg;
+      // std::map<std::pair<const mesh *, size_type>,  mesh_region> mpi_reg;
 
       for (std::list<gen_expr>::iterator it = generic_expressions.begin();
              it != generic_expressions.end(); ++it) {
 
-        std::pair<const mesh *, size_type>
-          pms(&(it->mim.linked_mesh()), it->region);
-        if (mpi_reg.find(pms) == mpi_reg.end()) {
-          mesh_region rg(it->region);
-          it->mim.linked_mesh().intersect_with_mpi_region(rg);
-          mpi_reg[pms] = rg;
-        }
-        workspace.add_expression(it->expr, it->mim, mpi_reg[pms]);
+        // std::pair<const mesh *, size_type>
+        //  pms(&(it->mim.linked_mesh()), it->region);
+        // if (mpi_reg.find(pms) == mpi_reg.end()) {
+        //  mesh_region rg(it->region);
+        //  it->mim.linked_mesh().intersect_with_mpi_region(rg);
+        //  mpi_reg[pms] = rg;
+        // }
+        // workspace.add_expression(it->expr, it->mim, mpi_reg[pms]);
+        workspace.add_expression(it->expr, it->mim, it->region);
       }
 
       if (version & BUILD_RHS) {
@@ -2892,9 +2893,10 @@ namespace getfem {
       }
 
       ga_workspace workspace(md);
-      mesh_region rg(region);
-      mims[0]->linked_mesh().intersect_with_mpi_region(rg);
-      workspace.add_expression(expr, *(mims[0]), rg);
+      // mesh_region rg(region);
+      // mims[0]->linked_mesh().intersect_with_mpi_region(rg);
+      // workspace.add_expression(expr, *(mims[0]), rg);
+      workspace.add_expression(expr, *(mims[0]), region);
 
       if (recompute_matrix) {
         gmm::clear(matl[0]);
@@ -3059,9 +3061,10 @@ namespace getfem {
       GMM_TRACE2("Generic source term assembly");
 
       ga_workspace workspace(md);
-      mesh_region rg(region);
-      mims[0]->linked_mesh().intersect_with_mpi_region(rg);
-      workspace.add_expression(expr, *(mims[0]), rg);
+      // mesh_region rg(region);
+      // mims[0]->linked_mesh().intersect_with_mpi_region(rg);
+      // workspace.add_expression(expr, *(mims[0]), rg);
+      workspace.add_expression(expr, *(mims[0]), region);
       gmm::clear(vecl[0]);
       workspace.set_assembled_vector(vecl[0]);
       workspace.assembly(1);

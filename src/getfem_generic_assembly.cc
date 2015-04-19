@@ -2043,7 +2043,6 @@ namespace getfem {
 
     // Predefined functions
 
-    ga_interval R;
     // Power functions and their derivatives
     PREDEF_FUNCTIONS["sqrt"] = ga_predef_function(sqrt, 1, "DER_PDFUNC_SQRT");
     PREDEF_FUNCTIONS["sqr"] = ga_predef_function(ga_sqr, 2, "2*t");
@@ -2215,7 +2214,6 @@ namespace getfem {
 
   void ga_define_function(const std::string name, pscalar_func_onearg f,
                           const std::string &der) {
-    ga_interval R;
     PREDEF_FUNCTIONS[name] = ga_predef_function(f, 1, der);
     ga_predef_function &F = PREDEF_FUNCTIONS[name];
     if (der.size() == 0) F.dtype = 0;
@@ -2224,7 +2222,6 @@ namespace getfem {
 
   void ga_define_function(const std::string name, pscalar_func_twoargs f,
                           const std::string &der1, const std::string &der2) {
-    ga_interval R;
     PREDEF_FUNCTIONS[name] = ga_predef_function(f, 1, der1, der2);
     ga_predef_function &F = PREDEF_FUNCTIONS[name];
     if (der1.size() == 0 || der2.size()) F.dtype = 0;
@@ -4844,6 +4841,11 @@ namespace getfem {
 
     ga_exec(gis, *this);
     // cout << "Exec time " << gmm::uclock_sec()-time << endl;
+
+    if (order == 1) {
+      MPI_SUM_VECTOR(assembled_vector());
+      MPI_SUM_VECTOR(unreduced_V);
+    }
 
     // Deal with reduced fems.
     if (order) {
@@ -8872,7 +8874,9 @@ namespace getfem {
 
       // iteration on elements (or faces of elements)
       std::vector<size_type> ind;
-      for (getfem::mr_visitor v(region, m); !v.finished(); ++v) {
+      mesh_region rg(region);
+      m.intersect_with_mpi_region(rg);
+      for (getfem::mr_visitor v(rg, m); !v.finished(); ++v) {
         if (gic.use_mim()) {
           if (!mim.convex_index().is_in(v.cv())) continue;
           gis.pai = mim.int_method_of_element(v.cv())->approx_method();
@@ -8980,7 +8984,9 @@ namespace getfem {
       const mesh_region &region = *(it->first.region());
 
       // iteration on elements (or faces of elements)
-      for (getfem::mr_visitor v(region, m); !v.finished(); ++v) {
+      mesh_region rg(region);
+      m.intersect_with_mpi_region(rg);
+      for (getfem::mr_visitor v(rg, m); !v.finished(); ++v) {
         if (mim.convex_index().is_in(v.cv())) {
           // cout << "proceed with element " << v.cv() << endl;
           bgeot::vectors_to_base_matrix(G, m.points_of_convex(v.cv()));
@@ -9153,19 +9159,22 @@ namespace getfem {
     virtual bool use_pgp(size_type) const { return true; }
     virtual bool use_mim(void) const { return false; }
 
+    void init_(size_type si, size_type q, size_type qmult) {
+      s = si;
+      gmm::resize(result, qmult * mf.nb_basic_dof());
+      gmm::clear(result);
+      gmm::resize(dof_count, mf.nb_basic_dof()/q);
+      gmm::clear(dof_count);
+      initialized = true;
+    }
+
     virtual void store_result(size_type cv, size_type i, base_tensor &t) {
       size_type si = t.size();
       size_type q = mf.get_qdim();
       size_type qmult = si / q;
       GMM_ASSERT1( (si % q) == 0, "Incompatibility between the mesh_fem and "
                    "the size of the expression to be interpolated");
-      if (!initialized) {
-        s = si;
-        gmm::resize(result, qmult * mf.nb_basic_dof());
-        gmm::clear(result);
-        dof_count.resize(mf.nb_basic_dof()/q);
-        initialized = true;
-      }
+      if (!initialized) { init_(si, q, qmult); }
       GMM_ASSERT1(s == si, "Internal error");
       size_type idof = mf.ind_basic_dof_of_element(cv)[i*q];
       gmm::add(t.as_vector(),
@@ -9174,14 +9183,31 @@ namespace getfem {
     }
 
     virtual void finalize(void) {
+      std::vector<size_type> data(3);
+      data[0] = initialized ? result.size() : 0;
+      data[1] = initialized ? dof_count.size() : 0;
+      data[2] = initialized ? s : 0;
+      MPI_MAX_VECTOR(data);
       if (!initialized) {
-        gmm::clear(result);
-      } else {
-        for (size_type i = 0; i < dof_count.size(); ++i)
-          if (dof_count[i])
-            gmm::scale(gmm::sub_vector(result, gmm::sub_interval(s*i, s)),
-                       scalar_type(1) / scalar_type(dof_count[i]));
+        if (data[0]) {
+          gmm::resize(result, data[0]);
+          gmm::clear(result);
+          gmm::resize(dof_count, data[1]);
+          gmm::clear(dof_count);
+          s = data[2];
+        } else {
+          gmm::clear(result);
+        }
       }
+      if (initialized)
+        GMM_ASSERT1(gmm::vect_size(result) == data[0] &&  s == data[2] &&
+                  gmm::vect_size(dof_count) == data[1], "Incompatible sizes");
+      MPI_SUM_VECTOR(result);
+      MPI_SUM_VECTOR(dof_count);
+      for (size_type i = 0; i < dof_count.size(); ++i)
+        if (dof_count[i])
+          gmm::scale(gmm::sub_vector(result, gmm::sub_interval(s*i, s)),
+                     scalar_type(1) / scalar_type(dof_count[i]));
     }
 
     virtual const mesh &linked_mesh(void) { return mf.linked_mesh(); }
@@ -9193,14 +9219,12 @@ namespace getfem {
     }
   };
 
-  // To be parallelized ...
   void ga_interpolation_Lagrange_fem
   (ga_workspace &workspace, const mesh_fem &mf, base_vector &result) {
     ga_interpolation_context_fem_same_mesh gic(mf, result);
     ga_interpolation(workspace, gic);
   }
 
-  // To be parallelized ...
   void ga_interpolation_Lagrange_fem
   (const getfem::model &md, const std::string &expr, const mesh_fem &mf,
    base_vector &result, const mesh_region &rg) {
@@ -9250,9 +9274,23 @@ namespace getfem {
     }
 
     virtual void finalize(void) {
+      std::vector<size_type> data(2);
+      data[0] = initialized ? result.size() : 0;
+      data[1] = initialized ? s : 0;
+      MPI_MAX_VECTOR(data);
       if (!initialized) {
-        gmm::clear(result);
+        if (data[0]) {
+          gmm::resize(result, data[0]);
+          gmm::clear(result);
+          s = data[1];
+        } else {
+           gmm::clear(result);
+        }
       }
+      if (initialized)
+        GMM_ASSERT1(gmm::vect_size(result) == data[0] &&  s == data[1],
+                    "Incompatible sizes");
+      MPI_SUM_VECTOR(result);
     }
 
     virtual const mesh &linked_mesh(void) { return mti.linked_mesh(); }
@@ -9264,8 +9302,7 @@ namespace getfem {
     }
   };
 
-
-  // To be parallelized ...
+  // Distribute to be parallelized
   void ga_interpolation_mti
   (const getfem::model &md, const std::string &expr, mesh_trans_inv &mti,
    base_vector &result, const mesh_region &rg, int extrapolation,
@@ -9331,8 +9368,25 @@ namespace getfem {
                gmm::sub_vector(result, gmm::sub_interval(s*ipt, s)));
     }
 
-    virtual void finalize(void)
-    { if (!initialized) gmm::clear(result); }
+    virtual void finalize(void) {
+      std::vector<size_type> data(2);
+      data[0] = initialized ? result.size() : 0;
+      data[1] = initialized ? s : 0;
+      MPI_MAX_VECTOR(data);
+      if (!initialized) {
+        if (data[0]) {
+          gmm::resize(result, data[0]);
+          gmm::clear(result);
+          s = data[1];
+        } else {
+           gmm::clear(result);
+        }
+      }
+      if (initialized)
+        GMM_ASSERT1(gmm::vect_size(result) == data[0] &&  s == data[1],
+                    "Incompatible sizes");
+      MPI_SUM_VECTOR(result);
+    }
 
     virtual const mesh &linked_mesh(void)
     { return imd.linked_mesh_im().linked_mesh(); }
@@ -9341,8 +9395,6 @@ namespace getfem {
       : result(r), imd(imd_), initialized(false) { }
   };
 
-
-  // To be parallelized ...
   void ga_interpolation_im_data
   (const getfem::model &md, const std::string &expr, const im_data &imd,
    base_vector &result, const mesh_region &rg) {

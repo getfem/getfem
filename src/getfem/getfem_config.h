@@ -225,12 +225,22 @@ namespace getfem {
     T b; MPI_Allreduce(&a,&b,1,gmm::mpi_type(a), MPI_SUM, MPI_COMM_WORLD);
     return b;
   }
+
   template <typename VECT> inline void MPI_SUM_VECTOR(const VECT &VV) {
     VECT &V = const_cast<VECT &>(VV);
     typedef typename gmm::linalg_traits<VECT>::value_type T;
     std::vector<T> W(gmm::vect_size(V));
     MPI_Allreduce((void *)(&(V[0])), &(W[0]), gmm::vect_size(V),
                   gmm::mpi_type(T()), MPI_SUM, MPI_COMM_WORLD);
+    gmm::copy(W, V);
+  }
+
+  template <typename VECT> inline void MPI_MAX_VECTOR(const VECT &VV) {
+    VECT &V = const_cast<VECT &>(VV);
+    typedef typename gmm::linalg_traits<VECT>::value_type T;
+    std::vector<T> W(gmm::vect_size(V));
+    MPI_Allreduce((void *)(&(V[0])), &(W[0]), gmm::vect_size(V),
+                  gmm::mpi_type(T()), MPI_MAX, MPI_COMM_WORLD);
     gmm::copy(W, V);
   }
 
@@ -254,6 +264,7 @@ namespace getfem {
 		  gmm::vect_size(V), gmm::mpi_type(T()),
 		  MPI_SUM, MPI_COMM_WORLD);
   }
+
   inline bool MPI_IS_MASTER(void)
   { int rk; MPI_Comm_rank(MPI_COMM_WORLD, &rk); return !rk; }
 
@@ -355,6 +366,7 @@ namespace getfem {
 #else
   template <typename T> inline T MPI_SUM_SCALAR(T a) { return a; }
   template <typename VECT> inline void MPI_SUM_VECTOR(const VECT &) {}
+  template <typename VECT> inline void MPI_MAX_VECTOR(const VECT &VV) {}
   template <typename T> void MPI_BCAST0_SCALAR(T a) {}
   template <typename VECT> inline void MPI_BCAST0_VECTOR(const VECT &VV) {}
   template <typename MAT> inline void MPI_SUM_SPARSE_MATRIX(const MAT &) {}

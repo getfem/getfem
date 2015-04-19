@@ -98,11 +98,6 @@ namespace getfem {
   
   typedef scalar_type (*pscalar_func_onearg)(scalar_type);
   typedef scalar_type (*pscalar_func_twoargs)(scalar_type, scalar_type);
-  struct ga_interval {
-    scalar_type min, max;
-    ga_interval(void) { min = -INFINITY; max = +INFINITY; }
-    ga_interval(scalar_type a, scalar_type b) { min = a; max = b; }
-  };
 
   void ga_define_function(const std::string name, size_type nb_args,
                           const std::string expr, const std::string der1="",

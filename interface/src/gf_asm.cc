@@ -352,12 +352,14 @@ namespace getfem {
 static void
 do_generic_assembly(mexargs_in& in, mexargs_out& out, bool on_boundary)
 {
+  const getfem::mesh *mesh = 0;
   getfem::mesh_region rg = getfem::mesh_region::all_convexes();
   if (!on_boundary) {
     if (in.remaining() && !in.front().is_string()) {
       rg = in.pop().to_mesh_region();
     }
   } else rg = getfem::mesh_region(in.pop().to_integer());
+  
 
   std::string s = in.pop().to_string();
   getfem::generic_assembly assem(s);
@@ -369,7 +371,9 @@ do_generic_assembly(mexargs_in& in, mexargs_out& out, bool on_boundary)
     THROW_BADARG("generic assembly without any mesh_im has no sense!");
   /* stores the mesh_fem identifiers */
   while (in.remaining() && in.front().is_mesh_fem()) {
-    assem.push_mf(*in.pop().to_const_mesh_fem());
+    const getfem::mesh_fem *mf = in.pop().to_const_mesh_fem();
+    if (!mesh) mesh = &(mf->linked_mesh());
+    assem.push_mf(*mf);
   }
 
   /* store the data vectors */
@@ -386,6 +390,7 @@ do_generic_assembly(mexargs_in& in, mexargs_out& out, bool on_boundary)
   assem.set_mat_factory(&mat_fact);
   assem.set_vec_factory(&vec_fact);
 
+  mesh->intersect_with_mpi_region(rg);
   assem.assembly(rg);
   // get the matrix back
   for (size_type i=0; out.remaining() && i < assem.mat().size(); ++i) {
@@ -409,7 +414,7 @@ do_generic_assembly(mexargs_in& in, mexargs_out& out, bool on_boundary)
   }
 }
 
-// TODO: generalization to complex ...
+
 static void do_high_level_generic_assembly(mexargs_in& in, mexargs_out& out) {
 
   getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
@@ -555,6 +560,7 @@ static void do_expression_analysis(mexargs_in& in) {
   workspace.print(cout);
 }
 
+// To be parallelized
 template<typename T> static void
 gf_dirichlet(getfemint::mexargs_out& out,
              const getfem::mesh_im &mim,
@@ -575,6 +581,7 @@ gf_dirichlet(getfemint::mexargs_out& out,
   out_H.from_sparse(H/*,threshold*/);
 }
 
+// To be parallelized
 void interpolate_or_extrapolate(mexargs_in &in, mexargs_out &out, int extrapolate) {
   const getfem::mesh_fem *mf1 = in.pop().to_const_mesh_fem();
   if (in.front().is_mesh_fem()) {
@@ -627,6 +634,11 @@ void assemble_source(size_type boundary_num,
   const getfem::mesh_im *mim = get_mim(in);
   const getfem::mesh_fem *mf_u = in.pop().to_const_mesh_fem();
   const getfem::mesh_fem *mf_d = in.pop().to_const_mesh_fem();
+  size_type region = boundary_num;
+  if (in.remaining()) region = in.pop().to_integer();
+  getfem::mesh_region rg(region);
+  mf_u->linked_mesh().intersect_with_mpi_region(rg);
+
   unsigned q_dim = mf_u->get_qdim() / mf_d->get_qdim();
   if (!in.front().is_complex()) {
 
@@ -697,7 +709,7 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
   if (subc_tab.size() == 0) {
 
 
-    /*@FUNC M = ('mass matrix', @tmim mim, @tmf mf1[, @tmf mf2[, boundary_num]])
+    /*@FUNC M = ('mass matrix', @tmim mim, @tmf mf1[, @tmf mf2[, @int region]])
     Assembly of a mass matrix.
 
     Return a @tsp object.
@@ -707,41 +719,51 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        const getfem::mesh_im *mim = get_mim(in);
        const getfem::mesh_fem *mf_u1 = in.pop().to_const_mesh_fem();
        const getfem::mesh_fem *mf_u2 = in.remaining() ? in.pop().to_const_mesh_fem() : mf_u1;
-       size_type nbound = in.remaining() ? in.pop().to_integer():size_type(-1);
+       size_type region = in.remaining() ? in.pop().to_integer():size_type(-1);
+       getfem::mesh_region rg(region);
+       mf_u1->linked_mesh().intersect_with_mpi_region(rg);
        gf_real_sparse_by_col M(mf_u1->nb_dof(), mf_u2->nb_dof());
-       getfem::asm_mass_matrix(M, *mim, *mf_u1, *mf_u2, nbound);
+       getfem::asm_mass_matrix(M, *mim, *mf_u1, *mf_u2, rg);
        out.pop().from_sparse(M);
        );
 
-    /*@FUNC M = ('lsneuman matrix', @tmim mim, @tmf mf1, @tmf mf2, @tls ls)
+    /*@FUNC M = ('lsneuman matrix', @tmim mim, @tmf mf1, @tmf mf2, @tls ls[, @int region])
       Assembly of a level set Neuman  matrix.
 
       Return a @tsp object.
       @*/
     sub_command
-      ("lsneuman matrix", 3, 4, 0, 1,
+      ("lsneuman matrix", 4, 5, 0, 1,
        const getfem::mesh_im *mim = get_mim(in);
        const getfem::mesh_fem *mf_u1 = in.pop().to_const_mesh_fem();
        const getfem::mesh_fem *mf_u2 = in.pop().to_const_mesh_fem();
        getfem::level_set *ls1= in.pop().to_levelset();
        gf_real_sparse_by_col M(mf_u2->nb_dof(), mf_u1->nb_dof());
+       size_type region = size_type(-1);
+       if (in.remaining()) region = in.pop().to_integer();
+       getfem::mesh_region rg(region);
+       mf_u1->linked_mesh().intersect_with_mpi_region(rg);
        asm_lsneuman_matrix(M, *mim, *mf_u1, *mf_u2, *ls1);
        out.pop().from_sparse(M);
        );
 
-    /*@FUNC M = ('nlsgrad matrix', @tmim mim, @tmf mf1, @tmf mf2, @tls ls)
+    /*@FUNC M = ('nlsgrad matrix', @tmim mim, @tmf mf1, @tmf mf2, @tls ls[, @int region])
       Assembly of a nlsgrad matrix.
 
       Return a @tsp object.
       @*/
     sub_command
-      ("nlsgrad matrix", 3, 4, 0, 1,
+      ("nlsgrad matrix", 4, 5, 0, 1,
        const getfem::mesh_im *mim = get_mim(in);
        const getfem::mesh_fem *mf_u1 = in.pop().to_const_mesh_fem();
        const getfem::mesh_fem *mf_u2 = in.pop().to_const_mesh_fem();
        getfem::level_set *ls1= in.pop().to_levelset();
        gf_real_sparse_by_col M(mf_u1->nb_dof(), mf_u2->nb_dof());
-       asm_nlsgrad_matrix(M, *mim, *mf_u1, *mf_u2, *ls1);
+       size_type region = size_type(-1);
+       if (in.remaining()) region = in.pop().to_integer();
+       getfem::mesh_region rg(region);
+       mf_u1->linked_mesh().intersect_with_mpi_region(rg);
+       asm_nlsgrad_matrix(M, *mim, *mf_u1, *mf_u2, *ls1, rg);
        out.pop().from_sparse(M);
        );
 
@@ -763,7 +785,7 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        );
 
 
-    /*@FUNC L = ('laplacian', @tmim mim, @tmf mf_u, @tmf mf_d, @dvec a)
+    /*@FUNC L = ('laplacian', @tmim mim, @tmf mf_u, @tmf mf_d, @dvec a[, @int region])
       Assembly of the matrix for the Laplacian problem.
 
       :math:`\nabla\cdot(a(x)\nabla u)`  with `a` a scalar.
@@ -771,17 +793,21 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
       Return a @tsp object.
       @*/
     sub_command
-      ("laplacian", 4, 4,0, 1,
+      ("laplacian", 4, 5, 0, 1,
        const getfem::mesh_im *mim = get_mim(in);
        const getfem::mesh_fem *mf_u = in.pop().to_const_mesh_fem();
        const getfem::mesh_fem *mf_d = in.pop().to_const_mesh_fem();
        darray A               = in.pop().to_darray(int(mf_d->nb_dof()));
        gf_real_sparse_by_col M(mf_u->nb_dof(), mf_u->nb_dof());
-       getfem::asm_stiffness_matrix_for_laplacian(M, *mim, *mf_u, *mf_d, A);
+       size_type region = size_type(-1);
+       if (in.remaining()) region = in.pop().to_integer();
+       getfem::mesh_region rg(region);
+       mf_u->linked_mesh().intersect_with_mpi_region(rg);
+       getfem::asm_stiffness_matrix_for_laplacian(M, *mim, *mf_u, *mf_d, A, rg);
        out.pop().from_sparse(M);
        );
 
-    /*@FUNC Le = ('linear elasticity', @tmim mim, @tmf mf_u, @tmf mf_d, @dvec lambda_d, @dvec mu_d)
+    /*@FUNC Le = ('linear elasticity', @tmim mim, @tmf mf_u, @tmf mf_d, @dvec lambda_d, @dvec mu_d[, @int region])
     Assembles of the matrix for the linear (isotropic) elasticity problem.
 
     :math:`\nabla\cdot(C(x):\nabla u)`
@@ -790,14 +816,19 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
     Return a @tsp object.
     @*/
     sub_command
-      ("linear elasticity", 5, 5, 0, 1,
+      ("linear elasticity", 5, 6, 0, 1,
        const getfem::mesh_im *mim = get_mim(in);
        const getfem::mesh_fem *mf_u = in.pop().to_const_mesh_fem();
        const getfem::mesh_fem *mf_d = in.pop().to_const_mesh_fem();
        darray lambda          = in.pop().to_darray(int(mf_d->nb_dof()));
        darray mu              = in.pop().to_darray(int(mf_d->nb_dof()));
        gf_real_sparse_by_col M(mf_u->nb_dof(), mf_u->nb_dof());
-       getfem::asm_stiffness_matrix_for_linear_elasticity(M, *mim, *mf_u, *mf_d, lambda, mu);
+       size_type region = size_type(-1);
+       if (in.remaining()) region = in.pop().to_integer();
+       getfem::mesh_region rg(region);
+       mf_u->linked_mesh().intersect_with_mpi_region(rg);
+       getfem::asm_stiffness_matrix_for_linear_elasticity
+       (M, *mim, *mf_u, *mf_d, lambda, mu, rg);
        out.pop().from_sparse(M);
        );
 
@@ -849,24 +880,30 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        const getfem::mesh_fem *mf_d = in.pop().to_const_mesh_fem();
        darray param = in.pop().to_darray(int(law.nb_params()),
                                          int(mf_d->nb_dof()));
+
+       size_type region = size_type(-1);
+       // if (in.remaining()) region = in.pop().to_integer();
+       getfem::mesh_region rg(region);
+       mf_u->linked_mesh().intersect_with_mpi_region(rg);
+
        while (in.remaining()) {
          std::string what = in.pop().to_string();
          if (cmd_strmatch(what, "tangent matrix")) {
            gf_real_sparse_by_col  K(mf_u->nb_dof(), mf_u->nb_dof());
            getfem::asm_nonlinear_elasticity_tangent_matrix(K, *mim, *mf_u, U,
-                                                           mf_d, param, law);
+                                                           mf_d, param, law,rg);
            out.pop().from_sparse(K);
          } else if (cmd_strmatch(what, "rhs")) {
            darray B = out.pop().create_darray_v(unsigned(mf_u->nb_dof()));
            getfem::asm_nonlinear_elasticity_rhs(B, *mim, *mf_u, U, mf_d,
-                                                param, law);
+                                                param, law,rg);
          } else if (cmd_strmatch(what, "incompressible tangent matrix")) {
            const getfem::mesh_fem *mf_p = in.pop().to_const_mesh_fem();
            darray P = in.pop().to_darray(int(mf_p->nb_dof()));
            gf_real_sparse_by_col  K(mf_u->nb_dof(), mf_u->nb_dof());
            gf_real_sparse_by_col  B(mf_u->nb_dof(), mf_p->nb_dof());
            getfem::asm_nonlinear_incomp_tangent_matrix(K, B, *mim, *mf_u,
-                                                       *mf_p, U, P);
+                                                       *mf_p, U, P,rg);
            out.pop().from_sparse(K);
            out.pop().from_sparse(B);
          } else if (cmd_strmatch(what, "incompressible rhs")) {
@@ -874,7 +911,7 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
            darray P = in.pop().to_darray(int(mf_p->nb_dof()));
            darray RU = out.pop().create_darray_v(unsigned(mf_u->nb_dof()));
            darray RB = out.pop().create_darray_v(unsigned(mf_p->nb_dof()));
-           getfem::asm_nonlinear_incomp_rhs(RU, RB, *mim, *mf_u, *mf_p, U, P);
+           getfem::asm_nonlinear_incomp_rhs(RU, RB, *mim, *mf_u, *mf_p, U, P,rg);
          } else {
            THROW_BADARG("expecting 'tangent matrix' or 'rhs', or "
                         "'incomp tangent matrix' or 'incomp rhs', got '"
@@ -886,7 +923,7 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        );
 
 
-    /*@FUNC @CELL{K, B} = ('stokes', @tmim mim, @tmf mf_u, @tmf mf_p, @tmf mf_d, @dvec nu)
+    /*@FUNC @CELL{K, B} = ('stokes', @tmim mim, @tmf mf_u, @tmf mf_p, @tmf mf_d, @dvec nu[, @int region])
     Assembly of matrices for the Stokes problem.
 
     :math:`-\nu(x)\Delta u + \nabla p = 0`
@@ -901,7 +938,7 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
     `K` and `B` are @tsp object's.
     @*/
     sub_command
-      ("stokes", 5, 5, 0, 2,
+      ("stokes", 5, 6, 0, 2,
        const getfem::mesh_im *mim = get_mim(in);
        const getfem::mesh_fem *mf_u = in.pop().to_const_mesh_fem();
        const getfem::mesh_fem *mf_p = in.pop().to_const_mesh_fem();
@@ -909,13 +946,17 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        darray           vec_d = in.pop().to_darray(int(mf_d->nb_dof()));
        gf_real_sparse_by_col  K(mf_u->nb_dof(), mf_u->nb_dof());
        gf_real_sparse_by_col  B(mf_u->nb_dof(), mf_p->nb_dof());
-       getfem::asm_stokes(K, B, *mim, *mf_u, *mf_p, *mf_d, vec_d);
+       size_type region = size_type(-1);
+       if (in.remaining()) region = in.pop().to_integer();
+       getfem::mesh_region rg(region);
+       mf_u->linked_mesh().intersect_with_mpi_region(rg);
+       getfem::asm_stokes(K, B, *mim, *mf_u, *mf_p, *mf_d, vec_d, rg);
        out.pop().from_sparse(K);
        out.pop().from_sparse(B);
        );
 
 
-    /*@FUNC A = ('helmholtz', @tmim mim, @tmf mf_u, @tmf mf_d, @cvec k)
+    /*@FUNC A = ('helmholtz', @tmim mim, @tmf mf_u, @tmf mf_d, @cvec k[, @int region])
     Assembly of the matrix for the Helmholtz problem.
 
     :math:`\Delta u + k^2 u` = 0,  with `k` complex scalar.
@@ -923,7 +964,7 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
     Return a @tsp object.
     @*/
     sub_command
-      ("helmholtz", 4, 4, 0, 1,
+      ("helmholtz", 4, 5, 0, 1,
        const getfem::mesh_im *mim = get_mim(in);
        const getfem::mesh_fem *mf_u = in.pop().to_const_mesh_fem();
        const getfem::mesh_fem *mf_d = in.pop().to_const_mesh_fem();
@@ -931,12 +972,16 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        std::vector<complex_type> WN(wn.size());
        for (size_type i=0; i < wn.size(); ++i) WN[i] = gmm::sqr(wn[i]);
        gf_cplx_sparse_by_col  A(mf_u->nb_dof(), mf_u->nb_dof());
-       getfem::asm_Helmholtz(A, *mim, *mf_u, *mf_d, WN);
+       size_type region = size_type(-1);
+       if (in.remaining()) region = in.pop().to_integer();
+       getfem::mesh_region rg(region);
+       mf_u->linked_mesh().intersect_with_mpi_region(rg);
+       getfem::asm_Helmholtz(A, *mim, *mf_u, *mf_d, WN, rg);
        out.pop().from_sparse(A);
        );
 
 
-    /*@FUNC A = ('bilaplacian', @tmim mim, @tmf mf_u, @tmf mf_d, @dvec a)
+    /*@FUNC A = ('bilaplacian', @tmim mim, @tmf mf_u, @tmf mf_d, @dvec a[, @int region])
       Assembly of the matrix for the Bilaplacian problem.
 
       :math:`\Delta(a(x)\Delta u) = 0`   with `a` scalar.
@@ -944,17 +989,21 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
       Return a @tsp object.
       @*/
     sub_command
-      ("bilaplacian", 4, 4, 0, 1,
+      ("bilaplacian", 4, 5, 0, 1,
        const getfem::mesh_im *mim = get_mim(in);
        const getfem::mesh_fem *mf_u = in.pop().to_const_mesh_fem();
        const getfem::mesh_fem *mf_d = in.pop().to_const_mesh_fem();
        darray           a = in.pop().to_darray(int(mf_d->nb_dof()));
        gf_real_sparse_by_col  A(mf_u->nb_dof(), mf_u->nb_dof());
-       getfem::asm_stiffness_matrix_for_bilaplacian(A, *mim, *mf_u, *mf_d, a);
+       size_type region = size_type(-1);
+       if (in.remaining()) region = in.pop().to_integer();
+       getfem::mesh_region rg(region);
+       mf_u->linked_mesh().intersect_with_mpi_region(rg);
+       getfem::asm_stiffness_matrix_for_bilaplacian(A, *mim,*mf_u,*mf_d, a, rg);
        out.pop().from_sparse(A);
        );
 
-    /*@FUNC A = ('bilaplacian KL', @tmim mim, @tmf mf_u, @tmf mf_d, @dvec a, @dvec nu)
+    /*@FUNC A = ('bilaplacian KL', @tmim mim, @tmf mf_u, @tmf mf_d, @dvec a, @dvec nu[, @int region])
       Assembly of the matrix for the Bilaplacian problem with Kirchoff-Love formulation.
 
       :math:`\Delta(a(x)\Delta u) = 0`   with `a` scalar.
@@ -962,19 +1011,23 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
       Return a @tsp object.
       @*/
     sub_command
-      ("bilaplacian KL", 5, 5, 0, 1,
+      ("bilaplacian KL", 5, 6, 0, 1,
        const getfem::mesh_im *mim = get_mim(in);
        const getfem::mesh_fem *mf_u = in.pop().to_const_mesh_fem();
        const getfem::mesh_fem *mf_d = in.pop().to_const_mesh_fem();
        darray           a = in.pop().to_darray(int(mf_d->nb_dof()));
        darray           nu = in.pop().to_darray(int(mf_d->nb_dof()));
        gf_real_sparse_by_col  A(mf_u->nb_dof(), mf_u->nb_dof());
-       getfem::asm_stiffness_matrix_for_bilaplacian_KL(A, *mim, *mf_u, *mf_d, a, nu);
+       size_type region = size_type(-1);
+       if (in.remaining()) region = in.pop().to_integer();
+       getfem::mesh_region rg(region);
+       mf_u->linked_mesh().intersect_with_mpi_region(rg);
+       getfem::asm_stiffness_matrix_for_bilaplacian_KL(A,*mim,*mf_u,*mf_d,a,nu,rg);
        out.pop().from_sparse(A);
        );
 
 
-    /*@FUNC V = ('volumic source', @tmim mim, @tmf mf_u, @tmf mf_d, @dcvec fd)
+    /*@FUNC V = ('volumic source', @tmim mim, @tmf mf_u, @tmf mf_d, @dcvec fd[, @int region])
     Assembly of a volumic source term.
 
     Output a vector `V`, assembled on the @tmf `mf_u`, using the data
@@ -984,7 +1037,7 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
     Return a @dcvec object.
     @*/
     sub_command
-      ("volumic source", 4, 4, 1, 1,
+      ("volumic source", 4, 5, 1, 1,
        assemble_source(size_type(-1), in, out);
        );
 
@@ -999,7 +1052,7 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
     Return a @dcvec object.
     @*/
     sub_command
-      ("boundary source", 5, 5, 0, 1,
+      ("boundary source", 5, 6, 0, 1,
        int boundary_num = in.pop().to_integer();
        assemble_source(boundary_num, in, out);
        );
@@ -1063,6 +1116,8 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        const getfem::mesh_im *mim = get_mim(in);
        const getfem::mesh_fem *mf_u = in.pop().to_const_mesh_fem();
        const getfem::mesh_fem *mf_d = in.pop().to_const_mesh_fem();
+       getfem::mesh_region rg(boundary_num);
+       mf_u->linked_mesh().intersect_with_mpi_region(rg);
 
        unsigned q_dim = mf_u->get_qdim();
        if (!in.front().is_complex()) {
@@ -1070,14 +1125,14 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
          if (q.ndim() == 2) in.last_popped().check_dimensions(q, q_dim* q_dim, int(mf_d->nb_dof()));
          else               in.last_popped().check_dimensions(q, q_dim, q_dim, int(mf_d->nb_dof()));
          gf_real_sparse_by_col Q(mf_u->nb_dof(), mf_u->nb_dof());
-         getfem::asm_qu_term(Q, *mim, *mf_u, *mf_d, q, boundary_num);
+         getfem::asm_qu_term(Q, *mim, *mf_u, *mf_d, q, rg);
          out.pop().from_sparse(Q);
        } else {
          carray q            = in.pop().to_carray();
          if (q.ndim() == 2) in.last_popped().check_dimensions(q, q_dim* q_dim, int(mf_d->nb_dof()));
          else               in.last_popped().check_dimensions(q, q_dim, q_dim, int(mf_d->nb_dof()));
          gf_cplx_sparse_by_col Q(mf_u->nb_dof(), mf_u->nb_dof());
-         getfem::asm_qu_term(Q, *mim, *mf_u, *mf_d, q, boundary_num);
+         getfem::asm_qu_term(Q, *mim, *mf_u, *mf_d, q, rg);
          out.pop().from_sparse(Q);
        }
        );
@@ -1272,6 +1327,8 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        darray obs = in.pop().to_darray();
        in.last_popped().check_trailing_dimension(int(mf_obs->nb_dof()));
        double r = in.pop().to_scalar();
+       getfem::mesh_region rg(boundary_num);
+       mf_u->linked_mesh().intersect_with_mpi_region(rg);
 
        darray F = out.pop().create_darray_v(unsigned(mf_lambda->nb_dof()));
        if (in.remaining()) { // with friction
@@ -1293,11 +1350,11 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
            }
            getfem::asm_integral_contact_Uzawa_proj
              (F, *mim, *mf_u, u, *mf_obs, obs, *mf_lambda, vec_lambda,
-              mf_coeff, vec_coeff, &vec_W, r, alpha, boundary_num, option);
+              mf_coeff, vec_coeff, &vec_W, r, alpha, rg, option);
        } else // without friction
            getfem::asm_integral_contact_Uzawa_proj
              (F, *mim, *mf_u, u, *mf_obs, obs, *mf_lambda, vec_lambda,
-              r, boundary_num);
+              r, rg);
        );
 
 
@@ -1321,8 +1378,10 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        darray obs = in.pop().to_darray();
        in.last_popped().check_trailing_dimension(int(mf_obs->nb_dof()));
        darray F = out.pop().create_darray_v(unsigned(mf_u->nb_dof()));
+       getfem::mesh_region rg(boundary_num);
+       mf_u->linked_mesh().intersect_with_mpi_region(rg);
        getfem::asm_level_set_normal_source_term
-         (F, *mim, *mf_u, *mf_obs, obs, *mf_lambda, vec_lambda, boundary_num);
+         (F, *mim, *mf_u, *mf_obs, obs, *mf_lambda, vec_lambda, rg);
 
        );
 

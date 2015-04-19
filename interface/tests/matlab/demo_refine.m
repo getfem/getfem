@@ -73,11 +73,11 @@ for step=1:8,
   
   VM = gf_model_get(md, 'compute isotropic linearized Von Mises or Tresca', 'u', 'lambda', 'mu', mfdu);
 
-  subplot(2,1,1);
   if (N==3) opt = {'cvlst', get(m,'outer_faces')}; 
   else opt = {}; end;
   
   if (draw)
+    subplot(2,1,1);
     gf_plot(mfdu,VM,'deformed_mesh','on', 'deformation',U,...
 	    'deformation_mf',mfu,'refine', 4, 'deformation_scale',1, opt{:}); 
     gf_colormap('chouette');
