@@ -366,9 +366,9 @@ namespace getfem {
 #else
   template <typename T> inline T MPI_SUM_SCALAR(T a) { return a; }
   template <typename VECT> inline void MPI_SUM_VECTOR(const VECT &) {}
-  template <typename VECT> inline void MPI_MAX_VECTOR(const VECT &VV) {}
+  template <typename VECT> inline void MPI_MAX_VECTOR(const VECT &) {}
   template <typename T> void MPI_BCAST0_SCALAR(T &a) {}
-  template <typename VECT> inline void MPI_BCAST0_VECTOR(const VECT &VV) {}
+  template <typename VECT> inline void MPI_BCAST0_VECTOR(const VECT &) {}
   template <typename MAT> inline void MPI_SUM_SPARSE_MATRIX(const MAT &) {}
   template <typename VECT1, typename VECT2>
   inline void MPI_SUM_VECTOR(const VECT1 &V, const VECT2 &WW)

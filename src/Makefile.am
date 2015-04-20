@@ -68,7 +68,6 @@ nobase_include_HEADERS =                   		\
 	getfem/dal_tas.h                   		\
 	getfem/dal_tree_sorted.h           		\
 	getfem/bgeot_config.h              		\
-	getfem/bgeot_imbricated_box.h	   		\
 	getfem/bgeot_permutations.h        		\
 	getfem/bgeot_convex_structure.h    		\
 	getfem/bgeot_convex.h              		\
@@ -160,7 +159,6 @@ SRC =                                      		\
 	bgeot_convex_ref.cc                		\
 	bgeot_geometric_trans.cc           		\
 	bgeot_geotrans_inv.cc              		\
-	bgeot_imbricated_box.cc            		\
 	bgeot_kdtree.cc		           		\
 	bgeot_mesh_structure.cc            		\
 	bgeot_rtree.cc		           		\

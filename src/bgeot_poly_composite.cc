@@ -25,6 +25,43 @@ Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 
 namespace bgeot {
 
+  inline scalar_type sfloor(scalar_type x)
+    { return (x >= 0) ? floor(x) : -floor(-x); }
+
+
+  int imbricated_box_less::operator()(const base_node &x,
+				      const base_node &y) const {
+    size_type s = x.size(); 
+    scalar_type c1 = c_max, c2 = c_max * scalar_type(base);
+    GMM_ASSERT2(y.size() == s, "dimension error");
+    
+    base_node::const_iterator itx=x.begin(), itex=x.end(), ity=y.begin();
+    int ret = 0;
+    for (; itx != itex; ++itx, ++ity) {
+      long a = long(sfloor((*itx) * c1)), b = long(sfloor((*ity) * c1));
+      if ((gmm::abs(a) > scalar_type(base))
+	  || (gmm::abs(b) > scalar_type(base))) { 
+	exp_max++; c_max /= scalar_type(base);
+	return (*this)(x,y);
+      }
+      if (ret == 0) { if (a < b) ret = -1; else if (a > b) ret = 1; }
+    }
+    if (ret) return ret;
+    
+    for (int e = exp_max; e >= exp_min; --e, c1 *= scalar_type(base),
+	   c2 *= scalar_type(base)) {
+      itx = x.begin(), itex = x.end(), ity = y.begin();
+      for (; itx != itex; ++itx, ++ity) {
+	int a = int(sfloor(((*itx) * c2) - sfloor((*itx) * c1)
+			   * scalar_type(base)));
+	int b = int(sfloor(((*ity) * c2) - sfloor((*ity) * c1)
+			   * scalar_type(base)));
+	if (a < b) return -1; else if (a > b) return 1;
+      }
+    }
+    return 0;
+  }
+
   mesh_precomposite::mesh_precomposite(const basic_mesh &m) {
     msh = &m;
     det.resize(m.nb_convex());
