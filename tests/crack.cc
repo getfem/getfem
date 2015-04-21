@@ -35,7 +35,6 @@
 #include "getfem/getfem_mesh_fem_level_set.h"
 #include "getfem/getfem_mesh_fem_product.h"
 #include "getfem/getfem_mesh_fem_global_function.h"
-#include "getfem/getfem_spider_fem.h"
 #include "getfem/getfem_mesh_fem_sum.h"
 #include "getfem/getfem_crack_sif.h"
 #include "gmm/gmm.h"
@@ -329,16 +328,6 @@ struct crack_problem {
 
   base_small_vector translation;
 
-  struct spider_param {
-    getfem::spider_fem *fem;
-    scalar_type theta0;
-    scalar_type radius;
-    unsigned Nr;
-    unsigned Ntheta;
-    int K;
-  };
-  spider_param spider;
-
   scalar_type residual;      /* max residual for the iterative solvers      */
   bool mixed_pressure, add_crack;
   unsigned dir_with_mult;
@@ -355,9 +344,7 @@ struct crack_problem {
   typedef enum { NO_ENRICHMENT=0, 
 		 FIXED_ZONE=1, 
 		 GLOBAL_WITH_MORTAR=2,
-		 GLOBAL_WITH_CUTOFF=3,
-		 SPIDER_FEM_ALONE=4,
-		 SPIDER_FEM_ENRICHMENT=5 } enrichment_option_enum;
+		 GLOBAL_WITH_CUTOFF=3 } enrichment_option_enum;
   enrichment_option_enum enrichment_option;
   bool vectorial_enrichment;
   dense_matrix Qsing;
@@ -444,12 +431,6 @@ void crack_problem::init(void) {
   cout << "MESH_TYPE=" << MESH_TYPE << "\n";
   cout << "FEM_TYPE="  << FEM_TYPE << "\n";
   cout << "INTEGRATION=" << INTEGRATION << "\n";
-
-  spider.radius = PARAM.real_value("SPIDER_RADIUS","spider_radius");
-  spider.Nr = unsigned(PARAM.int_value("SPIDER_NR","Spider_Nr "));
-  spider.Ntheta = unsigned(PARAM.int_value("SPIDER_NTHETA","Ntheta "));
-  spider.K = int(PARAM.int_value("SPIDER_K","K "));
-  spider.theta0 =0;
 
   translation.resize(2); 
   translation[0] =0.5;
@@ -619,20 +600,6 @@ bool crack_problem::solve(plain_vector &U) {
   
   mf_sing_u.set_functions(vfunc);
 
-  if (enrichment_option == SPIDER_FEM_ALONE || 
-      enrichment_option == SPIDER_FEM_ENRICHMENT) {
-    spider.fem = new getfem::spider_fem(spider.radius, mim, spider.Nr,
-					spider.Ntheta, spider.K, translation,
-					spider.theta0, int(0), scalar_type(0));
-    mf_us.set_finite_element(mesh.convex_index(),spider.fem->get_pfem());
-    for (dal::bv_visitor_c i(mf_us.convex_index()); !i.finished(); ++i) {
-      if (mf_us.fem_of_element(i)->nb_dof(i) == 0) {
-	mf_us.set_finite_element(i,0);
-      }
-    }
-    spider.fem->check();
-  }
-
   switch (enrichment_option) {
 
 
@@ -705,14 +672,6 @@ bool crack_problem::solve(plain_vector &U) {
       else
 	cout<<"Using Polynomial Cutoff..."<<endl;
       mf_u_sum.set_mesh_fems(mf_sing_u, mfls_u);
-    } break;
-
-    case SPIDER_FEM_ALONE: {
-      mf_u_sum.set_mesh_fems(mf_us); 
-    } break;
-  
-    case SPIDER_FEM_ENRICHMENT: {
-      mf_u_sum.set_mesh_fems(mf_us, mfls_u); 
     } break;
 
     case NO_ENRICHMENT: {
