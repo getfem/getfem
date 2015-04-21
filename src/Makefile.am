@@ -84,7 +84,6 @@ nobase_include_HEADERS =                   		\
 	getfem/bgeot_small_vector.h        		\
 	getfem/bgeot_sparse_tensors.h      		\
 	getfem/bgeot_tensor.h              		\
-	getfem/bgeot_vector.h              		\
 	getfem/bgeot_comma_init.h	   		\
 	getfem/bgeot_ftool.h               		\
 	getfem/getfem_arch_config.h        		\

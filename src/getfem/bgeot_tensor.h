@@ -37,7 +37,7 @@
 #ifndef BGEOT_TENSOR_H__
 #define BGEOT_TENSOR_H__
 
-#include "bgeot_vector.h"
+#include "bgeot_small_vector.h"
 #include "getfem/getfem_omp.h"
 
 

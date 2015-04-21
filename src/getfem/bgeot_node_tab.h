@@ -39,7 +39,7 @@
     that are nearer than a certain very small distance.
 
 */
-#include "bgeot_vector.h"
+#include "bgeot_small_vector.h"
 #include "dal_tree_sorted.h"
 #include "set"
 

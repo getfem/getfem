@@ -39,7 +39,7 @@
 
     Basically, a KD-tree is a balanced N-dimensional tree.
 */
-#include "bgeot_vector.h"
+#include "bgeot_small_vector.h"
 
 namespace bgeot {
   struct kdtree_elt_base;

@@ -39,7 +39,7 @@
 */
 
 #include <set>
-#include "bgeot_vector.h"
+#include "bgeot_small_vector.h"
 
 namespace bgeot {
 

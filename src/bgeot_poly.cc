@@ -22,7 +22,7 @@
 
 
 #include "getfem/bgeot_poly.h"
-#include "getfem/bgeot_vector.h"
+#include "getfem/bgeot_small_vector.h"
 #include "getfem/bgeot_ftool.h"
 
 namespace bgeot {

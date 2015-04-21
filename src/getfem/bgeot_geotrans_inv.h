@@ -53,7 +53,7 @@
 #define BGEOT_GEOTRANS_INV_H__
 
 #include "bgeot_geometric_trans.h"
-#include "bgeot_vector.h"
+#include "bgeot_small_vector.h"
 #include "bgeot_kdtree.h"
 
 namespace bgeot {
