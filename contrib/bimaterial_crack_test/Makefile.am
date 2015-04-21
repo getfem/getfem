@@ -6,8 +6,9 @@ check_PROGRAMS =                 \
 
 CLEANFILES = 
 
-bimaterial_crack_test_SOURCES = bimaterial_crack_test.cc
-crack_SOURCES = crack.cc crack_exact_solution.cc crack_exact_solution.h
+bimaterial_crack_test_SOURCES = bimaterial_crack_test.cc getfem_Xfem.cc
+crack_SOURCES = crack.cc crack_exact_solution.cc crack_exact_solution.h getfem_Xfem.cc
+
 
 AM_CPPFLAGS = -I$(top_srcdir)/src -I../../src 
 LDADD    = ../../src/libgetfem.la -lm @SUPLDFLAGS@ @BOOST_LIBS@

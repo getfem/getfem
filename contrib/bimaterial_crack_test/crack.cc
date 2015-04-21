@@ -35,7 +35,7 @@
 #include "getfem/getfem_mesh_fem_level_set.h"
 #include "getfem/getfem_mesh_fem_product.h"
 #include "getfem/getfem_mesh_fem_global_function.h"
-#include "getfem/getfem_spider_fem.h"
+#include "getfem_spider_fem.h"
 #include "getfem/getfem_mesh_fem_sum.h"
 #include "gmm/gmm.h"
 #include "gmm/gmm_inoutput.h"
