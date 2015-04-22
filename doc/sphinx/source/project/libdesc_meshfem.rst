@@ -32,8 +32,7 @@ Files
    :file:`getfem_derivatives.h`, "Interpolation of some derivatives of a finite element field on a (discontinuous) Lagrange finite element. The interpolation facilities of the high-level generic assembly can be used instead."
    :file:`getfem_inter_element.h` and :file:`getfem_inter_element.cc`, "An attempt to make framework for inter-element computations (jump in normal derivative for instance). To be continuated and perhaps integrated into the generic assembly language."
    :file:`getfem_error_estimate.h` and :file:`getfem_error_estimate.cc`, "An attempt to make framework for computation of error estimates. To be continuated and perhaps integrated into the generic assembly language."
-   :file:`getfem_crack_sif.h`, "Crack support functions for computation of SIF
-          (stress intensity factors)."
+   :file:`getfem_crack_sif.h`, "Crack support functions for computation of SIF(stress intensity factors)."
    :file:`getfem_torus.h` and :file:`getfem_torus.cc`, "Adapt a mesh_fem object which extends a 2D dimensional structure with a radial dimension".
 
 State
