@@ -6,8 +6,8 @@
 
 .. _dp-femdesc:
 
-Introduction to the FEM description in |gf|
-===========================================
+The FEM description in |gf|
+===========================
 
 The aim of this section is to briefly introduce the FEM description in |gf|
 mainly in order to fix the notation used in the rest of the document (definition

@@ -12,5 +12,6 @@
 
    intro
    install
+   basic_usage
    thermo_coupling
    wheel

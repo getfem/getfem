@@ -708,6 +708,59 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
 
   if (subc_tab.size() == 0) {
 
+    /*@FUNC @CELL{...} = ('generic', @tmim mim, @int order, @str expression, @int region, [@tmodel model,] [@str varname, @int is_variable[, {@tmf mf, @tmimd mimd}], value], ...)
+      High-level generic assembly procedure for volumic or boundary assembly.
+
+      Performs the generic assembly of `expression` with the integration
+      method `mim` on the mesh region of index `region` (-1 means all
+      the element of the mesh). The same mesh should be shared by
+      the integration method and all the finite element methods or
+      mesh_im_data corresponding to the variables.
+
+      `order` indicates either that the (scalar) potential
+      (order = 0) or the (vector) residual (order = 1) or the
+      tangent (matrix) (order = 2) is to be computed.
+
+      `model` is an optional parameter allowing to take into account
+      all variables and data of a model.
+
+      The variables and constant (data) are listed after the
+      region number (or optionally the model).
+      For each variable/constant, first the variable/constant
+      name should be given (as it is referred in the assembly string), then
+      1 if it is a variable or 0 for a constant, then the finite element
+      method if it is a fem variable/constant or the mesh_im_data if it is
+      data defined on integration points, and the vector representing
+      the value of the variable/constant. It is possible to give an arbitrary
+      number of variable/constant. The difference between a variable and a
+      constant is that automatic differentiation is done with respect to
+      variables only (see Getfem++ user documentation). Test functions are
+      only available for variables, not for constants.
+
+      Note that if several variables are given, the assembly of the
+      tangent matrix/residual vector will be done considering the order
+      in the call of the function (the degrees of freedom of the first
+      variable, then of the second, and so on). If a model is provided,
+      all degrees of freedom of the model will be counted first.
+
+      For example, the L2 norm of a vector field "u" can be computed with::
+
+        ::COMPUTE('L2 norm') or with the square root of:
+
+        ::ASM('generic', mim, 0, 'u.u', -1, 'u', 1, mf, U);
+
+      The nonhomogeneous Laplacian stiffness matrix of a scalar field can be evaluated with::
+
+        ::ASM('laplacian', mim, mf, mf_data, A) or equivalently with:
+
+        ::ASM('generic', mim, 2, 'A*Grad_Test2_u.Grad_Test_u', -1, 'u', 1, mf, U, 'A', 0, mf_data, A);
+
+        @*/
+    sub_command
+      ("generic", 4, -1, 0, -1,
+       do_high_level_generic_assembly(in, out);
+       );
+
 
     /*@FUNC M = ('mass matrix', @tmim mim, @tmf mf1[, @tmf mf2[, @int region]])
     Assembly of a mass matrix.
@@ -727,62 +780,6 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        out.pop().from_sparse(M);
        );
 
-    /*@FUNC M = ('lsneuman matrix', @tmim mim, @tmf mf1, @tmf mf2, @tls ls[, @int region])
-      Assembly of a level set Neuman  matrix.
-
-      Return a @tsp object.
-      @*/
-    sub_command
-      ("lsneuman matrix", 4, 5, 0, 1,
-       const getfem::mesh_im *mim = get_mim(in);
-       const getfem::mesh_fem *mf_u1 = in.pop().to_const_mesh_fem();
-       const getfem::mesh_fem *mf_u2 = in.pop().to_const_mesh_fem();
-       getfem::level_set *ls1= in.pop().to_levelset();
-       gf_real_sparse_by_col M(mf_u2->nb_dof(), mf_u1->nb_dof());
-       size_type region = size_type(-1);
-       if (in.remaining()) region = in.pop().to_integer();
-       getfem::mesh_region rg(region);
-       mf_u1->linked_mesh().intersect_with_mpi_region(rg);
-       asm_lsneuman_matrix(M, *mim, *mf_u1, *mf_u2, *ls1);
-       out.pop().from_sparse(M);
-       );
-
-    /*@FUNC M = ('nlsgrad matrix', @tmim mim, @tmf mf1, @tmf mf2, @tls ls[, @int region])
-      Assembly of a nlsgrad matrix.
-
-      Return a @tsp object.
-      @*/
-    sub_command
-      ("nlsgrad matrix", 4, 5, 0, 1,
-       const getfem::mesh_im *mim = get_mim(in);
-       const getfem::mesh_fem *mf_u1 = in.pop().to_const_mesh_fem();
-       const getfem::mesh_fem *mf_u2 = in.pop().to_const_mesh_fem();
-       getfem::level_set *ls1= in.pop().to_levelset();
-       gf_real_sparse_by_col M(mf_u1->nb_dof(), mf_u2->nb_dof());
-       size_type region = size_type(-1);
-       if (in.remaining()) region = in.pop().to_integer();
-       getfem::mesh_region rg(region);
-       mf_u1->linked_mesh().intersect_with_mpi_region(rg);
-       asm_nlsgrad_matrix(M, *mim, *mf_u1, *mf_u2, *ls1, rg);
-       out.pop().from_sparse(M);
-       );
-
-    /*@FUNC M = ('stabilization patch matrix', @tm mesh, @tmf mf,  @tmim mim, @real ratio, @real h)
-      Assembly of stabilization patch matrix .
-
-      Return a @tsp object.
-      @*/
-    sub_command
-      ("stabilization patch matrix", 5, 5, 0, 1,
-       const getfem::mesh_im *mim = get_mim(in);
-       const getfem::mesh *mesh = in.pop().to_const_mesh();
-       const getfem::mesh_fem *mf_mult = in.pop().to_const_mesh_fem();
-       double ratio_size= in.pop().to_scalar();
-       double h= in.pop().to_scalar();
-       gf_real_sparse_by_col M(mf_mult->nb_dof(), mf_mult->nb_dof());
-       asm_stabilization_patch_matrix(M, *mesh,* mf_mult, *mim, ratio_size, h);
-       out.pop().from_sparse(M);
-       );
 
 
     /*@FUNC L = ('laplacian', @tmim mim, @tmf mf_u, @tmf mf_d, @dvec a[, @int region])
@@ -1173,60 +1170,6 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        );
 
 
-    /*@FUNC @CELL{...} = ('generic', @tmim mim, @int order, @str expression, @int region, [@tmodel model,] [@str varname, @int is_variable[, {@tmf mf, @tmimd mimd}], value], ...)
-      High-level generic assembly procedure for volumic assembly.
-
-      Performs the generic assembly of `expression` with the integration
-      method `mim` on the mesh region of index `region` (-1 means all
-      the element of the mesh). The same mesh should be shared by
-      the integration method and all the finite element methods or
-      mesh_im_data corresponding to the variables.
-
-      `order` indicates either that the (scalar) potential
-      (order = 0) or the (vector) residual (order = 1) or the
-      tangent (matrix) (order = 2) is to be computed.
-
-      `model` is an optional parameter allowing to take into account
-      all variables and data of a model.
-
-      The variables and constant (data) are listed after the
-      region number (or optionally the model).
-      For each variable/constant, first the variable/constant
-      name should be given (as it is referred in the assembly string), then
-      1 if it is a variable or 0 for a constant, then the finite element
-      method if it is a fem variable/constant or the mesh_im_data if it is
-      data defined on integration points, and the vector representing
-      the value of the variable/constant. It is possible to give an arbitrary
-      number of variable/constant. The difference between a variable and a
-      constant is that automatic differentiation is done with respect to
-      variables only (see Getfem++ user documentation). Test functions are
-      only available for variables, not for constants.
-
-      Note that if several variables are given, the assembly of the
-      tangent matrix/residual vector will be done considering the order
-      in the call of the function (the degrees of freedom of the first
-      variable, then of the second, and so on). If a model is provided,
-      all degrees of freedom of the model will be counted first.
-
-      For example, the L2 norm of a vector field "u" can be computed with::
-
-        ::COMPUTE('L2 norm') or with the square root of:
-
-        ::ASM('generic', mim, 0, 'u.u', -1, 'u', 1, mf, U);
-
-      The nonhomogeneous Laplacian stiffness matrix of a scalar field can be evaluated with::
-
-        ::ASM('laplacian', mim, mf, mf_data, A) or equivalently with:
-
-        ::ASM('generic', mim, 2, 'A*Grad_Test2_u.Grad_Test_u', -1, 'u', 1, mf, U, 'A', 0, mf_data, A);
-
-        @*/
-    sub_command
-      ("generic", 4, -1, 0, -1,
-       do_high_level_generic_assembly(in, out);
-       );
-
-
     /*@FUNC ('expression analysis', @str expression, [@tmodel model,] [@str varname, @int is_variable[, {@tmf mf, @tmimd mimd}]], ...)
       Analyse a high-level generic assembly expression and print
       information about the provided expression.@*/
@@ -1383,6 +1326,63 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        getfem::asm_level_set_normal_source_term
          (F, *mim, *mf_u, *mf_obs, obs, *mf_lambda, vec_lambda, rg);
 
+       );
+
+    /*@FUNC M = ('lsneuman matrix', @tmim mim, @tmf mf1, @tmf mf2, @tls ls[, @int region])
+      Assembly of a level set Neuman  matrix.
+
+      Return a @tsp object.
+      @*/
+    sub_command
+      ("lsneuman matrix", 4, 5, 0, 1,
+       const getfem::mesh_im *mim = get_mim(in);
+       const getfem::mesh_fem *mf_u1 = in.pop().to_const_mesh_fem();
+       const getfem::mesh_fem *mf_u2 = in.pop().to_const_mesh_fem();
+       getfem::level_set *ls1= in.pop().to_levelset();
+       gf_real_sparse_by_col M(mf_u2->nb_dof(), mf_u1->nb_dof());
+       size_type region = size_type(-1);
+       if (in.remaining()) region = in.pop().to_integer();
+       getfem::mesh_region rg(region);
+       mf_u1->linked_mesh().intersect_with_mpi_region(rg);
+       asm_lsneuman_matrix(M, *mim, *mf_u1, *mf_u2, *ls1);
+       out.pop().from_sparse(M);
+       );
+
+    /*@FUNC M = ('nlsgrad matrix', @tmim mim, @tmf mf1, @tmf mf2, @tls ls[, @int region])
+      Assembly of a nlsgrad matrix.
+
+      Return a @tsp object.
+      @*/
+    sub_command
+      ("nlsgrad matrix", 4, 5, 0, 1,
+       const getfem::mesh_im *mim = get_mim(in);
+       const getfem::mesh_fem *mf_u1 = in.pop().to_const_mesh_fem();
+       const getfem::mesh_fem *mf_u2 = in.pop().to_const_mesh_fem();
+       getfem::level_set *ls1= in.pop().to_levelset();
+       gf_real_sparse_by_col M(mf_u1->nb_dof(), mf_u2->nb_dof());
+       size_type region = size_type(-1);
+       if (in.remaining()) region = in.pop().to_integer();
+       getfem::mesh_region rg(region);
+       mf_u1->linked_mesh().intersect_with_mpi_region(rg);
+       asm_nlsgrad_matrix(M, *mim, *mf_u1, *mf_u2, *ls1, rg);
+       out.pop().from_sparse(M);
+       );
+
+    /*@FUNC M = ('stabilization patch matrix', @tm mesh, @tmf mf,  @tmim mim, @real ratio, @real h)
+      Assembly of stabilization patch matrix .
+
+      Return a @tsp object.
+      @*/
+    sub_command
+      ("stabilization patch matrix", 5, 5, 0, 1,
+       const getfem::mesh_im *mim = get_mim(in);
+       const getfem::mesh *mesh = in.pop().to_const_mesh();
+       const getfem::mesh_fem *mf_mult = in.pop().to_const_mesh_fem();
+       double ratio_size= in.pop().to_scalar();
+       double h= in.pop().to_scalar();
+       gf_real_sparse_by_col M(mf_mult->nb_dof(), mf_mult->nb_dof());
+       asm_stabilization_patch_matrix(M, *mesh,* mf_mult, *mim, ratio_size, h);
+       out.pop().from_sparse(M);
        );
 
   }

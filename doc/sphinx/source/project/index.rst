@@ -11,9 +11,9 @@ Description of the Project
    :maxdepth: 2
 
    intro
+   contribute
    femdesc
    libdesc
-   global
 
    appendixA
    ../biblio
