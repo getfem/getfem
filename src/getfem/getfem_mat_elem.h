@@ -34,7 +34,7 @@
    @date December 21, 2000.
    @brief elementary computations (used by the generic assembly).
 
-   This is the kernel of getfem..
+   This is the kernel of getfem low-level generic assembly.
 */
 
 #ifndef GETFEM_MAT_ELEM_H__

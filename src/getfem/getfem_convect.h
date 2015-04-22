@@ -67,7 +67,7 @@ namespace getfem {
     // Could be extended to non-lagragian fem with a projection (moving the 
     //   gauss points).
     // Can take into account a source term by integration on the
-    //   caracteristics.
+    //   characteristics.
 
     typedef typename gmm::linalg_traits<VECT1>::value_type T;
     int extra = (option == CONVECT_EXTRAPOLATION) ? 2 : 0;

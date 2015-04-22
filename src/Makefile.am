@@ -92,7 +92,6 @@ nobase_include_HEADERS =                   		\
 	getfem/getfem_assembling_tensors.h 		\
 	getfem/getfem_generic_assembly.h 		\
 	getfem/getfem_context.h 			\
-	getfem/getfem_external_data_fem.h  		\
 	getfem/getfem_config.h             		\
 	getfem/getfem_interpolation.h      		\
 	getfem/getfem_export.h             		\
@@ -103,7 +102,6 @@ nobase_include_HEADERS =                   		\
 	getfem/getfem_projected_fem.h   		\
 	getfem/getfem_mesh_fem_global_function.h	\
 	getfem/getfem_mesh_fem_sum.h            	\
-	getfem/getfem_gauss_lobatto_fem_coef.h  	\
 	getfem/getfem_im_list.h                 	\
 	getfem/getfem_mat_elem.h                	\
 	getfem/getfem_mat_elem_type.h           	\
@@ -124,7 +122,6 @@ nobase_include_HEADERS =                   		\
 	getfem/getfem_fem_level_set.h             	\
 	getfem/getfem_mesh_slicers.h	           	\
 	getfem/getfem_mesh_slice.h	           	\
-	getfem/getfem_norm.h         	           	\
 	getfem/getfem_regular_meshes.h            	\
 	getfem/getfem_models.h                  	\
 	getfem/getfem_model_solvers.h             	\
