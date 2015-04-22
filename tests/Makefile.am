@@ -24,7 +24,6 @@ check_PROGRAMS =                   \
 	test_mat_elem              \
 	test_interpolation         \
 	test_assembly              \
-	test_norm	           \
 	test_interpolated_fem      \
 	test_range_basis           \
 	laplacian                  \
@@ -85,7 +84,6 @@ test_tree_sorted_SOURCES = test_tree_sorted.cc
 test_mat_elem_SOURCES = test_mat_elem.cc
 test_slice_SOURCES = test_slice.cc
 test_range_basis_SOURCES = test_range_basis.cc
-test_norm_SOURCES = test_norm.cc
 schwarz_additive_SOURCES = schwarz_additive.cc
 plasticity_SOURCES = plasticity.cc
 if QHULL
@@ -114,7 +112,6 @@ TESTS = \
 	test_kdtree.pl                \
 	test_rtree.pl                 \
 	geo_trans_inv.pl              \
-	test_norm.pl                  \
 	test_mesh.pl                  \
 	test_interpolation.pl         \
 	test_mat_elem.pl              \
@@ -161,7 +158,6 @@ EXTRA_DIST =                               			\
 	test_int_set.pl                    			\
 	test_interpolated_fem.pl           			\
 	test_slice.pl			   			\
-	test_norm.pl			   			\
 	test_mesh_im_level_set.pl          			\
 	thermo_elasticity_electrical_coupling.pl		\
 	thermo_elasticity_electrical_coupling.param		\

@@ -29,7 +29,6 @@
 #define GMM_USES_SUPERLU
 
 #include "getfem/getfem_assembling.h"
-#include "getfem/getfem_norm.h"
 #include "getfem/getfem_regular_meshes.h"
 #include "getfem/getfem_export.h"
 #include "gmm/gmm.h"
