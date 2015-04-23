@@ -237,23 +237,20 @@ namespace getfem {
 
     for (VAR_SET::iterator it = variables.begin(); it != variables.end();
          ++it) {
-      if (it->second.is_fem_dofs && !(it->second.is_affine_dependent)
-          && ((it->second.filter & VDESCRFILTER_CTERM)
-              || (it->second.filter & VDESCRFILTER_INFSUP))) {
-        VAR_SET::iterator it2 = variables.find(it->second.filter_var);
-        GMM_ASSERT1(it2 != variables.end(), "The primal variable of the "
-                    "multiplier does not exist");
-        GMM_ASSERT1(it2->second.is_fem_dofs, "The primal variable of the "
-                    "multiplier is not a fem variable");
-        multipliers[it->second.filter_var].push_back(it->first);
-        if (it->second.v_num < it->second.mf->version_number() ||
-            it->second.v_num < it2->second.mf->version_number())
-          tobedone[it->second.filter_var] = true;
-      }
-    }
-
-    for (VAR_SET::iterator it=variables.begin(); it!=variables.end(); ++it) {
       if (it->second.is_fem_dofs && !(it->second.is_affine_dependent)) {
+        if ((it->second.filter & VDESCRFILTER_CTERM)
+            || (it->second.filter & VDESCRFILTER_INFSUP)) {
+          VAR_SET::iterator it2 = variables.find(it->second.filter_var);
+          GMM_ASSERT1(it2 != variables.end(), "The primal variable of the "
+                      "multiplier does not exist");
+          GMM_ASSERT1(it2->second.is_fem_dofs, "The primal variable of the "
+                      "multiplier is not a fem variable");
+          multipliers[it->second.filter_var].push_back(it->first);
+          if (it->second.v_num < it->second.mf->version_number() ||
+              it->second.v_num < it2->second.mf->version_number()) {
+            tobedone[it->second.filter_var] = true;
+          }
+        }
         switch (it->second.filter) {
         case VDESCRFILTER_NO:
           if (it->second.v_num < it->second.mf->version_number()) {
@@ -275,9 +272,9 @@ namespace getfem {
         default : break;
         }
       }
-
-      if(it->second.pim_data != 0
-         && it->second.v_num < it->second.pim_data->version_number()) {
+    
+      if (it->second.pim_data != 0
+          && it->second.v_num < it->second.pim_data->version_number()) {
         const im_data *pimd = it->second.pim_data;
         size_type data_size = pimd->nb_filtered_index()*pimd->nb_tensor_elem();
         it->second.set_size(data_size);
@@ -285,11 +282,32 @@ namespace getfem {
       }
     }
 
+    for (VAR_SET::iterator it = variables.begin(); it != variables.end();
+         ++it) {
+      if (it->second.is_fem_dofs && !(it->second.is_affine_dependent) &&
+          ((it->second.filter & VDESCRFILTER_CTERM)
+           || (it->second.filter & VDESCRFILTER_INFSUP))) {
+        if (tobedone.find(it->second.filter_var) != tobedone.end()) {
+          // This step forces the recomputation of corresponding bricks.
+          // A test to check if a modification is really necessary could
+          // be done first ... (difficult to coordinate with other
+          // multipliers)
+          dal::bit_vector alldof; alldof.add(0, it->second.mf->nb_dof());
+          it->second.partial_mf->adapt(alldof);
+          it->second.set_size(it->second.partial_mf->nb_dof());
+          it->second.v_num = act_counter();
+        }
+      }
+    }
+
+    resize_global_system();
+
     for (std::map<std::string, bool>::iterator itbd = tobedone.begin();
          itbd != tobedone.end(); ++itbd) {
 //       #if GETFEM_PARA_LEVEL > 1
 //       double tt_ref = MPI_Wtime();
-//       if (!rk) cout << "compute size of multipliers for " << itbd->first << endl;
+//       if (!rk) cout << "compute size of multipliers for " << itbd->first
+//                     << endl;
 //       #endif
 
       std::vector<std::string> &mults = multipliers[itbd->first];
@@ -310,15 +328,6 @@ namespace getfem {
       for (size_type k = 0; k < mults.size(); ++k) {
         VAR_SET::iterator it = variables.find(mults[k]);
 
-        // This step forces the recomputation of corresponding bricks.
-        // A test to check if a modification is really necessary could
-        // be done first ... (difficult to coordinate with other multipliers)
-        
-        // mult_kept_dofs.push_back(it->second.partial_mf->retrieve_kept_dofs());
-        dal::bit_vector alldof; alldof.add(0, it->second.mf->nb_dof());
-        it->second.partial_mf->adapt(alldof);
-        it->second.set_size(it->second.partial_mf->nb_dof());
-
         // Obtaining the coupling matrix between the multipier and
         // the primal variable. A search is done on all the terms of the
         // model. Only the the corresponding linear terms are added.
@@ -338,32 +347,75 @@ namespace getfem {
 
               const term_description &term = brick.tlist[j];
 
-              if (term.is_matrix_term && !mults[k].compare(term.var1) &&
-                  !it2->first.compare(term.var2)) {
-                if (!bupd) {
-                  brick.terms_to_be_computed = true;
-                  update_brick(ib, BUILD_MATRIX);
-                  bupd = true;
+              if (term.is_matrix_term) {
+                if (term.is_global) {
+                  bool varc = false, multc = false;
+                  for (size_type iv = 0; iv < brick.vlist.size(); ++iv) {
+                    if (!(mults[k].compare(brick.vlist[iv]))) multc = true;
+                    if (!(it2->first.compare(brick.vlist[iv]))) varc = true;
+                  }
+                  if (multc && varc) {
+                    GMM_ASSERT1(!cplx, "Sorry, not taken into account");
+                    generic_expressions.clear();
+                    if (!bupd) {
+                      brick.terms_to_be_computed = true;
+                      update_brick(ib, BUILD_MATRIX);
+                      bupd = true;
+                    }
+                    if (generic_expressions.size()) {
+                      GMM_TRACE2("Generic assembly for actualize sizes");
+                      ga_workspace workspace(*this);
+                      for (std::list<gen_expr>::iterator ig
+                             = generic_expressions.begin();
+                           ig != generic_expressions.end(); ++ig) {
+                        workspace.add_expression(ig->expr,ig->mim,ig->region);
+                      }
+                      gmm::clear(rTM);
+                      workspace.set_assembled_matrix(rTM);
+                      workspace.assembly(2);
+                      gmm::add
+                        (gmm::sub_matrix(rTM, it->second.I, it2->second.I),MM);
+                      gmm::add(gmm::transposed
+                               (gmm::sub_matrix(rTM, it2->second.I,
+                                                it->second.I)), MM);
+                      bupd = false;
+                    } else {
+                      gmm::add(gmm::sub_matrix(brick.rmatlist[j],
+                                               it->second.I, it2->second.I),
+                               MM);
+                      gmm::add(gmm::transposed(gmm::sub_matrix
+                                               (brick.rmatlist[j],
+                                                it2->second.I, it->second.I)),
+                               MM);
+                    }
+                  }
+                } else if (!mults[k].compare(term.var1) && 
+                    !it2->first.compare(term.var2)) {
+                  if (!bupd) {
+                    brick.terms_to_be_computed = true;
+                    update_brick(ib, BUILD_MATRIX);
+                    bupd = true;
+                  }
+                  if (cplx)
+                    gmm::add
+                      (gmm::transposed(gmm::real_part(brick.cmatlist[j])), MM);
+                  else
+                    gmm::add(gmm::transposed(brick.rmatlist[j]), MM);
+                  termadded = true;
+                  
+                } else if (!mults[k].compare(term.var2) &&
+                           !it2->first.compare(term.var1)) {
+                  if (!bupd) {
+                    brick.terms_to_be_computed = true;
+                    update_brick(ib, BUILD_MATRIX);
+                    bupd = true;
+                  }
+                  if (cplx)
+                    gmm::add(gmm::real_part(brick.cmatlist[j]), MM);
+                  else
+                    gmm::add(brick.rmatlist[j], MM);
+                  termadded = true;
                 }
-                if (cplx)
-                  gmm::add(gmm::transposed(gmm::real_part(brick.cmatlist[j])),
-                           MM);
-                else
-                  gmm::add(gmm::transposed(brick.rmatlist[j]), MM);
-                termadded = true;
-
-              } else if (term.is_matrix_term && !mults[k].compare(term.var2) &&
-                         !it2->first.compare(term.var1)) {
-                if (!bupd) {
-                  brick.terms_to_be_computed = true;
-                  update_brick(ib, BUILD_MATRIX);
-                  bupd = true;
-                }
-                if (cplx)
-                  gmm::add(gmm::real_part(brick.cmatlist[j]), MM);
-                else
-                  gmm::add(brick.rmatlist[j], MM);
-                termadded = true;
               }
             }
           }
@@ -2404,21 +2456,11 @@ namespace getfem {
     // Generic expressions
     if (generic_expressions.size()) {
       // cout << "generic assembly " << version << endl;
+      GMM_TRACE2("Global generic assembly");
       ga_workspace workspace(*this);
-
-      // std::map<std::pair<const mesh *, size_type>,  mesh_region> mpi_reg;
 
       for (std::list<gen_expr>::iterator it = generic_expressions.begin();
              it != generic_expressions.end(); ++it) {
-
-        // std::pair<const mesh *, size_type>
-        //  pms(&(it->mim.linked_mesh()), it->region);
-        // if (mpi_reg.find(pms) == mpi_reg.end()) {
-        //  mesh_region rg(it->region);
-        //  it->mim.linked_mesh().intersect_with_mpi_region(rg);
-        //  mpi_reg[pms] = rg;
-        // }
-        // workspace.add_expression(it->expr, it->mim, mpi_reg[pms]);
         workspace.add_expression(it->expr, it->mim, it->region);
       }
 
@@ -2616,10 +2658,14 @@ namespace getfem {
   model::complex_variable(const std::string &name, size_type niter) const {
     GMM_ASSERT1(complex_version, "This model is a real one");
     context_check();
-    VAR_SET::const_iterator it = variables.find(name);
+    VAR_SET::iterator it = variables.find(name);
     GMM_ASSERT1(it!=variables.end(), "Undefined variable " << name);
-    if (act_size_to_be_done && it->second.is_fem_dofs) //it->second.filter != VDESCRFILTER_NO
-      actualize_sizes();
+    if (act_size_to_be_done && it->second.is_fem_dofs) {
+      if (it->second.filter != VDESCRFILTER_NO)
+        actualize_sizes();
+      else
+        it->second.set_size(it->second.mf->nb_dof());
+    }
     if (niter == size_type(-1)) niter = it->second.default_iter;
     GMM_ASSERT1(it->second.n_iter + it->second.n_temp_iter  > niter,
                 "Invalid iteration number "
@@ -2633,8 +2679,12 @@ namespace getfem {
     context_check();
     VAR_SET::iterator it = variables.find(name);
     GMM_ASSERT1(it!=variables.end(), "Undefined variable " << name);
-    if (act_size_to_be_done && it->second.is_fem_dofs) //it->second.filter != VDESCRFILTER_NO
-      actualize_sizes();
+    if (act_size_to_be_done && it->second.is_fem_dofs) {
+      if (it->second.filter != VDESCRFILTER_NO)
+        actualize_sizes();
+      else
+        it->second.set_size(it->second.mf->nb_dof()*it->second.qdim);
+    }
     it->second.v_num_data = act_counter();
     if (niter == size_type(-1)) niter = it->second.default_iter;
     GMM_ASSERT1(it->second.n_iter + it->second.n_temp_iter > niter,
@@ -2892,6 +2942,7 @@ namespace getfem {
           md.is_var_newer_than_brick(dl[i], ib);
       }
 
+      GMM_TRACE2(name << ": generic assembly");
       ga_workspace workspace(md);
       // mesh_region rg(region);
       // mims[0]->linked_mesh().intersect_with_mpi_region(rg);
@@ -3064,6 +3115,7 @@ namespace getfem {
       // mesh_region rg(region);
       // mims[0]->linked_mesh().intersect_with_mpi_region(rg);
       // workspace.add_expression(expr, *(mims[0]), rg);
+      GMM_TRACE2(name << ": generic source term assembly");
       workspace.add_expression(expr, *(mims[0]), region);
       gmm::clear(vecl[0]);
       workspace.set_assembled_vector(vecl[0]);
