@@ -2643,10 +2643,14 @@ namespace getfem {
   model::real_variable(const std::string &name, size_type niter) const {
     GMM_ASSERT1(!complex_version, "This model is a complex one");
     context_check();
-    VAR_SET::const_iterator it = variables.find(name);
+    VAR_SET::iterator it = variables.find(name);
     GMM_ASSERT1(it!=variables.end(), "Undefined variable " << name);
-    if (act_size_to_be_done && it->second.is_fem_dofs) //it->second.filter != VDESCRFILTER_NO
-      actualize_sizes();
+    if (act_size_to_be_done && it->second.is_fem_dofs) {
+      if (it->second.filter != VDESCRFILTER_NO)
+        actualize_sizes();
+      else
+        it->second.set_size(it->second.mf->nb_dof()*it->second.qdim);
+    }
     if (niter == size_type(-1)) niter = it->second.default_iter;
     GMM_ASSERT1(it->second.n_iter + it->second.n_temp_iter > niter,
                 "Invalid iteration number "
@@ -2664,7 +2668,7 @@ namespace getfem {
       if (it->second.filter != VDESCRFILTER_NO)
         actualize_sizes();
       else
-        it->second.set_size(it->second.mf->nb_dof());
+        it->second.set_size(it->second.mf->nb_dof()*it->second.qdim);
     }
     if (niter == size_type(-1)) niter = it->second.default_iter;
     GMM_ASSERT1(it->second.n_iter + it->second.n_temp_iter  > niter,
@@ -2699,8 +2703,12 @@ namespace getfem {
     context_check();
     VAR_SET::iterator it = variables.find(name);
     GMM_ASSERT1(it!=variables.end(), "Undefined variable " << name);
-    if (act_size_to_be_done && it->second.is_fem_dofs) //it->second.filter != VDESCRFILTER_NO
-      actualize_sizes();
+    if (act_size_to_be_done && it->second.is_fem_dofs) {
+      if (it->second.filter != VDESCRFILTER_NO)
+        actualize_sizes();
+      else
+        it->second.set_size(it->second.mf->nb_dof()*it->second.qdim);
+    }
     it->second.v_num_data = act_counter();
     if (niter == size_type(-1)) niter = it->second.default_iter;
     GMM_ASSERT1(it->second.n_iter + it->second.n_temp_iter > niter,
@@ -2717,8 +2725,12 @@ namespace getfem {
     GMM_ASSERT1(it != variables.end(), "Undefined variable " << name);
     GMM_ASSERT1(it->second.is_affine_dependent,
                 "Only for affine dependent variables");
-    if (act_size_to_be_done && it->second.is_fem_dofs) //it->second.filter != VDESCRFILTER_NO
-      actualize_sizes();
+    if (act_size_to_be_done && it->second.is_fem_dofs) {
+      if (it->second.filter != VDESCRFILTER_NO)
+        actualize_sizes();
+      else
+        it->second.set_size(it->second.mf->nb_dof()*it->second.qdim);
+    }
     it->second.v_num_data = act_counter();
     return it->second.affine_real_value;
   }
@@ -2729,8 +2741,12 @@ namespace getfem {
     context_check();
     VAR_SET::iterator it = variables.find(name);
     GMM_ASSERT1(it!=variables.end(), "Undefined variable " << name);
-    if (act_size_to_be_done && it->second.is_fem_dofs) //it->second.filter != VDESCRFILTER_NO
-      actualize_sizes();
+    if (act_size_to_be_done && it->second.is_fem_dofs) {
+      if (it->second.filter != VDESCRFILTER_NO)
+        actualize_sizes();
+      else
+        it->second.set_size(it->second.mf->nb_dof()*it->second.qdim);
+    }
     it->second.v_num_data = act_counter();
     return it->second.affine_complex_value;
   }
