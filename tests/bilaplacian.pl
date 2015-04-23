@@ -78,5 +78,6 @@ if ($err2 > $err1 / 1.6) {
   print "Convergence error: P1: $err1 $err2\n";
   exit(1);
 }
+`rm -f $tmp`;
 print ".\n";
 

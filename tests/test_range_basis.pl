@@ -79,7 +79,7 @@ sub start_program { # (N, K, NX, OPTION, SOLVER)
 
 start_program("");
 
-#`rm -f $tmp`;
+`rm -f $tmp`;
 if ($er == 1) { exit(1); }
 
 

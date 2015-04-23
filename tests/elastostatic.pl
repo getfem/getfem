@@ -117,6 +117,6 @@ if ($err2 > $err1 / 4) {
   exit(1);
 }
 
-
+`rm -f $tmp`;
 
 print ".\n";

@@ -48,7 +48,6 @@ namespace getfem
       @param mf the source mesh_fem.
       @param U the source field.
       @param mf_target should be a lagrange discontinous element
-      does not work with vectorial elements. ... to be done ...
       @param V contains on output the gradient of U, evaluated on mf_target.
 
       mf_target may have the same Qdim than mf, or it may

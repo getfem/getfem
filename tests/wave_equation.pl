@@ -113,7 +113,7 @@ start_program("");
 ##start_program("-d N=3 -d INTEGRATION=1 -d MESH_TYPE=2 -d NX=3 -d FT=0.01");
 #print ".";
 
-#`rm -f $tmp`;
+`rm -f $tmp`;
 if ($er == 1) { exit(1); }
 
 

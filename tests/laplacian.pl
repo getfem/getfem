@@ -115,7 +115,7 @@ start_program("-d 'MESH_TYPE=\"GT_QK(2,1)\"' -d 'FEM_TYPE=\"FEM_PRODUCT(FEM_PK_G
 
 print ".\n";
 
-#`rm -f $tmp`;
+`rm -f $tmp`;
 if ($er == 1) { exit(1); }
 
 

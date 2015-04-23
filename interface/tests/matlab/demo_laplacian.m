@@ -16,7 +16,7 @@
 % Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 
 % Options for prescribing the Dirichlet condition
-dirichlet_version = 0; % 0 = simplification, 1 = with multipliers, 2 = penalization,  3 = Nitsche's method
+dirichlet_version = 1; % 0 = simplification, 1 = with multipliers, 2 = penalization,  3 = Nitsche's method
 theta = 1;       % Nitsche's method parameter theta
 gamma0 = 0.001;  % Nitsche's method parameter gamma0 (gamma = gamma0*h)
 r = 1e8;         % Penalization parameter
@@ -36,9 +36,9 @@ else
   m=gf_mesh('import','structured',sprintf('GT="GT_PK(2,1)";SIZES=[1,1];NOISED=0;NSUBDIV=[%d,%d];', NX, NX));
 end
 
-% create a mesh_fem of for a field of dimension 1 (i.e. a scalar field)
+% Create a mesh_fem of for a field of dimension 1 (i.e. a scalar field)
 mf = gf_mesh_fem(m,1);
-% assign the QK or PK fem to all convexes of the mesh_fem, and define an
+% Assign the QK or PK fem to all convexes of the mesh_fem, and define an
 % integration method
 if (quadrangles)
   gf_mesh_fem_set(mf,'fem',gf_fem(sprintf('FEM_QK(2,%d)', K)));
@@ -48,16 +48,17 @@ else
   mim = gf_mesh_im(m, gf_integ('IM_TRIANGLE(6)'));
 end
 
-% detect the border of the mesh
+% Detect the border of the mesh
 border = gf_mesh_get(m,'outer faces');
-% mark it as boundary #1
+% Mark it as boundary GAMMAD=1
+GAMMAD=1;
 gf_mesh_set(m, 'boundary', 1, border);
 if (draw)
   gf_plot_mesh(m, 'regions', [1]); % the boundary edges appears in red
   pause(1);
 end
 
-% interpolate the exact solution
+% Interpolate the exact solution
 % Uexact = gf_mesh_fem_get(mf, 'eval', { '10*y.*(y-1).*x.*(x-1)+10*x.^5' });
 Uexact = gf_mesh_fem_get(mf, 'eval', { 'x.*sin(2*pi*x).*sin(2*pi*y)' });
 % Opposite of its laplacian
@@ -66,20 +67,21 @@ F      = gf_mesh_fem_get(mf, 'eval', { '4*pi*(2*pi*x.*sin(2*pi*x) - cos(2*pi*x))
 
 md=gf_model('real');
 gf_model_set(md, 'add fem variable', 'u', mf);
-gf_model_set(md, 'add Laplacian brick', mim, 'u');
+gf_model_set(md, 'add linear generic assembly brick', mim, 'Grad_u.Grad_Test_u');
+% gf_model_set(md, 'add Laplacian brick', mim, 'u');
 gf_model_set(md, 'add initialized fem data', 'VolumicData', mf, F);
 gf_model_set(md, 'add source term brick', mim, 'u', 'VolumicData');
 gf_model_set(md, 'add initialized fem data', 'DirichletData', mf, Uexact);
 switch (dirichlet_version)
   case 0,
-    gf_model_set(md, 'add Dirichlet condition with simplification', 'u', 1, 'DirichletData');   
+    gf_model_set(md, 'add Dirichlet condition with simplification', 'u', GAMMAD, 'DirichletData');   
   case 1, 
-    gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'u', mf, 1, 'DirichletData');
+    gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'u', mf, GAMMAD, 'DirichletData');
   case 2,
-    gf_model_set(md, 'add Dirichlet condition with penalization', mim, 'u', r, 1, 'DirichletData');
+    gf_model_set(md, 'add Dirichlet condition with penalization', mim, 'u', r, GAMMAD, 'DirichletData');
   case 3,
     gf_model_set(md, 'add initialized data', 'gamma0', [gamma0]);
-    gf_model_set(md, 'add Dirichlet condition with Nitsche method', mim, 'u', 'gamma0', 1, theta, 'DirichletData');
+    gf_model_set(md, 'add Dirichlet condition with Nitsche method', mim, 'u', 'gamma0', GAMMAD, theta, 'DirichletData');
 end
 gf_model_get(md, 'solve');
 U = gf_model_get(md, 'variable', 'u');
