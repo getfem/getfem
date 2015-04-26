@@ -47,10 +47,9 @@ result of the function is the brick index in the model.
 
 The second function is::
 
-  size_type getfem::add_generic_elliptic_brick(md, mim, varname, dataname, region = -1);
+  size_type getfem::add_generic_elliptic_brick(md, mim, varname, dataexpr, region = -1);
 
-It adds a term with an arbitrary coefficient given by the data ``dataname`` of the
-model. This data have to be defined first in the model.
+It adds a term with an arbitrary coefficient given by the expression ``dataexpr`` which as to be a regular expression of the high-level generic assembly language (like "1", "sin(X[0])" or "Norm(u)" for instance) even depending on model variables (except for the complex version where it has to be a declared data of the model)
 
 Note that very general equations can be obtained with this brick. For instance,
 linear anisotropic elasticity can be obtained with a tensor data. When an order

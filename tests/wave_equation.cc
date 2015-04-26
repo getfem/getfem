@@ -1,6 +1,6 @@
 /*===========================================================================
  
- Copyright (C) 2009-2012 Yves Renard.
+ Copyright (C) 2009-2015 Yves Renard.
  
  This file is a part of GETFEM++
  
@@ -18,6 +18,8 @@
  Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
  
 ===========================================================================*/
+
+// Uses deprecated time_dispatcher. Do not take as a model.
 
 /**@file wave_equation.cc
    @brief Transient wave equation.
@@ -338,8 +340,10 @@ bool wave_equation_problem::solve(void) {
       // plain_vector V(mf_u.nb_dof()), W(mf_u.nb_dof());
       plain_vector V(mf_u.nb_dof());
       gmm::copy(model.real_variable("v"), V);
+      gmm::sub_interval Iu = model.interval_of_variable("u");
       scalar_type J
-	= gmm::vect_sp(model.linear_real_matrix_term(iblap, 0), U, U) * 0.5
+	= gmm::vect_sp(gmm::sub_matrix(model.linear_real_matrix_term(iblap, 0),
+                                       Iu, Iu), U, U) * 0.5
 	+ gmm::vect_sp(model.linear_real_matrix_term(ibddt, 0), V, V)
 	* 0.5 * dt*dt*alpha;
       cout << "Energy : " << J << endl;

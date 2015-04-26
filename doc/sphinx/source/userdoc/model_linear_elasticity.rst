@@ -71,13 +71,12 @@ The function adding this incompressibility condition is::
 
   ind_brick = getfem::add_linear_incompressibility
               (md, mim, varname, multname_pressure, region = size_type(-1),
-               dataname_penal_coeff = std::string());
+               dataexpr_penal_coeff = std::string());
 
 where ``varname`` is the variable on which the incompressibility condition is
 prescribed, ``multname_pressure`` is a variable which should be described on a
-scalar fem representing the multiplier (the pressure) and ``dataname_penal_coeff``
-is an optional penalization coefficient (constant or described on a finite element
-method) for the nearly incompressible condition.
+scalar fem representing the multiplier (the pressure) and ``dataexpr_penal_coeff``
+is an optional penalization coefficient for the nearly incompressible condition.
 
 In nearly incompressible homogeneous linearized elasticity, one has
 :math:`\varepsilon = 1 / \lambda` where :math:`\lambda` is one of the Lamé

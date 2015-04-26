@@ -10,8 +10,8 @@
 
 
 
-The model tools for the integration of transient problems (For getfem 5.0)
---------------------------------------------------------------------------
+The model tools for the integration of transient problems
+---------------------------------------------------------
 
 Although time integration scheme can be written directly using the model object by describing the problem to be solved at each iteration, the model object furnishes some basic tools to facilitate the writing of such schemes. These tools are based on the following basic principles:
 
@@ -37,7 +37,7 @@ Although time integration scheme can be written directly using the model object 
 
   (even though, of course, in this situation, the use of linear bricks is preferable for efficiency reasons)
 
-* For all implemented one-step schemes, the time step can be change from an iteration to another for both order one and order two in time problems (or even quasi-static problems).
+* For all implemented one-step schemes, the time step can be changed from an iteration to another for both order one and order two in time problems (or even quasi-static problems).
 
 * A scheme for second order in time problem (resp. first order in time) can be applied to a second or first order in time or even to a quasi-static problem (resp. to a first order or quasi-static problem) without any problem except that the initial data corresponding to the velocity/displacement have to be initialized with respect ot the order of the scheme. Conversely, of course, a scheme for first order problem cannot be applied to a second order in time problem. 
  

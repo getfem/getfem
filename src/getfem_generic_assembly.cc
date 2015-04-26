@@ -4719,9 +4719,10 @@ namespace getfem {
   ga_workspace::tree_description &ga_workspace::tree_info(size_type i)
   { return trees[i]; }
 
-  // TODO: methods to add a function or an operator
 
   bool ga_workspace::used_variables(model::varnamelist &vl,
+                                    model::varnamelist &vl_test1,
+                                    model::varnamelist &vl_test2,
                                     model::varnamelist &dl,
                                     size_type order) {
 
@@ -4733,48 +4734,67 @@ namespace getfem {
       dll.insert(var_trans_pair(dl[i], ""));
 
     for (size_type i = 0; i < trees.size(); ++i) {
-      ga_workspace::tree_description &td = trees[i];
+      ga_workspace::tree_description &td =  trees[i];
+      std::set<var_trans_pair> dllaux;
+      bool fv = ga_extract_variables(td.ptree->root, *this, *(td.m),
+                                     dllaux, false);
+      
       if (td.order == order) {
-        bool fv = ga_extract_variables(td.ptree->root, *this, *(td.m),
-                                       dll, false);
-        switch (td.order) {
-        case 0: break;
-        case 1:
-          {
-            if (variable_group_exists(td.name_test1)) {
-              const std::vector<std::string> &t= variable_group(td.name_test1);
-              for (size_type j = 0; j < t.size(); ++j)
-                vll.insert(var_trans_pair(t[j], td.interpolate_name_test1));
-            } else vll.insert(var_trans_pair(td.name_test1,
-                                             td.interpolate_name_test1));
+        for (std::set<var_trans_pair>::iterator it = dllaux.begin();
+             it!=dllaux.end(); ++it)
+          dll.insert(*it);
+      }
+      switch (td.order) {
+      case 0:  break;
+      case 1:
+        if (td.order == order) {
+          if (variable_group_exists(td.name_test1)) {
+            const std::vector<std::string> &t= variable_group(td.name_test1);
+            for (size_type j = 0; j < t.size(); ++j) {
+              vll.insert(var_trans_pair(t[j], td.interpolate_name_test1));
+            }
+          } else {
+            vll.insert(var_trans_pair(td.name_test1,
+                                      td.interpolate_name_test1));
           }
-          break;
-        case 2:
-          {
-            if (variable_group_exists(td.name_test1)) {
-              const std::vector<std::string> &t= variable_group(td.name_test1);
-              for (size_type j = 0; j < t.size(); ++j)
-                vll.insert(var_trans_pair(t[j], td.interpolate_name_test1));
-            } else vll.insert(var_trans_pair(td.name_test1,
-                                             td.interpolate_name_test1));
-            if (variable_group_exists(td.name_test2)) {
-              const std::vector<std::string> &t= variable_group(td.name_test2);
-              for (size_type j = 0; j < t.size(); ++j)
-                vll.insert(var_trans_pair(t[j], td.interpolate_name_test2));
-            } else vll.insert(var_trans_pair(td.name_test2,
-                                             td.interpolate_name_test2));
-            if (fv) islin = false;
-          }
-          break;
+          vl_test1.push_back(td.name_test1);
         }
+        break;
+      case 2:
+        if (td.order == order) {
+          if (variable_group_exists(td.name_test1)) {
+            const std::vector<std::string> &t= variable_group(td.name_test1);
+            for (size_type j = 0; j < t.size(); ++j) {
+              vll.insert(var_trans_pair(t[j], td.interpolate_name_test1));
+              }
+          } else {
+            vll.insert(var_trans_pair(td.name_test1,
+                                      td.interpolate_name_test1));
+          }
+          if (variable_group_exists(td.name_test2)) {
+            const std::vector<std::string> &t= variable_group(td.name_test2);
+            for (size_type j = 0; j < t.size(); ++j) {
+              vll.insert(var_trans_pair(t[j], td.interpolate_name_test2));
+            }
+          } else {
+            vll.insert(var_trans_pair(td.name_test2,
+                                      td.interpolate_name_test2));
+          }
+          vl_test1.push_back(td.name_test1);
+          vl_test2.push_back(td.name_test2);
+        }
+        if (fv) islin = false;
+        break;
       }
     }
     vl.clear();
     for (std::set<var_trans_pair>::iterator it=vll.begin(); it!=vll.end();++it)
-      if (vl.size() == 0 || it->first.compare(vl.back())) vl.push_back(it->first);
+      if (vl.size() == 0 || it->first.compare(vl.back()))
+        vl.push_back(it->first);
     dl.clear();
     for (std::set<var_trans_pair>::iterator it=dll.begin(); it!=dll.end();++it)
-      if (dl.size() == 0 || it->first.compare(dl.back())) dl.push_back(it->first);
+      if (dl.size() == 0 || it->first.compare(dl.back()))
+        dl.push_back(it->first);
 
     return islin;
   }
@@ -4930,6 +4950,27 @@ namespace getfem {
       }
     }
   }
+
+  const gmm::sub_interval &
+  ga_workspace::interval_of_disabled_variable(const std::string &name) const {
+    std::map<std::string, gmm::sub_interval>::const_iterator
+      it1 = int_disabled_variables.find(name);
+    if (it1 != int_disabled_variables.end()) return it1->second;
+    if (md->is_affine_dependent_variable(name))
+      return interval_of_disabled_variable(md->org_variable(name));
+
+    size_type first = md->nb_dof();
+    for (std::map<std::string, gmm::sub_interval>::const_iterator it
+           = int_disabled_variables.begin();
+         it !=  int_disabled_variables.end(); ++it) {
+      first = std::max(first, it->second.last());
+    }
+    int_disabled_variables[name]
+      = gmm::sub_interval(first, gmm::vect_size(value(name)));
+    return int_disabled_variables[name];
+  }
+
+  std::map<std::string, gmm::sub_interval> int_disabled_variables;
 
   void ga_workspace::clear_expressions(void) {
     clear_aux_trees();
@@ -6724,6 +6765,164 @@ namespace getfem {
     }
   }
 
+  //=========================================================================
+  // Extract the constant term of degre 1 expressions
+  //=========================================================================
+
+  static bool ga_node_extract_constant_term
+  (ga_tree &tree, pga_tree_node pnode, const ga_workspace &workspace,
+   const mesh &m) {
+    bool is_constant = true;
+    size_type nbch = pnode->children.size();
+    pga_tree_node child0 = (nbch > 0) ? pnode->children[0] : 0;
+    // pga_tree_node child1 = (nbch > 1) ? pnode->children[1] : 0;
+    bool child_0_is_constant = (nbch <= 0) ? true : 
+      ga_node_extract_constant_term(tree, pnode->children[0], workspace, m);
+    bool child_1_is_constant = (nbch <= 1) ? true :
+      ga_node_extract_constant_term(tree, pnode->children[1], workspace, m);
+    
+    switch (pnode->node_type) {
+    case GA_NODE_ZERO: is_constant = false; break;
+
+    case GA_NODE_ELEMENTARY_VAL_TEST: case GA_NODE_ELEMENTARY_GRAD_TEST:
+    case GA_NODE_ELEMENTARY_HESS_TEST: case GA_NODE_ELEMENTARY_DIVERG_TEST:
+    case GA_NODE_VAL_TEST: case GA_NODE_GRAD_TEST: case GA_NODE_PREDEF_FUNC:
+    case GA_NODE_HESS_TEST: case GA_NODE_DIVERG_TEST: case GA_NODE_RESHAPE:
+    case GA_NODE_ELT_SIZE: case GA_NODE_CONSTANT: case GA_NODE_X:
+    case GA_NODE_NORMAL: case GA_NODE_OPERATOR:
+      is_constant = true; break;
+
+    case GA_NODE_ELEMENTARY_VAL: case GA_NODE_ELEMENTARY_GRAD:
+    case GA_NODE_ELEMENTARY_HESS: case GA_NODE_ELEMENTARY_DIVERG:
+    case GA_NODE_VAL: case GA_NODE_GRAD: case GA_NODE_HESS:
+    case GA_NODE_DIVERG:
+      is_constant = workspace.is_constant(pnode->name);
+      break;
+
+    case GA_NODE_INTERPOLATE_VAL:
+    case GA_NODE_INTERPOLATE_GRAD:
+    case GA_NODE_INTERPOLATE_HESS:
+    case GA_NODE_INTERPOLATE_DIVERG:
+      {
+        if (!(workspace.is_constant(pnode->name))) {
+          is_constant = false; break;
+        }
+        std::set<var_trans_pair> vars;
+        workspace.interpolate_transformation(pnode->interpolate_name)
+          ->extract_variables(workspace, vars, true, m,
+                              pnode->interpolate_name);
+        for (std::set<var_trans_pair>::iterator it=vars.begin();
+             it != vars.end(); ++it) {
+          if (!(workspace.is_constant(it->first)))
+            { is_constant = false; break; }
+        }
+      }
+      break;
+
+    case GA_NODE_INTERPOLATE_FILTER:
+      if (!child_0_is_constant) { is_constant = false; break; }
+      // No break intentionally
+    case GA_NODE_INTERPOLATE_VAL_TEST:
+    case GA_NODE_INTERPOLATE_GRAD_TEST:
+    case GA_NODE_INTERPOLATE_DIVERG_TEST:
+    case GA_NODE_INTERPOLATE_HESS_TEST:
+    case GA_NODE_INTERPOLATE_X:
+    case GA_NODE_INTERPOLATE_NORMAL:
+    case GA_NODE_INTERPOLATE_DERIVATIVE:
+      {
+        std::set<var_trans_pair> vars;
+        workspace.interpolate_transformation(pnode->interpolate_name)
+          ->extract_variables(workspace, vars, true, m,
+                              pnode->interpolate_name);
+        for (std::set<var_trans_pair>::iterator it=vars.begin();
+             it != vars.end(); ++it) {
+          if (!(workspace.is_constant(it->first)))
+            { is_constant = false; break; }
+        }
+      }
+      break;
+
+    case GA_NODE_OP:
+      switch(pnode->op_type) {
+        case GA_PLUS: case GA_MINUS:
+          if (!child_0_is_constant && !child_1_is_constant)
+            { is_constant = false; break; }
+          break;
+
+      case GA_UNARY_MINUS: case GA_QUOTE: case GA_TRACE: case GA_DEVIATOR:
+      case GA_PRINT:
+        is_constant = child_0_is_constant;
+        break;
+
+      case GA_DOT: case GA_MULT: case GA_COLON: case GA_TMULT:
+      case GA_DOTMULT: case GA_DIV: case GA_DOTDIV:
+        is_constant = (child_0_is_constant && child_1_is_constant);
+        break;
+        
+      default: GMM_ASSERT1(false, "Unexpected operation. Internal error.");
+      }
+      break;
+
+    case GA_NODE_C_MATRIX:
+      for (size_type i = 0; i < pnode->children.size(); ++i) {
+        if (!(ga_node_extract_constant_term(tree, pnode->children[i],
+                                            workspace, m)))
+          { is_constant = false; break; }
+      }
+      break;
+
+    case GA_NODE_PARAMS:
+      if (child0->node_type == GA_NODE_RESHAPE) {
+        is_constant = child_1_is_constant;
+      } else if (child0->node_type == GA_NODE_PREDEF_FUNC) {
+        for (size_type i = 1; i < pnode->children.size(); ++i) {
+          if (!(ga_node_extract_constant_term(tree, pnode->children[i],
+                                              workspace, m)))
+            { is_constant = false; break; }
+        }
+      } else if (child0->node_type == GA_NODE_SPEC_FUNC) {
+        GMM_ASSERT1(false, "internal error");
+      } else if (child0->node_type == GA_NODE_OPERATOR) {
+        for (size_type i = 1; i < pnode->children.size(); ++i) {
+          if (!(ga_node_extract_constant_term(tree, pnode->children[i],
+                                              workspace, m)))
+            { is_constant = false; break; }
+        }
+      } else {
+        is_constant = child_0_is_constant;
+      }
+      break;
+
+    default: GMM_ASSERT1(false, "Unexpected node type " << pnode->node_type
+                         << " in extract constant term. Internal error.");
+    }
+
+    if (!is_constant) {
+      pnode->node_type = GA_NODE_ZERO;
+      tree.clear_children(pnode);
+    }
+    return is_constant;
+  }
+
+  std::string ga_workspace::extract_constant_term(const mesh &m) {
+    std::string constant_term;
+    for (size_type i = 0; i < trees.size(); ++i) {
+      ga_workspace::tree_description &td =  trees[i];
+      
+      if (td.order == 1) {
+        ga_tree local_tree = *(td.ptree);
+        if (local_tree.root)
+          ga_node_extract_constant_term(local_tree, local_tree.root, *this, m);
+        if (local_tree.root)
+          ga_semantic_analysis("", local_tree, *this, m.dim(), false, false);
+        if (local_tree.root && local_tree.root->node_type != GA_NODE_ZERO) {
+          constant_term += "-("+ga_tree_to_string(local_tree)+")";
+        }
+      }
+    }
+    return constant_term;
+  }
+
 
   //=========================================================================
   // Derivation algorithm: derivation of a tree with respect to a variable
@@ -6732,7 +6931,7 @@ namespace getfem {
   //=========================================================================
 
   static bool ga_node_mark_tree_for_variable
-  (pga_tree_node pnode, const ga_workspace &workspace, const mesh & m,
+  (pga_tree_node pnode, const ga_workspace &workspace, const mesh &m,
    const std::string &varname,
    const std::string &interpolatename) {
     bool marked = false;

@@ -32,10 +32,11 @@ terms in scalar or vectorial problems.
 
 The function adding this brick to a model is::
 
-  add_Fourier_Robin_brick(md, mim, varname, dataname, region);
+  add_Fourier_Robin_brick(md, mim, varname, dataexpr, region);
 
-where ``dataname`` is the data of the model which represents the coefficient
-:math:`Q`.
+where ``dataexpr`` is the data of the model which represents the coefficient
+:math:`Q`.  It can be an arbitrary valid expression of the high-level generic
+assembly language (except for the complex version for which it should be a data of the model)
 
 Note that an additional right hand side can be added with a source term brick.
 

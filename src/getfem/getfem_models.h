@@ -438,6 +438,11 @@ namespace getfem {
       return bricks[ib].pbr;
     }
 
+    void variable_list(varnamelist &vl) const {
+      for (VAR_SET::const_iterator it = variables.begin();
+             it != variables.end(); ++it) vl.push_back(it->first);
+    }
+
     void define_variable_group(const std::string &group_name,
                                const std::vector<std::string> &nl);
     bool variable_group_exists(const std::string &group_name) const
@@ -599,8 +604,10 @@ namespace getfem {
     void set_factor_of_variable(const std::string &name, scalar_type a) {
       VAR_SET::iterator it = variables.find(name);
       GMM_ASSERT1(it != variables.end(), "Undefined variable " << name);
-      it->second.alpha = a;
-      it->second.v_num_data = act_counter();
+      if (it->second.alpha != a) {
+        it->second.alpha = a;
+        it->second.v_num_data = act_counter();
+      }
     }
 
     bool is_im_data(const std::string &name) const {
@@ -705,79 +712,6 @@ namespace getfem {
       context_check(); if (act_size_to_be_done) actualize_sizes();
       from_variables(V, T());
     }
-
-    template<typename VECTOR, typename T>
-    void spec_from_variables(VECTOR &V, const varnamelist &vl, T) const {
-      for (size_type i = 0; i < vl.size(); ++i) {
-        VAR_SET::iterator it = variables.find(vl[i]);
-        if (it->second.is_variable && it->second.is_affine_dependent
-            && !(it->second.is_disabled))
-          gmm::copy(gmm::scaled(it->second.real_value[0],
-                                T(1)/it->second.alpha),
-                    gmm::sub_vector(V, it->second.I));
-        else if (it->second.is_variable && !(it->second.is_disabled))
-          gmm::copy(it->second.real_value[0],
-                    gmm::sub_vector(V, it->second.I));
-      }
-    }
-
-    template<typename VECTOR, typename T>
-    void spec_from_variables(VECTOR &V, const varnamelist &vl,
-                             std::complex<T>) const {
-      for (size_type i = 0; i < vl.size(); ++i) {
-        VAR_SET::iterator it = variables.find(vl[i]);
-        if (it->second.is_variable && it->second.is_affine_dependent
-            && !(it->second.is_disabled))
-          gmm::copy(gmm::scaled(it->second.complex_value[0],
-                                std::complex<T>(1)/it->second.alpha),
-                    gmm::sub_vector(V, it->second.I));
-        else if (it->second.is_variable && !(it->second.is_disabled))
-          gmm::copy(it->second.complex_value[0],
-                    gmm::sub_vector(V, it->second.I));
-      }
-    }
-
-    template<typename VECTOR>
-    void spec_from_variables(VECTOR &V, const varnamelist &vl) const {
-      typedef typename gmm::linalg_traits<VECTOR>::value_type T;
-      context_check(); if (act_size_to_be_done) actualize_sizes();
-      gmm::clear(V);
-      spec_from_variables(V, vl, T());
-    }
-
-    template<typename VECTOR, typename T>
-    void spec2_from_variables(VECTOR &V, const varnamelist &vl, T) const {
-      for (size_type i = 0; i < vl.size(); ++i) {
-        VAR_SET::iterator it = variables.find(vl[i]);
-        if (it->second.is_variable && it->second.is_affine_dependent
-            && !(it->second.is_disabled))
-          gmm::copy(gmm::scaled(it->second.affine_real_value,
-                                T(1)/it->second.alpha),
-                    gmm::sub_vector(V, it->second.I));
-      }
-    }
-
-    template<typename VECTOR, typename T>
-    void spec2_from_variables(VECTOR &V, const varnamelist &vl,
-                              std::complex<T>) const {
-      for (size_type i = 0; i < vl.size(); ++i) {
-        VAR_SET::iterator it = variables.find(vl[i]);
-        if (it->second.is_variable && it->second.is_affine_dependent
-            && !(it->second.is_disabled))
-          gmm::copy(gmm::scaled(it->second.affine_complex_value,
-                                std::complex<T>(1)/it->second.alpha),
-                    gmm::sub_vector(V, it->second.I));
-      }
-    }
-
-    template<typename VECTOR>
-    void spec2_from_variables(VECTOR &V, const varnamelist &vl) const {
-      typedef typename gmm::linalg_traits<VECTOR>::value_type T;
-      context_check(); if (act_size_to_be_done) actualize_sizes();
-      gmm::clear(V);
-      spec2_from_variables(V, vl, T());
-    }
-
 
     const gmm::uint64_type &version_number_of_data_variable
     (const std::string &varname) const
@@ -1702,10 +1636,6 @@ namespace getfem {
   //
   //=========================================================================
 
-
-
-
-
   /** Adds a matrix term given by the assembly string `expr` which will
       be assembled in region `region` and with the integration method `mim`.
       Only the matrix term will be taken into account, assuming that it is
@@ -1726,8 +1656,8 @@ namespace getfem {
   size_type APIDECL add_linear_generic_assembly_brick
   (model &md, const mesh_im &mim, const std::string &expr,
    size_type region = size_type(-1), bool is_sym = false,
-   bool is_coercive = false, std::string brickname = "");
-
+   bool is_coercive = false, std::string brickname = "",
+   bool return_if_nonlin = false);
 
   /** Adds a nonlinear term given by the assembly string `expr` which will
       be assembled in region `region` and with the integration method `mim`.
@@ -1756,33 +1686,10 @@ namespace getfem {
   */
   size_type APIDECL add_source_term_generic_assembly_brick
   (model &md, const mesh_im &mim, const std::string &expr,
-   size_type region = size_type(-1),  std::string brickname = "");
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+   size_type region = size_type(-1),  std::string brickname = "",
+   std::string directvarname = std::string(),
+   const std::string &directdataname = std::string(),
+   bool return_if_nonlin = false);
 
   /** Adds a Laplacian term on the variable `varname` (in fact with a minus :
       :math:`-\text{div}(\nabla u)`). If it is a vector
@@ -1795,7 +1702,8 @@ namespace getfem {
    size_type region = size_type(-1));
 
 
-  /** Adds an elliptic term on the variable `varname`. The shape of the elliptic
+  /** Adds an elliptic term on the variable `varname`.
+      The shape of the elliptic
       term depends both on the variable and the data. This corresponds to a
       term $-\text{div}(a\nabla u)$ where $a$ is the data and $u$ the variable.
       The data can be a scalar, a matrix or an order four tensor. The variable
@@ -1808,37 +1716,45 @@ namespace getfem {
       matrix/tensor have to be stored with the fortran order (columnwise) in
       the data vector (compatibility with blas). The symmetry and coercivity
       of the given matrix/tensor is not verified (but assumed). `region` is an
-      optional mesh region on which the term is added. Return the brick index
-      in the model.
+      optional mesh region on which the term is added. Note that for the real
+      version which uses the high-level generic assembly language, `dataexpr`
+      can be any regular expression of the high-level generic assembly
+      language (like "1", "sin(X[0])" or "Norm(u)" for instance) even
+      depending on model variables.
+      Return the brick index in the model.
   */
   size_type APIDECL add_generic_elliptic_brick
   (model &md, const mesh_im &mim, const std::string &varname,
-   const std::string &dataname, size_type region = size_type(-1));
+   const std::string &dataexpr, size_type region = size_type(-1));
 
 
   /** Adds a source term on the variable `varname`. The source term is
-      represented by the data `dataname` which could be constant or described
-      on a fem.  `region` is an optional mesh region on which the term is
+      represented by `dataexpr` which could be any regular expression of the
+      high-level generic assembly language (except for the complex version
+      where it has to be a declared data of the model). `region` is an
+      optional mesh region on which the term is
       added. An additional optional data `directdataname` can be provided. The
       corresponding data vector will be directly added to the right hand
       side without assembly. Return the brick index in the model.
   */
   size_type APIDECL add_source_term_brick
   (model &md, const mesh_im &mim, const std::string &varname,
-   const std::string &dataname, size_type region = size_type(-1),
+   const std::string &dataexpr, size_type region = size_type(-1),
    const std::string &directdataname = std::string());
 
   /** Adds a source term on the variable `varname` on a boundary `region`.
       The source term is
-      represented by the data `dataname` which could be constant or described
-      on a fem. A sclar product with the outward normal unit vector to
+      represented by the data `dataepxpr` which could be any regular
+      expression of the high-level generic assembly language (except
+      for the complex version where it has to be a declared data of
+      the model). A scalar product with the outward normal unit vector to
       the boundary is performed. The main aim of this brick is to represent
       a Neumann condition with a vector data without performing the
       scalar product with the normal as a pre-processing.
   */
   size_type APIDECL add_normal_source_term_brick
   (model &md, const mesh_im &mim, const std::string &varname,
-   const std::string &dataname, size_type region);
+   const std::string &dataexpr, size_type region);
 
 
   /** Adds a (simple) Dirichlet condition on the variable `varname` and
@@ -2204,12 +2120,12 @@ namespace getfem {
       equation (@f$\Delta u + k^2u = 0@f$, with @f$K=k^2@f$).
       The weak formulation is (@f$\int k^2 u.v - \nabla u.\nabla v@f$)
 
-      `dataname` should contain the wave number $k$. It can be real or
-      complex, fem dependant or not.
+      `dataexpr` should contain the wave number $k$. It can be real or
+      complex.
   */
   size_type APIDECL add_Helmholtz_brick(model &md, const mesh_im &mim,
                                         const std::string &varname,
-                                        const std::string &dataname,
+                                        const std::string &dataexpr,
                                         size_type region = size_type(-1));
 
 
@@ -2217,14 +2133,16 @@ namespace getfem {
       (@f$\int (qu).v @f$) on a boundary. It is used to represent a
       Fourier-Robin boundary condition.
 
-      `dataname` should contain the parameter $q$ which should be a
+      `dataexpr` is the parameter $q$ which should be a
       (@f$N\times N@f$) matrix term, where $N$ is the dimension of the
-      variable `varname`. Note that an additional right hand
-      side can be added with a source term brick.
+      variable `varname`. It can be an arbitrary valid expression of the
+      high-level generic assembly language (except for the complex version
+      for which it should be a data of the model). Note that an additional
+      right hand side can be added with a source term brick.
   */
   size_type APIDECL add_Fourier_Robin_brick(model &md, const mesh_im &mim,
                                             const std::string &varname,
-                                            const std::string &dataname,
+                                            const std::string &dataexpr,
                                             size_type region);
 
 
@@ -2423,12 +2341,11 @@ namespace getfem {
      For nearly incompressible elasticity,
      @f[ p = -\lambda \textrm{div}~u @f]
      @f[ \sigma = 2 \mu \varepsilon(u) -p I @f]
-     @see asm_stokes_B
   */
   size_type APIDECL add_linear_incompressibility
   (model &md, const mesh_im &mim, const std::string &varname,
    const std::string &multname_pressure, size_type region = size_type(-1),
-   const std::string &dataname_penal_coeff = std::string());
+   const std::string &dataexpr_penal_coeff = std::string());
 
   /** Mass brick ( @f$ \int \rho u.v @f$ ).
       Adds a mass matix on a variable (eventually with a specified region).
@@ -2436,7 +2353,7 @@ namespace getfem {
   */
   size_type APIDECL add_mass_brick
   (model &md, const mesh_im &mim, const std::string &varname,
-   const std::string &dataname_rho = std::string(),
+   const std::string &dataexpr_rho = std::string(),
    size_type region = size_type(-1));
 
   /** Basic d/dt brick ( @f$ \int \rho ((u^{n+1}-u^n)/dt).v @f$ ).

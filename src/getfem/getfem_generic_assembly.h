@@ -120,6 +120,7 @@ namespace getfem {
 
     const model *md;
     const ga_workspace *parent_workspace;
+    bool enable_all_md_variables;
 
     struct var_description {
 
@@ -165,9 +166,11 @@ namespace getfem {
 
   private:
 
+    mutable std::map<std::string, gmm::sub_interval> int_disabled_variables;
+
     std::map<const mesh *, std::list<mesh_region> > registred_mims;
     
-    const mesh_region &register_region(const mesh &m, const mesh_region &region);
+    const mesh_region &register_region(const mesh &m,const mesh_region &region);
 
     typedef std::map<std::string, var_description> VAR_SET;
 
@@ -322,7 +325,10 @@ namespace getfem {
                                         gmm::sub_interval(), &VV, &imd);
     }
 
-    bool used_variables(model::varnamelist &vl, model::varnamelist &dl,
+    std::string extract_constant_term(const mesh &m);
+
+    bool used_variables(model::varnamelist &vl, model::varnamelist &vl_test1,
+                        model::varnamelist &vl_test2, model::varnamelist &dl,
                         size_type order);
 
     bool variable_exists(const std::string &name) const {
@@ -443,7 +449,10 @@ namespace getfem {
       if (it != variables.end()) return !(it->second.is_variable);
       if (variable_group_exists(name))
         return is_constant(first_variable_of_group(name));
-      if (md && md->variable_exists(name)) return md->is_data(name);
+      if (md && md->variable_exists(name)) {
+        if (enable_all_md_variables) return md->is_true_data(name);
+        return md->is_data(name);
+      }
       if (parent_workspace && parent_workspace->variable_exists(name))
         return parent_workspace->is_constant(name);
       GMM_ASSERT1(false, "Undefined variable " << name);
@@ -454,13 +463,14 @@ namespace getfem {
       if (it != variables.end()) return false;
       if (variable_group_exists(name))
         return is_disabled_variable(first_variable_of_group(name));
-      if (md && md->variable_exists(name))
+      if (md && md->variable_exists(name)) {
+        if (enable_all_md_variables) return false;
         return md->is_disabled_variable(name);
+      }
       if (parent_workspace && parent_workspace->variable_exists(name))
         return parent_workspace->is_disabled_variable(name);
       GMM_ASSERT1(false, "Undefined variable " << name);
     }
-
 
     const scalar_type &factor_of_variable(const std::string &name) const {
       static const scalar_type one(1);
@@ -475,11 +485,17 @@ namespace getfem {
     }
 
     const gmm::sub_interval &
+    interval_of_disabled_variable(const std::string &name) const;
+
+    const gmm::sub_interval &
     interval_of_variable(const std::string &name) const {
       VAR_SET::const_iterator it = variables.find(name);
       if (it != variables.end()) return it->second.I;
-      if (md && md->variable_exists(name))
+      if (md && md->variable_exists(name)) {
+        if (enable_all_md_variables && md->is_disabled_variable(name))
+          return interval_of_disabled_variable(name);
         return md->interval_of_variable(name);
+      }
       if (parent_workspace && parent_workspace->variable_exists(name))
         return parent_workspace->interval_of_variable(name);
       GMM_ASSERT1(false, "Undefined variable " << name);
@@ -570,10 +586,13 @@ namespace getfem {
 
     void assembly(size_type order);
 
-    ga_workspace(const getfem::model &md_) : md(&md_), parent_workspace(0) {}
+    ga_workspace(const getfem::model &md_, bool enable_all_variables = false)
+      : md(&md_), parent_workspace(0),
+        enable_all_md_variables(enable_all_variables) {}
     ga_workspace(bool, const ga_workspace &gaw)
-      : md(0), parent_workspace(&gaw) {}
-    ga_workspace(void) : md(0), parent_workspace(0) {}
+      : md(0), parent_workspace(&gaw), enable_all_md_variables(false) {}
+    ga_workspace(void)
+      : md(0), parent_workspace(0), enable_all_md_variables(false) {}
     ~ga_workspace() { clear_expressions(); }
 
   };

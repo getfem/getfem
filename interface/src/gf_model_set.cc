@@ -541,7 +541,8 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     The shape of the elliptic term depends both on the variable and the data.
     This corresponds to a term
     :math:`-\text{div}(a\nabla u)`
-    where :math:`a` is the data and :math:`u` the variable. The data can be a scalar,
+    where :math:`a` is the data and :math:`u` the variable. The data can be
+    a scalar,
     a matrix or an order four tensor. The variable can be vector valued or
     not. If the data is a scalar or a matrix and the variable is vector
     valued then the term is added componentwise. An order four tensor data
@@ -553,7 +554,12 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     symmetry of the given matrix/tensor is not verified (but assumed). If
     this is a vector valued variable, the elliptic term is added
     componentwise. `region` is an optional mesh region on which the term is
-    added. If it is not specified, it is added on the whole mesh. Return the
+    added. If it is not specified, it is added on the whole mesh. Note that
+    for the real
+    version which uses the high-level generic assembly language, `dataname`
+    can be any regular expression of the high-level generic assembly
+    language (like "1", "sin(X[0])" or "Norm(u)" for instance) even
+      depending on model variables. Return the
     brick index in the model.@*/
     sub_command
       ("add generic elliptic brick", 3, 4, 0, 1,
@@ -571,10 +577,13 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        );
 
 
-    /*@SET ind = ('add source term brick', @tmim mim, @str varname, @str dataname[, @int region[, @str directdataname]])
+    /*@SET ind = ('add source term brick', @tmim mim, @str varname, @str dataexpr[, @int region[, @str directdataname]])
     Add a source term to the model relatively to the variable `varname`.
-    The source term is represented by the data `dataname` which could be
-    constant or described on a fem. `region` is an optional mesh region
+    The source term is
+    represented by `dataexpr` which could be any regular expression of the
+    high-level generic assembly language (except for the complex version
+    where it has to be a declared data of the model).
+    `region` is an optional mesh region
     on which the term is added. An additional optional data `directdataname`
     can be provided. The corresponding data vector will be directly added
     to the right hand side without assembly. Note that when region is a
@@ -600,8 +609,11 @@ void gf_model_set(getfemint::mexargs_in& m_in,
 
     /*@SET ind = ('add normal source term brick', @tmim mim, @str varname, @str dataname, @int region)
       Add a source term on the variable `varname` on a boundary `region`.
-      This region should be a boundary. The source term is represented by the
-      data `dataname` which could be constant or described on a fem. A scalar
+      This region should be a boundary. The source term is
+      represented by the data `dataepxpr` which could be any regular
+      expression of the high-level generic assembly language (except
+      for the complex version where it has to be a declared data of
+      the model). A scalar
       product with the outward normal unit vector to the boundary is performed.
       The main aim of this brick is to represent a Neumann condition with a
       vector data without performing the scalar product with the normal as a
@@ -1202,9 +1214,9 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        );
 
 
-    /*@SET ind = ('add Helmholtz brick', @tmim mim, @str varname, @str dataname[, @int region])
+    /*@SET ind = ('add Helmholtz brick', @tmim mim, @str varname, @str dataexpr[, @int region])
       Add a Helmholtz term to the model relatively to the variable `varname`.
-      `dataname` should contain the wave number. `region` is an optional mesh
+      `dataexpr` is the wave number. `region` is an optional mesh
       region on which the term is added. If it is not specified, it is added
       on the whole mesh. Return the brick index in the model.@*/
     sub_command
@@ -1223,13 +1235,14 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        );
 
 
-    /*@SET ind = ('add Fourier Robin brick', @tmim mim, @str varname, @str dataname, @int region)
+    /*@SET ind = ('add Fourier Robin brick', @tmim mim, @str varname, @str dataexpr, @int region)
     Add a Fourier-Robin term to the model relatively to the variable
     `varname`. This corresponds to a weak term of the form
-    :math:`\int (qu).v`. `dataname`
-    should contain the parameter :math:`q` of
-    the Fourier-Robin condition. `region` is the mesh region on which
-    the term is added. Return the brick index in the model.@*/
+    :math:`\int (qu).v`. `dataexpr` is the parameter :math:`q` of
+    the Fourier-Robin condition.  It can be an arbitrary valid expression
+    of the high-level generic assembly language (except for the complex version
+    for which it should be a data of the model). `region` is the mesh region
+    on which the term is added. Return the brick index in the model.@*/
     sub_command
       ("add Fourier Robin brick", 4, 4, 0, 1,
        getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
@@ -1499,13 +1512,13 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        );
 
 
-    /*@SET ind = ('add linear incompressibility brick', @tmim mim, @str varname, @str multname_pressure[, @int region[, @str dataname_coeff]])
+    /*@SET ind = ('add linear incompressibility brick', @tmim mim, @str varname, @str multname_pressure[, @int region[, @str dataexpr_coeff]])
     Add an linear incompressibility condition on `variable`. `multname_pressure`
     is a variable which represent the pressure. Be aware that an inf-sup
     condition between the finite element method describing the pressure and the
     primal variable has to be satisfied. `region` is an optional mesh region on
     which the term is added. If it is not specified, it is added on the whole mesh.
-    `dataname_coeff` is an optional penalization coefficient for nearly
+    `dataexpr_coeff` is an optional penalization coefficient for nearly
     incompressible elasticity for instance. In this case, it is the inverse
     of the Lame coefficient :math:`\lambda`. Return the brick index in the model.@*/
     sub_command
@@ -1940,9 +1953,9 @@ void gf_model_set(getfemint::mexargs_in& m_in,
 	
 
 
-    /*@SET ind = ('add mass brick', @tmim mim, @str varname[, @str dataname_rho[, @int region]])
+    /*@SET ind = ('add mass brick', @tmim mim, @str varname[, @str dataexpr_rho[, @int region]])
       Add mass term to the model relatively to the variable `varname`.
-      If specified, the data `dataname_rho` should contain the
+      If specified, the data `dataexpr_rho` is the
       density (1 if omitted). `region` is an optional mesh region on
       which the term is added. If it is not specified, it
       is added on the whole mesh. Return the brick index in the model.@*/

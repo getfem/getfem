@@ -25,9 +25,7 @@ mass matrix on the tangent linear system with respect to a certain variable.
 The function which adds this brick to a model is::
 
   ind_brick = getfem::add_mass_brick
-              (md, mim, varname, dataname_rho="", region = size_type(-1));
+              (md, mim, varname, dataexpr_rho="", region = size_type(-1));
 
-where ``dataname_rho`` is an optional data of the model representing the density
+where ``dataexpr_rho`` is an optional expression representing the density
 :math:`\rho`. If it is omitted, the density is assumed to be equal to one.
-
-Note that for time integration schemes, there exist specific bricks for the discretization of time derivatives.

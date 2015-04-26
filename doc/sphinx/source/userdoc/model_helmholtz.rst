@@ -23,7 +23,7 @@ version, a complex model has to be used (see :file:`tests/helmholtz.cc`).
 
 The function adding a Helmholtz brick to a model is::
 
-  getfem::add_Helmholtz_brick(md, mim, varname, dataname, region);
+  getfem::add_Helmholtz_brick(md, mim, varname, dataexpr, region);
 
 where ``varname`` is the variable on which the Helmholtz term is added and
-``dataname`` should contain the wave number.
+``dataexpr`` is the wave number.

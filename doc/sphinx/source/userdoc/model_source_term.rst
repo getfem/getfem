@@ -29,12 +29,11 @@ domain.
 The function to add a source term to a model is::
 
   add_source_term_brick(md, mim,
-                        varname, dataname, region = -1,
+                        varname, dataexpr, region = -1,
                         directdataname = std::string());
 
 where ``md``is the model object, ``mim`` is the integration method, ``varname`` is
-the variable of the model for which the source term is added, ``dataname`` is the
-name of the data in the model which represents the source term. It has to be
+the variable of the model for which the source term is added, ``dataexpr`` has to be  a regular expression of the high-level generic assembly language (except for the complex version where it has to be a declared data of the model). It has to be
 scalar or vector valued depending on the fact that the variable is scalar or
 vector valued itself. ``region`` is a mesh region on which the term is added. If
 the region corresponds to a boundary, the source term will represent a Neumann
@@ -47,7 +46,7 @@ A slightly different brick, especially dedicated to deal with a Neumann conditio
 is added by the following function::
 
   add_normal_source_term_brick(md, mim,
-                               varname, dataname, region);
+                               varname, dataexpr, region);
 
 The difference compared to the basic source term brick is that the data should be
 a vector field (a matrix field if the variable ``varname`` is itself vector
