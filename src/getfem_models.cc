@@ -6462,7 +6462,7 @@ namespace getfem {
   (model &md, const mesh_im &mim, const std::string &varname,
    const std::string &dataexpr1, const std::string &dataexpr2,
    size_type region, const std::string &dataname3) {
-#if 0 // Old brick
+#if 1 // Old brick
       pbrick pbr = new iso_lin_elasticity_brick;
       model::termlist tl;
       tl.push_back(model::term_description(varname, varname, true));
