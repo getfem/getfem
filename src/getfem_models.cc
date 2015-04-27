@@ -852,7 +852,7 @@ namespace getfem {
     for (size_type i=0; i < varnames.size(); ++i)
       GMM_ASSERT1(variables.find(varnames[i]) != variables.end(),
                   "Undefined model variable " << varnames[i]);
-    cout << "dl == " << datanames << endl;
+    // cout << "dl == " << datanames << endl;
     for (size_type i=0; i < datanames.size(); ++i)
       GMM_ASSERT1(variables.find(datanames[i]) != variables.end(),
                   "Undefined model data or variable " << datanames[i]);
@@ -2972,15 +2972,10 @@ namespace getfem {
     if (!is_lin && return_if_nonlin) return size_type(-1);
     GMM_ASSERT1(is_lin, "Nonlinear term");
 
-    cout << "dl = " << dl << endl;
-    cout << "directvarname = " << directvarname << endl;
-
     if (directdataname.size()) {
       vl.push_back(directvarname);
       dl.push_back(directdataname);
     } else directvarname = "";
-
-    cout << "dl = " << dl << endl;
     
     pbrick pbr = new gen_source_term_assembly_brick
       (expr, brickname, vl_test1, directvarname, directdataname);
@@ -2992,7 +2987,6 @@ namespace getfem {
       tl.push_back(model::term_description(directvarname));
 
     return md.add_brick(pbr, vl, dl, tl, model::mimlist(1, &mim), region);
-    cout << "ok " << endl;
   }
 
   // ----------------------------------------------------------------------
