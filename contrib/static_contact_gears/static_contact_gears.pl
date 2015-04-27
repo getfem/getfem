@@ -18,7 +18,10 @@
 $bin_dir = "$ENV{srcdir}/../../bin";
 $tmp = `$bin_dir/createmp test_static_contact_gears.param`;
 
-sub catch { `rm -f $tmp`; exit(1); }
+sub catch {
+`rm -f $tmp`;
+exit(1);
+}
 $SIG{INT} = 'catch';
 
 open(TMPF, ">$tmp") or die "Open file impossible : $!\n";
@@ -28,8 +31,8 @@ LAMBDA = 1.18E+5;
 ROT_ANGLE = -1.5E-2;
 RESIDUAL = 1E-6;
 FRICTION_COEFFICIENT = 0.0E+0;
-MESHNAME_GEAR1 = 'gmsh:./gear1.msh';
-MESHNAME_GEAR2 = 'gmsh:./gear2.msh';
+MESHNAME_GEAR1 = 'gmsh:$ENV{srcdir}/gear1.msh';
+MESHNAME_GEAR2 = 'gmsh:$ENV{srcdir}/gear2.msh';
 CONTACT_FACES_1 = [113];
 CONTACT_FACES_2 = [113];
 DIRICHLET_FACES_1 = [133,142,143,173,182,183];
