@@ -32,7 +32,7 @@ A specific language has been developed to describe the weak formulation of bound
 
   - Test functions corresponding to the variables. It is identified by the prefix ``Test_`` followed by the variable name. For instance  ``Test_u``, ``Test_v``, ``Test_p``, ``Test_pressure``, ``Test_electric_field``. For the tangent system, second order test functions are denoted ``Test2_`` followed by the variable name.
 
-  - The gradient of a variable or of test functions are identified by ``Grad_`` followed by the variable name or by ``Test_`` or ``Test2_`` followed itself by the variable name. This is available for fem variables only. For instance ``Grad_u``, ``Grad_pressure``, ``Grad_electric_field`` and ``Grad_Test_u``, ``Grad_Test2_v``.
+  - The gradient of a variable or of test functions are identified by ``Grad_`` followed by the variable name or by ``Test_`` or ``Test2_`` followed itself by the variable name. This is available for fem variables only. For instance ``Grad_u``, ``Grad_pressure``, ``Grad_electric_field`` and ``Grad_Test_u``, ``Grad_Test2_v``. For vector fields, ``Div_u`` and ``Div_Test_u`` are some shortcuts for ``Trace(Grad_u)`` and ``Trace(Grad_Test_u)``, respectively.
 
   - The Hessian of a variable or of test functions are identified by ``Hess_`` followed by the variable name or by ``Test_`` or ``Test2_`` followed itself by the variable name. This is available for fem variables only. For instance ``Hess_u``, ``Hess_v``, ``Hess_p``, ``Hess_Test2_v``, ``Hess_Test_p``, ``Hess_Test_pressure``.
 
@@ -118,11 +118,11 @@ for :math:`u` a vector field and :math:`\sigma(u) = \lambda \mbox{div } u + \mu 
 
 or:: 
 
-  lambda*Trace(Grad_u)*Trace(Grad_Test_u) + mu*(Grad_u + Grad_u'):Grad_Test_u - my_f.Test_u
+  lambda*Div_u*Div_Test_u + mu*(Grad_u + Grad_u'):Grad_Test_u - my_f.Test_u
 
 Here again, the coefficients ``lambda`` and ``mu`` can be given constants, or scalar field or explicit expression or even expression coming from some other variables in order to couples some problems. For instance, if the coefficients depends on a temperature field one can write::
 
-  my_f1(theta)*Trace(Grad_u)*Trace(Grad_Test_u)
+  my_f1(theta)*Div_u*Div_Test_u
   + my_f2(theta)*(Grad_u + Grad_u'):Grad_Test_u - my_f.Grad_Test_u
 
 where ``theta`` is the temperature which can be the solution to a Poisson equation::
@@ -363,7 +363,7 @@ Order four tensors are necessary for instance to express elasticity tensors or i
 The variables
 *************
 
-A list of variables should be given to the ``ga_worspace`` object (directly or through a model object). The variables are described on a finite element method or can be a simple vector of unknowns. This means that it is possible also to couple algebraic equations to pde ones on a model. A variable name should begin by a letter (case sensitive) or an underscore followed by a letter, a number or an underscore. Some name are reserved, this is the case of operators names (``Det``, ``Norm``, ``Trace``, ``Deviator``, ...) and thus cannot be used as variable names. The name should not begin by ``Test_``, ``Test2_``, ``Grad_`` or ``Hess_``. The variable name should not correspond to a predefined function (``sin``, ``cos``, ``acos`` ...) and to constants (``pi``, ``Normal``, ``X``, ``Id`` ...).
+A list of variables should be given to the ``ga_worspace`` object (directly or through a model object). The variables are described on a finite element method or can be a simple vector of unknowns. This means that it is possible also to couple algebraic equations to pde ones on a model. A variable name should begin by a letter (case sensitive) or an underscore followed by a letter, a number or an underscore. Some name are reserved, this is the case of operators names (``Det``, ``Norm``, ``Trace``, ``Deviator``, ...) and thus cannot be used as variable names. The name should not begin by ``Test_``, ``Test2_``, ``Grad_``, ``Div_`` or ``Hess_``. The variable name should not correspond to a predefined function (``sin``, ``cos``, ``acos`` ...) and to constants (``pi``, ``Normal``, ``X``, ``Id`` ...).
 
 The constants or data
 *********************
@@ -381,7 +381,7 @@ The first order test function are used in the weak formulation (which derive for
 Gradient
 ********
 
-The gradient of a variable or of test functions are identified by ``Grad_`` followed by the variable name or by ``Test_`` followed itself by the variable name. This is available for fem variables (or constants) only. For instance ``Grad_u``, ``Grad_v``, ``Grad_p``, ``Grad_pressure``, ``Grad_electric_field`` and ``Grad_Test_u``, ``Grad_Test_v``, ``Grad_Test_p``, ``Grad_Test_pressure``, ``Grad_Test_electric_field``. The gradient is either a vector for scalar variables or a matrix for vector field variables. In the latter case, the first index corresponds to the vector field dimension and the second one to the index of the partial derivative.
+The gradient of a variable or of test functions are identified by ``Grad_`` followed by the variable name or by ``Test_`` followed itself by the variable name. This is available for fem variables (or constants) only. For instance ``Grad_u``, ``Grad_v``, ``Grad_p``, ``Grad_pressure``, ``Grad_electric_field`` and ``Grad_Test_u``, ``Grad_Test_v``, ``Grad_Test_p``, ``Grad_Test_pressure``, ``Grad_Test_electric_field``. The gradient is either a vector for scalar variables or a matrix for vector field variables. In the latter case, the first index corresponds to the vector field dimension and the second one to the index of the partial derivative.  ``Div_u`` and ``Div_Test_u`` are some optimized shortcuts for ``Trace(Grad_u)`` and ``Trace(Grad_Test_u)``, respectively.
 
 Hessian
 *******
@@ -638,9 +638,11 @@ Once a transformation is defined in the workspace/model, one can interpolate a v
   Interpolate(X, transname)
   Interpolate(u, transname)
   Interpolate(Grad_u, transname)
+  Interpolate(Div_u, transname)
   Interpolate(Hess_u, transname)
   Interpolate(Test_u, transname)
   Interpolate(Grad_Test_u, transname)
+  Interpolate(Div_Test_u, transname)
   Interpolate(Hess_Test_u, transname)
 
 where ``u`` is the name of the variable to be interpolated.
@@ -687,9 +689,11 @@ where ``pelementary_transformation`` is a pointer to an object deriving from ``v
 
   Elementary_transformation(u, transname)
   Elementary_transformation(Grad_u, transname)
+  Elementary_transformation(Div_u, transname)
   Elementary_transformation(Hess_u, transname)
   Elementary_transformation(Test_u, transname)
   Elementary_transformation(Grad_Test_u, transname)
+  Elementary_transformation(Div_Test_u, transname)
   Elementary_transformation(Hess_Test_u, transname)
 
 where ``u`` is one of the fem variables of the model/workspace. For the moment, the only available elementary transformation is the the one for the projection on rotated RT0 element for two-dimensional elements which can be added thanks to the function (defined in :file:`getfem/linearized_plate.h`)::
