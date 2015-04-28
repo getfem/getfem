@@ -3618,12 +3618,38 @@ namespace getfem {
       std::string test_varname
         = "Test_" + sup_previous_and_dot_to_varname(varname);
       const mesh_fem &mf_u = md.mesh_fem_of_variable(varname);
-      size_type qdim = mf_u.get_qdim();
+      size_type dim = mf_u.linked_mesh().dim(), qdim = mf_u.get_qdim(), qdim_data = 1;
       std::string expr;
-      if (qdim == 1)
-        expr = "(("+dataname+")*Grad_"+varname+").Grad_"+test_varname;
-      else
-        expr = "(("+dataname+")*Grad_"+varname+"):Grad_"+test_varname;
+
+      if (md.variable_exists(dataname)) {
+        const mesh_fem *mf = md.pmesh_fem_of_variable(dataname);
+        size_type n = gmm::vect_size(md.real_variable(dataname));
+        if (mf) qdim_data = mf->get_qdim() * (n / mf->nb_dof());
+        else  qdim_data = n;
+      }
+      
+      if (qdim == 1) {
+        if (qdim_data != 1) {
+          GMM_ASSERT1(qdim_data == gmm::sqr(dim),
+                      "Wrong data size for generic elliptic brick");
+          expr = "((Reshape("+dataname+",meshdim,meshdim))*Grad_"+varname+").Grad_"
+            + test_varname;
+        } else {
+          expr = "(("+dataname+")*Grad_"+varname+").Grad_"+test_varname;
+        }
+      } else {
+        if (qdim_data != 1) {
+          if (qdim_data == gmm::sqr(dim))
+            expr = "((Reshape("+dataname+",meshdim,meshdim))*Grad_"+varname+"):Grad_"
+              +test_varname;
+          else if (qdim_data == gmm::sqr(gmm::sqr(dim))) 
+            expr = "((Reshape("+dataname+",meshdim,meshdim,meshdim,meshdim))*Grad_"
+              +varname+"):Grad_"+test_varname;
+          else GMM_ASSERT1(false, "Wrong data size for generic elliptic brick");
+        } else {
+          expr = "(("+dataname+")*Grad_"+varname+"):Grad_"+test_varname;
+        }
+      }
       size_type ib = add_linear_generic_assembly_brick
         (md, mim, expr, region, true, true, "Generic elliptic", true);
       if (ib == size_type(-1))
