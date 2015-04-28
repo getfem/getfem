@@ -2959,6 +2959,18 @@ namespace getfem {
 
   };
 
+  static bool check_compatibility_vl_test(model &md,const model::varnamelist vl_test) {
+    model::varnamelist org;
+    for (size_type i = 0; i < vl_test.size(); ++i) {
+      if (md.is_affine_dependent_variable(vl_test[i]))
+        org.push_back(md.org_variable(vl_test[i]));
+    }
+    for (size_type i = 0; i < vl_test.size(); ++i)
+      for (size_type j = 0; j < org.size(); ++j)
+        if (vl_test[i].compare(org[j]) == 0) return false;
+    return true;
+  }
+
   size_type add_source_term_generic_assembly_brick
   (model &md, const mesh_im &mim, const std::string &expr, size_type region,
    std::string brickname, std::string directvarname,
@@ -2971,6 +2983,9 @@ namespace getfem {
     bool is_lin = workspace.used_variables(vl, vl_test1, vl_test2, dl, 1);
     if (!is_lin && return_if_nonlin) return size_type(-1);
     GMM_ASSERT1(is_lin, "Nonlinear term");
+    GMM_ASSERT1(check_compatibility_vl_test(md, vl_test1),
+                "This brick do not support the assembly on both an affine dependent "
+                "variable and its original variable. Split the brick");
 
     if (directdataname.size()) {
       vl.push_back(directvarname);
@@ -3058,6 +3073,28 @@ namespace getfem {
 
   };
 
+  static bool check_compatibility_vl_test(model &md,
+                                          const model::varnamelist vl_test1,
+                                          const model::varnamelist vl_test2) {
+    for (size_type i = 0; i < vl_test1.size(); ++i)
+      for (size_type j = 0; j < vl_test1.size(); ++j) {
+        bool is1 = md.is_affine_dependent_variable(vl_test1[i]);
+        bool is2 = md.is_affine_dependent_variable(vl_test2[i]);
+        if (is1 || is2) {
+          const std::string &org1 = is1 ? md.org_variable(vl_test1[i]) : vl_test1[i];
+          const std::string &org2 = is2 ? md.org_variable(vl_test2[i]) : vl_test2[i];
+          bool is1_bis = md.is_affine_dependent_variable(vl_test1[j]);
+          bool is2_bis = md.is_affine_dependent_variable(vl_test2[j]);
+          const std::string &org1_bis = is1_bis ? md.org_variable(vl_test1[j])
+            : vl_test1[j];
+          const std::string &org2_bis = is2_bis ? md.org_variable(vl_test2[j])
+            : vl_test2[j];
+          if (org1.compare(org1_bis) == 0 && org2.compare(org2_bis)) return false;
+        }
+    return true;
+  }
+
+
   size_type add_linear_generic_assembly_brick
   (model &md, const mesh_im &mim, const std::string &expr, size_type region,
    bool is_sym, bool is_coercive, std::string brickname,
@@ -3080,7 +3117,10 @@ namespace getfem {
 
     // GMM_ASSERT1(order <= 1,
     //             "This brick does not support a second order term");
-    
+    GMM_ASSERT1(check_compatibility_vl_test(md, vl_test1, vl_test2),
+                "This brick do not support the assembly on both an affine dependent "
+                "variable and its original variable. Split the brick");
+
     if (vl_test1.size()) {
       pbrick pbr = new gen_linear_assembly_brick(expr, is_sym, is_coercive,
                                                  brickname,
