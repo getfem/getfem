@@ -3091,9 +3091,9 @@ namespace getfem {
             : vl_test2[j];
           if (org1.compare(org1_bis) == 0 && org2.compare(org2_bis)) return false;
         }
+      }
     return true;
   }
-
 
   size_type add_linear_generic_assembly_brick
   (model &md, const mesh_im &mim, const std::string &expr, size_type region,
