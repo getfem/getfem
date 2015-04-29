@@ -464,8 +464,10 @@ namespace getfem {
     /** Return the number of  degrees of freedom attached to a given convex.
 	@param cv the convex number.
     */
-    virtual size_type nb_basic_dof_of_element(size_type cv) const
-    { pfem pf = f_elems[cv]; return pf->nb_dof(cv) * Qdim / pf->target_dim(); }
+    virtual size_type nb_basic_dof_of_element(size_type cv) const {
+      context_check(); if (!dof_enumeration_made) enumerate_dof();
+      pfem pf = f_elems[cv]; return pf->nb_dof(cv) * Qdim / pf->target_dim();
+    }
     size_type nb_dof_of_element(size_type cv) const IS_DEPRECATED
     { return nb_basic_dof_of_element(cv); }
     

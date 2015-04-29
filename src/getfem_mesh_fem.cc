@@ -1,6 +1,6 @@
 /*===========================================================================
  
- Copyright (C) 1999-2012 Yves Renard
+ Copyright (C) 1999-2015 Yves Renard
  
  This file is a part of GETFEM++
  
@@ -238,7 +238,7 @@ namespace getfem {
   }
 
   size_type mesh_fem::first_convex_of_basic_dof(size_type d) const {
-    context_check();
+    context_check(); if (!dof_enumeration_made) enumerate_dof();
     for (size_type i = d; i != d - Qdim && i != size_type(-1); --i) {
       size_type j = dof_structure.first_convex_of_point(i);
       if (j != size_type(-1)) return j;
@@ -247,6 +247,7 @@ namespace getfem {
   }
 
   const mesh::ind_cv_ct &mesh_fem::convex_to_basic_dof(size_type d) const {
+    context_check(); if (!dof_enumeration_made) enumerate_dof();
     for (size_type i = d; i != d - Qdim && i != size_type(-1); --i) {
       size_type j = dof_structure.first_convex_of_point(i);
       if (j != size_type(-1)) return dof_structure.convex_to_point(i);
