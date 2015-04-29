@@ -453,6 +453,7 @@ namespace getfem {
     */
     virtual size_type nb_basic_dof_of_face_of_element(size_type cv,
 					      short_type f) const {
+      context_check(); if (!dof_enumeration_made) enumerate_dof();
       pfem pf = f_elems[cv];
       return dof_structure.structure_of_convex(cv)->nb_points_of_face(f)
 	* Qdim / pf->target_dim();
