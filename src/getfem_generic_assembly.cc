@@ -4446,6 +4446,48 @@ namespace getfem {
     return lmr.back();
   }
 
+  bgeot::multi_index ga_workspace::qdims(const std::string &name) const {
+      VAR_SET::const_iterator it = variables.find(name);
+      if (it != variables.end()) {
+        const mesh_fem *mf =  it->second.is_fem_dofs ? it->second.mf : 0;
+        const im_data *imd = it->second.imd;
+        size_type n = it->second.qdim();
+        if (mf) {
+          size_type ndof = mf->nb_dof();
+          GMM_ASSERT1(ndof, "Variable " << name << " with no dof. You probably "
+                      "made a wrong initialization of a mesh_fem object");
+          bgeot::multi_index mi = mf->get_qdims();
+          if (n > 1 || it->second.qdims.size() > 1) {
+            size_type i = 0;
+            if (mi.back() == 1) { mi.back() *= it->second.qdims[0]; ++i; }
+            for (; i < it->second.qdims.size(); ++i)
+              mi.push_back(it->second.qdims[i]);
+          }
+          return mi;
+        } else if (imd) {
+          bgeot::multi_index mi = imd->tensor_size();
+          size_type q = n / imd->nb_filtered_index();
+          GMM_ASSERT1(q % imd->nb_tensor_elem() == 0,
+                      "Invalid mesh im data vector");
+          if (n > 1 || it->second.qdims.size() > 1) {
+            size_type i = 0;
+            if (mi.back() == 1) { mi.back() *= it->second.qdims[0]; ++i; }
+            for (; i < it->second.qdims.size(); ++i)
+              mi.push_back(it->second.qdims[i]);
+          }
+          return mi;
+        }
+        return it->second.qdims;
+      }
+      if (md && md->variable_exists(name))
+        return md->qdims_of_variable(name);
+      if (parent_workspace && parent_workspace->variable_exists(name))
+        return parent_workspace->qdims(name);
+      if (variable_group_exists(name))
+        return qdims(first_variable_of_group(name));
+      GMM_ASSERT1(false, "Undefined variable or group " << name);
+    }
+
 
   typedef std::pair<std::string, std::string> var_trans_pair;
 

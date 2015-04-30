@@ -255,7 +255,7 @@ namespace getfem {
         case VDESCRFILTER_NO:
           if (it->second.v_num < it->second.mf->version_number()) {
             size_type s = it->second.mf->nb_dof();
-            if (!it->second.is_variable) s *= it->second.qdim;
+            if (!it->second.is_variable) s *= it->second.qdim();
             it->second.set_size(s);
             it->second.v_num = act_counter();
           }
@@ -2600,6 +2600,40 @@ namespace getfem {
     return it->second.passociated_mf();
   }
 
+  bgeot::multi_index model::qdims_of_variable(const std::string &name) const {
+    VAR_SET::const_iterator it = variables.find(name);
+    GMM_ASSERT1(it!=variables.end(), "Undefined variable " << name);
+    const mesh_fem *mf = it->second.passociated_mf();
+    const im_data *imd = it->second.pim_data;
+    size_type n = it->second.qdim();
+    if (mf) {
+      size_type ndof = mf->nb_dof();
+      GMM_ASSERT1(ndof, "Variable " << name << " with no dof. You probably "
+                  "made a wrong initialization of a mesh_fem object");
+      bgeot::multi_index mi = mf->get_qdims();
+      if (n > 1 || it->second.qdims.size() > 1) {
+        size_type i = 0;
+        if (mi.back() == 1) { mi.back() *= it->second.qdims[0]; ++i; }
+        for (; i < it->second.qdims.size(); ++i)
+          mi.push_back(it->second.qdims[i]);
+      }
+      return mi;
+    } else if (imd) {
+      bgeot::multi_index mi = imd->tensor_size();
+      size_type q = n / imd->nb_filtered_index();
+      GMM_ASSERT1(q % imd->nb_tensor_elem() == 0,
+                  "Invalid mesh im data vector");
+      if (n > 1 || it->second.qdims.size() > 1) {
+        size_type i = 0;
+        if (mi.back() == 1) { mi.back() *= it->second.qdims[0]; ++i; }
+        for (; i < it->second.qdims.size(); ++i)
+          mi.push_back(it->second.qdims[i]);
+      }
+      return mi;
+    }
+    return it->second.qdims;
+  }
+  
   const model_real_plain_vector &
   model::real_variable(const std::string &name, size_type niter) const {
     GMM_ASSERT1(!complex_version, "This model is a complex one");
@@ -2610,7 +2644,7 @@ namespace getfem {
       if (it->second.filter != VDESCRFILTER_NO)
         actualize_sizes();
       else
-        it->second.set_size(it->second.mf->nb_dof()*it->second.qdim);
+        it->second.set_size(it->second.mf->nb_dof()*it->second.qdim());
     }
     if (niter == size_type(-1)) niter = it->second.default_iter;
     GMM_ASSERT1(it->second.n_iter + it->second.n_temp_iter > niter,
@@ -2629,7 +2663,7 @@ namespace getfem {
       if (it->second.filter != VDESCRFILTER_NO)
         actualize_sizes();
       else
-        it->second.set_size(it->second.mf->nb_dof()*it->second.qdim);
+        it->second.set_size(it->second.mf->nb_dof()*it->second.qdim());
     }
     if (niter == size_type(-1)) niter = it->second.default_iter;
     GMM_ASSERT1(it->second.n_iter + it->second.n_temp_iter  > niter,
@@ -2648,7 +2682,7 @@ namespace getfem {
       if (it->second.filter != VDESCRFILTER_NO)
         actualize_sizes();
       else
-        it->second.set_size(it->second.mf->nb_dof()*it->second.qdim);
+        it->second.set_size(it->second.mf->nb_dof()*it->second.qdim());
     }
     it->second.v_num_data = act_counter();
     if (niter == size_type(-1)) niter = it->second.default_iter;
@@ -2668,7 +2702,7 @@ namespace getfem {
       if (it->second.filter != VDESCRFILTER_NO)
         actualize_sizes();
       else
-        it->second.set_size(it->second.mf->nb_dof()*it->second.qdim);
+        it->second.set_size(it->second.mf->nb_dof()*it->second.qdim());
     }
     it->second.v_num_data = act_counter();
     if (niter == size_type(-1)) niter = it->second.default_iter;
@@ -2690,7 +2724,7 @@ namespace getfem {
       if (it->second.filter != VDESCRFILTER_NO)
         actualize_sizes();
       else
-        it->second.set_size(it->second.mf->nb_dof()*it->second.qdim);
+        it->second.set_size(it->second.mf->nb_dof()*it->second.qdim());
     }
     it->second.v_num_data = act_counter();
     return it->second.affine_real_value;
@@ -2706,7 +2740,7 @@ namespace getfem {
       if (it->second.filter != VDESCRFILTER_NO)
         actualize_sizes();
       else
-        it->second.set_size(it->second.mf->nb_dof()*it->second.qdim);
+        it->second.set_size(it->second.mf->nb_dof()*it->second.qdim());
     }
     it->second.v_num_data = act_counter();
     return it->second.affine_complex_value;

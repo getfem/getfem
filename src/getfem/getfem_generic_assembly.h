@@ -130,16 +130,27 @@ namespace getfem {
       gmm::sub_interval I;
       const model_real_plain_vector *V;
       const im_data *imd;
+      bgeot::multi_index qdims;  // For data having a qdim != of the fem
+                                 // (dim per dof for dof data)
+                                 // and for constant variables.
 
-      var_description(bool is_var,
-                      bool is_fem, 
-                      const mesh_fem *mmf,
-                      gmm::sub_interval I_,
-                      const model_real_plain_vector *v, const im_data *imd_)
+      size_type qdim(void) const {
+        size_type q = 1;
+        for (size_type i = 0; i < qdims.size(); ++i) q *= qdims[i];
+        return q;
+      }
+
+      var_description(bool is_var, bool is_fem, 
+                      const mesh_fem *mmf, gmm::sub_interval I_,
+                      const model_real_plain_vector *v, const im_data *imd_,
+                      size_type Q)
         : is_variable(is_var), is_fem_dofs(is_fem), mf(mmf), I(I_), V(v),
-          imd(imd_) {}
+          imd(imd_), qdims(1) { 
+        GMM_ASSERT1(Q > 0, "Bad dimension");
+        qdims[0] = Q;
+      }
       var_description() : is_variable(false), is_fem_dofs(false),
-                          mf(0), V(0), imd(0) {}
+                          mf(0), V(0), imd(0), qdims(1) { qdims[0] = 1; }
     };
 
   public:
@@ -300,29 +311,34 @@ namespace getfem {
     void add_fem_variable(const std::string &name, const mesh_fem &mf,
                           const gmm::sub_interval &I,
                           const model_real_plain_vector &VV)
-    { variables[name] = var_description(true, true, &mf, I, &VV, 0); }
+    { variables[name] = var_description(true, true, &mf, I, &VV, 0, 1); }
     
     void add_fixed_size_variable(const std::string &name,
                                  const gmm::sub_interval &I,
-                                 const model_real_plain_vector &VV)
-    { variables[name] = var_description(true, false, 0, I, &VV, 0); }
+                                 const model_real_plain_vector &VV) {
+      variables[name] = var_description(true, false, 0, I, &VV, 0,
+                                        dim_type(gmm::vect_size(VV)));
+    }
 
     void add_fem_constant(const std::string &name, const mesh_fem &mf,
                           const model_real_plain_vector &VV) { 
       variables[name] = var_description(false, true, &mf,
-                                        gmm::sub_interval(), &VV, 0);
+                                        gmm::sub_interval(), &VV, 0,
+                                        gmm::vect_size(VV)/(mf.nb_dof()));
     }
     
     void add_fixed_size_constant(const std::string &name,
                                  const model_real_plain_vector &VV) {
       variables[name] = var_description(false, false, 0,
-                                        gmm::sub_interval(), &VV, 0);
+                                        gmm::sub_interval(), &VV, 0,
+                                        gmm::vect_size(VV));
     }
 
     void add_im_data(const std::string &name, const im_data &imd,
                      const model_real_plain_vector &VV) {
-      variables[name] = var_description(false, false, 0,
-                                        gmm::sub_interval(), &VV, &imd);
+      variables[name] = var_description
+        (false, false, 0, gmm::sub_interval(), &VV, &imd,
+         gmm::vect_size(VV)/(imd.nb_filtered_index() * imd.nb_tensor_elem()));
     }
 
     std::string extract_constant_term(const mesh &m);
@@ -543,33 +559,7 @@ namespace getfem {
       return n;
     }
 
-    bgeot::multi_index qdims(const std::string &name) const {
-      const mesh_fem *mf = associated_mf(name);
-      const im_data *imd = associated_im_data(name);
-      size_type n = gmm::vect_size(value(name));
-      if (mf) {
-        size_type ndof = mf->nb_dof();
-        GMM_ASSERT1(ndof, "Variable " << name << " with no dof. You probably "
-                    "made a wrong initialization of a mesh_fem object");
-        bgeot::multi_index mi = mf->get_qdims();
-        size_type qmult = n / ndof;
-        if (qmult > 1) {
-          if (mi.back() == 1) mi.back() *= qmult; else mi.push_back(qmult);
-        }
-        return mi;
-      } else if (imd) {
-        bgeot::multi_index mi = imd->tensor_size();
-        size_type q = n / imd->nb_filtered_index();
-        GMM_ASSERT1(q % imd->nb_tensor_elem() == 0,
-                    "Invalid mesh im data vector");
-        size_type qmult = q / imd->nb_tensor_elem();
-        if (qmult > 1) {
-          if (mi.back() == 1) mi.back() *= qmult; else mi.push_back(qmult);
-        }
-        return mi;
-      }
-      bgeot::multi_index mi(1); mi[0] = n; return mi;
-    }
+    bgeot::multi_index qdims(const std::string &name) const;
 
     const model_real_plain_vector &value(const std::string &name) const {
       VAR_SET::const_iterator it = variables.find(name);
