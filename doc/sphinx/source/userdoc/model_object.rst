@@ -65,14 +65,24 @@ The main useful methods on a |mo| object are
 .. cfunction:: add_fixed_size_variable(name, size, niter=1)
 
    Add a variable of fixed size. ``name`` is a string which designate the
-   variable. ``niter`` is the number of copy of the variable (used for time
-   integration schemes).
+   variable. ``niter`` is the number of copy of the variable.
+
+.. cfunction:: add_fixed_size_variable(name, sizes, niter=1)
+
+   Add a variable of fixed size. ``name`` is a string which designate the
+   variable. ``sizes`` is a vector of dimension for matrix or tensor fixed
+   size variables. ``niter`` is the number of copy of the variable.
 
 .. cfunction:: add_fixed_size_data(name, size, niter=1)
 
    Add a data of fixed size. ``name`` is a string which designate the data.
-   ``niter`` is the number of copy of the data (used for time integration
-   schemes).
+   ``niter`` is the number of copy of the data.
+
+.. cfunction:: add_fixed_size_data(name, sizes, niter=1)
+
+   Add a data of fixed size. ``name`` is a string which designate the data.
+   ``sizes`` is a vector of dimension for matrix or tensor fixed
+   size variables. ``niter`` is the number of copy of the data.
 
 .. cfunction:: add_initialized_fixed_size_data(name, V)
 
@@ -88,20 +98,18 @@ The main useful methods on a |mo| object are
 
    Add a variable being the dofs of a finite element method ``mf``. ``name`` is a
    string which designate the variable. ``niter`` is the number of copy of the
-   variable (used for time integration schemes).
+   variable.
 
 .. cfunction:: add_fem_data(name, mf, niter=1)
 
    Add a data being the dofs of a finite element method ``mf``. ``name`` is a
-   string which designate the data. ``niter`` is the number of copy of the data
-   (used for time integration schemes).
+   string which designate the data. ``niter`` is the number of copy of the data.
 
 .. cfunction:: add_initialized_fem_data(name, mf, V, niter=1)
 
    Add a data being the dofs of a finite element method ``mf`` initialized with
    the given vector ``V``. ``name`` is a string which designate the data.
-   ``niter`` is the number of copy of the data (used for time integration
-   schemes).
+   ``niter`` is the number of copy of the data.
 
 .. cfunction:: add_multiplier(name, mf, primal_name, niter=1)
 
@@ -114,7 +122,7 @@ The main useful methods on a |mo| object are
    done and a special algorithm is called to extract independent constraints. This
    algorithm is optimized for boundary multipliers (see gmm::range_basis). Use it
    with care for volumic multipliers. ``niter`` is the number of copy of the
-   variable (used for time integration schemes). Note that for complex terms, only
+   variable. Note that for complex terms, only
    the real part is considered to filter the multiplier.
 
 .. cfunction:: real_variable(name, niter=1)
