@@ -92,48 +92,48 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        );
 
 
-    /*@SET ('add fem variable', @str name, @tmf mf[, @int niter])
+    /*@SET ('add fem variable', @str name, @tmf mf)
       Add a variable to the model linked to a @tmf. `name` is the variable
-      name and `niter` is the optional number of version of the data stored,
-      for time integration schemes.@*/
+      name. @*/
     sub_command
-      ("add fem variable", 2, 3, 0, 0,
+      ("add fem variable", 2, 2, 0, 0,
        std::string name = in.pop().to_string();
        getfemint_mesh_fem *gfi_mf = in.pop().to_getfemint_mesh_fem();
-       size_type niter = 1;
-       if (in.remaining()) niter = in.pop().to_integer(1,10);
-       md->model().add_fem_variable(name, gfi_mf->mesh_fem(), niter);
+       md->model().add_fem_variable(name, gfi_mf->mesh_fem());
        workspace().set_dependance(md, gfi_mf);
        );
 
-    /*@SET ('add filtered fem variable', @str name, @tmf mf, @int region[, @int niter])
+    /*@SET ('add filtered fem variable', @str name, @tmf mf, @int region)
       Add a variable to the model linked to a @tmf. The variable is filtered
       in the sense that only the dof on the region are considered.
-      `name` is the variable name and `niter` is the optional number of
-      version of the data stored, for time integration schemes.@*/
+      `name` is the variable name. @*/
     sub_command
-      ("add filtered fem variable", 3, 4, 0, 0,
+      ("add filtered fem variable", 3, 3, 0, 0,
        std::string name = in.pop().to_string();
        getfemint_mesh_fem *gfi_mf = in.pop().to_getfemint_mesh_fem();
        size_type region = in.pop().to_integer();
-       size_type niter = 1;
-       if (in.remaining()) niter = in.pop().to_integer(1,10);
-       md->model().add_filtered_fem_variable(name, gfi_mf->mesh_fem(), region, niter);
+       md->model().add_filtered_fem_variable(name, gfi_mf->mesh_fem(), region);
        workspace().set_dependance(md, gfi_mf);
        );
 
 
-    /*@SET ('add variable', @str name, @int size[, @int niter])
-      Add a variable to the model of constant size. `name` is the variable
-      name and `niter` is the optional number of version of the data stored,
-      for time integration schemes. @*/
+    /*@SET ('add variable', @str name, sizes)
+      Add a variable to the model of constant sizes. `sizes` is either a
+      integer (for a scalar or vector variable) or a vector of dimensions
+      for a tensor variable. `name` is the variable name. @*/
     sub_command
-      ("add variable", 2, 3, 0, 0,
+      ("add variable", 2, 2, 0, 0,
        std::string name = in.pop().to_string();
-       size_type s = in.pop().to_integer();
-       size_type niter = 1;
-       if (in.remaining()) niter = in.pop().to_integer(1,10);
-       md->model().add_fixed_size_variable(name, s, niter);
+       mexarg_in argin = in.pop();
+       bgeot::multi_index mi(1);
+       if (argin.is_integer()) {
+         mi[0] = argin.to_integer();
+       } else {
+         iarray v = argin.to_iarray();
+         mi.resize(v.size());
+         for (size_type i = 0; i < v.size(); ++i) mi[i] = v[i];
+       }
+       md->model().add_fixed_size_variable(name, mi);
        );
 
     /*@SET ('delete variable', @str name)
@@ -145,162 +145,217 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        );
 
 
-    /*@SET ('resize variable', @str name, @int size)
-      Resize a  constant size variable of the model. `name` is the variable
-      name. @*/
+    /*@SET ('resize variable', @str name, sizes)
+      Resize a  constant size variable of the model.  `sizes` is either a
+      integer (for a scalar or vector variable) or a vector of dimensions
+      for a tensor variable. `name` is the variable name. @*/
     sub_command
       ("resize variable", 2, 2, 0, 0,
        std::string name = in.pop().to_string();
-       size_type s = in.pop().to_integer();
-       md->model().resize_fixed_size_variable(name, s);
+       mexarg_in argin = in.pop();
+       bgeot::multi_index mi(1);
+       if (argin.is_integer()) {
+         mi[0] = argin.to_integer();
+       } else {
+         iarray v = argin.to_iarray();
+         mi.resize(v.size());
+         for (size_type i = 0; i < v.size(); ++i) mi[i] = v[i];
+       }
+       md->model().resize_fixed_size_variable(name, mi);
        );
 
 
-    /*@SET ('add multiplier', @str name, @tmf mf, @str primalname[, @tmim mim, @int region][, @int niter])
+    /*@SET ('add multiplier', @str name, @tmf mf, @str primalname[, @tmim mim, @int region])
     Add a particular variable linked to a fem being a multiplier with
     respect to a primal variable. The dof will be filtered with the
     ``gmm::range_basis`` function applied on the terms of the model
     which link the multiplier and the primal variable. This in order to
     retain only linearly independant constraints on the primal variable.
-    Optimized for boundary multipliers. `niter` is the optional number
-    of version of the data stored, for time integration schemes. @*/
+    Optimized for boundary multipliers. @*/
     sub_command
-      ("add multiplier", 3, 6, 0, 0,
+      ("add multiplier", 3, 5, 0, 0,
        std::string name = in.pop().to_string();
        getfemint_mesh_fem *gfi_mf = in.pop().to_getfemint_mesh_fem();
        std::string primalname = in.pop().to_string();
 
        getfemint_mesh_im *gfi_mim = 0;
        size_type region = size_type(-1);
-       size_type niter = 1;
        if (in.remaining()) {
 	 mexarg_in argin = in.pop();
-	 if (argin.is_mesh_im()) {
-	   gfi_mim = argin.to_getfemint_mesh_im();
-	   region = in.pop().to_integer();
-	 } 
-	 else niter =  argin.to_integer(1,10);
+         gfi_mim = argin.to_getfemint_mesh_im();
+         region = in.pop().to_integer();
        }
-       if (in.remaining()) niter = in.pop().to_integer(1,10);
        if (gfi_mim)
 	 md->model().add_multiplier(name, gfi_mf->mesh_fem(), primalname,
-				    gfi_mim->mesh_im(), region, niter);
+				    gfi_mim->mesh_im(), region);
        else
-	 md->model().add_multiplier(name, gfi_mf->mesh_fem(),primalname,niter);
+	 md->model().add_multiplier(name, gfi_mf->mesh_fem(),primalname);
        workspace().set_dependance(md, gfi_mf);
        );
 
 
-    /*@SET ('add im data', @str name, @tmimd mimd[, @int niter]])
+    /*@SET ('add im data', @str name, @tmimd mimd)
       Add a data set to the model linked to a @tmimd. `name` is the data
-      name and `niter` is the optional number of version of the data stored,
-      for time integration schemes. @*/
+      name. @*/
     sub_command
-      ("add im data", 2, 3, 0, 0,
+      ("add im data", 2, 2, 0, 0,
        std::string name = in.pop().to_string();
        getfemint_mesh_im_data *gfi_mimd = in.pop().to_getfemint_mesh_im_data();
-       size_type niter = 1;
-       if (in.remaining()) niter = in.pop().to_integer(1,10);
-       md->model().add_im_data(name, gfi_mimd->mesh_im_data(), niter);
+       md->model().add_im_data(name, gfi_mimd->mesh_im_data());
        workspace().set_dependance(md, gfi_mimd);
        );
 
 
-    /*@SET ('add fem data', @str name, @tmf mf[, @int qdim[, @int niter]])
+    /*@SET ('add fem data', @str name, @tmf mf[, sizes])
       Add a data to the model linked to a @tmf. `name` is the data name,
-      `qdim` is the optional dimension of the data over the @tmf and
-      `niter` is the optional number of version of the data stored,
-      for time integration schemes. @*/
+      `sizes` an optional parameter which is either an 
+      integer  or a vector of suplementary dimensions with respect to `mf`. @*/
     sub_command
-      ("add fem data", 2, 4, 0, 0,
+      ("add fem data", 2, 3, 0, 0,
        std::string name = in.pop().to_string();
        getfemint_mesh_fem *gfi_mf = in.pop().to_getfemint_mesh_fem();
-       dim_type qdim = 1;
-       if (in.remaining()) qdim = dim_type(in.pop().to_integer(1,255));
-       size_type niter = 1;
-       if (in.remaining()) niter = in.pop().to_integer(1,10);
-       md->model().add_fem_data(name, gfi_mf->mesh_fem(), qdim, niter);
+       bgeot::multi_index mi(1); mi[0] = 1;
+       if (in.remaining()) {
+         mexarg_in argin = in.pop();
+         if (argin.is_integer()) {
+           mi[0] = argin.to_integer();
+         } else {
+           iarray v = argin.to_iarray();
+           mi.resize(v.size());
+           for (size_type i = 0; i < v.size(); ++i) mi[i] = v[i];
+         }
+       }
+       md->model().add_fem_data(name, gfi_mf->mesh_fem(), mi);
        workspace().set_dependance(md, gfi_mf);
        );
 
 
-    /*@SET ('add initialized fem data', @str name, @tmf mf, @vec V)
+    /*@SET ('add initialized fem data', @str name, @tmf mf, @vec V[, sizes])
       Add a data to the model linked to a @tmf. `name` is the data name.
       The data is initiakized with `V`. The data can be a scalar or vector
-      field.@*/
+      field. `sizes` an optional parameter which is either an 
+      integer  or a vector of suplementary dimensions with respect to `mf`.@*/
     sub_command
-      ("add initialized fem data", 3, 3, 0, 0,
+      ("add initialized fem data", 3, 4, 0, 0,
        std::string name = in.pop().to_string();
        getfemint_mesh_fem *gfi_mf = in.pop().to_getfemint_mesh_fem();
        if (!md->is_complex()) {
          darray st = in.pop().to_darray();
          std::vector<double> V(st.begin(), st.end());
-         md->model().add_initialized_fem_data(name, gfi_mf->mesh_fem(), V);
+         bgeot::multi_index mi(1);
+         mi[0] = gmm::vect_size(V) / gfi_mf->mesh_fem().nb_dof();
+         if (in.remaining()) {
+           mexarg_in argin = in.pop();
+           if (argin.is_integer()) {
+             mi[0] = argin.to_integer();
+           } else {
+             iarray v = argin.to_iarray();
+             mi.resize(v.size());
+             for (size_type i = 0; i < v.size(); ++i) mi[i] = v[i];
+           }
+         }
+         md->model().add_initialized_fem_data(name, gfi_mf->mesh_fem(), V, mi);
        } else {
          carray st = in.pop().to_carray();
          std::vector<std::complex<double> > V(st.begin(), st.end());
-         md->model().add_initialized_fem_data(name, gfi_mf->mesh_fem(), V);
+         bgeot::multi_index mi(1);
+         mi[0] = gmm::vect_size(V) / gfi_mf->mesh_fem().nb_dof();
+         if (in.remaining()) {
+           mexarg_in argin = in.pop();
+           if (argin.is_integer()) {
+             mi[0] = argin.to_integer();
+           } else {
+             iarray v = argin.to_iarray();
+             mi.resize(v.size());
+             for (size_type i = 0; i < v.size(); ++i) mi[i] = v[i];
+           }
+         }
+         md->model().add_initialized_fem_data(name, gfi_mf->mesh_fem(), V, mi);
        }
        workspace().set_dependance(md, gfi_mf);
        );
 
 
-    /*@SET ('add data', @str name, @int size[, @int niter])
-      Add a data to the model of constant size. `name` is the data name
-      and `niter` is the optional number of version of the data stored,
-      for time integration schemes. @*/
+    /*@SET ('add data', @str name, @int size)
+      Add a fixed size data to the model.  `sizes` is either a
+      integer (for a scalar or vector data) or a vector of dimensions
+      for a tensor data. `name` is the data name. @*/
     sub_command
-      ("add data", 2, 3, 0, 0,
+      ("add data", 2, 2, 0, 0,
        std::string name = in.pop().to_string();
-       size_type s = in.pop().to_integer();
-       size_type niter = 1;
-       if (in.remaining()) niter = in.pop().to_integer(1,10);
-       md->model().add_fixed_size_data(name, s, niter);
+       mexarg_in argin = in.pop();
+       bgeot::multi_index mi(1);
+       if (argin.is_integer()) {
+         mi[0] = argin.to_integer();
+       } else {
+         iarray v = argin.to_iarray();
+         mi.resize(v.size());
+         for (size_type i = 0; i < v.size(); ++i) mi[i] = v[i];
+       }
+       md->model().add_fixed_size_data(name, mi);
        );
 
 
-    /*@SET ('add initialized data', @str name, @vec V)
-      Add a fixed size data to the model linked to a @tmf.
+    /*@SET ('add initialized data', @str name, @vec V[, sizes])
+      Add an initialized fixed size data to the model. `sizes` an
+      optional parameter which is either an 
+      integer  or a vector dimensions that describes the format of the
+      data. By default, the data is considered to b a vector field.
       `name` is the data name and `V` is the value of the data.@*/
     sub_command
-      ("add initialized data", 2, 2, 0, 0,
+      ("add initialized data", 2, 3, 0, 0,
        std::string name = in.pop().to_string();
        if (!md->is_complex()) {
          darray st = in.pop().to_darray();
          std::vector<double> V(st.begin(), st.end());
-         md->model().add_initialized_fixed_size_data(name, V);
+         bgeot::multi_index mi(1);
+         mi[0] = gmm::vect_size(V);
+         if (in.remaining()) {
+           mexarg_in argin = in.pop();
+           if (argin.is_integer()) {
+             mi[0] = argin.to_integer();
+           } else {
+             iarray v = argin.to_iarray();
+             mi.resize(v.size());
+             for (size_type i = 0; i < v.size(); ++i) mi[i] = v[i];
+           }
+         }
+         md->model().add_initialized_fixed_size_data(name, V, mi);
        } else {
          carray st = in.pop().to_carray();
          std::vector<std::complex<double> > V(st.begin(), st.end());
-         md->model().add_initialized_fixed_size_data(name, V);
+         bgeot::multi_index mi(1);
+         mi[0] = gmm::vect_size(V);
+         if (in.remaining()) {
+           mexarg_in argin = in.pop();
+           if (argin.is_integer()) {
+             mi[0] = argin.to_integer();
+           } else {
+             iarray v = argin.to_iarray();
+             mi.resize(v.size());
+             for (size_type i = 0; i < v.size(); ++i) mi[i] = v[i];
+           }
+         }
+         md->model().add_initialized_fixed_size_data(name, V, mi);
        }
        );
 
 
-    /*@SET ('variable', @str name, @vec V[, @int niter])
-      Set the value of a variable or data. `name` is the data name
-      and `niter` is the optional number of version of the data stored,
-      for time integration schemes.@*/
+    /*@SET ('variable', @str name, @vec V)
+      Set the value of a variable or data. `name` is the data name.@*/
     sub_command
-      ("variable", 2, 3, 0, 0,
+      ("variable", 2, 2, 0, 0,
        std::string name = in.pop().to_string();
        if (!md->is_complex()) {
          darray st = in.pop().to_darray();
-         size_type niter = 0;
-         if (in.remaining())
-           niter = in.pop().to_integer(0,10) - config::base_index();
-         GMM_ASSERT1(st.size()==md->model().real_variable(name, niter).size(),
+         GMM_ASSERT1(st.size()==md->model().real_variable(name).size(),
                      "Bad size in assignment");
-         md->model().set_real_variable(name, niter).assign(st.begin(), st.end());
+         md->model().set_real_variable(name).assign(st.begin(),st.end());
        } else {
          carray st = in.pop().to_carray();
-         size_type niter = 0;
-         if (in.remaining())
-           niter = in.pop().to_integer(0,10) - config::base_index();
-         GMM_ASSERT1(st.size() == md->model().complex_variable(name,
-                                                               niter).size(),
+         GMM_ASSERT1(st.size() == md->model().complex_variable(name).size(),
                      "Bad size in assignment");
-         md->model().set_complex_variable(name, niter).assign(st.begin(),
+         md->model().set_complex_variable(name).assign(st.begin(),
                                                               st.end());
        }
        );

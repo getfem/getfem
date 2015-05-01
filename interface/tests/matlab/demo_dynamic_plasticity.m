@@ -92,7 +92,7 @@ fright=get(m,'faces from pid',pidright);
 set(m,'boundary',1,fleft); % for Dirichlet condition
 set(m,'boundary',2,fright); % for Neumann condition
 
-% Decomposed the mesh into 2 regions with different values of Lamé coeff
+% Decomposed the mesh into 2 regions with different values of Lam?? coeff
 if (bi_material) separation = LY/2; else separation = 0; end
 pidtop    = find(P(2,:)>=separation-1E-6); % Retrieve index of points of the top part
 pidbottom = find(P(2,:)<=separation+1E-6); % Retrieve index of points of the bottom part
@@ -122,7 +122,7 @@ md = gfModel('real');
 
 % Declare that u is the unknown of the system on mf_u
 % 2 is the number of version of the data stored, for the time integration scheme 
-set(md, 'add fem variable', 'u', mf_u, 2);
+set(md, 'add fem variable', 'u', mf_u);
 
 
 

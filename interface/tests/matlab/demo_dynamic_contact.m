@@ -238,7 +238,7 @@ if (Nitsche)
       gf_model_set(md, 'add initialized data', 'alpha_f', [0]);
       gf_model_set(md, 'add fem data', 'wt', mfu);
       
-      % Nécessaire ?
+      % N??cessaire ?
       % gf_model_set(md, 'add Nitsche contact with rigid obstacle brick', mim_friction, 'u', ...
       %  'obstacle', 'gamma0', GAMMAC, theta_N);
       

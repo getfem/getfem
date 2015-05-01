@@ -635,19 +635,22 @@ void assemble_source(size_type boundary_num,
   const getfem::mesh_fem *mf_u = in.pop().to_const_mesh_fem();
   const getfem::mesh_fem *mf_d = in.pop().to_const_mesh_fem();
   size_type region = boundary_num;
-  if (in.remaining()) region = in.pop().to_integer();
-  getfem::mesh_region rg(region);
-  mf_u->linked_mesh().intersect_with_mpi_region(rg);
-
+  
   unsigned q_dim = mf_u->get_qdim() / mf_d->get_qdim();
   if (!in.front().is_complex()) {
 
-    darray g               = in.pop().to_darray(q_dim, int(mf_d->nb_dof()));
-    darray F               = out.pop().create_darray_v(unsigned(mf_u->nb_dof()));
+    darray g = in.pop().to_darray(q_dim, int(mf_d->nb_dof()));
+    darray F = out.pop().create_darray_v(unsigned(mf_u->nb_dof()));
+    if (in.remaining()) region = in.pop().to_integer();
+    getfem::mesh_region rg(region);
+    mf_u->linked_mesh().intersect_with_mpi_region(rg);
     getfem::asm_source_term(F, *mim, *mf_u, *mf_d, g, boundary_num);
   } else {
-    carray g               = in.pop().to_carray(q_dim, int(mf_d->nb_dof()));
-    carray F               = out.pop().create_carray_v(unsigned(mf_u->nb_dof()));
+    carray g = in.pop().to_carray(q_dim, int(mf_d->nb_dof()));
+    carray F = out.pop().create_carray_v(unsigned(mf_u->nb_dof()));
+    if (in.remaining()) region = in.pop().to_integer();
+    getfem::mesh_region rg(region);
+    mf_u->linked_mesh().intersect_with_mpi_region(rg);
     getfem::asm_source_term(F, *mim, *mf_u, *mf_d, g, boundary_num);
   }
 }

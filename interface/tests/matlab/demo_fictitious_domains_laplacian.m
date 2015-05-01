@@ -54,7 +54,7 @@ end
 
 ls=gf_levelset(m, ls_degree);
 ls2s=gf_levelset(m, ls_degree, 'with_secondary');
-ls2=gf_LevelSet(m, ls_degree, 'with_secondary');
+ls2=gf_levelset(m, ls_degree, 'with_secondary');
 
 mf_ls=gfObject(gf_levelset_get(ls, 'mf'));
 mf_ls2=gfObject(gf_levelset_get(ls2, 'mf'));

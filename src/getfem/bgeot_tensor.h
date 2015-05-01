@@ -496,6 +496,7 @@ namespace bgeot {
   }
 
   typedef tensor<scalar_type> base_tensor;
+  typedef tensor<complex_type> base_complex_tensor;
 
 
 }  /* end of namespace bgeot.                                              */

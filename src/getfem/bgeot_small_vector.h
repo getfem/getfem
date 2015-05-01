@@ -391,12 +391,6 @@ namespace bgeot {
   { return m*x; }
 
 
-
-  typedef std::vector<scalar_type> base_vector;
-  typedef small_vector<scalar_type> base_small_vector;
-  typedef base_small_vector base_node;
-  typedef gmm::dense_matrix<scalar_type> base_matrix;
-
   template <class VEC_CONT>
   void vectors_to_base_matrix(base_matrix &G, const VEC_CONT &a) {
     size_type P = (*(a.begin())).size(), NP = a.end() - a.begin();
@@ -407,7 +401,8 @@ namespace bgeot {
       std::copy((*it).begin(), (*it).end(), itm);
   }
 
-
+  typedef small_vector<scalar_type> base_small_vector;
+  typedef base_small_vector base_node;
 
 }
 

@@ -33,7 +33,7 @@
 
 namespace getfem {
 
-  void model::var_description::set_size(size_type s) {
+  void model::var_description::set_size(void) {
     n_temp_iter = 0;
     default_iter = 0;
     if (is_complex)
@@ -42,6 +42,10 @@ namespace getfem {
       real_value.resize(n_iter);
     v_num_var_iter.resize(n_iter);
     v_num_iter.resize(n_iter);
+    size_type s = is_fem_dofs ? passociated_mf()->nb_dof()
+      : (pim_data ?
+         (pim_data->nb_filtered_index() * pim_data->nb_tensor_elem()) : 1);
+    s *= qdim();
     for (size_type i = 0; i < n_iter; ++i)
       if (is_complex)
         complex_value[i].resize(s);
@@ -187,7 +191,7 @@ namespace getfem {
       if (it->second.is_affine_dependent) {
         VAR_SET::iterator it2 = variables.find(it->second.org_name);
         it->second.I = it2->second.I;
-        it->second.set_size(it2->second.size());
+        it->second.set_size();
       }
     }
 
@@ -242,7 +246,7 @@ namespace getfem {
             || (it->second.filter & VDESCRFILTER_INFSUP)) {
           VAR_SET::iterator it2 = variables.find(it->second.filter_var);
           GMM_ASSERT1(it2 != variables.end(), "The primal variable of the "
-                      "multiplier does not exist");
+                      "multiplier does not exist : " << it->second.filter_var);
           GMM_ASSERT1(it2->second.is_fem_dofs, "The primal variable of the "
                       "multiplier is not a fem variable");
           multipliers[it->second.filter_var].push_back(it->first);
@@ -254,9 +258,7 @@ namespace getfem {
         switch (it->second.filter) {
         case VDESCRFILTER_NO:
           if (it->second.v_num < it->second.mf->version_number()) {
-            size_type s = it->second.mf->nb_dof();
-            if (!it->second.is_variable) s *= it->second.qdim();
-            it->second.set_size(s);
+            it->second.set_size();
             it->second.v_num = act_counter();
           }
           break;
@@ -265,7 +267,7 @@ namespace getfem {
             dal::bit_vector dor
               = it->second.mf->dof_on_region(it->second.m_region);
             it->second.partial_mf->adapt(dor);
-            it->second.set_size(it->second.partial_mf->nb_dof());
+            it->second.set_size();
             it->second.v_num = act_counter();
           }
           break;
@@ -275,9 +277,8 @@ namespace getfem {
     
       if (it->second.pim_data != 0
           && it->second.v_num < it->second.pim_data->version_number()) {
-        const im_data *pimd = it->second.pim_data;
-        size_type data_size = pimd->nb_filtered_index()*pimd->nb_tensor_elem();
-        it->second.set_size(data_size);
+        // const im_data *pimd = it->second.pim_data;
+        it->second.set_size();
         it->second.v_num = act_counter();
       }
     }
@@ -294,7 +295,7 @@ namespace getfem {
           // multipliers)
           dal::bit_vector alldof; alldof.add(0, it->second.mf->nb_dof());
           it->second.partial_mf->adapt(alldof);
-          it->second.set_size(it->second.partial_mf->nb_dof());
+          it->second.set_size();
           it->second.v_num = act_counter();
         }
       }
@@ -456,7 +457,7 @@ namespace getfem {
             kept &= it->second.mf->dof_on_region(it->second.m_region);
           // kept &= mult_kept_dofs[k];
           it->second.partial_mf->adapt(kept);
-          it->second.set_size(it->second.partial_mf->nb_dof());
+          it->second.set_size();
           it->second.v_num = act_counter();
         }
       }
@@ -487,7 +488,7 @@ namespace getfem {
             kept &= it->second.mf->dof_on_region(it->second.m_region);
           // kept &= mult_kept_dofs[k];
           it->second.partial_mf->adapt(kept);
-          it->second.set_size(it->second.partial_mf->nb_dof());
+          it->second.set_size();
           it->second.v_num = act_counter();
           s += it->second.mf->nb_dof();
         }
@@ -563,9 +564,23 @@ namespace getfem {
                                       size_type niter) {
     check_name_validity(name);
     variables[name] = var_description(true, is_complex(), false, niter);
+    GMM_ASSERT1(size, "Variable of null size are not allowed");
+    variables[name].qdims[0] = size;
     act_size_to_be_done = true;
-    variables[name].set_size(size);
+    variables[name].set_size();
   }
+
+  void model::add_fixed_size_variable(const std::string &name,
+                                      const bgeot::multi_index &sizes,
+                                      size_type niter) {
+    check_name_validity(name);
+    variables[name] = var_description(true, is_complex(), false, niter,
+                                      VDESCRFILTER_NO, 0, size_type(-1),
+                                      sizes);
+    act_size_to_be_done = true;
+    variables[name].set_size();
+  }
+
 
   void model::resize_fixed_size_variable(const std::string &name,
                                          size_type size) {
@@ -573,17 +588,40 @@ namespace getfem {
                 "Cannot explicitly resize a fem variable or data");
     GMM_ASSERT1(variables[name].pim_data == 0,
                 "Cannot explicitly resize an im data");
-    variables[name].set_size(size);
+    GMM_ASSERT1(size, "Variable of null size are not allowed");
+    variables[name].qdims.resize(1);
+    variables[name].qdims[0] = size;
+    variables[name].set_size();
   }
 
-  void resize_fixed_size_variable(const std::string &name, size_type size);
+  void model::resize_fixed_size_variable(const std::string &name,
+                                         const bgeot::multi_index &sizes) {
+    GMM_ASSERT1(!(variables[name].is_fem_dofs),
+                "Cannot explicitly resize a fem variable or data");
+    GMM_ASSERT1(variables[name].pim_data == 0,
+                "Cannot explicitly resize an im data");
+    variables[name].qdims = sizes;
+    variables[name].set_size();
+  }
 
 
   void model::add_fixed_size_data(const std::string &name, size_type size,
                                   size_type niter) {
     check_name_validity(name);
     variables[name] = var_description(false, is_complex(), false, niter);
-    variables[name].set_size(size);
+    GMM_ASSERT1(size, "Data of null size are not allowed");
+    variables[name].qdims[0] = size;
+    variables[name].set_size();
+  }
+
+  void model::add_fixed_size_data(const std::string &name,
+                                  const bgeot::multi_index &sizes,
+                                  size_type niter) {
+    check_name_validity(name);
+    variables[name] = var_description(false, is_complex(), false, niter);
+    variables[name].qdims = sizes;
+    GMM_ASSERT1(variables[name].qdim(), "Data of null size are not allowed");
+    variables[name].set_size();
   }
 
   void model::add_im_data(const std::string &name, const im_data &im_data,
@@ -591,7 +629,7 @@ namespace getfem {
     check_name_validity(name);
     variables[name] = var_description(false, is_complex(), false, niter);
     variables[name].pim_data = &im_data;
-    variables[name].set_size(im_data.nb_filtered_index() * im_data.nb_tensor_elem());
+    variables[name].set_size();
     add_dependency(im_data);
   }
 
@@ -600,7 +638,7 @@ namespace getfem {
     check_name_validity(name);
     variables[name] = var_description(true, is_complex(), true, niter,
                                       VDESCRFILTER_NO, &mf);
-    variables[name].set_size(mf.nb_dof());
+    variables[name].set_size();
     add_dependency(mf);
     act_size_to_be_done = true;
     leading_dim = std::max(leading_dim, mf.linked_mesh().dim());
@@ -612,7 +650,7 @@ namespace getfem {
     check_name_validity(name);
     variables[name] = var_description(true, is_complex(), true, niter,
                                       VDESCRFILTER_REGION, &mf, region);
-    variables[name].set_size(mf.nb_dof());
+    variables[name].set_size();
     act_size_to_be_done = true;
     add_dependency(mf);
   }
@@ -629,16 +667,28 @@ namespace getfem {
     variables[name].is_affine_dependent = true;
     variables[name].org_name = org_name;
     variables[name].alpha = alpha;
-    variables[name].set_size(variables[org_name].size());
+    variables[name].set_size();
   }
 
   void model::add_fem_data(const std::string &name, const mesh_fem &mf,
-                               dim_type qdim, size_type niter) {
+                           dim_type qdim, size_type niter) {
     check_name_validity(name);
     variables[name] = var_description(false, is_complex(), true, niter,
-                                      VDESCRFILTER_NO, &mf, size_type(-1),
-                                      qdim);
-    variables[name].set_size(mf.nb_dof()*qdim);
+                                      VDESCRFILTER_NO, &mf);
+    variables[name].qdims[0] = qdim;
+    GMM_ASSERT1(qdim, "Data of null size are not allowed");
+    variables[name].set_size();
+    add_dependency(mf);
+  }
+
+  void model::add_fem_data(const std::string &name, const mesh_fem &mf,
+                           const bgeot::multi_index &sizes, size_type niter) {
+    check_name_validity(name);
+    variables[name] = var_description(false, is_complex(), true, niter,
+                                      VDESCRFILTER_NO, &mf);
+    variables[name].qdims = sizes;
+    GMM_ASSERT1(variables[name].qdim(), "Data of null size are not allowed");
+    variables[name].set_size();
     add_dependency(mf);
   }
 
@@ -648,8 +698,8 @@ namespace getfem {
     check_name_validity(name);
     variables[name] = var_description(true, is_complex(), true, niter,
                                       VDESCRFILTER_CTERM, &mf, 0,
-                                      1, primal_name);
-    variables[name].set_size(mf.nb_dof());
+                                      bgeot::multi_index(), primal_name);
+    variables[name].set_size();
     act_size_to_be_done = true;
     add_dependency(mf);
   }
@@ -660,8 +710,8 @@ namespace getfem {
     check_name_validity(name);
     variables[name] = var_description(true, is_complex(), true, niter,
                                       VDESCRFILTER_REGION_CTERM, &mf, region,
-                                      1, primal_name);
-    variables[name].set_size(mf.nb_dof());
+                                      bgeot::multi_index(), primal_name);
+    variables[name].set_size();
     act_size_to_be_done = true;
     add_dependency(mf);
   }
@@ -672,8 +722,8 @@ namespace getfem {
     check_name_validity(name);
     variables[name] = var_description(true, is_complex(), true, niter,
                                       VDESCRFILTER_INFSUP, &mf, region,
-                                      1, primal_name, &mim);
-    variables[name].set_size(mf.nb_dof());
+                                      bgeot::multi_index(), primal_name, &mim);
+    variables[name].set_size();
     act_size_to_be_done = true;
     add_dependency(mf);
   }
@@ -2100,7 +2150,7 @@ namespace getfem {
       if (it->second.is_affine_dependent) {
         VAR_SET::iterator it2 = variables.find(it->second.org_name);
         if (it->second.size() != it2->second.size())
-          it->second.set_size(it2->second.size());
+          it->second.set_size();
          if (it->second.is_complex) {
            gmm::add(gmm::scaled(it2->second.complex_value[0],
                                 complex_type(it->second.alpha)),
@@ -2644,7 +2694,7 @@ namespace getfem {
       if (it->second.filter != VDESCRFILTER_NO)
         actualize_sizes();
       else
-        it->second.set_size(it->second.mf->nb_dof()*it->second.qdim());
+        it->second.set_size();
     }
     if (niter == size_type(-1)) niter = it->second.default_iter;
     GMM_ASSERT1(it->second.n_iter + it->second.n_temp_iter > niter,
@@ -2663,7 +2713,7 @@ namespace getfem {
       if (it->second.filter != VDESCRFILTER_NO)
         actualize_sizes();
       else
-        it->second.set_size(it->second.mf->nb_dof()*it->second.qdim());
+        it->second.set_size();
     }
     if (niter == size_type(-1)) niter = it->second.default_iter;
     GMM_ASSERT1(it->second.n_iter + it->second.n_temp_iter  > niter,
@@ -2682,7 +2732,7 @@ namespace getfem {
       if (it->second.filter != VDESCRFILTER_NO)
         actualize_sizes();
       else
-        it->second.set_size(it->second.mf->nb_dof()*it->second.qdim());
+        it->second.set_size();
     }
     it->second.v_num_data = act_counter();
     if (niter == size_type(-1)) niter = it->second.default_iter;
@@ -2702,7 +2752,7 @@ namespace getfem {
       if (it->second.filter != VDESCRFILTER_NO)
         actualize_sizes();
       else
-        it->second.set_size(it->second.mf->nb_dof()*it->second.qdim());
+        it->second.set_size();
     }
     it->second.v_num_data = act_counter();
     if (niter == size_type(-1)) niter = it->second.default_iter;
@@ -2724,7 +2774,7 @@ namespace getfem {
       if (it->second.filter != VDESCRFILTER_NO)
         actualize_sizes();
       else
-        it->second.set_size(it->second.mf->nb_dof()*it->second.qdim());
+        it->second.set_size();
     }
     it->second.v_num_data = act_counter();
     return it->second.affine_real_value;
@@ -2740,7 +2790,7 @@ namespace getfem {
       if (it->second.filter != VDESCRFILTER_NO)
         actualize_sizes();
       else
-        it->second.set_size(it->second.mf->nb_dof()*it->second.qdim());
+        it->second.set_size();
     }
     it->second.v_num_data = act_counter();
     return it->second.affine_complex_value;

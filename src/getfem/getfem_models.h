@@ -178,8 +178,7 @@ namespace getfem {
                                   // to another variable. 
       bool is_fem_dofs;  // The variable is the dofs of a fem
       var_description_filter filter; // A filter on the dofs is applied or not.
-      size_type n_iter; //  Number of versions of the variable stored for time
-      // integration schemes.
+      size_type n_iter; //  Number of versions of the variable stored.
       size_type n_temp_iter; // Number of additional temporary versions
       size_type default_iter; // default iteration number.
 
@@ -198,8 +197,8 @@ namespace getfem {
       gmm::uint64_type v_num, v_num_data;
 
       gmm::sub_interval I; // For a variable : indices on the whole system.
-      // For an affine dependent variable, should be the same than the orgininal
-      // variable
+      // For an affine dependent variable, should be the same than the
+      // orgininal variable
       std::vector<model_real_plain_vector> real_value;
       std::vector<model_complex_plain_vector> complex_value;
       std::vector<gmm::uint64_type> v_num_var_iter;
@@ -225,20 +224,22 @@ namespace getfem {
                       bool is_fem = false, size_type n_it = 1,
                       var_description_filter fil = VDESCRFILTER_NO,
                       const mesh_fem *mmf = 0,
-                      size_type m_reg = size_type(-1), size_type Q = 1,
+                      size_type m_reg = size_type(-1),
+                      bgeot::multi_index qdims_ = bgeot::multi_index(),
                       const std::string &filter_v = std::string(""),
                       const mesh_im *mim_ = 0, const im_data *pimd = 0)
         : is_variable(is_var), is_disabled(false), is_complex(is_com),
           is_affine_dependent(false), is_fem_dofs(is_fem), filter(fil),
           n_iter(std::max(size_type(1), n_it)), n_temp_iter(0),
           default_iter(0), ptsc(0), mf(mmf), m_region(m_reg), mim(mim_),
-          filter_var(filter_v), qdims(1), v_num(0), v_num_data(act_counter()),
+          filter_var(filter_v), qdims(qdims_), v_num(0),
+          v_num_data(act_counter()),
           alpha(1), pim_data(pimd) {
         if (filter != VDESCRFILTER_NO && mf != 0)
           partial_mf = new partial_mesh_fem(*mf);
-        // v_num_data = v_num; 
-        GMM_ASSERT1(Q > 0, "Bad dimension");
-        qdims[0] = Q;
+        // v_num_data = v_num;
+        if (qdims.size() == 0) qdims.push_back(1);
+        GMM_ASSERT1(qdim(), "Attempt to create a null size variable");
       }
 
       // add a temporary version for time integration schemes. Automatically
@@ -255,7 +256,7 @@ namespace getfem {
 
       const mesh_fem *passociated_mf(void) const {
         if (!is_fem_dofs) return 0;
-        if (filter == VDESCRFILTER_NO) return mf;
+        if (filter == VDESCRFILTER_NO || partial_mf.get() == 0) return mf;
         else return partial_mf.get();
       }
 
@@ -263,7 +264,7 @@ namespace getfem {
       // indeed intitialized by actualize_sizes ...
       { return is_complex ? complex_value[0].size() : real_value[0].size(); }
 
-      void set_size(size_type s);
+      void set_size(void);
     };
 
   public:
@@ -755,43 +756,107 @@ namespace getfem {
       to_variables(V, T());
     }
 
-    /** Adds a fixed size variable to the model. niter is the number of version
-        of the variable stored, for time integration schemes. */
+    /** Add a fixed size variable to the model assumed to be a vector.
+        niter is the number of version of the variable stored. */
     void add_fixed_size_variable(const std::string &name, size_type size,
                                  size_type niter = 1);
+    
+    /** Add a fixed size variable to the model whith given tensor dimensions.
+        niter is the number of version of the variable stored. */
+    void add_fixed_size_variable(const std::string &name,
+                                 const bgeot::multi_index &sizes,
+                                 size_type niter = 1);
 
-    /** Adds a fixed size data to the model. niter is the number of version
+    /** Add a fixed size data to the model. niter is the number of version
         of the data stored, for time integration schemes. */
     void add_fixed_size_data(const std::string &name, size_type size,
+                             size_type niter = 1);
+
+    /** Add a fixed size data to the model. niter is the number of version
+        of the data stored, for time integration schemes. */
+    void add_fixed_size_data(const std::string &name,
+                             const bgeot::multi_index &sizes,
                              size_type niter = 1);
 
     /** Resize a fixed size variable (or data) of the model. */
     void resize_fixed_size_variable(const std::string &name, size_type size);
 
+    /** Resize a fixed size variable (or data) of the model. */
+    void resize_fixed_size_variable(const std::string &name,
+                                    const bgeot::multi_index &sizes);
 
-    /** Adds a fixed size data to the model initialized with V. */
+    /** Add a fixed size data (assumed to be a vector) to the model and
+        initialized with v. */
     template <typename VECT>
     void add_initialized_fixed_size_data(const std::string &name,
                                          const VECT &v) {
-      this->add_fixed_size_data(name, gmm::vect_size(v), 1);
-      if (this->is_complex()) // to be templated .. see later
+      this->add_fixed_size_data(name, gmm::vect_size(v));
+      if (this->is_complex())
         gmm::copy(v, this->set_complex_variable(name));
       else
         gmm::copy(gmm::real_part(v), this->set_real_variable(name));
     }
 
-    /** Adds a scalar data (i.e. of size 1) to the model initialized with e. */
+    /** Add a fixed size data (assumed to be a vector) to the model and
+        initialized with v. */
+    template <typename VECT>
+    void add_initialized_fixed_size_data(const std::string &name,
+                                         const VECT &v,
+                                         const bgeot::multi_index &sizes) {
+      this->add_fixed_size_data(name, sizes);
+      if (this->is_complex())
+        gmm::copy(v, this->set_complex_variable(name));
+      else
+        gmm::copy(gmm::real_part(v), this->set_real_variable(name));
+    }
+
+    /** Add a fixed size data (assumed to be a matrix) to the model and
+        initialized with M. */
+    void add_initialized_matrix_data(const std::string &name,
+                                     const base_matrix &M) {
+      this->add_fixed_size_data(name, bgeot::multi_index(gmm::mat_nrows(M),
+                                                         gmm::mat_ncols(M)));
+      GMM_ASSERT1(!(this->is_complex()), "Sorry, complex version to be done");
+      gmm::copy(M.as_vector(), this->set_real_variable(name));
+    }
+
+    void add_initialized_matrix_data(const std::string &name,
+                                     const base_complex_matrix &M) {
+      this->add_fixed_size_data(name, bgeot::multi_index(gmm::mat_nrows(M),
+                                                         gmm::mat_ncols(M)));
+      GMM_ASSERT1(!(this->is_complex()), "Sorry, complex version to be done");
+      gmm::copy(M.as_vector(), this->set_complex_variable(name));
+    }
+
+    /** Add a fixed size data (assumed to be a tensor) to the model and
+        initialized with t. */
+    void add_initialized_tensor_data(const std::string &name,
+                                     const base_tensor &t) {
+      this->add_fixed_size_data(name, t.sizes(), 1);
+      GMM_ASSERT1(!(this->is_complex()), "Sorry, complex version to be done");
+      gmm::copy(t.as_vector(), this->set_real_variable(name));
+    }
+
+    void add_initialized_tensor_data(const std::string &name,
+                                     const base_complex_tensor &t) {
+      this->add_fixed_size_data(name, t.sizes(), 1);
+      GMM_ASSERT1(!(this->is_complex()), "Sorry, complex version to be done");
+      gmm::copy(t.as_vector(), this->set_complex_variable(name));
+    }
+
+
+    /** Add a scalar data (i.e. of size 1) to the model initialized with e. */
     template <typename T>
     void add_initialized_scalar_data(const std::string &name, T e) {
       this->add_fixed_size_data(name, 1, 1);
-      if (this->is_complex()) // to be templated .. see later
+      if (this->is_complex())
         this->set_complex_variable(name)[0] = e;
       else
         this->set_real_variable(name)[0] = gmm::real(e);
     }
 
 
-    /** Adds a variable being the dofs of a finite element method to the model.
+    /** Add a variable being the dofs of a finite element method to the model.
         niter is the number of version of the variable stored, for time
         integration schemes. */
     void add_fem_variable(const std::string &name, const mesh_fem &mf,
@@ -800,7 +865,7 @@ namespace getfem {
     /** Add a data that is described by integration points.*/
     void add_im_data(const std::string &name, const im_data &im_data, size_type niter = 1);
 
-    /** Adds a variable linked to a fem with the dof filtered with respect
+    /** Add a variable linked to a fem with the dof filtered with respect
         to a mesh region. Only the dof returned by the dof_on_region
         method of `mf` will be kept. niter is the number of version
         of the data stored, for time integration schemes. */
@@ -808,7 +873,7 @@ namespace getfem {
                                    size_type region, size_type niter = 1);
 
 
-    /** Adds a "virtual" variable be an affine depedent variable with respect
+    /** Add a "virtual" variable be an affine depedent variable with respect
         to another variable. Mainly used for time integration scheme for
         instance to represent time derivative of variables.
         `alpha` is the multiplicative scalar of the dependency. */
@@ -816,25 +881,42 @@ namespace getfem {
                                        const std::string &org_name,
                                        scalar_type alpha = scalar_type(1));
 
-    /** Adds a data being the dofs of a finite element method to the model.
-        The data is initialized with V. */
+    /** Add a data being the dofs of a finite element method to the model.*/
     void add_fem_data(const std::string &name, const mesh_fem &mf,
                       dim_type qdim = 1, size_type niter = 1);
 
-    /** Adds a fixed size data to the model. niter is the number of version
-        of the data stored, for time integration schemes. */
+    /** Add a data being the dofs of a finite element method to the model.*/
+    void add_fem_data(const std::string &name, const mesh_fem &mf,
+                      const bgeot::multi_index &sizes, size_type niter = 1);
+
+    /** Add an initialized fixed size data to the model, assumed to be a
+        vector field if the size of the vector is a multiple of the dof
+        number. */
     template <typename VECT>
     void add_initialized_fem_data(const std::string &name, const mesh_fem &mf,
                                   const VECT &v) {
       this->add_fem_data(name, mf,
                          dim_type(gmm::vect_size(v) / mf.nb_dof()), 1);
-      if (this->is_complex()) // to be templated .. see later
+      if (this->is_complex())
         gmm::copy(v, this->set_complex_variable(name));
       else
         gmm::copy(gmm::real_part(v), this->set_real_variable(name));
     }
 
-    /** Adds a particular variable linked to a fem being a multiplier with
+    /** Add a fixed size data to the model. The data is a tensor of given
+        sizes on each dof of the finite element method. */
+    template <typename VECT>
+    void add_initialized_fem_data(const std::string &name, const mesh_fem &mf,
+                                  const VECT &v, 
+                                  const bgeot::multi_index &sizes) {
+      this->add_fem_data(name, mf, sizes, 1);
+      if (this->is_complex())
+        gmm::copy(v, this->set_complex_variable(name));
+      else
+        gmm::copy(gmm::real_part(v), this->set_real_variable(name));
+    }
+
+    /** Add a particular variable linked to a fem being a multiplier with
         respect to a primal variable. The dof will be filtered with the
         gmm::range_basis function applied on the terms of the model which
         link the multiplier and the primal variable. Optimized for boundary
@@ -844,7 +926,7 @@ namespace getfem {
                         const std::string &primal_name,
                         size_type niter = 1);
 
-    /** Adds a particular variable linked to a fem being a multiplier with
+    /** Add a particular variable linked to a fem being a multiplier with
         respect to a primal variable and a region. The dof will be filtered
         both with the gmm::range_basis function applied on the terms of
         the model which link the multiplier and the primal variable and on
@@ -855,7 +937,7 @@ namespace getfem {
                         size_type region, const std::string &primal_name,
                         size_type niter = 1);
 
-    /** Adds a particular variable linked to a fem being a multiplier with
+    /** Add a particular variable linked to a fem being a multiplier with
         respect to a primal variable. The dof will be filtered with the
         gmm::range_basis function applied on the mass matrix between the fem
         of the multiplier and the one of the primal variable.
@@ -866,7 +948,7 @@ namespace getfem {
                         size_type region, size_type niter = 1);
 
 
-    /** Adds a macro definition for the high generic assembly langage.
+    /** Add a macro definition for the high generic assembly langage.
         This macro can be used for the definition of generic assembly bricks.
         The name of a macro cannot coincide with a variable name. */
     void add_macro(const std::string &name, const std::string &expr);
@@ -971,7 +1053,7 @@ namespace getfem {
       bricks[ib].terms_to_be_computed = true;
     }
 
-    /** Adds a brick to the model. varname is the list of variable used
+    /** Add a brick to the model. varname is the list of variable used
         and datanames the data used. If a variable is used as a data, it
         should be declared in the datanames (it will depend on the value of
         the variable not only on the fem). Returns the brick index. */
@@ -983,7 +1065,7 @@ namespace getfem {
     /** Delete the brick of index ib from the model. */
     void delete_brick(size_type ib);
 
-    /** Adds an integration method to a brick. */
+    /** Add an integration method to a brick. */
     void add_mim_to_brick(size_type ib, const mesh_im &mim);
 
     /** Change the term list of a brick. Used for very special bricks only. */
@@ -1046,7 +1128,7 @@ namespace getfem {
     { init_step = true; init_time_step = ddt; }
     
 
-    /** Adds a time dispacther to a brick. */
+    /** Add a time dispacther to a brick. */
     void add_time_dispatcher(size_type ibrick, pdispatcher pdispatch);
 
     void set_dispatch_coeff(void);
@@ -1337,7 +1419,7 @@ namespace getfem {
   //
   //=========================================================================
 
-  /** Adds a theta-method time dispatcher to a list of bricks. For instance,
+  /** Add a theta-method time dispatcher to a list of bricks. For instance,
       a matrix term $K$ will be replaced by
       $\theta K U^{n+1} + (1-\theta) K U^{n}$.
   */
@@ -1354,7 +1436,7 @@ namespace getfem {
    const std::string &pdt, const std::string &ptheta);
 
 
-  /** Adds a midpoint time dispatcher to a list of bricks. For instance,
+  /** Add a midpoint time dispatcher to a list of bricks. For instance,
       a nonlinear term $K(U)$ will be replaced by
       $K((U^{n+1} +  U^{n})/2)$.
   */
@@ -1641,7 +1723,7 @@ namespace getfem {
   //
   //=========================================================================
 
-  /** Adds a matrix term given by the assembly string `expr` which will
+  /** Add a matrix term given by the assembly string `expr` which will
       be assembled in region `region` and with the integration method `mim`.
       Only the matrix term will be taken into account, assuming that it is
       linear.
@@ -1664,7 +1746,7 @@ namespace getfem {
    bool is_coercive = false, std::string brickname = "",
    bool return_if_nonlin = false);
 
-  /** Adds a nonlinear term given by the assembly string `expr` which will
+  /** Add a nonlinear term given by the assembly string `expr` which will
       be assembled in region `region` and with the integration method `mim`.
       The expression can describe a potential or a weak form. Second order
       terms (i.e. containing second order test functions, Test2) are not
@@ -1681,7 +1763,7 @@ namespace getfem {
    bool is_coercive = false, std::string brickname = "");
 
 
-  /** Adds a source term given by the assembly string `expr` which will
+  /** Add a source term given by the assembly string `expr` which will
       be assembled in region `region` and with the integration method `mim`.
       Only the residual term will be taken into account.
       Take care that if the expression contains some variables and if the
@@ -1696,7 +1778,7 @@ namespace getfem {
    const std::string &directdataname = std::string(),
    bool return_if_nonlin = false);
 
-  /** Adds a Laplacian term on the variable `varname` (in fact with a minus :
+  /** Add a Laplacian term on the variable `varname` (in fact with a minus :
       :math:`-\text{div}(\nabla u)`). If it is a vector
       valued variable, the Laplacian term is componentwise. `region` is an
       optional mesh region on which the term is added. Return the brick index
@@ -1707,7 +1789,7 @@ namespace getfem {
    size_type region = size_type(-1));
 
 
-  /** Adds an elliptic term on the variable `varname`.
+  /** Add an elliptic term on the variable `varname`.
       The shape of the elliptic
       term depends both on the variable and the data. This corresponds to a
       term $-\text{div}(a\nabla u)$ where $a$ is the data and $u$ the variable.
@@ -1733,7 +1815,7 @@ namespace getfem {
    const std::string &dataexpr, size_type region = size_type(-1));
 
 
-  /** Adds a source term on the variable `varname`. The source term is
+  /** Add a source term on the variable `varname`. The source term is
       represented by `dataexpr` which could be any regular expression of the
       high-level generic assembly language (except for the complex version
       where it has to be a declared data of the model). `region` is an
@@ -1747,7 +1829,7 @@ namespace getfem {
    const std::string &dataexpr, size_type region = size_type(-1),
    const std::string &directdataname = std::string());
 
-  /** Adds a source term on the variable `varname` on a boundary `region`.
+  /** Add a source term on the variable `varname` on a boundary `region`.
       The source term is
       represented by the data `dataepxpr` which could be any regular
       expression of the high-level generic assembly language (except
@@ -1762,7 +1844,7 @@ namespace getfem {
    const std::string &dataexpr, size_type region);
 
 
-  /** Adds a (simple) Dirichlet condition on the variable `varname` and
+  /** Add a (simple) Dirichlet condition on the variable `varname` and
       the mesh region `region`. The Dirichlet condition is prescribed by
       a simple post-treatment of the final linear system (tangent system
       for nonlinear problems) consisting of modifying the lines corresponding
@@ -1785,7 +1867,7 @@ namespace getfem {
    const std::string &dataname = std::string());
 
 
-  /** Adds a Dirichlet condition on the variable `varname` and the mesh
+  /** Add a Dirichlet condition on the variable `varname` and the mesh
       region `region`. This region should be a boundary. The Dirichlet
       condition is prescribed with a multiplier variable `multname` which
       should be first declared as a multiplier
@@ -1827,7 +1909,7 @@ namespace getfem {
   */
   const APIDECL std::string &mult_varname_Dirichlet(model &md, size_type ind_brick);
 
-  /** Adds a Dirichlet condition on the variable `varname` and the mesh
+  /** Add a Dirichlet condition on the variable `varname` and the mesh
       region `region`. This region should be a boundary. The Dirichlet
       condition is prescribed with penalization. The penalization coefficient
       is intially `penalization_coeff` and will be added to the data of
@@ -1845,7 +1927,7 @@ namespace getfem {
    const std::string &dataname = std::string(),
    const mesh_fem *mf_mult = 0);
 
-  /** Adds a Dirichlet condition on the variable `varname` and the mesh
+  /** Add a Dirichlet condition on the variable `varname` and the mesh
       region `region`. This region should be a boundary. The Dirichlet
       condition is prescribed with Nitsche's method. `dataname` is the optional
       right hand side of the Dirichlet condition. It could be constant or
@@ -1869,7 +1951,7 @@ namespace getfem {
    scalar_type theta = scalar_type(1),
    const std::string &dataname = std::string());
 
-  /** Adds a Dirichlet condition to the normal component of the vector
+  /** Add a Dirichlet condition to the normal component of the vector
       (or tensor) valued variable `varname` and the mesh
       region `region`. This region should be a boundary. The Dirichlet
       condition is prescribed with a multiplier variable `multname` which
@@ -1907,7 +1989,7 @@ namespace getfem {
    dim_type degree, size_type region,
    const std::string &dataname = std::string());
 
-  /** Adds a Dirichlet condition to the normal component of the vector
+  /** Add a Dirichlet condition to the normal component of the vector
       (or tensor) valued variable `varname` and the mesh
       region `region`. This region should be a boundary. The Dirichlet
       condition is prescribed with penalization. The penalization coefficient
@@ -1928,7 +2010,7 @@ namespace getfem {
    const mesh_fem *mf_mult = 0);
 
 
-  /** Adds a Dirichlet condition to the normal component of the vector
+  /** Add a Dirichlet condition to the normal component of the vector
       (or tensor) valued variable `varname` and the mesh region `region`.
       This region should be a boundary. The Dirichlet
       condition is prescribed with Nitsche's method. `dataname` is the optional
@@ -1954,7 +2036,7 @@ namespace getfem {
    const std::string &dataname = std::string());
 
 
-  /** Adds some pointwise constraints on the variable `varname` thanks to
+  /** Add some pointwise constraints on the variable `varname` thanks to
       a penalization. The penalization coefficient is initially
       `penalization_coeff` and will be added to the data of the model.
       The conditions are prescribed on a set of points given in the data
@@ -1977,7 +2059,7 @@ namespace getfem {
    const std::string &dataname_val = std::string());
 
 
-  /** Adds some pointwise constraints on the variable `varname` using a given
+  /** Add some pointwise constraints on the variable `varname` using a given
       multiplier `multname`.
       The conditions are prescribed on a set of points given in the data
       `dataname_pt` whose dimension is the number of points times the dimension
@@ -2001,7 +2083,7 @@ namespace getfem {
    const std::string &dataname_unitv = std::string(),
    const std::string &dataname_val = std::string());
 
-  /** Adds some pointwise constraints on the variable `varname` using
+  /** Add some pointwise constraints on the variable `varname` using
       multiplier. The multiplier variable is automatically added to the model.
       The conditions are prescribed on a set of points given in the data
       `dataname_pt` whose dimension is the number of points times the dimension
@@ -2030,7 +2112,7 @@ namespace getfem {
   void APIDECL change_penalization_coeff(model &md, size_type ind_brick,
                                          scalar_type penalisation_coeff);
 
-  /** Adds a generalized Dirichlet condition on the variable `varname` and
+  /** Add a generalized Dirichlet condition on the variable `varname` and
       the mesh region `region`. This version is for vector field.
       It prescribes a condition @f$ Hu = r @f$ where `H` is a matrix field.
       This region should be a boundary. The Dirichlet
@@ -2068,7 +2150,7 @@ namespace getfem {
    dim_type degree, size_type region,
    const std::string &dataname, const std::string &Hname);
 
-  /** Adds a Dirichlet condition on the variable `varname` and the mesh
+  /** Add a Dirichlet condition on the variable `varname` and the mesh
       region `region`. This version is for vector field.
       It prescribes a condition @f$ Hu = r @f$ where `H` is a matrix field.
       This region should be a boundary. This region should be a boundary.
@@ -2090,7 +2172,7 @@ namespace getfem {
    const std::string &dataname, const std::string &Hname,
    const mesh_fem *mf_mult = 0);
 
-  /** Adds a Dirichlet condition on the variable `varname` and the mesh
+  /** Add a Dirichlet condition on the variable `varname` and the mesh
       region `region`.
       This version is for vector field. It prescribes a condition
       @f$ Hu = r @f$ where `H` is a matrix field. The region should be a
@@ -2121,7 +2203,7 @@ namespace getfem {
    const std::string &dataname, const std::string &Hname);
 
 
-  /** Adds a Helmoltz brick to the model. This corresponds to the scalar
+  /** Add a Helmoltz brick to the model. This corresponds to the scalar
       equation (@f$\Delta u + k^2u = 0@f$, with @f$K=k^2@f$).
       The weak formulation is (@f$\int k^2 u.v - \nabla u.\nabla v@f$)
 
@@ -2134,7 +2216,7 @@ namespace getfem {
                                         size_type region = size_type(-1));
 
 
-  /** Adds a Fourier-Robin brick to the model. This correspond to the weak term
+  /** Add a Fourier-Robin brick to the model. This correspond to the weak term
       (@f$\int (qu).v @f$) on a boundary. It is used to represent a
       Fourier-Robin boundary condition.
 
@@ -2218,7 +2300,7 @@ namespace getfem {
     set_private_data_matrix(md, indbrick, B, T());
   }
 
-  /** Adds an additional explicit penalized constraint on the variable
+  /** Add an additional explicit penalized constraint on the variable
       `varname`. The constraint is $BU=L$ with `B` being a rectangular
       sparse matrix.
       Be aware that `B` should not contain a plain row, otherwise the whole
@@ -2238,7 +2320,7 @@ namespace getfem {
     return ind;
   }
 
-  /** Adds an additional explicit constraint on the variable `varname` thank to
+  /** Add an additional explicit constraint on the variable `varname` thank to
       a multiplier `multname` peviously added to the model (should be a fixed
       size variable).
       The constraint is $BU=L$ with `B` being a rectangular sparse matrix.
@@ -2261,7 +2343,7 @@ namespace getfem {
                                         bool issymmetric, bool iscoercive);
   size_type APIDECL add_explicit_rhs(model &md, const std::string &varname);
 
-  /** Adds a brick reprenting an explicit matrix to be added to the tangent
+  /** Add a brick reprenting an explicit matrix to be added to the tangent
       linear system relatively to the variables 'varname1' and 'varname2'.
       The given matrix should have as many rows as the dimension of
       'varname1' and as many columns as the dimension of 'varname2'.
@@ -2282,7 +2364,7 @@ namespace getfem {
     return ind;
   }
 
-  /**  Adds a brick representing an explicit right hand side to be added to
+  /**  Add a brick representing an explicit right hand side to be added to
        the right hand side of the tangent
        linear system relatively to the variable 'varname'.
        The given rhs should have the same size than the dimension of
@@ -2353,7 +2435,7 @@ namespace getfem {
    const std::string &dataexpr_penal_coeff = std::string());
 
   /** Mass brick ( @f$ \int \rho u.v @f$ ).
-      Adds a mass matix on a variable (eventually with a specified region).
+      Add a mass matix on a variable (eventually with a specified region).
       If the parameter $\rho$ is omitted it is assumed to be equal to 1.
   */
   size_type APIDECL add_mass_brick
@@ -2362,7 +2444,7 @@ namespace getfem {
    size_type region = size_type(-1));
 
   /** Basic d/dt brick ( @f$ \int \rho ((u^{n+1}-u^n)/dt).v @f$ ).
-      Adds the standard discretization of a first order time derivative. The
+      Add the standard discretization of a first order time derivative. The
       parameter $rho$ is the density which could be omitted (the defaul value
       is 1). This brick should be used in addition to a time dispatcher for the
       other terms.
@@ -2374,7 +2456,7 @@ namespace getfem {
    size_type region = size_type(-1));
 
   /** Basic d2/dt2 brick ( @f$ \int \rho ((u^{n+1}-u^n)/(\alpha dt^2) - v^n/(\alpha dt) ).w @f$ ).
-      Adds the standard discretization of a second order time derivative. The
+      Add the standard discretization of a second order time derivative. The
       parameter $rho$ is the density which could be omitted (the defaul value
       is 1). This brick should be used in addition to a time dispatcher for the
       other terms. The time derivative $v$ of the variable $u$ is preferably

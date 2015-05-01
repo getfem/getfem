@@ -17,7 +17,7 @@ mf.set_fem(gf.Fem('FEM_QK(2,2)'))
 print gf.Fem('FEM_QK(2,2)').poly_str()
 
 # an exact integration will be used
-mim = gf.MeshIm(m, gf.Integ('IM_EXACT_PARALLELEPIPED(2)'))
+mim = gf.MeshIm(m, gf.Integ('IM_GAUSS_PARALLELEPIPED(2,4)'))
 
 # detect the border of the mesh
 border = m.outer_faces()

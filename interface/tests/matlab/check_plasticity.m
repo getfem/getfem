@@ -93,7 +93,7 @@ fright=get(m,'faces from pid',pidright);
 set(m,'boundary',1,fleft); % for Dirichlet condition
 set(m,'boundary',2,fright); % for Neumann condition
 
-% Decomposed the mesh into 2 regions with different values of Lamé coeff
+% Decomposed the mesh into 2 regions with different values of Lam?? coeff
 if (bi_material) separation = LY/2; else separation = 0; end
 pidtop    = find(P(2,:)>=separation-1E-6); % Retrieve index of points of the top part
 pidbottom = find(P(2,:)<=separation+1E-6); % Retrieve index of points of the bottom part
@@ -120,7 +120,7 @@ md = gfModel('real');
 
 % Declare that u is the unknown of the system on mf_u
 % 2 is the number of version of the data stored, for the time integration scheme 
-set(md, 'add fem variable', 'u', mf_u, 2);
+set(md, 'add fem variable', 'u', mf_u);
 
 % Declare that lambda is a data of the system on mf_data
 set(md, 'add initialized fem data', 'lambda', mf_data, lambda);
@@ -188,7 +188,7 @@ for step=1:size(t,2),
     % get(md, 'solve', 'noisy', 'max_iter', 80);
 
     % Retrieve the solution U
-    U = get(md, 'variable', 'u', 0);
+    U = get(md, 'variable', 'u');
     
     % Compute new plasticity constraints used to compute 
     % the Von Mises or Tresca stress

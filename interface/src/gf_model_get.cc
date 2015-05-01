@@ -208,16 +208,12 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        );
 
 
-    /*@GET V = ('variable', @str name[, @int niter])
-      Gives the value of a variable or data.@*/
+    /*@GET V = ('variable', @str name)
+      Gives the value of a variable or data. @*/
     sub_command
-      ("variable", 1, 2, 0, 1,
+      ("variable", 1, 1, 0, 1,
        std::string name = in.pop().to_string();
-       size_type niter = 0;
-       if (in.remaining())
-         niter = in.pop().to_integer(0,10) - config::base_index();
-       RETURN_VECTOR(real_variable(name, niter),
-                     complex_variable(name, niter));
+       RETURN_VECTOR(real_variable(name), complex_variable(name));
        );
 
 

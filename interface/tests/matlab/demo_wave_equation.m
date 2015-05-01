@@ -41,7 +41,7 @@ U0 = gf_mesh_fem_get(mf, 'eval', { 'y.*(y-1).*x.*(x-1).*x.*x' });
 V0 = 0*U0;
 
 md=gf_model('real');
-gf_model_set(md, 'add fem variable', 'u', mf, 2);
+gf_model_set(md, 'add fem variable', 'u', mf);
 gf_model_set(md, 'add Laplacian brick', mim, 'u');
 gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'u', mf, 1);
 

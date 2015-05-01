@@ -29,7 +29,7 @@ printf('The expression of its basis functions on the reference convex\n');
 disp(gf_fem_get(gf_fem('FEM_QK(2,2)'),'poly_str')); 
 
 // an exact integration will be used
-mim = gf_mesh_im(m, gf_integ('IM_EXACT_PARALLELEPIPED(2)'));
+mim = gf_mesh_im(m, gf_integ('IM_GAUSS_PARALLELEPIPED(2,4)'));
 
 // detect the border of the mesh
 border = gf_mesh_get(m,'outer_faces');
@@ -54,7 +54,7 @@ gf_model_set(md, 'add initialized fem data', 'DirichletData', mf, Uexact);
 gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'u', mf, 42, 'DirichletData');
 
 // add source term
-f = gf_mesh_fem_get_eval(mf, list('2*(x^2+y^2)-2*(x+y)+20*x^3'));
+f = gf_mesh_fem_get_eval(mf, list('2*(x.^2+y.^2)-2*(x+y)+20*x.^3'));
 gf_model_set(md, 'add initialized fem data', 'VolumicData', mf, f);
 gf_model_set(md, 'add source term brick', mim, 'u', 'VolumicData');
 

@@ -391,8 +391,11 @@ namespace getfem {
   
   using bgeot::base_small_vector;
   using bgeot::base_vector;
+  using bgeot::base_complex_vector;
   using bgeot::base_matrix;
+  using bgeot::base_complex_matrix;
   using bgeot::base_tensor;
+  using bgeot::base_complex_tensor;
   using bgeot::base_poly;
   using bgeot::base_node;
   

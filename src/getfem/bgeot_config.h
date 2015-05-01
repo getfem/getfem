@@ -106,6 +106,12 @@ namespace bgeot {
 #  define LONG_SCAL(xx) long_scalar_type(#xx) /* string assignment to preserve the precision */
 #endif
 
+  typedef std::vector<scalar_type> base_vector;
+  typedef std::vector<complex_type> base_complex_vector;
+  typedef gmm::dense_matrix<scalar_type> base_matrix;
+  typedef gmm::dense_matrix<complex_type> base_complex_matrix;
+
+
   // For compatibility with Getfem 2.0
 
   using gmm::dimension_error;

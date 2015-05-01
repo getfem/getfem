@@ -24,8 +24,8 @@ gf_plot_mesh(m, 'vertices', 'on', 'convexes', 'on');
 mf = gf_mesh_fem(m,1);
 gf_mesh_fem_set(mf,'fem',gf_fem('FEM_QK(2,2)'));
 
-% assign the same integration method on all convexes
-mim=gf_mesh_im(m, gf_integ('IM_EXACT_PARALLELEPIPED(2)'));
+% assign the same integration method on all elements
+mim=gf_mesh_im(m, gf_integ('IM_GAUSS_PARALLELEPIPED(2,4)'));
 
 % detect the border of the mesh
 border = gf_mesh_get(m,'outer faces');
@@ -49,7 +49,7 @@ gf_model_set(md, 'add initialized fem data', 'DirichletData', mf, Uexact);
 gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'u', mf, 42, 'DirichletData');
 
 % add source term
-f = gf_mesh_fem_get(mf, 'eval', { '2(x^2+y^2)-2(x+y)+20x^3' });
+f = gf_mesh_fem_get(mf, 'eval', { '2*(x.^2+y.^2)-2*(x+y)+20*(x.^3)' });
 gf_model_set(md, 'add initialized fem data', 'VolumicData', mf, f);
 gf_model_set(md, 'add source term brick', mim, 'u', 'VolumicData');
 

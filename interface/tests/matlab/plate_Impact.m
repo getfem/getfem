@@ -40,14 +40,14 @@ beta  = 1/2; %%%%%% beta Newmark parameter - pas d'ammortissement en masse
 Thickness = 0.01; % Plate thickness
 %E     = 6.9*10^(10); % module young
 E     = 21*10^(10); % module young acier
-rho   = 7770; % densit� acier 
-%rho   = 5700; % densit� alu
+rho   = 7770; % densit??? acier 
+%rho   = 5700; % densit??? alu
 NU=0.3;% coeff poisson alu
-D = (E*(Thickness)^3)/(12*(1-NU^2)*rho*Thickness);%% rigidit� flexion/masse*epaisseur
+D = (E*(Thickness)^3)/(12*(1-NU^2)*rho*Thickness);%% rigidit??? flexion/masse*epaisseur
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 amp = 0; %  amp:    amplitude of excitation force
 dt=2*1e-5;% pas de temps
-tmax= 3; % dur�e max
+tmax= 3; % dur???e max
 Nmax=tmax/dt; % nombre de pas de temps
 omega = 10;% pulsation
 e=0;
@@ -71,7 +71,7 @@ nddl = gf_mesh_fem_get(mfu,'nbdof');
 nddllag = gf_mesh_fem_get(mfd,'nbdof');
 
 CoordMesh = gf_mesh_get(m, 'pts'); %%%Return the list of point coordinates of the mesh
-% Coordonn�es des noeuds du maillage
+% Coordonn???es des noeuds du maillage
 X=CoordMesh(1,:);
 Y=CoordMesh(2,:);
 nelt = gf_mesh_get(m,'nbcvs');
@@ -197,7 +197,7 @@ gf_plot(mfu, U1', 'zplot', 'on', 'deformed_mesh','on');
 
 gf_model_set(md, 'variable', 'VolumicData', get(mfd, 'eval', {'0'}));
 gf_model_set(md, 'add explicit matrix', 'u', 'u', Mass);
-ind_rhs = gf_model_set(md, 'add explicit rhs', 'u', zeros(nddl, 1)); % -1 à enlever ... bug interface
+ind_rhs = gf_model_set(md, 'add explicit rhs', 'u', zeros(nddl, 1)); % -1 ?? enlever ... bug interface
 
 %%% obstacle definition
 
@@ -224,7 +224,7 @@ for i=DOFs%%%DOFsbd(1):DOFsbd(lenght(DOFsbd))%%%%%%%%%  "|" est le ou
   
     if dofdisp(i)==1 %| (Y(inoeud(j))==3)
       
-              obstacle2(i)= 0.05;%%%%%% 1xamp aux noeuds fleche � la base
+              obstacle2(i)= 0.05;%%%%%% 1xamp aux noeuds fleche ??? la base
     end
     if dofdisp(i)==0 %| (Y(inoeud(j))==3)
       
@@ -238,7 +238,7 @@ gf_model_set(md, 'add variable', 'lambda', nbconstraints);
 gf_model_set(md, 'add initialized data', 'r', [1]);
 gf_model_set(md, 'add initialized data', 'gap', gap);
 gf_model_set(md, 'add initialized data', 'alpha', ones(nbconstraints, 1));
-gf_model_set(md, 'add basic contact brick', 'u', 'lambda', 'r', B, 'gap', 'alpha', 0);
+gf_model_set(md, 'add basic contact brick', 'u', 'lambda', 'r', B, 'gap', 'alpha', 1);
 
 %Ud1= gf_mesh_fem_get(mfd, 'eval', { '0 ' })';
     %Ud1= gf_mesh_fem_get(mfd, 'eval', { ' 6*10^(-2)*(y.^2)' })'; %5*(y.^2)*10^(-2)%%%%%% deplacement impose initial
@@ -329,13 +329,13 @@ for t = dt:dt:tmax
      %Ucentre(n)=U1(502);
   
   
-       %%%% Evaluation de l'�nergie totale classique avec G_n
+       %%%% Evaluation de l'???nergie totale classique avec G_n
         if n > 1
     %ETOT(n)    ETOT(n)=(0.125/dt^2)*(U3(:)-U1(:))'*Mass*(U3(:)-U1(:)) + (0.5)*(U2(:))'*Kass*(U2(:));
     ETOT(n)=(0.5/dt^2)*(U2(:)-U1(:))'*Mass*(U2(:)-U1(:)) + (0.5)*(U1(:))'*Kass*(U1(:));% - (G_n)*U2(:);  
     
     %ETOT(n)=(0.125/dt^2)*(U(:,n+1)-U(:,n-1))'*Mg*(U(:,n+1)-U(:,n-1)) + (0.5)*(U(:,n))'*Kg*(U(:,n)) - (G_n)'*U(:,n);
-      %%%% Evaluation de l'�nergie totale forme DP - 2008 splines 
+      %%%% Evaluation de l'???nergie totale forme DP - 2008 splines 
      % ETOTDP(n)=0.5*((U(:,n)-U(:,n-1))'*((1/dt^2)*Mg + beta*Kg)*(U(:,n)-U(:,n-1))  + (U(:,n))'*Kg*(U(:,n-1))) - (G_n)'*U(:,n) ;
     % ETOT(n)=(0.125/dt^2)*(U3(:)-U1(:))'*Mass*(U3(:)-U1(:)) + (0.5)*(U2(:))'*Kass*(U2(:)) - (G_n)'*U2(:);
  
@@ -363,9 +363,9 @@ for t = dt:dt:tmax
 %--- /!\ ici on sauve dans le GIF ----------------------------------------%
 %-------------------------------------------------------------------------%
        % [RGB,badmap] = frame2im(Fr(n)); %on la convertie en image de type 'true-color'
-       % [IND,map] = rgb2ind(RGB, 255); %on convertie en couleur ind�x�es. 255 est le nombre de couleur.
+       % [IND,map] = rgb2ind(RGB, 255); %on convertie en couleur ind???x???es. 255 est le nombre de couleur.
        % if isfirst
-        %    imwrite(IND,map,'NDP_Impact_plaque.gif','gif','LoopCount',100); %---- premi�re image du fichier GIF
+        %    imwrite(IND,map,'NDP_Impact_plaque.gif','gif','LoopCount',100); %---- premi???re image du fichier GIF
         %    isfirst=false;
         %else
         %    imwrite(IND,map,'NDP_Impact_plaque.gif','gif','WriteMode','append','DelayTime',0.09); %---- les images suivantes
@@ -379,11 +379,11 @@ toc
 
 %%%%movie2avi(Fr,'NDP_Impact_plaque.avi','compression','None')
 %close(gcf)          %---- fermeture du handle figure
-%%%%%%mov = close(mov);   %---- fermeture du handle vid�o
+%%%%%%mov = close(mov);   %---- fermeture du handle vid???o
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%     
-%%%%%%%%%%% Trac� des r�sultats
+%%%%%%%%%%% Trac??? des r???sultats
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 figure
@@ -438,7 +438,7 @@ Force_dom_ini = gf_asm('volumic source', mim, mfu, mfd, Force_ini);
 Force_dom_ini=Force_dom_ini/(rho*Thickness);
 
 %%%%%%%%%%%%%%%%%%%%%%%%
-% Conditions aux limites sur les matrices de masse et de rigidit�
+% Conditions aux limites sur les matrices de masse et de rigidit???
 %%%%%%%%%%%%%%%%%%%%%%%%
 
 
@@ -488,18 +488,18 @@ end
   ddlcoingche=DOFsbdlibre(1);
   ddlcoindt= DOFsbdlibre(length(DOFsbdlibre)-6);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
- %%%%%%%%%%%%%%%%%%%%%%% si sinus � la base
+ %%%%%%%%%%%%%%%%%%%%%%% si sinus ??? la base
  U_nstat = zeros(nddl,1);
 for i=DOFsbd%%%DOFsbd(1):DOFsbd(lenght(DOFsbd))%%%%%%%%%  "|" est le ou 
   
     if dofdisp(i)==1 %| (Y(inoeud(j))==3)
       
-              U_nstat(i)= amp; %%%%%%% 1xamp aux noeuds fleche � la base
+              U_nstat(i)= amp; %%%%%%% 1xamp aux noeuds fleche ??? la base
     end
 end
 
  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
- %%%%%%%%%%%%%%%%%%%%%%% si sinus � la base CLNH
+ %%%%%%%%%%%%%%%%%%%%%%% si sinus ??? la base CLNH
  Force_sin = zeros(nddl,1);
  Force_sin = (omega^2)*Mass*U_nstat-Kass*U_nstat;
 
@@ -523,7 +523,7 @@ end
 
 
 
-% Boucle sur tous les noeuds de d�placement impos� nul
+% Boucle sur tous les noeuds de d???placement impos??? nul
 % for i=1:nelt %%%%%%%%%  "|" est le ou 
 %     idof=DOFs(IDx(i):IDx(i+1)-1);
 %     inoeud=Points(INDx(i):INDx(i+1)-1);
@@ -559,11 +559,11 @@ for i=DOFs%%%DOFsbd(1):DOFsbd(lenght(DOFsbd))%%%%%%%%%  "|" est le ou
   
     if dofdisp(i)==1 %| (Y(inoeud(j))==3)
       
-              obstacle2(i)= inf ; %0.1%%%%%% 1xamp aux noeuds fleche � la base
+              obstacle2(i)= inf ; %0.1%%%%%% 1xamp aux noeuds fleche ??? la base
     end
     if dofdisp(i)==0 %| (Y(inoeud(j))==3)
       
-              obstacle2(i)= inf ; %%%%%%% 1xamp aux noeuds fleche � la base
+              obstacle2(i)= inf ; %%%%%%% 1xamp aux noeuds fleche ??? la base
     end
 end
 
@@ -637,7 +637,7 @@ ETOTDP=zeros(1,Nmax);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
 %-------------------------------------------------------------------------%
-%---- initialisation vid�o et GIF ----------------------------------------%
+%---- initialisation vid???o et GIF ----------------------------------------%
 %-------------------------------------------------------------------------%
 %TAILLE  = [150 100 800 800];
 %TAILLE2 = [0.0 0.0 1.0 1.0];
@@ -661,7 +661,7 @@ tic
 for n=2:Nmax; 
 
     
-%%%%%%%%%%%%%%%%%%% si sinus � la base + force dom + dep initial impos�
+%%%%%%%%%%%%%%%%%%% si sinus ??? la base + force dom + dep initial impos???
 G_n=Force_sin*sin(omega*n*dt) +(Force_dom)/(rho*Thickness);
        
       
@@ -670,7 +670,7 @@ F_n=(2*Mass -((dt)^2)*(1-2*beta)*Kass)*U2 - (Mass+(((dt)^2)*beta-alpha*((dt)/2))
      
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%% prediction sol bilaterale  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%% D�placement sans obstacles %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+%%%%%%%% D???placement sans obstacles %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 U3= B*F_n;
 %U3(:)= quadprog(A,-F_n,[],[],[],[],-gap,gap);
@@ -761,11 +761,11 @@ U3= B*F_n;
   
     if dofdisp(i)==1 %| (Y(inoeud(j))==3)
       
-              U3(i)= amp*sin(omega*n*dt) ; %%%%%%% 1xamp aux noeuds fleche � la base
+              U3(i)= amp*sin(omega*n*dt) ; %%%%%%% 1xamp aux noeuds fleche ??? la base
     end
     if dofdisp(i)==0 %| (Y(inoeud(j))==3)
       
-              U3(i)= 0 ; %%%%%%% 1xamp aux noeuds fleche � la base
+              U3(i)= 0 ; %%%%%%% 1xamp aux noeuds fleche ??? la base
     end
 end
 
@@ -777,11 +777,11 @@ end
      Ucentre(n)=Q_n(502);
   
   
-       %%%% Evaluation de l'�nergie totale classique avec G_n
+       %%%% Evaluation de l'???nergie totale classique avec G_n
         if n > 1
     ETOT(n)=(0.125/dt^2)*(U3(:)-U1(:))'*Mass*(U3(:)-U1(:)) + (0.5)*(U2(:))'*Kass*(U2(:)) - (G_n)*U2(:);    
     %ETOT(n)=(0.125/dt^2)*(U(:,n+1)-U(:,n-1))'*Mg*(U(:,n+1)-U(:,n-1)) + (0.5)*(U(:,n))'*Kg*(U(:,n)) - (G_n)'*U(:,n);
-      %%%% Evaluation de l'�nergie totale forme DP - 2008 splines 
+      %%%% Evaluation de l'???nergie totale forme DP - 2008 splines 
      % ETOTDP(n)=0.5*((U(:,n)-U(:,n-1))'*((1/dt^2)*Mg + beta*Kg)*(U(:,n)-U(:,n-1))  + (U(:,n))'*Kg*(U(:,n-1))) - (G_n)'*U(:,n) ;
     % ETOT(n)=(0.125/dt^2)*(U3(:)-U1(:))'*Mass*(U3(:)-U1(:)) + (0.5)*(U2(:))'*Kass*(U2(:)) - (G_n)'*U2(:);
  
@@ -809,9 +809,9 @@ end
 %--- /!\ ici on sauve dans le GIF ----------------------------------------%
 %-------------------------------------------------------------------------%
        % [RGB,badmap] = frame2im(Fr(n)); %on la convertie en image de type 'true-color'
-       % [IND,map] = rgb2ind(RGB, 255); %on convertie en couleur ind�x�es. 255 est le nombre de couleur.
+       % [IND,map] = rgb2ind(RGB, 255); %on convertie en couleur ind???x???es. 255 est le nombre de couleur.
        % if isfirst
-        %    imwrite(IND,map,'NDP_Impact_plaque.gif','gif','LoopCount',100); %---- premi�re image du fichier GIF
+        %    imwrite(IND,map,'NDP_Impact_plaque.gif','gif','LoopCount',100); %---- premi???re image du fichier GIF
         %    isfirst=false;
         %else
         %    imwrite(IND,map,'NDP_Impact_plaque.gif','gif','WriteMode','append','DelayTime',0.09); %---- les images suivantes
@@ -825,11 +825,11 @@ toc
 
 %%%%movie2avi(Fr,'NDP_Impact_plaque.avi','compression','None')
 %close(gcf)          %---- fermeture du handle figure
-%%%%%%mov = close(mov);   %---- fermeture du handle vid�o
+%%%%%%mov = close(mov);   %---- fermeture du handle vid???o
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%     
-%%%%%%%%%%% Trac� des r�sultats
+%%%%%%%%%%% Trac??? des r???sultats
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 figure
