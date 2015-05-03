@@ -16,7 +16,8 @@
 % Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 
 % Options for prescribing the Dirichlet condition
-dirichlet_version = 1; % 0 = simplification, 1 = with multipliers, 2 = penalization,  3 = Nitsche's method
+dirichlet_version = 3; % 0 = simplification, 1 = with multipliers,
+                       % 2 = penalization,  3 = Nitsche's method
 theta = 1;       % Nitsche's method parameter theta
 gamma0 = 0.001;  % Nitsche's method parameter gamma0 (gamma = gamma0*h)
 r = 1e8;         % Penalization parameter
@@ -81,7 +82,8 @@ switch (dirichlet_version)
     gf_model_set(md, 'add Dirichlet condition with penalization', mim, 'u', r, GAMMAD, 'DirichletData');
   case 3,
     gf_model_set(md, 'add initialized data', 'gamma0', [gamma0]);
-    gf_model_set(md, 'add Dirichlet condition with Nitsche method', mim, 'u', 'gamma0', GAMMAD, theta, 'DirichletData');
+    % gf_model_set(md, 'add Dirichlet condition with Nitsche method', mim, 'u', 'gamma0', GAMMAD, theta, 'DirichletData');
+    gf_model_set(md, 'add Dirichlet condition with Nitsche method deux', mim, 'u', 'Grad_u.Normal', 'gamma0', GAMMAD, theta, 'DirichletData');
 end
 gf_model_get(md, 'solve');
 U = gf_model_get(md, 'variable', 'u');

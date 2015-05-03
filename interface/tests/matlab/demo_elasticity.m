@@ -19,10 +19,10 @@ clear all;
 % parameters
 d = 2;                 % dimension (cannot be changed for the moment)
 clambda = 1; cmu = 1;  % Lame coefficients
-dirichlet_version = 1; % 1 = With multipliers, 2 = Nitsche's method
-theta = 0;             % Nitsche's method parameter theta
-gamma0 = 0.0001;       % Nitsche's method parameter gamma0 (gamma = gamma0*h)
-incompressible = 1;    % Test with incompressibility or not
+dirichlet_version = 2; % 1 = With multipliers, 2 = Nitsche's method
+theta = 1;             % Nitsche's method parameter theta
+gamma0 = 0.001;        % Nitsche's method parameter gamma0 (gamma = gamma0*h)
+incompressible = false;% Test with incompressibility or not
 NX = 100;
 
 % trace on;
@@ -75,7 +75,7 @@ gf_model_set(md, 'add fem variable', 'u', mf);
 gf_model_set(md, 'add initialized data', 'cmu', [cmu]);
 gf_model_set(md, 'add initialized data', 'clambda', [clambda]);
 % gf_model_set(md, 'add linear generic assembly brick', mim, ...
-%       '(clambda*Trace(Grad_Test_u)*Id(qdim(u)) +
+%       '(clambda*Div_Test_u*Id(qdim(u)) +
 %       cmu*(Grad_Test_u''+Grad_Test_u)):Grad_Test2_u');
 gf_model_set(md, 'add isotropic linearized elasticity brick', mim, 'u', 'clambda', 'cmu');
 if (incompressible)
@@ -92,12 +92,13 @@ if (dirichlet_version == 1)
   gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'u', mf, 1, 'DirichletData');
 else
   gf_model_set(md, 'add initialized data', 'gamma0', [gamma0]);
-  gf_model_set(md, 'add Dirichlet condition with Nitsche method', mim, 'u', 'gamma0', 1, theta, 'DirichletData');
+  % gf_model_set(md, 'add Dirichlet condition with Nitsche method', mim, 'u', 'gamma0', 1, theta, 'DirichletData');
+  gf_model_set(md, 'add Dirichlet condition with Nitsche method deux', mim, 'u', '((clambda*Div_u)*Normal+cmu*((Grad_u+Grad_u''))*Normal)', 'gamma0', 1, theta, 'DirichletData');
 end
 
 % gf_model_get(md, 'test tangent matrix', 1e-6, 10, 0.1);
 tic;    
-gf_model_get(md, 'solve', 'noisy', 'max iter', 1);
+gf_model_get(md, 'solve', 'noisy', 'max iter', 100);
 U = gf_model_get(md, 'variable', 'u');
 toc;
 

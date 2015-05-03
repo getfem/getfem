@@ -474,8 +474,9 @@ static void do_high_level_generic_assembly(mexargs_in& in, mexargs_out& out) {
     }
   }
 
-  bool add_derivative(order != 0);
-  workspace.add_expression(expr, gfi_mim->mesh_im(), region, add_derivative);
+  size_type add_derivative_order = (order != 0) ? 2 : 0;
+  workspace.add_expression(expr, gfi_mim->mesh_im(), region,
+                           add_derivative_order);
 
   switch (order) {
   case 0:
@@ -556,7 +557,7 @@ static void do_expression_analysis(mexargs_in& in) {
   }
 
   workspace.add_expression(expr, getfem::ga_workspace::dummy_mim,
-                                 getfem::ga_workspace::dummy_region, false);
+                                 getfem::ga_workspace::dummy_region, 0);
   workspace.print(cout);
 }
 

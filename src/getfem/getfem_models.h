@@ -1948,8 +1948,31 @@ namespace getfem {
   size_type APIDECL add_Dirichlet_condition_with_Nitsche_method
   (model &md, const mesh_im &mim, const std::string &varname,
    const std::string &gamma0name, size_type region,
-   scalar_type theta = scalar_type(1),
+   scalar_type theta = scalar_type(0),
    const std::string &dataname = std::string());
+
+  /** Add a Dirichlet condition on the variable `varname` and the mesh
+      region `region`. This region should be a boundary. `Neumannterm`
+      is the expression of the Neumann term (obtained by the Green formula)
+      described as an expression of the high-level
+      generic assembly language. The Dirichlet
+      condition is prescribed with Nitsche's method. `datag` is the optional
+      right hand side of the Dirichlet condition. `datagamma0` is the
+      Nitsche's method parameter. `theta` is a scalar value which can be
+      positive or negative. `theta = 1` corresponds to the standard symmetric
+      method which is conditionnaly coercive for  `gamma0` small.
+      `theta = -1` corresponds to the skew-symmetric method which is
+      inconditionnaly coercive. `theta = 0` is the simplest method
+      for which the second derivative of the Neumann term is not necessary
+      even for nonlinear problems. Return the brick index in the model.
+  */
+  size_type APIDECL add_Dirichlet_condition_with_Nitsche_method
+  (model &md, const mesh_im &mim, const std::string &varname,
+   const std::string &Neumannterm,
+   const std::string &datagamma0, size_type region,
+   scalar_type theta = scalar_type(0),
+   const std::string &datag = std::string());
+
 
   /** Add a Dirichlet condition to the normal component of the vector
       (or tensor) valued variable `varname` and the mesh
@@ -2034,6 +2057,29 @@ namespace getfem {
    const std::string &gamma0name, size_type region,
    scalar_type theta = scalar_type(1),
    const std::string &dataname = std::string());
+
+
+  /** Add a Dirichlet condition on the normal component of the variable
+      `varname` and the mesh
+      region `region`. This region should be a boundary. `Neumannterm`
+      is the expression of the Neumann term (obtained by the Green formula)
+      described as an expression of the high-level
+      generic assembly language. The Dirichlet
+      condition is prescribed with Nitsche's method. `datag` is the optional
+      scalar right hand side of the Dirichlet condition. `datagamma0` is the
+      Nitsche's method parameter. `theta` is a scalar value which can be
+      positive or negative. `theta = 1` corresponds to the standard symmetric
+      method which is conditionnaly coercive for  `gamma0` small.
+      `theta = -1` corresponds to the skew-symmetric method which is
+      inconditionnaly coercive. `theta = 0` is the simplest method
+      for which the second derivative of the Neumann term is not necessary
+      even for nonlinear problems. Return the brick index in the model.
+  */
+  size_type APIDECL add_normal_Dirichlet_condition_with_Nitsche_method
+  (model &md, const mesh_im &mim, const std::string &varname,
+   const std::string &Neumannterm, const std::string &datagamma0,
+   size_type region, scalar_type theta = scalar_type(0),
+   const std::string &datag = std::string());
 
 
   /** Add some pointwise constraints on the variable `varname` thanks to
@@ -2201,6 +2247,29 @@ namespace getfem {
   (model &md, const mesh_im &mim, const std::string &varname,
    const std::string &gamma0name, size_type region, scalar_type theta,
    const std::string &dataname, const std::string &Hname);
+
+  /** Add a Dirichlet condition on the variable `varname` and the mesh
+      region `region`. This region should be a boundary. This version
+      is for vector field. It prescribes a condition
+      @f$ Hu = r @f$ where `H` is a matrix field. `Neumannterm`
+      is the expression of the Neumann term (obtained by the Green formula)
+      described as an expression of the high-level
+      generic assembly language. The Dirichlet
+      condition is prescribed with Nitsche's method. `datag` is the optional
+      right hand side of the Dirichlet condition. `datagamma0` is the
+      Nitsche's method parameter. `theta` is a scalar value which can be
+      positive or negative. `theta = 1` corresponds to the standard symmetric
+      method which is conditionnaly coercive for  `gamma0` small.
+      `theta = -1` corresponds to the skew-symmetric method which is
+      inconditionnaly coercive. `theta = 0` is the simplest method
+      for which the second derivative of the Neumann term is not necessary
+      even for nonlinear problems. Return the brick index in the model.
+  */
+  size_type APIDECL add_generalized_Dirichlet_condition_with_Nitsche_method
+  (model &md, const mesh_im &mim, const std::string &varname,
+   const std::string &Neumannterm, const std::string &datagamma0,
+   size_type region, scalar_type theta,
+   const std::string &datag, const std::string &dataH);
 
 
   /** Add a Helmoltz brick to the model. This corresponds to the scalar

@@ -207,7 +207,7 @@ namespace getfem {
 
     void add_tree(ga_tree &tree, const mesh &m, const mesh_im &mim,
                   const mesh_region &rg,
-                  const std::string &expr, bool add_derivative = true,
+                  const std::string &expr, size_type add_derivative_order = 2,
                   bool scalar_expr = true);
     void clear_aux_trees(void);
 
@@ -289,7 +289,7 @@ namespace getfem {
      */
     size_type add_expression(const std::string expr, const mesh_im &mim,
                              const mesh_region &rg=mesh_region::all_convexes(),
-                             bool add_derivative = true);
+                             size_type add_derivative_order = 2);
     /* Internal use */
     void add_function_expression(const std::string expr);
     /* Internal use */
@@ -342,6 +342,7 @@ namespace getfem {
     }
 
     std::string extract_constant_term(const mesh &m);
+    std::string extract_order1_term(const std::string &varname);
 
     bool used_variables(model::varnamelist &vl, model::varnamelist &vl_test1,
                         model::varnamelist &vl_test2, model::varnamelist &dl,

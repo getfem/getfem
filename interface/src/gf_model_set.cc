@@ -822,6 +822,48 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        out.pop().from_integer(int(ind));
        );
 
+    /*@SET ind = ('add Dirichlet condition with Nitsche method deux', @tmim mim, @str varname, @str Neumannterm, @str datagamma0, @int region[, @scalar theta][, @str dataname])
+      Add a Dirichlet condition on the variable `varname` and the mesh
+      region `region`. This region should be a boundary. `Neumannterm`
+      is the expression of the Neumann term (obtained by the Green formula)
+      described as an expression of the high-level
+      generic assembly language. The Dirichlet
+      condition is prescribed with Nitsche's method. `datag` is the optional
+      right hand side of the Dirichlet condition. `datagamma0` is the
+      Nitsche's method parameter. `theta` is a scalar value which can be
+      positive or negative. `theta = 1` corresponds to the standard symmetric
+      method which is conditionnaly coercive for  `gamma0` small.
+      `theta = -1` corresponds to the skew-symmetric method which is
+      inconditionnaly coercive. `theta = 0` (default) is the simplest method
+      for which the second derivative of the Neumann term is not necessary
+      even for nonlinear problems. Return the brick index in the model.
+    @*/
+    sub_command
+      ("add Dirichlet condition with Nitsche method deux", 5, 7, 0, 1,
+       getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+       std::string varname = in.pop().to_string();
+       std::string Neumannterm = in.pop().to_string();
+       std::string gamma0name = in.pop().to_string();
+       size_type region = in.pop().to_integer();
+       scalar_type theta = scalar_type(0);
+       std::string dataname;
+       if (in.remaining()) {
+	 mexarg_in argin = in.pop();
+	 if (argin.is_string())
+	   dataname = argin.to_string();
+	 else
+	   theta = argin.to_scalar();
+       }
+       if (in.remaining()) dataname = in.pop().to_string();
+
+       size_type ind = config::base_index();
+       ind += getfem::add_Dirichlet_condition_with_Nitsche_method
+       (md->model(), gfi_mim->mesh_im(), varname, Neumannterm,
+        gamma0name, region, theta, dataname);
+       workspace().set_dependance(md, gfi_mim);
+       out.pop().from_integer(int(ind));
+       );
+
     /*@SET ind = ('add Dirichlet condition with penalization', @tmim mim, @str varname, @scalar coeff, @int region[, @str dataname, @tmf mf_mult])
     Add a Dirichlet condition on the variable `varname` and the mesh
     region `region`. This region should be a boundary. The Dirichlet

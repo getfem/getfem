@@ -4548,7 +4548,8 @@ namespace getfem {
   void ga_workspace::add_tree(ga_tree &tree, const mesh &m,
                               const mesh_im &mim, const mesh_region &rg,
                               const std::string &expr,
-                              bool add_derivative, bool function_expr) {
+                              size_type add_derivative_order,
+                              bool function_expr) {
     if (tree.root) {
 
       // Eliminate the term if it corresponds to disabled variables
@@ -4611,7 +4612,7 @@ namespace getfem {
         trees.back().order = order;
       }
 
-      if (add_derivative && order <= 1) {
+      if (order < add_derivative_order) {
         std::set<var_trans_pair> expr_variables;
         ga_extract_variables((remain ? tree : *(trees[ind_tree].ptree)).root,
                              *this, m, expr_variables, true);
@@ -4627,7 +4628,8 @@ namespace getfem {
             ga_semantic_analysis(expr, dtree, *this, m.dim(),
                                  false, function_expr);
             // cout << "after analysis "  << ga_tree_to_string(dtree) << endl;
-            add_tree(dtree, m, mim, rg, expr);
+            add_tree(dtree, m, mim, rg, expr, add_derivative_order,
+                     function_expr);
           }
         }
       }
@@ -4677,7 +4679,7 @@ namespace getfem {
   size_type ga_workspace::add_expression(const std::string expr,
                                          const mesh_im &mim,
                                          const mesh_region &rg_,
-                                         bool add_derivative) {
+                                         size_type add_derivative_order) {
     const mesh_region &rg = register_region(mim.linked_mesh(), rg_);
     // cout << "adding expression " << expr << endl;
     size_type max_order = 0;
@@ -4698,13 +4700,15 @@ namespace getfem {
                              false, false);
         if ((*it)->root)
           max_order = std::max((*it)->root->nb_test_functions(), max_order);
-        add_tree(*(*it), mim.linked_mesh(), mim, rg, expr, add_derivative);
+        add_tree(*(*it), mim.linked_mesh(), mim, rg, expr,
+                 add_derivative_order);
       }
 
       if (tree.root) {
         // cout << "adding tree expression " << endl;
         max_order = std::max(tree.root->nb_test_functions(), max_order);
-        add_tree(tree, mim.linked_mesh(), mim, rg, expr);
+        add_tree(tree, mim.linked_mesh(), mim, rg, expr,
+                 add_derivative_order);
       }
       clear_aux_trees();
     }
@@ -4719,7 +4723,7 @@ namespace getfem {
     if (tree.root) {
       // GMM_ASSERT1(tree.root->nb_test_functions() == 0,
       //            "Invalid function expression");
-      add_tree(tree, dummy_mesh, dummy_mim, dummy_region, expr, false);
+      add_tree(tree, dummy_mesh, dummy_mim, dummy_region, expr, 0);
     }
   }
 
@@ -4733,7 +4737,7 @@ namespace getfem {
     if (tree.root) {
       GMM_ASSERT1(tree.root->nb_test_functions() == 0,
                   "Invalid expression containing test functions");
-      add_tree(tree, m, dummy_mim, rg, expr, false, false);
+      add_tree(tree, m, dummy_mim, rg, expr, 0, false);
     }
   }
 
@@ -4748,7 +4752,7 @@ namespace getfem {
     if (tree.root) {
       GMM_ASSERT1(tree.root->nb_test_functions() == 0,
                   "Invalid expression containing test functions");
-      add_tree(tree, m, mim, rg, expr, false, false);
+      add_tree(tree, m, mim, rg, expr, 0, false);
     }
   }
 
@@ -6965,6 +6969,25 @@ namespace getfem {
     return constant_term;
   }
 
+  //=========================================================================
+  // Extract the order one term corresponding to a certain test function 
+  //=========================================================================
+
+  std::string ga_workspace::extract_order1_term(const std::string &varname) {
+    std::string term;
+    for (size_type i = 0; i < trees.size(); ++i) {
+      ga_workspace::tree_description &td =  trees[i];
+      if (td.order == 1 && td.name_test1.compare(varname) == 0) {
+        ga_tree local_tree = *(td.ptree);
+        if (term.size())
+          term += "+("+ga_tree_to_string(local_tree)+")";
+        else
+          term = "("+ga_tree_to_string(local_tree)+")";
+      }
+    }
+    return term;
+  }
+
 
   //=========================================================================
   // Derivation algorithm: derivation of a tree with respect to a variable
@@ -8406,7 +8429,7 @@ namespace getfem {
              else if (pnode->test_function_type < 3) {
                if (child0->tensor_proper_size() == 1)
                  pgai = new ga_instruction_simple_tmult
-                   (pnode->t, child1->t, child0->t);
+                   (pnode->t, child0->t, child1->t);
                else {
                  if (s2 == 2) // Unroll loop test ... to be extended
                    pgai = new ga_instruction_reduction_2
@@ -8965,7 +8988,8 @@ namespace getfem {
           ga_compile_interpolate_trans(root, workspace, gis, rmi, *(td.m));
           ga_compile_node(root, workspace, gis, rmi, *(td.m), false,
                           rmi.current_hierarchy);
-          // cout << "compilation finished "; ga_print_node(root, cout); cout << endl;
+          // cout << "compilation finished "; ga_print_node(root, cout);
+          // cout << endl;
 
           // Addition of an assembly instruction
           pga_instruction pgai = 0;

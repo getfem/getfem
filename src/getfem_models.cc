@@ -3037,7 +3037,8 @@ namespace getfem {
       expr = expr_;
       set_flags(brickname, true /* is linear*/,
                 true /* is symmetric */, true /* is coercive */,
-                true /* is real */, false /* is complex */);
+                true /* is real */, false /* is complex */,
+                false /* compute each time */, false /* has a Neumann term */);
       directvarname = directvarname_; directdataname = directdataname_;
     }
 
@@ -5395,7 +5396,7 @@ namespace getfem {
     }
   };
 
-
+  // Deprecated brick
   size_type add_Dirichlet_condition_with_Nitsche_method
   (model &md, const mesh_im &mim, const std::string &varname,
    const std::string &gamma0name, size_type region, scalar_type theta,
@@ -5421,7 +5422,46 @@ namespace getfem {
     return md.add_brick(pbr, vl, dl, tl, model::mimlist(1, &mim), region);
   }
 
+  // New brick
+  size_type add_Dirichlet_condition_with_Nitsche_method
+  (model &md, const mesh_im &mim, const std::string &varname,
+   const std::string &Neumannterm,
+   const std::string &datagamma0, size_type region, scalar_type theta,
+   const std::string &datag) {
+    char stheta[20];
+    sprintf(stheta, "%.16g", theta);
+    ga_workspace workspace(md, true);
+    size_type order = workspace.add_expression(Neumannterm, mim, region, 1);
+    GMM_ASSERT1(order == 0, "Wrong expression of the Neumann term");
+    model::varnamelist vl, vl_test1, vl_test2, dl;
+    bool is_lin = workspace.used_variables(vl, vl_test1, vl_test2, dl, 1);
+    
+    std::string condition = "("+varname + (datag.size() ? "-("+datag+"))":")");
+    std::string gamma = "(("+datagamma0+")*element_size)";
+    std::string r = "(1/"+gamma+")";
+    std::string expr = "("+r+"*"+condition+"-("+Neumannterm+")).Test_"+varname;
+    if (theta != scalar_type(0)) {
+      std::string derivative_Neumann = workspace.extract_order1_term(varname);
+      if (derivative_Neumann.size()) 
+        expr+="-"+std::string(stheta)+"*"+condition+".("+derivative_Neumann+")";
+    }
 
+    // cout << "Nitsche expression : " << expr << endl;
+    // cout << "is_lin : " << int(is_lin) << endl;
+    
+    if (is_lin) {
+      return add_linear_generic_assembly_brick
+        (md, mim, expr, region, false, false,
+         "Dirichlet condition with Nitsche's method");
+    } else {
+      return add_nonlinear_generic_assembly_brick
+        (md, mim, expr, region, false, false,
+         "Dirichlet condition with Nitsche's method");
+    }
+  }
+
+  
+  // Deprecated brick
   size_type add_normal_Dirichlet_condition_with_Nitsche_method
   (model &md, const mesh_im &mim, const std::string &varname,
    const std::string &gamma0name, size_type region, scalar_type theta,
@@ -5446,6 +5486,44 @@ namespace getfem {
     return md.add_brick(pbr, vl, dl, tl, model::mimlist(1, &mim), region);
   }
 
+  // New brick
+  size_type add_normal_Dirichlet_condition_with_Nitsche_method
+  (model &md, const mesh_im &mim, const std::string &varname,
+   const std::string &Neumannterm,
+   const std::string &datagamma0, size_type region, scalar_type theta,
+   const std::string &datag) {
+    char stheta[20];
+    sprintf(stheta, "%.16g", theta);
+    ga_workspace workspace(md, true);
+    size_type order = workspace.add_expression(Neumannterm, mim, region, 1);
+    GMM_ASSERT1(order == 0, "Wrong expression of the Neumann term");
+    model::varnamelist vl, vl_test1, vl_test2, dl;
+    bool is_lin = workspace.used_variables(vl, vl_test1, vl_test2, dl, 1);
+    
+    std::string condition = "("+varname+".Normal"
+      + (datag.size() ? "-("+datag+"))":")");
+    std::string gamma = "(("+datagamma0+")*element_size)";
+    std::string r = "(1/"+gamma+")";
+    std::string expr = "("+r+"*"+condition+"-Normal.("+Neumannterm
+      +"))*(Normal.Test_"+varname+")";
+    if (theta != scalar_type(0)) {
+      std::string derivative_Neumann = workspace.extract_order1_term(varname);
+      if (derivative_Neumann.size()) 
+        expr+="-"+std::string(stheta)+"*"+condition+"*Normal.("
+          +derivative_Neumann+")";
+    }
+    if (is_lin) {
+      return add_linear_generic_assembly_brick
+        (md, mim, expr, region, false, false,
+         "Dirichlet condition with Nitsche's method");
+    } else {
+      return add_nonlinear_generic_assembly_brick
+        (md, mim, expr, region, false, false,
+         "Dirichlet condition with Nitsche's method");
+    }
+  }
+
+  // Deprecated brick
   size_type add_generalized_Dirichlet_condition_with_Nitsche_method
   (model &md, const mesh_im &mim, const std::string &varname,
    const std::string &gamma0name, size_type region, scalar_type theta,
@@ -5469,6 +5547,43 @@ namespace getfem {
     dl.push_back(dataname);
     dl.push_back(Hname);
     return md.add_brick(pbr, vl, dl, tl, model::mimlist(1, &mim), region);
+  }
+
+    // New brick
+  size_type add_generalized_Dirichlet_condition_with_Nitsche_method
+  (model &md, const mesh_im &mim, const std::string &varname,
+   const std::string &Neumannterm,
+   const std::string &datagamma0, size_type region, scalar_type theta,
+   const std::string &datag, const std::string &dataH) {
+    char stheta[20];
+    sprintf(stheta, "%.16g", theta);
+    ga_workspace workspace(md, true);
+    size_type order = workspace.add_expression(Neumannterm, mim, region, 1);
+    GMM_ASSERT1(order == 0, "Wrong expression of the Neumann term");
+    model::varnamelist vl, vl_test1, vl_test2, dl;
+    bool is_lin = workspace.used_variables(vl, vl_test1, vl_test2, dl, 1);
+    
+    std::string condition = "(("+dataH+")*"+varname
+      + (datag.size() ? "-("+datag+"))":")");
+    std::string gamma = "(("+datagamma0+")*element_size)";
+    std::string r = "(1/"+gamma+")";
+    std::string expr = "("+r+"*"+condition+"-("+dataH+")*("+Neumannterm
+      +"))*(("+dataH+")*Test_"+varname+")";
+    if (theta != scalar_type(0)) {
+      std::string derivative_Neumann = workspace.extract_order1_term(varname);
+      if (derivative_Neumann.size()) 
+        expr+="-"+std::string(stheta)+"*"+condition+"*(("+dataH+")*("
+          +derivative_Neumann+"))";
+    }
+    if (is_lin) {
+      return add_linear_generic_assembly_brick
+        (md, mim, expr, region, false, false,
+         "Dirichlet condition with Nitsche's method");
+    } else {
+      return add_nonlinear_generic_assembly_brick
+        (md, mim, expr, region, false, false,
+         "Dirichlet condition with Nitsche's method");
+    }
   }
 
   // ----------------------------------------------------------------------
