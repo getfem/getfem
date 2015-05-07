@@ -6748,6 +6748,128 @@ namespace getfem {
     ga_valid_operand(expr, tree.root);
   }
 
+
+
+  //=========================================================================
+  // Extract a sub tree which consists of the corresponding node and of
+  // the terms multiplying this term, but not the term in addition.
+  // The aim is to expand an expression is a sum of elementary factors.
+  // Complains if a nonlinear term is encountered.
+  //=========================================================================
+  static void ga_extract_factor(ga_tree &result_tree, pga_tree_node pnode,
+                                pga_tree_node &new_pnode) {
+    
+    result_tree.clear();
+    result_tree.copy_node(pnode, 0,  result_tree.root);
+    new_pnode = result_tree.root;
+
+    bool minus_sign = false;
+
+    pga_tree_node pnode_child = pnode;
+    pnode = pnode->parent;
+
+    while (pnode) {
+
+      size_type nbch = pnode->children.size();
+      pga_tree_node child0 = (nbch > 0) ? pnode->children[0] : 0;
+      pga_tree_node child1 = (nbch > 1) ? pnode->children[1] : 0;
+      
+
+      switch (pnode->node_type) {
+        
+        
+      case GA_NODE_OP:
+        switch(pnode->op_type) {
+        case GA_PLUS:
+          // Nothing to do
+          break;
+        case GA_MINUS:
+          if (child1 == pnode_child) minus_sign = !(minus_sign);
+          // A remaining minus sign is added at the end if necessary.
+          break;
+        case GA_UNARY_MINUS: case GA_QUOTE: case GA_TRACE: case GA_DEVIATOR:
+        case GA_PRINT:
+          // Copy of the term
+          result_tree.insert_node(result_tree.root, pnode->node_type);
+          result_tree.root->op_type = pnode->op_type;
+          result_tree.root->pos = pnode->pos;
+          break;
+        case GA_DOT: case GA_MULT: case GA_COLON: case GA_TMULT:
+        case GA_DOTMULT: case GA_DIV: case GA_DOTDIV:
+          // Copy of the term and other child
+          result_tree.insert_node(result_tree.root, pnode->node_type);
+          result_tree.root->op_type = pnode->op_type;
+          result_tree.root->pos = pnode->pos;
+          if (child0 == pnode_child) {
+            result_tree.root->children.resize(2);
+            result_tree.copy_node(child1, result_tree.root,
+                                  result_tree.root->children[1]);
+          } else if (child1 == pnode_child) {
+            result_tree.root->children.resize(2);
+            result_tree.root->children[1] = result_tree.root->children[0];
+            result_tree.copy_node(child0, result_tree.root,
+                                  result_tree.root->children[0]);
+          } else GMM_ASSERT1(false, "Corrupted tree");
+          break;
+        default: GMM_ASSERT1(false, "Unexpected operation. Internal error.");
+        }
+        break;
+        
+      case GA_NODE_PARAMS:
+        cout << "child0->node_type = " << child0->node_type << endl;
+        cout << "child1->node_type = " << child1->node_type << endl;
+        GMM_ASSERT1(child0->node_type == GA_NODE_RESHAPE, "Cannot extract a "
+                    "factor which is a parameter of a nonlinear "
+                    "operator/function");
+        GMM_ASSERT1(child1 == pnode_child, "Cannot extract a factor of a "
+                    "Reshape size parameter");
+        // Copy of the term and other children
+        result_tree.insert_node(result_tree.root, pnode->node_type);
+        result_tree.root->pos = pnode->pos;
+        result_tree.root->children.resize(pnode->children.size());
+        result_tree.root->children[1] = result_tree.root->children[0];
+        for (size_type i = 0; i < pnode->children.size(); ++i) {
+          if (i != 1) {
+            result_tree.copy_node(pnode->children[i], result_tree.root,
+                                  result_tree.root->children[i]);
+          }
+        }
+        break;
+        
+      case GA_NODE_C_MATRIX:
+        result_tree.insert_node(result_tree.root, pnode->node_type);
+        result_tree.root->pos = pnode->pos;
+        result_tree.root->children.resize(pnode->children.size());
+        for (size_type i = 0; i < pnode->children.size(); ++i)
+          if (pnode_child == pnode->children[i]) {
+            result_tree.root->children[i] = result_tree.root->children[0];
+            result_tree.root->children[0] = 0;
+          }
+        
+        for (size_type i = 0; i < pnode->children.size(); ++i) {
+          if (pnode_child == pnode->children[i]) {
+            pnode->children[i] = new ga_tree_node(GA_NODE_ZERO, pnode->pos);
+            pnode->children[i]->init_scalar_tensor(scalar_type(0));
+            pnode->children[i]->parent = pnode;
+          }
+        }
+        break;
+        
+      default: GMM_ASSERT1(false, "Unexpected node type " << pnode->node_type
+                           << " in extract constant term. Internal error.");
+      }
+      
+      pnode_child = pnode;
+      pnode = pnode->parent;
+    }
+    
+    if (minus_sign) {
+      result_tree.insert_node(result_tree.root, GA_NODE_OP);
+      result_tree.root->op_type = GA_UNARY_MINUS;
+      result_tree.root->pos = pnode->children[0]->pos;
+    }
+  }
+
   //=========================================================================
   // Splitting of the terms which depend on different test functions.
   // To be performed just after a semantic analysis.
@@ -6978,7 +7100,7 @@ namespace getfem {
     for (size_type i = 0; i < trees.size(); ++i) {
       ga_workspace::tree_description &td =  trees[i];
       if (td.order == 1 && td.name_test1.compare(varname) == 0) {
-        ga_tree local_tree = *(td.ptree);
+        ga_tree &local_tree = *(td.ptree);
         if (term.size())
           term += "+("+ga_tree_to_string(local_tree)+")";
         else
@@ -6988,6 +7110,199 @@ namespace getfem {
     return term;
   }
 
+
+  //=========================================================================
+  // Extract Neumann terms
+  //=========================================================================
+
+  static std::string ga_extract_one_Neumann_term
+  (const std::string &varname,
+    ga_workspace &workspace, pga_tree_node pnode) {
+
+    size_type N = workspace.qdim(varname);
+    const mesh_fem *mf = workspace.associated_mf(varname);
+    GMM_ASSERT1(mf, "Works only with fem variables.");
+    size_type meshdim = mf->linked_mesh().dim();
+    ga_tree factor;
+    pga_tree_node new_pnode;
+    ga_extract_factor(factor, pnode, new_pnode);
+    std::string result;
+    pga_tree_node nnew_pnode = new_pnode;
+
+    int cas = new_pnode->node_type == GA_NODE_GRAD_TEST ? 0 : 1;
+    // Allow to detect Trace(Grad_Test_u)
+    if (cas == 0 && new_pnode->parent &&
+        new_pnode->parent->node_type == GA_NODE_OP &&
+        new_pnode->parent->op_type == GA_TRACE) {
+      cas = 2; nnew_pnode = new_pnode->parent;
+    }
+    bool ok = true;
+    pga_tree_node colon_pnode = 0;
+    bool quote_before_colon = false;
+
+    // A:Grad_Test_u --> A*Normal if A is a matrix
+    // Grad_Test_u:A --> A*Normal if A is a matrix
+    // A*Div_Test_u  --> A*Normal if A is a scalar
+    // Div_Test_u*A  --> Normal*A if A is a scalar
+    // A*(Grad_Test_u)' --> (A)'*Normal if A is a matrix
+    // intercaled scalar multplications and divisions are taken into account
+    while (nnew_pnode->parent) {
+      pga_tree_node previous_node = nnew_pnode;
+      nnew_pnode = nnew_pnode->parent;
+
+      if (nnew_pnode->node_type == GA_NODE_OP &&
+          nnew_pnode->op_type == GA_MULT &&
+          nnew_pnode->children[0] == previous_node &&
+          nnew_pnode->children[1]->tensor_proper_size() == 1) {
+      } else if (nnew_pnode->node_type == GA_NODE_OP &&
+                 nnew_pnode->op_type == GA_MULT &&
+                 nnew_pnode->children[1] == previous_node &&
+                 nnew_pnode->children[0]->tensor_proper_size() == 1) {
+
+      } else if (nnew_pnode->node_type == GA_NODE_OP &&
+                 nnew_pnode->op_type == GA_DIV &&
+                 nnew_pnode->children[0] == previous_node &&
+                 nnew_pnode->children[1]->tensor_proper_size() == 1) {
+
+      } else if (nnew_pnode->node_type == GA_NODE_OP &&
+                 nnew_pnode->op_type == GA_COLON &&
+                 nnew_pnode->children[0] == previous_node &&
+                 nnew_pnode->children[1]->tensor_order() == 2 &&
+                 colon_pnode == 0 && cas == 0) {
+        std::swap(nnew_pnode->children[0],  nnew_pnode->children[1]);
+        colon_pnode = nnew_pnode;
+      } else if (nnew_pnode->node_type == GA_NODE_OP &&
+                 nnew_pnode->op_type == GA_COLON &&
+                 nnew_pnode->children[1] == previous_node &&
+                 nnew_pnode->children[0]->tensor_order() == 2 &&
+                 colon_pnode == 0 && cas == 0) {
+        colon_pnode = nnew_pnode;
+      } else if (nnew_pnode->node_type == GA_NODE_OP &&
+                 nnew_pnode->op_type == GA_QUOTE &&
+                 colon_pnode == 0 && cas == 0 && !quote_before_colon) {
+        quote_before_colon = true;
+      } else ok = false;
+    }
+
+    //  cout << "analyzing factor : " <<  ga_tree_to_string(factor) << endl;
+    // cout << "ok = " << int(ok) << endl;
+    // cout << "colon_pnode = " << colon_pnode << endl;
+
+    if (ok && cas == 0 && !colon_pnode) ok = false;
+    
+    if (N == 1) {
+      new_pnode->node_type = GA_NODE_NORMAL;
+      result = "(" + ga_tree_to_string(factor) + ")";
+    } else if (ok) {
+      switch (cas) {
+      case 0:
+        new_pnode->node_type = GA_NODE_NORMAL;
+        colon_pnode->op_type = GA_MULT;
+        if (quote_before_colon) {
+          factor.insert_node(colon_pnode->children[0], GA_NODE_OP);
+          colon_pnode->children[0]->op_type = GA_QUOTE;
+          nnew_pnode = new_pnode->parent;
+          while(nnew_pnode->node_type != GA_NODE_OP ||
+                nnew_pnode->op_type != GA_QUOTE)
+            nnew_pnode = nnew_pnode->parent;
+          factor.replace_node_by_child(nnew_pnode,0);
+        }
+        break;
+      case 1:
+        new_pnode->node_type = GA_NODE_NORMAL;
+        break;
+      case 2:
+        new_pnode->parent->node_type = GA_NODE_NORMAL;
+        factor.clear_children(new_pnode->parent);
+        break;
+      }
+      result = "(" + ga_tree_to_string(factor) + ")";
+
+    } else {
+      // General case 
+
+      result = "[";
+      bgeot::multi_index mi(2); mi[0] = N; mi[1] = meshdim;
+      
+      for (size_type i = 0; i < N; ++i) {
+        factor.clear_children(new_pnode);
+        new_pnode->node_type = GA_NODE_C_MATRIX;
+        new_pnode->nbc1 = meshdim;
+        new_pnode->nbc2 = new_pnode->nbc3 = 1;
+        new_pnode->t.adjust_sizes(mi);
+        new_pnode->children.resize(N*meshdim);
+        for (size_type j = 0; j < N; ++j) {
+          for (size_type k = 0; k < meshdim; ++k) {
+            if (j == i) {
+              pga_tree_node param_node = new_pnode->children[k*N+j]
+                = new ga_tree_node(GA_NODE_PARAMS, pnode->pos);
+              new_pnode->children[k*N+j]->parent = new_pnode;
+              param_node->children.resize(2);
+              param_node->children[0] = new ga_tree_node(GA_NODE_NORMAL,
+                                                         pnode->pos);
+              param_node->children[0]->parent = param_node;
+              param_node->children[1] = new ga_tree_node(GA_NODE_CONSTANT,
+                                                         pnode->pos);
+              param_node->children[1]->parent = param_node;
+              param_node->children[1]->init_scalar_tensor(scalar_type(k));
+            
+            } else {
+              new_pnode->children[k*N+j] = new ga_tree_node(GA_NODE_ZERO,
+                                                            pnode->pos);
+              new_pnode->children[k*N+j]->init_scalar_tensor(scalar_type(0));
+              new_pnode->children[k*N+j]->parent = new_pnode;
+            }
+          }
+        }
+        result += "(" + ga_tree_to_string(factor) + ")";
+        if (i < N-1) result += ";";
+      }
+      result += "]";
+      GMM_TRACE2("Warning, generic Neumann term used: " << result); 
+    }
+      
+    return result;
+  }
+
+
+  static void ga_extract_Neumann_term_rec
+  (ga_tree &tree, const std::string &varname,
+   ga_workspace &workspace, pga_tree_node pnode, std::string &result) {
+
+    for (size_type i = 0; i < pnode->children.size(); ++i)
+      ga_extract_Neumann_term_rec(tree, varname, workspace,
+                                  pnode->children[i], result);
+
+    switch (pnode->node_type) {
+    case GA_NODE_DIVERG_TEST: case GA_NODE_GRAD_TEST:
+    case GA_NODE_ELEMENTARY_GRAD_TEST: case GA_NODE_ELEMENTARY_DIVERG_TEST:
+      if (pnode->name.compare(varname) == 0) {
+        if (result.size()) result += " + ";
+        result += ga_extract_one_Neumann_term(varname, workspace, pnode);
+      }
+      break;
+    case GA_NODE_INTERPOLATE_GRAD_TEST: case GA_NODE_INTERPOLATE_DIVERG_TEST:
+          if (pnode->name.compare(varname) == 0)
+            GMM_ASSERT1(false, "Do not know how to extract a "
+                        "Neumann term with an interpolate transformation");
+       break;
+    default: break;
+    }
+  }
+
+  std::string ga_workspace::extract_Neumann_term(const std::string &varname) {
+    std::string result;
+    for (size_type i = 0; i < trees.size(); ++i) {
+      ga_workspace::tree_description &td =  trees[i];
+      if (td.order == 1 && td.name_test1.compare(varname) == 0) {
+        ga_tree &local_tree = *(td.ptree);
+        if (local_tree.root)
+          ga_extract_Neumann_term_rec(local_tree, varname, *this,
+                                      local_tree.root, result);
+      }
+    }
+    return result;
+  }
 
   //=========================================================================
   // Derivation algorithm: derivation of a tree with respect to a variable
