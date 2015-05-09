@@ -1,7 +1,7 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
 
-Copyright (C) 2005-2012 Yves Renard, Julien Pommier
+Copyright (C) 2005-2015 Yves Renard, Julien Pommier
 
 This file is a part of GETFEM++
 
@@ -30,7 +30,7 @@ might be covered by the GNU Lesser General Public License.
 ===========================================================================*/
 
 /**@file getfem_mesh_region.h
-@author  Yves Renard <Yves.Renard@insa-lyon.fr>, Julien Pommier <Julien.Pommier@insa-toulouse.fr>
+@author  Yves Renard, Julien Pommier
 @date 2005.
 @brief  region objects (set of convexes and/or convex faces)
 */
@@ -97,12 +97,12 @@ namespace getfem {
                               mesh_region(size_type) constructor is used */
 
     size_type type_; //optional type of the region
-    omp_distribute<bool> partitioning_allowed; /**specifies that in multithreaded code 
-                                               only a partition of the region is visible
-                                               in index() and size() methods, as well as
-                                               during iteration with mr_visitor */
+    omp_distribute<bool> partitioning_allowed; /** specifies that in
+                          multithreaded code only a partition of the
+                          region is visible in index() and size() methods,
+                          as well as during iteration with mr_visitor */
     mesh *parent_mesh; /* used for mesh_region "extracted" from
-                       a mesh (to provide feedback) */
+                          a mesh (to provide feedback) */
 
 
     //cashing iterators for paritions
@@ -164,15 +164,20 @@ namespace getfem {
     /** subtract the second region from the first one */
     static mesh_region subtract(const mesh_region &a, 
                                 const mesh_region &b);
+    /** Test if the region is a boundary of a list of faces of elements of
+        region `rg`. Return 0 if not, -1 if only partially, 1 if the region
+        contains only some faces which are all faces of elements of `rg`. */
+    int region_is_faces_of(const mesh_region &rg);
+
     size_type id() const { return id_; }
 
     size_type get_type() const { return type_; }
 
     void  set_type(size_type type)  { type_ = type; }
 
-    /** in multithreaded part of the program makes only a partition of the region
-    visible in the index() and size() operations, as well as during iterations
-    with mr_visitor. This is a default behaviour*/
+    /** in multithreaded part of the program makes only a partition of the 
+    region visible in the index() and size() operations, as well as during 
+    iterations with mr_visitor. This is a default behaviour*/
     void  allow_partitioning();
 
     /**disregard partitioning, which means being able to see the whole region
@@ -270,7 +275,7 @@ namespace getfem {
 
       bool operator++() { return next(); }
 
-      bool finished() const { return finished_; }//it == ite && c.none(); }	
+      bool finished() const { return finished_; }//it == ite && c.none(); }
 
       bool next_face() 
       {

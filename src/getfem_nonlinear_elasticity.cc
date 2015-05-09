@@ -1014,6 +1014,7 @@ namespace getfem {
   //  Add a nonlinear elasticity brick.  
   //=========================================================================
 
+  // Deprecated brick
   size_type add_nonlinear_elasticity_brick
   (model &md, const mesh_im &mim, const std::string &varname,
    const abstract_hyperelastic_law &AHL, const std::string &dataname,

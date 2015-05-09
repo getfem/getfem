@@ -581,7 +581,8 @@ namespace getfem {
 
   /** Add a nonlinear (large strain) elasticity term to the model with
       respect to the variable
-      `varname`. Note that the constitutive law is described by `AHL` which
+      `varname` (deprecated brick, use add_finite_strain_elaticity instead).
+      Note that the constitutive law is described by `AHL` which
       should not be freed since the model is used. `dataname` described the
       parameters of the constitutive laws. It could be a vector of value
       of length the number of parameter of the constitutive law or a vector

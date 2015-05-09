@@ -7092,6 +7092,26 @@ namespace getfem {
   }
 
   //=========================================================================
+  // Extract the order zero term 
+  //=========================================================================
+
+  std::string ga_workspace::extract_order0_term(void) {
+    std::string term;
+    for (size_type i = 0; i < trees.size(); ++i) {
+      ga_workspace::tree_description &td =  trees[i];
+      if (td.order == 0) {
+        ga_tree &local_tree = *(td.ptree);
+        if (term.size())
+          term += "+("+ga_tree_to_string(local_tree)+")";
+        else
+          term = "("+ga_tree_to_string(local_tree)+")";
+      }
+    }
+    return term;
+  }
+
+
+  //=========================================================================
   // Extract the order one term corresponding to a certain test function 
   //=========================================================================
 

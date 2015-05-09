@@ -778,56 +778,14 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        out.pop().from_integer(int(ind));
        );
 
-
-    /*@SET ind = ('add Dirichlet condition with Nitsche method', @tmim mim, @str varname, @str gamma0name, @int region[, @scalar theta][, @str dataname])
-      Add a Dirichlet condition on the variable `varname` and the mesh
-      region `region`. This region should be a boundary. The Dirichlet
-      condition is prescribed with Nitsche's method. `dataname` is the optional
-      right hand side of the Dirichlet condition. It could be constant or
-      described on a fem; scalar or vector valued, depending on the variable
-      on which the Dirichlet condition is prescribed. `gamma0name` is the
-      Nitsche's method parameter. `theta` is a scalar value which can be
-      positive or negative. `theta = 1` corresponds to the standard symmetric
-      method which is conditionnaly coercive for  `gamma0` small.
-      `theta = -1` corresponds to the skew-symmetric method which is
-      inconditionnaly coercive. `theta = 0` is the simplest method
-      for which the second derivative of the Neumann term is not necessary. 
-      CAUTION: This brick has to be added in the model after all the bricks
-      corresponding to partial differential terms having a Neumann term.
-      Moreover, This brick can only be applied to bricks declaring their
-      Neumann terms. Returns the brick index in the model.
-    @*/
-    sub_command
-      ("add Dirichlet condition with Nitsche method", 4, 6, 0, 1,
-       getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
-       std::string varname = in.pop().to_string();
-       std::string gamma0name = in.pop().to_string();
-       size_type region = in.pop().to_integer();
-       scalar_type theta = scalar_type(1);
-       std::string dataname;
-       if (in.remaining()) {
-	 mexarg_in argin = in.pop();
-	 if (argin.is_string())
-	   dataname = argin.to_string();
-	 else
-	   theta = argin.to_scalar();
-       }
-       if (in.remaining()) dataname = in.pop().to_string();
-
-       size_type ind = config::base_index();
-       ind += getfem::add_Dirichlet_condition_with_Nitsche_method
-       (md->model(), gfi_mim->mesh_im(), varname, gamma0name, region,
-	theta, dataname);
-       workspace().set_dependance(md, gfi_mim);
-       out.pop().from_integer(int(ind));
-       );
-
-    /*@SET ind = ('add Dirichlet condition with Nitsche method deux', @tmim mim, @str varname, @str Neumannterm, @str datagamma0, @int region[, @scalar theta][, @str dataname])
+    /*@SET ind = ('add Dirichlet condition with Nitsche method', @tmim mim, @str varname, @str Neumannterm, @str datagamma0, @int region[, @scalar theta][, @str dataname])
       Add a Dirichlet condition on the variable `varname` and the mesh
       region `region`. This region should be a boundary. `Neumannterm`
       is the expression of the Neumann term (obtained by the Green formula)
       described as an expression of the high-level
-      generic assembly language. The Dirichlet
+      generic assembly language. This term can be obtained by 
+      MODEL:GET('Neumann term', varname, region) once all volumic bricks have
+      been added to the model. The Dirichlet
       condition is prescribed with Nitsche's method. `datag` is the optional
       right hand side of the Dirichlet condition. `datagamma0` is the
       Nitsche's method parameter. `theta` is a scalar value which can be
@@ -839,7 +797,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       even for nonlinear problems. Return the brick index in the model.
     @*/
     sub_command
-      ("add Dirichlet condition with Nitsche method deux", 5, 7, 0, 1,
+      ("add Dirichlet condition with Nitsche method", 5, 7, 0, 1,
        getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
        std::string varname = in.pop().to_string();
        std::string Neumannterm = in.pop().to_string();
@@ -987,10 +945,15 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        );
 
 
-    /*@SET ind = ('add normal Dirichlet condition with Nitsche method', @tmim mim, @str varname, @str gamma0name, @int region[, @scalar theta][, @str dataname])
+    /*@SET ind = ('add normal Dirichlet condition with Nitsche method', @tmim mim, @str varname, @str Neumannterm, @str gamma0name, @int region[, @scalar theta][, @str dataname])
       Add a Dirichlet condition to the normal component of the vector
       (or tensor) valued variable `varname` and the mesh region `region`.
-      This region should be a boundary. The Dirichlet
+      This region should be a boundary. `Neumannterm`
+      is the expression of the Neumann term (obtained by the Green formula)
+      described as an expression of the high-level
+      generic assembly language. This term can be obtained by 
+      MODEL:GET('Neumann term', varname, region) once all volumic bricks have
+      been added to the model. The Dirichlet
       condition is prescribed with Nitsche's method. `dataname` is the optional
       right hand side of the Dirichlet condition. It could be constant or
       described on a fem. `gamma0name` is the
@@ -1001,16 +964,14 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       inconditionnaly coercive. `theta = 0` is the simplest method
       for which the second derivative of the Neumann term is not necessary
       even for nonlinear problems. 
-      CAUTION: This brick has to be added in the model after all the bricks
-      corresponding to partial differential terms having a Neumann term.
-      Moreover, This brick can only be applied to bricks declaring their
-      Neumann terms. Returns the brick index in the model.
+      Returns the brick index in the model.
       (This brick is not fully tested)
     @*/
     sub_command
-      ("add normal Dirichlet condition with Nitsche method", 4, 6, 0, 1,
+      ("add normal Dirichlet condition with Nitsche method", 5, 7, 0, 1,
        getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
        std::string varname = in.pop().to_string();
+       std::string Neumannterm = in.pop().to_string();
        std::string gamma0name = in.pop().to_string();
        size_type region = in.pop().to_integer();
        scalar_type theta = scalar_type(1);
@@ -1026,8 +987,8 @@ void gf_model_set(getfemint::mexargs_in& m_in,
 
        size_type ind = config::base_index();
        ind += getfem::add_normal_Dirichlet_condition_with_Nitsche_method
-       (md->model(), gfi_mim->mesh_im(), varname, gamma0name, region,
-	theta, dataname);
+       (md->model(), gfi_mim->mesh_im(), varname, Neumannterm,
+        gamma0name, region, theta, dataname);
        workspace().set_dependance(md, gfi_mim);
        out.pop().from_integer(int(ind));
        );
@@ -1130,14 +1091,18 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        );
 
 
-    /*@SET ind = ('add generalized Dirichlet condition with Nitsche method', @tmim mim, @str varname, @str gamma0name, @int region[, @scalar theta], @str dataname, @str Hname)
+    /*@SET ind = ('add generalized Dirichlet condition with Nitsche method', @tmim mim, @str varname, @str Neumannterm, @str gamma0name, @int region[, @scalar theta], @str dataname, @str Hname)
       Add a Dirichlet condition on the variable `varname` and the mesh
       region `region`.
       This version is for vector field. It prescribes a condition
       @f$ Hu = r @f$ where `H` is a matrix field.
       CAUTION : the matrix H should have all eigenvalues equal to 1 or 0.
-      The region should be a
-      boundary. This region should be a boundary.  The Dirichlet
+      The region should be a boundary.   `Neumannterm`
+      is the expression of the Neumann term (obtained by the Green formula)
+      described as an expression of the high-level
+      generic assembly language. This term can be obtained by 
+      MODEL:GET('Neumann term', varname, region) once all volumic bricks have
+      been added to the model.  The Dirichlet
       condition is prescribed with Nitsche's method. `dataname` is the optional
       right hand side of the Dirichlet condition. It could be constant or
       described on a fem. `gamma0name` is the
@@ -1149,17 +1114,14 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       for which the second derivative of the Neumann term is not necessary
       even for nonlinear problems. `Hname` is the data
       corresponding to the matrix field `H`. It has to be a constant matrix
-      or described on a scalar fem.
-      CAUTION: This brick has to be added in the model after all the bricks
-      corresponding to partial differential terms having a Neumann term.
-      Moreover, This brick can only be applied to bricks declaring their
-      Neumann terms. Returns the brick index in the model.
+      or described on a scalar fem. Returns the brick index in the model.
       (This brick is not fully tested)
     @*/
     sub_command
-      ("add generalized Dirichlet condition with Nitsche method", 6, 7, 0, 1,
+      ("add generalized Dirichlet condition with Nitsche method", 7, 8, 0, 1,
        getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
        std::string varname = in.pop().to_string();
+       std::string Neumannterm = in.pop().to_string();
        std::string gamma0name = in.pop().to_string();
        size_type region = in.pop().to_integer();
        scalar_type theta = scalar_type(1);
@@ -1176,8 +1138,8 @@ void gf_model_set(getfemint::mexargs_in& m_in,
 
        size_type ind = config::base_index();
        ind += getfem::add_generalized_Dirichlet_condition_with_Nitsche_method
-       (md->model(), gfi_mim->mesh_im(), varname, gamma0name, region,
-	theta, dataname, Hname);
+       (md->model(), gfi_mim->mesh_im(), varname, Neumannterm,
+        gamma0name, region, theta, dataname, Hname);
        workspace().set_dependance(md, gfi_mim);
        out.pop().from_integer(int(ind));
        );
@@ -1614,10 +1576,11 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     is a variable which represent the pressure. Be aware that an inf-sup
     condition between the finite element method describing the pressure and the
     primal variable has to be satisfied. `region` is an optional mesh region on
-    which the term is added. If it is not specified, it is added on the whole mesh.
-    `dataexpr_coeff` is an optional penalization coefficient for nearly
+    which the term is added. If it is not specified, it is added on the whole
+    mesh. `dataexpr_coeff` is an optional penalization coefficient for nearly
     incompressible elasticity for instance. In this case, it is the inverse
-    of the Lame coefficient :math:`\lambda`. Return the brick index in the model.@*/
+    of the Lame coefficient :math:`\lambda`. Return the brick index in the
+    model.@*/
     sub_command
       ("add linear incompressibility brick", 3, 5, 0, 1,
        getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
@@ -1638,16 +1601,17 @@ void gf_model_set(getfemint::mexargs_in& m_in,
 
     /*@SET ind = ('add nonlinear elasticity brick', @tmim mim, @str varname, @str constitutive_law, @str dataname[, @int region])
     Add a nonlinear elasticity term to the model relatively to the
-    variable `varname`. `lawname` is the constitutive law which
+    variable `varname` (deprecated brick, use add_finite_strain_elaticity
+    instead). `lawname` is the constitutive law which
     could be 'SaintVenant Kirchhoff', 'Mooney Rivlin', 'neo Hookean',
     'Ciarlet Geymonat' or 'generalized Blatz Ko'.
     'Mooney Rivlin' and 'neo Hookean' law names can be preceded with the word
     'compressible' or 'incompressible' to force using the corresponding version.
     The compressible version of these laws requires one additional material
     coefficient. By default, the incompressible version of 'Mooney Rivlin' law
-    and the compressible one of the 'neo Hookean' law are considered. In general,
-    'neo Hookean' is a special case of the 'Mooney Rivlin' law that requires one
-    coefficient less.
+    and the compressible one of the 'neo Hookean' law are considered. In
+    general, 'neo Hookean' is a special case of the 'Mooney Rivlin' law that
+    requires one coefficient less.
     IMPORTANT : if the variable is defined on a 2D mesh, the plane strain
     approximation is automatically used.
     `dataname` is a vector of parameters for the constitutive law. Its length
@@ -2701,7 +2665,8 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         out.pop().from_integer(int(ind + config::base_index()));
         );
      
-     /*@SET ind = ('add Nitsche contact with rigid obstacle brick', @tmim mim, @str varname, @str dataname_obstacle, @str gamma0name,  @int region[, @scalar theta[, @str dataname_friction_coeff[, @str dataname_alpha, @str dataname_wt]]])
+         
+     /*@SET ind = ('add Nitsche contact with rigid obstacle brick deux', @tmim mim, @str varname, @str Neumannterm, @str dataname_obstacle, @str gamma0name,  @int region[, @scalar theta[, @str dataname_friction_coeff[, @str dataname_alpha, @str dataname_wt]]])
       Adds a contact condition with or without Coulomb friction on the variable
       `varname` and the mesh boundary `region`. The contact condition
       is prescribed with Nitsche's method. The rigid obstacle should
@@ -2721,11 +2686,13 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       corresponding to partial differential terms having a Neumann term.
       Moreover, This brick can only be applied to bricks declaring their
       Neumann terms. Returns the brick index in the model.
+      Deprecated brick.
     @*/
     sub_command
-      ("add Nitsche contact with rigid obstacle brick", 5, 9, 0, 1,
+      ("add Nitsche contact with rigid obstacle brick", 6, 10, 0, 1,
        getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
        std::string varname = in.pop().to_string();
+       std::string Neumannterm = in.pop().to_string();
        std::string dataname_obs = in.pop().to_string();
        std::string gamma0name = in.pop().to_string();
        size_type region = in.pop().to_integer();
@@ -2747,7 +2714,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
 
        size_type ind = config::base_index();
        ind += getfem::add_Nitsche_contact_with_rigid_obstacle_brick
-       (md->model(), gfi_mim->mesh_im(), varname, dataname_obs,
+       (md->model(), gfi_mim->mesh_im(), varname, Neumannterm, dataname_obs,
 	gamma0name, theta,
 	dataname_fr, dataname_alpha, dataname_wt, region);
        workspace().set_dependance(md, gfi_mim);
@@ -2755,8 +2722,8 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        );
 
 #ifdef EXPERIMENTAL_PURPOSE_ONLY
-     
-     /*@SET ind = ('add Nitsche midpoint contact with rigid obstacle brick', @tmim mim, @str varname, @str dataname_obstacle, @str gamma0name,  @int region, @scalar theta, @str dataname_friction_coeff, @str dataname_alpha, @str dataname_wt, @int option)
+
+     /*@SET ind = ('add Nitsche midpoint contact with rigid obstacle brick deux', @tmim mim, @str varname, @str Neumannterm, @str dataname_obstacle, @str gamma0name,  @int region, @scalar theta, @str dataname_friction_coeff, @str dataname_alpha, @str dataname_wt)
       EXPERIMENTAL BRICK: for midpoint scheme only !!
       Adds a contact condition with or without Coulomb friction on the variable
       `varname` and the mesh boundary `region`. The contact condition
@@ -2773,15 +2740,15 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       The optional parameter `dataname_friction_coeff` is the friction
       coefficient which could be constant or defined on a finite element
       method.
-      CAUTION: This brick has to be added in the model after all the bricks
-      corresponding to partial differential terms having a Neumann term.
-      Moreover, This brick can only be applied to bricks declaring their
-      Neumann terms. Returns the brick index in the model.
+      Returns the brick index in the model.
+      
     @*/
     sub_command
-      ("add Nitsche midpoint contact with rigid obstacle brick", 9, 10, 0, 1,
+      ("add Nitsche midpoint contact with rigid obstacle brick", 11, 11, 0, 1,
        getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
        std::string varname = in.pop().to_string();
+       std::string Neumannterm = in.pop().to_string();
+       std::string Neumannterm_wt = in.pop().to_string();
        std::string dataname_obs = in.pop().to_string();
        std::string gamma0name = in.pop().to_string();
        size_type region = in.pop().to_integer();
@@ -2796,13 +2763,13 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        dataname_fr = in.pop().to_string();
        std::string dataname_alpha = in.pop().to_string();
        std::string dataname_wt = in.pop().to_string();
-       size_type option = in.pop().to_integer();
 
        size_type ind = config::base_index();
-       ind += getfem::add_Nitsche_midpoint_contact_with_rigid_obstacle_brick
-       (md->model(), gfi_mim->mesh_im(), varname, dataname_obs,
+       ind += getfem::add_Nitsche_contact_with_rigid_obstacle_brick_modified_midpoint
+       (md->model(), gfi_mim->mesh_im(), varname, Neumannterm, Neumannterm_wt,
+        dataname_obs,
 	gamma0name, theta,
-	dataname_fr, dataname_alpha, dataname_wt, region, option);
+	dataname_fr, dataname_alpha, dataname_wt, region);
        workspace().set_dependance(md, gfi_mim);
        out.pop().from_integer(int(ind));
        );
@@ -2868,65 +2835,6 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        out.pop().from_integer(int(ind));
        );
 
-#ifdef EXPERIMENTAL_PURPOSE_ONLY
-
-    /*@SET ind = ('add Nitsche fictitious domain contact brick twopass', @tmim mim, @str varname1, @str varname2, @str dataname_d1, @str dataname_d2, @str gamma0name [, @scalar theta[, @str dataname_friction_coeff[, @str dataname_alpha, @str dataname_wt1,@str dataname_wt2]]])
-     Adds a contact condition with or without Coulomb friction between
-     two bodies in a fictitious domain. The contact condition is applied on 
-     the variable `varname_u1` corresponds with the first and slave body 
-     with Nitsche's method and on the variable `varname_u2` corresponds 
-     with the second and master body with Nitsche's method. 
-     The contact condition is evaluated on the fictitious slave boundary.
-     The first body should be described by the level-set `dataname_d1` 
-     and the second body should be described by the level-set `dataname_d2`.
-     `gamma0name` is the Nitsche's method parameter. 
-     `theta` is a scalar value which can be positive or negative. 
-     `theta = 1` corresponds to the standard symmetric method which is
-     conditionnaly coercive for  `gamma0` small.
-     `theta = -1` corresponds to the skew-symmetric method which is inconditionnaly coercive.
-     `theta = 0` is the simplest method for which the second derivative of
-     the Neumann term is not necessary. The optional parameter `dataname_friction_coeff`
-     is the friction coefficient which could be constant or defined on a finite element method. 
-     CAUTION: This brick has to be added in the model after all the bricks
-     corresponding to partial differential terms having a Neumann term.
-     Moreover, This brick can only be applied to bricks declaring their
-     Neumann terms. Returns the brick index in the model. 
-    @*/
-    sub_command
-      ("add Nitsche fictitious domain contact brick twopass", 6, 11, 0, 1,
-       getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
-       std::string varname1 = in.pop().to_string();
-       std::string varname2 = in.pop().to_string();
-       std::string dataname_d1 = in.pop().to_string();
-       std::string dataname_d2 = in.pop().to_string();
-       std::string gamma0name = in.pop().to_string();
-       scalar_type theta = scalar_type(1);
-       std::string dataname_fr;
-       if (in.remaining()) {
-	 mexarg_in argin = in.pop();
-	 if (argin.is_string())
-	   dataname_fr = argin.to_string();
-	 else
-	   theta = argin.to_scalar();
-       }
-       if (in.remaining()) dataname_fr = in.pop().to_string();
-       std::string dataname_alpha;
-       if (in.remaining()) dataname_alpha = in.pop().to_string();
-       std::string dataname_wt1;
-       if (in.remaining()) dataname_wt1 = in.pop().to_string();
-       std::string dataname_wt2;
-       if (in.remaining()) dataname_wt2 = in.pop().to_string();
-
-       size_type ind = config::base_index();
-       ind += getfem::add_Nitsche_fictitious_domain_contact_brick_twopass
-       (md->model(), gfi_mim->mesh_im(), varname1, varname2, dataname_d1,
-        dataname_d2, gamma0name, theta,
-	dataname_fr, dataname_alpha, dataname_wt1, dataname_wt2);
-       workspace().set_dependance(md, gfi_mim);
-       out.pop().from_integer(int(ind));
-       );
-
-#endif
 
     // CONTACT BETWEEN NON-MATCHING MESHES
 

@@ -52,7 +52,8 @@ mim = gf_mesh_im(m, gf_integ('IM_GAUSS_PARALLELEPIPED(2,4)'));
 % detect the border of the mesh
 border = gf_mesh_get(m,'outer faces');
 % mark it as boundary #1
-gf_mesh_set(m, 'boundary', 1, border);
+GAMMAD = 1;
+gf_mesh_set(m, 'boundary', GAMMAD, border);
 % gf_plot_mesh(m, 'regions', [1]); % the boundary edges appears in red
 % pause(1);
 
@@ -89,11 +90,11 @@ gf_model_set(md, 'add initialized fem data', 'VolumicData', mf, F);
 gf_model_set(md, 'add source term brick', mim, 'u', 'VolumicData');
 gf_model_set(md, 'add initialized fem data', 'DirichletData', mf, Uexact);
 if (dirichlet_version == 1)
-  gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'u', mf, 1, 'DirichletData');
+  gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'u', mf, GAMMAD, 'DirichletData');
 else
   gf_model_set(md, 'add initialized data', 'gamma0', [gamma0]);
-  % gf_model_set(md, 'add Dirichlet condition with Nitsche method', mim, 'u', 'gamma0', 1, theta, 'DirichletData');
-  gf_model_set(md, 'add Dirichlet condition with Nitsche method deux', mim, 'u', '((clambda*Div_u)*Normal+cmu*((Grad_u+Grad_u''))*Normal)', 'gamma0', 1, theta, 'DirichletData');
+  expr = gf_model_get(md, 'Neumann term', 'u', GAMMAD);
+  gf_model_set(md, 'add Dirichlet condition with Nitsche method', mim, 'u', expr, 'gamma0', GAMMAD, theta, 'DirichletData');
 end
 
 % gf_model_get(md, 'test tangent matrix', 1e-6, 10, 0.1);

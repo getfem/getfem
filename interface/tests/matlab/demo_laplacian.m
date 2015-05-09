@@ -82,8 +82,8 @@ switch (dirichlet_version)
     gf_model_set(md, 'add Dirichlet condition with penalization', mim, 'u', r, GAMMAD, 'DirichletData');
   case 3,
     gf_model_set(md, 'add initialized data', 'gamma0', [gamma0]);
-    % gf_model_set(md, 'add Dirichlet condition with Nitsche method', mim, 'u', 'gamma0', GAMMAD, theta, 'DirichletData');
-    gf_model_set(md, 'add Dirichlet condition with Nitsche method deux', mim, 'u', 'Grad_u.Normal', 'gamma0', GAMMAD, theta, 'DirichletData');
+    expr = gf_model_get(md, 'Neumann term', 'u', GAMMAD);
+    gf_model_set(md, 'add Dirichlet condition with Nitsche method', mim, 'u', expr, 'gamma0', GAMMAD, theta, 'DirichletData');
 end
 gf_model_get(md, 'solve');
 U = gf_model_get(md, 'variable', 'u');

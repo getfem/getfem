@@ -655,6 +655,23 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        out.pop().from_scalar(errmax);
        );
 
+    /*@GET expr = ('Neumann term', @str varname, @int region)
+       Gives the assembly string corresponding to the Neumann term of
+       the fem variable `varname` on `region`. It is deduced from the
+       assembly string declared by the model bricks.
+       `region` should be the index of a boundary region
+       on the mesh where `varname` is defined. Care to call this function
+       only after all the volumic bricks have been declared.
+       Complains, if a brick
+       omit to declare an assembly string. @*/
+    sub_command
+      ("Neumann term", 2, 2, 0, 1,
+       std::string varname = in.pop().to_string();
+       size_type rg =in.pop().to_integer();
+       std::string expr = md->model().Neumann_term(varname, rg);
+       out.pop().from_string(expr.c_str());
+       );
+
 
     /*@GET V = ('compute isotropic linearized Von Mises or Tresca', @str varname, @str dataname_lambda, @str dataname_mu, @tmf mf_vm[, @str version])
       Compute the Von-Mises stress or the Tresca stress of a field (only

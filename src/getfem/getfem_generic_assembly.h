@@ -343,6 +343,7 @@ namespace getfem {
 
     std::string extract_constant_term(const mesh &m);
     std::string extract_order1_term(const std::string &varname);
+    std::string extract_order0_term();
     std::string extract_Neumann_term(const std::string &varname);
   
 

@@ -444,6 +444,13 @@ namespace getfem {
     return r;
   }
 
+  int mesh_region::region_is_faces_of(const mesh_region &rg) {
+    int r = 1, partially = 0;
+    for (mr_visitor cv(*this); !cv.finished(); cv.next())
+      if (cv.is_face() && rg.is_in(cv.cv())) partially = -1; else r = 0;
+    if (r == 1) return 1; else return partially;
+  }
+
   size_type mesh_region::free_region_id(const getfem::mesh& m)
   {
     return m.regions_index().last_true()+1;

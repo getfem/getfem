@@ -1204,6 +1204,16 @@ namespace getfem {
         from all bricks. */
     virtual void assembly(build_version version);
 
+    /** Gives the assembly string corresponding to the Neumann term of
+        the fem variable `varname` on `region`. It is deduced from the
+        assembly string declared by the model bricks.
+        `region` should be the index of a boundary region
+        on the mesh where `varname` is defined. Care to call this function
+        only after all the volumic bricks have been declared.
+        Complains, if a brick  omit to declare an assembly string.
+    */
+    std::string Neumann_term(const std::string &varname, size_type region);
+
     virtual void clear(void) {
       variables.clear();
       active_bricks.clear();
@@ -1502,24 +1512,25 @@ namespace getfem {
     bool is_coercive(void)  const { BRICK_NOT_INIT; return iscoercive;  }
     bool is_real(void)      const { BRICK_NOT_INIT; return isreal;      }
     bool is_complex(void)   const { BRICK_NOT_INIT; return iscomplex;   }
-    bool has_Neumann_term(void) const { BRICK_NOT_INIT; return hasNeumannterm; }
+    bool has_Neumann_term(void) const {BRICK_NOT_INIT; return hasNeumannterm; }
     bool is_to_be_computed_each_time(void) const
     { BRICK_NOT_INIT; return compute_each_time; }
     const std::string &brick_name(void) const { BRICK_NOT_INIT; return name; }
 
 
-    /**Assembly of bricks real tangent terms.
-    In case of Getfem's compilation with OpenMP option,
-    this method is executed on multiple threads.
-    The parallelism is provided by distributing all tangent matrices and
-    vectors and accumulating them later into the original. Additionally,
-    by default, all mesh_region objects, participating in the assembly, are also
-    partitioned. In order to avoid data race conditions, this method should not
-    modify any data simultaneously accessible from multiple threads. In case
-    this is unavoidable, the race can be prevented by distributing this data
-    (of type T) between the threads via getfem::omp_distribute<T> (prefered method) or
-    protected from concurrent access with mutexes (e.g. getfem::omp_lock) or OpenMP
-    critical section. */
+    /** Assembly of bricks real tangent terms.
+        In case of Getfem's compilation with OpenMP option,
+        this method is executed on multiple threads.
+        The parallelism is provided by distributing all tangent matrices and
+        vectors and accumulating them later into the original. Additionally,
+        by default, all mesh_region objects, participating in the assembly,
+        are also partitioned. In order to avoid data race conditions, this
+        method should not modify any data simultaneously accessible from
+        multiple threads. In case this is unavoidable, the race can be
+        prevented by distributing this data (of type T) between the threads
+        via getfem::omp_distribute<T> (prefered method) or
+        protected from concurrent access with mutexes (e.g. getfem::omp_lock)
+        or OpenMP critical section. */
     virtual void asm_real_tangent_terms(const model &, size_type,
                                         const model::varnamelist &,
                                         const model::varnamelist &,
@@ -1528,21 +1539,24 @@ namespace getfem {
                                         model::real_veclist &,
                                         model::real_veclist &,
                                         size_type, build_version) const
-    {/**doesn't have to be overriden if serial pre- post- assemblies are defined*/}
+    { /** doesn't have to be overriden if serial pre- post- assemblies are
+          defined */
+    }
 
 
-    /**Assembly of bricks complex tangent terms.
-    In case of Getfem's compilation with OpenMP option,
-    this method is executed on multiple threads.
-    The parallelism is provided by distributing all tangent matrices and
-    vectors and accumulating them later into the original. Additionally,
-    by default, all mesh_region objects, participating in the assembly, are also
-    partitioned. In order to avoid data race conditions, this method should not
-    modify any data simultaneously accessible from multiple threads. In case
-    this is unavoidable, the race can be prevented by distributing this data
-    (of type T) between the threads via getfem::omp_distribute<T> (prefered method) or
-    protected from concurrent access with mutexes (e.g. getfem::omp_lock) or OpenMP
-    critical section. */
+    /** Assembly of bricks complex tangent terms.
+        In case of Getfem's compilation with OpenMP option,
+        this method is executed on multiple threads.
+        The parallelism is provided by distributing all tangent matrices and
+        vectors and accumulating them later into the original. Additionally,
+        by default, all mesh_region objects, participating in the assembly,
+        are also partitioned. In order to avoid data race conditions, this
+        method should not modify any data simultaneously accessible from
+        multiple threads. In case this is unavoidable, the race can be
+        prevented by distributing this data (of type T) between the threads
+        via getfem::omp_distribute<T> (prefered method) or
+        protected from concurrent access with mutexes (e.g. getfem::omp_lock)
+        or OpenMP critical section. */
     virtual void asm_complex_tangent_terms(const model &, size_type,
                                            const model::varnamelist &,
                                            const model::varnamelist &,
@@ -1551,13 +1565,16 @@ namespace getfem {
                                            model::complex_veclist &,
                                            model::complex_veclist &,
                                            size_type, build_version) const
-    {/**doesn't have to be overriden if serial pre- post- assemblies are defined*/  }
+    { /** doesn't have to be overriden if serial pre- post- assemblies are
+          defined*/
+    }
 
 
-    /**Peform any pre assembly action for real term assembly. The purpose of this method
-    is to do any action that cannot be peformed in the main assembly routines in parallel.
-    Possible action can be modification of the model object, cashing some data that cannot be
-    distributed etc. */
+    /** Peform any pre assembly action for real term assembly. The purpose of
+        this method is to do any action that cannot be peformed in the main
+        assembly routines in parallel.
+        Possible action can be modification of the model object, cashing
+        some data that cannot be distributed etc. */
     virtual void real_pre_assembly_in_serial(const model &, size_type,
                                         const model::varnamelist &,
                                         const model::varnamelist &,
@@ -1567,10 +1584,11 @@ namespace getfem {
                                         model::real_veclist &,
                                         size_type, build_version) const { };
 
-    /**Peform any pre assembly action for comple term assembly. The purpose of this method
-    is to do any action that cannot be peformed in the main assembly routines in parallel.
-    Possible action can be modification of the model object, cashing some data that cannot be
-    distributed etc. */
+    /** Peform any pre assembly action for complex term assembly. The purpose
+        of this method is to do any action that cannot be peformed in the
+        main assembly routines in parallel.
+        Possible action can be modification of the model object, cashing
+        some data that cannot be distributed etc. */
     virtual void complex_pre_assembly_in_serial(const model &, size_type,
                                         const model::varnamelist &,
                                         const model::varnamelist &,
@@ -1580,10 +1598,11 @@ namespace getfem {
                                         model::complex_veclist &,
                                         size_type, build_version) const { };
 
-    /**Peform any post assembly action for real terms. The purpose of this method
-    is to do any action that cannot be peformed in the main assembly routines in parallel.
-    Possible action can be modification of the model object, cashing some data that cannot be
-    distributed etc. */
+    /** Peform any post assembly action for real terms. The purpose of this
+        method is to do any action that cannot be peformed in the main
+        assembly routines in parallel.
+        Possible action can be modification of the model object, cashing
+        some data that cannot be distributed etc. */
     virtual void real_post_assembly_in_serial(const model &, size_type,
                                         const model::varnamelist &,
                                         const model::varnamelist &,
@@ -1593,10 +1612,11 @@ namespace getfem {
                                         model::real_veclist &,
                                         size_type, build_version) const { };
 
-    /**Peform any post assembly action for complex terms. The purpose of this method
-    is to do any action that cannot be peformed in the main assembly routines in parallel.
-    Possible action can be modification of the model object, cashing some data that cannot be
-    distributed etc. */
+    /** Peform any post assembly action for complex terms. The purpose of this
+        method is to do any action that cannot be peformed in the main
+        assembly routines in parallel.
+        Possible action can be modification of the model object, cashing
+        some data that cannot be distributed etc. */
     virtual void complex_post_assembly_in_serial(const model &, size_type,
                                         const model::varnamelist &,
                                         const model::varnamelist &,
@@ -1607,7 +1627,7 @@ namespace getfem {
                                         size_type, build_version) const { };
 
 
-    /**check consistency of stiffness matrix and rhs*/
+    /** check consistency of stiffness matrix and rhs */
     void check_stiffness_matrix_and_rhs(const model &, size_type,
                                         const model::termlist& tlist,
                                         const model::varnamelist &,
@@ -1617,8 +1637,19 @@ namespace getfem {
                                         model::real_veclist &,
                                         model::real_veclist &, size_type rg,
                                         const scalar_type delta = 1e-8) const;
+    /** The brick may declare an assembly string for the computation of the
+        Neumann terms (in order to prescribe boundary conditions with
+        Nitche's method). */
+    virtual std::string declare_volume_assembly_string
+    (const model &, size_type, const model::varnamelist &,
+     const model::varnamelist &) const {
+      GMM_ASSERT1(false, "No assemby string declared, computation of Neumann "
+                  "term impossible for brick " << name);
+    }
+
     private:
-      /**simultaneous call to real_pre_assembly, real_assembly and real_post_assembly*/
+      /** simultaneous call to real_pre_assembly, real_assembly
+          and real_post_assembly */
       void full_asm_real_tangent_terms_(const model &, size_type,
         const model::varnamelist &,
         const model::varnamelist &,
@@ -1928,34 +1959,12 @@ namespace getfem {
    const mesh_fem *mf_mult = 0);
 
   /** Add a Dirichlet condition on the variable `varname` and the mesh
-      region `region`. This region should be a boundary. The Dirichlet
-      condition is prescribed with Nitsche's method. `dataname` is the optional
-      right hand side of the Dirichlet condition. It could be constant or
-      described on a fem; scalar or vector valued, depending on the variable
-      on which the Dirichlet condition is prescribed. `gamma0name` is the
-      Nitsche's method parameter. `theta` is a scalar value which can be
-      positive or negative. `theta = 1` corresponds to the standard symmetric
-      method which is conditionnaly coercive for  `gamma0` small.
-      `theta = -1` corresponds to the skew-symmetric method which is
-      inconditionnaly coercive. `theta = 0` is the simplest method
-      for which the second derivative of the Neumann term is not necessary
-      even for nonlinear problems. Returns the brick index in the model.
-      CAUTION: This brick has to be added in the model after all the bricks
-      corresponding to partial differential terms having a Neumann term.
-      Moreover, This brick can only be applied to bricks declaring their
-      Neumann terms.
-  */
-  size_type APIDECL add_Dirichlet_condition_with_Nitsche_method
-  (model &md, const mesh_im &mim, const std::string &varname,
-   const std::string &gamma0name, size_type region,
-   scalar_type theta = scalar_type(0),
-   const std::string &dataname = std::string());
-
-  /** Add a Dirichlet condition on the variable `varname` and the mesh
       region `region`. This region should be a boundary. `Neumannterm`
       is the expression of the Neumann term (obtained by the Green formula)
       described as an expression of the high-level
-      generic assembly language. The Dirichlet
+      generic assembly language. This term can be obtained with
+      md. Neumann_term(varname, region) once all volumic bricks have
+      been added to the model. The Dirichlet
       condition is prescribed with Nitsche's method. `datag` is the optional
       right hand side of the Dirichlet condition. `datagamma0` is the
       Nitsche's method parameter. `theta` is a scalar value which can be
@@ -2033,38 +2042,15 @@ namespace getfem {
    const mesh_fem *mf_mult = 0);
 
 
-  /** Add a Dirichlet condition to the normal component of the vector
-      (or tensor) valued variable `varname` and the mesh region `region`.
-      This region should be a boundary. The Dirichlet
-      condition is prescribed with Nitsche's method. `dataname` is the optional
-      right hand side of the Dirichlet condition. It could be constant or
-      described on a fem. `gamma0name` is the
-      Nitsche's method parameter. `theta` is a scalar value which can be
-      positive or negative. `theta = 1` corresponds to the standard symmetric
-      method which is conditionnaly coercive for  `gamma0` small.
-      `theta = -1` corresponds to the skew-symmetric method which is
-      inconditionnaly coercive. `theta = 0` is the simplest method
-      for which the second derivative of the Neumann term is not necessary
-      even for nonlinear problems. Returns the brick index in the model.
-      CAUTION: This brick has to be added in the model after all the bricks
-      corresponding to partial differential terms having a Neumann term.
-      Moreover, This brick can only be applied to bricks declaring their
-      Neumann terms.
-      (This brick is not fully tested)
-  */
-  size_type APIDECL add_normal_Dirichlet_condition_with_Nitsche_method
-  (model &md, const mesh_im &mim, const std::string &varname,
-   const std::string &gamma0name, size_type region,
-   scalar_type theta = scalar_type(1),
-   const std::string &dataname = std::string());
-
 
   /** Add a Dirichlet condition on the normal component of the variable
       `varname` and the mesh
       region `region`. This region should be a boundary. `Neumannterm`
       is the expression of the Neumann term (obtained by the Green formula)
       described as an expression of the high-level
-      generic assembly language. The Dirichlet
+      generic assembly language. This term can be obtained with
+      md.Neumann_term(varname, region) once all volumic bricks have
+      been added to the model.The Dirichlet
       condition is prescribed with Nitsche's method. `datag` is the optional
       scalar right hand side of the Dirichlet condition. `datagamma0` is the
       Nitsche's method parameter. `theta` is a scalar value which can be
@@ -2219,42 +2205,15 @@ namespace getfem {
    const mesh_fem *mf_mult = 0);
 
   /** Add a Dirichlet condition on the variable `varname` and the mesh
-      region `region`.
-      This version is for vector field. It prescribes a condition
-      @f$ Hu = r @f$ where `H` is a matrix field. The region should be a
-      boundary. This region should be a boundary.  The Dirichlet
-      condition is prescribed with Nitsche's method.
-      CAUTION : the matrix H should have all eigenvalues equal to 1 or 0.
-      `dataname` is the optional
-      right hand side of the Dirichlet condition. It could be constant or
-      described on a fem. `gamma0name` is the
-      Nitsche's method parameter. `theta` is a scalar value which can be
-      positive or negative. `theta = 1` corresponds to the standard symmetric
-      method which is conditionnaly coercive for  `gamma0` small.
-      `theta = -1` corresponds to the skew-symmetric method which is
-      inconditionnaly coercive. `theta = 0` is the simplest method
-      for which the second derivative of the Neumann term is not necessary
-      even for nonlinear problems. `Hname' is the data
-      corresponding to the matrix field `H`. It has to be a constant matrix
-      or described on a scalar fem. Returns the brick index in the model.
-      CAUTION: This brick has to be added in the model after all the bricks
-      corresponding to partial differential terms having a Neumann term.
-      Moreover, This brick can only be applied to bricks declaring their
-      Neumann terms.
-      (This brick is not fully tested)
-  */
-  size_type APIDECL add_generalized_Dirichlet_condition_with_Nitsche_method
-  (model &md, const mesh_im &mim, const std::string &varname,
-   const std::string &gamma0name, size_type region, scalar_type theta,
-   const std::string &dataname, const std::string &Hname);
-
-  /** Add a Dirichlet condition on the variable `varname` and the mesh
       region `region`. This region should be a boundary. This version
       is for vector field. It prescribes a condition
       @f$ Hu = r @f$ where `H` is a matrix field. `Neumannterm`
       is the expression of the Neumann term (obtained by the Green formula)
       described as an expression of the high-level
-      generic assembly language. The Dirichlet
+      generic assembly language. of the high-level
+      generic assembly language. This term can be obtained with
+      md.Neumann_term(varname, region) once all volumic bricks have
+      been added to the model. The Dirichlet
       condition is prescribed with Nitsche's method. `datag` is the optional
       right hand side of the Dirichlet condition. `datagamma0` is the
       Nitsche's method parameter. `theta` is a scalar value which can be

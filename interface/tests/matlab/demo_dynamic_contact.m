@@ -1,4 +1,4 @@
-% Copyright (C) 2009-2012 Yves Renard.
+% Copyright (C) 2009-2015 Yves Renard.
 %
 % This file is a part of GETFEM++
 %
@@ -11,7 +11,7 @@
 % WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
 % or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 % License and GCC Runtime Library Exception for more details.
-% You  should  have received a copy of the GNU Lesser General Public License
+% You  should  have received a copy oft the GNU Lesser General Public License
 % along  with  this program;  if not, write to the Free Software Foundation,
 % Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 %
@@ -62,7 +62,7 @@ if (d == 1)
   theta = 0.5;             % Theta-method scheme coefficient
   dirichlet = 1;           % Dirichlet condition or not
   dirichlet_val = 0.0;
-  scheme = 4;              % 1 = theta-method, 2 = Newmark, 3 = Newmark with beta = 0, 4 = midpoint modified
+  scheme = 4              % 1 = theta-method, 2 = Newmark, 3 = Newmark with beta = 0, 4 = midpoint modified
   u_degree = 1;
   v_degree = 1;
   lambda_degree = 1;
@@ -75,21 +75,21 @@ else
   friction = 0;            % Friction coefficient
   vertical_force = 0.1;    % Volumic load in the vertical direction
   r = 10;                  % Augmentation parameter
-  dt = 0.001;               % Time step
+  dt = 0.01;               % Time step
   T = 40;                  % Simulation time
   dt_plot = 0.5;           % Drawing step;
   beta = 0.25;             % Newmark scheme coefficient
   gamma = 0.5;             % Newmark scheme coefficient
-  theta = 0.5;             % Theta-method scheme coefficient
+  theta = 1.0;             % Theta-method scheme coefficient
   dirichlet = 0;           % Dirichlet condition or not
   dirichlet_val = 0.45;
-  scheme = 3;              % 1 = theta-method, 2 = Newmark, 3 = Newmark with beta = 0, 4 = midpoint modified
+  scheme = 1;              % 1 = theta-method, 2 = Newmark, 3 = Newmark with beta = 0, 4 = midpoint modified (Experimental: compile GetFEM with --enable-experimental)
   u_degree = 2;
   v_degree = 1;
   lambda_degree = 1;
   Nitsche = 1;             % Use Nitsche's method or not
-  gamma0_N = 0.01;          % Parameter gamma0 for Nitsche's method
-  theta_N =  1;          % Parameter theta for Nitsche's method
+  gamma0_N = 0.001;        % Parameter gamma0 for Nitsche's method
+  theta_N =  1;            % Parameter theta for Nitsche's method
 end
   
 singular_mass = 0;         % 0 = standard method
@@ -230,6 +230,7 @@ gf_model_set(md, 'add initialized fem data', 'obstacle', mfd, OBS);
 
 if (Nitsche)
   gf_model_set(md, 'add initialized data', 'gamma0', [gamma0_N]);
+  expr_Neumann = gf_model_get(md, 'Neumann term', 'u', GAMMAC);
   if (scheme == 4)
       if (friction ~= 0)
          error('To be adapted for friction');
@@ -238,24 +239,20 @@ if (Nitsche)
       gf_model_set(md, 'add initialized data', 'alpha_f', [0]);
       gf_model_set(md, 'add fem data', 'wt', mfu);
       
-      % N??cessaire ?
-      % gf_model_set(md, 'add Nitsche contact with rigid obstacle brick', mim_friction, 'u', ...
-      %  'obstacle', 'gamma0', GAMMAC, theta_N);
-      
+      % Very experimental brick : compile GetFEM with the option --enable-experimental
+      expr_Neumann_wt = '((clambda*Div_wt)*Normal + (cmu*(Grad_wt+(Grad_wt'')))*Normal)'
       gf_model_set(md, 'add Nitsche midpoint contact with rigid obstacle brick', mim_friction, 'u', ...
-       'obstacle', 'gamma0', GAMMAC, theta_N, 'friction_coeff', 'alpha_f', 'wt', 2);
-      gf_model_set(md, 'add Nitsche midpoint contact with rigid obstacle brick', mim_friction, 'u', ...
-       'obstacle', 'gamma0', GAMMAC, theta_N, 'friction_coeff', 'alpha_f', 'wt', 1);
+       expr_Neumann, expr_Neumann_wt, 'obstacle', 'gamma0', GAMMAC, theta_N, 'friction_coeff', 'alpha_f', 'wt');
   else
     if (friction == 0)
       gf_model_set(md, 'add Nitsche contact with rigid obstacle brick', mim_friction, 'u', ...
-                   'obstacle', 'gamma0', GAMMAC, theta_N);
+                   expr_Neumann, 'obstacle', 'gamma0', GAMMAC, theta_N);
     else
       gf_model_set(md, 'add initialized data', 'friction_coeff', [friction]);
       gf_model_set(md, 'add initialized data', 'alpha_f', [1./dt]);
       gf_model_set(md, 'add fem data', 'wt', mfu);
       gf_model_set(md, 'add Nitsche contact with rigid obstacle brick', mim_friction, 'u', ...
-           'obstacle', 'gamma0', GAMMAC, theta_N, 'friction_coeff', 'alpha_f', 'wt');
+           expr_Neumann, 'obstacle', 'gamma0', GAMMAC, theta_N, 'friction_coeff', 'alpha_f', 'wt');
     end
   end
 else

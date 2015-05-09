@@ -873,7 +873,12 @@ namespace getfem {
 
 
   /** Adds a contact condition with or without Coulomb friction on the variable
-      `varname_u` and the mesh boundary `region`. The contact condition
+      `varname_u` and the mesh boundary `region`.  `Neumannterm`
+      is the expression of the Neumann term (obtained by the Green formula)
+      described as an expression of the high-level
+      generic assembly language. This term can be obtained with
+      md.Neumann_term(varname, region) once all volumic bricks have
+      been added to the model. The contact condition
       is prescribed with Nitsche's method. The rigid obstacle should
       be described with the data `dataname_obstacle` being a signed distance to
       the obstacle (interpolated on a finite element method).
@@ -884,19 +889,16 @@ namespace getfem {
       `theta = -1` corresponds to the skew-symmetric method which is
       inconditionnaly coercive. `theta = 0` is the simplest method
       for which the second derivative of the Neumann term is not necessary.
-      The optional parameter `dataname_friction_coeff` is the friction
-      coefficient which could be constant or defined on a finite element
-      method.
-      CAUTION: This brick has to be added in the model after all the bricks
-      corresponding to partial differential terms having a Neumann term.
-      Moreover, This brick can only be applied to bricks declaring their
-      Neumann terms. Returns the brick index in the model.
+      The optional parameter `dataexpr_friction_coeff` is the friction
+      coefficient which could be any expression of the assembly language.
+      Returns the brick index in the model.
   */
   size_type add_Nitsche_contact_with_rigid_obstacle_brick
   (model &md, const mesh_im &mim, const std::string &varname_u,
-   const std::string &dataname_obs, const std::string &dataname_gamma0,
-   scalar_type theta,
-   const std::string &dataname_friction_coeff,
+   const std::string &Neumannterm,
+   const std::string &expr_obs, const std::string &dataname_gamma0,
+   scalar_type theta_,
+   std::string dataexpr_friction_coeff,
    const std::string &dataname_alpha,
    const std::string &dataname_wt,
    size_type region);
@@ -918,19 +920,17 @@ namespace getfem {
       The optional parameter `dataname_friction_coeff` is the friction
       coefficient which could be constant or defined on a finite element
       method.
-      CAUTION: This brick has to be added in the model after all the bricks
-      corresponding to partial differential terms having a Neumann term.
-      Moreover, This brick can only be applied to bricks declaring their
-      Neumann terms. Returns the brick index in the model.
+      Returns the brick index in the model.
   */
-  size_type add_Nitsche_midpoint_contact_with_rigid_obstacle_brick
+  size_type add_Nitsche_contact_with_rigid_obstacle_brick_modified_midpoint
   (model &md, const mesh_im &mim, const std::string &varname_u,
-   const std::string &dataname_obs, const std::string &dataname_gamma0,
-   scalar_type theta,
-   const std::string &dataname_friction_coeff,
+   const std::string &Neumannterm, const std::string &Neumannterm_wt,
+   const std::string &obs, const std::string &dataname_gamma0,
+   scalar_type theta_,
+   std::string dataname_friction_coeff,
    const std::string &dataname_alpha,
    const std::string &dataname_wt,
-   size_type region, size_type option);
+   size_type region);
 
 #endif
 
@@ -967,43 +967,6 @@ CAUTION: This brick has to be added in the model
    const std::string &dataname_friction_coeff,
    const std::string &dataname_alpha,
    const std::string &dataname_wt1, const std::string &dataname_wt2);
-
-#ifdef EXPERIMENTAL_PURPOSE_ONLY
-
-  /** Adds a contact condition with or without Coulomb friction between
- two bodies in a fictitious domain. The contact condition is applied on
- the variable `varname_u1` corresponds with the first
- and slave body with Nitsche's method and on the variable `varname_u2`
- corresponds with the second and master body with Nitsche's method.
- The contact condition is evaluated on the fictitious slave bondary.
- The first body should be described by the level-set `dataname_d1`
- and the second body should be described by the level-set
-`dataname_d2`. `gamma0name` is the Nitsche's method parameter.
- `theta` is a scalar value which can be positive or negative.
- `theta = 1` corresponds to the standard symmetric method which
- is conditionnaly coercive for  `gamma0` small.
- `theta = -1` corresponds to the skew-symmetric method which is
- inconditionnaly coercive. `theta = 0` is the simplest method for
- which the second derivative of the Neumann term is not necessary. 
-The optional parameter `dataname_friction_coeff` is the friction 
-coefficient which could be constant or defined on a finite element method. 
-CAUTION: This brick has to be added in the model
- after all the bricks corresponding to partial differential
- terms having a Neumann term. Moreover, This brick can only
- be applied to bricks declaring their Neumann terms. Returns the brick index in the model. 
-
-  */
-  size_type add_Nitsche_fictitious_domain_contact_brick_twopass
-  (model &md, const mesh_im &mim, const std::string &varname_u1,
-   const std::string &varname_u2, const std::string &dataname_d1,
-   const std::string &dataname_d2, const std::string &dataname_gamma0,
-   scalar_type theta,
-   const std::string &dataname_friction_coeff,
-   const std::string &dataname_alpha,
-   const std::string &dataname_wt1, const std::string &dataname_wt2);
-
-
-#endif
 
 
 }  /* end of namespace getfem.                                             */
