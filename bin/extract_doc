@@ -299,7 +299,6 @@ def FilterDoc(d, langage, objects, commands, set_replace = set()):
 
     # Authorized abbreviations
     d = string.replace(d, '@tcs',    'cont_struct')
-    d = string.replace(d, '@tmcf',   'multi_contact_frame')
     d = string.replace(d, '@tmf',    'mesh_fem')
     d = string.replace(d, '@tgt',    'geotrans')
     d = string.replace(d, '@tgf',    'global_function')
@@ -901,7 +900,6 @@ elif (option == 'matlab-doc'):
   print '`global_function`      global function descriptor'
   print '`mesher_object`        mesher object descriptor'
   print '`cont_struct`          continuation-structure descriptor'
-  print '`multi_contact_frame`  multi-contact descriptor'
   print '=====================  =================================================='
   print ''  
   print 'Arguments listed between square brackets are optional. Lists between braces indicate that the argument must match one of the elements of the list. For example::'
@@ -1205,14 +1203,6 @@ elif (option == 'scilab-com'):
   mfile.write('      </varlistentry>\n\n')
   mfile.write('    </variablelist>\n\n')
 
-  mfile.write('      <varlistentry>\n')
-  mfile.write('        <term>multi_contact_frame</term>\n')
-  mfile.write('        <listitem>\n')
-  mfile.write('          <para>multi-contact descriptor</para>\n')
-  mfile.write('        </listitem>\n')
-  mfile.write('      </varlistentry>\n\n')
-  mfile.write('    </variablelist>\n\n')
-
   mfile.write('    <para>Arguments listed between square brackets are optional. Lists between braces indicate</para>\n')
   mfile.write('    <para>that the argument must match one of the elements of the list. For example:</para>\n\n')
 
@@ -1412,7 +1402,6 @@ elif (option == 'scilab-doc-rst'):
   print '`global_function`      global function descriptor'
   print '`mesher_object`        mesher object descriptor'
   print '`cont_struct`          continuation-structure descriptor'
-  print '`multi_contact_frame`  multi-contact descriptor'
   print '=====================  =================================================='
   print ''  
   print 'Arguments listed between square brackets are optional. Lists between braces indicate that the argument must match one of the elements of the list. For example::'

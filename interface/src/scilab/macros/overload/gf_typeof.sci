@@ -40,14 +40,12 @@ function res = gf_typeof(gf_var)
   case 14 then
     res = 'gfModel';
   case 15 then
-    res = 'gfMultiContactFrame';
-  case 16 then
     res = 'gfPrecond';
-  case 17 then
+  case 16 then
     res = 'gfSlice';
-  case 18 then
+  case 17 then
     res = 'gfSpmat';
-  case 19 then
+  case 18 then
     res = 'gfPoly';
   else
     error('wrong object ID');

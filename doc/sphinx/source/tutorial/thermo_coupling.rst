@@ -4,7 +4,7 @@
 
 .. _tut-thermo_elec_coupling:
 
-Example of Thermo-elastic and electrical coupling (|gf| 5.0, simple nonlinear coupled problem, model object, generic assembly, solve and visualization)
+Example of Thermo-elastic and electrical coupling (simple nonlinear coupled problem, model object, generic assembly, solve and visualization)
 =======================================================================================================================================================
 
 This example aims to present a simple example of a multiphysics problem with a nonlinear coupling of a displacement field, a temperature field and an electric potential field. It also aims to compare the use of the C++ library and the different interfaces. The corresponding demo files are present in the test directories of |gf| (`tests/`, `interface/tests/python`, `interface/scr/scilab/demos` and `interface/tests/matlab`).

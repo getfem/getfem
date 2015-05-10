@@ -1,7 +1,7 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
 
- Copyright (C) 2013-2013 Yves Renard, Konstantinos Poulios.
+ Copyright (C) 2013-2015 Yves Renard, Konstantinos Poulios.
 
  This file is a part of GETFEM++
 
@@ -113,6 +113,7 @@ namespace getfem {
       self-contact detection or not, and a few parameter).
       For each slave boundary (and also master boundaries if self-contact
       is asked) a multiplier variable should be defined.
+      DEPRECATED brick.
   */
   size_type add_integral_large_sliding_contact_brick_raytrace
   (model &md, multi_contact_frame &mcf,

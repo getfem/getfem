@@ -32,7 +32,6 @@
 #include <getfemint_mesh_im.h>
 #include <getfemint_mesh_im_data.h>
 #include <getfemint_gsparse.h>
-#include <getfemint_multi_contact_frame.h>
 #include <getfem/getfem_contact_and_friction_nodal.h>
 #include <getfem/getfem_contact_and_friction_integral.h>
 #include <getfem/getfem_contact_and_friction_large_sliding.h>
@@ -613,8 +612,8 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     for the real
     version which uses the high-level generic assembly language, `dataname`
     can be any regular expression of the high-level generic assembly
-    language (like "1", "sin(X[0])" or "Norm(u)" for instance) even
-      depending on model variables. Return the
+    language (like "1", "sin(X(1))" or "Norm(u)" for instance) even
+    depending on model variables. Return the
     brick index in the model.@*/
     sub_command
       ("add generic elliptic brick", 3, 4, 0, 1,
@@ -2116,127 +2115,6 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        );
 
 
-
-
-    
-
-    /*@SET ind = ('add basic d on dt brick', @tmim mim, @str varnameU, @str dataname_dt[, @str dataname_rho[, @int region]])
-    Add the standard discretization of a first order time derivative on
-    `varnameU`. The parameter `dataname_rho` is the density which could
-    be omitted (the defaul value is 1). This brick should be used in
-    addition to a time dispatcher for the other terms. Return the brick
-    index in the model.@*/
-    sub_command
-      ("add basic d on dt brick", 3, 5, 0, 1,
-       getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
-       std::string varnameU = in.pop().to_string();
-       std::string varnamedt = in.pop().to_string();
-       std::string dataname_rho;
-       if (in.remaining()) dataname_rho = in.pop().to_string();
-       size_type region = size_type(-1);
-       if (in.remaining()) region = in.pop().to_integer();
-       size_type ind
-       = getfem::add_basic_d_on_dt_brick
-       (md->model(), gfi_mim->mesh_im(), varnameU, varnamedt, dataname_rho, region)
-       + config::base_index();
-       workspace().set_dependance(md, gfi_mim);
-       out.pop().from_integer(int(ind));
-       );
-
-
-    /*@SET ind = ('add basic d2 on dt2 brick', @tmim mim, @str varnameU,  @str datanameV, @str dataname_dt, @str dataname_alpha,[, @str dataname_rho[, @int region]])
-    Add the standard discretization of a second order time derivative
-    on `varnameU`. `datanameV` is a data represented on the same finite
-    element method as U which represents the time derivative of U. The
-    parameter `dataname_rho` is the density which could be omitted (the defaul
-    value is 1). This brick should be used in addition to a time dispatcher for
-    the other terms. The time derivative :math:`v` of the
-    variable :math:`u` is preferably computed as a
-    post-traitement which depends on each scheme. The parameter `dataname_alpha`
-    depends on the time integration scheme. Return the brick index in the model.@*/
-    sub_command
-      ("add basic d2 on dt2 brick", 5, 7, 0, 1,
-       getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
-       std::string varnameU = in.pop().to_string();
-       std::string varnameV = in.pop().to_string();
-       std::string varnamedt = in.pop().to_string();
-       std::string varnamealpha = in.pop().to_string();
-       std::string dataname_rho;
-       if (in.remaining()) dataname_rho = in.pop().to_string();
-       size_type region = size_type(-1);
-       if (in.remaining()) region = in.pop().to_integer();
-       size_type ind
-       = getfem::add_basic_d2_on_dt2_brick
-       (md->model(), gfi_mim->mesh_im(), varnameU,  varnameV, varnamedt, varnamealpha, dataname_rho, region)
-       + config::base_index();
-       workspace().set_dependance(md, gfi_mim);
-       out.pop().from_integer(int(ind));
-       );
-
-
-    /*@SET ('add theta method dispatcher', @ivec bricks_indices, @str theta)
-      Add a theta-method time dispatcher to a list of bricks. For instance,
-      a matrix term :math:`K` will be replaced by
-      :math:`\theta K U^{n+1} + (1-\theta) K U^{n}`.
-      @*/
-    sub_command
-      ("add theta method dispatcher", 2, 2, 0,0,
-       dal::bit_vector bv = in.pop().to_bit_vector();
-       std::string datanametheta = in.pop().to_string();
-       getfem::add_theta_method_dispatcher(md->model(), bv, datanametheta);
-       );
-
-    /*@SET ('add midpoint dispatcher', @ivec bricks_indices)
-      Add a midpoint time dispatcher to a list of bricks. For instance, a
-      nonlinear term :math:`K(U)` will be replaced by
-      :math:`K((U^{n+1} +  U^{n})/2)`.@*/
-    sub_command
-      ("add midpoint dispatcher", 1, 1, 0,0,
-       dal::bit_vector bv = in.pop().to_bit_vector();
-       getfem::add_midpoint_dispatcher(md->model(), bv);
-       );
-
-
-    /*@SET ('velocity update for order two theta method', @str varnameU,  @str datanameV, @str dataname_dt, @str dataname_theta)
-      Function which udpate the velocity :math:`v^{n+1}` after
-      the computation of the displacement :math:`u^{n+1}` and
-      before the next iteration. Specific for theta-method and when the velocity is
-      included in the data of the model. @*/
-    sub_command
-      ("velocity update for order two theta method", 4, 4, 0,0,
-       std::string varnameU = in.pop().to_string();
-       std::string varnameV = in.pop().to_string();
-       std::string varnamedt = in.pop().to_string();
-       std::string varnametheta = in.pop().to_string();
-       velocity_update_for_order_two_theta_method
-       (md->model(), varnameU, varnameV, varnamedt, varnametheta);
-       );
-
-
-    /*@SET ('velocity update for Newmark scheme', @int id2dt2_brick, @str varnameU,  @str datanameV, @str dataname_dt, @str dataname_twobeta, @str dataname_alpha)
-      Function which udpate the velocity
-      :math:`v^{n+1}` after
-      the computation of the displacement
-      :math:`u^{n+1}` and
-      before the next iteration. Specific for Newmark scheme
-      and when the velocity is
-      included in the data of the model.*
-      This version inverts the mass matrix by a
-      conjugate gradient.@*/
-     sub_command
-       ("velocity update for Newmark scheme", 6, 6, 0,0,
-        size_type id2dt2 = in.pop().to_integer();
-        std::string varnameU = in.pop().to_string();
-        std::string varnameV = in.pop().to_string();
-        std::string varnamedt = in.pop().to_string();
-        std::string varnametwobeta = in.pop().to_string();
-        std::string varnamegamma = in.pop().to_string();
-        velocity_update_for_Newmark_scheme
-        (md->model(), id2dt2, varnameU, varnameV, varnamedt,
-         varnametwobeta, varnamegamma);
-        );
-
-
      /*@SET ('disable bricks', @ivec bricks_indices)
        Disable a brick (the brick will no longer participate to the
        building of the tangent linear system).@*/
@@ -2723,7 +2601,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
 
 #ifdef EXPERIMENTAL_PURPOSE_ONLY
 
-     /*@SET ind = ('add Nitsche midpoint contact with rigid obstacle brick deux', @tmim mim, @str varname, @str Neumannterm, @str dataname_obstacle, @str gamma0name,  @int region, @scalar theta, @str dataname_friction_coeff, @str dataname_alpha, @str dataname_wt)
+     /*@SET ind = ('add Nitsche midpoint contact with rigid obstacle brick deux', @tmim mim, @str varname, @str Neumannterm, @str Neumannterm_wt, @str dataname_obstacle, @str gamma0name,  @int region, @scalar theta, @str dataname_friction_coeff, @str dataname_alpha, @str dataname_wt)
       EXPERIMENTAL BRICK: for midpoint scheme only !!
       Adds a contact condition with or without Coulomb friction on the variable
       `varname` and the mesh boundary `region`. The contact condition
@@ -3189,35 +3067,6 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        (md->model(), ind, gfi_mim->mesh_im(), region, true, true,
         dispname, lambda, wname);
        );
-
-     /*@SET ind = ('add integral large sliding contact brick raytrace', @tmcf multi_contact, @str dataname_r[, @str dataname_fr[, @str dataname_alpha]])
-      Adds a large sliding contact with friction brick to the model.
-      This brick is able to deal with self-contact, contact between
-      several deformable bodies and contact with rigid obstacles.
-      It takes a variable of type multi_contact_frame wich describe
-      the contact situation (master and slave contact boundaries,
-      self-contact detection or not, and a few parameter).
-      For each slave boundary (and also master boundaries if self-contact
-      is asked) a multiplier variable should be defined. @*/
-
-     sub_command
-       ("add integral large sliding contact brick raytrace", 2, 4, 0, 1,
-        
-        getfemint_multi_contact_frame *gfi_mcf
-          = in.pop().to_getfemint_multi_contact_frame();
-        std::string dataname_r = in.pop().to_string();
-        std::string dataname_fr;
-        if (in.remaining()) dataname_fr = in.pop().to_string();
-        std::string dataname_alpha;
-        if (in.remaining()) dataname_alpha = in.pop().to_string();
-
-        size_type  ind
-        = getfem::add_integral_large_sliding_contact_brick_raytrace
-        (md->model(), gfi_mcf->multi_contact_frame(), dataname_r,
-         dataname_fr, dataname_alpha);
-        out.pop().from_integer(int(ind + config::base_index()));
-        workspace().set_dependance(md, gfi_mcf);
-        );
   }
 
   if (m_in.narg() < 2)  THROW_BADARG( "Wrong number of input arguments");

@@ -402,7 +402,10 @@ namespace getfem {
   //  Structure which stores the contact boundaries, rigid obstacles and
   //  computes the contact pairs in large sliding/large deformation
   //
+  //  Deprecated
+  //
   //=========================================================================
+
 
   class multi_contact_frame {
 

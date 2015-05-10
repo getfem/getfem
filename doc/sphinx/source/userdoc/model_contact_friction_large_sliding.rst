@@ -11,14 +11,16 @@
 Large sliding/large deformation contact with friction bricks
 ------------------------------------------------------------
 
-These bricks present some algorithms for contact and friction in the large sliding/large deformation framework. Of course, their computational cost is greatly higher than small sliding-small deformation bricks.
+The basic tools to deal with large sliding/large deformation contact of deformable structures are accessible in the high-level generic assembly language. Some interpolate transformations (see :ref:`ud-gasm-high-transf`) are defined to perform the contact detection and allow to integrate from a contacct bondary to the opposite contact boundary. Some other usefull tools such as the unit normal vector in the real configuration and projections to take into account contact with Coulomb friction are also defined as operators in the high-level generic assembly language.
 
-The multi-contact frame object
-++++++++++++++++++++++++++++++
+Of course, the computational cost of large sliding/large deformation contact algorithms is greatly higher than small sliding-small deformation ones.
 
-(this structure will probably evolve for 5.0 release of |gf|)
+.. _ud-model-contact-friction_raytrace_inter_trans:
 
-A |gf| object is dedicated to the computation of effective contact surfaces which is shared by all the bricks. This object stores the different potential contact surfaces. On most of methods, potential contact surface are classified into two categories: master and slave surface (see  :ref:`figure<ud-fig-masterslave>`).
+Raytracing interpolate transformation
+*************************************
+
+In order to incorporate the contact detection in the high-level generic assembly, a specific interpolate transformation has been defined (see :ref:`ud-gasm-high-transf` for more explanations on interpolate tranformations). It is based on a raytracing contact detection has described in [KO-RE2014]_ and uses the criteria described below. The interpolate transformation stores the different potential contact surfaces. On most of methods, potential contact surface are classified into two categories: master and slave surface (see  :ref:`figure<ud-fig-masterslave>`).
 
 .. _ud-fig-masterslave:
 
@@ -30,54 +32,52 @@ The slave surface is the "contactor" and the master one the "target". Rigid obst
 
 Basically, in order to detect the contact pairs, Gauss points or f.e.m. nodes of slave surfaces are projected on master surfaces (see  :ref:`figure<ud-fig-masterslave>`). If self-contact is considered, Gauss points or f.e.m. nodes of master surface are also projected on master surfaces.
 
-The use of multi-contact frame object
-*************************************
 
-A multi-contact frame object is initialized as follows::
+The addition of a raytracing transformation to a model::
 
-  multi_contact_frame mcf(size_type N, scalar_type release_distance,
-                          bool use_delaunay = true, bool self_contact = true,
-                          scalar_type cut_angle = 0.3, bool raytrace = false,
-                          int nodes_mode = 0, bool ref_conf = false);
+  void add_raytracing_transformation(model &md, const std::string &transname,
+                                      scalar_type d)
 
-  multi_contact_frame mcf(const model &md, size_type N,
-                          scalar_type release_distance,
-                          bool use_delaunay = true, bool self_contact = true,
-                          scalar_type cut_angle = 0.3, bool raytrace = false,
-                          int nodes_mode = 0, bool ref_conf = false);
+where ``transname`` is a name given to the transformation which allows to refer to it in the high-level generic assembly language and ``d`` is the release distance (see above).
 
-  
-where ``md`` is a Getfem model. In this case, the multi contact frame object is linked to a model. ``N`` is the space dimension (typically, 2 or 3), `release_distance` is the limit distance beyond which two points are not considered in potential contact (should be typically comparable to element sizes). There is several optional parameters. if ``use_delaunay`` is true (default value), then contact detection is done calling `Qhull <http://www.qhull.org>`_ package to perform a Delaunay triangulation on potential contact points. Otherwise, contact detection is performed by conputing some influences boxes of the element of master surfaces. If ``ref_conf`` is true, the contact detection is made on the reference configuration (without taking into account a displacement). The parameter ``cut_angle`` is an angle in radian which is used for the simplification of unit normal cones in the case of f.e.m. node contact : if a contact cone has an angle less than ``cut_angle`` it is reduced to a mean unit normal to simplify the contact detection. If ``raytrace`` is true, raytracing is used instead of projection. If ``nodes_mode=0`` (default value), then contact is considered on Gauss points, ``nodes_mode=1`` then contact is considered on Gauss points for slave surfaces and on f.e.m. nodes for master surfaces (in that case, the f.e.m. should be of Lagrange type) and ``nodes_mode=2`` then contact is considered on f.e.m. nodes for both slave and master surfaces. If ``self_contact`` is true, the contact detection is also made between master surfaces and for a master surface with itself. 
+The raytracing transformation is added without any slave or master contact boundary. The following functions allows to add some boundaries to the transformation::
 
-Once a multi-contact frame is build, one adds slave or master surfaces, or rigid obstacles. Note that rigid obstacles are defined by a level-set expression which is evaluated by the `MuParser <http://muparser.beltoforion.de/>`_ package. The methods of multi-contact frame object adding a contact boundary are::
+  add_master_contact_boundary_to_raytracing_transformation(model &md,
+             const std::string &transname, const mesh &m,
+             const std::string &dispname, size_type region)
 
+  add_slave_contact_boundary_to_raytracing_transformation(model &md,
+             const std::string &transname, const mesh &m,
+             const std::string &dispname, size_type region)
 
-  size_type add_obstacle(const std::string &obs);
+where ``dispname`` is the variable name which represent the displacement on that contact
+boundary. The difference between master and slave contact boundary is that the contact detection is to be performed starting from a slave or master boundary toward a master boundary. The contact detection is not performed toward a slave boundary. Consequently, only the influence boxes of the elements of the master surfaces are computed and stored.
 
-  size_type add_slave_boundary(const getfem::mesh_im &mim,
-                               const getfem::mesh_fem &mfu,
-                               const model_real_plain_vector &U,
-                               size_type region);
+It is also possible to add a rigid obstacle (considered as a master surface) thanks to the function:: 
 
-  size_type add_master_boundary(const getfem::mesh_im &mim,
-                                const getfem::mesh_fem &mfu,
-                                const model_real_plain_vector &U,
-                                size_type region);
+  add_rigid_obstacle_to_raytracing_transformation(model &md,
+             const std::string &transname,
+             const std::string &expr, size_type N)
 
-  size_type add_slave_boundary(const getfem::mesh_im &mim,
-                               size_type region,
-                               const std::string &varname,
-                               const std::string &multname = "",
-                               const std::string &wname = "");
+where ``expr`` is the expression of a signed distance to the obstacle using the syntax of the high-level generic assembly language (``X`` being the current position, ``X(0)``, ``X(1)`` ... the corresponding components). For instance an expression ``X(0) + 5`` will correspond to a flat obstacle lying on the right of the position ``-5`` of the first coordinate. Be aware that the expression have to be close to a signed distance, which in particular means that the gradient norm have to be close to 1. 
 
-  size_type add_master_boundary(const getfem::mesh_im &mim,
-                               size_type region,
-                               const std::string &varname,
-                               const std::string &multname = "",
-                               const std::string &wname = "");
-                               
+In order to distinguish between non-contact situations and the occurence of a contact with another deformable body or with a rigid obstacle, the transformation returns an integer identifiant which can be used by the `Interpolate_filter` command of the high-level generic assembly language (see :ref:`ud-gasm-high-transf`). The different values:
 
-where ``obs`` is a string containing the expression of the level-set function which should be a signed distance to the obstacle (the coordinates are (``x``, ``y``) in 2D, (``x``, ``y``, ``z``) in 3D and , (``x``, ``y``, ``z``, ``w``) in 4D). ``region`` is the boundary number. The two last function can be called when the multi contact frame object is linked to a Getfem model. ``multname`` is the optional name of a multiplier variable to represent the contact stress. ``wname`` is the optional name of a variable representing the displacement at previous time step to compute the sliding velocity.
+* 0 : no contact found on this Gauss point
+
+* 1 : contact occurs on this Gauss point with a deformable body
+
+* 2 : contact occurs on this Gauss point with a rigid obstacle.
+
+such that it is possible to differentiate the treatment of these three cases using::
+
+  Interpolate_filter(transname, expr1, 0)
+  Interpolate_filter(transname, expr2, 1)
+  Interpolate_filter(transname, expr3, 2)
+
+in the assembly language, where ``expr1``, ``expr2`` and ``expr3`` correspond to the different terms to be computed. The matlab interface demo program :file:`/interface/tests/matlab/demo_large_sliding_contact.m` presents an example of use.
+
+Note that the transformation could also be directly used with a `ga_workspace` object if model object are not used. See :file:`getfem/getfem_contact_and_friction_common.h` for more details. Note also that in the framework of the model object, a interfaced use of this transformation is allowed by the model bricks described below.
 
 
 The contact pair detection algorithm
@@ -228,23 +228,8 @@ Sorry, for the moment the brick is not working.
 
 
 
-Integral contact brick with raytrace
-++++++++++++++++++++++++++++++++++++
-
-(this is a working brick which will probably evolve for 5.0 release of |gf|)
-
-Add of the brick::
-
-  size_type add_integral_large_sliding_contact_brick_raytrace
-    (model &md, multi_contact_frame &mcf,
-     const std::string &dataname_r,
-     const std::string &dataname_friction_coeff = std::string(),
-     const std::string &dataname_alpha = std::string());
-
-
-
 Tools of the high-level generic assembly for contact with friction
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+******************************************************************
 
 The following nonlinear operators are defined in the high-level generic assembly langage (see :ref:`ud-gasm-high`):
 
@@ -337,64 +322,12 @@ The following nonlinear operators are defined in the high-level generic assembly
        +\partial_{\tau} P_{B(n,\tau)} \partial_r \tau
 
 
-.. _ud-model-contact-friction_raytrace_inter_trans:
-
-Raytracing interpolate transformation
-*************************************
-
-In order to incorporate the contact detection in the high-level generic assembly, a specific interpolate transformation has been defined (see :ref:`ud-gasm-high_interpolate_trans` for more explanations on interpolate tranformations). It is based on a raytracing contact detection has described in [KO-RE2014]_ and uses the criteria described above.
-
-The addition of a raytracing transformation to a model::
-
-  void add_raytracing_transformation(model &md, const std::string &transname,
-                                      scalar_type d)
-
-where ``transname`` is a name given to the transformation which allows to refer to it in the high-level generic assembly language and ``d`` is the release distance (see above).
-
-The raytracing transformation is added without any slave or master contact boundary. The following functions allows to add some boundaries to the transformation::
-
-  add_master_contact_boundary_to_raytracing_transformation(model &md,
-             const std::string &transname, const mesh &m,
-             const std::string &dispname, size_type region)
-
-  add_slave_contact_boundary_to_raytracing_transformation(model &md,
-             const std::string &transname, const mesh &m,
-             const std::string &dispname, size_type region)
-
-where ``dispname`` is the variable name which represent the displacement on that contact
-boundary. The difference between master and slave contact boundary is that the contact detection is to be performed starting from a slave or master boundary toward a master boundary. The contact detection is not performed toward a slave boundary. Consequently, only the influence boxes of the elements of the master surfaces are computed and stored.
-
-It is also possible to add a rigid obstacle (considered as a master surface) thanks to the function:: 
-
-  add_rigid_obstacle_to_raytracing_transformation(model &md,
-             const std::string &transname,
-             const std::string &expr, size_type N)
-
-where ``expr`` is the expression of a signed distance to the obstacle using the syntax of the high-level generic assembly language (``X`` being the current position, ``X(0)``, ``X(1)`` ... the corresponding components). For instance an expression ``X(0) + 5`` will correspond to a flat obstacle lying on the right of the position ``-5`` of the first coordinate. Be aware that the expression have to be close to a signed distance, which in particular means that the gradient norm have to be close to 1. 
-
-In order to distinguish between non-contact situations and the occurence of a contact with another deformable body or with a rigid obstacle, the transformation returns an integer identifiant which can be used by the `Interpolate_filter` command of the high-level generic assembly language (see :ref:`ud-gasm-high_interpolate_trans`). The different values:
-
-* 0 : no contact found on this Gauss point
-
-* 1 : contact occurs on this Gauss point with a deformable body
-
-* 2 : contact occurs on this Gauss point with a rigid obstacle.
-
-such that it is possible to differentiate the treatment of these three cases using::
-
-  Interpolate_filter(transname, expr1, 0)
-  Interpolate_filter(transname, expr2, 1)
-  Interpolate_filter(transname, expr3, 2)
-
-in the assembly language, where ``expr1``, ``expr2`` and ``expr3`` correspond to the different terms to be computed. The matlab interface demo program :file:`/interface/tests/matlab/demo_large_sliding_contact.m` presents an example of use.
-
-Note that the transformation could also be directly used with a `ga_workspace` object if model object are not used. See :file:`getfem/getfem_contact_and_friction_common.h` for more details. Note also that in the framework of the model object, a interfaced use of this transformation is allowed by the model bricks described below.
 
 
 .. _ud-model-contact-friction-large-hlgav:
 
-Integral contact brick with raytrace, high-level generic assembly version
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Integral contact brick with raytrace
+************************************
 
 
 Add of the brick::
@@ -405,7 +338,7 @@ Add of the brick::
      const std::string &dataname_friction_coeff = "0",
      const std::string &dataname_alpha = "1");
 
-This brick allows to deal with a multi-contact situation. It adds to the model a raytracing interpolate transformation as described in the previous section whose name can be obtained by the command::
+This brick allows to deal with a multi-contact situation. It adds to the model a raytracing interpolate transformation as described in a previous section whose name can be obtained by the command::
 
   const std::string &transformation_name_of_large_sliding_contact_brick(model &md,
                          size_type indbrick);
