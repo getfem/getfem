@@ -18,13 +18,13 @@ LAW = 3;     % 0 : SaintVenant-Kirchhoff
 FORCEX = 0          % Amplitude of the external force
 FORCEY = 0;
 FORCEZ = 0;
-TORSION = 2.65; %3.14;
+TORSION = 2.00; %3.14;
 EXTENSION = 0.0;
 %%%%%   discretisation parameters  :                     	      %%%%%
 MESH_TYPE = 'GT_PK(3,1)';
 %MESH_TYPE = 'GT_QK(3,1)'; % linear rectangles
 %MESH_TYPE = 'GT_PRISM(3,1)';     % 3D prisms
-NX = 2;            	          % space step.
+NX = 2;            	          % space steps.
 NZ = 8;
 
 MESH_NOISED = 0; % Set to one if you want to "shake" the mesh
@@ -65,10 +65,10 @@ INTEGRATION = 'IM_TETRAHEDRON(6)'
 %INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(7), 3)';
 
 RESIDUAL = 1E-6;     	% residu for iterative solvers.
-MAXITER = 500;
+MAXITER = 100;
 DIRICHLET_VERSION=0;
-NBSTEP = 10;
+NBSTEP = 40;
 %%%%%   saving parameters                                             %%%%%
 ROOTFILENAME = 'nonlinear_elastostatic';     % Root of data files.
 VTK_EXPORT = 1; % export solution to a .vtk file ?
-NOISY=2
+NOISY=1

@@ -1,6 +1,6 @@
 /*===========================================================================
  
- Copyright (C) 2002-2012 Yves Renard, Julien Pommier.
+ Copyright (C) 2002-2015 Yves Renard, Julien Pommier.
  
  This file is a part of GETFEM++
  
@@ -77,7 +77,8 @@ struct elastostatic_problem {
 
   bool solve(plain_vector &U);
   void init(void);
-  elastostatic_problem(void) : mim(mesh), mf_u(mesh), mf_p(mesh), mf_rhs(mesh), mf_coef(mesh) {}
+  elastostatic_problem(void) : mim(mesh), mf_u(mesh), mf_p(mesh), mf_rhs(mesh),
+                               mf_coef(mesh) {}
 };
 
 
@@ -89,7 +90,7 @@ struct elastostatic_problem {
 void elastostatic_problem::init(void) {
   std::string MESH_TYPE = PARAM.string_value("MESH_TYPE","Mesh type ");
   std::string FEM_TYPE  = PARAM.string_value("FEM_TYPE","FEM name");
-  std::string FEM_TYPE_P  = PARAM.string_value("FEM_TYPE_P","FEM name for the pressure");
+  std::string FEM_TYPE_P= PARAM.string_value("FEM_TYPE_P","FEM name for the pressure");
   std::string INTEGRATION = PARAM.string_value("INTEGRATION",
 					       "Name of integration method");
   cout << "MESH_TYPE=" << MESH_TYPE << "\n";
@@ -186,25 +187,19 @@ bool elastostatic_problem::solve(plain_vector &U) {
   base_vector p(3); p[0] = p1; p[1] = p2; p[2] = p3;
 
   /* choose the material law */
-  getfem::abstract_hyperelastic_law *pl1 = 0, *pl = 0;
+  std::string lawname;
   switch (law_num) {
-    case 0:
-    case 1: pl1 = new getfem::SaintVenant_Kirchhoff_hyperelastic_law(); break;
-    case 2: pl1 = new getfem::Ciarlet_Geymonat_hyperelastic_law(); break;
-    case 3: pl1 = new getfem::Mooney_Rivlin_hyperelastic_law(); break;
-    default: GMM_ASSERT1(false, "no such law");
+  case 0:
+  case 1: lawname = "Saint_Venant_Kirchhoff"; p.resize(2); break;
+  case 2: lawname = "Ciarlet_Geymonat"; p.resize(3); break;
+  case 3: lawname = "Incompressible_Mooney_Rivlin"; p.resize(2); break;
+  default: GMM_ASSERT1(false, "no such law");
   }
 
   if (N == 2) {
     cout << "2D plane strain hyper-elasticity\n";
-    pl = new getfem::plane_strain_hyperelastic_law(pl1);
-  } else pl = pl1;
-
-  p.resize(pl->nb_params());
-
-
-  pl->test_derivatives(3, 5e-9, p);
-
+    lawname = "Plane_Strain_"+lawname;
+  }
 
   getfem::model model;
 
@@ -213,12 +208,12 @@ bool elastostatic_problem::solve(plain_vector &U) {
 
   // Nonlinear elasticity brick
   model.add_initialized_fixed_size_data("params", p);
-  getfem::add_nonlinear_elasticity_brick(model, mim, "u", *pl, "params");
+  getfem::add_finite_strain_elasticity_brick(model, mim, "u", lawname, "params");
 
   // Incompressibility
   if (law_num == 1 || law_num == 3) {
     model.add_fem_variable("p", mf_p);
-    getfem::add_nonlinear_incompressibility_brick(model, mim, "u", "p");
+    getfem::add_finite_strain_incompressibility_brick(model, mim, "u", "p");
   }
 
   // Defining the volumic source term.
@@ -247,6 +242,7 @@ bool elastostatic_problem::solve(plain_vector &U) {
 
 
   gmm::iteration iter;
+  gmm::set_traces_level(1); // To avoid some trace messages 
 
 
   /* prepare the export routine for OpenDX (all time steps will be exported) 
@@ -275,7 +271,8 @@ bool elastostatic_problem::solve(plain_vector &U) {
       /* Apply the gradual torsion/extension */
       scalar_type torsion = PARAM.real_value("TORSION","Amplitude of the torsion");
       torsion *= (step+1)/scalar_type(nb_step);
-      scalar_type extension = PARAM.real_value("EXTENSION","Amplitude of the extension");
+      scalar_type extension = PARAM.real_value("EXTENSION",
+                                               "Amplitude of the extension");
       extension *= (step+1)/scalar_type(nb_step);
       base_node G(N); G[0] = G[1] = 0.5;
       for (size_type i = 0; i < nb_dof_rhs; ++i) {
@@ -291,24 +288,11 @@ bool elastostatic_problem::solve(plain_vector &U) {
     gmm::copy(F2, model.set_real_variable("DirichletData"));
 
     cout << "step " << step << ", number of variables : " << model.nb_dof() << endl;
-    iter = gmm::iteration(residual, int(PARAM.int_value("NOISY")), maxit ? maxit : 40000);
+    iter = gmm::iteration(residual, int(PARAM.int_value("NOISY")),
+                          maxit ? maxit : 40000);
 
     /* let the non-linear solve (Newton) do its job */
-    // getfem::default_newton_line_search ls;
-    getfem::simplest_newton_line_search ls(100000, 1.4, 0.001, 0.8);
-
-    getfem::standard_solve
-      (model, iter,
-       getfem::default_linear_solver<getfem::model_real_sparse_matrix,
-       getfem::model_real_plain_vector>(model),
-       ls);
-
-    pl->reset_unvalid_flag();
-    model.assembly(getfem::model::BUILD_RHS);
-    if (pl->get_unvalid_flag()) 
-      GMM_WARNING1("The solution is not completely valid, the determinant "
-		   "of the transformation is negative on "
-		   << pl->get_unvalid_flag() << " gauss points");
+    getfem::standard_solve(model, iter);
 
     gmm::copy(model.real_variable("u"), U);
     //char s[100]; sprintf(s, "step%d", step+1);
@@ -350,8 +334,8 @@ int main(int argc, char *argv[]) {
       exp.exporting(p.mf_u); 
       exp.write_point_data(p.mf_u, U, "elastostatic_displacement");
       cout << "export done, you can view the data file with (for example)\n"
-	"mayavi -d " << p.datafilename << ".vtk -f ExtractVectorNorm -f "
-	"WarpVector -m BandedSurfaceMap -m Outline\n";
+	"mayavi2 -d " << p.datafilename << ".vtk -f ExtractVectorNorm -f "
+	"WarpVector -m Surface -m Outline\n";
     }
   }
   GMM_STANDARD_CATCH_ERROR;
