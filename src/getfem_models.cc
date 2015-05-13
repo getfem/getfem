@@ -6246,9 +6246,11 @@ namespace getfem {
                                                   tresca);
       }
     } else {
-      std::string sigma = "("+data_lambda+")*Div_"+varname+"*Id(meshdim)+("
-        + data_mu+")*(Grad_"+varname+"+Grad_"+varname+"')";
-      std::string expr = "sqrt(3/2)*Norm(Deviator("+sigma+"))";
+      // The Lambda part is not necessary for Von Mises stress ...
+      // std::string sigma = "("+data_lambda+")*Div_"+varname+"*Id(meshdim)+("
+      //   + data_mu+")*(Grad_"+varname+"+Grad_"+varname+"')";
+      std::string sigma_d = "("+data_mu+")*(Grad_"+varname+"+Grad_"+varname+"')";
+      std::string expr = "sqrt(3/2)*Norm(Deviator("+sigma_d+"))";
       ga_interpolation_Lagrange_fem(md, expr, mf_vm, VM);
     }
   }
@@ -6258,12 +6260,14 @@ namespace getfem {
   (model &md, const std::string &varname, const std::string &data_E,
    const std::string &data_nu, const mesh_fem &mf_vm,
    model_real_plain_vector &VM) {
+    // The Lambda part is not necessary for Von Mises stress ...
+    // std::string lambda = "(("+data_E+")*("+data_nu+")/((1+("+data_nu+"))*(1-2*("
+    //  +data_nu+"))))";
     std::string mu = "(("+data_E+")/(2*(1+("+data_nu+"))))";
-    std::string lambda = "(("+data_E+")*("+data_nu+")/((1+("+data_nu+"))*(1-2*("
-      +data_nu+"))))";
-    std::string sigma = lambda+"*Div_"+varname+"*Id(meshdim)+"
-      + mu+"*(Grad_"+varname+"+Grad_"+varname+"')";
-    std::string expr = "sqrt(3/2)*Norm(Deviator("+sigma+"))";
+    // std::string sigma = lambda+"*Div_"+varname+"*Id(meshdim)+"
+    //  + mu+"*(Grad_"+varname+"+Grad_"+varname+"')";
+    std::string sigma_d = mu+"*(Grad_"+varname+"+Grad_"+varname+"')";
+    std::string expr = "sqrt(3/2)*Norm(Deviator("+sigma_d+"))";
     ga_interpolation_Lagrange_fem(md, expr, mf_vm, VM);
   }
 
@@ -6271,23 +6275,24 @@ namespace getfem {
   (model &md, const std::string &varname, const std::string &data_E,
    const std::string &data_nu, const mesh_fem &mf_vm,
    model_real_plain_vector &VM) {
-    const mesh_fem *mfu = md.pmesh_fem_of_variable(varname);
-    GMM_ASSERT1(mfu, "The variable should be a fem variable");
-    size_type N = mfu->linked_mesh().dim();
-
+    // The Lambda part is not necessary for Von Mises stress ...
+    // const mesh_fem *mfu = md.pmesh_fem_of_variable(varname);
+    // GMM_ASSERT1(mfu, "The variable should be a fem variable");
+    // size_type N = mfu->linked_mesh().dim();
+    // std::string lambda =  "(("+data_E+")*("+data_nu+")/((1+("+data_nu
+    //  +"))*(1-2*("+data_nu+"))))";
+    // if (N == 2)
+    //  lambda = "(("+data_E+")*("+data_nu+")/((1-sqr("+data_nu+"))))";
     std::string mu = "(("+data_E+")/(2*(1+("+data_nu+"))))";
-    std::string lambda =  "(("+data_E+")*("+data_nu+")/((1+("+data_nu
-      +"))*(1-2*("+data_nu+"))))";
-    if (N == 2)
-      lambda = "(("+data_E+")*("+data_nu+")/((1-sqr("+data_nu+"))))";
-    std::string sigma = lambda+"*Div_"+varname+"*Id(meshdim)+"
-      + mu+"*(Grad_"+varname+"+Grad_"+varname+"')";
-    std::string expr = "sqrt(3/2)*Norm(Deviator("+sigma+"))";
+    // std::string sigma = lambda+"*Div_"+varname+"*Id(meshdim)+"
+    //   + mu+"*(Grad_"+varname+"+Grad_"+varname+"')";
+    std::string sigma_d = mu+"*(Grad_"+varname+"+Grad_"+varname+"')";
+    std::string expr = "sqrt(3/2)*Norm(Deviator("+sigma_d+"))";
     ga_interpolation_Lagrange_fem(md, expr, mf_vm, VM);
   }
 
 
-  // ----------------------------------------------------------------------
+  // --------------------------------------------------------------------
   //
   // linearized incompressibility brick  (div u = 0)
   //

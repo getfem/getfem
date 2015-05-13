@@ -17,9 +17,9 @@
 
 clear all;
 % parameters
-option = 3;            % 1 = use Lame coefficients brick
-                       % 2 = use plane strain approximation 
-                       % 3 = use plane stress approximation 
+option = 2;            % 1 = use Lame coefficients brick
+                       % 2 = use plane strain approximation brick
+                       % 3 = use plane stress approximation brick
 d = 2;                 % dimension (cannot be changed for the moment)
 E = 1;                 % Young's modulus
 nu = 0.3;              % Poisson ratio
