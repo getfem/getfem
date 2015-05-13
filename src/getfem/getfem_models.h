@@ -2417,6 +2417,30 @@ namespace getfem {
    size_type region = size_type(-1),
    const std::string &dataname_preconstraint = std::string());
 
+  /**  Linear elasticity brick ( @f$ \int \sigma(u):\varepsilon(v) @f$ ).
+      for isotropic material. Parametrized by Young modulus and Poisson ratio
+      For two-dimensional problems, corresponds to the plain strain
+      approximation
+      ( @f$ \lambda = E\nu/((1+\nu)(1-2\nu)), \mu = E/(2(1+\nu)) @f$ ).
+      Corresponds to the standard model for three-dimensional problems.
+  */
+  size_type APIDECL add_isotropic_linearized_elasticity_brick_pstrain
+  (model &md, const mesh_im &mim, const std::string &varname,
+   const std::string &data_E, const std::string &data_nu,
+   size_type region);
+
+  /** 
+      Linear elasticity brick ( @f$ \int \sigma(u):\varepsilon(v) @f$ ).
+      for isotropic material. Parametrized by Young modulus and Poisson ratio.
+      For two-dimensional problems, corresponds to the plain stress
+      approximation
+      ( @f$ \lambda^* = E\nu/(1-\nu^2), \mu = E/(2(1+\nu)) @f$ ).
+      Corresponds to the standard model for three-dimensional problems.
+  */
+  size_type APIDECL add_isotropic_linearized_elasticity_brick_pstress
+  (model &md, const mesh_im &mim, const std::string &varname,
+   const std::string &data_E, const std::string &data_nu,
+   size_type region);
 
   void APIDECL compute_isotropic_linearized_Von_Mises_or_Tresca
   (model &md, const std::string &varname, const std::string &dataname_lambda,
@@ -2426,6 +2450,7 @@ namespace getfem {
   /**
      Compute the Von-Mises stress or the Tresca stress of a field
      (only valid for isotropic linearized elasticity in 3D)
+     Parametrized by Lame coefficients.
   */
   template <class VECTVM>
   void compute_isotropic_linearized_Von_Mises_or_Tresca
@@ -2437,6 +2462,27 @@ namespace getfem {
       (md, varname, dataname_lambda, dataname_mu, mf_vm, VMM, tresca);
     gmm::copy(VMM, VM);
   }
+
+  /**
+     Compute the Von-Mises stress  of a displacement field for isotropic
+     linearized elasticity in 3D or in 2D with plane strain assumption.
+     Parametrized by Young modulus and Poisson ratio.
+  */
+  void APIDECL compute_isotropic_linearized_Von_Mises_pstrain
+  (model &md, const std::string &varname, const std::string &data_E,
+   const std::string &data_nu, const mesh_fem &mf_vm,
+   model_real_plain_vector &VM);
+
+  /**
+     Compute the Von-Mises stress  of a displacement field for isotropic
+     linearized elasticity in 3D or in 2D with plane stress assumption.
+     Parametrized by Young modulus and Poisson ratio.
+  */
+  void APIDECL compute_isotropic_linearized_Von_Mises_pstress
+  (model &md, const std::string &varname, const std::string &data_E,
+   const std::string &data_nu, const mesh_fem &mf_vm,
+   model_real_plain_vector &VM);
+
 
   /**
      Mixed linear incompressibility condition brick.

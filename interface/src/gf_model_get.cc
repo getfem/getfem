@@ -676,7 +676,9 @@ void gf_model_get(getfemint::mexargs_in& m_in,
     /*@GET V = ('compute isotropic linearized Von Mises or Tresca', @str varname, @str dataname_lambda, @str dataname_mu, @tmf mf_vm[, @str version])
       Compute the Von-Mises stress or the Tresca stress of a field (only
       valid for isotropic linearized elasticity in 3D). `version` should
-      be  'Von_Mises' or 'Tresca' ('Von_Mises' is the default). @*/
+      be  'Von_Mises' or 'Tresca' ('Von_Mises' is the default).
+      Parametrized by Lame coefficients.
+      @*/
     sub_command
       ("compute isotropic linearized Von Mises or Tresca", 4, 5, 0, 1,
        std::string varname = in.pop().to_string();
@@ -699,6 +701,41 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        out.pop().from_dcvector(VMM);
        );
 
+    /*@GET V = ('compute isotropic linearized Von Mises pstrain', @str varname, @str data_E, @str data_nu, @tmf mf_vm)
+      Compute the Von-Mises stress  of a displacement field for isotropic
+      linearized elasticity in 3D or in 2D with plane strain assumption.
+      Parametrized by Young modulus and Poisson ratio.
+      @*/
+    sub_command
+      ("compute isotropic linearized Von Mises pstrain", 4, 4, 0, 1,
+       std::string varname = in.pop().to_string();
+       std::string data_E = in.pop().to_string();
+       std::string data_nu = in.pop().to_string();
+       getfemint_mesh_fem *gfi_mf = in.pop().to_getfemint_mesh_fem();
+
+       getfem::model_real_plain_vector VMM((gfi_mf->mesh_fem()).nb_dof());
+       getfem::compute_isotropic_linearized_Von_Mises_pstrain
+       (md->model(), varname, data_E, data_nu, gfi_mf->mesh_fem(), VMM);
+       out.pop().from_dcvector(VMM);
+       );
+
+    /*@GET V = ('compute isotropic linearized Von Mises pstress', @str varname, @str data_E, @str data_nu, @tmf mf_vm)
+      Compute the Von-Mises stress  of a displacement field for isotropic
+      linearized elasticity in 3D or in 2D with plane stress assumption.
+      Parametrized by Young modulus and Poisson ratio.
+      @*/
+    sub_command
+      ("compute isotropic linearized Von Mises pstress", 4, 4, 0, 1,
+       std::string varname = in.pop().to_string();
+       std::string data_E = in.pop().to_string();
+       std::string data_nu = in.pop().to_string();
+       getfemint_mesh_fem *gfi_mf = in.pop().to_getfemint_mesh_fem();
+
+       getfem::model_real_plain_vector VMM((gfi_mf->mesh_fem()).nb_dof());
+       getfem::compute_isotropic_linearized_Von_Mises_pstress
+       (md->model(), varname, data_E, data_nu, gfi_mf->mesh_fem(), VMM);
+       out.pop().from_dcvector(VMM);
+       );
 
     /*@GET V = ('compute Von Mises or Tresca', @str varname, @str lawname, @str dataname, @tmf mf_vm[, @str version])
       Compute on `mf_vm` the Von-Mises stress or the Tresca stress of a field

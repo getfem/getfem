@@ -6,8 +6,8 @@
 
 .. _ud-asm:
 
-Standard assembly procedures
-============================
+Some Standard assembly procedures (low-level generic assembly)
+==============================================================
 
 Procedures defined in the file :file:`getfem/getfem_assembling.h` allow the
 assembly of stiffness matrices, mass matrices and boundary conditions for a few

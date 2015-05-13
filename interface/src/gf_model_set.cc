@@ -1569,6 +1569,60 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        out.pop().from_integer(int(ind));
        );
 
+    /*@SET ind = ('add isotropic linearized elasticity brick pstrain', @tmim mim, @str varname, @str data_E, @str data_nu[, @int region])
+      Add an isotropic linearized elasticity term to the model relatively to
+      the variable `varname`. `data_E` and `data_nu` should
+      contain the Young modulus and Poisson ratio, respectively.
+      `region` is an optional mesh region on which the term is added.
+      If it is not specified, it is added
+      on the whole mesh.
+      On two-dimensional meshes, the term will correpsond to a plain strain
+      approximation. On three-dimensional meshes, it will correspond to the
+      standard model. 
+      Return the brick index in the model.@*/
+    sub_command
+      ("add isotropic linearized elasticity brick pstrain", 4, 5, 0, 1,
+       getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+       std::string varname = in.pop().to_string();
+       std::string data_E = in.pop().to_string();
+       std::string data_nu = in.pop().to_string();
+       size_type region = size_type(-1);
+       if (in.remaining()) region = in.pop().to_integer();
+       size_type ind
+       = getfem::add_isotropic_linearized_elasticity_brick_pstrain
+       (md->model(), gfi_mim->mesh_im(), varname, data_E, data_nu, region)
+       + config::base_index();
+       workspace().set_dependance(md, gfi_mim);
+       out.pop().from_integer(int(ind));
+       );
+
+    /*@SET ind = ('add isotropic linearized elasticity brick pstress', @tmim mim, @str varname, @str data_E, @str data_nu[, @int region])
+      Add an isotropic linearized elasticity term to the model relatively to
+      the variable `varname`. `data_E` and `data_nu` should
+      contain the Young modulus and Poisson ratio, respectively.
+      `region` is an optional mesh region on which the term is added.
+      If it is not specified, it is added
+      on the whole mesh.
+      On two-dimensional meshes, the term will correpsond to a plain stress
+      approximation. On three-dimensional meshes, it will correspond to the
+      standard model. 
+      Return the brick index in the model.@*/
+    sub_command
+      ("add isotropic linearized elasticity brick pstress", 4, 5, 0, 1,
+       getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+       std::string varname = in.pop().to_string();
+       std::string data_E = in.pop().to_string();
+       std::string data_nu = in.pop().to_string();
+       size_type region = size_type(-1);
+       if (in.remaining()) region = in.pop().to_integer();
+       size_type ind
+       = getfem::add_isotropic_linearized_elasticity_brick_pstress
+       (md->model(), gfi_mim->mesh_im(), varname, data_E, data_nu, region)
+       + config::base_index();
+       workspace().set_dependance(md, gfi_mim);
+       out.pop().from_integer(int(ind));
+       );
+
 
     /*@SET ind = ('add linear incompressibility brick', @tmim mim, @str varname, @str multname_pressure[, @int region[, @str dataexpr_coeff]])
     Add an linear incompressibility condition on `variable`. `multname_pressure`

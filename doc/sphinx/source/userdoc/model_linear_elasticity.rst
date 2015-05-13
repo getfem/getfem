@@ -26,20 +26,47 @@ with
    \varepsilon(u) &= (\nabla u + \nabla u^T)/2
 
 :math:`\varepsilon(u)` is the small strain tensor, :math:`\sigma` is the stress
-tensor, :math:`\lambda` and :math:`\mu` are the Lamé coefficients. This represents
+tensor, :math:`\lambda` and :math:`\mu` are the |Lame| coefficients. This represents
 the system of linearized isotropic elasticity. It can also be used with
 :math:`\lambda=0` together with the linear incompressible brick to build the
 Stokes problem.
 
-The function which adds this brick to a model is::
+
+Let us recall that the relation between the |Lame| coefficients an Young modulus :math:`E` and Poisson ratio :math:`\nu` is
+
+.. math::
+
+   \lambda = \Frac{E\nu}{(1+\nu)(1-2\nu)}, ~~~ \mu = \Frac{E}{2(1+\nu)},
+
+except for the plane stress approximation (2D model) where
+
+.. math::
+
+   \lambda^* = \Frac{E\nu}{(1-\nu^2)}, ~~~ \mu = \Frac{E}{2(1+\nu)},
+
+
+The function which adds this brick to a model and parametrized with the |Lame| coefficients is::
 
   ind_brick = getfem::add_isotropic_linearized_elasticity_brick
-              (md, mim, varname, dataname_lambda, dataname_mu,
+              (md, mim, varname, data_lambda, data_mu,
                region = size_type(-1));
 
 where ``dataname_lambda`` and ``dataname_mu`` are the data of the model
-representing the Lamé coefficients (constant or described on a finite element
-method).
+representing the |Lame| coefficients.
+
+The function which adds this brick to a model and parametrized with Young modulus and Poisson ratio is::
+
+  ind_brick = getfem::add_isotropic_linearized_elasticity_brick_pstrain
+              (md, mim, varname, data_E, data_nu, region = size_type(-1));
+
+
+This brick represent a plane strain approximation when it is applied to a 2D mesh (and a standard model on a 3D mesh). in order to obtain a plane stress approximation for 2D meshes, one can use::
+
+  ind_brick = getfem::add_isotropic_linearized_elasticity_brick_pstress
+              (md, mim, varname, data_E, data_nu, region = size_type(-1));
+
+For 3D meshes, the two previous bricks give the same result.
+
 
 The function::
 
@@ -48,10 +75,20 @@ The function::
 
 compute the Von Mises criterion (or Tresca if ``tresca_flag`` is set to true) on
 the displacement field stored in ``varname``. The stress is evaluated on the |mf|
-``mf_vm`` and stored in the vector ``VM``.
+``mf_vm`` and stored in the vector ``VM``. It is not valid for 2D plane stress approximation and is parametrized with |Lame| coefficients. The functions::
 
-The program :file:`tests/elastostatic.cc` can be taken as a model of use of this
-brick.
+  getfem::compute_isotropic_linearized_Von_Mises
+    (md, varname, data_E, data_nu, mf_vm, VM);
+
+  getfem::compute_isotropic_linearized_Von_Mises
+    (md, varname, data_E, data_nu, mf_vm, VM);
+
+compute the Von Mises stress, parametrized with Young modulus and Poisson ratio, the second one being valid for 2D plane stress approximation when it is applied on a 2D mesh (the two functions give the same result for 3D problems).
+
+
+
+
+The program :file:`tests/elastostatic.cc` can be taken as a model of use of a linearized isotropic elasticity brick.
 
 
 Linear incompressibility (or nearly incompressibility) brick

@@ -6144,44 +6144,148 @@ namespace getfem {
 #endif
   }
 
-  void compute_isotropic_linearized_Von_Mises_or_Tresca
-  (model &md, const std::string &varname, const std::string &dataname_lambda,
-   const std::string &dataname_mu, const mesh_fem &mf_vm,
-   model_real_plain_vector &VM, bool tresca) {
-
-    const mesh_fem &mf_u = md.mesh_fem_of_variable(varname);
-    const mesh_fem *mf_lambda = md.pmesh_fem_of_variable(dataname_lambda);
-    const model_real_plain_vector *lambda=&(md.real_variable(dataname_lambda));
-    const mesh_fem *mf_mu = md.pmesh_fem_of_variable(dataname_mu);
-    const model_real_plain_vector *mu = &(md.real_variable(dataname_mu));
-
-    size_type sl = gmm::vect_size(*lambda);
-    if (mf_lambda) sl = sl * mf_lambda->get_qdim() / mf_lambda->nb_dof();
-    size_type sm = gmm::vect_size(*mu);
-    if (mf_mu) sm = sm * mf_mu->get_qdim() / mf_mu->nb_dof();
-
-    GMM_ASSERT1(sl == 1 && sm == 1, "Bad format for Lame coefficients");
-    GMM_ASSERT1(mf_lambda == mf_mu,
-                "The two Lame coefficients should be described on the same "
-                "finite element method.");
-
-    if (mf_lambda) {
-      getfem::interpolation_von_mises_or_tresca(mf_u, mf_vm,
-                                                md.real_variable(varname), VM,
-                                                *mf_lambda, *lambda,
-                                                *mf_lambda, *mu,
-                                                tresca);
+  size_type add_isotropic_linearized_elasticity_brick_pstrain
+  (model &md, const mesh_im &mim, const std::string &varname,
+   const std::string &data_E, const std::string &data_nu,
+   size_type region) {
+    std::string test_varname
+      = "Test_" + sup_previous_and_dot_to_varname(varname);
+    
+    std::string mu = "(("+data_E+")/(2*(1+("+data_nu+"))))";
+    std::string lambda = "(("+data_E+")*("+data_nu+")/((1+("+data_nu+"))*(1-2*("
+      +data_nu+"))))";
+    std::string expr = lambda+"*Div_"+varname+"*Div_"+test_varname
+      + "+"+mu+"*(Grad_"+varname+"+Grad_"+varname+"'):Grad_"+test_varname;
+    
+    ga_workspace workspace(md, true);
+    workspace.add_expression(expr, mim, region);
+    model::varnamelist vl, vl_test1, vl_test2, dl;
+    bool is_lin = workspace.used_variables(vl, vl_test1, vl_test2, dl, 2);
+    
+    if (is_lin) {
+      return add_linear_generic_assembly_brick
+        (md, mim, expr, region, false, false, "Linearized isotropic elasticity");
     } else {
-      mf_lambda = &(classical_mesh_fem(mf_u.linked_mesh(), 0));
-      model_real_plain_vector LAMBDA(mf_lambda->nb_dof(), (*lambda)[0]);
-      model_real_plain_vector MU(mf_lambda->nb_dof(), (*mu)[0]);
-      getfem::interpolation_von_mises_or_tresca(mf_u, mf_vm,
-                                                md.real_variable(varname), VM,
-                                                *mf_lambda, LAMBDA,
-                                                *mf_lambda, MU,
-                                                tresca);
+      return add_nonlinear_generic_assembly_brick
+        (md, mim, expr, region, false, false,
+         "Linearized isotropic elasticity (with nonlinear dependance)");
     }
   }
+
+  size_type add_isotropic_linearized_elasticity_brick_pstress
+  (model &md, const mesh_im &mim, const std::string &varname,
+   const std::string &data_E, const std::string &data_nu,
+   size_type region) {
+    std::string test_varname
+      = "Test_" + sup_previous_and_dot_to_varname(varname);
+    
+    const mesh_fem *mfu = md.pmesh_fem_of_variable(varname);
+    GMM_ASSERT1(mfu, "The variable should be a fem variable");
+    size_type N = mfu->linked_mesh().dim();
+
+    std::string mu = "(("+data_E+")/(2*(1+("+data_nu+"))))";
+    std::string lambda =  "(("+data_E+")*("+data_nu+")/((1+("+data_nu+"))*(1-2*("
+      +data_nu+"))))";
+    if (N == 2)
+      lambda = "(("+data_E+")*("+data_nu+")/((1-sqr("+data_nu+"))))";
+    std::string expr = lambda+"*Div_"+varname+"*Div_"+test_varname
+      + "+"+mu+"*(Grad_"+varname+"+Grad_"+varname+"'):Grad_"+test_varname;
+    
+    ga_workspace workspace(md, true);
+    workspace.add_expression(expr, mim, region);
+    model::varnamelist vl, vl_test1, vl_test2, dl;
+    bool is_lin = workspace.used_variables(vl, vl_test1, vl_test2, dl, 2);
+    
+    if (is_lin) {
+      return add_linear_generic_assembly_brick
+        (md, mim, expr, region, false, false, "Linearized isotropic elasticity");
+    } else {
+      return add_nonlinear_generic_assembly_brick
+        (md, mim, expr, region, false, false,
+         "Linearized isotropic elasticity (with nonlinear dependance)");
+    }
+  }
+
+  // Tresca to be implemented with generic interpolation
+  void compute_isotropic_linearized_Von_Mises_or_Tresca
+  (model &md, const std::string &varname, const std::string &data_lambda,
+   const std::string &data_mu, const mesh_fem &mf_vm,
+   model_real_plain_vector &VM, bool tresca) {
+
+    if (tresca) {
+      const mesh_fem &mf_u = md.mesh_fem_of_variable(varname);
+      const mesh_fem *mf_lambda = md.pmesh_fem_of_variable(data_lambda);
+      const model_real_plain_vector *lambda=&(md.real_variable(data_lambda));
+      const mesh_fem *mf_mu = md.pmesh_fem_of_variable(data_mu);
+      const model_real_plain_vector *mu = &(md.real_variable(data_mu));
+      
+      size_type sl = gmm::vect_size(*lambda);
+      if (mf_lambda) sl = sl * mf_lambda->get_qdim() / mf_lambda->nb_dof();
+      size_type sm = gmm::vect_size(*mu);
+      if (mf_mu) sm = sm * mf_mu->get_qdim() / mf_mu->nb_dof();
+
+      GMM_ASSERT1(sl == 1 && sm == 1, "Bad format for Lame coefficients");
+      GMM_ASSERT1(mf_lambda == mf_mu,
+                  "The two Lame coefficients should be described on the same "
+                  "finite element method.");
+      
+      if (mf_lambda) {
+        getfem::interpolation_von_mises_or_tresca(mf_u, mf_vm,
+                                                  md.real_variable(varname), VM,
+                                                  *mf_lambda, *lambda,
+                                                  *mf_lambda, *mu,
+                                                  tresca);
+      } else {
+        mf_lambda = &(classical_mesh_fem(mf_u.linked_mesh(), 0));
+        model_real_plain_vector LAMBDA(mf_lambda->nb_dof(), (*lambda)[0]);
+        model_real_plain_vector MU(mf_lambda->nb_dof(), (*mu)[0]);
+        getfem::interpolation_von_mises_or_tresca(mf_u, mf_vm,
+                                                  md.real_variable(varname), VM,
+                                                  *mf_lambda, LAMBDA,
+                                                  *mf_lambda, MU,
+                                                  tresca);
+      }
+    } else {
+      std::string sigma = "("+data_lambda+")*Div_"+varname+"*Id(meshdim)+("
+        + data_mu+")*(Grad_"+varname+"+Grad_"+varname+"')";
+      std::string expr = "sqrt(3/2)*Norm(Deviator("+sigma+"))";
+      ga_interpolation_Lagrange_fem(md, expr, mf_vm, VM);
+    }
+  }
+
+
+  void compute_isotropic_linearized_Von_Mises_pstrain
+  (model &md, const std::string &varname, const std::string &data_E,
+   const std::string &data_nu, const mesh_fem &mf_vm,
+   model_real_plain_vector &VM) {
+    std::string mu = "(("+data_E+")/(2*(1+("+data_nu+"))))";
+    std::string lambda = "(("+data_E+")*("+data_nu+")/((1+("+data_nu+"))*(1-2*("
+      +data_nu+"))))";
+    std::string sigma = lambda+"*Div_"+varname+"*Id(meshdim)+"
+      + mu+"*(Grad_"+varname+"+Grad_"+varname+"')";
+    std::string expr = "sqrt(3/2)*Norm(Deviator("+sigma+"))";
+    ga_interpolation_Lagrange_fem(md, expr, mf_vm, VM);
+  }
+
+  void compute_isotropic_linearized_Von_Mises_pstress
+  (model &md, const std::string &varname, const std::string &data_E,
+   const std::string &data_nu, const mesh_fem &mf_vm,
+   model_real_plain_vector &VM) {
+    const mesh_fem *mfu = md.pmesh_fem_of_variable(varname);
+    GMM_ASSERT1(mfu, "The variable should be a fem variable");
+    size_type N = mfu->linked_mesh().dim();
+
+    std::string mu = "(("+data_E+")/(2*(1+("+data_nu+"))))";
+    std::string lambda =  "(("+data_E+")*("+data_nu+")/((1+("+data_nu
+      +"))*(1-2*("+data_nu+"))))";
+    if (N == 2)
+      lambda = "(("+data_E+")*("+data_nu+")/((1-sqr("+data_nu+"))))";
+    std::string sigma = lambda+"*Div_"+varname+"*Id(meshdim)+"
+      + mu+"*(Grad_"+varname+"+Grad_"+varname+"')";
+    std::string expr = "sqrt(3/2)*Norm(Deviator("+sigma+"))";
+    ga_interpolation_Lagrange_fem(md, expr, mf_vm, VM);
+  }
+
 
   // ----------------------------------------------------------------------
   //

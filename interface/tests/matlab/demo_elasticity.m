@@ -17,13 +17,23 @@
 
 clear all;
 % parameters
+option = 3;            % 1 = use Lame coefficients brick
+                       % 2 = use plane strain approximation 
+                       % 3 = use plane stress approximation 
 d = 2;                 % dimension (cannot be changed for the moment)
-clambda = 1; cmu = 1;  % Lame coefficients
+E = 1;                 % Young's modulus
+nu = 0.3;              % Poisson ratio
+cmu = E/(2*(1+nu));    % Lame coefficient
+if (option == 3)
+  clambda = 2*cmu*nu/(1-2*nu); % Lame coefficient, 3D and plane strain
+else
+  clambda = 2*cmu*nu/(1-nu);   % Lame coefficient, plane stress
+end
 dirichlet_version = 2; % 1 = With multipliers, 2 = Nitsche's method
 theta = 1;             % Nitsche's method parameter theta
 gamma0 = 0.001;        % Nitsche's method parameter gamma0 (gamma = gamma0*h)
 incompressible = false;% Test with incompressibility or not
-NX = 100;
+NX = 30;
 
 % trace on;
 gf_workspace('clear all');
@@ -73,12 +83,23 @@ end
 
 md=gf_model('real');
 gf_model_set(md, 'add fem variable', 'u', mf);
-gf_model_set(md, 'add initialized data', 'cmu', [cmu]);
-gf_model_set(md, 'add initialized data', 'clambda', [clambda]);
-% gf_model_set(md, 'add linear generic assembly brick', mim, ...
-%       '(clambda*Div_Test_u*Id(qdim(u)) +
-%       cmu*(Grad_Test_u''+Grad_Test_u)):Grad_Test2_u');
-gf_model_set(md, 'add isotropic linearized elasticity brick', mim, 'u', 'clambda', 'cmu');
+if (option == 1)
+  gf_model_set(md, 'add initialized data', 'cmu', [cmu]);
+  gf_model_set(md, 'add initialized data', 'clambda', [clambda]);
+  % gf_model_set(md, 'add linear generic assembly brick', mim, ...
+  %       '(clambda*Div_Test_u*Id(qdim(u)) +
+  %       cmu*(Grad_Test_u''+Grad_Test_u)):Grad_Test2_u');
+  gf_model_set(md, 'add isotropic linearized elasticity brick', mim, 'u', 'clambda', 'cmu');
+elseif (option == 2)
+  gf_model_set(md, 'add initialized data', 'E', [E]);
+  gf_model_set(md, 'add initialized data', 'nu', [nu]);
+  gf_model_set(md, 'add isotropic linearized elasticity brick pstrain', mim, 'u', 'E', 'nu');
+elseif (option == 3)
+  gf_model_set(md, 'add initialized data', 'E', [E]);
+  gf_model_set(md, 'add initialized data', 'nu', [nu]);
+  gf_model_set(md, 'add isotropic linearized elasticity brick pstress', mim, 'u', 'E', 'nu');
+end
+
 if (incompressible)
   gf_model_set(md, 'add fem variable', 'p', mfp);
   gf_model_set(md, 'add linear incompressibility brick', mim, 'u', 'p');
@@ -97,7 +118,6 @@ else
   gf_model_set(md, 'add Dirichlet condition with Nitsche method', mim, 'u', expr, 'gamma0', GAMMAD, theta, 'DirichletData');
 end
 
-% gf_model_get(md, 'test tangent matrix', 1e-6, 10, 0.1);
 tic;    
 gf_model_get(md, 'solve', 'noisy', 'max iter', 100);
 U = gf_model_get(md, 'variable', 'u');
@@ -105,7 +125,14 @@ toc;
 
 figure(1);
 subplot(1+incompressible, 2, 1);
-VM = gf_model_get(md, 'compute isotropic linearized Von Mises or Tresca', 'u', 'clambda', 'cmu', mfdu);
+if (option == 1)
+  VM = gf_model_get(md, 'compute isotropic linearized Von Mises or Tresca', 'u', 'clambda', 'cmu', mfdu);
+elseif (option == 2)
+  VM = gf_model_get(md, 'compute isotropic linearized Von Mises pstrain', 'u', 'E', 'nu', mfdu);
+elseif (option == 3)
+  VM = gf_model_get(md, 'compute isotropic linearized Von Mises pstress', 'u', 'E', 'nu', mfdu);
+end
+    
 gf_plot(mfdu, VM, 'deformed_mesh', 'on', 'deformation', U, 'deformation_mf', mf, 'refine', 4); 
 colorbar;title('approximated solution');
 
