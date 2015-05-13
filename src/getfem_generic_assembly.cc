@@ -745,6 +745,32 @@ namespace getfem {
       break;
     case GA_NODE_CONSTANT: case GA_NODE_ZERO:
       if (pnode1->t.size() != pnode2->t.size()) return false;
+      
+      switch(version) {
+      case 0: case 1:
+        if (pnode1->test_function_type != pnode2->test_function_type)
+          return false;
+        if ((pnode1->test_function_type & 1) &&
+            pnode1->name_test1.compare(pnode2->name_test1) != 0)
+          return false;
+        if ((pnode1->test_function_type & 2) &&
+            pnode1->name_test2.compare(pnode2->name_test2) != 0)
+          return false;
+        break;
+      case 2:
+        if ((pnode1->test_function_type == 1 &&
+             pnode2->test_function_type == 1) ||
+            (pnode1->test_function_type == 2 &&
+             pnode2->test_function_type == 2))
+          return false;
+        if ((pnode1->test_function_type & 1) &&
+            pnode1->name_test1.compare(pnode2->name_test2) != 0)
+          return false;
+        if ((pnode1->test_function_type & 2) &&
+            pnode1->name_test2.compare(pnode2->name_test1) != 0)
+          return false;
+        break;
+      }
       if (pnode1->t.size() != 1 &&
           pnode1->t.sizes().size() != pnode2->t.sizes().size()) return false;
       for (size_type i = 0; i < pnode1->t.sizes().size(); ++i)
@@ -5081,7 +5107,12 @@ namespace getfem {
 
     switch (pnode->node_type) {
     case GA_NODE_CONSTANT: case GA_NODE_ZERO:
-      c += ga_hash_code(pnode->t); break;
+      c += ga_hash_code(pnode->t);
+      if (pnode->test_function_type & 1)
+        c += 34.731 * ga_hash_code(pnode->name_test1);
+      if (pnode->test_function_type & 2)
+        c += 34.731 * ga_hash_code(pnode->name_test2);
+      break;
 
     case GA_NODE_OP: c += scalar_type(pnode->op_type)*M_E*M_PI*M_PI; break;
     case GA_NODE_X: c += scalar_type(pnode->nbc1) + M_E*M_PI; break;
@@ -8215,10 +8246,11 @@ namespace getfem {
         // cout << " and "; ga_print_node(*it, cout); cout << endl;
         if (sub_tree_are_equal(pnode, *it, workspace, 1)) {
           // cout << "confirmed no transpose" << endl;
-          if (pnode->t.size() == 1)
+          if (pnode->t.size() == 1) {
             pgai = new ga_instruction_copy_scalar(pnode->t[0], (*it)->t[0]);
-          else
+          } else {
             pgai = new ga_instruction_copy_tensor(pnode->t, (*it)->t);
+          }
           rmi.instructions.push_back(pgai);
           return;
         }
