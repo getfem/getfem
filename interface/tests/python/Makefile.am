@@ -9,6 +9,7 @@ EXTRA_DIST= 						\
 	demo_plasticity.py              		\
 	demo_plate.py 					\
 	demo_static_contact.py 				\
+	demo_Mindlin_Reissner_plate.py 			\
 	demo_step_by_step.py				\
 	demo_stokes_3D_tank.py          		\
 	demo_stokes_3D_tank_draw.py			\

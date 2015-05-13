@@ -43,8 +43,8 @@ nx = 20                             #
                                     #
 DIRICHLET  = 101                    #
                                     #
-Lambda = 1.25E10 # Lamé coefficient #
-Mu = 1.875E10    # Lamé coefficient #
+Lambda = 1.25E10 # Lame coefficient #
+Mu = 1.875E10    # Lame coefficient #
 #####################################
 
 # Global Functions: ###############################

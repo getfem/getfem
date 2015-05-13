@@ -1,4 +1,5 @@
-% Copyright (C) 20015-2015 FABRE Mathieu, SECK Mamadou, DALLERIT Valentin, Yves Renard
+% Copyright (C) 2015-2015 FABRE Mathieu, SECK Mamadou, DALLERIT Valentin,
+%                         Yves Renard
 %
 % This file is a part of GETFEM++
 %
@@ -24,12 +25,14 @@ epsilon  = 0.001;      % Plate thickness
 kappa     = 5/6;       % Shear correction factor
 f = -5*epsilon^3;      % Prescribed force on the top of the plate
 
-variant = 2;           % 0 : not reduced, 1 : with reduced integration, 2 : MITC reduction
+variant = 2;           % 0 : not reduced, 1 : with reduced integration,
+                       % 2 : MITC reduction
 quadrangles = true;    % Locking free only on quadrangle for the moment
 K = 1;                 % Degree of the finite element method
 with_Mindlin_brick = true; % Uses the Reissner-Mindlin predefined brick or not
-dirichlet_version = 1; % 0 = simplification, 1 = with multipliers, 2 = penalization
-
+dirichlet_version = 1; % 0 = simplification, 1 = with multipliers
+                       % 2 = penalization
+r = 1E8;               % Penalization parameter.
 plot_mesh = false;
 draw_solution = true;
 
@@ -42,11 +45,9 @@ else
   m=gf_mesh('import','structured',sprintf('GT="GT_PK(2,1)";SIZES=[1,1];NOISED=0;NSUBDIV=[%d,%d];', NX, NX));
 end
 
-% Create a mesh_fem of for a 2 dimension vector field
+% Create a mesh_fem  for a 2D vector field
 mftheta = gf_mesh_fem(m,2);
 mfu = gf_mesh_fem(m,1);
-% Assign the QK or PK fem to all convexes of the mesh_fem, and define an
-% integration method
 if (quadrangles)
   gf_mesh_fem_set(mftheta,'fem',gf_fem(sprintf('FEM_QK(2,%d)', K)));
   gf_mesh_fem_set(mfu,'fem',gf_fem(sprintf('FEM_QK(2,%d)', K)));
@@ -59,15 +60,15 @@ else
   mim_reduced = gf_mesh_im(m, gf_integ('IM_TRIANGLE(1)'));
 end
 
-% detect the border of the mesh
+% Detect the border of the mesh and  assign it the boundary number 1
 border = gf_mesh_get(m,'outer faces');
-% mark it as boundary #1
 gf_mesh_set(m, 'boundary', 1, border);
 if (plot_mesh)
   gf_plot_mesh(m, 'regions', [1]); % the boundary edges appears in red
   pause(1);
 end
 
+% Build the model
 md=gf_model('real');
 gf_model_set(md, 'add fem variable', 'u', mfu);
 gf_model_set(md, 'add fem variable', 'theta', mftheta);
