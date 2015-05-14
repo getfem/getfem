@@ -18,6 +18,7 @@ EXTRA_DIST= 						\
 	demo_tripod.py 					\
 	demo_tripod_alt.py 				\
 	demo_wave.py					\
+	demo_wave_equation.py				\
 	getfem_tvtk.py
 
 if BUILDPYTHON

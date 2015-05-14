@@ -48,7 +48,7 @@ NX = 80                # Number of element per direction
 
 
 if (quadrangles):
-  m = gf.Mesh('cartesian', np.arange(0., 1., 1./NX),np.arange(0., 1., 1./NX))
+  m = gf.Mesh('cartesian', np.arange(0., 1.+1./NX, 1./NX),np.arange(0., 1.+1./NX, 1./NX))
 else:
   m = gf.Mesh('import','structured',
               'GT="GT_PK(2,1)";SIZES=[1,1];NOISED=0;NSUBDIV=[%d,%d];'
