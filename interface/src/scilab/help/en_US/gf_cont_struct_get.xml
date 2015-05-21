@@ -62,8 +62,9 @@
       given by <literal>solution</literal> and <literal>parameter</literal>, the tangent given by <literal>tangent_sol</literal>
       and <literal>tangent_par</literal>, and the step size <literal>h</literal>. Return a new point on the
       solution curve, the corresponding tangent and a step size for the next
-      step. If the returned step size equals zero, the continuation has
-      failed. Optionally, return the type of any detected singular point.
+      step and optionally the size of the current step. If the returned step
+      size equals zero, the continuation has failed. Optionally, return the
+      type of any detected singular point.
       NOTE: The new point need not to be saved in the model in the end!
     </para>
     </listitem>

@@ -445,15 +445,16 @@ set to the initial step size ``h_init``.
 
 Subsequently, one step of the continuation is called by ::
 
-  S.Moore_Penrose_continuation(U, lambda, T_U, T_lambda, h);
+  S.Moore_Penrose_continuation(U, lambda, T_U, T_lambda, h, h0);
 
 After each call, a new point on a solution curve and the corresponding tangent
 are returned in the variables ``U``, ``lambda`` and ``T_U``, ``T_lambda``. The
-step size for the next prediction is returned in ``h``. According to the chosen
-value of ``singularities``, the test functions for limit and bifurcation points 
-are evaluated at the end of each continuation step. Furthermore, if a smooth
-bifurcation point is detected, the procedure for numerical bifurcation is
-performed and an approximation of the branching point as well as tangents to
+step size for the next prediction is returned in ``h``. The size of the
+current step is returned in the optional argument ``h0``. According to the
+chosen value of ``singularities``, the test functions for limit and bifurcation
+points are evaluated at the end of each continuation step. Furthermore, if a
+smooth bifurcation point is detected, the procedure for numerical bifurcation
+is performed and an approximation of the branching point as well as tangents to
 both bifurcating curves are saved in the continuation object ``S``. From
 there, they can easily be recovered with member functions of ``S`` so that one
 can initialise the continuation to trace either of the curves next time.

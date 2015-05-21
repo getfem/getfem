@@ -259,7 +259,7 @@ drawnow;
 // continue from the initial point
 for step = 1:nbstep
   printf('\nbeginning of step %d\n', step);
-  [X, gm, T_X, T_gm, h, sing_label] = gf_cont_struct_get(S, ...
+  [X, gm, T_X, T_gm, h, h0, sing_label] = gf_cont_struct_get(S, ...
     'Moore-Penrose continuation', X, gm, T_X, T_gm, h);
   if (h == 0) then
     printf('Continuation has failed.\n')

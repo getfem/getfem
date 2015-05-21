@@ -351,7 +351,7 @@ namespace getfem {
         diff = w_norm(Delta_X, Delta_Gamma);
         if (noisy() > 1)
           cout << " Correction " << std::setw(3) << it << ":"
-          << " Gamma = " << std::fixed << std::setprecision(6) << 1e2*Gamma << " %"
+          << " Gamma = " << std::fixed << std::setprecision(6) << Gamma
           << " residual = " << std::scientific << std::setprecision(3) << res
           << " difference = " << std::scientific << std::setprecision(3) << diff
           << " cosang = " << std::fixed << std::setprecision(6)
@@ -365,7 +365,7 @@ namespace getfem {
         }
       }
       if (noisy() == 1) cout << "Correction finished with Gamma = "
-                             << 1e2*Gamma << " %" << endl;
+                             << Gamma << endl;
       return converged;
     }
 
@@ -387,7 +387,7 @@ namespace getfem {
         // prediction
         scaled_add(x, gamma, tx, tgamma, h, X, Gamma);   // [X,Gamma] = [x,gamma] + h * [tx,tgamma]
         if (noisy() > 0)
-          cout << "(TPD) Prediction   : Gamma = " << 1e2*Gamma << " %"
+          cout << "(TPD) Prediction   : Gamma = " << Gamma
                << " (for h = " << h << ", tgamma = " << tgamma << ")" << endl;
         copy(tx, tgamma, tX, tGamma);
         //correction
@@ -426,7 +426,7 @@ namespace getfem {
       for (size_type i=0; i < 10 && (gmm::abs(h) >= h_min()); ++i) {
         scaled_add(x0, gamma0, tx0, tgamma0, h, X, Gamma); // [X,Gamma] = [x0,gamma0] + h * [tx0,tgamma0]
         if (noisy() > 0)
-          cout << "(TSBP) Prediction   : Gamma = " << 1e2*Gamma << " %"
+          cout << "(TSBP) Prediction   : Gamma = " << Gamma
                << " (for h = " << h << ", tgamma = " << tgamma << ")" << endl;
         if (newton_corr(X, Gamma, tX, tGamma, tx0, tgamma0)) {
           copy(X, Gamma, x0, gamma0);
@@ -487,7 +487,7 @@ namespace getfem {
       for (size_type i = 0; i < 15; i++) {
         scaled_add(x0, gamma0, tx0, tgamma0, h, X, Gamma);    // [X,Gamma] = [x0,gamma0] + h*[tx0,tgamma0]
         if (noisy() > 0)
-          cout << "(TNSBP) Prediction   : Gamma = " << 1e2*Gamma << " %"
+          cout << "(TNSBP) Prediction   : Gamma = " << Gamma
                << " (for h = " << h << ", tgamma = " << tgamma << ")" << endl;
         if (newton_corr(X, Gamma, tX, tGamma, tx0, tgamma0)
             && (cosang(tX, tx0, tGamma, tgamma0) >= mcos)) {
@@ -601,7 +601,8 @@ namespace getfem {
     /* Perform one step of the (non-smooth) Moore-Penrose continuation.
        NOTE: The new point need not to be saved in the model in the end! */
     void Moore_Penrose_continuation(VECT &x, double &gamma,
-                                    VECT &tx, double &tgamma, double &h) {
+                                    VECT &tx, double &tgamma,
+                                    double &h, double &h0) {
       bool converged, new_point = false, tangent_switched = false;
       size_type it, step_dec = 0;
       double tgamma0 = tgamma, Gamma, tGamma;
@@ -611,10 +612,11 @@ namespace getfem {
       clear_sing_data();
 
       do {
+        h0 = h;
         // prediction
         scaled_add(x, gamma, tx, tgamma, h, X, Gamma);              // [X,Gamma] = [x,gamma] + h*[tx,tgamma]
         if (noisy() > 0)
-          cout << " Prediction    : Gamma = " << 1e2*Gamma << " %"
+          cout << " Prediction    : Gamma = " << Gamma
                << " (for h = " << std::scientific << std::setprecision(3) << h
                << ", tgamma = " << tgamma << ")" << endl;
         copy(tx, tgamma, tX, tGamma);
@@ -630,12 +632,12 @@ namespace getfem {
               set_sing_label("limit point");
               if (noisy() > 0) cout << "Limit point detected!" << endl;
             }
-            if (this->singularities > 1) {
+            if (this->singularities > 1) { // Treat bifurcations
               if (noisy() > 0)
                 cout << "New point found, starting computing a test function "
                      << "for bifurcations" << endl;
               if (!tangent_switched) {
-                if(test_smooth_bifurcation(X, Gamma, tX, tGamma)) {
+                if (test_smooth_bifurcation(X, Gamma, tX, tGamma)) {
                   set_sing_label("smooth bifurcation point");
                   if (noisy() > 0)
                     cout << "Smooth bifurcation point detected!" << endl;
@@ -675,6 +677,7 @@ namespace getfem {
         copy(X, Gamma, x, gamma);
         copy(tX, tGamma, tx, tgamma);
       } else if (this->non_smooth && this->singularities > 1) {
+        h0 = h_min();
         treat_nonsmooth_point(x, gamma, tx0, tgamma0, true);
         if (gmm::vect_size(get_x_next()) > 0) {
           if (test_limit_point(tGamma)) {
@@ -714,8 +717,14 @@ namespace getfem {
 
       if (!new_point) {
         cout << "Continuation has failed!" << endl;
-        h = 0;
+        h0 = h = 0;
       }
+    }
+
+    void Moore_Penrose_continuation(VECT &x, double &gamma,
+                                    VECT &tx, double &tgamma, double &h) {
+      double h0;
+      Moore_Penrose_continuation(x, gamma, tx, tgamma, h, h0);
     }
 
   protected:

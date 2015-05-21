@@ -69,15 +69,42 @@ void gf_cont_struct_get(getfemint::mexargs_in& m_in,
     /*@FUNC h = ('init step size')
       Return an initial step size for continuation.@*/
     sub_command
-      ("init step size", 0, 0, 0, 1,
-
+      ("init step size", 0, 0, 1, 1,
        out.pop().from_scalar(ps->h_init());
+       );
+
+    /*@FUNC h = ('min step size')
+      Return the minimum step size for continuation.@*/
+    sub_command
+      ("min step size", 0, 0, 0, 1,
+       out.pop().from_scalar(ps->h_min());
+       );
+
+    /*@FUNC h = ('max step size')
+      Return the maximum step size for continuation.@*/
+    sub_command
+      ("max step size", 0, 0, 0, 1,
+       out.pop().from_scalar(ps->h_max());
+       );
+
+    /*@FUNC h = ('step size decrement')
+      Return the decrement ratio of the step size for continuation.@*/
+    sub_command
+      ("step size decrement", 0, 0, 0, 1,
+       out.pop().from_scalar(ps->h_dec());
+       );
+
+    /*@FUNC h = ('step size increment')
+      Return the increment ratio of the step size for continuation.@*/
+    sub_command
+      ("step size increment", 0, 0, 0, 1,
+       out.pop().from_scalar(ps->h_inc());
        );
 
     /*@FUNC [@vec tangent_sol, @scalar tangent_par] = ('compute tangent', @vec solution, @scalar parameter, @vec tangent_sol, @scalar tangent_par)
       Compute and return an updated tangent.@*/
     sub_command
-      ("compute tangent", 4, 4, 0, 2,
+      ("compute tangent", 4, 4, 2, 2,
        size_type nbdof = ps->linked_model().nb_dof();
        darray x0 = in.pop().to_darray();
        scalar_type gamma = in.pop().to_scalar();
@@ -99,7 +126,7 @@ void gf_cont_struct_get(getfemint::mexargs_in& m_in,
       computed tangent with respect to the parameter is determined by the
       sign of `init_dir`.@*/
     sub_command
-      ("init Moore-Penrose continuation", 3, 3, 0, 3,
+      ("init Moore-Penrose continuation", 3, 3, 3, 3,
 
        size_type nbdof = ps->linked_model().nb_dof();
        darray x_ = in.pop().to_darray();
@@ -120,12 +147,13 @@ void gf_cont_struct_get(getfemint::mexargs_in& m_in,
       Compute one step of the Moore-Penrose continuation: Take the point
       given by `solution` and `parameter`, the tangent given by `tangent_sol`
       and `tangent_par`, and the step size `h`. Return a new point on the
-      solution curve, the corresponding tangent and a step size for the next
-      step. If the returned step size equals zero, the continuation has
-      failed. Optionally, return the type of any detected singular point.
+      solution curve, the corresponding tangent, a step size for the next
+      step and optionally the current step size. If the returned step
+      size equals zero, the continuation has failed. Optionally, return
+      the type of any detected singular point.
       NOTE: The new point need not to be saved in the model in the end!@*/
     sub_command
-      ("Moore-Penrose continuation", 5, 5, 0, 6,
+      ("Moore-Penrose continuation", 5, 5, 5, 7,
 
        size_type nbdof = ps->linked_model().nb_dof();
        darray x_ = in.pop().to_darray();
@@ -135,13 +163,16 @@ void gf_cont_struct_get(getfemint::mexargs_in& m_in,
        std::vector<double> tx(nbdof); gmm::copy(tx_, tx);
        scalar_type tgamma = in.pop().to_scalar();
        scalar_type h = in.pop().to_scalar();
+       scalar_type h0(0);
 
-       ps->Moore_Penrose_continuation(x, gamma, tx, tgamma, h);
+       ps->Moore_Penrose_continuation(x, gamma, tx, tgamma, h, h0);
        out.pop().from_dcvector(x);
        out.pop().from_scalar(gamma);
        out.pop().from_dcvector(tx);
        out.pop().from_scalar(tgamma);
        out.pop().from_scalar(h);
+       if (out.remaining())
+         out.pop().from_scalar(h0);
        if (out.remaining())
          out.pop().from_string(ps->get_sing_label().c_str());
        );
@@ -153,7 +184,7 @@ void gf_cont_struct_get(getfemint::mexargs_in& m_in,
       and `tangent_par1` and the point given by `solution2` and `parameter2`
       with the tangent given by `tangent_sol2` and `tangent_par2`.@*/
     sub_command
-      ("non-smooth bifurcation test", 8, 8, 0, 1,
+      ("non-smooth bifurcation test", 8, 8, 1, 1,
 
        size_type nbdof = ps->linked_model().nb_dof();
        darray x1_ = in.pop().to_darray();
@@ -181,7 +212,7 @@ void gf_cont_struct_get(getfemint::mexargs_in& m_in,
       the whole calculated graph when passing between different sub-domains
       of differentiability.@*/
     sub_command
-      ("bifurcation test function", 0, 0, 0, 3,
+      ("bifurcation test function", 0, 0, 1, 3,
 
        out.pop().from_scalar(ps->get_tau_bp_2());
        if (out.remaining()) out.pop().from_dcvector(ps->get_alpha_hist());
