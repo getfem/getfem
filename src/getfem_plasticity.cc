@@ -805,6 +805,9 @@ namespace getfem {
     return true;
   }
 
+  // numerical differantiation of logm
+  // not used becaused it caused some issues and was slower than
+  // simply inverting the derivative of expm
   bool logm_deriv(const base_matrix &a, base_tensor &dalog,
                   base_matrix *palog=NULL) {
 
@@ -887,9 +890,16 @@ namespace getfem {
     void derivative(const arg_list &args, size_type /*nder*/,
                     base_tensor &result) const {
       size_type N = args[0]->sizes()[0];
-      base_matrix inpmat(N,N);
+      base_matrix inpmat(N,N), outmat(N,N), tmpmat(N*N,N*N);
       gmm::copy(args[0]->as_vector(), inpmat.as_vector());
-      bool info = logm_deriv(inpmat, result);
+      gmm::logm(inpmat, outmat);
+      bool info = expm_deriv(outmat, result);
+      if (info) {
+        gmm::copy(result.as_vector(), tmpmat.as_vector());
+        scalar_type det = gmm::lu_inverse(tmpmat);
+        if (det <= 0) gmm::copy(gmm::identity_matrix(), tmpmat);
+        gmm::copy(tmpmat.as_vector(), result.as_vector());
+      }
       GMM_ASSERT1(info, "Matrix logarithm derivative calculation "
                         "failed to converge");
     }
