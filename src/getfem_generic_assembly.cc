@@ -4731,7 +4731,7 @@ namespace getfem {
       }
 
       if (tree.root) {
-        // cout << "adding tree expression " << endl;
+        // cout << "adding tree expression " << ga_tree_to_string(tree) << endl;
         max_order = std::max(tree.root->nb_test_functions(), max_order);
         add_tree(tree, mim.linked_mesh(), mim, rg, expr,
                  add_derivative_order);
@@ -6289,10 +6289,11 @@ namespace getfem {
             GMM_ASSERT1(ind_in_parent != size_type(-1), "Internal error");
           }
           ga_tree &ma_tree = workspace.macro_tree(name, meshdim, ignore_X);
+          pga_tree_node &newnode = (ind_in_parent == size_type(-1))
+            ? tree.root : pnode->parent->children[ind_in_parent];
+          tree.copy_node(ma_tree.root, pnode->parent, newnode);
           delete pnode;
-          tree.copy_node(ma_tree.root, pnode->parent,
-                         (ind_in_parent == size_type(-1)) ? tree.root
-                         : pnode->parent->children[ind_in_parent]);
+          pnode = newnode;
         } else {
           // Search for a variable name with optional gradient, Hessian,
           // divergence or test functions
