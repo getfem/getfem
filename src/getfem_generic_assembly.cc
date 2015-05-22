@@ -276,6 +276,8 @@ namespace getfem {
     GA_NODE_C_MATRIX,
     GA_NODE_X,
     GA_NODE_ELT_SIZE,
+    GA_NODE_ELT_K,
+    GA_NODE_ELT_B,
     GA_NODE_NORMAL,
     GA_NODE_VAL,
     GA_NODE_GRAD,
@@ -1102,6 +1104,8 @@ namespace getfem {
       if (pnode->nbc1) str << "X(" << pnode->nbc1 << ")"; else str << "X";
       break;
     case GA_NODE_ELT_SIZE: str << "element_size"; break;
+    case GA_NODE_ELT_K: str << "element_K"; break;
+    case GA_NODE_ELT_B: str << "element_B"; break;
     case GA_NODE_NORMAL: str << "Normal"; break;
     case GA_NODE_INTERPOLATE_FILTER:
       str << "Interpolate_filter(" << pnode->interpolate_name << ",";
@@ -1700,7 +1704,7 @@ namespace getfem {
   //=========================================================================
 
   static void ga_semantic_analysis(const std::string &, ga_tree &,
-                                   const ga_workspace &, size_type,
+                                   const ga_workspace &, size_type, size_type,
                                    bool, bool);
   static void ga_split_tree(const std::string &, ga_tree &,
                             ga_workspace &, pga_tree_node, int = 1);
@@ -2519,7 +2523,33 @@ namespace getfem {
       : t(t_), es(es_)  {}
   };
 
+  struct ga_instruction_element_K : public ga_instruction {
+    base_tensor &t;
+    fem_interpolation_context &ctx;
 
+    virtual int exec(void) {
+      GA_DEBUG_INFO("Instruction: element_K");
+      GMM_ASSERT1(t.size() == (ctx.K()).size(), "Invalid tensor size.");
+      gmm::copy(ctx.K().as_vector(), t.as_vector());
+      return 0;
+    }
+    ga_instruction_element_K(base_tensor &t_, fem_interpolation_context &ct)
+      : t(t_), ctx(ct)  {}
+  };
+
+  struct ga_instruction_element_B : public ga_instruction {
+    base_tensor &t;
+    fem_interpolation_context &ctx;
+
+    virtual int exec(void) {
+      GA_DEBUG_INFO("Instruction: element_B");
+      GMM_ASSERT1(t.size() == (ctx.B()).size(), "Invalid tensor size.");
+      gmm::copy(ctx.B().as_vector(), t.as_vector());
+      return 0;
+    }
+    ga_instruction_element_B(base_tensor &t_, fem_interpolation_context &ct)
+      : t(t_), ctx(ct)  {}
+  };
 
   struct ga_instruction_val_base : public ga_instruction {
     base_tensor &t;
@@ -4571,6 +4601,11 @@ namespace getfem {
     return found_var;
   }
 
+  static size_type ref_elt_dim_of_mesh(const mesh &m) {
+    GMM_ASSERT1(m.convex_index().card(), "Mesh with no elements");
+    return m.trans_of_convex(m.convex_index().first())->dim();
+  }
+
   void ga_workspace::add_tree(ga_tree &tree, const mesh &m,
                               const mesh_im &mim, const mesh_region &rg,
                               const std::string &expr,
@@ -4617,7 +4652,8 @@ namespace getfem {
           ftree.root->op_type = GA_PLUS;
           ftree.add_child(ftree.root);
           ftree.copy_node(tree.root, ftree.root, ftree.root->children[1]);
-          ga_semantic_analysis("", ftree, *this, m.dim(), false,function_expr);
+          ga_semantic_analysis("", ftree, *this, m.dim(),
+                               ref_elt_dim_of_mesh(m), false, function_expr);
           found = true;
           break;
         }
@@ -4652,7 +4688,7 @@ namespace getfem {
             ga_derivative(dtree, *this, m, it->first, it->second, 1+order);
             // cout << "Result : " << ga_tree_to_string(dtree) << endl;
             ga_semantic_analysis(expr, dtree, *this, m.dim(),
-                                 false, function_expr);
+                                 ref_elt_dim_of_mesh(m), false, function_expr);
             // cout << "after analysis "  << ga_tree_to_string(dtree) << endl;
             add_tree(dtree, m, mim, rg, expr, add_derivative_order,
                      function_expr);
@@ -4672,7 +4708,8 @@ namespace getfem {
   ga_workspace::m_tree::~m_tree(void) { if (ptree) delete ptree; }
 
   ga_tree &ga_workspace::macro_tree(const std::string &name,
-                                    size_type meshdim, bool ignore_X) const {
+                                    size_type meshdim, size_type ref_elt_dim,
+                                    bool ignore_X) const {
     GMM_ASSERT1(macro_exists(name), "Undefined macro");
     std::map<std::string, m_tree>::iterator it = macro_trees.find(name);
     bool to_be_analyzed = false;
@@ -4692,7 +4729,7 @@ namespace getfem {
     if (to_be_analyzed) {
       ga_tree tree;
       ga_read_string(get_macro(name), tree);
-      ga_semantic_analysis(get_macro(name), tree, *this, meshdim,
+      ga_semantic_analysis(get_macro(name), tree, *this, meshdim, ref_elt_dim,
                            false, ignore_X);
       GMM_ASSERT1(tree.root, "Invalid macro");
       mt->ptree = new ga_tree(tree);
@@ -4715,7 +4752,7 @@ namespace getfem {
     // cout << "string read" << endl << "result : " << ga_tree_to_string(tree)
     //     << endl << "first semantic analysis" << endl;
     ga_semantic_analysis(expr, tree, *this, mim.linked_mesh().dim(),
-                         false, false);
+                         ref_elt_dim_of_mesh(mim.linked_mesh()), false, false);
     // cout << "first semantic analysis done" << endl;
     if (tree.root) {
       ga_split_tree(expr, tree, *this, tree.root);
@@ -4723,6 +4760,7 @@ namespace getfem {
       for (std::list<ga_tree *>::iterator it = aux_trees.begin();
            it != aux_trees.end(); ++it) {
         ga_semantic_analysis(expr, *(*it), *this, mim.linked_mesh().dim(),
+                             ref_elt_dim_of_mesh(mim.linked_mesh()),
                              false, false);
         if ((*it)->root)
           max_order = std::max((*it)->root->nb_test_functions(), max_order);
@@ -4745,7 +4783,7 @@ namespace getfem {
   void ga_workspace::add_function_expression(const std::string expr) {
     ga_tree tree;
     ga_read_string(expr, tree);
-    ga_semantic_analysis(expr, tree, *this, 1, false, true);
+    ga_semantic_analysis(expr, tree, *this, 1, 1, false, true);
     if (tree.root) {
       // GMM_ASSERT1(tree.root->nb_test_functions() == 0,
       //            "Invalid function expression");
@@ -4759,7 +4797,8 @@ namespace getfem {
     const mesh_region &rg = register_region(m, rg_);
     ga_tree tree;
     ga_read_string(expr, tree);
-    ga_semantic_analysis(expr, tree, *this, m.dim(), false, false);
+    ga_semantic_analysis(expr, tree, *this, m.dim(), ref_elt_dim_of_mesh(m),
+                         false, false);
     if (tree.root) {
       GMM_ASSERT1(tree.root->nb_test_functions() == 0,
                   "Invalid expression containing test functions");
@@ -4774,7 +4813,8 @@ namespace getfem {
     const mesh_region &rg = register_region(m, rg_);
     ga_tree tree;
     ga_read_string(expr, tree);
-    ga_semantic_analysis(expr, tree, *this, m.dim(), false, false);
+    ga_semantic_analysis(expr, tree, *this, m.dim(), ref_elt_dim_of_mesh(m),
+                         false, false);
     if (tree.root) {
       GMM_ASSERT1(tree.root->nb_test_functions() == 0,
                   "Invalid expression containing test functions");
@@ -5224,6 +5264,7 @@ namespace getfem {
   static void ga_node_analysis(const std::string &expr, ga_tree &tree,
                                const ga_workspace &workspace,
                                pga_tree_node pnode, size_type meshdim,
+                               size_type ref_elt_dim,
                                bool eval_fixed_size, bool ignore_X) {
     bool all_cte = true, all_sc = true;
     pnode->symmetric_op = false;
@@ -5238,7 +5279,7 @@ namespace getfem {
 
     for (size_type i = 0; i < pnode->children.size(); ++i) {
       ga_node_analysis(expr, tree, workspace, pnode->children[i], meshdim,
-                       eval_fixed_size, ignore_X);
+                       ref_elt_dim, eval_fixed_size, ignore_X);
       all_cte = all_cte && (pnode->children[i]->node_type == GA_NODE_CONSTANT);
       all_sc = all_sc && (pnode->children[i]->tensor_proper_size() == 1);
       GMM_ASSERT1(pnode->children[i]->test_function_type != size_type(-1),
@@ -5265,6 +5306,7 @@ namespace getfem {
     switch (pnode->node_type) {
     case GA_NODE_PREDEF_FUNC: case GA_NODE_OPERATOR: case GA_NODE_SPEC_FUNC :
     case GA_NODE_CONSTANT: case GA_NODE_X: case GA_NODE_ELT_SIZE:
+    case GA_NODE_ELT_K:  case GA_NODE_ELT_B:
     case GA_NODE_NORMAL: case GA_NODE_RESHAPE:
     case GA_NODE_INTERPOLATE_X: case GA_NODE_INTERPOLATE_NORMAL:
       pnode->test_function_type = 0; break;
@@ -6191,7 +6233,7 @@ namespace getfem {
     case GA_NODE_NAME:
       {
         std::string name = pnode->name;
-
+        
         if (!ignore_X && !(name.compare("X"))) {
           pnode->node_type = GA_NODE_X;
           pnode->nbc1 = 0;
@@ -6201,6 +6243,16 @@ namespace getfem {
         if (!(name.compare("element_size"))) {
           pnode->node_type = GA_NODE_ELT_SIZE;
           pnode->init_scalar_tensor(0);
+          break;
+        }
+        if (!(name.compare("element_K"))) {
+          pnode->node_type = GA_NODE_ELT_K;
+          pnode->init_matrix_tensor(meshdim, ref_elt_dim);
+          break;
+        }
+        if (!(name.compare("element_B"))) {
+          pnode->node_type = GA_NODE_ELT_B;
+          pnode->init_matrix_tensor(ref_elt_dim, meshdim);
           break;
         }
         if (!(name.compare("Normal"))) {
@@ -6288,7 +6340,8 @@ namespace getfem {
                 ind_in_parent = i;
             GMM_ASSERT1(ind_in_parent != size_type(-1), "Internal error");
           }
-          ga_tree &ma_tree = workspace.macro_tree(name, meshdim, ignore_X);
+          ga_tree &ma_tree
+            = workspace.macro_tree(name, meshdim, ref_elt_dim, ignore_X);
           pga_tree_node &newnode = (ind_in_parent == size_type(-1))
             ? tree.root : pnode->parent->children[ind_in_parent];
           tree.copy_node(ma_tree.root, pnode->parent, newnode);
@@ -6769,12 +6822,14 @@ namespace getfem {
 
   static void ga_semantic_analysis(const std::string &expr, ga_tree &tree,
                                    const ga_workspace &workspace,
-                                   size_type meshdim, bool eval_fixed_size,
+                                   size_type meshdim,
+                                   size_type ref_elt_dim,
+                                   bool eval_fixed_size,
                                    bool ignore_X) {
     GMM_ASSERT1(predef_functions_initialized, "Internal error");
     if (!(tree.root)) return;
     // cout << "semantic analysis of " << ga_tree_to_string(tree) << endl;
-    ga_node_analysis(expr, tree, workspace, tree.root, meshdim,
+    ga_node_analysis(expr, tree, workspace, tree.root, meshdim, ref_elt_dim,
                      eval_fixed_size, ignore_X);
     // cout << "semantic analysis done " << endl;
     ga_valid_operand(expr, tree.root);
@@ -6988,7 +7043,8 @@ namespace getfem {
     case GA_NODE_ELEMENTARY_HESS_TEST: case GA_NODE_ELEMENTARY_DIVERG_TEST:
     case GA_NODE_VAL_TEST: case GA_NODE_GRAD_TEST: case GA_NODE_PREDEF_FUNC:
     case GA_NODE_HESS_TEST: case GA_NODE_DIVERG_TEST: case GA_NODE_RESHAPE:
-    case GA_NODE_ELT_SIZE: case GA_NODE_CONSTANT: case GA_NODE_X:
+    case GA_NODE_ELT_SIZE: case GA_NODE_ELT_K: case GA_NODE_ELT_B:
+    case GA_NODE_CONSTANT: case GA_NODE_X:
     case GA_NODE_NORMAL: case GA_NODE_OPERATOR:
       is_constant = true; break;
 
@@ -7114,7 +7170,8 @@ namespace getfem {
         if (local_tree.root)
           ga_node_extract_constant_term(local_tree, local_tree.root, *this, m);
         if (local_tree.root)
-          ga_semantic_analysis("", local_tree, *this, m.dim(), false, false);
+          ga_semantic_analysis("", local_tree, *this, m.dim(),
+                               ref_elt_dim_of_mesh(m), false, false);
         if (local_tree.root && local_tree.root->node_type != GA_NODE_ZERO) {
           constant_term += "-("+ga_tree_to_string(local_tree)+")";
         }
@@ -8028,7 +8085,7 @@ namespace getfem {
       ga_derivative(tree, workspace, *((const mesh *)(0)), var, "", 1);
       if (tree.root) {
         ga_replace_test_by_cte(tree.root, true);
-        ga_semantic_analysis(expr, tree, workspace, 1, false, true);
+        ga_semantic_analysis(expr, tree, workspace, 1, 1, false, true);
       }
       return ga_tree_to_string(tree);
     } else return "0";
@@ -8337,6 +8394,20 @@ namespace getfem {
       if (pnode->t.size() != 1) pnode->init_scalar_tensor(0);
       pgai = new ga_instruction_element_size(pnode->t, gis.elt_size);
       gis.need_elt_size = true;
+      rmi.instructions.push_back(pgai);
+      break;
+
+    case GA_NODE_ELT_K:
+      GMM_ASSERT1(!function_case,
+                  "No use of element_K is allowed in functions");
+      pgai = new ga_instruction_element_K(pnode->t, gis.ctx);
+      rmi.instructions.push_back(pgai);
+      break;
+
+    case GA_NODE_ELT_B:
+      GMM_ASSERT1(!function_case,
+                  "No use of element_B is allowed in functions");
+      pgai = new ga_instruction_element_B(pnode->t, gis.ctx);
       rmi.instructions.push_back(pgai);
       break;
 
@@ -9308,7 +9379,7 @@ namespace getfem {
         const mesh *m = td.m;
         GMM_ASSERT1(m, "Internal error");
         ga_semantic_analysis("", gis.trees.back(), workspace, m->dim(),
-                             true, false);
+                             ref_elt_dim_of_mesh(*m), true, false);
         pga_tree_node root = gis.trees.back().root;
         if (root) {
           // Compile tree
@@ -9342,7 +9413,9 @@ namespace getfem {
 
         // Semantic analysis mainly to evaluate fixed size variables and data
         ga_semantic_analysis("", gis.trees.back(), workspace,
-                             td.mim->linked_mesh().dim(), true, false);
+                             td.mim->linked_mesh().dim(),
+                             ref_elt_dim_of_mesh(td.mim->linked_mesh()),
+                             true, false);
         pga_tree_node root = gis.trees.back().root;
         if (root) {
           // Compiling tree
@@ -9737,12 +9810,12 @@ namespace getfem {
       ga_tree tree = *(local_workspace.tree_info(0).ptree);
       ga_derivative(tree, local_workspace, *((const mesh *)(0)), var, "", 1);
       if (tree.root) {
-        ga_semantic_analysis(expr, tree, local_workspace, 1, false, true);
+        ga_semantic_analysis(expr, tree, local_workspace, 1, 1, false, true);
         // To be improved to suppress test functions in the expression ...
         // ga_replace_test_by_cte do not work in all operations like
         // vector components x(1)
         // ga_replace_test_by_cte(tree.root, false);
-        // ga_semantic_analysis(expr, tree, local_workspace, 1, false, true);
+        // ga_semantic_analysis(expr, tree, local_workspace,1,1,false,true);
       }
       expr = ga_tree_to_string(tree);
     }
@@ -10132,7 +10205,7 @@ namespace getfem {
           ga_derivative(tree, pwi.first, source_mesh,
                         it->first, it->second, 1);
           if (tree.root)
-            ga_semantic_analysis(expr, tree, local_workspace, 1, false, true);
+            ga_semantic_analysis(expr, tree, local_workspace,1,1,false,true);
           ga_compile_interpolation(pwi.first, pwi.second);
         }
       }

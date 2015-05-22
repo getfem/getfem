@@ -135,6 +135,7 @@ and must have a method to compute the derivtive with respect to the ith variable
 For the moment, only polynomials and piecewise polynomials are defined in the
 files :file:`bgeot_poly.h` and :file:`bgeot_poly_composite.h`.
 
+.. _dp-transgeo:
 
 Geometric transformations
 -------------------------

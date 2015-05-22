@@ -527,6 +527,12 @@ Special expressions linked to the current position
 
   - ``element_size`` gives an estimate of the current element diameter (using getfem::convex_radius_estimate).
 
+  - ``element_K`` gives the gradient of the geometric transformation (see :ref:`dp-transgeo`) from the reference (parent) element. Could be used only if the mesh do not contain elements of mixed dimensions.
+
+  - ``element_B`` gives the transpose of the pseudo-inverse of the gradient of the geometric transformation (see :ref:`dp-transgeo`) from the reference (parent) element. Could be used only if the mesh do not contain elements of mixed dimensions.
+
+
+
 Print command
 *************
 

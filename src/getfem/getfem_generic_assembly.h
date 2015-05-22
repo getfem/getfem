@@ -414,7 +414,7 @@ namespace getfem {
     }
 
     ga_tree &macro_tree(const std::string &name, size_type meshdim,
-                        bool ignore_X) const;
+                        size_type ref_elt_dim, bool ignore_X) const;
 
     void add_interpolate_transformation(const std::string &name,
                                         pinterpolate_transformation ptrans)
