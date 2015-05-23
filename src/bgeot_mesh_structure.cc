@@ -404,8 +404,8 @@ namespace bgeot {
     }
 
     /* do the cuthill mckee */
-    connectivity[cv] = size_type(-1);
     while (cv != size_type(-1)) {
+      connectivity[cv] = size_type(-1);
       cmk.push_back(cv);
       size_type nbp = ms.nb_points_of_convex(cv);
 
