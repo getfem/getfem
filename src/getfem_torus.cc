@@ -216,7 +216,7 @@ namespace getfem
     dim_ = cvr->structure()->dim();
     is_equiv = real_element_defined = true;
     is_polycomp = is_pol = is_lag = false;
-    es_degree = 5;
+    es_degree = poriginal_fem_->estimated_degree();
     ntarget_dim = 3;
 
     std::stringstream nm;
