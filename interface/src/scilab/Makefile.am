@@ -75,7 +75,6 @@ EXTRA_DIST=builddoc.sce \
         demos/demo_convection_rotating_cavity.sce \
         demos/demo_crack.sce \
         demos/demo_fictitious_domains.sce \
-        demos/demo_finallaplacian.sce \
         demos/demo_laplacian.sce \
         demos/demo_mesh_generation.sce \
         demos/demo_mortar.sce \
