@@ -2159,7 +2159,7 @@ namespace getfem {
 
 
     // Miscellaneous functions
-    PREDEF_FUNCTIONS["Heaviside"] = ga_predef_function(ga_Heaviside, 2, "(0)");  // ga_predef_function(ga_Heaviside);
+    PREDEF_FUNCTIONS["Heaviside"] = ga_predef_function(ga_Heaviside);
     PREDEF_FUNCTIONS["sign"] = ga_predef_function(ga_sign);
     PREDEF_FUNCTIONS["abs"] = ga_predef_function(ga_abs, 1, "sign");
     PREDEF_FUNCTIONS["pos_part"]
