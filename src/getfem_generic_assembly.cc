@@ -232,7 +232,7 @@ namespace getfem {
 
   static void ga_throw_error_msg(const std::string &expr, size_type pos,
                                  const std::string &msg) {
-    int length_before = 40, length_after = 40;
+    int length_before = 50, length_after = 50;
     if (expr.size()) {
       int first = std::max(0, int(pos)-length_before);
       int last = std::min(int(pos)+length_after, int(expr.size()));
@@ -2159,7 +2159,7 @@ namespace getfem {
 
 
     // Miscellaneous functions
-    PREDEF_FUNCTIONS["Heaviside"] = ga_predef_function(ga_Heaviside);
+    PREDEF_FUNCTIONS["Heaviside"] = ga_predef_function(ga_Heaviside, 2, "(0)");  // ga_predef_function(ga_Heaviside);
     PREDEF_FUNCTIONS["sign"] = ga_predef_function(ga_sign);
     PREDEF_FUNCTIONS["abs"] = ga_predef_function(ga_abs, 1, "sign");
     PREDEF_FUNCTIONS["pos_part"]
@@ -6903,8 +6903,6 @@ namespace getfem {
         break;
         
       case GA_NODE_PARAMS:
-        cout << "child0->node_type = " << child0->node_type << endl;
-        cout << "child1->node_type = " << child1->node_type << endl;
         GMM_ASSERT1(child0->node_type == GA_NODE_RESHAPE, "Cannot extract a "
                     "factor which is a parameter of a nonlinear "
                     "operator/function");
@@ -7827,7 +7825,7 @@ namespace getfem {
         std::string name = child0->name;
         ga_predef_function_tab::iterator it = PREDEF_FUNCTIONS.find(name);
         const ga_predef_function &F = it->second;
-
+      
         if (F.nbargs == 1) {
           // TODO: if the function is affine, extend it in the tree
           //       (especially for sqr ...)
@@ -7885,16 +7883,18 @@ namespace getfem {
             }
             break;
           }
-          tree.insert_node(pnode, GA_NODE_OP);
-          pga_tree_node pnode_op = pnode->parent;
-          if (child1->tensor_order() == 0)
-            pnode_op->op_type = GA_MULT;
-          else
-            pnode_op->op_type = GA_DOTMULT;
-          pnode_op->children.push_back(0);
-          tree.copy_node(child1, pnode_op, pnode_op->children[1]);
-          ga_node_derivation(tree, workspace, m, pnode_op->children[1],
-                             varname, interpolatename, order);
+          if (pnode->children.size() >= 2) {
+            tree.insert_node(pnode, GA_NODE_OP);
+            pga_tree_node pnode_op = pnode->parent;
+            if (child1->tensor_order() == 0)
+              pnode_op->op_type = GA_MULT;
+            else
+              pnode_op->op_type = GA_DOTMULT;
+            pnode_op->children.push_back(0);
+            tree.copy_node(child1, pnode_op, pnode_op->children[1]);
+            ga_node_derivation(tree, workspace, m, pnode_op->children[1],
+                               varname, interpolatename, order);
+          }
         } else {
           pga_tree_node child2 = pnode->children[2];
 
