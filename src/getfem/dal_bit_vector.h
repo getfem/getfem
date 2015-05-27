@@ -391,6 +391,8 @@ namespace dal {
     typedef std::forward_iterator_tag iterator_category;
     typedef size_type value_type;
     typedef size_type difference_type;
+    typedef size_type* pointer;
+    typedef size_type& reference;
 
     const_bv_iterator(const ITERABLE_BV* p_iterable, size_type pos)
       : p_iterable_(const_cast<ITERABLE_BV*>(p_iterable)), pos_(pos)
