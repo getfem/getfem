@@ -51,6 +51,8 @@
 #include "dal_basic.h"
 #include <limits.h>
 #include <bitset>
+#include <iterator>
+#include <algorithm>
 
 namespace dal {
 
@@ -385,6 +387,11 @@ namespace dal {
     typedef dal::bit_vector::size_type size_type;
 
   public:
+
+    typedef std::forward_iterator_tag iterator_category;
+    typedef size_type value_type;
+    typedef size_type difference_type;
+
     const_bv_iterator(const ITERABLE_BV* p_iterable, size_type pos)
       : p_iterable_(const_cast<ITERABLE_BV*>(p_iterable)), pos_(pos)
     {}
