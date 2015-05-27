@@ -397,6 +397,10 @@ namespace dal {
       return size_type(*p_iterable_);
     }
 
+    size_type operator-(const const_bv_iterator &other) const{
+      return pos_ - other.pos_;
+    }
+
     const const_bv_iterator &operator++(){
       ++*p_iterable_;
       pos_ = *p_iterable_;
