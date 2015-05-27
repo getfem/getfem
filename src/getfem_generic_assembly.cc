@@ -232,7 +232,7 @@ namespace getfem {
 
   static void ga_throw_error_msg(const std::string &expr, size_type pos,
                                  const std::string &msg) {
-    int length_before = 50, length_after = 50;
+    int length_before = 70, length_after = 70;
     if (expr.size()) {
       int first = std::max(0, int(pos)-length_before);
       int last = std::min(int(pos)+length_after, int(expr.size()));
@@ -2159,7 +2159,7 @@ namespace getfem {
 
 
     // Miscellaneous functions
-    PREDEF_FUNCTIONS["Heaviside"] = ga_predef_function(ga_Heaviside);
+    PREDEF_FUNCTIONS["Heaviside"] = ga_predef_function(ga_Heaviside); // ga_predef_function(ga_Heaviside, 2, "(0)");
     PREDEF_FUNCTIONS["sign"] = ga_predef_function(ga_sign);
     PREDEF_FUNCTIONS["abs"] = ga_predef_function(ga_abs, 1, "sign");
     PREDEF_FUNCTIONS["pos_part"]
@@ -7832,7 +7832,7 @@ namespace getfem {
           switch (F.dtype) {
           case 0:
             GMM_ASSERT1(false, "Cannot derive function " << child0->name
-                        << ". No derivative provided");
+                        << ". No derivative provided or not derivable function.");
           case 1:
             child0->name = F.derivative1;
             break;
@@ -7853,24 +7853,16 @@ namespace getfem {
               if (Fp.is_affine("t")) {
                 scalar_type b = Fp(scalar_type(0));
                 scalar_type a = Fp(scalar_type(1)) - b;
-                if (a == scalar_type(0) && b == scalar_type(0)) {
-                  pnode->node_type = GA_NODE_ZERO;
-                  gmm::clear(pnode->t.as_vector());
-                  tree.clear_children(pnode);
-                } else if (a == scalar_type(0)) {
-                  pnode->node_type = GA_NODE_CONSTANT;
-                  std::fill(pnode->t.begin(), pnode->t.end(), b);
-                  tree.clear_children(pnode);
-                } else if (b  == scalar_type(0)) {
+                if (b  == scalar_type(0)) {
                   pnode->node_type = GA_NODE_OP;
                   pnode->op_type = GA_MULT;
                   child0->init_scalar_tensor(a);
-                  child0->node_type = GA_NODE_CONSTANT;
+                  child0->node_type = (a == scalar_type(0)) ? GA_NODE_ZERO : GA_NODE_CONSTANT;
                 } else {
                   pnode->node_type = GA_NODE_OP;
                   pnode->op_type = GA_MULT;
                   child0->init_scalar_tensor(a);
-                  child0->node_type = GA_NODE_CONSTANT;
+                  child0->node_type = (a == scalar_type(0)) ? GA_NODE_ZERO : GA_NODE_CONSTANT;
                   tree.insert_node(pnode, GA_NODE_OP);
                   pnode->parent->op_type = GA_PLUS;
                   tree.add_child(pnode->parent);
