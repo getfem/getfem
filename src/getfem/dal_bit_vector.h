@@ -400,11 +400,18 @@ namespace dal {
     //difference of iterators
     size_type operator-(const const_bv_iterator &other) const{
       if (pos_ == other.pos_) return 0;
-      auto it  = (pos_ < other.pos_) ? *this : other;
-      auto end = (pos_ > other.pos_) ? *this : other;
-      size_type size = 0;
-      while(it.pos_ < end.pos_) { it++; size++;}
-      return size;
+
+      auto &vector_this  = p_iterable_->v_;
+      auto &vector_other = other.p_iterable_->v_;
+      bv_visitor v_this(vector_this), v_other(vector_other);
+      while (v_this < pos_) ++v_this;
+      while (v_other < other.pos_) ++v_other;
+      auto &v     = (pos_ < other.pos_)  ? v_this : v_other;
+      auto &v_end = (pos_ >= other.pos_) ? v_this : v_other;
+
+      size_type count = 0;
+      while(v < v_end) { ++v; ++count;}
+      return count;
     }
 
     const const_bv_iterator &operator++(){
@@ -441,6 +448,7 @@ namespace dal {
   private:
     const bit_vector& v_;
     bv_visitor visitor_;
+    friend class const_bv_iterator<bv_iterable>;
   };
 
   /***Same as bv_iterable class except the bit_vector is copied locally.*/
@@ -456,6 +464,7 @@ namespace dal {
   private:
     bit_vector v_;
     bv_visitor visitor_;
+    friend class const_bv_iterator<bv_iterable_c>;
   };
 
 }
