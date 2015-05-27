@@ -397,8 +397,14 @@ namespace dal {
       return size_type(*p_iterable_);
     }
 
+    //difference of iterators
     size_type operator-(const const_bv_iterator &other) const{
-      return pos_ - other.pos_;
+      if (pos_ == other.pos_) return 0;
+      auto it  = (pos_ < other.pos_) ? *this : other;
+      auto end = (pos_ > other.pos_) ? *this : other;
+      size_type size = 0;
+      while(it.pos_ < end.pos_) { it++; size++;}
+      return size;
     }
 
     const const_bv_iterator &operator++(){
