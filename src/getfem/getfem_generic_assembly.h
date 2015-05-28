@@ -103,7 +103,7 @@ namespace getfem {
                           const std::string expr, const std::string der1="",
                           const std::string der2="");
   void ga_define_function(const std::string name, pscalar_func_onearg f,
-                          const std::string der1="");
+                          const std::string &der1="");
   void ga_define_function(const std::string name, pscalar_func_twoargs f2,
                           const std::string &der1="",
                           const std::string &der2="");
