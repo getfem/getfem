@@ -54,7 +54,7 @@ mo2 = gf.MesherObject('ball', [0., 15.], 8.)
 mo3 = gf.MesherObject('set minus', mo1, mo2)
 
 print 'Meshes generation'
-gf.util('trace level', 2)   # No trace for mesh generation
+gf.util('trace level', 1)   # No trace for mesh generation nor for assembly
 mesh1 = gf.Mesh('generate', mo3, h, 2)
 mesh2 = gf.Mesh('import','structured','GT="GT_PK(2,1)";SIZES=[30,10];NOISED=0;NSUBDIV=[%d,%d];' % (int(30/h)+1, int(10/h)+1));
 mesh2.translate([-15.,-10.])
