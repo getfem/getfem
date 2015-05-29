@@ -3298,15 +3298,15 @@ namespace getfem {
 
     std::string expr;
 
-    virtual void asm_real_tangent_terms(const model &md, size_type ,
-                                        const model::varnamelist &,
-                                        const model::varnamelist &,
-                                        const model::mimlist &mims,
-                                        model::real_matlist &,
-                                        model::real_veclist &,
-                                        model::real_veclist &,
-                                        size_type region,
-                                        build_version) const {
+    virtual void real_post_assembly_in_serial(const model &md, size_type ,
+                                              const model::varnamelist &,
+                                              const model::varnamelist &,
+                                              const model::mimlist &mims,
+                                              model::real_matlist &,
+                                              model::real_veclist &,
+                                              model::real_veclist &,
+                                              size_type region,
+                                              build_version) const {
       GMM_ASSERT1(mims.size() == 1,
                   "Generic linear assembly brick needs one and only one "
                   "mesh_im");
