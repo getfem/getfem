@@ -4685,10 +4685,13 @@ namespace getfem {
             ga_tree dtree = (remain ? tree : *(trees[ind_tree].ptree));
             // cout << "Derivation with respect to " << it->first << " : "
             //     << it->second << " of " << ga_tree_to_string(dtree) << endl;
+            // scalar_type time = gmm::uclock_sec();
             ga_derivative(dtree, *this, m, it->first, it->second, 1+order);
             // cout << "Result : " << ga_tree_to_string(dtree) << endl;
+            // cout << "Derivative time " << gmm::uclock_sec()-time << endl;
             ga_semantic_analysis(expr, dtree, *this, m.dim(),
                                  ref_elt_dim_of_mesh(m), false, function_expr);
+            // cout << "Analysis after Derivative time " << gmm::uclock_sec()-time << endl;
             // cout << "after analysis "  << ga_tree_to_string(dtree) << endl;
             add_tree(dtree, m, mim, rg, expr, add_derivative_order,
                      function_expr);
@@ -4745,6 +4748,7 @@ namespace getfem {
                                          size_type add_derivative_order) {
     const mesh_region &rg = register_region(mim.linked_mesh(), rg_);
     // cout << "adding expression " << expr << endl;
+    // scalar_type time = gmm::uclock_sec();
     size_type max_order = 0;
     ga_tree tree;
     // cout << "read string" << endl;
@@ -4753,6 +4757,8 @@ namespace getfem {
     //     << endl << "first semantic analysis" << endl;
     ga_semantic_analysis(expr, tree, *this, mim.linked_mesh().dim(),
                          ref_elt_dim_of_mesh(mim.linked_mesh()), false, false);
+    // cout << "First analysis time : " << gmm::uclock_sec()-time << endl;
+
     // cout << "first semantic analysis done" << endl;
     if (tree.root) {
       ga_split_tree(expr, tree, *this, tree.root);
@@ -4777,6 +4783,7 @@ namespace getfem {
       clear_aux_trees();
     }
     // cout << "end adding expression " << endl;
+    // cout << "Time for add expression " << gmm::uclock_sec()-time << endl;
     return max_order;
   }
 
