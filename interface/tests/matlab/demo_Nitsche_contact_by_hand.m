@@ -14,27 +14,27 @@ approximation_type = 2  % 0 : Augmentend Lagrangian
 
 draw_mesh = true;       
 ref_sol = 0             % 0 : Reference solution (Von Mises)
-                        % 1 : Convergence curves in L2 and H1 norms on Ω1and Ω2.
+                        % 1 : Convergence curves in L2 and H1 norms on ??1and ??2.
                         % 2 : Error as fonction of gamma0 for different values of theta 
                         
-% The test case: The numerical tests in two dimensions (resp. three dimensions) are performed on a domain Ω =]−0.5, 0.5[^2 (resp. Ω =]−0.5, 0.5[^3 
-% containing the first body: Ω1 , a disk of radius R and center (0,0) (resp. a sphere of radius 0.25 and center (0,0,0)), and the second: Ω2 =]−0.5, 0.5[×]−0.5, −0.25[ 
-% (resp. Ω2 =]−0.5, 0.5[2 ×]−0.5, 0.25[). The contact surface Γ_c1 is the lower semicircle and Γ_c2 is the top surface of Ω2 (i.e.Γ1 = {x ∈ ∂Ω1 ; x2 <=0} and 
-% Γ_c2 = {x ∈ ∂Ω2 ; x2 = −0.25}. A Dirichlet condition is prescribed on the bottom of the rectangle (resp. cuboid).Since no Dirichlet condition is applied on Ω1 the problem is only
+% The test case: The numerical tests in two dimensions (resp. three dimensions) are performed on a domain ?? =]???0.5, 0.5[^2 (resp. ?? =]???0.5, 0.5[^3 
+% containing the first body: ??1 , a disk of radius R and center (0,0) (resp. a sphere of radius 0.25 and center (0,0,0)), and the second: ??2 =]???0.5, 0.5[??]???0.5, ???0.25[ 
+% (resp. ??2 =]???0.5, 0.5[2 ??]???0.5, 0.25[). The contact surface ??_c1 is the lower semicircle and ??_c2 is the top surface of ??2 (i.e.??1 = {x ??? ?????1 ; x2 <=0} and 
+% ??_c2 = {x ??? ?????2 ; x2 = ???0.25}. A Dirichlet condition is prescribed on the bottom of the rectangle (resp. cuboid).Since no Dirichlet condition is applied on ??1 the problem is only
 % semi-coercive,so we apply a penalisation on it and to overcome the non-definiteness coming from the free rigid motions, the horizontal displacement is prescribed to be zero on the two points of coordinates (0,0) and
-% (0,0.1) which blocks the horizontal translation and the rigid rotation.The projector Π1 is defined from Γ1 to Γ2 in the vertical direction. All remaining parts of the boundaries are
-% considered traction free. The Lame coefficients are λ and μ and we apply a vertical volume density of force on Ω1.
+% (0,0.1) which blocks the horizontal translation and the rigid rotation.The projector ??1 is defined from ??1 to ??2 in the vertical direction. All remaining parts of the boundaries are
+% considered traction free. The Lame coefficients are ?? and ?? and we apply a vertical volume density of force on ??1.
                         
 N = 2                   % 2 or 3 dimensions
 
-R=0.25;                 % Radiaus of Ω1.
+R=0.25;                 % Radiaus of ??1.
 dirichlet_val = 0;      % Dirchelet condition.
 f_coeff=0;              % friction coefficient.
-clambda = 1;            % Lame coefficient λ.
-cmu = 1;                % Lame coefficient μ.
-vertical_force = -0.1;  % Verticvertical volume density of force on Ω1.
-penalty_parameter = 1E-7;    % penalisation parmeter on Ω1.
-elelments_degre = 2            %  degre of elments (1 or 2).
+clambda = 1;            % Lame coefficient ??.
+cmu = 1;                % Lame coefficient ??.
+vertical_force = -0.1;  % Verticvertical volume density of force on ??1.
+penalty_parameter = 1E-7;    % penalisation parmeter on ??1.
+elments_degre = 2            %  degre of elments (1 or 2).
     
  if (ref_sol == 0)
     Theta = [-1];       %   theta
@@ -66,26 +66,26 @@ NX = Nxy(zz)
 
 %mesh constuction
     if     (N==2) 
-        mo1 =  gf_mesher_object('ball',[0 0],R); % Ω1
+        mo1 =  gf_mesher_object('ball',[0 0],R); % ??1
         mesh1 = gf_mesh('generate', mo1, 1/NX ,4) ; 
-        mo2=gf_mesher_object('rectangle', [-0.5 -0.5], [0.5 -0.25]); %  Ω2
+        mo2=gf_mesher_object('rectangle', [-0.5 -0.5], [0.5 -0.25]); %  ??2
         mesh2 = gf_mesh('generate', mo2, 1/NX ,2) ; 
     elseif (N==3)
-        mo1 =  gf_mesher_object('ball',[0 0 0],R); % Ω1
+        mo1 =  gf_mesher_object('ball',[0 0 0],R); % ??1
         mesh1 = gf_mesh('generate', mo1, 1/NX ,2) ; 
-        mo2=gf_mesher_object('rectangle', [-0.5 -0.5 -0.5], [0.5  0.5 -0.25]); %  Ω2
+        mo2=gf_mesher_object('rectangle', [-0.5 -0.5 -0.5], [0.5  0.5 -0.25]); %  ??2
         mesh2 = gf_mesh('generate', mo2, 1/NX ,2) ; 
     end
     
 
-    mfu1 = gf_mesh_fem(mesh1, N) ;gf_mesh_fem_set(mfu1, 'classical fem', elelments_degre);
-    mflambda1 = gf_mesh_fem(mesh1, 1); gf_mesh_fem_set(mflambda1, 'classical fem', elelments_degre);
+    mfu1 = gf_mesh_fem(mesh1, N) ;gf_mesh_fem_set(mfu1, 'classical fem', elments_degre);
+    mflambda1 = gf_mesh_fem(mesh1, 1); gf_mesh_fem_set(mflambda1, 'classical fem', elments_degre);
 
-    mfvm1 = gf_mesh_fem(mesh1); gf_mesh_fem_set(mfvm1, 'classical discontinuous fem', elelments_degre);
+    mfvm1 = gf_mesh_fem(mesh1); gf_mesh_fem_set(mfvm1, 'classical discontinuous fem', elments_degre);
 
-    mfu2 = gf_mesh_fem(mesh2, N); gf_mesh_fem_set(mfu2, 'classical fem', elelments_degre);
+    mfu2 = gf_mesh_fem(mesh2, N); gf_mesh_fem_set(mfu2, 'classical fem', elments_degre);
 
-    mfvm2 = gf_mesh_fem(mesh2); gf_mesh_fem_set(mfvm2, 'classical discontinuous fem', elelments_degre);
+    mfvm2 = gf_mesh_fem(mesh2); gf_mesh_fem_set(mfvm2, 'classical discontinuous fem', elments_degre);
 
     mim1 = gf_mesh_im(mesh1, 4);
     mim1_contact = gf_mesh_im(mesh1, 6);
@@ -281,8 +281,8 @@ NX = Nxy(zz)
        mfu_ref2 = gf_mesh_fem('load', 'sol_ref_mesh_fem2',mesh_ref2);
 
         N =gf_mesh_get(mesh_ref2,'dim');
-        %mfu_ref1 = gf_mesh_fem(mesh_ref1, N); gf_mesh_fem_set(mfu_ref1, 'classical fem', elelments_degre);
-        %mfu_ref2 = gf_mesh_fem(mesh_ref2, N);gf_mesh_fem_set(mfu_ref2, 'classical fem', elelments_degre);
+        %mfu_ref1 = gf_mesh_fem(mesh_ref1, N); gf_mesh_fem_set(mfu_ref1, 'classical fem', elments_degre);
+        %mfu_ref2 = gf_mesh_fem(mesh_ref2, N);gf_mesh_fem_set(mfu_ref2, 'classical fem', elments_degre);
         mim_ref1 = gf_mesh_im(mesh_ref1, 4);
         mim_ref2 = gf_mesh_im(mesh_ref2, 4);
 
