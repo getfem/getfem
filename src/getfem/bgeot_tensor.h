@@ -202,6 +202,13 @@ namespace bgeot {
       this->resize(d);
     }
 
+    void init() { sizes_.resize(0);  coeff.resize(0); this->resize(1); }
+
+    void init(size_type i) {
+      sizes_.resize(1); sizes_[0] = i; coeff.resize(1); coeff[0] = 1;
+      this->resize(i);
+    }
+
     void init(size_type i, size_type j) {
       sizes_.resize(2); sizes_[0] = i; sizes_[1] = j;
       coeff.resize(2); coeff[0] = 1; coeff[1] = i;
@@ -213,6 +220,11 @@ namespace bgeot {
           || !(std::equal(mi.begin(), mi.end(), sizes().begin())))
         init(mi);
     }
+
+    void adjust_sizes(void) { if (sizes_.size() || this->size() != 1) init(); }
+
+    void adjust_sizes(size_type i)
+    { if (sizes_.size() != 1 || sizes_[0] != i) init(i); }
 
     void adjust_sizes(size_type i, size_type j)
     { if (sizes_.size() != 2 || sizes_[0] != i || sizes_[1] != j) init(i, j); }

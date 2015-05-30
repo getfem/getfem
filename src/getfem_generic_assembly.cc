@@ -55,6 +55,15 @@ BoostMathFunction const erfc = boost::math::erfc<double>;
 #define GA_DEBUG_ASSERT(a, b) GMM_ASSERT1(a, b)
 // #define GA_DEBUG_ASSERT(a, b)
 
+#if 1
+  #define GA_TIC 
+  #define GA_TOC(a) 
+  #define GA_TOCTIC(a)
+#else 
+  #define GA_TIC scalar_type _ga_time_ = gmm::uclock_sec();
+  #define GA_TOC(a) { cout << (a) << " : " << gmm::uclock_sec() - _ga_time_ << endl; }
+  #define GA_TOCTIC(a) { GA_TOC(a); _ga_time_ = gmm::uclock_sec(); }
+#endif
 
 namespace getfem {
 
@@ -415,20 +424,15 @@ namespace getfem {
       return true;
     }
 
-    void init_scalar_tensor(scalar_type v) {
-      t.adjust_sizes(bgeot::multi_index());
-      t[0] = v;
-      test_function_type = 0;
-    }
-    void init_vector_tensor(size_type d) {
-      bgeot::multi_index mi(1);
-      mi[0]=d; t.adjust_sizes(mi);
-      test_function_type = 0;
-    }
-    void init_matrix_tensor(size_type n, size_type m) {
-      t.adjust_sizes(bgeot::multi_index(n,m));
-      test_function_type = 0;
-    }
+    void init_scalar_tensor(scalar_type v)
+    { t.adjust_sizes(); t[0] = v; test_function_type = 0; }
+
+    void init_vector_tensor(size_type d)
+    { t.adjust_sizes(d); test_function_type = 0; }
+
+    void init_matrix_tensor(size_type n, size_type m)
+    { t.adjust_sizes(n, m); test_function_type = 0; }
+
     void init_third_order_tensor(size_type n, size_type m,  size_type l) {
       t.adjust_sizes(bgeot::multi_index(n,m,l));
       test_function_type = 0;
@@ -4685,13 +4689,13 @@ namespace getfem {
             ga_tree dtree = (remain ? tree : *(trees[ind_tree].ptree));
             // cout << "Derivation with respect to " << it->first << " : "
             //     << it->second << " of " << ga_tree_to_string(dtree) << endl;
-            // scalar_type time = gmm::uclock_sec();
+            GA_TIC;
             ga_derivative(dtree, *this, m, it->first, it->second, 1+order);
             // cout << "Result : " << ga_tree_to_string(dtree) << endl;
-            // cout << "Derivative time " << gmm::uclock_sec()-time << endl;
+            GA_TOCTIC("Derivative time");
             ga_semantic_analysis(expr, dtree, *this, m.dim(),
                                  ref_elt_dim_of_mesh(m), false, function_expr);
-            // cout << "Analysis after Derivative time " << gmm::uclock_sec()-time << endl;
+            GA_TOCTIC("Analysis after Derivative time");
             // cout << "after analysis "  << ga_tree_to_string(dtree) << endl;
             add_tree(dtree, m, mim, rg, expr, add_derivative_order,
                      function_expr);
@@ -4748,7 +4752,7 @@ namespace getfem {
                                          size_type add_derivative_order) {
     const mesh_region &rg = register_region(mim.linked_mesh(), rg_);
     // cout << "adding expression " << expr << endl;
-    // scalar_type time = gmm::uclock_sec();
+    GA_TIC;
     size_type max_order = 0;
     ga_tree tree;
     // cout << "read string" << endl;
@@ -4757,7 +4761,7 @@ namespace getfem {
     //     << endl << "first semantic analysis" << endl;
     ga_semantic_analysis(expr, tree, *this, mim.linked_mesh().dim(),
                          ref_elt_dim_of_mesh(mim.linked_mesh()), false, false);
-    // cout << "First analysis time : " << gmm::uclock_sec()-time << endl;
+    GA_TOC("First analysis time");
 
     // cout << "first semantic analysis done" << endl;
     if (tree.root) {
@@ -4783,7 +4787,7 @@ namespace getfem {
       clear_aux_trees();
     }
     // cout << "end adding expression " << endl;
-    // cout << "Time for add expression " << gmm::uclock_sec()-time << endl;
+    GA_TOC("Time for add expression");
     return max_order;
   }
 
@@ -4957,13 +4961,11 @@ namespace getfem {
 
   void ga_workspace::assembly(size_type order) {
 
-    // scalar_type time = gmm::uclock_sec();
-
+    GA_TIC;
     ga_instruction_set gis;
     ga_compile(*this, gis, order);
     size_type ndof = gis.nb_dof, max_dof =  gis.max_dof;
-    // cout << "Compile time " << gmm::uclock_sec()-time << endl;
-    // time = gmm::uclock_sec();
+    GA_TOCTIC("Compile time");
 
     if (order == 2) {
       K.resize(max_dof);
@@ -4974,12 +4976,10 @@ namespace getfem {
       gmm::clear(unreduced_V); gmm::resize(unreduced_V, ndof);
     }
     E = 0;
-    // cout << "Init time " << gmm::uclock_sec()-time << endl;
-    // time = gmm::uclock_sec();
-
+    GA_TOCTIC("Init time");
 
     ga_exec(gis, *this);
-    // cout << "Exec time " << gmm::uclock_sec()-time << endl;
+    GA_TOCTIC("Exec time");
 
     if (order == 1) {
       MPI_SUM_VECTOR(assembled_vector());
