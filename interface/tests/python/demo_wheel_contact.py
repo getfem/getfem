@@ -42,9 +42,9 @@ applied_force = 1E7              # Force at the hole boundary (N)
 #
 # Numerical parameters
 #
-h = 1                      # Approximate mesh size
-elements_degree = 2        # Degree of the finite element methods
-gamma0 = 1./E;             # Augmentation parameter for the augmented Lagrangian 
+h = 1                    # Approximate mesh size
+elements_degree = 2      # Degree of the finite element methods
+gamma0 = 1./E;           # Augmentation parameter for the augmented Lagrangian 
 
 #
 # Mesh generation. Meshes can also been imported from several formats.
@@ -53,7 +53,7 @@ mo1 = gf.MesherObject('ball', [0., 15.], 15.)
 mo2 = gf.MesherObject('ball', [0., 15.], 8.)
 mo3 = gf.MesherObject('set minus', mo1, mo2)
 
-print 'Meshes generation'
+print ('Meshes generation')
 gf.util('trace level', 1)   # No trace for mesh generation nor for assembly
 mesh1 = gf.Mesh('generate', mo3, h, 2)
 mesh2 = gf.Mesh('import','structured','GT="GT_PK(2,1)";SIZES=[30,10];NOISED=0;NSUBDIV=[%d,%d];' % (int(30/h)+1, int(10/h)+1));
@@ -127,18 +127,25 @@ md.add_nonlinear_generic_assembly_brick(mim1, 'lambda1*(Test_u1.[0;1])'
 md.add_nonlinear_generic_assembly_brick(mim1, '-(gamma0*element_size)*(lambda1 + neg_part(lambda1+(1/(gamma0*element_size))*((u1-Interpolate(u2,Proj1)+X-Interpolate(X,Proj1)).[0;1])))*Test_lambda1', CONTACT_BOUND);
 
 # Prescribed force in the hole
+
+# md.add_initialized_data('DData', [0., -1.0])
+# md.add_Dirichlet_condition_with_multipliers(mim1, 'u1', elements_degree-1, HOLE_BOUND, 'DData');
+
 md.add_filtered_fem_variable('lambda_D', mflambda, HOLE_BOUND)
 md.add_initialized_data('F', [applied_force/(8*2*np.pi)])
 md.add_variable('alpha_D', 1)
-md.add_linear_generic_assembly_brick(mim1, 'lambda_D.Test_u1 + (u1 - alpha_D*[0;1]).Test_lambda_D + (lambda_D.[0;1]-F)*Test_alpha_D', HOLE_BOUND)
+md.add_linear_generic_assembly_brick(mim1, 'lambda_D.Test_u1 + (alpha_D*[0;1] - u1).Test_lambda_D + (lambda_D.[0;1] - F)*Test_alpha_D', HOLE_BOUND)
 
 #
 # Model solve
 #
 
 print 'Solve problem with ', md.nbdof(), ' dofs'
-md.solve('max_res', 1E-9, 'max_iter', 100, 'noisy') # , 'lsearch', 'simplest',  'alpha min', 0.8)
-
+print 'alpha_D = ', md.variable('alpha_D')[0]
+md.test_tangent_matrix(1e-4, 10, 0.001);
+md.solve('max_res', 1E-9, 'max_iter', 20, 'noisy') # , 'lsearch', 'simplest',  'alpha min', 0.8)
+print 'alpha_D = ', md.variable('alpha_D')[0]
+md.test_tangent_matrix(1e-4, 10, 0.001);
 
 #
 # Solution export

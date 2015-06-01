@@ -8802,8 +8802,8 @@ namespace getfem {
 
        case GA_PLUS:
          if (pnode->t.size() == 1) {
-           GA_DEBUG_ASSERT(pnode->nb_test_functions() == 0,
-                           "Internal error: non zero number of test functions");
+           // GA_DEBUG_ASSERT(pnode->nb_test_functions() == 0,
+           //               "Internal error: non zero number of test functions");
            GA_DEBUG_ASSERT(child0->t.size() == 1,
                            "Internal error: child0 not scalar");
            GA_DEBUG_ASSERT(child1->t.size() == 1,
@@ -8818,8 +8818,8 @@ namespace getfem {
 
        case GA_MINUS:
          if (pnode->t.size() == 1) {
-           GA_DEBUG_ASSERT(pnode->nb_test_functions() == 0,
-                           "Internal error: non zero number of test functions");
+           // GA_DEBUG_ASSERT(pnode->nb_test_functions() == 0,
+           //              "Internal error: non zero number of test functions");
            GA_DEBUG_ASSERT(child0->t.size() == 1,
                            "Internal error: child0 not scalar");
            GA_DEBUG_ASSERT(child1->t.size() == 1,
@@ -8855,9 +8855,10 @@ namespace getfem {
                (pnode->op_type == GA_MULT && dim1 <= 1) ||
                child0->t.size() == 1 || child1->t.size() == 1) {
 
-             if (child0->t.size() == 1 && child1->t.size() == 1)
+             if (child0->t.size() == 1 && child1->t.size() == 1) {
                pgai = new ga_instruction_scalar_scalar_mult
                  (pnode->t[0], child0->t[0], child1->t[0]);
+             }
              else if (child0->t.size() == 1)
                pgai = new ga_instruction_scalar_mult
                  (pnode->t, child1->t, child0->t[0]);
@@ -8967,8 +8968,8 @@ namespace getfem {
 
        case GA_DIV:
          if (child0->t.size() == 1 && child1->t.size() == 1) {
-           GA_DEBUG_ASSERT(pnode->nb_test_functions() == 0,
-                           "Internal error");
+           // GA_DEBUG_ASSERT(pnode->nb_test_functions() == 0,
+           //                "Internal error");
            pgai = new ga_instruction_scalar_scalar_div
              (pnode->t[0], child0->t[0], child1->t[0]);
          } else if (child1->t.size() == 1) {
@@ -9015,8 +9016,7 @@ namespace getfem {
        case GA_DOTMULT:
 
          if (child0->t.size() == 1 && child1->t.size() == 1) {
-           GA_DEBUG_ASSERT(pnode->nb_test_functions() == 0,
-                           "Internal error");
+           // GA_DEBUG_ASSERT(pnode->nb_test_functions() == 0, "Internal error");
            pgai = new ga_instruction_scalar_scalar_mult
              (pnode->t[0], child0->t[0], child1->t[0]);
          } else if (child0->t.size() == 1)
@@ -9044,8 +9044,7 @@ namespace getfem {
 
        case GA_DOTDIV:
          if (child0->t.size() == 1 && child1->t.size() == 1) {
-           GA_DEBUG_ASSERT(pnode->nb_test_functions() == 0,
-                           "Internal error");
+           // GA_DEBUG_ASSERT(pnode->nb_test_functions() == 0, "Internal error");
            pgai = new ga_instruction_scalar_scalar_div
              (pnode->t[0], child0->t[0], child1->t[0]);
          } else if (child1->t.size() == 1) {
@@ -9061,8 +9060,7 @@ namespace getfem {
 
        case GA_TMULT:
          if (child0->t.size() == 1 && child1->t.size() == 1) {
-           GA_DEBUG_ASSERT(pnode->nb_test_functions() == 0,
-                           "Internal error");
+           // GA_DEBUG_ASSERT(pnode->nb_test_functions() == 0, "Internal error");
            pgai = new ga_instruction_scalar_scalar_mult
              (pnode->t[0], child0->t[0], child1->t[0]);
          } else if (child0->t.size() == 1)
