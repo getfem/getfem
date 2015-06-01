@@ -67,11 +67,20 @@ namespace getfem {
       case 10: { /* 2ND ORDER QUADRANGLE */
         pgt = bgeot::parallelepiped_geotrans(2,2);
       } break;
-      case 11: { /* 2ND ORDER TETRAEDRON */
+      case 11: { /* 2ND ORDER TETRAHEDRON (10-NODE) */
         pgt = bgeot::simplex_geotrans(3,2);
+      } break;
+      case 12: { /* 2ND ORDER HEXAHEDRON (27-NODE) */
+        pgt = bgeot::parallelepiped_geotrans(3,2);
       } break;
       case 15: { /* POINT */
         GMM_WARNING2("ignoring point element");
+      } break;
+      case 16: { /* INCOMPLETE 2ND ORDER QUADRANGLE (8-NODE) */
+        pgt = bgeot::Q2_incomplete_geotrans(2);
+      } break;
+      case 17: { /* INCOMPLETE 2ND ORDER HEXAHEDRON (20-NODE) */
+        pgt = bgeot::Q2_incomplete_geotrans(3);
       } break;
       case 26: { /* 3RD ORDER LINE */
         pgt = bgeot::simplex_geotrans(1,3);
@@ -120,11 +129,20 @@ namespace getfem {
       case 10: { /* 2ND ORDER QUADRANGLE */
         nodes.resize(9);
       } break;
-  	  case 11: { /* 2ND ORDER TETRAHEDRON */
+      case 11: { /* 2ND ORDER TETRAHEDRON (10-NODE) */
         nodes.resize(10);
+      } break;
+      case 12: { /* 2ND ORDER HEXAHEDRON (27-NODE) */
+        nodes.resize(27);
       } break;
       case 15: { /* POINT */
         nodes.resize(1);
+      } break;
+      case 16: { /* INCOMPLETE 2ND ORDER QUADRANGLE (8-NODE) */
+        nodes.resize(8);
+      } break;
+      case 17: { /* INCOMPLETE 2ND ORDER HEXAHEDRON (20-NODE) */
+        nodes.resize(20);
       } break;
       case 26: { /* 3RD ORDER LINE */
         nodes.resize(4);
@@ -298,101 +316,137 @@ namespace getfem {
       if(ci.type != 15) ci.set_pgt();
       // Reordering nodes for certain elements (should be completed ?)
       // http://www.geuz.org/gmsh/doc/texinfo/gmsh.html#Node-ordering
+      std::vector<size_type> tmp_nodes(ci.nodes);
       switch(ci.type) {
-      case 3 : std::swap(ci.nodes[2], ci.nodes[3]); break;
+      case 3 : {
+        ci.nodes[2] = tmp_nodes[3];
+        ci.nodes[3] = tmp_nodes[2];
+      } break;
       case 5 : { /* First order hexaedron */
-        std::vector<size_type> tmp_nodes(8);
-        tmp_nodes[0] = ci.nodes[0];
-        tmp_nodes[1] = ci.nodes[1];
-        tmp_nodes[2] = ci.nodes[3];
-        tmp_nodes[3] = ci.nodes[2];
-        tmp_nodes[4] = ci.nodes[4];
-        tmp_nodes[5] = ci.nodes[5];
-        tmp_nodes[6] = ci.nodes[7];
-        tmp_nodes[7] = ci.nodes[6];
-        ci.nodes[0] = tmp_nodes[0], ci.nodes[1] = tmp_nodes[1],
-          ci.nodes[2] = tmp_nodes[2];
-        ci.nodes[3] = tmp_nodes[3], ci.nodes[4] = tmp_nodes[4],
-          ci.nodes[5] = tmp_nodes[5];
-        ci.nodes[6] = tmp_nodes[6], ci.nodes[7] = tmp_nodes[7];
-      }
-        break;
+        //ci.nodes[0] = tmp_nodes[0];
+        //ci.nodes[1] = tmp_nodes[1];
+        ci.nodes[2] = tmp_nodes[3];
+        ci.nodes[3] = tmp_nodes[2];
+        //ci.nodes[4] = tmp_nodes[4];
+        //ci.nodes[5] = tmp_nodes[5];
+        ci.nodes[6] = tmp_nodes[7];
+        ci.nodes[7] = tmp_nodes[6];
+      } break;
       case 8 : { /* Second order line */
-        std::vector<size_type> tmp_nodes(3);
-        tmp_nodes[0] = ci.nodes[0]; tmp_nodes[1] = ci.nodes[2];
-        tmp_nodes[2] = ci.nodes[1];
-
-        ci.nodes[0] = tmp_nodes[0]; ci.nodes[1] = tmp_nodes[1];
-        ci.nodes[2] = tmp_nodes[2];
-      }
-        break;
-      case 11: { /* Second order tetrahedron */
-        std::vector<bgeot::size_type> tmp_nodes(10);
-        tmp_nodes[0] = ci.nodes[0], tmp_nodes[1] = ci.nodes[4],
-        tmp_nodes[2] = ci.nodes[1];
-        tmp_nodes[3] = ci.nodes[6], tmp_nodes[4] = ci.nodes[5],
-        tmp_nodes[5] = ci.nodes[2];
-        tmp_nodes[6] = ci.nodes[7], tmp_nodes[7] = ci.nodes[9],
-        tmp_nodes[8] = ci.nodes[8],
-        tmp_nodes[9] = ci.nodes[3];
-
-        ci.nodes[0] = tmp_nodes[0], ci.nodes[1] = tmp_nodes[1],
-        ci.nodes[2] = tmp_nodes[2];
-        ci.nodes[3] = tmp_nodes[3], ci.nodes[4] = tmp_nodes[4],
-        ci.nodes[5] = tmp_nodes[5];
-        ci.nodes[6] = tmp_nodes[6], ci.nodes[7] = tmp_nodes[7],
-        ci.nodes[8] = tmp_nodes[8],
-        ci.nodes[9] = tmp_nodes[9];
-      }
-        break;
+        //ci.nodes[0] = tmp_nodes[0];
+        ci.nodes[1] = tmp_nodes[2];
+        ci.nodes[2] = tmp_nodes[1];
+      } break;
       case 9 : { /* Second order triangle */
-        std::vector<size_type> tmp_nodes(6);
-        tmp_nodes[0] = ci.nodes[0], tmp_nodes[1] = ci.nodes[3],
-          tmp_nodes[2] = ci.nodes[1];
-        tmp_nodes[3] = ci.nodes[5], tmp_nodes[4] = ci.nodes[4],
-          tmp_nodes[5] = ci.nodes[2];
-
-        ci.nodes[0] = tmp_nodes[0], ci.nodes[1] = tmp_nodes[1],
-          ci.nodes[2] = tmp_nodes[2];
-        ci.nodes[3] = tmp_nodes[3], ci.nodes[4] = tmp_nodes[4],
-          ci.nodes[5] = tmp_nodes[5];
-      }
-        break;
+        //ci.nodes[0] = tmp_nodes[0];
+        ci.nodes[1] = tmp_nodes[3];
+        ci.nodes[2] = tmp_nodes[1];
+        ci.nodes[3] = tmp_nodes[5];
+        //ci.nodes[4] = tmp_nodes[4];
+        ci.nodes[5] = tmp_nodes[2];
+      } break;
       case 10 : { /* Second order quadrangle */
-        std::vector<size_type> tmp_nodes(9);
-        tmp_nodes[0] = ci.nodes[0]; tmp_nodes[1] = ci.nodes[4];
-        tmp_nodes[2] = ci.nodes[1]; tmp_nodes[3] = ci.nodes[7];
-        tmp_nodes[4] = ci.nodes[8]; tmp_nodes[5] = ci.nodes[5];
-        tmp_nodes[6] = ci.nodes[3]; tmp_nodes[7] = ci.nodes[6];
-        tmp_nodes[8] = ci.nodes[2];
-
-        ci.nodes[0] = tmp_nodes[0]; ci.nodes[1] = tmp_nodes[1];
-        ci.nodes[2] = tmp_nodes[2]; ci.nodes[3] = tmp_nodes[3];
-        ci.nodes[4] = tmp_nodes[4]; ci.nodes[5] = tmp_nodes[5];
-        ci.nodes[6] = tmp_nodes[6]; ci.nodes[7] = tmp_nodes[7];
-        ci.nodes[8] = tmp_nodes[8];
-      }
-        break;
+        //ci.nodes[0] = tmp_nodes[0];
+        ci.nodes[1] = tmp_nodes[4];
+        ci.nodes[2] = tmp_nodes[1];
+        ci.nodes[3] = tmp_nodes[7];
+        ci.nodes[4] = tmp_nodes[8];
+        //ci.nodes[5] = tmp_nodes[5];
+        ci.nodes[6] = tmp_nodes[3];
+        ci.nodes[7] = tmp_nodes[6];
+        ci.nodes[8] = tmp_nodes[2];
+      } break;
+      case 11: { /* Second order tetrahedron */
+        //ci.nodes[0] = tmp_nodes[0];
+        ci.nodes[1] = tmp_nodes[4];
+        ci.nodes[2] = tmp_nodes[1];
+        ci.nodes[3] = tmp_nodes[6];
+        ci.nodes[4] = tmp_nodes[5];
+        ci.nodes[5] = tmp_nodes[2];
+        ci.nodes[6] = tmp_nodes[7];
+        ci.nodes[7] = tmp_nodes[9];
+        //ci.nodes[8] = tmp_nodes[8];
+        ci.nodes[9] = tmp_nodes[3];
+      } break;
+      case 12: { /* Second order hexahedron */
+        //ci.nodes[0] = tmp_nodes[0];
+        ci.nodes[1] = tmp_nodes[8];
+        ci.nodes[2] = tmp_nodes[1];
+        ci.nodes[3] = tmp_nodes[9];
+        ci.nodes[4] = tmp_nodes[20];
+        ci.nodes[5] = tmp_nodes[11];
+        ci.nodes[6] = tmp_nodes[3];
+        ci.nodes[7] = tmp_nodes[13];
+        ci.nodes[8] = tmp_nodes[2];
+        ci.nodes[9] = tmp_nodes[10];
+        ci.nodes[10] = tmp_nodes[21];
+        ci.nodes[11] = tmp_nodes[12];
+        ci.nodes[12] = tmp_nodes[22];
+        ci.nodes[13] = tmp_nodes[26];
+        ci.nodes[14] = tmp_nodes[23];
+        //ci.nodes[15] = tmp_nodes[15];
+        ci.nodes[16] = tmp_nodes[24];
+        ci.nodes[17] = tmp_nodes[14];
+        ci.nodes[18] = tmp_nodes[4];
+        ci.nodes[19] = tmp_nodes[16];
+        ci.nodes[20] = tmp_nodes[5];
+        ci.nodes[21] = tmp_nodes[17];
+        ci.nodes[22] = tmp_nodes[25];
+        ci.nodes[23] = tmp_nodes[18];
+        ci.nodes[24] = tmp_nodes[7];
+        ci.nodes[25] = tmp_nodes[19];
+        ci.nodes[26] = tmp_nodes[6];
+      } break;
+      case 16 : { /* Incomplete second order quadrangle */
+        //ci.nodes[0] = tmp_nodes[0];
+        ci.nodes[1] = tmp_nodes[4];
+        ci.nodes[2] = tmp_nodes[1];
+        ci.nodes[3] = tmp_nodes[7];
+        ci.nodes[4] = tmp_nodes[5];
+        ci.nodes[5] = tmp_nodes[3];
+        ci.nodes[6] = tmp_nodes[6];
+        ci.nodes[7] = tmp_nodes[2];
+      } break;
+      case 17: { /* Incomplete second order hexahedron */
+        //ci.nodes[0] = tmp_nodes[0];
+        ci.nodes[1] = tmp_nodes[8];
+        ci.nodes[2] = tmp_nodes[1];
+        ci.nodes[3] = tmp_nodes[9];
+        ci.nodes[4] = tmp_nodes[11];
+        ci.nodes[5] = tmp_nodes[3];
+        ci.nodes[6] = tmp_nodes[13];
+        ci.nodes[7] = tmp_nodes[2];
+        ci.nodes[8] = tmp_nodes[10];
+        ci.nodes[9] = tmp_nodes[12];
+        ci.nodes[10] = tmp_nodes[15];
+        ci.nodes[11] = tmp_nodes[14];
+        ci.nodes[12] = tmp_nodes[4];
+        ci.nodes[13] = tmp_nodes[16];
+        ci.nodes[14] = tmp_nodes[5];
+        ci.nodes[15] = tmp_nodes[17];
+        ci.nodes[16] = tmp_nodes[18];
+        ci.nodes[17] = tmp_nodes[7];
+        ci.nodes[18] = tmp_nodes[19];
+        ci.nodes[19] = tmp_nodes[6];
+      } break;
       case 26 : { /* Third order line */
-        std::vector<size_type> tmp_nodes(4);
-        tmp_nodes[0] = ci.nodes[0]; tmp_nodes[1] = ci.nodes[2];
-        tmp_nodes[2] = ci.nodes[3]; tmp_nodes[3] = ci.nodes[1];
-
-        ci.nodes[0] = tmp_nodes[0]; ci.nodes[1] = tmp_nodes[1];
-        ci.nodes[2] = tmp_nodes[2]; ci.nodes[3] = tmp_nodes[3];
-      }
-        break;
+        //ci.nodes[0] = tmp_nodes[0];
+        ci.nodes[1] = tmp_nodes[2];
+        ci.nodes[2] = tmp_nodes[3];
+        ci.nodes[3] = tmp_nodes[1];
+      } break;
       case 21 : { /* Third order triangle */
-        std::vector<size_type> tmp_nodes(10);
-        tmp_nodes[0] = ci.nodes[0]; tmp_nodes[1] = ci.nodes[3];
-        tmp_nodes[2] = ci.nodes[4]; tmp_nodes[3] = ci.nodes[1];
-        tmp_nodes[4] = ci.nodes[8]; tmp_nodes[5] = ci.nodes[9];
-        tmp_nodes[6] = ci.nodes[5]; tmp_nodes[7] = ci.nodes[7];
-        tmp_nodes[8] = ci.nodes[6]; tmp_nodes[9] = ci.nodes[2];
-
-        gmm::copy(tmp_nodes, ci.nodes);
-      }
-        break;
+        //ci.nodes[0] = tmp_nodes[0];
+        ci.nodes[1] = tmp_nodes[3];
+        ci.nodes[2] = tmp_nodes[4];
+        ci.nodes[3] = tmp_nodes[1];
+        ci.nodes[4] = tmp_nodes[8];
+        ci.nodes[5] = tmp_nodes[9];
+        ci.nodes[6] = tmp_nodes[5];
+        //ci.nodes[7] = tmp_nodes[7];
+        ci.nodes[8] = tmp_nodes[6];
+        ci.nodes[9] = tmp_nodes[2];
+      } break;
       }
     }
     nb_cv = cvlst.size();
