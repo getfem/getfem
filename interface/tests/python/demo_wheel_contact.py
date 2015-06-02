@@ -30,7 +30,7 @@ import numpy as np
 gf.util('trace level', 1)    # No trace for mesh generation nor for assembly
 
 export_mesh = True;
-Dirichlet_condition = False; # Use a dirichlet condition instead of a global load
+Dirichlet_version = False; # Use a dirichlet condition instead of a global load
 
 #
 # Physical parameters
@@ -101,7 +101,7 @@ mfvm1 = gf.MeshFem(mesh1, 1)
 mfvm1.set_classical_discontinuous_fem(elements_degree)
 mfvm2 = gf.MeshFem(mesh2, 1)
 mfvm2.set_classical_discontinuous_fem(elements_degree)
-mim1 = gf.MeshIm(mesh1, 8) # Order 8 seems to be a minimum. Why ?
+mim1 = gf.MeshIm(mesh1, 6)
 mim1c = gf.MeshIm(mesh1, gf.Integ('IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(4),2)'))
 mim2 = gf.MeshIm(mesh2, 4)
 
@@ -131,22 +131,25 @@ md.add_nonlinear_generic_assembly_brick(mim1c, 'lambda1*(Test_u1.[0;1])'
 md.add_nonlinear_generic_assembly_brick(mim1c, '-(gamma0*element_size)*(lambda1 + neg_part(lambda1+(1/(gamma0*element_size))*((u1-Interpolate(u2,Proj1)+X-Interpolate(X,Proj1)).[0;1])))*Test_lambda1', CONTACT_BOUND);
 
 # Prescribed force in the hole
-if (Dirichlet_condition):
+if (Dirichlet_version):
   md.add_initialized_data('DData', [0., -1.0])
   md.add_Dirichlet_condition_with_multipliers(mim1, 'u1', elements_degree-1, HOLE_BOUND, 'DData');
 else:
   md.add_filtered_fem_variable('lambda_D', mflambda, HOLE_BOUND)
   md.add_initialized_data('F', [applied_force/(8*2*np.pi)])
   md.add_variable('alpha_D', 1)
-  md.add_linear_generic_assembly_brick(mim1, 'lambda_D.Test_u1 + (alpha_D*[0;1] - u1).Test_lambda_D + (lambda_D.[0;1] - F)*Test_alpha_D', HOLE_BOUND)
+  md.add_linear_generic_assembly_brick(mim1, '-lambda_D.Test_u1 + (alpha_D*[0;1] - u1).Test_lambda_D + (lambda_D.[0;1] + F)*Test_alpha_D + 1E-6*alpha_D*Test_alpha_D', HOLE_BOUND)
+  # The small penalization 1E-6*alpha_D*Test_alpha_D seems necessary to have
+  # a convergence in all cases. Why ?
+
 
 #
 # Model solve
 #
 
 print 'Solve problem with ', md.nbdof(), ' dofs'
-md.solve('max_res', 1E-9, 'max_iter', 20, 'noisy') # , 'lsearch', 'simplest',  'alpha min', 0.8)
-if not(Dirichlet_condition):
+md.solve('max_res', 1E-9, 'max_iter', 40, 'noisy') # , 'lsearch', 'simplest',  'alpha min', 0.8)
+if not(Dirichlet_version):
   print 'alpha_D = ', md.variable('alpha_D')[0]
 
 #

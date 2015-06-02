@@ -10307,6 +10307,12 @@ namespace getfem {
         bool converged = true;
         bool is_in = gic.invert(P, P_ref, converged);
 
+        // cout << "cv = " << cv << " P = " << P << " P_ref = " << P_ref
+        // cout << " is_in = " << int(is_in) << endl;
+        // for (size_type iii = 0;
+        //      iii < target_mesh.points_of_convex(cv).size(); ++iii)
+        //  cout << target_mesh.points_of_convex(cv)[iii] << endl;
+        
         if (is_in && converged) {
           face_num = short_type(-1); // Should detect potential faces ?
           ret_type = 1;

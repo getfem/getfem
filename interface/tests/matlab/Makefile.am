@@ -53,6 +53,7 @@ EXTRA_DIST= \
 	demo_contact_fictitious_domain_nitsche.m \
 	demo_static_contact.m \
 	demo_large_sliding_contact.m \
+	demo_wheel_contact.m \
 	demo_wave2D.m \
 	demo_wave2D_alt.m \
 	demo_wave_equation.m \
