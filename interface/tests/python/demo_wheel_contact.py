@@ -20,13 +20,17 @@
 # Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 #
 ############################################################################
+#
+# Contact of a deformable 'wheel' onto a plane deformable obstacle.
+#
+############################################################################
 
 import getfem as gf
 import numpy as np
-
-# Contact of a deformable 'wheel' onto a plane deformable obstacle.
+gf.util('trace level', 1)    # No trace for mesh generation nor for assembly
 
 export_mesh = True;
+Dirichlet_condition = False; # Use a dirichlet condition instead of a global load
 
 #
 # Physical parameters
@@ -42,7 +46,7 @@ applied_force = 1E7              # Force at the hole boundary (N)
 #
 # Numerical parameters
 #
-h = 1                    # Approximate mesh size
+h = 1.                   # Approximate mesh size
 elements_degree = 2      # Degree of the finite element methods
 gamma0 = 1./E;           # Augmentation parameter for the augmented Lagrangian 
 
@@ -54,7 +58,6 @@ mo2 = gf.MesherObject('ball', [0., 15.], 8.)
 mo3 = gf.MesherObject('set minus', mo1, mo2)
 
 print ('Meshes generation')
-gf.util('trace level', 1)   # No trace for mesh generation nor for assembly
 mesh1 = gf.Mesh('generate', mo3, h, 2)
 mesh2 = gf.Mesh('import','structured','GT="GT_PK(2,1)";SIZES=[30,10];NOISED=0;NSUBDIV=[%d,%d];' % (int(30/h)+1, int(10/h)+1));
 mesh2.translate([-15.,-10.])
@@ -98,8 +101,9 @@ mfvm1 = gf.MeshFem(mesh1, 1)
 mfvm1.set_classical_discontinuous_fem(elements_degree)
 mfvm2 = gf.MeshFem(mesh2, 1)
 mfvm2.set_classical_discontinuous_fem(elements_degree)
-mim1 = gf.MeshIm(mesh1, pow(elements_degree,2))
-mim2 = gf.MeshIm(mesh2, pow(elements_degree,2))
+mim1 = gf.MeshIm(mesh1, 8) # Order 8 seems to be a minimum. Why ?
+mim1c = gf.MeshIm(mesh1, gf.Integ('IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(4),2)'))
+mim2 = gf.MeshIm(mesh2, 4)
 
 
 #
@@ -120,32 +124,30 @@ md.add_Dirichlet_condition_with_multipliers(mim2, 'u2', elements_degree-1, BOTTO
 
 # Contact condition (augmented Lagrangian)
 md.add_initialized_data('gamma0', [gamma0])
-md.add_interpolate_transformation_from_expression('Proj1', mesh1, mesh2, '[X(1);0]')
+md.add_interpolate_transformation_from_expression('Proj1', mesh1, mesh2, '[X(1);0.]')
 md.add_filtered_fem_variable('lambda1', mflambda_C, CONTACT_BOUND)
-md.add_nonlinear_generic_assembly_brick(mim1, 'lambda1*(Test_u1.[0;1])'
+md.add_nonlinear_generic_assembly_brick(mim1c, 'lambda1*(Test_u1.[0;1])'
                                         '-lambda1*(Interpolate(Test_u2,Proj1).[0;1])', CONTACT_BOUND)
-md.add_nonlinear_generic_assembly_brick(mim1, '-(gamma0*element_size)*(lambda1 + neg_part(lambda1+(1/(gamma0*element_size))*((u1-Interpolate(u2,Proj1)+X-Interpolate(X,Proj1)).[0;1])))*Test_lambda1', CONTACT_BOUND);
+md.add_nonlinear_generic_assembly_brick(mim1c, '-(gamma0*element_size)*(lambda1 + neg_part(lambda1+(1/(gamma0*element_size))*((u1-Interpolate(u2,Proj1)+X-Interpolate(X,Proj1)).[0;1])))*Test_lambda1', CONTACT_BOUND);
 
 # Prescribed force in the hole
-
-# md.add_initialized_data('DData', [0., -1.0])
-# md.add_Dirichlet_condition_with_multipliers(mim1, 'u1', elements_degree-1, HOLE_BOUND, 'DData');
-
-md.add_filtered_fem_variable('lambda_D', mflambda, HOLE_BOUND)
-md.add_initialized_data('F', [applied_force/(8*2*np.pi)])
-md.add_variable('alpha_D', 1)
-md.add_linear_generic_assembly_brick(mim1, 'lambda_D.Test_u1 + (alpha_D*[0;1] - u1).Test_lambda_D + (lambda_D.[0;1] - F)*Test_alpha_D', HOLE_BOUND)
+if (Dirichlet_condition):
+  md.add_initialized_data('DData', [0., -1.0])
+  md.add_Dirichlet_condition_with_multipliers(mim1, 'u1', elements_degree-1, HOLE_BOUND, 'DData');
+else:
+  md.add_filtered_fem_variable('lambda_D', mflambda, HOLE_BOUND)
+  md.add_initialized_data('F', [applied_force/(8*2*np.pi)])
+  md.add_variable('alpha_D', 1)
+  md.add_linear_generic_assembly_brick(mim1, 'lambda_D.Test_u1 + (alpha_D*[0;1] - u1).Test_lambda_D + (lambda_D.[0;1] - F)*Test_alpha_D', HOLE_BOUND)
 
 #
 # Model solve
 #
 
 print 'Solve problem with ', md.nbdof(), ' dofs'
-print 'alpha_D = ', md.variable('alpha_D')[0]
-md.test_tangent_matrix(1e-4, 10, 0.001);
 md.solve('max_res', 1E-9, 'max_iter', 20, 'noisy') # , 'lsearch', 'simplest',  'alpha min', 0.8)
-print 'alpha_D = ', md.variable('alpha_D')[0]
-md.test_tangent_matrix(1e-4, 10, 0.001);
+if not(Dirichlet_condition):
+  print 'alpha_D = ', md.variable('alpha_D')[0]
 
 #
 # Solution export

@@ -6113,7 +6113,7 @@ namespace getfem {
       + test_varname;
     
 
-#if 1 // Old brick
+#if 0 // Old brick
     pbrick pbr = new iso_lin_elasticity_brick(dataname3.size() ? expr1:expr2);
     model::termlist tl;
     tl.push_back(model::term_description(varname, varname, true));
