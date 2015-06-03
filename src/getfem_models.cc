@@ -4003,9 +4003,21 @@ namespace getfem {
         asm_homogeneous_source_term(vecl[0], mim, mf_u, A, rg);
 
       if (dl.size() > 1) gmm::add(md.real_variable(dl[1]), vecl[0]);
+    }
 
+    void real_post_assembly_in_serial(const model &md, size_type ib,
+                                      const model::varnamelist &vl,
+                                      const model::varnamelist &dl,
+                                      const model::mimlist &/* mims */,
+                                      model::real_matlist &/*matl*/,
+                                      model::real_veclist &vecl,
+                                      model::real_veclist &,
+                                      size_type /*region*/,
+                                      build_version) const override
+    {
       md.add_external_load(ib, gmm::vect_norm1(vecl[0]));
     }
+
 
     virtual void asm_complex_tangent_terms(const model &md, size_type ib,
                                            const model::varnamelist &vl,
@@ -4042,9 +4054,21 @@ namespace getfem {
         asm_homogeneous_source_term(vecl[0], mim, mf_u, A, rg);
 
       if (dl.size() > 1) gmm::add(md.complex_variable(dl[1]), vecl[0]);
+    }
 
+    void complex_post_assembly_in_serial(const model &md,
+                                         size_type ib,
+                                         const model::varnamelist &,
+                                         const model::varnamelist &,
+                                         const model::mimlist &,
+                                         model::complex_matlist &,
+                                         model::complex_veclist &vecl,
+                                         model::complex_veclist &,
+                                         size_type, build_version) const override
+    {
       md.add_external_load(ib, gmm::vect_norm1(vecl[0]));
     }
+
 
 
     source_term_brick(void) {

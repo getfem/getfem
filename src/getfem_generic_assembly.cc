@@ -5238,7 +5238,7 @@ namespace getfem {
       return 2;
 
     ga_predef_operator_tab &PREDEF_OPERATORS
-      = dal::singleton<ga_predef_operator_tab>::instance();
+      = dal::singleton<ga_predef_operator_tab>::instance(0);
     ga_predef_function_tab::const_iterator it=PREDEF_FUNCTIONS.find(name);
     if (it != PREDEF_FUNCTIONS.end())
       return 1;
@@ -6316,7 +6316,7 @@ namespace getfem {
         }
 
         ga_predef_operator_tab &PREDEF_OPERATORS
-          = dal::singleton<ga_predef_operator_tab>::instance();
+          = dal::singleton<ga_predef_operator_tab>::instance(0);
         ga_predef_function_tab::const_iterator it=PREDEF_FUNCTIONS.find(name);
         if (it != PREDEF_FUNCTIONS.end()) {
           // Predefined function found
@@ -6725,7 +6725,7 @@ namespace getfem {
                         "operators should only be scalar, vector or matrices");
         }
         ga_predef_operator_tab &PREDEF_OPERATORS
-          = dal::singleton<ga_predef_operator_tab>::instance();
+          = dal::singleton<ga_predef_operator_tab>::instance(0);
         ga_predef_operator_tab::T::iterator it
           = PREDEF_OPERATORS.tab.find(child0->name);
         const ga_nonlinear_operator &OP = *(it->second);
@@ -9223,7 +9223,7 @@ namespace getfem {
       } else if (child0->node_type == GA_NODE_OPERATOR) {
 
         ga_predef_operator_tab &PREDEF_OPERATORS
-          = dal::singleton<ga_predef_operator_tab>::instance();
+          = dal::singleton<ga_predef_operator_tab>::instance(0);
         ga_predef_operator_tab::T::iterator it
           = PREDEF_OPERATORS.tab.find(child0->name);
         const ga_nonlinear_operator &OP = *(it->second);
