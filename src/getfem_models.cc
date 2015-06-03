@@ -1616,6 +1616,58 @@ namespace getfem {
       }
   };
 
+  /** the same as above, but to be used for multithreaded distribution of a single matrix or a vector */
+  template <class CONTAINER> class distro
+  {
+    CONTAINER& original;
+    omp_distribute<CONTAINER> distributed;
+
+    void build_distro(gmm::abstract_matrix)
+    {
+      for(size_type thread = 1; thread < num_threads(); thread++)
+      {
+        gmm::resize(distributed(thread), gmm::mat_nrows(original),gmm::mat_ncols(original));
+      }
+    }
+
+    void build_distro(gmm::abstract_vector)
+    {
+      //.. skipping thread 0 ..
+      for(size_type thread = 1; thread < num_threads(); thread++)
+      {
+        gmm::resize(distributed(thread), gmm::vect_size(original));
+      }
+    }
+
+    bool not_multithreaded() const { return num_threads() == 1; }
+
+  public:
+
+    distro(CONTAINER& c) : original(c)
+    {
+      if (not_multithreaded()) return;
+      build_distro(typename gmm::linalg_traits<CONTAINER>::linalg_type());
+    }
+
+    operator CONTAINER&()
+    {
+      if (not_multithreaded() || this_thread() == 0) return original;
+      else return distributed(this_thread());
+    }
+
+    ~distro()
+    {
+      if (not_multithreaded()) return;
+
+      GMM_ASSERT1(!me_is_multithreaded_now(),
+                  "List accumulation should not run in parallel");
+
+      for(size_type thread = 1; thread < num_threads(); thread++)
+      {
+        gmm::add(distributed(thread), original);
+      }
+    }
+  };
 
   void model::brick_call(size_type ib, build_version version,
                          size_type rhs_ind) const
@@ -2532,33 +2584,47 @@ namespace getfem {
 
     // Generic expressions
     if (generic_expressions.size()) {
-      GMM_TRACE2("Global generic assembly");
-      ga_workspace workspace(*this);
 
-      for (std::list<gen_expr>::iterator it = generic_expressions.begin();
-             it != generic_expressions.end(); ++it) {
-        workspace.add_expression(it->expr, it->mim, it->region);
-      }
+      model_real_plain_vector residual;
+      if (version & BUILD_RHS) gmm::resize(residual, gmm::vect_size(rrhs));
 
-      if (version & BUILD_RHS) {
-        if (is_complex()) {
-          GMM_ASSERT1(false, "to be done");
-        } else {
-          model_real_plain_vector residual(gmm::vect_size(rrhs));
-          workspace.set_assembled_vector(residual);
-          workspace.assembly(1);
-          gmm::add(gmm::scaled(residual, scalar_type(-1)), rrhs);
-        }
-      }
+      { //need parentheses for constructor/destructor semantics of distro
+        distro<decltype(rrhs)> residual_distributed(residual);
+        distro<decltype(rTM)>  tangent_matrix_distributed(rTM);
 
-      if (version & BUILD_MATRIX) {
-        if (is_complex()) {
-          GMM_ASSERT1(false, "to be done");
-        } else {
-          workspace.set_assembled_matrix(rTM);
-          workspace.assembly(2);
-        }
-      }
+        /*running the assembly in parallel*/
+        gmm::standard_locale locale;
+        open_mp_is_running_properly check;
+
+        #pragma omp parallel default(shared)
+        {
+          GMM_TRACE2("Global generic assembly");
+          ga_workspace workspace(*this);
+
+          for (auto &&ge : generic_expressions) workspace.add_expression(ge.expr, ge.mim, ge.region);
+
+          if (version & BUILD_RHS) {
+            if (is_complex()) {
+              GMM_ASSERT1(false, "to be done");
+            } else {
+              workspace.set_assembled_vector(residual_distributed);
+              workspace.assembly(1);
+            }
+          }
+
+          if (version & BUILD_MATRIX) {
+            if (is_complex()) {
+              GMM_ASSERT1(false, "to be done");
+            } else {
+              workspace.set_assembled_matrix(tangent_matrix_distributed);
+              workspace.assembly(2);
+            }
+          }
+        } //#pragma omp parallel
+      } //end of distro scope
+
+      if (version & BUILD_RHS) gmm::add(gmm::scaled(residual, scalar_type(-1)), rrhs);
+
     }
 
     // Post simplification for dof constraints
