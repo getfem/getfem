@@ -33,6 +33,61 @@
 
 namespace getfem {
 
+
+/** multi-threaded distribution of a single vector or a matrix. Uses RAII semantics
+  (constructor/destructor)  */
+  template <class CONTAINER> class distro
+  {
+    CONTAINER& original;
+    omp_distribute<CONTAINER> distributed;
+
+    void build_distro(gmm::abstract_matrix)
+    {
+      for(size_type thread = 1; thread < num_threads(); thread++)
+      {
+        gmm::resize(distributed(thread), gmm::mat_nrows(original),gmm::mat_ncols(original));
+      }
+    }
+
+    void build_distro(gmm::abstract_vector)
+    {
+      //.. skipping thread 0 ..
+      for(size_type thread = 1; thread < num_threads(); thread++)
+      {
+        gmm::resize(distributed(thread), gmm::vect_size(original));
+      }
+    }
+
+    bool not_multithreaded() const { return num_threads() == 1; }
+
+  public:
+
+    distro(CONTAINER& c) : original(c)
+    {
+      if (not_multithreaded()) return;
+      build_distro(typename gmm::linalg_traits<CONTAINER>::linalg_type());
+    }
+
+    operator CONTAINER&()
+    {
+      if (not_multithreaded() || this_thread() == 0) return original;
+      else return distributed(this_thread());
+    }
+
+    ~distro()
+    {
+      if (not_multithreaded()) return;
+
+      GMM_ASSERT1(!me_is_multithreaded_now(),
+                  "List accumulation should not run in parallel");
+
+      for(size_type thread = 1; thread < num_threads(); thread++)
+      {
+        gmm::add(distributed(thread), original);
+      }
+    }
+  };
+
   void model::var_description::set_size(void) {
     n_temp_iter = 0;
     default_iter = 0;
@@ -357,15 +412,20 @@ namespace getfem {
                 update_brick(ib, BUILD_MATRIX);
                 if (generic_expressions.size()) {
                   GMM_TRACE2("Generic assembly for actualize sizes");
-                  ga_workspace workspace(*this);
-                  for (std::list<gen_expr>::iterator ig
-                         = generic_expressions.begin();
-                       ig != generic_expressions.end(); ++ig) {
-                    workspace.add_expression(ig->expr,ig->mim,ig->region);
-                  }
-                  gmm::clear(rTM);
-                  workspace.set_assembled_matrix(rTM);
-                  workspace.assembly(2);
+                  {
+                    gmm::clear(rTM);
+                    distro<decltype(rTM)>  distro_rTM(rTM);
+                    gmm::standard_locale locale;
+                    open_mp_is_running_properly check;
+                    #pragma omp parallel default(shared)
+                    {
+                      ga_workspace workspace(*this);
+                      for (auto &&ge : generic_expressions)
+                        workspace.add_expression(ge.expr, ge.mim, ge.region);
+                      workspace.set_assembled_matrix(distro_rTM);
+                      workspace.assembly(2);
+                    } //parallel
+                  } //distro scope
                   gmm::add
                     (gmm::sub_matrix(rTM, it->second.I, it2->second.I),MM);
                   gmm::add(gmm::transposed
@@ -1614,59 +1674,6 @@ namespace getfem {
                 gmm::add(*it_distributed, *it_original);
         }
       }
-  };
-
-  /** the same as above, but to be used for multithreaded distribution of a single matrix or a vector */
-  template <class CONTAINER> class distro
-  {
-    CONTAINER& original;
-    omp_distribute<CONTAINER> distributed;
-
-    void build_distro(gmm::abstract_matrix)
-    {
-      for(size_type thread = 1; thread < num_threads(); thread++)
-      {
-        gmm::resize(distributed(thread), gmm::mat_nrows(original),gmm::mat_ncols(original));
-      }
-    }
-
-    void build_distro(gmm::abstract_vector)
-    {
-      //.. skipping thread 0 ..
-      for(size_type thread = 1; thread < num_threads(); thread++)
-      {
-        gmm::resize(distributed(thread), gmm::vect_size(original));
-      }
-    }
-
-    bool not_multithreaded() const { return num_threads() == 1; }
-
-  public:
-
-    distro(CONTAINER& c) : original(c)
-    {
-      if (not_multithreaded()) return;
-      build_distro(typename gmm::linalg_traits<CONTAINER>::linalg_type());
-    }
-
-    operator CONTAINER&()
-    {
-      if (not_multithreaded() || this_thread() == 0) return original;
-      else return distributed(this_thread());
-    }
-
-    ~distro()
-    {
-      if (not_multithreaded()) return;
-
-      GMM_ASSERT1(!me_is_multithreaded_now(),
-                  "List accumulation should not run in parallel");
-
-      for(size_type thread = 1; thread < num_threads(); thread++)
-      {
-        gmm::add(distributed(thread), original);
-      }
-    }
   };
 
   void model::brick_call(size_type ib, build_version version,
