@@ -344,8 +344,40 @@ namespace getfem {
             bool bupd = false;
             bool cplx = is_complex() && brick.pbr->is_complex();
 
-            for (size_type j = 0; j < brick.tlist.size(); ++j) {
+            if (!(brick.tlist.size())) {
+              bool varc = false, multc = false;
+              for (size_type iv = 0; iv < brick.vlist.size(); ++iv) {
+                if (!(mults[k].compare(brick.vlist[iv]))) multc = true;
+                if (!(it2->first.compare(brick.vlist[iv]))) varc = true;
+              }
+              if (multc && varc) {
+                GMM_ASSERT1(!cplx, "Sorry, not taken into account");
+                generic_expressions.clear();
+                brick.terms_to_be_computed = true;
+                update_brick(ib, BUILD_MATRIX);
+                if (generic_expressions.size()) {
+                  GMM_TRACE2("Generic assembly for actualize sizes");
+                  ga_workspace workspace(*this);
+                  for (std::list<gen_expr>::iterator ig
+                         = generic_expressions.begin();
+                       ig != generic_expressions.end(); ++ig) {
+                    workspace.add_expression(ig->expr,ig->mim,ig->region);
+                  }
+                  gmm::clear(rTM);
+                  workspace.set_assembled_matrix(rTM);
+                  workspace.assembly(2);
+                  gmm::add
+                    (gmm::sub_matrix(rTM, it->second.I, it2->second.I),MM);
+                  gmm::add(gmm::transposed
+                           (gmm::sub_matrix(rTM, it2->second.I,
+                                            it->second.I)), MM);
+                  bupd = false;
+                }
+              }
+            }
 
+
+            for (size_type j = 0; j < brick.tlist.size(); ++j) {
               const term_description &term = brick.tlist[j];
 
               if (term.is_matrix_term) {
@@ -363,32 +395,14 @@ namespace getfem {
                       update_brick(ib, BUILD_MATRIX);
                       bupd = true;
                     }
-                    if (generic_expressions.size()) {
-                      GMM_TRACE2("Generic assembly for actualize sizes");
-                      ga_workspace workspace(*this);
-                      for (std::list<gen_expr>::iterator ig
-                             = generic_expressions.begin();
-                           ig != generic_expressions.end(); ++ig) {
-                        workspace.add_expression(ig->expr,ig->mim,ig->region);
-                      }
-                      gmm::clear(rTM);
-                      workspace.set_assembled_matrix(rTM);
-                      workspace.assembly(2);
-                      gmm::add
-                        (gmm::sub_matrix(rTM, it->second.I, it2->second.I),MM);
-                      gmm::add(gmm::transposed
-                               (gmm::sub_matrix(rTM, it2->second.I,
-                                                it->second.I)), MM);
-                      bupd = false;
-                    } else {
-                      gmm::add(gmm::sub_matrix(brick.rmatlist[j],
-                                               it->second.I, it2->second.I),
-                               MM);
-                      gmm::add(gmm::transposed(gmm::sub_matrix
-                                               (brick.rmatlist[j],
-                                                it2->second.I, it->second.I)),
-                               MM);
-                    }
+                    gmm::add(gmm::sub_matrix(brick.rmatlist[j],
+                                             it->second.I, it2->second.I),
+                             MM);
+                    gmm::add(gmm::transposed(gmm::sub_matrix
+                                             (brick.rmatlist[j],
+                                              it2->second.I, it->second.I)),
+                             MM);
+                    termadded = true;
                   }
                 } else if (!mults[k].compare(term.var1) && 
                     !it2->first.compare(term.var2)) {
@@ -2708,9 +2722,6 @@ namespace getfem {
     const im_data *imd = it->second.pim_data;
     size_type n = it->second.qdim();
     if (mf) {
-      size_type ndof = mf->nb_dof();
-      GMM_ASSERT1(ndof, "Variable " << name << " with no dof. You probably "
-                  "made a wrong initialization of a mesh_fem object");
       bgeot::multi_index mi = mf->get_qdims();
       if (n > 1 || it->second.qdims.size() > 1) {
         size_type i = 0;
@@ -2734,6 +2745,21 @@ namespace getfem {
     }
     return it->second.qdims;
   }
+
+  size_type model::qdim_of_variable(const std::string &name) const {
+    VAR_SET::const_iterator it = variables.find(name);
+    GMM_ASSERT1(it!=variables.end(), "Undefined variable " << name);
+    const mesh_fem *mf = it->second.passociated_mf();
+    const im_data *imd = it->second.pim_data;
+    size_type n = it->second.qdim();
+    if (mf) {
+      return mf->get_qdim() * n;
+    } else if (imd) {
+      return imd->tensor_size().total_size() * n;
+    }
+    return n;
+  }
+
   
   const model_real_plain_vector &
   model::real_variable(const std::string &name, size_type niter) const {
@@ -3341,18 +3367,15 @@ namespace getfem {
                 " in assembly string for nonlinear terms");
     model::varnamelist vl, vl_test1, vl_test2, ddl, dl;
     workspace.used_variables(vl, vl_test1, vl_test2, ddl, order);
-
     for (size_type i = 0; i < ddl.size(); ++i)
       if (md.is_true_data(ddl[i])) dl.push_back(ddl[i]);
       else vl.push_back(ddl[i]);
-
     if (order == 0) { is_coercive = is_sym = true; }
     pbrick pbr = new gen_nonlinear_assembly_brick(expr, is_sym, is_coercive,
                                                   brickname);
     model::termlist tl; // No term
     // tl.push_back(model::term_description(true, is_sym));
     // TODO to be changed.
-
     return md.add_brick(pbr, vl, dl, tl, model::mimlist(1, &mim), region);
   }
 

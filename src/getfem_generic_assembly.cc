@@ -4513,9 +4513,6 @@ namespace getfem {
         const im_data *imd = it->second.imd;
         size_type n = it->second.qdim();
         if (mf) {
-          size_type ndof = mf->nb_dof();
-          GMM_ASSERT1(ndof, "Variable " << name << " with no dof. You probably "
-                      "made a wrong initialization of a mesh_fem object");
           bgeot::multi_index mi = mf->get_qdims();
           if (n > 1 || it->second.qdims.size() > 1) {
             size_type i = 0;
@@ -4547,7 +4544,29 @@ namespace getfem {
         return qdims(first_variable_of_group(name));
       GMM_ASSERT1(false, "Undefined variable or group " << name);
     }
-
+  
+  size_type ga_workspace::qdim(const std::string &name) const {
+    VAR_SET::const_iterator it = variables.find(name);
+    if (it != variables.end()) {
+      const mesh_fem *mf =  it->second.is_fem_dofs ? it->second.mf : 0;
+      const im_data *imd = it->second.imd;
+      size_type n = it->second.qdim();
+      if (mf) {
+        return n * mf->get_qdim();
+      } else if (imd) {
+        return n * imd->tensor_size().total_size();
+      }
+      return n;
+    }
+    if (md && md->variable_exists(name))
+      return md->qdim_of_variable(name);
+    if (parent_workspace && parent_workspace->variable_exists(name))
+      return parent_workspace->qdim(name);
+    if (variable_group_exists(name))
+      return qdim(first_variable_of_group(name));
+    GMM_ASSERT1(false, "Undefined variable or group " << name);
+  }
+  
 
   typedef std::pair<std::string, std::string> var_trans_pair;
 
@@ -6436,13 +6455,13 @@ namespace getfem {
             size_type q = workspace.qdim(name);
             size_type n = mf->linked_mesh().dim();
             bgeot::multi_index mii = workspace.qdims(name);
-
+            
             if (!q) ga_throw_error(expr, pnode->pos,
                                    "Invalid null size of variable " << name);
             if (mii.size() > 6)
               ga_throw_error(expr, pnode->pos,
                             "Tensor with too much dimensions. Limited to 6");
-
+            
             switch (prefix_id) {
             case 0: // value
               pnode->node_type = test ? GA_NODE_VAL_TEST : GA_NODE_VAL;

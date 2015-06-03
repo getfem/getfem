@@ -545,23 +545,24 @@ namespace getfem {
       GMM_ASSERT1(false, "Undefined variable " << name);
     }
 
-    size_type qdim(const std::string &name) const {
-      const mesh_fem *mf = associated_mf(name);
-      const im_data *imd = associated_im_data(name);
-      size_type n = gmm::vect_size(value(name));
-      if (mf) {
-        size_type ndof = mf->nb_dof();
-        GMM_ASSERT1(ndof, "Variable " << name << " with no dof. You probably "
-                    "made a wrong initialization of a mesh_fem object");
-        return mf->get_qdim() * (n / ndof);
-      } else if (imd) {
-        size_type q = n / imd->nb_filtered_index();
-        GMM_ASSERT1(q % imd->nb_tensor_elem() == 0,
-                    "Invalid mesh im data vector");
-        return q;
-      }
-      return n;
-    }
+    size_type qdim(const std::string &name) const;
+//     {
+//       const mesh_fem *mf = associated_mf(name);
+//       const im_data *imd = associated_im_data(name);
+//       size_type n = ;
+//       if (mf) {
+//         size_type ndof = mf->nb_dof();
+//         GMM_ASSERT1(ndof, "Variable " << name << " with no dof. You probably "
+//                     "made a wrong initialization of a mesh_fem object");
+//         return mf->get_qdim() * (n / ndof);
+//       } else if (imd) {
+//         size_type q = n / imd->nb_filtered_index();
+//         GMM_ASSERT1(q % imd->nb_tensor_elem() == 0,
+//                     "Invalid mesh im data vector");
+//         return q;
+//       }
+//       return gmm::vect_size(value(name));
+//     }
 
     bgeot::multi_index qdims(const std::string &name) const;
 

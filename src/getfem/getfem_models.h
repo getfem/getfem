@@ -214,11 +214,7 @@ namespace getfem {
       // im data description
       const im_data *pim_data;
 
-      size_type qdim(void) const {
-        size_type q = 1;
-        for (size_type i = 0; i < qdims.size(); ++i) q *= qdims[i];
-        return q;
-      }
+      size_type qdim(void) const { return qdims.total_size(); }
 
       var_description(bool is_var = false, bool is_com = false,
                       bool is_fem = false, size_type n_it = 1,
@@ -971,6 +967,7 @@ namespace getfem {
 
     
     bgeot::multi_index qdims_of_variable(const std::string &name) const;
+    size_type qdim_of_variable(const std::string &name) const;
 
     /** Gives the access to the tangent matrix. For the real version. */
     const model_real_sparse_matrix &real_tangent_matrix(void) const {

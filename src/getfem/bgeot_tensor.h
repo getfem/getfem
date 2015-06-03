@@ -92,6 +92,12 @@ namespace bgeot {
       return true;
     }
 
+    size_type total_size(void) const {
+      size_type s = 1;
+      for (size_type k = 0; k < this->size(); ++k) s *= (*this)[k];
+      return s;
+    }
+
     size_type memsize() const {
       return std::vector<size_type>::capacity()*sizeof(size_type) +
         sizeof(multi_index);
