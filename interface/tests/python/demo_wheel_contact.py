@@ -39,14 +39,14 @@ E = 21E6                         # Young Modulus (N/cm^2)
 nu = 0.3                         # Poisson ratio
 clambda = E*nu/((1+nu)*(1-2*nu)) # First Lame coefficient (N/cm^2)
 cmu = E/(2*(1+nu))               # Second Lame coefficient (N/cm^2)
-clambdastar = 2*clambda*cmu/(clambda+2*cmu) # Lame coefficient for Plane stress (N/cm^2)
+clambdastar = 2*clambda*cmu/(clambda+2*cmu) # Lame coefficient for Plane stress
 applied_force = 1E7              # Force at the hole boundary (N)
 
 
 #
 # Numerical parameters
 #
-h = 1.                   # Approximate mesh size
+h = 1                    # Approximate mesh size
 elements_degree = 2      # Degree of the finite element methods
 gamma0 = 1./E;           # Augmentation parameter for the augmented Lagrangian 
 
@@ -101,7 +101,7 @@ mfvm1 = gf.MeshFem(mesh1, 1)
 mfvm1.set_classical_discontinuous_fem(elements_degree)
 mfvm2 = gf.MeshFem(mesh2, 1)
 mfvm2.set_classical_discontinuous_fem(elements_degree)
-mim1 = gf.MeshIm(mesh1, 6)
+mim1 = gf.MeshIm(mesh1, 4)
 mim1c = gf.MeshIm(mesh1, gf.Integ('IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(4),2)'))
 mim2 = gf.MeshIm(mesh2, 4)
 
@@ -124,7 +124,7 @@ md.add_Dirichlet_condition_with_multipliers(mim2, 'u2', elements_degree-1, BOTTO
 
 # Contact condition (augmented Lagrangian)
 md.add_initialized_data('gamma0', [gamma0])
-md.add_interpolate_transformation_from_expression('Proj1', mesh1, mesh2, '[X(1);0.]')
+md.add_interpolate_transformation_from_expression('Proj1', mesh1, mesh2, '[X(1);0]')
 md.add_filtered_fem_variable('lambda1', mflambda_C, CONTACT_BOUND)
 md.add_nonlinear_generic_assembly_brick(mim1c, 'lambda1*(Test_u1.[0;1])'
                                         '-lambda1*(Interpolate(Test_u2,Proj1).[0;1])', CONTACT_BOUND)
@@ -151,6 +151,7 @@ print 'Solve problem with ', md.nbdof(), ' dofs'
 md.solve('max_res', 1E-9, 'max_iter', 40, 'noisy') # , 'lsearch', 'simplest',  'alpha min', 0.8)
 if not(Dirichlet_version):
   print 'alpha_D = ', md.variable('alpha_D')[0]
+# print 'Contact multiplier ', md.variable('lambda1')
 
 #
 # Solution export
