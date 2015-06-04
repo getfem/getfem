@@ -3131,15 +3131,15 @@ namespace getfem {
     std::string expr, directvarname, directdataname;
     model::varnamelist vl_test1;
 
-    virtual void asm_real_tangent_terms(const model &md, size_type ib,
-                                        const model::varnamelist &,
-                                        const model::varnamelist &,
-                                        const model::mimlist &mims,
-                                        model::real_matlist &,
-                                        model::real_veclist &vecl,
-                                        model::real_veclist &,
-                                        size_type region,
-                                        build_version) const {
+    void asm_real_tangent_terms(const model &md, size_type /* ib */,
+                                const model::varnamelist &,
+                                const model::varnamelist &,
+                                const model::mimlist &mims,
+                                model::real_matlist &,
+                                model::real_veclist &vecl,
+                                model::real_veclist &,
+                                size_type region,
+                                build_version) const override {
       GMM_ASSERT1(vecl.size() ==  vl_test1.size()
                   + ((directdataname.size() == 0) ? 0 : 1), "Wrong number "
                   "of terms for Generic source term assembly brick ");
@@ -3163,7 +3163,6 @@ namespace getfem {
         model_real_plain_vector V(nbgdof);
         workspace.set_assembled_vector(V);
         workspace.assembly(1);
-        md.add_external_load(ib, gmm::vect_norm1(V));
         for (size_type i = 0; i < vl_test1.size(); ++i) {
           gmm::copy(gmm::sub_vector
                     (V, workspace.interval_of_variable(vl_test1[i])), vecl[i]);
@@ -3172,8 +3171,21 @@ namespace getfem {
 
       if (directvarname.size()) {
         gmm::copy(md.real_variable(directdataname), vecl.back());
-        md.add_external_load(ib, gmm::vect_norm1(vecl.back()));
       }
+    }
+
+    void real_post_assembly_in_serial(const model &md, size_type ib,
+                                      const model::varnamelist &/* vl */,
+                                      const model::varnamelist &/* dl */,
+                                      const model::mimlist &/* mims */,
+                                      model::real_matlist &/*matl*/,
+                                      model::real_veclist &vecl,
+                                      model::real_veclist &,
+                                      size_type /*region*/,
+                                      build_version) const override {
+      scalar_type el = scalar_type(0);
+      for (size_type i=0; i < vecl.size(); ++i) el += gmm::vect_norm1(vecl[i]);
+      md.add_external_load(ib, el);
     }
 
     virtual std::string declare_volume_assembly_string
@@ -3965,7 +3977,7 @@ namespace getfem {
   // Kept only for the complex version
   struct source_term_brick : public virtual_brick {
 
-    virtual void asm_real_tangent_terms(const model &md, size_type ib,
+    void asm_real_tangent_terms(const model &md, size_type /*ib*/,
                                         const model::varnamelist &vl,
                                         const model::varnamelist &dl,
                                         const model::mimlist &mims,
@@ -3973,7 +3985,7 @@ namespace getfem {
                                         model::real_veclist &vecl,
                                         model::real_veclist &,
                                         size_type region,
-                                        build_version) const {
+                                        build_version) const override {
       GMM_ASSERT1(vecl.size() == 1,
                   "Source term brick has one and only one term");
       GMM_ASSERT1(mims.size() == 1,
@@ -4006,8 +4018,8 @@ namespace getfem {
     }
 
     void real_post_assembly_in_serial(const model &md, size_type ib,
-                                      const model::varnamelist &vl,
-                                      const model::varnamelist &dl,
+                                      const model::varnamelist &/* vl */,
+                                      const model::varnamelist &/* dl */,
                                       const model::mimlist &/* mims */,
                                       model::real_matlist &/*matl*/,
                                       model::real_veclist &vecl,
@@ -4019,15 +4031,15 @@ namespace getfem {
     }
 
 
-    virtual void asm_complex_tangent_terms(const model &md, size_type ib,
-                                           const model::varnamelist &vl,
-                                           const model::varnamelist &dl,
-                                           const model::mimlist &mims,
-                                           model::complex_matlist &,
-                                           model::complex_veclist &vecl,
-                                           model::complex_veclist &,
-                                           size_type region,
-                                           build_version) const {
+    void asm_complex_tangent_terms(const model &md, size_type /*ib*/,
+                                   const model::varnamelist &vl,
+                                   const model::varnamelist &dl,
+                                   const model::mimlist &mims,
+                                   model::complex_matlist &,
+                                   model::complex_veclist &vecl,
+                                   model::complex_veclist &,
+                                   size_type region,
+                                   build_version) const override {
       GMM_ASSERT1(vecl.size() == 1,
                   "Source term brick has one and only one term");
       GMM_ASSERT1(mims.size() == 1,
@@ -4126,15 +4138,15 @@ namespace getfem {
 
   struct normal_source_term_brick : public virtual_brick {
 
-    virtual void asm_real_tangent_terms(const model &md, size_type ib,
-                                        const model::varnamelist &vl,
-                                        const model::varnamelist &dl,
-                                        const model::mimlist &mims,
-                                        model::real_matlist &,
-                                        model::real_veclist &vecl,
-                                        model::real_veclist &,
-                                        size_type region,
-                                        build_version) const {
+    void asm_real_tangent_terms(const model &md, size_type /* ib */,
+                                const model::varnamelist &vl,
+                                const model::varnamelist &dl,
+                                const model::mimlist &mims,
+                                model::real_matlist &,
+                                model::real_veclist &vecl,
+                                model::real_veclist &,
+                                size_type region,
+                                build_version) const override {
       GMM_ASSERT1(vecl.size() == 1,
                   "Source term brick has one and only one term");
       GMM_ASSERT1(mims.size() == 1,
@@ -4162,11 +4174,22 @@ namespace getfem {
         asm_normal_source_term(vecl[0], mim, mf_u, *mf_data, A, rg);
       else
         asm_homogeneous_normal_source_term(vecl[0], mim, mf_u, A, rg);
-
-      md.add_external_load(ib, gmm::vect_norm1(vecl[0]));
     }
 
-    virtual void asm_complex_tangent_terms(const model &md, size_type ib,
+    void real_post_assembly_in_serial(const model &md, size_type ib,
+                                      const model::varnamelist &/* vl */,
+                                      const model::varnamelist &/* dl */,
+                                      const model::mimlist &/* mims */,
+                                      model::real_matlist &/*matl*/,
+                                      model::real_veclist &vecl,
+                                      model::real_veclist &,
+                                      size_type /*region*/,
+                                      build_version) const override {
+      md.add_external_load(ib, gmm::vect_norm1(vecl[0]));
+    }
+    
+
+    virtual void asm_complex_tangent_terms(const model &md, size_type /* ib */,
                                            const model::varnamelist &vl,
                                            const model::varnamelist &dl,
                                            const model::mimlist &mims,
@@ -4199,6 +4222,17 @@ namespace getfem {
         asm_normal_source_term(vecl[0], mim, mf_u, *mf_data, A, rg);
       else
         asm_homogeneous_normal_source_term(vecl[0], mim, mf_u, A, rg);
+    }
+
+    void complex_post_assembly_in_serial(const model &md, size_type ib,
+                                         const model::varnamelist &/* vl */,
+                                         const model::varnamelist &/* dl */,
+                                         const model::mimlist &/* mims */,
+                                         model::complex_matlist &/*matl*/,
+                                         model::complex_veclist &vecl,
+                                         model::complex_veclist &,
+                                         size_type /*region*/,
+                                         build_version) const override {
       md.add_external_load(ib, gmm::vect_norm1(vecl[0]));
     }
 
@@ -4394,8 +4428,6 @@ namespace getfem {
             asm_homogeneous_source_term(vecl[0], mim, mf_mult, *A, rg);
         }
 
-        md.add_external_load(ib, gmm::vect_norm1(vecl[0]));
-
         if (penalized && (&mf_mult != &mf_u))  {
           gmm::mult(gmm::transposed(rB), rV, vecl[0]);
           gmm::scale(vecl[0], gmm::abs((*COEFF)[0]));
@@ -4404,6 +4436,18 @@ namespace getfem {
           gmm::scale(vecl[0], gmm::abs((*COEFF)[0]));
       }
 
+    }
+
+    void real_post_assembly_in_serial(const model &md, size_type ib,
+                                      const model::varnamelist &/* vl */,
+                                      const model::varnamelist &/* dl */,
+                                      const model::mimlist &/* mims */,
+                                      model::real_matlist &/*matl*/,
+                                      model::real_veclist &vecl,
+                                      model::real_veclist &,
+                                      size_type /*region*/,
+                                      build_version) const override {
+      md.add_external_load(ib, gmm::vect_norm1(vecl[0]));
     }
 
     virtual void asm_complex_tangent_terms(const model &md, size_type ib,
@@ -4539,8 +4583,6 @@ namespace getfem {
             asm_homogeneous_source_term(vecl[0], mim, mf_mult, *A, rg);
         }
 
-        md.add_external_load(ib, gmm::vect_norm1(vecl[0]));
-
         if (penalized && (&mf_mult != &mf_u))  {
           gmm::mult(gmm::transposed(cB), cV, vecl[0]);
           gmm::scale(vecl[0], gmm::abs((*COEFF)[0]));
@@ -4549,6 +4591,19 @@ namespace getfem {
           gmm::scale(vecl[0], gmm::abs((*COEFF)[0]));
       }
     }
+
+    void complex_post_assembly_in_serial(const model &md, size_type ib,
+                                         const model::varnamelist &/* vl */,
+                                         const model::varnamelist &/* dl */,
+                                         const model::mimlist &/* mims */,
+                                         model::complex_matlist &/*matl*/,
+                                         model::complex_veclist &vecl,
+                                         model::complex_veclist &,
+                                         size_type /*region*/,
+                                         build_version) const override {
+      md.add_external_load(ib, gmm::vect_norm1(vecl[0]));
+    }
+
 
     virtual std::string declare_volume_assembly_string
     (const model &, size_type, const model::varnamelist &,
@@ -6145,15 +6200,15 @@ namespace getfem {
 
     std::string expr, dataname3;
 
-    virtual void asm_real_tangent_terms(const model &md, size_type ib,
-                                        const model::varnamelist &vl,
-                                        const model::varnamelist &dl,
-                                        const model::mimlist &mims,
-                                        model::real_matlist &matl,
-                                        model::real_veclist &vecl,
-                                        model::real_veclist &,
-                                        size_type region,
-                                        build_version version) const {
+    void asm_real_tangent_terms(const model &md, size_type ib,
+                                const model::varnamelist &vl,
+                                const model::varnamelist &dl,
+                                const model::mimlist &mims,
+                                model::real_matlist &matl,
+                                model::real_veclist &vecl,
+                                model::real_veclist &,
+                                size_type region,
+                                build_version version) const override {
       GMM_ASSERT1(vl.size() == 1, "Linearized isotropic elasticity brick "
                   "has one and only one variable");
       GMM_ASSERT1(matl.size() == 1, "Linearized isotropic elasticity brick "
@@ -6195,10 +6250,22 @@ namespace getfem {
         gmm::mult(matl[0],
                   gmm::scaled(md.real_variable(dataname3), scalar_type(-1)),
                   vecl[0]);
-        md.add_external_load(ib, gmm::vect_norm1(vecl[0]));
       }
 
     }
+
+    void real_post_assembly_in_serial(const model &md, size_type ib,
+                                      const model::varnamelist &/* vl */,
+                                      const model::varnamelist &/* dl */,
+                                      const model::mimlist &/* mims */,
+                                      model::real_matlist &/*matl*/,
+                                      model::real_veclist &vecl,
+                                      model::real_veclist &,
+                                      size_type /*region*/,
+                                      build_version) const override {
+      md.add_external_load(ib, gmm::vect_norm1(vecl[0]));
+    }
+
 
     virtual std::string declare_volume_assembly_string
     (const model &, size_type, const model::varnamelist &,
