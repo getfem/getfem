@@ -52,9 +52,13 @@ namespace getfem {
   class virtual_cont_struct {
 
   protected:
-
+#ifdef _MSC_VER
+    const double tau_bp_init = 1.e6;
+    const double diffeps = 1.e-8;
+#else
     static constexpr double tau_bp_init = 1.e6;
     static constexpr double diffeps = 1.e-8;
+#endif
 
     int singularities;
 
