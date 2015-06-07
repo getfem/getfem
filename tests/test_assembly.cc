@@ -985,10 +985,12 @@ static void test_new_assembly(int N, int NX, int pK) {
                   "cos(pi*X).exp(X*0)", mim, 0);
       SCAL_TEST_0("Test on function integration 2",
                   "-Derivative_sin(pi*X).exp(X*0)", mim, 0);
+      auto value = 2.0*double(N) / M_PI;
       SCAL_TEST_0("Test on function integration 2",
-                  "sin(pi*X).exp(X*0)", mim, 2.0*double(N)/M_PI);
+                  "sin(pi*X).exp(X*0)", mim, value);
+      auto min_value = -value;
       SCAL_TEST_0("Test on function integration 2",
-                  "Derivative_cos(pi*X).exp(X*0)", mim, -2.0*double(N)/M_PI);
+                  "Derivative_cos(pi*X).exp(X*0)", mim, min_value);
       SCAL_TEST_0("Test on function integration 3",
                   "cos(pi*X).Id(meshdim)(:,1)", mim,0);
     }
