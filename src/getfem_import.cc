@@ -88,6 +88,9 @@ namespace getfem {
       case 21: { /* 3RD ORDER TRIANGLE */
         pgt = bgeot::simplex_geotrans(2,3);
       } break;
+      case 23: { /* 4TH ORDER TRIANGLE */
+        pgt = bgeot::simplex_geotrans(2, 4);
+      } break;
       default: { /* UNKNOWN .. */
         /* higher order elements : to be done .. */
         GMM_ASSERT1(false, "gmsh element type " << type << " is unknown.");
@@ -149,6 +152,9 @@ namespace getfem {
       } break;
       case 21: { /* 3RD ORDER TRIANGLE */
         nodes.resize(10);
+      } break;
+      case 23: { /* 4TH ORDER TRIANGLE */
+        nodes.resize(15);
       } break;
       default: { /* UNKNOWN .. */
         /* higher order elements : to be done .. */
@@ -446,6 +452,23 @@ namespace getfem {
         //ci.nodes[7] = tmp_nodes[7];
         ci.nodes[8] = tmp_nodes[6];
         ci.nodes[9] = tmp_nodes[2];
+      } break;
+      case 23: { /* Fourth order triangle */
+      //ci.nodes[0]  = tmp_nodes[0];
+        ci.nodes[1]  = tmp_nodes[3];
+        ci.nodes[2]  = tmp_nodes[4];
+        ci.nodes[3]  = tmp_nodes[5];
+        ci.nodes[4]  = tmp_nodes[1];
+        ci.nodes[5]  = tmp_nodes[11];
+        ci.nodes[6]  = tmp_nodes[12];
+        ci.nodes[7]  = tmp_nodes[13];
+        ci.nodes[8]  = tmp_nodes[6];
+        ci.nodes[9]  = tmp_nodes[10];
+        ci.nodes[10] = tmp_nodes[14];
+        ci.nodes[11] = tmp_nodes[7];
+        ci.nodes[12] = tmp_nodes[9];
+        ci.nodes[13] = tmp_nodes[8];
+        ci.nodes[14] = tmp_nodes[2];
       } break;
       }
     }
