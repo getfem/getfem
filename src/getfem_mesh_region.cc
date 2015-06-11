@@ -439,7 +439,10 @@ namespace getfem {
     {
       size_type cv = itb->first;
       map_t::iterator it = r.wp().m.find(cv);
-      if (it != r.wp().m.end()) it->second &= ~(itb->second);
+      if (it != r.wp().m.end()){
+		it->second &= ~(itb->second);
+		if (it->second.none()) r.wp().m.erase(it);
+	  }
     }
     return r;
   }
