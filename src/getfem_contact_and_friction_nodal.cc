@@ -1,9 +1,9 @@
 /*===========================================================================
- 
+
  Copyright (C) 2004-2012 Yves Renard, Konstantinos Poulios.
- 
+
  This file is a part of GETFEM++
- 
+
  Getfem++  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
@@ -16,7 +16,7 @@
  You  should  have received a copy of the GNU Lesser General Public License
  along  with  this program;  if not, write to the Free Software Foundation,
  Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
- 
+
 ===========================================================================*/
 
 
@@ -774,7 +774,7 @@ namespace getfem {
 					  gmm::mat_nrows(T_t_u1));
 	    model_real_sparse_matrix tmp4(gmm::mat_ncols(T_t_u2),
 					  gmm::mat_nrows(T_t_u2));
-	    
+
 	    for (size_type i=0; i < nbc; ++i) {
 	      gmm::sub_interval SUBI(i*d, d);
 	      scalar_type th = - (std::min(vt0, RLN[i])) * friction_coeff[i];
@@ -794,7 +794,7 @@ namespace getfem {
 		    if (two_variables)
 		      gmm::add(gmm::scaled(gmm::mat_row(BT2,i*d+k),
 			   vg[k]*friction_coeff[i]), gmm::mat_col(T_u2_n, i));
-		  
+
 		    gmm::copy(gmm::scaled(gmm::mat_row(BBT1,i*d+k),
 					  -r*friction_coeff[i]*vg[k]),
 			      gmm::mat_col(tmp5, i*d+k));
@@ -815,7 +815,7 @@ namespace getfem {
 	    gmm::add(gmm::transposed(tmp3), T_t_u1);
 	    if (two_variables)
 	      gmm::add(gmm::transposed(tmp4), T_t_u2);
-	    
+
 	    if (augmentation_version == 2) {
 	      model_real_sparse_matrix tmp1(gmm::mat_ncols(BN1),
 					    gmm::mat_ncols(BN1));
@@ -975,7 +975,7 @@ namespace getfem {
           }
 	  for (size_type i = 0; i < nbc; ++i) {
 	    rlambda_n[i] = (lambda_n[i] - RLN[i]) / (r * alpha[i]);
-	    if (!contact_only) 
+	    if (!contact_only)
 	      for (size_type k = 0; k < d; ++k)
 		rlambda_t[i*d+k]
 		  = (lambda_t[i*d+k] - RLT[i*d+k]) / (r * alpha[i]);
@@ -999,7 +999,7 @@ namespace getfem {
           }
 	  for (size_type i = 0; i < nbc; ++i) {
 	    rlambda_n[i] = (lambda_n[i] - RLN[i]) / (r * alpha[i]);
-	    if (!contact_only) 
+	    if (!contact_only)
 	      for (size_type k = 0; k < d; ++k)
 		rlambda_t[i*d+k]
 		  = (lambda_t[i*d+k] - RLT[i*d+k]) / (r * alpha[i]);
@@ -1032,7 +1032,7 @@ namespace getfem {
           }
 	  for (size_type i = 0; i < nbc; ++i) {
 	    rlambda_n[i] /= alpha[i];
-	    if (!contact_only) 
+	    if (!contact_only)
 	      for (size_type k = 0; k < d; ++k) rlambda_t[i*d+k] /= alpha[i];
 	  }
           break;
@@ -1066,7 +1066,7 @@ namespace getfem {
           if (two_variables) gmm::mult_add(BBN2, u2, rlambda_n);
 	  for (size_type i = 0; i < nbc; ++i) {
 	    rlambda_n[i] /= alpha[i];
-	    if (!contact_only) 
+	    if (!contact_only)
 	      for (size_type k = 0; k < d; ++k) rlambda_t[i*d+k] /= alpha[i];
 	  }
           break;
@@ -1474,7 +1474,7 @@ namespace getfem {
 
         getfem::ga_workspace gw;
         getfem::ga_function f(gw, obstacle);
-        
+
         size_type N = d+1;
         getfem::model_real_plain_vector pt(N);
         gw.add_fixed_size_constant("X", pt);
@@ -1482,7 +1482,7 @@ namespace getfem {
         if (N >= 2) gw.add_macro("y", "X(2)");
         if (N >= 3) gw.add_macro("z", "X(3)");
         if (N >= 4) gw.add_macro("w", "X(4)");
-        
+
         f.compile();
 
         gmm::resize(gap, nbc);
@@ -1501,7 +1501,7 @@ namespace getfem {
 
             // Computation of gap
             gap[j] = (f.eval())[0];
-            
+
             // computation of BN
             size_type cv = mf_u1.first_convex_of_basic_dof(id);
             scalar_type eps
@@ -1513,15 +1513,15 @@ namespace getfem {
             }
             // unit normal vector
             base_node un = - grad / gmm::vect_norm2(grad);
-            
+
             for (size_type k = 0; k <= d; ++k)
               BN1(j, id + k) = un[k];
-            
+
             // computation of BT
             if (!contact_only) {
-              
+
               orthonormal_basis_to_unit_vec(d, un, ut);
-              
+
               for (size_type k = 0; k <= d; ++k)
                 for (size_type nn = 0; nn < d; ++nn)
                   BT1(j*d+nn, id + k) = ut[nn][k];
@@ -1838,7 +1838,7 @@ namespace getfem {
       multname_n = md.new_name("contact_multiplier");
     else
       GMM_ASSERT1(multname_n.compare(md.new_name(multname_n)) == 0,
-                  "The given name for the multiplier is alraedy reserved in the model");
+                  "The given name for the multiplier is already reserved in the model");
     md.add_fixed_size_variable(multname_n, nbc);
 
     model::termlist tl;
@@ -1909,13 +1909,13 @@ namespace getfem {
       multname_n = md.new_name("contact_normal_multiplier");
     else
       GMM_ASSERT1(multname_n.compare(md.new_name(multname_n)) == 0,
-                  "The given name for the multiplier is alraedy reserved in the model");
+                  "The given name for the multiplier is already reserved in the model");
     md.add_fixed_size_variable(multname_n, nbc);
     if (multname_t.size() == 0)
       multname_t = md.new_name("contact_tangent_multiplier");
     else
       GMM_ASSERT1(multname_t.compare(md.new_name(multname_t)) == 0,
-                  "The given name for the multiplier is alraedy reserved in the model");
+                  "The given name for the multiplier is already reserved in the model");
     md.add_fixed_size_variable(multname_t, nbc * (mf_u1.get_qdim() - 1) ); // ??
 
     model::termlist tl;
