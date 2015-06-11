@@ -1316,13 +1316,15 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        out.pop().from_integer(int(ind));
        );
 
-    /*@SET ind = ('add constraint with multipliers', @str varname, @str multname, @tspmat B, @vec L)
+    /*@SET ind = ('add constraint with multipliers', @str varname, @str multname, @tspmat B, {@vec L | @str dataname})
     Add an additional explicit constraint on the variable `varname` thank to
     a multiplier `multname` peviously added to the model (should be a fixed
     size variable). The constraint is :math:`BU=L`
     with `B` being a rectangular sparse matrix. It is possible to change
     the constraint at any time with the methods MODEL:SET('set private matrix')
-    and MODEL:SET('set private rhs'). Return the brick index in the model.@*/
+    and MODEL:SET('set private rhs'). If `dataname` is specified instead of `L`,
+    the vector `L` is defined in the model as data with the given name.
+    Return the brick index in the model.@*/
     sub_command
       ("add constraint with multipliers", 4, 4, 0, 1,
        std::string varname = in.pop().to_string();
@@ -1352,7 +1354,10 @@ void gf_model_set(getfemint::mexargs_in& m_in,
            THROW_BADARG("Constraint matrix should be a sparse matrix");
        }
 
-       if (!md->is_complex()) {
+       if (in.front().is_string()) {
+         std::string dataname = in.pop().to_string();
+         getfem::set_private_data_rhs(md->model(), ind, dataname);
+       } else if (!md->is_complex()) {
          darray st = in.pop().to_darray();
          std::vector<double> V(st.begin(), st.end());
          getfem::set_private_data_rhs(md->model(), ind, V);
@@ -1366,14 +1371,17 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        );
 
 
-    /*@SET ind = ('add constraint with penalization', @str varname, @scalar coeff, @tspmat B, @vec L)
+    /*@SET ind = ('add constraint with penalization', @str varname, @scalar coeff, @tspmat B, {@vec L | @str dataname})
     Add an additional explicit penalized constraint on the variable `varname`.
     The constraint is :math`BU=L` with `B` being a rectangular sparse matrix.
     Be aware that `B` should not contain a palin row, otherwise the whole
     tangent matrix will be plain. It is possible to change the constraint
     at any time with the methods MODEL:SET('set private matrix')
     and MODEL:SET('set private rhs'). The method
-    MODEL:SET('change penalization coeff') can be used. Return the brick
+    MODEL:SET('change penalization coeff') can be used.
+    If `dataname` is specified instead of `L`, the vector `L` is defined
+    in the model as data with the given name.
+    Return the brick
     index in the model.@*/
     sub_command
       ("add constraint with penalization", 4, 4, 0, 1,
@@ -1404,7 +1412,10 @@ void gf_model_set(getfemint::mexargs_in& m_in,
            THROW_BADARG("Constraint matrix should be a sparse matrix");
        }
 
-       if (!md->is_complex()) {
+       if (in.front().is_string()) {
+         std::string dataname = in.pop().to_string();
+         getfem::set_private_data_rhs(md->model(), ind, dataname);
+       } else if (!md->is_complex()) {
          darray st = in.pop().to_darray();
          std::vector<double> V(st.begin(), st.end());
          getfem::set_private_data_rhs(md->model(), ind, V);
@@ -1474,14 +1485,19 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       the right hand side of the tangent linear system relatively to the
       variable `varname`. The given rhs should have the same size than the
       dimension of `varname`. The rhs can be changed by the command
-      MODEL:SET('set private rhs'). Return the brick index in the model.@*/
+      MODEL:SET('set private rhs'). If `dataname` is specified instead of
+      `L`, the vector `L` is defined in the model as data with the given name.
+      Return the brick index in the model.@*/
     sub_command
       ("add explicit rhs", 2, 2, 0, 1,
        std::string varname = in.pop().to_string();
        size_type ind
        = getfem::add_explicit_rhs(md->model(), varname);
 
-       if (!md->is_complex()) {
+       if (in.front().is_string()) {
+         std::string dataname = in.pop().to_string();
+         getfem::set_private_data_rhs(md->model(), ind, dataname);
+       } else if (!md->is_complex()) {
          darray st = in.pop().to_darray();
          std::vector<double> V(st.begin(), st.end());
          getfem::set_private_data_rhs(md->model(), ind, V);

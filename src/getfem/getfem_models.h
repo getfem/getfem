@@ -257,7 +257,7 @@ namespace getfem {
       }
 
       size_type size(void) const // Should control that the variable is
-      // indeed intitialized by actualize_sizes ...
+      // indeed initialized by actualize_sizes() ...
       { return is_complex ? complex_value[0].size() : real_value[0].size(); }
 
       void set_size(void);
@@ -2271,6 +2271,9 @@ namespace getfem {
   (model &md, const std::string &varname, scalar_type penalisation_coeff);
   size_type APIDECL add_constraint_with_multipliers
   (model &md, const std::string &varname, const std::string &multname);
+
+  void set_private_data_rhs
+  (model &md, size_type indbrick, const std::string &varname);
 
   template <typename VECT, typename T>
   void set_private_data_rhs(model &md, size_type ind,

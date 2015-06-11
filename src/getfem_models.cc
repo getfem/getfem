@@ -5634,19 +5634,19 @@ namespace getfem {
     model_complex_sparse_matrix cB;
     model_real_plain_vector rL;
     model_complex_plain_vector cL;
-
+    std::string nameL;
   };
 
   struct constraint_brick : public have_private_data_brick {
 
     virtual void real_pre_assembly_in_serial(const model &md, size_type,
-                                        const model::varnamelist &vl,
-                                        const model::varnamelist &dl,
-                                        const model::mimlist &mims,
-                                        model::real_matlist &matl,
-                                        model::real_veclist &vecl,
-                                        model::real_veclist &,
-                                        size_type, build_version) const {
+                                             const model::varnamelist &vl,
+                                             const model::varnamelist &dl,
+                                             const model::mimlist &mims,
+                                             model::real_matlist &matl,
+                                             model::real_veclist &vecl,
+                                             model::real_veclist &,
+                                             size_type, build_version) const {
       if (MPI_IS_MASTER()) {
 
         GMM_ASSERT1(vecl.size() == 1 && matl.size() == 1,
@@ -5659,31 +5659,39 @@ namespace getfem {
         bool penalized = (vl.size() == 1);
         const model_real_plain_vector *COEFF = 0;
 
+        bool has_data = (nameL.compare("") != 0);
+        if (has_data)
+          GMM_ASSERT1(nameL.compare(dl.back()) == 0 &&
+                      md.variable_exists(nameL) && md.is_data(nameL),
+                      "Internal error");
+        const model_real_plain_vector &
+          rrL = has_data ? md.real_variable(nameL) : rL;
+
         if (penalized) {
           COEFF = &(md.real_variable(dl[0]));
           GMM_ASSERT1(gmm::vect_size(*COEFF) == 1,
                       "Data for coefficient should be a scalar");
 
           gmm::mult(gmm::transposed(rB),
-                    gmm::scaled(rL, gmm::abs((*COEFF)[0])), vecl[0]);
+                    gmm::scaled(rrL, gmm::abs((*COEFF)[0])), vecl[0]);
           gmm::mult(gmm::transposed(rB),
                     gmm::scaled(rB, gmm::abs((*COEFF)[0])), matl[0]);
         } else {
-          gmm::copy(rL, vecl[0]);
+          gmm::copy(rrL, vecl[0]);
           gmm::copy(rB, matl[0]);
         }
       }
     }
 
     virtual void complex_pre_assembly_in_serial(const model &md, size_type,
-                                           const model::varnamelist &vl,
-                                           const model::varnamelist &dl,
-                                           const model::mimlist &mims,
-                                           model::complex_matlist &matl,
-                                           model::complex_veclist &vecl,
-                                           model::complex_veclist &,
-                                           size_type,
-                                           build_version) const {
+                                                const model::varnamelist &vl,
+                                                const model::varnamelist &dl,
+                                                const model::mimlist &mims,
+                                                model::complex_matlist &matl,
+                                                model::complex_veclist &vecl,
+                                                model::complex_veclist &,
+                                                size_type,
+                                                build_version) const {
       if (MPI_IS_MASTER()) {
 
         GMM_ASSERT1(vecl.size() == 1 && matl.size() == 1,
@@ -5696,17 +5704,25 @@ namespace getfem {
         bool penalized = (vl.size() == 1);
         const model_complex_plain_vector *COEFF = 0;
 
+        bool has_data = (nameL.compare("") != 0);
+        if (has_data)
+          GMM_ASSERT1(nameL.compare(dl.back()) == 0 &&
+                      md.variable_exists(nameL) && md.is_data(nameL),
+                      "Internal error");
+        const model_complex_plain_vector &
+          ccL = has_data ? md.complex_variable(nameL) : cL;
+
         if (penalized) {
           COEFF = &(md.complex_variable(dl[0]));
           GMM_ASSERT1(gmm::vect_size(*COEFF) == 1,
                       "Data for coefficient should be a scalar");
 
           gmm::mult(gmm::transposed(cB),
-                    gmm::scaled(cL, gmm::abs((*COEFF)[0])), vecl[0]);
+                    gmm::scaled(ccL, gmm::abs((*COEFF)[0])), vecl[0]);
           gmm::mult(gmm::transposed(cB),
                     gmm::scaled(cB, gmm::abs((*COEFF)[0])), matl[0]);
         } else {
-          gmm::copy(cL, vecl[0]);
+          gmm::copy(ccL, vecl[0]);
           gmm::copy(cB, matl[0]);
         }
       }
@@ -5746,6 +5762,7 @@ namespace getfem {
     have_private_data_brick *p = dynamic_cast<have_private_data_brick *>
       (const_cast<virtual_brick *>(pbr.get()));
     GMM_ASSERT1(p, "Wrong type of brick");
+    if (p->nameL.compare("") != 0) GMM_WARNING1("Rhs already set by data name");
     return p->rL;
   }
 
@@ -5766,7 +5783,24 @@ namespace getfem {
     have_private_data_brick *p = dynamic_cast<have_private_data_brick *>
       (const_cast<virtual_brick *>(pbr.get()));
     GMM_ASSERT1(p, "Wrong type of brick");
+    if (p->nameL.compare("") != 0) GMM_WARNING1("Rhs already set by data name");
     return p->cL;
+  }
+
+  void set_private_data_rhs
+  (model &md, size_type indbrick, const std::string &varname) {
+    pbrick pbr = md.brick_pointer(indbrick);
+    md.touch_brick(indbrick);
+    have_private_data_brick *p = dynamic_cast<have_private_data_brick *>
+      (const_cast<virtual_brick *>(pbr.get()));
+    GMM_ASSERT1(p, "Wrong type of brick");
+    if (p->nameL.compare(varname) != 0) {
+      model::varnamelist dl = md.datanamelist_of_brick(indbrick);
+      if (p->nameL.compare("") == 0) dl.push_back(varname);
+      else dl.back() = varname;
+      md.change_data_of_brick(indbrick, dl);
+      p->nameL = varname;
+    }
   }
 
   size_type add_constraint_with_penalization
