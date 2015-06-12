@@ -530,15 +530,14 @@ namespace getfem {
        << "  component \"data\" value \"" << name << "_data\"\n";
   }
 
-  /***************************************************************
-      @brief POS export.
+  /** @brief POS export.
 
       export class to Gmsh post-processing file format.
 
       ( http://geuz.org/gmsh )
 
       A pos_export can store multiple scalar/vector/tensor fields.
-  ****************************************************************/
+  */
 
   class pos_export {
   protected:
