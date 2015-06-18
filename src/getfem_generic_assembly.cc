@@ -1982,7 +1982,7 @@ namespace getfem {
         for (size_type j = 0; j < N; ++j)
           for (size_type i = 0; i < N; ++i, ++it)
             *it = M(j, i) * det;
-        GMM_ASSERT1(it == result.end(), "Internal error");
+        GA_DEBUG_ASSERT(it == result.end(), "Internal error");
       }
     }
 
@@ -2002,7 +2002,7 @@ namespace getfem {
             for (size_type j = 0; j < N; ++j)
               for (size_type i = 0; i < N; ++i, ++it)
                 *it = (M(j, i) * M(l,k) - M(j,k) * M(l, i)) * det;
-        GMM_ASSERT1(it == result.end(), "Internal error");
+        GA_DEBUG_ASSERT(it == result.end(), "Internal error");
       }
     }
   };
@@ -2041,7 +2041,7 @@ namespace getfem {
           for (size_type j = 0; j < N; ++j)
             for (size_type i = 0; i < N; ++i, ++it)
               *it = -M(i,k)*M(l,j);
-      GMM_ASSERT1(it == result.end(), "Internal error");
+      GA_DEBUG_ASSERT(it == result.end(), "Internal error");
     }
 
     // Second derivative :
@@ -2061,7 +2061,7 @@ namespace getfem {
               for (size_type j = 0; j < N; ++j)
                 for (size_type i = 0; i < N; ++i, ++it)
                   *it = M(i,k)*M(l,m)*M(n,j)+M(i,m)*M(m,k)*M(l,j);
-      GMM_ASSERT1(it == result.end(), "Internal error");
+      GA_DEBUG_ASSERT(it == result.end(), "Internal error");
     }
   };
 
@@ -4364,6 +4364,8 @@ namespace getfem {
       base_vector &V = mf.is_reduced() ? Vr : Vn;
       size_type cv_1 = ctx.is_convex_num_valid()
         ? ctx.convex_num() : mf.convex_index().first_true();
+      GA_DEBUG_ASSERT(V.size() >= I.first() + mf.nb_basic_dof(),
+                      "Bad assembly vector size");
       mesh_fem::ind_dof_ct ct = mf.ind_basic_dof_of_element(cv_1);
       for (size_type i = 0; i < ct.size(); ++i)
         V[I.first()+ct[i]] += t[i] * coeff;
