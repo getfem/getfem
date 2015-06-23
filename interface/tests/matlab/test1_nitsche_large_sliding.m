@@ -27,13 +27,13 @@ test_case =1; % 0 = 2D punch on a rigid obstacle
 
 clambda1 = 1.; cmu1 = 1.;   % Elasticity parameters
 clambda2 = 1.; cmu2 = 1.;   % Elasticity parameters
-r = 1/100;                    % Augmentation parameter
+r = 1;                    % Augmentation parameter
 alpha = 1.0;                % Alpha coefficient for "sliding velocity"
 f_coeff = 0;              % Friction coefficient
 
 test_tangent_matrix = false;
 nonlinear_elasticity = true;
-max_iter = 50;
+max_iter = 30;
 draw_mesh = true;
 do_plot = true;
 generic_assembly_contact_brick = true;
@@ -43,7 +43,7 @@ switch(test_case)
     vf = 0.0;
     vf_mult = 1.0;
     penalty_parameter = 0;
-    dirichlet_translation = -0.5;
+    dirichlet_translation = -1;
     max_res = 1E-8;
     release_dist = 1.5;
     self_contact = false;
@@ -164,7 +164,7 @@ md=gf_model('real');
 F = zeros(1, N); F(N) = -vf;
 
 gf_model_set(md, 'add fem variable', 'u1', mfu1);
-gf_model_set(md, 'add filtered fem variable', 'lambda1', pre_mflambda1, CONTACT_BOUNDARY1);
+% gf_model_set(md, 'add filtered fem variable', 'lambda1', pre_mflambda1, CONTACT_BOUNDARY1);
 
 if (nonlinear_elasticity)
   lawname = 'Ciarlet Geymonat';
@@ -193,9 +193,9 @@ gf_model_set(md, 'add source term brick', mim1, 'u1', 'data1');
 
 if (two_meshes)
   gf_model_set(md, 'add fem variable', 'u2', mfu2);
-  if (self_contact)
-    gf_model_set(md, 'add filtered fem variable', 'lambda2', pre_mflambda2, CONTACT_BOUNDARY2);
-  end
+  % if (self_contact)
+  %   gf_model_set(md, 'add filtered fem variable', 'lambda2', pre_mflambda2, CONTACT_BOUNDARY2);
+  % end
   
   if (nonlinear_elasticity)
     lawname = 'Ciarlet Geymonat';
@@ -263,7 +263,7 @@ if (generic_assembly_contact_brick)
         gf_model_set(md, 'add rigid obstacle to raytracing transformation', 'contact_trans', 'z+5', N);
     end
 
-    gamma='(r*element_size)';
+   gamma='(r*element_size)';
    sigma_chap_u1 =gf_model_get(md, 'Neumann term', 'u1', CONTACT_BOUNDARY1)
    g1_n = '((Interpolate(u2,contact_trans)-u1+Interpolate(X,contact_trans)-X).Transformed_unit_vector(Grad_u1, Normal))';
    g1_t='u1';
@@ -271,11 +271,14 @@ if (generic_assembly_contact_brick)
    gf_model_set(md, 'add initialized data', 'f', f_coeff);
    %gf_model_set(md, 'add nonlinear generic assembly brick', mim1_contact, strcat('Interpolate_filter(contact_trans,(Test_u1).Transformed_unit_vector(Grad_u1, Normal)*pos_part(',g1_n,'-',gamma,'*(',sigma_chap_u1,'.Transformed_unit_vector(Grad_u1, Normal))),1)'),CONTACT_BOUNDARY1);
    %gf_model_set(md, 'add nonlinear generic assembly brick', mim1_contact, strcat('Interpolate_filter(contact_trans,-(Interpolate(Test_u2,contact_trans)).Transformed_unit_vector(Grad_u1, Normal)*pos_part(',g1_n,'-',gamma,'*',sigma_chap_u1,'.Transformed_unit_vector(Grad_u1, Normal)),1)'),CONTACT_BOUNDARY1);
+   
+   % assembly_string1 = strcat('Interpolate_filter(contact_trans,-(Test_u1).(Coulomb_friction_coupled_projection((',sigma_chap_u1,'),Transformed_unit_vector(Grad_u1, Normal),',g1_t,',',g1_n,',f,1/',gamma,')),1)')
    gf_model_set(md, 'add nonlinear generic assembly brick', mim1_contact, strcat('Interpolate_filter(contact_trans,-(Test_u1).(Coulomb_friction_coupled_projection((',sigma_chap_u1,'),Transformed_unit_vector(Grad_u1, Normal),',g1_t,',',g1_n,',f,1/',gamma,')),1)'),CONTACT_BOUNDARY1);
+   % assembly_string2 = strcat('Interpolate_filter(contact_trans,(Interpolate(Test_u2,contact_trans)).(Coulomb_friction_coupled_projection(',sigma_chap_u1,',Transformed_unit_vector(Grad_u1, Normal),',g1_t,',',g1_n,',f,','1/',gamma,')),1)')
    gf_model_set(md, 'add nonlinear generic assembly brick', mim1_contact, strcat('Interpolate_filter(contact_trans,(Interpolate(Test_u2,contact_trans)).(Coulomb_friction_coupled_projection(',sigma_chap_u1,',Transformed_unit_vector(Grad_u1, Normal),',g1_t,',',g1_n,',f,','1/',gamma,')),1)'),CONTACT_BOUNDARY1);
   end
 end
-    %errmax = gf_model_get(md, 'test tangent matrix', 1E-9, 10, 0.0001);
+    % errmax = gf_model_get(md, 'test tangent matrix', 1E-9, 10, 0.0001);
     % errmax = gf_model_get(md, 'test tangent matrix term', 'lambda1', 'u1', 1E-8, 20, 0.00001);
    % disp(sprintf('errmax = %g', errmax));
   
@@ -297,15 +300,15 @@ end
     end
     gf_plot(mfvm1,VM1,'mesh', 'off', 'deformed_mesh','on', 'deformation',U1,'deformation_mf',mfu1,'deformation_scale', 1, 'refine', 8); colorbar;
 
-    hold on % quiver plot of the multiplier
-    lambda1 = gf_model_get(md, 'variable', 'lambda1');
-    mf_lambda1 = gf_model_get(md, 'mesh fem of variable', 'lambda1');
-    sl=gf_slice({'boundary'}, mf_lambda1, CONTACT_BOUNDARY1);
-    bound_lambda1=gf_compute(mf_lambda1, lambda1,'interpolate on', sl);
-    bound_u1=gf_compute(mfu1, U1,'interpolate on', sl);
-    pts = gf_slice_get(sl, 'pts');
-    quiver(bound_u1(1,:)+pts(1,:), bound_u1(2,:)+pts(2,:), bound_lambda1(1,:), bound_lambda1(2,:))
-    hold off
+    % hold on % quiver plot of the multiplier
+    % lambda1 = gf_model_get(md, 'variable', 'lambda1');
+    % mf_lambda1 = gf_model_get(md, 'mesh fem of variable', 'lambda1');
+    % sl=gf_slice({'boundary'}, mf_lambda1, CONTACT_BOUNDARY1);
+    % bound_lambda1=gf_compute(mf_lambda1, lambda1,'interpolate on', sl);
+    % bound_u1=gf_compute(mfu1, U1,'interpolate on', sl);
+    % pts = gf_slice_get(sl, 'pts');
+    % quiver(bound_u1(1,:)+pts(1,:), bound_u1(2,:)+pts(2,:), bound_lambda1(1,:), bound_lambda1(2,:))
+    % hold off
   
     % hold on
     % gf_plot(mf_lambda1, lambda1,'mesh', 'off', 'deformed_mesh','off', 'deformation',U1,'deformation_mf',mfu1,'deformation_scale', 1, 'refine', 8);
