@@ -121,7 +121,7 @@ namespace getfem {
       } break;
       case 7: { /* PYRAMID */
         GMM_ASSERT1(false,
-                    "sorry pyramidal convexes not done for the moment..");
+                    "sorry pyramidal elements not done for the moment..");
       } break;
       case 8: { /* 2ND ORDER LINE */
         nodes.resize(3);
@@ -315,7 +315,7 @@ namespace getfem {
         std::map<size_type, size_type>::iterator
 	      it = msh_node_2_getfem_node.find(j);
         GMM_ASSERT1(it != msh_node_2_getfem_node.end(),
-		    "Invalid node ID " << j << " in gmsh convex "
+		    "Invalid node ID " << j << " in gmsh element "
 		    << (ci.id + 1));
         ci.nodes[i] = it->second;
       }
@@ -476,7 +476,7 @@ namespace getfem {
     if (cvlst.size()) {
       std::sort(cvlst.begin(), cvlst.end());
       if (cvlst.front().type == 15){
-        GMM_WARNING2("Only nodes defined in the mesh! No convexes are added.");
+        GMM_WARNING2("Only nodes defined in the mesh! No elements are added.");
         return;
       }
 
@@ -528,7 +528,7 @@ namespace getfem {
               {
                 GMM_WARNING2("gmsh import ignored a node id: "
                              << ci.id << " region :" << ci.region <<
-                             " point is not added explicitly as a convex.");
+                             " point is not added explicitly as an element.");
               }
               else if (add_all_element_type){
                 size_type ic = m.add_convex(ci.pgt, ci.nodes.begin());
@@ -536,9 +536,9 @@ namespace getfem {
                 cvok = true;
               }
               else{
-                GMM_WARNING2("gmsh import ignored a convex of type "
+                GMM_WARNING2("gmsh import ignored a element of type "
                   << bgeot::name_of_geometric_trans(ci.pgt) <<
-                  " as it does not belong to the face of another convex");
+                  " as it does not belong to the face of another element");
               }
             }
           }
@@ -685,7 +685,7 @@ namespace getfem {
 	  std::map<size_type, size_type>::iterator
 	    it = msh_node_2_getfem_node.find(j);
           GMM_ASSERT1(it != msh_node_2_getfem_node.end(),
-		      "Invalid node ID " << j << " in GiD convex " << cv_id);
+		      "Invalid node ID " << j << " in GiD element " << cv_id);
 	  cv_nodes[i] = it->second;
         }
         getfem_cv_nodes.resize(nnode);
