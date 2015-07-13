@@ -8679,6 +8679,10 @@ namespace getfem {
       {
         const mesh_fem *mf = workspace.associated_mf(pnode->name);
         if (mf) {
+          GMM_ASSERT1(&(mf->linked_mesh()) == &(m),
+                      "The finite element of variable " << pnode->name <<
+                      " has to be defined on the same mesh than the "
+                      "integration method used");
 
           // An instruction for pfp update
           if (rmi.pfps.find(mf) == rmi.pfps.end() ||
