@@ -5596,10 +5596,14 @@ namespace getfem {
           for (size_type i = c_size; i < size1.size(); ++i)
             if (size1[i] != 1) compatible = false;
 
-          if (!compatible)
+          if (!compatible) {
+            // cout << "child0 = "; ga_print_node(child0, cout); cout << endl;
+            // cout << "child1 = "; ga_print_node(child1, cout); cout << endl;
             ga_throw_error(expr, pnode->pos, "Addition or subtraction of "
                            "expressions of different sizes: "
                            << size0 << " != " << size1);
+            
+          }
 
           if (child0->test_function_type || child1->test_function_type) {
             if (child0->test_function_type != child1->test_function_type ||
@@ -7319,7 +7323,7 @@ namespace getfem {
       } else ok = false;
     }
 
-    //  cout << "analyzing factor : " <<  ga_tree_to_string(factor) << endl;
+    // cout << "analyzing factor : " <<  ga_tree_to_string(factor) << endl;
     // cout << "ok = " << int(ok) << endl;
     // cout << "colon_pnode = " << colon_pnode << endl;
 
@@ -7853,10 +7857,8 @@ namespace getfem {
         std::string name = child0->name;
         ga_predef_function_tab::iterator it = PREDEF_FUNCTIONS.find(name);
         const ga_predef_function &F = it->second;
-      
+
         if (F.nbargs == 1) {
-          // TODO: if the function is affine, extend it in the tree
-          //       (especially for sqr ...)
           switch (F.dtype) {
           case 0:
             GMM_ASSERT1(false, "Cannot derive function " << child0->name
@@ -7898,6 +7900,7 @@ namespace getfem {
                   pnode_cte->node_type = GA_NODE_CONSTANT;
                   pnode_cte->t = pnode->t;
                   std::fill(pnode_cte->t.begin(), pnode_cte->t.end(), b);
+                  pnode = pnode->parent;
                 }
               }
             }

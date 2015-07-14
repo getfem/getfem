@@ -510,7 +510,9 @@ static void do_high_level_generic_assembly(mexargs_in& in, mexargs_out& out) {
 
 static void do_expression_analysis(mexargs_in& in) {
 
+  getfem::mesh *mesh = in.pop().to_mesh();
   std::string expr = in.pop().to_string();
+  size_type der_order = in.pop().to_integer(0, 2);
   getfem::ga_workspace workspace1;
   getfem::model dummy_md;
   bool with_model = in.remaining() && in.front().is_model();
@@ -556,8 +558,11 @@ static void do_expression_analysis(mexargs_in& in) {
     }
   }
 
-  workspace.add_expression(expr, getfem::ga_workspace::dummy_mim,
-                                 getfem::ga_workspace::dummy_region, 0);
+  getfem::mesh_im dummy_mim(*mesh);
+
+  workspace.add_expression(expr, dummy_mim,
+                                 getfem::ga_workspace::dummy_region,
+                                 der_order);
   workspace.print(cout);
 }
 
@@ -1174,11 +1179,11 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        );
 
 
-    /*@FUNC ('expression analysis', @str expression, [@tmodel model,] [@str varname, @int is_variable[, {@tmf mf, @tmimd mimd}]], ...)
+    /*@FUNC ('expression analysis', @tm mesh, @str expression [, der_order] [, @tmodel model] [, @str varname, @int is_variable[, {@tmf mf, @tmimd mimd}], ...])
       Analyse a high-level generic assembly expression and print
       information about the provided expression.@*/
     sub_command
-      ("expression analysis", 2, -1, 0, 0,
+      ("expression analysis", 3, -1, 0, 0,
        do_expression_analysis(in);
        );
 
