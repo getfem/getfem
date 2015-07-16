@@ -24,6 +24,7 @@
 #include <getfemint_gsparse.h>
 #include <getfem/getfem_partial_mesh_fem.h>
 #include <gmm/gmm_range_basis.h>
+#include <getfem/getfem_mesh_fem_level_set.h>
 
 using namespace getfemint;
 
@@ -255,6 +256,18 @@ void gf_mesh_fem_set(getfemint::mexargs_in& m_in,
        if (!ppmf) THROW_BADARG("The command 'set partial' can only be "
 			      "applied to a partial mesh_fem object");
        ppmf->adapt(doflst, rcvlst);
+       );
+
+    /*@SET ('adapt')
+    For a @tmf levelset object only. Adapt the mesh_fem object to a
+    change of the levelset function. @*/
+    sub_command
+      ("adapt", 0, 0, 0, 0,
+       getfem::mesh_fem_level_set *mfls
+       = dynamic_cast<getfem::mesh_fem_level_set *>(mf);
+       if (!mfls) THROW_BADARG("The command 'adapt' can only be "
+                               "applied to a mesh_fem_level_set object");
+       mfls->adapt();
        );
 
   }
