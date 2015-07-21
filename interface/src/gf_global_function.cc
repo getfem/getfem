@@ -1,6 +1,6 @@
 /*===========================================================================
  
- Copyright (C) 2009-2012 Luis Saavedra.
+ Copyright (C) 2009-2015 Luis Saavedra.
  
  This file is a part of GETFEM++
  

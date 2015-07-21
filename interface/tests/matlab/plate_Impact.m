@@ -1,4 +1,4 @@
-% Copyright (C) 2011-2012 Cedric POZZOLINI
+% Copyright (C) 2011-2015 Cedric POZZOLINI
 %
 % This file is a part of GETFEM++
 %

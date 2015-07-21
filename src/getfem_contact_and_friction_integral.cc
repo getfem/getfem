@@ -1,10 +1,9 @@
-/* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
-
- Copyright (C) 2011-2013 Yves Renard, Konstantinos Poulios.
-
+ 
+ Copyright (C) 2011-2015 Yves Renard, Konstantinos Poulios.
+ 
  This file is a part of GETFEM++
-
+ 
  Getfem++  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
@@ -17,7 +16,7 @@
  You  should  have received a copy of the GNU Lesser General Public License
  along  with  this program;  if not, write to the Free Software Foundation,
  Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
-
+ 
 ===========================================================================*/
 
 #include "getfem/bgeot_rtree.h"

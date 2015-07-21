@@ -1,4 +1,4 @@
-% Copyright (C) 2010-2014  Yves Renard, Farshid Dabaghi.
+% Copyright (C) 2010-2015 Yves Renard, Farshid Dabaghi.
 %
 % This file is a part of GETFEM++
 %

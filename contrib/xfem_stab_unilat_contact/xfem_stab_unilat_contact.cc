@@ -1,6 +1,6 @@
 /*===========================================================================
  
- Copyright (C) 2002-2012 Yves Renard, Julien Pommier.
+ Copyright (C) 2002-2015 Yves Renard, Julien Pommier.
  
  This file is a part of GETFEM++
  

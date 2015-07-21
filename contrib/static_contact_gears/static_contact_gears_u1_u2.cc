@@ -1,6 +1,6 @@
 /*===========================================================================
  
- Copyright (C) 2009-2012 Konstantinos Poulios.
+ Copyright (C) 2009-2015 Konstantinos Poulios.
  
  This file is a part of GETFEM++
  

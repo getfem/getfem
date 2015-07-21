@@ -1,4 +1,4 @@
-% Copyright (C) 2006-2012 Yves Renard, Julien Pommier.
+% Copyright (C) 2006-2015 Yves Renard, Julien Pommier.
 %
 % This file is a part of GETFEM++
 %

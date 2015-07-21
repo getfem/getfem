@@ -1,6 +1,6 @@
 /*===========================================================================
  
- Copyright (C) 2007-2012 Yves Renard
+ Copyright (C) 2007-2015 Yves Renard
  
  This file is a part of GETFEM++
  

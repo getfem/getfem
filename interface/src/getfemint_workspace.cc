@@ -1,6 +1,6 @@
 /*===========================================================================
  
- Copyright (C) 2002-2013 Julien Pommier.
+ Copyright (C) 2002-2015 Julien Pommier.
  
  This file is a part of GETFEM++
  

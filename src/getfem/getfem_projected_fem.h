@@ -1,7 +1,7 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
  
- Copyright (C) 2012-2012 Yves Renard, Konstantinos Poulios
+ Copyright (C) 2012-2015 Yves Renard, Konstantinos Poulios
  
  This file is a part of GETFEM++
  

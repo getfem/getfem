@@ -1,4 +1,4 @@
-% Copyright (C) 2011-2012 Mariama Ndiaye, Yves Renard.
+% Copyright (C) 2011-2015 Mariama Ndiaye, Yves Renard.
 %
 % This file is a part of GETFEM++
 %

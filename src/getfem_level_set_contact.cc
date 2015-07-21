@@ -1,7 +1,6 @@
-/* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
  
- Copyright (C) 2012-2012 Andriy Andreykiv
+ Copyright (C) 2012-2015 Andriy Andreykiv
  
  This file is a part of GETFEM++
  

@@ -1,4 +1,4 @@
-% Copyright (C) 2006-2012 Yves Renard, Mathieu Fabre.
+% Copyright (C) 2006-2015 Yves Renard, Mathieu Fabre.
 %
 % This file is a part of GETFEM++
 %
@@ -11,7 +11,7 @@
 % WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
 % or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 % License and GCC Runtime Library Exception for more details.
-% You  should  have received a copy of the G NU Lesser General Public License
+% You  should  have received a copy of the GNU Lesser General Public License
 % along  with  this program;  if not, write to the Free Software Foundation,
 % Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 

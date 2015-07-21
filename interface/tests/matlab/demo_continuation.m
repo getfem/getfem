@@ -1,4 +1,4 @@
-% Copyright (C) 2011-2014 Tomas Ligursky, Yves Renard.
+% Copyright (C) 2011-2015 Tomas Ligursky, Yves Renard.
 %
 % This file is a part of GETFEM++
 %

@@ -1,6 +1,6 @@
 /*===========================================================================
  
- Copyright (C) 2011-2012 Yann Collette.
+ Copyright (C) 2011-2015 Yann Collette.
  
  This file is a part of GETFEM++
  

@@ -40,7 +40,7 @@ Files
    :file:`dal_naming_system.h`, "A generic object to associate a name to a method descriptor and store the method descriptor. Used for finite element methods, integration methods and geometric transformations. Uses dal::static_stored_object."
    :file:`dal_shared_ptr.h`,  A simplified version of boost::shared_ptr.
    :file:`dal_singleton.h` and :file:`dal_singleton.cc`, "A simple singleton implementation which has been made thread safe for OpenMP (singletons are replicated n each thread)."
-   :file:`dal_backtrace.h` and :file:`dal_backtrace.cc`, "For debugging, dump glibc backtrace.
+   :file:`dal_backtrace.h` and :file:`dal_backtrace.cc`, "For debugging, dump glibc backtrace."
 
 
 

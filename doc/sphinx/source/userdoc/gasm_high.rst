@@ -489,14 +489,14 @@ The assembly language allows to manipulate explicit vectors (i.e. order 1 tensor
 Explicit matrices
 *****************
 
-Similarly to explicit vectors, it is possible to manipulate explicit matrices (i.e. order 2 tensors) with the notation ``[a,b;c,d]``,  i.e. an arbitrary number of lines separated by a semicolon, each line having the same number of components separated by a comma.  The components can be some numeric constants, some valid expressions and may contains some tests functions.
+Similarly to explicit vectors, it is possible to manipulate explicit matrices (i.e. order 2 tensors) with the notation ``[a,b;c,d]``,  i.e. an arbitrary number of lines separated by a semicolon, each line having the same number of components separated by a comma.  The components can be some numeric constants, some valid expressions and may contains some tests functions. For instance ``[11,12,13;21,22,23]`` is a 2x3 matrix.
 
 
 
 Explicit order four tensors
 ***************************
 
-Explicit order four tensors are also allowed. To this aim, the two supplementary dimensions compared to matrices are separated by  ``,,`` and ``;;``. For instance ``[1,1;1,2,,1,1;1,2;;1,1;1,2,,1,1;1,2]`` is a 2x2x2x2 valid tensor. Note that constant fourth order tensors can also be obtained by the tensor product of two constant matrices. 
+Explicit order four tensors are also allowed. To this aim, the two supplementary dimensions compared to matrices are separated by  ``,,`` and ``;;``. For instance ``[1,1;1,2,,1,1;1,2;;1,1;1,2,,1,1;1,2]`` is a 2x2x2x2 valid tensor and ``[1,1;1,1,,1,1;1,1;;2,2;2,2,,2,2;2,2;;3,3;3,3,,3,3;3,3]`` is a 3x2x2x2 tensor. Note that constant fourth order tensors can also be obtained by the tensor product of two constant matrices or by the Reshape instruction. 
 
 Explicit order five or six tensors
 **********************************

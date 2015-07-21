@@ -1,4 +1,4 @@
-% Copyright (C) 2012-2012 Yves Renard, Michel Fournie.
+% Copyright (C) 2012-2015 Yves Renard, Michel Fournie.
 %
 % This file is a part of GETFEM++
 %

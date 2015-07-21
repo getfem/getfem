@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2014 Yves Renard
+# Copyright (C) 2014-2015 Yves Renard
 #
 # This file is a part of GETFEM++
 #

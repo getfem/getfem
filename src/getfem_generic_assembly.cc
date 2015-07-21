@@ -3412,7 +3412,8 @@ namespace getfem {
     base_tensor &t, &tc1;
     virtual int exec(void) {
       GA_DEBUG_INFO("Instruction: addition");
-      GA_DEBUG_ASSERT(t.size() == tc1.size(), "internal error");
+      GA_DEBUG_ASSERT(t.size() == tc1.size(), "internal error " << t.size()
+                      << " incompatible with "  << tc1.size());
       gmm::add(tc1.as_vector(), t.as_vector());
       return 0;
     }
@@ -10178,12 +10179,13 @@ namespace getfem {
       if ((ignore_data && !extract_variable_done) ||
           (!ignore_data && !extract_data_done)) {
         used_vars.clear();
-        local_workspace = ga_workspace(true, workspace);
-        local_workspace.clear_expressions();
-        local_workspace.add_interpolation_expression(expr, source_mesh);
-        for (size_type i = 0; i < local_workspace.nb_trees(); ++i)
-          ga_extract_variables(local_workspace.tree_info(i).ptree
-                               ->root, local_workspace, source_mesh,
+         ga_workspace aux_workspace;
+        aux_workspace = ga_workspace(true, workspace);
+        aux_workspace.clear_expressions();
+        aux_workspace.add_interpolation_expression(expr, source_mesh);
+        for (size_type i = 0; i < aux_workspace.nb_trees(); ++i)
+          ga_extract_variables(aux_workspace.tree_info(i).ptree
+                               ->root, aux_workspace, source_mesh,
                                ignore_data ? used_vars : used_data,
                                ignore_data);
         if (ignore_data)
@@ -10292,6 +10294,7 @@ namespace getfem {
                   std::map<var_trans_pair, base_tensor> &derivatives,
                   bool compute_derivatives) const {
       int ret_type = 0;
+
       ga_interpolation_single_point_exec(local_gis, local_workspace, ctx_x,
                                          Normal, m);
 
@@ -10333,12 +10336,11 @@ namespace getfem {
                  target_mesh.trans_of_convex(cv));
 
         bool converged = true;
-        bool is_in = gic.invert(P, P_ref, converged);
-
-        // cout << "cv = " << cv << " P = " << P << " P_ref = " << P_ref
+        bool is_in = gic.invert(P, P_ref, converged, 1E-4);
+        // cout << "cv = " << cv << " P = " << P << " P_ref = " << P_ref << endl;
         // cout << " is_in = " << int(is_in) << endl;
         // for (size_type iii = 0;
-        //      iii < target_mesh.points_of_convex(cv).size(); ++iii)
+        //     iii < target_mesh.points_of_convex(cv).size(); ++iii)
         //  cout << target_mesh.points_of_convex(cv)[iii] << endl;
         
         if (is_in && converged) {

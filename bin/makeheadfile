@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# Copyright (C) 1998-2012 Yves Renard
+# Copyright (C) 1998-2015 Yves Renard
 #
 # This file is a part of GETFEM++
 #
@@ -147,7 +147,7 @@ sub process_file  {
   $license = 0;
   $libname = 0; $filename = 0; $date = 0; $author1 = 0; $year1 = 0; $year2 = -1;
   $comment1 = ""; $comment2 = ""; $author2=""; $author3=""; $copyauth="";
-  $authors = $copyauth = "Yves Renard, Julien Pommier.";
+  $authors = $copyauth = "Yves Renard.";
 
   while ($li = <FILE>) {
 
@@ -234,7 +234,7 @@ sub process_file  {
       if (!($license)) {
 	$year1 = $year;
 	$date = $year;
-	$authors = $copyauth = "Yves Renard, Julien Pommier.";
+	$authors = $copyauth = "Yves Renard.";
 	seek(FILE, 0, 0);
 	# close(FILE);
 	# open(FILE, "$name");
