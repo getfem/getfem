@@ -1,0 +1,56 @@
+.. include:: ../replaces.txt
+
+****************************
+  What's New in |gf| 5.0
+****************************
+
+This is a major release of |gf|. The main evolution is the generalization of the use of the high-level generic assembly for a more easy writting of nonlinear coupled problems. The few incompatibilities come from the fact that a certain number of tools have been re-designed (mainly Nitsche's bricks and time integration schemes) and the old brick system (from 3.0 release) have been definitevely unplugged.
+
+Released version, 2015/07/21.
+
+The main changes are:
+
+   * Standard bricks (generic elliptic, elasticity ...) are now based on the
+     high-level generic assembly.
+
+   * Nitsche's bricks have been re-designed.
+
+   * The support for time integration schemes has been re-designed.
+
+   * The support for large sliding contact has been improved (still a work in
+     progress).
+
+   * Import of GMSH meshes has been improved.
+
+   * New tutorial and new Python/Scilab/Matlab demos.
+
+   * Allowing tensor field for model data.
+
+   * Cleaning/deletion of some obsolete files, including the old brick system.
+
+   * MPI and OpenMP parallelization of the high-level generic assembly.
+
+   * The use of mu_parser have been replaced by the use of the high-level
+     generic assembly language. mu_parser in no longer a dependence of |gf|.
+
+   * Add of "elementary transformations" in the high-level generic assembly
+     to allow for instance a local projection of a finite element on a lower
+     level element to perform a reduction such as the one used in MITC element.
+
+   * Macro definition in the high-level generic assembly language.
+
+   * Numerical continuation/bifurcation detection/branching improved.
+
+   * Matrix exponential and logarithm operators added to the high-level
+     generic assembly.
+
+   * Allowing the use of C++11 feature.
+
+   * New im_data object version to store and interpolate data on the
+     gauss points of a boundary.
+
+   
+
+
+
+
