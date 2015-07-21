@@ -131,7 +131,7 @@ struct problem_definition {
   }
   virtual void validate_solution(navier_stokes_problem &p, scalar_type t) {
     plain_vector R; dirichlet_condition(p, t, R);
-    p.mf_rhs.set_qdim(p.N);
+    p.mf_rhs.set_qdim(bgeot::dim_type(p.N));
     scalar_type err = getfem::asm_L2_dist(p.mim, 
 					  p.mf_u, p.Un1,
 					  p.mf_rhs, R);
@@ -551,13 +551,13 @@ void navier_stokes_problem::init(void) {
   T  = PARAM.real_value("T", "Final time");
   Tinitial = PARAM.real_value("Tinitial","Initial Time");
   dt_export = PARAM.real_value("DT_EXPORT", "Time step for export");
-  noisy = PARAM.int_value("NOISY", "");
-  time_order = PARAM.int_value("TIME_ORDER", "Discretization time order");
-  option = PARAM.int_value("OPTION", "option");
+  noisy = int(PARAM.int_value("NOISY", ""));
+  time_order = int(PARAM.int_value("TIME_ORDER", "Discretization time order"));
+  option = int(PARAM.int_value("OPTION", "option"));
 
   //  R = PARAM.real_value("RADIUS","Radius of the cylinder");
 
-  int prob = PARAM.int_value("PROBLEM", "the problem");
+  int prob = int(PARAM.int_value("PROBLEM", "the problem"));
   switch (prob) {
     case 1: pdef.reset(new problem_definition_Stokes_analytic); break;
     case 2: pdef.reset(new problem_definition_Green_Taylor_analytic); break;
@@ -565,14 +565,14 @@ void navier_stokes_problem::init(void) {
   default: GMM_ASSERT1(false, "wrong PROBLEM value");
   }
 
-  non_reflective_bc = PARAM.int_value("NON_REFLECTIVE_BC", "the type of non-reflective boundary condition");
+  non_reflective_bc = int(PARAM.int_value("NON_REFLECTIVE_BC", "the type of non-reflective boundary condition"));
   GMM_ASSERT1(non_reflective_bc >= 0 && non_reflective_bc <= 2, "arg wrong bc");
 
-  export_to_opendx = PARAM.int_value("DX_EXPORT", "");
+  export_to_opendx = int(PARAM.int_value("DX_EXPORT", ""));
   first_export = true;
 
   Re = 1 / nu;
-  mf_u.set_qdim(N);
+  mf_u.set_qdim(bgeot::dim_type(N));
 
   /* set the finite element on the mf_u */
   getfem::pfem pf_u = getfem::fem_descriptor(FEM_TYPE);
@@ -687,7 +687,7 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
 //////////////////////////////////////////////////////////////////////////
 // To take into account the BOUNDAY CONDITIONS (Lagrange multipliers)
 //////////////////////////////////////////////////////////////////////////
-  mf_mult.set_qdim(N);
+  mf_mult.set_qdim(bgeot::dim_type(N));
   GMM_ASSERT1(!mf_rhs.is_reduced(), "To be adapted");
   
   dal::bit_vector dofon_nonref = mf_mult.basic_dof_on_region(NONREFLECTIVE_BOUNDARY_NUM);
@@ -813,7 +813,7 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
 
 
  // Dirichlet condition on cylinder
-  mf_mult.set_qdim(N);
+  mf_mult.set_qdim(bgeot::dim_type(N));
   GMM_ASSERT1(!mf_rhs.is_reduced(), "To be adapted");
 
  dal::bit_vector dofon_Dirichlet_On_Cylinder 
@@ -844,7 +844,7 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
 
 
   // Non reflective condition
-  mf_mult.set_qdim(N);
+  mf_mult.set_qdim(bgeot::dim_type(N));
   GMM_ASSERT1(!mf_rhs.is_reduced(), "To be adapted");
   //   dal::bit_vector dofon_nonref
   //  = mf_mult.basic_dof_on_region(NONREFLECTIVE_BOUNDARY_NUM);
@@ -876,7 +876,7 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
 
   // In 3D - NEUMANN_BOUNDARY_NUM
   sparse_matrix HN;
-  size_type nbdof_neumann=0;
+  // size_type nbdof_neumann=0;
   gmm::sub_interval I5;
   
   dofon_nonref= mf_mult.basic_dof_on_region(NONREFLECTIVE_BOUNDARY_NUM);
@@ -1045,69 +1045,69 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
   GMM_ASSERT1(!mf_p.is_reduced(), "To be adapted");
 
 
- if (N==2) {	 
-	 for (unsigned i=0; i< mf_p.nb_dof(); ++i){
+  if (N==2) {	 
+    for (unsigned i=0; i< mf_p.nb_dof(); ++i){
       bgeot :: base_node BN =  mf_p.point_of_basic_dof(i);
       if (BN[0]<BoxXmax && BN[0] > BoxXmin && BN[1]< BoxYmax && BN[1] > BoxYmin ) {
-		  cout << "Point Part in Box -- i on mf_p= " << i <<",x="<<BN[0]<<",y="<<BN[1]<< endl;
-		  ptPartP[0] = BN[0];
-		  ptPartP[1] = BN[1];
-		  ptPartP[2] = i;
-		  break;
+        cout << "Point Part in Box -- i on mf_p= " << i <<",x="<<BN[0]<<",y="<<BN[1]<< endl;
+        ptPartP[0] = BN[0];
+        ptPartP[1] = BN[1];
+        ptPartP[2] = i;
+        break;
       }
     } 
+    
 	 
-	 
-	 for (unsigned i=0; i< mf_u.nb_dof(); ++i){
-		 bgeot :: base_node BN =  mf_u.point_of_dof(i);
-		 if (BN[0]==ptPartP[0] && BN[1]==ptPartP[1] ) {
-			 cout << "Point Part in Box -- i on mf_u= " << i <<",x="<<BN[0]<<",y="<<BN[1]<< endl;
-			 // Attention c'est vectoriel => en sortie i <-> pt sur la dernière composante de la vitesse
-			 // Vitesse =(U,V,W) alors en 2D --> sur V, en 3D --> sur W
-			 // D'ou la modif dans ptPartU[2]
-			 ptPartU[0] = BN[0];
-			 ptPartU[1] = BN[1]; 
-			 ptPartU[2] = i - N + 1;
-		     break;
-
-		 } 
-	 }
-	 ptPartData << ptPartP[0] << " " << ptPartP[1] << endl; 
-	 
+    for (unsigned i=0; i< mf_u.nb_dof(); ++i){
+      bgeot::base_node BN =  mf_u.point_of_basic_dof(i);
+      if (BN[0]==ptPartP[0] && BN[1]==ptPartP[1] ) {
+        cout << "Point Part in Box -- i on mf_u= " << i <<",x="<<BN[0]<<",y="<<BN[1]<< endl;
+        // Attention c'est vectoriel => en sortie i <-> pt sur la dernière composante de la vitesse
+        // Vitesse =(U,V,W) alors en 2D --> sur V, en 3D --> sur W
+        // D'ou la modif dans ptPartU[2]
+        ptPartU[0] = BN[0];
+        ptPartU[1] = BN[1]; 
+        ptPartU[2] = i - N + 1;
+        break;
+        
+      } 
+    }
+    ptPartData << ptPartP[0] << " " << ptPartP[1] << endl; 
+    
   }
-	if (N==3) {	 
-		for (unsigned i=0; i< mf_p.nb_dof(); ++i){
-			bgeot :: base_node BN =  mf_p.point_of_basic_dof(i);
-			if (BN[0]<BoxXmax && BN[0] > BoxXmin && BN[1]< BoxYmax && BN[1] > BoxYmin  && BN[2]< BoxZmax && BN[2] > BoxZmin ) {
-				cout << "Point Part in Box -- i on mf_p= " << i <<",x="<<BN[0]<<",y="<<BN[1]<< ",z="<<BN[2]<< endl;
-				ptPartP[0] = BN[0];
-				ptPartP[1] = BN[1];
-				ptPartP[2] = BN[2];
-				ptPartP[3] = i;
-				break;
-			}
-		} 
-		
-		
-		for (unsigned i=0; i< mf_u.nb_dof(); ++i){
-			bgeot :: base_node BN =  mf_u.point_of_dof(i);
-			if (BN[0]==ptPartP[0] && BN[1]==ptPartP[1]&& BN[2]==ptPartP[2] ) {
-				cout << "Point Part in Box -- i on mf_u= " << i <<",x="<<BN[0]<<",y="<<BN[1]<<",z="<<BN[2]<< endl;
-				// Attention c'est vectoriel => en sortie i <-> pt sur la dernière composante de la vitesse
-				// Vitesse =(U,V,W) alors en 2D --> sur V, en 3D --> sur W
-				// D'ou la modif dans ptPartU[3]
-				ptPartU[0] = BN[0];
-				ptPartU[1] = BN[1]; 
-				ptPartU[2] = BN[2];
-				ptPartU[3] = i - N + 1;
-				break;
-				
-			} 
-		}
-		ptPartData << ptPartP[0] << " " << ptPartP[1] << " " << ptPartP[2] << endl; 
-		
-	} 
-
+  if (N==3) {	 
+    for (unsigned i=0; i< mf_p.nb_dof(); ++i){
+      bgeot :: base_node BN =  mf_p.point_of_basic_dof(i);
+      if (BN[0]<BoxXmax && BN[0] > BoxXmin && BN[1]< BoxYmax && BN[1] > BoxYmin  && BN[2]< BoxZmax && BN[2] > BoxZmin ) {
+        cout << "Point Part in Box -- i on mf_p= " << i <<",x="<<BN[0]<<",y="<<BN[1]<< ",z="<<BN[2]<< endl;
+        ptPartP[0] = BN[0];
+        ptPartP[1] = BN[1];
+        ptPartP[2] = BN[2];
+        ptPartP[3] = i;
+        break;
+      }
+    } 
+    
+    
+    for (unsigned i=0; i< mf_u.nb_dof(); ++i){
+      bgeot :: base_node BN =  mf_u.point_of_basic_dof(i);
+      if (BN[0]==ptPartP[0] && BN[1]==ptPartP[1]&& BN[2]==ptPartP[2] ) {
+        cout << "Point Part in Box -- i on mf_u= " << i <<",x="<<BN[0]<<",y="<<BN[1]<<",z="<<BN[2]<< endl;
+        // Attention c'est vectoriel => en sortie i <-> pt sur la dernière composante de la vitesse
+        // Vitesse =(U,V,W) alors en 2D --> sur V, en 3D --> sur W
+        // D'ou la modif dans ptPartU[3]
+        ptPartU[0] = BN[0];
+        ptPartU[1] = BN[1]; 
+        ptPartU[2] = BN[2];
+        ptPartU[3] = i - N + 1;
+        break;
+	
+      } 
+    }
+    ptPartData << ptPartP[0] << " " << ptPartP[1] << " " << ptPartP[2] << endl; 
+    
+  } 
+  
   size_type sizelsystem = 0;
   size_type sizelsystemP = nbdof_p+1;
 
@@ -1396,7 +1396,7 @@ gmm :: sub_interval SUB_CT_P(0,nbdof_p);
     //
 	  
     {
-      double rcond;
+      // double rcond;
       plain_vector X(sizelsystem);
 
 		//plain_vector Xu(sizelsystem/2);
@@ -1609,7 +1609,7 @@ gmm :: sub_interval SUB_CT_P(0,nbdof_p);
     gmm::add(YY, gmm::sub_vector(Y, I1));
  
     {
-      double rcond;
+      // double rcond;
       plain_vector X(sizelsystem);
 	  //plain_vector Xu(sizelsystem/2);
 	  //plain_vector Xv(sizelsystem/2);
@@ -1656,11 +1656,11 @@ gmm :: sub_interval SUB_CT_P(0,nbdof_p);
 		gmm:: clear(lambda);
 		gmm::copy(gmm::sub_vector(X, I4),lambda);
 		delta = 0.0;
-		for (int ii = 0; ii <= nbdof_nonref; ii += 2) {
+		for (int ii = 0; ii <= int(nbdof_nonref); ii += 2) {
 			delta = delta+lambda[ii];
 		}
-	    delta=delta/nbdof_nonref;
-		for (int ii = 0; ii <= nbdof_nonref; ii += 2) {
+                delta=delta/bgeot::scalar_type(nbdof_nonref);
+            for (int ii = 0; ii <= int(nbdof_nonref); ii += 2) {
 			lambda[ii] = 1.0-delta;
 		}
 		cout << "delta" << delta << endl;
@@ -1735,23 +1735,23 @@ gmm :: sub_interval SUB_CT_P(0,nbdof_p);
  
 	  
 	  
-	  if (N==2) {
-		  std::vector<scalar_type> Cxn(1), Cxp(1), Cyn(1), Cyp(1);
-		  getfem :: mesh_region mpioncylinder = mf_u.linked_mesh().get_mpi_sub_region(ON_CYLINDER_BOUNDARY_NUM);
-		  //Cxn[0] = 0; Cxp[0] = 0; Cyn[0] = 0; Cyp[0] = 0;
-		  getfem :: ClCd2D(Cxn,Cxp,Cyn,Cyp,mim,mf_u,mf_p,Un0,Pn1,mpioncylinder);
-		  coeffTP<<t<<" "<<nu*Cxn[0]<<" "<<Cxp[0]<<" "<<nu*Cxn[0]+Cxp[0]<<" "<<nu*Cyn[0]<<" "<<Cyp[0]<<" "<<nu*Cyn[0]+Cyp[0]<<" "<<endl;
-		  ptPartData << t << " " << Un1[ptPartU[2]] << " " << Un1[ptPartU[2] + 1] << " " << Pn1[ptPartP[2]] << endl;
-	  }
-	  
-	  if (N==3) {
-		  std::vector<scalar_type> Cxn(1), Cxp(1), Cyn(1), Cyp(1);
-		  getfem :: mesh_region mpioncylinder = mf_u.linked_mesh().get_mpi_sub_region(ON_CYLINDER_BOUNDARY_NUM);
-		  getfem :: ClCd3D(Cxn,Cxp,Cyn,Cyp,mim,mf_u,mf_p,Un0,Pn1,mpioncylinder);
-		  coeffTP <<t<<" "<<Cxn[0]<<" "<<Cxp[0]<<" "<<Cxn[0]+Cxp[0]<<" "<<Cyn[0]<<" "<<Cyp[0]<<" "<<Cyn[0]+Cyp[0]<<" " << endl;
-		  ptPartData <<t<<" "<<Un1[ptPartU[3]]<<" "<<Un1[ptPartU[3]+1]<<" " <<Un1[ptPartU[3]+2]<<" "<<Pn1[ptPartP[3]]<< endl;
-		}
-	  
+    if (N==2) {
+      std::vector<scalar_type> Cxn(1), Cxp(1), Cyn(1), Cyp(1);
+      getfem :: mesh_region mpioncylinder = mf_u.linked_mesh().get_mpi_sub_region(ON_CYLINDER_BOUNDARY_NUM);
+      //Cxn[0] = 0; Cxp[0] = 0; Cyn[0] = 0; Cyp[0] = 0;
+      getfem :: ClCd2D(Cxn,Cxp,Cyn,Cyp,mim,mf_u,mf_p,Un0,Pn1,mpioncylinder);
+      coeffTP<<t<<" "<<nu*Cxn[0]<<" "<<Cxp[0]<<" "<<nu*Cxn[0]+Cxp[0]<<" "<<nu*Cyn[0]<<" "<<Cyp[0]<<" "<<nu*Cyn[0]+Cyp[0]<<" "<<endl;
+      ptPartData << t << " " << Un1[size_type(ptPartU[2])] << " " << Un1[size_type(ptPartU[2] + 1)] << " " << Pn1[size_type(ptPartP[2])] << endl;
+    }
+    
+    if (N==3) {
+      std::vector<scalar_type> Cxn(1), Cxp(1), Cyn(1), Cyp(1);
+      getfem :: mesh_region mpioncylinder = mf_u.linked_mesh().get_mpi_sub_region(ON_CYLINDER_BOUNDARY_NUM);
+      getfem :: ClCd3D(Cxn,Cxp,Cyn,Cyp,mim,mf_u,mf_p,Un0,Pn1,mpioncylinder);
+      coeffTP <<t<<" "<<Cxn[0]<<" "<<Cxp[0]<<" "<<Cxn[0]+Cxp[0]<<" "<<Cyn[0]<<" "<<Cyp[0]<<" "<<Cyn[0]+Cyp[0]<<" " << endl;
+      ptPartData <<t<<" "<<Un1[size_type(ptPartU[3])]<<" "<<Un1[size_type(ptPartU[3]+1)]<<" " <<Un1[size_type(ptPartU[3]+2)]<<" "<<Pn1[size_type(ptPartP[3])]<< endl;
+    }
+    
   }
 	  
   

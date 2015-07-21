@@ -466,6 +466,7 @@ int main(/* int argc, char **argv */) {
     }
     if (!ok) throw(gmm::failure_error("IM_NONE failed..\n"));
     print_some_methods();
+    check_orders();
     check_methods();
     int failcnt = inspect_results();
     cout << "\nOrders of some approximate integration methods:\n";

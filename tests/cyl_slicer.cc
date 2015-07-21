@@ -47,7 +47,7 @@ bgeot::scalar_type func(const bgeot::base_node& x) {
   return x[0];
 }
 
-int main(int argc, char *argv[]) {
+int main(int /* argc */, char * /* argv */ []) {
   try {
     getfem::mesh mymesh;
 

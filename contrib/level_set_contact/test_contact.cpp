@@ -151,7 +151,7 @@ int main(int argc, char *argv[])
         gmm::iteration iter_contact(1e-4,1,100000);
         scalar_type applied_disp = p.applied_disp;
         size_type nstep=p.nstep;
-        scalar_type disp_incr = applied_disp/nstep;
+        scalar_type disp_incr = applied_disp/scalar_type(nstep);
         
         for(size_type step=0; step<=nstep; step++)
           {

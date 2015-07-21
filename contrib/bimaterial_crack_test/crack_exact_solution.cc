@@ -26,17 +26,17 @@ using std::ends; using std::cin;
 
 /* returns sin(theta/2) where theta is the angle
    of 0-(x,y) with the axis Ox */
-static scalar_type sint2(scalar_type x, scalar_type y) {
-  scalar_type r = sqrt(x*x+y*y);
-  if (r == 0) return 0;
-  else return (y<0 ? -1:1) * sqrt(gmm::abs(r-x)/(2*r));
-  // sometimes (gcc3.3.2 -O3), r-x < 0 ....
-}
-static scalar_type cost2(scalar_type x, scalar_type y) {
-  scalar_type r = sqrt(x*x+y*y);
-  if (r == 0) return 0;
-  else return sqrt(gmm::abs(r+x)/(2*r));
-}
+/* static scalar_type sint2(scalar_type x, scalar_type y) { */
+/*   scalar_type r = sqrt(x*x+y*y); */
+/*   if (r == 0) return 0; */
+/*   else return (y<0 ? -1:1) * sqrt(gmm::abs(r-x)/(2*r)); */
+/*   // sometimes (gcc3.3.2 -O3), r-x < 0 .... */
+/* } */
+/* static scalar_type cost2(scalar_type x, scalar_type y) { */
+/*   scalar_type r = sqrt(x*x+y*y); */
+/*   if (r == 0) return 0; */
+/*   else return sqrt(gmm::abs(r+x)/(2*r)); */
+/* } */
 /* analytical solution for a semi-infinite crack [-inf,a] in an
    infinite plane submitted to +sigma above the crack
    and -sigma under the crack. (The crack is directed along the x axis).
@@ -288,11 +288,10 @@ base_small_vector crack_exact_solution_function::grad(scalar_type x, scalar_type
 void crack_exact_solution::init(int function_num, scalar_type lambda, scalar_type mu,
 				getfem::level_set &ls) {
   std::vector<getfem::pglobal_function> cfun(2);
-  for (size_type i = 0; i < 2; ++i) {
+  for (unsigned i = 0; i < 2; ++i) {
     /* use the singularity */
     getfem::abstract_xy_function *s = 
-      new crack_exact_solution_function(function_num, 
-					i, lambda, mu);
+      new crack_exact_solution_function(function_num, i, lambda, mu);
     cfun[i] = getfem::global_function_on_level_set(ls, *s);
   }
   

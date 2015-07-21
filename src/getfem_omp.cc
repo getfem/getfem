@@ -99,6 +99,7 @@ namespace getfem{
       GMM_WARNING0("building partitions inside parallel region");
 
     omp_guard scoped_lock;
+    GMM_NOPERATION(scoped_lock);
     size_type Nelems = original_region->size();
     size_type psize = static_cast<size_type>
       (std::ceil(static_cast<scalar_type >(Nelems)/

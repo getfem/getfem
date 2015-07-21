@@ -195,8 +195,8 @@ public:
   virtual void compute(getfem::fem_interpolation_context& ctx,
 		       bgeot::base_tensor &t) {
     size_type cv = ctx.convex_num();
-    coeff.resize(mf.nb_dof_of_element(cv));
-    gmm::copy(gmm::sub_vector(U, gmm::sub_index(mf.ind_dof_of_element(cv))),
+    coeff.resize(mf.nb_basic_dof_of_element(cv));
+    gmm::copy(gmm::sub_vector(U, gmm::sub_index(mf.ind_basic_dof_of_element(cv))),
 	      coeff);
     ctx.pf()->interpolation_grad(ctx, coeff, gradU, 1);
     scalar_type norm = gmm::vect_norm2(gmm::mat_row(gradU, 0));
@@ -304,29 +304,12 @@ void asm_mass_matrix_up(const MAT &RM_, const getfem::mesh_im &mim, const getfem
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 /*
  * Elementary extrapolation matrices
  */
 
-void compute_mass_matrix_extra_element(base_matrix &M, const getfem::mesh_im &mim, const getfem::mesh_fem &mf,
+void compute_mass_matrix_extra_element
+(base_matrix &M, const getfem::mesh_im &mim, const getfem::mesh_fem &mf,
  size_type cv1, size_type cv2) {
 
   getfem::pfem pf1_old = 0;
@@ -355,7 +338,7 @@ void compute_mass_matrix_extra_element(base_matrix &M, const getfem::mesh_im &mi
   }
   
   bgeot::vectors_to_base_matrix(G1, m.points_of_convex(cv1));
-  getfem::fem_interpolation_context ctx1(pgt1, pfp1, 0, G1, cv1,size_type(-1));
+  getfem::fem_interpolation_context ctx1(pgt1, pfp1, 0, G1, cv1, short_type(-1));
   
   getfem::pfem pf2 = mf.fem_of_element(cv2);
   size_type nbd2 = pf1->nb_dof(cv2);
@@ -368,7 +351,7 @@ void compute_mass_matrix_extra_element(base_matrix &M, const getfem::mesh_im &mi
   bgeot::vectors_to_base_matrix(G2, m.points_of_convex(cv2));
   
   getfem::fem_interpolation_context ctx2(pgt2, pf2, base_node(pgt2->dim()),
-					 G2, cv2, size_type(-1));
+					 G2, cv2, short_type(-1));
 
   for (unsigned ii=0; ii < pai1->nb_points_on_convex(); ++ii) {
     ctx1.set_ii(ii);
@@ -453,7 +436,7 @@ int main(int argc, char *argv[]) {
   //getfem::level_set lsup(mesh, dim_type(lsdeg), true), lsdown(mesh, dim_type(lsdeg), true);
   const getfem::mesh_fem &lsmf = ls.get_mesh_fem();
   for (unsigned i = 0; i < lsmf.nb_dof(); ++i) {
-    ls.values()[i] = ls_value(lsmf.point_of_dof(i));
+    ls.values()[i] = ls_value(lsmf.point_of_basic_dof(i));
 	  }
  
 	
@@ -522,7 +505,7 @@ int main(int argc, char *argv[]) {
   // Finite element method for the unknown velocity u
   getfem::mesh_fem pre_mf(mesh);
   std::string FEM = PARAM.string_value("FEM", "finite element method");
-  pre_mf.set_qdim(N);
+  pre_mf.set_qdim(bgeot::dim_type(N));
   pre_mf.set_finite_element(mesh.convex_index(),
 			    getfem::fem_descriptor(FEM));
 	
@@ -556,7 +539,7 @@ int main(int argc, char *argv[]) {
   // Finite element method for the rhs
   getfem::mesh_fem mf_rhs(mesh);
   std::string FEMR = PARAM.string_value("FEM_RHS", "finite element method");
-  mf_rhs.set_qdim(N);
+  mf_rhs.set_qdim(bgeot::dim_type(N));
   mf_rhs.set_finite_element(mesh.convex_index(),
 			    getfem::fem_descriptor(FEMR));
   size_type nb_dof_rhs = mf_rhs.nb_dof();
@@ -568,7 +551,7 @@ int main(int argc, char *argv[]) {
   // Finite element method for the multipliers
   getfem::mesh_fem pre_mf_mult(mesh);
   std::string FEMM = PARAM.string_value("FEM_MULT", "fem for multipliers");
-  pre_mf_mult.set_qdim(N);
+  pre_mf_mult.set_qdim(bgeot::dim_type(N));
   pre_mf_mult.set_finite_element(mesh.convex_index(),
 				 getfem::fem_descriptor(FEMM));
   getfem::partial_mesh_fem mf_mult(pre_mf_mult);
@@ -673,7 +656,7 @@ int main(int argc, char *argv[]) {
       getfem::asm_mass_matrix(MC1, mim, mf_P0);
       getfem::asm_mass_matrix(MC2, uncutmim, mf_P0);
       for (size_type i = 0; i < nbe; ++i) {
-	size_type cv = mf_P0.first_convex_of_dof(i);
+	size_type cv = mf_P0.first_convex_of_basic_dof(i);
 	ratios[cv] = gmm::abs(MC1(i,i)) / gmm::abs(MC2(i,i));
 	if (ratios[cv] > 0 && ratios[cv] < min_ratio) elt_black_list.add(cv);
       }
@@ -685,7 +668,7 @@ int main(int argc, char *argv[]) {
 
       for (size_type i = 0; i < nb_dof; ++i) {
 	bool found = false;
-	getfem::mesh::ind_cv_ct ct = mf.convex_to_dof(i);
+	getfem::mesh::ind_cv_ct ct = mf.convex_to_basic_dof(i);
 	getfem::mesh::ind_cv_ct::const_iterator it;
 	for (it = ct.begin(); it != ct.end(); ++it)
 	  if (!elt_black_list.is_in(*it)) found = true;
@@ -709,7 +692,7 @@ int main(int argc, char *argv[]) {
 	compute_mass_matrix_extra_element(Mloc, uncutmim, mf, i, cv2);
 	for (size_type ii = 0; ii < gmm::mat_nrows(Mloc); ++ii) 
 	  for (size_type jj = 0; jj < gmm::mat_ncols(Mloc); ++jj)
-	    EX(mf.ind_dof_of_element(i)[ii], mf.ind_dof_of_element(cv2)[jj])
+	    EX(mf.ind_basic_dof_of_element(i)[ii], mf.ind_basic_dof_of_element(cv2)[jj])
 	      += Mloc(ii, jj);
       }
 
@@ -928,7 +911,7 @@ cout << compteur << " " << G[0] << " " << G[1] << endl;
   // computation of error on u.
   double errmax = 0.0, exactmax = 0.0;
   for (size_type i = 0; i < nb_dof_rhs; ++i)
-    if (ls_value(mf_rhs.point_of_dof(i)) >= 0.0) {
+    if (ls_value(mf_rhs.point_of_basic_dof(i)) >= 0.0) {
       errmax = std::max(errmax, Eint[i]);
       exactmax = std::max(exactmax, Vint[i]);
     }

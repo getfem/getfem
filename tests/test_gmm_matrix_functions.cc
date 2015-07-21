@@ -35,9 +35,9 @@ template <class T> void test_sqrtm(T) {
   gmm::dense_matrix<T> X(n, n), SQRTMX(n, n), Z(n, n);
   gmm::copy(gmm::identity_matrix(), X);
   gmm::copy(gmm::identity_matrix(), Z);
-  X(1,1) = X(2,2) = pow(T(2),-26);
+  X(1,1) = X(2,2) = T(pow(2.,-26.));
   X(0,3) = T(1);
-  Z(1,1) = Z(2,2) = pow(T(2),-13);
+  Z(1,1) = Z(2,2) = T(pow(2.,-13.));
   Z(0,3) = T(0.5);
 
   gmm::sqrtm(X, SQRTMX);

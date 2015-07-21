@@ -84,7 +84,7 @@ namespace dal {
     search_stored_object(pstatic_stored_object_key k) const
   {
    getfem::local_guard guard = locks_.get_lock();
-   stored_object_tab::const_iterator it = find(enr_static_stored_object_key(k));
+   stored_object_tab::const_iterator it=find(enr_static_stored_object_key(k));
    return (it != end()) ? it->second.p : 0;
   }
 
@@ -99,6 +99,7 @@ namespace dal {
     ito1->second.dependencies.insert(o2);
     return true;
   }
+
   void stored_object_tab::add_stored_object(pstatic_stored_object_key k, 
     pstatic_stored_object o,  permanence perm) 
   {
@@ -106,9 +107,10 @@ namespace dal {
     GMM_ASSERT1(stored_keys_.find(o) == stored_keys_.end(),
       "This object has already been stored, possibly with another key");
     stored_keys_[o] = k;
-    insert(std::make_pair(enr_static_stored_object_key(k),enr_static_stored_object(o, perm)));
+    insert(std::make_pair(enr_static_stored_object_key(k),
+                          enr_static_stored_object(o, perm)));
     size_t t = this_thread();
-    GMM_ASSERT2(stored_keys_.size() == size(), 
+    GMM_ASSERT2(stored_keys_.size() == size() && t != size_t(-1), 
       "stored_keys are not consistent with stored_object tab");
   }
 
@@ -343,6 +345,7 @@ namespace dal {
     bool ignore_unstored) 
   {
       getfem::omp_guard lock;
+      GMM_NOPERATION(lock);
       stored_object_tab& stored_objects
         = dal::singleton<stored_object_tab>::instance();
       std::list<pstatic_stored_object>::iterator it, itnext;
