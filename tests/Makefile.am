@@ -2,7 +2,8 @@ if QHULL
 optprogs = test_mesh_generation test_mesh_im_level_set crack thermo_elasticity_electrical_coupling
 optpl = test_mesh_im_level_set.pl \
         crack.pl                  \
-	thermo_elasticity_electrical_coupling.pl
+	thermo_elasticity_electrical_coupling.pl \
+	test_mesh_generation.pl
 else
 optprogs =
 optpl = 
@@ -128,7 +129,8 @@ TESTS = \
 	$(optpl)                      \
 	nonlinear_elastostatic.pl     \
 	nonlinear_membrane.pl         \
-	plasticity.pl                 \
+	test_continuation.pl   	      \
+        plasticity.pl                 \
 	helmholtz.pl                  \
 	schwarz_additive.pl           \
 	bilaplacian.pl    	      \
@@ -163,6 +165,7 @@ EXTRA_DIST =                               			\
 	thermo_elasticity_electrical_coupling.param		\
 	test_tree_sorted.pl                			\
 	test_mat_elem.pl                   			\
+	test_mesh_generation.pl                                 \
 	crack.pl                           			\
 	crack.param                        			\
 	laplacian.param                    			\
@@ -192,6 +195,7 @@ EXTRA_DIST =                               			\
 	wave_equation.param                			\
 	cyl_slicer.pl                           		\
 	test_continuation.param                                 \
+	test_continuation.pl                                    \
 	make_gmm_test.pl                   			\
 	gmm_torture01_lusolve.cc           			\
 	gmm_torture05_mult.cc              			\
