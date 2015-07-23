@@ -444,7 +444,7 @@ namespace getfem {
 
     ga_tree_node(void)
       : node_type(GA_NODE_VOID), test_function_type(size_type(-1)), qdim1(0),
-        qdim2(0), der1(0), der2(0), symmetric_op(false), hash_value(0) {}
+        qdim2(0), pos(0), der1(0), der2(0), symmetric_op(false), hash_value(0) {}
     ga_tree_node(GA_NODE_TYPE ty, size_type p)
       : node_type(ty), test_function_type(size_type(-1)), qdim1(0), qdim2(0),
         pos(p), der1(0), der2(0), symmetric_op(false), hash_value(0) {}
@@ -689,7 +689,7 @@ namespace getfem {
     }
 
     void insert_node(pga_tree_node pnode, GA_NODE_TYPE node_type) {
-      pga_tree_node newnode = new ga_tree_node;
+      pga_tree_node newnode = new ga_tree_node();
       newnode->parent = pnode->parent;
       newnode->node_type = node_type;
       if (pnode->parent) {
@@ -702,7 +702,7 @@ namespace getfem {
     }
 
     void add_child(pga_tree_node pnode) {
-      pga_tree_node newnode = new ga_tree_node;
+      pga_tree_node newnode = new ga_tree_node();
       newnode->parent = pnode;
       pnode->children.push_back(newnode);
     }
@@ -1525,15 +1525,14 @@ namespace getfem {
             ga_tree sub_tree;
             GA_TOKEN_TYPE r_type;
             tree.add_params(token_pos);
-            for(;;) {
+            do {
               r_type = ga_read_term(expr, pos, sub_tree);
               if (r_type != GA_RPAR && r_type != GA_COMMA)
                 ga_throw_error(expr, pos-((r_type != GA_END)?1:0),
                                "Parameters should be separated "
                                "by ',' and parameter list ended by ')'.");
               tree.add_sub_tree(sub_tree);
-              if (r_type == GA_RPAR) break;
-            }
+            } while (r_type != GA_RPAR);
             state = 2;
           }
           break;
@@ -1774,18 +1773,19 @@ namespace getfem {
       return false;
     }
 
-    ga_predef_function(void) : gis(0) {}
+    ga_predef_function(void) : expr(""), derivative1(""), derivative2(""), gis(0) {}
     ga_predef_function(pscalar_func_onearg f, size_type dtype_ = 0,
                        const std::string &der = "")
-      : ftype(0), dtype(dtype_), nbargs(1), f1(f), derivative1(der), gis(0) {}
+      : ftype(0), dtype(dtype_), nbargs(1), f1(f), expr(""),
+        derivative1(der), derivative2(""), gis(0) {}
     ga_predef_function(pscalar_func_twoargs f, size_type dtype_ = 0,
                        const std::string &der1 = "",
                        const std::string &der2 = "")
       : ftype(0), dtype(dtype_), nbargs(2), f2(f),
-        derivative1(der1), derivative2(der2), gis(0) {}
+        expr(""), derivative1(der1), derivative2(der2), gis(0) {}
     ga_predef_function(const std::string &expr_)
-      : ftype(1), dtype(3), nbargs(1), expr(expr_), t(1), u(1), gis(0) {
-    }
+      : ftype(1), dtype(3), nbargs(1), expr(expr_),
+        derivative1(""), derivative2(""), t(1), u(1), gis(0) {}
 
     ~ga_predef_function() { if (gis) delete gis; }
   };
@@ -3398,8 +3398,10 @@ namespace getfem {
     base_tensor &t, &tc1, &tc2;
     virtual int exec(void) {
       GA_DEBUG_INFO("Instruction: addition");
-      GA_DEBUG_ASSERT(t.size() == tc1.size() && t.size() == tc2.size(),
-                  "internal error");
+      GA_DEBUG_ASSERT(t.size() == tc1.size(),
+                      "internal error " << t.size() << " != " << tc1.size());
+      GA_DEBUG_ASSERT(t.size() == tc2.size(),
+                      "internal error " << t.size() << " != " << tc2.size());
       gmm::add(tc1.as_vector(), tc2.as_vector(), t.as_vector());
       return 0;
     }
@@ -3412,7 +3414,7 @@ namespace getfem {
     virtual int exec(void) {
       GA_DEBUG_INFO("Instruction: addition");
       GA_DEBUG_ASSERT(t.size() == tc1.size(), "internal error " << t.size()
-                      << " incompatible with "  << tc1.size());
+                      << " incompatible with " << tc1.size());
       gmm::add(tc1.as_vector(), t.as_vector());
       return 0;
     }
@@ -6265,7 +6267,7 @@ namespace getfem {
     case GA_NODE_NAME:
       {
         std::string name = pnode->name;
-        
+
         if (!ignore_X && !(name.compare("X"))) {
           pnode->node_type = GA_NODE_X;
           pnode->nbc1 = 0;
@@ -6461,13 +6463,13 @@ namespace getfem {
             size_type q = workspace.qdim(name);
             size_type n = mf->linked_mesh().dim();
             bgeot::multi_index mii = workspace.qdims(name);
-            
+
             if (!q) ga_throw_error(expr, pnode->pos,
                                    "Invalid null size of variable " << name);
             if (mii.size() > 6)
               ga_throw_error(expr, pnode->pos,
                             "Tensor with too much dimensions. Limited to 6");
-            
+
             switch (prefix_id) {
             case 0: // value
               pnode->node_type = test ? GA_NODE_VAL_TEST : GA_NODE_VAL;
@@ -7883,23 +7885,18 @@ namespace getfem {
               if (Fp.is_affine("t")) {
                 scalar_type b = Fp(scalar_type(0));
                 scalar_type a = Fp(scalar_type(1)) - b;
-                if (b  == scalar_type(0)) {
-                  pnode->node_type = GA_NODE_OP;
-                  pnode->op_type = GA_MULT;
-                  child0->init_scalar_tensor(a);
-                  child0->node_type = (a == scalar_type(0)) ? GA_NODE_ZERO : GA_NODE_CONSTANT;
-                } else {
-                  pnode->node_type = GA_NODE_OP;
-                  pnode->op_type = GA_MULT;
-                  child0->init_scalar_tensor(a);
-                  child0->node_type = (a == scalar_type(0)) ? GA_NODE_ZERO : GA_NODE_CONSTANT;
+                pnode->node_type = GA_NODE_OP;
+                pnode->op_type = GA_MULT;
+                child0->init_scalar_tensor(a);
+                child0->node_type = (a == scalar_type(0)) ? GA_NODE_ZERO : GA_NODE_CONSTANT;
+                if (b != scalar_type(0)) {
                   tree.insert_node(pnode, GA_NODE_OP);
-                  pnode->parent->op_type = GA_PLUS;
+                  pnode->parent->op_type = (b > 0) ? GA_PLUS : GA_MINUS;
                   tree.add_child(pnode->parent);
                   pga_tree_node pnode_cte = pnode->parent->children[1];
                   pnode_cte->node_type = GA_NODE_CONSTANT;
                   pnode_cte->t = pnode->t;
-                  std::fill(pnode_cte->t.begin(), pnode_cte->t.end(), b);
+                  std::fill(pnode_cte->t.begin(), pnode_cte->t.end(), gmm::abs(b));
                   pnode = pnode->parent;
                 }
               }
@@ -8684,8 +8681,8 @@ namespace getfem {
         if (mf) {
           GMM_ASSERT1(&(mf->linked_mesh()) == &(m),
                       "The finite element of variable " << pnode->name <<
-                      " has to be defined on the same mesh than the "
-                      "integration method used");
+                      " and the applied integration method have to be"
+                      " defined on the same mesh");
 
           // An instruction for pfp update
           if (rmi.pfps.find(mf) == rmi.pfps.end() ||
@@ -9840,7 +9837,8 @@ namespace getfem {
         // ga_replace_test_by_cte do not work in all operations like
         // vector components x(1)
         // ga_replace_test_by_cte(tree.root, false);
-        // ga_semantic_analysis(expr, tree, local_workspace,1,1,false,true);
+        // ga_semantic_analysis(expr, tree, local_workspace, 1, 1,
+        //                      false, true);
       }
       expr = ga_tree_to_string(tree);
     }
@@ -10178,7 +10176,7 @@ namespace getfem {
       if ((ignore_data && !extract_variable_done) ||
           (!ignore_data && !extract_data_done)) {
         used_vars.clear();
-         ga_workspace aux_workspace;
+        ga_workspace aux_workspace;
         aux_workspace = ga_workspace(true, workspace);
         aux_workspace.clear_expressions();
         aux_workspace.add_interpolation_expression(expr, source_mesh);
@@ -10231,7 +10229,8 @@ namespace getfem {
           ga_derivative(tree, pwi.first, source_mesh,
                         it->first, it->second, 1);
           if (tree.root)
-            ga_semantic_analysis(expr, tree, local_workspace,1,1,false,true);
+            ga_semantic_analysis(expr, tree, local_workspace, 1, 1,
+                                 false, true);
           ga_compile_interpolation(pwi.first, pwi.second);
         }
       }
