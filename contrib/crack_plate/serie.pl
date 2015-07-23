@@ -1,8 +1,8 @@
 # Copyright (C) 2001-2015 Jeremie Lasry
 #
-# This file is a part of GETFEM++
+# This file is a part of GetFEM++
 #
-# Getfem++  is  free software;  you  can  redistribute  it  and/or modify it
+# GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
 # under  the  terms  of the  GNU  Lesser General Public License as published
 # by  the  Free Software Foundation;  either version 3 of the License,  or
 # (at your option) any later version along with the GCC Runtime Library

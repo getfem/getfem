@@ -1,9 +1,9 @@
 #!/usr/bin/perl
 # Copyright (C) 1998-2015 Yves Renard
 #
-# This file is a part of GETFEM++
+# This file is a part of GetFEM++
 #
-# Getfem++  is  free software;  you  can  redistribute  it  and/or modify it
+# GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
 # under  the  terms  of the  GNU  Lesser General Public License as published
 # by  the  Free Software Foundation; either version 3 of the License,  or
 # (at your option) any later version along with the GCC Runtime Library
@@ -36,11 +36,11 @@ sub print_license  {
 
   if ($NAME =~ /\.pl$/) {
     print RES <<""
-# Copyright (C) $year1-$year2 $copyauth
+# Copyright (C) $year1$toyear2 $copyauth
 #
-# This file is a part of GETFEM++
+# This file is a part of GetFEM++
 #
-# Getfem++  is  free software;  you  can  redistribute  it  and/or modify it
+# GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
 # under  the  terms  of the  GNU  Lesser General Public License as published
 # by  the  Free Software Foundation;  either version 3 of the License,  or
 # (at your option) any later version along with the GCC Runtime Library
@@ -58,11 +58,11 @@ sub print_license  {
 
   } elsif ($NAME =~ /\.m$/) {
     print RES <<""
-% Copyright (C) $year1-$year2 $copyauth
+% Copyright (C) $year1$toyear2 $copyauth
 %
-% This file is a part of GETFEM++
+% This file is a part of GetFEM++
 %
-% Getfem++  is  free software;  you  can  redistribute  it  and/or modify it
+% GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
 % under  the  terms  of the  GNU  Lesser General Public License as published
 % by  the  Free Software Foundation;  either version 3 of the License,  or
 % (at your option) any later version along with the GCC Runtime Library
@@ -81,13 +81,10 @@ sub print_license  {
   } else {
 
   print RES <<""
-/*===========================================================================
- 
- Copyright (C) $year1-$year2 $copyauth
- 
- This file is a part of GETFEM++
- 
- Getfem++  is  free software;  you  can  redistribute  it  and/or modify it
+/*===========================================================================\n
+ Copyright (C) $year1$toyear2 $copyauth\n
+ This file is a part of GetFEM++\n
+ GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -98,8 +95,7 @@ sub print_license  {
  License and GCC Runtime Library Exception for more details.
  You  should  have received a copy of the GNU Lesser General Public License
  along  with  this program;  if not, write to the Free Software Foundation,
- Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
- 
+ Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.\n
 
 ;
   if ($NAME =~ /\.h$/) {
@@ -111,8 +107,7 @@ sub print_license  {
  executable, this file  does  not  by itself cause the resulting executable
  to be covered  by the GNU Lesser General Public License.  This   exception
  does not  however  invalidate  any  other  reasons why the executable file
- might be covered by the GNU Lesser General Public License.
- 
+ might be covered by the GNU Lesser General Public License.\n
 
 ;
   }
@@ -145,7 +140,7 @@ sub process_file  {
 
 # extract information
   $license = 0;
-  $libname = 0; $filename = 0; $date = 0; $author1 = 0; $year1 = 0; $year2 = -1;
+  $libname = 0; $filename = 0; $author1 = 0; $year1 = 0; $year2 = -1;
   $comment1 = ""; $comment2 = ""; $author2=""; $author3=""; $copyauth="";
   $authors = $copyauth = "Yves Renard.";
 
@@ -184,15 +179,18 @@ sub process_file  {
 
   }
 
-
+  $toyear2 = "";
+  if ($year2 > 0) {
+    $toyear2 = -$year2;
+  }
   switch ($license) {
     case(0) { print "No copyright detected.\n"; }
-    case(1) { print "Copyright detected: LGPL $year1-$year2 $copyauth\n"; }
-    case(2) { print "Copyright detected: LGPL with special exception $year1-$year2 $copyauth\n"; }
-    case(3) { print "Copyright detected: Boost $year1-$year2 $copyauth\n"; }
-    case(4) { print "Copyright detected: Xerox $year1-$year2 $copyauth\n"; }
-    case(5) { print "Copyright detected: special license from Meschach Library  $year1-$year2 $copyauth\n"; }
-    else { print "Unknown license detected: $year1-$year2 $copyauth\n"; }
+    case(1) { print "Copyright detected: LGPL $year1$toyear2 $copyauth\n"; }
+    case(2) { print "Copyright detected: LGPL with special exception $year1$toyear2 $copyauth\n"; }
+    case(3) { print "Copyright detected: Boost $year1$toyear2 $copyauth\n"; }
+    case(4) { print "Copyright detected: Xerox $year1$toyear2 $copyauth\n"; }
+    case(5) { print "Copyright detected: special license from Meschach Library  $year1$toyear2 $copyauth\n"; }
+    else { print "Unknown license detected: $year1$toyear2 $copyauth\n"; }
   }
 
 
@@ -215,7 +213,7 @@ sub process_file  {
 
   }
 
-  if (($option == 2 || ($option == 1 && $year2 != $year)) && $license < 3) {
+  if (($option == 2 || $option == 4 || ($option == 1 && $year2 != $year)) && $license < 3) {
 
     if ($license == 0) {
       print "Copyright notice has to be added : adding LGPL License ?\n";
@@ -223,17 +221,24 @@ sub process_file  {
       print "Copyright notice has to be updated\n";
     }
 
-    print "Perform the modification ? (Y/[N]) ";
-    $ans = <STDIN>; chomp($ans);
+    if ($option == 4) {
+      $ans = "y";
+    } else {
+      print "Perform the modification ? (Y/[N]) ";
+      $ans = <STDIN>; chomp($ans);
+    }
     if ($ans eq "y" || $ans eq "Y") {
       print "Updating license\n\n";
 
-      $year2=$year;
+      if ($option != 4) {
+        $year2=$year;
+      }
       $enablecpp = "/* -*- c++ -*- (enables emacs c++ mode) */\n";
 
-      if (!($license)) {
+      if (!($license) && $option != 4) {
 	$year1 = $year;
-	$date = $year;
+	$year2 = 0;
+        $toyear2 = "";
 	$authors = $copyauth = "Yves Renard.";
 	seek(FILE, 0, 0);
 	# close(FILE);
@@ -263,6 +268,7 @@ sub process_file  {
 
       close(RES);
       close(FILE);
+#      `touch $name.newhead -r $name`; # keep original timestamp
       `mv -f $name.newhead $name`;
 
     }
@@ -295,12 +301,13 @@ $options = $ARGV[0];
 if ($options eq "make") { $option = 1; }
 elsif ($options eq "makeall") { $option = 2; }
 elsif ($options eq "info") { $option = 3; }
+elsif ($options eq "onlytextall") { $option = 4; }
 else {
   print "Valid options are:\n";
   print "  make: change the header files where necessary,\n";
   print "  makeall: change the header files everywhere (use with care),\n";
   print "  info: show information.\n";
-  print "Should be run on the top of Getfem tree\n";
+  print "Should be run on the top of GetFEM++ tree\n";
   exit(1);
 }
 
