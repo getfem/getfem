@@ -44,7 +44,7 @@ print `cp -r $getfem_root/m4 $root`;
 
 open(F, ">$root/AUTHORS") or die "Open file impossible : $!\n";
 print F <<""
-Authors of GETFEM++\n
+Authors of GetFEM++\n
 Yves RENARD. Initial project. All the project.\n
 Julien POMMIER. All the project.\n
 

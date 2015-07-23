@@ -25,7 +25,7 @@
    @brief Small deformation plasticity problem.
 
    This program is used to check that getfem++ is working. 
-   This is also a good example of use of Getfem++.
+   This is also a good example of use of GetFEM++.
 */
 
 #include "getfem/getfem_assembling.h" 
@@ -37,7 +37,7 @@
 using std::endl; using std::cout; using std::cerr;
 using std::ends; using std::cin;
 
-/* some Getfem++ types that we will be using */
+/* some GetFEM++ types that we will be using */
 
 /* special class for small (dim<16) vectors */
 using bgeot::base_small_vector; 

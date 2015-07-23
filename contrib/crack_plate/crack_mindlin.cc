@@ -24,7 +24,7 @@
  * Linear Elastostatic plate problem with a through crack.
  *
  * This program is used to check that getfem++ is working. This is also 
- * a good example of use of Getfem++.
+ * a good example of use of GetFEM++.
 */
 
 #include "getfem/getfem_assembling.h" /* import assembly methods (and norms comp.) */
@@ -44,7 +44,7 @@ using std::endl; using std::cout; using std::cerr;
 using std::ends; using std::cin;
 
 
-/* some Getfem++ types that we will be using */
+/* some GetFEM++ types that we will be using */
 using bgeot::base_small_vector; /* special class for small (dim<16) vectors */
 using bgeot::base_node;  /* geometrical nodes(derived from base_small_vector)*/
 using bgeot::scalar_type; /* = double */

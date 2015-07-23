@@ -348,7 +348,7 @@
       the value of the variable/constant. It is possible to give an arbitrary
       number of variable/constant. The difference between a variable and a
       constant is that automatic differentiation is done with respect to
-      variables only (see Getfem++ user documentation). Test functions are
+      variables only (see GetFEM++ user documentation). Test functions are
       only available for variables, not for constants.
 
       Note that if several variables are given, the assembly of the

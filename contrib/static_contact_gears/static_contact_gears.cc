@@ -30,7 +30,7 @@
 using std::endl; using std::cout; using std::cerr;
 using std::ends; using std::cin;
 
-/* some Getfem++ types that we will be using */
+/* some GetFEM++ types that we will be using */
 using bgeot::dim_type;
 using bgeot::size_type;   /* = unsigned long */
 using bgeot::short_type;

@@ -117,7 +117,7 @@ For the moment, the method is not parallelized (this should be done ...). The ca
                            
 ``A`` is the matrix of the linear system. ``u`` is the unknown vector. ``f`` is the right hand side. ``P`` is an eventual preconditioner for the local solver. ``vB`` is a vector of rectangular sparse matrices (``of type const std::vector<vBMatrix>``, where ``vBMatrix`` is a sparse matrix type), each of these matrices is of size :math:`N \times N_i` where :math:`N` is the size of ``A`` and :math:`N_i` the number of variables in the :math:`i^{th}` sub-domain ; each column of the matrix is a base vector of the sub-space representing the :math:`i^{th}` sub-domain. ``iter`` is an iteration object. ``local_solver`` has to be chosen in the list ``gmm::using_gmres(), gmm::using_bicgstab(), gmm::using_cg(), gmm::using_qmr()`` and  ``gmm::using_superlu()`` if SuperLu is installed. ``global_solver`` has to be chosen in the list ``gmm::using_gmres(), gmm::using_bicgstab(), gmm::using_cg(), gmm::using_qmr()``.
 
-The test program ``schwarz_additive.C`` is the directory ``tests`` of Getfem++ is an example of the resolution with the additive Schwarz method of an elastostatic problem with the use of coarse mesh to make a better preconditioning (i.e. one of the sub-domains represents in fact a coarser mesh).
+The test program ``schwarz_additive.C`` is the directory ``tests`` of GetFEM++ is an example of the resolution with the additive Schwarz method of an elastostatic problem with the use of coarse mesh to make a better preconditioning (i.e. one of the sub-domains represents in fact a coarser mesh).
 
 In the case of multiple solves with the same linear system, it is possible to store the preconditioners or the LU factorisations to save computation time.
 

@@ -385,7 +385,7 @@ namespace bgeot {
      the xreal will be computed if needed as long as pgp+ii is known).
      See also fem_interpolation_context in getfem_fem.h.
      The name of member data, and the computations done by this structure
-     are heavily described in the Getfem++ Kernel Documentation.
+     are heavily described in the GetFEM++ Kernel Documentation.
   */
   class APIDECL geotrans_interpolation_context {
     mutable base_node xref_; /** reference point */

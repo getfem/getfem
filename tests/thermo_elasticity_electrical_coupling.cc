@@ -63,7 +63,7 @@
 using std::endl; using std::cout; using std::cerr;
 using std::ends; using std::cin;
 
-/* some Getfem++ types that we will be using */
+/* some GetFEM++ types that we will be using */
 using bgeot::size_type;
 using bgeot::base_node;
 using bgeot::base_small_vector;

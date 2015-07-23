@@ -34,7 +34,7 @@
 //#include "gmm/gmm_MUMPS_interface.h"
 
 
-/* some Getfem++ types that we will be using */
+/* some GetFEM++ types that we will be using */
 using bgeot::base_small_vector; /* special class for small (dim<16) vectors */
 using bgeot::base_node;  /* geometrical nodes(derived from base_small_vector)*/
 using bgeot::scalar_type; /* = double */

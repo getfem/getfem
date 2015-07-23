@@ -1,7 +1,7 @@
 Short Installation procedure
 ============================
 
-Basically, to install GETFEM++ you need to:
+Basically, in order to install GetFEM++ you need to:
 
 1. Optionally set the CXX environment variable to your compiler.
   csh:

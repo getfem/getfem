@@ -11,7 +11,7 @@
     <refname>gf_cont_struct</refname>
     <refpurpose>  This object serves for storing parameters and data used in numerical
   continuation of solution branches of models (for more details about
-  continuation see the Getfem++ user documentation).
+  continuation see the GetFEM++ user documentation).
 </refpurpose>
   </refnamediv>
 
@@ -27,7 +27,7 @@
 
     <para>  This object serves for storing parameters and data used in numerical
   continuation of solution branches of models (for more details about
-  continuation see the Getfem++ user documentation).
+  continuation see the GetFEM++ user documentation).
 </para>
   </refsection>
 

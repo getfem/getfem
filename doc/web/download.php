@@ -1,8 +1,8 @@
 <?php $thisPage="Download"; include("header.inc") ?>
   <div id="content">
-    <h1> Download Getfem++</h1>
+    <h1> Download GetFEM++</h1>
     <p>
-      Getfem++ is freely distributed under the terms of the
+      GetFEM++ is freely distributed under the terms of the
       <a href="http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html">
        Gnu Lesser General Public License, either version 2.1 of the license or any later version</a>.
     </p>

@@ -1,6 +1,6 @@
 <?php $thisPage="Screenshots"; include("header.inc") ?>
   <div id="content">
-  <h1>Getfem++ in action..</h1>
+  <h1>GetFEM++ in action..</h1>
 
   <a name="genmesh"></a><h3 class="sshot">Generic mesh handling</h3>
   <p>

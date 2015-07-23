@@ -29,13 +29,13 @@
 
 ===========================================================================*/
 
-/*! @mainpage Getfem++ reference documentation.
+/*! @mainpage GetFEM++ reference documentation.
 
   <center><img src="http://download.gna.org/getfem/html/homepage/_static/logo_getfem_small.png"></center>
  
   @section intro Introduction
  
-  This documentation has been generated from the Getfem++ sources, this is not a tutorial.
+  This documentation has been generated from the GetFEM++ sources, this is not a tutorial.
  
   @section Terminology
  
@@ -92,15 +92,15 @@
   of basis functions on each convex is the @link asm assembly@endlink.
 
   A mesh, with a set of FEM attached to its convexes is called a @link getfem_mesh_fem.h
-  mesh_fem@endlink object in Getfem++.
+  mesh_fem@endlink object in GetFEM++.
 
   A mesh, with a set of integration methods attached to its convexes
-  is called a @link getfem_mesh_im.h mesh_im@endlink object in Getfem++.
+  is called a @link getfem_mesh_im.h mesh_im@endlink object in GetFEM++.
 
   A @c mesh_fem can be used to approximate scalar fields (heat, pression,
   ..), or vector fields (displacement, electric field, ..). A @c mesh_im
   will be used to perform numerical integrations on these fields.
-  Although Getfem++ supports vector FEMs, intrinsic vector FEMs are
+  Although GetFEM++ supports vector FEMs, intrinsic vector FEMs are
   essentially used in mixed methods (for instance Raviart-Thomas element).
   Most of the FEM currently available are scalar. Of course,
   these scalar FEMs can be used to approximate each component of a

@@ -3,7 +3,7 @@
     <h1>Faq</h1>
 
     <div class="faqq">
-      What are the main differences between GETFEM++ and Deal II <a
+      What are the main differences between GetFEM++ and Deal II <a
       href="http://gaia.iwr.uni-heidelberg.de/~deal">http://www.dealii.org</a>
     </div>
 
@@ -11,7 +11,7 @@
       <p>
 	Of course, every single package have its own
 	specificities and advantages. I think, the logic is slightly
-	different in the sense that the main goal of GETFEM++ is to be
+	different in the sense that the main goal of GetFEM++ is to be
 	able to handle virtually any FEM, in any number of dimensions.
       </p>
       <ul>
@@ -20,14 +20,14 @@
 	</li>
 	<li>
 	  <p>
-	  Getfem++ provide a large set of pre-programmed methods. It
-	  is possible to use Getfem++ without knowing the details of
+	  GetFEM++ provide a large set of pre-programmed methods. It
+	  is possible to use GetFEM++ without knowing the details of
 	  implementation of finite element methods since they are
 	  described with a character string like "PK(N,K)" and the
 	  MATLAB interface hides all the c++ internals for people who
 	  don't want to deal with C++.</p>
 	  <p>
-	    Getfem++ is more
+	    GetFEM++ is more
 	  flexible, since it provides separate basic descriptions of
 	  Finite Element methods, geometric description and
 	  integration methods. This means that you can either choose
@@ -37,12 +37,12 @@
 	  you define properly a new finite element method on the
 	  reference element you will be able to use it with any
 	  geometric transformation.</p>
-	  <p>Getfem++ can handle FEMs of
+	  <p>GetFEM++ can handle FEMs of
 	  any dimension, and this dimension is not fixed at
 	  compile-time (it is not a template parameter). 
 </p>
 <p>On the other
-	  side Getfem++ is not parallelized and does not have mesh
+	  side GetFEM++ is not parallelized and does not have mesh
 	  generations tools.
 	  </p>
 	</li>

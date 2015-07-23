@@ -19,7 +19,7 @@
 			   http://www.cs.berkeley.edu/~demmel/SuperLU.html</a>.
     </li>
 </ul>
-<h1>Some project using Getfem++ and/or Gmm++</h1>
+<h1>Some project using GetFEM++ and/or Gmm++</h1>
 <ul>
 <li> <p> IceTools: an open source model for glaciers </p> 
 <a href="http://icetools.sourceforge.net"> 
@@ -31,7 +31,7 @@
     </li>
     </ul>
 
-<h1>Some publications based on Getfem++ and/or Gmm++</h1>
+<h1>Some publications based on GetFEM++ and/or Gmm++</h1>
 <ul>
     <li> <p> A. Andreykiv, D. J. Rixen, Numerical modelling of electromechanical coupling using fictitious
 domain and level set methods. Int. J. Numer. Meth. Engng 2009. </p> <a href="http://www3.interscience.wiley.com/journal/122440964/abstract"> http://www3.interscience.wiley.com/journal/122440964/abstract</a>

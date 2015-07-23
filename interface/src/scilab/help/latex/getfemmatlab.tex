@@ -230,7 +230,7 @@ colorlinks=true,pdfauthor={Julien Pommier},urlcolor=blue]{hyperref}
 \end{center}
 
 % \begin{abstract}
-% Basic user documentation for GETFEM++.
+% Basic user documentation for GetFEM++.
 % \end{abstract}
 
 
@@ -391,15 +391,15 @@ The process of construction of a global linear system from integrals of basis
 functions on each convex is the \textbf{assembly}\index{assembly}.
 
 A mesh, with a set of FEM attached to its
-convexes is called a \textbf{mesh\_fem} object in Getfem++.
+convexes is called a \textbf{mesh\_fem} object in GetFEM++.
 
 A mesh, with a set of integration methods attached to its
-convexes is called a \textbf{mesh\_im} object in Getfem++ \NEW.
+convexes is called a \textbf{mesh\_im} object in GetFEM++ \NEW.
 
 A \tmf can be used to approximate scalar fields (heat, pression, ..),
 or vector fields (displacement, electric field, ..). A \tmim will be
 used to perform numerical integrations on these fields.  Most of the
-finite elements implemented in Getfem++ are scalar (however, TR0 and
+finite elements implemented in GetFEM++ are scalar (however, TR0 and
 edges elements are also available). Of course, these scalar FEMs can
 be used to approximate each component of a vector field. This is done
 by setting the \textbf{Qdim} of the \tmf to the dimension of the

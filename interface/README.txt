@@ -29,10 +29,10 @@ and it's finished. You can place these two files anywhere, just add the path to 
 
 
 -----------------------
-HOW TO INSTALL GETFEM++/Matlab toolbox
+HOW TO INSTALL GetFEM++/Matlab toolbox
 -----------------------
 
-The installation of the Getfem++ Matlab toolbox requires :
+The installation of the GetFEM++ Matlab toolbox requires :
 
 - perl installed in /usr/bin/perl
 

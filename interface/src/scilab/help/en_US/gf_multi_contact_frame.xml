@@ -11,7 +11,7 @@
     <refname>gf_multi_contact_frame</refname>
     <refpurpose>  This object serves for describing a multi-contact situation between
   potentially several deformable bodies and eventually some rigid obstacles.
-  (for more details see the Getfem++ user documentation).
+  (for more details see the GetFEM++ user documentation).
 </refpurpose>
   </refnamediv>
 
@@ -27,7 +27,7 @@
 
     <para>  This object serves for describing a multi-contact situation between
   potentially several deformable bodies and eventually some rigid obstacles.
-  (for more details see the Getfem++ user documentation).
+  (for more details see the GetFEM++ user documentation).
 </para>
   </refsection>
 

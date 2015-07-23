@@ -984,7 +984,7 @@ status open
 
 \begin_layout Plain Layout
 
-% Basic user documentation for GETFEM++.
+% Basic user documentation for GetFEM++.
 \end_layout
 
 \begin_layout Plain Layout
@@ -2116,7 +2116,7 @@ A mesh, with a set of FEM attached to its convexes is called a
 \series bold
 mesh_fem
 \series default
- object in Getfem++.
+ object in GetFEM++.
 \end_layout
 
 \begin_layout Standard
@@ -2125,7 +2125,7 @@ A mesh, with a set of integration methods attached to its convexes is called
 \series bold
 mesh_im
 \series default
- object in Getfem++ 
+ object in GetFEM++ 
 \begin_inset ERT
 status collapsed
 
@@ -2171,7 +2171,7 @@ tmim
 \end_inset
 
  will be used to perform numerical integrations on these fields.
- Most of the finite elements implemented in Getfem++ are scalar (however,
+ Most of the finite elements implemented in GetFEM++ are scalar (however,
  TR0 and edges elements are also available).
  Of course, these scalar FEMs can be used to approximate each component
  of a vector field.

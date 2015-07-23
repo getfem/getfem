@@ -67,15 +67,15 @@
     of basis functions on each convex is the assembly.</para>
 
     <para>A mesh, with a set of FEM attached to its convexes is called a
-    mesh_fem object in Getfem++.</para>
+    mesh_fem object in GetFEM++.</para>
 
     <para>A mesh, with a set of integration methods attached to its convexes
-    is called a mesh_im object in Getfem++ (New in getfem 2.0).</para>
+    is called a mesh_im object in GetFEM++ (New in getfem 2.0).</para>
 
     <para>A mesh_fem can be used to approximate scalar fields (heat, pression,
     ..), or vector fields (displacement, electric field, ..). A mesh_im will
     be used to perform numerical integrations on these fields. Most of the
-    finite elements implemented in Getfem++ are scalar (however, TR0 and edges
+    finite elements implemented in GetFEM++ are scalar (however, TR0 and edges
     elements are also available). Of course, these scalar FEMs can be used to
     approximate each component of a vector field. This is done by setting the
     Qdim of the mesh_fem to the dimension of the vector field (i.e. Qdim=1

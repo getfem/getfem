@@ -26,7 +26,7 @@
    square, and is compared to the analytical solution.
 
    This program is used to check that getfem++ is working. This is
-   also a good example of use of Getfem++. This program  does not use the
+   also a good example of use of GetFEM++. This program  does not use the
    model bricks intentionally in order to serve as an exemple of solving
    a pde directly with the assembly procedures.
 */
@@ -39,7 +39,7 @@
 using std::endl; using std::cout; using std::cerr;
 using std::ends; using std::cin;
 
-/* some Getfem++ types that we will be using */
+/* some GetFEM++ types that we will be using */
 using bgeot::base_small_vector; /* special class for small (dim<16) vectors */
 using bgeot::base_node; /* geometrical nodes (derived from base_small_vector)*/
 using bgeot::scalar_type; /* = double */

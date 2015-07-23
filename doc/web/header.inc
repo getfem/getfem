@@ -13,9 +13,9 @@
 	      <a href="news.html">What's New</a>
 	    </li>
 	  </ul>
-	  <h3>Getfem++</h3>
+	  <h3>GetFEM++</h3>
 	  <ul>
-	    <li<?php if ($thisPage=="Getfem++ HomePage") echo " id=\"currentpage\""; ?>>
+	    <li<?php if ($thisPage=="GetFEM++ HomePage") echo " id=\"currentpage\""; ?>>
 	      <a href="getfem_intro.html">Introduction</a>
 	    </li>
 	    <li<?php if ($thisPage=="Screenshots") echo " id=\"currentpage\""; ?>>
@@ -70,7 +70,7 @@
 	      <a href="doc.html">Documentation</a>
 	      <?php if ($thisPage=="Documentation") : ?>
 	      <ul class="menusub">
-		<li><a href="http://download.gna.org/getfem/doc/getfemuser/getfemuser.html">Getfem++ user guide</a></li>
+		<li><a href="http://download.gna.org/getfem/doc/getfemuser/getfemuser.html">GetFEM++ user guide</a></li>
 		<li><a href="http://download.gna.org/getfem/doc/getfem_matlab/gfm.html">Matlab interface</a></li>
 		<li><a href="http://download.gna.org/getfem/doc/getfem_python_reference.html">Python interface</a></li>
 		<li><a href="http://download.gna.org/getfem/doc/gmmuser/gmmuser.html">Gmm++ user guide</a></li>

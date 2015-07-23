@@ -30,7 +30,7 @@ using namespace getfemint;
 /*@GFDOC
   This object serves for storing parameters and data used in numerical
   continuation of solution branches of models (for more details about
-  continuation see the Getfem++ user documentation).
+  continuation see the GetFEM++ user documentation).
 @*/
 
 void gf_cont_struct(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {

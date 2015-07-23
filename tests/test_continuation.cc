@@ -27,7 +27,7 @@
    -u'' +  u = lambda * exp(u) in (0, 1), u'(0) = u'(1) = 0.
 
    This program is used to check that getfem++ is working. This is also 
-   a good example of use of Getfem++.
+   a good example of use of GetFEM++.
 */
 
 #include "getfem/getfem_regular_meshes.h"
@@ -38,7 +38,7 @@
 using std::endl; using std::cout; using std::cerr;
 using std::ends; using std::cin;
 
-/* some Getfem++ types that we will be using */
+/* some GetFEM++ types that we will be using */
 using bgeot::scalar_type; /* = double */
 using bgeot::size_type;   /* = unsigned long */
 

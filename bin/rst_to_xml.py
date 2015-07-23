@@ -3,7 +3,7 @@
 #
 # Copyright (C) 2010-2010 Yves Renard.
 #                                                       
-# This file is a part of GETFEM++                                         
+# This file is a part of GetFEM++                                         
 #                                                                         
 # GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
 # under  the  terms  of the  GNU  Lesser General Public License as published

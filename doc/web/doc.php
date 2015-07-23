@@ -14,7 +14,7 @@
 	  Basic User documentation<br> <a href="http://download.gna.org/getfem/doc/getfemuser.pdf">[pdf]</a> <a href="http://download.gna.org/getfem/doc/getfemuser/getfemuser.html">[html]</a>
 	</td>
 	<td width="70%">
-	  This is the core Getfem++ documentation. It documents most of Getfem++ features, and shows a number of examples.
+	  This is the core GetFEM++ documentation. It documents most of GetFEM++ features, and shows a number of examples.
 	</td>
       </tr>      
       <tr>
@@ -59,7 +59,7 @@
       </tr>
       <tr>
 	<td class="docptr">
-	  Getfem++ project documentation<br> <a href="http://download.gna.org/getfem/doc/getfem_project.pdf">[pdf]</a> <a href="http://download.gna.org/getfem/doc/getfem_project/getfem_project.html">[html]</a>
+	  GetFEM++ project documentation<br> <a href="http://download.gna.org/getfem/doc/getfem_project.pdf">[pdf]</a> <a href="http://download.gna.org/getfem/doc/getfem_project/getfem_project.html">[html]</a>
 	</td>
 	<td>
 	  Description of the project including the present state, the perspectives and an exhaustive list of finite element and integration methods implemented in Getfem.
@@ -85,7 +85,7 @@
       A presentation (in french) of getfem++ <a href="http://download.gna.org/getfem/doc/presentation_2003.pdf">presentation_2003.pdf</a>.
     </p>
     <p>
-      A Getfem++ poster <a href="http://download.gna.org/getfem/doc/poster_getfem.pdf">poster_getfem.pdf (in french)</a>, <a href="http://download.gna.org/getfem/doc/poster_english.pdf">poster_getfem.pdf (in english)</a>.
+      A GetFEM++ poster <a href="http://download.gna.org/getfem/doc/poster_getfem.pdf">poster_getfem.pdf (in french)</a>, <a href="http://download.gna.org/getfem/doc/poster_english.pdf">poster_getfem.pdf (in english)</a>.
     </p>
   </div>
 <?php include("footer.inc") ?>

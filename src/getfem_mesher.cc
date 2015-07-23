@@ -1439,7 +1439,7 @@ namespace getfem {
   void delaunay(const std::vector<base_node> &,
 		gmm::dense_matrix<size_type>&) {
     GMM_ASSERT1(false, "Qhull header files not installed. "
-		"Install qhull library and reinstall Getfem++ library.");
+		"Install qhull library and reinstall GetFEM++ library.");
   }
 # else
 
