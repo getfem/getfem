@@ -349,11 +349,9 @@ The last example is the assembly of the stiffness matrix of an order four proble
 with ``D`` the flexion modulus and ``nu`` the Poisson ratio.
 
 
-The detailed syntax of the assembly language 
---------------------------------------------
 
 The tensors
-***********
+-----------
 
 Basically, what is manipulated in the generic assembly language are tensors. This can be order 0 tensors in scalar expressions (for instance in ``3+sin(pi/2)``), order 1 tensors in vector expressions (such as ``X.X`` or ``Grad_u`` if u is a scalar variable), order 2 tensors for matrix expressions and so on. For efficiency reasons, the language manipulates tensors up to order six. The language could be easily extended to support tensors of order greater than six but it may lead to inefficient computations. When an expression contains tests functions (as in ``Trace(Grad_Test_u)`` for a vector field ``u``), the computation is done for each test functions, which means that the tensor implicitly have a supplementary component. This means that, implicitly, the maximal order of manipulated tensors are in fact six (in ``Grad_Test_u:Grad_Test2_u`` there are two components implicitly added for first and second order test functions).
 
@@ -361,36 +359,36 @@ Order four tensors are necessary for instance to express elasticity tensors or i
 
 
 The variables
-*************
+-------------
 
 A list of variables should be given to the ``ga_worspace`` object (directly or through a model object). The variables are described on a finite element method or can be a simple vector of unknowns. This means that it is possible also to couple algebraic equations to pde ones on a model. A variable name should begin by a letter (case sensitive) or an underscore followed by a letter, a number or an underscore. Some name are reserved, this is the case of operators names (``Det``, ``Norm``, ``Trace``, ``Deviator``, ...) and thus cannot be used as variable names. The name should not begin by ``Test_``, ``Test2_``, ``Grad_``, ``Div_`` or ``Hess_``. The variable name should not correspond to a predefined function (``sin``, ``cos``, ``acos`` ...) and to constants (``pi``, ``Normal``, ``X``, ``Id`` ...).
 
 The constants or data
-*********************
+---------------------
 
 A list of constants could also be given to the ``ga_worspace`` object. The rule are the same as for the variables but no test function can be associated to constants and there is no symbolic differentiation with respect to constants. Scalar constants are often defined to represent the coefficients which intervene in constitutive laws. Additionally, constants can be some scalar/vector/tensor fields defined on integration points via a ``im_data`` object (for instance for some implementation of the approximation of constitutive laws such as plasticity).
 
 
 Test functions
-**************
+--------------
 
 Each variable is associated with first order and second order test functions.
 The first order test function are used in the weak formulation (which derive form the potential equation if it exists) and the second order test functions are used in the tangent system. For a variable ``u`` the associated tests functions are ``Test_u`` and ``Test2_u``. The assembly string have to be linear with respect to tests functions. As a result of the presence of the term ``Test_u`` on a assembly string, the expression will be evaluated for each shape function of the finite element corresponding to the variable ``u``. On a given element, if the finite element have ``N`` shape functions ans if ``u`` is a scalar field, the value of ``Test_u`` will be the value of each shape function on the current point. So ``Test_u`` return if face a vector of ``N`` values. But of course, this is implicit in the language. So one do not have to care about this.
 
 
 Gradient
-********
+--------
 
 The gradient of a variable or of test functions are identified by ``Grad_`` followed by the variable name or by ``Test_`` followed itself by the variable name. This is available for fem variables (or constants) only. For instance ``Grad_u``, ``Grad_v``, ``Grad_p``, ``Grad_pressure``, ``Grad_electric_field`` and ``Grad_Test_u``, ``Grad_Test_v``, ``Grad_Test_p``, ``Grad_Test_pressure``, ``Grad_Test_electric_field``. The gradient is either a vector for scalar variables or a matrix for vector field variables. In the latter case, the first index corresponds to the vector field dimension and the second one to the index of the partial derivative.  ``Div_u`` and ``Div_Test_u`` are some optimized shortcuts for ``Trace(Grad_u)`` and ``Trace(Grad_Test_u)``, respectively.
 
 Hessian
-*******
+-------
 
 Similarly, the Hessian of a variable or of test functions are identified by ``Hess_`` followed by the variable name or by ``Test_`` followed itself by the variable name. This is available for fem variables only. For instance ``Hess_u``, ``Hess_v``, ``Hess_p``, ``Hess_pressure``, ``Hess_electric_field`` and ``Hess_Test_u``, ``Hess_Test_v``, ``Hess_Test_p``, ``Hess_Test_pressure``, ``Hess_Test_electric_field``. The Hessian is either a matrix for scalar variables or a third order tensor for vector field variables. In the latter case, the first index corresponds to the vector field dimension and the two remaining to the indices of partial derivatives.
 
 
 Predefined scalar functions
-***************************
+---------------------------
 
 A certain number of predefined scalar functions can be used. The exhaustive list is the following and for most of them are equivalent to the corresponding C function:
 
@@ -413,7 +411,7 @@ A scalar function can be applied to a scalar expression, but also to a tensor on
 
 
 User defined scalar functions
-*****************************
+-----------------------------
 
 It is possible to add a scalar function to the already predefined ones. Note that the generic assembly consider only scalar function with one or two parameters. In order to add a scalar function to the generic assembly, one has to call::
 
@@ -438,13 +436,13 @@ cancel the definition of an already define function (it has no action if the fun
 
 
 Derivatives of defined scalar functions
-***************************************
+---------------------------------------
 
 It is possible to refer directly to the derivative of defined functions by adding the prefix ``Derivative_`` to the function name. For instance, ``Derivative_sin(t)`` will be equivalent to ``cos(t)``. For two arguments functions like ``pow(t,u)`` one can refer to the derivative with respect to the second argument with the prefix  ``Derivative_2_`` before the function name.
 
 
 Binary operations
-*****************
+-----------------
 
 A certain number of binary operations between tensors are available:
 
@@ -467,7 +465,7 @@ A certain number of binary operations between tensors are available:
 
 
 Unary operators
-***************
+---------------
  
   - ``-`` the unary minus operator: change the sign of an expression.
   
@@ -475,41 +473,41 @@ Unary operators
   
 
 Parentheses
-***********
+-----------
 
 Parentheses can be used in a standard way to change the operation order. If no parentheses are indicated, the usually priority order are used. The operations ``+``  and ``-`` have the lower priority (with no distinction), then ``*``, ``/``, ``:``, ``.``, ``.*``, ``./``, ``@`` with no distinction and the higher priority is reserved for the unary operators ``-`` and ``'``.
 
 
 Explicit vectors
-****************
+----------------
 
 The assembly language allows to manipulate explicit vectors (i.e. order 1 tensors) with the notation ``[a;b;c;d;e]``, i.e. an arbitrary number of components separated by a semicolon, the whole vector beginning with a right bracket and ended by a left bracket. The components can be some numeric constants, some valid expressions and may contains some tests functions. In the latter case, the vector have to be homogeneous with respect to the tests functions. This means that a construction of the type ``[Test_u; Test_v]`` is not allowed. A valid example, with ``u`` a scalar field variable is ``[5*Grad_Test_u(2), 2*Grad_Test_u(1)]``. 
 
 
 Explicit matrices
-*****************
+-----------------
 
 Similarly to explicit vectors, it is possible to manipulate explicit matrices (i.e. order 2 tensors) with the notation ``[a,b;c,d]``,  i.e. an arbitrary number of lines separated by a semicolon, each line having the same number of components separated by a comma.  The components can be some numeric constants, some valid expressions and may contains some tests functions. For instance ``[11,12,13;21,22,23]`` is a 2x3 matrix.
 
 
 
 Explicit order four tensors
-***************************
+---------------------------
 
 Explicit order four tensors are also allowed. To this aim, the two supplementary dimensions compared to matrices are separated by  ``,,`` and ``;;``. For instance ``[1,1;1,2,,1,1;1,2;;1,1;1,2,,1,1;1,2]`` is a 2x2x2x2 valid tensor and ``[1,1;1,1,,1,1;1,1;;2,2;2,2,,2,2;2,2;;3,3;3,3,,3,3;3,3]`` is a 3x2x2x2 tensor. Note that constant fourth order tensors can also be obtained by the tensor product of two constant matrices or by the Reshape instruction. 
 
 Explicit order five or six tensors
-**********************************
+----------------------------------
 
 Explicit order five or six tensors are not directly supported by the assembly language. However, they can be easily obtained via the Reshape instruction.
 
 
 Access to tensor components
-***************************
+---------------------------
 The access to a component of a vector/matrix/tensor can be done by following a term by a left parenthesis, the list of components and a right parenthesis. For instance ``[1,1,2](3)`` is correct and is returning ``2`` as expected. Note that indices are assumed to begin by 1 (even in C++ and with the python interface). The expressions ``[1,1;2,3](2,2)`` and ``Grad_u(2,2)`` are also correct provided that ``u`` is a vector valued declared variable. Note that the components can be the result of a constant computation. For instance ``[1,1;2,3](1+1,a)`` is correct provided that ``a`` is a declared constant but not if it is declared as a variable. A colon can replace the value of an index in a Matlab like syntax for instance to access to a line or a column of a matrix. ``[1,1;2,3](1,:)`` denotes the first line of the matrix ``[1,1;2,3]``. It can also be used for a fourth order tensor.
 
 Constant expressions
-********************
+--------------------
 
   - Floating points with standards notations (for instance ``3``, ``1.456``, ``1E-6``)
   - ``pi``: the constant Pi. 
@@ -519,7 +517,7 @@ Constant expressions
   - ``qdims(u)``: the dimensions of the variable ``u`` (i.e. the size for fixed size variables and the vector of dimensions of the vector/tensor field for f.e.m. variables)
 
 Special expressions linked to the current position 
-**************************************************
+--------------------------------------------------
 
   - ``X`` is the current coordinate on the real element (i.e. the position on the mesh of the current Gauss point on which the expression is evaluated), ``X(i)`` is its ith component. For instance ``sin(X(1)+X(2))`` is a valid expression on a mesh of dimension greater or equal to two. 
 
@@ -534,27 +532,27 @@ Special expressions linked to the current position
 
 
 Print command
-*************
+-------------
 
 For debugging purpose, the command ``Print(a)`` is printing the tensor ``a`` and pass it unchanged. For instance  ``Grad_u.Print(Grad_Test_u)`` will have the same effect as ``Grad_u.Grad_Test_u`` but printing the tensor ``Grad_Test_u`` for each Gauss point of each element. Note that constant terms are printed only once at the beginning of the assembly. Note also that the expression could be derived so that the derivative of the term may be printed instead of the term itself.
 
 Reshape a tensor
-****************
+----------------
 
 The command ``Reshape(t, i, j, ...)`` reshapes the tensor ``t`` (which could be an expression). The only constraint is that the number of components should be compatible. For instance  ``Reshape(Grad_u, 1, meshdim)`` is equivalent to ``Grad_u'`` for u a scalar variable. Note that the order of the components remain unchanged and are classically stored in Fortran order for compatibility with Blas/Lapack.
 
 Trace operator
-**************
+--------------
 
 The command ``Trace(m)`` gives the trace (sum of diagonal components) of a square matrix ``m``. Since it is a linear operator, it can be applied on test functions.
 
 Deviator operator
-*****************
+-----------------
 
 The command ``Deviator(m)`` gives the deviator of a square matrix ``m``. It is equivalent to ``m - Trace(m)*Id(meshdim)/meshdim``. Since it is a linear operator, it can be applied on test functions. 
 
 Nonlinear operators
-*******************
+-------------------
 
 The assembly language provide some predefined nonlinear operator. Each nonlinear operator is available together with its first and second derivatives. Nonlinear operator can be applied to an expression as long as this expression do not contain some test functions.
 
@@ -581,7 +579,7 @@ The assembly language provide some predefined nonlinear operator. Each nonlinear
 .. _ud-gasm-high_macros:
 
 Macro definition
-****************
+----------------
 
 A macro definition can be added to the assembly language by declaring it to the ga_workspace or model object by::
 
@@ -602,7 +600,7 @@ The macros are expanded inline at the semantic analysis phase. At the compilatio
 .. _ud-gasm-high-transf:
 
 Interpolate transformations
-***************************
+---------------------------
 The ``Interpolate`` operation allows to compute integrals between quantities which are either defined on different part of a mesh or even on different meshes. It is a powerful operation which allows to compute mortar matrices or take into account periodic conditions. However, one have to remember that it is based on interpolation which may have a non-negligible computational cost.
 
 In order to use this functionality, the user have first to declare to the workspace or to the model object an interpolate transformation which described the map between the current integration point and the point lying on the same mesh or on another mesh.
@@ -676,7 +674,7 @@ In that case, the equality will only be prescribed in the part of the domain whe
 .. _ud-gasm-high-elem-trans:
 
 Elementary transformations
-**************************
+--------------------------
 
 An elementary transformation is a linear transformation of the shape
 functions given by a matrix which may depend on the element which is applied
