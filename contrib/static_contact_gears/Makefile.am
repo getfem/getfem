@@ -2,7 +2,12 @@
 
 check_PROGRAMS = static_contact_gears static_contact_gears_u1_u2
 
-CLEANFILES = 
+CLEANFILES = 						 \
+	static_contact_gears.U static_contact_gears.vtk  \
+	static_contact_gears.RHS static_contact_gears.VM \
+	static_contact_gears.mfd static_contact_gears.mf \
+	static_contact_gears.mesh
+
 
 static_contact_gears_SOURCES = static_contact_gears.cc
 static_contact_gears_u1_u2_SOURCES = static_contact_gears_u1_u2.cc
@@ -26,6 +31,7 @@ EXTRA_DIST = \
 	static_contact_planetary_5.msh \
 	static_contact_planetary.py \
 	static_contact_gears.param \
+	static_contact_gears.pl \
 	static_contact_gears_2D.param \
 	static_contact_gears_2teeth.param
 

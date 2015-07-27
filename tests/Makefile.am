@@ -50,14 +50,12 @@ CLEANFILES = \
 	elasto_static.mesh test_mesh.mesh toto.mat test_mat_elem.mesh       \
 	helmholtz.vtk plate.mesh plate.vtk nonlinear_elastostatic.mesh      \
 	nonlinear_elastostatic.mf nonlinear_elastostatic.mfd                \
-	nonlinear_elastostatic.dx nonlinear_elastostatic.vtk                \
-	plasticity.mesh plasticity.U plasticity.sigmabar plasticity.vtk     \
-	plasticity.meshfem plasticity.coef elasto_static_err.vtk            \
+	nonlinear_elastostatic.dx plasticity.mesh plasticity.U              \
+        plasticity.sigmabar plasticity.meshfem plasticity.coef              \
 	ii_files/* auto_gmm* dyn*.txt                                       \
-	*.sl time FN0              \
+	*.sl time FN0 *.vtk             \
 	nonlinear_elastostatic.U crack.mesh cut.mesh nonlinear_membrane.mfd \
 	nonlinear_membrane.mesh test_range_basis.mesh nonlinear_membrane.mf \
-	nonlinear_membrane.vtk feminterpolation.vtk circleslice.vtk         \
 	Q2_incomplete.pos Q2_incomplete.msh
 
 dynamic_array_SOURCES = dynamic_array.cc 

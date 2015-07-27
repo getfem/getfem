@@ -875,7 +875,7 @@ elif (option == 'matlab-doc'):
   print ''
   print '=====================  =================================================='
   print '`int`                  integer value'
-  print '`hobj`                 a handle for any getfem++ object'
+  print '`hobj`                 a handle for any GetFEM++ object'
   print '`scalar`               scalar value'
   print '`string`               string'
   print '`ivec`                 vector of integer values'
@@ -883,8 +883,8 @@ elif (option == 'matlab-doc'):
   print '`imat`                 matrix of integer values'
   print '`mat`                  matrix'
   print '`spmat`                sparse matrix (both matlab native sparse'
-  print '                       matrices, and getfem sparse matrices)'
-  print '`precond`              getfem preconditioner object'
+  print '                       matrices, and GetFEM sparse matrices)'
+  print '`precond`              GetFEM preconditioner object'
   print '`mesh mesh`            object descriptor (or gfMesh object)'
   print '`mesh_fem`             mesh fem object descriptor (or gfMeshFem object)'
   print '`mesh_im`              mesh im object descriptor (or gfMeshIm object)'
@@ -1044,7 +1044,7 @@ elif (option == 'scilab-com'):
   mfile.write('      <varlistentry>\n')
   mfile.write('        <term>hobj</term>\n')
   mfile.write('        <listitem>\n')
-  mfile.write('          <para>a handle for any getfem++ object</para>\n')
+  mfile.write('          <para>a handle for any GetFEM++ object</para>\n')
   mfile.write('        </listitem>\n')
   mfile.write('      </varlistentry>\n\n')
 
@@ -1093,14 +1093,14 @@ elif (option == 'scilab-com'):
   mfile.write('      <varlistentry>\n')
   mfile.write('        <term>spmat</term>\n')
   mfile.write('        <listitem>\n')
-  mfile.write('          <para>sparse matrix (both matlab native sparse matrices, and getfem sparse matrices)</para>\n')
+  mfile.write('          <para>sparse matrix (both Matlab native sparse matrices, and GetFEM sparse matrices)</para>\n')
   mfile.write('        </listitem>\n')
   mfile.write('      </varlistentry>\n\n')
 
   mfile.write('      <varlistentry>\n')
   mfile.write('        <term>precond</term>\n')
   mfile.write('        <listitem>\n')
-  mfile.write('          <para>getfem preconditioner object</para>\n')
+  mfile.write('          <para>GetFEM preconditioner object</para>\n')
   mfile.write('        </listitem>\n')
   mfile.write('      </varlistentry>\n\n')
 
@@ -1377,7 +1377,7 @@ elif (option == 'scilab-doc-rst'):
   print ''
   print '=====================  =================================================='
   print '`int`                  integer value'
-  print '`hobj`                 a handle for any getfem++ object'
+  print '`hobj`                 a handle for any GetFEM++ object'
   print '`scalar`               scalar value'
   print '`string`               string'
   print '`ivec`                 vector of integer values'
@@ -1385,8 +1385,8 @@ elif (option == 'scilab-doc-rst'):
   print '`imat`                 matrix of integer values'
   print '`mat`                  matrix'
   print '`spmat`                sparse matrix (both matlab native sparse'
-  print '                       matrices, and getfem sparse matrices)'
-  print '`precond`              getfem preconditioner object'
+  print '                       matrices, and GetFEM sparse matrices)'
+  print '`precond`              GetFEM preconditioner object'
   print '`mesh mesh`            object descriptor (or gfMesh object)'
   print '`mesh_fem`             mesh fem object descriptor (or gfMeshFem object)'
   print '`mesh_im`              mesh im object descriptor (or gfMeshIm object)'
@@ -1564,7 +1564,7 @@ obj_count = {}
 getfem('workspace', 'clear all')
 
 def generic_constructor(self, clname, *args):
-    \"\"\"Internal function -- acts as a constructor for all getfem objects.\"\"\"
+    \"\"\"Internal function -- acts as a constructor for all GetFEM objects.\"\"\"
     #print 'generic_constructor.'+clname+'('+str(args)+')'
     if (len(args)==1 and type(args[0]) is GetfemObject):
       if hasattr(self,'id'):
@@ -1589,7 +1589,7 @@ def generic_constructor(self, clname, *args):
     obj_count[self.id] = obj_count.get(self.id,0)+1
 
 def generic_destructor(self, destructible=True):
-    \"\"\"Internal function -- acts as a destructor for all getfem objects.\"\"\"
+    \"\"\"Internal function -- acts as a destructor for all GetFEM objects.\"\"\"
     if (not hasattr(self,'id')):
       return
     #print \"Mesh.__del__       \",self.id,'count=',obj_count[self.id]
@@ -1850,7 +1850,7 @@ def generic_destructor(self, destructible=True):
 
 
   print '\ndef memstats():'
-  print '  print "*** Getfem view of the workspace:"'
+  print '  print "*** GetFEM view of the workspace:"'
   print '  getfem(\'workspace\',\'stats\')'
   print '  print "*** Python view of the workspace:"'
   print '  for id,c in obj_count.iteritems():'
