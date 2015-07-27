@@ -25,7 +25,7 @@ Requirements
   packages to be installed (package ``python-numpy`` and ``python-scipy``
   in debian
   distribution). In case of troubles with a non-|gnu| compiler,
-  gcc/g++ (>= 4.1) should be a safe solution (package
+  gcc/g++ (>= 4.8) should be a safe solution (package
   ``build-essential`` in debian distribution).
 
 * If you want mesh generation, it requires the package qhull

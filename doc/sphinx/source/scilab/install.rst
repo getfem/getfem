@@ -11,7 +11,7 @@ Installation
 
 The installation of the |sci| |gf| toolbox can be somewhat tricky, since it combines a
 C++ compiler, libraries and |sci| interaction. In case of troubles with a
-non-GNU compiler, gcc/g++ (>= 4.1) should be a safe solution.
+non-GNU compiler, gcc/g++ (>= 4.8) should be a safe solution.
 
 .. caution::
 
