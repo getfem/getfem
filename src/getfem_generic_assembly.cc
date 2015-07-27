@@ -4629,8 +4629,10 @@ namespace getfem {
   }
 
   static size_type ref_elt_dim_of_mesh(const mesh &m) {
-    GMM_ASSERT1(m.convex_index().card(), "Mesh with no elements");
-    return m.trans_of_convex(m.convex_index().first())->dim();
+    if (m.convex_index().card())
+      return m.trans_of_convex(m.convex_index().first())->dim();
+    else
+      return size_type(0);
   }
 
   void ga_workspace::add_tree(ga_tree &tree, const mesh &m,

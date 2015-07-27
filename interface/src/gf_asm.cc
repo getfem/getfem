@@ -510,9 +510,18 @@ static void do_high_level_generic_assembly(mexargs_in& in, mexargs_out& out) {
 
 static void do_expression_analysis(mexargs_in& in) {
 
-  getfem::mesh *mesh = in.pop().to_mesh();
   std::string expr = in.pop().to_string();
-  size_type der_order = in.pop().to_integer(0, 2);
+
+  bool with_mesh = in.remaining() && in.front().is_mesh();
+  bool with_mim = !with_mesh && in.remaining() && in.front().is_mesh_im();
+
+  getfem::mesh dummy_mesh;
+  const getfem::mesh_im dummy_mim(with_mesh ? *(in.pop().to_mesh()) : dummy_mesh);
+  const getfem::mesh_im &mim = with_mim ? *(in.pop().to_const_mesh_im())
+                                        : dummy_mim;
+
+  size_type der_order = in.remaining() && in.front().is_integer()
+                      ? in.pop().to_integer(0, 2) : 0;
   getfem::ga_workspace workspace1;
   getfem::model dummy_md;
   bool with_model = in.remaining() && in.front().is_model();
@@ -528,12 +537,14 @@ static void do_expression_analysis(mexargs_in& in) {
 
   while (in.remaining()) {
     std::string varname = in.pop().to_string();
+    GMM_ASSERT1(in.remaining() && in.front().is_integer(),
+                "Expected variable or data flag after variable " << varname)
     bool is_cte(in.pop().to_integer() == 0);
     const getfem::mesh_fem *mf(0);
     const getfem::im_data *mimd(0);
-    if (in.front().is_mesh_fem())
+    if (in.remaining() && in.front().is_mesh_fem())
       mf = in.pop().to_const_mesh_fem();
-    else if (in.front().is_mesh_im_data())
+    else if (in.remaining() && in.front().is_mesh_im_data())
       mimd = in.pop().to_const_mesh_im_data();
     GMM_ASSERT1(varnames.count(varname) == 0,
                 "The same variable/constant name is repeated twice: "
@@ -558,11 +569,8 @@ static void do_expression_analysis(mexargs_in& in) {
     }
   }
 
-  getfem::mesh_im dummy_mim(*mesh);
-
-  workspace.add_expression(expr, dummy_mim,
-                                 getfem::ga_workspace::dummy_region,
-                                 der_order);
+  workspace.add_expression(expr, mim, getfem::ga_workspace::dummy_region,
+                           der_order);
   workspace.print(cout);
 }
 
@@ -1179,11 +1187,11 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        );
 
 
-    /*@FUNC ('expression analysis', @tm mesh, @str expression [, der_order] [, @tmodel model] [, @str varname, @int is_variable[, {@tmf mf, @tmimd mimd}], ...])
+    /*@FUNC ('expression analysis', @str expression [, {@tm mesh | @tmim mim}] [, der_order] [, @tmodel model] [, @str varname, @int is_variable[, {@tmf mf | @tmimd mimd}], ...])
       Analyse a high-level generic assembly expression and print
       information about the provided expression.@*/
     sub_command
-      ("expression analysis", 3, -1, 0, 0,
+      ("expression analysis", 1, -1, 0, 0,
        do_expression_analysis(in);
        );
 
