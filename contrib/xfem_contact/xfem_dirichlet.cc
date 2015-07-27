@@ -409,7 +409,11 @@ void asm_patch_vector
 template<class MAT>
 void asm_stabilization_patch_term
 (const MAT &RM_, const getfem::mesh &mesh, const getfem::mesh_im &mimbounddown, const getfem::mesh_fem &mf_mult,
- scalar_type ratio_size, scalar_type h ){
+ scalar_type ratio_size, scalar_type
+#ifdef GETFEM_HAVE_METIS
+h
+#endif
+){
   MAT &M1 = const_cast<MAT &>(RM_);
   
   /****************************************************/

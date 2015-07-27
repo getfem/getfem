@@ -36,7 +36,7 @@
  */
 
 
-#ifndef GETFEM_GENERIC_ASSEMBLY_H__ 
+#ifndef GETFEM_GENERIC_ASSEMBLY_H__
 #define GETFEM_GENERIC_ASSEMBLY_H__
 
 #include <map>
@@ -70,7 +70,7 @@ namespace getfem {
                              bgeot::multi_index &sizes) const = 0;
 
     virtual void value(const arg_list &args, base_tensor &result) const = 0;
-    
+
     virtual void derivative(const arg_list &args, size_type i,
                             base_tensor &result) const = 0;
 
@@ -83,7 +83,7 @@ namespace getfem {
   struct ga_predef_operator_tab {
     typedef std::map<std::string, ga_nonlinear_operator*> T;
     std::map<std::string, ga_nonlinear_operator*> tab;
-    
+
    void add_method(const std::string &name, ga_nonlinear_operator *pt)
     { tab[name] = pt; }
     ~ga_predef_operator_tab() {
@@ -95,7 +95,7 @@ namespace getfem {
   //=========================================================================
   // For user predefined scalar functions.
   //=========================================================================
-  
+
   typedef scalar_type (*pscalar_func_onearg)(scalar_type);
   typedef scalar_type (*pscalar_func_twoargs)(scalar_type, scalar_type);
 
@@ -107,7 +107,7 @@ namespace getfem {
   void ga_define_function(const std::string name, pscalar_func_twoargs f2,
                           const std::string &der1="",
                           const std::string &der2="");
- 
+
   void ga_undefine_function(const std::string name);
   bool ga_function_exists(const std::string name);
 
@@ -140,12 +140,12 @@ namespace getfem {
         return q;
       }
 
-      var_description(bool is_var, bool is_fem, 
+      var_description(bool is_var, bool is_fem,
                       const mesh_fem *mmf, gmm::sub_interval I_,
                       const model_real_plain_vector *v, const im_data *imd_,
                       size_type Q)
         : is_variable(is_var), is_fem_dofs(is_fem), mf(mmf), I(I_), V(v),
-          imd(imd_), qdims(1) { 
+          imd(imd_), qdims(1) {
         GMM_ASSERT1(Q > 0, "Bad dimension");
         qdims[0] = Q;
       }
@@ -180,7 +180,7 @@ namespace getfem {
     mutable std::map<std::string, gmm::sub_interval> int_disabled_variables;
 
     std::map<const mesh *, std::list<mesh_region> > registred_mims;
-    
+
     const mesh_region &register_region(const mesh &m,const mesh_region &region);
 
     typedef std::map<std::string, var_description> VAR_SET;
@@ -201,7 +201,7 @@ namespace getfem {
       m_tree(void) : ptree(0) {}
       ~m_tree(void);
     };
-    
+
     mutable std::map<std::string, m_tree> macro_trees;
 
 
@@ -282,7 +282,7 @@ namespace getfem {
     model_real_sparse_matrix &unreduced_matrix(void)
     { return unreduced_K; }
     base_vector &unreduced_vector(void) { return unreduced_V; }
-    
+
     /** Add an expression, perform the semantic analysis, split into
      *  terms in separated test functions, derive if necessary to obtain
      *  the tangent terms. Return the maximal order found in the expression.
@@ -300,52 +300,32 @@ namespace getfem {
 
     /** Delete all previously added expressions. */
     void clear_expressions(void);
-    
+
     /** Print some information about all previously added expressions. */
     void print(std::ostream &str);
 
     void add_aux_tree(ga_tree &tree);
     size_type nb_trees(void) const;
     tree_description &tree_info(size_type i);
-        
+
     void add_fem_variable(const std::string &name, const mesh_fem &mf,
                           const gmm::sub_interval &I,
-                          const model_real_plain_vector &VV)
-    { variables[name] = var_description(true, true, &mf, I, &VV, 0, 1); }
-    
+                          const model_real_plain_vector &VV);
     void add_fixed_size_variable(const std::string &name,
                                  const gmm::sub_interval &I,
-                                 const model_real_plain_vector &VV) {
-      variables[name] = var_description(true, false, 0, I, &VV, 0,
-                                        dim_type(gmm::vect_size(VV)));
-    }
-
+                                 const model_real_plain_vector &VV);
     void add_fem_constant(const std::string &name, const mesh_fem &mf,
-                          const model_real_plain_vector &VV) { 
-      variables[name] = var_description(false, true, &mf,
-                                        gmm::sub_interval(), &VV, 0,
-                                        gmm::vect_size(VV)/(mf.nb_dof()));
-    }
-    
+                          const model_real_plain_vector &VV);
     void add_fixed_size_constant(const std::string &name,
-                                 const model_real_plain_vector &VV) {
-      variables[name] = var_description(false, false, 0,
-                                        gmm::sub_interval(), &VV, 0,
-                                        gmm::vect_size(VV));
-    }
-
+                                 const model_real_plain_vector &VV);
     void add_im_data(const std::string &name, const im_data &imd,
-                     const model_real_plain_vector &VV) {
-      variables[name] = var_description
-        (false, false, 0, gmm::sub_interval(), &VV, &imd,
-         gmm::vect_size(VV)/(imd.nb_filtered_index() * imd.nb_tensor_elem()));
-    }
+                     const model_real_plain_vector &VV);
 
     std::string extract_constant_term(const mesh &m);
     std::string extract_order1_term(const std::string &varname);
     std::string extract_order0_term();
     std::string extract_Neumann_term(const std::string &varname);
-  
+
 
     bool used_variables(model::varnamelist &vl, model::varnamelist &vl_test1,
                         model::varnamelist &vl_test2, model::varnamelist &dl,
@@ -391,7 +371,7 @@ namespace getfem {
       GMM_ASSERT1(t.size(), "Variable group " << name << " has no variable");
       return t[0];
     }
-    
+
     bool macro_exists(const std::string &name) const {
       if (macros.find(name) != macros.end()) return true;
       if (md && md->macro_exists(name)) return true;
@@ -402,7 +382,7 @@ namespace getfem {
 
     void add_macro(const std::string &name, const std::string &expr)
     { macros[name] = expr; }
-   
+
     const std::string& get_macro(const std::string &name) const {
       std::map<std::string, std::string>::const_iterator it=macros.find(name);
       if (it != macros.end()) return it->second;
@@ -604,7 +584,7 @@ namespace getfem {
     mutable ga_workspace local_workspace;
     std::string expr;
     mutable ga_instruction_set *gis;
-    
+
   public:
     ga_function(void) : gis(0) {}
     ga_function(const model &md, const std::string &e);
@@ -637,19 +617,19 @@ namespace getfem {
     virtual const mesh &linked_mesh(void) = 0;
     virtual ~ga_interpolation_context() {}
   };
-  
+
 
   //=========================================================================
   // Interpolation functions
   //=========================================================================
 
-  
+
   void ga_interpolation(ga_workspace &workspace,
                         ga_interpolation_context &gic);
 
   void ga_interpolation_Lagrange_fem
   (ga_workspace &workspace, const mesh_fem &mf, base_vector &result);
-  
+
   void ga_interpolation_Lagrange_fem
   (const getfem::model &md, const std::string &expr, const mesh_fem &mf,
    base_vector &result, const mesh_region &rg=mesh_region::all_convexes());
@@ -673,7 +653,7 @@ namespace getfem {
       high-level generic assembly expression which may contains some
       variable of the model. CAUTION: For the moment, the derivative of the
       transformation with respect to the eventual variables used is not
-      taken into account in the model solve. 
+      taken into account in the model solve.
   */
   void add_interpolate_transformation_from_expression
   (model &md, const std::string &transname, const mesh &source_mesh,
@@ -682,7 +662,7 @@ namespace getfem {
   void add_interpolate_transformation_from_expression
   (ga_workspace &workspace, const std::string &transname,
    const mesh &source_mesh, const mesh &target_mesh, const std::string &expr);
-  
+
 }  /* end of namespace getfem.                                             */
 
 

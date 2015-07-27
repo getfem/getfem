@@ -437,7 +437,7 @@ namespace getfem {
       test_function_type = 0;
     }
     void init_fourth_order_tensor(size_type n, size_type m,
-                                size_type l, size_type k) {
+                                  size_type l, size_type k) {
       t.adjust_sizes(bgeot::multi_index(n,m,l,k));
       test_function_type = 0;
     }
@@ -1461,7 +1461,7 @@ namespace getfem {
             size_type nbc1 = 0, nbc2 = 0, nbc3 = 0, n1 = 0, n2 = 0, n3 = 0;
             bool foundsemi = false, founddcomma = false, founddsemi = false;
             tree.add_matrix(token_pos);
-            for(;;) {
+            do {
               r_type = ga_read_term(expr, pos, sub_tree);
               ++n1; ++n2; ++n3;
               if (!foundsemi) ++nbc1;
@@ -1497,8 +1497,8 @@ namespace getfem {
               }
 
               tree.add_sub_tree(sub_tree);
-              if (r_type == GA_RBRACKET) break;
-            }
+
+            } while (r_type != GA_RBRACKET);
             state = 2;
           }
           break;
@@ -4497,6 +4497,49 @@ namespace getfem {
   // functions, operators.
   //=========================================================================
 
+  void ga_workspace::add_fem_variable
+  (const std::string &name, const mesh_fem &mf,
+   const gmm::sub_interval &I, const model_real_plain_vector &VV)
+  {
+    variables[name] = var_description(true, true, &mf, I, &VV, 0, 1);
+  }
+
+  void ga_workspace::add_fixed_size_variable
+  (const std::string &name,
+   const gmm::sub_interval &I, const model_real_plain_vector &VV)
+  {
+    variables[name] = var_description(true, false, 0, I, &VV, 0,
+                                      dim_type(gmm::vect_size(VV)));
+  }
+
+  void ga_workspace::add_fem_constant
+  (const std::string &name, const mesh_fem &mf,
+   const model_real_plain_vector &VV)
+  {
+    GMM_ASSERT1(mf.nb_dof(), "The provided mesh_fem of variable" << name
+                             << "has zero degrees of freedom.");
+    size_type Q = gmm::vect_size(VV)/mf.nb_dof();
+    if (Q == 0) Q = size_type(1);
+    variables[name] = var_description(false, true, &mf,
+                                      gmm::sub_interval(), &VV, 0, Q);
+  }
+    
+  void ga_workspace::add_fixed_size_constant
+  (const std::string &name, const model_real_plain_vector &VV)
+  {
+    variables[name] = var_description(false, false, 0,
+                                      gmm::sub_interval(), &VV, 0,
+                                      gmm::vect_size(VV));
+  }
+
+  void ga_workspace::add_im_data(const std::string &name, const im_data &imd,
+                                 const model_real_plain_vector &VV)
+  {
+    variables[name] = var_description
+      (false, false, 0, gmm::sub_interval(), &VV, &imd,
+       gmm::vect_size(VV)/(imd.nb_filtered_index() * imd.nb_tensor_elem()));
+  }
+
   const mesh_region &ga_workspace::register_region(const mesh &m,
                                                    const mesh_region &region) {
     if (&m == &dummy_mesh) return dummy_region;
@@ -4511,43 +4554,43 @@ namespace getfem {
   }
 
   bgeot::multi_index ga_workspace::qdims(const std::string &name) const {
-      VAR_SET::const_iterator it = variables.find(name);
-      if (it != variables.end()) {
-        const mesh_fem *mf =  it->second.is_fem_dofs ? it->second.mf : 0;
-        const im_data *imd = it->second.imd;
-        size_type n = it->second.qdim();
-        if (mf) {
-          bgeot::multi_index mi = mf->get_qdims();
-          if (n > 1 || it->second.qdims.size() > 1) {
-            size_type i = 0;
-            if (mi.back() == 1) { mi.back() *= it->second.qdims[0]; ++i; }
-            for (; i < it->second.qdims.size(); ++i)
-              mi.push_back(it->second.qdims[i]);
-          }
-          return mi;
-        } else if (imd) {
-          bgeot::multi_index mi = imd->tensor_size();
-          size_type q = n / imd->nb_filtered_index();
-          GMM_ASSERT1(q % imd->nb_tensor_elem() == 0,
-                      "Invalid mesh im data vector");
-          if (n > 1 || it->second.qdims.size() > 1) {
-            size_type i = 0;
-            if (mi.back() == 1) { mi.back() *= it->second.qdims[0]; ++i; }
-            for (; i < it->second.qdims.size(); ++i)
-              mi.push_back(it->second.qdims[i]);
-          }
-          return mi;
+    VAR_SET::const_iterator it = variables.find(name);
+    if (it != variables.end()) {
+      const mesh_fem *mf =  it->second.is_fem_dofs ? it->second.mf : 0;
+      const im_data *imd = it->second.imd;
+      size_type n = it->second.qdim();
+      if (mf) {
+        bgeot::multi_index mi = mf->get_qdims();
+        if (n > 1 || it->second.qdims.size() > 1) {
+          size_type i = 0;
+          if (mi.back() == 1) { mi.back() *= it->second.qdims[0]; ++i; }
+          for (; i < it->second.qdims.size(); ++i)
+            mi.push_back(it->second.qdims[i]);
         }
-        return it->second.qdims;
+        return mi;
+      } else if (imd) {
+        bgeot::multi_index mi = imd->tensor_size();
+        size_type q = n / imd->nb_filtered_index();
+        GMM_ASSERT1(q % imd->nb_tensor_elem() == 0,
+                    "Invalid mesh im data vector");
+        if (n > 1 || it->second.qdims.size() > 1) {
+          size_type i = 0;
+          if (mi.back() == 1) { mi.back() *= it->second.qdims[0]; ++i; }
+          for (; i < it->second.qdims.size(); ++i)
+            mi.push_back(it->second.qdims[i]);
+        }
+        return mi;
       }
-      if (md && md->variable_exists(name))
-        return md->qdims_of_variable(name);
-      if (parent_workspace && parent_workspace->variable_exists(name))
-        return parent_workspace->qdims(name);
-      if (variable_group_exists(name))
-        return qdims(first_variable_of_group(name));
-      GMM_ASSERT1(false, "Undefined variable or group " << name);
+      return it->second.qdims;
     }
+    if (md && md->variable_exists(name))
+      return md->qdims_of_variable(name);
+    if (parent_workspace && parent_workspace->variable_exists(name))
+      return parent_workspace->qdims(name);
+    if (variable_group_exists(name))
+      return qdims(first_variable_of_group(name));
+    GMM_ASSERT1(false, "Undefined variable or group " << name);
+  }
   
   size_type ga_workspace::qdim(const std::string &name) const {
     VAR_SET::const_iterator it = variables.find(name);
@@ -6806,7 +6849,8 @@ namespace getfem {
             mi1[i] = size_type(round(pnode->children[i+1]->t[0])-1);
             if (mi1[i] >= child0->tensor_proper_size(i))
               ga_throw_error(expr, pnode->children[i+1]->pos,
-                              "Index out of range.");
+                             "Index out of range, " << mi1[i]+1 << " > "
+                             << child0->tensor_proper_size(i) << " .");
           }
         }
         mi.resize(0);
