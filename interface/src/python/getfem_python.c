@@ -18,6 +18,8 @@
  Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 
 ===========================================================================*/
+#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
+
 #include <Python.h>
 #include "numpy/arrayobject.h"
 #include "structmember.h"
@@ -318,16 +320,16 @@ PyObject_to_gfi_array(gcollect *gc, PyObject *o)
       case NPY_ULONGLONG:
         t->storage.type = GFI_INT32;
 
-        if (1==((PyArrayObject *)o)->nd)// there is a bug in PyArray_CheckFromAny ?
+        if (PyArray_NDIM((PyArrayObject *)o) == 1) // is there a bug in PyArray_CheckFromAny ?
           po = PyArray_CheckFromAny(o,PyArray_DescrFromType(NPY_INT),0,0,
-               NPY_FORCECAST|NPY_OUT_ARRAY|NPY_ELEMENTSTRIDES,NULL);
+               NPY_ARRAY_FORCECAST|NPY_ARRAY_OUT_ARRAY|NPY_ARRAY_ELEMENTSTRIDES,NULL);
         else
           po = PyArray_CheckFromAny(o,PyArray_DescrFromType(NPY_INT),0,0,
-               NPY_FORCECAST|NPY_OUT_FARRAY|NPY_ELEMENTSTRIDES,NULL);
+               NPY_ARRAY_FORCECAST|NPY_ARRAY_OUT_FARRAY|NPY_ARRAY_ELEMENTSTRIDES,NULL);
         if(!po) { PyErr_NoMemory(); return NULL;}
 
         gc_ref(gc,po);
-        TGFISTORE(int32,val) = (int *)((PyArrayObject *)po)->data; // no new copy
+        TGFISTORE(int32,val) = (int *)PyArray_DATA((PyArrayObject *)po); // no new copy
         break;
       case NPY_FLOAT:
       case NPY_DOUBLE:
@@ -335,16 +337,16 @@ PyObject_to_gfi_array(gcollect *gc, PyObject *o)
         t->storage.type = GFI_DOUBLE;
         t->storage.gfi_storage_u.data_double.is_complex = 0;
 
-        if (1==((PyArrayObject *)o)->nd)// there is a bug in PyArray_CheckFromAny ?
+        if (PyArray_NDIM((PyArrayObject *)o) == 1)// is there a bug in PyArray_CheckFromAny ?
           po = PyArray_CheckFromAny(o,PyArray_DescrFromType(NPY_DOUBLE),0,0,
-               NPY_FORCECAST|NPY_OUT_ARRAY|NPY_ELEMENTSTRIDES,NULL);
+               NPY_ARRAY_FORCECAST|NPY_ARRAY_OUT_ARRAY|NPY_ARRAY_ELEMENTSTRIDES,NULL);
         else
           po = PyArray_CheckFromAny(o,PyArray_DescrFromType(NPY_DOUBLE),0,0,
-               NPY_FORCECAST|NPY_OUT_FARRAY|NPY_ELEMENTSTRIDES,NULL);
+               NPY_ARRAY_FORCECAST|NPY_ARRAY_OUT_FARRAY|NPY_ARRAY_ELEMENTSTRIDES,NULL);
         if(!po) { PyErr_NoMemory(); return NULL;}
 
         gc_ref(gc,po);
-        TGFISTORE(double,val) = (double *)((PyArrayObject *)po)->data; // no new copy
+        TGFISTORE(double,val) = (double *)PyArray_DATA((PyArrayObject *)po); // no new copy
         break;
       case NPY_CFLOAT:
       case NPY_CDOUBLE:
@@ -352,16 +354,16 @@ PyObject_to_gfi_array(gcollect *gc, PyObject *o)
         t->storage.type = GFI_DOUBLE;
         t->storage.gfi_storage_u.data_double.is_complex = 1;
 
-        if (1==((PyArrayObject *)o)->nd)// there is a bug in PyArray_CheckFromAny ?
+        if (PyArray_NDIM((PyArrayObject *)o) == 1) // is there a bug in PyArray_CheckFromAny ?
           po = PyArray_CheckFromAny(o,PyArray_DescrFromType(NPY_CDOUBLE),0,0,
-               NPY_FORCECAST|NPY_OUT_ARRAY|NPY_ELEMENTSTRIDES,NULL);
+               NPY_ARRAY_FORCECAST|NPY_ARRAY_OUT_ARRAY|NPY_ARRAY_ELEMENTSTRIDES,NULL);
         else
           po = PyArray_CheckFromAny(o,PyArray_DescrFromType(NPY_CDOUBLE),0,0,
-               NPY_FORCECAST|NPY_OUT_FARRAY|NPY_ELEMENTSTRIDES,NULL);
+               NPY_ARRAY_FORCECAST|NPY_ARRAY_OUT_FARRAY|NPY_ARRAY_ELEMENTSTRIDES,NULL);
         if(!po) { PyErr_NoMemory(); return NULL;}
 
         gc_ref(gc,po);
-        TGFISTORE(double,val) = (double *)((PyArrayObject *)po)->data; // no new copy
+        TGFISTORE(double,val) = (double *)PyArray_DATA((PyArrayObject *)po); // no new copy
         break;
       default: {
         PyObject *sdtype = PyObject_Str((PyObject*)PyArray_DescrFromType(dtype));
@@ -371,12 +373,12 @@ PyObject_to_gfi_array(gcollect *gc, PyObject *o)
         return NULL;
       }
     }
-    t->dim.dim_len = ((PyArrayObject *)po)->nd;
+    t->dim.dim_len = PyArray_NDIM((PyArrayObject *)po);
     t->dim.dim_val = (u_int *)gc_alloc(gc, t->dim.dim_len * sizeof(u_int));
 
     int i;
     for (i=0; i < t->dim.dim_len; ++i)
-      t->dim.dim_val[i] = (u_int)((PyArrayObject *)po)->dimensions[i];
+      t->dim.dim_val[i] = (u_int)PyArray_DIM((PyArrayObject *)po,i);
   } else if (PyTuple_Check(o) || PyList_Check(o)) {
     //printf("Tuple or List\n");
     /* python tuples and lists are stored in 'cell arrays' (i.e. matlab's lists of inhomogeneous elements) */
@@ -476,9 +478,9 @@ gfi_array_to_PyObject(gfi_array *t, int in__init__) {
       if (!(o = PyArray_EMPTY(t->dim.dim_len, dim, NPY_INT, 1))) return NULL;
       PyDimMem_FREE(dim);
 
-      npy_intp itemsize = PyArray_ITEMSIZE(o); /*size of elements*/
-      npy_intp size = PyArray_Size(o);         /*number of elements*/
-      memcpy(((PyArrayObject*)o)->data, TGFISTORE(int32,val), size*itemsize); // new copy
+      npy_intp itemsize = PyArray_ITEMSIZE((PyArrayObject *)o); /*size of elements*/
+      npy_intp size = PyArray_Size(o);                          /*number of elements*/
+      memcpy(PyArray_DATA((PyArrayObject *)o), TGFISTORE(int32,val), size*itemsize); // new copy
     }
   } break;
   case GFI_DOUBLE: {
@@ -504,9 +506,9 @@ gfi_array_to_PyObject(gfi_array *t, int in__init__) {
         PyDimMem_FREE(dim);
       }
     }
-    npy_intp itemsize = PyArray_ITEMSIZE(o); /*size of elements*/
-    npy_intp size = PyArray_Size(o);         /*number of elements*/
-    memcpy(((PyArrayObject*)o)->data, TGFISTORE(double,val), size*itemsize); // new copy
+    npy_intp itemsize = PyArray_ITEMSIZE((PyArrayObject *)o); /*size of elements*/
+    npy_intp size = PyArray_Size(o);                          /*number of elements*/
+    memcpy(PyArray_DATA((PyArrayObject *)o), TGFISTORE(double,val), size*itemsize); // new copy
   } break;
   case GFI_CHAR: {
     //printf("GFI_CHAR\n");
@@ -532,15 +534,15 @@ gfi_array_to_PyObject(gfi_array *t, int in__init__) {
       int i;
       for(i=0; i< t->dim.dim_len; i++)
         dim[i] = (npy_intp)t->dim.dim_val[i];
-      if (!(o = PyArray_EMPTY(t->dim.dim_len, dim, PyArray_OBJECT,1))) return NULL;
+      if (!(o = PyArray_EMPTY(t->dim.dim_len, dim, NPY_OBJECT,1))) return NULL;
 
-      if (!PyArray_ISFARRAY((PyArrayObject*)o)) { // I'm just too lazy to transpose matrices
+      if (!PyArray_ISFARRAY(PyArray_DATA((PyArrayObject *)o))) { // I'm just too lazy to transpose matrices
         PyErr_Format(PyExc_RuntimeError, "cannot return %d-D array of %d getfem objects",
                      t->dim.dim_len, nb);
         return NULL;
       }
       for (i = 0; i<nb; ++i) {
-        ((PyObject**)(((PyArrayObject*)o)->data))[i] =
+        (PyObject*)PyArray_GETPTR1((PyArrayObject*)o,i) = // not compiling
           PyGetfemObject_FromObjId(t->storage.gfi_storage_u.objid.objid_val[i], in__init__);
       }
 #else
