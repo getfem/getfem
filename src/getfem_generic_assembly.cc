@@ -574,6 +574,26 @@ namespace getfem {
       current_node->nbc1 = current_node->nbc2 = current_node->nbc3 = 0;
     }
 
+    void zip_matrix(const pga_tree_node source_node) {
+      GMM_ASSERT1(current_node->node_type == GA_NODE_C_MATRIX &&
+                  source_node->node_type == GA_NODE_C_MATRIX,
+                  "Internal error");
+      size_type target_size = current_node->children.size();
+      size_type source_size = source_node->children.size();
+      size_type last_dim_size = target_size/source_size;
+      GMM_ASSERT1(target_size == source_size*last_dim_size,
+                  "Internal error");
+      std::vector<pga_tree_node> new_children;
+      for (size_type i = 0; i < source_size; ++i) {
+        for (size_type j = 0; j < last_dim_size; ++j)
+          new_children.push_back(current_node->children[i*last_dim_size+j]);
+        new_children.push_back(source_node->children[i]);
+      }
+      source_node->children.resize(0); // so that the destructor of source_node
+                                       // will not destruct the children
+      current_node->children = new_children;
+    }
+
     void add_op(GA_TOKEN_TYPE op_type, size_type pos) {
       while (current_node && current_node->parent &&
              current_node->parent->node_type == GA_NODE_OP &&
@@ -1458,47 +1478,125 @@ namespace getfem {
           {
             ga_tree sub_tree;
             GA_TOKEN_TYPE r_type;
-            size_type nbc1 = 0, nbc2 = 0, nbc3 = 0, n1 = 0, n2 = 0, n3 = 0;
-            bool foundsemi = false, founddcomma = false, founddsemi = false;
+            size_type nbc1(0), nbc2(0), nbc3(0), n1(0), n2(0), n3(0);
+            size_type tensor_order(1);
+            bool foundcomma(false), foundsemi(false), nested_format(false);
+
             tree.add_matrix(token_pos);
             do {
               r_type = ga_read_term(expr, pos, sub_tree);
-              ++n1; ++n2; ++n3;
-              if (!foundsemi) ++nbc1;
-              if (!founddcomma) ++nbc2;
-              if (!founddsemi) ++nbc3;
 
-              switch(r_type) {
-              case GA_COMMA: break;
-              case GA_SEMICOLON: foundsemi = true; n1 = 0; break;
-              case GA_DCOMMA: founddcomma = true; n2 = 0; n1 = 0; break;
-              case GA_DSEMICOLON:
-                founddsemi = true; n3 = 0; n2 = 0; n1 = 0; break;
-              case GA_RBRACKET:
-                if (n1 != nbc1 || n2 != nbc2 || n3 != nbc3 ||
-                    (founddcomma && !founddsemi) ||
-                    (!founddcomma && founddsemi))
+              if (sub_tree.root->node_type == GA_NODE_C_MATRIX) {
+
+                // nested format
+
+                if (r_type != GA_COMMA && r_type != GA_RBRACKET)  // in the nested format only "," and "]" are expected
                   ga_throw_error(expr, pos-1, "Bad explicit "
-                                  "vector/matrix/tensor format. ");
-                tree.current_node->nbc1 = nbc1;
-                if (founddcomma) {
-                  tree.current_node->nbc2 = nbc2/nbc1;
-                  tree.current_node->nbc3 = nbc3/nbc2;
+                                 "vector/matrix/tensor format.")
+                else if (sub_tree.root->nbc3 != 1)                // the sub-tensor to be merged cannot be of fourth order
+                  ga_throw_error(expr, pos-1, "Definition of explicit "
+                                 "tensors is limitted to the fourth order. "
+                                 "Limit exceeded.")
+                else if (foundsemi ||                             // Cannot mix with the non-nested format.
+                         (sub_tree.root->children.size() > 1 &&   // The sub-tensor cannot be a column vector [a;b],
+                          sub_tree.root->nbc1 == 1))              // the nested format only accepts row vectors [a,b]
+                  ga_throw_error(expr, pos-1, "Bad explicit "     // and converts them to column vectors internally
+                                 "vector/matrix/tensor format.")  // (see below)
+
+                if (sub_tree.root->children.size() == sub_tree.root->nbc1)
+                  sub_tree.root->nbc1 = 1; // convert a row vector [a,b] to a column vector [a;b]
+
+                nested_format = true;
+
+                size_type sub_tensor_order = 3;
+                if (sub_tree.root->nbc1 == 1)
+                  sub_tensor_order = 1;
+                else if (sub_tree.root->nbc2 == 1)
+                  sub_tensor_order = 2;
+
+                if (tensor_order == 1) {
+                  if (nbc1 != 0 || nbc2 != 0 || nbc3 != 0)
+                    ga_throw_error(expr, pos-1, "Bad explicit "
+                                   "vector/matrix/tensor format.");
+                  nbc1 = 1;
+                  nbc2 = sub_tree.root->nbc1;
+                  nbc3 = sub_tree.root->nbc2;
+                  tensor_order = sub_tensor_order + 1;
                 } else {
-                  tree.current_node->nbc2 = tree.current_node->nbc3 = 1;
+                  if ((tensor_order != sub_tensor_order + 1) ||
+                      (tensor_order > 2 && nbc2 != sub_tree.root->nbc1) ||
+                      (tensor_order > 3 && nbc3 != sub_tree.root->nbc2))
+                    ga_throw_error(expr, pos-1, "Bad explicit "
+                                   "vector/matrix/tensor format.");
+                  nbc1 += 1;
                 }
-                break;
-              default:
-                ga_throw_error(expr, pos-1, "The explicit "
-                                "vector/matrix/tensor components should be "
-                                "separated by ',', ';', ',,' and ';;' and "
-                                "be ended by ']'.");
-                break;
+
+                tree.zip_matrix(sub_tree.root);
+                sub_tree.clear();
+                if (r_type == GA_RBRACKET) {
+                  tree.current_node->nbc1 = nbc1;
+                  tree.current_node->nbc2 = nbc2;
+                  tree.current_node->nbc3 = nbc3;
+                }
+
+              } else {
+
+                // non-nested format
+
+                tree.add_sub_tree(sub_tree);
+
+                ++n1; ++n2; ++n3;
+                if (tensor_order < 2) ++nbc1;
+                if (tensor_order < 3) ++nbc2;
+                if (tensor_order < 4) ++nbc3;
+
+                if (r_type == GA_COMMA) {
+                  if (!foundcomma && tensor_order > 1)
+                    ga_throw_error(expr, pos-1, "Bad explicit "
+                                   "vector/matrix/tensor format.");
+                  foundcomma = true;
+                } else if (r_type == GA_SEMICOLON) {
+                  if (n1 != nbc1)
+                    ga_throw_error(expr, pos-1, "Bad explicit "
+                                   "vector/matrix/tensor format.");
+                  n1 = 0;
+                  tensor_order = std::max(tensor_order, size_type(2));
+                } else if (r_type == GA_DCOMMA) {
+                  if (n1 != nbc1 || n2 != nbc2)
+                    ga_throw_error(expr, pos-1, "Bad explicit "
+                                   "vector/matrix/tensor format.");
+                  foundsemi = true;
+                  n2 = n1 = 0;
+                  tensor_order = std::max(tensor_order, size_type(3));
+                } else if (r_type == GA_DSEMICOLON) {
+                  if (n1 != nbc1 || n2 != nbc2 || n3 != nbc3 ||
+                      tensor_order < 3)
+                    ga_throw_error(expr, pos-1, "Bad explicit "
+                                   "vector/matrix/tensor format.");
+                  n3 = n2 = n1 = 0;
+                  tensor_order = std::max(tensor_order, size_type(4));
+                } else if (r_type == GA_RBRACKET) {
+                  if (n1 != nbc1 || n2 != nbc2 || n3 != nbc3 ||
+                      tensor_order == 3)
+                    ga_throw_error(expr, pos-1, "Bad explicit "
+                                   "vector/matrix/tensor format.");
+                  tree.current_node->nbc1 = nbc1;
+                  if (tensor_order == 4) {
+                    tree.current_node->nbc2 = nbc2/nbc1;
+                    tree.current_node->nbc3 = nbc3/nbc2;
+                  } else {
+                    tree.current_node->nbc2 = tree.current_node->nbc3 = 1;
+                  }
+                } else {
+                  ga_throw_error(expr, pos-1, "The explicit "
+                                 "vector/matrix/tensor components should be "
+                                 "separated by ',', ';', ',,' and ';;' and "
+                                 "be ended by ']'.");
+                }
               }
 
-              tree.add_sub_tree(sub_tree);
-
             } while (r_type != GA_RBRACKET);
+
             state = 2;
           }
           break;
@@ -6279,30 +6377,33 @@ namespace getfem {
         if (nbc1 == 1 && nbc2 == 1 && nbc3 == 1 && nbl == 1) {
           pnode->t.adjust_sizes(mi);
           if (all_cte) pnode->t[0] = child0->t[0];
-        } else if (nbc1 == 1 && nbc2 == 1 && nbc3 == 1) {
-          mi.push_back(nbl);
-          pnode->t.adjust_sizes(mi);
-          if (all_cte)
-            for (size_type i = 0; i < nbl; ++i)
-              pnode->t[i] = pnode->children[i]->t[0];
-        } else if (nbc2 == 1 && nbc3 == 1) {
-          mi.push_back(nbl); mi.push_back(nbc1);
-          pnode->t.adjust_sizes(mi);
-          if (all_cte) // TODO: verify order
-            for (size_type i = 0; i < nbl; ++i)
-              for (size_type j = 0; j < nbc1; ++j)
-                pnode->t(i,j) = pnode->children[i*nbc1+j]->t[0];
         } else {
-          mi.push_back(nbl); mi.push_back(nbc3);
-          mi.push_back(nbc2); mi.push_back(nbc1);
+          mi.push_back(nbl);
+          if (nbc3 != 1) mi.push_back(nbc3);
+          if (nbc2 != 1) mi.push_back(nbc2);
+          if (nbc1 != 1) mi.push_back(nbc1);
           pnode->t.adjust_sizes(mi);
-          size_type n = 0;
-          if (all_cte) // TODO: verify order
-            for (size_type i = 0; i < nbl; ++i)
-              for (size_type j = 0; j < nbc3; ++j)
-                for (size_type k = 0; k < nbc2; ++k)
-                  for (size_type l = 0; l < nbc1; ++l)
-                    pnode->t(i,j,k,l) = pnode->children[n++]->t[0];
+          if (all_cte) {
+            size_type n = 0;
+            if (nbc1 == 1 && nbc2 == 1 && nbc3 == 1)
+              for (size_type i = 0; i < nbl; ++i)
+                pnode->t[i] = pnode->children[i]->t[0];
+            else if (nbc2 == 1 && nbc3 == 1) // TODO: verify order
+              for (size_type i = 0; i < nbl; ++i)
+                for (size_type j = 0; j < nbc1; ++j)
+                  pnode->t(i,j) = pnode->children[n++]->t[0];
+            else if (nbc3 == 1) // TODO: verify order
+              for (size_type i = 0; i < nbl; ++i)
+                for (size_type j = 0; j < nbc2; ++j)
+                  for (size_type k = 0; k < nbc1; ++k)
+                    pnode->t(i,j,k) = pnode->children[n++]->t[0];
+            else // TODO: verify order
+              for (size_type i = 0; i < nbl; ++i)
+                for (size_type j = 0; j < nbc3; ++j)
+                  for (size_type k = 0; k < nbc2; ++k)
+                    for (size_type l = 0; l < nbc1; ++l)
+                      pnode->t(i,j,k,l) = pnode->children[n++]->t[0];
+          }
         }
         if (all_cte) tree.clear_children(pnode);
       }
