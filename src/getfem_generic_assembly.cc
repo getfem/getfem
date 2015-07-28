@@ -931,49 +931,35 @@ namespace getfem {
       str << "]";
       break;
 
-    case 2:
-      str << "[";
-      for (size_type i = 0; i < pnode->tensor_proper_size(0); ++i) {
-        if (i != 0) str << "; ";
-        for (size_type j = 0; j < pnode->tensor_proper_size(1); ++j) {
-          if (j != 0) str << ", ";
-          str << (nt ? scalar_type(0) : pnode->t(i,j));
-        }
-      }
-      str << "]";
-      break;
-
-    case 3:
-      str << "[";
-      for (size_type i = 0; i < pnode->tensor_proper_size(0); ++i) {
-        if (i != 0) str << ",, ";
-        for (size_type j = 0; j < pnode->tensor_proper_size(1); ++j) {
-          if (j != 0) str << "; ";
-          for (size_type k = 0; k < pnode->tensor_proper_size(2); ++k) {
-            if (k != 0) str << ", ";
-            str << (nt ? scalar_type(0) : pnode->t(i,j,k));
-          }
-        }
-      }
-      str << "]";
-      break;
-
-    case 4:
-      str << "[";
-      for (size_type i = 0; i < pnode->tensor_proper_size(0); ++i) {
-        if (i != 0) str << ";; ";
-        for (size_type j = 0; j < pnode->tensor_proper_size(1); ++j) {
-          if (j != 0) str << ",, ";
-          for (size_type k = 0; k < pnode->tensor_proper_size(2); ++k) {
-            if (k != 0) str << "; ";
-            for (size_type l = 0; l < pnode->tensor_proper_size(3); ++l) {
-              if (l != 0) str << ", ";
-              str << (nt ? scalar_type(0) : pnode->t(i,j,k,l));
+    case 2: case 3: case 4:
+      {
+        size_type ii(0);
+        size_type n0 = pnode->tensor_proper_size(0);
+        size_type n1 = pnode->tensor_proper_size(1);
+        size_type n2 = (pnode->tensor_order() > 2) ? pnode->tensor_proper_size(2) : 1;
+        size_type n3 = (pnode->tensor_order() > 3) ? pnode->tensor_proper_size(3) : 1;
+        if (n3 > 1) str << "[";
+        for (size_type l = 0; l < n3; ++l) {
+          if (l != 0) str << ",";
+          if (n2 > 1) str << "[";
+          for (size_type k = 0; k < n2; ++k) {
+            if (k != 0) str << ",";
+            if (n1 > 1) str << "[";
+            for (size_type j = 0; j < n1; ++j) {
+              if (j != 0) str << ",";
+              if (n0 > 1) str << "[";
+              for (size_type i = 0; i < n0; ++i) {
+                if (i != 0) str << ",";
+                str << (nt ? scalar_type(0) : pnode->t[ii++]);
+              }
+              if (n0 > 1) str << "]";
             }
+            if (n1 > 1) str << "]";
           }
+          if (n2 > 1) str << "]";
         }
+        if (n3 > 1) str << "]";
       }
-      str << "]";
       break;
 
     case 5: case 6:
@@ -1243,23 +1229,35 @@ namespace getfem {
       break;
 
     case GA_NODE_C_MATRIX:
-      GMM_ASSERT1(pnode->children.size(), "Invalid tree");
-      str << "[";
-      for (size_type i = 0; i < pnode->children.size(); ++i) {
-        if (i > 0) {
-          if (i%pnode->nbc1 != 0) str << ", ";
-          else {
-            if (pnode->nbc2 > 1 || pnode->nbc3 > 1) {
-              if (i%(pnode->nbc1*pnode->nbc2) != 0) str << "; ";
-              else if (i%(pnode->nbc1*pnode->nbc2*pnode->nbc3) != 0)
-                str << ",, ";
-              else str << ";; ";
-            } else str << "; ";
+      {
+        GMM_ASSERT1(pnode->children.size(), "Invalid tree");
+        size_type nbc1 = pnode->nbc1;
+        size_type nbc2 = pnode->nbc2;
+        size_type nbc3 = pnode->nbc3;
+        size_type nbcl = pnode->children.size()/(nbc1*nbc2*nbc3);
+        if (nbc1 > 1) str << "[";
+        for (size_type i1 = 0; i1 < nbc1; ++i1) {
+          if (i1 != 0) str << ",";
+          if (nbc2 > 1) str << "[";
+          for (size_type i2 = 0; i2 < nbc2; ++i2) {
+            if (i2 != 0) str << ",";
+            if (nbc3 > 1) str << "[";
+            for (size_type i3 = 0; i3 < nbc3; ++i3) {
+              if (i3 != 0) str << ",";
+              if (nbcl > 1) str << "[";
+              for (size_type i4 = 0; i4 < nbcl; ++i4) {
+                if (i4 != 0) str << ",";
+                size_type ii = ((i4*nbc3 + i3)*nbc2 + i2)*nbc1 + i1;
+                ga_print_node(pnode->children[ii], str);
+              }
+              if (nbcl > 1) str << "]";
+            }
+            if (nbc3 > 1) str << "]";
           }
+          if (nbc2 > 1) str << "]";
         }
-        ga_print_node(pnode->children[i], str);
+        if (nbc1 > 1) str << "]";
       }
-      str << "]";
       break;
 
     default:
@@ -5565,7 +5563,7 @@ namespace getfem {
 
         std::string name = pnode->name;
         size_type prefix_id = ga_parse_prefix_operator(name);
-        size_type test = ga_parse_prefix_test(name);;
+        size_type test = ga_parse_prefix_test(name);
         pnode->name = name;
 
         // Group must be tested and it should be a fem variable
@@ -6532,7 +6530,7 @@ namespace getfem {
           // divergence or test functions
 
           size_type prefix_id = ga_parse_prefix_operator(name);
-          size_type test = ga_parse_prefix_test(name);;
+          size_type test = ga_parse_prefix_test(name);
 
           if (!(workspace.variable_exists(name)))
             ga_throw_error(expr, pnode->pos, "Unknown variable, function, "
@@ -9310,7 +9308,7 @@ namespace getfem {
 
     case GA_NODE_PARAMS:
       if (child0->node_type == GA_NODE_RESHAPE) {
-        pgai = new ga_instruction_copy_tensor(pnode->t, child1->t);;
+        pgai = new ga_instruction_copy_tensor(pnode->t, child1->t);
         rmi.instructions.push_back(pgai);
       } else if (child0->node_type == GA_NODE_PREDEF_FUNC) {
 
