@@ -17,52 +17,54 @@ The header file to be included to use the high-level generic assembly procedures
 
 Differences in execution time between high and low level generic assembly
 -------------------------------------------------------------------------
-For basic linear assembly terms, the high and low level generic assembly procedures have approximately the same efficiency in term of computational time. Both have been thoroughly optimized. On the one hand, the fact that the high-level generic assembly incorporate a compilation in basic optimized instructions and operates simplifications makes (for instance all identical expressions are computed only once) that it can be really faster especially on complex terms. On the other hand, the fact that the low-level generic assembly incorporates a mechanism to pre-compute on the reference element the linear term for elements with a linear transformation makes that it can be faster on simple linear terms. But even in that case, the high level generic assembly is sometime faster. Of course, a possibility would be to incorporate the ability to pre-compute on the reference element the linear term for linear transformations in the high level generic assembly. However, it would be rather complicated due to the high genericity of the language. A consequence also is that exact integration is not allowed in the high level generic assembly.
+For basic linear assembly terms, the high and low level generic assembly procedures have approximately the same efficiency in term of computational time. Both have been thoroughly optimized. On the one hand, the fact that the high-level generic assembly incorporates a compilation in basic optimized instructions and operates simplifications makes (for instance all identical expressions are computed only once) that it can be really faster especially on complex terms. On the other hand, the fact that the low-level generic assembly incorporates a mechanism to pre-compute on the reference element the linear term for elements with a linear transformation makes that it can be faster on simple linear terms. But even in that case, the high level generic assembly is sometime faster. Of course, a possibility would be to incorporate the ability to pre-compute on the reference element the linear term for linear transformations in the high level generic assembly. However, it would be rather complicated due to the high genericity of the language. A consequence also is that exact integration is not allowed in the high level generic assembly.
 
 
 
 Overview of the assembly language syntax
 ----------------------------------------
 
-A specific language has been developed to describe the weak formulation of boundary value problems. It aims to be close to the structure of a standard weak formulation. The components are the following:
+A specific language has been developed to describe the weak formulation of boundary value problems. It is intended to be close to the structure of a standard weak formulation and it incorporates the following components:
 
   - Variable names: A list of variables should be given. The variables are described on a finite element method or can be a simple vector of unknowns. For instance ``u``, ``v``, ``p``, ``pressure``, ``electric_field`` are valid variable names.
 
-  - Constant names: A list of constants could be given. The rule are the same as for the variables but no test function can be associated to constants.
+  - Constant names: A list of constants could be given. The rules are the same as for the variables but no test functions can be associated to constants.
 
-  - Test functions corresponding to the variables. It is identified by the prefix ``Test_`` followed by the variable name. For instance  ``Test_u``, ``Test_v``, ``Test_p``, ``Test_pressure``, ``Test_electric_field``. For the tangent system, second order test functions are denoted ``Test2_`` followed by the variable name.
+  - Test functions: Can be used with respect to any of the variables. They are identified by the prefix ``Test_`` followed by the corresponding variable name. For instance  ``Test_u``, ``Test_v``, ``Test_p``, ``Test_pressure``, ``Test_electric_field``. For the tangent system, second order test functions are denoted ``Test2_`` followed by the variable name.
 
-  - The gradient of a variable or of test functions are identified by ``Grad_`` followed by the variable name or by ``Test_`` or ``Test2_`` followed itself by the variable name. This is available for fem variables only. For instance ``Grad_u``, ``Grad_pressure``, ``Grad_electric_field`` and ``Grad_Test_u``, ``Grad_Test2_v``. For vector fields, ``Div_u`` and ``Div_Test_u`` are some shortcuts for ``Trace(Grad_u)`` and ``Trace(Grad_Test_u)``, respectively.
+  - Gradients: Spatial gradients of variables or test functions are identified by the prefix ``Grad_`` followed by the variable name or by ``Test_`` or ``Test2_`` followed itself by the variable name. This is available for FEM variables only. For instance ``Grad_u``, ``Grad_pressure``, ``Grad_electric_field`` and ``Grad_Test_u``, ``Grad_Test2_v``. For vector fields, ``Div_u`` and ``Div_Test_u`` are some shortcuts for ``Trace(Grad_u)`` and ``Trace(Grad_Test_u)``, respectively.
 
-  - The Hessian of a variable or of test functions are identified by ``Hess_`` followed by the variable name or by ``Test_`` or ``Test2_`` followed itself by the variable name. This is available for fem variables only. For instance ``Hess_u``, ``Hess_v``, ``Hess_p``, ``Hess_Test2_v``, ``Hess_Test_p``, ``Hess_Test_pressure``.
+  - Hessians: The Hessian of a variable or test function is identified by the prefix ``Hess_`` followed by the variable name or by ``Test_`` or ``Test2_`` followed itself by the variable name. This is available for FEM variables only. For instance ``Hess_u``, ``Hess_v``, ``Hess_p``, ``Hess_Test2_v``, ``Hess_Test_p``, ``Hess_Test_pressure``.
 
-  - A certain number of predefined scalar functions (``sin(t)``, ``cos(t)``, ``pow(t,u)``, ``sqrt(t)``, ``sqr(t)``, ``Heaviside(t)``, ...). A scalar function can be applied to scalar or vector/matrix/tensor expressions. It applies componentwise. For functions having two arguments (``pow(t,u)``, ``min(t,u)`` ...) if two non-scalar arguments are passed, the dimension have to be the same. For instance "max([1;2],[0;3])" will return "[0;3]".
+  - A certain number of predefined scalar functions (``sin(t)``, ``cos(t)``, ``pow(t,u)``, ``sqrt(t)``, ``sqr(t)``, ``Heaviside(t)``, ...). A scalar function can be applied to scalar or vector/matrix/tensor expressions. It applies componentwise. For functions having two arguments (``pow(t,u)``, ``min(t,u)`` ...) if two non-scalar arguments are passed, the dimension have to be the same. For instance "max([1;2],[0;3])" will return "[1;3]".
 
   - A certain number of operators: ``+``, ``-``, ``*``, ``/``, ``:``, ``.``, ``.*``, ``./``, ``@``, ``'``.
 
-  - Some constants : ``pi``, ``meshdim`` (the dimension of the current mesh), ``qdim(u)`` and ``qdims(u)`` the dimensions of the variable ``u`` (the size for fixed size variables and the dimension of the vector field for f.e.m. variables), ``Id(n)`` the identity :math:`n\times n` matrix.
+  - Some constants: ``pi``, ``meshdim`` (the dimension of the current mesh), ``qdim(u)`` and ``qdims(u)`` the dimensions of the variable ``u`` (the size for fixed size variables and the dimension of the vector field for FEM variables), ``Id(n)`` the identity :math:`n\times n` matrix.
 
-  - Parentheses can be used to change the operations order in a standard way. For instance ``(1+2)*4`` or ``(u+v)*Test_u`` are correct. 
+  - Parentheses can be used to change the operations order in a standard way. For instance ``(1+2)*4`` or ``(u+v)*Test_u`` are valid expressions. 
 
   - The access to a component of a vector/matrix/tensor can be done by following a term by a left parenthesis, the list of components and a right parenthesis. For instance ``[1,1,2](3)`` is correct and will return ``2``. Note that indices are assumed to begin by 1 (even in C++ and with the python interface). A colon can replace the value of an index in a Matlab like syntax.
 
-  - Explicit vectors. Example:  ``[1;2;3;4]`` is an explicit vector of size four. Each component can be an expression.
+  - Explicit vectors: For instance ``[1;2;3;4]`` is an explicit vector of size four. Each component can be an expression.
 
-  - Explicit matrices. Example: ``[1,2;3,4]`` denotes a 2x2 matrix. Each component can be an expression.
+  - Explicit matrices: For instance ``[1,3;2,4]`` and ``[[1,2],[3,4]]`` denote the same 2x2 matrix. Each component can be an expression.
 
-  - Explicit fourth order tensors. Supplementary dimensions are separated with ``,,`` and ``;;``. For instance ``[1,1;1,2,,1,1;1,2;;1,1;1,2,,1,1;1,2]`` is a 2x2x2x2 valid tensor.
+  - Explicit fourth order tensors: Supplementary dimensions are separated with ``,,`` and ``;;``. For instance ``[1,1;1,2,,1,1;1,2;;1,1;1,2,,1,1;1,2]`` is a 2x2x2x2 valid tensor.
 
-  - ``X`` is the current coordinate on the real element, ``X(i)`` is its ith component, ``Normal`` ( the outward unit normal vector to a boundary, for boundary integration).
+  - ``X`` is the current coordinate on the real element, ``X(i)`` is its i-th component.
 
-  - ``Reshape(t, i, j, ...)``: reshape a vector/matrix/tensor. Note that all tensor in |gf| are stored in the fortran order.
+  - ``Normal`` is the outward unit normal vector to a boundary (for integration on a domain boundary).
+
+  - ``Reshape(t, i, j, ...)``: Reshape a vector/matrix/tensor. Note that all tensors in |gf| are stored in the Fortran order.
 
   - A certain number of linear and nonlinear operators (``Trace``, ``Norm``, ``Det``, ``Deviator``, ...). The nonlinear operators cannot be applied to test functions.
 
   - Possiblility of macro definition (in the model or ga_workspace object). The macros should be some valid expressions that are expanded inline at the semantic analysis phase (if they are used several times, the computation is automatically factorized at the compilation stage).
 
-  - ``Interpolate(variable, transformation)``: powerful operation which allows to interpolate the variables, or test functions either on the same mesh on other elements or on another mesh. ``transformation`` is an object stored by the workspace or model object which describe the map from the current point to the point where to perform the interpolation. This functionality can be used for instance to prescribe periodic conditions or to compute mortar matrices for two finite element defined on different meshes or more generaly for fictitious domain methods such as fluid-structure interaction.
+  - ``Interpolate(variable, transformation)``: Powerful operation which allows to interpolate the variables, or test functions either on the same mesh on other elements or on another mesh. ``transformation`` is an object stored by the workspace or model object which describes the map from the current point to the point where to perform the interpolation. This functionality can be used for instance to prescribe periodic conditions or to compute mortar matrices for two finite element spaces defined on different meshes or more generally for fictitious domain methods such as fluid-structure interaction.
 
-  - ``Elementary_transformation(variable, transformation)``: Allow a linear tranformation defined at the element level (i.e. which is not possible to define at the gauss point level). This add been added mostly to defien reduction for plate elements (projection onto low-level vector element such as rotated RT0). ``transformation`` is an object stored by the workspace or model object which describe the trasformation for a particular element.
+  - ``Elementary_transformation(variable, transformation)``: Allow a linear tranformation defined at the element level (i.e. not possible to define at the gauss point level). This feature has been added mostly for defining a reduction for plate elements (projection onto low-level vector element such as rotated RT0). ``transformation`` is an object stored by the workspace or model object which describes the trasformation for a particular element.
 
 
 Some basic examples
@@ -81,7 +83,7 @@ with Dirichlet boundary conditions :math:`u = 0` on :math:`\partial\Omega` is cl
 
   \int_{\Omega} \nabla u\cdot \nabla v dx = \int_{\Omega} f v dx,
 
-for all test function  :math:`v` vanishing on  :math:`\partial\Omega`.
+for all test functions :math:`v` vanishing on  :math:`\partial\Omega`.
 The corresponding expression on the assembly string is::
 
   Grad_u.Grad_Test_u - my_f*Test_u
@@ -135,7 +137,7 @@ and ``my_f1`` and ``my_f2`` are some given functions. Note that in that case, th
 Derivation order and symbolic differentiation
 ---------------------------------------------
 
-The derivation order of the assembly string is automatically detected. This means that if no tests function are found, the order will be considered to be 0 (potential energy), if first order tests functions are found, the order will be considered to be 1 (weak formulation) and if both first and second order tests functions are found, the order will be considered to be 2 (tangent system).
+The derivation order of the assembly string is automatically detected. This means that if no test functions are found, the order will be considered to be 0 (potential energy), if first order test functions are found, the order will be considered to be 1 (weak formulation) and if both first and second order test functions are found, the order will be considered to be 2 (tangent system).
 
 In order to perform an assembly (see next section), one should specify the order (0, 1 or 2). If an order 1 string is furnished and an order 2 assembly is required, a symbolic differentiation of the expression is performed. The same if an order 0 string is furnished and if an order 1 or 2 assembly is required. Of course, the converse is not true. If an order 1 expression is given and an order 0 assembly is expected, no integration is performed. This should not be generally not possible since an arbitrary weak formulation do not necessary derive from a potential energy.
 
@@ -147,7 +149,7 @@ IMPORTANT REMARK: Note that for coupled problems, a global potential frequently 
 C++ Call of the assembly
 ------------------------
 
-Note that the most natural way to use the generic assembly is by the use of the genric assembly bricks of the model object, see Section :ref:`ud-model-generic-assembly`. It is however also possible to use the high level generic assembly on its own.
+Note that the most natural way to use the generic assembly is by the use of the generic assembly bricks of the model object, see Section :ref:`ud-model-generic-assembly`. It is however also possible to use the high level generic assembly on its own.
 
 The generic assembly is driven by the object ``getfem::ga_workspace`` defined in :file:`getfem/getfem\_generic_assembly.h`.
 
@@ -215,7 +217,7 @@ It is also possible to call the generic assembly from the Python/Scilab/Matlab i
 C++ assembly examples
 ---------------------
 
-As a first example, if ones need to perform the assembly of a Poisson problem
+As a first example, if one needs to perform the assembly of a Poisson problem
 
 .. math::
 
@@ -353,7 +355,7 @@ with ``D`` the flexion modulus and ``nu`` the Poisson ratio.
 The tensors
 -----------
 
-Basically, what is manipulated in the generic assembly language are tensors. This can be order 0 tensors in scalar expressions (for instance in ``3+sin(pi/2)``), order 1 tensors in vector expressions (such as ``X.X`` or ``Grad_u`` if u is a scalar variable), order 2 tensors for matrix expressions and so on. For efficiency reasons, the language manipulates tensors up to order six. The language could be easily extended to support tensors of order greater than six but it may lead to inefficient computations. When an expression contains tests functions (as in ``Trace(Grad_Test_u)`` for a vector field ``u``), the computation is done for each test functions, which means that the tensor implicitly have a supplementary component. This means that, implicitly, the maximal order of manipulated tensors are in fact six (in ``Grad_Test_u:Grad_Test2_u`` there are two components implicitly added for first and second order test functions).
+Basically, what is manipulated in the generic assembly language are tensors. This can be order 0 tensors in scalar expressions (for instance in ``3+sin(pi/2)``), order 1 tensors in vector expressions (such as ``X.X`` or ``Grad_u`` if u is a scalar variable), order 2 tensors for matrix expressions and so on. For efficiency reasons, the language manipulates tensors up to order six. The language could be easily extended to support tensors of order greater than six but it may lead to inefficient computations. When an expression contains test functions (as in ``Trace(Grad_Test_u)`` for a vector field ``u``), the computation is done for each test functions, which means that the tensor implicitly have a supplementary component. This means that, implicitly, the maximal order of manipulated tensors are in fact six (in ``Grad_Test_u:Grad_Test2_u`` there are two components implicitly added for first and second order test functions).
 
 Order four tensors are necessary for instance to express elasticity tensors or in general to obtain the tangent term for vector valued unknowns.
 
@@ -373,18 +375,18 @@ Test functions
 --------------
 
 Each variable is associated with first order and second order test functions.
-The first order test function are used in the weak formulation (which derive form the potential equation if it exists) and the second order test functions are used in the tangent system. For a variable ``u`` the associated tests functions are ``Test_u`` and ``Test2_u``. The assembly string have to be linear with respect to tests functions. As a result of the presence of the term ``Test_u`` on a assembly string, the expression will be evaluated for each shape function of the finite element corresponding to the variable ``u``. On a given element, if the finite element have ``N`` shape functions ans if ``u`` is a scalar field, the value of ``Test_u`` will be the value of each shape function on the current point. So ``Test_u`` return if face a vector of ``N`` values. But of course, this is implicit in the language. So one do not have to care about this.
+The first order test function are used in the weak formulation (which derive form the potential equation if it exists) and the second order test functions are used in the tangent system. For a variable ``u`` the associated test functions are ``Test_u`` and ``Test2_u``. The assembly string have to be linear with respect to test functions. As a result of the presence of the term ``Test_u`` on a assembly string, the expression will be evaluated for each shape function of the finite element corresponding to the variable ``u``. On a given element, if the finite element have ``N`` shape functions ans if ``u`` is a scalar field, the value of ``Test_u`` will be the value of each shape function on the current point. So ``Test_u`` return if face a vector of ``N`` values. But of course, this is implicit in the language. So one do not have to care about this.
 
 
 Gradient
 --------
 
-The gradient of a variable or of test functions are identified by ``Grad_`` followed by the variable name or by ``Test_`` followed itself by the variable name. This is available for fem variables (or constants) only. For instance ``Grad_u``, ``Grad_v``, ``Grad_p``, ``Grad_pressure``, ``Grad_electric_field`` and ``Grad_Test_u``, ``Grad_Test_v``, ``Grad_Test_p``, ``Grad_Test_pressure``, ``Grad_Test_electric_field``. The gradient is either a vector for scalar variables or a matrix for vector field variables. In the latter case, the first index corresponds to the vector field dimension and the second one to the index of the partial derivative.  ``Div_u`` and ``Div_Test_u`` are some optimized shortcuts for ``Trace(Grad_u)`` and ``Trace(Grad_Test_u)``, respectively.
+The gradient of a variable or of test functions are identified by ``Grad_`` followed by the variable name or by ``Test_`` followed itself by the variable name. This is available for FEM variables (or constants) only. For instance ``Grad_u``, ``Grad_v``, ``Grad_p``, ``Grad_pressure``, ``Grad_electric_field`` and ``Grad_Test_u``, ``Grad_Test_v``, ``Grad_Test_p``, ``Grad_Test_pressure``, ``Grad_Test_electric_field``. The gradient is either a vector for scalar variables or a matrix for vector field variables. In the latter case, the first index corresponds to the vector field dimension and the second one to the index of the partial derivative.  ``Div_u`` and ``Div_Test_u`` are some optimized shortcuts for ``Trace(Grad_u)`` and ``Trace(Grad_Test_u)``, respectively.
 
 Hessian
 -------
 
-Similarly, the Hessian of a variable or of test functions are identified by ``Hess_`` followed by the variable name or by ``Test_`` followed itself by the variable name. This is available for fem variables only. For instance ``Hess_u``, ``Hess_v``, ``Hess_p``, ``Hess_pressure``, ``Hess_electric_field`` and ``Hess_Test_u``, ``Hess_Test_v``, ``Hess_Test_p``, ``Hess_Test_pressure``, ``Hess_Test_electric_field``. The Hessian is either a matrix for scalar variables or a third order tensor for vector field variables. In the latter case, the first index corresponds to the vector field dimension and the two remaining to the indices of partial derivatives.
+Similarly, the Hessian of a variable or of test functions are identified by ``Hess_`` followed by the variable name or by ``Test_`` followed itself by the variable name. This is available for FEM variables only. For instance ``Hess_u``, ``Hess_v``, ``Hess_p``, ``Hess_pressure``, ``Hess_electric_field`` and ``Hess_Test_u``, ``Hess_Test_v``, ``Hess_Test_p``, ``Hess_Test_pressure``, ``Hess_Test_electric_field``. The Hessian is either a matrix for scalar variables or a third order tensor for vector field variables. In the latter case, the first index corresponds to the vector field dimension and the two remaining to the indices of partial derivatives.
 
 
 Predefined scalar functions
@@ -481,23 +483,21 @@ Parentheses can be used in a standard way to change the operation order. If no p
 Explicit vectors
 ----------------
 
-The assembly language allows to manipulate explicit vectors (i.e. order 1 tensors) with the notation ``[a;b;c;d;e]``, i.e. an arbitrary number of components separated by a semicolon, the whole vector beginning with a right bracket and ended by a left bracket. The components can be some numeric constants, some valid expressions and may contains some tests functions. In the latter case, the vector have to be homogeneous with respect to the tests functions. This means that a construction of the type ``[Test_u; Test_v]`` is not allowed. A valid example, with ``u`` a scalar field variable is ``[5*Grad_Test_u(2), 2*Grad_Test_u(1)]``. 
+The assembly language allows to define explicit vectors (i.e. order 1 tensors) with the notation ``[a;b;c;d;e]``, i.e. an arbitrary number of components separated by a semicolon, the whole vector beginning with a right bracket and ended by a left bracket. The components can be some numeric constants, some valid expressions and may also contain test functions. In the latter case, the vector has to be homogeneous with respect to the test functions. This means that a construction of the type ``[Test_u; Test_v]`` is not allowed. A valid example, with ``u`` as a scalar field variable is ``[5*Grad_Test_u(2), 2*Grad_Test_u(1)]``. 
 
 
 Explicit matrices
 -----------------
 
-Similarly to explicit vectors, it is possible to manipulate explicit matrices (i.e. order 2 tensors) with the notation ``[a,b;c,d]``,  i.e. an arbitrary number of lines separated by a semicolon, each line having the same number of components separated by a comma.  The components can be some numeric constants, some valid expressions and may contains some tests functions. For instance ``[11,12,13;21,22,23]`` is a 2x3 matrix.
+Similarly to explicit vectors, it is possible to define explicit matrices (i.e. order 2 tensors) with the notation ``[a,c;b,d]``,  i.e. an arbitrary number of lines separated by a semicolon, each line having the same number of components separated by a comma. Alternatively the nested format ``[[a,b],[c,d]]`` provides an equivalent result. For instance ``[11,12,13;21,22,23]`` and ``[[11,21],[12,22],[13,23]]`` both represent the same 2x3 matrix. The components can be some numeric constants, some valid expressions and may also contain test functions.
 
 
-
-Explicit order four tensors
+Explicit tensors
 ---------------------------
 
-Explicit order four tensors are also allowed. To this aim, the two supplementary dimensions compared to matrices are separated by  ``,,`` and ``;;``. For instance ``[1,1;1,2,,1,1;1,2;;1,1;1,2,,1,1;1,2]`` is a 2x2x2x2 valid tensor and ``[1,1;1,1,,1,1;1,1;;2,2;2,2,,2,2;2,2;;3,3;3,3,,3,3;3,3]`` is a 3x2x2x2 tensor. Note that constant fourth order tensors can also be obtained by the tensor product of two constant matrices or by the Reshape instruction. 
+Explicit order four tensors are also allowed. To this aim, the two supplementary dimensions compared to matrices are separated by  ``,,`` and ``;;``. For instance ``[1,1;1,1,,1,1;1,1;;2,2;2,2,,2,2;2,2;;3,3;3,3,,3,3;3,3]`` is a valid 3x2x2x2 tensor. Note that constant fourth order tensors can also be obtained by the tensor product of two constant matrices or by the Reshape instruction. 
 
-Explicit order five or six tensors
-----------------------------------
+The nested format can also be used for defining order four tensors. The previous example is equivalent to writting ``[[[[1,2,3],[1,2,3]],[[1,2,3],[1,2,3]]],[[[1,2,3],[1,2,3]],[[1,2,3],[1,2,3]]]]``. The nested format also allows the definition of order three tensors.
 
 Explicit order five or six tensors are not directly supported by the assembly language. However, they can be easily obtained via the Reshape instruction.
 
@@ -513,13 +513,13 @@ Constant expressions
   - ``pi``: the constant Pi. 
   - ``meshdim``: the dimension of the current mesh (i.e. size of geometrical nodes)
   - ``Id(n)``: the identity matrix of size :math:`n\times n`. `n` should be an integer expression. For instance ``Id(meshdim)`` is allowed.
-  - ``qdim(u)``: the total dimension of the variable ``u`` (i.e. the  size for fixed size variables and the total dimension of the vector/tensor field for f.e.m. variables)
-  - ``qdims(u)``: the dimensions of the variable ``u`` (i.e. the size for fixed size variables and the vector of dimensions of the vector/tensor field for f.e.m. variables)
+  - ``qdim(u)``: the total dimension of the variable ``u`` (i.e. the  size for fixed size variables and the total dimension of the vector/tensor field for FEM variables)
+  - ``qdims(u)``: the dimensions of the variable ``u`` (i.e. the size for fixed size variables and the vector of dimensions of the vector/tensor field for FEM variables)
 
 Special expressions linked to the current position 
 --------------------------------------------------
 
-  - ``X`` is the current coordinate on the real element (i.e. the position on the mesh of the current Gauss point on which the expression is evaluated), ``X(i)`` is its ith component. For instance ``sin(X(1)+X(2))`` is a valid expression on a mesh of dimension greater or equal to two. 
+  - ``X`` is the current coordinate on the real element (i.e. the position on the mesh of the current Gauss point on which the expression is evaluated), ``X(i)`` is its i-th component. For instance ``sin(X(1)+X(2))`` is a valid expression on a mesh of dimension greater or equal to two. 
 
   - ``Normal`` the outward unit normal vector to a boundary when integration on a boundary is performed.
 
@@ -700,7 +700,7 @@ where ``pelementary_transformation`` is a pointer to an object deriving from ``v
   Elementary_transformation(Div_Test_u, transname)
   Elementary_transformation(Hess_Test_u, transname)
 
-where ``u`` is one of the fem variables of the model/workspace. For the moment, the only available elementary transformation is the the one for the projection on rotated RT0 element for two-dimensional elements which can be added thanks to the function (defined in :file:`getfem/linearized_plate.h`)::
+where ``u`` is one of the FEM variables of the model/workspace. For the moment, the only available elementary transformation is the the one for the projection on rotated RT0 element for two-dimensional elements which can be added thanks to the function (defined in :file:`getfem/linearized_plate.h`)::
 
   add_2D_rotated_RT0_projection(model, transname)
 

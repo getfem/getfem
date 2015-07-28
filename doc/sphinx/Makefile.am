@@ -71,7 +71,7 @@ build: $(srcdir)/source/matlab/cmdref.rst $(srcdir)/source/python/cmdref.rst $(s
 	echo # rm -fr build/$(BUILDER)/_images
 	echo # rm -fr build/$(BUILDER)/*.png
 	mkdir -p build/$(BUILDER) build/doctrees
-	PYTHONPATH=../../interface/src/python && $(SPHINXBUILD) $(ALLSPHINXOPTS)
+	PYTHONPATH=../../interface/src/python LD_PRELOAD=../../src/.libs/libgetfem.so $(SPHINXBUILD) $(ALLSPHINXOPTS)
 	@echo
 
 view:
