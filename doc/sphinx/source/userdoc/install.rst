@@ -43,7 +43,7 @@ There are two ways to get |gf|, either as a compressed package (stable
 release) or via anonymous svn access (unstable releases).
 
 The latest stable release of |gf| is getfem-|version|.tar.gz you can download `here
-<http://download.gna.org/getfem/stable/getfem-4.3.tar.gz>`_.
+<http://download.gna.org/getfem/stable/getfem-5.0.tar.gz>`_.
 
  * download package:
 
