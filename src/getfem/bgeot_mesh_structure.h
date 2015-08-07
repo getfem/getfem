@@ -47,7 +47,7 @@ namespace bgeot {
   struct APIDECL mesh_convex_structure {
     typedef std::vector<size_type> ind_pt_ct;
 
-    pconvex_structure cstruct;       /* type of convexe.                  */
+    pconvex_structure cstruct;       /* type of convex.                  */
     ind_pt_ct pts;                   /* point list indices.               */
 
     pconvex_structure structure(void) const { return cstruct; }
@@ -55,16 +55,25 @@ namespace bgeot {
     mesh_convex_structure(void) : cstruct(0) {}
   };
 
+  struct convex_face
+  {
+    convex_face(size_type element, short_type face) : cv(element), f(face) {}
+    size_type cv = -1;
+    short_type f = -1;
+    bool valid() const {return (cv != size_type(-1)) && (f != short_type(-1));}
+    static convex_face invalid_face() {return {size_type(-1), short_type(-1)};}
+  };
+
   /**@addtogroup mesh */
   ///@{
-  /** Mesh structure definition. 
+  /** Mesh structure definition.
    *   At this point, the mesh is just a graph: the points have no
    *  associated coordinates
    */
   class APIDECL mesh_structure {
 
   public :
-    
+
     typedef std::vector<size_type> ind_cv_ct;
     typedef std::vector<size_type> ind_set;
     typedef gmm::tab_ref_index_ref<ind_cv_ct::const_iterator,
@@ -72,11 +81,10 @@ namespace bgeot {
     typedef dal::dynamic_array<ind_cv_ct, 8> point_ct;
 
   protected :
-    
+
     dal::dynamic_tas<mesh_convex_structure, 8> convex_tab;
     point_ct points_tab;
-    
-    
+
   public :
 
     /// Return the list of valid convex IDs
@@ -110,7 +118,7 @@ namespace bgeot {
     void swap_points(size_type i, size_type j);
     /// Exchange two convex IDs
     void swap_convex(size_type cv1, size_type cv2);
-    
+
     template<class ITER>
     size_type add_convex_noverif(pconvex_structure cs, ITER ipts,
                                  size_type to_index = size_type(-1));
@@ -128,11 +136,11 @@ namespace bgeot {
     size_type add_segment(size_type a, size_type b);
     /** Remove the convex ic */
     void sup_convex(size_type ic);
-    /** Remove a convex given its points 
+    /** Remove a convex given its points
         @param nb the number of points for the convex
         @param ipts an iterator over the list of point IDs of the convex
     */
-    template<class ITER> 
+    template<class ITER>
     void sup_convex_with_points(ITER ipts, short_type nb);
     void sup_segment(size_type a, size_type b)
       { size_type t[2]; t[0] = a; t[1] = b; sup_convex_with_points(&t[0], 2); }
@@ -150,13 +158,13 @@ namespace bgeot {
     size_type nb_convex_with_edge(size_type i1, size_type i2);
     void convex_with_edge(size_type i1, size_type i2,
                           std::vector<size_type> &ipt);
-    
+
     /** Return a container of the convexes attached to point ip */
     const ind_cv_ct &convex_to_point(size_type ip) const
     { return points_tab[ip]; }
     /** Return a container of the points attached (via an edge) to point ip */
     void ind_points_to_point(size_type, ind_set &) const;
-    
+
     /** Return true if the convex contains the listed points.
         @param ic the convex ID.
         @param nb the number of points which are searched in ic.
@@ -164,16 +172,16 @@ namespace bgeot {
     */
     template<class ITER>
       bool is_convex_having_points(size_type ic,short_type nb, ITER pit) const;
-    
+
     /** Return true if the face of the convex contains the given list of points */
-    template<class ITER> 
+    template<class ITER>
     bool is_convex_face_having_points(size_type ic, short_type face_num,
                                       short_type nb, ITER pit) const;
-    
+
     /** Return a container of the (global) point number for face f or convex ic */
     ind_pt_face_ct ind_points_of_face_of_convex(size_type ic,
                                                 short_type f) const;
-    
+
     size_type memsize(void) const;
     /** Reorder the convex IDs and point IDs, such that there is no
         hole in their numbering. */
@@ -181,7 +189,7 @@ namespace bgeot {
     /// erase the mesh
     void clear(void);
     void stat(void);
- 
+
     /** Return in s a list of neighbours of a given convex face.
         @param ic the convex id.
         @param f the face number of the convex.
@@ -195,16 +203,25 @@ namespace bgeot {
     */
     void neighbours_of_convex(size_type ic, ind_set &s) const;
 
-    /** Return a neighbour of a given convex face.
+    /** Return a neighbour convex of a given convex face.
         @param ic the convex id.
         @param f the face number of the convex.
         @return size_type(-1) if there is no neighbour to this convex and
         the index of the first neighbour found otherwise.
     */
     size_type neighbour_of_convex(size_type ic, short_type f) const;
+
+    /**Return a face of the neighbouring element that is adjacent to the given face
+       @param ic the convex id.
+       @param f the face number of the convex.
+       @return convex_face that contains the neighbours convex id and the adjacent
+       face number, or convex_face::invalid_face() otherwise.
+    */
+    convex_face adjacent_face(size_type ic, short_type f) const;
+
     bool is_convex_having_neighbour(size_type ic, short_type f) const
     { return (neighbour_of_convex(ic, f) != size_type(-1)); }
-    
+
     /** Convex ID of the first convex attached to the point ip. */
     size_type first_convex_of_point(size_type ip) const
     { return points_tab[ip].empty() ?  size_type(-1) : points_tab[ip][0]; }
@@ -234,7 +251,6 @@ namespace bgeot {
         return false;
     return true;
   }
-  
 
   template<class ITER> bool
   mesh_structure::is_convex_face_having_points(size_type ic, short_type face_num,
@@ -250,7 +266,7 @@ namespace bgeot {
                                                  ITER ipts, size_type is) {
     mesh_convex_structure s; s.cstruct = cs;
     size_type nb = cs->nb_points();
-    
+
     if (is != size_type(-1)) { sup_convex(is); convex_tab.add_to_index(is,s); }
     else is = convex_tab.add(s);
 
@@ -293,7 +309,7 @@ namespace bgeot {
     size_type cv;
     inline bool operator < (const edge_list_elt &e) const
     {
-      if (i < e.i) return true; if (i > e.i) return false; 
+      if (i < e.i) return true; if (i > e.i) return false;
       if (j < e.j) return true; else if (j > e.j) return false;
       if (cv < e.cv) return true; return false;
     }
@@ -303,13 +319,13 @@ namespace bgeot {
   };
 
   typedef dal::dynamic_tree_sorted<edge_list_elt> edge_list;
-  
+
   /* do not use that */
-  void APIDECL mesh_edge_list_convex(pconvex_structure cvs, 
-                             std::vector<size_type> points_of_convex, 
-                             size_type cv_id, edge_list &el, 
+  void APIDECL mesh_edge_list_convex(pconvex_structure cvs,
+                             std::vector<size_type> points_of_convex,
+                             size_type cv_id, edge_list &el,
                              bool merge_convex);
-  void APIDECL mesh_edge_list(const mesh_structure &m, edge_list &el, 
+  void APIDECL mesh_edge_list(const mesh_structure &m, edge_list &el,
                       bool merge_convex = true);
 
 

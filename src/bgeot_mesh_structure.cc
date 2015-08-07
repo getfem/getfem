@@ -259,6 +259,26 @@ namespace bgeot {
     return size_type(-1);
   }
 
+  convex_face mesh_structure::adjacent_face(size_type cv, short_type f) const
+  {
+    if (!is_convex_having_neighbour(cv, f)) return convex_face::invalid_face();
+
+    auto face_points = ind_points_of_face_of_convex(cv, f);
+    auto neighbour_element = neighbour_of_convex(cv, f);
+    auto nNeighbourElementFaces = structure_of_convex(neighbour_element)->nb_faces();
+    for (short_type f = 0; f < nNeighbourElementFaces; ++f)
+    {
+      auto nPointsOnFace = structure_of_convex(neighbour_element)->nb_points_of_face(f);
+      if (is_convex_face_having_points(neighbour_element, f, nPointsOnFace, face_points.begin()))
+      {
+        return {neighbour_element, f};
+      }
+    }
+    GMM_ASSERT2(false, "failed to determine neighbouring face");
+
+    return convex_face::invalid_face();
+  }
+
   size_type mesh_structure::ind_in_convex_of_point(size_type ic,
                                                    size_type ip) const {
     const ind_cv_ct &ct = ind_points_of_convex(ic);
