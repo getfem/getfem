@@ -266,12 +266,12 @@ namespace bgeot {
     auto face_points = ind_points_of_face_of_convex(cv, f);
     auto neighbour_element = neighbour_of_convex(cv, f);
     auto nNeighbourElementFaces = structure_of_convex(neighbour_element)->nb_faces();
-    for (short_type f = 0; f < nNeighbourElementFaces; ++f)
+    for (short_type iff = 0; iff < nNeighbourElementFaces; ++iff)
     {
-      auto nPointsOnFace = structure_of_convex(neighbour_element)->nb_points_of_face(f);
-      if (is_convex_face_having_points(neighbour_element, f, nPointsOnFace, face_points.begin()))
+      auto nPointsOnFace = structure_of_convex(neighbour_element)->nb_points_of_face(iff);
+      if (is_convex_face_having_points(neighbour_element, iff, nPointsOnFace, face_points.begin()))
       {
-        return {neighbour_element, f};
+        return {neighbour_element, iff};
       }
     }
     GMM_ASSERT2(false, "failed to determine neighbouring face");

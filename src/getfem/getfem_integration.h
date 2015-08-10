@@ -92,7 +92,11 @@
 #include "bgeot_convex_ref.h"
 #include "bgeot_geometric_trans.h"
 #include "bgeot_node_tab.h"
+#include "bgeot_poly_composite.h"
 #include "getfem/dal_naming_system.h"
+
+
+
 
 namespace getfem
 {
@@ -322,9 +326,9 @@ namespace getfem
   /// return IM_NONE
   pintegration_method im_none(void);
 
-  class mesh_precomposite;
+
   class mesh_im;
-  papprox_integration composite_approx_int_method(const mesh_precomposite &mp, 
+  papprox_integration composite_approx_int_method(const bgeot::mesh_precomposite &mp, 
 						  const mesh_im &mf,
 						  bgeot::pconvex_ref cr);
 
