@@ -134,10 +134,10 @@ namespace getfem {
     ga_operator_priorities[GA_DOTDIV] = 2;
     ga_operator_priorities[GA_TMULT] = 2;
     ga_operator_priorities[GA_QUOTE] = 3;
-    ga_operator_priorities[GA_TRACE] = 3;
-    ga_operator_priorities[GA_DEVIATOR] = 3;
-    ga_operator_priorities[GA_PRINT] = 3;
     ga_operator_priorities[GA_UNARY_MINUS] = 3;
+    ga_operator_priorities[GA_TRACE] = 4;
+    ga_operator_priorities[GA_DEVIATOR] = 4;
+    ga_operator_priorities[GA_PRINT] = 4;
 
     return true;
   }
@@ -542,6 +542,10 @@ namespace getfem {
 
     void add_params(size_type pos) {
       GMM_ASSERT1(current_node, "internal error");
+      while (current_node && current_node->parent &&
+             current_node->parent->node_type == GA_NODE_OP &&
+             ga_operator_priorities[current_node->parent->op_type] >= 4)
+        current_node = current_node->parent;
       pga_tree_node new_node = new ga_tree_node(GA_NODE_PARAMS, pos);
       pga_tree_node parent =  current_node->parent;
       if (parent) {
