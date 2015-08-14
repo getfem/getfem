@@ -282,7 +282,7 @@ namespace getfem{
         T.as_vector()[i_comp] = V1[iPt*nb_tensor_elem_ +i_comp];
     }
 
-    /**set a value of a integration point 
+    /**set a value of an integration point 
     from a raw vector data, described by the tensor size.*/
     template <typename VECT>
     typename VECT::value_type &set_value (VECT &V1, 
@@ -294,7 +294,7 @@ namespace getfem{
       else return V1[filtered_index_of_point(cv,i)];
     }
 
-    /**set a vector of a integration point 
+    /**set a vector of an integration point 
     from a raw vector data, described by the tensor size.*/
     template <typename VECT1, typename VECT2>
     void set_vector (VECT1 &V1, 
