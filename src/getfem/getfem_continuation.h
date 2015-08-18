@@ -334,6 +334,10 @@ namespace getfem {
         solve_grad(X, Gamma, Delta_X, y, f, g);                // y = F_x(X, Gamma)^-1 * g
                                                                // Delta_X = F_x(X, Gamma)^-1 * f
         Delta_Gamma = sp(tX, Delta_X) / (sp(tX, y) - tGamma);  // Delta_Gamma = tX.Delta_X / (tX.y - tGamma)
+        if (isnan(Delta_Gamma)) {
+          if (noisy() > 0) cout << "Newton correction failed with NaN" << endl;
+          return false;
+        }
         gmm::add(gmm::scaled(y, -Delta_Gamma), Delta_X);       // Delta_X -= Delta_Gamma * y
         scaled_add(X, Gamma, Delta_X, Delta_Gamma, -1,
                    X, Gamma);                                  // [X,Gamma] -= [Delta_X,Delta_Gamma]
