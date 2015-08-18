@@ -216,7 +216,10 @@ namespace getfem {
         already existing point.
         @param pt the point coordinates.
     */
-    size_type add_point(const base_node &pt) { return pts.add_node(pt); }
+    size_type add_point(const base_node &pt,
+                        const scalar_type tol=scalar_type(0)) {
+      return pts.add_node(pt, tol);
+    }
     //                        scalar_type characteristic_size = scalar_type(1));
 
     /// Give the number of geometrical nodes in the mesh.
@@ -278,7 +281,8 @@ namespace getfem {
         @return the number of the new convex.
     */
     template<class ITER>
-    size_type add_convex_by_points(bgeot::pgeometric_trans pgt, ITER ipts);
+    size_type add_convex_by_points(bgeot::pgeometric_trans pgt, ITER ipts,
+                                   const scalar_type tol=scalar_type(0));
 
     /** Add a simplex to the mesh, given its dimension and point numbers.
      */
@@ -579,11 +583,11 @@ namespace getfem {
 
  template<class ITER>
     size_type mesh::add_convex_by_points(bgeot::pgeometric_trans pgt,
-                                                                   ITER ipts)
+                                         ITER ipts, const scalar_type tol)
   {
     short_type nb = short_type(pgt->nb_points());
     std::vector<size_type> ind(nb);
-    for (short_type i = 0; i < nb; ++ipts, ++i) ind[i] = add_point(*ipts);
+    for (short_type i = 0; i < nb; ++ipts, ++i) ind[i] = add_point(*ipts, tol);
     return add_convex(pgt, ind.begin());
   }
 

@@ -83,7 +83,7 @@ namespace bgeot {
     /** Add a point to the array or identify it with a very close existing
 	point.
     */
-    size_type add_node(const base_node &pt);
+    size_type add_node(const base_node &pt, const scalar_type radius=0);
     size_type add(const base_node &pt) { return add_node(pt); }
     void sup_node(size_type i);
     void sup(size_type i) { sup_node(i); }

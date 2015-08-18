@@ -355,16 +355,20 @@ void gf_mesh_set(getfemint::mexargs_in& m_in,
        );
 
 
-    /*@SET ('merge', @tmesh m2)
+    /*@SET ('merge', @tmesh m2[, @scalar  tol])
       Merge with the @tmesh `m2`.
       
-      Overlapping points won't be duplicated. If `m2` is a @tmf object,
-      its linked mesh will be used.@*/
+      Overlapping points, within a tolerance radius `tol`, will not be
+      duplicated. If `m2` is a @tmf object, its linked mesh will be used.@*/
     sub_command
-      ("merge", 1, 1, 0, 0,
+      ("merge", 1, 2, 0, 0,
        const getfem::mesh *pmesh2 = in.pop().to_const_mesh();
+       scalar_type tol(0);
+       if (in.remaining()) tol = in.pop().to_scalar();
        for (dal::bv_visitor cv(pmesh2->convex_index()); !cv.finished(); ++cv)
-         pmesh->add_convex_by_points(pmesh2->trans_of_convex(cv), pmesh2->points_of_convex(cv).begin());
+         pmesh->add_convex_by_points(pmesh2->trans_of_convex(cv),
+                                     pmesh2->points_of_convex(cv).begin(),
+                                     tol);
        );
 
 

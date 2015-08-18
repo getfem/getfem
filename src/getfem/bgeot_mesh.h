@@ -87,7 +87,10 @@ namespace bgeot {
       return ref_mesh_pt_ct(pts.begin(), rct.begin(), rct.end());
     } 
 
-    size_type add_point(const base_node &pt) { return pts.add_node(pt); }
+    size_type add_point(const base_node &pt,
+                        const scalar_type tol=scalar_type(0)) {
+      return pts.add_node(pt, tol);
+    }
 
     template<class ITER>
     size_type add_convex(bgeot::pgeometric_trans pgt, ITER ipts) { 
