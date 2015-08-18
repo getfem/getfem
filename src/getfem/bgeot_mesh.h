@@ -93,7 +93,7 @@ namespace bgeot {
     size_type add_convex(bgeot::pgeometric_trans pgt, ITER ipts) { 
       bool present;
       size_type i = mesh_structure::add_convex(pgt->structure(), ipts,
-					       &present);
+                                               &present);
       gtab[i] = pgt; trans_exists[i] = true;
       return i;
     }
@@ -109,7 +109,7 @@ namespace bgeot {
     }
 
     size_type add_tetrahedron(size_type a, size_type b,
-			      size_type c, size_type d) {
+                              size_type c, size_type d) {
       size_type ipt[4]; ipt[0] = a; ipt[1] = b; ipt[2] = c; ipt[3] = d;
       return add_convex(simplex_geotrans(3, 1), &(ipt[0]));
     }

@@ -54,9 +54,9 @@ namespace bgeot {
   }
 
   size_type node_tab::search_node(const base_node &pt,
-				  const scalar_type radius) const {
+                                  const scalar_type radius) const {
     if (card() == 0) return size_type(-1);
-        
+
     scalar_type eps_radius = std::max(eps, radius);
     for (size_type is = 0; is < 5; ++is) {
       if (is >= sorters.size()) add_sorter();
@@ -70,15 +70,15 @@ namespace bgeot {
       // if (is > 0) cout << "begin loop " << " v = " <<  sorters[is].key_comp().v << "sp c = " << gmm::vect_sp(c, sorters[is].key_comp().v) << " eps_radius = " << eps_radius << " max_radius " <<  max_radius << endl;
       for (; it != sorters[is].end() && count < 20; ++it, ++count) {
 
-	const base_node &pt2 = (*this)[*it];
+        const base_node &pt2 = (*this)[*it];
 
-// 	if (count > 0) {
-// 	  cout << "count " << count << " is = " << is << " pt = " << pt << " pt2 = " << pt2 << " sp = " << gmm::vect_sp(pt2, sorters[is].key_comp().v) << " spinit = " << gmm::vect_sp(pt, sorters[is].key_comp().v) << endl;
-// 	}
+//         if (count > 0) {
+//           cout << "count " << count << " is = " << is << " pt = " << pt << " pt2 = " << pt2 << " sp = " << gmm::vect_sp(pt2, sorters[is].key_comp().v) << " spinit = " << gmm::vect_sp(pt, sorters[is].key_comp().v) << endl;
+//         }
 
-	if (gmm::vect_dist2(pt, pt2) < eps_radius) return *it;
-	if (gmm::vect_sp(pt2, sorters[is].key_comp().v) > up_bound)
-	  return size_type(-1);
+        if (gmm::vect_dist2(pt, pt2) < eps_radius) return *it;
+        if (gmm::vect_sp(pt2, sorters[is].key_comp().v) > up_bound)
+          return size_type(-1);
       }
       if (it == sorters[is].end()) return size_type(-1);
     }
@@ -107,11 +107,11 @@ namespace bgeot {
       GMM_ASSERT1(dim_ == pt.size(), "Nodes should have the same dimension");
       id = search_node(pt);
       if (id == size_type(-1)) {
-	id = dal::dynamic_tas<base_node>::add(pt);
-	for (size_type i = 0; i < sorters.size(); ++i) {
-	  sorters[i].insert(id);
-	  GMM_ASSERT3(sorters[i].size() == card(), "internal error");
-	}
+        id = dal::dynamic_tas<base_node>::add(pt);
+        for (size_type i = 0; i < sorters.size(); ++i) {
+          sorters[i].insert(id);
+          GMM_ASSERT3(sorters[i].size() == card(), "internal error");
+        }
       }
     }
     return id;
@@ -121,13 +121,13 @@ namespace bgeot {
     if (i != j) {
       bool existi = index().is_in(i), existj = index().is_in(j);
       for (size_type is = 0; is < sorters.size(); ++is) {
-	if (existi) sorters[is].erase(i);
-	if (existj) sorters[is].erase(j);
+        if (existi) sorters[is].erase(i);
+        if (existj) sorters[is].erase(j);
       }
       dal::dynamic_tas<base_node>::swap(i, j);
       for (size_type is = 0; is < sorters.size(); ++is) {
-	if (existi) sorters[is].insert(j);
-	if (existj) sorters[is].insert(i);
+        if (existi) sorters[is].insert(j);
+        if (existj) sorters[is].insert(i);
         GMM_ASSERT3(sorters[is].size() == card(), "internal error");
       }
     }
@@ -136,12 +136,12 @@ namespace bgeot {
   void node_tab::sup_node(size_type i) {
     if (index().is_in(i)) {
       for (size_type is = 0; is < sorters.size(); ++is) {
-	sorters[is].erase(i);
+        sorters[is].erase(i);
         GMM_ASSERT3(sorters[is].size()+1 == card(), "Internal error");
         // if (sorters[is].size()+1 != card()) { resort(); }
       }
       dal::dynamic_tas<base_node>::sup(i);
-      
+
     }
   }
 
@@ -153,7 +153,7 @@ namespace bgeot {
   void node_tab::transformation(const base_matrix &M) {
     base_small_vector w(M.nrows());
     GMM_ASSERT1(gmm::mat_nrows(M) != 0 && gmm::mat_ncols(M) == dim(),
-		"invalid dimensions for the transformation matrix");
+                "invalid dimensions for the transformation matrix");
     dim_ = unsigned(gmm::mat_nrows(M));
     for (dal::bv_visitor i(index()); !i.finished(); ++i) {
       w = (*this)[i];

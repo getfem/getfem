@@ -91,8 +91,8 @@ static void subtract_regions(getfem::mesh &mesh, getfemint::mexargs_in& in) {
 struct sub_gf_mesh_set : virtual public dal::static_stored_object {
   int arg_in_min, arg_in_max, arg_out_min, arg_out_max;
   virtual void run(getfemint::mexargs_in& in,
-		   getfemint::mexargs_out& out,
-		   getfem::mesh *pmesh) = 0;
+                   getfemint::mexargs_out& out,
+                   getfem::mesh *pmesh) = 0;
 };
 
 typedef boost::intrusive_ptr<sub_gf_mesh_set> psub_command;
@@ -101,16 +101,16 @@ typedef boost::intrusive_ptr<sub_gf_mesh_set> psub_command;
 template <typename T> static inline void dummy_func(T &) {}
 
 #define sub_command(name, arginmin, arginmax, argoutmin, argoutmax, code) { \
-    struct subc : public sub_gf_mesh_set {				\
-      virtual void run(getfemint::mexargs_in& in,			\
-		       getfemint::mexargs_out& out,			\
-		       getfem::mesh *pmesh)				\
-      { dummy_func(in); dummy_func(out); code }				\
-    };									\
-    psub_command psubc = new subc;					\
-    psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;		\
-    psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;	\
-    subc_tab[cmd_normalize(name)] = psubc;				\
+    struct subc : public sub_gf_mesh_set {                                  \
+      virtual void run(getfemint::mexargs_in& in,                           \
+                       getfemint::mexargs_out& out,                         \
+                       getfem::mesh *pmesh)                                 \
+      { dummy_func(in); dummy_func(out); code }                             \
+    };                                                                      \
+    psub_command psubc = new subc;                                          \
+    psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;             \
+    psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;         \
+    subc_tab[cmd_normalize(name)] = psubc;                                  \
   }                           
 
 
@@ -119,7 +119,7 @@ template <typename T> static inline void dummy_func(T &) {}
 @*/
 
 void gf_mesh_set(getfemint::mexargs_in& m_in,
-		 getfemint::mexargs_out& m_out) {
+                 getfemint::mexargs_out& m_out) {
   typedef std::map<std::string, psub_command > SUBC_TAB;
   static SUBC_TAB subc_tab;
 
@@ -132,10 +132,10 @@ void gf_mesh_set(getfemint::mexargs_in& m_in,
       ("pts", 1, 1, 0, 1,
        darray P = in.pop().to_darray
        (pmesh->dim(),
-	int(pmesh->points().index().last_true()+1));
+        int(pmesh->points().index().last_true()+1));
        for (dal::bv_visitor i(pmesh->points().index()); !i.finished(); ++i) {
-	 for (unsigned k=0; k < pmesh->dim(); ++k)
-	   pmesh->points()[i][k] = P(k,i);
+         for (unsigned k=0; k < pmesh->dim(); ++k)
+           pmesh->points()[i][k] = P(k,i);
        }
        );
 
@@ -158,8 +158,8 @@ void gf_mesh_set(getfemint::mexargs_in& m_in,
        darray v = in.pop().to_darray(pmesh->dim(), -1);
        iarray w = out.pop().create_iarray_h(v.getn());
        for (int j=0; j < int(v.getn()); j++) {
-	 w[j] = unsigned(pmesh->add_point(v.col_to_bn(j))
-			 + config::base_index());
+         w[j] = unsigned(pmesh->add_point(v.col_to_bn(j))
+                         + config::base_index());
        }
        );
 
@@ -175,12 +175,12 @@ void gf_mesh_set(getfemint::mexargs_in& m_in,
        iarray v = in.pop().to_iarray();
        
        for (size_type j=0; j < v.size(); j++) {
-	 id_type id = v[j]-config::base_index();
-	 if (pmesh->is_point_valid(id)) {
-	   THROW_ERROR( "Can't remove point " << id+config::base_index()
-			<< ": a convex is still attached to it.");
-	 }
-	 pmesh->sup_point(id);
+         id_type id = v[j]-config::base_index();
+         if (pmesh->is_point_valid(id)) {
+           THROW_ERROR("Can't remove point " << id+config::base_index()
+                       << ": a convex is still attached to it.");
+         }
+         pmesh->sup_point(id);
        }
        );
 
@@ -204,12 +204,12 @@ void gf_mesh_set(getfemint::mexargs_in& m_in,
        std::vector<getfemint::id_type> qp(pgt->nb_points());
        /* loop over convexes */
        for (unsigned k=0; k < v.getp(); k++) {
-	 /* loop over convex points */
-	 for (unsigned j=0; j < v.getn(); j++) {
-	   qp[j] = unsigned(pmesh->add_point(v.col_to_bn(j,k)));
-	 }
-	 id_type cv_id = id_type(pmesh->add_convex(pgt, qp.begin()));
-	 w[k] = cv_id+config::base_index();
+         /* loop over convex points */
+         for (unsigned j=0; j < v.getn(); j++) {
+           qp[j] = unsigned(pmesh->add_point(v.col_to_bn(j,k)));
+         }
+         id_type cv_id = id_type(pmesh->add_convex(pgt, qp.begin()));
+         w[k] = cv_id+config::base_index();
        }
        );
 
@@ -225,13 +225,13 @@ void gf_mesh_set(getfemint::mexargs_in& m_in,
        iarray v = in.pop().to_iarray();
        
        for (size_type j=0; j < v.size(); j++) {
-	 id_type id = v[j]-config::base_index();
-	 if (pmesh->convex_index().is_in(id)) {
-	   pmesh->sup_convex(id);
-	 } else {
-	   THROW_ERROR("can't delete convex " << id+config::base_index()
-		       << ", it is not part of the mesh");
-	 }
+         id_type id = v[j]-config::base_index();
+         if (pmesh->convex_index().is_in(id)) {
+           pmesh->sup_convex(id);
+         } else {
+           THROW_ERROR("Can't delete convex " << id+config::base_index()
+                       << ", it is not part of the mesh");
+         }
        }
        );
 
@@ -245,9 +245,9 @@ void gf_mesh_set(getfemint::mexargs_in& m_in,
       ("del convex of dim", 1, 1, 0, 0,
        dal::bit_vector bv = in.pop().to_bit_vector(NULL, 0);
        for (dal::bv_visitor_c cv(pmesh->convex_index());
-	    !cv.finished(); ++cv) {
-	 if (bv.is_in(pmesh->structure_of_convex(cv)->dim()))
-	   pmesh->sup_convex(cv);
+            !cv.finished(); ++cv) {
+         if (bv.is_in(pmesh->structure_of_convex(cv)->dim()))
+           pmesh->sup_convex(cv);
        }
        );
 
@@ -340,7 +340,7 @@ void gf_mesh_set(getfemint::mexargs_in& m_in,
       ("delete boundary", 1, 1, 0, 0,
        dal::bit_vector lst = in.pop().to_bit_vector(&pmesh->regions_index(),0);
        for (dal::bv_visitor b(lst); !b.finished(); ++b)
-	 pmesh->sup_region(b);
+         pmesh->sup_region(b);
        );
 
 
@@ -351,7 +351,7 @@ void gf_mesh_set(getfemint::mexargs_in& m_in,
        dal::bit_vector lst = in.pop().to_bit_vector(&pmesh->regions_index(),0);
        // pmesh->sup_region(1); ??
        for (dal::bv_visitor b(lst); !b.finished(); ++b)
-	 pmesh->sup_region(b);
+         pmesh->sup_region(b);
        );
 
 
@@ -364,7 +364,7 @@ void gf_mesh_set(getfemint::mexargs_in& m_in,
       ("merge", 1, 1, 0, 0,
        const getfem::mesh *pmesh2 = in.pop().to_const_mesh();
        for (dal::bv_visitor cv(pmesh2->convex_index()); !cv.finished(); ++cv)
-	 pmesh->add_convex_by_points(pmesh2->trans_of_convex(cv), pmesh2->points_of_convex(cv).begin());
+         pmesh->add_convex_by_points(pmesh2->trans_of_convex(cv), pmesh2->points_of_convex(cv).begin());
        );
 
 
@@ -408,8 +408,8 @@ void gf_mesh_set(getfemint::mexargs_in& m_in,
   SUBC_TAB::iterator it = subc_tab.find(cmd);
   if (it != subc_tab.end()) {
     check_cmd(cmd, it->first.c_str(), m_in, m_out, it->second->arg_in_min,
-	      it->second->arg_in_max, it->second->arg_out_min,
-	      it->second->arg_out_max);
+              it->second->arg_in_max, it->second->arg_out_min,
+              it->second->arg_out_max);
     it->second->run(m_in, m_out, pmesh);
   }
   else bad_cmd(init_cmd);

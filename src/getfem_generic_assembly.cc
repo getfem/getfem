@@ -2399,10 +2399,10 @@ namespace getfem {
         GMM_ASSERT1(!(ctx.is_on_face()),
                     "Im data cannot be used on boundaries");
       }
-      size_type ind = imd.filtered_index_of_point(cv, ctx.ii());
-      GMM_ASSERT1(ind != size_type(-1),
-                  "Im data with no data on the current integration point");
-      gmm::copy(gmm::sub_vector(U, gmm::sub_interval(ind*qdim, qdim)),
+      size_type ipt = imd.filtered_index_of_point(cv, ctx.ii());
+      GMM_ASSERT1(ipt != size_type(-1),
+                  "Im data with no data on the current integration point.");
+      gmm::copy(gmm::sub_vector(U, gmm::sub_interval(ipt*qdim, qdim)),
                 t.as_vector());
       return 0;
     }
@@ -10245,6 +10245,8 @@ namespace getfem {
       }
       GMM_ASSERT1(s == si, "Internal error");
       size_type ipt = imd.filtered_index_of_point(cv, i);
+      GMM_ASSERT1(ipt != size_type(-1),
+                  "Im data with no data on the current integration point.");
       gmm::add(t.as_vector(),
                gmm::sub_vector(result, gmm::sub_interval(s*ipt, s)));
     }

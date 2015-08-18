@@ -536,7 +536,7 @@ namespace getfem {
                 cvok = true;
               }
               else{
-                GMM_WARNING2("gmsh import ignored a element of type "
+                GMM_WARNING2("gmsh import ignored an element of type "
                   << bgeot::name_of_geometric_trans(ci.pgt) <<
                   " as it does not belong to the face of another element");
               }

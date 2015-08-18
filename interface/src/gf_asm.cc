@@ -1072,7 +1072,7 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        );
 
 
-    /*@FUNC @CELL{HH, RR} = ('dirichlet', @int bnum, @tmim mim, @tmf mf_u, @tmf mf_d, @dmat H, @dvec R [, threshold])
+    /*@FUNC @CELL{HH, RR} = ('dirichlet', @int bnum, @tmim mim, @tmf mf_u, @tmf mf_d, @dmat H, @dvec R [, @scalar threshold])
     Assembly of Dirichlet conditions of type `h.u = r`.
 
     Handle `h.u = r` where h is a square matrix (of any rank) whose
