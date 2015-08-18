@@ -12,24 +12,36 @@
 Nitsche's method for dirichlet and contact boundary conditions
 --------------------------------------------------------------
 
-Nitsche's method is a very attractive methods since it allows to take into
-account Dirichlet type boundary conditions or contact with friction boundary conditions in a weak way without the use of Lagrange multipliers.  |gf| provides a generic implementation of Nitche's method. The advantage of Nitsche's method, which is to tranform a Dirichlet boundary condition into weak terms similarly as a Neumann boundary condition, is paid by the fact that the implementation is model dependent. This method needs the use of an approximation of the corresponding Neumann term. Thus, in order to add a boundary condition with Nitsche's method on a variable of a model, the corresponding brick has to have access to an approximation of the Neumann term of all the partial differential terms applied to this variables. In the following, considering a variable :math:`u`, we will denote by
+|gf| provides a generic implementation of Nitche's method which allows to take into account Dirichlet type boundary conditions or contact with friction boundary conditions in a weak sense without the use of Lagrange multipliers.
+The method is very attractive because it transforms a Dirichlet boundary condition into a weak term similar to a Neumann boundary condition.
+However, this advantage is paid by the fact that the implementation of Nitche's method is model dependent, because it requires an approximation of the corresponding Neumann term.
+In order to add a boundary condition with Nitsche's method on a variable of a model, the corresponding brick has to have access to an approximation of the Neumann term of all partial differential terms applied to this variables.
+In the following, considering a variable :math:`u`, we will denote by
 
 .. math::
   G
 
-the sum of all the Neumann terms on its variables. Note that the Neumann term :math:`G` will often depend on the variable :math:`u` but may depend on some other variables of the model. This is the case for instance for mixed formulations of incompressible elasticity. The Neumann terms depend also frequently on some parameters of the model (elasticity coefficients ...) but this is assumed to be contained in its expression.
+the sum of all Neumann terms on this variables.
+Note that the Neumann term :math:`G` will often depend on the variable :math:`u` but it may also depend on other variables of the model.
+This is the case for instance for mixed formulations of incompressible elasticity.
+The Neumann terms depend also frequently on some parameters of the model (elasticity coefficients ...) but this is assumed to be contained in its expression.
 
-For instance, if there is a Laplace term (:math:`\Delta u`) is applied on the variable :math:`u`, the Neumann term will be :math:`G = \Frac{\partial u}{\partial n}` where :math:`n` is the outward unit normal on the considered boundary. If :math:`u` represents the displacement of a deformable body, the Neumann term will be :math:`G = \sigma(u)n`, where :math:`\sigma(u)` is the stress tensor depending on the consitutive law. Of course, in that case :math:`G` depends on some body parameters. If additionally a mixed incompressibility brick is added with a variable :math:`p` denoting the pressure, the Neumann term on :math:`u` will depend on :math:`p` in the following way: :math:`G = \sigma(u)n - pn`
+For instance, if there is a Laplace term (:math:`\Delta u`), applied on the variable :math:`u`, the Neumann term will be :math:`G = \Frac{\partial u}{\partial n}` where :math:`n` is the outward unit normal on the considered boundary.
+If :math:`u` represents the displacements of a deformable body, the Neumann term will be :math:`G = \sigma(u)n`, where :math:`\sigma(u)` is the stress tensor depending on the consitutive law.
+Of course, in that case :math:`G` also depends on some material parameters.
+If additionally a mixed incompressibility brick is added with a variable :math:`p` denoting the pressure, the Neumann term on :math:`u` will depend on :math:`p` in the following way:
+:math:`G = \sigma(u)n - pn`
 
-In order to propose a generic implementation in which the brick proposing Nitsche's method are not dependent on the partial differential terms applied to the concerned variables, each brick adding a partial differential term is asked to give its expression via an assembly string (high generic assembly language).
+In order to allow a generic implementation in which the brick imposing Nitsche's method will work for every partial differential term applied to the concerned variables, each brick adding a partial differential term to a model is required to give its expression via an assembly string (high generic assembly language).
  
-
-A special method of the model object::
+These expressions are utilized in a special method of the model object::
 
   expr = md.Neumann_term(variable, region)
 
-allows to automatically compute the expression of the Neumann term by scanning the term of each brick and performing some manipulations. This supposes of course that all the volumic bricks have been added to the model before calling this method. This works only for order to partial differential equations. A generic implementation for higher order pde would be more complicated.
+which allows to automatically derive an expression for the sum of all Neumann terms, by scanning the expressions provided by all partial differential term bricks and performing appropriate manipulations.
+Of course it is required that all volumic bricks were added to the model prior to the call of this method.
+The derivation of the Neumann term works only for second order partial differential equations.
+A generic implementation for higher order pde would be more complicated.
    
 
 Generic Nitsche's method for a Dirichlet condition 
