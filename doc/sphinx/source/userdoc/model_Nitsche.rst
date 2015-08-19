@@ -12,16 +12,16 @@
 Nitsche's method for dirichlet and contact boundary conditions
 --------------------------------------------------------------
 
-|gf| provides a generic implementation of Nitche's method which allows to take into account Dirichlet type boundary conditions or contact with friction boundary conditions in a weak sense without the use of Lagrange multipliers.
+|gf| provides a generic implementation of Nitche's method which allows to account for Dirichlet type or contact with friction boundary conditions in a weak sense without the use of Lagrange multipliers.
 The method is very attractive because it transforms a Dirichlet boundary condition into a weak term similar to a Neumann boundary condition.
-However, this advantage is paid by the fact that the implementation of Nitche's method is model dependent, because it requires an approximation of the corresponding Neumann term.
-In order to add a boundary condition with Nitsche's method on a variable of a model, the corresponding brick has to have access to an approximation of the Neumann term of all partial differential terms applied to this variables.
+However, this advantage is at the cost that the implementation of Nitche's method is model dependent, since it requires an approximation of the corresponding Neumann term.
+In order to add a boundary condition with Nitsche's method on a variable of a model, the corresponding brick needs to have access to an approximation of the Neumann term of all partial differential terms applied to this variable.
 In the following, considering a variable :math:`u`, we will denote by
 
 .. math::
   G
 
-the sum of all Neumann terms on this variables.
+the sum of all Neumann terms on this variable.
 Note that the Neumann term :math:`G` will often depend on the variable :math:`u` but it may also depend on other variables of the model.
 This is the case for instance for mixed formulations of incompressible elasticity.
 The Neumann terms depend also frequently on some parameters of the model (elasticity coefficients ...) but this is assumed to be contained in its expression.
@@ -47,20 +47,25 @@ A generic implementation for higher order pde would be more complicated.
 Generic Nitsche's method for a Dirichlet condition 
 ++++++++++++++++++++++++++++++++++++++++++++++++++
 
-Assume that the variable :math:`u` is considered and that on wants to prescribe the condition
+Assume that the variable :math:`u` is considered and that one wants to prescribe the condition
 
 .. math::
   Hu = g
 
-on a part :math:`\Gamma_D`  of the boundary of the considered domain. Here :math:`H` is considered equal to one in the scalar case or can be either the identity matrix in the vectorial case either a singular matrix having only 1 or 0 as eigenvalues. This allow here to prescribe only the normal or tangent component of :math:`u`. For instance if one wants to prescribe only the normal component, :math:`H` will be chosen to be equal to :math:`nn^T` where :math:`n` is the outward unit normal on :math:`\Gamma_D`.
+on a part :math:`\Gamma_D`  of the boundary of the considered domain.
+Here :math:`H` is considered equal to one in the scalar case or can be either the identity matrix in the vectorial case either a singular matrix having only 1 or 0 as eigenvalues.
+This allow here to prescribe only the normal or tangent component of :math:`u`.
+For instance if one wants to prescribe only the normal component, :math:`H` will be chosen to be equal to :math:`nn^T` where :math:`n` is the outward unit normal on :math:`\Gamma_D`.
 
-Nitsche's method to prescribe this dirichlet condition consists in adding to the weak formulation of the problem the following term
+Nitsche's method for prescribing this Dirichlet condition consists in adding the following term to the weak formulation of the problem
 
 .. math::
   \int_{\Gamma_D} \Frac{1}{\gamma}(Hu-g-\gamma HG).(Hv) - \theta(Hu-g).(HD_uG[v])d\Gamma,
 
-where :math:`\gamma` and :math:`\theta` are two parameters of Nitsche's method and :math:`v` is the test function corresponding to :math:`u`. The parameter :math:`\theta` can be chosen positive or negative. :math:`\theta = 1` corresponds to the more standard method which leads to a symmetric tangent term in standard situations, :math:`\theta = 0` corresponds to a non-symmetric method which has the advantage to have a reduced number of terms and especially not to need the second derivatives of :math:`G` in the nonlinear case, and :math:`\theta = -1` is a kind of skew-symmetric method which ensure an inconditonal coercivity (which means independent of :math:`\gamma`) at least in standard situations.
-The parameter :math:`\gamma` is a kind of penalization parameter (although the method is consistent) which is taken to be :math:`\gamma = \gamma_0 h_T` where :math:`\gamma_0` is taken uniform on the mesh and :math:`h_T` is the diameter of the element :math:`T`. Note that, in standard situations, except for :math:`\theta = -1` the parameter :math:`\gamma_0` has to be taken sufficiently small in order to ensure the convergence of Nitsche's method.
+where :math:`\gamma` and :math:`\theta` are two parameters of Nitsche's method and :math:`v` is the test function corresponding to :math:`u`.
+The parameter :math:`\theta` can be chosen positive or negative. :math:`\theta = 1` corresponds to the more standard method which leads to a symmetric tangent term in standard situations, :math:`\theta = 0` corresponds to a non-symmetric method which has the advantage of a reduced number of terms and not requiring the second derivatives of :math:`G` in the nonlinear case, and :math:`\theta = -1` is a kind of skew-symmetric method which ensures an inconditonal coercivity (which means independent of :math:`\gamma`) at least in standard situations.
+The parameter :math:`\gamma` is a kind of penalization parameter (although the method is consistent) which is taken to be :math:`\gamma = \gamma_0 h_T` where :math:`\gamma_0` is taken uniform on the mesh and :math:`h_T` is the diameter of the element :math:`T`.
+Note that, in standard situations, except for :math:`\theta = -1` the parameter :math:`\gamma_0` has to be taken sufficiently small in order to ensure the convergence of Nitsche's method.
 
 The bricks adding a Dirichlet condition with Nitsche's method to a model are the following::
 
