@@ -714,8 +714,11 @@ namespace getfem {
     }
 
     const gmm::uint64_type &version_number_of_data_variable
-    (const std::string &varname) const
-    { return variables[varname].v_num_data; }
+    (const std::string &varname) const {
+      auto it = variables.find(varname);
+      GMM_ASSERT1(it != std::end(variables), "variable " + varname + " not found");
+      return it->second.v_num_data;
+    }
 
 
     template<typename VECTOR, typename T>
