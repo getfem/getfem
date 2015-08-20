@@ -592,6 +592,7 @@ namespace getfem {
         for (size_type j = 0; j < last_dim_size; ++j)
           new_children.push_back(current_node->children[i*last_dim_size+j]);
         new_children.push_back(source_node->children[i]);
+        source_node->children[i]->parent = current_node;
       }
       source_node->children.resize(0); // so that the destructor of source_node
                                        // will not destruct the children
