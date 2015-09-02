@@ -127,7 +127,11 @@ namespace getfem {
     template <typename VECT>
     mesher_level_set(pfem pf_, const VECT &coeff_,
 		     scalar_type shift_ls_ = scalar_type(0)) {
-      shift_ls = shift_ls_; init_base(pf_, coeff_);
+      init_base(pf_, coeff_);
+      set_shift(shift_ls_);
+    }
+    void set_shift(scalar_type shift_ls_) {
+      shift_ls = shift_ls_; 
       if (shift_ls != scalar_type(0)) {
 	base_node P(pf->dim()); base_small_vector G(pf->dim());
 	grad(P, G);

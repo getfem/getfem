@@ -1,3 +1,4 @@
+/* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
 
  Copyright (C) 1999-2015 Yves Renard
@@ -94,17 +95,24 @@ namespace getfem {
 
   void fem_level_set::find_zone_id(const fem_interpolation_context &c, 
 				   std::vector<bool> &ids) const {
-    size_type s = 0;
+    size_type s = 0, cv = c.convex_num();
     for (size_type i = 0; i < dofzones.size(); ++i)
       if (dofzones[i]) s += dofzones[i]->size();
     ids.resize(0); ids.resize(dofzones.size()+1, false);
     // cout << "dofzones.size() = " << dofzones.size() << endl;
     std::string z(common_ls_zones);
+    base_vector coeff(32);
+    
+    mesher_level_set eval;
     for (dal::bv_visitor i(ls_index); !i.finished(); ++i) {
-      mesher_level_set eval = mls.get_level_set(i)->
-	mls_of_convex(c.convex_num());
+      const level_set *ls = mls.get_level_set(i);
+      const mesh_fem &mf = ls->get_mesh_fem();
+      slice_vector_on_basic_dof_of_element(mf, ls->values(), cv, coeff);
+      eval.init_base(mf.fem_of_element(cv), coeff);
+      eval.set_shift(ls->get_shift());
+
+      // mesher_level_set eval = mls.get_level_set(i)->mls_of_convex(cv);
       scalar_type v = eval(c.xref());
-      // z[i] = (v > 1e-9) ? '+' : ((v < -1e-9) ? '-' : '0');
       z[(size_t)i] = (v > 0.) ? '+' : '-';
     }
     unsigned cnt = 0;
@@ -112,7 +120,6 @@ namespace getfem {
       if (!dofzones[d]) continue;
       for (mesh_level_set::zoneset::const_iterator it = dofzones[d]->begin();
 	   it != dofzones[d]->end(); ++it, ++cnt) {
-        // cout << "cnt = " << cnt << endl;
 	ids[cnt] = false;
 	for (mesh_level_set::zone::const_iterator it2 = (*it)->begin();
 	     it2 != (*it)->end(); ++it2) {
@@ -124,9 +131,9 @@ namespace getfem {
 
   void fem_level_set::real_base_value(const fem_interpolation_context &c,
 				      base_tensor &t, bool) const {
-    bgeot::multi_index mi(2);
-    mi[1] = target_dim(); mi[0] = short_type(nb_base(0));
-    t.adjust_sizes(mi);
+    // bgeot::multi_index mi(2);
+    // mi[1] = target_dim(); mi[0] = short_type(nb_base(0));
+    t.adjust_sizes(nb_base(0), target_dim());
     base_tensor::iterator it = t.begin();
     fem_interpolation_context c0 = c;
     if (c0.have_pfp())
@@ -151,10 +158,10 @@ namespace getfem {
 
   void fem_level_set::real_grad_base_value(const fem_interpolation_context &c,
 					   base_tensor &t, bool) const {
-    bgeot::multi_index mi(3);
-    mi[2] = short_type(c.N()); mi[1] = target_dim();
-    mi[0] = short_type(nb_base(0));
-    t.adjust_sizes(mi);
+    // bgeot::multi_index mi(3);
+    // mi[2] = short_type(c.N()); mi[1] = target_dim();
+    // mi[0] = short_type(nb_base(0));
+    t.adjust_sizes(nb_base(0), target_dim(), c.N());
     fem_interpolation_context c0 = c;
     if (c0.have_pfp())
       c0.set_pfp(fem_precomp(bfem, &c0.pfp()->get_point_tab(), c0.pfp()));
@@ -182,11 +189,11 @@ namespace getfem {
   }
   
   void fem_level_set::real_hess_base_value(const fem_interpolation_context &c,
-				  base_tensor &t, bool) const {
-    bgeot::multi_index mi(4);
-    mi[3] = mi[2] = short_type(c.N()); mi[1] = target_dim();
-    mi[0] = short_type(nb_base(0));
-    t.adjust_sizes(mi);
+                                           base_tensor &t, bool) const {
+    // bgeot::multi_index mi(4);
+    // mi[3] = mi[2] = short_type(c.N()); mi[1] = target_dim();
+    // mi[0] = short_type(nb_base(0));
+    t.adjust_sizes(nb_base(0), target_dim(), c.N(), c.N());
     fem_interpolation_context c0 = c;
     if (c0.have_pfp())
       c0.set_pfp(fem_precomp(bfem, &c0.pfp()->get_point_tab(), c0.pfp()));

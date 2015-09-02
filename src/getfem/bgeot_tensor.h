@@ -221,6 +221,20 @@ namespace bgeot {
       this->resize(i*j);
     }
 
+    void init(size_type i, size_type j, size_type k) {
+      sizes_.resize(3); sizes_[0] = i; sizes_[1] = j; sizes_[2] = k; 
+      coeff.resize(3); coeff[0] = 1; coeff[1] = i; coeff[2] = i*j;
+      this->resize(i*j*k);
+    }
+
+    void init(size_type i, size_type j, size_type k, size_type l) {
+      sizes_.resize(4);
+      sizes_[0] = i; sizes_[1] = j; sizes_[2] = k; sizes_[3] = k; 
+      coeff.resize(4);
+      coeff[0] = 1; coeff[1] = i; coeff[2] = i*j; coeff[3] = i*j*k;
+      this->resize(i*j*k*l);
+    }
+
     void adjust_sizes(const multi_index &mi) {
       if (!mi.size() || (mi.size() != sizes().size())
           || !(std::equal(mi.begin(), mi.end(), sizes().begin())))
@@ -234,6 +248,17 @@ namespace bgeot {
 
     void adjust_sizes(size_type i, size_type j)
     { if (sizes_.size() != 2 || sizes_[0] != i || sizes_[1] != j) init(i, j); }
+
+    void adjust_sizes(size_type i, size_type j, size_type k) {
+      if (sizes_.size() != 3 || sizes_[0] != i || sizes_[1] != j
+          || sizes_[2] != k)
+        init(i, j, k);
+    }
+    void adjust_sizes(size_type i, size_type j, size_type k, size_type l) {
+      if (sizes_.size() != 3 || sizes_[0] != i || sizes_[1] != j
+          || sizes_[2] != k || sizes_[3] != l)
+        init(i, j, k, l);
+    }
 
     tensor(const multi_index &c) { init(c); }
     tensor(size_type i, size_type j, size_type k, size_type l)

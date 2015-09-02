@@ -67,6 +67,7 @@ namespace getfem {
   public :
 
     void set_shift(scalar_type shift_ls_) { shift_ls = shift_ls_; }
+    scalar_type get_shift(void) const { return shift_ls; } 
     void simplify(scalar_type eps = 0.01);
     void update_from_context(void) const { }
     void reinit(void);
