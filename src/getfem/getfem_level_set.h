@@ -60,14 +60,16 @@ namespace getfem {
     bool with_secondary;
     scalar_type shift_ls;     // for the computation of a gap on a level_set.
     // shift the level set on the ref element for mesher_level_set call
+    // Deprecated.
 
     void copy_from(const level_set &ls); // WARNING :  to be updated if
                                          //    some components are added 
 
   public :
 
-    void set_shift(scalar_type shift_ls_) { shift_ls = shift_ls_; }
-    scalar_type get_shift(void) const { return shift_ls; } 
+    void set_shift(scalar_type shift_ls_) // Deprecated
+    { shift_ls = shift_ls_; }
+    scalar_type get_shift(void) const { return shift_ls; }  // Deprecated
     void simplify(scalar_type eps = 0.01);
     void update_from_context(void) const { }
     void reinit(void);

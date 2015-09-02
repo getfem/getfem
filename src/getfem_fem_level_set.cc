@@ -94,7 +94,7 @@ namespace getfem {
   }
 
   void fem_level_set::find_zone_id(const fem_interpolation_context &c, 
-				   std::vector<bool> &ids) const {
+				   std::vector<bool> &ids, int side) const {
     size_type s = 0, cv = c.convex_num();
     for (size_type i = 0; i < dofzones.size(); ++i)
       if (dofzones[i]) s += dofzones[i]->size();
@@ -104,17 +104,29 @@ namespace getfem {
     base_vector coeff(32);
     
     mesher_level_set eval;
+    size_type iclosest = size_type(-1); scalar_type vclosest = 1E100;
     for (dal::bv_visitor i(ls_index); !i.finished(); ++i) {
       const level_set *ls = mls.get_level_set(i);
       const mesh_fem &mf = ls->get_mesh_fem();
       slice_vector_on_basic_dof_of_element(mf, ls->values(), cv, coeff);
       eval.init_base(mf.fem_of_element(cv), coeff);
-      eval.set_shift(ls->get_shift());
+      eval.set_shift(ls->get_shift()); // Deprecated
 
       // mesher_level_set eval = mls.get_level_set(i)->mls_of_convex(cv);
+      
+
       scalar_type v = eval(c.xref());
-      z[(size_t)i] = (v > 0.) ? '+' : '-';
+      if (side != 0) {
+        if (gmm::abs(v) <  vclosest) { vclosest = gmm::abs(v); iclosest = i; }
+      }
+      z[size_type(i)] = (v > 0.) ? '+' : '-';
     }
+
+    if (side != 0 && iclosest != size_type(-1)) // Forces the side of the
+                           // closest level-set (in order to compute jumps).
+      z[iclosest] = (side > 0) ? '+' : '-';
+
+
     unsigned cnt = 0;
     for (unsigned d = 0; d < dofzones.size(); ++d) {
       if (!dofzones[d]) continue;
@@ -143,7 +155,7 @@ namespace getfem {
     base_tensor::const_iterator itf = tt.begin();
 
     std::vector<bool> zid;
-    find_zone_id(c, zid);
+    find_zone_id(c, zid, c.xfem_side());
     for (dim_type q = 0; q < target_dim(); ++q) {
       unsigned cnt = 0;
       for (size_type d = 0; d < bfem->nb_dof(0); ++d, ++itf) {
@@ -172,7 +184,7 @@ namespace getfem {
     base_tensor::const_iterator itf = tt.begin();
 
     std::vector<bool> zid;
-    find_zone_id(c, zid);
+    find_zone_id(c, zid, c.xfem_side());
 
     for (dim_type i = 0; i < c.N() ; ++i) {
       for (dim_type q = 0; q < target_dim(); ++q) {
@@ -204,7 +216,7 @@ namespace getfem {
     base_tensor::const_iterator itf = tt.begin();
 
     std::vector<bool> zid;
-    find_zone_id(c, zid);
+    find_zone_id(c, zid, c.xfem_side());
 
     for (dim_type i = 0; i < c.N() ; ++i) {
       for (dim_type j = 0; j < c.N() ; ++j) {

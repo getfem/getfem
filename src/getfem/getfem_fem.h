@@ -685,6 +685,7 @@ namespace getfem {
     pfem_precomp pfp_;      // optional fem_precomp_ (speed up the computations)
     size_type convex_num_;  // The element (convex) number
     short_type face_num_;   // Face number for boundary integration
+    int xfem_side_; // For the computation of a jump with fem_level_set only
   public:
     /// true if a fem_precomp_ has been supplied.
     bool have_pfp() const { return pfp_ != 0; }
@@ -717,6 +718,8 @@ namespace getfem {
     pfem_precomp pfp() const { return pfp_; }
     void set_pfp(pfem_precomp newpfp);
     void set_pf(pfem newpf);
+    int xfem_side(void) const { return xfem_side_; }
+    void set_xfem_side(int side) { xfem_side_ = side; }
     fem_interpolation_context();
     fem_interpolation_context(bgeot::pgeotrans_precomp pgp__,
                               pfem_precomp pfp__, size_type ii__,
