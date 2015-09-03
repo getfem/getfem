@@ -705,4 +705,36 @@ where ``u`` is one of the FEM variables of the model/workspace. For the moment, 
   add_2D_rotated_RT0_projection(model, transname)
 
 
+Xfem discontinuity evaluation (with mesh_fem_level_set)
+-------------------------------------------------------
 
+For |gf| 5.1. When using a fem cut by a level-set (using fem_level_set or mesh_fem_level_set objects), it is often interesting to integrate the discontinuity jump of a variable, or the jump in gradient or the average value. For this purpose, the generic assembly language furnishes the following expressions for ``u`` a FEM variable::
+
+  Xfem_plus(u)
+  Xfem_plus(Grad_u)
+  Xfem_plus(Div_u)
+  Xfem_plus(Hess_u)
+  Xfem_plus(Test_u)
+  Xfem_plus(Test_Grad_u)
+  Xfem_plus(Test_Div_u)
+  Xfem_plus(Test_Hess_u)
+  
+  Xfem_minus(u)
+  Xfem_minus(Grad_u)
+  Xfem_minus(Div_u)
+  Xfem_minus(Hess_u)
+  Xfem_minus(Test_u)
+  Xfem_minus(Test_Grad_u)
+  Xfem_minus(Test_Div_u)
+  Xfem_minus(Test_Hess_u)
+  
+which are only available when the evaluation (integration) is made on the curve/surface separating two zones of continuity, i.e. on the zero level-set of a considered level-set function (using a mesh_im_level_set object). For instance, a jump in the variable ``u`` will be given by::
+
+  Xfem_plus(u)-Xfem_minus(u)
+
+and the average by::
+
+  (Xfem_plus(u)+Xfem_minus(u))/2
+
+The value ``Xfem_plus(u)`` is the value of ``u`` on the side where the corresponding level-set function is positive and ``Xfem_minus(u)`` the value of ``u`` on the side where the level-set function is negative.
+  
