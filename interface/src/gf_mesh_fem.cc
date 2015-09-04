@@ -24,6 +24,7 @@
 #include <getfemint_mesh_fem.h>
 #include <getfemint_mesh.h>
 #include <getfem/getfem_mesh_fem_sum.h>
+#include <getfem/getfem_mesh_fem_product.h>
 #include <getfemint_levelset.h>
 #include <getfemint_mesh_levelset.h>
 #include <getfem/getfem_mesh_fem_level_set.h>
@@ -71,7 +72,14 @@ template <typename T> static inline void dummy_func(T &) {}
     subc_tab[cmd_normalize(name)] = psubc;				\
   }
 
-
+/*@INIT MF = ('.mesh', @tmesh m[, @int Qdim1=1[, @int Qdim2=1, ...]])
+  Build a new @tmf object.
+  
+  The `Qdim` parameters specifies the dimension of the field represented
+  by the finite element method. Qdim1 = 1 for a scalar field,
+  Qdim1 = n for a vector field off size n, Qdim1=m, Qdim2=n for
+  a matrix field of size mxn ...
+  Returns the handle of the created object. @*/
 
 void gf_mesh_fem(getfemint::mexargs_in& m_in,
 		 getfemint::mexargs_out& m_out) {
@@ -80,7 +88,7 @@ void gf_mesh_fem(getfemint::mexargs_in& m_in,
 
   if (subc_tab.size() == 0) {
 
-      /*@INIT MF = ('load', @str fname[, @tmesh m])
+    /*@INIT MF = ('load', @str fname[, @tmesh m])
       Load a @tmf from a file.
 
       If the mesh `m` is not supplied (this kind of file does not store the
@@ -117,7 +125,7 @@ void gf_mesh_fem(getfemint::mexargs_in& m_in,
        );
 
 
-      /*@INIT MF = ('clone', @tmf mf)
+    /*@INIT MF = ('clone', @tmf mf)
       Create a copy of a @tmf.@*/
     sub_command
       ("clone", 1, 1, 0, 1,
@@ -129,12 +137,11 @@ void gf_mesh_fem(getfemint::mexargs_in& m_in,
        mmf->mesh_fem().read_from_file(ss);
        );
 
+    
+    /*@INIT MF = ('sum', @tmf mf1, @tmf mf2[, @tmf mf3[, ...]])
+      Create a @tmf that spans two (or more) @tmf's.
 
-      /*@INIT MF = ('sum', @tmf mf1, @tmf mf2[, @tmf mf3[, ...]])
-      Create a @tmf that combines two (or more) @tmf's.
-
-      All @tmf must share the same mesh (see
-      ``FEM:INIT('interpolated_fem')`` to map a @tmf onto another).
+      All @tmf must share the same mesh.
 
       After that, you should not modify the FEM of `mf1`, `mf2` etc.@*/
     sub_command
@@ -154,6 +161,25 @@ void gf_mesh_fem(getfemint::mexargs_in& m_in,
        }
        msum->set_mesh_fems(mftab);
        msum->adapt();
+       );
+
+    /*@INIT MF = ('product', @tmf mf1, @tmf mf2)
+      Create a @tmf that spans all the product of a selection of shape
+      functions of `mf1` by all shape functions of `mf2`.
+      Designed for Xfem enrichment.
+
+      `mf1` and `mf2` must share the same mesh.
+
+      After that, you should not modify the FEM of `mf1`, `mf2`.@*/
+    sub_command
+      ("product", 2, 2, 0, 1,
+       getfemint_mesh_fem *gfimf1 = in.pop().to_getfemint_mesh_fem();
+       getfemint_mesh_fem *gfimf2 = in.pop().to_getfemint_mesh_fem();
+       getfem::mesh_fem_product *mprod = 
+         new getfem::mesh_fem_product(gfimf1->mesh_fem(), gfimf2->mesh_fem());
+       mmf = getfemint_mesh_fem::get_from(mprod);
+       workspace().set_dependance(mmf, gfimf1);
+       workspace().set_dependance(mmf, gfimf2);
        );
 
 
@@ -200,12 +226,12 @@ void gf_mesh_fem(getfemint::mexargs_in& m_in,
        );
 
 
-      /*@INIT MF = ('partial', @tmf mf, @ivec DOFs[, @ivec RCVs])
-        Build a restricted @tmf by keeping only a subset of the degrees of
-        freedom of `mf`.
+    /*@INIT MF = ('partial', @tmf mf, @ivec DOFs[, @ivec RCVs])
+      Build a restricted @tmf by keeping only a subset of the degrees of
+      freedom of `mf`.
 
-        If `RCVs` is given, no FEM will be put on the convexes listed in
-        `RCVs`.@*/
+      If `RCVs` is given, no FEM will be put on the convexes listed in
+      `RCVs`.@*/
     sub_command
       ("partial", 2, 3, 0, 1,
        getfemint_mesh_fem *gmf = in.pop().to_getfemint_mesh_fem();
@@ -244,14 +270,8 @@ void gf_mesh_fem(getfemint::mexargs_in& m_in,
     else bad_cmd(init_cmd);
 
   } else if (check_cmd("MeshFem", "MeshFem", m_in, m_out, 1, 7, 0, 1)) {
-    /*@INIT MF = ('.mesh', @tmesh m[, @int Qdim1=1[, @int Qdim2=1, ...]])
-      Build a new @tmf object.
-
-      The `Qdim` parameters specifies the dimension of the field represented
-      by the finite element method. Qdim1 = 1 for a scalar field,
-      Qdim1 = n for a vector field off size n, Qdim1=m, Qdim2=n for
-      a matrix field of size mxn ...
-      Returns the handle of the created object. @*/
+    /* Documentation iof the commande moved in first position to appear first
+       in the documentation. */
     mm = m_in.pop().to_getfemint_mesh();
     bgeot::multi_index mi;
     dim_type qdim = 1;

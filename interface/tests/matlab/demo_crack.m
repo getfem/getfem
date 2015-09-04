@@ -22,6 +22,13 @@
 %
 %%%
 
+variant = 1;
+% variant : 1 : one crack with cutoff enrichement
+%           2 : one crack with a fixed size area Xfem enrichment
+%           3 : a branching crack with a fixed size area Xfem enrichment
+%           4 : variant 2 plus a penalisation of the jump over the cracks
+
+
 gf_workspace('clear all');
 
 % Parameters
@@ -30,34 +37,52 @@ DIRICHLET  = 101;
 Lambda     = 1.25e10;   % Lame coefficient
 Mu         = 1.875e10;  % Lame coefficient
 
-% Global Functions
-ck0 = gf_global_function('crack',0);
-ck1 = gf_global_function('crack',1);
-ck2 = gf_global_function('crack',2);
-ck3 = gf_global_function('crack',3);
-coff = gf_global_function('cutoff',2,0.4,0.01,0.4);
-ckoff0 = gf_global_function('product', ck0, coff);
-ckoff1 = gf_global_function('product', ck1, coff);
-ckoff2 = gf_global_function('product', ck2, coff);
-ckoff3 = gf_global_function('product', ck3, coff);
-
-% Mesh in action:
+% Mesh in definition:
 m = gf_mesh('regular_simplices', -0.5:1.0/nx:0.5+1.0/nx, -0.5:1.0/nx:0.5+1.0/nx);
 % m = gf_mesh('import','gmsh','quad.msh')
 
 % boundary set:
-gf_mesh_set(m,'region',DIRICHLET, gf_mesh_get(m,'outer_faces'));
-% MeshFem in action:
+gf_mesh_set(m, 'region', DIRICHLET, gf_mesh_get(m,'outer_faces'));
+
+% Basic mesh_fem without enrichment
 mf_pre_u = gf_mesh_fem(m);
 gf_mesh_fem_set(mf_pre_u,'fem',gf_fem('FEM_PK(2,1)'));
-% Levelset in action:
+
+
+% Levelset(s) definition
 ls  = gf_levelset(m,1,'y','x');
 mls = gf_mesh_levelset(m);
 gf_mesh_levelset_set(mls,'add',ls);
+if (variant > 2)
+   ls2 =  gf_levelset(m,1,'x+0.125','abs(y)-0.375');
+   gf_mesh_levelset_set(mls,'add',ls2);
+end
 gf_mesh_levelset_set(mls,'adapt');
+
+
+% Global Functions for asymptotic enrichment
+ck0 = gf_global_function('crack',0);
+ck1 = gf_global_function('crack',1);
+ck2 = gf_global_function('crack',2);
+ck3 = gf_global_function('crack',3);
+
+% Definition of the enriched finite element method
 mfls_u    = gf_mesh_fem('levelset',mls,mf_pre_u);
-mf_sing_u = gf_mesh_fem('global function',m,ls, {ckoff0,ckoff1,ckoff2,ckoff3},1);
-mf_u      = gf_mesh_fem('sum',mf_sing_u,mfls_u);
+
+if (variant == 1) % Cutoff enrichement 
+  coff = gf_global_function('cutoff',2,0.4,0.01,0.4);
+  ckoff0 = gf_global_function('product', ck0, coff);
+  ckoff1 = gf_global_function('product', ck1, coff);
+  ckoff2 = gf_global_function('product', ck2, coff);
+  ckoff3 = gf_global_function('product', ck3, coff);
+  mf_sing_u = gf_mesh_fem('global function',m,ls, {ckoff0,ckoff1,ckoff2,ckoff3},1);
+  mf_u      = gf_mesh_fem('sum',mf_sing_u,mfls_u);
+else
+  mf_part_unity = gf_mesh_fem(m);
+  gf_mesh_fem_set(mf_part_unity, 'classical fem', 1);
+  % + selection des ddls autour du ou des fond de fissure
+end  
+  
 gf_mesh_fem_set(mf_u,'qdim',2);
 % exact solution:
 mf_ue = gf_mesh_fem('global function',m,ls,{ck0,ck1,ck2,ck3});
@@ -108,5 +133,5 @@ gf_mesh_fem_get(mfv,'export_to_pos','crack.pos',V,'V',Ve,'Ve', mfvm, VM,'Von Mis
 disp('You can view the solution with (for example): gmsh crack.pos\n');
 
 % drawing the solution
-gf_plot(mfvm, VM, 'deformed_mesh', 'on', 'deformation_mf', mfv, 'deformation', V, 'deformation_scale', 0.20);
+gf_plot(mfvm, VM, 'deformed_mesh', 'on', 'deformation_mf', mfv, 'deformation', V, 'deformation_scale', 0.10);
 colorbar;
