@@ -25,6 +25,7 @@
 #include <getfem/getfem_partial_mesh_fem.h>
 #include <gmm/gmm_range_basis.h>
 #include <getfem/getfem_mesh_fem_level_set.h>
+#include <getfem/getfem_mesh_fem_product.h>
 
 using namespace getfemint;
 
@@ -259,8 +260,8 @@ void gf_mesh_fem_set(getfemint::mexargs_in& m_in,
        );
 
     /*@SET ('adapt')
-    For a @tmf levelset object only. Adapt the mesh_fem object to a
-    change of the levelset function. @*/
+      For a @tmf levelset object only. Adapt the mesh_fem object to a
+      change of the levelset function. @*/
     sub_command
       ("adapt", 0, 0, 0, 0,
        getfem::mesh_fem_level_set *mfls
@@ -268,6 +269,19 @@ void gf_mesh_fem_set(getfemint::mexargs_in& m_in,
        if (!mfls) THROW_BADARG("The command 'adapt' can only be "
                                "applied to a mesh_fem_level_set object");
        mfls->adapt();
+       );
+
+    /*@SET ('set enriched dofs', @ivec DOFs)
+      For a @tmf product object only. Set te enriched dofs and adapt the @tmf product.
+      @*/
+    sub_command
+      ("set enriched dofs", 1, 1, 0, 0,
+       getfem::mesh_fem_product *mfprod
+       = dynamic_cast<getfem::mesh_fem_product *>(mf);
+       if (!mfprod) THROW_BADARG("The command 'set enriched dofs' can only be "
+                                 "applied to a mesh_fem_product object");
+       dal::bit_vector doflst = in.pop().to_bit_vector();
+       mfprod->set_enrichment(doflst);
        );
 
   }

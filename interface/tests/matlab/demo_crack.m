@@ -22,11 +22,12 @@
 %
 %%%
 
-variant = 1;
+variant = 4;
 % variant : 1 : one crack with cutoff enrichement
 %           2 : one crack with a fixed size area Xfem enrichment
 %           3 : a branching crack with a fixed size area Xfem enrichment
-%           4 : variant 2 plus a penalisation of the jump over the cracks
+%           4 : variant 3 with the second crack closed by a penalisation of
+%               the jump (exemple of use of xfem_plus and xfem_minus).
 
 
 gf_workspace('clear all');
@@ -67,7 +68,7 @@ ck2 = gf_global_function('crack',2);
 ck3 = gf_global_function('crack',3);
 
 % Definition of the enriched finite element method
-mfls_u    = gf_mesh_fem('levelset',mls,mf_pre_u);
+mfls_u = gf_mesh_fem('levelset',mls,mf_pre_u);
 
 if (variant == 1) % Cutoff enrichement 
   coff = gf_global_function('cutoff',2,0.4,0.01,0.4);
@@ -80,11 +81,29 @@ if (variant == 1) % Cutoff enrichement
 else
   mf_part_unity = gf_mesh_fem(m);
   gf_mesh_fem_set(mf_part_unity, 'classical fem', 1);
-  % + selection des ddls autour du ou des fond de fissure
+  DOFpts = gf_mesh_fem_get(mf_part_unity, 'basic dof nodes');
+  % Search the dofs to be enriched with the asymptotic displacement.
+  Idofs_center = find((DOFpts(1,:)).^2 + (DOFpts(2,:)).^2 <= (0.1)^2);
+  mf_sing_u = gf_mesh_fem('global function',m,ls, {ck0,ck1,ck2,ck3}, 1);
+  mf_xfem_sing = gf_mesh_fem('product', mf_part_unity, mf_sing_u);
+  gf_mesh_fem_set( mf_xfem_sing, 'set enriched dofs', Idofs_center);
+  if (variant > 2)
+    Idofs_up = find((DOFpts(1,:)+0.125).^2 + (DOFpts(2,:)-0.375).^2 <= (0.1)^2);
+    Idofs_down = find((DOFpts(1,:)+0.125).^2 + (DOFpts(2,:)+0.375).^2 <= (0.1)^2);
+    mf_sing_u2 = gf_mesh_fem('global function',m,ls2, {ck0,ck1,ck2,ck3}, 1);
+    mf_xfem_sing2 = gf_mesh_fem('product', mf_part_unity, mf_sing_u2);
+    gf_mesh_fem_set(mf_xfem_sing2, 'set enriched dofs', [Idofs_up Idofs_down]);
+  end
+  
+  if (variant == 2)
+    mf_u = gf_mesh_fem('sum', mf_xfem_sing, mfls_u);
+  else
+    mf_u = gf_mesh_fem('sum', mf_xfem_sing, mf_xfem_sing2, mfls_u);
+  end
 end  
   
 gf_mesh_fem_set(mf_u,'qdim',2);
-% exact solution:
+% Exact solution for a single crack
 mf_ue = gf_mesh_fem('global function',m,ls,{ck0,ck1,ck2,ck3});
 A = 2+2*Mu/(Lambda+2*Mu);
 B=-2*(Lambda+Mu)/(Lambda+2*Mu)
@@ -109,6 +128,12 @@ gf_model_set(md,'add_initialized_data','mu', [Mu]);
 gf_model_set(md,'add_isotropic_linearized_elasticity_brick',mim,'u','lambda','mu');
 gf_model_set(md,'add_initialized_fem_data','DirichletData', mf_ue, Ue);
 gf_model_set(md,'add_Dirichlet_condition_with_penalization',mim,'u', 1e12, DIRICHLET, 'DirichletData');
+
+if (variant == 4)
+  mim_bound = gf_mesh_im('levelset', mls, 'boundary(b)', gf_integ('IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6),3)'));
+  % gf_asm('generic', mim_bound, 0, '1', -1)
+  gf_model_set(md, 'add linear generic assembly brick', mim_bound, '1e15*(Xfem_plus(u)-Xfem_minus(u)).(Xfem_plus(Test_u)-Xfem_minus(Test_u))');
+end
 
 % assembly of the linear system and solve:
 gf_model_get(md,'solve');

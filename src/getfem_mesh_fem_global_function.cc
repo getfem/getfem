@@ -582,6 +582,8 @@ namespace getfem {
       update_mls(c.convex_num());
       scalar_type x = mls_x(c.xref());
       scalar_type y = mls_y(c.xref());
+      if (c.xfem_side() > 0 && y <= 0) y = 1E-13;
+      if (c.xfem_side() < 0 && y >= 0) y = -1E-13;
       return fn.val(x,y);
     }
     virtual void grad(const fem_interpolation_context& c,
@@ -591,7 +593,8 @@ namespace getfem {
       base_small_vector dx(P), dy(P), dfr(2);
       scalar_type x = mls_x.grad(c.xref(), dx);
       scalar_type y = mls_y.grad(c.xref(), dy);
-
+      if (c.xfem_side() > 0 && y <= 0) y = 1E-13;
+      if (c.xfem_side() < 0 && y >= 0) y = -1E-13;
       base_small_vector gfn = fn.grad(x,y);
       gmm::mult(c.B(), gfn[0]*dx + gfn[1]*dy, g);
     }
@@ -603,7 +606,8 @@ namespace getfem {
       base_small_vector dx(P), dy(P), dfr(2),  dx_real(N), dy_real(N);
       scalar_type x = mls_x.grad(c.xref(), dx);
       scalar_type y = mls_y.grad(c.xref(), dy);
-
+      if (c.xfem_side() > 0 && y <= 0) y = 1E-13;
+      if (c.xfem_side() < 0 && y >= 0) y = -1E-13;
       base_small_vector gfn = fn.grad(x,y);
       base_matrix hfn = fn.hess(x,y);
 
