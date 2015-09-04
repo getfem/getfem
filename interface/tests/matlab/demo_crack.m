@@ -23,8 +23,8 @@
 %%%
 
 variant = 4;
-% variant : 1 : one crack with cutoff enrichement
-%           2 : one crack with a fixed size area Xfem enrichment
+% variant : 1 : a single crack with cutoff enrichement
+%           2 : a single crack with a fixed size area Xfem enrichment
 %           3 : a branching crack with a fixed size area Xfem enrichment
 %           4 : variant 3 with the second crack closed by a penalisation of
 %               the jump (exemple of use of xfem_plus and xfem_minus).
