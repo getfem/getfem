@@ -122,13 +122,14 @@ namespace getfem {
   
   mesh_im::mesh_im(void) {
     linked_mesh_ = 0; auto_add_elt_pim = 0;
+    is_lower_dim = false;
     v_num_update = v_num = act_counter();
   }
 
   mesh_im::mesh_im(const mesh_im &mim) : context_dependencies() {
     GMM_ASSERT1(mim.linked_mesh_ == 0,
 		"Copy constructor is not allowed for non void mesh_im");
-    linked_mesh_ = 0; auto_add_elt_pim = 0;
+    linked_mesh_ = 0; auto_add_elt_pim = 0; is_lower_dim = false;
     v_num_update = v_num = act_counter();
   }
 
@@ -139,7 +140,7 @@ namespace getfem {
   }
 
   mesh_im::mesh_im(mesh &me)
-  { linked_mesh_ = 0; init_with_mesh(me); }
+  { linked_mesh_ = 0; init_with_mesh(me); is_lower_dim = false; }
 
   mesh_im::~mesh_im() {}
 

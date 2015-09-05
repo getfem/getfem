@@ -3266,6 +3266,7 @@ namespace getfem {
   struct gen_linear_assembly_brick : public virtual_brick {
 
     std::string expr;
+    bool is_lower_dim;
     model::varnamelist vl_test1, vl_test2;
 
     virtual void asm_real_tangent_terms(const model &md, size_type ib,
@@ -3315,16 +3316,18 @@ namespace getfem {
     virtual std::string declare_volume_assembly_string
     (const model &, size_type, const model::varnamelist &,
      const model::varnamelist &) const {
-      return expr;
+      return is_lower_dim ? std::string() : expr;
     }
 
-    gen_linear_assembly_brick(const std::string &expr_, bool is_sym,
+    gen_linear_assembly_brick(const std::string &expr_, const mesh_im &mim,
+                              bool is_sym,
                               bool is_coer, std::string brickname,
                               const model::varnamelist &vl_test1_,
                               const model::varnamelist &vl_test2_)
       : vl_test1(vl_test1_), vl_test2(vl_test2_) {
       if (brickname.size() == 0) brickname = "Generic linear assembly brick";
       expr = expr_;
+      is_lower_dim = mim.is_lower_dimensional();
       set_flags(brickname, true /* is linear*/,
                 is_sym /* is symmetric */, is_coer /* is coercive */,
                 true /* is real */, false /* is complex */);
@@ -3385,7 +3388,7 @@ namespace getfem {
                 "Split the brick.");
 
     if (vl_test1.size()) {
-      pbrick pbr = new gen_linear_assembly_brick(expr, is_sym, is_coercive,
+      pbrick pbr = new gen_linear_assembly_brick(expr, mim,is_sym, is_coercive,
                                                  brickname,
                                                  vl_test1, vl_test2);
       model::termlist tl;
@@ -3407,6 +3410,7 @@ namespace getfem {
   struct gen_nonlinear_assembly_brick : public virtual_brick {
 
     std::string expr;
+    bool is_lower_dim;
 
     virtual void real_post_assembly_in_serial(const model &md, size_type ,
                                               const model::varnamelist &,
@@ -3430,10 +3434,12 @@ namespace getfem {
     }
 
 
-    gen_nonlinear_assembly_brick(const std::string &expr_, bool is_sym,
+    gen_nonlinear_assembly_brick(const std::string &expr_, const mesh_im &mim,
+                                 bool is_sym,
                                  bool is_coer, std::string brickname = "") {
       if (brickname.size() == 0) brickname = "Generic linear assembly brick";
       expr = expr_;
+      is_lower_dim = mim.is_lower_dimensional();
       set_flags(brickname, false /* is linear*/,
                 is_sym /* is symmetric */, is_coer /* is coercive */,
                 true /* is real */, false /* is complex */);
@@ -3455,8 +3461,8 @@ namespace getfem {
       if (md.is_true_data(ddl[i])) dl.push_back(ddl[i]);
       else vl.push_back(ddl[i]);
     if (order == 0) { is_coercive = is_sym = true; }
-    pbrick pbr = new gen_nonlinear_assembly_brick(expr, is_sym, is_coercive,
-                                                  brickname);
+    pbrick pbr = new gen_nonlinear_assembly_brick(expr, mim, is_sym,
+                                                  is_coercive, brickname);
     model::termlist tl; // No term
     // tl.push_back(model::term_description(true, is_sym));
     // TODO to be changed.

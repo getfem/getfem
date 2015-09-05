@@ -49,6 +49,7 @@ namespace getfem {
     static mesh dummy_mesh;
 
   protected :
+    bool is_lower_dim;
     dal::dynamic_array<pintegration_method> ims;
     dal::bit_vector im_convexes;
     mesh *linked_mesh_;
@@ -71,6 +72,8 @@ namespace getfem {
      */
     inline const dal::bit_vector &convex_index(void) const
     { return im_convexes; }
+
+    bool is_lower_dimensional(void) const { return is_lower_dim; }
 
     /// Give a reference to the linked mesh of type mesh.
     mesh &linked_mesh(void) const

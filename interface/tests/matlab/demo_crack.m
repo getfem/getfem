@@ -25,8 +25,13 @@
 variant = 4;
 % variant : 1 : a single crack with cutoff enrichement
 %           2 : a single crack with a fixed size area Xfem enrichment
-%           3 : a branching crack with a fixed size area Xfem enrichment
+%           3 : a suppl?mentary crossing  crack with a fixed size area
+%               Xfem enrichment
 %           4 : variant 3 with the second crack closed by a penalisation of
+%               the jump (exemple of use of xfem_plus and xfem_minus).
+%           5 : variant 3 with the first crack closed by a penalisation of
+%               the jump (exemple of use of xfem_plus and xfem_minus).
+%           6 : variant 3 with the two cracks closed by a penalisation of
 %               the jump (exemple of use of xfem_plus and xfem_minus).
 
 
@@ -106,7 +111,7 @@ gf_mesh_fem_set(mf_u,'qdim',2);
 % Exact solution for a single crack
 mf_ue = gf_mesh_fem('global function',m,ls,{ck0,ck1,ck2,ck3});
 A = 2+2*Mu/(Lambda+2*Mu);
-B=-2*(Lambda+Mu)/(Lambda+2*Mu)
+B = -2*(Lambda+Mu)/(Lambda+2*Mu);
 Ue = zeros(2,4);
 Ue(1,1) =   0; Ue(2,1) = A-B; % sin(theta/2)
 Ue(1,2) = A+B; Ue(2,2) = 0;   % cos(theta/2)
@@ -129,10 +134,15 @@ gf_model_set(md,'add_isotropic_linearized_elasticity_brick',mim,'u','lambda','mu
 gf_model_set(md,'add_initialized_fem_data','DirichletData', mf_ue, Ue);
 gf_model_set(md,'add_Dirichlet_condition_with_penalization',mim,'u', 1e12, DIRICHLET, 'DirichletData');
 
-if (variant == 4)
-  mim_bound = gf_mesh_im('levelset', mls, 'boundary(b)', gf_integ('IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6),3)'));
-  % gf_asm('generic', mim_bound, 0, '1', -1)
-  gf_model_set(md, 'add linear generic assembly brick', mim_bound, '1e15*(Xfem_plus(u)-Xfem_minus(u)).(Xfem_plus(Test_u)-Xfem_minus(Test_u))');
+if (variant == 5 || variant == 6) % Penalisation of the jump over the first crack
+  mim_bound1 = gf_mesh_im('levelset', mls, 'boundary(a)', gf_integ('IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6),3)'));
+  % gf_asm('generic', mim_bound, 0, '1', -1) % length of the crack
+  gf_model_set(md, 'add linear generic assembly brick', mim_bound1, '1e17*(Xfem_plus(u)-Xfem_minus(u)).(Xfem_plus(Test_u)-Xfem_minus(Test_u))');
+end
+
+if (variant == 4 || variant == 6) % Penalisation of the jump over the second crack
+  mim_bound2 = gf_mesh_im('levelset', mls, 'boundary(b)', gf_integ('IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6),3)'));
+  gf_model_set(md, 'add linear generic assembly brick', mim_bound2, '1e17*(Xfem_plus(u)-Xfem_minus(u)).(Xfem_plus(Test_u)-Xfem_minus(Test_u))');
 end
 
 % assembly of the linear system and solve:
