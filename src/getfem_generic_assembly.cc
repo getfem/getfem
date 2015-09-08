@@ -2507,7 +2507,7 @@ namespace getfem {
                           const std::string &der1, const std::string &der2) {
     PREDEF_FUNCTIONS[name] = ga_predef_function(f, 1, der1, der2);
     ga_predef_function &F = PREDEF_FUNCTIONS[name];
-    if (der1.size() == 0 || der2.size()) F.dtype = 0;
+    if (der1.size() == 0 || der2.size() == 0) F.dtype = 0;
     else if (!(ga_function_exists(der1)) || !(ga_function_exists(der2)))
       F.dtype = 2;
   }
