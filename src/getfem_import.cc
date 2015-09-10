@@ -194,7 +194,8 @@ namespace getfem {
                                     std::map<std::string, size_type> *region_map=NULL,
                                     std::pair<size_type, size_type> *face_region_range=NULL,
                                     bool add_all_element_type = false,
-                                    bool remove_last_dimension = true)
+                                    bool remove_last_dimension = true,
+                                    std::map<size_type, std::set<size_type>> *nodal_map = NULL)
   {
     gmm::stream_standard_locale sl(f);
     /* print general warning */
@@ -521,14 +522,17 @@ namespace getfem {
                 }
               }
             }
+            if (is_node && (nodal_map != NULL)) (*nodal_map)[ci.region].insert(ci.id);
             //if the convex is not part of the face of others
             if (!cvok)
             {
               if (is_node)
               {
-                GMM_WARNING2("gmsh import ignored a node id: "
-                             << ci.id << " region :" << ci.region <<
-                             " point is not added explicitly as an element.");
+                if (nodal_map == NULL){
+                  GMM_WARNING2("gmsh import ignored a node id: "
+                               << ci.id << " region :" << ci.region <<
+                               " point is not added explicitly as an element.");
+                }
               }
               else if (add_all_element_type){
                 size_type ic = m.add_convex(ci.pgt, ci.nodes.begin());
@@ -1238,26 +1242,30 @@ namespace getfem {
   }
 
   void import_mesh_gmsh(std::istream& f, mesh &m,
-                  std::map<std::string, size_type> &region_map,
-                   bool remove_last_dimension)
+                        std::map<std::string, size_type> &region_map,
+                        bool remove_last_dimension,
+                        std::map<size_type, std::set<size_type>> *nodal_map)
   {
-    import_gmsh_mesh_file(f, m, 0, &region_map, nullptr, false, remove_last_dimension);
+    import_gmsh_mesh_file(f, m, 0, &region_map, nullptr, false, remove_last_dimension, nodal_map);
   }
 
   void import_mesh_gmsh(std::istream& f, mesh& m,
                         bool add_all_element_type,
                         std::pair<size_type, size_type> *face_region_range,
                         std::map<std::string, size_type> *region_map,
-                   bool remove_last_dimension)
+                        bool remove_last_dimension,
+                        std::map<size_type, std::set<size_type>> *nodal_map)
   {
-    import_gmsh_mesh_file(f, m, 0, region_map, face_region_range, add_all_element_type, remove_last_dimension);
+    import_gmsh_mesh_file(f, m, 0, region_map, face_region_range, add_all_element_type,
+                          remove_last_dimension, nodal_map);
   }
 
   void import_mesh_gmsh(const std::string& filename, mesh& m,
                         bool add_all_element_type,
                         std::pair<size_type, size_type> *face_region_range,
                         std::map<std::string, size_type> *region_map,
-                        bool remove_last_dimension)
+                        bool remove_last_dimension,
+                        std::map<size_type, std::set<size_type>> *nodal_map)
   {
     m.clear();
     try {
@@ -1265,7 +1273,8 @@ namespace getfem {
       GMM_ASSERT1(f.good(), "can't open file " << filename);
       /* throw exceptions when an error occurs */
       f.exceptions(std::ifstream::badbit | std::ifstream::failbit);
-      import_gmsh_mesh_file(f, m, 0, region_map, face_region_range, add_all_element_type, remove_last_dimension);
+      import_gmsh_mesh_file(f, m, 0, region_map, face_region_range, add_all_element_type,
+                            remove_last_dimension, nodal_map);
       f.close();
     }
     catch (failure_error& exc) {
@@ -1281,8 +1290,9 @@ namespace getfem {
 
   void import_mesh_gmsh(const std::string& filename,
     mesh& m, std::map<std::string, size_type> &region_map,
-    bool remove_last_dimension) {
-    import_mesh_gmsh(filename, m, false, NULL, &region_map, remove_last_dimension);
+    bool remove_last_dimension,
+    std::map<size_type, std::set<size_type>> *nodal_map) {
+    import_mesh_gmsh(filename, m, false, NULL, &region_map, remove_last_dimension, nodal_map);
   }
 
   void import_mesh(std::istream& f, const std::string& format,

@@ -130,23 +130,27 @@ namespace getfem {
   */
   void import_mesh_gmsh(const std::string& filename, mesh& m,
                    std::map<std::string, bgeot::size_type> &region_map,
-                   bool remove_last_dimension = true);
+                   bool remove_last_dimension = true,
+                   std::map<size_type, std::set<size_type>> *nodal_map = NULL);
 
   void import_mesh_gmsh(std::istream& f, mesh& m,
-                   std::map<std::string, bgeot::size_type> &region_map,
-                   bool remove_last_dimension = true);
+                        std::map<std::string, bgeot::size_type> &region_map,
+                        bool remove_last_dimension = true,
+                        std::map<size_type, std::set<size_type>> *nodal_map = NULL);
 
   void import_mesh_gmsh(const std::string& filename, mesh& m,
                         bool add_all_element_type = false,
                         std::pair<bgeot::size_type, bgeot::size_type> *face_region_range = NULL,
                         std::map<std::string, bgeot::size_type> *region_map = NULL,
-                        bool remove_last_dimension = true);
+                        bool remove_last_dimension = true,
+                        std::map<size_type, std::set<size_type>> *nodal_map = NULL);
 
   void import_mesh_gmsh(std::istream& f, mesh& m,
                         bool add_all_element_type = false,
                         std::pair<bgeot::size_type, bgeot::size_type> *face_region_range = NULL,
                         std::map<std::string, bgeot::size_type> *region_map = NULL,
-                        bool remove_last_dimension = true);
+                        bool remove_last_dimension = true,
+                        std::map<size_type, std::set<size_type>> *nodal_map = NULL);
 
   /** for gmsh and gid meshes, the mesh nodes are always 3D, so for a 2D mesh
       the z-component of nodes should be removed */
