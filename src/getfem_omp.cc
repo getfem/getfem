@@ -23,22 +23,22 @@
 #include "getfem/getfem_omp.h"
 #include "getfem/getfem_level_set_contact.h"
 
-namespace getfem{ 
+namespace getfem{
 
 #ifdef GETFEM_HAVE_OPENMP
 
   boost::recursive_mutex omp_guard::boost_mutex;
 
-  omp_guard::omp_guard() 
-    : boost::lock_guard<boost::recursive_mutex>(boost_mutex) 
+  omp_guard::omp_guard()
+    : boost::lock_guard<boost::recursive_mutex>(boost_mutex)
   {}
 
-  local_guard::local_guard(boost::recursive_mutex& m) : 
-    mutex_(m), 
+  local_guard::local_guard(boost::recursive_mutex& m) :
+    mutex_(m),
     plock_(new boost::lock_guard<boost::recursive_mutex>(m))
   { }
 
-  local_guard::local_guard(const local_guard& guard) 
+  local_guard::local_guard(const local_guard& guard)
     : mutex_(guard.mutex_), plock_(guard.plock_)
   { }
 
@@ -49,10 +49,6 @@ namespace getfem{
   }
 #endif
 
-
-
-
-
   omp_distribute<bool> open_mp_is_running_properly::answer = false;
   open_mp_is_running_properly::open_mp_is_running_properly()
   {answer.all_threads()=true;}
@@ -60,7 +56,7 @@ namespace getfem{
   {answer.all_threads()=false;}
   bool open_mp_is_running_properly::is_it(){return answer;}
 
-  region_partition::region_partition(const region_partition& rp) : 
+  region_partition::region_partition(const region_partition& rp) :
     pparent_mesh(rp.pparent_mesh),
     original_region(rp.original_region),
     partitions(rp.partitions)  {   }
@@ -95,7 +91,7 @@ namespace getfem{
       GMM_ASSERT1(pm->has_region(id),"Improper region number");
       original_region.reset(new mesh_region(pm->region(id)));
     }
-    if (me_is_multithreaded_now()) 
+    if (me_is_multithreaded_now())
       GMM_WARNING0("building partitions inside parallel region");
 
     omp_guard scoped_lock;
@@ -107,7 +103,7 @@ namespace getfem{
     mr_visitor mr(*original_region);
     for(size_type thread = 0; thread<num_threads();thread++)
     {
-      partitions[thread] = 
+      partitions[thread] =
         getfem::mesh_region::free_region_id(*(original_region->get_parent_mesh()));
       mesh_region partition;
       for(size_type i=thread*psize;i<(thread+1)*psize && !mr.finished();i++,++mr)
@@ -136,6 +132,34 @@ namespace getfem{
     for(std::vector<BOOL>::iterator it=distro.thread_values.begin();
       it!=distro.thread_values.end();it++) *it=x;
 
+  }
+
+  thread_exception::thread_exception(): exceptions_(num_threads(), nullptr)
+  {}
+
+  thread_exception::~thread_exception() {rethrow();}
+
+  std::vector<std::exception_ptr> thread_exception::caughtExceptions() const
+  {
+    std::vector<std::exception_ptr> exceptions;
+    for (auto &&pException : exceptions_)
+    {
+      if (pException != nullptr) exceptions.push_back(pException);
+    }
+    return exceptions;
+  }
+
+  void thread_exception::rethrow()
+  {
+    for (auto &&pException : exceptions_)
+    {
+      if (pException != nullptr) std::rethrow_exception(pException);
+    }
+  }
+
+  void thread_exception::captureException()
+  {
+    exceptions_[omp_get_thread_num()] = std::current_exception();
   }
 
 }

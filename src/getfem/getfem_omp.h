@@ -82,7 +82,7 @@ namespace getfem
   };
 
   //like boost::lock_guard, but copyable
-  class local_guard 
+  class local_guard
   {
   public:
     local_guard(boost::recursive_mutex&);
@@ -93,7 +93,7 @@ namespace getfem
     boost::shared_ptr<boost::lock_guard<boost::recursive_mutex>> plock_;
   };
 
-  //produces scoped lock on the 
+  //produces scoped lock on the
   //mutex, held in this class
   class lock_factory
   {
@@ -108,7 +108,7 @@ namespace getfem
   };
 
 
-#else 
+#else
 
   class omp_guard{};
   class local_guard{};
@@ -119,7 +119,7 @@ namespace getfem
 #endif
 
 
-#ifdef GETFEM_HAVE_OPENMP	
+#ifdef GETFEM_HAVE_OPENMP
   /**number of OpenMP threads*/
   inline size_t num_threads(){return omp_get_max_threads();}
 
@@ -140,10 +140,10 @@ namespace getfem
 
 
 
-  /**use this template class for any object you want to 
+  /**use this template class for any object you want to
   distribute to open_MP threads. The creation of this
   object should happen in serial, while accessing the individual
-  thread local instances will take place in parallel. If 
+  thread local instances will take place in parallel. If
   one needs creation of thread local object, use the macro
   DEFINE_STATIC_THREAD_LOCAL
   */
@@ -160,7 +160,7 @@ namespace getfem
     };
   public:
     omp_distribute() : thread_values(num_threads()) {}
-    omp_distribute(const T& value) : 
+    omp_distribute(const T& value) :
       thread_values(num_threads(),value) {}
     operator T& (){return thread_values[this_thread()];}
     operator const T& () const {return thread_values[this_thread()];}
@@ -168,11 +168,11 @@ namespace getfem
     const T& thrd_cast() const {return thread_values[this_thread()];}
     T& operator()(size_type i) {
       return thread_values[i];
-    }	
+    }
     const T& operator()(size_type i) const {
       return thread_values[i];
     }
-    T& operator = (const T& x){ 
+    T& operator = (const T& x){
       return (thread_values[this_thread()]=x);
     }
 
@@ -196,19 +196,19 @@ namespace getfem
   public:
     typedef std::vector<T> VEC;
     omp_distribute() : thread_values(num_threads()) {}
-    omp_distribute(size_t n, const T& value) : 
+    omp_distribute(size_t n, const T& value) :
       thread_values(num_threads(), std::vector<T>(n,value)){}
     operator VEC& (){return thread_values[this_thread()];}
-    operator const VEC& () const 
+    operator const VEC& () const
     {return thread_values[this_thread()];}
-    VEC& operator()(size_type i) {return thread_values[i];}	
+    VEC& operator()(size_type i) {return thread_values[i];}
     const VEC& operator()(size_type i) const {return thread_values[i];}
     VEC& thrd_cast(){return thread_values[this_thread()];}
-    const VEC& thrd_cast() const 
+    const VEC& thrd_cast() const
     {return thread_values[this_thread()];}
-    T& operator[](size_type i) 
-    {return thread_values[this_thread()][i];}	
-    const T& operator[](size_type i) const 
+    T& operator[](size_type i)
+    {return thread_values[this_thread()][i];}
+    const T& operator[](size_type i) const
     {return thread_values[this_thread()][i];}
     T& operator = (const T& value) {
       return (thread_values[this_thread()]=value);
@@ -233,7 +233,7 @@ namespace getfem
   public:
 
     omp_distribute() : thread_values(num_threads()) {}
-    omp_distribute(const bool& value) : 
+    omp_distribute(const bool& value) :
       thread_values(num_threads(),value) {}
     operator BOOL& (){return thread_values[this_thread()];}
     operator const BOOL& () const {return thread_values[this_thread()];}
@@ -241,11 +241,11 @@ namespace getfem
     const BOOL& thrd_cast() const {return thread_values[this_thread()];}
     BOOL& operator()(size_type i) {
       return thread_values[i];
-    }	
+    }
     const BOOL& operator()(size_type i) const {
       return thread_values[i];
     }
-    BOOL& operator = (const BOOL& x){ 
+    BOOL& operator = (const BOOL& x){
       return (thread_values[this_thread()]=x);
     }
     all_values_proxy all_threads(){return all_values_proxy(*this);}
@@ -297,14 +297,14 @@ namespace getfem
 
 #if defined _WIN32 && !defined (__GNUC__)
   /**parallelization function for a for loop*/
-  template<class LOOP_BODY> 
-  inline void open_mp_for(int begin, int end, 
+  template<class LOOP_BODY>
+  inline void open_mp_for(int begin, int end,
     const LOOP_BODY& loop_body){
-      _configthreadlocale(_ENABLE_PER_THREAD_LOCALE); 
+      _configthreadlocale(_ENABLE_PER_THREAD_LOCALE);
       gmm::standard_locale locale;
       open_mp_is_running_properly check;
-#pragma omp parallel default(shared) 
-      { 
+#pragma omp parallel default(shared)
+      {
         _setmbcp(_MB_CP_ANSI);
 #pragma omp for schedule(static)
         for(int i=begin;i<end;i++) loop_body(i);
@@ -313,31 +313,24 @@ namespace getfem
   }
 #else /*LINUX*/
   /**parallelization function for a for loop*/
-  template<class LOOP_BODY> 
+  template<class LOOP_BODY>
   inline void open_mp_for(
     int begin, int end, const LOOP_BODY& loop_body){
       gmm::standard_locale locale;
       open_mp_is_running_properly check;
-#pragma omp parallel default(shared) 
-      { 
+#pragma omp parallel default(shared)
+      {
 #pragma omp for schedule(static)
         for(int i=begin;i<end;i++) loop_body(i);
       }
   }
 #endif
 
-
-
-
-
-
-
-
   /**parallelization macro of a for loop*/
 #define OPEN_MP_FOR(begin,end,loop_counter,loop_body) \
   getfem::open_mp_for(begin,end,loop_body(loop_counter));
 
-  /**used to partition a mesh region so that 
+  /**used to partition a mesh region so that
   each partition can be used on a different thread. Thread safe*/
   class region_partition {
     mesh* pparent_mesh;
@@ -346,8 +339,43 @@ namespace getfem
   public:
     region_partition(mesh* mmesh=0,size_type id=-1);
     region_partition(const region_partition& rp);
-    void operator=(const region_partition& rp);		
+    void operator=(const region_partition& rp);
     size_type thread_local_partition() const;
+  };
+
+  /**Allows to re-throw exceptions, generated in OpemMP parallel section.
+  Collects exceptions from all threads and on destruction re-throws the first one, so that
+  it can be again caught in the master thread*/
+  class thread_exception {
+  public:
+    thread_exception();
+
+    /**re-throws the first captured exception*/
+    ~thread_exception();
+
+    /**run function f in parallel part to capture it's exceptions. Possible syntax can be:
+    thread_exception exception;
+    #pragma omp parallel...
+    {
+      exception.run([&]
+      {
+        your code that can throw exceptions
+      });
+    }*/
+    template <typename Function, typename... Parameters>
+    void run(Function f, Parameters... params)
+    {
+      try {f(params...);} catch (...){captureException();}
+    }
+
+    /**vector of pointers to caught exceptions*/
+    std::vector<std::exception_ptr> caughtExceptions() const;
+
+  private:
+    void rethrow();
+    void captureException();
+
+    std::vector<std::exception_ptr> exceptions_;
   };
 
 

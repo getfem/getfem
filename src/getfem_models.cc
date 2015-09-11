@@ -416,13 +416,17 @@ namespace getfem {
                     distro<decltype(rTM)>  distro_rTM(rTM);
                     gmm::standard_locale locale;
                     open_mp_is_running_properly check;
+                    thread_exception exception;
                     #pragma omp parallel default(shared)
                     {
-                      ga_workspace workspace(*this);
-                      for (auto &&ge : generic_expressions)
-                        workspace.add_expression(ge.expr, ge.mim, ge.region);
-                      workspace.set_assembled_matrix(distro_rTM);
-                      workspace.assembly(2);
+                      exception.run([&]
+                      {
+                        ga_workspace workspace(*this);
+                        for (auto &&ge : generic_expressions)
+                          workspace.add_expression(ge.expr, ge.mim, ge.region);
+                        workspace.set_assembled_matrix(distro_rTM);
+                        workspace.assembly(2);
+                      });
                     } //parallel
                   } //distro scope
                   gmm::add
@@ -1702,14 +1706,18 @@ namespace getfem {
         /*running the assembly in parallel*/
         gmm::standard_locale locale;
         open_mp_is_running_properly check;
+        thread_exception exception;
         #pragma omp parallel default(shared)
         {
-          brick.pbr->asm_complex_tangent_terms(*this, ib, brick.vlist,
-                                               brick.dlist, brick.mims,
-                                               cmatlist,
-                                               cveclist,
-                                               cveclist_sym,
-                                               brick.region, version);
+          exception.run([&]
+          {
+            brick.pbr->asm_complex_tangent_terms(*this, ib, brick.vlist,
+                                                 brick.dlist, brick.mims,
+                                                 cmatlist,
+                                                 cveclist,
+                                                 cveclist_sym,
+                                                 brick.region, version);
+          });
         }
 
       }
@@ -1757,15 +1765,19 @@ namespace getfem {
         /*running the assembly in parallel*/
         gmm::standard_locale locale;
         open_mp_is_running_properly check;
+        thread_exception exception;
         #pragma omp parallel default(shared)
         {
-          brick.pbr->asm_real_tangent_terms(*this, ib, brick.vlist,
-                                            brick.dlist, brick.mims,
-                                            rmatlist,
-                                            rveclist,
-                                            rveclist_sym,
-                                            brick.region,
-                                            version);
+          exception.run([&]
+          {
+            brick.pbr->asm_real_tangent_terms(*this, ib, brick.vlist,
+                                              brick.dlist, brick.mims,
+                                              rmatlist,
+                                              rveclist,
+                                              rveclist_sym,
+                                              brick.region,
+                                              version);
+          });
         }
       }
       brick.pbr->real_post_assembly_in_serial(*this, ib, brick.vlist,
@@ -2601,31 +2613,34 @@ namespace getfem {
         /*running the assembly in parallel*/
         gmm::standard_locale locale;
         open_mp_is_running_properly check;
-
+        thread_exception exception;
         #pragma omp parallel default(shared)
         {
-          GMM_TRACE2("Global generic assembly");
-          ga_workspace workspace(*this);
+          exception.run([&]
+          {
+            GMM_TRACE2("Global generic assembly");
+            ga_workspace workspace(*this);
 
-          for (auto &&ge : generic_expressions) workspace.add_expression(ge.expr, ge.mim, ge.region);
+            for (auto &&ge : generic_expressions) workspace.add_expression(ge.expr, ge.mim, ge.region);
 
-          if (version & BUILD_RHS) {
-            if (is_complex()) {
-              GMM_ASSERT1(false, "to be done");
-            } else {
-              workspace.set_assembled_vector(residual_distributed);
-              workspace.assembly(1);
+            if (version & BUILD_RHS) {
+              if (is_complex()) {
+                GMM_ASSERT1(false, "to be done");
+              } else {
+                workspace.set_assembled_vector(residual_distributed);
+                workspace.assembly(1);
+              }
             }
-          }
 
-          if (version & BUILD_MATRIX) {
-            if (is_complex()) {
-              GMM_ASSERT1(false, "to be done");
-            } else {
-              workspace.set_assembled_matrix(tangent_matrix_distributed);
-              workspace.assembly(2);
+            if (version & BUILD_MATRIX) {
+              if (is_complex()) {
+                GMM_ASSERT1(false, "to be done");
+              } else {
+                workspace.set_assembled_matrix(tangent_matrix_distributed);
+                workspace.assembly(2);
+              }
             }
-          }
+          });//exception.run(
         } //#pragma omp parallel
       } //end of distro scope
 
