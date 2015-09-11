@@ -1,10 +1,12 @@
-******************************
-  What's New in GetFEM++ 1.6
-******************************
+.. include:: ../replaces.txt
+
+************************
+  What's New in |gf| 1.6
+************************
 
    Released, 2004/01/23:
 
-   * Getfem++ 1.6 is mostly a bugfix and performance improvements release:
+   * |gf| 1.6 is mostly a bugfix and performance improvements release:
 
      * Some new integration methods were added (high order methods for
        triangles such as ``IM_TRIANGLE(19)`` from P. Solin, K. Segeth

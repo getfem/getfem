@@ -1,9 +1,11 @@
-******************************
-  What's New in GetFEM++ 3.1
-******************************
+.. include:: ../replaces.txt
+
+************************
+  What's New in |gf| 3.1
+************************
 
    Minor version, 2008/09/09:
 
-   * A certain number of small bug fixed in Getfem++ and Gmm++.
+   * A certain number of small bug fixed in |gf| and Gmm++.
 
    * Clarification of copyrights.

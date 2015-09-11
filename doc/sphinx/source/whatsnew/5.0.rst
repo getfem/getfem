@@ -1,8 +1,8 @@
 .. include:: ../replaces.txt
 
-****************************
+************************
   What's New in |gf| 5.0
-****************************
+************************
 
 This is a major release of |gf|. The main evolution is the generalization of the use of the high-level generic assembly for a more easy writting of nonlinear coupled problems. The few incompatibilities come from the fact that a certain number of tools have been re-designed (mainly Nitsche's bricks and time integration schemes) and the old brick system (from 1.7 release) have been definitevely unplugged.
 

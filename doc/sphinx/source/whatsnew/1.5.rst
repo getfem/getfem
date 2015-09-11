@@ -1,6 +1,8 @@
-******************************
-  What's New in GetFEM++ 1.5
-******************************
+.. include:: ../replaces.txt
+
+************************
+  What's New in |gf| 1.5
+************************
 
    Released, 2003/07/25:
 
@@ -16,6 +18,6 @@
 
    * Initial support for XFem.
 
-   * Mesh slices in getfem++ and getfem-matlab.
+   * Mesh slices in |gf| and GetFEM-Matlab.
 
    * The Matlab interface was merged into a single giant mex-file.

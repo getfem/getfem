@@ -1,10 +1,12 @@
-******************************
-  What's New in GetFEM++ 2.0
-******************************
+.. include:: ../replaces.txt
+
+************************
+  What's New in |gf| 2.0
+************************
 
    Released, 2006/03/20:
 
-   * This is a major update to getfem++, which make some
+   * This is a major update to |gf|, which make some
      backward-incompatible changes:
 
      * The old mesh_fem has been split into two disjoint classes:
@@ -39,8 +41,5 @@
      * Automatic mesh refinement.
 
 Major changes for the matlab and python interface: they follow the
-changes that occured in getfem. An interface to the getfem++ model
+changes that occured in |gf|. An interface to the |gf| model
 bricks has been added.
-
-Next releases of getfem++ will try to maintain backward
-compatability with this release.

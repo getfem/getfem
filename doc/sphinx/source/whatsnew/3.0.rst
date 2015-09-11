@@ -1,15 +1,14 @@
-******************************
-  What's New in GetFEM++ 3.0
-******************************
+.. include:: ../replaces.txt
 
-Getfem++ 3.0 is now available !
+************************
+  What's New in |gf| 3.0
+************************
 
-Not so many changes, but some of them are incompatible with getfem 
-2.0:
+Not so many changes, but some of them are incompatible with |gf| 2.0:
 
    Released, 2007/06/27:
 
-   * The getfem and gmm header files have been moved into their
+   * The |gf| and Gmm++ header files have been moved into their
      respective subdirectories. So, as a consequence, the include
      directives have to be updated:
 
@@ -19,8 +18,8 @@ Not so many changes, but some of them are incompatible with getfem
      * ``#include "getfem_xxx.h"`` should be replaced with
        ``#include "getfem/getfem_xxx.h"``
 
-   * The getfem interface (python and matlab) is now included in the
-     getfem tar.gz file, in the `interface` subdirectory. They can
+   * The |gf| interface (Python and Matlab) is now included in the
+     |gf| tar.gz file, in the `interface` subdirectory. They can
      be enabled with the ``--enable-python`` or ``--enable-matlab``
      switch of the configure script.
 

@@ -1,12 +1,14 @@
-******************************
-  What's New in GetFEM++ 1.7
-******************************
+.. include:: ../replaces.txt
+
+************************
+  What's New in |gf| 1.7
+************************
 
    Released, 2005/01/05:
 
-   * An important number of improvements have been done on Getfem++ 1.7.
-     Note that the next release will be getfem 2.0, some of its changes
-     won't maintain backward compatibility with getfem++-1.7:
+   * An important number of improvements have been done on |gf| 1.7.
+     Note that the next release will be |gf| 2.0, some of its changes
+     won't maintain backward compatibility with |gf| 1.7:
 
      * Introduction of the `model brick` system, which provides a
        general framework for the solution of common PDEs. Each brick
@@ -36,7 +38,7 @@
 
      * A BFGS algorithm has been developped.
 
-     * gmm++ now handles (valid) operations mixing complex and
+     * Gmm++ now handles (valid) operations mixing complex and
        scalars.
 
      * gmm::real_part(V) and gmm::imag_part(V) gives a possibly
@@ -55,4 +57,4 @@ working, the python interface is still considered a *work in
 progress*. You have to enable it explicitly with ``./configure
 --enable-python``. An example of use can be found `here
 <http://home.gna.org/getfem/demo_tripod.py.html>`_. An interface to 
-the gmm++ sparse matrices and solvers is also provided.
+the Gmm++ sparse matrices and solvers is also provided.

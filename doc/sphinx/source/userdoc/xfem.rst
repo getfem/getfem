@@ -6,21 +6,23 @@
 
 .. _ud-xfem:
 
-Level-sets, Xfem, fictitious domains
-====================================
+Level-sets, Xfem, fictitious domains, Cut-fem
+=============================================
 
-|gf| offers (since v2.0) a certain number of functionalities concerning
-level-sets, support for Xfem and fictitious domain methods and discontinuous field
-across a level-set.
+Since v2.0, |gf| offers a certain number of facilities to support Xfem and fictitious domain methods with a cut-fem strategy. Most of these tools have been initially developed by Julien Pommier for the study published in [LA-PO-RE-SA2005]_.
+
+The implementation is a fairly large generality, based on the use of level-sets, as suggested in [SU-CH-MO-BE2001]_ and allows simultaneous use of a large number of level-sets which can cross.
+
+The Xfem implementation for the discretization of the jump follows the strategy of [HA-HA2004]_ although we had no knowledge of this work during implementation. This means that there is no degree of freedom representing the jump across the level-set. Instead, the degrees of freedom represent the displacement of each side of the level-set. This is essential in any way in the presence of level-set that intersect each other because it may exist more than two different zones of continuity inside a single element.
+
 
 .. important::
 
    All the tools listed below needs the package `qhull <http://www.qhull.org>`_
-   installed on your system. This package is widely available. It computes convex
-   hull and delaunay triangulations in arbitrary dimension. Everything here is
-   considered "work in progress", it is still subject to major changes if needed.
+   installed on your system. This package is widely available.
+   It computes convex hull and delaunay triangulations in arbitrary dimension.
 
-The program :file:`tests/crack.cc` is a good example of use of these tools.
+The programs :file:`tests/crack.cc`, :file:`interface/tests/matlab/crack.m` and :file:`interface/tests/python/crack.py` are some good examples of use of these tools.
 
 
 Representation of level-sets

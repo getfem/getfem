@@ -10,7 +10,7 @@ Released version, 2012/08/02.
 
 The main changes are:
 
-   * The license of Getfem has moved to LGPL 3 with GCC Runtime Exception
+   * The license of |gf| has moved to LGPL 3 with GCC Runtime Exception
      allowing commercial codes to use Getfem.
 
    * Contact/friction bricks has been extented to non-matching meshes and
