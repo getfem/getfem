@@ -9,11 +9,15 @@
 Level-sets, Xfem, fictitious domains, Cut-fem
 =============================================
 
-Since v2.0, |gf| offers a certain number of facilities to support Xfem and fictitious domain methods with a cut-fem strategy. Most of these tools have been initially developed by Julien Pommier for the study published in [LA-PO-RE-SA2005]_.
+Since v2.0, |gf| offers a certain number of facilities to support Xfem and fictitious domain methods with a cut-fem strategy. Most of these tools have been initially mainly developed by Julien Pommier for the study published in [LA-PO-RE-SA2005]_.
 
 The implementation is a fairly large generality, based on the use of level-sets, as suggested in [SU-CH-MO-BE2001]_ and allows simultaneous use of a large number of level-sets which can cross.
 
 The Xfem implementation for the discretization of the jump follows the strategy of [HA-HA2004]_ although we had no knowledge of this work during implementation. This means that there is no degree of freedom representing the jump across the level-set. Instead, the degrees of freedom represent the displacement of each side of the level-set. This is essential in any way in the presence of level-set that intersect each other because it may exist more than two different zones of continuity inside a single element.
+
+The cut fem strategy for fictitious domain method has been used for the first time with |gf| for the study published in [HA-RE2009]_ where a quite simple stabilization strategy is proposed. Here also, before knowing the existence of the Work of E. Burman and P. Hanbo [bu-ha2010]_ on that topic.
+
+The tools for Xfem have been then enriched by the PhD works of J. Larsy (see for instance [LA-RE-SA2010]_) the one of E. Chahine (see for instance [CH-LA-RE2011]_, [NI-RE-CH2011]_), and of S. Amdouni  (see for instance [AM-MO-RE2014]_, [AM-MO-RE2014b]_).
 
 
 .. important::
@@ -28,8 +32,8 @@ The programs :file:`tests/crack.cc`, :file:`interface/tests/matlab/crack.m` and 
 Representation of level-sets
 ----------------------------
 
-|gf| deals with level-set defined by piecewise polynomial function on a mesh. It
-will be defined as the zero of this function. In the file
+Some structure are defined to manipulate level-set functions defined by
+piecewise polynomial function on a mesh. In the file
 :file:`getfem/getfem_levelset.h` a level-set is represented by a function defined
 on a lagrange fem of a certain degree on a mesh. The constructor to define a new
 |gf_ls| is the following::
@@ -50,6 +54,8 @@ dof for the primary level-set function, so that these values can be set. The
 method ``ls.value(1)`` returns the dof vector for the secondary level-set function
 if any. The method ``ls.get_mesh_fem()`` returns a reference on the |gf_mf|
 object.
+
+Not that often in applications, the level-set function evolves thanks to an Hamilton-Jacobi equation (for its re-initialization for instance). See the :ref:`ud-convect` which can be used in the approximation of a Hamilton-Jacobi equation.
 
 
 Mesh cut by level-sets

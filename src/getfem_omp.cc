@@ -159,7 +159,7 @@ namespace getfem{
 
   void thread_exception::captureException()
   {
-    exceptions_[omp_get_thread_num()] = std::current_exception();
+    exceptions_[this_thread()] = std::current_exception();
   }
 
 }

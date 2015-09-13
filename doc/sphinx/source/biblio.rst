@@ -11,6 +11,12 @@ References
 .. [Al-Ge1997] E.L. Allgower and K. Georg,
    *Numerical Path Following*, Handbook of Numerical Analysis, Vol. V (P.G. Ciarlet and J.L. Lions, eds.), Elsevier, pp. 3-207, 1997.
 
+.. [AM-MO-RE2014] S. Amdouni, M. Moakher, Y. Renard,
+   *A local projection stabilization of fictitious domain method for elliptic boundary value problems*, Appl. Numer. Math., 76:60-75, 2014.
+
+.. [AM-MO-RE2014b] S. Amdouni, M. Moakher, Y. Renard,
+   *A stabilized Lagrange multiplier method for the enriched finite element approximation of Tresca contact problems of cracked elastic bodies*, Comp. Meth. Appl. Mech. Engng., 270:178-200, 2014.
+
 .. [bank1983] R.E. Bank, A.H. Sherman, A. Weiser,
    *Refinement algorithms and data structures for regular local mesh refinement*, in Scientific Computing IMACS, Amsterdam, North-Holland, pp 3-17, 1983.
 
@@ -20,9 +26,14 @@ References
 .. [br-ba-fo1989] F. Brezzi, K.J. Bathe, M. Fortin,
    *Mixed-interpolated element for Reissner-Mindlin plates*, Internat. J. Numer. Methods Engrg., 28, 1787-1801, 1989.
 
+.. [bu-ha2010] E. Burman, P. Hansbo,
+   *Fictitious domain finite element methods using cut elements: I. A stabilized Lagrange multiplier method*, Computer Methods in Applied Mechanics, 199:41-44, 2680-2686, 2010. 
 
 .. [ca-re-so1994] D. Calvetti, L. Reichel and D.C. Sorensen.
    *An implicitely restarted Lanczos method for large symmetric eigenvalue problems*. Electronic Transaction on Numerical Analysis}. 2:1-21, 1994.
+
+.. [CH-LA-RE2011] E. Chahine, P. Laborde, Y. Renard,
+   *A non-conformal eXtended Finite Element approach: Integral matching Xfem*, Applied Numerical Mathematics, 61:322-343, 2011. 
 
 .. [ciarlet1978] P.G. Ciarlet,
    *The finite element method for elliptic problems*, Studies in Mathematics and its Applications vol. 4, North-Holland, 1978.
@@ -55,6 +66,9 @@ References
 .. [HA-HA2004] A Hansbo, P Hansbo,
    *A finite element method for the simulation of strong and weak discontinuities in solid mechanics*, Computer methods in applied mechanics and engineering 193 (33-35), 3523-3540, 2004.
 
+.. [HA-RE2009] J. Haslinger, Y. Renard,
+   *A new fictitious domain approach inspired by the extended finite element method*, Siam J. on Numer. Anal., 47(2):1474-1499, 2009.
+
 .. [HI-RE2010] Hild P., Renard Y.
    *Stabilized lagrange multiplier method for the finite element approximation of contact problems in elastostatics.* Numer. Math. 15:1, 101--129, 2010.
 
@@ -65,7 +79,10 @@ References
    *Contact problems in elasticity*, SIAM, 1988.
 
 .. [LA-PO-RE-SA2005] Laborde P., Pommier J., Renard Y., Salaun M.
-   *High order extended finite element method for cracked domains*. Int. J. Numer. Meth. Engng., 64:354-381, 2005. 
+   *High order extended finite element method for cracked domains*. Int. J. Numer. Meth. Engng., 64:354-381, 2005.
+
+.. [LA-RE-SA2010] J. Lasry, Y. Renard, M. Salaun.
+   *eXtended Finite Element Method for thin cracked plates with Kirchhoff-Love theory*, Int. J. Numer. Meth. Engng., 84(9):1115-1138, 2010.
 
 .. [KO-RE2014] Poulios K., Renard Y.,
    *An unconstrained integral approximation of large sliding frictional contact between deformable solids*. Computers and Structures, 153:75-90, 2015.
@@ -90,6 +107,9 @@ References
 
 .. [nedelec1991] J.-C. Nedelec.
    *Notions sur les techniques d'elements finis*, Ellipses, SMAI, Mathematiques & Applications no 7, 1991.
+
+.. [NI-RE-CH2011] S. Nicaise, Y. Renard, E. Chahine,
+   *Optimal convergence analysis for the eXtended Finite Element Method*, Int. J. Numer. Meth. Engng., 86:528-548, 2011.
 
 .. [Pantz2008] O. Pantz
    *The Modeling of Deformable Bodies with Frictionless (Self-)Contacts*, Archive for Rational Mechanics and Analysis, Volume 188, Issue 2, pp 183-212, 2008.
