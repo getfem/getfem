@@ -24,16 +24,16 @@ Files
 
 
    :file:`getfem_mesh_fem.h` and :file:`getfem_mesh_fem.cc`, "Defines the structure representing a finite element on a whole mesh. Each element of the mesh is associated with a finite element method. This is a quite complex structure which perform dof identification and numbering, allows a global linear reduction."
-   :file:`getfem_mesh_fem_global_function.h` and :file:`getfem_mesh_fem_global_function.cc`, "Define mesh_fem whose base functions are global function given by the user. Usefull for enrichment with singular function".
-   :file:`getfem_mesh_fem_product.h` and :file:`getfem_mesh_fem_product.cc`, "Produces a mesh_fem object which is a kind of direct product of two finite element method. Usefull for Xfem enrichment".
-   :file:`getfem_mesh_fem_sum.h` and :file:`getfem_mesh_fem_sum.cc`, "Produces a mesh_fem object which is a kind of direct sum of two finite element method. Usefull for Xfem enrichment".
+   :file:`getfem_mesh_fem_global_function.h` and :file:`getfem_mesh_fem_global_function.cc`, "Define mesh_fem whose base functions are global function given by the user. Usefull for enrichment with singular function."
+   :file:`getfem_mesh_fem_product.h` and :file:`getfem_mesh_fem_product.cc`, "Produces a mesh_fem object which is a kind of direct product of two finite element method. Usefull for Xfem enrichment."
+   :file:`getfem_mesh_fem_sum.h` and :file:`getfem_mesh_fem_sum.cc`, "Produces a mesh_fem object which is a kind of direct sum of two finite element method. Usefull for Xfem enrichment."
    :file:`getfem_partial_mesh_fem.h` and :file:`getfem_partial_mesh_fem.cc`, "Produces a mesh_fem with a reduced number of dofs"
    :file:`getfem_interpolation.h` and :file:`getfem_interpolation.cc`, "Interpolation between two finite element methods, possibly between different meshes. The interpolation facilities of the high-level generic assembly can be used instead."
    :file:`getfem_derivatives.h`, "Interpolation of some derivatives of a finite element field on a (discontinuous) Lagrange finite element. The interpolation facilities of the high-level generic assembly can be used instead."
    :file:`getfem_inter_element.h` and :file:`getfem_inter_element.cc`, "An attempt to make framework for inter-element computations (jump in normal derivative for instance). To be continuated and perhaps integrated into the generic assembly language."
    :file:`getfem_error_estimate.h` and :file:`getfem_error_estimate.cc`, "An attempt to make framework for computation of error estimates. To be continuated and perhaps integrated into the generic assembly language."
    :file:`getfem_crack_sif.h`, "Crack support functions for computation of SIF(stress intensity factors)."
-   :file:`getfem_torus.h` and :file:`getfem_torus.cc`, "Adapt a mesh_fem object which extends a 2D dimensional structure with a radial dimension".
+   :file:`getfem_torus.h` and :file:`getfem_torus.cc`, "Adapt a mesh_fem object which extends a 2D dimensional structure with a radial dimension."
 
 State
 ^^^^^

@@ -23,10 +23,10 @@ Files
    :header: "File(s)", "Description"
    :widths: 8, 15
 
-   :file:`getfem_mat_elem_type.h` and:file:` getfem_mat_elem_type.cc, "Defines bes type for components of an elementary matrix".
-   :file:`getfem_mat_elem.h` and:file:` getfem_mat_elem.cc, "Describes an compute elementary matrices".
-   :file:`getfem_assembling_tensors.h` and:file:`getfem_assembling_tensors.cc`, "Performs the assembly.".
-   :file:`getfem_assembling.h`, "Various assembly terms (linear elasticity, generix elliptic term, Dirichlet condition ...".
+   :file:`getfem_mat_elem_type.h` and:file:` getfem_mat_elem_type.cc, "Defines bes type for components of an elementary matrix."
+   :file:`getfem_mat_elem.h` and:file:` getfem_mat_elem.cc, "Describes an compute elementary matrices."
+   :file:`getfem_assembling_tensors.h` and:file:`getfem_assembling_tensors.cc`, "Performs the assembly."
+   :file:`getfem_assembling.h`, "Various assembly terms (linear elasticity, generix elliptic term, Dirichlet condition ..."
 
 State
 ^^^^^

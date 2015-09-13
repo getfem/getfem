@@ -47,14 +47,14 @@ Files
    :file:`bgeot_convex_ref.h` and :file:`bgeot_convex_ref.cc` and :file:`bgeot_convex_structure.cc`, "Describe reference elements."
    :file:`bgeot_mesh.h`, "Describes a mesh with the collection of node (but without the description of geometric transformations)."
    :file:`getfem_mesh_region.h` and :file:`getfem_mesh_region.cc`, "Object representing a mesh region (boundary or part of a mesh)."
-   :file:`bgeot_geometric_trans.h` and :file:`bgeot_geometric_trans.cc`, Describes geometric transformations.
-   :file:`bgeot_geotrans_inv.h` and :file:`bgeot_geotrans_inv.cc`, A tool to invert geometric transformations.
+   :file:`bgeot_geometric_trans.h` and :file:`bgeot_geometric_trans.cc`, "Describes geometric transformations."
+   :file:`bgeot_geotrans_inv.h` and :file:`bgeot_geotrans_inv.cc`, "A tool to invert geometric transformations."
    :file:`getfem_mesh.h` and :file:`getfem_mesh.cc`, "Fully describes a mesh (with the geometric transformations, subparts of the mesh, support for parallelization). Includes the Bank algorithm to refine a mesh."
    :file:`getfem_deformable_mesh.h`, "defines an object capable to deform a mesh with respect to a displacement field and capable to restore it"
-   :file:`getfem_mesher.h` and :file:`getfem_mesher.cc`, "An experimental mesher, in arbitrary dimension. To be used with care and  quite slow (because of node optimization). it meshes geometries defined by some level sets.
+   :file:`getfem_mesher.h` and :file:`getfem_mesher.cc`, "An experimental mesher, in arbitrary dimension. To be used with care and  quite slow (because of node optimization). it meshes geometries defined by some level sets."
    :file:`getfem_import.h` and :file:`getfem_import.cc`, "Import mesh files in various formats"
    :file:`getfem_regular_meshes.h` and :file:`getfem_regular_meshes.cc`, "Produces structured meshes"
-   :file:`getfem_mesh_slicers.h` and :file:`getfem_mesh_slicers.cc`, "A slice is built from a mesh, by applying some slicing operations (cut the mesh with a plane, intersect with a sphere, take the boundary faces, etc..). They are used for post-treatment (exportation of results to VTK or OpenDX,  etc.)".
+   :file:`getfem_mesh_slicers.h` and :file:`getfem_mesh_slicers.cc`, "A slice is built from a mesh, by applying some slicing operations (cut the mesh with a plane, intersect with a sphere, take the boundary faces, etc..). They are used for post-treatment (exportation of results to VTK or OpenDX,  etc.)."
    :file:`getfem_mesh_slice.h` and :file:`getfem_mesh_slice.cc`, "Store mesh slices."
 
 

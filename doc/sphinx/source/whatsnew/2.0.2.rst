@@ -6,4 +6,4 @@
 
    Minor update, 2006/11/10:
 
-   * The `Gmsh <http://geuz.org/gmsh/>`_ mesh import has been fixed.
+   * The |gmsh| mesh import has been fixed.

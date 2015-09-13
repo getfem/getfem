@@ -38,11 +38,11 @@ checkout:
 	fi
 	@if [ ! -d tools/sphinx ]; then \
 	  echo "Checking out Sphinx..."; \
-	  svn checkout $(SPHINXROOT)/external/Sphinx-0.6.5/sphinx tools/sphinx; \
+	  svn checkout $(SPHINXROOT)/external/Sphinx-1.2/sphinx tools/sphinx; \
 	fi
 	@if [ ! -d tools/docutils ]; then \
 	  echo "Checking out Docutils..."; \
-	  svn checkout $(SPHINXROOT)/external/docutils-0.6/docutils tools/docutils; \
+	  svn checkout $(SPHINXROOT)/external/docutils-0.11/docutils tools/docutils; \
 	fi
 	@if [ ! -d tools/jinja2 ]; then \
 	  echo "Checking out Jinja..."; \
@@ -50,7 +50,7 @@ checkout:
 	fi
 	@if [ ! -d tools/pygments ]; then \
 	  echo "Checking out Pygments..."; \
-	  svn checkout $(SPHINXROOT)/external/Pygments-1.3.1/pygments tools/pygments; \
+	  svn checkout $(SPHINXROOT)/external/Pygments-1.6/pygments tools/pygments; \
 	fi
 
 update: checkout
@@ -71,7 +71,8 @@ build: $(srcdir)/source/matlab/cmdref.rst $(srcdir)/source/python/cmdref.rst $(s
 	echo # rm -fr build/$(BUILDER)/_images
 	echo # rm -fr build/$(BUILDER)/*.png
 	mkdir -p build/$(BUILDER) build/doctrees
-	PYTHONPATH=../../interface/src/python LD_PRELOAD=../../src/.libs/libgetfem.so $(SPHINXBUILD) $(ALLSPHINXOPTS)
+	echo # PYTHONPATH=../../interface/src/python LD_PRELOAD=../../src/.libs/libgetfem.so $(SPHINXBUILD) $(ALLSPHINXOPTS)
+	PYTHONPATH=../../interface/src/python $(SPHINXBUILD) $(ALLSPHINXOPTS)
 	@echo
 
 view:

@@ -26,7 +26,6 @@ user_preamble = """\n% begin user_preamble:
 \\usepackage{mathrsfs}
 \\usepackage{amsmath}
 \\usepackage{amssymb}
-\\usepackage[utf8]{inputenc}
 \\newcommand\\Reel{\\rm I\\hspace{-0.15em}R}
 \\newcommand\\R{\\rm I\\hspace{-0.15em}R}
 \\newcommand{\\ds}{\\displaystyle}
@@ -49,7 +48,7 @@ _stdauthor = getfem_env('authors')
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = ['sphinx.ext.pngmath','sphinx.ext.autodoc',
-              'sphinx.ext.refcounting','sphinx.ext.coverage',
+              'sphinx.ext.coverage',
               'sphinx.ext.doctest']
 
 # The suffix of source filenames.

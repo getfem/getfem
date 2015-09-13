@@ -140,7 +140,7 @@ References
    :rtrim:
 
 
-.. For recent sphinx version, see http://sphinxcontrib-bibtex.readthedocs.org/en/latest/usage.html
+.. For recent sphinx version, see http://sphinxcontrib-bibtex.readthedocs.org/en/latest/usage.html (package externe ?)
    .. bibliography:: biblio.bib
    :style: unsrt
    :all:
