@@ -9,15 +9,34 @@
 Level-sets, Xfem, fictitious domains, Cut-fem
 =============================================
 
-Since v2.0, |gf| offers a certain number of facilities to support Xfem and fictitious domain methods with a cut-fem strategy. Most of these tools have been initially mainly developed by Julien Pommier for the study published in [LA-PO-RE-SA2005]_.
+Since v2.0, |gf| offers a certain number of facilities to support Xfem
+and fictitious domain methods with a cut-fem strategy. Most of these
+tools have been initially mainly developed by Julien Pommier for the
+study published in [LA-PO-RE-SA2005]_.
 
-The implementation is a fairly large generality, based on the use of level-sets, as suggested in [SU-CH-MO-BE2001]_ and allows simultaneous use of a large number of level-sets which can cross.
+The implementation is a fairly large generality, based on the use of
+level-sets, as suggested in [SU-CH-MO-BE2001]_ and allows simultaneous
+use of a large number of level-sets which can cross.
 
-The Xfem implementation for the discretization of the jump follows the strategy of [HA-HA2004]_ although we had no knowledge of this work during implementation. This means that there is no degree of freedom representing the jump across the level-set. Instead, the degrees of freedom represent the displacement of each side of the level-set. This is essential in any way in the presence of level-set that intersect each other because it may exist more than two different zones of continuity inside a single element.
+The Xfem implementation for the discretization of the jump follows
+the strategy of [HA-HA2004]_ although we had no knowledge of this work
+during implementation. This means that there is no degree of freedom
+representing the jump across the level-set. Instead, the degrees of
+freedom represent the displacement of each side of the level-set.
+This is essential in any way in the presence of level-set that
+intersect each other because it may exist more than two different
+zones of continuity inside a single element.
 
-The cut fem strategy for fictitious domain method has been used for the first time with |gf| for the study published in [HA-RE2009]_ where a quite simple stabilization strategy is proposed. Here also, before knowing the existence of the Work of E. Burman and P. Hanbo [bu-ha2010]_ on that topic.
+The cut fem strategy for fictitious domain method has been used for
+the first time with |gf| for the study published in [HA-RE2009]_ where
+a quite simple stabilization strategy is proposed. Here also, before
+knowing the existence of the Work of
+E. Burman and P. Hanbo [bu-ha2010]_ on that topic.
 
-The tools for Xfem have been then enriched by the PhD works of J. Larsy (see for instance [LA-RE-SA2010]_) the one of E. Chahine (see for instance [CH-LA-RE2011]_, [NI-RE-CH2011]_), and of S. Amdouni  (see for instance [AM-MO-RE2014]_, [AM-MO-RE2014b]_).
+The tools for Xfem have been then enriched by the PhD works
+of J. Larsy (see for instance [LA-RE-SA2010]_) the one
+of E. Chahine (see for instance [CH-LA-RE2011]_, [NI-RE-CH2011]_),
+and of S. Amdouni  (see for instance [AM-MO-RE2014]_, [AM-MO-RE2014b]_).
 
 
 .. important::
@@ -34,49 +53,59 @@ Representation of level-sets
 
 Some structure are defined to manipulate level-set functions defined by
 piecewise polynomial function on a mesh. In the file
-:file:`getfem/getfem_levelset.h` a level-set is represented by a function defined
-on a lagrange fem of a certain degree on a mesh. The constructor to define a new
-|gf_ls| is the following::
+:file:`getfem/getfem_levelset.h` a level-set is represented by a
+function defined on a lagrange fem of a certain degree on a mesh.
+The constructor to define a new |gf_ls| is the following::
 
   getfem::level_set ls(mesh, degree = 1, with_secondary = false);
 
 where ``mesh`` is a valid mesh of type |gf_m|, ``degree`` is the degree of the
 polynomials (1 is the default value), and ``with_secondary`` is a boolean whose
-default value is false. The secondary level-set is used to represent fractures (if
-:math:`p(x)` is the primary levelset function and :math:`s(x)` is the secondary
-levelset function, the crack is defined by :math:`p(x) = 0` and :math:`s(x) \leq
-0`: the role of the secondary is to stop the crack).
+default value is false. The secondary level-set is used to represent
+fractures (if :math:`p(x)` is the primary levelset function and
+:math:`s(x)` is the secondary levelset function, the crack is defined
+by :math:`p(x) = 0` and :math:`s(x) \leq 0`: the role of the secondary
+is to delimitate the crack).
 
-Each level-set function is defined by a |mf| ``mf`` and the dof values over this
-|mf|, in a vector. The object |gf_ls| contains a |mf| and the vectors of dof for
-the corresponding function(s). The method ``ls.value(0)`` returns the vector of
-dof for the primary level-set function, so that these values can be set. The
-method ``ls.value(1)`` returns the dof vector for the secondary level-set function
-if any. The method ``ls.get_mesh_fem()`` returns a reference on the |gf_mf|
-object.
+Each level-set function is defined by a |mf| ``mf`` and the dof values
+over this |mf|, in a vector. The object |gf_ls| contains a |mf| and the
+vectors of dof for the corresponding function(s). The method
+``ls.value(0)`` returns the vector of dof for the primary level-set
+function, so that these values can be set. The method ``ls.value(1)``
+returns the dof vector for the secondary level-set function if any.
+The method ``ls.get_mesh_fem()`` returns a reference on the |gf_mf| object.
 
-Not that often in applications, the level-set function evolves thanks to an Hamilton-Jacobi equation (for its re-initialization for instance). See the :ref:`ud-convect` which can be used in the approximation of a Hamilton-Jacobi equation.
+Note that, in applications, the level-set function often evolves thanks
+to an Hamilton-Jacobi equation (for its re-initialization for instance).
+See the :ref:`ud-convect` which can be used in the approximation of a
+Hamilton-Jacobi equation.
 
 
 Mesh cut by level-sets
 ----------------------
 
 In order to compute adapted integration methods and finite element methods to
-represent a field which is discontinuous across a level-set, a certain number of
-pre-computations have to be done at the mesh level. The file
-:file:`getfem/getfem_mesh_level_set.h` defines the object |gf_mls| which handles
-these pre-computations. The constructor of this object is the following::
+represent a field which is discontinuous across one or several level-sets,
+a certain number of pre-computations have to be done at the mesh level. In
+:file:`getfem/getfem_mesh_level_set.h` is defined the object |gf_mls| which
+handles these pre-computations. The constructor of this object is the
+following::
 
   getfem::mesh_level_set mls(mesh);
 
-where ``mesh`` is a valid mesh of type |gf_m|. In order to indicate that the mesh
-is cut by a level-set, one has to call the method ``mls.add_level_set(ls)``, where
-``ls`` is an object of type |gf_ls|. An arbitrary number of level-sets can be
-added. To initialize the object or to actualize it when the value of the level-set
-function is modified, one has to call the method ``mls.adapt()``.
+where ``mesh`` is a valid mesh of type |gf_m|. In order to indicate that
+the mesh is cut by a level-set, one has to call the method
+``mls.add_level_set(ls)``, where ``ls`` is an object of type |gf_ls|.
+An arbitrary number of level-sets can be added. To initialize the object
+or to actualize it when the value of the level-set function is modified,
+one has to call the method ``mls.adapt()``.
 
 In particular a subdivision of each element cut by the level-set is made with
-simplices.
+simplices. Note that the whole cut-mesh is generally not conformal.
+
+The cut-mesh can be obtained for instance for post-treatment thanks to ``mls.global_cut_mesh(m)`` which fill ``m`` with the cut-mesh.
+
+
 
 
 Adapted integration methods

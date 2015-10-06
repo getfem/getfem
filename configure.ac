@@ -479,10 +479,10 @@ if test "x$useQHULL" = "xno"; then
   echo "Building with libqhull explicitly disabled";
 else
   AC_CHECK_LIB(qhull, qh_new_qhull)
-  AC_CHECK_HEADERS(qhull/qhull.h,[useQHULL="yes"],
+  AC_CHECK_HEADERS(libqhull/qhull_a.h,[useQHULL="yes"],
   [
     if test "x$useQHULL" = "xyes"; then
-      AC_MSG_ERROR([header files qhull/qhull.h not found. Use --enable-qhull=no flag]);
+      AC_MSG_ERROR([header files libqhull/qhull_a.h not found. Use --enable-qhull=no flag]);
       useQHULL="no"
     fi;
   ])

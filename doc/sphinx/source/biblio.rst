@@ -19,7 +19,6 @@ References
 
 .. [bank1983] R.E. Bank, A.H. Sherman, A. Weiser,
    *Refinement algorithms and data structures for regular local mesh refinement*, in Scientific Computing IMACS, Amsterdam, North-Holland, pp 3-17, 1983.
-
 .. [ba-dv1985] K.J. Bathe, E.N. Dvorkin,
    *A four-node plate bending element based on Mindlin-Reissner plate theory and a mixed interpolation*, Internat. J. Numer. Methods Engrg., 21, 367-383, 1985.
 

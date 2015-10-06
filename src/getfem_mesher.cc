@@ -1435,7 +1435,7 @@ namespace getfem {
   //    Interface with qhull
   // ******************************************************************
 
-# ifndef GETFEM_HAVE_QHULL_QHULL_H
+# ifndef GETFEM_HAVE_LIBQHULL_QHULL_A_H
   void delaunay(const std::vector<base_node> &,
 		gmm::dense_matrix<size_type>&) {
     GMM_ASSERT1(false, "Qhull header files not installed. "
@@ -1444,18 +1444,18 @@ namespace getfem {
 # else
 
   extern "C" {
-#ifdef _MSC_VER
+// #ifdef _MSC_VER
 # include <libqhull/qhull_a.h>
-#else
-# include <qhull/qhull.h>
-//# include <qhull/mem.h>
-# include <qhull/qset.h>
-//# include <qhull/geom.h>
-//# include <qhull/merge.h>
-//# include <qhull/poly.h>
-//# include <qhull/io.h>
-//# include <qhull/stat.h>
-#endif
+// #else
+// # include <qhull/qhull.h>
+// # include <qhull/mem.h>
+// # include <qhull/qset.h>
+// # include <qhull/geom.h>
+// # include <qhull/merge.h>
+// # include <qhull/poly.h>
+// # include <qhull/io.h>
+// # include <qhull/stat.h>
+// #endif
 }
 
   void delaunay(const std::vector<base_node> &pts,
