@@ -91,6 +91,9 @@ namespace getfem {
       case 23: { /* 4TH ORDER TRIANGLE */
         pgt = bgeot::simplex_geotrans(2, 4);
       } break;
+      case 27: { /* 4TH ORDER LINE */
+        pgt = bgeot::simplex_geotrans(1, 4);
+      } break;
       default: { /* UNKNOWN .. */
         /* higher order elements : to be done .. */
         GMM_ASSERT1(false, "gmsh element type " << type << " is unknown.");
@@ -155,6 +158,9 @@ namespace getfem {
       } break;
       case 23: { /* 4TH ORDER TRIANGLE */
         nodes.resize(15);
+      } break;
+      case 27: { /* 4TH ORDER LINE */
+        nodes.resize(5);
       } break;
       default: { /* UNKNOWN .. */
         /* higher order elements : to be done .. */
@@ -470,6 +476,13 @@ namespace getfem {
         ci.nodes[12] = tmp_nodes[9];
         ci.nodes[13] = tmp_nodes[8];
         ci.nodes[14] = tmp_nodes[2];
+      } break;
+      case 27: { /* Fourth order line */
+      //ci.nodes[0]  = tmp_nodes[0];
+        ci.nodes[1]  = tmp_nodes[2];
+        ci.nodes[2]  = tmp_nodes[3];
+        ci.nodes[3]  = tmp_nodes[4];
+        ci.nodes[4]  = tmp_nodes[1];
       } break;
       }
     }
