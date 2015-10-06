@@ -27,6 +27,7 @@
 #include "getfem/dal_singleton.h"
 #include "getfem/bgeot_rtree.h"
 #include "getfem/bgeot_geotrans_inv.h"
+#include "getfem/getfem_copyable_ptr.h"
 
 /**
   Providing for special Math functions unavailable on Intel or MSVS C++
@@ -1975,46 +1976,53 @@ namespace getfem {
                            const std::string &varname,
                            const std::string &interpolatename);
 
-
-  struct ga_predef_function {
-    size_type ftype; // 0 : C++ function with C++ derivative(s)
+  class ga_predef_function {
+    size_type ftype_; // 0 : C++ function with C++ derivative(s)
                      // 1 : function defined by an string expression.
 
-    size_type dtype; // 0 : no derivative(s)
+    size_type dtype_; // 0 : no derivative(s)
                      // 1 : derivative(s) given by C++ functions
                      // 2 : derivatives(s) given by string expression(s)
                      // 3 : derivatives(s) to be symbolically computed.
-    size_type nbargs;         // One or two arguments
-    pscalar_func_onearg f1;   // Function pointer for a one argument function
-    pscalar_func_twoargs f2;  // Function pointer for a two arguments function
-    std::string expr;
-    std::string derivative1, derivative2;
-    mutable base_vector t,u;
-    mutable ga_workspace workspace;
-    mutable ga_instruction_set *gis;
+    size_type nbargs_;         // One or two arguments
+    pscalar_func_onearg f1_;   // Function pointer for a one argument function
+    pscalar_func_twoargs f2_;  // Function pointer for a two arguments function
+    std::string expr_;
+    std::string derivative1_, derivative2_;
+    mutable omp_distribute<base_vector> t, u;
+    mutable omp_distribute<ga_workspace> workspace;
+    copyable_ptr<omp_distribute<ga_instruction_set>> gis = nullptr;
 
+    friend void ga_define_function(const std::string name, size_type nbargs,
+                                   const std::string expr, const std::string der1,
+                                   const std::string der2);
+    friend void ga_define_function(const std::string name, pscalar_func_onearg f,
+                                   const std::string &der);
+    friend void ga_define_function(const std::string name, pscalar_func_twoargs f,
+                                   const std::string &der1, const std::string &der2);
+  public:
     scalar_type operator()(scalar_type t_, scalar_type u_ = 0.) const {
-      switch(ftype) {
+      switch(ftype_) {
       case 0:
-        if (nbargs == 2)
-          return (*f2)(t_, u_);
+        if (nbargs_ == 2)
+          return (*f2_)(t_, u_);
         else
-          return (*f1)(t_);
+          return (*f1_)(t_);
         break;
       case 1:
         t[0] = t_; u[0] = u_;
-        workspace.assembled_potential() = scalar_type(0);
-        ga_function_exec(*gis);
-        return workspace.assembled_potential();
+        workspace.thrd_cast().assembled_potential() = scalar_type(0);
+        ga_function_exec((*gis).thrd_cast());
+        return workspace.thrd_cast().assembled_potential();
         break;
       }
       return 0.;
     }
 
     bool is_affine(const std::string &varname) const {
-      if (ftype == 1) {
-        for (size_type i = 0; i < workspace.nb_trees(); ++i) {
-          ga_workspace::tree_description &td = workspace.tree_info(i);
+      if (ftype_ == 1) {
+        for (size_type i = 0; i < workspace.thrd_cast().nb_trees(); ++i) {
+          ga_workspace::tree_description &td = workspace.thrd_cast().tree_info(i);
           if (!(ga_is_affine(*(td.ptree), workspace, varname, "")))
             return false;
         }
@@ -2023,21 +2031,28 @@ namespace getfem {
       return false;
     }
 
-    ga_predef_function(void) : expr(""), derivative1(""), derivative2(""), gis(0) {}
+    size_type ftype() const {return ftype_;}
+    size_type dtype() const {return dtype_;}
+    size_type nbargs() const {return nbargs_;}
+    const std::string &derivative1() const {return derivative1_;}
+    const std::string &derivative2() const {return derivative2_;}
+    const std::string &expr() const {return expr_;}
+    pscalar_func_onearg f1() const {return f1_;}
+    pscalar_func_twoargs f2() const {return f2_;}
+
+    ga_predef_function(void) : expr_(""), derivative1_(""), derivative2_(""), gis(nullptr) {}
     ga_predef_function(pscalar_func_onearg f, size_type dtype_ = 0,
                        const std::string &der = "")
-      : ftype(0), dtype(dtype_), nbargs(1), f1(f), expr(""),
-        derivative1(der), derivative2(""), gis(0) {}
+      : ftype_(0), dtype_(dtype_), nbargs_(1), f1_(f), expr_(""),
+        derivative1_(der), derivative2_("") {}
     ga_predef_function(pscalar_func_twoargs f, size_type dtype_ = 0,
                        const std::string &der1 = "",
                        const std::string &der2 = "")
-      : ftype(0), dtype(dtype_), nbargs(2), f2(f),
-        expr(""), derivative1(der1), derivative2(der2), gis(0) {}
+      : ftype_(0), dtype_(dtype_), nbargs_(2), f2_(f),
+        expr_(""), derivative1_(der1), derivative2_(der2), gis(nullptr) {}
     ga_predef_function(const std::string &expr_)
-      : ftype(1), dtype(3), nbargs(1), expr(expr_),
-        derivative1(""), derivative2(""), t(1), u(1), gis(0) {}
-
-    ~ga_predef_function() { if (gis) delete gis; }
+      : ftype_(1), dtype_(3), nbargs_(1), expr_(expr_),
+        derivative1_(""), derivative2_(""), t(1, 0.), u(1, 0.), gis(nullptr) {}
   };
 
 
@@ -2479,18 +2494,23 @@ namespace getfem {
                 "Already defined function " << name);
     PREDEF_FUNCTIONS[name] = ga_predef_function(expr);
     ga_predef_function &F = PREDEF_FUNCTIONS[name];
-    F.gis = new ga_instruction_set;
-    F.workspace.add_fixed_size_variable("t", gmm::sub_interval(0,1), F.t);
-    if (nbargs == 2)
-      F.workspace.add_fixed_size_variable("u", gmm::sub_interval(0,1), F.u);
-    F.workspace.add_function_expression(expr);
-    ga_compile_function(F.workspace, *(F.gis), true);
-    F.nbargs = nbargs;
+    GMM_ASSERT1(!me_is_multithreaded_now(),
+                "functions should not be defined in multi-threaded code");
+    F.gis = std::make_unique<omp_distribute<ga_instruction_set>>();
+    for (size_type thread = 0; thread < num_threads(); ++thread)
+    {
+      F.workspace(thread).add_fixed_size_variable("t", gmm::sub_interval(0,1), F.t);
+      if (nbargs == 2)
+        F.workspace(thread).add_fixed_size_variable("u", gmm::sub_interval(0,1), F.u);
+      F.workspace(thread).add_function_expression(expr);
+      ga_compile_function(F.workspace(thread), (*F.gis)(thread), true);
+    }
+    F.nbargs_ = nbargs;
     if (nbargs == 1) {
-      if (der1.size()) { F.derivative1 = der1; F.dtype = 2; }
+      if (der1.size()) { F.derivative1_ = der1; F.dtype_ = 2; }
     } else {
       if (der1.size() && der2.size()) {
-        F.derivative1 = der1;  F.derivative2 = der2; F.dtype = 2;
+        F.derivative1_ = der1;  F.derivative2_ = der2; F.dtype_ = 2;
       }
     }
   }
@@ -2499,17 +2519,17 @@ namespace getfem {
                           const std::string &der) {
     PREDEF_FUNCTIONS[name] = ga_predef_function(f, 1, der);
     ga_predef_function &F = PREDEF_FUNCTIONS[name];
-    if (der.size() == 0) F.dtype = 0;
-    else if (!(ga_function_exists(der))) F.dtype = 2;
+    if (der.size() == 0) F.dtype_ = 0;
+    else if (!(ga_function_exists(der))) F.dtype_ = 2;
   }
 
   void ga_define_function(const std::string name, pscalar_func_twoargs f,
                           const std::string &der1, const std::string &der2) {
     PREDEF_FUNCTIONS[name] = ga_predef_function(f, 1, der1, der2);
     ga_predef_function &F = PREDEF_FUNCTIONS[name];
-    if (der1.size() == 0 || der2.size() == 0) F.dtype = 0;
+    if (der1.size() == 0 || der2.size() == 0) F.dtype_ = 0;
     else if (!(ga_function_exists(der1)) || !(ga_function_exists(der2)))
-      F.dtype = 2;
+      F.dtype_ = 2;
   }
 
   void ga_undefine_function(const std::string name) {
@@ -6836,13 +6856,13 @@ namespace getfem {
           pnode->name = name;
           pnode->test_function_type = 0;
           if (pnode->der1) {
-            if (pnode->der1 > it->second.nbargs
-                || pnode->der2 > it->second.nbargs)
+            if (pnode->der1 > it->second.nbargs()
+                || pnode->der2 > it->second.nbargs())
               ga_throw_error(expr, pnode->pos, "Invalid derivative.");
             const ga_predef_function &F = it->second;
-            if (F.ftype == 0 && !(pnode->der2)) {
+            if (F.ftype() == 0 && !(pnode->der2)) {
               pnode->name = ((pnode->der1 == 1) ?
-                             F.derivative1 : F.derivative2);
+                             F.derivative1() : F.derivative2());
               pnode->der1 = pnode->der2 = 0;
             }
           }
@@ -7102,7 +7122,7 @@ namespace getfem {
         std::string name = child0->name;
         ga_predef_function_tab::iterator it = PREDEF_FUNCTIONS.find(name);
         const ga_predef_function &F = it->second;
-        size_type nbargs = F.nbargs;
+        size_type nbargs = F.nbargs();
         if (nbargs+1 != pnode->children.size()) {
             ga_throw_error(expr, pnode->pos, "Bad number of arguments for "
                 "predefined function " << name << ". Found "
@@ -8408,22 +8428,22 @@ namespace getfem {
         ga_predef_function_tab::iterator it = PREDEF_FUNCTIONS.find(name);
         const ga_predef_function &F = it->second;
 
-        if (F.nbargs == 1) {
-          switch (F.dtype) {
+        if (F.nbargs() == 1) {
+          switch (F.dtype()) {
           case 0:
             GMM_ASSERT1(false, "Cannot derive function " << child0->name
                         << ". No derivative provided or not derivable function.");
           case 1:
-            child0->name = F.derivative1;
+            child0->name = F.derivative1();
             break;
           case 2: case 3:
             {
               child0->name = "DER_PDFUNC_" + child0->name;
               if (!(ga_function_exists(child0->name))) {
-                if (F.dtype == 2)
-                  ga_define_function(child0->name, 1, F.derivative1);
+                if (F.dtype() == 2)
+                  ga_define_function(child0->name, 1, F.derivative1());
                 else {
-                  std::string expr = ga_derivative_scalar_function(F.expr,"t");
+                  std::string expr = ga_derivative_scalar_function(F.expr(),"t");
                   ga_define_function(child0->name, 1, expr);
                 }
               }
@@ -8470,22 +8490,22 @@ namespace getfem {
             tree.duplicate_with_addition(pnode);
 
           if (child1->marked) {
-            switch (F.dtype) {
+            switch (F.dtype()) {
             case 0:
               GMM_ASSERT1(false, "Cannot derive function " << child0->name
                           << ". No derivative provided");
             case 1:
-              child0->name = F.derivative1;
+              child0->name = F.derivative1();
               break;
             case 2:
               child0->name = "DER_PDFUNC1_" + child0->name;
               if (!(ga_function_exists(child0->name)))
-                ga_define_function(child0->name, 2, F.derivative1);
+                ga_define_function(child0->name, 2, F.derivative1());
               break;
             case 3:
               child0->name = "DER_PDFUNC1_" + child0->name;
               if (!(ga_function_exists(child0->name))) {
-                std::string expr = ga_derivative_scalar_function(F.expr, "t");
+                std::string expr = ga_derivative_scalar_function(F.expr(), "t");
                 ga_define_function(child0->name, 2, expr);
               }
               break;
@@ -8507,22 +8527,22 @@ namespace getfem {
             child0 = pnode->children[0]; child1 = pnode->children[1];
             child2 = pnode->children[2];
 
-            switch (F.dtype) {
+            switch (F.dtype()) {
             case 0:
               GMM_ASSERT1(false, "Cannot derive function " << child0->name
                           << ". No derivative provided");
             case 1:
-              child0->name = F.derivative2;
+              child0->name = F.derivative2();
               break;
             case 2:
               child0->name = "DER_PDFUNC2_" + child0->name;
               if (!(ga_function_exists(child0->name)))
-                ga_define_function(child0->name, 2, F.derivative2);
+                ga_define_function(child0->name, 2, F.derivative2());
               break;
             case 3:
               child0->name = "DER_PDFUNC2_" + child0->name;
               if (!(ga_function_exists(child0->name))) {
-                std::string expr = ga_derivative_scalar_function(F.expr, "u");
+                std::string expr = ga_derivative_scalar_function(F.expr(), "u");
                 ga_define_function(child0->name, 2, expr);
               }
               break;
@@ -9918,51 +9938,51 @@ namespace getfem {
         std::string name = child0->name;
         ga_predef_function_tab::iterator it = PREDEF_FUNCTIONS.find(name);
         const ga_predef_function &F = it->second;
-        size_type nbargs = F.nbargs;
+        size_type nbargs = F.nbargs();
         pga_tree_node child2 = (nbargs == 2) ? pnode->children[2] : child1;
 
         if (nbargs == 1) {
           if (child1->t.size() == 1) {
-            if (F.ftype == 0)
+            if (F.ftype() == 0)
               pgai = new ga_instruction_eval_func_1arg_1res
-                (pnode->t[0], child1->t[0], F.f1);
+                (pnode->t[0], child1->t[0], F.f1());
             else
               pgai = new ga_instruction_eval_func_1arg_1res_expr
                 (pnode->t[0], child1->t[0], F);
           } else {
-            if (F.ftype == 0)
+            if (F.ftype() == 0)
               pgai = new ga_instruction_eval_func_1arg
-                (pnode->t, child1->t, F.f1);
+                (pnode->t, child1->t, F.f1());
             else
               pgai = new ga_instruction_eval_func_1arg_expr
                 (pnode->t, child1->t, F);
           }
         } else {
           if (child1->t.size() == 1 && child2->t.size() == 1) {
-            if (F.ftype == 0)
+            if (F.ftype() == 0)
               pgai = new ga_instruction_eval_func_2arg_1res
-                (pnode->t[0], child1->t[0], child2->t[0], F.f2);
+                (pnode->t[0], child1->t[0], child2->t[0], F.f2());
             else
               pgai = new ga_instruction_eval_func_2arg_1res_expr
                 (pnode->t[0], child1->t[0], child2->t[0], F);
           } else if (child1->t.size() == 1) {
-            if (F.ftype == 0)
+            if (F.ftype() == 0)
               pgai = new ga_instruction_eval_func_2arg_first_scalar
-                (pnode->t, child1->t, child2->t, F.f2);
+                (pnode->t, child1->t, child2->t, F.f2());
             else
               pgai = new ga_instruction_eval_func_2arg_first_scalar_expr
                 (pnode->t, child1->t, child2->t, F);
           } else if (child2->t.size() == 1) {
-            if (F.ftype == 0)
+            if (F.ftype() == 0)
               pgai = new ga_instruction_eval_func_2arg_second_scalar
-                (pnode->t, child1->t, child2->t, F.f2);
+                (pnode->t, child1->t, child2->t, F.f2());
             else
               pgai = new ga_instruction_eval_func_2arg_second_scalar_expr
                 (pnode->t, child1->t, child2->t, F);
           } else {
-            if (F.ftype == 0)
+            if (F.ftype() == 0)
               pgai = new ga_instruction_eval_func_2arg
-                (pnode->t, child1->t, child2->t, F.f2);
+                (pnode->t, child1->t, child2->t, F.f2());
             else
               pgai = new ga_instruction_eval_func_2arg_expr
                 (pnode->t, child1->t, child2->t, F);
