@@ -30,7 +30,7 @@
 ===========================================================================*/
 /**@file getfem_copyable_ptr.h
 @author  Andriy Andreykiv <andriy.andreykiv@gmail.com>
-@date May 6th, 2015.
+@date October 6th, 2015.
 @brief A smart pointer that copies the value it points to on copy operations
 */
 #pragma once
