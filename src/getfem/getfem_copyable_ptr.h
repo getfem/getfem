@@ -36,6 +36,7 @@
 #pragma once
 
 #include <memory>
+#include <cstddef>
 
 namespace getfem {
 
@@ -43,7 +44,7 @@ namespace getfem {
   A wrapper around a unique_ptr that clones the value on copy
 */
 template<class T> class copyable_ptr{
-  std::unique_ptr<T> p_ = nullptr;
+  std::unique_ptr<T> p_ = std::unique_ptr<T>(nullptr);
 public:
   copyable_ptr() = default;
 

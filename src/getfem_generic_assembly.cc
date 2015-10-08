@@ -1991,7 +1991,7 @@ namespace getfem {
     std::string derivative1_, derivative2_;
     mutable omp_distribute<base_vector> t, u;
     mutable omp_distribute<ga_workspace> workspace;
-    copyable_ptr<omp_distribute<ga_instruction_set>> gis = nullptr;
+    copyable_ptr<omp_distribute<ga_instruction_set>> gis;
 
     friend void ga_define_function(const std::string name, size_type nbargs,
                                    const std::string expr, const std::string der1,
@@ -2041,17 +2041,17 @@ namespace getfem {
     pscalar_func_twoargs f2() const {return f2_;}
 
     ga_predef_function(void) : expr_(""), derivative1_(""), derivative2_(""), gis(nullptr) {}
-    ga_predef_function(pscalar_func_onearg f, size_type dtype_ = 0,
+    ga_predef_function(pscalar_func_onearg f, size_type dtype__ = 0,
                        const std::string &der = "")
-      : ftype_(0), dtype_(dtype_), nbargs_(1), f1_(f), expr_(""),
+      : ftype_(0), dtype_(dtype__), nbargs_(1), f1_(f), expr_(""),
         derivative1_(der), derivative2_("") {}
-    ga_predef_function(pscalar_func_twoargs f, size_type dtype_ = 0,
+    ga_predef_function(pscalar_func_twoargs f, size_type dtype__ = 0,
                        const std::string &der1 = "",
                        const std::string &der2 = "")
-      : ftype_(0), dtype_(dtype_), nbargs_(2), f2_(f),
+      : ftype_(0), dtype_(dtype__), nbargs_(2), f2_(f),
         expr_(""), derivative1_(der1), derivative2_(der2), gis(nullptr) {}
-    ga_predef_function(const std::string &expr_)
-      : ftype_(1), dtype_(3), nbargs_(1), expr_(expr_),
+    ga_predef_function(const std::string &expr__)
+      : ftype_(1), dtype_(3), nbargs_(1), expr_(expr__),
         derivative1_(""), derivative2_(""), t(1, 0.), u(1, 0.), gis(nullptr) {}
   };
 

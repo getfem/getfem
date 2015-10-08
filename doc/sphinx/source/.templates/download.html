@@ -36,11 +36,14 @@ configurations:<p>
 
 <ul>
   <li>Linux with g++ 4.8.x</li>
-  <li>MacOS X (with the python and matlab interface)</li>
+  <li>MacOS X (with the python interface)</li>
   <li>Windows with <a href="http://www.mingw.org">MinGW</a> and
   <a href="http://www.mingw.org/wiki/msys">MSys</a>
   ({{ project }} only -- see specific notes for the matlab interface)</li>
 </ul>
+
+<p>Concerning the compilation on MacOS X, the simplest seems to install the package qhull and eventually the sequential version of Mumps with the package manager Homebrew. For the python interface, python 2 should be installed with numpy and scipy packages (you can use pip to install them). The compilation of the python interface may fail. Go to interface/src/python directory and try to add the right libraries to build the _getfem.so dynamic library.
+</p>
 
 <p>You can find some help on how to build the Matlab interface on <a href="http://windhoff.net/wiki/how_to/build_getfem_matlab_toolbox_on_windows_xp">Windows XP</a> and <a href="http://windhoff.net/wiki/how_to/build_getfem_matlab_toolbox_on_ubuntu_linux">Ubuntu</a> on the page of Mirko Windhoff.
 </p>

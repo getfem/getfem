@@ -87,6 +87,7 @@ nobase_include_HEADERS =                   		\
 	getfem/bgeot_comma_init.h	   		\
 	getfem/bgeot_ftool.h               		\
 	getfem/getfem_arch_config.h        		\
+	getfem/getfem_copyable_ptr.h        		\
 	getfem/getfem_integration.h        		\
 	getfem/getfem_assembling.h         		\
 	getfem/getfem_assembling_tensors.h 		\
