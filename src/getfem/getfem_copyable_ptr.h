@@ -49,12 +49,12 @@ public:
 
   copyable_ptr(std::unique_ptr<T> p) : p_(std::move(p)) {}
 
-  copyable_ptr(const copyable_ptr<T> &x) : p_(x.p_ ? std::make_unique<T>(*x.p_) : nullptr)  {}
+  copyable_ptr(const copyable_ptr<T> &x) : p_(x.p_ ? std::unique_ptr<T>(new T(*x.p_)) : nullptr)  {}
 
   copyable_ptr(copyable_ptr<T> &&x) : p_(std::move(*x.p_))  {}
 
   copyable_ptr<T> &operator=(const copyable_ptr<T> &x){
-    if (x.p_) p_ = std::make_unique<T>(*x.p_);
+    if (x.p_) p_ = std::unique_ptr<T>(new T(*x.p_));
     return *this;
   }
 
