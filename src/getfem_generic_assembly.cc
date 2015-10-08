@@ -1976,6 +1976,8 @@ namespace getfem {
                            const std::string &varname,
                            const std::string &interpolatename);
 
+  using instruction_set = omp_distribute<ga_instruction_set>;
+
   class ga_predef_function {
     size_type ftype_; // 0 : C++ function with C++ derivative(s)
                      // 1 : function defined by an string expression.
@@ -1991,7 +1993,7 @@ namespace getfem {
     std::string derivative1_, derivative2_;
     mutable omp_distribute<base_vector> t, u;
     mutable omp_distribute<ga_workspace> workspace;
-    copyable_ptr<omp_distribute<ga_instruction_set>> gis;
+    copyable_ptr<instruction_set> gis;
 
     friend void ga_define_function(const std::string name, size_type nbargs,
                                    const std::string expr, const std::string der1,
@@ -2496,7 +2498,7 @@ namespace getfem {
     ga_predef_function &F = PREDEF_FUNCTIONS[name];
     GMM_ASSERT1(!me_is_multithreaded_now(),
                 "functions should not be defined in multi-threaded code");
-    F.gis = std::make_unique<omp_distribute<ga_instruction_set>>();
+    F.gis = std::unique_ptr<instruction_set>(new instruction_set());
     for (size_type thread = 0; thread < num_threads(); ++thread)
     {
       F.workspace(thread).add_fixed_size_variable("t", gmm::sub_interval(0,1), F.t);
