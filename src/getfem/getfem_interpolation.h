@@ -92,7 +92,7 @@ namespace getfem {
     mesh_trans_inv(const mesh &m, double EPS_ = 1E-12)
       : bgeot::geotrans_inv(EPS_), msh(m) {}
   };
-  
+
 
   /* ********************************************************************* */
   /*                                                                       */
@@ -286,7 +286,7 @@ namespace getfem {
     std::vector<size_type> dof_source;
     GMM_ASSERT1(qdim == mf_target.get_qdim() || mf_target.get_qdim() == 1,
                 "Attempt to interpolate a field of dimension "
-                << qdim << " on a mesh_fem whose Qdim is " << 
+                << qdim << " on a mesh_fem whose Qdim is " <<
                 int(mf_target.get_qdim()));
     size_type qmult = mf_source.get_qdim()/mf_target.get_qdim();
     size_type qqdimt = qqdim * mf_source.get_qdim()/mf_target.get_qdim();
@@ -303,7 +303,7 @@ namespace getfem {
     for (dal::bv_visitor cv(mf_source.convex_index()); !cv.finished(); ++cv) {
       bgeot::pgeometric_trans pgt=mf_source.linked_mesh().trans_of_convex(cv);
       pfem pf_s = mf_source.fem_of_element(cv);
-      if (!mf_target.convex_index().is_in(cv)) 
+      if (!mf_target.convex_index().is_in(cv))
         continue;
       pfem pf_t = mf_target.fem_of_element(cv);
       size_type nbd_s = pf_s->nb_dof(cv);
@@ -328,7 +328,7 @@ namespace getfem {
           }
         }
       }
-      if (pf_s->need_G()) 
+      if (pf_s->need_G())
         bgeot::vectors_to_base_matrix
           (G, mf_source.linked_mesh().points_of_convex(cv));
 
@@ -380,7 +380,7 @@ namespace getfem {
           for (size_type j=0; j < dof_source.size(); ++j)
             gmm::scale(gmm::mat_row(M, dof_t + k), scalar_type(1)/passes);
     }
-    
+
     if (version == 0)
       mf_target.reduce_vector(V, VV);
     else {
@@ -392,7 +392,7 @@ namespace getfem {
           gmm::mult(MMM, mf_source.extension_matrix(), MM);
         }
         else
-          gmm::mult(mf_target.reduction_matrix(), M, MM); 
+          gmm::mult(mf_target.reduction_matrix(), M, MM);
       else
         if (mf_source.is_reduced())
           gmm::mult(M, mf_source.extension_matrix(), MM);
@@ -401,7 +401,7 @@ namespace getfem {
     }
   }
 
-  
+
   /*
      interpolation of a solution on another mesh.
      - mti contains the points where to interpolate.
@@ -427,7 +427,7 @@ namespace getfem {
     if (version == 0) mf_source.extend_vector(UU, U);
 
     mti.distribute(extrapolation, rg_source);
-    std::vector<size_type> itab;    
+    std::vector<size_type> itab;
     base_matrix G;
 
     /* interpolation */
@@ -436,14 +436,14 @@ namespace getfem {
     std::vector<std::vector<T> > coeff;
     base_tensor Z;
     std::vector<size_type> dof_source;
-    
+
     for (dal::bv_visitor cv(mf_source.convex_index()); !cv.finished(); ++cv) {
       bgeot::pgeometric_trans pgt = msh.trans_of_convex(cv);
       mti.points_on_convex(cv, itab);
       if (itab.size() == 0) continue;
 
       pfem pf_s = mf_source.fem_of_element(cv);
-      if (pf_s->need_G()) 
+      if (pf_s->need_G())
         bgeot::vectors_to_base_matrix(G, msh.points_of_convex(cv));
 
       fem_interpolation_context ctx(pgt, pf_s, base_node(), G, cv,
@@ -473,7 +473,7 @@ namespace getfem {
           size_type dof_t = mti.id_of_point(ipt);
           size_type pos = dof_t * qdim_s;
           if (version == 0) {
-            for (size_type qq=0; qq < qqdim; ++qq) {           
+            for (size_type qq=0; qq < qqdim; ++qq) {
               pf_s->interpolation(ctx, coeff[qq], val, qdim_s);
               for (size_type k=0; k < qdim_s; ++k)
                 V[(pos + k)*qqdim+qq] = val[k];
@@ -523,7 +523,7 @@ namespace getfem {
       else
         gmm::copy(M, MM);
     }
-    
+
   }
 
   template<typename VECTU, typename VECTV>
@@ -555,7 +555,7 @@ namespace getfem {
     //Check if it is a torus mesh_fem
     const torus_mesh_fem * pmf_torus = dynamic_cast<const torus_mesh_fem *>(&mf_target);
     if(pmf_torus != 0){
-      interpolation_to_torus_mesh_fem(mf_source, *pmf_torus, 
+      interpolation_to_torus_mesh_fem(mf_source, *pmf_torus,
                                       U, VV, MM, version, extrapolation, EPS, rg_source, rg_target);
       return;
     }
@@ -574,7 +574,7 @@ namespace getfem {
     GMM_ASSERT1(qdim_s == qdim_t || qdim_t == 1,
                 "Attempt to interpolate a field of dimension "
                 << qdim_s << " on a mesh_fem whose Qdim is " << qdim_t);
-    
+
     /* test if the target mesh_fem is really of Lagrange type.         */
     for (dal::bv_visitor cv(mf_target.convex_index()); !cv.finished();++cv) {
       pfem pf_t = mf_target.fem_of_element(cv);
@@ -599,7 +599,7 @@ namespace getfem {
       mf_target.reduce_vector(V, VV);
     else {
       if (mf_target.is_reduced())
-        gmm::mult(mf_target.reduction_matrix(), M, MM); 
+        gmm::mult(mf_target.reduction_matrix(), M, MM);
       else
         gmm::copy(M, MM);
     }
@@ -632,12 +632,12 @@ namespace getfem {
     GMM_ASSERT1(qdim_s == qdim_t || qdim_t == 1,
                 "Attempt to interpolate a field of dimension "
                 << qdim_s << " on a mesh_fem whose Qdim is " << qdim_t);
-    
+
     /* test if the target mesh_fem is convenient for interpolation.         */
     for (dal::bv_visitor cv(mf_target.convex_index()); !cv.finished();++cv) {
       pfem pf_t = mf_target.fem_of_element(cv);
 
-      GMM_ASSERT1(pf_t->target_dim() == 1 || 
+      GMM_ASSERT1(pf_t->target_dim() == 1 ||
                   (mf_target.get_qdim() == mf_target.linked_mesh().dim()),
                   "Target fem not convenient for interpolation");
     }
@@ -657,7 +657,7 @@ namespace getfem {
         if (dof % qdim_t == 0)
         {
            base_node p(msh.dim());
-          for (size_type k=0; k < msh.dim(); ++k) p[k] = mf_target.point_of_basic_dof(dof)[k];          
+          for (size_type k=0; k < msh.dim(); ++k) p[k] = mf_target.point_of_basic_dof(dof)[k];
           mti.add_point_with_id(p, dof/qdim_t);
         }
       interpolation(mf_source, mti, U, V, M, version, extrapolation, 0, rg_source);
@@ -667,7 +667,7 @@ namespace getfem {
       mf_target.reduce_vector(V, VV);
     else {
       if (mf_target.is_reduced())
-        gmm::mult(mf_target.reduction_matrix(), M, MM); 
+        gmm::mult(mf_target.reduction_matrix(), M, MM);
       else
         gmm::copy(M, MM);
     }
@@ -688,7 +688,7 @@ namespace getfem {
         rg_source.id() == mesh_region::all_convexes().id() &&
         rg_target.id() == mesh_region::all_convexes().id())
       interpolation_same_mesh(mf_source, mf_target, U, V, M, 0);
-    else 
+    else
       interpolation(mf_source, mf_target, U, V, M, 0, extrapolation, EPS,
                     rg_source, rg_target);
   }
@@ -705,7 +705,7 @@ namespace getfem {
         rg_source.id() == mesh_region::all_convexes().id() &&
         rg_target.id() ==mesh_region::all_convexes().id())
       interpolation_same_mesh(mf_source, mf_target, U, V, M, 1);
-    else 
+    else
       interpolation(mf_source, mf_target, U, V, M, 1, extrapolation, EPS,
                     rg_source, rg_target);
   }
@@ -713,7 +713,7 @@ namespace getfem {
 
   /**Interpolate mesh_fem data to im_data.
    The qdim of mesh_fem must be equal to im_data nb_tensor_elem.
-   Both im_data and mesh_fem must reside in the same mesh. 
+   Both im_data and mesh_fem must reside in the same mesh.
    Only convexes defined with both mesh_fem and im_data will be interpolated.
    Version 0 uses filtered region of im_data, while other versions use full region.
   */
@@ -722,9 +722,9 @@ namespace getfem {
     const im_data &im_target,
     const VECT &nodal_data, VECT &int_pt_data, bool use_im_data_filtered = true){
     // typedef typename gmm::linalg_traits<const VECT>::value_type T;
-    
+
     dim_type qdim = mf_source.get_qdim();
-    GMM_ASSERT1(qdim == im_target.nb_tensor_elem(), 
+    GMM_ASSERT1(qdim == im_target.nb_tensor_elem(),
                 "Incompatible size of qdim for mesh_fem " << qdim
                 << " and im_data " << im_target.nb_tensor_elem());
     GMM_ASSERT1(&mf_source.linked_mesh() == &im_target.linked_mesh_im().linked_mesh(),
@@ -732,27 +732,27 @@ namespace getfem {
 
     base_matrix G;
     base_vector coeff;
-    bgeot::base_tensor tensor_int_point(im_target.tensor_size());    
+    bgeot::base_tensor tensor_int_point(im_target.tensor_size());
     fem_precomp_pool fppool;
 
     size_type nb_dof = mf_source.nb_dof();
     size_type nb_basic_dof = mf_source.nb_basic_dof();
 
-    GMM_ASSERT1(nb_dof == gmm::vect_size(nodal_data), 
+    GMM_ASSERT1(nb_dof == gmm::vect_size(nodal_data),
                 "Provided nodal data size is " << gmm::vect_size(nodal_data)
                 << " but expecting vector size of " << nb_dof);
-    
+
     size_type size_im_data = (use_im_data_filtered)
                               ?im_target.nb_filtered_index() * im_target.nb_tensor_elem()
                               :im_target.nb_index() * im_target.nb_tensor_elem();
-    GMM_ASSERT1(size_im_data == gmm::vect_size(int_pt_data), 
+    GMM_ASSERT1(size_im_data == gmm::vect_size(int_pt_data),
                 "Provided im data size is " << gmm::vect_size(int_pt_data)
                 << " but expecting vector size of " << size_im_data);
- 
+
     VECT extended_nodal_data(nb_basic_dof);
     if (nb_dof == nb_basic_dof) gmm::copy(nodal_data, extended_nodal_data);
     else mf_source.extend_vector(nodal_data, extended_nodal_data);
-    
+
     dal::bit_vector im_data_convex_index;
     if(use_im_data_filtered) im_data_convex_index = im_target.filtered_convex_index();
     else im_data_convex_index = im_target.linked_mesh_im().convex_index();
@@ -766,27 +766,23 @@ namespace getfem {
       mesh_fem::ind_dof_ct::const_iterator it_dof;
       size_type cv_nb_dof = mf_source.nb_basic_dof_of_element(cv);
       size_type nb_nodal_pt = cv_nb_dof / qdim;
-      coeff.resize(cv_nb_dof);      
+      coeff.resize(cv_nb_dof);
       getfem::slice_vector_on_basic_dof_of_element(mf_source, extended_nodal_data, cv, coeff);
 
       getfem::pintegration_method pim = im_target.linked_mesh_im().int_method_of_element(cv);
-      if (pf_source->need_G()) 
+      if (pf_source->need_G())
         bgeot::vectors_to_base_matrix(G, pim->approx_method()->integration_points());
 
       pfem_precomp pfp = fppool(pf_source, &pim->approx_method()->integration_points());
       fem_interpolation_context ctx(pgt, pfp, size_type(-1), G, cv, short_type(-1));
-      size_type index_int_pt(-1);
-      
-      if(use_im_data_filtered) index_int_pt = im_target.filtered_index_of_point(cv, 0);
-      else index_int_pt = im_target.index_of_point(cv, 0);
 
       size_type nb_int_points = im_target.nb_points_of_element(cv);
 
-      for (size_type i = 0; i < nb_int_points; ++i, index_int_pt+=qdim) {
-        ctx.set_ii(i);        
+      for (size_type i = 0; i < nb_int_points; ++i) {
+        ctx.set_ii(i);
         ctx.pf()->interpolation(ctx, coeff, tensor_int_point.as_vector(), qdim);
         im_target.set_tensor(int_pt_data, cv, i, tensor_int_point, use_im_data_filtered);
-      }    
+      }
     }//end of convex loop
   }
 
