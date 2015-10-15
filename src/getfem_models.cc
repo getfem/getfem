@@ -3403,7 +3403,7 @@ namespace getfem {
                 "Split the brick.");
 
     if (vl_test1.size()) {
-      pbrick pbr = new gen_linear_assembly_brick(expr, mim,is_sym, is_coercive,
+      pbrick pbr = new gen_linear_assembly_brick(expr, mim, is_sym, is_coercive,
                                                  brickname,
                                                  vl_test1, vl_test2);
       model::termlist tl;

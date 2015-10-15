@@ -1980,12 +1980,12 @@ namespace getfem {
 
   class ga_predef_function {
     size_type ftype_; // 0 : C++ function with C++ derivative(s)
-                     // 1 : function defined by an string expression.
+                      // 1 : function defined by an string expression.
 
     size_type dtype_; // 0 : no derivative(s)
-                     // 1 : derivative(s) given by C++ functions
-                     // 2 : derivatives(s) given by string expression(s)
-                     // 3 : derivatives(s) to be symbolically computed.
+                      // 1 : derivative(s) given by C++ functions
+                      // 2 : derivatives(s) given by string expression(s)
+                      // 3 : derivatives(s) to be symbolically computed.
     size_type nbargs_;         // One or two arguments
     pscalar_func_onearg f1_;   // Function pointer for a one argument function
     pscalar_func_twoargs f2_;  // Function pointer for a two arguments function
@@ -2529,7 +2529,8 @@ namespace getfem {
                           const std::string &der1, const std::string &der2) {
     PREDEF_FUNCTIONS[name] = ga_predef_function(f, 1, der1, der2);
     ga_predef_function &F = PREDEF_FUNCTIONS[name];
-    if (der1.size() == 0 || der2.size() == 0) F.dtype_ = 0;
+    if (der1.size() == 0 || der2.size() == 0)
+      F.dtype_ = 0;
     else if (!(ga_function_exists(der1)) || !(ga_function_exists(der2)))
       F.dtype_ = 2;
   }
@@ -2568,8 +2569,6 @@ namespace getfem {
         GMM_ASSERT1(imd.linked_mesh_im().int_method_of_element(cv)
                     ->approx_method() == pai, "Im data have to be used only "
                     "on their original integration method.");
-        GMM_ASSERT1(!(ctx.is_on_face()),
-                    "Im data cannot be used on boundaries");
       }
       size_type ipt = imd.filtered_index_of_point(cv, ctx.ii());
       GMM_ASSERT1(ipt != size_type(-1),
@@ -6653,7 +6652,7 @@ namespace getfem {
                              << child1->tensor_proper_size(0) << ","
                              << child1->tensor_proper_size(1) << ").");
           } else ga_throw_error(expr, pnode->pos,
-                                 "Unauthorized multiplication.");
+                                "Unauthorized multiplication.");
           pnode->t.adjust_sizes(mi);
           // Simplifications
           if (child0->tensor_is_zero() || child1->tensor_is_zero()) {
@@ -9118,13 +9117,13 @@ namespace getfem {
           pgai = 0;
           switch (pnode->node_type) {
           case GA_NODE_VAL: case GA_NODE_ELEMENTARY_VAL:
-             if (rmi.base.find(mf) == rmi.base.end() ||
-                !(if_hierarchy.is_compatible(rmi.base_hierarchy[mf]))) {
+            if (rmi.base.find(mf) == rmi.base.end() ||
+               !(if_hierarchy.is_compatible(rmi.base_hierarchy[mf]))) {
               rmi.base_hierarchy[mf].push_back(if_hierarchy);
               pgai = new ga_instruction_val_base
                 (rmi.base[mf], gis.ctx, *mf, rmi.pfps[mf]);
-             }
-             break;
+            }
+            break;
           case GA_NODE_XFEM_PLUS_VAL:
             if (rmi.xfem_plus_base.find(mf) == rmi.xfem_plus_base.end() ||
              !(if_hierarchy.is_compatible(rmi.xfem_plus_base_hierarchy[mf]))) {
@@ -10828,15 +10827,20 @@ namespace getfem {
     size_type s;
 
     virtual const bgeot::stored_point_tab &
-    points_for_element(size_type cv, short_type /*f*/,
+    points_for_element(size_type cv, short_type f,
                        std::vector<size_type> &ind) const {
       pintegration_method pim =imd.linked_mesh_im().int_method_of_element(cv);
       if (pim->type() == IM_NONE) return *(bgeot::pstored_point_tab(0));
       GMM_ASSERT1(pim->type() == IM_APPROX, "Sorry, exact methods cannot "
                   "be used in high level generic assembly");
-      for (size_type i = 0;
-           i < pim->approx_method()->nb_points_on_convex(); ++i)
-        ind.push_back(i);
+      size_type i_start(0), i_end(0);
+      if (f == short_type(-1))
+        i_end = pim->approx_method()->nb_points_on_convex();
+      else {
+        i_start = pim->approx_method()->ind_first_point_on_face(f);
+        i_end = i_start + pim->approx_method()->nb_points_on_face(f);
+      }
+      for (size_type i = i_start; i < i_end; ++i) ind.push_back(i);
       return pim->approx_method()->integration_points();
     }
 

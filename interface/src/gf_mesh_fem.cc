@@ -270,8 +270,8 @@ void gf_mesh_fem(getfemint::mexargs_in& m_in,
     else bad_cmd(init_cmd);
 
   } else if (check_cmd("MeshFem", "MeshFem", m_in, m_out, 1, 7, 0, 1)) {
-    /* Documentation iof the commande moved in first position to appear first
-       in the documentation. */
+    /* Documentation of the command moved to the beginning so that it appears
+       first in the documentation. */
     mm = m_in.pop().to_getfemint_mesh();
     bgeot::multi_index mi;
     dim_type qdim = 1;
