@@ -318,9 +318,9 @@ namespace getfem {
   }
 
   bool mesh_region::is_only_convexes() const 
-  { 
+  {
     return is_empty() || 
-      (and_mask()[0] == true && and_mask().count() == 1); 
+      (or_mask()[0] == true && or_mask().count() == 1); 
   }
 
   bool mesh_region::is_only_faces() const 
@@ -342,6 +342,15 @@ namespace getfem {
     bs.set();
     for (map_t::const_iterator it = rp().m.begin(); it != rp().m.end(); ++it)
       if ( (*it).second.any() )  bs &= (*it).second;
+    return bs;
+  }
+
+  face_bitset mesh_region::or_mask() const 
+  {
+    face_bitset bs; 
+    if (rp().m.empty()) return bs;
+    for (map_t::const_iterator it = rp().m.begin(); it != rp().m.end(); ++it)
+      if ( (*it).second.any() )  bs |= (*it).second;
     return bs;
   }
 

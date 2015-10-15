@@ -228,6 +228,7 @@ namespace getfem {
     bool is_only_convexes() const;
     face_bitset faces_of_convex(size_type cv) const;
     face_bitset and_mask() const;
+    face_bitset or_mask() const;
     void error_if_not_faces() const;
     void error_if_not_convexes() const;
     void error_if_not_homogeneous() const;
