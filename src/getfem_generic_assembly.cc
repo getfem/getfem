@@ -611,7 +611,8 @@ namespace getfem {
       size_type source_size = source_node->children.size();
       size_type last_dim_size = target_size/source_size;
       GMM_ASSERT1(target_size == source_size*last_dim_size,
-                  "Internal error");
+                  "Internal error, " << target_size << " != " <<
+                  source_size << "*" << last_dim_size);
       std::vector<pga_tree_node> new_children;
       for (size_type i = 0; i < source_size; ++i) {
         for (size_type j = 0; j < last_dim_size; ++j)

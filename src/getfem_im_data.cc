@@ -35,7 +35,7 @@ namespace getfem
     set_tensor_size(tensorSize);
     add_dependency(im_);
     if (filtered_region_!=size_type(-1) && 
-        im_.linked_mesh().region(filtered_region_).is_only_faces()){
+        im_.linked_mesh().region(filtered_region_).is_only_faces()) {
         update_index_for_face_();
         is_on_face_ = true;
     }
@@ -50,7 +50,7 @@ namespace getfem
     nb_tensor_elem_ = 1;
     add_dependency(im_);
     if (filtered_region_ != size_type(-1) &&
-      im_.linked_mesh().region(filtered_region_).is_only_faces()){
+      im_.linked_mesh().region(filtered_region_).is_only_faces()) {
       update_index_for_face_();
       is_on_face_ = true;
     }
@@ -120,16 +120,16 @@ namespace getfem
       face_container_[cv].point_index_.resize(nb_points_on_faces);
       size_type nb_index_convex = 0;
 
-      for (short_type i_face = 0; i_face < nb_faces; ++i_face){
+      for (short_type i_face = 0; i_face < nb_faces; ++i_face) {
         size_type nb_pt_face = pim->nb_points_on_face(i_face);
-        for (size_type k = 0; k < nb_pt_face; ++k){
+        for (size_type k = 0; k < nb_pt_face; ++k) {
           face_container_[cv].point_index_[nb_index_convex] = nb_index_;
           face_container_[cv].index_of_face_[i_face].add(nb_index_);
           ++nb_index_;
           ++nb_index_convex;
         }
       }
-      if (rg.index().is_in(cv)){
+      if (rg.index().is_in(cv)) {
         filtered_convex_index_.add(cv);
         filtered_face_container_[cv].index_of_face_.resize(nb_faces);
         filtered_face_container_[cv].inactive_ = false;
@@ -137,10 +137,10 @@ namespace getfem
         filtered_face_container_[cv].point_index_.resize(nb_points_on_faces);
         nb_index_convex = 0;
 
-        for (short_type i_face = 0; i_face < nb_faces; ++i_face){
+        for (short_type i_face = 0; i_face < nb_faces; ++i_face) {
           size_type nb_pt_face = pim->nb_points_on_face(i_face);
-          for (size_type k = 0; k < nb_pt_face; ++k){
-            if (!rg.is_in(cv, i_face)){
+          for (size_type k = 0; k < nb_pt_face; ++k) {
+            if (!rg.is_in(cv, i_face)) {
               filtered_face_container_[cv].point_index_[nb_index_convex] = size_type(-1);
             }
             else{
@@ -169,7 +169,7 @@ namespace getfem
   size_type im_data::nb_points_of_element(size_type cv, short_type f) const{
     context_check();
     if (!im_.convex_index().is_in(cv)) return 0;
-    if (f == short_type(-1)){
+    if (f == short_type(-1)) {
       size_type nb_points = im_.int_method_of_element(cv)
                               ->approx_method()->nb_points_on_convex();
       if (!is_on_face_) return nb_points;
@@ -182,15 +182,15 @@ namespace getfem
 
   size_type im_data::index_of_point(size_type cv, size_type i) const{
     context_check();
-    if (!is_on_face_){
+    if (!is_on_face_) {
       if (cv < int_point_index_.size()) return int_point_index_[cv] + i;
       else return size_type(-1);
     }
-    if (cv < face_container_.size()){
+    if (cv < face_container_.size()) {
       size_type return_index = i - face_container_[cv].start_index_;
       if (face_container_[cv].inactive_ ||
           face_container_[cv].start_index_ > i ||
-          face_container_[cv].point_index_.size() < return_index){
+          face_container_[cv].point_index_.size() < return_index) {
         return size_type(-1);
       }
       return face_container_[cv].point_index_[return_index];
@@ -202,7 +202,7 @@ namespace getfem
     return nb_tensor_elem_;
   }
 
-  void im_data::set_tensor_size(const bgeot::multi_index& tensorSize){
+  void im_data::set_tensor_size(const bgeot::multi_index& tensorSize) {
     tensor_size_  = tensorSize;    
     nb_tensor_elem_ = 1;
     bgeot::multi_index::iterator it = tensor_size_.begin();
@@ -212,7 +212,7 @@ namespace getfem
 
   size_type im_data::filtered_index_of_point(size_type cv, size_type i) const{
     context_check();
-    if (!is_on_face_){
+    if (!is_on_face_) {
       if (cv < filtered_int_point_index_.size())
       {
         if (filtered_int_point_index_[cv] == size_type(-1)) return size_type(-1);
@@ -220,11 +220,11 @@ namespace getfem
       }
       else return size_type(-1);
     }
-    if (cv < filtered_face_container_.size()){
+    if (cv < filtered_face_container_.size()) {
       size_type return_index = i - face_container_[cv].start_index_;
       if (filtered_face_container_[cv].inactive_ ||
           filtered_face_container_[cv].start_index_ > i ||
-          filtered_face_container_[cv].point_index_.size() < return_index){
+          filtered_face_container_[cv].point_index_.size() < return_index) {
         return size_type(-1);
       }
       return filtered_face_container_[cv].point_index_[return_index];
@@ -250,7 +250,7 @@ namespace getfem
   void im_data::update_from_context() const{
     is_on_face_ = false;
     if (filtered_region_ != size_type(-1) && 
-        im_.linked_mesh().region(filtered_region_).is_only_faces()){
+        im_.linked_mesh().region(filtered_region_).is_only_faces()) {
       update_index_for_face_();
       is_on_face_ = true;
     }
@@ -258,12 +258,12 @@ namespace getfem
     touch();
   }
 
-  bool is_equivalent_with_vector(const bgeot::multi_index &sizes, size_type vector_size){
+  bool is_equivalent_with_vector(const bgeot::multi_index &sizes, size_type vector_size) {
     bool checked = false;
     size_type size = 1;
-    for (size_type i = 0; i < sizes.size(); ++i){
+    for (size_type i = 0; i < sizes.size(); ++i) {
       if (sizes[i] > 1 && checked) return false;
-      if (sizes[i] > 1){ 
+      if (sizes[i] > 1) { 
         checked = true;
         size = sizes[i];
         if (size != vector_size) return false;
@@ -272,20 +272,20 @@ namespace getfem
     return (vector_size == size);
   }
 
-  bool is_equivalent_with_matrix(const bgeot::multi_index &sizes, size_type nrows, size_type ncols){
-    if (nrows == 1 || ncols == 1){
+  bool is_equivalent_with_matrix(const bgeot::multi_index &sizes, size_type nrows, size_type ncols) {
+    if (nrows == 1 || ncols == 1) {
       return is_equivalent_with_vector(sizes, nrows + ncols - 1);
     }    
     size_type tensor_row = 1;
     size_type tensor_col = 1;
     bool first_checked = false;
     bool second_checked = false;
-    for (size_type i = 0; i < sizes.size(); ++i){
-      if (sizes[i] > 1 && !first_checked){
+    for (size_type i = 0; i < sizes.size(); ++i) {
+      if (sizes[i] > 1 && !first_checked) {
         first_checked = true;
         tensor_row = sizes[i];
         if (tensor_row != nrows) return false;
-      } else if (sizes[i] > 1 && !second_checked){
+      } else if (sizes[i] > 1 && !second_checked) {
         second_checked = true;
         tensor_col = sizes[i];
         if (tensor_col != ncols) return false;

@@ -73,17 +73,17 @@
 
    - "IM_QUASI_POLAR(IM1, IP1)"        : if IM1 is an integration method on a
                square, gives an integration method on a triangle which is
-	       close to a polar integration with respect to vertex IP1.
-	       if IM1 is an integration method on a tetrahedron, gives an
-	       integration method on a tetrahedron which is close to a
-	       cylindrical integration with respect to vertex IP1 (does not work very well).
-	       if IM1 is an integration method on a prism. Gives an integration
+               close to a polar integration with respect to vertex IP1.
+               if IM1 is an integration method on a tetrahedron, gives an
+               integration method on a tetrahedron which is close to a
+               cylindrical integration with respect to vertex IP1 (does not work very well).
+               if IM1 is an integration method on a prism. Gives an integration
                method on a tetrahedron which is close to a
-	       cylindrical integration with respect to vertex IP1.
+               cylindrical integration with respect to vertex IP1.
    - "IM_QUASI_POLAR(IM1, IP1, IP2)"   : IM1 should be an integration method
                on a prism. Gives an integration method on a tetrahedron which
-	       is close to a cylindrical integration with respect to IP1-IP2
-	       axis.
+               is close to a cylindrical integration with respect to IP1-IP2
+               axis.
 */
 #ifndef GETFEM_INTEGRATION_H__
 #define GETFEM_INTEGRATION_H__
@@ -120,9 +120,9 @@ namespace getfem
       bgeot::pconvex_structure structure(void) const { return cvs; }
 
       virtual long_scalar_type int_monomial(const bgeot::power_index &power)
-	const = 0;
+        const = 0;
       virtual long_scalar_type int_monomial_on_face(const bgeot::power_index
-					       &power, short_type f) const = 0;
+                                                    &power, short_type f) const = 0;
 
       /// Evaluate the integral of the polynomial P on the reference element.
       long_scalar_type int_poly(const base_poly &P) const;
@@ -130,7 +130,7 @@ namespace getfem
        *    reference element.
        */
       long_scalar_type int_poly_on_face(const base_poly &P,
-					short_type f) const;
+                                        short_type f) const;
 
       virtual ~poly_integration() {}
 
@@ -174,6 +174,9 @@ namespace getfem
     { return repartition[f+1] - repartition[f]; }
     size_type ind_first_point_on_face(short_type f) const 
     { return repartition[f]; }
+    /// Convenience method returning the number of faces of the reference convex
+    short_type nb_convex_faces() const
+    { return cvr->structure()->nb_faces(); /* == repartition.size() - 1;*/ }
     bool is_built_on_the_fly(void) const { return built_on_the_fly; }
     void set_built_on_the_fly(void)  { built_on_the_fly = true; }
     /// Structure of the reference element.
@@ -204,9 +207,9 @@ namespace getfem
     { return int_coeffs[repartition[f] + i]; }
     
     void add_point(const base_node &pt, scalar_type w,
-		   short_type f=short_type(-1));
+                   short_type f=short_type(-1));
     void add_point_norepeat(const base_node &pt, scalar_type w,
-			    short_type f=short_type(-1));
+                            short_type f=short_type(-1));
     void add_point_full_symmetric(base_node pt, scalar_type w);
     void add_method_on_face(pintegration_method ppi, short_type f);
     void valid_method(void);
@@ -214,7 +217,7 @@ namespace getfem
     approx_integration(void) : valid(false), built_on_the_fly(false) { }
     approx_integration(bgeot::pconvex_ref cr)
       : cvr(cr), repartition(cr->structure()->nb_faces()+1),
-	pt_to_store(cr->structure()->nb_faces()+1), valid(false),
+        pt_to_store(cr->structure()->nb_faces()+1), valid(false),
         built_on_the_fly(false)
     { std::fill(repartition.begin(), repartition.end(), 0); } 
     
@@ -258,12 +261,12 @@ namespace getfem
 
     const bgeot::stored_point_tab &integration_points(void) const { 
       if (type() == IM_EXACT) {
-	size_type n = method.ppi->structure()->dim();
-	std::vector<base_node> spt(1); spt[0] = base_node(n);
-	return (*store_point_tab(spt));
+        size_type n = method.ppi->structure()->dim();
+        std::vector<base_node> spt(1); spt[0] = base_node(n);
+        return (*store_point_tab(spt));
       }
       else if (type() == IM_APPROX)
-	return method.pai->integration_points();
+        return method.pai->integration_points();
       else GMM_ASSERT1(false, "IM_NONE has no points");
     }
 
@@ -296,7 +299,7 @@ namespace getfem
       null pointer is returned).
   */
   pintegration_method int_method_descriptor(std::string name,
-					    bool throw_if_not_found = true);
+                                            bool throw_if_not_found = true);
 
   /** Get the string name of an integration method .
    */
@@ -329,8 +332,8 @@ namespace getfem
 
   class mesh_im;
   papprox_integration composite_approx_int_method(const bgeot::mesh_precomposite &mp, 
-						  const mesh_im &mf,
-						  bgeot::pconvex_ref cr);
+                                                  const mesh_im &mf,
+                                                  bgeot::pconvex_ref cr);
 
   /* try to integrate all monomials up to order 'order' and return the 
      max. error */
@@ -344,7 +347,7 @@ namespace getfem
   typedef dal::naming_system<integration_method>::param_list im_param_list;
 
   void add_integration_name(std::string name,
-		         dal::naming_system<integration_method>::pfunction f);
+                            dal::naming_system<integration_method>::pfunction f);
 
 }  /* end of namespace getfem.                                            */
 

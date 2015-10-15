@@ -184,7 +184,7 @@ namespace getfem {
   */
   template <typename VECT, typename F>
   void interpolation_function(mesh_fem &mf_target, const VECT &VV, F &f,
-                         mesh_region rg=mesh_region::all_convexes()) {
+                              mesh_region rg=mesh_region::all_convexes()) {
     typedef typename gmm::linalg_traits<VECT>::value_type T;
     size_type qqdimt = gmm::vect_size(VV) / mf_target.nb_dof();
     std::vector<T> V(mf_target.nb_basic_dof()*qqdimt);
@@ -718,9 +718,9 @@ namespace getfem {
    Version 0 uses filtered region of im_data, while other versions use full region.
   */
   template <typename VECT>
-  void interpolation_to_im_data(const mesh_fem &mf_source,
-    const im_data &im_target,
-    const VECT &nodal_data, VECT &int_pt_data, bool use_im_data_filtered = true){
+  void interpolation_to_im_data(const mesh_fem &mf_source, const im_data &im_target,
+                                const VECT &nodal_data, VECT &int_pt_data,
+                                bool use_im_data_filtered = true) {
     // typedef typename gmm::linalg_traits<const VECT>::value_type T;
 
     dim_type qdim = mf_source.get_qdim();
@@ -742,9 +742,9 @@ namespace getfem {
                 "Provided nodal data size is " << gmm::vect_size(nodal_data)
                 << " but expecting vector size of " << nb_dof);
 
-    size_type size_im_data = (use_im_data_filtered)
-                              ?im_target.nb_filtered_index() * im_target.nb_tensor_elem()
-                              :im_target.nb_index() * im_target.nb_tensor_elem();
+    size_type size_im_data = use_im_data_filtered
+                           ? im_target.nb_filtered_index() * im_target.nb_tensor_elem()
+                           : im_target.nb_index() * im_target.nb_tensor_elem();
     GMM_ASSERT1(size_im_data == gmm::vect_size(int_pt_data),
                 "Provided im data size is " << gmm::vect_size(int_pt_data)
                 << " but expecting vector size of " << size_im_data);
@@ -754,14 +754,15 @@ namespace getfem {
     else mf_source.extend_vector(nodal_data, extended_nodal_data);
 
     dal::bit_vector im_data_convex_index;
-    if(use_im_data_filtered) im_data_convex_index = im_target.filtered_convex_index();
+    if (use_im_data_filtered) im_data_convex_index = im_target.filtered_convex_index();
     else im_data_convex_index = im_target.linked_mesh_im().convex_index();
 
     for (dal::bv_visitor cv(im_data_convex_index); !cv.finished(); ++cv) {
 
       bgeot::pgeometric_trans pgt = mf_source.linked_mesh().trans_of_convex(cv);
       pfem pf_source = mf_source.fem_of_element(cv);
-      if(pf_source == NULL) continue;
+      if (pf_source == NULL)
+        continue;
 
       mesh_fem::ind_dof_ct::const_iterator it_dof;
       size_type cv_nb_dof = mf_source.nb_basic_dof_of_element(cv);
