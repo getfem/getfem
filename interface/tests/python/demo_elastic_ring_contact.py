@@ -2,7 +2,7 @@
 # -*- coding: UTF8 -*-
 # Python GetFEM++ interface
 #
-# Copyright (C) 2013-2013 Konstantinos Poulios.
+# Copyright (C) 2013-2015 Konstantinos Poulios.
 #
 # This file is a part of GetFEM++
 #
@@ -24,6 +24,8 @@
 import getfem as gf
 import numpy as np
 import time
+
+gf.util_trace_level(1)
 
 # Input data
 ri = 90.   # ring inner diameter
@@ -49,11 +51,11 @@ dg = -0.5  # vertical displacement per load step
 steps = 80 # number of load steps
 
 #------------------------------------
-geotrans_R = 'GT_QK(2,1)'  # geometric transformation for the ring mesh
-geotrans_B = 'GT_QK(2,1)'  # geometric transformation for the block mesh
+geotrans_R = 'GT_QK(2,2)'  # geometric transformation for the ring mesh
+geotrans_B = 'GT_QK(2,2)'  # geometric transformation for the block mesh
 
-fem_disp_order_R = 1  # displacements finite element order for the ring
-fem_disp_order_B = 1  # displacements finite element order for the block
+fem_disp_order_R = 2  # displacements finite element order for the ring
+fem_disp_order_B = 2  # displacements finite element order for the block
 fem_mult_order_R = 1  # multiplier finite element order for the ring
 fem_mult_order_B = 1  # multiplier finite element order for the block
 
@@ -81,7 +83,7 @@ cmu = E / (2*(1+nu))
 r_aug = 0.1     # Augmentation parameter
 alpha = 0.      # Alpha coefficient for "sliding velocity"
 f_coeff = 0.    # Friction coefficient
-release_dist = 1.
+release_dist = 0.05*ri
 
 
 mesh_R = gf.Mesh('import', 'structured',
@@ -212,19 +214,17 @@ md.add_initialized_data('params_block', params_B)
 md.add_nonlinear_elasticity_brick(mim_B, 'uB', lawname, 'params_block')
 
 md.add_initialized_data('dirichlet_ring', np.zeros(N))
-md.add_Dirichlet_condition_with_multipliers(mim_R, 'uR', 1, DIRICHLET_BOUNDARY_R, 'dirichlet_ring')
+md.add_Dirichlet_condition_with_multipliers(mim_R, 'uR', fem_disp_order_R, DIRICHLET_BOUNDARY_R, 'dirichlet_ring')
 
 md.add_initialized_data('dirichlet_block', np.zeros(N))
-md.add_Dirichlet_condition_with_multipliers(mim_B, 'uB', 1, DIRICHLET_BOUNDARY_B, 'dirichlet_block')
-
-mcff = gf.MultiContactFrame(md, N, release_dist, False, False, 0.2, True, 0, False)
-mcff.add_slave_boundary(mim_R_contact, CONTACT_BOUNDARY_R, 'uR', 'lambda_ring')
-mcff.add_master_boundary(mim_B_contact, CONTACT_BOUNDARY_B, 'uB')
+md.add_Dirichlet_condition_with_multipliers(mim_B, 'uB', fem_disp_order_B, DIRICHLET_BOUNDARY_B, 'dirichlet_block')
 
 md.add_initialized_data('r', r_aug)
 md.add_initialized_data('alpha', alpha)
 md.add_initialized_data('f', f_coeff)
-md.add_integral_large_sliding_contact_brick_raytrace(mcff, 'r', 'f', 'alpha')
+ind = md.add_integral_large_sliding_contact_brick_raytracing("r", release_dist, "f", "alpha", 0)
+md.add_slave_contact_boundary_to_large_sliding_contact_brick(ind,  mim_R_contact, CONTACT_BOUNDARY_R, "uR", "lambda_ring")
+md.add_master_contact_boundary_to_large_sliding_contact_brick(ind, mim_B_contact, CONTACT_BOUNDARY_B, "uB")
 
 dirichlet_R = np.zeros(N)
 for nit in range(steps+1):
@@ -236,7 +236,8 @@ for nit in range(steps+1):
    md.set_variable('dirichlet_ring', dirichlet_R)
 
    starttime = time.clock()
-   md.solve('noisy', 'max_iter', 100, 'max_res', 1e-8)
+   md.solve('noisy', 'max_iter', 40, 'max_res', 1e-8, #)[0]
+            'lsearch', 'simplest', 'alpha max ratio', 1.5, 'alpha min', 0.2, 'alpha mult', 0.6)[0]
    print('solution time for iteration %i is %f sec' % (nit, time.clock()-starttime))
 
    U_R = md.variable('uR')
