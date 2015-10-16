@@ -64,26 +64,22 @@ integration_degree_B = 4
 integration_contact_degree_R = 4
 integration_contact_degree_B = 4
 
+is_master_R = False
+is_master_B = True
+
+r_aug = 300.             # Augmentation parameter
+alpha = 1.               # Alpha coefficient for "sliding velocity"
+f_coeff = 0.             # Friction coefficient
+release_dist = 5.
+
+
 #------------------------------------
-
-# cases (TODO):
-# compare P,Q elements
-# compare r_aug values (augmentation parameter)
-# compare different master/slave combinations
-# compare different geotrans degrees and fem orders
-
 clambda1 = E1*nu1 / ((1+nu1)*(1-2*nu1))
 cmu1 = E1 / (2*(1+nu1))
 clambda2 = E2*nu2 / ((1+nu2)*(1-2*nu2))
 cmu2 = E2 / (2*(1+nu2))
 clambda = E*nu / ((1+nu)*(1-2*nu))
 cmu = E / (2*(1+nu))
-
-
-r_aug = 0.1     # Augmentation parameter
-alpha = 0.      # Alpha coefficient for "sliding velocity"
-f_coeff = 0.    # Friction coefficient
-release_dist = 0.05*ri
 
 
 mesh_R = gf.Mesh('import', 'structured',
@@ -190,12 +186,20 @@ mim_B_contact = gf.MeshIm(mesh_B, integration_contact_degree_B)
 md = gf.Model('real')
 
 md.add_fem_variable('uR', mfu_R)
-md.add_filtered_fem_variable('lambda_ring', pre_mflambda_R, CONTACT_BOUNDARY_R)
+if is_master_B:
+   md.add_filtered_fem_variable('lambda_ring', pre_mflambda_R, CONTACT_BOUNDARY_R)
+if f_coeff > 1e-10:
+   md.add_fem_data('wR', mfu_R)
 
-lawname = 'neo Hookean'
-params_R1 = [cmu1/2., clambda1/2+cmu1/3]
-params_R2 = [cmu2/2., clambda2/2+cmu2/3]
-params_B = [cmu/2., clambda/2+cmu/3]
+#lawname = 'neo Hookean'
+#params_R1 = [cmu1/2., clambda1/2+cmu1/3]
+#params_R2 = [cmu2/2., clambda2/2+cmu2/3]
+#params_B = [cmu/2., clambda/2+cmu/3]
+
+lawname = 'neo Hookean Ciarlet'
+params_R1 = [clambda1, cmu1]
+params_R2 = [clambda2, cmu2]
+params_B = [clambda, cmu]
 
 #lawname = 'Ciarlet Geymonat'
 #params_R1 = [clambda1, cmu1, cmu1/2-clambda1/8]
@@ -208,23 +212,50 @@ md.add_nonlinear_elasticity_brick(mim_R, 'uR', lawname, 'params_ring1', RING1)
 md.add_nonlinear_elasticity_brick(mim_R, 'uR', lawname, 'params_ring2', RING2)
 
 md.add_fem_variable('uB', mfu_B)
-#md.add_filtered_fem_variable('lambda_block', pre_mflambda_B, CONTACT_BOUNDARY_B)
+if is_master_R:
+   md.add_filtered_fem_variable('lambda_block', pre_mflambda_B, CONTACT_BOUNDARY_B)
+if f_coeff > 1e-10:
+   md.add_fem_data('wB', mfu_B)
 
 md.add_initialized_data('params_block', params_B)
 md.add_nonlinear_elasticity_brick(mim_B, 'uB', lawname, 'params_block')
 
 md.add_initialized_data('dirichlet_ring', np.zeros(N))
-md.add_Dirichlet_condition_with_multipliers(mim_R, 'uR', fem_disp_order_R, DIRICHLET_BOUNDARY_R, 'dirichlet_ring')
+md.add_Dirichlet_condition_with_multipliers(mim_R, 'uR', mfu_R, DIRICHLET_BOUNDARY_R, 'dirichlet_ring')
 
 md.add_initialized_data('dirichlet_block', np.zeros(N))
-md.add_Dirichlet_condition_with_multipliers(mim_B, 'uB', fem_disp_order_B, DIRICHLET_BOUNDARY_B, 'dirichlet_block')
+md.add_Dirichlet_condition_with_multipliers(mim_B, 'uB', mfu_B, DIRICHLET_BOUNDARY_B, 'dirichlet_block')
 
 md.add_initialized_data('r', r_aug)
 md.add_initialized_data('alpha', alpha)
 md.add_initialized_data('f', f_coeff)
-ind = md.add_integral_large_sliding_contact_brick_raytracing("r", release_dist, "f", "alpha", 0)
-md.add_slave_contact_boundary_to_large_sliding_contact_brick(ind,  mim_R_contact, CONTACT_BOUNDARY_R, "uR", "lambda_ring")
-md.add_master_contact_boundary_to_large_sliding_contact_brick(ind, mim_B_contact, CONTACT_BOUNDARY_B, "uB")
+ibc = md.add_integral_large_sliding_contact_brick_raytracing('r', release_dist, 'f', 'alpha', 0)
+
+wR_str = ''
+wB_str = ''
+if f_coeff > 1e-10:
+   wR_str = 'wR'
+   wB_str = 'wB'
+
+if not is_master_R:
+   md.add_slave_contact_boundary_to_large_sliding_contact_brick\
+   (ibc, mim_R_contact, CONTACT_BOUNDARY_R, 'uR', 'lambda_ring', wR_str)
+elif is_master_R and is_master_B:
+   md.add_master_slave_contact_boundary_to_large_sliding_contact_brick\
+   (ibc, mim_R_contact, CONTACT_BOUNDARY_R, 'uR', 'lambda_ring', wR_str)
+else:
+   md.add_master_contact_boundary_to_large_sliding_contact_brick\
+   (ibc, mim_R_contact, CONTACT_BOUNDARY_R, 'uR', wR_str)
+
+if not is_master_B:
+   md.add_slave_contact_boundary_to_large_sliding_contact_brick\
+   (ibc, mim_B_contact, CONTACT_BOUNDARY_B, 'uB', 'lambda_block', wB_str)
+elif is_master_B and is_master_R:
+   md.add_master_slave_contact_boundary_to_large_sliding_contact_brick\
+   (ibc, mim_B_contact, CONTACT_BOUNDARY_B, 'uB', 'lambda_block', wB_str)
+else:
+   md.add_master_contact_boundary_to_large_sliding_contact_brick\
+   (ibc, mim_B_contact, CONTACT_BOUNDARY_B, 'uB', wB_str)
 
 dirichlet_R = np.zeros(N)
 for nit in range(steps+1):
@@ -234,6 +265,10 @@ for nit in range(steps+1):
    else:
      dirichlet_R[N-1] += dg
    md.set_variable('dirichlet_ring', dirichlet_R)
+
+   if f_coeff > 1e-10:
+      md.set_variable('wR', md.variable('uR'))
+      md.set_variable('wB', md.variable('uB'))
 
    starttime = time.clock()
    md.solve('noisy', 'max_iter', 40, 'max_res', 1e-8, #)[0]

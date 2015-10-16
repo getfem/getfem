@@ -153,7 +153,13 @@ md = gf.Model("real")
 F = np.zeros(N)
 F[N-1] = -vf
 
+w1_str = ""
+w2_str = ""
+
 md.add_fem_variable("u1", mfu1)
+if f_coeff > 1e-10:
+   md.add_fem_data("w1", mfu1)
+   w1_str = "w1"
 md.add_filtered_fem_variable("lambda1", pre_mflambda1, CONTACT_BOUNDARY1)
 
 if nonlinear_elasticity:
@@ -183,6 +189,9 @@ md.add_source_term_brick(mim1, "u1", "data1")
 
 if test_case not in [0,3]:
    md.add_fem_variable("u2", mfu2)
+   if f_coeff > 1e-10:
+      md.add_fem_data("w2", mfu2)
+      w2_str = "w2"
    if self_contact:
       md.add_filtered_fem_variable("lambda2", pre_mflambda2, CONTACT_BOUNDARY2)
 
@@ -218,13 +227,13 @@ if test_case <= 1:
    md.add_initialized_data("Ddata1", Ddata)
    md.add_Dirichlet_condition_with_multipliers(mim1, "u1", 1, DIRICHLET_BOUNDARY1, "Ddata1")
 
-
 md.add_initialized_data("r", r)
 md.add_initialized_data("alpha", alpha)
 md.add_initialized_data("f", f_coeff)
 
 direct_generic_assembly = False
 if direct_generic_assembly:  # Direct use of high-level generic assembly
+  # TODO: account for w1, w2 when f_coeff > 0
   md.add_raytracing_transformation("contact_trans", release_dist)
   if two_meshes: # The definition of a variable group is not mandatory. Just for test.
     md.define_variable_group("u", "u1", "u2")
@@ -269,21 +278,21 @@ else: # Use of the new contact brick which uses the high-level generic assembly
   ind = md.add_integral_large_sliding_contact_brick_raytracing("r", release_dist, "f", "alpha", 0)
 
   if self_contact:
-    md.add_master_slave_contact_boundary_to_large_sliding_contact_brick(ind,  mim1_contact, CONTACT_BOUNDARY1, "u1", "lambda1")
+    md.add_master_slave_contact_boundary_to_large_sliding_contact_brick(ind,  mim1_contact, CONTACT_BOUNDARY1, "u1", "lambda1", w1_str)
   else:
-    md.add_slave_contact_boundary_to_large_sliding_contact_brick(ind,  mim1_contact, CONTACT_BOUNDARY1, "u1", "lambda1")
+    md.add_slave_contact_boundary_to_large_sliding_contact_brick(ind,  mim1_contact, CONTACT_BOUNDARY1, "u1", "lambda1", w1_str)
 
   if test_case == 0:
     md.add_rigid_obstacle_to_large_sliding_contact_brick(ind, "80-sqrt(sqr(x)+sqr(y-80))", N)
   elif test_case == 1:
-    md.add_master_contact_boundary_to_large_sliding_contact_brick(ind, mim2_contact, CONTACT_BOUNDARY2, "u2")
+    md.add_master_contact_boundary_to_large_sliding_contact_brick(ind, mim2_contact, CONTACT_BOUNDARY2, "u2", w2_str)
   elif test_case == 2:
-    md.add_master_slave_contact_boundary_to_large_sliding_contact_brick(ind, mim2_contact, CONTACT_BOUNDARY2, "u2", "lambda2")
+    md.add_master_slave_contact_boundary_to_large_sliding_contact_brick(ind, mim2_contact, CONTACT_BOUNDARY2, "u2", "lambda2", w2_str)
     md.add_rigid_obstacle_to_large_sliding_contact_brick(ind, "y+1", N)
   elif test_case == 3:
     md.add_rigid_obstacle_to_large_sliding_contact_brick(ind, "2-sqrt(sqr(x)+sqr(y-1))", N)
   elif test_case == 4:
-    md.add_master_slave_contact_boundary_to_large_sliding_contact_brick(ind, mim2_contact, CONTACT_BOUNDARY2, "u2", "lambda2")
+    md.add_master_slave_contact_boundary_to_large_sliding_contact_brick(ind, mim2_contact, CONTACT_BOUNDARY2, "u2", "lambda2", w2_str)
     md.add_rigid_obstacle_to_large_sliding_contact_brick(ind, "z+5", N)
 
   u_group = md.displacement_group_name_of_large_sliding_contact_brick(ind)
@@ -298,6 +307,11 @@ for nit in range(load_steps):
       print("errmax = %g" % errmax)
       if errmax > 1e-3:
          print("bad tangent matrix")
+
+   if w1_str:
+      md.set_variable(w1_str, md.variable("u1"))
+   if w2_str:
+      md.set_variable(w2_str, md.variable("u2"))
 
    print("SOLVING LOAD STEP %i" % nit)
    md.solve("noisy", "max_iter", max_iter, "max_res", max_res) # , "lsearch", "simplest")
