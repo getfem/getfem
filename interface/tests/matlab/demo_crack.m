@@ -25,14 +25,14 @@
 variant = 4;
 % variant : 1 : a single crack with cutoff enrichement
 %           2 : a single crack with a fixed size area Xfem enrichment
-%           3 : a suppl?mentary crossing  crack with a fixed size area
+%           3 : a supplementary crossing  crack with a fixed size area
 %               Xfem enrichment
 %           4 : variant 3 with the second crack closed by a penalisation of
-%               the jump (exemple of use of xfem_plus and xfem_minus).
+%               the jump (example of use of xfem_plus and xfem_minus).
 %           5 : variant 3 with the first crack closed by a penalisation of
-%               the jump (exemple of use of xfem_plus and xfem_minus).
+%               the jump (example of use of xfem_plus and xfem_minus).
 %           6 : variant 3 with the two cracks closed by a penalisation of
-%               the jump (exemple of use of xfem_plus and xfem_minus).
+%               the jump (example of use of xfem_plus and xfem_minus).
 
 
 gf_workspace('clear all');
@@ -43,17 +43,25 @@ DIRICHLET  = 101;
 Lambda     = 1.25e10;   % Lame coefficient
 Mu         = 1.875e10;  % Lame coefficient
 
-% Mesh in definition:
+% Mesh definition:
 m = gf_mesh('regular_simplices', -0.5:1.0/nx:0.5+1.0/nx, -0.5:1.0/nx:0.5+1.0/nx);
 % m = gf_mesh('import','gmsh','quad.msh')
 
-% boundary set:
+% Boundary set:
 gf_mesh_set(m, 'region', DIRICHLET, gf_mesh_get(m,'outer_faces'));
 
-% Basic mesh_fem without enrichment
-mf_pre_u = gf_mesh_fem(m);
-gf_mesh_fem_set(mf_pre_u,'fem',gf_fem('FEM_PK(2,1)'));
-
+% Global functions for asymptotic enrichment:
+ck0 = gf_global_function('crack',0);
+ck1 = gf_global_function('crack',1);
+ck2 = gf_global_function('crack',2);
+ck3 = gf_global_function('crack',3);
+if (variant == 1) % Cutoff enrichement 
+  coff = gf_global_function('cutoff',2,0.4,0.01,0.4);
+  ckoff0 = gf_global_function('product', ck0, coff);
+  ckoff1 = gf_global_function('product', ck1, coff);
+  ckoff2 = gf_global_function('product', ck2, coff);
+  ckoff3 = gf_global_function('product', ck3, coff);
+end
 
 % Levelset(s) definition
 ls  = gf_levelset(m,1,'y','x');
@@ -65,22 +73,14 @@ if (variant > 2)
 end
 gf_mesh_levelset_set(mls,'adapt');
 
-
-% Global Functions for asymptotic enrichment
-ck0 = gf_global_function('crack',0);
-ck1 = gf_global_function('crack',1);
-ck2 = gf_global_function('crack',2);
-ck3 = gf_global_function('crack',3);
+% Basic mesh_fem without enrichment
+mf_pre_u = gf_mesh_fem(m);
+gf_mesh_fem_set(mf_pre_u,'fem',gf_fem('FEM_PK(2,1)'));
 
 % Definition of the enriched finite element method
 mfls_u = gf_mesh_fem('levelset',mls,mf_pre_u);
 
 if (variant == 1) % Cutoff enrichement 
-  coff = gf_global_function('cutoff',2,0.4,0.01,0.4);
-  ckoff0 = gf_global_function('product', ck0, coff);
-  ckoff1 = gf_global_function('product', ck1, coff);
-  ckoff2 = gf_global_function('product', ck2, coff);
-  ckoff3 = gf_global_function('product', ck3, coff);
   mf_sing_u = gf_mesh_fem('global function',m,ls, {ckoff0,ckoff1,ckoff2,ckoff3},1);
   mf_u      = gf_mesh_fem('sum',mf_sing_u,mfls_u);
 else
@@ -106,9 +106,16 @@ else
     mf_u = gf_mesh_fem('sum', mf_xfem_sing, mf_xfem_sing2, mfls_u);
   end
 end  
-  
+
 gf_mesh_fem_set(mf_u,'qdim',2);
-% Exact solution for a single crack
+
+% MeshIm definition:
+mim = gf_mesh_im('levelset', mls, 'all', ...
+		gf_integ('IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6),3)'), ...
+		gf_integ('IM_STRUCTURED_COMPOSITE(IM_GAUSS_PARALLELEPIPED(2,6),9)'), ...
+		gf_integ('IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6),5)'));
+
+% Exact solution for a single crack:
 mf_ue = gf_mesh_fem('global function',m,ls,{ck0,ck1,ck2,ck3});
 A = 2+2*Mu/(Lambda+2*Mu);
 B = -2*(Lambda+Mu)/(Lambda+2*Mu);
@@ -119,12 +126,8 @@ Ue(1,3) =  -B; Ue(2,3) = 0;   % sin(theta/2)*sin(theta)
 Ue(1,4) =   0; Ue(2,4) = B;   % cos(theta/2)*cos(theta)
 Ue = Ue / 2*pi;
 Ue=reshape(Ue,1,8);
-% MeshIm in action:
-mim = gf_mesh_im('levelset', mls, 'all', ...
-		gf_integ('IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6),3)'), ...
-		gf_integ('IM_STRUCTURED_COMPOSITE(IM_GAUSS_PARALLELEPIPED(2,6),9)'), ...
-		gf_integ('IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6),5)'));
-% Model in action:
+
+% Model definition:
 md = gf_model('real');
 gf_model_set(md,'add_fem_variable', 'u', mf_u);
 % data
@@ -145,7 +148,7 @@ if (variant == 4 || variant == 6) % Penalisation of the jump over the second cra
   gf_model_set(md, 'add linear generic assembly brick', mim_bound2, '1e17*(Xfem_plus(u)-Xfem_minus(u)).(Xfem_plus(Test_u)-Xfem_minus(Test_u))');
 end
 
-% assembly of the linear system and solve:
+% Assembly of the linear system and solve:
 gf_model_get(md,'solve');
 U = gf_model_get(md,'variable','u');
 
@@ -154,10 +157,11 @@ cut_mesh = gf_mesh_levelset_get(mls,'cut_mesh');
 mfv = gf_mesh_fem(cut_mesh,2);
 gf_mesh_fem_set(mfv,'classical_discontinuous_fem',2,0.001);
 gf_mesh_fem_set(mf_ue,'qdim',2);
+
 V  = gf_compute(mf_u,U,'interpolate_on',mfv);
 Ve = gf_compute(mf_ue,Ue,'interpolate_on',mfv);
 
-% computation of the Von Mises stress
+% Computation of the Von Mises stress
 mfvm = gf_mesh_fem(cut_mesh);
 gf_mesh_fem_set(mfvm,'classical_discontinuous_fem',2,0.001);
 gf_model_set(md,'add initialized fem data', 'u_cut', mfv, V);

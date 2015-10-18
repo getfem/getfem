@@ -116,7 +116,7 @@ For a model `md`, the following instructions::
    model.perform_init_time_derivative(ddt);
    standard_solve(model, iter);
 
-allows to perform automatically the approximation of the initial time derivative. The parameter `ddt` corresponds to the small time step used to perform the aproximation. Typically, `dtt = dt/20` could be used where  `dt` is the time step used to approximate the transient problem (see the exemple below).
+allows to perform automatically the approximation of the initial time derivative. The parameter `ddt` corresponds to the small time step used to perform the aproximation. Typically, `dtt = dt/20` could be used where  `dt` is the time step used to approximate the transient problem (see the example below).
 
 The implicit theta-method for second-order problems
 ***************************************************
