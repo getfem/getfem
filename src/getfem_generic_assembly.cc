@@ -2013,9 +2013,9 @@ namespace getfem {
           return (*f1_)(t_);
         break;
       case 1:
-        t[0] = t_; u[0] = u_;
+        t.thrd_cast()[0] = t_; u.thrd_cast()[0] = u_;
         workspace.thrd_cast().assembled_potential() = scalar_type(0);
-        ga_function_exec((*gis).thrd_cast());
+        ga_function_exec(*gis);
         return workspace.thrd_cast().assembled_potential();
         break;
       }
@@ -2502,9 +2502,9 @@ namespace getfem {
     F.gis = std::unique_ptr<instruction_set>(new instruction_set());
     for (size_type thread = 0; thread < num_threads(); ++thread)
     {
-      F.workspace(thread).add_fixed_size_variable("t", gmm::sub_interval(0,1), F.t);
+      F.workspace(thread).add_fixed_size_variable("t", gmm::sub_interval(0,1), F.t(thread));
       if (nbargs == 2)
-        F.workspace(thread).add_fixed_size_variable("u", gmm::sub_interval(0,1), F.u);
+        F.workspace(thread).add_fixed_size_variable("u", gmm::sub_interval(0,1), F.u(thread));
       F.workspace(thread).add_function_expression(expr);
       ga_compile_function(F.workspace(thread), (*F.gis)(thread), true);
     }
