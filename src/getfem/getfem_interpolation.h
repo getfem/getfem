@@ -715,25 +715,21 @@ namespace getfem {
    The qdim of mesh_fem must be equal to im_data nb_tensor_elem.
    Both im_data and mesh_fem must reside in the same mesh.
    Only convexes defined with both mesh_fem and im_data will be interpolated.
-   Version 0 uses filtered region of im_data, while other versions use full region.
+   The use_im_data_filter flag controls the use of the filtered region of
+   im_data (default) or the use the full mesh.
   */
   template <typename VECT>
   void interpolation_to_im_data(const mesh_fem &mf_source, const im_data &im_target,
                                 const VECT &nodal_data, VECT &int_pt_data,
-                                bool use_im_data_filtered = true) {
+                                bool use_im_data_filter = true) {
     // typedef typename gmm::linalg_traits<const VECT>::value_type T;
 
     dim_type qdim = mf_source.get_qdim();
     GMM_ASSERT1(qdim == im_target.nb_tensor_elem(),
                 "Incompatible size of qdim for mesh_fem " << qdim
                 << " and im_data " << im_target.nb_tensor_elem());
-    GMM_ASSERT1(&mf_source.linked_mesh() == &im_target.linked_mesh_im().linked_mesh(),
+    GMM_ASSERT1(&mf_source.linked_mesh() == &im_target.linked_mesh(),
                 "mf_source and im_data do not share the same mesh.");
-
-    base_matrix G;
-    base_vector coeff;
-    bgeot::base_tensor tensor_int_point(im_target.tensor_size());
-    fem_precomp_pool fppool;
 
     size_type nb_dof = mf_source.nb_dof();
     size_type nb_basic_dof = mf_source.nb_basic_dof();
@@ -742,21 +738,23 @@ namespace getfem {
                 "Provided nodal data size is " << gmm::vect_size(nodal_data)
                 << " but expecting vector size of " << nb_dof);
 
-    size_type size_im_data = use_im_data_filtered
-                           ? im_target.nb_filtered_index() * im_target.nb_tensor_elem()
-                           : im_target.nb_index() * im_target.nb_tensor_elem();
+    size_type size_im_data = im_target.nb_index(use_im_data_filter)
+                           * im_target.nb_tensor_elem();
     GMM_ASSERT1(size_im_data == gmm::vect_size(int_pt_data),
                 "Provided im data size is " << gmm::vect_size(int_pt_data)
                 << " but expecting vector size of " << size_im_data);
 
-    VECT extended_nodal_data(nb_basic_dof);
-    if (nb_dof == nb_basic_dof) gmm::copy(nodal_data, extended_nodal_data);
-    else mf_source.extend_vector(nodal_data, extended_nodal_data);
+    VECT extended_nodal_data_((nb_dof != nb_basic_dof) ? nb_basic_dof : 0);
+    if (nb_dof != nb_basic_dof)
+      mf_source.extend_vector(nodal_data, extended_nodal_data_);
+    const VECT &extended_nodal_data = (nb_dof == nb_basic_dof) ? nodal_data : extended_nodal_data_;
 
-    dal::bit_vector im_data_convex_index;
-    if (use_im_data_filtered) im_data_convex_index = im_target.filtered_convex_index();
-    else im_data_convex_index = im_target.linked_mesh_im().convex_index();
+    dal::bit_vector im_data_convex_index(im_target.convex_index(use_im_data_filter));
 
+    base_matrix G;
+    base_vector coeff;
+    bgeot::base_tensor tensor_int_point(im_target.tensor_size());    
+    fem_precomp_pool fppool;
     for (dal::bv_visitor cv(im_data_convex_index); !cv.finished(); ++cv) {
 
       bgeot::pgeometric_trans pgt = mf_source.linked_mesh().trans_of_convex(cv);
@@ -770,19 +768,40 @@ namespace getfem {
       coeff.resize(cv_nb_dof);
       getfem::slice_vector_on_basic_dof_of_element(mf_source, extended_nodal_data, cv, coeff);
 
-      getfem::pintegration_method pim = im_target.linked_mesh_im().int_method_of_element(cv);
+      const getfem::papprox_integration pim(im_target.approx_int_method_of_element(cv));
       if (pf_source->need_G())
-        bgeot::vectors_to_base_matrix(G, pim->approx_method()->integration_points());
+        bgeot::vectors_to_base_matrix(G, pim->integration_points());
 
-      pfem_precomp pfp = fppool(pf_source, &pim->approx_method()->integration_points());
-      fem_interpolation_context ctx(pgt, pfp, size_type(-1), G, cv, short_type(-1));
+      pfem_precomp pfp = fppool(pf_source, &pim->integration_points());
 
-      size_type nb_int_points = im_target.nb_points_of_element(cv);
+      // interior of the convex
+      size_type nb_int_pts;
+      size_type int_pt_id = im_target.index_of_first_point(cv, short_type(-1),
+                                                           use_im_data_filter);
+      if (int_pt_id != size_type(-1)) {
+        nb_int_pts = im_target.nb_points_of_element(cv, short_type(-1));
+        fem_interpolation_context ctx(pgt, pfp, size_type(-1), G, cv);
+        for (size_type i = 0; i < nb_int_pts; ++i, ++int_pt_id) {
+          ctx.set_ii(i);
+          ctx.pf()->interpolation(ctx, coeff, tensor_int_point.as_vector(), qdim);
+          im_target.set_tensor(int_pt_data, int_pt_id, tensor_int_point);
+        }
+      }
 
-      for (size_type i = 0; i < nb_int_points; ++i) {
-        ctx.set_ii(i);
-        ctx.pf()->interpolation(ctx, coeff, tensor_int_point.as_vector(), qdim);
-        im_target.set_tensor(int_pt_data, cv, i, tensor_int_point, use_im_data_filtered);
+      // convex faces
+      for (short_type f=0, nb_faces=im_target.nb_faces_of_element(cv);
+           f < nb_faces; ++f) {
+        int_pt_id = im_target.index_of_first_point(cv, f, use_im_data_filter);
+        if (int_pt_id != size_type(-1)) {
+          nb_int_pts = im_target.nb_points_of_element(cv, f);
+          fem_interpolation_context ctx(pgt, pfp, size_type(-1), G, cv, f);
+          size_type i0 = pim->ind_first_point_on_face(f);
+          for (size_type i = 0; i < nb_int_pts; ++i, ++int_pt_id) {
+            ctx.set_ii(i+i0);
+            ctx.pf()->interpolation(ctx, coeff, tensor_int_point.as_vector(), qdim);
+            im_target.set_tensor(int_pt_data, int_pt_id, tensor_int_point);
+          }
+        }
       }
     }//end of convex loop
   }
