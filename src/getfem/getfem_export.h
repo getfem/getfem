@@ -79,13 +79,23 @@ namespace getfem {
     enum { EMPTY, HEADER_WRITTEN, STRUCTURE_WRITTEN, IN_CELL_DATA,
            IN_POINT_DATA } state;
   public:
-    typedef enum { VTK_VERTEX = 1, VTK_LINE = 3, VTK_QUADRATIC_EDGE = 21,
-                   VTK_TRIANGLE = 5, VTK_QUADRATIC_TRIANGLE = 22,
-                   VTK_PIXEL = 8, VTK_QUAD = 9, VTK_QUADRATIC_QUAD = 23,
-                   VTK_TETRA = 10, VTK_QUADRATIC_TETRA = 24,
-                   VTK_WEDGE = 13, /*VTK_QUADRATIC_WEDGE = 26,*/
-                   VTK_VOXEL = 11, VTK_HEXAHEDRON = 12,
-                   VTK_QUADRATIC_HEXAHEDRON = 25 } vtk_cell_type;
+    typedef enum { VTK_VERTEX = 1,
+                   VTK_LINE = 3,
+                   VTK_TRIANGLE = 5,
+                   VTK_PIXEL = 8,
+                   VTK_QUAD = 9,
+                   VTK_TETRA = 10,
+                   VTK_VOXEL = 11,
+                   VTK_HEXAHEDRON = 12,
+                   VTK_WEDGE = 13,
+                   VTK_QUADRATIC_EDGE = 21,
+                   VTK_QUADRATIC_TRIANGLE = 22,
+                   VTK_QUADRATIC_QUAD = 23,
+                   VTK_QUADRATIC_TETRA = 24,
+                   VTK_QUADRATIC_HEXAHEDRON = 25,
+                   /*VTK_QUADRATIC_WEDGE = 26,*/
+                   VTK_BIQUADRATIC_QUAD = 28,
+                   VTK_TRIQUADRATIC_HEXAHEDRON = 29 } vtk_cell_type;
     vtk_export(const std::string& fname, bool ascii_ = false);
     vtk_export(std::ostream &os_, bool ascii_ = false);
 
