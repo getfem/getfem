@@ -528,6 +528,7 @@ The following program allows to take into account the whole elastic deformation 
 
                 md.add_initialized_scalar_data("cmu", cmu);
                 md.add_initialized_scalar_data("clambdastar", clambdastar);
+                md.add_initialized_scalar_data("T0", T0);
                 getfem::add_isotropic_linearized_elasticity_brick
                   (md, mim, "u", "clambdastar", "cmu");
                 getfem::add_Dirichlet_condition_with_multipliers
@@ -543,6 +544,7 @@ The following program allows to take into account the whole elastic deformation 
 
                 md.add_initialized_data('cmu', [cmu])
                 md.add_initialized_data('clambdastar', [clambdastar])
+                md.add_initialized_data('T0', [T0])
                 md.add_isotropic_linearized_elasticity_brick(mim, 'u', 'clambdastar', 'cmu')
 
                 md.add_Dirichlet_condition_with_multipliers(mim, 'u', elements_degree-1, LEFT_BOUND)
@@ -556,6 +558,7 @@ The following program allows to take into account the whole elastic deformation 
 
                 gf_model_set(md, 'add initialized data', 'cmu', [cmu]);
                 gf_model_set(md, 'add initialized data', 'clambdastar', [clambdastar]);
+                gf_model_set(md, 'add initialized data', 'T0', [T0]);
                 gf_model_set(md, 'add isotropic linearized elasticity brick', mim, 'u', 'clambdastar', 'cmu');
 
                 gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'u', elements_degree-1, LEFT_BOUND);
@@ -569,6 +572,7 @@ The following program allows to take into account the whole elastic deformation 
 
                 gf_model_set(md, 'add initialized data', 'cmu', [cmu]);
                 gf_model_set(md, 'add initialized data', 'clambdastar', [clambdastar]);
+                gf_model_set(md, 'add initialized data', 'T0', [T0]);
                 gf_model_set(md, 'add isotropic linearized elasticity brick', mim, 'u', 'clambdastar', 'cmu');
 
                 gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'u', elements_degree-1, LEFT_BOUND);
@@ -591,7 +595,6 @@ Similarly, the following program take into account the electric potential equati
                 md.add_initialized_scalar_data("eps", epsilon);
                 md.add_initialized_scalar_data("rho_0", rho_0);
                 md.add_initialized_scalar_data("alpha", alpha);
-                md.add_initialized_scalar_data("T0", T0);
                 getfem::add_nonlinear_generic_assembly_brick
                   (md, mim, sigmaeps+"*(Grad_V.Grad_Test_V)");
                 getfem::add_Dirichlet_condition_with_multipliers
@@ -606,7 +609,6 @@ Similarly, the following program take into account the electric potential equati
                 md.add_initialized_data('eps', [epsilon])
                 md.add_initialized_data('rho_0', [rho_0])
                 md.add_initialized_data('alpha', [alpha])
-                md.add_initialized_data('T0', [T0])
                 md.add_nonlinear_generic_assembly_brick(mim, sigmaeps+'*(Grad_V.Grad_Test_V)')
                 md.add_Dirichlet_condition_with_multipliers(mim, 'V', elements_degree-1, RIGHT_BOUND)
                 md.add_initialized_data('DdataV', [0.1])
@@ -618,7 +620,6 @@ Similarly, the following program take into account the electric potential equati
                 gf_model_set(md, 'add initialized data', 'eps', [epsilon]);
                 gf_model_set(md, 'add initialized data', 'rho_0', [rho_0]);
                 gf_model_set(md, 'add initialized data', 'alpha', [alpha]);
-                gf_model_set(md, 'add initialized data', 'T0', [T0]);
                 gf_model_set(md, 'add nonlinear generic assembly brick', mim, sigmaeps+'*(Grad_V.Grad_Test_V)');
                 gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'V', elements_degree-1, RIGHT_BOUND);
                 gf_model_set(md, 'add initialized data', 'DdataV', [0.1]);
@@ -630,7 +631,6 @@ Similarly, the following program take into account the electric potential equati
                 gf_model_set(md, 'add initialized data', 'eps', [epsilon]);
                 gf_model_set(md, 'add initialized data', 'rho_0', [rho_0]);
                 gf_model_set(md, 'add initialized data', 'alpha', [alpha]);
-                gf_model_set(md, 'add initialized data', 'T0', [T0]);
                 gf_model_set(md, 'add nonlinear generic assembly brick', mim, [sigmaeps '*(Grad_V.Grad_Test_V)']);
                 gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'V', elements_degree-1, RIGHT_BOUND);
                 gf_model_set(md, 'add initialized data', 'DdataV', [0.1]);
