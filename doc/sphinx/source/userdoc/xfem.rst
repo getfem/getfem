@@ -146,6 +146,39 @@ To initialize the object or to actualize it when the value of the level-set
 function is modified, one has to call the method ``mim.adapt()``.
 
 
+When more than one level-set is declared on the |gf_mls| object, it is possible to set more precisely the integration domain using the method::
+
+  mim.set_level_set_boolean_operations("desc");
+
+where "desc" is a string containing the description of the boolean operation which defines the integration domain. The syntax is simple, for example if there are 3 different levelset,
+
+  "a*b*c" is the intersection of the domains defined by each
+  levelset (this is the default behaviour if this function is not
+  called).
+
+  "a+b+c" is the union of their domains.
+
+  "c-(a+b)" is the domain of the third levelset minus the union of
+  the domains of the two others.
+      
+  "!a" is the complementary of the domain of a (i.e. it is the
+  domain where a(x)>0)
+
+  The first levelset is always referred to with "a", the second
+  with "b", and so on.
+
+
+Cut-fem
+-------
+
+The previous tools (description of the level-sets, cut mesh and cut integration method) are already sufficient to build cut-fem applications.
+
++ exemple (:file:`interface/tests/python/demo_fictitious_domain.py`)
+
+A few word on stabilizations methods ... 
+
+
+
 Discontinuous field across some level-sets
 ------------------------------------------
 

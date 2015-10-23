@@ -27,9 +27,9 @@ clear all;
 
 % Import the mesh : disc
 % m=gf_mesh('load', '../../../tests/meshes/disc_P2_h4.mesh');
-% m=gf_mesh('load', '../../../tests/meshes/disc_P2_h2.mesh');
+m=gf_mesh('load', '../../../tests/meshes/disc_P2_h2.mesh');
 % m=gf_mesh('load', '../../../tests/meshes/disc_P2_h1.mesh');
-m=gf_mesh('load', '../../../tests/meshes/disc_P2_h0_5.mesh');
+% m=gf_mesh('load', '../../../tests/meshes/disc_P2_h0_5.mesh');
 % m=gf_mesh('load', '../../../tests/meshes/disc_P2_h0_3.mesh');
 
 % Import the mesh : sphere
@@ -47,7 +47,7 @@ d = gf_mesh_get(m, 'dim'); % Mesh dimension
 clambda = 1;           % Lame coefficient
 cmu = 1;               % Lame coefficient
 friction_coeff = 0.4;  % coefficient of friction
-vertical_force = 0.05; % Volumic load in the vertical direction
+vertical_force = 0.015; % Volumic load in the vertical direction
 u_degree = 2;
 lambda_degree = 2;
 incompressibility = 0;
@@ -70,7 +70,7 @@ end;
 
 niter = 100;   % Maximum number of iterations for Newton's algorithm.
 plot_mesh = true;
-version = 16; % 1 : frictionless contact and the basic contact brick
+version = 1; % 1 : frictionless contact and the basic contact brick
               % 2 : contact with 'static' Coulomb friction and basic contact brick
               % 3 : frictionless contact and the contact with a
               %     rigid obstacle brick
@@ -394,7 +394,7 @@ if (d == 3)
   set(gcf,'renderer','zbuffer');
   h=gf_plot_slice(sl2,'mesh','on','mesh_slice_edges','off','data',VMsl);
   view(-80,-15); axis on; camlight; gf_colormap('chouette');
-  % map=[1:-1/10:0]'*[1 1 1]; colormap(map); % for NB
+  
     
   % gf_plot(mfvm, VM, 'mesh', 'off', 'cvlst', ...
   %        gf_mesh_get(mfu,'outer faces'), 'deformation', U, ...
@@ -405,6 +405,7 @@ if (d == 3)
 else
   gf_plot(mfvm, VM, 'deformed_mesh', 'on', 'deformation', U, ...
           'deformation_mf', mfu, 'deformation_scale', 1, 'refine', 8);
+  map=[1:-1/10:0]'*[0.6 0.6 0.4]; colormap(map); % for NB
   xlabel('x'); ylabel('y');
   title('Deformed configuration (not really a small deformation of course ...)');
 end;

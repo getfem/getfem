@@ -75,7 +75,7 @@ m.set_region(1,fleft)
 m.set_region(2,fright)
 
 md = gf.Model('real')
-md.add_fem_variable('u', mfu, 2)
+md.add_fem_variable('u', mfu)
 md.add_fem_data('sigma', mfsigma)
 md.add_initialized_data('lambda', Lambda)
 md.add_initialized_data('mu', Mu)
