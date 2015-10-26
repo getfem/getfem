@@ -215,7 +215,9 @@ namespace getfem
     cvr = poriginal_fem_->ref_convex(0);
     dim_ = cvr->structure()->dim();
     is_equiv = real_element_defined = true;
-    is_polycomp = is_pol = is_lag = false;
+    is_pol = poriginal_fem_->is_polynomial();
+    is_polycomp = poriginal_fem_->is_polynomialcomp();
+    is_lag = poriginal_fem_->is_lagrange();
     es_degree = poriginal_fem_->estimated_degree();
     ntarget_dim = 3;
 
