@@ -55,6 +55,9 @@ References
    *A finite element method for Reissner-Mindlin plates*,
    Math. Comp., 83:286, 701-733, 2014.
 
+.. [Fa-Po-Re2015] M. Fabre, J. Pousin, Y. Renard.
+   *A fictitious domain method for frictionless contact problems in elasticity using Nitsche's method*. preprint, https://hal.archives-ouvertes.fr/hal-00960996v1
+
 .. [Fa-Pa2003] F. Facchinei and J.-S. Pang,
    *Finite-Dimensional Variational Inequalities and Complementarity Problems, Vol. II*,
    Springer Series in Operations Research, Springer, New York, 2003.

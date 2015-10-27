@@ -36,7 +36,8 @@ E. Burman and P. Hanbo [bu-ha2010]_ on that topic.
 The tools for Xfem have been then enriched by the PhD works
 of J. Larsy (see for instance [LA-RE-SA2010]_) the one
 of E. Chahine (see for instance [CH-LA-RE2011]_, [NI-RE-CH2011]_),
-and of S. Amdouni  (see for instance [AM-MO-RE2014]_, [AM-MO-RE2014b]_).
+of S. Amdouni  (see for instance [AM-MO-RE2014]_, [AM-MO-RE2014b]_)
+and of M. Fabre (see for instance  [Fa-Po-Re2015]_).
 
 
 .. important::
@@ -171,12 +172,11 @@ where "desc" is a string containing the description of the boolean operation whi
 Cut-fem
 -------
 
-The previous tools (description of the level-sets, cut mesh and cut integration method) are already sufficient to build cut-fem applications.
+The implementation of a cut finite element method such as described in [bu-ha2010]_, i.e. a finite element on a fictitious domain restricted to a smaller real domain, is possible just using the previous tools and mainly the adapted integration method. Several examples are available on |gf| test programs. See for instance :file:`interface/tests/python/demo_fictitious_domain.py` or :file:`interface/tests/matlab/demo_fictitious_domain.m`.
 
-+ exemple (:file:`interface/tests/python/demo_fictitious_domain.py`)
+In this context, one often needs to restrict the unknown finite element field to the degrees of freedom whose corresponding shape function supports have an intersection with the real domain. This can be done using the ``partial_mesh_fem`` object. See for instance :file:`interface/tests/matlab/demo_structural_optimization.m`.
 
-A few word on stabilizations methods ... 
-
+Note that often, a stabilization technique have to be considered in order to treat eventual locking phenomena due to element with very small intersection with the real domain for example when applying a Dirichlet condition. See for instance [bu-ha2010]_,  [HA-RE2009]_ and [Fa-Po-Re2015]_.
 
 
 Discontinuous field across some level-sets
@@ -197,16 +197,31 @@ cut by the level-sets.
 To initialize the object or to actualize it when the value of the level-set
 function is modified, one has to call the method ``mfls.adapt()``.
 
-To represent discontinuous fields, the finite element method is enriched with
-discontinuous functions which are the product of a Heaviside function by the base
-functions of the finite element method represented by ``mf`` (see [Xfem]_ for
-more details).
+To represent discontinuous fields, the finite element method is enriched
+with discontinuous functions which are the product of a Heaviside function
+by the base functions of the finite element method represented by ``mf``
+(see [HA-HA2004]_ and [Xfem]_ for more details).
 
 
-Fictitious domain approach with Xfem
-------------------------------------
+Xfem
+----
 
-An example of a Poisson problem with a Dirichlet condition posed on a boundary
-independant of the mesh is present on the ``tests`` directory of the distribution.
+mesh_fem_product, mesh_fem_sum, Xfem_plus, Xfem_minus ...
 
-See :file:`contrib/xfem_contact/xfem_dirichlet.cc` file.
+
+
+
+Note that some procedures are available in the file :file:`src/getfem/getfem_crack_sif.h` to compute the stress intensity factors in 2D (restricted to homogeneous isotropic linearized elasticity).
+
+
+
+Post treatment
+--------------
+
+Several tools are available to represent the solution only on a side of a levels-set or on both taking into account the discontinuity (for Xfem approximation).
+
+
+Slices ...
+
+
+cut-mesh, interpolation

@@ -105,7 +105,7 @@ dof_out = get(mfu0, 'dof from im', mim);
 cv_out = get(mim, 'convex_index');
 cv_in = setdiff(gf_mesh_get(m, 'cvid'), cv_out);
 
-mfu = gfMeshFem('partial', mfu0, dof_out, cv_in);
+% mfu = gfMeshFem('partial', mfu0, dof_out, cv_in);
 
 
 md=gf_model('real');
