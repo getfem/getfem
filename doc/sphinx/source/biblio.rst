@@ -22,6 +22,10 @@ References
 .. [ba-dv1985] K.J. Bathe, E.N. Dvorkin,
    *A four-node plate bending element based on Mindlin-Reissner plate theory and a mixed interpolation*, Internat. J. Numer. Methods Engrg., 21, 367-383, 1985.
 
+.. [Be-Mi-Mo-Bu2005] Béchet E, Minnebo H, Moës N, Burgardt B,
+   *Improved implementation and robustness study of the X-FEM for stress analysis around cracks*
+   Internat. J. Numer. Methods Engrg., 64, 1033-1056, 2005.
+
 .. [br-ba-fo1989] F. Brezzi, K.J. Bathe, M. Fortin,
    *Mixed-interpolated element for Reissner-Mindlin plates*, Internat. J. Numer. Methods Engrg., 28, 1787-1801, 1989.
 
@@ -30,6 +34,9 @@ References
 
 .. [ca-re-so1994] D. Calvetti, L. Reichel and D.C. Sorensen.
    *An implicitely restarted Lanczos method for large symmetric eigenvalue problems*. Electronic Transaction on Numerical Analysis}. 2:1-21, 1994.
+
+.. [CH-LA-RE2008] E. Chahine, P. Laborde, Y. Renard.
+   *Crack-tip enrichment in the Xfem method using a cut-off function*, Int. J. Numer. Meth. Engng., 75(6):629-646, 2008.
 
 .. [CH-LA-RE2011] E. Chahine, P. Laborde, Y. Renard,
    *A non-conformal eXtended Finite Element approach: Integral matching Xfem*, Applied Numerical Mathematics, 61:322-343, 2011. 

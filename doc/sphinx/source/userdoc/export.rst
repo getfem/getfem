@@ -49,6 +49,8 @@ either a |gf_m| or |gf_mf| , but also the more versatile |gf_smsl|.
 
 Examples of use can be found in the examples of the tests directory.
 
+.. _ud-export_slices:
+
 Producing mesh slices
 ---------------------
 

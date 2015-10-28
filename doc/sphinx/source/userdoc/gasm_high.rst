@@ -704,6 +704,7 @@ where ``u`` is one of the FEM variables of the model/workspace. For the moment, 
 
   add_2D_rotated_RT0_projection(model, transname)
 
+.. _ud-gasm-high_xfem:
 
 Xfem discontinuity evaluation (with mesh_fem_level_set)
 -------------------------------------------------------
