@@ -22,7 +22,7 @@ References
 .. [ba-dv1985] K.J. Bathe, E.N. Dvorkin,
    *A four-node plate bending element based on Mindlin-Reissner plate theory and a mixed interpolation*, Internat. J. Numer. Methods Engrg., 21, 367-383, 1985.
 
-.. [Be-Mi-Mo-Bu2005] Béchet E, Minnebo H, Moës N, Burgardt B,
+.. [Be-Mi-Mo-Bu2005] Bechet E, Minnebo H, |moes| N, Burgardt B,
    *Improved implementation and robustness study of the X-FEM for stress analysis around cracks*
    Internat. J. Numer. Methods Engrg., 64, 1033-1056, 2005.
 
@@ -111,7 +111,7 @@ References
 .. [Mi-Zh2002] P. Ming and Z. Shi,
    *Optimal L2 error bounds for MITC3 type element.* Numer. Math. 91, 77-91, 2002.
 
-.. [Xfem] N. Moes, J. Dolbow and T. Belytschko,
+.. [Xfem] N. |moes|, J. Dolbow and T. Belytschko,
    *A finite element method for crack growth without remeshing*, Internat. J. Numer. Methods Engrg., 46, 131-150, 1999.
 
 .. [nedelec1991] J.-C. Nedelec.
@@ -135,13 +135,14 @@ References
 .. [renard2013] Y. Renard,
    *Generalized Newton's methods for the approximation and resolution of frictional contact problems in elasticity*,  Comp. Meth. Appl. Mech. Engng., 256:38-55, 2013.
 
-.. [SU-CH-MO-BE2001] Sukumar N., Chopp D.L., Moes N., Belytschko T.
+.. [SU-CH-MO-BE2001] Sukumar N., Chopp D.L., |moes| N., Belytschko T.
    *Modeling holes and inclusions by level sets in the extended finite-element method* Comp. Meth. Appl. Mech. Engng., 190:46-47, 2001.
 
 .. [ZT1989] Zienkiewicz and Taylor "The finite element method" 5th edition
     volume 3 : Fluids Dynamics, section 2.6 
 
 
+.. |moes| unicode:: Mo U+00EB s
 .. |dolezel| unicode:: Dole U+017E el 
    :rtrim:
 .. |ligursky| unicode:: Ligursk U+00FD

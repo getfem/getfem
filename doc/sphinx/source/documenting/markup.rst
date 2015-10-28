@@ -134,8 +134,8 @@ The directives are:
    Describes a "simple" C macro.  Simple macros are macros which are used
    for code expansion, but which do not take arguments so cannot be described as
    functions.  This is not to be used for simple constant definitions.  Examples
-   of its use in the Python documentation include :cmacro:`PyObject_HEAD` and
-   :cmacro:`Py_BEGIN_ALLOW_THREADS`.
+   of its use in the Python documentation include ``PyObject_HEAD`` and
+   ``Py_BEGIN_ALLOW_THREADS``.
 
 .. describe:: ctype
 
