@@ -247,6 +247,28 @@ outer_faces(const getfem::mesh &m, mexargs_in &in, mexargs_out &out, const std::
 }
 
 
+static void 
+inner_faces(const getfem::mesh &m, mexargs_in &in, mexargs_out &out) {
+  dal::bit_vector cvlst;
+
+  if (in.remaining()) cvlst = in.pop().to_bit_vector(&m.convex_index());
+  else cvlst = m.convex_index();
+  getfem::mesh_region mr;
+  for (dal::bv_visitor ic(cvlst); !ic.finished(); ++ic) mr.add(ic);
+  getfem::mesh_region mrr =  inner_faces_of_mesh(m, mr);
+
+  unsigned fcnt = 0;
+  for (getfem::mr_visitor i(mrr); !i.finished(); ++i) ++fcnt;
+  iarray w = out.pop().create_iarray(2, fcnt);
+  fcnt = 0;
+  for (getfem::mr_visitor i(mrr); !i.finished(); ++i) {
+    w(0,fcnt) = int(i.cv()+config::base_index());
+    w(1,fcnt) = int(short_type(i.f()+config::base_index()));
+    fcnt++;
+  }
+}
+
+
 static bgeot::base_node
 normal_of_face(const getfem::mesh& mesh, size_type cv, short_type f, size_type node) {
   if (!mesh.convex_index().is_in(cv)) THROW_BADARG("convex " << cv+1 << " not found in mesh");
@@ -746,7 +768,7 @@ void gf_mesh_get(getfemint::mexargs_in& m_in,
 
 
     /*@GET CVFIDs = ('outer faces'[, CVIDs])
-    Return the set of faces not shared by two convexes.
+    Return the set of faces not shared by two elements.
 
     The output `CVFIDs` is a two-rows matrix, the first row lists
     convex #ids, and the second one lists face numbers (local number
@@ -758,6 +780,16 @@ void gf_mesh_get(getfemint::mexargs_in& m_in,
       ("outer faces", 0, 1, 0, 1,
        check_empty_mesh(pmesh);
        outer_faces(*pmesh, in, out);
+       );
+
+    /*@GET CVFIDs = ('inner faces'[, CVIDs])
+    Return the set of faces shared at least by two elements in CVIDs.
+    Each face is represented only once and is arbitrary chosen
+    between the two neighbour elements. @*/
+    sub_command
+      ("inner faces", 0, 1, 0, 1,
+       check_empty_mesh(pmesh);
+       inner_faces(*pmesh, in, out);
        );
 
     /*@GET CVFIDs = ('outer faces with direction', @vec v, @scalar angle [, CVIDs])

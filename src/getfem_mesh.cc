@@ -782,20 +782,22 @@ namespace getfem {
     mr.error_if_not_convexes();
     mesh_region mrr;
     dal::bit_vector visited;
+    bgeot::mesh_structure::ind_set neighbours;
     
     for (mr_visitor i(mr); !i.finished(); ++i) {
       size_type cv1 = i.cv();
       short_type nbf = m.structure_of_convex(i.cv())->nb_faces();
       bool neighbour_visited = false;
-      for (short_type f = 0; f < nbf; f++) {
-	size_type cv2 = m.neighbour_of_convex(cv1, f);
-	if (cv2 == size_type(-1) && visited.is_in(cv2))
-	  { neighbour_visited = true; break; }
+      for (short_type f = 0; f < nbf; ++f) {
+	neighbours.resize(0); m.neighbours_of_convex(cv1, f, neighbours);
+	for (size_type j = 0; j < neighbours.size(); ++j)
+	  if (visited.is_in(neighbours[j]))
+	    { neighbour_visited = true; break; }
       }
       if (!neighbour_visited) {
-	for (short_type f = 0; f < nbf; f++) {
+	for (short_type f = 0; f < nbf; ++f) {
 	  size_type cv2 = m.neighbour_of_convex(cv1, f);
-	  if (cv2 == size_type(-1) && mr.is_in(cv2) && !(visited.is_in(cv2)))
+	  if (cv2 == size_type(-1) && mr.is_in(cv2))
 	    mrr.add(cv1,f);
 	}
 	visited.add(cv1);
@@ -806,10 +808,15 @@ namespace getfem {
       size_type cv1 = i.cv();
       short_type nbf = m.structure_of_convex(i.cv())->nb_faces();
       if (!(visited.is_in(cv1))) {
-	for (short_type f = 0; f < nbf; f++) {
-	  size_type cv2 = m.neighbour_of_convex(i.cv(), f);
-	  if (cv2 == size_type(-1) && mr.is_in(cv2) && !(visited.is_in(cv2)))
-	    mrr.add(cv1,f);
+	for (short_type f = 0; f < nbf; ++f) {
+
+	  neighbours.resize(0); m.neighbours_of_convex(cv1, f, neighbours);
+	  bool ok = false;
+	  for (size_type j = 0; j < neighbours.size(); ++j)  {
+	    if (visited.is_in(neighbours[j])) { ok = false; break; }
+	    if (mr.is_in(neighbours[j])) { ok = true; }
+	  }
+	  if (ok) mrr.add(cv1,f);
 	}
 	visited.add(cv1);
       }
