@@ -674,6 +674,13 @@ namespace getfem {
   inline mesh_region APIDECL outer_faces_of_mesh(const mesh &m)
   { mesh_region fl; outer_faces_of_mesh(m,m.convex_index(),fl); return fl; }
 
+  /** Select all the faces sharing at least two element of the given mesh
+      region. Each face is represented only once and is arbitrary chosen
+      between the two neighbour elements.
+   */
+  mesh_region APIDECL inner_faces_of_mesh(const mesh &m,
+					  const mesh_region &mr);
+  
   /** Select in the region mr the faces of the mesh m with their unit
       outward vector having a maximal angle "angle" with the vector V.
    */

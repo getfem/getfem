@@ -772,6 +772,52 @@ namespace getfem {
     }
   }
 
+  /* Select all the faces sharing at least two element of the given mesh
+      region. Each face is represented only once and is arbitrary chosen
+      between the two neighbour elements. Try to minimize the number of
+      elements.
+  */
+  mesh_region inner_faces_of_mesh(const mesh &m,
+				  const mesh_region &mr) {
+    mr.error_if_not_convexes();
+    mesh_region mrr;
+    dal::bit_vector visited;
+    
+    for (mr_visitor i(mr); !i.finished(); ++i) {
+      size_type cv1 = i.cv();
+      short_type nbf = m.structure_of_convex(i.cv())->nb_faces();
+      bool neighbour_visited = false;
+      for (short_type f = 0; f < nbf; f++) {
+	size_type cv2 = m.neighbour_of_convex(cv1, f);
+	if (cv2 == size_type(-1) && visited.is_in(cv2))
+	  { neighbour_visited = true; break; }
+      }
+      if (!neighbour_visited) {
+	for (short_type f = 0; f < nbf; f++) {
+	  size_type cv2 = m.neighbour_of_convex(cv1, f);
+	  if (cv2 == size_type(-1) && mr.is_in(cv2) && !(visited.is_in(cv2)))
+	    mrr.add(cv1,f);
+	}
+	visited.add(cv1);
+      }
+    }
+
+    for (mr_visitor i(mr); !i.finished(); ++i) {
+      size_type cv1 = i.cv();
+      short_type nbf = m.structure_of_convex(i.cv())->nb_faces();
+      if (!(visited.is_in(cv1))) {
+	for (short_type f = 0; f < nbf; f++) {
+	  size_type cv2 = m.neighbour_of_convex(i.cv(), f);
+	  if (cv2 == size_type(-1) && mr.is_in(cv2) && !(visited.is_in(cv2)))
+	    mrr.add(cv1,f);
+	}
+	visited.add(cv1);
+      }
+    }
+    return mrr;
+  }
+
+
   mesh_region select_faces_of_normal(const mesh &m, const mesh_region &mr,
                                      const base_small_vector &V,
                                      scalar_type angle) {
