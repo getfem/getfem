@@ -24,7 +24,7 @@
   This program is used to check that python-getfem is working. This is
   also a good example of use of GetFEM++.
 
-  $Id$
+  $Id: demo_laplacian.py 4429 2013-10-01 13:15:15Z renard $
 """
 # Import basic modules
 import getfem as gf
@@ -35,6 +35,8 @@ NX = 100                           # Mesh parameter.
 Dirichlet_with_multipliers = True  # Dirichlet condition with multipliers
                                    # or penalization
 dirichlet_coefficient = 1e10       # Penalization coefficient
+interior_penalty_factor = 1e6      # Parameter of the interior penalty term
+
 
 # Create a simple cartesian mesh
 m = gf.Mesh('regular_simplices', np.arange(0,1+1./NX,1./NX), np.arange(0,1+1./NX,1./NX))
@@ -42,11 +44,11 @@ m = gf.Mesh('regular_simplices', np.arange(0,1+1./NX,1./NX), np.arange(0,1+1./NX
 # Create a MeshFem for u and rhs fields of dimension 1 (i.e. a scalar field)
 mfu   = gf.MeshFem(m, 1)
 mfrhs = gf.MeshFem(m, 1)
-# assign the P2 fem to all convexes of the both MeshFem
-mfu.set_fem(gf.Fem('FEM_PK(2,2)'))
+# Assign the discontinuous P2 fem to all convexes of the both MeshFem
+mfu.set_fem(gf.Fem('FEM_PK_DISCONTINUOUS(2,2)'))
 mfrhs.set_fem(gf.Fem('FEM_PK(2,2)'))
 
-#  Integration method used
+# Integration method used
 mim = gf.MeshIm(m, gf.Integ('IM_TRIANGLE(4)'))
 
 # Boundary selection
@@ -65,6 +67,12 @@ NEUMANN_BOUNDARY_NUM = 3
 m.set_region(DIRICHLET_BOUNDARY_NUM1, fleft)
 m.set_region(DIRICHLET_BOUNDARY_NUM2, ftop)
 m.set_region(NEUMANN_BOUNDARY_NUM, fneum)
+
+# Inner edges for the interior penalty terms
+in_faces = m.inner_faces()
+INNER_FACES=4
+m.set_region(INNER_FACES, in_faces)
+
 
 # Interpolate the exact solution (Assuming mfu is a Lagrange fem)
 Ue = mfu.eval('y*(y-1)*x*(x-1)+x*x*x*x*x')
@@ -114,6 +122,12 @@ else:
   md.add_Dirichlet_condition_with_penalization(mim, 'u', dirichlet_coefficient,
                                                DIRICHLET_BOUNDARY_NUM2,
                                                'DirichletData')
+
+# Interior penalty term
+md.add_initialized_data('alpha', [interior_penalty_factor])
+md.add_linear_generic_assembly_brick(mim, 'alpha*(u-Interpolate(u,neighbour_elt))*Test_u - alpha*(u-Interpolate(u,neighbour_elt))*Interpolate(Test_u,neighbour_elt)', INNER_FACES)
+
+
 gf.memstats()
 # md.listvar()
 # md.listbricks()
@@ -134,7 +148,7 @@ mfu.export_to_pos('laplacian.pos', Ue,'Exact solution',
 print 'You can view the solution with (for example):'
 print 'gmsh laplacian.pos'
 
-
 if (H1error > 1e-3):
     print 'Error too large !'
     exit(1)
+

@@ -663,6 +663,14 @@ namespace getfem {
   (ga_workspace &workspace, const std::string &transname,
    const mesh &source_mesh, const mesh &target_mesh, const std::string &expr);
 
+
+  /** Add a transformation to the model `md` corresponding to the interpolation
+      on the neighbour element. Can only be applied to the computation on
+      some internal faces of a mesh.
+  */
+  void add_interpolate_transformation_neighbour(model &md);
+  void add_interpolate_transformation_neighbour(ga_workspace &workspace);
+
 }  /* end of namespace getfem.                                             */
 
 

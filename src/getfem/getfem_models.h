@@ -1146,6 +1146,9 @@ namespace getfem {
     */
     void add_interpolate_transformation(const std::string &name,
                                         pinterpolate_transformation ptrans) {
+      if (transformations.find(name) != transformations.end())
+        GMM_ASSERT1(name.compare("neighbour_elt"), "neighbour_elt is a "
+                    "reserved interpolate transformation name");
        transformations[name] = ptrans;
     }
 
@@ -1228,12 +1231,7 @@ namespace getfem {
       crhs = model_complex_plain_vector();
     }
 
-    model(bool comp_version = false) {
-      init(); complex_version = comp_version;
-      is_linear_ = is_symmetric_ = is_coercive_ = true;
-      leading_dim = 0;
-      time_integration = 0; init_step = false; time_step = scalar_type(1);
-    }
+    model(bool comp_version = false);
 
     /** check consistency of RHS and Stiffness matrix for brick with
         @param  ind_brick  - index of the brick

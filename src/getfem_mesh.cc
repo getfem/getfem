@@ -773,7 +773,7 @@ namespace getfem {
   }
 
   /* Select all the faces sharing at least two element of the given mesh
-      region. Each face is represented only once and is arbitrary chosen
+      region. Each face is represented only once and is arbitrarily chosen
       between the two neighbour elements. Try to minimize the number of
       elements.
   */
@@ -795,10 +795,9 @@ namespace getfem {
 	    { neighbour_visited = true; break; }
       }
       if (!neighbour_visited) {
-	for (short_type f = 0; f < nbf; ++f) {
+        for (short_type f = 0; f < nbf; ++f) {
 	  size_type cv2 = m.neighbour_of_convex(cv1, f);
-	  if (cv2 == size_type(-1) && mr.is_in(cv2))
-	    mrr.add(cv1,f);
+	  if (cv2 != size_type(-1) && mr.is_in(cv2)) mrr.add(cv1,f);
 	}
 	visited.add(cv1);
       }
@@ -806,17 +805,16 @@ namespace getfem {
 
     for (mr_visitor i(mr); !i.finished(); ++i) {
       size_type cv1 = i.cv();
-      short_type nbf = m.structure_of_convex(i.cv())->nb_faces();
       if (!(visited.is_in(cv1))) {
+        short_type nbf = m.structure_of_convex(i.cv())->nb_faces();
 	for (short_type f = 0; f < nbf; ++f) {
-
 	  neighbours.resize(0); m.neighbours_of_convex(cv1, f, neighbours);
 	  bool ok = false;
 	  for (size_type j = 0; j < neighbours.size(); ++j)  {
 	    if (visited.is_in(neighbours[j])) { ok = false; break; }
 	    if (mr.is_in(neighbours[j])) { ok = true; }
 	  }
-	  if (ok) mrr.add(cv1,f);
+	  if (ok) { mrr.add(cv1,f); }
 	}
 	visited.add(cv1);
       }

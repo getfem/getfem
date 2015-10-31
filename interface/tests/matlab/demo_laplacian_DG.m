@@ -1,4 +1,4 @@
-% Copyright (C) 2005-2015 Julien Pommier.
+% Copyright (C) 2015-2015 Yves Renard.
 %
 % This file is a part of GetFEM++
 %
@@ -15,15 +15,19 @@
 % along  with  this program;  if not, write to the Free Software Foundation,
 % Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 
+% A Poisson problem solved with a Discontinuous Galerkin method (or
+% interior penalty method).
+
 % Options for prescribing the Dirichlet condition
-dirichlet_version = 3; % 0 = simplification, 1 = with multipliers,
+dirichlet_version = 0; % 0 = simplification, 1 = with multipliers,
                        % 2 = penalization,  3 = Nitsche's method
 theta = 1;       % Nitsche's method parameter theta
 gamma0 = 0.001;  % Nitsche's method parameter gamma0 (gamma = gamma0*h)
 r = 1e8;         % Penalization parameter
 draw = true;
 quadrangles = true;
-K = 2;           % Degree of the finite element method
+K = 2;           % Degree of the discontinuous finite element method
+interior_penalty_factor = 1E5; % Parameter of the interior penalty term
 
 asize =  size(who('automatic_var654'));
 if (asize(1)) draw = false; end;
@@ -42,20 +46,26 @@ mf = gf_mesh_fem(m,1);
 % Assign the QK or PK fem to all convexes of the mesh_fem, and define an
 % integration method
 if (quadrangles)
-  gf_mesh_fem_set(mf,'fem',gf_fem(sprintf('FEM_QK(2,%d)', K)));
+  gf_mesh_fem_set(mf,'fem',gf_fem(sprintf('FEM_QK_DISCONTINUOUS(2,%d)', K)));
   mim = gf_mesh_im(m, gf_integ('IM_GAUSS_PARALLELEPIPED(2,6)'));
 else
-  gf_mesh_fem_set(mf,'fem',gf_fem(sprintf('FEM_PK(2,%d)', K)));
+  gf_mesh_fem_set(mf,'fem',gf_fem(sprintf('FEM_PK_DISCONTINUOUS(2,%d)', K)));
   mim = gf_mesh_im(m, gf_integ('IM_TRIANGLE(6)'));
 end
 
 % Detect the border of the mesh
 border = gf_mesh_get(m,'outer faces');
-% Mark it as boundary GAMMAD=1
 GAMMAD=1;
 gf_mesh_set(m, 'boundary', GAMMAD, border);
+% Inner faces for the interior penalty terms
+in_faces = gf_mesh_get(m,'inner faces');
+INNER_FACES=2;
+gf_mesh_set(m, 'boundary', INNER_FACES, in_faces);
+
+% Mesh plot
 if (draw)
-  gf_plot_mesh(m, 'regions', [GAMMAD]); % the boundary edges appear in red
+  subplot(2,2,1); gf_plot_mesh(m, 'regions', [GAMMAD]);  % the boundary edges appear in red
+  subplot(2,2,2); gf_plot_mesh(m, 'regions', [INNER_FACES]); % inner edges appear in red
   pause(1);
 end
 
@@ -85,14 +95,20 @@ switch (dirichlet_version)
     expr = gf_model_get(md, 'Neumann term', 'u', GAMMAD);
     gf_model_set(md, 'add Dirichlet condition with Nitsche method', mim, 'u', expr, 'gamma0', GAMMAD, theta, 'DirichletData');
 end
+
+% Interior penalty term
+gf_model_set(md, 'add initialized data', 'alpha', [interior_penalty_factor]);
+gf_model_set(md, 'add linear generic assembly brick', mim, 'alpha*(u-Interpolate(u,neighbour_elt))*Test_u - alpha*(u-Interpolate(u,neighbour_elt))*Interpolate(Test_u,neighbour_elt)', INNER_FACES);
+
+
 gf_model_get(md, 'solve');
 U = gf_model_get(md, 'variable', 'u');
 
 if (draw)
-  subplot(2,1,1); gf_plot(mf,U,'mesh','off'); 
+  subplot(2,2,3); gf_plot(mf,U,'mesh','off'); 
   colorbar; title('computed solution');
 
-  subplot(2,1,2); gf_plot(mf,Uexact-U,'mesh','on'); 
+  subplot(2,2,4); gf_plot(mf,Uexact-U,'mesh','on'); 
   colorbar;title('difference with exact solution');
 end
 

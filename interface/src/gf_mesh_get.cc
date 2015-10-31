@@ -784,7 +784,7 @@ void gf_mesh_get(getfemint::mexargs_in& m_in,
 
     /*@GET CVFIDs = ('inner faces'[, CVIDs])
     Return the set of faces shared at least by two elements in CVIDs.
-    Each face is represented only once and is arbitrary chosen
+    Each face is represented only once and is arbitrarily chosen
     between the two neighbour elements. @*/
     sub_command
       ("inner faces", 0, 1, 0, 1,

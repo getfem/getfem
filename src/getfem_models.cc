@@ -87,6 +87,14 @@ namespace getfem {
     }
   };
 
+  model::model(bool comp_version) {
+    init(); complex_version = comp_version;
+    is_linear_ = is_symmetric_ = is_coercive_ = true;
+    leading_dim = 0;
+    time_integration = 0; init_step = false; time_step = scalar_type(1);
+    add_interpolate_transformation_neighbour(*this);
+  }
+
   void model::var_description::set_size(void) {
     n_temp_iter = 0;
     default_iter = 0;

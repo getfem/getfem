@@ -675,7 +675,7 @@ namespace getfem {
   { mesh_region fl; outer_faces_of_mesh(m,m.convex_index(),fl); return fl; }
 
   /** Select all the faces sharing at least two element of the given mesh
-      region. Each face is represented only once and is arbitrary chosen
+      region. Each face is represented only once and is arbitrarily chosen
       between the two neighbour elements.
    */
   mesh_region APIDECL inner_faces_of_mesh(const mesh &m,

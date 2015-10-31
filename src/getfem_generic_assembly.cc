@@ -9576,16 +9576,20 @@ namespace getfem {
         }
 
         if (pnode->node_type == GA_NODE_INTERPOLATE_VAL_TEST) {
-          pgai = new ga_instruction_interpolate_val_base // --> t(Qmult*ndof,Qmult*target_dim)
+	  // --> t(Qmult*ndof,Qmult*target_dim)
+          pgai = new ga_instruction_interpolate_val_base
             (pnode->t, m2, mfn, mfg, *pctx, workspace.qdim(pnode->name));
         } else if (pnode->node_type == GA_NODE_INTERPOLATE_GRAD_TEST) {
-          pgai = new ga_instruction_interpolate_grad_base // --> t(Qmult*ndof,Qmult*target_dim,N)
+	   // --> t(Qmult*ndof,Qmult*target_dim,N)
+          pgai = new ga_instruction_interpolate_grad_base
             (pnode->t, m2, mfn, mfg, *pctx, workspace.qdim(pnode->name));
         } else if (pnode->node_type == GA_NODE_INTERPOLATE_HESS_TEST) {
-          pgai = new ga_instruction_interpolate_hess_base // --> t(Qmult*ndof,Qmult*target_dim,N,N)
+	   // --> t(Qmult*ndof,Qmult*target_dim,N,N)
+          pgai = new ga_instruction_interpolate_hess_base
             (pnode->t, m2, mfn, mfg, *pctx, workspace.qdim(pnode->name));
         } else { // if (pnode->node_type == GA_NODE_INTERPOLATE_DIVERG_TEST) {
-          pgai = new ga_instruction_interpolate_diverg_base // --> t(Qmult*ndof)
+           // --> t(Qmult*ndof)
+	  pgai = new ga_instruction_interpolate_diverg_base
             (pnode->t, m2, mfn, mfg, *pctx, workspace.qdim(pnode->name));
         }
         rmi.instructions.push_back(pgai);
@@ -9597,8 +9601,6 @@ namespace getfem {
 
        case GA_PLUS:
          if (pnode->t.size() == 1) {
-           // GA_DEBUG_ASSERT(pnode->nb_test_functions() == 0,
-           //               "Internal error: non zero number of test functions");
            GA_DEBUG_ASSERT(child0->t.size() == 1,
                            "Internal error: child0 not scalar");
            GA_DEBUG_ASSERT(child1->t.size() == 1,
@@ -9763,8 +9765,6 @@ namespace getfem {
 
        case GA_DIV:
          if (child0->t.size() == 1 && child1->t.size() == 1) {
-           // GA_DEBUG_ASSERT(pnode->nb_test_functions() == 0,
-           //                "Internal error");
            pgai = new ga_instruction_scalar_scalar_div
              (pnode->t[0], child0->t[0], child1->t[0]);
          } else if (child1->t.size() == 1) {
@@ -9811,7 +9811,6 @@ namespace getfem {
        case GA_DOTMULT:
 
          if (child0->t.size() == 1 && child1->t.size() == 1) {
-           // GA_DEBUG_ASSERT(pnode->nb_test_functions() == 0, "Internal error");
            pgai = new ga_instruction_scalar_scalar_mult
              (pnode->t[0], child0->t[0], child1->t[0]);
          } else if (child0->t.size() == 1)
@@ -9839,8 +9838,7 @@ namespace getfem {
 
        case GA_DOTDIV:
          if (child0->t.size() == 1 && child1->t.size() == 1) {
-           // GA_DEBUG_ASSERT(pnode->nb_test_functions() == 0, "Internal error");
-           pgai = new ga_instruction_scalar_scalar_div
+	   pgai = new ga_instruction_scalar_scalar_div
              (pnode->t[0], child0->t[0], child1->t[0]);
          } else if (child1->t.size() == 1) {
            pgai = new ga_instruction_scalar_div
@@ -9855,7 +9853,6 @@ namespace getfem {
 
        case GA_TMULT:
          if (child0->t.size() == 1 && child1->t.size() == 1) {
-           // GA_DEBUG_ASSERT(pnode->nb_test_functions() == 0, "Internal error");
            pgai = new ga_instruction_scalar_scalar_mult
              (pnode->t[0], child0->t[0], child1->t[0]);
          } else if (child0->t.size() == 1)
@@ -11112,7 +11109,7 @@ namespace getfem {
 
         bool converged = true;
         bool is_in = gic.invert(P, P_ref, converged, 1E-4);
-        // cout << "cv = " << cv << " P = " << P << " P_ref = " << P_ref << endl;
+        // cout << "cv = " << cv << " P = " << P << " P_ref = "<< P_ref << endl;
         // cout << " is_in = " << int(is_in) << endl;
         // for (size_type iii = 0;
         //     iii < target_mesh.points_of_convex(cv).size(); ++iii)
@@ -11174,6 +11171,72 @@ namespace getfem {
       = new interpolate_transformation_expression(sm, tm, expr);
 
     workspace.add_interpolate_transformation(name, p);
+  }
+
+  //=========================================================================
+  // Interpolate transformation on neighbour element (for internal faces)
+  //=========================================================================
+
+  class  interpolate_transformation_neighbour
+    : public virtual_interpolate_transformation, public context_dependencies {
+
+  public:
+    void update_from_context(void) const {}
+    void extract_variables(const ga_workspace &/* workspace */,
+                           std::set<var_trans_pair> &/* vars */,
+                           bool /* ignore_data */, const mesh &/* m */,
+                           const std::string &/* interpolate_name */) const {}
+    void init(const ga_workspace &/* workspace */) const {}
+    void finalize(void) const {}
+
+    int transform(const ga_workspace &/*workspace*/, const mesh &m_x,
+                  fem_interpolation_context &ctx_x,
+		  const base_small_vector &/*Normal*/, const mesh **m_t,
+                  size_type &cv, short_type &face_num, base_node &P_ref,
+                  base_small_vector &/*N_y*/,
+                  std::map<var_trans_pair, base_tensor> &/*derivatives*/,
+                  bool compute_derivatives) const {
+      
+      int ret_type = 0;
+      *m_t = &m_x;
+      size_type cv_x = ctx_x.convex_num();
+      short_type face_x = ctx_x.face_num();
+      GMM_ASSERT1(face_x != short_type(-1), "Neighbour transformation can "
+                  "only be applied to internal faces");
+
+      auto adj_face = m_x.adjacent_face(cv_x, face_x);
+     
+      if (adj_face.cv != size_type(-1)) {
+	bgeot::geotrans_inv_convex gic;
+	gic.init(m_x.points_of_convex(adj_face.cv),
+		 m_x.trans_of_convex(adj_face.cv));
+	bool converged = true;
+	bool is_in = gic.invert(ctx_x.xreal(), P_ref, converged, 1E-4);
+	GMM_ASSERT1(is_in && converged, "Geometric transformation inversion "
+		    "has failed in neighbour transformation");
+	face_num = adj_face.f;
+	cv = adj_face.cv;
+	ret_type = 1;
+      }
+      GMM_ASSERT1(!compute_derivatives,
+		  "No derivative for this transformation");
+      return ret_type;
+    }
+
+    interpolate_transformation_neighbour(void) { }
+
+  };
+
+  // Should be added by default
+
+  void add_interpolate_transformation_neighbour(model &md) {
+    pinterpolate_transformation p = new interpolate_transformation_neighbour();
+    md.add_interpolate_transformation("neighbour_elt", p);
+  }
+
+  void add_interpolate_transformation_neighbour(ga_workspace &workspace) {
+    pinterpolate_transformation p = new interpolate_transformation_neighbour();
+    workspace.add_interpolate_transformation("neighbour_elt", p);
   }
 
 
