@@ -27,7 +27,7 @@ r = 1e8;         % Penalization parameter
 draw = true;
 quadrangles = true;
 K = 2;           % Degree of the discontinuous finite element method
-interior_penalty_factor = 1E5; % Parameter of the interior penalty term
+interior_penalty_factor = 1E7; % Parameter of the interior penalty term
 
 asize =  size(who('automatic_var654'));
 if (asize(1)) draw = false; end;
@@ -57,7 +57,7 @@ end
 border = gf_mesh_get(m,'outer faces');
 GAMMAD=1;
 gf_mesh_set(m, 'boundary', GAMMAD, border);
-% Inner faces for the interior penalty terms
+% Inner edges for the interior penalty terms
 in_faces = gf_mesh_get(m,'inner faces');
 INNER_FACES=2;
 gf_mesh_set(m, 'boundary', INNER_FACES, in_faces);
@@ -96,9 +96,12 @@ switch (dirichlet_version)
     gf_model_set(md, 'add Dirichlet condition with Nitsche method', mim, 'u', expr, 'gamma0', GAMMAD, theta, 'DirichletData');
 end
 
-% Interior penalty term
+% Interior penalty terms
 gf_model_set(md, 'add initialized data', 'alpha', [interior_penalty_factor]);
+gf_model_set(md, 'add linear generic assembly brick', mim, '(u-Interpolate(u,neighbour_elt))*(Grad_Test_u.Normal)/2 + (u-Interpolate(u,neighbour_elt))*(Interpolate(Grad_Test_u,neighbour_elt).Normal)/2', INNER_FACES);
+gf_model_set(md, 'add linear generic assembly brick', mim, '-Test_u*(Grad_u.Normal + Interpolate(Grad_u,neighbour_elt).Normal)/2+Interpolate(Test_u,neighbour_elt)*(Grad_u.Normal + Interpolate(Grad_u,neighbour_elt).Normal)/2', INNER_FACES);
 gf_model_set(md, 'add linear generic assembly brick', mim, 'alpha*(u-Interpolate(u,neighbour_elt))*Test_u - alpha*(u-Interpolate(u,neighbour_elt))*Interpolate(Test_u,neighbour_elt)', INNER_FACES);
+% gf_model_set(md, 'add linear generic assembly brick', mim, 'alpha*(u-Interpolate(u,neighbour_elt))*(Test_u-Interpolate(Test_u,neighbour_elt))', INNER_FACES);
 
 
 gf_model_get(md, 'solve');
