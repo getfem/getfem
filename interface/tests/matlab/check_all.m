@@ -105,6 +105,15 @@ catch
   errcnt=errcnt+1; disp(['== ' t ': FAILURE']);
 end;
 
+t = 'demo_laplacian_DG [model use for solving a Poisson problem] ';
+try
+  automatic_var654 = 1;
+  demo_laplacian_DG;
+  disp(['== ' t ': SUCCESS']);
+catch
+  errcnt=errcnt+1; disp(['== ' t ': FAILURE']);
+end;
+
 t = 'demo_periodic_laplacian [model use for solving a Poisson problem]        ';
 try
   automatic_var654 = 1;

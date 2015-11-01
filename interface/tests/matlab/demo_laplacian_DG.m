@@ -98,11 +98,13 @@ end
 
 % Interior penalty terms
 gf_model_set(md, 'add initialized data', 'alpha', [interior_penalty_factor]);
-gf_model_set(md, 'add linear generic assembly brick', mim, '(u-Interpolate(u,neighbour_elt))*(Grad_Test_u.Normal)/2 + (u-Interpolate(u,neighbour_elt))*(Interpolate(Grad_Test_u,neighbour_elt).Normal)/2', INNER_FACES);
-gf_model_set(md, 'add linear generic assembly brick', mim, '-Test_u*(Grad_u.Normal + Interpolate(Grad_u,neighbour_elt).Normal)/2+Interpolate(Test_u,neighbour_elt)*(Grad_u.Normal + Interpolate(Grad_u,neighbour_elt).Normal)/2', INNER_FACES);
-gf_model_set(md, 'add linear generic assembly brick', mim, 'alpha*(u-Interpolate(u,neighbour_elt))*Test_u - alpha*(u-Interpolate(u,neighbour_elt))*Interpolate(Test_u,neighbour_elt)', INNER_FACES);
-% gf_model_set(md, 'add linear generic assembly brick', mim, 'alpha*(u-Interpolate(u,neighbour_elt))*(Test_u-Interpolate(Test_u,neighbour_elt))', INNER_FACES);
-
+jump = '(u-Interpolate(u,neighbour_elt))';
+test_jump = '(Test_u-Interpolate(Test_u,neighbour_elt))';
+grad_mean = '((Grad_u.Normal-Interpolate(Grad_u,neighbour_elt).Normal)/2)';
+grad_test_mean = '((Grad_Test_u.Normal-Interpolate(Grad_Test_u,neighbour_elt).Normal)/2)';
+gf_model_set(md, 'add linear generic assembly brick', mim, sprintf('(%s)*(%s)', jump, grad_test_mean), INNER_FACES);
+gf_model_set(md, 'add linear generic assembly brick', mim, sprintf('(%s)*(%s)', test_jump, grad_mean), INNER_FACES);
+gf_model_set(md, 'add linear generic assembly brick', mim, sprintf('alpha*(%s)*(%s)', jump, test_jump), INNER_FACES);
 
 gf_model_get(md, 'solve');
 U = gf_model_get(md, 'variable', 'u');

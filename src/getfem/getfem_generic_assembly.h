@@ -116,6 +116,8 @@ namespace getfem {
   // functions, operators.
   //=========================================================================
 
+  typedef std::pair<std::string, std::string> var_trans_pair;
+
   class ga_workspace {
 
     const model *md;
@@ -174,10 +176,14 @@ namespace getfem {
     static const mesh dummy_mesh;
     static const mesh_im dummy_mim;
     static const mesh_region dummy_region;
+    mutable std::set<var_trans_pair> test1, test2;
+    var_trans_pair selected_test1, selected_test2;
 
   private:
 
     mutable std::map<std::string, gmm::sub_interval> int_disabled_variables;
+    
+    
 
     std::map<const mesh *, std::list<mesh_region> > registred_mims;
 
@@ -189,7 +195,6 @@ namespace getfem {
     std::map<std::string, pinterpolate_transformation> transformations;
     std::map<std::string, pelementary_transformation> elem_transformations;
     std::vector<tree_description> trees;
-    std::list<ga_tree *> aux_trees;
 
     std::map<std::string, std::vector<std::string> > variable_groups;
     std::map<std::string, std::string> macros;
@@ -209,7 +214,6 @@ namespace getfem {
                   const mesh_region &rg,
                   const std::string &expr, size_type add_derivative_order = 2,
                   bool scalar_expr = true);
-    void clear_aux_trees(void);
 
     struct sparse_matrix_ptr {
       bool todelete;
@@ -304,7 +308,6 @@ namespace getfem {
     /** Print some information about all previously added expressions. */
     void print(std::ostream &str);
 
-    void add_aux_tree(ga_tree &tree);
     size_type nb_trees(void) const;
     tree_description &tree_info(size_type i);
 
@@ -526,23 +529,6 @@ namespace getfem {
     }
 
     size_type qdim(const std::string &name) const;
-//     {
-//       const mesh_fem *mf = associated_mf(name);
-//       const im_data *imd = associated_im_data(name);
-//       size_type n = ;
-//       if (mf) {
-//         size_type ndof = mf->nb_dof();
-//         GMM_ASSERT1(ndof, "Variable " << name << " with no dof. You probably "
-//                     "made a wrong initialization of a mesh_fem object");
-//         return mf->get_qdim() * (n / ndof);
-//       } else if (imd) {
-//         size_type q = n / imd->nb_filtered_index();
-//         GMM_ASSERT1(q % imd->nb_tensor_elem() == 0,
-//                     "Invalid mesh im data vector");
-//         return q;
-//       }
-//       return gmm::vect_size(value(name));
-//     }
 
     bgeot::multi_index qdims(const std::string &name) const;
 
