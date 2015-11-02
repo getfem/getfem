@@ -680,8 +680,10 @@ namespace getfem {
       clear_node_rec(pnode);
     }
 
-    void clear(void)
-    { if (root) clear_node_rec(root); root = current_node = 0; }
+    void clear(void) { 
+      std::string ga_tree_to_string(const ga_tree &tree);
+      if (root) clear_node_rec(root); root = current_node = 0;
+    }
 
     void clear_children(pga_tree_node pnode) {
       for (size_type i = 0; i < pnode->children.size(); ++i)
@@ -5173,12 +5175,20 @@ namespace getfem {
   }
 
   ga_workspace::m_tree::~m_tree(void) { if (ptree) delete ptree; }
+  ga_workspace::m_tree::m_tree(const m_tree& o)
+    : ptree(o.ptree), meshdim(o.meshdim), ignore_X(o.ignore_X)
+  { if (o.ptree) ptree = new ga_tree(*(o.ptree)); }
+  ga_workspace::m_tree &ga_workspace::m_tree::operator =(const m_tree& o) {
+    ptree = o.ptree; meshdim = o.meshdim; ignore_X = o.ignore_X;
+    if (o.ptree) ptree = new ga_tree(*(o.ptree));
+    return *this;
+  }
 
   ga_tree &ga_workspace::macro_tree(const std::string &name,
                                     size_type meshdim, size_type ref_elt_dim,
                                     bool ignore_X) const {
     GMM_ASSERT1(macro_exists(name), "Undefined macro");
-    std::map<std::string, m_tree>::iterator it = macro_trees.find(name);
+    auto it = macro_trees.find(name);
     bool to_be_analyzed = false;
     m_tree *mt = 0;
 
@@ -5756,6 +5766,18 @@ namespace getfem {
     // cout << "semantic analysis of " << ga_tree_to_string(tree) << endl;
     ga_node_analysis(expr, tree, workspace, tree.root, meshdim, ref_elt_dim,
                      eval_fixed_size, ignore_X, option);
+    if (tree.root && option == 2) {
+      if (((tree.root->test_function_type & 1) && 
+	   (tree.root->name_test1.compare(workspace.selected_test1.first)
+	    || tree.root->interpolate_name_test1.compare
+	    (workspace.selected_test1.second)))
+	  ||
+	  ((tree.root->test_function_type & 2) &&
+	   (tree.root->name_test2.compare(workspace.selected_test2.first)
+	    || tree.root->interpolate_name_test2.compare
+	    (workspace.selected_test2.second))))
+	tree.clear();
+    }
     // cout << "semantic analysis done " << endl;
     ga_valid_operand(expr, tree.root);
   }

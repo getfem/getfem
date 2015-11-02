@@ -204,11 +204,12 @@ namespace getfem {
       size_type meshdim;
       bool ignore_X;
       m_tree(void) : ptree(0) {}
+      m_tree(const m_tree& o);
+      m_tree &operator =(const m_tree& o);
       ~m_tree(void);
     };
 
     mutable std::map<std::string, m_tree> macro_trees;
-
 
     void add_tree(ga_tree &tree, const mesh &m, const mesh_im &mim,
                   const mesh_region &rg,
