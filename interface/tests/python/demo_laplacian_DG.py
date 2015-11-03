@@ -1,8 +1,7 @@
 #!/usr/bin/env python
-# -*- coding: UTF8 -*-
 # Python GetFEM++ interface
 #
-# Copyright (C) 2004-2015 Yves Renard, Julien Pommier.
+# Copyright (C) 2015-2015 Yves Renard
 #
 # This file is a part of GetFEM++
 #
@@ -24,18 +23,25 @@
   This program is used to check that python-getfem is working. This is
   also a good example of use of GetFEM++.
 
-  $Id: demo_laplacian.py 4429 2013-10-01 13:15:15Z renard $
+  Poisson problem solved with a Discontinuous Galerkin method (or
+  interior penalty method). See for instance
+  "Unified analysis of discontinuous Galerkin methods for elliptic
+  problems", D.N. Arnold, F. Brezzi, B. Cockburn, L.D. Marini, SIAM J.
+  Numer. Anal. vol. 39:5, pp 1749-1779, 2002.
+
+  $Id: demo_laplacian_DG.py 4429 2013-10-01 13:15:15Z renard $
 """
 # Import basic modules
 import getfem as gf
 import numpy as np
 
 ## Parameters
-NX = 100                           # Mesh parameter.
+NX = 20                            # Mesh parameter.
 Dirichlet_with_multipliers = True  # Dirichlet condition with multipliers
                                    # or penalization
 dirichlet_coefficient = 1e10       # Penalization coefficient
-interior_penalty_factor = 1e6      # Parameter of the interior penalty term
+interior_penalty_factor = 1e7      # Parameter of the interior penalty term
+verify_neighbour_computation = True;
 
 
 # Create a simple cartesian mesh
@@ -73,6 +79,14 @@ in_faces = m.inner_faces()
 INNER_FACES=4
 m.set_region(INNER_FACES, in_faces)
 
+if (verify_neighbour_computation):
+  TEST_FACES=5
+  adjf = m.adjacent_face(42, 0);
+  if (len(adjf) != 2):
+    print ('No adjacent edge found, change the element number')
+    exit(1)
+  m.set_region(TEST_FACES, np.array([[42,adjf[0][0]], [0,adjf[1][0]]]));
+  
 
 # Interpolate the exact solution (Assuming mfu is a Lagrange fem)
 Ue = mfu.eval('y*(y-1)*x*(x-1)+x*x*x*x*x')
@@ -125,8 +139,13 @@ else:
 
 # Interior penalty term
 md.add_initialized_data('alpha', [interior_penalty_factor])
-md.add_linear_generic_assembly_brick(mim, 'alpha*(u-Interpolate(u,neighbour_elt))*Test_u - alpha*(u-Interpolate(u,neighbour_elt))*Interpolate(Test_u,neighbour_elt)', INNER_FACES)
-
+jump = "(u-Interpolate(u,neighbour_elt))";
+test_jump = "(Test_u-Interpolate(Test_u,neighbour_elt))";
+grad_mean = "((Grad_u.Normal-Interpolate(Grad_u,neighbour_elt).Normal)/2)";
+grad_test_mean = "((Grad_Test_u.Normal-Interpolate(Grad_Test_u,neighbour_elt).Normal)/2)";
+# md.add_linear_generic_assembly_brick(mim, "({F})*({G})".format(F=jump, G=grad_test_mean), INNER_FACES);
+# md.add_linear_generic_assembly_brick(mim, "({F})*({G})".format(F=test_jump, G=grad_mean), INNER_FACES);
+md.add_linear_generic_assembly_brick(mim, "alpha*({F})*({G})".format(F=jump, G=test_jump), INNER_FACES);
 
 gf.memstats()
 # md.listvar()
@@ -148,6 +167,17 @@ mfu.export_to_pos('laplacian.pos', Ue,'Exact solution',
 print 'You can view the solution with (for example):'
 print 'gmsh laplacian.pos'
 
+if (verify_neighbour_computation):
+  A=gf.asm('generic', mim, 1, 'u*Test_u*(Normal.Normal)', TEST_FACES, md)
+  B=gf.asm('generic', mim, 1, '-Interpolate(u,neighbour_elt)*Interpolate(Test_u,neighbour_elt)*(Interpolate(Normal,neighbour_elt).Normal)', TEST_FACES, md)
+  err_v = np.linalg.norm(A-B)
+  A=gf.asm('generic', mim, 1, '(Grad_u.Normal)*(Grad_Test_u.Normal)', TEST_FACES, md)
+  B=gf.asm('generic', mim, 1, '(Interpolate(Grad_u,neighbour_elt).Normal)*(Interpolate(Grad_Test_u,neighbour_elt).Normal)', TEST_FACES, md)
+  err_v = err_v + np.linalg.norm(A-B)
+  if (err_v > 1E-14):
+    print 'Test on neighbour element computation: error to big: ', err_v
+    exit(1)
+  
 if (H1error > 1e-3):
     print 'Error too large !'
     exit(1)

@@ -681,7 +681,6 @@ namespace getfem {
     }
 
     void clear(void) { 
-      std::string ga_tree_to_string(const ga_tree &tree);
       if (root) clear_node_rec(root); root = current_node = 0;
     }
 

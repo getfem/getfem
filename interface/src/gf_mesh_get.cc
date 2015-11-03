@@ -819,9 +819,25 @@ void gf_mesh_get(getfemint::mexargs_in& m_in,
        outer_faces(*pmesh, in, out, "box");
        );
 
-    
+    /*@GET CVFIDs = ('adjacent face', @int cvid, @int fid)
+    Return convex face of the neighbour element if it exists.
+    If the convex have more than one neighbour
+    relativley to the face ``f`` (think to bar elements in 3D for instance),
+    return the first face found. @*/
+    sub_command
+      ("adjacent face", 2, 2, 0, 1,
+       check_empty_mesh(pmesh);
+       size_type cv = in.pop().to_convex_number(*pmesh);
+       short_type f = in.pop().to_face_number(pmesh->structure_of_convex(cv)->nb_faces());
+       bgeot::convex_face cvf = pmesh->adjacent_face(cv, f);
+       getfem::mesh_region flst;
+       if (cvf.cv != size_type(-1))
+	 flst.add(cvf.cv,cvf.f);
+       out.pop().from_mesh_region(flst);
+       );
+
     /*@GET CVFIDs = ('faces from cvid'[, @ivec CVIDs][, 'merge'])
-    Return a list of convexes faces from a list of convex #id.
+    Return a list of convex faces from a list of convex #id.
 
     `CVFIDs` is a two-rows matrix, the first row lists convex #ids,
     and the second lists face numbers (local number in the convex).

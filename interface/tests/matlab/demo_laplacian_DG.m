@@ -16,7 +16,10 @@
 % Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 
 % A Poisson problem solved with a Discontinuous Galerkin method (or
-% interior penalty method).
+% interior penalty method). See for instance
+% "Unified analysis of discontinuous Galerkin methods for elliptic
+% problems", D.N. Arnold, F. Brezzi, B. Cockburn, L.D. Marini, SIAM J.
+% Numer. Anal. vol. 39:5, pp 1749-1779, 2002.
 
 % Options for prescribing the Dirichlet condition
 dirichlet_version = 0; % 0 = simplification, 1 = with multipliers,
@@ -28,6 +31,7 @@ draw = true;
 quadrangles = true;
 K = 2;           % Degree of the discontinuous finite element method
 interior_penalty_factor = 1E7; % Parameter of the interior penalty term
+verify_neighbour_computation = true;
 
 asize =  size(who('automatic_var654'));
 if (asize(1)) draw = false; end;
@@ -56,11 +60,24 @@ end
 % Detect the border of the mesh
 border = gf_mesh_get(m,'outer faces');
 GAMMAD=1;
-gf_mesh_set(m, 'boundary', GAMMAD, border);
+gf_mesh_set(m, 'region', GAMMAD, border);
 % Inner edges for the interior penalty terms
 in_faces = gf_mesh_get(m,'inner faces');
 INNER_FACES=2;
-gf_mesh_set(m, 'boundary', INNER_FACES, in_faces);
+gf_mesh_set(m, 'region', INNER_FACES, in_faces);
+if (verify_neighbour_computation)
+  TEST_FACES=3;
+  adjf = gf_mesh_get(m, 'adjacent face', 43, 1);
+  if (size(adjf,2) == 0)
+    error('Adjacent face not found');
+  end
+  gf_mesh_set(m, 'region', TEST_FACES, [[43; 1], adjf]);
+  if (draw)
+    figure(2); 
+    gf_plot_mesh(m, 'regions', [TEST_FACES], 'convexes', 'on');
+    figure(1)
+  end
+end
 
 % Mesh plot
 if (draw)
@@ -121,8 +138,19 @@ err = gf_compute(mf, Uexact-U, 'H1 norm', mim);
 
 disp(sprintf('H1 norm of error: %g', err));
 
-if (err > 2E-4)
-   error('Laplacian test: error to big');
+if (verify_neighbour_computation)
+  A=gf_asm('generic', mim, 1, 'u*Test_u*(Normal.Normal)', TEST_FACES, md);
+  B=gf_asm('generic', mim, 1, '-Interpolate(u,neighbour_elt)*Interpolate(Test_u,neighbour_elt)*(Interpolate(Normal,neighbour_elt).Normal)', TEST_FACES, md);
+  err_v = norm(A-B);
+  A=gf_asm('generic', mim, 1, '(Grad_u.Normal)*(Grad_Test_u.Normal)', TEST_FACES, md);
+  B=gf_asm('generic', mim, 1, '(Interpolate(Grad_u,neighbour_elt).Normal)*(Interpolate(Grad_Test_u,neighbour_elt).Normal)', TEST_FACES, md);
+  err_v = err_v + norm(A-B);
+  if (err_v > 1E-14)
+    error('Test on neighbour element computation: error to big');
+  end
 end
 
+if (err > 2E-4)
+  error('Laplacian test: error to big');
+end
 

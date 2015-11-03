@@ -53,7 +53,7 @@ end
 border = gf_mesh_get(m,'outer faces');
 % Mark it as boundary GAMMAD=1
 GAMMAD=1;
-gf_mesh_set(m, 'boundary', GAMMAD, border);
+gf_mesh_set(m, 'region', GAMMAD, border);
 if (draw)
   gf_plot_mesh(m, 'regions', [GAMMAD]); % the boundary edges appear in red
   pause(1);
