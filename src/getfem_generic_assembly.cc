@@ -5349,7 +5349,12 @@ namespace getfem {
             vll.insert(var_trans_pair(td.name_test1,
                                       td.interpolate_name_test1));
           }
-          vl_test1.push_back(td.name_test1);
+	  bool found = false;
+	  for (size_type j = 0; j < vl_test1.size(); ++j)
+	    if (td.name_test1.compare(vl_test1[j]) == 0)
+	      found = true;
+	  if (!found)
+	    vl_test1.push_back(td.name_test1);
         }
         break;
       case 2:
@@ -5372,8 +5377,15 @@ namespace getfem {
             vll.insert(var_trans_pair(td.name_test2,
                                       td.interpolate_name_test2));
           }
-          vl_test1.push_back(td.name_test1);
-          vl_test2.push_back(td.name_test2);
+	  bool found = false;
+	  for (size_type j = 0; j < vl_test1.size(); ++j)
+	    if ((td.name_test1.compare(vl_test1[j]) == 0) &&
+		(td.name_test2.compare(vl_test2[j]) == 0))
+	      found = true;
+	  if (!found) {
+	    vl_test1.push_back(td.name_test1);
+	    vl_test2.push_back(td.name_test2);
+	  }
         }
         if (fv) islin = false;
         break;
