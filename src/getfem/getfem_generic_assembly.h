@@ -566,8 +566,6 @@ namespace getfem {
   struct ga_instruction_set;
 
   class ga_function {
-    // gerer les arguments et leur modif éventuelle ..
-    // Il faut pouvoir deriver les fonctions et obtenir leur gradients
     mutable ga_workspace local_workspace;
     std::string expr;
     mutable ga_instruction_set *gis;

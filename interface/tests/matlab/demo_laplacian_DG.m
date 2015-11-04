@@ -22,15 +22,16 @@
 % Numer. Anal. vol. 39:5, pp 1749-1779, 2002.
 
 % Options for prescribing the Dirichlet condition
-dirichlet_version = 0; % 0 = simplification, 1 = with multipliers,
+dirichlet_version = 3; % 0 = simplification, 1 = with multipliers,
                        % 2 = penalization,  3 = Nitsche's method
 theta = 1;       % Nitsche's method parameter theta
 gamma0 = 0.001;  % Nitsche's method parameter gamma0 (gamma = gamma0*h)
-r = 1e8;         % Penalization parameter
+r = 1e8;         % Penalization parameter for the Dirichlet condition
 draw = true;
 quadrangles = true;
+NX = 20;
 K = 2;           % Degree of the discontinuous finite element method
-interior_penalty_factor = 1E7; % Parameter of the interior penalty term
+interior_penalty_factor = 300*NX; % Parameter of the interior penalty term
 verify_neighbour_computation = true;
 
 asize =  size(who('automatic_var654'));
@@ -38,7 +39,6 @@ if (asize(1)) draw = false; end;
 
 % trace on;
 gf_workspace('clear all');
-NX = 20;
 if (quadrangles)
   m = gf_mesh('cartesian',[0:1/NX:1],[0:1/NX:1]);
 else
@@ -61,10 +61,12 @@ end
 border = gf_mesh_get(m,'outer faces');
 GAMMAD=1;
 gf_mesh_set(m, 'region', GAMMAD, border);
+
 % Inner edges for the interior penalty terms
 in_faces = gf_mesh_get(m,'inner faces');
 INNER_FACES=2;
 gf_mesh_set(m, 'region', INNER_FACES, in_faces);
+
 if (verify_neighbour_computation)
   TEST_FACES=3;
   adjf = gf_mesh_get(m, 'adjacent face', 43, 1);
@@ -115,13 +117,13 @@ end
 
 % Interior penalty terms
 gf_model_set(md, 'add initialized data', 'alpha', [interior_penalty_factor]);
-jump = '(u-Interpolate(u,neighbour_elt))';
-test_jump = '(Test_u-Interpolate(Test_u,neighbour_elt))';
-grad_mean = '((Grad_u.Normal-Interpolate(Grad_u,neighbour_elt).Normal)/2)';
-grad_test_mean = '((Grad_Test_u.Normal-Interpolate(Grad_Test_u,neighbour_elt).Normal)/2)';
-gf_model_set(md, 'add linear generic assembly brick', mim, sprintf('(%s)*(%s)', jump, grad_test_mean), INNER_FACES);
-gf_model_set(md, 'add linear generic assembly brick', mim, sprintf('(%s)*(%s)', test_jump, grad_mean), INNER_FACES);
-gf_model_set(md, 'add linear generic assembly brick', mim, sprintf('alpha*(%s)*(%s)', jump, test_jump), INNER_FACES);
+jump = '((u-Interpolate(u,neighbour_elt))*Normal)';
+test_jump = '((Test_u-Interpolate(Test_u,neighbour_elt))*Normal)';
+grad_mean = '((Grad_u+Interpolate(Grad_u,neighbour_elt))*0.5)';
+grad_test_mean = '((Grad_Test_u+Interpolate(Grad_Test_u,neighbour_elt))*0.5)';
+gf_model_set(md, 'add linear generic assembly brick', mim, sprintf('-((%s).(%s))', grad_mean, test_jump), INNER_FACES);
+gf_model_set(md, 'add linear generic assembly brick', mim, sprintf('-((%s).(%s))', jump, grad_test_mean), INNER_FACES);
+gf_model_set(md, 'add linear generic assembly brick', mim, sprintf('-alpha*((%s).(%s))', jump, test_jump), INNER_FACES);
 
 gf_model_get(md, 'solve');
 U = gf_model_get(md, 'variable', 'u');
@@ -145,7 +147,7 @@ if (verify_neighbour_computation)
   A=gf_asm('generic', mim, 1, '(Grad_u.Normal)*(Grad_Test_u.Normal)', TEST_FACES, md);
   B=gf_asm('generic', mim, 1, '(Interpolate(Grad_u,neighbour_elt).Normal)*(Interpolate(Grad_Test_u,neighbour_elt).Normal)', TEST_FACES, md);
   err_v = err_v + norm(A-B);
-  if (err_v > 1E-14)
+  if (err_v > 1E-13)
     error('Test on neighbour element computation: error to big');
   end
 end

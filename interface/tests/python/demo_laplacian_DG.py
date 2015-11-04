@@ -40,7 +40,7 @@ NX = 20                            # Mesh parameter.
 Dirichlet_with_multipliers = True  # Dirichlet condition with multipliers
                                    # or penalization
 dirichlet_coefficient = 1e10       # Penalization coefficient
-interior_penalty_factor = 1e7      # Parameter of the interior penalty term
+interior_penalty_factor = 1e2*NX   # Parameter of the interior penalty term
 verify_neighbour_computation = True;
 
 
@@ -137,15 +137,15 @@ else:
                                                DIRICHLET_BOUNDARY_NUM2,
                                                'DirichletData')
 
-# Interior penalty term
+# Interior penalty terms
 md.add_initialized_data('alpha', [interior_penalty_factor])
-jump = "(u-Interpolate(u,neighbour_elt))";
-test_jump = "(Test_u-Interpolate(Test_u,neighbour_elt))";
-grad_mean = "((Grad_u.Normal-Interpolate(Grad_u,neighbour_elt).Normal)/2)";
-grad_test_mean = "((Grad_Test_u.Normal-Interpolate(Grad_Test_u,neighbour_elt).Normal)/2)";
-# md.add_linear_generic_assembly_brick(mim, "({F})*({G})".format(F=jump, G=grad_test_mean), INNER_FACES);
-# md.add_linear_generic_assembly_brick(mim, "({F})*({G})".format(F=test_jump, G=grad_mean), INNER_FACES);
-md.add_linear_generic_assembly_brick(mim, "alpha*({F})*({G})".format(F=jump, G=test_jump), INNER_FACES);
+jump = "((u-Interpolate(u,neighbour_elt))*Normal)"
+test_jump = "((Test_u-Interpolate(Test_u,neighbour_elt))*Normal)"
+grad_mean = "((Grad_u+Interpolate(Grad_u,neighbour_elt))*0.5)"
+grad_test_mean = "((Grad_Test_u+Interpolate(Grad_Test_u,neighbour_elt))*0.5)"
+md.add_linear_generic_assembly_brick(mim, "-(({F}).({G}))".format(F=grad_mean, G=test_jump), INNER_FACES);
+md.add_linear_generic_assembly_brick(mim, "-(({F}).({G}))".format(F=jump, G=grad_test_mean), INNER_FACES);
+md.add_linear_generic_assembly_brick(mim, "alpha*(({F}).({G}))".format(F=jump, G=test_jump), INNER_FACES);
 
 gf.memstats()
 # md.listvar()
@@ -174,7 +174,7 @@ if (verify_neighbour_computation):
   A=gf.asm('generic', mim, 1, '(Grad_u.Normal)*(Grad_Test_u.Normal)', TEST_FACES, md)
   B=gf.asm('generic', mim, 1, '(Interpolate(Grad_u,neighbour_elt).Normal)*(Interpolate(Grad_Test_u,neighbour_elt).Normal)', TEST_FACES, md)
   err_v = err_v + np.linalg.norm(A-B)
-  if (err_v > 1E-14):
+  if (err_v > 1E-13):
     print 'Test on neighbour element computation: error to big: ', err_v
     exit(1)
   
