@@ -469,23 +469,28 @@ namespace getfem {
     }
 
     ga_tree_node(void)
-      : node_type(GA_NODE_VOID), test_function_type(size_type(-1)), qdim1(0),
-        qdim2(0), pos(0), der1(0), der2(0), symmetric_op(false), hash_value(0) {}
+      : node_type(GA_NODE_VOID), test_function_type(-1),
+        qdim1(0), qdim2(0), nbc1(0), nbc2(0), nbc3(0),
+        pos(0), der1(0), der2(0), symmetric_op(false), hash_value(0) {}
     ga_tree_node(GA_NODE_TYPE ty, size_type p)
-      : node_type(ty), test_function_type(size_type(-1)), qdim1(0), qdim2(0),
+      : node_type(ty), test_function_type(-1),
+        qdim1(0), qdim2(0), nbc1(0), nbc2(0), nbc3(0),
         pos(p), der1(0), der2(0), symmetric_op(false), hash_value(0) {}
     ga_tree_node(scalar_type v, size_type p)
-      : node_type(GA_NODE_CONSTANT), test_function_type(size_type(-1)),
-        qdim1(0), qdim2(0), pos(p), der1(0), der2(0), symmetric_op(false),
+      : node_type(GA_NODE_CONSTANT), test_function_type(-1),
+        qdim1(0), qdim2(0), nbc1(0), nbc2(0), nbc3(0),
+        pos(p), der1(0), der2(0), symmetric_op(false),
         hash_value(0)
     { init_scalar_tensor(v); }
     ga_tree_node(const char *n, size_type l, size_type p)
-      : node_type(GA_NODE_NAME), test_function_type(size_type(-1)), qdim1(0),
-        qdim2(0), pos(p), name(n, l), der1(0), der2(0), symmetric_op(false),
+      : node_type(GA_NODE_NAME), test_function_type(-1),
+        qdim1(0), qdim2(0), nbc1(0), nbc2(0), nbc3(0),
+        pos(p), name(n, l), der1(0), der2(0), symmetric_op(false),
         hash_value(0) {}
     ga_tree_node(GA_TOKEN_TYPE op, size_type p)
-      : node_type(GA_NODE_OP), test_function_type(size_type(-1)), qdim1(0),
-        qdim2(0), pos(p), der1(0), der2(0), op_type(op), symmetric_op(false),
+      : node_type(GA_NODE_OP), test_function_type(-1),
+        qdim1(0), qdim2(0), nbc1(0), nbc2(0), nbc3(0),
+        pos(p), der1(0), der2(0), op_type(op), symmetric_op(false),
         hash_value(0) {}
 
   };
@@ -918,14 +923,14 @@ namespace getfem {
 
     if (version && ntype1 == GA_NODE_OP && pnode1->symmetric_op) {
       if (sub_tree_are_equal(pnode1->children[0], pnode2->children[0],
-                                 workspace, version) &&
+                             workspace, version) &&
           sub_tree_are_equal(pnode1->children[1], pnode2->children[1],
-                                 workspace, version))
+                             workspace, version))
         return true;
       if (sub_tree_are_equal(pnode1->children[1], pnode2->children[0],
-                                 workspace, version) &&
+                             workspace, version) &&
           sub_tree_are_equal(pnode1->children[0], pnode2->children[1],
-                                 workspace, version) )
+                             workspace, version) )
         return true;
       return false;
     } else {
@@ -1930,8 +1935,10 @@ namespace getfem {
       std::map<scalar_type, std::list<pga_tree_node> > node_list;
 
       ~region_mim_instructions(void) {
-        for (size_type i = 0; i < instructions.size(); ++i)
+        for (size_type i = 0; i < instructions.size(); ++i) {
           delete instructions[i];
+          instructions[i] = 0;
+        }
       }
       region_mim_instructions(void): m(0) {}
     };
@@ -3426,7 +3433,7 @@ namespace getfem {
         return 0;
       const std::string &varname
         = inin.m ? workspace.variable_in_group(gname, *(inin.m))
-        : workspace.first_variable_of_group(gname);
+                 : workspace.first_variable_of_group(gname);
       vgi.mf = workspace.associated_mf(varname);
       vgi.Ir = gis.var_intervals[varname];
       vgi.In = workspace.interval_of_variable(varname);
@@ -5603,9 +5610,9 @@ namespace getfem {
 
   ga_workspace::tree_description &ga_workspace::tree_description::operator =
   (const ga_workspace::tree_description& td)
-  { if (ptree) delete ptree; copy(td); return *this; }
+  { if (ptree) delete ptree; ptree = 0; copy(td); return *this; }
   ga_workspace::tree_description::~tree_description()
-  { if (ptree) delete ptree; }
+  { if (ptree) delete ptree; ptree = 0; }
 
   //=========================================================================
   // Some hash code functions for node identification
@@ -6104,7 +6111,7 @@ namespace getfem {
 
         if (ndt == 1) {
           if (!(workspace.interpolate_transformation_exists
-                        (pnode->interpolate_name)))  {
+                (pnode->interpolate_name)))  {
             ga_throw_error(expr, pnode->pos,
                            "Unknown interpolate transformation");
           }
@@ -7025,9 +7032,8 @@ namespace getfem {
               workspace.test1.insert
                 (var_trans_pair(pnode->name_test1,
                                 pnode->interpolate_name_test1));
-            pnode->qdim1
-              = (mf ? workspace.qdim(name)
-                 : gmm::vect_size(workspace.value(name)));
+            pnode->qdim1 = mf ? workspace.qdim(name)
+                              : gmm::vect_size(workspace.value(name));
             if (!(pnode->qdim1))
               ga_throw_error(expr, pnode->pos,
                              "Invalid null size of variable");
@@ -7038,9 +7044,8 @@ namespace getfem {
               workspace.test2.insert
                 (var_trans_pair(pnode->name_test2,
                                 pnode->interpolate_name_test2));
-            pnode->qdim2
-              = (mf ? workspace.qdim(name)
-                    : gmm::vect_size(workspace.value(name)));
+            pnode->qdim2 = mf ? workspace.qdim(name)
+                              : gmm::vect_size(workspace.value(name));
             if (!(pnode->qdim2))
               ga_throw_error(expr, pnode->pos,
                              "Invalid null size of variable");
@@ -10602,7 +10607,7 @@ namespace getfem {
     return *this;
   }
 
-  ga_function::~ga_function() { if (gis) delete gis; }
+  ga_function::~ga_function() { if (gis) delete gis; gis = 0; }
 
   const base_tensor &ga_function::eval(void) const {
     GMM_ASSERT1(gis, "Uncompiled function");

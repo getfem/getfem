@@ -59,24 +59,24 @@ static void set_region(getfem::mesh &mesh, getfemint::mexargs_in& in,
 }
 
 static void intersect_regions(getfem::mesh &mesh, getfemint::mexargs_in& in) {
-  unsigned ir1 = in.pop().to_integer(1,100000);
-  unsigned ir2 = in.pop().to_integer(1,100000);
+  unsigned ir1 = in.pop().to_integer(1,1000000);
+  unsigned ir2 = in.pop().to_integer(1,1000000);
   getfem::mesh_region &r1 = mesh.region(ir1);
   getfem::mesh_region &r2 = mesh.region(ir2);
   r1 = getfem::mesh_region::intersection(r1, r2);
 }
 
 static void merge_regions(getfem::mesh &mesh, getfemint::mexargs_in& in) {
-  unsigned ir1 = in.pop().to_integer(1,100000);
-  unsigned ir2 = in.pop().to_integer(1,100000);
+  unsigned ir1 = in.pop().to_integer(1,1000000);
+  unsigned ir2 = in.pop().to_integer(1,1000000);
   getfem::mesh_region &r1 = mesh.region(ir1);
   getfem::mesh_region &r2 = mesh.region(ir2);
   r1 = getfem::mesh_region::merge(r1, r2);
 }
 
 static void subtract_regions(getfem::mesh &mesh, getfemint::mexargs_in& in) {
-  unsigned ir1 = in.pop().to_integer(1,100000);
-  unsigned ir2 = in.pop().to_integer(1,100000);
+  unsigned ir1 = in.pop().to_integer(1,1000000);
+  unsigned ir2 = in.pop().to_integer(1,1000000);
   getfem::mesh_region &r1 = mesh.region(ir1);
   getfem::mesh_region &r2 = mesh.region(ir2);
   r1 = getfem::mesh_region::subtract(r1, r2);

@@ -88,7 +88,7 @@ namespace getfem {
     { tab[name] = pt; }
     ~ga_predef_operator_tab() {
       for (T::iterator it = tab.begin(); it != tab.end(); ++it)
-        delete it->second;
+        { delete it->second; it->second = 0; }
     }
   };
 
@@ -166,7 +166,10 @@ namespace getfem {
       const mesh_region *rg;
       ga_tree *ptree;
       base_vector elem;
-      tree_description() : ptree(0) {}
+      tree_description()
+        : name_test1(""), name_test2(""),
+          interpolate_name_test1(""), interpolate_name_test2(""),
+          mim(0), m(0), rg(0), ptree(0), elem(0) {}
       void copy(const tree_description& td);
       tree_description(const tree_description& td) { copy(td); }
       tree_description &operator =(const tree_description& td);
@@ -203,7 +206,7 @@ namespace getfem {
       ga_tree *ptree;
       size_type meshdim;
       bool ignore_X;
-      m_tree() : ptree(0) {}
+      m_tree() : ptree(0), meshdim(-1), ignore_X(false) {}
       m_tree(const m_tree& o);
       m_tree &operator =(const m_tree& o);
       ~m_tree();
@@ -236,7 +239,7 @@ namespace getfem {
         if (todelete) ptr = new model_real_sparse_matrix(smp());
         return *this;
       }
-      ~sparse_matrix_ptr() { if (todelete) delete ptr; }
+      ~sparse_matrix_ptr() { if (todelete) delete ptr; ptr = 0; }
     };
 
     struct base_vector_ptr {
@@ -259,7 +262,7 @@ namespace getfem {
         if (todelete) ptr = new base_vector(smp());
         return *this;
       }
-      ~base_vector_ptr() { if (todelete) delete ptr; }
+      ~base_vector_ptr() { if (todelete) delete ptr; ptr = 0; }
     };
 
     sparse_matrix_ptr K;
@@ -571,7 +574,7 @@ namespace getfem {
     mutable ga_instruction_set *gis;
 
   public:
-    ga_function() : gis(0) {}
+    ga_function() : local_workspace(), expr(""), gis(0) {}
     ga_function(const model &md, const std::string &e);
     ga_function(const ga_workspace &workspace_, const std::string &e);
     ga_function(const std::string &e);

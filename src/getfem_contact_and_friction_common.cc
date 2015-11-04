@@ -1327,7 +1327,8 @@ namespace getfem {
       mutable model_real_plain_vector U_unred; // Unreduced displacement
       bool slave;
  
-      contact_boundary() {}
+      contact_boundary()
+        : region(-1), mfu(0), dispname(""), U(0), U_unred(0), slave(false) {}
       contact_boundary(size_type r, const mesh_fem *mf, const std::string dn,
                        bool sl)
         : region(r), mfu(mf), dispname(dn), slave(sl) {}
@@ -1338,7 +1339,8 @@ namespace getfem {
       size_type ind_element;   // Element number
       short_type ind_face;     // Face number in element
       base_small_vector mean_normal;   // Mean outward normal unit vector
-      face_box_info() {}
+      face_box_info()
+        : ind_boundary(-1), ind_element(-1), ind_face(-1), mean_normal(0) {}
       face_box_info(size_type ib, size_type ie,
                     short_type iff, const base_small_vector &n)
         : ind_boundary(ib), ind_element(ie), ind_face(iff), mean_normal(n) {}
