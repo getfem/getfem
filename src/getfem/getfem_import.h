@@ -109,7 +109,7 @@ namespace getfem {
       and their numbers:
       @code
         getfem::mesh myMesh;
-        typedef std::map<std::string, bgeot::size_type> RegMap;
+        typedef std::map<std::string, size_type> RegMap;
         typedef RegMap::iterator RegMapIter;
         RegMap regmap;
         getfem::import_mesh_gmsh("mesh.msh", myMesh, regmap);
@@ -129,26 +129,26 @@ namespace getfem {
       be tested.
   */
   void import_mesh_gmsh(const std::string& filename, mesh& m,
-                   std::map<std::string, bgeot::size_type> &region_map,
+                   std::map<std::string, size_type> &region_map,
                    bool remove_last_dimension = true,
                    std::map<size_type, std::set<size_type>> *nodal_map = NULL);
 
   void import_mesh_gmsh(std::istream& f, mesh& m,
-                        std::map<std::string, bgeot::size_type> &region_map,
+                        std::map<std::string, size_type> &region_map,
                         bool remove_last_dimension = true,
                         std::map<size_type, std::set<size_type>> *nodal_map = NULL);
 
   void import_mesh_gmsh(const std::string& filename, mesh& m,
                         bool add_all_element_type = false,
-                        std::pair<bgeot::size_type, bgeot::size_type> *face_region_range = NULL,
-                        std::map<std::string, bgeot::size_type> *region_map = NULL,
+                        std::pair<size_type, size_type> *face_region_range = NULL,
+                        std::map<std::string, size_type> *region_map = NULL,
                         bool remove_last_dimension = true,
                         std::map<size_type, std::set<size_type>> *nodal_map = NULL);
 
   void import_mesh_gmsh(std::istream& f, mesh& m,
                         bool add_all_element_type = false,
-                        std::pair<bgeot::size_type, bgeot::size_type> *face_region_range = NULL,
-                        std::map<std::string, bgeot::size_type> *region_map = NULL,
+                        std::pair<size_type, size_type> *face_region_range = NULL,
+                        std::map<std::string, size_type> *region_map = NULL,
                         bool remove_last_dimension = true,
                         std::map<size_type, std::set<size_type>> *nodal_map = NULL);
 

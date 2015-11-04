@@ -77,7 +77,7 @@ namespace bgeot {
   static const size_t ST_NIL = size_t(-1);
   typedef gmm::uint16_type dim_type;
   typedef gmm::uint16_type short_type;
-  typedef size_t size_type;
+  using gmm::size_type;
   typedef double scalar_type;
   typedef std::complex<double> complex_type;
   inline double to_double(double &a) { return a; }

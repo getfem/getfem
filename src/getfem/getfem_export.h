@@ -128,14 +128,14 @@ namespace getfem {
         'name' */
     template<class VECT> void write_sliced_point_data(const VECT& Uslice,
                                                       const std::string& name,
-                                                      getfem::size_type qdim=1);
+                                                      size_type qdim=1);
     /** export data which is constant over each element. You should not use
         this function if you are exporting a slice.  U should have
         convex_index().card() elements.  */
 
     template<class VECT> void write_cell_data(const VECT& U,
                                               const std::string& name, 
-                                              getfem::size_type qdim = 1);
+                                              size_type qdim = 1);
     /** export a data_set correspounding to measures of quality for each convex
         of the supplied mesh (which should have the same number of convex than
         the one used in the vtk_export)
@@ -156,12 +156,12 @@ namespace getfem {
     void switch_to_cell_data();
     void switch_to_point_data();
     template<class T> void write_val(T v);
-    template<class V> void write_vec(V p, getfem::size_type qdim);
+    template<class V> void write_vec(V p, size_type qdim);
     template<class IT> void write_3x3tensor(IT p);
     void write_separ();
     template<class VECT> void write_dataset_(const VECT& U,
                                              const std::string& name,
-                                             getfem::size_type qdim,
+                                             size_type qdim,
                                              bool cell_data=false);
   };
 
@@ -176,7 +176,7 @@ namespace getfem {
     }
   }
 
-  template<class IT> void vtk_export::write_vec(IT p, getfem::size_type qdim) {
+  template<class IT> void vtk_export::write_vec(IT p, size_type qdim) {
     float v[3];
     for (size_type i=0; i < qdim; ++i) {
       v[i] = float(p[i]);
@@ -227,21 +227,21 @@ namespace getfem {
   }
 
   template<class VECT>
-  void vtk_export::write_cell_data(const VECT& U, const std::string& name, getfem::size_type qdim) {
+  void vtk_export::write_cell_data(const VECT& U, const std::string& name,
+                                   size_type qdim) {
     write_dataset_(U, name, qdim, true);
   }
 
   template<class VECT>
   void vtk_export::write_sliced_point_data(const VECT& U,
                                            const std::string& name,
-                                           getfem::size_type qdim) {
+                                           size_type qdim) {
     write_dataset_(U, name, qdim, false);
   }
 
   template<class VECT>
   void vtk_export::write_dataset_(const VECT& U, const std::string& name,
-                                  getfem::size_type qdim,
-                                  bool cell_data) {
+                                  size_type qdim, bool cell_data) {
     write_mesh();
     size_type nb_val = 0;
     if (cell_data) {
