@@ -36,7 +36,7 @@ Glossary
       A finite element method is defined on a real element. It consist on a
       certain number of degrees of freedom linked to the corresponding shape
       functions and a manner to glue the degrees of freedom from a element
-      to a neighbor element.
+      to a neighbour element.
 
    Integration method
       See **cubature method**.

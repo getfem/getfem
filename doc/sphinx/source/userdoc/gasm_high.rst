@@ -676,28 +676,28 @@ In that case, the equality will only be prescribed in the part of the domain whe
 Evaluating discontinuities across inter-element edges/faces
 -----------------------------------------------------------
 
-A specific interpolate transformation (see previous section), called ``neighboor_elt`` is defined by default in all models. This transformation can only be used when a computation is made on an internal edge/face of a mesh, i.e. an element face shared at least by two elements. It aims to compute discontinuity jumps of a variable across inter-element faces. It is particularly suitable to implement Discontinuous Galerkin and interior penalty methods, Ghost penalty terms or a posteriori estimators. The expressions::
+A specific interpolate transformation (see previous section), called ``neighbour_elt`` is defined by default in all models. This transformation can only be used when a computation is made on an internal edge/face of a mesh, i.e. an element face shared at least by two elements. It aims to compute discontinuity jumps of a variable across inter-element faces. It is particularly suitable to implement Discontinuous Galerkin and interior penalty methods, Ghost penalty terms or a posteriori estimators. The expressions::
 
-  Interpolate(Normal, neighboor_elt)
-  Interpolate(X, neighboor_elt)
-  Interpolate(u, neighboor_elt)
-  Interpolate(Grad_u, neighboor_elt)
-  Interpolate(Div_u, neighboor_elt)
-  Interpolate(Hess_u, neighboor_elt)
-  Interpolate(Test_u, neighboor_elt)
-  Interpolate(Grad_Test_u, neighboor_elt)
-  Interpolate(Div_Test_u, neighboor_elt)
-  Interpolate(Hess_Test_u, neighboor_elt)
+  Interpolate(Normal, neighbour_elt)
+  Interpolate(X, neighbour_elt)
+  Interpolate(u, neighbour_elt)
+  Interpolate(Grad_u, neighbour_elt)
+  Interpolate(Div_u, neighbour_elt)
+  Interpolate(Hess_u, neighbour_elt)
+  Interpolate(Test_u, neighbour_elt)
+  Interpolate(Grad_Test_u, neighbour_elt)
+  Interpolate(Div_Test_u, neighbour_elt)
+  Interpolate(Hess_Test_u, neighbour_elt)
 
-are available (as with any other interpolate transformation) and compute a field on the current point but on the neighbour element. Of course, ``Interpolate(X, neighboor_elt)`` as no specific interest since it returns the same result as ``X``. Similarly, in most cases, ``Interpolate(Normal, neighboor_elt)`` will return the opposite of ``Normal`` except for instance for 2D shell element in a 3D mesh where it has an interest.
+are available (as with any other interpolate transformation) and compute a field on the current point but on the neighbour element. Of course, ``Interpolate(X, neighbour_elt)`` as no specific interest since it returns the same result as ``X``. Similarly, in most cases, ``Interpolate(Normal, neighbour_elt)`` will return the opposite of ``Normal`` except for instance for 2D shell element in a 3D mesh where it has an interest.
 
 The jump on a variable ``u`` can be computed with::
 
-  u-Interpolate(u, neighboor_elt)
+  u-Interpolate(u, neighbour_elt)
 
 and a penalisation term of the jump can be written::
 
-  (u-Interpolate(u, neighboor_elt))*(Test_u-Interpolate(Test_u, neighboor_elt))
+  (u-Interpolate(u, neighbour_elt))*(Test_u-Interpolate(Test_u, neighbour_elt))
 
 Note that the region representing the set of all internal faces of a mesh can be obtained thanks to the function::
 

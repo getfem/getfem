@@ -117,7 +117,7 @@ namespace getfem {
     return i;
   }
 
-  void multi_contact_frame::extend_vectors(void) {
+  void multi_contact_frame::extend_vectors() {
     dal::bit_vector iU, ilambda;
     for (size_type i = 0; i < contact_boundaries.size(); ++i) {
       size_type ind_U = contact_boundaries[i].ind_U;
@@ -141,7 +141,7 @@ namespace getfem {
     }
   }
 
-  void multi_contact_frame::normal_cone_simplification(void) {
+  void multi_contact_frame::normal_cone_simplification() {
     if (nodes_mode) {
       scalar_type threshold = ::cos(cut_angle);
       for (size_type i = 0; i < boundary_points_info.size(); ++i) {
@@ -225,7 +225,7 @@ namespace getfem {
     if (!found) sfi.push_back(face_info(ib, ie, iff));
   }
 
-  void multi_contact_frame::clear_aux_info(void) {
+  void multi_contact_frame::clear_aux_info() {
     boundary_points = std::vector<base_node>();
     boundary_points_info = std::vector<boundary_point>();
     element_boxes.clear();
@@ -475,7 +475,7 @@ namespace getfem {
       }
   }
 
-  void multi_contact_frame::compute_potential_contact_pairs_delaunay(void) {
+  void multi_contact_frame::compute_potential_contact_pairs_delaunay() {
 
     compute_boundary_points();
     normal_cone_simplification();
@@ -583,7 +583,7 @@ namespace getfem {
   }
 
 
-  void multi_contact_frame::compute_influence_boxes(void) {
+  void multi_contact_frame::compute_influence_boxes() {
     fem_precomp_pool fppool;
     bool avert = false;
     base_matrix G;
@@ -684,7 +684,7 @@ namespace getfem {
       }
   }
 
-  void multi_contact_frame::compute_potential_contact_pairs_influence_boxes(void) {
+  void multi_contact_frame::compute_potential_contact_pairs_influence_boxes() {
     compute_influence_boxes();
     compute_boundary_points(!self_contact); // vraiment necessaire ?
     normal_cone_simplification();
@@ -862,7 +862,7 @@ namespace getfem {
   // - Case J3 of valid/invalid contact situations is not really taken into
   //   account. How to take it into account in a cheap way ?
 
-  void multi_contact_frame::compute_contact_pairs(void) {
+  void multi_contact_frame::compute_contact_pairs() {
     base_matrix G, grad(N,N);
     model_real_plain_vector coeff;
     base_small_vector a(N-1), ny(N);
@@ -1327,7 +1327,7 @@ namespace getfem {
       mutable model_real_plain_vector U_unred; // Unreduced displacement
       bool slave;
  
-      contact_boundary(void) {}
+      contact_boundary() {}
       contact_boundary(size_type r, const mesh_fem *mf, const std::string dn,
                        bool sl)
         : region(r), mfu(mf), dispname(dn), slave(sl) {}
@@ -1338,7 +1338,7 @@ namespace getfem {
       size_type ind_element;   // Element number
       short_type ind_face;     // Face number in element
       base_small_vector mean_normal;   // Mean outward normal unit vector
-      face_box_info(void) {}
+      face_box_info() {}
       face_box_info(size_type ib, size_type ie,
                     short_type iff, const base_small_vector &n)
         : ind_boundary(ib), ind_element(ie), ind_face(iff), mean_normal(n) {}
@@ -1363,7 +1363,7 @@ namespace getfem {
     mutable std::vector<face_box_info> face_boxes_info;
 
 
-    void compute_face_boxes(void) const { // called by init
+    void compute_face_boxes() const { // called by init
       fem_precomp_pool fppool;
       base_matrix G;
       model_real_plain_vector coeff;
@@ -1577,7 +1577,7 @@ namespace getfem {
       compute_face_boxes();
     };
 
-    void finalize(void) const {
+    void finalize() const {
       face_boxes.clear();
       face_boxes_info = std::vector<face_box_info>();
       for (size_type i = 0; i < contact_boundaries.size(); ++i)
@@ -2334,7 +2334,7 @@ namespace getfem {
     }
   };
 
-  static bool init_predef_operators(void) {
+  static bool init_predef_operators() {
 
     ga_predef_operator_tab &PREDEF_OPERATORS
       = dal::singleton<ga_predef_operator_tab>::instance();

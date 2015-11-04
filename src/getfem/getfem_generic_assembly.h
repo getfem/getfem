@@ -136,7 +136,7 @@ namespace getfem {
                                  // (dim per dof for dof data)
                                  // and for constant variables.
 
-      size_type qdim(void) const {
+      size_type qdim() const {
         size_type q = 1;
         for (size_type i = 0; i < qdims.size(); ++i) q *= qdims[i];
         return q;
@@ -166,7 +166,7 @@ namespace getfem {
       const mesh_region *rg;
       ga_tree *ptree;
       base_vector elem;
-      tree_description(void) : ptree(0) {}
+      tree_description() : ptree(0) {}
       void copy(const tree_description& td);
       tree_description(const tree_description& td) { copy(td); }
       tree_description &operator =(const tree_description& td);
@@ -203,10 +203,10 @@ namespace getfem {
       ga_tree *ptree;
       size_type meshdim;
       bool ignore_X;
-      m_tree(void) : ptree(0) {}
+      m_tree() : ptree(0) {}
       m_tree(const m_tree& o);
       m_tree &operator =(const m_tree& o);
-      ~m_tree(void);
+      ~m_tree();
     };
 
     mutable std::map<std::string, m_tree> macro_trees;
@@ -219,13 +219,13 @@ namespace getfem {
     struct sparse_matrix_ptr {
       bool todelete;
       model_real_sparse_matrix *ptr;
-      model_real_sparse_matrix &operator()(void) { return *ptr; }
-      const model_real_sparse_matrix &operator()(void) const { return *ptr; }
+      model_real_sparse_matrix &operator()() { return *ptr; }
+      const model_real_sparse_matrix &operator()() const { return *ptr; }
       void resize(size_type nb)
       { if (todelete) { gmm::clear(*ptr); gmm::resize(*ptr, nb, nb); } }
       void set_matrix(model_real_sparse_matrix &M)
       { if (todelete) delete ptr; todelete = false; ptr = &M; }
-      sparse_matrix_ptr(void):
+      sparse_matrix_ptr():
         todelete(true), ptr(new model_real_sparse_matrix(2,2)) {}
       sparse_matrix_ptr(const sparse_matrix_ptr &smp):
         todelete(smp.todelete), ptr(smp.ptr)
@@ -242,13 +242,13 @@ namespace getfem {
     struct base_vector_ptr {
       bool todelete;
       base_vector *ptr;
-      base_vector &operator()(void) { return *ptr; }
-      const base_vector &operator()(void) const { return *ptr; }
+      base_vector &operator()() { return *ptr; }
+      const base_vector &operator()() const { return *ptr; }
       void resize(size_type nb)
       { if (todelete) { gmm::clear(*ptr); gmm::resize(*ptr, nb);} }
       void set_vector(base_vector &vector)
       { if (todelete) delete ptr; todelete = false; ptr = &vector; }
-      base_vector_ptr(void):
+      base_vector_ptr():
         todelete(true), ptr(new base_vector(2)) {}
       base_vector_ptr(const base_vector_ptr &smp):
         todelete(smp.todelete), ptr(smp.ptr)
@@ -271,22 +271,22 @@ namespace getfem {
 
   public:
 
-    const model_real_sparse_matrix &assembled_matrix(void) const { return K();}
-    model_real_sparse_matrix &assembled_matrix(void) { return K(); }
-    scalar_type &assembled_potential(void) { return E; }
-    const scalar_type &assembled_potential(void) const { return E; }
-    const base_vector &assembled_vector(void) const { return V(); }
-    base_vector &assembled_vector(void) { return V(); }
+    const model_real_sparse_matrix &assembled_matrix() const { return K();}
+    model_real_sparse_matrix &assembled_matrix() { return K(); }
+    scalar_type &assembled_potential() { return E; }
+    const scalar_type &assembled_potential() const { return E; }
+    const base_vector &assembled_vector() const { return V(); }
+    base_vector &assembled_vector() { return V(); }
     void set_assembled_matrix(model_real_sparse_matrix &K_)
     { K.set_matrix(K_); }
     void set_assembled_vector(base_vector &V_)
     { V.set_vector(V_); }
-    base_tensor &assembled_tensor(void) { return assemb_t; }
-    const base_tensor &assembled_tensor(void) const { return assemb_t; }
+    base_tensor &assembled_tensor() { return assemb_t; }
+    const base_tensor &assembled_tensor() const { return assemb_t; }
 
-    model_real_sparse_matrix &unreduced_matrix(void)
+    model_real_sparse_matrix &unreduced_matrix()
     { return unreduced_K; }
-    base_vector &unreduced_vector(void) { return unreduced_V; }
+    base_vector &unreduced_vector() { return unreduced_V; }
 
     /** Add an expression, perform the semantic analysis, split into
      *  terms in separated test functions, derive if necessary to obtain
@@ -304,12 +304,12 @@ namespace getfem {
                                       const mesh_region &rg=mesh_region::all_convexes());
 
     /** Delete all previously added expressions. */
-    void clear_expressions(void);
+    void clear_expressions();
 
     /** Print some information about all previously added expressions. */
     void print(std::ostream &str);
 
-    size_type nb_trees(void) const;
+    size_type nb_trees() const;
     tree_description &tree_info(size_type i);
 
     void add_fem_variable(const std::string &name, const mesh_fem &mf,
@@ -553,7 +553,7 @@ namespace getfem {
         enable_all_md_variables(enable_all_variables) {}
     ga_workspace(bool, const ga_workspace &gaw)
       : md(0), parent_workspace(&gaw), enable_all_md_variables(false) {}
-    ga_workspace(void)
+    ga_workspace()
       : md(0), parent_workspace(0), enable_all_md_variables(false) {}
     ~ga_workspace() { clear_expressions(); }
 
@@ -571,18 +571,18 @@ namespace getfem {
     mutable ga_instruction_set *gis;
 
   public:
-    ga_function(void) : gis(0) {}
+    ga_function() : gis(0) {}
     ga_function(const model &md, const std::string &e);
     ga_function(const ga_workspace &workspace_, const std::string &e);
     ga_function(const std::string &e);
     ga_function(const ga_function &gaf);
     ga_function &operator =(const ga_function &gaf);
     ~ga_function();
-    const std::string &expression(void) const { return expr; }
-    const base_tensor &eval(void) const;
+    const std::string &expression() const { return expr; }
+    const base_tensor &eval() const;
     void derivative(const std::string &variable);
-    void compile(void) const;
-    ga_workspace &workspace(void) const { return  local_workspace; }
+    void compile() const;
+    ga_workspace &workspace() const { return  local_workspace; }
 
   };
 
@@ -596,10 +596,10 @@ namespace getfem {
     points_for_element(size_type cv, short_type f,
                        std::vector<size_type> &ind) const = 0;
     virtual bool use_pgp(size_type cv) const = 0;
-    virtual bool use_mim(void) const = 0;
+    virtual bool use_mim() const = 0;
     virtual void store_result(size_type cv, size_type i, base_tensor &t) = 0;
-    virtual void finalize(void) = 0;
-    virtual const mesh &linked_mesh(void) = 0;
+    virtual void finalize() = 0;
+    virtual const mesh &linked_mesh() = 0;
     virtual ~ga_interpolation_context() {}
   };
 

@@ -17,7 +17,7 @@ element level and the degrees of freedom. Finite element methods can be of
 different types. They could be scalar or vectorial, polynomial, piecewise
 polynomial or non-polynomial, equivalent via the geometric transformation or not.
 Moreover, the description of the degrees of freedom have to be such that it is
-possible to gather the compatible degrees of freedom between two neighbor
+possible to gather the compatible degrees of freedom between two neighbour
 elements in a generic way (for instance connecting a Lagrange 2D element to
 another Lagrange 1D element).
 
