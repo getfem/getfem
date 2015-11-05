@@ -10589,7 +10589,7 @@ namespace getfem {
     : local_workspace(), expr(e), gis(0) {}
 
   ga_function::ga_function(const ga_function &gaf)
-    : local_workspace(true, gaf.local_workspace), expr(gaf.expr), gis(0)
+    : local_workspace(gaf.local_workspace), expr(gaf.expr), gis(0)
   { if (gaf.gis) compile(); }
 
   void ga_function::compile(void) const {

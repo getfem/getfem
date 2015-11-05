@@ -1353,10 +1353,70 @@ namespace getfem {
     typedef std::map<const mesh *, std::vector<size_type> > mesh_boundary_cor;
     mesh_boundary_cor boundary_for_mesh;
     
-    struct obstacle {
-      ga_function f;
-      ga_function der_f;
+    class obstacle {
+      const model *md;
+      const ga_workspace *parent_workspace;
+      std::string expr;
+
       mutable base_vector X;
+      mutable ga_function f, der_f;
+      mutable bool compiled;
+
+      void compile() const {
+        if (md)
+          f = ga_function(md, expr);
+        else if (parent_workspace)
+          f = ga_function(parent_workspace, expr);
+        else
+          f = ga_function(expr);
+        size_type N = gmm::vect_size(X);
+        f.workspace().add_fixed_size_variable("X", gmm::sub_interval(0, N), X);
+        if (N >= 1) f.workspace().add_macro("x", "X(1)");
+        if (N >= 2) f.workspace().add_macro("y", "X(2)");
+        if (N >= 3) f.workspace().add_macro("z", "X(3)");
+        if (N >= 4) f.workspace().add_macro("w", "X(4)");
+        f.compile();
+        der_f = f;
+        der_f.derivative("X");
+        compiled = true;
+      }
+
+    public:
+
+      base_vector &point() const { return X; }
+
+      const base_tensor &eval() const {
+        if (!compiled) compile();
+        return f.eval();
+      }
+      const base_tensor &eval_derivative() const {
+        if (!compiled) compile();
+        return der_f.eval();
+      }
+
+      obstacle()
+        : md(0), parent_workspace(0), expr(""), X(0), f(), der_f() {}
+      obstacle(const model &md_, const std::string &expr_, size_type N)
+        : md(&md_), parent_workspace(0), expr(expr_), X(N),
+          f(), der_f(), compiled(false) {}
+      obstacle(const ga_workspace &parent_workspace_,
+               const std::string &expr_, size_type N)
+        : md(0), parent_workspace(&parent_workspace_), expr(expr_), X(N),
+          f(), der_f(), compiled(false) {}
+      obstacle(const obstacle &obs)
+        : md(obs.md), parent_workspace(obs.parent_workspace), expr(obs.expr),
+          X(obs.X), f(), der_f(), compiled(false) {}
+      obstacle &operator =(const obstacle& obs) {
+        md = obs.md;
+        parent_workspace = obs.parent_workspace;
+        expr = obs.expr;
+        X = obs.X;
+        f = ga_function();
+        der_f = ga_function();
+        compiled = false;
+        return *this;
+      }
+      ~obstacle() {}
     };
 
     std::vector<obstacle> obstacles;
@@ -1454,34 +1514,12 @@ namespace getfem {
 
     void add_rigid_obstacle(const model &md, const std::string &expr,
                             size_type N) {
-      obstacles.push_back(obstacle());
-      obstacles.back().f = ga_function(md, expr);
-      gmm::resize(obstacles.back().X, N);
-      obstacles.back().f.workspace().add_fixed_size_variable
-        ("X", gmm::sub_interval(0, N), obstacles.back().X);
-      if (N >= 1) obstacles.back().f.workspace().add_macro("x", "X(1)");
-      if (N >= 2) obstacles.back().f.workspace().add_macro("y", "X(2)");
-      if (N >= 3) obstacles.back().f.workspace().add_macro("z", "X(3)");
-      if (N >= 4) obstacles.back().f.workspace().add_macro("w", "X(4)");
-      obstacles.back().f.compile();
-      obstacles.back().der_f = obstacles.back().f;
-      obstacles.back().der_f.derivative("X");
+      obstacles.push_back(obstacle(md, expr, N));
     }
 
-    void add_rigid_obstacle(const ga_workspace &workspace,
+    void add_rigid_obstacle(const ga_workspace &parent_workspace,
                             const std::string &expr, size_type N) {
-      obstacles.push_back(obstacle());
-      obstacles.back().f = ga_function(workspace, expr);
-      gmm::resize(obstacles.back().X, N);
-      obstacles.back().f.workspace().add_fixed_size_variable
-        ("X", gmm::sub_interval(0, N), obstacles.back().X);
-      if (N >= 1) obstacles.back().f.workspace().add_macro("x", "X(1)");
-      if (N >= 2) obstacles.back().f.workspace().add_macro("y", "X(2)");
-      if (N >= 3) obstacles.back().f.workspace().add_macro("z", "X(3)");
-      if (N >= 4) obstacles.back().f.workspace().add_macro("w", "X(4)");
-      obstacles.back().f.compile();
-      obstacles.back().der_f = obstacles.back().f;
-      obstacles.back().der_f.derivative("X");
+     obstacles.push_back(obstacle(parent_workspace, expr, N));
     }
 
     void add_contact_boundary(const model &md, const mesh &m,
@@ -1655,15 +1693,15 @@ namespace getfem {
       size_type irigid_obstacle(-1);
       for (size_type i = 0; i < obstacles.size(); ++i) {
         const obstacle &obs = obstacles[i];
-        gmm::copy(pt_x, obs.X);
-        const base_tensor &t = obs.f.eval();
+        gmm::copy(pt_x, obs.point());
+        const base_tensor &t = obs.eval();
         
         GMM_ASSERT1(t.size() == 1, "Obstacle level set function as to be "
                     "a scalar valued one");
         d1 = t[0];
         // cout << "d1 = " << d1 << endl;
         if (gmm::abs(d1) < release_distance && d1 < d0) {
-          const base_tensor &t_der = obs.der_f.eval();
+          const base_tensor &t_der = obs.eval_derivative();
           GMM_ASSERT1(t_der.size() == n_x.size(), "Bad derivative size");
           if (gmm::vect_sp(t_der.as_vector(), n_x) < scalar_type(0)) 
             { d0 = d1; irigid_obstacle = i; gmm::copy(t_der.as_vector(),n_y); }
@@ -1673,26 +1711,26 @@ namespace getfem {
       if (irigid_obstacle != size_type(-1)) {
         // cout << "Testing obstacle " << irigid_obstacle << endl;
         const obstacle &obs = obstacles[irigid_obstacle];
-        gmm::copy(pt_x, obs.X);
+        gmm::copy(pt_x, obs.point());
         gmm::copy(pt_x, pt_y);
         size_type nit = 0, nb_fail = 0;
         scalar_type alpha(0), beta(0);
         d1 = d0;
         
         while (gmm::abs(d1) > 1E-13 && ++nit < 50 && nb_fail < 3) {
-          if (nit != 1) gmm::copy(obs.der_f.eval().as_vector(), n_y);
+          if (nit != 1) gmm::copy(obs.eval_derivative().as_vector(), n_y);
 
           for (scalar_type lambda(1); lambda >= 1E-3; lambda/=scalar_type(2)) {
             alpha = beta - lambda * d1 / gmm::vect_sp(n_y, n_x);
-            gmm::add(pt_x, gmm::scaled(n_x, alpha), obs.X);
-            d2 = obs.f.eval()[0];
+            gmm::add(pt_x, gmm::scaled(n_x, alpha), obs.point());
+            d2 = obs.eval()[0];
             if (gmm::abs(d2) < gmm::abs(d1)) break;
           }
           if (gmm::abs(beta - d1 / gmm::vect_sp(n_y, n_x)) > scalar_type(500))
             nb_fail++;
           beta = alpha; d1 = d2;
         }
-        gmm::copy(obs.X, pt_y);
+        gmm::copy(obs.point(), pt_y);
 
         if (gmm::abs(d1) > 1E-8) {
            GMM_WARNING1("Raytrace on rigid obstacle failed");
