@@ -218,6 +218,10 @@ namespace getfem {
     else partitioning_allowed.all_threads() = false;
   }
 
+  bool mesh_region::is_partitioning_allowed() const
+  {
+    return partitioning_allowed;
+  }
 
   /* may be optimized .. */
   const dal::bit_vector&  mesh_region::index() const 

@@ -185,6 +185,8 @@ namespace getfem {
     where master region is partitioned, while the slave region is not*/
     void  prohibit_partitioning();
 
+    bool is_partitioning_allowed() const;
+
     /**extract the next region number 
     that does not yet exists in the mesh*/
     static size_type free_region_id(const getfem::mesh& m);
