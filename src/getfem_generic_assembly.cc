@@ -11200,6 +11200,102 @@ namespace getfem {
   // Interpolate transformation on neighbour element (for internal faces)
   //=========================================================================
 
+
+  struct gauss_pt_corresp {
+    bgeot::pgeometric_trans pgt1, pgt2;
+    papprox_integration pai;
+    std::vector<size_type> nodes;
+  };
+
+  bool operator <(const gauss_pt_corresp &gpc1,
+		  const gauss_pt_corresp &gpc2) {
+    if (gpc1.pai != gpc2.pai)
+      { if (gpc1.pai  <  gpc2.pai ) return true; else return false; }
+    if (gpc1.nodes.size() !=  gpc2.nodes.size()) {
+      if (gpc1.nodes.size() < gpc2.nodes.size())
+	return true; else return false;
+    }
+    for (size_type i = 0; i < gpc1.nodes.size(); ++i) {
+      if (gpc1.nodes[i] != gpc2.nodes[i])
+	{ if (gpc1.nodes[i] < gpc2.nodes[i]) return true; else return false; }
+    }
+    if (gpc1.pgt1 != gpc2.pgt1)
+      { if (gpc1.pgt1 <  gpc2.pgt1) return true; else return false; }
+    if (gpc1.pgt2 !=  gpc2.pgt2)
+      { if (gpc1.pgt2 <  gpc2.pgt2) return true; else return false; }
+    return false;
+  }
+
+  std::map<gauss_pt_corresp, bgeot::pstored_point_tab> stored_corresp; // a mettre dans une structure intermédiaire ?
+  
+
+  static bgeot::pstored_point_tab furnish_pspt(const mesh_im &mim,
+						size_type cv,
+						short_type f) {
+    const mesh& m = mim.linked_mesh();
+    GMM_ASSERT1(f != short_type(-1) && cv != size_type (-1)
+		&& m.convex_index().is_in(cv), "Invalid convex or face id");
+    auto adj_face = m.adjacent_face(cv, f);
+    GMM_ASSERT1(adj_face.cv != size_type(-1), "No adjacent face");
+    pintegration_method pim = mim.int_method_of_element(cv);
+    GMM_ASSERT1(pim->type() == IM_APPROX, "Unvalid integration method");
+    papprox_integration pai = pim->approx_method();
+    GMM_ASSERT1(!(pai->is_built_on_the_fly()), "Do not call "
+		"this function for build on the fly integration methods");
+
+
+    // Fill a gauss_pt_corresp structure.
+    gauss_pt_corresp gpc;
+    gpc.pgt1 = m.trans_of_convex(cv);
+    gpc.pgt2 = m.trans_of_convex(adj_face.cv);
+    gpc.pai = pai;
+    auto inds_pt1 = m.ind_points_of_face_of_convex(cv, f);
+    auto inds_pt2 = m.ind_points_of_face_of_convex(adj_face.cv, adj_face.f);
+    auto str1 = gpc.pgt1->structure();
+    auto str2 = gpc.pgt2->structure();
+    size_type nbptf1 = str1->nb_points_of_face(f);
+    size_type nbptf2 = str2->nb_points_of_face(adj_face.f);
+    gpc.nodes.resize(nbptf1*2);
+    for (size_type i = 0; i < nbptf1; ++i)  {
+      gpc.nodes[2*i] = str1->ind_points_of_face(f)[i];
+      bool found = false;
+      for (size_type j = 0; j < nbptf2; ++j) {
+	if (inds_pt2[j] == inds_pt1[i]) {
+	  gpc.nodes[2*i+1] = str2->ind_points_of_face(adj_face.f)[j];
+	  found = true;
+	  break;
+	}
+      }
+      GMM_ASSERT1(found, "Internal error");
+    }
+    
+    auto itm = stored_corresp.find(gpc);
+    if (itm != stored_corresp.end()) return itm->second;
+    else {
+      size_type nbpt = pai->nb_points_on_face(f);
+      base_matrix G;
+      bgeot::geotrans_inv_convex gic;
+      gic.init(m.points_of_convex(adj_face.cv), gpc.pgt2);
+      size_type first_ind = pai->ind_first_point_on_face(f);
+      const bgeot::stored_point_tab &spt = pai->integration_points();
+      bgeot::vectors_to_base_matrix(G, m.points_of_convex(cv));
+      fem_interpolation_context ctx(gpc.pgt1, 0, spt[0], G, cv, f);
+      std::vector<base_node> P_ref(nbpt);
+      
+      for (size_type i = 0; i < nbpt; ++i) {
+	ctx.set_xref(spt[first_ind+i]);
+	bool converged = true;
+	bool is_in = gic.invert(ctx.xreal(), P_ref[i], converged, 1E-4);
+	GMM_ASSERT1(is_in && converged, "Geometric transformation inversion "
+		    "has failed in neighbour transformation");
+      }
+      bgeot::pstored_point_tab pspt = store_point_tab(P_ref);
+      stored_corresp[gpc] = pspt;
+      return pspt;
+    }
+  }
+
+
   class  interpolate_transformation_neighbour
     : public virtual_interpolate_transformation, public context_dependencies {
 

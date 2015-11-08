@@ -259,23 +259,19 @@ namespace bgeot {
     return size_type(-1);
   }
 
-  convex_face mesh_structure::adjacent_face(size_type cv, short_type f) const
-  {
-    if (!is_convex_having_neighbour(cv, f)) return convex_face::invalid_face();
-
+  convex_face mesh_structure::adjacent_face(size_type cv, short_type f) const {
+    size_type neighbour_element = neighbour_of_convex(cv, f);
+    if (neighbour_element == size_type(-1)) return convex_face::invalid_face();
+    auto pcs = structure_of_convex(neighbour_element);
     auto face_points = ind_points_of_face_of_convex(cv, f);
-    auto neighbour_element = neighbour_of_convex(cv, f);
-    auto nNeighbourElementFaces = structure_of_convex(neighbour_element)->nb_faces();
-    for (short_type iff = 0; iff < nNeighbourElementFaces; ++iff)
-    {
-      auto nPointsOnFace = structure_of_convex(neighbour_element)->nb_points_of_face(iff);
-      if (is_convex_face_having_points(neighbour_element, iff, nPointsOnFace, face_points.begin()))
-      {
+    auto nNeighbourElementFaces = pcs->nb_faces();
+    for (short_type iff = 0; iff < nNeighbourElementFaces; ++iff) {
+      auto nPointsOnFace = pcs->nb_points_of_face(iff);
+      if (is_convex_face_having_points(neighbour_element, iff,
+				       nPointsOnFace, face_points.begin()))
         return {neighbour_element, iff};
-      }
     }
     GMM_ASSERT2(false, "failed to determine neighbouring face");
-
     return convex_face::invalid_face();
   }
 
