@@ -1664,7 +1664,16 @@ namespace getfem {
   //
   //=========================================================================
 
-  typedef std::pair<std::string, std::string> var_trans_pair;
+  struct var_trans_pair {
+    std::string varname, transname;
+    bool operator <(const var_trans_pair &vt) const {
+      return (varname < vt.varname) ||
+             (!(varname > vt.varname) && transname < vt.transname);
+    }
+    var_trans_pair() : varname(), transname() {}
+    var_trans_pair(const std::string &v, const std::string &t)
+      : varname(v), transname(t) {}
+  };
 
   class APIDECL virtual_interpolate_transformation
     : virtual public dal::static_stored_object {
@@ -1692,8 +1701,6 @@ namespace getfem {
   //  Virtual elementary_transformation object.
   //
   //=========================================================================
-
-  typedef std::pair<std::string, std::string> var_trans_pair;
 
   class APIDECL virtual_elementary_transformation
     : virtual public dal::static_stored_object {

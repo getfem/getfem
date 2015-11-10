@@ -2019,13 +2019,13 @@ namespace getfem {
 
           for (std::map<var_trans_pair, base_tensor>::iterator itd
                  = derivatives.begin(); itd != derivatives.end(); ++itd) {
-            if (dispname_x.compare(itd->first.first) == 0 &&
-                itd->first.second.size() == 0) {
+            if (dispname_x.compare(itd->first.varname) == 0 &&
+                itd->first.transname.size() == 0) {
               itd->second.adjust_sizes(ndof_ux, N);
               gmm::copy(der_x.as_vector(), itd->second.as_vector());
             } else if (ret_type == 1 &&
-                       stored_dispname.compare(itd->first.first) == 0 &&
-                       itd->first.second.size() != 0) {
+                       stored_dispname.compare(itd->first.varname) == 0 &&
+                       itd->first.transname.size() != 0) {
               itd->second.adjust_sizes(ndof_uy, N);
               gmm::copy(der_y.as_vector(), itd->second.as_vector());
             } else itd->second.adjust_sizes(0, 0);

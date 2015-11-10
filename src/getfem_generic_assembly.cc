@@ -1748,7 +1748,8 @@ namespace getfem {
           }
           break;
 
-        default: ga_throw_error(expr, token_pos, "Unexpected token.");
+        default:
+          ga_throw_error(expr, token_pos, "Unexpected token.");
         }
         break;
 
@@ -1782,7 +1783,8 @@ namespace getfem {
           }
           break;
 
-        default: ga_throw_error(expr, token_pos, "Unexpected token.");
+        default:
+          ga_throw_error(expr, token_pos, "Unexpected token.");
         }
         break;
       }
@@ -1946,7 +1948,7 @@ namespace getfem {
     std::list<ga_tree> trees; // The trees are stored mainly because they
                               // contain the intermediary tensors.
 
-    typedef std::map<region_mim,  region_mim_instructions> instructions_set;
+    typedef std::map<region_mim, region_mim_instructions> instructions_set;
 
     instructions_set  whole_instructions;
 
@@ -5160,12 +5162,12 @@ namespace getfem {
 
         for (std::set<var_trans_pair>::iterator it = expr_variables.begin();
              it != expr_variables.end(); ++it) {
-          if (!(is_constant(it->first))) {
+          if (!(is_constant(it->varname))) {
             ga_tree dtree = (remain ? tree : *(trees[ind_tree].ptree));
             // cout << "Derivation with respect to " << it->first << " : "
             //     << it->second << " of " << ga_tree_to_string(dtree) << endl;
             GA_TIC;
-            ga_derivative(dtree, *this, m, it->first, it->second, 1+order);
+            ga_derivative(dtree, *this, m, it->varname, it->transname, 1+order);
             // cout << "Result : " << ga_tree_to_string(dtree) << endl;
             GA_TOCTIC("Derivative time");
             ga_semantic_analysis(expr, dtree, *this, m.dim(),
@@ -5400,12 +5402,12 @@ namespace getfem {
     }
     vl.clear();
     for (auto it = vll.begin(); it!=vll.end(); ++it)
-      if (vl.size() == 0 || it->first.compare(vl.back()))
-        vl.push_back(it->first);
+      if (vl.size() == 0 || it->varname.compare(vl.back()))
+        vl.push_back(it->varname);
     dl.clear();
     for (auto it = dll.begin(); it!=dll.end(); ++it)
-      if (dl.size() == 0 || it->first.compare(dl.back()))
-        dl.push_back(it->first);
+      if (dl.size() == 0 || it->varname.compare(dl.back()))
+        dl.push_back(it->varname);
 
     return islin;
   }
@@ -5786,14 +5788,14 @@ namespace getfem {
                      eval_fixed_size, ignore_X, option);
     if (tree.root && option == 2) {
       if (((tree.root->test_function_type & 1) &&
-           (tree.root->name_test1.compare(workspace.selected_test1.first)
+           (tree.root->name_test1.compare(workspace.selected_test1.varname)
             || tree.root->interpolate_name_test1.compare
-            (workspace.selected_test1.second)))
+            (workspace.selected_test1.transname)))
           ||
           ((tree.root->test_function_type & 2) &&
-           (tree.root->name_test2.compare(workspace.selected_test2.first)
+           (tree.root->name_test2.compare(workspace.selected_test2.varname)
             || tree.root->interpolate_name_test2.compare
-            (workspace.selected_test2.second))))
+            (workspace.selected_test2.transname))))
         tree.clear();
     }
     // cout << "semantic analysis done " << endl;
@@ -5922,12 +5924,12 @@ namespace getfem {
       break;
 
     case GA_NODE_INTERPOLATE:
-      if (!(pnode->name.compare("Normal"))) {
+      if (pnode->name.compare("Normal") == 0) {
         pnode->node_type = GA_NODE_INTERPOLATE_NORMAL;
         pnode->init_vector_tensor(meshdim);
         break;
       }
-      if (!(pnode->name.compare("X"))) {
+      if (pnode->name.compare("X") == 0) {
         pnode->node_type = GA_NODE_INTERPOLATE_X;
         pnode->init_vector_tensor(meshdim);
         break;
@@ -6220,23 +6222,23 @@ namespace getfem {
             if (option == 2 && !compatible) {
               bool child0_compatible = true, child1_compatible = true;
               if (pnode->test_function_type & 1) {
-                if (child0->name_test1.compare(workspace.selected_test1.first)
+                if (child0->name_test1.compare(workspace.selected_test1.varname)
                     || child0->interpolate_name_test1.compare
-                    (workspace.selected_test1.second))
+                    (workspace.selected_test1.transname))
                   child0_compatible = false;
-                if (child1->name_test1.compare(workspace.selected_test1.first)
+                if (child1->name_test1.compare(workspace.selected_test1.varname)
                     || child1->interpolate_name_test1.compare
-                    (workspace.selected_test1.second))
+                    (workspace.selected_test1.transname))
                   child1_compatible = false;
               }
               if (pnode->test_function_type & 2) {
-                if (child0->name_test2.compare(workspace.selected_test2.first)
+                if (child0->name_test2.compare(workspace.selected_test2.varname)
                     || child0->interpolate_name_test2.compare
-                    (workspace.selected_test2.second))
+                    (workspace.selected_test2.transname))
                   child0_compatible = false;
-                if (child1->name_test2.compare(workspace.selected_test2.first)
+                if (child1->name_test2.compare(workspace.selected_test2.varname)
                     || child1->interpolate_name_test1.compare
-                    (workspace.selected_test2.second))
+                    (workspace.selected_test2.transname))
                   child1_compatible = false;
               }
               if (child0_compatible) {
@@ -7660,7 +7662,7 @@ namespace getfem {
                               pnode->interpolate_name);
         for (std::set<var_trans_pair>::iterator it=vars.begin();
              it != vars.end(); ++it) {
-          if (!(workspace.is_constant(it->first)))
+          if (!(workspace.is_constant(it->varname)))
             { is_constant = false; break; }
         }
       }
@@ -7683,7 +7685,7 @@ namespace getfem {
                               pnode->interpolate_name);
         for (std::set<var_trans_pair>::iterator it=vars.begin();
              it != vars.end(); ++it) {
-          if (!(workspace.is_constant(it->first)))
+          if (!(workspace.is_constant(it->varname)))
             { is_constant = false; break; }
         }
       }
@@ -8059,8 +8061,8 @@ namespace getfem {
                             m, pnode->interpolate_name);
       for (std::set<var_trans_pair>::iterator it=vars.begin();
            it != vars.end(); ++it) {
-        if (it->first.compare(varname) == 0 &&
-            it->second.compare(interpolatename) == 0) marked = true;
+        if (it->varname.compare(varname) == 0 &&
+            it->transname.compare(interpolatename) == 0) marked = true;
       }
     }
     pnode->marked = marked;
@@ -8119,8 +8121,8 @@ namespace getfem {
                                 pnode->interpolate_name);
           for (std::set<var_trans_pair>::iterator it=vars.begin();
                it != vars.end(); ++it) {
-            if (it->first.compare(varname) == 0 &&
-                it->second.compare(interpolatename) == 0)
+            if (it->varname.compare(varname) == 0 &&
+                it->transname.compare(interpolatename) == 0)
               itrans = true;
           }
         }
@@ -10129,7 +10131,7 @@ namespace getfem {
       interpolates_der.insert(pnode->interpolate_name_der);
       interpolates[pnode->interpolate_name_der].size();
       if (workspace.variable_group_exists(pnode->name))
-          interpolates[pnode->interpolate_name_der].insert(pnode->name);
+        interpolates[pnode->interpolate_name_der].insert(pnode->name);
     }
     for (size_type i = 0; i < pnode->children.size(); ++i)
       found = ga_node_used_interpolates(pnode->children[i], workspace,
@@ -11024,7 +11026,7 @@ namespace getfem {
         if (pwi.first.nb_trees()) {
           ga_tree tree = *(pwi.first.tree_info(0).ptree);
           ga_derivative(tree, pwi.first, source_mesh,
-                        it->first, it->second, 1);
+                        it->varname, it->transname, 1);
           if (tree.root)
             ga_semantic_analysis(expr, tree, local_workspace, 1, 1,
                                  false, true);

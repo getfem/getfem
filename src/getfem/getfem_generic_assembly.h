@@ -116,8 +116,6 @@ namespace getfem {
   // functions, operators.
   //=========================================================================
 
-  typedef std::pair<std::string, std::string> var_trans_pair;
-
   class ga_workspace {
 
     const model *md;
