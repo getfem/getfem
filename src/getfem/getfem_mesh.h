@@ -679,7 +679,7 @@ namespace getfem {
       between the two neighbour elements.
    */
   mesh_region APIDECL inner_faces_of_mesh(const mesh &m,
-					  const mesh_region &mr);
+			       mesh_region mr = mesh_region::all_convexes());
   
   /** Select in the region mr the faces of the mesh m with their unit
       outward vector having a maximal angle "angle" with the vector V.

@@ -38,7 +38,6 @@
 #include "getfem/getfem_partial_mesh_fem.h"
 #include "getfem/getfem_contact_and_friction_nodal.h"
 #include "getfem/getfem_import.h"
-#include "getfem/getfem_inter_element.h"
 #include "getfem/getfem_mesh_fem_sum.h"
 #include "gmm/gmm_inoutput.h"
 

@@ -510,11 +510,17 @@ void gf_compute(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        const getfem::mesh_im &mim = *in.pop().to_const_mesh_im();
        darray err =
        out.pop().create_darray_h
-               (unsigned(mim.linked_mesh().convex_index().last_true()+1));
+       (unsigned(mim.linked_mesh().convex_index().last_true()+1));
        if (!U.is_complex())
 	 getfem::error_estimate(mim, *mf, U.real(), err, mim.convex_index());
-       else
-	 getfem::error_estimate(mim, *mf, U.cplx(), err, mim.convex_index());
+       else {
+	 getfem::base_vector err_imag(gmm::vect_size(err));
+	 getfem::error_estimate(mim, *mf, gmm::imag_part(U.cplx()), err_imag,
+				mim.convex_index());
+	 getfem::error_estimate(mim, *mf, gmm::real_part(U.cplx()), err,
+				mim.convex_index());
+	 gmm::add(err_imag, err);
+       }
        );
 
       

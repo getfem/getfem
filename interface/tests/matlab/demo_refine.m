@@ -53,11 +53,6 @@ fright=gf_mesh_get(m,'faces from pid',find(abs(P(1,:) - L)<1e-6));
 gf_mesh_set(m,'region',1,fleft);
 gf_mesh_set(m,'region',2,fright);
 
-% Inner edges for the interior penalty terms
-in_faces = gf_mesh_get(m,'inner faces');
-INNER_FACES=5;
-gf_mesh_set(m, 'region', INNER_FACES, in_faces);
-
 
 F=zeros(N,1); F(2) = -20; % the external force
 
@@ -93,13 +88,7 @@ for step=1:8,
   
   dd=get(mf0, 'basic dof from cvid');
   ERR=gf_compute(mfu, U, 'error estimate', mim);
-  size(ERR)
   E=ERR; E(dd)=ERR;
-  
-  ERR_BIS = gf_asm('generic', mim, 1, 'element_size*Norm_sqr(Grad_u.Normal-Interpolate(Grad_u,neighbour_elt).Normal)*(Test_z+Interpolate(Test_z,neighbour_elt))', INNER_FACES, 'u', 0, mfu, U, 'z', 1, mf0, ERR'*0);
-  size(ERR_BIS)
-  gf_mesh_fem_get(mfu, 'nbdof')
-  gf_mesh_fem_get(mf0, 'nbdof')
   
   if (draw)
     subplot(2,1,2);
@@ -107,7 +96,7 @@ for step=1:8,
     title('Error estimate')
     pause(1.5);
   end
-  set(m, 'refine', find(ERR > 0.1e-4));
+  set(m, 'refine', find(ERR > 2e-6));
   set(m, 'optimize structure');
   norm(E)
 end;

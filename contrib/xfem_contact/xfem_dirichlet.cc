@@ -34,7 +34,6 @@
 #include "getfem/getfem_partial_mesh_fem.h"
 #include "getfem/getfem_Coulomb_friction.h"
 #include "getfem/getfem_import.h"
-#include "getfem/getfem_inter_element.h"
 #include "gmm/gmm.h"
 #include "getfem/bgeot_mesh_structure.h"
 #include "getfem/getfem_config.h"

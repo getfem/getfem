@@ -34,7 +34,6 @@
 #include "getfem/getfem_partial_mesh_fem.h"
 #include "getfem/getfem_contact_and_friction_nodal.h"
 #include "getfem/getfem_import.h"
-#include "getfem/getfem_inter_element.h"
 #include "gmm/gmm.h"
 
 using std::endl; using std::cout; using std::cerr;

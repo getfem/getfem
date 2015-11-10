@@ -1042,7 +1042,6 @@ contrib/xfem_stab_unilat_contact/Makefile                               \
 contrib/mixed_elastostatic/Makefile                                     \
 contrib/xfem_contact/Makefile                                           \
 contrib/crack_plate/Makefile                                            \
-contrib/inter_element_test/Makefile                                     \
 contrib/aposteriori/Makefile                                            \
 contrib/level_set_contact/Makefile                                      \
 contrib/static_contact_gears/Makefile                                   \

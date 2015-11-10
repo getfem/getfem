@@ -777,10 +777,10 @@ namespace getfem {
       between the two neighbour elements. Try to minimize the number of
       elements.
   */
-  mesh_region inner_faces_of_mesh(const mesh &m,
-				  const mesh_region &mr) {
-    mr.error_if_not_convexes();
+  mesh_region inner_faces_of_mesh(const mesh &m, mesh_region mr) {
     mesh_region mrr;
+    mr.from_mesh(m);
+    mr.error_if_not_convexes();
     dal::bit_vector visited;
     bgeot::mesh_structure::ind_set neighbours;
     

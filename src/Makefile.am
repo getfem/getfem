@@ -111,7 +111,6 @@ nobase_include_HEADERS =                   		\
 	getfem/getfem_mesh_fem.h                	\
 	getfem/getfem_mesh_im.h                 	\
 	getfem/getfem_error_estimate.h          	\
-	getfem/getfem_inter_element.h           	\
 	getfem/getfem_level_set.h	        	\
 	getfem/getfem_partial_mesh_fem.h		\
 	getfem/getfem_torus.h                   	\
@@ -178,7 +177,6 @@ SRC =                                      		\
 	getfem_fem_composite.cc            		\
 	getfem_mat_elem.cc                 		\
 	getfem_mat_elem_type.cc            		\
-	getfem_inter_element.cc           		\
 	getfem_level_set.cc	           		\
 	getfem_mesh_level_set.cc           		\
 	getfem_mesh_im_level_set.cc        		\

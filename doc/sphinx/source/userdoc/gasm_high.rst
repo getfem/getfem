@@ -285,7 +285,7 @@ where :math:`f` is the source term and :math:`v` the test function. The correspo
   workspace.add_fem_constant("f", mf_data, F);
   workspace.add_expression("f*Test_u", mim);
   getfem::base_vector L(nbdofu);
-  workspace.set_assembled_vector(V);
+  workspace.set_assembled_vector(L);
   workspace.assembly(1);
 
 if the source term is describe on a finite element ``mf_data`` and the corresponding vector of degrees of freedom ``F``. Explicit source terms are also possible. For instance::
@@ -296,7 +296,7 @@ if the source term is describe on a finite element ``mf_data`` and the correspon
   workspace.add_fem_variable("u", mf_u, gmm::sub_interval(0, nbdofu), U);
   workspace.add_expression("sin(X(1)+X(2))*Test_u", mim);
   getfem::base_vector L(nbdofu);
-  workspace.set_assembled_vector(V);
+  workspace.set_assembled_vector(L);
   workspace.assembly(1);
 
 is also valid. If the source term is a boundary term (in case of a Neumann condition) the only difference is that the mesh region corresponding to the boundary have to be given as follows::
