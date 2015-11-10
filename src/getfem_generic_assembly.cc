@@ -1846,6 +1846,31 @@ namespace getfem {
   typedef ga_instruction *pga_instruction;
   typedef std::vector<pga_instruction> ga_instruction_list;
 
+  struct gauss_pt_corresp { // For neighbour interpolation transformation
+    bgeot::pgeometric_trans pgt1, pgt2;
+    papprox_integration pai;
+    std::vector<size_type> nodes;
+  };
+  
+  bool operator <(const gauss_pt_corresp &gpc1,
+		  const gauss_pt_corresp &gpc2) {
+    if (gpc1.pai != gpc2.pai)
+      { if (gpc1.pai  <  gpc2.pai ) return true; else return false; }
+    if (gpc1.nodes.size() !=  gpc2.nodes.size()) {
+      if (gpc1.nodes.size() < gpc2.nodes.size())
+	return true; else return false;
+    }
+    for (size_type i = 0; i < gpc1.nodes.size(); ++i) {
+      if (gpc1.nodes[i] != gpc2.nodes[i])
+	{ if (gpc1.nodes[i] < gpc2.nodes[i]) return true; else return false; }
+    }
+    if (gpc1.pgt1 != gpc2.pgt1)
+      { if (gpc1.pgt1 <  gpc2.pgt1) return true; else return false; }
+    if (gpc1.pgt2 !=  gpc2.pgt2)
+      { if (gpc1.pgt2 <  gpc2.pgt2) return true; else return false; }
+    return false;
+  }
+
   struct ga_instruction_set {
 
     papprox_integration pai;       // Current approximation method
@@ -1859,6 +1884,7 @@ namespace getfem {
     size_type nbpt, ipt;           // Number and index of Gauss point
     bgeot::geotrans_precomp_pool gp_pool;
     fem_precomp_pool fp_pool;
+    std::map<gauss_pt_corresp, bgeot::pstored_point_tab> neighbour_corresp;
 
     struct region_mim : std::pair<const mesh_im *, const mesh_region *> {
       const mesh_im* mim(void) const { return this->first; }
@@ -1888,8 +1914,10 @@ namespace getfem {
       fem_interpolation_context ctx;
       base_node pt_y;
       base_small_vector Normal;
+      base_matrix G;
       std::map<std::string, variable_group_info> groups_info;
       std::map<var_trans_pair, base_tensor> derivatives;
+      std::map<const mesh_fem *, pfem_precomp> pfps;
     };
 
     struct elementary_trans_info {
@@ -3489,6 +3517,9 @@ namespace getfem {
     fem_interpolation_context &ctx;
     base_vector coeff;
     size_type qdim;
+    size_type &ipt;
+    fem_precomp_pool &fp_pool;
+    ga_instruction_set::interpolate_info &inin;
 
     virtual int exec(void) {
       GMM_ASSERT1(ctx.is_convex_num_valid(), "No valid element for the "
@@ -3498,18 +3529,25 @@ namespace getfem {
       GMM_ASSERT1(&(mf.linked_mesh()) == *m, "Interpolation of a variable "
         "on another mesh than the one it is defined on");
       slice_vector_on_basic_dof_of_element(mf, U, ctx.convex_num(), coeff);
-      ctx.set_pf(mf.fem_of_element(ctx.convex_num()));
-      GMM_ASSERT1(ctx.pf(), "Undefined finite element method");
+      pfem pf = mf.fem_of_element(ctx.convex_num());
+      GMM_ASSERT1(pf, "Undefined finite element method");
+      if (ctx.have_pgp()) {
+	if (ipt == 0)
+	  inin.pfps[&mf] = fp_pool(pf, &(ctx.pgp()->get_point_tab()));
+	ctx.set_pfp(inin.pfps[&mf]);
+      } else {
+	ctx.set_pf(pf);
+      }
       return 0;
     }
 
     ga_instruction_interpolate
     (base_tensor &tt, const mesh **m_, const mesh_fem *mfn_,
-     const mesh_fem **mfg_,
-     const base_vector *Un_, const base_vector **Ug_,
-     fem_interpolation_context &ctx_, size_type q)
+     const mesh_fem **mfg_, const base_vector *Un_, const base_vector **Ug_,
+     fem_interpolation_context &ctx_, size_type q, size_type &ipt_,
+     fem_precomp_pool &fp_pool_, ga_instruction_set::interpolate_info &inin_)
       : t(tt), m(m_), mfn(mfn_), mfg(mfg_), Un(Un_), Ug(Ug_),
-        ctx(ctx_), qdim(q) {}
+        ctx(ctx_), qdim(q), ipt(ipt_), fp_pool(fp_pool_), inin(inin_) {}
   };
 
   struct ga_instruction_interpolate_val : public ga_instruction_interpolate {
@@ -3522,11 +3560,13 @@ namespace getfem {
       return 0;
     }
 
-    ga_instruction_interpolate_val(base_tensor &tt, const mesh **m_, const mesh_fem *mfn_,
-     const mesh_fem **mfg_,
-     const base_vector *Un_, const base_vector **Ug_,
-     fem_interpolation_context &ctx_, size_type q)
-    : ga_instruction_interpolate(tt, m_, mfn_, mfg_, Un_, Ug_,ctx_, q)
+    ga_instruction_interpolate_val
+    (base_tensor &tt, const mesh **m_, const mesh_fem *mfn_,
+     const mesh_fem **mfg_, const base_vector *Un_, const base_vector **Ug_,
+     fem_interpolation_context &ctx_, size_type q, size_type &ipt_,
+     fem_precomp_pool &fp_pool_, ga_instruction_set::interpolate_info &inin_)
+    : ga_instruction_interpolate(tt, m_, mfn_, mfg_, Un_, Ug_,ctx_, q, ipt_,
+				 fp_pool_, inin_)
     {}
   };
 
@@ -3541,11 +3581,13 @@ namespace getfem {
       return 0;
     }
 
-    ga_instruction_interpolate_grad(base_tensor &tt, const mesh **m_, const mesh_fem *mfn_,
-     const mesh_fem **mfg_,
-     const base_vector *Un_, const base_vector **Ug_,
-     fem_interpolation_context &ctx_, size_type q)
-    : ga_instruction_interpolate(tt, m_, mfn_, mfg_, Un_, Ug_, ctx_, q)
+    ga_instruction_interpolate_grad
+    (base_tensor &tt, const mesh **m_, const mesh_fem *mfn_,
+     const mesh_fem **mfg_, const base_vector *Un_, const base_vector **Ug_,
+     fem_interpolation_context &ctx_, size_type q, size_type &ipt_,
+     fem_precomp_pool &fp_pool_, ga_instruction_set::interpolate_info &inin_)
+    : ga_instruction_interpolate(tt, m_, mfn_, mfg_, Un_, Ug_, ctx_, q, ipt_,
+				 fp_pool_, inin_)
     {}
   };
 
@@ -3560,11 +3602,13 @@ namespace getfem {
       return 0;
     }
 
-    ga_instruction_interpolate_hess(base_tensor &tt, const mesh **m_, const mesh_fem *mfn_,
-     const mesh_fem **mfg_,
-     const base_vector *Un_, const base_vector **Ug_,
-     fem_interpolation_context &ctx_, size_type q)
-    : ga_instruction_interpolate(tt, m_, mfn_, mfg_, Un_, Ug_, ctx_, q)
+    ga_instruction_interpolate_hess
+    (base_tensor &tt, const mesh **m_, const mesh_fem *mfn_,
+     const mesh_fem **mfg_, const base_vector *Un_, const base_vector **Ug_,
+     fem_interpolation_context &ctx_, size_type q, size_type &ipt_,
+     fem_precomp_pool &fp_pool_, ga_instruction_set::interpolate_info &inin_)
+    : ga_instruction_interpolate(tt, m_, mfn_, mfg_, Un_, Ug_, ctx_, q, ipt_,
+				 fp_pool_, inin_)
     {}
   };
 
@@ -3577,11 +3621,13 @@ namespace getfem {
       return 0;
     }
 
-    ga_instruction_interpolate_diverg(base_tensor &tt, const mesh **m_, const mesh_fem *mfn_,
-     const mesh_fem **mfg_,
-     const base_vector *Un_, const base_vector **Ug_,
-     fem_interpolation_context &ctx_, size_type q)
-    : ga_instruction_interpolate(tt, m_, mfn_, mfg_, Un_, Ug_, ctx_, q)
+    ga_instruction_interpolate_diverg
+    (base_tensor &tt, const mesh **m_, const mesh_fem *mfn_,
+     const mesh_fem **mfg_, const base_vector *Un_, const base_vector **Ug_,
+     fem_interpolation_context &ctx_, size_type q, size_type &ipt_,
+     fem_precomp_pool &fp_pool_, ga_instruction_set::interpolate_info &inin_)
+    : ga_instruction_interpolate(tt, m_, mfn_, mfg_, Un_, Ug_, ctx_, q, ipt_,
+				 fp_pool_, inin_)
     {}
   };
 
@@ -3590,6 +3636,9 @@ namespace getfem {
     const mesh **m;
     const mesh_fem *mfn, **mfg;
     fem_interpolation_context &ctx;
+    size_type &ipt;
+    fem_precomp_pool &fp_pool;
+    ga_instruction_set::interpolate_info &inin;
 
     virtual int exec(void) {
       GMM_ASSERT1(ctx.is_convex_num_valid(), "No valid element for the "
@@ -3597,15 +3646,26 @@ namespace getfem {
       const mesh_fem &mf = *(mfg ? *mfg : mfn);
       GMM_ASSERT1(&(mf.linked_mesh()) == *m, "Interpolation of a variable "
         "on another mesh than the one it is defined on");
-      ctx.set_pf(mf.fem_of_element(ctx.convex_num()));
-      GMM_ASSERT1(ctx.pf(), "Undefined finite element method");
+
+      pfem pf = mf.fem_of_element(ctx.convex_num());
+      GMM_ASSERT1(pf, "Undefined finite element method");
+
+      if (ctx.have_pgp()) {
+	if (ipt == 0)
+	  inin.pfps[&mf] = fp_pool(pf, &(ctx.pgp()->get_point_tab()));
+	ctx.set_pfp(inin.pfps[&mf]);
+      } else {
+	ctx.set_pf(pf);
+      }
       return 0;
     }
 
     ga_instruction_interpolate_base
     (const mesh **m_, const mesh_fem *mfn_, const mesh_fem **mfg_,
-     fem_interpolation_context &ctx_)
-      : m(m_), mfn(mfn_), mfg(mfg_), ctx(ctx_) {}
+     fem_interpolation_context &ctx_, size_type &ipt_,
+     fem_precomp_pool &fp_pool_, ga_instruction_set::interpolate_info &inin_)
+      : m(m_), mfn(mfn_), mfg(mfg_), ctx(ctx_), ipt(ipt_),
+	fp_pool(fp_pool_), inin(inin_) {}
   };
 
   struct ga_instruction_interpolate_val_base
@@ -3620,9 +3680,12 @@ namespace getfem {
 
     ga_instruction_interpolate_val_base
     (base_tensor &t_, const mesh **m_, const mesh_fem *mfn_,
-     const mesh_fem **mfg_, fem_interpolation_context &ctx_, size_type q)
+     const mesh_fem **mfg_, fem_interpolation_context &ctx_, size_type q,
+     size_type &ipt_, fem_precomp_pool &fp_pool_,
+     ga_instruction_set::interpolate_info &inin_)
       : ga_instruction_copy_val_base(t_, ZZ, q),
-        ga_instruction_interpolate_base(m_, mfn_, mfg_, ctx_) {}
+        ga_instruction_interpolate_base(m_, mfn_, mfg_, ctx_, ipt_,
+					fp_pool_, inin_) {}
   };
 
   struct ga_instruction_interpolate_grad_base
@@ -3637,9 +3700,12 @@ namespace getfem {
 
     ga_instruction_interpolate_grad_base
     (base_tensor &t_, const mesh **m_, const mesh_fem *mfn_,
-     const mesh_fem **mfg_, fem_interpolation_context &ctx_, size_type q)
+     const mesh_fem **mfg_, fem_interpolation_context &ctx_, size_type q,
+     size_type &ipt_, fem_precomp_pool &fp_pool_,
+     ga_instruction_set::interpolate_info &inin_)
       : ga_instruction_copy_grad_base(t_, ZZ, q),
-        ga_instruction_interpolate_base(m_, mfn_, mfg_, ctx_) {}
+        ga_instruction_interpolate_base(m_, mfn_, mfg_, ctx_, ipt_,
+					fp_pool_, inin_) {}
   };
 
   struct ga_instruction_interpolate_hess_base
@@ -3654,9 +3720,12 @@ namespace getfem {
 
     ga_instruction_interpolate_hess_base
     (base_tensor &t_, const mesh **m_, const mesh_fem *mfn_,
-     const mesh_fem **mfg_, fem_interpolation_context &ctx_, size_type q)
+     const mesh_fem **mfg_, fem_interpolation_context &ctx_, size_type q,
+     size_type &ipt_, fem_precomp_pool &fp_pool_,
+     ga_instruction_set::interpolate_info &inin_)
       : ga_instruction_copy_hess_base(t_, ZZ, q),
-        ga_instruction_interpolate_base(m_, mfn_, mfg_, ctx_) {}
+        ga_instruction_interpolate_base(m_, mfn_, mfg_, ctx_, ipt_,
+					fp_pool_, inin_) {}
   };
 
   struct ga_instruction_interpolate_diverg_base
@@ -3671,9 +3740,12 @@ namespace getfem {
 
     ga_instruction_interpolate_diverg_base
     (base_tensor &t_, const mesh **m_, const mesh_fem *mfn_,
-     const mesh_fem **mfg_, fem_interpolation_context &ctx_, size_type q)
+     const mesh_fem **mfg_, fem_interpolation_context &ctx_, size_type q,
+     size_type &ipt_, fem_precomp_pool &fp_pool_,
+     ga_instruction_set::interpolate_info &inin_)
       : ga_instruction_copy_diverg_base(t_, ZZ, q),
-        ga_instruction_interpolate_base(m_, mfn_, mfg_, ctx_) {}
+        ga_instruction_interpolate_base(m_, mfn_, mfg_, ctx_, ipt_,
+					fp_pool_, inin_) {}
   };
 
 
@@ -4700,7 +4772,6 @@ namespace getfem {
     fem_interpolation_context &ctx;
     base_small_vector &Normal;
     const mesh &m;
-    base_matrix G;
     bool compute_der;
 
     virtual int exec(void) {
@@ -4714,9 +4785,9 @@ namespace getfem {
                                       inin.derivatives, compute_der);
       if (inin.pt_type) {
         if (cv != size_type(-1)) {
-          bgeot::vectors_to_base_matrix(G, (inin.m)->points_of_convex(cv));
+          bgeot::vectors_to_base_matrix(inin.G, (inin.m)->points_of_convex(cv));
           inin.ctx = fem_interpolation_context((inin.m)->trans_of_convex(cv),
-                                               0, P_ref, G, cv, face_num);
+                                               0, P_ref, inin.G, cv, face_num);
           inin.has_ctx = true;
           if (face_num != short_type(-1)) {
             inin.Normal = bgeot::compute_normal(inin.ctx, face_num);
@@ -4744,6 +4815,146 @@ namespace getfem {
      base_small_vector &No, const mesh &mm, bool compute_der_)
       : workspace(w), inin(i), trans(t), ctx(ctxx), Normal(No), m(mm),
         compute_der(compute_der_) {}
+  };
+
+  struct ga_instruction_neighbour_transformation_call : public ga_instruction {
+    ga_workspace &workspace;
+    ga_instruction_set::interpolate_info &inin;
+    pinterpolate_transformation trans;
+    fem_interpolation_context &ctx;
+    base_small_vector &Normal;
+    const mesh &m;
+    size_type &ipt;
+    papprox_integration &pai;
+    bgeot::geotrans_precomp_pool &gp_pool;
+    std::map<gauss_pt_corresp, bgeot::pstored_point_tab> &neighbour_corresp;
+
+    virtual int exec(void) {
+      bool cancel_optimization = false;
+      GA_DEBUG_INFO("Instruction: call interpolate transformation");
+      if (ipt == 0) {
+	if (!(ctx.have_pgp()) || !pai || pai->is_built_on_the_fly()
+	    || cancel_optimization) {
+	  inin.ctx = fem_interpolation_context();
+	} else {
+	  // Test if the situation has already been encountered
+	  size_type cv = ctx.convex_num();
+	  short_type f = ctx.face_num();
+	  auto adj_face = m.adjacent_face(cv, f);
+	  if (adj_face.cv == size_type(-1)) {
+	    inin.ctx = fem_interpolation_context();
+	  } else {
+	    gauss_pt_corresp gpc;
+	    gpc.pgt1 = m.trans_of_convex(cv);
+	    gpc.pgt2 = m.trans_of_convex(adj_face.cv);
+	    gpc.pai = pai;
+	    auto inds_pt1 = m.ind_points_of_face_of_convex(cv, f);
+	    auto inds_pt2 = m.ind_points_of_face_of_convex(adj_face.cv,
+							   adj_face.f);
+	    auto str1 = gpc.pgt1->structure();
+	    auto str2 = gpc.pgt2->structure();
+	    size_type nbptf1 = str1->nb_points_of_face(f);
+	    size_type nbptf2 = str2->nb_points_of_face(adj_face.f);
+	    gpc.nodes.resize(nbptf1*2);
+	    for (size_type i = 0; i < nbptf1; ++i)  {
+	      gpc.nodes[2*i] = str1->ind_points_of_face(f)[i];
+	      bool found = false;
+	      for (size_type j = 0; j < nbptf2; ++j) {
+		if (inds_pt2[j] == inds_pt1[i]) {
+		  gpc.nodes[2*i+1] = str2->ind_points_of_face(adj_face.f)[j];
+		  found = true;
+		  break;
+		}
+	      }
+	      GMM_ASSERT1(found, "Internal error");
+	    }
+	    bgeot::pstored_point_tab pspt = 0;
+	    auto itm = neighbour_corresp.find(gpc);
+	    if (itm != neighbour_corresp.end()) {
+	      pspt = itm->second;
+	    } else {
+	      size_type nbpt = pai->nb_points_on_face(f);
+	      bgeot::geotrans_inv_convex gic;
+	      gic.init(m.points_of_convex(adj_face.cv), gpc.pgt2);
+	      size_type first_ind = pai->ind_first_point_on_face(f);
+	      const bgeot::stored_point_tab &spt = pai->integration_points();
+	      base_matrix G;
+	      bgeot::vectors_to_base_matrix(G, m.points_of_convex(cv));
+	      fem_interpolation_context ctx_x(gpc.pgt1, 0, spt[0], G, cv, f);
+	      std::vector<base_node> P_ref(nbpt);
+	      
+	      for (size_type i = 0; i < nbpt; ++i) {
+		ctx_x.set_xref(spt[first_ind+i]);
+		bool converged = true;
+		bool is_in = gic.invert(ctx_x.xreal(), P_ref[i],converged,1E-4);
+		GMM_ASSERT1(is_in && converged,"Geometric transformation "
+			    "inversion has failed in neighbour transformation");
+	      }
+	      pspt = store_point_tab(P_ref);
+	      neighbour_corresp[gpc] = pspt;
+	    }
+	    bgeot::vectors_to_base_matrix(inin.G,
+					  m.points_of_convex(adj_face.cv));
+	    bgeot::pgeotrans_precomp pgp = gp_pool(gpc.pgt2, pspt);
+	    inin.ctx = fem_interpolation_context(pgp, 0, 0, inin.G,
+						 adj_face.cv, adj_face.f);
+	  }
+	}
+      }
+
+      if (inin.ctx.have_pgp()) {
+	inin.ctx.set_ii(ipt);
+	inin.pt_type = 1;
+	inin.has_ctx = true;
+	inin.pt_y = inin.ctx.xreal();
+	inin.Normal = bgeot::compute_normal(inin.ctx, inin.ctx.face_num());
+	gmm::scale(inin.Normal, 1.0/gmm::vect_norm2(inin.Normal));
+	inin.m = &m;
+      } else {
+	base_node P_ref;
+	size_type cv;
+	short_type face_num;
+	gmm::clear(inin.Normal);
+	inin.pt_type = trans->transform(workspace, m, ctx, Normal, &(inin.m),
+					cv, face_num, P_ref, inin.Normal,
+					inin.derivatives, false);
+	if (inin.pt_type) {
+	  if (cv != size_type(-1)) {
+	    bgeot::vectors_to_base_matrix(inin.G,
+					  (inin.m)->points_of_convex(cv));
+	    inin.ctx = fem_interpolation_context((inin.m)->trans_of_convex(cv),
+						 0, P_ref, inin.G, cv, face_num);
+	    inin.has_ctx = true;
+	    if (face_num != short_type(-1)) {
+	      inin.Normal = bgeot::compute_normal(inin.ctx, face_num);
+	      gmm::scale(inin.Normal, 1.0/gmm::vect_norm2(inin.Normal));
+	    } else
+	      inin.Normal.resize(0);
+	    inin.pt_y = inin.ctx.xreal();
+	  } else {
+	    inin.ctx = fem_interpolation_context();
+	    inin.pt_y = P_ref;
+	    inin.has_ctx = false;
+	  }
+	} else {
+	  inin.ctx = fem_interpolation_context();
+	  inin.Normal.resize(0);
+	  inin.pt_y.resize(0);
+	  inin.has_ctx = false;
+	}	
+      }
+      GA_DEBUG_INFO("Instruction: end of call interpolate transformation");
+      return 0;
+    }
+    ga_instruction_neighbour_transformation_call
+    (ga_workspace &w, ga_instruction_set::interpolate_info &i,
+     pinterpolate_transformation t, fem_interpolation_context &ctxx,
+     base_small_vector &No, const mesh &mm, size_type &ipt_,
+     papprox_integration &pai_, bgeot::geotrans_precomp_pool &gp_pool_,
+     std::map<gauss_pt_corresp, bgeot::pstored_point_tab> &neighbour_corresp_)
+      : workspace(w), inin(i), trans(t), ctx(ctxx), Normal(No), m(mm),
+	ipt(ipt_), pai(pai_), gp_pool(gp_pool_),
+	neighbour_corresp(neighbour_corresp_) {}
   };
 
 
@@ -9352,16 +9563,20 @@ namespace getfem {
 
         if (pnode->node_type == GA_NODE_INTERPOLATE_VAL) {
           pgai = new ga_instruction_interpolate_val // --> t(target_dim*Qmult)
-            (pnode->t, m2, mfn, mfg, Un, Ug, *pctx, workspace.qdim(pnode->name));
+            (pnode->t, m2, mfn, mfg, Un, Ug, *pctx, workspace.qdim(pnode->name),
+	     gis.ipt, gis.fp_pool, rmi.interpolate_infos[intn]);
         } else if (pnode->node_type == GA_NODE_INTERPOLATE_GRAD) {
           pgai = new ga_instruction_interpolate_grad // --> t(target_dim*Qmult,N)
-            (pnode->t, m2, mfn, mfg, Un, Ug, *pctx, workspace.qdim(pnode->name));
+            (pnode->t, m2, mfn, mfg, Un, Ug, *pctx, workspace.qdim(pnode->name),
+	     gis.ipt, gis.fp_pool, rmi.interpolate_infos[intn]);
         } else if (pnode->node_type == GA_NODE_INTERPOLATE_HESS) {
           pgai = new ga_instruction_interpolate_hess // --> t(target_dim*Qmult,N,N)
-            (pnode->t, m2, mfn, mfg, Un, Ug, *pctx, workspace.qdim(pnode->name));
+            (pnode->t, m2, mfn, mfg, Un, Ug, *pctx, workspace.qdim(pnode->name),
+	     gis.ipt, gis.fp_pool, rmi.interpolate_infos[intn]);
         } else { // --> t(1)
           pgai = new ga_instruction_interpolate_diverg
-            (pnode->t, m2, mfn, mfg, Un, Ug, *pctx, workspace.qdim(pnode->name));
+            (pnode->t, m2, mfn, mfg, Un, Ug, *pctx, workspace.qdim(pnode->name),
+	     gis.ipt, gis.fp_pool, rmi.interpolate_infos[intn]);
         }
         rmi.instructions.push_back(pgai);
       }
@@ -9604,19 +9819,23 @@ namespace getfem {
         if (pnode->node_type == GA_NODE_INTERPOLATE_VAL_TEST) {
           // --> t(Qmult*ndof,Qmult*target_dim)
           pgai = new ga_instruction_interpolate_val_base
-            (pnode->t, m2, mfn, mfg, *pctx, workspace.qdim(pnode->name));
+            (pnode->t, m2, mfn, mfg, *pctx, workspace.qdim(pnode->name),
+	     gis.ipt, gis.fp_pool, rmi.interpolate_infos[intn]);
         } else if (pnode->node_type == GA_NODE_INTERPOLATE_GRAD_TEST) {
            // --> t(Qmult*ndof,Qmult*target_dim,N)
           pgai = new ga_instruction_interpolate_grad_base
-            (pnode->t, m2, mfn, mfg, *pctx, workspace.qdim(pnode->name));
+            (pnode->t, m2, mfn, mfg, *pctx, workspace.qdim(pnode->name),
+	     gis.ipt, gis.fp_pool, rmi.interpolate_infos[intn]);
         } else if (pnode->node_type == GA_NODE_INTERPOLATE_HESS_TEST) {
            // --> t(Qmult*ndof,Qmult*target_dim,N,N)
           pgai = new ga_instruction_interpolate_hess_base
-            (pnode->t, m2, mfn, mfg, *pctx, workspace.qdim(pnode->name));
+            (pnode->t, m2, mfn, mfg, *pctx, workspace.qdim(pnode->name),
+	     gis.ipt, gis.fp_pool, rmi.interpolate_infos[intn]);
         } else { // if (pnode->node_type == GA_NODE_INTERPOLATE_DIVERG_TEST) {
            // --> t(Qmult*ndof)
           pgai = new ga_instruction_interpolate_diverg_base
-            (pnode->t, m2, mfn, mfg, *pctx, workspace.qdim(pnode->name));
+            (pnode->t, m2, mfn, mfg, *pctx, workspace.qdim(pnode->name),
+	     gis.ipt, gis.fp_pool, rmi.interpolate_infos[intn]);
         }
         rmi.instructions.push_back(pgai);
       }
@@ -10160,11 +10379,20 @@ namespace getfem {
         rmi.transformations[it->first].size();
         gis.transformations.insert(it->first);
         if (compute_der) rmi.transformations_der.insert(it->first);
-        pga_instruction pgai = new ga_instruction_transformation_call
-          (workspace, rmi.interpolate_infos[it->first],
-           workspace.interpolate_transformation(it->first), gis.ctx,
-           gis.Normal, m, compute_der);
-        rmi.instructions.push_back(pgai);
+	pga_instruction pgai=0;
+	if (!(it->first.compare("neighbour_elt"))) {
+	  pgai = new ga_instruction_neighbour_transformation_call
+	    (workspace, rmi.interpolate_infos[it->first],
+	     workspace.interpolate_transformation(it->first), gis.ctx,
+	     gis.Normal, m, gis.ipt, gis.pai, gis.gp_pool,
+	     gis.neighbour_corresp);
+	} else {
+	  pgai = new ga_instruction_transformation_call
+	    (workspace, rmi.interpolate_infos[it->first],
+	     workspace.interpolate_transformation(it->first), gis.ctx,
+	     gis.Normal, m, compute_der);
+	}
+        if (pgai) rmi.instructions.push_back(pgai);
       }
 
       for (std::set<std::string>::iterator itt = it->second.begin();
@@ -10298,16 +10526,14 @@ namespace getfem {
               fem_interpolation_context *pctx1 = &(gis.ctx);
               bool interpolate = false;
               if (intn1.size()) {
-                pctx1
-                  = &(rmi.interpolate_infos[root->interpolate_name_test1].ctx);
-                interpolate = true;
+                pctx1 = &(rmi.interpolate_infos[intn1].ctx);
+                interpolate = (intn1.compare("neighbour_elt")!=0);
               }
               fem_interpolation_context *pctx2 = &(gis.ctx);
               if (intn2.size()) {
-                pctx2
-                  = &(rmi.interpolate_infos[root->interpolate_name_test2].ctx);
-                interpolate = true;
-              }
+                pctx2 = &(rmi.interpolate_infos[intn2].ctx);
+                interpolate = (intn2.compare("neighbour_elt")!=0);
+               }
 
               add_interval_to_gis(workspace, root->name_test1, gis);
               add_interval_to_gis(workspace, root->name_test2, gis);
@@ -10340,7 +10566,6 @@ namespace getfem {
                 Ir2 = &(gis.var_intervals[root->name_test2]);
                 In2 = &(workspace.interval_of_variable(root->name_test2));
               }
-
 
               pgai = new ga_instruction_matrix_assembly
                 <model_real_sparse_matrix>
@@ -10404,7 +10629,8 @@ namespace getfem {
         if (gic.use_mim()) {
           if (!mim.convex_index().is_in(v.cv())) continue;
           gis.pai = mim.int_method_of_element(v.cv())->approx_method();
-        }
+        } else
+	  gis.pai = 0;
 
         ind.resize(0);
         const bgeot::stored_point_tab &spt
@@ -10474,6 +10700,7 @@ namespace getfem {
     gmm::clear(workspace.assembled_tensor().as_vector());
     gis.nbpt = 1;
     gis.ipt = 0;
+    gis.pai = 0;
 
     ga_instruction_set::instructions_set::iterator
       it = gis.whole_instructions.begin();
@@ -10498,7 +10725,6 @@ namespace getfem {
     ga_instruction_set::instructions_set::iterator it
       = gis.whole_instructions.begin();
     for (; it != gis.whole_instructions.end(); ++it) {
-
       const getfem::mesh_im &mim = *(it->first.mim());
       const getfem::mesh &m = *(it->second.m);
 
@@ -10510,64 +10736,77 @@ namespace getfem {
       // iteration on elements (or faces of elements)
       mesh_region rg(region);
       m.intersect_with_mpi_region(rg);
+      size_type old_cv = size_type(-1);
+      bgeot::pgeometric_trans pgt = 0;
+      pintegration_method pim = 0;
+      bgeot::pstored_point_tab pspt = 0;
+      size_type N = 0;
       for (getfem::mr_visitor v(rg, m); !v.finished(); ++v) {
         if (mim.convex_index().is_in(v.cv())) {
           // cout << "proceed with element " << v.cv() << endl;
-          bgeot::vectors_to_base_matrix(G, m.points_of_convex(v.cv()));
-          size_type N = G.nrows();
-          bgeot::pgeometric_trans pgt = m.trans_of_convex(v.cv());
-          pintegration_method pim = mim.int_method_of_element(v.cv());
-          if (pim->type() == IM_NONE) continue;
-          GMM_ASSERT1(pim->type() == IM_APPROX, "Sorry, exact methods cannot "
+	  if (v.cv() != old_cv) {
+	    bgeot::vectors_to_base_matrix(G, m.points_of_convex(v.cv()));
+	    N = G.nrows();
+	    pgt = m.trans_of_convex(v.cv());
+	    pim = mim.int_method_of_element(v.cv());
+	    GMM_ASSERT1(pim->type() == IM_APPROX, "Sorry, exact methods cannot "
                       "be used in high level generic assembly");
-          const bgeot::stored_point_tab &spt
-            = pim->approx_method()->integration_points();
-          if (spt.size()) {
-            if (gis.ctx.have_pgp() && gis.pai == pim->approx_method() &&
-                gis.ctx.pgt() == pgt) {
-              gis.ctx = fem_interpolation_context(gis.ctx.pgp(), 0, 0, G,
-                                                  v.cv(), v.f());
-            } else {
-              if (pim->approx_method()->is_built_on_the_fly()) {
-                gis.ctx = fem_interpolation_context(pgt, 0, spt[0], G,
-                                                    v.cv(), v.f());
-              } else {
-                bgeot::pgeotrans_precomp pgp = gis.gp_pool(pgt, &spt);
-                gis.ctx = fem_interpolation_context(pgp, 0, 0, G,
-                                                    v.cv(), v.f());
-              }
-            }
-            gis.pai = pim->approx_method();
-            if (gis.need_elt_size)
-              gis.elt_size = m.convex_radius_estimate(v.cv()) * scalar_type(2);
-            // iterations on Gauss points
-            gis.nbpt = gis.pai->nb_points_on_convex();
-            size_type first_ind = 0;
-            if (v.f() != short_type(-1)) {
-              gis.nbpt = gis.pai->nb_points_on_face(v.f());
-              first_ind = gis.pai->ind_first_point_on_face(v.f());
-            }
-            for (gis.ipt = 0; gis.ipt < gis.nbpt; ++(gis.ipt)) {
-              if (gis.ctx.have_pgp()) gis.ctx.set_ii(first_ind+gis.ipt);
-              else gis.ctx.set_xref(spt[first_ind+gis.ipt]);
-              if (gis.ipt == 0 || !(pgt->is_linear())) {
-                J = gis.ctx.J();
-                // Computation of unit normal vector in case of a boundary
-                if (v.f() != short_type(-1)) {
-                  up.resize(N); un.resize(P);
-                  gmm::copy(pgt->normals()[v.f()], un);
-                  gmm::mult(gis.ctx.B(), un, up);
-                  scalar_type nup = gmm::vect_norm2(up);
-                  J *= nup;
-                  gmm::scale(up,1.0/nup);
-                  gis.Normal = up;
-                } else gis.Normal.resize(0);
-              }
-              gis.coeff = J * gis.pai->coeff(first_ind+gis.ipt);
-              for (size_type j = 0; j < gil.size(); ++j) j += gil[j]->exec();
-            }
-          }
-        }
+	    if (pim->type() == IM_NONE) continue;
+	    pspt = &(pim->approx_method()->integration_points());
+	    
+	    if (pspt->size()) {
+	      if (gis.ctx.have_pgp() && gis.pai == pim->approx_method() &&
+		  gis.ctx.pgt() == pgt) {
+		gis.ctx = fem_interpolation_context(gis.ctx.pgp(), 0, 0, G,
+						    v.cv(), v.f());
+	      } else {
+		if (pim->approx_method()->is_built_on_the_fly()) {
+		  gis.ctx = fem_interpolation_context(pgt, 0, (*pspt)[0], G,
+						      v.cv(), v.f());
+		} else {
+		  bgeot::pgeotrans_precomp pgp = gis.gp_pool(pgt, pspt);
+		  gis.ctx = fem_interpolation_context(pgp, 0, 0, G,
+						      v.cv(), v.f());
+		}
+	      }
+	      gis.pai = pim->approx_method();
+	      if (gis.need_elt_size)
+		gis.elt_size = m.convex_radius_estimate(v.cv())*scalar_type(2);
+	    }
+	    old_cv = v.cv();
+	  } else {
+	    if (pim->type() == IM_NONE) continue;
+	    gis.ctx.set_face_num(v.f());
+	  }
+	  if (pspt->size()) {
+	    // iterations on Gauss points
+	    gis.nbpt = gis.pai->nb_points_on_convex();
+	    size_type first_ind = 0;
+	    if (v.f() != short_type(-1)) {
+	      gis.nbpt = gis.pai->nb_points_on_face(v.f());
+	      first_ind = gis.pai->ind_first_point_on_face(v.f());
+	    }
+	    for (gis.ipt = 0; gis.ipt < gis.nbpt; ++(gis.ipt)) {
+	      if (gis.ctx.have_pgp()) gis.ctx.set_ii(first_ind+gis.ipt);
+	      else gis.ctx.set_xref((*pspt)[first_ind+gis.ipt]);
+	      if (gis.ipt == 0 || !(pgt->is_linear())) {
+		J = gis.ctx.J();
+		// Computation of unit normal vector in case of a boundary
+		if (v.f() != short_type(-1)) {
+		  up.resize(N); un.resize(P);
+		  gmm::copy(pgt->normals()[v.f()], un);
+		  gmm::mult(gis.ctx.B(), un, up);
+		  scalar_type nup = gmm::vect_norm2(up);
+		  J *= nup;
+		  gmm::scale(up,1.0/nup);
+		  gis.Normal = up;
+		} else gis.Normal.resize(0);
+	      }
+	      gis.coeff = J * gis.pai->coeff(first_ind+gis.ipt);
+	      for (size_type j = 0; j < gil.size(); ++j) j += gil[j]->exec();
+	    }
+	  }
+	}
       }
       GA_DEBUG_INFO("-----------------------------");
     }
@@ -11201,102 +11440,6 @@ namespace getfem {
   //=========================================================================
   // Interpolate transformation on neighbour element (for internal faces)
   //=========================================================================
-
-
-  struct gauss_pt_corresp {
-    bgeot::pgeometric_trans pgt1, pgt2;
-    papprox_integration pai;
-    std::vector<size_type> nodes;
-  };
-
-  bool operator <(const gauss_pt_corresp &gpc1,
-		  const gauss_pt_corresp &gpc2) {
-    if (gpc1.pai != gpc2.pai)
-      { if (gpc1.pai  <  gpc2.pai ) return true; else return false; }
-    if (gpc1.nodes.size() !=  gpc2.nodes.size()) {
-      if (gpc1.nodes.size() < gpc2.nodes.size())
-	return true; else return false;
-    }
-    for (size_type i = 0; i < gpc1.nodes.size(); ++i) {
-      if (gpc1.nodes[i] != gpc2.nodes[i])
-	{ if (gpc1.nodes[i] < gpc2.nodes[i]) return true; else return false; }
-    }
-    if (gpc1.pgt1 != gpc2.pgt1)
-      { if (gpc1.pgt1 <  gpc2.pgt1) return true; else return false; }
-    if (gpc1.pgt2 !=  gpc2.pgt2)
-      { if (gpc1.pgt2 <  gpc2.pgt2) return true; else return false; }
-    return false;
-  }
-
-  std::map<gauss_pt_corresp, bgeot::pstored_point_tab> stored_corresp; // a mettre dans une structure intermédiaire ?
-  
-
-  static bgeot::pstored_point_tab furnish_pspt(const mesh_im &mim,
-						size_type cv,
-						short_type f) {
-    const mesh& m = mim.linked_mesh();
-    GMM_ASSERT1(f != short_type(-1) && cv != size_type (-1)
-		&& m.convex_index().is_in(cv), "Invalid convex or face id");
-    auto adj_face = m.adjacent_face(cv, f);
-    GMM_ASSERT1(adj_face.cv != size_type(-1), "No adjacent face");
-    pintegration_method pim = mim.int_method_of_element(cv);
-    GMM_ASSERT1(pim->type() == IM_APPROX, "Unvalid integration method");
-    papprox_integration pai = pim->approx_method();
-    GMM_ASSERT1(!(pai->is_built_on_the_fly()), "Do not call "
-		"this function for build on the fly integration methods");
-
-
-    // Fill a gauss_pt_corresp structure.
-    gauss_pt_corresp gpc;
-    gpc.pgt1 = m.trans_of_convex(cv);
-    gpc.pgt2 = m.trans_of_convex(adj_face.cv);
-    gpc.pai = pai;
-    auto inds_pt1 = m.ind_points_of_face_of_convex(cv, f);
-    auto inds_pt2 = m.ind_points_of_face_of_convex(adj_face.cv, adj_face.f);
-    auto str1 = gpc.pgt1->structure();
-    auto str2 = gpc.pgt2->structure();
-    size_type nbptf1 = str1->nb_points_of_face(f);
-    size_type nbptf2 = str2->nb_points_of_face(adj_face.f);
-    gpc.nodes.resize(nbptf1*2);
-    for (size_type i = 0; i < nbptf1; ++i)  {
-      gpc.nodes[2*i] = str1->ind_points_of_face(f)[i];
-      bool found = false;
-      for (size_type j = 0; j < nbptf2; ++j) {
-	if (inds_pt2[j] == inds_pt1[i]) {
-	  gpc.nodes[2*i+1] = str2->ind_points_of_face(adj_face.f)[j];
-	  found = true;
-	  break;
-	}
-      }
-      GMM_ASSERT1(found, "Internal error");
-    }
-    
-    auto itm = stored_corresp.find(gpc);
-    if (itm != stored_corresp.end()) return itm->second;
-    else {
-      size_type nbpt = pai->nb_points_on_face(f);
-      base_matrix G;
-      bgeot::geotrans_inv_convex gic;
-      gic.init(m.points_of_convex(adj_face.cv), gpc.pgt2);
-      size_type first_ind = pai->ind_first_point_on_face(f);
-      const bgeot::stored_point_tab &spt = pai->integration_points();
-      bgeot::vectors_to_base_matrix(G, m.points_of_convex(cv));
-      fem_interpolation_context ctx(gpc.pgt1, 0, spt[0], G, cv, f);
-      std::vector<base_node> P_ref(nbpt);
-      
-      for (size_type i = 0; i < nbpt; ++i) {
-	ctx.set_xref(spt[first_ind+i]);
-	bool converged = true;
-	bool is_in = gic.invert(ctx.xreal(), P_ref[i], converged, 1E-4);
-	GMM_ASSERT1(is_in && converged, "Geometric transformation inversion "
-		    "has failed in neighbour transformation");
-      }
-      bgeot::pstored_point_tab pspt = store_point_tab(P_ref);
-      stored_corresp[gpc] = pspt;
-      return pspt;
-    }
-  }
-
 
   class  interpolate_transformation_neighbour
     : public virtual_interpolate_transformation, public context_dependencies {

@@ -710,6 +710,8 @@ namespace getfem {
     /** get the current convex number */
     size_type convex_num() const;
     bool is_convex_num_valid() const;
+    /** set the current face number */
+    void set_face_num(short_type f) { face_num_ = f; }
     /** get the current face number */
     short_type face_num() const;
     /** On a face ? */

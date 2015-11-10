@@ -707,7 +707,7 @@ where ``mr`` is an optional mesh region. If ``mr`` is specified only the face in
 
 See for instance :file:`interface/tests/python/demo_laplacian_DG.py` or :file:`interface/tests/matlab/demo_laplacian_DG.m` for an example of use.
 
-
+Compared to other interpolate transformations, this transformation is more optimized and benefits from finite element and geometric transformation pre-computations.
 
 Elementary transformations
 --------------------------

@@ -140,7 +140,7 @@ namespace getfem {
 	iendj.compute_on_face(cv1.cv(), f);
     
     for (mr_visitor cv1(sub_rg); !cv1.finished(); ++cv1)
-      err[cv1.cv()] *= m.convex_radius_estimate(cv1.cv());
+      err[cv1.cv()] *= m.convex_radius_estimate(cv1.cv()) * scalar_type(2);
     
     MPI_SUM_VECTOR(err);
   }
