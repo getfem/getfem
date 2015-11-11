@@ -73,7 +73,7 @@ base_small_vector sol_grad(const base_node &x)
 */
 struct laplacian_problem {
 
-  enum { DIRICHLET_BOUNDARY_NUM = 0, NEUMANN_BOUNDARY_NUM = 1};
+  enum { DIRICHLET_BOUNDARY_NUM = 0, NEUMANN_BOUNDARY_NUM = 1, INNER_FACES = 2};
   enum { DIRICHLET_WITH_MULTIPLIERS = 0, DIRICHLET_WITH_PENALIZATION = 1};
   getfem::mesh mesh;        /* the mesh */
   getfem::mesh_im mim;      /* the integration methods. */
@@ -87,6 +87,8 @@ struct laplacian_problem {
 
   std::string datafilename;
   bgeot::md_param PARAM;
+  bool DG_TERMS;
+  scalar_type interior_penalty_factor;
 
   bool solve(void);
   void init(void);
@@ -103,6 +105,11 @@ void laplacian_problem::init(void) {
   std::string FEM_TYPE  = PARAM.string_value("FEM_TYPE","FEM name");
   std::string INTEGRATION = PARAM.string_value("INTEGRATION",
 					       "Name of integration method");
+  DG_TERMS = (PARAM.int_value("DG_TERMS",
+			      "Discontinuous Galerkin terms or not") != 0);
+  interior_penalty_factor = PARAM.real_value("INTERIOR_PENALTY_FACTOR",
+					     "Interior penalty factor for DG");
+
   cout << "MESH_TYPE=" << MESH_TYPE << "\n";
   cout << "FEM_TYPE="  << FEM_TYPE << "\n";
   cout << "INTEGRATION=" << INTEGRATION << "\n";
@@ -176,6 +183,10 @@ void laplacian_problem::init(void) {
       mesh.region(DIRICHLET_BOUNDARY_NUM).add(i.cv(), i.f());
     }
   }
+
+  if (DG_TERMS)
+    mesh.region(INNER_FACES) = getfem::inner_faces_of_mesh(mesh);
+
 }
 
 bool laplacian_problem::solve(void) {
@@ -215,8 +226,22 @@ bool laplacian_problem::solve(void) {
       (model, mim, "u", dirichlet_coefficient,
        DIRICHLET_BOUNDARY_NUM, "DirichletData");
   
+  if (DG_TERMS) {
+    model.add_initialized_scalar_data("alpha", interior_penalty_factor);
+    std::string jump="((u-Interpolate(u,neighbour_elt))*Normal)";
+    std::string test_jump="((Test_u-Interpolate(Test_u,neighbour_elt))*Normal)";
+    std::string grad_mean="((Grad_u+Interpolate(Grad_u,neighbour_elt))*0.5)";
+    std::string grad_test_mean
+      ="((Grad_Test_u+Interpolate(Grad_Test_u,neighbour_elt))*0.5)";
+    std::string expr = "-("+grad_mean+").("+test_jump+") "
+      "- ("+jump+").("+grad_test_mean+")"
+      "+ alpha*("+jump+").("+test_jump+")";
+    getfem::add_linear_generic_assembly_brick(model, mim, expr,
+					      INNER_FACES, true);
+  }
+
   model.listvar(cout);
- 
+
   gmm::iteration iter(residual, 1, 40000);
   getfem::standard_solve(model, iter);
 

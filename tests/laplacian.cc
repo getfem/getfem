@@ -93,7 +93,7 @@ struct laplacian_problem {
 			      */
   std::string datafilename;
   bgeot::md_param PARAM;
-
+  
   void assembly(void);
   bool solve(void);
   void init(void);
@@ -111,6 +111,7 @@ void laplacian_problem::init(void) {
   std::string FEM_TYPE  = PARAM.string_value("FEM_TYPE","FEM name");
   std::string INTEGRATION = PARAM.string_value("INTEGRATION",
 					       "Name of integration method");
+
   cout << "MESH_TYPE=" << MESH_TYPE << "\n";
   cout << "FEM_TYPE="  << FEM_TYPE << "\n";
   cout << "INTEGRATION=" << INTEGRATION << "\n";

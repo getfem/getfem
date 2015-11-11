@@ -29,7 +29,7 @@ gamma0 = 0.001;  % Nitsche's method parameter gamma0 (gamma = gamma0*h)
 r = 1e8;         % Penalization parameter for the Dirichlet condition
 draw = false;
 quadrangles = true;
-NX = 150;
+NX = 20;
 K = 2;           % Degree of the discontinuous finite element method
 interior_penalty_factor = 300*NX; % Parameter of the interior penalty term
 verify_neighbour_computation = true;
@@ -125,10 +125,6 @@ grad_test_mean = '((Grad_Test_u+Interpolate(Grad_Test_u,neighbour_elt))*0.5)';
 % gf_model_set(md, 'add linear generic assembly brick', mim, sprintf('-((%s).(%s))', jump, grad_test_mean), INNER_FACES);
 % gf_model_set(md, 'add linear generic assembly brick', mim, sprintf('alpha*((%s).(%s))', jump, test_jump), INNER_FACES);
 gf_model_set(md, 'add linear generic assembly brick', mim, sprintf('-((%s).(%s))-((%s).(%s))+alpha*((%s).(%s))', grad_mean, test_jump, jump, grad_test_mean, jump, test_jump), INNER_FACES);
-
-tic;
-gf_model_get(md, 'assembly');
-toc
 
 gf_model_get(md, 'solve', 'noisy');
 U = gf_model_get(md, 'variable', 'u');

@@ -39,6 +39,8 @@ ROOTFILENAME = 'laplacian';       % Root of data files.
 DIRICHLET_VERSION = 1;      	  % 0 = With Lagrange multipliers
 			    	  % 1 = penalization.
 DIRICHLET_COEFFICIENT = 1E10;	  % Penalization coefficient.
+DG_TERMS = 0;                     % No discontinous Galerkin terms
+INTERIOR_PENALTY_FACTOR = 0;      % Interior penalty factor for DG
 
 ;
 close(TMPF);

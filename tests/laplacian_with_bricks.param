@@ -8,16 +8,23 @@ INCLINE = 0;                	     % Incline of the mesh.
 FT = 0.1;                   	     % parameter for the exact solution.
 N = 2;                      	     % domain in dimension N
 QUAD = 0;                   	     % use quadrilaterons or not
-NX = 100;                   	     % space step.
+NX = 50;                   	     % space step.
 MESH_NOISED = 0;            	     % "shake" the mesh or not
+DG_TERMS = 0;                        % Discontinuous Galerkin terms or not
+INTERIOR_PENALTY_FACTOR = 1000;      % Interior penalty factor for DG
 DIRICHLET_VERSION = 1;      	     % 0 = With Lagrange multipliers
 			    	     % 1 = penalization.
 DIRICHLET_COEFFICIENT = 1E10;	     % Penalization coefficient.
 
+
 if (N == 1)
   FT = 5.0;
   MESH_TYPE = 'GT_PK(1,1)';          % segments
-  FEM_TYPE = 'FEM_PK(1,2)';          % P1 for segments
+  if (DG_TERMS)
+    FEM_TYPE = 'FEM_PK_DISCONTINUOUS(1,2)';          % P2 for segments
+  else
+    FEM_TYPE = 'FEM_PK(1,2)';          % P2 for segments
+  end
 %  FEM_TYPE = 'FEM_HERMITE(1)'; DATA_FEM_TYPE = 'FEM_PK(1,3)';
   INTEGRATION = 'IM_GAUSS1D(6)';     % Gauss-Legendre integration on segments
 end
@@ -25,7 +32,11 @@ end
 if (N == 2 && ~QUAD)
   FT = 10.0;
   MESH_TYPE = 'GT_PK(2,1)';          % triangles
-  FEM_TYPE = 'FEM_PK(2,1)';          % P1 for triangles
+  if (DG_TERMS)
+    FEM_TYPE = 'FEM_PK_DISCONTINUOUS(2,2)';        % P2 for triangles
+  else
+    FEM_TYPE = 'FEM_PK(2,2)';          % P2 for triangles
+  end
   %FEM_TYPE = 'FEM_REDUCED_HCT_TRIANGLE'; DATA_FEM_TYPE = 'FEM_PK(2,3)';
   %INTEGRATION = 'IM_HCT_COMPOSITE(IM_TRIANGLE(6))';
   %FEM_TYPE = 'FEM_HERMITE(2)'; DATA_FEM_TYPE = 'FEM_PK(2,2)';
@@ -41,13 +52,21 @@ if (N == 2 && QUAD)
   else
     MESH_TYPE = 'GT_LINEAR_QK(2)';   % quadrilaterons (linear transformation)
   end
-  FEM_TYPE = 'FEM_QK(2,2)';          % Q1 for quadrilaterons
+  if (DG_TERMS)
+    FEM_TYPE = 'FEM_QK_DISCONTINUOUS(2,2)';          % Q2 for quadrilaterons
+  else
+    FEM_TYPE = 'FEM_QK(2,2)';          % Q2 for quadrilaterons
+  end
   INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(2,6)';
 end
 
 if (N == 3 && ~QUAD)
   MESH_TYPE = 'GT_PK(3,1)';          % tetrahedrons
-  FEM_TYPE = 'FEM_PK(3,2)';          % P1 for tetrahedrons
+  if (DG_TERMS)
+    FEM_TYPE = 'FEM_PK_DISCONTINUOUS(3,2)';          % P1 for tetrahedrons
+  else
+    FEM_TYPE = 'FEM_PK(3,2)';          % P1 for tetrahedrons
+  end
   INTEGRATION = 'IM_TETRAHEDRON(2)'; % quadrature rule for polynomials up
                                      % to degree 6 on tetrahedrons
 end
@@ -58,7 +77,11 @@ if (N == 3 && QUAD)
   else
     MESH_TYPE = 'GT_LINEAR_QK(3)';   % hexahedrons (linear transformation)
   end
-  FEM_TYPE = 'FEM_QK(3,1)';          % Q1 for hexahedrons
+  if (DG_TERMS)
+    FEM_TYPE = 'FEM_QK_DISCONTINUOUS(3,2)';          % Q2 for hexahedrons
+  else
+    FEM_TYPE = 'FEM_QK(3,2)';          % Q2 for hexahedrons
+  end
   INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(3,6)';
 end
 
