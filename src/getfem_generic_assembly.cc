@@ -11170,6 +11170,20 @@ namespace getfem {
     ga_interpolation(workspace, gic);
   }
 
+  void ga_interpolation_im_data
+  (ga_workspace &workspace, const getfem::model &md,
+   const std::string &expr, const std::string &var_name,
+   const mesh_region &rg)
+  {
+    auto pim_data = md.pim_data_of_variable(var_name);
+    GMM_ASSERT1(pim_data != nullptr, "im_data for "
+                                     + var_name + " is not found.");
+    auto &result = md.set_real_variable(var_name);
+    workspace.add_interpolation_expression
+      (expr, pim_data->linked_mesh_im(), rg);
+    ga_interpolation_context_im_data gic(*pim_data, result);
+    ga_interpolation(workspace, gic);
+  }
 
   //=========================================================================
   // Interpolate transformation with an expression

@@ -630,6 +630,11 @@ namespace getfem {
   (const getfem::model &md, const std::string &expr, const im_data &imd,
    base_vector &result, const mesh_region &rg=mesh_region::all_convexes());
 
+  void ga_interpolation_im_data
+  (ga_workspace &workspace, const getfem::model &md,
+   const std::string &expr, const std::string &var_name,
+   const mesh_region &rg=mesh_region::all_convexes());
+
   //=========================================================================
   // Interpolate transformations
   //=========================================================================
