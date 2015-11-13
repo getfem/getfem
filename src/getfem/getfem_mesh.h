@@ -678,8 +678,8 @@ namespace getfem {
       region. Each face is represented only once and is arbitrarily chosen
       between the two neighbour elements.
    */
-  mesh_region APIDECL inner_faces_of_mesh(const mesh &m,
-			       mesh_region mr = mesh_region::all_convexes());
+  mesh_region APIDECL inner_faces_of_mesh
+  (const mesh &m, mesh_region mr = mesh_region::all_convexes());
   
   /** Select in the region mr the faces of the mesh m with their unit
       outward vector having a maximal angle "angle" with the vector V.

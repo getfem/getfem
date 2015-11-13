@@ -1527,13 +1527,14 @@ namespace getfem {
                               size_type region, bool slave) {
       const mesh_fem *mf = 0;
       if (md.variable_group_exists(dispname)) {
-        const std::vector<std::string> &t = md.variable_group(dispname);
-        for (size_type i = 0; i < t.size(); ++i) {
-          const mesh_fem *mf2 = md.pmesh_fem_of_variable(t[i]);
+        for (const auto &t : md.variable_group(dispname)) {
+          const mesh_fem *mf2 = md.pmesh_fem_of_variable(t);
           if (mf2 && &(mf2->linked_mesh()) == &m)
             { mf = mf2; break; }
         }
-      } else mf = md.pmesh_fem_of_variable(dispname);
+      } else
+        mf = md.pmesh_fem_of_variable(dispname);
+
       GMM_ASSERT1(mf, "Displacement should be a fem variable");
       contact_boundary cb(region, mf, dispname, slave);
       boundary_for_mesh[&(mf->linked_mesh())]
@@ -1546,13 +1547,14 @@ namespace getfem {
                               size_type region, bool slave) {
       const mesh_fem *mf = 0;
       if (workspace.variable_group_exists(dispname)) {
-        const std::vector<std::string> &t = workspace.variable_group(dispname);
-        for (size_type i = 0; i < t.size(); ++i) {
-          const mesh_fem *mf2 = workspace.associated_mf(t[i]);
+        for (const auto &t : workspace.variable_group(dispname)) {
+          const mesh_fem *mf2 = workspace.associated_mf(t);
           if (mf2 && &(mf2->linked_mesh()) == &m)
             { mf = mf2; break; }
         }
-      } else mf = workspace.associated_mf(dispname);
+      } else
+        mf = workspace.associated_mf(dispname);
+
       GMM_ASSERT1(mf, "Displacement should be a fem variable");
       contact_boundary cb(region, mf, dispname, slave);
       boundary_for_mesh[&(mf->linked_mesh())]
@@ -1570,27 +1572,23 @@ namespace getfem {
       // GMM_ASSERT1(mf, "Internal error");
       // const mesh &m_x = mf->linked_mesh();
 
-      mesh_boundary_cor::const_iterator it =  boundary_for_mesh.find(&m_x);
+      mesh_boundary_cor::const_iterator it = boundary_for_mesh.find(&m_x);
       GMM_ASSERT1(it != boundary_for_mesh.end(), "Raytracing interpolate "
                   "transformation: Mesh with no declared contact boundary");
-      const std::vector<size_type> &boundaries_ind = it->second;
-      for (size_type i = 0; i < boundaries_ind.size(); ++i) {
-        const contact_boundary &cb =  contact_boundaries[boundaries_ind[i]];
+      for (const auto &boundary_ind : it->second) {
+        const contact_boundary &cb = contact_boundaries[boundary_ind];
         const std::string &dispname_x
-          =  workspace.variable_in_group(cb.dispname, m_x);
+          = workspace.variable_in_group(cb.dispname, m_x);
         if (!ignore_data || !(workspace.is_constant(dispname_x)))
           vars.insert(var_trans_pair(dispname_x, ""));
       }
 
-      for (size_type i = 0; i < contact_boundaries.size(); ++i) {
-        const contact_boundary &cb =  contact_boundaries[i];
+      for (const auto &cb : contact_boundaries) {
         if (!(cb.slave)) {
           if (expand_groups && workspace.variable_group_exists(cb.dispname)
               && (!ignore_data || !(workspace.is_constant(cb.dispname)))) {
-            const std::vector<std::string> &t
-              = workspace.variable_group(cb.dispname);
-          for (size_type j = 0; j < t.size(); ++j)
-            vars.insert(var_trans_pair(t[j], interpolate_name));
+            for (const auto &t : workspace.variable_group(cb.dispname))
+              vars.insert(var_trans_pair(t, interpolate_name));
           } else {
             if (!ignore_data || !(workspace.is_constant(cb.dispname)))
               vars.insert(var_trans_pair(cb.dispname, interpolate_name));
@@ -1600,8 +1598,7 @@ namespace getfem {
     }
 
     void init(const ga_workspace &workspace) const {
-      for (size_type i = 0; i < contact_boundaries.size(); ++i) {
-        const contact_boundary &cb =  contact_boundaries[i];
+      for (const auto &cb : contact_boundaries) {
         const mesh_fem &mfu = *(cb.mfu);
         const std::string dispname_x
           =  workspace.variable_in_group(cb.dispname, mfu.linked_mesh());
@@ -1620,8 +1617,8 @@ namespace getfem {
     void finalize() const {
       face_boxes.clear();
       face_boxes_info = std::vector<face_box_info>();
-      for (size_type i = 0; i < contact_boundaries.size(); ++i)
-        contact_boundaries[i].U_unred = model_real_plain_vector();
+      for (auto&& cb : contact_boundaries)
+        cb.U_unred = model_real_plain_vector();
     }
 
     int transform(const ga_workspace &workspace, const mesh &m_x,
@@ -1643,16 +1640,15 @@ namespace getfem {
       mesh_boundary_cor::const_iterator it =  boundary_for_mesh.find(&m_x);
       GMM_ASSERT1(it != boundary_for_mesh.end(),
                   "Mesh with no declared contact boundary");
-      const std::vector<size_type> &boundaries_ind = it->second;
       size_type ib_x = size_type(-1);
-      for (size_type i = 0; i < boundaries_ind.size(); ++i) {
-        const contact_boundary &cb =  contact_boundaries[boundaries_ind[i]];
+      for (const auto &boundary_ind : it->second) {
+        const contact_boundary &cb = contact_boundaries[boundary_ind];
         if (m_x.region(cb.region).is_in(cv_x, face_x))
-          { ib_x = boundaries_ind[i]; break; }
+          { ib_x = boundary_ind; break; }
       }
       GMM_ASSERT1(ib_x != size_type(-1),
                   "No contact region found for this point");
-      const contact_boundary &cb_x =  contact_boundaries[ib_x];
+      const contact_boundary &cb_x = contact_boundaries[ib_x];
       const mesh_fem &mfu_x = *(cb_x.mfu); 
       pfem pfu_x = mfu_x.fem_of_element(cv_x);
       size_type N = mfu_x.linked_mesh().dim();
@@ -1741,7 +1737,8 @@ namespace getfem {
           stored_pt_y = stored_pt_y_ref = pt_y; stored_n_y = n_y, 
           stored_signed_distance = d0;
           first_pair_found = true;
-        } else irigid_obstacle = size_type(-1);
+        } else
+          irigid_obstacle = size_type(-1);
       }
 
       //
@@ -1758,9 +1755,8 @@ namespace getfem {
       // Iteration on potential contact pairs and application
       // of selection criteria
       //
-      bgeot::rtree::pbox_set::iterator it_cp = bset.begin();
-      for (; it_cp != bset.end(); ++it_cp) {
-        face_box_info &fbox_y = face_boxes_info[(*it_cp)->id];
+      for (const auto &pbox : bset) {
+        face_box_info &fbox_y = face_boxes_info[pbox->id];
         size_type ib_y = fbox_y.ind_boundary;
         const contact_boundary &cb_y =  contact_boundaries[ib_y];
         const mesh_fem &mfu_y = *(cb_y.mfu);
@@ -1826,13 +1822,12 @@ namespace getfem {
         size_type nbfail = 0, niter = 0;
         for (;residual > 2E-12 && niter <= 30; ++niter) {
           
-          for (size_type subiter(0);;) {
+          for (size_type subiter(0); subiter <= 4; ++subiter) {
             pps(a, hessa);
             det = gmm::abs(gmm::lu_inverse(hessa, false));
             if (det > 1E-15) break;
             for (size_type i = 0; i < N-1; ++i)
               a[i] += gmm::random() * 1E-7;
-            if (++subiter > 4) break;
           }
           if (det <= 1E-15) break;
           // Computation of the descent direction
@@ -2013,27 +2008,25 @@ namespace getfem {
                   der_x(i, j) -= M2(j, k) * vgrad_base_ux(i, l, k)
                     * n_x[l] * stored_signed_distance;
 
-
           const std::string &dispname_x
             = workspace.variable_in_group(cb_x.dispname, m_x);
 
-          for (std::map<var_trans_pair, base_tensor>::iterator itd
-                 = derivatives.begin(); itd != derivatives.end(); ++itd) {
-            if (dispname_x.compare(itd->first.varname) == 0 &&
-                itd->first.transname.size() == 0) {
-              itd->second.adjust_sizes(ndof_ux, N);
-              gmm::copy(der_x.as_vector(), itd->second.as_vector());
+          for (auto&& d : derivatives) {
+            if (dispname_x.compare(d.first.varname) == 0 &&
+                d.first.transname.size() == 0) {
+              d.second.adjust_sizes(ndof_ux, N);
+              gmm::copy(der_x.as_vector(), d.second.as_vector());
             } else if (ret_type == 1 &&
-                       stored_dispname.compare(itd->first.varname) == 0 &&
-                       itd->first.transname.size() != 0) {
-              itd->second.adjust_sizes(ndof_uy, N);
-              gmm::copy(der_y.as_vector(), itd->second.as_vector());
-            } else itd->second.adjust_sizes(0, 0);
+                       stored_dispname.compare(d.first.varname) == 0 &&
+                       d.first.transname.size() != 0) {
+              d.second.adjust_sizes(ndof_uy, N);
+              gmm::copy(der_y.as_vector(), d.second.as_vector());
+            } else
+              d.second.adjust_sizes(0, 0);
           }
         } else {
-          for (std::map<var_trans_pair, base_tensor>::iterator itd
-                 = derivatives.begin(); itd != derivatives.end(); ++itd)
-            itd->second.adjust_sizes(0, 0);
+          for (auto&& d : derivatives)
+            d.second.adjust_sizes(0, 0);
         }
       }
       return ret_type;

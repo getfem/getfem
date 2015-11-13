@@ -2516,73 +2516,74 @@ namespace getfem {
   void add_rigid_obstacle_to_large_sliding_contact_brick
   (model &md, size_type indbrick, std::string expr, size_type N) {
     pbrick pbr = md.brick_pointer(indbrick);
-     intergral_large_sliding_contact_brick_raytracing *p
-       = dynamic_cast<intergral_large_sliding_contact_brick_raytracing *>
-       (const_cast<virtual_brick *>(pbr.get()));
-     GMM_ASSERT1(p, "Wrong type of brick");
-     add_rigid_obstacle_to_raytracing_transformation
-       (md, p->transformation_name, expr, N);
+    intergral_large_sliding_contact_brick_raytracing *p
+      = dynamic_cast<intergral_large_sliding_contact_brick_raytracing *>
+      (const_cast<virtual_brick *>(pbr.get()));
+    GMM_ASSERT1(p, "Wrong type of brick");
+    add_rigid_obstacle_to_raytracing_transformation
+      (md, p->transformation_name, expr, N);
   }
   
   void add_contact_boundary_to_large_sliding_contact_brick
   (model &md, size_type indbrick, const mesh_im &mim, size_type region,
    bool is_master, bool is_slave, const std::string &u,
    const std::string &lambda, const std::string &w) {
-     pbrick pbr = md.brick_pointer(indbrick);
-     intergral_large_sliding_contact_brick_raytracing *p
-       = dynamic_cast<intergral_large_sliding_contact_brick_raytracing *>
-       (const_cast<virtual_brick *>(pbr.get()));
-     GMM_ASSERT1(p, "Wrong type of brick");
-     
-     bool found_u = false, found_lambda = false;
-     for (size_type i = 0; i < p->vl.size(); ++i) {
-       if (p->vl[i].compare(u) == 0) found_u = true;
-       if (p->vl[i].compare(lambda) == 0) found_lambda = true;
-     }
-     if (!found_u) p->vl.push_back(u);
-     GMM_ASSERT1(!is_slave || lambda.size(),
-                 "You should define a multiplier on each slave boundary");
-     if (is_slave && !found_lambda) p->vl.push_back(lambda);
-     if (!found_u || (is_slave && !found_lambda))
-       md.change_variables_of_brick(indbrick, p->vl);
 
-     std::vector<std::string> ug = md.variable_group(p->u_group);
-     found_u = false;
-     for (size_type i = 0; i < ug.size(); ++i)
-         if (ug[i].compare(u) == 0) found_u = true;
-     if (!found_u) {
-       ug.push_back(u);
-       md.define_variable_group(p->u_group, ug);
-     }
+    pbrick pbr = md.brick_pointer(indbrick);
+    intergral_large_sliding_contact_brick_raytracing *p
+      = dynamic_cast<intergral_large_sliding_contact_brick_raytracing *>
+      (const_cast<virtual_brick *>(pbr.get()));
+    GMM_ASSERT1(p, "Wrong type of brick");
 
-     if (w.size()) {
-       bool found_w = false;
-       for (size_type i = 0; i < p->dl.size(); ++i)
-         if (p->dl[i].compare(w) == 0) found_w = true;
-       if (!found_w) { 
-         p->dl.push_back(w);
-         md.change_data_of_brick(indbrick, p->dl);
-       }
-       std::vector<std::string> wg = md.variable_group(p->w_group);
-       found_w = false;
-       for (size_type i = 0; i < wg.size(); ++i)
-         if (wg[i].compare(w) == 0) found_w = true;
-       if (!found_w) {
-         wg.push_back(w);
-         md.define_variable_group(p->w_group, wg);
-       }
-     }
-     
-     bool found_mim = false;
-     for (size_type i = 0; i < p->ml.size(); ++i)
-       if (p->ml[i] == &mim) found_mim = true;
-     if (!found_mim) {
-       p->ml.push_back(&mim);
-       md.change_mims_of_brick(indbrick, p->ml);
-     }
+    bool found_u = false, found_lambda = false;
+    for (const auto & v : p->vl) {
+      if (v.compare(u) == 0) found_u = true;
+      if (v.compare(lambda) == 0) found_lambda = true;
+    }
+    if (!found_u) p->vl.push_back(u);
+    GMM_ASSERT1(!is_slave || lambda.size(),
+                "You should define a multiplier on each slave boundary");
+    if (is_slave && !found_lambda) p->vl.push_back(lambda);
+    if (!found_u || (is_slave && !found_lambda))
+      md.change_variables_of_brick(indbrick, p->vl);
 
-     p->add_contact_boundary(md, mim, region, is_master, is_slave,
-                             u, lambda, w);
+    std::vector<std::string> ug = md.variable_group(p->u_group);
+    found_u = false;
+    for (const auto &uu : ug)
+      if (uu.compare(u) == 0) { found_u = true; break; }
+    if (!found_u) {
+      ug.push_back(u);
+      md.define_variable_group(p->u_group, ug);
+    }
+
+    if (w.size()) {
+      bool found_w = false;
+      for (const auto &ww : p->dl)
+        if (ww.compare(w) == 0) { found_w = true; break; }
+      if (!found_w) { 
+        p->dl.push_back(w);
+        md.change_data_of_brick(indbrick, p->dl);
+      }
+      std::vector<std::string> wg = md.variable_group(p->w_group);
+      found_w = false;
+      for (const auto &ww : wg)
+        if (ww.compare(w) == 0) { found_w = true; break; }
+      if (!found_w) {
+        wg.push_back(w);
+        md.define_variable_group(p->w_group, wg);
+      }
+    }
+
+    bool found_mim = false;
+    for (const auto &pmim : p->ml)
+      if (pmim == &mim) { found_mim = true; break; }
+    if (!found_mim) {
+      p->ml.push_back(&mim);
+      md.change_mims_of_brick(indbrick, p->ml);
+    }
+
+    p->add_contact_boundary(md, mim, region, is_master, is_slave,
+                            u, lambda, w);
   } 
 
   size_type add_integral_large_sliding_contact_brick_raytracing
