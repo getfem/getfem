@@ -220,9 +220,9 @@ namespace getfem {
 	}
 	penriched_Qk->valid();
 	pfem pf(penriched_Qk);
-	dal::add_stored_object(new special_cartesianfem_key(pf), pf,
-			   pf->ref_convex(0),
-			   pf->node_tab(0));
+	dal::pstatic_stored_object_key
+	  pk = std::make_shared<special_cartesianfem_key>(pf);
+	dal::add_stored_object(pk, pf, pf->ref_convex(0), pf->node_tab(0));
 
 	cartesian_fem.set_finite_element(cartesian.convex_index(), pf);  
 	GMM_ASSERT1(!cartesian_fem.is_reduced(), "To be adapted");
