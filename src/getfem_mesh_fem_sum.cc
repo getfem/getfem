@@ -291,9 +291,9 @@ namespace getfem {
         if (situations.find(pfems) == situations.end() || is_cv_dep) {
           pfem pf = std::make_shared<fem_sum>(pfems, i,
 					      smart_global_dof_linking_);
-          dal::add_stored_object(new special_mflsum_key(pf), pf,
-                                 pf->ref_convex(0),
-                                 pf->node_tab(0));
+	  dal::pstatic_stored_object_key
+	    pk = std::make_shared<special_mflsum_key>(pf);
+          dal::add_stored_object(pk, pf, pf->ref_convex(0), pf->node_tab(0));
           build_methods.push_back(pf);
           situations[pfems] = pf;
         }

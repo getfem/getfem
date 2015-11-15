@@ -439,9 +439,11 @@ namespace bgeot {
       size_type nbp = basic_structure(cvr->structure())->nb_points();
 
       force_simplexification = force_simplexification || (nbp == n+1);
+      dal::pstatic_stored_object_key
+	pk = std::make_shared<str_mesh_key>(basic_structure(cvr->structure()),
+					    k, force_simplexification);
 
-      dal::pstatic_stored_object o
-        = dal::search_stored_object(str_mesh_key(basic_structure(cvr->structure()), k, force_simplexification));
+      dal::pstatic_stored_object o = dal::search_stored_object(pk);
       pstr_mesh_cv__ psmc;
       if (o) {
         psmc = std::dynamic_pointer_cast<const str_mesh_cv__>(o);
@@ -481,7 +483,7 @@ namespace bgeot {
         }
 
         smc.pmp = new mesh_precomposite(*(smc.pm));
-        dal::add_stored_object(new str_mesh_key(basic_structure(cvr->structure()), k, force_simplexification), psmc, basic_structure(cvr->structure()));
+        dal::add_stored_object(pk, psmc, basic_structure(cvr->structure()));
       }
       pm  = psmc->pm;
       pmp = psmc->pmp;
@@ -497,14 +499,16 @@ namespace bgeot {
   const std::vector<mesh_structure*>& 
     refined_simplex_mesh_for_convex_faces(pconvex_ref cvr, 
     short_type k) {
-      dal::pstatic_stored_object o
-        = dal::search_stored_object(str_mesh_key(basic_structure(cvr->structure()), k, true));
-      if (o) {
-        pstr_mesh_cv__ psmc = std::dynamic_pointer_cast<const str_mesh_cv__>(o);
-        return psmc->pfacem;
-      } 
-      else GMM_ASSERT1(false,
-        "call refined_simplex_mesh_for_convex first (or fix me)");
+    dal::pstatic_stored_object_key
+      pk = std::make_shared<str_mesh_key>(basic_structure(cvr->structure()),
+					  k, true);
+    dal::pstatic_stored_object o = dal::search_stored_object(pk);
+    if (o) {
+      pstr_mesh_cv__ psmc = std::dynamic_pointer_cast<const str_mesh_cv__>(o);
+      return psmc->pfacem;
+    } 
+    else GMM_ASSERT1(false,
+		     "call refined_simplex_mesh_for_convex first (or fix me)");
   }
 
 }  /* end of namespace getfem.                                            */

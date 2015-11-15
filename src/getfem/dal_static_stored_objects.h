@@ -43,9 +43,9 @@ static_stored_object_key with an overloaded "compare" method.
 To store a new object, you have to test if the object is not
 already stored and then call dal::add_stored_object:
 @code
-if (!search_stored_object(your_object_key(parameters))) {
-add_stored_object(new your_object_key(parameters),
-new your_object(parameters));
+pstatic_stored_object_key p = make_shared<your_object_key>(parameters);
+if (!search_stored_object(p)) {
+add_stored_object(p, make_shared<your_object>(parameters));
 }
 @endcode
 You can add a dependency of your new object with
@@ -95,9 +95,8 @@ namespace dal {
     STANDARD_STATIC_OBJECT = 2,  // standard
     WEAK_STATIC_OBJECT = 3,      // delete it if necessary
     AUTODELETE_STATIC_OBJECT = 4 // automatically deleted 
-    // when the last dependent object is deleted
+                                 // when the last dependent object is deleted
   };
-
 
   class static_stored_object_key {
   protected :
@@ -167,7 +166,7 @@ namespace dal {
 
 
 
-  typedef const static_stored_object_key* pstatic_stored_object_key;
+  typedef std::shared_ptr<const static_stored_object_key> pstatic_stored_object_key;
 
 
   /**
@@ -181,11 +180,6 @@ namespace dal {
 
   /** Gives a pointer to an object from a key pointer. */
   pstatic_stored_object search_stored_object(pstatic_stored_object_key k);
-
-  /** Gives a pointer to an object from a key reference. */
-  inline pstatic_stored_object
-    search_stored_object(const static_stored_object_key &k)
-  { return search_stored_object(&k); }
 
   /** Test if an object is stored*/
   bool exists_stored_object(pstatic_stored_object o);
@@ -270,7 +264,7 @@ namespace dal {
     enr_static_stored_object(pstatic_stored_object o, permanence perma)
       : p(o), perm(perma) {valid = true;}
     enr_static_stored_object(void)
-      : p(0), perm(STANDARD_STATIC_OBJECT) {valid = true;}
+      : perm(STANDARD_STATIC_OBJECT) {valid = true;}
     enr_static_stored_object(const enr_static_stored_object& enr_o) 
       : p(enr_o.p), perm(enr_o.perm), dependent_object(enr_o.dependent_object),
       dependencies(enr_o.dependencies){valid = static_cast<bool>(enr_o.perm);}
@@ -290,20 +284,14 @@ namespace dal {
 
   /** Table of stored objects. Thread safe, uses thread specific mutexes. */
   struct stored_object_tab : 
-    public std::map<enr_static_stored_object_key, enr_static_stored_object>
-  {
-  
-    struct stored_key_tab : 
-      public std::map<pstatic_stored_object,pstatic_stored_object_key> 
-    {
-      ~stored_key_tab() 
-      {
-        for (iterator it = begin(); it != end(); ++it) delete it->second;
-      }
-    };
+    public std::map<enr_static_stored_object_key, enr_static_stored_object> {
+    
+    typedef std::map<pstatic_stored_object,pstatic_stored_object_key>
+      stored_key_tab;
 
     stored_object_tab();
-    pstatic_stored_object search_stored_object(pstatic_stored_object_key k) const;
+    pstatic_stored_object
+      search_stored_object(pstatic_stored_object_key k) const;
     bool has_dependent_objects(pstatic_stored_object o) const;
     bool exists_stored_object(pstatic_stored_object o) const;
     //adding the object to the storage on the current thread

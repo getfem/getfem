@@ -190,8 +190,9 @@ namespace getfem {
 	pfem pf = std::make_shared<fem_product>
 	  (mf1.fem_of_element(cv), mf2.fem_of_element(cv), cv,
 	   xfem_index, local_enriched_dof);
-	special_mflproduct_key *psm = new special_mflproduct_key(pf);
-	dal::add_stored_object(psm, pf, pf->ref_convex(0), pf->node_tab(0));
+	dal::pstatic_stored_object_key
+	  pk = std::make_shared<special_mflproduct_key>(pf);
+	dal::add_stored_object(pk, pf, pf->ref_convex(0), pf->node_tab(0));
 	build_methods.push_back(pf);
 	set_finite_element(cv, pf);
       }

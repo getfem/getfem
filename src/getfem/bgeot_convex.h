@@ -198,14 +198,14 @@ namespace bgeot {
 		     "convex_direct_product : null convex product");
     
     if (!dal::exists_stored_object(cv1.structure())) {
-      special_convex_structure_key_ *pcs
-	= new special_convex_structure_key_(cv1.structure());
+      dal::pstatic_stored_object_key
+	pcs = std::make_shared<special_convex_structure_key_>(cv1.structure());
       dal::add_stored_object(pcs, cv1.structure(),
 			     dal::AUTODELETE_STATIC_OBJECT);
     }
     if (!dal::exists_stored_object(cv2.structure())) {
-      special_convex_structure_key_ *pcs
-	= new special_convex_structure_key_(cv2.structure());
+      dal::pstatic_stored_object_key
+	pcs = std::make_shared<special_convex_structure_key_>(cv2.structure());
       dal::add_stored_object(pcs, cv2.structure(),
 			     dal::AUTODELETE_STATIC_OBJECT);
     }

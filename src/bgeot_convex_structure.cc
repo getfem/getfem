@@ -105,11 +105,12 @@ namespace bgeot {
       fpu_init = true;
     }
 #endif
-    dal::pstatic_stored_object o
-      = dal::search_stored_object(convex_structure_key(0, nc, 1));
+    dal::pstatic_stored_object_key
+      pcsk = std::make_shared<convex_structure_key>(0, nc, 1);
+    dal::pstatic_stored_object o = dal::search_stored_object(pcsk);
     if (o) return std::dynamic_pointer_cast<const convex_structure>(o);
     
-    simplex_structure_ *p = new simplex_structure_;
+    auto p = std::make_shared<simplex_structure_>();
     pconvex_structure pcvs = pconvex_structure(p);
     p->Nc = dim_type(nc); p->nbpt = short_type(nc+1);
     p->nbf = short_type(nc ? nc+1 : 0);
@@ -124,7 +125,6 @@ namespace bgeot {
       for (short_type j = 0; j < nc; j++)
 	(p->faces[i])[j] = (j >= i) ? short_type(j + 1) : j;
     }
-    dal::pstatic_stored_object_key pcsk = new convex_structure_key(0, nc, 1);
     if (nc == 0)
       dal::add_stored_object(pcsk, pcvs, dal::PERMANENT_STATIC_OBJECT);
     else
@@ -188,12 +188,13 @@ namespace bgeot {
   pconvex_structure simplex_structure(dim_type nc, short_type K) {
     if (nc == 0) K = 1;
     if (K == 1) return simplex_structure(nc);
-    dal::pstatic_stored_object o
-      = dal::search_stored_object(convex_structure_key(0, nc, K));
+    dal::pstatic_stored_object_key
+      pcsk = std::make_shared<convex_structure_key>(0, nc, K);
+    dal::pstatic_stored_object o = dal::search_stored_object(pcsk);
     if (o) return std::dynamic_pointer_cast<const convex_structure>(o);
-    pconvex_structure p(new K_simplex_structure_(nc, K));
-    dal::add_stored_object(new convex_structure_key(0, nc, K), p,
-			   simplex_structure(dim_type(nc-1), K),
+
+    pconvex_structure p = std::make_shared<K_simplex_structure_>(nc, K);
+    dal::add_stored_object(pcsk, p, simplex_structure(dim_type(nc-1), K),
 			   dal::PERMANENT_STATIC_OBJECT);
     return p;
   }
@@ -209,12 +210,14 @@ namespace bgeot {
   pconvex_structure polygon_structure(short_type nbt) {
     if (nbt <= 1) return simplex_structure(0);
     if (nbt <= 3) return simplex_structure(dim_type(nbt-1));
-    dal::pstatic_stored_object o
-      = dal::search_stored_object(convex_structure_key(1, dim_type(nbt)));
+    
+    dal::pstatic_stored_object_key
+      pcsk = std::make_shared<convex_structure_key>(1, dim_type(nbt));
+    dal::pstatic_stored_object o = dal::search_stored_object(pcsk);
     if (o) return std::dynamic_pointer_cast<const convex_structure>(o);
 
-    polygon_structure_ *p = new polygon_structure_;
-    pconvex_structure pcvs = pconvex_structure(p);
+    auto p = std::make_shared<polygon_structure_>();
+    pconvex_structure pcvs(p);
     p->Nc = 2; p->nbpt = nbt; p->nbf = nbt;
     p->auto_basic = true;
     p->faces_struct.resize(p->nbf);
@@ -232,8 +235,7 @@ namespace bgeot {
     p->dir_points_[1] = 1;
     p->dir_points_[2] = short_type(nbt - 1);
     
-    dal::add_stored_object(new convex_structure_key(1, dim_type(nbt)), pcvs,
-			   simplex_structure(1),
+    dal::add_stored_object(pcsk, pcvs, simplex_structure(1),
 			   dal::PERMANENT_STATIC_OBJECT);
     return pcvs;
   }
@@ -315,12 +317,12 @@ namespace bgeot {
 
   pconvex_structure convex_product_structure(pconvex_structure a,
 					     pconvex_structure b) {
-    dal::pstatic_stored_object o
-      = dal::search_stored_object(cv_pr_key_(a, b));
+    
+    dal::pstatic_stored_object_key pcsk = std::make_shared<cv_pr_key_>(a, b);
+    dal::pstatic_stored_object o = dal::search_stored_object(pcsk);
     if (o) return std::dynamic_pointer_cast<const convex_structure>(o);
-    pconvex_structure p(new cv_pr_structure_(a, b));
-    dal::add_stored_object(new cv_pr_key_(a, b), p, a, b,
-			   dal::PERMANENT_STATIC_OBJECT);
+    pconvex_structure p = std::make_shared<cv_pr_structure_>(a, b);
+    dal::add_stored_object(pcsk, p, a, b, dal::PERMANENT_STATIC_OBJECT);
     for (size_type k = 0; k < p->nb_faces(); ++k) {
       if (exists_stored_object(p->faces_structure()[k]))
 	dal::add_dependency(p, p->faces_structure()[k]);
@@ -340,14 +342,15 @@ namespace bgeot {
 
   pconvex_structure parallelepiped_structure(dim_type nc) {
     if (nc <= 1) return simplex_structure(nc);
-    dal::pstatic_stored_object o
-      = dal::search_stored_object(parallelepiped_key_(nc));
+    dal::pstatic_stored_object_key
+      pcsk = std::make_shared<parallelepiped_key_>(nc);
+
+    dal::pstatic_stored_object o = dal::search_stored_object(pcsk);
     if (o) return ((std::dynamic_pointer_cast<const parallelepiped_>(o))->p);
-    parallelepiped_ *p = new parallelepiped_;
+    auto p = std::make_shared<parallelepiped_>();
     p->p = convex_product_structure(parallelepiped_structure(dim_type(nc-1)),
 				    simplex_structure(1));
-    dal::add_stored_object(new parallelepiped_key_(nc),
-			   dal::pstatic_stored_object(p), p->p,
+    dal::add_stored_object(pcsk, dal::pstatic_stored_object(p), p->p,
 			   dal::PERMANENT_STATIC_OBJECT);
     return p->p;
   }
@@ -366,10 +369,12 @@ namespace bgeot {
   
   pconvex_structure Q2_incomplete_structure(dim_type nc) {
     GMM_ASSERT1(nc == 2 || nc == 3, "Bad parameter, expected value 2 or 3");
-    dal::pstatic_stored_object o = dal::search_stored_object(Q2_incomplete_structure_key_(nc));
+    dal::pstatic_stored_object_key
+      pcsk = std::make_shared<Q2_incomplete_structure_key_>(nc);
+    dal::pstatic_stored_object o = dal::search_stored_object(pcsk);
     if (o) return std::dynamic_pointer_cast<const convex_structure>(o);
     
-    Q2_incomplete_structure_ *p = new Q2_incomplete_structure_;
+    auto p = std::make_shared<Q2_incomplete_structure_>();
     pconvex_structure pcvs(p);
     p->Nc = nc;
     p->nbpt = (nc == 2) ? 8 : 20;
@@ -425,8 +430,7 @@ namespace bgeot {
         : Q2_incomplete_structure(2);
     }
     
-    dal::add_stored_object(new Q2_incomplete_structure_key_(nc), pcvs,
-                           parallelepiped_structure(dim_type(nc-1)),
+    dal::add_stored_object(pcsk, pcvs, parallelepiped_structure(dim_type(nc-1)),
                            dal::PERMANENT_STATIC_OBJECT);
     return pcvs;
   }
@@ -443,11 +447,12 @@ namespace bgeot {
   
   pconvex_structure generic_dummy_structure(dim_type nc, size_type n,
 					    size_type nf) {
-    dal::pstatic_stored_object o
-      = dal::search_stored_object(convex_structure_key(2, nc,
-					     short_type(n), short_type(nf)));
+    dal::pstatic_stored_object_key
+      pcsk = std::make_shared<convex_structure_key>(2, nc, short_type(n),
+						    short_type(nf));
+    dal::pstatic_stored_object o = dal::search_stored_object(pcsk);
     if (o) return std::dynamic_pointer_cast<const convex_structure>(o);
-    dummy_structure_ *p = new dummy_structure_;
+    auto p = std::make_shared<dummy_structure_>();
     pconvex_structure pcvs(p);
     p->Nc = nc; p->nbpt = short_type(n); p->nbf = 0;
     p->faces_struct.resize(nf);
@@ -461,12 +466,10 @@ namespace bgeot {
     }
     p->dir_points_.resize(0);
     p->auto_basic = true;
-    convex_structure_key *pcs
-      = new convex_structure_key(2, nc, short_type(n), short_type(nf));
     if (nc == 0)
-      dal::add_stored_object(pcs, pcvs, dal::PERMANENT_STATIC_OBJECT);
+      dal::add_stored_object(pcsk, pcvs, dal::PERMANENT_STATIC_OBJECT);
     else
-      dal::add_stored_object(pcs, pcvs,
+      dal::add_stored_object(pcsk, pcvs,
 			     generic_dummy_structure(dim_type(nc-1), n, nc),
 			     dal::PERMANENT_STATIC_OBJECT);
     return pcvs;

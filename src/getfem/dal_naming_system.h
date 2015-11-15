@@ -138,7 +138,7 @@ namespace dal {
 			         naming_system<METHOD>::pmethod pm)  const {
     pstatic_stored_object_key k = key_of_stored_object(pm);
     const method_key *p;
-    if (!k || !(p = dynamic_cast<const method_key *>(k)))
+    if (!k || !(p = dynamic_cast<const method_key *>(k.get())))
       return prefix + "_UNKNOWN";
     return p->name;
   }
@@ -148,7 +148,7 @@ namespace dal {
 			        naming_system<METHOD>::pmethod pm)  const {
     pstatic_stored_object_key k = key_of_stored_object(pm);
     const method_key *p;
-    if (!k || !(p = dynamic_cast<const method_key *>(k)))
+    if (!k || !(p = dynamic_cast<const method_key *>(k.get())))
       return prefix + "_UNKNOWN";
     const std::string &name(p->name);
     std::map<std::string, std::string>::const_iterator
@@ -269,39 +269,40 @@ namespace dal {
 	  }
 	  norm_name << ')';
 	}
-	method_key nname(norm_name.str());
+	auto pnname = std::make_shared<method_key>(norm_name.str());
+	// method_key nname(norm_name.str());
 	if (aliases.find(norm_name.str()) != aliases.end())
-	  nname.name = aliases[norm_name.str()];
-	pstatic_stored_object o = search_stored_object(nname);
+	  pnname->name = aliases[norm_name.str()];
+	pstatic_stored_object o = search_stored_object(pnname);
 	if (o) return std::dynamic_pointer_cast<const METHOD>(o);
 	pm = pmethod();
 	std::vector<pstatic_stored_object> dependencies;
 	for (size_type k = 0; k < genfunctions.size() && pm.get() == 0; ++k) {
-	  pm = (*(genfunctions[k]))(nname.name, dependencies);
+	  pm = (*(genfunctions[k]))(pnname->name, dependencies);
 	}
 	if (!(pm.get())) {
 	  if (ind_suff == size_type(-1)) {
-	    GMM_ASSERT1(!throw_if_not_found, "Unknown method: " << nname.name);
+	    GMM_ASSERT1(!throw_if_not_found, "Unknown method: "<<pnname->name);
 	    return 0;
 	  }
 	  pm = (*(functions[ind_suff]))(params, dependencies);
 	}
 	pstatic_stored_object_key k = key_of_stored_object(pm);
 	if (!k) {
-	  add_stored_object(new method_key(nname), pm,
+	  add_stored_object(pnname, pm,
 			    dal::PERMANENT_STATIC_OBJECT);
 	  for (size_type j = 0; j < dependencies.size(); ++j)
 	    add_dependency(pm, dependencies[j]);
 	}
 	else {
-	  std::string normname((dynamic_cast<const method_key *>(k))->name);
-	  aliases[nname.name] = normname;
-	  if (nname.name.size() < normname.size()) {
+	  std::string normname((dynamic_cast<const method_key *>(k.get()))->name);
+	  aliases[pnname->name] = normname;
+	  if (pnname->name.size() < normname.size()) {
 	    if (shorter_names.find(normname) != shorter_names.end()) {
-	      if (nname.name.size() < shorter_names[normname].size())
-		shorter_names[normname] = nname.name;
+	      if (pnname->name.size() < shorter_names[normname].size())
+		shorter_names[normname] = pnname->name;
 	    }
-	    else shorter_names[normname] = nname.name;
+	    else shorter_names[normname] = pnname->name;
 	  }
 	}
 	return pm;
@@ -314,8 +315,9 @@ namespace dal {
   template <class METHOD>
   bool naming_system<METHOD>::delete_method(std::string name) {
     pmethod pm;
-    method_key nname(name);
-    pstatic_stored_object o = search_stored_object(nname);
+    // method_key nname(name);
+    pstatic_stored_object_key pnname = std::make_shared<method_key>(name);
+    pstatic_stored_object o = search_stored_object(pnname);
     if (!o) return false;
     pm = std::dynamic_pointer_cast<const METHOD>(o);
     pstatic_stored_object_key k = key_of_stored_object(pm);

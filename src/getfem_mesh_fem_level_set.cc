@@ -52,8 +52,9 @@ namespace getfem {
       (gmm::index_ref_iterator(dof_enrichments.begin(),
 			       mf.ind_basic_dof_of_element(cv).begin()) ,
        mf.fem_of_element(cv), mls, xfem_index);
-    special_mfls_key *psm = new special_mfls_key(pf);
-    dal::add_stored_object(psm, pf, pf->ref_convex(0), pf->node_tab(0));
+    dal::pstatic_stored_object_key
+      pk = std::make_shared<special_mfls_key>(pf);
+    dal::add_stored_object(pk, pf, pf->ref_convex(0), pf->node_tab(0));
     build_methods.push_back(pf);
     set_finite_element(cv, pf);
   }

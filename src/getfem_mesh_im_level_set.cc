@@ -394,9 +394,9 @@ namespace getfem {
 
     if (new_approx->nb_points()) {
       pintegration_method pim(new integration_method(new_approx));
-      special_imls_key *p = new special_imls_key(new_approx);
-      dal::add_stored_object(p, pim,
-			     new_approx->ref_convex(),
+      dal::pstatic_stored_object_key
+	pk = std::make_shared<special_imls_key>(new_approx);
+      dal::add_stored_object(pk, pim, new_approx->ref_convex(),
 			     new_approx->pintegration_points());
       build_methods.push_back(pim);
       cut_im.set_integration_method(cv, pim);
@@ -677,9 +677,9 @@ namespace getfem {
 
     if (new_approx->nb_points()) {
       pintegration_method pim(new integration_method(new_approx));
-      special_imls_key *p = new special_imls_key(new_approx);
-      dal::add_stored_object(p, pim,
-			     new_approx->ref_convex(),
+      dal::pstatic_stored_object_key
+	pk = std::make_shared<special_imls_key>(new_approx);
+      dal::add_stored_object(pk, pim, new_approx->ref_convex(),
 			     new_approx->pintegration_points());
       build_methods.push_back(pim);
       cut_im.set_integration_method(cv, pim);

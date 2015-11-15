@@ -52,12 +52,13 @@ namespace bgeot {
   /* ********************************************************************* */
 
   struct stored_point_tab_key : virtual public dal::static_stored_object_key  {
-    const stored_point_tab * pspt;
+    const stored_point_tab *pspt;
     virtual bool compare(const static_stored_object_key &oo) const {
       const stored_point_tab_key &o
 	= dynamic_cast<const stored_point_tab_key &>(oo);
       const stored_point_tab &x = *pspt;
       const stored_point_tab &y = *(o.pspt);
+      if (&x == &y) return false;
       std::vector<base_node>::const_iterator it1 = x.begin(), it2 = y.begin();
       base_node::const_iterator itn1, itn2, itne;
       for ( ; it1 != x.end() && it2 != y.end() ; ++it1, ++it2) {
@@ -75,32 +76,34 @@ namespace bgeot {
   };
   
   
-  pstored_point_tab store_point_tab(const stored_point_tab& spt) {
-    dal::pstatic_stored_object o
-      = dal::search_stored_object(stored_point_tab_key(&spt));
+  pstored_point_tab store_point_tab(const stored_point_tab &spt) {
+    dal::pstatic_stored_object_key
+      pk = std::make_shared<stored_point_tab_key>(&spt);
+    dal::pstatic_stored_object o = dal::search_stored_object(pk);
     if (o) return std::dynamic_pointer_cast<const stored_point_tab>(o);
-    pstored_point_tab p(new stored_point_tab(spt));
-    stored_point_tab_key *psp = new stored_point_tab_key(p.get());
+    pstored_point_tab p = std::make_shared<stored_point_tab>(spt);
+    dal::pstatic_stored_object_key
+      psp = std::make_shared<stored_point_tab_key>(p.get());
     dal::add_stored_object(psp, p, dal::AUTODELETE_STATIC_OBJECT);
     return p;
   }
 
-  struct cleanup_simplexified_convexes
-    : public dal::ptr_collection<mesh_structure> {};
+  //  struct cleanup_simplexified_convexes
+  //   : public dal::ptr_collection<mesh_structure> {};
 
   /* should be called on the basic_convex_ref */
   const mesh_structure* convex_of_reference::simplexified_convex() const {    
-    if (psimplexified_convex == 0) {
-      psimplexified_convex = new mesh_structure();
-      dal::singleton<cleanup_simplexified_convexes>::instance()
-	.push_back(psimplexified_convex);
+    if (psimplexified_convex.get() == 0) {
+      psimplexified_convex = std::make_shared<mesh_structure>();
+      // dal::singleton<cleanup_simplexified_convexes>::instance()
+      //	.push_back(psimplexified_convex);
       GMM_ASSERT1(auto_basic,
 		  "always use simplexified_convex on the basic_convex_ref() "
 		  "[this=" << nb_points() << ", basic="
 		  << basic_convex_ref_->nb_points());
       simplexify_convex(structure(), *psimplexified_convex);
     }
-    return psimplexified_convex;
+    return psimplexified_convex.get();
   }
 
   // Key type for static storing
@@ -197,12 +200,12 @@ namespace bgeot {
   };
 
   pconvex_ref simplex_of_reference(dim_type nc, short_type K) {
-    dal::pstatic_stored_object o
-      = dal::search_stored_object(convex_of_reference_key(0, nc, K));
+    dal::pstatic_stored_object_key
+      pk = std::make_shared<convex_of_reference_key>(0, nc, K);
+    dal::pstatic_stored_object o = dal::search_stored_object(pk);
     if (o) return std::dynamic_pointer_cast<const convex_of_reference>(o);
-    pconvex_ref p(new K_simplex_of_ref_(nc, K));
-    dal::add_stored_object(new convex_of_reference_key(0, nc, K), p,
-			   p->structure(), p->pspt(),
+    pconvex_ref p = std::make_shared<K_simplex_of_ref_>(nc, K);
+    dal::add_stored_object(pk, p, p->structure(), p->pspt(),
 			   dal::PERMANENT_STATIC_OBJECT);
     pconvex_ref p1 = basic_convex_ref(p);
     if (p != p1) add_dependency(p, p1); 
@@ -299,11 +302,12 @@ namespace bgeot {
   DAL_SIMPLE_KEY(Q2_incomplete_reference_key_, dim_type);
   
   pconvex_ref Q2_incomplete_reference(dim_type nc) {
-    dal::pstatic_stored_object o = dal::search_stored_object(Q2_incomplete_reference_key_(nc));
+     dal::pstatic_stored_object_key
+      pk = std::make_shared<Q2_incomplete_reference_key_>(nc);
+    dal::pstatic_stored_object o = dal::search_stored_object(pk);
     if (o) return std::dynamic_pointer_cast<const convex_of_reference>(o);
-    pconvex_ref p(new Q2_incomplete_of_ref_(nc));
-    dal::add_stored_object(new Q2_incomplete_reference_key_(nc), p,
-                           p->structure(), p->pspt(),
+    pconvex_ref p = std::make_shared<Q2_incomplete_of_ref_>(nc);
+    dal::add_stored_object(pk, p, p->structure(), p->pspt(),
                            dal::PERMANENT_STATIC_OBJECT);
      pconvex_ref p1 = basic_convex_ref(p);
     if (p != p1) add_dependency(p, p1); 
@@ -372,11 +376,12 @@ namespace bgeot {
 
 
   pconvex_ref convex_ref_product(pconvex_ref a, pconvex_ref b) {
-    dal::pstatic_stored_object o
-      = dal::search_stored_object(product_ref_key_(a, b));
+    dal::pstatic_stored_object_key
+      pk = std::make_shared<product_ref_key_>(a, b);
+    dal::pstatic_stored_object o = dal::search_stored_object(pk);
     if (o) return std::dynamic_pointer_cast<const convex_of_reference>(o);
-    pconvex_ref p(new product_ref_(a, b));
-    dal::add_stored_object(new product_ref_key_(a, b), p, a, b,
+    pconvex_ref p = std::make_shared<product_ref_>(a, b);
+    dal::add_stored_object(pk, p, a, b,
 			   convex_product_structure(a->structure(),
 						    b->structure()),
 			   p->pspt(), dal::PERMANENT_STATIC_OBJECT);
@@ -457,12 +462,12 @@ namespace bgeot {
 
   pconvex_ref equilateral_simplex_of_reference(dim_type nc) {
     if (nc <= 1) return simplex_of_reference(nc);
-    dal::pstatic_stored_object o
-      = dal::search_stored_object(convex_of_reference_key(1, nc));
+     dal::pstatic_stored_object_key
+      pk = std::make_shared<convex_of_reference_key>(1, nc);
+    dal::pstatic_stored_object o  = dal::search_stored_object(pk);
     if (o) return std::dynamic_pointer_cast<const convex_of_reference>(o);
-    pconvex_ref p(new equilateral_simplex_of_ref_(nc));
-    dal::add_stored_object(new convex_of_reference_key(1, nc), p,
-			   p->structure(), p->pspt(),
+    pconvex_ref p = std::make_shared<equilateral_simplex_of_ref_>(nc);
+    dal::add_stored_object(pk, p, p->structure(), p->pspt(),
 			   dal::PERMANENT_STATIC_OBJECT);
     return p;
   }
@@ -491,14 +496,13 @@ namespace bgeot {
 
   pconvex_ref generic_dummy_convex_ref(dim_type nc, size_type n,
 				       size_type nf) {
-    dal::pstatic_stored_object o
-      = dal::search_stored_object(convex_of_reference_key(2, nc,
-					    short_type(n), short_type(nf)));
+    dal::pstatic_stored_object_key
+      pk = std::make_shared<convex_of_reference_key>(2, nc, short_type(n),
+						     short_type(nf));
+    dal::pstatic_stored_object o = dal::search_stored_object(pk);
     if (o) return std::dynamic_pointer_cast<const convex_of_reference>(o);
-    pconvex_ref p(new generic_dummy_(nc, n, nf));
-    dal::add_stored_object(new convex_of_reference_key(2, nc,
-					   short_type(n), short_type(nf)), p,
-			   p->structure(), p->pspt(),
+    pconvex_ref p = std::make_shared<generic_dummy_>(nc, n, nf);
+    dal::add_stored_object(pk, p, p->structure(), p->pspt(),
 			   dal::PERMANENT_STATIC_OBJECT);
     return p;
   }

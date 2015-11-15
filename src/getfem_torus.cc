@@ -73,7 +73,9 @@ namespace bgeot{
 
   pconvex_structure torus_structure_descriptor(pconvex_structure ori_structure){
 
-    dal::pstatic_stored_object o = dal::search_stored_object(torus_structure_key(ori_structure));
+    dal::pstatic_stored_object_key
+      pk = std::make_shared<torus_structure_key>(ori_structure);
+    dal::pstatic_stored_object o = dal::search_stored_object(pk);
     if (o) return std::dynamic_pointer_cast<const convex_structure>(o);
 
     torus_structure *p = new torus_structure;
@@ -97,8 +99,7 @@ namespace bgeot{
 
     p->basic_pcvs = basic_structure(ori_structure);
 
-    torus_structure_key *key = new torus_structure_key(ori_structure);
-    dal::add_stored_object(key, pcvs, dal::PERMANENT_STATIC_OBJECT);
+    dal::add_stored_object(pk, pcvs, dal::PERMANENT_STATIC_OBJECT);
     return pcvs;
   }
 
@@ -106,13 +107,14 @@ namespace bgeot{
 
   pconvex_ref ptorus_reference(pconvex_ref ori_convex_reference)
   {
-    dal::pstatic_stored_object o 
-      = dal::search_stored_object(torus_reference_key(ori_convex_reference));
+    dal::pstatic_stored_object_key
+      pk = std::make_shared<torus_reference_key>(ori_convex_reference);
+    dal::pstatic_stored_object o = dal::search_stored_object(pk);
 
     if (o) return std::dynamic_pointer_cast<const bgeot::convex_of_reference>(o);
     pconvex_ref p(new torus_reference(ori_convex_reference));
-    dal::add_stored_object(new torus_reference_key(ori_convex_reference), p,
-      p->structure(), p->pspt(), dal::PERMANENT_STATIC_OBJECT);
+    dal::add_stored_object(pk, p, p->structure(), p->pspt(),
+			   dal::PERMANENT_STATIC_OBJECT);
     return p;
   }
 
@@ -192,14 +194,14 @@ namespace bgeot{
   DAL_SIMPLE_KEY(torus_geom_trans_key, pgeometric_trans);
 
   pgeometric_trans torus_geom_trans_descriptor(pgeometric_trans poriginal_trans){
-    dal::pstatic_stored_object o 
-      = dal::search_stored_object(torus_geom_trans_key(poriginal_trans));
+    dal::pstatic_stored_object_key
+      pk = std::make_shared<torus_geom_trans_key>(poriginal_trans);
+    dal::pstatic_stored_object o = dal::search_stored_object(pk);
 
     if (o) return std::dynamic_pointer_cast<const torus_geom_trans>(o);
 
     bgeot::pgeometric_trans p(new torus_geom_trans(poriginal_trans));
-    dal::add_stored_object(new torus_geom_trans_key(poriginal_trans), 
-      p, dal::PERMANENT_STATIC_OBJECT);
+    dal::add_stored_object(pk, p, dal::PERMANENT_STATIC_OBJECT);
     return p;
   }
 
@@ -368,7 +370,9 @@ namespace getfem
     static bgeot::size_type key_count = 0;
     ++key_count;
     getfem::pfem pfem_torus(new torus_fem(pf));
-    dal::add_stored_object(new torus_fem_key(key_count), pfem_torus);
+    dal::pstatic_stored_object_key
+      pk = std::make_shared<torus_fem_key>(key_count);
+    dal::add_stored_object(pk, pfem_torus);
     return pfem_torus;
   }
 

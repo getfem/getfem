@@ -3465,16 +3465,14 @@ namespace getfem {
 
   pfem_precomp fem_precomp(pfem pf, bgeot::pstored_point_tab pspt,
 			   dal::pstatic_stored_object dep) {
-    dal::pstatic_stored_object o
-      = dal::search_stored_object(pre_fem_key_(pf, pspt));
+    dal::pstatic_stored_object_key pk = std::make_shared<pre_fem_key_>(pf,pspt);
+    dal::pstatic_stored_object o = dal::search_stored_object(pk);
     if (o) return std::dynamic_pointer_cast<const fem_precomp_>(o);
     pfem_precomp p(new fem_precomp_(pf, pspt));
-    dal::add_stored_object(new pre_fem_key_(pf, pspt), p, pspt,
-			   dal::AUTODELETE_STATIC_OBJECT);
+    dal::add_stored_object(pk, p, pspt, dal::AUTODELETE_STATIC_OBJECT);
     if (dal::exists_stored_object(pf)) dal::add_dependency(p, pf);
     if (dep) dal::add_dependency(p, dep);
     return p;
-    
   }
 
   void fem_precomp_pool::clear(void) {

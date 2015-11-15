@@ -799,12 +799,11 @@ namespace bgeot {
   pgeotrans_precomp geotrans_precomp(pgeometric_trans pg,
                                      pstored_point_tab pspt,
                                      dal::pstatic_stored_object dep) {
-    dal::pstatic_stored_object o
-      = dal::search_stored_object(pre_geot_key_(pg, pspt));
+    dal::pstatic_stored_object_key pk= std::make_shared<pre_geot_key_>(pg,pspt);
+    dal::pstatic_stored_object o = dal::search_stored_object(pk);
     if (o) return std::dynamic_pointer_cast<const geotrans_precomp_>(o);
     pgeotrans_precomp p(new geotrans_precomp_(pg, pspt));
-    dal::add_stored_object(new pre_geot_key_(pg, pspt), p, pg, pspt,
-                           dal::AUTODELETE_STATIC_OBJECT);
+    dal::add_stored_object(pk, p, pg, pspt, dal::AUTODELETE_STATIC_OBJECT);
     if (dep) dal::add_dependency(p, dep);
     return p;
   }

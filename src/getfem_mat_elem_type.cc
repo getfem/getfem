@@ -49,12 +49,12 @@ namespace getfem {
   };
 
   static pmat_elem_type add_to_met_tab(const mat_elem_type &f) {
-    dal::pstatic_stored_object o
-      = dal::search_stored_object(mat_elem_type_key(&f));
+    dal::pstatic_stored_object_key pk = std::make_shared<mat_elem_type_key>(&f);
+    dal::pstatic_stored_object o = dal::search_stored_object(pk);
     if (o) return std::dynamic_pointer_cast<const mat_elem_type>(o);
     pmat_elem_type p = std::make_shared<mat_elem_type>(f);
-    dal::add_stored_object(new mat_elem_type_key(p.get()), p,
-                           dal::AUTODELETE_STATIC_OBJECT);
+    pk = std::make_shared<mat_elem_type_key>(p.get());
+    dal::add_stored_object(pk, p, dal::AUTODELETE_STATIC_OBJECT);
     for (size_type i=0; i < f.size(); ++i) {
       if (f[i].pfi) dal::add_dependency(p, f[i].pfi);
       if (f[i].t == GETFEM_NONLINEAR_ && f[i].nl_part==0)

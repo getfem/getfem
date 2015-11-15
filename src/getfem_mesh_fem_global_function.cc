@@ -105,7 +105,9 @@ namespace getfem {
   pfem new_global_function_fem(bgeot::pconvex_ref cvr,
                                const std::vector<pglobal_function> &f) {
     pfem pf(new global_function_fem(cvr,f));
-    dal::add_stored_object(new special_int_globf_fem_key(pf), pf);
+    dal::pstatic_stored_object_key
+      pk = std::make_shared<special_int_globf_fem_key>(pf);
+    dal::add_stored_object(pk, pf);
     return pf;
   }
 
