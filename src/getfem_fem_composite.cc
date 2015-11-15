@@ -93,7 +93,7 @@ namespace getfem {
     mesh m(*pm);
     mesh_fem mf(m);
     mf.set_finite_element(pm->convex_index(), pf);
-    const virtual_fem *p = composite_fe_method(*pmp, mf, pf->ref_convex(0));
+    pfem p(composite_fe_method(*pmp, mf, pf->ref_convex(0)));
     dependencies.push_back(p->ref_convex(0));
     dependencies.push_back(p->node_tab(0));
     return p;
@@ -207,7 +207,7 @@ namespace getfem {
    std::vector<dal::pstatic_stored_object> &dependencies) {
     GMM_ASSERT1(params.size() == 0, "Bad number of parameters : "
 		<< params.size() << " should be 0.");
-    virtual_fem *p = new P1bubbletriangle__;
+    pfem p(new P1bubbletriangle__);
     dependencies.push_back(p->ref_convex(0));
     dependencies.push_back(p->node_tab(0));
     return p;
@@ -241,7 +241,7 @@ namespace getfem {
     if (pgt != pgt_stored) {
       pgt_stored = pgt;
       pgp = bgeot::geotrans_precomp(pgt, node_tab(0), 0);
-      pfp = fem_precomp(this, node_tab(0), 0);
+      pfp = fem_precomp(pfem(new HCT_triangle__), node_tab(0), 0);
     }
     gmm::copy(gmm::identity_matrix(), M);
     
@@ -375,7 +375,7 @@ namespace getfem {
    std::vector<dal::pstatic_stored_object> &dependencies) {
     GMM_ASSERT1(params.size() == 0, "Bad number of parameters : "
 		<< params.size() << " should be 0.");
-    virtual_fem *p = new HCT_triangle__;
+    pfem p(new HCT_triangle__);
     dependencies.push_back(p->ref_convex(0));
     dependencies.push_back(p->node_tab(0));
     return p;
@@ -444,7 +444,7 @@ namespace getfem {
    std::vector<dal::pstatic_stored_object> &dependencies) {
     GMM_ASSERT1(params.size() == 0, "Bad number of parameters : "
 		<< params.size() << " should be 0.");
-    virtual_fem *p = new reduced_HCT_triangle__;
+    pfem p(new reduced_HCT_triangle__);
     dependencies.push_back(p->ref_convex(0));
     dependencies.push_back(p->node_tab(0));
     return p;
@@ -478,7 +478,7 @@ namespace getfem {
     if (pgt != pgt_stored) {
       pgt_stored = pgt;
       pgp = bgeot::geotrans_precomp(pgt, node_tab(0), 0);
-      pfp = fem_precomp(this, node_tab(0), 0);
+      pfp = fem_precomp(pfem(new quadc1p3__), node_tab(0), 0);
     }
     gmm::copy(gmm::identity_matrix(), M);
     
@@ -642,7 +642,7 @@ namespace getfem {
    std::vector<dal::pstatic_stored_object> &dependencies) {
     GMM_ASSERT1(params.size() == 0, "Bad number of parameters : "
 		<< params.size() << " should be 0.");
-    virtual_fem *p = new quadc1p3__;
+    pfem p(new quadc1p3__);
     dependencies.push_back(p->ref_convex(0));
     dependencies.push_back(p->node_tab(0));
     return p;
@@ -714,7 +714,7 @@ namespace getfem {
    std::vector<dal::pstatic_stored_object> &dependencies) {
     GMM_ASSERT1(params.size() == 0, "Bad number of parameters : "
 		<< params.size() << " should be 0.");
-    virtual_fem *p = new reduced_quadc1p3__;
+    pfem p(new reduced_quadc1p3__);
     dependencies.push_back(p->ref_convex(0));
     dependencies.push_back(p->node_tab(0));
     return p;

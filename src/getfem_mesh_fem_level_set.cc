@@ -48,10 +48,10 @@ namespace getfem {
   DAL_SIMPLE_KEY(special_mfls_key, pfem);
 
   void mesh_fem_level_set::build_method_of_convex(size_type cv) {
-    pfem pf = new fem_level_set(gmm::index_ref_iterator
-				(dof_enrichments.begin(),
-				 mf.ind_basic_dof_of_element(cv).begin()) ,
-				mf.fem_of_element(cv), mls, xfem_index);
+    pfem pf = std::make_shared<fem_level_set>
+      (gmm::index_ref_iterator(dof_enrichments.begin(),
+			       mf.ind_basic_dof_of_element(cv).begin()) ,
+       mf.fem_of_element(cv), mls, xfem_index);
     special_mfls_key *psm = new special_mfls_key(pf);
     dal::add_stored_object(psm, pf, pf->ref_convex(0), pf->node_tab(0));
     build_methods.push_back(pf);

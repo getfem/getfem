@@ -218,10 +218,10 @@ namespace getfem {
   class virtual_fem;
 
   /** type of pointer on a fem description @see getfem::virtual_fem */
-  typedef boost::intrusive_ptr<const getfem::virtual_fem> pfem;
+  typedef std::shared_ptr<const getfem::virtual_fem> pfem;
 
   class fem_precomp_;
-  typedef boost::intrusive_ptr<const getfem::fem_precomp_> pfem_precomp;
+  typedef std::shared_ptr<const getfem::fem_precomp_> pfem_precomp;
 
   class fem_interpolation_context;
 
@@ -239,7 +239,7 @@ namespace getfem {
        But cvs_node has to be a pointer, as bgeot::convex_structure
        inherits from dal::static_stored_object
     */
-    boost::intrusive_ptr<bgeot::convex_structure> cvs_node;
+    std::shared_ptr<bgeot::convex_structure> cvs_node;
     bgeot::convex<base_node> cv_node;
     mutable bgeot::pstored_point_tab pspt;
     mutable bool pspt_valid;
@@ -605,8 +605,10 @@ namespace getfem {
     inline const base_tensor &hess(size_type i) const
       { if (hpc.empty()) init_hess(); return hpc[i]; }
     inline pfem get_pfem() const { return pf; }
-    inline const bgeot::stored_point_tab& get_point_tab() const
-      { return *pspt; }
+    // inline const bgeot::stored_point_tab& get_point_tab() const
+    //  { return *pspt; }
+    inline bgeot::pstored_point_tab get_ppoint_tab() const
+    { return pspt; }
     fem_precomp_(pfem, bgeot::pstored_point_tab);
   private:
     void init_val() const;

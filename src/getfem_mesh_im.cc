@@ -57,7 +57,7 @@ namespace getfem {
     else if (!im_convexes.is_in(cv) || ims[cv] != pim) {
       GMM_ASSERT1
 	(pim->type() == IM_NONE || 
-	 linked_mesh_->structure_of_convex(cv)->basic_structure()
+	 basic_structure(linked_mesh_->structure_of_convex(cv))
 	 == pim->structure(),
 	 "Incompatibility between integration method "
 	 << getfem::name_of_int_method(pim) << " and mesh element " <<

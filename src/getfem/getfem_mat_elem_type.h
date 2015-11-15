@@ -48,7 +48,7 @@ namespace getfem {
       GETFEM_UNIT_NORMAL_, GETFEM_GRAD_GEOTRANS_, GETFEM_GRAD_GEOTRANS_INV_ };
 
   class mat_elem_type;
-  typedef boost::intrusive_ptr<const mat_elem_type> pmat_elem_type;
+  typedef std::shared_ptr<const mat_elem_type> pmat_elem_type;
 
   /**
      abstract class for integration of non-linear terms into the mat_elem

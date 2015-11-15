@@ -46,7 +46,7 @@ static void gf_mesh_im_set_integ_(getfem::mesh_im *mim,
     //  THROW_ERROR("Convex " << cv+config::base_index()
     //                        << " was not found in mesh");
     if (pim->structure() !=
-	mim->linked_mesh().structure_of_convex(cv)->basic_structure())
+	bgeot::basic_structure(mim->linked_mesh().structure_of_convex(cv)))
       infomsg() << "Warning: structure of the Integration Method seems "
 	"to be incompatible with the structure of the convex\n";
   }

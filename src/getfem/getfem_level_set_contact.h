@@ -187,12 +187,12 @@ namespace level_set_contact {
     dal::bit_vector old_contact_elm_list;
     dal::bit_vector pre_old_ct_list;
     size_type ACTIVE_CONTACT_REGION;
-    mutable dal::shared_ptr<mesh_im> pmim_contact;
+    mutable std::shared_ptr<mesh_im> pmim_contact;
     mutable getfem::pfem ifem_srf;
-    mutable dal::shared_ptr<mesh_fem> pinterpolated_fem;
-    mutable dal::shared_ptr<mesh_fem> pinterpolated_fem_U;
-    mutable dal::shared_ptr<gmm::unsorted_sub_index> slave_ls_dofs;
-    mutable dal::shared_ptr<gmm::unsorted_sub_index> slave_U_dofs;
+    mutable std::shared_ptr<mesh_fem> pinterpolated_fem;
+    mutable std::shared_ptr<mesh_fem> pinterpolated_fem_U;
+    mutable std::shared_ptr<gmm::unsorted_sub_index> slave_ls_dofs;
+    mutable std::shared_ptr<gmm::unsorted_sub_index> slave_U_dofs;
     mutable size_type n_integrated_elems;
     
     // state of the object
@@ -292,7 +292,7 @@ namespace level_set_contact {
     size_type BOUNDARY_ELEMENTS, VOLUME_ELEMENTS;
     std::vector<size_type> face_to_belem_ind;
     static std::vector<master_contact_body*> masters;
-    std::map<std::string, dal::shared_ptr<contact_pair_info> > contact_table;
+    std::map<std::string, std::shared_ptr<contact_pair_info> > contact_table;
     std::map<size_type,face_type> border_faces;
     
   protected:
@@ -417,7 +417,7 @@ namespace level_set_contact {
     
     /** return a pointer to mesh_im used for contact surface calculations
      */
-    dal::shared_ptr<mesh_im> build_mesh_im_on_boundary(
+    std::shared_ptr<mesh_im> build_mesh_im_on_boundary(
                                                        size_type region);
     
     /**gives a face, corresponding to newly created 
@@ -436,8 +436,8 @@ namespace level_set_contact {
   /**temporary object that updates contact pair, 
      deformes meshes and undeformes when it selfdestructs*/
   class contact_pair_update{
-    dal::shared_ptr<getfem::temporary_mesh_deformator<> > def_master;
-    dal::shared_ptr<getfem::temporary_mesh_deformator<> > def_slave;
+    std::shared_ptr<getfem::temporary_mesh_deformator<> > def_master;
+    std::shared_ptr<getfem::temporary_mesh_deformator<> > def_slave;
     master_contact_body& mcb;
     slave_contact_body& scb;
   public:
@@ -632,7 +632,7 @@ namespace level_set_contact {
     NormalTerm R_matrix(mcb,2);
     
     //nonlinear term that describes regularized integration or dummy (unity) multiplier
-    dal::shared_ptr<getfem::nonlinear_elem_term> integration(0);
+    std::shared_ptr<getfem::nonlinear_elem_term> integration(0);
     if (mcb.integration==master_contact_body::REGULARIZED_LEVEL_SET){
       integration.reset(new HFunction(mf_master_ls,mcb.get_model().real_variable(ls_name),
                                       mcb.regularized_tollerance,mcb.small_weight_multiplier));
@@ -735,7 +735,7 @@ namespace level_set_contact {
     NormalTerm R_matrix(mcb,2);
     
     //nonlinear term that describes regularized integration or dummy (unity) multiplier
-    dal::shared_ptr<getfem::nonlinear_elem_term> integration(0);
+    std::shared_ptr<getfem::nonlinear_elem_term> integration(0);
     if (mcb.integration==master_contact_body::REGULARIZED_LEVEL_SET){
       integration.reset(new HFunction(mf_master_ls,mcb.get_model().real_variable(ls_name),
                                       mcb.regularized_tollerance,mcb.small_weight_multiplier));

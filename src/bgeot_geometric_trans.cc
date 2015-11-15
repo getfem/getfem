@@ -68,9 +68,9 @@ namespace bgeot {
       size_type P = pgt_->structure()->dim();
       K_.resize(N(), P);
       if (have_pgp()) {
-        GMM_ASSERT1(ii_ < pgp_->get_point_tab().size(),
+        GMM_ASSERT1(ii_ < pgp_->get_ppoint_tab()->size(),
                     "Invalid index " << ii_ << " should be < "
-                    << pgp_->get_point_tab().size());
+                    << pgp_->get_ppoint_tab()->size());
 
         if (&pgp_->grad(ii_) == 0) { cerr << "OULA!! " << ii_ << "\n"; }
         else if (pgp_->grad(ii_).size() == 0) { cerr << "OUCH\n"; }
@@ -170,7 +170,7 @@ namespace bgeot {
   geotrans_interpolation_context::geotrans_interpolation_context
   (bgeot::pgeotrans_precomp pgp__, size_type ii__, const base_matrix& G__) :
     G_(&G__), pgt_(pgp__->get_trans()), pgp_(pgp__),
-    pspt_(&pgp__->get_point_tab()), ii_(ii__), J_(-1) {}
+    pspt_(pgp__->get_ppoint_tab()), ii_(ii__), J_(-1) {}
   geotrans_interpolation_context::geotrans_interpolation_context
   (bgeot::pgeometric_trans pgt__, bgeot::pstored_point_tab pspt__,
    size_type ii__,  const base_matrix& G__) :
@@ -328,7 +328,7 @@ namespace bgeot {
                 double(n) == params[0].num() && double(k) == params[1].num(),
                 "Bad parameters");
     dependencies.push_back(simplex_of_reference(dim_type(n), dim_type(k)));
-    return new simplex_trans_(dim_type(n), dim_type(k));
+    return pgeometric_trans(new simplex_trans_(dim_type(n), dim_type(k)));
   }
 
   /* ******************************************************************** */
@@ -371,7 +371,7 @@ namespace bgeot {
       = dynamic_cast<const poly_geometric_trans *>(b.get());
     GMM_ASSERT1(aa && bb, "The product of geometric transformations "
                 "is only defined for polynomial ones");
-    return new cv_pr_t_(aa, bb);
+    return pgeometric_trans(new cv_pr_t_(aa, bb));
   }
 
   /* ******************************************************************** */
@@ -422,7 +422,7 @@ namespace bgeot {
       = dynamic_cast<const poly_geometric_trans *>(b.get());
     GMM_ASSERT1(aa && bb, "The product of geometric transformations "
                 "is only defined for polynomial ones");
-    return new cv_pr_tl_(aa, bb);
+    return pgeometric_trans(new cv_pr_tl_(aa, bb));
   }
 
   /* ******************************************************************** */
@@ -546,15 +546,13 @@ namespace bgeot {
     GMM_ASSERT1(n == 2 || n == 3, "Bad parameter, expected value 2 or 3");
     
     dependencies.push_back(Q2_incomplete_reference(dim_type(n)));
-    return new Q2_incomplete_trans_(dim_type(n));
+    return pgeometric_trans(new Q2_incomplete_trans_(dim_type(n)));
   }
   
   pgeometric_trans Q2_incomplete_geotrans(dim_type nc) {
-    static pgeometric_trans pgt = 0;
     std::stringstream name;
     name << "GT_Q2_INCOMPLETE(" << nc << ")";
-    pgt = geometric_trans_descriptor(name.str());
-    return pgt;
+    return geometric_trans_descriptor(name.str());
   }
 
 
@@ -803,8 +801,8 @@ namespace bgeot {
                                      dal::pstatic_stored_object dep) {
     dal::pstatic_stored_object o
       = dal::search_stored_object(pre_geot_key_(pg, pspt));
-    if (o) return dal::stored_cast<geotrans_precomp_>(o);
-    pgeotrans_precomp p = new geotrans_precomp_(pg, pspt);
+    if (o) return std::dynamic_pointer_cast<const geotrans_precomp_>(o);
+    pgeotrans_precomp p(new geotrans_precomp_(pg, pspt));
     dal::add_stored_object(new pre_geot_key_(pg, pspt), p, pg, pspt,
                            dal::AUTODELETE_STATIC_OBJECT);
     if (dep) dal::add_dependency(p, dep);

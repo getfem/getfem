@@ -158,10 +158,10 @@ struct sub_gf_spmat_get : virtual public dal::static_stored_object {
   int arg_in_min, arg_in_max, arg_out_min, arg_out_max;
   virtual void run(getfemint::mexargs_in& in,
 		   getfemint::mexargs_out& out,
-		   dal::shared_ptr<gsparse> &pgsp, gsparse &gsp) = 0;
+		   std::shared_ptr<gsparse> &pgsp, gsparse &gsp) = 0;
 };
 
-typedef boost::intrusive_ptr<sub_gf_spmat_get> psub_command;
+typedef std::shared_ptr<sub_gf_spmat_get> psub_command;
 
 // Function to avoid warning in macro with unused arguments.
 template <typename T> static inline void dummy_func(T &) {}
@@ -170,11 +170,11 @@ template <typename T> static inline void dummy_func(T &) {}
     struct subc : public sub_gf_spmat_get {				\
       virtual void run(getfemint::mexargs_in& in,			\
 		       getfemint::mexargs_out& out,			\
-		       dal::shared_ptr<gsparse> &pgsp, gsparse &gsp)	\
+		       std::shared_ptr<gsparse> &pgsp, gsparse &gsp)	\
       { dummy_func(in); dummy_func(out); dummy_func(pgsp);		\
 	dummy_func(gsp); code }						\
     };									\
-    psub_command psubc = new subc;					\
+    psub_command psubc(new subc);					\
     psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;		\
     psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;	\
     subc_tab[cmd_normalize(name)] = psubc;				\
@@ -403,7 +403,7 @@ void gf_spmat_get(getfemint::mexargs_in& m_in,
 
   if (m_in.narg() < 2)  THROW_BADARG( "Wrong number of input arguments");
 
-  dal::shared_ptr<gsparse> pgsp = m_in.pop().to_sparse();
+  std::shared_ptr<gsparse> pgsp = m_in.pop().to_sparse();
   gsparse &gsp = *pgsp;
   std::string init_cmd   = m_in.pop().to_string();
   std::string cmd        = cmd_normalize(init_cmd);

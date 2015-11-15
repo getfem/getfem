@@ -1019,7 +1019,7 @@ namespace getfem {
   (model &md, const mesh_im &mim, const std::string &varname,
    const abstract_hyperelastic_law &AHL, const std::string &dataname,
    size_type region) {
-    pbrick pbr = new nonlinear_elasticity_brick(AHL);
+    pbrick pbr(new nonlinear_elasticity_brick(AHL));
 
     model::termlist tl;
     tl.push_back(model::term_description(varname, varname, true));
@@ -1269,7 +1269,7 @@ namespace getfem {
   size_type add_nonlinear_incompressibility_brick
   (model &md, const mesh_im &mim, const std::string &varname,
    const std::string &multname, size_type region) {
-    pbrick pbr = new nonlinear_incompressibility_brick();
+    pbrick pbr(new nonlinear_incompressibility_brick());
     model::termlist tl;
     tl.push_back(model::term_description(varname, varname, true));
     tl.push_back(model::term_description(varname, multname, true));

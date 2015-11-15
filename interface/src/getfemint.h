@@ -41,14 +41,13 @@
 #include <getfem/getfem_mesh_fem.h>
 #include <getfem/getfem_im_data.h>
 #include <gfi_array.h>
-#include <getfem/dal_shared_ptr.h>
 
 namespace getfem {
   class stored_mesh_slice;
   class mesh;
   class mesh_fem;
   class mat_elem_type;
-  typedef boost::intrusive_ptr<const mat_elem_type> pmat_elem_type;
+  typedef std::shared_ptr<const mat_elem_type> pmat_elem_type;
   class level_set;
   class mesh_level_set;
   class abstract_xy_function;
@@ -58,6 +57,39 @@ namespace getfem {
 
 namespace getfemint
 {
+
+  /**
+     shared_array uses operator delete[] for destruction of data
+   */
+  template <typename T> class shared_array {
+    T *p;
+    unsigned long *refcnt;
+  public:
+    shared_array() : p(0), refcnt(0) {}
+    explicit shared_array(T *q, bool refcounted = true) : p(q), refcnt(0)
+    { if (refcounted) refcnt = new unsigned long(1); }
+    shared_array(const shared_array<T> &other)
+      : p(other.p), refcnt(other.refcnt)
+    { if (refcnt) ++(*refcnt); }
+    void reset(T *q, bool refcounted = true)
+    { release(); shared_array<T> tmp(q,refcounted); (*this).swap(tmp); }
+    void swap(shared_array<T> &other)
+    { std::swap(p,other.p); std::swap(refcnt,other.refcnt); }
+    void release() {
+      if (refcnt && --(*refcnt) == 0)
+	{ if (p) delete[] p; delete refcnt; }
+      p = 0; refcnt = 0;
+    }
+    ~shared_array() { release(); }
+    shared_array<T> &operator=(const shared_array<T> &other)
+    { shared_array<T> tmp(other); swap(tmp); return *this; }
+    T *get() const { return p; }
+    bool counted() { return refcnt; }
+    unsigned long use_count() const { return refcnt ? 0 : *refcnt; }
+    T& operator[](unsigned i) const { return p[i]; }
+  };
+
+
   /* exception-throwing version of the allocation functions of gfi_array.h */
   gfi_array* checked_gfi_array_create(int ndim, const int *dims, gfi_type_id type, gfi_complex_flag is_complex = GFI_REAL);
   gfi_array* checked_gfi_array_create_0(gfi_type_id type, gfi_complex_flag is_complex = GFI_REAL);
@@ -164,7 +196,7 @@ namespace getfemint
     typedef value_type* iterator;
     typedef const value_type* const_iterator;
   protected:
-    dal::shared_array<T> data;
+    shared_array<T> data;
   public:
     value_type& operator[](size_type i)
     { if (i >= size()) THROW_INTERNAL_ERROR; return data[unsigned(i)]; }
@@ -284,7 +316,7 @@ namespace getfemint
     bool is_complex() const { return v == COMPLEX; }
     carray &to_complex() {
       if (v == REAL)
-        { c.reset(new carray(mx)); d.reset(0); v = COMPLEX; }
+        { c.reset(new carray(mx)); d = std::shared_ptr<darray>(); v = COMPLEX; }
       return cplx();
     }
     darray &to_real() {
@@ -292,13 +324,13 @@ namespace getfemint
         THROW_BADARG("expected a real (not a complex) array in this context");
       return real();
     }
-    void clear() { d.reset(0); c.reset(0); }
+    void clear() { c=std::shared_ptr<carray>(); d=std::shared_ptr<darray>(); }
     array_dimensions& sizes() { if (d.get()) return *d; else return *c; }
     const array_dimensions& sizes() const { if (d.get()) return *d; else return *c; }
   private:
     const gfi_array *mx;
-    dal::shared_ptr<darray> d;
-    dal::shared_ptr<carray> c;
+    std::shared_ptr<darray> d;
+    std::shared_ptr<carray> c;
     int v;
   };
 
@@ -497,7 +529,7 @@ namespace getfemint {
     getfem::base_node         to_base_node(int expected_dim);
     void                      to_sparse(gf_real_sparse_csc_const_ref& M);
     void                      to_sparse(gf_cplx_sparse_csc_const_ref& M);
-    dal::shared_ptr<gsparse>  to_sparse();
+    std::shared_ptr<gsparse>  to_sparse();
     getfemint_gsparse *       to_getfemint_gsparse();
 
     mexarg_in &check_trailing_dimension(int expected_dim);

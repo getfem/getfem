@@ -70,7 +70,7 @@ namespace getfem {
     std::vector<base_tensor> val_e(2);
     for (size_type k = 0; k < 2; ++k) {
       if (c0.have_pfp()) {
-	c0.set_pfp(fem_precomp(pfems[k], &c0.pfp()->get_point_tab(),
+	c0.set_pfp(fem_precomp(pfems[k], c0.pfp()->get_ppoint_tab(),
 			       c0.pfp()));
       } else { c0.set_pf(pfems[k]); }
       c0.base_value(val_e[k]);
@@ -98,7 +98,7 @@ namespace getfem {
     std::vector<base_tensor> grad_e(2), val_e(2);
     for (size_type k = 0; k < 2; ++k) {
       if (c0.have_pfp()) {
-	c0.set_pfp(fem_precomp(pfems[k], &c0.pfp()->get_point_tab(),
+	c0.set_pfp(fem_precomp(pfems[k], c0.pfp()->get_ppoint_tab(),
 			       c0.pfp()));
       } else { c0.set_pf(pfems[k]); }
       c0.grad_base_value(grad_e[k]);
@@ -130,7 +130,7 @@ namespace getfem {
     std::vector<base_tensor> hess_e(2), grad_e(2), val_e(2);
     for (size_type k = 0; k < 2; ++k) {
       if (c0.have_pfp()) {
-	c0.set_pfp(fem_precomp(pfems[k], &c0.pfp()->get_point_tab(),
+	c0.set_pfp(fem_precomp(pfems[k], c0.pfp()->get_ppoint_tab(),
 			       c0.pfp()));
       } else { c0.set_pf(pfems[k]); }
       c0.hess_base_value(hess_e[k]);
@@ -187,9 +187,9 @@ namespace getfem {
 	if (enriched_dof.is_in(mf1.ind_basic_dof_of_element(cv)[i]))
 	  local_enriched_dof.add(i);
       if (local_enriched_dof.card() > 0) {
-	pfem pf = new fem_product(mf1.fem_of_element(cv),
-				  mf2.fem_of_element(cv), cv,
-				  xfem_index, local_enriched_dof);
+	pfem pf = std::make_shared<fem_product>
+	  (mf1.fem_of_element(cv), mf2.fem_of_element(cv), cv,
+	   xfem_index, local_enriched_dof);
 	special_mflproduct_key *psm = new special_mflproduct_key(pf);
 	dal::add_stored_object(psm, pf, pf->ref_convex(0), pf->node_tab(0));
 	build_methods.push_back(pf);

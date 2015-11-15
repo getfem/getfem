@@ -499,7 +499,7 @@ namespace getfem {
      const std::string &datasigma,
      size_type region) {
 
-    pbrick pbr = new elastoplasticity_brick(ACP);
+    pbrick pbr(new elastoplasticity_brick(ACP));
 
     model::termlist tl;
     tl.push_back(model::term_description

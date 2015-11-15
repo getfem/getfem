@@ -54,7 +54,6 @@ This is the kernel of getfem.
 
 #include <locale.h>
 #include <memory>
-#include "dal_shared_ptr.h"
 #include "gmm/gmm_std.h"
 #include "bgeot_config.h"
 #ifdef GETFEM_HAVE_OPENMP
@@ -334,7 +333,7 @@ namespace getfem
   each partition can be used on a different thread. Thread safe*/
   class region_partition {
     mesh* pparent_mesh;
-    dal::shared_ptr<mesh_region> original_region;
+    std::shared_ptr<mesh_region> original_region;
     mutable std::vector<size_type> partitions;
   public:
     region_partition(mesh* mmesh=0,size_type id=-1);

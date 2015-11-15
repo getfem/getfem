@@ -560,14 +560,14 @@ namespace getfemint {
       if (cvf[i].f != dim_type(-1)) {
         cv_struc = cv_struc->faces_structure()[cvf[i].f];
       }
-      if (cv_struc->basic_structure()->nb_points() == 2)  /* pas les lignes */
+      if (bgeot::basic_structure(cv_struc)->nb_points() == 2)  /* pas les lignes */
         continue;
       if (cv_struc->dim() > 2)
         THROW_ERROR("cannot draw a 3D convex (convex nb " << cvf[i].cv
                     << "), please specify "
                     "faces (see gf_mesh_get(m,'outer faces') for example)");
       size_type t_inc = 0;
-      switch (cv_struc->basic_structure()->nb_points()) {
+      switch (bgeot::basic_structure(cv_struc)->nb_points()) {
       case 3: t_inc = 1; break;
       case 4: t_inc =2; break;
       }
@@ -604,7 +604,7 @@ namespace getfemint {
         std::copy(pts.begin(), pts.end(), ipts.begin());
         cv_struc = cv_struc->faces_structure()[cvf[i].f];
       }
-      if (cv_struc->basic_structure()->nb_points() == 2) /* pas les lignes */
+      if (bgeot::basic_structure(cv_struc)->nb_points() == 2) /* pas les lignes */
         continue;
       /* for each point, count the nb of faces it belongs */
       std::vector<short_type> fcnt(cv_struc->nb_points(), 0);
@@ -639,8 +639,8 @@ namespace getfemint {
       } else {
         cerr << "convex not handled by eval_on_triangulated_surface: "
              << bgeot::name_of_geometric_trans(mesh->trans_of_convex(cvf[i].cv)) << endl;
-        //cerr << "cv_struc->basic_structure()->nb_points() = "
-        //     << cv_struc->basic_structure()->nb_points() << endl;
+        //cerr << "basic_structure(cv_struc)->nb_points() = "
+        //     << bgeot::basic_structure(cv_struc)->nb_points() << endl;
         //        GMM_ASSERT1(false, "");
       }
       assert(tri_cnt <= nb_tri);

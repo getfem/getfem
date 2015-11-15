@@ -44,7 +44,7 @@ namespace getfem {
       papprox_integration pai = pim->approx_method();
       
       for (size_type j = 0; j < pai->nb_points_on_convex(); ++j) {
-	base_node pt = pgt->transform(pim->integration_points()[j],
+	base_node pt = pgt->transform((*(pim->pintegration_points()))[j],
 				      mi.linked_mesh().points_of_convex(cv));
 	p->add_point(pt, pai->coeff(j) * gmm::abs(mp.det[cv]));
       }
@@ -97,12 +97,12 @@ namespace getfem {
     mesh_im mi(m);
     mi.set_integration_method(pm->convex_index(), pim);
 
-    integration_method *p
-      = new integration_method
-      (composite_approx_int_method(*pmp, mi,
-				   pim->approx_method()->ref_convex()));
+    pintegration_method
+      p(new integration_method
+	(composite_approx_int_method(*pmp, mi,
+				     pim->approx_method()->ref_convex())));
     dependencies.push_back(p->approx_method()->ref_convex());
-    dependencies.push_back(&(p->approx_method()->integration_points()));
+    dependencies.push_back(p->approx_method()->pintegration_points());
     return p;
   }
 
@@ -136,12 +136,12 @@ namespace getfem {
     mesh_im mi(jfs.m);
     mi.set_integration_method(jfs.m.convex_index(), pim);
 
-    integration_method *p
-      = new integration_method
-      (composite_approx_int_method(jfs.mp, mi,
-				   pim->approx_method()->ref_convex()));
+    pintegration_method 
+      p(new integration_method
+	(composite_approx_int_method(jfs.mp, mi,
+				     pim->approx_method()->ref_convex())));
     dependencies.push_back(p->approx_method()->ref_convex());
-    dependencies.push_back(&(p->approx_method()->integration_points()));
+    dependencies.push_back(p->approx_method()->pintegration_points());
     return p;
   }
 
@@ -175,11 +175,12 @@ namespace getfem {
     mesh_im mi(jfs.m);
     mi.set_integration_method(jfs.m.convex_index(), pim);
 
-    integration_method *p = new integration_method
-      (composite_approx_int_method(jfs.mp, mi,
-				   bgeot::parallelepiped_of_reference(2)));
+    pintegration_method
+      p(new integration_method
+	(composite_approx_int_method(jfs.mp, mi,
+				     bgeot::parallelepiped_of_reference(2))));
     dependencies.push_back(p->approx_method()->ref_convex());
-    dependencies.push_back(&(p->approx_method()->integration_points()));
+    dependencies.push_back(p->approx_method()->pintegration_points());
     return p;
   }
 

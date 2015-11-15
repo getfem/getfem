@@ -47,24 +47,24 @@ namespace getfem {
 
   class virtual_brick;
   /** type of pointer on a brick */
-  typedef boost::intrusive_ptr<const virtual_brick> pbrick;
+  typedef std::shared_ptr<const virtual_brick> pbrick;
 
   class virtual_dispatcher;
-  typedef boost::intrusive_ptr<const virtual_dispatcher> pdispatcher;
+  typedef std::shared_ptr<const virtual_dispatcher> pdispatcher;
 
   class virtual_time_scheme;
-  typedef boost::intrusive_ptr<const virtual_time_scheme> ptime_scheme;
+  typedef std::shared_ptr<const virtual_time_scheme> ptime_scheme;
 
 
   class Neumann_elem_term;
-  typedef boost::intrusive_ptr<const Neumann_elem_term> pNeumann_elem_term;
+  typedef std::shared_ptr<const Neumann_elem_term> pNeumann_elem_term;
 
   class virtual_interpolate_transformation;
-  typedef boost::intrusive_ptr<const virtual_interpolate_transformation>
+  typedef std::shared_ptr<const virtual_interpolate_transformation>
   pinterpolate_transformation;
 
   class virtual_elementary_transformation;
-  typedef boost::intrusive_ptr<const virtual_elementary_transformation>
+  typedef std::shared_ptr<const virtual_elementary_transformation>
   pelementary_transformation;
   
 
@@ -232,7 +232,7 @@ namespace getfem {
           v_num_data(act_counter()),
           alpha(1), pim_data(pimd) {
         if (filter != VDESCRFILTER_NO && mf != 0)
-          partial_mf = new partial_mesh_fem(*mf);
+          partial_mf = ppartial_mesh_fem(new partial_mesh_fem(*mf));
         // v_num_data = v_num;
         if (qdims.size() == 0) qdims.push_back(1);
         GMM_ASSERT1(qdim(), "Attempt to create a null size variable");

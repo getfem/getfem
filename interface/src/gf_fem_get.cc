@@ -50,7 +50,7 @@ struct sub_gf_fem_get : virtual public dal::static_stored_object {
 		   getfemint_pfem *gfi_fem, getfem::pfem fem) = 0;
 };
 
-typedef boost::intrusive_ptr<sub_gf_fem_get> psub_command;
+typedef std::shared_ptr<sub_gf_fem_get> psub_command;
 
 // Function to avoid warning in macro with unused arguments.
 template <typename T> static inline void dummy_func(T &) {}
@@ -62,7 +62,7 @@ template <typename T> static inline void dummy_func(T &) {}
 		       getfemint_pfem *gfi_fem, getfem::pfem fem)	\
       { dummy_func(in); dummy_func(out); dummy_func(gfi_fem); code }	\
     };									\
-    psub_command psubc = new subc;					\
+    psub_command psubc(new subc);					\
     psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;		\
     psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;	\
     subc_tab[cmd_normalize(name)] = psubc;				\

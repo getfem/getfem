@@ -104,7 +104,7 @@ namespace getfem {
 
   pfem new_global_function_fem(bgeot::pconvex_ref cvr,
                                const std::vector<pglobal_function> &f) {
-    pfem pf = new global_function_fem(cvr,f);
+    pfem pf(new global_function_fem(cvr,f));
     dal::add_stored_object(new special_int_globf_fem_key(pf), pf);
     return pf;
   }
@@ -126,7 +126,7 @@ namespace getfem {
     for (dal::bv_visitor cv(linked_mesh().convex_index());
          !cv.finished(); ++cv) {
       bgeot::pconvex_ref cvr =
-        linked_mesh().trans_of_convex(cv)->convex_ref()->basic_convex_ref();
+        bgeot::basic_convex_ref(linked_mesh().trans_of_convex(cv)->convex_ref());
 
       std::map<bgeot::pconvex_ref,pfem>::iterator it = build_methods.find(cvr);
       pfem pf;
@@ -648,7 +648,7 @@ namespace getfem {
   pglobal_function
   global_function_on_level_set(const level_set &ls,
                                const abstract_xy_function &fn) {
-    return new global_function_on_levelset_(ls, fn);
+    return pglobal_function(new global_function_on_levelset_(ls, fn));
   }
 
 
@@ -747,7 +747,7 @@ namespace getfem {
   pglobal_function
   global_function_on_level_sets(const std::vector<level_set> &lsets,
                                 const abstract_xy_function &fn) {
-    return new global_function_on_levelsets_(lsets, fn);
+    return pglobal_function(new global_function_on_levelsets_(lsets, fn));
   }
 
 

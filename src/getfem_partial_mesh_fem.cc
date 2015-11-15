@@ -141,11 +141,11 @@ namespace getfem {
       static papprox_integration pai2_old = 0;
       if (pgt_old != pgt || pai2 != pai2_old) {
         pim1 = getfem::classical_approx_im(pgt, 2);
-              pgp2 = bgeot::geotrans_precomp(pgt,&(pai2->integration_points()),pim);
+	pgp2 = bgeot::geotrans_precomp(pgt, pai2->pintegration_points(),pim);
       }
       if (pai2 != pai2_old || pf != pf_old) {
         pf_old = pf;
-        pfp = getfem::fem_precomp(pf, &(pai2->integration_points()), pim);
+        pfp = getfem::fem_precomp(pf, pai2->pintegration_points(), pim);
       }
       pai2_old = pai2;
       pgt_old = pgt;

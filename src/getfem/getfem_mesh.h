@@ -39,7 +39,6 @@
 #define GETFEM_MESH_H__
 
 #include <bitset>
-#include "dal_shared_ptr.h"
 #include "bgeot_ftool.h"
 #include "bgeot_mesh.h"
 #include "bgeot_geotrans_inv.h"
@@ -61,7 +60,7 @@ namespace getfem {
   gmm::uint64_type APIDECL act_counter(void);
 
   class integration_method;
-  typedef boost::intrusive_ptr<const integration_method> pintegration_method;
+  typedef std::shared_ptr<const integration_method> pintegration_method;
 
   /**@addtogroup mesh*/
   /**@{*/

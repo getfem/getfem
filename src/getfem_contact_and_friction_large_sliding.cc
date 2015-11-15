@@ -367,7 +367,7 @@ namespace getfem {
       if (!ctx_ux_init) {
         bgeot::vectors_to_base_matrix(Gx, meshx().points_of_convex(cvx_));
         pfem_precomp pfp_ux
-          = fppool(pf_ux, &(pim->approx_method()->integration_points()));
+          = fppool(pf_ux, pim->approx_method()->pintegration_points());
         ctx_ux_ = fem_interpolation_context(pgtx, pfp_ux, cp->slave_ind_pt,
                                             Gx, cvx_, fx);
         ctx_ux_init = true;
@@ -379,7 +379,7 @@ namespace getfem {
       GMM_ASSERT1(have_lx, "No multiplier defined on the slave surface");
       if (!ctx_lx_init) {
         pfem_precomp pfp_lx
-          = fppool(pf_lx, &(pim->approx_method()->integration_points()));
+          = fppool(pf_lx, pim->approx_method()->pintegration_points());
         ctx_lx_ = fem_interpolation_context(pgtx, pfp_lx, cp->slave_ind_pt,
                                             ctx_ux().G(), cvx_, fx);
         ctx_lx_init = true;
@@ -1141,6 +1141,7 @@ namespace getfem {
     bool with_friction = (dataname_friction_coeff.size() > 0);
     integral_large_sliding_contact_brick *pbr
       = new integral_large_sliding_contact_brick(mcf, with_friction);
+    pbrick pbri(pbr);
 
     model::termlist tl; // A unique global unsymmetric term
     tl.push_back(model::term_description(true, false));
@@ -1172,7 +1173,7 @@ namespace getfem {
       }
     }
 
-    return md.add_brick(pbr, vl, dl, tl, model::mimlist(), size_type(-1));
+    return md.add_brick(pbri, vl, dl, tl, model::mimlist(), size_type(-1));
   }
 
 
@@ -2181,9 +2182,9 @@ namespace getfem {
         bgeot::vectors_to_base_matrix(G, m.points_of_convex(cv));
 
         pfem_precomp pfpu
-          = fppool(pf_s,&(pim->approx_method()->integration_points()));
+          = fppool(pf_s, pim->approx_method()->pintegration_points());
         pfem_precomp pfpl
-          = fppool(pf_sl,&(pim->approx_method()->integration_points()));
+          = fppool(pf_sl, pim->approx_method()->pintegration_points());
         fem_interpolation_context ctxu(pgt, pfpu, size_type(-1), G, cv, v.f());
         fem_interpolation_context ctxl(pgt, pfpl, size_type(-1), G, cv, v.f());
 
@@ -2624,7 +2625,7 @@ namespace getfem {
       = new intergral_large_sliding_contact_brick_raytracing
       (augm_param, f_coeff, ugroupname, wgroupname, transname, alpha,
        sym_v, frame_indifferent);
-    pbrick pbr = p;
+    pbrick pbr(p);
     p->dl = dl;
 
     return md.add_brick(pbr, p->vl, p->dl, model::termlist(),model::mimlist(),

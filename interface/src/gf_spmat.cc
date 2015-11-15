@@ -149,7 +149,7 @@ struct sub_gf_spmat : virtual public dal::static_stored_object {
 		   getfemint::mexargs_out& out, gsparse &gsp) = 0;
 };
 
-typedef boost::intrusive_ptr<sub_gf_spmat> psub_command;
+typedef std::shared_ptr<sub_gf_spmat> psub_command;
 
 // Function to avoid warning in macro with unused arguments.
 template <typename T> static inline void dummy_func(T &) {}
@@ -160,7 +160,7 @@ template <typename T> static inline void dummy_func(T &) {}
 		       getfemint::mexargs_out& out, gsparse &gsp)	\
       { dummy_func(in); dummy_func(out); code }				\
     };									\
-    psub_command psubc = new subc;					\
+    psub_command psubc(new subc);					\
     psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;		\
     psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;	\
     subc_tab[cmd_normalize(name)] = psubc;				\
@@ -200,7 +200,7 @@ void gf_spmat(getfemint::mexargs_in& m_in,
       will return a 40x5 matrix.@*/
     sub_command
       ("copy", 1, 3, 0, 1,
-       dal::shared_ptr<gsparse> A = in.pop().to_sparse();
+       std::shared_ptr<gsparse> A = in.pop().to_sparse();
        if (!A->is_complex()) {
 	 copy_spmat(*A, gsp, in, scalar_type());
        } else {
@@ -224,8 +224,8 @@ void gf_spmat(getfemint::mexargs_in& m_in,
        may have to use ``SPMAT:SET('to_complex')`` @*/
     sub_command
       ("mult", 2, 2, 0, 1,
-       dal::shared_ptr<gsparse> A = in.pop().to_sparse();
-       dal::shared_ptr<gsparse> B = in.pop().to_sparse();
+       std::shared_ptr<gsparse> A = in.pop().to_sparse();
+       std::shared_ptr<gsparse> B = in.pop().to_sparse();
        size_type m = A->nrows(); size_type n = B->ncols();
 
        if (A->is_complex() != B->is_complex())
@@ -267,8 +267,8 @@ void gf_spmat(getfemint::mexargs_in& m_in,
        Adding a real matrix with a complex matrix is possible.@*/
     sub_command
       ("add", 2, 2, 0, 1,
-       dal::shared_ptr<gsparse> A = in.pop().to_sparse();
-       dal::shared_ptr<gsparse> B = in.pop().to_sparse();
+       std::shared_ptr<gsparse> A = in.pop().to_sparse();
+       std::shared_ptr<gsparse> B = in.pop().to_sparse();
        size_type m = A->nrows(); size_type n = A->ncols();
        if (A->is_complex() != B->is_complex()) {
 	 gsp.cplx_wsc(new gsparse::t_wscmat_c(m,n));

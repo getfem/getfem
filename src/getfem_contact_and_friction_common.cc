@@ -433,7 +433,7 @@ namespace getfem {
           else {
             pintegration_method pim = mim.int_method_of_element(cv);
             GMM_ASSERT1(pim, "Integration method should be defined");
-            pfp = fppool(pf_s,&(pim->approx_method()->integration_points()));
+            pfp = fppool(pf_s, pim->approx_method()->pintegration_points());
             nbptf = pim->approx_method()->nb_points_on_face(v.f());
             indpt.resize(nbptf); indpfp.resize(nbptf);
             for (short_type ip = 0; ip < nbptf; ++ip)
@@ -608,7 +608,7 @@ namespace getfem {
           size_type cv = v.cv();
           bgeot::pgeometric_trans pgt = m.trans_of_convex(cv);
           pfem pf_s = mfu.fem_of_element(cv);
-          pfem_precomp pfp = fppool(pf_s, &(pgt->geometric_nodes()));
+          pfem_precomp pfp = fppool(pf_s, pgt->pgeometric_nodes());
           if (!ref_conf)
             slice_vector_on_basic_dof_of_element(mfu, U, cv, coeff);
           bgeot::vectors_to_base_matrix
@@ -1453,7 +1453,7 @@ namespace getfem {
             size_type cv = v.cv();
             bgeot::pgeometric_trans pgt = m.trans_of_convex(cv);
             pfem pf_s = mfu.fem_of_element(cv);
-            pfem_precomp pfp = fppool(pf_s, &(pgt->geometric_nodes()));
+            pfem_precomp pfp = fppool(pf_s, pgt->pgeometric_nodes());
             slice_vector_on_basic_dof_of_element(mfu, U, cv, coeff);
             bgeot::vectors_to_base_matrix
               (G, mfu.linked_mesh().points_of_convex(cv));
@@ -2038,13 +2038,13 @@ namespace getfem {
 
   void add_raytracing_transformation
   (model &md, const std::string &transname, scalar_type d) {
-    pinterpolate_transformation p=new raytracing_interpolate_transformation(d);
+    pinterpolate_transformation p(new raytracing_interpolate_transformation(d));
     md.add_interpolate_transformation(transname, p);
   }
 
   void add_raytracing_transformation
   (ga_workspace &workspace, const std::string &transname, scalar_type d) {
-    pinterpolate_transformation p=new raytracing_interpolate_transformation(d);
+    pinterpolate_transformation p(new raytracing_interpolate_transformation(d));
     workspace.add_interpolate_transformation(transname, p);
   }
 

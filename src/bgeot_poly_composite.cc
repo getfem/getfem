@@ -351,19 +351,19 @@ namespace bgeot {
     pgeometric_trans opt_gt,
     const std::vector<base_node> *opt_gt_pts,
     short_type k, pbasic_mesh &pm) {
-      size_type nbp = cvs->basic_structure()->nb_points();
+      size_type nbp = basic_structure(cvs)->nb_points();
       dim_type n = cvs->dim();
       /* Identifying simplexes.                                           */    
       if (nbp == size_type(n+1) && 
-        cvs->basic_structure()==simplex_structure(n)) {
+	  basic_structure(cvs)==simplex_structure(n)) {
           // smc.pm->write_to_file(cout);
           structured_mesh_for_simplex_(cvs,opt_gt,opt_gt_pts,k,pm);
           /* Identifying parallelepipeds.                                     */
       } else if (nbp == (size_type(1) << n) && 
-        cvs->basic_structure() == parallelepiped_structure(n)) {
+	  basic_structure(cvs) == parallelepiped_structure(n)) {
           structured_mesh_for_parallelepiped_(cvs,opt_gt,opt_gt_pts,k,pm);
       } else if (nbp == size_type(2 * n) && 
-        cvs->basic_structure() == prism_structure(n)) {
+          basic_structure(cvs) == prism_structure(n)) {
           GMM_ASSERT1(false, "Sorry, structured_mesh not implemented for prisms.");
       } else {
         GMM_ASSERT1(false, "This element is not taken into account. Contact us");
@@ -423,7 +423,7 @@ namespace bgeot {
     }
   };
 
-  typedef boost::intrusive_ptr<const str_mesh_cv__> pstr_mesh_cv__;
+  typedef std::shared_ptr<const str_mesh_cv__> pstr_mesh_cv__;
 
   /**
   * This function returns a mesh in pm which contains a refinement of the convex
@@ -436,23 +436,20 @@ namespace bgeot {
     pbasic_mesh &pm, pmesh_precomposite &pmp, 
     bool force_simplexification) {
       size_type n = cvr->structure()->dim();
-      size_type nbp = cvr->structure()->basic_structure()->nb_points();
+      size_type nbp = basic_structure(cvr->structure())->nb_points();
 
       force_simplexification = force_simplexification || (nbp == n+1);
 
       dal::pstatic_stored_object o
-        = dal::search_stored_object(str_mesh_key(cvr->structure()
-        ->basic_structure(), k,
-        force_simplexification));
+        = dal::search_stored_object(str_mesh_key(basic_structure(cvr->structure()), k, force_simplexification));
       pstr_mesh_cv__ psmc;
       if (o) {
-        psmc = dal::stored_cast<str_mesh_cv__>(o);
+        psmc = std::dynamic_pointer_cast<const str_mesh_cv__>(o);
       } 
       else {
-        str_mesh_cv__ &smc(*(new str_mesh_cv__(cvr->structure()
-          ->basic_structure(), k,
+        str_mesh_cv__ &smc(*(new str_mesh_cv__(basic_structure(cvr->structure()), k,
           force_simplexification)));
-        psmc = &smc;
+        psmc = pstr_mesh_cv__(&smc);
 
         smc.pm = new basic_mesh();
 
@@ -460,14 +457,14 @@ namespace bgeot {
           // cout << "cvr = " << int(cvr->structure()->dim()) << " : "
           //      << cvr->structure()->nb_points() << endl;
           const mesh_structure* splx_mesh
-            = cvr->basic_convex_ref()->simplexified_convex();
+            = basic_convex_ref(cvr)->simplexified_convex();
           /* splx_mesh is correctly oriented */
           for (size_type ic=0; ic < splx_mesh->nb_convex(); ++ic) {
             std::vector<base_node> cvpts(splx_mesh->nb_points_of_convex(ic));
             pgeometric_trans sgt
               = simplex_geotrans(cvr->structure()->dim(), 1);
             for (size_type j=0; j < cvpts.size(); ++j) {
-              cvpts[j] = cvr->basic_convex_ref()->points()
+              cvpts[j] = basic_convex_ref(cvr)->points()
                 [splx_mesh->ind_points_of_convex(ic)[j]];
               //cerr << "cvpts[" << j << "]=" << cvpts[j] << endl;
             }
@@ -484,10 +481,7 @@ namespace bgeot {
         }
 
         smc.pmp = new mesh_precomposite(*(smc.pm));
-        dal::add_stored_object(new str_mesh_key(cvr->structure()
-          ->basic_structure(), k,
-          force_simplexification), psmc,
-          cvr->structure()->basic_structure());
+        dal::add_stored_object(new str_mesh_key(basic_structure(cvr->structure()), k, force_simplexification), psmc, basic_structure(cvr->structure()));
       }
       pm  = psmc->pm;
       pmp = psmc->pmp;
@@ -504,10 +498,9 @@ namespace bgeot {
     refined_simplex_mesh_for_convex_faces(pconvex_ref cvr, 
     short_type k) {
       dal::pstatic_stored_object o
-        = dal::search_stored_object(str_mesh_key(cvr->structure()
-        ->basic_structure(), k, true));
+        = dal::search_stored_object(str_mesh_key(basic_structure(cvr->structure()), k, true));
       if (o) {
-        pstr_mesh_cv__ psmc = dal::stored_cast<str_mesh_cv__>(o);
+        pstr_mesh_cv__ psmc = std::dynamic_pointer_cast<const str_mesh_cv__>(o);
         return psmc->pfacem;
       } 
       else GMM_ASSERT1(false,

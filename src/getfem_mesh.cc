@@ -319,7 +319,7 @@ namespace getfem {
                                                    const base_node &pt) const {
     bgeot::pgeometric_trans pgt = trans_of_convex(ic);
     base_matrix G(dim(),pgt->nb_points());
-    vectors_to_base_matrix(G,points_of_convex(ic));
+    vectors_to_base_matrix(G, points_of_convex(ic));
     bgeot::geotrans_interpolation_context c(trans_of_convex(ic), pt, G);
     return bgeot::compute_normal(c, f);
   }
@@ -329,9 +329,9 @@ namespace getfem {
                                                    size_type n) const {
     bgeot::pgeometric_trans pgt = trans_of_convex(ic);
     bgeot::pgeotrans_precomp pgp
-      = bgeot::geotrans_precomp(pgt, &(pgt->geometric_nodes()), 0);
+      = bgeot::geotrans_precomp(pgt, pgt->pgeometric_nodes(), 0);
     base_matrix G;
-    vectors_to_base_matrix(G,points_of_convex(ic));
+    vectors_to_base_matrix(G, points_of_convex(ic));
     bgeot::geotrans_interpolation_context
       c(pgp,pgt->structure()->ind_points_of_face(f)[n], G);
     return bgeot::compute_normal(c, f);
@@ -341,7 +341,7 @@ namespace getfem {
                                                         short_type f) const {
     bgeot::pgeometric_trans pgt = trans_of_convex(ic);
     bgeot::pgeotrans_precomp pgp
-      = bgeot::geotrans_precomp(pgt, &(pgt->geometric_nodes()), 0);
+      = bgeot::geotrans_precomp(pgt, pgt->pgeometric_nodes(), 0);
     base_matrix G; vectors_to_base_matrix(G,points_of_convex(ic));
     bgeot::geotrans_interpolation_context c(pgp,0, G);
     base_small_vector n(dim());
@@ -367,7 +367,7 @@ namespace getfem {
                                                          size_type n) const {
     bgeot::pgeometric_trans pgt = trans_of_convex(ic);
     bgeot::pgeotrans_precomp pgp
-      = bgeot::geotrans_precomp(pgt, &pgt->geometric_nodes(), 0);
+      = bgeot::geotrans_precomp(pgt, pgt->pgeometric_nodes(), 0);
     base_matrix G(dim(),pgt->nb_points());
     vectors_to_base_matrix(G,points_of_convex(ic));
     bgeot::geotrans_interpolation_context
@@ -655,7 +655,7 @@ namespace getfem {
       vectors_to_base_matrix
         (G, bgeot::equilateral_simplex_of_reference(N)->points());
       gmm::mult(G, bgeot::geotrans_precomp
-                (pgt, &pgt->convex_ref()->points(), 0)->grad(0), Gr);
+                (pgt, pgt->pgeometric_nodes(), 0)->grad(0), Gr);
       gmm::lu_inverse(Gr);
       pbm[N-1].swap(Gr);
     }
@@ -675,7 +675,7 @@ namespace getfem {
       pgt_old = pgt;
       pim_old = pi;
       pgp = bgeot::geotrans_precomp
-        (pgt,&pai->integration_points(), pi);
+        (pgt, pai->pintegration_points(), pi);
     }
     bgeot::geotrans_interpolation_context gic(pgp, 0, G);
     for (size_type i = 0; i < pai->nb_points_on_convex(); ++i) {
@@ -696,7 +696,7 @@ namespace getfem {
     static bgeot::pgeotrans_precomp pgp = 0;
     if (pgt_old != pgt) {
       pgt_old=pgt;
-      pgp=bgeot::geotrans_precomp(pgt, &pgt->convex_ref()->points(), 0);
+      pgp=bgeot::geotrans_precomp(pgt, pgt->pgeometric_nodes(), 0);
     }
 
     size_type n = (pgt->is_linear()) ? 1 : pgt->nb_points();
@@ -708,7 +708,8 @@ namespace getfem {
       /* TODO : this is an ugly fix for simplexes only.. there should be
          a transformation of any pgt to the equivalent equilateral pgt
          (for prisms etc) */
-      if (pgt->structure()->basic_structure() == bgeot::simplex_structure(P))
+      if (bgeot::basic_structure(pgt->structure())
+	  == bgeot::simplex_structure(P))
         gmm::mult(base_matrix(K),equilateral_to_GT_PK_grad(P),K);
       q = std::max(q, gmm::condition_number(K));
     }
@@ -721,7 +722,7 @@ namespace getfem {
     static bgeot::pgeotrans_precomp pgp = 0;
     if (pgt_old != pgt) {
       pgt_old=pgt;
-      pgp=bgeot::geotrans_precomp(pgt, &pgt->convex_ref()->points(), 0);
+      pgp=bgeot::geotrans_precomp(pgt, pgt->pgeometric_nodes(), 0);
     }
     size_type N = G.nrows();
     size_type n = (pgt->is_linear()) ? 1 : pgt->nb_points();

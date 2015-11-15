@@ -132,7 +132,7 @@ const level_set_contact::contact_pair_info&
 	level_set_contact::master_contact_body::get_pair_info(
 	const std::string& slave_var_name) const
 {   
-	std::map<std::string, dal::shared_ptr<contact_pair_info> >
+	std::map<std::string, std::shared_ptr<contact_pair_info> >
 		::const_iterator it = contact_table.find(slave_var_name);
 	if (it!=contact_table.end()) return *(it->second);
 	GMM_ASSERT1(false,"did not find info on slave contact body, \
@@ -143,7 +143,7 @@ level_set_contact::contact_pair_info&
 	level_set_contact::master_contact_body::get_pair_info(
 	const std::string& slave_var_name)
 {   
-	std::map<std::string, dal::shared_ptr<contact_pair_info> >
+	std::map<std::string, std::shared_ptr<contact_pair_info> >
 		::iterator it = contact_table.find(slave_var_name);
 	if (it!=contact_table.end()) return *(it->second);
 	GMM_ASSERT1(false,"did not find info on slave contact body, \
@@ -174,7 +174,7 @@ void level_set_contact::master_contact_body::
 	size_type assumed_contact_elems = getfem::mesh_region::free_region_id(get_mesh());
 	getfem::mesh_region& contact_elems = get_mesh().region(assumed_contact_elems);
 	getfem::mesh_region& boundary_elems = get_mesh().region(BOUNDARY_ELEMENTS);
-	dal::shared_ptr<getfem::mr_visitor> i;
+	std::shared_ptr<getfem::mr_visitor> i;
 	getfem::mesh_region outer_faces;
 	outer_faces.clear();
 	getfem::outer_faces_of_mesh(get_mesh(), outer_faces);
@@ -226,7 +226,7 @@ void level_set_contact::master_contact_body::
 
 	//register contact pair
 	contact_table[scb.get_var_name()] = 
-		dal::shared_ptr<contact_pair_info>
+		std::shared_ptr<contact_pair_info>
 		(new contact_pair_info(*this,scb,mult_name,assumed_contact_elems)); 
 
 }
@@ -257,7 +257,7 @@ void level_set_contact::master_contact_body::clear_all_contact_history()
 
 void level_set_contact::master_contact_body::clear_contact_history()
 {
-	std::map<std::string, dal::shared_ptr<contact_pair_info> >::
+	std::map<std::string, std::shared_ptr<contact_pair_info> >::
 		iterator it = contact_table.begin();
 	for(;it!=contact_table.end();it++)
 		it->second->clear_contact_history();
@@ -266,7 +266,7 @@ void level_set_contact::master_contact_body::clear_contact_history()
 bool level_set_contact::master_contact_body::master_contact_changed()
 {
 	bool contact_surfaces_changed = false;
-	std::map<std::string, dal::shared_ptr<contact_pair_info> >::
+	std::map<std::string, std::shared_ptr<contact_pair_info> >::
 		iterator it = contact_table.begin();
 	for(;it!=contact_table.end();it++)
 		if (it->second->contact_changed()) 
@@ -275,11 +275,11 @@ bool level_set_contact::master_contact_body::master_contact_changed()
 	return contact_surfaces_changed;
 }
 
-dal::shared_ptr<getfem::mesh_im> level_set_contact::master_contact_body::
+std::shared_ptr<getfem::mesh_im> level_set_contact::master_contact_body::
 	build_mesh_im_on_boundary(size_type region_id)
 {
 
-	dal::shared_ptr<getfem::mesh_im> pmim_contact;
+	std::shared_ptr<getfem::mesh_im> pmim_contact;
 
 		pmim_contact.reset(new mesh_im(get_mesh()));
 		if (mult_mim_order!=size_type(-1)){
@@ -569,11 +569,9 @@ getfem::size_type level_set_contact::add_level_set_normal_contact_brick(
 	model& md, 
 	master_contact_body& mcb, 
 	slave_contact_body& scb,
-	size_type rg)
-{
+	size_type rg) {
 	//level set contact class
-	getfem::pbrick pbr = 
-		new level_set_contact_brick(md,mcb,scb,rg);
+        getfem::pbrick pbr(new level_set_contact_brick(md,mcb,scb,rg));
 
 	//term description
 	const std::string& name_Um = mcb.get_var_name();

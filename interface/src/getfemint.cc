@@ -1086,10 +1086,10 @@ namespace getfemint {
   }
 
   /* get a (native or getfem) sparse matrix */
-  dal::shared_ptr<gsparse>
+  std::shared_ptr<gsparse>
   mexarg_in::to_sparse() {
     if (gfi_array_get_class(arg) == GFI_SPARSE) {
-      dal::shared_ptr<gsparse> pgsp(new gsparse(arg));
+      std::shared_ptr<gsparse> pgsp(new gsparse(arg));
       return pgsp;
     } else {
       id_type id,cid;

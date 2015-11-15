@@ -120,7 +120,7 @@ namespace getfem {
     virtual size_type memsize() const = 0;
   };
 
-  typedef boost::intrusive_ptr<const mat_elem_computation>
+  typedef std::shared_ptr<const mat_elem_computation>
   pmat_elem_computation;
 
   /** 

@@ -74,9 +74,10 @@ namespace bgeot{
   pconvex_structure torus_structure_descriptor(pconvex_structure ori_structure){
 
     dal::pstatic_stored_object o = dal::search_stored_object(torus_structure_key(ori_structure));
-    if (o) return dal::stored_cast<convex_structure>(o);
+    if (o) return std::dynamic_pointer_cast<const convex_structure>(o);
 
     torus_structure *p = new torus_structure;
+    pconvex_structure pcvs(p);
     p->Nc = dim_type(ori_structure->dim() + 1);
     p->nbpt = ori_structure->nb_points();
     p->nbf = ori_structure->nb_faces();
@@ -94,11 +95,11 @@ namespace bgeot{
     p->dir_points_.resize(ori_structure->ind_dir_points().size());
     p->dir_points_ = ori_structure->ind_dir_points();
 
-    p->basic_pcvs = ori_structure->basic_structure().get();
+    p->basic_pcvs = basic_structure(ori_structure);
 
     torus_structure_key *key = new torus_structure_key(ori_structure);
-    dal::add_stored_object(key, p, dal::PERMANENT_STATIC_OBJECT);
-    return p;
+    dal::add_stored_object(key, pcvs, dal::PERMANENT_STATIC_OBJECT);
+    return pcvs;
   }
 
   DAL_SIMPLE_KEY(torus_reference_key, pconvex_ref);
@@ -108,10 +109,10 @@ namespace bgeot{
     dal::pstatic_stored_object o 
       = dal::search_stored_object(torus_reference_key(ori_convex_reference));
 
-    if (o) return dal::stored_cast<bgeot::convex_of_reference>(o);
-    pconvex_ref p = new torus_reference(ori_convex_reference);
+    if (o) return std::dynamic_pointer_cast<const bgeot::convex_of_reference>(o);
+    pconvex_ref p(new torus_reference(ori_convex_reference));
     dal::add_stored_object(new torus_reference_key(ori_convex_reference), p,
-      p->structure(), &(p->points()), dal::PERMANENT_STATIC_OBJECT);
+      p->structure(), p->pspt(), dal::PERMANENT_STATIC_OBJECT);
     return p;
   }
 
@@ -194,9 +195,9 @@ namespace bgeot{
     dal::pstatic_stored_object o 
       = dal::search_stored_object(torus_geom_trans_key(poriginal_trans));
 
-    if (o) return dal::stored_cast<torus_geom_trans>(o);
+    if (o) return std::dynamic_pointer_cast<const torus_geom_trans>(o);
 
-    bgeot::pgeometric_trans p = new torus_geom_trans(poriginal_trans);
+    bgeot::pgeometric_trans p(new torus_geom_trans(poriginal_trans));
     dal::add_stored_object(new torus_geom_trans_key(poriginal_trans), 
       p, dal::PERMANENT_STATIC_OBJECT);
     return p;
@@ -291,7 +292,7 @@ namespace getfem
     GMM_ASSERT1(radius > 0, "Negative radius in axisymmetry gradient calculation!");
 
     base_tensor u;
-    bgeot::pstored_point_tab ppt = &(c.pgp()->get_point_tab());
+    bgeot::pstored_point_tab ppt = c.pgp()->get_ppoint_tab();
     getfem::pfem_precomp pfp = getfem::fem_precomp(poriginal_fem_, ppt, 0);
     base_tensor u_origin = pfp->grad(c.ii());
     //poriginal_fem_->grad_base_value(c.xref(), u_origin);
@@ -366,7 +367,7 @@ namespace getfem
   getfem::pfem new_torus_fem(getfem::pfem pf){
     static bgeot::size_type key_count = 0;
     ++key_count;
-    getfem::pfem pfem_torus= new torus_fem(pf);
+    getfem::pfem pfem_torus(new torus_fem(pf));
     dal::add_stored_object(new torus_fem_key(key_count), pfem_torus);
     return pfem_torus;
   }

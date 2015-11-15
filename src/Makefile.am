@@ -1,6 +1,5 @@
 nobase_include_HEADERS =                   		\
 	getfem_boost/workaround.hpp        		\
-	getfem_boost/intrusive_ptr.hpp     		\
 	getfem_boost/noncopyable.hpp       		\
 	gmm/gmm.h                          		\
 	gmm/gmm_matrix.h                   		\
@@ -59,7 +58,6 @@ nobase_include_HEADERS =                   		\
 	gmm/gmm_MUMPS_interface.h          		\
 	getfem/dal_config.h		   		\
 	getfem/dal_singleton.h		   		\
-	getfem/dal_shared_ptr.h            		\
 	getfem/dal_basic.h                 		\
 	getfem/dal_bit_vector.h            		\
 	getfem/dal_static_stored_objects.h 		\

@@ -108,7 +108,7 @@ struct crack_singular_bilaplacian_xy_function : public getfem::abstract_xy_funct
 
   
 inline getfem::pglobal_function bilaplacian_crack_singular(size_type i, const getfem::level_set &ls, scalar_type nu, scalar_type pos){ 
-  return new bilaplacian_singular_functions(i, ls, nu, pos);
+  return getfem::pglobal_function(new bilaplacian_singular_functions(i, ls, nu, pos));
 }
 
 struct exact_solution_bilap {

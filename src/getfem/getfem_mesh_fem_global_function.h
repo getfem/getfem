@@ -54,7 +54,7 @@ namespace getfem {
     virtual ~global_function() {}
   };
 
-  typedef boost::intrusive_ptr<const global_function> pglobal_function;
+  typedef std::shared_ptr<const global_function> pglobal_function;
 
   class global_function_fem : public virtual_fem {
   protected :

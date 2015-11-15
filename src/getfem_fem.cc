@@ -185,7 +185,7 @@ namespace getfem {
   }
 
   fem_interpolation_context::fem_interpolation_context() :
-    bgeot::geotrans_interpolation_context(), pf_(0), pfp_(0), 
+    bgeot::geotrans_interpolation_context(), 
     convex_num_(size_type(-1)), face_num_(short_type(-1)), xfem_side_(0) {}
   fem_interpolation_context::fem_interpolation_context
   (bgeot::pgeotrans_precomp pgp__, pfem_precomp pfp__, size_type ii__, 
@@ -196,7 +196,7 @@ namespace getfem {
   fem_interpolation_context::fem_interpolation_context
   (bgeot::pgeometric_trans pgt__, pfem_precomp pfp__, size_type ii__, 
    const base_matrix& G__, size_type convex_num__, short_type face_num__) :
-    bgeot::geotrans_interpolation_context(pgt__,&pfp__->get_point_tab(),
+    bgeot::geotrans_interpolation_context(pgt__,pfp__->get_ppoint_tab(),
 					  ii__, G__),
     convex_num_(convex_num__), face_num_(face_num__), xfem_side_(0)
   { set_pfp(pfp__); }
@@ -611,7 +611,7 @@ namespace getfem {
     GMM_ASSERT1(n > 0 && n < 100 && k >= 0 && k <= 150 &&
 		double(n) == params[0].num() && double(k) == params[1].num(),
 		"Bad parameters");
-    virtual_fem *p = new PK_fem_(dim_type(n), short_type(k));
+    pfem p(new PK_fem_(dim_type(n), short_type(k)));
     dependencies.push_back(p->ref_convex(0));
     dependencies.push_back(p->node_tab(0));
     return p;
@@ -668,8 +668,8 @@ namespace getfem {
     pfem pf2 = params[1].method();
     GMM_ASSERT1(pf1->is_polynomial() && pf2->is_polynomial(),
 		"Both arguments to FEM_PRODUCT must be polynomial FEM");
-    virtual_fem *p = new tproduct_femi(ppolyfem(pf1.get()),
-				       ppolyfem(pf2.get()));
+    pfem p(new tproduct_femi(ppolyfem(pf1.get()),
+			     ppolyfem(pf2.get())));
     dependencies.push_back(p->ref_convex(0));
     dependencies.push_back(p->node_tab(0));
     return p;
@@ -756,11 +756,11 @@ namespace getfem {
     pfem pf1 = params[0].method();
     pfem pf2 = params[1].method();
     if (pf1->is_polynomial() && pf2->is_polynomial())
-      return new thierach_femi(ppolyfem(pf1.get()),ppolyfem(pf2.get()));
+      return pfem(new thierach_femi(ppolyfem(pf1.get()),ppolyfem(pf2.get())));
     GMM_ASSERT1(pf1->is_polynomialcomp() && pf2->is_polynomialcomp(),
 		"Bad parameters");
-    virtual_fem *p = new thierach_femi_comp(ppolycompfem(pf1.get()),
-					    ppolycompfem(pf2.get()));
+    pfem p(new thierach_femi_comp(ppolycompfem(pf1.get()),
+				  ppolycompfem(pf2.get())));
     dependencies.push_back(p->ref_convex(0));
     dependencies.push_back(p->node_tab(0));
     return p;
@@ -952,7 +952,7 @@ namespace getfem {
     dependencies.push_back(p->ref_convex(0));
     dependencies.push_back(p->node_tab(0));
 
-    return p;
+    return pfem(p);
   }
 
 
@@ -1075,7 +1075,7 @@ namespace getfem {
     dependencies.push_back(p->ref_convex(0));
     dependencies.push_back(p->node_tab(0));
 
-    return p;
+    return pfem(p);
   }
 
 
@@ -1108,7 +1108,7 @@ namespace getfem {
     int n = int(::floor(params[0].num() + 0.01));
     GMM_ASSERT1(n > 1 && n < 100 && double(n) == params[0].num(),
 		"Bad parameter");
-    virtual_fem *p = new P1_wabbfoaf_(dim_type(n));
+    pfem p(new P1_wabbfoaf_(dim_type(n)));
     dependencies.push_back(p->ref_convex(0));
     dependencies.push_back(p->node_tab(0));
     return p;
@@ -1124,7 +1124,7 @@ namespace getfem {
     base_small_vector norient;
     mutable bgeot::pgeotrans_precomp pgp;
     mutable bgeot::pgeometric_trans pgt_stored;
-    mutable pfem_precomp pfp;
+    // mutable pfem_precomp pfp;
 
     virtual void mat_trans(base_matrix &M, const base_matrix &G,
 			   bgeot::pgeometric_trans pgt) const;
@@ -1139,7 +1139,7 @@ namespace getfem {
     if (pgt != pgt_stored) {
       pgt_stored = pgt;
       pgp = bgeot::geotrans_precomp(pgt, node_tab(0), 0);
-      pfp = fem_precomp(this, node_tab(0), 0);
+      // pfp = fem_precomp(this, node_tab(0), 0);
     }
     GMM_ASSERT1(N == nc, "Sorry, this element works only in dimension " << nc);
 
@@ -1204,7 +1204,7 @@ namespace getfem {
     int n = int(::floor(params[0].num() + 0.01));
     GMM_ASSERT1(n > 1 && n < 100 && double(n) == params[0].num(),
 		"Bad parameter");
-    virtual_fem *p = new P1_RT0_(dim_type(n));
+    pfem p(new P1_RT0_(dim_type(n)));
     dependencies.push_back(p->ref_convex(0));
     dependencies.push_back(p->node_tab(0));
     return p;
@@ -1221,7 +1221,7 @@ namespace getfem {
     base_small_vector norient;
     mutable bgeot::pgeotrans_precomp pgp;
     mutable bgeot::pgeometric_trans pgt_stored;
-    mutable pfem_precomp pfp;
+    // mutable pfem_precomp pfp;
 
     virtual void mat_trans(base_matrix &M, const base_matrix &G,
 			   bgeot::pgeometric_trans pgt) const;
@@ -1236,7 +1236,7 @@ namespace getfem {
     if (pgt != pgt_stored) {
       pgt_stored = pgt;
       pgp = bgeot::geotrans_precomp(pgt, node_tab(0),0);
-      pfp = fem_precomp(this, node_tab(0), 0);
+      // pfp = fem_precomp(this, node_tab(0), 0);
     }
     GMM_ASSERT1(N == nc, "Sorry, this element works only in dimension " << nc);
 
@@ -1301,7 +1301,7 @@ namespace getfem {
     int n = int(::floor(params[0].num() + 0.01));
     GMM_ASSERT1(n > 1 && n < 100 && double(n) == params[0].num(),
 		"Bad parameter");
-    virtual_fem *p = new P1_RT0Q_(dim_type(n));
+    pfem p(new P1_RT0Q_(dim_type(n)));
     dependencies.push_back(p->ref_convex(0));
     dependencies.push_back(p->node_tab(0));
     return p;
@@ -1334,7 +1334,7 @@ namespace getfem {
     if (pgt != pgt_stored) {
       pgt_stored = pgt;
       pgp = bgeot::geotrans_precomp(pgt, node_tab(0), 0);
-      pfp = fem_precomp(this, node_tab(0), 0);
+      pfp = fem_precomp(pfem(new P1_nedelec_(nc)), node_tab(0), 0);
     }
     fem_interpolation_context ctx(pgp,pfp,0,G,0);
 
@@ -1416,7 +1416,7 @@ namespace getfem {
     int n = int(::floor(params[0].num() + 0.01));
     GMM_ASSERT1(n > 1 && n < 100 && double(n) == params[0].num(),
 		"Bad parameter");
-    virtual_fem *p = new P1_nedelec_(dim_type(n));
+    pfem p(new P1_nedelec_(dim_type(n)));
     dependencies.push_back(p->ref_convex(0));
     dependencies.push_back(p->node_tab(0));
     return p;
@@ -1448,7 +1448,7 @@ namespace getfem {
   static pfem P1_with_bubble_on_a_face_lagrange(fem_param_list &params,
 	std::vector<dal::pstatic_stored_object> &dependencies) {
     GMM_ASSERT1(params.size() == 0, "Bad number of parameters");
-    virtual_fem *p = new P1_wabbfoafla_;
+    pfem p(new P1_wabbfoafla_);
     dependencies.push_back(p->ref_convex(0));
     dependencies.push_back(p->node_tab(0));
     return p;
@@ -2630,7 +2630,7 @@ namespace getfem {
 		<< params.size() << " should be 1.");
     GMM_ASSERT1(params[0].type() == 0, "Bad type of parameters");
     int k = int(::floor(params[0].num() + 0.01));
-    virtual_fem *p = new PK_GL_fem_(k);
+    pfem p(new PK_GL_fem_(k));
     dependencies.push_back(p->ref_convex(0));
     dependencies.push_back(p->node_tab(0));
     return p;
@@ -2874,7 +2874,7 @@ namespace getfem {
     }
     dependencies.push_back(p->ref_convex(0));
     dependencies.push_back(p->node_tab(0));
-    return p;
+    return pfem(p);
   }
 
   /* ******************************************************************** */
@@ -2901,7 +2901,7 @@ namespace getfem {
     if (pgt != pgt_stored) {
       pgt_stored = pgt;
       pgp = bgeot::geotrans_precomp(pgt, node_tab(0), 0);
-      pfp = fem_precomp(this, node_tab(0), 0);
+      pfp = fem_precomp(pfem(new argyris_triangle__), node_tab(0), 0);
     }
     gmm::copy(gmm::identity_matrix(), M);
 
@@ -3042,7 +3042,7 @@ namespace getfem {
   static pfem triangle_Argyris_fem(fem_param_list &params,
 	std::vector<dal::pstatic_stored_object> &dependencies) {
     GMM_ASSERT1(params.size() == 0, "Bad number of parameters");
-    virtual_fem *p = new argyris_triangle__;
+    pfem p(new argyris_triangle__);
     dependencies.push_back(p->ref_convex(0));
     dependencies.push_back(p->node_tab(0));
     return p;
@@ -3073,7 +3073,7 @@ namespace getfem {
     if (pgt != pgt_stored) {
       pgt_stored = pgt;
       pgp = bgeot::geotrans_precomp(pgt, node_tab(0), 0);
-      pfp = fem_precomp(this, node_tab(0), 0);
+      pfp = fem_precomp(pfem(new  morley_triangle__), node_tab(0), 0);
     }
     gmm::copy(gmm::identity_matrix(), M);
     DEFINE_STATIC_THREAD_LOCAL_CONSTRUCTED(base_matrix, W, 3, 6);
@@ -3141,7 +3141,7 @@ namespace getfem {
   static pfem triangle_Morley_fem(fem_param_list &params,
 	std::vector<dal::pstatic_stored_object> &dependencies) {
     GMM_ASSERT1(params.size() == 0, "Bad number of parameters");
-    virtual_fem *p = new morley_triangle__;
+    pfem p(new morley_triangle__);
     dependencies.push_back(p->ref_convex(0));
     dependencies.push_back(p->node_tab(0));
     return p;
@@ -3191,7 +3191,7 @@ namespace getfem {
     GMM_ASSERT1(n > 0 && n < 100 && k >= 0 && k <= 150 && alpha >= 0 &&
 		alpha < 1 && double(n) == params[0].num()
 		&& double(k) == params[1].num(), "Bad parameters");
-    virtual_fem *p = new PK_discont_(dim_type(n), short_type(k), alpha);
+    pfem p(new PK_discont_(dim_type(n), short_type(k), alpha));
     dependencies.push_back(p->ref_convex(0));
     dependencies.push_back(p->node_tab(0));
     return p;
@@ -3238,7 +3238,7 @@ namespace getfem {
     GMM_ASSERT1(n > 0 && n < 100 && k >= 0 && k <= 150 &&
 		double(n) == params[0].num() && double(k) == params[1].num(),
 		"Bad parameters");
-    virtual_fem *p = new PK_with_cubic_bubble_(dim_type(n), short_type(k));
+    pfem p(new PK_with_cubic_bubble_(dim_type(n), short_type(k)));
     dependencies.push_back(p->ref_convex(0));
     dependencies.push_back(p->node_tab(0));
     return p;
@@ -3251,7 +3251,7 @@ namespace getfem {
   static pfem classical_fem_(const char *suffix, const char *arg, 
 			     bgeot::pgeometric_trans pgt,
 			     short_type k) {
-    DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(bgeot::pgeometric_trans, pgt_last, 0);
+    DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(bgeot::pgeometric_trans, pgt_last,0);
     DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(short_type, k_last, short_type(-1));
     DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(pfem, fm_last, 0);
     DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(char, isuffix_last, 0);
@@ -3276,7 +3276,7 @@ namespace getfem {
     
     /* Identifying Q1-parallelepiped.                                     */
     if (!found && nbp == (size_type(1) << n))
-      if (pgt->basic_structure() == bgeot::parallelepiped_structure(dim_type(n)))
+      if (pgt->basic_structure()==bgeot::parallelepiped_structure(dim_type(n)))
     	{ name << "FEM_QK" << suffix << "("; found = true; }
 
     /* Identifying Q1-prisms.                                             */
@@ -3467,8 +3467,8 @@ namespace getfem {
 			   dal::pstatic_stored_object dep) {
     dal::pstatic_stored_object o
       = dal::search_stored_object(pre_fem_key_(pf, pspt));
-    if (o) return dal::stored_cast<fem_precomp_>(o);
-    pfem_precomp p = new fem_precomp_(pf, pspt);
+    if (o) return std::dynamic_pointer_cast<const fem_precomp_>(o);
+    pfem_precomp p(new fem_precomp_(pf, pspt));
     dal::add_stored_object(new pre_fem_key_(pf, pspt), p, pspt,
 			   dal::AUTODELETE_STATIC_OBJECT);
     if (dal::exists_stored_object(pf)) dal::add_dependency(p, pf);

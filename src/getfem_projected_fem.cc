@@ -350,7 +350,7 @@ namespace getfem {
       papprox_integration pai = pim->approx_method();
       bgeot::pgeometric_trans pgt = mim_target.linked_mesh().trans_of_convex(cv);
       bgeot::pgeotrans_precomp pgp =
-        bgeot::geotrans_precomp(pgt, &(pai->integration_points()), 0);
+        bgeot::geotrans_precomp(pgt, pai->pintegration_points(), 0);
       dal::bit_vector dofs;
       size_type last_cv = size_type(-1); // refers to the source mesh
       short_type last_f = short_type(-1); // refers to the source mesh
@@ -532,8 +532,8 @@ namespace getfem {
     std::map<size_type,gausspt_projection_data>::iterator git;
     git = e.gausspt.find(c.ii());
     if (c.have_pgp() &&
-        (&c.pgp()->get_point_tab()
-         == &e.pim->approx_method()->integration_points()) &&
+        (c.pgp()->get_ppoint_tab()
+         == e.pim->approx_method()->pintegration_points()) &&
         git != e.gausspt.end()) {
       gausspt_projection_data &gppd = git->second;
       if (gppd.iflags & 1) {
@@ -625,8 +625,8 @@ namespace getfem {
     std::map<size_type,gausspt_projection_data>::iterator git;
     git = e.gausspt.find(c.ii());
     if (c.have_pgp() &&
-        (&c.pgp()->get_point_tab()
-         == &e.pim->approx_method()->integration_points()) &&
+        (c.pgp()->get_ppoint_tab()
+         == e.pim->approx_method()->pintegration_points()) &&
         git != e.gausspt.end()) {
       gausspt_projection_data &gppd = git->second;
       if (gppd.iflags & 1) {
@@ -716,8 +716,8 @@ namespace getfem {
       std::map<size_type,gausspt_projection_data>::iterator git;
       git = e.gausspt.find(c.ii());
       if (c.have_pgp() &&
-          (&c.pgp()->get_point_tab()
-           == &e.pim->approx_method()->integration_points()) &&
+          (c.pgp()->get_ppoint_tab()
+           == e.pim->approx_method()->pintegration_points()) &&
           git != e.gausspt.end()) {
         gausspt_projection_data &gppd = git->second;
         if (gppd.iflags & 1) {
@@ -834,8 +834,8 @@ namespace getfem {
   pfem new_projected_fem(const mesh_fem &mf_source_, const mesh_im &mim_target_,
                          size_type rg_source_, size_type rg_target_,
                          dal::bit_vector blocked_dofs_, bool store_val) {
-    pfem pf = new projected_fem(mf_source_, mim_target_, rg_source_, rg_target_,
-                                blocked_dofs_, store_val);
+    pfem pf(new projected_fem(mf_source_, mim_target_, rg_source_, rg_target_,
+			      blocked_dofs_, store_val));
     dal::add_stored_object(new special_projfem_key(pf), pf);
     return pf;
   }

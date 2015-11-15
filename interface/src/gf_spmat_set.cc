@@ -64,7 +64,7 @@ spmat_set_or_add_sub_matrix(gsparse &gsp, getfemint::mexargs_in& in,
 		 "Use to_wsc first");
   size_type m = ii.size(), n = jj.size();
   if (in.front().is_sparse()) {
-    dal::shared_ptr<gsparse> src = in.pop().to_sparse();
+    std::shared_ptr<gsparse> src = in.pop().to_sparse();
     switch (src->storage()) {
       case gsparse::WSCMAT:
 	if (do_add) gmm::add (src->wsc(T()), gmm::sub_matrix(gsp.wsc(T()), ii, jj));
@@ -118,7 +118,7 @@ struct sub_gf_spmat_set : virtual public dal::static_stored_object {
 		   gsparse &gsp) = 0;
 };
 
-typedef boost::intrusive_ptr<sub_gf_spmat_set> psub_command;
+typedef std::shared_ptr<sub_gf_spmat_set> psub_command;
 
 // Function to avoid warning in macro with unused arguments.
 template <typename T> static inline void dummy_func(T &) {}
@@ -130,7 +130,7 @@ template <typename T> static inline void dummy_func(T &) {}
 		       gsparse &gsp)					\
       { dummy_func(in); dummy_func(out); code }				\
     };									\
-    psub_command psubc = new subc;					\
+    psub_command psubc(new subc);					\
     psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;		\
     psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;	\
     subc_tab[cmd_normalize(name)] = psubc;				\

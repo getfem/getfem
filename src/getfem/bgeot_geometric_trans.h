@@ -128,7 +128,7 @@ namespace bgeot {
     pconvex_structure structure(void) const { return cvr->structure(); }
     /// Basic structure of the reference element.
     pconvex_structure basic_structure(void) const
-    { return cvr->structure()->basic_structure(); }
+    { return bgeot::basic_structure(cvr->structure()); }
     /// Gives the value of the functions vector at a certain point.
     virtual void poly_vector_val(const base_node &pt, base_vector &val) const = 0;
     /// Gives the value of a subgroup of the functions vector at a certain point.
@@ -150,6 +150,9 @@ namespace bgeot {
     /// Gives the array of geometric nodes (on reference convex)
     const stored_point_tab &geometric_nodes(void) const
     { return cvr->points(); }
+    /// Gives the array of geometric nodes (on reference convex)
+    pstored_point_tab pgeometric_nodes(void) const
+    { return cvr->pspt(); }
     /// Gives the array of the normals to faces (on reference convex)
     const std::vector<base_small_vector> &normals(void) const
     { return cvr->normals(); }
@@ -176,7 +179,7 @@ namespace bgeot {
   }
 
   /** pointer type for a geometric transformation */
-  typedef boost::intrusive_ptr<const bgeot::geometric_trans> pgeometric_trans;
+  typedef std::shared_ptr<const bgeot::geometric_trans> pgeometric_trans;
   class geotrans_interpolation_context;
 
   template<class CONT>
@@ -263,7 +266,7 @@ namespace bgeot {
 
 
   class geotrans_precomp_;
-  typedef boost::intrusive_ptr<const geotrans_precomp_> pgeotrans_precomp;
+  typedef std::shared_ptr<const geotrans_precomp_> pgeotrans_precomp;
 
 
   /**
@@ -305,7 +308,8 @@ namespace bgeot {
 
     base_node transform(size_type i, const base_matrix &G) const;
     pgeometric_trans get_trans() const { return pgt; }
-    inline const stored_point_tab& get_point_tab() const { return *pspt; }
+    // inline const stored_point_tab& get_point_tab() const { return *pspt; }
+    inline pstored_point_tab get_ppoint_tab() const { return pspt; }
   protected:
     geotrans_precomp_(pgeometric_trans pg, pstored_point_tab ps);
 

@@ -62,7 +62,7 @@ new your_object(parameters),
 dependency);
 @endcode
 
-Boost intrusive_ptr are used.
+std::shared_ptr are used.
 */
 #ifndef DAL_STATIC_STORED_OBJECTS_H__
 #define DAL_STATIC_STORED_OBJECTS_H__
@@ -76,11 +76,6 @@ Boost intrusive_ptr are used.
 
 
 #include "getfem/getfem_arch_config.h"
-#ifdef GETFEM_HAVE_BOOST
-#include <boost/intrusive_ptr.hpp>
-#else
-# include <getfem_boost/intrusive_ptr.hpp>
-#endif
 
 #ifdef GETFEM_HAVE_OPENMP
   #include <boost/atomic.hpp>
@@ -176,58 +171,11 @@ namespace dal {
 
 
   /**
-  base class for reference-counted getfem objects (via
-  boost::intrusive_ptr).
-  The reference-counting is thread safe
-  @see dal_static_stored_objects.h
+  base class for static stored objects 
   */
-  class static_stored_object 
-  {
-    mutable atomic_int pointer_ref_count_;
-  public :
-    static_stored_object(void) : pointer_ref_count_(0) {}
-    static_stored_object(const static_stored_object &) : pointer_ref_count_(0) {}
-    static_stored_object &operator =(const static_stored_object &) { return *this; }
-    virtual ~static_stored_object() { }
-    friend void intrusive_ptr_add_ref(const static_stored_object *o);
-    friend void intrusive_ptr_release(const static_stored_object *o);
-  };
+  class static_stored_object { public : virtual ~static_stored_object() {} };
 
-  typedef boost::intrusive_ptr<const static_stored_object>
-    pstatic_stored_object;
-
-  template<class T> boost::intrusive_ptr<const T>
-  stored_cast(pstatic_stored_object o) {
-    return boost::intrusive_ptr<const T>(dynamic_cast<const T *>(o.get()));
-  }
-
-
-#ifdef GETFEM_HAVE_OPENMP
-  inline void intrusive_ptr_add_ref(const static_stored_object * x)
-  {
-    x->pointer_ref_count_.fetch_add(1, boost::memory_order_relaxed);
-  }
-
-  inline void intrusive_ptr_release(const static_stored_object * x)
-  {
-    if (x->pointer_ref_count_.fetch_sub(1, boost::memory_order_release) == 1) 
-    {
-      boost::atomic_thread_fence(boost::memory_order_acquire);
-      delete x;
-    }
-  }
-#else
-  inline void intrusive_ptr_add_ref(const static_stored_object *o)
-  { 
-  	o->pointer_ref_count_++; 
-  }
-
-  inline void intrusive_ptr_release(const static_stored_object *o)
-  {    
-    if (--(o->pointer_ref_count_) == 0) delete o;  	
-  }
-#endif
-
+  typedef std::shared_ptr<const static_stored_object> pstatic_stored_object;
 
   pstatic_stored_object_key key_of_stored_object(pstatic_stored_object o);
 
@@ -406,7 +354,7 @@ namespace dal {
       iterator ite = stored_objects.end();
 
       for(iterator it = itb; it != ite; ++it){
-        const OBJECT_TYPE *p_object =  dal::stored_cast<OBJECT_TYPE>(it->second.p).get();
+        const OBJECT_TYPE *p_object =  std::dynamic_pointer_cast<const OBJECT_TYPE>(it->second.p).get();
         if(p_object != 0) delete_object_list.push_back(it->second.p);
       }    
     }
@@ -420,7 +368,7 @@ namespace dal {
         iterator ite = stored_objects.end();
 
         for(iterator it = itb; it != ite; ++it){
-          const OBJECT_TYPE *p_object =  dal::stored_cast<OBJECT_TYPE>(it->second.p).get();
+          const OBJECT_TYPE *p_object =  std::dynamic_pointer_cast<const OBJECT_TYPE>(it->second.p).get();
           if(p_object != 0) delete_object_list.push_back(it->second.p);
         }
       }

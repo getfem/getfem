@@ -54,9 +54,9 @@ namespace bgeot {
   class convex_structure;
 
   /// Pointer on a convex structure description. 
-  typedef boost::intrusive_ptr<const convex_structure> pconvex_structure;
+  typedef std::shared_ptr<const convex_structure> pconvex_structure;
 
-  typedef std::vector<const convex_structure *> convex_structure_faces_ct;
+  typedef std::vector<pconvex_structure> convex_structure_faces_ct;
   typedef std::vector<short_type>               convex_ind_ct;
   typedef gmm::tab_ref_index_ref< convex_ind_ct::const_iterator,
 	         convex_ind_ct::const_iterator> ref_convex_ind_ct;
@@ -77,7 +77,8 @@ namespace bgeot {
     convex_structure_faces_ct  faces_struct;
     std::vector<convex_ind_ct> faces;
     convex_ind_ct              dir_points_;
-    const convex_structure *basic_pcvs;
+    pconvex_structure basic_pcvs;
+    bool auto_basic;
     
     pconvex_structure prod_a, prod_b; /* only filled for convex structures */
 				      /* product.                          */
@@ -89,9 +90,6 @@ namespace bgeot {
       inline dim_type  dim(void)        const { return Nc;   }
       /// Number of vertices.
       inline short_type nb_points(void) const { return nbpt; }
-      /// Original structure (if concerned).
-      pconvex_structure basic_structure(void) const 
-      { return basic_pcvs; }
     /** Number of vertices of a face.
      *	@param i the face number.
      */
@@ -136,12 +134,17 @@ namespace bgeot {
       return prod_a ? true : false;
     }
   protected:
-    convex_structure() { prod_a = prod_b = 0; }
-    friend boost::intrusive_ptr<convex_structure> new_convex_structure();
+    convex_structure() { prod_a = prod_b = 0; auto_basic = false; }
+    friend std::shared_ptr<convex_structure> new_convex_structure();
+    friend pconvex_structure basic_structure(pconvex_structure cv);
   };
 
-  inline boost::intrusive_ptr<convex_structure> new_convex_structure()
-  { return boost::intrusive_ptr<convex_structure>(new convex_structure); }
+  /// Original structure (if concerned)
+  inline pconvex_structure basic_structure(pconvex_structure cv)
+  { if (cv->auto_basic) return cv; else return cv->basic_pcvs; }
+
+  inline std::shared_ptr<convex_structure> new_convex_structure()
+  { return std::shared_ptr<convex_structure>(new convex_structure); }
 
   /** @name functions on convex structures
    */

@@ -38,7 +38,7 @@ namespace getfem {
   static pintegration_method im_none(im_param_list &params,
 			       std::vector<dal::pstatic_stored_object> &) {
     GMM_ASSERT1(params.size() == 0, "IM_NONE does not accept any parameter");
-    return new integration_method();
+    return pintegration_method(new integration_method());
   }
 
   long_scalar_type poly_integration::int_poly(const base_poly &P) const {
@@ -134,8 +134,9 @@ namespace getfem {
     GMM_ASSERT1(n > 0 && n < 100 && double(n) == params[0].num(),
 		"Bad parameters");
     dependencies.push_back(bgeot::simplex_structure(dim_type(n)));
-    return new integration_method
-      (new simplex_poly_integration_(bgeot::simplex_structure(dim_type(n))));
+    return pintegration_method
+      (new integration_method
+       (new simplex_poly_integration_(bgeot::simplex_structure(dim_type(n)))));
   }
 
   /* ******************************************************************** */
@@ -195,8 +196,9 @@ namespace getfem {
     dependencies.push_back(a); dependencies.push_back(b);
     dependencies.push_back(bgeot::convex_product_structure(a->structure(),
 							   b->structure()));
-    return new integration_method(new plyint_mul_structure_(a->exact_method(),
-							  b->exact_method()));
+    return pintegration_method
+      (new integration_method(new plyint_mul_structure_(a->exact_method(),
+							b->exact_method())));
   }
 
   /* ******************************************************************** */
@@ -336,7 +338,7 @@ namespace getfem {
     for (size_type i = 0; i < pai->nb_points_on_convex(); ++i) {
       pt = (cvr->dir_points_of_face(f))[0];
       for (dim_type j = 0; j < N; ++j)
-	pt += pts[j] * (pai->integration_points()[i])[j];
+	pt += pts[j] * ((*(pai->pintegration_points()))[i])[j];
       add_point(pt, pai->coeff(i) * det, f);
     }
   }
@@ -413,12 +415,12 @@ namespace getfem {
 	pai->valid_method();
         // cerr << "finding " << name << endl;
 
-	integration_method *p = new integration_method(pai);
+	pintegration_method p(new integration_method(pai));
 	dependencies.push_back(p->approx_method()->ref_convex());
-	dependencies.push_back(&(p->approx_method()->integration_points()));
+	dependencies.push_back(p->approx_method()->pintegration_points());
 	return p;
       }
-    return 0;
+    return pintegration_method();
   }
 
 
@@ -525,10 +527,9 @@ namespace getfem {
       return int_method_descriptor(name.str());
     }
     else {
-      integration_method *p
-	= new integration_method(new gauss_approx_integration_(short_type(n/2 + 1)));
+      pintegration_method p(new integration_method(new gauss_approx_integration_(short_type(n/2 + 1))));
       dependencies.push_back(p->approx_method()->ref_convex());
-      dependencies.push_back(&(p->approx_method()->integration_points()));
+      dependencies.push_back(p->approx_method()->pintegration_points());
       return p;
     }
   }
@@ -636,10 +637,9 @@ namespace getfem {
     GMM_ASSERT1(n >= 0 && n < 100 && k >= 0 && k <= 150 &&
 		double(n) == params[0].num() && double(k) == params[1].num(),
 		"Bad parameters");
-    integration_method *p
-      = new integration_method(new Newton_Cotes_approx_integration_(dim_type(n), short_type(k)));
+    pintegration_method p(new integration_method(new Newton_Cotes_approx_integration_(dim_type(n), short_type(k))));
     dependencies.push_back(p->approx_method()->ref_convex());
-    dependencies.push_back(&(p->approx_method()->integration_points()));
+    dependencies.push_back(p->approx_method()->pintegration_points());
     return p;
   }
 
@@ -725,11 +725,11 @@ namespace getfem {
     pintegration_method b = params[1].method();
     GMM_ASSERT1(a->type() == IM_APPROX && b->type() == IM_APPROX,
 		"Bad parameters");
-    integration_method *p
-      = new integration_method(new a_int_pro_integration(a->approx_method(),
-							 b->approx_method()));
+    pintegration_method 
+      p(new integration_method(new a_int_pro_integration(a->approx_method(),
+							 b->approx_method())));
     dependencies.push_back(p->approx_method()->ref_convex());
-    dependencies.push_back(&(p->approx_method()->integration_points()));
+    dependencies.push_back(p->approx_method()->pintegration_points());
     return p;
   }
 
@@ -1002,11 +1002,11 @@ namespace getfem {
     int N = a->approx_method()->dim();
     GMM_ASSERT1(N >= 2 && N <= 3 && ip1 >= 0 && ip2 >= 0 && ip1 <= N
 		&& ip2 <= N, "Bad parameters");
-    integration_method *p
-      = new integration_method(new quasi_polar_integration(a->approx_method(),
-							   ip1, ip2));
+    pintegration_method 
+      p(new integration_method(new quasi_polar_integration(a->approx_method(),
+							   ip1, ip2)));
     dependencies.push_back(p->approx_method()->ref_convex());
-    dependencies.push_back(&(p->approx_method()->integration_points()));
+    dependencies.push_back(p->approx_method()->pintegration_points());
     return p;
   }
 
@@ -1054,7 +1054,7 @@ namespace getfem {
   }
 
   std::string name_of_int_method(pintegration_method p) {
-    if (!p) return "IM_NONE";
+    if (!(p.get())) return "IM_NONE";
     return dal::singleton<im_naming_system>::instance().shorter_name_of_method(p);
   }
 
@@ -1108,7 +1108,7 @@ namespace getfem {
   }
 
   static pintegration_method classical_exact_im(bgeot::pconvex_structure cvs) {
-    cvs = cvs->basic_structure();
+    cvs = bgeot::basic_structure(cvs);
     DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(bgeot::pconvex_structure,cvs_last, 0);
     DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(pintegration_method, im_last, 0);
     bool found = false;
@@ -1164,7 +1164,7 @@ namespace getfem {
 
     degree = std::max<dim_type>(degree, 1);
     bgeot::pconvex_structure a, b;
-    if (cvs->basic_structure() == bgeot::simplex_structure(dim_type(n))) {
+    if (bgeot::basic_structure(cvs) == bgeot::simplex_structure(dim_type(n))) {
       /* Identifying P1-simplexes. */
       switch (n) {
       case 0: return int_method_descriptor("IM_NC(0,0)");
@@ -1184,7 +1184,7 @@ namespace getfem {
       GMM_ASSERT1(false, "could not find an " << name.str()
                   << " of degree >= " << int(degree));
     } else if (cvs->is_product(&a,&b) ||
-               (cvs->basic_structure() && cvs->basic_structure()->is_product(&a,&b))) {
+               (bgeot::basic_structure(cvs).get() && bgeot::basic_structure(cvs)->is_product(&a,&b))) {
       name << "IM_PRODUCT(" 
            << name_of_int_method(classical_approx_im_(a,degree)) << ","
            << name_of_int_method(classical_approx_im_(b,degree)) << ")";

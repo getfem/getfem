@@ -32,7 +32,7 @@
 #include "getfem/getfem_model_solvers.h"
 #include "getfem/getfem_mesh_im_level_set.h"
 #include "getfem/getfem_partial_mesh_fem.h"
-#include "getfem/getfem_Coulomb_friction.h"
+#include "getfem/getfem_contact_and_friction_common.h"
 #include "getfem/getfem_import.h"
 #include "gmm/gmm.h"
 #include "getfem/bgeot_mesh_structure.h"
@@ -571,12 +571,12 @@ void compute_mass_matrix_extra_element
   size_type nbd1 = pf1->nb_dof(cv1);
   
   if (pf1 != pf1_old || pai1 != pai1_old) {
-    pfp1 = fem_precomp(pf1, &pai1->integration_points(), pim1);
+    pfp1 = fem_precomp(pf1, pai1->pintegration_points(), pim1);
     pf1_old = pf1; pai1_old = pai1;
   }
   
   bgeot::vectors_to_base_matrix(G1, m.points_of_convex(cv1));
-  getfem::fem_interpolation_context ctx1(pgt1, pfp1, 0, G1, cv1,size_type(-1));
+  getfem::fem_interpolation_context ctx1(pgt1, pfp1, 0, G1, cv1,short_type(-1));
   
   getfem::pfem pf2 = mf.fem_of_element(cv2);
   size_type nbd2 = pf1->nb_dof(cv2);
@@ -589,7 +589,7 @@ void compute_mass_matrix_extra_element
   bgeot::vectors_to_base_matrix(G2, m.points_of_convex(cv2));
   
   getfem::fem_interpolation_context ctx2(pgt2, pf2, base_node(pgt2->dim()),
-					 G2, cv2, size_type(-1));
+					 G2, cv2, short_type(-1));
 
   for (unsigned ii=0; ii < pai1->nb_points_on_convex(); ++ii) {
     ctx1.set_ii(ii);

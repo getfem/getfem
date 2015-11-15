@@ -2650,11 +2650,11 @@ namespace getfem {
       if (ctx.have_pgp()) {
         pfem pf = mf.fem_of_element(ctx.convex_num());
         if (!pfp || pf != pfp->get_pfem() ||
-            &(ctx.pgp()->get_point_tab()) != &(pfp->get_point_tab())) {
+            ctx.pgp()->get_ppoint_tab() != pfp->get_ppoint_tab()) {
           if (pf->is_on_real_element())
             pfp = 0;
           else {
-            pfp = fp_pool(pf, &(ctx.pgp()->get_point_tab()));
+            pfp = fp_pool(pf, ctx.pgp()->get_ppoint_tab());
           }
         }
       } else {
@@ -3530,7 +3530,7 @@ namespace getfem {
       GMM_ASSERT1(pf, "Undefined finite element method");
       if (ctx.have_pgp()) {
         if (ipt == 0)
-          inin.pfps[&mf] = fp_pool(pf, &(ctx.pgp()->get_point_tab()));
+          inin.pfps[&mf] = fp_pool(pf, ctx.pgp()->get_ppoint_tab());
         ctx.set_pfp(inin.pfps[&mf]);
       } else {
         ctx.set_pf(pf);
@@ -3649,7 +3649,7 @@ namespace getfem {
 
       if (ctx.have_pgp()) {
         if (ipt == 0)
-          inin.pfps[&mf] = fp_pool(pf, &(ctx.pgp()->get_point_tab()));
+          inin.pfps[&mf] = fp_pool(pf, ctx.pgp()->get_ppoint_tab());
         ctx.set_pfp(inin.pfps[&mf]);
       } else {
         ctx.set_pf(pf);
@@ -4874,7 +4874,8 @@ namespace getfem {
               bgeot::geotrans_inv_convex gic;
               gic.init(m.points_of_convex(adj_face.cv), gpc.pgt2);
               size_type first_ind = pai->ind_first_point_on_face(f);
-              const bgeot::stored_point_tab &spt = pai->integration_points();
+              const bgeot::stored_point_tab
+		&spt = *(pai->pintegration_points());
               base_matrix G;
               bgeot::vectors_to_base_matrix(G, m.points_of_convex(cv));
               fem_interpolation_context ctx_x(gpc.pgt1, 0, spt[0], G, cv, f);
@@ -10626,10 +10627,10 @@ namespace getfem {
           gis.pai = 0;
 
         ind.resize(0);
-        const bgeot::stored_point_tab &spt
-          = gic.points_for_element(v.cv(), v.f(), ind);
+        bgeot::pstored_point_tab pspt
+          = gic.ppoints_for_element(v.cv(), v.f(), ind);
 
-        if (&spt && ind.size() && spt.size()) {
+        if (pspt.get() && ind.size() && pspt->size()) {
           bgeot::vectors_to_base_matrix(G, m.points_of_convex(v.cv()));
           size_type N = G.nrows();
           bgeot::pgeometric_trans pgt = m.trans_of_convex(v.cv());
@@ -10639,10 +10640,10 @@ namespace getfem {
                                                 v.cv(), v.f());
           } else {
             if (!(gic.use_pgp(v.cv()))) {
-              gis.ctx = fem_interpolation_context(pgt, 0, spt[0], G,
+              gis.ctx = fem_interpolation_context(pgt, 0, (*pspt)[0], G,
                                                   v.cv(), v.f());
             } else {
-              bgeot::pgeotrans_precomp pgp = gis.gp_pool(pgt, &spt);
+              bgeot::pgeotrans_precomp pgp = gis.gp_pool(pgt, pspt);
               gis.ctx = fem_interpolation_context(pgp, 0, 0, G,
                                                   v.cv(), v.f());
             }
@@ -10652,11 +10653,11 @@ namespace getfem {
             gis.elt_size = m.convex_radius_estimate(v.cv()) * scalar_type(2);
 
           // iterations on interpolation points
-          gis.nbpt = spt.size();
+          gis.nbpt = pspt->size();
           for (size_type ii = 0; ii < ind.size(); ++ii) {
             gis.ipt = ind[ii];
             if (gis.ctx.have_pgp()) gis.ctx.set_ii(gis.ipt);
-            else gis.ctx.set_xref(spt[gis.ipt]);
+            else gis.ctx.set_xref((*pspt)[gis.ipt]);
 
             if (ii == 0 || !(pgt->is_linear())) {
               // Computation of unit normal vector in case of a boundary
@@ -10745,7 +10746,7 @@ namespace getfem {
             GMM_ASSERT1(pim->type() == IM_APPROX, "Sorry, exact methods cannot "
                         "be used in high level generic assembly");
             if (pim->type() == IM_NONE) continue;
-            pspt = &(pim->approx_method()->integration_points());
+            pspt = pim->approx_method()->pintegration_points();
             
             if (pspt->size()) {
               if (gis.ctx.have_pgp() && gis.pai == pim->approx_method() &&
@@ -10891,8 +10892,8 @@ namespace getfem {
     bool initialized;
     size_type s;
 
-    virtual const bgeot::stored_point_tab &
-    points_for_element(size_type cv, short_type f,
+    virtual bgeot::pstored_point_tab
+    ppoints_for_element(size_type cv, short_type f,
                        std::vector<size_type> &ind) const {
       pfem pf = mf.fem_of_element(cv);
       GMM_ASSERT1(pf->is_lagrange(),
@@ -10909,7 +10910,7 @@ namespace getfem {
           ind.push_back(i);
       }
 
-      return *(pf->node_tab(cv));
+      return pf->node_tab(cv);
     }
 
     virtual bool use_pgp(size_type) const { return true; }
@@ -10998,8 +10999,8 @@ namespace getfem {
     size_type s, nbdof;
 
 
-    virtual const bgeot::stored_point_tab &
-    points_for_element(size_type cv, short_type,
+    virtual bgeot::pstored_point_tab
+    ppoints_for_element(size_type cv, short_type,
                        std::vector<size_type> &ind) const {
       std::vector<size_type> itab;
       mti.points_on_convex(cv, itab);
@@ -11008,7 +11009,7 @@ namespace getfem {
         pt_tab[i] = mti.reference_coords()[itab[i]];
         ind.push_back(i);
       }
-      return *(store_point_tab(pt_tab));
+      return store_point_tab(pt_tab);
     }
 
     virtual bool use_pgp(size_type) const { return false; }
@@ -11081,11 +11082,11 @@ namespace getfem {
     bool initialized;
     size_type s;
 
-    virtual const bgeot::stored_point_tab &
-    points_for_element(size_type cv, short_type f,
+    virtual bgeot::pstored_point_tab
+    ppoints_for_element(size_type cv, short_type f,
                        std::vector<size_type> &ind) const {
       pintegration_method pim =imd.linked_mesh_im().int_method_of_element(cv);
-      if (pim->type() == IM_NONE) return *(bgeot::pstored_point_tab(0));
+      if (pim->type() == IM_NONE) return bgeot::pstored_point_tab();
       GMM_ASSERT1(pim->type() == IM_APPROX, "Sorry, exact methods cannot "
                   "be used in high level generic assembly");
       size_type i_start(0), i_end(0);
@@ -11096,7 +11097,7 @@ namespace getfem {
         i_end = i_start + pim->approx_method()->nb_points_on_face(f);
       }
       for (size_type i = i_start; i < i_end; ++i) ind.push_back(i);
-      return pim->approx_method()->integration_points();
+      return pim->approx_method()->pintegration_points();
     }
 
     virtual bool use_pgp(size_type cv) const {
@@ -11170,20 +11171,6 @@ namespace getfem {
     ga_interpolation(workspace, gic);
   }
 
-  void ga_interpolation_im_data
-  (ga_workspace &workspace, const getfem::model &md,
-   const std::string &expr, const std::string &var_name,
-   const mesh_region &rg)
-  {
-    auto pim_data = md.pim_data_of_variable(var_name);
-    GMM_ASSERT1(pim_data != nullptr, "im_data for "
-                                     + var_name + " is not found.");
-    auto &result = md.set_real_variable(var_name);
-    workspace.add_interpolation_expression
-      (expr, pim_data->linked_mesh_im(), rg);
-    ga_interpolation_context_im_data gic(*pim_data, result);
-    ga_interpolation(workspace, gic);
-  }
 
   //=========================================================================
   // Interpolate transformation with an expression
@@ -11432,18 +11419,16 @@ namespace getfem {
   void add_interpolate_transformation_from_expression
   (model &md, const std::string &name, const mesh &sm, const mesh &tm,
    const std::string &expr) {
-    pinterpolate_transformation p
-      = new interpolate_transformation_expression(sm, tm, expr);
-
+    pinterpolate_transformation 
+      p(new interpolate_transformation_expression(sm, tm, expr));
     md.add_interpolate_transformation(name, p);
   }
 
   void add_interpolate_transformation_from_expression
   (ga_workspace &workspace, const std::string &name, const mesh &sm,
    const mesh &tm, const std::string &expr) {
-    pinterpolate_transformation p
-      = new interpolate_transformation_expression(sm, tm, expr);
-
+    pinterpolate_transformation
+      p(new interpolate_transformation_expression(sm, tm, expr));
     workspace.add_interpolate_transformation(name, p);
   }
 
@@ -11504,12 +11489,12 @@ namespace getfem {
   // Should be added by default
 
   void add_interpolate_transformation_neighbour(model &md) {
-    pinterpolate_transformation p = new interpolate_transformation_neighbour();
+    pinterpolate_transformation p(new interpolate_transformation_neighbour());
     md.add_interpolate_transformation("neighbour_elt", p);
   }
 
   void add_interpolate_transformation_neighbour(ga_workspace &workspace) {
-    pinterpolate_transformation p = new interpolate_transformation_neighbour();
+    pinterpolate_transformation p(new interpolate_transformation_neighbour());
     workspace.add_interpolate_transformation("neighbour_elt", p);
   }
 

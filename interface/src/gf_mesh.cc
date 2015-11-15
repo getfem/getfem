@@ -301,7 +301,7 @@ struct sub_gf_mesh : virtual public dal::static_stored_object {
 		   getfem::mesh *pmesh) = 0;
 };
 
-typedef boost::intrusive_ptr<sub_gf_mesh> psub_command;
+typedef std::shared_ptr<sub_gf_mesh> psub_command;
 
 // Function to avoid warning in macro with unused arguments.
 template <typename T> static inline void dummy_func(T &) {}
@@ -313,7 +313,7 @@ template <typename T> static inline void dummy_func(T &) {}
 		       getfem::mesh *pmesh)				\
       { dummy_func(in); dummy_func(out); code }				\
     };									\
-    psub_command psubc = new subc;					\
+    psub_command psubc(new subc);					\
     psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;		\
     psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;	\
     subc_tab[cmd_normalize(name)] = psubc;				\

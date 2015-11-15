@@ -141,10 +141,10 @@ namespace getfemint
   };
 
   class getfemint_gsparse : public getfem_object {
-    dal::shared_ptr<gsparse> gsp;
+    std::shared_ptr<gsparse> gsp;
   public:
     gsparse& sparse() { return *(gsp.get()); }
-    dal::shared_ptr<gsparse> ref() { return gsp; }
+    std::shared_ptr<gsparse> ref() { return gsp; }
     getfemint_gsparse() { gsp.reset(new gsparse); }
     ~getfemint_gsparse() { (*gsp).deallocate(); }
     id_type class_id() const { return GSPARSE_CLASS_ID; }

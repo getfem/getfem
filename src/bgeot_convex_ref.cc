@@ -30,7 +30,7 @@ namespace bgeot {
 
   static void simplexify_convex(pconvex_structure cvs, mesh_structure &m) {
     m.clear();
-    cvs = cvs->basic_structure();
+    cvs = basic_structure(cvs);
     dim_type n = cvs->dim();
     std::vector<size_type> ipts(n+1);
     if (cvs->nb_points() == n + 1) {
@@ -78,8 +78,8 @@ namespace bgeot {
   pstored_point_tab store_point_tab(const stored_point_tab& spt) {
     dal::pstatic_stored_object o
       = dal::search_stored_object(stored_point_tab_key(&spt));
-    if (o) return dal::stored_cast<stored_point_tab>(o);
-    pstored_point_tab p = new stored_point_tab(spt);
+    if (o) return std::dynamic_pointer_cast<const stored_point_tab>(o);
+    pstored_point_tab p(new stored_point_tab(spt));
     stored_point_tab_key *psp = new stored_point_tab_key(p.get());
     dal::add_stored_object(psp, p, dal::AUTODELETE_STATIC_OBJECT);
     return p;
@@ -94,10 +94,10 @@ namespace bgeot {
       psimplexified_convex = new mesh_structure();
       dal::singleton<cleanup_simplexified_convexes>::instance()
 	.push_back(psimplexified_convex);
-      GMM_ASSERT1(this == basic_convex_ref(),
+      GMM_ASSERT1(auto_basic,
 		  "always use simplexified_convex on the basic_convex_ref() "
 		  "[this=" << nb_points() << ", basic="
-		  << basic_convex_ref()->nb_points());
+		  << basic_convex_ref_->nb_points());
       simplexify_convex(structure(), *psimplexified_convex);
     }
     return psimplexified_convex;
@@ -156,6 +156,10 @@ namespace bgeot {
     }
     K_simplex_of_ref_(dim_type NN, short_type KK) {
       cvs = simplex_structure(NN, KK);
+      if (KK == 1)
+	auto_basic = true;
+      else
+	basic_convex_ref_ = simplex_of_reference(NN, 1);
       size_type R = cvs->nb_points();
       convex<base_node>::points().resize(R);
       normals_.resize(NN+1);
@@ -195,13 +199,12 @@ namespace bgeot {
   pconvex_ref simplex_of_reference(dim_type nc, short_type K) {
     dal::pstatic_stored_object o
       = dal::search_stored_object(convex_of_reference_key(0, nc, K));
-    if (o) return dal::stored_cast<convex_of_reference>(o);
-    pconvex_ref p = new K_simplex_of_ref_(nc, K);
+    if (o) return std::dynamic_pointer_cast<const convex_of_reference>(o);
+    pconvex_ref p(new K_simplex_of_ref_(nc, K));
     dal::add_stored_object(new convex_of_reference_key(0, nc, K), p,
-			   p->structure(), &(p->points()),
+			   p->structure(), p->pspt(),
 			   dal::PERMANENT_STATIC_OBJECT);
-    pconvex_ref p1 = simplex_of_reference(nc, 1);
-    p->attach_basic_convex_ref(p1);
+    pconvex_ref p1 = basic_convex_ref(p);
     if (p != p1) add_dependency(p, p1); 
     return p;
   }
@@ -240,6 +243,7 @@ namespace bgeot {
       cvs = Q2_incomplete_structure(nc);
       convex<base_node>::points().resize(cvs->nb_points());
       normals_.resize(nc == 2 ? 4: 6);
+      basic_convex_ref_ = parallelepiped_of_reference(nc);
       
       if(nc==2) {
         sc(normals_[0]) =  1, 0;
@@ -296,11 +300,13 @@ namespace bgeot {
   
   pconvex_ref Q2_incomplete_reference(dim_type nc) {
     dal::pstatic_stored_object o = dal::search_stored_object(Q2_incomplete_reference_key_(nc));
-    if (o) return dal::stored_cast<convex_of_reference>(o);
-    pconvex_ref p = new Q2_incomplete_of_ref_(nc);
+    if (o) return std::dynamic_pointer_cast<const convex_of_reference>(o);
+    pconvex_ref p(new Q2_incomplete_of_ref_(nc));
     dal::add_stored_object(new Q2_incomplete_reference_key_(nc), p,
-                           p->structure(), &(p->points()),
+                           p->structure(), p->pspt(),
                            dal::PERMANENT_STATIC_OBJECT);
+     pconvex_ref p1 = basic_convex_ref(p);
+    if (p != p1) add_dependency(p, p1); 
     return p;
   }
 
@@ -355,6 +361,12 @@ namespace bgeot {
 		  normals_[r+cvr1->structure()->nb_faces()].begin()
 		  + cvr1->structure()->dim());
       ppoints = store_point_tab(convex<base_node>::points());
+
+      if (basic_convex_ref(a) == a && basic_convex_ref(b) == b)
+	auto_basic = true;
+      else
+	basic_convex_ref_ = convex_ref_product(basic_convex_ref(a),
+					       basic_convex_ref(a));
     }
   };
 
@@ -362,15 +374,13 @@ namespace bgeot {
   pconvex_ref convex_ref_product(pconvex_ref a, pconvex_ref b) {
     dal::pstatic_stored_object o
       = dal::search_stored_object(product_ref_key_(a, b));
-    if (o) return dal::stored_cast<convex_of_reference>(o);
-    pconvex_ref p = new product_ref_(a, b);
+    if (o) return std::dynamic_pointer_cast<const convex_of_reference>(o);
+    pconvex_ref p(new product_ref_(a, b));
     dal::add_stored_object(new product_ref_key_(a, b), p, a, b,
 			   convex_product_structure(a->structure(),
 						    b->structure()),
-			   &(p->points()), dal::PERMANENT_STATIC_OBJECT);
-    pconvex_ref p1 = convex_ref_product(a->basic_convex_ref(),
-					b->basic_convex_ref());
-    p->attach_basic_convex_ref(p1);
+			   p->pspt(), dal::PERMANENT_STATIC_OBJECT);
+    pconvex_ref p1 = basic_convex_ref(p);
     if (p != p1) add_dependency(p, p1); 
     return p;
   }
@@ -417,8 +427,8 @@ namespace bgeot {
     }
     equilateral_simplex_of_ref_(size_type N) {
       pconvex_ref prev = equilateral_simplex_of_reference(dim_type(N-1));
-      basic_convex_ref_ = this;
       cvs = simplex_structure(dim_type(N), 1);
+      auto_basic = true;
       convex<base_node>::points().resize(N+1);
       normals_.resize(N+1);
       base_node G(N); G.fill(0.);
@@ -449,10 +459,10 @@ namespace bgeot {
     if (nc <= 1) return simplex_of_reference(nc);
     dal::pstatic_stored_object o
       = dal::search_stored_object(convex_of_reference_key(1, nc));
-    if (o) return dal::stored_cast<convex_of_reference>(o);
-    pconvex_ref p = new equilateral_simplex_of_ref_(nc);
+    if (o) return std::dynamic_pointer_cast<const convex_of_reference>(o);
+    pconvex_ref p(new equilateral_simplex_of_ref_(nc));
     dal::add_stored_object(new convex_of_reference_key(1, nc), p,
-			   p->structure(), &(p->points()),
+			   p->structure(), p->pspt(),
 			   dal::PERMANENT_STATIC_OBJECT);
     return p;
   }
@@ -469,6 +479,7 @@ namespace bgeot {
   
     generic_dummy_(dim_type d, size_type n, size_type nf) {
       cvs = generic_dummy_structure(d, n, nf);
+      auto_basic = true;
       convex<base_node>::points().resize(n);
       normals_.resize(0);
       base_node P(d);
@@ -483,11 +494,11 @@ namespace bgeot {
     dal::pstatic_stored_object o
       = dal::search_stored_object(convex_of_reference_key(2, nc,
 					    short_type(n), short_type(nf)));
-    if (o) return dal::stored_cast<convex_of_reference>(o);
-    pconvex_ref p = new generic_dummy_(nc, n, nf);
+    if (o) return std::dynamic_pointer_cast<const convex_of_reference>(o);
+    pconvex_ref p(new generic_dummy_(nc, n, nf));
     dal::add_stored_object(new convex_of_reference_key(2, nc,
 					   short_type(n), short_type(nf)), p,
-			   p->structure(), &(p->points()),
+			   p->structure(), p->pspt(),
 			   dal::PERMANENT_STATIC_OBJECT);
     return p;
   }

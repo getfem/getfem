@@ -46,7 +46,6 @@ environment;
 #include <vector>
 #include <memory>
 #include "getfem_omp.h"
-#include "dal_shared_ptr.h"
 
 
 namespace dal {

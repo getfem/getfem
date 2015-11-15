@@ -46,7 +46,6 @@
 
 #include <vector>
 #include "dal_config.h"
-#include "dal_shared_ptr.h"
 #include "getfem_omp.h"
 
 /// Dynamic Array Library
@@ -332,7 +331,7 @@ namespace dal
   template<class T, unsigned char pks> 
     typename dynamic_array<T,pks>::const_reference
       dynamic_array<T,pks>::operator [](size_type ii) const { 
-        DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(dal::shared_ptr<T>,pf,NULL);
+        DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(std::shared_ptr<T>,pf,NULL);
         if (pf.get() == NULL) { pf.reset(new T()); }
         return (ii<last_ind) ? (array[ii>>pks])[ii&DNAMPKS__] : *pf;
   }

@@ -47,7 +47,7 @@ static void set_fem(getfem::mesh_fem *mf, getfemint::mexargs_in& in)
     if (!mf->linked_mesh().convex_index().is_in(cv))
       THROW_ERROR("Convex " << cv+config::base_index()
                   << " was not found in mesh");
-    if (fem->basic_structure(cv) != mf->linked_mesh().structure_of_convex(cv)->basic_structure())
+    if (fem->basic_structure(cv) != bgeot::basic_structure(mf->linked_mesh().structure_of_convex(cv)))
       infomsg() << "Warning: structure of the FEM seems to be incompatible "
         "with the structure of the convex (if you are using high degree "
         "geom. transf. ignore this)\n";
@@ -104,7 +104,7 @@ struct sub_gf_mf_set : virtual public dal::static_stored_object {
 		   getfem::mesh_fem *mf) = 0;
 };
 
-typedef boost::intrusive_ptr<sub_gf_mf_set> psub_command;
+typedef std::shared_ptr<sub_gf_mf_set> psub_command;
 
 // Function to avoid warning in macro with unused arguments.
 template <typename T> static inline void dummy_func(T &) {}
@@ -116,7 +116,7 @@ template <typename T> static inline void dummy_func(T &) {}
 		       getfem::mesh_fem *mf)				\
       { dummy_func(in); dummy_func(out); code }				\
     };									\
-    psub_command psubc = new subc;					\
+    psub_command psubc(new subc);					\
     psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;		\
     psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;	\
     subc_tab[cmd_normalize(name)] = psubc;				\
@@ -185,8 +185,8 @@ void gf_mesh_fem_set(getfemint::mexargs_in& m_in,
       Set the reduction and extension matrices and valid their use.@*/
     sub_command
       ("reduction matrices", 2, 2, 0, 0,
-       dal::shared_ptr<gsparse> R = in.pop().to_sparse();
-       dal::shared_ptr<gsparse> E = in.pop().to_sparse();
+       std::shared_ptr<gsparse> R = in.pop().to_sparse();
+       std::shared_ptr<gsparse> E = in.pop().to_sparse();
        if (R->is_complex() || E->is_complex())
 	 THROW_BADARG("Reduction and extension matrices should be real matrices");
        if (R->storage()==gsparse::CSCMAT && E->storage()==gsparse::CSCMAT)
@@ -219,7 +219,7 @@ void gf_mesh_fem_set(getfemint::mexargs_in& m_in,
       of fredoom of the finite element method.  @*/
     sub_command
       ("reduce meshfem", 1, 1, 0, 0,
-       dal::shared_ptr<gsparse>  RM = in.pop().to_sparse();
+       std::shared_ptr<gsparse>  RM = in.pop().to_sparse();
        std::set<size_type> cols;
        cols.clear();
        gmm::range_basis(RM->real_csc(), cols, 1e-12);

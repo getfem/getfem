@@ -48,7 +48,7 @@ void print_method(getfem::pintegration_method ppi) {
 	 <<  pai->nb_points_on_face(k) << endl;
   for (size_type k = 0; k < pai->nb_points(); ++k) {
     cout << "Coeff " << k << " : " << pai->integration_coefficients()[k];
-    cout << "\t point : " << pai->integration_points()[k] << endl;
+    cout << "\t point : " << (*(pai->pintegration_points()))[k] << endl;
   }
   cout << endl << endl;
 }
@@ -133,7 +133,7 @@ static void check_im_order(const std::string& s/*, size_type expected_pk=size_ty
 	  prod *= pow(opt_long_scalar_type(ppi->approx_method()->point(i)[d]), idx[d]);
 	sum += prod;
       }
-      if (ppi->structure()->basic_structure() == bgeot::simplex_structure(bgeot::dim_type(dim))) {        
+      if (bgeot::basic_structure(ppi->structure()) == bgeot::simplex_structure(bgeot::dim_type(dim))) {        
         size_type fa = 1;
         for (size_type z = 0; z < dim; z++)
           for (size_type k = 1; k <= idx[z]; ++k, ++fa)
@@ -141,7 +141,7 @@ static void check_im_order(const std::string& s/*, size_type expected_pk=size_ty
         for (size_type k = 0; k < dim; k++) { realsum /= opt_long_scalar_type(scalar_type(fa)); fa++; }
     /*	for (size_type d=dim-1, c=0; d+1 != 0; --d) { c += idx[d]+1; realsum *= opt_long_scalar_type(c); }
       realsum = opt_long_scalar_type(1.)/realsum;*/
-      } else if (ppi->structure()->basic_structure() == bgeot::parallelepiped_structure(bgeot::dim_type(dim))) {
+      } else if (bgeot::basic_structure(ppi->structure()) == bgeot::parallelepiped_structure(bgeot::dim_type(dim))) {
 	for (size_type d=0; d < dim; ++d) realsum *= opt_long_scalar_type(idx[d]+1);
 	realsum = opt_long_scalar_type(1.)/realsum;
       }

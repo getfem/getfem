@@ -247,18 +247,18 @@ test_convex_simplif(void) {
   cout << endl;
 
   cout << "sr3=" << sr3 << endl;
-  bgeot::pconvex_ref t=sr3->basic_convex_ref();
+  bgeot::pconvex_ref t=basic_convex_ref(sr3);
   cout << "sr3->basic_convex_ref()=" << t << endl;
 
   cout << "sr3->basic_convex_ref() = faces:" << sr3->structure()->nb_faces() << " ; ";
-  for (size_type i=0; i < sr3->basic_convex_ref()->points().size(); ++i) { if (i) cout << ","; cout << sr3->basic_convex_ref()->points()[i]; }
+  for (size_type i=0; i < basic_convex_ref(sr3)->points().size(); ++i) { if (i) cout << ","; cout << basic_convex_ref(sr3)->points()[i]; }
   cout << endl;
 
-  const bgeot::mesh_structure *msr2 = sr2->basic_convex_ref()->simplexified_convex();
+  const bgeot::mesh_structure *msr2 = basic_convex_ref(sr2)->simplexified_convex();
   print_mesh_structure(msr2);
-  const bgeot::mesh_structure *msr3 = sr3->basic_convex_ref()->simplexified_convex();
+  const bgeot::mesh_structure *msr3 = basic_convex_ref(sr3)->simplexified_convex();
   print_mesh_structure(msr3);
-  const bgeot::mesh_structure *psr = pr->basic_convex_ref()->simplexified_convex();
+  const bgeot::mesh_structure *psr = basic_convex_ref(pr)->simplexified_convex();
   print_mesh_structure(psr);
   const bgeot::basic_mesh *msrr2 = bgeot::refined_simplex_mesh_for_convex(sr2,2);
   getfem::mesh(*msrr2).write_to_file(cout);

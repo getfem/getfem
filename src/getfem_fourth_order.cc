@@ -120,7 +120,7 @@ namespace getfem {
   (model &md, const mesh_im &mim, const std::string &varname,
    const std::string &dataname,
    size_type region) {
-    pbrick pbr = new bilap_brick;
+    pbrick pbr(new bilap_brick);
     model::termlist tl;
     tl.push_back(model::term_description(varname, varname, true));
     model::varnamelist dl(1, dataname);
@@ -132,7 +132,7 @@ namespace getfem {
   (model &md, const mesh_im &mim, const std::string &varname,
    const std::string &dataname1, const std::string &dataname2,
    size_type region) {
-    pbrick pbr = new bilap_brick;
+    pbrick pbr(new bilap_brick);
     model::termlist tl;
     tl.push_back(model::term_description(varname, varname, true));
     model::varnamelist dl(1, dataname1);
@@ -249,7 +249,7 @@ namespace getfem {
   size_type add_normal_derivative_source_term_brick
   (model &md, const mesh_im &mim, const std::string &varname,
    const std::string &dataname, size_type region) {
-    pbrick pbr = new normal_derivative_source_term_brick;
+    pbrick pbr(new normal_derivative_source_term_brick);
     model::termlist tl;
     tl.push_back(model::term_description(varname));
     model::varnamelist vdata(1, dataname);
@@ -333,7 +333,7 @@ namespace getfem {
   (model &md, const mesh_im &mim, const std::string &varname,
    const std::string &dataname1, const std::string &dataname2,
    size_type region) {
-    pbrick pbr = new KL_source_term_brick;
+    pbrick pbr(new KL_source_term_brick);
     model::termlist tl;
     tl.push_back(model::term_description(varname));
     model::varnamelist vdata(1, dataname1);
@@ -616,7 +616,7 @@ namespace getfem {
   (model &md, const mesh_im &mim, const std::string &varname,
    const std::string &multname, size_type region,
    const std::string &dataname, bool R_must_be_derivated) {
-    pbrick pbr = new normal_derivative_Dirichlet_condition_brick(false, R_must_be_derivated);
+    pbrick pbr(new normal_derivative_Dirichlet_condition_brick(false, R_must_be_derivated));
     model::termlist tl;
     tl.push_back(model::term_description(multname, varname, true));
     model::varnamelist vl(1, varname);
@@ -658,7 +658,7 @@ namespace getfem {
       md.set_complex_variable(coeffname)[0] = penalisation_coeff;
     else
       md.set_real_variable(coeffname)[0] = penalisation_coeff;
-    pbrick pbr = new normal_derivative_Dirichlet_condition_brick(true, R_must_be_derivated);
+    pbrick pbr(new normal_derivative_Dirichlet_condition_brick(true, R_must_be_derivated));
     model::termlist tl;
     tl.push_back(model::term_description(varname, varname, true));
     model::varnamelist vl(1, varname);

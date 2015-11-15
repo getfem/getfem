@@ -41,8 +41,8 @@
 namespace dal {
 
   /** @file dal_naming_system.h
-   @author  Yves Renard <Yves.Renard@insa-lyon.fr>
-   @date August 17, 2002.
+      @author  Yves Renard <Yves.Renard@insa-lyon.fr>
+      @date August 17, 2002.
       @brief Naming system.
   */
 
@@ -56,7 +56,7 @@ namespace dal {
 
   public :
 
-    typedef boost::intrusive_ptr<const METHOD> pmethod;
+    typedef std::shared_ptr<const METHOD> pmethod;
 
     struct parameter {
       int type_; // 0 = numeric value, 1 = pointer on another method.
@@ -197,7 +197,7 @@ namespace dal {
     int state = 0;
     bool error = false;
     bool isend = false;
-    pmethod pm = 0;
+    pmethod pm;
     size_type ind_suff = size_type(-1);
     size_type l;
     param_list params;
@@ -228,7 +228,7 @@ namespace dal {
 	case 1  : i += l; break;
 	case 2  :
 	  pm = method_(name, i, throw_if_not_found);
-	  if (!pm) return pm;
+	  if (!(pm.get())) return pm;
 	  params.push_back(parameter(pm));
 	  state = 3; break;
 	case 3  : {
@@ -273,13 +273,13 @@ namespace dal {
 	if (aliases.find(norm_name.str()) != aliases.end())
 	  nname.name = aliases[norm_name.str()];
 	pstatic_stored_object o = search_stored_object(nname);
-	if (o) return stored_cast<METHOD>(o);
-	pm = 0;
+	if (o) return std::dynamic_pointer_cast<const METHOD>(o);
+	pm = pmethod();
 	std::vector<pstatic_stored_object> dependencies;
-	for (size_type k = 0; k < genfunctions.size() && pm == 0; ++k) {
+	for (size_type k = 0; k < genfunctions.size() && pm.get() == 0; ++k) {
 	  pm = (*(genfunctions[k]))(nname.name, dependencies);
 	}
-	if (!pm) {
+	if (!(pm.get())) {
 	  if (ind_suff == size_type(-1)) {
 	    GMM_ASSERT1(!throw_if_not_found, "Unknown method: " << nname.name);
 	    return 0;
@@ -312,18 +312,15 @@ namespace dal {
 
   /**deletion of static_stored_object in the naming system*/
   template <class METHOD>
-  bool naming_system<METHOD>::delete_method(std::string name) 
-  {
-
-    pmethod pm = 0;
-	method_key nname(name);
-	pstatic_stored_object o = search_stored_object(nname);
-
-	if (!o) return false;
-	pm = stored_cast<METHOD>(o);
-	pstatic_stored_object_key k = key_of_stored_object(pm);
-	dal::del_stored_object(pm, false);
-	return true;
+  bool naming_system<METHOD>::delete_method(std::string name) {
+    pmethod pm;
+    method_key nname(name);
+    pstatic_stored_object o = search_stored_object(nname);
+    if (!o) return false;
+    pm = std::dynamic_pointer_cast<const METHOD>(o);
+    pstatic_stored_object_key k = key_of_stored_object(pm);
+    dal::del_stored_object(pm, false);
+    return true;
   }
 
 }

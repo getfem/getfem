@@ -117,7 +117,7 @@ struct sub_gf_precond : virtual public dal::static_stored_object {
 		   getfemint::mexargs_out& out) = 0;
 };
 
-typedef boost::intrusive_ptr<sub_gf_precond> psub_command;
+typedef std::shared_ptr<sub_gf_precond> psub_command;
 
 // Function to avoid warning in macro with unused arguments.
 template <typename T> static inline void dummy_func(T &) {}
@@ -128,7 +128,7 @@ template <typename T> static inline void dummy_func(T &) {}
 		       getfemint::mexargs_out& out)			\
       { dummy_func(in); dummy_func(out); code }				\
     };									\
-    psub_command psubc = new subc;					\
+    psub_command psubc(new subc);					\
     psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;		\
     psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;	\
     subc_tab[cmd_normalize(name)] = psubc;				\
@@ -162,7 +162,7 @@ void gf_precond(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
       Create a diagonal precondioner.@*/
     sub_command
       ("diagonal", 1, 1, 0, 1,
-       dal::shared_ptr<gsparse> M = in.pop().to_sparse(); M->to_csc();
+       std::shared_ptr<gsparse> M = in.pop().to_sparse(); M->to_csc();
        if (M->is_complex()) precond_diagonal(*M, out, complex_type());
        else                 precond_diagonal(*M, out, scalar_type());
        );
@@ -174,7 +174,7 @@ void gf_precond(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
       (no fill-in).@*/
     sub_command
       ("ildlt", 1, 1, 0, 1,
-       dal::shared_ptr<gsparse> M = in.pop().to_sparse(); M->to_csc();
+       std::shared_ptr<gsparse> M = in.pop().to_sparse(); M->to_csc();
        if (M->is_complex()) precond_ildlt(*M, out, complex_type());
        else                 precond_ildlt(*M, out, scalar_type());
        );
@@ -187,7 +187,7 @@ void gf_precond(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
 
     sub_command
       ("ilu", 1, 1, 0, 1,
-       dal::shared_ptr<gsparse> M = in.pop().to_sparse(); M->to_csc();
+       std::shared_ptr<gsparse> M = in.pop().to_sparse(); M->to_csc();
        if (M->is_complex()) precond_ilu(*M, out, complex_type());
        else                 precond_ilu(*M, out, scalar_type());
        );
@@ -199,7 +199,7 @@ void gf_precond(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
       for `fillin` is 10, and the default threshold is1e-7.@*/
     sub_command
       ("ildltt", 1, 3, 0, 1,
-       dal::shared_ptr<gsparse> M = in.pop().to_sparse(); M->to_csc();
+       std::shared_ptr<gsparse> M = in.pop().to_sparse(); M->to_csc();
        int additional_fillin = 10; scalar_type threshold = 1e-7;
        if (in.remaining()) additional_fillin = in.pop().to_integer(0, 100000);
        if (in.remaining()) threshold = in.pop().to_scalar(0,1e30);
@@ -214,7 +214,7 @@ void gf_precond(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
       `fillin` is 10, and the default threshold is 1e-7.@*/
     sub_command
       ("ilut", 1, 3, 0, 1,
-       dal::shared_ptr<gsparse> M = in.pop().to_sparse(); M->to_csc();
+       std::shared_ptr<gsparse> M = in.pop().to_sparse(); M->to_csc();
        int additional_fillin = 10; scalar_type threshold = 1e-7;
        if (in.remaining()) additional_fillin = in.pop().to_integer(0, 100000);
        if (in.remaining()) threshold = in.pop().to_scalar(0,1e30);
@@ -229,7 +229,7 @@ void gf_precond(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
       eat all your memory for 3D problems.@*/
     sub_command
       ("superlu", 1, 1, 0, 1,
-       dal::shared_ptr<gsparse> M = in.pop().to_sparse(); M->to_csc();
+       std::shared_ptr<gsparse> M = in.pop().to_sparse(); M->to_csc();
        if (M->is_complex()) precond_superlu(*M, out, complex_type());
        else                 precond_superlu(*M, out, scalar_type());
        );
@@ -243,7 +243,7 @@ void gf_precond(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
 	 ggsp = in.pop().to_getfemint_gsparse();
        } else {
 	 ggsp = new getfemint_gsparse();
-	 dal::shared_ptr<gsparse> src = in.pop().to_sparse();
+	 std::shared_ptr<gsparse> src = in.pop().to_sparse();
 	 if (src->is_complex()) {
 	   ggsp->sparse().allocate(src->nrows(), src->ncols(), src->storage(), complex_type());
 	   gmm::copy(src->csc(complex_type()), ggsp->sparse().csc_w(complex_type()));

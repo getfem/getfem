@@ -157,7 +157,7 @@ namespace getfem {
     std::vector<base_tensor> val_e(pfems.size());
     for (size_type k = 0; k < pfems.size(); ++k) {
       if (c0.have_pfp()) {
-        c0.set_pfp(fem_precomp(pfems[k], &c0.pfp()->get_point_tab(),
+        c0.set_pfp(fem_precomp(pfems[k], c0.pfp()->get_ppoint_tab(),
                                c0.pfp()));
       } else { c0.set_pf(pfems[k]); }
       c0.base_value(val_e[k]);
@@ -190,7 +190,7 @@ namespace getfem {
     std::vector<base_tensor> grad_e(pfems.size());
     for (size_type k = 0; k < pfems.size(); ++k) {
       if (c0.have_pfp()) {
-        c0.set_pfp(fem_precomp(pfems[k], &c0.pfp()->get_point_tab(),
+        c0.set_pfp(fem_precomp(pfems[k], c0.pfp()->get_ppoint_tab(),
                                c0.pfp()));
       } else { c0.set_pf(pfems[k]); }
       c0.grad_base_value(grad_e[k]);
@@ -225,7 +225,7 @@ namespace getfem {
     std::vector<base_tensor> hess_e(pfems.size());
     for (size_type k = 0; k < pfems.size(); ++k) {
       if (c0.have_pfp()) {
-        c0.set_pfp(fem_precomp(pfems[k], &c0.pfp()->get_point_tab(),
+        c0.set_pfp(fem_precomp(pfems[k], c0.pfp()->get_ppoint_tab(),
                                c0.pfp()));
       } else { c0.set_pf(pfems[k]); }
       c0.hess_base_value(hess_e[k]);
@@ -289,7 +289,8 @@ namespace getfem {
       }
       else if (pfems.size() > 0) {
         if (situations.find(pfems) == situations.end() || is_cv_dep) {
-          pfem pf = new fem_sum(pfems, i, smart_global_dof_linking_);
+          pfem pf = std::make_shared<fem_sum>(pfems, i,
+					      smart_global_dof_linking_);
           dal::add_stored_object(new special_mflsum_key(pf), pf,
                                  pf->ref_convex(0),
                                  pf->node_tab(0));

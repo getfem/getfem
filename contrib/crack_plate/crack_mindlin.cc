@@ -237,7 +237,7 @@ sin(theta)+2.0/sqrt(r)*(mu_*cos(theta/2.0)*(30.0*lambda_+60.0*mu_-5.0*gamma*r*r)
 
 getfem::pglobal_function mindlin_crack_singular(size_type i, 
   const getfem::level_set &ls, scalar_type lambda, scalar_type mu, scalar_type epsilon){ 
-  return new mindlin_singular_functions(i, ls, lambda, mu, epsilon);
+  return getfem::pglobal_function(new mindlin_singular_functions(i, ls, lambda, mu, epsilon));
 }
 
 

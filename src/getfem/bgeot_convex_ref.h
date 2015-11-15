@@ -54,7 +54,7 @@ namespace bgeot {
       : std::vector<base_node>(it, ite) { }
   };
 
-  typedef boost::intrusive_ptr<const stored_point_tab> pstored_point_tab;
+  typedef std::shared_ptr<const stored_point_tab> pstored_point_tab;
 
   pstored_point_tab store_point_tab(const stored_point_tab& spt);
 
@@ -65,7 +65,7 @@ namespace bgeot {
   class mesh_structure;
 
   class convex_of_reference;
-  typedef boost::intrusive_ptr<const convex_of_reference> pconvex_ref;
+  typedef std::shared_ptr<const convex_of_reference> pconvex_ref;
     
   /** Base class for reference convexes.
 
@@ -91,9 +91,10 @@ namespace bgeot {
     std::vector<base_small_vector> normals_;
     pstored_point_tab ppoints;
     mutable mesh_structure *psimplexified_convex;
-    mutable const convex_of_reference *basic_convex_ref_;
+    pconvex_ref basic_convex_ref_;
+    bool auto_basic;
     convex_of_reference() : convex<base_node>(), psimplexified_convex(0),
-			    basic_convex_ref_(0) {}
+			    basic_convex_ref_(0), auto_basic(false) {}
 
   public :
     /// return a negative or null number if the base_node is in the convex.
@@ -111,18 +112,19 @@ namespace bgeot {
     /// return the vertices of the reference convex.
     const stored_point_tab &points(void) const { return *ppoints; }
     const stored_point_tab &points(void) { return *ppoints; }
+    pstored_point_tab pspt(void) const { return ppoints; }
     
     /** return a mesh structure composed of simplexes whose union
 	is the reference convex. All simplexes have the same (direct)
 	orientation.
     */
     const mesh_structure* simplexified_convex() const;
-    /// return the associated order 1 reference convex.
-    pconvex_ref basic_convex_ref() const { return basic_convex_ref_; }
-    /// private function..
-    void attach_basic_convex_ref(pconvex_ref cvr) const
-    { basic_convex_ref_ = cvr.get(); }
+    friend pconvex_ref basic_convex_ref(pconvex_ref cvr);
   };
+
+  /// return the associated order 1 reference convex.
+  inline pconvex_ref basic_convex_ref(pconvex_ref cvr)
+  { if (cvr->auto_basic) return cvr; else return cvr->basic_convex_ref_; }
 
   
   //@name public functions for obtaining a convex of reference

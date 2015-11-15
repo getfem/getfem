@@ -147,7 +147,7 @@ namespace getfem {
 
   };
 
-  typedef boost::intrusive_ptr<partial_mesh_fem> ppartial_mesh_fem;
+  typedef std::shared_ptr<partial_mesh_fem> ppartial_mesh_fem;
 
   /**
      @brief Return a selection of dof who contribute significantly to the

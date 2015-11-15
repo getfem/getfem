@@ -460,16 +460,16 @@ namespace getfem
       pmf.reset(new mesh_fem(const_cast<mesh&>(m),1));
     bgeot::pgeometric_trans pgt = m.trans_of_convex(m.convex_index().first_true());
     GMM_ASSERT1(dxname_of_convex_structure
-              (pgt->structure()->basic_structure()) != 0,
+              (basic_structure(pgt->structure())) != 0,
               "DX Cannot handle " <<
               bgeot::name_of_geometric_trans(pgt) << ", use slices");
     /* initialize pmf with finite elements suitable for OpenDX */
     for (dal::bv_visitor cv(mf.convex_index()); !cv.finished(); ++cv) {
       bgeot::pgeometric_trans pgt2 = mf.linked_mesh().trans_of_convex(cv);
-      GMM_ASSERT1(pgt->structure()->basic_structure() ==
-                pgt2->structure()->basic_structure(),
-                "Cannot export this mesh to opendx, it contains "
-                "different convex types. Slice it first.");
+      GMM_ASSERT1(basic_structure(pgt->structure()) ==
+		  basic_structure(pgt2->structure()),
+		  "Cannot export this mesh to opendx, it contains "
+		  "different convex types. Slice it first.");
       pfem pf = mf.fem_of_element(cv);
       bool discontinuous = false;
       for (unsigned i=0; i < pf->nb_dof(cv); ++i) {
@@ -723,7 +723,7 @@ namespace getfem
         write_val(int(pmf->ind_basic_dof_of_element(cv)[i]));
       write_separ();
     }
-    write_convex_attributes(pmf->linked_mesh().structure_of_convex(pmf->convex_index().first_true())->basic_structure());
+    write_convex_attributes(basic_structure(pmf->linked_mesh().structure_of_convex(pmf->convex_index().first_true())));
   }
 
   void dx_export::exporting_mesh_edges(bool with_slice_edges) {

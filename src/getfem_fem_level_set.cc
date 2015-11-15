@@ -149,7 +149,7 @@ namespace getfem {
     base_tensor::iterator it = t.begin();
     fem_interpolation_context c0 = c;
     if (c0.have_pfp())
-      c0.set_pfp(fem_precomp(bfem, &c0.pfp()->get_point_tab(), c0.pfp()));
+      c0.set_pfp(fem_precomp(bfem, c0.pfp()->get_ppoint_tab(), c0.pfp()));
     else  c0.set_pf(bfem); 
     base_tensor tt; c0.base_value(tt);
     base_tensor::const_iterator itf = tt.begin();
@@ -176,7 +176,7 @@ namespace getfem {
     t.adjust_sizes(nb_base(0), target_dim(), c.N());
     fem_interpolation_context c0 = c;
     if (c0.have_pfp())
-      c0.set_pfp(fem_precomp(bfem, &c0.pfp()->get_point_tab(), c0.pfp()));
+      c0.set_pfp(fem_precomp(bfem, c0.pfp()->get_ppoint_tab(), c0.pfp()));
     else  c0.set_pf(bfem); 
     base_tensor tt; c0.grad_base_value(tt);
 
@@ -208,7 +208,7 @@ namespace getfem {
     t.adjust_sizes(nb_base(0), target_dim(), c.N(), c.N());
     fem_interpolation_context c0 = c;
     if (c0.have_pfp())
-      c0.set_pfp(fem_precomp(bfem, &c0.pfp()->get_point_tab(), c0.pfp()));
+      c0.set_pfp(fem_precomp(bfem, c0.pfp()->get_ppoint_tab(), c0.pfp()));
     else  c0.set_pf(bfem); 
     base_tensor tt; c0.hess_base_value(tt);
 

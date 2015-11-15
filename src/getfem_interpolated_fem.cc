@@ -199,8 +199,8 @@ namespace getfem {
     if (e.nb_dof == 0) return;
     
     if (c.have_pgp() && 
-        (&c.pgp()->get_point_tab()
-         == &e.pim->approx_method()->integration_points())) {
+        (c.pgp()->get_ppoint_tab()
+         == e.pim->approx_method()->pintegration_points())) {
       gausspt_interpolation_data &gpid = e.gausspt.at(c.ii());
       if (gpid.iflags & 1) {
         cv = gpid.elt;
@@ -251,8 +251,8 @@ namespace getfem {
     if (nbdof == 0) return;
     
     if (c.have_pgp()  && 
-        (&c.pgp()->get_point_tab()
-         == &e.pim->approx_method()->integration_points())) {
+        (c.pgp()->get_ppoint_tab()
+         == e.pim->approx_method()->pintegration_points())) {
       gausspt_interpolation_data &gpid = e.gausspt.at(c.ii());
       if (gpid.iflags & 1) {
         cv = gpid.elt;
@@ -398,7 +398,7 @@ namespace getfem {
   pfem new_interpolated_fem(const mesh_fem &mef, const mesh_im &mim,
                             pinterpolated_func pif,
                             dal::bit_vector blocked_dof, bool store_val) {
-    pfem pf = new interpolated_fem(mef, mim, pif, blocked_dof, store_val);
+    pfem pf(new interpolated_fem(mef, mim, pif, blocked_dof, store_val));
     dal::add_stored_object(new special_intfem_key(pf), pf);
     return pf;
   }

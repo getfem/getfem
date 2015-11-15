@@ -132,7 +132,7 @@ namespace getfem {
       }
     }
     else {
-      GMM_ASSERT1(linked_mesh_->structure_of_convex(cv)->basic_structure() 
+      GMM_ASSERT1(basic_structure(linked_mesh_->structure_of_convex(cv)) 
 		  == pf->basic_structure(cv),
 		  "Incompatibility between fem " << name_of_fem(pf) << 
 		  " and mesh element " <<

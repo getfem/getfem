@@ -167,7 +167,7 @@ namespace getfem {
     pfem get_pfem(void) { return final_fem; }
     
     ~spider_fem () { 
-      pfem pf = penriched_Qk;
+      pfem pf(penriched_Qk);
       dal::del_stored_object(pf);
       if (final_fem) del_interpolated_fem(final_fem);
     }
@@ -219,7 +219,7 @@ namespace getfem {
 	  penriched_Qk->add_func(Qk, &Sqrtrsin);
 	}
 	penriched_Qk->valid();
-	pfem pf = penriched_Qk;
+	pfem pf(penriched_Qk);
 	dal::add_stored_object(new special_cartesianfem_key(pf), pf,
 			   pf->ref_convex(0),
 			   pf->node_tab(0));

@@ -770,9 +770,9 @@ namespace getfem {
 
       const getfem::papprox_integration pim(im_target.approx_int_method_of_element(cv));
       if (pf_source->need_G())
-        bgeot::vectors_to_base_matrix(G, pim->integration_points());
+        bgeot::vectors_to_base_matrix(G, *(pim->pintegration_points()));
 
-      pfem_precomp pfp = fppool(pf_source, &pim->integration_points());
+      pfem_precomp pfp = fppool(pf_source, pim->pintegration_points());
 
       // interior of the convex
       size_type nb_int_pts;

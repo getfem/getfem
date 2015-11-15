@@ -56,7 +56,7 @@ struct sub_gf_md_set : virtual public dal::static_stored_object {
                    getfemint_model *md) = 0;
 };
 
-typedef boost::intrusive_ptr<sub_gf_md_set> psub_command;
+typedef std::shared_ptr<sub_gf_md_set> psub_command;
 
 // Function to avoid warning in macro with unused arguments.
 template <typename T> static inline void dummy_func(T &) {}
@@ -68,7 +68,7 @@ template <typename T> static inline void dummy_func(T &) {}
                        getfemint_model *md)                             \
       { dummy_func(in); dummy_func(out); code }                         \
     };                                                                  \
-    psub_command psubc = new subc;                                      \
+    psub_command psubc(new subc);					\
     psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;         \
     psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;     \
     subc_tab[cmd_normalize(name)] = psubc;                              \
@@ -1328,7 +1328,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       ("add constraint with multipliers", 4, 4, 0, 1,
        std::string varname = in.pop().to_string();
        std::string multname = in.pop().to_string();
-       dal::shared_ptr<gsparse> B = in.pop().to_sparse();
+       std::shared_ptr<gsparse> B = in.pop().to_sparse();
        if (B->is_complex() && !md->is_complex())
          THROW_BADARG("Complex constraint for a real model");
        if (!B->is_complex() && md->is_complex())
@@ -1386,7 +1386,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       ("add constraint with penalization", 4, 4, 0, 1,
        std::string varname = in.pop().to_string();
        double coeff = in.pop().to_scalar();
-       dal::shared_ptr<gsparse> B = in.pop().to_sparse();
+       std::shared_ptr<gsparse> B = in.pop().to_sparse();
        if (B->is_complex() && !md->is_complex())
          THROW_BADARG("Complex constraint for a real model");
        if (!B->is_complex() && md->is_complex())
@@ -1443,7 +1443,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       ("add explicit matrix", 3, 5, 0, 1,
        std::string varname1 = in.pop().to_string();
        std::string varname2 = in.pop().to_string();
-       dal::shared_ptr<gsparse> B = in.pop().to_sparse();
+       std::shared_ptr<gsparse> B = in.pop().to_sparse();
        bool issymmetric = false;
        bool iscoercive = false;
        if (in.remaining()) issymmetric = (in.pop().to_integer(0,1) != 0);
@@ -1517,7 +1517,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     sub_command
       ("set private matrix", 2, 2, 0, 0,
        size_type ind = in.pop().to_integer() - config::base_index();
-       dal::shared_ptr<gsparse> B = in.pop().to_sparse();
+       std::shared_ptr<gsparse> B = in.pop().to_sparse();
 
        if (B->is_complex() && !md->is_complex())
          THROW_BADARG("Complex constraint for a real model");
@@ -2292,9 +2292,9 @@ void gf_model_set(getfemint::mexargs_in& m_in,
           argin = in.pop();
         }
 
-        dal::shared_ptr<gsparse> BN = argin.to_sparse();
+        std::shared_ptr<gsparse> BN = argin.to_sparse();
         if (BN->is_complex()) THROW_BADARG("Complex matrix not allowed");
-        dal::shared_ptr<gsparse> BT;
+        std::shared_ptr<gsparse> BT;
         if (friction) {
           BT = in.pop().to_sparse();
           if (BT->is_complex()) THROW_BADARG("Complex matrix not allowed");
@@ -2366,7 +2366,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
      sub_command
        ("contact brick set BN", 2, 2, 0, 0,
         size_type ind = in.pop().to_integer() - config::base_index();
-        dal::shared_ptr<gsparse> B = in.pop().to_sparse();
+        std::shared_ptr<gsparse> B = in.pop().to_sparse();
 
         if (B->is_complex())
           THROW_BADARG("BN should be a real matrix");
@@ -2388,7 +2388,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
      sub_command
        ("contact brick set BT", 2, 2, 0, 0,
         size_type ind = in.pop().to_integer() - config::base_index();
-        dal::shared_ptr<gsparse> B = in.pop().to_sparse();
+        std::shared_ptr<gsparse> B = in.pop().to_sparse();
 
         if (B->is_complex())
           THROW_BADARG("BT should be a real matrix");

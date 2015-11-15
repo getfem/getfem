@@ -41,7 +41,6 @@
 #include <bitset>
 #include <iostream>
 #include "dal_bit_vector.h"
-#include "dal_shared_ptr.h"
 #include "bgeot_convex_structure.h"
 #include "getfem_config.h"
 
@@ -53,9 +52,9 @@
 #include <map>
 // #endif
 
-#ifdef GETFEM_HAVE_BOOST
-#include <boost/shared_ptr.hpp>
-#endif
+// #ifdef GETFEM_HAVE_BOOST
+// #include <boost/shared_ptr.hpp>
+// #endif
 
 
 namespace getfem {
@@ -85,13 +84,13 @@ namespace getfem {
       mutable omp_distribute<dal::bit_vector> index_;
     };
 
-#ifdef GETFEM_HAVE_BOOST
+    // #ifdef GETFEM_HAVE_BOOST
     //need to use boost smart pointer, cause it's reference
     //counting is thread safe
-    boost::shared_ptr<impl> p;  /* the real region data */
-#else
-    dal::shared_ptr<impl> p;  /* the real region data */
-#endif
+    // boost::shared_ptr<impl> p;  /* the real region data */
+    // #else
+    std::shared_ptr<impl> p;  /* the real region data */
+    // #endif
 
     size_type id_;            /* used temporarily when the 
                               mesh_region(size_type) constructor is used */

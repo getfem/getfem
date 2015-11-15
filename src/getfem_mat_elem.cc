@@ -92,7 +92,7 @@ namespace getfem {
                            bool prefer_comp_on_real_element) {
 
       pgt = pg;
-      pgp = bgeot::geotrans_precomp(pg, &(pi->integration_points()), pi);
+      pgp = bgeot::geotrans_precomp(pg, pi->pintegration_points(), pi);
       pme = pm;
       switch (pi->type()) {
       case IM_EXACT:
@@ -187,7 +187,7 @@ namespace getfem {
         it = pme->begin(), ite = pme->end();
         for (size_type k = 0; it != ite; ++it, ++k)
           if ((*it).pfi)
-            pfp[k] = fem_precomp((*it).pfi, &(pai->integration_points()), pi);
+            pfp[k] = fem_precomp((*it).pfi, pai->pintegration_points(), pi);
           else pfp[k] = 0;
         elmt_stored.resize(pme->size());
       }
@@ -520,7 +520,8 @@ namespace getfem {
                  size_type elt, mat_elem_integration_callback *icb = 0) const {
       dim_type P = dim_type(dim), N = dim_type(G.nrows());
       short_type NP = short_type(pgt->nb_points());
-      fem_interpolation_context ctx(pgp, 0, 0, G, elt, short_type(ir-1));
+      fem_interpolation_context ctx(pgp, 0, 0, G, elt,
+				    short_type(ir-1));
 
       GMM_ASSERT1(G.ncols() == NP, "dimensions mismatch");
       if (ir > 0) {
@@ -628,9 +629,10 @@ namespace getfem {
     dal::pstatic_stored_object o
       = dal::search_stored_object(emelem_comp_key_(pm, pi, pg,
                                                 prefer_comp_on_real_element));
-    if (o) return dal::stored_cast<mat_elem_computation>(o);
-    pmat_elem_computation p = new emelem_comp_structure_(pm, pi, pg,
-                                                prefer_comp_on_real_element);
+    if (o) return std::dynamic_pointer_cast<const mat_elem_computation>(o);
+    pmat_elem_computation
+      p(new emelem_comp_structure_(pm, pi, pg,
+				   prefer_comp_on_real_element));
     dal::add_stored_object(new emelem_comp_key_(pm, pi, pg,
                                                prefer_comp_on_real_element),
                            p, pm, pi, pg);

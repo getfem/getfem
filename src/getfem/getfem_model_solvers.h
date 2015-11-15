@@ -554,17 +554,17 @@ namespace getfem {
 
   typedef abstract_linear_solver<model_real_sparse_matrix,
                                  model_real_plain_vector> rmodel_linear_solver;
-  typedef dal::shared_ptr<rmodel_linear_solver> rmodel_plsolver_type;
+  typedef std::shared_ptr<rmodel_linear_solver> rmodel_plsolver_type;
   typedef abstract_linear_solver<model_complex_sparse_matrix,
                                  model_complex_plain_vector>
           cmodel_linear_solver;
-  typedef dal::shared_ptr<cmodel_linear_solver> cmodel_plsolver_type;
+  typedef std::shared_ptr<cmodel_linear_solver> cmodel_plsolver_type;
 
 
   template<typename MATRIX, typename VECTOR>
-  dal::shared_ptr<abstract_linear_solver<MATRIX, VECTOR> >
+  std::shared_ptr<abstract_linear_solver<MATRIX, VECTOR> >
   default_linear_solver(const model &md) {
-    dal::shared_ptr<abstract_linear_solver<MATRIX, VECTOR> > p;
+    std::shared_ptr<abstract_linear_solver<MATRIX, VECTOR> > p;
 
 #if GETFEM_PARA_LEVEL == 1 && GETFEM_PARA_SOLVER == MUMPS_PARA_SOLVER
     if (md.is_symmetric())
@@ -608,9 +608,9 @@ namespace getfem {
   }
 
   template <typename MATRIX, typename VECTOR>
-  dal::shared_ptr<abstract_linear_solver<MATRIX, VECTOR> >
+  std::shared_ptr<abstract_linear_solver<MATRIX, VECTOR> >
   select_linear_solver(const model &md, const std::string &name) {
-    dal::shared_ptr<abstract_linear_solver<MATRIX, VECTOR> > p;
+    std::shared_ptr<abstract_linear_solver<MATRIX, VECTOR> > p;
     if (bgeot::casecmp(name, "superlu") == 0)
       p.reset(new linear_solver_superlu<MATRIX, VECTOR>);
     else if (bgeot::casecmp(name, "mumps") == 0) {

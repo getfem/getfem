@@ -67,7 +67,7 @@ namespace getfem {
     typedef level_set *plevel_set;
     std::vector<plevel_set> level_sets; // set of level set
     
-    typedef boost::intrusive_ptr<mesh> pmesh;
+    typedef std::shared_ptr<mesh> pmesh;
 
     struct convex_info {
       pmesh pmsh;

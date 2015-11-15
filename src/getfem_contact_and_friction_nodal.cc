@@ -1295,8 +1295,8 @@ namespace getfem {
 
     Coulomb_friction_brick *pbr_
       = new Coulomb_friction_brick(aug_version, true, false, false, Hughes_stabilized);
+    pbrick pbr(pbr_);
     pbr_->set_BN1(BN);
-    pbrick pbr = pbr_;
 
     model::termlist tl;
     tl.push_back(model::term_description(varname_u, varname_u, false));
@@ -1344,9 +1344,9 @@ namespace getfem {
     Coulomb_friction_brick *pbr_
       = new Coulomb_friction_brick(aug_version,false, false,
                             Tresca_version, Hughes_stabilized, dynamic_terms);
+    pbrick pbr(pbr_);
     pbr_->set_BN1(BN);
     pbr_->set_BT1(BT);
-    pbrick pbr = pbr_;
 
     model::termlist tl;
     tl.push_back(model::term_description(varname_u, varname_u, false));
@@ -1594,8 +1594,7 @@ namespace getfem {
   (model &md, const mesh_im &mim, const std::string &varname_u,
    const std::string &multname_n, const std::string &dataname_r,
    size_type region, const std::string &obstacle, int aug_version) {
-    pbrick pbr
-      = new Coulomb_friction_brick_rigid_obstacle(aug_version, true, obstacle);
+    pbrick pbr(new Coulomb_friction_brick_rigid_obstacle(aug_version, true, obstacle));
 
     model::termlist tl;
     tl.push_back(model::term_description(varname_u, varname_u, false));
@@ -1621,8 +1620,8 @@ namespace getfem {
    const std::string &multname_n, const std::string &multname_t,
    const std::string &dataname_r, const std::string &dataname_friction_coeff,
    size_type region, const std::string &obstacle, int aug_version) {
-    pbrick pbr
-      = new Coulomb_friction_brick_rigid_obstacle(aug_version,false,obstacle);
+    pbrick pbr(new Coulomb_friction_brick_rigid_obstacle(aug_version,
+							 false, obstacle));
 
     model::termlist tl;
     tl.push_back(model::term_description(varname_u, varname_u, false));
@@ -1816,8 +1815,8 @@ namespace getfem {
 
     bool two_variables = (varname_u1.compare(varname_u2) != 0);
 
-    pbrick pbr = new Coulomb_friction_brick_nonmatching_meshes
-           (aug_version, true, two_variables, rg1, rg2, slave1, slave2);
+    pbrick pbr(new Coulomb_friction_brick_nonmatching_meshes
+	       (aug_version, true, two_variables, rg1, rg2, slave1, slave2));
 
     // Calculate multipliers size
     const mesh_fem &mf_u1 = md.mesh_fem_of_variable(varname_u1);
@@ -1887,8 +1886,8 @@ namespace getfem {
 
     bool two_variables = (varname_u1.compare(varname_u2) != 0);
 
-    pbrick pbr = new Coulomb_friction_brick_nonmatching_meshes
-           (aug_version, false, two_variables, rg1, rg2, slave1, slave2);
+    pbrick pbr(new Coulomb_friction_brick_nonmatching_meshes
+	       (aug_version, false, two_variables, rg1, rg2, slave1, slave2));
 
     // Calculate multipliers size
     const mesh_fem &mf_u1 = md.mesh_fem_of_variable(varname_u1);

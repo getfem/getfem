@@ -76,7 +76,7 @@ iterative_gmm_solver(iterative_gmm_solver_type stype, gsparse &gsp,
 
 void iterative_gmm_solver(iterative_gmm_solver_type stype,
                          getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
-  dal::shared_ptr<gsparse> pgsp = in.pop().to_sparse();
+  std::shared_ptr<gsparse> pgsp = in.pop().to_sparse();
   gsparse &gsp = *pgsp;
   if (!gsp.is_complex() && in.front().is_complex())
     THROW_BADARG("please use a real right hand side, or convert the sparse matrix to a complex one");
@@ -120,7 +120,7 @@ struct sub_gf_linsolve : virtual public dal::static_stored_object {
                    getfemint::mexargs_out& out) = 0;
 };
 
-typedef boost::intrusive_ptr<sub_gf_linsolve> psub_command;
+typedef std::shared_ptr<sub_gf_linsolve> psub_command;
 
 // Function to avoid warning in macro with unused arguments.
 template <typename T> static inline void dummy_func(T &) {}
@@ -131,7 +131,7 @@ template <typename T> static inline void dummy_func(T &) {}
                        getfemint::mexargs_out& out)                         \
       { dummy_func(in); dummy_func(out); code }                             \
     };                                                                      \
-    psub_command psubc = new subc;                                          \
+    psub_command psubc(new subc);					    \
     psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;             \
     psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;         \
     subc_tab[cmd_normalize(name)] = psubc;                                  \
@@ -181,7 +181,7 @@ void gf_linsolve(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
       Alias for ::LINSOLVE('superlu',...)@*/
     sub_command
       ("lu", 2, 2, 0, 2,
-       dal::shared_ptr<gsparse> pgsp = in.pop().to_sparse();
+       std::shared_ptr<gsparse> pgsp = in.pop().to_sparse();
        gsparse &gsp = *pgsp;
        if (!gsp.is_complex() && in.front().is_complex())
          THROW_BADARG("please use a real right hand side, or convert the sparse matrix to a complex one");
@@ -196,7 +196,7 @@ void gf_linsolve(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
     The condition number estimate `cond` is returned with the solution `U`.@*/
     sub_command
       ("superlu", 2, 2, 0, 2,
-       dal::shared_ptr<gsparse> pgsp = in.pop().to_sparse();
+       std::shared_ptr<gsparse> pgsp = in.pop().to_sparse();
        gsparse &gsp = *pgsp;
        if (!gsp.is_complex() && in.front().is_complex())
          THROW_BADARG("please use a real right hand side, or convert the sparse matrix to a complex one");
@@ -209,7 +209,7 @@ void gf_linsolve(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
     Solve `M.U = b` using the MUMPS solver.@*/
     sub_command
       ("mumps", 2, 2, 0, 1,
-       dal::shared_ptr<gsparse> pgsp = in.pop().to_sparse();
+       std::shared_ptr<gsparse> pgsp = in.pop().to_sparse();
        gsparse &gsp = *pgsp;
        if (!gsp.is_complex() && in.front().is_complex())
          THROW_BADARG("please use a real right hand side, or convert the sparse matrix to a complex one");

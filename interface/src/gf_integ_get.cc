@@ -42,7 +42,7 @@ struct sub_gf_integ_get : virtual public dal::static_stored_object {
 		   getfem::papprox_integration pai, size_type imdim) = 0;
 };
 
-typedef boost::intrusive_ptr<sub_gf_integ_get> psub_command;
+typedef std::shared_ptr<sub_gf_integ_get> psub_command;
 
 // Function to avoid warning in macro with unused arguments.
 template <typename T> static inline void dummy_func(T &) {}
@@ -58,7 +58,7 @@ template <typename T> static inline void dummy_func(T &) {}
 	dummy_func(imdim); dummy_func(pai); code			\
       }	                                            			\
     };									\
-    psub_command psubc = new subc;					\
+    psub_command psubc(new subc);					\
     psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;		\
     psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;	\
     subc_tab[cmd_normalize(name)] = psubc;				\
@@ -116,7 +116,7 @@ void gf_integ_get(getfemint::mexargs_in& m_in,
     sub_command
       ("pts", 0, 0, 0, 1,
        check_not_exact(im);
-       out.pop().from_vector_container(pai->integration_points());
+       out.pop().from_vector_container(*(pai->pintegration_points()));
        );
 
 

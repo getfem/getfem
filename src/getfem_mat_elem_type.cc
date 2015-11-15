@@ -51,8 +51,8 @@ namespace getfem {
   static pmat_elem_type add_to_met_tab(const mat_elem_type &f) {
     dal::pstatic_stored_object o
       = dal::search_stored_object(mat_elem_type_key(&f));
-    if (o) return dal::stored_cast<mat_elem_type>(o);
-    pmat_elem_type p = new mat_elem_type(f);
+    if (o) return std::dynamic_pointer_cast<const mat_elem_type>(o);
+    pmat_elem_type p = std::make_shared<mat_elem_type>(f);
     dal::add_stored_object(new mat_elem_type_key(p.get()), p,
                            dal::AUTODELETE_STATIC_OBJECT);
     for (size_type i=0; i < f.size(); ++i) {

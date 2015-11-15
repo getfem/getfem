@@ -332,7 +332,7 @@ void compute_mass_matrix_extra_element
   size_type nbd1 = pf1->nb_dof(cv1);
   
   if (pf1 != pf1_old || pai1 != pai1_old) {
-    pfp1 = fem_precomp(pf1, &pai1->integration_points(), pim1);
+    pfp1 = fem_precomp(pf1, pai1->pintegration_points(), pim1);
     pf1_old = pf1; pai1_old = pai1;
   }
   

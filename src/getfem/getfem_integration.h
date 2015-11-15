@@ -145,7 +145,7 @@ namespace getfem
    */
 
   class integration_method;  
-  typedef boost::intrusive_ptr<const integration_method> pintegration_method;
+  typedef std::shared_ptr<const integration_method> pintegration_method;
 
 
   class approx_integration {
@@ -181,15 +181,16 @@ namespace getfem
     void set_built_on_the_fly(void)  { built_on_the_fly = true; }
     /// Structure of the reference element.
     bgeot::pconvex_structure structure(void) const
-    { return cvr->structure()->basic_structure(); }
+    { return basic_structure(cvr->structure()); }
     bgeot::pconvex_ref ref_convex(void) const { return cvr; }
     
     const std::vector<size_type> &repart(void) const { return repartition; }
     
     /// Gives an array of integration nodes.
-    const bgeot::stored_point_tab  &
-    integration_points(void) const
-    { return *(pint_points); }
+    // const bgeot::stored_point_tab &integration_points(void) const
+    // { return *(pint_points); }
+    bgeot::pstored_point_tab pintegration_points(void) const
+    { return pint_points; }
     /// Gives the integration node i on the reference element.
     const base_node &point(size_type i) const
     { return (*pint_points)[i]; }
@@ -259,16 +260,19 @@ namespace getfem
     void set_exact_method(ppoly_integration ppii)
     { remove(); method.ppi = ppii; im_type = IM_EXACT; }
 
-    const bgeot::stored_point_tab &integration_points(void) const { 
+    bgeot::pstored_point_tab pintegration_points(void) const { 
       if (type() == IM_EXACT) {
         size_type n = method.ppi->structure()->dim();
         std::vector<base_node> spt(1); spt[0] = base_node(n);
-        return (*store_point_tab(spt));
+        return store_point_tab(spt);
       }
       else if (type() == IM_APPROX)
-        return method.pai->integration_points();
+        return method.pai->pintegration_points();
       else GMM_ASSERT1(false, "IM_NONE has no points");
     }
+
+    // const bgeot::stored_point_tab &integration_points(void) const
+    // { return *(pintegration_points()); }
 
     bgeot::pconvex_structure structure(void) const { 
       switch (type()) {

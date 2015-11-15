@@ -43,7 +43,7 @@ struct sub_gf_cvstruct_get : virtual public dal::static_stored_object {
                    bgeot::pconvex_structure cs) = 0;
 };
 
-typedef boost::intrusive_ptr<sub_gf_cvstruct_get> psub_command;
+typedef std::shared_ptr<sub_gf_cvstruct_get> psub_command;
 
 // Function to avoid warning in macro with unused arguments.
 template <typename T> static inline void dummy_func(T &) {}
@@ -55,7 +55,7 @@ template <typename T> static inline void dummy_func(T &) {}
                        bgeot::pconvex_structure cs)                         \
       { dummy_func(in); dummy_func(out); dummy_func(cs); code }             \
     };                                                                      \
-    psub_command psubc = new subc;                                          \
+    psub_command psubc(new subc);					    \
     psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;             \
     psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;         \
     subc_tab[cmd_normalize(name)] = psubc;                                  \
@@ -96,7 +96,7 @@ void gf_cvstruct_get(getfemint::mexargs_in& m_in,
     sub_command
       ("basic_structure", 0, 0, 0, 1,
        out.pop().from_object_id
-       (getfemint::ind_convex_structure(cs->basic_structure()),
+       (getfemint::ind_convex_structure(bgeot::basic_structure(cs)),
         CVSTRUCT_CLASS_ID);
        );
 
