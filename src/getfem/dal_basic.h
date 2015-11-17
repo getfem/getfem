@@ -37,13 +37,6 @@
 #ifndef DAL_BASIC_H__
 #define DAL_BASIC_H__
 
-/* *********************************************************************** */
-/* Remarks for future improvements:                                        */
-/*									   */
-/* - For the moment, the allocation is made by new and delete[].           */
-/*									   */
-/* *********************************************************************** */
-
 #include <vector>
 #include "dal_config.h"
 #include "getfem_omp.h"
@@ -205,7 +198,7 @@ namespace dal
     typedef size_t               size_type;
     typedef ptrdiff_t            difference_type;
     typedef unsigned char        pack_size_type;
-    typedef std::vector<pointer> pointer_array;
+    typedef std::vector<std::unique_ptr<T[]>> pointer_array;
     typedef dna_iterator<T, pks> iterator;
     typedef dna_const_iterator<T, pks> const_iterator;
     typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
@@ -303,15 +296,14 @@ namespace dal
   
   template<class T, unsigned char pks>
   void dynamic_array<T,pks>::clear(void) { 
-    typename pointer_array::iterator it  = array.begin();
-    typename pointer_array::iterator ite = it+ ((last_ind + DNAMPKS__) >> pks);
-    while (it != ite) delete[] *it++;
+    // typename pointer_array::iterator it  = array.begin();
+    // typename pointer_array::iterator ite = it+ ((last_ind + DNAMPKS__) >> pks);
+    // while (it != ite) delete[] *it++;
     array.clear(); init();
   }
   
   template<class T, unsigned char pks> dynamic_array<T,pks>
   &dynamic_array<T,pks>::operator = (const dynamic_array<T,pks> &da) {
-    clear(); /* evitable ... ? */
     array.resize(da.array.size());
     last_ind = da.last_ind;
     last_accessed = da.last_accessed;
@@ -320,9 +312,10 @@ namespace dal
     typename pointer_array::const_iterator ita = da.array.begin();
     typename pointer_array::iterator ite = it+ ((last_ind + DNAMPKS__) >> pks);
     while (it != ite) {
-      register pointer p = *it++ = new T[DNAMPKS__+1];
+      *it = std::make_unique<T[]>(DNAMPKS__+1);
+      register pointer p = it->get(); ++it;
       register pointer pe = p + (DNAMPKS__+1);
-      register const_pointer pa = *ita++;
+      register const_pointer pa = (ita++)->get();
       while (p != pe) *p++ = *pa++;
     }
     return *this;
@@ -332,7 +325,7 @@ namespace dal
     typename dynamic_array<T,pks>::const_reference
       dynamic_array<T,pks>::operator [](size_type ii) const { 
         DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(std::shared_ptr<T>,pf,NULL);
-        if (pf.get() == NULL) { pf.reset(new T()); }
+        if (pf.get() == NULL) { pf = std::make_shared<T>(); }
         return (ii<last_ind) ? (array[ii>>pks])[ii&DNAMPKS__] : *pf;
   }
 
@@ -349,7 +342,7 @@ namespace dal
 	}
 	for (size_type jj = (last_ind >> pks); ii >= last_ind;
 	     jj++, last_ind += (DNAMPKS__ + 1))
-	  { array[jj] = new T[DNAMPKS__ + 1]; }
+	  { array[jj] = std::make_unique<T[]>(DNAMPKS__ + 1); }
       }
     }
     return (array[ii >> pks])[ii & DNAMPKS__];
@@ -382,21 +375,6 @@ namespace dal
   template<class T, unsigned char pks> inline
     void swap(const dynamic_array<T,pks> &x, const dynamic_array<T,pks> &y)
   { x.swap(y); }
-
-
-  /** 
-   *  A very simple pointer collection
-   *  which destroys the content of its pointers 
-   */
-  template<class T> class ptr_collection : public std::vector<T*> {
-  public:
-    typedef typename std::vector<T*>::size_type size_type;
-    typedef typename std::vector<T*>::iterator iterator;
-    typedef typename std::vector<T*>::const_iterator const_iterator;
-    ptr_collection() : std::vector<T*>() {}
-    ptr_collection(size_type sz) : std::vector<T*>(sz) { std::fill(this->begin(),this->end(),0); }
-    ~ptr_collection() { for (iterator i=this->begin(); i != this->end(); ++i) { if (*i) delete *i; *i = 0; } }
-  };
 
 }
 #endif /* DAL_BASIC_H__  */

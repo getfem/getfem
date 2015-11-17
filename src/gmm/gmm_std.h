@@ -94,8 +94,8 @@
 */
 
 #if defined(__GNUC__)
-#  if (__GNUC__ < 3)
-#    error : PLEASE UPDATE g++ TO AT LEAST 3.0 VERSION
+#  if (__GNUC__ < 4)
+#    error : PLEASE UPDATE g++ TO AT LEAST 4.8 VERSION
 #  endif
 #endif
 
@@ -129,15 +129,37 @@
 #include <memory>
 #include <locale.h>
 
-#if defined(__GNUC__) || defined(__GNUG__)
+
+#if defined(__GNUC__) && (__cplusplus <= 201103L)
 namespace std {
-  template<typename T, typename ...Args>
-  unique_ptr<T> make_unique( Args&& ...args )
-  { return std::unique_ptr<T>( new T( std::forward<Args>(args)... ) ); }
+  template<typename _Tp>
+    struct _MakeUniq
+    { typedef unique_ptr<_Tp> __single_object; };
+  template<typename _Tp>
+    struct _MakeUniq<_Tp[]>
+    { typedef unique_ptr<_Tp[]> __array; };
+  template<typename _Tp, size_t _Bound>
+    struct _MakeUniq<_Tp[_Bound]>
+    { struct __invalid_type { }; };
+  /// std::make_unique for single objects
+  template<typename _Tp, typename... _Args>
+    inline typename _MakeUniq<_Tp>::__single_object
+    make_unique(_Args&&... __args)
+    { return unique_ptr<_Tp>(new _Tp(std::forward<_Args>(__args)...)); }
+  /// std::make_unique for arrays of unknown bound
+  template<typename _Tp>
+    inline typename _MakeUniq<_Tp>::__array
+    make_unique(size_t __num)
+    { return unique_ptr<_Tp>(new typename remove_extent<_Tp>::type[__num]()); }
+  /// Disable std::make_unique for arrays of known bound
+  template<typename _Tp, typename... _Args>
+    inline typename _MakeUniq<_Tp>::__invalid_type
+    make_unique(_Args&&...) = delete;
 }
 #endif
 
 #ifdef GETFEM_HAVE_OPENMP
+
 #include <omp.h>
 	/**number of OpenMP threads*/
 	inline size_t num_threads(){return omp_get_max_threads();}

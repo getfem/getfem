@@ -219,74 +219,74 @@ namespace getfem {
 }
 
 static getfem::slicer_action*
-build_slicers(const getfem::mesh& m, dal::ptr_collection<getfem::slicer_action> & slicers,
+build_slicers(const getfem::mesh& m, std::vector<std::unique_ptr<getfem::slicer_action>> &slicers,
               const gfi_array *arg) {
   GMM_ASSERT1(gfi_array_get_class(arg) == GFI_CELL, "slices must be "
               "described as imbricated cell arrays");
   mexargs_in in(1, &arg, true);
   std::string cmd = in.pop().to_string();
   if (check_cmd(cmd, "none", in, 0, 0)) {
-    slicers.push_back(new getfem::slicer_none());
+    slicers.push_back(std::make_unique<getfem::slicer_none>());
   } else if (check_cmd(cmd, "planar", in, 3, 3)) {
     int orient = in.pop().to_integer(-1,2);
     getfem::base_node x0 = in.pop().to_base_node();
-    slicers.push_back(new getfem::slicer_half_space(x0, in.pop().to_base_node(), orient));
+    slicers.push_back(std::make_unique<getfem::slicer_half_space>(x0, in.pop().to_base_node(), orient));
   } else if (check_cmd(cmd, "ball", in, 3, 3)) {
     int orient = in.pop().to_integer(-1,2);
     getfem::base_node x0 = in.pop().to_base_node();
-    slicers.push_back(new getfem::slicer_sphere(x0, in.pop().to_scalar(1e-5), orient));
+    slicers.push_back(std::make_unique<getfem::slicer_sphere>(x0, in.pop().to_scalar(1e-5), orient));
   } else if (check_cmd(cmd, "cylinder", in, 4, 4)) {
     int orient = in.pop().to_integer(-1,2);
     getfem::base_node x0 = in.pop().to_base_node();
     getfem::base_node x1 = in.pop().to_base_node();
-    slicers.push_back(new getfem::slicer_cylinder(x0, x1, in.pop().to_scalar(1e-5), orient));
+    slicers.push_back(std::make_unique<getfem::slicer_cylinder>(x0, x1, in.pop().to_scalar(1e-5), orient));
   } else if (check_cmd(cmd, "isovalues", in, 4, 4)) {
     int orient = in.pop().to_integer(-1,2);
     const getfem::mesh_fem &mf = *in.pop().to_const_mesh_fem();
     darray U = in.pop().to_darray(int(mf.nb_dof()));
-    slicers.push_back(new getfem::slicer_isovalues(getfem::mesh_slice_cv_dof_data<darray>(mf,U),
+    slicers.push_back(std::make_unique<getfem::slicer_isovalues>(getfem::mesh_slice_cv_dof_data<darray>(mf,U),
                                                    in.pop().to_scalar(), orient));
   } else if (check_cmd(cmd, "boundary", in, 0, 1)) {
     getfem::slicer_action *s1 = 0;
     if (in.remaining()) {
       s1 = build_slicers(m, slicers, in.pop().arg);
     } else {
-      slicers.push_back(new getfem::slicer_none());
-      s1 = slicers.back();
+      slicers.push_back(std::make_unique<getfem::slicer_none>());
+      s1 = slicers.back().get();
     }
     getfem::mesh_region cvflst;
     getfem::outer_faces_of_mesh(m, m.convex_index(), cvflst);
-    slicers.push_back(new getfem::slicer_boundary(m,*s1,cvflst));
+    slicers.push_back(std::make_unique<getfem::slicer_boundary>(m,*s1,cvflst));
   } else if (check_cmd(cmd, "explode", in, 1, 1)) {
     scalar_type c = in.pop().to_scalar();
-    slicers.push_back(new getfem::slicer_explode(c));
+    slicers.push_back(std::make_unique<getfem::slicer_explode>(c));
   } else if (check_cmd(cmd, "union", in, 1, -1)) {
     getfem::slicer_action *s1 = build_slicers(m, slicers, in.pop().arg);
     while (in.remaining()) {
       getfem::slicer_action *s2 = build_slicers(m, slicers, in.pop().arg);
-      slicers.push_back(new getfem::slicer_union(*s1,*s2));
-      s1 = slicers.back();
+      slicers.push_back(std::make_unique<getfem::slicer_union>(*s1,*s2));
+      s1 = slicers.back().get();
     }
   } else if (check_cmd(cmd, "intersection", in, 1, -1)) {
     getfem::slicer_action *s1 = build_slicers(m, slicers, in.pop().arg);
     while (in.remaining()) {
       getfem::slicer_action *s2 = build_slicers(m, slicers, in.pop().arg);
-      slicers.push_back(new getfem::slicer_intersect(*s1,*s2));
-      s1 = slicers.back();
+      slicers.push_back(std::make_unique<getfem::slicer_intersect>(*s1,*s2));
+      s1 = slicers.back().get();
     }
   } else if (check_cmd(cmd, "diff", in, 2, 2)) {
     getfem::slicer_action *s1 = build_slicers(m, slicers, in.pop().arg);
     getfem::slicer_action *s2 = build_slicers(m, slicers, in.pop().arg);
-    slicers.push_back(new getfem::slicer_complementary(*s2));
-    slicers.push_back(new getfem::slicer_intersect(*s1, *slicers.back()));
+    slicers.push_back(std::make_unique<getfem::slicer_complementary>(*s2));
+    slicers.push_back(std::make_unique<getfem::slicer_intersect>(*s1, *slicers.back()));
   } else if (check_cmd(cmd, "comp", in, 1, 1)) {
     getfem::slicer_action *s = build_slicers(m, slicers, in.pop().arg);
-    slicers.push_back(new getfem::slicer_complementary(*s));
+    slicers.push_back(std::make_unique<getfem::slicer_complementary>(*s));
   } else if (check_cmd(cmd, "mesh", in, 1, 1)) {
     const getfem::mesh &m2 = *in.pop().to_const_mesh();
-    slicers.push_back(new getfem::slicer_mesh_with_mesh(m2));
+    slicers.push_back(std::make_unique<getfem::slicer_mesh_with_mesh>(m2));
   } else bad_cmd(cmd);
-  return slicers.back();
+  return slicers.back().get();
 }
 
 
@@ -419,7 +419,7 @@ void gf_slice(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       id_type id; in.pop().to_const_mesh(id); mm = object_to_mesh(workspace().object(id));
     }
 
-    dal::ptr_collection<getfem::slicer_action> slicers;
+    std::vector<std::unique_ptr<getfem::slicer_action>> slicers;
     getfem::slicer_action * s = build_slicers(mm->mesh(), slicers, arg);
 
     /* build the slice */

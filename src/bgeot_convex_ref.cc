@@ -88,9 +88,6 @@ namespace bgeot {
     return p;
   }
 
-  //  struct cleanup_simplexified_convexes
-  //   : public dal::ptr_collection<mesh_structure> {};
-
   /* should be called on the basic_convex_ref */
   const mesh_structure* convex_of_reference::simplexified_convex() const {    
     if (psimplexified_convex.get() == 0) {
