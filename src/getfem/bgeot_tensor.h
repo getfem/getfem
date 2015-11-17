@@ -312,45 +312,49 @@ namespace bgeot {
     /* reduction du tenseur t par son indice ni et la matrice          */
     /* transposee de m.                                                */
 
-        DEFINE_STATIC_THREAD_LOCAL(std::vector<T>*,tmp);
-        DEFINE_STATIC_THREAD_LOCAL(multi_index*,mi);
-        DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(bool,isinit,false);
+    // DEFINE_STATIC_THREAD_LOCAL(std::vector<T>*,tmp);
+    // DEFINE_STATIC_THREAD_LOCAL(multi_index*,mi);
+    DEFINE_STATIC_THREAD_LOCAL(std::vector<T>, tmp);
+    DEFINE_STATIC_THREAD_LOCAL(multi_index, mi);
+    // DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(bool,isinit,false);
 
-    if (!isinit) {
-      tmp = new std::vector<T>(3); mi = new multi_index(); isinit = true;
-    }
+    // if (!isinit) {
+    //  tmp = std::make_shared<std::vector<T>(3);
+    //  mi = std::make_shared<multi_index>();
+    //  isinit = true;
+    // }
 
-    *mi = t.sizes();
-    size_type dimt = (*mi)[ni], dim = m.nrows();
+    mi = t.sizes();
+    size_type dimt = mi[ni], dim = m.nrows();
 
     GMM_ASSERT2(dimt, "Inconsistent dimension.");
     GMM_ASSERT2(dimt == m.ncols(), "Dimensions mismatch.");
     GMM_ASSERT2(&t != this, "Does not work when t and *this are the same.");
 
 
-    (*mi)[ni] = dim;
-    if (tmp->size() < dimt) tmp->resize(dimt);
-    adjust_sizes(*mi);
+    mi[ni] = dim;
+    if (tmp.size() < dimt) tmp.resize(dimt);
+    adjust_sizes(mi);
 
     const_iterator pft = t.begin();
     iterator pf = this->begin();
     size_type dd  =   coeff[ni]*(  sizes()[ni]-1)-1, co  =   coeff[ni];
     size_type ddt = t.coeff[ni]*(t.sizes()[ni]-1)-1, cot = t.coeff[ni];
-    std::fill(mi->begin(), mi->end(), 0);
-    for (;!mi->finished(sizes()); mi->incrementation(sizes()), ++pf, ++pft) {
-      if ((*mi)[ni] != 0) {
+    std::fill(mi.begin(), mi.end(), 0);
+    for (;!mi.finished(sizes()); mi.incrementation(sizes()), ++pf, ++pft) {
+      if (mi[ni] != 0) {
         for (size_type k = 0; k <= size_type(ni); ++k)
-          (*mi)[k] = size_type(sizes()[k] - 1);
+          mi[k] = size_type(sizes()[k] - 1);
         pf += dd; pft += ddt;
       } else {
-        const_iterator pl = pft; iterator pt = tmp->begin();
+        const_iterator pl = pft; iterator pt = tmp.begin();
         *pt++ = *pl;
         for(size_type k = 1; k < dimt; ++k, ++pt) { pl += cot; *pt = *pl;}
 
         iterator pff = pf;
         for (size_type k = 0; k < dim; ++k) {
           if (k) pff += co;
-          *pff = T(0); pt = tmp->begin(); pl = m.begin() + k;
+          *pff = T(0); pt = tmp.begin(); pl = m.begin() + k;
           *pff += (*pl) * (*pt); ++pt;
           for (size_type l = 1; l < dimt; ++l, ++pt) {
             pl += dim;
@@ -385,41 +389,43 @@ namespace bgeot {
   template<class T> void tensor<T>::mat_reduction
   (const tensor &t, const gmm::dense_matrix<T> &m, int ni) {
     /* reduction du tenseur t par son indice ni et la matrice m.       */
-        DEFINE_STATIC_THREAD_LOCAL(std::vector<T>*,tmp);
-        DEFINE_STATIC_THREAD_LOCAL(multi_index*,mi);
-        DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(bool,isinit,false);
-    if (!isinit) {
-      tmp = new std::vector<T>(3); mi = new multi_index(); isinit = true;
-    }
-    *mi = t.sizes();
-    size_type dimt = (*mi)[ni], dim = m.ncols();
+    // DEFINE_STATIC_THREAD_LOCAL(std::vector<T>*,tmp);
+    // DEFINE_STATIC_THREAD_LOCAL(multi_index*,mi);
+    // DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(bool,isinit,false);
+    DEFINE_STATIC_THREAD_LOCAL(std::vector<T>, tmp);
+    DEFINE_STATIC_THREAD_LOCAL(multi_index, mi);
+    // if (!isinit) {
+    //  tmp = new std::vector<T>(3); mi = new multi_index(); isinit = true;
+    // }
+    mi = t.sizes();
+    size_type dimt = mi[ni], dim = m.ncols();
     GMM_ASSERT2(dimt, "Inconsistent dimension.");
     GMM_ASSERT2(dimt == m.nrows(), "Dimensions mismatch.");
     GMM_ASSERT2(&t != this, "Does not work when t and *this are the same.");
 
-    (*mi)[ni] = dim;
-    if (tmp->size() < dimt) tmp->resize(dimt);
-    adjust_sizes(*mi);
+    mi[ni] = dim;
+    if (tmp.size() < dimt) tmp.resize(dimt);
+    adjust_sizes(mi);
     const_iterator pft = t.begin();
     iterator pf = this->begin();
     size_type dd  =   coeff[ni]*(  sizes()[ni]-1)-1, co  =   coeff[ni];
     size_type ddt = t.coeff[ni]*(t.sizes()[ni]-1)-1, cot = t.coeff[ni];
-    std::fill(mi->begin(), mi->end(), 0);
-    for (;!mi->finished(sizes()); mi->incrementation(sizes()), ++pf, ++pft) {
-      if ((*mi)[ni] != 0) {
+    std::fill(mi.begin(), mi.end(), 0);
+    for (;!mi.finished(sizes()); mi.incrementation(sizes()), ++pf, ++pft) {
+      if (mi[ni] != 0) {
         for (size_type k = 0; k <= size_type(ni); ++k)
-          (*mi)[k] = size_type(sizes()[k] - 1);
+          mi[k] = size_type(sizes()[k] - 1);
         pf += dd; pft += ddt;
       }
       else {
-        const_iterator pl = pft; iterator pt = tmp->begin();
+        const_iterator pl = pft; iterator pt = tmp.begin();
         *pt++ = *pl;
         for(size_type k = 1; k < dimt; ++k, ++pt) { pl += cot; *pt = *pl; }
 
         iterator pff = pf; pl = m.begin();
         for (size_type k = 0; k < dim; ++k) {
           if (k) pff += co;
-          *pff = T(0); pt = tmp->begin();
+          *pff = T(0); pt = tmp.begin();
           for (size_type l = 0; l < dimt; ++l, ++pt, ++pl)
             *pff += (*pl) * (*pt);
         }

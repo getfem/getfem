@@ -98,9 +98,9 @@ namespace getfem {
     mi.set_integration_method(pm->convex_index(), pim);
 
     pintegration_method
-      p(new integration_method
-	(composite_approx_int_method(*pmp, mi,
-				     pim->approx_method()->ref_convex())));
+      p = std::make_shared<integration_method>
+      (composite_approx_int_method(*pmp, mi,
+				    pim->approx_method()->ref_convex()));
     dependencies.push_back(p->approx_method()->ref_convex());
     dependencies.push_back(p->approx_method()->pintegration_points());
     return p;
@@ -136,10 +136,10 @@ namespace getfem {
     mesh_im mi(jfs.m);
     mi.set_integration_method(jfs.m.convex_index(), pim);
 
-    pintegration_method 
-      p(new integration_method
-	(composite_approx_int_method(jfs.mp, mi,
-				     pim->approx_method()->ref_convex())));
+    pintegration_method
+      p = std::make_shared<integration_method>
+      (composite_approx_int_method(jfs.mp, mi,
+				   pim->approx_method()->ref_convex()));
     dependencies.push_back(p->approx_method()->ref_convex());
     dependencies.push_back(p->approx_method()->pintegration_points());
     return p;
@@ -176,9 +176,9 @@ namespace getfem {
     mi.set_integration_method(jfs.m.convex_index(), pim);
 
     pintegration_method
-      p(new integration_method
-	(composite_approx_int_method(jfs.mp, mi,
-				     bgeot::parallelepiped_of_reference(2))));
+      p = std::make_shared<integration_method>
+      (composite_approx_int_method(jfs.mp, mi,
+				   bgeot::parallelepiped_of_reference(2)));
     dependencies.push_back(p->approx_method()->ref_convex());
     dependencies.push_back(p->approx_method()->pintegration_points());
     return p;

@@ -133,8 +133,10 @@ namespace bgeot {
       if (pprod2) *pprod2 = prod_b;
       return prod_a ? true : false;
     }
+    explicit convex_structure(bool auto_b)
+      : auto_basic(auto_b), prod_a(0), prod_b(0) { }
   protected:
-    convex_structure() { prod_a = prod_b = 0; auto_basic = false; }
+    convex_structure() : auto_basic(false), prod_a(0), prod_b(0) { }
     friend std::shared_ptr<convex_structure> new_convex_structure();
     friend pconvex_structure basic_structure(pconvex_structure cv);
   };
@@ -144,7 +146,7 @@ namespace bgeot {
   { if (cv->auto_basic) return cv; else return cv->basic_pcvs; }
 
   inline std::shared_ptr<convex_structure> new_convex_structure()
-  { return std::shared_ptr<convex_structure>(new convex_structure); }
+  { return std::make_shared<convex_structure>(false); }
 
   /** @name functions on convex structures
    */

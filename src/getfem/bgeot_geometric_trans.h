@@ -310,7 +310,6 @@ namespace bgeot {
     pgeometric_trans get_trans() const { return pgt; }
     // inline const stored_point_tab& get_point_tab() const { return *pspt; }
     inline pstored_point_tab get_ppoint_tab() const { return pspt; }
-  protected:
     geotrans_precomp_(pgeometric_trans pg, pstored_point_tab ps);
 
   private:

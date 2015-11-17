@@ -328,7 +328,7 @@ namespace bgeot {
                 double(n) == params[0].num() && double(k) == params[1].num(),
                 "Bad parameters");
     dependencies.push_back(simplex_of_reference(dim_type(n), dim_type(k)));
-    return pgeometric_trans(new simplex_trans_(dim_type(n), dim_type(k)));
+    return std::make_shared<simplex_trans_>(dim_type(n), dim_type(k));
   }
 
   /* ******************************************************************** */
@@ -371,7 +371,7 @@ namespace bgeot {
       = dynamic_cast<const poly_geometric_trans *>(b.get());
     GMM_ASSERT1(aa && bb, "The product of geometric transformations "
                 "is only defined for polynomial ones");
-    return pgeometric_trans(new cv_pr_t_(aa, bb));
+    return std::make_shared<cv_pr_t_>(aa, bb);
   }
 
   /* ******************************************************************** */
@@ -422,7 +422,7 @@ namespace bgeot {
       = dynamic_cast<const poly_geometric_trans *>(b.get());
     GMM_ASSERT1(aa && bb, "The product of geometric transformations "
                 "is only defined for polynomial ones");
-    return pgeometric_trans(new cv_pr_tl_(aa, bb));
+    return std::make_shared<cv_pr_tl_>(aa, bb);
   }
 
   /* ******************************************************************** */
@@ -540,13 +540,14 @@ namespace bgeot {
   static pgeometric_trans
     Q2_incomplete_gt(gt_param_list& params,
                      std::vector<dal::pstatic_stored_object> &dependencies) {
-    GMM_ASSERT1(params.size() == 1, "Bad number of parameters : " << params.size() << " should be 1.");
+    GMM_ASSERT1(params.size() == 1, "Bad number of parameters : "
+		<< params.size() << " should be 1.");
     GMM_ASSERT1(params[0].type() == 0, "Bad type of parameters");
     int n = int(::floor(params[0].num() + 0.01));
     GMM_ASSERT1(n == 2 || n == 3, "Bad parameter, expected value 2 or 3");
     
     dependencies.push_back(Q2_incomplete_reference(dim_type(n)));
-    return pgeometric_trans(new Q2_incomplete_trans_(dim_type(n)));
+    return std::make_shared<Q2_incomplete_trans_>(dim_type(n));
   }
   
   pgeometric_trans Q2_incomplete_geotrans(dim_type nc) {
@@ -802,7 +803,7 @@ namespace bgeot {
     dal::pstatic_stored_object_key pk= std::make_shared<pre_geot_key_>(pg,pspt);
     dal::pstatic_stored_object o = dal::search_stored_object(pk);
     if (o) return std::dynamic_pointer_cast<const geotrans_precomp_>(o);
-    pgeotrans_precomp p(new geotrans_precomp_(pg, pspt));
+    pgeotrans_precomp p = std::make_shared<geotrans_precomp_>(pg, pspt);
     dal::add_stored_object(pk, p, pg, pspt, dal::AUTODELETE_STATIC_OBJECT);
     if (dep) dal::add_dependency(p, dep);
     return p;
