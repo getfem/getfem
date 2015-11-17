@@ -562,20 +562,21 @@ namespace getfem {
 
 
   template<typename MATRIX, typename VECTOR>
-  std::shared_ptr<abstract_linear_solver<MATRIX, VECTOR> >
+  std::shared_ptr<abstract_linear_solver<MATRIX, VECTOR>>
   default_linear_solver(const model &md) {
-    std::shared_ptr<abstract_linear_solver<MATRIX, VECTOR> > p;
 
 #if GETFEM_PARA_LEVEL == 1 && GETFEM_PARA_SOLVER == MUMPS_PARA_SOLVER
     if (md.is_symmetric())
-      p.reset(new linear_solver_mumps_sym<MATRIX, VECTOR>);
+      return std::make_shared<linear_solver_mumps_sym<MATRIX, VECTOR>>();
     else
-      p.reset(new linear_solver_mumps<MATRIX, VECTOR>);
+      return std::make_shared<linear_solver_mumps<MATRIX, VECTOR>>();
 #elif GETFEM_PARA_LEVEL > 1 && GETFEM_PARA_SOLVER == MUMPS_PARA_SOLVER
     if (md.is_symmetric())
-      p.reset(new linear_solver_distributed_mumps_sym<MATRIX, VECTOR>);
-    else
-      p.reset(new linear_solver_distributed_mumps<MATRIX, VECTOR>);
+      return std::make_shared
+	<linear_solver_distributed_mumps_sym<MATRIX, VECTOR>>();
+      else
+	return std::make_shared
+	  <linear_solver_distributed_mumps<MATRIX, VECTOR>>();
 #else
     size_type ndof = md.nb_dof(), max3d = 15000, dim = md.leading_dimension();
 # ifdef GMM_USES_MUMPS
@@ -584,59 +585,65 @@ namespace getfem {
     if ((ndof<300000 && dim<=2) || (ndof<max3d && dim<=3) || (ndof<1000)) {
 # ifdef GMM_USES_MUMPS
       if (md.is_symmetric())
-        p.reset(new linear_solver_mumps_sym<MATRIX, VECTOR>);
+	return std::make_shared<linear_solver_mumps_sym<MATRIX, VECTOR>>();
       else
-        p.reset(new linear_solver_mumps<MATRIX, VECTOR>);
+	return std::make_shared<linear_solver_mumps<MATRIX, VECTOR>>();
 # else
-      p.reset(new linear_solver_superlu<MATRIX, VECTOR>);
+      return std::make_shared<linear_solver_superlu<MATRIX, VECTOR>>();
 # endif
     }
     else {
       if (md.is_coercive())
-        p.reset(new linear_solver_cg_preconditioned_ildlt<MATRIX, VECTOR>);
+	return std::make_shared
+	  <linear_solver_cg_preconditioned_ildlt<MATRIX, VECTOR>>();
       else {
         if (dim <= 2)
-          p.reset(new
-                  linear_solver_gmres_preconditioned_ilut<MATRIX,VECTOR>);
-        else
-          p.reset(new
-                  linear_solver_gmres_preconditioned_ilu<MATRIX,VECTOR>);
+	  return std::make_shared
+	    <linear_solver_gmres_preconditioned_ilut<MATRIX,VECTOR>>();
+	  else
+	    return std::make_shared
+	      <linear_solver_gmres_preconditioned_ilu<MATRIX,VECTOR>>();
       }
     }
 #endif
-    return p;
+    return std::shared_ptr<abstract_linear_solver<MATRIX, VECTOR>>();
   }
 
   template <typename MATRIX, typename VECTOR>
-  std::shared_ptr<abstract_linear_solver<MATRIX, VECTOR> >
+  std::shared_ptr<abstract_linear_solver<MATRIX, VECTOR>>
   select_linear_solver(const model &md, const std::string &name) {
-    std::shared_ptr<abstract_linear_solver<MATRIX, VECTOR> > p;
+    std::shared_ptr<abstract_linear_solver<MATRIX, VECTOR>> p;
     if (bgeot::casecmp(name, "superlu") == 0)
-      p.reset(new linear_solver_superlu<MATRIX, VECTOR>);
+      return std::make_shared<linear_solver_superlu<MATRIX, VECTOR>>();
     else if (bgeot::casecmp(name, "mumps") == 0) {
 #ifdef GMM_USES_MUMPS
 # if GETFEM_PARA_LEVEL <= 1
-      p.reset(new linear_solver_mumps<MATRIX, VECTOR>);
+      return std::make_shared<linear_solver_mumps<MATRIX, VECTOR>>();
 # else
-      p.reset(new linear_solver_distributed_mumps<MATRIX, VECTOR>);
+      return std::make_shared
+	<linear_solver_distributed_mumps<MATRIX, VECTOR>>();
 # endif
 #else
       GMM_ASSERT1(false, "Mumps is not interfaced");
 #endif
     }
     else if (bgeot::casecmp(name, "cg/ildlt") == 0)
-      p.reset(new linear_solver_cg_preconditioned_ildlt<MATRIX, VECTOR>);
+      return std::make_shared
+	<linear_solver_cg_preconditioned_ildlt<MATRIX, VECTOR>>();
     else if (bgeot::casecmp(name, "gmres/ilu") == 0)
-      p.reset(new linear_solver_gmres_preconditioned_ilu<MATRIX, VECTOR>);
+      return std::make_shared
+	<linear_solver_gmres_preconditioned_ilu<MATRIX, VECTOR>>();
     else if (bgeot::casecmp(name, "gmres/ilut") == 0)
-      p.reset(new linear_solver_gmres_preconditioned_ilut<MATRIX, VECTOR>);
+      return std::make_shared
+	<linear_solver_gmres_preconditioned_ilut<MATRIX, VECTOR>>();
     else if (bgeot::casecmp(name, "gmres/ilutp") == 0)
-      p.reset(new linear_solver_gmres_preconditioned_ilutp<MATRIX, VECTOR>);
+      return std::make_shared
+	<linear_solver_gmres_preconditioned_ilutp<MATRIX, VECTOR>>();
     else if (bgeot::casecmp(name, "auto") == 0)
-      p = default_linear_solver<MATRIX, VECTOR>(md);
+      return default_linear_solver<MATRIX, VECTOR>(md);
     else
       GMM_ASSERT1(false, "Unknown linear solver");
-    return p;
+    return std::shared_ptr<abstract_linear_solver<MATRIX, VECTOR>>();
   }
 
   inline rmodel_plsolver_type rselect_linear_solver(const model &md,

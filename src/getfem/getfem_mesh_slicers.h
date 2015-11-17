@@ -194,7 +194,7 @@ namespace getfem {
     virtual void copy(size_type cv, base_vector& coeff) const = 0;
     virtual scalar_type maxval() const = 0;
     virtual ~mesh_slice_cv_dof_data_base() {}
-    virtual mesh_slice_cv_dof_data_base* clone() const = 0;
+    virtual std::unique_ptr<mesh_slice_cv_dof_data_base> clone() const = 0;
   };
 
   /**
@@ -223,9 +223,8 @@ namespace getfem {
         *out = u[*it];
     }
     scalar_type maxval() const { return gmm::vect_norminf(u); }
-    virtual mesh_slice_cv_dof_data_base* clone() const {
-      return new mesh_slice_cv_dof_data<VEC>(*this);
-    }
+    virtual std::unique_ptr<mesh_slice_cv_dof_data_base> clone() const
+    { return std::make_unique<mesh_slice_cv_dof_data<VEC>>(*this); }
   };
   
 

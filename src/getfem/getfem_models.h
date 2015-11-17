@@ -232,7 +232,7 @@ namespace getfem {
           v_num_data(act_counter()),
           alpha(1), pim_data(pimd) {
         if (filter != VDESCRFILTER_NO && mf != 0)
-          partial_mf = ppartial_mesh_fem(new partial_mesh_fem(*mf));
+          partial_mf = std::make_shared<partial_mesh_fem>(*mf);
         // v_num_data = v_num;
         if (qdims.size() == 0) qdims.push_back(1);
         GMM_ASSERT1(qdim(), "Attempt to create a null size variable");
