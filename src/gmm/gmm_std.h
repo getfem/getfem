@@ -85,7 +85,7 @@
 # include <stdcomp.h>
 # undef _RWSTD_NO_CLASS_PARTIAL_SPEC
 # undef _RWSTD_NO_NAMESPACE
-#endif 
+#endif
 */
 /* for VISUAL C++ ...
 #if defined(_MSC_VER) //  && !defined(__MWERKS__)
@@ -111,7 +111,7 @@
 #include <cassert>
 #include <climits>
 #include <iostream>
-//#include <ios> 
+//#include <ios>
 #include <fstream>
 #include <ctime>
 #include <exception>
@@ -129,13 +129,15 @@
 #include <memory>
 #include <locale.h>
 
+#if defined(__GNUC__) || defined(__GNUG__)
 namespace std {
   template<typename T, typename ...Args>
   unique_ptr<T> make_unique( Args&& ...args )
   { return std::unique_ptr<T>( new T( std::forward<Args>(args)... ) ); }
 }
+#endif
 
-#ifdef GETFEM_HAVE_OPENMP	
+#ifdef GETFEM_HAVE_OPENMP
 #include <omp.h>
 	/**number of OpenMP threads*/
 	inline size_t num_threads(){return omp_get_max_threads();}
@@ -162,16 +164,16 @@ namespace gmm {
 	public :
 		inline standard_locale(void) : cinloc(cin.getloc())
 		{
-			if (!me_is_multithreaded_now()){ 
+			if (!me_is_multithreaded_now()){
 				 cloc=setlocale(LC_NUMERIC, 0);
-				 setlocale(LC_NUMERIC,"C"); 
+				 setlocale(LC_NUMERIC,"C");
 			}
 		}
 
 		inline ~standard_locale() {
-			if (!me_is_multithreaded_now()) 
-					setlocale(LC_NUMERIC, cloc.c_str()); 
-			
+			if (!me_is_multithreaded_now())
+					setlocale(LC_NUMERIC, cloc.c_str());
+
 		}
 	};
 #else
@@ -182,7 +184,7 @@ namespace gmm {
 
 	//public :
 	//	inline standard_locale(void) : oldloc(uselocale((locale_t)0))
-	//	{       
+	//	{
 	//			temploc = newlocale(LC_NUMERIC, "C", NULL);
     //              uselocale(temploc);
 	//	}
@@ -198,7 +200,7 @@ namespace gmm {
   class standard_locale {
     std::string cloc;
     std::locale cinloc;
-    
+
   public :
     inline standard_locale(void)
       : cloc(setlocale(LC_NUMERIC, 0)), cinloc(cin.getloc())
@@ -213,20 +215,20 @@ namespace gmm {
   class stream_standard_locale {
     std::locale cloc;
     std::ios &io;
-    
+
   public :
     inline stream_standard_locale(std::ios &i)
       : cloc(i.getloc()), io(i) { io.imbue(std::locale("C")); }
     inline ~stream_standard_locale() { io.imbue(cloc); }
   };
-  
-  
-  
-  
+
+
+
+
   /* ******************************************************************* */
   /*       Clock functions.                                              */
   /* ******************************************************************* */
-  
+
 # if  defined(HAVE_SYS_TIMES)
   inline double uclock_sec(void) {
     static double ttclk = 0.;
@@ -237,23 +239,23 @@ namespace gmm {
   inline double uclock_sec(void)
   { return double(clock())/double(CLOCKS_PER_SEC); }
 # endif
-  
+
   /* ******************************************************************** */
   /*	Fixed size integer types.                     			  */
   /* ******************************************************************** */
-  // Remark : the test program dynamic_array tests the lenght of
+  // Remark : the test program dynamic_array tests the length of
   //          resulting integers
-  
+
   template <size_t s> struct fixed_size_integer_generator {
     typedef void int_base_type;
-    typedef void uint_base_type;  
+    typedef void uint_base_type;
   };
-  
+
   template <> struct fixed_size_integer_generator<sizeof(char)> {
     typedef signed char int_base_type;
     typedef unsigned char uint_base_type;
   };
-  
+
   template <> struct fixed_size_integer_generator<sizeof(short int)
     - ((sizeof(short int) == sizeof(char)) ? 78 : 0)> {
   typedef signed short int int_base_type;
@@ -324,13 +326,13 @@ typedef fixed_size_integer_generator<8>::uint_base_type uint64_type;
 // #endif
 
 #if defined(__GNUC__) && !defined(__ICC)
-/* 
-   g++ can issue a warning at each usage of a function declared with this special attribute 
+/*
+   g++ can issue a warning at each usage of a function declared with this special attribute
    (also works with typedefs and variable declarations)
 */
 # define IS_DEPRECATED __attribute__ ((__deprecated__))
 /*
-  the specified function is inlined at any optimization level 
+  the specified function is inlined at any optimization level
 */
 # define ALWAYS_INLINE __attribute__((always_inline))
 #else
@@ -345,7 +347,7 @@ typedef fixed_size_integer_generator<8>::uint_base_type uint64_type;
   /* ******************************************************************** */
 
 #if defined(EXPORTED_TO_SHARED_LIB)
-#  if defined(_MSC_VER) || defined(__INTEL_COMPILER)    
+#  if defined(_MSC_VER) || defined(__INTEL_COMPILER)
 #     define APIDECL __declspec(dllexport)
 #  elif defined(__GNUC__)
 #     define __attribute__((visibility("default")))
@@ -358,7 +360,7 @@ typedef fixed_size_integer_generator<8>::uint_base_type uint64_type;
 #endif
 
 #if defined(IMPORTED_FROM_SHARED_LIB)
-#  if defined(_MSC_VER) || defined(__INTEL_COMPILER)    
+#  if defined(_MSC_VER) || defined(__INTEL_COMPILER)
 #     define APIDECL __declspec(dllimport)
 #  else
 #     define APIDECL
@@ -375,4 +377,3 @@ typedef fixed_size_integer_generator<8>::uint_base_type uint64_type;
 #endif
 
 #endif /* GMM_STD_H__ */
-
