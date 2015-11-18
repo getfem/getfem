@@ -129,9 +129,8 @@
 #include <memory>
 #include <locale.h>
 
-
-#if defined(__GNUC__) && (__cplusplus <= 201103L)
 namespace std {
+#if defined(__GNUC__) && (__cplusplus <= 201103L)
   template<typename _Tp>
     struct _MakeUniq
     { typedef unique_ptr<_Tp> __single_object; };
@@ -155,8 +154,28 @@ namespace std {
   template<typename _Tp, typename... _Args>
     inline typename _MakeUniq<_Tp>::__invalid_type
     make_unique(_Args&&...) = delete;
-}
 #endif
+
+
+  // Should simply be replaced by std::shared_ptr<T[]> when it will be supported
+  // by the STL
+  template <typename T> class shared_array_ptr : shared_ptr<T> {
+  public:
+    shared_array_ptr() {}
+    shared_array_ptr(T *q) : std::shared_ptr<T>(q, default_delete<T[]>()) {}
+    template <typename Y> shared_array_ptr(const std::shared_ptr<Y> &p, T *q)
+      : std::shared_ptr<T>(p, q) {}
+    T *get() const { return shared_ptr<T>::get(); }
+    T& operator*() const { return shared_ptr<T>::operator*(); }
+    T* operator->() const { return shared_ptr<T>::operator->(); }
+  };
+  
+  template <typename T> shared_array_ptr<T> make_shared_array(size_t num)
+  { return shared_array_ptr<T>(new T[num]); }
+}
+
+
+
 
 #ifdef GETFEM_HAVE_OPENMP
 

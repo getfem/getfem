@@ -55,40 +55,7 @@ namespace getfem {
   class cont_struct_getfem_model;
 }
 
-namespace getfemint
-{
-
-  /**
-     shared_array uses operator delete[] for destruction of data
-   */
-  template <typename T> class shared_array {
-    T *p;
-    unsigned long *refcnt;
-  public:
-    shared_array() : p(0), refcnt(0) {}
-    explicit shared_array(T *q, bool refcounted = true) : p(q), refcnt(0)
-    { if (refcounted) refcnt = new unsigned long(1); }
-    shared_array(const shared_array<T> &other)
-      : p(other.p), refcnt(other.refcnt)
-    { if (refcnt) ++(*refcnt); }
-    void reset(T *q, bool refcounted = true)
-    { release(); shared_array<T> tmp(q,refcounted); (*this).swap(tmp); }
-    void swap(shared_array<T> &other)
-    { std::swap(p,other.p); std::swap(refcnt,other.refcnt); }
-    void release() {
-      if (refcnt && --(*refcnt) == 0)
-	{ if (p) delete[] p; delete refcnt; }
-      p = 0; refcnt = 0;
-    }
-    ~shared_array() { release(); }
-    shared_array<T> &operator=(const shared_array<T> &other)
-    { shared_array<T> tmp(other); swap(tmp); return *this; }
-    T *get() const { return p; }
-    bool counted() { return refcnt; }
-    unsigned long use_count() const { return refcnt ? 0 : *refcnt; }
-    T& operator[](unsigned i) const { return p[i]; }
-  };
-
+namespace getfemint {
 
   /* exception-throwing version of the allocation functions of gfi_array.h */
   gfi_array* checked_gfi_array_create(int ndim, const int *dims, gfi_type_id type, gfi_complex_flag is_complex = GFI_REAL);
@@ -196,19 +163,19 @@ namespace getfemint
     typedef value_type* iterator;
     typedef const value_type* const_iterator;
   protected:
-    shared_array<T> data;
+    std::shared_array_ptr<T> data; // should be replaced by std::shared_array_ptr<T[]> data when it will be suported.
   public:
     value_type& operator[](size_type i)
-    { if (i >= size()) THROW_INTERNAL_ERROR; return data[unsigned(i)]; }
+    { if (i >= size()) THROW_INTERNAL_ERROR; return (data.get())[unsigned(i)]; }
     const value_type& operator[](size_type i)
-      const { if (i >= size()) THROW_INTERNAL_ERROR; return data[unsigned(i)]; }
+      const { if (i >= size()) THROW_INTERNAL_ERROR; return (data.get())[unsigned(i)]; }
     value_type& operator()(size_type i, size_type j, size_type k=0) {
       if (i+j*getm()+k*getm()*getn() >= size()) THROW_INTERNAL_ERROR;
-      return data[unsigned(i+j*getm()+k*getm()*getn())];
+      return (data.get())[unsigned(i+j*getm()+k*getm()*getn())];
     }
     const value_type& operator()(size_type i, size_type j, size_type k=0) const {
       if (i+j*getm()+k*getm()*getn() >= size()) THROW_INTERNAL_ERROR;
-      return data[unsigned(i+j*getm()+k*getm()*getn())];
+      return (data.get())[unsigned(i+j*getm()+k*getm()*getn())];
     }
     iterator begin() { return data.get(); }
     iterator end() { return data.get()+size(); }
@@ -216,19 +183,16 @@ namespace getfemint
     const_iterator end() const { return data.get()+size(); }
 
     /* with this contructor, the data is refcounted */
-    garray(value_type *v, int sz_) : array_dimensions(sz_), data(v,true) {}
+    garray(value_type *v, int sz_) : array_dimensions(sz_), data(v) {}
 
     /* copies the array vector into a new VECT object */
-    template<class VECT> VECT to_vector() const {
-      VECT v(begin(), end()); /*v(size());
-                                std::copy(begin(), end(), v.begin());*/
-      return v;
-    }
+    template<class VECT> VECT to_vector()
+      const { VECT v(begin(), end()); return v; }
     garray() {}
     garray(const gfi_array *mx) : array_dimensions(mx) {}
     bool in_range(value_type vmin, value_type vmax) {
       for (size_type i = 0; i < size(); i++)
-        if (data[i] < vmin || data[i] > vmax) return false;
+        if ((data.get())[i] < vmin || (data.get())[i] > vmax) return false;
       return true;
     }
   };
@@ -241,11 +205,11 @@ namespace getfemint
       if (gfi_array_get_class(mx) == GFI_DOUBLE) {
         /* creation from an array of doubles : just store a ref to the array */
         assign_dimensions(mx);
-        data.reset(gfi_double_get_data(mx), false);
+	data = std::shared_array_ptr<double>(std::shared_ptr<double>(), gfi_double_get_data(mx));
       } else if (gfi_array_get_class(mx) == GFI_UINT32 || gfi_array_get_class(mx) == GFI_INT32) {
         /* creation from an array of int : allocation of new storage, and copy of the content */
         assign_dimensions(mx);
-        data.reset(new double[size()], true);
+        data = std::make_shared_array<double>(size());
         if (gfi_array_get_class(mx) == GFI_INT32)
           std::copy(gfi_int32_get_data(mx), gfi_int32_get_data(mx)+size(), data.get());
         else
@@ -277,11 +241,11 @@ namespace getfemint
       if (gfi_array_get_class(mx) == GFI_DOUBLE && gfi_array_is_complex(mx)) {
         /* creation from an array of complexes : just store a ref to the array */
         assign_dimensions(mx);
-        data.reset(reinterpret_cast<complex_type*>(gfi_double_get_data(mx)), false);
+	data = std::shared_array_ptr<complex_type>(std::shared_ptr<complex_type>(), reinterpret_cast<complex_type*>(gfi_double_get_data(mx)));
       } else if (gfi_array_get_class(mx) == GFI_DOUBLE || gfi_array_get_class(mx) == GFI_UINT32 || gfi_array_get_class(mx) == GFI_INT32) {
         /* creation from an array of int or doubles : allocation of new storage, and copy of the content */
         assign_dimensions(mx);
-        data.reset(new complex_type[size()], true);
+	data = std::make_shared_array<complex_type>(size());
         if (gfi_array_get_class(mx) == GFI_DOUBLE)
           std::copy(gfi_double_get_data(mx), gfi_double_get_data(mx)+size(), data.get());
         else if (gfi_array_get_class(mx) == GFI_INT32)
@@ -309,14 +273,13 @@ namespace getfemint
       mx = mx_;
       v = v_; if (v == -1) v = gfi_array_is_complex(mx) ? COMPLEX : REAL;
       clear();
-      if (v == REAL)
-        d.reset(new darray(mx));
-      else c.reset(new carray(mx));
+      if (v == REAL) d = std::make_shared<darray>(mx);
+      else c = std::make_shared<carray>(mx);
     }
     bool is_complex() const { return v == COMPLEX; }
     carray &to_complex() {
       if (v == REAL)
-        { c.reset(new carray(mx)); d = std::shared_ptr<darray>(); v = COMPLEX; }
+        { c = std::make_shared<carray>(mx); d = std::shared_ptr<darray>(); v = COMPLEX; }
       return cplx();
     }
     darray &to_real() {
@@ -341,9 +304,9 @@ namespace getfemint
     iarray() {}
     void assign(const gfi_array *mx) {
       if (gfi_array_get_class(mx) == GFI_INT32)
-        data.reset(gfi_int32_get_data(mx), false);
+	data = std::shared_array_ptr<int>(std::shared_ptr<int>(), gfi_int32_get_data(mx));
       else if (gfi_array_get_class(mx) == GFI_UINT32)
-        data.reset((int*)gfi_uint32_get_data(mx), false);
+	data = std::shared_array_ptr<int>(std::shared_ptr<int>(), (int*)gfi_uint32_get_data(mx));
       else THROW_INTERNAL_ERROR;
       assign_dimensions(mx);
     }
@@ -677,14 +640,6 @@ private:
     }
     int narg() const { return nb_arg; }
     int remaining() const { return int(idx.card()); }
-    void get_array(const gfi_array **& m) {
-      if (remaining()) {
-        m = new const gfi_array *[remaining()];
-        for (size_type i=0; remaining(); i++) {
-          m[i] = pop_gfi_array();
-        }
-      } else m = NULL;
-    }
     void pop_all() { idx.clear(); }
   };
 
