@@ -10612,7 +10612,6 @@ namespace getfem {
       const getfem::mesh &m = *(it->second.m);
       GMM_ASSERT1(&m == &(gic.linked_mesh()),
                   "Incompatibility of meshes in interpolation");
-      size_type P = m.dim();
       ga_instruction_list &gil = it->second.instructions;
 
       // iteration on elements (or faces of elements)
@@ -10632,8 +10631,9 @@ namespace getfem {
 
         if (pspt.get() && ind.size() && pspt->size()) {
           bgeot::vectors_to_base_matrix(G, m.points_of_convex(v.cv()));
-          size_type N = G.nrows();
           bgeot::pgeometric_trans pgt = m.trans_of_convex(v.cv());
+          up.resize(G.nrows());
+          un.resize(pgt->dim());
 
           if (gis.ctx.have_pgp() && gis.ctx.pgt() == pgt) {
             gis.ctx = fem_interpolation_context(gis.ctx.pgp(), 0, 0, G,
@@ -10663,7 +10663,6 @@ namespace getfem {
               // Computation of unit normal vector in case of a boundary
               if (v.f() != short_type(-1)) {
                 const base_matrix& B = gis.ctx.B();
-                up.resize(N); un.resize(P);
                 gmm::copy(pgt->normals()[v.f()], un);
                 gmm::mult(B, un, up);
                 scalar_type nup = gmm::vect_norm2(up);
@@ -10723,7 +10722,6 @@ namespace getfem {
       const getfem::mesh &m = *(it->second.m);
 
       GMM_ASSERT1(&m == &(mim.linked_mesh()), "Incompatibility of meshes");
-      size_type P = m.dim();
       ga_instruction_list &gil = it->second.instructions;
       const mesh_region &region = *(it->first.region());
 
@@ -10734,14 +10732,14 @@ namespace getfem {
       bgeot::pgeometric_trans pgt = 0;
       pintegration_method pim = 0;
       bgeot::pstored_point_tab pspt = 0;
-      size_type N = 0;
       for (getfem::mr_visitor v(rg, m); !v.finished(); ++v) {
         if (mim.convex_index().is_in(v.cv())) {
           // cout << "proceed with element " << v.cv() << endl;
           if (v.cv() != old_cv) {
             bgeot::vectors_to_base_matrix(G, m.points_of_convex(v.cv()));
-            N = G.nrows();
             pgt = m.trans_of_convex(v.cv());
+            up.resize(G.nrows());
+            un.resize(pgt->dim());
             pim = mim.int_method_of_element(v.cv());
             GMM_ASSERT1(pim->type() == IM_APPROX, "Sorry, exact methods cannot "
                         "be used in high level generic assembly");
@@ -10787,7 +10785,6 @@ namespace getfem {
                 J = gis.ctx.J();
                 // Computation of unit normal vector in case of a boundary
                 if (v.f() != short_type(-1)) {
-                  up.resize(N); un.resize(P);
                   gmm::copy(pgt->normals()[v.f()], un);
                   gmm::mult(gis.ctx.B(), un, up);
                   scalar_type nup = gmm::vect_norm2(up);
