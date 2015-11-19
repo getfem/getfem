@@ -50,6 +50,9 @@ namespace getfem {
 
   int check_symmetry(const base_tensor &t);
 
+  class abstract_hyperelastic_law;
+  typedef std::shared_ptr<const abstract_hyperelastic_law> phyperelastic_law;
+
   /** Base class for material law. 
       Inherit from this class to define a new law.
   */
@@ -57,7 +60,7 @@ namespace getfem {
   public:
     mutable int uvflag;
     size_type nb_params_;
-    getfem::abstract_hyperelastic_law *pl; /* optional reference */
+    phyperelastic_law pl; /* optional reference */
     void reset_unvalid_flag(void) const { uvflag = 0; }
     void inc_unvalid_flag(void) const { uvflag++; }
     int get_unvalid_flag(void) const { return uvflag; }
@@ -89,7 +92,7 @@ namespace getfem {
 			base_tensor &grad_sigma_ul)const;
 
     size_type nb_params(void) const { return nb_params_; }
-    abstract_hyperelastic_law() { nb_params_ = 0; pl = 0; }
+    abstract_hyperelastic_law() { nb_params_ = 0; }
     virtual ~abstract_hyperelastic_law() {}
     static void random_E(base_matrix &E);
     void test_derivatives(size_type N, scalar_type h,
@@ -213,7 +216,7 @@ namespace getfem {
 		       const base_vector &params, scalar_type det_trans) const;
     virtual void grad_sigma(const base_matrix &E, base_tensor &result,
 			    const base_vector &params, scalar_type det_trans) const;
-    plane_strain_hyperelastic_law(getfem::abstract_hyperelastic_law *pl_)
+    plane_strain_hyperelastic_law(const phyperelastic_law &pl_)
     { pl = pl_; nb_params_ = pl->nb_params(); }
   };
 
@@ -590,20 +593,20 @@ namespace getfem {
   */
   size_type add_nonlinear_elasticity_brick
   (model &md, const mesh_im &mim, const std::string &varname,
-   const abstract_hyperelastic_law &AHL, const std::string &dataname,
+   const phyperelastic_law &AHL, const std::string &dataname,
    size_type region = size_type(-1));
 
 
 
   void compute_Von_Mises_or_Tresca
-  (model &md, const std::string &varname, const abstract_hyperelastic_law &AHL,
+  (model &md, const std::string &varname, const phyperelastic_law &AHL,
    const std::string &dataname, const mesh_fem &mf_vm,
    model_real_plain_vector &VM, bool tresca);
 
 
   void compute_sigmahathat(model &md,
 			   const std::string &varname, 
-			   const abstract_hyperelastic_law &AHL,
+			   const phyperelastic_law &AHL,
 			   const std::string &dataname,
 			   const mesh_fem &mf_sigma,
 			   model_real_plain_vector &SIGMA);
@@ -614,7 +617,7 @@ namespace getfem {
      with respect to the constitutive elasticity law AHL (only valid in 3D).
   */
   template <class VECTVM> void compute_Von_Mises_or_Tresca
-  (model &md, const std::string &varname, const abstract_hyperelastic_law &AHL,
+  (model &md, const std::string &varname, const phyperelastic_law &AHL,
    const std::string &dataname, const mesh_fem &mf_vm,
    VECTVM &VM, bool tresca) {
     model_real_plain_vector VMM(mf_vm.nb_dof());

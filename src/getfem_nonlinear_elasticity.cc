@@ -345,55 +345,53 @@ namespace getfem {
     GMM_ASSERT1(ok, "Derivative test has failed");
   }
     
-	void abstract_hyperelastic_law::cauchy_updated_lagrangian(const base_matrix& F, 
-		const base_matrix &E, 
-		base_matrix &cauchy_stress,
-		const base_vector &params,
-		scalar_type det_trans) const
-	{
-		size_type N = E.ncols();
-		base_matrix PK2(N,N);
-		sigma(E,PK2,params,det_trans);//second Piola-Kirchhoff stress
-		base_matrix aux(N,N);
-		gmm::mult(F,PK2,aux);
-		gmm::mult(aux,gmm::transposed(F),cauchy_stress);
-		gmm::scale(cauchy_stress,scalar_type(1.0/det_trans)); //cauchy = 1/J*F*PK2*F^T
-	}
+  void abstract_hyperelastic_law::cauchy_updated_lagrangian
+  (const base_matrix& F, const base_matrix &E, 
+   base_matrix &cauchy_stress, const base_vector &params,
+   scalar_type det_trans) const
+  {
+    size_type N = E.ncols();
+    base_matrix PK2(N,N);
+    sigma(E,PK2,params,det_trans);//second Piola-Kirchhoff stress
+    base_matrix aux(N,N);
+    gmm::mult(F,PK2,aux);
+    gmm::mult(aux,gmm::transposed(F),cauchy_stress);
+    gmm::scale(cauchy_stress,scalar_type(1.0/det_trans)); //cauchy = 1/J*F*PK2*F^T
+  }
+  
 
-
-	void abstract_hyperelastic_law::grad_sigma_updated_lagrangian(const base_matrix& F, 
-		const base_matrix& E,
-		const base_vector &params,
-		scalar_type det_trans,
-		base_tensor &grad_sigma_ul)const
-	{
-		size_type N = E.ncols();
-		base_tensor Cse(N,N,N,N);
-		grad_sigma(E,Cse,params,det_trans);
-		scalar_type mult = 1.0/det_trans;
-		// this is a general transformation for an anisotropic material, very non-efficient;
-		// more effiecient calculations can be overloaded for every specific material
-		for(size_type i = 0; i < N; ++i)
-			for(size_type j = 0; j < N; ++j)
-				for(size_type k = 0; k < N; ++k)
-					for(size_type l = 0; l < N; ++l)
-					{
-						grad_sigma_ul(i,j,k,l) = 0.0;
-						for(size_type m = 0; m < N; ++m)
-						{    for(size_type n = 0; n < N; ++n)
-								for(size_type p = 0; p < N; ++p)
-									for(size_type q = 0; q < N; ++q)
-										grad_sigma_ul(i,j,k,l)+= 
-										F(i,m)*F(j,n)*F(k,p)*F(l,q)*Cse(m,n,p,q);
-						}
-						grad_sigma_ul(i,j,k,l) *= mult;
-					}
-	}
-
+  void abstract_hyperelastic_law::grad_sigma_updated_lagrangian
+  (const base_matrix& F, const base_matrix& E,
+   const base_vector &params, scalar_type det_trans,
+   base_tensor &grad_sigma_ul) const
+  {
+    size_type N = E.ncols();
+    base_tensor Cse(N,N,N,N);
+    grad_sigma(E,Cse,params,det_trans);
+    scalar_type mult = 1.0/det_trans;
+    // this is a general transformation for an anisotropic material, very non-efficient;
+    // more effiecient calculations can be overloaded for every specific material
+    for(size_type i = 0; i < N; ++i)
+      for(size_type j = 0; j < N; ++j)
+	for(size_type k = 0; k < N; ++k)
+	  for(size_type l = 0; l < N; ++l)
+	    {
+	      grad_sigma_ul(i,j,k,l) = 0.0;
+	      for(size_type m = 0; m < N; ++m)
+		{    for(size_type n = 0; n < N; ++n)
+		    for(size_type p = 0; p < N; ++p)
+		      for(size_type q = 0; q < N; ++q)
+			grad_sigma_ul(i,j,k,l)+= 
+			  F(i,m)*F(j,n)*F(k,p)*F(l,q)*Cse(m,n,p,q);
+		}
+	      grad_sigma_ul(i,j,k,l) *= mult;
+	    }
+  }
+  
   scalar_type SaintVenant_Kirchhoff_hyperelastic_law::strain_energy
   (const base_matrix &E, const base_vector &params, scalar_type) const {
     return gmm::sqr(gmm::mat_trace(E)) * params[0] / scalar_type(2)
-      + gmm::mat_euclidean_norm_sqr(E) * params[1];
+    + gmm::mat_euclidean_norm_sqr(E) * params[1];
   }
   
   void SaintVenant_Kirchhoff_hyperelastic_law::sigma
@@ -693,11 +691,11 @@ namespace getfem {
   }
 
   Neo_Hookean_hyperelastic_law::Neo_Hookean_hyperelastic_law(bool bonet_)
-  : bonet(bonet_)
+    : bonet(bonet_)
   {
     nb_params_ = 2;
   }
-
+  
 
 
   scalar_type generalized_Blatz_Ko_hyperelastic_law::strain_energy
@@ -949,7 +947,7 @@ namespace getfem {
 
   struct nonlinear_elasticity_brick : public virtual_brick {
 
-    const abstract_hyperelastic_law &AHL;
+    phyperelastic_law AHL;
     
     virtual void asm_real_tangent_terms(const model &md, size_type /* ib */,
                                         const model::varnamelist &vl,
@@ -979,7 +977,7 @@ namespace getfem {
 
       size_type sl = gmm::vect_size(params);
       if (mf_params) sl = sl * mf_params->get_qdim() / mf_params->nb_dof();
-      GMM_ASSERT1(sl == AHL.nb_params(), "Wrong number of coefficients for the "
+      GMM_ASSERT1(sl == AHL->nb_params(), "Wrong number of coefficients for the "
 		  "nonlinear constitutive elastic law");
 
       mesh_region rg(region);
@@ -989,19 +987,19 @@ namespace getfem {
 	gmm::clear(matl[0]);
 	GMM_TRACE2("Nonlinear elasticity stiffness matrix assembly");
 	asm_nonlinear_elasticity_tangent_matrix
-	  (matl[0], mim, mf_u, u, mf_params, params, AHL, rg);
+	  (matl[0], mim, mf_u, u, mf_params, params, *AHL, rg);
       }
 
 
       if (version & model::BUILD_RHS) {
 	asm_nonlinear_elasticity_rhs(vecl[0], mim,
-				     mf_u, u, mf_params, params, AHL, rg);
+				     mf_u, u, mf_params, params, *AHL, rg);
 	gmm::scale(vecl[0], scalar_type(-1));
       }
 
     }
 
-    nonlinear_elasticity_brick(const abstract_hyperelastic_law &AHL_)
+    nonlinear_elasticity_brick(const phyperelastic_law &AHL_)
       : AHL(AHL_) {
       set_flags("Nonlinear elasticity brick", false /* is linear*/,
                 true /* is symmetric */, true /* is coercive */,
@@ -1017,9 +1015,9 @@ namespace getfem {
   // Deprecated brick
   size_type add_nonlinear_elasticity_brick
   (model &md, const mesh_im &mim, const std::string &varname,
-   const abstract_hyperelastic_law &AHL, const std::string &dataname,
+   const phyperelastic_law &AHL, const std::string &dataname,
    size_type region) {
-    pbrick pbr(new nonlinear_elasticity_brick(AHL));
+    pbrick pbr = std::make_shared<nonlinear_elasticity_brick>(AHL);
 
     model::termlist tl;
     tl.push_back(model::term_description(varname, varname, true));
@@ -1034,7 +1032,7 @@ namespace getfem {
 
   void compute_Von_Mises_or_Tresca(model &md,
 				   const std::string &varname, 
-				   const abstract_hyperelastic_law &AHL,
+				   const phyperelastic_law &AHL,
 				   const std::string &dataname,
 				   const mesh_fem &mf_vm,
 				   model_real_plain_vector &VM,
@@ -1048,11 +1046,11 @@ namespace getfem {
     
     size_type sl = gmm::vect_size(params);
     if (mf_params) sl = sl * mf_params->get_qdim() / mf_params->nb_dof();
-    GMM_ASSERT1(sl == AHL.nb_params(), "Wrong number of coefficients for "
+    GMM_ASSERT1(sl == AHL->nb_params(), "Wrong number of coefficients for "
 		"the nonlinear constitutive elastic law");
     
     unsigned N = unsigned(mf_u.linked_mesh().dim());
-    unsigned NP = unsigned(AHL.nb_params()), NFem = mf_u.get_qdim();
+    unsigned NP = unsigned(AHL->nb_params()), NFem = mf_u.get_qdim();
     model_real_plain_vector GRAD(mf_vm.nb_dof()*NFem*N);
     model_real_plain_vector PARAMS(mf_vm.nb_dof()*NP);
     if (mf_params) interpolation(*mf_params, mf_vm, params, PARAMS);
@@ -1079,7 +1077,7 @@ namespace getfem {
       gmm::scale(E, scalar_type(1)/scalar_type(2));
       if (mf_params)
 	gmm::copy(gmm::sub_vector(PARAMS, gmm::sub_interval(i*NP,NP)), p);
-      AHL.sigma(E, sigmahathat, p, scalar_type(1));
+      AHL->sigma(E, sigmahathat, p, scalar_type(1));
       if (NFem == 3 && N == 2) {
 	//jyh : compute ez, normal on deformed surface
 	for (unsigned int l = 0; l <NFem; ++l)  {
@@ -1128,7 +1126,7 @@ namespace getfem {
 
   void compute_sigmahathat(model &md,
 		     const std::string &varname, 
-		     const abstract_hyperelastic_law &AHL,
+		     const phyperelastic_law &AHL,
 		     const std::string &dataname,
 		     const mesh_fem &mf_sigma,
 		     model_real_plain_vector &SIGMA) {
@@ -1139,11 +1137,11 @@ namespace getfem {
     
     size_type sl = gmm::vect_size(params);
     if (mf_params) sl = sl * mf_params->get_qdim() / mf_params->nb_dof();
-    GMM_ASSERT1(sl == AHL.nb_params(), "Wrong number of coefficients for "
+    GMM_ASSERT1(sl == AHL->nb_params(), "Wrong number of coefficients for "
 		"the nonlinear constitutive elastic law");
     
     unsigned N = unsigned(mf_u.linked_mesh().dim());
-    unsigned NP = unsigned(AHL.nb_params()), NFem = mf_u.get_qdim();
+    unsigned NP = unsigned(AHL->nb_params()), NFem = mf_u.get_qdim();
     GMM_ASSERT1(mf_sigma.nb_dof() > 0, "Bad mf_sigma");
     size_type qqdim = mf_sigma.get_qdim();
     size_type ratio = N*N / qqdim;
@@ -1198,7 +1196,7 @@ namespace getfem {
       if (mf_params)
 	gmm::copy(gmm::sub_vector(PARAMS, gmm::sub_interval(i*ratio*NP,NP)),p);
       // cout << "E = " << E << endl;
-      AHL.sigma(E, sigmahathat, p, scalar_type(1));
+      AHL->sigma(E, sigmahathat, p, scalar_type(1));
       // cout << "ok" << endl;
       std::copy(sigmahathat.begin(), sigmahathat.end(), SIGMA.begin()+i*N*N);
     }
@@ -1269,7 +1267,7 @@ namespace getfem {
   size_type add_nonlinear_incompressibility_brick
   (model &md, const mesh_im &mim, const std::string &varname,
    const std::string &multname, size_type region) {
-    pbrick pbr(new nonlinear_incompressibility_brick());
+    pbrick pbr = std::make_shared<nonlinear_incompressibility_brick>();
     model::termlist tl;
     tl.push_back(model::term_description(varname, varname, true));
     tl.push_back(model::term_description(varname, multname, true));
@@ -1768,7 +1766,7 @@ namespace getfem {
 
 
   struct AHL_wrapper_sigma : public ga_nonlinear_operator {
-    abstract_hyperelastic_law *AHL;
+    phyperelastic_law AHL;
     bool result_size(const arg_list &args, bgeot::multi_index &sizes) const {
       if (args.size() != 2 || args[0]->sizes().size() != 2 
           || args[1]->size() != AHL->nb_params()
@@ -1833,15 +1831,13 @@ namespace getfem {
       GMM_ASSERT1(false, "Sorry, second derivative not implemented");
     }
 
-    AHL_wrapper_sigma(abstract_hyperelastic_law *A) : AHL(A) {}
-
-    virtual ~AHL_wrapper_sigma() { delete AHL; }
+    AHL_wrapper_sigma(const phyperelastic_law &A) : AHL(A) {}
 
   };
 
 
   struct AHL_wrapper_potential : public ga_nonlinear_operator {
-    abstract_hyperelastic_law *AHL;
+    phyperelastic_law AHL;
     bool result_size(const arg_list &args, bgeot::multi_index &sizes) const {
       if (args.size() != 2 || args[0]->sizes().size() != 2 
           || args[1]->size() != AHL->nb_params()
@@ -1927,9 +1923,8 @@ namespace getfem {
 
     }
 
-    AHL_wrapper_potential(abstract_hyperelastic_law *A) : AHL(A) {}
+    AHL_wrapper_potential(const phyperelastic_law &A) : AHL(A) {}
 
-    virtual ~AHL_wrapper_potential() { delete AHL; }
   };
 
 
@@ -2027,126 +2022,179 @@ namespace getfem {
     ga_predef_operator_tab &PREDEF_OPERATORS
       = dal::singleton<ga_predef_operator_tab>::instance();
     
-    PREDEF_OPERATORS.add_method("Matrix_i2", new matrix_i2_operator());
-    PREDEF_OPERATORS.add_method("Matrix_j1", new matrix_j1_operator());
-    PREDEF_OPERATORS.add_method("Matrix_j2", new matrix_j2_operator());
-    PREDEF_OPERATORS.add_method("Right_Cauchy_Green",
-                                new Right_Cauchy_Green_operator());
-    PREDEF_OPERATORS.add_method("Left_Cauchy_Green",
-                                new Left_Cauchy_Green_operator());
-    PREDEF_OPERATORS.add_method("Green_Lagrangian",
-                                new Green_Lagrangian_operator());
+    PREDEF_OPERATORS.add_method
+      ("Matrix_i2", std::make_shared<matrix_i2_operator>());
+    PREDEF_OPERATORS.add_method
+      ("Matrix_j1", std::make_shared<matrix_j1_operator>());
+    PREDEF_OPERATORS.add_method
+      ("Matrix_j2", std::make_shared<matrix_j2_operator>());
+    PREDEF_OPERATORS.add_method
+      ("Right_Cauchy_Green", std::make_shared<Right_Cauchy_Green_operator>());
+    PREDEF_OPERATORS.add_method
+      ("Left_Cauchy_Green", std::make_shared<Left_Cauchy_Green_operator>());
+    PREDEF_OPERATORS.add_method
+      ("Green_Lagrangian", std::make_shared<Green_Lagrangian_operator>());
 
-    PREDEF_OPERATORS.add_method("Cauchy_stress_from_PK2",
-                                new Cauchy_stress_from_PK2());
+    PREDEF_OPERATORS.add_method
+      ("Cauchy_stress_from_PK2", std::make_shared<Cauchy_stress_from_PK2>());
 
-    PREDEF_OPERATORS.add_method("Saint_Venant_Kirchhoff_sigma",
-                                new Saint_Venant_Kirchhoff_sigma());
-    PREDEF_OPERATORS.add_method("Saint_Venant_Kirchhoff_potential",
-      new AHL_wrapper_potential(new SaintVenant_Kirchhoff_hyperelastic_law()));
-    PREDEF_OPERATORS.add_method("Plane_Strain_Saint_Venant_Kirchhoff_sigma",
-                                new Saint_Venant_Kirchhoff_sigma());
+    PREDEF_OPERATORS.add_method
+      ("Saint_Venant_Kirchhoff_sigma",
+       std::make_shared<Saint_Venant_Kirchhoff_sigma>());
+    PREDEF_OPERATORS.add_method
+      ("Saint_Venant_Kirchhoff_potential",
+       std::make_shared<AHL_wrapper_potential>
+       (std::make_shared<SaintVenant_Kirchhoff_hyperelastic_law>()));
+    PREDEF_OPERATORS.add_method
+      ("Plane_Strain_Saint_Venant_Kirchhoff_sigma",
+       std::make_shared<Saint_Venant_Kirchhoff_sigma>());
     PREDEF_OPERATORS.add_method
       ("Plane_Strain_Saint_Venant_Kirchhoff_potential",
-      new AHL_wrapper_potential(new SaintVenant_Kirchhoff_hyperelastic_law()));
-    
+       std::make_shared<AHL_wrapper_potential>
+       (std::make_shared<SaintVenant_Kirchhoff_hyperelastic_law>()));
 
-    abstract_hyperelastic_law *gbklaw
-      = new generalized_Blatz_Ko_hyperelastic_law();
-    PREDEF_OPERATORS.add_method("Generalized_Blatz_Ko_sigma",
-      new AHL_wrapper_sigma(gbklaw));
-    PREDEF_OPERATORS.add_method("Generalized_Blatz_Ko_potential",
-      new AHL_wrapper_potential(new generalized_Blatz_Ko_hyperelastic_law()));
-    PREDEF_OPERATORS.add_method("Plane_Strain_Generalized_Blatz_Ko_sigma",
-      new AHL_wrapper_sigma(new plane_strain_hyperelastic_law(gbklaw)));
-    PREDEF_OPERATORS.add_method("Plane_Strain_Generalized_Blatz_Ko_potential",
-      new AHL_wrapper_potential(new plane_strain_hyperelastic_law(gbklaw)));
+    phyperelastic_law gbklaw
+      = std::make_shared<generalized_Blatz_Ko_hyperelastic_law>();
+    PREDEF_OPERATORS.add_method
+      ("Generalized_Blatz_Ko_sigma",
+       std::make_shared<AHL_wrapper_sigma>(gbklaw));
+    PREDEF_OPERATORS.add_method
+      ("Generalized_Blatz_Ko_potential",
+       std::make_shared<AHL_wrapper_potential>
+       (std::make_shared<generalized_Blatz_Ko_hyperelastic_law>()));
+    PREDEF_OPERATORS.add_method
+      ("Plane_Strain_Generalized_Blatz_Ko_sigma",
+       std::make_shared<AHL_wrapper_sigma>
+       (std::make_shared<plane_strain_hyperelastic_law>(gbklaw)));
+    PREDEF_OPERATORS.add_method
+      ("Plane_Strain_Generalized_Blatz_Ko_potential",
+       std::make_shared<AHL_wrapper_potential>
+       (std::make_shared<plane_strain_hyperelastic_law>(gbklaw)));
     
-    abstract_hyperelastic_law *cigelaw
-      = new Ciarlet_Geymonat_hyperelastic_law();
-    PREDEF_OPERATORS.add_method("Ciarlet_Geymonat_sigma",
-      new AHL_wrapper_sigma(cigelaw));
-    PREDEF_OPERATORS.add_method("Ciarlet_Geymonat_potential",
-      new AHL_wrapper_potential(new Ciarlet_Geymonat_hyperelastic_law()));
-    PREDEF_OPERATORS.add_method("Plane_Strain_Ciarlet_Geymonat_sigma",
-      new AHL_wrapper_sigma(new plane_strain_hyperelastic_law(cigelaw)));
-    PREDEF_OPERATORS.add_method("Plane_Strain_Ciarlet_Geymonat_potential",
-      new AHL_wrapper_potential(new plane_strain_hyperelastic_law(cigelaw)));
+    phyperelastic_law cigelaw
+      = std::make_shared<Ciarlet_Geymonat_hyperelastic_law>();
+    PREDEF_OPERATORS.add_method
+      ("Ciarlet_Geymonat_sigma", std::make_shared<AHL_wrapper_sigma>(cigelaw));
+    PREDEF_OPERATORS.add_method
+      ("Ciarlet_Geymonat_potential",
+       std::make_shared<AHL_wrapper_potential>
+       (std::make_shared<Ciarlet_Geymonat_hyperelastic_law>()));
+    PREDEF_OPERATORS.add_method
+      ("Plane_Strain_Ciarlet_Geymonat_sigma",
+       std::make_shared<AHL_wrapper_sigma>
+       (std::make_shared<plane_strain_hyperelastic_law>(cigelaw)));
+    PREDEF_OPERATORS.add_method
+      ("Plane_Strain_Ciarlet_Geymonat_potential",
+       std::make_shared<AHL_wrapper_potential>
+       (std::make_shared<plane_strain_hyperelastic_law>(cigelaw)));
     
-    abstract_hyperelastic_law *morilaw
-      = new Mooney_Rivlin_hyperelastic_law();    
-    PREDEF_OPERATORS.add_method("Incompressible_Mooney_Rivlin_sigma",
-      new AHL_wrapper_sigma(morilaw));
-    PREDEF_OPERATORS.add_method("Incompressible_Mooney_Rivlin_potential",
-      new AHL_wrapper_potential(new Mooney_Rivlin_hyperelastic_law()));
+    phyperelastic_law morilaw
+      = std::make_shared<Mooney_Rivlin_hyperelastic_law>();    
+    PREDEF_OPERATORS.add_method
+      ("Incompressible_Mooney_Rivlin_sigma",
+       std::make_shared<AHL_wrapper_sigma>(morilaw));
+    PREDEF_OPERATORS.add_method
+      ("Incompressible_Mooney_Rivlin_potential",
+       std::make_shared<AHL_wrapper_potential>
+       (std::make_shared<Mooney_Rivlin_hyperelastic_law>()));
     PREDEF_OPERATORS.add_method
       ("Plane_Strain_Incompressible_Mooney_Rivlin_sigma",
-      new AHL_wrapper_sigma(new plane_strain_hyperelastic_law(morilaw)));
+       std::make_shared<AHL_wrapper_sigma>
+       (std::make_shared<plane_strain_hyperelastic_law>(morilaw)));
     PREDEF_OPERATORS.add_method
       ("Plane_Strain_Incompressible_Mooney_Rivlin_potential",
-      new AHL_wrapper_potential(new plane_strain_hyperelastic_law(morilaw)));
+       std::make_shared<AHL_wrapper_potential>
+       (std::make_shared<plane_strain_hyperelastic_law>(morilaw)));
 
-    abstract_hyperelastic_law *cmorilaw
-      = new Mooney_Rivlin_hyperelastic_law(true);
-    PREDEF_OPERATORS.add_method("Compressible_Mooney_Rivlin_sigma",
-      new AHL_wrapper_sigma(cmorilaw));
-    PREDEF_OPERATORS.add_method("Compressible_Mooney_Rivlin_potential",
-      new AHL_wrapper_potential(new Mooney_Rivlin_hyperelastic_law(true)));
+    phyperelastic_law cmorilaw
+      = std::make_shared<Mooney_Rivlin_hyperelastic_law>(true);
+    PREDEF_OPERATORS.add_method
+      ("Compressible_Mooney_Rivlin_sigma",
+       std::make_shared<AHL_wrapper_sigma>(cmorilaw));
+    PREDEF_OPERATORS.add_method
+      ("Compressible_Mooney_Rivlin_potential",
+       std::make_shared<AHL_wrapper_potential>
+       (std::make_shared<Mooney_Rivlin_hyperelastic_law>(true)));
     PREDEF_OPERATORS.add_method
       ("Plane_Strain_Compressible_Mooney_Rivlin_sigma",
-      new AHL_wrapper_sigma(new plane_strain_hyperelastic_law(cmorilaw)));
+       std::make_shared<AHL_wrapper_sigma>
+       (std::make_shared<plane_strain_hyperelastic_law>(cmorilaw)));
     PREDEF_OPERATORS.add_method
       ("Plane_Strain_Compressible_Mooney_Rivlin_potential",
-      new AHL_wrapper_potential(new plane_strain_hyperelastic_law(cmorilaw)));
-
-    abstract_hyperelastic_law *ineolaw
-      = new Mooney_Rivlin_hyperelastic_law(false, true);
-    PREDEF_OPERATORS.add_method("Incompressible_Neo_Hookean_sigma",
-      new AHL_wrapper_sigma(ineolaw));
-    PREDEF_OPERATORS.add_method("Incompressible_Neo_Hookean_potential",
-    new AHL_wrapper_potential(new Mooney_Rivlin_hyperelastic_law(false,true)));
+       std::make_shared<AHL_wrapper_potential>
+       (std::make_shared<plane_strain_hyperelastic_law>(cmorilaw)));
+    
+    phyperelastic_law ineolaw
+      = std::make_shared<Mooney_Rivlin_hyperelastic_law>(false, true);
+    PREDEF_OPERATORS.add_method
+      ("Incompressible_Neo_Hookean_sigma",
+       std::make_shared<AHL_wrapper_sigma>(ineolaw));
+    PREDEF_OPERATORS.add_method
+      ("Incompressible_Neo_Hookean_potential",
+       std::make_shared<AHL_wrapper_potential>
+       (std::make_shared<Mooney_Rivlin_hyperelastic_law>(false,true)));
     PREDEF_OPERATORS.add_method
       ("Plane_Strain_Incompressible_Neo_Hookean_sigma",
-      new AHL_wrapper_sigma(new plane_strain_hyperelastic_law(ineolaw)));
+       std::make_shared<AHL_wrapper_sigma>
+       (std::make_shared<plane_strain_hyperelastic_law>(ineolaw)));
     PREDEF_OPERATORS.add_method
       ("Plane_Strain_Incompressible_Neo_Hookean_potential",
-      new AHL_wrapper_potential(new plane_strain_hyperelastic_law(ineolaw)));
+       std::make_shared<AHL_wrapper_potential>
+       (std::make_shared<plane_strain_hyperelastic_law>(ineolaw)));
 
-    abstract_hyperelastic_law *cneolaw
-      = new Mooney_Rivlin_hyperelastic_law(true, true);
-    PREDEF_OPERATORS.add_method("Compressible_Neo_Hookean_sigma",
-      new AHL_wrapper_sigma(cneolaw));
-    PREDEF_OPERATORS.add_method("Compressible_Neo_Hookean_potential",
-      new AHL_wrapper_potential(new Mooney_Rivlin_hyperelastic_law(true,true)));
-    PREDEF_OPERATORS.add_method("Plane_Strain_Compressible_Neo_Hookean_sigma",
-      new AHL_wrapper_sigma(new plane_strain_hyperelastic_law(cneolaw)));
+    phyperelastic_law cneolaw
+      = std::make_shared<Mooney_Rivlin_hyperelastic_law>(true, true);
+    PREDEF_OPERATORS.add_method
+      ("Compressible_Neo_Hookean_sigma",
+       std::make_shared<AHL_wrapper_sigma>(cneolaw));
+    PREDEF_OPERATORS.add_method
+      ("Compressible_Neo_Hookean_potential",
+       std::make_shared<AHL_wrapper_potential>
+       (std::make_shared<Mooney_Rivlin_hyperelastic_law>(true,true)));
+    PREDEF_OPERATORS.add_method
+      ("Plane_Strain_Compressible_Neo_Hookean_sigma",
+       std::make_shared<AHL_wrapper_sigma>
+       (std::make_shared<plane_strain_hyperelastic_law>(cneolaw)));
     PREDEF_OPERATORS.add_method
       ("Plane_Strain_Compressible_Neo_Hookean_potential",
-      new AHL_wrapper_potential(new plane_strain_hyperelastic_law(cneolaw)));
-
-    abstract_hyperelastic_law *cneobolaw
-      = new Neo_Hookean_hyperelastic_law(true);
-    PREDEF_OPERATORS.add_method("Compressible_Neo_Hookean_Bonet_sigma",
-      new AHL_wrapper_sigma(cneobolaw));
-    PREDEF_OPERATORS.add_method("Compressible_Neo_Hookean_Bonet_potential",
-      new AHL_wrapper_potential(new Neo_Hookean_hyperelastic_law(true)));
-    PREDEF_OPERATORS.add_method("Plane_Strain_Compressible_Neo_Hookean_Bonet_sigma",
-      new AHL_wrapper_sigma(new plane_strain_hyperelastic_law(cneobolaw)));
+       std::make_shared<AHL_wrapper_potential>
+       (std::make_shared<plane_strain_hyperelastic_law>(cneolaw)));
+    
+    phyperelastic_law cneobolaw
+      = std::make_shared<Neo_Hookean_hyperelastic_law>(true);
+    PREDEF_OPERATORS.add_method
+      ("Compressible_Neo_Hookean_Bonet_sigma",
+       std::make_shared<AHL_wrapper_sigma>(cneobolaw));
+    PREDEF_OPERATORS.add_method
+      ("Compressible_Neo_Hookean_Bonet_potential",
+       std::make_shared<AHL_wrapper_potential>
+       (std::make_shared<Neo_Hookean_hyperelastic_law>(true)));
+    PREDEF_OPERATORS.add_method
+      ("Plane_Strain_Compressible_Neo_Hookean_Bonet_sigma",
+       std::make_shared<AHL_wrapper_sigma>
+       (std::make_shared<plane_strain_hyperelastic_law>(cneobolaw)));
     PREDEF_OPERATORS.add_method
       ("Plane_Strain_Compressible_Neo_Hookean_Bonet_potential",
-      new AHL_wrapper_potential(new plane_strain_hyperelastic_law(cneobolaw)));
+       std::make_shared<AHL_wrapper_potential>
+       (std::make_shared<plane_strain_hyperelastic_law>(cneobolaw)));
 
-    abstract_hyperelastic_law *cneocilaw
-      = new Neo_Hookean_hyperelastic_law(false);
-    PREDEF_OPERATORS.add_method("Compressible_Neo_Hookean_Ciarlet_sigma",
-      new AHL_wrapper_sigma(cneocilaw));
-    PREDEF_OPERATORS.add_method("Compressible_Neo_Hookean_Ciarlet_potential",
-      new AHL_wrapper_potential(new Neo_Hookean_hyperelastic_law(false)));
-    PREDEF_OPERATORS.add_method("Plane_Strain_Compressible_Neo_Hookean_Ciarlet_sigma",
-      new AHL_wrapper_sigma(new plane_strain_hyperelastic_law(cneocilaw)));
+    phyperelastic_law cneocilaw
+      = std::make_shared<Neo_Hookean_hyperelastic_law>(false);
+    PREDEF_OPERATORS.add_method
+      ("Compressible_Neo_Hookean_Ciarlet_sigma",
+       std::make_shared<AHL_wrapper_sigma>(cneocilaw));
+    PREDEF_OPERATORS.add_method
+      ("Compressible_Neo_Hookean_Ciarlet_potential",
+       std::make_shared<AHL_wrapper_potential>
+       (std::make_shared<Neo_Hookean_hyperelastic_law>(false)));
+    PREDEF_OPERATORS.add_method
+      ("Plane_Strain_Compressible_Neo_Hookean_Ciarlet_sigma",
+       std::make_shared<AHL_wrapper_sigma>
+       (std::make_shared<plane_strain_hyperelastic_law>(cneocilaw)));
     PREDEF_OPERATORS.add_method
       ("Plane_Strain_Compressible_Neo_Hookean_Ciarlet_potential",
-      new AHL_wrapper_potential(new plane_strain_hyperelastic_law(cneocilaw)));
+       std::make_shared<AHL_wrapper_potential>
+       (std::make_shared<plane_strain_hyperelastic_law>(cneocilaw)));
 
     return true;
   }

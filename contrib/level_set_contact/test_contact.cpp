@@ -71,7 +71,7 @@ int main(int argc, char *argv[])
         model.add_fem_variable("U_slave" ,mf_slave);
         
         //materials
-        getfem::abstract_hyperelastic_law* mat_law = new getfem::SaintVenant_Kirchhoff_hyperelastic_law();
+        getfem::phyperelastic_law mat_law = std::make_shared<getfem::SaintVenant_Kirchhoff_hyperelastic_law>();
         bgeot::base_vector mat_param_master(2); 
         mat_param_master[0] = p.lambda_master; mat_param_master[1] = p.mu_master;
         bgeot::base_vector mat_param_slave(2); 
@@ -81,8 +81,8 @@ int main(int argc, char *argv[])
         //nonlinear elasticity bricks (can also use updated Lagrangian)
         model.add_initialized_fixed_size_data("params_master", mat_param_master);
         model.add_initialized_fixed_size_data("params_slave" , mat_param_slave );
-        getfem::add_nonlinear_elasticity_brick(model, mim_master, "U_master", *mat_law, "params_master");
-        getfem::add_nonlinear_elasticity_brick(model, mim_slave,   "U_slave", *mat_law, "params_slave");
+        getfem::add_nonlinear_elasticity_brick(model, mim_master, "U_master", mat_law, "params_master");
+        getfem::add_nonlinear_elasticity_brick(model, mim_slave,   "U_slave", mat_law, "params_slave");
         
         //Fixed Dirichlet on slaves bottom
         getfem::add_Dirichlet_condition_with_multipliers(model,mim_slave,

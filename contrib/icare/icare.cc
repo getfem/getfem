@@ -559,9 +559,9 @@ void navier_stokes_problem::init(void) {
 
   int prob = int(PARAM.int_value("PROBLEM", "the problem"));
   switch (prob) {
-    case 1: pdef.reset(new problem_definition_Stokes_analytic); break;
-    case 2: pdef.reset(new problem_definition_Green_Taylor_analytic); break;
-    case 3: pdef.reset(new problem_rotating_cylinder(PARAM.real_value("CYL_ROT_SPEED"))); break;
+  case 1: pdef = std::make_unique<problem_definition_Stokes_analytic>(); break;
+  case 2: pdef = std::make_unique<problem_definition_Green_Taylor_analytic>(); break;
+  case 3: pdef = std::make_unique<problem_rotating_cylinder>(PARAM.real_value("CYL_ROT_SPEED")); break;
   default: GMM_ASSERT1(false, "wrong PROBLEM value");
   }
 
@@ -1801,10 +1801,9 @@ gmm :: sub_interval SUB_CT_P(0,nbdof_p);
 //     }
      Pformat.close();
     
-    
-    exp.reset(new getfem::dx_export(datafilename + ".dx", false));
-    if (N <= 2)
-      sl.build(mesh, getfem::slicer_none(),2);
+     exp = std::make_unique<getfem::dx_export>(datafilename + ".dx", false);
+     if (N <= 2)
+       sl.build(mesh, getfem::slicer_none(),2);
     else
       sl.build(mesh, getfem::slicer_boundary(mesh),2);
     exp->exporting(sl,true);

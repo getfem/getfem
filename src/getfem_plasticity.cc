@@ -499,7 +499,7 @@ namespace getfem {
      const std::string &datasigma,
      size_type region) {
 
-    pbrick pbr(new elastoplasticity_brick(ACP));
+    pbrick pbr = std::make_shared<elastoplasticity_brick>(ACP);
 
     model::termlist tl;
     tl.push_back(model::term_description
@@ -1056,13 +1056,13 @@ namespace getfem {
       = dal::singleton<ga_predef_operator_tab>::instance();
 
     PREDEF_OPERATORS.add_method("Expm",
-                                new matrix_exponential_operator());
+                              std::make_shared<matrix_exponential_operator>());
     PREDEF_OPERATORS.add_method("Logm",
-                                new matrix_logarithm_operator());
+                                std::make_shared<matrix_logarithm_operator>());
     PREDEF_OPERATORS.add_method("Normalized",
-                                new normalized_operator());
+                                std::make_shared<normalized_operator>());
     PREDEF_OPERATORS.add_method("Von_Mises_projection",
-                                new Von_Mises_projection_operator());
+                            std::make_shared<Von_Mises_projection_operator>());
     return true;
    }
 

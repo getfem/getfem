@@ -316,7 +316,7 @@ bool elastoplasticity_problem::solve(plain_vector &U) {
   getfem::base_vector plast(mf_vm.nb_dof());
   
   for (size_type nb = 0; nb < Nb_t; ++nb) {
-    cout<<"=============iteration number : "<<nb<<"=========="<<endl;
+    cout << "=============iteration number : " << nb << "==========" << endl;
    
     scalar_type t = T[nb];
     

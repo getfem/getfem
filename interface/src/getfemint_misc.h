@@ -37,6 +37,7 @@
 
 namespace getfem {
   class abstract_hyperelastic_law;
+  typedef std::shared_ptr<const abstract_hyperelastic_law> phyperelastic_law;
 }
 
 namespace getfem {
@@ -72,7 +73,7 @@ namespace getfemint {
 			       mexargs_out& out,
 			       const getfem::mesh_fem *pmf, const darray& U);
   
-  const getfem::abstract_hyperelastic_law &abstract_hyperelastic_law_from_name(const std::string &lawname, size_type N);
+  const getfem::phyperelastic_law &abstract_hyperelastic_law_from_name(const std::string &lawname, size_type N);
 
 
   const getfem::abstract_constraints_projection &abstract_constraints_projection_from_name(const std::string &projname);

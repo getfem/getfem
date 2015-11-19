@@ -310,8 +310,8 @@ bool membrane_problem::solve  (plain_vector &U,getfem::base_vector &VM) {
   
   if(print_convexes==1) convexDescription(mf_u);
   
-  
-  getfem::abstract_hyperelastic_law *pl = new getfem::membrane_elastic_law();
+  getfem::phyperelastic_law
+    pl = std::make_shared<getfem::membrane_elastic_law>();
   
   cout << "law=membrane, parameters=" << p <<endl;
 
@@ -319,7 +319,7 @@ bool membrane_problem::solve  (plain_vector &U,getfem::base_vector &VM) {
   md.add_fem_variable("u", mf_u);
 
   md.add_initialized_fixed_size_data("params", p);
-  add_nonlinear_elasticity_brick(md,  mim, "u", *pl, "params");  
+  add_nonlinear_elasticity_brick(md,  mim, "u", pl, "params");  
   
   // Defining the volumic source term.
   unsigned int src_type =  unsigned(PARAM.int_value("src_type","type of source term, 0 for volumic, 1 if src term if applied to neumann bdy"));
@@ -430,7 +430,7 @@ bool membrane_problem::solve  (plain_vector &U,getfem::base_vector &VM) {
   
   //compute von mises stress
   // unsigned int PRINT_STRESSES = unsigned(PARAM.int_value("PRINT_STRESSES","1 to print stresses"));
-  getfem::compute_Von_Mises_or_Tresca(md, "u", *pl, "params", mf_vm, VM, false);
+  getfem::compute_Von_Mises_or_Tresca(md, "u", pl, "params", mf_vm, VM, false);
   
   //clean to avoid vtk export error
   gmm::clean(VM, 1E-20);

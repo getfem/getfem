@@ -692,27 +692,45 @@ namespace getfemint {
   }
 
 
-  const getfem::abstract_hyperelastic_law &
+  const getfem::phyperelastic_law &
   abstract_hyperelastic_law_from_name(const std::string &lawname,
                                       size_type N) {
-    static getfem::SaintVenant_Kirchhoff_hyperelastic_law SVK_AHL;
-    static getfem::Mooney_Rivlin_hyperelastic_law IMR_AHL(false,false);
-    static getfem::Mooney_Rivlin_hyperelastic_law CMR_AHL(true,false);
-    static getfem::Mooney_Rivlin_hyperelastic_law INH_AHL(false,true);
-    static getfem::Mooney_Rivlin_hyperelastic_law CNH_AHL(true,true);
-    static getfem::Neo_Hookean_hyperelastic_law NHB_AHL(true);  // Bonet
-    static getfem::Neo_Hookean_hyperelastic_law NHC_AHL(false); // Ciarlet
-    static getfem::Ciarlet_Geymonat_hyperelastic_law CG_AHL;
-    static getfem::generalized_Blatz_Ko_hyperelastic_law GBK_AHL;
-    static getfem::plane_strain_hyperelastic_law PS_SVK_AHL(&SVK_AHL);
-    static getfem::plane_strain_hyperelastic_law PS_IMR_AHL(&IMR_AHL);
-    static getfem::plane_strain_hyperelastic_law PS_CMR_AHL(&CMR_AHL);
-    static getfem::plane_strain_hyperelastic_law PS_INH_AHL(&INH_AHL);
-    static getfem::plane_strain_hyperelastic_law PS_CNH_AHL(&CNH_AHL);
-    static getfem::plane_strain_hyperelastic_law PS_NHB_AHL(&NHB_AHL);
-    static getfem::plane_strain_hyperelastic_law PS_NHC_AHL(&NHC_AHL);
-    static getfem::plane_strain_hyperelastic_law PS_CG_AHL(&CG_AHL);
-    static getfem::plane_strain_hyperelastic_law PS_GBK_AHL(&GBK_AHL);
+    static getfem::phyperelastic_law SVK_AHL =
+      std::make_shared<getfem::SaintVenant_Kirchhoff_hyperelastic_law>();
+    static getfem::phyperelastic_law IMR_AHL =
+      std::make_shared<getfem::Mooney_Rivlin_hyperelastic_law>(false,false);
+    static getfem::phyperelastic_law CMR_AHL =
+      std::make_shared<getfem::Mooney_Rivlin_hyperelastic_law>(true,false);
+    static getfem::phyperelastic_law INH_AHL =
+      std::make_shared<getfem::Mooney_Rivlin_hyperelastic_law>(false,true);
+    static getfem::phyperelastic_law CNH_AHL =
+      std::make_shared<getfem::Mooney_Rivlin_hyperelastic_law>(true,true);
+    static getfem::phyperelastic_law NHB_AHL =
+      std::make_shared<getfem::Neo_Hookean_hyperelastic_law>(true);  // Bonet
+    static getfem::phyperelastic_law NHC_AHL =
+      std::make_shared<getfem::Neo_Hookean_hyperelastic_law>(false); // Ciarlet
+    static getfem::phyperelastic_law CG_AHL =
+      std::make_shared<getfem::Ciarlet_Geymonat_hyperelastic_law>();
+    static getfem::phyperelastic_law GBK_AHL =
+      std::make_shared<getfem::generalized_Blatz_Ko_hyperelastic_law>();
+    static getfem::phyperelastic_law PS_SVK_AHL =
+      std::make_shared<getfem::plane_strain_hyperelastic_law>(SVK_AHL);
+    static getfem::phyperelastic_law PS_IMR_AHL =
+      std::make_shared<getfem::plane_strain_hyperelastic_law>(IMR_AHL);
+    static getfem::phyperelastic_law PS_CMR_AHL =
+      std::make_shared<getfem::plane_strain_hyperelastic_law>(CMR_AHL);
+    static getfem::phyperelastic_law PS_INH_AHL =
+      std::make_shared<getfem::plane_strain_hyperelastic_law>(INH_AHL);
+    static getfem::phyperelastic_law PS_CNH_AHL =
+      std::make_shared<getfem::plane_strain_hyperelastic_law>(CNH_AHL);
+    static getfem::phyperelastic_law PS_NHB_AHL =
+      std::make_shared<getfem::plane_strain_hyperelastic_law>(NHB_AHL);
+    static getfem::phyperelastic_law PS_NHC_AHL =
+      std::make_shared<getfem::plane_strain_hyperelastic_law>(NHC_AHL);
+    static getfem::phyperelastic_law PS_CG_AHL =
+      std::make_shared<getfem::plane_strain_hyperelastic_law>(CG_AHL);
+    static getfem::phyperelastic_law PS_GBK_AHL =
+      std::make_shared<getfem::plane_strain_hyperelastic_law>(GBK_AHL);
 
     if (cmd_strmatch(lawname, "SaintVenant Kirchhoff") ||
         cmd_strmatch(lawname, "svk"))
@@ -752,7 +770,7 @@ namespace getfemint {
 
     if (cmd_strmatch(lawname, "generalized Blatz Ko") ||
         cmd_strmatch(lawname, "gbk"))
-      {        if (N == 2) return PS_GBK_AHL; else return GBK_AHL; }
+      { if (N == 2) return PS_GBK_AHL; else return GBK_AHL; }
 
 
     THROW_BADARG(lawname <<

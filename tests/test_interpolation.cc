@@ -180,28 +180,32 @@ scalar_type interpolate_check(const mesh_fem &mf1, const mesh_fem& mf2, int i, i
 
   if (i == 0) {
     switch (mat_version) {
-      case 0: break;
-      case 1: 
-        rsc12.reset(new rsc_matrix(mf2.nb_dof(), mf1.nb_dof())); 
-        rsc21.reset(new rsc_matrix(mf1.nb_dof(), mf2.nb_dof())); 
-        getfem::interpolation(mf1, mf2, *rsc12); getfem::interpolation(mf2, mf1, *rsc21);
-        return 0.;
-      case 2: 
-        rsr12.reset(new rsr_matrix(mf2.nb_dof(), mf1.nb_dof())); 
-        rsr21.reset(new rsr_matrix(mf1.nb_dof(), mf2.nb_dof())); 
-        getfem::interpolation(mf1, mf2, *rsr12); getfem::interpolation(mf2, mf1, *rsr21);
-        return 0.;
-      case 3: 
-        wsc12.reset(new wsc_matrix(mf2.nb_dof(), mf1.nb_dof())); 
-        wsc21.reset(new wsc_matrix(mf1.nb_dof(), mf2.nb_dof())); 
-        getfem::interpolation(mf1, mf2, *wsc12); getfem::interpolation(mf2, mf1, *wsc21);
-        return 0.;
-      case 4: 
-        wsr12.reset(new wsr_matrix(mf2.nb_dof(), mf1.nb_dof())); 
-        wsr21.reset(new wsr_matrix(mf1.nb_dof(), mf2.nb_dof())); 
-        getfem::interpolation(mf1, mf2, *wsr12); getfem::interpolation(mf2, mf1, *wsr21);
-        return 0.;
-      default: assert(0);
+    case 0: break;
+    case 1: 
+      rsc12 = std::make_unique<rsc_matrix>(mf2.nb_dof(), mf1.nb_dof()); 
+      rsc21 = std::make_unique<rsc_matrix>(mf1.nb_dof(), mf2.nb_dof()); 
+      getfem::interpolation(mf1, mf2, *rsc12);
+      getfem::interpolation(mf2, mf1, *rsc21);
+      return 0.;
+    case 2: 
+      rsr12 = std::make_unique<rsr_matrix>(mf2.nb_dof(), mf1.nb_dof()); 
+      rsr21 = std::make_unique<rsr_matrix>(mf1.nb_dof(), mf2.nb_dof()); 
+      getfem::interpolation(mf1, mf2, *rsr12);
+      getfem::interpolation(mf2, mf1, *rsr21);
+      return 0.;
+    case 3: 
+      wsc12 = std::make_unique<wsc_matrix>(mf2.nb_dof(), mf1.nb_dof()); 
+      wsc21 = std::make_unique<wsc_matrix>(mf1.nb_dof(), mf2.nb_dof()); 
+      getfem::interpolation(mf1, mf2, *wsc12);
+      getfem::interpolation(mf2, mf1, *wsc21);
+      return 0.;
+    case 4: 
+      wsr12 = std::make_unique<wsr_matrix>(mf2.nb_dof(), mf1.nb_dof()); 
+      wsr21 = std::make_unique<wsr_matrix>(mf1.nb_dof(), mf2.nb_dof()); 
+      getfem::interpolation(mf1, mf2, *wsr12);
+      getfem::interpolation(mf2, mf1, *wsr21);
+      return 0.;
+    default: assert(0);
     }
   }
   std::vector<scalar_type> U(mf1.nb_dof()), U2(mf1.nb_dof());

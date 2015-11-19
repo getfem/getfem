@@ -153,7 +153,7 @@ B = sprintf('((1+(H)/(2*(mu)))*(%s) - (((lambda)*(H))/(2*(mu)*(meshdim*(lambda)+
 ApH = sprintf('((2*(mu)+(H))*(%s) + (lambda)*(%s))', Is, IxI);
 Enp1 = '((Grad_u+Grad_u'')/2)';
 En = '((Grad_Previous_u+Grad_Previous_u'')/2)';
-  
+
 %expression de sigma for Implicit Euler method
 %expr_sigma = strcat('(', B_inv, '*(Von_Mises_projection((-(H)*', Enp1, ')+(', ApH, '*(',Enp1,'-',En,')) + (', B, '*sigma), von_mises_threshold) + H*', Enp1, '))');
   
@@ -161,8 +161,11 @@ En = '((Grad_Previous_u+Grad_Previous_u'')/2)';
 expr_sigma = strcat('(', B_inv, '*(Von_Mises_projection((',B,'*((1-alpha)*sigma))+(-(H)*(((1-alpha)*',En,')+(alpha*', Enp1, ')))+(alpha*', ApH, '*(',Enp1,'-',En,')) + (alpha*', ...
     B, '*sigma), von_mises_threshold) + (H)*(((1-alpha)*',En,')+(alpha*', Enp1, '))))');
   
+% gf_model_set(md, 'add nonlinear generic assembly brick', mim, strcat(expr_sigma, 'Grad_u:Grad_Test_u'));
 gf_model_set(md, 'add nonlinear generic assembly brick', mim, strcat(expr_sigma, ':Grad_Test_u'));
 % gf_model_set(md, 'add finite strain elasticity brick', mim, 'u', 'SaintVenant Kirchhoff', '[lambda; mu]');
+
+return;
 
 % Add homogeneous Dirichlet condition to u on the left hand side of the domain
 set(md, 'add Dirichlet condition with multipliers', mim, 'u', mf_u, 1);
@@ -172,8 +175,6 @@ set(md,'add initialized fem data', 'VolumicData', mf_data, get(mf_data, 'eval',{
 set(md, 'add source term brick', mim, 'u', 'VolumicData', 2);
 
 VM=zeros(1,get(mf_vm, 'nbdof'));
-
-
 
 for step=1:size(t,2),
     disp(sprintf('step %d / %d, coeff = %g', step, size(t,2), t(step)));

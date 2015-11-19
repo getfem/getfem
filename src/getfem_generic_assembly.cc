@@ -2502,10 +2502,11 @@ namespace getfem {
     ga_predef_operator_tab &PREDEF_OPERATORS
       = dal::singleton<ga_predef_operator_tab>::instance();
 
-    PREDEF_OPERATORS.add_method("Norm", new norm_operator());
-    PREDEF_OPERATORS.add_method("Norm_sqr", new norm_sqr_operator());
-    PREDEF_OPERATORS.add_method("Det", new det_operator());
-    PREDEF_OPERATORS.add_method("Inv", new inverse_operator());
+    PREDEF_OPERATORS.add_method("Norm", std::make_shared<norm_operator>());
+    PREDEF_OPERATORS.add_method("Norm_sqr",
+				std::make_shared<norm_sqr_operator>());
+    PREDEF_OPERATORS.add_method("Det", std::make_shared<det_operator>());
+    PREDEF_OPERATORS.add_method("Inv", std::make_shared<inverse_operator>());
     return true;
   }
 

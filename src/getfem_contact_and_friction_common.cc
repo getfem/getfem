@@ -2373,9 +2373,9 @@ namespace getfem {
       = dal::singleton<ga_predef_operator_tab>::instance();
     
     PREDEF_OPERATORS.add_method("Transformed_unit_vector",
-                                new Transformed_unit_vector());
+                                std::make_shared<Transformed_unit_vector>());
     PREDEF_OPERATORS.add_method("Coulomb_friction_coupled_projection",
-                                new Coulomb_friction_coupled_projection());
+                    std::make_shared<Coulomb_friction_coupled_projection>());
 
     return true;
    }

@@ -889,11 +889,11 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        darray U = in.pop().to_darray(int(mf_u->nb_dof()));
        std::string lawname = in.pop().to_string();
        /* a refaire , pas bon, le terme incompressible se passe de loi */
-       const getfem::abstract_hyperelastic_law &law
+       getfem::phyperelastic_law law
        = abstract_hyperelastic_law_from_name(lawname,
                                              mf_u->linked_mesh().dim());
        const getfem::mesh_fem *mf_d = in.pop().to_const_mesh_fem();
-       darray param = in.pop().to_darray(int(law.nb_params()),
+       darray param = in.pop().to_darray(int(law->nb_params()),
                                          int(mf_d->nb_dof()));
 
        size_type region = size_type(-1);
@@ -906,12 +906,12 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
          if (cmd_strmatch(what, "tangent matrix")) {
            gf_real_sparse_by_col  K(mf_u->nb_dof(), mf_u->nb_dof());
            getfem::asm_nonlinear_elasticity_tangent_matrix(K, *mim, *mf_u, U,
-                                                           mf_d, param, law,rg);
+                                                           mf_d, param,*law,rg);
            out.pop().from_sparse(K);
          } else if (cmd_strmatch(what, "rhs")) {
            darray B = out.pop().create_darray_v(unsigned(mf_u->nb_dof()));
            getfem::asm_nonlinear_elasticity_rhs(B, *mim, *mf_u, U, mf_d,
-                                                param, law,rg);
+                                                param,*law, rg);
          } else if (cmd_strmatch(what, "incompressible tangent matrix")) {
            const getfem::mesh_fem *mf_p = in.pop().to_const_mesh_fem();
            darray P = in.pop().to_darray(int(mf_p->nb_dof()));
