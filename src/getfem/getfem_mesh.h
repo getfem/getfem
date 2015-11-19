@@ -506,9 +506,6 @@ namespace getfem {
     /** Clone a mesh */
     void copy_from(const mesh& m); /* might be the copy constructor */
     size_type memsize(void) const;
-    ~mesh() {
-      if (Bank_info) delete Bank_info;
-    }
 
     friend class mesh_region;
   private:
@@ -545,7 +542,7 @@ namespace getfem {
       edge_set edges;
     };
 
-    Bank_info_struct *Bank_info;
+    std::unique_ptr<Bank_info_struct> Bank_info;
 
     std::string name_; //optional name of the mesh
     void set_name(const std::string&);

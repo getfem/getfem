@@ -127,7 +127,6 @@ namespace getfem {
     modified = true;
 #endif
     cuthill_mckee_uptodate = false;
-    Bank_info = 0;
   }
 
   mesh::mesh(const std::string name) : name_(name)  { init(); }
@@ -235,7 +234,7 @@ namespace getfem {
 
   void mesh::transformation(const base_matrix &M) {
     pts.transformation(M);
-    if (Bank_info) { delete Bank_info; Bank_info = 0; }
+    Bank_info = std::unique_ptr<Bank_info_struct>();
     touch();
   }
 
@@ -257,7 +256,7 @@ namespace getfem {
     gtab.clear(); trans_exists.clear();
     cvf_sets.clear(); valid_cvf_sets.clear();
     cvs_v_num.clear();
-    if (Bank_info) { delete Bank_info; Bank_info = 0; }
+    Bank_info = std::unique_ptr<Bank_info_struct>();
     touch();
   }
 
@@ -300,7 +299,7 @@ namespace getfem {
       for (size_type ip = 0; ip < ipt.size(); ++ip) sup_point(ipt[ip]);
     trans_exists.sup(ic);
     sup_convex_from_regions(ic);
-    if (Bank_info) Bank_sup_convex_from_green(ic);
+    if (Bank_info.get()) Bank_sup_convex_from_green(ic);
     touch();
   }
 
@@ -310,7 +309,7 @@ namespace getfem {
       trans_exists.swap(i, j);
       gtab.swap(i,j);
       swap_convex_in_regions(i, j);
-      if (Bank_info) Bank_swap_convex(i,j);
+      if (Bank_info.get()) Bank_swap_convex(i,j);
       cvs_v_num[i] = cvs_v_num[j] = act_counter(); touch();
     }
   }
@@ -428,11 +427,9 @@ namespace getfem {
     gmm::uint64_type d = act_counter();
     for (dal::bv_visitor i(convex_index()); !i.finished(); ++i)
       cvs_v_num[i] = d;
-    if (Bank_info) { delete Bank_info; Bank_info = 0; }
-    if (m.Bank_info) {
-      Bank_info = new Bank_info_struct;
-      *Bank_info = *(m.Bank_info);
-    }
+    Bank_info = std::unique_ptr<Bank_info_struct>();
+    if (m.Bank_info.get())
+      Bank_info = std::make_unique<Bank_info_struct>(*(m.Bank_info));
   }
 
   struct mesh_convex_structure_loc {
@@ -914,7 +911,7 @@ namespace getfem {
   }
 
   void mesh::Bank_sup_convex_from_green(size_type i) {
-    if (Bank_info && Bank_info->is_green_simplex.is_in(i)) {
+    if (Bank_info.get() && Bank_info->is_green_simplex.is_in(i)) {
       size_type igs = Bank_info->num_green_simplex[i];
       green_simplex &gs = Bank_info->green_simplices[igs];
       for (size_type j = 0; j < gs.sub_simplices.size(); ++j) {
@@ -926,7 +923,7 @@ namespace getfem {
   }
 
   void mesh::Bank_swap_convex(size_type i, size_type j) {
-    if (Bank_info) {
+    if (Bank_info.get()) {
       Bank_info->is_green_simplex.swap(i, j);
       std::map<size_type, size_type>::iterator
         iti = Bank_info->num_green_simplex.find(i);
@@ -1195,7 +1192,7 @@ namespace getfem {
   }
 
   void mesh::Bank_refine(dal::bit_vector b) {
-    if (Bank_info == 0) Bank_info = new Bank_info_struct;
+    if (!(Bank_info.get())) Bank_info = std::make_unique<Bank_info_struct>();
 
     b &= convex_index();
     if (b.card() == 0) return;

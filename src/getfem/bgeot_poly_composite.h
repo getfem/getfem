@@ -143,7 +143,7 @@ namespace bgeot {
       the mesh_structure refer to the points of the mesh given by
       refined_simplex_mesh_for_convex.
   */      
-  const std::vector<mesh_structure*>&
+  const std::vector<std::unique_ptr<mesh_structure>>&
   refined_simplex_mesh_for_convex_faces(pconvex_ref cvr, short_type k);
 }  /* end of namespace bgeot.                                            */
 

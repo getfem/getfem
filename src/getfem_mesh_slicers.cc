@@ -702,7 +702,7 @@ namespace getfem {
         prev_nrefine = nrefine;
       }
       if (face < dim_type(-1))
-        cvms = bgeot::refined_simplex_mesh_for_convex_faces(cvr, nrefine)[face];
+        cvms = bgeot::refined_simplex_mesh_for_convex_faces(cvr, nrefine)[face].get();
       else
         cvms = cvm; 
 
@@ -848,7 +848,7 @@ namespace getfem {
       }
       if (face < dim_type(-1)) {
         if (!discont) {
-          cvms = bgeot::refined_simplex_mesh_for_convex_faces(cvr, short_type(nrefine))[face];
+          cvms = bgeot::refined_simplex_mesh_for_convex_faces(cvr, short_type(nrefine))[face].get();
         } else {
           cvms = &refined_simplex_mesh_for_convex_faces_cut_by_level_set(face);
         }
