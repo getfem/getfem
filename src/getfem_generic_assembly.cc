@@ -11167,7 +11167,7 @@ namespace getfem {
   }
 
   void ga_interpolation_im_data
-  (ga_workspace &workspace, const im_data &imd, base_vector &result, const mesh_region &rg) {
+  (ga_workspace &workspace, const im_data &imd, base_vector &result, const mesh_region &/* rg */) {
     ga_interpolation_context_im_data gic(imd, result);
     ga_interpolation(workspace, gic);
   }

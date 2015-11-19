@@ -66,7 +66,7 @@ template <typename T> static inline void dummy_func(T &) {}
       { dummy_func(in); dummy_func(out); dummy_func(mm);		\
 	dummy_func(q_dim); code }					\
     };									\
-    psub_command psubc(new subc);					\
+    psub_command psubc = std::make_shared<subc>();			\
     psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;		\
     psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;	\
     subc_tab[cmd_normalize(name)] = psubc;				\
@@ -214,8 +214,8 @@ void gf_mesh_fem(getfemint::mexargs_in& m_in,
 
        std::vector<getfem::pglobal_function> vfunc(size_type(in_gf->narg()));
        for (size_type i = 0; i < vfunc.size(); ++i) {
-	 getfem::abstract_xy_function *s = in_gf->pop().to_global_function();
-	 vfunc[i] = getfem::global_function_on_level_set(gls->levelset(), *s);
+	 getfem::pxy_function s = in_gf->pop().to_global_function();
+	 vfunc[i] = getfem::global_function_on_level_set(gls->levelset(), s);
        }
 
        getfem::mesh_fem_global_function *mfgf = new getfem::mesh_fem_global_function(mm->mesh());

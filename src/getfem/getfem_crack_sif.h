@@ -98,9 +98,8 @@ namespace getfem {
     
     std::vector<pglobal_function> cfun(4);
     for (unsigned j=0; j < 4; ++j) {
-      crack_singular_xy_function *s = 
-	new crack_singular_xy_function(j);
-      cfun[j] = global_function_on_level_set(ls, *s);
+      auto s = std::make_shared<crack_singular_xy_function>(j);
+      cfun[j] = global_function_on_level_set(ls, s);
     }
     mf_mode.set_functions(cfun);
     mf_mode.set_qdim(2);

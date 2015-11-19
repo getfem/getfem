@@ -632,11 +632,12 @@ namespace level_set_contact {
     NormalTerm R_matrix(mcb,2);
     
     //nonlinear term that describes regularized integration or dummy (unity) multiplier
-    std::shared_ptr<getfem::nonlinear_elem_term> integration(0);
-    if (mcb.integration==master_contact_body::REGULARIZED_LEVEL_SET){
-      integration.reset(new HFunction(mf_master_ls,mcb.get_model().real_variable(ls_name),
-                                      mcb.regularized_tollerance,mcb.small_weight_multiplier));
-    } else {integration.reset(new Unity(mf_master_ls));}
+    std::shared_ptr<getfem::nonlinear_elem_term> integration;
+    if (mcb.integration==master_contact_body::REGULARIZED_LEVEL_SET) {
+      integration = std::make_shared<HFunction>
+	(mf_master_ls,mcb.get_model().real_variable(ls_name),
+	 mcb.regularized_tollerance,mcb.small_weight_multiplier);
+    } else { integration = std::make_shared<Unity>(mf_master_ls); }
     
     
     //temp matrices due to different DOF indeces of the slave
@@ -735,11 +736,12 @@ namespace level_set_contact {
     NormalTerm R_matrix(mcb,2);
     
     //nonlinear term that describes regularized integration or dummy (unity) multiplier
-    std::shared_ptr<getfem::nonlinear_elem_term> integration(0);
-    if (mcb.integration==master_contact_body::REGULARIZED_LEVEL_SET){
-      integration.reset(new HFunction(mf_master_ls,mcb.get_model().real_variable(ls_name),
-                                      mcb.regularized_tollerance,mcb.small_weight_multiplier));
-    } else {integration.reset(new Unity(mf_master_ls));}
+    std::shared_ptr<getfem::nonlinear_elem_term> integration;
+    if (mcb.integration==master_contact_body::REGULARIZED_LEVEL_SET) {
+      integration = std::make_shared<HFunction>
+	(mf_master_ls,mcb.get_model().real_variable(ls_name),
+	 mcb.regularized_tollerance,mcb.small_weight_multiplier);
+    } else { integration = std::make_shared<Unity>(mf_master_ls); }
     
     // temp RHS vector due to diff DOF indeces for mesh_fem object of the slave
     plain_vector RHS_Us_small(mf_U_interpolate.nb_dof());

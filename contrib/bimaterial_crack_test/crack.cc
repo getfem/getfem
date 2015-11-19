@@ -69,11 +69,14 @@ struct crack_problem {
   getfem::mesh_fem mf_partition_of_unity;
   getfem::mesh_fem_product mf_product;
   getfem::mesh_fem_sum mf_u_sum;
+
+  getfem::mesh interpolated_m;
+  getfem::mesh_fem interpolated_mf;
   
   base_small_vector translation;
 
   struct spider_param {
-    getfem::spider_fem *fem;
+    std::unique_ptr<getfem::spider_fem> fem;
     scalar_type theta0;
     scalar_type radius;
     unsigned Nr;
@@ -133,8 +136,8 @@ struct crack_problem {
 			mf_sing_u(mesh),
 			mf_partition_of_unity(mesh),
 			mf_product(mf_partition_of_unity, mf_sing_u),
-
-			mf_u_sum(mesh), mf_us(mesh), mf_rhs(mesh), mf_p(mesh),
+			mf_u_sum(mesh), interpolated_mf(interpolated_m),
+			mf_us(mesh), mf_rhs(mesh), mf_p(mesh),
 #ifdef VALIDATE_XFEM
 			exact_sol(mesh), 
 #endif
@@ -333,18 +336,6 @@ void crack_problem::init(void) {
   mf_mult.set_finite_element(mesh.convex_index(), pf_u);
   mf_mult.set_qdim(dim_type(N));
   mf_partition_of_unity.set_classical_finite_element(1);
-  
-//   if (enrichment_option == 3 || enrichment_option == 4) {
-//     spider = new getfem::spider_fem(spider_radius, mim, spider_Nr,
-// 				    spider_Ntheta, spider_K, translation,
-// 				    theta0);
-//     mf_us.set_finite_element(mesh.convex_index(),spider->get_pfem());
-//     for (dal::bv_visitor_c i(mf_us.convex_index()); !i.finished(); ++i) {
-//       if (mf_us.fem_of_element(i)->nb_dof(i) == 0) {
-// 	mf_us.set_finite_element(i,0);
-//       }
-//     }
-//   }
 
   mixed_pressure =
     (PARAM.int_value("MIXED_PRESSURE","Mixed version or not.") != 0);
@@ -487,66 +478,52 @@ bool crack_problem::solve(plain_vector &U) {
     cout << "Using default singular functions\n";
     for (unsigned i = 0; i < vfunc.size(); ++i){
       /* use the singularity */
-      getfem::abstract_xy_function *s = 
-	new getfem::crack_singular_xy_function(i);
+      getfem::pxy_function
+	s = std::make_shared<getfem::crack_singular_xy_function>(i);
       if (enrichment_option != FIXED_ZONE && 
 	  enrichment_option != GLOBAL_WITH_MORTAR) {
 	/* use the product of the singularity function
 	   with a cutoff */
-	getfem::abstract_xy_function *c = 
-	  new getfem::cutoff_xy_function(int(cutoff_func),
-					 cutoff_radius, 
-					 cutoff_radius1,cutoff_radius0);
-	s = new getfem::product_of_xy_functions(*s, *c);
+	getfem::pxy_function c = std::make_shared<getfem::cutoff_xy_function>
+	  (int(cutoff_func), cutoff_radius, cutoff_radius1,cutoff_radius0);
+	s = std::make_shared<getfem::product_of_xy_functions>(s, c);
       }
-      vfunc[i] = getfem::global_function_on_level_set(ls, *s);
+      vfunc[i] = getfem::global_function_on_level_set(ls, s);
     }
   } else {
     cout << "Load singular functions from " << GLOBAL_FUNCTION_MF << " and " << GLOBAL_FUNCTION_U << "\n";
-    getfem::mesh *m = new getfem::mesh(); 
-    m->read_from_file(GLOBAL_FUNCTION_MF);
-    getfem::mesh_fem *mf_c = new getfem::mesh_fem(*m); 
-    mf_c->read_from_file(GLOBAL_FUNCTION_MF);
+    interpolated_m.clear();
+    interpolated_m.read_from_file(GLOBAL_FUNCTION_MF);
+    interpolated_mf.read_from_file(GLOBAL_FUNCTION_MF);
     std::fstream f(GLOBAL_FUNCTION_U.c_str(), std::ios::in);
-    plain_vector W(mf_c->nb_dof());
+    plain_vector W(interpolated_mf.nb_dof());
 
 
   
-    for (unsigned i=0; i < mf_c->nb_dof(); ++i) {
-      f >> W[i]; GMM_ASSERT1(f.good(), "problem while reading " << GLOBAL_FUNCTION_U);
-      
-      //cout << "The precalculated dof " << i << " of coordinates " << mf_c->point_of_dof(i) << " is "<< W[i] <<endl; 
-      /*scalar_type x = pow(mf_c->point_of_dof(i)[0],2); scalar_type y = pow(mf_c->point_of_dof(i)[1],2);
-	scalar_type r = std::sqrt(pow(x,2) + pow(y,2));
-	scalar_type sgny = (y < 0 ? -1.0 : 1.0);
-	scalar_type sin2 = sqrt(gmm::abs(.5-x/(2*r))) * sgny;
-	scalar_type cos2 = sqrt(gmm::abs(.5+x/(2*r)));
-	W[i] = std::sqrt(r) * sin2;
-      */
+    for (unsigned i=0; i < interpolated_mf.nb_dof(); ++i) {
+      f >> W[i];
+      GMM_ASSERT1(f.good(), "problem while reading " << GLOBAL_FUNCTION_U);
     }
-    unsigned nb_func = mf_c->get_qdim();
+    unsigned nb_func = interpolated_mf.get_qdim();
     cout << "read " << nb_func << " global functions OK.\n";
     vfunc.resize(nb_func);
-    getfem::interpolator_on_mesh_fem *global_interp = 
-      new getfem::interpolator_on_mesh_fem(*mf_c, W);
+    auto global_interp
+      = std::make_shared<getfem::interpolator_on_mesh_fem>(interpolated_mf, W);
     for (size_type i=0; i < nb_func; ++i) {
       /* use the precalculated function for the enrichment*/
-      //getfem::abstract_xy_function *s = new getfem::crack_singular_xy_function(i);
-      getfem::abstract_xy_function *s = new getfem::interpolated_xy_function(*global_interp,i);
-
+      getfem::pxy_function
+	s = std::make_shared<getfem::interpolated_xy_function>(global_interp,i);
       if (enrichment_option != FIXED_ZONE && 
 	  enrichment_option != GLOBAL_WITH_MORTAR) {
 
 	/* use the product of the enrichment function
 	   with a cutoff */
-	getfem::abstract_xy_function *c = 
-	  new getfem::cutoff_xy_function(int(cutoff_func),
-					 cutoff_radius, 
-					 cutoff_radius1,cutoff_radius0);
-	s = new getfem::product_of_xy_functions(*s, *c);
+	getfem::pxy_function c = std::make_shared<getfem::cutoff_xy_function>
+	(int(cutoff_func), cutoff_radius, cutoff_radius1,cutoff_radius0);
+	s = std::make_shared<getfem::product_of_xy_functions>(s, c);
       }    
-      vfunc[i] = getfem::global_function_on_level_set(ls, *s);
-    }    
+      vfunc[i] = getfem::global_function_on_level_set(ls, s);
+    }
   }
   
   
@@ -555,10 +532,9 @@ bool crack_problem::solve(plain_vector &U) {
 
   if (enrichment_option == SPIDER_FEM_ALONE || 
       enrichment_option == SPIDER_FEM_ENRICHMENT) {
-    spider.fem = new getfem::spider_fem(spider.radius, mim, spider.Nr,
-					spider.Ntheta, spider.K, translation,
-					spider.theta0, spider.bimat_enrichment,
-					spider.epsilon);
+    spider.fem = std::make_unique<getfem::spider_fem>
+      (spider.radius, mim, spider.Nr, spider.Ntheta, spider.K, translation,
+       spider.theta0, spider.bimat_enrichment, spider.epsilon);
     mf_us.set_finite_element(mesh.convex_index(),spider.fem->get_pfem());
     for (dal::bv_visitor_c i(mf_us.convex_index()); !i.finished(); ++i) {
       if (mf_us.fem_of_element(i)->nb_dof(i) == 0) {

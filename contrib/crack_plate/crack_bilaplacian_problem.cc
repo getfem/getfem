@@ -663,41 +663,41 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
   }
   else if (enrichment_option == 4){
 	cout << "Setting up the singular functions for the cutoff enrichment\n";
-	if (PARAM.int_value("SING_BASE_TYPE") == 0){
-		std::vector<getfem::pglobal_function> vfunc(4);
-		for (size_type i = 0; i < vfunc.size(); ++i) {
-		/* use the singularity */
-		getfem::abstract_xy_function *s = 
-		new crack_singular_bilaplacian_xy_function(i, ls, nu, 0.);
-		/* use the product of the singularity function
-			with a cutoff */
-		getfem::abstract_xy_function *cc = 
-			new getfem::cutoff_xy_function(int(cutoff.fun_num),
-						cutoff.radius, 
-						cutoff.radius1,
-						cutoff.radius0);
-		s = new getfem::product_of_xy_functions(*s, *cc);
-		vfunc[i] = getfem::global_function_on_level_set(ls, *s);
-		}
-	mf_sing_u.set_functions(vfunc);
+	if (PARAM.int_value("SING_BASE_TYPE") == 0) {
+	  std::vector<getfem::pglobal_function> vfunc(4);
+	  for (size_type i = 0; i < vfunc.size(); ++i) {
+	    /* use the singularity */
+	    getfem::pxy_function
+	      s = std::make_shared<crack_singular_bilaplacian_xy_function>
+	      (i, ls, nu, 0.);
+	    /* use the product of the singularity function
+	       with a cutoff */
+	    getfem::pxy_function
+	      cc =  std::make_shared<getfem::cutoff_xy_function>
+	      (int(cutoff.fun_num), cutoff.radius, cutoff.radius1, 
+	       cutoff.radius0);
+	    s = std::make_shared<getfem::product_of_xy_functions>(s, cc);
+	    vfunc[i] = getfem::global_function_on_level_set(ls, s);
+	  }
+	  mf_sing_u.set_functions(vfunc);
 	}
 	if (PARAM.int_value("SING_BASE_TYPE") == 1){
-		std::vector<getfem::pglobal_function> vfunc(2);
-		for (size_type i = 0; i < vfunc.size(); ++i) {
-		/* use the singularity */
-		getfem::abstract_xy_function *s = 
-		new crack_singular_bilaplacian_xy_function(i+4, ls, nu, 0.);
-		/* use the product of the singularity function
-			with a cutoff */
-		getfem::abstract_xy_function *cc = 
-			new getfem::cutoff_xy_function(int(cutoff.fun_num),
-						cutoff.radius, 
-						cutoff.radius1,
-						cutoff.radius0);
-		s = new getfem::product_of_xy_functions(*s, *cc);
-		vfunc[i] = getfem::global_function_on_level_set(ls, *s);
-		}
-	mf_sing_u.set_functions(vfunc);
+	  std::vector<getfem::pglobal_function> vfunc(2);
+	  for (size_type i = 0; i < vfunc.size(); ++i) {
+	    /* use the singularity */
+	    getfem::pxy_function
+	      s = std::make_shared<crack_singular_bilaplacian_xy_function>
+	      (i+4, ls, nu, 0.);
+	    /* use the product of the singularity function
+	       with a cutoff */
+	    getfem::pxy_function
+	      cc =  std::make_shared<getfem::cutoff_xy_function>
+	      (int(cutoff.fun_num), cutoff.radius, cutoff.radius1, 
+	       cutoff.radius0);
+	    s = std::make_shared<getfem::product_of_xy_functions>(s, cc);
+	    vfunc[i] = getfem::global_function_on_level_set(ls, s);
+	  }
+	  mf_sing_u.set_functions(vfunc);
 	}
   }
   // Setting the enrichment --------------------------------------------/

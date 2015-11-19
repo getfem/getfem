@@ -86,9 +86,9 @@ struct exact_solution {
 	    getfem::level_set &ls) {
     std::vector<getfem::pglobal_function> cfun(4);
     for (unsigned j=0; j < 4; ++j) {
-      getfem::abstract_xy_function *s = 
-	new getfem::crack_singular_xy_function(j);
-      cfun[j] = getfem::global_function_on_level_set(ls, *s);
+      getfem::pxy_function s
+	= std::make_shared<getfem::crack_singular_xy_function>(j);
+      cfun[j] = getfem::global_function_on_level_set(ls, s);
     }
 
     mf.set_functions(cfun);
@@ -539,14 +539,13 @@ bool crack_problem::solve(plain_vector &U) {
     std::vector<getfem::pglobal_function> vfunc(4);
     for (unsigned i = 0; i < vfunc.size(); ++i) {
       /* use the singularity */
-      getfem::abstract_xy_function *s = 
-	new getfem::crack_singular_xy_function(i);
-      getfem::abstract_xy_function *c = 
-	new getfem::cutoff_xy_function(int(cutoff.fun_num),
-				       cutoff.radius, 
-				       cutoff.radius1, cutoff.radius0);
-      s = new getfem::product_of_xy_functions(*s, *c);
-      vfunc[i] = getfem::global_function_on_level_set(ls, *s);
+      getfem::pxy_function
+	s = std::make_shared<getfem::crack_singular_xy_function>(i);
+      getfem::pxy_function
+	c = std::make_shared<getfem::cutoff_xy_function>
+	(int(cutoff.fun_num), cutoff.radius, cutoff.radius1, cutoff.radius0);
+      s = std::make_shared<getfem::product_of_xy_functions>(s, c);
+      vfunc[i] = getfem::global_function_on_level_set(ls, s);
     }
     mf_sing_u.set_functions(vfunc);
 

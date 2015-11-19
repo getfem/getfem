@@ -252,10 +252,10 @@ struct exact_solution {
     std::vector<getfem::pglobal_function> cfunc(4);
    
  for (unsigned i = 0; i < 4; ++i) {
-    /* use the singularity */
-    getfem::abstract_xy_function *s = 
-      new getfem::crack_singular_xy_function(i);
-    cfunc[i] = getfem::global_function_on_level_set(ls, *s);
+   /* use the singularity */
+   getfem::pxy_function
+     s = std::make_shared<getfem::crack_singular_xy_function>(i);
+    cfunc[i] = getfem::global_function_on_level_set(ls, s);
  }
 
     mf.set_functions(cfunc);
@@ -1112,16 +1112,6 @@ int main(int argc, char *argv[]) {
 #ifdef VALIDATE_XFEM
 
 	plain_vector VM_EXACT(mf_refined_vm.nb_dof());
-
-
-	/* getfem::mesh_fem_global_function mf(mcut_refined,Q);
-	   std::vector<getfem::pglobal_function> cfun(4);
-	   for (unsigned j=0; j < 4; ++j)
-	   cfun[j] = getfem::isotropic_crack_singular_2D(j, p.ls);
-	   mf.set_functions(cfun);
-	   getfem::interpolation_von_mises(mf, mf_refined_vm, p.exact_sol.U,
-	   VM_EXACT);
-	*/
 
 
 	getfem::interpolation_von_mises(mf_refined, mf_refined_vm, EXACT, VM_EXACT);

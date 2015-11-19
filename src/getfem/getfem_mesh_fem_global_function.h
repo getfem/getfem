@@ -145,6 +145,8 @@ namespace getfem {
     bool eval(const base_node pt, base_vector &val, base_matrix &grad) const;
   };
 
+  typedef std::shared_ptr<const interpolator_on_mesh_fem>
+    pinterpolator_on_mesh_fem;
 
   /* below a list of simple function of (x,y)
      used for building the crack singular functions
@@ -155,6 +157,8 @@ namespace getfem {
     virtual base_matrix hess(scalar_type x, scalar_type y) const = 0;
     virtual ~abstract_xy_function() {}
   };
+
+  typedef std::shared_ptr<const abstract_xy_function> pxy_function;
 
   struct parser_xy_function : public abstract_xy_function {
     ga_workspace gw_val, gw_grad, gw_hess;
@@ -193,61 +197,58 @@ namespace getfem {
   };
 
   struct interpolated_xy_function : public abstract_xy_function {
-    interpolator_on_mesh_fem &itp;
+    pinterpolator_on_mesh_fem itp;
     size_type component;
     virtual scalar_type val(scalar_type x, scalar_type y) const {
       base_vector v; base_matrix g;
-      itp.eval(base_node(x,y), v, g);
+      itp->eval(base_node(x,y), v, g);
       return v[component];
     }
     virtual base_small_vector grad(scalar_type x, scalar_type y) const {
       base_vector v; base_matrix g;
-      itp.eval(base_node(x,y), v, g);
+      itp->eval(base_node(x,y), v, g);
       return base_small_vector(g(component,0), g(component,1));
     }
     virtual base_matrix hess(scalar_type, scalar_type) const
     { GMM_ASSERT1(false, "Sorry, to be done ..."); }
-    interpolated_xy_function(interpolator_on_mesh_fem &itp_, size_type c) :
+    interpolated_xy_function(const pinterpolator_on_mesh_fem &itp_,
+			     size_type c) :
       itp(itp_), component(c) {}
   };
 
-  struct product_of_xy_functions :
-    public abstract_xy_function {
-    abstract_xy_function &fn1, &fn2;
+  struct product_of_xy_functions : public abstract_xy_function {
+    pxy_function fn1, fn2;
     scalar_type val(scalar_type x, scalar_type y) const {
-      return fn1.val(x,y) * fn2.val(x,y);
+      return fn1->val(x,y) * fn2->val(x,y);
     }
     base_small_vector grad(scalar_type x, scalar_type y) const {
-      return fn1.grad(x,y)*fn2.val(x,y) + fn1.val(x,y)*fn2.grad(x,y);
+      return fn1->grad(x,y)*fn2->val(x,y) + fn1->val(x,y)*fn2->grad(x,y);
     }
     virtual base_matrix hess(scalar_type x, scalar_type y) const {
-      base_matrix h = fn1.hess(x,y);
-      gmm::scale(h, fn2.val(x,y));
-      gmm::add(gmm::scaled(fn2.hess(x,y), fn1.val(x,y)), h);
-      gmm::rank_two_update(h, fn1.grad(x,y), fn2.grad(x,y));
+      base_matrix h = fn1->hess(x,y);
+      gmm::scale(h, fn2->val(x,y));
+      gmm::add(gmm::scaled(fn2->hess(x,y), fn1->val(x,y)), h);
+      gmm::rank_two_update(h, fn1->grad(x,y), fn2->grad(x,y));
       return h;
     }
-    product_of_xy_functions(abstract_xy_function &fn1_,
-                            abstract_xy_function &fn2_)
+    product_of_xy_functions(pxy_function &fn1_, pxy_function &fn2_)
       : fn1(fn1_), fn2(fn2_) {}
   };
 
-  struct add_of_xy_functions :
-    public abstract_xy_function {
-    abstract_xy_function &fn1, &fn2;
+  struct add_of_xy_functions : public abstract_xy_function {
+    pxy_function fn1, fn2;
     scalar_type val(scalar_type x, scalar_type y) const {
-      return fn1.val(x,y) + fn2.val(x,y);
+      return fn1->val(x,y) + fn2->val(x,y);
     }
     base_small_vector grad(scalar_type x, scalar_type y) const {
-      return fn1.grad(x,y) + fn2.grad(x,y);
+      return fn1->grad(x,y) + fn2->grad(x,y);
     }
     virtual base_matrix hess(scalar_type x, scalar_type y) const {
-      base_matrix h = fn1.hess(x,y);
-      gmm::add(fn2.hess(x,y), h);
+      base_matrix h = fn1->hess(x,y);
+      gmm::add(fn2->hess(x,y), h);
       return h;
     }
-    add_of_xy_functions(abstract_xy_function &fn1_,
-                        abstract_xy_function &fn2_)
+    add_of_xy_functions(const pxy_function &fn1_, const pxy_function &fn2_)
       : fn1(fn1_), fn2(fn2_) {}
   };
 
@@ -257,12 +258,11 @@ namespace getfem {
   class level_set;
 
   pglobal_function
-  global_function_on_level_set(const level_set &ls,
-                               const abstract_xy_function &fn);
+  global_function_on_level_set(const level_set &ls, const pxy_function &fn);
 
   pglobal_function
   global_function_on_level_sets(const std::vector<level_set> &lsets,
-                                const abstract_xy_function &fn);
+                                const pxy_function &fn);
 
 
 }  /* end of namespace getfem.                                            */

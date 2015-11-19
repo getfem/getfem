@@ -126,16 +126,16 @@ typedef std::shared_ptr<sub_gf_linsolve> psub_command;
 template <typename T> static inline void dummy_func(T &) {}
 
 #define sub_command(name, arginmin, arginmax, argoutmin, argoutmax, code) { \
-    struct subc : public sub_gf_linsolve {                                  \
-      virtual void run(getfemint::mexargs_in& in,                           \
-                       getfemint::mexargs_out& out)                         \
-      { dummy_func(in); dummy_func(out); code }                             \
-    };                                                                      \
-    psub_command psubc(new subc);					    \
-    psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;             \
-    psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;         \
-    subc_tab[cmd_normalize(name)] = psubc;                                  \
-  }                           
+    struct subc : public sub_gf_linsolve {				\
+      virtual void run(getfemint::mexargs_in& in,			\
+                       getfemint::mexargs_out& out)			\
+      { dummy_func(in); dummy_func(out); code }				\
+    };									\
+    psub_command psubc = std::make_shared<subc>();			\
+    psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;		\
+    psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;	\
+    subc_tab[cmd_normalize(name)] = psubc;				\
+  }                        
 
 
 

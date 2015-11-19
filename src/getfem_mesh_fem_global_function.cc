@@ -104,7 +104,7 @@ namespace getfem {
 
   pfem new_global_function_fem(bgeot::pconvex_ref cvr,
                                const std::vector<pglobal_function> &f) {
-    pfem pf(new global_function_fem(cvr,f));
+    pfem pf = std::make_shared<global_function_fem>(cvr,f);
     dal::pstatic_stored_object_key
       pk = std::make_shared<special_int_globf_fem_key>(pf);
     dal::add_stored_object(pk, pf);
@@ -128,12 +128,12 @@ namespace getfem {
     for (dal::bv_visitor cv(linked_mesh().convex_index());
          !cv.finished(); ++cv) {
       bgeot::pconvex_ref cvr =
-        bgeot::basic_convex_ref(linked_mesh().trans_of_convex(cv)->convex_ref());
+       bgeot::basic_convex_ref(linked_mesh().trans_of_convex(cv)->convex_ref());
 
       std::map<bgeot::pconvex_ref,pfem>::iterator it = build_methods.find(cvr);
       pfem pf;
       if (it == build_methods.end()) {
-        build_methods[cvr] = pf = new_global_function_fem(cvr, fun);
+        build_methods[cvr] = pf = new_global_function_fem(cvr,fun);
       } else pf = (*it).second;
       set_finite_element(cv, pf);
     }
@@ -570,7 +570,7 @@ namespace getfem {
     mutable mesher_level_set mls_x, mls_y;
     mutable size_type cv;
 
-    const abstract_xy_function &fn;
+    pxy_function fn;
 
     void update_mls(size_type cv_) const {
       if (cv_ != cv) {
@@ -586,7 +586,7 @@ namespace getfem {
       scalar_type y = mls_y(c.xref());
       if (c.xfem_side() > 0 && y <= 0) y = 1E-13;
       if (c.xfem_side() < 0 && y >= 0) y = -1E-13;
-      return fn.val(x,y);
+      return fn->val(x,y);
     }
     virtual void grad(const fem_interpolation_context& c,
                       base_small_vector &g) const {
@@ -597,7 +597,7 @@ namespace getfem {
       scalar_type y = mls_y.grad(c.xref(), dy);
       if (c.xfem_side() > 0 && y <= 0) y = 1E-13;
       if (c.xfem_side() < 0 && y >= 0) y = -1E-13;
-      base_small_vector gfn = fn.grad(x,y);
+      base_small_vector gfn = fn->grad(x,y);
       gmm::mult(c.B(), gfn[0]*dx + gfn[1]*dy, g);
     }
     virtual void hess(const fem_interpolation_context&c,
@@ -610,8 +610,8 @@ namespace getfem {
       scalar_type y = mls_y.grad(c.xref(), dy);
       if (c.xfem_side() > 0 && y <= 0) y = 1E-13;
       if (c.xfem_side() < 0 && y >= 0) y = -1E-13;
-      base_small_vector gfn = fn.grad(x,y);
-      base_matrix hfn = fn.hess(x,y);
+      base_small_vector gfn = fn->grad(x,y);
+      base_matrix hfn = fn->hess(x,y);
 
       base_matrix hx, hy, hx_real(N*N, 1), hy_real(N*N, 1);
       mls_x.hess(c.xref(), hx);
@@ -638,8 +638,7 @@ namespace getfem {
 
     void update_from_context(void) const { cv =  size_type(-1); }
 
-    global_function_on_levelset_(const level_set &ls_,
-                                 const abstract_xy_function &fn_)
+    global_function_on_levelset_(const level_set &ls_, const pxy_function &fn_)
       : ls(ls_), fn(fn_) {
       cv = size_type(-1);
       this->add_dependency(ls);
@@ -649,8 +648,8 @@ namespace getfem {
 
   pglobal_function
   global_function_on_level_set(const level_set &ls,
-                               const abstract_xy_function &fn) {
-    return pglobal_function(new global_function_on_levelset_(ls, fn));
+                               const pxy_function &fn) {
+    return std::make_shared<global_function_on_levelset_>(ls, fn);
   }
 
 
@@ -660,7 +659,7 @@ namespace getfem {
     mutable mesher_level_set mls_x, mls_y;
     mutable size_type cv;
 
-    const abstract_xy_function &fn;
+    pxy_function fn;
 
     void update_mls(size_type cv_, size_type n) const {
       if (cv_ != cv) {
@@ -685,7 +684,7 @@ namespace getfem {
       update_mls(c.convex_num(), c.xref().size());
       scalar_type x = mls_x(c.xref());
       scalar_type y = mls_y(c.xref());
-      return fn.val(x,y);
+      return fn->val(x,y);
     }
     virtual void grad(const fem_interpolation_context& c,
                       base_small_vector &g) const {
@@ -695,7 +694,7 @@ namespace getfem {
       scalar_type x = mls_x.grad(c.xref(), dx);
       scalar_type y = mls_y.grad(c.xref(), dy);
 
-      base_small_vector gfn = fn.grad(x,y);
+      base_small_vector gfn = fn->grad(x,y);
 
       gmm::mult(c.B(), gfn[0]*dx + gfn[1]*dy, g);
     }
@@ -708,8 +707,8 @@ namespace getfem {
       scalar_type x = mls_x.grad(c.xref(), dx);
       scalar_type y = mls_y.grad(c.xref(), dy);
 
-      base_small_vector gfn = fn.grad(x,y);
-      base_matrix hfn = fn.hess(x,y);
+      base_small_vector gfn = fn->grad(x,y);
+      base_matrix hfn = fn->hess(x,y);
 
       base_matrix hx, hy, hx_real(N*N, 1), hy_real(N*N, 1);
       mls_x.hess(c.xref(), hx);
@@ -737,7 +736,7 @@ namespace getfem {
     void update_from_context(void) const { cv =  size_type(-1); }
 
     global_function_on_levelsets_(const std::vector<level_set> &lsets_,
-                                  const abstract_xy_function &fn_)
+                                  const pxy_function &fn_)
       : lsets(lsets_), fn(fn_) {
       cv = size_type(-1);
       for (size_type i = 0; i < lsets.size(); ++i)
@@ -748,8 +747,8 @@ namespace getfem {
 
   pglobal_function
   global_function_on_level_sets(const std::vector<level_set> &lsets,
-                                const abstract_xy_function &fn) {
-    return pglobal_function(new global_function_on_levelsets_(lsets, fn));
+                                const pxy_function &fn) {
+    return std::make_shared<global_function_on_levelsets_>(lsets, fn);
   }
 
 

@@ -1047,26 +1047,24 @@ bool  unilateral_contact_problem::solve(plain_vector &U, plain_vector &LAMBDA, p
   cout << dgr << endl;
   
   std::vector<getfem::pglobal_function> vfunc(dgr*4);
-  //std::vector<getfem::pglobal_function> vfunc_u(6);
-  //std::vector<getfem::pglobal_function> vfunc_p(dgrp*2);
+
   if (!load_global_fun) {
     std::cout << "Using default singular functions\n";
     for (unsigned i = 0; i < vfunc.size(); ++i){
       /* use the singularity */
       
-      getfem::abstract_xy_function *s = 
-	new getfem::crack_singular_xy_function(i);
+      getfem::pxy_function
+	s = std::make_shared<getfem::crack_singular_xy_function>(i);
       
       if (enrichment_option != FIXED_ZONE ) {
 	/* use the product of the singularity function
 	   with a cutoff */
-	getfem::abstract_xy_function *c = 
-	  new getfem::cutoff_xy_function(int(cutoff_func),
-					 cutoff_radius, 
-					 cutoff_radius1,cutoff_radius0);
-	s  = new getfem::product_of_xy_functions(*s, *c);
+	getfem::pxy_function
+	  c = std::make_shared<getfem::cutoff_xy_function>
+	  (int(cutoff_func), cutoff_radius, cutoff_radius1,cutoff_radius0);
+	s  = std::make_shared<getfem::product_of_xy_functions>(s, c);
        }
-      vfunc[i]=getfem::global_function_on_level_set(ls, *s);           
+      vfunc[i]=getfem::global_function_on_level_set(ls, s);     
     }
   }
   

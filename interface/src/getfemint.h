@@ -51,6 +51,7 @@ namespace getfem {
   class level_set;
   class mesh_level_set;
   class abstract_xy_function;
+  typedef std::shared_ptr<const abstract_xy_function> pxy_function;
   class mesher_signed_distance;
   class cont_struct_getfem_model;
 }
@@ -431,9 +432,9 @@ namespace getfemint {
     getfem::level_set *                  to_levelset();
     getfemint_mesh_levelset *            to_getfemint_mesh_levelset(bool writeable=false);
     getfem::mesh_level_set *             to_mesh_levelset();
-    const getfem::abstract_xy_function * to_const_global_function();
+    const getfem::pxy_function           to_const_global_function();
+    getfem::pxy_function                 to_global_function();
     const getfem::mesher_signed_distance * to_const_mesher_object();
-    getfem::abstract_xy_function *       to_global_function();
     getfem::mesher_signed_distance *     to_mesher_object();
     const getfem::cont_struct_getfem_model * to_const_cont_struct();
     getfem::cont_struct_getfem_model *   to_cont_struct();

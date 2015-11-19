@@ -44,17 +44,15 @@ namespace getfemint
 {
   class getfemint_global_function : public getfem_object {
   private:
-    getfem::abstract_xy_function *pgf;
+    getfem::pxy_function pgf;
   public:
-    ~getfemint_global_function();
     id_type class_id() const { return GLOBAL_FUNCTION_CLASS_ID; }
-    getfem::abstract_xy_function& global_function() { return *pgf; }
-    const getfem::abstract_xy_function& global_function() const { return *pgf; }
+    const getfem::pxy_function &global_function() const { return pgf; }
 
-    static getfemint_global_function* get_from(getfem::abstract_xy_function *pabs,
+    static getfemint_global_function* get_from(const getfem::pxy_function &pabs,
                                                int flags = 0);
 
-    getfemint_global_function(getfem::abstract_xy_function *pabs);
+    getfemint_global_function(const getfem::pxy_function &pabs);
   };
 
   inline bool object_is_global_function(getfem_object *o) {

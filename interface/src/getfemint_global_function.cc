@@ -23,21 +23,19 @@
 #include <getfemint_workspace.h>
 
 namespace getfemint {
-  getfemint_global_function::getfemint_global_function(getfem::abstract_xy_function *pabs) {
-    assert(workspace == 0);
-    pgf  = pabs;
-    ikey = getfem_object::internal_key_type(pgf);
-  }
 
-  getfemint_global_function::~getfemint_global_function() {
-    if (!is_static()) delete pgf;
-    pgf = NULL;
+  getfemint_global_function::getfemint_global_function
+  (const getfem::pxy_function &pabs) : pgf(pabs) {
+    assert(workspace == 0);
+    ikey = getfem_object::internal_key_type(pgf.get());
   }
 
   getfemint_global_function*
-  getfemint_global_function::get_from(getfem::abstract_xy_function *pabs, int flags) {
+  getfemint_global_function::get_from(const getfem::pxy_function &pabs,
+				      int flags) {
     getfem_object *o =
-      getfemint::workspace().object(getfem_object::internal_key_type(pabs));
+      getfemint::workspace().object
+      (getfem_object::internal_key_type(pabs.get()));
     getfemint_global_function *gpgf = NULL;
     if (!o) {
       gpgf = new getfemint_global_function(pabs);
@@ -47,4 +45,5 @@ namespace getfemint {
     assert(gpgf);
     return gpgf;
   }
+
 }

@@ -59,7 +59,7 @@ template <typename T> static inline void dummy_func(T &) {}
 		       getfemint_mesh *mm, pgetfemint_mesh_im &mim)	\
       { dummy_func(in); dummy_func(out); dummy_func(mm); code }		\
     };									\
-    psub_command psubc(new subc);					\
+    psub_command psubc = std::make_shared<subc>();			\
     psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;		\
     psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;	\
     subc_tab[cmd_normalize(name)] = psubc;				\

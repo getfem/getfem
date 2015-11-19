@@ -62,15 +62,11 @@ template <typename T> static inline void dummy_func(T &) {}
 		       pgetfemint_global_function &ggf)			\
       { dummy_func(in); dummy_func(out); code }				\
     };									\
-    psub_command psubc(new subc);					\
+    psub_command psubc = std::make_shared<subc>();			\
     psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;		\
     psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;	\
     subc_tab[cmd_normalize(name)] = psubc;				\
   }
-
-
-
-
 
 
 void gf_global_function(getfemint::mexargs_in& m_in,
@@ -90,7 +86,8 @@ void gf_global_function(getfemint::mexargs_in& m_in,
        scalar_type r1 = in.pop().to_scalar();
        scalar_type r0 = in.pop().to_scalar();
 
-       getfem::abstract_xy_function *cutoff = new getfem::cutoff_xy_function(int(fn),r,r1,r0);
+       auto cutoff
+       = std::make_shared<getfem::cutoff_xy_function>(int(fn),r,r1,r0);
        ggf = getfemint_global_function::get_from(cutoff);
        );
 
@@ -100,8 +97,8 @@ void gf_global_function(getfemint::mexargs_in& m_in,
     sub_command
       ("crack", 1, 1, 0, 1,
        size_type fn = in.pop().to_integer(0,11);
-       getfem::abstract_xy_function *crack
-       = new getfem::crack_singular_xy_function(unsigned(fn));
+       auto crack
+       = std::make_shared<getfem::crack_singular_xy_function>(unsigned(fn));
        ggf = getfemint_global_function::get_from(crack);
        );
 
@@ -114,10 +111,12 @@ void gf_global_function(getfemint::mexargs_in& m_in,
        std::string sval = in.pop().to_string();
        std::string sgrad = "[0;0]";
        std::string shess = "[0,0;0,0]";
-       if (in.remaining() && in.front().is_string()) sgrad = in.pop().to_string();
-       if (in.remaining() && in.front().is_string()) shess = in.pop().to_string();
-
-       getfem::abstract_xy_function *parser = new getfem::parser_xy_function(sval,sgrad,shess);
+       if (in.remaining() && in.front().is_string())
+	 sgrad = in.pop().to_string();
+       if (in.remaining() && in.front().is_string())
+	 shess = in.pop().to_string();
+       auto parser
+       = std::make_shared<getfem::parser_xy_function>(sval,sgrad,shess);
        ggf = getfemint_global_function::get_from(parser);
        );
 
@@ -125,10 +124,10 @@ void gf_global_function(getfemint::mexargs_in& m_in,
       Create a product of two global functions.@*/
     sub_command
       ("product", 2, 2, 0, 1,
-       getfem::abstract_xy_function *af1 = in.pop().to_global_function();
-       getfem::abstract_xy_function *af2 = in.pop().to_global_function();
-
-       getfem::abstract_xy_function *product = new getfem::product_of_xy_functions(*af1,*af2);
+       getfem::pxy_function af1 = in.pop().to_global_function();
+       getfem::pxy_function af2 = in.pop().to_global_function();
+       auto product
+       = std::make_shared<getfem::product_of_xy_functions>(af1,af2);
        ggf = getfemint_global_function::get_from(product);
        );
 
@@ -137,10 +136,9 @@ void gf_global_function(getfemint::mexargs_in& m_in,
       Create a add of two global functions.@*/
     sub_command
       ("add", 2, 2, 0, 1,
-       getfem::abstract_xy_function *af1 = in.pop().to_global_function();
-       getfem::abstract_xy_function *af2 = in.pop().to_global_function();
-       getfem::abstract_xy_function *add
-       = new getfem::add_of_xy_functions(*af1,*af2);
+       getfem::pxy_function af1 = in.pop().to_global_function();
+       getfem::pxy_function af2 = in.pop().to_global_function();
+       auto add = std::make_shared<getfem::add_of_xy_functions>(af1,af2);
        ggf = getfemint_global_function::get_from(add);
        );
 

@@ -134,7 +134,7 @@ namespace getfem
     dim_ = m.dim();
     GMM_ASSERT1(dim_ <= 3, "attempt to export a " << int(dim_)
               << "D slice (not supported)");
-    pmf.reset(new mesh_fem(const_cast<mesh&>(m),1));
+    pmf = std::make_unique<mesh_fem>(const_cast<mesh&>(m), dim_type(1));
     pmf->set_classical_finite_element(1);
     exporting(*pmf);
   }
@@ -143,8 +143,8 @@ namespace getfem
     dim_ = mf.linked_mesh().dim();
     GMM_ASSERT1(dim_ <= 3, "attempt to export a " << int(dim_)
               << "D slice (not supported)");
-    if (&mf != pmf.get()) pmf.reset(new mesh_fem(mf.linked_mesh(),1));
-
+    if (&mf != pmf.get())
+      pmf = std::make_unique<mesh_fem>(mf.linked_mesh(), dim_type(1));
     /* initialize pmf with finite elements suitable for VTK (which only knows
        isoparametric FEMs of order 1 and 2) */
     for (dal::bv_visitor cv(mf.convex_index()); !cv.finished(); ++cv) {
@@ -457,7 +457,7 @@ namespace getfem
     dim_ = m.dim();
     GMM_ASSERT1(dim_ <= 3, "4D meshes and more are not supported");
     if (&mf != pmf.get())
-      pmf.reset(new mesh_fem(const_cast<mesh&>(m),1));
+      pmf = std::make_unique<mesh_fem>(const_cast<mesh&>(m), dim_type(1));
     bgeot::pgeometric_trans pgt = m.trans_of_convex(m.convex_index().first_true());
     GMM_ASSERT1(dxname_of_convex_structure
               (basic_structure(pgt->structure())) != 0,
@@ -486,7 +486,7 @@ namespace getfem
   void dx_export::exporting(const mesh& m, std::string name) {
     dim_ = m.dim();
     GMM_ASSERT1(dim_ <= 3, "4D meshes and more are not supported");
-    pmf.reset(new mesh_fem(const_cast<mesh&>(m),1));
+    pmf = std::make_unique<mesh_fem>(const_cast<mesh&>(m), dim_type(1));
     pmf->set_classical_finite_element(1);
     exporting(*pmf, name);
   }
@@ -835,7 +835,7 @@ namespace getfem
     dim = dim_type(m.dim());
     GMM_ASSERT1(int(dim) <= 3, "attempt to export a "
                 << int(dim) << "D mesh (not supported)");
-    pmf.reset(new mesh_fem(const_cast<mesh&>(m),1));
+    pmf = std::make_unique<mesh_fem>(const_cast<mesh&>(m), dim_type(1));
     pmf->set_classical_finite_element(1);
     exporting(*pmf);
     state = STRUCTURE_WRITTEN;
@@ -846,7 +846,8 @@ namespace getfem
     dim = dim_type(mf.linked_mesh().dim());
     GMM_ASSERT1(int(dim) <= 3, "attempt to export a "
                 << int(dim) << "D mesh_fem (not supported)");
-    if (&mf != pmf.get()) pmf.reset(new mesh_fem(mf.linked_mesh(),1));
+    if (&mf != pmf.get())
+      pmf = std::make_unique<mesh_fem>(mf.linked_mesh(), dim_type(1));
 
     /* initialize pmf with finite elements suitable for Gmsh */
     for (dal::bv_visitor cv(mf.convex_index()); !cv.finished(); ++cv) {
@@ -946,7 +947,7 @@ namespace getfem
     if (state >= IN_CELL_DATA) return;
     GMM_ASSERT1(int(m.dim()) <= 3, "attempt to export a "
                 << int(m.dim()) << "D mesh (not supported)");
-    pmf.reset(new mesh_fem(const_cast<mesh&>(m),1));
+    pmf = std::make_unique<mesh_fem>(const_cast<mesh&>(m), dim_type(1));
     pmf->set_classical_finite_element(1);
     write(*pmf,name);
     state = IN_CELL_DATA;

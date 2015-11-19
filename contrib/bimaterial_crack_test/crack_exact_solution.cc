@@ -290,9 +290,10 @@ void crack_exact_solution::init(int function_num, scalar_type lambda, scalar_typ
   std::vector<getfem::pglobal_function> cfun(2);
   for (unsigned i = 0; i < 2; ++i) {
     /* use the singularity */
-    getfem::abstract_xy_function *s = 
-      new crack_exact_solution_function(function_num, i, lambda, mu);
-    cfun[i] = getfem::global_function_on_level_set(ls, *s);
+    getfem::pxy_function
+      s = std::make_shared<crack_exact_solution_function>
+      (function_num, i, lambda, mu);
+    cfun[i] = getfem::global_function_on_level_set(ls, s);
   }
   
   mf.set_functions(cfun);

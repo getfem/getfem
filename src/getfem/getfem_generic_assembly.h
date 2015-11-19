@@ -218,49 +218,48 @@ namespace getfem {
                   bool scalar_expr = true);
 
     struct sparse_matrix_ptr {
-      bool todelete;
-      model_real_sparse_matrix *ptr;
+      std::shared_ptr<model_real_sparse_matrix> ptr;
       model_real_sparse_matrix &operator()() { return *ptr; }
       const model_real_sparse_matrix &operator()() const { return *ptr; }
       void resize(size_type nb)
-      { if (todelete) { gmm::clear(*ptr); gmm::resize(*ptr, nb, nb); } }
-      void set_matrix(model_real_sparse_matrix &M)
-      { if (todelete) delete ptr; todelete = false; ptr = &M; }
-      sparse_matrix_ptr():
-        todelete(true), ptr(new model_real_sparse_matrix(2,2)) {}
-      sparse_matrix_ptr(const sparse_matrix_ptr &smp):
-        todelete(smp.todelete), ptr(smp.ptr)
-      { if (todelete) ptr = new model_real_sparse_matrix(smp()); }
+      { if (ptr.use_count()) { gmm::clear(*ptr); gmm::resize(*ptr, nb, nb); } }
+      void set_matrix(model_real_sparse_matrix &M) {
+	ptr = std::shared_ptr<model_real_sparse_matrix>
+	  (std::shared_ptr<model_real_sparse_matrix>(), &M);
+      }
+      sparse_matrix_ptr()
+	: ptr(std::make_shared<model_real_sparse_matrix>(2,2)) {}
+      sparse_matrix_ptr(const sparse_matrix_ptr &smp): ptr(smp.ptr) {
+	if (ptr.use_count())
+	  ptr=std::make_shared<model_real_sparse_matrix>(smp());
+      }
       sparse_matrix_ptr &operator =(const sparse_matrix_ptr &smp) {
-        if (todelete) delete ptr;
-        todelete = smp.todelete; ptr = smp.ptr;
-        if (todelete) ptr = new model_real_sparse_matrix(smp());
+	ptr = smp.ptr;
+	if (ptr.use_count())
+	  ptr=std::make_shared<model_real_sparse_matrix>(smp());
         return *this;
       }
-      ~sparse_matrix_ptr() { if (todelete) delete ptr; ptr = 0; }
     };
 
     struct base_vector_ptr {
-      bool todelete;
-      base_vector *ptr;
+      std::shared_ptr<base_vector> ptr;
       base_vector &operator()() { return *ptr; }
       const base_vector &operator()() const { return *ptr; }
       void resize(size_type nb)
-      { if (todelete) { gmm::clear(*ptr); gmm::resize(*ptr, nb);} }
-      void set_vector(base_vector &vector)
-      { if (todelete) delete ptr; todelete = false; ptr = &vector; }
-      base_vector_ptr():
-        todelete(true), ptr(new base_vector(2)) {}
-      base_vector_ptr(const base_vector_ptr &smp):
-        todelete(smp.todelete), ptr(smp.ptr)
-      { if (todelete) ptr = new base_vector(smp()); }
+      { if (ptr.use_count()) { gmm::clear(*ptr); gmm::resize(*ptr, nb);} }
+      void set_vector(base_vector &vector) {
+	ptr = std::shared_ptr<base_vector>(std::shared_ptr<base_vector>(),
+					   &vector);
+      }
+      base_vector_ptr(): ptr(std::make_shared<base_vector>(2)) {}
+      base_vector_ptr(const base_vector_ptr &smp): ptr(smp.ptr)
+      { if (ptr.use_count()) ptr=std::make_shared<base_vector>(smp()); }
       base_vector_ptr &operator =(const base_vector_ptr &smp) {
-        if (todelete) delete ptr;
-        todelete = smp.todelete; ptr = smp.ptr;
-        if (todelete) ptr = new base_vector(smp());
+	ptr = smp.ptr;
+	if (ptr.use_count())
+	  ptr = std::make_shared<base_vector>(smp());
         return *this;
       }
-      ~base_vector_ptr() { if (todelete) delete ptr; ptr = 0; }
     };
 
     sparse_matrix_ptr K;

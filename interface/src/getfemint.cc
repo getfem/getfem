@@ -704,14 +704,14 @@ namespace getfemint {
     return object_to_global_function(o);
   }
 
-  getfem::abstract_xy_function *
+  getfem::pxy_function
   mexarg_in::to_global_function() {
-    return &to_getfemint_global_function(true)->global_function();
+    return to_getfemint_global_function(true)->global_function();
   }
 
-  const getfem::abstract_xy_function *
+  const getfem::pxy_function
   mexarg_in::to_const_global_function() {
-    return &to_getfemint_global_function(false)->global_function();
+    return to_getfemint_global_function(false)->global_function();
   }
 
   /*

@@ -56,7 +56,7 @@ template <typename T> static inline void dummy_func(T &) {}
 		       getfem::mesh_level_set &mls)			\
       { dummy_func(in); dummy_func(out);  dummy_func(gmls); code }	\
     };									\
-    psub_command psubc(new subc);					\
+    psub_command psubc = std::make_shared<subc>();			\
     psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;		\
     psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;	\
     subc_tab[cmd_normalize(name)] = psubc;				\
