@@ -783,9 +783,10 @@ namespace getfemint {
 
 
   /** This function return the right projection type chosen which could only be for the moment the Von Mises projection. */
-  const getfem::abstract_constraints_projection &abstract_constraints_projection_from_name(const std::string &projname) {
+  const getfem::pconstraints_projection &abstract_constraints_projection_from_name(const std::string &projname) {
 
-    static getfem::VM_projection VM_proj(0);
+    static getfem::pconstraints_projection
+      VM_proj = std::shared_ptr<getfem::VM_projection>(0);
 
     if (cmd_strmatch(projname, "Von Mises") ||
         cmd_strmatch(projname, "VM")) return VM_proj;

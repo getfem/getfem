@@ -32,7 +32,7 @@
 /**@file getfem_mesher.h
    @author  Julien Pommier <Julien.Pommier@insa-toulouse.fr>, Yves Renard <Yves.Renard@insa-lyon.fr>
    @date May 1, 2004.
-   @brief a broken mesher.
+   @brief An experimental mesher.
 */
 
 #ifndef GETFEM_MESHER_H__
@@ -83,6 +83,8 @@ namespace getfem {
 				      mesher_signed_distance*>& list) const=0;
     virtual scalar_type operator()(const base_node &P) const  = 0;
   };
+
+  typedef std::shared_ptr<const mesher_signed_distance> pmesher_signed_distance;
 
   class mesher_half_space : public mesher_signed_distance {
     base_node x0; base_small_vector n; scalar_type xon;

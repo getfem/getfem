@@ -286,10 +286,10 @@ bool elastoplasticity_problem::solve(plain_vector &U) {
   model.add_fem_data("sigma", mf_sigma);
 
   /* choose the projection type */
-  getfem::abstract_constraints_projection *proj = 0;
-  proj = new getfem::VM_projection(0);
+  getfem::pconstraints_projection
+    proj = std::make_shared<getfem::VM_projection>(0);
 
-  add_elastoplasticity_brick(model, mim, *proj, "u", "lambda", "mu", 
+  add_elastoplasticity_brick(model, mim, proj, "u", "lambda", "mu", 
 			     "s", "sigma");
   
   plain_vector F(nb_dof_rhs * N);
@@ -342,7 +342,7 @@ bool elastoplasticity_problem::solve(plain_vector &U) {
  
     //compute and save sigma_np1
     //    getfem::mesh_fem *mf_data=0;
-    getfem::elastoplasticity_next_iter(model, mim, "u", *proj, 
+    getfem::elastoplasticity_next_iter(model, mim, "u", proj, 
 			"lambda", "mu", "s", "sigma");
     
     // Get the solution and save it

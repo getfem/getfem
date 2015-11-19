@@ -74,7 +74,8 @@ namespace getfem {
     virtual ~abstract_constraints_projection () {}
   };
 
-
+  typedef std::shared_ptr<const abstract_constraints_projection>
+  pconstraints_projection;
 
   //=================================================================
   // Von Mises projection
@@ -259,7 +260,7 @@ namespace getfem {
   size_type add_elastoplasticity_brick
   (model &md,
    const mesh_im &mim,
-   const abstract_constraints_projection &ACP,
+   const pconstraints_projection &ACP,
    const std::string &varname,
    const std::string &datalambda,
    const std::string &datamu,
@@ -283,7 +284,7 @@ namespace getfem {
   void elastoplasticity_next_iter(model &md,
                                   const mesh_im &mim,
                                   const std::string &varname,
-                                  const abstract_constraints_projection &ACP,
+                                  const pconstraints_projection &ACP,
                                   const std::string &datalambda,
                                   const std::string &datamu,
                                   const std::string &datathreshold,
@@ -314,7 +315,7 @@ namespace getfem {
                             const mesh_im &mim,
                             const mesh_fem &mf_pl,
                             const std::string &varname,
-                            const abstract_constraints_projection &ACP,
+                            const pconstraints_projection &ACP,
                             const std::string &datalambda,
                             const std::string &datamu,
                             const std::string &datathreshold,

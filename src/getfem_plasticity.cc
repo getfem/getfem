@@ -412,7 +412,7 @@ namespace getfem {
 
   struct elastoplasticity_brick : public virtual_brick {
 
-    const abstract_constraints_projection  &t_proj;
+    pconstraints_projection  t_proj;
 
     virtual void asm_real_tangent_terms(const model &md,
                                         size_type /* ib */,
@@ -459,7 +459,7 @@ namespace getfem {
         gmm::clear(matl[0]);
         asm_elastoplasticity_tangent_matrix
           (matl[0], mim, mf_u, mf_sigma, *mf_data, u_n,
-           u_np1, sigma_n, lambda, mu, threshold, t_proj, rg);
+           u_np1, sigma_n, lambda, mu, threshold, *t_proj, rg);
       }
 
       if (version & model::BUILD_RHS) {
@@ -467,14 +467,14 @@ namespace getfem {
         asm_elastoplasticity_rhs(vecl[0], dummy,
                                  mim, mf_u, mf_sigma, *mf_data,
                                  u_n, u_np1, sigma_n,
-                                 lambda, mu, threshold, t_proj, PROJ, rg);
+                                 lambda, mu, threshold, *t_proj, PROJ, rg);
         gmm::scale(vecl[0], scalar_type(-1));
       }
 
     }
 
     // constructor
-    elastoplasticity_brick(const abstract_constraints_projection &t_proj_)
+    elastoplasticity_brick(const pconstraints_projection &t_proj_)
       : t_proj(t_proj_) {
       set_flags("Elastoplasticity brick", false /* is linear*/,
                 true /* is symmetric */, false /* is coercive */,
@@ -491,7 +491,7 @@ namespace getfem {
   size_type add_elastoplasticity_brick
     (model &md,
      const mesh_im &mim,
-     const abstract_constraints_projection &ACP,
+     const pconstraints_projection &ACP,
      const std::string &varname,
      const std::string &datalambda,
      const std::string &datamu,
@@ -524,7 +524,7 @@ namespace getfem {
   void elastoplasticity_next_iter(model &md,
                                   const mesh_im &mim,
                                   const std::string &varname,
-                                  const abstract_constraints_projection &ACP,
+                                  const pconstraints_projection &ACP,
                                   const std::string &datalambda,
                                   const std::string &datamu,
                                   const std::string &datathreshold,
@@ -551,7 +551,7 @@ namespace getfem {
     asm_elastoplasticity_rhs(dummyV, &sigma_np1,
                              mim, mf_u, mf_sigma, *mf_data,
                              u_n, u_np1, sigma_n,
-                             lambda, mu, threshold, ACP, PROJ, rg);
+                             lambda, mu, threshold, *ACP, PROJ, rg);
 
     // upload sigma and u : u_np1 -> u_n, sigma_np1 -> sigma_n
     // be careful to use this function
@@ -626,7 +626,7 @@ namespace getfem {
                             const mesh_im &mim,
                             const mesh_fem &mf_pl,
                             const std::string &varname,
-                            const abstract_constraints_projection &ACP,
+                            const pconstraints_projection &ACP,
                             const std::string &datalambda,
                             const std::string &datamu,
                             const std::string &datathreshold,
@@ -654,7 +654,7 @@ namespace getfem {
     asm_elastoplasticity_rhs(dummyV, &saved_plast,
                              mim, mf_u, mf_sigma, *pmf_data,
                              u_n, u_np1, sigma_n,
-                             lambda, mu, threshold, ACP, PLAST, rg);
+                             lambda, mu, threshold, *ACP, PLAST, rg);
 
     /* Retrieve and save the plastic part */
     GMM_ASSERT1(gmm::vect_size(plast) == mf_pl.nb_dof(),

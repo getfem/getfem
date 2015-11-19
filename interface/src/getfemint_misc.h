@@ -42,6 +42,7 @@ namespace getfem {
 
 namespace getfem {
   class abstract_constraints_projection;
+  typedef std::shared_ptr<const abstract_constraints_projection> pconstraints_projection;
 }
 
 namespace getfemint {
@@ -76,7 +77,7 @@ namespace getfemint {
   const getfem::phyperelastic_law &abstract_hyperelastic_law_from_name(const std::string &lawname, size_type N);
 
 
-  const getfem::abstract_constraints_projection &abstract_constraints_projection_from_name(const std::string &projname);
+  const getfem::pconstraints_projection &abstract_constraints_projection_from_name(const std::string &projname);
 
 
   class interruptible_iteration : public gmm::iteration {
