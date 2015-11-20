@@ -182,6 +182,7 @@ namespace getfem {
     explicit mesh(const std::string name = "");
     mesh(const bgeot::basic_mesh &m, const std::string name = "");
     mesh(const mesh &m);
+    mesh &operator=(const mesh &m);
 
     inline std::string get_name() const {return name_;}
     void update_from_context(void) const {}

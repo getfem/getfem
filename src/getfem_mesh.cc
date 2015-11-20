@@ -135,6 +135,12 @@ namespace getfem {
 
   mesh::mesh(const mesh &m){copy_from(m);}
 
+  mesh &mesh::operator=(const mesh &m) {
+    clear();
+    copy_from(m);
+    return *this;
+  }
+
 #if GETFEM_PARA_LEVEL > 1
 
   void mesh::compute_mpi_region(void) const {
@@ -258,7 +264,7 @@ namespace getfem {
     gtab.clear(); trans_exists.clear();
     cvf_sets.clear(); valid_cvf_sets.clear();
     cvs_v_num.clear();
-    Bank_info = std::unique_ptr<Bank_info_struct>();
+    Bank_info = nullptr;
     touch();
   }
 
