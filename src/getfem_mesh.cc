@@ -133,6 +133,8 @@ namespace getfem {
 
   mesh::mesh(const bgeot::basic_mesh &m, const std::string name) : bgeot::basic_mesh(m), name_(name)  { init(); }
 
+  mesh::mesh(const mesh &m){copy_from(m);}
+
 #if GETFEM_PARA_LEVEL > 1
 
   void mesh::compute_mpi_region(void) const {
