@@ -42,7 +42,15 @@
 #include "bgeot_small_vector.h"
 
 namespace bgeot {
-  struct kdtree_elt_base;
+
+  /* generic node for the kdtree */
+  struct kdtree_elt_base {
+    enum { PTS_PER_LEAF=8 };
+    unsigned n; /* 0 => is a tree node, != 0 => tree leaf storing n points */
+    bool isleaf() const { return (n != 0); }
+    kdtree_elt_base(unsigned n_) : n(n_) {}
+  };
+
   /// store a point and the associated index for the kdtree. 
   /* std::pair<size_type,base_node> is not ok since it does not
      have a suitable overloaded swap function ...
@@ -93,11 +101,10 @@ namespace bgeot {
   */
   class kdtree : public boost::noncopyable {
     dim_type N; /* dimension of points */
-    kdtree_elt_base *tree;
+    std::unique_ptr<kdtree_elt_base> tree;
     kdtree_tab_type pts;
   public:
-    kdtree() : N(0), tree(0) {}
-    ~kdtree() { clear_tree(); }
+    kdtree() : N(0) {}
     /// reset the tree, remove all points
     void clear() { clear_tree(); pts.clear(); N = 0; }
     void reserve(size_type n) { pts.reserve(n); }
@@ -129,4 +136,5 @@ namespace bgeot {
     void clear_tree();
   };
 }
+
 #endif

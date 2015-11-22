@@ -64,8 +64,8 @@ namespace getfem {
     touch();
   }
 
-  mesher_level_set level_set::mls_of_convex(size_type cv, unsigned lsnum,
-					    bool inverted) const {
+  pmesher_signed_distance level_set::mls_of_convex(size_type cv, unsigned lsnum,
+					     bool inverted) const {
     assert(this); assert(mf); 
     GMM_ASSERT1(mf->linked_mesh().convex_index().is_in(cv), "convex " << cv
 		<< " is not in the level set mesh!");
@@ -79,8 +79,7 @@ namespace getfem {
     for (size_type i = 0; i < coeff.size(); ++i)
       coeff[i] = (!inverted ? scalar_type(1) : scalar_type(-1)) * 
 	values(lsnum)[mf->ind_basic_dof_of_element(cv)[i]];
-    //cout << "mls_of_convex[lsnum=" << lsnum << "] : coeff = " << coeff << "\n";
-    return mesher_level_set(mf->fem_of_element(cv), coeff, shift_ls);
+    return new_mesher_level_set(mf->fem_of_element(cv), coeff, shift_ls);
   }
  
   size_type level_set::memsize() const {

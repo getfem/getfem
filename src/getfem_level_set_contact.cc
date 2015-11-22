@@ -180,13 +180,13 @@ void level_set_contact::master_contact_body::
 	getfem::outer_faces_of_mesh(get_mesh(), outer_faces);
 
 	if (assumed_contact_region==size_type(-1)){ //all faces will be searched for contact
-		i.reset(new getfem::mr_visitor(outer_faces));
+	  i = std::make_shared<getfem::mr_visitor>(outer_faces);
 	}
 	else // only specified faces will be searched
 	{  
 		getfem::mesh_region& assumed_region = get_mesh().
 			region(assumed_contact_region);
-		i.reset(new getfem::mr_visitor(assumed_region));
+		i = std::make_shared<getfem::mr_visitor>(assumed_region);
 	}
 
 	for (; !i->finished(); ++(*i)){
@@ -226,8 +226,7 @@ void level_set_contact::master_contact_body::
 
 	//register contact pair
 	contact_table[scb.get_var_name()] = 
-		std::shared_ptr<contact_pair_info>
-		(new contact_pair_info(*this,scb,mult_name,assumed_contact_elems)); 
+	  std::make_shared<contact_pair_info>(*this,scb,mult_name,assumed_contact_elems);
 
 }
 
@@ -281,7 +280,7 @@ std::shared_ptr<getfem::mesh_im> level_set_contact::master_contact_body::
 
 	std::shared_ptr<getfem::mesh_im> pmim_contact;
 
-		pmim_contact.reset(new mesh_im(get_mesh()));
+	pmim_contact = std::make_shared<mesh_im>(get_mesh());
 		if (mult_mim_order!=size_type(-1)){
 			pmim_contact->set_integration_method
                           (get_mesh().region(region_id).index(),
@@ -314,15 +313,15 @@ mcb(_mcb), scb(_scb)
 		Umaster=mcb.get_model().real_variable(mcb.get_var_name());
 	// size_type dof_check = Umaster.size();
 	// size_type node_check = mcb.get_mesh().nb_points();
-	def_master.reset(new getfem::temporary_mesh_deformator<>
-		(mcb.get_mesh_fem(),Umaster));
+	def_master = std::make_shared<getfem::temporary_mesh_deformator<>>
+		(mcb.get_mesh_fem(),Umaster);
 	mcb.is_deformed=true;
 	if (&mcb.get_mesh()!=&scb.get_mesh()){ 
 		//  not deforming the slave if the master and the slave are the same
 		const model_real_plain_vector& 
 			Uslave=scb.get_model().real_variable(scb.get_var_name());
-		def_slave.reset(new getfem::temporary_mesh_deformator<>
-			(scb.get_mesh_fem(),Uslave));
+		def_slave = std::make_shared<getfem::temporary_mesh_deformator<>>
+			(scb.get_mesh_fem(),Uslave);
 		scb.is_deformed=true;
 	}
 	if (ud == FULL_UPDATE) mcb.update_for_slave(scb.get_var_name());
@@ -524,7 +523,7 @@ void level_set_contact::contact_pair_info::update() const
 		"Internal error: Contact area is empty");
 
 	//pinterpolated_fem for level set
-	pinterpolated_fem.reset(new mesh_fem(master_cb.get_mesh()));
+	pinterpolated_fem = std::make_shared<mesh_fem>(master_cb.get_mesh());
 	if (ifem_srf.get()!=0) getfem::del_interpolated_fem(ifem_srf);
 	ifem_srf=getfem::new_interpolated_fem(
 		slave_cb.get_ls_mesh_fem(),*pmim_contact);
@@ -534,7 +533,7 @@ void level_set_contact::contact_pair_info::update() const
 
 
 	//pinterpolated_fem_U
-	pinterpolated_fem_U.reset(new mesh_fem(master_cb.get_mesh()));
+	pinterpolated_fem_U = std::make_shared<mesh_fem>(master_cb.get_mesh());
 	pinterpolated_fem_U->set_finite_element(master_cb.get_mesh().
 		region(ACTIVE_CONTACT_REGION).index(),ifem_srf);
 	pinterpolated_fem_U->set_qdim(master_cb.get_mesh().dim());
@@ -550,7 +549,7 @@ void level_set_contact::contact_pair_info::update() const
 			= ifem_srf->index_of_global_dof(icv, j);}
 	}
 
-	slave_ls_dofs.reset(new gmm::unsorted_sub_index(index));
+	slave_ls_dofs = std::make_shared<gmm::unsorted_sub_index>(index);
 
 	//slave_U_dofs
 	std::vector<size_type> indexU(pinterpolated_fem_U->nb_dof());
@@ -558,7 +557,7 @@ void level_set_contact::contact_pair_info::update() const
 	for(size_type d=0;d<dim;d++)
 		for(size_type i=0;i<pinterpolated_fem->nb_dof();i++)
 			indexU[dim*i+d] = dim*index[i]+d;
-	slave_U_dofs.reset(new gmm::unsorted_sub_index(indexU));
+	slave_U_dofs = std::make_shared<gmm::unsorted_sub_index>(indexU);
 
 	members_are_computed=true;
 }
@@ -571,7 +570,7 @@ getfem::size_type level_set_contact::add_level_set_normal_contact_brick(
 	slave_contact_body& scb,
 	size_type rg) {
 	//level set contact class
-        getfem::pbrick pbr(new level_set_contact_brick(md,mcb,scb,rg));
+  getfem::pbrick pbr = std::make_shared<level_set_contact_brick>(md,mcb,scb,rg);
 
 	//term description
 	const std::string& name_Um = mcb.get_var_name();

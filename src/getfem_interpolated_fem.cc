@@ -398,7 +398,8 @@ namespace getfem {
   pfem new_interpolated_fem(const mesh_fem &mef, const mesh_im &mim,
                             pinterpolated_func pif,
                             dal::bit_vector blocked_dof, bool store_val) {
-    pfem pf(new interpolated_fem(mef, mim, pif, blocked_dof, store_val));
+    pfem pf = std::make_shared<interpolated_fem>
+      (mef, mim, pif, blocked_dof, store_val);
     dal::pstatic_stored_object_key pk=std::make_shared<special_intfem_key>(pf);
     dal::add_stored_object(pk, pf);
     return pf;

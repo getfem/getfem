@@ -256,13 +256,13 @@ struct Chrono {
   };
 
 
-  static mesher_signed_distance *new_ref_element(bgeot::pgeometric_trans pgt) {
+  static pmesher_signed_distance new_ref_element(bgeot::pgeometric_trans pgt) {
     dim_type n = pgt->structure()->dim();
     size_type nbp = pgt->basic_structure()->nb_points();
     /* Identifying simplexes.                                          */
     if (nbp == size_type(n+1) &&
 	pgt->basic_structure() == bgeot::simplex_structure(n)) {
-	return new mesher_simplex_ref(n);
+	return new_mesher_simplex_ref(n);
     }
     
     /* Identifying parallelepiped.                                     */
@@ -270,13 +270,13 @@ struct Chrono {
 	pgt->basic_structure() == bgeot::parallelepiped_structure(n)) {
       base_node rmin(n), rmax(n);
       std::fill(rmax.begin(), rmax.end(), scalar_type(1));
-      return new mesher_rectangle(rmin, rmax);
+      return new_mesher_rectangle(rmin, rmax);
     }
     
     /* Identifying prisms.                                             */
     if (nbp == size_type(2 * n) &&
 	pgt->basic_structure() == bgeot::prism_structure(n)) {
-      return new mesher_prism_ref(n);
+      return new_mesher_prism_ref(n);
     }
     
     GMM_ASSERT1(false, "This element is not taken into account. Contact us");
@@ -382,11 +382,11 @@ struct Chrono {
 				   scalar_type radius_cv) {
     
     cut_cv[cv] = convex_info();
-    cut_cv[cv].pmsh = pmesh(new mesh);
+    cut_cv[cv].pmsh = std::make_shared<mesh>();
     if (noisy) cout << "cutting element " << cv << endl;
     bgeot::pgeometric_trans pgt = linked_mesh().trans_of_convex(cv);
-    std::unique_ptr<mesher_signed_distance> ref_element(new_ref_element(pgt));
-    std::vector<mesher_level_set> mesher_level_sets;
+    pmesher_signed_distance ref_element = new_ref_element(pgt);
+    std::vector<pmesher_signed_distance> mesher_level_sets;
     
     size_type n = pgt->structure()->dim();
     size_type nbtotls = primary.card() + secondary.card();
@@ -411,16 +411,16 @@ struct Chrono {
 	base_node X(n); gmm::fill_random(X);
 	K = std::max(K, (level_sets[ll])->degree());
 	mesher_level_sets.push_back(level_sets[ll]->mls_of_convex(cv, 0));
-	mesher_level_set &mls(mesher_level_sets.back());
-	list_constraints.push_back(&mesher_level_sets.back());
-	r0 = std::min(r0, curvature_radius_estimate(mls, X, true));
+	pmesher_signed_distance mls(mesher_level_sets.back());
+	list_constraints.push_back(mesher_level_sets.back().get());
+	r0 = std::min(r0, curvature_radius_estimate(*mls, X, true));
 	GMM_ASSERT1(gmm::abs(r0) >= 1e-13, "Something wrong in your level "
 		    "set ... curvature radius = " << r0);
 	if (secondary[ll]) {
 	  mesher_level_sets.push_back(level_sets[ll]->mls_of_convex(cv, 1));
-	  mesher_level_set &mls2(mesher_level_sets.back());
-	  list_constraints.push_back(&mesher_level_sets.back());
-	  r0 = std::min(r0, curvature_radius_estimate(mls2, X, true));
+	  pmesher_signed_distance mls2(mesher_level_sets.back());
+	  list_constraints.push_back(mesher_level_sets.back().get());
+	  r0 = std::min(r0, curvature_radius_estimate(*mls2, X, true));
 	}
       }
     }
@@ -704,7 +704,7 @@ struct Chrono {
       bgeot::pgeometric_trans pgt2 = bgeot::simplex_geotrans(n, K);
       papprox_integration
 	pai = classical_approx_im(pgt2,dim_type(2*K))->approx_method();
-      approx_integration new_approx(pgt->convex_ref());
+      auto new_approx = std::make_shared<approx_integration>(pgt->convex_ref());
       base_matrix KK(n,n), CS(n,n);
       base_matrix pc(pgt2->nb_points(), n); 
       for (dal::bv_visitor i(msh.convex_index()); !i.finished(); ++i) {
@@ -727,7 +727,7 @@ struct Chrono {
 		 << msh.points_of_convex(i)[4] << " p6 = "
 		 << msh.points_of_convex(i)[5] << " K = " << int(K) << endl;
 	  if (sign == 0 && gmm::abs(J) > 1E-14) sign = J;
-	  new_approx.add_point(c.xreal(), pai->coeff(j) * gmm::abs(J));
+	  new_approx->add_point(c.xreal(), pai->coeff(j) * gmm::abs(J));
 	}
       }
 
@@ -739,17 +739,17 @@ struct Chrono {
 						pai->point(0), G);
 	for (size_type j = 0; j < pai->nb_points_on_face(it.f()); ++j) {
 	  c.set_xref(pai->point_on_face(it.f(), j));
-	  new_approx.add_point(c.xreal(), pai->coeff_on_face(it.f(), j)
+	  new_approx->add_point(c.xreal(), pai->coeff_on_face(it.f(), j)
 			       * gmm::abs(c.J()), it.f() /* faux */);
 	}
       }
-      new_approx.valid_method();
+      new_approx->valid_method();
 
       /* 
        * Step 5 : Test the validity of produced integration method.
        */
       
-      scalar_type error = test_integration_error(&new_approx, 1);
+      scalar_type error = test_integration_error(new_approx, 1);
       if (noisy) cout << " max monomial integration err: " << error << "\n";
       if (error > 1e-5) {
 	if (noisy) cout << "PAS BON NON PLUS\n"; if (noisy) getchar();
@@ -824,12 +824,12 @@ struct Chrono {
       mesh &msh = *(it->second.pmsh);      
       for (unsigned ils = 0; ils < nb_level_sets(); ++ils) {
 	if (get_level_set(ils)->has_secondary()) {
-	  mesher_level_set mesherls0 =  get_level_set(ils)->mls_of_convex(cv, 0, false);
-	  mesher_level_set mesherls1 =  get_level_set(ils)->mls_of_convex(cv, 1, false);
+	  pmesher_signed_distance mesherls0 = get_level_set(ils)->mls_of_convex(cv, 0, false);
+	  pmesher_signed_distance mesherls1 = get_level_set(ils)->mls_of_convex(cv, 1, false);
 	  for (dal::bv_visitor ii(msh.convex_index()); !ii.finished(); ++ii) {
 	    for (unsigned ipt = 0; ipt < msh.nb_points_of_convex(ii); ++ipt) {
-	      if (gmm::abs(mesherls0(msh.points_of_convex(ii)[ipt])) < 1E-10
-		  && gmm::abs(mesherls1(msh.points_of_convex(ii)[ipt])) < 1E-10) {
+	      if (gmm::abs((*mesherls0)(msh.points_of_convex(ii)[ipt])) < 1E-10
+		  && gmm::abs((*mesherls1)(msh.points_of_convex(ii)[ipt])) < 1E-10) {
 		crack_tip_convexes_.add(cv);
 		goto next_convex;
 	      }
@@ -917,17 +917,17 @@ struct Chrono {
 
     // cout << "cv " << cv << " radius = " << radius << endl;
 
-    mesher_level_set mls0 = ls->mls_of_convex(cv, 0), mls1(mls0);
+    pmesher_signed_distance mls0 = ls->mls_of_convex(cv, 0), mls1(mls0);
     if (ls->has_secondary()) mls1 = ls->mls_of_convex(cv, 1);
     int p = 0;
     bool is_cut = false;
     scalar_type d2 = 0, d1 = 1, d0 = 0, d0min = 0;
     for (size_type i = 0; i < pgt2->nb_points(); ++i) {
-      d0 = mls0(cvi.pmsh->points_of_convex(sub_cv)[i]);
+      d0 = (*mls0)(cvi.pmsh->points_of_convex(sub_cv)[i]);
       if (i == 0) d0min = gmm::abs(d0);
       else d0min = std::min(d0min, gmm::abs(d0));
       if (ls->has_secondary())
-	d1 = std::min(d1, mls1(cvi.pmsh->points_of_convex(sub_cv)[i]));
+	d1 = std::min(d1, (*mls1)(cvi.pmsh->points_of_convex(sub_cv)[i]));
      
       int p2 = ( (d0 < -EPS) ? -1 : ((d0 > EPS) ? +1 : 0));
       if (p == 0) p = p2;
@@ -963,23 +963,23 @@ struct Chrono {
       if (!p2 || p*p2 < 0) return 0;
     }
 
-    mesher_level_set mls1 = ls->mls_of_convex(cv, lsnum, false);
+    pmesher_signed_distance mls1 = ls->mls_of_convex(cv, lsnum, false);
     base_node X(pf->dim()), G(pf->dim());
     gmm::fill_random(X); X *= 1E-2;
-    scalar_type d = mls1.grad(X, G);
+    scalar_type d = mls1->grad(X, G);
     if (gmm::vect_norm2(G)*2.5 < gmm::abs(d)) return p;
 
     bgeot::pgeometric_trans pgt = linked_mesh().trans_of_convex(cv);
-    std::unique_ptr<mesher_signed_distance> ref_element(new_ref_element(pgt));
+    pmesher_signed_distance ref_element = new_ref_element(pgt);
     
     gmm::fill_random(X); X *= 1E-2;
-    mesher_intersection mi1(*ref_element, mls1);
+    mesher_intersection mi1(ref_element, mls1);
     if (!try_projection(mi1, X)) return p;
     if ((*ref_element)(X) > 1E-8) return p;
     
     gmm::fill_random(X); X *= 1E-2;
-    mesher_level_set mls2 = ls->mls_of_convex(cv, lsnum, true);
-    mesher_intersection mi2(*ref_element, mls2);
+    pmesher_signed_distance mls2 = ls->mls_of_convex(cv, lsnum, true);
+    mesher_intersection mi2(ref_element, mls2);
     if (!try_projection(mi2, X)) return p;
     if ((*ref_element)(X) > 1E-8) return p;
    

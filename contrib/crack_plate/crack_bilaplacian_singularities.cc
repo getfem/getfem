@@ -340,7 +340,7 @@ scalar_type bilaplacian_singular_functions::val(const getfem::fem_interpolation_
 
   assert(ls.get_mesh_fem().convex_index().is_in(c.convex_num()));
   update_mls(c.convex_num());
-  scalar_type x = mls1(c.xref()), y = mls0(c.xref());
+  scalar_type x = (*mls1)(c.xref()), y = (*mls0)(c.xref());
   scalar_type v = sing_function(x, y);
   return v;
 }
@@ -350,7 +350,7 @@ void bilaplacian_singular_functions::grad(const getfem::fem_interpolation_contex
   update_mls(c.convex_num());
   size_type P = c.xref().size();
   base_small_vector dx(P), dy(P), dfr(2);
-  scalar_type x = mls1.grad(c.xref(), dx), y = mls0.grad(c.xref(), dy);
+  scalar_type x = mls1->grad(c.xref(), dx), y = mls0->grad(c.xref(), dy);
   if (x*x + y*y < 1e-20) {
     cerr << "Warning, point very close to the singularity. xreal = "
          << c.xreal() << ", x_crack = " << x << ", y_crack=" << y << "\n";
@@ -365,10 +365,10 @@ void bilaplacian_singular_functions::hess(const getfem::fem_interpolation_contex
   update_mls(c.convex_num());
   size_type P = c.xref().size(); assert(P == 2);
   base_small_vector dx(P), dy(P), dfr(2);  
-  scalar_type x = mls1.grad(c.xref(), dx), y = mls0.grad(c.xref(), dy);
+  scalar_type x = mls1->grad(c.xref(), dx), y = mls0->grad(c.xref(), dy);
   base_matrix d2x(P,P), d2y(P,P), hefr(P, P) ;
-  mls1.hess(c.xref(), d2x) ;
-  mls0.hess(c.xref(), d2y) ;
+  mls1->hess(c.xref(), d2x) ;
+  mls0->hess(c.xref(), d2y) ;
   if (x*x + y*y < 1e-20) {
     cerr << "Warning, point very close to the singularity. xreal = "
          << c.xreal() << ", x_crack = " << x << ", y_crack=" << y << "\n";

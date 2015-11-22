@@ -31,13 +31,12 @@ namespace getfem {
   composite_approx_int_method(const bgeot::mesh_precomposite &mp,
 			      const mesh_im &mi,
 			      bgeot::pconvex_ref cr) {
-    approx_integration *p = new approx_integration(cr);
+    auto p = std::make_shared<approx_integration>(cr);
     base_vector w;
     for (dal::bv_visitor cv(mi.convex_index()); !cv.finished(); ++cv) {
       pintegration_method pim = mi.int_method_of_element(cv);
       bgeot::pgeometric_trans pgt = mi.linked_mesh().trans_of_convex(cv);
       if (pim->type() != IM_APPROX || !(pgt->is_linear())) {
-	delete p;
 	GMM_ASSERT1(false, "Approx integration and linear transformation "
 		    "are required.");
       }

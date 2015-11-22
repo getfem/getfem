@@ -22,20 +22,14 @@
 #include "getfem/bgeot_rtree.h"
 
 namespace bgeot {
-  struct rtree_elt_base {
-    enum { RECTS_PER_LEAF=8 };
-    bool isleaf_;
-    bool isleaf() const { return isleaf_; }
-    base_node rmin, rmax;
-    rtree_elt_base(bool leaf, const base_node& rmin_, const base_node& rmax_) 
-      : isleaf_(leaf), rmin(rmin_), rmax(rmax_) {}
-  };
-  
+
   struct rtree_node : public rtree_elt_base {
-    rtree_elt_base *left, *right;
+    std::unique_ptr<rtree_elt_base> left, right;
     rtree_node(const base_node& bmin, const base_node& bmax, 
-	       rtree_elt_base *left_, rtree_elt_base *right_) 
-      : rtree_elt_base(false, bmin, bmax), left(left_), right(right_) {}
+	       std::unique_ptr<rtree_elt_base> &&left_,
+	       std::unique_ptr<rtree_elt_base> &&right_) 
+      : rtree_elt_base(false, bmin, bmax), left(std::move(left_)),
+	right( std::move(right_)) { }
   };
 
   struct rtree_leaf : public rtree_elt_base {
@@ -179,23 +173,18 @@ namespace bgeot {
   template <typename Predicate>
   static void find_matching_boxes_(rtree_elt_base *n, rtree::pbox_set& boxlst,
 				   Predicate p) {
-    // cout << "find_matching_boxes_: " << n->rmin << ".." << n->rmax << "\n";
     if (n->isleaf()) {
-      // cout << "find_matching_boxes_ in leaf\n";
       const rtree_leaf *rl = static_cast<rtree_leaf*>(n);
       for (rtree::pbox_cont::const_iterator it = rl->lst.begin();
            it != rl->lst.end(); ++it) {
-	// cout << "  ->match(" << (*it)->id << "=" << (*it)->min << ","
-        //      << (*it)->max << " -> " << p((*it)->min, (*it)->max) << "\n";
 	if (p((*it)->min, (*it)->max)) { boxlst.insert(*it); }
       }
     } else {
-      // cout << "find_matching_boxes_ in branch\n";
       const rtree_node *rn = static_cast<rtree_node*>(n);
       if (p.accept(rn->left->rmin,rn->left->rmax)) 
-	bgeot::find_matching_boxes_(rn->left, boxlst, p);
+	bgeot::find_matching_boxes_(rn->left.get(), boxlst, p);
       if (p.accept(rn->right->rmin,rn->right->rmax)) 
-	bgeot::find_matching_boxes_(rn->right, boxlst, p);
+	bgeot::find_matching_boxes_(rn->right.get(), boxlst, p);
     }
   }
 
@@ -203,34 +192,31 @@ namespace bgeot {
                                       const base_node& bmax,
                                       pbox_set& boxlst) {
     boxlst.clear(); if (!root) build_tree(); 
-    if (root) find_matching_boxes_(root, boxlst, intersection_p(bmin,bmax));
-    // cout << "find_intersecting_boxes : found " << boxlst.size()
-    //      << " matches\n";
+    if (root) find_matching_boxes_(root.get(),boxlst,intersection_p(bmin,bmax));
   }
 
   void rtree::find_containing_boxes(const base_node& bmin,
                                     const base_node& bmax, pbox_set& boxlst) {
     boxlst.clear(); if (!root) build_tree();
-    if (root) find_matching_boxes_(root, boxlst, contains_p(bmin,bmax));
+    if (root) find_matching_boxes_(root.get(), boxlst, contains_p(bmin,bmax));
   }
 
   void rtree::find_contained_boxes(const base_node& bmin,
                                    const base_node& bmax, pbox_set& boxlst) {
     boxlst.clear(); if (!root) build_tree();
-    if (root) find_matching_boxes_(root, boxlst, contained_p(bmin,bmax));
-    // cout << "find_matching_boxes : found " << boxlst.size() << " matches\n";
+    if (root) find_matching_boxes_(root.get(), boxlst, contained_p(bmin,bmax));
   }
 
   void rtree::find_boxes_at_point(const base_node& P, pbox_set& boxlst) {
     boxlst.clear(); if (!root) build_tree();
-    if (root) find_matching_boxes_(root, boxlst, has_point_p(P));
+    if (root) find_matching_boxes_(root.get(), boxlst, has_point_p(P));
   }
 
   void rtree::find_line_intersecting_boxes(const base_node& org,
                                            const base_small_vector& dirv,
                                            pbox_set& boxlst) {
     boxlst.clear(); if (!root) build_tree();
-    if (root) find_matching_boxes_(root, boxlst, intersect_line(org, dirv));
+    if (root) find_matching_boxes_(root.get(),boxlst,intersect_line(org, dirv));
   }
 
   void rtree::find_line_intersecting_boxes(const base_node& org,
@@ -240,7 +226,7 @@ namespace bgeot {
                                            pbox_set& boxlst) {
     boxlst.clear(); if (!root) build_tree();
     if (root)
-      find_matching_boxes_(root, boxlst,
+      find_matching_boxes_(root.get(), boxlst,
                            intersect_line_and_box(org, dirv, bmin, bmax));
   }
 
@@ -253,8 +239,6 @@ namespace bgeot {
 			 unsigned dir, scalar_type& split_v) {
     scalar_type v = bmin[dir] + (bmax[dir] - bmin[dir])/2; split_v = v;
     size_type cnt = 0;
-    // cout << "[enter]Split_test: dir=" << dir << ", split_v=" << v
-    //      << ", bmin=" << bmin << ", bmax=" << bmax << "\n";
     for (rtree::pbox_cont::const_iterator it = b.begin(); it!=b.end(); ++it) {
       if ((*it)->max[dir] < v) {
 	if (cnt == 0) split_v = (*it)->max[dir]; 
@@ -262,8 +246,6 @@ namespace bgeot {
 	cnt++; 
       }
     }
-    // cout << "[exit] Split_test cnt = " << cnt << ", b.size()="
-    //      << b.size() << ", split_v=" << split_v << "\n";
     return (cnt > 0 && cnt < b.size());
   }
 
@@ -273,38 +255,28 @@ namespace bgeot {
      split_test function above).
      Regions of the tree do not overlap (box are splitted).
   */
-  static rtree_elt_base* build_tree_(rtree::pbox_cont b, 
-				     const base_node& bmin,
-                                     const base_node& bmax,
-				     unsigned last_dir) {
+  static std::unique_ptr<rtree_elt_base> build_tree_(rtree::pbox_cont b, 
+						     const base_node& bmin,
+						     const base_node& bmax,
+						     unsigned last_dir) {
     size_type N=bmin.size();
     scalar_type split_v(0); 
     unsigned split_dir = unsigned((last_dir+1)%N);
-    // cout << " build_tree_ [b.size=" << b.size() << "], bmin=" << bmin
-    //      << ", bmax=" << bmax << "\n";
     bool split_ok = false;
     if (b.size() > rtree_elt_base::RECTS_PER_LEAF) {
       for (size_type itry=0; itry < N; ++itry) {
-	//cout << "split_test: dir=" << split_dir << "\n";
 	if (split_test(b, bmin, bmax, split_dir, split_v))
           { split_ok = true; break; }
 	split_dir = unsigned((split_dir+1)%N);
       }
-      // if (!split_ok && b.size() > rtree_elt_base::RECTS_PER_LEAF*2)
-      //   cout << "FAILED TO SPLIT ...\n";
     }
     if (split_ok) {
       size_type cnt1=0,cnt2=0;
-      // cout << "splitting with v=" << split_v << "\n";
       for (rtree::pbox_cont::const_iterator it = b.begin();
            it != b.end(); ++it) {
-	// cout << " . test box" << (*it)->min[split_dir] << ".."
-        //      << (*it)->max[split_dir] << "\n";
 	if ((*it)->min[split_dir] < split_v) cnt1++; 
 	if ((*it)->max[split_dir] > split_v) cnt2++;
       }
-      // cout << "  -> left : " << cnt1 << " boxes, right : "
-      //      << cnt2 << " boxes\n";
       assert(cnt1); assert(cnt2);
       GMM_ASSERT1(cnt1+cnt2 >= b.size(), "internal error");
       rtree::pbox_cont v1(cnt1), v2(cnt2);
@@ -316,8 +288,6 @@ namespace bgeot {
 	if ((*it)->min[split_dir] < split_v) {
 	  v1[cnt1++] = *it; 
 	  update_box(bmin1,bmax1,(*it)->min,(*it)->max);
-	  // cout << "update_box bmin1=" << bmin1 << ", bmax1="
-          //      << bmax1 << "\n";
 	}
 	if ((*it)->max[split_dir] > split_v) {
 	  v2[cnt2++] = *it;
@@ -333,11 +303,12 @@ namespace bgeot {
       bmax1[split_dir] = std::min(bmax1[split_dir], split_v);
       bmin2[split_dir] = std::max(bmin2[split_dir], split_v);
       assert(cnt1 == v1.size()); assert(cnt2 == v2.size());
-      return new rtree_node(bmin,bmax, 
-			    build_tree_(v1, bmin1, bmax1, split_dir),
-			    build_tree_(v2, bmin2, bmax2, split_dir));
+      return std::make_unique<rtree_node>
+	(bmin,bmax, 
+	 build_tree_(v1, bmin1, bmax1, split_dir),
+	 build_tree_(v2, bmin2, bmax2, split_dir));
     } else {
-      return new rtree_leaf(bmin,bmax,b);
+      return std::make_unique<rtree_leaf>(bmin, bmax, b);
     }
   }
 
@@ -352,27 +323,11 @@ namespace bgeot {
      update_box(bmin,bmax,(*it).min,(*it).max);
      *b_it++ = &(*it);
    }
-   root = build_tree_(b,bmin,bmax,0);
+   root = build_tree_(b, bmin, bmax, 0);
  }
-  
-  static void destroy_tree_(rtree_elt_base *n) {
-    if (n->isleaf()) delete static_cast<rtree_leaf*>(n);
-    else {
-      const rtree_node *rn = static_cast<rtree_node*>(n);
-      if (rn->left) { destroy_tree_(rn->left); }
-      if (rn->right) { destroy_tree_(rn->right); }
-      delete rn;
-    }
-  }
-
-  void rtree::destroy_tree() {
-    if (root) { destroy_tree_(root); }
-    root = 0;
-  }
 
   static void dump_tree_(rtree_elt_base *p, int level, size_type& count) {
     if (!p) return;
-    cout << level << "|";
     for (int i=0; i < level; ++i) cout << "  ";
     cout << "span=" << p->rmin << ".." << p->rmax << " ";
     if (p->isleaf()) {
@@ -384,8 +339,8 @@ namespace bgeot {
     } else {
       cout << "Node\n";
       const rtree_node *rn = static_cast<rtree_node*>(p);
-      if (rn->left) { dump_tree_(rn->left, level+1, count); }
-      if (rn->right) { dump_tree_(rn->right, level+1, count); }
+      if (rn->left) { dump_tree_(rn->left.get(), level+1, count); }
+      if (rn->right) { dump_tree_(rn->right.get(), level+1, count); }
     }
   }
 
@@ -393,7 +348,7 @@ namespace bgeot {
     cout << "tree dump follows\n";
     if (!root) build_tree();
     size_type count = 0;
-    dump_tree_(root, 0, count);
+    dump_tree_(root.get(), 0, count);
     cout << " --- end of tree dump, nb of rectangles: " << boxes.size() 
 	 << ", rectangle ref in tree: " << count << "\n";
   }

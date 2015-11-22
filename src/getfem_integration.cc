@@ -38,7 +38,7 @@ namespace getfem {
   static pintegration_method im_none(im_param_list &params,
 			       std::vector<dal::pstatic_stored_object> &) {
     GMM_ASSERT1(params.size() == 0, "IM_NONE does not accept any parameter");
-    return pintegration_method(new integration_method());
+    return std::make_shared<integration_method>();
   }
 
   long_scalar_type poly_integration::int_poly(const base_poly &P) const {
@@ -134,9 +134,9 @@ namespace getfem {
     GMM_ASSERT1(n > 0 && n < 100 && double(n) == params[0].num(),
 		"Bad parameters");
     dependencies.push_back(bgeot::simplex_structure(dim_type(n)));
-    return pintegration_method
-      (new integration_method
-       (new simplex_poly_integration_(bgeot::simplex_structure(dim_type(n)))));
+    ppoly_integration ppi = std::make_shared<simplex_poly_integration_>
+      (bgeot::simplex_structure(dim_type(n)));
+    return std::make_shared<integration_method>(ppi);
   }
 
   /* ******************************************************************** */
@@ -196,9 +196,9 @@ namespace getfem {
     dependencies.push_back(a); dependencies.push_back(b);
     dependencies.push_back(bgeot::convex_product_structure(a->structure(),
 							   b->structure()));
-    return pintegration_method
-      (new integration_method(new plyint_mul_structure_(a->exact_method(),
-							b->exact_method())));
+    ppoly_integration ppi = std::make_shared<plyint_mul_structure_>
+      (a->exact_method(), b->exact_method());
+    return  std::make_shared<integration_method>(ppi);
   }
 
   /* ******************************************************************** */
@@ -376,7 +376,7 @@ namespace getfem {
 	  = bgeot::geometric_trans_descriptor(im_desc_tab[i].geotrans_name);
 	dim_type N = pgt->structure()->dim();
 	base_node pt(N);
-	approx_integration *pai = new approx_integration(pgt->convex_ref());
+	auto pai = std::make_shared<approx_integration>(pgt->convex_ref());
 	size_type fr = im_desc_tab[i].firstreal;
 	for (size_type j = 0; j < im_desc_tab[i].nb_points; ++j) {
 	  for (dim_type k = 0; k < N; ++k)
@@ -415,7 +415,7 @@ namespace getfem {
 	pai->valid_method();
         // cerr << "finding " << name << endl;
 
-	pintegration_method p(new integration_method(pai));
+	pintegration_method p(std::make_shared<integration_method>(pai));
 	dependencies.push_back(p->approx_method()->ref_convex());
 	dependencies.push_back(p->approx_method()->pintegration_points());
 	return p;
@@ -527,7 +527,9 @@ namespace getfem {
       return int_method_descriptor(name.str());
     }
     else {
-      pintegration_method p(new integration_method(new gauss_approx_integration_(short_type(n/2 + 1))));
+      papprox_integration
+	pai = std::make_shared<gauss_approx_integration_>(short_type(n/2 + 1));
+      pintegration_method p = std::make_shared<integration_method>(pai);
       dependencies.push_back(p->approx_method()->ref_convex());
       dependencies.push_back(p->approx_method()->pintegration_points());
       return p;
@@ -637,7 +639,10 @@ namespace getfem {
     GMM_ASSERT1(n >= 0 && n < 100 && k >= 0 && k <= 150 &&
 		double(n) == params[0].num() && double(k) == params[1].num(),
 		"Bad parameters");
-    pintegration_method p(new integration_method(new Newton_Cotes_approx_integration_(dim_type(n), short_type(k))));
+    papprox_integration
+      pai = std::make_shared<Newton_Cotes_approx_integration_>(dim_type(n),
+							       short_type(k));
+    pintegration_method p = std::make_shared<integration_method>(pai);
     dependencies.push_back(p->approx_method()->ref_convex());
     dependencies.push_back(p->approx_method()->pintegration_points());
     return p;
@@ -725,9 +730,10 @@ namespace getfem {
     pintegration_method b = params[1].method();
     GMM_ASSERT1(a->type() == IM_APPROX && b->type() == IM_APPROX,
 		"Bad parameters");
-    pintegration_method 
-      p(new integration_method(new a_int_pro_integration(a->approx_method(),
-							 b->approx_method())));
+    papprox_integration
+      pai = std::make_shared<a_int_pro_integration>(a->approx_method(),
+						    b->approx_method());
+    pintegration_method p = std::make_shared<integration_method>(pai);
     dependencies.push_back(p->approx_method()->ref_convex());
     dependencies.push_back(p->approx_method()->pintegration_points());
     return p;
@@ -1002,9 +1008,11 @@ namespace getfem {
     int N = a->approx_method()->dim();
     GMM_ASSERT1(N >= 2 && N <= 3 && ip1 >= 0 && ip2 >= 0 && ip1 <= N
 		&& ip2 <= N, "Bad parameters");
-    pintegration_method 
-      p(new integration_method(new quasi_polar_integration(a->approx_method(),
-							   ip1, ip2)));
+
+    papprox_integration
+      pai = std::make_shared<quasi_polar_integration>(a->approx_method(),
+						      ip1, ip2);
+    pintegration_method p = std::make_shared<integration_method>(pai);
     dependencies.push_back(p->approx_method()->ref_convex());
     dependencies.push_back(p->approx_method()->pintegration_points());
     return p;

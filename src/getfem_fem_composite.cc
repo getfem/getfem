@@ -29,13 +29,12 @@ namespace getfem {
  
   typedef const fem<bgeot::polynomial_composite> * ppolycompfem;
 
-  static ppolycompfem composite_fe_method(const bgeot::mesh_precomposite &mp, 
-				   const mesh_fem &mf, bgeot::pconvex_ref cr) {
+  static pfem composite_fe_method(const bgeot::mesh_precomposite &mp, 
+				  const mesh_fem &mf, bgeot::pconvex_ref cr) {
     
     GMM_ASSERT1(!mf.is_reduced(),
 		"Sorry, does not work for reduced mesh_fems");
-    fem<bgeot::polynomial_composite> *p = new fem<bgeot::polynomial_composite>;
-
+    auto p = std::make_shared<fem<bgeot::polynomial_composite>>();
     p->mref_convex() = cr;
     p->dim() = cr->structure()->dim();
     p->is_polynomialcomp() = p->is_equivalent() = true;
@@ -52,7 +51,6 @@ namespace getfem {
       pfem pf1 = mf.fem_of_element(cv);
       if (!pf1->is_lagrange()) p->is_lagrange() = false;
       if (!(pf1->is_equivalent() && pf1->is_polynomial())) {
-	delete p;
 	GMM_ASSERT1(false, "Only for polynomial and equivalent fem.");
       }
       ppolyfem pf = ppolyfem(pf1.get());
@@ -93,7 +91,7 @@ namespace getfem {
     mesh m(*pm);
     mesh_fem mf(m);
     mf.set_finite_element(pm->convex_index(), pf);
-    pfem p(composite_fe_method(*pmp, mf, pf->ref_convex(0)));
+    pfem p = composite_fe_method(*pmp, mf, pf->ref_convex(0));
     dependencies.push_back(p->ref_convex(0));
     dependencies.push_back(p->node_tab(0));
     return p;
@@ -207,7 +205,7 @@ namespace getfem {
    std::vector<dal::pstatic_stored_object> &dependencies) {
     GMM_ASSERT1(params.size() == 0, "Bad number of parameters : "
 		<< params.size() << " should be 0.");
-    pfem p(new P1bubbletriangle__);
+    pfem p = std::make_shared<P1bubbletriangle__>();
     dependencies.push_back(p->ref_convex(0));
     dependencies.push_back(p->node_tab(0));
     return p;
@@ -241,7 +239,7 @@ namespace getfem {
     if (pgt != pgt_stored) {
       pgt_stored = pgt;
       pgp = bgeot::geotrans_precomp(pgt, node_tab(0), 0);
-      pfp = fem_precomp(pfem(new HCT_triangle__), node_tab(0), 0);
+      pfp = fem_precomp(std::make_shared<HCT_triangle__>(), node_tab(0), 0);
     }
     gmm::copy(gmm::identity_matrix(), M);
     
@@ -375,7 +373,7 @@ namespace getfem {
    std::vector<dal::pstatic_stored_object> &dependencies) {
     GMM_ASSERT1(params.size() == 0, "Bad number of parameters : "
 		<< params.size() << " should be 0.");
-    pfem p(new HCT_triangle__);
+    pfem p = std::make_shared<HCT_triangle__>();
     dependencies.push_back(p->ref_convex(0));
     dependencies.push_back(p->node_tab(0));
     return p;
@@ -444,7 +442,7 @@ namespace getfem {
    std::vector<dal::pstatic_stored_object> &dependencies) {
     GMM_ASSERT1(params.size() == 0, "Bad number of parameters : "
 		<< params.size() << " should be 0.");
-    pfem p(new reduced_HCT_triangle__);
+    pfem p = std::make_shared<reduced_HCT_triangle__>();
     dependencies.push_back(p->ref_convex(0));
     dependencies.push_back(p->node_tab(0));
     return p;
@@ -478,7 +476,7 @@ namespace getfem {
     if (pgt != pgt_stored) {
       pgt_stored = pgt;
       pgp = bgeot::geotrans_precomp(pgt, node_tab(0), 0);
-      pfp = fem_precomp(pfem(new quadc1p3__), node_tab(0), 0);
+      pfp = fem_precomp(std::make_shared<quadc1p3__>(), node_tab(0), 0);
     }
     gmm::copy(gmm::identity_matrix(), M);
     
@@ -642,7 +640,7 @@ namespace getfem {
    std::vector<dal::pstatic_stored_object> &dependencies) {
     GMM_ASSERT1(params.size() == 0, "Bad number of parameters : "
 		<< params.size() << " should be 0.");
-    pfem p(new quadc1p3__);
+    pfem p = std::make_shared<quadc1p3__>();
     dependencies.push_back(p->ref_convex(0));
     dependencies.push_back(p->node_tab(0));
     return p;
@@ -714,7 +712,7 @@ namespace getfem {
    std::vector<dal::pstatic_stored_object> &dependencies) {
     GMM_ASSERT1(params.size() == 0, "Bad number of parameters : "
 		<< params.size() << " should be 0.");
-    pfem p(new reduced_quadc1p3__);
+    pfem p = std::make_shared<reduced_quadc1p3__>();
     dependencies.push_back(p->ref_convex(0));
     dependencies.push_back(p->node_tab(0));
     return p;

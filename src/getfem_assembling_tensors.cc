@@ -1351,7 +1351,7 @@ namespace getfem {
     } while (advance_if(PRODUCT));
     accept(CLOSE_PAR, "expecting ')'");
 
-    return record(new ATN_computed_tensor(what));
+    return record(std::make_unique<ATN_computed_tensor>(what));
   }
 
   void generic_assembly::do_dim_spec(vdim_specif_list& lst) {
@@ -1395,7 +1395,7 @@ namespace getfem {
       ASM_THROW_PARSE_ERROR("invalid size for data argument " << datanum+1 << 
       " real size is " << indata[datanum]->vect_size()
       << " expected size is " << sz.nbelt());
-    return record(new ATN_tensor_from_dofs_data(indata[datanum], sz));
+    return record(std::make_unique<ATN_tensor_from_dofs_data>(indata[datanum].get(), sz));
   }
 
   std::pair<ATN_tensor*, std::string>
@@ -1408,7 +1408,7 @@ namespace getfem {
           if (tok_type() == COLON) {
             s.push_back(' '); advance(); j++;
           } else if (tok_type() == NUMBER) {
-            t = record(new ATN_sliced_tensor(*t, dim_type(j),
+            t = record(std::make_unique<ATN_sliced_tensor>(*t, dim_type(j),
               tok_number_ival())); advance();
           } else if (tok_type() == IDENT) {
             if ((tok().length()==1 && isalpha(tok()[0])) || islower(tok()[0])) {
@@ -1448,7 +1448,7 @@ namespace getfem {
         tnode t2 = do_expr();
         if (t2.type() != tnode::TNTENSOR)
           ASM_THROW_PARSE_ERROR("can't symmetrise a scalar!");
-        t.assign(record(new ATN_symmetrized_tensor(*t2.tensor())));
+        t.assign(record(std::make_unique<ATN_symmetrized_tensor>(*t2.tensor())));
       } else ASM_THROW_PARSE_ERROR("unknown identifier: " << tok());
     } else ASM_THROW_PARSE_ERROR("unexpected token: " << tok());
     pop_mark();
@@ -1475,7 +1475,7 @@ namespace getfem {
     if (ttab.size() == 1 && ttab[0].second.length() == 0) {
       return tnode(ttab[0].first);
     } else {
-      return tnode(record(new ATN_reduced_tensor(ttab)));
+      return tnode(record(std::make_unique<ATN_reduced_tensor>(ttab)));
     }
   }
 
@@ -1495,7 +1495,7 @@ namespace getfem {
         else if (tok_type() == NUMBER) i = tok_number_ival(1000);
         else ASM_THROW_PARSE_ERROR("only numbers or colons allowed here");
         if (check_permut.is_in(i)) { /* on prend la diagonale du tenseur */
-          t = tnode(record(new ATN_diagonal_tensor(*t.tensor(), dim_type(i),
+          t = tnode(record(std::make_unique<ATN_diagonal_tensor>(*t.tensor(), dim_type(i),
             dim_type(j))));
           check_permut.add(j);
           reorder.push_back(dim_type(j));
@@ -1513,7 +1513,7 @@ namespace getfem {
         ASM_THROW_PARSE_ERROR("you did not give a real permutation:"
           << reorder);
       }
-      t = tnode(record(new ATN_permuted_tensor(*t.tensor(), reorder)));
+      t = tnode(record(std::make_unique<ATN_permuted_tensor>(*t.tensor(), reorder)));
     }
     return t;
   }
@@ -1550,7 +1550,7 @@ namespace getfem {
         if (t.tensor()->is_tensors_sum_scaled() && !t.tensor()->is_frozen()) {
           t.tensor()->is_tensors_sum_scaled()->apply_scale(v);
         } else {
-          t.assign(record(new ATN_tensors_sum_scaled(*t.tensor(), v)));
+          t.assign(record(std::make_unique<ATN_tensors_sum_scaled>(*t.tensor(), v)));
         }
       }
     }
@@ -1570,7 +1570,7 @@ namespace getfem {
     tnode t = do_term();
     if (negt) {
       if (t.type() == tnode::TNCONST) t.assign(-t.xval());
-      else t.assign(record(new ATN_tensor_scalar_add(*t.tensor(), 0., -1)));
+      else t.assign(record(std::make_unique<ATN_tensor_scalar_add>(*t.tensor(), 0., -1)));
     }
     while (true) {
       int plus;
@@ -1580,7 +1580,7 @@ namespace getfem {
       tnode t2 = do_term();
       if (t.type() == tnode::TNTENSOR && t2.type() == tnode::TNTENSOR) {
         if (!t.tensor()->is_tensors_sum_scaled() || t.tensor()->is_frozen()) {
-          t.assign(record(new ATN_tensors_sum_scaled(*t.tensor(), +1))); 
+          t.assign(record(std::make_unique<ATN_tensors_sum_scaled>(*t.tensor(), +1))); 
         }
         t.tensor()->is_tensors_sum_scaled()
           ->push_scaled_tensor(*t2.tensor(), scalar_type(plus));
@@ -1591,7 +1591,7 @@ namespace getfem {
         if (t.type() != tnode::TNTENSOR)
         { std::swap(t,t2); if (plus<0) tsgn = -1; }
         else if (plus<0) t2.assign(-t2.xval());
-        t.assign(record(new ATN_tensor_scalar_add(*t.tensor(), t2.xval(),
+        t.assign(record(std::make_unique<ATN_tensor_scalar_add>(*t.tensor(), t2.xval(),
           tsgn)));
       } 
     }
@@ -1645,7 +1645,7 @@ namespace getfem {
               tensor_ranges r(vds.size());
               for (size_type i=0; i < vds.size(); ++i)
                 r[i] = unsigned(vds[i].dim);
-              outvec[arg_num] = vec_fact->create_vec(r);
+              outvec[arg_num] = std::shared_ptr<base_asm_vec>(std::shared_ptr<base_asm_vec>(), vec_fact->create_vec(r));
             }
             else ASM_THROW_PARSE_ERROR("output vector $" << arg_num+1
               << " does not exist");
@@ -1657,8 +1657,8 @@ namespace getfem {
           /* if we are allowed to dynamically create matrices */
           if (outmat[arg_num] == 0) {
             if (mat_fact != 0)
-              outmat[arg_num] = mat_fact->create_mat(vds[0].pmf->nb_dof(),
-              vds[1].pmf->nb_dof());
+              outmat[arg_num] = std::shared_ptr<base_asm_mat>(std::shared_ptr<base_asm_mat>(), mat_fact->create_mat(vds[0].pmf->nb_dof(),
+														     vds[1].pmf->nb_dof()));
             else ASM_THROW_PARSE_ERROR("output matrix $" << arg_num+1
               << " does not exist");
           }
@@ -1676,18 +1676,16 @@ namespace getfem {
 
     switch (what) {
     case wPRINT: {
-      record_out(new ATN_print_tensor(*t.tensor(), tok_substr(print_mark, 
+      record_out(std::make_unique<ATN_print_tensor>(*t.tensor(), tok_substr(print_mark, 
         tok_mark())));
                  } break;
     case wOUTPUT_ARRAY: {
-      ATN *pout = outvec[arg_num]->build_output_tensor(*t.tensor(), vds);
-      record_out(pout);
+      record_out(outvec[arg_num]->build_output_tensor(*t.tensor(), vds));
                         } break;
     case wOUTPUT_MATRIX: {
-      ATN *pout = outmat[arg_num]->build_output_tensor(*t.tensor(),
-        *vds[0].pmf,
-        *vds[1].pmf);
-      record_out(pout);
+      record_out(outmat[arg_num]->build_output_tensor(*t.tensor(),
+						      *vds[0].pmf,
+						      *vds[1].pmf));
                          } break;
     case wALIAS: {
       vars[ident] = t.tensor(); t.tensor()->freeze();
@@ -1698,8 +1696,17 @@ namespace getfem {
   }
 
   struct atn_number_compare {
-    bool operator()(ATN *a, ATN *b) {
-      assert(a && b);
+    bool operator()(const std::unique_ptr<ATN_tensor> &a,
+		    const std::unique_ptr<ATN_tensor> &b) {
+      assert(a.get() && b.get());
+      return (a->number() < b->number());
+    }
+  };
+
+  struct outvar_compare {
+    bool operator()(const std::unique_ptr<ATN> &a,
+		    const std::unique_ptr<ATN> &b) {
+      assert(a.get() && b.get());
       return (a->number() < b->number());
     }
   };
@@ -1720,14 +1727,14 @@ namespace getfem {
       outvars[i]->set_number(gcnt);
 
     std::sort(atn_tensors.begin(), atn_tensors.end(), atn_number_compare());
-    std::sort(outvars.begin(), outvars.end(), atn_number_compare());
+    std::sort(outvars.begin(), outvars.end(), outvar_compare());
 
     /* remove non-numbered (ie unused) atn_tensors */
     while (atn_tensors.size()
       && atn_tensors.back()->number() == unsigned(-1)) {
         cerr << "warning: the expression " << atn_tensors.back()->name()
           << " won't be evaluated since it is not used!\n";
-        delete atn_tensors.back(); atn_tensors.pop_back();
+        atn_tensors.pop_back();
     }
     parse_done = true;
   }

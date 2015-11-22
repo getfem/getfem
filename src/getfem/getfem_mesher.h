@@ -116,6 +116,10 @@ namespace getfem {
 
   };
 
+  inline pmesher_signed_distance  new_mesher_half_space
+  (const base_node &x0, const base_small_vector &n)
+  { return std::make_shared<mesher_half_space>(x0, n); }
+
   class mesher_level_set : public mesher_signed_distance {
     bgeot::base_poly base;
     mutable std::vector<base_poly> gradient;
@@ -173,7 +177,10 @@ namespace getfem {
     initialized = 0; 
   }
 
-
+  template <typename VECT> 
+  inline pmesher_signed_distance new_mesher_level_set
+  (pfem pf, const VECT &coeff, scalar_type shift_ls = scalar_type(0))
+  { return std::make_shared<mesher_level_set>(pf, coeff, shift_ls); }
 
 
   class mesher_ball : public mesher_signed_distance {
@@ -209,6 +216,9 @@ namespace getfem {
       GMM_ASSERT1(false, "Sorry, to be done");
     }
   };
+
+  inline pmesher_signed_distance new_mesher_ball(base_node x0, scalar_type R)
+  { return std::make_shared<mesher_ball>(x0, R); }
 
   class mesher_rectangle : public mesher_signed_distance {
     // ajouter une rotation rigide et translation ..
@@ -265,6 +275,9 @@ namespace getfem {
     }
   };
 
+  inline pmesher_signed_distance new_mesher_rectangle(base_node rmin,
+						      base_node rmax)
+  { return std::make_shared<mesher_rectangle>(rmin, rmax); }
 
   class mesher_simplex_ref : public mesher_signed_distance {
     // ajouter une rotation rigide, homothetie,  et translation ..
@@ -318,6 +331,10 @@ namespace getfem {
 				      mesher_signed_distance*>& list) const
     { for (unsigned k = 0; k < N+1; ++k) hfs[k].register_constraints(list); }
   };
+
+  inline pmesher_signed_distance new_mesher_simplex_ref(unsigned N)
+  { return std::make_shared<mesher_simplex_ref>(N); }
+
 
   class mesher_prism_ref : public mesher_signed_distance {
     // ajouter une rotation rigide, homothetie,  et translation ..
@@ -378,65 +395,59 @@ namespace getfem {
     { for (unsigned k = 0; k < N+2; ++k) hfs[k].register_constraints(list); }
   };
 
+  inline pmesher_signed_distance new_mesher_prism_ref(unsigned N)
+  { return std::make_shared<mesher_prism_ref>(N); }
+
+
 
   // Rem : It would be better for the convergence of Newton's methods to
   //       take somthing more smooth than min. for instance tthe square root
   //       of positive parts or negative parts depending on the position of
   //       point (in or out the domain).
 
-  extern const mesher_half_space void_signed_distance;
-
   class mesher_union : public mesher_signed_distance {
-    std::vector<const mesher_signed_distance *> dists;
+    std::vector<pmesher_signed_distance> dists;
     mutable std::vector<scalar_type> vd;
     mutable bool isin;
     bool with_min;
   public:
-    mesher_union(const std::vector<const mesher_signed_distance *>
+    mesher_union(const std::vector<pmesher_signed_distance>
 			&dists_) : dists(dists_) 
     { vd.resize(dists.size()); with_min = true; }
 
-    mesher_union(const mesher_signed_distance &a_,
-		 const mesher_signed_distance &b_,
-		 const mesher_signed_distance &c_ = void_signed_distance,
-		 const mesher_signed_distance &d_ = void_signed_distance,
-		 const mesher_signed_distance &e_ = void_signed_distance,
-		 const mesher_signed_distance &f_ = void_signed_distance,
-		 const mesher_signed_distance &g_ = void_signed_distance,
-		 const mesher_signed_distance &h_ = void_signed_distance,
-		 const mesher_signed_distance &i_ = void_signed_distance,
-		 const mesher_signed_distance &j_ = void_signed_distance,
-		 const mesher_signed_distance &k_ = void_signed_distance,
-		 const mesher_signed_distance &l_ = void_signed_distance,
-		 const mesher_signed_distance &m_ = void_signed_distance,
-		 const mesher_signed_distance &n_ = void_signed_distance,
-		 const mesher_signed_distance &o_ = void_signed_distance,
-		 const mesher_signed_distance &p_ = void_signed_distance,
-		 const mesher_signed_distance &q_ = void_signed_distance,
-		 const mesher_signed_distance &r_ = void_signed_distance,
-		 const mesher_signed_distance &s_ = void_signed_distance,
-		 const mesher_signed_distance &t_ = void_signed_distance) {
-      dists.push_back(&a_); dists.push_back(&b_);
-      size_type nb = 2; with_min = true;
-      if (&c_ != &void_signed_distance) { dists.push_back(&c_); ++nb; }
-      if (&d_ != &void_signed_distance) { dists.push_back(&d_); ++nb; }
-      if (&e_ != &void_signed_distance) { dists.push_back(&e_); ++nb; }
-      if (&f_ != &void_signed_distance) { dists.push_back(&f_); ++nb; }
-      if (&g_ != &void_signed_distance) { dists.push_back(&g_); ++nb; }
-      if (&h_ != &void_signed_distance) { dists.push_back(&h_); ++nb; }
-      if (&i_ != &void_signed_distance) { dists.push_back(&i_); ++nb; }
-      if (&j_ != &void_signed_distance) { dists.push_back(&j_); ++nb; }
-      if (&k_ != &void_signed_distance) { dists.push_back(&k_); ++nb; }
-      if (&l_ != &void_signed_distance) { dists.push_back(&l_); ++nb; }
-      if (&m_ != &void_signed_distance) { dists.push_back(&m_); ++nb; }
-      if (&n_ != &void_signed_distance) { dists.push_back(&n_); ++nb; }
-      if (&o_ != &void_signed_distance) { dists.push_back(&o_); ++nb; }
-      if (&p_ != &void_signed_distance) { dists.push_back(&p_); ++nb; }
-      if (&q_ != &void_signed_distance) { dists.push_back(&q_); ++nb; }
-      if (&r_ != &void_signed_distance) { dists.push_back(&r_); ++nb; }
-      if (&s_ != &void_signed_distance) { dists.push_back(&s_); ++nb; }
-      if (&t_ != &void_signed_distance) { dists.push_back(&t_); ++nb; }
-      vd.resize(nb);
+    mesher_union
+    (const pmesher_signed_distance &a,
+     const pmesher_signed_distance &b,
+     const pmesher_signed_distance &c = pmesher_signed_distance(),
+     const pmesher_signed_distance &d = pmesher_signed_distance(),
+     const pmesher_signed_distance &e = pmesher_signed_distance(),
+     const pmesher_signed_distance &f = pmesher_signed_distance(),
+     const pmesher_signed_distance &g = pmesher_signed_distance(),
+     const pmesher_signed_distance &h = pmesher_signed_distance(),
+     const pmesher_signed_distance &i = pmesher_signed_distance(),
+     const pmesher_signed_distance &j = pmesher_signed_distance(),
+     const pmesher_signed_distance &k = pmesher_signed_distance(),
+     const pmesher_signed_distance &l = pmesher_signed_distance(),
+     const pmesher_signed_distance &m = pmesher_signed_distance(),
+     const pmesher_signed_distance &n = pmesher_signed_distance(),
+     const pmesher_signed_distance &o = pmesher_signed_distance(),
+     const pmesher_signed_distance &p = pmesher_signed_distance(),
+     const pmesher_signed_distance &q = pmesher_signed_distance(),
+     const pmesher_signed_distance &r = pmesher_signed_distance(),
+     const pmesher_signed_distance &s = pmesher_signed_distance(),
+     const pmesher_signed_distance &t = pmesher_signed_distance()) {
+      dists.push_back(a); dists.push_back(b);
+      with_min = true;
+      if (c) dists.push_back(c); if (d) dists.push_back(d);
+      if (e) dists.push_back(e); if (f) dists.push_back(f);
+      if (g) dists.push_back(g); if (h) dists.push_back(h);
+      if (i) dists.push_back(i); if (j) dists.push_back(j);
+      if (k) dists.push_back(k); if (l) dists.push_back(l);
+      if (m) dists.push_back(m); if (n) dists.push_back(n);
+      if (o) dists.push_back(o); if (p) dists.push_back(p);
+      if (q) dists.push_back(q); if (r) dists.push_back(r);
+      if (s) dists.push_back(s); if (t) dists.push_back(t);
+      vd.resize(dists.size());
     }
     
     bool bounding_box(base_node &bmin, base_node &bmax) const {
@@ -548,58 +559,80 @@ namespace getfem {
     }
   };
 
+  inline pmesher_signed_distance new_mesher_union
+  (const std::vector<pmesher_signed_distance> &dists)
+  { return std::make_shared<mesher_union>(dists); }
+
+  inline pmesher_signed_distance new_mesher_union
+  (const pmesher_signed_distance &a,
+   const pmesher_signed_distance &b,
+   const pmesher_signed_distance &c = pmesher_signed_distance(),
+   const pmesher_signed_distance &d = pmesher_signed_distance(),
+   const pmesher_signed_distance &e = pmesher_signed_distance(),
+   const pmesher_signed_distance &f = pmesher_signed_distance(),
+   const pmesher_signed_distance &g = pmesher_signed_distance(),
+   const pmesher_signed_distance &h = pmesher_signed_distance(),
+   const pmesher_signed_distance &i = pmesher_signed_distance(),
+   const pmesher_signed_distance &j = pmesher_signed_distance(),
+   const pmesher_signed_distance &k = pmesher_signed_distance(),
+   const pmesher_signed_distance &l = pmesher_signed_distance(),
+   const pmesher_signed_distance &m = pmesher_signed_distance(),
+   const pmesher_signed_distance &n = pmesher_signed_distance(),
+   const pmesher_signed_distance &o = pmesher_signed_distance(),
+   const pmesher_signed_distance &p = pmesher_signed_distance(),
+   const pmesher_signed_distance &q = pmesher_signed_distance(),
+   const pmesher_signed_distance &r = pmesher_signed_distance(),
+   const pmesher_signed_distance &s = pmesher_signed_distance(),
+   const pmesher_signed_distance &t = pmesher_signed_distance()) {
+    return std::make_shared<mesher_union>
+      (a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t);
+  }
+ 
+
+
   class mesher_intersection : public mesher_signed_distance {
-    std::vector<const mesher_signed_distance *> dists;
+    std::vector<pmesher_signed_distance> dists;
     mutable std::vector<scalar_type> vd;
 
     // const mesher_signed_distance &a, &b;
   public:
     
-    mesher_intersection(const std::vector<const mesher_signed_distance *>
+    mesher_intersection(const std::vector<pmesher_signed_distance>
 			&dists_) : dists(dists_) 
     { vd.resize(dists.size()); }
     
-    mesher_intersection(const mesher_signed_distance &a_,
-		 const mesher_signed_distance &b_,
-		 const mesher_signed_distance &c_ = void_signed_distance,
-		 const mesher_signed_distance &d_ = void_signed_distance,
-		 const mesher_signed_distance &e_ = void_signed_distance,
-		 const mesher_signed_distance &f_ = void_signed_distance,
-		 const mesher_signed_distance &g_ = void_signed_distance,
-		 const mesher_signed_distance &h_ = void_signed_distance,
-		 const mesher_signed_distance &i_ = void_signed_distance,
-		 const mesher_signed_distance &j_ = void_signed_distance,
-		 const mesher_signed_distance &k_ = void_signed_distance,
-		 const mesher_signed_distance &l_ = void_signed_distance,
-		 const mesher_signed_distance &m_ = void_signed_distance,
-		 const mesher_signed_distance &n_ = void_signed_distance,
-		 const mesher_signed_distance &o_ = void_signed_distance,
-		 const mesher_signed_distance &p_ = void_signed_distance,
-		 const mesher_signed_distance &q_ = void_signed_distance,
-		 const mesher_signed_distance &r_ = void_signed_distance,
-		 const mesher_signed_distance &s_ = void_signed_distance,
-		 const mesher_signed_distance &t_ = void_signed_distance) {
-      dists.push_back(&a_); dists.push_back(&b_);
-      size_type nb = 2;
-      if (&c_ != &void_signed_distance) { dists.push_back(&c_); ++nb; }
-      if (&d_ != &void_signed_distance) { dists.push_back(&d_); ++nb; }
-      if (&e_ != &void_signed_distance) { dists.push_back(&e_); ++nb; }
-      if (&f_ != &void_signed_distance) { dists.push_back(&f_); ++nb; }
-      if (&g_ != &void_signed_distance) { dists.push_back(&g_); ++nb; }
-      if (&h_ != &void_signed_distance) { dists.push_back(&h_); ++nb; }
-      if (&i_ != &void_signed_distance) { dists.push_back(&i_); ++nb; }
-      if (&j_ != &void_signed_distance) { dists.push_back(&j_); ++nb; }
-      if (&k_ != &void_signed_distance) { dists.push_back(&k_); ++nb; }
-      if (&l_ != &void_signed_distance) { dists.push_back(&l_); ++nb; }
-      if (&m_ != &void_signed_distance) { dists.push_back(&m_); ++nb; }
-      if (&n_ != &void_signed_distance) { dists.push_back(&n_); ++nb; }
-      if (&o_ != &void_signed_distance) { dists.push_back(&o_); ++nb; }
-      if (&p_ != &void_signed_distance) { dists.push_back(&p_); ++nb; }
-      if (&q_ != &void_signed_distance) { dists.push_back(&q_); ++nb; }
-      if (&r_ != &void_signed_distance) { dists.push_back(&r_); ++nb; }
-      if (&s_ != &void_signed_distance) { dists.push_back(&s_); ++nb; }
-      if (&t_ != &void_signed_distance) { dists.push_back(&t_); ++nb; }
-      vd.resize(nb);
+    mesher_intersection
+    (const pmesher_signed_distance &a,
+     const pmesher_signed_distance &b,
+     const pmesher_signed_distance &c = pmesher_signed_distance(),
+     const pmesher_signed_distance &d = pmesher_signed_distance(),
+     const pmesher_signed_distance &e = pmesher_signed_distance(),
+     const pmesher_signed_distance &f = pmesher_signed_distance(),
+     const pmesher_signed_distance &g = pmesher_signed_distance(),
+     const pmesher_signed_distance &h = pmesher_signed_distance(),
+     const pmesher_signed_distance &i = pmesher_signed_distance(),
+     const pmesher_signed_distance &j = pmesher_signed_distance(),
+     const pmesher_signed_distance &k = pmesher_signed_distance(),
+     const pmesher_signed_distance &l = pmesher_signed_distance(),
+     const pmesher_signed_distance &m = pmesher_signed_distance(),
+     const pmesher_signed_distance &n = pmesher_signed_distance(),
+     const pmesher_signed_distance &o = pmesher_signed_distance(),
+     const pmesher_signed_distance &p = pmesher_signed_distance(),
+     const pmesher_signed_distance &q = pmesher_signed_distance(),
+     const pmesher_signed_distance &r = pmesher_signed_distance(),
+     const pmesher_signed_distance &s = pmesher_signed_distance(),
+     const pmesher_signed_distance &t = pmesher_signed_distance()) {
+      dists.push_back(a); dists.push_back(b);
+      if (c) dists.push_back(c); if (d) dists.push_back(d);
+      if (e) dists.push_back(e); if (f) dists.push_back(f);
+      if (g) dists.push_back(g); if (h) dists.push_back(h);
+      if (i) dists.push_back(i); if (j) dists.push_back(j);
+      if (k) dists.push_back(k); if (l) dists.push_back(l);
+      if (m) dists.push_back(m); if (n) dists.push_back(n);
+      if (o) dists.push_back(o); if (p) dists.push_back(p);
+      if (q) dists.push_back(q); if (r) dists.push_back(r);
+      if (s) dists.push_back(s); if (t) dists.push_back(t);
+      vd.resize(dists.size());
     }
     bool bounding_box(base_node &bmin, base_node &bmax) const {
       base_node bmin2, bmax2;
@@ -661,40 +694,75 @@ namespace getfem {
     }
   };
 
+  inline pmesher_signed_distance new_mesher_intersection
+  (const std::vector<pmesher_signed_distance> &dists)
+  { return std::make_shared<mesher_intersection>(dists); }
+
+  inline pmesher_signed_distance new_mesher_intersection
+  (const pmesher_signed_distance &a,
+   const pmesher_signed_distance &b,
+   const pmesher_signed_distance &c = pmesher_signed_distance(),
+   const pmesher_signed_distance &d = pmesher_signed_distance(),
+   const pmesher_signed_distance &e = pmesher_signed_distance(),
+   const pmesher_signed_distance &f = pmesher_signed_distance(),
+   const pmesher_signed_distance &g = pmesher_signed_distance(),
+   const pmesher_signed_distance &h = pmesher_signed_distance(),
+   const pmesher_signed_distance &i = pmesher_signed_distance(),
+   const pmesher_signed_distance &j = pmesher_signed_distance(),
+   const pmesher_signed_distance &k = pmesher_signed_distance(),
+   const pmesher_signed_distance &l = pmesher_signed_distance(),
+   const pmesher_signed_distance &m = pmesher_signed_distance(),
+   const pmesher_signed_distance &n = pmesher_signed_distance(),
+   const pmesher_signed_distance &o = pmesher_signed_distance(),
+   const pmesher_signed_distance &p = pmesher_signed_distance(),
+   const pmesher_signed_distance &q = pmesher_signed_distance(),
+   const pmesher_signed_distance &r = pmesher_signed_distance(),
+   const pmesher_signed_distance &s = pmesher_signed_distance(),
+   const pmesher_signed_distance &t = pmesher_signed_distance()) {
+    return std::make_shared<mesher_intersection>
+      (a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t);
+  }
+ 
+
+
   class mesher_setminus : public mesher_signed_distance {
-    const mesher_signed_distance &a, &b;
+    pmesher_signed_distance a, b;
   public:
-    mesher_setminus(const mesher_signed_distance& a_,
-		    const mesher_signed_distance &b_) : a(a_), b(b_) {}
+    mesher_setminus(const pmesher_signed_distance& a_,
+		    const pmesher_signed_distance &b_) : a(a_), b(b_) {}
     bool bounding_box(base_node &bmin, base_node &bmax) const
-    { return a.bounding_box(bmin,bmax); }
+    { return a->bounding_box(bmin,bmax); }
     scalar_type operator()(const base_node &P, dal::bit_vector &bv) const {
-      scalar_type da = a(P), db = -b(P);
+      scalar_type da = (*a)(P), db = -(*b)(P);
       if (da < SEPS && db < SEPS) {
-	if (da > -SEPS) a(P, bv);
-	if (db > -SEPS) b(P, bv);
+	if (da > -SEPS) (*a)(P, bv);
+	if (db > -SEPS) (*b)(P, bv);
       }
       return std::max(da, db);
     }
     scalar_type operator()(const base_node &P) const
-    { return std::max(a(P),-b(P)); }
+    { return std::max((*a)(P),-(*b)(P)); }
     virtual void register_constraints(std::vector<const
 				      mesher_signed_distance*>& list) const {
-      a.register_constraints(list); b.register_constraints(list);
+      a->register_constraints(list); b->register_constraints(list);
     }
     scalar_type grad(const base_node &P, base_small_vector &G) const {
-      scalar_type da = a(P), db = -b(P);
-      if (da > db) return a.grad(P, G);
-      else { b.grad(P, G); G *= scalar_type(-1); return db; }
+      scalar_type da = (*a)(P), db = -(*b)(P);
+      if (da > db) return a->grad(P, G);
+      else { b->grad(P, G); G *= scalar_type(-1); return db; }
     }
     void hess(const base_node &P, base_matrix &H) const {
-      scalar_type da = a(P), db = -b(P);
-      if (da > db) a.hess(P, H);
-      else { b.hess(P, H); gmm::scale(H, scalar_type(-1)); }
+      scalar_type da = (*a)(P), db = -(*b)(P);
+      if (da > db) a->hess(P, H);
+      else { b->hess(P, H); gmm::scale(H, scalar_type(-1)); }
     }
 
   };
   
+  inline pmesher_signed_distance new_mesher_setminus
+  (const pmesher_signed_distance &a, const pmesher_signed_distance &b)
+  { return std::make_shared<mesher_setminus>(a, b); }
+
 
   class mesher_tube : public mesher_signed_distance {
     base_node x0; base_node n; scalar_type R;
@@ -736,17 +804,23 @@ namespace getfem {
     }
   };
 
+  inline pmesher_signed_distance new_mesher_tube(base_node x0, base_node n,
+						 scalar_type R)
+  { return std::make_shared<mesher_tube>(x0,n,R); }
+
+
   class mesher_cylinder : public mesher_signed_distance {
     base_node x0; base_small_vector n;
     scalar_type L, R;
-    mesher_tube t;
-    mesher_half_space p1, p2;
-    mesher_intersection i1;
+    pmesher_signed_distance t, p1, p2, i1;
   public:
     mesher_cylinder(const base_node &c, const base_small_vector &no,
 		    scalar_type L_, scalar_type R_)
-      : x0(c), n(no/gmm::vect_norm2(no)), L(L_), R(R_), t(x0, n, R),
-	p1(x0, n), p2(x0+n*L, -1.0 * n), i1(p1, p2, t) {}
+      : x0(c), n(no/gmm::vect_norm2(no)), L(L_), R(R_),
+	t(new_mesher_tube(x0, n, R)),
+	p1(new_mesher_half_space(x0, n)),
+	p2(new_mesher_half_space(x0+n*L, -1.0 * n)),
+	i1(new_mesher_intersection(p1, p2, t)) {}
     bool bounding_box(base_node &bmin, base_node &bmax) const {
       base_node x1(x0+n*L);
       bmin = bmax = x0;
@@ -756,20 +830,24 @@ namespace getfem {
       }
       return true;
     }
-    virtual scalar_type operator()(const base_node &P) const { return i1(P); }
+    virtual scalar_type operator()(const base_node &P) const {return (*i1)(P); }
     virtual scalar_type operator()(const base_node &P,
 				   dal::bit_vector& bv) const
-    { return i1(P, bv); }
+    { return (*i1)(P, bv); }
     scalar_type grad(const base_node &P, base_small_vector &G) const
-      { return i1.grad(P, G); }
+      { return i1->grad(P, G); }
     void hess(const base_node &, base_matrix &) const {
       GMM_ASSERT1(false, "Sorry, to be done");
     }
     virtual void register_constraints(std::vector<const
 				      mesher_signed_distance*>& list) const
-    { i1.register_constraints(list); }
+    { i1->register_constraints(list); }
   };
 
+  inline pmesher_signed_distance new_mesher_cylinder
+  (const base_node &c, const base_small_vector &no,
+   scalar_type L, scalar_type R)
+  { return std::make_shared<mesher_cylinder>(c,no,L,R); }
 
 
   class mesher_infinite_cone : public mesher_signed_distance {
@@ -817,17 +895,23 @@ namespace getfem {
     }
   };
 
+  inline pmesher_signed_distance new_mesher_infinite_cone
+  (base_node x0, base_node n, scalar_type alpha)
+  { return std::make_shared<mesher_infinite_cone>(x0,n,alpha); }
+
+
   class mesher_cone : public mesher_signed_distance {
     base_node x0; base_small_vector n;
     scalar_type L, alpha;
-    mesher_infinite_cone t;
-    mesher_half_space p1, p2;
-    mesher_intersection i1;
+    pmesher_signed_distance t, p1, p2, i1;
   public:
     mesher_cone(const base_node &c, const base_small_vector &no,
 		    scalar_type L_, scalar_type alpha_)
       : x0(c), n(no/gmm::vect_norm2(no)), L(L_), alpha(alpha_),
-	t(x0, n, alpha), p1(x0, n), p2(x0+n*L, -1.0 * n), i1(p1, p2, t) {}
+	t(new_mesher_infinite_cone(x0, n, alpha)),
+	p1(new_mesher_half_space(x0, n)),
+	p2(new_mesher_half_space(x0+n*L, -1.0 * n)),
+	i1(new_mesher_intersection(p1, p2, t)) {}
     bool bounding_box(base_node &bmin, base_node &bmax) const {
       base_node x1(x0+n*L);
       scalar_type R = L * sin(alpha);
@@ -838,19 +922,25 @@ namespace getfem {
       }
       return true;
     }
-    virtual scalar_type operator()(const base_node &P) const { return i1(P); }
+    virtual scalar_type operator()(const base_node &P) const {return (*i1)(P); }
     virtual scalar_type operator()(const base_node &P,
 				   dal::bit_vector& bv) const
-    { return i1(P, bv); }
+    { return (*i1)(P, bv); }
     scalar_type grad(const base_node &P, base_small_vector &G) const
-      { return i1.grad(P, G); }
+      { return i1->grad(P, G); }
     void hess(const base_node &, base_matrix &) const {
       GMM_ASSERT1(false, "Sorry, to be done");
     }
     virtual void register_constraints(std::vector<const
 				      mesher_signed_distance*>& list) const
-    { i1.register_constraints(list); }
+    { i1->register_constraints(list); }
   };
+
+  inline pmesher_signed_distance new_mesher_cone
+  (const base_node &c, const base_small_vector &no,
+   scalar_type L, scalar_type alpha)
+  { return std::make_shared<mesher_cone>(c,no,L,alpha); }
+
 
   class mesher_ellipse : public mesher_signed_distance {
     base_node x0; base_small_vector n, t;
@@ -900,6 +990,12 @@ namespace getfem {
 				      mesher_signed_distance*>& list) const
     { id = list.size(); list.push_back(this); }
   };
+
+  inline pmesher_signed_distance new_mesher_ellipse
+  (const base_node &center, const base_small_vector &no,
+   scalar_type r, scalar_type R)
+  { return std::make_shared<mesher_ellipse>(center,no,r,R); }
+
 
 
   class mesher_torus : public mesher_signed_distance { // to be done
@@ -951,7 +1047,9 @@ namespace getfem {
   };
 
 
-  
+  inline pmesher_signed_distance new_mesher_torus(scalar_type R, scalar_type r)
+  { return std::make_shared<mesher_torus>(R,r); }
+
 
   // interface with qhull
   void delaunay(const std::vector<base_node> &pts,
@@ -959,7 +1057,7 @@ namespace getfem {
 
   
   // mesher
-  void build_mesh(mesh &m, const mesher_signed_distance& dist_,
+  void build_mesh(mesh &m, const pmesher_signed_distance& dist_,
 		  scalar_type h0, const std::vector<base_node> &fixed_points
 		  = std::vector<base_node>(), size_type K = 1, int noise = -1,
 		  size_type iter_max = 500, int prefind = 1,

@@ -1195,7 +1195,8 @@ namespace getfem {
 
   void add_theta_method_for_first_order(model &md, const std::string &varname,
                                         scalar_type theta) {
-    ptime_scheme ptsc(new first_order_theta_method_scheme(md, varname,theta));
+    ptime_scheme ptsc
+      = std::make_shared<first_order_theta_method_scheme>(md, varname,theta);
     md.add_time_integration_scheme(varname, ptsc);
   }
 
@@ -1334,7 +1335,8 @@ namespace getfem {
 
   void add_theta_method_for_second_order(model &md, const std::string &varname,
                                          scalar_type theta) {
-    ptime_scheme ptsc(new second_order_theta_method_scheme(md,varname,theta));
+    ptime_scheme ptsc = std::make_shared<second_order_theta_method_scheme>
+      (md,varname,theta);
     md.add_time_integration_scheme(varname, ptsc);
   }
 
@@ -1475,7 +1477,8 @@ namespace getfem {
 
   void add_Newmark_scheme(model &md, const std::string &varname,
                           scalar_type beta, scalar_type gamma) {
-    ptime_scheme ptsc(new Newmark_scheme(md, varname, beta, gamma));
+    ptime_scheme ptsc = std::make_shared<Newmark_scheme>
+      (md, varname, beta, gamma);
     md.add_time_integration_scheme(varname, ptsc);
   }
 
@@ -3268,8 +3271,8 @@ namespace getfem {
       dl.push_back(directdataname);
     } else directvarname = "";
     
-    pbrick pbr(new gen_source_term_assembly_brick
-	       (expr, brickname, vl_test1, directvarname, directdataname));
+    pbrick pbr = std::make_shared<gen_source_term_assembly_brick>
+      (expr, brickname, vl_test1, directvarname, directdataname);
     model::termlist tl;
 
     for (size_type i = 0; i < vl_test1.size(); ++i)
@@ -3411,9 +3414,8 @@ namespace getfem {
                 "Split the brick.");
 
     if (vl_test1.size()) {
-      pbrick pbr(new gen_linear_assembly_brick(expr, mim, is_sym, is_coercive,
-					       brickname,
-					       vl_test1, vl_test2));
+      pbrick pbr = std::make_shared<gen_linear_assembly_brick>
+	(expr, mim, is_sym, is_coercive, brickname, vl_test1, vl_test2);
       model::termlist tl;
       for (size_type i = 0; i < vl_test1.size(); ++i)
         tl.push_back(model::term_description(vl_test1[i], vl_test2[i], false));
@@ -3484,8 +3486,8 @@ namespace getfem {
       if (md.is_true_data(ddl[i])) dl.push_back(ddl[i]);
       else vl.push_back(ddl[i]);
     if (order == 0) { is_coercive = is_sym = true; }
-    pbrick pbr(new gen_nonlinear_assembly_brick(expr, mim, is_sym,
-						is_coercive, brickname));
+    pbrick pbr = std::make_shared<gen_nonlinear_assembly_brick>
+      (expr, mim, is_sym, is_coercive, brickname);
     model::termlist tl; // No term
     // tl.push_back(model::term_description(true, is_sym));
     // TODO to be changed.
@@ -3787,7 +3789,8 @@ namespace getfem {
         A = &(md.real_variable(dl[0]));
         mf_a = md.pmesh_fem_of_variable(dl[0]);
       }
-      pNeumann_elem_term pNt(new generic_elliptic_Neumann_elem_term(mf_a, A));
+      pNeumann_elem_term pNt
+	= std::make_shared<generic_elliptic_Neumann_elem_term>(mf_a, A);
       md.add_Neumann_term(pNt, vl[0], ib);
     }
 
@@ -3808,7 +3811,8 @@ namespace getfem {
         A = &(md.real_variable(dl[0]));
         mf_a = md.pmesh_fem_of_variable(dl[0]);
       }
-      pNeumann_elem_term pNt(new generic_elliptic_Neumann_elem_term(mf_a, A));
+      pNeumann_elem_term pNt
+	= std::make_shared<generic_elliptic_Neumann_elem_term>(mf_a, A);
       md.add_Neumann_term(pNt, vl[0], ib);
     }
 
@@ -3918,7 +3922,7 @@ namespace getfem {
                                 const std::string &varname,
                                 size_type region) {
     if (md.is_complex()) {
-      pbrick pbr(new generic_elliptic_brick);
+      pbrick pbr = std::make_shared<generic_elliptic_brick>();
       model::termlist tl;
       tl.push_back(model::term_description(varname, varname, true));
       return md.add_brick(pbr, model::varnamelist(1, varname),
@@ -3944,7 +3948,7 @@ namespace getfem {
                                        const std::string &dataname,
                                        size_type region) {
     if (md.is_complex()) {
-      pbrick pbr(new generic_elliptic_brick);
+      pbrick pbr = std::make_shared<generic_elliptic_brick>();
       model::termlist tl;
       tl.push_back(model::term_description(varname, varname, true));
       return md.add_brick(pbr, model::varnamelist(1, varname),
@@ -4127,7 +4131,7 @@ namespace getfem {
                                   size_type region,
                                   const std::string &directdataname) {
     if (md.is_complex()) {
-      pbrick pbr(new source_term_brick);
+      pbrick pbr = std::make_shared<source_term_brick>();
       model::termlist tl;
       tl.push_back(model::term_description(varname));
       model::varnamelist vdata(1, dataexpr);
@@ -4279,7 +4283,7 @@ namespace getfem {
                                          const std::string &dataexpr,
                                          size_type region) {
     if (md.is_complex()) {
-      pbrick pbr(new normal_source_term_brick);
+      pbrick pbr = std::make_shared<normal_source_term_brick>();
       model::termlist tl;
       tl.push_back(model::term_description(varname));
       model::varnamelist vdata(1, dataexpr);
@@ -4659,7 +4663,7 @@ namespace getfem {
   (model &md, const mesh_im &mim, const std::string &varname,
    const std::string &multname, size_type region,
    const std::string &dataname) {
-    pbrick pbr(new Dirichlet_condition_brick(false, false, false));
+    pbrick pbr = std::make_shared<Dirichlet_condition_brick>(false,false,false);
     model::termlist tl;
     tl.push_back(model::term_description(multname, varname, true));
     model::varnamelist vl(1, varname);
@@ -4704,7 +4708,8 @@ namespace getfem {
       md.set_complex_variable(coeffname)[0] = penalisation_coeff;
     else
       md.set_real_variable(coeffname)[0] = penalisation_coeff;
-    pbrick pbr(new Dirichlet_condition_brick(true, false, false, mf_mult));
+    pbrick pbr = std::make_shared<Dirichlet_condition_brick>
+      (true, false, false, mf_mult);
     model::termlist tl;
     tl.push_back(model::term_description(varname, varname, true));
     model::varnamelist vl(1, varname);
@@ -4717,7 +4722,7 @@ namespace getfem {
   (model &md, const mesh_im &mim, const std::string &varname,
    const std::string &multname, size_type region,
    const std::string &dataname) {
-    pbrick pbr(new Dirichlet_condition_brick(false, false, true));
+    pbrick pbr = std::make_shared<Dirichlet_condition_brick>(false,false,true);
     model::termlist tl;
     tl.push_back(model::term_description(multname, varname, true));
     model::varnamelist vl(1, varname);
@@ -4757,7 +4762,8 @@ namespace getfem {
       md.set_complex_variable(coeffname)[0] = penalisation_coeff;
     else
       md.set_real_variable(coeffname)[0] = penalisation_coeff;
-    pbrick pbr(new Dirichlet_condition_brick(true, false, true, mf_mult));
+    pbrick pbr = std::make_shared<Dirichlet_condition_brick>
+      (true, false, true, mf_mult);
     model::termlist tl;
     tl.push_back(model::term_description(varname, varname, true));
     model::varnamelist vl(1, varname);
@@ -4771,7 +4777,7 @@ namespace getfem {
   (model &md, const mesh_im &mim, const std::string &varname,
    const std::string &multname, size_type region,
    const std::string &dataname, const std::string &Hname) {
-    pbrick pbr(new Dirichlet_condition_brick(false, true, false));
+    pbrick pbr = std::make_shared<Dirichlet_condition_brick>(false,true,false);
     model::termlist tl;
     tl.push_back(model::term_description(multname, varname, true));
     model::varnamelist vl(1, varname);
@@ -4814,7 +4820,8 @@ namespace getfem {
       md.set_complex_variable(coeffname)[0] = penalisation_coeff;
     else
       md.set_real_variable(coeffname)[0] = penalisation_coeff;
-    pbrick pbr(new Dirichlet_condition_brick(true, true, false, mf_mult));
+    pbrick pbr = std::make_shared<Dirichlet_condition_brick>
+      (true, true, false, mf_mult);
     model::termlist tl;
     tl.push_back(model::term_description(varname, varname, true));
     model::varnamelist vl(1, varname);
@@ -5007,7 +5014,7 @@ namespace getfem {
   size_type add_Dirichlet_condition_with_simplification
   (model &md, const std::string &varname,
    size_type region, const std::string &dataname) {
-    pbrick pbr(new simplification_Dirichlet_condition_brick());
+    pbrick pbr = std::make_shared<simplification_Dirichlet_condition_brick>();
     model::termlist tl;
     model::varnamelist vl(1, varname);
     model::varnamelist dl;
@@ -5360,7 +5367,7 @@ namespace getfem {
       md.set_complex_variable(coeffname)[0] = penalisation_coeff;
     else
       md.set_real_variable(coeffname)[0] = penalisation_coeff;
-    pbrick pbr(new pointwise_constraints_brick(true));
+    pbrick pbr = std::make_shared<pointwise_constraints_brick>(true);
     model::termlist tl;
     tl.push_back(model::term_description(varname, varname, true));
     model::varnamelist vl(1, varname);
@@ -5376,7 +5383,7 @@ namespace getfem {
   (model &md, const std::string &varname,
    const std::string &multname, const std::string &dataname_pt,
    const std::string &dataname_unitv, const std::string &dataname_val) {
-    pbrick pbr(new  pointwise_constraints_brick(false));
+    pbrick pbr = std::make_shared<pointwise_constraints_brick>(false);
     model::termlist tl;
     tl.push_back(model::term_description(multname, varname, true));
     model::varnamelist vl(1, varname);
@@ -5510,7 +5517,7 @@ namespace getfem {
                                 const std::string &dataexpr,
                                 size_type region) {
     if (md.is_complex()) {
-      pbrick pbr(new Helmholtz_brick);
+      pbrick pbr = std::make_shared<Helmholtz_brick>();
       model::termlist tl;
       tl.push_back(model::term_description(varname, varname, true));
       return md.add_brick(pbr, model::varnamelist(1, varname),
@@ -5631,7 +5638,7 @@ namespace getfem {
                                     const std::string &dataexpr,
                                     size_type region) {
     if (md.is_complex()) {
-      pbrick pbr(new Fourier_Robin_brick);
+      pbrick pbr = std::make_shared<Fourier_Robin_brick>();
       model::termlist tl;
       tl.push_back(model::term_description(varname, varname, true));
       return md.add_brick(pbr, model::varnamelist(1, varname),
@@ -5839,7 +5846,7 @@ namespace getfem {
       md.set_complex_variable(coeffname)[0] = penalisation_coeff;
     else
       md.set_real_variable(coeffname)[0] = penalisation_coeff;
-    pbrick pbr(new constraint_brick(true));
+    pbrick pbr = std::make_shared<constraint_brick>(true);
     model::termlist tl;
     tl.push_back(model::term_description(varname, varname, true));
     model::varnamelist vl(1, varname);
@@ -5849,7 +5856,7 @@ namespace getfem {
 
   size_type add_constraint_with_multipliers
   (model &md, const std::string &varname, const std::string &multname) {
-    pbrick pbr(new constraint_brick(false));
+    pbrick pbr = std::make_shared<constraint_brick>(false);
     model::termlist tl;
     tl.push_back(model::term_description(multname, varname, true));
     model::varnamelist vl(1, varname);
@@ -5919,7 +5926,8 @@ namespace getfem {
   size_type add_explicit_matrix
   (model &md, const std::string &varname1, const std::string &varname2,
    bool issymmetric, bool iscoercive) {
-    pbrick pbr(new explicit_matrix_brick(issymmetric, iscoercive));
+    pbrick pbr = std::make_shared<explicit_matrix_brick>(issymmetric,
+							 iscoercive);
     model::termlist tl;
     tl.push_back(model::term_description(varname1, varname2, issymmetric));
     model::varnamelist vl(1, varname1);
@@ -5993,7 +6001,7 @@ namespace getfem {
 
   size_type add_explicit_rhs
   (model &md, const std::string &varname) {
-    pbrick pbr(new explicit_rhs_brick());
+    pbrick pbr = std::make_shared<explicit_rhs_brick>();
     model::termlist tl;
     tl.push_back(model::term_description(varname));
     model::varnamelist vl(1, varname);
@@ -6235,8 +6243,9 @@ namespace getfem {
           const mesh_fem *mf_mu = md.pmesh_fem_of_variable(dl[1]);
           const model_real_plain_vector *mu = &(md.real_variable(dl[1]));
 
-          pNeumann_elem_term pNt(new iso_lin_elasticity_Neumann_elem_term
-				 (mf_lambda, lambda, mf_mu, mu));
+          pNeumann_elem_term pNt
+	    = std::make_shared<iso_lin_elasticity_Neumann_elem_term>
+	    (mf_lambda, lambda, mf_mu, mu);
           md.add_Neumann_term(pNt, vl[0], ib);
       }
     }
@@ -6363,7 +6372,8 @@ namespace getfem {
     
 
 #if 0 // Old brick
-    pbrick pbr(new iso_lin_elasticity_brick(dataname3.size() ? expr1:expr2));
+    pbrick pbr = std::make_shared<iso_lin_elasticity_brick>
+      (dataname3.size() ? expr1:expr2);
     model::termlist tl;
     tl.push_back(model::term_description(varname, varname, true));
     model::varnamelist dl(1, dataexpr1);
@@ -6379,7 +6389,8 @@ namespace getfem {
     bool is_lin = workspace.used_variables(vl, vl_test1, vl_test2, dl, 2);
     
     if (is_lin) {
-      pbrick pbr(new iso_lin_elasticity_new_brick(expr2, dataname3));
+      pbrick pbr = std::make_shared<iso_lin_elasticity_new_brick>
+	(expr2, dataname3);
       model::termlist tl;
       tl.push_back(model::term_description(varname,
                            sup_previous_and_dot_to_varname(varname), true));
@@ -6712,9 +6723,9 @@ namespace getfem {
                                               build_version) const
     {
         const mesh_fem &mf_p = md.mesh_fem_of_variable(vl[1]);
-        pNeumann_elem_term pNt(new lin_incomp_Neumann_elem_term
+        pNeumann_elem_term pNt = std::make_shared<lin_incomp_Neumann_elem_term>
           (md.version_number_of_data_variable( vl[1]), &mf_p,
-	   &(md.real_variable(vl[1])), vl[1]));
+	   &(md.real_variable(vl[1])), vl[1]);
         md.add_Neumann_term(pNt, vl[0], ib);
         md.add_auxilliary_variables_of_Neumann_terms(vl[0], vl[1]);
     }
@@ -6734,7 +6745,7 @@ namespace getfem {
    const std::string &multname, size_type region,
    const std::string &dataexpr) {
 #if 0
-    pbrick pbr(new linear_incompressibility_brick());
+    pbrick pbr = std::make_shared<linear_incompressibility_brick>();
     model::termlist tl;
     tl.push_back(model::term_description(multname, varname, true));
     model::varnamelist vl(1, varname);
@@ -6882,7 +6893,7 @@ namespace getfem {
   (model &md, const mesh_im &mim, const std::string &varname,
    const std::string &dataexpr_rho,  size_type region) {
     if (md.is_complex()) {
-      pbrick pbr(new mass_brick);
+      pbrick pbr = std::make_shared<mass_brick>();
       model::termlist tl;
       tl.push_back(model::term_description(varname, varname, true));
       model::varnamelist dl;
@@ -7064,7 +7075,7 @@ namespace getfem {
   (model &md, const mesh_im &mim, const std::string &varname,
    const std::string &dataname_dt, const std::string &dataname_rho,
    size_type region) {
-    pbrick pbr(new basic_d_on_dt_brick);
+    pbrick pbr = std::make_shared<basic_d_on_dt_brick>();
     model::termlist tl;
     tl.push_back(model::term_description(varname, varname, true));
     model::varnamelist dl(1, varname);
@@ -7242,7 +7253,7 @@ namespace getfem {
    const std::string &dataname_alpha,
    const std::string &dataname_rho,
    size_type region) {
-    pbrick pbr(new basic_d2_on_dt2_brick);
+    pbrick pbr = std::make_shared<basic_d2_on_dt2_brick>();
     model::termlist tl;
     tl.push_back(model::term_description(varnameU, varnameU, true));
     model::varnamelist dl(1, varnameU);
@@ -7325,7 +7336,7 @@ namespace getfem {
 
   void add_theta_method_dispatcher
   (model &md, dal::bit_vector ibricks, const std::string &THETA) {
-    pdispatcher pdispatch(new theta_method_dispatcher(THETA));
+    pdispatcher pdispatch = std::make_shared<theta_method_dispatcher>(THETA);
     for (dal::bv_visitor i(ibricks); !i.finished(); ++i)
       md.add_time_dispatcher(i, pdispatch);
   }
@@ -7627,7 +7638,7 @@ namespace getfem {
   };
 
   void add_midpoint_dispatcher(model &md, dal::bit_vector ibricks) {
-    pdispatcher pdispatch(new midpoint_dispatcher());
+    pdispatcher pdispatch = std::make_shared<midpoint_dispatcher>();
     for (dal::bv_visitor i(ibricks); !i.finished(); ++i)
       md.add_time_dispatcher(i, pdispatch);
   }

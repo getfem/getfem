@@ -423,21 +423,21 @@ namespace getfem {
 
   class base_asm_vec {
   public:
-    virtual ATN* build_output_tensor(ATN_tensor &a, 
-				     vdim_specif_list& vdim)=0;
+    virtual std::unique_ptr<ATN> build_output_tensor(ATN_tensor &a, 
+						     vdim_specif_list& vdim)=0;
     virtual ~base_asm_vec() {}
   };
 
   template< typename VEC > class asm_vec : public base_asm_vec {
-    VEC *v;
+    std::shared_ptr<VEC> v;
   public:
-    asm_vec(VEC *v_) : v(v_) {}
-    virtual ATN* build_output_tensor(ATN_tensor &a, 
-				     vdim_specif_list& vdim) {
-      ATN *t = new ATN_array_output<VEC>(a, *v, vdim); return t;
+    asm_vec(const std::shared_ptr<VEC> &v_) : v(v_) {}
+    asm_vec(VEC *v_) : v(std::shared_ptr<VEC>(), v_) {}
+    virtual std::unique_ptr<ATN> build_output_tensor(ATN_tensor &a, 
+						     vdim_specif_list& vdim) {
+      return std::make_unique<ATN_array_output<VEC>>(a, *v, vdim);
     }
-    VEC *vec() { return v; }
-    ~asm_vec() {}
+    VEC *vec() { return v.get(); }
   };
 
   /* the "factory" is only useful for the matlab interface,
@@ -456,13 +456,8 @@ namespace getfem {
       size_type sz = 1; for (size_type i=0; i < r.size(); ++i) sz *= r[i];
       if (sz == 0)
 	ASM_THROW_TENSOR_ERROR("can't create a vector of size " << r);
-      asm_vec<VEC> v(new VEC(sz));
-      this->push_back(v); return &this->back();
-    }
-    ~vec_factory() { 
-      for (size_type i=0; i < this->size(); ++i) {
-	delete (*this)[i].vec();
-      }
+      this->push_back(asm_vec<VEC>(std::make_shared<VEC>(sz)));
+      return &this->back();
     }
   };
 
@@ -470,22 +465,23 @@ namespace getfem {
   /* matrix wrappers */
   class base_asm_mat {
   public:
-    virtual ATN*
+    virtual std::unique_ptr<ATN> 
     build_output_tensor(ATN_tensor& a, const mesh_fem& mf1,
 			const mesh_fem& mf2) = 0;
     virtual ~base_asm_mat() {}
   };
 
   template< typename MAT > class asm_mat : public base_asm_mat {
-    MAT *m;
+    std::shared_ptr<MAT> m;
   public:
-    asm_mat(MAT* m_) : m(m_) {}
-    ATN*
+    asm_mat(const std::shared_ptr<MAT> &m_) : m(m_) {}
+    asm_mat(MAT *m_) : m(std::shared_ptr<MAT>(), m_) {}
+    std::unique_ptr<ATN> 
     build_output_tensor(ATN_tensor& a, const mesh_fem& mf1,
 			const mesh_fem& mf2) {
-      return new ATN_smatrix_output<MAT>(a, mf1, mf2, *m);
+      return std::make_unique<ATN_smatrix_output<MAT>>(a, mf1, mf2, *m);
     }
-    MAT *mat() { return m; }
+    MAT *mat() { return m.get(); }
     ~asm_mat() {}
   };
 
@@ -499,12 +495,8 @@ namespace getfem {
     : public base_mat_factory, private std::deque<asm_mat<MAT> > {
   public:
     base_asm_mat* create_mat(size_type m, size_type n) { 
-      this->push_back(asm_mat<MAT>(new MAT(m, n))); return &this->back();
-    }
-    ~mat_factory() { 
-      for (size_type i=0; i < this->size(); ++i) {
-	delete ((*this)[i]).mat(); 
-      }
+      this->push_back(asm_mat<MAT>(std::make_shared<MAT>(m, n)));
+      return &this->back();
     }
   };
 
@@ -608,10 +600,10 @@ namespace getfem {
     std::vector<const mesh_im *> imtab;  /* list of the mesh_im used.     */
     std::vector<pnonlinear_elem_term> innonlin;  /* alternatives to base, */
     /*                  grad, hess in comp() for non-linear computations) */
-    std::vector<base_asm_data*> indata;          /* data sources          */
-    std::vector<base_asm_vec*> outvec; /* vectors in which is done the    */
+    std::vector<std::unique_ptr<base_asm_data>> indata;          /* data sources          */
+    std::vector<std::shared_ptr<base_asm_vec>> outvec; /* vectors in which is done the    */
                                        /* assembly                        */
-    std::vector<base_asm_mat*> outmat; /* matrices in which is done the   */
+    std::vector<std::shared_ptr<base_asm_mat>> outmat; /* matrices in which is done the   */
                                        /* assembly                        */
 
     base_vec_factory *vec_fact; /* if non null, used to fill the outvec   */
@@ -619,16 +611,16 @@ namespace getfem {
     base_mat_factory *mat_fact; /* if non null, used to fill the outmat   */
                                 /* list with a given matrix class         */
 
-    std::vector<ATN*> outvars; /* the list of "final tensors" which       */
-			       /* produce some output in outvec and outmat*/
+    std::vector<std::unique_ptr<ATN>> outvars; /* the list of "final tensors"*/
+                          /* which produce some output in outvec and outmat. */
     
     std::map<std::string, ATN_tensor *> vars; /* the list of user variables */
-    std::vector<ATN_tensor*> atn_tensors;  /* keep track of all tensors     */
-    /* objects (except the ones listed in 'outvars') for deallocation when  */
-    /* all is done. Note that they are not stored in a random order, but    */
-    /* are reordered such that the childs of the i-th ATN_tensor are all    */
-    /* stored at indices j < i.	This assumption is largely used for calls   */
-    /* to shape updates and exec(cv,f).                                     */
+    std::vector<std::unique_ptr<ATN_tensor>> atn_tensors;  /* keep track of */
+    /* all tensors objects (except the ones listed in 'outvars') for        */
+    /* deallocation when all is done. Note that they are not stored in a    */
+    /* random order, but are reordered such that the childs of the          */
+    /* i-th ATN_tensor are all stored at indices j < i. This assumption is  */
+    /* largely used for calls to shape updates and exec(cv,f).              */
     bool parse_done;
 
   public:
@@ -636,35 +628,33 @@ namespace getfem {
     generic_assembly(const std::string& s_) :
       vec_fact(0), mat_fact(0), parse_done(false)
     { set_str(s_); }
-    generic_assembly(const std::string& s_,
-	       std::vector<const mesh_fem*>& mftab_, 
-	       std::vector<const mesh_im*>& imtab_, 
-	       std::vector<base_asm_data*> indata_,
-	       std::vector<base_asm_mat*> outmat_,
-	       std::vector<base_asm_vec*> outvec_) : 
-      mftab(mftab_), imtab(imtab_),
-      indata(indata_), outvec(outvec_), outmat(outmat_),
-      vec_fact(0), mat_fact(0), parse_done(false)
-    { set_str(s_); }    
+    // generic_assembly(const std::string& s_,
+    // 	       std::vector<const mesh_fem*>& mftab_, 
+    // 	       std::vector<const mesh_im*>& imtab_, 
+    // 	       std::vector<base_asm_data*> indata_,
+    // 	       std::vector<base_asm_mat*> outmat_,
+    // 	       std::vector<base_asm_vec*> outvec_) : 
+    //   mftab(mftab_), imtab(imtab_),
+    //   indata(indata_), outvec(outvec_), outmat(outmat_),
+    //   vec_fact(0), mat_fact(0), parse_done(false)
+    // { set_str(s_); }    
     ~generic_assembly() {
-      for (size_type i = 0; i < atn_tensors.size(); ++i) delete atn_tensors[i];
-      for (size_type i = 0; i < outvars.size(); ++i) delete outvars[i];
-      for (size_type i = 0; i < indata.size(); ++i) delete indata[i];
+      // for (size_type i = 0; i < indata.size(); ++i) delete indata[i];
       /* the destruction of outvec and outmat is assured, if necessary by  */
       /* the vec_fact and asm_fact (since they derive from deque<asm_mat>) */
-      if (vec_fact==0)
-	for (size_type i = 0; i < outvec.size(); ++i) delete outvec[i];
-      if (mat_fact==0)
-	for (size_type i = 0; i < outmat.size(); ++i) delete outmat[i];
+      // if (vec_fact==0)
+      // for (size_type i = 0; i < outvec.size(); ++i) delete outvec[i];
+      // if (mat_fact==0)
+      // for (size_type i = 0; i < outmat.size(); ++i) delete outmat[i];
     }
 
     void set(const std::string& s_) { set_str(s_); }
     const std::vector<const mesh_fem*>& mf() const { return mftab; }
     const std::vector<const mesh_im*>& im() const { return imtab; }
     const std::vector<pnonlinear_elem_term> nonlin() const { return innonlin; }
-    const std::vector<base_asm_data*>& data() const { return indata; }
-    const std::vector<base_asm_vec*>& vec() const { return outvec; }
-    const std::vector<base_asm_mat*>& mat() const { return outmat; }
+    const std::vector<std::unique_ptr<base_asm_data>>& data() const { return indata; }
+    const std::vector<std::shared_ptr<base_asm_vec>>& vec() const { return outvec; }
+    const std::vector<std::shared_ptr<base_asm_mat>>& mat() const { return outmat; }
     /// Add a new mesh_fem
     void push_mf(const mesh_fem& mf_) { mftab.push_back(&mf_); }
     /// Add a new mesh_im
@@ -675,25 +665,23 @@ namespace getfem {
     }
     /// Add a new data (dense array)
     template< typename VEC > void push_data(const VEC& d) { 
-      indata.push_back(new asm_data<VEC>(&d)); 
+      indata.push_back(std::make_unique<asm_data<VEC>>(&d)); 
     }
     /// Add a new output vector
     template< typename VEC > void push_vec(VEC& v) { 
-      asm_vec<VEC> *pv = new asm_vec<VEC>(&(gmm::linalg_cast(v)));
-      outvec.push_back(pv);
+      outvec.push_back(std::make_shared<asm_vec<VEC>>(&(gmm::linalg_cast(v))));
     }
     /// Add a new output vector (fake const version..)
     template< typename VEC > void push_vec(const VEC& v) { 
-      asm_vec<VEC> *pv = new asm_vec<VEC>(&(gmm::linalg_cast(v)));
-      outvec.push_back(pv);
+      outvec.push_back(std::make_shared<asm_vec<VEC>>(&(gmm::linalg_cast(v))));
     }
     /// Add a new output matrix (fake const version..)
     template< typename MAT > void push_mat(const MAT& m) { 
-      outmat.push_back(new asm_mat<MAT>(&(gmm::linalg_cast(m)))); 
+      outmat.push_back(std::make_shared<asm_mat<MAT>>(&(gmm::linalg_cast(m)))); 
     }
     /// Add a new output matrix
     template< typename MAT > void push_mat(MAT& m) { 
-      outmat.push_back(new asm_mat<MAT>(&(gmm::linalg_cast(m)))); 
+      outmat.push_back(std::make_shared<asm_mat<MAT>>(&(gmm::linalg_cast(m)))); 
     }
 
     template <typename T> void push_mat_or_vec(T &v) {
@@ -705,13 +693,13 @@ namespace getfem {
     void set_mat_factory(base_mat_factory *fact) { mat_fact = fact; }
 
   private:
-    ATN_tensor* record(ATN_tensor *t) {
+    ATN_tensor* record(std::unique_ptr<ATN_tensor> &&t) {
       t->set_name(mark_txt());
-      atn_tensors.push_back(t); return t;
+      atn_tensors.push_back(std::move(t)); return atn_tensors.back().get();
     }
-    ATN* record_out(ATN *t) {
+    ATN* record_out(std::unique_ptr<ATN> t) {
       t->set_name(mark_txt());
-      outvars.push_back(t); return t;
+      outvars.push_back(std::move(t)); return outvars.back().get();
     }
     const mesh_fem& do_mf_arg_basic();
     const mesh_fem& do_mf_arg(std::vector<const mesh_fem*> *multimf = 0);

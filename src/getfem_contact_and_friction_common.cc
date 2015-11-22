@@ -2038,13 +2038,15 @@ namespace getfem {
 
   void add_raytracing_transformation
   (model &md, const std::string &transname, scalar_type d) {
-    pinterpolate_transformation p(new raytracing_interpolate_transformation(d));
+    pinterpolate_transformation
+      p = std::make_shared<raytracing_interpolate_transformation>(d);
     md.add_interpolate_transformation(transname, p);
   }
 
   void add_raytracing_transformation
   (ga_workspace &workspace, const std::string &transname, scalar_type d) {
-    pinterpolate_transformation p(new raytracing_interpolate_transformation(d));
+    pinterpolate_transformation
+      p = std::make_shared<raytracing_interpolate_transformation>(d);
     workspace.add_interpolate_transformation(transname, p);
   }
 

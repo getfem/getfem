@@ -395,7 +395,7 @@ do_generic_assembly(mexargs_in& in, mexargs_out& out, bool on_boundary)
   // get the matrix back
   for (size_type i=0; out.remaining() && i < assem.mat().size(); ++i) {
     if (assem.mat()[i] != 0) {
-      getfem::base_asm_mat *BM = assem.mat()[i];
+      getfem::base_asm_mat *BM = assem.mat()[i].get();
       getfem::asm_mat<gf_real_sparse_by_col> * M =
         static_cast<getfem::asm_mat<gf_real_sparse_by_col>*>(BM);
       out.pop().from_sparse(*M->mat());
@@ -405,7 +405,7 @@ do_generic_assembly(mexargs_in& in, mexargs_out& out, bool on_boundary)
   if (out.remaining()) {
     for (size_type i=0; out.remaining() && i < assem.vec().size(); ++i) {
       if (assem.vec()[i] != 0) {
-        getfem::base_asm_vec *BV = assem.vec()[i];
+        getfem::base_asm_vec *BV = assem.vec()[i].get();
         getfem::asm_vec<darray_with_gfi_array> *V =
           static_cast<getfem::asm_vec<darray_with_gfi_array> *>(BV);
         mexarg_out mo = out.pop(); mo.arg = V->vec()->mx;

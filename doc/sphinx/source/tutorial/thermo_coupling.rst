@@ -206,12 +206,13 @@ The geometry of the domain is supposed to be a rectangle with three circular hol
 **C++**    .. code-block:: c++                             
 
                 getfem::mesh mesh;
-                getfem::mesher_rectangle mo1(base_node(0., 0.), base_node(100., 25.));
-                getfem::mesher_ball mo2(base_node(25., 12.5), 8.);
-                getfem::mesher_ball mo3(base_node(50., 12.5), 8.);
-                getfem::mesher_ball mo4(base_node(75., 12.5), 8.);
-                getfem::mesher_union mo5(mo2, mo3, mo4);
-                getfem::mesher_setminus mo(mo1, mo5);
+		getfem::pmesher_signed_distance
+		mo1 = getfem::new_mesher_rectangle(base_node(0., 0.), base_node(100., 25.)),
+		mo2 = getfem::new_mesher_ball(base_node(25., 12.5), 8.),
+		mo3 = getfem::new_mesher_ball(base_node(50., 12.5), 8.),
+		mo4 = getfem::new_mesher_ball(base_node(75., 12.5), 8.),
+		mo5 = getfem::new_mesher_union(mo2, mo3, mo4),
+		mo = getfem::new_mesher_setminus(mo1, mo5);
 
                 std::vector<getfem::base_node> fixed;
                 getfem::build_mesh(mesh, mo, h, fixed, 2, -2);

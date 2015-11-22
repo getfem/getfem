@@ -690,7 +690,7 @@ namespace getfem {
 
   class classical_mesh_fem_pool {
 
-    typedef const mesh_fem * pmesh_fem;
+    typedef std::shared_ptr<const mesh_fem> pmesh_fem;
     typedef std::map<mf__key_, pmesh_fem> mesh_fem_tab;
 
     mesh_fem_tab mfs;
@@ -702,7 +702,7 @@ namespace getfem {
       if (itn != mfs.end()) itn++;
       while (itt != mfs.end()) {
 	if (!(itt->first.is_context_valid()))
-	  { delete itt->second; mfs.erase(itt); }
+	  { mfs.erase(itt); }
 	itt=itn;
 	if (itn != mfs.end()) itn++;
       }
@@ -712,20 +712,13 @@ namespace getfem {
       assert(it == mfs.end() || it->second->is_context_valid());
       
       if (it == mfs.end()) {
-	mesh_fem *pmf = new mesh_fem(msh);
+	auto pmf = std::make_shared<mesh_fem>(msh);
 	pmf->set_classical_finite_element(o);
 	pmf->set_auto_add(o, false);
 	pmf->set_qdim(qdim);
 	return *(mfs[key] = pmf);
       }
       else return *(it->second);
-    }
-    
-    ~classical_mesh_fem_pool(){
-      for(mesh_fem_tab::iterator itt = mfs.begin();itt!=mfs.end();++itt){
-        delete itt->second;
-        itt->second = 0;
-      }
     }
 
   };

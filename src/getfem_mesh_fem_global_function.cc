@@ -567,7 +567,7 @@ namespace getfem {
   struct global_function_on_levelset_ :
     public global_function, public context_dependencies {
     const level_set &ls;
-    mutable mesher_level_set mls_x, mls_y;
+    mutable pmesher_signed_distance mls_x, mls_y;
     mutable size_type cv;
 
     pxy_function fn;
@@ -575,15 +575,15 @@ namespace getfem {
     void update_mls(size_type cv_) const {
       if (cv_ != cv) {
         cv=cv_;
-        mls_x=ls.mls_of_convex(cv, 1);
-        mls_y=ls.mls_of_convex(cv, 0);
+	mls_x = ls.mls_of_convex(cv, 1);
+        mls_y = ls.mls_of_convex(cv, 0);
       }
     }
 
     virtual scalar_type val(const fem_interpolation_context& c) const {
       update_mls(c.convex_num());
-      scalar_type x = mls_x(c.xref());
-      scalar_type y = mls_y(c.xref());
+      scalar_type x = (*mls_x)(c.xref());
+      scalar_type y = (*mls_y)(c.xref());
       if (c.xfem_side() > 0 && y <= 0) y = 1E-13;
       if (c.xfem_side() < 0 && y >= 0) y = -1E-13;
       return fn->val(x,y);
@@ -593,8 +593,8 @@ namespace getfem {
       update_mls(c.convex_num());
       size_type P = c.xref().size();
       base_small_vector dx(P), dy(P), dfr(2);
-      scalar_type x = mls_x.grad(c.xref(), dx);
-      scalar_type y = mls_y.grad(c.xref(), dy);
+      scalar_type x = mls_x->grad(c.xref(), dx);
+      scalar_type y = mls_y->grad(c.xref(), dy);
       if (c.xfem_side() > 0 && y <= 0) y = 1E-13;
       if (c.xfem_side() < 0 && y >= 0) y = -1E-13;
       base_small_vector gfn = fn->grad(x,y);
@@ -606,16 +606,16 @@ namespace getfem {
       size_type P = c.xref().size(), N = c.N();
 
       base_small_vector dx(P), dy(P), dfr(2),  dx_real(N), dy_real(N);
-      scalar_type x = mls_x.grad(c.xref(), dx);
-      scalar_type y = mls_y.grad(c.xref(), dy);
+      scalar_type x = mls_x->grad(c.xref(), dx);
+      scalar_type y = mls_y->grad(c.xref(), dy);
       if (c.xfem_side() > 0 && y <= 0) y = 1E-13;
       if (c.xfem_side() < 0 && y >= 0) y = -1E-13;
       base_small_vector gfn = fn->grad(x,y);
       base_matrix hfn = fn->hess(x,y);
 
       base_matrix hx, hy, hx_real(N*N, 1), hy_real(N*N, 1);
-      mls_x.hess(c.xref(), hx);
-      mls_x.hess(c.xref(), hy);
+      mls_x->hess(c.xref(), hx);
+      mls_x->hess(c.xref(), hy);
       gmm::reshape(hx, P*P, 1);
       gmm::reshape(hy, P*P, 1);
 
@@ -656,7 +656,7 @@ namespace getfem {
   struct global_function_on_levelsets_ :
     public global_function, public context_dependencies {
     const std::vector<level_set> &lsets;
-    mutable mesher_level_set mls_x, mls_y;
+    mutable pmesher_signed_distance mls_x, mls_y;
     mutable size_type cv;
 
     pxy_function fn;
@@ -667,10 +667,10 @@ namespace getfem {
         cv=cv_;
         scalar_type d = scalar_type(-2);
         for (size_type i = 0; i < lsets.size(); ++i) {
-          mesher_level_set mls_xx, mls_yy;
-          mls_xx=lsets[i].mls_of_convex(cv, 1);
-          mls_yy=lsets[i].mls_of_convex(cv, 0);
-          scalar_type x = mls_xx(pt), y = mls_yy(pt);
+          pmesher_signed_distance mls_xx, mls_yy;
+          mls_xx = lsets[i].mls_of_convex(cv, 1);
+          mls_yy = lsets[i].mls_of_convex(cv, 0);
+          scalar_type x = (*mls_xx)(pt), y = (*mls_yy)(pt);
           scalar_type d2 = gmm::sqr(x) + gmm::sqr(y);
           if (d < scalar_type(-1) || d2 < d) {
             d = d2;
@@ -682,8 +682,8 @@ namespace getfem {
 
     virtual scalar_type val(const fem_interpolation_context& c) const {
       update_mls(c.convex_num(), c.xref().size());
-      scalar_type x = mls_x(c.xref());
-      scalar_type y = mls_y(c.xref());
+      scalar_type x = (*mls_x)(c.xref());
+      scalar_type y = (*mls_y)(c.xref());
       return fn->val(x,y);
     }
     virtual void grad(const fem_interpolation_context& c,
@@ -691,8 +691,8 @@ namespace getfem {
       size_type P = c.xref().size();
       update_mls(c.convex_num(), P);
       base_small_vector dx(P), dy(P), dfr(2);
-      scalar_type x = mls_x.grad(c.xref(), dx);
-      scalar_type y = mls_y.grad(c.xref(), dy);
+      scalar_type x = mls_x->grad(c.xref(), dx);
+      scalar_type y = mls_y->grad(c.xref(), dy);
 
       base_small_vector gfn = fn->grad(x,y);
 
@@ -704,15 +704,15 @@ namespace getfem {
       update_mls(c.convex_num(), P);
 
       base_small_vector dx(P), dy(P), dfr(2),  dx_real(N), dy_real(N);
-      scalar_type x = mls_x.grad(c.xref(), dx);
-      scalar_type y = mls_y.grad(c.xref(), dy);
+      scalar_type x = mls_x->grad(c.xref(), dx);
+      scalar_type y = mls_y->grad(c.xref(), dy);
 
       base_small_vector gfn = fn->grad(x,y);
       base_matrix hfn = fn->hess(x,y);
 
       base_matrix hx, hy, hx_real(N*N, 1), hy_real(N*N, 1);
-      mls_x.hess(c.xref(), hx);
-      mls_x.hess(c.xref(), hy);
+      mls_x->hess(c.xref(), hx);
+      mls_x->hess(c.xref(), hy);
       gmm::reshape(hx, P*P, 1);
       gmm::reshape(hy, P*P, 1);
 

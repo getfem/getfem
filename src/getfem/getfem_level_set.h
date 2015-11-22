@@ -78,8 +78,8 @@ namespace getfem {
     const std::vector<scalar_type> &values(unsigned i = 0) const
     { return (i == 0) ? primary_ : secondary_; }
 
-    mesher_level_set mls_of_convex(size_type cv, unsigned lsnum = 0,
-				   bool inverted = false) const;
+    pmesher_signed_distance mls_of_convex(size_type cv, unsigned lsnum = 0,
+					  bool inverted = false) const;
     bool has_secondary(void) const { return with_secondary; }
     const mesh_fem &get_mesh_fem(void) const { return *mf; }
     const mesh &linked_mesh() const { return mf->linked_mesh(); }

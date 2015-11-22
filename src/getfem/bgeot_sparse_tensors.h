@@ -835,12 +835,12 @@ namespace bgeot {
   struct tensor_reduction {
     struct tref_or_reduction {
       tensor_ref tr_;
-      tensor_reduction *reduction;
+      std::shared_ptr<tensor_reduction> reduction;
       tensor_ref &tr() { return tr_; }
       const tensor_ref &tr() const { return tr_; }
       explicit tref_or_reduction(const tensor_ref &tr__, const std::string& s) 
-	: tr_(tr__), reduction(0), ridx(s) {}
-      explicit tref_or_reduction(tensor_reduction *p, const std::string& s) 
+	: tr_(tr__), ridx(s) {}
+      explicit tref_or_reduction(const std::shared_ptr<tensor_reduction> &p, const std::string& s) 
 	: reduction(p), ridx(s) {
 	reduction->result(tr_);
       }

@@ -921,7 +921,8 @@ namespace getfem {
    const std::string &multname_n, const std::string &dataname_obs,
    const std::string &dataname_r, size_type region, int option) {
 
-    pbrick pbr(new integral_contact_rigid_obstacle_brick(true, option));
+    pbrick pbr
+      = std::make_shared<integral_contact_rigid_obstacle_brick>(true, option);
 
     model::termlist tl;
 
@@ -963,7 +964,8 @@ namespace getfem {
    const std::string &dataname_alpha, const std::string &dataname_wt,
    const std::string &dataname_gamma, const std::string &dataname_vt) {
 
-    pbrick pbr(new integral_contact_rigid_obstacle_brick(false, option));
+    pbrick pbr = std::make_shared<integral_contact_rigid_obstacle_brick>
+      (false, option);
 
     model::termlist tl;
 
@@ -1294,7 +1296,8 @@ namespace getfem {
    const std::string &dataname_obs, const std::string &dataname_r,
    size_type region, int option, const std::string &dataname_n) {
 
-    pbrick pbr(new penalized_contact_rigid_obstacle_brick(true, option));
+    pbrick pbr = std::make_shared<penalized_contact_rigid_obstacle_brick>
+      (true, option);
 
     model::termlist tl;
     tl.push_back(model::term_description(varname_u, varname_u, true));
@@ -1324,7 +1327,8 @@ namespace getfem {
    size_type region, int option, const std::string &dataname_lambda,
    const std::string &dataname_alpha, const std::string &dataname_wt) {
 
-    pbrick pbr(new penalized_contact_rigid_obstacle_brick(false, option));
+    pbrick pbr = std::make_shared<penalized_contact_rigid_obstacle_brick>
+      (false, option);
 
     model::termlist tl;
     tl.push_back(model::term_description(varname_u, varname_u, false));
@@ -1856,8 +1860,8 @@ namespace getfem {
    const std::string &dataname_r,
    size_type region1, size_type region2, int option) {
 
-    pbrick pbr(new integral_contact_nonmatching_meshes_brick
-	       (region1, region2, true /* contact_only */, option));
+    pbrick pbr = std::make_shared<integral_contact_nonmatching_meshes_brick>
+      (region1, region2, true /* contact_only */, option);
 
     model::termlist tl;
 
@@ -1904,8 +1908,8 @@ namespace getfem {
    const std::string &dataname_alpha,
    const std::string &dataname_wt1, const std::string &dataname_wt2) {
 
-    pbrick pbr(new integral_contact_nonmatching_meshes_brick
-	       (region1, region2, false /* contact_only */, option));
+    pbrick pbr = std::make_shared<integral_contact_nonmatching_meshes_brick>
+      (region1, region2, false /* contact_only */, option);
 
     model::termlist tl;
 
@@ -2356,8 +2360,8 @@ namespace getfem {
    size_type region1, size_type region2,
    int option, const std::string &dataname_n) {
 
-    pbrick pbr(new penalized_contact_nonmatching_meshes_brick
-	       (region1, region2, true /* contact_only */, option));
+    pbrick pbr = std::make_shared<penalized_contact_nonmatching_meshes_brick>
+      (region1, region2, true /* contact_only */, option);
     model::termlist tl;
     tl.push_back(model::term_description(varname_u1, varname_u1, true));
     tl.push_back(model::term_description(varname_u2, varname_u2, true));
@@ -2390,8 +2394,8 @@ namespace getfem {
    const std::string &dataname_lambda, const std::string &dataname_alpha,
    const std::string &dataname_wt1, const std::string &dataname_wt2) {
 
-    pbrick pbr(new penalized_contact_nonmatching_meshes_brick
-	       (region1, region2, false /* contact_only */, option));
+    pbrick pbr = std::make_shared<penalized_contact_nonmatching_meshes_brick>
+      (region1, region2, false /* contact_only */, option);
     model::termlist tl;
     tl.push_back(model::term_description(varname_u1, varname_u1, true)); // 0: U1U1
     tl.push_back(model::term_description(varname_u2, varname_u2, true)); // 1: U2U2
@@ -3165,7 +3169,8 @@ namespace getfem {
    const std::string &dataname_wt1, const std::string &dataname_wt2) {
 
     bool nofriction = (dataname_friction_coeff.size() == 0);
-    pbrick pbr(new Nitsche_fictitious_domain_contact_brick(theta,nofriction));
+    pbrick pbr = std::make_shared<Nitsche_fictitious_domain_contact_brick>
+      (theta, nofriction);
 
     model::termlist tl;
     tl.push_back(model::term_description(varname_u1, varname_u1, false));

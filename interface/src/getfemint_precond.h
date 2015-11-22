@@ -99,8 +99,8 @@ namespace getfemint
     void set_dimensions(size_type m, size_type n) { p->set_dimensions(m,n); }
 
     getfemint_precond(gsparse::value_type v_) : v(v_) { 
-      if (!is_complex()) p.reset(new gprecond<scalar_type>()); 
-      else p.reset(new gprecond<complex_type>());
+      if (!is_complex()) p = std::make_unique<gprecond<scalar_type>>(); 
+      else p = std::make_unique<gprecond<complex_type>>();
     }
     ~getfemint_precond() {}
     id_type class_id() const { return PRECOND_CLASS_ID; }

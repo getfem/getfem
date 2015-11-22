@@ -731,14 +731,14 @@ namespace getfemint {
     return object_to_mesher_object(o);
   }
 
-  getfem::mesher_signed_distance *
+  getfem::pmesher_signed_distance
   mexarg_in::to_mesher_object() {
-    return &to_getfemint_mesher_object(true)->mesher_object();
+    return to_getfemint_mesher_object(true)->mesher_object();
   }
 
-  const getfem::mesher_signed_distance *
+  getfem::pmesher_signed_distance
   mexarg_in::to_const_mesher_object() {
-    return &to_getfemint_mesher_object(false)->mesher_object();
+    return to_getfemint_mesher_object(false)->mesher_object();
   }
 
   /*

@@ -27,13 +27,15 @@ namespace getfem {
   typedef mesh_region::face_bitset face_bitset;
 
   mesh_region::mesh_region(const mesh_region &other)
-    : p(new impl), id_(size_type(-2)), parent_mesh(0), index_updated(false)
+    : p(std::make_shared<impl>()), id_(size_type(-2)), parent_mesh(0),
+      index_updated(false)
   {
     this->operator=(other);
   }
 
 
-  mesh_region::mesh_region() : p(new impl), id_(size_type(-2)), type_(size_type(-1)),
+  mesh_region::mesh_region() : p(std::make_shared<impl>()), id_(size_type(-2)),
+			       type_(size_type(-1)),
     partitioning_allowed(true), parent_mesh(0), index_updated(false)
   { 
     if (me_is_multithreaded_now()) prohibit_partitioning();
@@ -44,14 +46,14 @@ namespace getfem {
   { }
 
   mesh_region::mesh_region(mesh& m, size_type id__, size_type type) : 
-    p(new impl), id_(id__), type_(type), partitioning_allowed(true), parent_mesh(&m),
+    p(std::make_shared<impl>()), id_(id__), type_(type), partitioning_allowed(true), parent_mesh(&m),
     index_updated(false)
   { 
     if (me_is_multithreaded_now()) prohibit_partitioning();  
   }
 
   mesh_region::mesh_region(const dal::bit_vector &bv) : 
-    p(new impl), id_(size_type(-2)), type_(size_type(-1)),
+    p(std::make_shared<impl>()), id_(size_type(-2)), type_(size_type(-1)),
     partitioning_allowed(true), parent_mesh(0), index_updated(false)
   { 
     if (me_is_multithreaded_now()) prohibit_partitioning();  
@@ -70,7 +72,7 @@ namespace getfem {
       mesh_region *r = const_cast<mesh_region*>(this);
       if (id_ == size_type(-1)) 
       {
-        r->p.reset(new impl); 
+        r->p = std::make_shared<impl>();
         r->add(m.convex_index());
       } 
       else if (id_ != size_type(-2))
@@ -91,7 +93,7 @@ namespace getfem {
       this->type_ = from.type_;
       this->partitioning_allowed = from.partitioning_allowed;
       if (from.p.get()) {
-        if (!this->p.get()) this->p.reset(new impl); 
+        if (!this->p.get()) this->p = std::make_shared<impl>();
         this->wp() = from.rp();
       }
       else

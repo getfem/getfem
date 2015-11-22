@@ -611,7 +611,7 @@ namespace getfem {
     GMM_ASSERT1(n > 0 && n < 100 && k >= 0 && k <= 150 &&
 		double(n) == params[0].num() && double(k) == params[1].num(),
 		"Bad parameters");
-    pfem p(new PK_fem_(dim_type(n), short_type(k)));
+    pfem p = std::make_shared<PK_fem_>(dim_type(n), short_type(k));
     dependencies.push_back(p->ref_convex(0));
     dependencies.push_back(p->node_tab(0));
     return p;
@@ -668,8 +668,8 @@ namespace getfem {
     pfem pf2 = params[1].method();
     GMM_ASSERT1(pf1->is_polynomial() && pf2->is_polynomial(),
 		"Both arguments to FEM_PRODUCT must be polynomial FEM");
-    pfem p(new tproduct_femi(ppolyfem(pf1.get()),
-			     ppolyfem(pf2.get())));
+    pfem p = std::make_shared<tproduct_femi>(ppolyfem(pf1.get()),
+					     ppolyfem(pf2.get()));
     dependencies.push_back(p->ref_convex(0));
     dependencies.push_back(p->node_tab(0));
     return p;
@@ -756,11 +756,12 @@ namespace getfem {
     pfem pf1 = params[0].method();
     pfem pf2 = params[1].method();
     if (pf1->is_polynomial() && pf2->is_polynomial())
-      return pfem(new thierach_femi(ppolyfem(pf1.get()),ppolyfem(pf2.get())));
+      return std::make_shared<thierach_femi>(ppolyfem(pf1.get()),
+					     ppolyfem(pf2.get()));
     GMM_ASSERT1(pf1->is_polynomialcomp() && pf2->is_polynomialcomp(),
 		"Bad parameters");
-    pfem p(new thierach_femi_comp(ppolycompfem(pf1.get()),
-				  ppolycompfem(pf2.get())));
+    pfem p  = std::make_shared<thierach_femi_comp>(ppolycompfem(pf1.get()),
+						   ppolycompfem(pf2.get()));
     dependencies.push_back(p->ref_convex(0));
     dependencies.push_back(p->node_tab(0));
     return p;
@@ -935,7 +936,7 @@ namespace getfem {
    static pfem P1_nonconforming_fem(fem_param_list &params,
 	std::vector<dal::pstatic_stored_object> &dependencies) {
     GMM_ASSERT1(params.size() == 0, "Bad number of parameters ");
-    fem<base_poly> *p = new fem<base_poly>;
+    auto p = std::make_shared<fem<base_poly>>();
     p->mref_convex() = bgeot::simplex_of_reference(2);
     p->dim() = 2;
     p->is_equivalent() = p->is_polynomial() = p->is_lagrange() = true;
@@ -990,7 +991,7 @@ namespace getfem {
       n = dim_type(::floor(params[0].num() + 0.01));
        GMM_ASSERT1(n == 2 || n == 3, "Bad parameter, expected value 2 or 3");
     }
-    fem<base_poly> *p = new fem<base_poly>;
+    auto p = std::make_shared<fem<base_poly>>();
     p->mref_convex() = bgeot::parallelepiped_of_reference(n);
     p->dim() = n;
     p->is_equivalent() = p->is_polynomial() = p->is_lagrange() = true;
@@ -1108,7 +1109,7 @@ namespace getfem {
     int n = int(::floor(params[0].num() + 0.01));
     GMM_ASSERT1(n > 1 && n < 100 && double(n) == params[0].num(),
 		"Bad parameter");
-    pfem p(new P1_wabbfoaf_(dim_type(n)));
+    pfem p  = std::make_shared<P1_wabbfoaf_>(dim_type(n));
     dependencies.push_back(p->ref_convex(0));
     dependencies.push_back(p->node_tab(0));
     return p;
@@ -1204,7 +1205,7 @@ namespace getfem {
     int n = int(::floor(params[0].num() + 0.01));
     GMM_ASSERT1(n > 1 && n < 100 && double(n) == params[0].num(),
 		"Bad parameter");
-    pfem p(new P1_RT0_(dim_type(n)));
+    pfem p = std::make_shared<P1_RT0_>(dim_type(n));
     dependencies.push_back(p->ref_convex(0));
     dependencies.push_back(p->node_tab(0));
     return p;
@@ -1301,7 +1302,7 @@ namespace getfem {
     int n = int(::floor(params[0].num() + 0.01));
     GMM_ASSERT1(n > 1 && n < 100 && double(n) == params[0].num(),
 		"Bad parameter");
-    pfem p(new P1_RT0Q_(dim_type(n)));
+    pfem p = std::make_shared<P1_RT0Q_>(dim_type(n));
     dependencies.push_back(p->ref_convex(0));
     dependencies.push_back(p->node_tab(0));
     return p;
@@ -1334,7 +1335,7 @@ namespace getfem {
     if (pgt != pgt_stored) {
       pgt_stored = pgt;
       pgp = bgeot::geotrans_precomp(pgt, node_tab(0), 0);
-      pfp = fem_precomp(pfem(new P1_nedelec_(nc)), node_tab(0), 0);
+      pfp = fem_precomp(std::make_shared<P1_nedelec_>(nc), node_tab(0), 0);
     }
     fem_interpolation_context ctx(pgp,pfp,0,G,0);
 
@@ -1416,7 +1417,7 @@ namespace getfem {
     int n = int(::floor(params[0].num() + 0.01));
     GMM_ASSERT1(n > 1 && n < 100 && double(n) == params[0].num(),
 		"Bad parameter");
-    pfem p(new P1_nedelec_(dim_type(n)));
+    pfem p = std::make_shared<P1_nedelec_>(dim_type(n));
     dependencies.push_back(p->ref_convex(0));
     dependencies.push_back(p->node_tab(0));
     return p;
@@ -1448,7 +1449,7 @@ namespace getfem {
   static pfem P1_with_bubble_on_a_face_lagrange(fem_param_list &params,
 	std::vector<dal::pstatic_stored_object> &dependencies) {
     GMM_ASSERT1(params.size() == 0, "Bad number of parameters");
-    pfem p(new P1_wabbfoafla_);
+    pfem p = std::make_shared<P1_wabbfoafla_>();
     dependencies.push_back(p->ref_convex(0));
     dependencies.push_back(p->node_tab(0));
     return p;
@@ -2630,7 +2631,7 @@ namespace getfem {
 		<< params.size() << " should be 1.");
     GMM_ASSERT1(params[0].type() == 0, "Bad type of parameters");
     int k = int(::floor(params[0].num() + 0.01));
-    pfem p(new PK_GL_fem_(k));
+    pfem p = std::make_shared<PK_GL_fem_>(k);
     dependencies.push_back(p->ref_convex(0));
     dependencies.push_back(p->node_tab(0));
     return p;
@@ -2864,11 +2865,11 @@ namespace getfem {
 		<< params.size() << " should be 1.");
     GMM_ASSERT1(params[0].type() == 0, "Bad type of parameters");
     int d = int(::floor(params[0].num() + 0.01));
-    virtual_fem *p = 0;
+    pfem p;
     switch(d) {
-    case 1 : p = new hermite_segment__; break;
-    case 2 : p = new hermite_triangle__; break;
-    case 3 : p = new hermite_tetrahedron__; break;
+    case 1 : p = std::make_shared<hermite_segment__>(); break;
+    case 2 : p = std::make_shared<hermite_triangle__>(); break;
+    case 3 : p = std::make_shared<hermite_tetrahedron__>(); break;
     default : GMM_ASSERT1(false, "Sorry, Hermite element in dimension "
 			  << d << " not available");
     }
@@ -2901,7 +2902,7 @@ namespace getfem {
     if (pgt != pgt_stored) {
       pgt_stored = pgt;
       pgp = bgeot::geotrans_precomp(pgt, node_tab(0), 0);
-      pfp = fem_precomp(pfem(new argyris_triangle__), node_tab(0), 0);
+      pfp = fem_precomp(std::make_shared<argyris_triangle__>(), node_tab(0), 0);
     }
     gmm::copy(gmm::identity_matrix(), M);
 
@@ -3042,7 +3043,7 @@ namespace getfem {
   static pfem triangle_Argyris_fem(fem_param_list &params,
 	std::vector<dal::pstatic_stored_object> &dependencies) {
     GMM_ASSERT1(params.size() == 0, "Bad number of parameters");
-    pfem p(new argyris_triangle__);
+    pfem p = std::make_shared<argyris_triangle__>();
     dependencies.push_back(p->ref_convex(0));
     dependencies.push_back(p->node_tab(0));
     return p;
@@ -3073,7 +3074,7 @@ namespace getfem {
     if (pgt != pgt_stored) {
       pgt_stored = pgt;
       pgp = bgeot::geotrans_precomp(pgt, node_tab(0), 0);
-      pfp = fem_precomp(pfem(new  morley_triangle__), node_tab(0), 0);
+      pfp = fem_precomp(std::make_shared<morley_triangle__>(), node_tab(0), 0);
     }
     gmm::copy(gmm::identity_matrix(), M);
     DEFINE_STATIC_THREAD_LOCAL_CONSTRUCTED(base_matrix, W, 3, 6);
@@ -3141,7 +3142,7 @@ namespace getfem {
   static pfem triangle_Morley_fem(fem_param_list &params,
 	std::vector<dal::pstatic_stored_object> &dependencies) {
     GMM_ASSERT1(params.size() == 0, "Bad number of parameters");
-    pfem p(new morley_triangle__);
+    pfem p = std::make_shared<morley_triangle__>();
     dependencies.push_back(p->ref_convex(0));
     dependencies.push_back(p->node_tab(0));
     return p;
@@ -3191,7 +3192,7 @@ namespace getfem {
     GMM_ASSERT1(n > 0 && n < 100 && k >= 0 && k <= 150 && alpha >= 0 &&
 		alpha < 1 && double(n) == params[0].num()
 		&& double(k) == params[1].num(), "Bad parameters");
-    pfem p(new PK_discont_(dim_type(n), short_type(k), alpha));
+    pfem p = std::make_shared<PK_discont_>(dim_type(n), short_type(k), alpha);
     dependencies.push_back(p->ref_convex(0));
     dependencies.push_back(p->node_tab(0));
     return p;
@@ -3238,7 +3239,8 @@ namespace getfem {
     GMM_ASSERT1(n > 0 && n < 100 && k >= 0 && k <= 150 &&
 		double(n) == params[0].num() && double(k) == params[1].num(),
 		"Bad parameters");
-    pfem p(new PK_with_cubic_bubble_(dim_type(n), short_type(k)));
+    pfem p = std::make_shared<PK_with_cubic_bubble_>(dim_type(n),
+						     short_type(k));
     dependencies.push_back(p->ref_convex(0));
     dependencies.push_back(p->node_tab(0));
     return p;
@@ -3468,7 +3470,7 @@ namespace getfem {
     dal::pstatic_stored_object_key pk = std::make_shared<pre_fem_key_>(pf,pspt);
     dal::pstatic_stored_object o = dal::search_stored_object(pk);
     if (o) return std::dynamic_pointer_cast<const fem_precomp_>(o);
-    pfem_precomp p(new fem_precomp_(pf, pspt));
+    pfem_precomp p = std::make_shared<fem_precomp_>(pf, pspt);
     dal::add_stored_object(pk, p, pspt, dal::AUTODELETE_STATIC_OBJECT);
     if (dal::exists_stored_object(pf)) dal::add_dependency(p, pf);
     if (dep) dal::add_dependency(p, dep);

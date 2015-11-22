@@ -151,7 +151,7 @@ namespace getfem {
     mesh cartesian;
     mesh_fem cartesian_fem;
     pfem Qk;
-    Xfem *penriched_Qk;
+    std::shared_ptr<Xfem> penriched_Qk;
     scalar_type R;
     unsigned Nr, Ntheta, K;
     Xfem_sqrtr Sqrtr;
@@ -166,7 +166,7 @@ namespace getfem {
     
     pfem get_pfem(void) { return final_fem; }
     
-    ~spider_fem () { 
+    ~spider_fem () {
       pfem pf(penriched_Qk);
       dal::del_stored_object(pf);
       if (final_fem) del_interpolated_fem(final_fem);
@@ -205,7 +205,7 @@ namespace getfem {
 	std::stringstream Qkname;
 	Qkname << "FEM_QK(2," << K << ")";
 	Qk = fem_descriptor(Qkname.str());
-	penriched_Qk = new Xfem(0);
+	penriched_Qk = std::make_shared<Xfem>(pfem());
 	if(bimat_enrichment == 0){
 	  cout << "Using SpiderFem homogenuous isotropic enrichment [sqrt(r)]..." << endl;
 	  penriched_Qk->add_func(Qk, &Sqrtr);

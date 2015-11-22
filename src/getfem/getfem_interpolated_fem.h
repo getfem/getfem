@@ -157,16 +157,10 @@ namespace getfem {
     void gauss_pts_stats(unsigned &ming, unsigned &maxg,
 			 scalar_type &meang) const; 
     size_type memsize() const;
-  private:
     interpolated_fem(const mesh_fem &mef, const mesh_im &meim,
 		     pinterpolated_func pif_ = 0,
 		     dal::bit_vector blocked_dof = dal::bit_vector(),
 		     bool store_val = true);
-    
-    friend pfem new_interpolated_fem(const mesh_fem &mef, const mesh_im &mim,
-				     pinterpolated_func pif,
-				     dal::bit_vector blocked_dof,
-				     bool store_val);
   };
   
 

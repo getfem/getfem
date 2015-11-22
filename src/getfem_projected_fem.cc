@@ -834,8 +834,8 @@ namespace getfem {
   pfem new_projected_fem(const mesh_fem &mf_source_, const mesh_im &mim_target_,
                          size_type rg_source_, size_type rg_target_,
                          dal::bit_vector blocked_dofs_, bool store_val) {
-    pfem pf(new projected_fem(mf_source_, mim_target_, rg_source_, rg_target_,
-			      blocked_dofs_, store_val));
+    pfem pf = std::make_shared<projected_fem>
+      (mf_source_, mim_target_, rg_source_, rg_target_,blocked_dofs_,store_val);
     dal::pstatic_stored_object_key
       pk = std::make_shared<special_projfem_key>(pf);
     dal::add_stored_object(pk, pf);

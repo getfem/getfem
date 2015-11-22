@@ -81,19 +81,19 @@ namespace getfem {
 
   DAL_SIMPLE_KEY(special_imls_key, papprox_integration);
 
-    /* only for INTEGRATE_INSIDE or INTEGRATE_OUTSIDE */
+  /* only for INTEGRATE_INSIDE or INTEGRATE_OUTSIDE */
   mesh_im_level_set::bool2 mesh_im_level_set::is_point_in_selected_area2
-  (const std::vector<mesher_level_set> &mesherls0,
-   const std::vector<mesher_level_set> &mesherls1,
-				  const base_node& P) {
+  (const std::vector<pmesher_signed_distance> &mesherls0,
+   const std::vector<pmesher_signed_distance> &mesherls1,
+   const base_node& P) {
     bool isin = true;
     int isbin = 0;
     for (unsigned i = 0; i < mls->nb_level_sets(); ++i) {
-      isin = isin && ((mesherls0[i])(P) < 0);
-      if (gmm::abs((mesherls0[i])(P)) < 1e-7)
+      isin = isin && ((*(mesherls0[i]))(P) < 0);
+      if (gmm::abs((*(mesherls0[i]))(P)) < 1e-7)
 	isbin = i+1;
       if (mls->get_level_set(i)->has_secondary())
-	isin = isin && ((mesherls1[i])(P) < 0);
+	isin = isin && ((*(mesherls1[i]))(P) < 0);
     }
     bool2 b; 
     b.in = ((integrate_where & INTEGRATE_OUTSIDE)) ? !isin : isin;
@@ -178,14 +178,14 @@ namespace getfem {
   
   mesh_im_level_set::bool2 
   mesh_im_level_set::is_point_in_selected_area
-           (const std::vector<mesher_level_set> &mesherls0,
-	    const std::vector<mesher_level_set> &mesherls1,
+           (const std::vector<pmesher_signed_distance> &mesherls0,
+	    const std::vector<pmesher_signed_distance> &mesherls1,
 	    const base_node& P) {
     is_in_eval ev;
     for (unsigned i = 0; i < mls->nb_level_sets(); ++i) {
       bool sec = mls->get_level_set(i)->has_secondary();
-      scalar_type d1 = (mesherls0[i])(P);
-      scalar_type d2 = (sec ? (mesherls1[i])(P) : -1);
+      scalar_type d1 = (*(mesherls0[i]))(P);
+      scalar_type d2 = (sec ? (*(mesherls1[i]))(P) : -1);
       if (d1 < 0 && d2 < 0) ev.in.add(i);
       // if ((integrate_where & INTEGRATE_OUTSIDE) /*&& !sec*/)
       //	ev.in[i].flip();
@@ -224,8 +224,8 @@ namespace getfem {
     base_matrix G;
     base_node B;
 
-    std::vector<mesher_level_set> mesherls0(mls->nb_level_sets());
-    std::vector<mesher_level_set> mesherls1(mls->nb_level_sets());
+    std::vector<pmesher_signed_distance> mesherls0(mls->nb_level_sets());
+    std::vector<pmesher_signed_distance> mesherls1(mls->nb_level_sets());
     dal::bit_vector convexes_arein;
 
     //std::fstream totof("totof", std::ios::out | std::ios::app);
@@ -256,7 +256,7 @@ namespace getfem {
        && (n >= 2) && (n <= 3),
        "Base integration method for quasi polar integration not convenient");
 
-    approx_integration *new_approx = new approx_integration(pgt->convex_ref());
+    auto new_approx = std::make_shared<approx_integration>(pgt->convex_ref());
     new_approx->set_built_on_the_fly();
     base_matrix KK(n,n), CS(n,n);
     base_matrix pc(pgt2->nb_points(), n);
@@ -279,9 +279,9 @@ namespace getfem {
 	for (unsigned ils = 0; ils < mls->nb_level_sets(); ++ils)
 	  if (mls->get_level_set(ils)->has_secondary()) {
 	    for (unsigned ipt = 0; ipt <= n; ++ipt) {
-	      if (gmm::abs((mesherls0[ils])(msh.points_of_convex(i)[ipt]))
+	      if (gmm::abs((*(mesherls0[ils]))(msh.points_of_convex(i)[ipt]))
 		  < 1E-10
-		  && gmm::abs((mesherls1[ils])(msh.points_of_convex(i)[ipt]))
+		  && gmm::abs((*(mesherls1[ils]))(msh.points_of_convex(i)[ipt]))
 		  < 1E-10) {
 		if (sing_ls == unsigned(-1)) sing_ls = ils;
 		GMM_ASSERT1(sing_ls == ils, "Two singular point in one "
@@ -379,7 +379,7 @@ namespace getfem {
 	  scalar_type nnup(1);
 	  if (integrate_where == INTEGRATE_BOUNDARY) {
 	    cc.set_xref(c.xreal());
-	    mesherls0[isin].grad(c.xreal(), un);
+	    mesherls0[isin]->grad(c.xreal(), un);
 	    un /= gmm::vect_norm2(un);
 	    gmm::mult(cc.B(), un, up);
 	    nnup = gmm::vect_norm2(up);
@@ -393,7 +393,8 @@ namespace getfem {
     new_approx->valid_method();
 
     if (new_approx->nb_points()) {
-      pintegration_method pim(new integration_method(new_approx));
+      pintegration_method
+	pim = std::make_shared<integration_method>(new_approx);
       dal::pstatic_stored_object_key
 	pk = std::make_shared<special_imls_key>(new_approx);
       dal::add_stored_object(pk, pim, new_approx->ref_convex(),
@@ -401,8 +402,6 @@ namespace getfem {
       build_methods.push_back(pim);
       cut_im.set_integration_method(cv, pim);
     }
-    else
-      delete new_approx;
   }
 
   void mesh_im_level_set::adapt(void) {
@@ -422,8 +421,8 @@ namespace getfem {
 	  ignored_im.add(cv);
 	} else if (integrate_where != (INTEGRATE_OUTSIDE|INTEGRATE_INSIDE)) {
 	  /* remove convexes that are not in the integration area */
-	  std::vector<mesher_level_set> mesherls0(mls->nb_level_sets());
-	  std::vector<mesher_level_set> mesherls1(mls->nb_level_sets());
+	  std::vector<pmesher_signed_distance> mesherls0(mls->nb_level_sets());
+	  std::vector<pmesher_signed_distance> mesherls1(mls->nb_level_sets());
 	  for (unsigned i = 0; i < mls->nb_level_sets(); ++i) {
 	    mesherls0[i] = mls->get_level_set(i)->mls_of_convex(cv, 0, false);
 	    if (mls->get_level_set(i)->has_secondary())
@@ -488,15 +487,15 @@ namespace getfem {
   }
   
   static bool is_point_in_intersection
-  (const std::vector<mesher_level_set> &mesherls0,
-   const std::vector<mesher_level_set> &mesherls1,
+  (const std::vector<pmesher_signed_distance> &mesherls0,
+   const std::vector<pmesher_signed_distance> &mesherls1,
    const base_node& P) {
     
     bool r = true;
     for (unsigned i = 0; i < mesherls0.size(); ++i) {
-      bool sec = mesherls1[i].is_initialized();
-      scalar_type d1 = (mesherls0[i])(P);
-      scalar_type d2 = (sec ? (mesherls1[i])(P) : -1);
+      bool sec = (dynamic_cast<const mesher_level_set *>(mesherls1[i].get()))->is_initialized();
+      scalar_type d1 = (*(mesherls0[i]))(P);
+      scalar_type d2 = (sec ? (*(mesherls1[i]))(P) : -1);
       if (!(gmm::abs(d1) < 1e-7 && d2 < 1e-7)) r = false;
     }
     return r;
@@ -529,8 +528,8 @@ namespace getfem {
     base_matrix G;
     base_node B;
 
-    std::vector<mesher_level_set> mesherls0(2);
-    std::vector<mesher_level_set> mesherls1(2);
+    std::vector<pmesher_signed_distance> mesherls0(2);
+    std::vector<pmesher_signed_distance> mesherls1(2);
     dal::bit_vector convexes_arein;
 
     mesherls0[0] = mls->get_level_set(ind_ls1)->mls_of_convex(cv, 0, false);
@@ -545,7 +544,7 @@ namespace getfem {
       = msh.trans_of_convex(msh.convex_index().first_true());
     dim_type n = pgt->dim();
 
-    approx_integration *new_approx = new approx_integration(pgt->convex_ref());
+    auto new_approx = std::make_shared<approx_integration>(pgt->convex_ref());
     new_approx->set_built_on_the_fly();
     base_matrix KK(n,n), CS(n,n);
     base_matrix pc(pgt2->nb_points(), n);
@@ -676,7 +675,8 @@ namespace getfem {
     new_approx->valid_method();
 
     if (new_approx->nb_points()) {
-      pintegration_method pim(new integration_method(new_approx));
+      pintegration_method
+	pim = std::make_shared<integration_method>(new_approx);
       dal::pstatic_stored_object_key
 	pk = std::make_shared<special_imls_key>(new_approx);
       dal::add_stored_object(pk, pim, new_approx->ref_convex(),
@@ -684,8 +684,6 @@ namespace getfem {
       build_methods.push_back(pim);
       cut_im.set_integration_method(cv, pim);
     }
-    else
-      delete new_approx;
   }
 
   void mesh_im_cross_level_set::adapt(void) {

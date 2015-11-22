@@ -136,7 +136,7 @@ namespace getfem
 
   };
 
-  typedef const poly_integration *ppoly_integration;
+  typedef std::shared_ptr<const poly_integration> ppoly_integration;
 
    /** Description of an approximate integration of polynomials of
    *  several variables on a reference element.
@@ -224,7 +224,7 @@ namespace getfem
     
   };
 
-  typedef const approx_integration *papprox_integration;
+  typedef std::shared_ptr<const approx_integration> papprox_integration;
 
   /**
      the list of main integration method types 
@@ -235,39 +235,30 @@ namespace getfem
      this structure is not intended to be used directly. It is built via
      the int_method_descriptor() function
   */
-  class integration_method : virtual public dal::static_stored_object {    
-    union {
-      ppoly_integration ppi; /* for exact integrations */
-      papprox_integration pai; /* for approximate integrations (i.e. cubatures) */
-    } method;
+  class integration_method : virtual public dal::static_stored_object {
+    ppoly_integration ppi; /* for exact integrations */
+    papprox_integration pai; /* for approximate integrations (i.e. cubatures) */
     integration_method_type im_type;
-
-    void remove(void) {
-      switch (type()) {
-      case IM_EXACT: if (method.ppi) delete method.ppi; break;
-      case IM_APPROX: if (method.pai) delete method.pai; break;
-      case IM_NONE: break;
-      }
-    }
+    void remove() { pai =  papprox_integration(); ppi = ppoly_integration(); }
 
   public:
     integration_method_type type(void) const { return im_type; }
-    papprox_integration approx_method(void) const { return method.pai; }
-    ppoly_integration exact_method(void) const { return method.ppi; }
+    const papprox_integration &approx_method(void) const { return pai; }
+    const ppoly_integration &exact_method(void) const { return ppi; }
 
     void set_approx_method(papprox_integration paii)
-    { remove(); method.pai = paii; im_type = IM_APPROX; }
+    { remove(); pai = paii; im_type = IM_APPROX; }
     void set_exact_method(ppoly_integration ppii)
-    { remove(); method.ppi = ppii; im_type = IM_EXACT; }
+    { remove(); ppi = ppii; im_type = IM_EXACT; }
 
     bgeot::pstored_point_tab pintegration_points(void) const { 
       if (type() == IM_EXACT) {
-        size_type n = method.ppi->structure()->dim();
+        size_type n = ppi->structure()->dim();
         std::vector<base_node> spt(1); spt[0] = base_node(n);
         return store_point_tab(spt);
       }
       else if (type() == IM_APPROX)
-        return method.pai->pintegration_points();
+        return pai->pintegration_points();
       else GMM_ASSERT1(false, "IM_NONE has no points");
     }
 
@@ -276,8 +267,8 @@ namespace getfem
 
     bgeot::pconvex_structure structure(void) const { 
       switch (type()) {
-      case IM_EXACT: return method.ppi->structure();
-      case IM_APPROX: return method.pai->structure();
+      case IM_EXACT: return ppi->structure();
+      case IM_APPROX: return pai->structure();
       case IM_NONE: GMM_ASSERT1(false, "IM_NONE has no structure");
       default: GMM_ASSERT3(false, "");
       }
@@ -285,13 +276,12 @@ namespace getfem
     }
 
     integration_method(ppoly_integration p)
-    { method.ppi = p; im_type = IM_EXACT; }
+    { ppi = p; im_type = IM_EXACT; }
 
     integration_method(papprox_integration p)
-    { method.pai = p; im_type = IM_APPROX; }
+    { pai = p; im_type = IM_APPROX; }
 
-    integration_method(void) { im_type = IM_NONE; method.pai = 0; }
-    ~integration_method(void) { remove(); }
+    integration_method(void) { im_type = IM_NONE; }
   };
 
 

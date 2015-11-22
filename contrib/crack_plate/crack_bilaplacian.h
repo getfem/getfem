@@ -77,7 +77,7 @@ struct bilaplacian_singular_functions : public getfem::global_function, public g
   const getfem::level_set &ls;
   scalar_type nu;          // Poison's coefficient
   scalar_type pos ;        // x-position of the crack-tip
-  mutable getfem::mesher_level_set mls0, mls1;
+  mutable getfem::pmesher_signed_distance mls0, mls1;
   mutable size_type cv;
   
   void update_mls(size_type cv_) const;
@@ -108,7 +108,7 @@ struct crack_singular_bilaplacian_xy_function : public getfem::abstract_xy_funct
 
   
 inline getfem::pglobal_function bilaplacian_crack_singular(size_type i, const getfem::level_set &ls, scalar_type nu, scalar_type pos){ 
-  return getfem::pglobal_function(new bilaplacian_singular_functions(i, ls, nu, pos));
+  return getfem::pglobal_function(std::make_shared<bilaplacian_singular_functions>(i, ls, nu, pos));
 }
 
 struct exact_solution_bilap {

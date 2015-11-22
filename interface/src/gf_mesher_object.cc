@@ -85,9 +85,9 @@ void gf_mesher_object(getfemint::mexargs_in& m_in,
        getfem::base_node bncenter(gmm::vect_size(center));
        gmm::copy(center, bncenter);
 
-       getfem::mesher_signed_distance *ball
-         = new getfem::mesher_ball(bncenter, radius);
-
+       getfem::pmesher_signed_distance ball
+       = getfem::new_mesher_ball(bncenter, radius);
+       
        pmo = getfemint_mesher_object::get_from(ball);
        );
 
@@ -107,8 +107,8 @@ void gf_mesher_object(getfemint::mexargs_in& m_in,
        getfem::base_node bnn(gmm::vect_size(n));
        gmm::copy(n, bnn);
 
-       getfem::mesher_signed_distance *half
-         = new getfem::mesher_half_space(bnorigin, bnn);
+       getfem::pmesher_signed_distance half
+       = getfem::new_mesher_half_space(bnorigin, bnn);
 
        pmo = getfemint_mesher_object::get_from(half);
        );
@@ -128,8 +128,8 @@ void gf_mesher_object(getfemint::mexargs_in& m_in,
        getfem::base_node bnn(gmm::vect_size(n));
        gmm::copy(n, bnn);
 
-       getfem::mesher_signed_distance *cyl
-       = new getfem::mesher_cylinder(bnorigin, bnn, length, radius);
+       getfem::pmesher_signed_distance cyl
+       = getfem::new_mesher_cylinder(bnorigin, bnn, length, radius);
 
        pmo = getfemint_mesher_object::get_from(cyl);
        );
@@ -149,8 +149,8 @@ void gf_mesher_object(getfemint::mexargs_in& m_in,
        getfem::base_node bnn(gmm::vect_size(n));
        gmm::copy(n, bnn);
 
-       getfem::mesher_signed_distance *cone
-       = new getfem::mesher_cone(bnorigin, bnn, length, half_angle);
+       getfem::pmesher_signed_distance cone
+       = getfem::new_mesher_cone(bnorigin, bnn, length, half_angle);
 
        pmo = getfemint_mesher_object::get_from(cone);
        );
@@ -165,8 +165,8 @@ void gf_mesher_object(getfemint::mexargs_in& m_in,
        double R = in.pop().to_scalar();
        double r = in.pop().to_scalar();
 
-       getfem::mesher_signed_distance *torus
-         = new getfem::mesher_torus(R, r);
+       getfem::pmesher_signed_distance torus
+         = getfem::new_mesher_torus(R, r);
 
        pmo = getfemint_mesher_object::get_from(torus);
        );
@@ -187,8 +187,8 @@ void gf_mesher_object(getfemint::mexargs_in& m_in,
        getfem::base_node rrmin(N); getfem::base_node rrmax(N);
        gmm::copy(rmin, rrmin); gmm::copy(rmax, rrmax);
 
-       getfem::mesher_signed_distance *rectangle
-         = new getfem::mesher_rectangle(rrmin, rrmax);
+       getfem::pmesher_signed_distance rectangle
+         = getfem::new_mesher_rectangle(rrmin, rrmax);
 
        pmo = getfemint_mesher_object::get_from(rectangle);
        );
@@ -200,11 +200,10 @@ void gf_mesher_object(getfemint::mexargs_in& m_in,
     sub_command
       ("intersect", 2, 100, 0, 1,
 
-       std::vector<const getfem::mesher_signed_distance *> vd;
+       std::vector<getfem::pmesher_signed_distance> vd;
 
-       const getfem::mesher_signed_distance *psd
+       getfem::pmesher_signed_distance psd
           = in.pop().to_const_mesher_object();
-
        vd.push_back(psd);
 
        while (in.remaining()) {
@@ -212,8 +211,8 @@ void gf_mesher_object(getfemint::mexargs_in& m_in,
 	 vd.push_back(psd);
        }
        
-       getfem::mesher_signed_distance *psd2 
-         = new getfem::mesher_intersection(vd);
+       getfem::pmesher_signed_distance psd2 
+         = getfem::new_mesher_intersection(vd);
        pmo = getfemint_mesher_object::get_from(psd2);
        );
 
@@ -223,11 +222,10 @@ void gf_mesher_object(getfemint::mexargs_in& m_in,
     sub_command
       ("union", 2, 100, 0, 1,
 
-       std::vector<const getfem::mesher_signed_distance *> vd;
+       std::vector<getfem::pmesher_signed_distance> vd;
 
-       const getfem::mesher_signed_distance *psd
-          = in.pop().to_const_mesher_object();
-
+       getfem::pmesher_signed_distance psd
+       = in.pop().to_const_mesher_object();
        vd.push_back(psd);
 
        while (in.remaining()) {
@@ -235,7 +233,7 @@ void gf_mesher_object(getfemint::mexargs_in& m_in,
 	 vd.push_back(psd);
        }
        
-       getfem::mesher_signed_distance *psd2 = new getfem::mesher_union(vd);
+       getfem::pmesher_signed_distance psd2 = getfem::new_mesher_union(vd);
        pmo = getfemint_mesher_object::get_from(psd2);
        );
 
@@ -245,15 +243,13 @@ void gf_mesher_object(getfemint::mexargs_in& m_in,
     sub_command
       ("set minus", 2, 100, 0, 1,
 
-       std::vector<const getfem::mesher_signed_distance *> vd;
-
-       const getfem::mesher_signed_distance *psd1
+       getfem::pmesher_signed_distance psd1
           = in.pop().to_const_mesher_object();
-       const getfem::mesher_signed_distance *psd2
+       getfem::pmesher_signed_distance psd2
           = in.pop().to_const_mesher_object();
        
-       getfem::mesher_signed_distance *psd
-         = new getfem::mesher_setminus(*psd1, *psd2);
+       getfem::pmesher_signed_distance psd
+         = getfem::new_mesher_setminus(psd1, psd2);
        pmo = getfemint_mesher_object::get_from(psd);
        );
   }

@@ -82,7 +82,7 @@ namespace gmm {
       This class can be used as a preconditioner for gmm iterative solvers.
   */
   template <class T> class SuperLU_factor {
-    SuperLU_factor_impl_common *impl;
+    std::shared_ptr<SuperLU_factor_impl_common> impl;
   public :
     enum { LU_NOTRANSP, LU_TRANSP, LU_CONJUGATED };
 
@@ -109,7 +109,6 @@ namespace gmm {
     std::vector<T> &sol() const;
     std::vector<T> &rhs() const;
     SuperLU_factor();
-    ~SuperLU_factor();
     float memsize() const;
     SuperLU_factor(const SuperLU_factor& other);
     SuperLU_factor& operator=(const SuperLU_factor& other);

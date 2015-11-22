@@ -194,7 +194,7 @@ namespace getfem {
 
   void add_2D_rotated_RT0_projection(model &md, std::string name) {
     pelementary_transformation
-      p(new _2D_Rotated_RT0_projection_transformation());
+      p = std::make_shared<_2D_Rotated_RT0_projection_transformation>();
     md.add_elementary_transformation(name, p);
   }
 

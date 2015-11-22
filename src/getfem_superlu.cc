@@ -360,37 +360,32 @@ namespace gmm {
    
   template<typename T> void 
   SuperLU_factor<T>::build_with(const gmm::csc_matrix<T> &A, int permc_spec) {
-    ((SuperLU_factor_impl<T>*)impl)->build_with(A,permc_spec);
+    ((SuperLU_factor_impl<T>*)impl.get())->build_with(A,permc_spec);
   }
 
   template<typename T> void
   SuperLU_factor<T>::solve(int transp) const {
-    ((SuperLU_factor_impl<T>*)impl)->solve(transp);
+    ((SuperLU_factor_impl<T>*)impl.get())->solve(transp);
   }
 
   template<typename T> std::vector<T> &
   SuperLU_factor<T>::sol() const {
-    return ((SuperLU_factor_impl<T>*)impl)->sol;
+    return ((SuperLU_factor_impl<T>*)impl.get())->sol;
   }
 
   template<typename T> std::vector<T> &
   SuperLU_factor<T>::rhs() const {
-    return ((SuperLU_factor_impl<T>*)impl)->rhs;
+    return ((SuperLU_factor_impl<T>*)impl.get())->rhs;
   }
 
   template<typename T> 
   SuperLU_factor<T>::SuperLU_factor() {
-    impl = new SuperLU_factor_impl<T>();
-  }
-
-  template<typename T> 
-  SuperLU_factor<T>::~SuperLU_factor() {
-    delete impl;
+    impl = std::make_shared<SuperLU_factor_impl<T>>();
   }
 
   template<typename T> 
   SuperLU_factor<T>::SuperLU_factor(const SuperLU_factor& other) {
-    impl = new SuperLU_factor_impl<T>();
+    impl =  std::make_shared<SuperLU_factor_impl<T>>();
     GMM_ASSERT1(!(other.impl->is_init),
 		"copy of initialized SuperLU_factor is forbidden");
     other.impl->is_init = false;

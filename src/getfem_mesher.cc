@@ -301,7 +301,7 @@ namespace getfem {
   };
 
   struct mesher {
-    const mesher_signed_distance& dist;
+    pmesher_signed_distance dist;
     const mesher_virtual_function& edge_len;
     scalar_type h0, dist_point_hull, boundary_threshold_flatness;
     size_type N, K, iter_max, iter_wtcc;
@@ -325,8 +325,8 @@ namespace getfem {
     std::vector<base_node> attractor_points;
 
     mesher(size_type K_,
-           const mesher_signed_distance& dist_, 
-           const mesher_virtual_function& edge_len_, 
+           const pmesher_signed_distance &dist_, 
+           const mesher_virtual_function &edge_len_, 
            scalar_type h0_,
            mesh &m, const std::vector<base_node> &fixed_points,
            int noise, size_type itm, int pref,
@@ -338,7 +338,7 @@ namespace getfem {
       K=K_; h0=h0_;
       ptol = 0.0025;
       ttol = .1;
-      dist.bounding_box(bounding_box_min,bounding_box_max);
+      dist->bounding_box(bounding_box_min,bounding_box_max);
       N = bounding_box_min.size();
       if (N == 2) { 
         L0mult = 1.2; deltat = .2; geps = .001*h0; 
@@ -347,7 +347,7 @@ namespace getfem {
         deltat=.1; geps=1e-1*h0;
       }
       deps=sqrt(1e-8)*h0;
-      dist.register_constraints(this->constraints);
+      dist->register_constraints(this->constraints);
 
       bgeot::pgeometric_trans pgt = bgeot::simplex_geotrans(N,1);
       gmm::resize(W,N,N);
@@ -518,7 +518,7 @@ namespace getfem {
                 ipt = m.ind_points_of_face_of_convex(ic, f)[i];
                 if (pts_attr[ipt]->constraints.card() == 0)
                   points_to_project.add(ipt);
-                else if (dist(pts[ipt]) < -1e-2) 
+                else if ((*dist)(pts[ipt]) < -1e-2) 
                   cout << "WARNING, point " << ipt 
                        << " incoherent !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!";
               }
@@ -587,11 +587,11 @@ namespace getfem {
     
 
     bool try_projection(base_node &X)
-    { return getfem::try_projection(dist, X); }
+    { return getfem::try_projection(*dist, X); }
 
     void projection(base_node &X) {
       base_small_vector G(X.size());
-      scalar_type d = dist.grad(X, G);
+      scalar_type d = dist->grad(X, G);
       size_type it(0);
       if (d > 0.0)
         while (gmm::abs(d) > 1e-10) {
@@ -600,13 +600,13 @@ namespace getfem {
 //           cout << "iter " << it << " X = " << X << " dist = " << d << 
 //             " grad = " << G << endl;
           gmm::add(gmm::scaled(G, -d / gmm::vect_norm2_sqr(G)), X);
-          d = dist.grad(X, G);
+          d = dist->grad(X, G);
         }
     }
     
     void surface_projection(base_node &X) { 
       base_small_vector G;
-      scalar_type d = dist.grad(X, G);
+      scalar_type d = dist->grad(X, G);
       size_type it(0);
       while (gmm::abs(d) > 1e-10) {
         ++it;
@@ -616,12 +616,12 @@ namespace getfem {
 //           cout << "iter " << it << " X = " << X << " dist = " << d << 
 //              " grad = " << G << endl;
         gmm::add(gmm::scaled(G, -d / gmm::vect_norm2_sqr(G)), X);
-        d = dist.grad(X, G);
+        d = dist->grad(X, G);
       }
     }
 
     void projection(base_node &X, dal::bit_vector& bv)
-    { projection(X); bv.clear(); dist(X,bv); }
+    { projection(X); bv.clear(); (*dist)(X,bv); }
 
     void constraint_projection(base_node &X, size_type cnum) {
       base_small_vector G;
@@ -647,7 +647,7 @@ namespace getfem {
 //       if (cnt >= 1000) return false;
 //       if (cts.card()) {
       dal::bit_vector ct2;
-      dist(X, ct2);
+      (*dist)(X, ct2);
       return ct2.contains(cts);
 //       }
 //       return true;
@@ -668,7 +668,7 @@ namespace getfem {
         } while (gmm::vect_dist2(oldX,X) > 1e-14 && cnt < 1000);
         if (cnt >= 1000) return false;
         dal::bit_vector ct2;
-        dist(X, ct2);
+        (*dist)(X, ct2);
         return ct2.contains(cts);
       }
     }
@@ -706,7 +706,7 @@ namespace getfem {
     void surface_projection_and_update_constraints(size_type ip) { 
       surface_projection(pts[ip]);
       dal::bit_vector new_cts;
-      dist(pts[ip], new_cts);
+      (*dist)(pts[ip], new_cts);
       pts_attr[ip] = get_attr(pts_attr[ip]->fixed, new_cts);
     }
 
@@ -714,7 +714,7 @@ namespace getfem {
       const dal::bit_vector& cts = pts_attr[ip]->constraints;
       dal::bit_vector new_cts;
       multi_constraint_projection(pts[ip], cts);
-      dist(pts[ip], new_cts);
+      (*dist)(pts[ip], new_cts);
       if (noisy > 1 && !new_cts.contains(cts)) {
         cout << "Point #" << ip << " has been downgraded from "
              << cts << " to " << new_cts << endl;
@@ -734,7 +734,7 @@ namespace getfem {
       base_node V(N); gmm::copy(VV, V);
 //       if (pts_attr[ip]->constraints.card() != 0) {
 //         base_small_vector grad;
-//      dist.grad(pts[ip], grad);
+//      dist->grad(pts[ip], grad);
 //         scalar_type r = gmm::vect_norm2_sqr(grad);
 //         gmm::add(gmm::scaled(grad, -gmm::vect_sp(V, grad) / r), V);
 //       }
@@ -781,7 +781,7 @@ namespace getfem {
 
       /* build the regular grid and filter points outside */
       for (size_type i=0; i < fixed_points.size(); ++i) {
-        if (dist(fixed_points[i]) < geps &&
+        if ((*dist)(fixed_points[i]) < geps &&
             m.search_point(fixed_points[i]) == size_type(-1)) {
           m.add_point(fixed_points[i]); 
           pts.push_back(fixed_points[i]); 
@@ -801,12 +801,12 @@ namespace getfem {
         }
 
         dal::bit_vector co;
-        if ((prefind == 1 && dist(P) < 0) || prefind == 2) {
+        if ((prefind == 1 && (*dist)(P) < 0) || prefind == 2) {
           for (size_type k = 0; k < constraints.size() && co.card() < N; ++k) {
             gmm::copy(P, Q);
             if (gmm::abs((*(constraints[k]))(Q)) < h0) {
               constraint_projection(Q, k);
-              if (dist(Q) > -geps && 
+              if ((*dist)(Q) > -geps && 
                   (gmm::vect_dist2(P, Q) < h0 / scalar_type(2))) co.add(k);
             }
           }
@@ -814,14 +814,14 @@ namespace getfem {
         gmm::copy(P, Q);
         if (co.card() > 0) { 
           bool ok = pure_multi_constraint_projection(Q, co);
-          if (!ok || gmm::abs(dist(Q)) > geps) { gmm::copy(P, Q); co.clear(); }
+          if (!ok || gmm::abs((*dist)(Q)) > geps) { gmm::copy(P, Q); co.clear(); }
         }
 
         if (prefind == 3) {
           try_projection(Q);
         }
 
-        if (dist(Q) < geps) {
+        if ((*dist)(Q) < geps) {
           if (m.search_point(Q) == size_type(-1)) {
             //cout << "adding point : " << Q << endl;
             if (!eff_box_init)
@@ -850,11 +850,11 @@ namespace getfem {
         for (unsigned i=0; i < nbpt; ++i) {
           if (pts_attr[i]->constraints.card()) {
             P = pts[i];
-            dist.grad(P, V);
+            dist->grad(P, V);
             scalar_type d = gmm::vect_norm2(V);
             if (d > 0) {
               P += V * (dist_point_hull*h0/d);
-              if (dist(P)*sqrt(scalar_type(N)) > dist_point_hull*h0) {
+              if ((*dist)(P)*sqrt(scalar_type(N)) > dist_point_hull*h0) {
                 Q = P;
                 projection(Q);
                 if (gmm::vect_dist2(P, Q) > dist_point_hull*h0/scalar_type(2))
@@ -957,7 +957,7 @@ namespace getfem {
           G = pts[t(0,i)];
           for (size_type k=1; k <= N; ++k) G += pts[t(k,i)];
           gmm::scale(G, scalar_type(1)/scalar_type(N+1));
-          dG = dist(G);
+          dG = (*dist)(G);
           gmm::clear(weights);
           
           q = quality_of_element(i);
@@ -977,7 +977,7 @@ namespace getfem {
                 if (/* gmm::vect_dist2(pts[t(k,i)], pts[t(l,i)]) > h0 && */
                     !(pts_attr[t(k,i)]->constraints.contains(all_cts))
                     && !(pts_attr[t(l,i)]->constraints.contains(all_cts))
-                    && dist(0.5*(pts[t(k,i)] + pts[t(l,i)])) > 0.)
+                    && (*dist)(0.5*(pts[t(k,i)] + pts[t(l,i)])) > 0.)
                   is_bridge_simplex = true;
               }
         }
@@ -1070,7 +1070,7 @@ namespace getfem {
           if (ipts[i] >= pts.size() && !ptdone[ipts[i]]) { 
             base_node &P = m.points()[ipts[i]];
             multi_constraint_projection(P, cts);
-            // dist(P, new_cts);
+            // (*dist)(P, new_cts);
           }
         }
       }
@@ -1109,7 +1109,7 @@ namespace getfem {
                           iAneighbours[i]) != iBneighbours.end())
               common_pts.push_back(iAneighbours[i]);
           bool do_projection = true;
-          if (dist(.5*(pts[iA]+pts[iB])) < 0) {
+          if ((*dist)(.5*(pts[iA]+pts[iB])) < 0) {
             for (mesh::ind_set::iterator it = common_pts.begin();
                  it != common_pts.end(); ++it) {
               if (pts_attr[*it]->constraints.contains(bv1)) {
@@ -1416,17 +1416,13 @@ namespace getfem {
   };
 
 
-  const mesher_half_space void_signed_distance(base_node(0.0, 0.0),
-                                               base_small_vector(0.0, 1.0));
 
-
-
-  void build_mesh(mesh &m, const mesher_signed_distance& dist_,
+  void build_mesh(mesh &m, const pmesher_signed_distance& dist,
                   scalar_type h0, const std::vector<base_node> &fixed_points,
                   size_type K, int noise, size_type iter_max, int prefind,
                   scalar_type dist_point_hull,
                   scalar_type boundary_threshold_flatness) {
-    mesher mg(K, dist_, getfem::mvf_constant(1), h0, m, fixed_points, noise,
+    mesher mg(K, dist, getfem::mvf_constant(1), h0, m, fixed_points, noise,
               iter_max, prefind, dist_point_hull, boundary_threshold_flatness);
   }
   

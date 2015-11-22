@@ -89,11 +89,11 @@ namespace getfem {
     /* return true when the point is inside the levelsets CSG
        description */
     bool2 is_point_in_selected_area
-    (const std::vector<mesher_level_set> &mesherls0,
-     const std::vector<mesher_level_set> &mesherls1, const base_node& P);
+    (const std::vector<pmesher_signed_distance> &mesherls0,
+     const std::vector<pmesher_signed_distance> &mesherls1, const base_node& P);
     bool2 is_point_in_selected_area2
-    (const std::vector<mesher_level_set> &mesherls0,
-     const std::vector<mesher_level_set> &mesherls1, const base_node& P);
+    (const std::vector<pmesher_signed_distance> &mesherls0,
+     const std::vector<pmesher_signed_distance> &mesherls1, const base_node& P);
 
   public :
     enum { INTEGRATE_INSIDE = 1, INTEGRATE_OUTSIDE = 2, INTEGRATE_ALL = 2+1,

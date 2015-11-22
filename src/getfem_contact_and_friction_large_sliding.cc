@@ -1139,9 +1139,9 @@ namespace getfem {
    const std::string &dataname_alpha) {
 
     bool with_friction = (dataname_friction_coeff.size() > 0);
-    integral_large_sliding_contact_brick *pbr
-      = new integral_large_sliding_contact_brick(mcf, with_friction);
-    pbrick pbri(pbr);
+    pbrick pbri
+      = std::make_shared<integral_large_sliding_contact_brick>(mcf,
+							       with_friction);
 
     model::termlist tl; // A unique global unsymmetric term
     tl.push_back(model::term_description(true, false));
@@ -2211,8 +2211,8 @@ namespace getfem {
    const std::string &multname, const std::string &dataname_r,
    const std::string &dataname_friction_coeff, size_type region) {
 
-    integral_large_sliding_contact_brick_field_extension *pbr
-      = new integral_large_sliding_contact_brick_field_extension();
+    auto pbr
+      =std::make_shared<integral_large_sliding_contact_brick_field_extension>();
 
     pbr->add_boundary(varname_u, multname, mim, region);
 
@@ -2621,13 +2621,12 @@ namespace getfem {
     if (md.variable_exists(f_coeff)) dl.push_back(f_coeff);
     if (md.variable_exists(alpha)) dl.push_back(alpha);
     
-    intergral_large_sliding_contact_brick_raytracing *p
-      = new intergral_large_sliding_contact_brick_raytracing
+    auto p = std::make_shared<intergral_large_sliding_contact_brick_raytracing>
       (augm_param, f_coeff, ugroupname, wgroupname, transname, alpha,
        sym_v, frame_indifferent);
     pbrick pbr(p);
     p->dl = dl;
-
+    
     return md.add_brick(pbr, p->vl, p->dl, model::termlist(),model::mimlist(),
                         size_type(-1));
   }

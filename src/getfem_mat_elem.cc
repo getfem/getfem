@@ -632,8 +632,8 @@ namespace getfem {
     dal::pstatic_stored_object o = dal::search_stored_object(pk);
     if (o) return std::dynamic_pointer_cast<const mat_elem_computation>(o);
     pmat_elem_computation
-      p(new emelem_comp_structure_(pm, pi, pg,
-				   prefer_comp_on_real_element));
+      p = std::make_shared<emelem_comp_structure_>
+      (pm, pi, pg, prefer_comp_on_real_element);
     dal::add_stored_object(pk, p, pm, pi, pg);
     return p;
   }

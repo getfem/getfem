@@ -44,7 +44,7 @@ void gf_model(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 {
   if (in.narg() < 1) THROW_BADARG( "Wrong number of input arguments");
 
-  getfemint_model * md = new getfemint_model();
+  getfemint_model *md = new getfemint_model();
   out.pop().from_object_id(workspace().push_object(md), MODEL_CLASS_ID);
 
   if (in.front().is_string()) {

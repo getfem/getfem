@@ -41,11 +41,11 @@ namespace getfemint {
 
   class getfemint_mesher_object : public getfemint::getfem_object {
   private:
-    getfem::mesher_signed_distance *msd;
-    getfemint_mesher_object(getfem::mesher_signed_distance *msd_) {
+    getfem::pmesher_signed_distance msd;
+    getfemint_mesher_object(getfem::pmesher_signed_distance msd_) {
       assert(workspace == 0);
       msd  = msd_;
-      ikey = getfem_object::internal_key_type(msd);
+      ikey = getfem_object::internal_key_type(msd.get());
     }
 
   public:
@@ -54,10 +54,11 @@ namespace getfemint {
     size_type memsize() const {
       return sizeof(getfem::mesher_signed_distance);
     }
-    static getfemint_mesher_object*
-    get_from(getfem::mesher_signed_distance *pmsd, int flags = 0) {
+    static getfemint_mesher_object *
+    get_from(getfem::pmesher_signed_distance pmsd, int flags = 0) {
       getfem_object *o =
-	getfemint::workspace().object(getfem_object::internal_key_type(pmsd));
+	getfemint::workspace().object
+	(getfem_object::internal_key_type(pmsd.get()));
       getfemint_mesher_object *gpgf = NULL;
       if (!o) {
 	gpgf = new getfemint_mesher_object(pmsd);
@@ -68,7 +69,7 @@ namespace getfemint {
       return gpgf;
     }
 
-    getfem::mesher_signed_distance &mesher_object() { return *msd; }
+    getfem::pmesher_signed_distance &mesher_object() { return msd; }
 
   };
 

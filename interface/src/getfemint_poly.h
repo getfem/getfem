@@ -42,14 +42,11 @@ namespace getfemint
 {
   class getfemint_poly : public getfem_object {
   private:
-    bgeot::base_poly *p;
+    std::shared_ptr<bgeot::base_poly> p;
     
   public:
     getfemint_poly() { 
-      p = new bgeot::base_poly();
-    }
-    ~getfemint_poly() {
-      delete p;
+      p = std::make_shared<bgeot::base_poly>();
     }
     id_type class_id() const { return POLY_CLASS_ID; }
 

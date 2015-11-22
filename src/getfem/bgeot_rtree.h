@@ -46,9 +46,16 @@ namespace bgeot {
   struct box_index {
     size_type id;
     base_node min, max;
-  };  
-
-  struct rtree_elt_base;
+  };
+ 
+  struct rtree_elt_base {
+    enum { RECTS_PER_LEAF=8 };
+    bool isleaf_;
+    bool isleaf() const { return isleaf_; }
+    base_node rmin, rmax;
+    rtree_elt_base(bool leaf, const base_node& rmin_, const base_node& rmax_) 
+      : isleaf_(leaf), rmin(rmin_), rmax(rmax_) {}
+  };
 
   /** Balanced tree of n-dimensional rectangles.
    *
@@ -61,15 +68,13 @@ namespace bgeot {
     typedef std::vector<const box_index*> pbox_cont;
     typedef std::set<const box_index*> pbox_set;
 
-    rtree() : root(0) {}
-    ~rtree() { destroy_tree(); }
     void add_box(base_node min, base_node max, size_type id=size_type(-1)) {
       box_index bi; bi.min = min; bi.max = max;
       bi.id = (id + 1) ? id : boxes.size();
       boxes.push_back(bi);
     }
     size_type nb_boxes() const { return boxes.size(); }
-    void clear() { destroy_tree(); boxes.clear(); }
+    void clear() { root = std::unique_ptr<rtree_elt_base>(); boxes.clear(); }
 
     void find_intersecting_boxes(const base_node& bmin, const base_node& bmax,
                                  pbox_set& boxlst);
@@ -128,7 +133,6 @@ namespace bgeot {
     void dump();
     void build_tree();
   private:
-    void destroy_tree();
     static void pbox_set_to_idvec(pbox_set bs, std::vector<size_type>& idvec) {
       idvec.reserve(bs.size()); idvec.resize(0);
       for (pbox_set::const_iterator it=bs.begin(); it != bs.end(); ++it)
@@ -136,7 +140,7 @@ namespace bgeot {
     }
 
     box_cont boxes;
-    rtree_elt_base *root;
+    std::unique_ptr<rtree_elt_base> root;
     getfem::lock_factory locks_;
   };
 

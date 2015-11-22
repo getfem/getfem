@@ -146,19 +146,11 @@ namespace getfem {
     void gauss_pts_stats(unsigned &ming, unsigned &maxg,
                          scalar_type &meang) const;
     size_type memsize() const;
-  private:
 
     projected_fem(const mesh_fem &mf_source_, const mesh_im &mim_target_,
                   size_type rg_source_, size_type rg_target_,
                   dal::bit_vector blocked_dofs_,
                   bool store_val);
-
-    friend pfem new_projected_fem(const mesh_fem &mf_source_,
-                                  const mesh_im &mim_target_,
-                                  size_type rg_source_,
-                                  size_type rg_target_,
-                                  dal::bit_vector blocked_dofs_,
-                                  bool store_val);
   };
 
 

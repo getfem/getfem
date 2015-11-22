@@ -78,7 +78,7 @@ namespace bgeot{
     dal::pstatic_stored_object o = dal::search_stored_object(pk);
     if (o) return std::dynamic_pointer_cast<const convex_structure>(o);
 
-    torus_structure *p = new torus_structure;
+    auto p = std::make_shared<torus_structure>();
     pconvex_structure pcvs(p);
     p->Nc = dim_type(ori_structure->dim() + 1);
     p->nbpt = ori_structure->nb_points();
@@ -112,7 +112,7 @@ namespace bgeot{
     dal::pstatic_stored_object o = dal::search_stored_object(pk);
 
     if (o) return std::dynamic_pointer_cast<const bgeot::convex_of_reference>(o);
-    pconvex_ref p(new torus_reference(ori_convex_reference));
+    pconvex_ref p = std::make_shared<torus_reference>(ori_convex_reference);
     dal::add_stored_object(pk, p, p->structure(), p->pspt(),
 			   dal::PERMANENT_STATIC_OBJECT);
     return p;
@@ -200,7 +200,7 @@ namespace bgeot{
 
     if (o) return std::dynamic_pointer_cast<const torus_geom_trans>(o);
 
-    bgeot::pgeometric_trans p(new torus_geom_trans(poriginal_trans));
+    bgeot::pgeometric_trans p = std::make_shared<torus_geom_trans>(poriginal_trans);
     dal::add_stored_object(pk, p, dal::PERMANENT_STATIC_OBJECT);
     return p;
   }
@@ -366,10 +366,10 @@ namespace getfem
     
   DAL_SIMPLE_KEY(torus_fem_key, bgeot::size_type);
 
-  getfem::pfem new_torus_fem(getfem::pfem pf){
+  getfem::pfem new_torus_fem(getfem::pfem pf) {
     static bgeot::size_type key_count = 0;
     ++key_count;
-    getfem::pfem pfem_torus(new torus_fem(pf));
+    getfem::pfem pfem_torus = std::make_shared<torus_fem>(pf);
     dal::pstatic_stored_object_key
       pk = std::make_shared<torus_fem_key>(key_count);
     dal::add_stored_object(pk, pfem_torus);

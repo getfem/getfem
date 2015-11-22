@@ -352,7 +352,7 @@ void crack_problem::error_estimate(const plain_vector &U, plain_vector &ERR) {
 
   for (dal::bv_visitor cv(mesh.convex_index()); !cv.finished(); ++cv) {
     
-    getfem::mesher_level_set mmls = ls.mls_of_convex(cv, 0);
+    getfem::pmesher_signed_distance mmls = ls.mls_of_convex(cv, 0);
     bgeot::pgeometric_trans pgt1 = mesh.trans_of_convex(cv);
     getfem::papprox_integration pai1 = 
       get_approx_im_or_fail(mim.int_method_of_element(cv));
@@ -396,7 +396,7 @@ void crack_problem::error_estimate(const plain_vector &U, plain_vector &ERR) {
       for (unsigned ii=0; ii < pai_crack->nb_points(); ++ii) {
 	
 	ctx1.set_xref(pai_crack->point(ii));
-	mmls.grad(pai_crack->point(ii), gradls);
+	mmls->grad(pai_crack->point(ii), gradls);
 	gradls /= gmm::vect_norm2(gradls);
 	gmm::mult(ctx1.B(), gradls, up);
 	scalar_type norm = gmm::vect_norm2(up);
@@ -446,7 +446,7 @@ void crack_problem::error_estimate(const plain_vector &U, plain_vector &ERR) {
     // jump of the stress between the element ant its neighbours.
     for (short_type f1=0; f1 < mesh.structure_of_convex(cv)->nb_faces(); ++f1) {
 
-      if (gmm::abs(mmls(mesh.trans_of_convex(cv)->convex_ref()->points_of_face(f1)[0])) < 1E-7 * radius) continue;
+      if (gmm::abs((*mmls)(mesh.trans_of_convex(cv)->convex_ref()->points_of_face(f1)[0])) < 1E-7 * radius) continue;
 
       size_type cvn = mesh.neighbour_of_convex(cv, f1);
       if (cvn == size_type(-1)) continue;

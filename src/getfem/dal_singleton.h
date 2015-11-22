@@ -59,13 +59,14 @@ namespace dal {
 
   class singletons_manager {
   protected:
-    getfem::omp_distribute<std::vector<singleton_instance_base *> > lst;
+    getfem::omp_distribute<std::vector<singleton_instance_base *>> lst;
     static singletons_manager& manager();
     static singletons_manager& m;
 
   public:
     static void register_new_singleton(singleton_instance_base *p);
-    static void register_new_singleton(singleton_instance_base *p, size_t ithread);
+    static void register_new_singleton(singleton_instance_base *p,
+				       size_t ithread);
     ~singletons_manager();
   private:
     singletons_manager();
@@ -74,53 +75,50 @@ namespace dal {
 
 
 
-  template <typename T, int LEV> class singleton_instance : public singleton_instance_base 
-  {
+  template <typename T, int LEV> class singleton_instance
+    : public singleton_instance_base {
     static getfem::omp_distribute<T*>* instance_;
-    static getfem::omp_distribute<T*>* omp_distro_pointer()
-    {
-      static getfem::omp_distribute<T*>* pointer = new getfem::omp_distribute<T*>( );
+    static getfem::omp_distribute<T*>* omp_distro_pointer() {
+      static getfem::omp_distribute<T*>*
+	pointer = new getfem::omp_distribute<T*>();
       return pointer;
     }
-    static T*& instance_pointer() { return omp_distro_pointer( )->thrd_cast(); }
-    static T*& instance_pointer(size_t ithread) { return (*omp_distro_pointer( ))(ithread);}
-
+    static T*& instance_pointer() { return omp_distro_pointer()->thrd_cast(); }
+    static T*& instance_pointer(size_t ithread)
+    { return (*omp_distro_pointer())(ithread);}
+    
   public:
-
+    
     singleton_instance() {}
-
+    
     /** Instance from the current thread*/
-    inline static T& instance() 
-    { 
+    inline static T& instance() { 
       T*& tinstance_ = instance_pointer();
       if (!tinstance_) {
         tinstance_ = new T();
-        singletons_manager::register_new_singleton(new singleton_instance<T,LEV>());
+        singletons_manager::register_new_singleton
+	  (new singleton_instance<T,LEV>());
       }
       return *tinstance_; 
     }
-
+    
     /**Instance from thread ithread*/
-    inline static T& instance(size_t ithread) 
-    { 
+    inline static T& instance(size_t ithread) { 
       T*& tinstance_ = instance_pointer(ithread);
       if (!tinstance_) {
         tinstance_ = new T();
-        singletons_manager::register_new_singleton(new singleton_instance<T,LEV>(),ithread);
+        singletons_manager::register_new_singleton
+	  (new singleton_instance<T,LEV>(),ithread);
       }
       return *tinstance_; 
     }
-
+    
     int level() { return LEV; }
-
-    ~singleton_instance() 
-    {
-      if (instance_) 
-      {
-        for(size_t i=0;i<getfem::num_threads();i++)
-        {
-          if((*instance_)(i)) 
-          { 
+    
+    ~singleton_instance() {
+      if (instance_) {
+        for(size_t i = 0; i < getfem::num_threads(); i++) {
+          if((*instance_)(i))  { 
             delete (*instance_)(i); 
             (*instance_)(i) = 0; 
           }
@@ -131,19 +129,19 @@ namespace dal {
   };
 
   /** singleton class. 
-
-  usage: 
-  @code
-  foo &f = singleton<foo>::instance();
-  const foo &f = singleton<foo>::const_instance();
-  @endcode
-  the LEV template arguments allows one to choose the order of destruction
-  of the singletons:
-  lowest LEV will be destroyed first.
+      
+      usage: 
+      @code
+      foo &f = singleton<foo>::instance();
+      const foo &f = singleton<foo>::const_instance();
+      @endcode
+      the LEV template arguments allows one to choose the order of destruction
+      of the singletons:
+      lowest LEV will be destroyed first.
   */
   template <typename T, int LEV=1> class singleton {
   public:
-
+    
     /** Instance from the current thread*/
     inline static T& instance() { 
       return singleton_instance<T,LEV>::instance();
@@ -153,9 +151,10 @@ namespace dal {
     inline static T& instance(size_t ithread) { 
       return singleton_instance<T,LEV>::instance(ithread);
     }
-    inline static const T& const_instance(size_t ithread) { return instance(ithread); }
+    inline static const T& const_instance(size_t ithread)
+    { return instance(ithread); }
 
-
+    
   protected:
     singleton() {}
     ~singleton() {}
@@ -163,10 +162,10 @@ namespace dal {
     singleton(const singleton&);            
     singleton& operator=(const singleton&);
   };
-
+  
   template <typename T, int LEV> 
   getfem::omp_distribute<T*>* singleton_instance<T,LEV>::instance_
-                        = singleton_instance<T,LEV>::omp_distro_pointer();
+  = singleton_instance<T,LEV>::omp_distro_pointer();
 }
 
 #endif

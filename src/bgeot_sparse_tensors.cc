@@ -774,7 +774,7 @@ namespace bgeot {
       find_best_sub_reduction(bv,red);
       if (bv.card() < trtab.size() && red.size()) {
         //cout << "making sub reduction\n";
-        tensor_reduction *sub = new tensor_reduction();
+	auto sub = std::make_shared<tensor_reduction>();
         std::vector<dim_type> new_rdim; new_rdim.reserve(16);
 	std::string new_reduction;
         for (dal::bv_visitor tnum(bv); !tnum.finished(); ++tnum) {
@@ -1039,10 +1039,6 @@ namespace bgeot {
   }
 
   void tensor_reduction::clear() {
-    for (unsigned i=0; i < trtab.size(); ++i) {
-      if (trtab[i].is_reduction()) delete trtab[i].reduction;
-      trtab[i].reduction = 0;
-    }
     trtab.clear(); 
     trres.clear(); 
     reduced_range.resize(0);

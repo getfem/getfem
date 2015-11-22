@@ -72,7 +72,7 @@ typedef getfem::modeling_standard_plain_vector  plain_vector;
 struct mindlin_singular_functions : public getfem::global_function, public getfem::context_dependencies {
   size_type l;             // singular function number
   const getfem::level_set &ls;
-  mutable getfem::mesher_level_set mls0, mls1;
+  mutable getfem::pmesher_signed_distance mls0, mls1;
   mutable size_type cv;
   scalar_type lambda, mu, epsilon; // lame coefficient and half-thickness, useful for exact solution
   
@@ -201,7 +201,7 @@ sin(theta)+2.0/sqrt(r)*(mu_*cos(theta/2.0)*(30.0*lambda_+60.0*mu_-5.0*gamma*r*r)
 
     assert(ls.get_mesh_fem().convex_index().is_in(c.convex_num()));
     update_mls(c.convex_num());
-    scalar_type x = mls1(c.xref()), y = mls0(c.xref());
+    scalar_type x = (*mls1)(c.xref()), y = (*mls0)(c.xref());
     scalar_type v = sing_function(x, y);
     return v;
   }
@@ -211,7 +211,7 @@ sin(theta)+2.0/sqrt(r)*(mu_*cos(theta/2.0)*(30.0*lambda_+60.0*mu_-5.0*gamma*r*r)
     update_mls(c.convex_num());
     size_type P = c.xref().size();
     base_small_vector dx(P), dy(P), dfr(2);
-    scalar_type x = mls1.grad(c.xref(), dx), y = mls0.grad(c.xref(), dy);
+    scalar_type x = mls1->grad(c.xref(), dx), y = mls0->grad(c.xref(), dy);
     if (x*x + y*y < 1e-20) {
       cerr << "Warning, point very close to the singularity. xreal = "
 	   << c.xreal() << ", x_crack = " << x << ", y_crack=" << y << "\n";
@@ -237,7 +237,7 @@ sin(theta)+2.0/sqrt(r)*(mu_*cos(theta/2.0)*(30.0*lambda_+60.0*mu_-5.0*gamma*r*r)
 
 getfem::pglobal_function mindlin_crack_singular(size_type i, 
   const getfem::level_set &ls, scalar_type lambda, scalar_type mu, scalar_type epsilon){ 
-  return getfem::pglobal_function(new mindlin_singular_functions(i, ls, lambda, mu, epsilon));
+  return std::make_shared<mindlin_singular_functions>(i, ls, lambda, mu, epsilon);
 }
 
 

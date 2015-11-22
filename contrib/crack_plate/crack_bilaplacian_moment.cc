@@ -377,7 +377,7 @@ bool bilaplacian_crack_problem::solve_moment(plain_vector &U) {
     getfem::standard_solve(model, iter);
 
     // getfem::useful_types<getfem::standard_model_state>::plsolver_type p;
-    // p.reset(new getfem::linear_solver_cg_preconditioned_ildlt<sparse_matrix,plain_vector>);
+    // p = std::make_shared<getfem::linear_solver_cg_preconditioned_ildlt<sparse_matrix,plain_vector>>();
     // Solution extraction
     gmm::resize(U, mf_u().nb_dof());
     gmm::copy(model.real_variable("u"), U);

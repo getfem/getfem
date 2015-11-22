@@ -145,7 +145,7 @@ namespace getfemint
   public:
     gsparse& sparse() { return *(gsp.get()); }
     std::shared_ptr<gsparse> ref() { return gsp; }
-    getfemint_gsparse() { gsp.reset(new gsparse); }
+    getfemint_gsparse() { gsp = std::make_shared<gsparse>(); }
     ~getfemint_gsparse() { (*gsp).deallocate(); }
     id_type class_id() const { return GSPARSE_CLASS_ID; }
     size_type memsize() const { return 0; /* TODO ! */ }
