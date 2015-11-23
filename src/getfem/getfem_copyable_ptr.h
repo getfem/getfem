@@ -67,9 +67,9 @@ public:
 
   operator bool() const {return p_.operator bool();}
 
-  T& operator*() const {return *p_;}
+  T& operator*() const {return p_.operator*();}
 
-  T& operator->() const {return *p_;}
+  T* operator->() const {return p_.operator->();}
 };
 
 } // namespace getfem
