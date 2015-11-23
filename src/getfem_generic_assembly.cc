@@ -1843,7 +1843,7 @@ namespace getfem {
     virtual ~ga_instruction() {};
   };
 
-  typedef std::unique_ptr<ga_instruction> pga_instruction;
+  typedef std::shared_ptr<ga_instruction> pga_instruction;
   typedef std::vector<pga_instruction> ga_instruction_list;
 
   struct gauss_pt_corresp { // For neighbour interpolation transformation
@@ -9099,22 +9099,22 @@ namespace getfem {
 
     if (pnode->test_function_type == 1) {
       if (mf1 || mfg1)
-        pgai = std::make_unique<ga_instruction_first_ind_tensor>
+        pgai = std::make_shared<ga_instruction_first_ind_tensor>
           (pnode->t, *pctx1, pnode->qdim1, mf1, mfg1);
     } else if (pnode->test_function_type == 2) {
       if (mf2 || mfg2)
-        pgai = std::make_unique<ga_instruction_first_ind_tensor>
+        pgai = std::make_shared<ga_instruction_first_ind_tensor>
           (pnode->t, *pctx2, pnode->qdim2, mf2, mfg2);
     } else if (pnode->test_function_type == 3) {
       if ((mf1 || mfg1) && (mf2 || mfg2))
-        pgai = std::make_unique<ga_instruction_two_first_ind_tensor>
+        pgai = std::make_shared<ga_instruction_two_first_ind_tensor>
           (pnode->t, *pctx1, *pctx2, pnode->qdim1, mf1, mfg1,
            pnode->qdim2, mf2, mfg2);
       else if (mf1 || mfg1)
-        pgai = std::make_unique<ga_instruction_first_ind_tensor>
+        pgai = std::make_shared<ga_instruction_first_ind_tensor>
           (pnode->t, *pctx1, pnode->qdim1, mf1, mfg1);
       else if (mf2 || mfg2)
-        pgai = std::make_unique<ga_instruction_second_ind_tensor>
+        pgai = std::make_shared<ga_instruction_second_ind_tensor>
           (pnode->t, *pctx2, pnode->qdim2, mf2, mfg2);
     }
     if (pgai) rmi.instructions.push_back(std::move(pgai));
@@ -9130,10 +9130,10 @@ namespace getfem {
         if (sub_tree_are_equal(pnode, *it, workspace, 1)) {
           // cout << "confirmed no transpose" << endl;
           if (pnode->t.size() == 1) {
-            pgai = std::make_unique<ga_instruction_copy_scalar>
+            pgai = std::make_shared<ga_instruction_copy_scalar>
 	      (pnode->t[0], (*it)->t[0]);
           } else {
-            pgai = std::make_unique<ga_instruction_copy_tensor>
+            pgai = std::make_shared<ga_instruction_copy_tensor>
 	      (pnode->t, (*it)->t);
           }
           rmi.instructions.push_back(std::move(pgai));
@@ -9142,10 +9142,10 @@ namespace getfem {
         if (sub_tree_are_equal(pnode, *it, workspace, 2)) {
           // cout << "confirmed with transpose" << endl;
           if (pnode->nb_test_functions() == 2) {
-            pgai = std::make_unique<ga_instruction_transpose_test>
+            pgai = std::make_shared<ga_instruction_transpose_test>
 	      (pnode->t, (*it)->t);
           } else {
-            pgai = std::make_unique<ga_instruction_copy_tensor>
+            pgai = std::make_shared<ga_instruction_copy_tensor>
 	      (pnode->t, (*it)->t);
           }
           rmi.instructions.push_back(std::move(pgai));
@@ -9174,11 +9174,11 @@ namespace getfem {
     if (pnode->node_type == GA_NODE_INTERPOLATE_FILTER) {
       const std::string &intn = pnode->interpolate_name;
       ga_instruction_set::interpolate_info &inin = rmi.interpolate_infos[intn];
-      pgai = std::make_unique<ga_instruction_interpolate_filter>
+      pgai = std::make_shared<ga_instruction_interpolate_filter>
         (pnode->t, inin, pnode->nbc1,
          int(rmi.instructions.size() - interpolate_filter_inst));
       rmi.instructions[interpolate_filter_inst].swap(pgai);
-      pgai = std::make_unique<ga_instruction_copy_tensor>
+      pgai = std::make_shared<ga_instruction_copy_tensor>
 	(pnode->t, pnode->children[0]->t);
       rmi.instructions.push_back(std::move(pgai));
       ga_clear_node_list(pnode->children[0], rmi.node_list);
@@ -9208,12 +9208,12 @@ namespace getfem {
         GA_DEBUG_ASSERT(pnode->t.size() == 1, "dimensions mismatch");
         GMM_ASSERT1(pnode->nbc1 <= m.dim(),
                     "Bad index for X in expression");
-        pgai = std::make_unique<ga_instruction_X_component>
+        pgai = std::make_shared<ga_instruction_X_component>
             (pnode->t[0], gis.ctx, pnode->nbc1-1);
       } else {
         if (pnode->t.size() != m.dim())
           pnode->init_vector_tensor(m.dim());
-        pgai = std::make_unique<ga_instruction_X>(pnode->t, gis.ctx);
+        pgai = std::make_shared<ga_instruction_X>(pnode->t, gis.ctx);
       }
       rmi.instructions.push_back(std::move(pgai));
       break;
@@ -9222,7 +9222,7 @@ namespace getfem {
       GMM_ASSERT1(!function_case,
                   "No use of element_size is allowed in functions");
       if (pnode->t.size() != 1) pnode->init_scalar_tensor(0);
-      pgai = std::make_unique<ga_instruction_element_size>
+      pgai = std::make_shared<ga_instruction_element_size>
 	(pnode->t, gis.elt_size);
       gis.need_elt_size = true;
       rmi.instructions.push_back(std::move(pgai));
@@ -9231,14 +9231,14 @@ namespace getfem {
     case GA_NODE_ELT_K:
       GMM_ASSERT1(!function_case,
                   "No use of element_K is allowed in functions");
-      pgai = std::make_unique<ga_instruction_element_K>(pnode->t, gis.ctx);
+      pgai = std::make_shared<ga_instruction_element_K>(pnode->t, gis.ctx);
       rmi.instructions.push_back(std::move(pgai));
       break;
 
     case GA_NODE_ELT_B:
       GMM_ASSERT1(!function_case,
                   "No use of element_B is allowed in functions");
-      pgai = std::make_unique<ga_instruction_element_B>(pnode->t, gis.ctx);
+      pgai = std::make_shared<ga_instruction_element_B>(pnode->t, gis.ctx);
       rmi.instructions.push_back(std::move(pgai));
       break;
 
@@ -9247,7 +9247,7 @@ namespace getfem {
                   "No use of Normal is allowed in functions");
       if (pnode->t.size() != m.dim())
         pnode->init_vector_tensor(m.dim());
-      pgai = std::make_unique<ga_instruction_Normal>(pnode->t, gis.Normal);
+      pgai = std::make_shared<ga_instruction_Normal>(pnode->t, gis.Normal);
       rmi.instructions.push_back(std::move(pgai));
       break;
 
@@ -9256,7 +9256,7 @@ namespace getfem {
                   "No use of Interpolate is allowed in functions");
       if (pnode->t.size() != m.dim())
         pnode->init_vector_tensor(m.dim());
-      pgai = std::make_unique<ga_instruction_Normal>(pnode->t,
+      pgai = std::make_shared<ga_instruction_Normal>(pnode->t,
                     rmi.interpolate_infos[pnode->interpolate_name].Normal);
       rmi.instructions.push_back(std::move(pgai));
       break;
@@ -9266,7 +9266,7 @@ namespace getfem {
                   "No use of Interpolate is allowed in functions");
       if (pnode->t.size() != m.dim())
         pnode->init_vector_tensor(m.dim());
-      pgai = std::make_unique<ga_instruction_Normal>(pnode->t,
+      pgai = std::make_shared<ga_instruction_Normal>(pnode->t,
                     rmi.interpolate_infos[pnode->interpolate_name].pt_y);
       rmi.instructions.push_back(std::move(pgai));
       break;
@@ -9301,10 +9301,10 @@ namespace getfem {
         GMM_ASSERT1(!imd, "No integration method data is allowed in "
                     "function expression");
         if (gmm::vect_size(workspace.value(pnode->name)) == 1)
-          pgai = std::make_unique<ga_instruction_copy_scalar>
+          pgai = std::make_shared<ga_instruction_copy_scalar>
             (pnode->t[0], (workspace.value(pnode->name))[0]);
         else
-          pgai = std::make_unique<ga_instruction_copy_vect>
+          pgai = std::make_shared<ga_instruction_copy_vect>
             (pnode->t.as_vector(), workspace.value(pnode->name));
         rmi.instructions.push_back(std::move(pgai));
       } else {
@@ -9312,7 +9312,7 @@ namespace getfem {
         const im_data *imd = workspace.associated_im_data(pnode->name);
 
         if (imd) {
-          pgai = std::make_unique<ga_instruction_extract_local_im_data>
+          pgai = std::make_shared<ga_instruction_extract_local_im_data>
             (pnode->t, *imd, workspace.value(pnode->name), gis.pai, gis.ctx,
              workspace.qdim(pnode->name));
           rmi.instructions.push_back(std::move(pgai));
@@ -9333,7 +9333,7 @@ namespace getfem {
             rmi.local_dofs_hierarchy[pnode->name].push_back(if_hierarchy);
             extend_variable_in_gis(workspace, pnode->name, gis);
             // cout << "local dof of " << pnode->name << endl;
-            pgai = std::make_unique<ga_instruction_slice_local_dofs>
+            pgai = std::make_shared<ga_instruction_slice_local_dofs>
               (*mf, *(gis.extended_vars[pnode->name]), gis.ctx,
                rmi.local_dofs[pnode->name]);
             rmi.instructions.push_back(std::move(pgai));
@@ -9344,7 +9344,7 @@ namespace getfem {
               !(if_hierarchy.is_compatible(rmi.pfps_hierarchy[mf]))) {
             rmi.pfps[mf] = 0;
             rmi.pfps_hierarchy[mf].push_back(if_hierarchy);
-            pgai = std::make_unique<ga_instruction_update_pfp>
+            pgai = std::make_shared<ga_instruction_update_pfp>
               (*mf,  rmi.pfps[mf], gis.ctx, gis.fp_pool);
             rmi.instructions.push_back(std::move(pgai));
           }
@@ -9358,7 +9358,7 @@ namespace getfem {
             if (rmi.base.find(mf) == rmi.base.end() ||
                !(if_hierarchy.is_compatible(rmi.base_hierarchy[mf]))) {
               rmi.base_hierarchy[mf].push_back(if_hierarchy);
-              pgai = std::make_unique<ga_instruction_val_base>
+              pgai = std::make_shared<ga_instruction_val_base>
                 (rmi.base[mf], gis.ctx, *mf, rmi.pfps[mf]);
             }
             break;
@@ -9366,7 +9366,7 @@ namespace getfem {
             if (rmi.xfem_plus_base.find(mf) == rmi.xfem_plus_base.end() ||
              !(if_hierarchy.is_compatible(rmi.xfem_plus_base_hierarchy[mf]))) {
               rmi.xfem_plus_base_hierarchy[mf].push_back(if_hierarchy);
-              pgai = std::make_unique<ga_instruction_xfem_plus_val_base>
+              pgai = std::make_shared<ga_instruction_xfem_plus_val_base>
                 (rmi.xfem_plus_base[mf], gis.ctx, *mf, rmi.pfps[mf]);
             }
             break;
@@ -9374,7 +9374,7 @@ namespace getfem {
             if (rmi.xfem_minus_base.find(mf) == rmi.xfem_minus_base.end() ||
             !(if_hierarchy.is_compatible(rmi.xfem_minus_base_hierarchy[mf]))) {
               rmi.xfem_minus_base_hierarchy[mf].push_back(if_hierarchy);
-              pgai = std::make_unique<ga_instruction_xfem_minus_val_base>
+              pgai = std::make_shared<ga_instruction_xfem_minus_val_base>
                 (rmi.xfem_minus_base[mf], gis.ctx, *mf, rmi.pfps[mf]);
             }
             break;
@@ -9383,7 +9383,7 @@ namespace getfem {
             if (rmi.grad.find(mf) == rmi.grad.end() ||
                 !(if_hierarchy.is_compatible(rmi.grad_hierarchy[mf]))) {
               rmi.grad_hierarchy[mf].push_back(if_hierarchy);
-              pgai = std::make_unique<ga_instruction_grad_base>
+              pgai = std::make_shared<ga_instruction_grad_base>
                 (rmi.grad[mf], gis.ctx, *mf, rmi.pfps[mf]);
             }
             break;
@@ -9391,7 +9391,7 @@ namespace getfem {
             if (rmi.xfem_plus_grad.find(mf) == rmi.xfem_plus_grad.end() ||
              !(if_hierarchy.is_compatible(rmi.xfem_plus_grad_hierarchy[mf]))) {
               rmi.xfem_plus_grad_hierarchy[mf].push_back(if_hierarchy);
-              pgai = std::make_unique<ga_instruction_xfem_plus_grad_base>
+              pgai = std::make_shared<ga_instruction_xfem_plus_grad_base>
                 (rmi.xfem_plus_grad[mf], gis.ctx, *mf, rmi.pfps[mf]);
             }
             break;
@@ -9399,7 +9399,7 @@ namespace getfem {
             if (rmi.xfem_minus_grad.find(mf) == rmi.xfem_minus_grad.end() ||
             !(if_hierarchy.is_compatible(rmi.xfem_minus_grad_hierarchy[mf]))) {
               rmi.xfem_minus_grad_hierarchy[mf].push_back(if_hierarchy);
-              pgai = std::make_unique<ga_instruction_xfem_minus_grad_base>
+              pgai = std::make_shared<ga_instruction_xfem_minus_grad_base>
                 (rmi.xfem_minus_grad[mf], gis.ctx, *mf, rmi.pfps[mf]);
             }
             break;
@@ -9407,7 +9407,7 @@ namespace getfem {
             if (rmi.hess.find(mf) == rmi.hess.end() ||
                 !(if_hierarchy.is_compatible(rmi.hess_hierarchy[mf]))) {
               rmi.hess_hierarchy[mf].push_back(if_hierarchy);
-              pgai = std::make_unique<ga_instruction_hess_base>
+              pgai = std::make_shared<ga_instruction_hess_base>
                 (rmi.hess[mf], gis.ctx, *mf, rmi.pfps[mf]);
             }
             break;
@@ -9415,7 +9415,7 @@ namespace getfem {
             if (rmi.xfem_plus_hess.find(mf) == rmi.xfem_plus_hess.end() ||
              !(if_hierarchy.is_compatible(rmi.xfem_plus_hess_hierarchy[mf]))) {
               rmi.xfem_plus_hess_hierarchy[mf].push_back(if_hierarchy);
-              pgai = std::make_unique<ga_instruction_xfem_plus_hess_base>
+              pgai = std::make_shared<ga_instruction_xfem_plus_hess_base>
                 (rmi.xfem_plus_hess[mf], gis.ctx, *mf, rmi.pfps[mf]);
             }
             break;
@@ -9423,7 +9423,7 @@ namespace getfem {
             if (rmi.xfem_minus_hess.find(mf) == rmi.xfem_minus_hess.end() ||
             !(if_hierarchy.is_compatible(rmi.xfem_minus_hess_hierarchy[mf]))) {
               rmi.xfem_minus_hess_hierarchy[mf].push_back(if_hierarchy);
-              pgai = std::make_unique<ga_instruction_xfem_minus_hess_base>
+              pgai = std::make_shared<ga_instruction_xfem_minus_hess_base>
                 (rmi.xfem_minus_hess[mf], gis.ctx, *mf, rmi.pfps[mf]);
             }
             break;
@@ -9435,62 +9435,62 @@ namespace getfem {
           // The eval instruction
           switch (pnode->node_type) {
           case GA_NODE_VAL: // --> t(target_dim*Qmult)
-            pgai = std::make_unique<ga_instruction_val>
+            pgai = std::make_shared<ga_instruction_val>
               (pnode->t, rmi.base[mf],
                rmi.local_dofs[pnode->name], workspace.qdim(pnode->name));
             break;
           case GA_NODE_GRAD: // --> t(target_dim*Qmult,N)
-            pgai = std::make_unique<ga_instruction_grad>
+            pgai = std::make_shared<ga_instruction_grad>
               (pnode->t, rmi.grad[mf],
                rmi.local_dofs[pnode->name], workspace.qdim(pnode->name));
             break;
           case GA_NODE_HESS: // --> t(target_dim*Qmult,N,N)
-            pgai = std::make_unique<ga_instruction_hess>
+            pgai = std::make_shared<ga_instruction_hess>
               (pnode->t, rmi.hess[mf],
                rmi.local_dofs[pnode->name], workspace.qdim(pnode->name));
             break;
           case GA_NODE_DIVERG: // --> t(1)
-            pgai = std::make_unique<ga_instruction_diverg>
+            pgai = std::make_shared<ga_instruction_diverg>
               (pnode->t, rmi.grad[mf],
                rmi.local_dofs[pnode->name], workspace.qdim(pnode->name));
             break;
           case GA_NODE_XFEM_PLUS_VAL: // --> t(target_dim*Qmult)
-            pgai = std::make_unique<ga_instruction_val>
+            pgai = std::make_shared<ga_instruction_val>
               (pnode->t, rmi.xfem_plus_base[mf],
                rmi.local_dofs[pnode->name], workspace.qdim(pnode->name));
             break;
           case GA_NODE_XFEM_PLUS_GRAD: // --> t(target_dim*Qmult,N)
-            pgai = std::make_unique<ga_instruction_grad>
+            pgai = std::make_shared<ga_instruction_grad>
               (pnode->t, rmi.xfem_plus_grad[mf],
                rmi.local_dofs[pnode->name], workspace.qdim(pnode->name));
             break;
           case GA_NODE_XFEM_PLUS_HESS: // --> t(target_dim*Qmult,N,N)
-            pgai = std::make_unique<ga_instruction_hess>
+            pgai = std::make_shared<ga_instruction_hess>
               (pnode->t, rmi.xfem_plus_hess[mf],
                rmi.local_dofs[pnode->name], workspace.qdim(pnode->name));
             break;
           case GA_NODE_XFEM_PLUS_DIVERG: // --> t(1)
-            pgai = std::make_unique<ga_instruction_diverg>
+            pgai = std::make_shared<ga_instruction_diverg>
               (pnode->t, rmi.xfem_plus_grad[mf],
                rmi.local_dofs[pnode->name], workspace.qdim(pnode->name));
             break;
           case GA_NODE_XFEM_MINUS_VAL: // --> t(target_dim*Qmult)
-            pgai = std::make_unique<ga_instruction_val>
+            pgai = std::make_shared<ga_instruction_val>
               (pnode->t, rmi.xfem_minus_base[mf],
                rmi.local_dofs[pnode->name], workspace.qdim(pnode->name));
             break;
           case GA_NODE_XFEM_MINUS_GRAD: // --> t(target_dim*Qmult,N)
-            pgai = std::make_unique<ga_instruction_grad>
+            pgai = std::make_shared<ga_instruction_grad>
               (pnode->t, rmi.xfem_minus_grad[mf],
                rmi.local_dofs[pnode->name], workspace.qdim(pnode->name));
             break;
           case GA_NODE_XFEM_MINUS_HESS: // --> t(target_dim*Qmult,N,N)
-            pgai = std::make_unique<ga_instruction_hess>
+            pgai = std::make_shared<ga_instruction_hess>
               (pnode->t, rmi.xfem_minus_hess[mf],
                rmi.local_dofs[pnode->name], workspace.qdim(pnode->name));
             break;
           case GA_NODE_XFEM_MINUS_DIVERG: // --> t(1)
-            pgai = std::make_unique<ga_instruction_diverg>
+            pgai = std::make_shared<ga_instruction_diverg>
               (pnode->t, rmi.xfem_minus_grad[mf],
                rmi.local_dofs[pnode->name], workspace.qdim(pnode->name));
             break;
@@ -9498,7 +9498,7 @@ namespace getfem {
             { // --> t(target_dim*Qmult)
               ga_instruction_set::elementary_trans_info &eti
                 = rmi.elementary_trans_infos[pnode->elementary_name];
-              pgai = std::make_unique<ga_instruction_elementary_transformation_val>
+              pgai = std::make_shared<ga_instruction_elementary_transformation_val>
                 (pnode->t, rmi.base[mf],
                  rmi.local_dofs[pnode->name], workspace.qdim(pnode->name),
                  workspace.elementary_transformation(pnode->elementary_name),
@@ -9509,7 +9509,7 @@ namespace getfem {
             { // --> t(target_dim*Qmult,N)
               ga_instruction_set::elementary_trans_info &eti
                 = rmi.elementary_trans_infos[pnode->elementary_name];
-              pgai = std::make_unique<ga_instruction_elementary_transformation_grad>
+              pgai = std::make_shared<ga_instruction_elementary_transformation_grad>
                 (pnode->t, rmi.grad[mf],
                  rmi.local_dofs[pnode->name], workspace.qdim(pnode->name),
                  workspace.elementary_transformation(pnode->elementary_name),
@@ -9520,7 +9520,7 @@ namespace getfem {
             { // --> t(target_dim*Qmult,N,N)
               ga_instruction_set::elementary_trans_info &eti
                 = rmi.elementary_trans_infos[pnode->elementary_name];
-              pgai = std::make_unique<ga_instruction_elementary_transformation_hess>
+              pgai = std::make_shared<ga_instruction_elementary_transformation_hess>
                 (pnode->t, rmi.hess[mf],
                  rmi.local_dofs[pnode->name], workspace.qdim(pnode->name),
                  workspace.elementary_transformation(pnode->elementary_name),
@@ -9531,7 +9531,7 @@ namespace getfem {
             { // --> t(1)
               ga_instruction_set::elementary_trans_info &eti
                 = rmi.elementary_trans_infos[pnode->elementary_name];
-              pgai = std::make_unique<ga_instruction_elementary_transformation_diverg>
+              pgai = std::make_shared<ga_instruction_elementary_transformation_diverg>
                 (pnode->t, rmi.grad[mf],
                  rmi.local_dofs[pnode->name], workspace.qdim(pnode->name),
                  workspace.elementary_transformation(pnode->elementary_name),
@@ -9562,19 +9562,19 @@ namespace getfem {
         }
 
         if (pnode->node_type == GA_NODE_INTERPOLATE_VAL) {
-          pgai = std::make_unique<ga_instruction_interpolate_val> // --> t(target_dim*Qmult)
+          pgai = std::make_shared<ga_instruction_interpolate_val> // --> t(target_dim*Qmult)
             (pnode->t, m2, mfn, mfg, Un, Ug, *pctx, workspace.qdim(pnode->name),
              gis.ipt, gis.fp_pool, rmi.interpolate_infos[intn]);
         } else if (pnode->node_type == GA_NODE_INTERPOLATE_GRAD) {
-          pgai = std::make_unique<ga_instruction_interpolate_grad> // --> t(target_dim*Qmult,N)
+          pgai = std::make_shared<ga_instruction_interpolate_grad> // --> t(target_dim*Qmult,N)
             (pnode->t, m2, mfn, mfg, Un, Ug, *pctx, workspace.qdim(pnode->name),
              gis.ipt, gis.fp_pool, rmi.interpolate_infos[intn]);
         } else if (pnode->node_type == GA_NODE_INTERPOLATE_HESS) {
-          pgai = std::make_unique<ga_instruction_interpolate_hess> // --> t(target_dim*Qmult,N,N)
+          pgai = std::make_shared<ga_instruction_interpolate_hess> // --> t(target_dim*Qmult,N,N)
             (pnode->t, m2, mfn, mfg, Un, Ug, *pctx, workspace.qdim(pnode->name),
              gis.ipt, gis.fp_pool, rmi.interpolate_infos[intn]);
         } else { // --> t(1)
-          pgai = std::make_unique<ga_instruction_interpolate_diverg>
+          pgai = std::make_shared<ga_instruction_interpolate_diverg>
             (pnode->t, m2, mfn, mfg, Un, Ug, *pctx, workspace.qdim(pnode->name),
              gis.ipt, gis.fp_pool, rmi.interpolate_infos[intn]);
         }
@@ -9585,7 +9585,7 @@ namespace getfem {
     case GA_NODE_INTERPOLATE_DERIVATIVE:
       GMM_ASSERT1(!function_case,
                   "No use of Interpolate is allowed in functions");
-      pgai = std::make_unique<ga_instruction_copy_tensor_possibly_void>
+      pgai = std::make_shared<ga_instruction_copy_tensor_possibly_void>
         (pnode->t,
          rmi.interpolate_infos[pnode->interpolate_name_der]
          .derivatives[var_trans_pair(pnode->name, pnode->interpolate_name)]);
@@ -9615,7 +9615,7 @@ namespace getfem {
               !(if_hierarchy.is_compatible(rmi.pfps_hierarchy[mf]))) {
             rmi.pfps[mf] = 0;
             rmi.pfps_hierarchy[mf].push_back(if_hierarchy);
-            pgai = std::make_unique<ga_instruction_update_pfp>
+            pgai = std::make_shared<ga_instruction_update_pfp>
               (*mf,  rmi.pfps[mf], gis.ctx, gis.fp_pool);
             rmi.instructions.push_back(std::move(pgai));
           }
@@ -9627,7 +9627,7 @@ namespace getfem {
              if (rmi.base.find(mf) == rmi.base.end() ||
                 !(if_hierarchy.is_compatible(rmi.base_hierarchy[mf]))) {
               rmi.base_hierarchy[mf].push_back(if_hierarchy);
-              pgai = std::make_unique<ga_instruction_val_base>
+              pgai = std::make_shared<ga_instruction_val_base>
                 (rmi.base[mf], gis.ctx, *mf, rmi.pfps[mf]);
              }
              break;
@@ -9635,7 +9635,7 @@ namespace getfem {
             if (rmi.xfem_plus_base.find(mf) == rmi.xfem_plus_base.end() ||
              !(if_hierarchy.is_compatible(rmi.xfem_plus_base_hierarchy[mf]))) {
               rmi.xfem_plus_base_hierarchy[mf].push_back(if_hierarchy);
-              pgai = std::make_unique<ga_instruction_xfem_plus_val_base>
+              pgai = std::make_shared<ga_instruction_xfem_plus_val_base>
                 (rmi.xfem_plus_base[mf], gis.ctx, *mf, rmi.pfps[mf]);
             }
             break;
@@ -9643,7 +9643,7 @@ namespace getfem {
             if (rmi.xfem_minus_base.find(mf) == rmi.xfem_minus_base.end() ||
             !(if_hierarchy.is_compatible(rmi.xfem_minus_base_hierarchy[mf]))) {
               rmi.xfem_minus_base_hierarchy[mf].push_back(if_hierarchy);
-              pgai = std::make_unique<ga_instruction_xfem_minus_val_base>
+              pgai = std::make_shared<ga_instruction_xfem_minus_val_base>
                 (rmi.xfem_minus_base[mf], gis.ctx, *mf, rmi.pfps[mf]);
             }
             break;
@@ -9653,7 +9653,7 @@ namespace getfem {
             if (rmi.grad.find(mf) == rmi.grad.end() ||
                 !(if_hierarchy.is_compatible(rmi.grad_hierarchy[mf]))) {
               rmi.grad_hierarchy[mf].push_back(if_hierarchy);
-              pgai = std::make_unique<ga_instruction_grad_base>
+              pgai = std::make_shared<ga_instruction_grad_base>
                 (rmi.grad[mf], gis.ctx, *mf, rmi.pfps[mf]);
             }
             break;
@@ -9661,7 +9661,7 @@ namespace getfem {
             if (rmi.xfem_plus_grad.find(mf) == rmi.xfem_plus_grad.end() ||
              !(if_hierarchy.is_compatible(rmi.xfem_plus_grad_hierarchy[mf]))) {
               rmi.xfem_plus_grad_hierarchy[mf].push_back(if_hierarchy);
-              pgai = std::make_unique<ga_instruction_xfem_plus_grad_base>
+              pgai = std::make_shared<ga_instruction_xfem_plus_grad_base>
                 (rmi.xfem_plus_grad[mf], gis.ctx, *mf, rmi.pfps[mf]);
             }
             break;
@@ -9670,7 +9670,7 @@ namespace getfem {
             if (rmi.xfem_minus_grad.find(mf) == rmi.xfem_minus_grad.end() ||
             !(if_hierarchy.is_compatible(rmi.xfem_minus_grad_hierarchy[mf]))) {
               rmi.xfem_minus_grad_hierarchy[mf].push_back(if_hierarchy);
-              pgai = std::make_unique<ga_instruction_xfem_minus_grad_base>
+              pgai = std::make_shared<ga_instruction_xfem_minus_grad_base>
                 (rmi.xfem_minus_grad[mf], gis.ctx, *mf, rmi.pfps[mf]);
             }
             break;
@@ -9678,7 +9678,7 @@ namespace getfem {
             if (rmi.hess.find(mf) == rmi.hess.end() ||
                 !(if_hierarchy.is_compatible(rmi.hess_hierarchy[mf]))) {
               rmi.hess_hierarchy[mf].push_back(if_hierarchy);
-              pgai = std::make_unique<ga_instruction_hess_base>
+              pgai = std::make_shared<ga_instruction_hess_base>
                 (rmi.hess[mf], gis.ctx, *mf, rmi.pfps[mf]);
             }
             break;
@@ -9686,7 +9686,7 @@ namespace getfem {
             if (rmi.xfem_plus_hess.find(mf) == rmi.xfem_plus_hess.end() ||
              !(if_hierarchy.is_compatible(rmi.xfem_plus_hess_hierarchy[mf]))) {
               rmi.xfem_plus_hess_hierarchy[mf].push_back(if_hierarchy);
-              pgai = std::make_unique<ga_instruction_xfem_plus_hess_base>
+              pgai = std::make_shared<ga_instruction_xfem_plus_hess_base>
                 (rmi.xfem_plus_hess[mf], gis.ctx, *mf, rmi.pfps[mf]);
             }
             break;
@@ -9694,7 +9694,7 @@ namespace getfem {
             if (rmi.xfem_minus_hess.find(mf) == rmi.xfem_minus_hess.end() ||
             !(if_hierarchy.is_compatible(rmi.xfem_minus_hess_hierarchy[mf]))) {
               rmi.xfem_minus_hess_hierarchy[mf].push_back(if_hierarchy);
-              pgai = std::make_unique<ga_instruction_xfem_minus_hess_base>
+              pgai = std::make_shared<ga_instruction_xfem_minus_hess_base>
                 (rmi.xfem_minus_hess[mf], gis.ctx, *mf, rmi.pfps[mf]);
             }
             break;
@@ -9706,58 +9706,58 @@ namespace getfem {
           // The copy of the real_base_value
           switch(pnode->node_type) {
           case GA_NODE_VAL_TEST: // --> t(Qmult*ndof,Qmult*target_dim)
-            pgai = std::make_unique<ga_instruction_copy_val_base>
+            pgai = std::make_shared<ga_instruction_copy_val_base>
               (pnode->t, rmi.base[mf], mf->get_qdim());
             break;
           case GA_NODE_GRAD_TEST: // --> t(Qmult*ndof,Qmult*target_dim,N)
-            pgai = std::make_unique<ga_instruction_copy_grad_base>
+            pgai = std::make_shared<ga_instruction_copy_grad_base>
               (pnode->t, rmi.grad[mf], mf->get_qdim());
             break;
           case GA_NODE_HESS_TEST: // --> t(Qmult*ndof,Qmult*target_dim,N,N)
-            pgai = std::make_unique<ga_instruction_copy_hess_base>
+            pgai = std::make_shared<ga_instruction_copy_hess_base>
               (pnode->t, rmi.hess[mf], mf->get_qdim());
             break;
           case GA_NODE_DIVERG_TEST: // --> t(Qmult*ndof)
-            pgai = std::make_unique<ga_instruction_copy_diverg_base>
+            pgai = std::make_shared<ga_instruction_copy_diverg_base>
               (pnode->t, rmi.grad[mf], mf->get_qdim());
             break;
           case GA_NODE_XFEM_PLUS_VAL_TEST: // -->t(Qmult*ndof,Qmult*target_dim)
-            pgai = std::make_unique<ga_instruction_copy_val_base>
+            pgai = std::make_shared<ga_instruction_copy_val_base>
               (pnode->t, rmi.xfem_plus_base[mf], mf->get_qdim());
             break;
           case GA_NODE_XFEM_PLUS_GRAD_TEST: // --> t(Qmult*ndof,Qmult*target_dim,N)
-            pgai = std::make_unique<ga_instruction_copy_grad_base>
+            pgai = std::make_shared<ga_instruction_copy_grad_base>
               (pnode->t, rmi.xfem_plus_grad[mf], mf->get_qdim());
             break;
           case GA_NODE_XFEM_PLUS_HESS_TEST: // --> t(Qmult*ndof,Qmult*target_dim,N,N)
-            pgai = std::make_unique<ga_instruction_copy_hess_base>
+            pgai = std::make_shared<ga_instruction_copy_hess_base>
               (pnode->t, rmi.xfem_plus_hess[mf], mf->get_qdim());
             break;
           case GA_NODE_XFEM_PLUS_DIVERG_TEST: // --> t(Qmult*ndof)
-            pgai = std::make_unique<ga_instruction_copy_diverg_base>
+            pgai = std::make_shared<ga_instruction_copy_diverg_base>
               (pnode->t, rmi.xfem_plus_grad[mf], mf->get_qdim());
             break;
           case GA_NODE_XFEM_MINUS_VAL_TEST: // -->t(Qmult*ndof,Qmult*target_dim)
-            pgai = std::make_unique<ga_instruction_copy_val_base>
+            pgai = std::make_shared<ga_instruction_copy_val_base>
               (pnode->t, rmi.xfem_minus_base[mf], mf->get_qdim());
             break;
           case GA_NODE_XFEM_MINUS_GRAD_TEST: // --> t(Qmult*ndof,Qmult*target_dim,N)
-            pgai = std::make_unique<ga_instruction_copy_grad_base>
+            pgai = std::make_shared<ga_instruction_copy_grad_base>
               (pnode->t, rmi.xfem_minus_grad[mf], mf->get_qdim());
             break;
           case GA_NODE_XFEM_MINUS_HESS_TEST: // --> t(Qmult*ndof,Qmult*target_dim,N,N)
-            pgai = std::make_unique<ga_instruction_copy_hess_base>
+            pgai = std::make_shared<ga_instruction_copy_hess_base>
               (pnode->t, rmi.xfem_minus_hess[mf], mf->get_qdim());
             break;
           case GA_NODE_XFEM_MINUS_DIVERG_TEST: // --> t(Qmult*ndof)
-            pgai = std::make_unique<ga_instruction_copy_diverg_base>
+            pgai = std::make_shared<ga_instruction_copy_diverg_base>
               (pnode->t, rmi.xfem_minus_grad[mf], mf->get_qdim());
             break;
           case GA_NODE_ELEMENTARY_VAL_TEST:
             { // --> t(Qmult*ndof,Qmult*target_dim)
               ga_instruction_set::elementary_trans_info &eti
                 = rmi.elementary_trans_infos[pnode->elementary_name];
-              pgai = std::make_unique<ga_instruction_elementary_transformation_val_base>
+              pgai = std::make_shared<ga_instruction_elementary_transformation_val_base>
                 (pnode->t, rmi.base[mf], mf->get_qdim(),
                  workspace.elementary_transformation(pnode->elementary_name),
                  *mf, gis.ctx, eti.M, &(eti.mf), eti.icv);
@@ -9767,7 +9767,7 @@ namespace getfem {
             { // --> t(Qmult*ndof,Qmult*target_dim,N)
               ga_instruction_set::elementary_trans_info &eti
                 = rmi.elementary_trans_infos[pnode->elementary_name];
-              pgai = std::make_unique<ga_instruction_elementary_transformation_grad_base>
+              pgai = std::make_shared<ga_instruction_elementary_transformation_grad_base>
                 (pnode->t, rmi.grad[mf], mf->get_qdim(),
                  workspace.elementary_transformation(pnode->elementary_name),
                  *mf, gis.ctx, eti.M, &(eti.mf), eti.icv);
@@ -9777,7 +9777,7 @@ namespace getfem {
             { // --> t(Qmult*ndof,Qmult*target_dim,N,N)
               ga_instruction_set::elementary_trans_info &eti
                 = rmi.elementary_trans_infos[pnode->elementary_name];
-              pgai = std::make_unique<ga_instruction_elementary_transformation_hess_base>
+              pgai = std::make_shared<ga_instruction_elementary_transformation_hess_base>
                 (pnode->t, rmi.hess[mf], mf->get_qdim(),
                  workspace.elementary_transformation(pnode->elementary_name),
                  *mf, gis.ctx, eti.M, &(eti.mf), eti.icv);
@@ -9787,7 +9787,7 @@ namespace getfem {
             { // --> t(Qmult*ndof)
               ga_instruction_set::elementary_trans_info &eti
                 = rmi.elementary_trans_infos[pnode->elementary_name];
-              pgai = std::make_unique<ga_instruction_elementary_transformation_diverg_base>
+              pgai = std::make_shared<ga_instruction_elementary_transformation_diverg_base>
                 (pnode->t, rmi.grad[mf], mf->get_qdim(),
                  workspace.elementary_transformation(pnode->elementary_name),
                  *mf, gis.ctx, eti.M, &(eti.mf), eti.icv);
@@ -9818,22 +9818,22 @@ namespace getfem {
 
         if (pnode->node_type == GA_NODE_INTERPOLATE_VAL_TEST) {
           // --> t(Qmult*ndof,Qmult*target_dim)
-          pgai = std::make_unique<ga_instruction_interpolate_val_base>
+          pgai = std::make_shared<ga_instruction_interpolate_val_base>
             (pnode->t, m2, mfn, mfg, *pctx, workspace.qdim(pnode->name),
              gis.ipt, gis.fp_pool, rmi.interpolate_infos[intn]);
         } else if (pnode->node_type == GA_NODE_INTERPOLATE_GRAD_TEST) {
            // --> t(Qmult*ndof,Qmult*target_dim,N)
-          pgai = std::make_unique<ga_instruction_interpolate_grad_base>
+          pgai = std::make_shared<ga_instruction_interpolate_grad_base>
             (pnode->t, m2, mfn, mfg, *pctx, workspace.qdim(pnode->name),
              gis.ipt, gis.fp_pool, rmi.interpolate_infos[intn]);
         } else if (pnode->node_type == GA_NODE_INTERPOLATE_HESS_TEST) {
            // --> t(Qmult*ndof,Qmult*target_dim,N,N)
-          pgai = std::make_unique<ga_instruction_interpolate_hess_base>
+          pgai = std::make_shared<ga_instruction_interpolate_hess_base>
             (pnode->t, m2, mfn, mfg, *pctx, workspace.qdim(pnode->name),
              gis.ipt, gis.fp_pool, rmi.interpolate_infos[intn]);
         } else { // if (pnode->node_type == GA_NODE_INTERPOLATE_DIVERG_TEST) {
            // --> t(Qmult*ndof)
-          pgai = std::make_unique<ga_instruction_interpolate_diverg_base>
+          pgai = std::make_shared<ga_instruction_interpolate_diverg_base>
             (pnode->t, m2, mfn, mfg, *pctx, workspace.qdim(pnode->name),
              gis.ipt, gis.fp_pool, rmi.interpolate_infos[intn]);
         }
@@ -9850,10 +9850,10 @@ namespace getfem {
                            "Internal error: child0 not scalar");
            GA_DEBUG_ASSERT(child1->t.size() == 1,
                            "Internal error: child1 not scalar");
-           pgai = std::make_unique<ga_instruction_scalar_add>
+           pgai = std::make_shared<ga_instruction_scalar_add>
              (pnode->t[0], child0->t[0], child1->t[0]);
          } else {
-           pgai = std::make_unique<ga_instruction_add>
+           pgai = std::make_shared<ga_instruction_add>
 	     (pnode->t, child0->t, child1->t);
          }
          rmi.instructions.push_back(std::move(pgai));
@@ -9867,10 +9867,10 @@ namespace getfem {
                            "Internal error: child0 not scalar");
            GA_DEBUG_ASSERT(child1->t.size() == 1,
                            "Internal error: child1 not scalar");
-           pgai = std::make_unique<ga_instruction_scalar_sub>
+           pgai = std::make_shared<ga_instruction_scalar_sub>
              (pnode->t[0], child0->t[0], child1->t[0]);
          } else {
-           pgai = std::make_unique<ga_instruction_sub>
+           pgai = std::make_shared<ga_instruction_sub>
 	     (pnode->t, child0->t, child1->t);
          }
          rmi.instructions.push_back(std::move(pgai));
@@ -9879,10 +9879,10 @@ namespace getfem {
        case GA_UNARY_MINUS:
          if (pnode->t.size() == 1) {
            GA_DEBUG_ASSERT(child0->t.size() == 1, "Internal error");
-           pgai = std::make_unique<ga_instruction_scalar_scalar_mult>
+           pgai = std::make_shared<ga_instruction_scalar_scalar_mult>
              (pnode->t[0], child0->t[0], minus);
          } else {
-           pgai = std::make_unique<ga_instruction_scalar_mult>
+           pgai = std::make_shared<ga_instruction_scalar_mult>
 	     (pnode->t, child0->t, minus);
          }
          rmi.instructions.push_back(std::move(pgai));
@@ -9901,25 +9901,25 @@ namespace getfem {
                child0->t.size() == 1 || child1->t.size() == 1) {
 
              if (child0->t.size() == 1 && child1->t.size() == 1) {
-               pgai = std::make_unique<ga_instruction_scalar_scalar_mult>
+               pgai = std::make_shared<ga_instruction_scalar_scalar_mult>
                  (pnode->t[0], child0->t[0], child1->t[0]);
              }
              else if (child0->t.size() == 1)
-               pgai = std::make_unique<ga_instruction_scalar_mult>
+               pgai = std::make_shared<ga_instruction_scalar_mult>
                  (pnode->t, child1->t, child0->t[0]);
              else if (child1->t.size() == 1)
-               pgai = std::make_unique<ga_instruction_scalar_mult>
+               pgai = std::make_shared<ga_instruction_scalar_mult>
                  (pnode->t, child0->t, child1->t[0]);
 	     else if (pnode->test_function_type < 3) {
                if (child0->tensor_proper_size() == 1)
-		 pgai = std::make_unique<ga_instruction_simple_tmult>
+		 pgai = std::make_shared<ga_instruction_simple_tmult>
                    (pnode->t, child0->t, child1->t);
 	       else {
                  if (s2 == 2) // Unroll loop test ... to be extended
-                   pgai = std::make_unique<ga_instruction_reduction_2>
+                   pgai = std::make_shared<ga_instruction_reduction_2>
                      (pnode->t, child0->t, child1->t);
                  else
-                   pgai = std::make_unique<ga_instruction_reduction>
+                   pgai = std::make_shared<ga_instruction_reduction>
                      (pnode->t, child0->t, child1->t, s2);
                }
              } else {
@@ -9928,33 +9928,33 @@ namespace getfem {
                  if (child1->test_function_type == 3 ||
                      child1->tensor_proper_size() <= s2) {
                    if (s2 == 2) // Unroll loop test ... to be extended
-                     pgai = std::make_unique<ga_instruction_reduction_2>
+                     pgai = std::make_shared<ga_instruction_reduction_2>
                        (pnode->t, child0->t, child1->t);
                    else
-                     pgai = std::make_unique<ga_instruction_reduction>
+                     pgai = std::make_shared<ga_instruction_reduction>
                        (pnode->t, child0->t, child1->t, s2);
                  } else {
-                   pgai = std::make_unique<ga_instruction_spec_reduction>
+                   pgai = std::make_shared<ga_instruction_spec_reduction>
                      (pnode->t, child1->t, child0->t, s2);
                  }
                } else if (child1->test_function_type == 0 ||
                           (child0->tensor_proper_size() == s2 &&
                            child1->tensor_proper_size() == s2)) {
                  if (s2 == 2) // Unroll loop test ... to be extended
-                   pgai = std::make_unique<ga_instruction_reduction_2>
+                   pgai = std::make_shared<ga_instruction_reduction_2>
                      (pnode->t, child1->t, child0->t);
                  else
-                   pgai = std::make_unique<ga_instruction_reduction>
+                   pgai = std::make_shared<ga_instruction_reduction>
                      (pnode->t, child1->t, child0->t, s2);
                } else {
                  if (child0->tensor_proper_size() == s2)
-                   pgai = std::make_unique<ga_instruction_reduction>
+                   pgai = std::make_shared<ga_instruction_reduction>
                      (pnode->t, child1->t, child0->t, s2);
                  else if (child1->tensor_proper_size() == s2)
-                   pgai = std::make_unique<ga_instruction_spec_reduction>
+                   pgai = std::make_shared<ga_instruction_spec_reduction>
                      (pnode->t, child0->t, child1->t, s2);
                  else
-                   pgai = std::make_unique<ga_instruction_spec2_reduction>
+                   pgai = std::make_shared<ga_instruction_spec2_reduction>
                      (pnode->t, child0->t, child1->t, s2);
                }
              }
@@ -9964,43 +9964,43 @@ namespace getfem {
 
              if (pnode->test_function_type < 3) {
                if (child1->tensor_proper_size() == 1)
-                 pgai = std::make_unique<ga_instruction_simple_tmult>
+                 pgai = std::make_shared<ga_instruction_simple_tmult>
                    (pnode->t, child1->t, child0->t);
                else if (child0->tensor_proper_size() == 1)
-                 pgai = std::make_unique<ga_instruction_simple_tmult>
+                 pgai = std::make_shared<ga_instruction_simple_tmult>
                    (pnode->t, child0->t, child1->t);
                else {
                  if (dim0 == 2)
-                   pgai = std::make_unique<ga_instruction_matrix_mult>
+                   pgai = std::make_shared<ga_instruction_matrix_mult>
                      (pnode->t, child0->t, child1->t);
                }
              } else {
                if (child1->tensor_proper_size() == 1) {
                  if (child1->test_function_type == 0 ||
                      child1->test_function_type == 1)
-                   pgai = std::make_unique<ga_instruction_simple_tmult>
+                   pgai = std::make_shared<ga_instruction_simple_tmult>
                      (pnode->t, child1->t, child0->t);
                  else
-                   pgai = std::make_unique<ga_instruction_spec_tmult>
+                   pgai = std::make_shared<ga_instruction_spec_tmult>
                      (pnode->t, child0->t, child1->t,
                       child0->tensor_proper_size(),
                       child1->tensor_proper_size());
                } else if (child0->tensor_proper_size() == 1) {
                  if (child0->test_function_type == 0 ||
                      child0->test_function_type == 1)
-                   pgai = std::make_unique<ga_instruction_simple_tmult>
+                   pgai = std::make_shared<ga_instruction_simple_tmult>
                      (pnode->t, child0->t, child1->t);
                  else
-                   pgai = std::make_unique<ga_instruction_spec_tmult>
+                   pgai = std::make_shared<ga_instruction_spec_tmult>
                      (pnode->t, child1->t, child0->t,
                       child1->tensor_proper_size(),
                       child0->tensor_proper_size());
                } else if (dim0 == 2) {
                  if (child1->test_function_type != 2)
-                   pgai = std::make_unique<ga_instruction_matrix_mult>
+                   pgai = std::make_shared<ga_instruction_matrix_mult>
                      (pnode->t, child0->t, child1->t);
                  else
-                   pgai = std::make_unique<ga_instruction_matrix_mult_spec>
+                   pgai = std::make_shared<ga_instruction_matrix_mult_spec>
                      (pnode->t, child0->t, child1->t);
                }
              }
@@ -10012,20 +10012,20 @@ namespace getfem {
 
        case GA_DIV:
          if (child0->t.size() == 1 && child1->t.size() == 1) {
-           pgai = std::make_unique<ga_instruction_scalar_scalar_div>
+           pgai = std::make_shared<ga_instruction_scalar_scalar_div>
              (pnode->t[0], child0->t[0], child1->t[0]);
          } else if (child1->t.size() == 1) {
-           pgai = std::make_unique<ga_instruction_scalar_div>
+           pgai = std::make_shared<ga_instruction_scalar_div>
              (pnode->t, child0->t, child1->t[0]);
          } else GMM_ASSERT1(false, "Internal error");
          rmi.instructions.push_back(std::move(pgai));
          break;
 
        case GA_PRINT:
-         pgai = std::make_unique<ga_instruction_copy_tensor>
+         pgai = std::make_shared<ga_instruction_copy_tensor>
 	   (pnode->t, child0->t);
          rmi.instructions.push_back(std::move(pgai));
-         pgai = std::make_unique<ga_instruction_print_tensor>
+         pgai = std::make_shared<ga_instruction_print_tensor>
 	   (pnode->t, child0, gis.ctx, gis.nbpt, gis.ipt);
          rmi.instructions.push_back(std::move(pgai));
          break;
@@ -10033,7 +10033,7 @@ namespace getfem {
        case GA_TRACE:
          {
            size_type N = (child0->tensor_proper_size() == 1) ? 1:size0.back();
-           pgai = std::make_unique<ga_instruction_trace>
+           pgai = std::make_shared<ga_instruction_trace>
 	     (pnode->t, child0->t, N);
            rmi.instructions.push_back(std::move(pgai));
          }
@@ -10042,7 +10042,7 @@ namespace getfem {
        case GA_DEVIATOR:
          {
            size_type N = (child0->tensor_proper_size() == 1) ? 1:size0.back();
-           pgai = std::make_unique<ga_instruction_deviator>
+           pgai = std::make_shared<ga_instruction_deviator>
 	     (pnode->t, child0->t, N);
            rmi.instructions.push_back(std::move(pgai));
          }
@@ -10050,11 +10050,11 @@ namespace getfem {
 
        case GA_QUOTE:
          if (pnode->tensor_proper_size() != 1) {
-           pgai = std::make_unique<ga_instruction_transpose>
+           pgai = std::make_shared<ga_instruction_transpose>
 	     (pnode->t, child0->t);
            rmi.instructions.push_back(std::move(pgai));
          } else {
-           pgai = std::make_unique<ga_instruction_copy_tensor>
+           pgai = std::make_shared<ga_instruction_copy_tensor>
 	     (pnode->t, child0->t);
            rmi.instructions.push_back(std::move(pgai));
          }
@@ -10063,25 +10063,25 @@ namespace getfem {
        case GA_DOTMULT:
 
          if (child0->t.size() == 1 && child1->t.size() == 1) {
-           pgai = std::make_unique<ga_instruction_scalar_scalar_mult>
+           pgai = std::make_shared<ga_instruction_scalar_scalar_mult>
              (pnode->t[0], child0->t[0], child1->t[0]);
          } else if (child0->t.size() == 1)
-           pgai = std::make_unique<ga_instruction_scalar_mult>
+           pgai = std::make_shared<ga_instruction_scalar_mult>
              (pnode->t, child1->t, child0->t[0]);
          else if (child1->t.size() == 1)
-           pgai = std::make_unique<ga_instruction_scalar_mult>
+           pgai = std::make_shared<ga_instruction_scalar_mult>
              (pnode->t, child0->t, child1->t[0]);
          else if (child1->test_function_type == 0)
-           pgai = std::make_unique<ga_instruction_dotmult>
+           pgai = std::make_shared<ga_instruction_dotmult>
              (pnode->t, child0->t, child1->t);
          else if (child0->test_function_type == 0)
-           pgai = std::make_unique<ga_instruction_dotmult>
+           pgai = std::make_shared<ga_instruction_dotmult>
              (pnode->t, child1->t, child0->t);
          else if (child0->test_function_type == 1)
-           pgai = std::make_unique<ga_instruction_dotmult_spec>
+           pgai = std::make_shared<ga_instruction_dotmult_spec>
              (pnode->t, child0->t, child1->t);
          else
-           pgai = std::make_unique<ga_instruction_dotmult_spec>
+           pgai = std::make_shared<ga_instruction_dotmult_spec>
              (pnode->t, child1->t, child0->t);
 
          rmi.instructions.push_back(std::move(pgai));
@@ -10090,13 +10090,13 @@ namespace getfem {
 
        case GA_DOTDIV:
          if (child0->t.size() == 1 && child1->t.size() == 1) {
-           pgai = std::make_unique<ga_instruction_scalar_scalar_div>
+           pgai = std::make_shared<ga_instruction_scalar_scalar_div>
              (pnode->t[0], child0->t[0], child1->t[0]);
          } else if (child1->t.size() == 1) {
-           pgai = std::make_unique<ga_instruction_scalar_div>
+           pgai = std::make_shared<ga_instruction_scalar_div>
              (pnode->t, child0->t, child1->t[0]);
          } else if (child1->test_function_type == 0) {
-           pgai = std::make_unique<ga_instruction_dotdiv>
+           pgai = std::make_shared<ga_instruction_dotdiv>
              (pnode->t, child0->t, child1->t);
          } else GMM_ASSERT1(false, "Internal error");
          rmi.instructions.push_back(std::move(pgai));
@@ -10105,22 +10105,22 @@ namespace getfem {
 
        case GA_TMULT:
          if (child0->t.size() == 1 && child1->t.size() == 1) {
-           pgai = std::make_unique<ga_instruction_scalar_scalar_mult>
+           pgai = std::make_shared<ga_instruction_scalar_scalar_mult>
              (pnode->t[0], child0->t[0], child1->t[0]);
          } else if (child0->t.size() == 1)
-           pgai = std::make_unique<ga_instruction_scalar_mult>
+           pgai = std::make_shared<ga_instruction_scalar_mult>
              (pnode->t, child1->t, child0->t[0]);
          else if (child1->t.size() == 1)
-           pgai = std::make_unique<ga_instruction_scalar_mult>
+           pgai = std::make_shared<ga_instruction_scalar_mult>
              (pnode->t, child0->t, child1->t[0]);
          else if (child1->test_function_type == 0)
-           pgai = std::make_unique<ga_instruction_simple_tmult>
+           pgai = std::make_shared<ga_instruction_simple_tmult>
              (pnode->t, child0->t, child1->t);
          else if (child1->tensor_proper_size() == 1)
-           pgai = std::make_unique<ga_instruction_spec2_tmult>
+           pgai = std::make_shared<ga_instruction_spec2_tmult>
              (pnode->t, child0->t, child1->t);
          else
-           pgai = std::make_unique<ga_instruction_spec_tmult>
+           pgai = std::make_shared<ga_instruction_spec_tmult>
              (pnode->t, child0->t, child1->t,
               child0->tensor_proper_size(),
               child1->tensor_proper_size());
@@ -10155,7 +10155,7 @@ namespace getfem {
                     components[i+j*nbl+k*nbl*nbc3+l*nbc2*nbc3*nbl]
                       = &(pnode->children[n++]->t);
           }
-          pgai = std::make_unique<ga_instruction_c_matrix_with_tests>
+          pgai = std::make_shared<ga_instruction_c_matrix_with_tests>
 	    (pnode->t, components);
         } else {
           std::vector<scalar_type *> components(pnode->children.size());
@@ -10175,7 +10175,7 @@ namespace getfem {
                     components[i+j*nbl+k*nbl*nbc3+l*nbc2*nbc3*nbl]
                       = &(pnode->children[n++]->t[0]);
           }
-          pgai = std::make_unique<ga_instruction_simple_c_matrix>(pnode->t, components);
+          pgai = std::make_shared<ga_instruction_simple_c_matrix>(pnode->t, components);
         }
         rmi.instructions.push_back(std::move(pgai));
       }
@@ -10183,7 +10183,7 @@ namespace getfem {
 
     case GA_NODE_PARAMS:
       if (child0->node_type == GA_NODE_RESHAPE) {
-        pgai = std::make_unique<ga_instruction_copy_tensor>(pnode->t, child1->t);
+        pgai = std::make_shared<ga_instruction_copy_tensor>(pnode->t, child1->t);
         rmi.instructions.push_back(std::move(pgai));
       } else if (child0->node_type == GA_NODE_PREDEF_FUNC) {
 
@@ -10196,47 +10196,47 @@ namespace getfem {
         if (nbargs == 1) {
           if (child1->t.size() == 1) {
             if (F.ftype() == 0)
-              pgai = std::make_unique<ga_instruction_eval_func_1arg_1res>
+              pgai = std::make_shared<ga_instruction_eval_func_1arg_1res>
                 (pnode->t[0], child1->t[0], F.f1());
             else
-              pgai = std::make_unique<ga_instruction_eval_func_1arg_1res_expr>
+              pgai = std::make_shared<ga_instruction_eval_func_1arg_1res_expr>
                 (pnode->t[0], child1->t[0], F);
           } else {
             if (F.ftype() == 0)
-              pgai = std::make_unique<ga_instruction_eval_func_1arg>
+              pgai = std::make_shared<ga_instruction_eval_func_1arg>
                 (pnode->t, child1->t, F.f1());
             else
-              pgai = std::make_unique<ga_instruction_eval_func_1arg_expr>
+              pgai = std::make_shared<ga_instruction_eval_func_1arg_expr>
                 (pnode->t, child1->t, F);
           }
         } else {
           if (child1->t.size() == 1 && child2->t.size() == 1) {
             if (F.ftype() == 0)
-              pgai = std::make_unique<ga_instruction_eval_func_2arg_1res>
+              pgai = std::make_shared<ga_instruction_eval_func_2arg_1res>
                 (pnode->t[0], child1->t[0], child2->t[0], F.f2());
             else
-              pgai = std::make_unique<ga_instruction_eval_func_2arg_1res_expr>
+              pgai = std::make_shared<ga_instruction_eval_func_2arg_1res_expr>
                 (pnode->t[0], child1->t[0], child2->t[0], F);
           } else if (child1->t.size() == 1) {
             if (F.ftype() == 0)
-              pgai = std::make_unique<ga_instruction_eval_func_2arg_first_scalar>
+              pgai = std::make_shared<ga_instruction_eval_func_2arg_first_scalar>
                 (pnode->t, child1->t, child2->t, F.f2());
             else
-              pgai = std::make_unique<ga_instruction_eval_func_2arg_first_scalar_expr>
+              pgai = std::make_shared<ga_instruction_eval_func_2arg_first_scalar_expr>
                 (pnode->t, child1->t, child2->t, F);
           } else if (child2->t.size() == 1) {
             if (F.ftype() == 0)
-              pgai = std::make_unique<ga_instruction_eval_func_2arg_second_scalar>
+              pgai = std::make_shared<ga_instruction_eval_func_2arg_second_scalar>
                 (pnode->t, child1->t, child2->t, F.f2());
             else
-              pgai = std::make_unique<ga_instruction_eval_func_2arg_second_scalar_expr>
+              pgai = std::make_shared<ga_instruction_eval_func_2arg_second_scalar_expr>
                 (pnode->t, child1->t, child2->t, F);
           } else {
             if (F.ftype() == 0)
-              pgai = std::make_unique<ga_instruction_eval_func_2arg>
+              pgai = std::make_shared<ga_instruction_eval_func_2arg>
                 (pnode->t, child1->t, child2->t, F.f2());
             else
-              pgai = std::make_unique<ga_instruction_eval_func_2arg_expr>
+              pgai = std::make_shared<ga_instruction_eval_func_2arg_expr>
                 (pnode->t, child1->t, child2->t, F);
           }
         }
@@ -10258,13 +10258,13 @@ namespace getfem {
           args.push_back(&(pnode->children[i]->t));
 
         if (child0->der1 && child0->der2 == 0) {
-	  pgai = std::make_unique<ga_instruction_eval_derivative_OP>
+	  pgai = std::make_shared<ga_instruction_eval_derivative_OP>
              (pnode->t, OP, args, child0->der1);
         } else if (child0->der1 && child0->der2) {
-          pgai = std::make_unique<ga_instruction_eval_second_derivative_OP>
+          pgai = std::make_shared<ga_instruction_eval_second_derivative_OP>
              (pnode->t, OP, args, child0->der1, child0->der2);
         } else {
-          pgai = std::make_unique<ga_instruction_eval_OP>(pnode->t, OP, args);
+          pgai = std::make_shared<ga_instruction_eval_OP>(pnode->t, OP, args);
         }
         rmi.instructions.push_back(std::move(pgai));
 
@@ -10273,7 +10273,7 @@ namespace getfem {
         if (pnode->t.size() == 1) {
           for (size_type i = 0; i < child0->tensor_order(); ++i)
             mi1[i] = size_type(round(pnode->children[i+1]->t[0])-1);
-          pgai = std::make_unique<ga_instruction_copy_scalar>
+          pgai = std::make_shared<ga_instruction_copy_scalar>
 	    (pnode->t[0], child0->t(mi1));
         } else {
           size_type nb_test = pnode->nb_test_functions();
@@ -10284,7 +10284,7 @@ namespace getfem {
             else
               indices.push_back(i+nb_test);
           }
-          pgai = std::make_unique<ga_instruction_tensor_slice>
+          pgai = std::make_shared<ga_instruction_tensor_slice>
 	    (pnode->t, child0->t, mi1, indices);
         }
         rmi.instructions.push_back(std::move(pgai));
@@ -10317,12 +10317,12 @@ namespace getfem {
         gis.coeff = scalar_type(1);
         pga_instruction pgai;
         if (scalar) {
-          pgai = std::make_unique<ga_instruction_scalar_assembly>
+          pgai = std::make_shared<ga_instruction_scalar_assembly>
             (root->t, workspace.assembled_potential(), gis.coeff);
 
         } else {
           workspace.assembled_tensor() = root->t;
-          pgai = std::make_unique<ga_instruction_add_to>
+          pgai = std::make_shared<ga_instruction_add_to>
             (workspace.assembled_tensor(), root->t);
         }
         gis.whole_instructions[rm].instructions.push_back(std::move(pgai));
@@ -10388,13 +10388,13 @@ namespace getfem {
         if (compute_der) rmi.transformations_der.insert(transname);
         pga_instruction pgai;
         if (transname.compare("neighbour_elt") == 0) {
-          pgai = std::make_unique<ga_instruction_neighbour_transformation_call>
+          pgai = std::make_shared<ga_instruction_neighbour_transformation_call>
             (workspace, rmi.interpolate_infos[transname],
              workspace.interpolate_transformation(transname), gis.ctx,
              gis.Normal, m, gis.ipt, gis.pai, gis.gp_pool,
              gis.neighbour_corresp);
         } else {
-          pgai = std::make_unique<ga_instruction_transformation_call>
+          pgai = std::make_shared<ga_instruction_transformation_call>
             (workspace, rmi.interpolate_infos[transname],
              workspace.interpolate_transformation(transname), gis.ctx,
              gis.Normal, m, compute_der);
@@ -10405,7 +10405,7 @@ namespace getfem {
       for (const auto &nodename : transformation.second) {
         if (rmi.transformations[transname].count(nodename) == 0) {
           auto&& inin = rmi.interpolate_infos[transname];
-          pga_instruction pgai = std::make_unique<ga_instruction_update_group_info>
+          pga_instruction pgai = std::make_shared<ga_instruction_update_group_info>
             (workspace, gis, inin, nodename, inin.groups_info[nodename]);
           rmi.instructions.push_back(std::move(pgai));
           rmi.transformations[transname].insert(nodename);
@@ -10442,7 +10442,7 @@ namespace getfem {
 
           // After compile tree
           workspace.assembled_tensor() = root->t;
-          pga_instruction pgai = std::make_unique<ga_instruction_add_to>
+          pga_instruction pgai = std::make_shared<ga_instruction_add_to>
             (workspace.assembled_tensor(), root->t);
           rmi.instructions.push_back(std::move(pgai));
         }
@@ -10484,7 +10484,7 @@ namespace getfem {
           pga_instruction pgai;
           switch(order) {
           case 0:
-            pgai = std::make_unique<ga_instruction_scalar_assembly>
+            pgai = std::make_shared<ga_instruction_scalar_assembly>
               (root->t, workspace.assembled_potential(), gis.coeff);
             break;
           case 1:
@@ -10509,12 +10509,12 @@ namespace getfem {
                   Ir = &(gis.var_intervals[root->name_test1]);
                   In = &(workspace.interval_of_variable(root->name_test1));
                 }
-                pgai = std::make_unique<ga_instruction_fem_vector_assembly>
+                pgai = std::make_shared<ga_instruction_fem_vector_assembly>
                   (root->t, workspace.unreduced_vector(),
                    workspace.assembled_vector(), *pctx, *Ir, *In, mf, mfg,
                    gis.coeff);
               } else {
-                pgai = std::make_unique<ga_instruction_vector_assembly>
+                pgai = std::make_shared<ga_instruction_vector_assembly>
                     (root->t, workspace.assembled_vector(),
                      workspace.interval_of_variable(root->name_test1),
                      gis.coeff);
@@ -10572,7 +10572,7 @@ namespace getfem {
                 In2 = &(workspace.interval_of_variable(root->name_test2));
               }
 
-              pgai = std::make_unique<ga_instruction_matrix_assembly<model_real_sparse_matrix>>
+              pgai = std::make_shared<ga_instruction_matrix_assembly<model_real_sparse_matrix>>
                 (root->t, workspace.unreduced_matrix(),
                  workspace.assembled_matrix(), *pctx1, *pctx2,
                  *Ir1, *In1, *Ir2, *In2, mf1, mfg1, mf2, mfg2,
