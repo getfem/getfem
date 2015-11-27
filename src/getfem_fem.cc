@@ -3478,10 +3478,8 @@ namespace getfem {
   }
 
   void fem_precomp_pool::clear(void) {
-    for (std::set<pfem_precomp>::iterator it = precomps.begin();
-	 it != precomps.end(); ++it) {
+    for (auto it = precomps.begin(); it != precomps.end(); ++it)
       del_stored_object(*it, true);
-    }
     precomps.clear();
   }
 

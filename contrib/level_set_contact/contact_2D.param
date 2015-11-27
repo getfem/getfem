@@ -32,7 +32,7 @@ MESH_TYPE_MASTER = 'QK';
 LAMBDA_MASTER = 110.0;
 MU_MASTER = 70.0;
 %
-%
+%
 % Slave contact body
 DIVxS = 20;
 DIVyS = 

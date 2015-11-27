@@ -180,7 +180,8 @@ namespace getfem {
 			    bool store_val = true);
 
   /** release an interpolated fem */
-  inline void del_interpolated_fem(pfem pf) { dal::del_stored_object(pf); }
+  inline void del_interpolated_fem(const pfem &pf)
+  { dal::del_stored_object(pf); }
 
   
 }  /* end of namespace getfem.                                            */

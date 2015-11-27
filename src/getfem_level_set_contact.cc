@@ -340,16 +340,12 @@ level_set_contact::contact_pair_info::contact_pair_info(
 	const std::string& _mult_name,
 	size_type _GIVEN_CONTACT_REGION) :
 
-master_cb(underformed_mcb),
+        master_cb(underformed_mcb),
 	slave_cb(underformed_scb),
 	mult_name(_mult_name),
 	GIVEN_CONTACT_REGION(_GIVEN_CONTACT_REGION),
 
 	ACTIVE_CONTACT_REGION(getfem::mesh_region::free_region_id(master_cb.get_mesh())),
-	pmim_contact(0),
-	ifem_srf(0),
-	pinterpolated_fem(0),
-	pinterpolated_fem_U(0),
 	members_are_computed(false),
 	init_cont_detect_done(false)
 
@@ -524,9 +520,13 @@ void level_set_contact::contact_pair_info::update() const
 
 	//pinterpolated_fem for level set
 	pinterpolated_fem = std::make_shared<mesh_fem>(master_cb.get_mesh());
-	if (ifem_srf.get()!=0) getfem::del_interpolated_fem(ifem_srf);
-	ifem_srf=getfem::new_interpolated_fem(
-		slave_cb.get_ls_mesh_fem(),*pmim_contact);
+
+	pinterpolated_fem_U = std::shared_ptr<mesh_fem>();
+
+	if (ifem_srf.get()) getfem::del_interpolated_fem(ifem_srf);
+
+	ifem_srf = getfem::new_interpolated_fem(slave_cb.get_ls_mesh_fem(),
+						*pmim_contact, 0, dal::bit_vector(), false);
 	pinterpolated_fem->set_finite_element(
 		master_cb.get_mesh().region(ACTIVE_CONTACT_REGION).index(),ifem_srf);
 	pinterpolated_fem->set_qdim(1);

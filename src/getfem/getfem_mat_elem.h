@@ -132,9 +132,27 @@ namespace getfem {
   pmat_elem_computation mat_elem(pmat_elem_type pm, 
 				 pintegration_method pi,
 				 bgeot::pgeometric_trans pg,
-                                 bool prefer_comp_on_real_element = false);
+                                 bool prefer_comp_on_real_element=false);
 
+  class mat_elem_pool {
+    std::set<pmat_elem_computation> mat_elems;
 
+  public :
+    pmat_elem_computation operator()(pmat_elem_type pm, 
+				     pintegration_method pi,
+				     bgeot::pgeometric_trans pg,
+				     bool prefer_comp_on_real_element=false) {
+      pmat_elem_computation p=mat_elem(pm, pi, pg, prefer_comp_on_real_element);
+      mat_elems.insert(p);
+      return p;
+    }
+    void clear(void) {
+      for (auto it = mat_elems.begin(); it != mat_elems.end(); ++it)
+	del_stored_object(*it, true);
+      mat_elems.clear();
+    }
+    ~mat_elem_pool() { clear(); }
+  };
 }  /* end of namespace getfem.                                             */
 
 

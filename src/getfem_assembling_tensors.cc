@@ -510,6 +510,7 @@ namespace getfem {
 
   class ATN_computed_tensor : public ATN_tensor {
     mf_comp_vect mfcomp;
+    mat_elem_pool mep;
     pmat_elem_computation pmec;
     pmat_elem_type pme;
     pintegration_method pim;
@@ -874,7 +875,7 @@ namespace getfem {
       }
       if (shape_updated_ || fem_changed || pgt != pgt2 || pim != pim2) {
         pgt = pgt2; pim = pim2;
-        pmec = mat_elem(pme, pim, pgt, has_inline_reduction);
+        pmec = mep(pme, pim, pgt, has_inline_reduction);
       }
     }
 
