@@ -1263,6 +1263,7 @@ namespace getfem {
      virtual void time_derivative_to_be_intialized(std::string &name_v,
                                       std::string &name_previous_v) const = 0;
     virtual void shift_variables(model &md) const = 0;
+    virtual ~virtual_time_scheme() {}
   };
 
   void add_theta_method_for_first_order(model &md, const std::string &varname,
@@ -1356,6 +1357,7 @@ namespace getfem {
     virtual_dispatcher(size_type _nbrhs) : nbrhs_(_nbrhs) {
       GMM_ASSERT1(_nbrhs > 0, "Time dispatcher with no rhs");
     }
+    virtual ~virtual_dispatcher() {}
 
   };
 
@@ -1493,7 +1495,8 @@ namespace getfem {
 
     typedef model::build_version build_version;
 
-    virtual_brick(void) { isinit = false; }
+    virtual_brick() { isinit = false; }
+    virtual ~virtual_brick() { }
     void set_flags(const std::string &bname, bool islin, bool issym,
                    bool iscoer, bool ire, bool isco, bool each_time = false,
                    bool hasNeumannt = true) {
@@ -1743,6 +1746,8 @@ namespace getfem {
      fem_interpolation_context& /*ctx*/,
      base_small_vector &/*n*/, base_tensor &/*output*/,
      size_type /*auxilliary_ind*/ = 0) const = 0;
+
+    virtual ~Neumann_elem_term() {}
 
   };
 

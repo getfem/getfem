@@ -168,29 +168,29 @@ namespace dal {
 #define DAL_TRIPLE_KEY(class_name, var_type1, var_type2, var_type3)	\
   struct class_name :							\
   public dal::simple_key<std::pair<var_type1,				\
-  std::pair<var_type2,var_type3> > > { \
+				   std::pair<var_type2,var_type3> > > { \
   class_name(var_type1 aa, var_type2 bb, var_type3 cc) :		\
-  dal::simple_key<std::pair<var_type1,				\
-  std::pair<var_type2, var_type3> > >					\
-  (std::make_pair(aa,std::make_pair(bb,cc))) {}			\
+    dal::simple_key<std::pair<var_type1,				\
+			      std::pair<var_type2, var_type3> > >	\
+    (std::make_pair(aa,std::make_pair(bb,cc))) {}			\
   }
 
 #define DAL_FOUR_KEY(class_name,var_type1,var_type2,var_type3,var_type4)\
   struct class_name : public						\
   dal::simple_key<std::pair						\
-  <var_type1, std::pair<var_type2, std::pair		\
-  <var_type3,var_type4> > > > {	\
-  class_name(var_type1 aa, var_type2 bb, var_type3 cc,var_type4 dd) : \
-  dal::simple_key<std::pair						\
-  <var_type1, std::pair<var_type2,			\
-  std::pair<var_type3,	\
-  var_type4> > > >	\
-  (std::make_pair(aa,std::make_pair(bb,std::make_pair(cc, dd)))) {} \
+		  <var_type1, std::pair<var_type2, std::pair		\
+					<var_type3,var_type4> > > > {	\
+    class_name(var_type1 aa, var_type2 bb, var_type3 cc,var_type4 dd) : \
+      dal::simple_key<std::pair						\
+		      <var_type1, std::pair<var_type2,			\
+					    std::pair<var_type3,	\
+						      var_type4> > > >	\
+      (std::make_pair(aa,std::make_pair(bb,std::make_pair(cc, dd)))) {} \
   }
 
 
-
-  typedef std::shared_ptr<const static_stored_object_key> pstatic_stored_object_key;
+  typedef std::shared_ptr<const static_stored_object_key>
+    pstatic_stored_object_key;
 
 
   /**

@@ -73,6 +73,7 @@ namespace getfem {
     mutable size_type id;
   public:
     mesher_signed_distance() : id(size_type(-1)) {}
+    virtual ~mesher_signed_distance() {}
     virtual bool bounding_box(base_node &bmin, base_node &bmax) const = 0;
     virtual scalar_type operator()(const base_node &P,
 				   dal::bit_vector &bv) const = 0;

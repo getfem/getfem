@@ -220,8 +220,8 @@ namespace getfem
       : cvr(cr), repartition(cr->structure()->nb_faces()+1),
         pt_to_store(cr->structure()->nb_faces()+1), valid(false),
         built_on_the_fly(false)
-    { std::fill(repartition.begin(), repartition.end(), 0); } 
-    
+    { std::fill(repartition.begin(), repartition.end(), 0); }
+    virtual ~approx_integration() {}
   };
 
   typedef std::shared_ptr<const approx_integration> papprox_integration;

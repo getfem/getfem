@@ -49,6 +49,7 @@ namespace bgeot {
     unsigned n; /* 0 => is a tree node, != 0 => tree leaf storing n points */
     bool isleaf() const { return (n != 0); }
     kdtree_elt_base(unsigned n_) : n(n_) {}
+    virtual ~kdtree_elt_base() {}
   };
 
   /// store a point and the associated index for the kdtree. 

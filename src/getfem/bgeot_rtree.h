@@ -55,6 +55,7 @@ namespace bgeot {
     base_node rmin, rmax;
     rtree_elt_base(bool leaf, const base_node& rmin_, const base_node& rmax_) 
       : isleaf_(leaf), rmin(rmin_), rmax(rmax_) {}
+    virtual ~rtree_elt_base() {}
   };
 
   /** Balanced tree of n-dimensional rectangles.
