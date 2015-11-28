@@ -110,7 +110,7 @@ namespace getfem {
     bgeot::multi_index sizes(size_type) const;
     bgeot::multi_index &get_mi(void) { return mi; }
     const bgeot::multi_index &get_mi(void) const { return mi; }
-    bool is_buil_on_the_fly(void);
+    bool is_build_on_the_fly(void);
   };
 
    /** @name functions on elementary matrix descriptions

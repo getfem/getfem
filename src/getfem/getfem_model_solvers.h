@@ -47,10 +47,6 @@
 
 //#include "gmm/gmm_inoutput.h"
 
-// metis necessary in this header only due to the old bricks system
-#if defined GETFEM_HAVE_METIS && !defined GETFEM_HAVE_METIS_OLD_API
-#  include <metis.h>
-#endif
 
 namespace getfem {
 
