@@ -1251,8 +1251,7 @@ namespace getfem {
       for the model object to apply a time integration scheme to an
       evolutionnary problem.
   **/
-  class APIDECL virtual_time_scheme
-    : virtual public dal::static_stored_object {
+  class APIDECL virtual_time_scheme {
 
   protected:
 
@@ -1286,7 +1285,7 @@ namespace getfem {
   /** The time dispatcher object modify the result of a brick in order to
       apply a time integration scheme.
   **/
-  class APIDECL virtual_dispatcher : virtual public dal::static_stored_object {
+  class APIDECL virtual_dispatcher {
 
   protected:
 
@@ -1474,7 +1473,7 @@ namespace getfem {
       The brick should not store data. The data have to be stored in the
       model object.
   **/
-  class APIDECL virtual_brick : virtual public dal::static_stored_object {
+  class APIDECL virtual_brick {
   protected:
     bool islinear;    // The brick add a linear term or not.
     bool issymmetric; // The brick add a symmetric term or not.
@@ -1675,8 +1674,7 @@ namespace getfem {
       : varname(v), transname(t) {}
   };
 
-  class APIDECL virtual_interpolate_transformation
-    : virtual public dal::static_stored_object {
+  class APIDECL virtual_interpolate_transformation {
 
   public:
     virtual void extract_variables
@@ -1702,8 +1700,7 @@ namespace getfem {
   //
   //=========================================================================
 
-  class APIDECL virtual_elementary_transformation
-    : virtual public dal::static_stored_object {
+  class APIDECL virtual_elementary_transformation {
 
   public:
     
@@ -1729,7 +1726,7 @@ namespace getfem {
      conditions for instance).
   */
 
-  struct APIDECL Neumann_elem_term : virtual public dal::static_stored_object {
+  struct APIDECL Neumann_elem_term  {
 
     std::vector<std::string> auxilliary_variables;
 

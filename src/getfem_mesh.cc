@@ -133,7 +133,7 @@ namespace getfem {
 
   mesh::mesh(const bgeot::basic_mesh &m, const std::string name) : bgeot::basic_mesh(m), name_(name)  { init(); }
 
-  mesh::mesh(const mesh &m){copy_from(m);}
+  mesh::mesh(const mesh &m) { copy_from(m); }
 
   mesh &mesh::operator=(const mesh &m) {
     clear();

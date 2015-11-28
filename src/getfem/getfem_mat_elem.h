@@ -116,7 +116,10 @@ namespace getfem {
       compute_on_face(t, pa, f, elt, icb); 
     }
     
-    virtual ~mat_elem_computation() {}
+    mat_elem_computation()
+    { DAL_STORED_OBJECT_DEBUG_CREATED(this, "Mat elem computation"); }
+    virtual ~mat_elem_computation()
+    { DAL_STORED_OBJECT_DEBUG_DESTROYED(this, "Mat elem computation"); }
     virtual size_type memsize() const = 0;
   };
 

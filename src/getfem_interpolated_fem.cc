@@ -384,6 +384,7 @@ namespace getfem {
                                      bool store_val)
     : mf(mef), mim(meim), pif(pif_), store_values(store_val),
       blocked_dof(blocked_dof_), mi2(2), mi3(3) {
+    DAL_STORED_OBJECT_DEBUG_CREATED(this, "Interpolated fem");
     this->add_dependency(mf);
     this->add_dependency(mim);
     is_pol = is_lag = false; es_degree = 5;

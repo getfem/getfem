@@ -336,6 +336,10 @@ namespace bgeot {
 
   struct parallelepiped_ : virtual public dal::static_stored_object {
     pconvex_structure p;
+    parallelepiped_()
+    { DAL_STORED_OBJECT_DEBUG_CREATED(this, "parallelepiped structure"); }
+    ~parallelepiped_()
+    { DAL_STORED_OBJECT_DEBUG_DESTROYED(this, "parallelepiped structure"); }
   };
 
   DAL_SIMPLE_KEY(parallelepiped_key_, dim_type);

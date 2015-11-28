@@ -161,6 +161,8 @@ namespace getfem {
 		     pinterpolated_func pif_ = 0,
 		     dal::bit_vector blocked_dof = dal::bit_vector(),
 		     bool store_val = true);
+    ~interpolated_fem()
+    { DAL_STORED_OBJECT_DEBUG_DESTROYED(this, "Interpolated fem"); }
   };
   
 

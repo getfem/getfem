@@ -51,7 +51,10 @@ namespace getfem {
     { GMM_ASSERT1(false, "this global_function has no gradient"); }
     virtual void hess(const fem_interpolation_context&, base_matrix&) const
     { GMM_ASSERT1(false, "this global_function has no hessian"); }
-    virtual ~global_function() {}
+    virtual ~global_function()
+    { DAL_STORED_OBJECT_DEBUG_DESTROYED(this, "Global function"); }
+    global_function()
+    { DAL_STORED_OBJECT_DEBUG_CREATED(this, "Global function");}
   };
 
   typedef std::shared_ptr<const global_function> pglobal_function;

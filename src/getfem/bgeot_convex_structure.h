@@ -134,9 +134,13 @@ namespace bgeot {
       return prod_a ? true : false;
     }
     explicit convex_structure(bool auto_b)
-      : auto_basic(auto_b), prod_a(0), prod_b(0) { }
+      : auto_basic(auto_b), prod_a(0), prod_b(0)
+    { DAL_STORED_OBJECT_DEBUG_CREATED(this, "Convex structure"); }
+    virtual ~convex_structure()
+    { DAL_STORED_OBJECT_DEBUG_DESTROYED(this, "Convex structure"); }
   protected:
-    convex_structure() : auto_basic(false), prod_a(0), prod_b(0) { }
+    convex_structure() : auto_basic(false), prod_a(0), prod_b(0)
+    { DAL_STORED_OBJECT_DEBUG_CREATED(this, "Convex structure"); }
     friend std::shared_ptr<convex_structure> new_convex_structure();
     friend pconvex_structure basic_structure(pconvex_structure cv);
   };

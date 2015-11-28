@@ -51,7 +51,10 @@ namespace bgeot {
     const base_node &operator[](size_type i) const
     { return std::vector<base_node>::operator [](i); }
     template <class IT> stored_point_tab(IT it, IT ite)
-      : std::vector<base_node>(it, ite) { }
+      : std::vector<base_node>(it, ite)
+    { DAL_STORED_OBJECT_DEBUG_CREATED(this, "Stored point tab"); }
+    ~stored_point_tab()
+    { DAL_STORED_OBJECT_DEBUG_DESTROYED(this, "Stored point tab"); }
   };
 
   typedef std::shared_ptr<const stored_point_tab> pstored_point_tab;
@@ -94,7 +97,8 @@ namespace bgeot {
     pconvex_ref basic_convex_ref_;
     bool auto_basic;
     convex_of_reference() : convex<base_node>(),
-			    basic_convex_ref_(0), auto_basic(false) {}
+			    basic_convex_ref_(0), auto_basic(false)
+    { DAL_STORED_OBJECT_DEBUG_CREATED(this, "convex of refrence"); }
 
   public :
     /// return a negative or null number if the base_node is in the convex.
@@ -113,7 +117,9 @@ namespace bgeot {
     const stored_point_tab &points(void) const { return *ppoints; }
     const stored_point_tab &points(void) { return *ppoints; }
     pstored_point_tab pspt(void) const { return ppoints; }
-    
+    virtual ~convex_of_reference()
+    { DAL_STORED_OBJECT_DEBUG_DESTROYED(this, "Convex of reference"); }
+
     /** return a mesh structure composed of simplexes whose union
 	is the reference convex. All simplexes have the same (direct)
 	orientation.

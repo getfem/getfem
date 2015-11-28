@@ -414,9 +414,10 @@ namespace bgeot {
     std::vector<std::unique_ptr<mesh_structure>> pfacem; /* array of mesh_structures for faces */
     dal::bit_vector nodes_on_edges;
     std::unique_ptr<mesh_precomposite> pmp;
-    str_mesh_cv__(void) {}
     str_mesh_cv__(pconvex_structure c, short_type k, bool smesh_) : 
-      cvs(c), n(k), simplex_mesh(smesh_) {}
+      cvs(c), n(k), simplex_mesh(smesh_)
+    { DAL_STORED_OBJECT_DEBUG_CREATED(this, "cv mesh"); }
+    ~str_mesh_cv__() { DAL_STORED_OBJECT_DEBUG_DESTROYED(this,"cv mesh"); }
   };
 
   typedef std::shared_ptr<const str_mesh_cv__> pstr_mesh_cv__;

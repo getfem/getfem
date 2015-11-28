@@ -275,13 +275,23 @@ namespace getfem
       return 0;
     }
 
-    integration_method(ppoly_integration p)
-    { ppi = p; im_type = IM_EXACT; }
+    integration_method(ppoly_integration p) {
+      DAL_STORED_OBJECT_DEBUG_CREATED(this, "Exact integration method");
+      ppi = p; im_type = IM_EXACT;
+    }
 
-    integration_method(papprox_integration p)
-    { pai = p; im_type = IM_APPROX; }
+    integration_method(papprox_integration p) {
+      DAL_STORED_OBJECT_DEBUG_CREATED(this, "Approximate integration method");
+      pai = p; im_type = IM_APPROX;
+    }
 
-    integration_method(void) { im_type = IM_NONE; }
+    integration_method() {
+      DAL_STORED_OBJECT_DEBUG_CREATED(this, "Integration method");
+      im_type = IM_NONE;
+    }
+    
+    ~integration_method()
+    { DAL_STORED_OBJECT_DEBUG_DESTROYED(this, "Integration method"); }
   };
 
 

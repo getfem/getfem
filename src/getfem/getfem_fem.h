@@ -447,6 +447,7 @@ namespace getfem {
     }
 
     virtual_fem(void) {
+      DAL_STORED_OBJECT_DEBUG_CREATED(this, "Fem");
       ntarget_dim = 1; dim_ = 1;
       is_equiv = is_pol = is_polycomp = is_lag = false;
       pspt_valid = false; hier_raff = 0; real_element_defined = false;
@@ -455,8 +456,8 @@ namespace getfem {
       cvs_node = bgeot::new_convex_structure();
     }
     virtual_fem(const virtual_fem& f) : dal::static_stored_object()
-    { copy(f); }
-    virtual ~virtual_fem() {}
+    { copy(f); DAL_STORED_OBJECT_DEBUG_CREATED(this, "Fem"); }
+    virtual ~virtual_fem() { DAL_STORED_OBJECT_DEBUG_DESTROYED(this, "Fem"); }
   private:
     void copy(const virtual_fem &f) {
       dof_types_ = f.dof_types_;
@@ -610,6 +611,7 @@ namespace getfem {
     inline bgeot::pstored_point_tab get_ppoint_tab() const
     { return pspt; }
     fem_precomp_(pfem, bgeot::pstored_point_tab);
+    ~fem_precomp_() { DAL_STORED_OBJECT_DEBUG_DESTROYED(this, "Fem_precomp"); }
   private:
     void init_val() const;
     void init_grad() const;

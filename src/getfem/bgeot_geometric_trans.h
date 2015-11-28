@@ -164,7 +164,10 @@ namespace bgeot {
     /** Compute the gradient at point x, pc is resized to [nb_points() x dim()]
         if the transformation is linear, x is not used at all */
     size_type complexity(void) const { return complexity_; }
-    virtual ~geometric_trans() {}
+    virtual ~geometric_trans()
+    { DAL_STORED_OBJECT_DEBUG_DESTROYED(this, "Geometric transformation"); }
+    geometric_trans()
+      { DAL_STORED_OBJECT_DEBUG_CREATED(this, "Geometric transformation"); }
   };
 
   template<class CONT>
@@ -311,6 +314,8 @@ namespace bgeot {
     // inline const stored_point_tab& get_point_tab() const { return *pspt; }
     inline pstored_point_tab get_ppoint_tab() const { return pspt; }
     geotrans_precomp_(pgeometric_trans pg, pstored_point_tab ps);
+    ~geotrans_precomp_()
+      { DAL_STORED_OBJECT_DEBUG_DESTROYED(this, "Geotrans precomp"); }
 
   private:
     void init_val() const;

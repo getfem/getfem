@@ -3441,11 +3441,10 @@ namespace getfem {
 
   fem_precomp_::fem_precomp_(pfem pff, bgeot::pstored_point_tab ps) :
     pf(pff), pspt(ps) {
+    DAL_STORED_OBJECT_DEBUG_CREATED(this, "Fem_precomp");
     for (size_type i = 0; i < pspt->size(); ++i)
       GMM_ASSERT1((*pspt)[i].size() == pf->dim(), "dimensions mismatch");
   }
-
-  //  fem_precomp_::fem_precomp_() : pf(0), pspt(0) {}
   
   void fem_precomp_::init_val() const {
     c.resize(pspt->size());

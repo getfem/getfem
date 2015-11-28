@@ -110,7 +110,12 @@ namespace getfem {
     bgeot::multi_index sizes(size_type) const;
     bgeot::multi_index &get_mi(void) { return mi; }
     const bgeot::multi_index &get_mi(void) const { return mi; }
-    bool is_build_on_the_fly(void);
+    mat_elem_type() { DAL_STORED_OBJECT_DEBUG_CREATED(this, "Mat elem type"); }
+    mat_elem_type(const mat_elem_type &o)
+      : std::vector<constituant>(o), mi(o.mi)
+    { DAL_STORED_OBJECT_DEBUG_CREATED(this, "Mat elem type"); }
+    ~mat_elem_type()
+    { DAL_STORED_OBJECT_DEBUG_DESTROYED(this, "Mat elem type"); }
   };
 
    /** @name functions on elementary matrix descriptions

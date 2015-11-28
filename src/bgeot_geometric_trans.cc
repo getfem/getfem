@@ -757,7 +757,8 @@ namespace bgeot {
 
   geotrans_precomp_::geotrans_precomp_(pgeometric_trans pg,
                                        pstored_point_tab ps)
-    : pgt(pg), pspt(ps) {}
+    : pgt(pg), pspt(ps)
+  { DAL_STORED_OBJECT_DEBUG_CREATED(this, "Geotrans precomp"); }
 
   void geotrans_precomp_::init_val() const {
     c.clear();

@@ -413,12 +413,11 @@ namespace level_set_contact {
     static void clear_all_contact_history();
     
     inline void update_for_slave(std::string slave_var_name)
-    {contact_table[slave_var_name]->update();};
+    { contact_table[slave_var_name]->update(); }
     
     /** return a pointer to mesh_im used for contact surface calculations
      */
-    std::shared_ptr<mesh_im> build_mesh_im_on_boundary(
-                                                       size_type region);
+    std::shared_ptr<mesh_im> build_mesh_im_on_boundary(size_type region);
     
     /**gives a face, corresponding to newly created 
        boundary element @param cv*/

@@ -132,8 +132,7 @@ const level_set_contact::contact_pair_info&
 	level_set_contact::master_contact_body::get_pair_info(
 	const std::string& slave_var_name) const
 {   
-	std::map<std::string, std::shared_ptr<contact_pair_info> >
-		::const_iterator it = contact_table.find(slave_var_name);
+        auto it = contact_table.find(slave_var_name);
 	if (it!=contact_table.end()) return *(it->second);
 	GMM_ASSERT1(false,"did not find info on slave contact body, \
 					  defined on variable "+slave_var_name);
@@ -143,8 +142,7 @@ level_set_contact::contact_pair_info&
 	level_set_contact::master_contact_body::get_pair_info(
 	const std::string& slave_var_name)
 {   
-	std::map<std::string, std::shared_ptr<contact_pair_info> >
-		::iterator it = contact_table.find(slave_var_name);
+	auto it = contact_table.find(slave_var_name);
 	if (it!=contact_table.end()) return *(it->second);
 	GMM_ASSERT1(false,"did not find info on slave contact body, \
 					  defined on variable "+slave_var_name);
@@ -154,8 +152,8 @@ level_set_contact::contact_pair_info&
 level_set_contact::face_type level_set_contact::master_contact_body::
 	ext_face_of_elem(size_type i) const
 {
-	std::map<size_type,face_type>::const_iterator it = border_faces.find(i);
-	if(it!=border_faces.end()) return it->second;
+	auto it = border_faces.find(i);
+	if (it!=border_faces.end()) return it->second;
 	GMM_ASSERT1(false,"did not find a face, corresponding to element "<<i);
 }
 

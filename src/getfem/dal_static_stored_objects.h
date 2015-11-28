@@ -86,9 +86,33 @@ std::shared_ptr are used.
   typedef bool  atomic_bool;
 #endif
 
-
+#define DAL_STORED_OBJECT_DEBUG 0
 
 namespace dal {
+
+
+#if DAL_STORED_OBJECT_DEBUG
+// Little tool for debug : detects the deleted static stored objects for
+// which the destructor is not called (i.e. a shared pointer is still stored
+// somewhere. Not thread safe.
+// Rule : Each potential stored object should called
+// DAL_STORED_OBJECT_DEBUG_CREATED(this, "name") in the constructor and
+// DAL_STORED_OBJECT_DEBUG_DESTROYED(this) in the destructor.
+  class static_stored_object;
+  void stored_debug_created(const static_stored_object *o, const std::string &name);
+  void stored_debug_added(const static_stored_object *o);
+  void stored_debug_deleted(const static_stored_object *o);
+  void stored_debug_destroyed(const static_stored_object *o, const std::string &name);
+# define DAL_STORED_OBJECT_DEBUG_CREATED(o, name) stored_debug_created(o, name)
+# define DAL_STORED_OBJECT_DEBUG_ADDED(o) stored_debug_added(o)
+# define DAL_STORED_OBJECT_DEBUG_DELETED(o) stored_debug_deleted(o)
+# define DAL_STORED_OBJECT_DEBUG_DESTROYED(o, name)  stored_debug_destroyed(o, name)
+#else
+# define DAL_STORED_OBJECT_DEBUG_CREATED(o, name)
+# define DAL_STORED_OBJECT_DEBUG_ADDED(o)
+# define DAL_STORED_OBJECT_DEBUG_DELETED(o)
+# define DAL_STORED_OBJECT_DEBUG_DESTROYED(o, name) 
+#endif
 
   enum permanence { PERMANENT_STATIC_OBJECT = 0, // not deletable object
     STRONG_STATIC_OBJECT = 1,    // preferable not to delete it
@@ -235,7 +259,8 @@ namespace dal {
   }
 
   /** Delete an object and the object which depend on it. */
-  void del_stored_object(pstatic_stored_object o, bool ignore_unstored=false);
+  void del_stored_object(const pstatic_stored_object &o,
+			 bool ignore_unstored=false);
 
   /** Delete all the object whose permanence is greater or equal to perm. */
   void del_stored_objects(int perm);

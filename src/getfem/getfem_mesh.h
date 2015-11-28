@@ -99,8 +99,7 @@ namespace getfem {
       (same thing for the convexes, always use convex_index()).
   */
 
-  class APIDECL mesh : virtual public dal::static_stored_object,
-                       public bgeot::basic_mesh,
+  class APIDECL mesh : public bgeot::basic_mesh,
                        public context_dependencies 
 
 //allowing mesh::shared_from_this() call

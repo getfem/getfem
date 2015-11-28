@@ -31,6 +31,100 @@
 
 namespace dal {
 
+  // 0 = only undestroyed, 1 = Normal, 2 very noisy, 
+#define DAL_STORED_OBJECT_DEBUG_NOISY 1
+
+#if DAL_STORED_OBJECT_DEBUG
+  static std::map <const static_stored_object *, std::string> _created_objects;
+  static std::map <const static_stored_object *, std::string> _added_objects;
+  static std::map <const static_stored_object *, std::string> _deleted_objects;
+ 
+
+  void stored_debug_created(const static_stored_object *o,
+			    const std::string &name) {
+    _created_objects[o] = name;
+#   if DAL_STORED_OBJECT_DEBUG_NOISY > 1
+    cout << "Created " << name << " : " << o << endl;
+#   endif
+  }
+  void stored_debug_added(const static_stored_object *o) {
+    auto it = _created_objects.find(o);
+    if (it == _created_objects.end()) {
+      _added_objects[o] = "";
+#   if DAL_STORED_OBJECT_DEBUG_NOISY > 0
+      cout << "Adding an unknown object " << o << endl;
+#   endif
+    } else {
+      _added_objects[o] = it->second;
+      _created_objects.erase(it);
+#   if DAL_STORED_OBJECT_DEBUG_NOISY > 1
+      cout << "Added " << it->second << " : " << o << endl;
+#   endif
+    }
+    if (_deleted_objects.size()) {
+      cout << endl << "Number of stored objects: " << _added_objects.size()
+	   << endl << "Number of unstored created objects: "
+	   << _created_objects.size() << endl
+	   << "Number of undestroyed object: "
+	   << _deleted_objects.size() << endl;
+      for (auto &x : _deleted_objects)
+	cout << "UNDESTROYED OBJECT " << x.second << " : " << x.first << endl;
+    }
+
+
+  }
+  void stored_debug_deleted(const static_stored_object *o) {
+    auto it = _added_objects.find(o);
+    if (it == _added_objects.end()) {
+      cout << "Deleting an unknown object ! " << o << endl;
+      _deleted_objects[o] = "";
+    } else {
+      _deleted_objects[o] = it->second;
+      _added_objects.erase(it);
+#   if DAL_STORED_OBJECT_DEBUG_NOISY > 1
+    cout << "Deleted " << it->second << " : " << o << endl;
+#   endif
+    }
+  }
+
+  void stored_debug_destroyed(const static_stored_object *o,
+			      const std::string &name) {
+    auto it = _deleted_objects.find(o);
+    if (it == _deleted_objects.end()) {
+      it = _created_objects.find(o);
+      if (it == _created_objects.end()) {
+	it = _added_objects.find(o);
+	if (it == _added_objects.end()) {
+	  cout << "Destroy an unknown object ! " << o << " name given : "
+	       << name << endl;
+	} else {
+	  _added_objects.erase(it);
+	  cout << "Destroy a non deleted object !! " << o << " name given : "
+	       << name << endl;
+	}
+      } else {
+#   if DAL_STORED_OBJECT_DEBUG_NOISY > 1
+	cout << "Destroy an unadded object " << it->second << " : " <<o<< endl;
+#   endif
+	_created_objects.erase(it);
+      }
+    } else {
+#   if DAL_STORED_OBJECT_DEBUG_NOISY > 1
+      cout << "Destroy " << it->second << " : " << o << " name given : "
+	   << name << endl;
+#   endif
+    _deleted_objects.erase(it);
+    }
+
+  }
+
+
+
+
+#endif
+
+
+
 
   // Gives a pointer to a key of an object from its pointer, while looking in the storage of
   // a specific thread
@@ -103,6 +197,7 @@ namespace dal {
   void stored_object_tab::add_stored_object(pstatic_stored_object_key k, 
     pstatic_stored_object o,  permanence perm) 
   {
+    DAL_STORED_OBJECT_DEBUG_ADDED(o.get());
     getfem::local_guard guard = locks_.get_lock();
     GMM_ASSERT1(stored_keys_.find(o) == stored_keys_.end(),
       "This object has already been stored, possibly with another key");
@@ -183,6 +278,7 @@ namespace dal {
     std::list<pstatic_stored_object>::iterator it;
     for (it = to_delete.begin(); it != to_delete.end(); ) 
     {
+      DAL_STORED_OBJECT_DEBUG_DELETED(it->get());
       stored_key_tab::iterator itk = stored_keys_.find(*it);
       stored_object_tab::iterator ito = end();
       if (itk != stored_keys_.end())
@@ -352,6 +448,7 @@ namespace dal {
       for (it = to_delete.begin(); it != to_delete.end(); it = itnext) 
       {
         itnext = it; itnext++;
+    
         stored_object_tab::iterator ito = iterator_of_object(*it);
         if (ito == stored_objects.end()) 
         {
@@ -360,7 +457,7 @@ namespace dal {
           else
             if (me_is_multithreaded_now())
             {
-              GMM_WARNING1("This object is (already?) not stored : " << it->get()
+              GMM_WARNING1("This object is (already?) not stored : "<< it->get()
               << " typename: " << typeid(*it->get()).name() 
               << "(which could happen in multithreaded code and is OK)");
             }
@@ -417,7 +514,7 @@ namespace dal {
   }
 
 
-  void del_stored_object(pstatic_stored_object o, bool ignore_unstored) 
+  void del_stored_object(const pstatic_stored_object &o, bool ignore_unstored) 
   {
     std::list<pstatic_stored_object> to_delete;
     to_delete.push_back(o);
