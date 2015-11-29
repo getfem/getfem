@@ -640,7 +640,7 @@ namespace level_set_contact {
     
     
     //temp matrices due to different DOF indeces of the slave
-    sparse_matrix Kms_small(mf_U_line.nb_dof(),mf_U_interpolate.nb_dof());
+    sparse_matrix Kms_small(mf_U_interpolate.nb_dof(), mf_U_line.nb_dof());
     sparse_matrix Kss_small(mf_U_interpolate.nb_dof(),mf_U_interpolate.nb_dof());
     sparse_matrix Ksl_small(mf_U_interpolate.nb_dof(),mf_lambda.nb_dof());
     
@@ -678,7 +678,7 @@ namespace level_set_contact {
     assem_boundary.push_data(LS_small);      //   data Level set on interpolated
     assem_boundary.push_data(LM);            //   data Lagrange mult values
     assem_boundary.push_mat(Kmm);                        //   result mat 1
-    assem_boundary.push_mat(gmm::transposed(Kms_small)); //   ..     mat 2
+    assem_boundary.push_mat(Kms_small);      //   ..     mat 2
     assem_boundary.push_mat(Kml);                        //   ..     mat 3
     assem_boundary.push_mat(Kss_small);                  //   ..     mat 4
     assem_boundary.push_mat(Ksl_small);                  //   ..     mat 5
@@ -689,7 +689,7 @@ namespace level_set_contact {
     const gmm::unsorted_sub_index& Us_dof = 
       mcb.get_pair_info(scb.get_var_name()).slave_vector_dofs();
     const gmm::sub_interval& LM_dof = gmm::sub_interval(0,mf_lambda.nb_dof());
-    gmm::copy(Kms_small,gmm::sub_matrix(Kms,Um_dof,Us_dof));
+    gmm::copy(gmm::transposed(Kms_small),gmm::sub_matrix(Kms,Um_dof,Us_dof));
     gmm::copy(Kss_small,gmm::sub_matrix(Kss,Us_dof,Us_dof));
     gmm::copy(Ksl_small,gmm::sub_matrix(Ksl,Us_dof,LM_dof));
     
