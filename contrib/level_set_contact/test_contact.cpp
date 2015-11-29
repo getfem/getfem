@@ -40,6 +40,9 @@ int main(int argc, char *argv[])
 {
     using namespace getfem;
 
+    gmm::set_traces_level(1);
+    gmm::set_warning_level(1);
+
     GMM_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
     FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
 
