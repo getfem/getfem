@@ -973,6 +973,7 @@ namespace getfem {
         tau_lp(0.), tau_bp_1(tau_bp_init), tau_bp_2(tau_bp_init),
         gamma_sing(0.), gamma_next(0.)
     {}
+    virtual ~virtual_cont_struct() {}
 
   };
 

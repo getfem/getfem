@@ -79,6 +79,7 @@ libgetfemint_la_SOURCES = \
 	getfemint_misc.cc \
 	$(PSEUDO_MFUNCTIONS) \
 	getfemint_workspace.cc \
+	getfemint_cont_struct.cc \
 	getfemint_mesh.cc \
 	getfemint_mesh_fem.cc \
 	getfemint_mesh_im.cc \

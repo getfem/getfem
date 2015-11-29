@@ -42,32 +42,16 @@ namespace getfemint {
   class getfemint_cont_struct : public getfem_object {
   private:
     getfem::cont_struct_getfem_model *s;
-    getfemint_cont_struct(getfem::cont_struct_getfem_model *s_) {
-      assert(workspace == 0);
-      s = s_;
-      ikey = getfem_object::internal_key_type(s);
-    }
-
+    getfemint_cont_struct(getfem::cont_struct_getfem_model *s_);
   public:
-    ~getfemint_cont_struct() {}
+    ~getfemint_cont_struct();
     id_type class_id() const { return CONT_STRUCT_CLASS_ID; }
     size_type memsize() const {
       return s->estimated_memsize();
     }
 
     static getfemint_cont_struct*
-    get_from(getfem::cont_struct_getfem_model *ps, int flags = 0) {
-      getfem_object *o =
-        getfemint::workspace().object(getfem_object::internal_key_type(ps));
-      getfemint_cont_struct *gs = NULL;
-      if (!o) {
-        gs = new getfemint_cont_struct(ps);
-        gs->set_flags(flags);
-        getfemint::workspace().push_object(gs);
-      } else gs = dynamic_cast<getfemint_cont_struct*>(o);
-      assert(gs);
-      return gs;
-    }
+    get_from(getfem::cont_struct_getfem_model *s_, int flags = 0);
 
     getfem::cont_struct_getfem_model &cont_struct() { return *s; }
   };

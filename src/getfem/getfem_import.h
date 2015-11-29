@@ -41,9 +41,11 @@
 #include <string>
 #include <iostream>
 #include <map>
+#include <set>
 #include "bgeot_config.h" /* for bgeot::size_type */
 
 namespace getfem {
+  using bgeot::size_type;
   class mesh;
 
   /** imports a mesh file.
