@@ -5419,7 +5419,7 @@ namespace getfem {
       ga_tree tree;
       ga_read_string(get_macro(name), tree);
       ga_semantic_analysis(get_macro(name), tree, *this, meshdim, ref_elt_dim,
-                           false, ignore_X);
+                           false, ignore_X, 3);
       GMM_ASSERT1(tree.root, "Invalid macro");
       mt->ptree = new ga_tree(tree);
       mt->meshdim = meshdim;
@@ -5978,6 +5978,8 @@ namespace getfem {
   //              store them,
   //          2 : cut incompatible test function branches with respect to the
   //              one in workspace.selected_pair
+  //          3 : do not complain about incompatible test functions neither
+  //              store them,
   static void ga_semantic_analysis(const std::string &expr, ga_tree &tree,
                                    const ga_workspace &workspace,
                                    size_type meshdim,
@@ -6395,7 +6397,7 @@ namespace getfem {
                   (child1->interpolate_name_test2))
                 compatible = false;
               break;
-            case 1: break;
+            case 1: case 3: break;
             default: GMM_ASSERT1(false, "Unknown option");
             }
           }
@@ -7208,6 +7210,8 @@ namespace getfem {
           tree.copy_node(ma_tree.root, pnode->parent, newnode);
           delete pnode;
           pnode = newnode;
+	  ga_node_analysis(expr, tree, workspace, pnode, meshdim,
+	  		   ref_elt_dim, eval_fixed_size, ignore_X, option);
         } else {
           // Search for a variable name with optional gradient, Hessian,
           // divergence or test functions
