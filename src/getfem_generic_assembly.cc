@@ -402,8 +402,7 @@ namespace getfem {
       size_type test0 = n0->test_function_type, test1 = n1->test_function_type;
       if (test0 && test1 && (test0 == test1 ||
                              test0 >= 3 || test1 >= 3))
-        ga_throw_error(expr, pos, "Incompatibility of test functions "
-                       "in product.");
+        ga_throw_error(expr, pos, "Incompatibility of test functions in product.");
       GMM_ASSERT1(test0 != size_type(-1) && test1 != size_type(-1),
                   "internal error");
 
@@ -1851,7 +1850,7 @@ namespace getfem {
     papprox_integration pai;
     std::vector<size_type> nodes;
   };
-  
+
   bool operator <(const gauss_pt_corresp &gpc1,
                   const gauss_pt_corresp &gpc2) {
     if (gpc1.pai != gpc2.pai)
@@ -4875,7 +4874,7 @@ namespace getfem {
               bgeot::vectors_to_base_matrix(G, m.points_of_convex(cv));
               fem_interpolation_context ctx_x(gpc.pgt1, 0, spt[0], G, cv, f);
               std::vector<base_node> P_ref(nbpt);
-              
+
               for (size_type i = 0; i < nbpt; ++i) {
                 ctx_x.set_xref(spt[first_ind+i]);
                 bool converged = true;
@@ -4934,7 +4933,7 @@ namespace getfem {
           inin.Normal.resize(0);
           inin.pt_y.resize(0);
           inin.has_ctx = false;
-        }        
+        }
       }
       GA_DEBUG_INFO("Instruction: end of call interpolate transformation");
       return 0;
@@ -10755,7 +10754,7 @@ namespace getfem {
                         "be used in high level generic assembly");
             if (pim->type() == IM_NONE) continue;
             pspt = pim->approx_method()->pintegration_points();
-            
+
             if (pspt->size()) {
               if (gis.ctx.have_pgp() && gis.pai == pim->approx_method() &&
                   gis.ctx.pgt() == pgt) {
@@ -11430,7 +11429,7 @@ namespace getfem {
   void add_interpolate_transformation_from_expression
   (model &md, const std::string &name, const mesh &sm, const mesh &tm,
    const std::string &expr) {
-    pinterpolate_transformation 
+    pinterpolate_transformation
       p(new interpolate_transformation_expression(sm, tm, expr));
     md.add_interpolate_transformation(name, p);
   }
