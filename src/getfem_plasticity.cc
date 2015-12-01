@@ -1056,17 +1056,19 @@ namespace getfem {
       = dal::singleton<ga_predef_operator_tab>::instance();
 
     PREDEF_OPERATORS.add_method("Expm",
-                              std::make_shared<matrix_exponential_operator>());
+                                std::make_shared<matrix_exponential_operator>());
     PREDEF_OPERATORS.add_method("Logm",
                                 std::make_shared<matrix_logarithm_operator>());
     PREDEF_OPERATORS.add_method("Normalized",
                                 std::make_shared<normalized_operator>());
     PREDEF_OPERATORS.add_method("Von_Mises_projection",
-                            std::make_shared<Von_Mises_projection_operator>());
+                                std::make_shared<Von_Mises_projection_operator>());
     return true;
    }
 
-  static bool predef_operators_initialized = init_predef_operators();
+  // declared in getfem_generic_assembly.cc
+  extern bool predef_operators_plasticity_initialized
+    = init_predef_operators();
 
 }  /* end of namespace getfem.  */
 

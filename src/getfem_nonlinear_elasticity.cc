@@ -2199,7 +2199,9 @@ namespace getfem {
     return true;
   }
 
-  static bool predef_operators_initialized = init_predef_operators();
+  // declared in getfem_generic_assembly.cc
+  extern bool predef_operators_nonlinear_elasticity_initialized
+    = init_predef_operators();
 
 
   std::string adapt_law_name(const std::string &lawname, size_type N) {

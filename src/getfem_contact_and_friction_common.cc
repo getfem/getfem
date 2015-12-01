@@ -2382,7 +2382,8 @@ namespace getfem {
     return true;
    }
 
-  static bool predef_operators_initialized = init_predef_operators();
-
+  // declared in getfem_generic_assembly.cc
+  extern bool predef_operators_contact_initialized
+    = init_predef_operators();
 
 }  /* end of namespace getfem.                                             */
