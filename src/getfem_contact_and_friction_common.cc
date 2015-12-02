@@ -2383,7 +2383,7 @@ namespace getfem {
    }
 
   // declared in getfem_generic_assembly.cc
-  extern bool predef_operators_contact_initialized
+  bool predef_operators_contact_initialized
     = init_predef_operators();
 
 }  /* end of namespace getfem.                                             */

@@ -538,7 +538,7 @@ AC_ARG_WITH(mumps,
    yes | "") usemumps="yes";;
    no) acx_mumps_ok="no" ;;
    -* | */* | *.a | *.so | *.so.* | *.o| builtin) MUMPS_LIBS="$with_mumps"; acx_mumps_ok="yes" ;;
-   *) MUMPS_LIBS=`echo $with_mumps | sed -e 's/^/-l/g;s/ / -l/g'` ; usemumps="yes";;
+   *) MUMPS_LIBS=`echo $with_mumps | sed -e 's/^/-l/g;s/ \+/ -l/g'` ; usemumps="yes";;
   esac]
 )
 
@@ -605,7 +605,7 @@ AC_ARG_ENABLE(metis,
  [usemetis="test"]
 )
 
-if test $paralevel -ge 2 -a "x$usemetis" = "xno"; then
+if test $paralevel -ge 1 -a "x$usemetis" = "xno"; then
   echo "Parallel getfem requires the METIS library, --enable-metis=no will be ignored";
   usemetis="yes"
 fi;
@@ -613,15 +613,13 @@ fi;
 if test "x$usemetis" = "xno"; then
   echo "Building without METIS";
 else
-  AC_CHECK_LIB(metis, METIS_PartGraphRecursive,
-               [usemetis="yes"],
-               [usemetis="no";
-                if test $paralevel -ge 2; then
+  if test $paralevel -ge 1; then
+    AC_CHECK_LIB(metis, METIS_PartGraphRecursive,
+                 [usemetis="yes"],
+                 [usemetis="no";
                   AC_MSG_ERROR([METIS library required for parallel getfem was not found])
-                fi
-               ])
+                 ])
 
-  if test "x$usemetis" = "xyes"; then
     METIS_LIBS="-lmetis"
     LIBS="$LIBS $METIS_LIBS"
     AC_DEFINE_UNQUOTED([HAVE_METIS],1,[defined if the Metis library was found and is working])
@@ -634,13 +632,9 @@ else
       AC_CHECK_HEADERS(metis.h,
                        [usemetis="yes"],
                        [usemetis="no";
-                        if test $paralevel -ge 2; then
-                          AC_MSG_ERROR([metis.h header required for parallel getfem was not found])
-                        fi
+                        AC_MSG_ERROR([metis.h header required for parallel getfem was not found])
                        ])
     fi;
-  else
-    echo "METIS library could not be found, building without METIS";
   fi;
 fi;
 

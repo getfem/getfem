@@ -2200,7 +2200,7 @@ namespace getfem {
   }
 
   // declared in getfem_generic_assembly.cc
-  extern bool predef_operators_nonlinear_elasticity_initialized
+  bool predef_operators_nonlinear_elasticity_initialized
     = init_predef_operators();
 
 
