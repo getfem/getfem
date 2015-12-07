@@ -41,8 +41,6 @@ namespace getfemint
   using std::endl; using std::cout; using std::cerr;
   using std::ends; using std::cin;
 
-  const char *name_of_getfemint_class_id(unsigned cid);
-
   void attach_gdb();
 
   #define THROW_INTERNAL_ERROR { dal::dump_backtrace(); GMM_THROW(getfemint::getfemint_error, "getfem-interface: internal error\n") }
@@ -50,13 +48,6 @@ namespace getfemint
   typedef size_t size_type;
   typedef bgeot::short_type short_type;
   typedef dal::uint32_type id_type;
-
-  #define GETFEMINT_CVS_MASK         0x12000000
-  #define GETFEMINT_PGT_MASK         0x14000000
-  #define GETFEMINT_PFI_MASK         0x15000000
-  #define GETFEMINT_PFEM_MASK        0x16000000
-  #define GETFEMINT_MATELEMTYPE_MASK 0x17000000
-  #define GETFEMINT_MATELEM_MASK     0x18000000
 
   class getfemint_error : public std::logic_error {
     //    std::string what_;

@@ -34,30 +34,23 @@
 
 #include <getfem/dal_tas.h>
 #include <getfemint_object.h>
-namespace getfemint
-{
+namespace getfemint {
 
   class workspace_data {
     std::string name;
     time_t creation_time;
   public:
-    id_type parent_workspace;
-    workspace_data() { name = "invalid"; creation_time = 0; parent_workspace = id_type(-2); }
-    workspace_data(std::string n, id_type parent) : name(n), parent_workspace(parent) { 
-      creation_time = ::time(NULL); 
-    }
-    const std::string& get_name() const { 
-      return name; 
-    }
+    workspace_data() { name = "invalid"; creation_time = 0; }
+    workspace_data(std::string n) : name(n) { creation_time = ::time(NULL); }
+    const std::string& get_name() const {  return name; }
     time_t get_creation_time() const { return creation_time; }    
   };
 
   class workspace_stack {
   public:
-    typedef dal::dynamic_tas<getfem_object*>  obj_ct;
-    typedef dal::dynamic_tas<workspace_data>  wrk_ct;
+    typedef std::vector<getfem_object *>  obj_ct;
+    typedef std::vector<workspace_data>  wrk_ct;
     static const id_type invalid_id = id_type(-1);
-    static const id_type anonymous_workspace = getfem_object::anonymous_workspace;
   private:
 
     id_type current_workspace; /* stores the current workspace number */
@@ -65,6 +58,7 @@ namespace getfemint
 
     /* list of getfem object */
     obj_ct obj;
+    dal::bit_vector valid_objects;
     /* list of used workspaces */
     wrk_ct wrk;
 
@@ -90,8 +84,8 @@ namespace getfemint
 
     void undelete_object(id_type id);
     /* at least mark the objet for future deletion (object becomes anonymous)
-       and if possible, destroy the object (and all the objects which use this one
-       if they are all anonymous) */
+       and if possible, destroy the object (and all the objects which use
+       this one if they are all anonymous) */
     void delete_object(id_type id);
 
     /* create a new workspace on top of the stack */
@@ -103,7 +97,8 @@ namespace getfemint
     void send_object_to_parent_workspace(id_type obj_id);
     void send_all_objects_to_parent_workspace();
 
-    /* delete every object in the workspace, but *does not* delete the workspace itself */
+    /* delete every object in the workspace, but *does not* delete the
+       workspace itself */
     void clear_workspace(id_type w);
     /* clears the current workspace */
     void clear_workspace() { clear_workspace(current_workspace); }
@@ -118,13 +113,12 @@ namespace getfemint
     getfem_object* object(getfem_object::internal_key_type p);
 
     const obj_ct& get_obj_list() const { return obj; }
+    const dal::bit_vector& get_obj_index() const { return valid_objects; }
     const wrk_ct& get_wrk_list() const { return wrk; }
     id_type get_current_workspace() const { return current_workspace; }
     id_type get_base_workspace() const { return base_workspace; }
-    workspace_stack() : current_workspace(anonymous_workspace) {
-      push_workspace("main");
-      base_workspace = current_workspace;
-    }
+    workspace_stack() : current_workspace(anonymous_workspace)
+    { push_workspace("main"); base_workspace = current_workspace; }
 
     void commit_newly_created_objects();
     void destroy_newly_created_objects();

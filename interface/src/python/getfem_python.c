@@ -632,29 +632,6 @@ call_getfem(PyObject *self, PyObject *args) { return call_getfem_(self,args, 0);
 static PyObject*
 call_getfem_from_constructor(PyObject *self, PyObject *args) { return call_getfem_(self,args, 1); }
 
-/*static PyObject *
-register_types(PyObject *self, PyObject *args)
-{
-  printf("registering types..\n");
-  if (PyArg_ParseTuple(args,"OOOOOOOO",
-                       &PyDerivedTypes[MESH_CLASS_ID],
-                       &PyDerivedTypes[MESHFEM_CLASS_ID],
-                       &PyDerivedTypes[GEOTRANS_CLASS_ID],
-                       &PyDerivedTypes[FEM_CLASS_ID],
-                       &PyDerivedTypes[INTEG_CLASS_ID],
-                       &PyDerivedTypes[ELTM_CLASS_ID],
-                       &PyDerivedTypes[CVSTRUCT_CLASS_ID],
-                       &PyDerivedTypes[POLY_CLASS_ID],
-                       &PyDerivedTypes[SLICE_CLASS_ID])) return NULL;
-  //Py_INCREF(PyDerivedTypes[MESH_CLASS_ID]);
-  PyObject_Print(PyDerivedTypes[MESH_CLASS_ID],stderr,0);
-  if (!PyClass_Check(PyDerivedTypes[MESH_CLASS_ID])) {
-    PyErr_Format(PyExc_RuntimeError, "Not a class..");
-    return NULL;
-  }
-  return Py_None;
-  }*/
-
 static PyObject *
 getfem_env(PyObject *self, PyObject *args) {
   char* word_in;

@@ -30,59 +30,60 @@
 
 using namespace getfemint;
 
-  class match_workspace {
-    id_type wid;
-  public:
-    match_workspace(id_type wid_) { wid = wid_; }
-    bool operator()(const getfem_object *o) {
-      return o->get_workspace() == wid;
-    }
-  };
-
 static void
 do_stat(id_type wid) {
-  const workspace_stack::obj_ct obj = workspace().get_obj_list();
-  const workspace_stack::wrk_ct wrk = workspace().get_wrk_list();
-  int cnt = 0;
-
-  if (wid == workspace_stack::anonymous_workspace) {
+  const workspace_stack::obj_ct &obj = workspace().get_obj_list();
+  const workspace_stack::wrk_ct &wrk = workspace().get_wrk_list();
+  const dal::bit_vector &valid_objects =  workspace().get_obj_index();
+  
+  if (wid == anonymous_workspace) {
     infomsg() << "Anonymous workspace (objects waiting for deletion)\n";
   } else {
-    if (!wrk.index()[wid]) THROW_INTERNAL_ERROR;
-    infomsg() << "Workspace " << wid << " [" << wrk[wid].get_name() << " -- " << 
-      std::count_if(obj.tas_begin(), obj.tas_end(), match_workspace(wid)) << " objects]\n";
+    if (wid >= wrk.size()) THROW_INTERNAL_ERROR;
+    size_type nb = 0;
+    for (dal::bv_visitor ii(valid_objects); !ii.finished(); ++ii)
+      if (obj[ii]->get_workspace() == wid) nb++;
+
+    infomsg() << "Workspace " << wid << " [" << wrk[wid].get_name() << " -- "
+	      << nb << " objects]\n";
   }
-  for (workspace_stack::obj_ct::const_tas_iterator it = obj.tas_begin(); it != obj.tas_end(); ++it, ++cnt) {
-    if (!obj.index()[it.index()]) THROW_INTERNAL_ERROR;
-    if (match_workspace(wid)(*it)) {
+
+  for (dal::bv_visitor ii(valid_objects); !ii.finished(); ++ii) {
+    getfem_object *o = obj[ii];
+    if (o->get_workspace() == wid) {
       std::string subclassname;
-      infomsg() << " ID" << std::setw(4) << (*it)->get_id() << " " 
-		<< std::setw(20) << name_of_getfemint_class_id((*it)->class_id())
-	        << std::setw(10) << subclassname 
-		<< "   " << std::setw(9) << (*it)->memsize() << " bytes";
-      if ((*it)->is_static()) infomsg() << " * "; else infomsg() << "   ";
-      if ((*it)->is_const()) infomsg() << "Const"; else infomsg() << "     ";
-      const std::vector<id_type>& used_by = (*it)->get_used_by();
+      infomsg() << " ID" << std::setw(4) << o->get_id() << " " 
+		<< std::setw(20)
+		<< name_of_getfemint_class_id(o->class_id())
+		<< std::setw(10) << subclassname 
+		<< "   " << std::setw(9) << o->memsize() << " bytes";
+      if (o->is_static()) infomsg() << " * "; else infomsg() << "   ";
+      if (o->is_const()) infomsg() << "Const"; else infomsg() << "     ";
+      const std::vector<id_type>& used_by = o->get_used_by();
       if (used_by.size()) {
 	infomsg() << " used by ";
-	for (size_type i=0; i < used_by.size(); ++i) infomsg() << " ID" << used_by[i];
+	for (size_type i=0; i < used_by.size(); ++i)
+	  infomsg() << " ID" << used_by[i];
       }
-      //      if ((*it)->is_anonymous()) mexPrintf("[ano]");
       infomsg() << endl;
     }
   }
 }
-
+  
 static void
 do_stats() {
-  //infomsg() << "Memory used by elementary matrices structures : " << getfem::stored_mat_elem_memsize()/1024 << "KB\n";
-  if (std::count_if(workspace().get_obj_list().tas_begin(), 
-		    workspace().get_obj_list().tas_end(), 
-		    match_workspace(workspace_stack::anonymous_workspace))) {
-    do_stat(workspace_stack::anonymous_workspace);
+  // infomsg() << "Memory used by elementary matrices structures : "
+  //           << getfem::stored_mat_elem_memsize()/1024 << "KB\n";
+  
+  const workspace_stack::obj_ct &obj = workspace().get_obj_list();
+  const dal::bit_vector &valid_objects =  workspace().get_obj_index();
+  bool ok = false;
+  for (dal::bv_visitor ii(valid_objects); !ii.finished(); ++ii) {
+    if (obj[ii]->get_workspace() == anonymous_workspace)
+      { ok = true; break; }
   }
-  for (dal::bv_visitor_c wid(workspace().get_wrk_list().index());
-       !wid.finished(); ++wid)
+  if (ok) do_stat(anonymous_workspace);
+  for (size_type wid = 0; wid < workspace().get_wrk_list().size(); ++wid)
     do_stat(id_type(wid));
 }
 
@@ -211,7 +212,8 @@ void gf_workspace(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
       should not need this command). @*/
     sub_command
       ("clear all", 0, 0, 0, 0,
-       while (workspace().get_current_workspace() != workspace().get_base_workspace()) {
+       while (workspace().get_current_workspace()
+	      != workspace().get_base_workspace()) {
 	 workspace().pop_workspace();
 	 //      mexPrintf("w <- %d\n", workspace().get_current_workspace());
        }
@@ -240,7 +242,8 @@ void gf_workspace(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
     /* Unofficial function */
     sub_command
       ("connect", 0, -1, 0, -1,
-       GMM_THROW(getfemint_error, "cannot connect: the toolbox was built without rpc support");
+       GMM_THROW(getfemint_error, "cannot connect: the toolbox was built "
+		 "without rpc support");
        );
 
 

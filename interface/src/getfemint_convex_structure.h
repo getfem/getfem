@@ -33,7 +33,7 @@
 #ifndef GETFEMINT_CONVEX_STRUCTURE_H__
 #define GETFEMINT_CONVEX_STRUCTURE_H__
 
-#include <getfemint_std.h>
+#include <getfemint.h>
 #include <getfem/bgeot_convex_structure.h>
 namespace getfemint
 {

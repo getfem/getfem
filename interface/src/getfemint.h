@@ -38,9 +38,11 @@
 
 #include <getfemint_std.h>
 #include <set>
+#include <getfem/dal_static_stored_objects.h>
 #include <getfem/getfem_mesh_fem.h>
 #include <getfem/getfem_im_data.h>
 #include <gfi_array.h>
+
 
 namespace getfem {
   class stored_mesh_slice;
@@ -58,6 +60,84 @@ namespace getfem {
 }
 
 namespace getfemint {
+
+  /* This is very important that the following classes respects the
+     alphabetic order. The order has to be the same as in getfem.py !!!
+     Do not forget to modify also 'name_of_getfemint_class_id' just after
+  */
+  typedef enum { CONT_STRUCT_CLASS_ID,
+		 CVSTRUCT_CLASS_ID,
+		 ELTM_CLASS_ID,
+		 FEM_CLASS_ID,
+		 GEOTRANS_CLASS_ID,
+		 GLOBAL_FUNCTION_CLASS_ID,
+		 INTEG_CLASS_ID,
+		 LEVELSET_CLASS_ID,
+		 MESH_CLASS_ID,
+		 MESHFEM_CLASS_ID,
+		 MESHIM_CLASS_ID,
+		 MESHIMDATA_CLASS_ID,
+		 MESH_LEVELSET_CLASS_ID,
+		 MESHER_OBJECT_CLASS_ID,
+		 MODEL_CLASS_ID,
+		 PRECOND_CLASS_ID,
+		 SLICE_CLASS_ID,
+		 GSPARSE_CLASS_ID, /* Considered as Spmat for alphabetic order*/
+		 POLY_CLASS_ID,    /* Not fully interfaced. Remain at the end */
+		 GETFEMINT_NB_CLASS } getfemint_class_id;
+  
+  
+  /* associate the class ID found in the matlab structures referencing
+     getfem object to a class name which coincides with the class name
+     given by matlab to the structure.
+     
+     IMPORTANT: Should correspond to the getfemint_class_id
+                In particular, it should be in alphabetic order.
+  */
+  inline const char *name_of_getfemint_class_id(id_type cid) {
+    switch (cid) {
+    case CONT_STRUCT_CLASS_ID:      return "gfContStruct";
+    case CVSTRUCT_CLASS_ID:         return "gfCvStruct";
+    case ELTM_CLASS_ID:             return "gfEltm";
+    case FEM_CLASS_ID:              return "gfFem";
+    case GEOTRANS_CLASS_ID:         return "gfGeoTrans";
+    case GLOBAL_FUNCTION_CLASS_ID:  return "gfGlobalFunction";
+    case INTEG_CLASS_ID:            return "gfInteg";
+    case LEVELSET_CLASS_ID:         return "gfLevelSet";
+    case MESH_CLASS_ID:             return "gfMesh";
+    case MESHFEM_CLASS_ID:          return "gfMeshFem";
+    case MESHIM_CLASS_ID:           return "gfMeshIm";
+    case MESHIMDATA_CLASS_ID:       return "gfMeshImData";
+    case MESH_LEVELSET_CLASS_ID:    return "gfMeshLevelSet";
+    case MESHER_OBJECT_CLASS_ID:    return "gfMesherObject";
+    case MODEL_CLASS_ID:            return "gfModel";
+    case PRECOND_CLASS_ID:          return "gfPrecond";
+    case SLICE_CLASS_ID:            return "gfSlice";
+    case GSPARSE_CLASS_ID:          return "gfSpmat";
+    case POLY_CLASS_ID:             return "gfPoly";
+    default :                       return "not_a_getfem_class";
+    }
+  }
+
+
+  // à gerer avec un singleton ...
+
+
+  // void gfi_add_stored_object(pstatic_stored_object o, void *struct_pointer);
+  // void gfi_add_dependency(void *ptr1, void *ptr2);
+  // void gfi_del_dependency(void *ptr1, void *ptr2);
+  // void del_stored_object(void *ptr);
+
+
+  
+
+ 
+
+  
+
+
+
+
 
   /* exception-throwing version of the allocation functions of gfi_array.h */
   gfi_array* checked_gfi_array_create(int ndim, const int *dims, gfi_type_id type, gfi_complex_flag is_complex = GFI_REAL);

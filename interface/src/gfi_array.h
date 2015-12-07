@@ -41,36 +41,13 @@
 #  endif
 #endif
 
-/* This is very important that the following classes respects the
-   alphabetic order. The order has to be the same as in getfem.py !!!
-   Do not forget to modify also 'name_of_getfemint_class_id' in getfemint.cc
-*/
-typedef enum { CONT_STRUCT_CLASS_ID,
-               CVSTRUCT_CLASS_ID,
-               ELTM_CLASS_ID,
-               FEM_CLASS_ID,
-               GEOTRANS_CLASS_ID,
-               GLOBAL_FUNCTION_CLASS_ID,
-               INTEG_CLASS_ID,
-               LEVELSET_CLASS_ID,
-               MESH_CLASS_ID,
-               MESHFEM_CLASS_ID,
-               MESHIM_CLASS_ID,
-               MESHIMDATA_CLASS_ID,
-               MESH_LEVELSET_CLASS_ID,
-               MESHER_OBJECT_CLASS_ID,
-               MODEL_CLASS_ID,
-               PRECOND_CLASS_ID,
-               SLICE_CLASS_ID,
-               GSPARSE_CLASS_ID, /* Considered as Spmat for alphabetic order */
-               POLY_CLASS_ID,    /* Not fully interfaced. Remain at the end */
-               GETFEMINT_NB_CLASS } getfemint_class_id;
+typedef enum { MATLAB_INTERFACE, PYTHON_INTERFACE, SCILAB_INTERFACE} gfi_interface_type;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-  /* extrait du gfm_rpc.h genere par rpcgen */
+  /* extrait du gfi_rpc.h genere par rpcgen */
 enum gfi_type_id {
         GFI_INT32 = 0,
         GFI_UINT32 = 1,
@@ -226,7 +203,6 @@ const char *
 gfi_type_id_name(gfi_type_id id, gfi_complex_flag is_complex);
 void gfi_array_print(gfi_array *t);
 
-typedef enum { MATLAB_INTERFACE, PYTHON_INTERFACE, SCILAB_INTERFACE} gfi_interface_type;
 
   int is_cancel_flag_set(void);
   void set_cancel_flag(int v);

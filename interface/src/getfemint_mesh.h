@@ -36,7 +36,7 @@
 #ifndef GETFEMINT_MESH_H__
 #define GETFEMINT_MESH_H__
 
-#include <getfemint_std.h>
+#include <getfemint.h>
 #include <getfemint_object.h>
 #include <getfem/getfem_mesh.h>
 

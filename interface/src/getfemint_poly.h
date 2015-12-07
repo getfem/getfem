@@ -33,7 +33,7 @@
 #ifndef GETFEMINT_POLY_H__
 #define GETFEMINT_POLY_H__
 
-#include <getfemint_std.h>
+#include <getfemint.h>
 #include <getfem/bgeot_config.h>
 #include <getfem/bgeot_poly.h>
 #include <getfemint_object.h>

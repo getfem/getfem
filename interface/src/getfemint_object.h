@@ -37,6 +37,8 @@
 namespace getfemint
 {
 
+  static const id_type anonymous_workspace = id_type(-1);
+  
   /* common class for all getfem objects addressable from the interface */
 
   enum { STATIC_OBJ = 1, CONST_OBJ = 2 };
@@ -54,8 +56,7 @@ namespace getfemint
     internal_key_type ikey; /* generally the pointer to the corresponding 
 			       getfem object */
 
-    static const id_type anonymous_workspace = id_type(-1);
-
+    
     typedef int obj_flags_t;
     obj_flags_t flags; /* if STATIC_OBJ, the linked getfem object is not
 			  deleted when the getfem_object is destroyed
@@ -73,7 +74,8 @@ namespace getfemint
     /* these functions can't be pure virtual functions !?
        it breaks the linking of getfem with libgetfemint.so
     */
-    virtual ~getfem_object() { id = id_type(-1); ikey = 0; workspace = id = 0x77777777;}
+    virtual ~getfem_object()
+    { id = id_type(-1); ikey = 0; workspace = id = 0x77777777;}
     virtual id_type class_id() const = 0;
 
     virtual size_type memsize() const { return 0; }

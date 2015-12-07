@@ -33,7 +33,7 @@
 #ifndef GETFEMINT_PGT_H__
 #define GETFEMINT_PGT_H__
 
-#include <getfemint_std.h>
+#include <getfemint.h>
 #include <getfem/bgeot_geometric_trans.h>
 
 namespace getfemint

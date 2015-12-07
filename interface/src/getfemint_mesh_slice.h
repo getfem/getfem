@@ -33,7 +33,7 @@
 #ifndef GETFEMINT_MESH_SLICE_H__
 #define GETFEMINT_MESH_SLICE_H__
 
-#include <getfemint_std.h>
+#include <getfemint.h>
 #include <getfemint_object.h>
 #include <getfemint_mesh.h>
 #include <getfem/getfem_mesh_slice.h>

@@ -33,14 +33,13 @@
 #ifndef GETFEMINT_PRECOND_H__
 #define GETFEMINT_PRECOND_H__
 
-#include <getfemint_std.h>
+#include <getfemint.h>
 #include <getfemint_object.h>
 #include <gmm/gmm_precond_diagonal.h>
 #include <gmm/gmm_precond_ildlt.h>
 #include <gmm/gmm_precond_ildltt.h>
 #include <gmm/gmm_precond_ilu.h>
 #include <gmm/gmm_precond_ilut.h>
-#include <getfemint.h>
 #include <getfem/getfem_superlu.h>
 #include <getfemint_gsparse.h>
 

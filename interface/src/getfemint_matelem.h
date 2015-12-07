@@ -33,7 +33,7 @@
 #ifndef GETFEMINT_MATELEM_H__
 #define GETFEMINT_MATELEM_H__
 
-#include <getfemint_std.h>
+#include <getfemint.h>
 #include <getfem/getfem_mat_elem.h>
 
 

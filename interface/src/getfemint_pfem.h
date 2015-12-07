@@ -34,6 +34,7 @@
 #define GETFEMINT_PFEM_H__
 
 #include <getfemint_object.h>
+#include <getfemint.h>
 #include <getfem/getfem_fem.h>
 
 

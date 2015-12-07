@@ -36,7 +36,7 @@
 #ifndef GETFEMINT_GLOBAL_FUNCTION_H__
 #define GETFEMINT_GLOBAL_FUNCTION_H__
 
-#include <getfemint_std.h>
+#include <getfemint.h>
 #include <getfemint_object.h>
 #include <getfem/getfem_mesh_fem_global_function.h>
 

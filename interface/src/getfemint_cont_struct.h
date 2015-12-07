@@ -33,8 +33,8 @@
    \brief getfem::cont_struct_getfem_model interface
 */
 
-#include <getfemint_std.h>
 #include <getfemint_object.h>
+#include <getfemint.h>
 #include <getfem/getfem_continuation.h>
 
 namespace getfemint {

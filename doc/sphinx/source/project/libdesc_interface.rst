@@ -298,7 +298,7 @@ Adding a new object to the getfem interface
 In order to add a new object to the interface, you have to build the new corresponding sources :file:`gf_obj.cc`, :file:`gf_obj_get.cc` and :file:`gf_obj_set.cc`. Of course you can take the existing ones as a model.
 
 A structure name `getfemint_object_name` has to be defined (see getfemint_mesh.h for instance).
-Moreover, for the management of the object, you have to declare the class in :file:`getfemint.cc` and :file:`getfemint.h` and add the methods `is_object()`, `to_const_object()`, `to_object()` and `to_getfemint_object()`. You have to set its ``class_id`` in :file:`gfi_array.h` (with respect to the alphabetic order of its name).
+Moreover, for the management of the object, you have to declare the class in :file:`getfemint.cc` and :file:`getfemint.h` and add the methods `is_object()`, `to_const_object()`, `to_object()` and `to_getfemint_object()`. 
 
 You have also to add the call of the interface function in :file:`getfem_interface.cc` and modifiy the file :file:`bin/extract_doc` and run the configure file.
 

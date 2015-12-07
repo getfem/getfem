@@ -58,39 +58,6 @@
 #include <exception> // NE PAS METTRE CE FICHIER EN PREMIER !!!! ou bien ennuis avec dec cxx 6.3 garantis
 
 namespace getfemint {
-  /* associate the class ID found in the matlab structures referencing
-     getfem object to a class name which coincides with the class name
-     given by matlab to the structure.
-     
-     IMPORTANT: Should correspond to the getfemint_class_id in gfi_array.h
-                In particular, it should be in alphabetic order.
-  */
-  const char *name_of_getfemint_class_id(unsigned cid) {
-    static const char *cname[GETFEMINT_NB_CLASS] = {
-      "gfContStruct",
-      "gfCvStruct",
-      "gfEltm",
-      "gfFem",
-      "gfGeoTrans",
-      "gfGlobalFunction",
-      "gfInteg",
-      "gfLevelSet",
-      "gfMesh",
-      "gfMeshFem",
-      "gfMeshIm",
-      "gfMeshImData",
-      "gfMeshLevelSet",
-      "gfMesherObject",
-      "gfModel",
-      "gfPrecond",
-      "gfSlice",
-      "gfSpmat",
-      "gfPoly"
-    };
-
-    if (cid >= GETFEMINT_NB_CLASS) return "not_a_getfem_class";
-    else return cname[cid];
-  }
 
   void array_dimensions::assign_dimensions(const gfi_array *mx) {
     sz = gfi_array_nb_of_elements(mx);
@@ -128,20 +95,6 @@ namespace getfemint {
       sizes_[0] = 1;
     }
   }
-
-  /*
-  bool is_static_object(id_type id, id_type cid) {
-    if (cid == FEM_CLASS_ID && id < 0x80000000)
-      return false;
-    else return
-      (cid != MESHFEM_CLASS_ID && cid != MESHIM_CLASS_ID &&
-       cid != MESH_CLASS_ID &&
-       cid != MODEL_CLASS_ID  &&
-       cid != SLICE_CLASS_ID && cid != POLY_CLASS_ID &&
-       cid != PRECOND_CLASS_ID && cid != GSPARSE_CLASS_ID &&
-       cid != LEVELSET_CLASS_ID && cid != MESH_LEVELSET_CLASS_ID);
-  }
-  */
 
   static std::string dim_of_gfi_array(const gfi_array *t) {
     std::stringstream ss;

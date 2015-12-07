@@ -33,7 +33,7 @@
    \brief getfem::models interface
 */
 
-#include <getfemint_std.h>
+#include <getfemint.h>
 #include <getfemint_object.h>
 #include <getfem/getfem_models.h>
 

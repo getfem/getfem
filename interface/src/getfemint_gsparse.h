@@ -33,7 +33,7 @@
 #ifndef GETFEMINT_GSPARSE_H__
 #define GETFEMINT_GSPARSE_H__
 
-#include <getfemint_std.h>
+#include <getfemint.h>
 #include <getfemint_object.h>
 #include <getfemint.h>
 
