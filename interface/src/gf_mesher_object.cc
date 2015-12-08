@@ -44,7 +44,7 @@ struct sub_mesher_object : virtual public dal::static_stored_object {
   int arg_in_min, arg_in_max, arg_out_min, arg_out_max;
   virtual void run(getfemint::mexargs_in& in,
 		   getfemint::mexargs_out& out,
-		   pgetfemint_mesher_object &pmo) = 0;
+		   getfem::pmesher_signed_distance &psd) = 0;
 };
 
 typedef std::shared_ptr<sub_mesher_object> psub_command;
@@ -56,7 +56,7 @@ template <typename T> static inline void dummy_func(T &) {}
     struct subc : public sub_mesher_object {		       		\
       virtual void run(getfemint::mexargs_in& in,			\
 		       getfemint::mexargs_out& out,			\
-		       pgetfemint_mesher_object &pmo)			\
+		       getfem::pmesher_signed_distance &psd) override	\
       { dummy_func(in); dummy_func(out); code }				\
     };									\
     psub_command psubc = std::make_shared<subc>();			\
@@ -85,10 +85,7 @@ void gf_mesher_object(getfemint::mexargs_in& m_in,
        getfem::base_node bncenter(gmm::vect_size(center));
        gmm::copy(center, bncenter);
 
-       getfem::pmesher_signed_distance ball
-       = getfem::new_mesher_ball(bncenter, radius);
-       
-       pmo = getfemint_mesher_object::get_from(ball);
+       psd = getfem::new_mesher_ball(bncenter, radius);
        );
 
     /*@INIT MF = ('half space', @vec origin, @vec normal_vector)
@@ -107,14 +104,12 @@ void gf_mesher_object(getfemint::mexargs_in& m_in,
        getfem::base_node bnn(gmm::vect_size(n));
        gmm::copy(n, bnn);
 
-       getfem::pmesher_signed_distance half
-       = getfem::new_mesher_half_space(bnorigin, bnn);
-
-       pmo = getfemint_mesher_object::get_from(half);
+       psd = getfem::new_mesher_half_space(bnorigin, bnn);
        );
 
     /*@INIT MF = ('cylinder', @vec origin, @vec n, @scalar length, @scalar radius)
-      Represents a cylinder (in any dimension) of a certain radius whose axis is determined by the origin, a vector `n` and a certain length.
+      Represents a cylinder (in any dimension) of a certain radius whose axis
+      is determined by the origin, a vector `n` and a certain length.
       @*/
     sub_command
       ("cylinder", 4, 4, 0, 1,
@@ -128,14 +123,12 @@ void gf_mesher_object(getfemint::mexargs_in& m_in,
        getfem::base_node bnn(gmm::vect_size(n));
        gmm::copy(n, bnn);
 
-       getfem::pmesher_signed_distance cyl
-       = getfem::new_mesher_cylinder(bnorigin, bnn, length, radius);
-
-       pmo = getfemint_mesher_object::get_from(cyl);
+       psd = getfem::new_mesher_cylinder(bnorigin, bnn, length, radius);
        );
 
-        /*@INIT MF = ('cone', @vec origin, @vec n, @scalar length, @scalar half_angle)
-      Represents a cone (in any dimension) of a certain half-angle (in radians) whose axis is determined by the origin, a vector `n` and a certain length.
+    /*@INIT MF = ('cone', @vec origin, @vec n, @scalar length, @scalar half_angle)
+      Represents a cone (in any dimension) of a certain half-angle (in radians)
+      whose axis is determined by the origin, a vector `n` and a certain length.
       @*/
     sub_command
       ("cone", 4, 4, 0, 1,
@@ -149,10 +142,7 @@ void gf_mesher_object(getfemint::mexargs_in& m_in,
        getfem::base_node bnn(gmm::vect_size(n));
        gmm::copy(n, bnn);
 
-       getfem::pmesher_signed_distance cone
-       = getfem::new_mesher_cone(bnorigin, bnn, length, half_angle);
-
-       pmo = getfemint_mesher_object::get_from(cone);
+       psd = getfem::new_mesher_cone(bnorigin, bnn, length, half_angle);
        );
 
     /*@INIT MF = ('torus', @scalar R, @scalar r)
@@ -164,11 +154,7 @@ void gf_mesher_object(getfemint::mexargs_in& m_in,
       ("torus", 2, 2, 0, 1,
        double R = in.pop().to_scalar();
        double r = in.pop().to_scalar();
-
-       getfem::pmesher_signed_distance torus
-         = getfem::new_mesher_torus(R, r);
-
-       pmo = getfemint_mesher_object::get_from(torus);
+       psd  = getfem::new_mesher_torus(R, r);
        );
 
     
@@ -187,10 +173,7 @@ void gf_mesher_object(getfemint::mexargs_in& m_in,
        getfem::base_node rrmin(N); getfem::base_node rrmax(N);
        gmm::copy(rmin, rrmin); gmm::copy(rmax, rrmax);
 
-       getfem::pmesher_signed_distance rectangle
-         = getfem::new_mesher_rectangle(rrmin, rrmax);
-
-       pmo = getfemint_mesher_object::get_from(rectangle);
+       psd = getfem::new_mesher_rectangle(rrmin, rrmax);
        );
 
 
@@ -199,21 +182,12 @@ void gf_mesher_object(getfemint::mexargs_in& m_in,
       @*/
     sub_command
       ("intersect", 2, 100, 0, 1,
-
        std::vector<getfem::pmesher_signed_distance> vd;
-
-       getfem::pmesher_signed_distance psd
-          = in.pop().to_const_mesher_object();
-       vd.push_back(psd);
-
-       while (in.remaining()) {
-	 psd = in.pop().to_const_mesher_object();
-	 vd.push_back(psd);
-       }
+       vd.push_back(in.pop().to_const_mesher_object());
+       while (in.remaining())
+	 vd.push_back(in.pop().to_const_mesher_object());
        
-       getfem::pmesher_signed_distance psd2 
-         = getfem::new_mesher_intersection(vd);
-       pmo = getfemint_mesher_object::get_from(psd2);
+       psd = getfem::new_mesher_intersection(vd);
        );
 
     /*@INIT MF = ('union', @tmo object1 , @tmo object2, ...)
@@ -221,20 +195,12 @@ void gf_mesher_object(getfemint::mexargs_in& m_in,
       @*/
     sub_command
       ("union", 2, 100, 0, 1,
-
        std::vector<getfem::pmesher_signed_distance> vd;
-
-       getfem::pmesher_signed_distance psd
-       = in.pop().to_const_mesher_object();
-       vd.push_back(psd);
-
-       while (in.remaining()) {
-	 psd = in.pop().to_const_mesher_object();
-	 vd.push_back(psd);
-       }
+       vd.push_back(in.pop().to_const_mesher_object());
+       while (in.remaining())
+	 vd.push_back(in.pop().to_const_mesher_object());
        
-       getfem::pmesher_signed_distance psd2 = getfem::new_mesher_union(vd);
-       pmo = getfemint_mesher_object::get_from(psd2);
+       psd = getfem::new_mesher_union(vd);
        );
 
     /*@INIT MF = ('set minus', @tmo object1 , @tmo object2)
@@ -242,21 +208,15 @@ void gf_mesher_object(getfemint::mexargs_in& m_in,
       @*/
     sub_command
       ("set minus", 2, 100, 0, 1,
-
-       getfem::pmesher_signed_distance psd1
-          = in.pop().to_const_mesher_object();
-       getfem::pmesher_signed_distance psd2
-          = in.pop().to_const_mesher_object();
-       
-       getfem::pmesher_signed_distance psd
-         = getfem::new_mesher_setminus(psd1, psd2);
-       pmo = getfemint_mesher_object::get_from(psd);
+       getfem::pmesher_signed_distance psd1 = in.pop().to_const_mesher_object();
+       getfem::pmesher_signed_distance psd2 = in.pop().to_const_mesher_object();
+       psd = getfem::new_mesher_setminus(psd1, psd2);
        );
   }
 
 
   if (m_in.narg() < 1) THROW_BADARG("Wrong number of input arguments");
-  getfemint_mesher_object *pmo = NULL;
+  getfem::pmesher_signed_distance psd;
   
   std::string init_cmd   = m_in.pop().to_string();
   std::string cmd        = cmd_normalize(init_cmd);
@@ -267,10 +227,10 @@ void gf_mesher_object(getfemint::mexargs_in& m_in,
     check_cmd(cmd, it->first.c_str(), m_in, m_out, it->second->arg_in_min,
 	      it->second->arg_in_max, it->second->arg_out_min,
 	      it->second->arg_out_max);
-    it->second->run(m_in, m_out, pmo);
+    it->second->run(m_in, m_out, psd);
   }
   else bad_cmd(init_cmd);
 
- 
+  getfemint_mesher_object *pmo = getfemint_mesher_object::get_from(psd);
   m_out.pop().from_object_id(pmo->get_id(), MESHER_OBJECT_CLASS_ID);
 }
