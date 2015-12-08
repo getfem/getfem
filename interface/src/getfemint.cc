@@ -55,7 +55,7 @@
 #  include <signal.h>
 # endif
 //#endif
-#include <exception> // NE PAS METTRE CE FICHIER EN PREMIER !!!! ou bien ennuis avec dec cxx 6.3 garantis
+#include <exception>
 
 namespace getfemint {
 

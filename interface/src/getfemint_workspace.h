@@ -32,8 +32,10 @@
 #ifndef GETFEMINT_WORKSPACE_H__
 #define GETFEMINT_WORKSPACE_H__
 
-#include <getfem/dal_tas.h>
+#include <getfemint.h>
 #include <getfemint_object.h>
+#include <getfem/dal_bit_vector.h>
+
 namespace getfemint {
 
   class workspace_data {
@@ -125,5 +127,102 @@ namespace getfemint {
   };
 
   workspace_stack& workspace();
+
+
+  // workspace_stack stores the various object assigned to the script
+  // languages variables (Python, Scilab or Matlab).
+  // This objects are organised in workspaces in Matlab and Scilab in
+  // order to be able to delete all the variables created locally in a
+  // sub-program or a loop (however, this has to be managed by the user).
+  // Additionnally, a variable may have dependances with respect to some
+  // other variables, in the sense that is a deletion of a variable occurs
+  // it will be delayed untill all the dependant variables are deleted
+  // (implemented with shared pointers).
+
+
+  // Cacher une partie de l'implementation ?
+
+  class workspace2_stack {
+    
+    struct object_info {
+      dal::pstatic_stored_object p;
+      void *raw_pointer;
+      id_type workspace;
+      getfemint_class_id class_id;
+      std::vector<dal::pstatic_stored_object> used_by;
+
+      object_info() : raw_pointer(0), class_id(GETFEMINT_NB_CLASS) {}
+    };
+
+    typedef std::vector<object_info>  obj_ct;
+    typedef std::vector<std::string>  wrk_ct;
+    static const id_type invalid_id = id_type(-1);
+
+    obj_ct obj;                      // Array of getfem object.
+    dal::bit_vector valid_objects;   // Indices of valid objects.
+    wrk_ct wrk;                      // Stack of used workspaces.
+
+    std::map<void *, id_type> kmap;
+    std::vector<id_type> newly_created_objects;
+
+  public:
+
+    // Creates a new workspace2 on top of the stack
+    void push_workspace2(const std::string &n = "Unnamed") { wrk.push_back(n); }
+
+    // Deletes the current workspace2 and returns to the parent workspace2
+    void pop_workspace2(bool keep_all = false);
+
+    // Inserts a new object (and gives it an id)
+    id_type push_object(const dal::pstatic_stored_object &p,
+			void *raw_pointer, getfemint_class_id class_id);
+
+    // Sets the dependance of an object with respect to another
+    void set_dependance(id_type user, id_type used);
+    void sup_dependance(id_type user, id_type used);
+
+    /** At least mark the objet for future deletion (object becomes anonymous)
+	and if possible, destroy the object (and all the objects which use
+	this one if they are all anonymous).
+    */
+    void delete_object(id_type id);
+
+    /* Move the object in the parent workspace2, in order to prevent
+       the object from being deleted when the current workspace2 will
+       be 'poped' */
+    void send_object_to_parent_workspace2(id_type obj_id);
+    void send_all_objects_to_parent_workspace2();
+
+    id_type get_current_workspace2() const { return id_type(wrk.size()-1); }
+    id_type get_base_workspace2() const { return id_type(0); }
+    /* Delete every object in the workspace2, but *does not* delete the
+       workspace2 itself */
+    void clear_workspace2(id_type w);
+    /* clears the current workspace2 */
+    void clear_workspace2() { clear_workspace2(get_current_workspace2()); }
+
+    
+    /* Throw an error if not found */
+    void *object(id_type id, const char *expected_type="");
+
+    /* Return id_type(-1) if not found */
+    id_type object(void *raw_pointer);
+    
+    workspace2_stack() { push_workspace2("main"); }
+
+    void commit_newly_created_objects();
+    void destroy_newly_created_objects();
+  };
+
+  workspace2_stack& workspace2();
+
+
+
+
+
+
+
+
+
 }
 #endif

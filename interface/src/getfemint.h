@@ -118,22 +118,9 @@ namespace getfemint {
     default :                       return "not_a_getfem_class";
     }
   }
-
-
-  // à gerer avec un singleton ...
-
-
-  // void gfi_add_stored_object(pstatic_stored_object o, void *struct_pointer);
-  // void gfi_add_dependency(void *ptr1, void *ptr2);
-  // void gfi_del_dependency(void *ptr1, void *ptr2);
-  // void del_stored_object(void *ptr);
-
-
   
 
- 
 
-  
 
 
 
