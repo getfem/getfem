@@ -22,9 +22,9 @@
 #include <map>
 #include <getfemint_misc.h>
 #include <getfemint_mesh.h>
-#include <getfemint_convex_structure.h>
 #include <getfemint_pgt.h>
 #include <getfem/getfem_export.h>
+#include <getfem/bgeot_convex_structure.h>
 
 using namespace getfemint;
 
@@ -46,7 +46,7 @@ get_structure_or_geotrans_of_convexes(const getfem::mesh& m,
   std::vector<id_type> ids; ids.reserve(cvlst.card());
   for (dal::bv_visitor cv(cvlst); !cv.finished(); ++cv) {
     if (class_id == CVSTRUCT_CLASS_ID)
-      ids.push_back(ind_convex_structure(m.structure_of_convex(cv)));
+      ids.push_back(store_cvstruct_object(m.structure_of_convex(cv)));
     else ids.push_back(ind_pgt(m.trans_of_convex(cv)));
   }
   out.return_packed_obj_ids(ids, class_id);

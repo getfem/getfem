@@ -78,28 +78,21 @@ libgetfemint_la_SOURCES = \
 	getfemint_misc.cc \
 	$(PSEUDO_MFUNCTIONS) \
 	getfemint_workspace.cc \
-	getfemint_cont_struct.cc \
 	getfemint_mesh.cc \
 	getfemint_mesh_fem.cc \
 	getfemint_mesh_im.cc \
 	getfemint_mesh_im_data.cc \
-	getfemint_matelem.cc \
-	getfemint_matelemtype.cc \
 	getfemint_pfem.cc \
 	getfemint_integ.h \
 	getfemint_integ.cc \
 	getfemint_global_function.h \
 	getfemint_global_function.cc \
 	getfemint_pgt.cc \
-	getfemint_convex_structure.cc \
 	gfi_array.h \
-	getfemint_cont_struct.h \
-	getfemint_convex_structure.h \
 	getfemint_mesh.h \
 	getfemint_misc.h \
 	getfemint_std.h \
 	gfi_rpc.h \
-	getfemint_matelem.h \
 	getfemint_mesh_fem.h \
 	getfemint_mesh_im.h \
 	getfemint_mesh_im_data.h \
@@ -108,7 +101,6 @@ libgetfemint_la_SOURCES = \
 	getfemint_pgt.h \
 	getfemint_workspace.h \
 	getfemint.h \
-	getfemint_matelemtype.h \
 	getfemint_mesh_slice.h \
 	getfemint_precond.h \
 	getfemint_levelset.h \

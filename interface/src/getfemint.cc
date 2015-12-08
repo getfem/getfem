@@ -30,21 +30,19 @@
 #include <getfemint_mesh_im.h>
 #include <getfemint_mesh_im_data.h>
 #include <getfemint_models.h>
-#include <getfemint_matelemtype.h>
-#include <getfemint_matelem.h>
 #include <getfemint_pfem.h>
 #include <getfemint_integ.h>
 #include <getfemint_pgt.h>
-#include <getfemint_convex_structure.h>
 #include <getfemint_precond.h>
 #include <getfemint_gsparse.h>
 #include <getfemint_levelset.h>
 #include <getfemint_mesh_levelset.h>
 #include <getfemint_global_function.h>
-#include <getfemint_cont_struct.h>
 #include <getfem/getfem_mat_elem_type.h>
 #include <getfem/getfem_mesh_fem_global_function.h>
 #include <getfem/getfem_mesher.h>
+#include <getfem/getfem_continuation.h>
+#include <getfem/bgeot_convex_structure.h>
 
 #include <getfemint_misc.h>
 //#ifdef MAINTAINER_MODE
@@ -339,15 +337,6 @@ namespace getfemint {
     if (is_object_id(&id, &cid) && cid == GLOBAL_FUNCTION_CLASS_ID) {
       getfem_object *o=workspace().object(id, name_of_getfemint_class_id(cid));
       return (object_is_global_function(o));
-    } else return false;
-  }
-
-  bool
-  mexarg_in::is_cont_struct() {
-    id_type id, cid;
-    if (is_object_id(&id, &cid) && cid == CONT_STRUCT_CLASS_ID) {
-      getfem_object *o=workspace().object(id, name_of_getfemint_class_id(cid));
-      return (object_is_cont_struct(o));
     } else return false;
   }
 
@@ -666,33 +655,6 @@ namespace getfemint {
     return to_getfemint_global_function(false)->global_function();
   }
 
-   /*
-    check if the argument is a valid handle to a cont_struct,
-    and return it
-  */
-  getfemint_cont_struct *
-  mexarg_in::to_getfemint_cont_struct(bool writeable) {
-    id_type id, cid;
-    to_object_id(&id,&cid);
-    if (cid != CONT_STRUCT_CLASS_ID) {
-      THROW_BADARG("argument " << argnum << " should be a cont_struct " <<
-                   "descriptor, its class is " << name_of_getfemint_class_id(cid));
-    }
-    getfem_object *o = workspace().object(id,name_of_getfemint_class_id(cid));
-    error_if_nonwritable(o, writeable);
-    return object_to_cont_struct(o);
-  }
-
-  const getfem::cont_struct_getfem_model *
-  mexarg_in::to_const_cont_struct() {
-    return &to_getfemint_cont_struct(false)->cont_struct();
-  }
-
-  getfem::cont_struct_getfem_model *
-  mexarg_in::to_cont_struct() {
-    return &to_getfemint_cont_struct(true)->cont_struct();
-  }
-
   getfemint_precond *
   mexarg_in::to_precond() {
     id_type id, cid;
@@ -729,19 +691,6 @@ namespace getfemint {
     return addr_integ(id);
   }
 
-  getfem::pmat_elem_type
-  mexarg_in::to_mat_elem_type() {
-    id_type id,cid;
-    to_object_id(&id,&cid);
-    if (cid != ELTM_CLASS_ID)
-      THROW_BADARG("Argument " << argnum <<
-                   " should be a elementary matrix descriptor.");
-    if (!exists_matelemtype(id))
-      THROW_BADARG("Argument " << argnum <<
-                   " is not a valid elementary matrix handle");
-    return addr_matelemtype(id);
-  }
-
   getfemint_pfem*
   mexarg_in::to_getfemint_pfem() {
     id_type id,cid;
@@ -771,19 +720,6 @@ namespace getfemint {
       THROW_BADARG("Argument " << argnum <<
                    " refers to a geometric transformation that does not exists");
     return getfemint::addr_pgt(id);
-  }
-
-  bgeot::pconvex_structure
-  mexarg_in::to_convex_structure() {
-    id_type id,cid;
-    to_object_id(&id,&cid);
-    if (cid != CVSTRUCT_CLASS_ID)
-      THROW_BADARG("Argument " << argnum <<
-                   " is not a convex structure handle");
-    if (!getfemint::exists_convex_structure(id))
-      THROW_BADARG("Argument " << argnum <<
-                   " refers to a convex structure that does not exists");
-    return getfemint::addr_convex_structure(id);
   }
 
   void mexarg_in::check_dimensions(const array_dimensions &v, int expected_dim) {
@@ -1517,38 +1453,94 @@ namespace getfemint {
 
 
 
+  // Functions for CONT_STRUCT_CLASS_ID
 
-
-  bool is_mesher_object(mexarg_in &p) {
+  bool is_cont_struct_object(mexarg_in &p) {
     id_type id, cid;
-    return (p.is_object_id(&id, &cid) && cid == MESHER_OBJECT_CLASS_ID);
+    return (p.is_object_id(&id, &cid) && cid == CONT_STRUCT_CLASS_ID);
   }
 
-  id_type store_mesher_object(const getfem::pmesher_signed_distance &psd) {
+  id_type store_cont_struct_object
+  (const std::shared_ptr<getfem::cont_struct_getfem_model> &shp) {
     auto &w = workspace2();
-    id_type id = w.object((const void *)(psd.get()));
+    id_type id = w.object((const void *)(shp.get()));
     if (id == id_type(-1)) {
-      auto p = std::dynamic_pointer_cast<const dal::static_stored_object>(psd);
+      auto p = std::dynamic_pointer_cast<const dal::static_stored_object>(shp);
       if (!(p.get())) THROW_INTERNAL_ERROR; // The object has to derive from
 	                                    // dal::static_stored_object.
-      id = w.push_object(p, (const void *)(psd.get()), MESHER_OBJECT_CLASS_ID);
+      id = w.push_object(p, (const void *)(shp.get()), CONT_STRUCT_CLASS_ID);
     }
     return id;
   }
 
-  getfem::pmesher_signed_distance to_mesher_object(mexarg_in &p) {
+  getfem::cont_struct_getfem_model *to_cont_struct_object(mexarg_in &p) {
     id_type id, cid;
-    if (p.is_object_id(&id, &cid) && cid == MESHER_OBJECT_CLASS_ID) {
-      return std::dynamic_pointer_cast<const getfem::mesher_signed_distance>
-	(workspace2().shared_pointer(id, name_of_getfemint_class_id(cid)));
+    if (p.is_object_id(&id, &cid) && cid == CONT_STRUCT_CLASS_ID) {
+      return const_cast<getfem::cont_struct_getfem_model *>
+	((const getfem::cont_struct_getfem_model *)
+	 (workspace2().object(id, name_of_getfemint_class_id(cid))));
     } else {
-      THROW_BADARG("argument " << p.argnum << " should be a mesher_object " <<
-                   "descriptor, its class is "
+      THROW_BADARG("argument " << p.argnum << " should be a continuation "
+		   "structure descriptor, its class is "
 		   << name_of_getfemint_class_id(cid));
     }
   }
 
+
+
+#define SIMPLE_SHARED_POINTER_MANAGED_OBJECT(NAME, TYPE, PTTYPE, CLASS_ID) \
+  bool is_##NAME##_object(mexarg_in &p) {				\
+    id_type id, cid;							\
+    return (p.is_object_id(&id, &cid) && cid == CLASS_ID);		\
+  }									\
+									\
+  id_type store_##NAME##_object(const PTTYPE &shp) {			\
+    auto &w = workspace2();						\
+    id_type id = w.object((const void *)(shp.get()));			\
+    if (id == id_type(-1)) {						\
+      auto p =								\
+       std::dynamic_pointer_cast<const dal::static_stored_object>(shp); \
+      if (!(p.get())) THROW_INTERNAL_ERROR;				\
+      id = w.push_object(p, (const void *)(shp.get()), CLASS_ID);	\
+    }									\
+    return id;								\
+  }									\
+									\
+  PTTYPE to_##NAME##_object(mexarg_in &p) {				\
+    id_type id, cid;							\
+    if (p.is_object_id(&id, &cid) && cid == CLASS_ID) {			\
+      return std::dynamic_pointer_cast<const TYPE>			\
+	(workspace2().shared_pointer(id, name_of_getfemint_class_id(cid))); \
+    } else {								\
+      THROW_BADARG("argument " << p.argnum << " should be a " <<	\
+		   name_of_getfemint_class_id(CLASS_ID) <<		\
+		   "descriptor, its class is "				\
+		   << name_of_getfemint_class_id(cid));			\
+    }									\
+  }
+
+
+
+  // Functions for CVSTRUCT_CLASS_ID
+  SIMPLE_SHARED_POINTER_MANAGED_OBJECT(cvstruct, bgeot::convex_structure,
+				       bgeot::pconvex_structure,
+				       CVSTRUCT_CLASS_ID)
   
+  // Functions for ELTM_CLASS_ID
+  SIMPLE_SHARED_POINTER_MANAGED_OBJECT(eltm, getfem::mat_elem_type,
+				       getfem::pmat_elem_type,
+				       ELTM_CLASS_ID)
+
+  // Functions for FEM_CLASS_ID
+  SIMPLE_SHARED_POINTER_MANAGED_OBJECT(fem, getfem::virtual_fem,
+				       getfem::pfem,
+				       FEM_CLASS_ID)
+
+
+  // Functions for MESHER_OBJECT_CLASS_ID
+  SIMPLE_SHARED_POINTER_MANAGED_OBJECT(mesher, getfem::mesher_signed_distance,
+				       getfem::pmesher_signed_distance,
+				       MESHER_OBJECT_CLASS_ID)
   
 
 

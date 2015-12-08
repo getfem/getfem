@@ -20,7 +20,7 @@
 ===========================================================================*/
 
 #include <getfemint.h>
-#include <getfemint_convex_structure.h>
+#include <getfem/bgeot_convex_structure.h>
 
 using namespace getfemint;
 
@@ -96,7 +96,7 @@ void gf_cvstruct_get(getfemint::mexargs_in& m_in,
     sub_command
       ("basic_structure", 0, 0, 0, 1,
        out.pop().from_object_id
-       (getfemint::ind_convex_structure(bgeot::basic_structure(cs)),
+       (store_cvstruct_object(bgeot::basic_structure(cs)),
         CVSTRUCT_CLASS_ID);
        );
 
@@ -107,7 +107,7 @@ void gf_cvstruct_get(getfemint::mexargs_in& m_in,
       ("face", 1, 1, 0, 1,
        short_type f = in.pop().to_face_number(cs->nb_faces());
        out.pop().from_object_id
-       (getfemint::ind_convex_structure(cs->faces_structure()[f]),
+       (store_cvstruct_object(cs->faces_structure()[f]),
         CVSTRUCT_CLASS_ID);
        );
 
@@ -143,7 +143,7 @@ void gf_cvstruct_get(getfemint::mexargs_in& m_in,
 
   if (m_in.narg() < 2)  THROW_BADARG( "Wrong number of input arguments");
 
-  bgeot::pconvex_structure cs = m_in.pop().to_convex_structure();
+  bgeot::pconvex_structure cs = to_cvstruct_object(m_in.pop());
   std::string init_cmd   = m_in.pop().to_string();
   std::string cmd        = cmd_normalize(init_cmd);
 

@@ -22,7 +22,7 @@
 #include <getfemint.h>
 #include <getfemint_workspace.h>
 #include <getfemint_models.h>
-#include <getfemint_cont_struct.h>
+#include <getfem/getfem_continuation.h>
 
 
 using namespace getfemint;
@@ -34,7 +34,6 @@ using namespace getfemint;
 @*/
 
 void gf_cont_struct(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
-  getfemint_cont_struct *pgs = NULL;
   if (check_cmd("ContStruct", "ContStruct", in, out, 3, 43, 0, 1)) {
 
     /*@INIT S = ('.init', @tmodel md, @str dataname_parameter[,@str dataname_init, @str dataname_final, @str dataname_current], @scalar sc_fac[, ...])
@@ -109,106 +108,108 @@ void gf_cont_struct(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
        determines how detailed information has to be displayed during the
        continuation process (residual values etc.).@*/
 
-       getfemint_model *md = in.pop().to_getfemint_model();
-       std::string dataname_parameter = in.pop().to_string(),
-                   dataname_init, dataname_final, dataname_current;
-       if (in.front().is_string()) {
-         dataname_init = in.pop().to_string();
-         dataname_final = in.pop().to_string();
-         dataname_current = in.pop().to_string();
-       }
-       scalar_type scfac = in.pop().to_scalar();
-
-       std::string lsolver("auto"), varname("");
-       scalar_type h_init(1e-2), h_max(1e-1), h_min(1e-5), h_inc(1.3), h_dec(0.5),
-                   maxres(1e-6), maxdiff(1e-6), mincos(0.9), maxres_solve(1e-8),
-                   delta_max(0.005), delta_min(0.00012), thrvar(0.02);
-       size_type maxit(10), thrit(4), nbdir(40), nbspan(1);
-       int noisy(0), singularities(0);
-       bool nonsmooth(false);
-
-       while (in.remaining() && in.front().is_string()) {
-         std::string opt = in.pop().to_string();
-         if (cmd_strmatch(opt, "lsolver"))  {
-           if (in.remaining()) lsolver = in.pop().to_string();
-           else THROW_BADARG("missing name for " << opt);
-         } else if (cmd_strmatch(opt, "h_init")) {
-           if (in.remaining()) h_init = in.pop().to_scalar();
-           else THROW_BADARG("missing value for " << opt);
-         } else if (cmd_strmatch(opt, "h_max")) {
-           if (in.remaining()) h_max = in.pop().to_scalar();
-           else THROW_BADARG("missing value for " << opt);
-         } else if (cmd_strmatch(opt, "h_min")) {
-           if (in.remaining()) h_min = in.pop().to_scalar();
-           else THROW_BADARG("missing value for " << opt);
-         } else if (cmd_strmatch(opt, "h_inc")) {
-           if (in.remaining()) h_inc = in.pop().to_scalar();
-           else THROW_BADARG("missing value for " << opt);
-         } else if (cmd_strmatch(opt, "h_dec")) {
-           if (in.remaining()) h_dec = in.pop().to_scalar();
-           else THROW_BADARG("missing value for " << opt);
-         } else if (cmd_strmatch(opt, "max_iter")) {
-           if (in.remaining()) maxit = in.pop().to_integer();
-           else THROW_BADARG("missing value for " << opt);
-         } else if (cmd_strmatch(opt, "thr_iter")) {
-           if (in.remaining()) thrit = in.pop().to_integer();
-           else THROW_BADARG("missing value for " << opt);
-         } else if (cmd_strmatch(opt, "max_res")) {
-           if (in.remaining()) maxres = in.pop().to_scalar();
-           else THROW_BADARG("missing value for " << opt);
-         } else if (cmd_strmatch(opt, "max_diff")) {
-           if (in.remaining()) maxdiff = in.pop().to_scalar();
-           else THROW_BADARG("missing value for " << opt);
-         } else if (cmd_strmatch(opt, "min_cos")) {
-           if (in.remaining()) mincos = in.pop().to_scalar();
-           else THROW_BADARG("missing value for " << opt);
-         } else if (cmd_strmatch(opt, "max_res_solve")) {
-           if (in.remaining()) maxres_solve = in.pop().to_scalar();
-           else THROW_BADARG("missing value for " << opt);
-         } else if (cmd_strmatch(opt, "delta_max")) {
-           if (in.remaining()) delta_max = in.pop().to_scalar();
-           else THROW_BADARG("missing value for " << opt);
-         } else if (cmd_strmatch(opt, "delta_min")) {
-           if (in.remaining()) delta_min = in.pop().to_scalar();
-           else THROW_BADARG("missing value for " << opt);
-         } else if (cmd_strmatch(opt, "thr_var")) {
-           if (in.remaining()) thrvar = in.pop().to_scalar();
-           else THROW_BADARG("missing value for " << opt);
-         } else if (cmd_strmatch(opt, "nb_dir")) {
-           if (in.remaining()) nbdir = in.pop().to_integer();
-           else THROW_BADARG("missing value for " << opt);
-         } else if (cmd_strmatch(opt, "nb_span")) {
-           if (in.remaining()) nbspan = in.pop().to_integer();
-           else THROW_BADARG("missing value for " << opt);
-         } else if (cmd_strmatch(opt, "singularities")) {
-           if (in.remaining()) singularities = in.pop().to_integer();
-           else THROW_BADARG("missing value for " << opt);
-         } else if (cmd_strmatch(opt, "variable_name")) {
-           if (in.remaining()) varname = in.pop().to_string();
-           else THROW_BADARG("missing name for " << opt);
-         } else if (cmd_strmatch(opt, "non-smooth")) nonsmooth = true;
-         else if (cmd_strmatch(opt, "noisy")) noisy = 1;
-         else if (cmd_strmatch(opt, "very noisy") ||
-                  cmd_strmatch(opt, "very_noisy")) noisy = 2;
-         else THROW_BADARG("bad option: " << opt);
-       }
-
-       getfem::cont_struct_getfem_model *ps=
-         new getfem::cont_struct_getfem_model
-         (md->model(), dataname_parameter, scfac,
-          getfem::rselect_linear_solver(md->model(), lsolver),
-          h_init, h_max, h_min, h_inc, h_dec, maxit, thrit, maxres, maxdiff,
-          mincos, maxres_solve, noisy, singularities, nonsmooth,
-          delta_max, delta_min, thrvar, nbdir, nbspan);
-
-       if (!dataname_current.empty())
-         ps->set_parametrised_data_names(dataname_init, dataname_final,
-                                         dataname_current);
-       if (!varname.empty())
-         ps->set_interval_from_variable_name(varname);
-
-       pgs = getfemint_cont_struct::get_from(ps);
-       workspace().set_dependance(pgs, md);
+    getfemint_model *md = in.pop().to_getfemint_model();
+    std::string dataname_parameter = in.pop().to_string(),
+      dataname_init, dataname_final, dataname_current;
+    if (in.front().is_string()) {
+      dataname_init = in.pop().to_string();
+      dataname_final = in.pop().to_string();
+      dataname_current = in.pop().to_string();
+    }
+    scalar_type scfac = in.pop().to_scalar();
+    
+    std::string lsolver("auto"), varname("");
+    scalar_type h_init(1e-2), h_max(1e-1), h_min(1e-5), h_inc(1.3), h_dec(0.5),
+      maxres(1e-6), maxdiff(1e-6), mincos(0.9), maxres_solve(1e-8),
+      delta_max(0.005), delta_min(0.00012), thrvar(0.02);
+    size_type maxit(10), thrit(4), nbdir(40), nbspan(1);
+    int noisy(0), singularities(0);
+    bool nonsmooth(false);
+    
+    while (in.remaining() && in.front().is_string()) {
+      std::string opt = in.pop().to_string();
+      if (cmd_strmatch(opt, "lsolver"))  {
+	if (in.remaining()) lsolver = in.pop().to_string();
+	else THROW_BADARG("missing name for " << opt);
+      } else if (cmd_strmatch(opt, "h_init")) {
+	if (in.remaining()) h_init = in.pop().to_scalar();
+	else THROW_BADARG("missing value for " << opt);
+      } else if (cmd_strmatch(opt, "h_max")) {
+	if (in.remaining()) h_max = in.pop().to_scalar();
+	else THROW_BADARG("missing value for " << opt);
+      } else if (cmd_strmatch(opt, "h_min")) {
+	if (in.remaining()) h_min = in.pop().to_scalar();
+	else THROW_BADARG("missing value for " << opt);
+      } else if (cmd_strmatch(opt, "h_inc")) {
+	if (in.remaining()) h_inc = in.pop().to_scalar();
+	else THROW_BADARG("missing value for " << opt);
+      } else if (cmd_strmatch(opt, "h_dec")) {
+	if (in.remaining()) h_dec = in.pop().to_scalar();
+	else THROW_BADARG("missing value for " << opt);
+      } else if (cmd_strmatch(opt, "max_iter")) {
+	if (in.remaining()) maxit = in.pop().to_integer();
+	else THROW_BADARG("missing value for " << opt);
+      } else if (cmd_strmatch(opt, "thr_iter")) {
+	if (in.remaining()) thrit = in.pop().to_integer();
+	else THROW_BADARG("missing value for " << opt);
+      } else if (cmd_strmatch(opt, "max_res")) {
+	if (in.remaining()) maxres = in.pop().to_scalar();
+	else THROW_BADARG("missing value for " << opt);
+      } else if (cmd_strmatch(opt, "max_diff")) {
+	if (in.remaining()) maxdiff = in.pop().to_scalar();
+	else THROW_BADARG("missing value for " << opt);
+      } else if (cmd_strmatch(opt, "min_cos")) {
+	if (in.remaining()) mincos = in.pop().to_scalar();
+	else THROW_BADARG("missing value for " << opt);
+      } else if (cmd_strmatch(opt, "max_res_solve")) {
+	if (in.remaining()) maxres_solve = in.pop().to_scalar();
+	else THROW_BADARG("missing value for " << opt);
+      } else if (cmd_strmatch(opt, "delta_max")) {
+	if (in.remaining()) delta_max = in.pop().to_scalar();
+	else THROW_BADARG("missing value for " << opt);
+      } else if (cmd_strmatch(opt, "delta_min")) {
+	if (in.remaining()) delta_min = in.pop().to_scalar();
+	else THROW_BADARG("missing value for " << opt);
+      } else if (cmd_strmatch(opt, "thr_var")) {
+	if (in.remaining()) thrvar = in.pop().to_scalar();
+	else THROW_BADARG("missing value for " << opt);
+      } else if (cmd_strmatch(opt, "nb_dir")) {
+	if (in.remaining()) nbdir = in.pop().to_integer();
+	else THROW_BADARG("missing value for " << opt);
+      } else if (cmd_strmatch(opt, "nb_span")) {
+	if (in.remaining()) nbspan = in.pop().to_integer();
+	else THROW_BADARG("missing value for " << opt);
+      } else if (cmd_strmatch(opt, "singularities")) {
+	if (in.remaining()) singularities = in.pop().to_integer();
+	else THROW_BADARG("missing value for " << opt);
+      } else if (cmd_strmatch(opt, "variable_name")) {
+	if (in.remaining()) varname = in.pop().to_string();
+	else THROW_BADARG("missing name for " << opt);
+      } else if (cmd_strmatch(opt, "non-smooth")) nonsmooth = true;
+      else if (cmd_strmatch(opt, "noisy")) noisy = 1;
+      else if (cmd_strmatch(opt, "very noisy") ||
+	       cmd_strmatch(opt, "very_noisy")) noisy = 2;
+      else THROW_BADARG("bad option: " << opt);
+    }
+    
+    auto shp = std::make_shared<getfem::cont_struct_getfem_model>
+      (md->model(), dataname_parameter, scfac,
+       getfem::rselect_linear_solver(md->model(), lsolver),
+       h_init, h_max, h_min, h_inc, h_dec, maxit, thrit, maxres, maxdiff,
+       mincos, maxres_solve, noisy, singularities, nonsmooth,
+       delta_max, delta_min, thrvar, nbdir, nbspan);
+    
+    
+    
+    if (!dataname_current.empty())
+      shp->set_parametrised_data_names(dataname_init, dataname_final,
+				      dataname_current);
+    if (!varname.empty())
+      shp->set_interval_from_variable_name(varname);
+    
+    id_type id = store_cont_struct_object(shp);
+    // workspace().set_dependance(id, md); // To be reactivated
+    out.pop().from_object_id(id, CONT_STRUCT_CLASS_ID);
   }
-  out.pop().from_object_id(pgs->get_id(), CONT_STRUCT_CLASS_ID);
+  
 }

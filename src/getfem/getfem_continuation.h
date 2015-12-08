@@ -990,7 +990,8 @@ namespace getfem {
 #ifdef GETFEM_MODELS_H__
 
   class cont_struct_getfem_model
-  : public virtual_cont_struct<base_vector, model_real_sparse_matrix> {
+    : public virtual_cont_struct<base_vector, model_real_sparse_matrix>,
+      public dal::static_stored_object {
 
   private:
     mutable model *md;

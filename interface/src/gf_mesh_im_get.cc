@@ -22,6 +22,7 @@
 #include <getfemint_misc.h>
 #include <getfemint_mesh_im.h>
 #include <getfemint_integ.h>
+#include <getfem/getfem_mat_elem_type.h>
 /*
   $Id$
  */
@@ -146,7 +147,7 @@ void gf_mesh_im_get(getfemint::mexargs_in& m_in,
     is integrated on the face `f` of `cv` instead of the whole convex.@*/
     sub_command
       ("eltm", 2, 3, 0, 1,
-       getfem::pmat_elem_type pmet = in.pop().to_mat_elem_type();
+       getfem::pmat_elem_type pmet = to_eltm_object(in.pop());
        size_type cv = in.pop().to_convex_number(mim->linked_mesh());
        /* one should check that the fem given to the MET is
           compatible with the fem of the element (not easy ..) */

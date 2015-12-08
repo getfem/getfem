@@ -21,7 +21,8 @@
 
 #include <getfemint_misc.h>
 #include <getfemint_workspace.h>
-#include <getfemint_cont_struct.h>
+#include <getfemint.h>
+#include <getfem/getfem_continuation.h>
 
 using namespace getfemint;
 
@@ -288,7 +289,7 @@ void gf_cont_struct_get(getfemint::mexargs_in& m_in,
 
   if (m_in.narg() < 2)  THROW_BADARG( "Wrong number of input arguments");
 
-  getfem::cont_struct_getfem_model *ps = m_in.pop().to_cont_struct();
+  getfem::cont_struct_getfem_model *ps = to_cont_struct_object(m_in.pop());
   std::string init_cmd   = m_in.pop().to_string();
   std::string cmd        = cmd_normalize(init_cmd);
 

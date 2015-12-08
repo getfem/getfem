@@ -39,6 +39,7 @@
 #include <getfemint_std.h>
 #include <set>
 #include <getfem/dal_static_stored_objects.h>
+#include <getfem/getfem_config.h>
 #include <getfem/getfem_mesh_fem.h> // utile ?
 #include <getfem/getfem_im_data.h> // utile ?
 #include <gfi_array.h>
@@ -52,6 +53,8 @@ namespace getfem {
   typedef std::shared_ptr<const mat_elem_type> pmat_elem_type;
   class level_set;
   class mesh_level_set;
+  class mesh_im;
+  class im_data;
   class abstract_xy_function;
   typedef std::shared_ptr<const abstract_xy_function> pxy_function;
   class mesher_signed_distance;
@@ -167,7 +170,6 @@ namespace getfemint {
   class getfemint_levelset;
   class getfemint_mesh_levelset;
   class getfemint_global_function;
-  class getfemint_cont_struct;
   class gsparse;
 
   class sub_index : public gmm::unsorted_sub_index{
@@ -463,7 +465,6 @@ namespace getfemint {
     bool                                 is_levelset();
     bool                                 is_mesh_levelset();
     bool                                 is_global_function();
-    bool                                 is_cont_struct();
     bool                                 is_sparse() { return (gfi_array_get_class(arg) == GFI_SPARSE || is_gsparse()); };
     bool                                 is_gsparse();
     bool                                 is_complex(); /* true for complex garrays AND complex sparse matrices (native or gsparse) */
@@ -501,16 +502,11 @@ namespace getfemint {
     getfem::mesh_level_set *             to_mesh_levelset();
     const getfem::pxy_function           to_const_global_function();
     getfem::pxy_function                 to_global_function();
-    const getfem::cont_struct_getfem_model * to_const_cont_struct();
-    getfem::cont_struct_getfem_model *   to_cont_struct();
     getfemint_global_function *          to_getfemint_global_function(bool writeable=false);
-    getfemint_cont_struct *              to_getfemint_cont_struct(bool writable=false);
     getfem::pintegration_method          to_integration_method();
     getfemint_pfem*                      to_getfemint_pfem();
     getfem::pfem                         to_fem();
-    getfem::pmat_elem_type               to_mat_elem_type();
     bgeot::pgeometric_trans              to_pgt();
-    bgeot::pconvex_structure             to_convex_structure();
     getfemint_precond *                  to_precond();
     getfem::mesh_region                  to_mesh_region();
 
@@ -761,16 +757,32 @@ private:
   const double& get_NaN();
   bool is_NaN(const double&);
 
+  // Functions for CONT_STRUCT_CLASS_ID
+  bool is_cont_struct_object(mexarg_in &p);
+  id_type store_cont_struct_object
+  (const std::shared_ptr<getfem::cont_struct_getfem_model> &shp);
+  getfem::cont_struct_getfem_model *to_cont_struct_object(mexarg_in &p);
 
+  // Functions for CVSTRUCT_CLASS_ID
+  bool is_cvstruct_object(mexarg_in &p);
+  id_type store_cvstruct_object(const bgeot::pconvex_structure &shp);
+  bgeot::pconvex_structure to_cvstruct_object(mexarg_in &p);
 
+  // Functions for ELTM_CLASS_ID
+  bool is_eltm_object(mexarg_in &p);
+  id_type store_eltm_object(const getfem::pmat_elem_type &shp);
+  getfem::pmat_elem_type to_eltm_object(mexarg_in &p);
 
+  // Functions for FEM_CLASS_ID
+  bool is_fem_object(mexarg_in &p);
+  id_type store_fem_object(const getfem::pfem &shp);
+  getfem::pfem to_fem_object(mexarg_in &p);
 
-  id_type store_mesher_object(const getfem::pmesher_signed_distance &psd);
+  // Functions for MESHER_OBJECT_CLASS_ID
   bool is_mesher_object(mexarg_in &p);
+  id_type store_mesher_object(const getfem::pmesher_signed_distance &shp);
   getfem::pmesher_signed_distance to_mesher_object(mexarg_in &p);
-    
-
-
+  
 
 
 

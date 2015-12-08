@@ -20,8 +20,8 @@
 ===========================================================================*/
 
 #include <getfemint_misc.h>
-#include <getfemint_matelemtype.h>
 #include <getfemint_pfem.h>
+#include <getfem/getfem_mat_elem_type.h>
 
 using namespace getfemint;
 
@@ -76,9 +76,9 @@ void gf_eltm(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     /*@INIT E = ('product', @teltm A, @teltm B)
       return a descriptor for the integration of the tensorial product of
       elementary matrices `A` and `B`.@*/
-    getfem::pmat_elem_type  m1 = in.pop().to_mat_elem_type();
-    getfem::pmat_elem_type  m2 = in.pop().to_mat_elem_type();
+    getfem::pmat_elem_type  m1 = to_eltm_object(in.pop());
+    getfem::pmat_elem_type  m2 = to_eltm_object(in.pop());
     pme = getfem::mat_elem_product(m1,m2);
   } else bad_cmd(cmd);
-  out.pop().from_object_id(getfemint::ind_matelemtype(pme), ELTM_CLASS_ID);
+  out.pop().from_object_id(store_eltm_object(pme), ELTM_CLASS_ID);
 }
