@@ -215,7 +215,6 @@ namespace getfemint {
 
   getfem_object* workspace_stack::object(id_type id, const char *expected_type) {
     getfem_object *o = NULL;
-    //cout << "obj.index() == " << obj.index() << ", id= " << id << "\n";
     if (valid_objects[id] &&
         std::find(newly_created_objects.begin(), newly_created_objects.end(),id) == newly_created_objects.end()) {
       o = obj[id];
@@ -273,22 +272,22 @@ namespace getfemint {
 
   /* inserts a new object (and gives it an id) */
   id_type workspace2_stack::push_object(const dal::pstatic_stored_object &p,
-					void *raw_pointer,
+					const void *raw_pointer,
 					getfemint_class_id class_id) {
-    id_type obj_id = id_type(valid_objects.first_false());
-    valid_objects.add(obj_id);
-    if (obj_id >= obj.size()) obj.push_back(object_info());
+    id_type id = id_type(valid_objects.first_false());
+    valid_objects.add(id);
+    if (id >= obj.size()) obj.push_back(object_info());
     
-    object_info &o = obj[obj_id];
+    object_info &o = obj[id];
     o.p = p;
     o.raw_pointer = raw_pointer;
     o.workspace = get_current_workspace2();
     o.class_id = class_id;
     o.used_by.clear();
 
-    kmap[raw_pointer] = obj_id;
-    newly_created_objects.push_back(obj_id);
-    return obj_id;
+    kmap[raw_pointer] = id;
+    newly_created_objects.push_back(id);
+    return id;
   }
 
   void workspace2_stack::set_dependance(id_type user, id_type used) {
@@ -349,7 +348,8 @@ namespace getfemint {
     }
   }
 
-  void* workspace2_stack::object(id_type id, const char *expected_type) {
+  const void *workspace2_stack::object(id_type id,
+				       const char *expected_type) const {
     if (valid_objects[id] &&
         std::find(newly_created_objects.begin(),newly_created_objects.end(),id)
 	== newly_created_objects.end()) {
@@ -360,7 +360,18 @@ namespace getfemint {
     return 0;
   }
 
-  id_type workspace2_stack::object(void *raw_pointer) {
+  const dal::pstatic_stored_object &workspace2_stack::shared_pointer
+  (id_type id, const char *expected_type) const {
+    if (valid_objects[id] &&
+        std::find(newly_created_objects.begin(),newly_created_objects.end(),id)
+	== newly_created_objects.end()) {
+      return obj[id].p;
+    } else {
+      THROW_ERROR("object " << expected_type << " [id=" << id << "] not found");
+    }
+  }
+
+  id_type workspace2_stack::object(const void *raw_pointer) const {
     auto it = kmap.find(raw_pointer);
     if (it != kmap.end()) return it->second; else return id_type(-1);
   }

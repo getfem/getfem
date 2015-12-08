@@ -512,8 +512,7 @@ void gf_mesh(getfemint::mexargs_in& m_in,
     sub_command
       ("generate", 2, 4, 0, 1,
 
-       getfem::pmesher_signed_distance pmo
-            = in.pop().to_const_mesher_object();
+       getfem::pmesher_signed_distance psd = to_mesher_object(in.pop());
        double h = in.pop().to_scalar();
        int K = 1;
        if (in.remaining()) K = in.pop().to_integer(1,6);
@@ -529,7 +528,7 @@ void gf_mesh(getfemint::mexargs_in& m_in,
        int prefind = 1;
        int max_iter = 400;
 
-       getfem::build_mesh(*pmesh, pmo, h, fixed, K, -1, max_iter, prefind);
+       getfem::build_mesh(*pmesh, psd, h, fixed, K, -1, max_iter, prefind);
        );
 
   }

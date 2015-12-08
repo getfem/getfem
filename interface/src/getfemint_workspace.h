@@ -35,6 +35,7 @@
 #include <getfemint.h>
 #include <getfemint_object.h>
 #include <getfem/dal_bit_vector.h>
+#include <getfem/dal_static_stored_objects.h>
 
 namespace getfemint {
 
@@ -129,9 +130,13 @@ namespace getfemint {
   workspace_stack& workspace();
 
 
-  // workspace_stack stores the various object assigned to the script
-  // languages variables (Python, Scilab or Matlab).
-  // This objects are organised in workspaces in Matlab and Scilab in
+
+
+
+
+  // The workspace_stack structure stores the various object assigned to
+  // the script languages variables (Python, Scilab or Matlab).
+  // This objects are organised in workspaces (for Matlab and Scilab only) in
   // order to be able to delete all the variables created locally in a
   // sub-program or a loop (however, this has to be managed by the user).
   // Additionnally, a variable may have dependances with respect to some
@@ -139,14 +144,11 @@ namespace getfemint {
   // it will be delayed untill all the dependant variables are deleted
   // (implemented with shared pointers).
 
-
-  // Cacher une partie de l'implementation ?
-
   class workspace2_stack {
     
     struct object_info {
       dal::pstatic_stored_object p;
-      void *raw_pointer;
+      const void *raw_pointer;
       id_type workspace;
       getfemint_class_id class_id;
       std::vector<dal::pstatic_stored_object> used_by;
@@ -162,7 +164,7 @@ namespace getfemint {
     dal::bit_vector valid_objects;   // Indices of valid objects.
     wrk_ct wrk;                      // Stack of used workspaces.
 
-    std::map<void *, id_type> kmap;
+    std::map<const void *, id_type> kmap;
     std::vector<id_type> newly_created_objects;
 
   public:
@@ -175,7 +177,7 @@ namespace getfemint {
 
     // Inserts a new object (and gives it an id)
     id_type push_object(const dal::pstatic_stored_object &p,
-			void *raw_pointer, getfemint_class_id class_id);
+			const void *raw_pointer, getfemint_class_id class_id);
 
     // Sets the dependance of an object with respect to another
     void set_dependance(id_type user, id_type used);
@@ -203,10 +205,14 @@ namespace getfemint {
 
     
     /* Throw an error if not found */
-    void *object(id_type id, const char *expected_type="");
+    const void *object(id_type id, const char *expected_type="") const;
+
+    /* Throw an error if not found */
+    const dal::pstatic_stored_object &shared_pointer
+    (id_type id, const char *expected_class="") const;
 
     /* Return id_type(-1) if not found */
-    id_type object(void *raw_pointer);
+    id_type object(const void *raw_pointer) const;
     
     workspace2_stack() { push_workspace2("main"); }
 

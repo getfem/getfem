@@ -26,7 +26,6 @@ using namespace getfemint;
 
 void gf_workspace(getfemint::mexargs_in& in, getfemint::mexargs_out& out);
 void gf_delete(getfemint::mexargs_in& in, getfemint::mexargs_out& out);
-void gf_undelete(getfemint::mexargs_in& in, getfemint::mexargs_out& out);
 void gf_eltm(getfemint::mexargs_in& in, getfemint::mexargs_out& out);
 void gf_geotrans(getfemint::mexargs_in& in, getfemint::mexargs_out& out);
 void gf_geotrans_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out);
@@ -127,7 +126,6 @@ char* getfem_interface_main(int config_id, const char *function,
   if (subc_tab.size() == 0) {
     subc_tab["workspace"] = gf_workspace;
     subc_tab["delete"] = gf_delete;
-    subc_tab["undelete"] = gf_undelete;
     subc_tab["eltm"] = gf_eltm;
     subc_tab["geotrans"] = gf_geotrans;
     subc_tab["geotrans_get"] = gf_geotrans_get;

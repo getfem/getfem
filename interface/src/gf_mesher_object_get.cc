@@ -22,7 +22,6 @@
 
 #include <getfemint_misc.h>
 #include <getfemint_workspace.h>
-#include <getfemint_mesher_object.h>
 #include <getfem/getfem_mesher.h>
 
 using namespace getfemint;
@@ -90,15 +89,13 @@ void gf_mesher_object_get(getfemint::mexargs_in& m_in,
       ("display", 0, 0, 0, 0,
        infomsg() << "gfMesherObject object\n";
        );
-
-
   }
 
 
 
   if (m_in.narg() < 2)  THROW_BADARG( "Wrong number of input arguments");
 
-  getfem::pmesher_signed_distance paf = m_in.pop().to_mesher_object();
+  getfem::pmesher_signed_distance paf = to_mesher_object(m_in.pop());
   std::string init_cmd   = m_in.pop().to_string();
   std::string cmd        = cmd_normalize(init_cmd);
 

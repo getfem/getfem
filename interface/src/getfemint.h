@@ -39,8 +39,8 @@
 #include <getfemint_std.h>
 #include <set>
 #include <getfem/dal_static_stored_objects.h>
-#include <getfem/getfem_mesh_fem.h>
-#include <getfem/getfem_im_data.h>
+#include <getfem/getfem_mesh_fem.h> // utile ?
+#include <getfem/getfem_im_data.h> // utile ?
 #include <gfi_array.h>
 
 
@@ -167,7 +167,6 @@ namespace getfemint {
   class getfemint_levelset;
   class getfemint_mesh_levelset;
   class getfemint_global_function;
-  class getfemint_mesher_object;
   class getfemint_cont_struct;
   class gsparse;
 
@@ -464,7 +463,6 @@ namespace getfemint {
     bool                                 is_levelset();
     bool                                 is_mesh_levelset();
     bool                                 is_global_function();
-    bool                                 is_mesher_object();
     bool                                 is_cont_struct();
     bool                                 is_sparse() { return (gfi_array_get_class(arg) == GFI_SPARSE || is_gsparse()); };
     bool                                 is_gsparse();
@@ -478,6 +476,7 @@ namespace getfemint {
     double                               to_scalar(double min_val=-1e300, double max_val=1e300);
     complex_type                         to_scalar(complex_type);
     std::string                          to_string();
+    std::pair<id_type, id_type>          to_object_ids(void);
     id_type                              to_object_id(id_type *pid=0, id_type *pcid=0);
     bgeot::base_poly *                   to_poly();
     const getfem::mesh_fem *             to_const_mesh_fem();
@@ -502,12 +501,9 @@ namespace getfemint {
     getfem::mesh_level_set *             to_mesh_levelset();
     const getfem::pxy_function           to_const_global_function();
     getfem::pxy_function                 to_global_function();
-    getfem::pmesher_signed_distance      to_const_mesher_object();
-    getfem::pmesher_signed_distance      to_mesher_object();
     const getfem::cont_struct_getfem_model * to_const_cont_struct();
     getfem::cont_struct_getfem_model *   to_cont_struct();
     getfemint_global_function *          to_getfemint_global_function(bool writeable=false);
-    getfemint_mesher_object *            to_getfemint_mesher_object(bool writeable=false);
     getfemint_cont_struct *              to_getfemint_cont_struct(bool writable=false);
     getfem::pintegration_method          to_integration_method();
     getfemint_pfem*                      to_getfemint_pfem();
@@ -764,6 +760,24 @@ private:
 
   const double& get_NaN();
   bool is_NaN(const double&);
+
+
+
+
+
+  id_type store_mesher_object(const getfem::pmesher_signed_distance &psd);
+  bool is_mesher_object(mexarg_in &p);
+  getfem::pmesher_signed_distance to_mesher_object(mexarg_in &p);
+    
+
+
+
+
+
+
+
+
+
 }  /* end of namespace getfemint.                                          */
 
 #endif /* GETFEMINT_H__                                                    */

@@ -41,7 +41,6 @@
 #include <getfemint_levelset.h>
 #include <getfemint_mesh_levelset.h>
 #include <getfemint_global_function.h>
-#include <getfemint_mesher_object.h>
 #include <getfemint_cont_struct.h>
 #include <getfem/getfem_mat_elem_type.h>
 #include <getfem/getfem_mesh_fem_global_function.h>
@@ -344,15 +343,6 @@ namespace getfemint {
   }
 
   bool
-  mexarg_in::is_mesher_object() {
-    id_type id, cid;
-    if (is_object_id(&id, &cid) && cid == MESHER_OBJECT_CLASS_ID) {
-      getfem_object *o=workspace().object(id, name_of_getfemint_class_id(cid));
-      return (object_is_mesher_object(o));
-    } else return false;
-  }
-
-  bool
   mexarg_in::is_cont_struct() {
     id_type id, cid;
     if (is_object_id(&id, &cid) && cid == CONT_STRUCT_CLASS_ID) {
@@ -388,11 +378,20 @@ namespace getfemint {
   mexarg_in::to_object_id(id_type *pid, id_type *pcid) {
     id_type id,cid;
     if (!is_object_id(&id, &cid)) {
-      THROW_BADARG("wrong type for argument " << argnum <<
-                   ": expecting a getfem object, got a " << gfi_array_get_class_name(arg));
+      THROW_BADARG("wrong type for argument " << argnum << ": expecting a "
+		   "getfem object, got a " << gfi_array_get_class_name(arg));
     }
     if (pid) *pid = id;
     if (pcid) *pcid = cid;
+    return id;
+  }
+
+  std::pair<id_type, id_type> mexarg_in::to_object_ids(void) {
+    std::pair<id_type, id_type> id;
+    if (!is_object_id(&(id.first), &(id.second))) {
+      THROW_BADARG("wrong type for argument " << argnum << ": expecting a "
+		   "getfem object, got a " << gfi_array_get_class_name(arg));
+    }
     return id;
   }
 
@@ -667,34 +666,7 @@ namespace getfemint {
     return to_getfemint_global_function(false)->global_function();
   }
 
-  /*
-    check if the argument is a valid handle to a mesher_object,
-    and returns it
-  */
-  getfemint_mesher_object *
-  mexarg_in::to_getfemint_mesher_object(bool writeable) {
-    id_type id, cid;
-    to_object_id(&id,&cid);
-    if (cid != MESHER_OBJECT_CLASS_ID) {
-      THROW_BADARG("argument " << argnum << " should be a mesher_object " <<
-                   "descriptor, its class is " << name_of_getfemint_class_id(cid));
-    }
-    getfem_object *o = workspace().object(id,name_of_getfemint_class_id(cid));
-    error_if_nonwritable(o, writeable);
-    return object_to_mesher_object(o);
-  }
-
-  getfem::pmesher_signed_distance
-  mexarg_in::to_mesher_object() {
-    return to_getfemint_mesher_object(true)->mesher_object();
-  }
-
-  getfem::pmesher_signed_distance
-  mexarg_in::to_const_mesher_object() {
-    return to_getfemint_mesher_object(false)->mesher_object();
-  }
-
-  /*
+   /*
     check if the argument is a valid handle to a cont_struct,
     and return it
   */
@@ -1454,7 +1426,11 @@ namespace getfemint {
       }
       out.clear();
       workspace().destroy_newly_created_objects();
-    } else workspace().commit_newly_created_objects();
+      workspace2().destroy_newly_created_objects();
+    } else {
+      workspace().commit_newly_created_objects();
+      workspace2().commit_newly_created_objects();
+    }
   }
 
   /* ensure that out[idx] is valid */
@@ -1531,5 +1507,51 @@ namespace getfemint {
     if (memcmp(p, (void*)const_cast<double*>(&get_NaN()), sizeof(v)) == 0) return true;
     return ((v!=w) || !(v==w)); /* add a small prayer to avoid any optimization by the compiler.. */
   }
+
+
+
+
+
+
+
+
+
+
+
+
+  bool is_mesher_object(mexarg_in &p) {
+    id_type id, cid;
+    return (p.is_object_id(&id, &cid) && cid == MESHER_OBJECT_CLASS_ID);
+  }
+
+  id_type store_mesher_object(const getfem::pmesher_signed_distance &psd) {
+    auto &w = workspace2();
+    id_type id = w.object((const void *)(psd.get()));
+    if (id == id_type(-1)) {
+      auto p = std::dynamic_pointer_cast<const dal::static_stored_object>(psd);
+      if (!(p.get())) THROW_INTERNAL_ERROR; // The object has to derive from
+	                                    // dal::static_stored_object.
+      id = w.push_object(p, (const void *)(psd.get()), MESHER_OBJECT_CLASS_ID);
+    }
+    return id;
+  }
+
+  getfem::pmesher_signed_distance to_mesher_object(mexarg_in &p) {
+    id_type id, cid;
+    if (p.is_object_id(&id, &cid) && cid == MESHER_OBJECT_CLASS_ID) {
+      return std::dynamic_pointer_cast<const getfem::mesher_signed_distance>
+	(workspace2().shared_pointer(id, name_of_getfemint_class_id(cid)));
+    } else {
+      THROW_BADARG("argument " << p.argnum << " should be a mesher_object " <<
+                   "descriptor, its class is "
+		   << name_of_getfemint_class_id(cid));
+    }
+  }
+
+  
+  
+
+
+
 
 } /* namespace getfemint */

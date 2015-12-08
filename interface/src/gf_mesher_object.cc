@@ -21,11 +21,7 @@
 
 #include <getfemint_misc.h>
 #include <getfemint_workspace.h>
-#include <getfemint_mesher_object.h>
 #include <getfem/getfem_mesher.h>
-
-
-
 
 
 using namespace getfemint;
@@ -37,8 +33,6 @@ using namespace getfemint;
 
 
 // Object for the declaration of a new sub-command.
-
-typedef getfemint_mesher_object *pgetfemint_mesher_object;
 
 struct sub_mesher_object : virtual public dal::static_stored_object {
   int arg_in_min, arg_in_max, arg_out_min, arg_out_max;
@@ -53,7 +47,7 @@ typedef std::shared_ptr<sub_mesher_object> psub_command;
 template <typename T> static inline void dummy_func(T &) {}
 
 #define sub_command(name, arginmin, arginmax, argoutmin, argoutmax, code) { \
-    struct subc : public sub_mesher_object {		       		\
+    struct subc : public sub_mesher_object {				\
       virtual void run(getfemint::mexargs_in& in,			\
 		       getfemint::mexargs_out& out,			\
 		       getfem::pmesher_signed_distance &psd) override	\
@@ -68,7 +62,7 @@ template <typename T> static inline void dummy_func(T &) {}
 
 
 void gf_mesher_object(getfemint::mexargs_in& m_in,
-		 getfemint::mexargs_out& m_out) {
+		      getfemint::mexargs_out& m_out) {
   typedef std::map<std::string, psub_command > SUBC_TAB;
   static SUBC_TAB subc_tab;
 
@@ -183,9 +177,9 @@ void gf_mesher_object(getfemint::mexargs_in& m_in,
     sub_command
       ("intersect", 2, 100, 0, 1,
        std::vector<getfem::pmesher_signed_distance> vd;
-       vd.push_back(in.pop().to_const_mesher_object());
+       vd.push_back(to_mesher_object(in.pop()));
        while (in.remaining())
-	 vd.push_back(in.pop().to_const_mesher_object());
+	 vd.push_back(to_mesher_object(in.pop()));
        
        psd = getfem::new_mesher_intersection(vd);
        );
@@ -196,9 +190,9 @@ void gf_mesher_object(getfemint::mexargs_in& m_in,
     sub_command
       ("union", 2, 100, 0, 1,
        std::vector<getfem::pmesher_signed_distance> vd;
-       vd.push_back(in.pop().to_const_mesher_object());
+       vd.push_back(to_mesher_object(in.pop()));
        while (in.remaining())
-	 vd.push_back(in.pop().to_const_mesher_object());
+	 vd.push_back(to_mesher_object(in.pop()));
        
        psd = getfem::new_mesher_union(vd);
        );
@@ -208,12 +202,11 @@ void gf_mesher_object(getfemint::mexargs_in& m_in,
       @*/
     sub_command
       ("set minus", 2, 100, 0, 1,
-       getfem::pmesher_signed_distance psd1 = in.pop().to_const_mesher_object();
-       getfem::pmesher_signed_distance psd2 = in.pop().to_const_mesher_object();
+       getfem::pmesher_signed_distance psd1 = to_mesher_object(in.pop());
+       getfem::pmesher_signed_distance psd2 = to_mesher_object(in.pop());
        psd = getfem::new_mesher_setminus(psd1, psd2);
        );
   }
-
 
   if (m_in.narg() < 1) THROW_BADARG("Wrong number of input arguments");
   getfem::pmesher_signed_distance psd;
@@ -231,6 +224,6 @@ void gf_mesher_object(getfemint::mexargs_in& m_in,
   }
   else bad_cmd(init_cmd);
 
-  getfemint_mesher_object *pmo = getfemint_mesher_object::get_from(psd);
-  m_out.pop().from_object_id(pmo->get_id(), MESHER_OBJECT_CLASS_ID);
+  id_type id = store_mesher_object(psd);
+  m_out.pop().from_object_id(id, MESHER_OBJECT_CLASS_ID);
 }

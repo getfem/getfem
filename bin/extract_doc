@@ -1573,17 +1573,8 @@ def generic_constructor(self, clname, *args):
         print \"args[0]: \",args[0]
       else:
         self.id = args[0]
-        if obj_count.get(self.id,0)==0:
-          #print \"Reviviendo objeto...\"
-          #print \"self: \",self
-          #print \"self.id: \",self.id
-          #if hasattr(self.id,'classid'):
-          #  print \"self.id.classid: \",self.id.classid
-          #else:
-          #  print \"self.id.classid not found!\"
-          getfem(\"undelete\",self.id)
-          #print \"self.id: \",self.id
-          #pass
+        #if obj_count.get(self.id,0)==0:
+        # getfem(\"undelete\",self.id)
     else:
       self.id = getfem_from_constructor(clname,*args)
     obj_count[self.id] = obj_count.get(self.id,0)+1
