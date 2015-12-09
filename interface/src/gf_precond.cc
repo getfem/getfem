@@ -95,12 +95,12 @@ precond_superlu(gsparse &M, mexargs_out& out, T) {
 }
 
 static void
-precond_spmat(getfemint_gsparse *gsp, mexargs_out& out) {
+precond_spmat(gsparse *gsp, mexargs_out& out) {
   getfemint_precond *precond = new getfemint_precond(gsparse::REAL);
   out.pop().from_object_id(workspace().push_object(precond), PRECOND_CLASS_ID);
   precond->precond(scalar_type()).type = gprecond_base::SPMAT;
   precond->precond(scalar_type()).gsp = gsp;
-  workspace().set_dependance(precond, gsp);
+  // workspace().set_dependance(precond, gsp);
 }
 
 /*@GFDOC
@@ -238,20 +238,23 @@ void gf_precond(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
       Preconditionner given explicitely by a sparse matrix.@*/
     sub_command
       ("spmat", 1, 1, 0, 1,
-       getfemint_gsparse *ggsp = 0;
-       if (in.front().is_gsparse()) {
-	 ggsp = in.pop().to_getfemint_gsparse();
+       gsparse *ggsp = 0;
+       if (is_spmat_object(in.front())) {
+	 ggsp = to_spmat_object(in.pop());
        } else {
-	 ggsp = new getfemint_gsparse();
+	 auto gsp = std::make_shared<gsparse>();
+	 ggsp = gsp.get();
 	 std::shared_ptr<gsparse> src = in.pop().to_sparse();
 	 if (src->is_complex()) {
-	   ggsp->sparse().allocate(src->nrows(), src->ncols(), src->storage(), complex_type());
-	   gmm::copy(src->csc(complex_type()), ggsp->sparse().csc_w(complex_type()));
+	   ggsp->allocate(src->nrows(), src->ncols(), src->storage(),
+			  complex_type());
+	   gmm::copy(src->csc(complex_type()), ggsp->csc_w(complex_type()));
 	 } else {
-	   ggsp->sparse().allocate(src->nrows(), src->ncols(), src->storage(), scalar_type());
-	   gmm::copy(src->csc(scalar_type()), ggsp->sparse().csc_w(scalar_type()));
+	   ggsp->allocate(src->nrows(), src->ncols(), src->storage(),
+			  scalar_type());
+	   gmm::copy(src->csc(scalar_type()), ggsp->csc_w(scalar_type()));
 	 }
-	 workspace().push_object(ggsp);
+	 store_spmat_object(gsp);
        }
        precond_spmat(ggsp, out);
        );

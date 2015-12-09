@@ -129,6 +129,7 @@ namespace getfemint
     void to_wsc();
     void to_csc();
     void to_complex();
+    size_type memsize() const { return 0; /* TODO ! */ }
     size_type ncols() const;
     size_type nrows() const;
     size_type nnz() const;

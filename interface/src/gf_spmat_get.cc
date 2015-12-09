@@ -400,7 +400,8 @@ void gf_spmat_get(getfemint::mexargs_in& m_in,
 
   if (m_in.narg() < 2)  THROW_BADARG( "Wrong number of input arguments");
 
-  gsparse &gsp = *(to_spmat_object(m_in.pop()));
+  std::shared_ptr<gsparse> pgsp = m_in.pop().to_sparse();
+  gsparse &gsp = *pgsp;
   std::string init_cmd   = m_in.pop().to_string();
   std::string cmd        = cmd_normalize(init_cmd);
 

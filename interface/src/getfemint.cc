@@ -749,32 +749,39 @@ namespace getfemint {
     return bn;
   }
 
-  // /* get a (native only) sparse matrix */
-  // void
-  // mexarg_in::to_sparse(gf_real_sparse_csc_const_ref& M) {
-  //   if (gfi_array_get_class(arg) != GFI_SPARSE) {
-  //     THROW_BADARG("Argument " << argnum << " was expected to be a sparse matrix");
-  //   }
-  //   if (is_complex()) {
-  //     THROW_BADARG("Argument " << argnum << " cannot be a complex sparse matrix");
-  //   }
-  //   assert(gfi_array_get_ndim(arg)==2);
-  //   M = gf_real_sparse_csc_const_ref(gfi_sparse_get_pr(arg), gfi_sparse_get_ir(arg), gfi_sparse_get_jc(arg),
-  //                                    gfi_array_get_dim(arg)[0],gfi_array_get_dim(arg)[1]);
-  // }
+  /* get a (native only) sparse matrix */
+  void mexarg_in::to_sparse(gf_real_sparse_csc_const_ref& M) {
+    if (gfi_array_get_class(arg) != GFI_SPARSE) {
+      THROW_BADARG("Argument " << argnum <<
+		   " was expected to be a sparse matrix");
+    }
+    if (is_complex()) {
+      THROW_BADARG("Argument " << argnum <<
+		   " cannot be a complex sparse matrix");
+    }
+    assert(gfi_array_get_ndim(arg)==2);
+    M = gf_real_sparse_csc_const_ref(gfi_sparse_get_pr(arg),
+				     gfi_sparse_get_ir(arg),
+				     gfi_sparse_get_jc(arg),
+                                     gfi_array_get_dim(arg)[0],
+				     gfi_array_get_dim(arg)[1]);
+  }
 
-  // void
-  // mexarg_in::to_sparse(gf_cplx_sparse_csc_const_ref& M) {
-  //   if (gfi_array_get_class(arg) != GFI_SPARSE) {
-  //     THROW_BADARG("Argument " << argnum << " was expected to be a sparse matrix");
-  //   }
-  //   if (!is_complex()) {
-  //     THROW_BADARG("Argument " << argnum << " cannot be a real sparse matrix");
-  //   }
-  //   assert(gfi_array_get_ndim(arg)==2);
-  //   M = gf_cplx_sparse_csc_const_ref((complex_type*)gfi_sparse_get_pr(arg), gfi_sparse_get_ir(arg), gfi_sparse_get_jc(arg),
-  //                                    gfi_array_get_dim(arg)[0],gfi_array_get_dim(arg)[1]);
-  // }
+  void mexarg_in::to_sparse(gf_cplx_sparse_csc_const_ref& M) {
+    if (gfi_array_get_class(arg) != GFI_SPARSE) {
+      THROW_BADARG("Argument " << argnum <<
+		   " was expected to be a sparse matrix");
+    }
+    if (!is_complex()) {
+      THROW_BADARG("Argument " << argnum << " cannot be a real sparse matrix");
+    }
+    assert(gfi_array_get_ndim(arg)==2);
+    M = gf_cplx_sparse_csc_const_ref((complex_type*)gfi_sparse_get_pr(arg),
+				     gfi_sparse_get_ir(arg),
+				     gfi_sparse_get_jc(arg),
+                                     gfi_array_get_dim(arg)[0],
+				     gfi_array_get_dim(arg)[1]);
+  }
 
   /* get a (native or getfem) sparse matrix */
   std::shared_ptr<gsparse> mexarg_in::to_sparse() {
@@ -783,11 +790,11 @@ namespace getfemint {
     } else {
       id_type id,cid;
       to_object_id(&id,&cid);
-      if (cid != GSPARSE_CLASS_ID)
+      if (cid != SPMAT_CLASS_ID)
         THROW_BADARG("Argument " << argnum <<
 		     " was expected to be a sparse matrix");
       auto gsp=workspace2().shared_pointer(id,name_of_getfemint_class_id(cid));
-      auto gsp2= const_pointer_cast<gsparse>
+      auto gsp2= std::const_pointer_cast<gsparse>
 	(std::dynamic_pointer_cast<const gsparse>(gsp));
       GMM_ASSERT1(gsp2.get(), "Internal error");
       return gsp2;
@@ -911,8 +918,8 @@ namespace getfemint {
     }
     if (fmt == USE_GSPARSE) {
       auto gsp = std::make_shared<gsparse>();
-      gsp.swap(M);
-      store_poly_object(gsp);
+      gsp->swap(M);
+      store_spmat_object(gsp);
     } else {
       M.to_csc();
       size_type nnz = M.nnz();

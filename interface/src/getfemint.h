@@ -543,8 +543,8 @@ namespace getfemint {
     sub_index                 to_sub_index();
     getfem::base_node         to_base_node() { return to_base_node(-1); }
     getfem::base_node         to_base_node(int expected_dim);
-    // void                      to_sparse(gf_real_sparse_csc_const_ref& M);
-    // void                      to_sparse(gf_cplx_sparse_csc_const_ref& M);
+    void                      to_sparse(gf_real_sparse_csc_const_ref& M);
+    void                      to_sparse(gf_cplx_sparse_csc_const_ref& M);
     std::shared_ptr<gsparse>  to_sparse();
 
     mexarg_in &check_trailing_dimension(int expected_dim);

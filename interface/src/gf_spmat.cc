@@ -201,7 +201,7 @@ void gf_spmat(getfemint::mexargs_in& m_in,
       will return a 40x5 matrix.@*/
     sub_command
       ("copy", 1, 3, 0, 1,
-       gsparse *A = to_spmat_object(in.pop());
+       std::shared_ptr<gsparse> A = in.pop().to_sparse();
        if (!A->is_complex()) {
 	 copy_spmat(*A, *gsp, in, scalar_type());
        } else {
@@ -225,8 +225,8 @@ void gf_spmat(getfemint::mexargs_in& m_in,
        may have to use ``SPMAT:SET('to_complex')`` @*/
     sub_command
       ("mult", 2, 2, 0, 1,
-       gsparse *A = to_spmat_object(in.pop());
-       gsparse *B = to_spmat_object(in.pop());
+       std::shared_ptr<gsparse> A = in.pop().to_sparse();
+       std::shared_ptr<gsparse> B = in.pop().to_sparse();
        size_type m = A->nrows(); size_type n = B->ncols();
 
        if (A->is_complex() != B->is_complex())
@@ -268,8 +268,8 @@ void gf_spmat(getfemint::mexargs_in& m_in,
        Adding a real matrix with a complex matrix is possible.@*/
     sub_command
       ("add", 2, 2, 0, 1,
-       gsparse *A = to_spmat_object(in.pop());
-       gsparse *B = to_spmat_object(in.pop());
+       std::shared_ptr<gsparse> A = in.pop().to_sparse();
+       std::shared_ptr<gsparse> B = in.pop().to_sparse();
        size_type m = A->nrows(); size_type n = A->ncols();
        if (A->is_complex() != B->is_complex()) {
 	 gsp->cplx_wsc(new gsparse::t_wscmat_c(m,n));

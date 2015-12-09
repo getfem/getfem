@@ -48,9 +48,9 @@ namespace getfemint
   struct gprecond_base {
     size_type nrows_, ncols_;
     enum { IDENTITY, DIAG, ILDLT, ILDLTT, ILU, ILUT, SUPERLU, SPMAT } type;
-    getfemint_gsparse *gsp;
-    size_type nrows(void) const { return gsp ? gsp->sparse().nrows() : nrows_; }
-    size_type ncols(void) const { return gsp ? gsp->sparse().ncols() : ncols_; }
+    gsparse *gsp;
+    size_type nrows(void) const { return gsp ? gsp->nrows() : nrows_; }
+    size_type ncols(void) const { return gsp ? gsp->ncols() : ncols_; }
     void set_dimensions(size_type m, size_type n) { nrows_ = m; ncols_ = n; }
     gprecond_base() : nrows_(0), ncols_(0), type(IDENTITY), gsp(0) {}
     const char *name() const { 
@@ -79,7 +79,7 @@ namespace getfemint
     //typedef enum { REAL, COMPLEX } value_type;
     gsparse::value_type v;
 
-    bool is_complex() { if (p.get() && p->gsp) return p->gsp->sparse().is_complex();
+    bool is_complex() { if (p.get() && p->gsp) return p->gsp->is_complex();
       else return v == gsparse::COMPLEX; }
     gprecond<scalar_type> &precond(scalar_type) {
       GMM_ASSERT1(!is_complex(), "cannot use a COMPLEX preconditionner with REAL data");
@@ -170,7 +170,7 @@ namespace gmm {
 	else         precond.superlu->solve(w,v,gmm::SuperLU_factor<T>::LU_TRANSP);
 	break;
       case getfemint::gprecond_base::SPMAT:
-	precond.gsp->sparse().mult_or_transposed_mult(v, w, !do_mult);
+	precond.gsp->mult_or_transposed_mult(v, w, !do_mult);
         break;
     }
   }
