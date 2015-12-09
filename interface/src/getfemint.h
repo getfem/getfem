@@ -44,24 +44,12 @@
 #include <gfi_array.h>
 
 // Avoid the dependance of different header (à distribuer et réorganiser)
-namespace bgeot {
-  class geometric_trans;
-  class convex_structure;
-}
-
 namespace getfem {
   class stored_mesh_slice;
-  class virtual_fem;
-  class integration_method;
   class mesh;
   class mesh_fem;
-  class mat_elem_type;
-  class level_set;
-  class mesh_level_set;
   class mesh_im;
   class im_data;
-  class abstract_xy_function;
-  class mesher_signed_distance;
   class model;
 }
 
@@ -749,50 +737,62 @@ private:
   const double& get_NaN();
   bool is_NaN(const double&);
 
+# define declare_getfem_class(CLASS)				\
+  } namespace getfem { class CLASS; } namespace getfemint {
+# define delare_bgeot_class(CLASS)				\
+  } namespace bgeot { class CLASS; } namespace getfemint {
+  
   // Functions for CONT_STRUCT_CLASS_ID
-  } namespace getfem { class cont_struct_getfem_model; } namespace getfemint {
+  declare_getfem_class(cont_struct_getfem_model)
   bool is_cont_struct_object(const mexarg_in &p);
   id_type store_cont_struct_object
   (const std::shared_ptr<getfem::cont_struct_getfem_model> &shp);
   getfem::cont_struct_getfem_model *to_cont_struct_object(const mexarg_in &p);
 
   // Functions for CVSTRUCT_CLASS_ID
+  delare_bgeot_class(convex_structure)
   typedef std::shared_ptr<const bgeot::convex_structure> pconvex_structure;
   bool is_cvstruct_object(const mexarg_in &p);
   id_type store_cvstruct_object(const pconvex_structure &shp);
   pconvex_structure to_cvstruct_object(const mexarg_in &p);
 
   // Functions for ELTM_CLASS_ID
+  declare_getfem_class(mat_elem_type)
   typedef std::shared_ptr<const getfem::mat_elem_type> pmat_elem_type;
   bool is_eltm_object(const mexarg_in &p);
   id_type store_eltm_object(const pmat_elem_type &shp);
   pmat_elem_type to_eltm_object(const mexarg_in &p);
 
   // Functions for FEM_CLASS_ID
+  declare_getfem_class(virtual_fem)
   typedef std::shared_ptr<const getfem::virtual_fem> pfem;
   bool is_fem_object(const mexarg_in &p);
   id_type store_fem_object(const pfem &shp);
   pfem to_fem_object(const mexarg_in &p);
 
   // Functions for GEOTRANS_CLASS_ID
+  delare_bgeot_class(geometric_trans)
   typedef std::shared_ptr<const bgeot::geometric_trans> pgeometric_trans;
   bool is_geotrans_object(const mexarg_in &p);
   id_type store_geotrans_object(const pgeometric_trans &shp);
   pgeometric_trans to_geotrans_object(const mexarg_in &p);
 
   // Functions for GLOBAL_FUNCTION_CLASS_ID
+  declare_getfem_class(abstract_xy_function)
   typedef std::shared_ptr<const getfem::abstract_xy_function> pxy_function;
   bool is_global_function_object(const mexarg_in &p);
   id_type store_global_function_object(const pxy_function &shp);
   pxy_function to_global_function_object(const mexarg_in &p);
 
   // Functions for INTEG_CLASS_ID
+  declare_getfem_class(integration_method)
   typedef std::shared_ptr<const getfem::integration_method> pintegration_method;
   bool is_integ_object(const mexarg_in &p);
   id_type store_integ_object(const pintegration_method &shp);
   pintegration_method to_integ_object(const mexarg_in &p);
 
   // Functions for LEVELSET_CLASS_ID
+  declare_getfem_class(level_set)
   bool is_levelset_object(const mexarg_in &p);
   id_type store_levelset_object(const std::shared_ptr<getfem::level_set> &shp);
   getfem::level_set *to_levelset_object(const mexarg_in &p);
@@ -818,12 +818,14 @@ private:
   getfem::im_data *to_meshimdata_object(const mexarg_in &p);
 
   // Functions for MESH_LEVELSET_CLASS_ID
+  declare_getfem_class(mesh_level_set)
   bool is_mesh_levelset_object(const mexarg_in &p);
   id_type store_mesh_levelset_object
   (const std::shared_ptr<getfem::mesh_level_set> &shp);
   getfem::mesh_level_set *to_mesh_levelset_object(const mexarg_in &p);
    
   // Functions for MESHER_OBJECT_CLASS_ID
+  declare_getfem_class(mesher_signed_distance)
   typedef std::shared_ptr<const getfem::mesher_signed_distance>
     pmesher_signed_distance;
   bool is_mesher_object(const mexarg_in &p);
