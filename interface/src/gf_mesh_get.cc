@@ -22,7 +22,7 @@
 #include <map>
 #include <getfemint_misc.h>
 #include <getfemint_mesh.h>
-#include <getfemint_pgt.h>
+#include <getfem/bgeot_geometric_trans.h>
 #include <getfem/getfem_export.h>
 #include <getfem/bgeot_convex_structure.h>
 
@@ -47,7 +47,7 @@ get_structure_or_geotrans_of_convexes(const getfem::mesh& m,
   for (dal::bv_visitor cv(cvlst); !cv.finished(); ++cv) {
     if (class_id == CVSTRUCT_CLASS_ID)
       ids.push_back(store_cvstruct_object(m.structure_of_convex(cv)));
-    else ids.push_back(ind_pgt(m.trans_of_convex(cv)));
+    else ids.push_back(store_geotrans_object(m.trans_of_convex(cv)));
   }
   out.return_packed_obj_ids(ids, class_id);
 }
@@ -59,7 +59,7 @@ transform_edge_list(const getfem::mesh &m, unsigned N, const bgeot::edge_list &e
   bgeot::edge_list::const_iterator it;
   size_type cv = size_type(-1);
   getfem::mesh::ref_convex cv_ref;
-  bgeot::pgeometric_trans pgt = NULL;
+  bgeot::pgeometric_trans pgt;
   size_type ecnt = 0;
   for (it = el.begin(); it != el.end(); it++, ecnt++) {
     if (cv != (*it).cv) {

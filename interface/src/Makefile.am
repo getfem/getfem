@@ -82,12 +82,6 @@ libgetfemint_la_SOURCES = \
 	getfemint_mesh_fem.cc \
 	getfemint_mesh_im.cc \
 	getfemint_mesh_im_data.cc \
-	getfemint_pfem.cc \
-	getfemint_integ.h \
-	getfemint_integ.cc \
-	getfemint_global_function.h \
-	getfemint_global_function.cc \
-	getfemint_pgt.cc \
 	gfi_array.h \
 	getfemint_mesh.h \
 	getfemint_misc.h \
@@ -98,21 +92,14 @@ libgetfemint_la_SOURCES = \
 	getfemint_mesh_im_data.h \
 	getfemint_models.h \
 	getfemint_object.h \
-	getfemint_pgt.h \
 	getfemint_workspace.h \
 	getfemint.h \
 	getfemint_mesh_slice.h \
 	getfemint_precond.h \
 	getfemint_levelset.h \
 	getfemint_levelset.cc \
-	getfemint_mesh_levelset.h \
-	getfemint_mesh_levelset.cc \
 	getfemint_gsparse.h \
-	getfemint_gsparse.cc \
-	getfemint_gsparse_misc.h \
-	getfemint_gsparse_misc.cc \
-	getfemint_pfem.h \
-	getfemint_poly.h
+	getfemint_gsparse.cc
 
 #libgetfemint_la_INCLUDES = @GETFEM_CPPFLAGS@ #fails with automake 1.6 on macos x tiger
 AM_CPPFLAGS = -I$(top_srcdir)/src -I../../src

@@ -50,7 +50,7 @@ namespace getfem {
       to handle cracks for example.
   */
 
-  class level_set : public context_dependencies {
+  class level_set : public context_dependencies, virtual public dal::static_stored_object {
 
   protected :
     mesh *pmesh;

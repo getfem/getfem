@@ -1356,7 +1356,7 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        const getfem::mesh_im *mim = get_mim(in);
        const getfem::mesh_fem *mf_u1 = in.pop().to_const_mesh_fem();
        const getfem::mesh_fem *mf_u2 = in.pop().to_const_mesh_fem();
-       getfem::level_set *ls1= in.pop().to_levelset();
+       getfem::level_set *ls1= to_levelset_object(in.pop());
        gf_real_sparse_by_col M(mf_u2->nb_dof(), mf_u1->nb_dof());
        size_type region = size_type(-1);
        if (in.remaining()) region = in.pop().to_integer();
@@ -1376,7 +1376,7 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        const getfem::mesh_im *mim = get_mim(in);
        const getfem::mesh_fem *mf_u1 = in.pop().to_const_mesh_fem();
        const getfem::mesh_fem *mf_u2 = in.pop().to_const_mesh_fem();
-       getfem::level_set *ls1= in.pop().to_levelset();
+       getfem::level_set *ls1= to_levelset_object(in.pop());
        gf_real_sparse_by_col M(mf_u1->nb_dof(), mf_u2->nb_dof());
        size_type region = size_type(-1);
        if (in.remaining()) region = in.pop().to_integer();

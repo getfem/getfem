@@ -20,7 +20,7 @@
 ===========================================================================*/
 
 #include <getfemint.h>
-#include <getfemint_pgt.h>
+#include <getfem/bgeot_geometric_trans.h>
 
 using namespace getfemint;
 
@@ -35,7 +35,7 @@ struct sub_gf_geotrans : virtual public dal::static_stored_object {
   int arg_in_min, arg_in_max, arg_out_min, arg_out_max;
   virtual void run(getfemint::mexargs_in& in,
 		   getfemint::mexargs_out& out,
-		   bgeot::pgeometric_trans pgt) = 0;
+		   const bgeot::pgeometric_trans &pgt) = 0;
 };
 
 typedef std::shared_ptr<sub_gf_geotrans> psub_command;
@@ -47,7 +47,7 @@ template <typename T> static inline void dummy_func(T &) {}
     struct subc : public sub_gf_geotrans {				\
       virtual void run(getfemint::mexargs_in& in,			\
 		       getfemint::mexargs_out& out,			\
-		       bgeot::pgeometric_trans pgt)			\
+		       const bgeot::pgeometric_trans &pgt)		\
       { dummy_func(in); dummy_func(out); code }				\
     };									\
     psub_command psubc = std::make_shared<subc>();			\
@@ -157,7 +157,7 @@ void gf_geotrans_get(getfemint::mexargs_in& m_in,
 
   if (m_in.narg() < 2)  THROW_BADARG( "Wrong number of input arguments");
 
-  bgeot::pgeometric_trans pgt = m_in.pop().to_pgt();
+  bgeot::pgeometric_trans pgt = to_geotrans_object(m_in.pop());
   std::string init_cmd   = m_in.pop().to_string();
   std::string cmd        = cmd_normalize(init_cmd);
 

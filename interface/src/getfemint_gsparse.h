@@ -39,7 +39,7 @@
 
 namespace getfemint
 {
-  class gsparse {
+  class gsparse : virtual public dal::static_stored_object {
   public:
     typedef enum { REAL, COMPLEX } value_type;
     typedef enum { WSCMAT, CSCMAT } storage_type;
@@ -48,8 +48,10 @@ namespace getfemint
     typedef gmm::col_matrix<gmm::wsvector<complex_type> > t_wscmat_c;
     typedef gmm::csc_matrix<scalar_type> t_cscmat_r;
     typedef gmm::csc_matrix<complex_type> t_cscmat_c;
-    typedef gmm::csc_matrix_ref<const scalar_type*, const unsigned int *, const unsigned int *> t_cscmat_ref_r;
-    typedef gmm::csc_matrix_ref<const complex_type*, const unsigned int *, const unsigned int *> t_cscmat_ref_c;
+    typedef gmm::csc_matrix_ref<const scalar_type*, const unsigned int *,
+				const unsigned int *> t_cscmat_ref_r;
+    typedef gmm::csc_matrix_ref<const complex_type*, const unsigned int *,
+				const unsigned int *> t_cscmat_ref_c;
     t_wscmat_r *pwscmat_r;
     t_wscmat_c *pwscmat_c;
     t_cscmat_r *pcscmat_r;
@@ -62,8 +64,10 @@ namespace getfemint
     gsparse& destructive_assign(t_cscmat_r &M);
     gsparse& destructive_assign(t_cscmat_c &M);
 
-    t_wscmat_r& real_wsc(t_wscmat_r *p = 0) { if (p) { v = REAL; pwscmat_r = p; } return *pwscmat_r; }
-    t_wscmat_c& cplx_wsc(t_wscmat_c *p = 0) { if (p) { v = COMPLEX; pwscmat_c = p; }return *pwscmat_c; }
+    t_wscmat_r& real_wsc(t_wscmat_r *p = 0)
+    { if (p) { v = REAL; pwscmat_r = p; } return *pwscmat_r; }
+    t_wscmat_c& cplx_wsc(t_wscmat_c *p = 0)
+    { if (p) { v = COMPLEX; pwscmat_c = p; }return *pwscmat_c; }
     t_cscmat_ref_r real_csc() { 
       if (gfimat && !gfi_array_is_complex(gfimat)) 
 	return t_cscmat_ref_r(gfi_sparse_get_pr(gfimat), 
@@ -78,7 +82,8 @@ namespace getfemint
 			      gmm::mat_ncols(*pcscmat_r));
       else THROW_INTERNAL_ERROR;
     }
-    t_cscmat_r& real_csc_w(t_cscmat_r *p=0) { if (p) { v = REAL; pcscmat_r = p; } return *pcscmat_r; }
+    t_cscmat_r& real_csc_w(t_cscmat_r *p=0)
+    { if (p) { v = REAL; pcscmat_r = p; } return *pcscmat_r; }
     t_cscmat_ref_c cplx_csc() { 
       if (gfimat && gfi_array_is_complex(gfimat)) 
 	return t_cscmat_ref_c((complex_type*)gfi_sparse_get_pr(gfimat), 
@@ -93,7 +98,8 @@ namespace getfemint
 			      gmm::mat_ncols(*pcscmat_c)); 
       else THROW_INTERNAL_ERROR;
     }
-    t_cscmat_c& cplx_csc_w(t_cscmat_c *p=0) { if (p) { v = COMPLEX; pcscmat_c = p; } return *pcscmat_c; }
+    t_cscmat_c& cplx_csc_w(t_cscmat_c *p=0)
+    { if (p) { v = COMPLEX; pcscmat_c = p; } return *pcscmat_c; }
 
     /* overloaded versions, useful for templates */
     t_wscmat_r& wsc(double, t_wscmat_r *p=0) { return real_wsc(p); }
@@ -103,7 +109,8 @@ namespace getfemint
     t_cscmat_r& csc_w(double, t_cscmat_r *p=0) { return real_csc_w(p); }
     t_cscmat_c& csc_w(complex_type, t_cscmat_c *p=0) { return cplx_csc_w(p); }
 
-    gsparse() : v(REAL), s(WSCMAT), pwscmat_r(0), pwscmat_c(0), pcscmat_r(0), pcscmat_c(0), gfimat(0) {}
+    gsparse() : v(REAL), s(WSCMAT), pwscmat_r(0), pwscmat_c(0),
+		pcscmat_r(0), pcscmat_c(0), gfimat(0) {}
     gsparse(size_type m, size_type n, storage_type s_, value_type v_ = REAL);
     gsparse(const gfi_array *a);
     storage_type storage() const { return s; }
@@ -111,9 +118,12 @@ namespace getfemint
     bool is_a_native_matrix_ref() const 
     { return (gfimat != 0); }
     void destroy();
-    void allocate(size_type m, size_type n, storage_type s_, value_type v_ = REAL);
-    void allocate(size_type m, size_type n, storage_type s_, scalar_type) { allocate(m,n,s_, REAL); }
-    void allocate(size_type m, size_type n, storage_type s_, complex_type) { allocate(m,n,s_, COMPLEX); }
+    void allocate(size_type m, size_type n, storage_type s_,
+		  value_type v_ = REAL);
+    void allocate(size_type m, size_type n, storage_type s_,
+		  scalar_type) { allocate(m,n,s_, REAL); }
+    void allocate(size_type m, size_type n, storage_type s_,
+		  complex_type) { allocate(m,n,s_, COMPLEX); }
     void deallocate(storage_type s_, value_type v_);
     void deallocate() { deallocate(s,v); }
     void to_wsc();
@@ -140,25 +150,9 @@ namespace getfemint
     }
   };
 
-  class getfemint_gsparse : public getfem_object {
-    std::shared_ptr<gsparse> gsp;
-  public:
-    gsparse& sparse() { return *(gsp.get()); }
-    std::shared_ptr<gsparse> ref() { return gsp; }
-    getfemint_gsparse() { gsp = std::make_shared<gsparse>(); }
-    ~getfemint_gsparse() { (*gsp).deallocate(); }
-    id_type class_id() const { return GSPARSE_CLASS_ID; }
-    size_type memsize() const { return 0; /* TODO ! */ }
-  };
-
-  inline bool object_is_gsparse(getfem_object *o) {
-    return (o->class_id() == GSPARSE_CLASS_ID);
-  }
-
-  inline getfemint_gsparse* object_to_gsparse(getfem_object *o) {
-    if (object_is_gsparse(o)) return ((getfemint_gsparse*)o);
-    else THROW_INTERNAL_ERROR;
-  }
+  void spmat_set_diag(gsparse &gsp, mexargs_in& in, bool create_matrix);
+  void spmat_load(mexargs_in& in, mexargs_out& out,
+		  mexarg_out::output_sparse_fmt fmt);
 }  /* end of namespace getfemint.                                          */
 
-#endif /* GETFEMINT_GSPARSE_H__                                         */
+#endif /* GETFEMINT_GSPARSE_H__                                            */

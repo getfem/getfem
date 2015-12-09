@@ -19,16 +19,16 @@
 
 ===========================================================================*/
 // $Id$
-#include <getfemint_misc.h>
-#include <getfemint_mesh_fem.h>
-#include <getfemint_integ.h>
-#include <getfemint_pfem.h>
+
+#include <getfem/getfem_fem.h>
 #include <getfem/getfem_export.h>
 #include <getfem/getfem_mesh_fem_level_set.h>
-#include <getfemint_mesh_levelset.h>
 #include <getfem/getfem_mesh_im.h>
 #include <getfem/getfem_partial_mesh_fem.h>
+#include <getfemint_misc.h>
+#include <getfemint_mesh_fem.h>
 #include <getfemint_gsparse.h>
+#include <getfemint_workspace.h>
 
 using namespace getfemint;
 
@@ -70,9 +70,8 @@ static void get_basic_fem_of_convexes(const getfem::mesh_fem& mf,
   std::vector<id_type> ids; ids.reserve(cvlst.card());
   for (dal::bv_visitor cv(cvlst); !cv.finished(); ++cv) {
     if (mf.convex_index().is_in(cv)) {
-      getfemint_pfem *gfi_pf =
-        getfemint_pfem::get_from(mf.fem_of_element(cv));
-      ids.push_back(gfi_pf->get_id());
+      id_type id = store_fem_object(mf.fem_of_element(cv));
+      ids.push_back(id);
     } else
       ids.push_back(id_type(-1));
   }
@@ -871,11 +870,9 @@ void gf_mesh_fem_get(getfemint::mexargs_in& m_in,
        if (mfls) {
 	 getfem::mesh_level_set *mls =
 	   const_cast<getfem::mesh_level_set*>(&mfls->linked_mesh_level_set());
-	 getfemint_mesh_levelset *gfi_mls =
-	   getfemint_mesh_levelset::get_from(mls);
-	 assert(gfi_mls);
-	 out.pop().from_object_id(gfi_mls->get_id(),
-				  MESH_LEVELSET_CLASS_ID);
+	 id_type id = workspace2().object((const void *)(mls));
+	 GMM_ASSERT1(id != id_type(-1), "Unknown mesh_level_set !");
+	 out.pop().from_object_id(id, MESH_LEVELSET_CLASS_ID);
        } else THROW_BADARG("not a mesh_fem using a mesh_levelset");
        );
 

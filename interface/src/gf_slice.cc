@@ -19,13 +19,14 @@
 
 ===========================================================================*/
 // $Id$
+
+#include <memory>
+#include <getfem/getfem_mesh_level_set.h>
 #include <getfemint_misc.h>
 #include <getfemint_workspace.h>
 #include <getfemint_mesh.h>
 #include <getfemint_mesh_fem.h>
 #include <getfemint_mesh_slice.h>
-#include <getfemint_mesh_levelset.h>
-#include <memory>
 
 
 using namespace getfemint;
@@ -412,9 +413,14 @@ void gf_slice(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     } else if (in.front().is_mesh_slice()) {
       source_slice = in.pop().to_getfemint_mesh_slice(false);
       mm = object_to_mesh(workspace().object(source_slice->linked_mesh_id()));
-    } else if (in.front().is_mesh_levelset()) {
-      pmls = &in.pop().to_getfemint_mesh_levelset()->mesh_levelset();
-      mm = getfemint_mesh::get_from(&pmls->linked_mesh());
+    } else if (is_mesh_levelset_object(in.front())) {
+      pmls = to_mesh_levelset_object(in.pop());
+      
+      // pour plus tard ...
+      // id_type id = workspace2.object((const void *)(&mls.linked_mesh()));
+      // GMM_ASSERT1(id != id_type(-1), "Unknown mesh !");
+
+      mm = getfemint_mesh::get_from(&(pmls->linked_mesh()));
     } else {
       id_type id; in.pop().to_const_mesh(id); mm = object_to_mesh(workspace().object(id));
     }

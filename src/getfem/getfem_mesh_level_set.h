@@ -49,7 +49,8 @@ namespace getfem {
 
       Note that the cutting won't be conformal.
   */
-  class mesh_level_set : public context_dependencies {
+  class mesh_level_set : public context_dependencies,
+			 virtual public dal::static_stored_object {
   public:
     typedef std::string subzone;
     typedef std::set<const subzone *> zone;

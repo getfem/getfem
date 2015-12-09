@@ -40,7 +40,7 @@ struct sub_gf_cvstruct_get : virtual public dal::static_stored_object {
   int arg_in_min, arg_in_max, arg_out_min, arg_out_max;
   virtual void run(getfemint::mexargs_in& in,
                    getfemint::mexargs_out& out,
-                   bgeot::pconvex_structure cs) = 0;
+                   const bgeot::pconvex_structure &cs) = 0;
 };
 
 typedef std::shared_ptr<sub_gf_cvstruct_get> psub_command;
@@ -52,7 +52,7 @@ template <typename T> static inline void dummy_func(T &) {}
     struct subc : public sub_gf_cvstruct_get {				\
       virtual void run(getfemint::mexargs_in& in,			\
                        getfemint::mexargs_out& out,			\
-                       bgeot::pconvex_structure cs)			\
+                       const bgeot::pconvex_structure &cs)		\
       { dummy_func(in); dummy_func(out); dummy_func(cs); code }		\
     };									\
     psub_command psubc = std::make_shared<subc>();			\

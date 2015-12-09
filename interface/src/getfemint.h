@@ -39,27 +39,30 @@
 #include <getfemint_std.h>
 #include <set>
 #include <getfem/dal_static_stored_objects.h>
+#include <getfem/dal_bit_vector.h>
 #include <getfem/getfem_config.h>
-#include <getfem/getfem_mesh_fem.h> // utile ?
-#include <getfem/getfem_im_data.h> // utile ?
 #include <gfi_array.h>
 
+// Avoid the dependance of different header (à distribuer et réorganiser)
+namespace bgeot {
+  class geometric_trans;
+  class convex_structure;
+}
 
 namespace getfem {
   class stored_mesh_slice;
+  class virtual_fem;
+  class integration_method;
   class mesh;
   class mesh_fem;
   class mat_elem_type;
-  typedef std::shared_ptr<const mat_elem_type> pmat_elem_type;
   class level_set;
   class mesh_level_set;
   class mesh_im;
   class im_data;
   class abstract_xy_function;
-  typedef std::shared_ptr<const abstract_xy_function> pxy_function;
   class mesher_signed_distance;
-  typedef std::shared_ptr<const mesher_signed_distance> pmesher_signed_distance;
-  class cont_struct_getfem_model;
+  class model;
 }
 
 namespace getfemint {
@@ -85,10 +88,10 @@ namespace getfemint {
 		 MODEL_CLASS_ID,
 		 PRECOND_CLASS_ID,
 		 SLICE_CLASS_ID,
-		 GSPARSE_CLASS_ID, /* Considered as Spmat for alphabetic order*/
+		 SPMAT_CLASS_ID,
 		 POLY_CLASS_ID,    /* Not fully interfaced. Remain at the end */
 		 GETFEMINT_NB_CLASS } getfemint_class_id;
-  
+
   
   /* associate the class ID found in the matlab structures referencing
      getfem object to a class name which coincides with the class name
@@ -116,7 +119,7 @@ namespace getfemint {
     case MODEL_CLASS_ID:            return "gfModel";
     case PRECOND_CLASS_ID:          return "gfPrecond";
     case SLICE_CLASS_ID:            return "gfSlice";
-    case GSPARSE_CLASS_ID:          return "gfSpmat";
+    case SPMAT_CLASS_ID:            return "gfSpmat";
     case POLY_CLASS_ID:             return "gfPoly";
     default :                       return "not_a_getfem_class";
     }
@@ -130,22 +133,33 @@ namespace getfemint {
 
 
   /* exception-throwing version of the allocation functions of gfi_array.h */
-  gfi_array* checked_gfi_array_create(int ndim, const int *dims, gfi_type_id type, gfi_complex_flag is_complex = GFI_REAL);
-  gfi_array* checked_gfi_array_create_0(gfi_type_id type, gfi_complex_flag is_complex = GFI_REAL);
-  gfi_array* checked_gfi_array_create_1(int M, gfi_type_id type, gfi_complex_flag is_complex = GFI_REAL);
-  gfi_array* checked_gfi_array_create_2(int M, int N, gfi_type_id type, gfi_complex_flag is_complex = GFI_REAL);
+  gfi_array* checked_gfi_array_create(int ndim, const int *dims,
+				      gfi_type_id type,
+				      gfi_complex_flag is_complex = GFI_REAL);
+  gfi_array* checked_gfi_array_create_0(gfi_type_id type,
+					gfi_complex_flag is_complex = GFI_REAL);
+  gfi_array* checked_gfi_array_create_1(int M, gfi_type_id type,
+					gfi_complex_flag is_complex = GFI_REAL);
+  gfi_array* checked_gfi_array_create_2(int M, int N, gfi_type_id type,
+					gfi_complex_flag is_complex = GFI_REAL);
   gfi_array* checked_gfi_array_from_string(const char*s);
-  gfi_array* checked_gfi_create_sparse(int m, int n, int nzmax, gfi_complex_flag is_complex);
+  gfi_array* checked_gfi_create_sparse(int m, int n, int nzmax,
+				       gfi_complex_flag is_complex);
 
   typedef bgeot::dim_type dim_type;
   typedef bgeot::scalar_type scalar_type;
   typedef std::complex<double> complex_type;
 
-  inline int *gfi_get_data(gfi_array *g, int) { return gfi_int32_get_data(g); }
-  inline unsigned *gfi_get_data(gfi_array *g, unsigned) { return gfi_uint32_get_data(g); }
-  inline char *gfi_get_data(gfi_array *g, char) { return gfi_char_get_data(g); }
-  inline double *gfi_get_data(gfi_array *g, double) { return gfi_double_get_data(g); }
-  inline complex_type *gfi_get_data(gfi_array *g, complex_type) { return (complex_type*)gfi_double_get_data(g); }
+  inline int *gfi_get_data(gfi_array *g, int)
+  { return gfi_int32_get_data(g); }
+  inline unsigned *gfi_get_data(gfi_array *g, unsigned)
+  { return gfi_uint32_get_data(g); }
+  inline char *gfi_get_data(gfi_array *g, char)
+  { return gfi_char_get_data(g); }
+  inline double *gfi_get_data(gfi_array *g, double)
+  { return gfi_double_get_data(g); }
+  inline complex_type *gfi_get_data(gfi_array *g, complex_type)
+  { return (complex_type*)gfi_double_get_data(g); }
 
 
   typedef gmm::row_matrix<gmm::wsvector<scalar_type> >  gf_real_sparse_by_row;
@@ -165,11 +179,6 @@ namespace getfemint {
   class getfemint_model;
   class getfemint_mesh_slice;
   class getfemint_precond;
-  class getfemint_gsparse;
-  class getfemint_pfem;
-  class getfemint_levelset;
-  class getfemint_mesh_levelset;
-  class getfemint_global_function;
   class gsparse;
 
   class sub_index : public gmm::unsorted_sub_index{
@@ -455,18 +464,14 @@ namespace getfemint {
     mexarg_in(const gfi_array *arg_, int num_) { arg = arg_; argnum = num_; }
     bool                                 is_string() { return (gfi_array_get_class(arg) == GFI_CHAR); }
     bool                                 is_cell() { return (gfi_array_get_class(arg) == GFI_CELL); }
-    bool                                 is_object_id(id_type *pid=0, id_type *pcid=0);
+    bool                                 is_object_id(id_type *pid=0, id_type *pcid=0) const;
     bool                                 is_mesh();
     bool                                 is_mesh_fem();
     bool                                 is_mesh_im();
     bool                                 is_mesh_im_data();
     bool                                 is_model();
     bool                                 is_mesh_slice();
-    bool                                 is_levelset();
-    bool                                 is_mesh_levelset();
-    bool                                 is_global_function();
-    bool                                 is_sparse() { return (gfi_array_get_class(arg) == GFI_SPARSE || is_gsparse()); };
-    bool                                 is_gsparse();
+    bool                                 is_sparse();
     bool                                 is_complex(); /* true for complex garrays AND complex sparse matrices (native or gsparse) */
     bool                                 is_integer();
     bool                                 is_bool();
@@ -479,7 +484,6 @@ namespace getfemint {
     std::string                          to_string();
     std::pair<id_type, id_type>          to_object_ids(void);
     id_type                              to_object_id(id_type *pid=0, id_type *pcid=0);
-    bgeot::base_poly *                   to_poly();
     const getfem::mesh_fem *             to_const_mesh_fem();
     getfem::mesh_fem *                   to_mesh_fem();
     const getfem::mesh_im *              to_const_mesh_im();
@@ -495,18 +499,6 @@ namespace getfemint {
     getfemint_model *                    to_getfemint_model(bool writeable=false);
     getfem::mesh *                       to_mesh();
     getfemint_mesh_slice *               to_getfemint_mesh_slice(bool writeable=false);
-    getfemint_levelset *                 to_getfemint_levelset(bool writeable=false);
-    // const getfem::level_set *            to_const_levelset();
-    getfem::level_set *                  to_levelset();
-    getfemint_mesh_levelset *            to_getfemint_mesh_levelset(bool writeable=false);
-    getfem::mesh_level_set *             to_mesh_levelset();
-    const getfem::pxy_function           to_const_global_function();
-    getfem::pxy_function                 to_global_function();
-    getfemint_global_function *          to_getfemint_global_function(bool writeable=false);
-    getfem::pintegration_method          to_integration_method();
-    getfemint_pfem*                      to_getfemint_pfem();
-    getfem::pfem                         to_fem();
-    bgeot::pgeometric_trans              to_pgt();
     getfemint_precond *                  to_precond();
     getfem::mesh_region                  to_mesh_region();
 
@@ -551,10 +543,9 @@ namespace getfemint {
     sub_index                 to_sub_index();
     getfem::base_node         to_base_node() { return to_base_node(-1); }
     getfem::base_node         to_base_node(int expected_dim);
-    void                      to_sparse(gf_real_sparse_csc_const_ref& M);
-    void                      to_sparse(gf_cplx_sparse_csc_const_ref& M);
+    // void                      to_sparse(gf_real_sparse_csc_const_ref& M);
+    // void                      to_sparse(gf_cplx_sparse_csc_const_ref& M);
     std::shared_ptr<gsparse>  to_sparse();
-    getfemint_gsparse *       to_getfemint_gsparse();
 
     mexarg_in &check_trailing_dimension(int expected_dim);
     void check_dimensions(array_dimensions &v, int expected_m, int expected_n, int expected_p=-1, int expected_q=-1);
@@ -585,10 +576,13 @@ private:
 
     /**
        BIG CAUTION:
-       the from_sparse function MAY erase the sparse matrix M (in order to avoid unnecessary copies of sparse matrices)
+       the from_sparse function MAY erase the sparse matrix M
+       (in order to avoid unnecessary copies of sparse matrices)
     */
-    void from_sparse(gf_real_sparse_by_col& M, output_sparse_fmt fmt = USE_DEFAULT_SPARSE);
-    void from_sparse(gf_cplx_sparse_by_col& M, output_sparse_fmt fmt = USE_DEFAULT_SPARSE);
+    void from_sparse(gf_real_sparse_by_col& M,
+		     output_sparse_fmt fmt = USE_DEFAULT_SPARSE);
+    void from_sparse(gf_cplx_sparse_by_col& M,
+		     output_sparse_fmt fmt = USE_DEFAULT_SPARSE);
     void from_sparse(gsparse& M, output_sparse_fmt fmt = USE_DEFAULT_SPARSE);
 
     void from_tensor(const getfem::base_tensor& t);
@@ -615,8 +609,6 @@ private:
     carray create_array(unsigned n, unsigned m, unsigned p, complex_type) { return create_carray(n,m,p); }
     darray create_array(const array_dimensions &dims, double);
     carray create_array(const array_dimensions &dims, complex_type);
-    /* allocates a gsparse object in the workspace */
-    gsparse &create_gsparse();
 
     template<class VECT> void from_dcvector(VECT& v) {
       typedef typename VECT::value_type T;
@@ -758,31 +750,116 @@ private:
   bool is_NaN(const double&);
 
   // Functions for CONT_STRUCT_CLASS_ID
-  bool is_cont_struct_object(mexarg_in &p);
+  } namespace getfem { class cont_struct_getfem_model; } namespace getfemint {
+  bool is_cont_struct_object(const mexarg_in &p);
   id_type store_cont_struct_object
   (const std::shared_ptr<getfem::cont_struct_getfem_model> &shp);
-  getfem::cont_struct_getfem_model *to_cont_struct_object(mexarg_in &p);
+  getfem::cont_struct_getfem_model *to_cont_struct_object(const mexarg_in &p);
 
   // Functions for CVSTRUCT_CLASS_ID
-  bool is_cvstruct_object(mexarg_in &p);
-  id_type store_cvstruct_object(const bgeot::pconvex_structure &shp);
-  bgeot::pconvex_structure to_cvstruct_object(mexarg_in &p);
+  typedef std::shared_ptr<const bgeot::convex_structure> pconvex_structure;
+  bool is_cvstruct_object(const mexarg_in &p);
+  id_type store_cvstruct_object(const pconvex_structure &shp);
+  pconvex_structure to_cvstruct_object(const mexarg_in &p);
 
   // Functions for ELTM_CLASS_ID
-  bool is_eltm_object(mexarg_in &p);
-  id_type store_eltm_object(const getfem::pmat_elem_type &shp);
-  getfem::pmat_elem_type to_eltm_object(mexarg_in &p);
+  typedef std::shared_ptr<const getfem::mat_elem_type> pmat_elem_type;
+  bool is_eltm_object(const mexarg_in &p);
+  id_type store_eltm_object(const pmat_elem_type &shp);
+  pmat_elem_type to_eltm_object(const mexarg_in &p);
 
   // Functions for FEM_CLASS_ID
-  bool is_fem_object(mexarg_in &p);
-  id_type store_fem_object(const getfem::pfem &shp);
-  getfem::pfem to_fem_object(mexarg_in &p);
+  typedef std::shared_ptr<const getfem::virtual_fem> pfem;
+  bool is_fem_object(const mexarg_in &p);
+  id_type store_fem_object(const pfem &shp);
+  pfem to_fem_object(const mexarg_in &p);
 
+  // Functions for GEOTRANS_CLASS_ID
+  typedef std::shared_ptr<const bgeot::geometric_trans> pgeometric_trans;
+  bool is_geotrans_object(const mexarg_in &p);
+  id_type store_geotrans_object(const pgeometric_trans &shp);
+  pgeometric_trans to_geotrans_object(const mexarg_in &p);
+
+  // Functions for GLOBAL_FUNCTION_CLASS_ID
+  typedef std::shared_ptr<const getfem::abstract_xy_function> pxy_function;
+  bool is_global_function_object(const mexarg_in &p);
+  id_type store_global_function_object(const pxy_function &shp);
+  pxy_function to_global_function_object(const mexarg_in &p);
+
+  // Functions for INTEG_CLASS_ID
+  typedef std::shared_ptr<const getfem::integration_method> pintegration_method;
+  bool is_integ_object(const mexarg_in &p);
+  id_type store_integ_object(const pintegration_method &shp);
+  pintegration_method to_integ_object(const mexarg_in &p);
+
+  // Functions for LEVELSET_CLASS_ID
+  bool is_levelset_object(const mexarg_in &p);
+  id_type store_levelset_object(const std::shared_ptr<getfem::level_set> &shp);
+  getfem::level_set *to_levelset_object(const mexarg_in &p);
+
+  // Functions for MESH_CLASS_ID
+  bool is_mesh_object(const mexarg_in &p);
+  id_type store_mesh_object(const std::shared_ptr<getfem::mesh> &shp);
+  getfem::mesh *to_mesh_object(const mexarg_in &p);
+
+  // Functions for MESHFEM_CLASS_ID
+  bool is_meshfem_object(const mexarg_in &p);
+  id_type store_meshfem_object(const std::shared_ptr<getfem::mesh_fem> &shp);
+  getfem::mesh_fem *to_meshfem_object(const mexarg_in &p);
+
+  // Functions for MESHIM_CLASS_ID
+  bool is_meshim_object(const mexarg_in &p);
+  id_type store_meshim_object(const std::shared_ptr<getfem::mesh_im> &shp);
+  getfem::mesh_im *to_meshim_object(const mexarg_in &p);
+
+  // Functions for MESHIMDATA_CLASS_ID
+  bool is_meshimdata_object(const mexarg_in &p);
+  id_type store_meshimdata_object(const std::shared_ptr<getfem::im_data> &shp);
+  getfem::im_data *to_meshimdata_object(const mexarg_in &p);
+
+  // Functions for MESH_LEVELSET_CLASS_ID
+  bool is_mesh_levelset_object(const mexarg_in &p);
+  id_type store_mesh_levelset_object
+  (const std::shared_ptr<getfem::mesh_level_set> &shp);
+  getfem::mesh_level_set *to_mesh_levelset_object(const mexarg_in &p);
+   
   // Functions for MESHER_OBJECT_CLASS_ID
-  bool is_mesher_object(mexarg_in &p);
-  id_type store_mesher_object(const getfem::pmesher_signed_distance &shp);
-  getfem::pmesher_signed_distance to_mesher_object(mexarg_in &p);
-  
+  typedef std::shared_ptr<const getfem::mesher_signed_distance>
+    pmesher_signed_distance;
+  bool is_mesher_object(const mexarg_in &p);
+  id_type store_mesher_object(const pmesher_signed_distance &shp);
+  pmesher_signed_distance to_mesher_object(const mexarg_in &p);
+
+  // Functions for MODEL_CLASS_ID
+  bool is_model_object(const mexarg_in &p);
+  id_type store_model_object(const std::shared_ptr<getfem::model> &shp);
+  getfem::model *to_model_object(const mexarg_in &p);
+
+  // Functions for PRECOND_CLASS_ID
+  // bool is_precond_object(const mexarg_in &p);
+  // id_type store_precond_object(const ?? &shp);
+  // ?? to_precond_object(const mexarg_in &p);
+
+  // Functions for SLICE_CLASS_ID
+  // bool is_slice_object(const mexarg_in &p);
+  // id_type store_slice_object(const pstored_mesh_slice &shp); ??
+  // getfem::stored_mesh_slice *to_slice_object(const mexarg_in &p); ??
+
+  // Functions for SPMAT_CLASS_ID
+  class gsparse;
+  bool is_spmat_object(const mexarg_in &p);
+  id_type store_spmat_object
+  (const std::shared_ptr<gsparse> &shp);
+  gsparse *to_spmat_object(const mexarg_in &p);
+
+  // Functions for POLY_CLASS_ID
+  struct getfemint_poly : virtual public dal::static_stored_object
+  { bgeot::base_poly p; };
+  bool is_poly_object(const mexarg_in &p);
+  id_type store_poly_object(const std::shared_ptr<getfemint_poly> &shp);
+  getfemint_poly *to_poly_object(const mexarg_in &p);
+
+
 
 
 

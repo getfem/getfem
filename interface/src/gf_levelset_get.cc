@@ -144,8 +144,7 @@ void gf_levelset_get(getfemint::mexargs_in& m_in,
 
   if (m_in.narg() < 2)  THROW_BADARG( "Wrong number of input arguments");
 
-  getfemint_levelset *gls = m_in.pop().to_getfemint_levelset();
-  getfem::level_set &ls = gls->levelset();
+  getfem::level_set &ls = *(to_levelset_object(m_in.pop()));
   std::string init_cmd   = m_in.pop().to_string();
   std::string cmd        = cmd_normalize(init_cmd);
 

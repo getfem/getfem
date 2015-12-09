@@ -21,8 +21,8 @@
 
 #include <getfemint_misc.h>
 #include <getfemint_mesh_im.h>
-#include <getfemint_integ.h>
-#include <getfem/getfem_mat_elem_type.h>
+#include <getfem/getfem_integration.h>
+#include <getfem/getfem_mat_elem.h>
 /*
   $Id$
  */
@@ -39,7 +39,7 @@ get_integ_of_convexes(const getfem::mesh_im& mim, mexargs_in& in, mexargs_out& o
   std::vector<id_type> ids; ids.reserve(cvlst.card());
   for (dal::bv_visitor cv(cvlst); !cv.finished(); ++cv) {
     if (mim.convex_index().is_in(cv))
-      ids.push_back(ind_integ(mim.int_method_of_element(cv)));
+      ids.push_back(store_integ_object(mim.int_method_of_element(cv)));
     else ids.push_back(id_type(-1));
   }
   out.return_packed_obj_ids(ids, INTEG_CLASS_ID);

@@ -20,7 +20,7 @@
 ===========================================================================*/
 
 #include <getfemint.h>
-#include <getfemint_integ.h>
+#include <getfem/getfem_integration.h>
 
 using namespace getfemint;
 
@@ -38,7 +38,7 @@ struct sub_gf_integ_get : virtual public dal::static_stored_object {
   int arg_in_min, arg_in_max, arg_out_min, arg_out_max;
   virtual void run(getfemint::mexargs_in& in,
 		   getfemint::mexargs_out& out,
-		   getfem::pintegration_method im,
+		   const getfem::pintegration_method &im,
 		   getfem::papprox_integration pai, size_type imdim) = 0;
 };
 
@@ -51,7 +51,7 @@ template <typename T> static inline void dummy_func(T &) {}
     struct subc : public sub_gf_integ_get {				\
       virtual void run(getfemint::mexargs_in& in,			\
 		       getfemint::mexargs_out& out,			\
-		       getfem::pintegration_method im,			\
+		       const getfem::pintegration_method &im,		\
 		       getfem::papprox_integration pai,			\
 		       size_type imdim) {				\
 	dummy_func(in); dummy_func(out); dummy_func(im);		\
@@ -198,7 +198,7 @@ void gf_integ_get(getfemint::mexargs_in& m_in,
   if (m_in.narg() < 2)  THROW_BADARG( "Wrong number of input arguments");
 
 
-  getfem::pintegration_method im = m_in.pop().to_integration_method();
+  getfem::pintegration_method im = to_integ_object(m_in.pop());
   getfem::papprox_integration
     pai = im->type() == getfem::IM_APPROX ? im->approx_method() : 0;
   size_type imdim = 0;

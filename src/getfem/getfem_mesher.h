@@ -49,7 +49,7 @@
 
 namespace getfem {
 
-  class mesher_virtual_function : public dal::static_stored_object {
+  class mesher_virtual_function : virtual public dal::static_stored_object {
   public:
     virtual scalar_type operator()(const base_node &P) const = 0;
     virtual ~mesher_virtual_function() {}

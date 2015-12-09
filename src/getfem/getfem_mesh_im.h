@@ -44,7 +44,7 @@
 namespace getfem {
 
   /// Describe an integration method linked to a mesh.
-  class mesh_im : public context_dependencies {
+  class mesh_im : public context_dependencies, virtual public dal::static_stored_object {
   private :
     static mesh dummy_mesh;
 

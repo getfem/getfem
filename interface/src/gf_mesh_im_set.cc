@@ -22,14 +22,14 @@
 #include <getfemint_misc.h>
 #include <getfemint_mesh_im.h>
 #include <getfem/getfem_mesh_im_level_set.h>
+#include <getfem/getfem_integration.h>
 
 using namespace getfemint;
 
 
 static void gf_mesh_im_set_integ_(getfem::mesh_im *mim,
 				  getfemint::mexargs_in& in) {
-  getfem::pintegration_method pim = 0;
-  pim = in.pop().to_integration_method();
+  getfem::pintegration_method pim = to_integ_object(in.pop());
 
   bool all_cv = false;
   /* check or build the convex list */

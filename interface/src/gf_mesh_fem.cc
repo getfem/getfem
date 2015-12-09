@@ -19,17 +19,17 @@
 
 ===========================================================================*/
 
+#include <getfem/getfem_mesh_fem_sum.h>
+#include <getfem/getfem_mesh_fem_product.h>
+#include <getfem/getfem_mesh_level_set.h>
+#include <getfem/getfem_mesh_fem_level_set.h>
+#include <getfem/getfem_partial_mesh_fem.h>
+#include <getfem/getfem_mesh_fem_global_function.h>
 #include <getfemint_misc.h>
 #include <getfemint_workspace.h>
 #include <getfemint_mesh_fem.h>
 #include <getfemint_mesh.h>
-#include <getfem/getfem_mesh_fem_sum.h>
-#include <getfem/getfem_mesh_fem_product.h>
 #include <getfemint_levelset.h>
-#include <getfemint_mesh_levelset.h>
-#include <getfem/getfem_mesh_fem_level_set.h>
-#include <getfem/getfem_partial_mesh_fem.h>
-#include <getfem/getfem_mesh_fem_global_function.h>
 
 using namespace getfemint;
 
@@ -188,14 +188,13 @@ void gf_mesh_fem(getfemint::mexargs_in& m_in,
       @tmls.@*/
     sub_command
       ("levelset", 2, 2, 0, 1,
-       getfemint_mesh_levelset *gmls = in.pop().to_getfemint_mesh_levelset();
+       getfem::mesh_level_set &mls = *(to_mesh_levelset_object(in.pop()));
        getfemint_mesh_fem *gmf = in.pop().to_getfemint_mesh_fem();
        getfem::mesh_fem_level_set *mfls =
-       new getfem::mesh_fem_level_set(gmls->mesh_levelset(),
-				      gmf->mesh_fem());
+       new getfem::mesh_fem_level_set(mls, gmf->mesh_fem());
        mmf = getfemint_mesh_fem::get_from(mfls);
        workspace().set_dependance(mmf, gmf);
-       workspace().set_dependance(mmf, gmls);
+       // workspace().set_dependance(mmf, gmls);
        mfls->adapt();
        );
 
@@ -207,15 +206,15 @@ void gf_mesh_fem(getfemint::mexargs_in& m_in,
     sub_command
       ("global function", 3, 4, 0, 1,
        mm = in.pop().to_getfemint_mesh();
-       getfemint_levelset *gls = in.pop().to_getfemint_levelset();
+       auto pls = to_levelset_object(in.pop());
        mexargs_in *in_gf = new mexargs_in(1, &in.pop().arg, true);
        if (in.remaining() && in.front().is_integer())
 	 q_dim = in.pop().to_integer(1,256);
 
        std::vector<getfem::pglobal_function> vfunc(size_type(in_gf->narg()));
        for (size_type i = 0; i < vfunc.size(); ++i) {
-	 getfem::pxy_function s = in_gf->pop().to_global_function();
-	 vfunc[i] = getfem::global_function_on_level_set(gls->levelset(), s);
+	 getfem::pxy_function s = to_global_function_object(in_gf->pop());
+	 vfunc[i] = getfem::global_function_on_level_set(*pls, s);
        }
 
        getfem::mesh_fem_global_function *mfgf = new getfem::mesh_fem_global_function(mm->mesh());

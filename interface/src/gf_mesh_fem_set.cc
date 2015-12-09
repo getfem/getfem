@@ -26,13 +26,14 @@
 #include <gmm/gmm_range_basis.h>
 #include <getfem/getfem_mesh_fem_level_set.h>
 #include <getfem/getfem_mesh_fem_product.h>
+#include <getfem/getfem_fem.h>
 
 using namespace getfemint;
 
 
 static void set_fem(getfem::mesh_fem *mf, getfemint::mexargs_in& in)
 {
-  getfem::pfem fem = in.pop().to_fem();
+  getfem::pfem fem = to_fem_object(in.pop());
 
   /* check or build the convex list */
   dal::bit_vector bv;

@@ -24,32 +24,11 @@
 #include <getfem/getfem_arch_config.h>
 
 namespace getfemint {
-  getfemint_levelset* getfemint_levelset::get_from(getfem::level_set *ls,
-                                                   int flags) {
-    getfem_object *o =
-      getfemint::workspace().object(getfem_object::internal_key_type(ls));
-    getfemint_levelset *gls = 0;
-    if (!o) {
-      const getfem::mesh &m = ls->get_mesh_fem().linked_mesh();
-      getfemint_mesh *gm =
-        getfemint_mesh::get_from(const_cast<getfem::mesh*>(&m),
-                                 flags);
-      gls = new getfemint_levelset();
-      gls->ls = ls;
-      gls->ikey = getfem_object::internal_key_type(ls);
-      gls->set_flags(flags);
-      getfemint::workspace().push_object(gls);
-      getfemint::workspace().set_dependance(gls, gm);
-    } else gls = dynamic_cast<getfemint_levelset*>(o);
-    assert(gls);
-    return gls;
 
-  }
-
-  void getfemint_levelset::values_from_func(unsigned idx,
-                                            const std::string &s) {
-
-    const getfem::mesh_fem &mf = levelset().get_mesh_fem();
+  void values_from_func(getfem::level_set *pls,
+			unsigned idx,
+			const std::string &s) {
+    const getfem::mesh_fem &mf = pls->get_mesh_fem();
     size_type N = mf.linked_mesh().dim();
     getfem::ga_workspace gw;
     getfem::model_real_plain_vector pt(N);
@@ -61,7 +40,7 @@ namespace getfemint {
     getfem::ga_function f(gw, s);
     
     f.compile();
-    ls->values(idx).resize(mf.nb_dof());
+    pls->values(idx).resize(mf.nb_dof());
     
     bool is_set = 0;
     for (unsigned i=0; i < mf.nb_dof(); ++i) {
@@ -69,8 +48,9 @@ namespace getfemint {
       gmm::copy(mf.point_of_basic_dof(i), pt);
       const bgeot::base_tensor &t = f.eval();
       GMM_ASSERT1(t.size() == 1, "Wrong size of expression result " << s);
-      ls->values(idx)[i] = t[0];
+      pls->values(idx)[i] = t[0];
     }
-   
   }
+  
+
 }

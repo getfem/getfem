@@ -20,8 +20,9 @@
 ===========================================================================*/
 // $Id$
 #include <getfemint.h>
-#include <getfemint_mesh_levelset.h>
+#include <getfem/getfem_mesh_level_set.h>
 #include <getfemint_workspace.h>
+#include <getfemint_mesh.h>
 
 using namespace getfemint;
 
@@ -33,14 +34,14 @@ using namespace getfemint;
   @*/
 
 void gf_mesh_levelset(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
-  getfemint_mesh_levelset *gmls = NULL;
   if (check_cmd("MeshLevelSet", "MeshLevelSet", in, out, 1, 1, 0, 1)) {
     /*@INIT MLS = ('.mesh', @tmesh m)
       Build a new @tmls object from a @tmesh and returns its handle. @*/
     getfemint_mesh *mm = in.pop().to_getfemint_mesh();
-    getfem::mesh_level_set *mls = new getfem::mesh_level_set(mm->mesh());
-    gmls = getfemint_mesh_levelset::get_from(mls);
-    workspace().set_dependance(gmls, mm);
+    id_type id = store_mesh_levelset_object
+      (std::make_shared<getfem::mesh_level_set>(mm->mesh()));
+
+    // workspace().set_dependance(id, mm);
+    out.pop().from_object_id(id, MESH_LEVELSET_CLASS_ID);
   }
-  out.pop().from_object_id(gmls->get_id(), MESH_LEVELSET_CLASS_ID);
 }

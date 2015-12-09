@@ -9,7 +9,7 @@
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
  Exception either version 3.1 or (at your option) any later version.
- This program  is  distributed  in  the  hope  that it will be useful,  but
+ This program  is  distributed  in  the  hope  that it willx be useful,  but
  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
  License and GCC Runtime Library Exception for more details.
@@ -23,26 +23,22 @@
 #include <getfemint.h>
 #include <getfemint_misc.h>
 #include <getfemint_workspace.h>
-#include <getfemint_poly.h>
 #include <getfemint_mesh.h>
 #include <getfemint_mesh_slice.h>
 #include <getfemint_mesh_fem.h>
 #include <getfemint_mesh_im.h>
 #include <getfemint_mesh_im_data.h>
 #include <getfemint_models.h>
-#include <getfemint_pfem.h>
-#include <getfemint_integ.h>
-#include <getfemint_pgt.h>
 #include <getfemint_precond.h>
 #include <getfemint_gsparse.h>
-#include <getfemint_levelset.h>
-#include <getfemint_mesh_levelset.h>
-#include <getfemint_global_function.h>
+#include <getfem/getfem_mesh_fem_global_function.h>
 #include <getfem/getfem_mat_elem_type.h>
 #include <getfem/getfem_mesh_fem_global_function.h>
 #include <getfem/getfem_mesher.h>
 #include <getfem/getfem_continuation.h>
+#include <getfem/getfem_integration.h>
 #include <getfem/bgeot_convex_structure.h>
+#include <getfem/getfem_mesh_level_set.h>
 
 #include <getfemint_misc.h>
 //#ifdef MAINTAINER_MODE
@@ -249,7 +245,7 @@ namespace getfemint {
   }
 
   bool
-  mexarg_in::is_object_id(id_type *pid, id_type *pcid) {
+  mexarg_in::is_object_id(id_type *pid, id_type *pcid) const {
     if (gfi_array_get_class(arg) == GFI_OBJID &&
         gfi_array_nb_of_elements(arg) == 1) {
       if (pid)  *pid  = gfi_objid_get_data(arg)->id;
@@ -313,46 +309,13 @@ namespace getfemint {
     } else return false;
   }
 
-  bool
-  mexarg_in::is_levelset() {
-    id_type id, cid;
-    if (is_object_id(&id, &cid) && cid == LEVELSET_CLASS_ID) {
-      getfem_object *o=workspace().object(id, name_of_getfemint_class_id(cid));
-      return (object_is_levelset(o));
-    } else return false;
-  }
-
-  bool
-  mexarg_in::is_mesh_levelset() {
-    id_type id, cid;
-    if (is_object_id(&id, &cid) && cid == MESH_LEVELSET_CLASS_ID) {
-      getfem_object *o=workspace().object(id, name_of_getfemint_class_id(cid));
-      return (object_is_mesh_levelset(o));
-    } else return false;
-  }
-
-  bool
-  mexarg_in::is_global_function() {
-    id_type id, cid;
-    if (is_object_id(&id, &cid) && cid == GLOBAL_FUNCTION_CLASS_ID) {
-      getfem_object *o=workspace().object(id, name_of_getfemint_class_id(cid));
-      return (object_is_global_function(o));
-    } else return false;
-  }
-
-  bool
-  mexarg_in::is_gsparse() {
-    id_type id, cid;
-    if (is_object_id(&id, &cid) && cid == GSPARSE_CLASS_ID) {
-      getfem_object *o=workspace().object(id, name_of_getfemint_class_id(cid));
-      return (object_is_gsparse(o));
-    } else return false;
-  }
+  bool mexarg_in::is_sparse()
+  { return (gfi_array_get_class(arg) == GFI_SPARSE || is_spmat_object(*this)); }
 
   bool
   mexarg_in::is_complex() {
-    if (!is_gsparse()) return gfi_array_is_complex(arg);
-    else return to_sparse()->is_complex();
+    if (!is_spmat_object(*this)) return gfi_array_is_complex(arg);
+    else return to_spmat_object(*this)->is_complex();
   }
 
   std::string
@@ -397,22 +360,6 @@ namespace getfemint {
     return &object_to_intset(o)->intset();
   }
   */
-
-
-  /*
-    check if the argument is a valid handle to a base_poly
-    and returns it
-  */
-  bgeot::base_poly *
-  mexarg_in::to_poly() {
-    id_type id, cid;
-    to_object_id(&id,&cid);
-    if (cid != POLY_CLASS_ID) {
-      THROW_BADARG("argument " << argnum << " should be a polynom descriptor, its class is " << name_of_getfemint_class_id(cid));
-    }
-    getfem_object *o = workspace().object(id,name_of_getfemint_class_id(cid));
-    return &object_to_poly(o)->poly();
-  }
 
   void mexarg_in::error_if_nonwritable(getfem_object *o, bool want_writeable) {
     if (want_writeable && o->is_const())
@@ -583,78 +530,6 @@ namespace getfemint {
     return object_to_mesh_slice(o);
   }
 
-  /*getfem::stored_mesh_slice *
-  mexarg_in::to_mesh_slice() {
-    return &to_getfemint_mesh_slice()->mesh_slice();
-  }
-  */
-
-  getfemint_levelset *
-  mexarg_in::to_getfemint_levelset(bool writeable) {
-    id_type id, cid;
-    to_object_id(&id,&cid);
-    if (cid != LEVELSET_CLASS_ID) {
-      THROW_BADARG("argument " << argnum << " should be a levelset descriptor, its class is " << name_of_getfemint_class_id(cid));
-    }
-    getfem_object *o = workspace().object(id,name_of_getfemint_class_id(cid));
-    error_if_nonwritable(o,writeable);
-    return object_to_levelset(o);
-  }
-
-  getfemint_mesh_levelset *
-  mexarg_in::to_getfemint_mesh_levelset(bool writeable) {
-    id_type id, cid;
-    to_object_id(&id,&cid);
-    if (cid != MESH_LEVELSET_CLASS_ID) {
-      THROW_BADARG("argument " << argnum << " should be a mesh_levelset descriptor, its class is " << name_of_getfemint_class_id(cid));
-    }
-    getfem_object *o = workspace().object(id,name_of_getfemint_class_id(cid));
-    error_if_nonwritable(o,writeable);
-    return object_to_mesh_levelset(o);
-  }
-  
-  getfem::mesh_level_set *
-  mexarg_in::to_mesh_levelset() {
-    return &to_getfemint_mesh_levelset(true)->mesh_levelset();
-  }
-  getfem::level_set *
-  mexarg_in::to_levelset() {
-    return &to_getfemint_levelset(true)->levelset();
-  }
-
-  // getfem::level_set *
-//   mexarg_in::to_const_levelset() {
-//     return &to_getfemint_levelset(false)->levelset();
-//   }
-
-
-  /*
-    check if the argument is a valid handle to a global_function,
-    and returns it
-  */
-  getfemint_global_function *
-  mexarg_in::to_getfemint_global_function(bool writeable) {
-    id_type id, cid;
-    to_object_id(&id,&cid);
-    if (cid != GLOBAL_FUNCTION_CLASS_ID) {
-      THROW_BADARG("argument " << argnum << " should be a global_function " <<
-                   "descriptor, its class is " << name_of_getfemint_class_id(cid));
-    }
-    getfem_object *o = workspace().object(id,name_of_getfemint_class_id(cid));
-    error_if_nonwritable(o, writeable);
-    return object_to_global_function(o);
-  }
-
-  getfem::pxy_function
-  mexarg_in::to_global_function() {
-    return to_getfemint_global_function(true)->global_function();
-  }
-
-  const getfem::pxy_function
-  mexarg_in::to_const_global_function() {
-    return to_getfemint_global_function(false)->global_function();
-  }
-
   getfemint_precond *
   mexarg_in::to_precond() {
     id_type id, cid;
@@ -675,51 +550,6 @@ namespace getfemint {
     }
     iarray v = to_iarray();
     return getfemint::to_mesh_region(v);
-  }
-
-  getfem::pintegration_method
-  mexarg_in::to_integration_method() {
-    id_type id,cid;
-    to_object_id(&id,&cid);
-    if (cid != INTEG_CLASS_ID)
-      THROW_BADARG("Argument " << argnum <<
-                   " should be an integration method descriptor");
-    if (!exists_integ(id)) {
-      THROW_BADARG("Argument " << argnum <<
-                   " is not a valid integration method handle");
-    }
-    return addr_integ(id);
-  }
-
-  getfemint_pfem*
-  mexarg_in::to_getfemint_pfem() {
-    id_type id,cid;
-    to_object_id(&id,&cid);
-    if (cid != FEM_CLASS_ID)
-      THROW_BADARG("Argument " << argnum <<
-                   " should be a fem descriptor");
-    getfem_object *o = workspace().object(id,name_of_getfemint_class_id(cid));
-    return object_to_pfem(o);
-  }
-
-  getfem::pfem
-  mexarg_in::to_fem() {
-    getfemint_pfem *p = to_getfemint_pfem();
-    return p->pfem();
-  }
-
-
-  bgeot::pgeometric_trans
-  mexarg_in::to_pgt() {
-    id_type id,cid;
-    to_object_id(&id,&cid);
-    if (cid != GEOTRANS_CLASS_ID)
-      THROW_BADARG("Argument " << argnum <<
-                   " is not a geometric transformation handle");
-    if (!getfemint::exists_pgt(id))
-      THROW_BADARG("Argument " << argnum <<
-                   " refers to a geometric transformation that does not exists");
-    return getfemint::addr_pgt(id);
   }
 
   void mexarg_in::check_dimensions(const array_dimensions &v, int expected_dim) {
@@ -919,62 +749,51 @@ namespace getfemint {
     return bn;
   }
 
-  /* get a (native only) sparse matrix */
-  void
-  mexarg_in::to_sparse(gf_real_sparse_csc_const_ref& M) {
-    if (gfi_array_get_class(arg) != GFI_SPARSE) {
-      THROW_BADARG("Argument " << argnum << " was expected to be a sparse matrix");
-    }
-    if (is_complex()) {
-      THROW_BADARG("Argument " << argnum << " cannot be a complex sparse matrix");
-    }
-    assert(gfi_array_get_ndim(arg)==2);
-    M = gf_real_sparse_csc_const_ref(gfi_sparse_get_pr(arg), gfi_sparse_get_ir(arg), gfi_sparse_get_jc(arg),
-                                     gfi_array_get_dim(arg)[0],gfi_array_get_dim(arg)[1]);
-  }
+  // /* get a (native only) sparse matrix */
+  // void
+  // mexarg_in::to_sparse(gf_real_sparse_csc_const_ref& M) {
+  //   if (gfi_array_get_class(arg) != GFI_SPARSE) {
+  //     THROW_BADARG("Argument " << argnum << " was expected to be a sparse matrix");
+  //   }
+  //   if (is_complex()) {
+  //     THROW_BADARG("Argument " << argnum << " cannot be a complex sparse matrix");
+  //   }
+  //   assert(gfi_array_get_ndim(arg)==2);
+  //   M = gf_real_sparse_csc_const_ref(gfi_sparse_get_pr(arg), gfi_sparse_get_ir(arg), gfi_sparse_get_jc(arg),
+  //                                    gfi_array_get_dim(arg)[0],gfi_array_get_dim(arg)[1]);
+  // }
 
-  void
-  mexarg_in::to_sparse(gf_cplx_sparse_csc_const_ref& M) {
-    if (gfi_array_get_class(arg) != GFI_SPARSE) {
-      THROW_BADARG("Argument " << argnum << " was expected to be a sparse matrix");
-    }
-    if (!is_complex()) {
-      THROW_BADARG("Argument " << argnum << " cannot be a real sparse matrix");
-    }
-    assert(gfi_array_get_ndim(arg)==2);
-    M = gf_cplx_sparse_csc_const_ref((complex_type*)gfi_sparse_get_pr(arg), gfi_sparse_get_ir(arg), gfi_sparse_get_jc(arg),
-                                     gfi_array_get_dim(arg)[0],gfi_array_get_dim(arg)[1]);
-  }
+  // void
+  // mexarg_in::to_sparse(gf_cplx_sparse_csc_const_ref& M) {
+  //   if (gfi_array_get_class(arg) != GFI_SPARSE) {
+  //     THROW_BADARG("Argument " << argnum << " was expected to be a sparse matrix");
+  //   }
+  //   if (!is_complex()) {
+  //     THROW_BADARG("Argument " << argnum << " cannot be a real sparse matrix");
+  //   }
+  //   assert(gfi_array_get_ndim(arg)==2);
+  //   M = gf_cplx_sparse_csc_const_ref((complex_type*)gfi_sparse_get_pr(arg), gfi_sparse_get_ir(arg), gfi_sparse_get_jc(arg),
+  //                                    gfi_array_get_dim(arg)[0],gfi_array_get_dim(arg)[1]);
+  // }
 
   /* get a (native or getfem) sparse matrix */
-  std::shared_ptr<gsparse>
-  mexarg_in::to_sparse() {
+  std::shared_ptr<gsparse> mexarg_in::to_sparse() {
     if (gfi_array_get_class(arg) == GFI_SPARSE) {
-      std::shared_ptr<gsparse> pgsp(new gsparse(arg));
-      return pgsp;
+      return std::make_shared<gsparse>(arg);
     } else {
       id_type id,cid;
       to_object_id(&id,&cid);
       if (cid != GSPARSE_CLASS_ID)
-        THROW_BADARG("Argument " << argnum << " was expected to be a sparse matrix");
-      getfem_object *o = workspace().object(id,name_of_getfemint_class_id(cid));
-      //cout << "id = " << id << ", cid= "<< cid << " " << name_of_getfemint_class_id(cid) << ", ->o = " << o << "\n";
-      return object_to_gsparse(o)->ref();
+        THROW_BADARG("Argument " << argnum <<
+		     " was expected to be a sparse matrix");
+      auto gsp=workspace2().shared_pointer(id,name_of_getfemint_class_id(cid));
+      auto gsp2= const_pointer_cast<gsparse>
+	(std::dynamic_pointer_cast<const gsparse>(gsp));
+      GMM_ASSERT1(gsp2.get(), "Internal error");
+      return gsp2;
     }
   }
 
-  getfemint_gsparse *
-  mexarg_in::to_getfemint_gsparse() {
-    if (gfi_array_get_class(arg) == GFI_SPARSE) {
-      THROW_BADARG("Argument " << argnum << " was expected as a GETFEM sparse matrix, not a native sparse matrix");
-    } else {
-      id_type id,cid;
-      to_object_id(&id,&cid);
-      if (cid != GSPARSE_CLASS_ID)
-        THROW_BADARG("Argument " << argnum << " was expected to be a sparse matrix");
-      return object_to_gsparse(workspace().object(id,name_of_getfemint_class_id(cid)));
-    }
-  }
 
   /* converts the gfi_array into a bit vector , shift all its values by
      'shift' and checking that they are a subset of 'subsetof' ( if the pointer
@@ -1074,26 +893,26 @@ namespace getfemint {
   }
 
   /* remember that M will be erased by these functions */
-  void
-  mexarg_out::from_sparse(gf_real_sparse_by_col& M, output_sparse_fmt fmt) {
+  void mexarg_out::from_sparse(gf_real_sparse_by_col& M,
+			       output_sparse_fmt fmt) {
+     gsparse gsp;
+     from_sparse(gsp.destructive_assign(M), fmt);
+  }
+
+  void mexarg_out::from_sparse(gf_cplx_sparse_by_col& M,
+			       output_sparse_fmt fmt) {
     gsparse gsp;
     from_sparse(gsp.destructive_assign(M), fmt);
   }
 
-  void
-  mexarg_out::from_sparse(gf_cplx_sparse_by_col& M, output_sparse_fmt fmt) {
-    gsparse gsp;
-    from_sparse(gsp.destructive_assign(M), fmt);
-  }
-
-  void
-  mexarg_out::from_sparse(gsparse& M, output_sparse_fmt fmt) {
+  void mexarg_out::from_sparse(gsparse& M, output_sparse_fmt fmt) {
     if (fmt == USE_DEFAULT_SPARSE) {
       fmt = (config::prefer_native_sparse() ? USE_NATIVE_SPARSE : USE_GSPARSE);
     }
     if (fmt == USE_GSPARSE) {
-      gsparse &gsp = create_gsparse();
+      auto gsp = std::make_shared<gsparse>();
       gsp.swap(M);
+      store_poly_object(gsp);
     } else {
       M.to_csc();
       size_type nnz = M.nnz();
@@ -1117,13 +936,6 @@ namespace getfemint {
       }
       M.deallocate(); // avoid nasty leak
     }
-  }
-
-  gsparse &
-  mexarg_out::create_gsparse() {
-    getfemint_gsparse *ggsparse = new getfemint_gsparse();
-    from_object_id(workspace().push_object(ggsparse), GSPARSE_CLASS_ID);
-    return ggsparse->sparse();
   }
 
   void
@@ -1447,54 +1259,50 @@ namespace getfemint {
 
 
 
-
-
-
-
-
-
-  // Functions for CONT_STRUCT_CLASS_ID
-
-  bool is_cont_struct_object(mexarg_in &p) {
-    id_type id, cid;
-    return (p.is_object_id(&id, &cid) && cid == CONT_STRUCT_CLASS_ID);
-  }
-
-  id_type store_cont_struct_object
-  (const std::shared_ptr<getfem::cont_struct_getfem_model> &shp) {
-    auto &w = workspace2();
-    id_type id = w.object((const void *)(shp.get()));
-    if (id == id_type(-1)) {
-      auto p = std::dynamic_pointer_cast<const dal::static_stored_object>(shp);
-      if (!(p.get())) THROW_INTERNAL_ERROR; // The object has to derive from
-	                                    // dal::static_stored_object.
-      id = w.push_object(p, (const void *)(shp.get()), CONT_STRUCT_CLASS_ID);
-    }
-    return id;
-  }
-
-  getfem::cont_struct_getfem_model *to_cont_struct_object(mexarg_in &p) {
-    id_type id, cid;
-    if (p.is_object_id(&id, &cid) && cid == CONT_STRUCT_CLASS_ID) {
-      return const_cast<getfem::cont_struct_getfem_model *>
-	((const getfem::cont_struct_getfem_model *)
-	 (workspace2().object(id, name_of_getfemint_class_id(cid))));
-    } else {
-      THROW_BADARG("argument " << p.argnum << " should be a continuation "
-		   "structure descriptor, its class is "
-		   << name_of_getfemint_class_id(cid));
-    }
-  }
-
-
-
-#define SIMPLE_SHARED_POINTER_MANAGED_OBJECT(NAME, TYPE, PTTYPE, CLASS_ID) \
-  bool is_##NAME##_object(mexarg_in &p) {				\
+  // Version of the interface functions for an object managed preferabily by
+  // a raw pointer, allowing to be modified.
+# define SIMPLE_RAW_POINTER_MANAGED_OBJECT(NAME, TYPE, CLASS_ID)	\
+  bool is_##NAME##_object(const mexarg_in &p) {				\
     id_type id, cid;							\
     return (p.is_object_id(&id, &cid) && cid == CLASS_ID);		\
   }									\
 									\
-  id_type store_##NAME##_object(const PTTYPE &shp) {			\
+  id_type store_##NAME##_object(const std::shared_ptr<TYPE> &shp) {	\
+    auto &w = workspace2();						\
+    id_type id = w.object((const void *)(shp.get()));			\
+    if (id == id_type(-1)) {						\
+      auto p =	std::dynamic_pointer_cast				\
+	<const dal::static_stored_object>(shp);				\
+      if (!(p.get())) THROW_INTERNAL_ERROR;				\
+      id = w.push_object(p, (const void *)(shp.get()), CLASS_ID);	\
+    }									\
+    return id;								\
+  }									\
+									\
+  TYPE *to_##NAME##_object(const mexarg_in &p) {			\
+    id_type id, cid;							\
+    if (p.is_object_id(&id, &cid) && cid == CLASS_ID) {			\
+      return const_cast<TYPE *>						\
+	((const TYPE *)							\
+	 (workspace2().object(id, name_of_getfemint_class_id(cid))));	\
+    } else {								\
+      THROW_BADARG("argument " << p.argnum << " should be a " <<	\
+		   name_of_getfemint_class_id(CLASS_ID) <<		\
+		   " descriptor, its class is "				\
+		   << name_of_getfemint_class_id(cid));			\
+    }									\
+  }
+  
+  // Version of the interface functions for an object managed only by the
+  // shared pointer, and assumed not to be modified.
+# define SIMPLE_SHARED_POINTER_MANAGED_OBJECT(NAME, TYPE, CLASS_ID)	\
+  bool is_##NAME##_object(const mexarg_in &p) {				\
+    id_type id, cid;							\
+    return (p.is_object_id(&id, &cid) && cid == CLASS_ID);		\
+  }									\
+									\
+  id_type store_##NAME##_object(const std::shared_ptr<const TYPE> &shp)	\
+  {									\
     auto &w = workspace2();						\
     id_type id = w.object((const void *)(shp.get()));			\
     if (id == id_type(-1)) {						\
@@ -1506,44 +1314,73 @@ namespace getfemint {
     return id;								\
   }									\
 									\
-  PTTYPE to_##NAME##_object(mexarg_in &p) {				\
+  std::shared_ptr<const TYPE> to_##NAME##_object(const mexarg_in &p) {	\
     id_type id, cid;							\
     if (p.is_object_id(&id, &cid) && cid == CLASS_ID) {			\
       return std::dynamic_pointer_cast<const TYPE>			\
-	(workspace2().shared_pointer(id, name_of_getfemint_class_id(cid))); \
+	(workspace2().shared_pointer(id,				\
+				     name_of_getfemint_class_id(cid)));	\
     } else {								\
       THROW_BADARG("argument " << p.argnum << " should be a " <<	\
 		   name_of_getfemint_class_id(CLASS_ID) <<		\
-		   "descriptor, its class is "				\
+		   " descriptor, its class is "				\
 		   << name_of_getfemint_class_id(cid));			\
     }									\
   }
 
-
-
+  // Functions for CONT_STRUCT_CLASS_ID
+  SIMPLE_RAW_POINTER_MANAGED_OBJECT(cont_struct,
+				    getfem::cont_struct_getfem_model,
+				    CONT_STRUCT_CLASS_ID)
+  
   // Functions for CVSTRUCT_CLASS_ID
   SIMPLE_SHARED_POINTER_MANAGED_OBJECT(cvstruct, bgeot::convex_structure,
-				       bgeot::pconvex_structure,
 				       CVSTRUCT_CLASS_ID)
   
   // Functions for ELTM_CLASS_ID
-  SIMPLE_SHARED_POINTER_MANAGED_OBJECT(eltm, getfem::mat_elem_type,
-				       getfem::pmat_elem_type,
+  SIMPLE_SHARED_POINTER_MANAGED_OBJECT(eltm,
+				       getfem::mat_elem_type,
 				       ELTM_CLASS_ID)
 
   // Functions for FEM_CLASS_ID
   SIMPLE_SHARED_POINTER_MANAGED_OBJECT(fem, getfem::virtual_fem,
-				       getfem::pfem,
 				       FEM_CLASS_ID)
 
+  // Functions for GEOTRANS_CLASS_ID
+  SIMPLE_SHARED_POINTER_MANAGED_OBJECT(geotrans, bgeot::geometric_trans,
+				       GEOTRANS_CLASS_ID)
+
+  // Functions for GLOBAL_FUNCTION_CLASS_ID
+  SIMPLE_SHARED_POINTER_MANAGED_OBJECT(global_function,
+				       getfem::abstract_xy_function,
+				       GLOBAL_FUNCTION_CLASS_ID)
+
+  // Functions for INTEG_CLASS_ID
+  SIMPLE_SHARED_POINTER_MANAGED_OBJECT(integ, getfem::integration_method,
+				       INTEG_CLASS_ID)
+
+  // Functions for LEVELSET_CLASS_ID
+  SIMPLE_RAW_POINTER_MANAGED_OBJECT(levelset, getfem::level_set,
+				    LEVELSET_CLASS_ID)
+
+  // Functions for MESH_CLASS_ID
+  SIMPLE_RAW_POINTER_MANAGED_OBJECT(mesh, getfem::mesh, MESH_CLASS_ID)
+
+  // Functions for MESH_LEVELSET_CLASS_ID
+  SIMPLE_RAW_POINTER_MANAGED_OBJECT(mesh_levelset, getfem::mesh_level_set,
+				    MESH_LEVELSET_CLASS_ID)
 
   // Functions for MESHER_OBJECT_CLASS_ID
   SIMPLE_SHARED_POINTER_MANAGED_OBJECT(mesher, getfem::mesher_signed_distance,
-				       getfem::pmesher_signed_distance,
 				       MESHER_OBJECT_CLASS_ID)
   
+  // Functions for MODEL_CLASS_ID
+  SIMPLE_RAW_POINTER_MANAGED_OBJECT(model, getfem::model, MODEL_CLASS_ID)
 
+  // Functions for SPMAT_CLASS_ID
+  SIMPLE_RAW_POINTER_MANAGED_OBJECT(spmat, gsparse, SPMAT_CLASS_ID)
 
-
+  // Functions for POLY_CLASS_ID
+  SIMPLE_RAW_POINTER_MANAGED_OBJECT(poly, getfemint_poly, POLY_CLASS_ID)
 
 } /* namespace getfemint */

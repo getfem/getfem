@@ -157,8 +157,7 @@ gf_spmat_get_Dirichlet_nullspace(gsparse &H, getfemint::mexargs_in& in, getfemin
 struct sub_gf_spmat_get : virtual public dal::static_stored_object {
   int arg_in_min, arg_in_max, arg_out_min, arg_out_max;
   virtual void run(getfemint::mexargs_in& in,
-		   getfemint::mexargs_out& out,
-		   std::shared_ptr<gsparse> &pgsp, gsparse &gsp) = 0;
+		   getfemint::mexargs_out& out, gsparse &gsp) = 0;
 };
 
 typedef std::shared_ptr<sub_gf_spmat_get> psub_command;
@@ -169,10 +168,8 @@ template <typename T> static inline void dummy_func(T &) {}
 #define sub_command(name, arginmin, arginmax, argoutmin, argoutmax, code) { \
     struct subc : public sub_gf_spmat_get {				\
       virtual void run(getfemint::mexargs_in& in,			\
-		       getfemint::mexargs_out& out,			\
-		       std::shared_ptr<gsparse> &pgsp, gsparse &gsp)	\
-      { dummy_func(in); dummy_func(out); dummy_func(pgsp);		\
-	dummy_func(gsp); code }						\
+		       getfemint::mexargs_out& out, gsparse &gsp)	\
+      { dummy_func(in); dummy_func(out); dummy_func(gsp); code }	\
     };									\
     psub_command psubc = std::make_shared<subc>();			\
     psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;		\
@@ -316,10 +313,10 @@ void gf_spmat_get(getfemint::mexargs_in& m_in,
     `(N'.K.N).UU = N'.B` with `U = N.UU + U0`@*/
     sub_command
       ("dirichlet nullspace", 1, 1, 2, 2,
-       if (pgsp->is_complex())
-	 gf_spmat_get_Dirichlet_nullspace(*pgsp, in, out, complex_type());
+       if (gsp.is_complex())
+	 gf_spmat_get_Dirichlet_nullspace(gsp, in, out, complex_type());
        else
-	 gf_spmat_get_Dirichlet_nullspace(*pgsp, in, out, scalar_type());
+	 gf_spmat_get_Dirichlet_nullspace(gsp, in, out, scalar_type());
        );
 
 
@@ -403,8 +400,7 @@ void gf_spmat_get(getfemint::mexargs_in& m_in,
 
   if (m_in.narg() < 2)  THROW_BADARG( "Wrong number of input arguments");
 
-  std::shared_ptr<gsparse> pgsp = m_in.pop().to_sparse();
-  gsparse &gsp = *pgsp;
+  gsparse &gsp = *(to_spmat_object(m_in.pop()));
   std::string init_cmd   = m_in.pop().to_string();
   std::string cmd        = cmd_normalize(init_cmd);
 
@@ -414,7 +410,7 @@ void gf_spmat_get(getfemint::mexargs_in& m_in,
     check_cmd(cmd, it->first.c_str(), m_in, m_out, it->second->arg_in_min,
 	      it->second->arg_in_max, it->second->arg_out_min,
 	      it->second->arg_out_max);
-    it->second->run(m_in, m_out, pgsp, gsp);
+    it->second->run(m_in, m_out, gsp);
   }
   else bad_cmd(init_cmd);
 

@@ -20,7 +20,6 @@
 ===========================================================================*/
 
 #include <getfemint_misc.h>
-#include <getfemint_poly.h>
 
 using namespace getfemint;
 
@@ -64,13 +63,13 @@ void gf_poly(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     THROW_BADARG("Wrong number of input arguments");
   }
   std::string cmd = in.pop().to_string();
-  bgeot::base_poly *pp = in.pop().to_poly();
+  getfemint_poly *pp = &(to_poly_object(in.pop())->p);
 
   if (check_cmd(cmd, "print", in, out, 0, 0, 0, 0)) {
     /*@FUNC ('print')
       Prints the content of P.
       @*/
-    print_poly(pp);
+    print_poly(pp->p);
   } else if (check_cmd(cmd, "product", in, out, 0, 0, 0, 0)) {
     /*@FUNC ('product')
       To be done ... !

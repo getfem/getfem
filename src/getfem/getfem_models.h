@@ -137,7 +137,8 @@ namespace getfem {
       right hand side and the constraints. There are two kinds of models, the
       ``real'' and the ``complex'' models.
   */
-  class APIDECL model : public context_dependencies {
+  class APIDECL model : public context_dependencies,
+			virtual public dal::static_stored_object {
 
   protected:
 

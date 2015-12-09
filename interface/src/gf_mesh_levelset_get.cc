@@ -19,8 +19,10 @@
 
 ===========================================================================*/
 // $Id$
+#include <getfem/getfem_mesh_level_set.h>
 #include <getfemint.h>
-#include <getfemint_mesh_levelset.h>
+#include <getfemint_workspace.h>
+#include <getfemint_mesh.h>
 #include <getfemint_levelset.h>
 
 using namespace getfemint;
@@ -37,7 +39,6 @@ struct sub_gf_lset_get : virtual public dal::static_stored_object {
   int arg_in_min, arg_in_max, arg_out_min, arg_out_max;
   virtual void run(getfemint::mexargs_in& in,
 		   getfemint::mexargs_out& out,
-		   getfemint_mesh_levelset *gmls,
 		   getfem::mesh_level_set &mls) = 0;
 };
 
@@ -50,10 +51,8 @@ template <typename T> static inline void dummy_func(T &) {}
     struct subc : public sub_gf_lset_get {				\
       virtual void run(getfemint::mexargs_in& in,			\
 		       getfemint::mexargs_out& out,			\
-		       getfemint_mesh_levelset *gmls,			\
 		       getfem::mesh_level_set &mls)			\
-      { dummy_func(in); dummy_func(out); dummy_func(gmls);		\
-	dummy_func(mls); code }						\
+      { dummy_func(in); dummy_func(out); dummy_func(mls); code }	\
     };									\
     psub_command psubc = std::make_shared<subc>();			\
     psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;		\
@@ -104,9 +103,10 @@ void gf_mesh_levelset_get(getfemint::mexargs_in& m_in,
       ("levelsets", 0, 0, 0, 1,
        std::vector<id_type> ids;
        for (unsigned i=0; i < mls.nb_level_sets(); ++i) {
-	 getfemint_levelset *gls =
-	   getfemint_levelset::get_from(&(*(mls.get_level_set(i))));
-	 ids.push_back(gls->get_id());
+	 
+	 id_type id = workspace2().object((const void *)(mls.get_level_set(i)));
+	 GMM_ASSERT1(id != id_type(-1), "Unknown levelset !");
+	 ids.push_back(id);
        }
        out.pop().from_object_id(ids, LEVELSET_CLASS_ID);
        );
@@ -161,8 +161,7 @@ void gf_mesh_levelset_get(getfemint::mexargs_in& m_in,
 
   if (m_in.narg() < 2)  THROW_BADARG( "Wrong number of input arguments");
 
-  getfemint_mesh_levelset *gmls = m_in.pop().to_getfemint_mesh_levelset();
-  getfem::mesh_level_set &mls = gmls->mesh_levelset();
+  getfem::mesh_level_set &mls = *(to_mesh_levelset_object(m_in.pop()));
 
   std::string init_cmd   = m_in.pop().to_string();
   std::string cmd        = cmd_normalize(init_cmd);
@@ -173,7 +172,7 @@ void gf_mesh_levelset_get(getfemint::mexargs_in& m_in,
     check_cmd(cmd, it->first.c_str(), m_in, m_out, it->second->arg_in_min,
 	      it->second->arg_in_max, it->second->arg_out_min,
 	      it->second->arg_out_max);
-    it->second->run(m_in, m_out, gmls, mls);
+    it->second->run(m_in, m_out, mls);
   }
   else bad_cmd(init_cmd);
 

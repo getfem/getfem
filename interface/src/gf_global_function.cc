@@ -21,7 +21,6 @@
 // $Id$
 #include <getfemint.h>
 #include <getfemint_workspace.h>
-#include <getfemint_global_function.h>
 #include <getfem/getfem_mesh_fem_global_function.h>
 #include <getfem/getfem_arch_config.h>
 
@@ -41,13 +40,11 @@ using namespace getfemint;
 
 // Object for the declaration of a new sub-command.
 
-typedef getfemint_global_function *pgetfemint_global_function;
-
 struct sub_gf_globfunc : virtual public dal::static_stored_object {
   int arg_in_min, arg_in_max, arg_out_min, arg_out_max;
   virtual void run(getfemint::mexargs_in& in,
 		   getfemint::mexargs_out& out,
-		   pgetfemint_global_function &ggf) = 0;
+		   getfem::pxy_function &ggf) = 0;
 };
 
 typedef std::shared_ptr<sub_gf_globfunc> psub_command;
@@ -59,7 +56,7 @@ template <typename T> static inline void dummy_func(T &) {}
     struct subc : public sub_gf_globfunc {				\
       virtual void run(getfemint::mexargs_in& in,			\
 		       getfemint::mexargs_out& out,			\
-		       pgetfemint_global_function &ggf)			\
+		       getfem::pxy_function &ggf)			\
       { dummy_func(in); dummy_func(out); code }				\
     };									\
     psub_command psubc = std::make_shared<subc>();			\
@@ -86,9 +83,7 @@ void gf_global_function(getfemint::mexargs_in& m_in,
        scalar_type r1 = in.pop().to_scalar();
        scalar_type r0 = in.pop().to_scalar();
 
-       auto cutoff
-       = std::make_shared<getfem::cutoff_xy_function>(int(fn),r,r1,r0);
-       ggf = getfemint_global_function::get_from(cutoff);
+       ggf = std::make_shared<getfem::cutoff_xy_function>(int(fn),r,r1,r0);
        );
 
 
@@ -97,9 +92,7 @@ void gf_global_function(getfemint::mexargs_in& m_in,
     sub_command
       ("crack", 1, 1, 0, 1,
        size_type fn = in.pop().to_integer(0,11);
-       auto crack
-       = std::make_shared<getfem::crack_singular_xy_function>(unsigned(fn));
-       ggf = getfemint_global_function::get_from(crack);
+       ggf = std::make_shared<getfem::crack_singular_xy_function>(unsigned(fn));
        );
 
     /*@INIT GF = ('parser', @str val[, @str grad[, @str hess]])
@@ -115,20 +108,16 @@ void gf_global_function(getfemint::mexargs_in& m_in,
 	 sgrad = in.pop().to_string();
        if (in.remaining() && in.front().is_string())
 	 shess = in.pop().to_string();
-       auto parser
-       = std::make_shared<getfem::parser_xy_function>(sval,sgrad,shess);
-       ggf = getfemint_global_function::get_from(parser);
+       ggf = std::make_shared<getfem::parser_xy_function>(sval,sgrad,shess);
        );
 
     /*@INIT GF = ('product', @tgf F, @tgf G)
       Create a product of two global functions.@*/
     sub_command
       ("product", 2, 2, 0, 1,
-       getfem::pxy_function af1 = in.pop().to_global_function();
-       getfem::pxy_function af2 = in.pop().to_global_function();
-       auto product
-       = std::make_shared<getfem::product_of_xy_functions>(af1,af2);
-       ggf = getfemint_global_function::get_from(product);
+       getfem::pxy_function af1 = to_global_function_object(in.pop());
+       getfem::pxy_function af2 = to_global_function_object(in.pop());
+       ggf = std::make_shared<getfem::product_of_xy_functions>(af1,af2);
        );
 
 
@@ -136,10 +125,9 @@ void gf_global_function(getfemint::mexargs_in& m_in,
       Create a add of two global functions.@*/
     sub_command
       ("add", 2, 2, 0, 1,
-       getfem::pxy_function af1 = in.pop().to_global_function();
-       getfem::pxy_function af2 = in.pop().to_global_function();
-       auto add = std::make_shared<getfem::add_of_xy_functions>(af1,af2);
-       ggf = getfemint_global_function::get_from(add);
+       getfem::pxy_function af1 = to_global_function_object(in.pop());
+       getfem::pxy_function af2 = to_global_function_object(in.pop());
+       ggf = std::make_shared<getfem::add_of_xy_functions>(af1,af2);
        );
 
   }
@@ -148,7 +136,7 @@ void gf_global_function(getfemint::mexargs_in& m_in,
 
   if (m_in.narg() < 1)  THROW_BADARG( "Wrong number of input arguments");
 
-  getfemint_global_function *ggf = NULL;
+  getfem::pxy_function ggf;
   std::string init_cmd   = m_in.pop().to_string();
   std::string cmd        = cmd_normalize(init_cmd);
 
@@ -162,8 +150,8 @@ void gf_global_function(getfemint::mexargs_in& m_in,
   }
   else bad_cmd(init_cmd);
 
-  m_out.pop().from_object_id(ggf->get_id(), GLOBAL_FUNCTION_CLASS_ID);
-
+  m_out.pop().from_object_id(store_global_function_object(ggf),
+			     GLOBAL_FUNCTION_CLASS_ID);
 }
 
 

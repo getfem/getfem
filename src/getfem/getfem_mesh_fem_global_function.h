@@ -154,7 +154,7 @@ namespace getfem {
   /* below a list of simple function of (x,y)
      used for building the crack singular functions
   */
-  struct abstract_xy_function {
+  struct abstract_xy_function  : virtual public dal::static_stored_object {
     virtual scalar_type val(scalar_type x, scalar_type y) const = 0;
     virtual base_small_vector grad(scalar_type x, scalar_type y) const = 0;
     virtual base_matrix hess(scalar_type x, scalar_type y) const = 0;

@@ -20,8 +20,9 @@
 ===========================================================================*/
 
 #include <getfemint.h>
-#include <getfemint_levelset.h>
 #include <getfemint_workspace.h>
+#include <getfemint_levelset.h>
+#include <getfemint_mesh.h>
 #include <getfem/getfem_arch_config.h>
 
 using namespace getfemint;
@@ -44,7 +45,6 @@ using namespace getfemint;
 
 void gf_levelset(
 getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
-  getfemint_levelset *gls = NULL;
   if (check_cmd("LevelSet", "LevelSet", in, out, 2, 4, 0, 1)) {
     /*@INIT LS = ('.mesh',@tmesh m, @int d[, @str 'ws'| @str f1[, @str f2 | @str 'ws']])
       Create a @tls object on a @tmesh represented by a primary function
@@ -71,14 +71,14 @@ getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
         if (cmd_strmatch(s1, "ws") || cmd_strmatch(s2,"with_secondary")) s2 = "";
     }
 
-    getfem::level_set *ls =
-      new getfem::level_set(mm->mesh(),dim_type(degree),with_secondary);
-    gls = getfemint_levelset::get_from(ls);
+    auto pls = std::make_shared<getfem::level_set>(mm->mesh(), dim_type(degree),
+						   with_secondary);
+    id_type id = store_levelset_object(pls);
 
-    if (s1.size()) gls->values_from_func(0, s1);
-    if (s2.size()) gls->values_from_func(1, s2);
+    if (s1.size()) values_from_func(pls.get(), 0, s1);
+    if (s2.size()) values_from_func(pls.get(), 1, s2);
 
-    workspace().set_dependance(gls, mm);
+    // workspace().set_dependance(gls, mm);
+    out.pop().from_object_id(id, LEVELSET_CLASS_ID);
   }
-  out.pop().from_object_id(gls->get_id(), LEVELSET_CLASS_ID);
 }

@@ -20,7 +20,7 @@
 ===========================================================================*/
 
 #include <getfemint.h>
-#include <getfemint_integ.h>
+#include <getfem/getfem_integration.h>
 
 using namespace getfemint;
 
@@ -86,6 +86,6 @@ void gf_integ(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     only apply to linear geometric transformations, are quite slow, and
     subject to numerical stability problems for high degree @tfem's. @*/
   std::string cmd = in.pop().to_string();
-  out.pop().from_object_id(getfemint::ind_integ(getfem::int_method_descriptor(cmd)),
-			   INTEG_CLASS_ID);
+  out.pop().from_object_id
+    (store_integ_object(getfem::int_method_descriptor(cmd)), INTEG_CLASS_ID);
 }

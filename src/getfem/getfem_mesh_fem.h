@@ -145,7 +145,7 @@ namespace getfem {
    *  @see mesh
    *  @see mesh_im
    */
-  class mesh_fem : public context_dependencies {
+  class mesh_fem : public context_dependencies, virtual public dal::static_stored_object {
   protected :
     
     typedef gmm::csc_matrix<scalar_type> REDUCTION_MATRIX;

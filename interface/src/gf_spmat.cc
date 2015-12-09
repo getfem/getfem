@@ -20,7 +20,6 @@
 ===========================================================================*/
 
 #include <getfemint_gsparse.h>
-#include <getfemint_gsparse_misc.h>
 #include <getfemint_workspace.h>
 #include <gmm/gmm_inoutput.h>
 
@@ -146,7 +145,8 @@ void load_spmat(mexargs_in& in, gsparse &gsp) {
 struct sub_gf_spmat : virtual public dal::static_stored_object {
   int arg_in_min, arg_in_max, arg_out_min, arg_out_max;
   virtual void run(getfemint::mexargs_in& in,
-		   getfemint::mexargs_out& out, gsparse &gsp) = 0;
+		   getfemint::mexargs_out& out,
+		   std::shared_ptr<gsparse> &gsp) = 0;
 };
 
 typedef std::shared_ptr<sub_gf_spmat> psub_command;
@@ -157,7 +157,8 @@ template <typename T> static inline void dummy_func(T &) {}
 #define sub_command(name, arginmin, arginmax, argoutmin, argoutmax, code) { \
     struct subc : public sub_gf_spmat {					\
       virtual void run(getfemint::mexargs_in& in,			\
-		       getfemint::mexargs_out& out, gsparse &gsp)	\
+		       getfemint::mexargs_out& out,			\
+		       std::shared_ptr<gsparse> &gsp)			\
       { dummy_func(in); dummy_func(out); code }				\
     };									\
     psub_command psubc = std::make_shared<subc>();			\
@@ -185,7 +186,7 @@ void gf_spmat(getfemint::mexargs_in& m_in,
       ("empty", 1, 2, 0, 1,
        size_type m = in.pop().to_integer(1,INT_MAX); size_type  n = m;
        if (in.remaining()) n = in.pop().to_integer(1, INT_MAX);
-       gsp.allocate(m, n, gsparse::WSCMAT, gsparse::REAL);
+       gsp->allocate(m, n, gsparse::WSCMAT, gsparse::REAL);
        );
 
     /*@INIT SM = ('copy', @mat K [, @PYTHON{@list} I [, @PYTHON{@list} J]])
@@ -200,11 +201,11 @@ void gf_spmat(getfemint::mexargs_in& m_in,
       will return a 40x5 matrix.@*/
     sub_command
       ("copy", 1, 3, 0, 1,
-       std::shared_ptr<gsparse> A = in.pop().to_sparse();
+       gsparse *A = to_spmat_object(in.pop());
        if (!A->is_complex()) {
-	 copy_spmat(*A, gsp, in, scalar_type());
+	 copy_spmat(*A, *gsp, in, scalar_type());
        } else {
-	 copy_spmat(*A, gsp, in, complex_type());
+	 copy_spmat(*A, *gsp, in, complex_type());
        }
        );
 
@@ -213,8 +214,8 @@ void gf_spmat(getfemint::mexargs_in& m_in,
     sub_command
       ("identity", 1, 1, 0, 1,
        size_type n = in.pop().to_integer(1, INT_MAX);
-       gsp.real_wsc(new gsparse::t_wscmat_r(n,n));
-       gmm::copy(gmm::identity_matrix(), gsp.real_wsc());
+       gsp->real_wsc(new gsparse::t_wscmat_r(n,n));
+       gmm::copy(gmm::identity_matrix(), gsp->real_wsc());
        );
 
 
@@ -224,41 +225,41 @@ void gf_spmat(getfemint::mexargs_in& m_in,
        may have to use ``SPMAT:SET('to_complex')`` @*/
     sub_command
       ("mult", 2, 2, 0, 1,
-       std::shared_ptr<gsparse> A = in.pop().to_sparse();
-       std::shared_ptr<gsparse> B = in.pop().to_sparse();
+       gsparse *A = to_spmat_object(in.pop());
+       gsparse *B = to_spmat_object(in.pop());
        size_type m = A->nrows(); size_type n = B->ncols();
 
        if (A->is_complex() != B->is_complex())
 	 THROW_BADARG("cannot multiply a complex matrix with a real one, use to_complex()");
-       if (!A->is_complex()) gsp.real_wsc(new gsparse::t_wscmat_r(m,n));
-       else gsp.cplx_wsc(new gsparse::t_wscmat_c(m,n));
+       if (!A->is_complex()) gsp->real_wsc(new gsparse::t_wscmat_r(m,n));
+       else gsp->cplx_wsc(new gsparse::t_wscmat_c(m,n));
        if (A->storage() == gsparse::CSCMAT
 	   && B->storage() == gsparse::CSCMAT) {
 	 if (!A->is_complex())
-	   gmm::mult(A->real_csc(),B->real_csc(), gsp.real_wsc());
+	   gmm::mult(A->real_csc(),B->real_csc(), gsp->real_wsc());
 	 else
-	   gmm::mult(A->cplx_csc(),B->cplx_csc(), gsp.cplx_wsc());
+	   gmm::mult(A->cplx_csc(),B->cplx_csc(), gsp->cplx_wsc());
        }
        else if (A->storage() == gsparse::CSCMAT
 		&& B->storage() == gsparse::WSCMAT) {
 	 if (!A->is_complex())
-	   gmm::mult(A->real_csc(),B->real_wsc(), gsp.real_wsc());
+	   gmm::mult(A->real_csc(),B->real_wsc(), gsp->real_wsc());
 	 else
-	   gmm::mult(A->cplx_csc(),B->cplx_wsc(), gsp.cplx_wsc());
+	   gmm::mult(A->cplx_csc(),B->cplx_wsc(), gsp->cplx_wsc());
        }
        else if (A->storage() == gsparse::WSCMAT
 		&& B->storage() == gsparse::CSCMAT) {
 	 if (!A->is_complex())
-	   gmm::mult(A->real_wsc(),B->real_csc(), gsp.real_wsc());
+	   gmm::mult(A->real_wsc(),B->real_csc(), gsp->real_wsc());
 	 else
-	   gmm::mult(A->cplx_wsc(),B->cplx_csc(), gsp.cplx_wsc());
+	   gmm::mult(A->cplx_wsc(),B->cplx_csc(), gsp->cplx_wsc());
        }
        else if (A->storage() == gsparse::WSCMAT
 		&& B->storage() == gsparse::WSCMAT) {
 	 if (!A->is_complex())
-	   gmm::mult(A->real_wsc(),B->real_wsc(), gsp.real_wsc());
+	   gmm::mult(A->real_wsc(),B->real_wsc(), gsp->real_wsc());
 	 else
-	   gmm::mult(A->cplx_wsc(),B->cplx_wsc(), gsp.cplx_wsc());
+	   gmm::mult(A->cplx_wsc(),B->cplx_wsc(), gsp->cplx_wsc());
        } else THROW_INTERNAL_ERROR;
        );
 
@@ -267,20 +268,20 @@ void gf_spmat(getfemint::mexargs_in& m_in,
        Adding a real matrix with a complex matrix is possible.@*/
     sub_command
       ("add", 2, 2, 0, 1,
-       std::shared_ptr<gsparse> A = in.pop().to_sparse();
-       std::shared_ptr<gsparse> B = in.pop().to_sparse();
+       gsparse *A = to_spmat_object(in.pop());
+       gsparse *B = to_spmat_object(in.pop());
        size_type m = A->nrows(); size_type n = A->ncols();
        if (A->is_complex() != B->is_complex()) {
-	 gsp.cplx_wsc(new gsparse::t_wscmat_c(m,n));
+	 gsp->cplx_wsc(new gsparse::t_wscmat_c(m,n));
 	 if (A->is_complex())
-	   gf_spmat_add(gsp, *B, *A, scalar_type(), complex_type());
-	 else gf_spmat_add(gsp, *A, *B, scalar_type(), complex_type());
+	   gf_spmat_add(*gsp, *B, *A, scalar_type(), complex_type());
+	 else gf_spmat_add(*gsp, *A, *B, scalar_type(), complex_type());
        } else if (A->is_complex()) {
-	 gsp.cplx_wsc(new gsparse::t_wscmat_c(m,n));
-	 gf_spmat_add(gsp, *A, *B, complex_type(), complex_type());
+	 gsp->cplx_wsc(new gsparse::t_wscmat_c(m,n));
+	 gf_spmat_add(*gsp, *A, *B, complex_type(), complex_type());
        } else {
-	 gsp.real_wsc(new gsparse::t_wscmat_r(m,n));
-	 gf_spmat_add(gsp, *A, *B, scalar_type(), scalar_type());
+	 gsp->real_wsc(new gsparse::t_wscmat_r(m,n));
+	 gf_spmat_add(*gsp, *A, *B, scalar_type(), scalar_type());
        }
        );
 
@@ -290,7 +291,7 @@ void gf_spmat(getfemint::mexargs_in& m_in,
        filled with the corresponding column of `D`.@*/
     sub_command
       ("diag", 1, 4, 0, 1,
-       spmat_set_diag(gsp, in, true);
+       spmat_set_diag(*gsp, in, true);
        );
 
     /*@INIT SM = ('load','hb'|'harwell-boeing'|'mm'|'matrix-market', @str filename)
@@ -298,7 +299,7 @@ void gf_spmat(getfemint::mexargs_in& m_in,
       @MATLAB{See also ``::UTIL('load matrix')``}.@*/
     sub_command
       ("load", 2, 2, 1, 1,
-       load_spmat(in, gsp);
+       load_spmat(in, *gsp);
        );
 
   }
@@ -306,7 +307,8 @@ void gf_spmat(getfemint::mexargs_in& m_in,
 
   if (m_in.narg() < 1)  THROW_BADARG( "Wrong number of input arguments");
 
-  gsparse &gsp = m_out.pop().create_gsparse();
+  auto gsp = std::make_shared<gsparse>();
+
   std::string init_cmd   = m_in.pop().to_string();
   std::string cmd        = cmd_normalize(init_cmd);
 
@@ -319,6 +321,9 @@ void gf_spmat(getfemint::mexargs_in& m_in,
     it->second->run(m_in, m_out, gsp);
   }
   else bad_cmd(init_cmd);
+
+  id_type id = store_spmat_object(gsp);
+  m_out.pop().from_object_id(id, SPMAT_CLASS_ID);
 
 }
 

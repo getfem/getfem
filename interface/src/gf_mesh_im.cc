@@ -19,12 +19,13 @@
 
 ===========================================================================*/
 
+#include <getfem/getfem_mesh_level_set.h>
+#include <getfem/getfem_mesh_im_level_set.h>
+#include <getfem/getfem_integration.h>
 #include <getfemint_misc.h>
 #include <getfemint_workspace.h>
 #include <getfemint_mesh_im.h>
 #include <getfemint_mesh.h>
-#include <getfemint_mesh_levelset.h>
-#include <getfem/getfem_mesh_im_level_set.h>
 
 using namespace getfemint;
 
@@ -164,13 +165,13 @@ void gf_mesh_im(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
       @*/
     sub_command
       ("levelset", 3, 5, 0, 1,
-       getfemint_mesh_levelset *gmls = in.pop().to_getfemint_mesh_levelset();
+       getfem::mesh_level_set &mls = *(to_mesh_levelset_object(in.pop()));
        std::string swhere = in.pop().to_string();
-       getfem::pintegration_method pim  = in.pop().to_integration_method();
+       getfem::pintegration_method pim  = to_integ_object(in.pop());
        getfem::pintegration_method pim2 = 0;
        getfem::pintegration_method pim3 = 0;
-       if (in.remaining()) pim2 = in.pop().to_integration_method();
-       if (in.remaining()) pim3 = in.pop().to_integration_method();
+       if (in.remaining()) pim2 = to_integ_object(in.pop());
+       if (in.remaining()) pim3 = to_integ_object(in.pop());
        int where = 0;
        std::string csg_description;
        if (cmd_strmatch(swhere, "all"))
@@ -204,8 +205,7 @@ void gf_mesh_im(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        }
 
        getfem::mesh_im_level_set *mimls =
-       new getfem::mesh_im_level_set(gmls->mesh_levelset(),
- 				     where, pim, pim2);
+       new getfem::mesh_im_level_set(mls, where, pim, pim2);
        if (pim3)
 	 mimls->set_integration_method(mimls->linked_mesh().convex_index(),
 				       pim3);
@@ -216,7 +216,7 @@ void gf_mesh_im(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        }
        mim = getfemint_mesh_im::get_from(mimls);
        mimls->adapt();
-       workspace().set_dependance(mim, gmls);
+       // workspace().set_dependance(mim, mls);
        );
 
   }

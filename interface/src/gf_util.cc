@@ -23,7 +23,6 @@
 #include <getfemint_misc.h>
 #include <gmm/gmm_inoutput.h>
 #include <getfemint_gsparse.h>
-#include <getfemint_gsparse_misc.h>
 
 using namespace getfemint;
 

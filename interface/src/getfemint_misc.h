@@ -33,6 +33,8 @@
 #define GETFEM_MISC_H__
 
 #include <getfemint.h>
+#include <getfem/getfem_mesh.h>
+#include <getfem/bgeot_convex.h>
 #include <gmm/gmm_iter.h>
 
 namespace getfem {

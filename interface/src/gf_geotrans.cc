@@ -20,7 +20,7 @@
 ===========================================================================*/
 
 #include <getfemint.h>
-#include <getfemint_pgt.h>
+#include <getfem/bgeot_geometric_trans.h>
 
 using namespace getfemint;
 
@@ -53,6 +53,6 @@ void gf_geotrans(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     THROW_BADARG( "Wrong number of input arguments");
   }
   std::string cmd = in.pop().to_string();
-  out.pop().from_object_id(getfemint::ind_pgt(bgeot::geometric_trans_descriptor(cmd)),
-			   GEOTRANS_CLASS_ID);
+  id_type id = store_geotrans_object(bgeot::geometric_trans_descriptor(cmd));
+  out.pop().from_object_id(id, GEOTRANS_CLASS_ID);
 }

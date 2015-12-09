@@ -20,15 +20,15 @@
 ===========================================================================*/
 
 #include <getfemint.h>
-#include <getfemint_pfem.h>
+#include <getfem/getfem_fem.h>
 
 using namespace getfemint;
 
 static size_type get_optional_convex_number(getfemint::mexargs_in &in,
-					    getfemint_pfem *gfi_fem,
+					    const getfem::pfem &pf,
 					    const std::string cmd) {
   size_type cv = 0;
-  if (!in.remaining() && gfi_fem->nbdof_need_convex_number())
+  if (!in.remaining() && pf->is_on_real_element())
     THROW_BADARG("This FEM requires a convex number for " << cmd);
   if (in.remaining())
     cv = in.pop().to_integer() - config::base_index();
@@ -41,13 +41,12 @@ static size_type get_optional_convex_number(getfemint::mexargs_in &in,
 
 
 
-// Object for the declaration of a new sub-command.
-
+// Object for the declaration of a new sub-command
 struct sub_gf_fem_get : virtual public dal::static_stored_object {
   int arg_in_min, arg_in_max, arg_out_min, arg_out_max;
   virtual void run(getfemint::mexargs_in& in,
 		   getfemint::mexargs_out& out,
-		   getfemint_pfem *gfi_fem, getfem::pfem fem) = 0;
+		   const getfem::pfem &pf) = 0;
 };
 
 typedef std::shared_ptr<sub_gf_fem_get> psub_command;
@@ -59,17 +58,14 @@ template <typename T> static inline void dummy_func(T &) {}
     struct subc : public sub_gf_fem_get {				\
       virtual void run(getfemint::mexargs_in& in,			\
 		       getfemint::mexargs_out& out,			\
-		       getfemint_pfem *gfi_fem, getfem::pfem fem)	\
-      { dummy_func(in); dummy_func(out); dummy_func(gfi_fem); code }	\
+		       const getfem::pfem &pf)				\
+      { dummy_func(in); dummy_func(out); code }				\
     };									\
     psub_command psubc = std::make_shared<subc>();			\
     psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;		\
     psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;	\
     subc_tab[cmd_normalize(name)] = psubc;				\
   }                           
-
-
-
 
 
 
@@ -89,8 +85,8 @@ void gf_fem_get(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
     can omit this convex number.@*/
     sub_command
       ("nbdof", 0, 1, 0, 1,
-       size_type cv = get_optional_convex_number(in, gfi_fem, "nbdof");
-       out.pop().from_scalar(double(fem->nb_dof(cv)));
+       size_type cv = get_optional_convex_number(in, pf, "nbdof");
+       out.pop().from_scalar(double(pf->nb_dof(cv)));
        );
 
     /*@RDATTR n = ('index of global dof', cv)
@@ -100,7 +96,7 @@ void gf_fem_get(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
       ("index of global dof", 2, 2, 0, 1,
        size_type cv = in.pop().to_integer() - config::base_index();
        size_type i = in.pop().to_integer() - config::base_index();
-       out.pop().from_scalar(double(fem->index_of_global_dof(cv, i) + config::base_index()));
+       out.pop().from_scalar(double(pf->index_of_global_dof(cv, i) + config::base_index()));
        );
 
 
@@ -108,7 +104,7 @@ void gf_fem_get(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
       Return the dimension (dimension of the reference convex) of the @tfem.@*/
     sub_command
       ("dim", 0, 0, 0, 1,
-       out.pop().from_scalar(fem->dim());
+       out.pop().from_scalar(pf->dim());
        );
 
 
@@ -118,7 +114,7 @@ void gf_fem_get(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
     The target space dimension is usually 1, except for vector @tfem. @*/
     sub_command
       ("target_dim", 0, 0, 0, 1,
-       out.pop().from_scalar(fem->target_dim());
+       out.pop().from_scalar(pf->target_dim());
        );
 
 
@@ -130,10 +126,9 @@ void gf_fem_get(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
       can omit this convex number. @*/
     sub_command
       ("pts", 0, 1, 0, 1,
-       size_type cv = get_optional_convex_number(in, gfi_fem, "pts");
-       out.pop().from_vector_container(fem->node_convex(cv).points());
+       size_type cv = get_optional_convex_number(in, pf, "pts");
+       out.pop().from_vector_container(pf->node_convex(cv).points());
        );
-
 
     /*@RDATTR b = ('is_equivalent')
       Return 0 if the @tfem is not equivalent.
@@ -142,7 +137,7 @@ void gf_fem_get(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
       the case of most classical @tfem's.@*/
     sub_command
       ("is_equivalent", 0, 0, 0, 1,
-       out.pop().from_scalar(fem->is_equivalent());
+       out.pop().from_scalar(pf->is_equivalent());
        );
 
 
@@ -150,7 +145,7 @@ void gf_fem_get(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
       Return 0 if the @tfem is not of Lagrange type.@*/
     sub_command
       ("is_lagrange", 0, 0, 0, 1,
-       out.pop().from_scalar(fem->is_lagrange());
+       out.pop().from_scalar(pf->is_lagrange());
        );
 
 
@@ -158,7 +153,7 @@ void gf_fem_get(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
       Return 0 if the basis functions are not polynomials.@*/
     sub_command
       ("is_polynomial", 0, 0, 0, 1,
-       out.pop().from_scalar(fem->is_polynomial());
+       out.pop().from_scalar(pf->is_polynomial());
        );
 
 
@@ -168,7 +163,7 @@ void gf_fem_get(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
     This is an estimation for fem which are not polynomials.@*/
     sub_command
       ("estimated_degree", 0, 0, 0, 1,
-       out.pop().from_scalar(fem->estimated_degree());
+       out.pop().from_scalar(pf->estimated_degree());
        );
 
 
@@ -179,8 +174,8 @@ void gf_fem_get(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
     sub_command
       ("base_value", 1, 1, 0, 1,
        getfem::base_tensor t;
-       getfem::base_node x = in.pop().to_base_node(fem->dim());
-       fem->base_value(x,t);
+       getfem::base_node x = in.pop().to_base_node(pf->dim());
+       pf->base_value(x,t);
        out.pop().from_tensor(t);
        );
 
@@ -192,8 +187,8 @@ void gf_fem_get(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
     sub_command
       ("grad_base_value", 1, 1, 0, 1,
        getfem::base_tensor t;
-       getfem::base_node x = in.pop().to_base_node(fem->dim());
-       fem->grad_base_value(x,t);
+       getfem::base_node x = in.pop().to_base_node(pf->dim());
+       pf->grad_base_value(x,t);
        out.pop().from_tensor(t);
        );
 
@@ -205,8 +200,8 @@ void gf_fem_get(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
     sub_command
       ("hess_base_value", 1, 1, 0, 1,
        getfem::base_tensor t;
-       getfem::base_node x = in.pop().to_base_node(fem->dim());
-       fem->hess_base_value(x,t);
+       getfem::base_node x = in.pop().to_base_node(pf->dim());
+       pf->hess_base_value(x,t);
        out.pop().from_tensor(t);
        );
 
@@ -219,11 +214,11 @@ void gf_fem_get(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
       strings. Of course this will fail on non-polynomial @tfem's. @*/
     sub_command
       ("poly_str", 0, 0, 0, 1,
-       getfem::ppolyfem pf = dynamic_cast<getfem::ppolyfem>(&(*fem));
-       if (pf) {
-	 std::vector<std::string> s(pf->base().size());
+       getfem::ppolyfem ppf = dynamic_cast<getfem::ppolyfem>(pf.get());
+       if (ppf) {
+	 std::vector<std::string> s(ppf->base().size());
 	 for (size_type i=0; i < s.size(); ++i) {
-	   std::stringstream ss; ss << pf->base()[i];
+	   std::stringstream ss; ss << ppf->base()[i];
 	   s[i] = ss.str();
 	 }
 	 out.pop().from_string_container(s);
@@ -239,7 +234,7 @@ void gf_fem_get(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
     objects.@*/
     sub_command
       ("char", 0, 0, 0, 1,
-       std::string s = getfem::name_of_fem(fem);
+       std::string s = getfem::name_of_fem(pf);
        out.pop().from_string(s.c_str());
        );
 
@@ -248,15 +243,15 @@ void gf_fem_get(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
     displays a short summary for a @tfem object.@*/
     sub_command
       ("display", 0, 0, 0, 0,
-       infomsg() << "gfFem object " << getfem::name_of_fem(fem)
-       << " in dimension " << int(fem->dim())
-       << ", with target dim " << int(fem->target_dim()) << " dof number "
-       << fem->nb_dof(0);
-       if (fem->is_equivalent()) infomsg() << " EQUIV ";
+       infomsg() << "gfFem object " << getfem::name_of_fem(pf)
+       << " in dimension " << int(pf->dim())
+       << ", with target dim " << int(pf->target_dim()) << " dof number "
+       << pf->nb_dof(0);
+       if (pf->is_equivalent()) infomsg() << " EQUIV ";
        else infomsg() << " NOTEQUIV ";
-       if (fem->is_polynomial()) infomsg() << " POLY ";
+       if (pf->is_polynomial()) infomsg() << " POLY ";
        else infomsg() << " NOTPOLY ";
-       if (fem->is_lagrange()) infomsg() << " LAGRANGE ";
+       if (pf->is_lagrange()) infomsg() << " LAGRANGE ";
        else infomsg() << " NOTLAGRANGE ";
        infomsg() << endl;
        );
@@ -268,8 +263,7 @@ void gf_fem_get(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
   if (m_in.narg() < 2)  THROW_BADARG( "Wrong number of input arguments");
 
 
-  getfemint_pfem *gfi_fem = m_in.pop().to_getfemint_pfem();
-  getfem::pfem fem = gfi_fem->pfem();//in.pop().to_fem();
+  getfem::pfem pf = to_fem_object(m_in.pop());
   std::string init_cmd   = m_in.pop().to_string();
   std::string cmd        = cmd_normalize(init_cmd);
 
@@ -279,7 +273,7 @@ void gf_fem_get(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
     check_cmd(cmd, it->first.c_str(), m_in, m_out, it->second->arg_in_min,
 	      it->second->arg_in_max, it->second->arg_out_min,
 	      it->second->arg_out_max);
-    it->second->run(m_in, m_out, gfi_fem, fem);
+    it->second->run(m_in, m_out, pf);
   }
   else bad_cmd(init_cmd);
 

@@ -100,7 +100,8 @@ namespace getfem {
   */
 
   class APIDECL mesh : public bgeot::basic_mesh,
-                       public context_dependencies 
+                       public context_dependencies,
+		       virtual public dal::static_stored_object
 
 //allowing mesh::shared_from_this() call
 #if defined(__GNUC__) 

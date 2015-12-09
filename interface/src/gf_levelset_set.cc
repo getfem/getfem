@@ -34,8 +34,7 @@ void gf_levelset_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
   if (in.narg() < 2) {
     THROW_BADARG( "Wrong number of input arguments");
   }
-  getfemint_levelset *gls = in.pop().to_getfemint_levelset(true);
-  getfem::level_set &ls = gls->levelset();
+  getfem::level_set *pls = to_levelset_object(in.pop());
   std::string cmd = in.pop().to_string();
   if (check_cmd(cmd, "values", in, out, 1, 2, 0, 0)) {
     /*@SET ('values', {@mat v1|@str func_1}[, @mat v2|@str func_2])
@@ -49,37 +48,37 @@ void gf_levelset_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     if (in.front().is_string()) {
       s1 = in.pop().to_string();
     } else {
-      v1 = in.pop().to_darray(int(ls.get_mesh_fem().nb_dof()));
+      v1 = in.pop().to_darray(int(pls->get_mesh_fem().nb_dof()));
     }
     if (in.remaining()) {
-      if (!ls.has_secondary())
+      if (!pls->has_secondary())
 	THROW_BADARG("The levelset has not secondary term");
       if (in.front().is_string()) {
 	s2 = in.pop().to_string();
       } else {
-	v2 = in.pop().to_darray(int(ls.get_mesh_fem().nb_dof()));
+	v2 = in.pop().to_darray(int(pls->get_mesh_fem().nb_dof()));
       }
     }
-    ls.values(0).resize(ls.get_mesh_fem().nb_dof());
+    pls->values(0).resize(pls->get_mesh_fem().nb_dof());
     if (s1.size()) {
-      gls->values_from_func(0, s1);
+      values_from_func(pls, 0, s1);
     } else {
-      ls.values(0).assign(v1.begin(), v1.end());
+      pls->values(0).assign(v1.begin(), v1.end());
     }
-    if (ls.has_secondary()) {
-      ls.values(1).resize(ls.get_mesh_fem().nb_dof());
+    if (pls->has_secondary()) {
+      pls->values(1).resize(pls->get_mesh_fem().nb_dof());
       if (s2.size()) {
-        gls->values_from_func(1, s2);
+        values_from_func(pls, 1, s2);
       } else {
-	ls.values(1).assign(v2.begin(), v2.end());
+	pls->values(1).assign(v2.begin(), v2.end());
       }
     }
   } else if (check_cmd(cmd, "simplify", in, out, 0, 1, 0, 0)) {
     /*@SET ('simplify'[, @scalar eps=0.01])
     Simplify dof of level-set optionally with the parameter `eps`.@*/
-    if (in.remaining()==0) ls.simplify();
+    if (in.remaining()==0) pls->simplify();
     else{
-      ls.simplify(in.pop().to_scalar());
+      pls->simplify(in.pop().to_scalar());
     }
   } else bad_cmd(cmd);
 }

@@ -21,6 +21,7 @@
 
 #include <getfemint_misc.h>
 #include <getfemint_mesh.h>
+#include <getfem/bgeot_geometric_trans.h>
 
 using namespace getfemint;
 
@@ -197,7 +198,7 @@ void gf_mesh_set(getfemint::mexargs_in& m_in,
     sub_command
       ("add convex", 2, 2, 0, 1,
        check_empty_mesh(pmesh);
-       bgeot::pgeometric_trans pgt = in.pop().to_pgt();
+       bgeot::pgeometric_trans pgt = to_geotrans_object(in.pop());
        darray v = in.pop().to_darray(pmesh->dim(), int(pgt->nb_points()), -1);
        iarray w = out.pop().create_iarray_h(v.getp());
        

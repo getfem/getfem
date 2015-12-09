@@ -20,7 +20,7 @@
 ===========================================================================*/
 // $Id$
 #include <getfemint.h>
-#include <getfemint_global_function.h>
+#include <getfem/getfem_mesh_fem_global_function.h>
 
 using namespace getfemint;
 
@@ -145,7 +145,7 @@ void gf_global_function_get(getfemint::mexargs_in& m_in,
 
   if (m_in.narg() < 2)  THROW_BADARG( "Wrong number of input arguments");
 
-  getfem::pxy_function paf = m_in.pop().to_global_function();
+  getfem::pxy_function paf = to_global_function_object(m_in.pop());
   std::string init_cmd   = m_in.pop().to_string();
   std::string cmd        = cmd_normalize(init_cmd);
 

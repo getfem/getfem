@@ -66,7 +66,7 @@ namespace getfem{
   integration points on a face, the filter region provided has to contain
   only faces.
   */
-  class im_data : public context_dependencies {
+  class im_data : public context_dependencies, virtual public dal::static_stored_object {
   public:
     /**
     * Constructor

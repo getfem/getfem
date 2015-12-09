@@ -20,7 +20,7 @@
 ===========================================================================*/
 
 #include <getfemint_misc.h>
-#include <getfemint_pfem.h>
+#include <getfem/getfem_fem.h>
 #include <getfem/getfem_mat_elem_type.h>
 
 using namespace getfemint;
@@ -47,17 +47,17 @@ void gf_eltm(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     /*@INIT E = ('base', @tfem FEM)
       return a descriptor for the integration of shape functions on
       elements, using the @tfem `FEM`. @*/
-    pme = getfem::mat_elem_base(in.pop().to_fem());
+    pme = getfem::mat_elem_base(to_fem_object(in.pop()));
   } else if (check_cmd(cmd, "grad", in, out, 1, 1, 0, 1)) {
     /*@INIT E = ('grad', @tfem FEM)
       return a descriptor for the integration of the gradient of shape
       functions on elements, using the @tfem `FEM`.@*/
-    pme = getfem::mat_elem_grad(in.pop().to_fem());
+    pme = getfem::mat_elem_grad(to_fem_object(in.pop()));
   } else if (check_cmd(cmd, "hessian", in, out, 1, 1, 0, 1)) {
     /*@INIT E = ('hessian', @tfem FEM)
       return a descriptor for the integration of the hessian of shape
       functions on elements, using the @tfem `FEM`.@*/
-    pme = getfem::mat_elem_hessian(in.pop().to_fem());
+    pme = getfem::mat_elem_hessian(to_fem_object(in.pop()));
   } else if (check_cmd(cmd, "normal", in, out, 0, 0, 0, 1)) {
     /*@INIT E = ('normal')
       return a descriptor for the unit normal of convex faces.@*/

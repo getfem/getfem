@@ -19,8 +19,8 @@
 
 ===========================================================================*/
 // $Id$
+#include <getfem/getfem_mesh_level_set.h>
 #include <getfemint.h>
-#include <getfemint_mesh_levelset.h>
 #include <getfemint_levelset.h>
 #include <getfemint_workspace.h>
 
@@ -39,7 +39,6 @@ struct sub_gf_lset_set : virtual public dal::static_stored_object {
   int arg_in_min, arg_in_max, arg_out_min, arg_out_max;
   virtual void run(getfemint::mexargs_in& in,
 		   getfemint::mexargs_out& out,
-		   getfemint_mesh_levelset *gmls,
 		   getfem::mesh_level_set &mls) = 0;
 };
 
@@ -52,9 +51,8 @@ template <typename T> static inline void dummy_func(T &) {}
     struct subc : public sub_gf_lset_set {				\
       virtual void run(getfemint::mexargs_in& in,			\
 		       getfemint::mexargs_out& out,			\
-		       getfemint_mesh_levelset *gmls,			\
 		       getfem::mesh_level_set &mls)			\
-      { dummy_func(in); dummy_func(out);  dummy_func(gmls); code }	\
+      { dummy_func(in); dummy_func(out); code }				\
     };									\
     psub_command psubc = std::make_shared<subc>();			\
     psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;		\
@@ -85,12 +83,12 @@ void gf_mesh_levelset_set(getfemint::mexargs_in& m_in,
     The @tmesh of `ls` and the linked @tmesh must be the same.@*/
     sub_command
       ("add", 1, 1, 0, 0,
-       getfemint_levelset *gls = in.pop().to_getfemint_levelset();
-       if (&mls.linked_mesh() != &gls->levelset().get_mesh_fem().linked_mesh())
+       getfem::level_set *gls = to_levelset_object(in.pop());
+       if (&mls.linked_mesh() != &gls->get_mesh_fem().linked_mesh())
 	 THROW_BADARG("The meshes of the levelset and the mesh_levelset "
 		      "are not the same!");
-       mls.add_level_set(gls->levelset());
-       workspace().set_dependance(gmls, gls);
+       mls.add_level_set(*gls);
+       // workspace().set_dependance(mls, gls);
        );
 
 
@@ -98,9 +96,9 @@ void gf_mesh_levelset_set(getfemint::mexargs_in& m_in,
     Remove a link to the @tls `ls`.@*/
     sub_command
       ("sup", 1, 1, 0, 0,
-       getfemint_levelset *gls = in.pop().to_getfemint_levelset();
-       mls.sup_level_set(gls->levelset());
-       workspace().sup_dependance(gmls, gls);
+       getfem::level_set *gls = to_levelset_object(in.pop());
+       mls.sup_level_set(*gls);
+       // workspace().sup_dependance(mls, gls);
        );
 
 
@@ -120,8 +118,7 @@ void gf_mesh_levelset_set(getfemint::mexargs_in& m_in,
 
   if (m_in.narg() < 2)  THROW_BADARG( "Wrong number of input arguments");
   
-  getfemint_mesh_levelset *gmls = m_in.pop().to_getfemint_mesh_levelset(true);
-  getfem::mesh_level_set &mls = gmls->mesh_levelset();
+  getfem::mesh_level_set &mls = *(to_mesh_levelset_object(m_in.pop()));
  
   std::string init_cmd   = m_in.pop().to_string();
   std::string cmd        = cmd_normalize(init_cmd);
@@ -131,7 +128,7 @@ void gf_mesh_levelset_set(getfemint::mexargs_in& m_in,
     check_cmd(cmd, it->first.c_str(), m_in, m_out, it->second->arg_in_min,
 	      it->second->arg_in_max, it->second->arg_out_min,
 	      it->second->arg_out_max);
-    it->second->run(m_in, m_out, gmls, mls);
+    it->second->run(m_in, m_out, mls);
   }
   else bad_cmd(init_cmd);
 

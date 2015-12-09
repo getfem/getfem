@@ -20,7 +20,6 @@
 ===========================================================================*/
 
 #include <getfemint_gsparse.h>
-#include <getfemint_gsparse_misc.h>
 #include <getfemint_workspace.h>
 
 using namespace getfemint;
@@ -275,9 +274,7 @@ void gf_spmat_set(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
   if (m_in.narg() < 2)  THROW_BADARG( "Wrong number of input arguments");
 
 
-  getfemint_gsparse *pgsp = m_in.pop().to_getfemint_gsparse();
-  gsparse &gsp = pgsp->sparse();
-
+  gsparse &gsp = *(to_spmat_object(m_in.pop()));
   std::string init_cmd   = m_in.pop().to_string();
   std::string cmd        = cmd_normalize(init_cmd);
 

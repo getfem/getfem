@@ -20,11 +20,11 @@
 ===========================================================================*/
 // $Id$
 #include <getfemint_misc.h>
-#include <getfemint_pfem.h>
 #include <getfemint_mesh_fem.h>
 #include <getfemint_mesh_im.h>
 #include <getfem/getfem_interpolated_fem.h>
 #include <getfemint_workspace.h>
+#include <getfem/getfem_fem.h>
 
 using namespace getfemint;
 /*@GFDOC
@@ -38,7 +38,7 @@ void gf_fem(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
     THROW_BADARG( "Wrong number of input arguments");
   }
   std::string cmd = in.pop().to_string();
-  getfemint_pfem *gfi_pf = 0;
+  id_type id = id_type(-1);
   if (check_cmd(cmd, "interpolated fem", in, out, 2, 3, 0, 1)) {
     /*@INIT F = ('interpolated_fem', @tmf mf, @tmim mim, [@ivec blocked_dof])
     Build a special @tfem which is interpolated from another @tmf.
@@ -58,10 +58,13 @@ void gf_fem(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
       getfem::new_interpolated_fem(gfi_mf->mesh_fem(),
 				   gfi_mim->mesh_im(),
 				   0, blocked_dof);
-    gfi_pf = getfemint_pfem::get_from(pf);
-    gfi_pf->nbdof_need_convex_number() = true;
-    workspace().set_dependance(gfi_pf, gfi_mim);
-    workspace().set_dependance(gfi_pf, gfi_mf);
+    // gfi_pf = getfemint_pfem::get_from(pf);
+    // gfi_pf->nbdof_need_convex_number() = true;
+    
+    id = store_fem_object(pf);
+
+    // workspace().set_dependance(id, gfi_mim);
+    // workspace().set_dependance(id, gfi_mf);
   } else {
     /*@INIT F = ('.list', @str fem_name)
       The `fem_name` should contain a description of the finite element
@@ -129,8 +132,8 @@ void gf_fem(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
       Of course, you have to ensure that the selected fem is compatible with
       the geometric transformation: a Pk fem has no meaning on a quadrangle.
       @*/
-    getfem::pfem pf = getfem::fem_descriptor(cmd);
-    gfi_pf = getfemint_pfem::get_from(pf, STATIC_OBJ | CONST_OBJ);
+    
+    id = store_fem_object(getfem::fem_descriptor(cmd));
   }
-  out.pop().from_object_id(gfi_pf->get_id(), FEM_CLASS_ID);
+  out.pop().from_object_id(id, FEM_CLASS_ID);
 }
