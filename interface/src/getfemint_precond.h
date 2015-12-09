@@ -54,7 +54,8 @@ namespace getfemint
     void set_dimensions(size_type m, size_type n) { nrows_ = m; ncols_ = n; }
     gprecond_base() : nrows_(0), ncols_(0), type(IDENTITY), gsp(0) {}
     const char *name() const { 
-      const char *p[] = { "IDENTITY", "DIAG", "ILDLT", "ILDLTT", "ILU", "ILUT", "SUPERLU", "GSPARSE" };
+      const char *p[] = { "IDENTITY", "DIAG", "ILDLT", "ILDLTT", "ILU", "ILUT",
+			  "SUPERLU", "GSPARSE" };
       return p[type];
     }
     virtual size_type memsize() const = 0;
@@ -62,7 +63,8 @@ namespace getfemint
   };
 
   template <typename T> struct gprecond : public gprecond_base {
-    typedef gmm::csc_matrix_ref<const T*, const unsigned int *, const unsigned int *> cscmat;
+    typedef gmm::csc_matrix_ref<const T*, const unsigned int *,
+				const unsigned int *> cscmat;
     std::unique_ptr<gmm::diagonal_precond<cscmat> > diagonal;
     std::unique_ptr<gmm::ildlt_precond<cscmat> > ildlt;
     std::unique_ptr<gmm::ildltt_precond<cscmat> > ildltt;
@@ -82,12 +84,14 @@ namespace getfemint
     bool is_complex() { if (p.get() && p->gsp) return p->gsp->is_complex();
       else return v == gsparse::COMPLEX; }
     gprecond<scalar_type> &precond(scalar_type) {
-      GMM_ASSERT1(!is_complex(), "cannot use a COMPLEX preconditionner with REAL data");
+      GMM_ASSERT1(!is_complex(),
+		  "cannot use a COMPLEX preconditionner with REAL data");
       return *static_cast<gprecond<scalar_type>*>(p.get()); 
     }
 
     gprecond<complex_type> &precond(complex_type) { 
-      GMM_ASSERT1(is_complex(), "cannot use a REAL preconditionner with COMPLEX data");
+      GMM_ASSERT1(is_complex(),
+		  "cannot use a REAL preconditionner with COMPLEX data");
       return *static_cast<gprecond<complex_type>*>(p.get());
     }
 
@@ -145,10 +149,13 @@ namespace gmm {
   };
 
   template <typename T, typename V1, typename V2>
-  void mult_or_transposed_mult(const getfemint::gprecond<T>& precond, const V1 &v, V2 &w, bool do_mult) {
+  void mult_or_transposed_mult(const getfemint::gprecond<T>& precond,
+			       const V1 &v, V2 &w, bool do_mult) {
     switch (precond.type) {
       case getfemint::gprecond_base::IDENTITY: gmm::copy(v,w); break;
-      case getfemint::gprecond_base::DIAG: gmm::mult(*precond.diagonal, v, w); break;
+      case getfemint::gprecond_base::DIAG:
+	gmm::mult(*precond.diagonal, v, w);
+	break;
       case getfemint::gprecond_base::ILDLT: 
         if (do_mult) gmm::mult(*precond.ildlt, v, w); 
         else gmm::transposed_mult(*precond.ildlt, v, w);
@@ -167,7 +174,7 @@ namespace gmm {
         break;
       case getfemint::gprecond_base::SUPERLU:
 	if (do_mult) precond.superlu->solve(w,v);
-	else         precond.superlu->solve(w,v,gmm::SuperLU_factor<T>::LU_TRANSP);
+	else precond.superlu->solve(w,v,gmm::SuperLU_factor<T>::LU_TRANSP);
 	break;
       case getfemint::gprecond_base::SPMAT:
 	precond.gsp->mult_or_transposed_mult(v, w, !do_mult);
@@ -179,7 +186,8 @@ namespace gmm {
     mult_or_transposed_mult(precond,v,w,true);
   }
   template <typename T, typename V1, typename V2>
-  void transposed_mult(const getfemint::gprecond<T>& precond, const V1 &v, V2 &w) {
+  void transposed_mult(const getfemint::gprecond<T>& precond, const V1 &v,
+		       V2 &w) {
     mult_or_transposed_mult(precond,v,w,false);
   }
 

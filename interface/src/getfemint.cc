@@ -1384,6 +1384,9 @@ namespace getfemint {
   // Functions for MODEL_CLASS_ID
   SIMPLE_RAW_POINTER_MANAGED_OBJECT(model, getfem::model, MODEL_CLASS_ID)
 
+  // Functions for PRECOND_CLASS_ID
+  SIMPLE_RAW_POINTER_MANAGED_OBJECT(precond, gprecond_base, PRECOND_CLASS_ID)
+
   // Functions for SPMAT_CLASS_ID
   SIMPLE_RAW_POINTER_MANAGED_OBJECT(spmat, gsparse, SPMAT_CLASS_ID)
 

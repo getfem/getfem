@@ -838,9 +838,10 @@ private:
   getfem::model *to_model_object(const mexarg_in &p);
 
   // Functions for PRECOND_CLASS_ID
-  // bool is_precond_object(const mexarg_in &p);
-  // id_type store_precond_object(const ?? &shp);
-  // ?? to_precond_object(const mexarg_in &p);
+  class gprecond_base;
+  bool is_precond_object(const mexarg_in &p);
+  id_type store_precond_object(const std::shared_ptr<gprecond_base> &shp);
+  gprecond_base *to_precond_object(const mexarg_in &p);
 
   // Functions for SLICE_CLASS_ID
   // bool is_slice_object(const mexarg_in &p);
