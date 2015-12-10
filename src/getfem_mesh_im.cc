@@ -127,7 +127,7 @@ namespace getfem {
   }
 
   void mesh_im::copy_from(const mesh_im &mim) {
-    if (linked_mesh_) this->sup_dependency(*linked_mesh_);
+    clear_dependencies();
     linked_mesh_ = 0;
     init_with_mesh(*(const_cast<mesh *>(mim.linked_mesh_)));
     is_lower_dim = mim.is_lower_dim;

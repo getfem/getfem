@@ -112,6 +112,12 @@ namespace getfem {
       touched = true;
     }
   }
+
+  void context_dependencies::clear_dependencies() {
+    iterator_list it = dependencies.begin(), ite = dependencies.end();
+    for (; it != ite; ++it) (*it)->sup_dependent_(*this);
+    dependencies.clear();
+  }
  
   context_dependencies::~context_dependencies() {
     invalid_context();

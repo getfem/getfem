@@ -122,6 +122,9 @@ namespace getfem {
       sup_dependency_(cd); 
     }
 
+    void clear_dependencies();
+
+
     bool is_context_valid(void) const { return (state != CONTEXT_INVALID); }
     bool is_context_changed() const { return (state == CONTEXT_CHANGED); }
     /** return true if update_from_context was called */

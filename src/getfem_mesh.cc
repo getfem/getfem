@@ -131,11 +131,15 @@ namespace getfem {
 
   mesh::mesh(const std::string name) : name_(name)  { init(); }
 
-  mesh::mesh(const bgeot::basic_mesh &m, const std::string name) : bgeot::basic_mesh(m), name_(name)  { init(); }
+  mesh::mesh(const bgeot::basic_mesh &m, const std::string name)
+    : bgeot::basic_mesh(m), name_(name)  { init(); }
 
-  mesh::mesh(const mesh &m) { copy_from(m); }
+  mesh::mesh(const mesh &m) : context_dependencies(),
+			      std::enable_shared_from_this<getfem::mesh>()
+  { copy_from(m); }
 
   mesh &mesh::operator=(const mesh &m) {
+    clear_dependencies();
     clear();
     copy_from(m);
     return *this;
