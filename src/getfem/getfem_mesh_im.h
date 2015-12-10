@@ -47,6 +47,7 @@ namespace getfem {
   class mesh_im : public context_dependencies, virtual public dal::static_stored_object {
   private :
     static mesh dummy_mesh;
+    void copy_from(const mesh_im &mim);
 
   protected :
     bool is_lower_dim;
@@ -129,7 +130,7 @@ namespace getfem {
     mesh_im(void);
     virtual ~mesh_im();
     mesh_im(const mesh_im &mim);
-    mesh_im & operator=(const mesh_im &mim);
+    mesh_im &operator=(const mesh_im &mim);
 
     /** Read the mesh_im from a stream.
         @param ist the stream. */

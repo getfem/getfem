@@ -236,7 +236,7 @@ void gf_compute(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
     sub_command
       ("L2 norm", 1, 2, 0, 1,
        U_is_a_vector(U, "L2 norm");
-       const getfem::mesh_im *mim = in.pop().to_const_mesh_im();
+       const getfem::mesh_im *mim = to_meshim_object(in.pop());
        dal::bit_vector bv = in.remaining() ?
        in.pop().to_bit_vector(&mf->convex_index()) : mf->convex_index();
        if (!U.is_complex())
@@ -252,7 +252,7 @@ void gf_compute(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
     sub_command
       ("L2 dist", 3, 4, 0, 1,
        U_is_a_vector(U, "L2 dist");
-       const getfem::mesh_im *mim = in.pop().to_const_mesh_im();
+       const getfem::mesh_im *mim = to_meshim_object(in.pop());
        const getfem::mesh_fem *mf_2 = in.pop().to_const_mesh_fem();
        if (!U.is_complex()) {
          darray st = in.pop().to_darray();
@@ -283,7 +283,7 @@ void gf_compute(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
     sub_command
       ("H1 semi norm", 1, 2, 0, 1,
        U_is_a_vector(U, "H1 semi norm");
-       const getfem::mesh_im *mim = in.pop().to_const_mesh_im();
+       const getfem::mesh_im *mim = to_meshim_object(in.pop());
        dal::bit_vector bv = in.remaining() ?
        in.pop().to_bit_vector(&mf->convex_index()) : mf->convex_index();
        if (!U.is_complex())
@@ -302,7 +302,7 @@ void gf_compute(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
     sub_command
       ("H1 semi dist", 3, 4, 0, 1,
        U_is_a_vector(U, "H1 semi dist");
-       const getfem::mesh_im *mim = in.pop().to_const_mesh_im();
+       const getfem::mesh_im *mim = to_meshim_object(in.pop());
        const getfem::mesh_fem *mf_2 = in.pop().to_const_mesh_fem();
        if (!U.is_complex()) {
          darray st = in.pop().to_darray();
@@ -333,7 +333,7 @@ void gf_compute(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
     sub_command
       ("H1 norm", 1, 2, 0, 1,
        U_is_a_vector(U, "H1 norm");
-       const getfem::mesh_im *mim = in.pop().to_const_mesh_im();
+       const getfem::mesh_im *mim = to_meshim_object(in.pop());
        dal::bit_vector bv = in.remaining() ?
        in.pop().to_bit_vector(&mf->convex_index()) : mf->convex_index();
        if (!U.is_complex())
@@ -351,7 +351,7 @@ void gf_compute(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
     sub_command
       ("H2 semi norm", 1, 2, 0, 1,
        U_is_a_vector(U, "H2 semi norm");
-       const getfem::mesh_im *mim = in.pop().to_const_mesh_im();
+       const getfem::mesh_im *mim = to_meshim_object(in.pop());
        dal::bit_vector bv = in.remaining() ?
        in.pop().to_bit_vector(&mf->convex_index()) : mf->convex_index();
        if (!U.is_complex())
@@ -370,7 +370,7 @@ void gf_compute(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
     sub_command
       ("H2 norm", 1, 2, 0, 1,
        U_is_a_vector(U, "H2 norm");
-       const getfem::mesh_im *mim = in.pop().to_const_mesh_im();
+       const getfem::mesh_im *mim = to_meshim_object(in.pop());
        dal::bit_vector bv = in.remaining() ?
        in.pop().to_bit_vector(&mf->convex_index()) : mf->convex_index();
        if (!U.is_complex())
@@ -506,7 +506,7 @@ void gf_compute(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
     the jump of the normal derivative is integrated on its faces.@*/
     sub_command
       ("error_estimate", 1, 1, 0, 1,
-       const getfem::mesh_im &mim = *in.pop().to_const_mesh_im();
+       const getfem::mesh_im &mim = to_meshim_object(in.pop());
        darray err =
        out.pop().create_darray_h
        (unsigned(mim.linked_mesh().convex_index().last_true()+1));
@@ -532,7 +532,7 @@ void gf_compute(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
     the jump of the normal derivative is integrated on its faces.@*/
     sub_command
       ("error_estimate_nitsche", 8, 8, 0, 1,
-       const getfem::mesh_im &mim = *in.pop().to_const_mesh_im();
+       const getfem::mesh_im &mim = *to_meshim_object(in.pop());
        int GAMMAC = in.pop().to_integer();
        int GAMMAN = in.pop().to_integer();
        scalar_type lambda = in.pop().to_scalar();

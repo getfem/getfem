@@ -24,7 +24,6 @@
 #include <getfem/getfem_integration.h>
 #include <getfemint_misc.h>
 #include <getfemint_workspace.h>
-#include <getfemint_mesh_im.h>
 #include <getfemint_mesh.h>
 
 using namespace getfemint;
@@ -39,13 +38,12 @@ void gf_mesh_im_set_integ(getfem::mesh_im *mim, getfemint::mexargs_in& in);
 
 // Object for the declaration of a new sub-command.
 
-typedef  getfemint_mesh_im *pgetfemint_mesh_im;
-
 struct sub_gf_mim : virtual public dal::static_stored_object {
   int arg_in_min, arg_in_max, arg_out_min, arg_out_max;
   virtual void run(getfemint::mexargs_in& in,
 		   getfemint::mexargs_out& out,
-		   getfemint_mesh *mm, pgetfemint_mesh_im &mim) = 0;
+		   getfemint_mesh *mm,
+		   std::shared_ptr<getfem::mesh_im> &mim) = 0;
 };
 
 typedef std::shared_ptr<sub_gf_mim> psub_command;
@@ -57,7 +55,8 @@ template <typename T> static inline void dummy_func(T &) {}
     struct subc : public sub_gf_mim {					\
       virtual void run(getfemint::mexargs_in& in,			\
 		       getfemint::mexargs_out& out,			\
-		       getfemint_mesh *mm, pgetfemint_mesh_im &mim)	\
+		       getfemint_mesh *mm,				\
+		       std::shared_ptr<getfem::mesh_im> &mim)		\
       { dummy_func(in); dummy_func(out); dummy_func(mm); code }		\
     };									\
     psub_command psubc = std::make_shared<subc>();			\
@@ -91,8 +90,8 @@ void gf_mesh_im(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
 	 m->read_from_file(fname);
 	 mm = getfemint_mesh::get_from(m);
        }
-       mim = getfemint_mesh_im::new_from(mm);
-       mim->mesh_im().read_from_file(fname);
+       mim = std::make_shared<getfem::mesh_im>(*mm);
+       mim->read_from_file(fname);
        );
 
 
@@ -107,10 +106,13 @@ void gf_mesh_im(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        else {
 	 getfem::mesh *m = new getfem::mesh();
 	 m->read_from_file(ss);
+	 
+	 // + Store the mesh! + dependance of the mesh from the mesh_im
+	 // workspace().set_dependance(m, mim);
 	 mm = getfemint_mesh::get_from(m);
        }
-       mim = getfemint_mesh_im::new_from(mm);
-       mim->mesh_im().read_from_file(ss);
+       mim = std::make_shared<getfem::mesh_im>(*mm);
+       mim->read_from_file(ss);
        );
 
 
@@ -118,12 +120,9 @@ void gf_mesh_im(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
       Create a copy of a @tmim.@*/
     sub_command
       ("clone", 1, 1, 0, 1,
-       getfemint_mesh_im *mim2 = in.pop().to_getfemint_mesh_im();
+       getfem::mesh_im *mim2 = to_meshim_object(in.pop());
        mm = object_to_mesh(workspace().object(mim2->linked_mesh_id()));
-       mim = getfemint_mesh_im::new_from(mm);
-       std::stringstream ss; /* not very elegant ! */
-       mim2->mesh_im().write_to_file(ss);
-       mim->mesh_im().read_from_file(ss);
+       mim = std::make_shared<getfem::mesh_im>(*mim2);
        );
 
 
@@ -224,9 +223,8 @@ void gf_mesh_im(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
 
   if (m_in.narg() < 1) THROW_BADARG("Wrong number of input arguments");
   getfemint_mesh *mm = NULL;
-  getfemint_mesh_im *mim = NULL;
+  std::shared_ptr<getfem::mesh_im> mim;
   if (m_in.front().is_string()) {
-
     std::string init_cmd   = m_in.pop().to_string();
     std::string cmd        = cmd_normalize(init_cmd);
 
@@ -250,12 +248,16 @@ void gf_mesh_im(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
     if (!m_out.narg_in_range(1, 1))
       THROW_BADARG("Wrong number of output arguments");
     mm = m_in.pop().to_getfemint_mesh();
-    mim = getfemint_mesh_im::new_from(mm);
+    mim = std::make_shared<getfem::mesh_im>(*mm);
     if (m_in.remaining()) {
-      gf_mesh_im_set_integ(&mim->mesh_im(), m_in);
+      gf_mesh_im_set_integ(&mim->get(), m_in);
     }
     if (m_in.remaining()) THROW_BADARG("Wrong number of input arguments");
-  }
+    
 
-  m_out.pop().from_object_id(mim->get_id(), MESHIM_CLASS_ID);
+  }
+  if (!mim.get()) THROW_INTERNAL_ERROR;
+  // workspace().set_dependance(mim, mm);
+  id_type id = store_meshim_object(mim);
+  m_out.pop().from_object_id(id, MESHIM_CLASS_ID);
 }

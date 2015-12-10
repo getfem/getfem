@@ -35,7 +35,6 @@
 #include <getfemint_models.h>
 #include <getfemint_mesh_fem.h>
 #include <getfemint_workspace.h>
-#include <getfemint_mesh_im.h>
 #include <getfemint_gsparse.h>
 
 using namespace getfemint;
@@ -175,16 +174,16 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        getfemint_mesh_fem *gfi_mf = in.pop().to_getfemint_mesh_fem();
        std::string primalname = in.pop().to_string();
 
-       getfemint_mesh_im *gfi_mim = 0;
+       getfem::mesh_im *mim = 0;
        size_type region = size_type(-1);
        if (in.remaining()) {
 	 mexarg_in argin = in.pop();
-         gfi_mim = argin.to_getfemint_mesh_im();
+         mim = to_meshim_object(argin);
          region = in.pop().to_integer();
        }
-       if (gfi_mim)
+       if (mim)
 	 md->model().add_multiplier(name, gfi_mf->mesh_fem(), primalname,
-				    gfi_mim->mesh_im(), region);
+				    *mim, region);
        else
 	 md->model().add_multiplier(name, gfi_mf->mesh_fem(),primalname);
        workspace().set_dependance(md, gfi_mf);
@@ -197,7 +196,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     sub_command
       ("add im data", 2, 2, 0, 0,
        std::string name = in.pop().to_string();
-       getfem::im_data *mimd = to_meshimdata_object(in.pop());
+       getfem::im_data *mimd = to_meshim_object(in.pop());
        md->model().add_im_data(name, *mimd);
        // workspace().set_dependance(md, gfi_mimd);
        );
@@ -496,7 +495,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       `brickname` is an otpional name for the brick.@*/
     sub_command
       ("add linear generic assembly brick", 2, 5, 0, 1,
-       getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+       getfem::mesh_im *mim = to_meshim_object(in.pop());
        std::string expr = in.pop().to_string();
        size_type region = size_type(-1);
        if (in.remaining()) region = in.pop().to_integer();
@@ -507,9 +506,9 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        
        size_type ind
        = getfem::add_linear_generic_assembly_brick
-       (md->model(), gfi_mim->mesh_im(), expr, region, is_symmetric,
+       (md->model(), *mim, expr, region, is_symmetric,
         is_coercive) + config::base_index();
-       workspace().set_dependance(md, gfi_mim);
+       // workspace().set_dependance(md, mim);
        out.pop().from_integer(int(ind));
        );
 
@@ -527,7 +526,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       `brickname` is an otpional name for the brick.@*/
     sub_command
       ("add nonlinear generic assembly brick", 2, 5, 0, 1,
-       getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+       getfem::mesh_im *mim = to_meshim_object(in.pop());
        std::string expr = in.pop().to_string();
        size_type region = size_type(-1);
        if (in.remaining()) region = in.pop().to_integer();
@@ -538,9 +537,9 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        
        size_type ind
        = getfem::add_nonlinear_generic_assembly_brick
-       (md->model(), gfi_mim->mesh_im(), expr, region, is_symmetric,
+       (md->model(), *mim, expr, region, is_symmetric,
         is_coercive) + config::base_index();
-       workspace().set_dependance(md, gfi_mim);
+       // workspace().set_dependance(md, mim);
        out.pop().from_integer(int(ind));
        );
 
@@ -554,15 +553,15 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       `brickname` is an otpional name for the brick.@*/
     sub_command
       ("add source term generic assembly brick", 2, 3, 0, 1,
-       getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+       getfem::mesh_im *mim = to_meshim_object(in.pop());
        std::string expr = in.pop().to_string();
        size_type region = size_type(-1);
        if (in.remaining()) region = in.pop().to_integer();
        
        size_type ind
        = getfem::add_source_term_generic_assembly_brick
-       (md->model(), gfi_mim->mesh_im(), expr, region) + config::base_index();
-       workspace().set_dependance(md, gfi_mim);
+       (md->model(), *mim, expr, region) + config::base_index();
+       // workspace().set_dependance(md, mim);
        out.pop().from_integer(int(ind));
        );
 
@@ -576,14 +575,14 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     the brick index in the model.@*/
     sub_command
       ("add Laplacian brick", 2, 3, 0, 1,
-       getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+       getfem::mesh_im *mim = to_meshim_object(in.pop());
        std::string varname = in.pop().to_string();
        size_type region = size_type(-1);
        if (in.remaining()) region = in.pop().to_integer();
        size_type ind
-       = getfem::add_Laplacian_brick(md->model(), gfi_mim->mesh_im(), varname, region)
+       = getfem::add_Laplacian_brick(md->model(), *mim, varname, region)
        + config::base_index();
-       workspace().set_dependance(md, gfi_mim);
+       // workspace().set_dependance(md, mim);
        out.pop().from_integer(int(ind));
        );
 
@@ -615,16 +614,16 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     brick index in the model.@*/
     sub_command
       ("add generic elliptic brick", 3, 4, 0, 1,
-       getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+       getfem::mesh_im *mim = to_meshim_object(in.pop());
        std::string varname = in.pop().to_string();
        std::string dataname = in.pop().to_string();
        size_type region = size_type(-1);
        if (in.remaining()) region = in.pop().to_integer();
        size_type ind
-       = getfem::add_generic_elliptic_brick(md->model(), gfi_mim->mesh_im(),
+       = getfem::add_generic_elliptic_brick(md->model(), *mim,
                                             varname, dataname, region)
        + config::base_index();
-       workspace().set_dependance(md, gfi_mim);
+       // workspace().set_dependance(md, mim);
        out.pop().from_integer(int(ind));
        );
 
@@ -643,7 +642,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     condition. Return the brick index in the model.@*/
     sub_command
       ("add source term brick", 3, 5, 0, 1,
-       getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+       getfem::mesh_im *mim = to_meshim_object(in.pop());
        std::string varname = in.pop().to_string();
        std::string dataname = in.pop().to_string();
        size_type region = size_type(-1);
@@ -651,10 +650,10 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        std::string directdataname;
        if (in.remaining()) directdataname = in.pop().to_string();
        size_type ind
-       = getfem::add_source_term_brick(md->model(), gfi_mim->mesh_im(),
+       = getfem::add_source_term_brick(md->model(), *mim,
                                  varname, dataname, region, directdataname)
        + config::base_index();
-       workspace().set_dependance(md, gfi_mim);
+       // workspace().set_dependance(md, mim);
        out.pop().from_integer(int(ind));
        );
 
@@ -672,15 +671,15 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       pre-processing. Return the brick index in the model.@*/
     sub_command
       ("add normal source term brick", 4, 4, 0, 1,
-       getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+       getfem::mesh_im *mim = to_meshim_object(in.pop());
        std::string varname = in.pop().to_string();
        std::string dataname = in.pop().to_string();
        size_type region = in.pop().to_integer();
        size_type ind
-       = getfem::add_normal_source_term_brick(md->model(), gfi_mim->mesh_im(),
+       = getfem::add_normal_source_term_brick(md->model(), *mim,
                                               varname, dataname, region)
        + config::base_index();
-       workspace().set_dependance(md, gfi_mim);
+       // workspace().set_dependance(md, mim);
        out.pop().from_integer(int(ind));
        );
 
@@ -737,7 +736,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       condition is prescribed. Return the brick index in the model.@*/
     sub_command
       ("add Dirichlet condition with multipliers", 4, 5, 0, 1,
-       getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+       getfem::mesh_im *mim = to_meshim_object(in.pop());
        std::string varname = in.pop().to_string();
        int version = 0;
        size_type degree = 0;
@@ -761,17 +760,17 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        size_type ind = config::base_index();
        switch(version) {
        case 1:  ind += getfem::add_Dirichlet_condition_with_multipliers
-           (md->model(), gfi_mim->mesh_im(), varname, dim_type(degree), region, dataname);
+           (md->model(), *mim, varname, dim_type(degree), region, dataname);
          break;
        case 2:  ind += getfem::add_Dirichlet_condition_with_multipliers
-           (md->model(), gfi_mim->mesh_im(), varname, multname, region, dataname);
+           (md->model(), *mim, varname, multname, region, dataname);
          break;
        case 3:  ind += getfem::add_Dirichlet_condition_with_multipliers
-           (md->model(), gfi_mim->mesh_im(), varname, gfi_mf->mesh_fem(), region, dataname);
+           (md->model(), *mim, varname, gfi_mf->mesh_fem(), region, dataname);
          workspace().set_dependance(md, gfi_mf);
          break;
        }
-       workspace().set_dependance(md, gfi_mim);
+       // workspace().set_dependance(md, mim);
        out.pop().from_integer(int(ind));
        );
 
@@ -795,7 +794,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     @*/
     sub_command
       ("add Dirichlet condition with Nitsche method", 5, 7, 0, 1,
-       getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+       getfem::mesh_im *mim = to_meshim_object(in.pop());
        std::string varname = in.pop().to_string();
        std::string Neumannterm = in.pop().to_string();
        std::string gamma0name = in.pop().to_string();
@@ -813,9 +812,9 @@ void gf_model_set(getfemint::mexargs_in& m_in,
 
        size_type ind = config::base_index();
        ind += getfem::add_Dirichlet_condition_with_Nitsche_method
-       (md->model(), gfi_mim->mesh_im(), varname, Neumannterm,
+       (md->model(), *mim, varname, Neumannterm,
         gamma0name, region, theta, dataname);
-       workspace().set_dependance(md, gfi_mim);
+       // workspace().set_dependance(md, mim);
        out.pop().from_integer(int(ind));
        );
 
@@ -832,7 +831,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     Return the brick index in the model.@*/
     sub_command
       ("add Dirichlet condition with penalization", 4, 6, 0, 1,
-       getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+       getfem::mesh_im *mim = to_meshim_object(in.pop());
        std::string varname = in.pop().to_string();
        double coeff = in.pop().to_scalar();
        size_type region = in.pop().to_integer();
@@ -842,9 +841,9 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        if (in.remaining()) mf_mult = in.pop().to_const_mesh_fem();
        size_type ind = config::base_index();
        ind += getfem::add_Dirichlet_condition_with_penalization
-       (md->model(), gfi_mim->mesh_im(), varname, coeff, region,
+       (md->model(), *mim, varname, coeff, region,
         dataname, mf_mult);
-       workspace().set_dependance(md, gfi_mim);
+       // workspace().set_dependance(md, mim);
        out.pop().from_integer(int(ind));
        );
 
@@ -870,7 +869,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       Returns the brick index in the model.@*/
     sub_command
       ("add normal Dirichlet condition with multipliers", 4, 5, 0, 1,
-       getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+       getfem::mesh_im *mim = to_meshim_object(in.pop());
        std::string varname = in.pop().to_string();
        int version = 0;
        size_type degree = 0;
@@ -894,17 +893,17 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        size_type ind = config::base_index();
        switch(version) {
        case 1:  ind += getfem::add_normal_Dirichlet_condition_with_multipliers
-           (md->model(), gfi_mim->mesh_im(), varname, dim_type(degree), region, dataname);
+           (md->model(), *mim, varname, dim_type(degree), region, dataname);
          break;
        case 2:  ind += getfem::add_normal_Dirichlet_condition_with_multipliers
-           (md->model(), gfi_mim->mesh_im(), varname, multname, region, dataname);
+           (md->model(), *mim, varname, multname, region, dataname);
          break;
        case 3:  ind += getfem::add_normal_Dirichlet_condition_with_multipliers
-           (md->model(), gfi_mim->mesh_im(), varname, gfi_mf->mesh_fem(), region, dataname);
+           (md->model(), *mim, varname, gfi_mf->mesh_fem(), region, dataname);
          workspace().set_dependance(md, gfi_mf);
          break;
        }
-       workspace().set_dependance(md, gfi_mim);
+       // workspace().set_dependance(md, mim);
        out.pop().from_integer(int(ind));
        );
 
@@ -925,7 +924,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     Returns the brick index in the model.@*/
     sub_command
       ("add normal Dirichlet condition with penalization", 4, 6, 0, 1,
-       getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+       getfem::mesh_im *mim = to_meshim_object(in.pop());
        std::string varname = in.pop().to_string();
        double coeff = in.pop().to_scalar();
        size_type region = in.pop().to_integer();
@@ -935,9 +934,9 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        if (in.remaining()) mf_mult = in.pop().to_const_mesh_fem();
        size_type ind = config::base_index();
        ind += getfem::add_normal_Dirichlet_condition_with_penalization
-       (md->model(), gfi_mim->mesh_im(), varname, coeff, region,
+       (md->model(), *mim, varname, coeff, region,
         dataname, mf_mult);
-       workspace().set_dependance(md, gfi_mim);
+       // workspace().set_dependance(md, mim);
        out.pop().from_integer(int(ind));
        );
 
@@ -966,7 +965,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     @*/
     sub_command
       ("add normal Dirichlet condition with Nitsche method", 5, 7, 0, 1,
-       getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+       getfem::mesh_im *mim = to_meshim_object(in.pop());
        std::string varname = in.pop().to_string();
        std::string Neumannterm = in.pop().to_string();
        std::string gamma0name = in.pop().to_string();
@@ -984,9 +983,9 @@ void gf_model_set(getfemint::mexargs_in& m_in,
 
        size_type ind = config::base_index();
        ind += getfem::add_normal_Dirichlet_condition_with_Nitsche_method
-       (md->model(), gfi_mim->mesh_im(), varname, Neumannterm,
+       (md->model(), *mim, varname, Neumannterm,
         gamma0name, region, theta, dataname);
-       workspace().set_dependance(md, gfi_mim);
+       // workspace().set_dependance(md, mim);
        out.pop().from_integer(int(ind));
        );
 
@@ -1014,7 +1013,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     Returns the brick index in the model.@*/
     sub_command
       ("add generalized Dirichlet condition with multipliers", 6, 6, 0, 1,
-       getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+       getfem::mesh_im *mim = to_meshim_object(in.pop());
        std::string varname = in.pop().to_string();
        int version = 0;
        size_type degree = 0;
@@ -1037,17 +1036,17 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        size_type ind = config::base_index();
        switch(version) {
        case 1:  ind += getfem::add_generalized_Dirichlet_condition_with_multipliers
-           (md->model(), gfi_mim->mesh_im(), varname, dim_type(degree), region, dataname, Hname);
+           (md->model(), *mim, varname, dim_type(degree), region, dataname, Hname);
          break;
        case 2:  ind += getfem::add_generalized_Dirichlet_condition_with_multipliers
-           (md->model(), gfi_mim->mesh_im(), varname, multname, region, dataname, Hname);
+           (md->model(), *mim, varname, multname, region, dataname, Hname);
          break;
        case 3:  ind += getfem::add_generalized_Dirichlet_condition_with_multipliers
-           (md->model(), gfi_mim->mesh_im(), varname, gfi_mf->mesh_fem(), region, dataname, Hname);
+           (md->model(), *mim, varname, gfi_mf->mesh_fem(), region, dataname, Hname);
          workspace().set_dependance(md, gfi_mf);
          break;
        }
-       workspace().set_dependance(md, gfi_mim);
+       // workspace().set_dependance(md, mim);
        out.pop().from_integer(int(ind));
        );
 
@@ -1071,7 +1070,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       Return the brick index in the model.@*/
     sub_command
       ("add generalized Dirichlet condition with penalization", 6, 7, 0, 1,
-       getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+       getfem::mesh_im *mim = to_meshim_object(in.pop());
        std::string varname = in.pop().to_string();
        double coeff = in.pop().to_scalar();
        size_type region = in.pop().to_integer();
@@ -1081,9 +1080,9 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        if (in.remaining()) mf_mult = in.pop().to_const_mesh_fem();
        size_type ind = config::base_index();
        ind += getfem::add_generalized_Dirichlet_condition_with_penalization
-       (md->model(), gfi_mim->mesh_im(), varname, coeff, region,
+       (md->model(), *mim, varname, coeff, region,
         dataname, Hname, mf_mult);
-       workspace().set_dependance(md, gfi_mim);
+       // workspace().set_dependance(md, mim);
        out.pop().from_integer(int(ind));
        );
 
@@ -1116,7 +1115,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     @*/
     sub_command
       ("add generalized Dirichlet condition with Nitsche method", 7, 8, 0, 1,
-       getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+       getfem::mesh_im *mim = to_meshim_object(in.pop());
        std::string varname = in.pop().to_string();
        std::string Neumannterm = in.pop().to_string();
        std::string gamma0name = in.pop().to_string();
@@ -1135,9 +1134,9 @@ void gf_model_set(getfemint::mexargs_in& m_in,
 
        size_type ind = config::base_index();
        ind += getfem::add_generalized_Dirichlet_condition_with_Nitsche_method
-       (md->model(), gfi_mim->mesh_im(), varname, Neumannterm,
+       (md->model(), *mim, varname, Neumannterm,
         gamma0name, region, theta, dataname, Hname);
-       workspace().set_dependance(md, gfi_mim);
+       // workspace().set_dependance(md, mim);
        out.pop().from_integer(int(ind));
        );
 
@@ -1277,16 +1276,16 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       on the whole mesh. Return the brick index in the model.@*/
     sub_command
       ("add Helmholtz brick", 3, 4, 0, 1,
-       getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+       getfem::mesh_im *mim = to_meshim_object(in.pop());
        std::string varname = in.pop().to_string();
        std::string dataname = in.pop().to_string();
        size_type region = size_type(-1);
        if (in.remaining()) region = in.pop().to_integer();
        size_type ind
-       = getfem::add_Helmholtz_brick(md->model(), gfi_mim->mesh_im(),
+       = getfem::add_Helmholtz_brick(md->model(), *mim,
                                      varname, dataname, region)
        + config::base_index();
-       workspace().set_dependance(md, gfi_mim);
+       // workspace().set_dependance(md, mim);
        out.pop().from_integer(int(ind));
        );
 
@@ -1301,16 +1300,16 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     on which the term is added. Return the brick index in the model.@*/
     sub_command
       ("add Fourier Robin brick", 4, 4, 0, 1,
-       getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+       getfem::mesh_im *mim = to_meshim_object(in.pop());
        std::string varname = in.pop().to_string();
        std::string dataname = in.pop().to_string();
        size_type region = size_type(-1);
        if (in.remaining()) region = in.pop().to_integer();
        size_type ind
-       = getfem::add_Fourier_Robin_brick(md->model(), gfi_mim->mesh_im(),
+       = getfem::add_Fourier_Robin_brick(md->model(), *mim,
                                          varname,dataname, region)
        + config::base_index();
-       workspace().set_dependance(md, gfi_mim);
+       // workspace().set_dependance(md, mim);
        out.pop().from_integer(int(ind));
        );
 
@@ -1569,7 +1568,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       on the whole mesh. Return the brick index in the model.@*/
     sub_command
       ("add isotropic linearized elasticity brick", 4, 5, 0, 1,
-       getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+       getfem::mesh_im *mim = to_meshim_object(in.pop());
        std::string varname = in.pop().to_string();
        std::string dataname_lambda = in.pop().to_string();
        std::string dataname_mu = in.pop().to_string();
@@ -1577,9 +1576,9 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        if (in.remaining()) region = in.pop().to_integer();
        size_type ind
        = getfem::add_isotropic_linearized_elasticity_brick
-       (md->model(), gfi_mim->mesh_im(), varname, dataname_lambda, dataname_mu, region)
+       (md->model(), *mim, varname, dataname_lambda, dataname_mu, region)
        + config::base_index();
-       workspace().set_dependance(md, gfi_mim);
+       // workspace().set_dependance(md, mim);
        out.pop().from_integer(int(ind));
        );
 
@@ -1596,7 +1595,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       Return the brick index in the model.@*/
     sub_command
       ("add isotropic linearized elasticity brick pstrain", 4, 5, 0, 1,
-       getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+       getfem::mesh_im *mim = to_meshim_object(in.pop());
        std::string varname = in.pop().to_string();
        std::string data_E = in.pop().to_string();
        std::string data_nu = in.pop().to_string();
@@ -1604,9 +1603,9 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        if (in.remaining()) region = in.pop().to_integer();
        size_type ind
        = getfem::add_isotropic_linearized_elasticity_brick_pstrain
-       (md->model(), gfi_mim->mesh_im(), varname, data_E, data_nu, region)
+       (md->model(), *mim, varname, data_E, data_nu, region)
        + config::base_index();
-       workspace().set_dependance(md, gfi_mim);
+       // workspace().set_dependance(md, mim);
        out.pop().from_integer(int(ind));
        );
 
@@ -1623,7 +1622,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       Return the brick index in the model.@*/
     sub_command
       ("add isotropic linearized elasticity brick pstress", 4, 5, 0, 1,
-       getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+       getfem::mesh_im *mim = to_meshim_object(in.pop());
        std::string varname = in.pop().to_string();
        std::string data_E = in.pop().to_string();
        std::string data_nu = in.pop().to_string();
@@ -1631,9 +1630,9 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        if (in.remaining()) region = in.pop().to_integer();
        size_type ind
        = getfem::add_isotropic_linearized_elasticity_brick_pstress
-       (md->model(), gfi_mim->mesh_im(), varname, data_E, data_nu, region)
+       (md->model(), *mim, varname, data_E, data_nu, region)
        + config::base_index();
-       workspace().set_dependance(md, gfi_mim);
+       // workspace().set_dependance(md, mim);
        out.pop().from_integer(int(ind));
        );
 
@@ -1650,7 +1649,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     model.@*/
     sub_command
       ("add linear incompressibility brick", 3, 5, 0, 1,
-       getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+       getfem::mesh_im *mim = to_meshim_object(in.pop());
        std::string varname = in.pop().to_string();
        std::string multname = in.pop().to_string();
        size_type region = size_type(-1);
@@ -1659,9 +1658,9 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        if (in.remaining()) dataname = in.pop().to_string();
        size_type ind
        = getfem::add_linear_incompressibility
-       (md->model(), gfi_mim->mesh_im(), varname, multname, region, dataname)
+       (md->model(), *mim, varname, multname, region, dataname)
        + config::base_index();
-       workspace().set_dependance(md, gfi_mim);
+       // workspace().set_dependance(md, mim);
        out.pop().from_integer(int(ind));
        );
 
@@ -1690,8 +1689,8 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     Returns the brick index in the model.@*/
     sub_command
       ("add nonlinear elasticity brick", 4, 5, 0, 1,
-       getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
-       size_type N = gfi_mim->mesh_im().linked_mesh().dim();
+       getfem::mesh_im *mim = to_meshim_object(in.pop());
+       size_type N = *mim.linked_mesh().dim();
        std::string varname = in.pop().to_string();
        std::string lawname = in.pop().to_string();
        std::string dataname = in.pop().to_string();
@@ -1699,10 +1698,10 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        if (in.remaining()) region = in.pop().to_integer();
        size_type ind = config::base_index() +
        add_nonlinear_elasticity_brick
-       (md->model(), gfi_mim->mesh_im(), varname,
+       (md->model(), *mim, varname,
         abstract_hyperelastic_law_from_name(lawname, N), dataname, region);
 
-       workspace().set_dependance(md, gfi_mim);
+       // workspace().set_dependance(md, mim);
        out.pop().from_integer(int(ind));
        );
 
@@ -1728,8 +1727,8 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     Returns the brick index in the model.@*/
     sub_command
       ("add finite strain elasticity brick", 4, 5, 0, 1,
-       getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
-       // size_type N = gfi_mim->mesh_im().linked_mesh().dim();
+       getfem::mesh_im *mim = to_meshim_object(in.pop());
+       // size_type N = *mim.linked_mesh().dim();
        std::string varname = in.pop().to_string();
        std::string lawname = in.pop().to_string();
        std::string params = in.pop().to_string();
@@ -1737,8 +1736,8 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        if (in.remaining()) region = in.pop().to_integer();
        size_type ind = config::base_index() +
        add_finite_strain_elasticity_brick
-       (md->model(), gfi_mim->mesh_im(), varname, lawname, params, region);
-       workspace().set_dependance(md, gfi_mim);
+       (md->model(), *mim, varname, lawname, params, region);
+       // workspace().set_dependance(md, mim);
        out.pop().from_integer(int(ind));
        );
 
@@ -1766,7 +1765,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       Return the brick index in the model.@*/
     sub_command
       ("add elastoplasticity brick", 7, 8, 0, 1,
-       getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+       getfem::mesh_im *mim = to_meshim_object(in.pop());
        std::string projname = in.pop().to_string();
        std::string varname = in.pop().to_string();
        std::string datalambda = in.pop().to_string();
@@ -1779,13 +1778,13 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        if (in.remaining()) region = in.pop().to_integer();
        size_type ind = config::base_index() +
        add_elastoplasticity_brick
-       (md->model(), gfi_mim->mesh_im(),
+       (md->model(), *mim,
         abstract_constraints_projection_from_name(projname),
         varname, datalambda, datamu,
         datathreshold, datasigma,
         region);
 
-       workspace().set_dependance(md, gfi_mim);
+       // workspace().set_dependance(md, mim);
        out.pop().from_integer(int(ind));
        );
 
@@ -1800,16 +1799,16 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     whole mesh. Return the brick index in the model.@*/
     sub_command
       ("add nonlinear incompressibility brick", 3, 4, 0, 1,
-       getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+       getfem::mesh_im *mim = to_meshim_object(in.pop());
        std::string varname = in.pop().to_string();
        std::string multname = in.pop().to_string();
        size_type region = size_type(-1);
        if (in.remaining()) region = in.pop().to_integer();
        size_type ind
        = getfem::add_nonlinear_incompressibility_brick
-       (md->model(), gfi_mim->mesh_im(), varname, multname, region)
+       (md->model(), *mim, varname, multname, region)
        + config::base_index();
-       workspace().set_dependance(md, gfi_mim);
+       // workspace().set_dependance(md, mim);
        out.pop().from_integer(int(ind));
        );
 
@@ -1828,16 +1827,16 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     ``u`` the variable which represent the displacement.@*/
     sub_command
       ("add finite strain incompressibility brick", 3, 4, 0, 1,
-       getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+       getfem::mesh_im *mim = to_meshim_object(in.pop());
        std::string varname = in.pop().to_string();
        std::string multname = in.pop().to_string();
        size_type region = size_type(-1);
        if (in.remaining()) region = in.pop().to_integer();
        size_type ind
        = getfem::add_finite_strain_incompressibility_brick
-       (md->model(), gfi_mim->mesh_im(), varname, multname, region)
+       (md->model(), *mim, varname, multname, region)
        + config::base_index();
-       workspace().set_dependance(md, gfi_mim);
+       // workspace().set_dependance(md, mim);
        out.pop().from_integer(int(ind));
        );
 
@@ -1851,15 +1850,15 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       Return the brick index in the model.@*/
     sub_command
       ("add bilaplacian brick", 3, 4, 0, 1,
-       getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+       getfem::mesh_im *mim = to_meshim_object(in.pop());
        std::string varname = in.pop().to_string();
        std::string dataname = in.pop().to_string();
        size_type region = size_type(-1);
        if (in.remaining()) region = in.pop().to_integer();
        size_type ind = config::base_index() +
-       add_bilaplacian_brick(md->model(), gfi_mim->mesh_im(),
+       add_bilaplacian_brick(md->model(), *mim,
                              varname, dataname, region);
-       workspace().set_dependance(md, gfi_mim);
+       // workspace().set_dependance(md, mim);
        out.pop().from_integer(int(ind));
        );
     
@@ -1873,16 +1872,16 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       Return the brick index in the model.@*/
     sub_command
       ("add Kirchhoff-Love plate brick", 4, 5, 0, 1,
-       getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+       getfem::mesh_im *mim = to_meshim_object(in.pop());
        std::string varname = in.pop().to_string();
        std::string dataname_D = in.pop().to_string();
        std::string dataname_nu = in.pop().to_string();
        size_type region = size_type(-1);
        if (in.remaining()) region = in.pop().to_integer();
        size_type ind = config::base_index() +
-       add_bilaplacian_brick_KL(md->model(), gfi_mim->mesh_im(),
+       add_bilaplacian_brick_KL(md->model(), *mim,
                                 varname, dataname_D, dataname_nu, region);
-       workspace().set_dependance(md, gfi_mim);
+       // workspace().set_dependance(md, mim);
        out.pop().from_integer(int(ind));
        );
 
@@ -1896,14 +1895,14 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       Return the brick index in the model.@*/
     sub_command
       ("add normal derivative source term brick", 4, 4, 0, 1,
-       getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+       getfem::mesh_im *mim = to_meshim_object(in.pop());
        std::string varname = in.pop().to_string();
        std::string dataname = in.pop().to_string();
        size_type region = in.pop().to_integer();
        size_type ind = config::base_index() +
-       add_normal_derivative_source_term_brick(md->model(), gfi_mim->mesh_im(),
+       add_normal_derivative_source_term_brick(md->model(), *mim,
                                 varname, dataname, region);
-       workspace().set_dependance(md, gfi_mim);
+       // workspace().set_dependance(md, mim);
        out.pop().from_integer(int(ind));
        );
 
@@ -1915,15 +1914,15 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       Return the brick index in the model.@*/
     sub_command
       ("add Kirchhoff-Love Neumann term brick", 5, 5, 0, 1,
-       getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+       getfem::mesh_im *mim = to_meshim_object(in.pop());
        std::string varname = in.pop().to_string();
        std::string dataname_M = in.pop().to_string();
        std::string dataname_divM = in.pop().to_string();
        size_type region = in.pop().to_integer();
        size_type ind = config::base_index() +
-       add_Kirchoff_Love_Neumann_term_brick(md->model(), gfi_mim->mesh_im(),
+       add_Kirchoff_Love_Neumann_term_brick(md->model(), *mim,
                                 varname, dataname_M, dataname_divM, region);
-       workspace().set_dependance(md, gfi_mim);
+       // workspace().set_dependance(md, mim);
        out.pop().from_integer(int(ind));
        );
 
@@ -1953,7 +1952,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       Return the brick index in the model.@*/
     sub_command
       ("add normal derivative Dirichlet condition with multipliers", 4, 6, 0, 1,
-       getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+       getfem::mesh_im *mim = to_meshim_object(in.pop());
        std::string varname = in.pop().to_string();
        std::string multname;
        getfemint_mesh_fem *gfi_mf = 0;
@@ -1980,18 +1979,18 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        switch(version) {
        case 1:  ind +=
            add_normal_derivative_Dirichlet_condition_with_multipliers
-           (md->model(), gfi_mim->mesh_im(), varname, dim_type(degree), region,
+           (md->model(), *mim, varname, dim_type(degree), region,
             dataname, R_must_be_derivated ); break;
        case 2:  ind +=
            add_normal_derivative_Dirichlet_condition_with_multipliers
-           (md->model(), gfi_mim->mesh_im(), varname, multname, region,
+           (md->model(), *mim, varname, multname, region,
             dataname, R_must_be_derivated ); break;
        case 3:  ind +=
            add_normal_derivative_Dirichlet_condition_with_multipliers
-           (md->model(), gfi_mim->mesh_im(), varname,  gfi_mf->mesh_fem(),
+           (md->model(), *mim, varname,  gfi_mf->mesh_fem(),
             region, dataname, R_must_be_derivated ); break;
        }
-       workspace().set_dependance(md, gfi_mim);
+       // workspace().set_dependance(md, mim);
        out.pop().from_integer(int(ind));
        );
 
@@ -2014,7 +2013,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       Return the brick index in the model.@*/
     sub_command
       ("add normal derivative Dirichlet condition with penalization", 4, 6, 0, 1,
-       getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+       getfem::mesh_im *mim = to_meshim_object(in.pop());
        std::string varname = in.pop().to_string();
        double coeff = in.pop().to_scalar();
        size_type region = in.pop().to_integer();
@@ -2025,9 +2024,9 @@ void gf_model_set(getfemint::mexargs_in& m_in,
          R_must_be_derivated = (in.pop().to_integer(0,1)) != 0;
        size_type ind = config::base_index() +
        add_normal_derivative_Dirichlet_condition_with_penalization
-           (md->model(), gfi_mim->mesh_im(), varname, coeff, region,
+           (md->model(), *mim, varname, coeff, region,
             dataname, R_must_be_derivated );
-       workspace().set_dependance(md, gfi_mim);
+       // workspace().set_dependance(md, mim);
        out.pop().from_integer(int(ind));
        );
 
@@ -2059,7 +2058,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       @*/
      sub_command
         ("add Mindlin Reissner plate brick", 7, 9, 0, 1,
-         getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+         getfem::mesh_im *mim = to_meshim_object(in.pop());
          getfemint_mesh_im *gfi_mim_reduced = in.pop().to_getfemint_mesh_im();
          std::string varname_U = in.pop().to_string();
          std::string varname_theta = in.pop().to_string();
@@ -2072,10 +2071,10 @@ void gf_model_set(getfemint::mexargs_in& m_in,
          size_type region = size_type(-1);
          if (in.remaining()) region = in.pop().to_integer();
          size_type ind = add_Mindlin_Reissner_plate_brick
-         (md->model(), gfi_mim->mesh_im(), gfi_mim_reduced->mesh_im(),
+         (md->model(), *mim, gfi_mim_reduced->mesh_im(),
           varname_U, varname_theta, param_E, param_nu, param_epsilon,
           param_kapa, variant, region);
-         workspace().set_dependance(md, gfi_mim);
+         // workspace().set_dependance(md, mim);
          out.pop().from_integer(int(ind));
          );
 	
@@ -2089,7 +2088,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       is added on the whole mesh. Return the brick index in the model.@*/
     sub_command
       ("add mass brick", 2, 4, 0, 1,
-       getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+       getfem::mesh_im *mim = to_meshim_object(in.pop());
        std::string varname = in.pop().to_string();
        std::string dataname_rho;
        if (in.remaining()) dataname_rho = in.pop().to_string();
@@ -2097,9 +2096,9 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        if (in.remaining()) region = in.pop().to_integer();
        size_type ind
        = getfem::add_mass_brick
-       (md->model(), gfi_mim->mesh_im(), varname, dataname_rho, region)
+       (md->model(), *mim, varname, dataname_rho, region)
        + config::base_index();
-       workspace().set_dependance(md, gfi_mim);
+       // workspace().set_dependance(md, mim);
        out.pop().from_integer(int(ind));
        );
 
@@ -2438,7 +2437,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
 
         bool friction = false;
 
-        getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+        getfem::mesh_im *mim = to_meshim_object(in.pop());
         std::string varname_u = in.pop().to_string();
         std::string multname_n = in.pop().to_string();
         std::string dataname_r = in.pop().to_string();
@@ -2462,14 +2461,14 @@ void gf_model_set(getfemint::mexargs_in& m_in,
 
         if (friction)
           ind = getfem::add_nodal_contact_with_rigid_obstacle_brick
-            (md->model(), gfi_mim->mesh_im(), varname_u, multname_n,
+            (md->model(), *mim, varname_u, multname_n,
              multname_t, dataname_r, dataname_fr, region, obstacle,
              augmented_version);
         else
           ind = getfem::add_nodal_contact_with_rigid_obstacle_brick
-            (md->model(), gfi_mim->mesh_im(), varname_u, multname_n,
+            (md->model(), *mim, varname_u, multname_n,
              dataname_r, region, obstacle, augmented_version);
-        workspace().set_dependance(md, gfi_mim);
+        // workspace().set_dependance(md, mim);
         out.pop().from_integer(int(ind + config::base_index()));
         );
 
@@ -2515,7 +2514,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
      sub_command
        ("add integral contact with rigid obstacle brick", 6, 12, 0, 1,
 
-        getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+        getfem::mesh_im *mim = to_meshim_object(in.pop());
         std::string varname_u = in.pop().to_string();
         std::string multname = in.pop().to_string();
         std::string dataname_obs = in.pop().to_string();
@@ -2529,7 +2528,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
             if (in.remaining()) option = in.pop().to_integer();
 
             ind = getfem::add_integral_contact_with_rigid_obstacle_brick
-                    (md->model(), gfi_mim->mesh_im(), varname_u, multname,
+                    (md->model(), *mim, varname_u, multname,
                      dataname_obs, dataname_r, region, option);
         } else { // with friction
             std::string dataname_coeff = argin.to_string();
@@ -2545,11 +2544,11 @@ void gf_model_set(getfemint::mexargs_in& m_in,
             if (in.remaining()) dataname_vt = in.pop().to_string();
 
             ind = getfem::add_integral_contact_with_rigid_obstacle_brick
-                    (md->model(), gfi_mim->mesh_im(), varname_u, multname,
+                    (md->model(), *mim, varname_u, multname,
                      dataname_obs, dataname_r, dataname_coeff, region, option,
                      dataname_alpha, dataname_wt, dataname_gamma, dataname_vt);
         }
-        workspace().set_dependance(md, gfi_mim);
+        // workspace().set_dependance(md, mim);
         out.pop().from_integer(int(ind + config::base_index()));
         );
 
@@ -2573,7 +2572,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
      sub_command
        ("add penalized contact with rigid obstacle brick", 5, 10, 0, 1,
 
-        getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+        getfem::mesh_im *mim = to_meshim_object(in.pop());
         std::string varname_u = in.pop().to_string();
         std::string dataname_obs = in.pop().to_string();
         std::string dataname_r = in.pop().to_string();
@@ -2588,7 +2587,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
             if (in.remaining()) dataname_n = in.pop().to_string();
 
             ind = getfem::add_penalized_contact_with_rigid_obstacle_brick
-                    (md->model(), gfi_mim->mesh_im(), varname_u,
+                    (md->model(), *mim, varname_u,
                      dataname_obs, dataname_r, region, option, dataname_n);
         } else { // with friction
             std::string dataname_coeff = argin.to_string();
@@ -2602,12 +2601,12 @@ void gf_model_set(getfemint::mexargs_in& m_in,
             if (in.remaining()) dataname_wt = in.pop().to_string();
 
             ind = getfem::add_penalized_contact_with_rigid_obstacle_brick
-                    (md->model(), gfi_mim->mesh_im(), varname_u,
+                    (md->model(), *mim, varname_u,
                      dataname_obs, dataname_r, dataname_coeff, region, option,
                      dataname_lambda, dataname_alpha, dataname_wt);
         }
 
-        workspace().set_dependance(md, gfi_mim);
+        // workspace().set_dependance(md, mim);
         out.pop().from_integer(int(ind + config::base_index()));
         );
      
@@ -2636,7 +2635,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     @*/
     sub_command
       ("add Nitsche contact with rigid obstacle brick", 6, 10, 0, 1,
-       getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+       getfem::mesh_im *mim = to_meshim_object(in.pop());
        std::string varname = in.pop().to_string();
        std::string Neumannterm = in.pop().to_string();
        std::string dataname_obs = in.pop().to_string();
@@ -2660,10 +2659,10 @@ void gf_model_set(getfemint::mexargs_in& m_in,
 
        size_type ind = config::base_index();
        ind += getfem::add_Nitsche_contact_with_rigid_obstacle_brick
-       (md->model(), gfi_mim->mesh_im(), varname, Neumannterm, dataname_obs,
+       (md->model(), *mim, varname, Neumannterm, dataname_obs,
 	gamma0name, theta,
 	dataname_fr, dataname_alpha, dataname_wt, region);
-       workspace().set_dependance(md, gfi_mim);
+       // workspace().set_dependance(md, mim);
        out.pop().from_integer(int(ind));
        );
 
@@ -2691,7 +2690,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     @*/
     sub_command
       ("add Nitsche midpoint contact with rigid obstacle brick", 11, 11, 0, 1,
-       getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+       getfem::mesh_im *mim = to_meshim_object(in.pop());
        std::string varname = in.pop().to_string();
        std::string Neumannterm = in.pop().to_string();
        std::string Neumannterm_wt = in.pop().to_string();
@@ -2712,11 +2711,11 @@ void gf_model_set(getfemint::mexargs_in& m_in,
 
        size_type ind = config::base_index();
        ind += getfem::add_Nitsche_contact_with_rigid_obstacle_brick_modified_midpoint
-       (md->model(), gfi_mim->mesh_im(), varname, Neumannterm, Neumannterm_wt,
+       (md->model(), *mim, varname, Neumannterm, Neumannterm_wt,
         dataname_obs,
 	gamma0name, theta,
 	dataname_fr, dataname_alpha, dataname_wt, region);
-       workspace().set_dependance(md, gfi_mim);
+       // workspace().set_dependance(md, mim);
        out.pop().from_integer(int(ind));
        );
 
@@ -2748,7 +2747,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     @*/
     sub_command
       ("add Nitsche fictitious domain contact brick", 6, 11, 0, 1,
-       getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+       getfem::mesh_im *mim = to_meshim_object(in.pop());
        std::string varname1 = in.pop().to_string();
        std::string varname2 = in.pop().to_string();
        std::string dataname_d1 = in.pop().to_string();
@@ -2774,10 +2773,10 @@ void gf_model_set(getfemint::mexargs_in& m_in,
 
        size_type ind = config::base_index();
        ind += getfem::add_Nitsche_fictitious_domain_contact_brick
-       (md->model(), gfi_mim->mesh_im(), varname1, varname2, dataname_d1,
+       (md->model(), *mim, varname1, varname2, dataname_d1,
         dataname_d2, gamma0name, theta,
 	dataname_fr, dataname_alpha, dataname_wt1, dataname_wt2);
-       workspace().set_dependance(md, gfi_mim);
+       // workspace().set_dependance(md, mim);
        out.pop().from_integer(int(ind));
        );
 
@@ -2922,7 +2921,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
      sub_command
        ("add integral contact between nonmatching meshes brick", 7, 12, 0, 1,
 
-        getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+        getfem::mesh_im *mim = to_meshim_object(in.pop());
         std::string varname_u1 = in.pop().to_string();
         std::string varname_u2 = in.pop().to_string();
         std::string multname = in.pop().to_string();
@@ -2937,7 +2936,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
             if (in.remaining()) option = in.pop().to_integer();
 
             ind = getfem::add_integral_contact_between_nonmatching_meshes_brick
-                    (md->model(), gfi_mim->mesh_im(), varname_u1, varname_u2,
+                    (md->model(), *mim, varname_u1, varname_u2,
                      multname, dataname_r, region1, region2, option);
         } else { // with friction
             std::string dataname_coeff = argin.to_string();
@@ -2952,11 +2951,11 @@ void gf_model_set(getfemint::mexargs_in& m_in,
             if (in.remaining()) dataname_wt2 = in.pop().to_string();
 
             ind = getfem::add_integral_contact_between_nonmatching_meshes_brick
-                    (md->model(), gfi_mim->mesh_im(), varname_u1, varname_u2,
+                    (md->model(), *mim, varname_u1, varname_u2,
                      multname, dataname_r, dataname_coeff, region1, region2,
                      option, dataname_alpha, dataname_wt1, dataname_wt2);
         }
-        workspace().set_dependance(md, gfi_mim);
+        // workspace().set_dependance(md, mim);
         out.pop().from_integer(int(ind + config::base_index()));
         );
 
@@ -2984,7 +2983,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
      sub_command
        ("add penalized contact between nonmatching meshes brick", 6, 12, 0, 1,
 
-        getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+        getfem::mesh_im *mim = to_meshim_object(in.pop());
         std::string varname_u1 = in.pop().to_string();
         std::string varname_u2 = in.pop().to_string();
         std::string dataname_r = in.pop().to_string();
@@ -3000,7 +2999,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
             if (in.remaining()) dataname_n = in.pop().to_string();
 
             ind = getfem::add_penalized_contact_between_nonmatching_meshes_brick
-                    (md->model(), gfi_mim->mesh_im(), varname_u1, varname_u2,
+                    (md->model(), *mim, varname_u1, varname_u2,
                      dataname_r, region1, region2, option, dataname_n);
         } else { // with friction
             std::string dataname_coeff = argin.to_string();
@@ -3017,12 +3016,12 @@ void gf_model_set(getfemint::mexargs_in& m_in,
             if (in.remaining()) dataname_wt2 = in.pop().to_string();
 
             ind = getfem::add_penalized_contact_between_nonmatching_meshes_brick
-                    (md->model(), gfi_mim->mesh_im(), varname_u1, varname_u2,
+                    (md->model(), *mim, varname_u1, varname_u2,
                      dataname_r, dataname_coeff, region1, region2, option,
                      dataname_lambda, dataname_alpha, dataname_wt1, dataname_wt2);
         }
 
-        workspace().set_dependance(md, gfi_mim);
+        // workspace().set_dependance(md, mim);
         out.pop().from_integer(int(ind + config::base_index()));
         );
 
@@ -3086,14 +3085,14 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     sub_command
       ("add master contact boundary to large sliding contact brick", 4, 5, 0,0,
        size_type ind = in.pop().to_integer() - config::base_index();
-       getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+       getfem::mesh_im *mim = to_meshim_object(in.pop());
        size_type region = in.pop().to_integer();
        std::string dispname = in.pop().to_string();
        std::string wname;
        if (in.remaining()) wname = in.pop().to_string();
 
        add_contact_boundary_to_large_sliding_contact_brick
-       (md->model(), ind, gfi_mim->mesh_im(), region, true, false,
+       (md->model(), ind, *mim, region, true, false,
         dispname, "", wname);
        );
 
@@ -3104,7 +3103,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     sub_command
       ("add slave contact boundary to large sliding contact brick", 5, 6, 0,0,
        size_type ind = in.pop().to_integer() - config::base_index();
-       getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+       getfem::mesh_im *mim = to_meshim_object(in.pop());
        size_type region = in.pop().to_integer();
        std::string dispname = in.pop().to_string();
        std::string lambda = in.pop().to_string();
@@ -3112,7 +3111,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        if (in.remaining()) wname = in.pop().to_string();
 
        add_contact_boundary_to_large_sliding_contact_brick
-       (md->model(), ind, gfi_mim->mesh_im(), region, false, true,
+       (md->model(), ind, *mim, region, false, true,
         dispname, lambda, wname);
        );
 
@@ -3124,7 +3123,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       ("add master slave contact boundary to large sliding contact brick",
        5, 6, 0, 0,
        size_type ind = in.pop().to_integer() - config::base_index();
-       getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+       getfem::mesh_im *mim = to_meshim_object(in.pop());
        size_type region = in.pop().to_integer();
        std::string dispname = in.pop().to_string();
        std::string lambda = in.pop().to_string();
@@ -3132,7 +3131,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        if (in.remaining()) wname = in.pop().to_string();
 
        add_contact_boundary_to_large_sliding_contact_brick
-       (md->model(), ind, gfi_mim->mesh_im(), region, true, true,
+       (md->model(), ind, *mim, region, true, true,
         dispname, lambda, wname);
        );
   }

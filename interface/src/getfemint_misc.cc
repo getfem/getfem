@@ -461,7 +461,8 @@ namespace getfemint {
 
     getfem::base_matrix pt_val;
     if (pmf) {
-      check_cv_fem(*pmf, cv);
+      if (!pmf->convex_index()[cv])
+	THROW_ERROR( "convex " << cv+config::base_index() << " has no FEM");
       pt_val.resize(qdim*U.getm(), pt.size());
       interpolate_on_convex_ref(pmf, cv, pt, U, pt_val);
     }

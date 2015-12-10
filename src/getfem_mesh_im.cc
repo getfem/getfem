@@ -113,7 +113,7 @@ namespace getfem {
 
 
   void mesh_im::init_with_mesh(mesh &me) {
-    GMM_ASSERT1(linked_mesh_ == 0, "Mesh level set already initialized");
+    GMM_ASSERT1(linked_mesh_ == 0, "Mesh im already initialized");
     linked_mesh_ = &me;
     this->add_dependency(me);
     auto_add_elt_pim = 0;
@@ -126,16 +126,24 @@ namespace getfem {
     v_num_update = v_num = act_counter();
   }
 
-  mesh_im::mesh_im(const mesh_im &mim) : context_dependencies() {
-    GMM_ASSERT1(mim.linked_mesh_ == 0,
-		"Copy constructor is not allowed for non void mesh_im");
-    linked_mesh_ = 0; auto_add_elt_pim = 0; is_lower_dim = false;
-    v_num_update = v_num = act_counter();
+  void mesh_im::copy_from(const mesh_im &mim) {
+    if (linked_mesh_) this->sup_dependency(*linked_mesh_);
+    linked_mesh_ = 0;
+    init_with_mesh(*(const_cast<mesh *>(mim.linked_mesh_)));
+    is_lower_dim = mim.is_lower_dim;
+    im_convexes = mim.im_convexes;
+    v_num_update = mim.v_num_update;
+    v_num = mim.v_num;
+    ims = mim.ims;
+    auto_add_elt_pim = mim.auto_add_elt_pim;
   }
 
-  mesh_im & mesh_im::operator=(const mesh_im &mim) {
-    GMM_ASSERT1(linked_mesh_ == 0 && mim.linked_mesh_ == 0,
-		"Copy operator is not allowed for non void mesh_im");
+  mesh_im::mesh_im(const mesh_im &mim) : context_dependencies() {
+    linked_mesh_ = 0; copy_from(mim);
+  }
+
+  mesh_im &mesh_im::operator=(const mesh_im &mim) {
+    copy_from(mim);
     return *this;
   }
 

@@ -155,7 +155,9 @@ void gf_mesh_im_get(getfemint::mexargs_in& m_in,
        /* if the convex has a IM, then it has been added to the convex index
           of the mesh_fem
        */
-       check_cv_im(*mim, cv);
+       if (!mim->convex_index()[cv])
+	 THROW_ERROR("convex " << cv+config::base_index()
+		     << " has no integration method!");
        getfem::pmat_elem_computation pmec =
        getfem::mat_elem(pmet,
                         mim->int_method_of_element(cv) ,

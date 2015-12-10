@@ -117,7 +117,9 @@ non_conformal_dof(getfem::mesh_fem &mf, mexargs_in &in, mexargs_out &out) {
   else cvlst = m.convex_index();
 
   for (dal::bv_visitor ic(cvlst); !ic.finished(); ++ic) {
-    check_cv_fem(mf, ic);
+    if (!mf.convex_index()[ic])
+      THROW_ERROR( "convex " << ic+config::base_index() << " has no FEM");
+
     for (short_type f = 0; f < m.structure_of_convex(ic)->nb_faces(); f++) {
       bgeot::short_type q;
       if (!m.is_convex_having_neighbour(ic, f)) {

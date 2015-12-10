@@ -34,7 +34,6 @@
 #include <getfemint_workspace.h>
 #include <getfemint_mesh.h>
 #include <getfemint_mesh_fem.h>
-#include <getfemint_mesh_im.h>
 #include <getfemint_models.h>
 #include <getfemint_precond.h>
 #include <getfemint_gsparse.h>
@@ -272,15 +271,6 @@ namespace getfemint {
   }
 
   bool
-  mexarg_in::is_mesh_im() {
-    id_type id, cid;
-    if (is_object_id(&id, &cid) && cid == MESHIM_CLASS_ID) {
-      getfem_object *o=workspace().object(id, name_of_getfemint_class_id(cid));
-      return (object_is_mesh_im(o));
-    } else return false;
-  }
-
-  bool
   mexarg_in::is_model() {
     id_type id, cid;
     if (is_object_id(&id, &cid) && cid == MODEL_CLASS_ID) {
@@ -352,33 +342,6 @@ namespace getfemint {
   }
 
   /*
-    check if the argument is a valid handle to a mesh_im,
-    and returns it
-  */
-  getfemint_mesh_im *
-  mexarg_in::to_getfemint_mesh_im(bool writeable) {
-    id_type id, cid;
-    to_object_id(&id,&cid);
-    if (cid != MESHIM_CLASS_ID) {
-      THROW_BADARG("argument " << argnum << " should be a mesh_im descriptor, "
-                   "its class is " << name_of_getfemint_class_id(cid));
-    }
-    getfem_object *o = workspace().object(id,name_of_getfemint_class_id(cid));
-    error_if_nonwritable(o,writeable);
-    return object_to_mesh_im(o);
-  }
-
-  getfem::mesh_im *
-  mexarg_in::to_mesh_im() {
-    return &to_getfemint_mesh_im(true)->mesh_im();
-  }
-
-  const getfem::mesh_im *
-  mexarg_in::to_const_mesh_im() {
-    return &to_getfemint_mesh_im(false)->mesh_im();
-  }
-
-  /*
     check if the argument is a valid mesh handle
     if a mesh_fem handle is given, its associated
     mesh is used
@@ -404,13 +367,15 @@ namespace getfemint {
     } else if (object_is_mesh_fem(o)) {
       mid = object_to_mesh_fem(o)->linked_mesh_id();
       mesh = &object_to_mesh_fem(o)->mesh_fem().linked_mesh();
-    } else if (object_is_mesh_im(o)) {
-      mid = object_to_mesh_im(o)->linked_mesh_id();
-      mesh = &object_to_mesh_im(o)->mesh_im().linked_mesh();
+    } else if (dynamic_cast<getfem::mesh_im *>(o)) {
+      // o n'est pas bon pour le moment. Le sera quand il viendra du workspace2
+      mesh = &dynamic_cast<getfem::mesh_im *>(o)->linked_mesh();
+      mid = workspace2().object(mesh); // A arranger avec ce qui précède...
+      if (mid == id_type(-1)) THROW_INTERNAL_ERROR;
     } else if (dynamic_cast<getfem::im_data *>(o)) {
       // o n'est pas bon pour le moment. Le sera quand il viendra du workspace2
-      mesh = &dynamic_cast<getfem::im_data *>(o)->linked_mesh_im().linked_mesh();
-      mid = workspace2().object(mesh); // A arranger avec ce qui précède ...
+      mesh =&dynamic_cast<getfem::im_data *>(o)->linked_mesh_im().linked_mesh();
+      mid = workspace2().object(mesh); // A arranger avec ce qui précède...
       if (mid == id_type(-1)) THROW_INTERNAL_ERROR;
     } else THROW_INTERNAL_ERROR;
     return mesh;
@@ -1131,14 +1096,6 @@ namespace getfemint {
       for (size_type i=0; i < id.size(); ++i)
         v[unsigned(i)] = (id[i] != id_type(-1)) ? m[id[i]] : id_type(-1);
     }
-  }
-
-  void check_cv_fem(const getfem::mesh_fem& mf, size_type cv) {
-    if (!mf.convex_index()[cv]) THROW_ERROR( "convex " << cv+config::base_index() << " has no FEM");
-  }
-
-  void check_cv_im(const getfem::mesh_im& mim, size_type cv) {
-    if (!mim.convex_index()[cv]) THROW_ERROR( "convex " << cv+config::base_index() << " has no integration method!");
   }
 
 

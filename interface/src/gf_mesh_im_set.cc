@@ -20,9 +20,8 @@
 ===========================================================================*/
 
 #include <getfemint_misc.h>
-#include <getfemint_mesh_im.h>
+#include <getfem/getfem_mesh_im.h>
 #include <getfem/getfem_mesh_im_level_set.h>
-#include <getfem/getfem_integration.h>
 
 using namespace getfemint;
 

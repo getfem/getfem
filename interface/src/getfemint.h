@@ -47,7 +47,6 @@
 namespace getfem {
   class mesh;
   class mesh_fem;
-  class mesh_im;
   class model;
 }
 
@@ -162,7 +161,6 @@ namespace getfemint {
   class getfem_object;
   class getfemint_mesh;
   class getfemint_mesh_fem;
-  class getfemint_mesh_im;
   class getfemint_model;
   class gsparse;
 
@@ -483,7 +481,6 @@ namespace getfemint {
     bool is_object_id(id_type *pid=0, id_type *pcid=0) const;
     bool is_mesh();
     bool is_mesh_fem();
-    bool is_mesh_im();
     bool is_model();
     bool is_sparse();
     bool is_complex(); /* true for complex garrays AND complex sparse matrices
@@ -502,13 +499,10 @@ namespace getfemint {
     id_type                  to_object_id(id_type *pid=0, id_type *pcid=0);
     const getfem::mesh_fem * to_const_mesh_fem();
     getfem::mesh_fem *       to_mesh_fem();
-    const getfem::mesh_im *  to_const_mesh_im();
-    getfem::mesh_im *        to_mesh_im();
     const getfem::mesh *     to_const_mesh();
     const getfem::mesh *     to_const_mesh(id_type& id);
     getfemint_mesh *         to_getfemint_mesh(bool writeable=false);
     getfemint_mesh_fem *     to_getfemint_mesh_fem(bool writeable=false);
-    getfemint_mesh_im *      to_getfemint_mesh_im(bool writeable=false);
     getfemint_model *        to_getfemint_model(bool writeable=false);
     getfem::mesh *           to_mesh();
     getfem::mesh_region      to_mesh_region();
@@ -768,8 +762,7 @@ namespace getfemint {
   inline void bad_cmd(std::string& cmd) {
     THROW_BADARG("Bad command name: " << cmd); }
 
-  void check_cv_fem(const getfem::mesh_fem& mf, size_type cv);
-  void check_cv_im(const getfem::mesh_im& mim, size_type cv);
+
 
 # define getfemint_declare_getfem_class(CLASS)				\
   } namespace getfem { class CLASS; } namespace getfemint {
