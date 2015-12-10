@@ -813,7 +813,7 @@ void gf_mesh_fem_get(getfemint::mexargs_in& m_in,
     the convexes which are not crosses by the levelset!@*/
     sub_command
       ("dof_from_im", 1, 2, 0, 1,
-       const getfem::mesh_im &mim = *in.pop().to_const_mesh_im();
+       const getfem::mesh_im &mim = *to_meshim_object(in.pop());
        int P = -1;
        if (&mim.linked_mesh() != &mf->linked_mesh())
 	 THROW_BADARG("the mesh_im uses a different mesh");

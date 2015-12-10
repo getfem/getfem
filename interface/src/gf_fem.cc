@@ -19,12 +19,12 @@
 
 ===========================================================================*/
 // $Id$
+#include <getfem/getfem_mesh_im.h>
+#include <getfem/getfem_interpolated_fem.h>
+#include <getfem/getfem_fem.h>
 #include <getfemint_misc.h>
 #include <getfemint_mesh_fem.h>
-#include <getfemint_mesh_im.h>
-#include <getfem/getfem_interpolated_fem.h>
 #include <getfemint_workspace.h>
-#include <getfem/getfem_fem.h>
 
 using namespace getfemint;
 /*@GFDOC
@@ -50,20 +50,18 @@ void gf_fem(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
     Note that this finite element may be quite slow, and eats much
     memory.@*/
     getfemint_mesh_fem *gfi_mf  = in.pop().to_getfemint_mesh_fem();
-    getfemint_mesh_im  *gfi_mim = in.pop().to_getfemint_mesh_im();
+    getfem::mesh_im  *mim = to_meshim_object(in.pop());
     dal::bit_vector blocked_dof;
     if (in.remaining())
       blocked_dof = in.pop().to_bit_vector();
     getfem::pfem pf =
-      getfem::new_interpolated_fem(gfi_mf->mesh_fem(),
-				   gfi_mim->mesh_im(),
-				   0, blocked_dof);
+      getfem::new_interpolated_fem(gfi_mf->mesh_fem(), *mim, 0, blocked_dof);
     // gfi_pf = getfemint_pfem::get_from(pf);
     // gfi_pf->nbdof_need_convex_number() = true;
     
     id = store_fem_object(pf);
 
-    // workspace().set_dependance(id, gfi_mim);
+    // workspace().set_dependance(id, mim);
     // workspace().set_dependance(id, gfi_mf);
   } else {
     /*@INIT F = ('.list', @str fem_name)

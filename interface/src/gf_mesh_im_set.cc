@@ -98,7 +98,7 @@ void gf_mesh_im_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     THROW_BADARG( "Wrong number of input arguments");
   }
 
-  getfem::mesh_im *mim = in.pop().to_mesh_im();
+  getfem::mesh_im *mim = to_meshim_object(in.pop());
   std::string cmd = in.pop().to_string();
   if (check_cmd(cmd, "integ", in, out, 1, 2, 0, 0)) {
     /*@SET ('integ',{@tinteg im|@int im_degree}[, @ivec CVids])

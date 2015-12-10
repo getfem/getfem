@@ -28,7 +28,6 @@
 #include <getfemint_misc.h>
 #include <getfemint_models.h>
 #include <getfemint_mesh_fem.h>
-#include <getfemint_mesh_im.h>
 #include <getfem/getfem_model_solvers.h>
 #include <getfem/getfem_generic_assembly.h>
 #include <getfem/getfem_nonlinear_elasticity.h>
@@ -865,7 +864,7 @@ void gf_model_get(getfemint::mexargs_in& m_in,
       'datasigma' is a vector which will contains the new stress constraints values.@*/
     sub_command
       ("elastoplasticity next iter", 7, 7, 0, 1,
-       getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();;
+       getfem::mesh_im *mim = to_meshim_object(in.pop());
        std::string varname = in.pop().to_string();
        std::string projname = in.pop().to_string();
        std::string datalambda = in.pop().to_string();
@@ -875,7 +874,7 @@ void gf_model_get(getfemint::mexargs_in& m_in,
 
 
        getfem::elastoplasticity_next_iter
-       (md->model(), gfi_mim->mesh_im(), varname,
+       (md->model(), *mim, varname,
 	abstract_constraints_projection_from_name(projname),
 	datalambda, datamu, datathreshold, datasigma);
        );
@@ -888,7 +887,7 @@ void gf_model_get(getfemint::mexargs_in& m_in,
       `datasigma` is a vector which contains the stress constraints values supported by the mesh.@*/
      sub_command
       ("compute plastic part", 8, 8, 0, 1,
-       getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();;
+       getfem::mesh_im *mim = to_meshim_object(in.pop());
        getfemint_mesh_fem *gfi_mf = in.pop().to_getfemint_mesh_fem();
        std::string varname = in.pop().to_string();
        std::string projname = in.pop().to_string();
@@ -899,7 +898,7 @@ void gf_model_get(getfemint::mexargs_in& m_in,
 
        getfem::model_real_plain_vector plast((gfi_mf->mesh_fem()).nb_dof());
        getfem::compute_plastic_part
-       (md->model(), gfi_mim->mesh_im(),  gfi_mf->mesh_fem(), varname,
+       (md->model(), *mim,  gfi_mf->mesh_fem(), varname,
 	abstract_constraints_projection_from_name(projname),
         datalambda, datamu, datathreshold, datasigma, plast);
        out.pop().from_dcvector(plast);

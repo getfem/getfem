@@ -196,9 +196,9 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     sub_command
       ("add im data", 2, 2, 0, 0,
        std::string name = in.pop().to_string();
-       getfem::im_data *mimd = to_meshim_object(in.pop());
+       getfem::im_data *mimd = to_meshimdata_object(in.pop());
        md->model().add_im_data(name, *mimd);
-       // workspace().set_dependance(md, gfi_mimd);
+       // workspace().set_dependance(md, mimd);
        );
 
 
@@ -1690,7 +1690,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     sub_command
       ("add nonlinear elasticity brick", 4, 5, 0, 1,
        getfem::mesh_im *mim = to_meshim_object(in.pop());
-       size_type N = *mim.linked_mesh().dim();
+       size_type N = mim->linked_mesh().dim();
        std::string varname = in.pop().to_string();
        std::string lawname = in.pop().to_string();
        std::string dataname = in.pop().to_string();
@@ -2059,7 +2059,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
      sub_command
         ("add Mindlin Reissner plate brick", 7, 9, 0, 1,
          getfem::mesh_im *mim = to_meshim_object(in.pop());
-         getfemint_mesh_im *gfi_mim_reduced = in.pop().to_getfemint_mesh_im();
+	 getfem::mesh_im *mim_reduced = to_meshim_object(in.pop());
          std::string varname_U = in.pop().to_string();
          std::string varname_theta = in.pop().to_string();
          std::string param_E = in.pop().to_string();
@@ -2071,7 +2071,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
          size_type region = size_type(-1);
          if (in.remaining()) region = in.pop().to_integer();
          size_type ind = add_Mindlin_Reissner_plate_brick
-         (md->model(), *mim, gfi_mim_reduced->mesh_im(),
+         (md->model(), *mim, *mim_reduced,
           varname_U, varname_theta, param_E, param_nu, param_epsilon,
           param_kapa, variant, region);
          // workspace().set_dependance(md, mim);
@@ -2822,22 +2822,22 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         bool two_variables = true;
         bool friction = false;
 
-        getfemint_mesh_im *gfi_mim1;
-        getfemint_mesh_im *gfi_mim2;
+	getfem::mesh_im *mim1 = 0;
+	getfem::mesh_im *mim2 = 0;
         std::string varname_u1;
         std::string varname_u2;
         bool slave1=true; bool slave2=false;
         int augmented_version = 1;
 
-        gfi_mim1 = in.pop().to_getfemint_mesh_im();
+        mim1 = to_meshim_object(in.pop());
         mexarg_in argin = in.pop();
         if (argin.is_string()) {
           two_variables = false;
-          gfi_mim2 = gfi_mim1;
+          mim2 = mim1;
           varname_u1 = argin.to_string();
           varname_u2 = varname_u1;
         } else {
-          gfi_mim2 = argin.to_getfemint_mesh_im();
+          mim2 = to_meshim_object(argin);
           varname_u1 = in.pop().to_string();
           varname_u2 = in.pop().to_string();
         }
@@ -2862,18 +2862,18 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         size_type ind;
         if (!friction)
           ind = getfem::add_nodal_contact_between_nonmatching_meshes_brick
-            (md->model(), gfi_mim1->mesh_im(), gfi_mim2->mesh_im(),
+            (md->model(), *mim1, *mim2,
              varname_u1, varname_u2, multname_n, dataname_r,
              vrg1, vrg2, slave1, slave2, augmented_version);
         else
           ind = getfem::add_nodal_contact_between_nonmatching_meshes_brick
-            (md->model(), gfi_mim1->mesh_im(), gfi_mim2->mesh_im(),
+            (md->model(), *mim1, *mim2,
              varname_u1, varname_u2, multname_n, multname_t,
              dataname_r, dataname_fr,
              vrg1, vrg2, slave1, slave2, augmented_version);
-        workspace().set_dependance(md, gfi_mim1);
-        if (two_variables)
-          workspace().set_dependance(md, gfi_mim2);
+        // workspace().set_dependance(md, mim1);
+        // if (two_variables)
+        //   workspace().set_dependance(md, mim2);
         out.pop().from_integer(int(ind + config::base_index()));
         );
 

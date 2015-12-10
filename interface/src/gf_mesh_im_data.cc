@@ -20,7 +20,6 @@
 ===========================================================================*/
 
 #include <getfemint.h>
-#include <getfemint_mesh_im.h>
 #include <getfem/getfem_im_data.h>
 
 
@@ -35,7 +34,7 @@ void gf_mesh_im_data(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out)
 
   if (m_in.narg() < 1 || m_in.narg() > 3) THROW_BADARG("Wrong number of input arguments");
   if (!m_out.narg_in_range(1, 1)) THROW_BADARG("Wrong number of output arguments");
-  if (!m_in.front().is_mesh_im()) THROW_BADARG("Wrong type of input argument, mesh_im expected");
+  if (!is_meshim_object(m_in.front())) THROW_BADARG("Wrong type of input argument, mesh_im expected");
 
   /*@INIT MIMD = ('.mesh_im', @tmim mim, @int region, @ivec size)
     Build a new @tmimd object linked to a @tmim object. If `region` is
@@ -44,7 +43,7 @@ void gf_mesh_im_data(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out)
     stored data per integration point. If not given, the scalar stored
     data are considered.
   @*/
-  getfemint_mesh_im *mim = m_in.pop().to_getfemint_mesh_im();
+  getfem::mesh_im *mim = to_meshim_object(m_in.pop());
   size_type rnum = size_type(-1);
   if (m_in.remaining())
     rnum = size_type(m_in.pop().to_integer());
@@ -56,7 +55,7 @@ void gf_mesh_im_data(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out)
     std::copy(v.begin(), v.end(), tensor_size.begin());
   }
   
-  auto mimd = std::make_shared<getfem::im_data>(mim->mesh_im());
+  auto mimd = std::make_shared<getfem::im_data>(*mim);
   mimd->set_region(rnum);
   mimd->set_tensor_size(tensor_size);
   id_type id = store_meshimdata_object(mimd);

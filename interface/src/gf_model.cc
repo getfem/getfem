@@ -23,10 +23,10 @@
    \brief model construction wrapper.
 */
 
+#include <getfem/getfem_mesh_im.h>
 #include <getfemint.h>
 #include <getfemint_workspace.h>
 #include <getfemint_models.h>
-#include <getfemint_mesh_im.h>
 #include <getfemint_mesh_fem.h>
 
 

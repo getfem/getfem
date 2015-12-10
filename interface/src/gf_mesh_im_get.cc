@@ -19,8 +19,8 @@
 
 ===========================================================================*/
 
-#include <getfemint_misc.h>
-#include <getfemint_mesh_im.h>
+#include <getfemint_workspace.h>
+#include <getfem/getfem_mesh_im.h>
 #include <getfem/getfem_integration.h>
 #include <getfem/getfem_mat_elem.h>
 /*
@@ -58,7 +58,6 @@ struct sub_gf_mim_get : virtual public dal::static_stored_object {
   int arg_in_min, arg_in_max, arg_out_min, arg_out_max;
   virtual void run(getfemint::mexargs_in& in,
                    getfemint::mexargs_out& out,
-                   getfemint_mesh_im *mi_mim,
                    getfem::mesh_im *mim) = 0;
 };
 
@@ -71,9 +70,8 @@ template <typename T> static inline void dummy_func(T &) {}
     struct subc : public sub_gf_mim_get {				\
       virtual void run(getfemint::mexargs_in& in,			\
                        getfemint::mexargs_out& out,			\
-                       getfemint_mesh_im *mi_mim, getfem::mesh_im *mim)	\
-      { dummy_func(in); dummy_func(out);  dummy_func(mi_mim);		\
-        dummy_func(mim); code }						\
+                       getfem::mesh_im *mim)				\
+      { dummy_func(in); dummy_func(out);  dummy_func(mim); code }	\
     };									\
     psub_command psubc = std::make_shared<subc>();			\
     psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;		\
@@ -273,7 +271,9 @@ void gf_mesh_im_get(getfemint::mexargs_in& m_in,
     Returns a reference to the @tmesh object linked to `mim`.@*/
     sub_command
       ("linked mesh", 0, 0, 0, 1,
-       out.pop().from_object_id(mi_mim->linked_mesh_id(), MESH_CLASS_ID);
+       id_type id = workspace2().object((const void *)(&mim->linked_mesh()));
+       if (id == id_type(-1)) THROW_INTERNAL_ERROR;
+       out.pop().from_object_id(id, MESH_CLASS_ID);
        );
 
 
@@ -291,8 +291,7 @@ void gf_mesh_im_get(getfemint::mexargs_in& m_in,
 
   if (m_in.narg() < 2)  THROW_BADARG( "Wrong number of input arguments");
 
-  getfemint_mesh_im *mi_mim = m_in.pop().to_getfemint_mesh_im();
-  getfem::mesh_im *mim   = &mi_mim->mesh_im();
+  getfem::mesh_im *mim   = to_meshim_object(m_in.pop());
   std::string init_cmd   = m_in.pop().to_string();
   std::string cmd        = cmd_normalize(init_cmd);
 
@@ -302,7 +301,7 @@ void gf_mesh_im_get(getfemint::mexargs_in& m_in,
     check_cmd(cmd, it->first.c_str(), m_in, m_out, it->second->arg_in_min,
               it->second->arg_in_max, it->second->arg_out_min,
               it->second->arg_out_max);
-    it->second->run(m_in, m_out, mi_mim, mim);
+    it->second->run(m_in, m_out, mim);
   }
   else bad_cmd(init_cmd);
 

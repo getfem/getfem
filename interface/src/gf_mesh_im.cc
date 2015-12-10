@@ -42,7 +42,7 @@ struct sub_gf_mim : virtual public dal::static_stored_object {
   int arg_in_min, arg_in_max, arg_out_min, arg_out_max;
   virtual void run(getfemint::mexargs_in& in,
 		   getfemint::mexargs_out& out,
-		   getfemint_mesh *mm,
+		   getfem::mesh *mm,
 		   std::shared_ptr<getfem::mesh_im> &mim) = 0;
 };
 
@@ -55,7 +55,7 @@ template <typename T> static inline void dummy_func(T &) {}
     struct subc : public sub_gf_mim {					\
       virtual void run(getfemint::mexargs_in& in,			\
 		       getfemint::mexargs_out& out,			\
-		       getfemint_mesh *mm,				\
+		       getfem::mesh *mm,				\
 		       std::shared_ptr<getfem::mesh_im> &mim)		\
       { dummy_func(in); dummy_func(out); dummy_func(mm); code }		\
     };									\
@@ -84,11 +84,11 @@ void gf_mesh_im(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
     sub_command
       ("load", 1, 2, 0, 1,
        std::string fname = in.pop().to_string();
-       if (in.remaining()) mm = in.pop().to_getfemint_mesh();
+       if (in.remaining()) mm = &in.pop().to_getfemint_mesh()->mesh();
        else {
 	 getfem::mesh *m = new getfem::mesh();
 	 m->read_from_file(fname);
-	 mm = getfemint_mesh::get_from(m);
+	 mm = &getfemint_mesh::get_from(m)->mesh();
        }
        mim = std::make_shared<getfem::mesh_im>(*mm);
        mim->read_from_file(fname);
@@ -102,14 +102,14 @@ void gf_mesh_im(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
     sub_command
       ("from string", 1, 2, 0, 1,
        std::stringstream ss(in.pop().to_string());
-       if (in.remaining()) mm = in.pop().to_getfemint_mesh();
+       if (in.remaining()) mm = &in.pop().to_getfemint_mesh()->mesh();
        else {
 	 getfem::mesh *m = new getfem::mesh();
 	 m->read_from_file(ss);
 	 
 	 // + Store the mesh! + dependance of the mesh from the mesh_im
 	 // workspace().set_dependance(m, mim);
-	 mm = getfemint_mesh::get_from(m);
+	 mm = &getfemint_mesh::get_from(m)->mesh();
        }
        mim = std::make_shared<getfem::mesh_im>(*mm);
        mim->read_from_file(ss);
@@ -121,7 +121,7 @@ void gf_mesh_im(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
     sub_command
       ("clone", 1, 1, 0, 1,
        getfem::mesh_im *mim2 = to_meshim_object(in.pop());
-       mm = object_to_mesh(workspace().object(mim2->linked_mesh_id()));
+       mm = &mim2->linked_mesh();
        mim = std::make_shared<getfem::mesh_im>(*mim2);
        );
 
@@ -202,9 +202,9 @@ void gf_mesh_im(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        if (pim->type() != getfem::IM_APPROX) {
  	 THROW_BADARG("expecting an approximate integration method");
        }
-
-       getfem::mesh_im_level_set *mimls =
-       new getfem::mesh_im_level_set(mls, where, pim, pim2);
+       
+       auto mimls = std::make_shared<getfem::mesh_im_level_set>(mls, where,
+								pim, pim2);
        if (pim3)
 	 mimls->set_integration_method(mimls->linked_mesh().convex_index(),
 				       pim3);
@@ -213,7 +213,7 @@ void gf_mesh_im(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        if (csg_description.size()) {
  	 mimls->set_level_set_boolean_operations(csg_description);
        }
-       mim = getfemint_mesh_im::get_from(mimls);
+       mim = mimls;
        mimls->adapt();
        // workspace().set_dependance(mim, mls);
        );
@@ -222,7 +222,7 @@ void gf_mesh_im(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
 
 
   if (m_in.narg() < 1) THROW_BADARG("Wrong number of input arguments");
-  getfemint_mesh *mm = NULL;
+  getfem::mesh *mm = NULL;
   std::shared_ptr<getfem::mesh_im> mim;
   if (m_in.front().is_string()) {
     std::string init_cmd   = m_in.pop().to_string();
@@ -247,10 +247,10 @@ void gf_mesh_im(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
       with these arguments.@*/
     if (!m_out.narg_in_range(1, 1))
       THROW_BADARG("Wrong number of output arguments");
-    mm = m_in.pop().to_getfemint_mesh();
+    mm = &(m_in.pop().to_getfemint_mesh()->mesh());
     mim = std::make_shared<getfem::mesh_im>(*mm);
     if (m_in.remaining()) {
-      gf_mesh_im_set_integ(&mim->get(), m_in);
+      gf_mesh_im_set_integ(mim.get(), m_in);
     }
     if (m_in.remaining()) THROW_BADARG("Wrong number of input arguments");
     

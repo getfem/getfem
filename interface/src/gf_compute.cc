@@ -506,7 +506,7 @@ void gf_compute(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
     the jump of the normal derivative is integrated on its faces.@*/
     sub_command
       ("error_estimate", 1, 1, 0, 1,
-       const getfem::mesh_im &mim = to_meshim_object(in.pop());
+       const getfem::mesh_im &mim = *(to_meshim_object(in.pop()));
        darray err =
        out.pop().create_darray_h
        (unsigned(mim.linked_mesh().convex_index().last_true()+1));

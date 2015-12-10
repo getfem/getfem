@@ -19,13 +19,6 @@
 
 ===========================================================================*/
 
-#include <getfemint.h>
-#include <getfemint_mesh_im.h>
-#include <getfemint_models.h>
-#include <getfem/getfem_assembling.h>
-#include <getfem/getfem_level_set.h>
-#include <getfemint_misc.h>
-#include <getfemint_gsparse.h>
 #include <getfem/getfem_interpolation.h>
 #include <getfem/getfem_nonlinear_elasticity.h>
 #include <getfem/getfem_fourth_order.h>
@@ -33,7 +26,13 @@
 #include <getfem/getfem_contact_and_friction_integral.h>
 #include <getfem/getfem_contact_and_friction_large_sliding.h>
 #include <getfem/getfem_generic_assembly.h>
+#include <getfem/getfem_assembling.h>
+#include <getfem/getfem_level_set.h>
 #include <getfem/getfem_im_data.h>
+#include <getfemint.h>
+#include <getfemint_models.h>
+#include <getfemint_misc.h>
+#include <getfemint_gsparse.h>
 
 #if GETFEM_HAVE_METIS_OLD_API
 extern "C" void METIS_PartGraphKway(int *, int *, int *, int *, int *, int *,
@@ -365,8 +364,8 @@ do_generic_assembly(mexargs_in& in, mexargs_out& out, bool on_boundary)
   std::string s = in.pop().to_string();
   getfem::generic_assembly assem(s);
   /* stores the mesh_fem identifiers */
-  while (in.remaining() && in.front().is_mesh_im()) {
-    assem.push_mi(*in.pop().to_mesh_im());
+  while (in.remaining() && is_meshim_object(in.front())) {
+    assem.push_mi(*to_meshim_object(in.pop()));
   }
   if (assem.im().size() == 0)
     THROW_BADARG("generic assembly without any mesh_im has no sense!");
@@ -418,7 +417,7 @@ do_generic_assembly(mexargs_in& in, mexargs_out& out, bool on_boundary)
 
 static void do_high_level_generic_assembly(mexargs_in& in, mexargs_out& out) {
 
-  getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+  getfem::mesh_im *mim = to_meshim_object(in.pop());
   size_type order = in.pop().to_integer(0, 2);
   std::string expr = in.pop().to_string();
   size_type region = in.pop().to_integer();
@@ -477,8 +476,7 @@ static void do_high_level_generic_assembly(mexargs_in& in, mexargs_out& out) {
   }
 
   size_type add_derivative_order = (order != 0) ? 2 : 0;
-  workspace.add_expression(expr, gfi_mim->mesh_im(), region,
-                           add_derivative_order);
+  workspace.add_expression(expr, *mim, region, add_derivative_order);
 
   switch (order) {
   case 0:
@@ -515,11 +513,11 @@ static void do_expression_analysis(mexargs_in& in) {
   std::string expr = in.pop().to_string();
 
   bool with_mesh = in.remaining() && in.front().is_mesh();
-  bool with_mim = !with_mesh && in.remaining() && in.front().is_mesh_im();
+  bool with_mim = !with_mesh && in.remaining() && is_meshim_object(in.front());
 
   getfem::mesh dummy_mesh;
   const getfem::mesh_im dummy_mim(with_mesh ? *(in.pop().to_mesh()) : dummy_mesh);
-  const getfem::mesh_im &mim = with_mim ? *(in.pop().to_const_mesh_im())
+  const getfem::mesh_im &mim = with_mim ? *(to_meshim_object(in.pop()))
                                         : dummy_mim;
 
   size_type der_order = in.remaining() && in.front().is_integer()
@@ -638,11 +636,11 @@ void interpolate_or_extrapolate(mexargs_in &in, mexargs_out &out, int extrapolat
 }
 
 static const getfem::mesh_im *get_mim(mexargs_in &in) {
-  if (!in.front().is_mesh_im()) {
+  if (!is_meshim_object(in.front())) {
     THROW_BADARG("Since release 2.0 of getfem, all assembly functions"
                  " expect a mesh_im as their second argument");
   }
-  return in.pop().to_const_mesh_im();
+  return to_meshim_object(in.pop());
 }
 
 void assemble_source(size_type boundary_num,
