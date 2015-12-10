@@ -28,13 +28,13 @@
 #include <getfem/getfem_integration.h>
 #include <getfem/bgeot_convex_structure.h>
 #include <getfem/getfem_mesh_level_set.h>
+#include <getfem/getfem_im_data.h>
 #include <getfemint.h>
 #include <getfemint_misc.h>
 #include <getfemint_workspace.h>
 #include <getfemint_mesh.h>
 #include <getfemint_mesh_fem.h>
 #include <getfemint_mesh_im.h>
-#include <getfemint_mesh_im_data.h>
 #include <getfemint_models.h>
 #include <getfemint_precond.h>
 #include <getfemint_gsparse.h>
@@ -281,15 +281,6 @@ namespace getfemint {
   }
 
   bool
-  mexarg_in::is_mesh_im_data() {
-    id_type id, cid;
-    if (is_object_id(&id, &cid) && cid == MESHIMDATA_CLASS_ID) {
-      getfem_object *o=workspace().object(id, name_of_getfemint_class_id(cid));
-      return (object_is_mesh_im_data(o));
-    } else return false;
-  }
-
-  bool
   mexarg_in::is_model() {
     id_type id, cid;
     if (is_object_id(&id, &cid) && cid == MODEL_CLASS_ID) {
@@ -388,33 +379,6 @@ namespace getfemint {
   }
 
   /*
-    checks if the argument is a valid handle to an mesh_im_data
-    and returns it
-  */
-  getfemint_mesh_im_data *
-  mexarg_in::to_getfemint_mesh_im_data(bool writeable) {
-    id_type id, cid;
-    to_object_id(&id,&cid);
-    if (cid != MESHIMDATA_CLASS_ID) {
-      THROW_BADARG("argument " << argnum << " should be a mesh_im_data descriptor, "
-                   "its class is " << name_of_getfemint_class_id(cid));
-    }
-    getfem_object *o = workspace().object(id,name_of_getfemint_class_id(cid));
-    error_if_nonwritable(o,writeable);
-    return object_to_mesh_im_data(o);
-  }
-
-  getfem::im_data *
-  mexarg_in::to_mesh_im_data() {
-    return &to_getfemint_mesh_im_data(true)->mesh_im_data();
-  }
-
-  const getfem::im_data *
-  mexarg_in::to_const_mesh_im_data() {
-    return &to_getfemint_mesh_im_data(false)->mesh_im_data();
-  }
-
-  /*
     check if the argument is a valid mesh handle
     if a mesh_fem handle is given, its associated
     mesh is used
@@ -443,9 +407,11 @@ namespace getfemint {
     } else if (object_is_mesh_im(o)) {
       mid = object_to_mesh_im(o)->linked_mesh_id();
       mesh = &object_to_mesh_im(o)->mesh_im().linked_mesh();
-    } else if (object_is_mesh_im_data(o)) {
-      mid = object_to_mesh_im_data(o)->linked_mesh_id();
-      mesh = &object_to_mesh_im_data(o)->mesh_im_data().linked_mesh_im().linked_mesh();
+    } else if (dynamic_cast<getfem::im_data *>(o)) {
+      // o n'est pas bon pour le moment. Le sera quand il viendra du workspace2
+      mesh = &dynamic_cast<getfem::im_data *>(o)->linked_mesh_im().linked_mesh();
+      mid = workspace2().object(mesh); // A arranger avec ce qui précède ...
+      if (mid == id_type(-1)) THROW_INTERNAL_ERROR;
     } else THROW_INTERNAL_ERROR;
     return mesh;
   }
@@ -1283,6 +1249,13 @@ namespace getfemint {
 
   // Functions for MESH_CLASS_ID
   SIMPLE_RAW_POINTER_MANAGED_OBJECT(mesh, getfem::mesh, MESH_CLASS_ID)
+
+  // Functions for MESHIM_CLASS_ID
+   SIMPLE_RAW_POINTER_MANAGED_OBJECT(meshim, getfem::mesh_im, MESHIM_CLASS_ID)
+
+  // Functions for MESHIMDATA_CLASS_ID
+ SIMPLE_RAW_POINTER_MANAGED_OBJECT(meshimdata, getfem::im_data,
+				   MESHIMDATA_CLASS_ID)
 
   // Functions for MESH_LEVELSET_CLASS_ID
   SIMPLE_RAW_POINTER_MANAGED_OBJECT(mesh_levelset, getfem::mesh_level_set,

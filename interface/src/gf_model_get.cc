@@ -27,13 +27,14 @@
 #include <getfemint_workspace.h>
 #include <getfemint_misc.h>
 #include <getfemint_models.h>
+#include <getfemint_mesh_fem.h>
+#include <getfemint_mesh_im.h>
 #include <getfem/getfem_model_solvers.h>
 #include <getfem/getfem_generic_assembly.h>
 #include <getfem/getfem_nonlinear_elasticity.h>
 #include <getfem/getfem_plasticity.h>
 #include <getfem/getfem_contact_and_friction_large_sliding.h>
-#include <getfemint_mesh_fem.h>
-#include <getfemint_mesh_im.h>
+#include <getfem/getfem_im_data.h>
 
 using namespace getfemint;
 
@@ -236,8 +237,8 @@ void gf_model_get(getfemint::mexargs_in& m_in,
                                        : size_type(-1);
          getfem::ga_interpolation_Lagrange_fem(md->model(), expr,
                                                *mf, result, rg);
-       } else if (in.front().is_mesh_im_data()) {
-         getfem::im_data *mimd = in.pop().to_mesh_im_data();
+       } else if (is_meshimdata_object(in.front())) {
+	   getfem::im_data *mimd = to_meshimdata_object(in.pop());
          size_type rg = in.remaining() ? in.pop().to_integer()
                                        : size_type(-1);
          getfem::ga_interpolation_im_data(md->model(), expr,

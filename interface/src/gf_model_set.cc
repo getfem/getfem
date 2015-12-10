@@ -23,14 +23,7 @@
    \brief getfemint_model setter.
 */
 
-#include <getfemint.h>
-#include <getfemint_misc.h>
-#include <getfemint_models.h>
-#include <getfemint_mesh_fem.h>
-#include <getfemint_workspace.h>
-#include <getfemint_mesh_im.h>
-#include <getfemint_mesh_im_data.h>
-#include <getfemint_gsparse.h>
+#include <getfem/getfem_im_data.h>
 #include <getfem/getfem_contact_and_friction_nodal.h>
 #include <getfem/getfem_contact_and_friction_integral.h>
 #include <getfem/getfem_contact_and_friction_large_sliding.h>
@@ -38,6 +31,12 @@
 #include <getfem/getfem_plasticity.h>
 #include <getfem/getfem_fourth_order.h>
 #include <getfem/getfem_linearized_plates.h>
+#include <getfemint_misc.h>
+#include <getfemint_models.h>
+#include <getfemint_mesh_fem.h>
+#include <getfemint_workspace.h>
+#include <getfemint_mesh_im.h>
+#include <getfemint_gsparse.h>
 
 using namespace getfemint;
 
@@ -198,9 +197,9 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     sub_command
       ("add im data", 2, 2, 0, 0,
        std::string name = in.pop().to_string();
-       getfemint_mesh_im_data *gfi_mimd = in.pop().to_getfemint_mesh_im_data();
-       md->model().add_im_data(name, gfi_mimd->mesh_im_data());
-       workspace().set_dependance(md, gfi_mimd);
+       getfem::im_data *mimd = to_meshimdata_object(in.pop());
+       md->model().add_im_data(name, *mimd);
+       // workspace().set_dependance(md, gfi_mimd);
        );
 
 

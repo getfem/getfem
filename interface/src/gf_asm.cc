@@ -33,6 +33,7 @@
 #include <getfem/getfem_contact_and_friction_integral.h>
 #include <getfem/getfem_contact_and_friction_large_sliding.h>
 #include <getfem/getfem_generic_assembly.h>
+#include <getfem/getfem_im_data.h>
 
 #if GETFEM_HAVE_METIS_OLD_API
 extern "C" void METIS_PartGraphKway(int *, int *, int *, int *, int *, int *,
@@ -442,8 +443,8 @@ static void do_high_level_generic_assembly(mexargs_in& in, mexargs_out& out) {
     const getfem::im_data *mimd(0);
     if (in.front().is_mesh_fem())
       mf = in.pop().to_const_mesh_fem();
-    else if (in.front().is_mesh_im_data())
-      mimd = in.pop().to_const_mesh_im_data();
+    else if (is_meshimdata_object(in.front()))
+      mimd = to_meshimdata_object(in.pop());
     darray U = in.pop().to_darray();
     GMM_ASSERT1(vectors.find(varname) == vectors.end(),
                 "The same variable/constant name is repeated twice: "
@@ -545,8 +546,8 @@ static void do_expression_analysis(mexargs_in& in) {
     const getfem::im_data *mimd(0);
     if (in.remaining() && in.front().is_mesh_fem())
       mf = in.pop().to_const_mesh_fem();
-    else if (in.remaining() && in.front().is_mesh_im_data())
-      mimd = in.pop().to_const_mesh_im_data();
+    else if (in.remaining() && is_meshimdata_object(in.front()))
+      mimd = to_meshimdata_object(in.pop());
     GMM_ASSERT1(varnames.count(varname) == 0,
                 "The same variable/constant name is repeated twice: "
                  << varname)

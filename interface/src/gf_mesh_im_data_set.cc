@@ -19,7 +19,8 @@
 
 ===========================================================================*/
 
-#include <getfemint_mesh_im_data.h>
+#include <getfemint.h>
+#include <getfem/getfem_im_data.h>
 
 using namespace getfemint;
 
@@ -33,7 +34,7 @@ void gf_mesh_im_data_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
   if (in.narg() < 2)
     THROW_BADARG( "Wrong number of input arguments");
 
-  getfem::im_data *mimd = in.pop().to_mesh_im_data();
+  getfem::im_data *mimd = to_meshimdata_object(in.pop());
   std::string cmd = in.pop().to_string();
 
   if (check_cmd(cmd, "region", in, out, 1, 1, 0, 0)) {

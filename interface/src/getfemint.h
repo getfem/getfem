@@ -48,7 +48,6 @@ namespace getfem {
   class mesh;
   class mesh_fem;
   class mesh_im;
-  class im_data;
   class model;
 }
 
@@ -164,7 +163,6 @@ namespace getfemint {
   class getfemint_mesh;
   class getfemint_mesh_fem;
   class getfemint_mesh_im;
-  class getfemint_mesh_im_data;
   class getfemint_model;
   class gsparse;
 
@@ -486,7 +484,6 @@ namespace getfemint {
     bool is_mesh();
     bool is_mesh_fem();
     bool is_mesh_im();
-    bool is_mesh_im_data();
     bool is_model();
     bool is_sparse();
     bool is_complex(); /* true for complex garrays AND complex sparse matrices
@@ -507,14 +504,11 @@ namespace getfemint {
     getfem::mesh_fem *       to_mesh_fem();
     const getfem::mesh_im *  to_const_mesh_im();
     getfem::mesh_im *        to_mesh_im();
-    const getfem::im_data *  to_const_mesh_im_data();
-    getfem::im_data *        to_mesh_im_data();
     const getfem::mesh *     to_const_mesh();
     const getfem::mesh *     to_const_mesh(id_type& id);
     getfemint_mesh *         to_getfemint_mesh(bool writeable=false);
     getfemint_mesh_fem *     to_getfemint_mesh_fem(bool writeable=false);
     getfemint_mesh_im *      to_getfemint_mesh_im(bool writeable=false);
-    getfemint_mesh_im_data * to_getfemint_mesh_im_data(bool writeable=false);
     getfemint_model *        to_getfemint_model(bool writeable=false);
     getfem::mesh *           to_mesh();
     getfem::mesh_region      to_mesh_region();
@@ -848,11 +842,13 @@ namespace getfemint {
   getfem::mesh_fem *to_meshfem_object(const mexarg_in &p);
 
   // Functions for MESHIM_CLASS_ID
+  getfemint_declare_getfem_class(mesh_im)
   bool is_meshim_object(const mexarg_in &p);
   id_type store_meshim_object(const std::shared_ptr<getfem::mesh_im> &shp);
   getfem::mesh_im *to_meshim_object(const mexarg_in &p);
 
   // Functions for MESHIMDATA_CLASS_ID
+  getfemint_declare_getfem_class(im_data)
   bool is_meshimdata_object(const mexarg_in &p);
   id_type store_meshimdata_object(const std::shared_ptr<getfem::im_data> &shp);
   getfem::im_data *to_meshimdata_object(const mexarg_in &p);

@@ -81,7 +81,6 @@ libgetfemint_la_SOURCES = \
 	getfemint_mesh.cc \
 	getfemint_mesh_fem.cc \
 	getfemint_mesh_im.cc \
-	getfemint_mesh_im_data.cc \
 	gfi_array.h \
 	getfemint_mesh.h \
 	getfemint_misc.h \
@@ -89,7 +88,6 @@ libgetfemint_la_SOURCES = \
 	gfi_rpc.h \
 	getfemint_mesh_fem.h \
 	getfemint_mesh_im.h \
-	getfemint_mesh_im_data.h \
 	getfemint_models.h \
 	getfemint_object.h \
 	getfemint_workspace.h \
