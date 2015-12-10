@@ -23,7 +23,7 @@
 #include <getfem/getfem_derivatives.h>
 #include <getfem/getfem_interpolation.h>
 #include <getfem/getfem_assembling.h>
-#include <getfemint_mesh_slice.h>
+#include <getfem/getfem_mesh_slice.h>
 #include <getfem/getfem_error_estimate.h>
 #include <getfem/getfem_convect.h>
 using namespace getfemint;
@@ -129,9 +129,8 @@ gf_interpolate(getfemint::mexargs_in& in, getfemint::mexargs_out& out,
     garray<T> V = out.pop().create_array(dims,T());
     getfem::interpolation(mf, mf_dest, U, V);
   }
-  else if (in.front().is_mesh_slice()) {
-    getfem::stored_mesh_slice *sl =
-      &in.pop().to_getfemint_mesh_slice()->mesh_slice();
+  else if (is_slice_object(in.front())) {
+    getfem::stored_mesh_slice *sl = to_slice_object(in.pop());
 
     for (size_type i=0; i < sl->nb_convex(); ++i)
       if (!mf.linked_mesh().convex_index().is_in(sl->convex_num(i)))

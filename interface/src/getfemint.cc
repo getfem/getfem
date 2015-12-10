@@ -20,27 +20,25 @@
 ===========================================================================*/
 
 #include <map>
+#include <getfem/getfem_mesh_slice.h>
+#include <getfem/getfem_mesh_fem_global_function.h>
+#include <getfem/getfem_mat_elem_type.h>
+#include <getfem/getfem_mesher.h>
+#include <getfem/getfem_continuation.h>
+#include <getfem/getfem_integration.h>
+#include <getfem/bgeot_convex_structure.h>
+#include <getfem/getfem_mesh_level_set.h>
 #include <getfemint.h>
 #include <getfemint_misc.h>
 #include <getfemint_workspace.h>
 #include <getfemint_mesh.h>
-#include <getfemint_mesh_slice.h>
 #include <getfemint_mesh_fem.h>
 #include <getfemint_mesh_im.h>
 #include <getfemint_mesh_im_data.h>
 #include <getfemint_models.h>
 #include <getfemint_precond.h>
 #include <getfemint_gsparse.h>
-#include <getfem/getfem_mesh_fem_global_function.h>
-#include <getfem/getfem_mat_elem_type.h>
-#include <getfem/getfem_mesh_fem_global_function.h>
-#include <getfem/getfem_mesher.h>
-#include <getfem/getfem_continuation.h>
-#include <getfem/getfem_integration.h>
-#include <getfem/bgeot_convex_structure.h>
-#include <getfem/getfem_mesh_level_set.h>
 
-#include <getfemint_misc.h>
 //#ifdef MAINTAINER_MODE
 # ifdef HAVE_CSIGNAL
 #  include <csignal>
@@ -300,15 +298,6 @@ namespace getfemint {
     } else return false;
   }
 
-  bool
-  mexarg_in::is_mesh_slice() {
-    id_type id, cid;
-    if (is_object_id(&id, &cid) && cid == SLICE_CLASS_ID) {
-      getfem_object *o=workspace().object(id, name_of_getfemint_class_id(cid));
-      return (object_is_mesh_slice(o));
-    } else return false;
-  }
-
   bool mexarg_in::is_sparse()
   { return (gfi_array_get_class(arg) == GFI_SPARSE || is_spmat_object(*this)); }
 
@@ -337,29 +326,6 @@ namespace getfemint {
     if (pcid) *pcid = cid;
     return id;
   }
-
-  std::pair<id_type, id_type> mexarg_in::to_object_ids(void) {
-    std::pair<id_type, id_type> id;
-    if (!is_object_id(&(id.first), &(id.second))) {
-      THROW_BADARG("wrong type for argument " << argnum << ": expecting a "
-		   "getfem object, got a " << gfi_array_get_class_name(arg));
-    }
-    return id;
-  }
-
-
-  /*
-    check if the argument is a valid handle to an intset
-    and returns it
-  */
-  /*
-  dal::bit_vector * mexarg_in::to_intset() {
-    getfem_object *o = workspace().object(to_object_id());
-    if (!object_is_intset(o)) {
-      THROW_BADARG("Argument " << argnum << " should be an intset descriptor");    }
-    return &object_to_intset(o)->intset();
-  }
-  */
 
   void mexarg_in::error_if_nonwritable(getfem_object *o, bool want_writeable) {
     if (want_writeable && o->is_const())
@@ -516,29 +482,6 @@ namespace getfemint {
     getfem_object *o = workspace().object(id,name_of_getfemint_class_id(cid));
     error_if_nonwritable(o,writeable);
     return object_to_model(o);
-  }
-
-  getfemint_mesh_slice *
-  mexarg_in::to_getfemint_mesh_slice(bool writeable) {
-    id_type id, cid;
-    to_object_id(&id,&cid);
-    if (cid != SLICE_CLASS_ID) {
-      THROW_BADARG("argument " << argnum << " should be a mesh slice descriptor, its class is " << name_of_getfemint_class_id(cid));
-    }
-    getfem_object *o = workspace().object(id,name_of_getfemint_class_id(cid));
-    error_if_nonwritable(o,writeable);
-    return object_to_mesh_slice(o);
-  }
-
-  getfemint_precond *
-  mexarg_in::to_precond() {
-    id_type id, cid;
-    to_object_id(&id,&cid);
-    if (cid != PRECOND_CLASS_ID) {
-      THROW_BADARG("argument " << argnum << " should be a preconditioner, its class is " << name_of_getfemint_class_id(cid));
-    }
-    getfem_object *o = workspace().object(id,name_of_getfemint_class_id(cid));
-    return object_to_precond(o);
   }
 
   getfem::mesh_region
@@ -1232,38 +1175,6 @@ namespace getfemint {
     if (!mim.convex_index()[cv]) THROW_ERROR( "convex " << cv+config::base_index() << " has no integration method!");
   }
 
-  static double NaN = 0.;
-  const double& get_NaN() {
-    if (NaN == 0.) {
-#ifdef NAN
-    NaN = NAN;
-#else
-      NaN=1e308;
-
-      /* disabled for now ... the dec alpha throws SIGFPE when i run the make check .. */
-
-      /*double a=0.,b=0.;
-      struct sigaction osa,nsa;
-      sigaction(SIGFPE, 0, &nsa);
-      nsa.sa_handler = SIG_IGN;
-      sigaction(SIGFPE, &nsa, &osa);
-      NaN = a / b;
-      sigaction(SIGFPE,&osa, 0);
-      //assert(NaN != NaN);//great ... assertion fails on dec/alpha and origin2k ..
-      */
-#endif
-    }
-    return NaN;
-  }
-
-  bool is_NaN(const double& v) {
-    double w = v;
-    void *p = &w;
-    if (memcmp(p, (void*)const_cast<double*>(&get_NaN()), sizeof(v)) == 0) return true;
-    return ((v!=w) || !(v==w)); /* add a small prayer to avoid any optimization by the compiler.. */
-  }
-
-
 
 
   // Version of the interface functions for an object managed preferabily by
@@ -1386,6 +1297,10 @@ namespace getfemint {
 
   // Functions for PRECOND_CLASS_ID
   SIMPLE_RAW_POINTER_MANAGED_OBJECT(precond, gprecond_base, PRECOND_CLASS_ID)
+
+  // Functions for PRECOND_CLASS_ID
+  SIMPLE_RAW_POINTER_MANAGED_OBJECT(slice, getfem::stored_mesh_slice,
+				    SLICE_CLASS_ID)
 
   // Functions for SPMAT_CLASS_ID
   SIMPLE_RAW_POINTER_MANAGED_OBJECT(spmat, gsparse, SPMAT_CLASS_ID)

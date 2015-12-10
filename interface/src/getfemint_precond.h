@@ -43,9 +43,9 @@
 #include <getfem/getfem_superlu.h>
 #include <getfemint_gsparse.h>
 
-namespace getfemint
-{
-  struct gprecond_base {
+namespace getfemint {
+
+  struct gprecond_base : virtual public dal::static_stored_object {
     size_type nrows_, ncols_;
     enum { IDENTITY, DIAG, ILDLT, ILDLTT, ILU, ILUT, SUPERLU, SPMAT } type;
     gsparse *gsp;
@@ -72,56 +72,23 @@ namespace getfemint
     std::unique_ptr<gmm::ilut_precond<cscmat> > ilut;
     std::unique_ptr<gmm::SuperLU_factor<T> > superlu;
 
-    virtual size_type memsize() const; 
+    virtual size_type memsize() const {
+      size_type sz = sizeof(*this);
+      switch (type) {
+      case IDENTITY: break;
+      case DIAG:    sz += diagonal->memsize(); break;
+      case ILUT:    sz += ilut->memsize(); break;
+      case ILU:     sz += ilu->memsize(); break;
+      case ILDLT:   sz += ildlt->memsize(); break;
+      case ILDLTT:  sz += ildltt->memsize(); break;
+      case SUPERLU:
+	sz += size_type(superlu->memsize()); break;
+      case SPMAT:   sz += gsp->memsize(); break;
+      }
+      return sz; 
+    }
   };
 
-
-  class getfemint_precond : public getfem_object {
-  public:
-    //typedef enum { REAL, COMPLEX } value_type;
-    gsparse::value_type v;
-
-    bool is_complex() { if (p.get() && p->gsp) return p->gsp->is_complex();
-      else return v == gsparse::COMPLEX; }
-    gprecond<scalar_type> &precond(scalar_type) {
-      GMM_ASSERT1(!is_complex(),
-		  "cannot use a COMPLEX preconditionner with REAL data");
-      return *static_cast<gprecond<scalar_type>*>(p.get()); 
-    }
-
-    gprecond<complex_type> &precond(complex_type) { 
-      GMM_ASSERT1(is_complex(),
-		  "cannot use a REAL preconditionner with COMPLEX data");
-      return *static_cast<gprecond<complex_type>*>(p.get());
-    }
-
-    gprecond_base &bprecond() { return *(p.get()); }
-    
-    size_type nrows(void) const { return p->nrows(); }
-    size_type ncols(void) const { return p->ncols(); }
-    void set_dimensions(size_type m, size_type n) { p->set_dimensions(m,n); }
-
-    getfemint_precond(gsparse::value_type v_) : v(v_) { 
-      if (!is_complex()) p = std::make_unique<gprecond<scalar_type>>(); 
-      else p = std::make_unique<gprecond<complex_type>>();
-    }
-    ~getfemint_precond() {}
-    id_type class_id() const { return PRECOND_CLASS_ID; }
-    /*size_type memsize() const {
-      return (p.get() ? p.get()->memsize() : 0);
-      }*/
-  private:
-    std::unique_ptr<gprecond_base> p;
-  };
-
-  inline bool object_is_precond(getfem_object *o) {
-    return (o->class_id() == PRECOND_CLASS_ID);
-  }
-
-  inline getfemint_precond* object_to_precond(getfem_object *o) {
-    if (object_is_precond(o)) return ((getfemint_precond*)o);
-    else THROW_INTERNAL_ERROR;
-  }
 }  /* end of namespace getfemint.                                          */
 
 namespace gmm {

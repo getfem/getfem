@@ -20,11 +20,11 @@
 ===========================================================================*/
 // $Id$
 #include <map>
-#include <getfemint_misc.h>
+#include <getfemint_workspace.h>
 #include <getfemint_mesh.h>
-#include <getfemint_mesh_slice.h>
 #include <getfem/getfem_mesh_slice.h>
 #include <getfem/getfem_export.h>
+#include <getfem/getfem_mesh_slice.h>
 
 using namespace getfemint;
 
@@ -136,8 +136,7 @@ struct sub_gf_slice_get : virtual public dal::static_stored_object {
   int arg_in_min, arg_in_max, arg_out_min, arg_out_max;
   virtual void run(getfemint::mexargs_in& in,
 		   getfemint::mexargs_out& out,
-		   getfemint_mesh_slice *mi_sl,
-		   const getfem::stored_mesh_slice *sl) = 0;
+		   getfem::stored_mesh_slice *sl) = 0;
 };
 
 typedef std::shared_ptr<sub_gf_slice_get> psub_command;
@@ -149,10 +148,8 @@ template <typename T> static inline void dummy_func(T &) {}
     struct subc : public sub_gf_slice_get {				\
       virtual void run(getfemint::mexargs_in& in,			\
 		       getfemint::mexargs_out& out,			\
-		       getfemint_mesh_slice *mi_sl,			\
-		       const getfem::stored_mesh_slice *sl)		\
-      { dummy_func(in); dummy_func(out); dummy_func(mi_sl);		\
-	dummy_func(sl); code }						\
+		       getfem::stored_mesh_slice *sl)			\
+      { dummy_func(in); dummy_func(out); dummy_func(sl); code }		\
     };									\
     psub_command psubc = std::make_shared<subc>();			\
     psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;		\
@@ -291,7 +288,7 @@ void gf_slice_get(getfemint::mexargs_in& m_in,
        slicer.push_back_action(action); slicer.exec(*sl);
 
        /* return a point list, a connectivity array, and optionnaly a list of edges with are part of the slice */
-       double nan = get_NaN();
+       double nan = ::nan("");
        dal::bit_vector bv = m.points().index();
        darray P = out.pop().create_darray(m.dim(), unsigned(bv.last_true()+1));
        iarray T1 = out.pop().create_iarray(2, unsigned(m.nb_convex() - slice_edges.card()));
@@ -339,7 +336,8 @@ void gf_slice_get(getfemint::mexargs_in& m_in,
       Return the mesh on which the slice was taken.@*/
     sub_command
       ("linked mesh", 0, 0, 0, 1,
-       out.pop().from_object_id(mi_sl->linked_mesh_id(), MESH_CLASS_ID);
+       id_type id = workspace2().object((const void *)(&(sl->linked_mesh())));
+       out.pop().from_object_id(id, MESH_CLASS_ID);
        );
 
     /*@GET m = ('mesh')
@@ -347,7 +345,8 @@ void gf_slice_get(getfemint::mexargs_in& m_in,
       (identical to 'linked mesh')@*/
     sub_command
       ("mesh", 0, 0, 0, 1,
-       out.pop().from_object_id(mi_sl->linked_mesh_id(), MESH_CLASS_ID);
+       id_type id = workspace2().object((const void *)(&(sl->linked_mesh())));
+       out.pop().from_object_id(id, MESH_CLASS_ID);
        );
 
 
@@ -577,8 +576,7 @@ void gf_slice_get(getfemint::mexargs_in& m_in,
  
   if (m_in.narg() < 2)  THROW_BADARG( "Wrong number of input arguments");
 
-  getfemint_mesh_slice *mi_sl = m_in.pop().to_getfemint_mesh_slice();
-  const getfem::stored_mesh_slice *sl = &mi_sl->mesh_slice();
+  getfem::stored_mesh_slice *sl = to_slice_object(m_in.pop());
   std::string init_cmd   = m_in.pop().to_string();
   std::string cmd        = cmd_normalize(init_cmd);
 
@@ -588,7 +586,7 @@ void gf_slice_get(getfemint::mexargs_in& m_in,
     check_cmd(cmd, it->first.c_str(), m_in, m_out, it->second->arg_in_min,
 	      it->second->arg_in_max, it->second->arg_out_min,
 	      it->second->arg_out_max);
-    it->second->run(m_in, m_out, mi_sl, sl);
+    it->second->run(m_in, m_out, sl);
   }
   else bad_cmd(init_cmd);
 

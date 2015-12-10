@@ -367,7 +367,7 @@ void gf_mesh_get(getfemint::mexargs_in& m_in,
     points.@*/
     sub_command
       ("pts", 0, 1, 0, 1,
-       double nan = get_NaN();
+       double nan = ::nan("");
        if (!in.remaining()) {
          dal::bit_vector bv = pmesh->points().index();
          darray w = out.pop().create_darray(pmesh->dim(), unsigned(bv.last_true()+1));
@@ -504,7 +504,7 @@ void gf_mesh_get(getfemint::mexargs_in& m_in,
        for (unsigned j=0; j < v.getn(); j++) {
          getfem::base_node P = v.col_to_bn(j);
          getfem::size_type id = size_type(-1);
-         if (!is_NaN(P[0])) id = pmesh->search_point(P,radius);
+         if (!isnan(P[0])) id = pmesh->search_point(P,radius);
          if (id == getfem::size_type(-1)) w[j] = -1;
          else w[j] = int(id + config::base_index());
        }

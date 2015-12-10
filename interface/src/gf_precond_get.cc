@@ -24,7 +24,8 @@
 using namespace getfemint;
 
 template <typename T> static void
-mult_or_tmult(gprecond<T>& precond, mexargs_in& in, mexargs_out& out, bool tmult) {
+mult_or_tmult(gprecond<T>& precond, mexargs_in& in, mexargs_out& out,
+	      bool tmult) {
   garray<T> v = in.pop().to_garray(T());
   garray<T> w = out.pop().create_array(v.getm(), v.getn(), T());
   gmm::mult_or_transposed_mult(precond, v, w, tmult);
@@ -44,7 +45,7 @@ struct sub_gf_precond_get : virtual public dal::static_stored_object {
   int arg_in_min, arg_in_max, arg_out_min, arg_out_max;
   virtual void run(getfemint::mexargs_in& in,
 		   getfemint::mexargs_out& out,
-		   getfemint_precond *precond) = 0;
+		   gprecond_base *precond) = 0;
 };
 
 typedef std::shared_ptr<sub_gf_precond_get> psub_command;
@@ -56,7 +57,7 @@ template <typename T> static inline void dummy_func(T &) {}
     struct subc : public sub_gf_precond_get {				\
       virtual void run(getfemint::mexargs_in& in,			\
 		       getfemint::mexargs_out& out,			\
-		       getfemint_precond *precond)			\
+		       gprecond_base *precond)				\
       { dummy_func(in); dummy_func(out); dummy_func(precond); code }	\
     };									\
     psub_command psubc = std::make_shared<subc>();			\
@@ -79,10 +80,13 @@ void gf_precond_get(getfemint::mexargs_in& m_in,
     Apply the preconditioner to the supplied vector.@*/
     sub_command
       ("mult", 1, 1, 0, 1,
-       if (!precond->is_complex())
-	 mult_or_tmult(precond->precond(scalar_type()), in, out, false);
-       else
-	 mult_or_tmult(precond->precond(complex_type()), in, out, false);
+       gprecond<scalar_type> *rprecond
+       = dynamic_cast<gprecond<scalar_type> *>(precond);
+       gprecond<complex_type> *cprecond
+       = dynamic_cast<gprecond<complex_type> *>(precond);
+       if (rprecond) mult_or_tmult(*rprecond, in, out, false);
+       else if (cprecond) mult_or_tmult(*cprecond, in, out, false);
+       else THROW_INTERNAL_ERROR;
        );
 
 
@@ -90,10 +94,13 @@ void gf_precond_get(getfemint::mexargs_in& m_in,
       Apply the transposed preconditioner to the supplied vector.@*/
     sub_command
       ("tmult", 1, 1, 0, 1,
-       if (!precond->is_complex())
-	 mult_or_tmult(precond->precond(scalar_type()), in, out, true);
-       else
-	 mult_or_tmult(precond->precond(complex_type()), in, out, true);
+       gprecond<scalar_type> *rprecond
+       = dynamic_cast<gprecond<scalar_type> *>(precond);
+       gprecond<complex_type> *cprecond
+       = dynamic_cast<gprecond<complex_type> *>(precond);
+       if (rprecond) mult_or_tmult(*rprecond, in, out, false);
+       else if (cprecond) mult_or_tmult(*cprecond, in, out, false);
+       else THROW_INTERNAL_ERROR;
        );
 
 
@@ -101,7 +108,7 @@ void gf_precond_get(getfemint::mexargs_in& m_in,
       Return a string describing the type of the preconditioner ('ilu', 'ildlt',..).@*/
     sub_command
       ("type", 0, 0, 0, 1,
-       out.pop().from_string(precond->bprecond().name());
+       out.pop().from_string(precond->name());
        );
 
 
@@ -110,8 +117,8 @@ void gf_precond_get(getfemint::mexargs_in& m_in,
     sub_command
       ("size", 0, 0, 0, 1,
        iarray sz = out.pop().create_iarray_h(2);
-       sz[0] = int(precond->bprecond().nrows());
-       sz[1] = int(precond->bprecond().ncols());
+       sz[0] = int(precond->nrows());
+       sz[1] = int(precond->ncols());
        );
 
 
@@ -119,7 +126,9 @@ void gf_precond_get(getfemint::mexargs_in& m_in,
       Return 1 if the preconditioner stores complex values.@*/
     sub_command
       ("is_complex", 0, 0, 0, 1,
-       out.pop().from_integer(precond->is_complex());
+       gprecond<scalar_type> *rprecond
+       = dynamic_cast<gprecond<scalar_type> *>(precond);
+       out.pop().from_integer(rprecond == 0);
        );
 
 
@@ -142,11 +151,13 @@ void gf_precond_get(getfemint::mexargs_in& m_in,
       displays a short summary for a @tprecond object.@*/
     sub_command
       ("display", 0, 0, 0, 0,
+       gprecond<scalar_type> *rprecond
+       = dynamic_cast<gprecond<scalar_type> *>(precond);
        infomsg() << "gfPrecond object with "
-       << precond->bprecond().nrows() << "x"
-       << precond->bprecond().ncols() << " "
-       << (precond->is_complex() ? "COMPLEX" : "REAL")
-       << " " << precond->bprecond().name() << " ["
+       << precond->nrows() << "x"
+       << precond->ncols() << " "
+       << ((rprecond == 0) ? "COMPLEX" : "REAL")
+       << " " << precond->name() << " ["
        << precond->memsize() << " bytes]";
        );
 
@@ -155,7 +166,7 @@ void gf_precond_get(getfemint::mexargs_in& m_in,
 
   if (m_in.narg() < 1)  THROW_BADARG( "Wrong number of input arguments");
  
-  getfemint_precond *precond = m_in.pop().to_precond();
+  gprecond_base *precond = to_precond_object(m_in.pop());
   std::string init_cmd   = m_in.pop().to_string();
   std::string cmd        = cmd_normalize(init_cmd);
 

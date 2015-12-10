@@ -43,7 +43,8 @@ iterative_gmm_solver(iterative_gmm_solver_type stype, gsparse &gsp,
 
   gprecond<T> id_precond;
   gprecond<T> *precond = &id_precond;
-  if (in.remaining()) precond = &in.pop().to_precond()->precond(T());
+  if (in.remaining())
+    precond = dynamic_cast<gprecond<T> *>(to_precond_object(in.pop()));
   precond->set_dimensions(gsp.nrows(), gsp.ncols());
 
   getfemint::interruptible_iteration iter(1e-16);

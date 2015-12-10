@@ -25,82 +25,69 @@
 
 using namespace getfemint;
 
-/* moved out of the gprecond class to avoid
-   the stupid inlining bug of gcc-3.3 and gcc-3.4
-   ( http://gcc.gnu.org/bugzilla/show_bug.cgi?id=16849 ) */
-
-   namespace getfemint {
-     template<typename T> size_type
-     gprecond<T>::memsize() const {
-       size_type sz = sizeof(*this);
-       switch (type) {
-	 case IDENTITY: break;
-	 case DIAG:    sz += diagonal->memsize(); break;
-	 case ILUT:    sz += ilut->memsize(); break;
-	 case ILU:     sz += ilu->memsize(); break;
-	 case ILDLT:   sz += ildlt->memsize(); break;
-	 case ILDLTT:  sz += ildltt->memsize(); break;
-	 case SUPERLU:
-	   sz += size_type(superlu->memsize()); break;
-	 case SPMAT:   sz += gsp->memsize(); break;
-       }
-       return sz;
-     }
-   }
-
-
 template <typename T> static gprecond<T>&
 precond_new(mexargs_out& out, T) {
-  getfemint_precond *precond = new getfemint_precond(gsparse::REAL);
-  out.pop().from_object_id(workspace().push_object(precond), PRECOND_CLASS_ID);
-  return precond->precond(T());
+  auto precond = std::make_shared<gprecond<T>>();
+  id_type id = store_precond_object(precond);
+  out.pop().from_object_id(id, PRECOND_CLASS_ID);
+  return *(precond.get());
 }
 
 template <typename T> static void
 precond_diagonal(gsparse &M, mexargs_out& out, T) {
   gprecond<T> &p = precond_new(out, T());
   p.type = gprecond_base::DIAG;
-  p.diagonal.reset(new gmm::diagonal_precond<typename gprecond<T>::cscmat>(M.csc(T())));
+  p.diagonal = std::make_unique<gmm::diagonal_precond<typename gprecond<T>::cscmat>>(M.csc(T()));
 }
+
 template <typename T> static void
 precond_ildlt(gsparse &M, mexargs_out& out, T) {
   gprecond<T> &p = precond_new(out, T());
   p.type = gprecond_base::ILDLT;
-  p.ildlt.reset(new gmm::ildlt_precond<typename gprecond<T>::cscmat>(M.csc(T())));
+  p.ildlt = std::make_unique<gmm::ildlt_precond<typename gprecond<T>::cscmat>>(M.csc(T()));
 }
+
 template <typename T> static void
 precond_ilu(gsparse &M, mexargs_out& out, T) {
   gprecond<T> &p = precond_new(out, T());
   p.type = gprecond_base::ILU;
-  p.ilu.reset(new gmm::ilu_precond<typename gprecond<T>::cscmat>(M.csc(T())));
+  p.ilu = std::make_unique<gmm::ilu_precond<typename gprecond<T>::cscmat>>(M.csc(T()));
 }
+
 template <typename T> static void
 precond_ildltt(gsparse &M, int additional_fillin, double threshold, mexargs_out& out, T) {
   gprecond<T> &p = precond_new(out, T());
   p.type = gprecond_base::ILDLTT;
-  p.ildltt.reset(new gmm::ildltt_precond<typename gprecond<T>::cscmat>(M.csc(T()), additional_fillin, threshold));
+  p.ildltt = std::make_unique<gmm::ildltt_precond<typename gprecond<T>::cscmat>>(M.csc(T()), additional_fillin, threshold);
 }
+
 template <typename T> static void
 precond_ilut(gsparse &M, int additional_fillin, double threshold, mexargs_out& out, T) {
   gprecond<T> &p = precond_new(out, T());
   p.type = gprecond_base::ILUT;
-  p.ilut.reset(new gmm::ilut_precond<typename gprecond<T>::cscmat>(M.csc(T()), additional_fillin, threshold));
+  p.ilut = std::make_unique<gmm::ilut_precond<typename gprecond<T>::cscmat>>(M.csc(T()), additional_fillin, threshold);
 }
 
 template <typename T> static void
 precond_superlu(gsparse &M, mexargs_out& out, T) {
   gprecond<T> &p = precond_new(out, T());
   p.type = gprecond_base::SUPERLU;
-  p.superlu.reset(new gmm::SuperLU_factor<T>()); p.superlu.get()->build_with(M.csc(T()));
+  p.superlu = std::make_unique<gmm::SuperLU_factor<T>>();
+  p.superlu.get()->build_with(M.csc(T()));
 }
 
-static void
-precond_spmat(gsparse *gsp, mexargs_out& out) {
-  getfemint_precond *precond = new getfemint_precond(gsparse::REAL);
-  out.pop().from_object_id(workspace().push_object(precond), PRECOND_CLASS_ID);
-  precond->precond(scalar_type()).type = gprecond_base::SPMAT;
-  precond->precond(scalar_type()).gsp = gsp;
-  // workspace().set_dependance(precond, gsp);
+static void precond_spmat(gsparse *gsp, mexargs_out& out) {
+  if (gsp->is_complex()) {
+    gprecond<complex_type> &p = precond_new(out, complex_type());
+    p.type = gprecond_base::SPMAT;
+    p.gsp = gsp;
+    // workspace().set_dependance(p, gsp);
+  } else {
+    gprecond<scalar_type> &p  = precond_new(out, scalar_type());
+    p.type = gprecond_base::SPMAT;
+    p.gsp = gsp;
+    // workspace().set_dependance(p, gsp);
+  }
 }
 
 /*@GFDOC
@@ -203,8 +190,10 @@ void gf_precond(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        int additional_fillin = 10; scalar_type threshold = 1e-7;
        if (in.remaining()) additional_fillin = in.pop().to_integer(0, 100000);
        if (in.remaining()) threshold = in.pop().to_scalar(0,1e30);
-       if (M->is_complex()) precond_ildltt(*M, additional_fillin, threshold, out, complex_type());
-       else                 precond_ildltt(*M, additional_fillin, threshold, out, scalar_type());
+       if (M->is_complex()) precond_ildltt(*M, additional_fillin, threshold,
+					   out, complex_type());
+       else                 precond_ildltt(*M, additional_fillin, threshold,
+					   out, scalar_type());
        );
 
     /*@INIT PC = ('ilut', @tsp m[, @int fillin[, @scalar threshold]])
@@ -218,8 +207,10 @@ void gf_precond(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        int additional_fillin = 10; scalar_type threshold = 1e-7;
        if (in.remaining()) additional_fillin = in.pop().to_integer(0, 100000);
        if (in.remaining()) threshold = in.pop().to_scalar(0,1e30);
-       if (M->is_complex()) precond_ilut(*M, additional_fillin, threshold, out, complex_type());
-       else                 precond_ilut(*M, additional_fillin, threshold, out, scalar_type());
+       if (M->is_complex()) precond_ilut(*M, additional_fillin, threshold,
+					 out, complex_type());
+       else                 precond_ilut(*M, additional_fillin, threshold,
+					 out, scalar_type());
        );
 
     /*@INIT PC = ('superlu', @tsp m)

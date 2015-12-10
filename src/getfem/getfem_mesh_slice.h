@@ -44,7 +44,7 @@ namespace getfem {
 
   /** The output of a getfem::mesh_slicer which has been recorded. 
    @see getfem::slicer_build_stored_mesh_slice */
-  class stored_mesh_slice {
+  class stored_mesh_slice : virtual public dal::static_stored_object {
   protected:
     /* nodes lists and simplexes lists for each convex of the original mesh */
     struct convex_slice {

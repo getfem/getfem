@@ -22,11 +22,11 @@
 
 #include <memory>
 #include <getfem/getfem_mesh_level_set.h>
+#include <getfem/getfem_mesh_slice.h>
 #include <getfemint_misc.h>
 #include <getfemint_workspace.h>
 #include <getfemint_mesh.h>
 #include <getfemint_mesh_fem.h>
-#include <getfemint_mesh_slice.h>
 
 
 using namespace getfemint;
@@ -385,9 +385,9 @@ void gf_slice(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
   if (in.narg()  <  2) THROW_BADARG("Wrong number of input arguments");
   if (!out.narg_in_range(1,1)) THROW_BADARG("Wrong number of output arguments");
 
-  getfemint_mesh *mm = 0;
+  const getfem::mesh *mm = 0;
   getfem::mesh_level_set *pmls = 0;
-  std::unique_ptr<getfem::stored_mesh_slice> pstored;
+  auto pstored = std::make_shared<getfem::stored_mesh_slice>();
 
   /* "normal" slices */
   if (in.front().is_cell()) {
@@ -398,43 +398,35 @@ void gf_slice(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     /* check the source argument (mesh/mesh_fem or slice) */
     std::unique_ptr<getfem::mesh_slice_cv_dof_data<darray> > mfdef;
     std::unique_ptr<getfem::slicer_action> slicer_def;
-    getfemint_mesh_slice *source_slice = 0;
+    getfem::stored_mesh_slice *source_slice = 0;
     if (in.front().is_mesh_fem() && in.remaining()  >=  3) {
-      mm = object_to_mesh(workspace().object(in.front().to_getfemint_mesh_fem()->linked_mesh_id()));
+      mm = &(object_to_mesh(workspace().object(in.front().to_getfemint_mesh_fem()->linked_mesh_id()))->mesh());
       const getfem::mesh_fem& mf = *in.pop().to_const_mesh_fem();
       darray Udef = in.pop().to_darray(-2, int(mf.nb_dof()));
-      if (!(mf.get_qdim() == mm->mesh().dim() && Udef.getm() == 1) &&
-          !(mf.get_qdim() == 1 && Udef.getm() == mm->mesh().dim())) {
-        THROW_BADARG("either the mesh_fem must have a Qdim=" << int(mm->mesh().dim()) <<
-                     ", either the data must have " << int(mm->mesh().dim()) << " rows");
+      if (!(mf.get_qdim() == mm->dim() && Udef.getm() == 1) &&
+          !(mf.get_qdim() == 1 && Udef.getm() == mm->dim())) {
+        THROW_BADARG("either the mesh_fem must have a Qdim=" << int(mm->dim()) <<
+                     ", either the data must have " << int(mm->dim()) << " rows");
       }
       mfdef.reset(new getfem::mesh_slice_cv_dof_data<darray>(mf,Udef));
       slicer_def.reset(new getfem::slicer_apply_deformation(*mfdef.get()));
-    } else if (in.front().is_mesh_slice()) {
-      source_slice = in.pop().to_getfemint_mesh_slice(false);
-      mm = object_to_mesh(workspace().object(source_slice->linked_mesh_id()));
+    } else if (is_slice_object(in.front())) {
+      source_slice = to_slice_object(in.pop());
+      mm = &(source_slice->linked_mesh());
     } else if (is_mesh_levelset_object(in.front())) {
       pmls = to_mesh_levelset_object(in.pop());
-      
-      // pour plus tard ...
-      // id_type id = workspace2.object((const void *)(&mls.linked_mesh()));
-      // GMM_ASSERT1(id != id_type(-1), "Unknown mesh !");
-
-      mm = getfemint_mesh::get_from(&(pmls->linked_mesh()));
+      mm = &(pmls->linked_mesh());
     } else {
-      id_type id; in.pop().to_const_mesh(id); mm = object_to_mesh(workspace().object(id));
+      id_type id; in.pop().to_const_mesh(id); mm = &(object_to_mesh(workspace().object(id))->mesh());
     }
 
     std::vector<std::unique_ptr<getfem::slicer_action>> slicers;
-    getfem::slicer_action * s = build_slicers(mm->mesh(), slicers, arg);
-
-    /* build the slice */
-    pstored.reset(new getfem::stored_mesh_slice());
+    getfem::slicer_action * s = build_slicers(*mm, slicers, arg);
 
     /* create the slicer and registers the actions */
-    getfem::mesh_slicer slicer(mm->mesh());
+    getfem::mesh_slicer slicer(*mm);
     if (pmls) slicer.using_mesh_level_set(*pmls);
-    getfem::slicer_build_stored_mesh_slice slicer_store(*pstored.get());
+    getfem::slicer_build_stored_mesh_slice slicer_store(*pstored);
     if (slicer_def.get()) slicer.push_back_action(*slicer_def.get());
     slicer.push_back_action(*s);
     slicer.push_back_action(slicer_store);
@@ -446,12 +438,12 @@ void gf_slice(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       /*std::vector<convex_face> cvf;
       if (in.remaining()) {
         iarray v = in.pop().to_iarray(-2, -1);
-        build_convex_face_lst(mm->mesh(), cvf, &v);
-        } else build_convex_face_lst(mm->mesh(), cvf, 0);*/
-      getfem::mesh_region rg = to_mesh_region(mm->mesh(), in);
+        build_convex_face_lst(*mm, cvf, &v);
+        } else build_convex_face_lst(*mm, cvf, 0);*/
+      getfem::mesh_region rg = to_mesh_region(*mm, in);
       slicer.exec(nrefine, rg);
     } else {
-      slicer.exec(source_slice->mesh_slice());
+      slicer.exec(*source_slice);
     }
     if (in.remaining()) THROW_BADARG("too much input arguments");
 
@@ -463,26 +455,29 @@ void gf_slice(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       Compute streamlines of the (vector) field `U`, with seed points given
       by the columns of `S`.@*/
       const getfem::mesh_fem *mf = in.front().to_const_mesh_fem();
-      id_type id; in.pop().to_const_mesh(id); mm = object_to_mesh(workspace().object(id));
+      id_type id; in.pop().to_const_mesh(id);
+      mm = &(object_to_mesh(workspace().object(id))->mesh());
       darray U = in.pop().to_darray(int(mf->nb_dof()));
-      darray v = in.pop().to_darray(mm->mesh().dim(), -1);
+      darray v = in.pop().to_darray(mm->dim(), -1);
       std::vector<getfem::base_node> seeds(v.getn());
       for (unsigned j=0; j < v.getn(); ++j)
         seeds[j] = v.col_to_bn(j);
       getfem::mesh_slice_cv_dof_data<darray> mfU(*mf,U);
-      pstored.reset(new getfem::mesh_slice_streamline(&mfU, seeds, true, true));
+      pstored = std::make_shared<getfem::mesh_slice_streamline>(&mfU, seeds,
+								true, true);
     } else if (check_cmd(cmd, "points", in, 2, 2)) {
     /*@INIT sl = ('points', @tmesh m, @dmat Pts)
       Return the "slice" composed of points given by the columns of `Pts`
       (useful for interpolation on a given set of sparse points, see
       ``::COMPUTE('interpolate on',sl)``.@*/
-      id_type id; in.pop().to_const_mesh(id); mm = object_to_mesh(workspace().object(id));
-      pstored.reset(new getfem::stored_mesh_slice());
-      getfem::mesh_slicer slicer(mm->mesh());
-      getfem::slicer_build_stored_mesh_slice slicer_store(*pstored.get());
+      id_type id; in.pop().to_const_mesh(id);
+      mm = &(object_to_mesh(workspace().object(id))->mesh());
+      pstored = std::make_shared<getfem::stored_mesh_slice>();
+      getfem::mesh_slicer slicer(*mm);
+      getfem::slicer_build_stored_mesh_slice slicer_store(*pstored);
       slicer.push_back_action(slicer_store);
 
-      darray w = in.pop().to_darray(mm->mesh().dim(), -1);
+      darray w = in.pop().to_darray(mm->dim(), -1);
       std::vector<getfem::base_node> N(w.getn());
       for (unsigned i=0; i < w.getn(); ++i) N[i] = w.col_to_bn(i);
       slicer.exec(N);
@@ -491,19 +486,22 @@ void gf_slice(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       Load the slice (and its linked mesh if it is not given as an argument)
       from a text file.@*/
       std::string fname = in.pop().to_string();
-      if (in.remaining()) mm = in.pop().to_getfemint_mesh();
+      if (in.remaining()) mm = &(in.pop().to_getfemint_mesh()->mesh());
       else {
         getfem::mesh *m = new getfem::mesh();
         m->read_from_file(fname);
-        mm = getfemint_mesh::get_from(m);
+        mm = &(getfemint_mesh::get_from(m)->mesh());
+	// workspace().set_dependance(mm, ??);
+	// simplifier ce qui précède ... il faut stocker le nouveau maillage
       }
-      pstored.reset(new getfem::stored_mesh_slice());
-      pstored->read_from_file(fname, mm->mesh());
+      pstored = std::make_shared<getfem::stored_mesh_slice>();
+      pstored->read_from_file(fname, *mm);
     } else bad_cmd(cmd);
   } else THROW_BADARG("a slicer specification (i.e. cell array) or a string "
                       "was expected as the first argument");
   if (mm == 0 || pstored.get() == 0) THROW_INTERNAL_ERROR;
-  getfemint_mesh_slice *mms = new getfemint_mesh_slice(*mm, pstored.release());
-  out.pop().from_object_id(workspace().push_object(mms), SLICE_CLASS_ID);
-  workspace().set_dependance(mms, mm);
+
+  id_type id = store_slice_object(pstored);
+  out.pop().from_object_id(id, SLICE_CLASS_ID);
+  // workspace().set_dependance(mms, mm);
 }
