@@ -21,7 +21,7 @@
 
 #include <getfemint.h>
 #include <getfemint_levelset.h>
-#include <getfemint_mesh_fem.h>
+#include <getfem/getfem_mesh_fem.h>
 
 using namespace getfemint;
 

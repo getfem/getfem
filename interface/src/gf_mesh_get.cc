@@ -21,10 +21,8 @@
 // $Id$
 #include <map>
 #include <getfemint_misc.h>
-#include <getfemint_mesh.h>
-#include <getfem/bgeot_geometric_trans.h>
 #include <getfem/getfem_export.h>
-#include <getfem/bgeot_convex_structure.h>
+#include <getfem/getfem_mesh.h>
 
 using namespace getfemint;
 
@@ -1203,7 +1201,7 @@ void gf_mesh_get(getfemint::mexargs_in& m_in,
   }
 
   if (m_in.narg() < 2)  THROW_BADARG( "Wrong number of input arguments");
-  const getfem::mesh *pmesh = m_in.pop().to_const_mesh();
+  const getfem::mesh *pmesh = to_mesh_object(m_in.pop());
   std::string init_cmd   = m_in.pop().to_string();
   std::string cmd        = cmd_normalize(init_cmd);
 

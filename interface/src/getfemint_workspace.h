@@ -33,106 +33,10 @@
 #define GETFEMINT_WORKSPACE_H__
 
 #include <getfemint.h>
-#include <getfemint_object.h>
 #include <getfem/dal_bit_vector.h>
 #include <getfem/dal_static_stored_objects.h>
 
 namespace getfemint {
-
-  class workspace_data {
-    std::string name;
-    time_t creation_time;
-  public:
-    workspace_data() { name = "invalid"; creation_time = 0; }
-    workspace_data(std::string n) : name(n) { creation_time = ::time(NULL); }
-    const std::string& get_name() const {  return name; }
-    time_t get_creation_time() const { return creation_time; }    
-  };
-
-  class workspace_stack {
-  public:
-    typedef std::vector<getfem_object *>  obj_ct;
-    typedef std::vector<workspace_data>  wrk_ct;
-    static const id_type invalid_id = id_type(-1);
-  private:
-
-    id_type current_workspace; /* stores the current workspace number */
-    id_type base_workspace;    /* stores the initial workspace number */
-
-    /* list of getfem object */
-    obj_ct obj;
-    dal::bit_vector valid_objects;
-    /* list of used workspaces */
-    wrk_ct wrk;
-
-    std::map<getfem_object::internal_key_type, getfem_object*> kmap;
-
-    std::vector<id_type> newly_created_objects;
-
-    /* check if object 'id' can be deleted 
-       (all objects which depend on it should be marked as anonymous)
-     */
-    void mark_deletable_objects(id_type id, dal::bit_vector& v,
-                                dal::bit_vector& g) const;
-    void mark_deletable_objects(id_type id, dal::bit_vector& v) const
-    { dal::bit_vector g; mark_deletable_objects(id, v, g); }
-  public:
-
-    /* inserts a new object (and gives it an id) */
-    id_type push_object(getfem_object *o);
-
-    /* set the dependance of an object with respect to another */
-    void set_dependance(getfem_object *user, getfem_object *used_by);
-    void sup_dependance(getfem_object *user, getfem_object *used_by);
-
-    void undelete_object(id_type id);
-    /* at least mark the objet for future deletion (object becomes anonymous)
-       and if possible, destroy the object (and all the objects which use
-       this one if they are all anonymous) */
-    void delete_object(id_type id);
-
-    /* create a new workspace on top of the stack */
-    void push_workspace(std::string n="unnamed");
-
-    /* move the object in the parent workspace, in order to prevent
-       the object from being deleted when the current workspace will
-       be 'poped' */
-    void send_object_to_parent_workspace(id_type obj_id);
-    void send_all_objects_to_parent_workspace();
-
-    /* delete every object in the workspace, but *does not* delete the
-       workspace itself */
-    void clear_workspace(id_type w);
-    /* clears the current workspace */
-    void clear_workspace() { clear_workspace(current_workspace); }
-
-    /* deletes the current workspace and returns to the parent workspace */
-    void pop_workspace(bool keep_all = false);
-
-    /* throw an error if not found */
-    getfem_object* object(id_type id, const char *expected_type="");
-
-    /* return 0 is object not found */
-    getfem_object* object(getfem_object::internal_key_type p);
-
-    const obj_ct& get_obj_list() const { return obj; }
-    const dal::bit_vector& get_obj_index() const { return valid_objects; }
-    const wrk_ct& get_wrk_list() const { return wrk; }
-    id_type get_current_workspace() const { return current_workspace; }
-    id_type get_base_workspace() const { return base_workspace; }
-    workspace_stack() : current_workspace(anonymous_workspace)
-    { push_workspace("main"); base_workspace = current_workspace; }
-
-    void commit_newly_created_objects();
-    void destroy_newly_created_objects();
-  };
-
-  workspace_stack& workspace();
-
-
-
-
-
 
   // The workspace_stack structure stores the various object assigned to
   // the script languages variables (Python, Scilab or Matlab).
@@ -144,7 +48,7 @@ namespace getfemint {
   // it will be delayed untill all the dependant variables are deleted
   // (implemented with shared pointers).
 
-  class workspace2_stack {
+  class workspace_stack {
     
     struct object_info {
       dal::pstatic_stored_object p;
@@ -169,11 +73,11 @@ namespace getfemint {
 
   public:
 
-    // Creates a new workspace2 on top of the stack
-    void push_workspace2(const std::string &n = "Unnamed") { wrk.push_back(n); }
+    // Creates a new workspace on top of the stack
+    void push_workspace(const std::string &n = "Unnamed") { wrk.push_back(n); }
 
-    // Deletes the current workspace2 and returns to the parent workspace2
-    void pop_workspace2(bool keep_all = false);
+    // Deletes the current workspace and returns to the parent workspace
+    void pop_workspace(bool keep_all = false);
 
     // Inserts a new object (and gives it an id)
     id_type push_object(const dal::pstatic_stored_object &p,
@@ -189,19 +93,19 @@ namespace getfemint {
     */
     void delete_object(id_type id);
 
-    /* Move the object in the parent workspace2, in order to prevent
-       the object from being deleted when the current workspace2 will
+    /* Move the object in the parent workspace, in order to prevent
+       the object from being deleted when the current workspace will
        be 'poped' */
-    void send_object_to_parent_workspace2(id_type obj_id);
-    void send_all_objects_to_parent_workspace2();
+    void send_object_to_parent_workspace(id_type obj_id);
+    void send_all_objects_to_parent_workspace();
 
-    id_type get_current_workspace2() const { return id_type(wrk.size()-1); }
-    id_type get_base_workspace2() const { return id_type(0); }
-    /* Delete every object in the workspace2, but *does not* delete the
-       workspace2 itself */
-    void clear_workspace2(id_type w);
-    /* clears the current workspace2 */
-    void clear_workspace2() { clear_workspace2(get_current_workspace2()); }
+    id_type get_current_workspace() const { return id_type(wrk.size()-1); }
+    id_type get_base_workspace() const { return id_type(0); }
+    /* Delete every object in the workspace, but *does not* delete the
+       workspace itself */
+    void clear_workspace(id_type w);
+    /* clears the current workspace */
+    void clear_workspace() { clear_workspace(get_current_workspace()); }
 
     
     /* Throw an error if not found */
@@ -214,21 +118,13 @@ namespace getfemint {
     /* Return id_type(-1) if not found */
     id_type object(const void *raw_pointer) const;
     
-    workspace2_stack() { push_workspace2("main"); }
+    workspace_stack() { push_workspace("main"); }
 
     void commit_newly_created_objects();
     void destroy_newly_created_objects();
   };
 
-  workspace2_stack& workspace2();
-
-
-
-
-
-
-
-
+  workspace_stack& workspace();
 
 }
 #endif

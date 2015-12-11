@@ -21,10 +21,8 @@
 // $Id$
 #include <map>
 #include <getfemint_workspace.h>
-#include <getfemint_mesh.h>
 #include <getfem/getfem_mesh_slice.h>
 #include <getfem/getfem_export.h>
-#include <getfem/getfem_mesh_slice.h>
 
 using namespace getfemint;
 
@@ -336,7 +334,8 @@ void gf_slice_get(getfemint::mexargs_in& m_in,
       Return the mesh on which the slice was taken.@*/
     sub_command
       ("linked mesh", 0, 0, 0, 1,
-       id_type id = workspace2().object((const void *)(&(sl->linked_mesh())));
+       id_type id = workspace().object((const void *)(&(sl->linked_mesh())));
+       if (id == id_type(-1)) THROW_INTERNAL_ERROR;
        out.pop().from_object_id(id, MESH_CLASS_ID);
        );
 
@@ -345,7 +344,8 @@ void gf_slice_get(getfemint::mexargs_in& m_in,
       (identical to 'linked mesh')@*/
     sub_command
       ("mesh", 0, 0, 0, 1,
-       id_type id = workspace2().object((const void *)(&(sl->linked_mesh())));
+       id_type id = workspace().object((const void *)(&(sl->linked_mesh())));
+       if (id == id_type(-1)) THROW_INTERNAL_ERROR;
        out.pop().from_object_id(id, MESH_CLASS_ID);
        );
 
@@ -411,8 +411,8 @@ void gf_slice_get(getfemint::mexargs_in& m_in,
        int count = 1;
        if (in.remaining()) {
 	 do {
-	   if (in.remaining() >= 2 && in.front().is_mesh_fem()) {
-	     const getfem::mesh_fem &mf = *in.pop().to_const_mesh_fem();
+	   if (in.remaining() >= 2 && is_meshfem_object(in.front())) {
+	     const getfem::mesh_fem &mf = *to_meshfem_object(in.pop());
 	     
 	     darray U = in.pop().to_darray();
 	     in.last_popped().check_trailing_dimension(int(mf.nb_dof()));
@@ -487,8 +487,8 @@ void gf_slice_get(getfemint::mexargs_in& m_in,
        if (edges) exp.exporting_mesh_edges();
        if (in.remaining()) {
 	 do {
-	   if (in.remaining() >= 2 && in.front().is_mesh_fem()) {
-	     const getfem::mesh_fem &mf = *in.pop().to_const_mesh_fem();
+	   if (in.remaining() >= 2 && is_meshfem_object(in.front())) {
+	     const getfem::mesh_fem &mf = *to_meshfem_object(in.pop());
 	     
 	     darray U = in.pop().to_darray();
 	     in.last_popped().check_trailing_dimension(int(mf.nb_dof()));
@@ -524,8 +524,8 @@ void gf_slice_get(getfemint::mexargs_in& m_in,
 	 name = in.pop().to_string();
        exp.write(*sl,name);
        while (in.remaining()) {
-	 if (in.remaining() >= 3 && in.front().is_mesh_fem()) {
-	   const getfem::mesh_fem *mf = in.pop().to_const_mesh_fem();
+	 if (in.remaining() >= 3 && is_meshfem_object(in.front())) {
+	     const getfem::mesh_fem *mf = to_meshfem_object(in.pop());
 	   
 	   darray U = in.pop().to_darray();
 	   in.last_popped().check_trailing_dimension(int(mf->nb_dof()));

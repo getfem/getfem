@@ -26,7 +26,6 @@
 #include <getfem/getfem_mesh_im.h>
 #include <getfem/getfem_partial_mesh_fem.h>
 #include <getfemint_misc.h>
-#include <getfemint_mesh_fem.h>
 #include <getfemint_gsparse.h>
 #include <getfemint_workspace.h>
 
@@ -214,7 +213,6 @@ struct sub_gf_mf_get : virtual public dal::static_stored_object {
   int arg_in_min, arg_in_max, arg_out_min, arg_out_max;
   virtual void run(getfemint::mexargs_in& in,
 		   getfemint::mexargs_out& out,
-		   getfemint_mesh_fem *mi_mf,
 		   getfem::mesh_fem *mf) = 0;
 };
 
@@ -227,10 +225,8 @@ template <typename T> static inline void dummy_func(T &) {}
     struct subc : public sub_gf_mf_get {				\
       virtual void run(getfemint::mexargs_in& in,			\
 		       getfemint::mexargs_out& out,			\
-		       getfemint_mesh_fem *mi_mf,			\
 		       getfem::mesh_fem *mf)				\
-      { dummy_func(in); dummy_func(out); dummy_func(mi_mf);		\
-	dummy_func(mf); code }						\
+      { dummy_func(in); dummy_func(out); dummy_func(mf); code }		\
     };									\
     psub_command psubc = std::make_shared<subc>();			\
     psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;		\
@@ -676,7 +672,9 @@ void gf_mesh_fem_get(getfemint::mexargs_in& m_in,
       Return a reference to the @tmesh object linked to `mf`.@*/
     sub_command
       ("linked mesh", 0, 0, 0, 1,
-       out.pop().from_object_id(mi_mf->linked_mesh_id(), MESH_CLASS_ID);
+       id_type id =  workspace().object((const void *)(&mf->linked_mesh()));
+       if (id == id_type(-1)) THROW_INTERNAL_ERROR;
+       out.pop().from_object_id(id, MESH_CLASS_ID);
        );
 
 
@@ -685,7 +683,9 @@ void gf_mesh_fem_get(getfemint::mexargs_in& m_in,
       (identical to MESH:GET('linked mesh'))@*/
     sub_command
       ("mesh", 0, 0, 0, 1,
-       out.pop().from_object_id(mi_mf->linked_mesh_id(), MESH_CLASS_ID);
+       id_type id =  workspace().object((const void *)(&mf->linked_mesh()));
+       if (id == id_type(-1)) THROW_INTERNAL_ERROR;
+       out.pop().from_object_id(id, MESH_CLASS_ID);
        );
 
 
@@ -713,8 +713,8 @@ void gf_mesh_fem_get(getfemint::mexargs_in& m_in,
        int count = 1;
        while (in.remaining()) {
 	 const getfem::mesh_fem *mf2 = mf;
-	 if (in.remaining() >= 2 && in.front().is_mesh_fem())
-	   mf2 = in.pop().to_const_mesh_fem();
+	 if (in.remaining() >= 2 && is_meshfem_object(in.front()))
+	   mf2 = to_meshfem_object(in.pop());
 	 darray U = in.pop().to_darray();
 	 in.last_popped().check_trailing_dimension(int(mf2->nb_dof()));
 	 exp.write_point_data(*mf2, U, get_vtk_dataset_name(in, count));
@@ -759,8 +759,8 @@ void gf_mesh_fem_get(getfemint::mexargs_in& m_in,
        if (edges) exp.exporting_mesh_edges();
        while (in.remaining()) {
 	 const getfem::mesh_fem *mf2 = mf;
-	 if (in.remaining() >= 2 && in.front().is_mesh_fem())
-	   mf2 = in.pop().to_const_mesh_fem();
+	 if (in.remaining() >= 2 && is_meshfem_object(in.front()))
+	   mf2 = to_meshfem_object(in.pop());
 	 darray U = in.pop().to_darray();
 	 in.last_popped().check_trailing_dimension(int(mf2->nb_dof()));
 	 exp.write_point_data(*mf2, U, get_dx_dataset_name(in));
@@ -786,8 +786,8 @@ void gf_mesh_fem_get(getfemint::mexargs_in& m_in,
        exp.write(*mf,name);
        while (in.remaining()) {
 	 const getfem::mesh_fem *mf2 = mf;
-	 if (in.remaining() >= 2 && in.front().is_mesh_fem()) {
-	   mf2 = in.pop().to_const_mesh_fem();
+	 if (in.remaining() >= 2 && is_meshfem_object(in.front())) {
+	   mf2 = to_meshfem_object(in.pop());
 	 }
 	 darray U = in.pop().to_darray();
 	 in.last_popped().check_trailing_dimension(int(mf2->nb_dof()));
@@ -858,7 +858,7 @@ void gf_mesh_fem_get(getfemint::mexargs_in& m_in,
     sub_command
       ("has_linked_mesh_levelset", 0, 0, 0, 1,
        getfem::mesh_fem_level_set *mfls =
-       dynamic_cast<getfem::mesh_fem_level_set*>(mf);
+       dynamic_cast<getfem::mesh_fem_level_set *>(mf);
        out.pop().from_integer(mfls ? 1 : 0);
        );
 
@@ -872,7 +872,7 @@ void gf_mesh_fem_get(getfemint::mexargs_in& m_in,
        if (mfls) {
 	 getfem::mesh_level_set *mls =
 	   const_cast<getfem::mesh_level_set*>(&mfls->linked_mesh_level_set());
-	 id_type id = workspace2().object((const void *)(mls));
+	 id_type id = workspace().object((const void *)(mls));
 	 GMM_ASSERT1(id != id_type(-1), "Unknown mesh_level_set !");
 	 out.pop().from_object_id(id, MESH_LEVELSET_CLASS_ID);
        } else THROW_BADARG("not a mesh_fem using a mesh_levelset");
@@ -883,8 +883,7 @@ void gf_mesh_fem_get(getfemint::mexargs_in& m_in,
 
 
   if (m_in.narg() < 2)  THROW_BADARG( "Wrong number of input arguments");
-  getfemint_mesh_fem *mi_mf = m_in.pop().to_getfemint_mesh_fem();
-  getfem::mesh_fem *mf   = &mi_mf->mesh_fem();
+  getfem::mesh_fem *mf   = to_meshfem_object(m_in.pop());
   std::string init_cmd   = m_in.pop().to_string();
   std::string cmd        = cmd_normalize(init_cmd);
 
@@ -894,7 +893,7 @@ void gf_mesh_fem_get(getfemint::mexargs_in& m_in,
     check_cmd(cmd, it->first.c_str(), m_in, m_out, it->second->arg_in_min,
 	      it->second->arg_in_max, it->second->arg_out_min,
 	      it->second->arg_out_max);
-    it->second->run(m_in, m_out, mi_mf, mf);
+    it->second->run(m_in, m_out, mf);
   }
   else bad_cmd(init_cmd);
 

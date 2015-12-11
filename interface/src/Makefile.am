@@ -71,25 +71,19 @@ EXTRA_DIST = gfi_rpc_clnt.c gfi_rpc_xdr.c gfi_array.c
 noinst_LTLIBRARIES = libgetfemint.la
 #libgetfemint_a_FLAGS=-D__USE_XOPEN
 libgetfemint_la_SOURCES =              	\
-	getfem_interface.cc            	\
 	getfem_interface.h  		\
+	getfem_interface.cc            	\
+	gfi_array.h 			\
 	gfi_array.c 			\
+	gfi_rpc.h 			\
+	getfemint_std.h 		\
+	getfemint.h 			\
 	getfemint.cc 			\
+	getfemint_misc.h 		\
 	getfemint_misc.cc 		\
 	$(PSEUDO_MFUNCTIONS) 		\
-	getfemint_workspace.cc 		\
-	getfemint_mesh.cc 		\
-	getfemint_mesh_fem.cc 		\
-	gfi_array.h 			\
-	getfemint_mesh.h 		\
-	getfemint_misc.h 		\
-	getfemint_std.h 		\
-	gfi_rpc.h 			\
-	getfemint_mesh_fem.h 		\
-		getfemint_models.h 	\
-	getfemint_object.h 		\
 	getfemint_workspace.h 		\
-	getfemint.h 			\
+	getfemint_workspace.cc 		\
 	getfemint_mesh_slice.h 		\
 	getfemint_precond.h 		\
 	getfemint_levelset.h 		\

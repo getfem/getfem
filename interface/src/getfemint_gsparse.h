@@ -34,8 +34,6 @@
 #define GETFEMINT_GSPARSE_H__
 
 #include <getfemint.h>
-#include <getfemint_object.h>
-#include <getfemint.h>
 
 namespace getfemint
 {

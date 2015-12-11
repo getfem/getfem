@@ -21,7 +21,6 @@
 
 #include <getfemint.h>
 #include <getfemint_workspace.h>
-#include <getfemint_models.h>
 #include <getfem/getfem_continuation.h>
 
 
@@ -108,7 +107,7 @@ void gf_cont_struct(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
        determines how detailed information has to be displayed during the
        continuation process (residual values etc.).@*/
 
-    getfemint_model *md = in.pop().to_getfemint_model();
+    getfem::model *md = to_model_object(in.pop());
     std::string dataname_parameter = in.pop().to_string(),
       dataname_init, dataname_final, dataname_current;
     if (in.front().is_string()) {
@@ -193,8 +192,8 @@ void gf_cont_struct(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
     }
     
     auto shp = std::make_shared<getfem::cont_struct_getfem_model>
-      (md->model(), dataname_parameter, scfac,
-       getfem::rselect_linear_solver(md->model(), lsolver),
+      (*md, dataname_parameter, scfac,
+       getfem::rselect_linear_solver(*md, lsolver),
        h_init, h_max, h_min, h_inc, h_dec, maxit, thrit, maxres, maxdiff,
        mincos, maxres_solve, noisy, singularities, nonsmooth,
        delta_max, delta_min, thrvar, nbdir, nbspan);

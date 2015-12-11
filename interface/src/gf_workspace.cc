@@ -26,7 +26,6 @@
 #include <unistd.h>
 #endif
 #include <iomanip>
-#include <getfem/getfem_mat_elem.h>
 
 using namespace getfemint;
 
@@ -72,8 +71,6 @@ do_stat(id_type wid) {
   
 static void
 do_stats() {
-  // infomsg() << "Memory used by elementary matrices structures : "
-  //           << getfem::stored_mat_elem_memsize()/1024 << "KB\n";
   
   const workspace_stack::obj_ct &obj = workspace().get_obj_list();
   const dal::bit_vector &valid_objects =  workspace().get_obj_index();

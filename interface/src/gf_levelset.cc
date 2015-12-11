@@ -22,7 +22,6 @@
 #include <getfemint.h>
 #include <getfemint_workspace.h>
 #include <getfemint_levelset.h>
-#include <getfemint_mesh.h>
 #include <getfem/getfem_arch_config.h>
 
 using namespace getfemint;
@@ -57,7 +56,7 @@ getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
       generic assembly language). If `f2` is set; this levelset
       is represented by a primary function and a secondary function defined
       by these expressions. @*/
-    getfemint_mesh *mm = in.pop().to_getfemint_mesh();
+    getfem::mesh *mm = to_mesh_object(in.pop());
     size_type degree = in.pop().to_integer(1, 20);
 
     bool with_secondary = false;
@@ -71,7 +70,7 @@ getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
         if (cmd_strmatch(s1, "ws") || cmd_strmatch(s2,"with_secondary")) s2 = "";
     }
 
-    auto pls = std::make_shared<getfem::level_set>(mm->mesh(), dim_type(degree),
+    auto pls = std::make_shared<getfem::level_set>(*mm, dim_type(degree),
 						   with_secondary);
     id_type id = store_levelset_object(pls);
 

@@ -23,10 +23,9 @@
 #include <memory>
 #include <getfem/getfem_mesh_level_set.h>
 #include <getfem/getfem_mesh_slice.h>
+#include <getfem/getfem_mesh_fem.h>
 #include <getfemint_misc.h>
 #include <getfemint_workspace.h>
-#include <getfemint_mesh.h>
-#include <getfemint_mesh_fem.h>
 
 
 using namespace getfemint;
@@ -243,7 +242,7 @@ build_slicers(const getfem::mesh& m, std::vector<std::unique_ptr<getfem::slicer_
     slicers.push_back(std::make_unique<getfem::slicer_cylinder>(x0, x1, in.pop().to_scalar(1e-5), orient));
   } else if (check_cmd(cmd, "isovalues", in, 4, 4)) {
     int orient = in.pop().to_integer(-1,2);
-    const getfem::mesh_fem &mf = *in.pop().to_const_mesh_fem();
+    const getfem::mesh_fem &mf = *to_meshfem_object(in.pop());
     darray U = in.pop().to_darray(int(mf.nb_dof()));
     slicers.push_back(std::make_unique<getfem::slicer_isovalues>(getfem::mesh_slice_cv_dof_data<darray>(mf,U),
                                                    in.pop().to_scalar(), orient));
@@ -284,7 +283,7 @@ build_slicers(const getfem::mesh& m, std::vector<std::unique_ptr<getfem::slicer_
     getfem::slicer_action *s = build_slicers(m, slicers, in.pop().arg);
     slicers.push_back(std::make_unique<getfem::slicer_complementary>(*s));
   } else if (check_cmd(cmd, "mesh", in, 1, 1)) {
-    const getfem::mesh &m2 = *in.pop().to_const_mesh();
+    const getfem::mesh &m2 = *to_mesh_object(in.pop());
     slicers.push_back(std::make_unique<getfem::slicer_mesh_with_mesh>(m2));
   } else bad_cmd(cmd);
   return slicers.back().get();
@@ -399,9 +398,9 @@ void gf_slice(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     std::unique_ptr<getfem::mesh_slice_cv_dof_data<darray> > mfdef;
     std::unique_ptr<getfem::slicer_action> slicer_def;
     getfem::stored_mesh_slice *source_slice = 0;
-    if (in.front().is_mesh_fem() && in.remaining()  >=  3) {
-      mm = &(object_to_mesh(workspace().object(in.front().to_getfemint_mesh_fem()->linked_mesh_id()))->mesh());
-      const getfem::mesh_fem& mf = *in.pop().to_const_mesh_fem();
+    if (is_meshfem_object(in.front()) && in.remaining()  >=  3) {
+      const getfem::mesh_fem& mf = *to_meshfem_object(in.pop());
+      mm = &mf.linked_mesh();
       darray Udef = in.pop().to_darray(-2, int(mf.nb_dof()));
       if (!(mf.get_qdim() == mm->dim() && Udef.getm() == 1) &&
           !(mf.get_qdim() == 1 && Udef.getm() == mm->dim())) {
@@ -417,7 +416,7 @@ void gf_slice(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       pmls = to_mesh_levelset_object(in.pop());
       mm = &(pmls->linked_mesh());
     } else {
-      id_type id; in.pop().to_const_mesh(id); mm = &(object_to_mesh(workspace().object(id))->mesh());
+      mm = to_mesh_object(in.pop());
     }
 
     std::vector<std::unique_ptr<getfem::slicer_action>> slicers;
@@ -454,9 +453,8 @@ void gf_slice(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     /*@INIT sl = ('streamlines', @tmf mf, @mat U, @dmat S)
       Compute streamlines of the (vector) field `U`, with seed points given
       by the columns of `S`.@*/
-      const getfem::mesh_fem *mf = in.front().to_const_mesh_fem();
-      id_type id; in.pop().to_const_mesh(id);
-      mm = &(object_to_mesh(workspace().object(id))->mesh());
+      const getfem::mesh_fem *mf = to_meshfem_object(in.front());
+      mm = to_mesh_object(in.pop());
       darray U = in.pop().to_darray(int(mf->nb_dof()));
       darray v = in.pop().to_darray(mm->dim(), -1);
       std::vector<getfem::base_node> seeds(v.getn());
@@ -470,8 +468,7 @@ void gf_slice(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       Return the "slice" composed of points given by the columns of `Pts`
       (useful for interpolation on a given set of sparse points, see
       ``::COMPUTE('interpolate on',sl)``.@*/
-      id_type id; in.pop().to_const_mesh(id);
-      mm = &(object_to_mesh(workspace().object(id))->mesh());
+      mm = to_mesh_object(in.pop());
       pstored = std::make_shared<getfem::stored_mesh_slice>();
       getfem::mesh_slicer slicer(*mm);
       getfem::slicer_build_stored_mesh_slice slicer_store(*pstored);
@@ -486,13 +483,15 @@ void gf_slice(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       Load the slice (and its linked mesh if it is not given as an argument)
       from a text file.@*/
       std::string fname = in.pop().to_string();
-      if (in.remaining()) mm = &(in.pop().to_getfemint_mesh()->mesh());
+      if (in.remaining()) mm = to_mesh_object(in.pop());
       else {
-        getfem::mesh *m = new getfem::mesh();
-        m->read_from_file(fname);
-        mm = &(getfemint_mesh::get_from(m)->mesh());
+	auto m = std::make_shared<getfem::mesh>();
+	m->read_from_file(fname);
+	store_mesh_object(m);
+	mm = m.get();
 	// workspace().set_dependance(mm, ??);
 	// simplifier ce qui précède ... il faut stocker le nouveau maillage
+	// et bien gerer la dépendance .... !!!
       }
       pstored = std::make_shared<getfem::stored_mesh_slice>();
       pstored->read_from_file(fname, *mm);

@@ -131,7 +131,7 @@ void gf_mesh_im_data_get(getfemint::mexargs_in& m_in,
     Returns a reference to the @tmesh object linked to `mim`.@*/
     sub_command
       ("linked mesh", 0, 0, 0, 1,
-       id_type id = workspace2().object(&mimd->linked_mesh_im().linked_mesh());
+       id_type id = workspace().object(&mimd->linked_mesh_im().linked_mesh());
        if (id == id_type(-1)) THROW_INTERNAL_ERROR;
        out.pop().from_object_id(id, MESH_CLASS_ID);
        );

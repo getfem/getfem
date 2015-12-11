@@ -115,8 +115,8 @@ gf_interpolate(getfemint::mexargs_in& in, getfemint::mexargs_out& out,
 	       const getfem::mesh_fem& mf, const garray<T> &U) {
   array_dimensions dims;
   dims.push_back(U,0,U.ndim()-1,true);
-  if (in.front().is_mesh_fem()) {
-    const getfem::mesh_fem& mf_dest = *in.pop().to_const_mesh_fem();
+  if (is_meshfem_object(in.front())) {
+      const getfem::mesh_fem& mf_dest = *to_meshfem_object(in.pop());
     error_for_non_lagrange_elements(mf_dest, true);
     size_type qmult = mf.get_qdim() / mf_dest.get_qdim();
     if (qmult == 0)
@@ -253,7 +253,7 @@ void gf_compute(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
       ("L2 dist", 3, 4, 0, 1,
        U_is_a_vector(U, "L2 dist");
        const getfem::mesh_im *mim = to_meshim_object(in.pop());
-       const getfem::mesh_fem *mf_2 = in.pop().to_const_mesh_fem();
+       const getfem::mesh_fem *mf_2 = to_meshfem_object(in.pop());
        if (!U.is_complex()) {
          darray st = in.pop().to_darray();
          std::vector<double> V(st.begin(), st.end());
@@ -303,7 +303,7 @@ void gf_compute(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
       ("H1 semi dist", 3, 4, 0, 1,
        U_is_a_vector(U, "H1 semi dist");
        const getfem::mesh_im *mim = to_meshim_object(in.pop());
-       const getfem::mesh_fem *mf_2 = in.pop().to_const_mesh_fem();
+       const getfem::mesh_fem *mf_2 = to_meshfem_object(in.pop());
        if (!U.is_complex()) {
          darray st = in.pop().to_darray();
          std::vector<double> V(st.begin(), st.end());
@@ -398,7 +398,7 @@ void gf_compute(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
     `mf` and Qdim_mf_du is the Qdim of `mf_du`.@*/
     sub_command
       ("gradient", 1, 1, 0, 1,
-       const getfem::mesh_fem *mf_grad = in.pop().to_const_mesh_fem();
+       const getfem::mesh_fem *mf_grad = to_meshfem_object(in.pop());
        error_for_non_lagrange_elements(*mf_grad, true);
        size_type qm
          = (mf_grad->get_qdim() == mf->get_qdim()) ? 1 : mf->get_qdim();
@@ -414,7 +414,7 @@ void gf_compute(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
     See also ::COMPUTE('gradient', @tmf mf_du).@*/
     sub_command
       ("hessian", 1, 1, 0, 1,
-       const getfem::mesh_fem *mf_hess = in.pop().to_const_mesh_fem();
+       const getfem::mesh_fem *mf_hess = to_meshfem_object(in.pop());
        error_for_non_lagrange_elements(*mf_hess, true);
        size_type qm = (mf_hess->get_qdim() == mf->get_qdim()) ? 1 : mf->get_qdim();
        if (!U.is_complex())
@@ -487,7 +487,7 @@ void gf_compute(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
     See also ::ASM('extrapolation matrix')@*/
     sub_command
       ("extrapolate on", 1, 1, 0, 1,
-       const getfem::mesh_fem *mf_dest = in.pop().to_const_mesh_fem();
+       const getfem::mesh_fem *mf_dest = to_meshfem_object(in.pop());
        error_for_non_lagrange_elements(*mf_dest, true);
        if (!U.is_complex()) {
 	 darray V = out.pop().create_darray(1, unsigned(mf_dest->nb_dof()));
@@ -574,7 +574,7 @@ void gf_compute(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
     @*/
     sub_command
       ("convect", 4, 7, 0, 0,
-       const getfem::mesh_fem *mf_v = in.pop().to_const_mesh_fem();
+       const getfem::mesh_fem *mf_v = to_meshfem_object(in.pop());
        rcarray V              = in.pop().to_rcarray();
        scalar_type dt = in.pop().to_scalar();
        size_type nt = in.pop().to_integer(0,100000);
@@ -619,7 +619,7 @@ void gf_compute(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
   
   if (m_in.narg() < 3)  THROW_BADARG( "Wrong number of input arguments");
 
-  const getfem::mesh_fem *mf   = m_in.pop().to_const_mesh_fem();
+  const getfem::mesh_fem *mf   = to_meshfem_object(m_in.pop());
   rcarray U              = m_in.pop().to_rcarray();
   m_in.last_popped().check_trailing_dimension(int(mf->nb_dof()));
   std::string init_cmd   = m_in.pop().to_string();

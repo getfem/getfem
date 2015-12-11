@@ -37,8 +37,6 @@
 #define GETFEMINT_LEVELSET_H__
 
 #include <getfemint.h>
-#include <getfemint_object.h>
-#include <getfemint.h>
 #include <getfem/getfem_level_set.h>
 
 namespace getfemint {

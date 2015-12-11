@@ -19,9 +19,9 @@
 
 ===========================================================================*/
 
-#include <getfemint.h>
+#include <getfemint_workspace.h>
 #include <getfemint_levelset.h>
-#include <getfemint_mesh_fem.h>
+#include <getfem/getfem_mesh_fem.h>
 
 using namespace getfemint;
 
@@ -101,9 +101,13 @@ void gf_levelset_get(getfemint::mexargs_in& m_in,
     sub_command
       ("mf", 0, 0, 0, 1,
        getfem::mesh_fem *pmf=const_cast<getfem::mesh_fem*>(&ls.get_mesh_fem());
-       getfemint_mesh_fem *gmf =
-       getfemint_mesh_fem::get_from(pmf, STATIC_OBJ | CONST_OBJ);
-       out.pop().from_object_id(gmf->get_id(), gmf->class_id());
+       id_type id = workspace().object(pmf);
+       if (id == id_type(-1)) {
+	 id = store_meshfem_object(std::shared_ptr<getfem::mesh_fem>
+				   (std::shared_ptr<getfem::mesh_fem>(), pmf));
+	 // set_dependance(??, ??)
+       }
+       out.pop().from_object_id(id, MESHFEM_CLASS_ID);
        );
 
 

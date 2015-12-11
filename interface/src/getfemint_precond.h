@@ -34,7 +34,6 @@
 #define GETFEMINT_PRECOND_H__
 
 #include <getfemint.h>
-#include <getfemint_object.h>
 #include <gmm/gmm_precond_diagonal.h>
 #include <gmm/gmm_precond_ildlt.h>
 #include <gmm/gmm_precond_ildltt.h>

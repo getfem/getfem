@@ -26,8 +26,6 @@
 #include <getfemint.h>
 #include <getfemint_workspace.h>
 #include <getfemint_misc.h>
-#include <getfemint_models.h>
-#include <getfemint_mesh_fem.h>
 #include <getfem/getfem_model_solvers.h>
 #include <getfem/getfem_generic_assembly.h>
 #include <getfem/getfem_nonlinear_elasticity.h>
@@ -40,22 +38,22 @@ using namespace getfemint;
 
 #define RETURN_SPARSE(realmeth, cplxmeth)                            \
   if (!md->is_complex()) {                                           \
-    gf_real_sparse_by_col M(gmm::mat_nrows(md->model().realmeth),    \
-                            gmm::mat_ncols(md->model().realmeth));   \
-    gmm::copy(md->model().realmeth, M);                              \
+    gf_real_sparse_by_col M(gmm::mat_nrows(md->realmeth),	     \
+                            gmm::mat_ncols(md->realmeth));	     \
+    gmm::copy(md->realmeth, M);					     \
     out.pop().from_sparse(M);                                        \
   } else {                                                           \
-    gf_cplx_sparse_by_col M(gmm::mat_nrows(md->model().cplxmeth),    \
-                            gmm::mat_ncols(md->model().cplxmeth));   \
-    gmm::copy(md->model().cplxmeth, M);                              \
+    gf_cplx_sparse_by_col M(gmm::mat_nrows(md->cplxmeth),	     \
+                            gmm::mat_ncols(md->cplxmeth));	     \
+    gmm::copy(md->cplxmeth, M);					     \
     out.pop().from_sparse(M);                                        \
   }
 
 #define RETURN_VECTOR(realmeth, cplxmeth)                      \
   if (!md->is_complex()) {                                     \
-    out.pop().from_dcvector(md->model().realmeth);             \
+    out.pop().from_dcvector(md->realmeth);		       \
   } else {                                                     \
-    out.pop().from_dcvector(md->model().cplxmeth);             \
+    out.pop().from_dcvector(md->cplxmeth);		       \
   }
 
 /*@GFDOC
@@ -69,7 +67,7 @@ struct sub_gf_md_get : virtual public dal::static_stored_object {
   int arg_in_min, arg_in_max, arg_out_min, arg_out_max;
   virtual void run(getfemint::mexargs_in& in,
                    getfemint::mexargs_out& out,
-                   getfemint_model *md) = 0;
+                   getfem::model *md) = 0;
 };
 
 typedef std::shared_ptr<sub_gf_md_get> psub_command;
@@ -81,7 +79,7 @@ template <typename T> static inline void dummy_func(T &) {}
     struct subc : public sub_gf_md_get {                                \
       virtual void run(getfemint::mexargs_in& in,                       \
                        getfemint::mexargs_out& out,                     \
-                       getfemint_model *md)                             \
+                       getfem::model *md)				\
       { dummy_func(in); dummy_func(out);  dummy_func(md); code }        \
     };                                                                  \
     psub_command psubc = std::make_shared<subc>();			\
@@ -110,14 +108,14 @@ void gf_model_get(getfemint::mexargs_in& m_in,
       Return the total number of degrees of freedom of the model.@*/
     sub_command
       ("nbdof", 0, 0, 0, 1,
-       out.pop().from_integer(int(md->model().nb_dof()));
+       out.pop().from_integer(int(md->nb_dof()));
        );
 
     /*@GET dt = ('get time step')
       Gives the value of the time step. @*/
     sub_command
       ("get time step", 0, 0, 0, 1,
-       out.pop().from_scalar(md->model().get_time_step());
+       out.pop().from_scalar(md->get_time_step());
        );
 
     /*@GET t = ('get time')
@@ -125,7 +123,7 @@ void gf_model_get(getfemint::mexargs_in& m_in,
       @*/
     sub_command
       ("get time", 0, 0, 0, 1,
-       out.pop().from_scalar(md->model().get_time());
+       out.pop().from_scalar(md->get_time());
        );
 
     /*@GET T = ('tangent_matrix')
@@ -168,10 +166,10 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        if (in.remaining())
          ind_iter = in.pop().to_integer() - config::base_index();
 
-       if (md->model().is_complex())
-         out.pop().from_dcvector(md->model().complex_brick_term_rhs(ind_brick, ind_term, sym, ind_iter));
+       if (md->is_complex())
+         out.pop().from_dcvector(md->complex_brick_term_rhs(ind_brick, ind_term, sym, ind_iter));
        else
-         out.pop().from_dcvector(md->model().real_brick_term_rhs(ind_brick, ind_term, sym, ind_iter));
+         out.pop().from_dcvector(md->real_brick_term_rhs(ind_brick, ind_term, sym, ind_iter));
        );
 
 
@@ -180,7 +178,23 @@ void gf_model_get(getfemint::mexargs_in& m_in,
       the model.@*/
     sub_command
       ("memsize", 0, 0, 0, 1,
-       out.pop().from_integer(int(md->memsize()));
+       size_type msz = 0;
+       /* Rough estimate. Quite optimistic with sparse matrices! */
+       if (!md->is_complex()) {
+	 size_type szd = sizeof(double);
+	 size_type szs = sizeof(size_type);
+	 msz = gmm::nnz(md->real_tangent_matrix()) * (szd + szs)
+	   + gmm::vect_size(md->real_rhs()) *  szd * 3
+	   + sizeof(getfem::model);
+       }
+       else {
+	 size_type szc = sizeof(std::complex<double>);
+	 size_type szs = sizeof(size_type);
+	 msz = gmm::nnz(md->complex_tangent_matrix()) * (szc + szs)
+	   + gmm::vect_size(md->complex_rhs()) *  szc * 3
+	   + sizeof(getfem::model);
+       }
+       out.pop().from_integer(int(msz));
        );
 
 
@@ -188,7 +202,7 @@ void gf_model_get(getfemint::mexargs_in& m_in,
       print to the output the list of variables and constants of the model.@*/
     sub_command
       ("variable list", 0, 0, 0, 0,
-       md->model().listvar(infomsg());
+       md->listvar(infomsg());
        );
 
 
@@ -196,7 +210,7 @@ void gf_model_get(getfemint::mexargs_in& m_in,
       print to the output the list of bricks of the model.@*/
     sub_command
       ("brick list", 0, 0, 0, 0,
-       md->model().listbricks(infomsg(), config::base_index());
+       md->listbricks(infomsg(), config::base_index());
        );
 
     /*@GET ('list residuals')
@@ -204,7 +218,7 @@ void gf_model_get(getfemint::mexargs_in& m_in,
       included in the model.@*/
     sub_command
       ("list residuals", 0, 0, 0, 0,
-       md->model().listresiduals(cout);
+       md->listresiduals(cout);
        );
 
 
@@ -230,22 +244,18 @@ void gf_model_get(getfemint::mexargs_in& m_in,
       ("interpolation", 2, 6, 0, 1, // should be extended to complex models ...
        std::string expr = in.pop().to_string();
        getfem::base_vector result;
-       if (in.front().is_mesh_fem()) {
-         const getfem::mesh_fem *mf = in.pop().to_const_mesh_fem();
-         size_type rg = in.remaining() ? in.pop().to_integer()
-                                       : size_type(-1);
-         getfem::ga_interpolation_Lagrange_fem(md->model(), expr,
-                                               *mf, result, rg);
+       if (is_meshfem_object(in.front())) {
+         const getfem::mesh_fem *mf = to_meshfem_object(in.pop());
+         size_type rg = in.remaining() ? in.pop().to_integer() : size_type(-1);
+         getfem::ga_interpolation_Lagrange_fem(*md, expr, *mf, result, rg);
        } else if (is_meshimdata_object(in.front())) {
 	   getfem::im_data *mimd = to_meshimdata_object(in.pop());
-         size_type rg = in.remaining() ? in.pop().to_integer()
-                                       : size_type(-1);
-         getfem::ga_interpolation_im_data(md->model(), expr,
-                                          *mimd, result, rg);
+         size_type rg = in.remaining() ? in.pop().to_integer() : size_type(-1);
+         getfem::ga_interpolation_im_data(*md, expr, *mimd, result, rg);
        } else {
          darray st = in.pop().to_darray();
          std::vector<double> PTS(st.begin(), st.end());
-         const getfem::mesh *m = in.pop().to_const_mesh();
+         const getfem::mesh *m = to_mesh_object(in.pop());
          size_type N = m->dim();
          size_type nbpoints = gmm::vect_size(PTS) / N;
          getfem::base_node p(N);
@@ -260,7 +270,7 @@ void gf_model_get(getfemint::mexargs_in& m_in,
                                             : size_type(0);
          size_type rg_source = in.remaining() ? in.pop().to_integer()
                                               : size_type(-1);
-         getfem::ga_interpolation_mti(md->model(), expr, mti,
+         getfem::ga_interpolation_mti(*md, expr, mti,
                                       result, rg, extrapolation, rg_source);
        }
        out.pop().from_dcvector(result);
@@ -271,16 +281,10 @@ void gf_model_get(getfemint::mexargs_in& m_in,
     sub_command
       ("mesh fem of variable", 1, 1, 0, 1,
        std::string name = in.pop().to_string();
-       const getfem::mesh_fem &mf = md->model().mesh_fem_of_variable(name);
-       getfem::mesh_fem *mmf = const_cast<getfem::mesh_fem *>(&mf);
-       getfem_object *o =
-         getfemint::workspace().object(getfem_object::internal_key_type(mmf));
-       getfemint_mesh_fem *gmf = getfemint_mesh_fem::get_from(mmf);
-       if (!o) {
-         gmf->set_flags(STATIC_OBJ);
-         workspace().set_dependance(gmf, md);
-       }
-       out.pop().from_object_id(gmf->get_id(), MESHFEM_CLASS_ID);
+       const getfem::mesh_fem &mf = md->mesh_fem_of_variable(name);
+       id_type id = workspace().object((const void *)(&mf));
+       if (id == id_type(-1)) THROW_INTERNAL_ERROR;
+       out.pop().from_object_id(id, MESHFEM_CLASS_ID);
        );
 
 
@@ -292,7 +296,7 @@ void gf_model_get(getfemint::mexargs_in& m_in,
       ("mult varname Dirichlet", 1, 1, 0, 1,
        size_type ind_brick = in.pop().to_integer() - config::base_index();
        out.pop().from_string
-       (getfem::mult_varname_Dirichlet(md->model(), ind_brick).c_str());
+       (getfem::mult_varname_Dirichlet(*md, ind_brick).c_str());
        );
 
 
@@ -302,7 +306,7 @@ void gf_model_get(getfemint::mexargs_in& m_in,
     sub_command
       ("interval of variable", 1, 1, 0, 1,
        std::string name = in.pop().to_string();
-       const gmm::sub_interval I = md->model().interval_of_variable(name);
+       const gmm::sub_interval I = md->interval_of_variable(name);
        iarray opids = out.pop().create_iarray_h(2);
        opids[0] = int(I.first() + config::base_index());
        opids[1] = int(I.size());
@@ -316,12 +320,12 @@ void gf_model_get(getfemint::mexargs_in& m_in,
     sub_command
       ("from variables", 0, 0, 0, 1,
        if (!md->is_complex()) {
-         std::vector<double> V(md->model().nb_dof());
-         md->model().from_variables(V);
+         std::vector<double> V(md->nb_dof());
+         md->from_variables(V);
          out.pop().from_dcvector(V);
        } else {
-         std::vector<std::complex<double> > V(md->model().nb_dof());
-         md->model().from_variables(V);
+         std::vector<std::complex<double> > V(md->nb_dof());
+         md->from_variables(V);
          out.pop().from_dcvector(V);
        }
        );
@@ -349,7 +353,7 @@ void gf_model_get(getfemint::mexargs_in& m_in,
                 cmd_strmatch(option, "build_matrix"))
          version = getfem::model::BUILD_MATRIX;
        else THROW_BADARG("bad option: " << option);
-       md->model().assembly(version);
+       md->assembly(version);
        );
 
 
@@ -465,13 +469,13 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        else GMM_ASSERT1(false, "unknown line search");
 
 
-       if (!md->model().is_complex()) {
-         getfem::standard_solve(md->model(), iter,
-                                getfem::rselect_linear_solver(md->model(),
+       if (!md->is_complex()) {
+         getfem::standard_solve(*md, iter,
+                                getfem::rselect_linear_solver(*md,
                                                               lsolver), *ls);
        } else {
-         getfem::standard_solve(md->model(), iter,
-                                getfem::cselect_linear_solver(md->model(),
+         getfem::standard_solve(*md, iter,
+                                getfem::cselect_linear_solver(*md,
                                                               lsolver), *ls);
        }
        if (out.remaining()) out.pop().from_integer(int(iter.get_iteration()));
@@ -492,7 +496,7 @@ void gf_model_get(getfemint::mexargs_in& m_in,
       @*/
     sub_command
       ("test tangent matrix", 0, 3, 0, 1,
-       size_type nbdof = md->model().nb_dof();
+       size_type nbdof = md->nb_dof();
        scalar_type EPS = 1E-6;
        if (in.remaining()) EPS = in.pop().to_scalar();
        scalar_type errmax = scalar_type(0);
@@ -501,7 +505,7 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        scalar_type scalef = scalar_type(1);
        if (in.remaining()) scalef = in.pop().to_scalar();
 
-       if (md->model().is_linear()) {
+       if (md->is_linear()) {
 	 GMM_WARNING1("Problem is linear, the test is not relevant");
        } else {
 	 if (md->is_complex()) {
@@ -510,51 +514,51 @@ void gf_model_get(getfemint::mexargs_in& m_in,
 	   std::vector<complex_type> DIR(nbdof);
 	   std::vector<complex_type> D1(nbdof);
 	   std::vector<complex_type> D2(nbdof);
-           md->model().from_variables(U);
+           md->from_variables(U);
 	   for (size_type i = 0; i < NN; ++i) {
 	     gmm::fill_random(dU); gmm::scale(dU, complex_type(scalef));
              gmm::add(U, dU);
 	     gmm::fill_random(DIR);
-	     md->model().to_variables(dU);
-	     md->model().assembly(getfem::model::BUILD_ALL);
-	     gmm::copy(md->model().complex_rhs(), D2);
-	     gmm::mult(md->model().complex_tangent_matrix(), DIR, D1);
+	     md->to_variables(dU);
+	     md->assembly(getfem::model::BUILD_ALL);
+	     gmm::copy(md->complex_rhs(), D2);
+	     gmm::mult(md->complex_tangent_matrix(), DIR, D1);
 	     gmm::add(gmm::scaled(DIR, complex_type(EPS)), dU);
-	     md->model().to_variables(dU);
-	     md->model().assembly(getfem::model::BUILD_RHS);
-	     gmm::add(gmm::scaled(md->model().complex_rhs(),
+	     md->to_variables(dU);
+	     md->assembly(getfem::model::BUILD_RHS);
+	     gmm::add(gmm::scaled(md->complex_rhs(),
 				  -complex_type(1)), D2);
 	     gmm::scale(D2, complex_type(1)/complex_type(EPS));
 	     scalar_type err = gmm::vect_dist2(D1, D2);
 	     cout << "Error at step " << i << " : " << err << endl;
 	     errmax = std::max(err, errmax);
 	   }
-           md->model().to_variables(U);
+           md->to_variables(U);
 	 } else {
 	   std::vector<scalar_type> U(nbdof);
 	   std::vector<scalar_type> dU(nbdof);
 	   std::vector<scalar_type> DIR(nbdof);
 	   std::vector<scalar_type> D1(nbdof);
 	   std::vector<scalar_type> D2(nbdof);
-           md->model().from_variables(U);
+           md->from_variables(U);
 	   for (size_type i = 0; i < NN; ++i) {
 	     gmm::fill_random(dU); gmm::scale(dU, scalef);
              gmm::add(U, dU);
 	     gmm::fill_random(DIR);
-	     md->model().to_variables(dU);
-	     md->model().assembly(getfem::model::BUILD_ALL);
-	     gmm::copy(md->model().real_rhs(), D2);
-	     gmm::mult(md->model().real_tangent_matrix(), DIR, D1);
+	     md->to_variables(dU);
+	     md->assembly(getfem::model::BUILD_ALL);
+	     gmm::copy(md->real_rhs(), D2);
+	     gmm::mult(md->real_tangent_matrix(), DIR, D1);
 	     gmm::add(gmm::scaled(DIR, EPS), dU);
-	     md->model().to_variables(dU);
-	     md->model().assembly(getfem::model::BUILD_RHS);
-	     gmm::add(gmm::scaled(md->model().real_rhs(),-scalar_type(1)), D2);
+	     md->to_variables(dU);
+	     md->assembly(getfem::model::BUILD_RHS);
+	     gmm::add(gmm::scaled(md->real_rhs(),-scalar_type(1)), D2);
 	     gmm::scale(D2, scalar_type(1)/EPS);
 	     scalar_type err = gmm::vect_dist2(D1, D2);
 	     cout << "Error at step " << i << " : " << err << endl;
 	     errmax = std::max(err, errmax);
 	   }
-           md->model().to_variables(U);
+           md->to_variables(U);
 	 }
        }
        out.pop().from_scalar(errmax);
@@ -580,8 +584,8 @@ void gf_model_get(getfemint::mexargs_in& m_in,
       ("test tangent matrix term", 2, 5, 0, 1,
        std::string varname1 = in.pop().to_string();
        std::string varname2 = in.pop().to_string();
-       gmm::sub_interval I1 = md->model().interval_of_variable(varname1);
-       gmm::sub_interval I2 = md->model().interval_of_variable(varname2);
+       gmm::sub_interval I1 = md->interval_of_variable(varname1);
+       gmm::sub_interval I2 = md->interval_of_variable(varname2);
        size_type nbdof1 = I1.size();
        size_type nbdof2 = I2.size();
 
@@ -593,7 +597,7 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        scalar_type scalef = scalar_type(1);
        if (in.remaining()) scalef = in.pop().to_scalar();
 
-       if (md->model().is_linear()) {
+       if (md->is_linear()) {
 	 GMM_WARNING1("Problem is linear, the test is not relevant");
        } else {
 	 if (md->is_complex()) {
@@ -602,54 +606,54 @@ void gf_model_get(getfemint::mexargs_in& m_in,
 	   std::vector<complex_type> DIR2(nbdof2);
 	   std::vector<complex_type> D1(nbdof1);
 	   std::vector<complex_type> D2(nbdof1);
-           gmm::copy(md->model().complex_variable(varname2), U2);
+           gmm::copy(md->complex_variable(varname2), U2);
 	   for (size_type i = 0; i < NN; ++i) {
 	     gmm::fill_random(dU2); gmm::scale(dU2, complex_type(scalef));
              gmm::add(U2, dU2);
-             gmm::copy(dU2, md->model().set_complex_variable(varname2));
+             gmm::copy(dU2, md->set_complex_variable(varname2));
 	     gmm::fill_random(DIR2);
-	     md->model().assembly(getfem::model::BUILD_ALL);
-	     gmm::copy(gmm::sub_vector(md->model().complex_rhs(), I1), D2);
-	     gmm::mult(gmm::sub_matrix(md->model().complex_tangent_matrix(),
+	     md->assembly(getfem::model::BUILD_ALL);
+	     gmm::copy(gmm::sub_vector(md->complex_rhs(), I1), D2);
+	     gmm::mult(gmm::sub_matrix(md->complex_tangent_matrix(),
                                        I1, I2), DIR2, D1);
 	     gmm::add(gmm::scaled(DIR2, complex_type(EPS)), dU2);
-	     gmm::copy(dU2, md->model().set_complex_variable(varname2));
-	     md->model().assembly(getfem::model::BUILD_RHS);
-	     gmm::add(gmm::scaled(gmm::sub_vector(md->model().complex_rhs(),
+	     gmm::copy(dU2, md->set_complex_variable(varname2));
+	     md->assembly(getfem::model::BUILD_RHS);
+	     gmm::add(gmm::scaled(gmm::sub_vector(md->complex_rhs(),
                                                   I1), complex_type(-1)), D2);
 	     gmm::scale(D2, complex_type(1)/complex_type(EPS));
 	     scalar_type err = gmm::vect_dist2(D1, D2);
 	     cout << "Error at step " << i << " : " << err << endl;
 	     errmax = std::max(err, errmax);
 	   }
-           gmm::copy(U2, md->model().set_complex_variable(varname2));
+           gmm::copy(U2, md->set_complex_variable(varname2));
 	 } else {
 	   std::vector<scalar_type> U2(nbdof2);
 	   std::vector<scalar_type> dU2(nbdof2);
 	   std::vector<scalar_type> DIR2(nbdof2);
 	   std::vector<scalar_type> D1(nbdof1);
 	   std::vector<scalar_type> D2(nbdof1);
-           gmm::copy(md->model().real_variable(varname2), U2);
+           gmm::copy(md->real_variable(varname2), U2);
 	   for (size_type i = 0; i < NN; ++i) {
 	     gmm::fill_random(dU2); gmm::scale(dU2, scalef);
              gmm::add(U2, dU2);
-             gmm::copy(dU2, md->model().set_real_variable(varname2));
+             gmm::copy(dU2, md->set_real_variable(varname2));
 	     gmm::fill_random(DIR2);
-	     md->model().assembly(getfem::model::BUILD_ALL);
-	     gmm::copy(gmm::sub_vector(md->model().real_rhs(), I1), D2);
-	     gmm::mult(gmm::sub_matrix(md->model().real_tangent_matrix(),
+	     md->assembly(getfem::model::BUILD_ALL);
+	     gmm::copy(gmm::sub_vector(md->real_rhs(), I1), D2);
+	     gmm::mult(gmm::sub_matrix(md->real_tangent_matrix(),
                                        I1, I2), DIR2, D1);
 	     gmm::add(gmm::scaled(DIR2, scalar_type(EPS)), dU2);
-	     gmm::copy(dU2, md->model().set_real_variable(varname2));
-	     md->model().assembly(getfem::model::BUILD_RHS);
-	     gmm::add(gmm::scaled(gmm::sub_vector(md->model().real_rhs(),
+	     gmm::copy(dU2, md->set_real_variable(varname2));
+	     md->assembly(getfem::model::BUILD_RHS);
+	     gmm::add(gmm::scaled(gmm::sub_vector(md->real_rhs(),
                                                   I1), scalar_type(-1)), D2);
 	     gmm::scale(D2, scalar_type(1)/EPS);
 	     scalar_type err = gmm::vect_dist2(D1, D2);
 	     cout << "Error at step " << i << " : " << err << endl;
 	     errmax = std::max(err, errmax);
 	   }
-           gmm::copy(U2, md->model().set_real_variable(varname2));
+           gmm::copy(U2, md->set_real_variable(varname2));
 	 }
        }
        out.pop().from_scalar(errmax);
@@ -668,7 +672,7 @@ void gf_model_get(getfemint::mexargs_in& m_in,
       ("Neumann term", 2, 2, 0, 1,
        std::string varname = in.pop().to_string();
        size_type rg =in.pop().to_integer();
-       std::string expr = md->model().Neumann_term(varname, rg);
+       std::string expr = md->Neumann_term(varname, rg);
        out.pop().from_string(expr.c_str());
        );
 
@@ -684,7 +688,7 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        std::string varname = in.pop().to_string();
        std::string dataname_lambda = in.pop().to_string();
        std::string dataname_mu = in.pop().to_string();
-       getfemint_mesh_fem *gfi_mf = in.pop().to_getfemint_mesh_fem();
+       const getfem::mesh_fem *mf = to_meshfem_object(in.pop());
        std::string stresca = "Von Mises";
        if (in.remaining()) stresca = in.pop().to_string();
        bool tresca = false;
@@ -695,9 +699,9 @@ void gf_model_get(getfemint::mexargs_in& m_in,
          tresca = true;
        else THROW_BADARG("bad option \'version\': " << stresca);
 
-       getfem::model_real_plain_vector VMM((gfi_mf->mesh_fem()).nb_dof());
+       getfem::model_real_plain_vector VMM(mf->nb_dof());
        getfem::compute_isotropic_linearized_Von_Mises_or_Tresca
-       (md->model(), varname, dataname_lambda, dataname_mu, gfi_mf->mesh_fem(), VMM, tresca);
+       (*md, varname, dataname_lambda, dataname_mu, *mf, VMM, tresca);
        out.pop().from_dcvector(VMM);
        );
 
@@ -711,11 +715,10 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        std::string varname = in.pop().to_string();
        std::string data_E = in.pop().to_string();
        std::string data_nu = in.pop().to_string();
-       getfemint_mesh_fem *gfi_mf = in.pop().to_getfemint_mesh_fem();
-
-       getfem::model_real_plain_vector VMM((gfi_mf->mesh_fem()).nb_dof());
+       const getfem::mesh_fem *mf = to_meshfem_object(in.pop());
+       getfem::model_real_plain_vector VMM(mf->nb_dof());
        getfem::compute_isotropic_linearized_Von_Mises_pstrain
-       (md->model(), varname, data_E, data_nu, gfi_mf->mesh_fem(), VMM);
+       (*md, varname, data_E, data_nu, *mf, VMM);
        out.pop().from_dcvector(VMM);
        );
 
@@ -729,11 +732,11 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        std::string varname = in.pop().to_string();
        std::string data_E = in.pop().to_string();
        std::string data_nu = in.pop().to_string();
-       getfemint_mesh_fem *gfi_mf = in.pop().to_getfemint_mesh_fem();
+       const getfem::mesh_fem *mf = to_meshfem_object(in.pop());
 
-       getfem::model_real_plain_vector VMM((gfi_mf->mesh_fem()).nb_dof());
+       getfem::model_real_plain_vector VMM(mf->nb_dof());
        getfem::compute_isotropic_linearized_Von_Mises_pstress
-       (md->model(), varname, data_E, data_nu, gfi_mf->mesh_fem(), VMM);
+       (*md, varname, data_E, data_nu, *mf, VMM);
        out.pop().from_dcvector(VMM);
        );
 
@@ -751,7 +754,7 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        std::string varname = in.pop().to_string();
        std::string lawname = in.pop().to_string();
        std::string dataname = in.pop().to_string();
-       getfemint_mesh_fem *gfi_mf = in.pop().to_getfemint_mesh_fem();
+       const getfem::mesh_fem *mf = to_meshfem_object(in.pop());
        std::string stresca = "Von Mises";
        if (in.remaining()) stresca = in.pop().to_string();
        bool tresca = false;
@@ -762,12 +765,11 @@ void gf_model_get(getfemint::mexargs_in& m_in,
          tresca = true;
        else THROW_BADARG("bad option \'version\': " << stresca);
 
-       getfem::model_real_plain_vector VMM((gfi_mf->mesh_fem()).nb_dof());
+       getfem::model_real_plain_vector VMM(mf->nb_dof());
        getfem::compute_Von_Mises_or_Tresca
-       (md->model(), varname,
+       (*md, varname,
         abstract_hyperelastic_law_from_name
-        (lawname, gfi_mf->mesh_fem().linked_mesh().dim()),
-        dataname, gfi_mf->mesh_fem(), VMM, tresca);
+        (lawname, mf->linked_mesh().dim()), dataname, *mf, VMM, tresca);
        out.pop().from_dcvector(VMM);
        );
 
@@ -784,13 +786,13 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        std::string varname = in.pop().to_string();
        std::string lawname = in.pop().to_string();
        std::string params = in.pop().to_string();
-       getfemint_mesh_fem *gfi_mf = in.pop().to_getfemint_mesh_fem();
+       const getfem::mesh_fem *mf = to_meshfem_object(in.pop());
        std::string stresca = "Von Mises";
        size_type rg = size_type(-1);
        if (in.remaining()) rg = in.pop().to_integer();
-       getfem::model_real_plain_vector VMM((gfi_mf->mesh_fem()).nb_dof());
+       getfem::model_real_plain_vector VMM(mf->nb_dof());
        getfem::finite_strain_elasticity_Von_Mises
-       (md->model(), varname, lawname, params,  gfi_mf->mesh_fem(), VMM, rg);
+       (*md, varname, lawname, params, *mf, VMM, rg);
        out.pop().from_dcvector(VMM);
        );
 
@@ -809,21 +811,18 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        std::string varname = in.pop().to_string();
        std::string lawname = in.pop().to_string();
        std::string dataname = in.pop().to_string();
-       getfemint_mesh_fem *gfi_mf = in.pop().to_getfemint_mesh_fem();
+       const getfem::mesh_fem *mf = to_meshfem_object(in.pop());
 
-
-       size_type N = size_type(gfi_mf->mesh_fem().linked_mesh().dim());
+       size_type N = size_type(mf->linked_mesh().dim());
        size_type ratio = 1;
-       if ((gfi_mf->mesh_fem()).get_qdim() == 1) ratio = N*N;
+       if (mf->get_qdim() == 1) ratio = N*N;
        
-       getfem::model_real_plain_vector
-         VMM(ratio*(gfi_mf->mesh_fem()).nb_dof());
+       getfem::model_real_plain_vector VMM(ratio*mf->nb_dof());
 
        getfem::compute_sigmahathat
-       (md->model(), varname,
+       (*md, varname,
         abstract_hyperelastic_law_from_name
-        (lawname, gfi_mf->mesh_fem().linked_mesh().dim()),
-        dataname, gfi_mf->mesh_fem(), VMM);
+        (lawname, mf->linked_mesh().dim()), dataname, *mf, VMM);
        out.pop().from_dcvector(VMM);
        );
 
@@ -835,7 +834,7 @@ void gf_model_get(getfemint::mexargs_in& m_in,
     sub_command
       ("compute elastoplasticity Von Mises or Tresca", 2, 3, 0, 1,
        std::string datasigma = in.pop().to_string();
-       getfemint_mesh_fem *gfi_mf = in.pop().to_getfemint_mesh_fem();
+       const getfem::mesh_fem *mf = to_meshfem_object(in.pop());
        std::string stresca = "Von Mises";
        if (in.remaining()) stresca = in.pop().to_string();
        bool tresca = false;
@@ -846,9 +845,9 @@ void gf_model_get(getfemint::mexargs_in& m_in,
          tresca = true;
        else THROW_BADARG("bad option \'version\': " << stresca);
 
-       getfem::model_real_plain_vector VMM((gfi_mf->mesh_fem()).nb_dof());
+       getfem::model_real_plain_vector VMM(mf->nb_dof());
        getfem::compute_elastoplasticity_Von_Mises_or_Tresca
-       (md->model(), datasigma, gfi_mf->mesh_fem(), VMM, tresca);
+       (*md, datasigma, *mf, VMM, tresca);
        out.pop().from_dcvector(VMM);
        );
 
@@ -874,12 +873,10 @@ void gf_model_get(getfemint::mexargs_in& m_in,
 
 
        getfem::elastoplasticity_next_iter
-       (md->model(), *mim, varname,
+       (*md, *mim, varname,
 	abstract_constraints_projection_from_name(projname),
 	datalambda, datamu, datathreshold, datasigma);
        );
-
-
 
 
     /*@GET V = ('compute plastic part', @tmim mim, @tmf mf_pl, @str varname, @str projname, @str datalambda, @str datamu, @str datathreshold, @str datasigma)
@@ -888,7 +885,7 @@ void gf_model_get(getfemint::mexargs_in& m_in,
      sub_command
       ("compute plastic part", 8, 8, 0, 1,
        getfem::mesh_im *mim = to_meshim_object(in.pop());
-       getfemint_mesh_fem *gfi_mf = in.pop().to_getfemint_mesh_fem();
+       const getfem::mesh_fem *mf = to_meshfem_object(in.pop());
        std::string varname = in.pop().to_string();
        std::string projname = in.pop().to_string();
        std::string datalambda = in.pop().to_string();
@@ -896,9 +893,9 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        std::string datathreshold = in.pop().to_string();
        std::string datasigma = in.pop().to_string();
 
-       getfem::model_real_plain_vector plast((gfi_mf->mesh_fem()).nb_dof());
+       getfem::model_real_plain_vector plast(mf->nb_dof());
        getfem::compute_plastic_part
-       (md->model(), *mim,  gfi_mf->mesh_fem(), varname,
+       (*md, *mim, *mf, varname,
 	abstract_constraints_projection_from_name(projname),
         datalambda, datamu, datathreshold, datasigma, plast);
        out.pop().from_dcvector(plast);
@@ -911,8 +908,7 @@ void gf_model_get(getfemint::mexargs_in& m_in,
       ("sliding data group name of large sliding contact brick", 1, 1, 0, 1,
        size_type ind = in.pop().to_integer() - config::base_index();
        std::string name
-       = sliding_data_group_name_of_large_sliding_contact_brick(md->model(),
-                                                                ind);
+       = sliding_data_group_name_of_large_sliding_contact_brick(*md, ind);
        out.pop().from_string(name.c_str());
        );
 
@@ -923,8 +919,7 @@ void gf_model_get(getfemint::mexargs_in& m_in,
       ("displacement group name of large sliding contact brick", 1, 1, 0, 1,
        size_type ind = in.pop().to_integer() - config::base_index();
        std::string name
-       = displacement_group_name_of_large_sliding_contact_brick(md->model(),
-                                                                ind);
+       = displacement_group_name_of_large_sliding_contact_brick(*md, ind);
        out.pop().from_string(name.c_str());
        );
 
@@ -935,7 +930,7 @@ void gf_model_get(getfemint::mexargs_in& m_in,
       ("transformation name of large sliding contact brick", 1, 1, 0, 1,
        size_type ind = in.pop().to_integer() - config::base_index();
        std::string name
-       = transformation_name_of_large_sliding_contact_brick(md->model(), ind);
+       = transformation_name_of_large_sliding_contact_brick(*md, ind);
        out.pop().from_string(name.c_str());
        );
 
@@ -971,7 +966,7 @@ void gf_model_get(getfemint::mexargs_in& m_in,
     sub_command
       ("display", 0, 0, 0, 0,
        if (md->is_complex()) infomsg() << "Complex "; else infomsg()<< "Real ";
-       infomsg() << "gfModel object with " << md->model().nb_dof()
+       infomsg() << "gfModel object with " << md->nb_dof()
        << " degrees of freedom\n";
        );
 
@@ -980,7 +975,7 @@ void gf_model_get(getfemint::mexargs_in& m_in,
 
   if (m_in.narg() < 2)  THROW_BADARG( "Wrong number of input arguments");
 
-  getfemint_model *md  = m_in.pop().to_getfemint_model();
+  getfem::model *md  = to_model_object(m_in.pop());
   std::string init_cmd   = m_in.pop().to_string();
   std::string cmd        = cmd_normalize(init_cmd);
 

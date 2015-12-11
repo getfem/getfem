@@ -20,8 +20,7 @@
 ===========================================================================*/
 
 #include <getfemint_misc.h>
-#include <getfemint_mesh.h>
-#include <getfem/bgeot_geometric_trans.h>
+#include <getfem/getfem_mesh.h>
 
 using namespace getfemint;
 
@@ -363,7 +362,7 @@ void gf_mesh_set(getfemint::mexargs_in& m_in,
       duplicated. If `m2` is a @tmf object, its linked mesh will be used.@*/
     sub_command
       ("merge", 1, 2, 0, 0,
-       const getfem::mesh *pmesh2 = in.pop().to_const_mesh();
+       const getfem::mesh *pmesh2 = to_mesh_object(in.pop());
        scalar_type tol(0);
        if (in.remaining()) tol = in.pop().to_scalar();
        for (dal::bv_visitor cv(pmesh2->convex_index()); !cv.finished(); ++cv)
@@ -405,7 +404,7 @@ void gf_mesh_set(getfemint::mexargs_in& m_in,
 
 
   if (m_in.narg() < 2)  THROW_BADARG( "Wrong number of input arguments");
-  getfem::mesh *pmesh = m_in.pop().to_mesh();
+  getfem::mesh *pmesh = to_mesh_object(m_in.pop());
   std::string init_cmd   = m_in.pop().to_string();
   std::string cmd        = cmd_normalize(init_cmd);
 

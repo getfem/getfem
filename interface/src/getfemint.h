@@ -43,13 +43,6 @@
 #include <getfem/getfem_config.h>
 #include <gfi_array.h>
 
-// Avoid the dependance of different header (à distribuer et réorganiser)
-namespace getfem {
-  class mesh;
-  class mesh_fem;
-  class model;
-}
-
 namespace getfemint {
 
   /* This is very important that the following classes respects the
@@ -157,11 +150,6 @@ namespace getfemint {
   typedef gmm::csc_matrix_ref<const complex_type *, const unsigned int *,
 			      const unsigned int *>
   gf_cplx_sparse_csc_const_ref;
-
-  class getfem_object;
-  class getfemint_mesh;
-  class getfemint_mesh_fem;
-  class getfemint_model;
   class gsparse;
 
   class sub_index : public gmm::unsorted_sub_index {
@@ -470,7 +458,6 @@ namespace getfemint {
   /* input argument of the gf_* files */
   class mexarg_in {
     double to_scalar_(bool isint);
-    void error_if_nonwritable(getfem_object *o, bool want_writeable);
   public:
     const gfi_array *arg;
     int argnum;
@@ -479,9 +466,6 @@ namespace getfemint {
     bool is_string() { return (gfi_array_get_class(arg) == GFI_CHAR); }
     bool is_cell() { return (gfi_array_get_class(arg) == GFI_CELL); }
     bool is_object_id(id_type *pid=0, id_type *pcid=0) const;
-    bool is_mesh();
-    bool is_mesh_fem();
-    bool is_model();
     bool is_sparse();
     bool is_complex(); /* true for complex garrays AND complex sparse matrices
 			  (native or gsparse) */
@@ -496,42 +480,31 @@ namespace getfemint {
     double               to_scalar(double min_val=-1e300, double max_val=1e300);
     complex_type         to_scalar(complex_type);
     std::string          to_string();
-    id_type                  to_object_id(id_type *pid=0, id_type *pcid=0);
-    const getfem::mesh_fem * to_const_mesh_fem();
-    getfem::mesh_fem *       to_mesh_fem();
-    const getfem::mesh *     to_const_mesh();
-    const getfem::mesh *     to_const_mesh(id_type& id);
-    getfemint_mesh *         to_getfemint_mesh(bool writeable=false);
-    getfemint_mesh_fem *     to_getfemint_mesh_fem(bool writeable=false);
-    getfemint_model *        to_getfemint_model(bool writeable=false);
-    getfem::mesh *           to_mesh();
-    getfem::mesh_region      to_mesh_region();
-    carray       to_carray();
-    carray       to_carray(int expected_dim);
-    carray       to_carray(int expected_n, int expected_m,
-				    int expected_k=1, int expected_q=1);
-    darray       to_darray(); /* do not perform any check on the
-				 number of dimensions of the array */
-    
-    darray       to_darray(int expected_dim); /* expect the argument to be a
-						 row or column vector of
-						 given dimension */
+    id_type              to_object_id(id_type *pid=0, id_type *pcid=0);
+    getfem::mesh_region  to_mesh_region();
+    carray               to_carray();
+    carray               to_carray(int expected_dim);
+    carray               to_carray(int expected_n, int expected_m,
+				   int expected_k=1, int expected_q=1);
+    darray               to_darray(); /* do not perform any check on the
+					 number of dimensions of the array */
+    /* expect the argument to be a row or column vector of given dimension */
+    darray               to_darray(int expected_dim);
     /* expect the argument to be a matrix (or possibly a 3D array)
        if any of the arguments has a value of -1, the corresponding dimension
        is not checked
      */
-    darray       to_darray(int expected_m, int expected_n,
-                                          int expected_k=1, int expected_q=1);
-
+    darray               to_darray(int expected_m, int expected_n,
+				   int expected_k=1, int expected_q=1);
     /* convertion to a real or complex array */
-    rcarray      to_rcarray();
-    rcarray      to_rcarray(int expected_dim);
-    rcarray      to_rcarray(int expected_m, int expected_n,
-			    int expected_k=1, int expected_q=1);
-    iarray       to_iarray();
-    iarray       to_iarray(int expected_dim);
-    iarray       to_iarray(int expected_m, int expected_n,
-			   int expected_k=1, int expected_q=1);
+    rcarray              to_rcarray();
+    rcarray              to_rcarray(int expected_dim);
+    rcarray              to_rcarray(int expected_m, int expected_n,
+				    int expected_k=1, int expected_q=1);
+    iarray               to_iarray();
+    iarray               to_iarray(int expected_dim);
+    iarray               to_iarray(int expected_m, int expected_n,
+				   int expected_k=1, int expected_q=1);
 
     /* template friendly version */
     garray<double>            to_garray(double) { return to_darray(); }
@@ -825,11 +798,13 @@ namespace getfemint {
   getfem::level_set *to_levelset_object(const mexarg_in &p);
 
   // Functions for MESH_CLASS_ID
+  getfemint_declare_getfem_class(mesh)
   bool is_mesh_object(const mexarg_in &p);
   id_type store_mesh_object(const std::shared_ptr<getfem::mesh> &shp);
   getfem::mesh *to_mesh_object(const mexarg_in &p);
 
   // Functions for MESHFEM_CLASS_ID
+  getfemint_declare_getfem_class(mesh_fem)
   bool is_meshfem_object(const mexarg_in &p);
   id_type store_meshfem_object(const std::shared_ptr<getfem::mesh_fem> &shp);
   getfem::mesh_fem *to_meshfem_object(const mexarg_in &p);
@@ -862,6 +837,7 @@ namespace getfemint {
   pmesher_signed_distance to_mesher_object(const mexarg_in &p);
 
   // Functions for MODEL_CLASS_ID
+  getfemint_declare_getfem_class(model)
   bool is_model_object(const mexarg_in &p);
   id_type store_model_object(const std::shared_ptr<getfem::model> &shp);
   getfem::model *to_model_object(const mexarg_in &p);

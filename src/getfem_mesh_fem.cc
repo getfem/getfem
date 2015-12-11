@@ -410,6 +410,38 @@ namespace getfem {
     v_num = v_num_update = act_counter();
   }
 
+  void mesh_fem::copy_from(const mesh_fem &mf) {
+    clear_dependencies();
+    linked_mesh_ = 0;
+    init_with_mesh(*mf.linked_mesh_, mf.get_qdim());
+
+    f_elems = mf.f_elems;
+    fe_convex = mf.fe_convex;
+    R_ = mf.R_;
+    E_ = mf.E_;
+    dof_structure = mf.dof_structure;
+    dof_enumeration_made = mf.dof_enumeration_made;
+    nb_total_dof = mf.nb_total_dof;
+    auto_add_elt_pf = mf.auto_add_elt_pf;
+    auto_add_elt_K = mf.auto_add_elt_K;
+    auto_add_elt_disc = mf.auto_add_elt_disc;
+    auto_add_elt_alpha = mf.auto_add_elt_alpha;
+    mi = mf.mi;
+    dof_partition = mf.dof_partition;
+    v_num_update = mf.v_num_update;
+    v_num = mf.v_num;
+    use_reduction = mf.use_reduction;
+  }
+
+  mesh_fem::mesh_fem(const mesh_fem &mf) : context_dependencies() {
+    linked_mesh_ = 0; copy_from(mf);
+  }
+
+  mesh_fem &mesh_fem::operator=(const mesh_fem &mf) {
+    copy_from(mf);
+    return *this;
+  }
+
   mesh_fem::mesh_fem(const mesh &me, dim_type Q)
     { linked_mesh_ = 0; init_with_mesh(me, Q); }
 

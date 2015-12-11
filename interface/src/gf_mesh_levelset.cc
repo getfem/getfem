@@ -22,7 +22,6 @@
 #include <getfemint.h>
 #include <getfem/getfem_mesh_level_set.h>
 #include <getfemint_workspace.h>
-#include <getfemint_mesh.h>
 
 using namespace getfemint;
 
@@ -37,9 +36,9 @@ void gf_mesh_levelset(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
   if (check_cmd("MeshLevelSet", "MeshLevelSet", in, out, 1, 1, 0, 1)) {
     /*@INIT MLS = ('.mesh', @tmesh m)
       Build a new @tmls object from a @tmesh and returns its handle. @*/
-    getfemint_mesh *mm = in.pop().to_getfemint_mesh();
+    getfem::mesh *mm = to_mesh_object(in.pop());
     id_type id = store_mesh_levelset_object
-      (std::make_shared<getfem::mesh_level_set>(mm->mesh()));
+      (std::make_shared<getfem::mesh_level_set>(*mm));
 
     // workspace().set_dependance(id, mm);
     out.pop().from_object_id(id, MESH_LEVELSET_CLASS_ID);

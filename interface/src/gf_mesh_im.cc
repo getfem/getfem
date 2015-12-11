@@ -24,7 +24,6 @@
 #include <getfem/getfem_integration.h>
 #include <getfemint_misc.h>
 #include <getfemint_workspace.h>
-#include <getfemint_mesh.h>
 
 using namespace getfemint;
 
@@ -84,11 +83,13 @@ void gf_mesh_im(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
     sub_command
       ("load", 1, 2, 0, 1,
        std::string fname = in.pop().to_string();
-       if (in.remaining()) mm = &in.pop().to_getfemint_mesh()->mesh();
+       if (in.remaining()) mm = to_mesh_object(in.pop());
        else {
-	 getfem::mesh *m = new getfem::mesh();
-	 m->read_from_file(fname);
-	 mm = &getfemint_mesh::get_from(m)->mesh();
+	  auto m = std::make_shared<getfem::mesh>();
+	  m->read_from_file(fname);
+	  store_mesh_object(m);
+	  mm = m.get();
+	  // + workspace().set_dependance(m, mim); à gerer dans ce cas ...
        }
        mim = std::make_shared<getfem::mesh_im>(*mm);
        mim->read_from_file(fname);
@@ -102,14 +103,13 @@ void gf_mesh_im(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
     sub_command
       ("from string", 1, 2, 0, 1,
        std::stringstream ss(in.pop().to_string());
-       if (in.remaining()) mm = &in.pop().to_getfemint_mesh()->mesh();
+       if (in.remaining()) mm = to_mesh_object(in.pop());
        else {
-	 getfem::mesh *m = new getfem::mesh();
+	 auto m = std::make_shared<getfem::mesh>();
 	 m->read_from_file(ss);
-	 
-	 // + Store the mesh! + dependance of the mesh from the mesh_im
-	 // workspace().set_dependance(m, mim);
-	 mm = &getfemint_mesh::get_from(m)->mesh();
+	 store_mesh_object(m);
+	 mm = m.get();
+	 // + workspace().set_dependance(m, mim); à gerer dans ce cas ...
        }
        mim = std::make_shared<getfem::mesh_im>(*mm);
        mim->read_from_file(ss);
@@ -247,7 +247,7 @@ void gf_mesh_im(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
       with these arguments.@*/
     if (!m_out.narg_in_range(1, 1))
       THROW_BADARG("Wrong number of output arguments");
-    mm = &(m_in.pop().to_getfemint_mesh()->mesh());
+    mm = to_mesh_object(m_in.pop());
     mim = std::make_shared<getfem::mesh_im>(*mm);
     if (m_in.remaining()) {
       gf_mesh_im_set_integ(mim.get(), m_in);

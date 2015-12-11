@@ -19,22 +19,16 @@
 
 ===========================================================================*/
 
-#include <map>
 #include <getfem/getfem_mesh_slice.h>
 #include <getfem/getfem_mesh_fem_global_function.h>
 #include <getfem/getfem_mat_elem_type.h>
 #include <getfem/getfem_mesher.h>
 #include <getfem/getfem_continuation.h>
-#include <getfem/getfem_integration.h>
-#include <getfem/bgeot_convex_structure.h>
 #include <getfem/getfem_mesh_level_set.h>
 #include <getfem/getfem_im_data.h>
-#include <getfemint.h>
+#include <getfem/getfem_models.h>
 #include <getfemint_misc.h>
 #include <getfemint_workspace.h>
-#include <getfemint_mesh.h>
-#include <getfemint_mesh_fem.h>
-#include <getfemint_models.h>
 #include <getfemint_precond.h>
 #include <getfemint_gsparse.h>
 
@@ -252,33 +246,6 @@ namespace getfemint {
     return false;
   }
 
-  bool
-  mexarg_in::is_mesh() {
-    id_type id, cid;
-    if (is_object_id(&id, &cid) && cid == MESH_CLASS_ID) {
-      getfem_object *o=workspace().object(id, name_of_getfemint_class_id(cid));
-      return (object_is_mesh(o));
-    } else return false;
-  }
-
-  bool
-  mexarg_in::is_mesh_fem() {
-    id_type id, cid;
-    if (is_object_id(&id, &cid) && cid == MESHFEM_CLASS_ID) {
-      getfem_object *o=workspace().object(id, name_of_getfemint_class_id(cid));
-      return (object_is_mesh_fem(o));
-    } else return false;
-  }
-
-  bool
-  mexarg_in::is_model() {
-    id_type id, cid;
-    if (is_object_id(&id, &cid) && cid == MODEL_CLASS_ID) {
-      getfem_object *o=workspace().object(id, name_of_getfemint_class_id(cid));
-      return (object_is_model(o));
-    } else return false;
-  }
-
   bool mexarg_in::is_sparse()
   { return (gfi_array_get_class(arg) == GFI_SPARSE || is_spmat_object(*this)); }
 
@@ -308,112 +275,39 @@ namespace getfemint {
     return id;
   }
 
-  void mexarg_in::error_if_nonwritable(getfem_object *o, bool want_writeable) {
-    if (want_writeable && o->is_const())
-      THROW_BADARG("argument " << argnum <<
-                   " should be a modifiable " <<
-                   name_of_getfemint_class_id(o->class_id()) <<
-                   ", this one is marked as read-only");
-  }
 
-  /*
-    check if the argument is a valid handle to a mesh_fem,
-    and returns it
-  */
-  getfemint_mesh_fem *
-  mexarg_in::to_getfemint_mesh_fem(bool writeable) {
-    id_type id, cid;
-    to_object_id(&id,&cid);
-    if (cid != MESHFEM_CLASS_ID) {
-      THROW_BADARG("argument " << argnum << " should be a mesh_fem descriptor, its class is " << name_of_getfemint_class_id(cid));
-    }
-    getfem_object *o = workspace().object(id,name_of_getfemint_class_id(cid));
-    error_if_nonwritable(o, writeable);
-    return object_to_mesh_fem(o);
-  }
-  getfem::mesh_fem *
-  mexarg_in::to_mesh_fem() {
-    return &to_getfemint_mesh_fem(true)->mesh_fem();
-  }
-
-  const getfem::mesh_fem *
-  mexarg_in::to_const_mesh_fem() {
-    return &to_getfemint_mesh_fem(false)->mesh_fem();
-  }
-
-  /*
-    check if the argument is a valid mesh handle
-    if a mesh_fem handle is given, its associated
-    mesh is used
-  */
-  const getfem::mesh *
-  mexarg_in::to_const_mesh() { id_type mid; return to_const_mesh(mid); }
-
-  const getfem::mesh *
-  mexarg_in::to_const_mesh(id_type& mid) {
-    id_type id, cid;
-    to_object_id(&id,&cid);
-    if (cid != MESHFEM_CLASS_ID && cid != MESH_CLASS_ID && cid != MESHIM_CLASS_ID
-        && cid != MESHIMDATA_CLASS_ID) {
-      THROW_BADARG("argument " << argnum << " should be a mesh or mesh_fem "
-                   "or mesh_im or mesh_im_data descriptor, its class is "
-                   << name_of_getfemint_class_id(cid));
-    }
-    const getfem::mesh *mesh = NULL;
-    getfem_object *o = workspace().object(id,name_of_getfemint_class_id(cid));
-    if (object_is_mesh(o)) {
-      mid = id;
-      mesh = &object_to_mesh(o)->mesh();
-    } else if (object_is_mesh_fem(o)) {
-      mid = object_to_mesh_fem(o)->linked_mesh_id();
-      mesh = &object_to_mesh_fem(o)->mesh_fem().linked_mesh();
-    } else if (dynamic_cast<getfem::mesh_im *>(o)) {
-      // o n'est pas bon pour le moment. Le sera quand il viendra du workspace2
-      mesh = &dynamic_cast<getfem::mesh_im *>(o)->linked_mesh();
-      mid = workspace2().object(mesh); // A arranger avec ce qui précède...
-      if (mid == id_type(-1)) THROW_INTERNAL_ERROR;
-    } else if (dynamic_cast<getfem::im_data *>(o)) {
-      // o n'est pas bon pour le moment. Le sera quand il viendra du workspace2
-      mesh =&dynamic_cast<getfem::im_data *>(o)->linked_mesh_im().linked_mesh();
-      mid = workspace2().object(mesh); // A arranger avec ce qui précède...
-      if (mid == id_type(-1)) THROW_INTERNAL_ERROR;
-    } else THROW_INTERNAL_ERROR;
-    return mesh;
-  }
-
-  /*
-    check if the argument is a valid mesh handle
-    (the returned arg is not const, so we can't use the mesh from mesh_fem objects)
-  */
-  getfemint_mesh *
-  mexarg_in::to_getfemint_mesh(bool writeable) {
-    id_type id, cid;
-    to_object_id(&id,&cid);
-    if (cid != MESH_CLASS_ID) {
-      THROW_BADARG("argument " << argnum << " should be a mesh descriptor, its class is " << name_of_getfemint_class_id(cid));
-    }
-    getfem_object *o = workspace().object(id,name_of_getfemint_class_id(cid));
-    error_if_nonwritable(o,writeable);
-    return object_to_mesh(o);
-  }
-
-  getfem::mesh *
-  mexarg_in::to_mesh() {
-    return &to_getfemint_mesh()->mesh();
-  }
-
-  getfemint_model *
-  mexarg_in::to_getfemint_model(bool writeable) {
-    id_type id, cid;
-    to_object_id(&id,&cid);
-    if (cid != MODEL_CLASS_ID) {
-      THROW_BADARG("argument " << argnum << " should be a model descriptor, "
-                   "its class is " << name_of_getfemint_class_id(cid));
-    }
-    getfem_object *o = workspace().object(id,name_of_getfemint_class_id(cid));
-    error_if_nonwritable(o,writeable);
-    return object_to_model(o);
-  }
+  // const getfem::mesh *
+  // mexarg_in::to_const_mesh(id_type& mid) {
+  //   id_type id, cid;
+  //   to_object_id(&id,&cid);
+  //   if (cid != MESHFEM_CLASS_ID && cid != MESH_CLASS_ID && cid != MESHIM_CLASS_ID
+  //       && cid != MESHIMDATA_CLASS_ID) {
+  //     THROW_BADARG("argument " << argnum << " should be a mesh or mesh_fem "
+  //                  "or mesh_im or mesh_im_data descriptor, its class is "
+  //                  << name_of_getfemint_class_id(cid));
+  //   }
+  //   const getfem::mesh *mesh = NULL;
+  //   getfem_object *o = workspace().object(id,name_of_getfemint_class_id(cid));
+  //   if (object_is_mesh(o)) {
+  //     mid = id;
+  //     mesh = &object_to_mesh(o)->mesh();
+  //   } else if (dynamic_cast<getfem::mesh_fem *>(o)) {
+  //     mesh = &dynamic_cast<getfem::mesh_fem *>(o)->linked_mesh();
+  //     mid = workspace().object(mesh); // A arranger avec ce qui précède...
+  //     if (mid == id_type(-1)) THROW_INTERNAL_ERROR;
+  //   } else if (dynamic_cast<getfem::mesh_im *>(o)) {
+  //     // o n'est pas bon pour le moment. Le sera quand il viendra du workspace
+  //     mesh = &dynamic_cast<getfem::mesh_im *>(o)->linked_mesh();
+  //     mid = workspace().object(mesh); // A arranger avec ce qui précède...
+  //     if (mid == id_type(-1)) THROW_INTERNAL_ERROR;
+  //   } else if (dynamic_cast<getfem::im_data *>(o)) {
+  //     // o n'est pas bon pour le moment. Le sera quand il viendra du workspace
+  //     mesh =&dynamic_cast<getfem::im_data *>(o)->linked_mesh_im().linked_mesh();
+  //     mid = workspace().object(mesh); // A arranger avec ce qui précède...
+  //     if (mid == id_type(-1)) THROW_INTERNAL_ERROR;
+  //   } else THROW_INTERNAL_ERROR;
+  //   return mesh;
+  // }
 
   getfem::mesh_region
   mexarg_in::to_mesh_region() {
@@ -667,7 +561,7 @@ namespace getfemint {
       if (cid != SPMAT_CLASS_ID)
         THROW_BADARG("Argument " << argnum <<
 		     " was expected to be a sparse matrix");
-      auto gsp=workspace2().shared_pointer(id,name_of_getfemint_class_id(cid));
+      auto gsp=workspace().shared_pointer(id,name_of_getfemint_class_id(cid));
       auto gsp2= std::const_pointer_cast<gsparse>
 	(std::dynamic_pointer_cast<const gsparse>(gsp));
       GMM_ASSERT1(gsp2.get(), "Internal error");
@@ -1055,10 +949,10 @@ namespace getfemint {
       }
       out.clear();
       workspace().destroy_newly_created_objects();
-      workspace2().destroy_newly_created_objects();
+      workspace().destroy_newly_created_objects();
     } else {
       workspace().commit_newly_created_objects();
-      workspace2().commit_newly_created_objects();
+      workspace().commit_newly_created_objects();
     }
   }
 
@@ -1109,7 +1003,7 @@ namespace getfemint {
   }									\
 									\
   id_type store_##NAME##_object(const std::shared_ptr<TYPE> &shp) {	\
-    auto &w = workspace2();						\
+    auto &w = workspace();						\
     id_type id = w.object((const void *)(shp.get()));			\
     if (id == id_type(-1)) {						\
       auto p =	std::dynamic_pointer_cast				\
@@ -1125,7 +1019,7 @@ namespace getfemint {
     if (p.is_object_id(&id, &cid) && cid == CLASS_ID) {			\
       return const_cast<TYPE *>						\
 	((const TYPE *)							\
-	 (workspace2().object(id, name_of_getfemint_class_id(cid))));	\
+	 (workspace().object(id, name_of_getfemint_class_id(cid))));	\
     } else {								\
       THROW_BADARG("argument " << p.argnum << " should be a " <<	\
 		   name_of_getfemint_class_id(CLASS_ID) <<		\
@@ -1144,7 +1038,7 @@ namespace getfemint {
 									\
   id_type store_##NAME##_object(const std::shared_ptr<const TYPE> &shp)	\
   {									\
-    auto &w = workspace2();						\
+    auto &w = workspace();						\
     id_type id = w.object((const void *)(shp.get()));			\
     if (id == id_type(-1)) {						\
       auto p =								\
@@ -1159,7 +1053,7 @@ namespace getfemint {
     id_type id, cid;							\
     if (p.is_object_id(&id, &cid) && cid == CLASS_ID) {			\
       return std::dynamic_pointer_cast<const TYPE>			\
-	(workspace2().shared_pointer(id,				\
+	(workspace().shared_pointer(id,					\
 				     name_of_getfemint_class_id(cid)));	\
     } else {								\
       THROW_BADARG("argument " << p.argnum << " should be a " <<	\
@@ -1207,12 +1101,15 @@ namespace getfemint {
   // Functions for MESH_CLASS_ID
   SIMPLE_RAW_POINTER_MANAGED_OBJECT(mesh, getfem::mesh, MESH_CLASS_ID)
 
+  // Functions for MESHFEM_CLASS_ID
+  SIMPLE_RAW_POINTER_MANAGED_OBJECT(meshfem, getfem::mesh_fem, MESHFEM_CLASS_ID)
+
   // Functions for MESHIM_CLASS_ID
    SIMPLE_RAW_POINTER_MANAGED_OBJECT(meshim, getfem::mesh_im, MESHIM_CLASS_ID)
 
   // Functions for MESHIMDATA_CLASS_ID
- SIMPLE_RAW_POINTER_MANAGED_OBJECT(meshimdata, getfem::im_data,
-				   MESHIMDATA_CLASS_ID)
+  SIMPLE_RAW_POINTER_MANAGED_OBJECT(meshimdata, getfem::im_data,
+				    MESHIMDATA_CLASS_ID)
 
   // Functions for MESH_LEVELSET_CLASS_ID
   SIMPLE_RAW_POINTER_MANAGED_OBJECT(mesh_levelset, getfem::mesh_level_set,

@@ -20,7 +20,6 @@
 ===========================================================================*/
 
 #include <getfemint_misc.h>
-#include <getfemint_mesh_fem.h>
 #include <getfemint_gsparse.h>
 #include <getfem/getfem_partial_mesh_fem.h>
 #include <gmm/gmm_range_basis.h>
@@ -290,7 +289,7 @@ void gf_mesh_fem_set(getfemint::mexargs_in& m_in,
 
   if (m_in.narg() < 2)  THROW_BADARG( "Wrong number of input arguments");
 
-  getfem::mesh_fem *mf   = m_in.pop().to_mesh_fem();
+  getfem::mesh_fem *mf   = to_meshfem_object(m_in.pop());
   std::string init_cmd   = m_in.pop().to_string();
   std::string cmd        = cmd_normalize(init_cmd);
 

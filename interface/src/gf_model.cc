@@ -24,10 +24,9 @@
 */
 
 #include <getfem/getfem_mesh_im.h>
+#include <getfem/getfem_models.h>
 #include <getfemint.h>
 #include <getfemint_workspace.h>
-#include <getfemint_models.h>
-#include <getfemint_mesh_fem.h>
 
 
 using namespace getfemint;
@@ -44,19 +43,18 @@ void gf_model(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 {
   if (in.narg() < 1) THROW_BADARG( "Wrong number of input arguments");
 
-  getfemint_model *md = new getfemint_model();
-  out.pop().from_object_id(workspace().push_object(md), MODEL_CLASS_ID);
-
   if (in.front().is_string()) {
     std::string cmd = in.pop().to_string();
     if (check_cmd(cmd, "real", in, out, 0, 0, 0, 1)) {
       /*@INIT MD = ('real')
       Build a model for real unknowns.@*/
-      md->set(new getfem::model(false));
+      auto md = std::make_shared<getfem::model>(false);
+      out.pop().from_object_id(store_model_object(md), MODEL_CLASS_ID);
     } else if (check_cmd(cmd, "complex", in, out, 0, 0, 0, 1)) {
       /*@INIT MD = ('complex')
       Build a model for complex unknowns.@*/
-      md->set(new getfem::model(true));
+      auto md = std::make_shared<getfem::model>(true);
+      out.pop().from_object_id(store_model_object(md), MODEL_CLASS_ID);
     } else bad_cmd(cmd);
   } else THROW_BADARG("expected a string");
 

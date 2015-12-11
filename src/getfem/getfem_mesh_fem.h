@@ -147,9 +147,11 @@ namespace getfem {
    */
   class mesh_fem : public context_dependencies, virtual public dal::static_stored_object {
   protected :
-    
     typedef gmm::csc_matrix<scalar_type> REDUCTION_MATRIX;
     typedef gmm::csr_matrix<scalar_type> EXTENSION_MATRIX;
+
+    void copy_from(const mesh_fem &mf); /* Remember to change copy_from if
+					   adding components to mesh_fem */
     
     dal::dynamic_array<pfem> f_elems;
     dal::bit_vector fe_convex;
@@ -577,6 +579,9 @@ namespace getfem {
     */
     explicit mesh_fem(const mesh &me, dim_type Q = 1);
     mesh_fem(void);
+    mesh_fem(const mesh_fem &mf);
+    mesh_fem &operator=(const mesh_fem &mf);
+
     virtual ~mesh_fem();
     virtual void clear(void);
     /** Read the mesh_fem from a stream. 

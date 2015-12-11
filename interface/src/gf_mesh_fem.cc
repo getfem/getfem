@@ -27,8 +27,6 @@
 #include <getfem/getfem_mesh_fem_global_function.h>
 #include <getfemint_misc.h>
 #include <getfemint_workspace.h>
-#include <getfemint_mesh_fem.h>
-#include <getfemint_mesh.h>
 #include <getfemint_levelset.h>
 
 using namespace getfemint;
@@ -40,14 +38,12 @@ using namespace getfemint;
 
 // Object for the declaration of a new sub-command.
 
-typedef getfemint_mesh_fem *pgetfemint_mesh_fem;
-
 struct sub_gf_mf : virtual public dal::static_stored_object {
   int arg_in_min, arg_in_max, arg_out_min, arg_out_max;
   virtual void run(getfemint::mexargs_in& in,
 		   getfemint::mexargs_out& out,
-		   getfemint_mesh *mm,
-		   pgetfemint_mesh_fem &mmf,
+		   const getfem::mesh *mm,
+		   std::shared_ptr<getfem::mesh_fem> &mmf,
 		   unsigned q_dim) = 0;
 };
 
@@ -60,8 +56,8 @@ template <typename T> static inline void dummy_func(T &) {}
     struct subc : public sub_gf_mf {					\
       virtual void run(getfemint::mexargs_in& in,			\
 		       getfemint::mexargs_out& out,			\
-		       getfemint_mesh *mm,				\
-		       pgetfemint_mesh_fem &mmf,			\
+		       const getfem::mesh *mm,				\
+		       std::shared_ptr<getfem::mesh_fem> &mmf,		\
 		       unsigned q_dim)					\
       { dummy_func(in); dummy_func(out); dummy_func(mm);		\
 	dummy_func(q_dim); code }					\
@@ -97,14 +93,16 @@ void gf_mesh_fem(getfemint::mexargs_in& m_in,
     sub_command
       ("load", 1, 2, 0, 1,
        std::string fname = in.pop().to_string();
-       if (in.remaining()) mm = in.pop().to_getfemint_mesh();
+       if (in.remaining()) mm = to_mesh_object(in.pop());
        else {
-	 getfem::mesh *m = new getfem::mesh();
+	 auto m = std::make_shared<getfem::mesh>();
 	 m->read_from_file(fname);
-	 mm = getfemint_mesh::get_from(m);
+	 store_mesh_object(m);
+	 mm = m.get();
+	 // + workspace().set_dependance(m, mmf); à gerer dans ce cas ...
        }
-       mmf = getfemint_mesh_fem::new_from(mm,q_dim);
-       mmf->mesh_fem().read_from_file(fname);
+       mmf = std::make_shared<getfem::mesh_fem>(*mm, q_dim);
+       mmf->read_from_file(fname);
        );
 
     /*@INIT MF = ('from string', @str s[, @tmesh m])
@@ -114,14 +112,18 @@ void gf_mesh_fem(getfemint::mexargs_in& m_in,
     sub_command
       ("from string", 1, 2, 0, 1,
        std::stringstream ss(in.pop().to_string());
-       if (in.remaining()) mm = in.pop().to_getfemint_mesh();
+       if (in.remaining()) mm = to_mesh_object(in.pop());
        else {
-	 getfem::mesh *m = new getfem::mesh();
+	 auto m = std::make_shared<getfem::mesh>();
 	 m->read_from_file(ss);
-	 mm = getfemint_mesh::get_from(m);
+	 store_mesh_object(m);
+	 mm = m.get();
+	 // + workspace().set_dependance(m, mmf); pas bon !!!! :
+	 // comment faire pour que le mesh soit détruit quand le mesh_fem
+	 // l'est ?? sinon il va rester indéfiniment
        }
-       mmf = getfemint_mesh_fem::new_from(mm,q_dim);
-       mmf->mesh_fem().read_from_file(ss);
+       mmf = std::make_shared<getfem::mesh_fem>(*mm, q_dim);
+       mmf->read_from_file(ss);
        );
 
 
@@ -129,12 +131,10 @@ void gf_mesh_fem(getfemint::mexargs_in& m_in,
       Create a copy of a @tmf.@*/
     sub_command
       ("clone", 1, 1, 0, 1,
-       getfemint_mesh_fem *mmf2 = in.pop().to_getfemint_mesh_fem();
-       mm = object_to_mesh(workspace().object(mmf2->linked_mesh_id()));
-       mmf = getfemint_mesh_fem::new_from(mm,q_dim);
-       std::stringstream ss;
-       mmf2->mesh_fem().write_to_file(ss);
-       mmf->mesh_fem().read_from_file(ss);
+       
+       getfem::mesh_fem *mmf2 = to_meshfem_object(in.pop());
+       mm = &mmf2->linked_mesh();
+       mmf = std::make_shared<getfem::mesh_fem>(*mmf2);
        );
 
     
@@ -147,20 +147,19 @@ void gf_mesh_fem(getfemint::mexargs_in& m_in,
     sub_command
       ("sum", 1, -1, 0, 1,
        std::vector<const getfem::mesh_fem*> mftab;
-       getfem::mesh_fem_sum *msum = 0;
+       std::shared_ptr<getfem::mesh_fem_sum> msum;
        while (in.remaining()) {
-	 getfemint_mesh_fem *gfimf = in.pop().to_getfemint_mesh_fem();
-	 if (msum == 0) {
-	   mm = object_to_mesh(workspace().object(gfimf->linked_mesh_id()));
-	   msum = new getfem::mesh_fem_sum(gfimf->linked_mesh());
-	
-	   mmf = getfemint_mesh_fem::get_from(msum);
+	 getfem::mesh_fem *gfimf = to_meshfem_object(in.pop());
+	 if (mmf.get() == 0) {
+	   mm = &gfimf->linked_mesh();
+	   msum = std::make_shared<getfem::mesh_fem_sum>(*mm);
 	 }
-	 workspace().set_dependance(mmf, gfimf);
-	 mftab.push_back(&gfimf->mesh_fem());
+	 // workspace().set_dependance(mmf, gfimf);
+	 mftab.push_back(gfimf);
        }
        msum->set_mesh_fems(mftab);
        msum->adapt();
+       mmf = msum;
        );
 
     /*@INIT MF = ('product', @tmf mf1, @tmf mf2)
@@ -173,13 +172,11 @@ void gf_mesh_fem(getfemint::mexargs_in& m_in,
       After that, you should not modify the FEM of `mf1`, `mf2`.@*/
     sub_command
       ("product", 2, 2, 0, 1,
-       getfemint_mesh_fem *gfimf1 = in.pop().to_getfemint_mesh_fem();
-       getfemint_mesh_fem *gfimf2 = in.pop().to_getfemint_mesh_fem();
-       getfem::mesh_fem_product *mprod = 
-         new getfem::mesh_fem_product(gfimf1->mesh_fem(), gfimf2->mesh_fem());
-       mmf = getfemint_mesh_fem::get_from(mprod);
-       workspace().set_dependance(mmf, gfimf1);
-       workspace().set_dependance(mmf, gfimf2);
+       getfem::mesh_fem *gfimf1 = to_meshfem_object(in.pop());
+       getfem::mesh_fem *gfimf2 = to_meshfem_object(in.pop());
+       mmf = std::make_shared<getfem::mesh_fem_product>(*gfimf1, *gfimf2);
+       // workspace().set_dependance(mmf, gfimf1);
+       // workspace().set_dependance(mmf, gfimf2);
        );
 
 
@@ -189,13 +186,12 @@ void gf_mesh_fem(getfemint::mexargs_in& m_in,
     sub_command
       ("levelset", 2, 2, 0, 1,
        getfem::mesh_level_set &mls = *(to_mesh_levelset_object(in.pop()));
-       getfemint_mesh_fem *gmf = in.pop().to_getfemint_mesh_fem();
-       getfem::mesh_fem_level_set *mfls =
-       new getfem::mesh_fem_level_set(mls, gmf->mesh_fem());
-       mmf = getfemint_mesh_fem::get_from(mfls);
-       workspace().set_dependance(mmf, gmf);
-       // workspace().set_dependance(mmf, gmls);
+       getfem::mesh_fem *gmf = to_meshfem_object(in.pop());
+       auto mfls = std::make_shared<getfem::mesh_fem_level_set>(mls, *gmf);
        mfls->adapt();
+       mmf = mfls;
+       // workspace().set_dependance(mmf, gmf);
+       // workspace().set_dependance(mmf, gmls);
        );
 
 
@@ -205,23 +201,22 @@ void gf_mesh_fem(getfemint::mexargs_in& m_in,
       level-set function of `ls`. @*/
     sub_command
       ("global function", 3, 4, 0, 1,
-       mm = in.pop().to_getfemint_mesh();
+       mm = to_mesh_object(in.pop());
        auto pls = to_levelset_object(in.pop());
-       mexargs_in *in_gf = new mexargs_in(1, &in.pop().arg, true);
+       mexargs_in in_gf(1, &in.pop().arg, true);
        if (in.remaining() && in.front().is_integer())
 	 q_dim = in.pop().to_integer(1,256);
 
-       std::vector<getfem::pglobal_function> vfunc(size_type(in_gf->narg()));
+       std::vector<getfem::pglobal_function> vfunc(size_type(in_gf.narg()));
        for (size_type i = 0; i < vfunc.size(); ++i) {
-	 getfem::pxy_function s = to_global_function_object(in_gf->pop());
+	 getfem::pxy_function s = to_global_function_object(in_gf.pop());
 	 vfunc[i] = getfem::global_function_on_level_set(*pls, s);
        }
 
-       getfem::mesh_fem_global_function *mfgf = new getfem::mesh_fem_global_function(mm->mesh());
+       auto mfgf = std::make_shared<getfem::mesh_fem_global_function>(*mm);
        mfgf->set_qdim(dim_type(q_dim));
        mfgf->set_functions(vfunc);
-
-       mmf = getfemint_mesh_fem::get_from(mfgf);
+       mmf = mfgf;
        );
 
 
@@ -233,24 +228,23 @@ void gf_mesh_fem(getfemint::mexargs_in& m_in,
       `RCVs`.@*/
     sub_command
       ("partial", 2, 3, 0, 1,
-       getfemint_mesh_fem *gmf = in.pop().to_getfemint_mesh_fem();
+       getfem::mesh_fem *gmf = to_meshfem_object(in.pop());
        dal::bit_vector doflst = in.pop().to_bit_vector();
        dal::bit_vector rcvlst;
        if (in.remaining()) rcvlst = in.pop().to_bit_vector();
 
-       getfem::partial_mesh_fem *ppmf =
-       new getfem::partial_mesh_fem(gmf->mesh_fem());
+       auto ppmf = std::make_shared<getfem::partial_mesh_fem>(*gmf);
        ppmf->adapt(doflst, rcvlst);
+       mmf = ppmf;
 
-       mmf = getfemint_mesh_fem::get_from(ppmf);
-       workspace().set_dependance(mmf, gmf);
+       // workspace().set_dependance(mmf, gmf);
        );
   }
 
 
   if (m_in.narg() < 1) THROW_BADARG("Wrong number of input arguments");
-  getfemint_mesh *mm = NULL;
-  getfemint_mesh_fem *mmf = NULL;
+  const getfem::mesh *mm = NULL;
+  std::shared_ptr<getfem::mesh_fem> mmf;
   unsigned q_dim = 1;
 
   if (m_in.front().is_string()) {
@@ -271,7 +265,7 @@ void gf_mesh_fem(getfemint::mexargs_in& m_in,
   } else if (check_cmd("MeshFem", "MeshFem", m_in, m_out, 1, 7, 0, 1)) {
     /* Documentation of the command moved to the beginning so that it appears
        first in the documentation. */
-    mm = m_in.pop().to_getfemint_mesh();
+    mm = to_mesh_object(m_in.pop());
     bgeot::multi_index mi;
     dim_type qdim = 1;
     while (m_in.remaining()) {
@@ -280,10 +274,11 @@ void gf_mesh_fem(getfemint::mexargs_in& m_in,
       qdim = dim_type(qdim*q);
     }
     if (mi.size() == 0) mi.push_back(qdim);
-    mmf = getfemint_mesh_fem::new_from(mm,qdim);
-    mmf->mesh_fem().set_qdim(mi);
-
-    workspace().set_dependance(mmf, mm);
+    mmf = std::make_shared<getfem::mesh_fem>(*mm, qdim);
+    mmf->set_qdim(mi);
+    // workspace().set_dependance(mmf, mm); à factoriser ?
   }
-  m_out.pop().from_object_id(mmf->get_id(), MESHFEM_CLASS_ID);
+
+  id_type id = store_meshfem_object(mmf);
+  m_out.pop().from_object_id(id, MESHFEM_CLASS_ID);
 }

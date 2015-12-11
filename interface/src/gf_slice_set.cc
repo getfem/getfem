@@ -21,7 +21,6 @@
 
 #include <map>
 #include <getfemint_misc.h>
-#include <getfemint_mesh.h>
 #include <getfem/getfem_mesh_slice.h>
 #include <getfem/getfem_mesh_slice.h>
 

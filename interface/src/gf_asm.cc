@@ -26,11 +26,9 @@
 #include <getfem/getfem_contact_and_friction_integral.h>
 #include <getfem/getfem_contact_and_friction_large_sliding.h>
 #include <getfem/getfem_generic_assembly.h>
-#include <getfem/getfem_assembling.h>
 #include <getfem/getfem_level_set.h>
 #include <getfem/getfem_im_data.h>
-#include <getfemint.h>
-#include <getfemint_models.h>
+#include <getfem/getfem_models.h>
 #include <getfemint_misc.h>
 #include <getfemint_gsparse.h>
 
@@ -370,8 +368,8 @@ do_generic_assembly(mexargs_in& in, mexargs_out& out, bool on_boundary)
   if (assem.im().size() == 0)
     THROW_BADARG("generic assembly without any mesh_im has no sense!");
   /* stores the mesh_fem identifiers */
-  while (in.remaining() && in.front().is_mesh_fem()) {
-    const getfem::mesh_fem *mf = in.pop().to_const_mesh_fem();
+  while (in.remaining() && is_meshfem_object(in.front())) {
+    const getfem::mesh_fem *mf = to_meshfem_object(in.pop());
     if (!mesh) mesh = &(mf->linked_mesh());
     assem.push_mf(*mf);
   }
@@ -425,9 +423,8 @@ static void do_high_level_generic_assembly(mexargs_in& in, mexargs_out& out) {
   getfem::ga_workspace workspace1;
   add_interpolate_transformation_neighbour(workspace1);
   getfem::model dummy_md;
-  bool with_model = in.remaining() && in.front().is_model();
-  const getfem::model &md = with_model ? in.pop().to_getfemint_model()->model()
-                                       : dummy_md;
+  bool with_model = in.remaining() && is_model_object(in.front());
+  const getfem::model &md = with_model ? *to_model_object(in.pop()) : dummy_md;
   getfem::ga_workspace workspace2(md);
   getfem::ga_workspace &workspace = with_model ? workspace2 : workspace1;
 
@@ -440,8 +437,8 @@ static void do_high_level_generic_assembly(mexargs_in& in, mexargs_out& out) {
     bool is_cte = (in.pop().to_integer() == 0);
     const getfem::mesh_fem *mf(0);
     const getfem::im_data *mimd(0);
-    if (in.front().is_mesh_fem())
-      mf = in.pop().to_const_mesh_fem();
+    if (is_meshfem_object(in.front()))
+      mf = to_meshfem_object(in.pop());
     else if (is_meshimdata_object(in.front()))
       mimd = to_meshimdata_object(in.pop());
     darray U = in.pop().to_darray();
@@ -512,11 +509,11 @@ static void do_expression_analysis(mexargs_in& in) {
 
   std::string expr = in.pop().to_string();
 
-  bool with_mesh = in.remaining() && in.front().is_mesh();
+  bool with_mesh = in.remaining() && is_mesh_object(in.front());
   bool with_mim = !with_mesh && in.remaining() && is_meshim_object(in.front());
 
   getfem::mesh dummy_mesh;
-  const getfem::mesh_im dummy_mim(with_mesh ? *(in.pop().to_mesh()) : dummy_mesh);
+  const getfem::mesh_im dummy_mim(with_mesh ? *(to_mesh_object(in.pop())):dummy_mesh);
   const getfem::mesh_im &mim = with_mim ? *(to_meshim_object(in.pop()))
                                         : dummy_mim;
 
@@ -524,9 +521,8 @@ static void do_expression_analysis(mexargs_in& in) {
                       ? in.pop().to_integer(0, 2) : 0;
   getfem::ga_workspace workspace1;
   getfem::model dummy_md;
-  bool with_model = in.remaining() && in.front().is_model();
-  const getfem::model &md = with_model ? in.pop().to_getfemint_model()->model()
-                                       : dummy_md;
+  bool with_model = in.remaining() && is_model_object(in.front());
+  const getfem::model &md = with_model ? *to_model_object(in.pop()) : dummy_md;
   getfem::ga_workspace workspace2(md);
   getfem::ga_workspace &workspace = with_model ? workspace2 : workspace1;
 
@@ -542,8 +538,8 @@ static void do_expression_analysis(mexargs_in& in) {
     bool is_cte(in.pop().to_integer() == 0);
     const getfem::mesh_fem *mf(0);
     const getfem::im_data *mimd(0);
-    if (in.remaining() && in.front().is_mesh_fem())
-      mf = in.pop().to_const_mesh_fem();
+    if (in.remaining() && is_meshfem_object(in.front()))
+      mf = to_meshfem_object(in.pop());
     else if (in.remaining() && is_meshimdata_object(in.front()))
       mimd = to_meshimdata_object(in.pop());
     GMM_ASSERT1(varnames.count(varname) == 0,
@@ -597,9 +593,9 @@ gf_dirichlet(getfemint::mexargs_out& out,
 
 // To be parallelized
 void interpolate_or_extrapolate(mexargs_in &in, mexargs_out &out, int extrapolate) {
-  const getfem::mesh_fem *mf1 = in.pop().to_const_mesh_fem();
-  if (in.front().is_mesh_fem()) {
-    const getfem::mesh_fem *mf2 = in.pop().to_const_mesh_fem();
+  const getfem::mesh_fem *mf1 = to_meshfem_object(in.pop());
+  if (is_meshfem_object(in.front())) {
+    const getfem::mesh_fem *mf2 = to_meshfem_object(in.pop());
     gmm::row_matrix<getfem::model_real_sparse_vector>
       Maux(mf2->nb_dof(), mf1->nb_dof());
     getfem::interpolation(*mf1, *mf2, Maux, extrapolate);
@@ -646,8 +642,8 @@ static const getfem::mesh_im *get_mim(mexargs_in &in) {
 void assemble_source(size_type boundary_num,
                      mexargs_in &in, mexargs_out &out) {
   const getfem::mesh_im *mim = get_mim(in);
-  const getfem::mesh_fem *mf_u = in.pop().to_const_mesh_fem();
-  const getfem::mesh_fem *mf_d = in.pop().to_const_mesh_fem();
+  const getfem::mesh_fem *mf_u = to_meshfem_object(in.pop());
+  const getfem::mesh_fem *mf_d = to_meshfem_object(in.pop());
   size_type region = boundary_num;
   
   unsigned q_dim = mf_u->get_qdim() / mf_d->get_qdim();
@@ -787,8 +783,8 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
     sub_command
       ("mass matrix", 2, 4, 0, 1,
        const getfem::mesh_im *mim = get_mim(in);
-       const getfem::mesh_fem *mf_u1 = in.pop().to_const_mesh_fem();
-       const getfem::mesh_fem *mf_u2 = in.remaining() ? in.pop().to_const_mesh_fem() : mf_u1;
+       const getfem::mesh_fem *mf_u1 = to_meshfem_object(in.pop());
+       const getfem::mesh_fem *mf_u2 = in.remaining() ? to_meshfem_object(in.pop()) : mf_u1;
        size_type region = in.remaining() ? in.pop().to_integer():size_type(-1);
        getfem::mesh_region rg(region);
        mf_u1->linked_mesh().intersect_with_mpi_region(rg);
@@ -809,8 +805,8 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
     sub_command
       ("laplacian", 4, 5, 0, 1,
        const getfem::mesh_im *mim = get_mim(in);
-       const getfem::mesh_fem *mf_u = in.pop().to_const_mesh_fem();
-       const getfem::mesh_fem *mf_d = in.pop().to_const_mesh_fem();
+       const getfem::mesh_fem *mf_u = to_meshfem_object(in.pop());
+       const getfem::mesh_fem *mf_d = to_meshfem_object(in.pop());
        darray A               = in.pop().to_darray(int(mf_d->nb_dof()));
        gf_real_sparse_by_col M(mf_u->nb_dof(), mf_u->nb_dof());
        size_type region = size_type(-1);
@@ -832,8 +828,8 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
     sub_command
       ("linear elasticity", 5, 6, 0, 1,
        const getfem::mesh_im *mim = get_mim(in);
-       const getfem::mesh_fem *mf_u = in.pop().to_const_mesh_fem();
-       const getfem::mesh_fem *mf_d = in.pop().to_const_mesh_fem();
+       const getfem::mesh_fem *mf_u = to_meshfem_object(in.pop());
+       const getfem::mesh_fem *mf_d = to_meshfem_object(in.pop());
        darray lambda          = in.pop().to_darray(int(mf_d->nb_dof()));
        darray mu              = in.pop().to_darray(int(mf_d->nb_dof()));
        gf_real_sparse_by_col M(mf_u->nb_dof(), mf_u->nb_dof());
@@ -884,14 +880,14 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
     sub_command
       ("nonlinear elasticity", 3,-1,0,-1,
        const getfem::mesh_im *mim = get_mim(in);
-       const getfem::mesh_fem *mf_u = in.pop().to_const_mesh_fem();
+       const getfem::mesh_fem *mf_u = to_meshfem_object(in.pop());
        darray U = in.pop().to_darray(int(mf_u->nb_dof()));
        std::string lawname = in.pop().to_string();
        /* a refaire , pas bon, le terme incompressible se passe de loi */
        getfem::phyperelastic_law law
        = abstract_hyperelastic_law_from_name(lawname,
                                              mf_u->linked_mesh().dim());
-       const getfem::mesh_fem *mf_d = in.pop().to_const_mesh_fem();
+       const getfem::mesh_fem *mf_d = to_meshfem_object(in.pop());
        darray param = in.pop().to_darray(int(law->nb_params()),
                                          int(mf_d->nb_dof()));
 
@@ -912,7 +908,7 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
            getfem::asm_nonlinear_elasticity_rhs(B, *mim, *mf_u, U, mf_d,
                                                 param,*law, rg);
          } else if (cmd_strmatch(what, "incompressible tangent matrix")) {
-           const getfem::mesh_fem *mf_p = in.pop().to_const_mesh_fem();
+	   const getfem::mesh_fem *mf_p = to_meshfem_object(in.pop());
            darray P = in.pop().to_darray(int(mf_p->nb_dof()));
            gf_real_sparse_by_col  K(mf_u->nb_dof(), mf_u->nb_dof());
            gf_real_sparse_by_col  B(mf_u->nb_dof(), mf_p->nb_dof());
@@ -921,7 +917,7 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
            out.pop().from_sparse(K);
            out.pop().from_sparse(B);
          } else if (cmd_strmatch(what, "incompressible rhs")) {
-           const getfem::mesh_fem *mf_p = in.pop().to_const_mesh_fem();
+	   const getfem::mesh_fem *mf_p = to_meshfem_object(in.pop());
            darray P = in.pop().to_darray(int(mf_p->nb_dof()));
            darray RU = out.pop().create_darray_v(unsigned(mf_u->nb_dof()));
            darray RB = out.pop().create_darray_v(unsigned(mf_p->nb_dof()));
@@ -954,9 +950,9 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
     sub_command
       ("stokes", 5, 6, 0, 2,
        const getfem::mesh_im *mim = get_mim(in);
-       const getfem::mesh_fem *mf_u = in.pop().to_const_mesh_fem();
-       const getfem::mesh_fem *mf_p = in.pop().to_const_mesh_fem();
-       const getfem::mesh_fem *mf_d = in.pop().to_const_mesh_fem();
+       const getfem::mesh_fem *mf_u = to_meshfem_object(in.pop());
+       const getfem::mesh_fem *mf_p = to_meshfem_object(in.pop());
+       const getfem::mesh_fem *mf_d = to_meshfem_object(in.pop());
        darray           vec_d = in.pop().to_darray(int(mf_d->nb_dof()));
        gf_real_sparse_by_col  K(mf_u->nb_dof(), mf_u->nb_dof());
        gf_real_sparse_by_col  B(mf_u->nb_dof(), mf_p->nb_dof());
@@ -980,8 +976,8 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
     sub_command
       ("helmholtz", 4, 5, 0, 1,
        const getfem::mesh_im *mim = get_mim(in);
-       const getfem::mesh_fem *mf_u = in.pop().to_const_mesh_fem();
-       const getfem::mesh_fem *mf_d = in.pop().to_const_mesh_fem();
+       const getfem::mesh_fem *mf_u = to_meshfem_object(in.pop());
+       const getfem::mesh_fem *mf_d = to_meshfem_object(in.pop());
        carray           wn = in.pop().to_carray(int(mf_d->nb_dof()));
        std::vector<complex_type> WN(wn.size());
        for (size_type i=0; i < wn.size(); ++i) WN[i] = gmm::sqr(wn[i]);
@@ -1005,8 +1001,8 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
     sub_command
       ("bilaplacian", 4, 5, 0, 1,
        const getfem::mesh_im *mim = get_mim(in);
-       const getfem::mesh_fem *mf_u = in.pop().to_const_mesh_fem();
-       const getfem::mesh_fem *mf_d = in.pop().to_const_mesh_fem();
+       const getfem::mesh_fem *mf_u = to_meshfem_object(in.pop());
+       const getfem::mesh_fem *mf_d = to_meshfem_object(in.pop());
        darray           a = in.pop().to_darray(int(mf_d->nb_dof()));
        gf_real_sparse_by_col  A(mf_u->nb_dof(), mf_u->nb_dof());
        size_type region = size_type(-1);
@@ -1027,8 +1023,8 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
     sub_command
       ("bilaplacian KL", 5, 6, 0, 1,
        const getfem::mesh_im *mim = get_mim(in);
-       const getfem::mesh_fem *mf_u = in.pop().to_const_mesh_fem();
-       const getfem::mesh_fem *mf_d = in.pop().to_const_mesh_fem();
+       const getfem::mesh_fem *mf_u = to_meshfem_object(in.pop());
+       const getfem::mesh_fem *mf_d = to_meshfem_object(in.pop());
        darray           a = in.pop().to_darray(int(mf_d->nb_dof()));
        darray           nu = in.pop().to_darray(int(mf_d->nb_dof()));
        gf_real_sparse_by_col  A(mf_u->nb_dof(), mf_u->nb_dof());
@@ -1099,8 +1095,8 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
       ("dirichlet", 6, 7, 2, 2,
        int boundary_num       = in.pop().to_integer();
        const getfem::mesh_im *mim = get_mim(in);
-       const getfem::mesh_fem *mf_u = in.pop().to_const_mesh_fem();
-       const getfem::mesh_fem *mf_d = in.pop().to_const_mesh_fem();
+       const getfem::mesh_fem *mf_u = to_meshfem_object(in.pop());
+       const getfem::mesh_fem *mf_d = to_meshfem_object(in.pop());
        mexarg_in in_h = in.pop();
        mexarg_in in_r = in.pop();
        double threshold = 1e-8;
@@ -1128,8 +1124,8 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
       ("boundary qu term", 5, 5, 0, 1,
        int boundary_num       = in.pop().to_integer();
        const getfem::mesh_im *mim = get_mim(in);
-       const getfem::mesh_fem *mf_u = in.pop().to_const_mesh_fem();
-       const getfem::mesh_fem *mf_d = in.pop().to_const_mesh_fem();
+       const getfem::mesh_fem *mf_u = to_meshfem_object(in.pop());
+       const getfem::mesh_fem *mf_d = to_meshfem_object(in.pop());
        getfem::mesh_region rg(boundary_num);
        mf_u->linked_mesh().intersect_with_mpi_region(rg);
 
@@ -1276,14 +1272,14 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
       ("integral contact Uzawa projection", 9, 13, 0, 1,
        int boundary_num = in.pop().to_integer();
        const getfem::mesh_im *mim = get_mim(in);
-       const getfem::mesh_fem *mf_u = in.pop().to_const_mesh_fem();
+       const getfem::mesh_fem *mf_u = to_meshfem_object(in.pop());
        // unsigned q_dim = mf_u->get_qdim();
        darray u = in.pop().to_darray();
        in.last_popped().check_trailing_dimension(int(mf_u->nb_dof()));
-       const getfem::mesh_fem *mf_lambda = in.pop().to_const_mesh_fem();
+       const getfem::mesh_fem *mf_lambda = to_meshfem_object(in.pop());
        darray vec_lambda = in.pop().to_darray();
        in.last_popped().check_trailing_dimension(int(mf_lambda->nb_dof()));
-       const getfem::mesh_fem *mf_obs = in.pop().to_const_mesh_fem();
+       const getfem::mesh_fem *mf_obs = to_meshfem_object(in.pop());
        darray obs = in.pop().to_darray();
        in.last_popped().check_trailing_dimension(int(mf_obs->nb_dof()));
        double r = in.pop().to_scalar();
@@ -1295,8 +1291,8 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
            const getfem::mesh_fem *mf_coeff = 0;
            darray vec_coeff;
            mexarg_in argin = in.pop();
-           if (argin.is_mesh_fem()) {
-             mf_coeff = argin.to_const_mesh_fem();
+           if (is_meshfem_object(argin)) {
+             mf_coeff = to_meshfem_object(argin);
              vec_coeff = in.pop().to_darray();
              in.last_popped().check_trailing_dimension(int(mf_coeff->nb_dof()));
            } else
@@ -1330,11 +1326,11 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
       ("level set normal source term", 7, 7, 0, 1,
        int boundary_num = in.pop().to_integer();
        const getfem::mesh_im *mim = get_mim(in);
-       const getfem::mesh_fem *mf_u = in.pop().to_const_mesh_fem();
-       const getfem::mesh_fem *mf_lambda = in.pop().to_const_mesh_fem();
+       const getfem::mesh_fem *mf_u = to_meshfem_object(in.pop());
+       const getfem::mesh_fem *mf_lambda = to_meshfem_object(in.pop());
        darray vec_lambda = in.pop().to_darray();
        in.last_popped().check_trailing_dimension(int(mf_lambda->nb_dof()));
-       const getfem::mesh_fem *mf_obs = in.pop().to_const_mesh_fem();
+       const getfem::mesh_fem *mf_obs = to_meshfem_object(in.pop());
        darray obs = in.pop().to_darray();
        in.last_popped().check_trailing_dimension(int(mf_obs->nb_dof()));
        darray F = out.pop().create_darray_v(unsigned(mf_u->nb_dof()));
@@ -1353,8 +1349,8 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
     sub_command
       ("lsneuman matrix", 4, 5, 0, 1,
        const getfem::mesh_im *mim = get_mim(in);
-       const getfem::mesh_fem *mf_u1 = in.pop().to_const_mesh_fem();
-       const getfem::mesh_fem *mf_u2 = in.pop().to_const_mesh_fem();
+       const getfem::mesh_fem *mf_u1 = to_meshfem_object(in.pop());
+       const getfem::mesh_fem *mf_u2 = to_meshfem_object(in.pop());
        getfem::level_set *ls1= to_levelset_object(in.pop());
        gf_real_sparse_by_col M(mf_u2->nb_dof(), mf_u1->nb_dof());
        size_type region = size_type(-1);
@@ -1373,8 +1369,8 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
     sub_command
       ("nlsgrad matrix", 4, 5, 0, 1,
        const getfem::mesh_im *mim = get_mim(in);
-       const getfem::mesh_fem *mf_u1 = in.pop().to_const_mesh_fem();
-       const getfem::mesh_fem *mf_u2 = in.pop().to_const_mesh_fem();
+       const getfem::mesh_fem *mf_u1 = to_meshfem_object(in.pop());
+       const getfem::mesh_fem *mf_u2 = to_meshfem_object(in.pop());
        getfem::level_set *ls1= to_levelset_object(in.pop());
        gf_real_sparse_by_col M(mf_u1->nb_dof(), mf_u2->nb_dof());
        size_type region = size_type(-1);
@@ -1393,8 +1389,8 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
     sub_command
       ("stabilization patch matrix", 5, 5, 0, 1,
        const getfem::mesh_im *mim = get_mim(in);
-       const getfem::mesh *mesh = in.pop().to_const_mesh();
-       const getfem::mesh_fem *mf_mult = in.pop().to_const_mesh_fem();
+       const getfem::mesh *mesh = to_mesh_object(in.pop());
+       const getfem::mesh_fem *mf_mult = to_meshfem_object(in.pop());
        double ratio_size= in.pop().to_scalar();
        double h= in.pop().to_scalar();
        gf_real_sparse_by_col M(mf_mult->nb_dof(), mf_mult->nb_dof());

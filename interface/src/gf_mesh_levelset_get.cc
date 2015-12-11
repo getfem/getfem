@@ -22,7 +22,6 @@
 #include <getfem/getfem_mesh_level_set.h>
 #include <getfemint.h>
 #include <getfemint_workspace.h>
-#include <getfemint_mesh.h>
 #include <getfemint_levelset.h>
 
 using namespace getfemint;
@@ -74,9 +73,9 @@ void gf_mesh_levelset_get(getfemint::mexargs_in& m_in,
       Return a @tmesh cut by the linked @tls's.@*/
     sub_command
       ("cut_mesh", 0, 0, 0, 1,
-       getfemint_mesh *mm = getfemint_mesh::get_from(new getfem::mesh);
-       mls.global_cut_mesh(mm->mesh());
-       out.pop().from_object_id(mm->get_id(), MESH_CLASS_ID);
+       auto mm = std::make_shared<getfem::mesh>();
+       mls.global_cut_mesh(*mm);
+       out.pop().from_object_id(store_mesh_object(mm), MESH_CLASS_ID);
        );
 
 
@@ -84,8 +83,9 @@ void gf_mesh_levelset_get(getfemint::mexargs_in& m_in,
       Return a reference to the linked @tmesh.@*/
     sub_command
       ("linked_mesh", 0, 0, 0, 1,
-       getfemint_mesh *mm = getfemint_mesh::get_from(&mls.linked_mesh());
-       out.pop().from_object_id(mm->get_id(), MESH_CLASS_ID);
+       id_type id = workspace().object(&mls.linked_mesh());
+       if (id == id_type(-1)) THROW_INTERNAL_ERROR;
+       out.pop().from_object_id(id, MESH_CLASS_ID);
        );
 
 
@@ -103,8 +103,7 @@ void gf_mesh_levelset_get(getfemint::mexargs_in& m_in,
       ("levelsets", 0, 0, 0, 1,
        std::vector<id_type> ids;
        for (unsigned i=0; i < mls.nb_level_sets(); ++i) {
-	 
-	 id_type id = workspace2().object((const void *)(mls.get_level_set(i)));
+	 id_type id = workspace().object((const void *)(mls.get_level_set(i)));
 	 GMM_ASSERT1(id != id_type(-1), "Unknown levelset !");
 	 ids.push_back(id);
        }

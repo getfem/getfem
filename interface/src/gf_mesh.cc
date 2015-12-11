@@ -21,7 +21,6 @@
 // $Id$
 #include <getfemint.h>
 #include <getfemint_workspace.h>
-#include <getfemint_mesh.h>
 #include <getfem/getfem_import.h>
 #include <getfem/getfem_regular_meshes.h>
 #include <getfem/getfem_mesher.h>
@@ -29,10 +28,10 @@
 using namespace getfemint;
 
 static void
-cartesian_mesh(getfem::mesh *pmesh, getfemint::mexargs_in &in, bool linear=true)
-{
+cartesian_mesh(getfem::mesh *pmesh, getfemint::mexargs_in &in,
+	       bool linear=true) {
   getfemint::size_type dim = in.remaining();
-
+  
   if (dim == 0) THROW_BADARG( "not enough input arguments");
 
   std::vector<darray> ppos(dim);
@@ -220,7 +219,7 @@ regular_simplices_mesh(getfem::mesh *pmesh, getfemint::mexargs_in &in) {
 static void
 curved_mesh(getfem::mesh *dest_mesh, getfemint::mexargs_in &in)
 {
-  const getfem::mesh *src_mesh = in.pop().to_const_mesh();
+  const getfem::mesh *src_mesh = to_mesh_object(in.pop());
   darray F = in.pop().to_darray(src_mesh->points().index().last()+1);
 
   int dim = src_mesh->dim();
@@ -242,7 +241,7 @@ curved_mesh(getfem::mesh *dest_mesh, getfemint::mexargs_in &in)
 static void
 prismatic_mesh(getfem::mesh *dest_mesh, getfemint::mexargs_in &in)
 {
-  const getfem::mesh *src_mesh = in.pop().to_const_mesh();
+  const getfem::mesh *src_mesh = to_mesh_object(in.pop());
   size_type nblay = in.pop().to_integer(1,2500000);
   short_type degree(1);
   if (in.remaining()) degree = short_type(in.pop().to_integer(1,2500000));
@@ -488,7 +487,7 @@ void gf_mesh(getfemint::mexargs_in& m_in,
       Create a copy of a mesh.@*/
     sub_command
       ("clone", 1, 1, 0, 1,
-       const getfem::mesh *m2 = in.pop().to_const_mesh();
+       const getfem::mesh *m2 = to_mesh_object(in.pop());
        pmesh->copy_from(*m2);
        );
 
@@ -530,16 +529,12 @@ void gf_mesh(getfemint::mexargs_in& m_in,
 
        getfem::build_mesh(*pmesh, psd, h, fixed, K, -1, max_iter, prefind);
        );
-
   }
 
 
   if (m_in.narg() < 1)  THROW_BADARG( "Wrong number of input arguments");
 
-  getfemint_mesh *mi_mesh =
-    getfemint_mesh::get_from(new getfem::mesh);
-  m_out.pop().from_object_id(mi_mesh->get_id(), MESH_CLASS_ID);
-  getfem::mesh *pmesh = &mi_mesh->mesh();
+  auto mesh = std::make_shared<getfem::mesh>();
   std::string init_cmd   = m_in.pop().to_string();
   std::string cmd        = cmd_normalize(init_cmd);
 
@@ -549,7 +544,9 @@ void gf_mesh(getfemint::mexargs_in& m_in,
     check_cmd(cmd, it->first.c_str(), m_in, m_out, it->second->arg_in_min,
 	      it->second->arg_in_max, it->second->arg_out_min,
 	      it->second->arg_out_max);
-    it->second->run(m_in, m_out, pmesh);
+    it->second->run(m_in, m_out, mesh.get());
+
+    m_out.pop().from_object_id(store_mesh_object(mesh), MESH_CLASS_ID);
   }
   else bad_cmd(init_cmd);
 
