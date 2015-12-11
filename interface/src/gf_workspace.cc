@@ -19,7 +19,6 @@
 
 ===========================================================================*/
 
-#include <getfemint.h>
 #include <getfemint_workspace.h>
 #include <algorithm>
 #ifndef _MSC_VER
@@ -29,60 +28,60 @@
 
 using namespace getfemint;
 
-static void
-do_stat(id_type wid) {
-  const workspace_stack::obj_ct &obj = workspace().get_obj_list();
-  const workspace_stack::wrk_ct &wrk = workspace().get_wrk_list();
-  const dal::bit_vector &valid_objects =  workspace().get_obj_index();
+// static void
+// do_stat(id_type wid) {
+//   const workspace_stack::obj_ct &obj = workspace().get_obj_list();
+//   const workspace_stack::wrk_ct &wrk = workspace().get_wrk_list();
+//   const dal::bit_vector &valid_objects =  workspace().get_obj_index();
   
-  if (wid == anonymous_workspace) {
-    infomsg() << "Anonymous workspace (objects waiting for deletion)\n";
-  } else {
-    if (wid >= wrk.size()) THROW_INTERNAL_ERROR;
-    size_type nb = 0;
-    for (dal::bv_visitor ii(valid_objects); !ii.finished(); ++ii)
-      if (obj[ii]->get_workspace() == wid) nb++;
+//   if (wid == anonymous_workspace) {
+//     infomsg() << "Anonymous workspace (objects waiting for deletion)\n";
+//   } else {
+//     if (wid >= wrk.size()) THROW_INTERNAL_ERROR;
+//     size_type nb = 0;
+//     for (dal::bv_visitor ii(valid_objects); !ii.finished(); ++ii)
+//       if (obj[ii]->get_workspace() == wid) nb++;
 
-    infomsg() << "Workspace " << wid << " [" << wrk[wid].get_name() << " -- "
-	      << nb << " objects]\n";
-  }
+//     infomsg() << "Workspace " << wid << " [" << wrk[wid].get_name() << " -- "
+// 	      << nb << " objects]\n";
+//   }
 
-  for (dal::bv_visitor ii(valid_objects); !ii.finished(); ++ii) {
-    getfem_object *o = obj[ii];
-    if (o->get_workspace() == wid) {
-      std::string subclassname;
-      infomsg() << " ID" << std::setw(4) << o->get_id() << " " 
-		<< std::setw(20)
-		<< name_of_getfemint_class_id(o->class_id())
-		<< std::setw(10) << subclassname 
-		<< "   " << std::setw(9) << o->memsize() << " bytes";
-      if (o->is_static()) infomsg() << " * "; else infomsg() << "   ";
-      if (o->is_const()) infomsg() << "Const"; else infomsg() << "     ";
-      const std::vector<id_type>& used_by = o->get_used_by();
-      if (used_by.size()) {
-	infomsg() << " used by ";
-	for (size_type i=0; i < used_by.size(); ++i)
-	  infomsg() << " ID" << used_by[i];
-      }
-      infomsg() << endl;
-    }
-  }
-}
+//   for (dal::bv_visitor ii(valid_objects); !ii.finished(); ++ii) {
+//     getfem_object *o = obj[ii];
+//     if (o->get_workspace() == wid) {
+//       std::string subclassname;
+//       infomsg() << " ID" << std::setw(4) << o->get_id() << " " 
+// 		<< std::setw(20)
+// 		<< name_of_getfemint_class_id(o->class_id())
+// 		<< std::setw(10) << subclassname 
+// 		<< "   " << std::setw(9) << o->memsize() << " bytes";
+//       if (o->is_static()) infomsg() << " * "; else infomsg() << "   ";
+//       if (o->is_const()) infomsg() << "Const"; else infomsg() << "     ";
+//       const std::vector<id_type>& used_by = o->get_used_by();
+//       if (used_by.size()) {
+// 	infomsg() << " used by ";
+// 	for (size_type i=0; i < used_by.size(); ++i)
+// 	  infomsg() << " ID" << used_by[i];
+//       }
+//       infomsg() << endl;
+//     }
+//   }
+// }
   
-static void
-do_stats() {
+// static void
+// do_stats() {
   
-  const workspace_stack::obj_ct &obj = workspace().get_obj_list();
-  const dal::bit_vector &valid_objects =  workspace().get_obj_index();
-  bool ok = false;
-  for (dal::bv_visitor ii(valid_objects); !ii.finished(); ++ii) {
-    if (obj[ii]->get_workspace() == anonymous_workspace)
-      { ok = true; break; }
-  }
-  if (ok) do_stat(anonymous_workspace);
-  for (size_type wid = 0; wid < workspace().get_wrk_list().size(); ++wid)
-    do_stat(id_type(wid));
-}
+//   const workspace_stack::obj_ct &obj = workspace().get_obj_list();
+//   const dal::bit_vector &valid_objects =  workspace().get_obj_index();
+//   bool ok = false;
+//   for (dal::bv_visitor ii(valid_objects); !ii.finished(); ++ii) {
+//     if (obj[ii]->get_workspace() == anonymous_workspace)
+//       { ok = true; break; }
+//   }
+//   if (ok) do_stat(anonymous_workspace);
+//   for (size_type wid = 0; wid < workspace().get_wrk_list().size(); ++wid)
+//     do_stat(id_type(wid));
+// }
 
 /*@GFDOC
     Getfem workspace management function. 
@@ -162,7 +161,7 @@ void gf_workspace(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        Print informations about variables in current workspace. @*/
     sub_command
       ("stat", 0, 0, 0, 0,
-       do_stat(workspace().get_current_workspace());
+       // do_stat(workspace().get_current_workspace());
        infomsg() << endl;
        );
 
@@ -171,7 +170,7 @@ void gf_workspace(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        Print informations about all getfem variables. @*/
     sub_command
       ("stats", 0, 0, 0, 0,
-       do_stats();
+       // do_stats();
        infomsg() << endl;
        );
 
