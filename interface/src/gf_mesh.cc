@@ -219,7 +219,7 @@ regular_simplices_mesh(getfem::mesh *pmesh, getfemint::mexargs_in &in) {
 static void
 curved_mesh(getfem::mesh *dest_mesh, getfemint::mexargs_in &in)
 {
-  const getfem::mesh *src_mesh = to_mesh_object(in.pop());
+  const getfem::mesh *src_mesh = extract_mesh_object(in.pop());
   darray F = in.pop().to_darray(src_mesh->points().index().last()+1);
 
   int dim = src_mesh->dim();
@@ -241,7 +241,7 @@ curved_mesh(getfem::mesh *dest_mesh, getfemint::mexargs_in &in)
 static void
 prismatic_mesh(getfem::mesh *dest_mesh, getfemint::mexargs_in &in)
 {
-  const getfem::mesh *src_mesh = to_mesh_object(in.pop());
+  const getfem::mesh *src_mesh = extract_mesh_object(in.pop());
   size_type nblay = in.pop().to_integer(1,2500000);
   short_type degree(1);
   if (in.remaining()) degree = short_type(in.pop().to_integer(1,2500000));
@@ -487,7 +487,7 @@ void gf_mesh(getfemint::mexargs_in& m_in,
       Create a copy of a mesh.@*/
     sub_command
       ("clone", 1, 1, 0, 1,
-       const getfem::mesh *m2 = to_mesh_object(in.pop());
+       const getfem::mesh *m2 = extract_mesh_object(in.pop());
        pmesh->copy_from(*m2);
        );
 

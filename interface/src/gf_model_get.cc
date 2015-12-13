@@ -255,7 +255,7 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        } else {
          darray st = in.pop().to_darray();
          std::vector<double> PTS(st.begin(), st.end());
-         const getfem::mesh *m = to_mesh_object(in.pop());
+         const getfem::mesh *m = extract_mesh_object(in.pop());
          size_type N = m->dim();
          size_type nbpoints = gmm::vect_size(PTS) / N;
          getfem::base_node p(N);

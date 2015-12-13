@@ -362,7 +362,7 @@ void gf_mesh_set(getfemint::mexargs_in& m_in,
       duplicated. If `m2` is a @tmf object, its linked mesh will be used.@*/
     sub_command
       ("merge", 1, 2, 0, 0,
-       const getfem::mesh *pmesh2 = to_mesh_object(in.pop());
+       const getfem::mesh *pmesh2 = extract_mesh_object(in.pop());
        scalar_type tol(0);
        if (in.remaining()) tol = in.pop().to_scalar();
        for (dal::bv_visitor cv(pmesh2->convex_index()); !cv.finished(); ++cv)

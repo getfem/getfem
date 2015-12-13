@@ -81,12 +81,12 @@ static void precond_spmat(gsparse *gsp, mexargs_out& out) {
     gprecond<complex_type> &p = precond_new(out, complex_type());
     p.type = gprecond_base::SPMAT;
     p.gsp = gsp;
-    // workspace().set_dependance(p, gsp);
+    workspace().set_dependence(&p, gsp);
   } else {
     gprecond<scalar_type> &p  = precond_new(out, scalar_type());
     p.type = gprecond_base::SPMAT;
     p.gsp = gsp;
-    // workspace().set_dependance(p, gsp);
+    workspace().set_dependence(&p, gsp);
   }
 }
 

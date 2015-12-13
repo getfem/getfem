@@ -105,7 +105,6 @@ void gf_levelset_get(getfemint::mexargs_in& m_in,
        if (id == id_type(-1)) {
 	 id = store_meshfem_object(std::shared_ptr<getfem::mesh_fem>
 				   (std::shared_ptr<getfem::mesh_fem>(), pmf));
-	 // set_dependance(??, ??)
        }
        out.pop().from_object_id(id, MESHFEM_CLASS_ID);
        );

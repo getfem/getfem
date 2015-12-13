@@ -142,7 +142,7 @@ namespace getfem {
       do {
         if (change_convex) {
           //cerr << "changement de convexe, ancien=" << cv << endl;
-          /* init convex-dependant data */
+          /* init convex-dependent data */
           if (!first) {
 
             cv = find_convex_of_point(mfU->pmf->linked_mesh(), cv, P0, refP0, gti);
@@ -283,7 +283,7 @@ build_slicers(const getfem::mesh& m, std::vector<std::unique_ptr<getfem::slicer_
     getfem::slicer_action *s = build_slicers(m, slicers, in.pop().arg);
     slicers.push_back(std::make_unique<getfem::slicer_complementary>(*s));
   } else if (check_cmd(cmd, "mesh", in, 1, 1)) {
-    const getfem::mesh &m2 = *to_mesh_object(in.pop());
+    const getfem::mesh &m2 = *extract_mesh_object(in.pop());
     slicers.push_back(std::make_unique<getfem::slicer_mesh_with_mesh>(m2));
   } else bad_cmd(cmd);
   return slicers.back().get();
@@ -416,7 +416,7 @@ void gf_slice(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       pmls = to_mesh_levelset_object(in.pop());
       mm = &(pmls->linked_mesh());
     } else {
-      mm = to_mesh_object(in.pop());
+      mm = extract_mesh_object(in.pop());
     }
 
     std::vector<std::unique_ptr<getfem::slicer_action>> slicers;
@@ -454,7 +454,7 @@ void gf_slice(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       Compute streamlines of the (vector) field `U`, with seed points given
       by the columns of `S`.@*/
       const getfem::mesh_fem *mf = to_meshfem_object(in.front());
-      mm = to_mesh_object(in.pop());
+      mm = extract_mesh_object(in.pop());
       darray U = in.pop().to_darray(int(mf->nb_dof()));
       darray v = in.pop().to_darray(mm->dim(), -1);
       std::vector<getfem::base_node> seeds(v.getn());
@@ -468,7 +468,7 @@ void gf_slice(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       Return the "slice" composed of points given by the columns of `Pts`
       (useful for interpolation on a given set of sparse points, see
       ``::COMPUTE('interpolate on',sl)``.@*/
-      mm = to_mesh_object(in.pop());
+      mm = extract_mesh_object(in.pop());
       pstored = std::make_shared<getfem::stored_mesh_slice>();
       getfem::mesh_slicer slicer(*mm);
       getfem::slicer_build_stored_mesh_slice slicer_store(*pstored);
@@ -483,17 +483,15 @@ void gf_slice(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       Load the slice (and its linked mesh if it is not given as an argument)
       from a text file.@*/
       std::string fname = in.pop().to_string();
-      if (in.remaining()) mm = to_mesh_object(in.pop());
+      pstored = std::make_shared<getfem::stored_mesh_slice>();
+      if (in.remaining()) mm = extract_mesh_object(in.pop());
       else {
 	auto m = std::make_shared<getfem::mesh>();
 	m->read_from_file(fname);
 	store_mesh_object(m);
 	mm = m.get();
-	// workspace().set_dependance(mm, ??);
-	// simplifier ce qui précède ... il faut stocker le nouveau maillage
-	// et bien gerer la dépendance .... !!!
+	workspace().add_hidden_object(store_slice_object(pstored), m);
       }
-      pstored = std::make_shared<getfem::stored_mesh_slice>();
       pstored->read_from_file(fname, *mm);
     } else bad_cmd(cmd);
   } else THROW_BADARG("a slicer specification (i.e. cell array) or a string "
@@ -502,5 +500,5 @@ void gf_slice(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 
   id_type id = store_slice_object(pstored);
   out.pop().from_object_id(id, SLICE_CLASS_ID);
-  // workspace().set_dependance(mms, mm);
+  workspace().set_dependence(pstored.get(), mm);
 }

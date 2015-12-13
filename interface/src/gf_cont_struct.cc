@@ -207,7 +207,7 @@ void gf_cont_struct(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
       shp->set_interval_from_variable_name(varname);
     
     id_type id = store_cont_struct_object(shp);
-    // workspace().set_dependance(id, md); // To be reactivated
+    workspace().set_dependence(id, (const void *)(md));
     out.pop().from_object_id(id, CONT_STRUCT_CLASS_ID);
   }
   

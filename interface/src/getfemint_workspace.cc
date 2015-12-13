@@ -24,6 +24,7 @@
 #include <getfem/dal_singleton.h>
 #include <getfem/bgeot_config.h>
 #include <getfemint_workspace.h>
+#include <iomanip>
 
 namespace getfemint {
 
@@ -52,43 +53,45 @@ namespace getfemint {
     o.raw_pointer = raw_pointer;
     o.workspace = get_current_workspace();
     o.class_id = class_id;
-    o.used_by.clear();
+    o.dependent_on.clear();
 
     kmap[raw_pointer] = id;
     newly_created_objects.push_back(id);
     return id;
   }
 
-  void workspace_stack::set_dependance(id_type user, id_type used) {
+  void workspace_stack::sup_dependence(id_type user, id_type used) {
     if (!(valid_objects.is_in(user)) || !(valid_objects.is_in(used)))
-      THROW_ERROR("Invalid objects\n");
-    auto &u = obj[used].used_by;
-    auto &p = obj[user].p;
-    for (auto it = u.begin(); it != u.end(); ++it)
-      if (it->get() == p.get()) return;
-    u.push_back(p);
-  }
-
-  void workspace_stack::sup_dependance(id_type user, id_type used) {
-    if (!(valid_objects.is_in(user)) || !(valid_objects.is_in(used)))
-      THROW_ERROR("Invalid objects\n");
-    auto &u = obj[used].used_by;
-    auto &p = obj[user].p;
+      THROW_ERROR("Invalid object\n");
+    auto &u = obj[user].dependent_on;
+    auto &p = obj[used].p;
     size_type i = 0, j = 0;
     for ( ; i < u.size(); ++i)
       { u[j] = u[i]; if (u[i].get() != p.get()) ++j; }
     u.resize(j);
   }
+  
+  void workspace_stack::add_hidden_object(id_type user,
+					  const dal::pstatic_stored_object &p) {
+    if (!(valid_objects.is_in(user))) THROW_ERROR("Invalid object\n");
+    auto &u = obj[user].dependent_on;
+    for (auto it = u.begin(); it != u.end(); ++it)
+      if (it->get() == p.get()) return;
+    u.push_back(p);
+  }
+
+  void workspace_stack::set_dependence(id_type user, id_type used) {
+    if (!(valid_objects.is_in(user)) || !(valid_objects.is_in(used)))
+      THROW_ERROR("Invalid object\n");
+    add_hidden_object(user, obj[used].p);
+  }
 
   void workspace_stack::delete_object(id_type id) {
     if (valid_objects[id]) {
+      object_info &ob = obj[id];
       valid_objects.sup(id);
-      kmap.erase(obj[id].raw_pointer);
-      obj[id] = object_info();
-    } else {
-      std::stringstream s;
-      s << "Object number " << id << " no longer exists : can't delete it";
-      throw getfemint_error(s.str());
+      kmap.erase(ob.raw_pointer);
+      ob = object_info();
     }
   }
 
@@ -156,6 +159,46 @@ namespace getfemint {
     }
   }
 
+  void workspace_stack::do_stats(std::ostream &o, id_type wid) {  
+    if (wid == id_type(-1)) {
+      o << "Anonymous workspace (objects waiting for deletion)\n";
+    } else {
+      if (wid >= wrk.size()) THROW_INTERNAL_ERROR;
+      size_type nb = 0;
+      for (dal::bv_visitor ii(valid_objects); !ii.finished(); ++ii)
+	if (obj[ii].workspace == wid) nb++;
+      
+      o << "Workspace " << wid << " [" << wrk[wid] << " -- "
+		<< nb << " objects]\n";
+    }
+    
+    for (dal::bv_visitor ii(valid_objects); !ii.finished(); ++ii) {
+      object_info &ob = obj[ii];
+      if (ob.workspace == wid) {
+	std::string subclassname;
+	o << " ID" << std::setw(4) << ii << " " << std::setw(20)
+	  << name_of_getfemint_class_id(ob.class_id)
+	  << std::setw(10) << subclassname;
+	if (ob.dependent_on.size()) {
+	  o << " dependent on ";
+	  for (size_type i=0; i < ob.dependent_on.size(); ++i) {
+	    id_type id = object(ob.dependent_on[i].get());
+	    if (id != id_type(-1))
+	      o << " ID" << id;
+	    else
+	      o << " object "
+		<< name_of_getfemint_class_id(class_id_of_object(ob.dependent_on[i]))
+		<< " waiting for deletion";
+	  }
+	}
+	o << endl;
+      }
+    }
+  }
 
+  void workspace_stack::do_stats(std::ostream &o) {
+    for (size_type wid = 0; wid < wrk.size(); ++wid)
+      do_stats(o, id_type(wid));
+  }
 
 }

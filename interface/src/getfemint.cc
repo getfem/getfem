@@ -992,6 +992,83 @@ namespace getfemint {
     }
   }
 
+  /* Associate the class ID found in the matlab structures referencing
+     getfem object to a class name which coincides with the class name
+     given by matlab to the structure.
+     
+     IMPORTANT: Should correspond to the getfemint_class_id
+                In particular, it should be in alphabetic order.
+     
+     To be completed when an object class is added.
+  */
+  const char *name_of_getfemint_class_id(id_type cid) {
+    switch (cid) {
+    case CONT_STRUCT_CLASS_ID:      return "gfContStruct";
+    case CVSTRUCT_CLASS_ID:         return "gfCvStruct";
+    case ELTM_CLASS_ID:             return "gfEltm";
+    case FEM_CLASS_ID:              return "gfFem";
+    case GEOTRANS_CLASS_ID:         return "gfGeoTrans";
+    case GLOBAL_FUNCTION_CLASS_ID:  return "gfGlobalFunction";
+    case INTEG_CLASS_ID:            return "gfInteg";
+    case LEVELSET_CLASS_ID:         return "gfLevelSet";
+    case MESH_CLASS_ID:             return "gfMesh";
+    case MESHFEM_CLASS_ID:          return "gfMeshFem";
+    case MESHIM_CLASS_ID:           return "gfMeshIm";
+    case MESHIMDATA_CLASS_ID:       return "gfMeshImData";
+    case MESH_LEVELSET_CLASS_ID:    return "gfMeshLevelSet";
+    case MESHER_OBJECT_CLASS_ID:    return "gfMesherObject";
+    case MODEL_CLASS_ID:            return "gfModel";
+    case PRECOND_CLASS_ID:          return "gfPrecond";
+    case SLICE_CLASS_ID:            return "gfSlice";
+    case SPMAT_CLASS_ID:            return "gfSpmat";
+    case POLY_CLASS_ID:             return "gfPoly";
+    default :                       return "not_a_getfem_class";
+    }
+  }
+
+  // Gives the class id of an object.
+  // To be completed when an object class is added.
+  id_type class_id_of_object(const dal::pstatic_stored_object &p) {
+    if (dynamic_cast<const getfem::cont_struct_getfem_model *>(p.get()))
+      return CONT_STRUCT_CLASS_ID;
+    if (dynamic_cast<const bgeot::convex_structure *>(p.get()))
+      return CVSTRUCT_CLASS_ID;
+    if (dynamic_cast<const getfem::mat_elem_type *>(p.get()))
+      return ELTM_CLASS_ID;
+    if (dynamic_cast<const getfem::virtual_fem *>(p.get()))
+      return FEM_CLASS_ID;
+    if (dynamic_cast<const bgeot::geometric_trans *>(p.get()))
+      return GEOTRANS_CLASS_ID;
+    if (dynamic_cast<const getfem::abstract_xy_function *>(p.get()))
+      return GLOBAL_FUNCTION_CLASS_ID;
+    if (dynamic_cast<const getfem::integration_method *>(p.get()))
+      return INTEG_CLASS_ID;
+    if (dynamic_cast<const getfem::level_set *>(p.get()))
+      return LEVELSET_CLASS_ID;
+    if (dynamic_cast<const getfem::mesh *>(p.get()))
+      return MESH_CLASS_ID;
+    if (dynamic_cast<const getfem::mesh_fem *>(p.get()))
+      return MESHFEM_CLASS_ID;
+    if (dynamic_cast<const getfem::mesh_im *>(p.get()))
+      return MESHIM_CLASS_ID;
+    if (dynamic_cast<const getfem::im_data *>(p.get()))
+      return MESHIMDATA_CLASS_ID;
+    if (dynamic_cast<const getfem::mesh_level_set *>(p.get()))
+      return MESH_LEVELSET_CLASS_ID;
+    if (dynamic_cast<const getfem::mesher_signed_distance *>(p.get()))
+      return MESHER_OBJECT_CLASS_ID;
+    if (dynamic_cast<const getfem::model *>(p.get()))
+      return MODEL_CLASS_ID;
+    if (dynamic_cast<const gprecond_base *>(p.get()))
+      return PRECOND_CLASS_ID;
+    if (dynamic_cast<const getfem::stored_mesh_slice *>(p.get()))
+      return SLICE_CLASS_ID;
+    if (dynamic_cast<const gsparse *>(p.get()))
+      return SPMAT_CLASS_ID;
+    if (dynamic_cast<const getfemint_poly *>(p.get()))
+      return POLY_CLASS_ID;
+    return id_type(-1);
+  }
 
 
   // Version of the interface functions for an object managed preferabily by
@@ -1100,6 +1177,33 @@ namespace getfemint {
 
   // Functions for MESH_CLASS_ID
   SIMPLE_RAW_POINTER_MANAGED_OBJECT(mesh, getfem::mesh, MESH_CLASS_ID)
+  
+  bool has_mesh_object(const mexarg_in &p) {
+    return is_mesh_object(p) || is_meshfem_object(p) || is_meshim_object(p) ||
+      is_meshimdata_object(p) || is_mesh_levelset_object(p);
+  }
+
+  getfem::mesh *extract_mesh_object(const mexarg_in &p) {
+    id_type id, cid;
+    if (p.is_object_id(&id, &cid)) {
+      switch (cid) {
+      case MESH_CLASS_ID: return to_mesh_object(p);
+      case MESH_LEVELSET_CLASS_ID:
+	return const_cast<getfem::mesh *>
+	  (&to_mesh_levelset_object(p)->linked_mesh());
+      case MESHIMDATA_CLASS_ID:
+	return const_cast<getfem::mesh *>
+	  (&to_meshimdata_object(p)->linked_mesh());
+	case MESHIM_CLASS_ID:
+	  return const_cast<getfem::mesh *>
+	    (&to_meshim_object(p)->linked_mesh());
+      case MESHFEM_CLASS_ID:
+	return const_cast<getfem::mesh *>
+	  (&to_meshfem_object(p)->linked_mesh());
+      default:THROW_BADARG("This object do not have a mesh");
+      }
+    } else THROW_BADARG("Not a getfem object");
+  }
 
   // Functions for MESHFEM_CLASS_ID
   SIMPLE_RAW_POINTER_MANAGED_OBJECT(meshfem, getfem::mesh_fem, MESHFEM_CLASS_ID)

@@ -509,11 +509,11 @@ static void do_expression_analysis(mexargs_in& in) {
 
   std::string expr = in.pop().to_string();
 
-  bool with_mesh = in.remaining() && is_mesh_object(in.front());
+  bool with_mesh = in.remaining() && has_mesh_object(in.front());
   bool with_mim = !with_mesh && in.remaining() && is_meshim_object(in.front());
 
   getfem::mesh dummy_mesh;
-  const getfem::mesh_im dummy_mim(with_mesh ? *(to_mesh_object(in.pop())):dummy_mesh);
+  const getfem::mesh_im dummy_mim(with_mesh ? *(extract_mesh_object(in.pop())):dummy_mesh);
   const getfem::mesh_im &mim = with_mim ? *(to_meshim_object(in.pop()))
                                         : dummy_mim;
 

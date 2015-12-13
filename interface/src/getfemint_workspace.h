@@ -44,9 +44,12 @@ namespace getfemint {
   // order to be able to delete all the variables created locally in a
   // sub-program or a loop (however, this has to be managed by the user).
   // Additionnally, a variable may have dependances with respect to some
-  // other variables, in the sense that is a deletion of a variable occurs
+  // other variables, in the sense that if a deletion of a variable occurs
   // it will be delayed untill all the dependant variables are deleted
   // (implemented with shared pointers).
+  // The object having a delayed deletion are called hidden objects. It is
+  // also possible to directlycreate an hidden object. An hidden object
+  // can eventually be retransformed in a normal object.
 
   class workspace_stack {
     
@@ -55,7 +58,7 @@ namespace getfemint {
       const void *raw_pointer;
       id_type workspace;
       getfemint_class_id class_id;
-      std::vector<dal::pstatic_stored_object> used_by;
+      std::vector<dal::pstatic_stored_object> dependent_on;
 
       object_info() : raw_pointer(0), class_id(GETFEMINT_NB_CLASS) {}
     };
@@ -83,9 +86,18 @@ namespace getfemint {
     id_type push_object(const dal::pstatic_stored_object &p,
 			const void *raw_pointer, getfemint_class_id class_id);
 
-    // Sets the dependance of an object with respect to another
-    void set_dependance(id_type user, id_type used);
-    void sup_dependance(id_type user, id_type used);
+    // Sets the dependence of an object with respect to another
+    void set_dependence(id_type user, id_type used);
+    void set_dependence(id_type user, const void *used)
+    { set_dependence(user, object(used)); }
+    void set_dependence(const void *user, const void *used)
+    { set_dependence( object(user), object(used)); }
+    void set_dependence(const void *user, id_type used)
+    { set_dependence( object(user), used); }
+    void sup_dependence(id_type user, id_type used);
+    void sup_dependence(const void *user, const void *used)
+    { sup_dependence( object(user), object(used)); }
+    void add_hidden_object(id_type user, const dal::pstatic_stored_object &p);
 
     /** At least mark the objet for future deletion (object becomes anonymous)
 	and if possible, destroy the object (and all the objects which use
@@ -122,6 +134,9 @@ namespace getfemint {
 
     void commit_newly_created_objects();
     void destroy_newly_created_objects();
+
+    void do_stats(std::ostream &o, id_type wid);
+    void do_stats(std::ostream &o);
   };
 
   workspace_stack& workspace();

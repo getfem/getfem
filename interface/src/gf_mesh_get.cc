@@ -1201,7 +1201,7 @@ void gf_mesh_get(getfemint::mexargs_in& m_in,
   }
 
   if (m_in.narg() < 2)  THROW_BADARG( "Wrong number of input arguments");
-  const getfem::mesh *pmesh = to_mesh_object(m_in.pop());
+  const getfem::mesh *pmesh = extract_mesh_object(m_in.pop());
   std::string init_cmd   = m_in.pop().to_string();
   std::string cmd        = cmd_normalize(init_cmd);
 

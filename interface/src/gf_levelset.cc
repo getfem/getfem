@@ -77,7 +77,7 @@ getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
     if (s1.size()) values_from_func(pls.get(), 0, s1);
     if (s2.size()) values_from_func(pls.get(), 1, s2);
 
-    // workspace().set_dependance(gls, mm);
+    workspace().set_dependence(id, mm);
     out.pop().from_object_id(id, LEVELSET_CLASS_ID);
   }
 }

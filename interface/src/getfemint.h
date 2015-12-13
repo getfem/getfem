@@ -71,44 +71,14 @@ namespace getfemint {
 		 GETFEMINT_NB_CLASS } getfemint_class_id;
 
   
-  /* associate the class ID found in the matlab structures referencing
+  /* Associate the class ID found in the matlab structures referencing
      getfem object to a class name which coincides with the class name
      given by matlab to the structure.
      
      IMPORTANT: Should correspond to the getfemint_class_id
                 In particular, it should be in alphabetic order.
   */
-  inline const char *name_of_getfemint_class_id(id_type cid) {
-    switch (cid) {
-    case CONT_STRUCT_CLASS_ID:      return "gfContStruct";
-    case CVSTRUCT_CLASS_ID:         return "gfCvStruct";
-    case ELTM_CLASS_ID:             return "gfEltm";
-    case FEM_CLASS_ID:              return "gfFem";
-    case GEOTRANS_CLASS_ID:         return "gfGeoTrans";
-    case GLOBAL_FUNCTION_CLASS_ID:  return "gfGlobalFunction";
-    case INTEG_CLASS_ID:            return "gfInteg";
-    case LEVELSET_CLASS_ID:         return "gfLevelSet";
-    case MESH_CLASS_ID:             return "gfMesh";
-    case MESHFEM_CLASS_ID:          return "gfMeshFem";
-    case MESHIM_CLASS_ID:           return "gfMeshIm";
-    case MESHIMDATA_CLASS_ID:       return "gfMeshImData";
-    case MESH_LEVELSET_CLASS_ID:    return "gfMeshLevelSet";
-    case MESHER_OBJECT_CLASS_ID:    return "gfMesherObject";
-    case MODEL_CLASS_ID:            return "gfModel";
-    case PRECOND_CLASS_ID:          return "gfPrecond";
-    case SLICE_CLASS_ID:            return "gfSlice";
-    case SPMAT_CLASS_ID:            return "gfSpmat";
-    case POLY_CLASS_ID:             return "gfPoly";
-    default :                       return "not_a_getfem_class";
-    }
-  }
-  
-
-
-
-
-
-
+  const char *name_of_getfemint_class_id(id_type cid);
 
   /* exception-throwing version of the allocation functions of gfi_array.h */
   gfi_array* checked_gfi_array_create(int ndim, const int *dims,
@@ -736,6 +706,9 @@ namespace getfemint {
     THROW_BADARG("Bad command name: " << cmd); }
 
 
+  // Gives the class id of an object
+  // To be completed when an object class is added.
+  id_type class_id_of_object(const dal::pstatic_stored_object &p);
 
 # define getfemint_declare_getfem_class(CLASS)				\
   } namespace getfem { class CLASS; } namespace getfemint {
@@ -802,6 +775,8 @@ namespace getfemint {
   bool is_mesh_object(const mexarg_in &p);
   id_type store_mesh_object(const std::shared_ptr<getfem::mesh> &shp);
   getfem::mesh *to_mesh_object(const mexarg_in &p);
+  bool has_mesh_object(const mexarg_in &p); // mesh or mesh_fem or mesh_im ...
+  getfem::mesh *extract_mesh_object(const mexarg_in &p);
 
   // Functions for MESHFEM_CLASS_ID
   getfemint_declare_getfem_class(mesh_fem)
@@ -868,11 +843,6 @@ namespace getfemint {
   bool is_poly_object(const mexarg_in &p);
   id_type store_poly_object(const std::shared_ptr<getfemint_poly> &shp);
   getfemint_poly *to_poly_object(const mexarg_in &p);
-
-
-
-
-
 
 
 

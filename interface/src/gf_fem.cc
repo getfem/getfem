@@ -61,8 +61,8 @@ void gf_fem(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
     
     id = store_fem_object(pf);
 
-    // workspace().set_dependance(id, mim);
-    // workspace().set_dependance(id, mf);
+    workspace().set_dependence(id, mim);
+    workspace().set_dependence(id, mf);
   } else {
     /*@INIT F = ('.list', @str fem_name)
       The `fem_name` should contain a description of the finite element

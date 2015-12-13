@@ -83,15 +83,17 @@ void gf_mesh_im(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
     sub_command
       ("load", 1, 2, 0, 1,
        std::string fname = in.pop().to_string();
-       if (in.remaining()) mm = to_mesh_object(in.pop());
-       else {
+       if (in.remaining()) {
+	 mm = extract_mesh_object(in.pop());
+	 mim = std::make_shared<getfem::mesh_im>(*mm);
+       } else {
 	  auto m = std::make_shared<getfem::mesh>();
 	  m->read_from_file(fname);
 	  store_mesh_object(m);
 	  mm = m.get();
-	  // + workspace().set_dependance(m, mim); à gerer dans ce cas ...
+	  mim = std::make_shared<getfem::mesh_im>(*mm);
+	  workspace().add_hidden_object(store_meshim_object(mim), m);
        }
-       mim = std::make_shared<getfem::mesh_im>(*mm);
        mim->read_from_file(fname);
        );
 
@@ -103,15 +105,17 @@ void gf_mesh_im(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
     sub_command
       ("from string", 1, 2, 0, 1,
        std::stringstream ss(in.pop().to_string());
-       if (in.remaining()) mm = to_mesh_object(in.pop());
-       else {
+       if (in.remaining()) {
+	 mm = extract_mesh_object(in.pop());
+	 mim = std::make_shared<getfem::mesh_im>(*mm);
+       } else {
 	 auto m = std::make_shared<getfem::mesh>();
 	 m->read_from_file(ss);
 	 store_mesh_object(m);
 	 mm = m.get();
-	 // + workspace().set_dependance(m, mim); à gerer dans ce cas ...
+	 mim = std::make_shared<getfem::mesh_im>(*mm);
+	 workspace().add_hidden_object(store_meshim_object(mim), m);
        }
-       mim = std::make_shared<getfem::mesh_im>(*mm);
        mim->read_from_file(ss);
        );
 
@@ -215,7 +219,8 @@ void gf_mesh_im(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        }
        mim = mimls;
        mimls->adapt();
-       // workspace().set_dependance(mim, mls);
+       store_meshim_object(mim);
+       workspace().set_dependence(mim.get(), mm);
        );
 
   }
@@ -247,7 +252,7 @@ void gf_mesh_im(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
       with these arguments.@*/
     if (!m_out.narg_in_range(1, 1))
       THROW_BADARG("Wrong number of output arguments");
-    mm = to_mesh_object(m_in.pop());
+    mm = extract_mesh_object(m_in.pop());
     mim = std::make_shared<getfem::mesh_im>(*mm);
     if (m_in.remaining()) {
       gf_mesh_im_set_integ(mim.get(), m_in);
@@ -257,7 +262,7 @@ void gf_mesh_im(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
 
   }
   if (!mim.get()) THROW_INTERNAL_ERROR;
-  // workspace().set_dependance(mim, mm);
   id_type id = store_meshim_object(mim);
+  workspace().set_dependence(id, mm);
   m_out.pop().from_object_id(id, MESHIM_CLASS_ID);
 }

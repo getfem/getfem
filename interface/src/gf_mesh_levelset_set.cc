@@ -88,7 +88,7 @@ void gf_mesh_levelset_set(getfemint::mexargs_in& m_in,
 	 THROW_BADARG("The meshes of the levelset and the mesh_levelset "
 		      "are not the same!");
        mls.add_level_set(*gls);
-       // workspace().set_dependance(mls, gls);
+       workspace().set_dependence(&mls, gls);
        );
 
 
@@ -98,7 +98,7 @@ void gf_mesh_levelset_set(getfemint::mexargs_in& m_in,
       ("sup", 1, 1, 0, 0,
        getfem::level_set *gls = to_levelset_object(in.pop());
        mls.sup_level_set(*gls);
-       // workspace().sup_dependance(mls, gls);
+       workspace().sup_dependence(&mls, gls);
        );
 
 
