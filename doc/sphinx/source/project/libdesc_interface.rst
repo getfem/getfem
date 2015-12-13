@@ -10,8 +10,7 @@
 Interface with scripts languages (Python, Scilab and Matlab)
 ------------------------------------------------------------
 
-A simplified interface of |gf| is provided, so that it is possible to use getfem
-in other languages.
+A simplified (but rather complete) interface of |gf| is provided, so that it is possible to use getfem in some script languages.
 
 Description
 ^^^^^^^^^^^
@@ -24,8 +23,8 @@ the python, matlab and scilab interfaces.
 This interface is not something that is generated automatically from c++ sources
 (as that could be the case with tools such as swig). It is something that has
 been designed as a simplified and consistent interface to getfem. Adding a new
-language should be quite easy (assuming the language provides some structures for
-dense arrays manipulations).
+language should be quite easy (assuming the language provides some structures
+for dense arrays manipulations).
 
 Files
 ^^^^^
@@ -55,27 +54,22 @@ All the files in the directory :file:`interface\src`. A short description of mai
   how to send and receive arrays, and object handles, from 
   ``getfem_interface_main()``. This file provide such functionnality.
 
-* :file:`getfemint_object.h`.
+* :file:`getfemint_gsparse.h`, :file:`getfemint_precond.h`, etc.
 
-  Not all getfem objects are exported, only a selected subset, mostly |m|, |mim|, 
-  |mf|, |sl|, |br|, etc. They are all wrapped in a common interface, which is 
-  ``getfemint::getfem_object``.
-
-* :file:`getfemint_mesh.h`, :file:`getfemint_mesh_fem.h`, etc.
-
-  All the wrapped |gf| objects. Some of them are quite complicated 
+  Files specific to an interfaced object if needed. 
   (getfemint_gsparse which export some kind of mutable sparse matrix that can 
   switch between different storage types, and real of complex elements).
 
 * :file:`gf_workspace.cc`, :file:`gf_delete.cc`.
 
-  Memory management for getfem objects. There is a layer in 
-  ``getfemint::getfem_object`` which handles the dependency between for example a 
-  ``getfemint_mesh`` and a ``getfemint_mesh_fem``. It makes sure that no object 
-  will be destroyed while there is still another getfem_object using it. The goal 
+  Memory management for getfem objects. There is a layer which handles the
+  dependency between for example a ``mesh`` and a ``mesh_fem``.
+  It makes sure that no object 
+  will be destroyed while there is still another getfem_object using it.
+  The goal 
   is to make sure that under no circumstances the user is able to crash getfem 
-  (and the host program, matlab, scilab or python) by passing incorrect argument to the 
-  getfem interface.
+  (and the host program, matlab, scilab or python) by passing incorrect
+  argument to the getfem interface.
 
   It also provides a kind of workspace stack, which was designed to simplify 
   handling and cleaning of many getfem objects in matlab (since matlab does not 
@@ -84,8 +78,9 @@ All the files in the directory :file:`interface\src`. A short description of mai
 * :file:`getfemint.h`, :file:`getfemint.cc`.
 
   Define the ``mexarg_in``, ``mexarg_out`` classes, which are used to parse the 
-  list of input and output arguments to the getfem interface functions. The name 
-  is not adequate anymore since any reference to "mex" has been moved into 
+  list of input and output arguments to the getfem interface functions.
+  The name  is not adequate anymore since any reference to "mex"
+  has been moved into 
   :file:`gfm_mex.c`.
 
 * :file:`gf_mesh.cc`, :file:`gf_mesh_get.cc`, :file:`gf_mesh_set.cc`,
@@ -297,8 +292,18 @@ Adding a new object to the getfem interface
 
 In order to add a new object to the interface, you have to build the new corresponding sources :file:`gf_obj.cc`, :file:`gf_obj_get.cc` and :file:`gf_obj_set.cc`. Of course you can take the existing ones as a model.
 
-A structure name `getfemint_object_name` has to be defined (see getfemint_mesh.h for instance).
-Moreover, for the management of the object, you have to declare the class in :file:`getfemint.cc` and :file:`getfemint.h` and add the methods `is_object()`, `to_const_object()`, `to_object()` and `to_getfemint_object()`. 
+For the management of the object, you have to declare the class at the begining of :file:`getfemint.h` (respecting the alphabetic order), and declare three functions::
+
+  bool is_"name"_object(const mexarg_in &p);
+  id_type store_"name"_object(const std::shared_ptr<object_class> &shp);
+  object_class *to_"name"_object(const mexarg_in &p);
+
+where "name" is the name of the object in the interface and ``object_class`` is the class name in getfem (for instance  ``getfem::mesh`` for the mesh object). Alternatively, for the object that are manipulated by a shared pointer in |gf|, the third function can return a shared pointer. 
+
+IMPORTANT : I order to be interfaced, a |gf| object has to derive from ``dal::static_stored_object``. However, if it is not the case, a wrapper class can be defined such as the one for ``bgeot::base_poly`` (see the end of :file:`getfemint.h`).
+
+The previous three functions have to be implemented at the end of :file:`getfemint.cc`.It is possible to use one of the two macros defined in :file:`getfemint.cc`. The firs macro is for a standard object and the second one for an object which is manipulated in |gf| with a shared pointer.
+
 
 You have also to add the call of the interface function in :file:`getfem_interface.cc` and modifiy the file :file:`bin/extract_doc` and run the configure file.
 

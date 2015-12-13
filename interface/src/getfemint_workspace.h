@@ -99,6 +99,8 @@ namespace getfemint {
     { sup_dependence( object(user), object(used)); }
     void add_hidden_object(id_type user, const dal::pstatic_stored_object &p);
 
+    dal::pstatic_stored_object hidden_object(id_type user, const void *p);
+
     /** At least mark the objet for future deletion (object becomes anonymous)
 	and if possible, destroy the object (and all the objects which use
 	this one if they are all anonymous).

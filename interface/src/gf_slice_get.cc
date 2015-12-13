@@ -335,7 +335,15 @@ void gf_slice_get(getfemint::mexargs_in& m_in,
     sub_command
       ("linked mesh", 0, 0, 0, 1,
        id_type id = workspace().object((const void *)(&(sl->linked_mesh())));
-       if (id == id_type(-1)) THROW_INTERNAL_ERROR;
+       if (id == id_type(-1)) {
+	 auto pst = workspace().hidden_object(workspace().object(sl),
+					      &sl->linked_mesh());
+	 if (!pst.get()) THROW_INTERNAL_ERROR;
+	 std::shared_ptr<getfem::mesh> pm = 
+	   std::const_pointer_cast<getfem::mesh>
+	   (std::dynamic_pointer_cast<const getfem::mesh>(pst));
+	 id = store_mesh_object(pm);
+       }
        out.pop().from_object_id(id, MESH_CLASS_ID);
        );
 

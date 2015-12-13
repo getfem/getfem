@@ -80,6 +80,15 @@ namespace getfemint {
     u.push_back(p);
   }
 
+  dal::pstatic_stored_object workspace_stack::hidden_object(id_type user,
+							    const void *p) {
+    if (!(valid_objects.is_in(user))) THROW_ERROR("Invalid object\n");
+    auto &u = obj[user].dependent_on;
+    for (auto it = u.begin(); it != u.end(); ++it)
+      if (it->get() == p) return *it;
+    return dal::pstatic_stored_object();
+  }
+
   void workspace_stack::set_dependence(id_type user, id_type used) {
     if (!(valid_objects.is_in(user)) || !(valid_objects.is_in(used)))
       THROW_ERROR("Invalid object\n");
