@@ -10762,10 +10762,10 @@ namespace getfem {
             un.resize(pgt->dim());
             pim = mim.int_method_of_element(v.cv());
 	    if (pim->type() == IM_NONE) continue;
-            cout << "pim->type() = " << int(pim->type()) <<  " : " << int(IM_APPROX) << endl;
+            // cout << "pim->type() = " << int(pim->type()) <<  " : " << int(IM_APPROX) << endl;
             GMM_ASSERT1(pim->type() == IM_APPROX, "Sorry, exact methods cannot "
                         "be used in high level generic assembly");
-	    cout << "passed ..." << endl;
+	    // cout << "passed ..." << endl;
 
             pspt = pim->approx_method()->pintegration_points();
 

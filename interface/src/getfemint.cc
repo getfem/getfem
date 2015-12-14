@@ -949,9 +949,7 @@ namespace getfemint {
       }
       out.clear();
       workspace().destroy_newly_created_objects();
-      workspace().destroy_newly_created_objects();
     } else {
-      workspace().commit_newly_created_objects();
       workspace().commit_newly_created_objects();
     }
   }
