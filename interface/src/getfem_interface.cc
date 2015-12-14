@@ -211,7 +211,7 @@ char* getfem_interface_main(int config_id, const char *function,
     std::copy(out.args().begin(), out.args().end(), *pout_args);
   }
   catch (getfemint_bad_arg e) {
-    //cerr << "Bad argument!\n";
+    // cerr << "Bad argument!\n";
     return strdup(e.what());
   }
   catch (getfemint_interrupted) {
@@ -219,6 +219,7 @@ char* getfem_interface_main(int config_id, const char *function,
     return strdup("Interrupted (Ctrl-C)");
   }
   catch (getfemint_error e) {
+    // cerr << "Error!\n";
     return strdup(e.what());
   }
   catch (std::logic_error e) {

@@ -27,7 +27,7 @@ dirichlet_version = 3; % 0 = simplification, 1 = with multipliers,
 theta = 1;       % Nitsche's method parameter theta
 gamma0 = 0.001;  % Nitsche's method parameter gamma0 (gamma = gamma0*h)
 r = 1e8;         % Penalization parameter for the Dirichlet condition
-draw = false;
+draw = true;
 quadrangles = true;
 NX = 20;
 K = 2;           % Degree of the discontinuous finite element method

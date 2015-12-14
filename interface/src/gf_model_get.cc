@@ -282,8 +282,13 @@ void gf_model_get(getfemint::mexargs_in& m_in,
       ("mesh fem of variable", 1, 1, 0, 1,
        std::string name = in.pop().to_string();
        const getfem::mesh_fem &mf = md->mesh_fem_of_variable(name);
-       id_type id = workspace().object((const void *)(&mf));
-       if (id == id_type(-1)) THROW_INTERNAL_ERROR;
+       id_type id = workspace().object(&mf);
+       if (id == id_type(-1)) {
+	 id = store_meshfem_object(std::shared_ptr<getfem::mesh_fem>
+				   (std::shared_ptr<getfem::mesh_fem>(),
+				    const_cast<getfem::mesh_fem *>(&mf)));
+	 workspace().set_dependence(&mf, md);
+       }
        out.pop().from_object_id(id, MESHFEM_CLASS_ID);
        );
 

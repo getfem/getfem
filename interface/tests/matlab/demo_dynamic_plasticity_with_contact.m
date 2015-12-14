@@ -209,7 +209,7 @@ md = gfModel('real');
 
 % Declare that u is the unknown of the system on mf_u
 % 2 is the number of version of the data stored, for the time integration scheme 
-set(md, 'add fem variable', 'u', mf_u, 2);
+set(md, 'add fem variable', 'u', mf_u);
 
 
 

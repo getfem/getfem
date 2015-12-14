@@ -16,13 +16,14 @@
 % Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 
 
-m = gf_mesh('cartesian',[0:.1:1],[0:.1:1]);
+m = gf_mesh('cartesian', [0:.1:1], [0:.1:1]);
 mf = gf_mesh_fem(m,1); % create a meshfem of for a field of dimension 1 (i.e. a scalar field)
 gf_mesh_fem_set(mf,'fem',gf_fem('FEM_QK(2,2)'));
 
 disp(gf_fem_get(gf_fem('FEM_QK(2,2)'), 'poly_str'));
 
-mim=gf_mesh_im(m, gf_integ('IM_EXACT_PARALLELEPIPED(2)'));
+mim=gf_mesh_im(m, gf_integ('IM_GAUSS_PARALLELEPIPED(2, 4)'));
+% mim=gf_mesh_im(m, gf_integ('IM_EXACT_PARALLELEPIPED(2)')); % not allowed with the high level generic assembly
 
 border = gf_mesh_get(m,'outer faces');
 gf_mesh_set(m, 'region', 42, border); % create the region (:#(B42
@@ -33,6 +34,7 @@ gf_plot_mesh(m, 'regions', [42], 'vertices','on','convexes','on');
 
 md=gf_model('real');
 gf_model_set(md, 'add fem variable', 'u', mf);
+% gf_model_set(md, 'add linear generic assembly brick', mim, 'Grad_u.Grad_Test_u');
 gf_model_set(md, 'add Laplacian brick', mim, 'u');
 R=gf_mesh_fem_get(mf, 'eval', {'(x-.5).^2 + (y-.5).^2 + x/5 - y/3'});
 gf_model_set(md, 'add initialized fem data', 'DirichletData', mf, R);

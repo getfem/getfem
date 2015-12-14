@@ -27,7 +27,7 @@ clc;
 % of the domain and an easy computed Neumann Condition on the right
 
 
-with_hardening = 1;
+with_hardening = 0;
 bi_material = false;
 test_tangent_matrix = false;
 do_plot = true;

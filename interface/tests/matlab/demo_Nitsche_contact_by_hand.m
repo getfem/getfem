@@ -55,7 +55,7 @@ elements_degree = 2          %  degre of elments (1 or 2).
  if (ref_sol == 0)
     Theta = [-1];       %   theta
     Gamma0 = [1/100];   %   Nitsche's parmeter gamma0
-    Nxy =[300];         %   mesh size (=1/nxy) 2D ->250 and 3D -> 25  
+    Nxy =[50];         %   mesh size (=1/nxy) 2D ->250 and 3D -> 25  
  
 
  elseif (ref_sol == 1)  
@@ -151,7 +151,6 @@ NX = Nxy(zz)
     hold on
     gf_plot_mesh(mesh1, 'refine', 8, 'curved', 'on'); % ,  'regions', CONTACT_BOUNDARY1);
     hold off
-    pause;
     end
     
 %Elastic model 

@@ -241,10 +241,10 @@ gf_model_set(md, 'add Dirichlet condition with simplification', 'u2', GAMMAD, 'D
 
 if (N==2)
     cpoints = [0, 0,   0, 0.1]; % constrained points for 2d
-    cunitv  = [1, 0,  1, 0];   % corresponding constrained directions for 2d, mieux avec [0, 0.1]
+    cunitv  = [1, 0,  1, 0];    % corresponding constrained directions for 2d, better with [0, 0.1]
 else
     cpoints = [0, 0, 0,    0, 0, 0,   0, 0, 0.1]; % constrained points for 3d
-    cunitv  = [1, 0, 0,   0, 1, 0,   0, 1, 0];   % corresponding constrained directions for 3d, mieux avec [0, 0.1]
+    cunitv  = [1, 0, 0,   0, 1, 0,   0, 1, 0];    % corresponding constrained directions for 3d, better with [0, 0.1]
 end
 
 gf_model_set(md, 'add initialized data', 'cpoints', cpoints);
@@ -258,7 +258,7 @@ indmass = gf_model_set(md, 'add mass brick', mim1, 'u1', 'penalty_param1');
 % gf_model_set(md, 'add initialized data', 'penalty_param2', [penalty_parameter]);
 % indmass = gf_model_set(md, 'add mass brick', mim2, 'u2', 'penalty_param2');
 
-gf_model_set(md,'add Nitsche fictitious domain contact brick twopass', mim_bound, 'u1', 'u2', 'd1', 'd2', 'gamma0', theta, 'friction_coeff'); 
+gf_model_set(md,'add Nitsche fictitious domain contact brick', mim_bound, 'u1', 'u2', 'd1', 'd2', 'gamma0', theta, 'friction_coeff'); 
 %pause;
 disp('solve');
 

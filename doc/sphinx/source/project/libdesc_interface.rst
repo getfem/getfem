@@ -292,7 +292,7 @@ Adding a new object to the getfem interface
 
 In order to add a new object to the interface, you have to build the new corresponding sources :file:`gf_obj.cc`, :file:`gf_obj_get.cc` and :file:`gf_obj_set.cc`. Of course you can take the existing ones as a model.
 
-For the management of the object, you have to declare the class at the begining of :file:`getfemint.h` (respecting the alphabetic order), and declare three functions::
+For the management of the object, you have to declare the class at the begining of :file:`getfemint.h` (with respect to the alphabetic order), and declare three functions::
 
   bool is_"name"_object(const mexarg_in &p);
   id_type store_"name"_object(const std::shared_ptr<object_class> &shp);
@@ -300,12 +300,14 @@ For the management of the object, you have to declare the class at the begining 
 
 where "name" is the name of the object in the interface and ``object_class`` is the class name in getfem (for instance  ``getfem::mesh`` for the mesh object). Alternatively, for the object that are manipulated by a shared pointer in |gf|, the third function can return a shared pointer. 
 
-IMPORTANT : I order to be interfaced, a |gf| object has to derive from ``dal::static_stored_object``. However, if it is not the case, a wrapper class can be defined such as the one for ``bgeot::base_poly`` (see the end of :file:`getfemint.h`).
+IMPORTANT: In order to be interfaced, a |gf| object has to derive from ``dal::static_stored_object``. However, if it is not the case, a wrapper class can be defined such as the one for ``bgeot::base_poly`` (see the end of :file:`getfemint.h`).
 
 The previous three functions have to be implemented at the end of :file:`getfemint.cc`.It is possible to use one of the two macros defined in :file:`getfemint.cc`. The firs macro is for a standard object and the second one for an object which is manipulated in |gf| with a shared pointer.
 
+You have also to complete functions ``name_of_getfemint_class_id`` and ``class_id_of_object`` at the end of :file:`getfemint.cc`.
 
-You have also to add the call of the interface function in :file:`getfem_interface.cc` and modifiy the file :file:`bin/extract_doc` and run the configure file.
+
+You have to add the call of the interface function in :file:`getfem_interface.cc` and modifiy the file :file:`bin/extract_doc` and run the configure file.
 
 The methods ``get('char')`` and ``get('display')`` should be defined for each object. The first one should give a string allowing the object to be saved in a file and the second one is to give some information about the object. Additionnaly, a constructor from a string is necessary to load the object from a file.
 

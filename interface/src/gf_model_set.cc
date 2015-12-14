@@ -2608,7 +2608,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         );
      
          
-     /*@SET ind = ('add Nitsche contact with rigid obstacle brick deux', @tmim mim, @str varname, @str Neumannterm, @str dataname_obstacle, @str gamma0name,  @int region[, @scalar theta[, @str dataname_friction_coeff[, @str dataname_alpha, @str dataname_wt]]])
+     /*@SET ind = ('add Nitsche contact with rigid obstacle brick', @tmim mim, @str varname, @str Neumannterm, @str dataname_obstacle, @str gamma0name,  @int region[, @scalar theta[, @str dataname_friction_coeff[, @str dataname_alpha, @str dataname_wt]]])
       Adds a contact condition with or without Coulomb friction on the variable
       `varname` and the mesh boundary `region`. The contact condition
       is prescribed with Nitsche's method. The rigid obstacle should
@@ -2665,7 +2665,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
 
 #ifdef EXPERIMENTAL_PURPOSE_ONLY
 
-     /*@SET ind = ('add Nitsche midpoint contact with rigid obstacle brick deux', @tmim mim, @str varname, @str Neumannterm, @str Neumannterm_wt, @str dataname_obstacle, @str gamma0name,  @int region, @scalar theta, @str dataname_friction_coeff, @str dataname_alpha, @str dataname_wt)
+     /*@SET ind = ('add Nitsche midpoint contact with rigid obstacle brick', @tmim mim, @str varname, @str Neumannterm, @str Neumannterm_wt, @str dataname_obstacle, @str gamma0name,  @int region, @scalar theta, @str dataname_friction_coeff, @str dataname_alpha, @str dataname_wt)
       EXPERIMENTAL BRICK: for midpoint scheme only !!
       Adds a contact condition with or without Coulomb friction on the variable
       `varname` and the mesh boundary `region`. The contact condition
