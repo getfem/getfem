@@ -342,9 +342,10 @@ namespace getfem
     size_type thread_local_partition() const;
   };
 
-  /**Allows to re-throw exceptions, generated in OpemMP parallel section.
-  Collects exceptions from all threads and on destruction re-throws the first one, so that
-  it can be again caught in the master thread*/
+  /** Allows to re-throw exceptions, generated in OpemMP parallel section.
+      Collects exceptions from all threads and on destruction re-throws
+      the first one, so that
+      it can be again caught in the master thread. */
   class thread_exception {
   public:
     thread_exception();
@@ -352,19 +353,20 @@ namespace getfem
     /**re-throws the first captured exception*/
     ~thread_exception();
 
-    /**run function f in parallel part to capture it's exceptions. Possible syntax can be:
-    thread_exception exception;
-    #pragma omp parallel...
-    {
-      exception.run([&]
-      {
-        your code that can throw exceptions
-      });
-    }*/
+    /** Run function f in parallel part to capture it's exceptions.
+        Possible syntax can be:
+	thread_exception exception;
+	#pragma omp parallel...
+	{
+	  exception.run([&]
+	  {
+            your code that can throw exceptions
+	  });
+	}*/
     template <typename Function, typename... Parameters>
     void run(Function f, Parameters... params)
     {
-      try {f(params...);} catch (...){captureException();}
+      try { f(params...); } catch (...) { captureException(); }
     }
 
     /**vector of pointers to caught exceptions*/

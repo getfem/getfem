@@ -1776,19 +1776,19 @@ namespace getfem {
         /*running the assembly in parallel*/
         gmm::standard_locale locale;
         open_mp_is_running_properly check;
-        thread_exception exception;
+	thread_exception exception;
         #pragma omp parallel default(shared)
-        {
-          exception.run([&]
-          {
-            brick.pbr->asm_real_tangent_terms(*this, ib, brick.vlist,
-                                              brick.dlist, brick.mims,
-                                              rmatlist,
-                                              rveclist,
-                                              rveclist_sym,
-                                              brick.region,
-                                              version);
-          });
+	{
+	  exception.run([&]
+	  {
+	    brick.pbr->asm_real_tangent_terms(*this, ib, brick.vlist,
+					      brick.dlist, brick.mims,
+					      rmatlist,
+					      rveclist,
+					      rveclist_sym,
+					      brick.region,
+					      version);
+	  } );
         }
       }
       brick.pbr->real_post_assembly_in_serial(*this, ib, brick.vlist,

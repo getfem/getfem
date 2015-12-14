@@ -135,9 +135,9 @@ namespace getfem{
   }
 
   thread_exception::thread_exception(): exceptions_(num_threads(), nullptr)
-  {}
+  { }
 
-  thread_exception::~thread_exception() {rethrow();}
+  thread_exception::~thread_exception() { rethrow(); }
 
   std::vector<std::exception_ptr> thread_exception::caughtExceptions() const
   {
