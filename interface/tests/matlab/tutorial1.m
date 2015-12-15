@@ -22,8 +22,8 @@ gf_mesh_fem_set(mf,'fem',gf_fem('FEM_QK(2,2)'));
 
 disp(gf_fem_get(gf_fem('FEM_QK(2,2)'), 'poly_str'));
 
-% mim=gf_mesh_im(m, gf_integ('IM_GAUSS_PARALLELEPIPED(2, 4)'));
-mim=gf_mesh_im(m, gf_integ('IM_EXACT_PARALLELEPIPED(2)')); % not allowed with the high level generic assembly
+mim=gf_mesh_im(m, gf_integ('IM_GAUSS_PARALLELEPIPED(2, 4)'));
+% mim=gf_mesh_im(m, gf_integ('IM_EXACT_PARALLELEPIPED(2)')); % not allowed with the high level generic assembly
 
 border = gf_mesh_get(m,'outer faces');
 gf_mesh_set(m, 'region', 42, border); % create the region (:#(B42

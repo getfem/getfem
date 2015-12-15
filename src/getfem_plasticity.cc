@@ -431,15 +431,18 @@ namespace getfem {
                   "Elastoplasticity brick need one variable");
       /** vl[0] = u */
 
-      GMM_ASSERT1(dl.size() == 4,
+      GMM_ASSERT1(dl.size() == 5,
                   "Wrong number of data for elastoplasticity brick, "
                   << dl.size() << " should be 4.");
       GMM_ASSERT1(matl.size() == 1,  "Wrong number of terms for "
                   "elastoplasticity brick");
 
-      const model_real_plain_vector &u_np1 = md.real_variable(vl[0], 0);
-      const model_real_plain_vector &u_n = md.real_variable(vl[0], 1);
+      const model_real_plain_vector &u_np1 = md.real_variable(vl[0]);
+      const model_real_plain_vector &u_n = md.real_variable(dl[4]);
       const mesh_fem &mf_u = *(md.pmesh_fem_of_variable(vl[0]));
+      GMM_ASSERT1(&mf_u == md.pmesh_fem_of_variable(dl[4]),
+		  "The previous displacement data have to be defined on the "
+		  "same mesh_fem as the displacement variable");
 
       const model_real_plain_vector &lambda = md.real_variable(dl[0]);
       const model_real_plain_vector &mu = md.real_variable(dl[1]);
@@ -493,6 +496,7 @@ namespace getfem {
      const mesh_im &mim,
      const pconstraints_projection &ACP,
      const std::string &varname,
+     const std::string &data_previous_disp,
      const std::string &datalambda,
      const std::string &datamu,
      const std::string &datathreshold,
@@ -508,6 +512,7 @@ namespace getfem {
     dl.push_back(datamu);
     dl.push_back(datathreshold);
     dl.push_back(datasigma);
+    dl.push_back(data_previous_disp);
     model::varnamelist vl(1, varname);
 
     return md.add_brick(pbr, vl, dl, tl,
@@ -524,14 +529,15 @@ namespace getfem {
   void elastoplasticity_next_iter(model &md,
                                   const mesh_im &mim,
                                   const std::string &varname,
-                                  const pconstraints_projection &ACP,
+                                  const std::string &data_previous_disp,
+				  const pconstraints_projection &ACP,
                                   const std::string &datalambda,
                                   const std::string &datamu,
                                   const std::string &datathreshold,
                                   const std::string &datasigma) {
 
-    const model_real_plain_vector &u_np1 = md.real_variable(varname, 0);
-    model_real_plain_vector &u_n = md.set_real_variable(varname, 1);
+    const model_real_plain_vector &u_np1 = md.real_variable(varname);
+    model_real_plain_vector &u_n = md.set_real_variable(data_previous_disp);
     const mesh_fem &mf_u = *(md.pmesh_fem_of_variable(varname));
 
     const model_real_plain_vector &lambda = md.real_variable(datalambda);
@@ -577,7 +583,7 @@ namespace getfem {
     GMM_ASSERT1(gmm::vect_size(VM) == mf_vm.nb_dof(),
                 "The vector has not the right size");
 
-    const model_real_plain_vector &sigma_np1 = md.real_variable(datasigma, 0);
+    const model_real_plain_vector &sigma_np1 = md.real_variable(datasigma);
     const mesh_fem &mf_sigma = *(md.pmesh_fem_of_variable(datasigma));
 
     // dimension of the finite element used
@@ -626,15 +632,16 @@ namespace getfem {
                             const mesh_im &mim,
                             const mesh_fem &mf_pl,
                             const std::string &varname,
-                            const pconstraints_projection &ACP,
+                            const std::string &data_previous_disp,
+			    const pconstraints_projection &ACP,
                             const std::string &datalambda,
                             const std::string &datamu,
                             const std::string &datathreshold,
                             const std::string &datasigma,
                             model_real_plain_vector &plast) {
 
-    const model_real_plain_vector &u_np1 = md.real_variable(varname, 0);
-    model_real_plain_vector &u_n = md.set_real_variable(varname, 1);
+    const model_real_plain_vector &u_np1 = md.real_variable(varname);
+    const model_real_plain_vector &u_n = md.real_variable(data_previous_disp);
     const mesh_fem &mf_u = *(md.pmesh_fem_of_variable(varname));
 
     const model_real_plain_vector &lambda = md.real_variable(datalambda);

@@ -134,9 +134,8 @@ namespace bgeot {
   public :
     scalar_type is_in(const base_node &pt) const {
       // return a negative or null number if pt is in the convex
-      if (pt.size() != cvs->dim())
-	throw dimension_error
-	  ("K_simplex_of_ref_::is_in : Dimension does not match");
+      GMM_ASSERT1(pt.size() == cvs->dim(),
+		  "K_simplex_of_ref_::is_in: Dimension does not match");
       scalar_type e = -1.0, r = (pt.size() > 0) ? -pt[0] : 0.0;
       base_node::const_iterator it = pt.begin(), ite = pt.end();
       for (; it != ite; e += *it, ++it) r = std::max(r, -(*it));
@@ -145,9 +144,8 @@ namespace bgeot {
     scalar_type is_in_face(short_type f, const base_node &pt) const {
       // return a null number if pt is in the face of the convex
       // negative if the point is on the side of the face where the element is
-      if (pt.size() != cvs->dim())
-	throw dimension_error
-	  ("K_simplex_of_ref_::is_in_face : Dimension does not match");
+      GMM_ASSERT1(pt.size() == cvs->dim(),
+		  "K_simplex_of_ref_::is_in_face: Dimension does not match");
       if (f > 0) return -pt[f-1];
       scalar_type e = -1.0;
       base_node::const_iterator it = pt.begin(), ite = pt.end();
@@ -218,9 +216,8 @@ namespace bgeot {
   public :
     scalar_type is_in(const base_node& pt) const {
       // return a negative or null number if pt is in the convex
-      if (pt.size() != cvs->dim())
-        throw dimension_error
-          ("Q2_incomplete_of_ref_::is_in : Dimension does not match");
+      GMM_ASSERT1(pt.size() == cvs->dim(),
+		  "Q2_incomplete_of_ref_::is_in: Dimension does not match");
       scalar_type e = -1.0, r = (pt.size() > 0) ? -pt[0] : 0.0;
       base_node::const_iterator it = pt.begin(), ite = pt.end();
       for (; it != ite; e += *it, ++it) r = std::max(r, -(*it));
@@ -229,9 +226,8 @@ namespace bgeot {
     scalar_type is_in_face(short_type f, const base_node& pt) const {
       // return a null number if pt is in the face of the convex
       // negative if the point is on the side of the face where the element is
-      if (pt.size() != cvs->dim())
-        throw dimension_error
-          ("Q2_incomplete_of_ref_::is_in_face : Dimension does not match");
+      GMM_ASSERT1(pt.size() == cvs->dim(), "Q2_incomplete_of_ref_::is_in_face: "
+		  "Dimension does not match");
       if (f > 0) return -pt[f-1];
       scalar_type e = -1.0;
       base_node::const_iterator it = pt.begin(), ite = pt.end();
@@ -324,9 +320,8 @@ namespace bgeot {
     scalar_type is_in(const base_node &pt) const {
       dim_type n1 = cvr1->structure()->dim(), n2 = cvr2->structure()->dim();
       base_node pt1(n1), pt2(n2);
-      if (pt.size() != cvs->dim())
-	throw dimension_error
-	  ("product_ref_::is_in : Dimension does not match");
+      GMM_ASSERT1(pt.size() == cvs->dim(),
+		  "product_ref_::is_in: Dimension does not match");
       std::copy(pt.begin(), pt.begin()+n1, pt1.begin());
       std::copy(pt.begin()+n1,   pt.end(), pt2.begin());
       return std::max(cvr1->is_in(pt1), cvr2->is_in(pt2));

@@ -398,15 +398,6 @@ namespace getfem {
   using bgeot::base_complex_tensor;
   using bgeot::base_poly;
   using bgeot::base_node;
-  
-  // For compatibility with Getfem 2.0
-
-  using std::invalid_argument;
-  using gmm::dimension_error;
-  using gmm::file_not_found_error;
-  using gmm::internal_error;
-  using gmm::to_be_done_error;
-  using gmm::failure_error;
 
 #if defined(__GNUC__)
   using std::isnan;

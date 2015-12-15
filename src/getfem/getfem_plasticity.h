@@ -235,33 +235,33 @@ namespace getfem {
   //=================================================================
 
 
-  /**  Add a nonlinear elastoplasticity term to the model for small
-       deformations and an isotropic material, with respect
-       to the variable `varname`.
-       Note that the constitutive lawtype of projection
-       to be used is described by `ACP` which should not be
-       freed while the model is used.
-       `datalambda` and `datamu` describe the Lamé coeffcients
-       of the studied material. Could be scalar or vector fields
-       described on a finite element method.
-       `datathreshold` represents the elasticity threshold
-       of the material. It could be a scalar or a vector field
-       described on the same finite element method as
-       the Lamé coefficients.
-       `datasigma` represents the stress constraints values
-       supported by the material. It should be a vector field
-       described on a finite element method.
-       Note that `varname` and `datasigma` have to be composed
-       of two iterates for the time scheme needed for the
-       Newton algorithm used. Moreover, if `varname` is described
-       onto a K-th order mesh_fem, `datasigma` has to be described
-       on a mesh_fem of order at least K-1.
+  /** Add a nonlinear elastoplasticity term to the model for small
+      deformations and an isotropic material, with respect
+      to the variable `varname`.
+      Note that the constitutive lawtype of projection
+      to be used is described by `ACP` which should not be
+      freed while the model is used.
+      `datalambda` and `datamu` describe the Lamé coeffcients
+      of the studied material. Could be scalar or vector fields
+      described on a finite element method.
+      `datathreshold` represents the elasticity threshold
+      of the material. It could be a scalar or a vector field
+      described on the same finite element method as
+      the Lamé coefficients.
+      `datasigma` represents the stress constraints values
+      supported by the material. It should be a vector field
+      described on a finite element method.
+      `previous_dep_name` represents the displacement at the previous time step.
+      Moreover, if `varname` is described
+      onto a K-th order mesh_fem, `datasigma` has to be described
+      on a mesh_fem of order at least K-1.
   */
   size_type add_elastoplasticity_brick
   (model &md,
    const mesh_im &mim,
    const pconstraints_projection &ACP,
    const std::string &varname,
+   const std::string &previous_dep_name,
    const std::string &datalambda,
    const std::string &datamu,
    const std::string &datathreshold,
@@ -274,6 +274,7 @@ namespace getfem {
       values supported by the material after a load or an unload.
       `varname` is the main unknown of the problem
       (the displacement),
+      `previous_dep_name` represents the displacement at the previous time step,
       `ACP` is the type of projection to be used that could only be
       `Von Mises` for the moment,
       `datalambda` and `datamu` are the Lamé coefficients
@@ -284,7 +285,8 @@ namespace getfem {
   void elastoplasticity_next_iter(model &md,
                                   const mesh_im &mim,
                                   const std::string &varname,
-                                  const pconstraints_projection &ACP,
+                                  const std::string &previous_dep_name,
+				  const pconstraints_projection &ACP,
                                   const std::string &datalambda,
                                   const std::string &datamu,
                                   const std::string &datathreshold,
@@ -315,7 +317,8 @@ namespace getfem {
                             const mesh_im &mim,
                             const mesh_fem &mf_pl,
                             const std::string &varname,
-                            const pconstraints_projection &ACP,
+                            const std::string &previous_dep_name,
+			    const pconstraints_projection &ACP,
                             const std::string &datalambda,
                             const std::string &datamu,
                             const std::string &datathreshold,

@@ -111,15 +111,6 @@ namespace bgeot {
   typedef gmm::dense_matrix<scalar_type> base_matrix;
   typedef gmm::dense_matrix<complex_type> base_complex_matrix;
 
-
-  // For compatibility with Getfem 2.0
-
-  using gmm::dimension_error;
-  using gmm::file_not_found_error;
-  using gmm::internal_error;
-  using gmm::to_be_done_error;
-  using gmm::failure_error;
-
 }  /* end of namespace bgeot.                                             */
 
 

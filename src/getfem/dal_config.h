@@ -45,14 +45,6 @@ namespace dal {
   using std::endl; using std::cout; using std::cerr;
   using std::ends; using std::cin;
 
-  // For compatibility with Getfem 2.0
-
-  using gmm::dimension_error;
-  using gmm::file_not_found_error;
-  using gmm::internal_error;
-  using gmm::to_be_done_error;
-  using gmm::failure_error;
-
   using gmm::int8_type;
   using gmm::uint8_type;
   using gmm::int16_type;
@@ -65,19 +57,6 @@ namespace dal {
   using gmm::lexicographical_less;
   using gmm::approx_less;
   using gmm::uclock_sec;
-  
-  inline void DAL_THROW() IS_DEPRECATED;
-  inline void DAL_THROW() {}
-
-#define DAL_STANDARD_CATCH_ERROR GMM_STANDARD_CATCH_ERROR
-#define DAL_THROW(a, b) { GMM_THROW(a, b); dal::DAL_THROW(); }
-#define DAL_WARNING0 GMM_WARNING0
-#define DAL_WARNING1 GMM_WARNING1
-#define DAL_WARNING2 GMM_WARNING2
-#define DAL_WARNING3 GMM_WARNING3
-#define DAL_WARNING4 GMM_WARNING4
-#define DAL_PRETTY_FUNCTION GMM_PRETTY_FUNCTION
-#define DAL_SET_EXCEPTION_DEBUG GMM_SET_EXCEPTION_DEBUG
 
 }  /* end of namespace bgeot.                                             */
 

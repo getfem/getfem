@@ -34,8 +34,8 @@ namespace bgeot {
   /* ******************************************************************** */
 
   void convex_structure::add_point_adaptative(short_type i, short_type f) {
-    if (nbpt < i) throw gmm::internal_error(
-		   "convex_structure::add_point_adaptative : internal error");
+    GMM_ASSERT1(i <= nbpt,  "convex_structure::add_point_adaptative: "
+		"internal error");
     if (i == nbpt) nbpt++;
     if (f != short_type(-1)) {
       faces[f].resize(faces[f].size() + 1);

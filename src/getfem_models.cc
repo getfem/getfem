@@ -436,6 +436,7 @@ namespace getfem {
                         workspace.assembly(2);
                       });
                     } //parallel
+		    exception.rethrow();
                   } //distro scope
                   gmm::add
                     (gmm::sub_matrix(rTM, it->second.I, it2->second.I),MM);
@@ -1730,7 +1731,7 @@ namespace getfem {
                                                  brick.region, version);
           });
         }
-
+	exception.rethrow();
       }
       brick.pbr->complex_post_assembly_in_serial(*this, ib, brick.vlist,
                                                  brick.dlist, brick.mims,
@@ -1772,7 +1773,7 @@ namespace getfem {
         list_distro<real_matlist> rmatlist(brick.rmatlist);
         list_distro<real_veclist> rveclist(brick.rveclist[rhs_ind]);
         list_distro<real_veclist> rveclist_sym(brick.rveclist_sym[rhs_ind]);
-
+	
         /*running the assembly in parallel*/
         gmm::standard_locale locale;
         open_mp_is_running_properly check;
@@ -1782,14 +1783,15 @@ namespace getfem {
 	  exception.run([&]
 	  {
 	    brick.pbr->asm_real_tangent_terms(*this, ib, brick.vlist,
-					      brick.dlist, brick.mims,
-					      rmatlist,
-					      rveclist,
-					      rveclist_sym,
-					      brick.region,
-					      version);
+	  				      brick.dlist, brick.mims,
+	  				      rmatlist,
+	  				      rveclist,
+	  				      rveclist_sym,
+	  				      brick.region,
+	  				      version);
 	  } );
-        }
+	}
+	exception.rethrow();
       }
       brick.pbr->real_post_assembly_in_serial(*this, ib, brick.vlist,
                                               brick.dlist, brick.mims,
@@ -2653,6 +2655,7 @@ namespace getfem {
             }
           });//exception.run(
         } //#pragma omp parallel
+	exception.rethrow();
       } //end of distro scope
 
       if (version & BUILD_RHS) gmm::add(gmm::scaled(residual, scalar_type(-1)), rrhs);

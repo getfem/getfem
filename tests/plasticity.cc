@@ -260,7 +260,8 @@ bool elastoplasticity_problem::solve(plain_vector &U) {
   getfem::model model;
 
   // Main unknown of the problem.
-  model.add_fem_variable("u", mf_u, 2);
+  model.add_fem_variable("u", mf_u);
+  model.add_fem_data("previous_u", mf_u);
 
   /*
   plain_vector lambdaV(nb_dof_rhs), sV(nb_dof_rhs);
@@ -289,8 +290,8 @@ bool elastoplasticity_problem::solve(plain_vector &U) {
   getfem::pconstraints_projection
     proj = std::make_shared<getfem::VM_projection>(0);
 
-  add_elastoplasticity_brick(model, mim, proj, "u", "lambda", "mu", 
-			     "s", "sigma");
+  add_elastoplasticity_brick(model, mim, proj, "u", "previous_u",
+			     "lambda", "mu",  "s", "sigma");
   
   plain_vector F(nb_dof_rhs * N);
   model.add_initialized_fem_data("NeumannData", mf_rhs, F);
@@ -338,11 +339,12 @@ bool elastoplasticity_problem::solve(plain_vector &U) {
     getfem::simplest_newton_line_search ls;
 
     gmm::iteration iter(residual, 2, 40000);
-    getfem::standard_solve(model, iter, getfem::rselect_linear_solver(model, "superlu"), ls);
+    getfem::standard_solve(model, iter,
+			   getfem::rselect_linear_solver(model, "superlu"), ls);
  
     //compute and save sigma_np1
     //    getfem::mesh_fem *mf_data=0;
-    getfem::elastoplasticity_next_iter(model, mim, "u", proj, 
+    getfem::elastoplasticity_next_iter(model, mim, "u", "previous_u", proj, 
 			"lambda", "mu", "s", "sigma");
     
     // Get the solution and save it

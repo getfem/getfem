@@ -1240,10 +1240,14 @@ namespace getfem {
       GMM_ASSERT1(f.good(), "can't open file " << filename);
       /* throw exceptions when an error occurs */
       f.exceptions(std::ifstream::badbit | std::ifstream::failbit);
-      import_mesh(f,format,m);
+      import_mesh(f, format,m);
       f.close();
     }
-    catch (failure_error& exc) {
+    catch (std::logic_error& exc) {
+      m.clear();
+      throw exc;
+    }
+    catch (std::runtime_error& exc) {
       m.clear();
       throw exc;
     }
@@ -1290,7 +1294,11 @@ namespace getfem {
                             remove_last_dimension, nodal_map);
       f.close();
     }
-    catch (failure_error& exc) {
+    catch (std::logic_error& exc) {
+      m.clear();
+      throw exc;
+    }
+    catch (std::runtime_error& exc) {
       m.clear();
       throw exc;
     }

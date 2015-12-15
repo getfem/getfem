@@ -362,7 +362,9 @@ namespace getfem
 	  {
             your code that can throw exceptions
 	  });
-	}*/
+	}
+	exception.rethrow();
+    */
     template <typename Function, typename... Parameters>
     void run(Function f, Parameters... params)
     {
@@ -371,9 +373,9 @@ namespace getfem
 
     /**vector of pointers to caught exceptions*/
     std::vector<std::exception_ptr> caughtExceptions() const;
-
-  private:
     void rethrow();
+    
+  private:
     void captureException();
 
     std::vector<std::exception_ptr> exceptions_;

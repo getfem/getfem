@@ -30,8 +30,8 @@ mf.set('fem',gf.Fem('FEM_QK(2,2)'))
 
 print (gf.Fem('FEM_QK(2,2)').poly_str())
 
-mim=gf.MeshIm(m, gf.Integ('IM_EXACT_PARALLELEPIPED(2)'));
-# mim=gf.MeshIm(m, gf.Integ('IM_GAUSS_PARALLELEPIPED(2, 4)'));
+# mim=gf.MeshIm(m, gf.Integ('IM_EXACT_PARALLELEPIPED(2)')); // not allowed
+mim=gf.MeshIm(m, gf.Integ('IM_GAUSS_PARALLELEPIPED(2, 4)'));
 
 
 border = m.outer_faces()

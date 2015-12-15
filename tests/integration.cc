@@ -464,7 +464,7 @@ int main(/* int argc, char **argv */) {
     } catch (gmm::gmm_error e) {
       ok = 1;
     }
-    if (!ok) throw(gmm::failure_error("IM_NONE failed..\n"));
+    GMM_ASSERT1(ok, "IM_NONE failed");
     print_some_methods();
     check_orders();
     check_methods();

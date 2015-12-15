@@ -76,7 +76,7 @@ namespace gmm {
     std::stringstream msg__;
     msg__ << "Error in " << file << ", line " << line << " " << func
 	  << ": \n" << errormsg << std::ends;
-    throw gmm::gmm_error(msg__.str());	
+    throw gmm::gmm_error(msg__.str());
   }
 # define GMM_THROW_(type, errormsg) {					\
     std::stringstream msg__;						\
@@ -262,66 +262,51 @@ namespace gmm {
   /*    Definitions for compatibility with old versions.        	   */
   /* ********************************************************************* */ 
   
-  using std::invalid_argument;
-  
-  struct dimension_error : public std::logic_error
-  { dimension_error(const std::string& w): std::logic_error(w) {} };
-  struct file_not_found_error : public std::logic_error
-  { file_not_found_error(const std::string& w): std::logic_error (w) {} };
-  struct internal_error : public std::logic_error
-  { internal_error(const std::string& w): std::logic_error(w) {} };
-  struct failure_error : public std::logic_error
-  { failure_error(const std::string& w): std::logic_error (w) {} };
-  struct not_linear_error : public std::logic_error
-  { not_linear_error(const std::string& w): std::logic_error (w) {} };
-  struct to_be_done_error : public std::logic_error
-  { to_be_done_error(const std::string& w): std::logic_error (w) {} };
-
-#define GMM_STANDARD_CATCH_ERROR   catch(std::logic_error e)	\
-    {								\
+#define GMM_STANDARD_CATCH_ERROR   catch(std::logic_error e)		\
+    {									\
       std::cerr << "============================================\n";	\
       std::cerr << "|      An error has been detected !!!      |\n";	\
       std::cerr << "============================================\n";	\
-      std::cerr << e.what() << std::endl << std::endl;				\
-      exit(1);							\
-    }								\
-  catch(std::runtime_error e)					\
-    {								\
+      std::cerr << e.what() << std::endl << std::endl;			\
+      exit(1);								\
+    }									\
+  catch(std::runtime_error e)						\
+    {									\
       std::cerr << "============================================\n";	\
       std::cerr << "|      An error has been detected !!!      |\n";	\
       std::cerr << "============================================\n";	\
-      std::cerr << e.what() << std::endl << std::endl;				\
-      exit(1);							\
-    }								\
-  catch(std::bad_alloc) {					\
+      std::cerr << e.what() << std::endl << std::endl;			\
+      exit(1);								\
+    }									\
+  catch(std::bad_alloc) {						\
     std::cerr << "============================================\n";	\
     std::cerr << "|  A bad allocation has been detected !!!  |\n";	\
     std::cerr << "============================================\n";	\
-    exit(1);							\
-  }								\
-  catch(std::bad_typeid) {					\
+    exit(1);								\
+  }									\
+  catch(std::bad_typeid) {						\
     std::cerr << "============================================\n";	\
     std::cerr << "|  A bad typeid     has been detected !!!  |\n";	\
     std::cerr << "============================================\n";	\
-    exit(1);							\
-  }								\
-  catch(std::bad_exception) {					\
+    exit(1);								\
+  }									\
+  catch(std::bad_exception) {						\
     std::cerr << "============================================\n";	\
     std::cerr << "|  A bad exception  has been detected !!!  |\n";	\
     std::cerr << "============================================\n";	\
-    exit(1);							\
-  }								\
-  catch(std::bad_cast) {					\
+    exit(1);								\
+  }									\
+  catch(std::bad_cast) {						\
     std::cerr << "============================================\n";	\
     std::cerr << "|    A bad cast  has been detected !!!     |\n";	\
     std::cerr << "============================================\n";	\
-    exit(1);							\
-  }								\
-  catch(...) {							\
+    exit(1);								\
+}									\
+  catch(...) {								\
     std::cerr << "============================================\n";	\
     std::cerr << "|  An unknown error has been detected !!!  |\n";	\
     std::cerr << "============================================\n";	\
-    exit(1);							\
+    exit(1);								\
   }
   //   catch(ios_base::failure) { 
   //     std::cerr << "============================================\n";

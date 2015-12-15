@@ -1740,15 +1740,14 @@ void gf_model_set(getfemint::mexargs_in& m_in,
 
 
 
-    /*@SET ind = ('add elastoplasticity brick', @tmim mim ,@str projname, @str varname, @str datalambda, @str datamu, @str datathreshold, @str datasigma[, @int region])
+    /*@SET ind = ('add elastoplasticity brick', @tmim mim ,@str projname, @str varname, @str previous_dep_name, @str datalambda, @str datamu, @str datathreshold, @str datasigma[, @int region])
       Add a nonlinear elastoplastic term to the model relatively to the
       variable `varname`, in small deformations, for an isotropic material
       and for a quasistatic model. `projname` is the type of projection that
       we want to use. For the moment, only the Von Mises projection is
       computing that we could entering 'VM' or 'Von Mises'.
       `datasigma` is the variable representing the constraints on the material.
-      Be careful that `varname` and `datasigma` are composed of two iterates
-      for the time scheme needed for the Newton algorithm used.
+      `previous_dep_name` represents the displacement at the previous time step.
       Moreover, the finite element method on which `varname` is described
       is an K ordered mesh_fem, the `datasigma` one have to be at least
       an K-1 ordered mesh_fem.
@@ -1761,10 +1760,11 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       If it is not specified, it is added on the whole mesh.
       Return the brick index in the model.@*/
     sub_command
-      ("add elastoplasticity brick", 7, 8, 0, 1,
+      ("add elastoplasticity brick", 8, 9, 0, 1,
        getfem::mesh_im *mim = to_meshim_object(in.pop());
        std::string projname = in.pop().to_string();
        std::string varname = in.pop().to_string();
+       std::string previous_dep = in.pop().to_string();
        std::string datalambda = in.pop().to_string();
        std::string datamu = in.pop().to_string();
        std::string datathreshold = in.pop().to_string();
@@ -1777,7 +1777,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        add_elastoplasticity_brick
        (*md, *mim,
         abstract_constraints_projection_from_name(projname),
-        varname, datalambda, datamu,
+        varname, previous_dep, datalambda, datamu,
         datathreshold, datasigma,
         region);
 

@@ -29,8 +29,8 @@ int main(void)
     t.add(6);
     // cout << "index = " << t.index() << endl;
     // cout << "first free place : " << t.index().first_false() << endl;
-    if (t.index().first_false() != 1)
-      throw gmm::internal_error("dynamic_tas.C : structure error 1");
+    GMM_ASSERT1(t.index().first_false() == 1,
+		"dynamic_tas.C : structure error 1");
     
     t.add(4);
     t.add(2);
@@ -40,8 +40,8 @@ int main(void)
     t.sup(1);
     // cout << "index = " << t.index() << endl;
     // cout << "first free place : " << t.index().first_false() << endl;
-    if (t.index().first_false() != 1)
-      throw gmm::internal_error("dynamic_tas.C : structure error 2");
+    GMM_ASSERT1(t.index().first_false() == 1,
+		"dynamic_tas.C : structure error 2");
     
     t.add(3);
     
