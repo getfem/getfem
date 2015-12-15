@@ -131,6 +131,9 @@ namespace getfemint {
 
     /* Return id_type(-1) if not found */
     id_type object(const void *raw_pointer) const;
+
+    /* Return id_type(-1) if not found */
+    id_type object(const dal::pstatic_stored_object &p) const;
     
     workspace_stack() { push_workspace("main"); }
 

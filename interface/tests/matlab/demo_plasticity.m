@@ -27,7 +27,7 @@ clc;
 % of the domain and an easy computed Neumann Condition on the right
 
 
-with_hardening = 1;
+with_hardening = 0;
 bi_material = false;
 test_tangent_matrix = false;
 do_plot = true;
@@ -161,11 +161,11 @@ if (with_hardening)
   gf_model_set(md, 'add nonlinear generic assembly brick', mim, strcat(expr_sigma, ':Grad_Test_u'));
   % gf_model_set(md, 'add finite strain elasticity brick', mim, 'u', 'SaintVenant Kirchhoff', '[lambda; mu]');
 else
-  gf_model_set(md, 'add fem data', 'Previous_u', mf_u);
+  gf_model_set(md, 'add fem data', 'previous_u', mf_u);
   % Declare that sigma is a data of the system on mf_sigma
   set(md, 'add fem data', 'sigma', mf_sigma);
   % Add plasticity brick on u
-  set(md, 'add elastoplasticity brick', mim, 'VM', 'u', 'Previous_u', 'lambda', 'mu', 'von_mises_threshold', 'sigma');
+  set(md, 'add elastoplasticity brick', mim, 'VM', 'u', 'previous_u', 'lambda', 'mu', 'von_mises_threshold', 'sigma');
 end
 
 % Add homogeneous Dirichlet condition to u on the left hand side of the domain
@@ -226,8 +226,8 @@ for step=1:size(t,2),
       gf_model_set(md, 'variable', 'sigma', sigma);
       gf_model_set(md, 'variable', 'Previous_u', U);
     else
-      get(md, 'elastoplasticity next iter', mim, 'u', 'Previous_u', 'VM', 'lambda', 'mu', 'von_mises_threshold', 'sigma');
-      plast = get(md, 'compute plastic part', mim, mf_vm, 'u', 'Previous_u', 'VM', 'lambda', 'mu', 'von_mises_threshold', 'sigma');
+      get(md, 'elastoplasticity next iter', mim, 'u', 'previous_u', 'VM', 'lambda', 'mu', 'von_mises_threshold', 'sigma');
+      plast = get(md, 'compute plastic part', mim, mf_vm, 'u', 'previous_u', 'VM', 'lambda', 'mu', 'von_mises_threshold', 'sigma');
       % Compute Von Mises or Tresca stress
       VM = get(md, 'compute elastoplasticity Von Mises or Tresca', 'sigma', mf_vm, 'Von Mises');
     end

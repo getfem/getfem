@@ -708,7 +708,8 @@ namespace getfemint {
 
   // Gives the class id of an object
   // To be completed when an object class is added.
-  id_type class_id_of_object(const dal::pstatic_stored_object &p);
+  id_type class_id_of_object(const dal::pstatic_stored_object &p,
+			     const void **q = 0);
 
 # define getfemint_declare_getfem_class(CLASS)				\
   } namespace getfem { class CLASS; } namespace getfemint {

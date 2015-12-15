@@ -157,9 +157,11 @@ namespace getfemint {
     if (it != kmap.end()) return it->second; else return id_type(-1);
   }
 
-  void workspace_stack::commit_newly_created_objects() {
-    newly_created_objects.resize(0);
-  }
+  id_type workspace_stack::object(const dal::pstatic_stored_object &p) const
+  { const void *q; class_id_of_object(p, &q); return object(q); }
+
+  void workspace_stack::commit_newly_created_objects()
+  { newly_created_objects.resize(0); }
 
   void workspace_stack::destroy_newly_created_objects() {
     while (newly_created_objects.size()) {
@@ -189,14 +191,15 @@ namespace getfemint {
 	  << name_of_getfemint_class_id(ob.class_id)
 	  << std::setw(10) << subclassname;
 	if (ob.dependent_on.size()) {
-	  o << " dependent on ";
+	  o << " depends on ";
 	  for (size_type i=0; i < ob.dependent_on.size(); ++i) {
-	    id_type id = object(ob.dependent_on[i].get());
+	    id_type id = object(ob.dependent_on[i]);
 	    if (id != id_type(-1))
 	      o << " ID" << id;
 	    else
-	      o << " object "
-		<< name_of_getfemint_class_id(class_id_of_object(ob.dependent_on[i]))
+	      o << " object of type "
+		<< name_of_getfemint_class_id
+		(class_id_of_object(ob.dependent_on[i]))
 		<< " waiting for deletion";
 	  }
 	}
