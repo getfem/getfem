@@ -43,7 +43,7 @@ namespace getfem {
     const mesh_fem &mf_u;
     const mesh_fem &mf_sigma;
     const mesh_fem *pmf_data;
-    model_real_plain_vector U_n,U_np1;
+    model_real_plain_vector U_n, U_np1;
     model_real_plain_vector Sigma_n;
     model_real_plain_vector threshold, lambda, mu;
     const abstract_constraints_projection &t_proj;

@@ -6432,7 +6432,19 @@ namespace getfem {
             pnode->qdim1 = child0->qdim1;
             pnode->qdim2 = child0->qdim2;
 
-            if (option == 2 && !compatible) {
+	    // simplification if one of the two operands is constant and zero
+            if (child0->tensor_is_zero()) {
+              if (pnode->op_type == GA_MINUS) {
+                pnode->op_type = GA_UNARY_MINUS;
+                tree.clear_node(child0);
+              } else {
+                tree.replace_node_by_child(pnode, 1);
+                pnode = child1;
+              }
+            } else if (child1->tensor_is_zero()) {
+              tree.replace_node_by_child(pnode, 0);
+              pnode = child0;
+            } else if (option == 2 && !compatible) {
               bool child0_compatible = true, child1_compatible = true;
               if (pnode->test_function_type & 1) {
                 if (child0->name_test1.compare(workspace.selected_test1.varname)
@@ -6474,20 +6486,6 @@ namespace getfem {
                   pnode = child1;
                 }
               }
-            }
-
-            // simplification if one of the two operands is constant and zero
-            if (child0->tensor_is_zero()) {
-              if (pnode->op_type == GA_MINUS) {
-                pnode->op_type = GA_UNARY_MINUS;
-                tree.clear_node(child0);
-              } else {
-                tree.replace_node_by_child(pnode, 1);
-                pnode = child1;
-              }
-            } else if (child1->tensor_is_zero()) {
-              tree.replace_node_by_child(pnode, 0);
-              pnode = child0;
             }
           }
         }
