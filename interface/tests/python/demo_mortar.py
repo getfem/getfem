@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: UTF8 -*-
+# -*- coding: utf-8 -*-
 # Python GetFEM++ interface
 #
 # Copyright (C) 2011 Yves Renard.
@@ -39,6 +39,8 @@ NX = 9
 radius = 0.3
 xc = 0.5
 yc = 0.5
+
+print "coucou"
 
 # creation of a simple cartesian mesh
 m = gf.Mesh('cartesian', np.arange(0,1+0.5/NX,1./NX), np.arange(0,1+0.5/NX,1./NX))
@@ -92,7 +94,6 @@ M =   gf.asm_boundary(MORTAR_BOUNDARY_IN, expr, mim, mfm, mfu)
 M = M-gf.asm_boundary(MORTAR_BOUNDARY_OUT, expr, mim, mfm, mfu)
 M = gf.Spmat('copy', M, indm, range(M.size()[1]))
 
-
 md = gf.Model('real')
 md.add_fem_variable('u', mfu);
 md.add_initialized_data('lambda', [1])
@@ -107,6 +108,7 @@ md.add_initialized_fem_data('VolumicData', mfd, F)
 md.add_source_term_brick(mim, 'u', 'VolumicData')
 md.add_variable('mult_spec', indm.size)
 md.add_constraint_with_multipliers('u', 'mult_spec', M, np.zeros(indm.size))
+
 
 md.solve();
 U = md.get('variable', 'u')

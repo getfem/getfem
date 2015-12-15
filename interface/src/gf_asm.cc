@@ -391,11 +391,13 @@ do_generic_assembly(mexargs_in& in, mexargs_out& out, bool on_boundary)
   mesh->intersect_with_mpi_region(rg);
   assem.assembly(rg);
   // get the matrix back
+  int nb_mat = 0;
   for (size_type i=0; out.remaining() && i < assem.mat().size(); ++i) {
     if (assem.mat()[i] != 0) {
+      nb_mat++;
       getfem::base_asm_mat *BM = assem.mat()[i].get();
-      getfem::asm_mat<gf_real_sparse_by_col> * M =
-        static_cast<getfem::asm_mat<gf_real_sparse_by_col>*>(BM);
+      getfem::asm_mat<gf_real_sparse_by_col> *M =
+        static_cast<getfem::asm_mat<gf_real_sparse_by_col> *>(BM);
       out.pop().from_sparse(*M->mat());
     }
   }

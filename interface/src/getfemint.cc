@@ -687,7 +687,8 @@ namespace getfemint {
     if (fmt == USE_GSPARSE) {
       auto gsp = std::make_shared<gsparse>();
       gsp->swap(M);
-      store_spmat_object(gsp);
+      id_type id = store_spmat_object(gsp);
+      from_object_id(id, SPMAT_CLASS_ID);
     } else {
       M.to_csc();
       size_type nnz = M.nnz();
