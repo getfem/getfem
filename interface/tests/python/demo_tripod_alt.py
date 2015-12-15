@@ -1,8 +1,8 @@
 #!/usr/bin/env python
-# -*- coding: UTF8 -*-
+# -*- coding: utf-8 -*-
 # Python GetFEM++ interface
 #
-# Copyright (C) 2004-2009 Yves Renard, Julien Pommier.
+# Copyright (C) 2004-2016 Yves Renard, Julien Pommier.
 #
 # This file is a part of GetFEM++
 #
@@ -67,10 +67,13 @@ Lambda = E*Nu/((1+Nu)*(1-2*Nu))
 Mu =E/(2*(1+Nu))
 
 F = asm_boundary_source(NEUMANN_BOUNDARY, mim, mfu,mfd,repeat([[0],[-100],[0]], mfd.nbdof(),1))
-K = asm_linear_elasticity(mim, mfu, mfd, repeat([Lambda], mfd.nbdof()), repeat([Mu], mfd.nbdof()));
+K = asm_linear_elasticity(mim, mfu, mfd, repeat([Lambda], mfd.nbdof()),
+                          repeat([Mu], mfd.nbdof()));
 
 # handle Dirichlet condition
-(H,R)=asm_dirichlet(DIRICHLET_BOUNDARY, mim, mfu, mfd, mfd.eval('identity(3)',globals(),locals()), mfd.eval('[0,0,0]'));
+(H,R)=asm_dirichlet(DIRICHLET_BOUNDARY, mim, mfu, mfd,
+                    mfd.eval('identity(3)',globals(),locals()),
+                    mfd.eval('[0,0,0]'));
 (N,U0)=H.dirichlet_nullspace(R)
 Nt=Spmat('copy',N); Nt.transpose()
 KK=Nt*K*N
@@ -100,25 +103,22 @@ for i in range(0, DU.shape[2]):
 
 print 'Von Mises range: ', VM.min(), VM.max()
 
-# export results to VTK (you can use http://mayavi.sourceforge.net/ to view these results )
-# i.e. with  "mayavi -d tripod.vtk -m BandedSurfaceMap -f WarpVector"
+# export results to VTK you can use
+# i.e. with  "mayavi2 -d tripod.vtk -f WarpScalar -m Surface"
 sl.export_to_vtk('tripod.vtk', 'ascii',mfe,  VM,'Von Mises Stress', mfu, U, 'Displacement')
+
 sl.export_to_vtk('tripod_edges.vtk','edges')
 
 # export to OpenDX
-sl.export_to_dx('tripod.dx', 'ascii', mfe, VM,'Von Mises Stress')
-
+sl.export_to_dx('tripod.dx', 'ascii', mfe, VM, 'Von Mises Stress')
 # export the displacement and the stress tensor field
 # can be viewed with mayavi -d ./tripod_ev.vtk -f WarpVector -m TensorGlyphs
-SigmaSL = compute_interpolate_on(mfe,Sigma,sl);
+SigmaSL = compute_interpolate_on(mfe, Sigma, sl);
 sl.export_to_vtk('tripod_ev.vtk', mfu, U, 'Displacement', SigmaSL, 'stress')
-
 # export to Gmsh POS
 sl.export_to_pos('tripod.pos', mfe, VM, 'Von Mises Stress', mfu, U, 'Displacement')
 
 print 'You can view the tripod with (for example) mayavi:'
-print 'mayavi -d tripod.vtk -f WarpVector -m BandedSurfaceMap'
-print 'or'
 print 'mayavi2 -d tripod.vtk -f WarpScalar -m Surface'
 print 'or'
 print 'gmsh tripod.pos'

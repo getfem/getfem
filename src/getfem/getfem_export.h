@@ -252,8 +252,8 @@ namespace getfem {
       switch_to_point_data();
       nb_val = psl ? psl->nb_points() : pmf_dof_used.card();
     }
-    //size_type Q = gmm::vect_size(U) / nb_val;
     size_type Q = qdim;
+    if (Q == 1) Q = gmm::vect_size(U) / nb_val;
     GMM_ASSERT1(gmm::vect_size(U) == nb_val*Q,
                 "inconsistency in the size of the dataset: "
                 << gmm::vect_size(U) << " != " << nb_val << "*" << Q);

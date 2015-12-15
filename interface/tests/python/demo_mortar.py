@@ -40,8 +40,6 @@ radius = 0.3
 xc = 0.5
 yc = 0.5
 
-print "coucou"
-
 # creation of a simple cartesian mesh
 m = gf.Mesh('cartesian', np.arange(0,1+0.5/NX,1./NX), np.arange(0,1+0.5/NX,1./NX))
 
