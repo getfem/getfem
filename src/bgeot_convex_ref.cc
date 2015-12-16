@@ -82,6 +82,7 @@ namespace bgeot {
     dal::pstatic_stored_object o = dal::search_stored_object(pk);
     if (o) return std::dynamic_pointer_cast<const stored_point_tab>(o);
     pstored_point_tab p = std::make_shared<stored_point_tab>(spt);
+    DAL_STORED_OBJECT_DEBUG_CREATED(p.get(), "Stored point tab");
     dal::pstatic_stored_object_key
       psp = std::make_shared<stored_point_tab_key>(p.get());
     dal::add_stored_object(psp, p, dal::AUTODELETE_STATIC_OBJECT);

@@ -1,4 +1,4 @@
-% Copyright (C) 2006-2015 Yves Renard, Mathieu Fabre.
+% Copyright (C) 2006-2016 Mathieu Fabre.
 %
 % This file is a part of GetFEM++
 %
@@ -29,14 +29,15 @@ ref_sol = 0;% 0 Reference solution
             % 1 Error in L2 and H1 in Omega1 Omega2
             % 2 link between gamma0 and theta
             
-N = 2 ;% 2 ou 3 dimensions
-R=0.25;
+N = 2; % 2 ou 3 dimensions
+R = 0.25;
 dirichlet_val = 0;
-  f_coeff=0.1;  
+f_coeff = 0.1;
+
 if (ref_sol == 0)
-    method = [-1];%théta
-    gamma = [1/200]; %1/200
-    nxy = [40]; % 2D ->400 and 3D -> 30
+    method = [-1]; % theta
+    gamma = [1/200]; % 1/200
+    nxy = [60]; % 2D ->400 and 3D -> 30
     ls_degree = 2;
     penalty_parameter = 10E-8;
     vertical_force = -0.1;
@@ -62,6 +63,7 @@ if (ref_sol == 2)
     vertical_force = -0.1;
 end
 
+
 for xx = 1:1:size(method,2)
 for yy = 1:1:size(gamma,2)
 for zz = 1:1:size(nxy,2)
@@ -69,7 +71,7 @@ theta = method(xx);
 gamma0 = gamma(yy);
 NX = nxy(zz);
 
-% definition of fictitious domain's mesh with quadrangles and order 1 of level-set
+% Definition of fictitious domain mesh with quadrangles and order 1 of level-set
 
 if (N==2)
     m=gf_mesh('regular simplices', -.5:(1/NX):.5, -.5:(1/NX):.5);
@@ -77,6 +79,7 @@ if (N==2)
 else
     m=gf_mesh('regular simplices', -.5:(1/NX):.5, -.5:(1/NX):.5, -.5:(1/NX):.5);
 end
+
 
 % gf_plot_mesh(m, 'convexes', 'on');
 % pause;
@@ -129,7 +132,7 @@ else
     zc = -0.25; xc=0; 
     ULS2=min(ULS2,z-zc);
 end
-gf_levelset_set(ls2, 'values', ULS2); 
+gf_levelset_set(ls2, 'values', ULS2);
 
 set(mls1, 'add', ls1);
 set(mls1, 'adapt');
@@ -145,16 +148,15 @@ GAMMAC = 1; GAMMAD = 2;
 border = gf_mesh_get(m,'outer faces');
 normals = gf_mesh_get(m, 'normal of faces', border);
 if (N==2)
-    contact_boundary=border(:, find(normals(2, :) < -0.01)); %the normal is -e2
+    contact_boundary=border(:, find(normals(2, :) < -0.01)); % Normal vector is -e2
 else
-    contact_boundary=border(:, find(normals(3, :) < -0.01));%the normal is -e3
+    contact_boundary=border(:, find(normals(3, :) < -0.01)); % Normal vector is -e3
 end
 gf_mesh_set(m, 'region', GAMMAD, contact_boundary);
-%gf_model_set(md,'add inialized data', 'dirichlet data',[dirichlet_val])
+
+
 
 %figure 1 : plot figure
-
-clf;
 
 if (draw_mesh)
   figure(1);  
@@ -178,13 +180,13 @@ end
 %Finites elements' method on mls1 and mls2
 
 if (N==2)
-    mim_bound = gfMeshIm('levelset',mls1,'boundary', gf_integ('IM_TRIANGLE(5)'));
-    mim = gfMeshIm('levelset',mls1,'all', gf_integ('IM_TRIANGLE(5)')); 
+    mim = gfMeshIm('levelset', mls1,'all', gf_integ('IM_TRIANGLE(5)'));
+    mim_bound = gfMeshIm('levelset', mls1, 'boundary', gf_integ('IM_TRIANGLE(5)'));
     mim1 = gfMeshIm('levelset', mls1, 'inside', gf_integ('IM_TRIANGLE(5)')); 
     mim2 = gfMeshIm('levelset', mls2, 'inside', gf_integ('IM_TRIANGLE(5)'));
 else
-    mim_bound = gfMeshIm('levelset',mls1,'boundary', gf_integ('IM_TETRAHEDRON(5)'));
-    mim = gfMeshIm('levelset',mls1,'all', gf_integ('IM_TETRAHEDRON(5)')); 
+    mim_bound = gfMeshIm('levelset', mls1, 'boundary', gf_integ('IM_TETRAHEDRON(5)'));
+    mim = gfMeshIm('levelset', mls1, 'all', gf_integ('IM_TETRAHEDRON(5)')); 
     mim1 = gfMeshIm('levelset', mls1, 'inside', gf_integ('IM_TETRAHEDRON(5)')); 
     mim2 = gfMeshIm('levelset', mls2, 'inside', gf_integ('IM_TETRAHEDRON(5)'));
 end
@@ -192,7 +194,6 @@ end
 set(mim, 'integ', 4);
 set(mim1, 'integ', 4);
 set(mim2, 'integ', 4);
-
 
 dof_out = get(mfu, 'dof from im', mim1);
 cv_out = get(mim1, 'convex_index');
@@ -259,16 +260,15 @@ indmass = gf_model_set(md, 'add mass brick', mim1, 'u1', 'penalty_param1');
 % indmass = gf_model_set(md, 'add mass brick', mim2, 'u2', 'penalty_param2');
 
 gf_model_set(md,'add Nitsche fictitious domain contact brick', mim_bound, 'u1', 'u2', 'd1', 'd2', 'gamma0', theta, 'friction_coeff'); 
-%pause;
+
 disp('solve');
 
-niter= 20; solve=true;
-%gf_model_get(md, 'test tangent matrix term', 'u1', 'u2', 1e-6, niter, 10.0);
-%gf_model_get(md, 'test tangent matrix', 1e-6, niter, 10);
-
+% niter= 20;
+% gf_model_get(md, 'test tangent matrix term', 'u1', 'u2', 1e-6, niter, 10.0);
+% gf_model_get(md, 'test tangent matrix', 1e-6, niter, 10);
 % gf_model_get(md, 'test tangent matrix', 1e-6, 20, 10);
 
-niter= 100;%100 d'habitude
+niter= 100;
 gf_model_get(md, 'solve', 'max_res', 1E-9, 'max_iter', niter, 'noisy');
 
 U1 = gf_model_get(md, 'variable', 'u1');  UU1 = gf_model_get(md, 'variable', 'u1');

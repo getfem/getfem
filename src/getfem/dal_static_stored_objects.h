@@ -99,14 +99,17 @@ namespace dal {
 // DAL_STORED_OBJECT_DEBUG_CREATED(this, "name") in the constructor and
 // DAL_STORED_OBJECT_DEBUG_DESTROYED(this) in the destructor.
   class static_stored_object;
-  void stored_debug_created(const static_stored_object *o, const std::string &name);
+  void stored_debug_created(const static_stored_object *o,
+			    const std::string &name);
   void stored_debug_added(const static_stored_object *o);
   void stored_debug_deleted(const static_stored_object *o);
-  void stored_debug_destroyed(const static_stored_object *o, const std::string &name);
+  void stored_debug_destroyed(const static_stored_object *o,
+			      const std::string &name);
 # define DAL_STORED_OBJECT_DEBUG_CREATED(o, name) stored_debug_created(o, name)
-# define DAL_STORED_OBJECT_DEBUG_ADDED(o) stored_debug_added(o)
+# define DAL_STORED_OBJECT_DEBUG_ADDED(o)   stored_debug_added(o)
 # define DAL_STORED_OBJECT_DEBUG_DELETED(o) stored_debug_deleted(o)
-# define DAL_STORED_OBJECT_DEBUG_DESTROYED(o, name)  stored_debug_destroyed(o, name)
+# define DAL_STORED_OBJECT_DEBUG_DESTROYED(o, name) \
+                                            stored_debug_destroyed(o, name)
 #else
 # define DAL_STORED_OBJECT_DEBUG_CREATED(o, name)
 # define DAL_STORED_OBJECT_DEBUG_ADDED(o)
@@ -315,6 +318,7 @@ namespace dal {
       stored_key_tab;
 
     stored_object_tab();
+    ~stored_object_tab();
     pstatic_stored_object
       search_stored_object(pstatic_stored_object_key k) const;
     bool has_dependent_objects(pstatic_stored_object o) const;

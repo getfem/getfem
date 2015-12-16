@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: UTF8 -*-
+# -*- coding: utf-8 -*-
 # Python GetFEM++ interface
 #
 # Copyright (C) 2004-2015 Yves Renard, Julien Pommier.
@@ -37,7 +37,8 @@ Dirichlet_with_multipliers = True  # Dirichlet condition with multipliers
 dirichlet_coefficient = 1e10       # Penalization coefficient
 
 # Create a simple cartesian mesh
-m = gf.Mesh('regular_simplices', np.arange(0,1+1./NX,1./NX), np.arange(0,1+1./NX,1./NX))
+m = gf.Mesh('regular_simplices', np.arange(0,1+1./NX,1./NX),
+            np.arange(0,1+1./NX,1./NX))
 
 # Create a MeshFem for u and rhs fields of dimension 1 (i.e. a scalar field)
 mfu   = gf.MeshFem(m, 1)

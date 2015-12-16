@@ -257,7 +257,7 @@ namespace dal
     
     dynamic_array(const dynamic_array<T,pks> &da) { init(); *this = da; }
     dynamic_array(void) { init(); }
-    ~dynamic_array(void) { clear(); }
+    // ~dynamic_array(void) { clear(); }
     inline pointer pt_to(size_type ii) /* used by iterators.             */
       { return (ii >=last_ind) ? NULL : &((array[ii>>pks])[ii&DNAMPKS__]); }
     inline const_pointer pt_to(size_type ii) const
@@ -312,7 +312,7 @@ namespace dal
     typename pointer_array::const_iterator ita = da.array.begin();
     typename pointer_array::iterator ite = it+ ((last_ind + DNAMPKS__) >> pks);
     while (it != ite) {
-      *it = std::make_unique<T[]>(DNAMPKS__+1);
+      *it = std::unique_ptr<T[]>(new T[DNAMPKS__+1]);// std::make_unique<T[]>(DNAMPKS__+1);
       register pointer p = it->get(); ++it;
       register pointer pe = p + (DNAMPKS__+1);
       register const_pointer pa = (ita++)->get();
@@ -342,7 +342,7 @@ namespace dal
 	}
 	for (size_type jj = (last_ind >> pks); ii >= last_ind;
 	     jj++, last_ind += (DNAMPKS__ + 1))
-	  { array[jj] = std::make_unique<T[]>(DNAMPKS__ + 1); }
+	  { array[jj] = std::unique_ptr<T[]>(new T[DNAMPKS__+1]); } // std::make_unique<T[]>(DNAMPKS__ + 1); }
       }
     }
     return (array[ii >> pks])[ii & DNAMPKS__];

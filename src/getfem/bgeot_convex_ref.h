@@ -53,7 +53,7 @@ namespace bgeot {
     template <class IT> stored_point_tab(IT it, IT ite)
       : std::vector<base_node>(it, ite)
     { DAL_STORED_OBJECT_DEBUG_CREATED(this, "Stored point tab"); }
-    ~stored_point_tab()
+    virtual ~stored_point_tab()
     { DAL_STORED_OBJECT_DEBUG_DESTROYED(this, "Stored point tab"); }
   };
 

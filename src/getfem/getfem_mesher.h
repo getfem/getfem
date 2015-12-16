@@ -168,8 +168,8 @@ namespace getfem {
   void mesher_level_set::init_base(pfem pf_, const VECT &coeff_) {
     std::vector<scalar_type> coeff(coeff_.begin(), coeff_.end());
     GMM_ASSERT1(gmm::vect_norm2(coeff) != 0, "level is zero!");
-    pf = dynamic_cast<const fem<base_poly>* > (pf_.get());
-    GMM_ASSERT1(pf, "PK fem are required for level set (got "
+    pf = dynamic_cast<const fem<base_poly>*> (pf_.get());
+    GMM_ASSERT1(pf, "A polynomial fem is required for level set (got "
 		<< typeid(pf_).name() << ")");
     base = base_poly(pf->base()[0].dim(), pf->base()[0].degree());
     for (unsigned i=0; i < pf->nb_base(0); ++i) {

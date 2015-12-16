@@ -32,8 +32,10 @@
 namespace dal {
 
   // 0 = only undestroyed, 1 = Normal, 2 very noisy, 
-#define DAL_STORED_OBJECT_DEBUG_NOISY 1
+#define DAL_STORED_OBJECT_DEBUG_NOISY 2
 
+static bool dal_static_stored_tab_valid__ = true;
+  
 #if DAL_STORED_OBJECT_DEBUG
   static std::map <const static_stored_object *, std::string> _created_objects;
   static std::map <const static_stored_object *, std::string> _added_objects;
@@ -42,80 +44,90 @@ namespace dal {
 
   void stored_debug_created(const static_stored_object *o,
 			    const std::string &name) {
-    _created_objects[o] = name;
+    if (dal_static_stored_tab_valid__) {
+      _created_objects[o] = name;
 #   if DAL_STORED_OBJECT_DEBUG_NOISY > 1
-    cout << "Created " << name << " : " << o << endl;
+      cout << "Created " << name << " : " << o << endl;
 #   endif
+    }
   }
   void stored_debug_added(const static_stored_object *o) {
-    auto it = _created_objects.find(o);
-    if (it == _created_objects.end()) {
-      _added_objects[o] = "";
+    if (dal_static_stored_tab_valid__) {
+      auto it = _created_objects.find(o);
+      if (it == _created_objects.end()) {
+	_added_objects[o] = "";
 #   if DAL_STORED_OBJECT_DEBUG_NOISY > 0
-      cout << "Adding an unknown object " << o << endl;
+	cout << "Adding an unknown object " << o << " of type "
+	     << typeid(*o).name() << " add DAL_STORED_OBJECT_DEBUG_CREATED"
+	  "(o, name)  in its constructor" << endl;
 #   endif
-    } else {
-      _added_objects[o] = it->second;
-      _created_objects.erase(it);
+      } else {
+	_added_objects[o] = it->second;
+	_created_objects.erase(it);
 #   if DAL_STORED_OBJECT_DEBUG_NOISY > 1
-      cout << "Added " << it->second << " : " << o << endl;
+	cout << "Added " << it->second << " : " << o << endl;
 #   endif
+      }
+      if (_deleted_objects.size()) {
+	cout << endl << "Number of stored objects: " << _added_objects.size()
+	     << endl << "Number of unstored created objects: "
+	     << _created_objects.size() << endl
+	     << "Number of undestroyed object: "
+	     << _deleted_objects.size() << endl;
+	for (auto &x : _deleted_objects)
+	  cout << "UNDESTROYED OBJECT " << x.second << " : " << x.first << endl;
+      }
     }
-    if (_deleted_objects.size()) {
-      cout << endl << "Number of stored objects: " << _added_objects.size()
-	   << endl << "Number of unstored created objects: "
-	   << _created_objects.size() << endl
-	   << "Number of undestroyed object: "
-	   << _deleted_objects.size() << endl;
-      for (auto &x : _deleted_objects)
-	cout << "UNDESTROYED OBJECT " << x.second << " : " << x.first << endl;
-    }
-
-
   }
+
   void stored_debug_deleted(const static_stored_object *o) {
-    auto it = _added_objects.find(o);
-    if (it == _added_objects.end()) {
-      cout << "Deleting an unknown object ! " << o << endl;
-      _deleted_objects[o] = "";
-    } else {
-      _deleted_objects[o] = it->second;
-      _added_objects.erase(it);
+    if (dal_static_stored_tab_valid__) {
+      auto it = _added_objects.find(o);
+      if (it == _added_objects.end()) {
+	cout << "Deleting an unknown object ! " << o << endl;
+	_deleted_objects[o] = "";
+      } else {
+	_deleted_objects[o] = it->second;
+	_added_objects.erase(it);
 #   if DAL_STORED_OBJECT_DEBUG_NOISY > 1
-    cout << "Deleted " << it->second << " : " << o << endl;
+	cout << "Deleted " << it->second << " : " << o << endl;
 #   endif
+      }
     }
   }
 
   void stored_debug_destroyed(const static_stored_object *o,
 			      const std::string &name) {
-    auto it = _deleted_objects.find(o);
-    if (it == _deleted_objects.end()) {
-      it = _created_objects.find(o);
-      if (it == _created_objects.end()) {
-	it = _added_objects.find(o);
-	if (it == _added_objects.end()) {
-	  cout << "Destroy an unknown object ! " << o << " name given : "
-	       << name << endl;
+    if (dal_static_stored_tab_valid__) {
+      auto it = _deleted_objects.find(o);
+      if (it == _deleted_objects.end()) {
+	it = _created_objects.find(o);
+	if (it == _created_objects.end()) {
+	  it = _added_objects.find(o);
+	  if (it == _added_objects.end()) {
+	    cout << "Destroy an unknown object ! " << o << " name given : "
+		 << name << endl;
+	  } else {
+	    _added_objects.erase(it);
+	    cout << "Destroy a non deleted object !! " << o << " name given : "
+		 << name << endl;
+	  }
 	} else {
-	  _added_objects.erase(it);
-	  cout << "Destroy a non deleted object !! " << o << " name given : "
-	       << name << endl;
+#   if DAL_STORED_OBJECT_DEBUG_NOISY > 1
+	  cout << "Destroy an unadded object " << it->second << " : "
+	       << o << endl;
+#   endif
+	  _created_objects.erase(it);
 	}
       } else {
 #   if DAL_STORED_OBJECT_DEBUG_NOISY > 1
-	cout << "Destroy an unadded object " << it->second << " : " <<o<< endl;
+	cout << "Destroy " << it->second << " : " << o << " name given : "
+	     << name << endl;
 #   endif
-	_created_objects.erase(it);
+	_deleted_objects.erase(it);
       }
-    } else {
-#   if DAL_STORED_OBJECT_DEBUG_NOISY > 1
-      cout << "Destroy " << it->second << " : " << o << " name given : "
-	   << name << endl;
-#   endif
-    _deleted_objects.erase(it);
+      
     }
-
   }
 
 
@@ -130,6 +142,7 @@ namespace dal {
   // a specific thread
   pstatic_stored_object_key key_of_stored_object(pstatic_stored_object o, size_t thread) 
   {
+    GMM_ASSERT1(dal_static_stored_tab_valid__, "Too late to do that");
     stored_object_tab::stored_key_tab& stored_keys 
       = dal::singleton<stored_object_tab>::instance(thread).stored_keys_;
     stored_object_tab::stored_key_tab::iterator it = stored_keys.find(o);
@@ -140,6 +153,7 @@ namespace dal {
   // gives a key of the stored object while looking in the storage of other threads
   pstatic_stored_object_key key_of_stored_object_other_threads(pstatic_stored_object o) 
   {
+    GMM_ASSERT1(dal_static_stored_tab_valid__, "Too late to do that");
     for(size_t thread = 0; thread<getfem::num_threads();thread++)
     {
       if (thread == this_thread()) continue;
@@ -151,16 +165,22 @@ namespace dal {
 
   pstatic_stored_object_key key_of_stored_object(pstatic_stored_object o) 
   {
+    if (dal_static_stored_tab_valid__) {
     pstatic_stored_object_key key = key_of_stored_object(o,this_thread());
     if (key) return key;
     else return (num_threads() > 1) ? key_of_stored_object_other_threads(o) : 0;
+    }
+    return 0;
   }
 
   bool exists_stored_object(pstatic_stored_object o) 
   {
+    if (dal_static_stored_tab_valid__) {
     stored_object_tab::stored_key_tab& stored_keys 
        = dal::singleton<stored_object_tab>::instance().stored_keys_;
     return  (stored_keys.find(o) != stored_keys.end());
+    }
+    return false;
   }
 
 
@@ -173,6 +193,10 @@ namespace dal {
     locks_(),
     stored_keys_()
   { }
+
+  stored_object_tab::~stored_object_tab() {
+    dal_static_stored_tab_valid__ = false;
+  }
 
   pstatic_stored_object stored_object_tab::
     search_stored_object(pstatic_stored_object_key k) const
@@ -299,15 +323,18 @@ namespace dal {
 
   pstatic_stored_object search_stored_object(pstatic_stored_object_key k) 
   {
+    if (dal_static_stored_tab_valid__) {
     stored_object_tab& stored_objects
         = dal::singleton<stored_object_tab>::instance();
     pstatic_stored_object p = stored_objects.search_stored_object(k);
     if (p) return p;
+    }
     return 0;
   }
 
   stored_object_tab::iterator iterator_of_object(pstatic_stored_object o)
   {
+    GMM_ASSERT1(dal_static_stored_tab_valid__, "Too late to do that");
     for(size_t thread=0; thread < num_threads(); ++thread)
     {
       stored_object_tab& stored_objects
@@ -321,6 +348,7 @@ namespace dal {
 
   void test_stored_objects(void) 
   {
+    if (dal_static_stored_tab_valid__) {
     for(size_t thread = 0; thread < num_threads(); ++thread)
     {
       stored_object_tab& stored_objects 
@@ -341,10 +369,12 @@ namespace dal {
         GMM_ASSERT1(iterator_of_object(it->second.p) != stored_objects.end(),
         "Object has key but cannot be found");
     }
+    }
   }
 
   void add_dependency(pstatic_stored_object o1,
     pstatic_stored_object o2) {
+    GMM_ASSERT1(dal_static_stored_tab_valid__, "Too late to add a dependency");
     bool dep_added = false;
     for(size_t thread=0; thread < num_threads(); ++thread)
     {
@@ -375,6 +405,7 @@ namespace dal {
   bool del_dependency(pstatic_stored_object o1,
     pstatic_stored_object o2) 
   {
+    if (dal_static_stored_tab_valid__) {
     bool dep_deleted = false;
     for(size_t thread=0; thread < num_threads(); ++thread)
     {
@@ -402,15 +433,19 @@ namespace dal {
     << typeid(*o1).name() << " and " << o2 << " of type "  << typeid(*o2).name() << ". ");
 
     return dependent_empty;
+    }
+    return false;
   }
 
 
   void add_stored_object(pstatic_stored_object_key k, pstatic_stored_object o,
 			 permanence perm) {
+    GMM_ASSERT1(dal_static_stored_tab_valid__, "Too late to add an object");
     dal::singleton<stored_object_tab>::instance().add_stored_object(k,o,perm);
   }
 
   void basic_delete(std::list<pstatic_stored_object> &to_delete) {
+    if (dal_static_stored_tab_valid__) {
     stored_object_tab& stored_objects_this_thread
       = dal::singleton<stored_object_tab>::instance();
     stored_objects_this_thread.basic_delete_(to_delete);
@@ -434,11 +469,13 @@ namespace dal {
       {
         GMM_ASSERT1(to_delete.empty(), "Could not delete objects");
       }
+    }
   }
   
   void del_stored_objects(std::list<pstatic_stored_object> &to_delete,
     bool ignore_unstored) 
   {
+    if (dal_static_stored_tab_valid__) {
       getfem::omp_guard lock;
       GMM_NOPERATION(lock);
       stored_object_tab& stored_objects
@@ -511,19 +548,23 @@ namespace dal {
         }
       }
       basic_delete(to_delete);
+    }
   }
 
 
   void del_stored_object(const pstatic_stored_object &o, bool ignore_unstored) 
   {
+    if (dal_static_stored_tab_valid__) {
     std::list<pstatic_stored_object> to_delete;
     to_delete.push_back(o);
     del_stored_objects(to_delete, ignore_unstored);
+    }
   }
 
 
   void del_stored_objects(permanence perm) 
   {
+    if (dal_static_stored_tab_valid__) {
     std::list<pstatic_stored_object> to_delete;
     for(size_t thread=0; thread<getfem::num_threads();thread++)
     {
@@ -536,10 +577,12 @@ namespace dal {
           to_delete.push_back(it->second.p);
     }
     del_stored_objects(to_delete, false);
+    }
   }
 
   void list_stored_objects(std::ostream &ost) 
   {
+    if (dal_static_stored_tab_valid__) {
     for(size_t thread=0; thread<getfem::num_threads();thread++)
     {
       stored_object_tab::stored_key_tab& stored_keys 
@@ -555,10 +598,12 @@ namespace dal {
             << typeid(*it->first).name() << endl;
       }
     }
+    }
   }
 
   size_t nb_stored_objects(void) 
   {
+    if (dal_static_stored_tab_valid__) {
     long num_objects=0;
     for(size_t thread=0;thread<getfem::num_threads(); ++thread)
     {
@@ -567,6 +612,8 @@ namespace dal {
       num_objects+=stored_keys.size();
     }
     return num_objects;
+    }
+    return 0;
   }
 
 }

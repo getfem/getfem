@@ -390,9 +390,8 @@ namespace getfem {
       }
     }
 
-    new_approx->valid_method();
-
     if (new_approx->nb_points()) {
+      new_approx->valid_method();
       pintegration_method
 	pim = std::make_shared<integration_method>(new_approx);
       dal::pstatic_stored_object_key
@@ -445,7 +444,7 @@ namespace getfem {
 
   void mesh_im_cross_level_set::clear_build_methods() {
     for (size_type i = 0; i < build_methods.size(); ++i)
-      del_stored_object(build_methods[i]);
+      if (build_methods[i].get()) del_stored_object(build_methods[i]);
     build_methods.clear();
     cut_im.clear();
   }
@@ -672,9 +671,8 @@ namespace getfem {
       }
     }
 
-    new_approx->valid_method();
-
     if (new_approx->nb_points()) {
+      new_approx->valid_method();
       pintegration_method
 	pim = std::make_shared<integration_method>(new_approx);
       dal::pstatic_stored_object_key

@@ -290,7 +290,7 @@ namespace getfem
       im_type = IM_NONE;
     }
     
-    ~integration_method()
+    virtual ~integration_method()
     { DAL_STORED_OBJECT_DEBUG_DESTROYED(this, "Integration method"); }
   };
 

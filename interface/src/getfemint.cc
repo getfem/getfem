@@ -1030,43 +1030,43 @@ namespace getfemint {
   id_type class_id_of_object(const dal::pstatic_stored_object &p,
 			     const void **q_) {
     const void *qq; const void **q(&qq); if (q_) { q = q_; *q_ = 0; }
-    if (*q=dynamic_cast<const getfem::cont_struct_getfem_model *>(p.get()))
+    if ((*q=dynamic_cast<const getfem::cont_struct_getfem_model *>(p.get())))
       return CONT_STRUCT_CLASS_ID;
-    if (*q=dynamic_cast<const bgeot::convex_structure *>(p.get()))
+    if ((*q=dynamic_cast<const bgeot::convex_structure *>(p.get())))
       return CVSTRUCT_CLASS_ID;
-    if (*q=dynamic_cast<const getfem::mat_elem_type *>(p.get()))
+    if ((*q=dynamic_cast<const getfem::mat_elem_type *>(p.get())))
       return ELTM_CLASS_ID;
-    if (*q=dynamic_cast<const getfem::virtual_fem *>(p.get()))
+    if ((*q=dynamic_cast<const getfem::virtual_fem *>(p.get())))
       return FEM_CLASS_ID;
-    if (*q=dynamic_cast<const bgeot::geometric_trans *>(p.get()))
+    if ((*q=dynamic_cast<const bgeot::geometric_trans *>(p.get())))
       return GEOTRANS_CLASS_ID;
-    if (*q=dynamic_cast<const getfem::abstract_xy_function *>(p.get()))
+    if ((*q=dynamic_cast<const getfem::abstract_xy_function *>(p.get())))
       return GLOBAL_FUNCTION_CLASS_ID;
-    if (*q=dynamic_cast<const getfem::integration_method *>(p.get()))
+    if ((*q=dynamic_cast<const getfem::integration_method *>(p.get())))
       return INTEG_CLASS_ID;
-    if (*q=dynamic_cast<const getfem::level_set *>(p.get()))
+    if ((*q=dynamic_cast<const getfem::level_set *>(p.get())))
       return LEVELSET_CLASS_ID;
-    if (*q=dynamic_cast<const getfem::mesh *>(p.get()))
+    if ((*q=dynamic_cast<const getfem::mesh *>(p.get())))
       return MESH_CLASS_ID;
-    if (*q=dynamic_cast<const getfem::mesh_fem *>(p.get()))
+    if ((*q=dynamic_cast<const getfem::mesh_fem *>(p.get())))
       return MESHFEM_CLASS_ID;
-    if (*q=dynamic_cast<const getfem::mesh_im *>(p.get()))
+    if ((*q=dynamic_cast<const getfem::mesh_im *>(p.get())))
       return MESHIM_CLASS_ID;
-    if (*q=dynamic_cast<const getfem::im_data *>(p.get()))
+    if ((*q=dynamic_cast<const getfem::im_data *>(p.get())))
       return MESHIMDATA_CLASS_ID;
-    if (*q=dynamic_cast<const getfem::mesh_level_set *>(p.get()))
+    if ((*q=dynamic_cast<const getfem::mesh_level_set *>(p.get())))
       return MESH_LEVELSET_CLASS_ID;
-    if (*q=dynamic_cast<const getfem::mesher_signed_distance *>(p.get()))
+    if ((*q=dynamic_cast<const getfem::mesher_signed_distance *>(p.get())))
       return MESHER_OBJECT_CLASS_ID;
-    if (*q=dynamic_cast<const getfem::model *>(p.get()))
+    if ((*q=dynamic_cast<const getfem::model *>(p.get())))
       return MODEL_CLASS_ID;
-    if (*q=dynamic_cast<const gprecond_base *>(p.get()))
+    if ((*q=dynamic_cast<const gprecond_base *>(p.get())))
       return PRECOND_CLASS_ID;
-    if (*q=dynamic_cast<const getfem::stored_mesh_slice *>(p.get()))
+    if ((*q=dynamic_cast<const getfem::stored_mesh_slice *>(p.get())))
       return SLICE_CLASS_ID;
-    if (*q=dynamic_cast<const gsparse *>(p.get()))
+    if ((*q=dynamic_cast<const gsparse *>(p.get())))
       return SPMAT_CLASS_ID;
-    if (*q=dynamic_cast<const getfemint_poly *>(p.get()))
+    if ((*q=dynamic_cast<const getfemint_poly *>(p.get())))
       return POLY_CLASS_ID;
     return id_type(-1);
   }
