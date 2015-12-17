@@ -83,7 +83,7 @@ else
   theta = 1.0;             % Theta-method scheme coefficient
   dirichlet = 0;           % Dirichlet condition or not
   dirichlet_val = 0.45;
-  scheme = 1;              % 1 = theta-method, 2 = Newmark, 3 = Newmark with beta = 0, 4 = midpoint modified (Experimental: compile GetFEM with --enable-experimental)
+  scheme = 4;              % 1 = theta-method, 2 = Newmark, 3 = Newmark with beta = 0, 4 = midpoint modified (Experimental: compile GetFEM with --enable-experimental)
   u_degree = 2;
   v_degree = 1;
   lambda_degree = 1;
@@ -193,6 +193,7 @@ gf_model_set(md, 'add initialized data', 'cmu', [cmu]);
 gf_model_set(md, 'add initialized data', 'clambda', [clambda]);
 gf_model_set(md, 'add isotropic linearized elasticity brick', mim, 'u', ...
                  'clambda', 'cmu');
+            
 if (singular_mass == 2)
   gf_model_set(md, 'add fem variable', 'v', mfv);
   switch(scheme)
@@ -230,7 +231,7 @@ gf_model_set(md, 'add initialized fem data', 'obstacle', mfd, OBS);
 
 if (Nitsche)
   gf_model_set(md, 'add initialized data', 'gamma0', [gamma0_N]);
-  expr_Neumann = gf_model_get(md, 'Neumann term', 'u', GAMMAC);
+  expr_Neumann = gf_model_get(md, 'Neumann term', 'u', GAMMAC)
   if (scheme == 4)
       if (friction ~= 0)
          error('To be adapted for friction');
@@ -240,9 +241,10 @@ if (Nitsche)
       gf_model_set(md, 'add fem data', 'wt', mfu);
       
       % Very experimental brick : compile GetFEM with the option --enable-experimental
-      expr_Neumann_wt = '((clambda*Div_wt)*Normal + (cmu*(Grad_wt+(Grad_wt'')))*Normal)'
+      expr_Neumann_wt = '((clambda*Div_wt)*Normal + (cmu*(Grad_wt+(Grad_wt'')))*Normal)';
       gf_model_set(md, 'add Nitsche midpoint contact with rigid obstacle brick', mim_friction, 'u', ...
        expr_Neumann, expr_Neumann_wt, 'obstacle', 'gamma0', GAMMAC, theta_N, 'friction_coeff', 'alpha_f', 'wt');
+      
   else
     if (friction == 0)
       gf_model_set(md, 'add Nitsche contact with rigid obstacle brick', mim_friction, 'u', ...

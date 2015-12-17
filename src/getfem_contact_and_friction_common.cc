@@ -2199,11 +2199,12 @@ namespace getfem {
   // Coulomb_friction_coupled_projection(lambda, n, Vs, g, f, r)
   struct Coulomb_friction_coupled_projection : public ga_nonlinear_operator {
     bool result_size(const arg_list &args, bgeot::multi_index &sizes) const {
-      if (args.size() != 6 || args[1]->size() != args[0]->size()
-          || args[2]->size() != args[0]->size()
-          || args[3]->size() != 1 || args[4]->size() > 3 || args[4]->size() == 0
-          || args[5]->size() != 1 ) return false;
-      ga_init_vector(sizes, args[0]->sizes()[0]);
+      if (args.size() != 6) return false;
+      size_type N =  args[0]->size();
+      if (N == 0 || args[1]->size() != N || args[2]->size() != N
+	  || args[3]->size() != 1 || args[4]->size() > 3
+	  || args[4]->size() == 0 || args[5]->size() != 1 ) return false;
+      ga_init_vector(sizes, N);
       return true;
     }
     
