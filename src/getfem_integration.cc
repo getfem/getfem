@@ -429,13 +429,16 @@ namespace getfem {
   /* ********************************************************************* */
 
   struct Legendre_polynomials {
-    std::vector<base_poly> polynomials;
-    std::vector<std::vector<long_scalar_type>> roots;
+    dal::dynamic_array<base_poly> polynomials;
+    dal::dynamic_array< std::vector<long_scalar_type> > roots;
+
+    // std::vector<base_poly> polynomials;
+    // std::vector<std::vector<long_scalar_type>> roots;
     int nb_lp;
     Legendre_polynomials() : nb_lp(-1) {}
     void init(short_type de) {
-      polynomials.resize(de+2);
-      roots.resize(de+2);
+      // polynomials.resize(de+2);
+      // roots.resize(de+2);
       if (nb_lp < 0) {
         polynomials[0] = base_poly(1,0);
         polynomials[0].one();
