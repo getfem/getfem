@@ -557,38 +557,6 @@ namespace getfem {
     many symmetries or many null elements..  in that case, it is preferable
     for getfem_mat_elem to handle only a sufficient subset of the tensor,
     and build back the full tensor via adequate strides and masks */
-    /*
-    stride_type add_packed_dims(const bgeot::tensor<unsigned> &packed_idx, stride_type s) {
-    size_type d = r_.size();
-    const bgeot::multi_index sz = packed_idx.sizes();
-    bgeot::index_set dims(sz.size());
-    bgeot::tensor_ranges rngs(sz.size());
-    for (dim_type i=0; i < dims.size(); ++i) {
-    dims[i] = d+i; // new dimension numbers 
-    rngs[i] = sz[i];
-    }
-
-    r_.insert(r_.end(), rngs.begin(), rngs.end());
-    tensor_strides v;
-    tensor_mask m(rngs,dims);
-    for (index_type i=0; i < packed_idx.size(); ++i)
-    if (packed_idx[i] != unsigned(-1)) m.set_mask_val(i,true);
-    v.resize(m.card());
-    stride_type max_stride = 0;
-    for (index_type i=0, p=0; i < packed_idx.size(); ++i) {
-    if (m(i)) {
-    v[p++] = s*packed_idx[i];
-    max_stride = std::max<stride_type>(max_stride, packed_idx[i]*s);
-    }
-    }
-    cout << "add_packed_dims : sz=" << sz << ", r_=" << r_ << ", s=" << s << ", card=" << m.card() << ", max_stride=" << max_stride << "\n";
-    assert(tensor().masks().size() == tensor().strides().size());
-    tensor().set_ndim_noclean(tensor().ndim()+sz.size());
-    tensor().push_mask(m);
-    tensor().strides().push_back(v);
-    return max_stride;
-    }
-    */
 
     /* append a dimension (full) to tref */
     stride_type add_dim(const tensor_ranges& rng, dim_type d, stride_type s, tensor_ref &tref) {
@@ -813,9 +781,7 @@ namespace getfem {
         }
         icb.red.insert(tref, mfcomp[i].reduction);
       }
-      //cout << "  build inline reduction : " << name() << "\n";
       icb.red.prepare();
-      //cout << "\n done inline reduction : " << name() << "\n";
       icb.red.result(tensor());
       r_.resize(tensor().ndim()); 
       for (dim_type i=0; i < tensor().ndim(); ++i) r_[i] = tensor().dim(i);
@@ -1184,8 +1150,6 @@ namespace getfem {
 
   void asm_tokenizer::get_tok() {
     gmm::standard_locale sl;
-    std::string sub = str.substr(tok_pos, 10);
-    //cerr << "tok_pos=" << tok_pos << "... '" << sub << "'..." << endl;
     curr_tok_ival = -1;
     while (tok_pos < str.length() && isspace(str[tok_pos])) ++tok_pos;
     if (tok_pos == str.length()) { 
@@ -1213,22 +1177,10 @@ namespace getfem {
       curr_tok_dval = strtod(&str[0]+tok_pos, &p);
       tok_len = p - &str[0] - tok_pos;
     }
-    curr_tok = str.substr(tok_pos, tok_len);
-    /*
-    cerr << "TOK[ ";
-    switch (curr_tok_type) {
-    case OPEN_PAR: case CLOSE_PAR: case EQUAL:
-    case COMMA: case SEMICOLON: case COLON:
-    case PLUS: case MINUS: case DIVIDE:
-    case OPEN_BRACE: case CLOSE_BRACE:
-    case PRODUCT: case MULTIPLY: cerr << "'" << char(curr_tok_type) << "'"; break;
-    case IDENT: cerr << "IDENT: '" << tok() << "'"; break;
-    case NUMBER: cerr << "NUMBER: " << curr_tok_dval; break;
-    case MFREF: cerr << "MFREF: " << tok_mfref_num(); break;
-    case  ARGNUM_SELECTOR: cerr << "ARGNUM: " << tok_argnum(); break;
-    case END: cerr << "END"; break;
-    }
-    cerr << "]" << endl;*/
+    if (tok_pos < str.length())
+      curr_tok = str.substr(tok_pos, tok_len);
+    else
+      curr_tok.clear();
   }
 
   const mesh_fem& generic_assembly::do_mf_arg_basic() {
@@ -1721,7 +1673,7 @@ namespace getfem {
     if (tok_type() != END) ASM_THROW_PARSE_ERROR("unexpected token: '"
       << tok() << "'");
     if (outvars.size() == 0) cerr << "warning: assembly without output\n";
-
+    
     /* reordering of atn_tensors and outvars */
     unsigned gcnt = 0;
     for (size_type i=0; i < outvars.size(); ++i) 
@@ -1861,6 +1813,7 @@ namespace getfem {
     r.from_mesh(imtab.at(0)->linked_mesh());
     r.error_if_not_homogeneous();
 
+ 
     consistency_check();
     get_convex_order(imtab.at(0)->convex_index(), imtab, mftab, r.index(), cv);
     parse();
