@@ -429,16 +429,13 @@ namespace getfem {
   /* ********************************************************************* */
 
   struct Legendre_polynomials {
-    dal::dynamic_array<base_poly> polynomials;
-    dal::dynamic_array< std::vector<long_scalar_type> > roots;
-
-    // std::vector<base_poly> polynomials;
-    // std::vector<std::vector<long_scalar_type>> roots;
+    std::vector<base_poly> polynomials;
+    std::vector<std::vector<long_scalar_type>> roots;
     int nb_lp;
     Legendre_polynomials() : nb_lp(-1) {}
     void init(short_type de) {
-      // polynomials.resize(de+2);
-      // roots.resize(de+2);
+      polynomials.resize(de+2);
+      roots.resize(de+2);
       if (nb_lp < 0) {
         polynomials[0] = base_poly(1,0);
         polynomials[0].one();
@@ -496,16 +493,18 @@ namespace getfem {
     repartition[1] = nbpt + 1;
     repartition[2] = nbpt + 2; 
     
-    Legendre_polynomials &lp = dal::singleton<Legendre_polynomials>::instance();
-    lp.init(nbpt);
+    Legendre_polynomials Lp;
+
+    // Legendre_polynomials &Lp = dal::singleton<Legendre_polynomials>::instance();
+    Lp.init(nbpt);
     
     for (short_type i = 0; i < nbpt; ++i) {
       int_points[i].resize(1);
-      long_scalar_type lr = lp.roots[nbpt][i];
+      long_scalar_type lr = Lp.roots[nbpt][i];
       int_points[i][0] = 0.5 + 0.5 * bgeot::to_scalar(lr);
       int_coeffs[i] = bgeot::to_scalar((1.0 - gmm::sqr(lr))
 	/ gmm::sqr( long_scalar_type(nbpt)
-		    * (lp.polynomials[nbpt-1].eval(&lr))));
+		    * (Lp.polynomials[nbpt-1].eval(&lr))));
     }
     
     int_points[nbpt].resize(1);
