@@ -668,11 +668,11 @@ struct Chrono {
       if (K > 1) { // To be done only on the level-set ...
 	dal::bit_vector ptdone;
 	std::vector<size_type> ipts;
-	for (mr_visitor icv(ls_border_faces); !icv.finished(); ++icv) {
-	  size_type i = icv.cv();
-	  short_type f = icv.f();
-	// for (dal::bv_visitor i(msh.convex_index()); !i.finished(); ++i) {
-	//  for (short_type f = 0; f <= n; ++f) {
+	// for (mr_visitor icv(ls_border_faces); !icv.finished(); ++icv) {
+	//  size_type i = icv.cv();
+	//   short_type f = icv.f();
+	for (dal::bv_visitor i(msh.convex_index()); !i.finished(); ++i) {
+	  for (short_type f = 0; f <= n; ++f) {
 	    const mesh::ind_pt_face_ct &fpts
 	      = msh.ind_points_of_face_of_convex(i, f);
 	    ipts.assign(fpts.begin(), fpts.end());
@@ -688,7 +688,7 @@ struct Chrono {
 	    interpolate_face_chrono.toc();
 #endif
 	  }
-	// }
+	}
       }
 
       if (noisy) {
