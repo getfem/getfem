@@ -100,7 +100,8 @@ struct Chrono {
 
   mesh_level_set::~mesh_level_set() {}
 
-  static void interpolate_face(mesh &m, dal::bit_vector& ptdone, 
+  static void interpolate_face(const bgeot::pgeometric_trans &pgt,
+			       mesh &m, dal::bit_vector& ptdone, 
 			       const std::vector<size_type>& ipts,
 			       const bgeot::pconvex_structure &cvs, 
 			       size_type nb_vertices,
@@ -114,8 +115,8 @@ struct Chrono {
 	fpts.resize(cvs->nb_points_of_face(f));
 	for (size_type k=0; k < fpts.size(); ++k)
 	  fpts[k] = ipts[cvs->ind_points_of_face(f)[k]];
-	interpolate_face(m,ptdone,fpts,cvs->faces_structure()[f], nb_vertices,
-			 constraints, list_constraints);
+	interpolate_face(pgt, m,ptdone,fpts,cvs->faces_structure()[f],
+			 nb_vertices, constraints, list_constraints);
       }
     }
 
@@ -126,7 +127,7 @@ struct Chrono {
     for (size_type i=0; i < ipts.size(); ++i) {
       // cout << "ipts[i] = " << ipts[i] << endl;
       if (ipts[i] < nb_vertices) {
-	// cout << "point " << i << " constraints[ipts[i]] = " << constraints[ipts[i]] << endl;
+	cout << "point " << i << " constraints[ipts[i]] = " << constraints[ipts[i]] << endl;
 	if (cnt == 0) cts = constraints[ipts[i]];
 	else cts &= constraints[ipts[i]];
 	++cnt;
@@ -146,6 +147,8 @@ struct Chrono {
 			 "Original point " << m.points()[ipts[i]]
 			 << " projection " << P);
 	  } else {
+	    if (noisy && pgt->convex_ref()->is_in(P) > 1E-8)
+	      cout << "The projected point is outside the reference convex !" << P << endl;
 	    m.points()[ipts[i]] = P;
 	  }
 	  ptdone[ipts[i]] = true;
@@ -544,7 +547,7 @@ struct Chrono {
 	msh.clear(); 
 	
 	for (size_type i = 0; i <  fixed_points.size(); ++i) {
-	  size_type j = msh.add_point(fixed_points[i]); // remettre le add_norepeat ?
+	  size_type j = msh.add_point(fixed_points[i]);
 	  assert(j == i);
 	}
 	
@@ -615,6 +618,7 @@ struct Chrono {
       }
       if (!h0_is_ok) continue;
 
+      // Produces an order K mesh for K > 1 (with affine element for the moment)
       if (K>1) {
 	for (dal::bv_visitor_c j(msh.convex_index()); !j.finished(); ++j) {
 	  bgeot::pgeometric_trans pgt2 = bgeot::simplex_geotrans(n, K);
@@ -680,7 +684,7 @@ struct Chrono {
 	    interpolate_face_chrono.tic();
 #endif
 	    
-	    interpolate_face(msh, ptdone, ipts,
+	    interpolate_face(pgt, msh, ptdone, ipts,
 			     msh.trans_of_convex(i)->structure()
 			     ->faces_structure()[f], fixed_points.size(),
 			     fixed_points_constraints, list_constraints);
