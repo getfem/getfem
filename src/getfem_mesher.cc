@@ -141,7 +141,7 @@ namespace getfem {
         }
         // cout << "G = " << G << endl;
         
-        if (info || gmm::abs(det) < 1E-40) {
+        if (info || gmm::abs(det) < 1E-20) {
           dal::bit_vector cts_red = cts;
           int eliminated = 0;
           i = 0;
@@ -175,8 +175,8 @@ namespace getfem {
           }
         }
         
-        if (gmm::vect_norm2(d) > 1e-14) {
-          if (info || gmm::abs(det) < 1E-40) {
+        if (gmm::vect_norm2(d) > 1e-11) {
+          if (info || gmm::abs(det) < 1E-20) {
             for (i = 0; i < nbco; ++i)
               try_projection(*(ls[i]), X, true);
             for (i = 0; i < nbco; ++i) d[i] = -(ls[i]->grad(X, G[i]));

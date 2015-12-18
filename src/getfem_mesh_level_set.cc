@@ -120,22 +120,25 @@ struct Chrono {
       }
     }
 
-    // cout << "ipts.size() = " << ipts.size() << endl;
-    // cout << " nb_vertices = " <<  nb_vertices << endl;
+    if (noisy) {
+      cout << "ipts.size() = " << ipts.size() << endl;
+      cout << " nb_vertices = " <<  nb_vertices << endl;
+    }
 
     dal::bit_vector cts; size_type cnt = 0;
     for (size_type i=0; i < ipts.size(); ++i) {
       // cout << "ipts[i] = " << ipts[i] << endl;
       if (ipts[i] < nb_vertices) {
-	cout << "point " << i << " constraints[ipts[i]] = " << constraints[ipts[i]] << endl;
+	if (noisy) cout << "point " << i << " coordinates " << m.points()[ipts[i]]<< " constraints[ipts[i]] = " << constraints[ipts[i]] << endl;
 	if (cnt == 0) cts = constraints[ipts[i]];
 	else cts &= constraints[ipts[i]];
 	++cnt;
       }
     }
 
+    if (noisy) cout << "cts = " << cts << endl;
+      
     if (cts.card()) {
-      // cout << "cts = " << cts << endl;
       // dal::bit_vector new_cts;
       for (size_type i=0; i < ipts.size(); ++i) {
 	if (ipts[i] >= nb_vertices && !ptdone[ipts[i]]) {
