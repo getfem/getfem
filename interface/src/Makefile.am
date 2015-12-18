@@ -84,7 +84,6 @@ libgetfemint_la_SOURCES =              	\
 	$(PSEUDO_MFUNCTIONS) 		\
 	getfemint_workspace.h 		\
 	getfemint_workspace.cc 		\
-	getfemint_mesh_slice.h 		\
 	getfemint_precond.h 		\
 	getfemint_levelset.h 		\
 	getfemint_levelset.cc 		\
