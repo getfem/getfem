@@ -262,7 +262,7 @@ namespace getfem {
     base_matrix pc(pgt2->nb_points(), n);
     std::vector<size_type> ptsing;
 
-    //cerr << "testing convex " << cv << ", " << msh.convex_index().card() << " subconvexes\n";
+    // cout << "testing convex " << cv << ", " << msh.convex_index().card() << " subconvexes\n";
 
     for (dal::bv_visitor i(msh.convex_index()); !i.finished(); ++i) {
       papprox_integration pai = regular_simplex_pim->approx_method();
@@ -371,21 +371,23 @@ namespace getfem {
 	
 	
 	for (size_type j = 0; j < pai->nb_points_on_face(f); ++j) {
-	  c.set_xref(pai->point_on_face(f, j));
-	  base_small_vector un = pgt2->normals()[f], up(msh.dim());
-	  gmm::mult(c.B(), un, up);
-	  scalar_type nup = gmm::vect_norm2(up);
-
-	  scalar_type nnup(1);
-	  if (integrate_where == INTEGRATE_BOUNDARY) {
-	    cc.set_xref(c.xreal());
-	    mesherls0[isin]->grad(c.xreal(), un);
-	    un /= gmm::vect_norm2(un);
-	    gmm::mult(cc.B(), un, up);
-	    nnup = gmm::vect_norm2(up);
+	  if (gmm::abs(c.J()) > 1E-11) {
+	    c.set_xref(pai->point_on_face(f, j));
+	    base_small_vector un = pgt2->normals()[f], up(msh.dim());
+	    gmm::mult(c.B(), un, up);
+	    scalar_type nup = gmm::vect_norm2(up);
+	    
+	    scalar_type nnup(1);
+	    if (integrate_where == INTEGRATE_BOUNDARY) {
+	      cc.set_xref(c.xreal());
+	      mesherls0[isin]->grad(c.xreal(), un);
+	      un /= gmm::vect_norm2(un);
+	      gmm::mult(cc.B(), un, up);
+	      nnup = gmm::vect_norm2(up);
+	    }
+	    new_approx->add_point(c.xreal(), pai->coeff_on_face(f, j)
+				  * gmm::abs(c.J()) * nup * nnup, ff);
 	  }
-	  new_approx->add_point(c.xreal(), pai->coeff_on_face(f, j)
-				* gmm::abs(c.J()) * nup * nnup, ff);
 	} 
       }
     }
@@ -436,6 +438,7 @@ namespace getfem {
       }
     }
     is_adapted = true; touch();
+    // cout << "Number of built methods : " << build_methods.size() << endl;
   }
 
 

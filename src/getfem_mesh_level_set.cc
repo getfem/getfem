@@ -35,7 +35,7 @@ namespace getfem {
     return os;
   }
 
-  std::ostream &operator<<(std::ostream &os, const mesh_level_set::zoneset &zs) {
+  std::ostream &operator<<(std::ostream &os,const mesh_level_set::zoneset &zs) {
     os << "zoneset[";
     for (mesh_level_set::zoneset::const_iterator it = zs.begin(); 
 	 it != zs.end(); ++it) {
@@ -102,7 +102,7 @@ struct Chrono {
 
   static void interpolate_face(mesh &m, dal::bit_vector& ptdone, 
 			       const std::vector<size_type>& ipts,
-			       bgeot::pconvex_structure cvs, 
+			       const bgeot::pconvex_structure &cvs, 
 			       size_type nb_vertices,
 			       const std::vector<dal::bit_vector> &constraints,
 			       const std::vector<const
@@ -142,8 +142,9 @@ struct Chrono {
 	  // if (cts.card() > 1)
 	  //   cout << "WARNING, projection sur " << cts << endl;
 	  if (!pure_multi_constraint_projection(list_constraints, P, cts)) {
-	    GMM_WARNING1("Pure multi has failed in interpolate_face !! Original point " << m.points()[ipts[i]] << " projection " << P);
-	    // GMM_ASSERT1(false, "");
+	    GMM_WARNING1("Pure multi has failed in interpolate_face !! "
+			 "Original point " << m.points()[ipts[i]]
+			 << " projection " << P);
 	  } else {
 	    m.points()[ipts[i]] = P;
 	  }
@@ -505,7 +506,7 @@ struct Chrono {
 
       dmin = 2.*h0;
       if (noisy) cout << "dmin = " << dmin << " h0 = " << h0 << endl;
-      if (noisy) cout << "cetait le convexe " << cv << endl;
+      if (noisy) cout << "convex " << cv << endl;
       
       dal::bit_vector retained_points
 	= mesh_points.decimate(*ref_element, dmin);
@@ -552,7 +553,7 @@ struct Chrono {
 	  size_type j = msh.add_convex(bgeot::simplex_geotrans(n,1),
 				       gmm::vect_const_begin(gmm::mat_col(simplexes, i)));
 	  /* remove flat convexes => beware the final mesh may not be conformal ! */
-	  if (msh.convex_quality_estimate(j) < 1E-12) msh.sup_convex(j);
+	  if (msh.convex_quality_estimate(j) < 1E-10) msh.sup_convex(j);
 	  else {
 	    std::vector<scalar_type> signs(list_constraints.size());
 	    std::vector<size_type> prev_point(list_constraints.size());
@@ -562,7 +563,7 @@ struct Chrono {
 		  (*(list_constraints[jj]))(msh.points_of_convex(j)[ii]);
 		if (gmm::abs(dd) > radius_cv * 1E-7) {
 		  if (dd * signs[jj] < 0.0) {
-		    if (noisy) cout << "Intersection trouvee ... " << jj
+		    if (noisy) cout << "Intersection found ... " << jj
 				    << " dd = " << dd << " convex quality = "
 				    << msh.convex_quality_estimate(j) << "\n";
 		    // calcul d'intersection
@@ -623,8 +624,8 @@ struct Chrono {
 	      (pgt2->convex_ref()->points()[k], msh.points_of_convex(j));
 	  }
 	  msh.sup_convex(j);
-	  /* some new point will be added to the mesh, but the initial ones (those on the
-	     convex vertices) are kepts */
+	  /* some new point will be added to the mesh, but the initial ones
+	     (those on the convex vertices) are kepts */
 	  size_type jj = msh.add_convex_by_points(pgt2, cvpts.begin());
 	  assert(jj == j);
 	}
@@ -653,7 +654,7 @@ struct Chrono {
 	      assert(K>1);
 	      continue; /* ignore additional point inserted when K>1 */
 	    }
-	    if (first) { cts = fixed_points_constraints[fpts[k]]; first = false; }
+	    if (first) { cts = fixed_points_constraints[fpts[k]]; first=false; }
 	    else cts &= fixed_points_constraints[fpts[k]];
 	  }
 	  for (dal::bv_visitor ii(cts); !ii.finished(); ++ii) {
@@ -664,11 +665,14 @@ struct Chrono {
       }
 
       
-      if (K > 1) { // à ne faire que sur les convexes concernés ..
+      if (K > 1) { // To be done only on the level-set ...
 	dal::bit_vector ptdone;
 	std::vector<size_type> ipts;
-	for (dal::bv_visitor i(msh.convex_index()); !i.finished(); ++i) {
-	  for (short_type f = 0; f <= n; ++f) {
+	for (mr_visitor icv(ls_border_faces); !icv.finished(); ++icv) {
+	  size_type i = icv.cv();
+	  short_type f = icv.f();
+	// for (dal::bv_visitor i(msh.convex_index()); !i.finished(); ++i) {
+	//  for (short_type f = 0; f <= n; ++f) {
 	    const mesh::ind_pt_face_ct &fpts
 	      = msh.ind_points_of_face_of_convex(i, f);
 	    ipts.assign(fpts.begin(), fpts.end());
@@ -684,7 +688,7 @@ struct Chrono {
 	    interpolate_face_chrono.toc();
 #endif
 	  }
-	}
+	// }
       }
 
       if (noisy) {
@@ -717,15 +721,14 @@ struct Chrono {
 	  pgt2->poly_vector_grad(pai->point(j), pc);
 	  gmm::mult(G,pc,KK);
 	  scalar_type J = gmm::lu_det(KK);
-	  if (noisy && J * sign < 0)
-	    cout << "ATTENTION retrournement de situation en convexe " << i
-		 << "sign = " << sign << " J = " << J << " p1 = "
-		 << msh.points_of_convex(i)[0] << " p2 = "
-		 << msh.points_of_convex(i)[1] << " p3 = "
-		 << msh.points_of_convex(i)[2] << " p4 = "
-		 << msh.points_of_convex(i)[3] << " p5 = "
-		 << msh.points_of_convex(i)[4] << " p6 = "
-		 << msh.points_of_convex(i)[5] << " K = " << int(K) << endl;
+	  if (noisy && J * sign < 0) {
+	    cout << "CAUTION reversal situation in convex " << i
+		 << "sign = " << sign << " J = " << J << endl;
+	    for (size_type nip = 0; nip < msh.nb_points_of_convex(i); ++nip)
+	      cout << "Point " << nip << "=" << msh.points_of_convex(i)[nip]
+		   << " ";
+	    cout << endl;
+	  }
 	  if (sign == 0 && gmm::abs(J) > 1E-14) sign = J;
 	  new_approx->add_point(c.xreal(), pai->coeff(j) * gmm::abs(J));
 	}
@@ -752,7 +755,7 @@ struct Chrono {
       scalar_type error = test_integration_error(new_approx, 1);
       if (noisy) cout << " max monomial integration err: " << error << "\n";
       if (error > 1e-5) {
-	if (noisy) cout << "PAS BON NON PLUS\n"; if (noisy) getchar();
+	if (noisy) cout << "Not Good ! Let us make a finer cut.\n"; if (noisy) getchar();
 	if (dmin > 3*h0) { dmin /= 2.; }
 	else { h0 /= 2.0; dmin = 2.*h0; }
 	h0_is_ok = false;
@@ -824,8 +827,10 @@ struct Chrono {
       mesh &msh = *(it->second.pmsh);      
       for (unsigned ils = 0; ils < nb_level_sets(); ++ils) {
 	if (get_level_set(ils)->has_secondary()) {
-	  pmesher_signed_distance mesherls0 = get_level_set(ils)->mls_of_convex(cv, 0, false);
-	  pmesher_signed_distance mesherls1 = get_level_set(ils)->mls_of_convex(cv, 1, false);
+	  pmesher_signed_distance
+	    mesherls0 = get_level_set(ils)->mls_of_convex(cv, 0, false);
+	  pmesher_signed_distance
+	    mesherls1 = get_level_set(ils)->mls_of_convex(cv, 1, false);
 	  for (dal::bv_visitor ii(msh.convex_index()); !ii.finished(); ++ii) {
 	    for (unsigned ipt = 0; ipt < msh.nb_points_of_convex(ii); ++ipt) {
 	      if (gmm::abs((*mesherls0)(msh.points_of_convex(ii)[ipt])) < 1E-10

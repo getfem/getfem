@@ -7646,8 +7646,9 @@ namespace getfem {
             mi1[i] = size_type(round(pnode->children[i+1]->t[0])-1);
             if (mi1[i] >= child0->tensor_proper_size(i))
               ga_throw_error(expr, pnode->children[i+1]->pos,
-                             "Index out of range, " << mi1[i]+1 << " > "
-                             << child0->tensor_proper_size(i) << " .");
+                             "Index out of range, " << mi1[i]+1
+			     << ". Should be between 1 and "
+                             << child0->tensor_proper_size(i) << ".");
           }
         }
         mi.resize(0);

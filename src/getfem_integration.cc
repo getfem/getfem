@@ -494,8 +494,6 @@ namespace getfem {
     repartition[2] = nbpt + 2; 
     
     Legendre_polynomials Lp;
-
-    // Legendre_polynomials &Lp = dal::singleton<Legendre_polynomials>::instance();
     Lp.init(nbpt);
     
     for (short_type i = 0; i < nbpt; ++i) {
