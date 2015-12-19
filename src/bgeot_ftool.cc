@@ -38,7 +38,8 @@ namespace bgeot {
     if (ist.eof()) return false; else return true;
   }
   
-#define get_c__(r, c) {	ist.get(c); if (ist.eof()) return r;  \
+#define get_c__(r, c) {	ist.get(c);					\
+    if (ist.eof()) { if (!st.size()) st.push_back('\n'); return r; }	\
     if (to_up) c = char(toupper(c)); }
 
 #define sdouble__(c, e) {  st.push_back(c); get_c__(5, d); \
@@ -47,7 +48,7 @@ namespace bgeot {
 
   int get_token(std::istream &ist, std::string &st,
 		bool ignore_cr, bool to_up, bool read_un_pm, int *linenb) {
-    st.resize(0);
+    st.clear();
     char c = char(-1), d, e;
    
     get_c__(0, c);
@@ -118,7 +119,9 @@ namespace bgeot {
     }
 
     if (isalpha(c) || c == '_') { // reading a name
-      while (isalnum(c) || c == '_') { st.push_back(c); get_c__(4,c); }
+      while (isalnum(c) || c == '_') {
+	st.push_back(c); get_c__(4,c); 
+      }
       ist.putback(c);
       return 4;
     }
@@ -140,7 +143,7 @@ namespace bgeot {
     for (i=0; t.s[i]; ++i) {
       if (i) is.get(c);
       GMM_ASSERT1(toupper(c) == toupper(t.s[i]) && !is.eof(),
-		  "expected token '"<<t.s<<"' not found");
+		  "expected token '" << t.s << "' not found");
     }
     return is;
   }

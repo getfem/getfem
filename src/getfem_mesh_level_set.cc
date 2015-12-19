@@ -129,7 +129,10 @@ struct Chrono {
     for (size_type i=0; i < ipts.size(); ++i) {
       // cout << "ipts[i] = " << ipts[i] << endl;
       if (ipts[i] < nb_vertices) {
-	if (noisy) cout << "point " << i << " coordinates " << m.points()[ipts[i]]<< " constraints[ipts[i]] = " << constraints[ipts[i]] << endl;
+	if (noisy)
+	  cout << "point " << i << " coordinates "
+	       << m.points()[ipts[i]] << " constraints[ipts[i]] = "
+	       << constraints[ipts[i]] << endl;
 	if (cnt == 0) cts = constraints[ipts[i]];
 	else cts &= constraints[ipts[i]];
 	++cnt;
@@ -150,9 +153,10 @@ struct Chrono {
 			 "Original point " << m.points()[ipts[i]]
 			 << " projection " << P);
 	  } else {
-	    if (noisy && pgt->convex_ref()->is_in(P) > 1E-8)
-	      cout << "The projected point is outside the reference convex !" << P << endl;
-	    m.points()[ipts[i]] = P;
+	    if (pgt->convex_ref()->is_in(P) > 1E-8) {
+	      GMM_WARNING1("Projected point outside the reference convex ! "
+			   "Projection canceled. P = " << P);
+	    } else m.points()[ipts[i]] = P;
 	  }
 	  ptdone[ipts[i]] = true;
 	  // dist(P, new_cts);

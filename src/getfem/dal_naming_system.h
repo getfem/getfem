@@ -96,8 +96,8 @@ namespace dal {
       method_key(const std::string &name_) : name(name_) {}
     };
 
-    int mns_lexem(std::string s, size_type i, size_type &lenght);
-    pmethod method_(std::string name, size_type &i, bool throw_if_not_found);
+    int mns_lexem(const std::string &s, size_type i, size_type &lenght);
+    pmethod method_(const std::string &name, size_type &i, bool throw_if_not_found);
 
 
 
@@ -108,7 +108,7 @@ namespace dal {
     void add_generic_function(pgenfunction pf);
     std::string normative_name_of_method(pmethod pm) const;
     std::string shorter_name_of_method(pmethod pm) const;
-    pmethod method(std::string name, size_type &i,
+    pmethod method(const std::string &name, size_type &i,
 		   bool throw_if_not_found = true)
     { gmm::standard_locale sl; return method_(name, i, throw_if_not_found); }
     naming_system(std::string pr) : prefix(pr) {}
@@ -166,20 +166,21 @@ namespace dal {
      6 = ','
   */
   template <class METHOD>
-  int naming_system<METHOD>::mns_lexem(std::string s, size_type i,
+  int naming_system<METHOD>::mns_lexem(const std::string &s, size_type i,
 				       size_type &lenght) {
     lenght = 1;
     if (i >= s.size()) return 0;
-    char c = s[i];
+    char c = s[i++];
     if (isspace(c)) return 1;
     if (isalpha(c) || c == '_') {
-      for (c = s[++i] ; isalpha(c) || c == '_' || isdigit(c); c = s[++i])
-	++lenght;
+      while (i < s.size() && (isalpha(s[i]) || s[i] == '_' || isdigit(s[i])))
+	{ ++i;  ++lenght; }
       return 2;
     }
     if (isdigit(c) || c == '-' || c == '+') {
-      for (c = s[++i] ; isdigit(c) || c == 'e' || c == 'E' ||
-	     c == '.' || c == '-' || c == '+' ; c = s[++i]) ++lenght;
+      while (i < s.size() && (isdigit(s[i]) || s[i] == 'e' || s[i] == 'E' ||
+			      s[i] == '.' || s[i] == '-' || s[i] == '+'))
+	{ ++i;  ++lenght; }
       return 3;
     }
     if (c == '(') return 4;
@@ -192,7 +193,7 @@ namespace dal {
 
   template <class METHOD>
   typename naming_system<METHOD>::pmethod
-  naming_system<METHOD>::method_(std::string name, size_type &i,
+  naming_system<METHOD>::method_(const std::string &name, size_type &i,
 				 bool throw_if_not_found) {
     int state = 0;
     bool error = false;
@@ -254,7 +255,7 @@ namespace dal {
       GMM_ASSERT1(!error, "Syntax error on position " << i
 		  << " of the string : " << name);
       if (isend) {
-	std::stringstream norm_name; //norm_name.imbue(std::locale("C"));
+	std::stringstream norm_name(suff); //norm_name.imbue(std::locale("C"));
 	gmm::standard_locale loc;
 	norm_name << suff;
 	if (params.size() > 0) {

@@ -574,7 +574,7 @@ namespace getfem {
   pfem classical_discontinuous_fem(bgeot::pgeometric_trans pg, short_type k, scalar_type alpha=0);
 
   /** get a fem descriptor from its string name. */
-  pfem fem_descriptor(std::string name);
+  pfem fem_descriptor(const std::string &name);
 
   /** get the string name of a fem descriptor. */
   std::string name_of_fem(pfem p);

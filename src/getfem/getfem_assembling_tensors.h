@@ -539,7 +539,7 @@ namespace getfem {
     std::deque<size_type> marks;
   public:
     asm_tokenizer() {}
-    void set_str(const std::string& s_) {
+   void set_str(const std::string& s_) {
       str = s_; tok_pos = 0; tok_len = size_type(-1); curr_tok_type = END;
       err_msg_mark = 0; get_tok(); 
     }
@@ -628,25 +628,7 @@ namespace getfem {
     generic_assembly(const std::string& s_) :
       vec_fact(0), mat_fact(0), parse_done(false)
     { set_str(s_); }
-    // generic_assembly(const std::string& s_,
-    // 	       std::vector<const mesh_fem*>& mftab_, 
-    // 	       std::vector<const mesh_im*>& imtab_, 
-    // 	       std::vector<base_asm_data*> indata_,
-    // 	       std::vector<base_asm_mat*> outmat_,
-    // 	       std::vector<base_asm_vec*> outvec_) : 
-    //   mftab(mftab_), imtab(imtab_),
-    //   indata(indata_), outvec(outvec_), outmat(outmat_),
-    //   vec_fact(0), mat_fact(0), parse_done(false)
-    // { set_str(s_); }    
-    ~generic_assembly() {
-      // for (size_type i = 0; i < indata.size(); ++i) delete indata[i];
-      /* the destruction of outvec and outmat is assured, if necessary by  */
-      /* the vec_fact and asm_fact (since they derive from deque<asm_mat>) */
-      // if (vec_fact==0)
-      // for (size_type i = 0; i < outvec.size(); ++i) delete outvec[i];
-      // if (mat_fact==0)
-      // for (size_type i = 0; i < outmat.size(); ++i) delete outmat[i];
-    }
+    ~generic_assembly() {}
 
     void set(const std::string& s_) { set_str(s_); }
     const std::vector<const mesh_fem*>& mf() const { return mftab; }
@@ -725,12 +707,6 @@ namespace getfem {
   public:
     /* parse the string 'str' and build the tree of vtensors */
     void parse();
-    /* do the assembly on the whole mesh */
-    //void volumic_assembly();
-    /* do the assembly on the specified convexes */
-    //void volumic_assembly(const dal::bit_vector& cvlst);
-    /* do the assembly on the specified boundary */
-    //void boundary_assembly(size_type boundary_number);
 
     /** do the assembly on the specified region (boundary or set of convexes)*/
     void assembly(const mesh_region &region = 

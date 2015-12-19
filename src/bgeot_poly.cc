@@ -115,18 +115,19 @@ namespace bgeot {
   int stored_tokent;
 
   static void unget_token(int i, std::string s)
-  { stored_s = s; stored_tokent = i; }
+  { std::swap(s, stored_s); stored_tokent = i; }
 
   static int get_next_token(std::string &s, std::istream &f) {
-    if (stored_s.size() == 0)
-      return get_token(f, s, true, false, false);
-    else { s = stored_s; stored_s.clear(); return stored_tokent; }
+    if (stored_s.size() == 0) {
+      int r = get_token(f, s, true, false, false);
+      return r;
+    }
+    else { s.clear(); std::swap(s, stored_s); return stored_tokent; }
   }
 
   static base_poly read_expression(short_type n, std::istream &f) {
     gmm::stream_standard_locale sl(f);
     gmm::standard_locale sll;
-    
     base_poly result(n,0);
     std::string s;
     int i = get_next_token(s, f), j;
@@ -147,7 +148,7 @@ namespace bgeot {
 	if (p.degree() > 0) parse_error(1);
 	result.one();  result *= sqrt(p[0]);
       }
-      else parse_error(2);
+      else { parse_error(2); }
       break;
     case 5 :
       switch (s[0]) {
@@ -210,7 +211,7 @@ namespace bgeot {
     std::vector<base_poly> value_list;
     std::string s;
     std::vector<int> op_list, prior_list;
-    
+
     int i = get_next_token(s, f), prior, op;
     if (i == 5 && s[0] == '-')
       { op_list.push_back(6); prior_list.push_back(2); }
@@ -219,7 +220,7 @@ namespace bgeot {
 
     value_list.push_back(read_expression(n, f));
     i = get_next_token(s, f);
-    operator_priority_(i, s[0], prior, op);
+    operator_priority_(i, i ? s[0] : '0', prior, op);
     while (op) {
       while (!prior_list.empty() && prior_list.back() <= prior)
 	do_bin_op(value_list, op_list, prior_list);
@@ -229,7 +230,7 @@ namespace bgeot {
       prior_list.push_back(prior);
       
       i = get_next_token(s, f);
-      operator_priority_(i, s[0], prior, op);
+      operator_priority_(i, i ? s[0] : '0', prior, op);
     }
     
     if (i == 5 && s[0] == ')') { f.putback(')'); }

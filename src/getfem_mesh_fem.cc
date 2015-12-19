@@ -455,7 +455,7 @@ namespace getfem {
     gmm::stream_standard_locale sl(ist);
     dal::bit_vector npt;
     dal::dynamic_array<double> tmpv;
-    std::string tmp, tmp2;
+    std::string tmp("nop"), tmp2("nop"); tmp.clear(); tmp2.clear();
     bool dof_read = false;
     gmm::col_matrix< gmm::wsvector<scalar_type> > RR, EE;
     ist.precision(16);

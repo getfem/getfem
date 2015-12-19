@@ -2679,7 +2679,7 @@ namespace getfem {
   // Hermite element on the segment. when the real element lies in
   // a 2 or 3 dimensional domain, the element should still work if
   // the tangent coincides.
-  hermite_segment__::hermite_segment__(void) { 
+  hermite_segment__::hermite_segment__(void) {
     base_node pt(1);
     cvr = bgeot::simplex_of_reference(1);
     dim_ = cvr->structure()->dim();
@@ -2688,7 +2688,7 @@ namespace getfem {
     is_pol = true;
     is_lag = is_equiv = false;
     base_.resize(4);
-    
+
     pt[0] = 0.0; add_node(lagrange_dof(1), pt);
     read_poly(base_[0], 1, "(1 - x)^2*(2*x + 1)");
 
@@ -3369,7 +3369,7 @@ namespace getfem {
   };
   
   // get a fem descriptor from a string name of a fem.
-  pfem fem_descriptor(std::string name) {
+  pfem fem_descriptor(const std::string &name) {
     size_type i = 0;
     pfem  pf = dal::singleton<fem_naming_system>::instance().method(name, i);
     const_cast<virtual_fem &>(*pf).debug_name()

@@ -34,7 +34,7 @@ namespace dal {
   // 0 = only undestroyed, 1 =  Normal, 2 very noisy, 
 #define DAL_STORED_OBJECT_DEBUG_NOISY 2
 
-static bool dal_static_stored_tab_valid__ = false;
+static bool dal_static_stored_tab_valid__ = true;
   
 #if DAL_STORED_OBJECT_DEBUG
   static std::map <const static_stored_object *, std::string> _created_objects;
