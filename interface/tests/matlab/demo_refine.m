@@ -18,7 +18,8 @@
 % In this example, the refinement will focus on the
 % transition between the Dirichlet and the Neumann boundary.
 
-clear all; clf;
+gf_workspace('clear all');
+% clear all; clf;
 L=100; H=22;
 N=2;
 draw = true;
