@@ -45,20 +45,20 @@ namespace getfem {
     }
     return M_;
   }
-  
+
   size_type fem_interpolation_context::convex_num() const {
     GMM_ASSERT3(convex_num_ != size_type(-1), "");
-    return convex_num_; 
+    return convex_num_;
   }
 
   bool fem_interpolation_context::is_convex_num_valid() const {
-    return convex_num_ != size_type(-1); 
+    return convex_num_ != size_type(-1);
   }
 
   short_type fem_interpolation_context::face_num() const {
     GMM_ASSERT3(face_num_ != short_type(-1),
-		"Face number is asked but not defined");
-    return face_num_; 
+                "Face number is asked but not defined");
+    return face_num_;
   }
 
   bool fem_interpolation_context::is_on_face() const {
@@ -66,104 +66,104 @@ namespace getfem {
   }
 
   void fem_interpolation_context::base_value(base_tensor& t,
-					     bool withM) const {
+                                             bool withM) const {
     if (pf()->is_on_real_element())
       pf()->real_base_value(*this, t);
     else {
       base_tensor u;
       if (have_pfp() && ii() != size_type(-1)) {
-	switch(pf()->vectorial_type()) {
-	case virtual_fem::VECTORIAL_PRIMAL_TYPE:
-	  t.mat_transp_reduction(pfp_->val(ii()), K(), 1); break;
-	case virtual_fem::VECTORIAL_DUAL_TYPE:
-	  t.mat_transp_reduction(pfp_->val(ii()), B(), 1); break;
-	default: t=pfp_->val(ii());
-	}
+        switch(pf()->vectorial_type()) {
+        case virtual_fem::VECTORIAL_PRIMAL_TYPE:
+          t.mat_transp_reduction(pfp_->val(ii()), K(), 1); break;
+        case virtual_fem::VECTORIAL_DUAL_TYPE:
+          t.mat_transp_reduction(pfp_->val(ii()), B(), 1); break;
+        default: t=pfp_->val(ii());
+        }
       }
       else {
-	switch(pf()->vectorial_type()) {
-	case virtual_fem::VECTORIAL_PRIMAL_TYPE:
-	  pf()->base_value(xref(), u); t.mat_transp_reduction(u,K(),1); break;
-	case virtual_fem::VECTORIAL_DUAL_TYPE:
-	  pf()->base_value(xref(), u); t.mat_transp_reduction(u,B(),1); break;
-	default: pf()->base_value(xref(), t);
-	}
+        switch(pf()->vectorial_type()) {
+        case virtual_fem::VECTORIAL_PRIMAL_TYPE:
+          pf()->base_value(xref(), u); t.mat_transp_reduction(u,K(),1); break;
+        case virtual_fem::VECTORIAL_DUAL_TYPE:
+          pf()->base_value(xref(), u); t.mat_transp_reduction(u,B(),1); break;
+        default: pf()->base_value(xref(), t);
+        }
       }
       if (!(pf()->is_equivalent()) && withM)
-	{ u = t; t.mat_transp_reduction(u, M(), 0); }
+        { u = t; t.mat_transp_reduction(u, M(), 0); }
     }
   }
 
   void fem_interpolation_context::grad_base_value(base_tensor& t,
-						  bool withM) const {
+                                                  bool withM) const {
     if (pf()->is_on_real_element())
       pf()->real_grad_base_value(*this, t);
     else {
       base_tensor u;
       if (have_pfp() && ii() != size_type(-1)) {
-	switch(pf()->vectorial_type()) {
-	case virtual_fem::VECTORIAL_PRIMAL_TYPE:
-	  u.mat_transp_reduction(pfp_->grad(ii()), B(), 2);
-	  t.mat_transp_reduction(u, K(), 1); break;
-	case virtual_fem::VECTORIAL_DUAL_TYPE:
-	  u.mat_transp_reduction(pfp_->grad(ii()), B(), 2);
-	  t.mat_transp_reduction(u, B(), 1); break;
-	default: t.mat_transp_reduction(pfp_->grad(ii()), B(), 2);
-	}
+        switch(pf()->vectorial_type()) {
+        case virtual_fem::VECTORIAL_PRIMAL_TYPE:
+          u.mat_transp_reduction(pfp_->grad(ii()), B(), 2);
+          t.mat_transp_reduction(u, K(), 1); break;
+        case virtual_fem::VECTORIAL_DUAL_TYPE:
+          u.mat_transp_reduction(pfp_->grad(ii()), B(), 2);
+          t.mat_transp_reduction(u, B(), 1); break;
+        default: t.mat_transp_reduction(pfp_->grad(ii()), B(), 2);
+        }
 
       } else {
-	pf()->grad_base_value(xref(), u);
-	if (u.size()) { /* only if the FEM can provide grad_base_value */
-	  t.mat_transp_reduction(u, B(), 2);
-	  switch(pf()->vectorial_type()) {
-	  case virtual_fem::VECTORIAL_PRIMAL_TYPE:
-	    u = t; t.mat_transp_reduction(u, K(), 1); break;
-	  case virtual_fem::VECTORIAL_DUAL_TYPE:
-	    u = t; t.mat_transp_reduction(u, B(), 1); break;
-	  default: break;
-	  }
-	}
+        pf()->grad_base_value(xref(), u);
+        if (u.size()) { /* only if the FEM can provide grad_base_value */
+          t.mat_transp_reduction(u, B(), 2);
+          switch(pf()->vectorial_type()) {
+          case virtual_fem::VECTORIAL_PRIMAL_TYPE:
+            u = t; t.mat_transp_reduction(u, K(), 1); break;
+          case virtual_fem::VECTORIAL_DUAL_TYPE:
+            u = t; t.mat_transp_reduction(u, B(), 1); break;
+          default: break;
+          }
+        }
       }
       if (!(pf()->is_equivalent()) && withM)
-	{ u = t; t.mat_transp_reduction(u, M(), 0); }
+        { u = t; t.mat_transp_reduction(u, M(), 0); }
     }
   }
 
   void fem_interpolation_context::hess_base_value(base_tensor& t,
-						  bool withM) const {
+                                                  bool withM) const {
     if (pf()->is_on_real_element())
       pf()->real_hess_base_value(*this, t);
     else {
       base_tensor tt;
       if (have_pfp() && ii() != size_type(-1))
-	tt = pfp()->hess(ii()); else pf()->hess_base_value(xref(), tt);
+        tt = pfp()->hess(ii()); else pf()->hess_base_value(xref(), tt);
 
       switch(pf()->vectorial_type()) {
       case virtual_fem::VECTORIAL_PRIMAL_TYPE:
-	{ base_tensor u = tt; tt.mat_transp_reduction(u, K(), 1); } break;
+        { base_tensor u = tt; tt.mat_transp_reduction(u, K(), 1); } break;
       case virtual_fem::VECTORIAL_DUAL_TYPE:
-	{ base_tensor u = tt; tt.mat_transp_reduction(u, B(), 1); } break;
+        { base_tensor u = tt; tt.mat_transp_reduction(u, B(), 1); } break;
       default: break;
       }
 
       if (tt.size()) { /* only if the FEM can provide hess_base_value */
-	bgeot::multi_index mim(3);
-	mim[2] = gmm::sqr(tt.sizes()[2]); mim[1] = tt.sizes()[1];
-	mim[0] = tt.sizes()[0];
-	tt.adjust_sizes(mim);
-	t.mat_transp_reduction(tt, B3(), 2);
-	if (!pgt()->is_linear()) {
-	  if (have_pfp()) {
-	    tt.mat_transp_reduction(pfp()->grad(ii()), B32(), 2);
-	  } else {
-	    base_tensor u;
-	    pf()->grad_base_value(xref(), u);
-	    tt.mat_transp_reduction(u, B32(), 2);
-	  }
-	  t -= tt;
-	}
-	if (!(pf()->is_equivalent()) && withM)
-	  { tt = t; t.mat_transp_reduction(tt, M(), 0); }
+        bgeot::multi_index mim(3);
+        mim[2] = gmm::sqr(tt.sizes()[2]); mim[1] = tt.sizes()[1];
+        mim[0] = tt.sizes()[0];
+        tt.adjust_sizes(mim);
+        t.mat_transp_reduction(tt, B3(), 2);
+        if (!pgt()->is_linear()) {
+          if (have_pfp()) {
+            tt.mat_transp_reduction(pfp()->grad(ii()), B32(), 2);
+          } else {
+            base_tensor u;
+            pf()->grad_base_value(xref(), u);
+            tt.mat_transp_reduction(u, B32(), 2);
+          }
+          t -= tt;
+        }
+        if (!(pf()->is_equivalent()) && withM)
+          { tt = t; t.mat_transp_reduction(tt, M(), 0); }
       }
     }
   }
@@ -185,19 +185,19 @@ namespace getfem {
   }
 
   fem_interpolation_context::fem_interpolation_context() :
-    bgeot::geotrans_interpolation_context(), 
+    bgeot::geotrans_interpolation_context(),
     convex_num_(size_type(-1)), face_num_(short_type(-1)), xfem_side_(0) {}
   fem_interpolation_context::fem_interpolation_context
-  (bgeot::pgeotrans_precomp pgp__, pfem_precomp pfp__, size_type ii__, 
-   const base_matrix& G__, size_type convex_num__, short_type face_num__) : 
-    bgeot::geotrans_interpolation_context(pgp__,ii__,G__), 
+  (bgeot::pgeotrans_precomp pgp__, pfem_precomp pfp__, size_type ii__,
+   const base_matrix& G__, size_type convex_num__, short_type face_num__) :
+    bgeot::geotrans_interpolation_context(pgp__,ii__,G__),
     convex_num_(convex_num__), face_num_(face_num__), xfem_side_(0)
     { set_pfp(pfp__); }
   fem_interpolation_context::fem_interpolation_context
-  (bgeot::pgeometric_trans pgt__, pfem_precomp pfp__, size_type ii__, 
+  (bgeot::pgeometric_trans pgt__, pfem_precomp pfp__, size_type ii__,
    const base_matrix& G__, size_type convex_num__, short_type face_num__) :
     bgeot::geotrans_interpolation_context(pgt__,pfp__->get_ppoint_tab(),
-					  ii__, G__),
+                                          ii__, G__),
     convex_num_(convex_num__), face_num_(face_num__), xfem_side_(0)
   { set_pfp(pfp__); }
   fem_interpolation_context::fem_interpolation_context(
@@ -207,34 +207,34 @@ namespace getfem {
     bgeot::geotrans_interpolation_context(pgt__,xref__,G__),
     pf_(pf__), pfp_(0), convex_num_(convex_num__), face_num_(face_num__),
     xfem_side_(0) {}
- 
-  void virtual_fem::real_base_value(const fem_interpolation_context &c, 
-				    base_tensor &t, bool withM) const
+
+  void virtual_fem::real_base_value(const fem_interpolation_context &c,
+                                    base_tensor &t, bool withM) const
   { c.base_value(t, withM); }
 
-  void virtual_fem::real_grad_base_value(const fem_interpolation_context &c, 
-				    base_tensor &t, bool withM) const
+  void virtual_fem::real_grad_base_value(const fem_interpolation_context &c,
+                                    base_tensor &t, bool withM) const
   { c.grad_base_value(t, withM);}
 
-  void virtual_fem::real_hess_base_value(const fem_interpolation_context &c, 
-					 base_tensor &t, bool withM) const
+  void virtual_fem::real_hess_base_value(const fem_interpolation_context &c,
+                                         base_tensor &t, bool withM) const
   { c.hess_base_value(t, withM); }
 
   /* ******************************************************************** */
-  /*	Class for description of an interpolation dof.                    */
+  /*        Class for description of an interpolation dof.                    */
   /* ******************************************************************** */
 
   enum ddl_type { LAGRANGE, NORMAL_DERIVATIVE, DERIVATIVE, MEAN_VALUE,
-		  BUBBLE1, LAGRANGE_NONCONFORMING, GLOBAL_DOF,
-		  SECOND_DERIVATIVE, NORMAL_COMPONENT, EDGE_COMPONENT};
+                  BUBBLE1, LAGRANGE_NONCONFORMING, GLOBAL_DOF,
+                  SECOND_DERIVATIVE, NORMAL_COMPONENT, EDGE_COMPONENT};
 
   struct ddl_elem {
     ddl_type t;
     gmm::int16_type hier_degree;
     short_type hier_raff;
     bool operator < (const ddl_elem &l) const {
-      if (t < l.t) return true; if (t > l.t) return false; 
-      if (hier_degree < l.hier_degree) return true; 
+      if (t < l.t) return true; if (t > l.t) return false;
+      if (hier_degree < l.hier_degree) return true;
       if (hier_degree > l.hier_degree) return false;
       if (hier_raff < l.hier_raff) return true; return false;
     }
@@ -260,7 +260,7 @@ namespace getfem {
   // ATTENTION : en cas de modif, changer aussi dof_description_compare,
   //             product_dof, et dof_hierarchical_compatibility.
   int dof_description_comp__::operator()(const dof_description &m,
-					 const dof_description &n) const { 
+                                         const dof_description &n) const {
     int nn = gmm::lexicographical_less<std::vector<ddl_elem> >()
       (m.ddl_desc, n.ddl_desc);
     if (nn < 0) return -1; if (nn > 0) return 1;
@@ -289,7 +289,7 @@ namespace getfem {
       n_old = n;
     }
     return p_old;
-  } 
+  }
 
   pdof_description lagrange_0_dof(dim_type n) {
     DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(dim_type, n_old, dim_type(-2));
@@ -333,7 +333,7 @@ namespace getfem {
     l.coord_index = ct;
     return &(tab[tab.add_norepeat(l)]);
   }
-  
+
   pdof_description raff_hierarchical_dof(pdof_description p, short_type deg) {
     dof_d_tab& tab = dal::singleton<dof_d_tab>::instance();
     dof_description l = *p;
@@ -368,7 +368,7 @@ namespace getfem {
   }
 
   pdof_description second_derivative_dof(dim_type n, dim_type num_der1,
-					 dim_type num_der2) {
+                                         dim_type num_der2) {
     dof_d_tab& tab = dal::singleton<dof_d_tab>::instance();
     dof_description l;
     l.ddl_desc.resize(n);
@@ -383,7 +383,7 @@ namespace getfem {
     dof_description l;
     l.ddl_desc.resize(n);
     std::fill(l.ddl_desc.begin(), l.ddl_desc.end(),
-	      ddl_elem(NORMAL_DERIVATIVE));
+              ddl_elem(NORMAL_DERIVATIVE));
     return &(tab[tab.add_norepeat(l)]);
   }
 
@@ -392,7 +392,7 @@ namespace getfem {
     dof_description l;
     l.ddl_desc.resize(n);
     std::fill(l.ddl_desc.begin(), l.ddl_desc.end(),
-	      ddl_elem(NORMAL_COMPONENT));
+              ddl_elem(NORMAL_COMPONENT));
     return &(tab[tab.add_norepeat(l)]);
   }
 
@@ -401,7 +401,7 @@ namespace getfem {
     dof_description l;
     l.ddl_desc.resize(n);
     std::fill(l.ddl_desc.begin(), l.ddl_desc.end(),
-	      ddl_elem(EDGE_COMPONENT));
+              ddl_elem(EDGE_COMPONENT));
     return &(tab[tab.add_norepeat(l)]);
   }
 
@@ -435,20 +435,20 @@ namespace getfem {
     l.ddl_desc.resize(nb1+nb2);
     std::copy(a->ddl_desc.begin(), a->ddl_desc.end(), l.ddl_desc.begin());
     std::copy(b->ddl_desc.begin(), b->ddl_desc.end(), l.ddl_desc.begin()+nb1);
-    
+
     {
       gmm::int16_type deg = -1;
       for (size_type i = 0; i < l.ddl_desc.size(); ++i)
-	deg = std::max(deg, l.ddl_desc[i].hier_degree);
+        deg = std::max(deg, l.ddl_desc[i].hier_degree);
       for (size_type i = 0; i < l.ddl_desc.size(); ++i)
-	l.ddl_desc[i].hier_degree = deg;
+        l.ddl_desc[i].hier_degree = deg;
     }
-    { 
+    {
       short_type deg = 0;
       for (size_type i = 0; i < l.ddl_desc.size(); ++i)
-	deg = std::max(deg, l.ddl_desc[i].hier_raff);
+        deg = std::max(deg, l.ddl_desc[i].hier_raff);
       for (size_type i = 0; i < l.ddl_desc.size(); ++i)
-	l.ddl_desc[i].hier_raff = deg;
+        l.ddl_desc[i].hier_raff = deg;
     }
     return &(tab[tab.add_norepeat(l)]);
   }
@@ -466,7 +466,7 @@ namespace getfem {
     {
       if ((nn = int(ita->t) - int (itb->t)) != 0) return nn;
       if ((nn = int(ita->hier_degree) - int (itb->hier_degree)) != 0)
-	return nn;
+        return nn;
     }
     for (; ita != itae; ++ita) if (ita->t != LAGRANGE) return 1;
     for (; itb != itbe; ++itb) if (itb->t != LAGRANGE) return -1;
@@ -491,15 +491,15 @@ namespace getfem {
 
   bool dof_compatibility(pdof_description a, pdof_description b)
   { return (dof_linkable(a) && dof_description_compare(a, b) == 0); }
-  
-  size_type dof_xfem_index(pdof_description a) 
+
+  size_type dof_xfem_index(pdof_description a)
   { return a->xfem_index; }
 
   dim_type coord_index_of_dof(pdof_description a)
   { return a->coord_index; }
 
   bool dof_hierarchical_compatibility(pdof_description a, pdof_description b)
-  { 
+  {
     if (a->coord_index != b->coord_index) return false;
     if (a->linkable != b->linkable) return false;
     if (a->xfem_index != b->xfem_index) return false;
@@ -514,7 +514,7 @@ namespace getfem {
   }
 
   void virtual_fem::add_node(const pdof_description &d, const base_node &pt,
-			     const dal::bit_vector &faces) {
+                             const dal::bit_vector &faces) {
     short_type nb = cv_node.nb_points();
     cv_node.points().resize(nb+1);
     cv_node.points()[nb] = pt;
@@ -531,7 +531,7 @@ namespace getfem {
     dal::bit_vector faces;
      for (short_type f = 0; f < cvs_node->nb_faces(); ++f)
       if (d->all_faces || gmm::abs(cvr->is_in_face(f, pt)) < 1.0E-7)
-	faces.add(f);
+        faces.add(f);
      add_node(d, pt, faces);
   }
 
@@ -547,7 +547,7 @@ namespace getfem {
   }
 
   /* ******************************************************************** */
-  /*	PK class.                                                         */
+  /*        PK class.                                                         */
   /* ******************************************************************** */
 
   class PK_fem_ : public fem<base_poly> {
@@ -556,61 +556,61 @@ namespace getfem {
     PK_fem_(dim_type nc, short_type k);
     ~PK_fem_() {}
   };
-  
+
   void PK_fem_::calc_base_func(base_poly &p, size_type i, short_type K) const {
     dim_type N = dim();
     base_poly l0(N, 0), l1(N, 0);
     bgeot::power_index w(short_type(N+1));
     l0.one(); l1.one(); p = l0;
-    
+
     if (K != 0) {
       for (short_type nn = 0; nn < N; ++nn) l0 -= base_poly(N, 1, nn);
-      
+
       w[0] = K;
-      for (short_type nn = 1; nn <= N; ++nn) { 
-	w[nn]=short_type(floor(0.5+bgeot::to_scalar((cv_node.points()[i])[nn-1]*opt_long_scalar_type(K))));
-	w[0]=short_type(w[0] - w[nn]);
+      for (short_type nn = 1; nn <= N; ++nn) {
+        w[nn]=short_type(floor(0.5+bgeot::to_scalar((cv_node.points()[i])[nn-1]*opt_long_scalar_type(K))));
+        w[0]=short_type(w[0] - w[nn]);
       }
-      
+
       for (int nn = 0; nn <= N; ++nn)
-	for (int j = 0; j < w[nn]; ++j) {
-	  if (nn == 0)
-	    p *= (l0 * (opt_long_scalar_type(K) / opt_long_scalar_type(j+1))) 
-	      - (l1 * (opt_long_scalar_type(j) / opt_long_scalar_type(j+1)));
-	  else
-	    p *= (base_poly(N,1,short_type(nn-1)) * (opt_long_scalar_type(K)/opt_long_scalar_type(j+1))) 
-	      - (l1 * (opt_long_scalar_type(j) / opt_long_scalar_type(j+1)));
-	}
+        for (int j = 0; j < w[nn]; ++j) {
+          if (nn == 0)
+            p *= (l0 * (opt_long_scalar_type(K) / opt_long_scalar_type(j+1)))
+              - (l1 * (opt_long_scalar_type(j) / opt_long_scalar_type(j+1)));
+          else
+            p *= (base_poly(N,1,short_type(nn-1)) * (opt_long_scalar_type(K)/opt_long_scalar_type(j+1)))
+              - (l1 * (opt_long_scalar_type(j) / opt_long_scalar_type(j+1)));
+        }
     }
   }
-  
+
   PK_fem_::PK_fem_(dim_type nc, short_type k) {
     cvr = bgeot::simplex_of_reference(nc);
     dim_ = cvr->structure()->dim();
     is_equiv = is_pol = is_lag = true;
     es_degree = k;
-    
+
     init_cvs_node();
     bgeot::pconvex_ref cvn = bgeot::simplex_of_reference(nc, k);
     size_type R = cvn->nb_points();
     for (size_type i = 0; i < R; ++i)
       add_node(k==0 ? lagrange_0_dof(nc) : lagrange_dof(nc), cvn->points()[i]);
-    
+
     base_.resize(R);
     for (size_type r = 0; r < R; r++) calc_base_func(base_[r], r, k);
   }
 
   static pfem PK_fem(fem_param_list &params,
-	std::vector<dal::pstatic_stored_object> &dependencies) {
+        std::vector<dal::pstatic_stored_object> &dependencies) {
     GMM_ASSERT1(params.size() == 2, "Bad number of parameters : "
-		<< params.size() << " should be 2.");
+                << params.size() << " should be 2.");
     GMM_ASSERT1(params[0].type() == 0 && params[1].type() == 0,
-		"Bad type of parameters");
+                "Bad type of parameters");
     int n = dim_type(::floor(params[0].num() + 0.01));
     int k = short_type(::floor(params[1].num() + 0.01));
     GMM_ASSERT1(n > 0 && n < 100 && k >= 0 && k <= 150 &&
-		double(n) == params[0].num() && double(k) == params[1].num(),
-		"Bad parameters");
+                double(n) == params[0].num() && double(k) == params[1].num(),
+                "Bad parameters");
     pfem p = std::make_shared<PK_fem_>(dim_type(n), short_type(k));
     dependencies.push_back(p->ref_convex(0));
     dependencies.push_back(p->node_tab(0));
@@ -619,57 +619,57 @@ namespace getfem {
 
 
   /* ******************************************************************** */
-  /*	Tensorial product of fem (for polynomial fem).                    */
+  /*        Tensorial product of fem (for polynomial fem).                    */
   /* ******************************************************************** */
 
-  struct tproduct_femi : public fem<base_poly> { 
+  struct tproduct_femi : public fem<base_poly> {
     tproduct_femi(ppolyfem fi1, ppolyfem fi2);
   };
 
   tproduct_femi::tproduct_femi(ppolyfem fi1, ppolyfem fi2) {
     if (fi2->target_dim() != 1) std::swap(fi1, fi2);
     GMM_ASSERT1(fi2->target_dim() == 1, "dimensions mismatch");
-    
+
     is_pol = true;
     is_equiv = fi1->is_equivalent() && fi2->is_equivalent();
     GMM_ASSERT1(is_equiv,
-		"Product of non equivalent elements not available, sorry.");
+                "Product of non equivalent elements not available, sorry.");
     is_lag = fi1->is_lagrange() && fi2->is_lagrange();;
     es_degree = short_type(fi1->estimated_degree() + fi2->estimated_degree());
-    
-    bgeot::convex<base_node> cv 
+
+    bgeot::convex<base_node> cv
       = bgeot::convex_direct_product(fi1->node_convex(0), fi2->node_convex(0));
     cvr = bgeot::convex_ref_product(fi1->ref_convex(0), fi2->ref_convex(0));
     dim_ = cvr->structure()->dim();
     init_cvs_node();
-    
+
     ntarget_dim = fi2->target_dim();
     base_.resize(cv.nb_points() * ntarget_dim);
     size_type i, j, r;
     for (j = 0, r = 0; j < fi2->nb_dof(0); ++j)
       for (i = 0; i < fi1->nb_dof(0); ++i, ++r)
-	add_node(product_dof(fi1->dof_types()[i], fi2->dof_types()[j]),
-		 cv.points()[r]);
-    
+        add_node(product_dof(fi1->dof_types()[i], fi2->dof_types()[j]),
+                 cv.points()[r]);
+
     for (j = 0, r = 0; j < fi2->nb_base_components(0); j++)
       for (i = 0; i < fi1->nb_base_components(0); i++, ++r) {
-	base_[r] = fi1->base()[i];
-	base_[r].direct_product(fi2->base()[j]); 
+        base_[r] = fi1->base()[i];
+        base_[r].direct_product(fi2->base()[j]);
       }
   }
 
   static pfem product_fem(fem_param_list &params,
-	std::vector<dal::pstatic_stored_object> &dependencies) {
+        std::vector<dal::pstatic_stored_object> &dependencies) {
     GMM_ASSERT1(params.size() == 2, "Bad number of parameters : "
-		<< params.size() << " should be 2.");
+                << params.size() << " should be 2.");
     GMM_ASSERT1(params[0].type() == 1 && params[1].type() == 1,
-		"Bad type of parameters");
+                "Bad type of parameters");
     pfem pf1 = params[0].method();
     pfem pf2 = params[1].method();
     GMM_ASSERT1(pf1->is_polynomial() && pf2->is_polynomial(),
-		"Both arguments to FEM_PRODUCT must be polynomial FEM");
+                "Both arguments to FEM_PRODUCT must be polynomial FEM");
     pfem p = std::make_shared<tproduct_femi>(ppolyfem(pf1.get()),
-					     ppolyfem(pf2.get()));
+                                             ppolyfem(pf2.get()));
     dependencies.push_back(p->ref_convex(0));
     dependencies.push_back(p->node_tab(0));
     return p;
@@ -679,7 +679,7 @@ namespace getfem {
   /*    Generic Hierarchical fem (for polynomial fem). To be interfaced.  */
   /* ******************************************************************** */
 
-  struct thierach_femi : public fem<base_poly> { 
+  struct thierach_femi : public fem<base_poly> {
     thierach_femi(ppolyfem fi1, ppolyfem fi2);
   };
 
@@ -687,81 +687,81 @@ namespace getfem {
     : fem<base_poly>(*fi1) {
     GMM_ASSERT1(fi2->target_dim()==fi1->target_dim(), "dimensions mismatch.");
     GMM_ASSERT1(fi2->basic_structure(0) == fi1->basic_structure(0),
-		"Incompatible elements.");
+                "Incompatible elements.");
     GMM_ASSERT1(fi1->is_equivalent() &&  fi2->is_equivalent(), "Sorry, "
-		"no hierachical construction for non tau-equivalent fems.");
+                "no hierachical construction for non tau-equivalent fems.");
     es_degree = fi2->estimated_degree();
     is_lag = false;
     unfreeze_cvs_node();
     for (size_type i = 0; i < fi2->nb_dof(0); ++i) {
       bool found = false;
       for (size_type j = 0; j < fi1->nb_dof(0); ++j) {
-	if ( gmm::vect_dist2(fi2->node_of_dof(0,i),
-			     fi1->node_of_dof(0,j)) < 1e-13
-	     && dof_hierarchical_compatibility(fi2->dof_types()[i],
-					       fi1->dof_types()[j]))
-	    { found = true; break; }
+        if ( gmm::vect_dist2(fi2->node_of_dof(0,i),
+                             fi1->node_of_dof(0,j)) < 1e-13
+             && dof_hierarchical_compatibility(fi2->dof_types()[i],
+                                               fi1->dof_types()[j]))
+            { found = true; break; }
       }
       if (!found) {
-	add_node(deg_hierarchical_dof(fi2->dof_types()[i], 
-				      fi1->estimated_degree()),
-		 fi2->node_of_dof(0,i));
-	base_.resize(nb_dof(0));
-	base_[nb_dof(0)-1] = (fi2->base())[i];
+        add_node(deg_hierarchical_dof(fi2->dof_types()[i],
+                                      fi1->estimated_degree()),
+                 fi2->node_of_dof(0,i));
+        base_.resize(nb_dof(0));
+        base_[nb_dof(0)-1] = (fi2->base())[i];
       }
     }
   }
 
-  struct thierach_femi_comp : public fem<bgeot::polynomial_composite> { 
-    thierach_femi_comp(ppolycompfem fi1, ppolycompfem fi2);  
+  struct thierach_femi_comp : public fem<bgeot::polynomial_composite> {
+    thierach_femi_comp(ppolycompfem fi1, ppolycompfem fi2);
   };
 
   thierach_femi_comp::thierach_femi_comp(ppolycompfem fi1, ppolycompfem fi2)
     : fem<bgeot::polynomial_composite>(*fi1) {
     GMM_ASSERT1(fi2->target_dim()==fi1->target_dim(), "dimensions mismatch.");
     GMM_ASSERT1(fi2->basic_structure(0) == fi1->basic_structure(0),
-		"Incompatible elements.");
+                "Incompatible elements.");
     GMM_ASSERT1(fi1->is_equivalent() &&  fi2->is_equivalent(), "Sorry, "
-		"no hierachical construction for non tau-equivalent fems.");
-    
+                "no hierachical construction for non tau-equivalent fems.");
+
     es_degree = std::max(fi2->estimated_degree(), fi1->estimated_degree());
-    
+
     is_lag = false;
     hier_raff = short_type(fi1->hierarchical_raff() + 1);
     unfreeze_cvs_node();
     for (size_type i = 0; i < fi2->nb_dof(0); ++i) {
       bool found = false;
       for (size_type j = 0; j < fi1->nb_dof(0); ++j) {
-	if ( gmm::vect_dist2(fi2->node_of_dof(0,i),
-			     fi1->node_of_dof(0,j)) < 1e-13
-	     && dof_hierarchical_compatibility(fi2->dof_types()[i],
-					       fi1->dof_types()[j]))
-	  { found = true; break; }
+        if ( gmm::vect_dist2(fi2->node_of_dof(0,i),
+                             fi1->node_of_dof(0,j)) < 1e-13
+             && dof_hierarchical_compatibility(fi2->dof_types()[i],
+                                               fi1->dof_types()[j]))
+          { found = true; break; }
       }
       if (!found) {
-	add_node(raff_hierarchical_dof(fi2->dof_types()[i], hier_raff),
-		 fi2->node_of_dof(0,i));
-	base_.resize(nb_dof(0));
-	base_[nb_dof(0)-1] = (fi2->base())[i];
+        add_node(raff_hierarchical_dof(fi2->dof_types()[i], hier_raff),
+                 fi2->node_of_dof(0,i));
+        base_.resize(nb_dof(0));
+        base_[nb_dof(0)-1] = (fi2->base())[i];
       }
     }
   }
 
   static pfem gen_hierarchical_fem(fem_param_list &params,
-	std::vector<dal::pstatic_stored_object> &dependencies) {
+        std::vector<dal::pstatic_stored_object> &dependencies) {
     GMM_ASSERT1(params.size() == 2, "Bad number of parameters : "
-		<< params.size() << " should be 2.");
+                << params.size() << " should be 2.");
     GMM_ASSERT1(params[0].type() == 1 && params[1].type() == 1,
-		"Bad type of parameters");
+                "Bad type of parameters");
     pfem pf1 = params[0].method();
     pfem pf2 = params[1].method();
     if (pf1->is_polynomial() && pf2->is_polynomial())
       return std::make_shared<thierach_femi>(ppolyfem(pf1.get()),
-					     ppolyfem(pf2.get()));
+                                             ppolyfem(pf2.get()));
     GMM_ASSERT1(pf1->is_polynomialcomp() && pf2->is_polynomialcomp(),
-		"Bad parameters");
+                "Bad parameters");
     pfem p  = std::make_shared<thierach_femi_comp>(ppolycompfem(pf1.get()),
-						   ppolycompfem(pf2.get()));
+                                                   ppolycompfem(pf2.get()));
     dependencies.push_back(p->ref_convex(0));
     dependencies.push_back(p->node_tab(0));
     return p;
@@ -772,64 +772,64 @@ namespace getfem {
   /* ******************************************************************** */
 
   static pfem PK_hierarch_fem(fem_param_list &params,
-	std::vector<dal::pstatic_stored_object> &) {
+        std::vector<dal::pstatic_stored_object> &) {
     GMM_ASSERT1(params.size() == 2, "Bad number of parameters : "
-		<< params.size() << " should be 2.");
+                << params.size() << " should be 2.");
     GMM_ASSERT1(params[0].type() == 0 && params[1].type() == 0,
-		"Bad type of parameters");
+                "Bad type of parameters");
     int n = int(::floor(params[0].num() + 0.01));
     int k = int(::floor(params[1].num() + 0.01)), s;
     GMM_ASSERT1(n > 0 && n < 100 && k > 0 && k <= 150 &&
-		double(n) == params[0].num() && double(k) == params[1].num(),
-		"Bad parameters");
+                double(n) == params[0].num() && double(k) == params[1].num(),
+                "Bad parameters");
     std::stringstream name;
-    if (k == 1) 
+    if (k == 1)
       name << "FEM_PK(" << n << ",1)";
     else {
       for (s = 2; s <= k; ++s) if ((k % s) == 0) break;
       name << "FEM_GEN_HIERARCHICAL(FEM_PK_HIERARCHICAL(" << n << ","
-	   << k/s << "), FEM_PK(" << n << "," << k << "))";
+           << k/s << "), FEM_PK(" << n << "," << k << "))";
     }
     return fem_descriptor(name.str());
   }
 
   static pfem QK_hierarch_fem(fem_param_list &params,
-	std::vector<dal::pstatic_stored_object> &) {
+        std::vector<dal::pstatic_stored_object> &) {
     GMM_ASSERT1(params.size() == 2, "Bad number of parameters : "
-		<< params.size() << " should be 2.");
+                << params.size() << " should be 2.");
     GMM_ASSERT1(params[0].type() == 0 && params[1].type() == 0,
-		"Bad type of parameters");
+                "Bad type of parameters");
     int n = int(::floor(params[0].num() + 0.01));
     int k = int(::floor(params[1].num() + 0.01));
     GMM_ASSERT1(n > 0 && n < 100 && k > 0 && k <= 150 &&
-		double(n) == params[0].num() && double(k) == params[1].num(),
-		"Bad parameters");
+                double(n) == params[0].num() && double(k) == params[1].num(),
+                "Bad parameters");
     std::stringstream name;
     if (n == 1)
       name << "FEM_PK_HIERARCHICAL(1," << k << ")";
     else
       name << "FEM_PRODUCT(FEM_PK_HIERARCHICAL(" << n-1 << "," << k
-	   << "),FEM_PK(1_HIERARCHICAL," << k << "))";
+           << "),FEM_PK(1_HIERARCHICAL," << k << "))";
     return fem_descriptor(name.str());
   }
 
   static pfem PK_prism_hierarch_fem(fem_param_list &params,
-	std::vector<dal::pstatic_stored_object> &) {
+        std::vector<dal::pstatic_stored_object> &) {
     GMM_ASSERT1(params.size() == 2, "Bad number of parameters : "
-		<< params.size() << " should be 2.");
+                << params.size() << " should be 2.");
     GMM_ASSERT1(params[0].type() == 0 && params[1].type() == 0,
-		"Bad type of parameters");
+                "Bad type of parameters");
     int n = int(::floor(params[0].num() + 0.01));
     int k = int(::floor(params[1].num() + 0.01));
     GMM_ASSERT1(n > 1 && n < 100 && k >= 0 && k <= 150 &&
-		double(n) == params[0].num() && double(k) == params[1].num(),
-		"Bad parameters");
+                double(n) == params[0].num() && double(k) == params[1].num(),
+                "Bad parameters");
     std::stringstream name;
     if (n == 2)
       name << "FEM_QK_HIERARCHICAL(1," << k << ")";
-    else 
+    else
       name << "FEM_PRODUCT(FEM_PK_HIERARCHICAL(" << n-1 << "," << k
-	   << "),FEM_PK_HIERARCHICAL(1," << k << "))";
+           << "),FEM_PK_HIERARCHICAL(1," << k << "))";
     return fem_descriptor(name.str());
   }
 
@@ -842,11 +842,11 @@ namespace getfem {
     const char *fempk = discontinuous ? "FEM_PK_DISCONTINUOUS" : "FEM_PK";
     const char *femqk = discontinuous ? "FEM_QK_DISCONTINUOUS" : "FEM_QK";
     GMM_ASSERT1(params.size() == 2 || (discontinuous && params.size() == 3),
-		"Bad number of parameters : "
-		<< params.size() << " should be 2.");
+                "Bad number of parameters : "
+                << params.size() << " should be 2.");
     GMM_ASSERT1(params[0].type() == 0 && params[1].type() == 0 &&
-		(params.size() != 3 || params[2].type() == 0),
-		"Bad type of parameters");
+                (params.size() != 3 || params[2].type() == 0),
+                "Bad type of parameters");
     int n = int(::floor(params[0].num() + 0.01));
     int k = int(::floor(params[1].num() + 0.01));
     char alpha[128]; alpha[0] = 0;
@@ -856,58 +856,58 @@ namespace getfem {
       sprintf(alpha, ",%g", v);
     }
     GMM_ASSERT1(n > 0 && n < 100 && k >= 0 && k <= 150 &&
-		double(n) == params[0].num() && double(k) == params[1].num(),
-		"Bad parameters");
+                double(n) == params[0].num() && double(k) == params[1].num(),
+                "Bad parameters");
     std::stringstream name;
     if (n == 1)
       name << fempk << "(1," << k << alpha << ")";
-    else 
+    else
       name << "FEM_PRODUCT(" << femqk << "(" << n-1 << ","
-	   << k << alpha << ")," << fempk << "(1," << k << alpha << "))";
+           << k << alpha << ")," << fempk << "(1," << k << alpha << "))";
     return fem_descriptor(name.str());
   }
   static pfem QK_fem(fem_param_list &params,
-	std::vector<dal::pstatic_stored_object> &) {
+        std::vector<dal::pstatic_stored_object> &) {
     return QK_fem_(params, false);
   }
   static pfem QK_discontinuous_fem(fem_param_list &params,
-	std::vector<dal::pstatic_stored_object> &) {
+        std::vector<dal::pstatic_stored_object> &) {
     return QK_fem_(params, true);
   }
 
-  
+
   /* ******************************************************************** */
   /* prims fems.                                                          */
   /* ******************************************************************** */
 
   static pfem PK_prism_fem(fem_param_list &params,
-	std::vector<dal::pstatic_stored_object> &) {
+        std::vector<dal::pstatic_stored_object> &) {
     GMM_ASSERT1(params.size() == 2, "Bad number of parameters : "
-		<< params.size() << " should be 2.");
+                << params.size() << " should be 2.");
     GMM_ASSERT1(params[0].type() == 0 && params[1].type() == 0,
-		"Bad type of parameters");
+                "Bad type of parameters");
     int n = int(::floor(params[0].num() + 0.01));
     int k = int(::floor(params[1].num() + 0.01));
     GMM_ASSERT1(n > 1 && n < 100 && k >= 0 && k <= 150 &&
-		double(n) == params[0].num() && double(k) == params[1].num(),
-		"Bad parameters");
+                double(n) == params[0].num() && double(k) == params[1].num(),
+                "Bad parameters");
     std::stringstream name;
     if (n == 2)
       name << "FEM_QK(1," << k << ")";
-    else 
+    else
       name << "FEM_PRODUCT(FEM_PK(" << n-1 << "," << k << "),FEM_PK(1,"
-	   << k << "))";
+           << k << "))";
     return fem_descriptor(name.str());
   }
 
   static pfem PK_prism_discontinuous_fem(fem_param_list &params,
-	std::vector<dal::pstatic_stored_object> &) {
+        std::vector<dal::pstatic_stored_object> &) {
     GMM_ASSERT1(params.size() == 2 || params.size() == 3,
-		"Bad number of parameters : "
-		<< params.size() << " should be 2.");
+                "Bad number of parameters : "
+                << params.size() << " should be 2.");
     GMM_ASSERT1(params[0].type() == 0 && params[1].type() == 0 &&
-		(params.size() != 3 || params[2].type() == 0),
-		"Bad type of parameters");
+                (params.size() != 3 || params[2].type() == 0),
+                "Bad type of parameters");
     int n = int(::floor(params[0].num() + 0.01));
     int k = int(::floor(params[1].num() + 0.01));
     char alpha[128]; alpha[0] = 0;
@@ -917,24 +917,24 @@ namespace getfem {
       sprintf(alpha, ",%g", v);
     }
     GMM_ASSERT1(n > 1 && n < 100 && k >= 0 && k <= 150 &&
-		double(n) == params[0].num() && double(k) == params[1].num(),
-		"Bad parameters");
+                double(n) == params[0].num() && double(k) == params[1].num(),
+                "Bad parameters");
     std::stringstream name;
     if (n == 2)
       name << "FEM_QK_DISCONTINUOUS(1," << k << alpha << ")";
-    else 
+    else
       name << "FEM_PRODUCT(FEM_PK_DISCONTINUOUS(" << n-1 << "," << k << alpha
-	   << "),FEM_PK_DISCONTINUOUS(1,"
-	   << k << alpha << "))";
+           << "),FEM_PK_DISCONTINUOUS(1,"
+           << k << alpha << "))";
     return fem_descriptor(name.str());
   }
 
   /* ******************************************************************** */
-  /*	P1 NON CONFORMING (dim 2)                                         */
+  /*        P1 NON CONFORMING (dim 2)                                         */
   /* ******************************************************************** */
 
    static pfem P1_nonconforming_fem(fem_param_list &params,
-	std::vector<dal::pstatic_stored_object> &dependencies) {
+        std::vector<dal::pstatic_stored_object> &dependencies) {
     GMM_ASSERT1(params.size() == 0, "Bad number of parameters ");
     auto p = std::make_shared<fem<base_poly>>();
     p->mref_convex() = bgeot::simplex_of_reference(2);
@@ -958,7 +958,7 @@ namespace getfem {
 
 
   /* ******************************************************************** */
-  /*	Quad8/Hexa20 SERENDIPITY ELEMENT (dim 2 or 3) (incomplete Q2)     */
+  /*        Quad8/Hexa20 SERENDIPITY ELEMENT (dim 2 or 3) (incomplete Q2)     */
   /* ******************************************************************** */
 
   // local dof numeration for 2D:
@@ -983,7 +983,7 @@ namespace getfem {
   // 0----1----2
 
    static pfem Q2_incomplete_fem(fem_param_list &params,
-	std::vector<dal::pstatic_stored_object> &dependencies) {
+        std::vector<dal::pstatic_stored_object> &dependencies) {
     GMM_ASSERT1(params.size() <= 1, "Bad number of parameters");
     dim_type n = 2;
     if (params.size() > 0) {
@@ -1081,7 +1081,7 @@ namespace getfem {
 
 
    /* ******************************************************************** */
-   /*	P1 element with a bubble base fonction on a face                   */
+   /*        P1 element with a bubble base fonction on a face                   */
    /* ******************************************************************** */
 
    struct P1_wabbfoaf_ : public PK_fem_ {
@@ -1098,17 +1098,17 @@ namespace getfem {
     for (int i = 2; i <= nc; ++i) base_[nc+1] *= base_[i];
     // Le raccord assure la continuite
     // des possibilités de raccord avec du P2 existent mais il faudrait
-    // modifier qlq chose (transformer les fct de base P1) 
+    // modifier qlq chose (transformer les fct de base P1)
   }
 
   static pfem P1_with_bubble_on_a_face(fem_param_list &params,
-	std::vector<dal::pstatic_stored_object> &dependencies) {
+        std::vector<dal::pstatic_stored_object> &dependencies) {
     GMM_ASSERT1(params.size() == 1, "Bad number of parameters : "
-		<< params.size() << " should be 1.");
+                << params.size() << " should be 1.");
     GMM_ASSERT1(params[0].type() == 0, "Bad type of parameters");
     int n = int(::floor(params[0].num() + 0.01));
     GMM_ASSERT1(n > 1 && n < 100 && double(n) == params[0].num(),
-		"Bad parameter");
+                "Bad parameter");
     pfem p  = std::make_shared<P1_wabbfoaf_>(dim_type(n));
     dependencies.push_back(p->ref_convex(0));
     dependencies.push_back(p->node_tab(0));
@@ -1116,9 +1116,9 @@ namespace getfem {
   }
 
   /* ******************************************************************** */
-  /*	Element RT0 on the simplexes.                                     */
+  /*        Element RT0 on the simplexes.                                     */
   /* ******************************************************************** */
-  
+
   struct P1_RT0_ : public fem<base_poly> {
     dim_type nc;
     mutable base_matrix K;
@@ -1128,13 +1128,13 @@ namespace getfem {
     // mutable pfem_precomp pfp;
 
     virtual void mat_trans(base_matrix &M, const base_matrix &G,
-			   bgeot::pgeometric_trans pgt) const;
+                           bgeot::pgeometric_trans pgt) const;
     P1_RT0_(dim_type nc_);
   };
 
   void P1_RT0_::mat_trans(base_matrix &M,
-			  const base_matrix &G,
-			  bgeot::pgeometric_trans pgt) const {
+                          const base_matrix &G,
+                          bgeot::pgeometric_trans pgt) const {
     dim_type N = dim_type(G.nrows());
     gmm::copy(gmm::identity_matrix(), M);
     if (pgt != pgt_stored) {
@@ -1147,16 +1147,16 @@ namespace getfem {
     gmm::mult(G, pgp->grad(0), K); gmm::lu_inverse(K);
     for (unsigned i = 0; i <= nc; ++i) {
       if (!(pgt->is_linear()))
-	{ gmm::mult(G, pgp->grad(i), K); gmm::lu_inverse(K); }
+        { gmm::mult(G, pgp->grad(i), K); gmm::lu_inverse(K); }
       bgeot::base_small_vector n(nc);
       gmm::mult(gmm::transposed(K), cvr->normals()[i], n);
-      
+
       M(i,i) = gmm::vect_norm2(n);
       n /= M(i,i);
       scalar_type ps = gmm::vect_sp(n, norient);
       if (ps < 0) M(i, i) *= scalar_type(-1);
       if (gmm::abs(ps) < 1E-8)
-	GMM_WARNING2("RT0 : The normal orientation may be not correct");
+        GMM_WARNING2("RT0 : The normal orientation may be not correct");
     }
   }
 
@@ -1178,12 +1178,12 @@ namespace getfem {
     vtype = VECTORIAL_PRIMAL_TYPE;
     base_.resize(nc*(nc+1));
 
-    
+
     for (size_type j = 0; j < nc; ++j)
       for (size_type i = 0; i <= nc; ++i) {
-	base_[i+j*(nc+1)] = base_poly(nc, 1, short_type(j));
-	if (i-1 == j) base_[i+j*(nc+1)] -= bgeot::one_poly(nc);
-	if (i == 0) base_[i+j*(nc+1)] *= sqrt(opt_long_scalar_type(nc));
+        base_[i+j*(nc+1)] = base_poly(nc, 1, short_type(j));
+        if (i-1 == j) base_[i+j*(nc+1)] -= bgeot::one_poly(nc);
+        if (i == 0) base_[i+j*(nc+1)] *= sqrt(opt_long_scalar_type(nc));
       }
 
     base_node pt(nc);
@@ -1198,13 +1198,13 @@ namespace getfem {
   }
 
   static pfem P1_RT0(fem_param_list &params,
-	std::vector<dal::pstatic_stored_object> &dependencies) {
+        std::vector<dal::pstatic_stored_object> &dependencies) {
     GMM_ASSERT1(params.size() == 1, "Bad number of parameters : "
-		<< params.size() << " should be 1.");
+                << params.size() << " should be 1.");
     GMM_ASSERT1(params[0].type() == 0, "Bad type of parameters");
     int n = int(::floor(params[0].num() + 0.01));
     GMM_ASSERT1(n > 1 && n < 100 && double(n) == params[0].num(),
-		"Bad parameter");
+                "Bad parameter");
     pfem p = std::make_shared<P1_RT0_>(dim_type(n));
     dependencies.push_back(p->ref_convex(0));
     dependencies.push_back(p->node_tab(0));
@@ -1213,9 +1213,9 @@ namespace getfem {
 
 
   /* ******************************************************************** */
-  /*	Element RT0 on parallelepideds.                                   */
+  /*        Element RT0 on parallelepideds.                                   */
   /* ******************************************************************** */
-  
+
   struct P1_RT0Q_ : public fem<base_poly> {
     dim_type nc;
     mutable base_matrix K;
@@ -1225,13 +1225,13 @@ namespace getfem {
     // mutable pfem_precomp pfp;
 
     virtual void mat_trans(base_matrix &M, const base_matrix &G,
-			   bgeot::pgeometric_trans pgt) const;
+                           bgeot::pgeometric_trans pgt) const;
     P1_RT0Q_(dim_type nc_);
   };
 
   void P1_RT0Q_::mat_trans(base_matrix &M,
-			  const base_matrix &G,
-			  bgeot::pgeometric_trans pgt) const {
+                          const base_matrix &G,
+                          bgeot::pgeometric_trans pgt) const {
     dim_type N = dim_type(G.nrows());
     gmm::copy(gmm::identity_matrix(), M);
     if (pgt != pgt_stored) {
@@ -1244,7 +1244,7 @@ namespace getfem {
     gmm::mult(G, pgp->grad(0), K); gmm::lu_inverse(K);
     for (unsigned i = 0; i < unsigned(2*nc); ++i) {
       if (!(pgt->is_linear()))
-	{ gmm::mult(G, pgp->grad(i), K); gmm::lu_inverse(K); }
+        { gmm::mult(G, pgp->grad(i), K); gmm::lu_inverse(K); }
       bgeot::base_small_vector n(nc);
       gmm::mult(gmm::transposed(K), cvr->normals()[i], n);
 
@@ -1253,7 +1253,7 @@ namespace getfem {
       scalar_type ps = gmm::vect_sp(n, norient);
       if (ps < 0) M(i, i) *= scalar_type(-1);
       if (gmm::abs(ps) < 1E-8)
-	GMM_WARNING2("RT0Q : The normal orientation may be not correct");
+        GMM_WARNING2("RT0Q : The normal orientation may be not correct");
     }
   }
 
@@ -1278,7 +1278,7 @@ namespace getfem {
     for (size_type j = 0; j < size_type(nc*2*nc); ++j)
       base_[j] = bgeot::null_poly(nc);
 
-    for (short_type i = 0; i < nc; ++i) { 
+    for (short_type i = 0; i < nc; ++i) {
       base_[2*i+i*2*nc] = base_poly(nc, 1, i);
       base_[2*i+1+i*2*nc] = base_poly(nc, 1, i) - bgeot::one_poly(nc);
     }
@@ -1295,13 +1295,13 @@ namespace getfem {
   }
 
   static pfem P1_RT0Q(fem_param_list &params,
-	std::vector<dal::pstatic_stored_object> &dependencies) {
+        std::vector<dal::pstatic_stored_object> &dependencies) {
     GMM_ASSERT1(params.size() == 1, "Bad number of parameters : "
-		<< params.size() << " should be 1.");
+                << params.size() << " should be 1.");
     GMM_ASSERT1(params[0].type() == 0, "Bad type of parameters");
     int n = int(::floor(params[0].num() + 0.01));
     GMM_ASSERT1(n > 1 && n < 100 && double(n) == params[0].num(),
-		"Bad parameter");
+                "Bad parameter");
     pfem p = std::make_shared<P1_RT0Q_>(dim_type(n));
     dependencies.push_back(p->ref_convex(0));
     dependencies.push_back(p->node_tab(0));
@@ -1310,9 +1310,9 @@ namespace getfem {
 
 
   /* ******************************************************************** */
-  /*	Nedelec Element.                                                  */
+  /*        Nedelec Element.                                                  */
   /* ******************************************************************** */
-  
+
   struct P1_nedelec_ : public fem<base_poly> {
     dim_type nc;
     base_small_vector norient;
@@ -1322,15 +1322,15 @@ namespace getfem {
     mutable pfem_precomp pfp;
 
     virtual void mat_trans(base_matrix &M, const base_matrix &G,
-			   bgeot::pgeometric_trans pgt) const;
+                           bgeot::pgeometric_trans pgt) const;
     P1_nedelec_(dim_type nc_);
   };
 
   void P1_nedelec_::mat_trans(base_matrix &M, const base_matrix &G,
-			      bgeot::pgeometric_trans pgt) const {
+                              bgeot::pgeometric_trans pgt) const {
     bgeot::base_small_vector t(nc), v(nc);
     GMM_ASSERT1(G.nrows() == nc,
-		"Sorry, this element works only in dimension " << nc);
+                "Sorry, this element works only in dimension " << nc);
 
     if (pgt != pgt_stored) {
       pgt_stored = pgt;
@@ -1347,14 +1347,14 @@ namespace getfem {
       scalar_type ps = gmm::vect_sp(t, norient);
       if (ps < 0) v *= scalar_type(-1);
       if (gmm::abs(ps) < 1E-8)
-	GMM_WARNING2("Nedelec element: "
-		     "The normal orientation may be uncorrect");
+        GMM_WARNING2("Nedelec element: "
+                     "The normal orientation may be uncorrect");
 
       const bgeot::base_tensor &tt = pfp->val(i);
       for (size_type j = 0; j < nb_dof(0); ++j) {
-	scalar_type a = scalar_type(0);
-	for (size_type k = 0; k < nc; ++k) a += tt(j, k) * v[k];
-	M(j, i) = a;
+        scalar_type a = scalar_type(0);
+        for (size_type k = 0; k < nc; ++k) a += tt(j, k) * v[k];
+        M(j, i) = a;
       }
     }
     // In fact matrix M is diagonal (at least for linear transformations).
@@ -1379,7 +1379,7 @@ namespace getfem {
     vtype = VECTORIAL_DUAL_TYPE;
     base_.resize(nc*(nc+1)*nc/2);
     tangents.resize(nc*(nc+1)*nc/2);
-    
+
     std::vector<base_poly> lambda(nc+1);
     std::vector<base_vector> grad_lambda(nc+1);
     lambda[0] = bgeot::one_poly(nc);
@@ -1395,28 +1395,28 @@ namespace getfem {
     size_type j = 0;
     for (size_type k = 0; k <= nc; ++k)
       for (size_type l = k+1; l <= nc; ++l, ++j) {
-	for (size_type i = 0; i < nc; ++i) {
-	  base_[j+i*(nc*(nc+1)/2)] = lambda[k] * grad_lambda[l][i]
-	    - lambda[l] * grad_lambda[k][i]; 
-	  // cout << "base(" << j << "," << i << ") = " <<  base_[j+i*(nc*(nc+1)/2)] << endl;
-	}
-	
-	base_node pt = (cvr->points()[k] + cvr->points()[l]) / scalar_type(2);
-	add_node(edge_component_dof(nc), pt);
-	tangents[j] = cvr->points()[l] - cvr->points()[k];
-	tangents[j] /= gmm::vect_norm2(tangents[j]);
-	// cout << "tangent(" << j << ") = " << tangents[j] << endl;
+        for (size_type i = 0; i < nc; ++i) {
+          base_[j+i*(nc*(nc+1)/2)] = lambda[k] * grad_lambda[l][i]
+            - lambda[l] * grad_lambda[k][i];
+          // cout << "base(" << j << "," << i << ") = " <<  base_[j+i*(nc*(nc+1)/2)] << endl;
+        }
+
+        base_node pt = (cvr->points()[k] + cvr->points()[l]) / scalar_type(2);
+        add_node(edge_component_dof(nc), pt);
+        tangents[j] = cvr->points()[l] - cvr->points()[k];
+        tangents[j] /= gmm::vect_norm2(tangents[j]);
+        // cout << "tangent(" << j << ") = " << tangents[j] << endl;
       }
   }
 
   static pfem P1_nedelec(fem_param_list &params,
-	std::vector<dal::pstatic_stored_object> &dependencies) {
+        std::vector<dal::pstatic_stored_object> &dependencies) {
     GMM_ASSERT1(params.size() == 1, "Bad number of parameters : "
-		<< params.size() << " should be 1.");
+                << params.size() << " should be 1.");
     GMM_ASSERT1(params[0].type() == 0, "Bad type of parameters");
     int n = int(::floor(params[0].num() + 0.01));
     GMM_ASSERT1(n > 1 && n < 100 && double(n) == params[0].num(),
-		"Bad parameter");
+                "Bad parameter");
     pfem p = std::make_shared<P1_nedelec_>(dim_type(n));
     dependencies.push_back(p->ref_convex(0));
     dependencies.push_back(p->node_tab(0));
@@ -1425,7 +1425,7 @@ namespace getfem {
 
 
   /* ******************************************************************** */
-  /*	P1 element with a bubble base fonction on a face : type lagrange  */
+  /*        P1 element with a bubble base fonction on a face : type lagrange  */
   /* ******************************************************************** */
 
   struct P1_wabbfoafla_ : public PK_fem_
@@ -1439,15 +1439,15 @@ namespace getfem {
     base_node pt(2); pt.fill(0.5);
     add_node(lagrange_dof(2), pt);
     base_.resize(nb_dof(0));
-    
+
     read_poly(base_[0], 2, "1 - y - x");
     read_poly(base_[1], 2, "x*(1 - 2*y)");
     read_poly(base_[2], 2, "y*(1 - 2*x)");
     read_poly(base_[3], 2, "4*x*y");
   }
-  
+
   static pfem P1_with_bubble_on_a_face_lagrange(fem_param_list &params,
-	std::vector<dal::pstatic_stored_object> &dependencies) {
+        std::vector<dal::pstatic_stored_object> &dependencies) {
     GMM_ASSERT1(params.size() == 0, "Bad number of parameters");
     pfem p = std::make_shared<P1_wabbfoafla_>();
     dependencies.push_back(p->ref_convex(0));
@@ -1457,7 +1457,7 @@ namespace getfem {
 
 
   /* ******************************************************************** */
-  /*	PK Gauss-Lobatto element on the segment                           */
+  /*        PK Gauss-Lobatto element on the segment                           */
   /* ******************************************************************** */
 
   static const double fem_coef_gausslob_1[4] =
@@ -1468,7 +1468,7 @@ namespace getfem {
     { 1.000000000000000e+00, -3.000000000000000e+00, 2.000000000000000e+00,
       0.000000000000000e-01, 4.000000000000000e+00, -4.000000000000000e+00,
       0.000000000000000e-01, -1.000000000000000e+00, 2.000000000000000e+00 };
-  
+
   static const double fem_coef_gausslob_3[16] =
     { 1.000000000000000e+00, -6.000000000000000e+00, 1.000000000000000e+01,
       -5.000000000000000e+00, 0.000000000000000e-01, 8.090169943749474e+00,
@@ -1476,7 +1476,7 @@ namespace getfem {
       -3.090169943749474e+00, 1.427050983124842e+01, -1.118033988749895e+01,
       0.000000000000000e-01, 1.000000000000000e+00, -5.000000000000000e+00,
       5.000000000000000e+00 };
-  
+
   static const double fem_coef_gausslob_4[25] =
     { 1.000000000000000e+00, -1.000000000000000e+01, 3.000000000000000e+01,
       -3.500000000000000e+01, 1.400000000000000e+01, 0.000000000000000e-01,
@@ -1487,7 +1487,7 @@ namespace getfem {
       5.464065671176971e+01, -3.266666666666667e+01, 0.000000000000000e-01,
       -1.000000000000000e+00, 9.000000000000000e+00, -2.100000000000000e+01,
       1.400000000000000e+01 };
-  
+
   static const double fem_coef_gausslob_5[36] =
     { 1.000000000000000e+00, -1.500000000000000e+01, 7.000000000000000e+01,
       -1.400000000000000e+02, 1.260000000000000e+02, -4.200000000000000e+01,
@@ -1501,7 +1501,7 @@ namespace getfem {
       -1.465663022612998e+02, 2.119001378496167e+02, -1.000722106463179e+02,
       0.000000000000000e-01, 1.000000000000000e+00, -1.400000000000000e+01,
       5.600000000000000e+01, -8.400000000000000e+01, 4.200000000000000e+01 };
-  
+
   static const double fem_coef_gausslob_6[49] =
     { 1.000000000000000e+00, -2.100000000000000e+01, 1.400000000000000e+02,
       -4.200000000000000e+02, 6.300000000000000e+02, -4.620000000000000e+02,
@@ -1520,7 +1520,7 @@ namespace getfem {
       0.000000000000000e-01, -1.000000000000000e+00, 2.000000000000000e+01,
       -1.200000000000000e+02, 3.000000000000000e+02, -3.300000000000000e+02,
       1.320000000000000e+02 };
-  
+
   static const double fem_coef_gausslob_7[64] =
     { 1.000000000000000e+00, -2.800000000000000e+01, 2.520000000000000e+02,
       -1.050000000000000e+03, 2.310000000000000e+03, -2.772000000000000e+03,
@@ -1544,7 +1544,7 @@ namespace getfem {
       1.000000000000000e+00, -2.700000000000000e+01, 2.250000000000000e+02,
       -8.250000000000000e+02, 1.485000000000000e+03, -1.287000000000000e+03,
       4.290000000000000e+02 };
-  
+
   static const double fem_coef_gausslob_8[81] =
     { 1.000000000000000e+00, -3.600000000000000e+01, 4.200000000000000e+02,
       -2.310000000000000e+03, 6.930000000000000e+03, -1.201200000000000e+04,
@@ -1573,7 +1573,7 @@ namespace getfem {
       0.000000000000000e-01, -1.000000000000000e+00, 3.500000000000000e+01,
       -3.850000000000000e+02, 1.925000000000000e+03, -5.005000000000000e+03,
       7.007000000000000e+03, -5.005000000000000e+03, 1.430000000000000e+03 };
-  
+
   static const double fem_coef_gausslob_9[100] =
     { 1.000000000000000e+00, -4.500000000000000e+01, 6.600000000000000e+02,
       -4.620000000000000e+03, 1.801800000000000e+04, -4.204200000000000e+04,
@@ -1609,7 +1609,7 @@ namespace getfem {
       6.160000000000000e+02, -4.004000000000000e+03, 1.401400000000000e+04,
       -2.802800000000000e+04, 3.203200000000000e+04, -1.944800000000000e+04,
       4.862000000000000e+03 };
-  
+
   static const double fem_coef_gausslob_10[121] =
     { 1.000000000000000e+00, -5.500000000000000e+01, 9.900000000000000e+02,
       -8.580000000000000e+03, 4.204200000000000e+04, -1.261260000000000e+05,
@@ -1652,7 +1652,7 @@ namespace getfem {
       7.644000000000000e+03, -3.439800000000000e+04, 9.172800000000000e+04,
       -1.485120000000000e+05, 1.432080000000000e+05, -7.558200000000000e+04,
       1.679600000000000e+04 };
-  
+
   static const double fem_coef_gausslob_11[144] =
     { 1.000000000000000e+00, -6.600000000000000e+01, 1.430000000000000e+03,
       -1.501500000000000e+04, 9.009000000000000e+04, -3.363360000000000e+05,
@@ -1702,7 +1702,7 @@ namespace getfem {
       1.365000000000000e+03, -1.365000000000000e+04, 7.644000000000000e+04,
       -2.598960000000000e+05, 5.569200000000000e+05, -7.558200000000000e+05,
       6.298500000000000e+05, -2.939300000000000e+05, 5.878600000000000e+04 };
-  
+
   static const double fem_coef_gausslob_12[169] =
     { 1.000000000000000e+00, -7.800000000000000e+01, 2.002000000000000e+03,
       -2.502500000000000e+04, 1.801800000000000e+05, -8.168160000000000e+05,
@@ -1761,7 +1761,7 @@ namespace getfem {
       6.597360000000000e+05, -1.790712000000000e+06, 3.197700000000000e+06,
       -3.730650000000000e+06, 2.735810000000000e+06, -1.144066000000000e+06,
       2.080120000000000e+05 };
-  
+
   static const double fem_coef_gausslob_13[196] =
     { 1.000000000000000e+00, -9.100000000000000e+01, 2.730000000000000e+03,
       -4.004000000000000e+04, 3.403400000000000e+05, -1.837836000000000e+06,
@@ -1829,7 +1829,7 @@ namespace getfem {
       5.116320000000000e+06, -1.151172000000000e+07, 1.758735000000000e+07,
       -1.797818000000000e+07, 1.176753600000000e+07, -4.457400000000000e+06,
       7.429000000000000e+05 };
-  
+
   static const double fem_coef_gausslob_14[225] =
     { 1.000000000000000e+00, -1.050000000000000e+02, 3.640000000000000e+03,
       -6.188000000000000e+04, 6.126120000000000e+05, -3.879876000000000e+06,
@@ -1906,7 +1906,7 @@ namespace getfem {
       3.325608000000000e+06, -1.330243200000000e+07, 3.658168800000000e+07,
       -7.011490200000000e+07, 9.348653600000000e+07, -8.498776000000000e+07,
       5.022004000000000e+07, -1.738386000000000e+07, 2.674440000000000e+06 };
-  
+
   static const double fem_coef_gausslob_16[289] =
     { 1.000000000000000e+00, -1.360000000000000e+02, 6.120000000000000e+03,
       -1.356600000000000e+05, 1.763580000000000e+06, -1.481407200000000e+07,
@@ -2005,7 +2005,7 @@ namespace getfem {
       1.563837275000000e+09, -2.303105805000000e+09, 2.442687975000000e+09,
       -1.816357725000000e+09, 8.981988750000000e+08, -2.651825250000000e+08,
       3.535767000000000e+07 };
-  
+
   static const double fem_coef_gausslob_24[625] =
     { 1.000000000000000e+00, -3.000000000000000e+02, 2.990000000000000e+04,
       -1.480050000000000e+06, 4.351347000000000e+07, -8.412604200000000e+08,
@@ -2216,7 +2216,7 @@ namespace getfem {
       1.428186531145374e+15, -1.077403874372826e+15, 6.237601377947940e+14,
       -2.673257733406260e+14, 7.985055567317400e+13, -1.483389769422600e+13,
       1.289904147324000e+12 };
-  
+
   static const double fem_coef_gausslob_32[1089] =
     { 1.000000000000000e+00, -5.280000000000000e+02, 9.275200000000000e+04,
       -8.115800000000000e+06, 4.236447600000000e+08, -1.462986571200000e+10,
@@ -2581,35 +2581,35 @@ namespace getfem {
       1.041080226472539e+21, -7.912209721191298e+20, 4.942087918159488e+20,
       -2.492163992918032e+20, 9.889539654436636e+19, -2.971733590742043e+19,
       6.353361469862300e+18, -8.607780055942471e+17, 5.553406487704820e+16 };
-  
+
   static const double *fem_coeff_gausslob[] =
     { 0, fem_coef_gausslob_1, fem_coef_gausslob_2, fem_coef_gausslob_3,
       fem_coef_gausslob_4, fem_coef_gausslob_5, fem_coef_gausslob_6, fem_coef_gausslob_7, fem_coef_gausslob_8,
       fem_coef_gausslob_9, fem_coef_gausslob_10, fem_coef_gausslob_11, fem_coef_gausslob_12, fem_coef_gausslob_13,
       fem_coef_gausslob_14, 0, fem_coef_gausslob_16, 0, 0, 0, 0, 0, 0, 0, fem_coef_gausslob_24, 0, 0, 0, 0, 0, 0, 0,
       fem_coef_gausslob_32, };
-  
+
   const unsigned fem_coeff_gausslob_max_k = 33;
-  
+
 
   class PK_GL_fem_ : public fem<base_poly> {
   public :
     PK_GL_fem_(unsigned k);
   };
-  
+
   PK_GL_fem_::PK_GL_fem_(unsigned k) {
     cvr = bgeot::simplex_of_reference(1);
     dim_ = cvr->structure()->dim();
     is_equiv = is_pol = is_lag = true;
     es_degree = short_type(k);
     GMM_ASSERT1(k < fem_coeff_gausslob_max_k && fem_coeff_gausslob[k],
-		"try another degree");
+                "try another degree");
     init_cvs_node();
     std::stringstream sstr; sstr << "IM_GAUSSLOBATTO1D(" << k*2-1 << ")";
     pintegration_method gl_im = int_method_descriptor(sstr.str());
     std::vector<base_node> points(k+1);
     for (size_type i = 0; i < k+1; ++i) {
-      points[i] = gl_im->approx_method()->point(i); 
+      points[i] = gl_im->approx_method()->point(i);
     }
     std::sort(points.begin(),points.end());
     for (size_type i = 0; i < k+1; ++i) {
@@ -2626,9 +2626,9 @@ namespace getfem {
   }
 
   static pfem PK_GL_fem(fem_param_list &params,
-	std::vector<dal::pstatic_stored_object> &dependencies) {
+        std::vector<dal::pstatic_stored_object> &dependencies) {
     GMM_ASSERT1(params.size() == 1, "Bad number of parameters : "
-		<< params.size() << " should be 1.");
+                << params.size() << " should be 1.");
     GMM_ASSERT1(params[0].type() == 0, "Bad type of parameters");
     int k = int(::floor(params[0].num() + 0.01));
     pfem p = std::make_shared<PK_GL_fem_>(k);
@@ -2638,18 +2638,18 @@ namespace getfem {
   }
 
   /* ******************************************************************** */
-  /*	Hermite element on the segment                                    */
+  /*        Hermite element on the segment                                    */
   /* ******************************************************************** */
 
   struct hermite_segment__ : public fem<base_poly> {
     virtual void mat_trans(base_matrix &M, const base_matrix &G,
-			   bgeot::pgeometric_trans pgt) const;
+                           bgeot::pgeometric_trans pgt) const;
     hermite_segment__(void);
   };
 
   void hermite_segment__::mat_trans(base_matrix &M,
-				    const base_matrix &G,
-				    bgeot::pgeometric_trans pgt) const {
+                                    const base_matrix &G,
+                                    bgeot::pgeometric_trans pgt) const {
     DEFINE_STATIC_THREAD_LOCAL(bgeot::pgeotrans_precomp, pgp);
     DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(bgeot::pgeometric_trans, pgt_stored, 0);
     DEFINE_STATIC_THREAD_LOCAL_CONSTRUCTED(base_matrix, K, 1, 1);
@@ -2703,18 +2703,18 @@ namespace getfem {
   }
 
   /* ******************************************************************** */
-  /*	Hermite element on the triangle                                   */
+  /*        Hermite element on the triangle                                   */
   /* ******************************************************************** */
 
   struct hermite_triangle__ : public fem<base_poly> {
     virtual void mat_trans(base_matrix &M, const base_matrix &G,
-			   bgeot::pgeometric_trans pgt) const;
+                           bgeot::pgeometric_trans pgt) const;
     hermite_triangle__(void);
   };
 
   void hermite_triangle__::mat_trans(base_matrix &M,
-				    const base_matrix &G,
-				    bgeot::pgeometric_trans pgt) const {
+                                    const base_matrix &G,
+                                    bgeot::pgeometric_trans pgt) const {
 
     DEFINE_STATIC_THREAD_LOCAL(bgeot::pgeotrans_precomp, pgp);
     DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(bgeot::pgeometric_trans, pgt_stored, 0);
@@ -2722,11 +2722,11 @@ namespace getfem {
     dim_type N = dim_type(G.nrows());
 
     GMM_ASSERT1(N == 2, "Sorry, this version of hermite "
-		"element works only in dimension two.")
+                "element works only in dimension two.")
     if (pgt != pgt_stored)
       { pgt_stored = pgt; pgp = bgeot::geotrans_precomp(pgt, node_tab(0), 0); }
     gmm::copy(gmm::identity_matrix(), M);
-    
+
     gmm::mult(G, pgp->grad(0), K);
     for (size_type i = 0; i < 3; ++i) {
       if (i && !(pgt->is_linear())) gmm::mult(G, pgp->grad(i*3), K);
@@ -2740,9 +2740,9 @@ namespace getfem {
     init_cvs_node();
     es_degree = 3;
     is_pol = true;
-    is_lag = is_equiv = false; 
+    is_lag = is_equiv = false;
     base_.resize(10);
-    
+
     add_node(lagrange_dof(2), base_node(0.0, 0.0));
     read_poly(base_[0], 2, "(1 - x - y)*(1 + x + y - 2*x*x - 11*x*y - 2*y*y)");
 
@@ -2763,41 +2763,41 @@ namespace getfem {
 
     add_node(lagrange_dof(2), base_node(0.0, 1.0));
     read_poly(base_[6], 2, "7*x*x*y + 7*x*y*y - 2*y*y*y + 3*y*y - 7*x*y");
- 
+
     add_node(derivative_dof(2, 0), base_node(0.0, 1.0));
     read_poly(base_[7], 2, "x*y*(x + 2*y - 1)");
 
     add_node(derivative_dof(2, 1), base_node(0.0, 1.0));
     read_poly(base_[8], 2, "y*y*y - 2*y*y*x - 2*y*x*x - y*y + 2*x*y");
- 
+
     add_node(lagrange_dof(2), base_node(1.0/3.0, 1.0/3.0));
     read_poly(base_[9], 2, "27*x*y*(1 - x - y)");
 
  }
 
   /* ******************************************************************** */
-  /*	Hermite element on the tetrahedron                                */
+  /*        Hermite element on the tetrahedron                                */
   /* ******************************************************************** */
 
   struct hermite_tetrahedron__ : public fem<base_poly> {
     virtual void mat_trans(base_matrix &M, const base_matrix &G,
-			   bgeot::pgeometric_trans pgt) const;
+                           bgeot::pgeometric_trans pgt) const;
     hermite_tetrahedron__(void);
   };
 
   void hermite_tetrahedron__::mat_trans(base_matrix &M,
-				    const base_matrix &G,
-				    bgeot::pgeometric_trans pgt) const {
+                                    const base_matrix &G,
+                                    bgeot::pgeometric_trans pgt) const {
     DEFINE_STATIC_THREAD_LOCAL(bgeot::pgeotrans_precomp, pgp);
     DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(bgeot::pgeometric_trans, pgt_stored, 0);
     DEFINE_STATIC_THREAD_LOCAL_CONSTRUCTED(base_matrix, K, 3, 3);
     dim_type N = dim_type(G.nrows());
     GMM_ASSERT1(N == 3, "Sorry, this version of hermite "
-		"element works only on dimension three.")
+                "element works only on dimension three.")
     if (pgt != pgt_stored)
       { pgt_stored = pgt; pgp = bgeot::geotrans_precomp(pgt, node_tab(0), 0); }
     gmm::copy(gmm::identity_matrix(), M);
-    
+
     gmm::mult(G, pgp->grad(0), K);
     for (size_type k = 0; k < 4; ++k) {
       if (k && !(pgt->is_linear())) gmm::mult(G, pgp->grad(k*4), K);
@@ -2805,64 +2805,64 @@ namespace getfem {
     }
   }
 
-  hermite_tetrahedron__::hermite_tetrahedron__(void) { 
+  hermite_tetrahedron__::hermite_tetrahedron__(void) {
     cvr = bgeot::simplex_of_reference(3);
     dim_ = cvr->structure()->dim();
     init_cvs_node();
     es_degree = 3;
     is_pol = true;
-    is_lag = is_equiv = false; 
+    is_lag = is_equiv = false;
     base_.resize(20);
     std::stringstream s
       ( "1 - 3*x*x - 13*x*y - 13*x*z - 3*y*y - 13*y*z - 3*z*z + 2*x*x*x"
-	"+ 13*x*x*y + 13*x*x*z + 13*x*y*y + 33*x*y*z + 13*x*z*z + 2*y*y*y"
-	"+ 13*y*y*z + 13*y*z*z + 2*z*z*z;"
-	"x - 2*x*x - 3*x*y - 3*x*z + x*x*x + 3*x*x*y + 3*x*x*z + 2*x*y*y"
-	"+ 4*x*y*z + 2*x*z*z;"
-	"y - 3*x*y - 2*y*y - 3*y*z + 2*x*x*y + 3*x*y*y + 4*x*y*z"
-	"+ y*y*y + 3*y*y*z + 2*y*z*z;"
-	"z - 3*x*z - 3*y*z - 2*z*z + 2*x*x*z + 4*x*y*z + 3*x*z*z"
-	"+ 2*y*y*z + 3*y*z*z + z*z*z;"
-	"3*x*x - 7*x*y - 7*x*z - 2*x*x*x + 7*x*x*y + 7*x*x*z + 7*x*y*y"
-	"+ 7*x*y*z + 7*x*z*z;"
-	"-x*x + 2*x*y + 2*x*z + x*x*x - 2*x*x*y - 2*x*x*z - 2*x*y*y" 
-	"- 2*x*y*z - 2*x*z*z;"
-	"-x*y + 2*x*x*y + x*y*y;"
-	"-x*z + 2*x*x*z + x*z*z;"
-	"-7*x*y + 3*y*y - 7*y*z + 7*x*x*y + 7*x*y*y + 7*x*y*z - 2*y*y*y"
-	"+ 7*y*y*z + 7*y*z*z;"
-	"-x*y + x*x*y + 2*x*y*y;"
-	"2*x*y - y*y + 2*y*z - 2*x*x*y - 2*x*y*y - 2*x*y*z + y*y*y"
-	"- 2*y*y*z - 2*y*z*z;"
-	"-y*z + 2*y*y*z + y*z*z;"
-	"-7*x*z - 7*y*z + 3*z*z + 7*x*x*z + 7*x*y*z + 7*x*z*z + 7*y*y*z"
-	"+ 7*y*z*z - 2*z*z*z;"
-	"-x*z + x*x*z + 2*x*z*z;"
-	"-y*z + y*y*z + 2*y*z*z;"
-	"2*x*z + 2*y*z - z*z - 2*x*x*z - 2*x*y*z - 2*x*z*z - 2*y*y*z"
-	"- 2*y*z*z + z*z*z;"
-	"27*x*y*z;"
-	"27*y*z - 27*x*y*z - 27*y*y*z - 27*y*z*z;"
-	"27*x*z - 27*x*x*z - 27*x*y*z - 27*x*z*z;"
-	"27*x*y - 27*x*x*y - 27*x*y*y - 27*x*y*z;");
-    
+        "+ 13*x*x*y + 13*x*x*z + 13*x*y*y + 33*x*y*z + 13*x*z*z + 2*y*y*y"
+        "+ 13*y*y*z + 13*y*z*z + 2*z*z*z;"
+        "x - 2*x*x - 3*x*y - 3*x*z + x*x*x + 3*x*x*y + 3*x*x*z + 2*x*y*y"
+        "+ 4*x*y*z + 2*x*z*z;"
+        "y - 3*x*y - 2*y*y - 3*y*z + 2*x*x*y + 3*x*y*y + 4*x*y*z"
+        "+ y*y*y + 3*y*y*z + 2*y*z*z;"
+        "z - 3*x*z - 3*y*z - 2*z*z + 2*x*x*z + 4*x*y*z + 3*x*z*z"
+        "+ 2*y*y*z + 3*y*z*z + z*z*z;"
+        "3*x*x - 7*x*y - 7*x*z - 2*x*x*x + 7*x*x*y + 7*x*x*z + 7*x*y*y"
+        "+ 7*x*y*z + 7*x*z*z;"
+        "-x*x + 2*x*y + 2*x*z + x*x*x - 2*x*x*y - 2*x*x*z - 2*x*y*y"
+        "- 2*x*y*z - 2*x*z*z;"
+        "-x*y + 2*x*x*y + x*y*y;"
+        "-x*z + 2*x*x*z + x*z*z;"
+        "-7*x*y + 3*y*y - 7*y*z + 7*x*x*y + 7*x*y*y + 7*x*y*z - 2*y*y*y"
+        "+ 7*y*y*z + 7*y*z*z;"
+        "-x*y + x*x*y + 2*x*y*y;"
+        "2*x*y - y*y + 2*y*z - 2*x*x*y - 2*x*y*y - 2*x*y*z + y*y*y"
+        "- 2*y*y*z - 2*y*z*z;"
+        "-y*z + 2*y*y*z + y*z*z;"
+        "-7*x*z - 7*y*z + 3*z*z + 7*x*x*z + 7*x*y*z + 7*x*z*z + 7*y*y*z"
+        "+ 7*y*z*z - 2*z*z*z;"
+        "-x*z + x*x*z + 2*x*z*z;"
+        "-y*z + y*y*z + 2*y*z*z;"
+        "2*x*z + 2*y*z - z*z - 2*x*x*z - 2*x*y*z - 2*x*z*z - 2*y*y*z"
+        "- 2*y*z*z + z*z*z;"
+        "27*x*y*z;"
+        "27*y*z - 27*x*y*z - 27*y*y*z - 27*y*z*z;"
+        "27*x*z - 27*x*x*z - 27*x*y*z - 27*x*z*z;"
+        "27*x*y - 27*x*x*y - 27*x*y*y - 27*x*y*z;");
+
     base_node pt(3);
     for (unsigned k = 0; k < 5; ++k) {
       for (unsigned i = 0; i < 4; ++i) {
-	base_[k*4+i] = bgeot::read_base_poly(3, s);
-	pt[0] = pt[1] = pt[2] = ((k == 4) ? 1.0/3.0 : 0.0);
-	if (k == 4 && i) pt[i-1] = 0.0;
-	if (k < 4 && k) pt[k-1] = 1.0;
-	if (k == 4 || i == 0)  add_node(lagrange_dof(3), pt);
-	else add_node(derivative_dof(3, dim_type(i-1)), pt);
+        base_[k*4+i] = bgeot::read_base_poly(3, s);
+        pt[0] = pt[1] = pt[2] = ((k == 4) ? 1.0/3.0 : 0.0);
+        if (k == 4 && i) pt[i-1] = 0.0;
+        if (k < 4 && k) pt[k-1] = 1.0;
+        if (k == 4 || i == 0)  add_node(lagrange_dof(3), pt);
+        else add_node(derivative_dof(3, dim_type(i-1)), pt);
       }
     }
   }
 
   static pfem Hermite_fem(fem_param_list &params,
-	std::vector<dal::pstatic_stored_object> &dependencies) {
+        std::vector<dal::pstatic_stored_object> &dependencies) {
     GMM_ASSERT1(params.size() == 1, "Bad number of parameters : "
-		<< params.size() << " should be 1.");
+                << params.size() << " should be 1.");
     GMM_ASSERT1(params[0].type() == 0, "Bad type of parameters");
     int d = int(::floor(params[0].num() + 0.01));
     pfem p;
@@ -2871,7 +2871,7 @@ namespace getfem {
     case 2 : p = std::make_shared<hermite_triangle__>(); break;
     case 3 : p = std::make_shared<hermite_tetrahedron__>(); break;
     default : GMM_ASSERT1(false, "Sorry, Hermite element in dimension "
-			  << d << " not available");
+                          << d << " not available");
     }
     dependencies.push_back(p->ref_convex(0));
     dependencies.push_back(p->node_tab(0));
@@ -2884,21 +2884,21 @@ namespace getfem {
 
   struct argyris_triangle__ : public fem<base_poly> {
     virtual void mat_trans(base_matrix &M, const base_matrix &G,
-			   bgeot::pgeometric_trans pgt) const;
+                           bgeot::pgeometric_trans pgt) const;
     argyris_triangle__(void);
   };
 
   void argyris_triangle__::mat_trans(base_matrix &M,
-				    const base_matrix &G,
-				    bgeot::pgeometric_trans pgt) const {
-    
+                                    const base_matrix &G,
+                                    bgeot::pgeometric_trans pgt) const {
+
     DEFINE_STATIC_THREAD_LOCAL(bgeot::pgeotrans_precomp, pgp);
     DEFINE_STATIC_THREAD_LOCAL(pfem_precomp, pfp);
     DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(bgeot::pgeometric_trans, pgt_stored, 0);
     DEFINE_STATIC_THREAD_LOCAL_CONSTRUCTED(base_matrix, K, 2, 2);
     dim_type N = dim_type(G.nrows());
     GMM_ASSERT1(N == 2, "Sorry, this version of argyris "
-		"element works only on dimension two.")
+                "element works only on dimension two.")
     if (pgt != pgt_stored) {
       pgt_stored = pgt;
       pgp = bgeot::geotrans_precomp(pgt, node_tab(0), 0);
@@ -2912,34 +2912,34 @@ namespace getfem {
       M(1+6*k, 1+6*k) = K(0,0); M(1+6*k, 2+6*k) = K(0,1);
       M(2+6*k, 1+6*k) = K(1,0); M(2+6*k, 2+6*k) = K(1,1);
       if (!(pgt->is_linear())) {
-	base_matrix XX[2], H(2,4), B(2,2), X(2,2);
-	XX[0] = XX[1] = base_matrix(2,2);
-	gmm::copy(gmm::transposed(K), B); gmm::lu_inverse(B);
-	gmm::mult(G, pgp->hessian(6*k), H);
-	for (unsigned j = 0; j < 2; ++j) {
-	  XX[j](0,0) = B(0, j)*H(0, 0) + B(1, j)*H(1, 0);
-	  XX[j](0,1) = XX[j](1,0) = B(0, j)*H(0, 1) + B(1, j)*H(1, 1);
-	  XX[j](1,1) = B(0, j)*H(0, 3) + B(1, j)*H(1, 3);
-	}
-	for (unsigned j = 0; j < 2; ++j) {
-	  gmm::copy(gmm::scaled(XX[0], K(j,0)), X);
-	  gmm::add(gmm::scaled(XX[1], K(j,1)), X);
-	  M(1+j+6*k, 3+6*k) = X(0,0); M(1+j+6*k, 4+6*k) = X(1, 0);
-	  M(1+j+6*k, 5+6*k) = X(1, 1);
-	}
+        base_matrix XX[2], H(2,4), B(2,2), X(2,2);
+        XX[0] = XX[1] = base_matrix(2,2);
+        gmm::copy(gmm::transposed(K), B); gmm::lu_inverse(B);
+        gmm::mult(G, pgp->hessian(6*k), H);
+        for (unsigned j = 0; j < 2; ++j) {
+          XX[j](0,0) = B(0, j)*H(0, 0) + B(1, j)*H(1, 0);
+          XX[j](0,1) = XX[j](1,0) = B(0, j)*H(0, 1) + B(1, j)*H(1, 1);
+          XX[j](1,1) = B(0, j)*H(0, 3) + B(1, j)*H(1, 3);
+        }
+        for (unsigned j = 0; j < 2; ++j) {
+          gmm::copy(gmm::scaled(XX[0], K(j,0)), X);
+          gmm::add(gmm::scaled(XX[1], K(j,1)), X);
+          M(1+j+6*k, 3+6*k) = X(0,0); M(1+j+6*k, 4+6*k) = X(1, 0);
+          M(1+j+6*k, 5+6*k) = X(1, 1);
+        }
       }
       scalar_type a = K(0,0), b = K(0,1), c = K(1,0), d = K(1,1);
       M(3+6*k, 3+6*k) = a*a;     M(3+6*k, 4+6*k) = a*b;       M(3+6*k, 5+6*k) = b*b;
       M(4+6*k, 3+6*k) = 2.0*a*c; M(4+6*k, 4+6*k) = b*c + a*d; M(4+6*k, 5+6*k) = 2.0*b*d;
-      M(5+6*k, 3+6*k) = c*c;     M(5+6*k, 4+6*k) = c*d;       M(5+6*k, 5+6*k) = d*d; 
+      M(5+6*k, 3+6*k) = c*c;     M(5+6*k, 4+6*k) = c*d;       M(5+6*k, 5+6*k) = d*d;
     }
-    
+
     DEFINE_STATIC_THREAD_LOCAL_CONSTRUCTED(base_matrix, W, 3, 21);
     base_small_vector norient(M_PI, M_PI * M_PI);
-    if (pgt->is_linear()) gmm::lu_inverse(K); 
+    if (pgt->is_linear()) gmm::lu_inverse(K);
     for (unsigned i = 18; i < 21; ++i) {
       if (!(pgt->is_linear()))
-	{ gmm::mult(G, pgp->grad(i), K); gmm::lu_inverse(K); }
+        { gmm::mult(G, pgp->grad(i), K); gmm::lu_inverse(K); }
       bgeot::base_small_vector n(2), v(2);
       gmm::mult(gmm::transposed(K), cvr->normals()[i-18], n);
       n /= gmm::vect_norm2(n);
@@ -2947,11 +2947,11 @@ namespace getfem {
       scalar_type ps = gmm::vect_sp(n, norient);
       if (ps < 0) n *= scalar_type(-1);
       if (gmm::abs(ps) < 1E-8)
-	GMM_WARNING2("Argyris : The normal orientation may be not correct");
+        GMM_WARNING2("Argyris : The normal orientation may be not correct");
       gmm::mult(K, n, v);
       const bgeot::base_tensor &t = pfp->grad(i);
       for (unsigned j = 0; j < 21; ++j)
-	W(i-18, j) = t(j, 0, 0) * v[0] + t(j, 0, 1) * v[1];
+        W(i-18, j) = t(j, 0, 0) * v[0] + t(j, 0, 1) * v[1];
     }
     DEFINE_STATIC_THREAD_LOCAL_CONSTRUCTED(base_matrix,A,3,3);
     DEFINE_STATIC_THREAD_LOCAL_CONSTRUCTED(bgeot::base_vector, w, 3);
@@ -2969,14 +2969,14 @@ namespace getfem {
     }
   }
 
-  argyris_triangle__::argyris_triangle__(void) { 
+  argyris_triangle__::argyris_triangle__(void) {
     cvr = bgeot::simplex_of_reference(2);
     dim_ = cvr->structure()->dim();
     init_cvs_node();
     es_degree = 5;
     is_pol = true;
     is_lag = false;
-    is_equiv = false; 
+    is_equiv = false;
     base_.resize(21);
 
     std::stringstream s
@@ -3017,31 +3017,31 @@ namespace getfem {
        "- 32*x*x*y*y*y - 16*x*y*y*y*y;"
        "-16*x*x*y + 32*x*x*x*y + 32*x*x*y*y - 16*x*x*x*x*y"
        "- 32*x*x*x*y*y - 16*x*x*y*y*y;");
-    
+
     base_node pt(2);
     for (unsigned k = 0; k < 7; ++k) {
       for (unsigned i = 0; i < 3; ++i) {
-	base_[k*3+i] = bgeot::read_base_poly(2, s);
-	if (k == 6) {
-	  pt[0] = pt[1] = 0.5; if (i) pt[i-1] = 0.0;
-	  add_node(normal_derivative_dof(2), pt);
-	}
-	else {
-	  pt[0] = pt[1] = 0.0; if (k/2) pt[k/2-1] = 1.0;
-	  if (k & 1) 
-	    add_node(second_derivative_dof(2, dim_type((i) ? 1:0),
-					   dim_type((i == 2) ? 1:0)), pt);
-	  else {
-	    if (i) add_node(derivative_dof(2, dim_type(i-1)), pt);
-	    else add_node(lagrange_dof(2), pt);
-	  }
-	}
+        base_[k*3+i] = bgeot::read_base_poly(2, s);
+        if (k == 6) {
+          pt[0] = pt[1] = 0.5; if (i) pt[i-1] = 0.0;
+          add_node(normal_derivative_dof(2), pt);
+        }
+        else {
+          pt[0] = pt[1] = 0.0; if (k/2) pt[k/2-1] = 1.0;
+          if (k & 1)
+            add_node(second_derivative_dof(2, dim_type((i) ? 1:0),
+                                           dim_type((i == 2) ? 1:0)), pt);
+          else {
+            if (i) add_node(derivative_dof(2, dim_type(i-1)), pt);
+            else add_node(lagrange_dof(2), pt);
+          }
+        }
       }
     }
   }
 
   static pfem triangle_Argyris_fem(fem_param_list &params,
-	std::vector<dal::pstatic_stored_object> &dependencies) {
+        std::vector<dal::pstatic_stored_object> &dependencies) {
     GMM_ASSERT1(params.size() == 0, "Bad number of parameters");
     pfem p = std::make_shared<argyris_triangle__>();
     dependencies.push_back(p->ref_convex(0));
@@ -3055,13 +3055,13 @@ namespace getfem {
 
   struct morley_triangle__ : public fem<base_poly> {
     virtual void mat_trans(base_matrix &M, const base_matrix &G,
-			   bgeot::pgeometric_trans pgt) const;
+                           bgeot::pgeometric_trans pgt) const;
     morley_triangle__(void);
   };
 
   void morley_triangle__::mat_trans(base_matrix &M,
-				    const base_matrix &G,
-				    bgeot::pgeometric_trans pgt) const {
+                                    const base_matrix &G,
+                                    bgeot::pgeometric_trans pgt) const {
 
     DEFINE_STATIC_THREAD_LOCAL(bgeot::pgeotrans_precomp, pgp);
     DEFINE_STATIC_THREAD_LOCAL(pfem_precomp, pfp);
@@ -3069,7 +3069,7 @@ namespace getfem {
     DEFINE_STATIC_THREAD_LOCAL_CONSTRUCTED(base_matrix, K, 2, 2);
     dim_type N = dim_type(G.nrows());
     GMM_ASSERT1(N == 2, "Sorry, this version of morley "
-		"element works only on dimension two.")
+                "element works only on dimension two.")
 
     if (pgt != pgt_stored) {
       pgt_stored = pgt;
@@ -3083,7 +3083,7 @@ namespace getfem {
       { gmm::mult(G, pgp->grad(0), K); gmm::lu_inverse(K); }
     for (unsigned i = 3; i < 6; ++i) {
       if (!(pgt->is_linear()))
-	{ gmm::mult(G, pgp->grad(i), K); gmm::lu_inverse(K); }
+        { gmm::mult(G, pgp->grad(i), K); gmm::lu_inverse(K); }
       bgeot::base_small_vector n(2), v(2);
       gmm::mult(gmm::transposed(K), cvr->normals()[i-3], n);
       n /= gmm::vect_norm2(n);
@@ -3091,14 +3091,14 @@ namespace getfem {
       scalar_type ps = gmm::vect_sp(n, norient);
       if (ps < 0) n *= scalar_type(-1);
       if (gmm::abs(ps) < 1E-8)
-	GMM_WARNING2("Morley : The normal orientation may be not correct");
+        GMM_WARNING2("Morley : The normal orientation may be not correct");
       gmm::mult(K, n, v);
       const bgeot::base_tensor &t = pfp->grad(i);
       for (unsigned j = 0; j < 6; ++j)
-	W(i-3, j) = t(j, 0, 0) * v[0] + t(j, 0, 1) * v[1];
+        W(i-3, j) = t(j, 0, 0) * v[0] + t(j, 0, 1) * v[1];
     }
     //    cout << "W = " << W << endl; getchar();
-    
+
     DEFINE_STATIC_THREAD_LOCAL_CONSTRUCTED(base_matrix, A, 3, 3);
     DEFINE_STATIC_THREAD_LOCAL_CONSTRUCTED(base_vector, w, 3);
     DEFINE_STATIC_THREAD_LOCAL_CONSTRUCTED(base_vector, coeff, 3);
@@ -3115,32 +3115,32 @@ namespace getfem {
     }
   }
 
-  morley_triangle__::morley_triangle__(void) { 
+  morley_triangle__::morley_triangle__(void) {
     cvr = bgeot::simplex_of_reference(2);
     dim_ = cvr->structure()->dim();
     init_cvs_node();
     es_degree = 2;
     is_pol = true;
-    is_lag = is_equiv = false; 
+    is_lag = is_equiv = false;
     base_.resize(6);
 
     std::stringstream s("1 - x - y + 2*x*y;  (x + y + x^2 - 2*x*y - y^2)/2;"
-			"(x + y - x^2 - 2*x*y + y^2)/2;"
-			"((x+y)^2 - x - y)*sqrt(2)/2;  x*(x-1);  y*(y-1);");
-    
+                        "(x + y - x^2 - 2*x*y + y^2)/2;"
+                        "((x+y)^2 - x - y)*sqrt(2)/2;  x*(x-1);  y*(y-1);");
+
     for (unsigned k = 0; k < 6; ++k)
       base_[k] = bgeot::read_base_poly(2, s);
-    
+
     add_node(lagrange_dof(2), base_node(0.0, 0.0));
     add_node(lagrange_dof(2), base_node(1.0, 0.0));
     add_node(lagrange_dof(2), base_node(0.0, 1.0));
-    add_node(normal_derivative_dof(2), base_node(0.5, 0.5)); 
-    add_node(normal_derivative_dof(2), base_node(0.0, 0.5)); 
+    add_node(normal_derivative_dof(2), base_node(0.5, 0.5));
+    add_node(normal_derivative_dof(2), base_node(0.0, 0.5));
     add_node(normal_derivative_dof(2), base_node(0.5, 0.0));
   }
 
   static pfem triangle_Morley_fem(fem_param_list &params,
-	std::vector<dal::pstatic_stored_object> &dependencies) {
+        std::vector<dal::pstatic_stored_object> &dependencies) {
     GMM_ASSERT1(params.size() == 0, "Bad number of parameters");
     pfem p = std::make_shared<morley_triangle__>();
     dependencies.push_back(p->ref_convex(0));
@@ -3149,49 +3149,49 @@ namespace getfem {
   }
 
   /* ******************************************************************** */
-  /*	DISCONTINUOUS PK                                                  */
+  /*        DISCONTINUOUS PK                                                  */
   /* ******************************************************************** */
 
   struct PK_discont_ : public PK_fem_ {
   public :
-    
+
     PK_discont_(dim_type nc, short_type k, scalar_type alpha=scalar_type(0))
       : PK_fem_(nc, k) {
       std::fill(dof_types_.begin(), dof_types_.end(),
-		lagrange_nonconforming_dof(nc));
+                lagrange_nonconforming_dof(nc));
 
       if (alpha != scalar_type(0)) {
-	base_node G = 
-	  gmm::mean_value(cv_node.points().begin(), cv_node.points().end());
-      for (size_type i=0; i < cv_node.nb_points(); ++i) 
-	cv_node.points()[i] = (1-alpha)*cv_node.points()[i] + alpha*G;
-	for (size_type d = 0; d < nc; ++d) {
-	  base_poly S(1,2); 
-	  S[0] = -alpha * G[d] / (1-alpha);
-	  S[1] = 1. / (1-alpha);
-	  for (size_type j=0; j < nb_base(0); ++j) {
-	    base_[j] = bgeot::poly_substitute_var(base_[j],S,d);
-	  }
-	}
+        base_node G =
+          gmm::mean_value(cv_node.points().begin(), cv_node.points().end());
+      for (size_type i=0; i < cv_node.nb_points(); ++i)
+        cv_node.points()[i] = (1-alpha)*cv_node.points()[i] + alpha*G;
+        for (size_type d = 0; d < nc; ++d) {
+          base_poly S(1,2);
+          S[0] = -alpha * G[d] / (1-alpha);
+          S[1] = 1. / (1-alpha);
+          for (size_type j=0; j < nb_base(0); ++j) {
+            base_[j] = bgeot::poly_substitute_var(base_[j],S,d);
+          }
+        }
       }
     }
   };
-  
+
   static pfem PK_discontinuous_fem(fem_param_list &params,
-	std::vector<dal::pstatic_stored_object> &dependencies) {
+        std::vector<dal::pstatic_stored_object> &dependencies) {
     GMM_ASSERT1(params.size() == 2 || params.size() == 3,
-		"Bad number of parameters : "
-		<< params.size() << " should be 2 or 3.");
+                "Bad number of parameters : "
+                << params.size() << " should be 2 or 3.");
     GMM_ASSERT1(params[0].type() == 0 && params[1].type() == 0 &&
-		(params.size() != 3 || params[2].type() == 0),
-		"Bad type of parameters");
+                (params.size() != 3 || params[2].type() == 0),
+                "Bad type of parameters");
     int n = int(::floor(params[0].num() + 0.01));
     int k = int(::floor(params[1].num() + 0.01));
     scalar_type alpha = 0.;
     if (params.size() == 3) alpha = params[2].num();
     GMM_ASSERT1(n > 0 && n < 100 && k >= 0 && k <= 150 && alpha >= 0 &&
-		alpha < 1 && double(n) == params[0].num()
-		&& double(k) == params[1].num(), "Bad parameters");
+                alpha < 1 && double(n) == params[0].num()
+                && double(k) == params[1].num(), "Bad parameters");
     pfem p = std::make_shared<PK_discont_>(dim_type(n), short_type(k), alpha);
     dependencies.push_back(p->ref_convex(0));
     dependencies.push_back(p->node_tab(0));
@@ -3200,26 +3200,26 @@ namespace getfem {
 
 
   /* ******************************************************************** */
-  /*	PK element with a bubble base fonction                            */
+  /*        PK element with a bubble base fonction                            */
   /* ******************************************************************** */
-  
+
   struct PK_with_cubic_bubble_ : public PK_fem_ {
     PK_with_cubic_bubble_(dim_type nc, short_type k);
   };
-  
+
   PK_with_cubic_bubble_::PK_with_cubic_bubble_(dim_type nc, short_type k)
     : PK_fem_(nc, k) {
     unfreeze_cvs_node();
     is_lag = false; es_degree = short_type(nc+1);
-    base_node pt(nc); 
+    base_node pt(nc);
     size_type j;
     PK_fem_ P1(nc, 1);
-    
+
     pt.fill(1./(nc+1)); /* barycenter of the convex */
-    
+
     add_node(bubble1_dof(nc), pt);
     base_.resize(nb_dof(0));
-    
+
     j = nb_dof(0) - 1;
     base_[j] = base_poly(nc, 0);
     base_[j].one();
@@ -3228,31 +3228,31 @@ namespace getfem {
   }
 
   static pfem PK_with_cubic_bubble(fem_param_list &params,
-	std::vector<dal::pstatic_stored_object> &dependencies) {
+        std::vector<dal::pstatic_stored_object> &dependencies) {
     GMM_ASSERT1(params.size() == 2, "Bad number of parameters : "
-		<< params.size() << " should be 2.");
+                << params.size() << " should be 2.");
     GMM_ASSERT1(params[0].type() == 0 && params[1].type() == 0,
-		"Bad type of parameters");
+                "Bad type of parameters");
     int n = int(::floor(params[0].num() + 0.01));
     int k = int(::floor(params[1].num() + 0.01));
     GMM_ASSERT1(k < n+1, "dimensions mismatch");
     GMM_ASSERT1(n > 0 && n < 100 && k >= 0 && k <= 150 &&
-		double(n) == params[0].num() && double(k) == params[1].num(),
-		"Bad parameters");
+                double(n) == params[0].num() && double(k) == params[1].num(),
+                "Bad parameters");
     pfem p = std::make_shared<PK_with_cubic_bubble_>(dim_type(n),
-						     short_type(k));
+                                                     short_type(k));
     dependencies.push_back(p->ref_convex(0));
     dependencies.push_back(p->node_tab(0));
     return p;
   }
 
   /* ******************************************************************** */
-  /*	classical fem                                                     */
+  /*        classical fem                                                     */
   /* ******************************************************************** */
 
-  static pfem classical_fem_(const char *suffix, const char *arg, 
-			     bgeot::pgeometric_trans pgt,
-			     short_type k) {
+  static pfem classical_fem_(const char *suffix, const char *arg,
+                             bgeot::pgeometric_trans pgt,
+                             short_type k) {
     DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(bgeot::pgeometric_trans, pgt_last,0);
     DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(short_type, k_last, short_type(-1));
     DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(pfem, fm_last, 0);
@@ -3274,18 +3274,18 @@ namespace getfem {
     /* Identifying P1-simplexes.                                          */
     if (nbp == n+1)
       if (pgt->basic_structure() == bgeot::simplex_structure(dim_type(n)))
-    	{ name << "FEM_PK" << suffix << "("; found = true; }
-    
+            { name << "FEM_PK" << suffix << "("; found = true; }
+
     /* Identifying Q1-parallelepiped.                                     */
     if (!found && nbp == (size_type(1) << n))
       if (pgt->basic_structure()==bgeot::parallelepiped_structure(dim_type(n)))
-    	{ name << "FEM_QK" << suffix << "("; found = true; }
+            { name << "FEM_QK" << suffix << "("; found = true; }
 
     /* Identifying Q1-prisms.                                             */
     if (!found && nbp == 2 * n)
       if (pgt->basic_structure() == bgeot::prism_structure(dim_type(n)))
-     	{ name << "FEM_PK_PRISM" << suffix << "("; found = true; }
-     
+             { name << "FEM_PK_PRISM" << suffix << "("; found = true; }
+
     // To be completed
 
     if (found) {
@@ -3295,41 +3295,41 @@ namespace getfem {
       k_last = k;
       return fm_last;
     }
- 
+
     GMM_ASSERT1(false, "This element is not taken into account. Contact us");
   }
 
   pfem classical_fem(bgeot::pgeometric_trans pgt, short_type k) {
     return classical_fem_("", "", pgt, k);
   }
-  
+
   pfem classical_discontinuous_fem(bgeot::pgeometric_trans pgt, short_type k,
-				   scalar_type alpha) {
+                                   scalar_type alpha) {
     char arg[128]; arg[0] = 0;
-    if (alpha) sprintf(arg, ",%g", alpha); 
+    if (alpha) sprintf(arg, ",%g", alpha);
     return classical_fem_("_DISCONTINUOUS", arg, pgt, k);
   }
-  
+
   /* ******************************************************************** */
   /*    Naming system                                                     */
   /* ******************************************************************** */
 
   pfem structured_composite_fem_method(fem_param_list &params,
-	std::vector<dal::pstatic_stored_object> &dependencies);
+        std::vector<dal::pstatic_stored_object> &dependencies);
   pfem PK_composite_hierarch_fem(fem_param_list &params,
-	std::vector<dal::pstatic_stored_object> &dependencies);
+        std::vector<dal::pstatic_stored_object> &dependencies);
   pfem PK_composite_full_hierarch_fem(fem_param_list &params,
-	std::vector<dal::pstatic_stored_object> &dependencies);
+        std::vector<dal::pstatic_stored_object> &dependencies);
   pfem HCT_triangle_fem(fem_param_list &params,
-	std::vector<dal::pstatic_stored_object> &dependencies);
+        std::vector<dal::pstatic_stored_object> &dependencies);
   pfem reduced_HCT_triangle_fem(fem_param_list &params,
-	std::vector<dal::pstatic_stored_object> &dependencies);
+        std::vector<dal::pstatic_stored_object> &dependencies);
   pfem reduced_quadc1p3_fem(fem_param_list &params,
-	std::vector<dal::pstatic_stored_object> &dependencies);
+        std::vector<dal::pstatic_stored_object> &dependencies);
   pfem quadc1p3_fem(fem_param_list &params,
-	std::vector<dal::pstatic_stored_object> &dependencies);
+        std::vector<dal::pstatic_stored_object> &dependencies);
   pfem P1bubbletriangle_fem(fem_param_list &params,
-	std::vector<dal::pstatic_stored_object> &dependencies);
+        std::vector<dal::pstatic_stored_object> &dependencies);
 
   struct fem_naming_system : public dal::naming_system<virtual_fem> {
     fem_naming_system() : dal::naming_system<virtual_fem>("FEM") {
@@ -3355,7 +3355,7 @@ namespace getfem {
       add_suffix("STRUCTURED_COMPOSITE", structured_composite_fem_method);
       add_suffix("PK_HIERARCHICAL_COMPOSITE", PK_composite_hierarch_fem);
       add_suffix("PK_FULL_HIERARCHICAL_COMPOSITE",
-		 PK_composite_full_hierarch_fem);
+                 PK_composite_full_hierarch_fem);
       add_suffix("PK_GAUSSLOBATTO1D", PK_GL_fem);
       add_suffix("Q2_INCOMPLETE", Q2_incomplete_fem);
       add_suffix("HCT_TRIANGLE", HCT_triangle_fem);
@@ -3367,7 +3367,7 @@ namespace getfem {
       add_suffix("NEDELEC", P1_nedelec);
     }
   };
-  
+
   // get a fem descriptor from a string name of a fem.
   pfem fem_descriptor(const std::string &name) {
     size_type i = 0;
@@ -3385,7 +3385,7 @@ namespace getfem {
 
   // allows the add of a fem.
   void add_fem_name(std::string name,
-		    dal::naming_system<virtual_fem>::pfunction f) {
+                    dal::naming_system<virtual_fem>::pfunction f) {
     dal::singleton<fem_naming_system>::instance().add_suffix(name, f);
   }
 
@@ -3445,10 +3445,10 @@ namespace getfem {
     for (size_type i = 0; i < pspt->size(); ++i)
       GMM_ASSERT1((*pspt)[i].size() == pf->dim(), "dimensions mismatch");
   }
-  
+
   void fem_precomp_::init_val() const {
     c.resize(pspt->size());
-    for (size_type i = 0; i < pspt->size(); ++i) 
+    for (size_type i = 0; i < pspt->size(); ++i)
       pf->base_value((*pspt)[i], c[i]);
   }
 
@@ -3465,7 +3465,7 @@ namespace getfem {
   }
 
   pfem_precomp fem_precomp(pfem pf, bgeot::pstored_point_tab pspt,
-			   dal::pstatic_stored_object dep) {
+                           dal::pstatic_stored_object dep) {
     dal::pstatic_stored_object_key pk = std::make_shared<pre_fem_key_>(pf,pspt);
     dal::pstatic_stored_object o = dal::search_stored_object(pk);
     if (o) return std::dynamic_pointer_cast<const fem_precomp_>(o);

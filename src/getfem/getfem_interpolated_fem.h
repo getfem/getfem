@@ -127,7 +127,7 @@ namespace getfem {
     bool find_a_point(base_node pt, base_node &ptr,
 		      size_type &cv) const;
 
-    void update_from_context(void) const;
+    virtual void update_from_context(void) const;
     inline void actualize_fictx(pfem pf, size_type cv,
 				const base_node &ptr) const;
 
@@ -161,7 +161,7 @@ namespace getfem {
 		     pinterpolated_func pif_ = 0,
 		     dal::bit_vector blocked_dof = dal::bit_vector(),
 		     bool store_val = true);
-    ~interpolated_fem()
+    virtual ~interpolated_fem()
     { DAL_STORED_OBJECT_DEBUG_DESTROYED(this, "Interpolated fem"); }
   };
   

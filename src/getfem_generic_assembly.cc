@@ -5104,10 +5104,6 @@ namespace getfem {
   };
 
 
-  const mesh ga_workspace::dummy_mesh = mesh();
-  const mesh_im ga_workspace::dummy_mim = mesh_im();
-  const mesh_region ga_workspace::dummy_region = mesh_region();
-
   //=========================================================================
   // Structure dealing with user defined environment : constant, variables,
   // functions, operators.
@@ -5153,7 +5149,8 @@ namespace getfem {
 
   const mesh_region &ga_workspace::register_region(const mesh &m,
                                                    const mesh_region &region) {
-    if (&m == &dummy_mesh) return dummy_region;
+    if (&m == &dummy_mesh())
+      return dummy_mesh_region();
 
     std::list<mesh_region> &lmr = registred_mims[&m];
     for (std::list<mesh_region>::iterator it = lmr.begin();
@@ -5490,7 +5487,8 @@ namespace getfem {
     if (tree.root) {
       // GMM_ASSERT1(tree.root->nb_test_functions() == 0,
       //            "Invalid function expression");
-      add_tree(tree, dummy_mesh, dummy_mim, dummy_region, expr, 0);
+      add_tree(tree, dummy_mesh(), dummy_mesh_im(), dummy_mesh_region(),
+               expr, 0);
     }
   }
 
@@ -5505,7 +5503,7 @@ namespace getfem {
     if (tree.root) {
       GMM_ASSERT1(tree.root->nb_test_functions() == 0,
                   "Invalid expression containing test functions");
-      add_tree(tree, m, dummy_mim, rg, expr, 0, false);
+      add_tree(tree, m, dummy_mesh_im(), rg, expr, 0, false);
     }
   }
 

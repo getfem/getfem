@@ -171,9 +171,6 @@ namespace getfem {
       ~tree_description();
     };
 
-    static const mesh dummy_mesh;
-    static const mesh_im dummy_mim;
-    static const mesh_region dummy_region;
     mutable std::set<var_trans_pair> test1, test2;
     var_trans_pair selected_test1, selected_test2;
 

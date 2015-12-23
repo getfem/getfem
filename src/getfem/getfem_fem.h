@@ -261,7 +261,7 @@ namespace getfem {
     /** Number of degrees of freedom.
 
        @param cv the convex number for this FEM. This information is
-       rarely used, by is needed by some "special" FEMs, such as
+       rarely used, but is needed by some "special" FEMs, such as
        getfem::interpolated_fem.
     */
     virtual size_type nb_dof(size_type /*cv*/) const

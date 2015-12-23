@@ -120,7 +120,8 @@ namespace bgeot {
 
     if (isalpha(c) || c == '_') { // reading a name
       while (isalnum(c) || c == '_') {
-	st.push_back(c); get_c__(4,c); 
+        st.push_back(c);
+        get_c__(4,c);
       }
       ist.putback(c);
       return 4;

@@ -567,8 +567,7 @@ static void do_expression_analysis(mexargs_in& in) {
     }
   }
 
-  workspace.add_expression(expr, mim, getfem::ga_workspace::dummy_region,
-                           der_order);
+  workspace.add_expression(expr, mim, getfem::dummy_mesh_region(), der_order);
   workspace.print(cout);
 }
 

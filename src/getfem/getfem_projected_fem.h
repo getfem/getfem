@@ -111,7 +111,7 @@ namespace getfem {
     bool find_a_projected_point(base_node pt, base_node &ptr_proj,
                                 size_type &cv_proj, short_type &fc_proj) const;
 
-    void update_from_context(void) const;
+    virtual void update_from_context(void) const;
     inline void actualize_fictx(pfem pf, size_type cv,
                                 const base_node &ptr) const;
 
@@ -151,6 +151,8 @@ namespace getfem {
                   size_type rg_source_, size_type rg_target_,
                   dal::bit_vector blocked_dofs_,
                   bool store_val);
+    virtual ~projected_fem()
+    { DAL_STORED_OBJECT_DEBUG_DESTROYED(this, "Projected fem"); }
   };
 
 

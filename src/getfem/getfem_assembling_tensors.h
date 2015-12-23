@@ -539,7 +539,7 @@ namespace getfem {
     std::deque<size_type> marks;
   public:
     asm_tokenizer() {}
-   void set_str(const std::string& s_) {
+    void set_str(const std::string& s_) {
       str = s_; tok_pos = 0; tok_len = size_type(-1); curr_tok_type = END;
       err_msg_mark = 0; get_tok(); 
     }

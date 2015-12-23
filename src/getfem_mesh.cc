@@ -1260,4 +1260,13 @@ namespace getfem {
     }
     Bank_info->edges.clear();
   }
+
+  struct dummy_mesh_ {
+    mesh m;
+    dummy_mesh_() : m() {}
+  };
+
+  const mesh &dummy_mesh()
+  { return dal::singleton<dummy_mesh_>::instance().m; }
+
 }  /* end of namespace getfem.                                             */

@@ -24,8 +24,6 @@
 
 namespace getfem {
 
-  mesh mesh_im::dummy_mesh = mesh();
-  
   void mesh_im::update_from_context(void) const {
     for (dal::bv_visitor i(im_convexes); !i.finished(); ++i) {
       if (linked_mesh_->convex_index().is_in(i)) {
@@ -112,7 +110,7 @@ namespace getfem {
   }
 
 
-  void mesh_im::init_with_mesh(mesh &me) {
+  void mesh_im::init_with_mesh(const mesh &me) {
     GMM_ASSERT1(linked_mesh_ == 0, "Mesh im already initialized");
     linked_mesh_ = &me;
     this->add_dependency(me);
@@ -120,7 +118,7 @@ namespace getfem {
     v_num_update = v_num = act_counter();
   }
   
-  mesh_im::mesh_im(void) {
+  mesh_im::mesh_im() {
     linked_mesh_ = 0; auto_add_elt_pim = 0;
     is_lower_dim = false;
     v_num_update = v_num = act_counter();
@@ -129,7 +127,7 @@ namespace getfem {
   void mesh_im::copy_from(const mesh_im &mim) {
     clear_dependencies();
     linked_mesh_ = 0;
-    init_with_mesh(*(const_cast<mesh *>(mim.linked_mesh_)));
+    init_with_mesh(*(mim.linked_mesh_));
     is_lower_dim = mim.is_lower_dim;
     im_convexes = mim.im_convexes;
     v_num_update = mim.v_num_update;
@@ -147,7 +145,7 @@ namespace getfem {
     return *this;
   }
 
-  mesh_im::mesh_im(mesh &me)
+  mesh_im::mesh_im(const mesh &me)
   { linked_mesh_ = 0; init_with_mesh(me); is_lower_dim = false; }
 
   mesh_im::~mesh_im() {}
@@ -227,6 +225,15 @@ namespace getfem {
     write_to_file(o);
     o.close();
   }
+
+  struct dummy_mesh_im_ {
+    mesh_im mim;
+    dummy_mesh_im_() : mim() {}
+  };
+
+  const mesh_im &dummy_mesh_im()
+  { return dal::singleton<dummy_mesh_im_>::instance().mim; }
+
 }  /* end of namespace getfem.                                             */
 
 

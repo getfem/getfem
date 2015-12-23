@@ -41,7 +41,7 @@ struct sub_gf_mim : virtual public dal::static_stored_object {
   int arg_in_min, arg_in_max, arg_out_min, arg_out_max;
   virtual void run(getfemint::mexargs_in& in,
 		   getfemint::mexargs_out& out,
-		   getfem::mesh * &mm,
+		   const getfem::mesh * &mm,
 		   std::shared_ptr<getfem::mesh_im> &mim) = 0;
 };
 
@@ -54,7 +54,7 @@ template <typename T> static inline void dummy_func(T &) {}
     struct subc : public sub_gf_mim {					\
       virtual void run(getfemint::mexargs_in& in,			\
 		       getfemint::mexargs_out& out,			\
-		       getfem::mesh * &mm,				\
+		       const getfem::mesh * &mm,			\
 		       std::shared_ptr<getfem::mesh_im> &mim)		\
       { dummy_func(in); dummy_func(out); dummy_func(mm); code }		\
     };									\
@@ -228,7 +228,7 @@ void gf_mesh_im(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
 
 
   if (m_in.narg() < 1) THROW_BADARG("Wrong number of input arguments");
-  getfem::mesh *mm = NULL;
+  const getfem::mesh *mm = NULL;
   std::shared_ptr<getfem::mesh_im> mim;
   if (m_in.front().is_string()) {
     std::string init_cmd   = m_in.pop().to_string();

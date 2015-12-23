@@ -29,12 +29,12 @@
 
 ===========================================================================*/
 
-/** @file dal_static_stored_objects.h 
+/** @file dal_static_stored_objects.h
 @author  Yves Renard <Yves.Renard@insa-lyon.fr>
 @date February 19, 2005
 @brief Stores interdependent getfem objects.
 
-Stored object :  
+Stored object :
 
 A type of object to be stored should derive from
 dal::static_stored_object and a key should inherit from
@@ -57,7 +57,7 @@ and then your object will be automatically deleted if the second object is
 deleted.
 The dependency can be added within the add_stored_object call:
 @code
-add_stored_object(new your_object_key(parameters), 
+add_stored_object(new your_object_key(parameters),
 new your_object(parameters),
 dependency);
 @endcode
@@ -100,11 +100,11 @@ namespace dal {
 // DAL_STORED_OBJECT_DEBUG_DESTROYED(this) in the destructor.
   class static_stored_object;
   void stored_debug_created(const static_stored_object *o,
-			    const std::string &name);
+                            const std::string &name);
   void stored_debug_added(const static_stored_object *o);
   void stored_debug_deleted(const static_stored_object *o);
   void stored_debug_destroyed(const static_stored_object *o,
-			      const std::string &name);
+                              const std::string &name);
 # define DAL_STORED_OBJECT_DEBUG_CREATED(o, name) stored_debug_created(o, name)
 # define DAL_STORED_OBJECT_DEBUG_ADDED(o)   stored_debug_added(o)
 # define DAL_STORED_OBJECT_DEBUG_DELETED(o) stored_debug_deleted(o)
@@ -114,14 +114,14 @@ namespace dal {
 # define DAL_STORED_OBJECT_DEBUG_CREATED(o, name)
 # define DAL_STORED_OBJECT_DEBUG_ADDED(o)
 # define DAL_STORED_OBJECT_DEBUG_DELETED(o)
-# define DAL_STORED_OBJECT_DEBUG_DESTROYED(o, name) 
+# define DAL_STORED_OBJECT_DEBUG_DESTROYED(o, name)
 #endif
 
   enum permanence { PERMANENT_STATIC_OBJECT = 0, // not deletable object
     STRONG_STATIC_OBJECT = 1,    // preferable not to delete it
     STANDARD_STATIC_OBJECT = 2,  // standard
     WEAK_STATIC_OBJECT = 3,      // delete it if necessary
-    AUTODELETE_STATIC_OBJECT = 4 // automatically deleted 
+    AUTODELETE_STATIC_OBJECT = 4 // automatically deleted
                                  // when the last dependent object is deleted
   };
 
@@ -145,49 +145,49 @@ namespace dal {
 
 
   template <typename var_type>
-  class simple_key : virtual public static_stored_object_key { 
-    var_type a;                                                     
-  public :                                                           
+  class simple_key : virtual public static_stored_object_key {
+    var_type a;
+  public :
     virtual bool compare(const static_stored_object_key &oo) const {
       const simple_key &o = dynamic_cast<const simple_key &>(oo);
-      if (a < o.a) return true; return false; 
+      if (a < o.a) return true; return false;
     }
     simple_key(var_type aa) : a(aa) {}
   };
 
-#define DAL_SIMPLE_KEY(class_name, var_type)                         \
-  struct class_name : public dal::simple_key<var_type> {	     \
-  class_name(var_type aa) : dal::simple_key<var_type>(aa) {}	     \
+#define DAL_SIMPLE_KEY(class_name, var_type)                            \
+  struct class_name : public dal::simple_key<var_type> {                \
+  class_name(var_type aa) : dal::simple_key<var_type>(aa) {}            \
   }
 
-#define DAL_DOUBLE_KEY(class_name, var_type1, var_type2)	     \
-  struct class_name :						     \
-  public dal::simple_key<std::pair<var_type1,var_type2> > {	     \
-  class_name(var_type1 aa, var_type2 bb) :			     \
-  dal::simple_key<std::pair<var_type1,var_type2> >		     \
-  (std::make_pair(aa,bb)) {}					     \
+#define DAL_DOUBLE_KEY(class_name, var_type1, var_type2)                \
+  struct class_name :                                                   \
+  public dal::simple_key<std::pair<var_type1,var_type2> > {             \
+  class_name(var_type1 aa, var_type2 bb) :                              \
+  dal::simple_key<std::pair<var_type1,var_type2> >                      \
+  (std::make_pair(aa,bb)) {}                                            \
   }
 
-#define DAL_TRIPLE_KEY(class_name, var_type1, var_type2, var_type3)	\
-  struct class_name :							\
-  public dal::simple_key<std::pair<var_type1,				\
-				   std::pair<var_type2,var_type3> > > { \
-  class_name(var_type1 aa, var_type2 bb, var_type3 cc) :		\
-    dal::simple_key<std::pair<var_type1,				\
-			      std::pair<var_type2, var_type3> > >	\
-    (std::make_pair(aa,std::make_pair(bb,cc))) {}			\
+#define DAL_TRIPLE_KEY(class_name, var_type1, var_type2, var_type3)     \
+  struct class_name :                                                   \
+  public dal::simple_key<std::pair<var_type1,                           \
+                                   std::pair<var_type2,var_type3> > > { \
+  class_name(var_type1 aa, var_type2 bb, var_type3 cc) :                \
+    dal::simple_key<std::pair<var_type1,                                \
+                              std::pair<var_type2, var_type3> > >       \
+    (std::make_pair(aa,std::make_pair(bb,cc))) {}                       \
   }
 
 #define DAL_FOUR_KEY(class_name,var_type1,var_type2,var_type3,var_type4)\
-  struct class_name : public						\
-  dal::simple_key<std::pair						\
-		  <var_type1, std::pair<var_type2, std::pair		\
-					<var_type3,var_type4> > > > {	\
+  struct class_name : public                                            \
+  dal::simple_key<std::pair                                             \
+                  <var_type1, std::pair<var_type2, std::pair            \
+                                        <var_type3,var_type4> > > > {   \
     class_name(var_type1 aa, var_type2 bb, var_type3 cc,var_type4 dd) : \
-      dal::simple_key<std::pair						\
-		      <var_type1, std::pair<var_type2,			\
-					    std::pair<var_type3,	\
-						      var_type4> > > >	\
+      dal::simple_key<std::pair                                         \
+                      <var_type1, std::pair<var_type2,                  \
+                                            std::pair<var_type3,        \
+                                                      var_type4> > > >  \
       (std::make_pair(aa,std::make_pair(bb,std::make_pair(cc, dd)))) {} \
   }
 
@@ -197,7 +197,7 @@ namespace dal {
 
 
   /**
-  base class for static stored objects 
+  base class for static stored objects
   */
   class static_stored_object { public : virtual ~static_stored_object() {} };
 
@@ -231,7 +231,7 @@ namespace dal {
 
   inline void
     add_stored_object(pstatic_stored_object_key k, pstatic_stored_object o,
-    pstatic_stored_object dep1, pstatic_stored_object dep2, 
+    pstatic_stored_object dep1, pstatic_stored_object dep2,
     permanence perm = STANDARD_STATIC_OBJECT) {
       add_stored_object(k, o, perm);
       add_dependency(o, dep1);
@@ -263,7 +263,7 @@ namespace dal {
 
   /** Delete an object and the object which depend on it. */
   void del_stored_object(const pstatic_stored_object &o,
-			 bool ignore_unstored=false);
+                         bool ignore_unstored=false);
 
   /** Delete all the object whose permanence is greater or equal to perm. */
   void del_stored_objects(int perm);
@@ -277,7 +277,7 @@ namespace dal {
   /** Delete a list of objects and their dependencies*/
   void del_stored_objects(std::list<pstatic_stored_object> &to_delete,
     bool ignore_unstored);
-  
+
   /** Test the validity of the whole global storage */
   void test_stored_objects(void);
 
@@ -293,7 +293,7 @@ namespace dal {
       : p(o), perm(perma) {valid = true;}
     enr_static_stored_object(void)
       : perm(STANDARD_STATIC_OBJECT) {valid = true;}
-    enr_static_stored_object(const enr_static_stored_object& enr_o) 
+    enr_static_stored_object(const enr_static_stored_object& enr_o)
       : p(enr_o.p), perm(enr_o.perm), dependent_object(enr_o.dependent_object),
       dependencies(enr_o.dependencies){valid = static_cast<bool>(enr_o.perm);}
   };
@@ -311,9 +311,9 @@ namespace dal {
 
 
   /** Table of stored objects. Thread safe, uses thread specific mutexes. */
-  struct stored_object_tab : 
+  struct stored_object_tab :
     public std::map<enr_static_stored_object_key, enr_static_stored_object> {
-    
+
     typedef std::map<pstatic_stored_object,pstatic_stored_object_key>
       stored_key_tab;
 
@@ -329,22 +329,22 @@ namespace dal {
 
     iterator iterator_of_object_(pstatic_stored_object o);
     //delete o2 from the dependency list of o1
-    //true if successfull, false if o1 is not 
+    //true if successfull, false if o1 is not
     //on this thread
     bool del_dependency_(pstatic_stored_object o1,
     pstatic_stored_object o2);
     //delete o1 from the dependent list of o2
-    //true if successfull, false if o1 is not 
+    //true if successfull, false if o1 is not
     //on this thread
     bool del_dependent_(pstatic_stored_object o1,
     pstatic_stored_object o2);
     //add o2 to the dependency list of o1
-    //true if successfull, false if o1 is not 
+    //true if successfull, false if o1 is not
     //on this thread
     bool add_dependency_(pstatic_stored_object o1,
     pstatic_stored_object o2);
     //add o1 to the dependent list of o2
-    //true if successfull, false if o1 is not 
+    //true if successfull, false if o1 is not
     //on this thread
     bool add_dependent_(pstatic_stored_object o1,
     pstatic_stored_object o2);
@@ -371,11 +371,12 @@ namespace dal {
       iterator ite = stored_objects.end();
 
       for(iterator it = itb; it != ite; ++it){
-        const OBJECT_TYPE *p_object =  std::dynamic_pointer_cast<const OBJECT_TYPE>(it->second.p).get();
+        const OBJECT_TYPE *p_object
+          = std::dynamic_pointer_cast<const OBJECT_TYPE>(it->second.p).get();
         if(p_object != 0) delete_object_list.push_back(it->second.p);
-      }    
+      }
     }
-    else{    
+    else{
       for(size_t thread = 0; thread<getfem::num_threads();thread++)
       {
         stored_object_tab& stored_objects
@@ -385,7 +386,8 @@ namespace dal {
         iterator ite = stored_objects.end();
 
         for(iterator it = itb; it != ite; ++it){
-          const OBJECT_TYPE *p_object =  std::dynamic_pointer_cast<const OBJECT_TYPE>(it->second.p).get();
+          const OBJECT_TYPE *p_object
+            = std::dynamic_pointer_cast<const OBJECT_TYPE>(it->second.p).get();
           if(p_object != 0) delete_object_list.push_back(it->second.p);
         }
       }

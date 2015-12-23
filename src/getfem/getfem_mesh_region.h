@@ -292,6 +292,10 @@ namespace getfem {
   };
 
   typedef mesh_region::visitor mr_visitor;
+
+  /* Dummy mesh_region for default parameter of functions. */
+  const mesh_region &dummy_mesh_region();
+
 }
 
 

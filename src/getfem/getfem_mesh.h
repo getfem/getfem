@@ -570,6 +570,10 @@ namespace getfem {
 
   };
 
+  /* Dummy mesh for default parameter of functions. */
+  const mesh &dummy_mesh();
+
+
   inline void APIDECL mesh::add_face_to_set(size_type s, size_type c, short_type f) {
     region(s).add(c,f);
   }

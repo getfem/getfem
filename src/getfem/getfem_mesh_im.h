@@ -46,14 +46,13 @@ namespace getfem {
   /// Describe an integration method linked to a mesh.
   class mesh_im : public context_dependencies, virtual public dal::static_stored_object {
   private :
-    static mesh dummy_mesh;
     void copy_from(const mesh_im &mim);
 
   protected :
     bool is_lower_dim;
     dal::dynamic_array<pintegration_method> ims;
     dal::bit_vector im_convexes;
-    mesh *linked_mesh_;
+    const mesh *linked_mesh_;
     mutable gmm::uint64_type v_num_update, v_num;
     pintegration_method auto_add_elt_pim; /* im for automatic addition     */
                           /* of element option. (0 = no automatic addition)*/
@@ -74,11 +73,11 @@ namespace getfem {
     inline const dal::bit_vector &convex_index(void) const
     { return im_convexes; }
 
-    bool is_lower_dimensional(void) const { return is_lower_dim; }
+    bool is_lower_dimensional() const { return is_lower_dim; }
 
     /// Give a reference to the linked mesh of type mesh.
-    mesh &linked_mesh(void) const
-    { return linked_mesh_ ? *linked_mesh_ : dummy_mesh; }
+    const mesh &linked_mesh() const
+    { return linked_mesh_ ? *linked_mesh_ : dummy_mesh(); }
     /** Set the integration method of a convex.
 
         @param cv the convex number
@@ -125,9 +124,9 @@ namespace getfem {
         ims.memsize() + im_convexes.memsize();
     }
 
-    void init_with_mesh(mesh &me);
-    mesh_im(mesh &me);
-    mesh_im(void);
+    void init_with_mesh(const mesh &me);
+    mesh_im(const mesh &me);
+    mesh_im();
     virtual ~mesh_im();
     mesh_im(const mesh_im &mim);
     mesh_im &operator=(const mesh_im &mim);
@@ -149,6 +148,9 @@ namespace getfem {
     */
     void write_to_file(const std::string &name, bool with_mesh=false) const;
   };
+
+  /** Dummy mesh_im for default parameter of functions. */
+  const mesh_im &dummy_mesh_im();
 
 }  /* end of namespace getfem.                                             */
 

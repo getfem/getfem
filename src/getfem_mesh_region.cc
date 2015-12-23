@@ -529,4 +529,12 @@ namespace getfem {
 
       return os;
   }
+
+  struct dummy_mesh_region_ {
+    mesh_region mr;
+    dummy_mesh_region_() : mr() {}
+  };
+
+  const mesh_region &dummy_mesh_region()
+  { return dal::singleton<dummy_mesh_region_>::instance().mr; }
 }

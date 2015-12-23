@@ -9,7 +9,7 @@
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
  Exception either version 3.1 or (at your option) any later version.
- This program  is  distributed  in  the  hope  that it willx be useful,  but
+ This program  is  distributed  in  the  hope  that it will be useful,  but
  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
  License and GCC Runtime Library Exception for more details.

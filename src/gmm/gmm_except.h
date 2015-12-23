@@ -301,7 +301,7 @@ namespace gmm {
     std::cerr << "|    A bad cast  has been detected !!!     |\n";	\
     std::cerr << "============================================\n";	\
     exit(1);								\
-}									\
+  }									\
   catch(...) {								\
     std::cerr << "============================================\n";	\
     std::cerr << "|  An unknown error has been detected !!!  |\n";	\
