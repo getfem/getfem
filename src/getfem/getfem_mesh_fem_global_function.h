@@ -43,6 +43,7 @@
 #include "getfem_generic_assembly.h"
 
 namespace getfem {
+
   /// inherit from this class to define new global functions.
   struct global_function : virtual public dal::static_stored_object {
     virtual scalar_type val(const fem_interpolation_context&) const
@@ -83,12 +84,15 @@ namespace getfem {
       cvr = cvr_;
       init();
     }
+    virtual ~global_function_fem()
+    { DAL_STORED_OBJECT_DEBUG_DESTROYED(this, "Global function fem"); }
   };
 
   pfem new_global_function_fem(bgeot::pconvex_ref cvr,
                                const std::vector<pglobal_function>& functions);
 
   inline void del_global_function_fem(pfem pf) { dal::del_stored_object(pf); }
+
 
   /** mesh_fem whose base functions are global functions (function
       defined on the whole mesh) given by the user. This is much more
@@ -120,8 +124,9 @@ namespace getfem {
 
   /** a general structure for interpolation of a function defined
       by a mesh_fem and a vector U at any point
-      (interpolation of value and radient).
+      (interpolation of value and gradient).
   */
+
   struct interpolator_on_mesh_fem {
     const mesh_fem &mf;
     std::vector<scalar_type> U;
@@ -133,28 +138,20 @@ namespace getfem {
 
 
     interpolator_on_mesh_fem(const mesh_fem &mf_,
-                             const std::vector<scalar_type> &U_) :
-      mf(mf_), U(U_) {
-      if (mf.is_reduced()) {
-        gmm::resize(U, mf.nb_basic_dof());
-        gmm::mult(mf.extension_matrix(), U_, U);
-      }
-      init();
-    }
-
-    void init();
-    bool find_a_point(base_node pt, base_node &ptr,
+                             const std::vector<scalar_type> &U_);
+    bool find_a_point(const base_node &pt, base_node &ptr,
                       size_type &cv) const;
-    bool eval(const base_node pt, base_vector &val, base_matrix &grad) const;
+    bool eval(const base_node &pt, base_vector &val, base_matrix &grad) const;
   };
 
   typedef std::shared_ptr<const interpolator_on_mesh_fem>
     pinterpolator_on_mesh_fem;
 
-  /* below a list of simple function of (x,y)
-     used for building the crack singular functions
+
+  /** below a list of simple function of (x,y)
+      used for building the crack singular functions
   */
-  struct abstract_xy_function  : virtual public dal::static_stored_object {
+  struct abstract_xy_function : virtual public dal::static_stored_object {
     virtual scalar_type val(scalar_type x, scalar_type y) const = 0;
     virtual base_small_vector grad(scalar_type x, scalar_type y) const = 0;
     virtual base_matrix hess(scalar_type x, scalar_type y) const = 0;
@@ -215,7 +212,7 @@ namespace getfem {
     virtual base_matrix hess(scalar_type, scalar_type) const
     { GMM_ASSERT1(false, "Sorry, to be done ..."); }
     interpolated_xy_function(const pinterpolator_on_mesh_fem &itp_,
-			     size_type c) :
+                             size_type c) :
       itp(itp_), component(c) {}
   };
 
@@ -255,9 +252,8 @@ namespace getfem {
       : fn1(fn1_), fn2(fn2_) {}
   };
 
-  /*
-   * some useful global functions
-   */
+
+  /** some useful global functions */
   class level_set;
 
   pglobal_function

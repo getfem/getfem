@@ -142,8 +142,8 @@ namespace getfem {
 
 
   parser_xy_function::parser_xy_function(const std::string &sval,
-					 const std::string &sgrad,
-					 const std::string &shess)
+                                         const std::string &sgrad,
+                                         const std::string &shess)
     : f_val(gw_val, sval), f_grad(gw_grad, sgrad), f_hess(gw_hess, shess),
       ptx(1), pty(1), ptr(1), ptt(1) {
 
@@ -151,7 +151,7 @@ namespace getfem {
     gw_val.add_fixed_size_constant("y", pty);
     gw_val.add_fixed_size_constant("r", ptr);
     gw_val.add_fixed_size_constant("theta", ptt);
-    
+
     gw_grad.add_fixed_size_constant("x", ptx);
     gw_grad.add_fixed_size_constant("y", pty);
     gw_grad.add_fixed_size_constant("r", ptr);
@@ -164,7 +164,7 @@ namespace getfem {
 
     f_val.compile(); f_grad.compile(); f_hess.compile();
   }
-  
+
   scalar_type
   parser_xy_function::val(scalar_type x, scalar_type y) const {
     ptx[0] = double(x);                   // x
@@ -224,21 +224,21 @@ namespace getfem {
 
     scalar_type res = 0;
     switch(l){
-   
-  /* First order enrichement displacement field (linear elasticity) */    
-      
+
+  /* First order enrichement displacement field (linear elasticity) */
+
       case 0 : res = sqrt(r)*sin2; break;
       case 1 : res = sqrt(r)*cos2; break;
       case 2 : res = sin2*y/sqrt(r); break;
       case 3 : res = cos2*y/sqrt(r); break;
-  
+
   /* Second order enrichement of displacement field (linear elasticity) */
-      
+
       case 4 : res = sqrt(r)*r*sin2; break;
       case 5 : res = sqrt(r)*r*cos2; break;
       case 6 : res = sin2*cos2*cos2*r*sqrt(r); break;
       case 7 : res = cos2*cos2*cos2*r*sqrt(r); break;
-  
+
    /* First order enrichement of pressure field (linear elasticity) mixed formulation */
 
       case 8 : res = -sin2/sqrt(r); break;
@@ -251,14 +251,14 @@ namespace getfem {
 
   /* First order enrichement of displacement field (nonlinear elasticity)[Rodney Stephenson Journal of elasticity VOL.12 No. 1, January 1982] */
 
-      case 12 : res = r*sin2*sin2; break; 
+      case 12 : res = r*sin2*sin2; break;
       case 13 : res = sqrt(r)*sin2; break;
 
 /* First order enrichement of pressure field (nonlinear elasticity)  */
 
-      case 14 : res = sin2/r; break; 
+      case 14 : res = sin2/r; break;
       case 15 : res = cos2/r; break;
- 
+
     default: GMM_ASSERT2(false, "arg");
     }
     return res;
@@ -299,8 +299,8 @@ namespace getfem {
       res[0] = -cos2*cos2*sin2*((4*cos2*cos2) - 3.)/sqrt(r);
       res[1] = cos2*((4*cos2*cos2*cos2*cos2) + 2. - (5*cos2*cos2))/sqrt(r);
       break;
- /* Second order enrichement of displacement field (linear elasticity) */   
-    
+ /* Second order enrichement of displacement field (linear elasticity) */
+
     case 4 :
       res[0] = sin2 *((4*cos2*cos2)-3.)*sqrt(r)/2.;
       res[1] = cos2*(5. - (4*cos2*cos2))*sqrt(r)/2. ;
@@ -309,7 +309,7 @@ namespace getfem {
       res[0] = cos2*((4*cos2*cos2)-1.)*sqrt(r)/2.;
       res[1] = sin2*((4*cos2*cos2)+1.)*sqrt(r)/2. ;
       break;
-   
+
     case 6 :
       res[0] = sin2*cos2*cos2*sqrt(r)/2.;
       res[1] = cos2*(2. - (cos2*cos2))*sqrt(r)/2.;
@@ -318,7 +318,7 @@ namespace getfem {
       res[0] = 3*cos2*cos2*cos2*sqrt(r)/2.;
       res[1] = 3*sin2*cos2*cos2*sqrt(r)/2.;
       break;
-    
+
   /* First order enrichement of pressure field (linear elasticity) mixed formulation */
 
     case 8 :
@@ -339,7 +339,7 @@ namespace getfem {
       res[0] = cos2/(2*sqrt(r));
       res[1] = sin2/(2*sqrt(r));
       break;
-    
+
  /* First order enrichement of displacement field (nonlinear elasticity)[Rodney Stephenson Journal of elasticity VOL.12 No. 1, January 1982] */
 
     case 12 :
@@ -575,7 +575,7 @@ namespace getfem {
     void update_mls(size_type cv_) const {
       if (cv_ != cv) {
         cv=cv_;
-	mls_x = ls.mls_of_convex(cv, 1);
+        mls_x = ls.mls_of_convex(cv, 1);
         mls_y = ls.mls_of_convex(cv, 0);
       }
     }
@@ -752,42 +752,54 @@ namespace getfem {
   }
 
 
-  void interpolator_on_mesh_fem::init() {
-    base_node min, max;
+  // interpolator on mesh_fem
+
+  interpolator_on_mesh_fem::interpolator_on_mesh_fem
+  (const mesh_fem &mf_, const std::vector<scalar_type> &U_)
+    : mf(mf_), U(U_) {
+
+    if (mf.is_reduced()) {
+      gmm::resize(U, mf.nb_basic_dof());
+      gmm::mult(mf.extension_matrix(), U_, U);
+    }
+    base_node bmin, bmax;
     scalar_type EPS=1E-13;
     cv_stored = size_type(-1);
     boxtree.clear();
     for (dal::bv_visitor cv(mf.convex_index()); !cv.finished(); ++cv) {
-      bounding_box(min, max, mf.linked_mesh().points_of_convex(cv),
+      bounding_box(bmin, bmax, mf.linked_mesh().points_of_convex(cv),
                    mf.linked_mesh().trans_of_convex(cv));
-      for (unsigned k=0; k < min.size(); ++k) { min[k]-=EPS; max[k]+=EPS; }
-      boxtree.add_box(min, max, cv);
+      for (auto&& val : bmin) val -= EPS;
+      for (auto&& val : bmax) val += EPS;
+      boxtree.add_box(bmin, bmax, cv);
     }
   }
 
-  bool interpolator_on_mesh_fem::find_a_point(base_node pt, base_node &ptr,
+  bool interpolator_on_mesh_fem::find_a_point(const base_node &pt,
+                                              base_node &ptr,
                                               size_type &cv) const {
     bool gt_invertible;
-    if (cv_stored != size_type(-1) && gic.invert(pt, ptr, gt_invertible))
-      { cv = cv_stored; if (gt_invertible) return true; }
+    if (cv_stored != size_type(-1) && gic.invert(pt, ptr, gt_invertible)) {
+      cv = cv_stored;
+      if (gt_invertible)
+        return true;
+    }
 
     boxtree.find_boxes_at_point(pt, boxlst);
-    bgeot::rtree::pbox_set::const_iterator it = boxlst.begin(),
-      ite = boxlst.end();
-    for (; it != ite; ++it) {
+    for (const auto &box : boxlst) {
       gic = bgeot::geotrans_inv_convex
-        (mf.linked_mesh().convex((*it)->id),
-         mf.linked_mesh().trans_of_convex((*it)->id));
-      cv_stored = (*it)->id;
+        (mf.linked_mesh().convex(box->id),
+         mf.linked_mesh().trans_of_convex(box->id));
+      cv_stored = box->id;
       if (gic.invert(pt, ptr, gt_invertible)) {
-        cv = (*it)->id;
+        cv = box->id;
         return true;
       }
     }
     return false;
   }
 
-  bool interpolator_on_mesh_fem::eval(const base_node pt, base_vector &val,
+  bool interpolator_on_mesh_fem::eval(const base_node &pt, base_vector &val,
                                       base_matrix &grad) const {
     base_node ptref;
     size_type cv;
@@ -809,7 +821,8 @@ namespace getfem {
       grad.resize(q, N);
       pf->interpolation_grad(fic, coeff, grad, q);
       return true;
-    } else return false;
+    } else
+      return false;
   }
 }
 
