@@ -41,11 +41,11 @@
 #include "getfem_mesher.h"
 
 namespace getfem {
-  /** @brief Define a level-set.  
+  /** @brief Define a level-set.
 
       In getfem, a levelset is one or two scalar functions, defined on
       a lagrange polynomial mesh_fem.
-      
+
       The (optional) second function is a way to limit the level-set
       to handle cracks for example.
   */
@@ -53,7 +53,6 @@ namespace getfem {
   class level_set : public context_dependencies, virtual public dal::static_stored_object {
 
   protected :
-    mesh *pmesh;
     dim_type degree_;
     const mesh_fem *mf;
     std::vector<scalar_type> primary_, secondary_;
@@ -63,7 +62,7 @@ namespace getfem {
     // Deprecated.
 
     void copy_from(const level_set &ls); // WARNING :  to be updated if
-                                         //    some components are added 
+                                         //    some components are added
 
   public :
 
@@ -79,20 +78,22 @@ namespace getfem {
     { return (i == 0) ? primary_ : secondary_; }
 
     pmesher_signed_distance mls_of_convex(size_type cv, unsigned lsnum = 0,
-					  bool inverted = false) const;
+                                          bool inverted = false) const;
     bool has_secondary(void) const { return with_secondary; }
     const mesh_fem &get_mesh_fem(void) const { return *mf; }
     const mesh &linked_mesh() const { return mf->linked_mesh(); }
     dim_type degree() const { return degree_; }
-    level_set(mesh &msh, dim_type deg = dim_type(1),
-	      bool with_secondary_ = false);
+    level_set(const mesh &msh, dim_type deg = dim_type(1),
+              bool with_secondary_ = false);
     level_set(const level_set &ls);
     level_set &operator =(const level_set &ls);
 
     ~level_set();
     size_type memsize() const;
   };
- 
+
+  /* Dummy level_set for default parameter of functions. */
+  const level_set &dummy_level_set();
 
 }  /* end of namespace getfem.                                             */
 

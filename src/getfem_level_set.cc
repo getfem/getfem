@@ -24,9 +24,9 @@
 
 namespace getfem {
 
-  level_set::level_set(mesh &msh, dim_type deg,
+  level_set::level_set(const mesh &msh, dim_type deg,
 		       bool with_secondary_)
-    : pmesh(&msh), degree_(deg), mf(&classical_mesh_fem(msh, deg)),
+    : degree_(deg), mf(&classical_mesh_fem(msh, deg)),
       with_secondary(with_secondary_) {
     shift_ls = scalar_type(0);
     primary_.resize(mf->nb_dof());
@@ -35,7 +35,6 @@ namespace getfem {
   }
 
   void level_set::copy_from(const level_set &ls) {
-    pmesh = ls.pmesh;
     degree_ = ls.degree_;
     mf = ls.mf;
     primary_ = ls.primary_;
@@ -107,6 +106,15 @@ namespace getfem {
   }
 
   
+  struct dummy_level_set_ {
+    level_set ls;
+    dummy_level_set_() : ls(dummy_mesh()) {}
+  };
+
+  const level_set &dummy_level_set()
+  { return dal::singleton<dummy_level_set_>::instance().ls; }
+
+
 
 }  /* end of namespace getfem.                                             */
 
