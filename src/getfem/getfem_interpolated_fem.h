@@ -83,7 +83,7 @@ namespace getfem {
     Note that the memory cost of this method is extremely high!
   */
   class interpolated_fem : public virtual_fem, public context_dependencies {
-    
+
   protected :
 
     struct elt_interpolation_data {
@@ -92,7 +92,7 @@ namespace getfem {
       std::vector<size_type> inddof;
       pintegration_method pim; // for DEBUG
       elt_interpolation_data() : nb_dof(0), pim(0) {}
-    }; 
+    };
 
     const mesh_fem &mf;    // mf represents the original finite element method
                            // to be interpolated.
@@ -108,8 +108,8 @@ namespace getfem {
     mutable bgeot::rtree boxtree; // Tree containing the bounding box
                                   // of mf1 elements
     mutable std::vector<size_type> ind_dof; /* all functions using this work
-					       array should keep it full of
-					       size_type(-1) */
+                                               array should keep it full of
+                                               size_type(-1) */
     mutable size_type cv_stored;
     mutable bgeot::rtree::pbox_set boxlst;
     mutable bgeot::geotrans_inv_convex gic;
@@ -117,7 +117,7 @@ namespace getfem {
     mutable fem_interpolation_context fictx;
     mutable size_type fictx_cv;
     mutable base_matrix G;
-    mutable std::vector<base_node> node_tab_;
+    mutable bgeot::pstored_point_tab pspt_override;
     mutable bgeot::multi_index mi2, mi3;
     mutable base_node ptref;
     mutable gmm::dense_matrix<scalar_type> trans;
@@ -125,11 +125,11 @@ namespace getfem {
     void build_rtree(void) const;
 
     bool find_a_point(base_node pt, base_node &ptr,
-		      size_type &cv) const;
+                      size_type &cv) const;
 
     virtual void update_from_context(void) const;
     inline void actualize_fictx(pfem pf, size_type cv,
-				const base_node &ptr) const;
+                                const base_node &ptr) const;
 
   public :
 
@@ -137,36 +137,37 @@ namespace getfem {
     virtual size_type index_of_global_dof(size_type cv, size_type i) const;
     virtual bgeot::pconvex_ref ref_convex(size_type cv) const;
     virtual const bgeot::convex<base_node> &node_convex(size_type cv) const;
-    virtual bgeot::pstored_point_tab node_tab(size_type) const;
+    virtual bgeot::pstored_point_tab node_tab(size_type) const
+    { return pspt_override; }
     void base_value(const base_node &, base_tensor &) const;
     void grad_base_value(const base_node &, base_tensor &) const;
     void hess_base_value(const base_node &, base_tensor &) const;
-    void real_base_value(const fem_interpolation_context& c, 
-			 base_tensor &t, bool = true) const;
-    void real_grad_base_value(const fem_interpolation_context& c, 
-			      base_tensor &t, bool = true) const;
-    void real_hess_base_value(const fem_interpolation_context&, 
-			      base_tensor &, bool = true) const;
+    void real_base_value(const fem_interpolation_context& c,
+                         base_tensor &t, bool = true) const;
+    void real_grad_base_value(const fem_interpolation_context& c,
+                              base_tensor &t, bool = true) const;
+    void real_hess_base_value(const fem_interpolation_context&,
+                              base_tensor &, bool = true) const;
 
     /** return the list of convexes of the interpolated mesh_fem which
      *  contain at least one gauss point (should be all convexes)! */
     dal::bit_vector interpolated_convexes() const;
-    
+
     /** return the min/max/mean number of gauss points in the convexes
      *  of the interpolated mesh_fem */
     void gauss_pts_stats(unsigned &ming, unsigned &maxg,
-			 scalar_type &meang) const; 
+                         scalar_type &meang) const;
     size_type memsize() const;
     interpolated_fem(const mesh_fem &mef, const mesh_im &meim,
-		     pinterpolated_func pif_ = 0,
-		     dal::bit_vector blocked_dof = dal::bit_vector(),
-		     bool store_val = true);
+                     pinterpolated_func pif_ = 0,
+                     dal::bit_vector blocked_dof = dal::bit_vector(),
+                     bool store_val = true);
     virtual ~interpolated_fem()
     { DAL_STORED_OBJECT_DEBUG_DESTROYED(this, "Interpolated fem"); }
   };
-  
 
-  /** create a new interpolated FEM. 
+
+  /** create a new interpolated FEM.
       @param mef the mesh_fem that will be interpolated.
       @param mim the integration method on the final mesh (not the mesh
              of mef!).
@@ -177,16 +178,16 @@ namespace getfem {
              function are cached at each gauss point (eats much memory).
   */
   pfem new_interpolated_fem(const mesh_fem &mef, const mesh_im &mim,
-			    pinterpolated_func pif = 0,
-			    dal::bit_vector blocked_dof = dal::bit_vector(),
-			    bool store_val = true);
+                            pinterpolated_func pif = 0,
+                            dal::bit_vector blocked_dof = dal::bit_vector(),
+                            bool store_val = true);
 
   /** release an interpolated fem */
   inline void del_interpolated_fem(const pfem &pf)
   { dal::del_stored_object(pf); }
 
-  
+
 }  /* end of namespace getfem.                                            */
 
 #endif
-  
+

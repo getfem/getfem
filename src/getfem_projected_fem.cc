@@ -440,8 +440,8 @@ namespace getfem {
     }
     /** setup global dofs, with dummy coordinates */
     base_node P(dim()); gmm::fill(P,1./20);
-    node_tab_.resize(max_dof);
-    std::fill(node_tab_.begin(), node_tab_.end(), P);
+    std::vector<base_node> node_tab_(max_dof, P);
+    pspt_override = bgeot::store_point_tab(node_tab_);
     pspt_valid = false;
     dof_types_.resize(max_dof);
     std::fill(dof_types_.begin(), dof_types_.end(),
@@ -481,13 +481,6 @@ namespace getfem {
     return *(bgeot::generic_dummy_convex_ref
              (dim(), nb_dof(cv),
               mim_target.linked_mesh().structure_of_convex(cv)->nb_faces()));
-  }
-
-  bgeot::pstored_point_tab projected_fem::node_tab(size_type)
-    const {
-    if (!pspt_valid)
-      { pspt = bgeot::store_point_tab(node_tab_); pspt_valid = true; }
-    return pspt;
   }
 
   void projected_fem::base_value(const base_node &, base_tensor &) const

@@ -53,17 +53,17 @@ namespace bgeot {
 
   class convex_structure;
 
-  /// Pointer on a convex structure description. 
+  /// Pointer on a convex structure description.
   typedef std::shared_ptr<const convex_structure> pconvex_structure;
 
   typedef std::vector<pconvex_structure> convex_structure_faces_ct;
   typedef std::vector<short_type>               convex_ind_ct;
   typedef gmm::tab_ref_index_ref< convex_ind_ct::const_iterator,
-	         convex_ind_ct::const_iterator> ref_convex_ind_ct;
+                 convex_ind_ct::const_iterator> ref_convex_ind_ct;
 
-  /**  Structure of a convex.  
+  /**  Structure of a convex.
    *
-   * This class is not to be manipulate by itself. Use
+   * This class is not to be manipulated by itself. Use
    * pconvex_structure and the functions written to produce the
    * convex structures from classicals convexes (simplexes, polygonals
    * ...). The reason is that there is no need for having more than
@@ -71,7 +71,7 @@ namespace bgeot {
    */
   class convex_structure : virtual public dal::static_stored_object {
   protected :
-    
+
     dim_type Nc;
     short_type nbpt, nbf;
     convex_structure_faces_ct  faces_struct;
@@ -79,9 +79,9 @@ namespace bgeot {
     convex_ind_ct              dir_points_;
     pconvex_structure basic_pcvs;
     bool auto_basic;
-    
+
     pconvex_structure prod_a, prod_b; /* only filled for convex structures */
-				      /* product.                          */
+                                      /* product.                          */
     public :
 
       /// Number of faces.
@@ -91,18 +91,18 @@ namespace bgeot {
       /// Number of vertices.
       inline short_type nb_points(void) const { return nbpt; }
     /** Number of vertices of a face.
-     *	@param i the face number.
+     *  @param i the face number.
      */
     inline short_type nb_points_of_face(short_type i) const
     { return short_type(faces[i].size()); }
-    /** Give an array of the indexes of the vertices of a face. 
-     *	The indexes are "local" to the convex.
-     *	@param i the face number.
+    /** Give an array of the indexes of the vertices of a face.
+     *  The indexes are "local" to the convex.
+     *  @param i the face number.
      */
     inline const convex_ind_ct &ind_points_of_face(short_type i) const
     { return faces[i]; }
     /** Return "direct" points indexes. These are the subset of points that
-     *	can be used to build a direct vector basis. (rarely used)
+     *  can be used to build a direct vector basis. (rarely used)
      */
     inline const convex_ind_ct &ind_dir_points() const
     { return dir_points_; }
@@ -112,23 +112,23 @@ namespace bgeot {
     inline const convex_structure_faces_ct &faces_structure(void) const
     { return faces_struct; }
     /** Return "direct" points indexes for a given face.
-     *	@param i the face number.
+     *  @param i the face number.
      */
     inline ref_convex_ind_ct ind_dir_points_of_face(short_type i) const {
       return ref_convex_ind_ct(faces[i].begin(),
-			       faces_struct[i]->ind_dir_points().begin(),
-			       faces_struct[i]->ind_dir_points().end());
+                               faces_struct[i]->ind_dir_points().begin(),
+                               faces_struct[i]->ind_dir_points().end());
     }
-    
+
     void init_for_adaptative(pconvex_structure cvs);
     void add_point_adaptative(short_type i, short_type f);
     /** Return true if the convex structure is indeed a direct product
-     *	of two convex structures. 
-     *	@param pprod1 the first sub-structure (optional)
-     *	@param pprod2 the second sub-structure (optional)
+     *  of two convex structures.
+     *  @param pprod1 the first sub-structure (optional)
+     *  @param pprod2 the second sub-structure (optional)
      */
     bool is_product(pconvex_structure *pprod1=0,
-		    pconvex_structure *pprod2=0) const {
+                    pconvex_structure *pprod2=0) const {
       if (pprod1) *pprod1 = prod_a;
       if (pprod2) *pprod2 = prod_b;
       return prod_a ? true : false;
@@ -160,7 +160,7 @@ namespace bgeot {
    *   For debuging purpose.
    */
   std::ostream &operator << (std::ostream &o,
-				   const convex_structure &cv);
+                             const convex_structure &cv);
 
   /// Give a pointer on the structures of a simplex of dimension d.
   pconvex_structure simplex_structure(dim_type d);
@@ -176,13 +176,13 @@ namespace bgeot {
    *   product of the convexes represented by *pcvs1 and *pcvs2.
    */
   pconvex_structure convex_product_structure(pconvex_structure,
-					     pconvex_structure);
+                                             pconvex_structure);
   /** Give a pointer on the structures of a prism of dimension d.
    *   i.e. the direct product of a simplex of dimension d-1 and a segment.
    */
-  inline pconvex_structure prism_structure(dim_type nc) { 
+  inline pconvex_structure prism_structure(dim_type nc) {
     return convex_product_structure(simplex_structure(dim_type(nc-1)),
-				    simplex_structure(1));
+                                    simplex_structure(1));
   }
 
   /** Simplex structure with the Lagrange grid of degree k.
@@ -193,7 +193,7 @@ namespace bgeot {
 
   /// Generic convex with n global nodes
   pconvex_structure generic_dummy_structure(dim_type nc, size_type n,
-					    size_type nf);
+                                            size_type nf);
 
   //@}
 

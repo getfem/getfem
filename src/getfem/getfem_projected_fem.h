@@ -102,7 +102,7 @@ namespace getfem {
     mutable fem_interpolation_context fictx;
     mutable size_type fictx_cv;
     mutable base_matrix G;
-    mutable std::vector<base_node> node_tab_;
+    mutable bgeot::pstored_point_tab pspt_override;
     mutable bgeot::multi_index mi2, mi3;
     mutable base_node ptref;
 
@@ -121,7 +121,8 @@ namespace getfem {
     virtual size_type index_of_global_dof(size_type cv, size_type i) const;
     virtual bgeot::pconvex_ref ref_convex(size_type cv) const;
     virtual const bgeot::convex<base_node> &node_convex(size_type cv) const;
-    virtual bgeot::pstored_point_tab node_tab(size_type) const;
+    virtual bgeot::pstored_point_tab node_tab(size_type) const
+    { return pspt_override; }
     void base_value(const base_node &, base_tensor &) const;
     void grad_base_value(const base_node &, base_tensor &) const;
     void hess_base_value(const base_node &, base_tensor &) const;

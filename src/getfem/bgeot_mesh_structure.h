@@ -112,7 +112,7 @@ namespace bgeot {
     short_type nb_points_of_convex(size_type ic) const
     { return convex_tab[ic].cstruct->nb_points(); }
     /// Return the number of faces of convex ic.
-    short_type nb_faces_of_convex(size_type ic) const 
+    short_type nb_faces_of_convex(size_type ic) const
     { return short_type(convex_tab[ic].cstruct->nb_faces()); }
     /// Exchange two point IDs
     void swap_points(size_type i, size_type j);
@@ -146,7 +146,7 @@ namespace bgeot {
       { size_type t[2]; t[0] = a; t[1] = b; sup_convex_with_points(&t[0], 2); }
     /** Insert a new convex corresponding to face f of the convex ic */
     size_type add_face_of_convex(size_type ic, short_type f);
-    /** Insert a new convexes corresponding to the faces of the convex ic */
+    /** Insert new convexes corresponding to the faces of the convex ic */
     void add_faces_of_convex(size_type ic);
     /** build a new mesh, such that its convexes are the faces of the
         convexes of the previous one */
@@ -239,7 +239,7 @@ namespace bgeot {
 
 
   /** Return the cuthill_mc_kee ordering on the convexes */
-  void APIDECL cuthill_mckee_on_convexes(const bgeot::mesh_structure &ms, 
+  void APIDECL cuthill_mckee_on_convexes(const bgeot::mesh_structure &ms,
                                  std::vector<size_type> &cmk);
 
   template<class ITER>

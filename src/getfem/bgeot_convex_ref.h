@@ -47,7 +47,7 @@ namespace bgeot {
 
   /** Point tab storage. */
   struct stored_point_tab : virtual public dal::static_stored_object,
-			    public std::vector<base_node> {
+                            public std::vector<base_node> {
     const base_node &operator[](size_type i) const
     { return std::vector<base_node>::operator [](i); }
     template <class IT> stored_point_tab(IT it, IT ite)
@@ -69,7 +69,7 @@ namespace bgeot {
 
   class convex_of_reference;
   typedef std::shared_ptr<const convex_of_reference> pconvex_ref;
-    
+
   /** Base class for reference convexes.
 
      Examples of reference convexes are (the order
@@ -88,16 +88,16 @@ namespace bgeot {
        degree k, this is a pointer to the correspounding convex_ref of
        degree 1.
    */
-  class convex_of_reference : virtual public dal::static_stored_object, 
-			      public convex<base_node> {
-  protected :     
+  class convex_of_reference : virtual public dal::static_stored_object,
+                              public convex<base_node> {
+  protected :
     std::vector<base_small_vector> normals_;
     pstored_point_tab ppoints;
     mutable std::shared_ptr<mesh_structure> psimplexified_convex;
     pconvex_ref basic_convex_ref_;
     bool auto_basic;
     convex_of_reference() : convex<base_node>(),
-			    basic_convex_ref_(0), auto_basic(false)
+                            basic_convex_ref_(0), auto_basic(false)
     { DAL_STORED_OBJECT_DEBUG_CREATED(this, "convex of refrence"); }
 
   public :
@@ -121,8 +121,8 @@ namespace bgeot {
     { DAL_STORED_OBJECT_DEBUG_DESTROYED(this, "Convex of reference"); }
 
     /** return a mesh structure composed of simplexes whose union
-	is the reference convex. All simplexes have the same (direct)
-	orientation.
+        is the reference convex. All simplexes have the same (direct)
+        orientation.
     */
     const mesh_structure* simplexified_convex() const;
     friend pconvex_ref basic_convex_ref(pconvex_ref cvr);
@@ -132,7 +132,7 @@ namespace bgeot {
   inline pconvex_ref basic_convex_ref(pconvex_ref cvr)
   { if (cvr->auto_basic) return cvr; else return cvr->basic_convex_ref_; }
 
-  
+
   //@name public functions for obtaining a convex of reference
   //@{
 
@@ -155,7 +155,7 @@ namespace bgeot {
   pconvex_ref equilateral_simplex_of_reference(dim_type nc);
 
   /** generic convex with n global nodes      */
-  pconvex_ref generic_dummy_convex_ref(dim_type nc, size_type n, size_type nf);
+  pconvex_ref generic_dummy_convex_ref(dim_type nc, size_type n, short_type nf);
   //@}
 
   /*@}*/

@@ -475,7 +475,7 @@ namespace bgeot {
     scalar_type is_in_face(short_type, const base_node &) const 
     { GMM_ASSERT1(false, "Information not available here"); }
   
-    generic_dummy_(dim_type d, size_type n, size_type nf) {
+    generic_dummy_(dim_type d, size_type n, short_type nf) {
       cvs = generic_dummy_structure(d, n, nf);
       auto_basic = true;
       convex<base_node>::points().resize(n);
@@ -488,10 +488,9 @@ namespace bgeot {
   };
 
   pconvex_ref generic_dummy_convex_ref(dim_type nc, size_type n,
-				       size_type nf) {
+                                       short_type nf) {
     dal::pstatic_stored_object_key
-      pk = std::make_shared<convex_of_reference_key>(2, nc, short_type(n),
-						     short_type(nf));
+      pk = std::make_shared<convex_of_reference_key>(2, nc, short_type(n), nf);
     dal::pstatic_stored_object o = dal::search_stored_object(pk);
     if (o) return std::dynamic_pointer_cast<const convex_of_reference>(o);
     pconvex_ref p = std::make_shared<generic_dummy_>(nc, n, nf);

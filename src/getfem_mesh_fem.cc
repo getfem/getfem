@@ -240,8 +240,8 @@ namespace getfem {
   size_type mesh_fem::first_convex_of_basic_dof(size_type d) const {
     context_check(); if (!dof_enumeration_made) enumerate_dof();
     for (size_type i = d; i != d - Qdim && i != size_type(-1); --i) {
-      size_type j = dof_structure.first_convex_of_point(i);
-      if (j != size_type(-1)) return j;
+      size_type cv = dof_structure.first_convex_of_point(i);
+      if (cv != size_type(-1)) return cv;
     }
     return size_type(-1);
   }
@@ -249,8 +249,8 @@ namespace getfem {
   const mesh::ind_cv_ct &mesh_fem::convex_to_basic_dof(size_type d) const {
     context_check(); if (!dof_enumeration_made) enumerate_dof();
     for (size_type i = d; i != d - Qdim && i != size_type(-1); --i) {
-      size_type j = dof_structure.first_convex_of_point(i);
-      if (j != size_type(-1)) return dof_structure.convex_to_point(i);
+      size_type cv = dof_structure.first_convex_of_point(i);
+      if (cv != size_type(-1)) return dof_structure.convex_to_point(i);
     }
     GMM_ASSERT1(false, "Inexistent dof");
   }

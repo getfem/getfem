@@ -18,11 +18,11 @@
  Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 
 ===========================================================================*/
-  
+
 /**
  * Linear Elastostatic problem with a crack.
  *
- * This program is used to check that getfem++ is working. This is also 
+ * This program is used to check that getfem++ is working. This is also
  * a good example of use of GetFEM++.
  */
 
@@ -72,7 +72,7 @@ struct crack_problem {
 
   getfem::mesh interpolated_m;
   getfem::mesh_fem interpolated_mf;
-  
+
   base_small_vector translation;
 
   struct spider_param {
@@ -92,37 +92,37 @@ struct crack_problem {
 
   getfem::mesh_fem& mf_u() { return mf_u_sum; }
   // getfem::mesh_fem& mf_u() { return mf_us; }
-  
+
   scalar_type lambda, mu;    /* Lame coefficients.                */
   getfem::mesh_fem mf_rhs;   /* mesh_fem for the right hand side (f(x),..)   */
   getfem::mesh_fem mf_p;     /* mesh_fem for the pressure for mixed form     */
 #ifdef VALIDATE_XFEM
   crack_exact_solution exact_sol;
 #endif
-  
-  
+
+
   int bimaterial;           /* For bimaterial interface fracture */
   double lambda_up, lambda_down, mu_up, mu_down;  /*Lame coeff for bimaterial case*/
   getfem::level_set ls;      /* The two level sets defining the crack.       */
   getfem::level_set ls2, ls3; /* The two level-sets defining the add. cracks.*/
- 
+
   scalar_type residual;      /* max residual for the iterative solvers      */
   bool mixed_pressure, add_crack;
   unsigned dir_with_mult;
   scalar_type cutoff_radius, cutoff_radius1, cutoff_radius0, enr_area_radius;
-  
+
   size_type cutoff_func;
 
-  typedef enum { NO_ENRICHMENT=0, 
-		 FIXED_ZONE=1, 
-		 GLOBAL_WITH_MORTAR=2,
-		 GLOBAL_WITH_CUTOFF=3,
-		 SPIDER_FEM_ALONE=4,
-		 SPIDER_FEM_ENRICHMENT=5 } enrichment_option_enum;
+  typedef enum { NO_ENRICHMENT=0,
+                 FIXED_ZONE=1,
+                 GLOBAL_WITH_MORTAR=2,
+                 GLOBAL_WITH_CUTOFF=3,
+                 SPIDER_FEM_ALONE=4,
+                 SPIDER_FEM_ENRICHMENT=5 } enrichment_option_enum;
   enrichment_option_enum enrichment_option;
 
   std::string datafilename;
-  
+
   int reference_test;
   std::string GLOBAL_FUNCTION_MF, GLOBAL_FUNCTION_U;
 
@@ -130,19 +130,19 @@ struct crack_problem {
 
   bool solve(plain_vector &U);
   void init(void);
-  crack_problem(void) : mls(mesh), mim(mls), 
-			mf_pre_u(mesh), mf_pre_mortar(mesh), mf_mult(mesh),
-			mfls_u(mls, mf_pre_u), mfls_mortar(mls, mf_pre_mortar), 
-			mf_sing_u(mesh),
-			mf_partition_of_unity(mesh),
-			mf_product(mf_partition_of_unity, mf_sing_u),
-			mf_u_sum(mesh), interpolated_mf(interpolated_m),
-			mf_us(mesh), mf_rhs(mesh), mf_p(mesh),
+  crack_problem(void) : mls(mesh), mim(mls),
+                        mf_pre_u(mesh), mf_pre_mortar(mesh), mf_mult(mesh),
+                        mfls_u(mls, mf_pre_u), mfls_mortar(mls, mf_pre_mortar),
+                        mf_sing_u(mesh),
+                        mf_partition_of_unity(mesh),
+                        mf_product(mf_partition_of_unity, mf_sing_u),
+                        mf_u_sum(mesh), interpolated_mf(interpolated_m),
+                        mf_us(mesh), mf_rhs(mesh), mf_p(mesh),
 #ifdef VALIDATE_XFEM
-			exact_sol(mesh), 
+                        exact_sol(mesh),
 #endif
-			ls(mesh, 1, true), ls2(mesh, 1, true),
-			ls3(mesh, 1, true) {}
+                        ls(mesh, 1, true), ls2(mesh, 1, true),
+                        ls3(mesh, 1, true) {}
 
 };
 
@@ -165,16 +165,16 @@ std::string name_of_dof(getfem::pdof_description dof) {
     if (getfem::dof_xfem_index(dof) != 0) {
       sprintf(s, "Xfem[idx:%d]", int(dof_xfem_index(dof)));
     }
-    
+
     for (dim_type r = 0; r < d; ++r) {
       if (dof == getfem::derivative_dof(d, r)) {
-	sprintf(s, "D_%c[%d]", "xyzuvw"[r], d); goto found;
+        sprintf(s, "D_%c[%d]", "xyzuvw"[r], d); goto found;
       }
       for (dim_type t = 0; t < d; ++t) {
-	if (dof == getfem::second_derivative_dof(d, r, t)) {
-	  sprintf(s, "D2%c%c[%d]", "xyzuvw"[r], "xyzuvw"[t], d); 
-	  goto found;
-	}
+        if (dof == getfem::second_derivative_dof(d, r, t)) {
+          sprintf(s, "D2%c%c[%d]", "xyzuvw"[r], "xyzuvw"[t], d);
+          goto found;
+        }
       }
     }
   }
@@ -190,24 +190,24 @@ void crack_problem::init(void) {
   std::string MESH_TYPE = PARAM.string_value("MESH_TYPE","Mesh type ");
   std::string FEM_TYPE  = PARAM.string_value("FEM_TYPE","FEM name");
   std::string INTEGRATION = PARAM.string_value("INTEGRATION",
-					       "Name of integration method");
+                                               "Name of integration method");
   std::string SIMPLEX_INTEGRATION = PARAM.string_value("SIMPLEX_INTEGRATION",
-					 "Name of simplex integration method");
+                                         "Name of simplex integration method");
   std::string SINGULAR_INTEGRATION = PARAM.string_value("SINGULAR_INTEGRATION");
 
   add_crack = (PARAM.int_value("ADDITIONAL_CRACK", "An additional crack ?") != 0);
   enrichment_option = enrichment_option_enum(PARAM.int_value("ENRICHMENT_OPTION",
-							     "Enrichment option"));
+                                                             "Enrichment option"));
   cout << "MESH_TYPE=" << MESH_TYPE << "\n";
   cout << "FEM_TYPE="  << FEM_TYPE << "\n";
   cout << "INTEGRATION=" << INTEGRATION << "\n";
 
   bimaterial = int(PARAM.int_value("BIMATERIAL", "bimaterial interface crack"));
-  
+
   if (bimaterial == 1){
-    mu = PARAM.real_value("MU", "Lame coefficient mu"); 
-    mu_up = PARAM.real_value("MU_UP", "Lame coefficient mu"); 
-    mu_down = PARAM.real_value("MU_DOWN", "Lame coefficient mu"); 
+    mu = PARAM.real_value("MU", "Lame coefficient mu");
+    mu_up = PARAM.real_value("MU_UP", "Lame coefficient mu");
+    mu_down = PARAM.real_value("MU_DOWN", "Lame coefficient mu");
     lambda_up = PARAM.real_value("LAMBDA_UP", "Lame Coef");
     lambda_down = PARAM.real_value("LAMBDA_DOWN", "Lame Coef");
     lambda = PARAM.real_value("LAMBDA", "Lame coefficient lambda");
@@ -217,8 +217,8 @@ void crack_problem::init(void) {
     mu = PARAM.real_value("MU", "Lame coefficient mu");
     lambda = PARAM.real_value("LAMBDA", "Lame coefficient lambda");
   }
-  
-  
+
+
   spider.radius = PARAM.real_value("SPIDER_RADIUS","spider_radius");
   spider.Nr = unsigned(PARAM.int_value("SPIDER_NR","Spider_Nr "));
   spider.Ntheta = unsigned(PARAM.int_value("SPIDER_NTHETA","Ntheta "));
@@ -226,13 +226,13 @@ void crack_problem::init(void) {
   spider.theta0 = 0;
   spider.bimat_enrichment = int(PARAM.int_value("SPIDER_BIMAT_ENRICHMENT","spider_bimat_enrichment"));
 
-  /* The following constants are taken from the Chang and Xu paper of 2007 
-     titled The singular stress field and stress intensity factors of a crack 
-     terminating at a bimaterial interface published in IJMECSCI. epsilon 
-     being the constant present in the asymptotic displacement analytic solution: 
+  /* The following constants are taken from the Chang and Xu paper of 2007
+     titled The singular stress field and stress intensity factors of a crack
+     terminating at a bimaterial interface published in IJMECSCI. epsilon
+     being the constant present in the asymptotic displacement analytic solution:
      r^{1/2} * cos (\epsilon Ln(r)) * f(\theta) and  r^{1/2} * sin (\epsilon Ln(r)) * f(\theta).
   */
-  
+
   if (spider.bimat_enrichment == 1){
     scalar_type nu1 = (lambda_up) / (2.*lambda_up + mu_up);
     scalar_type nu2 = (lambda_down) / (2.*lambda_down + mu_down);
@@ -240,54 +240,54 @@ void crack_problem::init(void) {
     scalar_type kappa2 = 3. - 4. * nu2;
     if (lambda_up == lambda_down && mu_up == mu_down)
       cout << "ERROR... Connot use the spider bimaterial enrichment with an isotropic homogenuous material (beta = 0/0!!!)... You should either use a bimaterial or disable the spider bimaterial enrichment" << endl;
-    
+
     scalar_type beta = (mu_up*(kappa2-1.) - mu_down*(kappa1-1.)) / (mu_up*(kappa2+1.) - mu_down*(kappa1+1.));
       spider.epsilon = 1./(2.*M_PI) * log( (1.-beta) / (1.+beta) );
-  
-    
+
+
     //spider.epsilon = PARAM.real_value("SPIDER_BIMAT_ENRICHMENT","spider_bimat_enrichment");
   }
-  
-  translation.resize(2); 
+
+  translation.resize(2);
   translation[0] =0.5;
   translation[1] =0.;
 
   /* First step : build the mesh */
-  bgeot::pgeometric_trans pgt = 
+  bgeot::pgeometric_trans pgt =
     bgeot::geometric_trans_descriptor(MESH_TYPE);
   size_type N = pgt->dim();
   std::vector<size_type> nsubdiv(N);
   std::fill(nsubdiv.begin(),nsubdiv.end(),
-	    PARAM.int_value("NX", "Nomber of space steps "));
+            PARAM.int_value("NX", "Nomber of space steps "));
   getfem::regular_unit_mesh(mesh, nsubdiv, pgt,
-			    PARAM.int_value("MESH_NOISED") != 0);
+                            PARAM.int_value("MESH_NOISED") != 0);
   base_small_vector tt(N); tt[1] = -0.5;
-  mesh.translation(tt); 
-  
+  mesh.translation(tt);
+
 
   scalar_type refinement_radius;
   refinement_radius = PARAM.real_value("REFINEMENT_RADIUS","Refinement Radius");
   size_type refinement_process;
   refinement_process = PARAM.int_value("REFINEMENT_PROCESS","Refinement process");
   dal::bit_vector conv_to_refine;
-  size_type ref = 1;  
+  size_type ref = 1;
   if (refinement_radius > 0){
     while(ref <= refinement_process){
       conv_to_refine.clear();
       for(dal::bv_visitor i(mesh.convex_index()); !i.finished(); ++i){
       for(size_type j=0; j < 3; ++j)
-	if(fabs(mesh.points()[mesh.ind_points_of_convex(i)[j]][0])<refinement_radius 
-	   && fabs(mesh.points()[mesh.ind_points_of_convex(i)[j]][1])<refinement_radius){
-	  conv_to_refine.add(i);
-	}
+        if(fabs(mesh.points()[mesh.ind_points_of_convex(i)[j]][0])<refinement_radius
+           && fabs(mesh.points()[mesh.ind_points_of_convex(i)[j]][1])<refinement_radius){
+          conv_to_refine.add(i);
+        }
       }
       mesh.Bank_refine(conv_to_refine);
-      
-      ref = ref + 1; 
+
+      ref = ref + 1;
       refinement_radius = refinement_radius/3.;
       if(refinement_radius > 1e-16 )
-	cout<<"refining process step " << ref << "... refining "<< conv_to_refine.size() <<" convexes..." << endl ; 
-      
+        cout<<"refining process step " << ref << "... refining "<< conv_to_refine.size() <<" convexes..." << endl ;
+
     }
   cout<<"refining process complete." << endl ;
   }
@@ -298,15 +298,15 @@ void crack_problem::init(void) {
   residual = PARAM.real_value("RESIDUAL");
   if (residual == 0.) residual = 1e-10;
   enr_area_radius = PARAM.real_value("RADIUS_ENR_AREA",
-				     "radius of the enrichment area");
-  
+                                     "radius of the enrichment area");
+
   GLOBAL_FUNCTION_MF = PARAM.string_value("GLOBAL_FUNCTION_MF");
   GLOBAL_FUNCTION_U = PARAM.string_value("GLOBAL_FUNCTION_U");
 
-  reference_test = int(PARAM.int_value("REFERENCE_TEST", "Reference test")); 
+  reference_test = int(PARAM.int_value("REFERENCE_TEST", "Reference test"));
 
-  unsigned EXACT_SOL_NUM = unsigned(PARAM.int_value("EXACT_SOL_NUM", "Exact solution function number")); 
-  
+  unsigned EXACT_SOL_NUM = unsigned(PARAM.int_value("EXACT_SOL_NUM", "Exact solution function number"));
+
 
   cutoff_func = PARAM.int_value("CUTOFF_FUNC", "cutoff function");
 
@@ -316,23 +316,23 @@ void crack_problem::init(void) {
   mf_u().set_qdim(dim_type(N));
 
   /* set the finite element on the mf_u */
-  getfem::pfem pf_u = 
+  getfem::pfem pf_u =
     getfem::fem_descriptor(FEM_TYPE);
-  getfem::pintegration_method ppi = 
+  getfem::pintegration_method ppi =
     getfem::int_method_descriptor(INTEGRATION);
-  getfem::pintegration_method simp_ppi = 
+  getfem::pintegration_method simp_ppi =
     getfem::int_method_descriptor(SIMPLEX_INTEGRATION);
   getfem::pintegration_method sing_ppi = (SINGULAR_INTEGRATION.size() ?
-		getfem::int_method_descriptor(SINGULAR_INTEGRATION) : 0);
-  
+                getfem::int_method_descriptor(SINGULAR_INTEGRATION) : 0);
+
   mim.set_integration_method(mesh.convex_index(), ppi);
   mls.add_level_set(ls);
   if (add_crack) { mls.add_level_set(ls2); mls.add_level_set(ls3); }
 
   mim.set_simplex_im(simp_ppi, sing_ppi);
   mf_pre_u.set_finite_element(mesh.convex_index(), pf_u);
-  mf_pre_mortar.set_finite_element(mesh.convex_index(), 
-				   getfem::fem_descriptor(PARAM.string_value("MORTAR_FEM_TYPE")));
+  mf_pre_mortar.set_finite_element(mesh.convex_index(),
+                                   getfem::fem_descriptor(PARAM.string_value("MORTAR_FEM_TYPE")));
   mf_mult.set_finite_element(mesh.convex_index(), pf_u);
   mf_mult.set_qdim(dim_type(N));
   mf_partition_of_unity.set_classical_finite_element(1);
@@ -343,7 +343,7 @@ void crack_problem::init(void) {
   if (mixed_pressure) {
     std::string FEM_TYPE_P  = PARAM.string_value("FEM_TYPE_P","FEM name P");
     mf_p.set_finite_element(mesh.convex_index(),
-			    getfem::fem_descriptor(FEM_TYPE_P));
+                            getfem::fem_descriptor(FEM_TYPE_P));
   }
 
   /* set the finite element on mf_rhs (same as mf_u is DATA_FEM_TYPE is
@@ -351,65 +351,65 @@ void crack_problem::init(void) {
   std::string data_fem_name = PARAM.string_value("DATA_FEM_TYPE");
   if (data_fem_name.size() == 0) {
     GMM_ASSERT1(pf_u->is_lagrange(), "You are using a non-lagrange FEM. "
-		<< "In that case you need to set "
-		<< "DATA_FEM_TYPE in the .param file");
+                << "In that case you need to set "
+                << "DATA_FEM_TYPE in the .param file");
     mf_rhs.set_finite_element(mesh.convex_index(), pf_u);
   } else {
-    mf_rhs.set_finite_element(mesh.convex_index(), 
-			      getfem::fem_descriptor(data_fem_name));
+    mf_rhs.set_finite_element(mesh.convex_index(),
+                              getfem::fem_descriptor(data_fem_name));
   }
-  
+
   /* set boundary conditions
    * (Neuman on the upper face, Dirichlet elsewhere) */
   cout << "Selecting Neumann and Dirichlet boundaries\n";
   getfem::mesh_region border_faces;
   getfem::outer_faces_of_mesh(mesh, border_faces);
   for (getfem::mr_visitor i(border_faces); !i.finished(); ++i) {
-    
+
     base_node un = mesh.normal_of_face_of_convex(i.cv(), i.f());
     un /= gmm::vect_norm2(un);
     if(bimaterial == 1) {
-      
+
       if (un[0]  > 1.0E-7 ) { // new Neumann face
-	mesh.region(DIRICHLET_BOUNDARY_NUM).add(i.cv(), i.f());
+        mesh.region(DIRICHLET_BOUNDARY_NUM).add(i.cv(), i.f());
       } else {
-	if (un[1]  > 1.0E-7 ) {
-	  cout << "normal = " << un << endl;
-	  mesh.region(NEUMANN_BOUNDARY_NUM1).add(i.cv(), i.f());
-	}
-	else {
-	  if (un[1]  < -1.0E-7 ) {
-	    cout << "normal = " << un << endl;
-	    mesh.region(NEUMANN_BOUNDARY_NUM).add(i.cv(), i.f());
-	  }
-	  else {
-	    if (un[0]  < -1.0E-7 ) {
-	      cout << "normal = " << un << endl;
-	      mesh.region(NEUMANN_HOMOGENE_BOUNDARY_NUM).add(i.cv(), i.f());
-	    }
-	  }
-	}
+        if (un[1]  > 1.0E-7 ) {
+          cout << "normal = " << un << endl;
+          mesh.region(NEUMANN_BOUNDARY_NUM1).add(i.cv(), i.f());
+        }
+        else {
+          if (un[1]  < -1.0E-7 ) {
+            cout << "normal = " << un << endl;
+            mesh.region(NEUMANN_BOUNDARY_NUM).add(i.cv(), i.f());
+          }
+          else {
+            if (un[0]  < -1.0E-7 ) {
+              cout << "normal = " << un << endl;
+              mesh.region(NEUMANN_HOMOGENE_BOUNDARY_NUM).add(i.cv(), i.f());
+            }
+          }
+        }
       }
     }
     else {
-      
+
 #ifdef VALIDATE_XFEM
       mesh.region(DIRICHLET_BOUNDARY_NUM).add(i.cv(), i.f());
 #else
       base_node un = mesh.normal_of_face_of_convex(i.cv(), i.f());
       un /= gmm::vect_norm2(un);
       if (un[0] - 1.0 < -1.0E-7) { // new Neumann face
-	mesh.region(NEUMANN_BOUNDARY_NUM).add(i.cv(), i.f());
+        mesh.region(NEUMANN_BOUNDARY_NUM).add(i.cv(), i.f());
       } else {
-	cout << "normal = " << un << endl;
-	mesh.region(DIRICHLET_BOUNDARY_NUM).add(i.cv(), i.f());
+        cout << "normal = " << un << endl;
+        mesh.region(DIRICHLET_BOUNDARY_NUM).add(i.cv(), i.f());
       }
 #endif
     }
   }
-  
-  
-  
+
+
+
 #ifdef VALIDATE_XFEM
   exact_sol.init(EXACT_SOL_NUM, lambda, mu, ls);
 #endif
@@ -440,7 +440,7 @@ base_small_vector ls_function(const base_node P, int num = 0) {
 bool crack_problem::solve(plain_vector &U) {
   size_type nb_dof_rhs = mf_rhs.nb_dof();
   size_type N = mesh.dim();
-  ls.reinit();  
+  ls.reinit();
   cout << "ls.get_mesh_fem().nb_dof() = " << ls.get_mesh_fem().nb_dof() << "\n";
   for (size_type d = 0; d < ls.get_mesh_fem().nb_dof(); ++d) {
     ls.values(0)[d] = ls_function(ls.get_mesh_fem().point_of_basic_dof(d), 0)[0];
@@ -455,13 +455,13 @@ bool crack_problem::solve(plain_vector &U) {
       ls2.values(1)[d] = ls_function(ls2.get_mesh_fem().point_of_basic_dof(d), 1)[1];
     }
     ls2.touch();
-    
+
     ls3.reinit();
     for (size_type d = 0; d < ls3.get_mesh_fem().nb_dof(); ++d) {
       ls3.values(0)[d] = ls_function(ls2.get_mesh_fem().point_of_basic_dof(d), 2)[0];
       ls3.values(1)[d] = ls_function(ls2.get_mesh_fem().point_of_basic_dof(d), 2)[1];
     }
-    ls3.touch(); 
+    ls3.touch();
   }
 
   mls.adapt();
@@ -470,7 +470,7 @@ bool crack_problem::solve(plain_vector &U) {
   mfls_mortar.adapt(); mfls_mortar.set_qdim(2);
 
   bool load_global_fun = GLOBAL_FUNCTION_MF.size() != 0;
- 
+
   cout << "Setting up the singular functions for the enrichment\n";
 
   std::vector<getfem::pglobal_function> vfunc(4);
@@ -479,14 +479,14 @@ bool crack_problem::solve(plain_vector &U) {
     for (unsigned i = 0; i < vfunc.size(); ++i){
       /* use the singularity */
       getfem::pxy_function
-	s = std::make_shared<getfem::crack_singular_xy_function>(i);
-      if (enrichment_option != FIXED_ZONE && 
-	  enrichment_option != GLOBAL_WITH_MORTAR) {
-	/* use the product of the singularity function
-	   with a cutoff */
-	getfem::pxy_function c = std::make_shared<getfem::cutoff_xy_function>
-	  (int(cutoff_func), cutoff_radius, cutoff_radius1,cutoff_radius0);
-	s = std::make_shared<getfem::product_of_xy_functions>(s, c);
+        s = std::make_shared<getfem::crack_singular_xy_function>(i);
+      if (enrichment_option != FIXED_ZONE &&
+          enrichment_option != GLOBAL_WITH_MORTAR) {
+        /* use the product of the singularity function
+           with a cutoff */
+        getfem::pxy_function c = std::make_shared<getfem::cutoff_xy_function>
+          (int(cutoff_func), cutoff_radius, cutoff_radius1,cutoff_radius0);
+        s = std::make_shared<getfem::product_of_xy_functions>(s, c);
       }
       vfunc[i] = getfem::global_function_on_level_set(ls, s);
     }
@@ -499,7 +499,7 @@ bool crack_problem::solve(plain_vector &U) {
     plain_vector W(interpolated_mf.nb_dof());
 
 
-  
+
     for (unsigned i=0; i < interpolated_mf.nb_dof(); ++i) {
       f >> W[i];
       GMM_ASSERT1(f.good(), "problem while reading " << GLOBAL_FUNCTION_U);
@@ -512,25 +512,25 @@ bool crack_problem::solve(plain_vector &U) {
     for (size_type i=0; i < nb_func; ++i) {
       /* use the precalculated function for the enrichment*/
       getfem::pxy_function
-	s = std::make_shared<getfem::interpolated_xy_function>(global_interp,i);
-      if (enrichment_option != FIXED_ZONE && 
-	  enrichment_option != GLOBAL_WITH_MORTAR) {
+        s = std::make_shared<getfem::interpolated_xy_function>(global_interp,i);
+      if (enrichment_option != FIXED_ZONE &&
+          enrichment_option != GLOBAL_WITH_MORTAR) {
 
-	/* use the product of the enrichment function
-	   with a cutoff */
-	getfem::pxy_function c = std::make_shared<getfem::cutoff_xy_function>
-	(int(cutoff_func), cutoff_radius, cutoff_radius1,cutoff_radius0);
-	s = std::make_shared<getfem::product_of_xy_functions>(s, c);
-      }    
+        /* use the product of the enrichment function
+           with a cutoff */
+        getfem::pxy_function c = std::make_shared<getfem::cutoff_xy_function>
+        (int(cutoff_func), cutoff_radius, cutoff_radius1,cutoff_radius0);
+        s = std::make_shared<getfem::product_of_xy_functions>(s, c);
+      }
       vfunc[i] = getfem::global_function_on_level_set(ls, s);
     }
   }
-  
-  
-  mf_sing_u.set_functions(vfunc);
-  
 
-  if (enrichment_option == SPIDER_FEM_ALONE || 
+
+  mf_sing_u.set_functions(vfunc);
+
+
+  if (enrichment_option == SPIDER_FEM_ALONE ||
       enrichment_option == SPIDER_FEM_ENRICHMENT) {
     spider.fem = std::make_unique<getfem::spider_fem>
       (spider.radius, mim, spider.Nr, spider.Ntheta, spider.K, translation,
@@ -538,7 +538,7 @@ bool crack_problem::solve(plain_vector &U) {
     mf_us.set_finite_element(mesh.convex_index(),spider.fem->get_pfem());
     for (dal::bv_visitor_c i(mf_us.convex_index()); !i.finished(); ++i) {
       if (mf_us.fem_of_element(i)->nb_dof(i) == 0) {
-	mf_us.set_finite_element(i,0);
+        mf_us.set_finite_element(i,0);
       }
     }
     spider.fem->check();
@@ -552,62 +552,62 @@ bool crack_problem::solve(plain_vector &U) {
       plain_vector X(mf_partition_of_unity.nb_dof());
       plain_vector Y(mf_partition_of_unity.nb_dof());
       getfem::interpolation(ls.get_mesh_fem(), mf_partition_of_unity,
-			    ls.values(1), X);
+                            ls.values(1), X);
       getfem::interpolation(ls.get_mesh_fem(), mf_partition_of_unity,
-			    ls.values(0), Y);
+                            ls.values(0), Y);
       for (size_type j = 0; j < mf_partition_of_unity.nb_dof(); ++j) {
-	if (gmm::sqr(X[j]) + gmm::sqr(Y[j]) <= gmm::sqr(enr_area_radius))
-	  enriched_dofs.add(j);
+        if (gmm::sqr(X[j]) + gmm::sqr(Y[j]) <= gmm::sqr(enr_area_radius))
+          enriched_dofs.add(j);
       }
       if (enriched_dofs.card() < 3)
-	GMM_WARNING0("There is " << enriched_dofs.card() <<
-		     " enriched dofs for the crack tip");
+        GMM_WARNING0("There is " << enriched_dofs.card() <<
+                     " enriched dofs for the crack tip");
       mf_product.set_enrichment(enriched_dofs);
       mf_u_sum.set_mesh_fems(mf_product, mfls_u);
     }
     break;
-  
+
 
     case GLOBAL_WITH_MORTAR: {
       // Selecting the element in the enriched domain
 
       dal::bit_vector cvlist_in_area;
       dal::bit_vector cvlist_out_area;
-      for (dal::bv_visitor cv(mesh.convex_index()); 
-	   !cv.finished(); ++cv) {
-	bool in_area = true;
-	/* For each element, we test all of its nodes. 
-	   If all the nodes are inside the enrichment area,
-	   then the element is completly inside the area too */ 
-	for (unsigned j=0; j < mesh.nb_points_of_convex(cv); ++j) {
-	  if (gmm::sqr(mesh.points_of_convex(cv)[j][0] - translation[0]) + 
-	      gmm::sqr(mesh.points_of_convex(cv)[j][1] - translation[1]) > 
-	      gmm::sqr(enr_area_radius)) {
-	    in_area = false; break;
-	  }
-	}
+      for (dal::bv_visitor cv(mesh.convex_index());
+           !cv.finished(); ++cv) {
+        bool in_area = true;
+        /* For each element, we test all of its nodes.
+           If all the nodes are inside the enrichment area,
+           then the element is completly inside the area too */
+        for (unsigned j=0; j < mesh.nb_points_of_convex(cv); ++j) {
+          if (gmm::sqr(mesh.points_of_convex(cv)[j][0] - translation[0]) +
+              gmm::sqr(mesh.points_of_convex(cv)[j][1] - translation[1]) >
+              gmm::sqr(enr_area_radius)) {
+            in_area = false; break;
+          }
+        }
 
-	/* "remove" the global function on convexes outside the enrichment
-	   area */
-	if (!in_area) {
-	  cvlist_out_area.add(cv);
-	  mf_sing_u.set_finite_element(cv, 0);
-	  mf_u().set_dof_partition(cv, 1);
-	} else cvlist_in_area.add(cv);
+        /* "remove" the global function on convexes outside the enrichment
+           area */
+        if (!in_area) {
+          cvlist_out_area.add(cv);
+          mf_sing_u.set_finite_element(cv, 0);
+          mf_u().set_dof_partition(cv, 1);
+        } else cvlist_in_area.add(cv);
       }
 
       /* extract the boundary of the enrichment area, from the
-	 "inside" point-of-view, and from the "outside"
-	 point-of-view */
+         "inside" point-of-view, and from the "outside"
+         point-of-view */
       getfem::mesh_region r_border, r_enr_out;
       getfem::outer_faces_of_mesh(mesh, r_border);
 
-      getfem::outer_faces_of_mesh(mesh, cvlist_in_area, 
-				  mesh.region(MORTAR_BOUNDARY_IN));
-      getfem::outer_faces_of_mesh(mesh, cvlist_out_area, 
-				  mesh.region(MORTAR_BOUNDARY_OUT));
+      getfem::outer_faces_of_mesh(mesh, cvlist_in_area,
+                                  mesh.region(MORTAR_BOUNDARY_IN));
+      getfem::outer_faces_of_mesh(mesh, cvlist_out_area,
+                                  mesh.region(MORTAR_BOUNDARY_OUT));
       for (getfem::mr_visitor v(r_border); !v.finished(); ++v) {
-	mesh.region(MORTAR_BOUNDARY_OUT).sup(v.cv(), v.f());
+        mesh.region(MORTAR_BOUNDARY_OUT).sup(v.cv(), v.f());
       }
       mf_u_sum.set_mesh_fems(mf_sing_u, mfls_u);
     } break;
@@ -620,20 +620,20 @@ bool crack_problem::solve(plain_vector &U) {
     mf_u_sum.set_mesh_fems(mf_sing_u, mfls_u);
   } break;
 
-  case SPIDER_FEM_ALONE : { 
-    mf_u_sum.set_mesh_fems(mf_us); 
+  case SPIDER_FEM_ALONE : {
+    mf_u_sum.set_mesh_fems(mf_us);
   } break;
-    
+
   case SPIDER_FEM_ENRICHMENT : {
-    mf_u_sum.set_mesh_fems(mf_us, mfls_u); 
+    mf_u_sum.set_mesh_fems(mf_us, mfls_u);
   } break;
-    
+
   case NO_ENRICHMENT: {
     mf_u_sum.set_mesh_fems(mfls_u);
   } break;
-  
+
   }
-  
+
 
   U.resize(mf_u().nb_dof());
 
@@ -661,7 +661,7 @@ bool crack_problem::solve(plain_vector &U) {
     cout<<"______________________________________________________________________________"<<endl;
     plain_vector bi_lambda(mf_rhs.nb_dof());
     plain_vector bi_mu(mf_rhs.nb_dof());
-    
+
     for (size_type ite = 0; ite < mf_rhs.nb_dof(); ite++) {
       if (mf_rhs.point_of_basic_dof(ite)[1] > 0){
         bi_lambda[ite] = lambda_up;
@@ -671,15 +671,15 @@ bool crack_problem::solve(plain_vector &U) {
         bi_lambda[ite] = lambda_down;
         bi_mu[ite] = mu_down;
       }
-    } 
-    
+    }
+
     gmm::copy(bi_lambda, model.set_real_variable("lambda"));
     gmm::copy(bi_mu, model.set_real_variable("mu"));
   }
-  
+
   if (mixed_pressure)
     getfem::add_linear_incompressibility(model, mim, "u", "p");
-  
+
 
   // Defining the volumic source term.
   plain_vector F(nb_dof_rhs * N);
@@ -689,10 +689,10 @@ bool crack_problem::solve(plain_vector &U) {
 
   // Defining the Neumann condition right hand side.
   gmm::clear(F);
-  
+
   // Neumann condition brick.
   if (bimaterial == 1) {
-    
+
     gmm::clear(F);
     for(size_type i = 1; i<F.size(); i=i+2) F[i] = 0.4;
     for(size_type i = 0; i<F.size(); i=i+2) F[i] = 0.;
@@ -700,7 +700,7 @@ bool crack_problem::solve(plain_vector &U) {
     getfem::add_source_term_brick
       (model, mim, "u", "NeumannData_up", NEUMANN_BOUNDARY_NUM1);
   }
-  
+
   // Dirichlet condition brick.
   if (bimaterial == 1) {
     getfem::add_Dirichlet_condition_with_multipliers
@@ -714,14 +714,14 @@ bool crack_problem::solve(plain_vector &U) {
 #else
     getfem::add_Dirichlet_condition_with_multipliers
       (model, mim, "u", mf_mult, DIRICHLET_BOUNDARY_NUM);
-#endif 
+#endif
   }
 
   if (enrichment_option == GLOBAL_WITH_MORTAR) {
     /* add a constraint brick for the mortar junction between
        the enriched area and the rest of the mesh */
     /* we use mfls_u as the space of lagrange multipliers */
-    getfem::mesh_fem &mf_mortar = mfls_mortar; 
+    getfem::mesh_fem &mf_mortar = mfls_mortar;
     /* adjust its qdim.. this is just evil and dangerous
        since mf_u() is built upon mfls_u.. it would be better
        to use a copy. */
@@ -736,31 +736,31 @@ bool crack_problem::solve(plain_vector &U) {
     GMM_ASSERT1(!mf_mortar.is_reduced(), "To be adapted");
     sparse_matrix M(mf_mortar.nb_dof(), mf_mortar.nb_dof());
     getfem::asm_mass_matrix(M, mim, mf_mortar, MORTAR_BOUNDARY_OUT);
-    for (dal::bv_visitor_c d(mf_mortar.basic_dof_on_region(MORTAR_BOUNDARY_OUT)); 
-	 !d.finished(); ++d) {
+    for (dal::bv_visitor_c d(mf_mortar.basic_dof_on_region(MORTAR_BOUNDARY_OUT));
+         !d.finished(); ++d) {
       if (M(d,d) > 1e-8) ind_mortar.push_back(d);
       else cout << "  removing non mortar dof" << d << "\n";
     }
 
     cout << ind_mortar.size() << " dof for the lagrange multiplier)\n";
 
-    sparse_matrix H0(mf_mortar.nb_dof(), mf_u().nb_dof()), 
+    sparse_matrix H0(mf_mortar.nb_dof(), mf_u().nb_dof()),
       H(ind_mortar.size(), mf_u().nb_dof());
 
 
     gmm::sub_index sub_i(ind_mortar);
     gmm::sub_interval sub_j(0, mf_u().nb_dof());
-    
+
     /* build the mortar constraint matrix -- note that the integration
        method is conformal to the crack
      */
-    getfem::asm_mass_matrix(H0, mim, mf_mortar, mf_u(), 
-			    MORTAR_BOUNDARY_OUT);
+    getfem::asm_mass_matrix(H0, mim, mf_mortar, mf_u(),
+                            MORTAR_BOUNDARY_OUT);
     gmm::copy(gmm::sub_matrix(H0, sub_i, sub_j), H);
 
     gmm::clear(H0);
-    getfem::asm_mass_matrix(H0, mim, mf_mortar, mf_u(), 
-			    MORTAR_BOUNDARY_IN);
+    getfem::asm_mass_matrix(H0, mim, mf_mortar, mf_u(),
+                            MORTAR_BOUNDARY_IN);
     gmm::add(gmm::scaled(gmm::sub_matrix(H0, sub_i, sub_j), -1), H);
 
 
@@ -775,10 +775,10 @@ bool crack_problem::solve(plain_vector &U) {
 
     for (size_type d = 0; d < mf_u().nb_dof(); ++d) {
       if (M2(d,d) < 1e-10) {
-	cout << "  removing null mf_u() dof " << d << "\n";
-	size_type n = gmm::mat_nrows(H);
-	gmm::resize(H, n+1, gmm::mat_ncols(H));
-	H(n, d) = 1;
+        cout << "  removing null mf_u() dof " << d << "\n";
+        size_type n = gmm::mat_nrows(H);
+        gmm::resize(H, n+1, gmm::mat_ncols(H));
+        H(n, d) = 1;
       }
     }
 
@@ -794,7 +794,7 @@ bool crack_problem::solve(plain_vector &U) {
   cout << "Solving... done" << endl;
   // Solution extraction
   gmm::copy(model.real_variable("u"), U);
-  
+
   if(reference_test)
     {
       cout << "Exporting reference solution...";
@@ -803,27 +803,27 @@ bool crack_problem::solve(plain_vector &U) {
       getfem::mesh_fem mf_refined(mesh, dim_type(N));
       std::string FEM_DISC = PARAM.string_value("FEM_DISC","fem disc ");
       mf_refined.set_finite_element(mesh.convex_index(),
-				    getfem::fem_descriptor(FEM_DISC));
-      
+                                    getfem::fem_descriptor(FEM_DISC));
+
       plain_vector W(mf_refined.nb_dof());
       getfem::interpolation(mf_u(), mf_refined, U, W);
-      
-      
+
+
       mf_refined.write_to_file(datafilename + "_refined_test.meshfem", true);
       gmm::vecsave(datafilename + "_refined_test.U", W);
       cout << "done" << endl;
     }
-  
-  
+
+
   return (iter.converged());
 }
 
 void export_interpolated_on_line(const getfem::mesh_fem &mf,
-				 const getfem::base_vector &U,
-				 const base_node &x0,
-				 const base_small_vector &dir,
-				 const int nb_points, 
-				 const std::string &filename) {
+                                 const getfem::base_vector &U,
+                                 const base_node &x0,
+                                 const base_small_vector &dir,
+                                 const int nb_points,
+                                 const std::string &filename) {
   getfem::mesh_trans_inv mti(mf.linked_mesh());
   scalar_type h = 1.0/(2*nb_points);
   for (int i=-nb_points; i <= nb_points; ++i) {
@@ -833,9 +833,9 @@ void export_interpolated_on_line(const getfem::mesh_fem &mf,
    getfem::base_vector V(mti.nb_points() * mf.get_qdim());
   getfem::base_matrix M;
   getfem::interpolation(mf, mti, U, V, M, 0, false);
-  
+
   std::ofstream f(filename.c_str()); f.precision(16);
-  
+
   for (size_type i=0; i < mti.nb_points(); ++i) {
     for (unsigned q=0; q < mf.get_qdim(); ++q) {
       f << V[i*mf.get_qdim()+q] << " ";
@@ -843,14 +843,14 @@ void export_interpolated_on_line(const getfem::mesh_fem &mf,
     f << "\n";
   }
 }
-				 
+
 
 /**************************************************************************/
 /*  main program.                                                         */
 /**************************************************************************/
 
 int main(int argc, char *argv[]) {
-  
+
   GMM_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
 
@@ -865,20 +865,20 @@ int main(int argc, char *argv[]) {
 
     plain_vector U(p.mf_u().nb_dof());
     if (!p.solve(U)) GMM_ASSERT1(false,"Solve has failed");
- 
+
     //        for (size_type i = 4; i < U.size(); ++i)
     //U[i] = 0;
     //cout << "The solution" << U ;
      gmm::vecsave("crack.U", U);
      cout << "vecsave done"<<endl;
-    { 
+    {
       getfem::mesh mcut;
       p.mls.global_cut_mesh(mcut);
       unsigned Q = p.mf_u().get_qdim();
       getfem::mesh_fem mf(mcut, dim_type(Q));
       mf.set_classical_discontinuous_finite_element(2, 0.001);
       // mf.set_finite_element
-      //	(getfem::fem_descriptor("FEM_PK_DISCONTINUOUS(2, 2, 0.0001)"));
+      //        (getfem::fem_descriptor("FEM_PK_DISCONTINUOUS(2, 2, 0.0001)"));
       plain_vector V(mf.nb_dof());
 
       getfem::interpolation(p.mf_u(), mf, U, V);
@@ -887,7 +887,7 @@ int main(int argc, char *argv[]) {
       getfem::mesh mcut_refined;
 
       unsigned NX = unsigned(p.PARAM.int_value("NX")), nn;
-//  unsigned NX = (unsigned)sqrt(p.mesh.convex_index().card()); 
+//  unsigned NX = (unsigned)sqrt(p.mesh.convex_index().card());
 //    unsigned nn;
       if (NX < 6) nn = 24;
       else if (NX < 12) nn = 6;
@@ -897,36 +897,36 @@ int main(int argc, char *argv[]) {
       /* choose an adequate slice refinement based on the distance to the crack tip */
       std::vector<bgeot::short_type> nrefine(mcut.convex_index().last_true()+1);
       for (dal::bv_visitor cv(mcut.convex_index()); !cv.finished(); ++cv) {
-	scalar_type dmin=0, d;
-	base_node Pmin,P;
-	for (unsigned i=0; i < mcut.nb_points_of_convex(cv); ++i) {
-	  P = mcut.points_of_convex(cv)[i];
-	  d = gmm::vect_norm2(ls_function(P));
-	  if (d < dmin || i == 0) { dmin = d; Pmin = P; }
-	}
+        scalar_type dmin=0, d;
+        base_node Pmin,P;
+        for (unsigned i=0; i < mcut.nb_points_of_convex(cv); ++i) {
+          P = mcut.points_of_convex(cv)[i];
+          d = gmm::vect_norm2(ls_function(P));
+          if (d < dmin || i == 0) { dmin = d; Pmin = P; }
+        }
 
-	if (dmin < 1e-5)
-	  nrefine[cv] = short_type(nn*8);
-	else if (dmin < .1) 
-	  nrefine[cv] = short_type(nn*2);
-	else nrefine[cv] = short_type(nn);
-	if (dmin < .01)
-	  cout << "cv: "<< cv << ", dmin = " << dmin << "Pmin=" << Pmin << " " << nrefine[cv] << "\n";
+        if (dmin < 1e-5)
+          nrefine[cv] = short_type(nn*8);
+        else if (dmin < .1)
+          nrefine[cv] = short_type(nn*2);
+        else nrefine[cv] = short_type(nn);
+        if (dmin < .01)
+          cout << "cv: "<< cv << ", dmin = " << dmin << "Pmin=" << Pmin << " " << nrefine[cv] << "\n";
       }
 
       {
-	getfem::mesh_slicer slicer(mcut); 
-	getfem::slicer_build_mesh bmesh(mcut_refined);
-	slicer.push_back_action(bmesh);
-	slicer.exec(nrefine, getfem::mesh_region::all_convexes());
+        getfem::mesh_slicer slicer(mcut);
+        getfem::slicer_build_mesh bmesh(mcut_refined);
+        slicer.push_back_action(bmesh);
+        slicer.exec(nrefine, getfem::mesh_region::all_convexes());
       }
       /*
-      sl.build(mcut, 
+      sl.build(mcut,
       getfem::slicer_build_mesh(mcut_refined), nrefine);*/
 
-      getfem::mesh_im mim_refined(mcut_refined); 
+      getfem::mesh_im mim_refined(mcut_refined);
       mim_refined.set_integration_method(getfem::int_method_descriptor
-					 ("IM_TRIANGLE(6)"));
+                                         ("IM_TRIANGLE(6)"));
 
       getfem::mesh_fem mf_refined(mcut_refined, dim_type(Q));
       mf_refined.set_classical_discontinuous_finite_element(2, 0.001);
@@ -939,143 +939,143 @@ int main(int argc, char *argv[]) {
       p.exact_sol.mf.set_qdim(dim_type(Q));
       assert(p.exact_sol.mf.nb_dof() == p.exact_sol.U.size());
       plain_vector EXACT(mf_refined.nb_dof());
-      getfem::interpolation(p.exact_sol.mf, mf_refined, 
-			    p.exact_sol.U, EXACT);
+      getfem::interpolation(p.exact_sol.mf, mf_refined,
+                            p.exact_sol.U, EXACT);
 
       plain_vector DIFF(EXACT); gmm::add(gmm::scaled(W,-1),DIFF);
 #endif
 
       if (p.PARAM.int_value("VTK_EXPORT")) {
-	getfem::mesh_fem mf_refined_vm(mcut_refined, 1);
-	mf_refined_vm.set_classical_discontinuous_finite_element(1, 0.001);
-	cerr << "mf_refined_vm.nb_dof=" << mf_refined_vm.nb_dof() << "\n";
-	plain_vector VM(mf_refined_vm.nb_dof());
+        getfem::mesh_fem mf_refined_vm(mcut_refined, 1);
+        mf_refined_vm.set_classical_discontinuous_finite_element(1, 0.001);
+        cerr << "mf_refined_vm.nb_dof=" << mf_refined_vm.nb_dof() << "\n";
+        plain_vector VM(mf_refined_vm.nb_dof());
 
-	cout << "computing von mises\n";
-	getfem::interpolation_von_mises(mf_refined, mf_refined_vm, W, VM);
+        cout << "computing von mises\n";
+        getfem::interpolation_von_mises(mf_refined, mf_refined_vm, W, VM);
 
-	plain_vector D(mf_refined_vm.nb_dof() * Q), 
-	  DN(mf_refined_vm.nb_dof());
-	
-#ifdef VALIDATE_XFEM
-	getfem::interpolation(mf_refined, mf_refined_vm, DIFF, D);
-	for (unsigned i=0; i < DN.size(); ++i) {
-	  DN[i] = gmm::vect_norm2(gmm::sub_vector(D, gmm::sub_interval(i*Q, Q)));
-	}
-#endif
-
-	cout << "export to " << p.datafilename + ".vtk" << "..\n";
-	getfem::vtk_export exp(p.datafilename + ".vtk",
-			       p.PARAM.int_value("VTK_EXPORT")==1);
-
-	exp.exporting(mf_refined); 
-	//exp.write_point_data(mf_refined_vm, DN, "error");
-	exp.write_point_data(mf_refined_vm, VM, "von mises stress");
-
-	exp.write_point_data(mf_refined, W, "elastostatic_displacement");
-
-	base_node line_x0(0.70001,0);
-	base_small_vector line_dir(0, 0.5001);
-	unsigned line_nb_points = 1000;
-	export_interpolated_on_line(mf_refined_vm, VM, 
-				    line_x0, line_dir, line_nb_points,
-				    "von_mises_on_line.data");
+        plain_vector D(mf_refined_vm.nb_dof() * Q),
+          DN(mf_refined_vm.nb_dof());
 
 #ifdef VALIDATE_XFEM
-
-	plain_vector VM_EXACT(mf_refined_vm.nb_dof());
-
-
-	/* getfem::mesh_fem_global_function mf(mcut_refined,Q);
-	   std::vector<getfem::pglobal_function> cfun(4);
-	   for (unsigned j=0; j < 4; ++j)
-	   cfun[j] = getfem::isotropic_crack_singular_2D(j, p.ls);
-	   mf.set_functions(cfun);
-	   getfem::interpolation_von_mises(mf, mf_refined_vm, p.exact_sol.U,
-	   VM_EXACT);
-	*/
-
-
-	getfem::interpolation_von_mises(mf_refined, mf_refined_vm, EXACT, VM_EXACT);
-	getfem::vtk_export exp2("crack_exact.vtk");
-	exp2.exporting(mf_refined);
-	exp2.write_point_data(mf_refined_vm, VM_EXACT, "exact von mises stress");
-	exp2.write_point_data(mf_refined, EXACT, "reference solution");
-	
-	export_interpolated_on_line(mf_refined_vm, VM_EXACT, 
-				    line_x0, line_dir, line_nb_points,
-				    "von_mises_on_line_exact.data");
+        getfem::interpolation(mf_refined, mf_refined_vm, DIFF, D);
+        for (unsigned i=0; i < DN.size(); ++i) {
+          DN[i] = gmm::vect_norm2(gmm::sub_vector(D, gmm::sub_interval(i*Q, Q)));
+        }
 #endif
-	
-	cout << "export done, you can view the data file with (for example)\n"
-	  "mayavi -d " << p.datafilename << ".vtk -f  "
-	  "WarpVector -m BandedSurfaceMap -m Outline\n";
+
+        cout << "export to " << p.datafilename + ".vtk" << "..\n";
+        getfem::vtk_export exp(p.datafilename + ".vtk",
+                               p.PARAM.int_value("VTK_EXPORT")==1);
+
+        exp.exporting(mf_refined);
+        //exp.write_point_data(mf_refined_vm, DN, "error");
+        exp.write_point_data(mf_refined_vm, VM, "von mises stress");
+
+        exp.write_point_data(mf_refined, W, "elastostatic_displacement");
+
+        base_node line_x0(0.70001,0);
+        base_small_vector line_dir(0, 0.5001);
+        unsigned line_nb_points = 1000;
+        export_interpolated_on_line(mf_refined_vm, VM,
+                                    line_x0, line_dir, line_nb_points,
+                                    "von_mises_on_line.data");
+
+#ifdef VALIDATE_XFEM
+
+        plain_vector VM_EXACT(mf_refined_vm.nb_dof());
+
+
+        /* getfem::mesh_fem_global_function mf(mcut_refined,Q);
+           std::vector<getfem::pglobal_function> cfun(4);
+           for (unsigned j=0; j < 4; ++j)
+           cfun[j] = getfem::isotropic_crack_singular_2D(j, p.ls);
+           mf.set_functions(cfun);
+           getfem::interpolation_von_mises(mf, mf_refined_vm, p.exact_sol.U,
+           VM_EXACT);
+        */
+
+
+        getfem::interpolation_von_mises(mf_refined, mf_refined_vm, EXACT, VM_EXACT);
+        getfem::vtk_export exp2("crack_exact.vtk");
+        exp2.exporting(mf_refined);
+        exp2.write_point_data(mf_refined_vm, VM_EXACT, "exact von mises stress");
+        exp2.write_point_data(mf_refined, EXACT, "reference solution");
+
+        export_interpolated_on_line(mf_refined_vm, VM_EXACT,
+                                    line_x0, line_dir, line_nb_points,
+                                    "von_mises_on_line_exact.data");
+#endif
+
+        cout << "export done, you can view the data file with (for example)\n"
+          "mayavi -d " << p.datafilename << ".vtk -f  "
+          "WarpVector -m BandedSurfaceMap -m Outline\n";
       }
 
       //bool error_to_ref_sol = 0;
-      
+
       if(p.PARAM.int_value("ERROR_TO_REF_SOL") == 1){
-	cout << "Coputing error with respect to a reference solution..." << endl;
-	std::string REFERENCE_MF = "crack_refined_test.meshfem";
-	std::string REFERENCE_U = "crack_refined_test.U";
-	
-	cout << "Load reference meshfem and solution from " << REFERENCE_MF << " and " << REFERENCE_U << "\n";
-	getfem::mesh ref_m; 
-	ref_m.read_from_file(REFERENCE_MF);
-	getfem::mesh_fem ref_mf(ref_m); 
-	ref_mf.read_from_file(REFERENCE_MF);
-	std::fstream f(REFERENCE_U.c_str(), std::ios::in);
-	plain_vector ref_U(ref_mf.nb_dof());
-      
-	for (unsigned i=0; i < ref_mf.nb_dof(); ++i) {
-	  f >> ref_U[i]; if (!f.good()) GMM_ASSERT1(f.good(), "problem while reading " << REFERENCE_U);
-	}
-	
-	getfem::mesh_im ref_mim(ref_m);
-	getfem::pintegration_method ppi = 
-	  getfem::int_method_descriptor("IM_TRIANGLE(6)");
-	ref_mim.set_integration_method(ref_m.convex_index(), ppi);
-	plain_vector interp_U(ref_mf.nb_dof());
-	getfem::interpolation(p.mf_u(), ref_mf, U, interp_U);
-	
-	//gmm::add(gmm::scaled(interp_U, -1), ref_U);
-	  
-	
-	cout << "To ref L2 ERROR:" << getfem::asm_L2_dist(ref_mim, ref_mf, interp_U,
-							  ref_mf, ref_U) << endl;
-	
-	cout << "To ref H1 ERROR:" << getfem::asm_H1_dist(ref_mim, ref_mf, interp_U,
-							  ref_mf, ref_U) << endl;
-	
-	//cout << "L2 ERROR:"<< getfem::asm_L2_norm(ref_mim, ref_mf, ref_U)
-	//     << endl << "H1 ERROR:"
-	//     << getfem::asm_H1_norm(ref_mim, ref_mf, ref_U) << "\n";
-	
+        cout << "Coputing error with respect to a reference solution..." << endl;
+        std::string REFERENCE_MF = "crack_refined_test.meshfem";
+        std::string REFERENCE_U = "crack_refined_test.U";
+
+        cout << "Load reference meshfem and solution from " << REFERENCE_MF << " and " << REFERENCE_U << "\n";
+        getfem::mesh ref_m;
+        ref_m.read_from_file(REFERENCE_MF);
+        getfem::mesh_fem ref_mf(ref_m);
+        ref_mf.read_from_file(REFERENCE_MF);
+        std::fstream f(REFERENCE_U.c_str(), std::ios::in);
+        plain_vector ref_U(ref_mf.nb_dof());
+
+        for (unsigned i=0; i < ref_mf.nb_dof(); ++i) {
+          f >> ref_U[i]; if (!f.good()) GMM_ASSERT1(f.good(), "problem while reading " << REFERENCE_U);
+        }
+
+        getfem::mesh_im ref_mim(ref_m);
+        getfem::pintegration_method ppi =
+          getfem::int_method_descriptor("IM_TRIANGLE(6)");
+        ref_mim.set_integration_method(ref_m.convex_index(), ppi);
+        plain_vector interp_U(ref_mf.nb_dof());
+        getfem::interpolation(p.mf_u(), ref_mf, U, interp_U);
+
+        //gmm::add(gmm::scaled(interp_U, -1), ref_U);
+
+
+        cout << "To ref L2 ERROR:" << getfem::asm_L2_dist(ref_mim, ref_mf, interp_U,
+                                                          ref_mf, ref_U) << endl;
+
+        cout << "To ref H1 ERROR:" << getfem::asm_H1_dist(ref_mim, ref_mf, interp_U,
+                                                          ref_mf, ref_U) << endl;
+
+        //cout << "L2 ERROR:"<< getfem::asm_L2_norm(ref_mim, ref_mf, ref_U)
+        //     << endl << "H1 ERROR:"
+        //     << getfem::asm_H1_norm(ref_mim, ref_mf, ref_U) << "\n";
+
       }
-      
+
 #ifdef VALIDATE_XFEM
 
       else {
-	cout << "L2 ERROR:"<< getfem::asm_L2_dist(p.mim, p.mf_u(), U,
-						  p.exact_sol.mf, p.exact_sol.U)
-	     << endl << "H1 ERROR:"
-	     << getfem::asm_H1_dist(p.mim, p.mf_u(), U,
-				    p.exact_sol.mf, p.exact_sol.U) << "\n";
-	
+        cout << "L2 ERROR:"<< getfem::asm_L2_dist(p.mim, p.mf_u(), U,
+                                                  p.exact_sol.mf, p.exact_sol.U)
+             << endl << "H1 ERROR:"
+             << getfem::asm_H1_dist(p.mim, p.mf_u(), U,
+                                    p.exact_sol.mf, p.exact_sol.U) << "\n";
+
       }
 
       cout << "L2 norm of the solution:"  << getfem::asm_L2_norm(p.mim,p.mf_u(),U)<<endl;
       cout << "H1 norm of the solution:"  << getfem::asm_H1_norm(p.mim,p.mf_u(),U)<<endl;
-      
-      
 
-      /* cout << "OLD ERROR L2:" 
-	 << getfem::asm_L2_norm(mim_refined,mf_refined,DIFF) 
-	 << " H1:" << getfem::asm_H1_dist(mim_refined,mf_refined,
-	 EXACT,mf_refined,W)  << "\n";
-	 
-	 cout << "ex = " << p.exact_sol.U << "\n";
-	 cout << "U  = " << gmm::sub_vector(U, gmm::sub_interval(0,8)) << "\n";
+
+
+      /* cout << "OLD ERROR L2:"
+         << getfem::asm_L2_norm(mim_refined,mf_refined,DIFF)
+         << " H1:" << getfem::asm_H1_dist(mim_refined,mf_refined,
+         EXACT,mf_refined,W)  << "\n";
+
+         cout << "ex = " << p.exact_sol.U << "\n";
+         cout << "U  = " << gmm::sub_vector(U, gmm::sub_interval(0,8)) << "\n";
       */
 #endif
     }
@@ -1083,5 +1083,5 @@ int main(int argc, char *argv[]) {
   }
   GMM_STANDARD_CATCH_ERROR;
 
-  return 0; 
+  return 0;
 }

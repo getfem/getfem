@@ -34,7 +34,7 @@ namespace getfem {
       boxtree.add_box(min, max, cv);
     }
   }
-  
+
   bool interpolated_fem::find_a_point(base_node pt, base_node &ptr,
                                       size_type &cv) const {
     bool gt_invertible;
@@ -49,32 +49,32 @@ namespace getfem {
         (mf.linked_mesh().convex((*it)->id),
          mf.linked_mesh().trans_of_convex((*it)->id));
       cv_stored = (*it)->id;
-      if (gic.invert(pt, ptr, gt_invertible)) { 
-        cv = (*it)->id; return true; 
+      if (gic.invert(pt, ptr, gt_invertible)) {
+        cv = (*it)->id; return true;
       }
     }
     return false;
   }
-  
+
   void interpolated_fem::update_from_context(void) const {
     fictx_cv = cv_stored = size_type(-1);
     dim_ = dim_type(-1);
     build_rtree();
-    
+
     GMM_ASSERT1(!mf.is_reduced(),
                 "Interpolated fem works only on non reduced mesh_fems");
 
     std::vector<elt_interpolation_data> vv(mim.convex_index().last_true() + 1);
     elements.swap(vv);
     base_node gpt;
-    ind_dof.resize(mf.nb_basic_dof()); 
+    ind_dof.resize(mf.nb_basic_dof());
     dal::bit_vector alldofs;
     size_type max_dof = 0;
     if (mim.convex_index().card() == 0) return;
     for (dal::bv_visitor cv(mim.convex_index()); !cv.finished(); ++cv) {
       if (dim_ == dim_type(-1))
         dim_ = mim.linked_mesh().structure_of_convex(cv)->dim();
-      
+
       GMM_ASSERT1(dim_ == mim.linked_mesh().structure_of_convex(cv)->dim(),
                   "Convexes of different dimension: to be done");
       pintegration_method pim = mim.int_method_of_element(cv);
@@ -123,49 +123,43 @@ namespace getfem {
     }
     /** setup global dofs, with dummy coordinates */
     base_node P(dim()); gmm::fill(P,1./20);
-    node_tab_.resize(max_dof);
-    std::fill(node_tab_.begin(), node_tab_.end(), P);
+    std::vector<base_node> node_tab_(max_dof, P);
+    pspt_override = bgeot::store_point_tab(node_tab_);
     pspt_valid = false;
     dof_types_.resize(max_dof);
     std::fill(dof_types_.begin(), dof_types_.end(),
               global_dof(dim()));
 
-    /* ind_dof should be kept full of -1 ( real_base_value and 
-       grad_base_value expect that) 
+    /* ind_dof should be kept full of -1 ( real_base_value and
+       grad_base_value expect that)
     */
     std::fill(ind_dof.begin(), ind_dof.end(), size_type(-1));
   }
 
   size_type interpolated_fem::nb_dof(size_type cv) const
-  { context_check(); 
+  { context_check();
     if (mim.linked_mesh().convex_index().is_in(cv))
-      return elements[cv].nb_dof; 
-    else GMM_ASSERT1(false, "Wrong convex number: " << cv);
-  }
-  
-  size_type interpolated_fem::index_of_global_dof
-  (size_type cv, size_type i) const
-  { return elements[cv].inddof[i]; }
-  
-  bgeot::pconvex_ref interpolated_fem::ref_convex(size_type cv) const
-  { return mim.int_method_of_element(cv)->approx_method()->ref_convex(); }
-  
-  const bgeot::convex<base_node> &interpolated_fem::node_convex
-  (size_type cv) const
-  { 
-    if (mim.linked_mesh().convex_index().is_in(cv))
-      return *(bgeot::generic_dummy_convex_ref(dim(), nb_dof(cv),
-                 mim.linked_mesh().structure_of_convex(cv)->nb_faces()));
+      return elements[cv].nb_dof;
     else GMM_ASSERT1(false, "Wrong convex number: " << cv);
   }
 
-  bgeot::pstored_point_tab interpolated_fem::node_tab(size_type)
-    const { 
-    if (!pspt_valid)
-      { pspt = bgeot::store_point_tab(node_tab_); pspt_valid = true; }
-    return pspt;
+  size_type interpolated_fem::index_of_global_dof
+  (size_type cv, size_type i) const
+  { return elements[cv].inddof[i]; }
+
+  bgeot::pconvex_ref interpolated_fem::ref_convex(size_type cv) const
+  { return mim.int_method_of_element(cv)->approx_method()->ref_convex(); }
+
+  const bgeot::convex<base_node> &interpolated_fem::node_convex
+  (size_type cv) const
+  {
+    if (mim.linked_mesh().convex_index().is_in(cv))
+      return *(bgeot::generic_dummy_convex_ref
+               (dim(), nb_dof(cv),
+                mim.linked_mesh().structure_of_convex(cv)->nb_faces()));
+    else GMM_ASSERT1(false, "Wrong convex number: " << cv);
   }
-  
+
   void interpolated_fem::base_value(const base_node &, base_tensor &) const
   { GMM_ASSERT1(false, "No base values, real only element."); }
   void interpolated_fem::grad_base_value(const base_node &,
@@ -174,7 +168,7 @@ namespace getfem {
   void interpolated_fem::hess_base_value(const base_node &,
                                          base_tensor &) const
   { GMM_ASSERT1(false, "No hess values, real only element."); }
-  
+
   inline void interpolated_fem::actualize_fictx(pfem pf, size_type cv,
                                                 const base_node &ptr) const {
     if (fictx_cv != cv) {
@@ -187,8 +181,8 @@ namespace getfem {
     }
     fictx.set_xref(ptr);
   }
-  
-  void interpolated_fem::real_base_value(const fem_interpolation_context& c, 
+
+  void interpolated_fem::real_base_value(const fem_interpolation_context& c,
                                          base_tensor &t, bool) const {
     elt_interpolation_data &e = elements.at(c.convex_num());
     size_type cv;
@@ -197,8 +191,8 @@ namespace getfem {
     t.adjust_sizes(mi2);
     std::fill(t.begin(), t.end(), scalar_type(0));
     if (e.nb_dof == 0) return;
-    
-    if (c.have_pgp() && 
+
+    if (c.have_pgp() &&
         (c.pgp()->get_ppoint_tab()
          == e.pim->approx_method()->pintegration_points())) {
       gausspt_interpolation_data &gpid = e.gausspt.at(c.ii());
@@ -236,9 +230,9 @@ namespace getfem {
           ind_dof[e.inddof[i]] = size_type(-1);
       }
     }
-    
+
   }
-  
+
   void interpolated_fem::real_grad_base_value
   (const fem_interpolation_context& c, base_tensor &t, bool) const {
     size_type N0 = mf.linked_mesh().dim();
@@ -249,8 +243,8 @@ namespace getfem {
     t.adjust_sizes(mi3);
     std::fill(t.begin(), t.end(), scalar_type(0));
     if (nbdof == 0) return;
-    
-    if (c.have_pgp()  && 
+
+    if (c.have_pgp()  &&
         (c.pgp()->get_ppoint_tab()
          == e.pim->approx_method()->pintegration_points())) {
       gausspt_interpolation_data &gpid = e.gausspt.at(c.ii());
@@ -289,7 +283,7 @@ namespace getfem {
       cerr << "NON PGP OU MAUVAIS PTS sz=" << elements.size() << ", cv="
            << c.convex_num() << " ";
       cerr << "ii=" << c.ii() << ", sz=" << e.gausspt.size() << "\n";
-      
+
       if (find_a_point(c.xreal(), ptref, cv)) {
         pfem pf = mf.fem_of_element(cv);
         unsigned rdim = target_dim() / pf->target_dim(), mdim = (rdim==1) ? 0 : 1;
@@ -324,11 +318,11 @@ namespace getfem {
       }
     }
   }
-  
+
   void interpolated_fem::real_hess_base_value
   (const fem_interpolation_context&, base_tensor &, bool) const
   { GMM_ASSERT1(false, "Sorry, to be done."); }
-  
+
 
   dal::bit_vector interpolated_fem::interpolated_convexes() const {
     dal::bit_vector bv;
@@ -378,7 +372,7 @@ namespace getfem {
   }
 
   interpolated_fem::interpolated_fem(const mesh_fem &mef,
-                                     const mesh_im &meim, 
+                                     const mesh_im &meim,
                                      pinterpolated_func pif_,
                                      dal::bit_vector blocked_dof_,
                                      bool store_val)
