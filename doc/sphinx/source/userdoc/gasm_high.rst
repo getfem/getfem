@@ -397,7 +397,7 @@ A certain number of predefined scalar functions can be used. The exhaustive list
   - ``sqr(t)`` (the square of t, equivalent to t*t), ``pow(t, u)`` (t to the power u),
     ``sqrt(t)`` (square root of t), ``exp(t)``, ``log(t)``, ``log10(t)``
 
-  - ``sin(t)``, ``cos(t)``, ``tan(t)``, ``asin(t)``, ``acos(t)``, ``atan(t)``
+  - ``sin(t)``, ``cos(t)``, ``tan(t)``, ``asin(t)``, ``acos(t)``, ``atan(t)``, ``atan2(t, u)``
 
   - ``sinh(t)``, ``cosh(t)``, ``tanh(t)``, ``asinh(t)``, ``acosh(t)``, ``atanh(t)``
 

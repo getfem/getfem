@@ -2136,9 +2136,9 @@ namespace getfem {
   }
   static scalar_type ga_der_sqrt(scalar_type t) { return 0.5/sqrt(t); }
   // static scalar_type ga_der_sqr(scalar_type t) { return 2*t; }
-  static scalar_type ga_der_pow1(scalar_type t, scalar_type u)
+  static scalar_type ga_der_t_pow(scalar_type t, scalar_type u)
   { return u*pow(t,u-1.); }
-  static scalar_type ga_der_pow2(scalar_type t, scalar_type u)
+  static scalar_type ga_der_u_pow(scalar_type t, scalar_type u)
   { return pow(t,u)*log(gmm::abs(t)); }
   static scalar_type ga_der_log(scalar_type t) { return 1./t; }
   static scalar_type ga_der_log10(scalar_type t) { return 1./(t*log(10.)); }
@@ -2160,15 +2160,19 @@ namespace getfem {
   { return -1./(sqrt(1.-t*t)); }
   static scalar_type ga_der_atan(scalar_type t)
   { return 1./(1.+t*t); }
+  static scalar_type ga_der_t_atan2(scalar_type t, scalar_type u)
+  { return u/(t*t+u*u); }
+  static scalar_type ga_der_u_atan2(scalar_type t, scalar_type u)
+  { return -t/(t*t+u*u); }
   static scalar_type ga_der_erf(scalar_type t)
   { return exp(-t*t)*2./sqrt(M_PI); }
   static scalar_type ga_der_erfc(scalar_type t)
   { return -exp(-t*t)*2./sqrt(M_PI); }
   static scalar_type ga_der_neg_part(scalar_type t)
   { return (t >= 0) ? 0. : -1.; }
-  static scalar_type ga_der_max1(scalar_type t, scalar_type u)
+  static scalar_type ga_der_t_max(scalar_type t, scalar_type u)
   { return (t-u >= 0) ? 1. : 0.; }
-  static scalar_type ga_der_max2(scalar_type t, scalar_type u)
+  static scalar_type ga_der_u_max(scalar_type t, scalar_type u)
   { return (u-t >= 0) ? 1. : 0.; }
 
 
@@ -2386,10 +2390,10 @@ namespace getfem {
     PREDEF_FUNCTIONS["DER_PDFUNC_SQRT"] =
       ga_predef_function(ga_der_sqrt, 2, "-0.25/(t*sqrt(t))");
     PREDEF_FUNCTIONS["DER_PDFUNC1_POW"] =
-      ga_predef_function(ga_der_pow1, 2, "u*(u-1)*pow(t,u-2)",
+      ga_predef_function(ga_der_t_pow, 2, "u*(u-1)*pow(t,u-2)",
                          "pow(t,u-1)*(u*log(t)+1)");
     PREDEF_FUNCTIONS["DER_PDFUNC2_POW"] =
-      ga_predef_function(ga_der_pow2, 2, "pow(t,u-1)*(u*log(t)+1)",
+      ga_predef_function(ga_der_u_pow, 2, "pow(t,u-1)*(u*log(t)+1)",
                          "pow(t,u)*sqr(log(t))");
 
     // Hyperbolic functions
@@ -2429,6 +2433,8 @@ namespace getfem {
     PREDEF_FUNCTIONS["asin"] = ga_predef_function(asin, 1, "DER_PDFUNC_ASIN");
     PREDEF_FUNCTIONS["acos"] = ga_predef_function(acos, 1, "DER_PDFUNC_ACOS");
     PREDEF_FUNCTIONS["atan"] = ga_predef_function(atan, 1, "DER_PDFUNC_ATAN");
+    PREDEF_FUNCTIONS["atan2"] = ga_predef_function(atan2, 1, "DER_PDFUNC1_ATAN2",
+                                                             "DER_PDFUNC2_ATAN2");
     PREDEF_FUNCTIONS["sinc"] = ga_predef_function(ga_sinc, 1,
                                                   "DER_PDFUNC_SINC");
     PREDEF_FUNCTIONS["DER_PDFUNC_SINC"] = ga_predef_function(ga_der_sinc, 1,
@@ -2448,6 +2454,12 @@ namespace getfem {
       ga_predef_function(ga_der_acos, 2, "-t/(pow(1-t*t,1.5))");
     PREDEF_FUNCTIONS["DER_PDFUNC_ATAN"] =
       ga_predef_function(ga_der_atan, 2, "-2*t/sqr(1+t*t)");
+    PREDEF_FUNCTIONS["DER_PDFUNC1_ATAN2"] =
+      ga_predef_function(ga_der_t_atan2, 2, "-2*t*u/sqr(sqr(u)+sqr(t))",
+                                            "(sqrt(t)-sqr(u))/sqr(sqr(u)+sqr(t))");
+    PREDEF_FUNCTIONS["DER_PDFUNC2_ATAN2"] =
+      ga_predef_function(ga_der_u_atan2, 2, "(sqrt(t)-sqr(u))/sqr(sqr(u)+sqr(t))",
+                                            "2*t*u/sqr(sqr(u)+sqr(t))");
 
 
     // Error functions
@@ -2483,8 +2495,8 @@ namespace getfem {
 
     PREDEF_FUNCTIONS["DER_PDFUNC_NEG_PART"]
       = ga_predef_function(ga_der_neg_part, 2, "-Heaviside(-t)");
-    PREDEF_FUNCTIONS["DER_PDFUNC1_MAX"] = ga_predef_function(ga_der_max1);
-    PREDEF_FUNCTIONS["DER_PDFUNC2_MAX"] = ga_predef_function(ga_der_max2);
+    PREDEF_FUNCTIONS["DER_PDFUNC1_MAX"] = ga_predef_function(ga_der_t_max);
+    PREDEF_FUNCTIONS["DER_PDFUNC2_MAX"] = ga_predef_function(ga_der_u_max);
 
 
     // Predefined special functions
