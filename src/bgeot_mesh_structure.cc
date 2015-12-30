@@ -346,7 +346,7 @@ namespace bgeot {
           }
         }
         else {
-          size_type nf = cvs->nb_faces();
+          short_type nf = cvs->nb_faces();
           //cerr << "ncs = " << ncs << ",cvs->dim=" << int(cvs->dim()) << ", nb_faces=" << nf << endl;
           for (short_type f = 0; f < nf; ++f) {
             cvstab[ncs+f] = (cvs->faces_structure())[f];
