@@ -2419,7 +2419,7 @@ namespace getfem {
     PREDEF_FUNCTIONS["DER_PDFUNC_ACOSH"] =
       ga_predef_function(ga_der_acosh, 2, "-t/(pow(t*t-1,1.5))");
     PREDEF_FUNCTIONS["DER_PDFUNC_ATANH"] =
-      ga_predef_function(ga_der_atanh, 2, "-2*t/sqr(1+t*t)");
+      ga_predef_function(ga_der_atanh, 2, "2*t/sqr(1-t*t)");
 
 
     // Trigonometric functions
@@ -2447,7 +2447,7 @@ namespace getfem {
     PREDEF_FUNCTIONS["DER_PDFUNC_ACOS"] =
       ga_predef_function(ga_der_acos, 2, "-t/(pow(1-t*t,1.5))");
     PREDEF_FUNCTIONS["DER_PDFUNC_ATAN"] =
-      ga_predef_function(ga_der_atan, 2, "2*t/sqr(1-t*t)");
+      ga_predef_function(ga_der_atan, 2, "-2*t/sqr(1+t*t)");
 
 
     // Error functions
