@@ -7180,7 +7180,7 @@ namespace getfem {
                 || pnode->der2 > it->second.nbargs())
               ga_throw_error(expr, pnode->pos, "Invalid derivative.");
             const ga_predef_function &F = it->second;
-            if (F.ftype() == 0 && !(pnode->der2)) {
+            if ((F.ftype() == 0 || F.dtype() == 2) && !(pnode->der2)) {
               pnode->name = ((pnode->der1 == 1) ?
                              F.derivative1() : F.derivative2());
               pnode->der1 = pnode->der2 = 0;
