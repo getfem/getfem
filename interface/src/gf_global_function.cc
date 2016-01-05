@@ -21,7 +21,7 @@
 // $Id$
 #include <getfemint.h>
 #include <getfemint_workspace.h>
-#include <getfem/getfem_mesh_fem_global_function.h>
+#include <getfem/getfem_global_function.h>
 #include <getfem/getfem_arch_config.h>
 
 using namespace getfemint;

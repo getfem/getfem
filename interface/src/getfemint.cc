@@ -20,7 +20,7 @@
 ===========================================================================*/
 
 #include <getfem/getfem_mesh_slice.h>
-#include <getfem/getfem_mesh_fem_global_function.h>
+#include <getfem/getfem_global_function.h>
 #include <getfem/getfem_mat_elem_type.h>
 #include <getfem/getfem_mesher.h>
 #include <getfem/getfem_continuation.h>

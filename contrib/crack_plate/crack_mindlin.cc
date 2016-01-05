@@ -228,7 +228,7 @@ sin(theta)+2.0/sqrt(r)*(mu_*cos(theta/2.0)*(30.0*lambda_+60.0*mu_-5.0*gamma*r*r)
 
   mindlin_singular_functions(size_type l_, const getfem::level_set &ls_, 
                              scalar_type lambda_, scalar_type mu_, scalar_type epsi) 
-			     : l(l_), ls(ls_), lambda(lambda_), mu(mu_), epsilon(epsi) {
+    : global_function(2), l(l_), ls(ls_), lambda(lambda_), mu(mu_), epsilon(epsi) {
     cv = size_type(-1);
     this->add_dependency(ls);
   }

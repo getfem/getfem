@@ -96,9 +96,11 @@ nobase_include_HEADERS =                   		\
 	getfem/getfem_export.h             		\
 	getfem/getfem_import.h	           		\
 	getfem/getfem_derivatives.h        		\
+	getfem/getfem_global_function.h			\
 	getfem/getfem_fem.h                		\
 	getfem/getfem_interpolated_fem.h   		\
 	getfem/getfem_projected_fem.h   		\
+	getfem/getfem_fem_global_function.h		\
 	getfem/getfem_mesh_fem_global_function.h	\
 	getfem/getfem_mesh_fem_sum.h            	\
 	getfem/getfem_im_list.h                 	\
@@ -168,9 +170,11 @@ SRC =                                      		\
 	getfem_mesh_im.cc                  		\
 	getfem_integration.cc              		\
 	getfem_integration_composite.cc    		\
+	getfem_global_function.cc			\
 	getfem_fem.cc                      		\
 	getfem_interpolated_fem.cc         		\
 	getfem_projected_fem.cc         		\
+	getfem_fem_global_function.cc 			\
 	getfem_mesh_fem_global_function.cc 		\
 	getfem_fem_composite.cc            		\
 	getfem_mat_elem.cc                 		\

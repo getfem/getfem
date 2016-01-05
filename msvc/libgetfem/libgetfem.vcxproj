@@ -196,7 +196,9 @@
     <ClInclude Include="..\..\src\getfem\getfem_derivatives.h" />
     <ClInclude Include="..\..\src\getfem\getfem_error_estimate.h" />
     <ClInclude Include="..\..\src\getfem\getfem_export.h" />
+    <ClInclude Include="..\..\src\getfem\getfem_global_function.h" />
     <ClInclude Include="..\..\src\getfem\getfem_fem.h" />
+    <ClInclude Include="..\..\src\getfem\getfem_fem_global_function.h" />
     <ClInclude Include="..\..\src\getfem\getfem_fem_level_set.h" />
     <ClInclude Include="..\..\src\getfem\getfem_fourth_order.h" />
     <ClInclude Include="..\..\src\getfem\getfem_generic_assembly.h" />
@@ -322,8 +324,10 @@
     <ClCompile Include="..\..\src\getfem_enumeration_dof_para.cc" />
     <ClCompile Include="..\..\src\getfem_error_estimate.cc" />
     <ClCompile Include="..\..\src\getfem_export.cc" />
+    <ClCompile Include="..\..\src\getfem_global_function.cc" />
     <ClCompile Include="..\..\src\getfem_fem.cc" />
     <ClCompile Include="..\..\src\getfem_fem_composite.cc" />
+    <ClCompile Include="..\..\src\getfem_fem_global_function.cc" />
     <ClCompile Include="..\..\src\getfem_fem_level_set.cc" />
     <ClCompile Include="..\..\src\getfem_fourth_order.cc" />
     <ClCompile Include="..\..\src\getfem_generic_assembly.cc" />

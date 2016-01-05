@@ -400,7 +400,9 @@ void bilaplacian_singular_functions::hess(const getfem::fem_interpolation_contex
 
 void bilaplacian_singular_functions::update_from_context(void) const { cv =  size_type(-1); }
 
-bilaplacian_singular_functions::bilaplacian_singular_functions(size_type l_, const getfem::level_set &ls_, scalar_type nu_, scalar_type pos_) : l(l_), ls(ls_), nu(nu_), pos(pos_) {
+bilaplacian_singular_functions::bilaplacian_singular_functions
+(size_type l_, const getfem::level_set &ls_, scalar_type nu_, scalar_type pos_)
+ : global_function(2), l(l_), ls(ls_), nu(nu_), pos(pos_) {
   cv = size_type(-1);
   this->add_dependency(ls);
 }

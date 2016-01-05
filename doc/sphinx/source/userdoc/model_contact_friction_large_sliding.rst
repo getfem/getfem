@@ -11,7 +11,7 @@
 Large sliding/large deformation contact with friction bricks
 ------------------------------------------------------------
 
-The basic tools to deal with large sliding/large deformation contact of deformable structures are accessible in the high-level generic assembly language. Some interpolate transformations (see :ref:`ud-gasm-high-transf`) are defined to perform the contact detection and allow to integrate from a contacct bondary to the opposite contact boundary. Some other usefull tools such as the unit normal vector in the real configuration and projections to take into account contact with Coulomb friction are also defined as operators in the high-level generic assembly language.
+The basic tools to deal with large sliding/large deformation contact of deformable structures are accessible in the high-level generic assembly language. Some interpolate transformations (see :ref:`ud-gasm-high-transf`) are defined to perform the contact detection and allow to integrate from a contacct bondary to the opposite contact boundary. Some other useful tools such as the unit normal vector in the real configuration and projections to take into account contact with Coulomb friction are also defined as operators in the high-level generic assembly language.
 
 Of course, the computational cost of large sliding/large deformation contact algorithms is greatly higher than small sliding-small deformation ones.
 
