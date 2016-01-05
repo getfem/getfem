@@ -35,8 +35,10 @@ sub print_license  {
   my $NAME = $_[1];
 
   if ($NAME =~ /\.pl$/) {
+    for my $i (0 .. $#year1) {
+      print RES "# Copyright (C) $year1[$i]$toyear2[$i] $copyauth[$i]\n";
+    }
     print RES <<""
-# Copyright (C) $year1$toyear2 $copyauth
 #
 # This file is a part of GetFEM++
 #
@@ -57,8 +59,10 @@ sub print_license  {
 ;
 
   } elsif ($NAME =~ /\.m$/) {
+    for my $i (0 .. $#year1) {
+      print RES "% Copyright (C) $year1[$i]$toyear2[$i] $copyauth[$i]\n";
+    }
     print RES <<""
-% Copyright (C) $year1$toyear2 $copyauth
 %
 % This file is a part of GetFEM++
 %
@@ -79,10 +83,15 @@ sub print_license  {
 ;
 
   } else {
-
   print RES <<""
 /*===========================================================================\n
- Copyright (C) $year1$toyear2 $copyauth\n
+
+;
+    for my $i (0 .. $#year1) {
+      print RES " Copyright (C) $year1[$i]$toyear2[$i] $copyauth[$i]\n";
+    }
+  print RES "\n";
+  print RES <<""
  This file is a part of GetFEM++\n
  GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
@@ -140,35 +149,34 @@ sub process_file  {
 
 # extract information
   $license = 0;
-  $libname = 0; $filename = 0; $author1 = 0; $year1 = 0; $year2 = -1;
-  $comment1 = ""; $comment2 = ""; $author2=""; $author3=""; $copyauth="";
-  $authors = $copyauth = "Yves Renard.";
+  @year1 = (); @year2 = (); @copyauth = ();
 
   while ($li = <FILE>) {
 
     if ($license==0 && $li =~ /Copyright/ && $li =~ /Xerox/
-	&& $li =~ /Corporation/)
+        && $li =~ /Corporation/)
       { $license = 4; }
 
-    if ($li =~ /Copyright/ && !$year1) {
+    if ($li =~ /Copyright/ && !$license) {
+      $ind=@year1;
       ($li, $l1) = split('\)', $li, 2);
       clean_line($l1);
-      $year1=int($l1);
+      $year1[$ind]=int($l1);
       ($li, $l2) = split('\-', $l1, 2);
-      $year2=int($l2);
-      ($li, $copyauth) = split(' ', $l1, 2);
-      $copyauth =~ s/\*\///g;
-      clean_line($copyauth);
+      $year2[$ind]=int($l2);
+      ($li, $copyauth[$ind]) = split(' ', $l1, 2);
+      $copyauth[$ind] =~ s/\*\///g;
+      clean_line($copyauth[$ind]);
     }
     if ($license==0 && $li =~ /Boost/ && $li =~ /Software/ && $li =~ /License/)
       { $license = 3; }
     if ($license==0 && $li =~ /GNU/ &&  $li =~ /Lesser/ && $li =~ /General/
-	&& $li =~ /Public/ && $li =~ /License/)
+        && $li =~ /Public/ && $li =~ /License/)
       { $license = 1; }
     if ($license==1 && $li =~ /special/ && $li =~ /exception/)
       { $license = 2; }
     if ($license==0 && $li =~ /Meschach/ && $li =~ /Library/
-	&& $li =~ /without/)
+        && $li =~ /without/)
       { $license = 5; }
 
 
@@ -179,33 +187,38 @@ sub process_file  {
 
   }
 
-  $toyear2 = "";
-  if ($year2 > 0) {
-    $toyear2 = -$year2;
-  }
   switch ($license) {
     case(0) { print "No copyright detected.\n"; }
-    case(1) { print "Copyright detected: LGPL $year1$toyear2 $copyauth\n"; }
-    case(2) { print "Copyright detected: LGPL with special exception $year1$toyear2 $copyauth\n"; }
-    case(3) { print "Copyright detected: Boost $year1$toyear2 $copyauth\n"; }
-    case(4) { print "Copyright detected: Xerox $year1$toyear2 $copyauth\n"; }
-    case(5) { print "Copyright detected: special license from Meschach Library  $year1$toyear2 $copyauth\n"; }
-    else { print "Unknown license detected: $year1$toyear2 $copyauth\n"; }
+    case(1) { print "Copyright detected: LGPL\n"; }
+    case(2) { print "Copyright detected: LGPL with special exception\n"; }
+    case(3) { print "Copyright detected: Boost\n"; }
+    case(4) { print "Copyright detected: Xerox\n"; }
+    case(5) { print "Copyright detected: special license from Meschach Library\n"; }
+    else { print "Unknown license detected:\n"; }
   }
-
+  @toyear2 = ();
+  for my $i (0 .. $#year2) {
+    $toyear2[$i]="     ";
+    if ($year2[$i] > 0) { $toyear2[$i] = -$year2[$i]; }
+  }
+  if ($license != 0) {
+    for my $i (0 .. $#year1) {
+      print "                    $year1[$i]$toyear2[$i] $copyauth[$i]\n";
+    }
+  }
 
   if ($option == 3) {
 
     do {
 
       if ($li =~ /Copyright/ || $li =~ /copyright/) {
-	print "Other copyright info:\n$li";
+        print "Other copyright info:\n$li";
       }
       if ($li =~ /Author/ || $li =~ /author/) {
-	print "Other author info:\n$li";
+        print "Other author info:\n$li";
       }
       if ($li =~ /License/ || $li =~ /license/) {
-	print "Other license info:\n$li";
+        print "Other license info:\n$li";
       }
     } while ($li = <FILE>);
 
@@ -231,39 +244,25 @@ sub process_file  {
       print "Updating license\n\n";
 
       if ($option != 4) {
-        $year2=$year;
+        for my $i (0 .. $#year2) { $year2[$i]=$year; }
       }
       $enablecpp = "/* -*- c++ -*- (enables emacs c++ mode) */\n";
 
       if (!($license) && $option != 4) {
-	$year1 = $year;
-	$year2 = 0;
-        $toyear2 = "";
-	$authors = $copyauth = "Yves Renard.";
-	seek(FILE, 0, 0);
-	# close(FILE);
-	# open(FILE, "$name");
-	open(RES, ">$name".".newhead");
-	if ($name =~ /\.h/) { print RES $enablecpp; }
-	print_license(RES, $name);
+        @year1 = ($year);
+        @year2 = (0);
+        @toyear2 = ("");
+        @copyauth = ("Yves Renard.");
+        seek(FILE, 0, 0);
+        # close(FILE);
+        # open(FILE, "$name");
       }
-      else {
-
-	if ($author3)
-	  { $authors = "$author1, $author2, $author3"; }
-	elsif ($author2)
-	  { $authors = "$author1, $author2"; }
-	else { $authors = "$author1"; }
-
-	$filename = $name;
-
-	open(RES, ">$name".".newhead");
-	if ($name =~ /\.h/) { print RES $enablecpp; }
-	print_license(RES, $name);
-      }
+      open(RES, ">$name".".newhead");
+      if ($name =~ /\.h/) { print RES $enablecpp; }
+      print_license(RES, $name);
 
       do {
-	print RES "$li";
+        print RES "$li";
       } while ($li = <FILE>);
 
       close(RES);
