@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright (C) 1998-2009 Yves Renard
+# Copyright (C) 1998-2015 Yves Renard
 #
 # This file is a part of GetFEM++
 #
@@ -50,6 +50,8 @@ echo "\\textheight 29.7cm"  >> ${gg}_0954236.tex
 echo "\\textwidth 21cm"  >> ${gg}_0954236.tex
 echo "\\headheight 0cm"  >> ${gg}_0954236.tex
 echo "\\newfont{\\msbmtwelve} {msbm10 scaled \\magstep1}" >> ${gg}_0954236.tex
+echo "\\newcommand{\\ds}{\\displaystyle}" >> ${gg}_0954236.tex
+echo "\\newcommand{\\Frac}[2]{{\\ds \\frac{\\ds #1}{\\ds #2}}}"  >> ${gg}_0954236.tex
 echo "\\begin{document} \\noindent" >> ${gg}_0954236.tex
 echo "{\\emtwelv \\textcolor{white}{.}}\\\\" >> ${gg}_0954236.tex
 echo "\\mbox{\\input{"${gg}".tex_0954236}}" >> ${gg}_0954236.tex
