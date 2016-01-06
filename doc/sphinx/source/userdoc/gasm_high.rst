@@ -709,6 +709,25 @@ See for instance :file:`interface/tests/python/demo_laplacian_DG.py` or :file:`i
 
 Compared to other interpolate transformations, this transformation is more optimized and benefits from finite element and geometric transformation pre-computations.
 
+Evaluating discontinuities across inter-element edges/faces
+-----------------------------------------------------------
+
+A specific interpolate transformation (see previous section), called ``neighbour_elt`` is defined by default in all models. This transformation can only be used when a computation is made on an internal edge/face of a mesh, i.e. an element face shared at least by two elements. It aims to compute discontinuity jumps of a variable across inter-element faces. It is particularly suitable to implement Discontinuous Galerkin and interior penalty methods, Ghost penalty terms or a posteriori estimators. The expressions::
+
+  Interpolate(Normal, neighbour_elt)
+  Interpolate(X, neighbour_elt)
+  Interpolate(u, neighbour_elt)
+  Interpolate(Grad_u, neighbour_elt)
+  Interpolate(Div_u, neighbour_elt)
+  Interpolate(Hess_u, neighbour_elt)
+  Interpolate(Test_u, neighbour_elt)
+  Interpolate(Grad_Test_u, neighbour_elt)
+  Interpolate(Div_Test_u, neighbour_elt)
+  Interpolate(Hess_Test_u, neighbour_elt)
+
+
+.. _ud-gasm-high-elem-trans:
+
 Elementary transformations
 --------------------------
 

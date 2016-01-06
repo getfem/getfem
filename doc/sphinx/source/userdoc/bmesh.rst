@@ -194,9 +194,11 @@ A mesh object can contain many |gf_mr| objects (declaration in
 convexes and convex faces. They are used to define boundaries, or a partition of
 the mesh for parallel solvers, etc.::
 
-  mymesh.region(30).add(3);   // add convex 3 into region 30
-  mymesh.region(30).add(4,3); // add face 3 of convex 4 into region 30
-  mymesh.sup_convex(4);       // the corresponding entry will be removed from mesh.region(30)
+  mymesh.region(30).add(2);   // adds convex 2 into region 30
+  mymesh.region(30).add(3);   // adds convex 3 into region 30
+  mymesh.region(30).add(4,3); // adds face 3 of convex 4 into region 30
+  mymesh.region(30).sup(3);   // Removes convex 3 from region 30
+  mymesh.sup_convex(4);       // Removes convex 4 from both the mesh and all the regions
   for (getfem::mr_visitor i(mymesh.region(30)); !i.finished(); ++i) {
     cout << "convex: " << i.cv() << " face:" << i.f() << endl;
   }
