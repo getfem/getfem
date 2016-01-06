@@ -57,6 +57,8 @@ namespace gmm {
     public :
 
     operator T() const { return pm->r(l); }
+    operator std::complex<T>() const { return std::complex<T>(pm->r(l)); }
+    
     ref_elt_vector(V *p, size_type ll) : pm(p), l(ll) {}
     inline ref_elt_vector &operator =(T v)
       { (*pm).w(l,v); return *this; }
@@ -72,12 +74,12 @@ namespace gmm {
       { (*pm).w(l,(*pm).r(l) * v); return *this; }
     inline ref_elt_vector &operator =(const ref_elt_vector &re)
       { *this = T(re); return *this; }
-    T operator +()    { return  T(*this);   } // necessary for unknow reason
-    T operator -()    { return -T(*this);   } // necessary for unknow reason
-    T operator +(T v) { return T(*this)+ v; } // necessary for unknow reason
-    T operator -(T v) { return T(*this)- v; } // necessary for unknow reason
-    T operator *(T v) { return T(*this)* v; } // necessary for unknow reason
-    T operator /(T v) { return T(*this)/ v; } // necessary for unknow reason
+    T operator +()    { return  T(*this);   }
+    T operator -()    { return -T(*this);   }
+    T operator +(T v) { return T(*this)+ v; }
+    T operator -(T v) { return T(*this)- v; }
+    T operator *(T v) { return T(*this)* v; }
+    T operator /(T v) { return T(*this)/ v; }
   };  
   
   
@@ -97,26 +99,30 @@ namespace gmm {
   template<typename T, typename V> inline
   T &operator /=(T &v, const ref_elt_vector<T, V> &re)
   { v /= T(re); return v; }
-  template<typename T, typename V> inline
-  T operator +(const ref_elt_vector<T, V> &re) { return T(re); }
-  template<typename T, typename V> inline
-  T operator -(const ref_elt_vector<T, V> &re) { return -T(re); }
-  template<typename T, typename V> inline
-  T operator +(const ref_elt_vector<T, V> &re, T v) { return T(re)+ v; }
-  template<typename T, typename V> inline
-  T operator +(T v, const ref_elt_vector<T, V> &re) { return v+ T(re); }
-  template<typename T, typename V> inline
-  T operator -(const ref_elt_vector<T, V> &re, T v) { return T(re)- v; }
-  template<typename T, typename V> inline
-  T operator -(T v, const ref_elt_vector<T, V> &re) { return v- T(re); }
-  template<typename T, typename V>  inline
-  T operator *(const ref_elt_vector<T, V> &re, T v) { return T(re)* v; }
-  template<typename T, typename V> inline
-  T operator *(T v, const ref_elt_vector<T, V> &re) { return v* T(re); }
-  template<typename T, typename V> inline
-  T operator /(const ref_elt_vector<T, V> &re, T v) { return T(re)/ v; }
-  template<typename T, typename V> inline
-  T operator /(T v, const ref_elt_vector<T, V> &re) { return v/ T(re); }
+  // template<typename T, typename V> inline
+  // T operator +(const ref_elt_vector<T, V> &re) { return T(re); }
+  // template<typename T, typename V> inline
+  // T operator -(const ref_elt_vector<T, V> &re) { return -T(re); }
+  // template<typename T, typename V> inline
+  // T operator +(const ref_elt_vector<T, V> &re, T v) { return T(re)+ v; }
+  // template<typename T, typename V> inline
+  // T operator +(T v, const ref_elt_vector<T, V> &re) { return v+ T(re); }
+  // template<typename T, typename V> inline
+  // T operator -(const ref_elt_vector<T, V> &re, T v) { return T(re)- v; }
+  // template<typename T, typename V> inline
+  // T operator -(T v, const ref_elt_vector<T, V> &re) { return v- T(re); }
+  // template<typename T, typename V>  inline
+  // T operator *(const ref_elt_vector<T, V> &re, T v) { return T(re)* v; }
+  // template<typename T, typename V> inline
+  // T operator *(T v, const ref_elt_vector<T, V> &re) { return v* T(re); }
+  
+  // template<typename T, typename V> inline
+  // std::complex<T> operator *(std::complex<T> v, const ref_elt_vector<T, V> &re) { return v* T(re); }
+ 
+  // template<typename T, typename V> inline
+  // T operator /(const ref_elt_vector<T, V> &re, T v) { return T(re)/ v; }
+  // template<typename T, typename V> inline
+  // T operator /(T v, const ref_elt_vector<T, V> &re) { return v/ T(re); }
   template<typename T, typename V> inline
   typename number_traits<T>::magnitude_type
   abs(const ref_elt_vector<T, V> &re) { return gmm::abs(T(re)); }

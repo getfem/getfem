@@ -409,13 +409,6 @@ namespace gmm {
 # define magnitude_of_linalg(M) typename number_traits<typename \
                     linalg_traits<M>::value_type>::magnitude_type
   
-  template<typename T> inline std::complex<T> operator*(const std::complex<T>& a, int b) {
-    return a*T(b);
-  }
-  template<typename T> inline std::complex<T> operator*(int b, const std::complex<T>& a) {
-    return a*T(b);
-  }
-
   /* ******************************************************************** */
   /*  types promotion                                                     */
   /* ******************************************************************** */
