@@ -29,11 +29,11 @@ Although time integration scheme can be written directly using the model object 
 
   .. math::
 
-    \dot{u}(t,x) - \Delta u(t,x) = sin(t)
+    \dot{u}(t,x) - \Delta u(t,x) = \sin(t)
 
   can simply be::
 
-    Dot_u*Test_u + Grad_u.Grad_Test_u - \sin(t)*Test_u
+    Dot_u*Test_u + Grad_u.Grad_Test_u - sin(t)*Test_u
 
   (even though, of course, in this situation, the use of linear bricks is preferable for efficiency reasons)
 
