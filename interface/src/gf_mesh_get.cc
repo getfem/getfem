@@ -502,7 +502,7 @@ void gf_mesh_get(getfemint::mexargs_in& m_in,
        for (unsigned j=0; j < v.getn(); j++) {
          getfem::base_node P = v.col_to_bn(j);
          getfem::size_type id = size_type(-1);
-         if (!isnan(P[0])) id = pmesh->search_point(P,radius);
+         if (!std::isnan(P[0])) id = pmesh->search_point(P,radius);
          if (id == getfem::size_type(-1)) w[j] = -1;
          else w[j] = int(id + config::base_index());
        }
