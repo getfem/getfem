@@ -219,7 +219,7 @@ namespace getfem {
     base_matrix H(dim(),dim());
     for (size_type i=0; i < nbdof; ++i) {
       functions[index_of_global_dof_[cv][i]]->hess(c,H);
-      for (size_type jk=0; jk < dim()*dim(); ++jk)
+      for (size_type jk=0; jk < size_type(dim()*dim()); ++jk)
         t[jk*nbdof + i] = H[jk];
     }
   }

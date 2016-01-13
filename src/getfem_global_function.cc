@@ -76,8 +76,8 @@ namespace getfem {
     h.resize(dim_, dim_);
     gmm::copy(pt, pt_);
     const bgeot::base_tensor &t = f_hess.eval();
-    GMM_ASSERT1(t.size() == dim_*dim_, "Wrong size of expression result "
-                << f_hess.expression());
+    GMM_ASSERT1(t.size() == size_type(dim_*dim_),
+		"Wrong size of expression result " << f_hess.expression());
     gmm::copy(t.as_vector(), h.as_vector());
   }
 
