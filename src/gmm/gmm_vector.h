@@ -58,28 +58,89 @@ namespace gmm {
 
     operator T() const { return pm->r(l); }
     ref_elt_vector(V *p, size_type ll) : pm(p), l(ll) {}
-    inline ref_elt_vector &operator =(T v)
-      { (*pm).w(l,v); return *this; }
     inline bool operator ==(T v) const { return ((*pm).r(l) == v); }
     inline bool operator !=(T v) const { return ((*pm).r(l) != v); }
+    inline bool operator ==(std::complex<T> v) const
+    { return ((*pm).r(l) == v); }
+    inline bool operator !=(std::complex<T> v) const
+    { return ((*pm).r(l) != v); }
     inline ref_elt_vector &operator +=(T v)
-      { (*pm).w(l,(*pm).r(l) + v); return *this; }
+    { (*pm).w(l,(*pm).r(l) + v); return *this; }
     inline ref_elt_vector &operator -=(T v)
-      { (*pm).w(l,(*pm).r(l) - v); return *this; }
+    { (*pm).w(l,(*pm).r(l) - v); return *this; }
     inline ref_elt_vector &operator /=(T v)
-      { (*pm).w(l,(*pm).r(l) / v); return *this; }
+    { (*pm).w(l,(*pm).r(l) / v); return *this; }
     inline ref_elt_vector &operator *=(T v)
-      { (*pm).w(l,(*pm).r(l) * v); return *this; }
+    { (*pm).w(l,(*pm).r(l) * v); return *this; }
     inline ref_elt_vector &operator =(const ref_elt_vector &re)
-      { *this = T(re); return *this; }
+    { *this = T(re); return *this; }
+    inline ref_elt_vector &operator =(T v)
+    { (*pm).w(l,v); return *this; }
     T operator +()    { return  T(*this);   }
     T operator -()    { return -T(*this);   }
     T operator +(T v) { return T(*this)+ v; }
     T operator -(T v) { return T(*this)- v; }
     T operator *(T v) { return T(*this)* v; }
     T operator /(T v) { return T(*this)/ v; }
+    std::complex<T> operator +(std::complex<T> v) { return T(*this)+ v; }
+    std::complex<T> operator -(std::complex<T> v) { return T(*this)- v; }
+    std::complex<T> operator *(std::complex<T> v) { return T(*this)* v; }
+    std::complex<T> operator /(std::complex<T> v) { return T(*this)/ v; }
+  };
+
+  template<typename T, typename V> class ref_elt_vector<std::complex<T>,V> {
+
+    V *pm;
+    size_type l;
+    
+    public :
+
+    operator std::complex<T>() const { return pm->r(l); }
+    ref_elt_vector(V *p, size_type ll) : pm(p), l(ll) {}
+    inline bool operator ==(std::complex<T> v) const
+    { return ((*pm).r(l) == v); }
+    inline bool operator !=(std::complex<T> v) const
+    { return ((*pm).r(l) != v); }
+    inline bool operator ==(T v) const { return ((*pm).r(l) == v); }
+    inline bool operator !=(T v) const { return ((*pm).r(l) != v); }
+    inline ref_elt_vector &operator +=(std::complex<T> v)
+    { (*pm).w(l,(*pm).r(l) + v); return *this; }
+    inline ref_elt_vector &operator -=(std::complex<T> v)
+    { (*pm).w(l,(*pm).r(l) - v); return *this; }
+    inline ref_elt_vector &operator /=(std::complex<T> v)
+    { (*pm).w(l,(*pm).r(l) / v); return *this; }
+    inline ref_elt_vector &operator *=(std::complex<T> v)
+    { (*pm).w(l,(*pm).r(l) * v); return *this; }
+    inline ref_elt_vector &operator =(const ref_elt_vector &re)
+    { *this = T(re); return *this; }
+    inline ref_elt_vector &operator =(std::complex<T> v)
+    { (*pm).w(l,v); return *this; }
+    inline ref_elt_vector &operator =(T v)
+    { (*pm).w(l,std::complex<T>(v)); return *this; }
+    inline ref_elt_vector &operator +=(T v)
+    { (*pm).w(l,(*pm).r(l) + v); return *this; }
+    inline ref_elt_vector &operator -=(T v)
+    { (*pm).w(l,(*pm).r(l) - v); return *this; }
+    inline ref_elt_vector &operator /=(T v)
+    { (*pm).w(l,(*pm).r(l) / v); return *this; }
+    inline ref_elt_vector &operator *=(T v)
+    { (*pm).w(l,(*pm).r(l) * v); return *this; }
+    std::complex<T> operator +()    { return  std::complex<T>(*this);   }
+    std::complex<T> operator -()    { return -std::complex<T>(*this);   }
+    std::complex<T> operator +(T v) { return std::complex<T>(*this)+ v; }
+    std::complex<T> operator -(T v) { return std::complex<T>(*this)- v; }
+    std::complex<T> operator *(T v) { return std::complex<T>(*this)* v; }
+    std::complex<T> operator /(T v) { return std::complex<T>(*this)/ v; }
+    std::complex<T> operator +(std::complex<T> v)
+    { return std::complex<T>(*this)+ v; }
+    std::complex<T> operator -(std::complex<T> v)
+    { return std::complex<T>(*this)- v; }
+    std::complex<T> operator *(std::complex<T> v)
+    { return std::complex<T>(*this)* v; }
+    std::complex<T> operator /(std::complex<T> v)
+    { return std::complex<T>(*this)/ v; }
   };  
-  
+
   
   template<typename T, typename V> inline
   bool operator ==(T v, const ref_elt_vector<T, V> &re) { return (v==T(re)); }
@@ -98,25 +159,37 @@ namespace gmm {
   T &operator /=(T &v, const ref_elt_vector<T, V> &re)
   { v /= T(re); return v; }
   template<typename T, typename V> inline
-  T operator +(const ref_elt_vector<T, V> &re) { return T(re); }
-  template<typename T, typename V> inline
-  T operator -(const ref_elt_vector<T, V> &re) { return -T(re); }
-  template<typename T, typename V> inline
-  T operator +(const ref_elt_vector<T, V> &re, T v) { return T(re)+ v; }
-  template<typename T, typename V> inline
   T operator +(T v, const ref_elt_vector<T, V> &re) { return v+ T(re); }
   template<typename T, typename V> inline
-  T operator -(const ref_elt_vector<T, V> &re, T v) { return T(re)- v; }
-  template<typename T, typename V> inline
   T operator -(T v, const ref_elt_vector<T, V> &re) { return v- T(re); }
-  template<typename T, typename V>  inline
-  T operator *(const ref_elt_vector<T, V> &re, T v) { return T(re)* v; }
   template<typename T, typename V> inline
   T operator *(T v, const ref_elt_vector<T, V> &re) { return v* T(re); }
   template<typename T, typename V> inline
-  T operator /(const ref_elt_vector<T, V> &re, T v) { return T(re)/ v; }
-  template<typename T, typename V> inline
   T operator /(T v, const ref_elt_vector<T, V> &re) { return v/ T(re); }
+  template<typename T, typename V> inline
+  std::complex<T> operator +(std::complex<T> v, const ref_elt_vector<T, V> &re)
+  { return v+ T(re); }
+  template<typename T, typename V> inline
+  std::complex<T> operator -(std::complex<T> v, const ref_elt_vector<T, V> &re)
+  { return v- T(re); }
+  template<typename T, typename V> inline
+  std::complex<T> operator *(std::complex<T> v, const ref_elt_vector<T, V> &re)
+  { return v* T(re); }
+  template<typename T, typename V> inline
+  std::complex<T> operator /(std::complex<T> v, const ref_elt_vector<T, V> &re)
+  { return v/ T(re); }
+  template<typename T, typename V> inline
+  std::complex<T> operator +(T v, const ref_elt_vector<std::complex<T>, V> &re)
+  { return v+ std::complex<T>(re); }
+  template<typename T, typename V> inline
+  std::complex<T> operator -(T v, const ref_elt_vector<std::complex<T>, V> &re)
+  { return v- std::complex<T>(re); }
+  template<typename T, typename V> inline
+  std::complex<T> operator *(T v, const ref_elt_vector<std::complex<T>, V> &re)
+  { return v* std::complex<T>(re); }
+  template<typename T, typename V> inline
+  std::complex<T> operator /(T v, const ref_elt_vector<std::complex<T>, V> &re)
+  { return v/ std::complex<T>(re); }
   template<typename T, typename V> inline
   typename number_traits<T>::magnitude_type
   abs(const ref_elt_vector<T, V> &re) { return gmm::abs(T(re)); }
