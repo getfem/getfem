@@ -213,14 +213,15 @@ namespace getfem {
     /** Add the point pt to the mesh and return the index of the
         point.
 
-        If the point is too close to an existing point, the
-        function does not create a new point, and returns the index of the
+        If the point is too close to an existing point and remove_duplicated_nodes = true,
+        the function does not create a new point, and returns the index of the
         already existing point.
         @param pt the point coordinates.
     */
     size_type add_point(const base_node &pt,
-                        const scalar_type tol=scalar_type(0)) {
-      return pts.add_node(pt, tol);
+                        const scalar_type tol=scalar_type(0),
+                        bool remove_duplicated_nodes = true) {
+      return pts.add_node(pt, tol, remove_duplicated_nodes);
     }
     //                        scalar_type characteristic_size = scalar_type(1));
 

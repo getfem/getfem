@@ -201,7 +201,8 @@ namespace getfem {
                                     std::pair<size_type, size_type> *face_region_range=NULL,
                                     bool add_all_element_type = false,
                                     bool remove_last_dimension = true,
-                                    std::map<size_type, std::set<size_type>> *nodal_map = NULL)
+                                    std::map<size_type, std::set<size_type>> *nodal_map = NULL,
+                                    bool remove_duplicated_nodes = true)
   {
     gmm::stream_standard_locale sl(f);
     /* print general warning */
@@ -265,7 +266,7 @@ namespace getfem {
       size_type node_id;
       base_node n(3); n[0]=n[1]=n[2]=0.0;
       f >> node_id >> n[0] >> n[1] >> n[2];
-      msh_node_2_getfem_node[node_id] = m.add_point(n);
+      msh_node_2_getfem_node[node_id] = m.add_point(n, 0.0, remove_duplicated_nodes);
     }
 
     if (version == 2)
@@ -1261,9 +1262,11 @@ namespace getfem {
   void import_mesh_gmsh(std::istream& f, mesh &m,
                         std::map<std::string, size_type> &region_map,
                         bool remove_last_dimension,
-                        std::map<size_type, std::set<size_type>> *nodal_map)
+                        std::map<size_type, std::set<size_type>> *nodal_map,
+                        bool remove_duplicated_nodes)
   {
-    import_gmsh_mesh_file(f, m, 0, &region_map, nullptr, false, remove_last_dimension, nodal_map);
+    import_gmsh_mesh_file(f, m, 0, &region_map, nullptr, false, remove_last_dimension, nodal_map,
+                          remove_duplicated_nodes);
   }
 
   void import_mesh_gmsh(std::istream& f, mesh& m,
@@ -1271,10 +1274,11 @@ namespace getfem {
                         std::pair<size_type, size_type> *face_region_range,
                         std::map<std::string, size_type> *region_map,
                         bool remove_last_dimension,
-                        std::map<size_type, std::set<size_type>> *nodal_map)
+                        std::map<size_type, std::set<size_type>> *nodal_map,
+                        bool remove_duplicated_nodes)
   {
     import_gmsh_mesh_file(f, m, 0, region_map, face_region_range, add_all_element_type,
-                          remove_last_dimension, nodal_map);
+                          remove_last_dimension, nodal_map, remove_duplicated_nodes);
   }
 
   void import_mesh_gmsh(const std::string& filename, mesh& m,
@@ -1282,7 +1286,8 @@ namespace getfem {
                         std::pair<size_type, size_type> *face_region_range,
                         std::map<std::string, size_type> *region_map,
                         bool remove_last_dimension,
-                        std::map<size_type, std::set<size_type>> *nodal_map)
+                        std::map<size_type, std::set<size_type>> *nodal_map,
+                        bool remove_duplicated_nodes)
   {
     m.clear();
     try {
@@ -1291,7 +1296,7 @@ namespace getfem {
       /* throw exceptions when an error occurs */
       f.exceptions(std::ifstream::badbit | std::ifstream::failbit);
       import_gmsh_mesh_file(f, m, 0, region_map, face_region_range, add_all_element_type,
-                            remove_last_dimension, nodal_map);
+                            remove_last_dimension, nodal_map, remove_duplicated_nodes);
       f.close();
     }
     catch (std::logic_error& exc) {
@@ -1312,8 +1317,10 @@ namespace getfem {
   void import_mesh_gmsh(const std::string& filename,
     mesh& m, std::map<std::string, size_type> &region_map,
     bool remove_last_dimension,
-    std::map<size_type, std::set<size_type>> *nodal_map) {
-    import_mesh_gmsh(filename, m, false, NULL, &region_map, remove_last_dimension, nodal_map);
+    std::map<size_type, std::set<size_type>> *nodal_map,
+    bool remove_duplicated_nodes) {
+    import_mesh_gmsh(filename, m, false, NULL, &region_map, remove_last_dimension, nodal_map,
+                     remove_duplicated_nodes);
   }
 
   void import_mesh(std::istream& f, const std::string& format,

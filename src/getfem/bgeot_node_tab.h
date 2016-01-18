@@ -81,9 +81,11 @@ namespace bgeot {
     */
     size_type search_node(const base_node &pt, const scalar_type radius=0) const;
     /** Add a point to the array or identify it with a very close existing
-	point.
+	point. If remove_duplicated_nodes = false, the identification of close existing points will be
+    omitted and the point simply added to the array.
     */
-    size_type add_node(const base_node &pt, const scalar_type radius=0);
+    size_type add_node(const base_node &pt, const scalar_type radius=0,
+                       bool remove_duplicated_nodes = true);
     size_type add(const base_node &pt) { return add_node(pt); }
     void sup_node(size_type i);
     void sup(size_type i) { sup_node(i); }

@@ -131,28 +131,32 @@ namespace getfem {
       be tested.
   */
   void import_mesh_gmsh(const std::string& filename, mesh& m,
-                   std::map<std::string, size_type> &region_map,
-                   bool remove_last_dimension = true,
-                   std::map<size_type, std::set<size_type>> *nodal_map = NULL);
+                        std::map<std::string, size_type> &region_map,
+                        bool remove_last_dimension = true,
+                        std::map<size_type, std::set<size_type>> *nodal_map = NULL,
+                        bool remove_duplicated_nodes = true);
 
   void import_mesh_gmsh(std::istream& f, mesh& m,
                         std::map<std::string, size_type> &region_map,
                         bool remove_last_dimension = true,
-                        std::map<size_type, std::set<size_type>> *nodal_map = NULL);
+                        std::map<size_type, std::set<size_type>> *nodal_map = NULL,
+                        bool remove_duplicated_nodes = true);
 
   void import_mesh_gmsh(const std::string& filename, mesh& m,
                         bool add_all_element_type = false,
                         std::pair<size_type, size_type> *face_region_range = NULL,
                         std::map<std::string, size_type> *region_map = NULL,
                         bool remove_last_dimension = true,
-                        std::map<size_type, std::set<size_type>> *nodal_map = NULL);
+                        std::map<size_type, std::set<size_type>> *nodal_map = NULL,
+                        bool remove_duplicated_nodes = true);
 
   void import_mesh_gmsh(std::istream& f, mesh& m,
                         bool add_all_element_type = false,
                         std::pair<size_type, size_type> *face_region_range = NULL,
                         std::map<std::string, size_type> *region_map = NULL,
                         bool remove_last_dimension = true,
-                        std::map<size_type, std::set<size_type>> *nodal_map = NULL);
+                        std::map<size_type, std::set<size_type>> *nodal_map = NULL,
+                        bool remove_duplicated_nodes = true);
 
   /** for gmsh and gid meshes, the mesh nodes are always 3D, so for a 2D mesh
       the z-component of nodes should be removed */

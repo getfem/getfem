@@ -93,7 +93,8 @@ namespace bgeot {
   }
 
   size_type node_tab::add_node(const base_node &pt,
-                               const scalar_type radius) {
+                               const scalar_type radius,
+                               bool remove_duplicated_nodes) {
     scalar_type npt = gmm::vect_norm2(pt);
     max_radius = std::max(max_radius, npt);
     eps = max_radius * prec_factor;
@@ -106,7 +107,7 @@ namespace bgeot {
     }
     else {
       GMM_ASSERT1(dim_ == pt.size(), "Nodes should have the same dimension");
-      id = search_node(pt, radius);
+      id = remove_duplicated_nodes ? search_node(pt, radius) : size_type(-1);
       if (id == size_type(-1)) {
         id = dal::dynamic_tas<base_node>::add(pt);
         for (size_type i = 0; i < sorters.size(); ++i) {
