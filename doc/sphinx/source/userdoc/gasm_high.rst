@@ -671,7 +671,7 @@ In that case, the equality will only be prescribed in the part of the domain whe
 
 **CAUTION**: You have to think that when some variables are used in the transformation, the computation of the tangent system takes into account these dependence. However, the second derivative of a transformation with respect to a variable used has not been implemented. Thus, such a transformation is not allowed in the definition of a potential since it cannot be derived twice.
 
-.. _ud-gasm-high-elem-trans:
+.. _ud-gasm-high-inter-elt-disc:
 
 Evaluating discontinuities across inter-element edges/faces
 -----------------------------------------------------------
@@ -708,23 +708,6 @@ where ``mr`` is an optional mesh region. If ``mr`` is specified only the face in
 See for instance :file:`interface/tests/python/demo_laplacian_DG.py` or :file:`interface/tests/matlab/demo_laplacian_DG.m` for an example of use.
 
 Compared to other interpolate transformations, this transformation is more optimized and benefits from finite element and geometric transformation pre-computations.
-
-Evaluating discontinuities across inter-element edges/faces
------------------------------------------------------------
-
-A specific interpolate transformation (see previous section), called ``neighbour_elt`` is defined by default in all models. This transformation can only be used when a computation is made on an internal edge/face of a mesh, i.e. an element face shared at least by two elements. It aims to compute discontinuity jumps of a variable across inter-element faces. It is particularly suitable to implement Discontinuous Galerkin and interior penalty methods, Ghost penalty terms or a posteriori estimators. The expressions::
-
-  Interpolate(Normal, neighbour_elt)
-  Interpolate(X, neighbour_elt)
-  Interpolate(u, neighbour_elt)
-  Interpolate(Grad_u, neighbour_elt)
-  Interpolate(Div_u, neighbour_elt)
-  Interpolate(Hess_u, neighbour_elt)
-  Interpolate(Test_u, neighbour_elt)
-  Interpolate(Grad_Test_u, neighbour_elt)
-  Interpolate(Div_Test_u, neighbour_elt)
-  Interpolate(Hess_Test_u, neighbour_elt)
-
 
 .. _ud-gasm-high-elem-trans:
 

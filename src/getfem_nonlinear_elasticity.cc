@@ -603,7 +603,7 @@ namespace getfem {
   scalar_type Neo_Hookean_hyperelastic_law::strain_energy
   (const base_matrix &E, const base_vector &params,
    scalar_type det_trans) const {
-    if (compressible && det_trans <= scalar_type(0)) return 1e200;
+    if (det_trans <= scalar_type(0)) return 1e200;
     size_type N = gmm::mat_nrows(E);
     GMM_ASSERT1(N == 3, "Neo Hookean hyperelastic law only defined "
                 "on dimension 3, sorry");
