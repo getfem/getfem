@@ -2696,7 +2696,7 @@ namespace getfem {
                   GMM_ASSERT1(version & BUILD_MATRIX, "Rhs only for a "
                               "symmetric linear problem with dof "
                               "constraint not allowed");
-                  model_complex_plain_vector vv(gmm::vect_size(rrhs));
+                  model_complex_plain_vector vv(gmm::vect_size(crhs));
                   gmm::mult(gmm::sub_matrix(cTM, II, SI), dof_go_values, vv);
                   MPI_SUM_VECTOR(vv);
                   gmm::add(gmm::scaled(vv, scalar_type(-1)), crhs);
