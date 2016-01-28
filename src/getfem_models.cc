@@ -825,6 +825,9 @@ namespace getfem {
           && (name.compare(itv->second.filter_var) == 0)) {
         itv->second.is_disabled = true;
       }
+      if (itv->second.is_variable && itv->second.is_affine_dependent
+	  && name.compare(itv->second.org_name) == 0)
+	itv->second.is_disabled = true;
     }
     if (!act_size_to_be_done) resize_global_system();
   }
@@ -840,6 +843,9 @@ namespace getfem {
           && (name.compare(itv->second.filter_var) == 0)) {
         itv->second.is_disabled = false;
       }
+      if (itv->second.is_variable && itv->second.is_affine_dependent
+	  && name.compare(itv->second.org_name) == 0)
+	itv->second.is_disabled = false;
     }
     if (!act_size_to_be_done) resize_global_system();
   }
@@ -2365,19 +2371,19 @@ namespace getfem {
         VAR_SET::iterator it1, it2;
         if (!isg) {
           it1 = variables.find(term.var1);
-          GMM_ASSERT1(it1->second.is_variable, "Assembly of data not allowed");
+	  GMM_ASSERT1(it1->second.is_variable, "Assembly of data not allowed");
           I1 = it1->second.I;
         }
         if (term.is_matrix_term && !isg) {
           it2 = variables.find(term.var2);
-          I2 = it2->second.I;
+	  I2 = it2->second.I;
           if (!(it2->second.is_variable)) {
-            std::string vorgname = sup_previous_and_dot_to_varname(term.var2);
+	    std::string vorgname = sup_previous_and_dot_to_varname(term.var2);
             VAR_SET::iterator it3 = variables.find(vorgname);
             GMM_ASSERT1(it3->second.is_variable,
                         "Assembly of data not allowed");
             I2 = it3->second.I;
-            isprevious = true;
+	    isprevious = true;
           }
           alpha *= it1->second.alpha * it2->second.alpha;
           alpha1 *= it1->second.alpha;
@@ -2525,7 +2531,7 @@ namespace getfem {
           if (term.is_matrix_term && (version & BUILD_MATRIX) && !isprevious
               && (isg || (!(it1->second.is_disabled)
                           && !(it2->second.is_disabled)))) {
-            gmm::add(gmm::scaled(brick.rmatlist[j], alpha),
+	    gmm::add(gmm::scaled(brick.rmatlist[j], alpha),
                      gmm::sub_matrix(rTM, I1, I2));
             if (term.is_symmetric && I1.first() != I2.first()) {
               gmm::add(gmm::scaled(gmm::transposed(brick.rmatlist[j]), alpha),
