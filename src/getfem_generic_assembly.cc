@@ -4548,7 +4548,7 @@ namespace getfem {
       GA_DEBUG_ASSERT(s, "Wrong sizes");
       base_tensor::iterator it = t.begin();
       for (size_type i = 0; i < components.size(); ++i) {
-        base_tensor &t1 = *(components[i]);
+        const base_tensor &t1 = *(components[i]);
         if (t1.size() > 1) {
           GA_DEBUG_ASSERT(t1.size() == s, "Wrong sizes, " << t1.size() << " != " << s);
           for (size_type j = 0; j < s; ++j) *it++ = t1[j];
@@ -10259,7 +10259,7 @@ namespace getfem {
         size_type nbc1 = pnode->nbc1, nbc2 = pnode->nbc2, nbc3 = pnode->nbc3;
         size_type nbl = pnode->children.size() / (nbc1*nbc2*nbc3);
         if (pnode->test_function_type) {
-          std::vector<base_tensor *> components(pnode->children.size());
+          std::vector<const base_tensor *> components(pnode->children.size());
 
           if (nbc1 == 1 && nbc2 == 1 && nbc3 == 1) {
             for (size_type i = 0; i < pnode->children.size(); ++i)
