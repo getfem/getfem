@@ -77,7 +77,7 @@ namespace getfem {
     gmm::copy(pt, pt_);
     const bgeot::base_tensor &t = f_hess.eval();
     GMM_ASSERT1(t.size() == size_type(dim_*dim_),
-		"Wrong size of expression result " << f_hess.expression());
+                "Wrong size of expression result " << f_hess.expression());
     gmm::copy(t.as_vector(), h.as_vector());
   }
 
@@ -192,11 +192,14 @@ namespace getfem {
   // Implementation of global_function_bounded
 
   bool global_function_bounded::is_in_support(const base_node &pt) const {
-    gmm::copy(pt, pt_);
-    const bgeot::base_tensor &t = f_val.eval();
-    GMM_ASSERT1(t.size() == 1, "Wrong size of expression result "
-                << f_val.expression());
-    return (t[0] > scalar_type(0));
+    if (has_expr) {
+      gmm::copy(pt, pt_);
+      const bgeot::base_tensor &t = f_val.eval();
+      GMM_ASSERT1(t.size() == 1, "Wrong size of expression result "
+                  << f_val.expression());
+      return (t[0] > scalar_type(0));
+    }
+    return true;
   }
 
   global_function_bounded::global_function_bounded(pglobal_function f_,
