@@ -262,7 +262,7 @@ where ``u`` is the vector valued displacement and ``p`` the pressure. The assemb
   workspace.add_fem_variable("u", mf_u, gmm::sub_interval(0, nbdofu), U);
   workspace.add_fem_variable("p", mf_p, gmm::sub_interval(nbdofu, nbdofp), P);
   workspace.add_fixed_size_constant("mu", vmu);
-  workspace.add_expression("mu*(Grad_u + Grad_u'):Grad_Test_u"
+  workspace.add_expression("2*mu*Sym(Grad_u):Grad_Test_u"
                         "- p*Trace(Grad_Test_u) - Test_p*Trace(Grad_u)", mim);
   getfem::model_real_sparse_matrix K(nbdofu+nbdofp, nbdofu+nbdofp);
   workspace.set_assembled_matrix(K);
@@ -541,15 +541,20 @@ Reshape a tensor
 
 The command ``Reshape(t, i, j, ...)`` reshapes the tensor ``t`` (which could be an expression). The only constraint is that the number of components should be compatible. For instance  ``Reshape(Grad_u, 1, meshdim)`` is equivalent to ``Grad_u'`` for u a scalar variable. Note that the order of the components remain unchanged and are classically stored in Fortran order for compatibility with Blas/Lapack.
 
-Trace operator
---------------
+Trace, Deviator and Sym operators
+---------------------------------
 
-The command ``Trace(m)`` gives the trace (sum of diagonal components) of a square matrix ``m``. Since it is a linear operator, it can be applied on test functions.
+Trace, Deviator and Sym operators are linear operators acting on square matrices:
 
-Deviator operator
------------------
+  - ``Trace(m)`` gives the trace (sum of diagonal components) of a square matrix ``m``.
 
-The command ``Deviator(m)`` gives the deviator of a square matrix ``m``. It is equivalent to ``m - Trace(m)*Id(meshdim)/meshdim``. Since it is a linear operator, it can be applied on test functions. 
+  - ``Deviator(m)`` gives the deviator of a square matrix ``m``. It is equivalent to ``m - Trace(m)*Id(meshdim)/meshdim``.
+
+  - ``Sym(m)`` gives the symmetric part of a square matrix ``m``, i.e. ``(m + m')/2``.
+
+The three operators can be applied on test functions. Which means that for instance both ``Trace(Grad_u)`` and  ``Trace(Grad_Test_u)`` is valid when ``Grad_u`` is a square matrix (i.e. ``u`` a vector field of the same dimension as the mesh).
+
+
 
 Nonlinear operators
 -------------------
