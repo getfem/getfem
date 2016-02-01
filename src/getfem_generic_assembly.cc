@@ -2405,7 +2405,7 @@ namespace getfem {
 
     // Predefined functions
     ga_predef_function_tab &PREDEF_FUNCTIONS
-      = dal::singleton<ga_predef_function_tab>::instance();
+      = dal::singleton<ga_predef_function_tab>::instance(0);
 
     // Power functions and their derivatives
     PREDEF_FUNCTIONS["sqrt"] = ga_predef_function(sqrt, 1, "DER_PDFUNC_SQRT");
@@ -2548,7 +2548,7 @@ namespace getfem {
 
   bool ga_function_exists(const std::string name) {
     const ga_predef_function_tab &PREDEF_FUNCTIONS
-      = dal::singleton<ga_predef_function_tab>::instance();
+      = dal::singleton<ga_predef_function_tab>::instance(0);
     return PREDEF_FUNCTIONS.find(name) != PREDEF_FUNCTIONS.end();
   }
 
@@ -2568,7 +2568,7 @@ namespace getfem {
     }
 
     ga_predef_function_tab &PREDEF_FUNCTIONS
-      = dal::singleton<ga_predef_function_tab>::instance();
+      = dal::singleton<ga_predef_function_tab>::instance(0);
     GMM_ASSERT1(PREDEF_FUNCTIONS.find(name) == PREDEF_FUNCTIONS.end(),
                 "Already defined function " << name);
     PREDEF_FUNCTIONS[name] = ga_predef_function(expr);
@@ -2597,7 +2597,7 @@ namespace getfem {
   void ga_define_function(const std::string name, pscalar_func_onearg f,
                           const std::string &der) {
     ga_predef_function_tab &PREDEF_FUNCTIONS
-      = dal::singleton<ga_predef_function_tab>::instance();
+      = dal::singleton<ga_predef_function_tab>::instance(0);
     PREDEF_FUNCTIONS[name] = ga_predef_function(f, 1, der);
     ga_predef_function &F = PREDEF_FUNCTIONS[name];
     if (der.size() == 0) F.dtype_ = 0;
@@ -2607,7 +2607,7 @@ namespace getfem {
   void ga_define_function(const std::string name, pscalar_func_twoargs f,
                           const std::string &der1, const std::string &der2) {
     ga_predef_function_tab &PREDEF_FUNCTIONS
-      = dal::singleton<ga_predef_function_tab>::instance();
+      = dal::singleton<ga_predef_function_tab>::instance(0);
     PREDEF_FUNCTIONS[name] = ga_predef_function(f, 1, der1, der2);
     ga_predef_function &F = PREDEF_FUNCTIONS[name];
     if (der1.size() == 0 || der2.size() == 0)
@@ -2618,7 +2618,7 @@ namespace getfem {
 
   void ga_undefine_function(const std::string name) {
     ga_predef_function_tab &PREDEF_FUNCTIONS
-      = dal::singleton<ga_predef_function_tab>::instance();
+      = dal::singleton<ga_predef_function_tab>::instance(0);
     ga_predef_function_tab::iterator it = PREDEF_FUNCTIONS.find(name);
     if (it != PREDEF_FUNCTIONS.end()) {
       PREDEF_FUNCTIONS.erase(name);
@@ -6026,7 +6026,7 @@ namespace getfem {
       return 2;
 
     ga_predef_function_tab &PREDEF_FUNCTIONS
-      = dal::singleton<ga_predef_function_tab>::instance();
+      = dal::singleton<ga_predef_function_tab>::instance(0);
     ga_predef_operator_tab &PREDEF_OPERATORS
       = dal::singleton<ga_predef_operator_tab>::instance(0);
     ga_predef_function_tab::const_iterator it=PREDEF_FUNCTIONS.find(name);
@@ -6149,7 +6149,7 @@ namespace getfem {
     // cout<<"begin analysis of node "; ga_print_node(pnode, cout); cout<<endl;
 
     const ga_predef_function_tab &PREDEF_FUNCTIONS
-      = dal::singleton<ga_predef_function_tab>::instance();
+      = dal::singleton<ga_predef_function_tab>::instance(0);
     const ga_predef_operator_tab &PREDEF_OPERATORS
       = dal::singleton<ga_predef_operator_tab>::instance(0);
 
@@ -8449,7 +8449,7 @@ namespace getfem {
     bgeot::multi_index mi;
 
     const ga_predef_function_tab &PREDEF_FUNCTIONS
-      = dal::singleton<ga_predef_function_tab>::instance();
+      = dal::singleton<ga_predef_function_tab>::instance(0);
 
     switch (pnode->node_type) {
     case GA_NODE_VAL: case GA_NODE_GRAD:
@@ -10374,7 +10374,7 @@ namespace getfem {
 
         std::string name = child0->name;
         const ga_predef_function_tab &PREDEF_FUNCTIONS
-          = dal::singleton<ga_predef_function_tab>::instance();
+          = dal::singleton<ga_predef_function_tab>::instance(0);
         ga_predef_function_tab::const_iterator it = PREDEF_FUNCTIONS.find(name);
         const ga_predef_function &F = it->second;
         size_type nbargs = F.nbargs();
