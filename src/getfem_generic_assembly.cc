@@ -90,6 +90,7 @@ namespace getfem {
     GA_COLON,       // ':'
     GA_QUOTE,       // ''' transpose
     GA_SYM,         // 'Sym' operator
+    GA_SKEW,        // 'Skew' operator
     GA_TRACE,       // 'Trace' operator
     GA_DEVIATOR,    // 'Deviator' operator
     GA_INTERPOLATE, // 'Interpolate' operation
@@ -145,6 +146,7 @@ namespace getfem {
     ga_operator_priorities[GA_QUOTE] = 3;
     ga_operator_priorities[GA_UNARY_MINUS] = 3;
     ga_operator_priorities[GA_SYM] = 4;
+    ga_operator_priorities[GA_SKEW] = 4;
     ga_operator_priorities[GA_TRACE] = 4;
     ga_operator_priorities[GA_DEVIATOR] = 4;
     ga_operator_priorities[GA_PRINT] = 4;
@@ -215,6 +217,8 @@ namespace getfem {
       }
       if (expr.compare(token_pos, token_length, "Sym") == 0)
         return GA_SYM;
+      if (expr.compare(token_pos, token_length, "Skew") == 0)
+        return GA_SKEW;
       if (expr.compare(token_pos, token_length, "Trace") == 0)
         return GA_TRACE;
       if (expr.compare(token_pos, token_length, "Deviator") == 0)
@@ -647,6 +651,7 @@ namespace getfem {
       pga_tree_node new_node = new ga_tree_node(op_type, pos);
       if (current_node) {
         if (op_type == GA_UNARY_MINUS || op_type == GA_SYM
+	    || op_type == GA_SKEW
             || op_type == GA_TRACE || op_type == GA_DEVIATOR
             || op_type == GA_PRINT) {
           current_node->children.push_back(new_node);
@@ -1159,7 +1164,10 @@ namespace getfem {
         } else if (pnode->op_type == GA_QUOTE) {
           GMM_ASSERT1(pnode->children.size() == 1, "Invalid tree");
           ga_print_node(pnode->children[0], str); str << "'";
-        } else if (pnode->op_type == GA_SYM) {
+        } else if (pnode->op_type == GA_SKEW) {
+          GMM_ASSERT1(pnode->children.size() == 1, "Invalid tree");
+          str << "Skew("; ga_print_node(pnode->children[0], str); str << ")";
+        }else if (pnode->op_type == GA_SYM) {
           GMM_ASSERT1(pnode->children.size() == 1, "Invalid tree");
           str << "Sym("; ga_print_node(pnode->children[0], str); str << ")";
         } else if (pnode->op_type == GA_TRACE) {
@@ -1460,6 +1468,10 @@ namespace getfem {
 
         case GA_SYM:
           tree.add_op(GA_SYM, token_pos);
+          state = 1; break;
+
+        case GA_SKEW:
+          tree.add_op(GA_SKEW, token_pos);
           state = 1; break;
 
         case GA_TRACE:
@@ -4135,7 +4147,7 @@ namespace getfem {
     base_tensor &t;
     const base_tensor &tc1;
     virtual int exec(void) {
-      GA_DEBUG_INFO("Instruction: transpose");
+      GA_DEBUG_INFO("Instruction: symmetric part");
       GA_DEBUG_ASSERT(t.size() == tc1.size(), "Wrong sizes");
       size_type order = t.sizes().size();
       size_type s1 = t.sizes()[order-2], s2 = t.sizes()[order-1];
@@ -4150,6 +4162,28 @@ namespace getfem {
       return 0;
     }
     ga_instruction_sym(base_tensor &t_, const base_tensor &tc1_)
+      : t(t_), tc1(tc1_) {}
+  };
+
+  struct ga_instruction_skew : public ga_instruction {
+    base_tensor &t;
+    const base_tensor &tc1;
+    virtual int exec(void) {
+      GA_DEBUG_INFO("Instruction: skew-symmetric part");
+      GA_DEBUG_ASSERT(t.size() == tc1.size(), "Wrong sizes");
+      size_type order = t.sizes().size();
+      size_type s1 = t.sizes()[order-2], s2 = t.sizes()[order-1];
+      size_type s = t.size() / (s1*s2);
+      for (size_type i = 0; i < s1;  ++i)
+        for (size_type j = 0; j < s2;  ++j) {
+          base_tensor::iterator it = t.begin() + s*(i + s1*j);
+          base_tensor::const_iterator it1 = tc1.begin() + s*(i + s1*j),
+                                      it1T = tc1.begin() + s*(j + s2*i);
+          for (size_type k = 0; k < s; ++k) *it++ = 0.5*(*it1++ - *it1T++);
+        }
+      return 0;
+    }
+    ga_instruction_skew(base_tensor &t_, const base_tensor &tc1_)
       : t(t_), tc1(tc1_) {}
   };
 
@@ -6674,13 +6708,21 @@ namespace getfem {
         }
         break;
 
-      case GA_SYM:
+      case GA_SYM: case GA_SKEW:
         if (dim0 != 2 || size0.back() != size0[size0.size()-2])
-          ga_throw_error(expr, pnode->pos, "Sym operator is for "
+          ga_throw_error(expr, pnode->pos, "Sym and Skew operators are for "
                          "square matrices only.");
         mi = size0;
-        if (child0->tensor_proper_size() == 1)
-          { tree.replace_node_by_child(pnode, 0); pnode = child0; break; }
+        if (child0->tensor_proper_size() == 1) {
+	  if (pnode->op_type == GA_SYM)
+	    { tree.replace_node_by_child(pnode, 0); pnode = child0; break; }
+	  else {
+	    pnode->node_type = GA_NODE_ZERO;
+	    gmm::clear(pnode->t.as_vector());
+	    tree.clear_children(pnode);
+	    break;
+	  }
+	}
 
         pnode->t.adjust_sizes(mi);
         pnode->test_function_type = child0->test_function_type;
@@ -6695,7 +6737,10 @@ namespace getfem {
           pnode->test_function_type = 0;
           for (size_type i = 0; i < mi.back(); ++i)
             for (size_type j = 0; j < mi.back(); ++j)
-              pnode->t(j, i) = 0.5*(child0->t(j,i) + child0->t(i,j));
+	      if (pnode->op_type == GA_SYM)
+		pnode->t(j, i) = 0.5*(child0->t(j,i) + child0->t(i,j));
+	      else
+		pnode->t(j, i) = 0.5*(child0->t(j,i) - child0->t(i,j));
           tree.clear_children(pnode);
         } else if (child0->node_type == GA_NODE_ZERO) {
           pnode->node_type = GA_NODE_ZERO;
@@ -6708,6 +6753,9 @@ namespace getfem {
         {
           mi = size0;
           size_type N = (child0->tensor_proper_size() == 1) ? 1 : mi.back();
+
+	  if (child0->tensor_proper_size() == 1)
+	    { tree.replace_node_by_child(pnode, 0); pnode = child0; break; }
 
           if ((dim0 != 2 && child0->tensor_proper_size() != 1) ||
               (dim0 == 2 && mi[mi.size()-2] != N))
@@ -6751,6 +6799,13 @@ namespace getfem {
               (dim0 == 2 && mi[mi.size()-2] != N))
             ga_throw_error(expr, pnode->pos,
                            "Deviator operator is for square matrices only.");
+
+	  if (child0->tensor_proper_size() == 1) {
+	    pnode->node_type = GA_NODE_ZERO;
+	    gmm::clear(pnode->t.as_vector());
+	    tree.clear_children(pnode);
+	    break;
+	  }
 
           pnode->t.adjust_sizes(mi);
           pnode->test_function_type = child0->test_function_type;
@@ -7834,7 +7889,7 @@ namespace getfem {
           if (child1 == pnode_child) minus_sign = !(minus_sign);
           // A remaining minus sign is added at the end if necessary.
           break;
-        case GA_UNARY_MINUS: case GA_QUOTE: case GA_SYM:
+        case GA_UNARY_MINUS: case GA_QUOTE: case GA_SYM: case GA_SKEW:
         case GA_TRACE: case GA_DEVIATOR: case GA_PRINT:
           // Copy of the term
           result_tree.insert_node(result_tree.root, pnode->node_type);
@@ -8008,7 +8063,7 @@ namespace getfem {
             { is_constant = false; break; }
           break;
 
-      case GA_UNARY_MINUS: case GA_QUOTE: case GA_SYM:
+      case GA_UNARY_MINUS: case GA_QUOTE: case GA_SYM: case GA_SKEW:
       case GA_TRACE: case GA_DEVIATOR: case GA_PRINT:
         is_constant = child_0_is_constant;
         break;
@@ -8664,7 +8719,7 @@ namespace getfem {
           }
           break;
 
-      case GA_UNARY_MINUS: case GA_QUOTE: case GA_SYM:
+      case GA_UNARY_MINUS: case GA_QUOTE: case GA_SYM: case GA_SKEW:
       case GA_TRACE: case GA_DEVIATOR: case GA_PRINT:
         ga_node_derivation(tree, workspace, m, child0, varname,
                            interpolatename, order);
@@ -9051,7 +9106,7 @@ namespace getfem {
         if (mark0) return ga_node_is_affine(child0);
         return ga_node_is_affine(child1);
 
-      case GA_UNARY_MINUS: case GA_QUOTE: case GA_SYM:
+      case GA_UNARY_MINUS: case GA_QUOTE: case GA_SYM: case GA_SKEW:
       case GA_TRACE: case GA_DEVIATOR:
       case GA_PRINT: case GA_NODE_INTERPOLATE_FILTER:
         return ga_node_is_affine(child0);
@@ -10159,6 +10214,14 @@ namespace getfem {
            rmi.instructions.push_back(std::move(pgai));
          } else {
            pgai = std::make_shared<ga_instruction_copy_tensor>
+             (pnode->t, child0->t);
+           rmi.instructions.push_back(std::move(pgai));
+         }
+         break;
+
+       case GA_SKEW:
+         {
+           pgai = std::make_shared<ga_instruction_skew>
              (pnode->t, child0->t);
            rmi.instructions.push_back(std::move(pgai));
          }
