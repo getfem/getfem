@@ -504,6 +504,8 @@ bool plate_problem::solve(plain_vector &Ut, plain_vector &U3, plain_vector &THET
   
   getfem::add_Dirichlet_condition_with_multipliers
     (md, mim, "u3", mf_u3, SIMPLY_FIXED_BOUNDARY_NUM);
+  getfem::add_Dirichlet_condition_with_multipliers
+    (md, mim, "ut", mf_ut, SIMPLY_FIXED_BOUNDARY_NUM);
   
   if (sol_ref == 1 || sol_ref == 2 || sol_ref == 3)
     getfem::add_Dirichlet_condition_with_multipliers
@@ -564,8 +566,9 @@ int main(int argc, char *argv[]) {
     p.pressure *= p.epsilon * p.epsilon * p.epsilon / 8.;
     p.mesh.write_to_file(p.datafilename + ".mesh");
     plain_vector Ut, U3, THETA;
-    if (!p.solve(Ut, U3, THETA)) GMM_ASSERT1(false, "Solve has failed");
+    bool ok = p.solve(Ut, U3, THETA);
     p.compute_error(Ut, U3, THETA);
+    GMM_ASSERT1(ok, "Solve has failed");
     
   }
   GMM_STANDARD_CATCH_ERROR;
