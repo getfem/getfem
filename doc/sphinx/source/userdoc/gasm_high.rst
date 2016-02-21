@@ -548,7 +548,7 @@ Trace, Deviator, Sym and Skew operators are linear operators acting on square ma
 
   - ``Trace(m)`` gives the trace (sum of diagonal components) of a square matrix ``m``.
 
-  - ``Deviator(m)`` gives the deviator of a square matrix ``m``. It is equivalent to ``m - Trace(m)*Id(dim)/dim``.
+  - ``Deviator(m)`` gives the deviator of a square matrix ``m``. It is equivalent to ``m - Trace(m)*Id(m_dim)/m_dim``, where ``m_dim`` is the dimension of ``m``.
 
   - ``Sym(m)`` gives the symmetric part of a square matrix ``m``, i.e. ``(m + m')/2``.
 

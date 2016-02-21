@@ -1348,7 +1348,7 @@ namespace getfem {
       if (ps < 0) v *= scalar_type(-1);
       if (gmm::abs(ps) < 1E-8)
         GMM_WARNING2("Nedelec element: "
-                     "The normal orientation may be uncorrect");
+                     "The normal orientation may be incorrect");
 
       const bgeot::base_tensor &tt = pfp->val(i);
       for (size_type j = 0; j < nb_dof(0); ++j) {

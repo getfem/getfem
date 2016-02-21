@@ -1918,7 +1918,7 @@ namespace getfem {
         ret_type = 2;
       } else if (first_pair_found) {
         *m_t = stored_m_y; cv = stored_cv_y; face_num = stored_face_y;
-        P_ref = stored_pt_y_ref;
+        P_ref = stored_pt_y_ref; N_y = stored_n_y;
         ret_type = 1;
       }
 
