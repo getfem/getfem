@@ -29,7 +29,8 @@ gf.util_trace_level(1)
 
 dirichlet_version = 2          # 1 = simplification, 2 = penalisation
 test_tangent_matrix = False    # Test or not tangent system validity
-incompressible = True;         # Incompressibility option
+incompressible = False;        # Incompressibility option
+explicit_potential = True;     # Elasticity law with explicit potential
 
 # lawname = 'Ciarlet Geymonat'
 # params = [1.,1.,0.25]
@@ -64,11 +65,11 @@ print('nbcvs=%d, nbpts=%d, nbdof=%d' % (m.nbcvs(), m.nbpts(), mfu.nbdof()))
 
 # Assign boundary numbers
 
-ftop = m.outer_faces_with_direction([0., 0., 1.], 0.5)
-fbot = m.outer_faces_with_direction([0., 0., -1.], 0.5)
+ftop = m.outer_faces_with_direction([0.,  1., 0.], 0.5)
+fbot = m.outer_faces_with_direction([0., -1., 0.], 0.5)
 
 m.set_region(1, ftop);
-m.set_region(2, ftop);
+m.set_region(2, fbot);
 m.set_region(3, np.append(ftop,fbot,axis=1));
 
 # Model definition
@@ -76,7 +77,24 @@ m.set_region(3, np.append(ftop,fbot,axis=1));
 md=gf.Model('real')
 md.add_fem_variable('u', mfu)
 md.add_initialized_data('params', params)
-md.add_finite_strain_elasticity_brick(mim, 'u', lawname, 'params')
+
+if (not(explicit_potential)):
+    md.add_finite_strain_elasticity_brick(mim, 'u', lawname, 'params')
+else:
+    print "Explicit elastic potential"
+    K = 1.2; mu = 3.0;
+    _F_ = "(Id(3)+Grad_u)"
+    _J_= "Det{F}".format(F=_F_)
+    _be_ = "(Left_Cauchy_Green{F})".format(F=_F_)
+
+    _expr_1 = "{K_over_2}*sqr(log({J}))+{mu_over_2}*(Matrix_j1{be}-3)"\
+              .format(K_over_2=K/2., J=_J_, mu_over_2=mu/2., be=_be_)
+
+    _expr_2 = "{K_over_2}*sqr(log({J}))+{mu_over_2}*(pow(Det{be},-1./3.)*Trace{be}-3)"\
+              .format(K_over_2=K/2., J=_J_, mu_over_2=mu/2., be=_be_)
+
+    md.add_nonlinear_generic_assembly_brick(mim, _expr_2);
+
 
 # md.add_nonlinear_generic_assembly_brick(mim, 'sqr(Trace(Green_Lagrangian(Id(meshdim)+Grad_u)))/8 + Norm_sqr(Green_Lagrangian(Id(meshdim)+Grad_u))/4')
 # md.add_nonlinear_generic_assembly_brick(mim, '((Id(meshdim)+Grad_u)*(params(1)*Trace(Green_Lagrangian(Id(meshdim)+Grad_u))*Id(meshdim)+2*params(2)*Green_Lagrangian(Id(meshdim)+Grad_u))):Grad_Test_u')
@@ -117,21 +135,24 @@ def axrot_matrix(A, B, theta):
     T=np.eye(4); T[0:3,3]=-np.array(A)
     Rx=np.eye(4)
     if (npla.norm(n[1:3])>1e-6):
-        Rx[1:3,1:3]=np.array([[c,-b],[b,c]]/d)
+        Rx[1:3,1:3]=np.array([[c/d,-b/d],[b/d,c/d]])
     Ry=np.eye(4); Ry[[[0],[2]],[0,2]]=[[d,-a],[a,d]]
-    Rz=np.eye(4); Rz[0:2,0:2]=np.array([[np.cos(theta),np.sin(theta)],[-np.sin(theta),np.cos(theta)]])
-    R = npla.inv(T)*npla.inv(Rx)*npla.inv(Ry)*Rz*Ry*Rx*T
+    Rz=np.eye(4)
+    Rz[0:2,0:2]=np.array([[np.cos(theta),np.sin(theta)],
+                          [-np.sin(theta),np.cos(theta)]])
+    R = np.dot(np.dot(np.dot(npla.inv(T),npla.inv(Rx)),
+                      np.dot(npla.inv(Ry),Rz)),np.dot(np.dot(Ry,Rx),T))
     return R;
   
 
 
 
 for step in range(1,nbstep+1):
-    w = 3.*step/nbstep
+    w = (3.*step)/nbstep
 
     # Computation of the rotation for Dirichlet's condition
     dtheta =  np.pi
-    dtheta2 = np.pi/2
+    dtheta2 = np.pi/2.
       
     if (dirichlet_version == 1):
         R=np.zeros(mfd.nbdof())
@@ -159,68 +180,50 @@ for step in range(1,nbstep+1):
         RB1 = axrot_matrix([0, h*.25, 0], [0, h*.25, 1], 0);
         RB2 = RT2.transpose()
 
-
     if (dirichlet_version == 1):
-##       for i=i_top,
-##         ro = RT1*RT2*[P(:,i);1];
-##         R(i) = ro(1+mod(i-1,3)) - P(1+mod(i-1,3),i);
-##       end
-##       for i=i_bot,
-##         ro = RB1*RB2*[P(:,i);1];
-##         R(i) = ro(1+mod(i-1,3)) - P(1+mod(i-1,3),i);
-##       end 
+        for i in i_top:
+            ro = np.dot(RT1, np.dot(RT2,np.append(P[:,i],[1])))
+            R[i] = ro[mod(i,3)] - P[mod(i,3),i]
+        for i in i_bot:
+            ro = np.dot(RB1,np.dot(RB2,np.append(P[:,i],[1])))
+            R[i] = ro[mod(i,3)] - P[mod(i,3),i] 
     else:
-##       for i=i_top,
-##         ro = RT1*RT2*[P(:,i);1];
-##         R(:, i) = ro(1:3) - P(:,i);
-##       end
-##       for i=i_bot,
-##         ro = RB1*RB2*[P(:,i);1];
-##         R(:, i) = ro(1:3) - P(:,i);
-##       end
+        for i in i_top:
+            ro = np.dot(RT1,np.dot(RT2,np.append(P[:,i],[1])))
+            R[:, i] = ro[0:3] - P[:,i]
+        for i in i_bot:
+            ro = np.dot(RB1,np.dot(RB2,np.append(P[:,i],[1])))
+            R[:, i] = ro[0:3] - P[:,i]
     
     md.set_variable('DirichletData', R)
-    md.solve('very noisy', 'max_iter', 100, 'max_res', 1e-5, 'lsearch', 'simplest')
+
+    # Nonlinear solve
+    md.solve('very noisy', 'max_iter', 50, 'max_res', 1e-7, 'lsearch',
+             'simplest')
 
     print("Iteration %d done" % step)
 
     if (test_tangent_matrix):
-       gf_model_get(md.test_tangent_matrix(1E-8, 10, 0.0001)
+       md.test_tangent_matrix(1E-8, 10, 0.0001)
 
-       
-##     U = gf_model_get(md, 'variable', 'u');
-##     VM0 = gf_model_get(md, 'compute Von Mises or Tresca', 'u', lawname, 'params', mfdu);
-##     # sigma = gf_model_get(md, 'compute second Piola Kirchhoff tensor', 'u', lawname, 'params', mfdu);
+    U = md.variable('u')
+
+    VM0 = md.compute_Von_Mises_or_Tresca('u', lawname, 'params', mfdu)
+
+    # Direct interpolation of the Von Mises stress
+    # VM = md.interpolation('(sqrt(3/2)/Det(Id(meshdim)+Grad_u))*Norm((Id(meshdim)+Grad_u)*Saint_Venant_Kirchhoff_sigma(Grad_u,params)*(Id(meshdim)+Grad_u'') - Id(meshdim)*Trace((Id(meshdim)+Grad_u)*Saint_Venant_Kirchhoff_sigma(Grad_u,params)*(Id(meshdim)+Grad_u''))/meshdim)', mfdu);
+
+    VM = md.finite_strain_elasticity_Von_Mises('u', lawname, 'params', mfdu)
+    print(npla.norm(VM-VM0))
     
-##     # Direct interpolation of the Von Mises stress
-##     # VM = gf_model_get(md, 'interpolation', '(sqrt(3/2)/Det(Id(meshdim)+Grad_u))*Norm((Id(meshdim)+Grad_u)*Saint_Venant_Kirchhoff_sigma(Grad_u,params)*(Id(meshdim)+Grad_u'') - Id(meshdim)*Trace((Id(meshdim)+Grad_u)*Saint_Venant_Kirchhoff_sigma(Grad_u,params)*(Id(meshdim)+Grad_u''))/meshdim)', mfdu);
-##     # VM = gf_model_get(md, 'interpolation', '(sqrt(3/2)/Det(Id(meshdim)+Grad_u))*Norm(Deviator((Id(meshdim)+Grad_u)*Saint_Venant_Kirchhoff_sigma(Grad_u,params)*(Id(meshdim)+Grad_u'')))', mfdu);
-##     # VM = gf_model_get(md, 'interpolation', 'sqrt(3/2)*Norm(Deviator(Cauchy_stress_from_PK2(Saint_Venant_Kirchhoff_sigma(Grad_u,params),Grad_u)))', mfdu);
-##     VM = gf_model_get(md, 'finite strain elasticity Von Mises', 'u', lawname, 'params', mfdu);
-##     norm(VM-VM0)
-    
-##     UU = [UU;U]; 
-##     VVM = [VVM;VM];
-##     save demo_nonlinear_elasticity_U.mat UU VVM m_char mfu_char mfdu_char;
-##   else
-##     U=UU(step,:);
-##     VM=VVM(step,:);
-##   end;
-##   disp(sprintf('step %d/%d : |U| = %g',step,nbstep,norm(U)));
+    sl=gf.Slice(('boundary',), mfu, 4)
+    sl.export_to_vtk('demo_nonlinear_elasticity_iter_%d.vtk' % step, 'ascii',
+                     mfdu,  VM, 'Von Mises Stress', mfu, U, 'Displacement')
 
-##   if (drawing)
-##     gf_plot(mfdu,VM,'mesh','off', 'cvlst',gf_mesh_get(mfdu,'outer faces'), 'deformation',U,'deformation_mf',mfu,'deformation_scale', 1, 'refine', 8); colorbar;
-##     axis([-3     6     0    20    -2     2]); caxis([0 .3]);
-##     view(30+20*w, 23+30*w);  
-##     campos([50 -30 80]);
-##     camva(8);
-##     camup
-##     camlight; 
-##     axis off;
-##     pause(1);
-    
-##   end
-##   end;
+
+
+print('You can vizualize the loading steps by launching for instance')
+print('mayavi2 -d demo_nonlinear_elasticity_iter_1.vtk -f WarpVector -m Surface')
 
 
 
@@ -237,24 +240,3 @@ for step in range(1,nbstep+1):
 
 
 
-## K = 1.2; mu = 3.0;
-## _F_ = "(Id(3)+Grad_u)"
-## _J_= "Det{F}".format(F=_F_)
-## _be_ = "(Left_Cauchy_Green{F})".format(F=_F_)
-
-## _expr_1 = "{K_over_2}*sqr(log({J}))+{mu_over_2}*(Matrix_j1{be}-3)"\
-##          .format(K_over_2=K/2., J=_J_, mu_over_2=mu/2., be=_be_)
-
-
-## _expr_2 = "{K_over_2}*sqr(log({J}))+{mu_over_2}*(pow(Det{be},-1./3.)*Trace{be}-3)"\
-##          .format(K_over_2=K/2., J=_J_, mu_over_2=mu/2., be=_be_)
-
-## # Mettre des prints sur la différence entre les deux ... + version avec potentiel de la loi d'élasticité non linéaire ... plutot recopier exemple elast. nonlinéaire
-
-
-## print("_expr1_ = %s" % _expr_1);
-
-## print("_expr2_ = %s" % _expr_2);
-
-
-## exit(1);
