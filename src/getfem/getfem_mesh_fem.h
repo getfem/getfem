@@ -618,7 +618,7 @@ namespace getfem {
       consequence is that you should NEVER modify this mesh_fem!
    */
   const mesh_fem &classical_mesh_fem(const mesh &mesh, dim_type degree,
-                                     dim_type qdim = 1);
+                                     dim_type qdim = 1, bool is_consistent_with_mesh = false);
 
   /** Dummy mesh_fem for default parameter of functions. */
   const mesh_fem &dummy_mesh_fem();
