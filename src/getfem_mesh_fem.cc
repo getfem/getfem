@@ -292,11 +292,15 @@ namespace getfem {
   class node_processor
   {
   public:
-    node_processor(const mesh &mesh) : mesh_{mesh}, nodes_map_(mesh.nb_points(), size_type(-1))
+    node_processor(const mesh &mesh, bool is_consistent_with_mesh) :
+      use_mesh_nodes_{is_consistent_with_mesh}, mesh_{mesh},
+      nodes_map_(mesh.nb_points(), size_type(-1))
     {}
 
     size_type process(bgeot::node_tab &dof_nodes, const base_node &p, size_type cv, size_type i)
     {
+      if (!use_mesh_nodes_) return dof_nodes.add_node(p);
+
       auto index = mesh_.ind_points_of_convex(cv)[i];
 
       if (nodes_map_[index] != size_type(-1)) return nodes_map_[index];
@@ -309,6 +313,7 @@ namespace getfem {
     }
 
   private:
+    const bool use_mesh_nodes_;
     const mesh &mesh_;
     std::vector<size_type> nodes_map_;
   };
@@ -343,7 +348,7 @@ namespace getfem {
     bgeot::pstored_point_tab pspt_old = 0;
     bgeot::pgeometric_trans pgt_old = 0;
     bgeot::pgeotrans_precomp pgp = 0;
-    node_processor node_processor(linked_mesh());
+    node_processor node_processor(linked_mesh(), is_consistent_with_mesh);
     for (size_type icv=0; icv < cmk.size(); ++icv) {
       cv = cmk[icv];
       if (!fe_convex.is_in(cv)) continue;
@@ -440,6 +445,7 @@ namespace getfem {
     clear_dependencies();
     linked_mesh_ = 0;
     init_with_mesh(*mf.linked_mesh_, mf.get_qdim());
+    is_consistent_with_mesh = mf.is_consistent_with_mesh;
 
     f_elems = mf.f_elems;
     fe_convex = mf.fe_convex;
@@ -468,7 +474,8 @@ namespace getfem {
     return *this;
   }
 
-  mesh_fem::mesh_fem(const mesh &me, dim_type Q)
+  mesh_fem::mesh_fem(const mesh &me, dim_type Q, bool is_consistent_with_mesh) :
+    is_consistent_with_mesh{is_consistent_with_mesh}
     { linked_mesh_ = 0; init_with_mesh(me, Q); }
 
   mesh_fem::mesh_fem(void)
@@ -724,21 +731,26 @@ namespace getfem {
   }
 
   struct mf__key_ : public context_dependencies {
+    bool is_consistent_with_mesh;
     const mesh *pmesh;
     dim_type order, qdim;
-    mf__key_(const mesh &msh, dim_type o, dim_type q)
-      : pmesh(&msh), order(o), qdim(q)  { add_dependency(msh); }
+    mf__key_(const mesh &msh, dim_type o, dim_type q, bool is_consistent_with_mesh)
+      : pmesh(&msh), order(o), qdim(q), is_consistent_with_mesh(is_consistent_with_mesh)
+    { add_dependency(msh); }
     bool operator <(const mf__key_ &a) const {
       if (pmesh < a.pmesh) return true;
       else if (pmesh > a.pmesh) return false;
       else if (order < a.order) return true;
       else if (order > a.order) return false;
       else if (qdim < a.qdim) return true;
+      else if (qdim > a.qdim) return false;
+      else if (is_consistent_with_mesh < a.is_consistent_with_mesh) return true;
       return false;
     }
     void update_from_context(void) const {}
     mf__key_(const mf__key_ &mfk) : context_dependencies( ) {
       pmesh = mfk.pmesh; order = mfk.order; qdim = mfk.qdim;
+      is_consistent_with_mesh = mfk.is_consistent_with_mesh;
       add_dependency(*pmesh);
     }
   private :
@@ -755,7 +767,8 @@ namespace getfem {
 
   public :
 
-    const mesh_fem &operator()(const mesh &msh, dim_type o, dim_type qdim) {
+    const mesh_fem &operator()(
+      const mesh &msh, dim_type o, dim_type qdim, bool is_consistent_with_mesh) {
       mesh_fem_tab::iterator itt = mfs.begin(), itn = mfs.begin();
       if (itn != mfs.end()) itn++;
       while (itt != mfs.end()) {
@@ -765,12 +778,12 @@ namespace getfem {
         if (itn != mfs.end()) itn++;
       }
 
-      mf__key_ key(msh, o, qdim);
+      mf__key_ key(msh, o, qdim, is_consistent_with_mesh);
       mesh_fem_tab::iterator it = mfs.find(key);
       assert(it == mfs.end() || it->second->is_context_valid());
 
       if (it == mfs.end()) {
-        auto pmf = std::make_shared<mesh_fem>(msh);
+        auto pmf = std::make_shared<mesh_fem>(msh, is_consistent_with_mesh);
         pmf->set_classical_finite_element(o);
         pmf->set_auto_add(o, false);
         pmf->set_qdim(qdim);
@@ -782,10 +795,10 @@ namespace getfem {
   };
 
   const mesh_fem &classical_mesh_fem(const mesh &msh,
-                                     dim_type order, dim_type qdim) {
+                                     dim_type order, dim_type qdim, bool is_consistent_with_mesh) {
     classical_mesh_fem_pool &pool
       = dal::singleton<classical_mesh_fem_pool>::instance();
-    return pool(msh, order, qdim);
+    return pool(msh, order, qdim, is_consistent_with_mesh);
   }
 
   struct dummy_mesh_fem_ {

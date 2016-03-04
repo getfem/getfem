@@ -153,6 +153,7 @@ namespace getfem {
     void copy_from(const mesh_fem &mf); /* Remember to change copy_from if
                                            adding components to mesh_fem */
 
+    bool is_consistent_with_mesh = false;
     dal::dynamic_array<pfem> f_elems;
     dal::bit_vector fe_convex;
     const mesh *linked_mesh_;
@@ -577,7 +578,7 @@ namespace getfem {
         @param me the linked mesh.
         @param Q the Q dimension (see mesh_fem::get_qdim).
     */
-    explicit mesh_fem(const mesh &me, dim_type Q = 1);
+    explicit mesh_fem(const mesh &me, dim_type Q = 1, bool is_consistent_with_mesh = false);
     mesh_fem(void);
     mesh_fem(const mesh_fem &mf);
     mesh_fem &operator=(const mesh_fem &mf);
