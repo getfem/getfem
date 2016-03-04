@@ -289,6 +289,30 @@ namespace getfem {
     }
   }
 
+  class node_processor
+  {
+  public:
+    node_processor(const mesh &mesh) : mesh_{mesh}, nodes_map_(mesh.nb_points(), size_type(-1))
+    {}
+
+    size_type process(bgeot::node_tab &dof_nodes, const base_node &p, size_type cv, size_type i)
+    {
+      auto index = mesh_.ind_points_of_convex(cv)[i];
+
+      if (nodes_map_[index] != size_type(-1)) return nodes_map_[index];
+      else
+      {
+        nodes_map_[index] = dof_nodes.add_node(p, 0, false);
+
+        return nodes_map_[index];
+      }
+    }
+
+  private:
+    const mesh &mesh_;
+    std::vector<size_type> nodes_map_;
+  };
+
   typedef std::map<fem_dof, size_type, dof_comp_> dof_sort_type;
 
   /// Enumeration of dofs
@@ -319,6 +343,7 @@ namespace getfem {
     bgeot::pstored_point_tab pspt_old = 0;
     bgeot::pgeometric_trans pgt_old = 0;
     bgeot::pgeotrans_precomp pgp = 0;
+    node_processor node_processor(linked_mesh());
     for (size_type icv=0; icv < cmk.size(); ++icv) {
       cv = cmk[icv];
       if (!fe_convex.is_in(cv)) continue;
@@ -351,7 +376,7 @@ namespace getfem {
           nbdof += Qdim / pf->target_dim();
         } else {
           pgp->transform(linked_mesh().points_of_convex(cv), i, P);
-          fd.ind_node = dof_nodes.add_node(P);
+          fd.ind_node = node_processor.process(dof_nodes, P, cv, i);
 
           std::pair<dof_sort_type::iterator, bool>
             pa = dof_sort.insert(std::make_pair(fd, nbdof));
