@@ -577,6 +577,7 @@ namespace getfem {
     /** Build a new mesh_fem. A mesh object must be supplied.
         @param me the linked mesh.
         @param Q the Q dimension (see mesh_fem::get_qdim).
+        @param is_consistent_with_mesh indicates whether mesh nodes and DoF nodes coincide.
     */
     explicit mesh_fem(const mesh &me, dim_type Q = 1, bool is_consistent_with_mesh = false);
     mesh_fem(void);
