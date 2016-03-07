@@ -301,7 +301,10 @@ namespace getfem {
     {
       if (!use_mesh_nodes_) return dof_nodes.add_node(p);
 
+      GMM_ASSERT1(i < mesh_.nb_points_of_convex(cv),
+                  i << " is larger than the number of points of convex " << cv);
       auto index = mesh_.ind_points_of_convex(cv)[i];
+      GMM_ASSERT1(index < nodes_map_.size(), index << " exceeds number of mesh nodes.");
 
       if (nodes_map_[index] != size_type(-1)) return nodes_map_[index];
       else
