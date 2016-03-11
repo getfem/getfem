@@ -16,7 +16,7 @@
 % Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 %
 %
-% Newmark-Dumont-Paoli for a Kirchoff-Love plate in dynamics with
+% Newmark-Dumont-Paoli for a Kirchhoff-Love plate in dynamics with
 % obstacles.
 %
 

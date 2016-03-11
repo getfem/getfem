@@ -277,13 +277,13 @@ namespace getfem {
 					size_type region,
 					build_version) const {
       GMM_ASSERT1(vecl.size() == 1,
-		  "Kirchoff Love source term brick has one and only "
+		  "Kirchhoff Love source term brick has one and only "
 		  "one term");
       GMM_ASSERT1(mims.size() == 1,
-		  "Kirchoff Love source term brick need one and only "
+		  "Kirchhoff Love source term brick need one and only "
 		  "one mesh_im");
       GMM_ASSERT1(vl.size() == 1 && dl.size() == 2,
-		  "Wrong number of variables for Kirchoff Love "
+		  "Wrong number of variables for Kirchhoff Love "
 		  "source term brick");
 
       const mesh_fem &mf_u = md.mesh_fem_of_variable(vl[0]);
@@ -299,19 +299,19 @@ namespace getfem {
       size_type s = gmm::vect_size(A);
       if (mf_dataA) s = s * mf_dataA->get_qdim() / mf_dataA->nb_dof();
       GMM_ASSERT1(mf_u.get_qdim() == 1 && s == N*N,
-		  dl[0] << ": bad format of Kirchoff Love Neumann term "
+		  dl[0] << ": bad format of Kirchhoff Love Neumann term "
 		  "data. Detected dimension is " << s << " should be "
 		  << N*N);
 
       s = gmm::vect_size(B);
       if (mf_dataB) s = s * mf_dataB->get_qdim() / mf_dataB->nb_dof();
       GMM_ASSERT1(s == N,
-		  dl[0] << ": bad format of Kirchoff Love Neumann term "
+		  dl[0] << ": bad format of Kirchhoff Love Neumann term "
 		  "data. Detected dimension is " << s << " should be "
 		  << N);
 
 
-      GMM_TRACE2("Kirchoff Love Neumann term assembly");
+      GMM_TRACE2("Kirchhoff Love Neumann term assembly");
       if (mf_dataA)
 	asm_neumann_KL_term(vecl[0], mim, mf_u, *mf_dataA, A, B, rg);
       else
@@ -320,7 +320,7 @@ namespace getfem {
     }
 
     KL_source_term_brick(void) {
-      set_flags("Kirchoff Love Neumann term", true /* is linear*/,
+      set_flags("Kirchhoff Love Neumann term", true /* is linear*/,
 		true /* is symmetric */, true /* is coercive */,
 		true /* is real */, false /* is complex */,
 		false /* compute each time */, false /* has a Neumann term */);
@@ -329,7 +329,7 @@ namespace getfem {
 
   };
 
-  size_type add_Kirchoff_Love_Neumann_term_brick
+  size_type add_Kirchhoff_Love_Neumann_term_brick
   (model &md, const mesh_im &mim, const std::string &varname,
    const std::string &dataname1, const std::string &dataname2,
    size_type region) {

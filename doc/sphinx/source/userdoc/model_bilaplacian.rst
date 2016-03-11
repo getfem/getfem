@@ -20,7 +20,7 @@ The following function ::
 adds a bilaplacian brick on the variable `varname` and on the mesh region `region`. This represent a term :math:`\Delta(D \Delta u)`. where :math:`D(x)` is a coefficient determined by `dataname` which could be constant or described on a f.e.m. The corresponding weak form is :math:`\int D(x)\Delta u(x) \Delta v(x) dx`.
  
 
-For the Kirchoff-Love plate model, the weak form is a bit different (and more stable than the previous one). the function to add that term is ::
+For the Kirchhoff-Love plate model, the weak form is a bit different (and more stable than the previous one). the function to add that term is ::
 
   ind = add_bilaplacian_brick_KL(md, mim, varname, dataname1, dataname2,
                                  region = size_type(-1));
@@ -44,7 +44,7 @@ system. `dataname` represents `b` and `varname` represents `v`.
 
 A Neumann term can be added thanks to the following bricks ::
 
-  ind = add_Kirchoff_Love_Neumann_term_brick(md, mim, varname,
+  ind = add_Kirchhoff_Love_Neumann_term_brick(md, mim, varname,
    dataname1, dataname2, region);
 
 which adds a Neumann term brick for Kirchhoff-Love model

@@ -381,7 +381,7 @@ The potentials::
   Plane_Strain_Compressible_Neo_Hookean_Ciarlet_potential(Grad_u, [lambda;mu])
 
 
-The second Piola-Kirchoff stress tensors::
+The second Piola-Kirchhoff stress tensors::
 
   Saint_Venant_Kirchhoff_sigma(Grad_u, [lambda; mu])
   Plane_Strain_Saint_Venant_Kirchhoff_sigma(Grad_u, [lambda; mu])

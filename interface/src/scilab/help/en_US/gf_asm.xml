@@ -218,7 +218,7 @@
     <listitem>
     <para><literal>A = gf_asm('bilaplacian KL', mesh_im mim, mesh_fem mf_u, mesh_fem mf_d, vec a, vec nu)</literal></para>
 
-    <para>         Assembly of the matrix for the Bilaplacian problem with Kirchoff-Love formulation.
+    <para>         Assembly of the matrix for the Bilaplacian problem with Kirchhoff-Love formulation.
 
       <latex style="text"><![CDATA[\Delta(a(x)\Delta u) = 0]]></latex>   with <literal>a</literal> scalar.
 

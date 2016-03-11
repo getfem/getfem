@@ -255,7 +255,7 @@ struct exact_solution {
     mf.set_functions(cfun);
     
     mf.set_qdim(1);
-    
+
     U.resize(8); assert(mf.nb_dof() == 4);
     getfem::base_vector::iterator it = U.begin();
     scalar_type coeff=0.;

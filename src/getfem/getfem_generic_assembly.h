@@ -85,7 +85,7 @@ namespace getfem {
     T tab;
 
     void add_method(const std::string &name,
-		    const std::shared_ptr<ga_nonlinear_operator> &pt)
+                    const std::shared_ptr<ga_nonlinear_operator> &pt)
     { tab[name] = pt; }
   };
 
@@ -218,19 +218,19 @@ namespace getfem {
       void resize(size_type nb)
       { if (ptr.use_count()) { gmm::clear(*ptr); gmm::resize(*ptr, nb, nb); } }
       void set_matrix(model_real_sparse_matrix &M) {
-	ptr = std::shared_ptr<model_real_sparse_matrix>
-	  (std::shared_ptr<model_real_sparse_matrix>(), &M);
+        ptr = std::shared_ptr<model_real_sparse_matrix>
+          (std::shared_ptr<model_real_sparse_matrix>(), &M);
       }
       sparse_matrix_ptr()
-	: ptr(std::make_shared<model_real_sparse_matrix>(2,2)) {}
+        : ptr(std::make_shared<model_real_sparse_matrix>(2,2)) {}
       sparse_matrix_ptr(const sparse_matrix_ptr &smp): ptr(smp.ptr) {
-	if (ptr.use_count())
-	  ptr=std::make_shared<model_real_sparse_matrix>(smp());
+        if (ptr.use_count())
+          ptr=std::make_shared<model_real_sparse_matrix>(smp());
       }
       sparse_matrix_ptr &operator =(const sparse_matrix_ptr &smp) {
-	ptr = smp.ptr;
-	if (ptr.use_count())
-	  ptr=std::make_shared<model_real_sparse_matrix>(smp());
+        ptr = smp.ptr;
+        if (ptr.use_count())
+          ptr=std::make_shared<model_real_sparse_matrix>(smp());
         return *this;
       }
     };
@@ -242,16 +242,16 @@ namespace getfem {
       void resize(size_type nb)
       { if (ptr.use_count()) { gmm::clear(*ptr); gmm::resize(*ptr, nb);} }
       void set_vector(base_vector &vector) {
-	ptr = std::shared_ptr<base_vector>(std::shared_ptr<base_vector>(),
-					   &vector);
+        ptr = std::shared_ptr<base_vector>(std::shared_ptr<base_vector>(),
+                                           &vector);
       }
       base_vector_ptr(): ptr(std::make_shared<base_vector>(2)) {}
       base_vector_ptr(const base_vector_ptr &smp): ptr(smp.ptr)
       { if (ptr.use_count()) ptr=std::make_shared<base_vector>(smp()); }
       base_vector_ptr &operator =(const base_vector_ptr &smp) {
-	ptr = smp.ptr;
-	if (ptr.use_count())
-	  ptr = std::make_shared<base_vector>(smp());
+        ptr = smp.ptr;
+        if (ptr.use_count())
+          ptr = std::make_shared<base_vector>(smp());
         return *this;
       }
     };
@@ -588,7 +588,7 @@ namespace getfem {
 
     virtual bgeot::pstored_point_tab
     ppoints_for_element(size_type cv, short_type f,
-			std::vector<size_type> &ind) const = 0;
+                        std::vector<size_type> &ind) const = 0;
     inline const bgeot::stored_point_tab &points_for_element
     (size_type cv, short_type f, std::vector<size_type> &ind) const
     { return *ppoints_for_element(cv, f, ind); }

@@ -77,7 +77,7 @@ struct plate_problem {
                              // sol_ref = 2 : homogeneous on the 4 vertical
                              //       edges with solution u3 = sin²(x)*sin²(y)
   scalar_type eta;           // useful only if sol_ref == 2 :
-                             // eta = 0 => Kirchoff-Love
+                             // eta = 0 => Kirchhoff-Love
 			     // eta = small => Mindlin 
   size_type N_Four ;
   base_matrix theta1_Four, theta2_Four, u3_Four ;

@@ -34,7 +34,7 @@ PRESSURE = 0.0005;      % pressure on the top surface of the plate
 			% will be multiplied by EPSILON^3.
 			  
 ETA = 1e-4;             % only useful if SOL_REF = 2 :
-			% if eta  = 0 => solution of the Kirchoff-Love model
+			% if eta  = 0 => solution of the Kirchhoff-Love model
 			% if eta != 0 => solution of the Mindlin-Reissner model
 			% To be taken of order epsilon^2 ?
 

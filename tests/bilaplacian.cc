@@ -398,7 +398,7 @@ bool bilaplacian_problem::solve(plain_vector &U) {
     getfem::interpolation_function(mf_rhs, H,sol_mtensor,FORCE_BOUNDARY_NUM);
     model.add_initialized_fem_data("M", mf_rhs, F);
     model.add_initialized_fem_data("H", mf_rhs, H);
-    add_Kirchoff_Love_Neumann_term_brick
+    add_Kirchhoff_Love_Neumann_term_brick
       (model, mim, "u", "H", "M", FORCE_BOUNDARY_NUM);
   }
   else {
