@@ -286,7 +286,7 @@ namespace getfem {
                                   const mesh_im &mim,
                                   const std::string &varname,
                                   const std::string &previous_dep_name,
-				  const pconstraints_projection &ACP,
+                                  const pconstraints_projection &ACP,
                                   const std::string &datalambda,
                                   const std::string &datamu,
                                   const std::string &datathreshold,

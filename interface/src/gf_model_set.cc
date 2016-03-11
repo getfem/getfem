@@ -1917,7 +1917,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        std::string dataname_divM = in.pop().to_string();
        size_type region = in.pop().to_integer();
        size_type ind = config::base_index() +
-       add_Kirchoff_Love_Neumann_term_brick(*md, *mim,
+       add_Kirchhoff_Love_Neumann_term_brick(*md, *mim,
                                 varname, dataname_M, dataname_divM, region);
        workspace().set_dependence(md, mim);
        out.pop().from_integer(int(ind));

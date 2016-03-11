@@ -230,8 +230,9 @@ namespace getfem {
           n_iter(std::max(size_type(1), n_it)), n_temp_iter(0),
           default_iter(0), ptsc(0), mf(mmf), m_region(m_reg), mim(mim_),
           filter_var(filter_v), qdims(qdims_), v_num(0),
-          v_num_data(act_counter()),
+          v_num_data(act_counter()), I(0,0),
           alpha(1), pim_data(pimd) {
+        
         if (filter != VDESCRFILTER_NO && mf != 0)
           partial_mf = std::make_shared<partial_mesh_fem>(*mf);
         // v_num_data = v_num;

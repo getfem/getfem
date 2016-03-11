@@ -436,7 +436,7 @@ namespace getfem {
                         workspace.assembly(2);
                       });
                     } //parallel
-		    exception.rethrow();
+                    exception.rethrow();
                   } //distro scope
                   gmm::add
                     (gmm::sub_matrix(rTM, it->second.I, it2->second.I),MM);
@@ -826,8 +826,8 @@ namespace getfem {
         itv->second.is_disabled = true;
       }
       if (itv->second.is_variable && itv->second.is_affine_dependent
-	  && name.compare(itv->second.org_name) == 0)
-	itv->second.is_disabled = true;
+          && name.compare(itv->second.org_name) == 0)
+        itv->second.is_disabled = true;
     }
     if (!act_size_to_be_done) resize_global_system();
   }
@@ -844,8 +844,8 @@ namespace getfem {
         itv->second.is_disabled = false;
       }
       if (itv->second.is_variable && itv->second.is_affine_dependent
-	  && name.compare(itv->second.org_name) == 0)
-	itv->second.is_disabled = false;
+          && name.compare(itv->second.org_name) == 0)
+        itv->second.is_disabled = false;
     }
     if (!act_size_to_be_done) resize_global_system();
   }
@@ -1737,7 +1737,7 @@ namespace getfem {
                                                  brick.region, version);
           });
         }
-	exception.rethrow();
+        exception.rethrow();
       }
       brick.pbr->complex_post_assembly_in_serial(*this, ib, brick.vlist,
                                                  brick.dlist, brick.mims,
@@ -1797,7 +1797,7 @@ namespace getfem {
                                               version);
           } );
         }
-	exception.rethrow();
+        exception.rethrow();
       }
       brick.pbr->real_post_assembly_in_serial(*this, ib, brick.vlist,
                                               brick.dlist, brick.mims,
@@ -2371,19 +2371,19 @@ namespace getfem {
         VAR_SET::iterator it1, it2;
         if (!isg) {
           it1 = variables.find(term.var1);
-	  GMM_ASSERT1(it1->second.is_variable, "Assembly of data not allowed");
+          GMM_ASSERT1(it1->second.is_variable, "Assembly of data not allowed");
           I1 = it1->second.I;
         }
         if (term.is_matrix_term && !isg) {
           it2 = variables.find(term.var2);
-	  I2 = it2->second.I;
+          I2 = it2->second.I;
           if (!(it2->second.is_variable)) {
-	    std::string vorgname = sup_previous_and_dot_to_varname(term.var2);
+            std::string vorgname = sup_previous_and_dot_to_varname(term.var2);
             VAR_SET::iterator it3 = variables.find(vorgname);
             GMM_ASSERT1(it3->second.is_variable,
                         "Assembly of data not allowed");
             I2 = it3->second.I;
-	    isprevious = true;
+            isprevious = true;
           }
           alpha *= it1->second.alpha * it2->second.alpha;
           alpha1 *= it1->second.alpha;
@@ -2531,7 +2531,7 @@ namespace getfem {
           if (term.is_matrix_term && (version & BUILD_MATRIX) && !isprevious
               && (isg || (!(it1->second.is_disabled)
                           && !(it2->second.is_disabled)))) {
-	    gmm::add(gmm::scaled(brick.rmatlist[j], alpha),
+            gmm::add(gmm::scaled(brick.rmatlist[j], alpha),
                      gmm::sub_matrix(rTM, I1, I2));
             if (term.is_symmetric && I1.first() != I2.first()) {
               gmm::add(gmm::scaled(gmm::transposed(brick.rmatlist[j]), alpha),
@@ -2661,7 +2661,7 @@ namespace getfem {
             }
           });//exception.run(
         } //#pragma omp parallel
-	exception.rethrow();
+        exception.rethrow();
       } //end of distro scope
 
       if (version & BUILD_RHS) gmm::add(gmm::scaled(residual, scalar_type(-1)), rrhs);
@@ -3424,7 +3424,7 @@ namespace getfem {
 
     if (vl_test1.size()) {
       pbrick pbr = std::make_shared<gen_linear_assembly_brick>
-	(expr, mim, is_sym, is_coercive, brickname, vl_test1, vl_test2);
+        (expr, mim, is_sym, is_coercive, brickname, vl_test1, vl_test2);
       model::termlist tl;
       for (size_type i = 0; i < vl_test1.size(); ++i)
         tl.push_back(model::term_description(vl_test1[i], vl_test2[i], false));
@@ -3799,7 +3799,7 @@ namespace getfem {
         mf_a = md.pmesh_fem_of_variable(dl[0]);
       }
       pNeumann_elem_term pNt
-	= std::make_shared<generic_elliptic_Neumann_elem_term>(mf_a, A);
+        = std::make_shared<generic_elliptic_Neumann_elem_term>(mf_a, A);
       md.add_Neumann_term(pNt, vl[0], ib);
     }
 
@@ -3821,7 +3821,7 @@ namespace getfem {
         mf_a = md.pmesh_fem_of_variable(dl[0]);
       }
       pNeumann_elem_term pNt
-	= std::make_shared<generic_elliptic_Neumann_elem_term>(mf_a, A);
+        = std::make_shared<generic_elliptic_Neumann_elem_term>(mf_a, A);
       md.add_Neumann_term(pNt, vl[0], ib);
     }
 
@@ -5936,7 +5936,7 @@ namespace getfem {
   (model &md, const std::string &varname1, const std::string &varname2,
    bool issymmetric, bool iscoercive) {
     pbrick pbr = std::make_shared<explicit_matrix_brick>(issymmetric,
-							 iscoercive);
+                                                         iscoercive);
     model::termlist tl;
     tl.push_back(model::term_description(varname1, varname2, issymmetric));
     model::varnamelist vl(1, varname1);
@@ -6253,8 +6253,8 @@ namespace getfem {
           const model_real_plain_vector *mu = &(md.real_variable(dl[1]));
 
           pNeumann_elem_term pNt
-	    = std::make_shared<iso_lin_elasticity_Neumann_elem_term>
-	    (mf_lambda, lambda, mf_mu, mu);
+            = std::make_shared<iso_lin_elasticity_Neumann_elem_term>
+            (mf_lambda, lambda, mf_mu, mu);
           md.add_Neumann_term(pNt, vl[0], ib);
       }
     }
@@ -6399,7 +6399,7 @@ namespace getfem {
     
     if (is_lin) {
       pbrick pbr = std::make_shared<iso_lin_elasticity_new_brick>
-	(expr2, dataname3);
+        (expr2, dataname3);
       model::termlist tl;
       tl.push_back(model::term_description(varname,
                            sup_previous_and_dot_to_varname(varname), true));
@@ -6734,7 +6734,7 @@ namespace getfem {
         const mesh_fem &mf_p = md.mesh_fem_of_variable(vl[1]);
         pNeumann_elem_term pNt = std::make_shared<lin_incomp_Neumann_elem_term>
           (md.version_number_of_data_variable( vl[1]), &mf_p,
-	   &(md.real_variable(vl[1])), vl[1]);
+           &(md.real_variable(vl[1])), vl[1]);
         md.add_Neumann_term(pNt, vl[0], ib);
         md.add_auxilliary_variables_of_Neumann_terms(vl[0], vl[1]);
     }

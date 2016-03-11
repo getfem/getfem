@@ -2453,8 +2453,7 @@ namespace getfem {
       //            "Generic linear assembly brick needs one and only one "
       //            "mesh_im"); // to be verified ...
 
-      for (size_type i = 0; i < boundaries.size(); ++i) {
-        const contact_boundary &cb = boundaries[i];
+      for (const contact_boundary &cb : boundaries) {
         if (cb.is_slave)
           md.add_generic_expression(cb.expr, *(cb.mim), cb.region);
       }
@@ -2524,7 +2523,7 @@ namespace getfem {
     add_rigid_obstacle_to_raytracing_transformation
       (md, p->transformation_name, expr, N);
   }
-  
+
   void add_contact_boundary_to_large_sliding_contact_brick
   (model &md, size_type indbrick, const mesh_im &mim, size_type region,
    bool is_master, bool is_slave, const std::string &u,
@@ -2627,7 +2626,7 @@ namespace getfem {
     pbrick pbr(p);
     p->dl = dl;
     
-    return md.add_brick(pbr, p->vl, p->dl, model::termlist(),model::mimlist(),
+    return md.add_brick(pbr, p->vl, p->dl, model::termlist(), model::mimlist(),
                         size_type(-1));
   }
 

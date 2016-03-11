@@ -1167,7 +1167,7 @@ namespace getfem {
         } else if (pnode->op_type == GA_SKEW) {
           GMM_ASSERT1(pnode->children.size() == 1, "Invalid tree");
           str << "Skew("; ga_print_node(pnode->children[0], str); str << ")";
-        }else if (pnode->op_type == GA_SYM) {
+        } else if (pnode->op_type == GA_SYM) {
           GMM_ASSERT1(pnode->children.size() == 1, "Invalid tree");
           str << "Sym("; ga_print_node(pnode->children[0], str); str << ")";
         } else if (pnode->op_type == GA_TRACE) {
@@ -1988,7 +1988,7 @@ namespace getfem {
       ga_instruction_list instructions;
       std::map<scalar_type, std::list<pga_tree_node> > node_list;
 
-      region_mim_instructions(void): m(0) {}
+      region_mim_instructions(): m(0) {}
     };
 
     std::list<ga_tree> trees; // The trees are stored mainly because they
@@ -3569,7 +3569,7 @@ namespace getfem {
       const mesh_fem &mf = *(mfg ? *mfg : mfn);
       const base_vector &U = *(Ug ? *Ug : Un);
       GMM_ASSERT1(&(mf.linked_mesh()) == *m, "Interpolation of a variable "
-        "on another mesh than the one it is defined on");
+                  "on another mesh than the one it is defined on");
       slice_vector_on_basic_dof_of_element(mf, U, ctx.convex_num(), coeff);
       pfem pf = mf.fem_of_element(ctx.convex_num());
       GMM_ASSERT1(pf, "Undefined finite element method");
@@ -6273,13 +6273,13 @@ namespace getfem {
 
         // Group must be tested and it should be a fem variable
         if (!(workspace.variable_or_group_exists(name)))
-            ga_throw_error(expr, pnode->pos,
-                           "Unknown variable or group of variables");
+          ga_throw_error(expr, pnode->pos,
+                         "Unknown variable or group of variables");
 
         const mesh_fem *mf = workspace.associated_mf(name);
         if (!mf)
           ga_throw_error(expr, pnode->pos, op__name
-                        << " can only apply to finite element variables/data");
+                         << " can only apply to finite element variables/data");
 
         size_type q = workspace.qdim(name), n = mf->linked_mesh().dim();
         if (!q) ga_throw_error(expr, pnode->pos,
@@ -8349,11 +8349,12 @@ namespace getfem {
       }
       break;
     case GA_NODE_INTERPOLATE_GRAD_TEST: case GA_NODE_INTERPOLATE_DIVERG_TEST:
-          if (pnode->name.compare(varname) == 0)
-            GMM_ASSERT1(false, "Do not know how to extract a "
-                        "Neumann term with an interpolate transformation");
-       break;
-    default: break;
+      if (pnode->name.compare(varname) == 0)
+        GMM_ASSERT1(false, "Do not know how to extract a "
+                    "Neumann term with an interpolate transformation");
+      break;
+    default:
+      break;
     }
   }
 
@@ -10589,7 +10590,7 @@ namespace getfem {
         if (pgai) rmi.instructions.push_back(std::move(pgai));
       }
 
-      for (const auto &nodename : transformation.second) {
+      for (const std::string &nodename : transformation.second) {
         if (rmi.transformations[transname].count(nodename) == 0) {
           auto&& inin = rmi.interpolate_infos[transname];
           pga_instruction pgai = std::make_shared<ga_instruction_update_group_info>
@@ -11281,7 +11282,7 @@ namespace getfem {
 
     virtual bgeot::pstored_point_tab
     ppoints_for_element(size_type cv, short_type f,
-                       std::vector<size_type> &ind) const {
+                        std::vector<size_type> &ind) const {
       pintegration_method pim =imd.linked_mesh_im().int_method_of_element(cv);
       if (pim->type() == IM_NONE) return bgeot::pstored_point_tab();
       GMM_ASSERT1(pim->type() == IM_APPROX, "Sorry, exact methods cannot "

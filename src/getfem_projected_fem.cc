@@ -309,7 +309,7 @@ namespace getfem {
     return false;
   }
 
-  void projected_fem::update_from_context(void) const {
+  void projected_fem::update_from_context() const {
     fictx_cv = size_type(-1);
     dim_ = dim_type(-1);
 

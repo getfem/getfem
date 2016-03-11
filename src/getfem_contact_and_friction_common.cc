@@ -1433,7 +1433,7 @@ namespace getfem {
       face_boxes_info.resize(0);
 
       for (size_type i = 0; i < contact_boundaries.size(); ++i) {
-        const contact_boundary &cb =  contact_boundaries[i];
+        const contact_boundary &cb = contact_boundaries[i];
         if (! cb.slave) {
           size_type bnum = cb.region;
           const mesh_fem &mfu = *(cb.mfu);
@@ -1527,7 +1527,7 @@ namespace getfem {
                               size_type region, bool slave) {
       const mesh_fem *mf = 0;
       if (md.variable_group_exists(dispname)) {
-        for (const auto &t : md.variable_group(dispname)) {
+        for (const std::string &t : md.variable_group(dispname)) {
           const mesh_fem *mf2 = md.pmesh_fem_of_variable(t);
           if (mf2 && &(mf2->linked_mesh()) == &m)
             { mf = mf2; break; }
@@ -1547,7 +1547,7 @@ namespace getfem {
                               size_type region, bool slave) {
       const mesh_fem *mf = 0;
       if (workspace.variable_group_exists(dispname)) {
-        for (const auto &t : workspace.variable_group(dispname)) {
+        for (const std::string &t : workspace.variable_group(dispname)) {
           const mesh_fem *mf2 = workspace.associated_mf(t);
           if (mf2 && &(mf2->linked_mesh()) == &m)
             { mf = mf2; break; }
@@ -1575,7 +1575,7 @@ namespace getfem {
       mesh_boundary_cor::const_iterator it = boundary_for_mesh.find(&m_x);
       GMM_ASSERT1(it != boundary_for_mesh.end(), "Raytracing interpolate "
                   "transformation: Mesh with no declared contact boundary");
-      for (const auto &boundary_ind : it->second) {
+      for (const size_type &boundary_ind : it->second) {
         const contact_boundary &cb = contact_boundaries[boundary_ind];
         const std::string &dispname_x
           = workspace.variable_in_group(cb.dispname, m_x);
@@ -1583,11 +1583,11 @@ namespace getfem {
           vars.insert(var_trans_pair(dispname_x, ""));
       }
 
-      for (const auto &cb : contact_boundaries) {
+      for (const contact_boundary &cb : contact_boundaries) {
         if (!(cb.slave)) {
           if (expand_groups && workspace.variable_group_exists(cb.dispname)
               && (!ignore_data || !(workspace.is_constant(cb.dispname)))) {
-            for (const auto &t : workspace.variable_group(cb.dispname))
+            for (const std::string &t : workspace.variable_group(cb.dispname))
               vars.insert(var_trans_pair(t, interpolate_name));
           } else {
             if (!ignore_data || !(workspace.is_constant(cb.dispname)))
@@ -1598,7 +1598,7 @@ namespace getfem {
     }
 
     void init(const ga_workspace &workspace) const {
-      for (const auto &cb : contact_boundaries) {
+      for (const contact_boundary &cb : contact_boundaries) {
         const mesh_fem &mfu = *(cb.mfu);
         const std::string dispname_x
           =  workspace.variable_in_group(cb.dispname, mfu.linked_mesh());
@@ -1617,7 +1617,7 @@ namespace getfem {
     void finalize() const {
       face_boxes.clear();
       face_boxes_info = std::vector<face_box_info>();
-      for (auto&& cb : contact_boundaries)
+      for (const contact_boundary &cb : contact_boundaries)
         cb.U_unred = model_real_plain_vector();
     }
 
@@ -1641,7 +1641,7 @@ namespace getfem {
       GMM_ASSERT1(it != boundary_for_mesh.end(),
                   "Mesh with no declared contact boundary");
       size_type ib_x = size_type(-1);
-      for (const auto &boundary_ind : it->second) {
+      for (const size_type &boundary_ind : it->second) {
         const contact_boundary &cb = contact_boundaries[boundary_ind];
         if (m_x.region(cb.region).is_in(cv_x, face_x))
           { ib_x = boundary_ind; break; }
@@ -1758,7 +1758,7 @@ namespace getfem {
       for (const auto &pbox : bset) {
         face_box_info &fbox_y = face_boxes_info[pbox->id];
         size_type ib_y = fbox_y.ind_boundary;
-        const contact_boundary &cb_y =  contact_boundaries[ib_y];
+        const contact_boundary &cb_y = contact_boundaries[ib_y];
         const mesh_fem &mfu_y = *(cb_y.mfu);
         const mesh &m_y = mfu_y.linked_mesh();
         size_type cv_y = fbox_y.ind_element;
