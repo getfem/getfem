@@ -174,6 +174,7 @@ typedef struct ptr_collect {
   void *p[COLLECTCHUNK];
   int n;
   struct ptr_collect *next;
+  int owned[COLLECTCHUNK];
 } ptr_collect;
 
 typedef struct gcollect {
@@ -182,22 +183,25 @@ typedef struct gcollect {
 } gcollect;
 
 static ptr_collect *
-ptr_collect_push_front(ptr_collect *col, void *p) {
+ptr_collect_push_front(ptr_collect *col, void *p, int owned) {
   if (col == NULL || col->n == COLLECTCHUNK) {
     ptr_collect *pcol = col;
     col = malloc(sizeof(ptr_collect));
     col->next = pcol;
-    col->n = 1; col->p[0] = p;
+    col->n = 1;
+    col->p[0] = p;
+    col->owned[0] = owned;
   } else {
-    col->p[col->n++] = p;
+    col->p[col->n] = p;
+    col->owned[col->n++] = owned;
   }
   return col;
 }
 
 /* mark a pyobject as referenced */
 static void
-gc_ref(gcollect *gc, PyObject *o) {
-  gc->pyobjects = ptr_collect_push_front(gc->pyobjects, o);
+gc_ref(gcollect *gc, PyObject *o, int owned) {
+  gc->pyobjects = ptr_collect_push_front(gc->pyobjects, o, owned);
 }
 
 /* allocate a collectable chunk of memory */
@@ -206,7 +210,7 @@ gc_alloc(gcollect *gc, size_t sz) {
   //printf("gc_alloc(%lu)\n", sz);
   void *p = malloc(sz == 0 ? 1 : sz);
   if (p) {
-    gc->allocated = ptr_collect_push_front(gc->allocated, p);
+    gc->allocated = ptr_collect_push_front(gc->allocated, p, 1);
   } else {
     PyErr_Format(PyExc_RuntimeError,
                  "could not allocate %d bytes: memory exhausted", (int)sz);
@@ -222,8 +226,9 @@ gc_release(gcollect *gc) {
   int i;
   if (!PyErr_Occurred())
     for (p = gc->pyobjects; p; p = np) {
-      /*for (i=0; i < p->n; ++i)
-        Py_DECREF((PyObject*)p->p[i]);*/
+      for (i=0; i < p->n; ++i)
+        if (p->owned[i])
+          Py_DECREF((PyObject*)p->p[i]);
       np = p->next; free(p);
     }
   gc->pyobjects = NULL;
@@ -231,8 +236,9 @@ gc_release(gcollect *gc) {
   for (p = gc->allocated; p; p = np) {
     //fprintf(stderr, "release bloc: n=%d, next=%p\n", p->n, p->next);
     for (i=0; i < p->n; ++i) {
+      if (p->owned[i])
       //fprintf(stderr, " i=%d release %p\n", i, p->p[i]);
-      free(p->p[i]);
+        free(p->p[i]);
     }
     np = p->next; free(p);
   }
@@ -274,7 +280,7 @@ PyObject_to_gfi_array(gcollect *gc, PyObject *o)
     /* for strings, the pointer is shared, no copy */
     int L = strlen(PyString_AsString(o));
     char *s = PyString_AsString(o);
-    gc_ref(gc, o);
+    gc_ref(gc, o, 0);
 
     t->storage.type = GFI_CHAR;
     t->dim.dim_len = 1; t->dim.dim_val = &TGFISTORE(char,len);
@@ -344,9 +350,9 @@ PyObject_to_gfi_array(gcollect *gc, PyObject *o)
           po = PyArray_CheckFromAny(o,PyArray_DescrFromType(NPY_INT),0,0,
                                     NPY_ARRAY_FORCECAST | NPY_ARRAY_OUT_FARRAY
                                     | NPY_ARRAY_ELEMENTSTRIDES, NULL);
-        if(!po) { PyErr_NoMemory(); return NULL;}
+        if (!po) { PyErr_NoMemory(); return NULL;}
 
-        gc_ref(gc,po);
+        gc_ref(gc, po, 1);
         /* No new copy. */
         TGFISTORE(int32,val) = (int *)PyArray_DATA((PyArrayObject *)po);
         break;
@@ -365,9 +371,9 @@ PyObject_to_gfi_array(gcollect *gc, PyObject *o)
           po = PyArray_CheckFromAny(o,PyArray_DescrFromType(NPY_DOUBLE),0,0,
                                     NPY_ARRAY_FORCECAST | NPY_ARRAY_OUT_FARRAY
                                     | NPY_ARRAY_ELEMENTSTRIDES, NULL);
-        if(!po) { PyErr_NoMemory(); return NULL;}
+        if (!po) { PyErr_NoMemory(); return NULL;}
 
-        gc_ref(gc,po);
+        gc_ref(gc, po, 1);
         /* No new copy. */
         TGFISTORE(double,val) = (double *)PyArray_DATA((PyArrayObject *)po);
         break;
@@ -386,9 +392,9 @@ PyObject_to_gfi_array(gcollect *gc, PyObject *o)
           po = PyArray_CheckFromAny(o,PyArray_DescrFromType(NPY_CDOUBLE),0,0,
                                     NPY_ARRAY_FORCECAST | NPY_ARRAY_OUT_FARRAY
                                     | NPY_ARRAY_ELEMENTSTRIDES, NULL);
-        if(!po) { PyErr_NoMemory(); return NULL;}
+        if (!po) { PyErr_NoMemory(); return NULL;}
 
-        gc_ref(gc,po);
+        gc_ref(gc, po, 1);
         /* No new copy. */
         TGFISTORE(double,val) = (double *)PyArray_DATA((PyArrayObject *)po);
         break;
