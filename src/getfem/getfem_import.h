@@ -121,8 +121,8 @@ namespace getfem {
         }
       @endcode
 
-      Additionally, optional face_region_range pair will define a range
-      of regions that faces that need to be imported explicitly as convexes.
+      Additionally, the optional lower_dim_convex_rg defines a set
+      of face regions that need to be imported explicitly as convexes.
 
       add_all_element_type flag, if set to true, will import all the lower
       dimension elements defined as independent convexes, only if the elements
@@ -144,7 +144,7 @@ namespace getfem {
 
   void import_mesh_gmsh(const std::string& filename, mesh& m,
                         bool add_all_element_type = false,
-                        std::pair<size_type, size_type> *face_region_range = NULL,
+                        std::set<size_type> *lower_dim_convex_rg = NULL,
                         std::map<std::string, size_type> *region_map = NULL,
                         bool remove_last_dimension = true,
                         std::map<size_type, std::set<size_type>> *nodal_map = NULL,
@@ -152,7 +152,7 @@ namespace getfem {
 
   void import_mesh_gmsh(std::istream& f, mesh& m,
                         bool add_all_element_type = false,
-                        std::pair<size_type, size_type> *face_region_range = NULL,
+                        std::set<size_type> *lower_dim_convex_rg = NULL,
                         std::map<std::string, size_type> *region_map = NULL,
                         bool remove_last_dimension = true,
                         std::map<size_type, std::set<size_type>> *nodal_map = NULL,

@@ -186,8 +186,8 @@ namespace getfem {
      structure: $Nodes list_of_nodes $EndNodes $Elements list_of_elt
      $EndElements
 
-     Faces that falls in the range of face_region_range will be imported as
-     an independant convex.
+     Lower dimensions elements in the regions of lower_dim_convex_rg will
+     be imported as independant convexes.
 
      If add_all_element_type is set to true, convexes with less dimension
      than highest dimension pgt and are not part of other element's face will
@@ -198,7 +198,7 @@ namespace getfem {
   */
   static void import_gmsh_mesh_file(std::istream& f, mesh& m, int deprecate=0,
                                     std::map<std::string, size_type> *region_map=NULL,
-                                    std::pair<size_type, size_type> *face_region_range=NULL,
+                                    std::set<size_type> *lower_dim_convex_rg=NULL,
                                     bool add_all_element_type = false,
                                     bool remove_last_dimension = true,
                                     std::map<size_type, std::set<size_type>> *nodal_map = NULL,
@@ -513,11 +513,11 @@ namespace getfem {
         //convexes with lower dimensions
         }
         else {
-          //convex that lies within the range of face_region_range
+          //convex that lies within the regions of lower_dim_convex_rg
           //is imported explicitly as a convex.
-          if (face_region_range != NULL &&
-            ci.region >= face_region_range->first &&
-            ci.region <= face_region_range->second && !is_node){
+          if (lower_dim_convex_rg != NULL &&
+              lower_dim_convex_rg->find(ci.region) != lower_dim_convex_rg->end() &&
+              !is_node){
               size_type ic = m.add_convex(ci.pgt, ci.nodes.begin()); cvok = true;
               m.region(ci.region).add(ic);
           }
@@ -1271,19 +1271,19 @@ namespace getfem {
 
   void import_mesh_gmsh(std::istream& f, mesh& m,
                         bool add_all_element_type,
-                        std::pair<size_type, size_type> *face_region_range,
+                        std::set<size_type> *lower_dim_convex_rg,
                         std::map<std::string, size_type> *region_map,
                         bool remove_last_dimension,
                         std::map<size_type, std::set<size_type>> *nodal_map,
                         bool remove_duplicated_nodes)
   {
-    import_gmsh_mesh_file(f, m, 0, region_map, face_region_range, add_all_element_type,
+    import_gmsh_mesh_file(f, m, 0, region_map, lower_dim_convex_rg, add_all_element_type,
                           remove_last_dimension, nodal_map, remove_duplicated_nodes);
   }
 
   void import_mesh_gmsh(const std::string& filename, mesh& m,
                         bool add_all_element_type,
-                        std::pair<size_type, size_type> *face_region_range,
+                        std::set<size_type> *lower_dim_convex_rg,
                         std::map<std::string, size_type> *region_map,
                         bool remove_last_dimension,
                         std::map<size_type, std::set<size_type>> *nodal_map,
@@ -1295,7 +1295,7 @@ namespace getfem {
       GMM_ASSERT1(f.good(), "can't open file " << filename);
       /* throw exceptions when an error occurs */
       f.exceptions(std::ifstream::badbit | std::ifstream::failbit);
-      import_gmsh_mesh_file(f, m, 0, region_map, face_region_range, add_all_element_type,
+      import_gmsh_mesh_file(f, m, 0, region_map, lower_dim_convex_rg, add_all_element_type,
                             remove_last_dimension, nodal_map, remove_duplicated_nodes);
       f.close();
     }
