@@ -168,52 +168,6 @@ namespace gmm {
 			     V2 &v2)
   { copy(v1, v2); gmm::lower_tri_solve(gmm::conjugated(P.U), v2, true); }
 
-
-  // for compatibility with old versions
-
-  template <typename Matrix>
-  struct choleskyt_precond : public ildltt_precond<Matrix>{
-    choleskyt_precond(const Matrix& A, int k_, double eps_)
-      : ildltt_precond<Matrix>(A, k_, eps_) {}
-    choleskyt_precond(void) {}
-  } IS_DEPRECATED;
-
-  template <typename Matrix, typename V1, typename V2> inline
-  void mult(const choleskyt_precond<Matrix>& P, const V1 &v1, V2 &v2) {
-    gmm::copy(v1, v2);
-    gmm::lower_tri_solve(gmm::conjugated(P.U), v2, true);
-    for (size_type i = 0; i < P.indiag.size(); ++i) v2[i] *= P.indiag[i];
-    gmm::upper_tri_solve(P.U, v2, true);
-  }
-
-  template <typename Matrix, typename V1, typename V2> inline
-  void transposed_mult(const choleskyt_precond<Matrix>& P,const V1 &v1, V2 &v2)
-  { mult(P, v1, v2); }
-
-  template <typename Matrix, typename V1, typename V2> inline
-  void left_mult(const choleskyt_precond<Matrix>& P, const V1 &v1, V2 &v2) {
-    copy(v1, v2);
-    gmm::lower_tri_solve(gmm::conjugated(P.U), v2, true);
-    for (size_type i = 0; i < P.indiag.size(); ++i) v2[i] *= P.indiag[i];
-  }
-
-  template <typename Matrix, typename V1, typename V2> inline
-  void right_mult(const choleskyt_precond<Matrix>& P, const V1 &v1, V2 &v2)
-  { copy(v1, v2); gmm::upper_tri_solve(P.U, v2, true); }
-
-  template <typename Matrix, typename V1, typename V2> inline
-  void transposed_left_mult(const choleskyt_precond<Matrix>& P, const V1 &v1,
-			    V2 &v2) {
-    copy(v1, v2);
-    gmm::upper_tri_solve(P.U, v2, true);
-    for (size_type i = 0; i < P.indiag.size(); ++i) v2[i] *= P.indiag[i];
-  }
-
-  template <typename Matrix, typename V1, typename V2> inline
-  void transposed_right_mult(const choleskyt_precond<Matrix>& P, const V1 &v1,
-			     V2 &v2)
-  { copy(v1, v2); gmm::lower_tri_solve(gmm::conjugated(P.U), v2, true); }
-
 }
 
 #endif 

@@ -473,8 +473,9 @@ namespace getfem {
     return *this;
   }
 
-  mesh_fem::mesh_fem(const mesh &me, dim_type Q, bool is_consistent_with_mesh) :
-    is_consistent_with_mesh{is_consistent_with_mesh}
+  mesh_fem::mesh_fem(const mesh &me, dim_type Q,
+		     bool is_consistent_with_mesh_) :
+    is_consistent_with_mesh(is_consistent_with_mesh_)
     { linked_mesh_ = 0; init_with_mesh(me, Q); }
 
   mesh_fem::mesh_fem(void)
@@ -733,8 +734,10 @@ namespace getfem {
     bool is_consistent_with_mesh;
     const mesh *pmesh;
     dim_type order, qdim;
-    mf__key_(const mesh &msh, dim_type o, dim_type q, bool is_consistent_with_mesh)
-      : pmesh(&msh), order(o), qdim(q), is_consistent_with_mesh(is_consistent_with_mesh)
+    mf__key_(const mesh &msh, dim_type o, dim_type q,
+	     bool is_consistent_with_mesh_)
+      : is_consistent_with_mesh(is_consistent_with_mesh_),
+	pmesh(&msh), order(o), qdim(q)
     { add_dependency(msh); }
     bool operator <(const mf__key_ &a) const {
       if (pmesh < a.pmesh) return true;

@@ -252,8 +252,8 @@ bool test_procedure(const MAT1 &m1_, const VECT1 &v1_, const VECT2 &v2_) {
   gmm::copy(m1, m3);
   gmm::add(gmm::conjugated(m1), m3);
   gmm::copy(m2, m1);
-  gmm::cholesky_precond<MAT1> P6(m1);
-  gmm::choleskyt_precond<MAT1> P7(m1, 10, prec);
+  gmm::ildlt_precond<MAT1> P6(m1);
+  gmm::ildltt_precond<MAT1> P7(m1, 10, prec);
   
   if (!is_hermitian(m1, prec*R(100)))
     GMM_ASSERT1(false, "The matrix is not hermitian");
