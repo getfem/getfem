@@ -41,8 +41,8 @@ namespace bgeot {
       size_type *tab;
       size_type nb = simplexified_tab(cvs, &tab);
       for (size_type nc = 0; nc < nb; ++nc) {
-	for (size_type i = 0; i <= n; ++i) ipts[i] = *tab++;
-	m.add_simplex(n, ipts.begin());
+        for (size_type i = 0; i <= n; ++i) ipts[i] = *tab++;
+        m.add_simplex(n, ipts.begin());
       }
     }
   }
@@ -55,19 +55,19 @@ namespace bgeot {
     const stored_point_tab *pspt;
     virtual bool compare(const static_stored_object_key &oo) const {
       const stored_point_tab_key &o
-	= dynamic_cast<const stored_point_tab_key &>(oo);
+        = dynamic_cast<const stored_point_tab_key &>(oo);
       const stored_point_tab &x = *pspt;
       const stored_point_tab &y = *(o.pspt);
       if (&x == &y) return false;
       std::vector<base_node>::const_iterator it1 = x.begin(), it2 = y.begin();
       base_node::const_iterator itn1, itn2, itne;
       for ( ; it1 != x.end() && it2 != y.end() ; ++it1, ++it2) {
-	if ((*it1).size() < (*it2).size()) return true;
-	if ((*it1).size() > (*it2).size()) return false;
-	itn1 = (*it1).begin(); itne = (*it1).end(); itn2 = (*it2).begin();
-	for ( ; itn1 != itne ; ++itn1, ++itn2)
-	  if (*itn1 < *itn2) return true;
-	  else if (*itn1 > *itn2) return false;
+        if ((*it1).size() < (*it2).size()) return true;
+        if ((*it1).size() > (*it2).size()) return false;
+        itn1 = (*it1).begin(); itne = (*it1).end(); itn2 = (*it2).begin();
+        for ( ; itn1 != itne ; ++itn1, ++itn2)
+          if (*itn1 < *itn2) return true;
+          else if (*itn1 > *itn2) return false;
       }
       if (it2 != y.end()) return true;
       return false;
@@ -94,11 +94,11 @@ namespace bgeot {
     if (psimplexified_convex.get() == 0) {
       psimplexified_convex = std::make_shared<mesh_structure>();
       // dal::singleton<cleanup_simplexified_convexes>::instance()
-      //	.push_back(psimplexified_convex);
+      //        .push_back(psimplexified_convex);
       GMM_ASSERT1(auto_basic,
-		  "always use simplexified_convex on the basic_convex_ref() "
-		  "[this=" << nb_points() << ", basic="
-		  << basic_convex_ref_->nb_points());
+                  "always use simplexified_convex on the basic_convex_ref() "
+                  "[this=" << nb_points() << ", basic="
+                  << basic_convex_ref_->nb_points());
       simplexify_convex(structure(), *psimplexified_convex);
     }
     return psimplexified_convex.get();
@@ -113,7 +113,7 @@ namespace bgeot {
   public :
     virtual bool compare(const static_stored_object_key &oo) const {
       const convex_of_reference_key &o
-	= dynamic_cast<const convex_of_reference_key &>(oo);
+        = dynamic_cast<const convex_of_reference_key &>(oo);
       if (type < o.type) return true;
       if (type > o.type) return false;
       if (N < o.N) return true;
@@ -124,7 +124,7 @@ namespace bgeot {
       return false;
     }
     convex_of_reference_key(int t, dim_type NN, short_type KK = 0,
-			    short_type nnf = 0)
+                            short_type nnf = 0)
       : type(t), N(NN), K(KK), nf(nnf) {}
   };
 
@@ -136,7 +136,7 @@ namespace bgeot {
     scalar_type is_in(const base_node &pt) const {
       // return a negative or null number if pt is in the convex
       GMM_ASSERT1(pt.size() == cvs->dim(),
-		  "K_simplex_of_ref_::is_in: Dimension does not match");
+                  "K_simplex_of_ref_::is_in: Dimension does not match");
       scalar_type e = -1.0, r = (pt.size() > 0) ? -pt[0] : 0.0;
       base_node::const_iterator it = pt.begin(), ite = pt.end();
       for (; it != ite; e += *it, ++it) r = std::max(r, -(*it));
@@ -146,7 +146,7 @@ namespace bgeot {
       // return a null number if pt is in the face of the convex
       // negative if the point is on the side of the face where the element is
       GMM_ASSERT1(pt.size() == cvs->dim(),
-		  "K_simplex_of_ref_::is_in_face: Dimension does not match");
+                  "K_simplex_of_ref_::is_in_face: Dimension does not match");
       if (f > 0) return -pt[f-1];
       scalar_type e = -1.0;
       base_node::const_iterator it = pt.begin(), ite = pt.end();
@@ -156,40 +156,40 @@ namespace bgeot {
     K_simplex_of_ref_(dim_type NN, short_type KK) {
       cvs = simplex_structure(NN, KK);
       if (KK == 1)
-	auto_basic = true;
+        auto_basic = true;
       else
-	basic_convex_ref_ = simplex_of_reference(NN, 1);
+        basic_convex_ref_ = simplex_of_reference(NN, 1);
       size_type R = cvs->nb_points();
       convex<base_node>::points().resize(R);
       normals_.resize(NN+1);
       base_node null(NN); null.fill(0.0);
       std::fill(normals_.begin(), normals_.end(), null);
       std::fill(convex<base_node>::points().begin(),
-		convex<base_node>::points().end(), null);
+                convex<base_node>::points().end(), null);
       for (size_type i = 1; i <= NN; ++i)
-	normals_[i][i-1] = -1.0;
+        normals_[i][i-1] = -1.0;
       if (NN > 0)
-	std::fill(normals_[0].begin(), normals_[0].end(),
-		  scalar_type(1.0)/sqrt(scalar_type(NN)));
+        std::fill(normals_[0].begin(), normals_[0].end(),
+                  scalar_type(1.0)/sqrt(scalar_type(NN)));
       base_node c(NN);  c.fill(0.0);
       
       if (KK == 0) {
-	c.fill(1.0/(NN+1));
-	convex<base_node>::points()[0] = c;
+        c.fill(1.0/(NN+1));
+        convex<base_node>::points()[0] = c;
       }
       else {
-	size_type sum = 0, l;
-	for (size_type r = 0; r < R; ++r) {
-	  convex<base_node>::points()[r] = c;
-	  if (KK != 0 && NN > 0) {
-	    l = 0; c[l] += 1.0 / scalar_type(KK); sum++;
-	    while (sum > KK) {
-	      sum -= int(floor(0.5+(c[l] * KK)));
-	      c[l] = 0.0; l++; if (l == NN) break;
-	      c[l] += 1.0 / scalar_type(KK); sum++;
-	    }
-	  }
-	}
+        size_type sum = 0, l;
+        for (size_type r = 0; r < R; ++r) {
+          convex<base_node>::points()[r] = c;
+          if (KK != 0 && NN > 0) {
+            l = 0; c[l] += 1.0 / scalar_type(KK); sum++;
+            while (sum > KK) {
+              sum -= int(floor(0.5+(c[l] * KK)));
+              c[l] = 0.0; l++; if (l == NN) break;
+              c[l] += 1.0 / scalar_type(KK); sum++;
+            }
+          }
+        }
       }
       ppoints = store_point_tab(convex<base_node>::points());
     }
@@ -202,14 +202,14 @@ namespace bgeot {
     if (o) return std::dynamic_pointer_cast<const convex_of_reference>(o);
     pconvex_ref p = std::make_shared<K_simplex_of_ref_>(nc, K);
     dal::add_stored_object(pk, p, p->structure(), p->pspt(),
-			   dal::PERMANENT_STATIC_OBJECT);
+                           dal::PERMANENT_STATIC_OBJECT);
     pconvex_ref p1 = basic_convex_ref(p);
     if (p != p1) add_dependency(p, p1); 
     return p;
   }
 
   /* ******************************************************************** */
-  /*	Incomplete Q2 quadrilateral or hexahedral of reference.           */
+  /*    Incomplete Q2 quadrilateral or hexahedral of reference.           */
   /* ******************************************************************** */
   /* By Yao Koutsawa  <yao.koutsawa@tudor.lu> 2012-12-10                  */
 
@@ -218,7 +218,7 @@ namespace bgeot {
     scalar_type is_in(const base_node& pt) const {
       // return a negative or null number if pt is in the convex
       GMM_ASSERT1(pt.size() == cvs->dim(),
-		  "Q2_incomplete_of_ref_::is_in: Dimension does not match");
+                  "Q2_incomplete_of_ref_::is_in: Dimension does not match");
       scalar_type e = -1.0, r = (pt.size() > 0) ? -pt[0] : 0.0;
       base_node::const_iterator it = pt.begin(), ite = pt.end();
       for (; it != ite; e += *it, ++it) r = std::max(r, -(*it));
@@ -228,7 +228,7 @@ namespace bgeot {
       // return a null number if pt is in the face of the convex
       // negative if the point is on the side of the face where the element is
       GMM_ASSERT1(pt.size() == cvs->dim(), "Q2_incomplete_of_ref_::is_in_face: "
-		  "Dimension does not match");
+                  "Dimension does not match");
       if (f > 0) return -pt[f-1];
       scalar_type e = -1.0;
       base_node::const_iterator it = pt.begin(), ite = pt.end();
@@ -310,7 +310,7 @@ namespace bgeot {
 
 
   /* ******************************************************************** */
-  /*	Products.                                                         */
+  /*    Products.                                                         */
   /* ******************************************************************** */
 
   DAL_DOUBLE_KEY(product_ref_key_, pconvex_ref, pconvex_ref);
@@ -322,7 +322,7 @@ namespace bgeot {
       dim_type n1 = cvr1->structure()->dim(), n2 = cvr2->structure()->dim();
       base_node pt1(n1), pt2(n2);
       GMM_ASSERT1(pt.size() == cvs->dim(),
-		  "product_ref_::is_in: Dimension does not match");
+                  "product_ref_::is_in: Dimension does not match");
       std::copy(pt.begin(), pt.begin()+n1, pt1.begin());
       std::copy(pt.begin()+n1,   pt.end(), pt2.begin());
       return std::max(cvr1->is_in(pt1), cvr2->is_in(pt2));
@@ -342,28 +342,28 @@ namespace bgeot {
 
     product_ref_(pconvex_ref a, pconvex_ref b) { 
       if (a->structure()->dim() < b->structure()->dim())
-	GMM_WARNING1("Illegal convex : swap your operands: dim(cv1)=" << 
-		    int(a->structure()->dim()) << " < dim(cv2)=" << 
-		    int(b->structure()->dim()));
+        GMM_WARNING1("Illegal convex : swap your operands: dim(cv1)=" << 
+                    int(a->structure()->dim()) << " < dim(cv2)=" << 
+                    int(b->structure()->dim()));
       cvr1 = a; cvr2 = b;
       *((convex<base_node> *)(this)) = convex_direct_product(*a, *b);
       normals_.resize(cvs->nb_faces());
       base_small_vector null(cvs->dim()); null.fill(0.0);
       std::fill(normals_.begin(), normals_.end(), null);
       for (size_type r = 0; r < cvr1->structure()->nb_faces(); r++)
-	std::copy(cvr1->normals()[r].begin(), cvr1->normals()[r].end(),
-		  normals_[r].begin());
+        std::copy(cvr1->normals()[r].begin(), cvr1->normals()[r].end(),
+                  normals_[r].begin());
       for (size_type r = 0; r < cvr2->structure()->nb_faces(); r++)
-	std::copy(cvr2->normals()[r].begin(), cvr2->normals()[r].end(),
-		  normals_[r+cvr1->structure()->nb_faces()].begin()
-		  + cvr1->structure()->dim());
+        std::copy(cvr2->normals()[r].begin(), cvr2->normals()[r].end(),
+                  normals_[r+cvr1->structure()->nb_faces()].begin()
+                  + cvr1->structure()->dim());
       ppoints = store_point_tab(convex<base_node>::points());
 
       if (basic_convex_ref(a) == a && basic_convex_ref(b) == b)
-	auto_basic = true;
+        auto_basic = true;
       else
-	basic_convex_ref_ = convex_ref_product(basic_convex_ref(a),
-					       basic_convex_ref(a));
+        basic_convex_ref_ = convex_ref_product(basic_convex_ref(a),
+                                               basic_convex_ref(b));
     }
   };
 
@@ -375,9 +375,9 @@ namespace bgeot {
     if (o) return std::dynamic_pointer_cast<const convex_of_reference>(o);
     pconvex_ref p = std::make_shared<product_ref_>(a, b);
     dal::add_stored_object(pk, p, a, b,
-			   convex_product_structure(a->structure(),
-						    b->structure()),
-			   p->pspt(), dal::PERMANENT_STATIC_OBJECT);
+                           convex_product_structure(a->structure(),
+                                                    b->structure()),
+                           p->pspt(), dal::PERMANENT_STATIC_OBJECT);
     pconvex_ref p1 = basic_convex_ref(p);
     if (p != p1) add_dependency(p, p1); 
     return p;
@@ -393,7 +393,7 @@ namespace bgeot {
     if (nc <= 1) return simplex_of_reference(nc);
     if (nc > ncd) { 
       tab[nc] = convex_ref_product(parallelepiped_of_reference(dim_type(nc-1)),
-				   simplex_of_reference(1));
+                                   simplex_of_reference(1));
       ncd = nc;
     }
     return tab[nc];
@@ -402,7 +402,7 @@ namespace bgeot {
   pconvex_ref prism_of_reference(dim_type nc) {
     if (nc <= 2) return parallelepiped_of_reference(nc);
     else return convex_ref_product(simplex_of_reference(dim_type(nc-1)),
-				   simplex_of_reference(1));
+                                   simplex_of_reference(1));
   }
 
   /* equilateral ref convexes are used for estimation of convex quality */
@@ -412,7 +412,7 @@ namespace bgeot {
       scalar_type d(0);
       for (size_type f = 0; f < normals().size(); ++f) {
         const base_node &x0 = (f ? convex<base_node>::points()[f-1]
-			       : convex<base_node>::points().back());
+                               : convex<base_node>::points().back());
         scalar_type v = gmm::vect_sp(pt-x0, normals()[f]);
         if (f == 0) d = v; else d = std::max(d,v);
       }
@@ -420,7 +420,7 @@ namespace bgeot {
     }
     scalar_type is_in_face(short_type f, const base_node &pt) const {
       const base_node &x0 = (f ? convex<base_node>::points()[f-1]
-			     : convex<base_node>::points().back());
+                             : convex<base_node>::points().back());
       return gmm::vect_sp(pt-x0, normals()[f]); 
     }
     equilateral_simplex_of_ref_(size_type N) {
@@ -434,13 +434,13 @@ namespace bgeot {
         convex<base_node>::points()[i].resize(N);
         if (i != N) {
           std::copy(prev->convex<base_node>::points()[i].begin(),
-		    prev->convex<base_node>::points()[i].end(),
-		    convex<base_node>::points()[i].begin());
+                    prev->convex<base_node>::points()[i].end(),
+                    convex<base_node>::points()[i].begin());
           convex<base_node>::points()[i][N-1] = 0.;
         } else {
           convex<base_node>::points()[i] = scalar_type(1)/scalar_type(N) * G;
           convex<base_node>::points()[i][N-1]
-	    = sqrt(1. - gmm::vect_norm2_sqr(convex<base_node>::points()[i]));
+            = sqrt(1. - gmm::vect_norm2_sqr(convex<base_node>::points()[i]));
         }
         G += convex<base_node>::points()[i];
       }
@@ -461,7 +461,7 @@ namespace bgeot {
     if (o) return std::dynamic_pointer_cast<const convex_of_reference>(o);
     pconvex_ref p = std::make_shared<equilateral_simplex_of_ref_>(nc);
     dal::add_stored_object(pk, p, p->structure(), p->pspt(),
-			   dal::PERMANENT_STATIC_OBJECT);
+                           dal::PERMANENT_STATIC_OBJECT);
     return p;
   }
 
@@ -495,7 +495,7 @@ namespace bgeot {
     if (o) return std::dynamic_pointer_cast<const convex_of_reference>(o);
     pconvex_ref p = std::make_shared<generic_dummy_>(nc, n, nf);
     dal::add_stored_object(pk, p, p->structure(), p->pspt(),
-			   dal::PERMANENT_STATIC_OBJECT);
+                           dal::PERMANENT_STATIC_OBJECT);
     return p;
   }
 
