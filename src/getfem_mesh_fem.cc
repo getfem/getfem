@@ -785,10 +785,9 @@ namespace getfem {
       assert(it == mfs.end() || it->second->is_context_valid());
 
       if (it == mfs.end()) {
-        auto pmf = std::make_shared<mesh_fem>(msh, is_consistent_with_mesh);
+        auto pmf = std::make_shared<mesh_fem>(msh, qdim, is_consistent_with_mesh);
         pmf->set_classical_finite_element(o);
         pmf->set_auto_add(o, false);
-        pmf->set_qdim(qdim);
         return *(mfs[key] = pmf);
       }
       else return *(it->second);

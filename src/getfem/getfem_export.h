@@ -101,7 +101,7 @@ namespace getfem {
 
     /** should be called before write_*_data */
     void exporting(const mesh& m);
-    void exporting(const mesh_fem& mf);
+    void exporting(const mesh_fem& mf, bool is_consistent_with_mesh = false);
     void exporting(const stored_mesh_slice& sl);
 
     /** the header is the second line of text in the exported file,
