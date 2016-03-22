@@ -1015,7 +1015,7 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        );
 
     /*@FUNC A = ('bilaplacian KL', @tmim mim, @tmf mf_u, @tmf mf_d, @dvec a, @dvec nu[, @int region])
-      Assembly of the matrix for the Bilaplacian problem with Kirchoff-Love formulation.
+      Assembly of the matrix for the Bilaplacian problem with Kirchhoff-Love formulation.
 
       :math:`\Delta(a(x)\Delta u) = 0`   with `a` scalar.
 

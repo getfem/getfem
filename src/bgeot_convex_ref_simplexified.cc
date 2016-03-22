@@ -300,7 +300,7 @@
       return simplexified_prism_6_nb;
     }
 
-    GMM_ASSERT1(false, "No simplexification  for this element");
+    GMM_ASSERT1(false, "No simplexification for this element");
   }
 
 

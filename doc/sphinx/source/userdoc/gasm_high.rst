@@ -725,7 +725,7 @@ An elementary transformation is a linear transformation of the shape
 functions given by a matrix which may depend on the element which is applied
 to the local degrees of freedom at the element level. an example of definition
 of elementary transformation can be found in the file
-:file:`src/linearized_plate.cc`. It aims for instance to define a local
+:file:`src/getfem_linearized_plates.cc`. It aims for instance to define a local
 projection of a finite element on a lower level element to perform a
 reduction such as the one used in MITC elements.
 
@@ -745,7 +745,7 @@ where ``pelementary_transformation`` is a pointer to an object deriving from ``v
   Elementary_transformation(Div_Test_u, transname)
   Elementary_transformation(Hess_Test_u, transname)
 
-where ``u`` is one of the FEM variables of the model/workspace. For the moment, the only available elementary transformation is the the one for the projection on rotated RT0 element for two-dimensional elements which can be added thanks to the function (defined in :file:`getfem/linearized_plate.h`)::
+where ``u`` is one of the FEM variables of the model/workspace. For the moment, the only available elementary transformation is the the one for the projection on rotated RT0 element for two-dimensional elements which can be added thanks to the function (defined in :file:`src/getfem/getfem_linearized_plates.h`)::
 
   add_2D_rotated_RT0_projection(model, transname)
 

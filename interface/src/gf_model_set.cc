@@ -1754,7 +1754,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       `datalambda` and `datamu` are the Lame coefficients of the studied
       material.
       `datathreshold` is the plasticity threshold of the material.
-      The three last variable could be constants or described on the
+      The three last variables could be constants or described on the
       same finite element method.
       `region` is an optional mesh region on which the term is added.
       If it is not specified, it is added on the whole mesh.

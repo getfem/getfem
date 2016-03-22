@@ -961,7 +961,7 @@ namespace getfem {
     const std::string& get_macro(const std::string &name) const;
 
     /** Delete a variable or data of the model. */
-    void delete_variable(const std::string &varnamename);
+    void delete_variable(const std::string &varname);
 
     /** Gives the access to the mesh_fem of a variable if any. Throw an
         exception otherwise. */

@@ -75,14 +75,14 @@ where :math:`P^h(T)` is the elementwize :math:`L^2`-projection onto the rotated 
 
   \int_{\Omega}G\epsilon (\nabla u_3 - P^h(\theta))\cdot(\nabla v_3 - P^h(\psi))dx
 
-The principle of the definition of an elementary projection is explained if the description of the high-level generica assembly language (see :ref:`ud-gasm-high-elem-trans`) and an example can be found in the file :file:`src/getfem_linearized_plate.cc`.
+The principle of the definition of an elementary projection is explained if the description of the high-level generic assembly language (see :ref:`ud-gasm-high-elem-trans`) and an example can be found in the file :file:`src/getfem_linearized_plates.cc`.
 
 
 
 Add a Mindlin-Reissner plate model brick to a model
 +++++++++++++++++++++++++++++++++++++++++++++++++++
 
-The following function defined in :file:`getfem/getfem_linearized_plate.h` allows to add a Mindlin-Reissner plate model term to a transverse displacement `u3` and a rotation `theta`::
+The following function defined in :file:`src/getfem/getfem_linearized_plates.h` allows to add a Mindlin-Reissner plate model term to a transverse displacement `u3` and a rotation `theta`::
 
   size_type add_Mindlin_Reissner_plate_brick
   (model, mim, mim_reduced, name_u3, name_theta, param_E,
