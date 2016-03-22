@@ -502,8 +502,8 @@ namespace getfem {
         gmsh_cv_info &ci = cvlst[cv];
         bool is_node = (ci.type == 15);
         unsigned ci_dim = (is_node) ? 0 : ci.pgt->dim();
-        cout << "importing cv dim=" << int(ci.pgt->dim()) << " N=" << N
-             << " region: " << ci.region << "\n";
+        //cout << "importing cv dim=" << int(ci.pgt->dim()) << " N=" << N
+        //     << " region: " << ci.region << "\n";
 
         //main convex import
         if (ci_dim == N) {
