@@ -303,12 +303,22 @@ namespace getfem {
 
       GMM_ASSERT1(i < mesh_.nb_points_of_convex(cv),
                   i << " is larger than the number of points of convex " << cv);
-      auto index = mesh_.ind_points_of_convex(cv)[i];
-      GMM_ASSERT1(index < nodes_map_.size(), index << " exceeds number of mesh nodes.");
+      auto &points = mesh_.points();
+      auto node_index = size_type(-1);
 
-      if (nodes_map_[index] == size_type(-1)) nodes_map_[index] = dof_nodes.add_node(p, 0, false);
+      for (auto &index : mesh_.ind_points_of_convex(cv)) {
+        if (gmm::vect_dist2(points[index], p) < 1e-10) {
+          node_index = index;
+          break;
+        }
+      }
 
-      return nodes_map_[index];
+      GMM_ASSERT1(node_index < nodes_map_.size(), node_index << " exceeds number of mesh nodes.");
+
+      if (nodes_map_[node_index] == size_type(-1))
+        nodes_map_[node_index] = dof_nodes.add_node(p, 0, false);
+
+      return nodes_map_[node_index];
     }
 
   private:
