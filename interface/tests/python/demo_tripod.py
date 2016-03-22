@@ -117,7 +117,7 @@ mfdu.set_fem(gf.Fem('FEM_PK_DISCONTINUOUS(3,1)'))
 if linear:
   VM = md.compute_isotropic_linearized_Von_Mises_or_Tresca('u','clambda','cmu', mfdu);
 else:
-  VM = md.finite_strain_elasticity_Von_Mises('u', lawname, 'params', mfdu);
+  VM = md.compute_finite_strain_elasticity_Von_Mises('u', lawname, 'params', mfdu);
 
 # post-processing
 sl=gf.Slice(('boundary',), mfu, degree)

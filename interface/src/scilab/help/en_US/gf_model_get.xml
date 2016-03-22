@@ -36,7 +36,7 @@
     <synopsis>gf_model_get(model M, 'test tangent matrix term', string varname1, string varname2[, scalar EPS[, int NB[, scalar scale]]])</synopsis>
     <synopsis>V = gf_model_get(model M, 'compute isotropic linearized Von Mises or Tresca', string varname, string dataname_lambda, string dataname_mu, mesh_fem mf_vm[, string version])</synopsis>
     <synopsis>V = gf_model_get(model M, 'compute Von Mises or Tresca', string varname, string lawname, string dataname, mesh_fem mf_vm[, string version])</synopsis>
-    <synopsis>V = gf_model_get(model M, 'finite strain elasticity Von Mises', string varname, string lawname, string params, mesh_fem mf_vm[, int region])</synopsis>
+    <synopsis>V = gf_model_get(model M, 'compute finite strain elasticity Von Mises', string varname, string lawname, string params, mesh_fem mf_vm[, int region])</synopsis>
     <synopsis>V = gf_model_get(model M, 'compute second Piola Kirchhoff tensor', string varname, string lawname, string dataname, mesh_fem mf_sigma)</synopsis>
     <synopsis>V = gf_model_get(model M, 'compute elastoplasticity Von Mises or Tresca', string datasigma, mesh_fem mf_vm[, string version])</synopsis>
     <synopsis>gf_model_get(model M, 'elastoplasticity next iter', mesh_im mim, string varname, string projname, string datalambda, string datamu, string datathreshold, string datasigma)</synopsis>
@@ -299,7 +299,7 @@
     </listitem>
 
     <listitem>
-    <para><literal>V = gf_model_get(model M, 'finite strain elasticity Von Mises', string varname, string lawname, string params, mesh_fem mf_vm[, int region])</literal></para>
+    <para><literal>V = gf_model_get(model M, 'compute finite strain elasticity Von Mises', string varname, string lawname, string params, mesh_fem mf_vm[, int region])</literal></para>
 
     <para>         Compute on <literal>mf_vm</literal> the Von-Mises stress of a field <literal>varname</literal>
       for nonlinear elasticity in 3D. <literal>lawname</literal> is the constitutive law which

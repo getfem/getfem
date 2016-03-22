@@ -111,7 +111,7 @@ gf_mesh_fem_set(mfdu,'fem',gf_fem('FEM_PK_DISCONTINUOUS(3,1)'));
 if (linear)
   VM = gf_model_get(md, 'compute isotropic linearized Von Mises or Tresca', 'u', 'clambda', 'cmu', mfdu);
 else
-  VM = gf_model_get(md, 'finite strain elasticity Von Mises', 'u', lawname, 'params', mfdu);
+  VM = gf_model_get(md, 'compute finite strain elasticity Von Mises', 'u', lawname, 'params', mfdu);
 end
 
 

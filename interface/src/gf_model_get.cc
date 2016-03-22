@@ -753,7 +753,8 @@ void gf_model_get(getfemint::mexargs_in& m_in,
       `dataname` is a vector of parameters for the constitutive law. Its length
       depends on the law. It could be a short vector of constant values or a
       vector field described on a finite element method for variable coefficients.
-      `version` should be  'Von_Mises' or 'Tresca' ('Von_Mises' is the default). @*/
+      `version` should be  'Von_Mises' or 'Tresca' ('Von_Mises' is the default).
+      @*/
     sub_command
       ("compute Von Mises or Tresca", 4, 5, 0, 1,
        std::string varname = in.pop().to_string();
@@ -778,25 +779,24 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        out.pop().from_dcvector(VMM);
        );
 
-    /*@GET V = ('finite strain elasticity Von Mises', @str varname, @str lawname, @str params, @tmf mf_vm[, @int region])
+    /*@GET V = ('compute finite strain elasticity Von Mises', @str varname, @str lawname, @str params, @tmf mf_vm[, @int region])
       Compute on `mf_vm` the Von-Mises stress of a field `varname`
       for nonlinear elasticity in 3D. `lawname` is the constitutive law which
       should be a valid name. `params` are the parameters law. It could be
       a short vector of constant values or may depend on data or variables
       of the model.
       Uses the high-level generic assembly.
- @*/
+      @*/
     sub_command
-      ("finite strain elasticity Von Mises", 4, 5, 0, 1,
+      ("compute finite strain elasticity Von Mises", 4, 5, 0, 1,
        std::string varname = in.pop().to_string();
        std::string lawname = in.pop().to_string();
        std::string params = in.pop().to_string();
        const getfem::mesh_fem *mf = to_meshfem_object(in.pop());
-       std::string stresca = "Von Mises";
        size_type rg = size_type(-1);
        if (in.remaining()) rg = in.pop().to_integer();
        getfem::model_real_plain_vector VMM(mf->nb_dof());
-       getfem::finite_strain_elasticity_Von_Mises
+       getfem::compute_finite_strain_elasticity_Von_Mises
        (*md, varname, lawname, params, *mf, VMM, rg);
        out.pop().from_dcvector(VMM);
        );
@@ -810,7 +810,7 @@ void gf_model_get(getfemint::mexargs_in& m_in,
       depends on the law. It could be a short vector of constant values or a
       vector field described on a finite element method for variable
       coefficients.
-     @*/
+      @*/
     sub_command
       ("compute second Piola Kirchhoff tensor", 4, 4, 0, 1,
        std::string varname = in.pop().to_string();
@@ -904,7 +904,7 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        getfem::model_real_plain_vector plast(mf->nb_dof());
        getfem::compute_plastic_part
        (*md, *mim, *mf, varname, previous_dep,
-	abstract_constraints_projection_from_name(projname),
+        abstract_constraints_projection_from_name(projname),
         datalambda, datamu, datathreshold, datasigma, plast);
        out.pop().from_dcvector(plast);
        );

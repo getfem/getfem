@@ -664,11 +664,20 @@ namespace getfem {
      with respect to the nonlinear elasticity constitutive law `lawname`
      with parameters `params` (only valid in 3D).
   */
-  void finite_strain_elasticity_Von_Mises
+  void compute_finite_strain_elasticity_Von_Mises
   (model &md, const std::string &varname, const std::string &lawname,
    const std::string &params, const mesh_fem &mf_vm,
    model_real_plain_vector &VM,
    const mesh_region &rg=mesh_region::all_convexes());
+
+  IS_DEPRECATED inline void finite_strain_elasticity_Von_Mises
+  (model &md, const std::string &varname, const std::string &lawname,
+   const std::string &params, const mesh_fem &mf_vm,
+   model_real_plain_vector &VM,
+   const mesh_region &rg=mesh_region::all_convexes()) {
+    compute_finite_strain_elasticity_Von_Mises(md, varname, lawname, params,
+                                               mf_vm, VM, rg);
+  }
 
 }  /* end of namespace getfem.                                             */
 

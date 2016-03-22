@@ -428,7 +428,7 @@ where ``md`` is the model, ``mim`` the integration method, ``varname`` the varia
 
 The Von Mises stress can be interpolated with the following function::
 
-  void finite_strain_elasticity_Von_Mises(md, varname, lawname, params, mf_vm, VM,
-                                          rg=mesh_region::all_convexes());
+  void compute_finite_strain_elasticity_Von_Mises(md, varname, lawname, params, mf_vm, VM,
+                                                  rg=mesh_region::all_convexes());
 
 where ``md`` is the model, ``varname`` the variable of the model representing the large strain displacement, ``lawname`` is the constitutive law name (see previou brick), ``params`` is a string representing the parameters of the law, ``mf_vm`` a (preferably discontinuous) Lagrange  finite element method on which the interpolation will be done and ``VM`` a vector of type ``model_real_plain_vector`` in which the interpolation will be stored.

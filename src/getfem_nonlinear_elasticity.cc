@@ -2274,7 +2274,7 @@ namespace getfem {
        "Finite strain incompressibility brick");
   }
 
-  void finite_strain_elasticity_Von_Mises
+  void compute_finite_strain_elasticity_Von_Mises
     (model &md, const std::string &varname, const std::string &lawname,
      const std::string &params, const mesh_fem &mf_vm,
      model_real_plain_vector &VM, const mesh_region &rg) {
