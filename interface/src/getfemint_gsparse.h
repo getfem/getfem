@@ -147,6 +147,7 @@ namespace getfemint
         default: THROW_INTERNAL_ERROR;
       }
     }
+    virtual ~gsparse() { destroy(); }
   };
 
   void spmat_set_diag(gsparse &gsp, mexargs_in& in, bool create_matrix);

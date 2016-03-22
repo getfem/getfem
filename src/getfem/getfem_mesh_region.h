@@ -199,7 +199,7 @@ namespace getfem {
 
     mesh_region& operator=(const mesh_region &mr);
 
-    bool compare(const mesh &m1, const mesh_region &mr, const mesh &m2);
+    bool compare(const mesh &m1, const mesh_region &mr, const mesh &m2) const;
 
     face_bitset operator[](size_t cv) const;
 

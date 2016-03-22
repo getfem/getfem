@@ -126,7 +126,7 @@ namespace getfem {
   }
 
   bool mesh_region::compare(const mesh &m1, const mesh_region &mr,
-                            const mesh &m2) {
+                            const mesh &m2) const {
     if (&m1 != &m2) return false;
     this->from_mesh(m1);
     mr.from_mesh(m2);

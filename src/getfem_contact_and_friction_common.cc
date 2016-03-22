@@ -1329,7 +1329,7 @@ namespace getfem {
  
       contact_boundary()
         : region(-1), mfu(0), dispname(""), U(0), U_unred(0), slave(false) {}
-      contact_boundary(size_type r, const mesh_fem *mf, const std::string dn,
+      contact_boundary(size_type r, const mesh_fem *mf, const std::string &dn,
                        bool sl)
         : region(r), mfu(mf), dispname(dn), slave(sl) {}
     };

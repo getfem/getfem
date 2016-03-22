@@ -2514,7 +2514,7 @@ namespace getfem {
   }
 
   void add_rigid_obstacle_to_large_sliding_contact_brick
-  (model &md, size_type indbrick, std::string expr, size_type N) {
+  (model &md, size_type indbrick, const std::string &expr, size_type N) {
     pbrick pbr = md.brick_pointer(indbrick);
     intergral_large_sliding_contact_brick_raytracing *p
       = dynamic_cast<intergral_large_sliding_contact_brick_raytracing *>

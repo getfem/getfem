@@ -81,7 +81,7 @@ namespace getfem {
       `N` is the mesh dimension.
   */
   void add_rigid_obstacle_to_large_sliding_contact_brick
-  (model &md, size_type indbrick, std::string expr, size_type N);
+  (model &md, size_type indbrick, const std::string &expr, size_type N);
 
   /** Gives the name of the group of variables corresponding to the
       sliding data for an existing large sliding contact brick.

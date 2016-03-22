@@ -106,6 +106,8 @@ namespace getfem {
                            const std::string &sval,
                            const std::string &sgrad="",
                            const std::string &shess="");
+    virtual ~global_function_parser()
+    { DAL_STORED_OBJECT_DEBUG_DESTROYED(this, "Global function parser"); }
   };
 
 
@@ -212,6 +214,7 @@ namespace getfem {
     parser_xy_function(const std::string &sval,
                        const std::string &sgrad="0;0;",
                        const std::string &shess="0;0;0;0;");
+    virtual ~parser_xy_function() {}
   };
 
   struct crack_singular_xy_function : public abstract_xy_function {
@@ -220,6 +223,7 @@ namespace getfem {
     virtual base_small_vector grad(scalar_type x, scalar_type y) const;
     virtual base_matrix hess(scalar_type x, scalar_type y) const;
     crack_singular_xy_function(unsigned l_) : l(l_) {}
+    virtual ~crack_singular_xy_function() {}
   };
 
   struct cutoff_xy_function : public abstract_xy_function {
@@ -234,6 +238,7 @@ namespace getfem {
     virtual base_matrix hess(scalar_type x, scalar_type y) const;
     cutoff_xy_function(int fun_num, scalar_type r,
                        scalar_type r1, scalar_type r0);
+    virtual ~cutoff_xy_function() {}
   };
 
   struct interpolated_xy_function : public abstract_xy_function {
@@ -254,6 +259,7 @@ namespace getfem {
     interpolated_xy_function(const pinterpolator_on_mesh_fem &itp_,
                              size_type c) :
       itp(itp_), component(c) {}
+    virtual ~interpolated_xy_function() {}
   };
 
   struct product_of_xy_functions : public abstract_xy_function {
@@ -273,6 +279,7 @@ namespace getfem {
     }
     product_of_xy_functions(pxy_function &fn1_, pxy_function &fn2_)
       : fn1(fn1_), fn2(fn2_) {}
+    virtual ~product_of_xy_functions() {}
   };
 
   struct add_of_xy_functions : public abstract_xy_function {
@@ -290,6 +297,7 @@ namespace getfem {
     }
     add_of_xy_functions(const pxy_function &fn1_, const pxy_function &fn2_)
       : fn1(fn1_), fn2(fn2_) {}
+    virtual ~add_of_xy_functions() {}
   };
 
 

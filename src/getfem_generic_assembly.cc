@@ -3525,7 +3525,7 @@ namespace getfem {
 
   struct ga_instruction_interpolate_filter : public ga_instruction {
     base_tensor &t;
-    ga_instruction_set::interpolate_info &inin;
+    const ga_instruction_set::interpolate_info &inin;
     size_type pt_type;
     int nb;
 
@@ -3545,7 +3545,7 @@ namespace getfem {
     }
 
     ga_instruction_interpolate_filter
-    (base_tensor &t_, ga_instruction_set::interpolate_info &inin_,
+    (base_tensor &t_, const ga_instruction_set::interpolate_info &inin_,
      size_type ind_, int nb_)
       : t(t_), inin(inin_), pt_type(ind_), nb(nb_) {}
   };
@@ -3559,7 +3559,7 @@ namespace getfem {
     fem_interpolation_context &ctx;
     base_vector coeff;
     size_type qdim;
-    size_type &ipt;
+    const size_type &ipt;
     fem_precomp_pool &fp_pool;
     ga_instruction_set::interpolate_info &inin;
 
@@ -3586,7 +3586,7 @@ namespace getfem {
     ga_instruction_interpolate
     (base_tensor &tt, const mesh **m_, const mesh_fem *mfn_,
      const mesh_fem **mfg_, const base_vector *Un_, const base_vector **Ug_,
-     fem_interpolation_context &ctx_, size_type q, size_type &ipt_,
+     fem_interpolation_context &ctx_, size_type q, const size_type &ipt_,
      fem_precomp_pool &fp_pool_, ga_instruction_set::interpolate_info &inin_)
       : t(tt), m(m_), mfn(mfn_), mfg(mfg_), Un(Un_), Ug(Ug_),
         ctx(ctx_), qdim(q), ipt(ipt_), fp_pool(fp_pool_), inin(inin_) {}
@@ -3678,7 +3678,7 @@ namespace getfem {
     const mesh **m;
     const mesh_fem *mfn, **mfg;
     fem_interpolation_context &ctx;
-    size_type &ipt;
+    const size_type &ipt;
     fem_precomp_pool &fp_pool;
     ga_instruction_set::interpolate_info &inin;
 
@@ -3704,7 +3704,7 @@ namespace getfem {
 
     ga_instruction_interpolate_base
     (const mesh **m_, const mesh_fem *mfn_, const mesh_fem **mfg_,
-     fem_interpolation_context &ctx_, size_type &ipt_,
+     fem_interpolation_context &ctx_, const size_type &ipt_,
      fem_precomp_pool &fp_pool_, ga_instruction_set::interpolate_info &inin_)
       : m(m_), mfn(mfn_), mfg(mfg_), ctx(ctx_), ipt(ipt_),
         fp_pool(fp_pool_), inin(inin_) {}
@@ -3723,7 +3723,7 @@ namespace getfem {
     ga_instruction_interpolate_val_base
     (base_tensor &t_, const mesh **m_, const mesh_fem *mfn_,
      const mesh_fem **mfg_, fem_interpolation_context &ctx_, size_type q,
-     size_type &ipt_, fem_precomp_pool &fp_pool_,
+     const size_type &ipt_, fem_precomp_pool &fp_pool_,
      ga_instruction_set::interpolate_info &inin_)
       : ga_instruction_copy_val_base(t_, ZZ, q),
         ga_instruction_interpolate_base(m_, mfn_, mfg_, ctx_, ipt_,
@@ -3743,7 +3743,7 @@ namespace getfem {
     ga_instruction_interpolate_grad_base
     (base_tensor &t_, const mesh **m_, const mesh_fem *mfn_,
      const mesh_fem **mfg_, fem_interpolation_context &ctx_, size_type q,
-     size_type &ipt_, fem_precomp_pool &fp_pool_,
+     const size_type &ipt_, fem_precomp_pool &fp_pool_,
      ga_instruction_set::interpolate_info &inin_)
       : ga_instruction_copy_grad_base(t_, ZZ, q),
         ga_instruction_interpolate_base(m_, mfn_, mfg_, ctx_, ipt_,
@@ -3763,7 +3763,7 @@ namespace getfem {
     ga_instruction_interpolate_hess_base
     (base_tensor &t_, const mesh **m_, const mesh_fem *mfn_,
      const mesh_fem **mfg_, fem_interpolation_context &ctx_, size_type q,
-     size_type &ipt_, fem_precomp_pool &fp_pool_,
+     const size_type &ipt_, fem_precomp_pool &fp_pool_,
      ga_instruction_set::interpolate_info &inin_)
       : ga_instruction_copy_hess_base(t_, ZZ, q),
         ga_instruction_interpolate_base(m_, mfn_, mfg_, ctx_, ipt_,
@@ -3783,7 +3783,7 @@ namespace getfem {
     ga_instruction_interpolate_diverg_base
     (base_tensor &t_, const mesh **m_, const mesh_fem *mfn_,
      const mesh_fem **mfg_, fem_interpolation_context &ctx_, size_type q,
-     size_type &ipt_, fem_precomp_pool &fp_pool_,
+     const size_type &ipt_, fem_precomp_pool &fp_pool_,
      ga_instruction_set::interpolate_info &inin_)
       : ga_instruction_copy_diverg_base(t_, ZZ, q),
         ga_instruction_interpolate_base(m_, mfn_, mfg_, ctx_, ipt_,
@@ -4866,7 +4866,7 @@ namespace getfem {
     ga_instruction_set::interpolate_info &inin;
     pinterpolate_transformation trans;
     fem_interpolation_context &ctx;
-    base_small_vector &Normal;
+    const base_small_vector &Normal;
     const mesh &m;
     bool compute_der;
 
@@ -4908,7 +4908,7 @@ namespace getfem {
     ga_instruction_transformation_call
     (ga_workspace &w, ga_instruction_set::interpolate_info &i,
      pinterpolate_transformation t, fem_interpolation_context &ctxx,
-     base_small_vector &No, const mesh &mm, bool compute_der_)
+     const base_small_vector &No, const mesh &mm, bool compute_der_)
       : workspace(w), inin(i), trans(t), ctx(ctxx), Normal(No), m(mm),
         compute_der(compute_der_) {}
   };
@@ -5129,7 +5129,7 @@ namespace getfem {
     const mesh_fem *mfn1, *mfn2;
     const mesh_fem **mfg1, **mfg2;
     const scalar_type &coeff, &alpha1, &alpha2;
-    size_type &nbpt, &ipt;
+    const size_type &nbpt, &ipt;
     base_vector &elem;
     bool interpolate;
     virtual int exec(void) {
@@ -5194,8 +5194,9 @@ namespace getfem {
                                    const scalar_type &coeff_,
                                    const scalar_type &alpha2_,
                                    const scalar_type &alpha1_,
-                                   size_type &nbpt_,
-                                   size_type &ipt_,  base_vector &elem_,
+                                   const size_type &nbpt_,
+                                   const size_type &ipt_,
+                                   base_vector &elem_,
                                    bool interpolate_)
       : t(t_), Kr(Kr_), Kn(Kn_), ctx1(ctx1_), ctx2(ctx2_),
         Ir1(Ir1_), Ir2(Ir2_), In1(In1_), In2(In2_),
