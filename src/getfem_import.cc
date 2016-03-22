@@ -172,6 +172,7 @@ namespace getfem {
     bool operator<(const gmsh_cv_info& other) const {
       unsigned this_dim = (type == 15) ? 0 : pgt->dim();
       unsigned other_dim = (other.type == 15) ? 0 : other.pgt->dim();
+      if (this_dim == other_dim) return region < other.region;
       return this_dim > other_dim;
     }
   };
@@ -501,8 +502,8 @@ namespace getfem {
         gmsh_cv_info &ci = cvlst[cv];
         bool is_node = (ci.type == 15);
         unsigned ci_dim = (is_node) ? 0 : ci.pgt->dim();
-        //cout << "importing cv dim=" << int(ci.pgt->dim()) << " N=" << N
-        //     << " region: " << ci.region << "\n";
+        cout << "importing cv dim=" << int(ci.pgt->dim()) << " N=" << N
+             << " region: " << ci.region << "\n";
 
         //main convex import
         if (ci_dim == N) {
