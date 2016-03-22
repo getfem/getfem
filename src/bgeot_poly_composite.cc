@@ -30,7 +30,7 @@ namespace bgeot {
 
 
   int imbricated_box_less::operator()(const base_node &x,
-				      const base_node &y) const {
+                                      const base_node &y) const {
     size_type s = x.size(); 
     scalar_type c1 = c_max, c2 = c_max * scalar_type(base);
     GMM_ASSERT2(y.size() == s, "dimension error");
@@ -40,23 +40,23 @@ namespace bgeot {
     for (; itx != itex; ++itx, ++ity) {
       long a = long(sfloor((*itx) * c1)), b = long(sfloor((*ity) * c1));
       if ((gmm::abs(a) > scalar_type(base))
-	  || (gmm::abs(b) > scalar_type(base))) { 
-	exp_max++; c_max /= scalar_type(base);
-	return (*this)(x,y);
+          || (gmm::abs(b) > scalar_type(base))) { 
+        exp_max++; c_max /= scalar_type(base);
+        return (*this)(x,y);
       }
       if (ret == 0) { if (a < b) ret = -1; else if (a > b) ret = 1; }
     }
     if (ret) return ret;
     
     for (int e = exp_max; e >= exp_min; --e, c1 *= scalar_type(base),
-	   c2 *= scalar_type(base)) {
+           c2 *= scalar_type(base)) {
       itx = x.begin(), itex = x.end(), ity = y.begin();
       for (; itx != itex; ++itx, ++ity) {
-	int a = int(sfloor(((*itx) * c2) - sfloor((*itx) * c1)
-			   * scalar_type(base)));
-	int b = int(sfloor(((*ity) * c2) - sfloor((*ity) * c1)
-			   * scalar_type(base)));
-	if (a < b) return -1; else if (a > b) return 1;
+        int a = int(sfloor(((*itx) * c2) - sfloor((*itx) * c1)
+                           * scalar_type(base)));
+        int b = int(sfloor(((*ity) * c2) - sfloor((*ity) * c1)
+                           * scalar_type(base)));
+        if (a < b) return -1; else if (a > b) return 1;
       }
     }
     return 0;
@@ -293,7 +293,7 @@ namespace bgeot {
                 }
               }
             }
-          }	
+          }
         }
         break;
       default : 
@@ -320,7 +320,7 @@ namespace bgeot {
       while (kcnt[n] == 0) {
         for (size_type z = 0; z < n; ++z)
           pt[z] = h*kcnt[z];
-        if (opt_gt) pt = opt_gt->transform(pt, *opt_gt_pts);	  
+        if (opt_gt) pt = opt_gt->transform(pt, *opt_gt_pts);
         pids.push_back(pm->add_point(pt));
         kk=0;
         while (kk <= n)
@@ -355,12 +355,12 @@ namespace bgeot {
       dim_type n = cvs->dim();
       /* Identifying simplexes.                                           */    
       if (nbp == size_type(n+1) && 
-	  basic_structure(cvs)==simplex_structure(n)) {
+          basic_structure(cvs)==simplex_structure(n)) {
           // smc.pm->write_to_file(cout);
           structured_mesh_for_simplex_(cvs,opt_gt,opt_gt_pts,k,pm);
           /* Identifying parallelepipeds.                                     */
       } else if (nbp == (size_type(1) << n) && 
-	  basic_structure(cvs) == parallelepiped_structure(n)) {
+          basic_structure(cvs) == parallelepiped_structure(n)) {
           structured_mesh_for_parallelepiped_(cvs,opt_gt,opt_gt_pts,k,pm);
       } else if (nbp == size_type(2 * n) && 
           basic_structure(cvs) == prism_structure(n)) {
@@ -437,8 +437,8 @@ namespace bgeot {
 
       force_simplexification = force_simplexification || (nbp == n+1);
       dal::pstatic_stored_object_key
-	pk = std::make_shared<str_mesh_key>(basic_structure(cvr->structure()),
-					    k, force_simplexification);
+        pk = std::make_shared<str_mesh_key>(basic_structure(cvr->structure()),
+                                            k, force_simplexification);
 
       dal::pstatic_stored_object o = dal::search_stored_object(pk);
       pstr_mesh_cv__ psmc;
@@ -446,10 +446,10 @@ namespace bgeot {
         psmc = std::dynamic_pointer_cast<const str_mesh_cv__>(o);
       else {
 
-	auto ppsmc = std::make_shared<str_mesh_cv__>
-	  (basic_structure(cvr->structure()), k, force_simplexification);
-	str_mesh_cv__ &smc(*ppsmc);
-	psmc = ppsmc;
+        auto ppsmc = std::make_shared<str_mesh_cv__>
+          (basic_structure(cvr->structure()), k, force_simplexification);
+        str_mesh_cv__ &smc(*ppsmc);
+        psmc = ppsmc;
 
         smc.pm = std::make_unique<basic_mesh>();
 
@@ -469,7 +469,7 @@ namespace bgeot {
               //cerr << "cvpts[" << j << "]=" << cvpts[j] << endl;
             }
             structured_mesh_for_convex_(splx_mesh->structure_of_convex(ic),
-					sgt, &cvpts, k, smc.pm.get());
+                                        sgt, &cvpts, k, smc.pm.get());
           }
         } else {
           structured_mesh_for_convex_(cvr->structure(), 0, 0, k, smc.pm.get());
@@ -498,14 +498,14 @@ namespace bgeot {
     refined_simplex_mesh_for_convex_faces(pconvex_ref cvr, short_type k) {
     dal::pstatic_stored_object_key
       pk = std::make_shared<str_mesh_key>(basic_structure(cvr->structure()),
-					  k, true);
+                                          k, true);
     dal::pstatic_stored_object o = dal::search_stored_object(pk);
     if (o) {
       pstr_mesh_cv__ psmc = std::dynamic_pointer_cast<const str_mesh_cv__>(o);
       return psmc->pfacem;
     } 
     else GMM_ASSERT1(false,
-		     "call refined_simplex_mesh_for_convex first (or fix me)");
+                     "call refined_simplex_mesh_for_convex first (or fix me)");
   }
 
 }  /* end of namespace getfem.                                            */

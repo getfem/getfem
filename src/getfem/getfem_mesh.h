@@ -44,20 +44,13 @@
 #include "bgeot_geotrans_inv.h"
 #include "getfem_context.h"
 #include "getfem_mesh_region.h"
-
-#if defined(__GNUC__) 
-#if __cplusplus > 199711L
-#include <memory>  //on GCC need to check for C++ 11
-#endif
-#else
-#include <memory>  //all the others like Intel and MSVC have it
-#endif
+#include <memory>
 
 
 namespace getfem {
 
   /* Version counter for convexes. */
-  gmm::uint64_type APIDECL act_counter(void);
+  gmm::uint64_type APIDECL act_counter();
 
   class integration_method;
   typedef std::shared_ptr<const integration_method> pintegration_method;
@@ -101,17 +94,8 @@ namespace getfem {
 
   class APIDECL mesh : public bgeot::basic_mesh,
                        public context_dependencies,
-		       virtual public dal::static_stored_object
-
-//allowing mesh::shared_from_this() call
-#if defined(__GNUC__) 
-#if __cplusplus > 199711L
-           , public std::enable_shared_from_this<mesh>
-#endif
-#else
-           , public std::enable_shared_from_this<mesh>
-#endif
-  
+                       virtual public dal::static_stored_object,
+                       public std::enable_shared_from_this<mesh>
   {
   public :
 
@@ -138,7 +122,7 @@ namespace getfem {
     mutable bool cuthill_mckee_uptodate;
     dal::dynamic_array<gmm::uint64_type> cvs_v_num;
     mutable std::vector<size_type> cmk_order; // cuthill-mckee
-    void init(void);
+    void init();
 
 #if GETFEM_PARA_LEVEL > 1
     mutable bool modified;
@@ -147,16 +131,16 @@ namespace getfem {
     // mutable dal::dynamic_array<mesh_region> mpi_sub_region;
     mutable dal::bit_vector valid_sub_regions;
 
-    void touch(void) {
+    void touch() {
       modified = true; cuthill_mckee_uptodate = false;
       context_dependencies::touch();
     }
-    void compute_mpi_region(void) const ;
+    void compute_mpi_region() const ;
     void compute_mpi_sub_region(size_type) const;
 
   public :
 
-    const mesh_region& get_mpi_region(void) const
+    const mesh_region& get_mpi_region() const
     { if (modified) compute_mpi_region(); return mpi_region; }
     const mesh_region& get_mpi_sub_region(size_type n) const {
       if (modified) compute_mpi_region();
@@ -166,10 +150,10 @@ namespace getfem {
     }
     void intersect_with_mpi_region(mesh_region &rg) const;
 #else
-    void touch(void)
+    void touch()
     { cuthill_mckee_uptodate = false; context_dependencies::touch(); }
   public :
-    const mesh_region get_mpi_region(void) const
+    const mesh_region get_mpi_region() const
     { return mesh_region::all_convexes(); }
     const mesh_region get_mpi_sub_region(size_type n) const {
       if (n == size_type(-1)) return get_mpi_region();
@@ -185,13 +169,13 @@ namespace getfem {
     mesh &operator=(const mesh &m);
 
     inline std::string get_name() const {return name_;}
-    void update_from_context(void) const {}
+    void update_from_context() const {}
     /// Mesh dimension.
-    dim_type dim(void) const { return pts.dim(); }
+    dim_type dim() const { return pts.dim(); }
     /// Return the array of PT.
-    const PT_TAB &points(void) const { return pts; }
+    const PT_TAB &points() const { return pts; }
     /// Return the array of PT.
-    PT_TAB &points(void) { return pts; }
+    PT_TAB &points() { return pts; }
 
     /// Return a (pseudo)container of the points of a given convex
     ref_mesh_pt_ct points_of_convex(size_type ic) const {
@@ -226,9 +210,9 @@ namespace getfem {
     //                        scalar_type characteristic_size = scalar_type(1));
 
     /// Give the number of geometrical nodes in the mesh.
-    size_type nb_points(void) const { return pts.card(); }
+    size_type nb_points() const { return pts.card(); }
     /// Return the points index
-    const dal::bit_vector &points_index(void) const { return pts.index(); }
+    const dal::bit_vector &points_index() const { return pts.index(); }
     /** Delete the point of index i from the mesh if it is not linked to a
         convex.
     */
@@ -484,11 +468,11 @@ namespace getfem {
     void sup_convex_from_regions(size_type cv);
     /** Pack the mesh : renumber convexes and nodes such that there
         is no holes in their numbering. Do NOT do the Cuthill-McKee. */
-    void optimize_structure(void);
+    void optimize_structure();
     /// Return the list of convex IDs for a Cuthill-McKee ordering
     const std::vector<size_type> &cuthill_mckee_ordering() const;
     /// Erase the mesh.
-    void clear(void);
+    void clear();
     /** Write the mesh to a file. The format is getfem-specific.
         @param name the file name.
     */
@@ -509,7 +493,7 @@ namespace getfem {
     void read_from_file(std::istream &ist);
     /** Clone a mesh */
     void copy_from(const mesh& m); /* might be the copy constructor */
-    size_type memsize(void) const;
+    size_type memsize() const;
 
     friend class mesh_region;
   private:
@@ -626,18 +610,18 @@ namespace getfem {
       of the convex area.
    */
   scalar_type APIDECL convex_area_estimate(bgeot::pgeometric_trans pgt,
-                                   const base_matrix& pts,
-                                   pintegration_method pim);
+                                           const base_matrix& pts,
+                                           pintegration_method pim);
 
   /** rough estimate of the maximum value of the condition
    * number of the jacobian of the geometric transformation */
   scalar_type APIDECL convex_quality_estimate(bgeot::pgeometric_trans pgt,
-                                      const base_matrix& pts);
+                                              const base_matrix& pts);
 
   /** rough estimate of the radius of the convex using the largest eigenvalue
    * of the jacobian of the geometric transformation */
   scalar_type APIDECL convex_radius_estimate(bgeot::pgeometric_trans pgt,
-                                     const base_matrix& pts);
+                                             const base_matrix& pts);
 
   /* stores a convex face. if f == -1, it is the whole convex.             */
   struct convex_face;

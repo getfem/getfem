@@ -530,7 +530,7 @@ namespace getfem {
                                   const mesh_im &mim,
                                   const std::string &varname,
                                   const std::string &data_previous_disp,
-				  const pconstraints_projection &ACP,
+                                  const pconstraints_projection &ACP,
                                   const std::string &datalambda,
                                   const std::string &datamu,
                                   const std::string &datathreshold,
@@ -584,7 +584,7 @@ namespace getfem {
                 "The vector has not the right size");
 
     const model_real_plain_vector &sigma_np1 = md.real_variable(datasigma);
-    const mesh_fem &mf_sigma = *(md.pmesh_fem_of_variable(datasigma));
+    const mesh_fem &mf_sigma = md.mesh_fem_of_variable(datasigma);
 
     // dimension of the finite element used
     dim_type N = mf_sigma.linked_mesh().dim();
@@ -633,7 +633,7 @@ namespace getfem {
                             const mesh_fem &mf_pl,
                             const std::string &varname,
                             const std::string &data_previous_disp,
-			    const pconstraints_projection &ACP,
+                            const pconstraints_projection &ACP,
                             const std::string &datalambda,
                             const std::string &datamu,
                             const std::string &datathreshold,

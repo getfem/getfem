@@ -650,8 +650,8 @@ namespace getfem {
         current_node = current_node->parent;
       pga_tree_node new_node = new ga_tree_node(op_type, pos);
       if (current_node) {
-        if (op_type == GA_UNARY_MINUS || op_type == GA_SYM
-	    || op_type == GA_SKEW
+        if (op_type == GA_UNARY_MINUS
+	    || op_type == GA_SYM || op_type == GA_SKEW
             || op_type == GA_TRACE || op_type == GA_DEVIATOR
             || op_type == GA_PRINT) {
           current_node->children.push_back(new_node);
@@ -1164,12 +1164,12 @@ namespace getfem {
         } else if (pnode->op_type == GA_QUOTE) {
           GMM_ASSERT1(pnode->children.size() == 1, "Invalid tree");
           ga_print_node(pnode->children[0], str); str << "'";
-        } else if (pnode->op_type == GA_SKEW) {
-          GMM_ASSERT1(pnode->children.size() == 1, "Invalid tree");
-          str << "Skew("; ga_print_node(pnode->children[0], str); str << ")";
         } else if (pnode->op_type == GA_SYM) {
           GMM_ASSERT1(pnode->children.size() == 1, "Invalid tree");
           str << "Sym("; ga_print_node(pnode->children[0], str); str << ")";
+        } else if (pnode->op_type == GA_SKEW) {
+          GMM_ASSERT1(pnode->children.size() == 1, "Invalid tree");
+          str << "Skew("; ga_print_node(pnode->children[0], str); str << ")";
         } else if (pnode->op_type == GA_TRACE) {
           GMM_ASSERT1(pnode->children.size() == 1, "Invalid tree");
           str << "Trace("; ga_print_node(pnode->children[0], str); str << ")";
@@ -4034,7 +4034,8 @@ namespace getfem {
   };
 
   struct ga_instruction_copy_vect : public ga_instruction {
-    base_vector &t; const base_vector &t1;
+    base_vector &t;
+    const base_vector &t1;
     virtual int exec(void) {
       GA_DEBUG_INFO("Instruction: fixed size tensor copy");
       gmm::copy(t1, t);
@@ -10691,8 +10692,10 @@ namespace getfem {
                     workspace.variable_group_exists(root->name_test1)) {
                   ga_instruction_set::variable_group_info &vgi =
                     rmi.interpolate_infos[intn1].groups_info[root->name_test1];
-                  Ir = &(vgi.Ir); In = &(vgi.In);
-                  mfg = &(vgi.mf); mf = 0;
+                  Ir = &(vgi.Ir);
+                  In = &(vgi.In);
+                  mfg = &(vgi.mf);
+                  mf = 0;
                 } else {
                   Ir = &(gis.var_intervals[root->name_test1]);
                   In = &(workspace.interval_of_variable(root->name_test1));
@@ -10738,8 +10741,10 @@ namespace getfem {
                   workspace.variable_group_exists(root->name_test1)) {
                 ga_instruction_set::variable_group_info &vgi =
                   rmi.interpolate_infos[intn1].groups_info[root->name_test1];
-                Ir1 = &(vgi.Ir); In1 = &(vgi.In);
-                mfg1 = &(vgi.mf); mf1 = 0;
+                Ir1 = &(vgi.Ir);
+                In1 = &(vgi.In);
+                mfg1 = &(vgi.mf);
+                mf1 = 0;
                 alpha1 = &(vgi.alpha);
               } else {
                 alpha1 = &(workspace.factor_of_variable(root->name_test1));
@@ -10751,8 +10756,10 @@ namespace getfem {
                   workspace.variable_group_exists(root->name_test2)) {
                 ga_instruction_set::variable_group_info &vgi =
                   rmi.interpolate_infos[intn2].groups_info[root->name_test2];
-                Ir2 = &(vgi.Ir); In2 = &(vgi.In);
-                mfg2 = &(vgi.mf); mf2 = 0;
+                Ir2 = &(vgi.Ir);
+                In2 = &(vgi.In);
+                mfg2 = &(vgi.mf);
+                mf2 = 0;
                 alpha2 = &(vgi.alpha);
               } else {
                 alpha2 = &(workspace.factor_of_variable(root->name_test2));
@@ -10939,11 +10946,12 @@ namespace getfem {
             up.resize(G.nrows());
             un.resize(pgt->dim());
             pim = mim.int_method_of_element(v.cv());
-	    if (pim->type() == IM_NONE) continue;
+            if (pim->type() == IM_NONE)
+              continue;
             // cout << "pim->type() = " << int(pim->type()) <<  " : " << int(IM_APPROX) << endl;
             GMM_ASSERT1(pim->type() == IM_APPROX, "Sorry, exact methods cannot "
                         "be used in high level generic assembly");
-	    // cout << "passed ..." << endl;
+            // cout << "passed ..." << endl;
 
             pspt = pim->approx_method()->pintegration_points();
 
@@ -10968,7 +10976,8 @@ namespace getfem {
             }
             old_cv = v.cv();
           } else {
-            if (pim->type() == IM_NONE) continue;
+            if (pim->type() == IM_NONE)
+              continue;
             gis.ctx.set_face_num(v.f());
           }
           if (pspt->size()) {
@@ -11035,7 +11044,8 @@ namespace getfem {
 
   ga_function &ga_function::operator =(const ga_function &gaf) {
     if (gis) delete gis; gis = 0;
-    local_workspace = gaf.local_workspace; expr = gaf.expr;
+    local_workspace = gaf.local_workspace;
+    expr = gaf.expr;
     if (gaf.gis) compile();
     return *this;
   }
@@ -11335,7 +11345,10 @@ namespace getfem {
       data[0] = initialized ? result.size() : 0;
       data[1] = initialized ? s : 0;
       MPI_MAX_VECTOR(data);
-      if (!initialized) {
+      if (initialized) {
+        GMM_ASSERT1(gmm::vect_size(result) == data[0] &&  s == data[1],
+                    "Incompatible sizes");
+      } else {
         if (data[0]) {
           gmm::resize(result, data[0]);
           gmm::clear(result);
@@ -11344,9 +11357,6 @@ namespace getfem {
            gmm::clear(result);
         }
       }
-      if (initialized)
-        GMM_ASSERT1(gmm::vect_size(result) == data[0] &&  s == data[1],
-                    "Incompatible sizes");
       MPI_SUM_VECTOR(result);
     }
 
@@ -11399,7 +11409,7 @@ namespace getfem {
     mutable bool extract_data_done;
 
   public:
-    void update_from_context(void) const {
+    void update_from_context() const {
       recompute_elt_boxes = true;
     }
 
@@ -11524,7 +11534,8 @@ namespace getfem {
                   fem_interpolation_context &ctx_x,
                   const base_small_vector &Normal,
                   const mesh **m_t,
-                  size_type &cv, short_type &face_num, base_node &P_ref,
+                  size_type &cv, short_type &face_num,
+                  base_node &P_ref,
                   base_small_vector &/*N_y*/,
                   std::map<var_trans_pair, base_tensor> &derivatives,
                   bool compute_derivatives) const {
@@ -11638,7 +11649,7 @@ namespace getfem {
   // Interpolate transformation on neighbour element (for internal faces)
   //=========================================================================
 
-  class  interpolate_transformation_neighbour
+  class interpolate_transformation_neighbour
     : public virtual_interpolate_transformation, public context_dependencies {
 
   public:
@@ -11653,7 +11664,8 @@ namespace getfem {
     int transform(const ga_workspace &/*workspace*/, const mesh &m_x,
                   fem_interpolation_context &ctx_x,
                   const base_small_vector &/*Normal*/, const mesh **m_t,
-                  size_type &cv, short_type &face_num, base_node &P_ref,
+                  size_type &cv, short_type &face_num,
+                  base_node &P_ref,
                   base_small_vector &/*N_y*/,
                   std::map<var_trans_pair, base_tensor> &/*derivatives*/,
                   bool compute_derivatives) const {

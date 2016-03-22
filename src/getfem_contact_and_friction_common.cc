@@ -1699,8 +1699,11 @@ namespace getfem {
         if (gmm::abs(d1) < release_distance && d1 < d0) {
           const base_tensor &t_der = obs.eval_derivative();
           GMM_ASSERT1(t_der.size() == n_x.size(), "Bad derivative size");
-          if (gmm::vect_sp(t_der.as_vector(), n_x) < scalar_type(0)) 
-            { d0 = d1; irigid_obstacle = i; gmm::copy(t_der.as_vector(),n_y); }
+          if (gmm::vect_sp(t_der.as_vector(), n_x) < scalar_type(0)) {
+            d0 = d1;
+            irigid_obstacle = i;
+            gmm::copy(t_der.as_vector(), n_y);
+          }
         }
       }
 
@@ -1734,7 +1737,8 @@ namespace getfem {
         else if (gmm::vect_dist2(pt_y, pt_x) <= release_distance) {
           n_y /= gmm::vect_norm2(n_y);
           d0 = gmm::vect_dist2(pt_y, pt_x) * gmm::sgn(d0);
-          stored_pt_y = stored_pt_y_ref = pt_y; stored_n_y = n_y, 
+          stored_pt_y = stored_pt_y_ref = pt_y;
+          stored_n_y = n_y;
           stored_signed_distance = d0;
           first_pair_found = true;
         } else
@@ -1912,7 +1916,9 @@ namespace getfem {
       }
 
       int ret_type = 0;
-      *m_t = 0; cv = size_type(-1); face_num = short_type(-1);
+      *m_t = 0;
+      cv = size_type(-1);
+      face_num = short_type(-1);
       if (irigid_obstacle != size_type(-1)) {
         P_ref = stored_pt_y; N_y = stored_n_y;
         ret_type = 2;

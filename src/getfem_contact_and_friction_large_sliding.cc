@@ -2386,7 +2386,7 @@ namespace getfem {
           if (frame_indifferent)
             Vs += "+("+g+")*("+n+"-"+n0+")";
         }
-        Vs  += ")*"+alpha;
+        Vs += ")*"+alpha;
 
         std::string coupled_projection_def =
           "Coulomb_friction_coupled_projection("

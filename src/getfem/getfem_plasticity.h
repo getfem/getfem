@@ -83,7 +83,7 @@ namespace getfem {
 
 
   /** Von Mises projection */
-  class VM_projection : public abstract_constraints_projection   {
+  class VM_projection : public abstract_constraints_projection {
 
     /* used to compute the projection */
     template<typename MAT>
@@ -256,19 +256,16 @@ namespace getfem {
       onto a K-th order mesh_fem, `datasigma` has to be described
       on a mesh_fem of order at least K-1.
   */
-  size_type add_elastoplasticity_brick
-  (model &md,
-   const mesh_im &mim,
-   const pconstraints_projection &ACP,
-   const std::string &varname,
-   const std::string &previous_dep_name,
-   const std::string &datalambda,
-   const std::string &datamu,
-   const std::string &datathreshold,
-   const std::string &datasigma,
-   size_type region = size_type(-1));
-
-
+  size_type add_elastoplasticity_brick(model &md,
+                                       const mesh_im &mim,
+                                       const pconstraints_projection &ACP,
+                                       const std::string &varname,
+                                       const std::string &previous_dep_name,
+                                       const std::string &datalambda,
+                                       const std::string &datamu,
+                                       const std::string &datathreshold,
+                                       const std::string &datasigma,
+                                       size_type region = size_type(-1));
 
   /** This function permits to compute the new stress constraints
       values supported by the material after a load or an unload.
@@ -292,7 +289,6 @@ namespace getfem {
                                   const std::string &datathreshold,
                                   const std::string &datasigma);
 
-
   /** This function computes on mf_vm the Von Mises or Tresca stress
       of a field for elastoplasticity and return it into the vector VM.
       Note that `datasigma` should be the vector containing the new
@@ -301,12 +297,10 @@ namespace getfem {
       be computed, otherwise it will be the Von Mises one.*/
   void compute_elastoplasticity_Von_Mises_or_Tresca
   (model &md,
-   const std::string & datasigma,
+   const std::string &datasigma,
    const mesh_fem &mf_vm,
    model_real_plain_vector &VM,
    bool tresca);
-
-
 
   /** This function computes on mf_pl the plastic part, that could appear
       after a load and an unload, into the vector `plast`.
@@ -318,7 +312,7 @@ namespace getfem {
                             const mesh_fem &mf_pl,
                             const std::string &varname,
                             const std::string &previous_dep_name,
-			    const pconstraints_projection &ACP,
+                            const pconstraints_projection &ACP,
                             const std::string &datalambda,
                             const std::string &datamu,
                             const std::string &datathreshold,
