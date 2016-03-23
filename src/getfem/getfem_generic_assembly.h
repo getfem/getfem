@@ -176,16 +176,16 @@ namespace getfem {
 
   private:
 
+    // mesh regions
+    std::map<const mesh *, std::list<mesh_region> > registred_mesh_regions;
+
+    const mesh_region &
+    register_region(const mesh &m, const mesh_region &region);
+
+    // variables and variable groups
     mutable std::map<std::string, gmm::sub_interval> int_disabled_variables;
-    
-    
-
-    std::map<const mesh *, std::list<mesh_region> > registred_mims;
-
-    const mesh_region &register_region(const mesh &m,const mesh_region &region);
 
     typedef std::map<std::string, var_description> VAR_SET;
-
     VAR_SET variables;
     std::map<std::string, pinterpolate_transformation> transformations;
     std::map<std::string, pelementary_transformation> elem_transformations;
@@ -306,6 +306,7 @@ namespace getfem {
     size_type nb_trees() const;
     tree_description &tree_info(size_type i);
 
+    // variables and variable groups
     void add_fem_variable(const std::string &name, const mesh_fem &mf,
                           const gmm::sub_interval &I,
                           const model_real_plain_vector &VV);
@@ -318,12 +319,6 @@ namespace getfem {
                                  const model_real_plain_vector &VV);
     void add_im_data(const std::string &name, const im_data &imd,
                      const model_real_plain_vector &VV);
-
-    std::string extract_constant_term(const mesh &m);
-    std::string extract_order1_term(const std::string &varname);
-    std::string extract_order0_term();
-    std::string extract_Neumann_term(const std::string &varname);
-
 
     bool used_variables(model::varnamelist &vl, model::varnamelist &vl_test1,
                         model::varnamelist &vl_test2, model::varnamelist &dl,
@@ -540,7 +535,16 @@ namespace getfem {
       GMM_ASSERT1(false, "Undefined variable or group " << name);
     }
 
+
+    // extract terms
+    std::string extract_constant_term(const mesh &m);
+    std::string extract_order1_term(const std::string &varname);
+    std::string extract_order0_term();
+    std::string extract_Neumann_term(const std::string &varname);
+
+
     void assembly(size_type order);
+
 
     ga_workspace(const getfem::model &md_, bool enable_all_variables = false)
       : md(&md_), parent_workspace(0),

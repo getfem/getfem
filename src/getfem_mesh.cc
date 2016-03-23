@@ -879,8 +879,8 @@ namespace getfem {
                 "please optimize the mesh before using "
                 "it as a base for prismatic mesh");
     size_type nb_layers_total = nb_layers * degree;
-    for (size_type i = 0; i < nbpt; ++i) {
-      std::copy(in.points()[i].begin(), in.points()[i].end(),pt.begin());
+    for (const base_node &inpt : in.points()) {
+      std::copy(inpt.begin(), inpt.end(), pt.begin());
       pt[dim] = 0.0;
       for (size_type j = 0; j <= nb_layers_total;
            ++j, pt[dim] += scalar_type(1) / scalar_type(nb_layers_total))

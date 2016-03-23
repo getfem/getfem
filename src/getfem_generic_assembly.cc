@@ -325,8 +325,8 @@ namespace getfem {
     GA_NODE_INTERPOLATE_GRAD_TEST,
     GA_NODE_INTERPOLATE_HESS_TEST,
     GA_NODE_INTERPOLATE_DIVERG_TEST,
-    GA_NODE_INTERPOLATE_NORMAL,
     GA_NODE_INTERPOLATE_X,
+    GA_NODE_INTERPOLATE_NORMAL,
     GA_NODE_INTERPOLATE_DERIVATIVE,
     GA_NODE_ELEMENTARY,
     GA_NODE_ELEMENTARY_VAL,
@@ -864,7 +864,7 @@ namespace getfem {
           pnode1->nbc1 != pnode2->nbc1)
         return false;
       break;
-    case GA_NODE_INTERPOLATE_NORMAL: case GA_NODE_INTERPOLATE_X:
+    case GA_NODE_INTERPOLATE_X: case GA_NODE_INTERPOLATE_NORMAL:
       if (pnode1->interpolate_name.compare(pnode2->interpolate_name))
         return false;
       break;
@@ -1049,8 +1049,8 @@ namespace getfem {
     switch(pnode->node_type) {
     case GA_NODE_INTERPOLATE:
     case GA_NODE_INTERPOLATE_FILTER:
-    case GA_NODE_INTERPOLATE_NORMAL:
     case GA_NODE_INTERPOLATE_X:
+    case GA_NODE_INTERPOLATE_NORMAL:
     case GA_NODE_INTERPOLATE_VAL:
     case GA_NODE_INTERPOLATE_GRAD:
     case GA_NODE_INTERPOLATE_HESS:
@@ -1226,11 +1226,11 @@ namespace getfem {
       else if (pnode->nbc1 != size_type(-1)) str << "," << pnode->nbc1;
       str << ")";
       break;
-    case GA_NODE_INTERPOLATE_NORMAL:
-      str << "Normal";
-      break;
     case GA_NODE_INTERPOLATE_X:
       str << "X";
+      break;
+    case GA_NODE_INTERPOLATE_NORMAL:
+      str << "Normal";
       break;
     case GA_NODE_INTERPOLATE_DERIVATIVE:
       if (pnode->test_function_type == 1) str << "Test_"; else str << "Test2_";
@@ -1333,8 +1333,10 @@ namespace getfem {
       GMM_ASSERT1(pnode->children.size(), "Invalid tree");
       ga_print_node(pnode->children[0], str);
       str << "(";
-      for (size_type i = 1; i < pnode->children.size(); ++i)
-        { if (i > 1) str << ", "; ga_print_node(pnode->children[i], str); }
+      for (size_type i = 1; i < pnode->children.size(); ++i) {
+        if (i > 1) str << ", ";
+        ga_print_node(pnode->children[i], str);
+      }
       str << ")";
       break;
 
@@ -5249,21 +5251,48 @@ namespace getfem {
        gmm::vect_size(VV)/(imd.nb_filtered_index() * imd.nb_tensor_elem()));
   }
 
-  const mesh_region &ga_workspace::register_region(const mesh &m,
-                                                   const mesh_region &region) {
-    if (&m == &dummy_mesh())
-      return dummy_mesh_region();
+  const gmm::sub_interval &
+  ga_workspace::interval_of_disabled_variable(const std::string &name) const {
+    std::map<std::string, gmm::sub_interval>::const_iterator
+      it1 = int_disabled_variables.find(name);
+    if (it1 != int_disabled_variables.end()) return it1->second;
+    if (md->is_affine_dependent_variable(name))
+      return interval_of_disabled_variable(md->org_variable(name));
 
-    std::list<mesh_region> &lmr = registred_mims[&m];
-    for (std::list<mesh_region>::iterator it = lmr.begin();
-         it != lmr.end(); ++it) {
-      if (it->compare(m, region, m)) return *it;
-    }
-    lmr.push_back(region);
-    return lmr.back();
+    size_type first = md->nb_dof();
+    for (const std::pair<std::string, gmm::sub_interval> &p
+         : int_disabled_variables)
+      first = std::max(first, p.second.last());
+
+    int_disabled_variables[name]
+      = gmm::sub_interval(first, gmm::vect_size(value(name)));
+    return int_disabled_variables[name];
   }
 
-  bgeot::multi_index ga_workspace::qdims(const std::string &name) const {
+  size_type ga_workspace::qdim(const std::string &name) const {
+    VAR_SET::const_iterator it = variables.find(name);
+    if (it != variables.end()) {
+      const mesh_fem *mf =  it->second.is_fem_dofs ? it->second.mf : 0;
+      const im_data *imd = it->second.imd;
+      size_type n = it->second.qdim();
+      if (mf) {
+        return n * mf->get_qdim();
+      } else if (imd) {
+        return n * imd->tensor_size().total_size();
+      }
+      return n;
+    }
+    if (md && md->variable_exists(name))
+      return md->qdim_of_variable(name);
+    if (parent_workspace && parent_workspace->variable_exists(name))
+      return parent_workspace->qdim(name);
+    if (variable_group_exists(name))
+      return qdim(first_variable_of_group(name));
+    GMM_ASSERT1(false, "Undefined variable or group " << name);
+  }
+
+  bgeot::multi_index
+  ga_workspace::qdims(const std::string &name) const {
     VAR_SET::const_iterator it = variables.find(name);
     if (it != variables.end()) {
       const mesh_fem *mf =  it->second.is_fem_dofs ? it->second.mf : 0;
@@ -5302,27 +5331,51 @@ namespace getfem {
     GMM_ASSERT1(false, "Undefined variable or group " << name);
   }
 
-  size_type ga_workspace::qdim(const std::string &name) const {
-    VAR_SET::const_iterator it = variables.find(name);
-    if (it != variables.end()) {
-      const mesh_fem *mf =  it->second.is_fem_dofs ? it->second.mf : 0;
-      const im_data *imd = it->second.imd;
-      size_type n = it->second.qdim();
-      if (mf) {
-        return n * mf->get_qdim();
-      } else if (imd) {
-        return n * imd->tensor_size().total_size();
+  ga_tree &
+  ga_workspace::macro_tree(const std::string &name, size_type meshdim,
+                           size_type ref_elt_dim, bool ignore_X) const {
+    GMM_ASSERT1(macro_exists(name), "Undefined macro");
+    auto it = macro_trees.find(name);
+    bool to_be_analyzed = false;
+    m_tree *mt = 0;
+
+    if (it == macro_trees.end()) {
+      mt = &(macro_trees[name]);
+      to_be_analyzed = true;
+    } else {
+      mt = &(it->second);
+      GMM_ASSERT1(mt->ptree, "Recursive definition of macro " << name);
+      if (mt->meshdim != meshdim || mt->ignore_X != ignore_X) {
+        to_be_analyzed = true;
+        delete mt->ptree; mt->ptree = 0;
       }
-      return n;
     }
-    if (md && md->variable_exists(name))
-      return md->qdim_of_variable(name);
-    if (parent_workspace && parent_workspace->variable_exists(name))
-      return parent_workspace->qdim(name);
-    if (variable_group_exists(name))
-      return qdim(first_variable_of_group(name));
-    GMM_ASSERT1(false, "Undefined variable or group " << name);
+    if (to_be_analyzed) {
+      ga_tree tree;
+      ga_read_string(get_macro(name), tree);
+      ga_semantic_analysis(get_macro(name), tree, *this, meshdim, ref_elt_dim,
+                           false, ignore_X, 3);
+      GMM_ASSERT1(tree.root, "Invalid macro");
+      mt->ptree = new ga_tree(tree);
+      mt->meshdim = meshdim;
+      mt->ignore_X = ignore_X;
+    }
+    return *(mt->ptree);
   }
+
+  const mesh_region &
+  ga_workspace::register_region(const mesh &m, const mesh_region &region) {
+    if (&m == &dummy_mesh())
+      return dummy_mesh_region();
+
+    std::list<mesh_region> &lmr = registred_mesh_regions[&m];
+    for (const mesh_region &mr : lmr)
+      if (mr.compare(m, region, m)) return mr;
+    lmr.push_back(region);
+    return lmr.back();
+  }
+
+
 
   static bool ga_extract_variables(pga_tree_node pnode,
                                    ga_workspace &workspace,
@@ -5356,11 +5409,8 @@ namespace getfem {
       if (!iscte) found_var = true;
       if (!ignore_data || !iscte) {
         if (group && expand_groups) {
-          const std::vector<std::string> &t
-            = workspace.variable_group(pnode->name);
-          for (size_type i = 0; i < t.size(); ++i)
-            vars.insert(var_trans_pair(t[i], pnode->interpolate_name));
-
+          for (const std::string &t : workspace.variable_group(pnode->name))
+            vars.insert(var_trans_pair(t, pnode->interpolate_name));
         } else
           vars.insert(var_trans_pair(pnode->name, pnode->interpolate_name));
       }
@@ -5373,14 +5423,14 @@ namespace getfem {
         pnode->node_type == GA_NODE_INTERPOLATE_GRAD_TEST ||
         pnode->node_type == GA_NODE_INTERPOLATE_HESS_TEST ||
         pnode->node_type == GA_NODE_INTERPOLATE_DIVERG_TEST ||
-        pnode->node_type == GA_NODE_INTERPOLATE_NORMAL ||
-        pnode->node_type == GA_NODE_INTERPOLATE_X) {
+        pnode->node_type == GA_NODE_INTERPOLATE_X ||
+        pnode->node_type == GA_NODE_INTERPOLATE_NORMAL) {
       workspace.interpolate_transformation(pnode->interpolate_name)
         ->extract_variables(workspace, vars, ignore_data, m,
                             pnode->interpolate_name);
     }
-    for (size_type i = 0; i < pnode->children.size(); ++i)
-      found_var = ga_extract_variables(pnode->children[i], workspace, m,
+    for (auto&& child : pnode->children)
+      found_var = ga_extract_variables(child, workspace, m,
                                        vars, ignore_data)
         || found_var;
     return found_var;
@@ -5465,15 +5515,13 @@ namespace getfem {
         std::set<var_trans_pair> expr_variables;
         ga_extract_variables((remain ? tree : *(trees[ind_tree].ptree)).root,
                              *this, m, expr_variables, true);
-
-        for (std::set<var_trans_pair>::iterator it = expr_variables.begin();
-             it != expr_variables.end(); ++it) {
-          if (!(is_constant(it->varname))) {
+        for (const var_trans_pair &var : expr_variables) {
+          if (!(is_constant(var.varname))) {
             ga_tree dtree = (remain ? tree : *(trees[ind_tree].ptree));
-            // cout << "Derivation with respect to " << it->first << " : "
-            //     << it->second << " of " << ga_tree_to_string(dtree) << endl;
+            // cout << "Derivation with respect to " << var.first << " : "
+            //     << var.second << " of " << ga_tree_to_string(dtree) << endl;
             GA_TIC;
-            ga_derivative(dtree, *this, m, it->varname, it->transname, 1+order);
+            ga_derivative(dtree, *this, m, var.varname, var.transname, 1+order);
             // cout << "Result : " << ga_tree_to_string(dtree) << endl;
             GA_TOCTIC("Derivative time");
             ga_semantic_analysis(expr, dtree, *this, m.dim(),
@@ -5497,38 +5545,6 @@ namespace getfem {
     ptree = o.ptree; meshdim = o.meshdim; ignore_X = o.ignore_X;
     if (o.ptree) ptree = new ga_tree(*(o.ptree));
     return *this;
-  }
-
-  ga_tree &ga_workspace::macro_tree(const std::string &name,
-                                    size_type meshdim, size_type ref_elt_dim,
-                                    bool ignore_X) const {
-    GMM_ASSERT1(macro_exists(name), "Undefined macro");
-    auto it = macro_trees.find(name);
-    bool to_be_analyzed = false;
-    m_tree *mt = 0;
-
-    if (it == macro_trees.end()) {
-      mt = &(macro_trees[name]);
-      to_be_analyzed = true;
-    } else {
-      mt = &(it->second);
-      GMM_ASSERT1(mt->ptree, "Recursive definition of macro " << name);
-      if (mt->meshdim != meshdim || mt->ignore_X != ignore_X) {
-        to_be_analyzed = true;
-        delete mt->ptree; mt->ptree = 0;
-      }
-    }
-    if (to_be_analyzed) {
-      ga_tree tree;
-      ga_read_string(get_macro(name), tree);
-      ga_semantic_analysis(get_macro(name), tree, *this, meshdim, ref_elt_dim,
-                           false, ignore_X, 3);
-      GMM_ASSERT1(tree.root, "Invalid macro");
-      mt->ptree = new ga_tree(tree);
-      mt->meshdim = meshdim;
-      mt->ignore_X = ignore_X;
-    }
-    return *(mt->ptree);
   }
 
   size_type ga_workspace::add_expression(const std::string expr,
@@ -5658,17 +5674,15 @@ namespace getfem {
       case 1:
         if (td.order == order) {
           if (variable_group_exists(td.name_test1)) {
-            const std::vector<std::string> &t= variable_group(td.name_test1);
-            for (size_type j = 0; j < t.size(); ++j) {
-              vll.insert(var_trans_pair(t[j], td.interpolate_name_test1));
-            }
+            for (const std::string &t : variable_group(td.name_test1))
+              vll.insert(var_trans_pair(t, td.interpolate_name_test1));
           } else {
             vll.insert(var_trans_pair(td.name_test1,
                                       td.interpolate_name_test1));
           }
           bool found = false;
-          for (size_type j = 0; j < vl_test1.size(); ++j)
-            if (td.name_test1.compare(vl_test1[j]) == 0)
+          for (const std::string &t : vl_test1)
+            if (td.name_test1.compare(t) == 0)
               found = true;
           if (!found)
             vl_test1.push_back(td.name_test1);
@@ -5677,19 +5691,15 @@ namespace getfem {
       case 2:
         if (td.order == order) {
           if (variable_group_exists(td.name_test1)) {
-            const std::vector<std::string> &t= variable_group(td.name_test1);
-            for (size_type j = 0; j < t.size(); ++j) {
-              vll.insert(var_trans_pair(t[j], td.interpolate_name_test1));
-              }
+            for (const std::string &t : variable_group(td.name_test1))
+              vll.insert(var_trans_pair(t, td.interpolate_name_test1));
           } else {
             vll.insert(var_trans_pair(td.name_test1,
                                       td.interpolate_name_test1));
           }
           if (variable_group_exists(td.name_test2)) {
-            const std::vector<std::string> &t= variable_group(td.name_test2);
-            for (size_type j = 0; j < t.size(); ++j) {
-              vll.insert(var_trans_pair(t[j], td.interpolate_name_test2));
-            }
+            for (const std::string &t : variable_group(td.name_test2))
+              vll.insert(var_trans_pair(t, td.interpolate_name_test2));
           } else {
             vll.insert(var_trans_pair(td.name_test2,
                                       td.interpolate_name_test2));
@@ -5709,13 +5719,13 @@ namespace getfem {
       }
     }
     vl.clear();
-    for (auto it = vll.begin(); it!=vll.end(); ++it)
-      if (vl.size() == 0 || it->varname.compare(vl.back()))
-        vl.push_back(it->varname);
+    for (const auto &var : vll)
+      if (vl.size() == 0 || var.varname.compare(vl.back()))
+        vl.push_back(var.varname);
     dl.clear();
-    for (auto it = dll.begin(); it!=dll.end(); ++it)
-      if (dl.size() == 0 || it->varname.compare(dl.back()))
-        dl.push_back(it->varname);
+    for (const auto &var : dll)
+      if (dl.size() == 0 || var.varname.compare(dl.back()))
+        dl.push_back(var.varname);
 
     return islin;
   }
@@ -5749,11 +5759,12 @@ namespace getfem {
   const std::string &ga_workspace::variable_in_group
   (const std::string &group_name, const mesh &m) const {
     if (variable_group_exists(group_name)) {
-      const std::vector<std::string> &t=variable_group(group_name);
-      for (size_type j = 0; j < t.size(); ++j)
-        if (&((associated_mf(t[j]))->linked_mesh()) == &m) return t[j];
+      for (const std::string &t : variable_group(group_name))
+        if (&(associated_mf(t)->linked_mesh()) == &m)
+          return t;
       GMM_ASSERT1(false, "No variable in this group for the given mesh");
-    } else return group_name;
+    } else
+      return group_name;
   }
 
 
@@ -5786,58 +5797,51 @@ namespace getfem {
 
     // Deal with reduced fems.
     if (order) {
-      std::list<ga_tree>::iterator it = gis.trees.begin();
       std::set<std::string> vars_vec_done;
       std::set<std::pair<std::string, std::string> > vars_mat_done;
-      for (; it != gis.trees.end(); ++it) {
-        if (it->root) {
+      for (ga_tree &tree : gis.trees) {
+        if (tree.root) {
           if (order == 1) {
-            const std::string &name = it->root->name_test1;
-            bool is_group = variable_group_exists(name);
-            const std::vector<std::string> *t
-              = is_group ? &(variable_group(name)) : 0;
-            const std::string *vname = &(is_group ? (*t)[0] : name);
-
-            for (size_type i = 0; (i==0) || (is_group && i < t->size()); ++i) {
-              if (i > 0) vname = &((*t)[i]);
-              const mesh_fem *mf = associated_mf(*vname);
+            const std::string &name = tree.root->name_test1;
+            const std::vector<std::string> vnames_(1,name);
+            const std::vector<std::string> &vnames
+              = variable_group_exists(name) ? variable_group(name)
+                                            : vnames_;
+            for (const std::string &vname : vnames) {
+              const mesh_fem *mf = associated_mf(vname);
               if (mf && mf->is_reduced() &&
-                  vars_vec_done.find(*vname) == vars_vec_done.end()) {
+                  vars_vec_done.find(vname) == vars_vec_done.end()) {
                 gmm::mult_add(gmm::transposed(mf->extension_matrix()),
                               gmm::sub_vector(unreduced_V,
-                                              gis.var_intervals[*vname]),
+                                              gis.var_intervals[vname]),
                               gmm::sub_vector(V(),
-                                              interval_of_variable(*vname)));
-                vars_vec_done.insert(*vname);
+                                              interval_of_variable(vname)));
+                vars_vec_done.insert(vname);
               }
             }
           } else {
-            std::string &name1 = it->root->name_test1;
-            std::string &name2 = it->root->name_test2;
-            bool is_group1 = variable_group_exists(name1);
-            const std::vector<std::string> *t1
-              = is_group1 ? &(variable_group(name1)) : 0;
-            const std::string *vname1 = &(is_group1 ? (*t1)[0] : name1);
-            bool is_group2 = variable_group_exists(name2);
-            const std::vector<std::string> *t2
-              = is_group2 ? &(variable_group(name2)) : 0;
-            const std::string *vname2 = &(is_group2 ? (*t2)[0] : name2);
-            for (size_type i1 = 0; (i1==0) || (is_group1 && i1 < t1->size());
-                 ++i1) {
-              if (i1 > 0) vname1 = &((*t1)[i1]);
-              for (size_type i2 = 0; (i2==0) || (is_group2 && i2 < t2->size());
-                   ++i2) {
-                if (i2 > 0) vname2 = &((*t2)[i2]);
-                const mesh_fem *mf1 = associated_mf(*vname1);
-                const mesh_fem *mf2 = associated_mf(*vname2);
+            std::string &name1 = tree.root->name_test1;
+            std::string &name2 = tree.root->name_test2;
+            const std::vector<std::string> vnames1_(1,name1),
+                                           vnames2_(2,name2);
+            const std::vector<std::string> &vnames1
+              = variable_group_exists(name1) ? variable_group(name1)
+                                             : vnames1_;
+            const std::vector<std::string> &vnames2
+              = variable_group_exists(name2) ? variable_group(name2)
+                                             : vnames2_;
+            for (const std::string &vname1 : vnames1) {
+              for (const std::string &vname2 : vnames2) {
+                const mesh_fem *mf1 = associated_mf(vname1);
+                const mesh_fem *mf2 = associated_mf(vname2);
                 if (((mf1 && mf1->is_reduced())
                      || (mf2 && mf2->is_reduced()))) {
-                  std::pair<std::string, std::string> p(*vname1, *vname2);
+                  std::pair<std::string, std::string> p(vname1, vname2);
                   if (vars_mat_done.find(p) == vars_mat_done.end()) {
-                    gmm::sub_interval uI1 = gis.var_intervals[*vname1];
-                    gmm::sub_interval uI2 = gis.var_intervals[*vname2];
-                    gmm::sub_interval I1 = interval_of_variable(*vname1);
-                    gmm::sub_interval I2 = interval_of_variable(*vname2);
+                    gmm::sub_interval uI1 = gis.var_intervals[vname1];
+                    gmm::sub_interval uI2 = gis.var_intervals[vname2];
+                    gmm::sub_interval I1 = interval_of_variable(vname1);
+                    gmm::sub_interval I2 = interval_of_variable(vname2);
                     if ((mf1 && mf1->is_reduced()) &&
                         (mf2 && mf2->is_reduced())) {
                       model_real_sparse_matrix aux(I1.size(), uI2.size());
@@ -5867,27 +5871,6 @@ namespace getfem {
       }
     }
   }
-
-  const gmm::sub_interval &
-  ga_workspace::interval_of_disabled_variable(const std::string &name) const {
-    std::map<std::string, gmm::sub_interval>::const_iterator
-      it1 = int_disabled_variables.find(name);
-    if (it1 != int_disabled_variables.end()) return it1->second;
-    if (md->is_affine_dependent_variable(name))
-      return interval_of_disabled_variable(md->org_variable(name));
-
-    size_type first = md->nb_dof();
-    for (std::map<std::string, gmm::sub_interval>::const_iterator it
-           = int_disabled_variables.begin();
-         it !=  int_disabled_variables.end(); ++it) {
-      first = std::max(first, it->second.last());
-    }
-    int_disabled_variables[name]
-      = gmm::sub_interval(first, gmm::vect_size(value(name)));
-    return int_disabled_variables[name];
-  }
-
-  std::map<std::string, gmm::sub_interval> int_disabled_variables;
 
   void ga_workspace::clear_expressions(void) {
     trees.clear();
@@ -5997,7 +5980,7 @@ namespace getfem {
     case GA_NODE_XFEM_MINUS_HESS_TEST: case GA_NODE_XFEM_MINUS_DIVERG_TEST:
       c += 1.33*(1.22+ga_hash_code(pnode->name));
       break;
-    case GA_NODE_INTERPOLATE_NORMAL: case GA_NODE_INTERPOLATE_X:
+    case GA_NODE_INTERPOLATE_X: case GA_NODE_INTERPOLATE_NORMAL:
       c += M_PI*1.33*ga_hash_code(pnode->interpolate_name);
       break;
     case GA_NODE_PREDEF_FUNC: case GA_NODE_SPEC_FUNC: case GA_NODE_OPERATOR:
@@ -6243,13 +6226,13 @@ namespace getfem {
       break;
 
     case GA_NODE_INTERPOLATE:
-      if (pnode->name.compare("Normal") == 0) {
-        pnode->node_type = GA_NODE_INTERPOLATE_NORMAL;
+      if (pnode->name.compare("X") == 0) {
+        pnode->node_type = GA_NODE_INTERPOLATE_X;
         pnode->init_vector_tensor(meshdim);
         break;
       }
-      if (pnode->name.compare("X") == 0) {
-        pnode->node_type = GA_NODE_INTERPOLATE_X;
+      if (pnode->name.compare("Normal") == 0) {
+        pnode->node_type = GA_NODE_INTERPOLATE_NORMAL;
         pnode->init_vector_tensor(meshdim);
         break;
       }
@@ -8027,9 +8010,8 @@ namespace getfem {
         workspace.interpolate_transformation(pnode->interpolate_name)
           ->extract_variables(workspace, vars, true, m,
                               pnode->interpolate_name);
-        for (std::set<var_trans_pair>::iterator it=vars.begin();
-             it != vars.end(); ++it) {
-          if (!(workspace.is_constant(it->varname)))
+        for (const var_trans_pair &var : vars) {
+          if (!(workspace.is_constant(var.varname)))
             { is_constant = false; break; }
         }
       }
@@ -8050,9 +8032,8 @@ namespace getfem {
         workspace.interpolate_transformation(pnode->interpolate_name)
           ->extract_variables(workspace, vars, true, m,
                               pnode->interpolate_name);
-        for (std::set<var_trans_pair>::iterator it=vars.begin();
-             it != vars.end(); ++it) {
-          if (!(workspace.is_constant(it->varname)))
+        for (const var_trans_pair &var : vars) {
+          if (!(workspace.is_constant(var.varname)))
             { is_constant = false; break; }
         }
       }
@@ -8421,8 +8402,8 @@ namespace getfem {
          pnode->interpolate_name.compare(interpolatename) == 0)) marked = true;
 
     if (interpolate_node || interpolate_test_node ||
-        pnode->node_type == GA_NODE_INTERPOLATE_NORMAL ||
-        pnode->node_type == GA_NODE_INTERPOLATE_X) {
+        pnode->node_type == GA_NODE_INTERPOLATE_X ||
+        pnode->node_type == GA_NODE_INTERPOLATE_NORMAL) {
       std::set<var_trans_pair> vars;
       workspace.interpolate_transformation(pnode->interpolate_name)
         ->extract_variables(workspace, vars, true,
@@ -8490,10 +8471,9 @@ namespace getfem {
           workspace.interpolate_transformation(pnode->interpolate_name)
             ->extract_variables(workspace, vars, true, m,
                                 pnode->interpolate_name);
-          for (std::set<var_trans_pair>::iterator it=vars.begin();
-               it != vars.end(); ++it) {
-            if (it->varname.compare(varname) == 0 &&
-                it->transname.compare(interpolatename) == 0)
+          for (const var_trans_pair &var : vars) {
+            if (var.varname.compare(varname) == 0 &&
+                var.transname.compare(interpolatename) == 0)
               itrans = true;
           }
         }
@@ -9167,9 +9147,8 @@ namespace getfem {
   static void add_interval_to_gis(ga_workspace &workspace, std::string varname,
                                   ga_instruction_set &gis) {
     if (workspace.variable_group_exists(varname)) {
-      const std::vector<std::string> &vg = workspace.variable_group(varname);
-      for (size_type i = 0; i < vg.size(); ++i)
-        add_interval_to_gis(workspace, vg[i], gis);
+      for (const std::string &v : workspace.variable_group(varname))
+        add_interval_to_gis(workspace, v, gis);
     } else if (gis.var_intervals.find(varname) == gis.var_intervals.end()) {
       const mesh_fem *mf = workspace.associated_mf(varname);
       size_type nd = mf ? mf->nb_basic_dof() :
@@ -9183,9 +9162,8 @@ namespace getfem {
                                      std::string varname,
                                      ga_instruction_set &gis) {
     if (workspace.variable_group_exists(varname)) {
-      const std::vector<std::string> &vg = workspace.variable_group(varname);
-      for (size_type i = 0; i < vg.size(); ++i)
-        extend_variable_in_gis(workspace, vg[i], gis);
+      for (const std::string &v : workspace.variable_group(varname))
+        extend_variable_in_gis(workspace, v, gis);
     } else if (gis.extended_vars.find(varname)==gis.extended_vars.end()) {
       const mesh_fem *mf = workspace.associated_mf(varname);
       if (mf->is_reduced()) {
@@ -9242,12 +9220,14 @@ namespace getfem {
       if (mf1) {
         pctx1 = &(gis.ctx);
         const std::string &intn1 = pnode->interpolate_name_test1;
-        if (intn1.size()) pctx1 = &(rmi.interpolate_infos[intn1].ctx);
-        if (intn1.size()
-            && workspace.variable_group_exists(pnode->name_test1)) {
-          ga_instruction_set::variable_group_info &vgi =
-            rmi.interpolate_infos[intn1].groups_info[pnode->name_test1];
-          mfg1 = &(vgi.mf); mf1 = 0;
+        if (intn1.size()) {
+          pctx1 = &(rmi.interpolate_infos[intn1].ctx);
+          if (workspace.variable_group_exists(pnode->name_test1)) {
+            ga_instruction_set::variable_group_info &vgi =
+              rmi.interpolate_infos[intn1].groups_info[pnode->name_test1];
+            mfg1 = &(vgi.mf);
+            mf1 = 0;
+          }
         }
       }
       if (pnode->name_test2.size())
@@ -9255,12 +9235,14 @@ namespace getfem {
       if (mf2) {
         pctx2 = &(gis.ctx);
         const std::string &intn2 = pnode->interpolate_name_test2;
-        if (intn2.size()) pctx2 = &(rmi.interpolate_infos[intn2].ctx);
-        if (intn2.size()
-            && workspace.variable_group_exists(pnode->name_test2)) {
-          ga_instruction_set::variable_group_info &vgi =
-            rmi.interpolate_infos[intn2].groups_info[pnode->name_test2];
-          mfg2 = &(vgi.mf); mf2 = 0;
+        if (intn2.size()) {
+          pctx2 = &(rmi.interpolate_infos[intn2].ctx);
+          if (workspace.variable_group_exists(pnode->name_test2)) {
+            ga_instruction_set::variable_group_info &vgi =
+              rmi.interpolate_infos[intn2].groups_info[pnode->name_test2];
+            mfg2 = &(vgi.mf);
+            mf2 = 0;
+          }
         }
       }
     }
@@ -10536,8 +10518,8 @@ namespace getfem {
 
     if (intrpl || intrpl_test ||
         pnode->node_type == GA_NODE_INTERPOLATE_FILTER ||
-        pnode->node_type == GA_NODE_INTERPOLATE_NORMAL ||
-        pnode->node_type == GA_NODE_INTERPOLATE_X) {
+        pnode->node_type == GA_NODE_INTERPOLATE_X ||
+        pnode->node_type == GA_NODE_INTERPOLATE_NORMAL) {
       interpolates[pnode->interpolate_name].size();
       if (intrpl || intrpl_test) {
         if (workspace.variable_group_exists(pnode->name))
@@ -10777,7 +10759,8 @@ namespace getfem {
               break;
             }
           }
-          if (pgai) gis.whole_instructions[rm].instructions.push_back(std::move(pgai));
+          if (pgai)
+            gis.whole_instructions[rm].instructions.push_back(std::move(pgai));
         }
       }
     }
@@ -10805,9 +10788,8 @@ namespace getfem {
     base_matrix G;
     base_small_vector un, up;
 
-    std::set<std::string>::iterator iti = gis.transformations.begin();
-    for (; iti != gis.transformations.end(); ++iti)
-      (workspace.interpolate_transformation(*iti))->init(workspace);
+    for (const std::string &t : gis.transformations)
+      workspace.interpolate_transformation(t)->init(workspace);
 
     ga_instruction_set::instructions_set::iterator it
       = gis.whole_instructions.begin();
@@ -10883,9 +10865,8 @@ namespace getfem {
         }
       }
     }
-    iti = gis.transformations.begin();
-    for (; iti != gis.transformations.end(); ++iti)
-      (workspace.interpolate_transformation(*iti))->finalize();
+    for (const std::string &t : gis.transformations)
+      workspace.interpolate_transformation(t)->finalize();
 
     gic.finalize();
   }
@@ -11392,6 +11373,11 @@ namespace getfem {
   class  interpolate_transformation_expression
     : public virtual_interpolate_transformation, public context_dependencies {
 
+    struct workspace_gis_pair : public std::pair<ga_workspace, ga_instruction_set> {
+      inline ga_workspace &workspace() { return this->first; }
+      inline ga_instruction_set &gis() { return this->second; }
+    };
+
     const mesh &source_mesh;
     const mesh &target_mesh;
     std::string expr;
@@ -11404,8 +11390,7 @@ namespace getfem {
     mutable std::set<var_trans_pair> used_vars;
     mutable std::set<var_trans_pair> used_data;
     mutable std::map<var_trans_pair,
-                     std::pair<ga_workspace,
-                               ga_instruction_set> > compiled_derivatives;
+                     workspace_gis_pair> compiled_derivatives;
     mutable bool extract_variable_done;
     mutable bool extract_data_done;
 
@@ -11456,9 +11441,8 @@ namespace getfem {
       ga_compile_interpolation(local_workspace, local_gis);
 
       // In fact, transformations are not allowed  ... for future compatibility
-      std::set<std::string>::iterator iti = local_gis.transformations.begin();
-      for (; iti != local_gis.transformations.end(); ++iti)
-        (local_workspace.interpolate_transformation(*iti))
+      for (const std::string &transname : local_gis.transformations)
+        local_workspace.interpolate_transformation(transname)
           ->init(local_workspace);
 
       if (!extract_variable_done) {
@@ -11466,20 +11450,18 @@ namespace getfem {
         extract_variables(workspace, vars, true, source_mesh, "");
       }
 
-      for (std::set<var_trans_pair>::iterator it = used_vars.begin();
-           it != used_vars.end(); ++it) {
-        std::pair<ga_workspace, ga_instruction_set>
-          &pwi = compiled_derivatives[*it];
-        pwi.first = local_workspace;
-        pwi.second = ga_instruction_set();
-        if (pwi.first.nb_trees()) {
-          ga_tree tree = *(pwi.first.tree_info(0).ptree);
-          ga_derivative(tree, pwi.first, source_mesh,
-                        it->varname, it->transname, 1);
+      for (const var_trans_pair &var : used_vars) {
+        workspace_gis_pair &pwi = compiled_derivatives[var];
+        pwi.workspace() = local_workspace;
+        pwi.gis() = ga_instruction_set();
+        if (pwi.workspace().nb_trees()) {
+          ga_tree tree = *(pwi.workspace().tree_info(0).ptree);
+          ga_derivative(tree, pwi.workspace(), source_mesh,
+                        var.varname, var.transname, 1);
           if (tree.root)
             ga_semantic_analysis(expr, tree, local_workspace, 1, 1,
                                  false, true);
-          ga_compile_interpolation(pwi.first, pwi.second);
+          ga_compile_interpolation(pwi.workspace(), pwi.gis());
         }
       }
 
@@ -11514,8 +11496,8 @@ namespace getfem {
           scalar_type h = bmax[0] - bmin[0];
           for (size_type k = 1; k < N; ++k) h = std::max(h, bmax[k]-bmin[k]);
           if (pgt->is_linear()) h *= 1E-8;
-          for (size_type k = 0; k < N; ++k)
-            { bmin[k] -= h*0.2; bmax[k] += h*0.2; }
+          for (auto &&val : bmin) val -= h*0.2;
+          for (auto &&val : bmax) val += h*0.2;
 
           element_boxes.add_box(bmin, bmax, cv);
         }
@@ -11524,9 +11506,8 @@ namespace getfem {
     }
 
     void finalize(void) const {
-      std::set<std::string>::iterator iti = local_gis.transformations.begin();
-      for (; iti != local_gis.transformations.end(); ++iti)
-        (local_workspace.interpolate_transformation(*iti))->finalize();
+      for (const std::string &transname : local_gis.transformations)
+        local_workspace.interpolate_transformation(transname)->finalize();
       local_gis = ga_instruction_set();
     }
 
@@ -11607,14 +11588,12 @@ namespace getfem {
       // including the Test_u.
       if (compute_derivatives) { // To be tested both with the computation
                                  // of derivative. Could be optimized ?
-        for (std::map<var_trans_pair, base_tensor>::iterator
-             itd = derivatives.begin(); itd != derivatives.end(); ++itd) {
-          std::pair<ga_workspace, ga_instruction_set>
-            &pwi = compiled_derivatives[itd->first];
+        for (auto &&d : derivatives) {
+          workspace_gis_pair &pwi = compiled_derivatives[d.first];
 
-          gmm::clear(pwi.first.assembled_tensor().as_vector());
-          ga_function_exec(pwi.second);
-          itd->second = pwi.first.assembled_tensor();
+          gmm::clear(pwi.workspace().assembled_tensor().as_vector());
+          ga_function_exec(pwi.gis());
+          d.second = pwi.workspace().assembled_tensor();
         }
       }
       return ret_type;

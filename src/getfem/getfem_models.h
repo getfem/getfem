@@ -249,13 +249,14 @@ namespace getfem {
 
       const mesh_fem &associated_mf(void) const {
         GMM_ASSERT1(is_fem_dofs, "This variable is not linked to a fem");
-        if (filter == VDESCRFILTER_NO) return *mf; else return *partial_mf;
+        return (filter == VDESCRFILTER_NO) ? *mf : *partial_mf;
       }
 
       const mesh_fem *passociated_mf(void) const {
-        if (!is_fem_dofs) return 0;
-        if (filter == VDESCRFILTER_NO || partial_mf.get() == 0) return mf;
-        else return partial_mf.get();
+        if (!is_fem_dofs)
+          return 0;
+        return (filter == VDESCRFILTER_NO || partial_mf.get() == 0)
+               ? mf : partial_mf.get();
       }
 
       size_type size(void) const // Should control that the variable is
