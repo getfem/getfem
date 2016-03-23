@@ -423,7 +423,6 @@ static void do_high_level_generic_assembly(mexargs_in& in, mexargs_out& out) {
   size_type region = in.pop().to_integer();
 
   getfem::ga_workspace workspace1;
-  add_interpolate_transformation_neighbour(workspace1);
   getfem::model dummy_md;
   bool with_model = in.remaining() && is_model_object(in.front());
   const getfem::model &md = with_model ? *to_model_object(in.pop()) : dummy_md;

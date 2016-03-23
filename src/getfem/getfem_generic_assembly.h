@@ -119,6 +119,8 @@ namespace getfem {
     const ga_workspace *parent_workspace;
     bool enable_all_md_variables;
 
+    void init();
+
     struct var_description {
 
       bool is_variable;
@@ -548,11 +550,14 @@ namespace getfem {
 
     ga_workspace(const getfem::model &md_, bool enable_all_variables = false)
       : md(&md_), parent_workspace(0),
-        enable_all_md_variables(enable_all_variables) {}
+        enable_all_md_variables(enable_all_variables)
+    { init(); }
     ga_workspace(bool, const ga_workspace &gaw)
-      : md(0), parent_workspace(&gaw), enable_all_md_variables(false) {}
+      : md(0), parent_workspace(&gaw), enable_all_md_variables(false)
+    { init(); }
     ga_workspace()
-      : md(0), parent_workspace(0), enable_all_md_variables(false) {}
+      : md(0), parent_workspace(0), enable_all_md_variables(false)
+    { init(); }
     ~ga_workspace() { clear_expressions(); }
 
   };
@@ -654,12 +659,12 @@ namespace getfem {
    const mesh &source_mesh, const mesh &target_mesh, const std::string &expr);
 
 
-  /** Add a transformation to the model `md` corresponding to the interpolation
-      on the neighbour element. Can only be applied to the computation on
-      some internal faces of a mesh.
+  /** Create a new instance of a transformation corresponding to the
+      interpolation on the neighbour element. Can only be applied to the
+      computation on some internal faces of a mesh.
+      (mainly for internal use in the constructor of getfem::model)
   */
-  void add_interpolate_transformation_neighbour(model &md);
-  void add_interpolate_transformation_neighbour(ga_workspace &workspace);
+  pinterpolate_transformation interpolate_transformation_neighbour_instance();
 
 }  /* end of namespace getfem.                                             */
 

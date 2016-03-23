@@ -92,7 +92,8 @@ namespace getfem {
     is_linear_ = is_symmetric_ = is_coercive_ = true;
     leading_dim = 0;
     time_integration = 0; init_step = false; time_step = scalar_type(1);
-    add_interpolate_transformation_neighbour(*this);
+    add_interpolate_transformation
+      ("neighbour_elt", interpolate_transformation_neighbour_instance());
   }
 
   void model::var_description::set_size(void) {
@@ -2810,19 +2811,22 @@ namespace getfem {
   }
 
 
-  const mesh_fem &model::mesh_fem_of_variable(const std::string &name) const {
+  const mesh_fem &
+  model::mesh_fem_of_variable(const std::string &name) const {
     VAR_SET::const_iterator it = variables.find(name);
     GMM_ASSERT1(it!=variables.end(), "Undefined variable " << name);
     return it->second.associated_mf();
   }
 
-  const mesh_fem *model::pmesh_fem_of_variable(const std::string &name) const {
+  const mesh_fem *
+  model::pmesh_fem_of_variable(const std::string &name) const {
     VAR_SET::const_iterator it = variables.find(name);
     GMM_ASSERT1(it!=variables.end(), "Undefined variable " << name);
     return it->second.passociated_mf();
   }
 
-  bgeot::multi_index model::qdims_of_variable(const std::string &name) const {
+  bgeot::multi_index
+  model::qdims_of_variable(const std::string &name) const {
     VAR_SET::const_iterator it = variables.find(name);
     GMM_ASSERT1(it!=variables.end(), "Undefined variable " << name);
     const mesh_fem *mf = it->second.passociated_mf();

@@ -60,7 +60,6 @@ namespace getfem {
     const mesh_fem &mf0 = classical_mesh_fem(m, 0);
 
     getfem::ga_workspace workspace;
-    add_interpolate_transformation_neighbour(workspace);
     mesh_region inner_faces = inner_faces_of_mesh(m, rg);
     getfem::size_type nbdof = mf0.nb_dof();
     getfem::base_vector Z(nbdof);

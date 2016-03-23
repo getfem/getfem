@@ -5213,6 +5213,12 @@ namespace getfem {
   // functions, operators.
   //=========================================================================
 
+  void ga_workspace::init() {
+    add_interpolate_transformation
+      ("neighbour_elt", interpolate_transformation_neighbour_instance());
+  }
+
+  // variables and variable groups
   void ga_workspace::add_fem_variable
   (const std::string &name, const mesh_fem &mf,
    const gmm::sub_interval &I, const model_real_plain_vector &VV) {
@@ -11680,16 +11686,12 @@ namespace getfem {
 
   };
 
-  // Should be added by default
 
-  void add_interpolate_transformation_neighbour(model &md) {
-    pinterpolate_transformation p(new interpolate_transformation_neighbour());
-    md.add_interpolate_transformation("neighbour_elt", p);
-  }
-
-  void add_interpolate_transformation_neighbour(ga_workspace &workspace) {
-    pinterpolate_transformation p(new interpolate_transformation_neighbour());
-    workspace.add_interpolate_transformation("neighbour_elt", p);
+  pinterpolate_transformation interpolate_transformation_neighbour_instance()
+  {
+    pinterpolate_transformation
+      p = std::make_shared<interpolate_transformation_neighbour>();
+    return p;
   }
 
 
