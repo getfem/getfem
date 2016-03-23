@@ -21,6 +21,7 @@
 
 #include <getfem/getfem_interpolation.h>
 #include <getfem/getfem_nonlinear_elasticity.h>
+#include <getfem/getfem_plasticity.h>
 #include <getfem/getfem_fourth_order.h>
 #include <getfem/getfem_contact_and_friction_nodal.h>
 #include <getfem/getfem_contact_and_friction_integral.h>
@@ -1180,6 +1181,56 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
       ("undefine function", 1, 1, 0, 0,
        std::string name = in.pop().to_string();
        getfem::ga_undefine_function(name);
+       );
+
+    /*@FUNC ('define linear hardening function', @str name, @scalar sigma_y0, @scalar H, ... [@str 'Frobenius'])
+      Define a new linear hardening function under the name `name`, with
+      initial yield stress `sigma_y0` and hardening modulus H.
+      If an extra string argument with the value 'Frobenius' is provided,
+      the hardening function is expressed in terms of Frobenius norms of its
+      input strain and output stress, instead of their Von-Mises equivalents. @*/
+    sub_command
+      ("define linear hardening function", 3, 4, 0, 0,
+       std::string name = in.pop().to_string();
+       const double sigma_y0 = in.pop().to_scalar();
+       const double H = in.pop().to_scalar();
+       bool frobenius(false);
+       if (in.remaining()) frobenius = (in.pop().to_integer() != 0);
+       getfem::ga_define_linear_hardening_function(name, sigma_y0, H, frobenius);
+       );
+
+    /*@FUNC ('define Ramberg Osgood hardening function', @str name, @scalar sigma_ref, {@scalar eps_ref | @scalar E, @scalar alpha}, @scalar n[, @str 'Frobenius'])
+      Define a new Ramberg Osgood hardening function under the name `name`,
+      with initial yield stress `sigma_y0` and hardening modulus H.
+      If an extra string argument with the value 'Frobenius' is provided,
+      the hardening function is expressed in terms of Frobenius norms of its
+      input strain and output stress, instead of their Von-Mises equivalents. @*/
+    sub_command
+      ("define Ramberg Osgood hardening function", 4, 6, 0, 0,
+       const std::string name = in.pop().to_string();
+       const double sigma_ref = in.pop().to_scalar();
+       double eps_ref = in.pop().to_scalar();
+       double n = in.pop().to_scalar();
+
+       bool frobenius(false);
+       if (in.remaining()) {
+         mexarg_in argin = in.pop();
+         if (argin.is_string()) {
+           frobenius = cmd_strmatch(argin.to_string(), "frobenius");
+           if (in.remaining())
+             THROW_BADARG( "Wrong types of input arguments");
+         } else {
+           const double E(eps_ref);
+           const double alpha(n);
+           eps_ref = alpha*sigma_ref/E;
+           n = argin.to_scalar();
+           if (in.remaining())
+             frobenius = cmd_strmatch(in.pop().to_string(), "frobenius");
+         }
+       }
+
+       getfem::ga_define_Ramberg_Osgood_hardening_function
+         (name, sigma_ref, eps_ref, n, frobenius);
        );
 
 

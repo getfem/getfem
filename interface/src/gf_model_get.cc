@@ -832,6 +832,32 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        );
 
 
+    /*@GET ('elastoplasticity next iter', @tmim mim, @str varname, @str previous_dep_name, @str projname, @str datalambda, @str datamu, @str datathreshold, @str datasigma)
+      Compute and save the stress constraints sigma for other hypothetical iterations.
+      'mim' is the integration method to use for the computation.
+      'varname' is the main variable of the problem.
+      'previous_dep_name' represents the displacement at the previous time step.
+      'projname' is the type of projection to use. For the moment it could only be 'Von Mises' or 'VM'.
+      'datalambda' and 'datamu' are the Lame coefficients of the material.
+      'datasigma' is a vector which will contain the new stress constraints values.@*/
+    sub_command
+      ("elastoplasticity next iter", 8, 8, 0, 1,
+       getfem::mesh_im *mim = to_meshim_object(in.pop());
+       std::string varname = in.pop().to_string();
+       std::string previous_dep = in.pop().to_string();
+       std::string projname = in.pop().to_string();
+       std::string datalambda = in.pop().to_string();
+       std::string datamu = in.pop().to_string();
+       std::string datathreshold = in.pop().to_string();
+       std::string datasigma = in.pop().to_string();
+
+
+       getfem::elastoplasticity_next_iter
+       (*md, *mim, varname, previous_dep,
+        abstract_constraints_projection_from_name(projname),
+        datalambda, datamu, datathreshold, datasigma);
+       );
+
     /*@GET V = ('compute elastoplasticity Von Mises or Tresca', @str datasigma, @tmf mf_vm[, @str version])
       Compute on `mf_vm` the Von-Mises or the Tresca stress of a field for plasticity and return it into the vector V.
       `datasigma` is a vector which contains the stress constraints values supported by the mesh.
@@ -855,36 +881,6 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        (*md, datasigma, *mf, VMM, tresca);
        out.pop().from_dcvector(VMM);
        );
-
-
-
-
-    /*@GET ('elastoplasticity next iter', @tmim mim, @str varname, @str previous_dep_name, @str projname, @str datalambda, @str datamu, @str datathreshold, @str datasigma)
-      Compute and save the stress constraints sigma for other hypothetical iterations.
-      'mim' is the integration method to use for the computation.
-      'varname' is the main variable of the problem.
-      'previous_dep_name' represents the displacement at the previous time step.
-      'projname' is the type of projection to use. For the moment it could only be 'Von Mises' or 'VM'.
-      'datalambda' and 'datamu' are the Lame coefficients of the material.
-      'datasigma' is a vector which will contains the new stress constraints values.@*/
-    sub_command
-      ("elastoplasticity next iter", 8, 8, 0, 1,
-       getfem::mesh_im *mim = to_meshim_object(in.pop());
-       std::string varname = in.pop().to_string();
-       std::string previous_dep = in.pop().to_string();
-       std::string projname = in.pop().to_string();
-       std::string datalambda = in.pop().to_string();
-       std::string datamu = in.pop().to_string();
-       std::string datathreshold = in.pop().to_string();
-       std::string datasigma = in.pop().to_string();
-
-
-       getfem::elastoplasticity_next_iter
-       (*md, *mim, varname, previous_dep,
-	abstract_constraints_projection_from_name(projname),
-	datalambda, datamu, datathreshold, datasigma);
-       );
-
 
     /*@GET V = ('compute plastic part', @tmim mim, @tmf mf_pl, @str varname, @str previous_dep_name, @str projname, @str datalambda, @str datamu, @str datathreshold, @str datasigma)
       Compute on `mf_pl` the plastic part and return it into the vector V.

@@ -320,6 +320,43 @@ namespace getfem {
                             model_real_plain_vector &plast);
 
 
+  // Finite strain elastoplasticity
+
+  /** Add a linear function with the name specified by `name` to represent
+      linear isotropoc hardening in plasticity with initial yield limit
+      `sigma_y0` and hardening modulus `H`.
+      A true value of the `frobenius` argument will express the hardening
+      function in terms of Frobenius norms both for the strain input and
+      the stress output, instead of the corresponding Von-Mises quantities.
+  */
+  void ga_define_linear_hardening_function
+  (const std::string &name, scalar_type sigma_y0, scalar_type H, bool frobenius=true);
+
+  /** Add a Ramberg-Osgood hardening function with the name specified by
+     `name`, for reference stress and strain given by `sigma_ref` and
+      `eps_ref` respectively and for a hardening exponent `n`.
+      A true value of the `frobenius` argument will express the hardening
+      function in terms of Frobenius norms both for the strain input and
+      the stress output, instead of the corresponding Von-Mises quantities.
+  */
+  void ga_define_Ramberg_Osgood_hardening_function
+  (const std::string &name,
+   scalar_type sigma_ref, scalar_type eps_ref, scalar_type n,
+   bool frobenius=false);
+
+  /** Add a Ramberg-Osgood hardening function with the name specified by
+     `name`, for reference stress `sigma_ref`, Young's modulus `E`,
+      offset parameter `alpha` and hardening parameter `n`.
+      A true value of the `frobenius` argument will express the hardening
+      function in terms of Frobenius norms both for the strain input and
+      the stress output, instead of the corresponding Von-Mises quantities.
+  */
+  inline void ga_define_Ramberg_Osgood_hardening_function
+  (const std::string &name, scalar_type sigma_ref, scalar_type E, 
+   scalar_type alpha, scalar_type n, bool frobenius=false) {
+    ga_define_Ramberg_Osgood_hardening_function
+      (name, sigma_ref, alpha*sigma_ref/E, n, frobenius);
+  }
 
 
 

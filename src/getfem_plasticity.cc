@@ -25,7 +25,7 @@
 #include "getfem/getfem_interpolation.h"
 #include "getfem/getfem_generic_assembly.h"
 #include "gmm/gmm_dense_matrix_functions.h"
-
+#include <iomanip>
 
 namespace getfem {
 
@@ -1076,6 +1076,41 @@ namespace getfem {
   // declared in getfem_generic_assembly.cc
   bool predef_operators_plasticity_initialized
     = init_predef_operators();
+
+
+  // Finite strain elastoplasticity
+
+  const std::string _TWOTHIRD_("0.6666666666666666667");
+  const std::string _FIVETHIRD_("1.6666666666666666667");
+  const std::string _SQRTTHREEHALF_("1.2247448713915889407");
+
+  void ga_define_linear_hardening_function
+  (const std::string &name, scalar_type sigma_y0, scalar_type H, bool frobenius)
+  {
+     if (frobenius) {
+       sigma_y0 *= sqrt(2./3.);
+       H *= 2./3.;
+     }
+     std::stringstream expr, der;
+     expr << std::setprecision(17) << sigma_y0 << "+" << H << "*t";
+     der << std::setprecision(17) << H;
+     ga_define_function(name, 1, expr.str(), der.str());
+  }
+
+  void ga_define_Ramberg_Osgood_hardening_function
+  (const std::string &name,
+   scalar_type sigma_ref, scalar_type eps_ref, scalar_type n, bool frobenius)
+  {
+    scalar_type coef = sigma_ref / pow(eps_ref, 1./n);
+    if (frobenius)
+      coef *= pow(2./3., 0.5 + 0.5/n); // = sqrt(2/3) * sqrt(2/3)^(1/n)
+
+    std::stringstream expr, der;
+    expr << std::setprecision(17) << coef << "*pow(t+1e-12," << 1./n << ")";
+    der << std::setprecision(17) << coef/n << "*pow(t+1e-12," << 1./n-1 << ")";
+    ga_define_function(name, 1, expr.str(), der.str());
+  }
+
 
 }  /* end of namespace getfem.  */
 
