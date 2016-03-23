@@ -821,6 +821,40 @@ namespace getfem {
   { return dal::singleton<dummy_mesh_fem_>::instance().mf; }
 
 
+  void vectorize_base_tensor(const base_tensor &t, base_matrix &vt,
+                             size_type ndof, size_type qdim, size_type N) {
+    GMM_ASSERT1(qdim == N || qdim == 1, "mixed intrinsic vector and "
+                "tensorised fem is not supported");
+    gmm::resize(vt, ndof, N);
+    ndof = (ndof*qdim)/N;
+    if (qdim == 1) {
+      gmm::clear(vt);
+      base_tensor::const_iterator it = t.begin();
+      for (size_type i = 0; i < ndof; ++i, ++it)
+        for (size_type j = 0; j < N; ++j) vt(i*N+j, j) = *it;
+    } else if (qdim == N) {
+      gmm::copy(t.as_vector(), vt.as_vector());
+    }
+  }
+
+  void vectorize_grad_base_tensor(const base_tensor &t, base_tensor &vt,
+                                  size_type ndof, size_type qdim,
+                                  size_type N) {
+    GMM_ASSERT1(qdim == N || qdim == 1, "mixed intrinsic vector and "
+                  "tensorised fem is not supported");
+    vt.adjust_sizes(bgeot::multi_index(ndof, N, N));
+    ndof = (ndof*qdim)/N;
+    if (qdim == 1) {
+      gmm::clear(vt.as_vector());
+      base_tensor::const_iterator it = t.begin();
+      for (size_type k = 0; k < N; ++k)
+        for (size_type i = 0; i < ndof; ++i, ++it)
+          for (size_type j = 0; j < N; ++j) vt(i*N+j, j, k) = *it;
+    } else if (qdim == N) {
+      gmm::copy(t.as_vector(), vt.as_vector());
+    }
+  }
+
 
 
 }  /* end of namespace getfem.                                             */

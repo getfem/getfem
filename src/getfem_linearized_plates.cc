@@ -21,7 +21,6 @@
 
 
 #include "getfem/getfem_linearized_plates.h"
-#include "getfem/getfem_contact_and_friction_common.h" // for vectorize_base_tensor
 
 
 namespace getfem {
