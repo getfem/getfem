@@ -139,13 +139,12 @@ namespace getfem
     exporting(*pmf);
   }
 
-  void vtk_export::exporting(const mesh_fem& mf, bool is_consistent_with_mesh) {
+  void vtk_export::exporting(const mesh_fem& mf) {
     dim_ = mf.linked_mesh().dim();
     GMM_ASSERT1(dim_ <= 3, "attempt to export a " << int(dim_)
               << "D slice (not supported)");
     if (&mf != pmf.get())
-      pmf = std::make_unique<mesh_fem>(
-              mf.linked_mesh(), dim_type(1), is_consistent_with_mesh);
+      pmf = std::make_unique<mesh_fem>(mf.linked_mesh());
     /* initialize pmf with finite elements suitable for VTK (which only knows
        isoparametric FEMs of order 1 and 2) */
     for (dal::bv_visitor cv(mf.convex_index()); !cv.finished(); ++cv) {
