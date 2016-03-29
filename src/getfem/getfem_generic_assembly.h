@@ -213,70 +213,30 @@ namespace getfem {
                   const std::string &expr, size_type add_derivative_order = 2,
                   bool scalar_expr = true);
 
-    struct sparse_matrix_ptr {
-      std::shared_ptr<model_real_sparse_matrix> ptr;
-      model_real_sparse_matrix &operator()() { return *ptr; }
-      const model_real_sparse_matrix &operator()() const { return *ptr; }
-      void resize(size_type nb)
-      { if (ptr.use_count()) { gmm::clear(*ptr); gmm::resize(*ptr, nb, nb); } }
-      void set_matrix(model_real_sparse_matrix &M) {
-        ptr = std::shared_ptr<model_real_sparse_matrix>
-          (std::shared_ptr<model_real_sparse_matrix>(), &M);
-      }
-      sparse_matrix_ptr()
-        : ptr(std::make_shared<model_real_sparse_matrix>(2,2)) {}
-      sparse_matrix_ptr(const sparse_matrix_ptr &smp): ptr(smp.ptr) {
-        if (ptr.use_count())
-          ptr=std::make_shared<model_real_sparse_matrix>(smp());
-      }
-      sparse_matrix_ptr &operator =(const sparse_matrix_ptr &smp) {
-        ptr = smp.ptr;
-        if (ptr.use_count())
-          ptr=std::make_shared<model_real_sparse_matrix>(smp());
-        return *this;
-      }
-    };
 
-    struct base_vector_ptr {
-      std::shared_ptr<base_vector> ptr;
-      base_vector &operator()() { return *ptr; }
-      const base_vector &operator()() const { return *ptr; }
-      void resize(size_type nb)
-      { if (ptr.use_count()) { gmm::clear(*ptr); gmm::resize(*ptr, nb);} }
-      void set_vector(base_vector &vector) {
-        ptr = std::shared_ptr<base_vector>(std::shared_ptr<base_vector>(),
-                                           &vector);
-      }
-      base_vector_ptr(): ptr(std::make_shared<base_vector>(2)) {}
-      base_vector_ptr(const base_vector_ptr &smp): ptr(smp.ptr)
-      { if (ptr.use_count()) ptr=std::make_shared<base_vector>(smp()); }
-      base_vector_ptr &operator =(const base_vector_ptr &smp) {
-        ptr = smp.ptr;
-        if (ptr.use_count())
-          ptr = std::make_shared<base_vector>(smp());
-        return *this;
-      }
-    };
-
-    sparse_matrix_ptr K;
+    std::shared_ptr<model_real_sparse_matrix> K;
     model_real_sparse_matrix unreduced_K;
-    base_vector_ptr V;
+    std::shared_ptr<base_vector> V;
     base_vector unreduced_V;
     scalar_type E;
     base_tensor assemb_t;
 
   public:
 
-    const model_real_sparse_matrix &assembled_matrix() const { return K();}
-    model_real_sparse_matrix &assembled_matrix() { return K(); }
+    const model_real_sparse_matrix &assembled_matrix() const { return *K;}
+    model_real_sparse_matrix &assembled_matrix() { return *K; }
     scalar_type &assembled_potential() { return E; }
     const scalar_type &assembled_potential() const { return E; }
-    const base_vector &assembled_vector() const { return V(); }
-    base_vector &assembled_vector() { return V(); }
-    void set_assembled_matrix(model_real_sparse_matrix &K_)
-    { K.set_matrix(K_); }
-    void set_assembled_vector(base_vector &V_)
-    { V.set_vector(V_); }
+    const base_vector &assembled_vector() const { return *V; }
+    base_vector &assembled_vector() { return *V; }
+    void set_assembled_matrix(model_real_sparse_matrix &K_) {
+      K = std::shared_ptr<model_real_sparse_matrix>
+          (std::shared_ptr<model_real_sparse_matrix>(), &K_);
+    }
+    void set_assembled_vector(base_vector &V_) {
+      V = std::shared_ptr<base_vector>
+          (std::shared_ptr<base_vector>(), &V_);
+    }
     base_tensor &assembled_tensor() { return assemb_t; }
     const base_tensor &assembled_tensor() const { return assemb_t; }
 

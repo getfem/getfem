@@ -5214,6 +5214,11 @@ namespace getfem {
   //=========================================================================
 
   void ga_workspace::init() {
+    // allocate own storage for K an V to be used unless/until external
+    // storage is provided with set_assembled_matrix/vector
+    K = std::make_shared<model_real_sparse_matrix>(2,2);
+    V = std::make_shared<base_vector>(2);
+    // add default transformations
     add_interpolate_transformation
       ("neighbour_elt", interpolate_transformation_neighbour_instance());
   }
@@ -5783,12 +5788,20 @@ namespace getfem {
     GA_TOCTIC("Compile time");
 
     if (order == 2) {
-      K.resize(max_dof);
-      gmm::clear(unreduced_K); gmm::resize(unreduced_K, ndof, ndof);
+      if (K.use_count()) {
+        gmm::clear(*K);
+        gmm::resize(*K, max_dof, max_dof);
+      }
+      gmm::clear(unreduced_K);
+      gmm::resize(unreduced_K, ndof, ndof);
     }
     if (order == 1) {
-      V.resize(max_dof);
-      gmm::clear(unreduced_V); gmm::resize(unreduced_V, ndof);
+      if (V.use_count()) {
+        gmm::clear(*V);
+        gmm::resize(*V, max_dof);
+      }
+      gmm::clear(unreduced_V);
+      gmm::resize(unreduced_V, ndof);
     }
     E = 0;
     GA_TOCTIC("Init time");
@@ -5820,7 +5833,7 @@ namespace getfem {
                 gmm::mult_add(gmm::transposed(mf->extension_matrix()),
                               gmm::sub_vector(unreduced_V,
                                               gis.var_intervals[vname]),
-                              gmm::sub_vector(V(),
+                              gmm::sub_vector(*V,
                                               interval_of_variable(vname)));
                 vars_vec_done.insert(vname);
               }
@@ -5855,17 +5868,17 @@ namespace getfem {
                       gmm::mult(gmm::transposed(mf1->extension_matrix()),
                                 gmm::sub_matrix(unreduced_K, uI1, uI2), aux);
                       gmm::mult(aux, mf2->extension_matrix(), M);
-                      gmm::add(M, gmm::sub_matrix(K(), I1, I2));
+                      gmm::add(M, gmm::sub_matrix(*K, I1, I2));
                     } else if (mf1 && mf1->is_reduced()) {
                       model_real_sparse_matrix M(I1.size(), I2.size());
                       gmm::mult(gmm::transposed(mf1->extension_matrix()),
                                 gmm::sub_matrix(unreduced_K, uI1, uI2), M);
-                      gmm::add(M, gmm::sub_matrix(K(), I1, I2));
+                      gmm::add(M, gmm::sub_matrix(*K, I1, I2));
                     } else {
                       model_real_row_sparse_matrix M(I1.size(), I2.size());
                       gmm::mult(gmm::sub_matrix(unreduced_K, uI1, uI2),
                                 mf2->extension_matrix(), M);
-                      gmm::add(M, gmm::sub_matrix(K(), I1, I2));
+                      gmm::add(M, gmm::sub_matrix(*K, I1, I2));
                     }
                     vars_mat_done.insert(p);
                   }
@@ -11619,7 +11632,7 @@ namespace getfem {
   (model &md, const std::string &name, const mesh &sm, const mesh &tm,
    const std::string &expr) {
     pinterpolate_transformation
-      p(new interpolate_transformation_expression(sm, tm, expr));
+      p = std::make_shared<interpolate_transformation_expression>(sm, tm, expr);
     md.add_interpolate_transformation(name, p);
   }
 
@@ -11627,7 +11640,7 @@ namespace getfem {
   (ga_workspace &workspace, const std::string &name, const mesh &sm,
    const mesh &tm, const std::string &expr) {
     pinterpolate_transformation
-      p(new interpolate_transformation_expression(sm, tm, expr));
+      p = std::make_shared<interpolate_transformation_expression>(sm, tm, expr);
     workspace.add_interpolate_transformation(name, p);
   }
 
