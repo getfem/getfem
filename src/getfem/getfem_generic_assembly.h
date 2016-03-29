@@ -286,11 +286,7 @@ namespace getfem {
                         model::varnamelist &vl_test2, model::varnamelist &dl,
                         size_type order);
 
-    bool variable_exists(const std::string &name) const {
-      return (md && md->variable_exists(name)) ||
-        (parent_workspace && parent_workspace->variable_exists(name)) ||
-        (variables.find(name) != variables.end());
-    }
+    bool variable_exists(const std::string &name) const;
 
     const std::string &variable_in_group(const std::string &group_name,
                                          const mesh &m) const;
@@ -298,204 +294,68 @@ namespace getfem {
     void define_variable_group(const std::string &group_name,
                                const std::vector<std::string> &nl);
 
-    bool variable_group_exists(std::string name) const {
-      return (variable_groups.find(name) != variable_groups.end()) ||
-        (md && md->variable_group_exists(name)) ||
-        (parent_workspace && parent_workspace->variable_group_exists(name));
-    }
+    bool variable_group_exists(std::string name) const;
 
     bool variable_or_group_exists(const std::string &name) const
     { return variable_exists(name) || variable_group_exists(name); }
 
-    const std::vector<std::string>
-    &variable_group(const std::string &group_name) const {
-      std::map<std::string, std::vector<std::string> >::const_iterator
-        it = variable_groups.find(group_name);
-      if (it != variable_groups.end())
-        return (variable_groups.find(group_name))->second;
-      if (md && md->variable_group_exists(group_name))
-        return md->variable_group(group_name);
-      if (parent_workspace &&
-          parent_workspace->variable_group_exists(group_name))
-        return parent_workspace->variable_group(group_name);
-      GMM_ASSERT1(false, "Undefined variable group " << group_name);
-    }
+    const std::vector<std::string> &
+    variable_group(const std::string &group_name) const;
 
-    const std::string &first_variable_of_group(const std::string &name) const {
-      const std::vector<std::string> &t = variable_group(name);
-      GMM_ASSERT1(t.size(), "Variable group " << name << " has no variable");
-      return t[0];
-    }
+    const std::string& first_variable_of_group(const std::string &name) const;
 
-    bool macro_exists(const std::string &name) const {
-      if (macros.find(name) != macros.end()) return true;
-      if (md && md->macro_exists(name)) return true;
-      if (parent_workspace &&
-          parent_workspace->macro_exists(name)) return true;
-      return false;
-    }
+    bool is_constant(const std::string &name) const;
 
-    void add_macro(const std::string &name, const std::string &expr)
-    { macros[name] = expr; }
+    bool is_disabled_variable(const std::string &name) const;
 
-    const std::string& get_macro(const std::string &name) const {
-      std::map<std::string, std::string>::const_iterator it=macros.find(name);
-      if (it != macros.end()) return it->second;
-      if (md && md->macro_exists(name)) return md->get_macro(name);
-      if (parent_workspace &&
-          parent_workspace->macro_exists(name))
-        return parent_workspace->get_macro(name);
-      GMM_ASSERT1(false, "Undefined macro");
-    }
-
-    ga_tree &macro_tree(const std::string &name, size_type meshdim,
-                        size_type ref_elt_dim, bool ignore_X) const;
-
-    void add_interpolate_transformation(const std::string &name,
-                                        pinterpolate_transformation ptrans)
-    { transformations[name] = ptrans; }
-
-    bool interpolate_transformation_exists(const std::string &name) const {
-      return (md && md->interpolate_transformation_exists(name)) ||
-        (parent_workspace &&
-         parent_workspace->interpolate_transformation_exists(name)) ||
-        (transformations.find(name) != transformations.end());
-    }
-
-    pinterpolate_transformation
-    interpolate_transformation(const std::string &name) const {
-      std::map<std::string, pinterpolate_transformation>::const_iterator
-        it = transformations.find(name);
-      if (it != transformations.end()) return it->second;
-      if (md && md->interpolate_transformation_exists(name))
-        return md->interpolate_transformation(name);
-      if (parent_workspace &&
-         parent_workspace->interpolate_transformation_exists(name))
-        return parent_workspace->interpolate_transformation(name);
-      GMM_ASSERT1(false, "Inexistent transformation " << name);
-    }
-
-    void add_elementary_transformation(const std::string &name,
-                                       pelementary_transformation ptrans)
-    { elem_transformations[name] = ptrans; }
-
-    bool elementary_transformation_exists(const std::string &name) const {
-      return (md && md->elementary_transformation_exists(name)) ||
-        (parent_workspace &&
-         parent_workspace->elementary_transformation_exists(name)) ||
-        (elem_transformations.find(name) != elem_transformations.end());
-    }
-
-    pelementary_transformation
-    elementary_transformation(const std::string &name) const {
-      std::map<std::string, pelementary_transformation>::const_iterator
-        it = elem_transformations.find(name);
-      if (it != elem_transformations.end()) return it->second;
-      if (md && md->elementary_transformation_exists(name))
-        return md->elementary_transformation(name);
-      if (parent_workspace &&
-         parent_workspace->elementary_transformation_exists(name))
-        return parent_workspace->elementary_transformation(name);
-      GMM_ASSERT1(false, "Inexistent elementary transformation " << name);
-    }
-
-    bool is_constant(const std::string &name) const {
-      VAR_SET::const_iterator it = variables.find(name);
-      if (it != variables.end()) return !(it->second.is_variable);
-      if (variable_group_exists(name))
-        return is_constant(first_variable_of_group(name));
-      if (md && md->variable_exists(name)) {
-        if (enable_all_md_variables) return md->is_true_data(name);
-        return md->is_data(name);
-      }
-      if (parent_workspace && parent_workspace->variable_exists(name))
-        return parent_workspace->is_constant(name);
-      GMM_ASSERT1(false, "Undefined variable " << name);
-    }
-
-    bool is_disabled_variable(const std::string &name) const {
-      VAR_SET::const_iterator it = variables.find(name);
-      if (it != variables.end()) return false;
-      if (variable_group_exists(name))
-        return is_disabled_variable(first_variable_of_group(name));
-      if (md && md->variable_exists(name)) {
-        if (enable_all_md_variables) return false;
-        return md->is_disabled_variable(name);
-      }
-      if (parent_workspace && parent_workspace->variable_exists(name))
-        return parent_workspace->is_disabled_variable(name);
-      GMM_ASSERT1(false, "Undefined variable " << name);
-    }
-
-    const scalar_type &factor_of_variable(const std::string &name) const {
-      static const scalar_type one(1);
-      VAR_SET::const_iterator it = variables.find(name);
-      if (it != variables.end()) return one;
-      if (variable_group_exists(name))
-        return one;
-      if (md && md->variable_exists(name)) return md->factor_of_variable(name);
-      if (parent_workspace && parent_workspace->variable_exists(name))
-        return parent_workspace->factor_of_variable(name);
-      GMM_ASSERT1(false, "Undefined variable " << name);
-    }
+    const scalar_type &factor_of_variable(const std::string &name) const;
 
     const gmm::sub_interval &
     interval_of_disabled_variable(const std::string &name) const;
 
     const gmm::sub_interval &
-    interval_of_variable(const std::string &name) const {
-      VAR_SET::const_iterator it = variables.find(name);
-      if (it != variables.end()) return it->second.I;
-      if (md && md->variable_exists(name)) {
-        if (enable_all_md_variables && md->is_disabled_variable(name))
-          return interval_of_disabled_variable(name);
-        return md->interval_of_variable(name);
-      }
-      if (parent_workspace && parent_workspace->variable_exists(name))
-        return parent_workspace->interval_of_variable(name);
-      GMM_ASSERT1(false, "Undefined variable " << name);
-    }
+    interval_of_variable(const std::string &name) const;
 
-    const mesh_fem *associated_mf(const std::string &name) const {
-      VAR_SET::const_iterator it = variables.find(name);
-      if (it != variables.end())
-        return it->second.is_fem_dofs ? it->second.mf : 0;
-      if (md && md->variable_exists(name))
-        return md->pmesh_fem_of_variable(name);
-      if (parent_workspace && parent_workspace->variable_exists(name))
-        return parent_workspace->associated_mf(name);
-      if (variable_group_exists(name))
-        return associated_mf(first_variable_of_group(name));
-      GMM_ASSERT1(false, "Undefined variable or group " << name);
-    }
+    const mesh_fem *associated_mf(const std::string &name) const;
 
-    const im_data *associated_im_data(const std::string &name) const {
-      VAR_SET::const_iterator it = variables.find(name);
-      if (it != variables.end())  return it->second.imd;
-      if (md && md->variable_exists(name))
-        return md->pim_data_of_variable(name);
-      if (parent_workspace && parent_workspace->variable_exists(name))
-        return parent_workspace->associated_im_data(name);
-      if (variable_group_exists(name)) return 0;
-      GMM_ASSERT1(false, "Undefined variable " << name);
-    }
+    const im_data *associated_im_data(const std::string &name) const;
 
     size_type qdim(const std::string &name) const;
 
     bgeot::multi_index qdims(const std::string &name) const;
 
-    const model_real_plain_vector &value(const std::string &name) const {
-      VAR_SET::const_iterator it = variables.find(name);
-      if (it != variables.end())
-        return *(it->second.V);
-      if (md && md->variable_exists(name))
-        return md->real_variable(name);
-      if (parent_workspace && parent_workspace->variable_exists(name))
-        return parent_workspace->value(name);
-      if (variable_group_exists(name))
-        return value(first_variable_of_group(name));
-      GMM_ASSERT1(false, "Undefined variable or group " << name);
-    }
+    const model_real_plain_vector &value(const std::string &name) const;
+
+
+    // macros
+    bool macro_exists(const std::string &name) const;
+
+    void add_macro(const std::string &name, const std::string &expr)
+    { macros[name] = expr; }
+
+    const std::string& get_macro(const std::string &name) const;
+
+    ga_tree& macro_tree(const std::string &name, size_type meshdim,
+                        size_type ref_elt_dim, bool ignore_X) const;
+
+
+    // interpolate and elementary transformations
+    void add_interpolate_transformation(const std::string &name,
+                                        pinterpolate_transformation ptrans);
+
+    bool interpolate_transformation_exists(const std::string &name) const;
+
+    pinterpolate_transformation
+    interpolate_transformation(const std::string &name) const;
+
+    void add_elementary_transformation(const std::string &name,
+                                       pelementary_transformation ptrans)
+    { elem_transformations[name] = ptrans; }
+
+    bool elementary_transformation_exists(const std::string &name) const;
+
+    pelementary_transformation
+    elementary_transformation(const std::string &name) const;
 
 
     // extract terms
