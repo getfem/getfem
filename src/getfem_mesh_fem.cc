@@ -72,7 +72,6 @@ namespace getfem {
   }
 
   dal::bit_vector mesh_fem::basic_dof_on_region(const mesh_region &b) const {
-    // cout << "dof on region for " << b << endl;
     context_check(); if (!dof_enumeration_made) this->enumerate_dof();
     dal::bit_vector res;
     for (getfem::mr_visitor v(b,linked_mesh()); !v.finished(); ++v) {
@@ -292,7 +291,7 @@ namespace getfem {
   class node_processor
   {
   public:
-    node_processor(const mesh &mesh) : mesh_{mesh}, convex_nodes_map_(mesh.nb_convex())
+    node_processor(const mesh &mesh) : mesh_{mesh}, convex_nodes_map_(mesh.convex_index().last_true()+1)
     {}
 
     size_type process(bgeot::node_tab &dof_nodes, const base_node &p, size_type cv)
@@ -693,6 +692,7 @@ namespace getfem {
       ost << " \'" << name_of_fem(fem_of_element(cv));
       ost << "\'\n";
     }
+
     if (!dof_partition.empty()) {
       ost << " BEGIN DOF_PARTITION\n";
       unsigned i = 0;
