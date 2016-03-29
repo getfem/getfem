@@ -2356,6 +2356,78 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         );
 
 
+     /*@SET ind = ('add basic contact brick two deformable bodies', @str varname_u1, @str varname_u2, @str multname_n, @str dataname_r, @tspmat BN1, @tspmat BN2[, @str dataname_gap[, @str dataname_alpha[, @int augmented_version]]])
+       
+     Add a frictionless contact condition to the model between two deformable
+      bodies. If U1, U2 are the vector
+      of degrees of freedom on which the unilateral constraint is applied,
+      the matrices `BN1` and `BN2` have to be such that this condition
+      is defined by
+      $B_{N1} U_1 B_{N2} U_2 + \le gap$. The constraint is prescribed thank
+      to a multiplier
+      `multname_n` whose dimension should be equal to the number of lines of
+      `BN`. The augmentation parameter `r` should be chosen in a range of
+      acceptabe values (see Getfem user documentation). `dataname_gap` is an
+      optional parameter representing the initial gap. It can be a single value
+      or a vector of value. `dataname_alpha` is an optional homogenization
+      parameter for the augmentation parameter
+      (see Getfem user documentation). The parameter `aug_version` indicates
+      the augmentation strategy : 1 for the non-symmetric Alart-Curnier
+      augmented Lagrangian, 2 for the symmetric one, 3 for the unsymmetric
+      method with augmented multiplier. @*/
+     sub_command
+       ("add basic contact brick two deformable bodies", 6, 9, 0, 1,
+
+        std::string varname_u1 = in.pop().to_string();
+        std::string varname_u2 = in.pop().to_string();
+        std::string multname_n = in.pop().to_string();
+        std::string dataname_r = in.pop().to_string();
+       
+        std::shared_ptr<gsparse> BN1 = in.pop().to_sparse();
+        std::shared_ptr<gsparse> BN2 =  in.pop().to_sparse();
+        if (BN1->is_complex()) THROW_BADARG("Complex matrix not allowed");
+        if (BN2->is_complex()) THROW_BADARG("Complex matrix not allowed");
+
+        std::string dataname_gap;
+        if (in.remaining()) dataname_gap = in.pop().to_string();
+        std::string dataname_alpha;
+        if (in.remaining()) dataname_alpha = in.pop().to_string();
+        int augmented_version = 1;
+        if (in.remaining()) augmented_version = in.pop().to_integer(1,4);
+
+        getfem::CONTACT_B_MATRIX BBN1; getfem::CONTACT_B_MATRIX BBN2;
+        if (BN1->storage()==gsparse::CSCMAT) {
+          gmm::resize(BBN1, gmm::mat_nrows(BN1->real_csc()),
+                      gmm::mat_ncols(BN1->real_csc()));
+          gmm::copy(BN1->real_csc(), BBN1);
+        }
+        else if (BN1->storage()==gsparse::WSCMAT) {
+          gmm::resize(BBN1, gmm::mat_nrows(BN1->real_wsc()),
+                      gmm::mat_ncols(BN1->real_wsc()));
+          gmm::copy(BN1->real_wsc(), BBN1);
+        }
+        else THROW_BADARG("Matrix BN1 should be a sparse matrix");
+
+        if (BN2->storage()==gsparse::CSCMAT) {
+          gmm::resize(BBN2, gmm::mat_nrows(BN2->real_csc()),
+                      gmm::mat_ncols(BN2->real_csc()));
+          gmm::copy(BN2->real_csc(), BBN2);
+        }
+        else if (BN2->storage()==gsparse::WSCMAT) {
+          gmm::resize(BBN2, gmm::mat_nrows(BN2->real_wsc()),
+                      gmm::mat_ncols(BN2->real_wsc()));
+          gmm::copy(BN2->real_wsc(), BBN2);
+        }
+        else THROW_BADARG("Matrix BN2 should be a sparse matrix");
+
+        size_type ind;
+	ind = getfem::add_basic_contact_brick_two_deformable_bodies
+	(*md, varname_u1, varname_u2, multname_n, dataname_r, BBN1, BBN2,
+	 dataname_gap, dataname_alpha, augmented_version);
+
+        out.pop().from_integer(int(ind + config::base_index()));
+        );
+
     /*@SET ('contact brick set BN', @int indbrick, @tspmat BN)
     Can be used to set the BN matrix of a basic contact/friction brick. @*/
      sub_command

@@ -64,6 +64,32 @@ namespace getfem {
    const std::string &dataname_r, CONTACT_B_MATRIX &BN,
    std::string dataname_gap = "", std::string dataname_alpha = "",
    int aug_version=1, bool Hughes_stabilized=false);
+  
+  /** Add a frictionless contact condition to the model between two deformable
+      bodies. If U1, U2 are the vector
+      of degrees of freedom on which the unilateral constraint is applied,
+      the matrices `BN1` and `BN2` have to be such that this condition
+      is defined by
+      $B_{N1} U_1 B_{N2} U_2 + \le gap$. The constraint is prescribed thank
+      to a multiplier
+      `multname_n` whose dimension should be equal to the number of lines of
+      `BN`. The augmentation parameter `r` should be chosen in a range of
+      acceptabe values (see Getfem user documentation). `dataname_gap` is an
+      optional parameter representing the initial gap. It can be a single value
+      or a vector of value. `dataname_alpha` is an optional homogenization
+      parameter for the augmentation parameter
+      (see Getfem user documentation). The parameter `aug_version` indicates
+      the augmentation strategy : 1 for the non-symmetric Alart-Curnier
+      augmented Lagrangian, 2 for the symmetric one, 3 for the unsymmetric
+      method with augmented multiplier.
+  */
+  size_type add_basic_contact_brick_two_deformable_bodies
+  (model &md, const std::string &varname_u1, const std::string &varname_u2,
+   const std::string &multname_n,
+   const std::string &dataname_r, CONTACT_B_MATRIX &BN1, CONTACT_B_MATRIX &BN2,
+   std::string dataname_gap = "", std::string dataname_alpha = "",
+   int aug_version=1, bool Hughes_stabilized=false);
+  
 
 
   /** Add a contact with friction condition to the model. If U is the vector
@@ -100,6 +126,8 @@ namespace getfem {
    std::string dataname_gap="", std::string dataname_alpha="",
    int aug_version=1, bool Tresca_version=false, const std::string dataname_threshold="",
    std::string dataname_gamma="", std::string dataname_wt="", bool Hughes_stabilized=false);
+
+
 
   /** Can be used to change the matrix BN of a basic contact/friction brick
    */

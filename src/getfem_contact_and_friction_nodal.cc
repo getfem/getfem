@@ -1203,6 +1203,12 @@ namespace getfem {
       is_init = false;
     }
 
+    void set_BN2(CONTACT_B_MATRIX &BN2_) {
+      gmm::resize(BN2, gmm::mat_nrows(BN2_), gmm::mat_ncols(BN2_));
+      gmm::copy(BN2_, BN2);
+      is_init = false;
+    }
+
     void set_DN(CONTACT_B_MATRIX &DN_) {
       gmm::resize(DN, gmm::mat_nrows(DN_), gmm::mat_ncols(DN_));
       gmm::copy(DN_, DN);
@@ -1320,6 +1326,55 @@ namespace getfem {
     dl.push_back(dataname_alpha);
 
     model::varnamelist vl(1, varname_u);
+    vl.push_back(multname_n);
+
+    return md.add_brick(pbr, vl, dl, tl, model::mimlist(), size_type(-1));
+  }
+
+  //=========================================================================
+  //  Add a frictionless contact condition with BN, r, alpha given for
+  //  two deformable bodies
+  //=========================================================================
+
+  size_type add_basic_contact_brick_two_deformable_bodies
+  (model &md, const std::string &varname_u1, const std::string &varname_u2,
+   const std::string &multname_n,
+   const std::string &dataname_r, CONTACT_B_MATRIX &BN1, CONTACT_B_MATRIX &BN2,
+   std::string dataname_gap, std::string dataname_alpha,
+   int aug_version, bool Hughes_stabilized) {
+
+    auto pbr_ = std::make_shared<Coulomb_friction_brick>
+      (aug_version, true, true, false, Hughes_stabilized);
+    pbrick pbr(pbr_);
+    pbr_->set_BN1(BN1);
+    pbr_->set_BN2(BN2);
+
+    model::termlist tl;
+    tl.push_back(model::term_description(varname_u1, varname_u1, false));
+    tl.push_back(model::term_description(varname_u2, varname_u2, false));
+    tl.push_back(model::term_description(varname_u1, multname_n, false));
+    tl.push_back(model::term_description(multname_n, varname_u1, false));
+    tl.push_back(model::term_description(varname_u2, multname_n, false));
+    tl.push_back(model::term_description(multname_n, varname_u2, false));
+    tl.push_back(model::term_description(multname_n, multname_n, false));
+    model::varnamelist dl(1, dataname_r);
+
+    if (dataname_gap.size() == 0) {
+      dataname_gap = md.new_name("contact_gap_on_" + varname_u1);
+      md.add_initialized_fixed_size_data
+        (dataname_gap, model_real_plain_vector(1, scalar_type(0)));
+    }
+    dl.push_back(dataname_gap);
+
+    if (dataname_alpha.size() == 0) {
+      dataname_alpha = md.new_name("contact_parameter_alpha_on_"+ multname_n);
+      md.add_initialized_fixed_size_data
+        (dataname_alpha, model_real_plain_vector(1, scalar_type(1)));
+    }
+    dl.push_back(dataname_alpha);
+
+    model::varnamelist vl(1, varname_u1);
+    vl.push_back(varname_u2);
     vl.push_back(multname_n);
 
     return md.add_brick(pbr, vl, dl, tl, model::mimlist(), size_type(-1));
