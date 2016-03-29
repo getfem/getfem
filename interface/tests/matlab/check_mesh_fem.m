@@ -74,7 +74,7 @@ function check_mesh_fem(iverbose,idebug)
      'BEGIN MESH STRUCTURE DESCRIPTION' 10,...
      'CONVEX 0    GT_PK(2,2)      1 4 2 6 5 3' 10,...
      'CONVEX 1    GT_QK(2,1)      2 17 3 7' 10,...
-     'CONVEX 2    GT_QK(2,2)      7 8 10 14 16 15 17 9 11' 10,...
+     'CONVEX 2    GT_QK(2,2)      7 8 10 14 46 15 17 9 11' 10,...
      'CONVEX 3    GT_QK(2,1)      10 12 11 13' 10,...
      'CONVEX 4    GT_PRODUCT(GT_PK(2,2),GT_PK(1,1)) 12 22 18 24 23 19 13 25 20 27 26 21' 10,...
      'CONVEX 5    GT_PRODUCT(GT_PK(1,1),GT_PK(1,3)) 2 3 28 29 30 31 32 33' 10,...
@@ -90,7 +90,6 @@ function check_mesh_fem(iverbose,idebug)
      ' CONVEX 8 FEM_PRODUCT(FEM_QK(2,3),FEM_PK(1,2))' 10,...
      'END MESH_FEM\n'];
   m=gf_mesh('from string',s);
-  gf_plot_mesh(m);
   mf=gf_mesh_fem('from string',s,m);
   s2=gf_mesh_fem_get(mf,'char');
   mf2=gf_mesh_fem('from string',s2,m);
@@ -131,12 +130,10 @@ function check_mesh_fem(iverbose,idebug)
     asserterr('gf_mesh_get(m, ''faces from pid'', i)');
   end;
   a=gf_mesh_get(m, 'outer faces');
-  b = [5 2 5 3 5 4 5 5 9 1 9 2 9 3 9 4 9 5];
-  % b=[1 0 2 0 3 0 4 0 5 2 5 3 5 4 5 5 6 0 9 1 9 2 9 3 9 4 9 5];
+  b = [5 2 5 3 5 4 5 5 9 1 9 2 9 3 9 5 9 6];
   gfassert('a(:)==b(:)');
   a=gf_mesh_get(m, 'outer faces',[4 5]);
   gfassert('a(:)==[5 1 5 2 5 3 5 4 5 5]''');
-  % gfassert('a(:)==[4 0 5 1 5 2 5 3 5 4 5 5]''');
   asserterr('gf_mesh_get(m, ''outer faces'',[4 6 7 8])');
   asserterr('gf_mesh_get(m, ''outer faces'',[0])');
   E=gf_mesh_get(m, 'edges');
@@ -183,8 +180,8 @@ function check_mesh_fem(iverbose,idebug)
   mf2=gf_mesh_fem('from string',s);
   mf3=gf_mesh_fem('from string',s,m2);
   gf_mesh_fem_set(mf2,'qdim',2);
-  s2=gf_mesh_fem_get(mf2,'char');
-  s3=gf_mesh_get(mf2,'char');
+  s2=gf_mesh_fem_get(mf2,'char')
+  s3=gf_mesh_get(mf2,'char')
   % ~bug here: doesn't work if s2 and s3 are reversed
   mf2=gf_mesh_fem('from string',[s3 s2]); 
   

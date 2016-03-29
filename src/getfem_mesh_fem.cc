@@ -291,7 +291,7 @@ namespace getfem {
   class node_processor
   {
   public:
-    node_processor(const mesh &mesh) : mesh_{mesh}, convex_nodes_map_(mesh.convex_index().last_true()+1)
+    node_processor(const mesh &mesh) : mesh_(mesh), convex_nodes_map_(mesh.convex_index().last_true()+1)
     {}
 
     size_type process(bgeot::node_tab &dof_nodes, const base_node &p, size_type cv)
