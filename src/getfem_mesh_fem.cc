@@ -291,7 +291,7 @@ namespace getfem {
   class node_processor
   {
   public:
-    node_processor(const mesh &mesh) : mesh_(mesh), convex_nodes_map_(mesh.convex_index().last_true()+1)
+    node_processor(const mesh &mesh) : mesh_{mesh}
     {}
 
     size_type process(bgeot::node_tab &dof_nodes, const base_node &p, size_type cv)
@@ -302,20 +302,39 @@ namespace getfem {
 
       if (it_cv != nodes_map_of_cv.end()) return it_cv->second;
 
-      auto node_index = size_type(-1);
+      bgeot::mesh_structure::ind_set neighbours;
+      mesh_.neighbours_of_convex(cv, neighbours);
 
-      for (auto p_index : mesh_.ind_points_of_convex(cv))
-        for (auto cv_index : mesh_.convex_to_point(p_index))
-          if (cv != cv_index) {
-            auto &nodes_map_of_cv_index = convex_nodes_map_[cv_index];
-            auto it_cv_index = nodes_map_of_cv_index.find(index_p);
+      for (auto neighbour : neighbours) {
+        auto &nodes_map_of_neighbour = convex_nodes_map_[neighbour];
+        auto it_neighbour = nodes_map_of_neighbour.find(index_p);
 
-            if (it_cv_index != nodes_map_of_cv_index.end()) node_index = it_cv_index->second;
-          }
+        if (it_neighbour != nodes_map_of_neighbour.end()) {
+          nodes_map_of_cv.emplace(index_p, it_neighbour->second);
 
-      if (node_index == size_type(-1)) node_index = dof_nodes.add_node(p, 0, false);
+          return it_neighbour->second;
+        }
+      }
 
-      convex_nodes_map_[cv].emplace(index_p, node_index);
+      for (auto point_index : mesh_.ind_points_of_convex(cv))
+        if (gmm::vect_dist2(p, mesh_.points()[point_index]) < gmm::default_tol(scalar_type())) {
+          for (auto cv_index : mesh_.convex_to_point(point_index))
+            if (cv != cv_index) {
+              auto &nodes_map_of_cv_index = convex_nodes_map_[cv_index];
+              auto it_cv_index = nodes_map_of_cv_index.find(index_p);
+
+              if (it_cv_index != nodes_map_of_cv_index.end()) {
+                nodes_map_of_cv.emplace(index_p, it_cv_index->second);
+
+                return it_cv_index->second;
+              }
+            }
+
+          break;
+        }
+
+      auto node_index = dof_nodes.add_node(p, 0, false);
+      nodes_map_of_cv.emplace(index_p, node_index);
 
       return node_index;
     }
@@ -323,7 +342,7 @@ namespace getfem {
   private:
     bgeot::node_tab processed_nodes_;
     const mesh &mesh_;
-    std::vector<std::map<size_type, size_type>> convex_nodes_map_;
+    std::map<size_type, std::map<size_type, size_type>> convex_nodes_map_;
   };
 
   typedef std::map<fem_dof, size_type, dof_comp_> dof_sort_type;
