@@ -157,7 +157,7 @@ namespace bgeot {
 
     size_type nb_convex_with_edge(size_type i1, size_type i2);
     void convex_with_edge(size_type i1, size_type i2,
-                          std::vector<size_type> &ipt);
+                          std::vector<size_type> &ipt) const;
 
     /** Return a container of the convexes attached to point ip */
     const ind_cv_ct &convex_to_point(size_type ip) const

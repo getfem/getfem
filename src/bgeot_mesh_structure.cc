@@ -147,7 +147,7 @@ namespace bgeot {
   }
 
   void mesh_structure::convex_with_edge(size_type i1, size_type i2,
-                                        std::vector<size_type> &ipt) {
+                                        std::vector<size_type> &ipt) const {
     ipt.resize(0);
     for (size_type k = 0; k < points_tab[i1].size(); ++k) {
       size_type cv = points_tab[i1][k];

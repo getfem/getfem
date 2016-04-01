@@ -332,6 +332,24 @@ namespace getfem {
 
           break;
         }
+        else
+          for (auto point2_index : mesh_.ind_points_of_convex(cv))
+            if (point_index != point2_index)
+            {
+              mesh_.convex_with_edge(point_index, point2_index, edge_cvs_);
+
+              for (auto cv_edge_index : edge_cvs_)
+                if (cv_edge_index != cv) {
+                  auto &nodes_map_of_cv_edge_index = convex_nodes_map_[cv_edge_index];
+                  auto it_cv_index = nodes_map_of_cv_edge_index.find(index_p);
+
+                  if (it_cv_index != nodes_map_of_cv_edge_index.end()) {
+                    nodes_map_of_cv.emplace(index_p, it_cv_index->second);
+
+                    return it_cv_index->second;
+                  }
+                }
+            }
 
       auto node_index = dof_nodes.add_node(p, 0, false);
       nodes_map_of_cv.emplace(index_p, node_index);
@@ -343,6 +361,7 @@ namespace getfem {
     bgeot::node_tab processed_nodes_;
     const mesh &mesh_;
     std::map<size_type, std::map<size_type, size_type>> convex_nodes_map_;
+    std::vector<size_type> edge_cvs_;
   };
 
   typedef std::map<fem_dof, size_type, dof_comp_> dof_sort_type;
