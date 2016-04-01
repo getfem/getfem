@@ -8,9 +8,9 @@
 
 .. _ud-model:
 
-=====================
-The model description
-=====================
+============================================
+The model description and basic model bricks
+============================================
 
 
 The model description of |gf| allows
@@ -55,8 +55,7 @@ The kernel of the model description is contained in the file
    model_bilaplacian
    model_Mindlin_plate
    model_time_integration
-   model_nonlinear_elasticity
    model_contact_friction
    model_contact_friction_large_sliding
    model_elastoplasticity
-   model_continuation
+  

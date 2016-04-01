@@ -33,8 +33,10 @@ User Documentation
    export
    convect
    model
-   examples
-
+   model_continuation
+   model_nonlinear_elasticity
+   model_ALE_rotating
+   
    appendixA
    appendixB
 

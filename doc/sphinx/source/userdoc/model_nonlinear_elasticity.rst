@@ -8,13 +8,13 @@
 
 .. _ud-model-nonlinear-elasticity:
 
-Nonlinear Elasticity brick
---------------------------
+Finite strain Elasticity bricks
+-------------------------------
 
 This brick implements some classical hyperelastic constitutive law for large deformation elasticity.
 
-Some recalls on nonlinear elasticity
-++++++++++++++++++++++++++++++++++++
+Some recalls on finite strain elasticity
+++++++++++++++++++++++++++++++++++++++++
 
 Let :math:`\Omega` be the reference configuration and :math:`\Omega_t` the deformed configuration of an elastic media. Then for :math:`X \in \Omega` we will denote by :math:`\Phi(x) = u(X) + X` the deformation. the vector field :math:`u` is the displacement with respect to the initial position.
 
@@ -40,12 +40,12 @@ One has
 
   C = \nabla\Phi^T\nabla\Phi = 2 E + I.
 
-Both tensors :math:`E` and :math:`C` are used to describe nonlinear elasticity constitutive laws.
+Both tensors :math:`E` and :math:`C` are used to describe finite strain elasticity constitutive laws.
 
 Main invariants and derivatives
 ###############################
 
-The description of nonlinear elasticity constitutive laws often requires the principal invariants of the deformation tensors:
+The description of finite strain elasticity constitutive laws often requires the principal invariants of the deformation tensors:
 
 :math:`i_1,i_2,i_3` are the invariants of orders :math:`1,2` and :math:`3`:
 

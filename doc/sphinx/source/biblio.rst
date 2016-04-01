@@ -62,6 +62,11 @@ References
    *A finite element method for Reissner-Mindlin plates*,
    Math. Comp., 83:286, 701-733, 2014.
 
+.. [Dr-La-Ek2014] A. Draganis, F. Larsson, A. Ekberg,
+   *Finite element analysis of transient thermomechanical rolling contact using
+   an efficient arbitrary Lagrangian-Eulerian description*,
+   Comput. Mech., 54, 389-405, 2014.
+
 .. [Fa-Po-Re2015] M. Fabre, J. Pousin, Y. Renard.
    *A fictitious domain method for frictionless contact problems in elasticity using Nitsche's method*. preprint, https://hal.archives-ouvertes.fr/hal-00960996v1
 
@@ -112,7 +117,13 @@ References
    *Optimal L2 error bounds for MITC3 type element.* Numer. Math. 91, 77-91, 2002.
 
 .. [Xfem] N. |moes|, J. Dolbow and T. Belytschko,
-   *A finite element method for crack growth without remeshing*, Internat. J. Numer. Methods Engrg., 46, 131-150, 1999.
+   *A finite element method for crack growth without remeshing*,
+   Internat. J. Numer. Methods Engrg., 46, 131-150, 1999.
+
+.. [Nackenhorst2004] U. Nackenhorst,
+   *The ALE formulation of bodies in rolling contact. Theoretical foundation
+   and finite element approach*,
+   Comp. Meth. Appl. Mech. Engng., 193:4299-4322, 2004.
 
 .. [nedelec1991] J.-C. Nedelec.
    *Notions sur les techniques d'elements finis*, Ellipses, SMAI, Mathematiques & Applications no 7, 1991.
