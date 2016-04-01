@@ -360,17 +360,19 @@ namespace getfem {
         } else if (!dof_linkable(fd.pnd)) { // If the dof is not linkable
           itab[i] = nbdof;
           nbdof += Qdim / pf->target_dim();
-        } else {                            // for a standard linkable dof
+        } else {                            // For a standard linkable dof
           pgp->transform(linked_mesh().points_of_convex(cv), i, P);
 	  size_type idof = nbdof;
-	  linked_mesh().neighbours_of_convex(cv, ftab[i], s);
+	  if (ftab[i].size()) {
+	    linked_mesh().neighbours_of_convex(cv, ftab[i], s);
 	  
-	  for (size_type ncv : s) { // For each neighbour
-	                            // control if the dof already exists.
-	    fd.ind_node = dof_nodes[ncv].search_node(P);
-	    if (fd.ind_node != size_type(-1)) {
-	      auto it = dof_sorts[ncv].find(fd);
-	      if (it != dof_sorts[ncv].end()) { idof = it->second; break; }
+	    for (size_type ncv : s) { // For each neighbour
+	                              // control if the dof already exists.
+	      fd.ind_node = dof_nodes[ncv].search_node(P);
+	      if (fd.ind_node != size_type(-1)) {
+		auto it = dof_sorts[ncv].find(fd);
+		if (it != dof_sorts[ncv].end()) { idof = it->second; break; }
+	      }
 	    }
 	  }
 	  if (idof == nbdof) nbdof += Qdim / pf->target_dim();
