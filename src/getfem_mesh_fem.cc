@@ -288,81 +288,6 @@ namespace getfem {
     }
   }
 
-  class node_processor
-  {
-  public:
-    node_processor(const mesh &mesh) : mesh_{mesh}
-    {}
-
-    size_type process(bgeot::node_tab &dof_nodes, const base_node &p, size_type cv)
-    {
-      auto index_p = processed_nodes_.add_node(p);
-      auto &nodes_map_of_cv = convex_nodes_map_[cv];
-      auto it_cv = nodes_map_of_cv.find(index_p);
-
-      if (it_cv != nodes_map_of_cv.end()) return it_cv->second;
-
-      bgeot::mesh_structure::ind_set neighbours;
-      mesh_.neighbours_of_convex(cv, neighbours);
-
-      for (auto neighbour : neighbours) {
-        auto &nodes_map_of_neighbour = convex_nodes_map_[neighbour];
-        auto it_neighbour = nodes_map_of_neighbour.find(index_p);
-
-        if (it_neighbour != nodes_map_of_neighbour.end()) {
-          nodes_map_of_cv.emplace(index_p, it_neighbour->second);
-
-          return it_neighbour->second;
-        }
-      }
-
-      for (auto point_index : mesh_.ind_points_of_convex(cv))
-        if (gmm::vect_dist2(p, mesh_.points()[point_index]) < gmm::default_tol(scalar_type())) {
-          for (auto cv_index : mesh_.convex_to_point(point_index))
-            if (cv != cv_index) {
-              auto &nodes_map_of_cv_index = convex_nodes_map_[cv_index];
-              auto it_cv_index = nodes_map_of_cv_index.find(index_p);
-
-              if (it_cv_index != nodes_map_of_cv_index.end()) {
-                nodes_map_of_cv.emplace(index_p, it_cv_index->second);
-
-                return it_cv_index->second;
-              }
-            }
-
-          break;
-        }
-        else
-          for (auto point2_index : mesh_.ind_points_of_convex(cv))
-            if (point_index != point2_index)
-            {
-              mesh_.convex_with_edge(point_index, point2_index, edge_cvs_);
-
-              for (auto cv_edge_index : edge_cvs_)
-                if (cv_edge_index != cv) {
-                  auto &nodes_map_of_cv_edge_index = convex_nodes_map_[cv_edge_index];
-                  auto it_cv_index = nodes_map_of_cv_edge_index.find(index_p);
-
-                  if (it_cv_index != nodes_map_of_cv_edge_index.end()) {
-                    nodes_map_of_cv.emplace(index_p, it_cv_index->second);
-
-                    return it_cv_index->second;
-                  }
-                }
-            }
-
-      auto node_index = dof_nodes.add_node(p, 0, false);
-      nodes_map_of_cv.emplace(index_p, node_index);
-
-      return node_index;
-    }
-
-  private:
-    bgeot::node_tab processed_nodes_;
-    const mesh &mesh_;
-    std::map<size_type, std::map<size_type, size_type>> convex_nodes_map_;
-    std::vector<size_type> edge_cvs_;
-  };
 
   typedef std::map<fem_dof, size_type, dof_comp_> dof_sort_type;
 
@@ -370,33 +295,37 @@ namespace getfem {
   void mesh_fem::enumerate_dof(void) const {
     GMM_ASSERT1(linked_mesh_ != 0, "Uninitialized mesh_fem");
     context_check();
-    if (fe_convex.card() == 0) {
-      dof_enumeration_made = true;
-      nb_total_dof = 0;
-      return;
-    }
+    if (fe_convex.card() == 0)
+      { dof_enumeration_made = true; nb_total_dof = 0; return; }
+
+    // Gives the Cuthill McKee ordering to iterate on elements
     const std::vector<size_type> &cmk = linked_mesh().cuthill_mckee_ordering();
 
-    bgeot::node_tab dof_nodes(scalar_type(100000));
-    dof_sort_type dof_sort;
-    dal::bit_vector encountered_global_dof;
-    dal::dynamic_array<size_type> ind_global_dof;
-    std::vector<size_type> tab;
-    base_node P;
+    // Dof counter
     size_type nbdof = 0;
 
-    size_type cv = fe_convex.first_true();
+    // Information stored per element
+    size_type nb_max_cv = linked_mesh().convex_index().last_true()+1;
+    std::vector<bgeot::node_tab> dof_nodes(nb_max_cv, bgeot::node_tab(1.e5));
+    std::vector<dof_sort_type> dof_sorts(nb_max_cv);
+    
+    // Information for global dof
+    dal::bit_vector encountered_global_dof, processed_elt;
+    dal::dynamic_array<size_type> ind_global_dof;
+    
+    // Auxilliary variables
+    std::vector<size_type> itab;
+    std::vector<std::vector<short_type>> ftab;
+    base_node P(linked_mesh().dim());
     fem_dof fd;
+    bgeot::mesh_structure::ind_set s;
 
     dof_structure.clear();
-    encountered_global_dof.clear();
-
     bgeot::pstored_point_tab pspt_old = 0;
     bgeot::pgeometric_trans pgt_old = 0;
     bgeot::pgeotrans_precomp pgp = 0;
-    node_processor node_processor(linked_mesh());
-    for (size_type icv=0; icv < cmk.size(); ++icv) {
-      cv = cmk[icv];
+
+    for (size_type cv : cmk) { // Loop on elements
       if (!fe_convex.is_in(cv)) continue;
       pfem pf = fem_of_element(cv);
       bgeot::pgeometric_trans pgt = linked_mesh().trans_of_convex(cv);
@@ -404,41 +333,53 @@ namespace getfem {
       if (pgt != pgt_old || pspt != pspt_old)
         pgp = bgeot::geotrans_precomp(pgt, pspt, pf);
       pgt_old = pgt; pspt_old = pspt;
-
       size_type nbd = pf->nb_dof(cv);
       pdof_description andof = global_dof(pf->dim());
-      tab.resize(nbd);
+      itab.resize(nbd); 
+      
+      // determine for each dof on which faces it lies
+      ftab.resize(nbd);
+      for (size_type i = 0; i < nbd; ++i) ftab[i].resize(0);
+      for (short_type f = 0; f < pf->structure(cv)->nb_faces(); ++f) {
+	for (short_type i : pf->structure(cv)->ind_points_of_face(f))
+	  ftab[i].push_back(f);
+      }
 
-      for (size_type i = 0; i < nbd; i++) {
-        P.resize(linked_mesh().dim());
+      for (size_type i = 0; i < nbd; i++) { // Loop on dofs
         fd.pnd = pf->dof_types()[i];
         fd.part = get_dof_partition(cv);
-        if (fd.pnd == andof) {
+
+        if (fd.pnd == andof) {              // If the dof is a global one
           size_type num = pf->index_of_global_dof(cv, i);
           if (!(encountered_global_dof[num])) {
             ind_global_dof[num] = nbdof;
-            // cout << "Global dof " << num << " is numbered " << nbdof <<endl;
             nbdof += Qdim / pf->target_dim();
             encountered_global_dof[num] = true;
           }
-          tab[i] = ind_global_dof[num];
-        } else if (!dof_linkable(fd.pnd)) {
-          tab[i] = nbdof;
+          itab[i] = ind_global_dof[num];
+        } else if (!dof_linkable(fd.pnd)) { // If the dof is not linkable
+          itab[i] = nbdof;
           nbdof += Qdim / pf->target_dim();
-        } else {
+        } else {                            // for a standard linkable dof
           pgp->transform(linked_mesh().points_of_convex(cv), i, P);
-          fd.ind_node = node_processor.process(dof_nodes, P, cv);
-
-          std::pair<dof_sort_type::iterator, bool>
-            pa = dof_sort.insert(std::make_pair(fd, nbdof));
-          if (pa.second) {
-            tab[i] = nbdof;
-            nbdof += Qdim / pf->target_dim();
-          }
-          else { tab[i] = pa.first->second; }
+	  size_type idof = nbdof;
+	  linked_mesh().neighbours_of_convex(cv, ftab[i], s);
+	  
+	  for (size_type ncv : s) { // For each neighbour
+	                            // control if the dof already exists.
+	    fd.ind_node = dof_nodes[ncv].search_node(P);
+	    if (fd.ind_node != size_type(-1)) {
+	      auto it = dof_sorts[ncv].find(fd);
+	      if (it != dof_sorts[ncv].end()) { idof = it->second; break; }
+	    }
+	  }
+	  if (idof == nbdof) nbdof += Qdim / pf->target_dim();
+	  itab[i] = idof;
+	  fd.ind_node = dof_nodes[cv].add_node(P);
+	  dof_sorts[cv][fd] = idof;
         }
       }
-      dof_structure.add_convex_noverif(pf->structure(cv), tab.begin(), cv);
+      dof_structure.add_convex_noverif(pf->structure(cv), itab.begin(), cv);
     }
 
     dof_enumeration_made = true;
