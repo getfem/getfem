@@ -167,12 +167,11 @@ function check_mesh_fem(iverbose,idebug)
 
   gf_mesh_fem_get(mf,'nbdof');
   d=gf_mesh_fem_get(mf,'basic dof from cv',[1 5]);
-  gfassert(['d==[1 2 3 4 5 6 37 40 42 43 44 45 46 47 48 49 50 51 52 53 54 55 ' ...
-          '56 57]']);
+  gfassert(['d==[1 2 3 4 5 6 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60]']);
   d=gf_mesh_fem_get(mf,'basic dof from cv',[1 5;1 2]);
-  gfassert('d==[3 5 6 37 40 42 45 47 50 52 55 57]');
+  gfassert('d==[3 5 6 43 46 48 49 52 54 55 58 60]');
   d=gf_mesh_fem_get(mf,'basic dof from cvid',5);
-  gfassert('d==[37 43 44 45 46 47 40 48 49 50 51 52 42 53 54 55 56 57]');
+  gfassert('d==[43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60]');
   
   s2=gf_mesh_get(mf,'char');
   gfassert('length(s2)>500');
