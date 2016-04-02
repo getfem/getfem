@@ -386,18 +386,16 @@ namespace getfem {
    const std::string &lawname, const std::vector<std::string> &params,
    size_type region = size_type(-1));
 
-  /** This function permits to compute the new stress constraints
-      values supported by the material after a load or an unload.
-      `varname` is the main unknown of the problem
-      (the displacement),
-      `previous_dep_name` represents the displacement at the previous time step,
-      `ACP` is the type of projection to be used that could only be
-      `Von Mises` for the moment,
-      `datalambda` and `datamu` are the Lamé coefficients
-      of the material,
-      `datathreshold` is the elasticity threshold of the material,
-      `datasigma` is the vector which will contains the new
-      computed values. */
+  /** This function permits to update the state variables for a finite
+      strain elastoplasticity brick, based on the current displacements
+      field defined in `dispname` and the plastic multiplier field
+      defined in `multname`. `pressname` is either empty or the name of
+      the pressure field in a mixed displacement-pressure formulation.
+      `lawname` defines the plasticity model and `params` is a vector
+      that contains both material parameters and the names of the state
+      variables to be updated. Currently only one plasticity model is
+      supported, defined as "Simo_Miehe".
+  */
   void finite_strain_elastoplasticity_next_iter
   (model &md, const mesh_im &mim, const std::string &dispname,
    const std::string &multname, const std::string &pressname,
