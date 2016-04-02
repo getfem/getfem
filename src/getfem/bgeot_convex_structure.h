@@ -82,14 +82,17 @@ namespace bgeot {
 
     pconvex_structure prod_a, prod_b; /* only filled for convex structures */
                                       /* product.                          */
-    public :
 
-      /// Number of faces.
-      inline short_type nb_faces(void)  const { return nbf;  }
-      /// Dimension of the convex.
-      inline dim_type  dim(void)        const { return Nc;   }
-      /// Number of vertices.
-      inline short_type nb_points(void) const { return nbpt; }
+    mutable std::map<std::vector<short_type>, convex_ind_ct> intersection_points;
+
+  public :
+
+    /// Number of faces.
+    inline short_type nb_faces()  const { return nbf;  }
+    /// Dimension of the convex.
+    inline dim_type  dim()        const { return Nc;   }
+    /// Number of vertices.
+    inline short_type nb_points() const { return nbpt; }
     /** Number of vertices of a face.
      *  @param i the face number.
      */
@@ -101,6 +104,12 @@ namespace bgeot {
      */
     inline const convex_ind_ct &ind_points_of_face(short_type i) const
     { return faces[i]; }
+    /** Give an array of the indexes of the vertices at the intersection
+     *  of a set of faces. The indexes are "local" to the convex.
+     *  @param i the face number.
+     */
+    const convex_ind_ct &
+    ind_common_points_of_faces(const std::vector<short_type> &ftab) const;
     /** Return "direct" points indexes. These are the subset of points that
      *  can be used to build a direct vector basis. (rarely used)
      */

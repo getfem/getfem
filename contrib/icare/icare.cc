@@ -1032,7 +1032,7 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
   scalar_type BoxXmax =  PARAM.real_value("BOXXmax", "Particular Point xMax");
   scalar_type BoxYmin =  PARAM.real_value("BOXYmin", "Particular Point yMin");
   scalar_type BoxYmax =  PARAM.real_value("BOXYmax", "Particular Point yMax");
-  scalar_type BoxZmin, BoxZmax;
+  scalar_type BoxZmin(0), BoxZmax(0);
 
   if (N==3) {
     BoxZmin =  PARAM.real_value("BOXZmin", "Particular Point zMin");

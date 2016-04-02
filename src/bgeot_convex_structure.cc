@@ -52,6 +52,22 @@ namespace bgeot {
     nbpt = 0;
   }
 
+  const convex_ind_ct &convex_structure::ind_common_points_of_faces
+  (const std::vector<short_type> &ftab) const {
+    auto it = intersection_points.find(ftab);
+    if (it == intersection_points.end()) {
+      std::vector<size_type> cpt(nb_points(), ftab.size());
+      for (short_type iff : ftab)
+        for (short_type i : ind_points_of_face(iff))
+          cpt[i]--;
+      convex_ind_ct ind;
+      for (size_type i = 0; i < nb_points(); ++i)
+        if (cpt[i] == 0) ind.push_back(i);
+      it = intersection_points.emplace(ftab, ind).first;
+    }
+    return it->second;
+  }
+
   std::ostream &operator <<(std::ostream &o, const convex_structure &cv) {
     o << "convex structure of dimension " << int(cv.dim()) << " with "
       << cv.nb_points() << " points and " << cv.nb_faces() << " faces "

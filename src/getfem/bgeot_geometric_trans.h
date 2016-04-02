@@ -45,8 +45,6 @@
 
 namespace bgeot {
 
-  typedef std::vector<short_type> convex_ind_ct;
-
   /**  Description of a geometric transformation between a
    * reference element and a real element.
    *

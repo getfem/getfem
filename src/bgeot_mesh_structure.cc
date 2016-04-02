@@ -230,23 +230,21 @@ namespace bgeot {
 
 
   void mesh_structure::neighbours_of_convex(size_type ic,
-					    const std::vector<short_type> &ftab,
-					    ind_set &s) const {
+                                            const std::vector<short_type> &ftab,
+                                            ind_set &s) const {
     s.resize(0);
-    size_type nb = nb_points_of_convex(ic);
     const mesh_convex_structure &q = convex_tab[ic];
-    std::vector<size_type> cpt(nb, size_type(0)), ipt(nb);
-    for (short_type iff : ftab)
-      for (short_type i : q.cstruct->ind_points_of_face(iff))
-	cpt[i]++;
-    ipt.resize(0);
-    for (size_type i = 0; i < nb; ++i)
-      if (cpt[i] == ftab.size()) ipt.push_back(q.pts[i]);
+    const convex_ind_ct &ind = q.cstruct->ind_common_points_of_faces(ftab);
+    std::vector<size_type> ipts(ind.size());
+    auto it = ind.cbegin();
+    for (size_type &ipt : ipts) ipt = q.pts[*it++];
 
-    for (size_type i = 0; i < points_tab[ipt[0]].size(); ++i) {
-      size_type icv = points_tab[ipt[0]][i];
-      if (icv != ic && is_convex_having_points(icv, short_type(ipt.size()),
-                                               ipt.begin())
+    auto ipt0 = ipts.cbegin();
+    auto ipt1 = ipt0 + 1;
+    short_type nbpts(ipts.size()-1);
+    for (size_type icv : points_tab[*ipt0]) {
+      if (icv != ic &&
+          (nbpts == 0 || is_convex_having_points(icv, nbpts, ipt1))
           && (convex_tab[ic].cstruct->dim()==convex_tab[icv].cstruct->dim()))
         s.push_back(icv);
     }
@@ -292,7 +290,7 @@ namespace bgeot {
     for (short_type iff = 0; iff < nNeighbourElementFaces; ++iff) {
       auto nPointsOnFace = pcs->nb_points_of_face(iff);
       if (is_convex_face_having_points(neighbour_element, iff,
-				       nPointsOnFace, face_points.begin()))
+                                       nPointsOnFace, face_points.begin()))
         return {neighbour_element, iff};
     }
     GMM_ASSERT2(false, "failed to determine neighbouring face");

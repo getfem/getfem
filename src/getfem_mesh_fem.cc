@@ -341,8 +341,8 @@ namespace getfem {
       ftab.resize(nbd);
       for (size_type i = 0; i < nbd; ++i) ftab[i].resize(0);
       for (short_type f = 0; f < pf->structure(cv)->nb_faces(); ++f) {
-	for (short_type i : pf->structure(cv)->ind_points_of_face(f))
-	  ftab[i].push_back(f);
+        for (short_type i : pf->structure(cv)->ind_points_of_face(f))
+          ftab[i].push_back(f);
       }
 
       for (size_type i = 0; i < nbd; i++) { // Loop on dofs
@@ -362,23 +362,23 @@ namespace getfem {
           nbdof += Qdim / pf->target_dim();
         } else {                            // For a standard linkable dof
           pgp->transform(linked_mesh().points_of_convex(cv), i, P);
-	  size_type idof = nbdof;
-	  if (ftab[i].size()) {
-	    linked_mesh().neighbours_of_convex(cv, ftab[i], s);
-	  
-	    for (size_type ncv : s) { // For each neighbour
-	                              // control if the dof already exists.
-	      fd.ind_node = dof_nodes[ncv].search_node(P);
-	      if (fd.ind_node != size_type(-1)) {
-		auto it = dof_sorts[ncv].find(fd);
-		if (it != dof_sorts[ncv].end()) { idof = it->second; break; }
-	      }
-	    }
-	  }
-	  if (idof == nbdof) nbdof += Qdim / pf->target_dim();
-	  itab[i] = idof;
-	  fd.ind_node = dof_nodes[cv].add_node(P);
-	  dof_sorts[cv][fd] = idof;
+          size_type idof = nbdof;
+          if (ftab[i].size()) {
+            linked_mesh().neighbours_of_convex(cv, ftab[i], s);
+          
+            for (size_type ncv : s) { // For each neighbour
+                                      // control if the dof already exists.
+              fd.ind_node = dof_nodes[ncv].search_node(P);
+              if (fd.ind_node != size_type(-1)) {
+                auto it = dof_sorts[ncv].find(fd);
+                if (it != dof_sorts[ncv].end()) { idof = it->second; break; }
+              }
+            }
+          }
+          if (idof == nbdof) nbdof += Qdim / pf->target_dim();
+          itab[i] = idof;
+          fd.ind_node = dof_nodes[cv].add_node(P);
+          dof_sorts[cv][fd] = idof;
         }
       }
       dof_structure.add_convex_noverif(pf->structure(cv), itab.begin(), cv);
