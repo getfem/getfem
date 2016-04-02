@@ -1111,6 +1111,254 @@ namespace getfem {
     ga_define_function(name, 1, expr.str(), der.str());
   }
 
+  // Simo-Miehe
+  void build_Simo_Miehe_elastoplasticity_expressions
+  (model &md, const mesh_im &mim, const std::string &dispname,
+   const std::string &multname, const std::string &pressname,
+   const std::string &K, const std::string &G, const std::string &sigma_y,
+   const std::string &plaststrain0, const std::string &invCp0,
+   std::string &expr, std::string &plaststrain, std::string &invCp, std::string &vm)
+  {
+    size_type N = mim.linked_mesh().dim();
+    GMM_ASSERT1(N >= 2 && N <= 3,
+                "Finite strain elastoplasticity brick works only in 2D or 3D");
+
+    const mesh_fem *mfu = md.pmesh_fem_of_variable(dispname);
+    GMM_ASSERT1(mfu && mfu->get_qdim() == N, "The finite strain "
+                "elastoplasticity brick can only be applied on a fem "
+                "variable of the same dimension as the mesh");
+    const mesh_fem *mfmult = md.pmesh_fem_of_variable(multname);
+    GMM_ASSERT1(mfmult && mfmult->get_qdim() == 1, "The plastic multiplier "
+                "for the finite strain elastoplasticity brick has to be a "
+                "scalar fem variable");
+    bool mixed(!pressname.empty());
+    const mesh_fem *mfpress = mixed ? md.pmesh_fem_of_variable(pressname) : 0;
+    GMM_ASSERT1(!mixed || (mfpress && mfpress->get_qdim() == 1),
+                "The hydrostatic pressure multiplier for the finite strain "
+                "elastoplasticity brick has to be a scalar fem variable");
+
+    GMM_ASSERT1(ga_function_exists(sigma_y), "The provided isotropic "
+                "hardening function name '" << sigma_y << "' is not defined");
+
+    GMM_ASSERT1(md.is_data(plaststrain0) &&
+                (md.pim_data_of_variable(plaststrain0) ||
+                 md.pmesh_fem_of_variable(plaststrain0)),
+                "The provided name '" << plaststrain0 << "' for the plastic "
+                "strain field at the previous timestep, should be defined "
+                "either as fem or as im data");
+    GMM_ASSERT1((md.pim_data_of_variable(plaststrain0) &&
+                 md.pim_data_of_variable(plaststrain0)->nb_tensor_elem() == 1) ||
+                (md.pmesh_fem_of_variable(plaststrain0) &&
+                 md.pmesh_fem_of_variable(plaststrain0)->get_qdim() == 1),
+                "Wrong size of " << plaststrain0);
+    GMM_ASSERT1(md.is_data(invCp0) &&
+                (md.pim_data_of_variable(invCp0) ||
+                 md.pmesh_fem_of_variable(invCp0)),
+                "The provided name '" << invCp0 << "' for the inverse of the "
+                "plastic right Cauchy-Green tensor field at the previous "
+                "timestep, should be defined either as fem or as im data");
+    bgeot::multi_index Cp_size(1);
+    Cp_size[0] = 4 + (N==3)*2;
+    GMM_ASSERT1((md.pim_data_of_variable(invCp0) &&
+                 md.pim_data_of_variable(invCp0)->tensor_size() == Cp_size) ||
+                (md.pmesh_fem_of_variable(invCp0) &&
+                 md.pmesh_fem_of_variable(invCp0)->get_qdims() == Cp_size),
+                "Wrong size of " << invCp0);
+
+    const std::string _U_ = sup_previous_and_dot_to_varname(dispname);
+    const std::string _KSI_ = sup_previous_and_dot_to_varname(multname);
+    const std::string _I_(N == 2 ? "Id(2)" : "Id(3)");
+    const std::string _F_("("+_I_+"+Grad_"+_U_+")");
+    const std::string _J_("Det"+_F_); // in 2D assumes plane strain
+
+    std::string _P_;
+    if (mixed)
+      _P_ = "-"+pressname+"*"+_J_;
+    else
+      _P_ = "("+K+")*log("+_J_+")";
+
+    std::string _INVCP0_, _F3d_, _DEVLOGBETR_, _DEVLOGBETR_3D_;
+    if (N == 2) { // plane strain
+      _INVCP0_ = "([[[1,0,0],[0,0,0],[0,0,0]],"
+                   "[[0,0,0],[0,1,0],[0,0,0]],"
+                   "[[0,0,0],[0,0,0],[0,0,1]],"
+                   "[[0,1,0],[1,0,0],[0,0,0]]]."+invCp0+")";
+      _F3d_ = "(Id(3)+[[1,0,0],[0,1,0]]*Grad_"+_U_+"*[[1,0,0],[0,1,0]]')";
+      _DEVLOGBETR_3D_ = "(Deviator(Logm("+_F3d_+"*"+_INVCP0_+"*"+_F3d_+"')))";
+      _DEVLOGBETR_ = "([[[[1,0],[0,0]],[[0,1],[0,0]],[[0,0],[0,0]]],"
+                       "[[[0,0],[1,0]],[[0,0],[0,1]],[[0,0],[0,0]]],"
+                       "[[[0,0],[0,0]],[[0,0],[0,0]],[[0,0],[0,0]]]]"
+                       ":"+_DEVLOGBETR_3D_+")";
+    } else { // 3D
+      _INVCP0_ = "([[[1,0,0],[0,0,0],[0,0,0]],"
+                   "[[0,0,0],[0,1,0],[0,0,0]],"
+                   "[[0,0,0],[0,0,0],[0,0,1]],"
+                   "[[0,1,0],[1,0,0],[0,0,0]],"
+                   "[[0,0,1],[0,0,0],[1,0,0]],"
+                   "[[0,0,0],[0,0,1],[0,1,0]]]."+invCp0+")";
+      _F3d_ = _F_;
+      _DEVLOGBETR_3D_ =
+      _DEVLOGBETR_ = "(Deviator(Logm("+_F_+"*"+_INVCP0_+"*"+_F_+"')))";
+    }
+    const std::string _DEVLOGBE_("((1-2*"+_KSI_+")*"+_DEVLOGBETR_+")");
+    const std::string _DEVLOGBE_3D_("((1-2*"+_KSI_+")*"+_DEVLOGBETR_3D_+")");
+    const std::string _DEVTAU_("("+G+")*pow("+_J_+",-"+_TWOTHIRD_+")*"+_DEVLOGBE_);
+    const std::string _TAU_("("+_P_+"*"+_I_+"+"+_DEVTAU_+")");
+
+    const std::string _PLASTSTRAIN_("("+plaststrain0+"+"+_KSI_+"*Norm"+_DEVLOGBETR_3D_+")");
+    const std::string _SIGMA_Y_(sigma_y+"("+_PLASTSTRAIN_+")");
+    const std::string _DEVSIGMA_("("+G+"*pow("+_J_+",-"+_FIVETHIRD_+")*"+_DEVLOGBE_3D_+")");
+    const std::string _DEVSIGMATR_("("+G+"*pow("+_J_+",-"+_FIVETHIRD_+")*"+_DEVLOGBETR_3D_+")");
+
+    // results
+    expr = _TAU_+":(Grad_Test_"+_U_+"*Inv"+_F_+")";
+    if (mixed)
+      expr += "+("+pressname+"/("+K+")+log("+_J_+")/"+_J_+")*Test_"+pressname;
+    expr += "+(Norm"+_DEVSIGMA_+
+            "-min("+_SIGMA_Y_+",Norm"+_DEVSIGMATR_+"+1e-12*"+_KSI_+"))*Test_"+_KSI_;
+
+    plaststrain = _PLASTSTRAIN_;
+
+    if (N==2) invCp = "[[[1,0,0,0.0],[0,0,0,0.5],[0,0,0,0]],"
+                       "[[0,0,0,0.5],[0,1,0,0.0],[0,0,0,0]],"
+                       "[[0,0,0,0.0],[0,0,0,0.0],[0,0,1,0]]]";
+    else invCp = "[[[1.0,0,0,0,0,0],[0,0,0,0.5,0,0],[0,0,0,0,0.5,0]],"
+                  "[[0,0,0,0.5,0,0],[0,1.0,0,0,0,0],[0,0,0,0,0,0.5]],"
+                  "[[0,0,0,0,0.5,0],[0,0,0,0,0,0.5],[0,0,1.0,0,0,0]]]";
+    invCp += ":((Inv"+_F3d_+"*Expm(-"+_KSI_+"*"+_DEVLOGBETR_3D_+")*"+_F3d_+")*"+_INVCP0_+
+              "*(Inv"+_F3d_+"*Expm(-"+_KSI_+"*"+_DEVLOGBETR_3D_+")*"+_F3d_+")')";
+
+    vm = _SQRTTHREEHALF_+"*Norm("+_DEVSIGMA_+")";
+  }
+
+  size_type add_finite_strain_elastoplasticity_brick
+  (model &md, const mesh_im &mim, const std::string &dispname,
+   const std::string &multname, const std::string &pressname,
+   const std::string &lawname, const std::vector<std::string> &params,
+   size_type region)
+  {
+    std::string adapted_lawname = lawname;
+    for (auto &c : adapted_lawname) if (c == ' ') c = '_';
+
+    if (adapted_lawname.compare("Simo_Miehe") == 0 ||
+        adapted_lawname.compare("Eterovic_Bathe") == 0) {
+      GMM_ASSERT1(params.size() == 5, "Wrong number of parameters, "
+                                      << params.size() << " != 5.");
+      std::string expr, dummy1, dummy2, dummy3;
+      build_Simo_Miehe_elastoplasticity_expressions
+      (md, mim, dispname, multname, pressname,
+       params[0], params[1], params[2], params[3], params[4],
+       expr, dummy1, dummy2, dummy3);
+      return add_nonlinear_generic_assembly_brick
+        (md, mim, expr, region, true, false, "Simo Miehe elastoplasticity brick");
+    } else
+      GMM_ASSERT1(false, lawname << " is not a known elastoplastic law");
+  }
+
+  // Updates any state variables included in params for the given lawname
+  void finite_strain_elastoplasticity_next_iter
+  (model &md, const mesh_im &mim, const std::string &dispname,
+   const std::string &multname, const std::string &pressname,
+   const std::string &lawname, const std::vector<std::string> &params,
+   size_type region) {
+
+    std::string adapted_lawname = lawname;
+    for (auto &c : adapted_lawname) if (c == ' ') c = '_';
+
+    if (adapted_lawname.compare("Simo_Miehe") == 0 ||
+        adapted_lawname.compare("Eterovic_Bathe") == 0) {
+      GMM_ASSERT1(params.size() == 5, "Wrong number of parameters, "
+                                      << params.size() << " != 5.");
+      std::string dummy1, dummy2, plaststrain, invCp;
+      build_Simo_Miehe_elastoplasticity_expressions
+        (md, mim, dispname, multname, pressname,
+         params[0], params[1], params[2], params[3], params[4],
+         dummy1, plaststrain, invCp, dummy2);
+
+      { // update plaststrain0
+        const std::string &plaststrain0 = params[3];
+        model_real_plain_vector tmpvec(gmm::vect_size(md.real_variable(plaststrain0)));
+
+        const getfem::im_data *pimd = md.pim_data_of_variable(plaststrain0);
+        if (pimd)
+          getfem::ga_interpolation_im_data(md, plaststrain, *pimd, tmpvec, region);
+        else {
+          const getfem::mesh_fem *pmf = md.pmesh_fem_of_variable(plaststrain0);
+          GMM_ASSERT1(pmf, "Provided data " << plaststrain0 << " should be defined "
+                           "either on a im_data or a mesh_fem object");
+          getfem::ga_interpolation_Lagrange_fem(md, plaststrain, *pmf, tmpvec, region);
+        }
+        gmm::copy(tmpvec, md.set_real_variable(plaststrain0));
+      }
+
+      { // update invCp0
+        const std::string &invCp0 = params[4];
+        model_real_plain_vector tmpvec(gmm::vect_size(md.real_variable(invCp0)));
+        const getfem::im_data *pimd = md.pim_data_of_variable(invCp0);
+        if (pimd)
+          getfem::ga_interpolation_im_data(md, invCp, *pimd, tmpvec, region);
+        else {
+          const getfem::mesh_fem *pmf = md.pmesh_fem_of_variable(invCp0);
+          GMM_ASSERT1(pmf, "Provided data " << invCp0 << " should be defined "
+                           "either on a im_data or a mesh_fem object");
+          getfem::ga_interpolation_Lagrange_fem(md, invCp, *pmf, tmpvec, region);
+        }
+        gmm::copy(tmpvec, md.set_real_variable(invCp0));
+      }
+
+      gmm::clear(md.set_real_variable(multname));
+
+    } else
+      GMM_ASSERT1(false, lawname << " is not a known elastoplastic law");
+  }
+
+  void compute_finite_strain_elastoplasticity_Von_Mises
+  (model &md, const mesh_im &mim, const std::string &dispname,
+   const std::string &multname, const std::string &pressname,
+   const std::string &lawname, const std::vector<std::string> &params,
+   const mesh_fem &mf_vm, model_real_plain_vector &VM, bool assemble,
+   size_type region) {
+
+    std::string adapted_lawname = lawname;
+    for (auto &c : adapted_lawname) if (c == ' ') c = '_';
+
+    if (adapted_lawname.compare("Simo_Miehe") == 0 ||
+        adapted_lawname.compare("Eterovic_Bathe") == 0) {
+      GMM_ASSERT1(params.size() == 5, "Wrong number of parameters, "
+                                      << params.size() << " != 5.");
+      std::string dummy1, dummy2, dummy3, vm;
+      build_Simo_Miehe_elastoplasticity_expressions
+        (md, mim, dispname, multname, pressname,
+         params[0], params[1], params[2], params[3], params[4],
+         dummy1, dummy2, dummy3, vm);
+
+      VM.resize(mf_vm.nb_dof());
+      if (assemble) {
+        model_real_plain_vector tmpvec(mf_vm.nb_dof());
+        getfem::ga_workspace workspace(md);
+        workspace.add_fem_variable("t", mf_vm, gmm::sub_interval(0, mf_vm.nb_dof()),
+                                               tmpvec);
+        workspace.add_expression(vm + "*Test_t", mim, region, 2);
+        workspace.set_assembled_vector(VM);
+        workspace.assembly(1);
+      } else {
+          const std::string &plaststrain0 = params[3];
+          const std::string &invCp0 = params[4];
+          bool fem_data = (md.pmesh_fem_of_variable(plaststrain0) != 0) &&
+                          (md.pmesh_fem_of_variable(invCp0) != 0);
+          GMM_ASSERT1(fem_data,
+                       "Provided data " << plaststrain0 << " and " <<
+                       invCp0 << " should be defined on a mesh_fem object, "
+                       "for interpolating the computed Von-Mises stresses, "
+                       "otherwise use the option 'assemble' to receive the "
+                       "corresponding assembled vector");
+        getfem::ga_interpolation_Lagrange_fem(md, vm, mf_vm, VM, region);
+      }
+
+    } else
+      GMM_ASSERT1(false, lawname << " is not a known elastoplastic law");
+
+  }
 
 }  /* end of namespace getfem.  */
 

@@ -905,6 +905,87 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        out.pop().from_dcvector(plast);
        );
 
+
+    /*@GET ('finite strain elastoplasticity next iter', @tmim mim ,@str dispname, @str multname, @str pressname, @str lawname, @str param1, @str param2, @str param3, @str param4, @str param5)
+      Update the state variables for the finite strain elastoplasticity brick.
+      `mim` is the integration method to use for the computation.
+      `dispname` is the displacement variable.
+      `multname` is the plastic multiplier.
+      `pressname` is an optional pressure multiplier for a mixed
+                  displacement pressure formulation, otherwise it is an
+                  empty string.
+      `lawname` is the name of the plasticity model (for the moment it can
+                only be the name Simo_Miehe)
+      For the Simo_Miehe model:
+        `params1` is the bulk modulus,
+        `params2` is the shear modulus,
+        `params3` is the name of a user defined function expressing isotropic
+                  hardening in terms of the Frobenius norms of the strain
+                  and stress tensors.
+        `params4` is the name of the plastic strain variable (which is updated).
+        `params5` is the name of the vector field for storing all non-repeated
+                  components of the inverse plastic right Cauchy-Green tensor
+                  (which is updated).
+        .@*/
+    sub_command
+      ("finite strain elastoplasticity next iter", 10, 10, 0, 1,
+       getfem::mesh_im *mim = to_meshim_object(in.pop());
+       const std::string dispname = in.pop().to_string();
+       const std::string multname = in.pop().to_string();
+       const std::string pressname = in.pop().to_string();
+       const std::string lawname = in.pop().to_string();
+
+       std::vector<std::string> params;
+       for (int i=0; i < 5 && in.remaining(); ++i) {
+         mexarg_in argin = in.pop();
+         if (argin.is_string())
+           params.push_back(argin.to_string());
+         else
+           break;
+       }
+
+       getfem::finite_strain_elastoplasticity_next_iter
+       (*md, *mim, dispname, multname, pressname, lawname, params);
+       );
+
+    /*@GET V = ('compute finite strain elastoplasticity Von Mises', @tmim mim ,@str dispname, @str multname, @str pressname, @str lawname, @str param1, @str param2, @str param3, @str param4, @str param5, @tmf mf_vm, ... [@str 'assemble'])
+      Compute on `mf_vm` the Von-Mises or the Tresca stress of a field for plasticity and return it into the vector V.
+      The first input parameters ar as in the function 'finite strain elastoplasticity next iter'.
+      @*/
+    sub_command
+      ("compute finite strain elastoplasticity Von Mises", 11, 12, 0, 1,
+       getfem::mesh_im *mim = to_meshim_object(in.pop());
+       const std::string dispname = in.pop().to_string();
+       const std::string multname = in.pop().to_string();
+       const std::string pressname = in.pop().to_string();
+       const std::string lawname = in.pop().to_string();
+
+       std::vector<std::string> params;
+       for (int i=0; i < 5 && in.remaining(); ++i) {
+         mexarg_in argin = in.pop();
+         if (argin.is_string())
+           params.push_back(argin.to_string());
+         else
+           break;
+       }
+
+       const getfem::mesh_fem *mf_vm = to_meshfem_object(in.pop());
+       bool assemble = false;
+       if (in.remaining()) {
+         const std::string option = in.pop().to_string();
+         assemble = cmd_strmatch(option, "assemble");
+         if (!assemble && !cmd_strmatch(option, "interpolate")) {
+           THROW_BADARG("bad option: " << option);
+         }
+       }
+       getfem::model_real_plain_vector VMM(mf_vm->nb_dof());
+       getfem::compute_finite_strain_elastoplasticity_Von_Mises
+       (*md, *mim, dispname, multname, pressname, lawname, params,
+        *mf_vm, VMM, assemble);
+       out.pop().from_dcvector(VMM);
+       );
+
+
      /*@GET V = ('sliding data group name of large sliding contact brick', @int indbrick)
       Gives the name of the group of variables corresponding to the
       sliding data for an existing large sliding contact brick.@*/

@@ -358,6 +358,63 @@ namespace getfem {
       (name, sigma_ref, alpha*sigma_ref/E, n, frobenius);
   }
 
+  /** Add a finite strain elastoplasticity brick to the model
+      with respect to the displacement variable `dispname` and the
+      plastic multiplier `multname`. If `pressname` is not empty,
+      a mixed displacement-pressure formulation is defined.
+      For the moment there is only one supported law defined through 
+      `lawname` as "Simo_Miehe" and expects as `params` a vector of
+      the following five parameters:
+      1) an expression for the initial bulk modulus K,
+      2) an expression for the initial shear modulus G,
+      3) the name of a user predefined function that decribes
+         the yield limit as a function of the hardening variable
+         (both the yield limit and the hardening variable values are
+          assumed to be Frobenius norms of appropriate stress and strain
+          tensors, respectively),
+      4) the name of a (scalar) fem_data or im_data field that holds the
+         plastic strain at the previous time step, and
+      5) the name of a fem_data or im_data field that holds all
+         non-repeated components of the inverse of the plastic right
+         Cauchy-Green tensor at the previous time step
+         (it has to be a 4 element vector for plane strain 2D problems
+         and a 6 element vector for 3D problems).
+  */
+  size_type add_finite_strain_elastoplasticity_brick
+  (model &md, const mesh_im &mim, const std::string &dispname,
+   const std::string &multname, const std::string &pressname,
+   const std::string &lawname, const std::vector<std::string> &params,
+   size_type region = size_type(-1));
+
+  /** This function permits to compute the new stress constraints
+      values supported by the material after a load or an unload.
+      `varname` is the main unknown of the problem
+      (the displacement),
+      `previous_dep_name` represents the displacement at the previous time step,
+      `ACP` is the type of projection to be used that could only be
+      `Von Mises` for the moment,
+      `datalambda` and `datamu` are the Lamé coefficients
+      of the material,
+      `datathreshold` is the elasticity threshold of the material,
+      `datasigma` is the vector which will contains the new
+      computed values. */
+  void finite_strain_elastoplasticity_next_iter
+  (model &md, const mesh_im &mim, const std::string &dispname,
+   const std::string &multname, const std::string &pressname,
+   const std::string &lawname, const std::vector<std::string> &params,
+   size_type region = size_type(-1));
+
+  /** This function computes on mf_vm the Von Mises stress with respect to
+      a finite strain elastoplasticity term.
+      If `assemble` = 'true', the Von-Mises stress field is assembled on
+      mf_vm, otherwise for the default value `assemble` = 'false', the field
+      is simply interpolated.*/
+  void compute_finite_strain_elastoplasticity_Von_Mises
+  (model &md, const mesh_im &mim, const std::string &dispname,
+   const std::string &multname, const std::string &pressname,
+   const std::string &lawname, const std::vector<std::string> &params,
+   const mesh_fem &mf_vm, model_real_plain_vector &VM, bool assemble=false,
+   size_type region = size_type(-1));
 
 
 } /* namespace getfem */

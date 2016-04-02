@@ -272,8 +272,8 @@ namespace bgeot {
   }
 
   template<class ITER>
-    size_type mesh_structure::add_convex_noverif(pconvex_structure cs,
-                                                 ITER ipts, size_type is) {
+  size_type mesh_structure::add_convex_noverif(pconvex_structure cs,
+                                               ITER ipts, size_type is) {
     mesh_convex_structure s; s.cstruct = cs;
     size_type nb = cs->nb_points();
 
@@ -287,8 +287,8 @@ namespace bgeot {
   }
 
   template<class ITER>
-    size_type mesh_structure::add_convex(pconvex_structure cs,
-                                         ITER ipts, bool *present) {
+  size_type mesh_structure::add_convex(pconvex_structure cs,
+                                       ITER ipts, bool *present) {
     if (present) *present = false;
     for (size_type i = 0; i < points_tab[*ipts].size(); ++i)
       if (structure_of_convex(points_tab[*ipts][i]) == cs &&
@@ -298,7 +298,7 @@ namespace bgeot {
   }
 
   template<class ITER>
-    void mesh_structure::sup_convex_with_points(ITER ipts, short_type nb) {
+  void mesh_structure::sup_convex_with_points(ITER ipts, short_type nb) {
     if (nb) {
       for (size_type i = 0; i < points_tab[*ipts].size(); ++i)
         if (is_convex_having_points(points_tab[*ipts][i], nb, ipts))

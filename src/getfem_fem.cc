@@ -529,7 +529,7 @@ namespace getfem {
 
   void virtual_fem::add_node(const pdof_description &d, const base_node &pt) {
     dal::bit_vector faces;
-     for (short_type f = 0; f < cvs_node->nb_faces(); ++f)
+    for (short_type f = 0; f < cvs_node->nb_faces(); ++f)
       if (d->all_faces || gmm::abs(cvr->is_in_face(f, pt)) < 1.0E-7)
         faces.add(f);
      add_node(d, pt, faces);

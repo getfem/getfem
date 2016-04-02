@@ -1786,6 +1786,72 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        );
 
 
+    /*@SET ind = ('add finite strain elastoplasticity brick', @tmim mim ,@str dispname, @str multname, @str pressname, @str lawname, @str param1, @str param2, @str param3, @str param4, @str param5[, @int region])
+      Add a nonlinear elastoplastic term to the model relatively to the
+      variable `dispname`, in large deformations, for an isotropic material
+      and for a quasistatic model. `multname` is a plastic multiplier name
+      previously defined by the user on a mesh_fem. `pressname` can either
+      be an empty string, resulting in a pure displacements based formulation,
+       or it can contain the name of a user defined scalar fem variable to be
+      used as the pressure multiplier in a mixed displacement-pressure
+      formulation. The fem spaces of `dispname` and `pressname` have to
+      fulfill an appropriate inf-sup condition.
+      The argument `lawname` determines the plasticity model to be used
+      and the subsequent parameters are the specific model parameters.
+      Currently there is only one supported plasticity model defined as
+      "Simo_Miehe" and expects the following specific parameters:
+      `param1` is an expression for the initial bulk modulus K
+      `param2` is an expression for the initial shear modulus G,
+      `param3` is the name of a user predefined function that decribes
+               the yield limit as a function of the hardening variable
+               (both the yield limit and the hardening variable values are
+               assumed to be Frobenius norms of appropriate stress and strain
+               tensors, respectively),
+      `param4` is the name of a (scalar) fem_data or im_data field that holds
+               the plastic strain at the previous time step, and
+      `param5` is the name of a fem_data or im_data field that holds all
+               non-repeated components of the inverse of the plastic right
+               Cauchy-Green tensor at the previous time step
+               (it has to be a 4 element vector for plane strain 2D problems
+               and a 6 element vector for 3D problems).
+      As usual, `region` is an optional mesh region on which the term is added.
+      If it is not specified, it is added on the whole mesh.
+      Return the brick index in the model.@*/
+    sub_command
+      ("add finite strain elastoplasticity brick", 10, 11, 0, 1,
+       getfem::mesh_im *mim = to_meshim_object(in.pop());
+       const std::string dispname = in.pop().to_string();
+       const std::string multname = in.pop().to_string();
+       const std::string pressname = in.pop().to_string();
+       const std::string lawname = in.pop().to_string();
+
+       size_type region(-1);
+       std::vector<std::string> params;
+       for (int i=0; i < 5 && in.remaining(); ++i) {
+         mexarg_in argin = in.pop();
+         if (argin.is_string())
+           params.push_back(argin.to_string());
+         else
+           break;
+       }
+
+       if (in.remaining()) {
+         mexarg_in argin = in.pop();
+         if (!argin.is_integer())
+           THROW_BADARG("Last optional argument must be an integer");
+         region = argin.to_integer();
+       }
+
+       size_type ind = config::base_index() +
+         add_finite_strain_elastoplasticity_brick
+         (*md, *mim, dispname, multname, pressname, lawname, params,
+          region);
+
+       workspace().set_dependence(md, mim);
+       out.pop().from_integer(int(ind));
+       );
+
+
     /*@SET ind = ('add nonlinear incompressibility brick', @tmim mim, @str varname, @str multname_pressure[, @int region])
     Add an nonlinear incompressibility condition on `variable` (for large
     strain elasticity). `multname_pressure`
