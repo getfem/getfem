@@ -61,7 +61,7 @@ namespace bgeot {
         for (short_type i : ind_points_of_face(iff))
           cpt[i]--;
       convex_ind_ct ind;
-      for (size_type i = 0; i < nb_points(); ++i)
+      for (short_type i = 0; i < nb_points(); ++i)
         if (cpt[i] == 0) ind.push_back(i);
       it = intersection_points.emplace(ftab, ind).first;
     }

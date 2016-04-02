@@ -233,15 +233,18 @@ namespace bgeot {
                                             const std::vector<short_type> &ftab,
                                             ind_set &s) const {
     s.resize(0);
+    if (ftab.size() == 0) return;
+    if (ftab.size() == 1) return neighbours_of_convex(ic, ftab[0], s);
     const mesh_convex_structure &q = convex_tab[ic];
     const convex_ind_ct &ind = q.cstruct->ind_common_points_of_faces(ftab);
+    if (ind.size() == 0) return neighbours_of_convex(ic, s);
     std::vector<size_type> ipts(ind.size());
     auto it = ind.cbegin();
     for (size_type &ipt : ipts) ipt = q.pts[*it++];
 
     auto ipt0 = ipts.cbegin();
     auto ipt1 = ipt0 + 1;
-    short_type nbpts(ipts.size()-1);
+    short_type nbpts = short_type(ipts.size()-1);
     for (size_type icv : points_tab[*ipt0]) {
       if (icv != ic &&
           (nbpts == 0 || is_convex_having_points(icv, nbpts, ipt1))

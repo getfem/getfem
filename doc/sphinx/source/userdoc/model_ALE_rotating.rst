@@ -13,6 +13,7 @@ ALE terms for rotating objects
 
 This section present a set of bricks facilitating the use of an ALE formulation for rotating bodies having a rotational symmetry (typically a train wheel).
 
+Work in progress ...
 
 Theoretical background
 ++++++++++++++++++++++
@@ -38,34 +39,27 @@ and :math:`z(t)` is a translation. This illustrated in the following figure:
 .. _ud-fig-rotating_cylinder:
 
 .. figure:: images/ALE_rotating_body.png
-   :align: center
-   :scale: 80
+    :height: 200pt
+    :align: center
+    :alt: alternate text
+    :figclass: align-center
 
-Note that the description is given for a three-dimensional body. For two-dimensional bodies, the third axes is neglected so that :math:`R(t)` is a :math:`2\times 2` rotation matrix.
-
-Denoting :math:`r(t)` the rotation
+Note that the description is given for a three-dimensional body. For two-dimensional bodies, the third axes is neglected so that :math:`R(t)` is a :math:`2\times 2` rotation matrix. Let us denote :math:`r(t)` the rotation:
 
 .. math::
-   r(t,X) = R(t)X, ~~~~~~~~~
-   A(t) = \left(\begin{array}{ccc}
+   r(t,X) = R(t)X, ~~~~~~~~~ mbox{ and }
+   A = \left(\begin{array}{ccc}
    0 & -1 & 0 \\
    1 & 0 & 0 \\
    0 & 0 & 0
-   \end{array} \right), ~~~~~~~~~
-   \mbox{ and } B(t) = A^2(t) = \left(\begin{array}{ccc}
-   -1 & 0 & 0 \\
-   0 & -1 & 0 \\
-   0 & 0 & 0
-   \end{array} \right),
+   \end{array} \right).
 
-such that
+We have then
 
 .. math::
- \dot{r}(t,X) = \dot{\theta}A(t)R(t)X
+ \dot{r}(t,X) = \dot{\theta}AR(t)X
 
-
-
-The ALE description consists in the decomposition of the motion of the cylinder :math:`\varphi(t, X)` in 
+If :math:`\varphi(t, X)` is the deformation of the body which maps the reference configuration :math:`\Omega^0` to the deformed configuration :math:`\Omega_t` at time :math:`t`, the ALE description consists in the decomposition of the deformation of the cylinder in 
 
 .. math::
    \varphi(t, X) = (\tau(t) \circ \bar{\varphi}(t) \circ r(t))(X) = \bar{\varphi}(t, r(t, X)) + z(t)
@@ -73,17 +67,51 @@ The ALE description consists in the decomposition of the motion of the cylinder 
 With :math:`\bar{X} = R(t)X` the new considered deformation is
 
 .. math::
-  \bar{\varphi}(\bar{X}) = \varphi(X) - z(t)
+  \bar{\varphi}(t,\bar{X}) = \varphi(X) - z(t)
 
+
+Thanks to the rotation symmetry of the reference configuration :math:`\Omega^0:`, we note that :math:`\bar{\Omega}^0 = r(t, \Omega^0)` is independant of :math:`t` and will serve as the new reference configuration. This is illustrated in the following figure: 
 
 .. _ud-fig-rotating_cylinder_conf:
 
 .. figure:: images/ALE_rotating_conf.png
-   :align: center
-   :scale: 80
+    :height: 200pt
+    :align: center
+    :alt: alternate text
+    :figclass: align-center
 
+The denomination ALE of the method is justified by the fact that :math:`\bar{\Omega}^0` is an intermediate configuration which is of Euler type for the rigid motion and a Lagrangian one for the additional deformation of the solid. If we denote
 
-+ analyse ... et graphique eventuel
+.. math::
+  \bar{u}(t,\bar{X}) = \bar{\varphi}(t, \bar{X}) - \bar{X}
+
+the displacement with respect to this intermediate configuration, the advantage is that if this additional displacement with respect to the rigid body motion is small, it is possible to use a small deformation model (for instance linearized elasticity).
+
+Due to the objectivity properties of standard consistutive laws, the expression od these laws in the intermediate configuration is most of the time identical to the expression in a standard reference configuration except for the expression of the time derivative which are modified because the change of coordinate is  nonconstant in time :
+
+.. math::
+
+  \Frac{\partial \varphi}{\partial t} = \Frac{\partial \bar{\varphi}}{\partial t} + \dot{\theta} \nabla \bar{\varphi} A \bar{X} + \dot{z}(t),
+
+  \Frac{\partial^2 \varphi}{\partial t^2} = \Frac{\partial^2 \bar{\varphi}}{\partial t^2} + 2\dot{\theta} \nabla\Frac{\partial \bar{\varphi}}{\partial t}A \bar{X} + \dot{\theta}^2\mbox{div}((\nabla\bar{\varphi}A \bar{X}) \otimes (A \bar{X}) )  + \ddot{\theta}\nabla\bar{\varphi}A \bar{X} + \ddot{z}(t).
+
+Note that the term :math:`\dot{\theta} A \bar{X} = \left(\begin{array}{c} -\dot{\theta}\bar{X}_2 \\ \dot{\theta}\bar{X}_1 \\ 0 \end{array}\right)` is the rigid motion velocity vector. Now, If :math:`\Theta(t,X)` is a quantity attached to the material points (for instance the temperature), then, with :math:`\bar{\Theta}(t,\bar{X}) = \Theta(t,X)` , one simply has
+
+.. math::
+
+  \Frac{\partial \Theta}{\partial t} = \Frac{\partial \bar{\Theta}}{\partial t} + \dot{\theta} \nabla \bar{\Theta} A \bar{X}
+
+This should not be forgotten that a correction has to be provided for each evolving variable for which the time derivative intervene in the considered model (think for instance to platic flow for plasticity). So that certain model bricks canot be used directly (plastic bricks for instance).
+
+|gf| bricks for structural mecanics are mainly considering the displacement as the amin unknown. The expression for the displacement is the following:
+
+.. math::
+  \Frac{\partial u}{\partial t} = \Frac{\partial \bar{u}}{\partial t} + \dot{\theta} (I_d + \nabla \bar{u}) A \bar{X} + \dot{z}(t),
+
+  \Frac{\partial^2 u}{\partial t^2} = \Frac{\partial^2 \bar{u}}{\partial t^2} + 2\dot{\theta} \nabla\Frac{\partial \bar{u}}{\partial t}A \bar{X} +  \dot{\theta}^2\mbox{div}(((I_d + \nabla\bar{u})A \bar{X}) \otimes (A \bar{X}) )  + \ddot{\theta} (I_d + \nabla\bar{u}) A \bar{X}  + \ddot{z}(t).
+  
+  
+
 
 
 Main invariants and derivatives
@@ -94,6 +122,8 @@ Main invariants and derivatives
 
 the available bricks ...
 ++++++++++++++++++++++++
+
+To be adapted ..
 
 This brick represents a large strain elasticity problem. It is defined in the files :file:`getfem/getfem_nonlinear_elasticity.h` and :file:`getfem/getfem_nonlinear_elasticity.cc`. The function adding this brick to a model is ::
 
