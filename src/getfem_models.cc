@@ -287,7 +287,7 @@ namespace getfem {
     act_size_to_be_done = false;
 
     std::map<std::string, std::vector<std::string> > multipliers;
-    std::map<std::string, bool > tobedone;
+    std::set<std::string> tobedone;
 
 //     #if GETFEM_PARA_LEVEL > 1
 //     int rk; MPI_Comm_rank(MPI_COMM_WORLD, &rk);
@@ -302,105 +302,102 @@ namespace getfem {
     for (dal::bv_visitor ib(valid_bricks); !ib.finished(); ++ib)
       bricks[ib].terms_to_be_computed = true;
 
-    for (VAR_SET::iterator it = variables.begin(); it != variables.end();
-         ++it) {
-      if (it->second.is_fem_dofs && !(it->second.is_affine_dependent)) {
-        if ((it->second.filter & VDESCRFILTER_CTERM)
-            || (it->second.filter & VDESCRFILTER_INFSUP)) {
-          VAR_SET::iterator it2 = variables.find(it->second.filter_var);
-          GMM_ASSERT1(it2 != variables.end(), "The primal variable of the "
-                      "multiplier does not exist : " << it->second.filter_var);
-          GMM_ASSERT1(it2->second.is_fem_dofs, "The primal variable of the "
-                      "multiplier is not a fem variable");
-          multipliers[it->second.filter_var].push_back(it->first);
-          if (it->second.v_num < it->second.mf->version_number() ||
-              it->second.v_num < it2->second.mf->version_number()) {
-            tobedone[it->second.filter_var] = true;
+    for (auto &&v : variables) {
+      const std::string &vname = v.first;
+      var_description &vdescr = v.second;
+      if (vdescr.is_fem_dofs && !(vdescr.is_affine_dependent)) {
+        if ((vdescr.filter & VDESCRFILTER_CTERM)
+            || (vdescr.filter & VDESCRFILTER_INFSUP)) {
+          VAR_SET::iterator vfilt = variables.find(vdescr.filter_var);
+          GMM_ASSERT1(vfilt != variables.end(), "The primal variable of the"
+                      " multiplier does not exist : " << vdescr.filter_var);
+          GMM_ASSERT1(vfilt->second.is_fem_dofs, "The primal variable of "
+                      "the multiplier is not a fem variable");
+          multipliers[vdescr.filter_var].push_back(vname);
+          if (vdescr.v_num < vdescr.mf->version_number() ||
+              vdescr.v_num < vfilt->second.mf->version_number()) {
+            tobedone.insert(vdescr.filter_var);
           }
         }
-        switch (it->second.filter) {
+        switch (vdescr.filter) {
         case VDESCRFILTER_NO:
-          if (it->second.v_num < it->second.mf->version_number()) {
-            it->second.set_size();
-            it->second.v_num = act_counter();
+          if (vdescr.v_num < vdescr.mf->version_number()) {
+            vdescr.set_size();
+            vdescr.v_num = act_counter();
           }
           break;
         case VDESCRFILTER_REGION:
-          if (it->second.v_num < it->second.mf->version_number()) {
+          if (vdescr.v_num < vdescr.mf->version_number()) {
             dal::bit_vector dor
-              = it->second.mf->dof_on_region(it->second.m_region);
-            it->second.partial_mf->adapt(dor);
-            it->second.set_size();
-            it->second.v_num = act_counter();
+              = vdescr.mf->dof_on_region(vdescr.m_region);
+            vdescr.partial_mf->adapt(dor);
+            vdescr.set_size();
+            vdescr.v_num = act_counter();
           }
           break;
         default : break;
         }
       }
     
-      if (it->second.pim_data != 0
-          && it->second.v_num < it->second.pim_data->version_number()) {
-        // const im_data *pimd = it->second.pim_data;
-        it->second.set_size();
-        it->second.v_num = act_counter();
+      if (vdescr.pim_data != 0
+          && vdescr.v_num < vdescr.pim_data->version_number()) {
+        // const im_data *pimd = vdescr.pim_data;
+        vdescr.set_size();
+        vdescr.v_num = act_counter();
       }
     }
 
-    for (VAR_SET::iterator it = variables.begin(); it != variables.end();
-         ++it) {
-      if (it->second.is_fem_dofs && !(it->second.is_affine_dependent) &&
-          ((it->second.filter & VDESCRFILTER_CTERM)
-           || (it->second.filter & VDESCRFILTER_INFSUP))) {
-        if (tobedone.find(it->second.filter_var) != tobedone.end()) {
+    for (auto &&v : variables) {
+      var_description &vdescr = v.second;
+      if (vdescr.is_fem_dofs && !(vdescr.is_affine_dependent) &&
+          ((vdescr.filter & VDESCRFILTER_CTERM)
+           || (vdescr.filter & VDESCRFILTER_INFSUP))) {
+        if (tobedone.count(vdescr.filter_var)) {
           // This step forces the recomputation of corresponding bricks.
           // A test to check if a modification is really necessary could
           // be done first ... (difficult to coordinate with other
           // multipliers)
-          dal::bit_vector alldof; alldof.add(0, it->second.mf->nb_dof());
-          it->second.partial_mf->adapt(alldof);
-          it->second.set_size();
-          it->second.v_num = act_counter();
+          dal::bit_vector alldof; alldof.add(0, vdescr.mf->nb_dof());
+          vdescr.partial_mf->adapt(alldof);
+          vdescr.set_size();
+          vdescr.v_num = act_counter();
         }
       }
     }
 
     resize_global_system();
 
-    for (std::map<std::string, bool>::iterator itbd = tobedone.begin();
-         itbd != tobedone.end(); ++itbd) {
+    for (const std::string &vname : tobedone) {
 //       #if GETFEM_PARA_LEVEL > 1
 //       double tt_ref = MPI_Wtime();
-//       if (!rk) cout << "compute size of multipliers for " << itbd->first
+//       if (!rk) cout << "compute size of multipliers for " << vname
 //                     << endl;
 //       #endif
 
-      std::vector<std::string> &mults = multipliers[itbd->first];
-      VAR_SET::iterator it2 = variables.find(itbd->first);
+      const std::vector<std::string> &mults = multipliers[vname];
+      const var_description &vdescr = variables.find(vname)->second;
 
       gmm::col_matrix< gmm::rsvector<scalar_type> > MGLOB;
       if (mults.size() > 1) {
         size_type s = 0;
-        for (size_type k = 0; k < mults.size(); ++k) {
-          VAR_SET::iterator it = variables.find(mults[k]);
-          s += it->second.mf->nb_dof();
-        }
-        gmm::resize(MGLOB, it2->second.mf->nb_dof(), s);
+        for (const std::string &mult : mults)
+          s += variables.find(mult)->second.mf->nb_dof();
+        gmm::resize(MGLOB, vdescr.mf->nb_dof(), s);
       }
       size_type s = 0;
       std::set<size_type> glob_columns;
-      // std::vector<dal::bit_vector> mult_kept_dofs;
-      for (size_type k = 0; k < mults.size(); ++k) {
-        VAR_SET::iterator it = variables.find(mults[k]);
+      for (const std::string &multname : mults) {
+        var_description &multdescr = variables.find(multname)->second;
 
         // Obtaining the coupling matrix between the multipier and
         // the primal variable. A search is done on all the terms of the
-        // model. Only the the corresponding linear terms are added.
+        // model. Only the corresponding linear terms are added.
         // If no linear term is available, a mass matrix is used.
         gmm::col_matrix< gmm::rsvector<scalar_type> >
-          MM(it2->second.associated_mf().nb_dof(), it->second.mf->nb_dof());
+          MM(vdescr.associated_mf().nb_dof(), multdescr.mf->nb_dof());
         bool termadded = false;
 
-        if (it->second.filter & VDESCRFILTER_CTERM) {
+        if (multdescr.filter & VDESCRFILTER_CTERM) {
 
           for (dal::bv_visitor ib(valid_bricks); !ib.finished(); ++ib) {
             const brick_description &brick = bricks[ib];
@@ -409,9 +406,9 @@ namespace getfem {
 
             if (!(brick.tlist.size())) {
               bool varc = false, multc = false;
-              for (size_type iv = 0; iv < brick.vlist.size(); ++iv) {
-                if (!(mults[k].compare(brick.vlist[iv]))) multc = true;
-                if (!(it2->first.compare(brick.vlist[iv]))) varc = true;
+              for (const std::string &var : brick.vlist) {
+                if (multname.compare(var) == 0) multc = true;
+                if (vname.compare(var) == 0) varc = true;
               }
               if (multc && varc) {
                 GMM_ASSERT1(!cplx, "Sorry, not taken into account");
@@ -431,7 +428,7 @@ namespace getfem {
                       exception.run([&]
                       {
                         ga_workspace workspace(*this);
-                        for (auto &&ge : generic_expressions)
+                        for (const auto &ge : generic_expressions)
                           workspace.add_expression(ge.expr, ge.mim, ge.region);
                         workspace.set_assembled_matrix(distro_rTM);
                         workspace.assembly(2);
@@ -440,10 +437,10 @@ namespace getfem {
                     exception.rethrow();
                   } //distro scope
                   gmm::add
-                    (gmm::sub_matrix(rTM, it->second.I, it2->second.I),MM);
+                    (gmm::sub_matrix(rTM, vdescr.I, multdescr.I), MM);
                   gmm::add(gmm::transposed
-                           (gmm::sub_matrix(rTM, it2->second.I,
-                                            it->second.I)), MM);
+                           (gmm::sub_matrix(rTM, multdescr.I,
+                                            vdescr.I)), MM);
                   bupd = false;
                 }
               }
@@ -456,9 +453,9 @@ namespace getfem {
               if (term.is_matrix_term) {
                 if (term.is_global) {
                   bool varc = false, multc = false;
-                  for (size_type iv = 0; iv < brick.vlist.size(); ++iv) {
-                    if (!(mults[k].compare(brick.vlist[iv]))) multc = true;
-                    if (!(it2->first.compare(brick.vlist[iv]))) varc = true;
+                  for (const std::string var : brick.vlist) {
+                    if (multname.compare(var) == 0) multc = true;
+                    if (vname.compare(var) == 0) varc = true;
                   }
                   if (multc && varc) {
                     GMM_ASSERT1(!cplx, "Sorry, not taken into account");
@@ -469,16 +466,16 @@ namespace getfem {
                       bupd = true;
                     }
                     gmm::add(gmm::sub_matrix(brick.rmatlist[j],
-                                             it->second.I, it2->second.I),
+                                             multdescr.I, vdescr.I),
                              MM);
                     gmm::add(gmm::transposed(gmm::sub_matrix
                                              (brick.rmatlist[j],
-                                              it2->second.I, it->second.I)),
+                                              vdescr.I, multdescr.I)),
                              MM);
                     termadded = true;
                   }
-                } else if (!mults[k].compare(term.var1) && 
-                    !it2->first.compare(term.var2)) {
+                } else if (!multname.compare(term.var1) && 
+                           !vname.compare(term.var2)) {
                   if (!bupd) {
                     brick.terms_to_be_computed = true;
                     update_brick(ib, BUILD_MATRIX);
@@ -491,8 +488,8 @@ namespace getfem {
                     gmm::add(gmm::transposed(brick.rmatlist[j]), MM);
                   termadded = true;
                   
-                } else if (!mults[k].compare(term.var2) &&
-                           !it2->first.compare(term.var1)) {
+                } else if (!multname.compare(term.var2) &&
+                           !vname.compare(term.var1)) {
                   if (!bupd) {
                     brick.terms_to_be_computed = true;
                     update_brick(ib, BUILD_MATRIX);
@@ -509,13 +506,13 @@ namespace getfem {
           }
 
           if (!termadded)
-            GMM_WARNING1("No term found to filter multiplier " << it->first
+            GMM_WARNING1("No term found to filter multiplier " << multname
                          << ". Variable is cancelled");
-        } else if (it->second.filter & VDESCRFILTER_INFSUP) {
-          mesh_region rg(it->second.m_region);
-          it->second.mim->linked_mesh().intersect_with_mpi_region(rg);
-          asm_mass_matrix(MM, *(it->second.mim), it2->second.associated_mf(),
-                          *(it->second.mf), rg);
+        } else if (multdescr.filter & VDESCRFILTER_INFSUP) {
+          mesh_region rg(multdescr.m_region);
+          multdescr.mim->linked_mesh().intersect_with_mpi_region(rg);
+          asm_mass_matrix(MM, *(multdescr.mim), vdescr.associated_mf(),
+                          *(multdescr.mf), rg);
         }
 
         MPI_SUM_SPARSE_MATRIX(MM);
@@ -528,29 +525,26 @@ namespace getfem {
 
         if (mults.size() > 1) {
           gmm::copy(MM, gmm::sub_matrix
-                    (MGLOB, gmm::sub_interval(0,
-                                        it2->second.associated_mf().nb_dof()),
-                     gmm::sub_interval(s, it->second.mf->nb_dof())));
-          for (std::set<size_type>::iterator itt = columns.begin();
-             itt != columns.end(); ++itt)
-            glob_columns.insert(s + *itt);
-          s += it->second.mf->nb_dof();
+                    (MGLOB,
+                     gmm::sub_interval(0, vdescr.associated_mf().nb_dof()),
+                     gmm::sub_interval(s, multdescr.mf->nb_dof())));
+          for (const size_type &icol : columns)
+            glob_columns.insert(s + icol);
+          s += multdescr.mf->nb_dof();
         } else {
           dal::bit_vector kept;
-          for (std::set<size_type>::iterator itt = columns.begin();
-               itt != columns.end(); ++itt)
-            kept.add(*itt);
-          if (it->second.filter & VDESCRFILTER_REGION)
-            kept &= it->second.mf->dof_on_region(it->second.m_region);
-          // kept &= mult_kept_dofs[k];
-          it->second.partial_mf->adapt(kept);
-          it->second.set_size();
-          it->second.v_num = act_counter();
+          for (const size_type &icol : columns)
+            kept.add(icol);
+          if (multdescr.filter & VDESCRFILTER_REGION)
+            kept &= multdescr.mf->dof_on_region(multdescr.m_region);
+          multdescr.partial_mf->adapt(kept);
+          multdescr.set_size();
+          multdescr.v_num = act_counter();
         }
       }
 
 //         #if GETFEM_PARA_LEVEL > 1
-//         if (!rk) cout << "Range basis for  multipliers for " << itbd->first << " time : " << MPI_Wtime()-tt_ref << endl;
+//         if (!rk) cout << "Range basis for  multipliers for " << vname << " time : " << MPI_Wtime()-tt_ref << endl;
 
 //         #endif
 
@@ -559,29 +553,27 @@ namespace getfem {
 
 
 //         #if GETFEM_PARA_LEVEL > 1
-//         if (!rk) cout << "Producing partial mf for  multipliers for " << itbd->first << " time : " << MPI_Wtime()-tt_ref << endl;
+//         if (!rk) cout << "Producing partial mf for  multipliers for " << vname << " time : " << MPI_Wtime()-tt_ref << endl;
 
 //         #endif
 
         s = 0;
-        for (size_type k = 0; k < mults.size(); ++k) {
-          VAR_SET::iterator it = variables.find(mults[k]);
+        for (const std::string &multname : mults) {
+          var_description &multdescr = variables.find(multname)->second;
           dal::bit_vector kept;
-          size_type nbdof = it->second.mf->nb_dof();
-          for (std::set<size_type>::iterator itt = glob_columns.begin();
-               itt != glob_columns.end(); ++itt)
-            if (*itt >= s && *itt < s + nbdof) kept.add(*itt-s);
-          if (it->second.filter & VDESCRFILTER_REGION)
-            kept &= it->second.mf->dof_on_region(it->second.m_region);
-          // kept &= mult_kept_dofs[k];
-          it->second.partial_mf->adapt(kept);
-          it->second.set_size();
-          it->second.v_num = act_counter();
-          s += it->second.mf->nb_dof();
+          size_type nbdof = multdescr.mf->nb_dof();
+          for (const size_type &icol : glob_columns)
+            if (icol >= s && icol < s + nbdof) kept.add(icol-s);
+          if (multdescr.filter & VDESCRFILTER_REGION)
+            kept &= multdescr.mf->dof_on_region(multdescr.m_region);
+          multdescr.partial_mf->adapt(kept);
+          multdescr.set_size();
+          multdescr.v_num = act_counter();
+          s += multdescr.mf->nb_dof();
         }
       }
 //       #if GETFEM_PARA_LEVEL > 1
-//       if (!rk) cout << "End compute size of  multipliers for " << itbd->first << " time : " << MPI_Wtime()-tt_ref << endl;
+//       if (!rk) cout << "End compute size of  multipliers for " << vname << " time : " << MPI_Wtime()-tt_ref << endl;
 
 //       #endif
     }
