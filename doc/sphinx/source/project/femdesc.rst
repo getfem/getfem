@@ -34,19 +34,19 @@ be declared with the type |bg_pcs|
 The following functions give a pointer onto the descriptor of the usual type of
 elements:
 
-.. c:function:: bgeot::simplex_structure(dim_type d)
+.. cfunction:: bgeot::simplex_structure(dim_type d)
 
    description of a simplex of dimension ``d``.
 
-.. c:function:: bgeot::parallelepiped_structure(dim_type d)
+.. cfunction:: bgeot::parallelepiped_structure(dim_type d)
 
    description of a parallelepiped of dimension ``d``.
 
-.. c:function:: bgeot::convex_product_structure(bgeot::pconvex_structure p1, bgeot::pconv$
+.. cfunction:: bgeot::convex_product_structure(bgeot::pconvex_structure p1, bgeot::pconv$
 
    description of the direct product of ``p1`` and ``p2``.
 
-.. c:function:: bgeot::prism_structure(dim_type d)
+.. cfunction:: bgeot::prism_structure(dim_type d)
 
    description of a prism of dimension ``d``
 
@@ -86,20 +86,20 @@ descriptor.
 
 The following functions build the descriptions:
 
-.. c:function:: bgeot::simplex_of_reference(dim_type d)
+.. cfunction:: bgeot::simplex_of_reference(dim_type d)
 
    description of the simplex of reference of dimension ``d``.
 
-.. c:function:: bgeot::simplex_of_reference(dim_type d, short_type k)
+.. cfunction:: bgeot::simplex_of_reference(dim_type d, short_type k)
 
    description of the simplex of reference of dimension ``d`` with degree ``k``
    Lagrange grid.
 
-.. c:function:: bgeot::convex_ref_product(pconvex_ref a, pconvex_ref b)
+.. cfunction:: bgeot::convex_ref_product(pconvex_ref a, pconvex_ref b)
 
    description of the direct product of two convexes of reference.
 
-.. c:function:: bgeot::parallelepiped_of_reference(dim_type d)
+.. cfunction:: bgeot::parallelepiped_of_reference(dim_type d)
 
    description of the parallelepiped of reference of dimension ``d``.
 

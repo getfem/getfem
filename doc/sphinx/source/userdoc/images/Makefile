@@ -78,6 +78,7 @@ FIGS=getfemlistargyris.fig                   \
      getfemusermodelfalsecontact1.fig        \
      getfemusermodelfalsecontact2.fig        \
      ALE_rotating_body.fig		     \
+     ALE_translation_body.fig		     \
      ALE_rotating_conf.fig
 
 EPSFIGS=$(FIGS:.fig=.eps)
