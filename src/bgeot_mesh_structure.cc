@@ -265,7 +265,7 @@ namespace bgeot {
     }
 
     if (ipts.size() == 0) {
-      GMM_ASSERT1(false, "pb");
+      return; // Should we return the all the neighbours ?
     }
 
     auto ipt0 = ipts.cbegin();
