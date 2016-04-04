@@ -912,21 +912,21 @@ void gf_model_get(getfemint::mexargs_in& m_in,
       `dispname` is the displacement variable.
       `multname` is the plastic multiplier.
       `pressname` is an optional pressure multiplier for a mixed
-                  displacement pressure formulation, otherwise it is an
-                  empty string.
+      displacement pressure formulation, otherwise it is an
+      empty string.
       `lawname` is the name of the plasticity model (for the moment it can
-                only be the name Simo_Miehe)
+      only be the name Simo_Miehe)
       For the Simo_Miehe model:
-        `params1` is the bulk modulus,
-        `params2` is the shear modulus,
-        `params3` is the name of a user defined function expressing isotropic
-                  hardening in terms of the Frobenius norms of the strain
-                  and stress tensors.
-        `params4` is the name of the plastic strain variable (which is updated).
-        `params5` is the name of the vector field for storing all non-repeated
-                  components of the inverse plastic right Cauchy-Green tensor
-                  (which is updated).
-        .@*/
+      `params1` is the bulk modulus,
+      `params2` is the shear modulus,
+      `params3` is the name of a user defined function expressing isotropic
+      hardening in terms of the Frobenius norms of the strain
+      and stress tensors.
+      `params4` is the name of the plastic strain variable (which is updated).
+      `params5` is the name of the vector field for storing all non-repeated
+      components of the inverse plastic right Cauchy-Green tensor
+      (which is updated).
+      @*/
     sub_command
       ("finite strain elastoplasticity next iter", 10, 10, 0, 1,
        getfem::mesh_im *mim = to_meshim_object(in.pop());

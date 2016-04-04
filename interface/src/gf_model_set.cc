@@ -1792,7 +1792,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       and for a quasistatic model. `multname` is a plastic multiplier name
       previously defined by the user on a mesh_fem. `pressname` can either
       be an empty string, resulting in a pure displacements based formulation,
-       or it can contain the name of a user defined scalar fem variable to be
+      or it can contain the name of a user defined scalar fem variable to be
       used as the pressure multiplier in a mixed displacement-pressure
       formulation. The fem spaces of `dispname` and `pressname` have to
       fulfill an appropriate inf-sup condition.
@@ -1803,17 +1803,17 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       `param1` is an expression for the initial bulk modulus K
       `param2` is an expression for the initial shear modulus G,
       `param3` is the name of a user predefined function that decribes
-               the yield limit as a function of the hardening variable
-               (both the yield limit and the hardening variable values are
-               assumed to be Frobenius norms of appropriate stress and strain
-               tensors, respectively),
+      the yield limit as a function of the hardening variable
+      (both the yield limit and the hardening variable values are
+      assumed to be Frobenius norms of appropriate stress and strain
+      tensors, respectively),
       `param4` is the name of a (scalar) fem_data or im_data field that holds
-               the plastic strain at the previous time step, and
+      the plastic strain at the previous time step, and
       `param5` is the name of a fem_data or im_data field that holds all
-               non-repeated components of the inverse of the plastic right
-               Cauchy-Green tensor at the previous time step
-               (it has to be a 4 element vector for plane strain 2D problems
-               and a 6 element vector for 3D problems).
+      non-repeated components of the inverse of the plastic right
+      Cauchy-Green tensor at the previous time step
+      (it has to be a 4 element vector for plane strain 2D problems
+      and a 6 element vector for 3D problems).
       As usual, `region` is an optional mesh region on which the term is added.
       If it is not specified, it is added on the whole mesh.
       Return the brick index in the model.@*/
