@@ -233,22 +233,46 @@ namespace bgeot {
                                             const std::vector<short_type> &ftab,
                                             ind_set &s) const {
     s.resize(0);
-    if (ftab.size() == 0) return;
-    if (ftab.size() == 1) return neighbours_of_convex(ic, ftab[0], s);
-    const mesh_convex_structure &q = convex_tab[ic];
-    const convex_ind_ct &ind = q.cstruct->ind_common_points_of_faces(ftab);
-    if (ind.size() == 0) return neighbours_of_convex(ic, s);
-    std::vector<size_type> ipts(ind.size());
-    auto it = ind.cbegin();
-    for (size_type &ipt : ipts) ipt = q.pts[*it++];
+    std::vector<size_type> ipts;
+
+    switch (ftab.size()) {
+    case 0:
+      {
+	ind_cv_ct pt = ind_points_of_convex(ic);
+	ipts.resize(pt.size());
+	std::copy(pt.begin(), pt.end(), ipts.begin());
+      }
+      break;
+
+    case 1:
+      {
+	ind_pt_face_ct pt = ind_points_of_face_of_convex(ic, ftab[0]);
+	ipts.resize(pt.size());
+	std::copy(pt.begin(), pt.end(), ipts.begin());
+      }
+      break;
+
+    default:
+      {
+	const mesh_convex_structure &q = convex_tab[ic];
+	const convex_ind_ct &ind = q.cstruct->ind_common_points_of_faces(ftab);
+	if (ind.size() == 0) return neighbours_of_convex(ic, s);
+	ipts.resize(ind.size());
+	auto it = ind.cbegin();
+	for (size_type &ipt : ipts) ipt = q.pts[*it++];
+      }
+      break;
+    }
+
+    if (ipts.size() == 0) {
+      GMM_ASSERT1(false, "pb");
+    }
 
     auto ipt0 = ipts.cbegin();
     auto ipt1 = ipt0 + 1;
     short_type nbpts = short_type(ipts.size()-1);
     for (size_type icv : points_tab[*ipt0]) {
-      if (icv != ic &&
-          (nbpts == 0 || is_convex_having_points(icv, nbpts, ipt1))
-          && (convex_tab[ic].cstruct->dim()==convex_tab[icv].cstruct->dim()))
+      if (icv != ic && (nbpts==0 || is_convex_having_points(icv, nbpts, ipt1)))
         s.push_back(icv);
     }
   }

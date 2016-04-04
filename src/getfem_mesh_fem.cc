@@ -335,8 +335,8 @@ namespace getfem {
       pgt_old = pgt; pspt_old = pspt;
       size_type nbd = pf->nb_dof(cv);
       pdof_description andof = global_dof(pf->dim());
-      itab.resize(nbd); 
-      
+      itab.resize(nbd);
+
       // determine for each dof on which faces it lies
       ftab.resize(nbd);
       for (size_type i = 0; i < nbd; ++i) ftab[i].resize(0);
@@ -346,7 +346,7 @@ namespace getfem {
       }
 
       for (size_type i = 0; i < nbd; i++) { // Loop on dofs
-        fd.pnd = pf->dof_types()[i];
+	fd.pnd = pf->dof_types()[i];
         fd.part = get_dof_partition(cv);
 
         if (fd.pnd == andof) {              // If the dof is a global one
@@ -363,9 +363,8 @@ namespace getfem {
         } else {                            // For a standard linkable dof
           pgp->transform(linked_mesh().points_of_convex(cv), i, P);
           size_type idof = nbdof;
-          if (ftab[i].size()) {
+          // if (ftab[i].size()) { // sauf si elt de taille < N ...
             linked_mesh().neighbours_of_convex(cv, ftab[i], s);
-          
             for (size_type ncv : s) { // For each neighbour
                                       // control if the dof already exists.
               fd.ind_node = dof_nodes[ncv].search_node(P);
@@ -374,7 +373,7 @@ namespace getfem {
                 if (it != dof_sorts[ncv].end()) { idof = it->second; break; }
               }
             }
-          }
+	    // }
           if (idof == nbdof) nbdof += Qdim / pf->target_dim();
           itab[i] = idof;
           fd.ind_node = dof_nodes[cv].add_node(P);
