@@ -13,8 +13,6 @@ ALE terms for rotating objects
 
 This section present a set of bricks facilitating the use of an ALE formulation for rotating bodies having a rotational symmetry (typically a train wheel).
 
-Work in progress ...
-
 Theoretical background
 ++++++++++++++++++++++
 
@@ -47,7 +45,7 @@ and :math:`z(t)` is a translation. This illustrated in the following figure:
 Note that the description is given for a three-dimensional body. For two-dimensional bodies, the third axes is neglected so that :math:`R(t)` is a :math:`2\times 2` rotation matrix. Let us denote :math:`r(t)` the rotation:
 
 .. math::
-   r(t,X) = R(t)X, ~~~~~~~~~ mbox{ and }
+   r(t,X) = R(t)X, ~~~~~~~~~ \mbox{ and }
    A = \left(\begin{array}{ccc}
    0 & -1 & 0 \\
    1 & 0 & 0 \\
@@ -114,43 +112,47 @@ This should not be forgotten that a correction has to be provided for each evolv
 
 
 
-Main invariants and derivatives
-###############################
+Weak formulation of the transient terms
+#######################################
+
+Asuming :math:`\rho^0` the density in the reference configuration having a rotation symmetry, the term corresponding to acceleration in the weak formulation reads (with :math:`v(X) = \bar{v}(\bar{X})` a test function):
+
+.. math::
+   \int_{\Omega^0} \rho^0 \Frac{\partial^2 u}{\partial t^2}\cdot vdX =
+
+   \int_{\bar{\Omega}^0} \rho^0 \left[\Frac{\partial^2 \bar{u}}{\partial t^2} + 2\dot{\theta} \nabla\Frac{\partial \bar{u}}{\partial t}A \bar{X} +  \dot{\theta}^2\mbox{div}(((I_d + \nabla\bar{u})A \bar{X}) \otimes (A \bar{X}) )  + \ddot{\theta} (I_d + \nabla\bar{u}) A \bar{X}  + \ddot{z}(t) \right] \cdot \bar{v} d\bar{X}.
+   
+The third term in the right hand side can be integrated by part as follows:
+
+.. math::
+   \begin{array}{rcl}
+   \ds \int_{\bar{\Omega}^0} \rho^0 \dot{\theta}^2\mbox{div}(((I_d + \nabla\bar{u})A \bar{X}) \otimes (A \bar{X}) ) \cdot \bar{v} d\bar{X} &=& - \ds \int_{\bar{\Omega}^0} (\dot{\theta}^2 (I_d + \nabla\bar{u})A \bar{X})) \cdot (\nabla (\rho^0 \bar{v}) A \bar{X}) d\bar{X} \\
+   &&\ds + \int_{\partial \bar{\Omega}^0} \rho^0 \dot{\theta}^2 (((I_d + \nabla\bar{u})A \bar{X}) \otimes (A \bar{X}) ) \bar{N} \cdot \bar{v} d\bar{\Gamma}.
+  \end{array}
+
+Since :math:`\bar{N}` the outward unit normal vector on :math:`\partial \bar{\Omega}^0` is orthogonal to :math:`A \bar{X}` the boundary term is zero and :math:`\nabla (\rho^0 \bar{v}) = \bar{v} \otimes \nabla \rho^0   + \rho^0 \nabla \bar{v}` and since :math:`\nabla \rho^0.(A\bar{X}) = 0` because of the asumption on :math:`\rho^0` to have a rotation symmetry, we have
+
+.. math::
+   \int_{\bar{\Omega}^0} \rho^0 \dot{\theta}^2\mbox{div}(((I_d + \nabla\bar{u})A \bar{X}) \otimes (A \bar{X}) ) \cdot \bar{v} d\bar{X} = - \int_{\bar{\Omega}^0} \rho^0 \dot{\theta}^2(\nabla\bar{u}A \bar{X}) \cdot (\nabla \bar{v} A \bar{X}) d\bar{X} - \int_{\bar{\Omega}^0} \rho^0 \dot{\theta}^2 (A^2 \bar{X})\cdot \bar{v} d\bar{X}.
+
+Thus globally
+
+.. math::
+   \begin{array}{rcl}
+   \ds \int_{\Omega^0} \rho^0 \Frac{\partial^2 u}{\partial t^2}\cdot vdX &=&
+   \ds \int_{\bar{\Omega}^0} \rho^0 \left[\Frac{\partial^2 \bar{u}}{\partial t^2} + 2\dot{\theta} \nabla\Frac{\partial \bar{u}}{\partial t}A \bar{X} + \ddot{\theta} \nabla\bar{u} A \bar{X}   \right] \cdot \bar{v} d\bar{X}\\
+   &&\ds - \int_{\bar{\Omega}^0} \rho^0 \dot{\theta}^2(\nabla\bar{u}A \bar{X}) \cdot (\nabla \bar{v} A \bar{X}) d\bar{X} - \int_{\bar{\Omega}^0} \rho^0 (\dot{\theta}^2 A^2 \bar{X} + \ddot{\theta} A\bar{X} + \ddot{z}(t))\cdot \bar{v} d\bar{X}.
+   \end{array}
+
+Note that two terms can deteriorate the coercivity of the problem and thus its well posedness and the stability of time integration schemes: the second one (convection term) and the fifth one. This may oblige to use additional stabilization techniques for large values of the angular velocity :math:`\dot{\theta}`.
 
 
-
-
-the available bricks ...
+The available bricks ...
 ++++++++++++++++++++++++
 
-To be adapted ..
+To be adapted  ::
 
-This brick represents a large strain elasticity problem. It is defined in the files :file:`getfem/getfem_nonlinear_elasticity.h` and :file:`getfem/getfem_nonlinear_elasticity.cc`. The function adding this brick to a model is ::
+  ind = getfem::brick_name(parmeters);
 
-  ind = getfem::add_nonlinear_elasticity_brick
-    (md, mim, varname, AHL, dataname, region = -1);
-
-where ``AHL`` is an object of type ``getfem::abstract_hyperelastic_law`` which represents the considered hyperelastic law. It has to be chosen between: ::
-
-  getfem::SaintVenant_Kirchhoff_hyperelastic_law AHL;
-  getfem::Ciarlet_Geymonat_hyperelastic_law AHL;
-  getfem::Mooney_Rivlin_hyperelastic_law AHL(compressible, neohookean);
-  getfem::plane_strain_hyperelastic_law AHL(pAHL);
-  getfem::generalized_Blatz_Ko_hyperelastic_law AHL;
-
-The Saint-Venant Kirchhoff law is a linearized law defined with the two Lame coefficients, Ciarlet Geymonat law is defined with the two Lame coefficients and an additional coefficient (:math:`\lambda, \mu, a`).
-
-
-
-Here is the list of nonlinear operators in the language which can be useful for nonlinear elasticity::
-
-  Det(M)                                % determinant of the matrix M
-  Trace(M)                              % trace of the matrix M
-  Matrix_i2(M)                          % second invariant of M (in 3D): (sqr(Trace(m)) - Trace(m*m))/2
-  Matrix_j1(M)                          % modified first invariant of M: Trace(m)pow(Det(m),-1/3).
-  Matrix_j2(M)                          % modified second invariant of M: Matrix_I2(m)*pow(Det(m),-2/3).
-  Right_Cauchy_Green(F)                 % F' * F
-  Left_Cauchy_Green(F)                  % F * F'
-  Green_Lagrangian(F)                   % (F'F - Id(meshdim))/2
-  Cauchy_stress_from_PK2(sigma, Grad_u) % (Id+Grad_u)*sigma*(I+Grad_u')/det(I+Grad_u)
+where ``parameters`` are the parameters ... 
 
