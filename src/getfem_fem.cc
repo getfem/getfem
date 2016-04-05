@@ -221,7 +221,7 @@ namespace getfem {
   { c.hess_base_value(t, withM); }
 
   /* ******************************************************************** */
-  /*        Class for description of an interpolation dof.                    */
+  /*        Class for description of an interpolation dof.                */
   /* ******************************************************************** */
 
   enum ddl_type { LAGRANGE, NORMAL_DERIVATIVE, DERIVATIVE, MEAN_VALUE,
@@ -513,6 +513,12 @@ namespace getfem {
     return true;
   }
 
+
+  /* ******************************************************************** */
+  /*        Members methods of virtual_fem           .                    */
+  /* ******************************************************************** */
+
+
   void virtual_fem::add_node(const pdof_description &d, const base_node &pt,
                              const dal::bit_vector &faces) {
     short_type nb = cv_node.nb_points();
@@ -548,6 +554,12 @@ namespace getfem {
   void virtual_fem::unfreeze_cvs_node(void) {
     cv_node.structure() = cvs_node;
     pspt_valid = false;
+  }
+
+  const std::vector<short_type> &
+  virtual_fem::faces_of_dof(size_type /*cv*/, size_type i) const {
+    static const std::vector<short_type> no_faces;
+    return (i < face_tab.size()) ? face_tab[i] : no_faces;
   }
 
   void virtual_fem::copy(const virtual_fem &f) {

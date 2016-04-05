@@ -317,7 +317,7 @@ namespace getfem {
     const base_node &node_of_dof(size_type cv, size_type i) const
       { return (*(node_tab(cv)))[i];}
     virtual const std::vector<short_type> &
-      faces_of_dof(size_type /*cv*/, size_type i) const { return face_tab[i]; }
+    faces_of_dof(size_type /*cv*/, size_type i) const;
     bool is_on_real_element(void) const { return real_element_defined; }
     bool is_equivalent(void) const { return is_equiv; }
     bool need_G(void) const
