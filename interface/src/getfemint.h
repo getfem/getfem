@@ -141,7 +141,7 @@ namespace getfemint {
     unsigned ndim_;
     unsigned sizes_[ARRAY_DIMENSIONS_MAXDIM];
   public:
-    array_dimensions(): sz(0), ndim_(0) {}
+    array_dimensions(): sz(0), ndim_(0) { sizes_[0]=0; sizes_[1]=0; }
     void push_back(unsigned d) {
       GMM_ASSERT1(ndim_ != ARRAY_DIMENSIONS_MAXDIM-1,
                   " max. nb of dimensions for an output argument exceeded!");

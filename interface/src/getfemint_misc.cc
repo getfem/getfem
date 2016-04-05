@@ -277,7 +277,7 @@ namespace getfemint {
         std::vector<size_type> cvpt(m.ind_points_of_convex(cv).begin(), m.ind_points_of_convex(cv).end());
         bgeot::mesh_edge_list_convex(m.structure_of_convex(cv), cvpt, cv, elcv, merge_convex);
         if (v.getm() == 2) { /* face numbers present */
-          /* loop while the convex number is do not change */
+          /* loop while the convex number do not change */
           do {
             mesh_edge_list_merge(m, el, elcv, int(cv), int(v(1,unsigned(j))-config::base_index()));
             j++;

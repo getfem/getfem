@@ -240,6 +240,7 @@ namespace getfem {
        inherits from dal::static_stored_object
     */
     std::shared_ptr<bgeot::convex_structure> cvs_node;
+    std::vector<std::vector<short_type>> face_tab; // face list for each dof
     bgeot::convex<base_node> cv_node;
     mutable bgeot::pstored_point_tab pspt;
     mutable bool pspt_valid;
@@ -315,6 +316,8 @@ namespace getfem {
     */
     const base_node &node_of_dof(size_type cv, size_type i) const
       { return (*(node_tab(cv)))[i];}
+    virtual const std::vector<short_type> &
+      faces_of_dof(size_type /*cv*/, size_type i) const { return face_tab[i]; }
     bool is_on_real_element(void) const { return real_element_defined; }
     bool is_equivalent(void) const { return is_equiv; }
     bool need_G(void) const
@@ -459,28 +462,7 @@ namespace getfem {
     { copy(f); DAL_STORED_OBJECT_DEBUG_CREATED(this, "Fem"); }
     virtual ~virtual_fem() { DAL_STORED_OBJECT_DEBUG_DESTROYED(this, "Fem"); }
   private:
-    void copy(const virtual_fem &f) {
-      dof_types_ = f.dof_types_;
-
-      cvs_node = bgeot::new_convex_structure();
-      *cvs_node = *f.cvs_node; // deep copy
-      cv_node = f.cv_node;
-      cv_node.structure() = cvs_node;
-      pspt = 0;
-      pspt_valid = false;
-      cvr = f.cvr;
-      dim_ = f.dim_;
-      ntarget_dim = f.ntarget_dim;
-      vtype = f.vtype;
-      is_equiv = f.is_equiv;
-      is_lag = f.is_lag;
-      is_pol = f.is_pol;
-      is_polycomp = f.is_polycomp;
-      real_element_defined = f.real_element_defined;
-      es_degree = f.es_degree;
-      hier_raff = f.hier_raff;
-      debug_name_ = f.debug_name_;
-    }
+    void copy(const virtual_fem &f);
   };
 
   /**

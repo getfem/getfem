@@ -519,10 +519,13 @@ namespace getfem {
     cv_node.points().resize(nb+1);
     cv_node.points()[nb] = pt;
     dof_types_.resize(nb+1);
+    face_tab.resize(nb+1);
     dof_types_[nb] = d;
     cvs_node->add_point_adaptative(nb, short_type(-1));
-    for (dal::bv_visitor f(faces); !f.finished(); ++f)
+    for (dal::bv_visitor f(faces); !f.finished(); ++f) {
       cvs_node->add_point_adaptative(nb, short_type(f));
+      face_tab[nb].push_back(short_type(f));
+    }
     pspt_valid = false;
   }
 
@@ -538,6 +541,7 @@ namespace getfem {
   void virtual_fem::init_cvs_node(void) {
     cvs_node->init_for_adaptative(cvr->structure());
     cv_node = bgeot::convex<base_node>(cvs_node);
+    face_tab.resize(0);
     pspt_valid = false;
   }
 
@@ -546,6 +550,29 @@ namespace getfem {
     pspt_valid = false;
   }
 
+  void virtual_fem::copy(const virtual_fem &f) {
+    dof_types_ = f.dof_types_;
+    cvs_node = bgeot::new_convex_structure();
+    *cvs_node = *f.cvs_node; // deep copy
+    cv_node = f.cv_node;
+    cv_node.structure() = cvs_node;
+    pspt = 0;
+    pspt_valid = false;
+    cvr = f.cvr;
+    dim_ = f.dim_;
+    ntarget_dim = f.ntarget_dim;
+    vtype = f.vtype;
+    is_equiv = f.is_equiv;
+    is_lag = f.is_lag;
+    is_pol = f.is_pol;
+    is_polycomp = f.is_polycomp;
+    real_element_defined = f.real_element_defined;
+    es_degree = f.es_degree;
+    hier_raff = f.hier_raff;
+    debug_name_ = f.debug_name_;
+    face_tab = f.face_tab;
+  }
+  
   /* ******************************************************************** */
   /*        PK class.                                                         */
   /* ******************************************************************** */

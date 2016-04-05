@@ -315,7 +315,6 @@ namespace getfem {
     
     // Auxilliary variables
     std::vector<size_type> itab;
-    std::vector<std::vector<short_type>> ftab;
     base_node P(linked_mesh().dim());
     fem_dof fd;
     bgeot::mesh_structure::ind_set s;
@@ -337,14 +336,6 @@ namespace getfem {
       pdof_description andof = global_dof(pf->dim());
       itab.resize(nbd);
 
-      // determine for each dof on which faces it lies
-      ftab.resize(nbd);
-      for (size_type i = 0; i < nbd; ++i) ftab[i].resize(0);
-      for (short_type f = 0; f < pf->structure(cv)->nb_faces(); ++f) {
-        for (short_type i : pf->structure(cv)->ind_points_of_face(f))
-          ftab[i].push_back(f);
-      }
-
       for (size_type i = 0; i < nbd; i++) { // Loop on dofs
 	fd.pnd = pf->dof_types()[i];
         fd.part = get_dof_partition(cv);
@@ -363,7 +354,7 @@ namespace getfem {
         } else {                            // For a standard linkable dof
           pgp->transform(linked_mesh().points_of_convex(cv), i, P);
           size_type idof = nbdof;
-	  linked_mesh().neighbours_of_convex(cv, ftab[i], s);
+	  linked_mesh().neighbours_of_convex(cv, pf->faces_of_dof(cv, i), s);
 	  for (size_type ncv : s) { // For each neighbour
 	                            // control if the dof already exists.
 	    fd.ind_node = dof_nodes[ncv].search_node(P);
