@@ -76,7 +76,7 @@ The surface :math:`f(\sigma, A) = 0` being the yield surface where the plastic d
 
 Let us consider also the plastic potential :math:`\Psi(\sigma, A)`, (convex with respect to both its two variables) which determine the plastic flow direction in the sense that the flow rule reads as
 
-.. math:: \dot{\varepsilon}^p = \dot{\gamma} \Frac{\Psi}{\partial \sigma}(\sigma, A), ~~~~~~ \dot{\alpha} = -\dot{\gamma} \Frac{\Psi}{\partial A}(\sigma, A),
+.. math:: \dot{\varepsilon}^p = \dot{\gamma} \Frac{\partial \Psi}{\partial \sigma}(\sigma, A), ~~~~~~ \dot{\alpha} = \dot{\gamma} \Frac{\partial \Psi}{\partial A}(\sigma, A),
 
 with the additional complementary condition
 
@@ -116,7 +116,7 @@ The mid-point scheme for the integration of the plastic flow rules reads as
 
 .. math:: \varepsilon^p_{n+1} - \varepsilon^p_{n} = \Delta \gamma \Frac{\Psi}{\partial \sigma}(\sigma_{n+\theta}, A_{n+\theta}),
 
-.. math:: \alpha_{n+1} - \alpha_n = -\Delta \gamma \Frac{\Psi}{\partial A}(\sigma_{n+\theta}, A_{n+\theta}),
+.. math:: \alpha_{n+1} - \alpha_n = \Delta \gamma \Frac{\Psi}{\partial A}(\sigma_{n+\theta}, A_{n+\theta}),
 
 with the complementary condition
 
@@ -137,7 +137,7 @@ so that our two main unknows are now :math:`u_{n+1} \mbox{ and } \Delta \xi`. Th
 .. math:: \varepsilon^p_{n+\theta} - \varepsilon^p_{n} = \alpha(\sigma_{n+\theta}, A_{n+\theta}) \theta \Delta \xi \Frac{\Psi}{\partial \sigma}(\sigma_{n+\theta}, A_{n+\theta}).
    :label: flowrule1
 
-.. math::  \alpha_{n+\theta} - \alpha_n = -\alpha(\sigma_{n+\theta}, A_{n+\theta}) \theta \Delta \xi \Frac{\Psi}{\partial A}(\sigma_{n+\theta}, A_{n+\theta}),
+.. math::  \alpha_{n+\theta} - \alpha_n = \alpha(\sigma_{n+\theta}, A_{n+\theta}) \theta \Delta \xi \Frac{\Psi}{\partial A}(\sigma_{n+\theta}, A_{n+\theta}),
    :label: flowrule2
 
 .. math:: f(\sigma_{n+\theta}, A_{n+\theta}) \le 0, ~~~ \Delta\xi \ge 0, ~~~ f(\sigma_{n+\theta}, A_{n+\theta}) \Delta \xi = 0.
@@ -202,7 +202,7 @@ There is no internal variables and we consider an isotropic elastic response. Th
 This corresponds to :math:`\Psi(\sigma) = f(\sigma) = \|\mbox{Dev}(\sigma)\| - \sqrt{\frac{2}{3}}\sigma_y`.
 
 
-The mid-point scheme for the integration of the plastic flow rule reads:
+The generalized mid-point scheme for the integration of the plastic flow rule reads:
 
 .. math:: \varepsilon^p_{n+\theta} - \varepsilon^p_{n} = \theta \alpha(\sigma_{n+\theta}, A_{n+\theta}) \Delta \xi \sqrt{\frac{3}{2}}\Frac{\mbox{Dev}(\sigma_{n+\theta})}{\|\mbox{Dev}(\sigma_{n+\theta})\|}.
 
@@ -237,24 +237,24 @@ i.e. :math:`A = \sqrt{\frac{2}{3}}H_i\alpha` and a uniaxial yield stress defined
 
 .. math:: \sigma_y(a) = \sigma_{y0} + \sqrt{\frac{3}{2}}A = \sigma_{y0} + H_i\alpha,
 
-for :math:`\sigma_{y0}` the initial uniaxial yield stress. The yield function (and plastic potential since this is a associated plastic model) can be defined by
+for :math:`\sigma_{y0}` the initial uniaxial yield stress. The yield function (and plastic potential since this is an associated plastic model) can be defined by
 
 .. math:: \Psi(\sigma, A) = f(\sigma, A) = \|\mbox{Dev}(\sigma - H_k\varepsilon^p)\| - \sqrt{\frac{2}{3}}\sigma_{y0} + A,
 
 where :math:`H_k` is the kinematic hardening modulus. The same computation as in the previous section leads to
 
-.. math:: {\mathscr E}^p(u_{n+\theta}, \theta \Delta \xi, \varepsilon^p_{n}) = \Frac{1}{1+(2\mu+H_k)\theta\Delta \xi}(\varepsilon^p_{n} + (2\mu)\theta\Delta \xi \mbox{Dev}(\varepsilon(u_{n+\theta}))),
+.. math:: {\mathscr E}^p(u_{n+\theta}, \theta \Delta \xi, \varepsilon^p_{n}) = \Frac{1}{1+(2\mu+H_k)\theta\Delta \xi}(\varepsilon^p_{n} + 2\mu\theta\Delta \xi \mbox{Dev}(\varepsilon(u_{n+\theta}))),
 
 .. math:: {\mathscr A}(u_{n+\theta}, \theta \Delta \xi, \varepsilon^p_{n}, \alpha_n) = \alpha_n + \|\varepsilon^p_{n+\theta}-\varepsilon^p_{n}\| = \alpha_n + \| {\mathscr E}^p(u_{n+\theta}, \theta \Delta \xi, \varepsilon^p_{n})-\varepsilon^p_{n}\|
 
-Note that the isotropic Hardening modulus do not intervene in :math:`{\mathscr E}^p(u_{n+\theta}, \theta \Delta \xi, \varepsilon^p_{n})` but only in :math:`f(\sigma, A)`.
+Note that the isotropic hardening modulus do not intervene in :math:`{\mathscr E}^p(u_{n+\theta}, \theta \Delta \xi, \varepsilon^p_{n})` but only in :math:`f(\sigma, A)`.
 
 Souza-Auricchio elastoplasticity law (for shape memory alloys)
 ==============================================================
 
-See for instance [GR-ST2015]_ for the justification of the construction of this flow rule. A Von-Mises stress criterion together with an isotropic elastic response, no internal variables and a special type of kinematic hardening is considered with a constraint :math:`\|\varepsilon^p\| \le c_3`. The yield function has the form
+See for instance [GR-ST2015]_ for the justification of the construction of this flow rule. A Von-Mises stress criterion together with an isotropic elastic response, no internal variables and a special type of kinematic hardening is considered with a constraint :math:`\|\varepsilon^p\| \le c_3`. The plastic potential and yield function have the form
 
-.. math:: \Psi(\sigma, A) = f(\sigma, A) = \left\|\mbox{Dev}\left(\sigma - c_1\Frac{\varepsilon^p}{\|\varepsilon^p\|} - c_2\varepsilon^p - \delta \Frac{\varepsilon^p}{\|\varepsilon^p\|}\right)\right\| - \sqrt{\frac{2}{3}}\sigma_{y},
+.. math:: \Psi(\sigma) = f(\sigma)  = \left\|\mbox{Dev}\left(\sigma - c_1\Frac{\varepsilon^p}{\|\varepsilon^p\|} - c_2\varepsilon^p - \delta \Frac{\varepsilon^p}{\|\varepsilon^p\|}\right)\right\| - \sqrt{\frac{2}{3}}\sigma_{y},
 
 with the complementarity condition
 
@@ -268,6 +268,7 @@ The integration of the flow rule reads
 
 .. math::
    \varepsilon^p_{n+\theta} - \varepsilon^p_{n} = \theta \Delta \xi \mbox{Dev}\left(\sigma_{n+\theta} - (c_1 + \delta)\Frac{\varepsilon^p_{n+\theta}}{\|\varepsilon^p_{n+\theta}\|} - c_2\varepsilon^p_{n+\theta}\right).
+   :label: souza_auri_comp
 
 which can be transformed in
 
@@ -280,12 +281,21 @@ With
 
 we conclude that :math:`\Frac{\varepsilon^p_{n+\theta}}{\|\varepsilon^p_{n+\theta}\|} = \Frac{B}{\|B\|}` and then :math:`\varepsilon^p_{n+\theta} = 0` for :math:`\|B\| \le c_1` and
 
-.. math:: (1+(2\mu+c_2)\theta\Delta \xi)\varepsilon^p_{n+\theta} = \Frac{B}{\|B\|} (\|B\| - \theta\Delta \xi(c_1+\delta))
+.. math:: (1+(2\mu+c_2)\theta\Delta \xi)\varepsilon^p_{n+\theta} = \Frac{B}{\|B\|} (\|B\| - \theta\Delta \xi(c_1+\delta)).
 
 Since :math:`\varepsilon^p_{n+\theta} = c_3` for :math:`\delta > 0` (complementarity condition), we can deduce the follwoing expression for :math:`\varepsilon^p_{n+\theta}`: 
 
-.. math:: {\mathscr E}^p(u_{n+\theta}, \theta \Delta \xi, \varepsilon^p_{n}) = \Frac{B}{\|B\|} \max\left(0, \min\left(c_3, \Frac{\|B\| - \theta\Delta \xi(c_1+\delta)}{1+(2\mu+c_2)\theta\Delta \xi}\right)\right).
+.. math:: {\mathscr E}^p(u_{n+\theta}, \theta \Delta \xi, \varepsilon^p_{n}) = \Frac{B}{\|B\|} \min\left(c_3, \Frac{\max(0, \|B\| - \theta\Delta \xi c_1)}{1+(2\mu+c_2)\theta\Delta \xi}\right).
 
+The yield condition reads then
+
+.. math:: f(\sigma_{n+\theta}) = \left\|2\mu\mbox{Dev}(\varepsilon(u_{n+\theta})) - (2\mu+c_2)\varepsilon^p_{n+\theta} - (c_1+\delta)\Frac{\varepsilon^p_{n+\theta}}{\|\varepsilon^p_{n+\theta}\|} \right\| - \sqrt{\frac{2}{3}}\sigma_{y} \le 0,
+
+or using :eq:`souza_auri_comp`
+
+.. math:: \|{\mathscr E}^p(u_{n+\theta}, \theta \Delta \xi, \varepsilon^p_{n}) - \varepsilon^p_{n}\| \le \theta\Delta \xi\sqrt{\frac{2}{3}}\sigma_{y}.
+
+stupid ? 
 
 
 
