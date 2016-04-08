@@ -35,6 +35,7 @@ User Documentation
    model
    model_continuation
    model_nonlinear_elasticity
+   model_plasticity_small_strain
    model_ALE_rotating
    
    appendixA
