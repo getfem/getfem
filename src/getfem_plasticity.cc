@@ -932,31 +932,108 @@ namespace getfem {
     }
     
     // Value : u/|u|
-    void value(const arg_list &args, base_tensor &result) const
-    {
-      scalar_type no = gmm::vect_norm2(args[0]->as_vector());
-      if (no < 1E-15)
-        gmm::clear(result.as_vector());
-      else
-        gmm::copy(gmm::scaled(args[0]->as_vector(), scalar_type(1)/no),
-                  result.as_vector());
+    void value(const arg_list &args, base_tensor &result) const {
+      const base_tensor &t = *args[0];
+      scalar_type eps = 1E-25;
+      scalar_type no = ::sqrt(gmm::vect_norm2_sqr(t.as_vector())+gmm::sqr(eps));
+      gmm::copy(gmm::scaled(t.as_vector(), scalar_type(1)/no),
+		result.as_vector());
     }
+    // void value(const arg_list &args, base_tensor &result) const {
+    //   scalar_type no = gmm::vect_norm2(args[0]->as_vector());
+    //   if (no < 1E-15)
+    //     gmm::clear(result.as_vector());
+    //   else
+    //     gmm::copy(gmm::scaled(args[0]->as_vector(), scalar_type(1)/no),
+    //               result.as_vector());
+    // }
 
     // Derivative : (|u|^2 Id - u x u)/|u|^3
     void derivative(const arg_list &args, size_type,
                     base_tensor &result) const {
       const base_tensor &t = *args[0];
-      size_type N = t.size();
-      scalar_type no = gmm::vect_norm2(t.as_vector());
+      scalar_type eps = 1E-25;
 
-      gmm::clear(result.as_vector());
-      if (no >= 1E-15) {
-        scalar_type no3 = no*no*no;
-        for (size_type i = 0; i < N; ++i) {
-          result[i*N+i] += scalar_type(1)/no;
-          for (size_type j = 0; j < N; ++j)
-            result[j*N+i] -= t[i]*t[j] / no3;
-        }
+      size_type N = t.size();
+      scalar_type no = ::sqrt(gmm::vect_norm2_sqr(t.as_vector())+gmm::sqr(eps));
+      scalar_type no3 = no*no*no;
+
+      for (size_type i = 0; i < N; ++i) {
+	result[i*N+i] += scalar_type(1)/no;
+	for (size_type j = 0; j < N; ++j)
+	  result[j*N+i] -= t[i]*t[j] / no3;
+      }
+    }
+    // void derivative(const arg_list &args, size_type,
+    //                 base_tensor &result) const {
+    //   const base_tensor &t = *args[0];
+    //   size_type N = t.size();
+    //   scalar_type no = gmm::vect_norm2(t.as_vector());
+
+    //   gmm::clear(result.as_vector());
+    //   if (no >= 1E-15) {
+    //     scalar_type no3 = no*no*no;
+    //     for (size_type i = 0; i < N; ++i) {
+    //       result[i*N+i] += scalar_type(1)/no;
+    //       for (size_type j = 0; j < N; ++j)
+    //         result[j*N+i] -= t[i]*t[j] / no3;
+    //     }
+    //   }
+    // }
+
+    // Second derivative : not implemented
+    void second_derivative(const arg_list &/*args*/, size_type, size_type,
+                           base_tensor &/*result*/) const {
+      GMM_ASSERT1(false, "Sorry, second derivative not implemented");
+    }
+  };
+
+
+  // Normalized_reg vector/matrix operator : Regularized Vector/matrix divided by its Frobenius norm
+  struct normalized_reg_operator : public ga_nonlinear_operator {
+    bool result_size(const arg_list &args, bgeot::multi_index &sizes) const {
+      if (args.size() != 2 || args[0]->sizes().size() > 2
+          || args[0]->sizes().size() < 1 || args[0]->size() != 1) return false;
+      if (args[0]->sizes().size() == 1)
+        ga_init_vector(sizes, args[0]->sizes()[0]);
+      else
+        ga_init_matrix(sizes, args[0]->sizes()[0], args[0]->sizes()[1]);
+      return true;
+    }
+    
+    // Value : u/(sqrt([u|^2+\eps^2))
+    void value(const arg_list &args, base_tensor &result) const {
+      const base_tensor &t = *args[0];
+      scalar_type eps = (*args[1])[0];
+      scalar_type no = ::sqrt(gmm::vect_norm2_sqr(t.as_vector())+gmm::sqr(eps));
+      gmm::copy(gmm::scaled(t.as_vector(), scalar_type(1)/no),
+		result.as_vector());
+    }
+
+    // Derivative / u : ((|u|^2+eps^2) Id - u x u)/(|u|^2+eps^2)^(3/2)
+    // Derivative / eps : -eps*u/(|u|^2+eps^2)^(3/2)
+    void derivative(const arg_list &args, size_type nder,
+                    base_tensor &result) const {
+      const base_tensor &t = *args[0];
+      scalar_type eps = (*args[1])[0];
+
+      size_type N = t.size();
+      scalar_type no = ::sqrt(gmm::vect_norm2_sqr(t.as_vector())+gmm::sqr(eps));
+      scalar_type no3 = no*no*no;
+
+      switch (nder) {
+      case 1:
+	for (size_type i = 0; i < N; ++i) {
+	  result[i*N+i] += scalar_type(1)/no;
+	  for (size_type j = 0; j < N; ++j)
+	    result[j*N+i] -= t[i]*t[j] / no3;
+	}
+	break;
+	
+      case 2:
+	gmm::copy(gmm::scaled(t.as_vector(), -scalar_type(eps)/no3),
+		  result.as_vector());
+	break;
       }
     }
 
@@ -1068,6 +1145,8 @@ namespace getfem {
                                 std::make_shared<matrix_logarithm_operator>());
     PREDEF_OPERATORS.add_method("Normalized",
                                 std::make_shared<normalized_operator>());
+    PREDEF_OPERATORS.add_method("Normalized_reg",
+                                std::make_shared<normalized_reg_operator>());
     PREDEF_OPERATORS.add_method("Von_Mises_projection",
                                 std::make_shared<Von_Mises_projection_operator>());
     return true;

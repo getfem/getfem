@@ -567,7 +567,9 @@ The assembly language provide some predefined nonlinear operator. Each nonlinear
 
   - ``Norm_sqr(v)`` for ``v`` a vector or a matrix gives the square of the euclidean norm of a vector or of the |Frobenius| norm of a matrix. For a vector this is equivalent to ``v.v`` and for a matrix to ``m:m``.
 
-  - ``Normalized(v)`` for ``v`` a vector or a matrix gives ``v`` divided by its euclidean (for vectors) or |Frobenius| (for matrices) norm.
+  - ``Normalized(v)`` for ``v`` a vector or a matrix gives ``v`` divided by its euclidean (for vectors) or |Frobenius| (for matrices) norm. In order to avoid problems when ``v`` is small, it is implemented as ``Normalized_reg(v, 1E-25)``.
+
+  - ``Normalized_reg(v, eps)`` for ``v`` a vector or a matrix gives a regularized version of ``Normalized(v)`` : ``v/sqrt(|v|*|v|+eps*eps)``.
 
   - ``Det(m)`` gives the determinant of a square matrix ``m``.
 
