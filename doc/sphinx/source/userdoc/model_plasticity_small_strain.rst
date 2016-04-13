@@ -61,7 +61,7 @@ In the standard cases, :math:`\psi(\varepsilon^e, \alpha)` is decomposed into
 
 .. math:: \psi(\varepsilon^e, \alpha) = \psi^e(\varepsilon^e) + \psi^p(\alpha).
 
-In the case of linearized elasticity, one has :math:`\psi^e(\varepsilon^e) = \frac{1}{2} ({\cal A}\varepsilon^e) :\varepsilon^e` for :math:`{\cal A}` the fourth order elasticity tensor en more precisely :math:`\psi^e(\varepsilon^e) = \mu \mbox{dev}(\varepsilon^e) : \mbox{dev}(\varepsilon^e) + \frac{1}{2} K (tr(\varepsilon^e))^2` for isotropic linearized elasticity for :math:`\mu, K = \lambda + 2\mu/3` the shear and bulk modulus, respectively.
+In the case of linearized elasticity, one has :math:`\psi^e(\varepsilon^e) = \frac{1}{2} ({\cal A}\varepsilon^e) :\varepsilon^e` for :math:`{\cal A}` the fourth order elasticity tensor en more precisely :math:`\psi^e(\varepsilon^e) = \mu \mbox{dev}(\varepsilon^e) : \mbox{dev}(\varepsilon^e) + \frac{1}{2} K (\mbox{tr}(\varepsilon^e))^2` for isotropic linearized elasticity for :math:`\mu, K = \lambda + 2\mu/3` the shear and bulk modulus, respectively.
 
 
 
@@ -161,35 +161,86 @@ Still :math:`u_{n+1} \mbox{ and } \Delta \xi` be given the stress :math:`\sigma_
 
 The complementarity equation :eq:`flowrule3` is then prescribed with the use of a well chosen complementarity function, as in [HA-WO2009]_ for :math:`r > 0` such as:
 
-.. math:: \ds \int_{\Omega} ((-f(\sigma_{n+\theta}, A_{n+\theta}) - r\Delta \xi)_+ + f(\sigma_{n+\theta}, A_{n+\theta}) ) \lambda dx = 0,   \forall \lambda
-
-
-pb : need of :math:`A_{n+\theta}` ... Would be more simple in :math:`f(\sigma_{n+1}, A_{n+1})`
-
-and ... the following should be more simple :
-
 .. math:: \ds \int_{\Omega} (\Delta \xi - (\Delta \xi + r f(\sigma_{n+\theta}, A_{n+\theta}))_+) \lambda dx = 0,   \forall \lambda
+
+or
+
+.. math:: \ds \int_{\Omega} (f(\sigma_{n+\theta} + (-f(\sigma_{n+\theta}, A_{n+\theta}) - \Delta \xi/r)_+ , A_{n+\theta}) ) \lambda dx = 0,   \forall \lambda
+
+
+pb : need of :math:`A_{n+\theta}` 
+
+
 
 Plane strain approximation
 ++++++++++++++++++++++++++
 
-To be described
+A plane strain approximation is a 2D problem which corresponds to the deformation of a long cylindrical object where the strain in  the length direction (assumed to be along the :math:`z` axis) is considered small compared to the ones in the other directions and is neglected. It result in a plane strain tensor of the form
+
+.. math:: \varepsilon(u) = \left(\hspace{-0.5em}\begin{array}{ccc} \varepsilon_{1,1} & \varepsilon_{1,2} & 0 \\ \varepsilon_{1,2} & \varepsilon_{2,2} & 0 \\ 0 & 0 & 0 \end{array}\hspace{-0.5em}\right).
+
+We denote
+
+.. math:: \bar{\varepsilon}(u) =  \left(\hspace{-0.5em}\begin{array}{cc} \varepsilon_{1,1} & \varepsilon_{1,2} \\ \varepsilon_{1,2} & \varepsilon_{2,2} \end{array}\hspace{-0.5em}\right)
+
+the non neglected components of the strain tensor. The adaptation to the plane strain approximation to plastic model is most of the time an  easy task.
+
+An isotropic linearized elastic response reads
+
+.. math:: \bar{\sigma} = \lambda \mbox{tr}(\bar{\varepsilon}^e) I + 2\mu\bar{\varepsilon}^e,
+
+and
+
+.. math:: \sigma_{33} = \lambda \mbox{tr}(\bar{\varepsilon}^e) = \Frac{\lambda}{2(\lambda+\mu)}.\mbox{tr}(\bar{\sigma})
+
+thus 
+
+.. math:: \mbox{tr}(\sigma) = \Frac{3\lambda+2\mu}{2(\lambda+\mu))} \mbox{tr}(\bar{\sigma}),
+
+.. math:: \mbox{Dev}(\sigma) = \sigma - \Frac{3\lambda+2\mu}{6(\lambda+\mu))} \mbox{tr}(\bar{\sigma}) I.
+
+
+
+
 
 Plane stress approximation
 ++++++++++++++++++++++++++
 
-To be described
+The plane stress approximation describe generally the 2D membrane deformation of a thin plate. It consist in prescribing the stress tensor to have only in-plane nonzero components, i.e.
+
+.. math:: \sigma = \left(\hspace{-0.5em}\begin{array}{ccc} \sigma_{1,1} & \sigma_{1,2} & 0 \\ \sigma_{1,2} & \sigma_{2,2} & 0 \\ 0 & 0 & 0 \end{array}\hspace{-0.5em}\right).
+
+We will still denote 
+
+.. math:: \bar{\sigma} =  \left(\hspace{-0.5em}\begin{array}{cc} \sigma_{1,1} & \sigma_{1,2} \\ \sigma_{1,2} & \sigma_{2,2} \end{array}\hspace{-0.5em}\right)
+
+the in-plane components of the stress tensor. For elastoplasticity, it consists generally to apply the 2D plastic flow rule, prescribing the out-plane components of the stress tensor to be zero with the additionnal variables :math:`\varepsilon^e_1`, :math:`\varepsilon^e_2`, :math:`\varepsilon^e_3` being unknown (see for instance [SO-PE-OW2008]_).
+
+For an isotropic linearized elastic response, one has :math:`\sigma = \lambda \mbox{tr}(\varepsilon^e) + 2\mu\varepsilon^e` such that
+
+.. math:: \varepsilon^e = \left(\hspace{-0.5em}\begin{array}{ccc} \varepsilon^e_{1,1} & \varepsilon^e_{1,2} & 0 \\ \varepsilon^e_{1,2} & \varepsilon^e_{2,2} & 0 \\ 0 & 0 & \varepsilon^e_{3,3} \end{array}\hspace{-0.5em}\right).
+
+with
+
+.. math:: \varepsilon^e_{3,3} = -\Frac{\lambda}{\lambda+2\mu}(\varepsilon^e_{1,1} + \varepsilon^e_{2,2})
+
+so that
+
+.. math:: \bar{\sigma} = \lambda^* \mbox{tr}(\bar{\varepsilon}^e) + 2\mu\bar{\varepsilon}^e ~~~\mbox{ with } \lambda^* = \Frac{2\mu\lambda}{\lambda+2\mu}
+   :label: plane_stress_iso
+
+Moreover
+
+.. math:: \|\mbox{Dev}(\sigma)\| = \left(\|\bar{\sigma}\|^2 - \Frac{1}{3}(\mbox{tr}(\bar{\sigma}))^2\right)^{1/2}.
 
 Some classical laws
 +++++++++++++++++++
-
-Von Mises vs Tresca threshold ...
 
 
 Tresca : :math:`\rho(\sigma) \le \sigma_y` where :math:`\rho(\sigma)` spectral radius of the Cauchy stress tensor and :math:`\sigma_y` the uniaxial yield stress (which may depend on some hardening internal variables.
 
 Von Mises :  :math:`\|\mbox{Dev}(\sigma)\| \le \sqrt{\frac{2}{3}}\sigma_y` where
-:math:`\mbox{Dev}(\sigma) = \sigma - \frac{1}{3}\mbox{Tr}(\sigma)I` the deviatoric part of :math:`\sigma` and :math:`\|\sigma\| = \sqrt{\sigma:\sigma}`.
+:math:`\mbox{Dev}(\sigma) = \sigma - \frac{1}{3}\mbox{tr}(\sigma)I` the deviatoric part of :math:`\sigma` and :math:`\|\sigma\| = \sqrt{\sigma:\sigma}`.
 
 
 Perfect isotropic associated elastoplasticity with Von-Mises criterion (Prandl-Reuss model)
@@ -204,7 +255,7 @@ This corresponds to :math:`\Psi(\sigma) = f(\sigma) = \|\mbox{Dev}(\sigma)\| - \
 
 The generalized mid-point scheme for the integration of the plastic flow rule reads:
 
-.. math:: \varepsilon^p_{n+\theta} - \varepsilon^p_{n} = \theta \alpha(\sigma_{n+\theta}, A_{n+\theta}) \Delta \xi \sqrt{\frac{3}{2}}\Frac{\mbox{Dev}(\sigma_{n+\theta})}{\|\mbox{Dev}(\sigma_{n+\theta})\|}.
+.. math:: \varepsilon^p_{n+\theta} - \varepsilon^p_{n} = \theta \alpha(\sigma_{n+\theta}, A_{n+\theta}) \Delta \xi \Frac{\mbox{Dev}(\sigma_{n+\theta})}{\|\mbox{Dev}(\sigma_{n+\theta})\|}.
 
 Choosing the factor :math:`\alpha(\sigma_{n+\theta}) = \|\mbox{Dev}(\sigma_{n+\theta})\|` and still with :math:`\Delta \xi = \Frac{\Delta \gamma}{\alpha(\sigma_{n+\theta})}` this gives the equation
 
@@ -216,9 +267,33 @@ Since :math:`\mbox{Dev}(\sigma_{n+\theta}) = 2\mu\mbox{Dev}(\varepsilon(u_{n+\th
 
 which is a linear expression with respect to :math:`u_{n+1}` (but not with respect to :math:`\Delta \xi`).
 
+**Plane strain approximation**
 
+The plane strain approximation has the same expression replacing the 3D strain tensors by the in-plane ones :math:`\bar{\varepsilon}^p` and  :math:`\bar{\varepsilon}(u_{n+\theta})`.
 
+.. math:: \bar{{\mathscr E}}^p(\bar{u}_{n+\theta}, \theta \Delta \xi, \bar{\varepsilon}^p_{n}) = \Frac{1}{1+2\mu\theta\Delta \xi}(\bar{\varepsilon}^p_{n} + 2\mu\theta\Delta \xi \mbox{Dev}^*(\bar{\varepsilon}(\bar{u}_{n+\theta}))),
 
+where :math:`\mbox{Dev}^*(\bar{\varepsilon}) = \bar{\varepsilon} - \Frac{\mbox{tr}(\bar{\varepsilon})}{3} \bar{I}` is still the 3D deviator.
+
+Moreover, for the yield condition, 
+
+.. math:: \mbox{Dev}(\sigma) = 2\mu\mbox{Dev}(\varepsilon(u) - \varepsilon^p) = 2\mu\left(\varepsilon(u) - \varepsilon^p - \Frac{\mbox{tr}(\bar{\varepsilon}(u)) - \mbox{tr}(\bar{\varepsilon}^p)}{3} I\right)
+
+.. math:: \begin{array}{rcl} \|\mbox{Dev}(\sigma)\| &=& 2\mu\sqrt{\left\|\bar{\varepsilon}(u) - \bar{\varepsilon}^p - \Frac{\mbox{tr}(\bar{\varepsilon}(u)) - \mbox{tr}(\bar{\varepsilon}^p)}{3} \bar{I}\right\|^2 + \Frac{(\mbox{tr}(\bar{\varepsilon}(u)) - \mbox{tr}(\bar{\varepsilon}^p))^2}{9}} \\ &=& \sqrt{\left\|\bar{\sigma} - \Frac{3\lambda+2\mu}{6(\lambda+\mu)}\mbox{tr}(\bar{\sigma})\bar{I} \right\|^2 + \Frac{\mu^2}{9(\lambda+\mu)^2}\mbox{tr}(\bar{\sigma})^2 } \end{array}
+
+**Plane stress approximation**
+
+For plane stress approximation, we use :eq:`plane_stress_iso` which gives
+
+.. math::  \bar{\varepsilon}^p_{n+\theta} - \bar{\varepsilon}^p_{n} = \theta \Delta \xi \mbox{Dev}^*(\bar{\sigma}_{n+\theta}) =  \theta \Delta \xi \mbox{Dev}^*(\lambda^*\mbox{tr}(\bar{\varepsilon}^e_{n+\theta})\bar{I} + 2\mu \bar{\varepsilon}^e_{n+\theta}) = \theta \Delta \xi\left(\Frac{\lambda^*-2\mu}{3}\mbox{tr}(\bar{\varepsilon}^e_{n+\theta})\bar{I} + 2\mu\bar{\varepsilon}^e_{n+\theta}\right)
+
+thus with :math:`\beta = \Frac{\lambda^*-2\mu}{3}` one has
+
+.. math::  (1+2\mu\theta \Delta \xi)\bar{\varepsilon}^p_{n+\theta} + \beta\theta \Delta \xi \mbox{tr}(\bar{\varepsilon}^p_{n+\theta})\bar{I} = \bar{\varepsilon}^p_{n} + \theta \Delta \xi\left(\beta\mbox{tr}(\bar{\varepsilon}(u_{n+\theta}))\bar{I} + 2\mu\bar{\varepsilon}(u_{n+\theta})\right)
+
+By inverting this relation we find for :math:`A = \bar{\varepsilon}^p_{n} + \theta \Delta \xi\left(\beta\mbox{tr}(\bar{\varepsilon}(u_{n+\theta}))\bar{I} + 2\mu\bar{\varepsilon}(u_{n+\theta})\right)`
+
+.. math::  \bar{{\mathscr E}}^p(\bar{u}_{n+\theta}, \theta \Delta \xi, \bar{\varepsilon}^p_{n}) = \Frac{1}{1+2\mu\theta\Delta \xi} A - \left( \Frac{\beta\theta\Delta \xi}{(1+2\mu\theta\Delta \xi)(1+(2\mu+2\beta)\theta\Delta \xi)} \right) \mbox{tr}(A)\bar{I}
 
 
 Isotropic elastoplasticity with linear isotropic and kinematic hardening and Von-Mises criterion
@@ -248,6 +323,11 @@ where :math:`H_k` is the kinematic hardening modulus. The same computation as in
 .. math:: {\mathscr A}(u_{n+\theta}, \theta \Delta \xi, \varepsilon^p_{n}, \alpha_n) = \alpha_n + \|\varepsilon^p_{n+\theta}-\varepsilon^p_{n}\| = \alpha_n + \| {\mathscr E}^p(u_{n+\theta}, \theta \Delta \xi, \varepsilon^p_{n})-\varepsilon^p_{n}\|
 
 Note that the isotropic hardening modulus do not intervene in :math:`{\mathscr E}^p(u_{n+\theta}, \theta \Delta \xi, \varepsilon^p_{n})` but only in :math:`f(\sigma, A)`.
+
+**Plane strain approximation**
+
+
+The plane strain approximation has the same expression replacing the 3D strain tensors by the in-plane ones :math:`\bar{\varepsilon}^p` and  :math:`\bar{\varepsilon}(u_{n+\theta})`.
 
 Souza-Auricchio elastoplasticity law (for shape memory alloys)
 ==============================================================
@@ -297,6 +377,11 @@ or using :eq:`souza_auri_comp`
 
 stupid ? 
 
+**Plane strain approximation**
+
+
+The plane strain approximation has the same expression replacing the 3D strain tensors by the in-plane ones :math:`\bar{\varepsilon}^p` and  :math:`\bar{\varepsilon}(u_{n+\theta})`.
+
 
 
 Some classical modelizations
@@ -309,6 +394,19 @@ Some classical modelizations
 
 Elasto-plasticity bricks 
 +++++++++++++++++++++++++
+
+
+
+Generic brick
+=============
+
+The generic brick add the following terms:
+
+.. math:: \int_{\Omega} \sigma_{n+1} : \nabla v dx +  \int_{\Omega} .. math:: \ds \int_{\Omega} (\Delta \xi - (\Delta \xi + r f(\sigma_{n+\theta}, A_{n+\theta}))_+) \lambda dx = 0,   \forall \lambda
+
+
+Other bricks
+============
 
 to be done: ::
 
