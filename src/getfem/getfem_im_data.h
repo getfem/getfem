@@ -231,7 +231,9 @@ namespace getfem{
       GMM_ASSERT1(nb_tensor_elem_*nb_index(use_filter) == V1.size(),
                   "Invalid tensorial size for vector V1");
       GMM_ASSERT1(nb_tensor_elem_ == 1, "im_data is not of scalar type");
-      return V1[index_of_point(cv,i,use_filter)];
+      size_type ptid = index_of_point(cv,i,use_filter);
+      GMM_ASSERT2(ptid != size_type(-1), "Point index of gauss point not found");
+      return V1[ptid];
     }
 
     /**get a vector of an integration point 
@@ -246,6 +248,7 @@ namespace getfem{
       GMM_ASSERT1(is_equivalent_with_vector(tensor_size_, V2.size()),
                   "V2 is incompatible with im_data tensor size");
       size_type ptid = index_of_point(cv,i,use_filter);
+      GMM_ASSERT2(ptid != size_type(-1), "Point index of gauss point not found");
       gmm::copy(gmm::sub_vector(V1, gmm::sub_interval(ptid*nb_tensor_elem_,
                                                       nb_tensor_elem_)),
                 V2);
@@ -263,6 +266,7 @@ namespace getfem{
       GMM_ASSERT1(is_equivalent_with_matrix(tensor_size_, M.nrows(), M.ncols()),
                   "M is incompatible with im_data tensor size");
       size_type ptid = index_of_point(cv,i,use_filter);
+      GMM_ASSERT2(ptid != size_type(-1), "Point index of gauss point not found");
       gmm::copy(gmm::sub_vector(V1, gmm::sub_interval(ptid*nb_tensor_elem_,
                                                       nb_tensor_elem_)),
                 M.as_vector());
@@ -280,6 +284,7 @@ namespace getfem{
       GMM_ASSERT1(tensor_size_ == T.sizes(),
                   "T is incompatible with im_data tensor size");
       size_type ptid = index_of_point(cv,i,use_filter);
+      GMM_ASSERT2(ptid != size_type(-1), "Point index of gauss point not found");
       gmm::copy(gmm::sub_vector(V1, gmm::sub_interval(ptid*nb_tensor_elem_,
                                                       nb_tensor_elem_)),
                 T.as_vector());
@@ -293,7 +298,9 @@ namespace getfem{
       GMM_ASSERT1(nb_tensor_elem_*nb_index(use_filter) == V1.size(),
                   "Invalid tensorial size for vector V1");
       GMM_ASSERT1(nb_tensor_elem_ == 1, "im_data is not of scalar type");
-      return V1[index_of_point(cv,i,use_filter)];
+      size_type ptid = index_of_point(cv,i,use_filter);
+      GMM_ASSERT2(ptid != size_type(-1), "Point index of gauss point not found");
+      return V1[ptid];
     }
 
     /**set a vector of an integration point 
@@ -308,6 +315,7 @@ namespace getfem{
       GMM_ASSERT1(is_equivalent_with_vector(tensor_size_, V2.size()),
                   "V2 is incompatible with im_data tensor size");
       size_type ptid = index_of_point(cv,i,use_filter);
+      GMM_ASSERT2(ptid != size_type(-1), "Point index of gauss point not found");
       gmm::copy(V2,
                 gmm::sub_vector(V1, gmm::sub_interval(ptid*nb_tensor_elem_,
                                                       nb_tensor_elem_)));
@@ -325,6 +333,7 @@ namespace getfem{
       GMM_ASSERT1(is_equivalent_with_matrix(tensor_size_, M.nrows(), M.ncols()),
                   "M is incompatible with im_data tensor size");
       size_type ptid = index_of_point(cv,i,use_filter);
+      GMM_ASSERT2(ptid != size_type(-1), "Point index of gauss point not found");
       gmm::copy(M.as_vector(),
                 gmm::sub_vector(V1, gmm::sub_interval(ptid*nb_tensor_elem_,
                                                       nb_tensor_elem_)));
@@ -342,6 +351,7 @@ namespace getfem{
       GMM_ASSERT1(tensor_size_ == T.sizes(),
                   "T is incompatible with im_data tensor size");
       size_type ptid = index_of_point(cv,i,use_filter);
+      GMM_ASSERT2(ptid != size_type(-1), "Point index of gauss point not found");
       gmm::copy(T.as_vector(),
                 gmm::sub_vector(V1, gmm::sub_interval(ptid*nb_tensor_elem_,
                                                       nb_tensor_elem_)));
