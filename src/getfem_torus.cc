@@ -141,7 +141,7 @@ namespace bgeot{
     poriginal_trans_->poly_vector_val(pt2D, base_value);
 
     pc.resize(nb_points(), 3);
-    const bgeot::scalar_type EPS = 1e-15;
+    const bgeot::scalar_type EPS = 1e-12;
 
     for (size_type i = 0; i < nb_points(); ++i){
       for (bgeot::dim_type n = 0; n < 2; ++n) pc(i, n) = pc2D(i, n);
@@ -289,7 +289,7 @@ namespace getfem
   {
     GMM_ASSERT1(!(poriginal_fem_->is_on_real_element()), "Original FEM must not be real.");
     
-    const bgeot::scalar_type EPS = 1e-15;
+    const bgeot::scalar_type EPS = 1e-12;
     bgeot::scalar_type radius = c.xreal()[0] + EPS;
     GMM_ASSERT1(radius > 0, "Negative radius in axisymmetry gradient calculation!");
 
