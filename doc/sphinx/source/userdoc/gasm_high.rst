@@ -554,7 +554,7 @@ Trace, Deviator, Sym and Skew operators are linear operators acting on square ma
 
   - ``Skew(m)`` gives the skew-symmetric part of a square matrix ``m``, i.e. ``(m - m')/2``.
 
-The four operators can be applied on test functions. Which means that for instance both ``Trace(Grad_u)`` and  ``Trace(Grad_Test_u)`` is valid when ``Grad_u`` is a square matrix (i.e. ``u`` a vector field of the same dimension as the mesh).
+The four operators can be applied on test functions. Which means that for instance both ``Trace(Grad_u)`` and  ``Trace(Grad_Test_u)`` are valid when ``Grad_u`` is a square matrix (i.e. ``u`` a vector field of the same dimension as the mesh).
 
 
 

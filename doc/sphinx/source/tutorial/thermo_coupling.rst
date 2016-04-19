@@ -166,7 +166,7 @@ Let us now define the different physical and numerical parameters of the problem
                 double clambdastar = 2*clambda*cmu/(clambda+2*cmu);
                 double F = 100E2;    // Force density at the right boundary (N/cm^2)
                 double kappa = 4.;   // Thermal conductivity (W/(cm K))
-                double D = 10.;      // Heat transfert coefficient (W/(K cm^2))
+                double D = 10.;      // Heat transfer coefficient (W/(K cm^2))
                 double air_temp = 20;// Temperature of the air in oC.
                 double alpha_th = 16.6E-6; // Thermal expansion coefficient (/K)
                 double T0 = 20.;     // Reference temperature in oC

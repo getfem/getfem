@@ -218,7 +218,7 @@ namespace getfem {
     model_real_sparse_matrix unreduced_K;
     std::shared_ptr<base_vector> V;
     base_vector unreduced_V;
-    scalar_type E;
+    scalar_type E = scalar_type(0.);
     base_tensor assemb_t;
 
   public:

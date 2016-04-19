@@ -397,7 +397,7 @@ namespace getfem {
     size_type vect_size() const {
       return gmm::vect_size(v); 
     }
-    /* used to transfert the data for the current convex to the mti of
+    /* used to transfer the data for the current convex to the mti of
        ATN_tensor_from_dofs_data */
     void copy_with_mti(const std::vector<tensor_strides> &str,
 		       multi_tensor_iterator &mti, const mesh_fem *pmf) const {

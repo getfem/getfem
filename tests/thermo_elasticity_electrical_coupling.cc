@@ -38,7 +38,7 @@
     boundary and 0.1V at the left boundary.
   Thermal problem: A thermal insulation condition is prescribed at the
     left and hole boudnaries. The remaining boundary and the plate itself
-    is supposed to be submitted to an heat transfert with respect to the
+    is supposed to be submitted to heat transfer with respect to the
     air at 20oC.
   Coupling terms:
     - Joule heating: source term  sigma|Grad_V|^2
@@ -88,7 +88,7 @@ int main(int argc, char *argv[]) {
   double F = PARAM.real_value("F",
                               "Force density at the right boundary (N/cm^2)");
   double kappa = PARAM.real_value("kappa", "Thermal conductivity (W/(cm K))");
-  double D = PARAM.real_value("D", "Heat transfert coefficient (W/(K cm^2))");
+  double D = PARAM.real_value("D", "Heat transfer coefficient (W/(K cm^2))");
   double air_temp = PARAM.real_value("air_temp",
                                      "Temperature of the air in oC");
   double alpha_th = PARAM.real_value("alpha_th",

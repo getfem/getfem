@@ -42,7 +42,7 @@ import numpy as np
 #   boundary and 0.1V at the left boundary.
 # Thermal problem: A thermal insulation condition is prescribed at the
 #   left and hole boudnaries. The remaining boundary and the plate itself
-#   is supposed to be submitted to an heat transfert with respect to the
+#   is supposed to be submitted to heat transfer with respect to the
 #   air at 20oC.
 # Coupling terms:
 #   - Joule heating: source term  sigma|Grad_V|^2
@@ -68,7 +68,7 @@ cmu = E/(2*(1+nu))               # Second Lame coefficient (N/cm^2)
 clambdastar = 2*clambda*cmu/(clambda+2*cmu) # Lame coefficient for Plane stress (N/cm^2)
 F = 100E2          # Force density at the right boundary (N/cm^2)
 kappa = 4.         # Thermal conductivity (W/(cm K))
-D = 10.            # Heat transfert coefficient (W/(K cm^2))
+D = 10.            # Heat transfer coefficient (W/(K cm^2))
 air_temp = 20.     # Temperature of the air in oC.
 alpha_th = 16.6E-6 # Thermal expansion coefficient (/K).
 T0 = 20.           # Reference temperature in oC.

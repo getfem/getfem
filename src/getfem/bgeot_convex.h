@@ -67,36 +67,38 @@ namespace bgeot {
     
   public :
     
-    ref_convex_pt_ct points_of_face(short_type i) const { 
+    ref_convex_pt_ct points_of_face(short_type i) const {
       return ref_convex_pt_ct(pts.begin(), cvs->ind_points_of_face(i).begin(),
-			      cvs->ind_points_of_face(i).end() );
+                              cvs->ind_points_of_face(i).end());
     }
     
-    /// Return "direct" points. These are the subset of points than can be used to build a direct vector basis. (rarely used)
-    ref_convex_pt_ct dir_points(void) const { 
+    /** Return "direct" points. These are the subset of points than can be
+        used to build a direct vector basis. (rarely used)
+    */
+    ref_convex_pt_ct dir_points() const {
       return ref_convex_pt_ct(pts.begin(), cvs->ind_dir_points().begin(),
-                              cvs->ind_dir_points().end() );
+                              cvs->ind_dir_points().end());
     }
     /** Direct points for a given face.
-	@param i the face number.
+        @param i the face number.
     */
     dref_convex_pt_ct dir_points_of_face(short_type i) const {
       return dref_convex_pt_ct(pts.begin(),
-			       cvs->ind_dir_points_of_face(i).begin(),
-			       cvs->ind_dir_points_of_face(i).end());
+                               cvs->ind_dir_points_of_face(i).begin(),
+                               cvs->ind_dir_points_of_face(i).end());
     }
-    pconvex_structure structure(void) const { return cvs; }
-    pconvex_structure &structure(void) { return cvs; }
-    const PT_TAB &points(void) const { return pts; }
-    PT_TAB &points(void) { return pts; }
-    short_type nb_points(void) const { return cvs->nb_points(); }
+    pconvex_structure structure() const { return cvs; }
+    pconvex_structure &structure() { return cvs; }
+    const PT_TAB &points() const { return pts; }
+    PT_TAB &points() { return pts; }
+    short_type nb_points() const { return cvs->nb_points(); }
     
     //void translate(const typename PT::vector_type &v);
     //template <class CONT> void base_of_orthogonal(CONT &tab);
-    convex(void) { }
+    convex() { }
     /** Build a convex object.
-	@param c the convex structure.
-	@param t the points array.
+        @param c the convex structure.
+        @param t the points array.
     */
     convex(pconvex_structure c, const PT_TAB &t) : cvs(c), pts(t) {}
     convex(pconvex_structure c) : cvs(c) {}
@@ -124,9 +126,9 @@ namespace bgeot {
       vect_[i]  = (points())[dptf[i+1]]; vect_[i] -= (points())[dptf[0]];
       
       for (j = 0; j < i; j++)
-	A[j] = vect_sp(vect_[i], vect_[j]);
+        A[j] = vect_sp(vect_[i], vect_[j]);
       for (j = 0; j < i; j++)
-	{ B = vect_[j]; B *= A[j]; vect_[i] -= B; }
+        { B = vect_[j]; B *= A[j]; vect_[i] -= B; }
       vect_[i] /= vect_norm2(vect_[i]);
     }
     
@@ -134,14 +136,14 @@ namespace bgeot {
       vect_[i] = vect_[0];
       vect_random(vect_[i]);
       for (j = 0; j < i; j++)
-	A[j] = vect_sp(vect_[i], vect_[j]);
+        A[j] = vect_sp(vect_[i], vect_[j]);
       for (j = 0; j < i; j++)
-	{ B = vect_[j]; B *= A[j]; vect_[i] -= B; }
+        { B = vect_[j]; B *= A[j]; vect_[i] -= B; }
       
       if (vect_norm2(vect_[i]) < 1.0E-4 )
-	i--;
+        i--;
       else
-	vect_[i] /= vect_norm2(vect_[i]);
+        vect_[i] /= vect_norm2(vect_[i]);
     }
     for (int i = n; i < N; i++) tab[i-n] = vect_[i];
   }
@@ -168,23 +170,23 @@ namespace bgeot {
 
   template<class PT, class PT_TAB1, class PT_TAB2>
     convex<PT> convex_product(const convex<PT, PT_TAB1> &cv1,
-			      const convex<PT, PT_TAB2> &cv2)
+                              const convex<PT, PT_TAB2> &cv2)
   { // optimisable
     typename convex<PT>::point_tab_type tab;
     tab.resize(cv1.nb_points() * cv2.nb_points());
     size_type i,j,k;
     for (i = 0, k = 0; i < cv1.nb_points(); ++i)
       for (j = 0; j < cv2.nb_points(); ++j, ++k)
-	{ tab[k] = (cv1.points())[i]; tab[k] += (cv2.points())[j]; }
+        { tab[k] = (cv1.points())[i]; tab[k] += (cv2.points())[j]; }
     return convex<PT>(
-	     convex_product_structure(cv1.structure(), cv2.structure()), tab);
+             convex_product_structure(cv1.structure(), cv2.structure()), tab);
   }
 
   struct special_convex_structure_key_ : virtual public dal::static_stored_object_key {
     pconvex_structure p;
     virtual bool compare(const static_stored_object_key &oo) const {
       const special_convex_structure_key_ &o
-	= dynamic_cast<const special_convex_structure_key_ &>(oo);
+        = dynamic_cast<const special_convex_structure_key_ &>(oo);
       if (p < o.p) return true;  return false;
     }
     special_convex_structure_key_(pconvex_structure pp) : p(pp) {}
@@ -192,22 +194,22 @@ namespace bgeot {
 
   template<class PT, class PT_TAB1, class PT_TAB2>
     convex<PT> convex_direct_product(const convex<PT, PT_TAB1> &cv1,
-				     const convex<PT, PT_TAB2> &cv2) {
+                                     const convex<PT, PT_TAB2> &cv2) {
     if (cv1.nb_points() == 0 || cv2.nb_points() == 0)
       throw std::invalid_argument(
-		     "convex_direct_product : null convex product");
+                     "convex_direct_product : null convex product");
     
     if (!dal::exists_stored_object(cv1.structure())) {
       dal::pstatic_stored_object_key
-	pcs = std::make_shared<special_convex_structure_key_>(cv1.structure());
+        pcs = std::make_shared<special_convex_structure_key_>(cv1.structure());
       dal::add_stored_object(pcs, cv1.structure(),
-			     dal::AUTODELETE_STATIC_OBJECT);
+                             dal::AUTODELETE_STATIC_OBJECT);
     }
     if (!dal::exists_stored_object(cv2.structure())) {
       dal::pstatic_stored_object_key
-	pcs = std::make_shared<special_convex_structure_key_>(cv2.structure());
+        pcs = std::make_shared<special_convex_structure_key_>(cv2.structure());
       dal::add_stored_object(pcs, cv2.structure(),
-			     dal::AUTODELETE_STATIC_OBJECT);
+                             dal::AUTODELETE_STATIC_OBJECT);
     }
     convex<PT> r(convex_product_structure(cv1.structure(), cv2.structure()));
     r.points().resize(r.nb_points());
@@ -219,8 +221,8 @@ namespace bgeot {
     for (it2 = cv2.points().begin(); it2 != it2e; ++it2)
       for (it1 = cv1.points().begin() ; it1 != it1e; ++it1, ++it)
       {
-	std::copy((*it1).begin(), (*it1).end(), (*it).begin());
-	std::copy((*it2).begin(), (*it2).end(), (*it).begin()+dim1);
+        std::copy((*it1).begin(), (*it1).end(), (*it).begin());
+        std::copy((*it2).begin(), (*it2).end(), (*it).begin()+dim1);
       }
     return r;
   }
@@ -230,14 +232,14 @@ namespace bgeot {
   {
     if (cv.nb_points() == 0 || n == 0)
       throw std::invalid_argument(
-		     "convex_multiply : null convex product");
+                     "convex_multiply : null convex product");
     convex<PT> r(multiply_convex_structure(cv.structure(), n));
     r.points().resize(r.nb_points());
     std::fill(r.points().begin(), r.points().end(), PT(r.structure()->dim()));
     dim_type dim1 = cv.structure()->dim();
     typename convex<PT>::point_tab_type::iterator it = r.points().begin();
     typename PT_TAB::const_iterator it1  = cv.points().begin(), it2,
-	                            it1e = cv.points().end();
+                                    it1e = cv.points().end();
     for (dim_type k = 0; k < n; ++k)
       for (it2 = it1; it2 != it1e; ++it2) *it++ = *it2;
     return r;
