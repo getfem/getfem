@@ -235,28 +235,103 @@ namespace getfem {
     return res_name;
   }
 
+
+  model::VAR_SET::const_iterator
+  model::find_variable(const std::string &name) const {
+    VAR_SET::const_iterator it = variables.find(name);
+    GMM_ASSERT1(it != variables.end(), "Undefined variable " << name);
+    return it;
+  }
+
+  bool model::is_disabled_variable(const std::string &name) const {
+    VAR_SET::const_iterator it = find_variable(name);
+    if (!(it->second.is_variable)) return false;
+    if (it->second.is_affine_dependent)
+      it = variables.find(it->second.org_name);
+    return it->second.is_disabled;
+  }
+
+  bool model::is_data(const std::string &name) const {
+    VAR_SET::const_iterator it = find_variable(name);
+    if (it->second.is_affine_dependent)
+      it = variables.find(it->second.org_name);
+    return (!(it->second.is_variable) || it->second.is_disabled);
+  }
+
+  bool model::is_true_data(const std::string &name) const {
+    VAR_SET::const_iterator it = find_variable(name);
+    return (!(it->second.is_variable));
+  }
+
+  bool model::is_affine_dependent_variable(const std::string &name) const {
+    VAR_SET::const_iterator it = find_variable(name);
+    return (it->second.is_affine_dependent);
+  }
+
+  const std::string &model::org_variable(const std::string &name) const {
+    VAR_SET::const_iterator it = variables.find(name);
+    GMM_ASSERT1(is_affine_dependent_variable(name),
+                "For affine dependent variables only");
+    return (it->second.org_name);
+  }
+
+  const scalar_type &
+  model::factor_of_variable(const std::string &name) const {
+    VAR_SET::const_iterator it = find_variable(name);
+    return (it->second.alpha);
+  }
+
+  void model::set_factor_of_variable(const std::string &name,
+                                     scalar_type a) {
+    VAR_SET::iterator it = variables.find(name);
+    GMM_ASSERT1(it != variables.end(), "Undefined variable " << name);
+    if (it->second.alpha != a) {
+      it->second.alpha = a;
+      it->second.v_num_data = act_counter();
+    }
+  }
+
+  bool model::is_im_data(const std::string &name) const {
+    VAR_SET::const_iterator it = find_variable(name);
+    return (it->second.pim_data != 0);
+  }
+
+  const im_data *
+  model::pim_data_of_variable(const std::string &name) const {
+    VAR_SET::const_iterator it = find_variable(name);
+    return it->second.pim_data;
+  }
+
+  const gmm::uint64_type &
+  model::version_number_of_data_variable(const std::string &name) const {
+    VAR_SET::const_iterator it = find_variable(name);
+    return it->second.v_num_data;
+  }
+
+  size_type model::nb_dof() const {
+    context_check();
+    if (act_size_to_be_done) actualize_sizes();
+    return (complex_version) ? gmm::vect_size(crhs) : gmm::vect_size(rrhs);
+  }
+
   void model::resize_global_system() const {
     size_type tot_size = 0;
 
-    for (VAR_SET::iterator it = variables.begin(); it != variables.end();
-         ++it) {
-      if (it->second.is_variable && it->second.is_disabled)
-        it->second.I  = gmm::sub_interval(0,0);
-      if (it->second.is_variable && !(it->second.is_affine_dependent)
-          && !(it->second.is_disabled)) {
-        it->second.I = gmm::sub_interval(tot_size, it->second.size());
-        tot_size += it->second.size();
+    for (auto && v : variables) {
+      if (v.second.is_variable && v.second.is_disabled)
+        v.second.I  = gmm::sub_interval(0,0);
+      if (v.second.is_variable && !(v.second.is_affine_dependent)
+          && !(v.second.is_disabled)) {
+        v.second.I = gmm::sub_interval(tot_size, v.second.size());
+        tot_size += v.second.size();
       }
     }
 
-    for (VAR_SET::iterator it = variables.begin(); it != variables.end();
-         ++it) {
-      if (it->second.is_affine_dependent) {
-        VAR_SET::iterator it2 = variables.find(it->second.org_name);
-        it->second.I = it2->second.I;
-        it->second.set_size();
+    for (auto &&v : variables)
+      if (v.second.is_affine_dependent) {
+        v.second.I = variables.find(v.second.org_name)->second.I;
+        v.second.set_size();
       }
-    }
 
     if (complex_version) {
       gmm::resize(cTM, tot_size, tot_size);
@@ -267,15 +342,12 @@ namespace getfem {
       gmm::resize(rrhs, tot_size);
     }
 
-    for (dal::bv_visitor ib(valid_bricks); !ib.finished(); ++ib) {
-      const brick_description &brick = bricks[ib];
-      for (size_type j = 0; j < brick.tlist.size(); ++j) {
-        if (brick.tlist[j].is_global) {
-          brick.terms_to_be_computed = true;
+    for (dal::bv_visitor ib(valid_bricks); !ib.finished(); ++ib)
+      for (const term_description &term : bricks[ib].tlist)
+        if (term.is_global) {
+          bricks[ib].terms_to_be_computed = true;
           break;
         }
-      }
-    }
   }
 
   void model::actualize_sizes(void) const {
@@ -404,7 +476,7 @@ namespace getfem {
             bool bupd = false;
             bool cplx = is_complex() && brick.pbr->is_complex();
 
-            if (!(brick.tlist.size())) {
+            if (brick.tlist.size() == 0) {
               bool varc = false, multc = false;
               for (const std::string &var : brick.vlist) {
                 if (multname.compare(var) == 0) multc = true;
@@ -474,8 +546,8 @@ namespace getfem {
                              MM);
                     termadded = true;
                   }
-                } else if (!multname.compare(term.var1) && 
-                           !vname.compare(term.var2)) {
+                } else if (multname.compare(term.var1) == 0 && 
+                           vname.compare(term.var2) == 0) {
                   if (!bupd) {
                     brick.terms_to_be_computed = true;
                     update_brick(ib, BUILD_MATRIX);
@@ -488,8 +560,8 @@ namespace getfem {
                     gmm::add(gmm::transposed(brick.rmatlist[j]), MM);
                   termadded = true;
                   
-                } else if (!multname.compare(term.var2) &&
-                           !vname.compare(term.var1)) {
+                } else if (multname.compare(term.var2) == 0 &&
+                           vname.compare(term.var1) == 0) {
                   if (!bupd) {
                     brick.terms_to_be_computed = true;
                     update_brick(ib, BUILD_MATRIX);
@@ -522,6 +594,8 @@ namespace getfem {
         //
         std::set<size_type> columns;
         gmm::range_basis(MM, columns);
+        if (columns.size() == 0)
+          GMM_WARNING1("Empty basis found for multiplier " << multname);
 
         if (mults.size() > 1) {
           gmm::copy(MM, gmm::sub_matrix
@@ -703,6 +777,36 @@ namespace getfem {
     variables[name].set_size();
   }
 
+  void model::add_initialized_matrix_data(const std::string &name,
+                                          const base_matrix &M) {
+    this->add_fixed_size_data(name, bgeot::multi_index(gmm::mat_nrows(M),
+                                                       gmm::mat_ncols(M)));
+    GMM_ASSERT1(!(this->is_complex()), "Sorry, complex version to be done");
+    gmm::copy(M.as_vector(), this->set_real_variable(name));
+  }
+
+  void model::add_initialized_matrix_data(const std::string &name,
+                                          const base_complex_matrix &M) {
+    this->add_fixed_size_data(name, bgeot::multi_index(gmm::mat_nrows(M),
+                                                       gmm::mat_ncols(M)));
+    GMM_ASSERT1(!(this->is_complex()), "Sorry, complex version to be done");
+    gmm::copy(M.as_vector(), this->set_complex_variable(name));
+  }
+
+  void model::add_initialized_tensor_data(const std::string &name,
+                                         const base_tensor &t) {
+    this->add_fixed_size_data(name, t.sizes(), 1);
+    GMM_ASSERT1(!(this->is_complex()), "Sorry, complex version to be done");
+    gmm::copy(t.as_vector(), this->set_real_variable(name));
+  }
+
+  void model::add_initialized_tensor_data(const std::string &name,
+                                          const base_complex_tensor &t) {
+    this->add_fixed_size_data(name, t.sizes(), 1);
+    GMM_ASSERT1(!(this->is_complex()), "Sorry, complex version to be done");
+    gmm::copy(t.as_vector(), this->set_complex_variable(name));
+  }
+
   void model::add_im_data(const std::string &name, const im_data &im_data,
                           size_type niter) {
     check_name_validity(name);
@@ -738,8 +842,7 @@ namespace getfem {
                                             const std::string &org_name,
                                             scalar_type alpha) {
     check_name_validity(name);
-    VAR_SET::const_iterator it = variables.find(org_name);
-    GMM_ASSERT1(it != variables.end(), "Undefined variable " << org_name);
+    VAR_SET::const_iterator it = find_variable(org_name);
     GMM_ASSERT1(it->second.is_variable && !(it->second.is_affine_dependent),
                 "The original variable should be a variable");
     variables[name] = variables[org_name];
@@ -903,8 +1006,7 @@ namespace getfem {
                     "Cannot delete a data which is still use by a brick");
     }
 
-    VAR_SET::const_iterator it = variables.find(varname);
-    GMM_ASSERT1(it != variables.end(), "Undefined variable " << varname);
+    VAR_SET::const_iterator it = find_variable(varname);
 
     if (it->second.is_fem_dofs) {
       const mesh_fem *mf = it->second.mf;
@@ -1046,6 +1148,31 @@ namespace getfem {
     GMM_ASSERT1(valid_bricks[ib], "Inexistent brick");
     touch_brick(ib);
     bricks[ib].is_update_brick = flag;
+  }
+
+  void model::set_time(scalar_type t, bool to_init) {
+    static const std::string varname("t");
+    VAR_SET::iterator it = variables.find(varname);
+    if (it == variables.end()) {
+      add_fixed_size_data(varname, 1);
+    } else {
+      GMM_ASSERT1(it->second.size() == 1, "Time data should be of size 1");
+    }
+    if (it == variables.end() || to_init) {
+      if (is_complex())
+        set_complex_variable(varname)[0] = complex_type(t);
+      else
+        set_real_variable(varname)[0] = t; 
+    }
+  }
+
+  scalar_type model::get_time() {
+    static const std::string varname("t");
+    set_time(scalar_type(0), false);
+    if (is_complex())
+      return gmm::real(complex_variable(varname)[0]);
+    else
+      return real_variable(varname)[0];
   }
 
   void model::call_init_affine_dependent_variables(int version) {
@@ -2633,7 +2760,8 @@ namespace getfem {
             GMM_TRACE2("Global generic assembly");
             ga_workspace workspace(*this);
 
-            for (auto &&ge : generic_expressions) workspace.add_expression(ge.expr, ge.mim, ge.region);
+            for (const auto &ge : generic_expressions)
+              workspace.add_expression(ge.expr, ge.mim, ge.region);
 
             if (version & BUILD_RHS) {
               if (is_complex()) {
@@ -2805,22 +2933,19 @@ namespace getfem {
 
   const mesh_fem &
   model::mesh_fem_of_variable(const std::string &name) const {
-    VAR_SET::const_iterator it = variables.find(name);
-    GMM_ASSERT1(it!=variables.end(), "Undefined variable " << name);
+    VAR_SET::const_iterator it = find_variable(name);
     return it->second.associated_mf();
   }
 
   const mesh_fem *
   model::pmesh_fem_of_variable(const std::string &name) const {
-    VAR_SET::const_iterator it = variables.find(name);
-    GMM_ASSERT1(it!=variables.end(), "Undefined variable " << name);
+    VAR_SET::const_iterator it = find_variable(name);
     return it->second.passociated_mf();
   }
 
   bgeot::multi_index
   model::qdims_of_variable(const std::string &name) const {
-    VAR_SET::const_iterator it = variables.find(name);
-    GMM_ASSERT1(it!=variables.end(), "Undefined variable " << name);
+    VAR_SET::const_iterator it = find_variable(name);
     const mesh_fem *mf = it->second.passociated_mf();
     const im_data *imd = it->second.pim_data;
     size_type n = it->second.qdim();
@@ -2850,8 +2975,7 @@ namespace getfem {
   }
 
   size_type model::qdim_of_variable(const std::string &name) const {
-    VAR_SET::const_iterator it = variables.find(name);
-    GMM_ASSERT1(it!=variables.end(), "Undefined variable " << name);
+    VAR_SET::const_iterator it = find_variable(name);
     const mesh_fem *mf = it->second.passociated_mf();
     const im_data *imd = it->second.pim_data;
     size_type n = it->second.qdim();
@@ -2864,6 +2988,14 @@ namespace getfem {
   }
 
   
+  const gmm::sub_interval &
+  model::interval_of_variable(const std::string &name) const {
+    context_check();
+    if (act_size_to_be_done) actualize_sizes();
+    VAR_SET::const_iterator it = find_variable(name);
+    return it->second.I;
+  }
+
   const model_real_plain_vector &
   model::real_variable(const std::string &name, size_type niter) const {
     GMM_ASSERT1(!complex_version, "This model is a complex one");
@@ -2985,6 +3117,21 @@ namespace getfem {
                       brick.vlist, brick.dlist, brick.mims, brick.rmatlist,
                       brick.rveclist[0], brick.rveclist_sym[0], brick.region);
   }
+
+  void model::clear() {
+    variables.clear();
+    active_bricks.clear();
+    valid_bricks.clear();
+    Neumann_term_list.clear();
+    real_dof_constraints.clear();
+    complex_dof_constraints.clear();
+    bricks.resize(0);
+    rTM = model_real_sparse_matrix();
+    cTM = model_complex_sparse_matrix();
+    rrhs = model_real_plain_vector();
+    crhs = model_complex_plain_vector();
+  }
+
 
 
   void virtual_brick::full_asm_real_tangent_terms_(const model &md, size_type ind_brick,
@@ -7511,14 +7658,16 @@ namespace getfem {
         if (!(pbr->is_linear()))
           md.add_temporaries(vl, id_num); // add temporaries for all variables
         md.add_temporaries(dl, id_num); // add temporaries for versionned data
-        clear(vectl[1]); clear(vectl_sym[1]);
+        for (auto &&v : vectl[1]) gmm::clear(v);
+        for (auto &&v : vectl_sym[1]) gmm::clear(v);
       }
 
       if (pbr->is_linear()) { // If the problem is linear, add the term
         // coming from the previous iteration as a second rhs.
         // This rhs is only used for this.
         if (first_iter) md.update_brick(ib, model::BUILD_RHS);
-        clear(vectl[1]); clear(vectl_sym[1]);
+        for (auto &&v : vectl[1]) gmm::clear(v);
+        for (auto &&v : vectl_sym[1]) gmm::clear(v);
         md.linear_brick_add_to_rhs(ib, 1, 0);
       }
     }
@@ -7580,7 +7729,8 @@ namespace getfem {
       md.brick_call(ib, version, 0);
       if (pbr->is_linear()) { // update second rhs (is updated by next_iter
         // but the call to the brick may have changed the matrices.
-        clear(vectl[1]); clear(vectl_sym[1]);
+        for (auto &&v : vectl[1]) gmm::clear(v);
+        for (auto &&v : vectl_sym[1]) gmm::clear(v);
         md.linear_brick_add_to_rhs(ib, 1, 1);
       }
 
@@ -7628,7 +7778,8 @@ namespace getfem {
       md.brick_call(ib, version, 0);
       if (pbr->is_linear()) { // update second rhs (is updated by next_iter
         // but the call to the brick may have changed the matrices.
-        clear(vectl[1]); clear(vectl_sym[1]);
+        for (auto &&v : vectl[1]) gmm::clear(v);
+        for (auto &&v : vectl_sym[1]) gmm::clear(v);
         md.linear_brick_add_to_rhs(ib, 1, 1);
       }
 

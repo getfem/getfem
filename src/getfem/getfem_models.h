@@ -245,25 +245,25 @@ namespace getfem {
       // the version if a temporary already exist with this identifier.
       size_type add_temporary(gmm::uint64_type id_num);
 
-      void clear_temporaries(void);
+      void clear_temporaries();
 
-      const mesh_fem &associated_mf(void) const {
+      const mesh_fem &associated_mf() const {
         GMM_ASSERT1(is_fem_dofs, "This variable is not linked to a fem");
         return (filter == VDESCRFILTER_NO) ? *mf : *partial_mf;
       }
 
-      const mesh_fem *passociated_mf(void) const {
+      const mesh_fem *passociated_mf() const {
         if (!is_fem_dofs)
           return 0;
         return (filter == VDESCRFILTER_NO || partial_mf.get() == 0)
                ? mf : partial_mf.get();
       }
 
-      size_type size(void) const // Should control that the variable is
+      size_type size() const // Should control that the variable is
       // indeed initialized by actualize_sizes() ...
       { return is_complex ? complex_value[0].size() : real_value[0].size(); }
 
-      void set_size(void);
+      void set_size();
     };
 
   public:
@@ -322,7 +322,7 @@ namespace getfem {
       mutable scalar_type external_load; // External load computed in assembly
 
       mutable model_real_plain_vector coeffs;
-      mutable scalar_type matrix_coeff;
+      mutable scalar_type matrix_coeff = scalar_type(0);
       mutable real_matlist rmatlist;    // Matrices the brick have to fill in
       // (real version).
       mutable std::vector<real_veclist> rveclist; // Rhs the brick have to
@@ -336,7 +336,7 @@ namespace getfem {
       mutable std::vector<complex_veclist> cveclist_sym;  // additional rhs
       // for symmetric terms (real version).
 
-      brick_description(void) : v_num(0) {}
+      brick_description() : v_num(0) {}
 
       brick_description(pbrick p, const varnamelist &vl,
                         const varnamelist &dl, const termlist &tl,
@@ -410,6 +410,8 @@ namespace getfem {
     scalar_type approx_external_load_; // Computed by assembly procedure
                                        // with BUILD_RHS option.
 
+    VAR_SET::const_iterator find_variable(const std::string &name) const;
+
   public:
 
     void add_generic_expression(const std::string &expr, const mesh_im &mim,
@@ -450,8 +452,9 @@ namespace getfem {
                                const std::vector<std::string> &nl);
     bool variable_group_exists(const std::string &group_name) const
     { return variable_groups.find(group_name) != variable_groups.end(); }
-    const std::vector<std::string>
-    &variable_group(const std::string &group_name) const {
+
+    const std::vector<std::string> &
+    variable_group(const std::string &group_name) const {
       GMM_ASSERT1(variable_group_exists(group_name),
                   "Undefined variable group " << group_name);
       return (variable_groups.find(group_name))->second;
@@ -560,91 +563,46 @@ namespace getfem {
       return (variables.find(name) != variables.end());
     }
 
-    bool is_disabled_variable(const std::string &name) const {
-      VAR_SET::iterator it = variables.find(name);
-      GMM_ASSERT1(it != variables.end(), "Undefined variable " << name);
-      if (!(it->second.is_variable)) return false;
-      if (it->second.is_affine_dependent)
-        it = variables.find(it->second.org_name);
-      return it->second.is_disabled;
-    }
+    bool is_disabled_variable(const std::string &name) const;
 
     /** Says if a name corresponds to a declared data or disabled variable.  */
-    bool is_data(const std::string &name) const {
-      VAR_SET::const_iterator it = variables.find(name);
-      GMM_ASSERT1(it != variables.end(), "Undefined variable " << name);
-      if (it->second.is_affine_dependent)
-        it = variables.find(it->second.org_name);
-      return (!(it->second.is_variable) || it->second.is_disabled);
-    }
+    bool is_data(const std::string &name) const;
 
     /** Says if a name corresponds to a declared data.  */
-    bool is_true_data(const std::string &name) const {
-      VAR_SET::const_iterator it = variables.find(name);
-      GMM_ASSERT1(it != variables.end(), "Undefined variable " << name);
-      return (!(it->second.is_variable));
-    }
+    bool is_true_data(const std::string &name) const;
 
-    bool is_affine_dependent_variable(const std::string &name) const {
-      VAR_SET::const_iterator it = variables.find(name);
-      GMM_ASSERT1(it != variables.end(), "Undefined variable " << name);
-      return (it->second.is_affine_dependent);
-    }
+    bool is_affine_dependent_variable(const std::string &name) const;
 
-    const std::string &org_variable(const std::string &name) const {
-      VAR_SET::const_iterator it = variables.find(name);
-      GMM_ASSERT1(is_affine_dependent_variable(name),
-                  "For affine dependent variables only");
-      return (it->second.org_name);
-    }
+    const std::string &org_variable(const std::string &name) const;
 
-    const scalar_type &factor_of_variable(const std::string &name) const {
-      VAR_SET::const_iterator it = variables.find(name);
-      GMM_ASSERT1(it != variables.end(), "Undefined variable " << name);
-      return (it->second.alpha);
-    }
+    const scalar_type &factor_of_variable(const std::string &name) const;
 
-    void set_factor_of_variable(const std::string &name, scalar_type a) {
-      VAR_SET::iterator it = variables.find(name);
-      GMM_ASSERT1(it != variables.end(), "Undefined variable " << name);
-      if (it->second.alpha != a) {
-        it->second.alpha = a;
-        it->second.v_num_data = act_counter();
-      }
-    }
+    void set_factor_of_variable(const std::string &name, scalar_type a);
 
-    bool is_im_data(const std::string &name) const {
-      VAR_SET::const_iterator it = variables.find(name);
-      GMM_ASSERT1(it != variables.end(), "Undefined variable " << name);
-      return (it->second.pim_data != 0);
-    }
+    bool is_im_data(const std::string &name) const;
 
-    const im_data *pim_data_of_variable(const std::string &name) const {
-      VAR_SET::const_iterator it = variables.find(name);
-      GMM_ASSERT1(it != variables.end(), "Undefined variable " << name);
-      return it->second.pim_data;
-    }
+    const im_data *pim_data_of_variable(const std::string &name) const;
+
+    const gmm::uint64_type &
+    version_number_of_data_variable(const std::string &varname) const;
 
     /** Boolean which says if the model deals with real or complex unknowns
         and data. */
-    bool is_complex(void) const { return complex_version; }
+    bool is_complex() const { return complex_version; }
 
     /** Return true if all the model terms do not affect the coercivity of
         the whole tangent system. */
-    bool is_coercive(void) const { return is_coercive_; }
+    bool is_coercive() const { return is_coercive_; }
 
     /** Return true if all the model terms do not affect the coercivity of
         the whole tangent system. */
-    bool is_symmetric(void) const { return is_symmetric_; }
+    bool is_symmetric() const { return is_symmetric_; }
 
     /** Return true if all the model terms are linear. */
-    bool is_linear(void) const { return is_linear_; }
+    bool is_linear() const { return is_linear_; }
 
     /** Total number of degrees of freedom in the model. */
-    size_type nb_dof(void) const {
-      context_check(); if (act_size_to_be_done) actualize_sizes();
-      return (complex_version) ? gmm::vect_size(crhs) : gmm::vect_size(rrhs);
-    }
+    size_type nb_dof() const;
 
     /** Leading dimension of the meshes used in the model. */
     dim_type leading_dimension(void) const { return leading_dim; }
@@ -653,12 +611,7 @@ namespace getfem {
     std::string new_name(const std::string &name);
 
     const gmm::sub_interval &
-    interval_of_variable(const std::string &name) const {
-      context_check(); if (act_size_to_be_done) actualize_sizes();
-      VAR_SET::const_iterator it = variables.find(name);
-      GMM_ASSERT1(it != variables.end(), "Undefined variable " << name);
-      return it->second.I;
-    }
+    interval_of_variable(const std::string &name) const;
 
     /** Gives the access to the vector value of a variable. For the real
         version. */
@@ -715,14 +668,6 @@ namespace getfem {
       context_check(); if (act_size_to_be_done) actualize_sizes();
       from_variables(V, T());
     }
-
-    const gmm::uint64_type &version_number_of_data_variable
-    (const std::string &varname) const {
-      auto it = variables.find(varname);
-      GMM_ASSERT1(it != std::end(variables), "variable " + varname + " not found");
-      return it->second.v_num_data;
-    }
-
 
     template<typename VECTOR, typename T>
     void to_variables(const VECTOR &V, T) {
@@ -815,36 +760,16 @@ namespace getfem {
     /** Add a fixed size data (assumed to be a matrix) to the model and
         initialized with M. */
     void add_initialized_matrix_data(const std::string &name,
-                                     const base_matrix &M) {
-      this->add_fixed_size_data(name, bgeot::multi_index(gmm::mat_nrows(M),
-                                                         gmm::mat_ncols(M)));
-      GMM_ASSERT1(!(this->is_complex()), "Sorry, complex version to be done");
-      gmm::copy(M.as_vector(), this->set_real_variable(name));
-    }
-
+                                     const base_matrix &M);
     void add_initialized_matrix_data(const std::string &name,
-                                     const base_complex_matrix &M) {
-      this->add_fixed_size_data(name, bgeot::multi_index(gmm::mat_nrows(M),
-                                                         gmm::mat_ncols(M)));
-      GMM_ASSERT1(!(this->is_complex()), "Sorry, complex version to be done");
-      gmm::copy(M.as_vector(), this->set_complex_variable(name));
-    }
+                                     const base_complex_matrix &M);
 
     /** Add a fixed size data (assumed to be a tensor) to the model and
         initialized with t. */
     void add_initialized_tensor_data(const std::string &name,
-                                     const base_tensor &t) {
-      this->add_fixed_size_data(name, t.sizes(), 1);
-      GMM_ASSERT1(!(this->is_complex()), "Sorry, complex version to be done");
-      gmm::copy(t.as_vector(), this->set_real_variable(name));
-    }
-
+                                     const base_tensor &t);
     void add_initialized_tensor_data(const std::string &name,
-                                     const base_complex_tensor &t) {
-      this->add_fixed_size_data(name, t.sizes(), 1);
-      GMM_ASSERT1(!(this->is_complex()), "Sorry, complex version to be done");
-      gmm::copy(t.as_vector(), this->set_complex_variable(name));
-    }
+                                     const base_complex_tensor &t);
 
 
     /** Add a scalar data (i.e. of size 1) to the model initialized with e. */
@@ -976,14 +901,14 @@ namespace getfem {
     size_type qdim_of_variable(const std::string &name) const;
 
     /** Gives the access to the tangent matrix. For the real version. */
-    const model_real_sparse_matrix &real_tangent_matrix(void) const {
+    const model_real_sparse_matrix &real_tangent_matrix() const {
       GMM_ASSERT1(!complex_version, "This model is a complex one");
       context_check(); if (act_size_to_be_done) actualize_sizes();
       return rTM;
     }
 
     /** Gives the access to the tangent matrix. For the complex version. */
-    const model_complex_sparse_matrix &complex_tangent_matrix(void) const {
+    const model_complex_sparse_matrix &complex_tangent_matrix() const {
       GMM_ASSERT1(complex_version, "This model is a real one");
       context_check(); if (act_size_to_be_done) actualize_sizes();
       return cTM;
@@ -991,7 +916,7 @@ namespace getfem {
 
     /** Gives the access to the right hand side of the tangent linear system.
         For the real version. An assembly of the rhs has to be done first. */
-    const model_real_plain_vector &real_rhs(void) const {
+    const model_real_plain_vector &real_rhs() const {
       GMM_ASSERT1(!complex_version, "This model is a complex one");
       context_check(); if (act_size_to_be_done) actualize_sizes();
       return rrhs;
@@ -1013,15 +938,15 @@ namespace getfem {
         return bricks[ib].rveclist[ind_iter][ind_term];
     }
 
-    /** Gives the access to the right hand side of the tangent linear system.
+    /** Gives access to the right hand side of the tangent linear system.
         For the complex version. */
-    const model_complex_plain_vector &complex_rhs(void) const {
+    const model_complex_plain_vector &complex_rhs() const {
       GMM_ASSERT1(complex_version, "This model is a real one");
       context_check(); if (act_size_to_be_done) actualize_sizes();
       return crhs;
     }
 
-    /** Gives the access to the part of the right hand side of a term of a particular nonlinear brick. Does not account of the eventual time dispatcher. An assembly of the rhs has to be done first. For the real version. */
+    /** Gives access to the part of the right hand side of a term of a particular nonlinear brick. Does not account of the eventual time dispatcher. An assembly of the rhs has to be done first. For the real version. */
     const model_complex_plain_vector &complex_brick_term_rhs(size_type ib, size_type ind_term = 0, bool sym = false, size_type ind_iter = 0) const {
       GMM_ASSERT1(!complex_version, "This model is a complex one");
       context_check(); if (act_size_to_be_done) actualize_sizes();
@@ -1090,41 +1015,20 @@ namespace getfem {
       */
     void change_update_flag_of_brick(size_type ib, bool flag);
 
-    void set_time(scalar_type t = scalar_type(0), bool to_init = true) {
-      static const std::string varname("t");
-      VAR_SET::iterator it = variables.find(varname);
-      if (it == variables.end()) {
-        add_fixed_size_data(varname, 1);
-      } else {
-        GMM_ASSERT1(it->second.size() == 1, "Time data should be of size 1");
-      }
-      if (it == variables.end() || to_init) {
-        if (is_complex())
-          set_complex_variable(varname)[0] = complex_type(t);
-        else
-          set_real_variable(varname)[0] = t; 
-      }
-    }
+    void set_time(scalar_type t = scalar_type(0), bool to_init = true);
 
-    scalar_type get_time(void) {
-      static const std::string varname("t");
-      set_time(scalar_type(0), false);
-      if (is_complex())
-        return gmm::real(complex_variable(varname)[0]);
-      else
-        return real_variable(varname)[0];
-    }
+    scalar_type get_time();
 
     void set_time_step(scalar_type dt) { time_step = dt; }
-    scalar_type get_time_step(void) const { return time_step; }
-    scalar_type get_init_time_step(void) const { return init_time_step; }
-    int is_time_integration(void) const { return time_integration; }
+    scalar_type get_time_step() const { return time_step; }
+    scalar_type get_init_time_step() const { return init_time_step; }
+    int is_time_integration() const { return time_integration; }
     void set_time_integration(int ti) { time_integration = ti; }
-    bool is_init_step(void) const { return init_step; }
-    void cancel_init_step(void) { init_step = false; }
+    bool is_init_step() const { return init_step; }
+    void cancel_init_step() { init_step = false; }
     void call_init_affine_dependent_variables(int version);
-    void shift_variables_for_time_integration(void);
-    void copy_init_time_derivative(void);
+    void shift_variables_for_time_integration();
+    void copy_init_time_derivative();
     void add_time_integration_scheme(const std::string &varname,
                                      ptime_scheme ptsc);
     void perform_init_time_derivative(scalar_type ddt)
@@ -1220,19 +1124,7 @@ namespace getfem {
     */
     std::string Neumann_term(const std::string &varname, size_type region);
 
-    virtual void clear(void) {
-      variables.clear();
-      active_bricks.clear();
-      valid_bricks.clear();
-      Neumann_term_list.clear();
-      real_dof_constraints.clear();
-      complex_dof_constraints.clear();
-      bricks.resize(0);
-      rTM = model_real_sparse_matrix();
-      cTM = model_complex_sparse_matrix();
-      rrhs = model_real_plain_vector();
-      crhs = model_complex_plain_vector();
-    }
+    virtual void clear();
 
     model(bool comp_version = false);
 
@@ -1292,20 +1184,6 @@ namespace getfem {
   class APIDECL virtual_dispatcher {
 
   protected:
-
-    void clear(model::real_veclist &v) const
-    { for (size_type i = 0; i < v.size(); ++i) gmm::clear(v[i]); }
-
-    void clear(model::complex_veclist &v) const
-    { for (size_type i = 0; i < v.size(); ++i) gmm::clear(v[i]); }
-
-    void transfert(model::real_veclist &v1,
-                   model::real_veclist &v2) const
-    { for (size_type i = 0; i < v1.size(); ++i) gmm::copy(v1[i], v2[i]); }
-
-    void transfert(model::complex_veclist &v1,
-                   model::complex_veclist &v2) const
-    { for (size_type i = 0; i < v1.size(); ++i) gmm::copy(v1[i], v2[i]); }
 
     size_type nbrhs_;
     std::vector<std::string> param_names;
@@ -1388,8 +1266,10 @@ namespace getfem {
       if (first_iter) md.update_brick(ib, model::BUILD_RHS);
 
       // shift the rhs
-      transfert(vectl[0], vectl[1]);
-      transfert(vectl_sym[0], vectl_sym[1]);
+      for (size_type i = 0; i < vectl[0].size(); ++i)
+        gmm::copy(vectl[0][i], vectl[1][i]);
+      for (size_type i = 0; i < vectl_sym[0].size(); ++i)
+        gmm::copy(vectl_sym[0][i], vectl_sym[1][i]);
 
       // add the component represented by the linear matrix terms to the
       // supplementary rhs

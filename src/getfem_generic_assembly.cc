@@ -11130,19 +11130,15 @@ namespace getfem {
     base_small_vector un, up;
     scalar_type J(0);
 
-    std::set<std::string>::iterator iti = gis.transformations.begin();
-    for (; iti != gis.transformations.end(); ++iti)
-      (workspace.interpolate_transformation(*iti))->init(workspace);
+    for (const std::string &t : gis.transformations)
+      workspace.interpolate_transformation(t)->init(workspace);
 
-    ga_instruction_set::instructions_set::iterator it
-      = gis.whole_instructions.begin();
-    for (; it != gis.whole_instructions.end(); ++it) {
-      const getfem::mesh_im &mim = *(it->first.mim());
-      const getfem::mesh &m = *(it->second.m);
-
+    for (const auto &instr : gis.whole_instructions) {
+      const getfem::mesh_im &mim = *(instr.first.mim());
+      const getfem::mesh &m = *(instr.second.m);
       GMM_ASSERT1(&m == &(mim.linked_mesh()), "Incompatibility of meshes");
-      ga_instruction_list &gil = it->second.instructions;
-      const mesh_region &region = *(it->first.region());
+      const ga_instruction_list &gil = instr.second.instructions;
+      const mesh_region &region = *(instr.first.region());
 
       // iteration on elements (or faces of elements)
       mesh_region rg(region);
@@ -11225,9 +11221,8 @@ namespace getfem {
       }
       GA_DEBUG_INFO("-----------------------------");
     }
-    iti = gis.transformations.begin();
-    for (; iti != gis.transformations.end(); ++iti)
-      (workspace.interpolate_transformation(*iti))->finalize();
+    for (const std::string &t : gis.transformations)
+      workspace.interpolate_transformation(t)->finalize();
   }
 
   //=========================================================================
