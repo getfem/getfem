@@ -274,22 +274,19 @@ namespace getfem {
   void mesh_fem::get_global_dof_index(std::vector<size_type> &ind) const {
     context_check(); if (!dof_enumeration_made) enumerate_dof();
     ind.resize(nb_total_dof);
-    for (size_type i=0; i < nb_total_dof; i++) {
-      ind[i] = size_type(-1);
-      size_type cv = first_convex_of_basic_dof(i) ;
+    gmm::fill(ind, size_type(-1));
+    for (dal::bv_visitor cv(convex_index()); !cv.finished(); ++cv) {
       pfem pf = fem_of_element(cv);
-      for (size_type j=0; j < nb_basic_dof_of_element(cv); j++) {
-        if (pf->dof_types()[j] == global_dof(pf->dim()))
-          if (ind_basic_dof_of_element(cv)[j] == i) {
-            ind[i] = pf->index_of_global_dof(cv,j);
-            break;
-          }
+      for (size_type j=0; j < pf->nb_dof(cv); j++) {
+        size_type gid = pf->index_of_global_dof(cv,j);
+        if (gid != size_type(-1)) {
+          size_type dof = dof_structure.ind_points_of_convex(cv)[j];
+          for (size_type i=0; i < Qdim/pf->target_dim(); ++i)
+            ind[dof+i] = gid;
+        }
       }
     }
   }
-
-
-  typedef std::map<fem_dof, size_type, dof_comp_> dof_sort_type;
 
   /// Enumeration of dofs
   void mesh_fem::enumerate_dof(void) const {
@@ -307,8 +304,9 @@ namespace getfem {
     // Information stored per element
     size_type nb_max_cv = linked_mesh().convex_index().last_true()+1;
     std::vector<bgeot::node_tab> dof_nodes(nb_max_cv, bgeot::node_tab(1.e5));
-    std::vector<dof_sort_type> dof_sorts(nb_max_cv);
-    
+    std::vector< std::map<fem_dof, size_type, dof_comp_> >
+      dof_sorts(nb_max_cv);
+
     // Information for global dof
     dal::bit_vector encountered_global_dof, processed_elt;
     dal::dynamic_array<size_type> ind_global_dof;
@@ -354,16 +352,16 @@ namespace getfem {
         } else {                            // For a standard linkable dof
           pgp->transform(linked_mesh().points_of_convex(cv), i, P);
           size_type idof = nbdof;
-	  linked_mesh().neighbours_of_convex(cv, pf->faces_of_dof(cv, i), s);
-	  for (size_type ncv : s) { // For each neighbour
-	                            // control if the dof already exists.
-	    fd.ind_node = dof_nodes[ncv].search_node(P);
-	    if (fd.ind_node != size_type(-1)) {
-	      auto it = dof_sorts[ncv].find(fd);
-	      if (it != dof_sorts[ncv].end()) { idof = it->second; break; }
-	    }
-	  }
-	  if (idof == nbdof) nbdof += Qdim / pf->target_dim();
+          linked_mesh().neighbours_of_convex(cv, pf->faces_of_dof(cv, i), s);
+          for (size_type ncv : s) { // For each neighbour
+                                    // control if the dof already exists.
+            fd.ind_node = dof_nodes[ncv].search_node(P);
+            if (fd.ind_node != size_type(-1)) {
+              auto it = dof_sorts[ncv].find(fd);
+              if (it != dof_sorts[ncv].end()) { idof = it->second; break; }
+            }
+          }
+          if (idof == nbdof) nbdof += Qdim / pf->target_dim();
           itab[i] = idof;
           fd.ind_node = dof_nodes[cv].add_node(P);
           dof_sorts[cv][fd] = idof;
@@ -739,8 +737,7 @@ namespace getfem {
 
   public :
 
-    const mesh_fem &operator()(
-      const mesh &msh, dim_type o, dim_type qdim) {
+    const mesh_fem &operator()(const mesh &msh, dim_type o, dim_type qdim) {
       mesh_fem_tab::iterator itt = mfs.begin(), itn = mfs.begin();
       if (itn != mfs.end()) itn++;
       while (itt != mfs.end()) {
@@ -765,7 +762,8 @@ namespace getfem {
 
   };
 
-  const mesh_fem &classical_mesh_fem(const mesh &msh, dim_type order, dim_type qdim) {
+  const mesh_fem &classical_mesh_fem(const mesh &msh,
+                                     dim_type order, dim_type qdim) {
     classical_mesh_fem_pool &pool
       = dal::singleton<classical_mesh_fem_pool>::instance();
     return pool(msh, order, qdim);
