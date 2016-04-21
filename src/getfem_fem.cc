@@ -3418,6 +3418,12 @@ namespace getfem {
 
   // get the string name of a fem descriptor.
   std::string name_of_fem(pfem p) {
+
+    auto &instance = dal::singleton<fem_naming_system>::instance();
+    auto *p_torus = dynamic_cast<const torus_fem *>(p.get());
+    if (p_torus) return instance.shorter_name_of_method(p_torus->get_original_pfem());
+    return instance.shorter_name_of_method(p);
+
     return dal::singleton<fem_naming_system>::instance().
       shorter_name_of_method(p);
   }

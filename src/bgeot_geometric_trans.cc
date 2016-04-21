@@ -24,6 +24,7 @@
 #include "getfem/dal_tree_sorted.h"
 #include "getfem/bgeot_geometric_trans.h"
 #include "getfem/bgeot_poly_composite.h"
+#include "getfem/getfem_torus.h"
 
 namespace bgeot {
 
@@ -650,7 +651,10 @@ namespace bgeot {
   }
 
   std::string name_of_geometric_trans(pgeometric_trans p) {
-    return dal::singleton<geometric_trans_naming_system>::instance().shorter_name_of_method(p);
+    auto &instance = dal::singleton<geometric_trans_naming_system>::instance();
+    const torus_geom_trans *pgt_torus = dynamic_cast<const torus_geom_trans *>(p.get());
+    if (pgt_torus) return instance.shorter_name_of_method(pgt_torus->get_original_transformation());
+    return instance.shorter_name_of_method(p);
   }
 
   /* Fonctions pour la ref. directe.                                     */

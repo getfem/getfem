@@ -361,7 +361,9 @@ namespace getfem
       }
     }
   }
-    
+
+  pfem torus_fem::get_original_pfem() const{return poriginal_fem_;}
+
   DAL_SIMPLE_KEY(torus_fem_key, bgeot::size_type);
 
   getfem::pfem new_torus_fem(getfem::pfem pf) {

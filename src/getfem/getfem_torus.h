@@ -98,6 +98,8 @@ namespace getfem
     void real_hess_base_value(const fem_interpolation_context&,
       base_tensor &, bool = true) const;
 
+    pfem get_original_pfem() const;
+
     torus_fem(pfem pf) : virtual_fem(*pf), poriginal_fem_(pf), is_scalar_(false){
       init();
     }
