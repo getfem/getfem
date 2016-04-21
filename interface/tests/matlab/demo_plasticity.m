@@ -216,7 +216,7 @@ for step=1:size(t,2),
       Epsilon_u = gf_model_get(md, 'interpolation', '((Grad_u+Grad_u'')/2)', mim_data);
       gf_model_set(md, 'variable', 'u', U);
       ind_gauss_pt = 22500;
-      if (size(sigma, 2) <= N*(ind_gauss_pt + 1))
+      if (size(sigma, 2) <= N*N*(ind_gauss_pt + 1))
         ind_gauss_pt = floor(3*size(sigma, 2) / (4*N*N));
       end
       sigma_fig(1,step)=sigma(N*N*ind_gauss_pt + 1);

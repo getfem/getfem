@@ -151,7 +151,7 @@ For :math:`u_{n+1} \mbox{ and } \Delta \xi` be given, we define the two maps
    {\mathscr A} : (u_{n+\theta}, \theta \Delta \xi, \varepsilon^p_{n}, \alpha_n) \mapsto \alpha_{n+\theta}
 
 
-where the pair :math:`(\varepsilon^p_{n+\theta}, \alpha_{n+\theta}) = ({\mathscr E}^p(u_{n+\theta}, \theta \Delta \xi, \varepsilon^p_{n}, \alpha_n), {\mathscr A}(u_{n+\theta}, \theta \Delta \xi, \varepsilon^p_{n}, \alpha_n))` is the solution to equations :eq:`flowrule1`, :eq:`flowrule2` (without the consideration of  :eq:`flowrule3`). We will see later, that, at least for simple isotropic plastic flow rules, these maps have a simple expression, even sometimes a linear one with respect to :math:`u_{n+\theta}`. Most of the time, the map :math:`{\mathscr A}` can be optained as a simple post-treatment of the map :math:`{\mathscr E}^p`.
+where the pair :math:`(\varepsilon^p_{n+\theta}, \alpha_{n+\theta}) = ({\mathscr E}^p(u_{n+\theta}, \theta \Delta \xi, \varepsilon^p_{n}, \alpha_n), {\mathscr A}(u_{n+\theta}, \theta \Delta \xi, \varepsilon^p_{n}, \alpha_n))` is the solution to equations :eq:`flowrule1`, :eq:`flowrule2` (without the consideration of  :eq:`flowrule3`). We will see later, that, at least for simple isotropic plastic flow rules, these maps have a simple expression, even sometimes a linear one with respect to :math:`u_{n+\theta}`.
 
 Still :math:`u_{n+1} \mbox{ and } \Delta \xi` be given the stress :math:`\sigma_{n+1}` reads
 
@@ -267,6 +267,42 @@ Since :math:`\mbox{Dev}(\sigma_{n+\theta}) = 2\mu\mbox{Dev}(\varepsilon(u_{n+\th
 
 which is a linear expression with respect to :math:`u_{n+1}` (but not with respect to :math:`\Delta \xi`).
 
+**Closest point projection approach (elimination of the multiplier)**
+
+The flow rule can be written in term of differential inclusion
+
+.. math:: \dot{\varepsilon}^p \in  \partial I_K(\sigma),
+
+where :math:`K = \left\{ \sigma : \|\mbox{Dev}(\sigma)\| \le \sqrt{\frac{2}{3}}\sigma_y\right\}` is the set of admissible stres tensors, :math:`I_K` is the indicator function of this set and :math:`\partial I_K` its sub-differential (normal cone to :math:`K`). This can be equivalently written
+
+.. math:: \sigma\in K, ~~~(\tau - \sigma):\dot{\varepsilon}^p \le 0 ~~~ \forall \tau \in K.
+
+or
+
+.. math:: {\cal A}(\bar{\tau} - \varepsilon(u) + \varepsilon^p):\dot{\varepsilon}^p \le 0 ~~~ \forall \bar{\tau} \in {\cal A}^{-1}K,
+
+where :math:`{\cal A}` is the fourth order elasticity tensor. Now, in term of projection it can be expressed as
+
+.. math:: \varepsilon(u) - \varepsilon^p = P^{{\cal A}}_{{\cal A}^{-1}K}(\varepsilon(u) - \varepsilon^p + r\dot{\varepsilon}^p),
+
+for any :math:`r > 0` and :math:`P^{{\cal A}}_{{\cal A}^{-1}K}` being the orthogonal projection on :math:`{\cal A}^{-1}K` with respect to the scalar product induced by :math:`{\cal A}`.
+
+The generalize mid-point scheme reads
+
+.. math:: \varepsilon(u_{n+\theta}) - \varepsilon^p_{n+\theta} = P^{{\cal A}}_{{\cal A}^{-1}K}\left(\varepsilon(u_{n+\theta}) - \varepsilon^p_{n+\theta} + \Frac{r}{\theta}(\varepsilon^p_{n+\theta}-\varepsilon^p_{n})\right).
+
+With the choice :math:`\Frac{r}{\theta} = 1` this gives
+
+.. math:: \varepsilon(u_{n+\theta}) = \varepsilon^p_{n} + (I - P^{{\cal A}}_{{\cal A}^{-1}K})(\varepsilon(u_{n+\theta})-\varepsilon^p_{n}).
+
+Since :math:`P^{{\cal A}}_{{\cal A}^{-1}K}` can be expressed as
+
+.. math:: P^{{\cal A}}_{{\cal A}^{-1}K}(\varepsilon) = \Frac{\mbox{tr}(\varepsilon)}{3}I + \min\left(\Frac{1}{2\mu}\sqrt{\frac{2}{3}}\sigma_y, \|\mbox{Dev}(\varepsilon)\|\right) \Frac{\mbox{Dev}(\varepsilon)}{\|\mbox{Dev}(\varepsilon)\|},
+
+We finally find with :math:`B = \mbox{Dev}(\varepsilon(u_{n+\theta}))-\varepsilon^p_{n}`
+
+.. math:: \varepsilon(u_{n+\theta}) = \tilde{\mathscr E}^p(u_{n+\theta}, \varepsilon^p_{n}) = \varepsilon^p_{n} + \left( 1 - \sqrt{\frac{2}{3}}\Frac{\sigma_y}{2\mu\|B\|}\right)_+ B
+
 **Plane strain approximation**
 
 The plane strain approximation has the same expression replacing the 3D strain tensors by the in-plane ones :math:`\bar{\varepsilon}^p` and  :math:`\bar{\varepsilon}(u_{n+\theta})`.
@@ -314,15 +350,47 @@ i.e. :math:`A = \sqrt{\frac{2}{3}}H_i\alpha` and a uniaxial yield stress defined
 
 for :math:`\sigma_{y0}` the initial uniaxial yield stress. The yield function (and plastic potential since this is an associated plastic model) can be defined by
 
-.. math:: \Psi(\sigma, A) = f(\sigma, A) = \|\mbox{Dev}(\sigma - H_k\varepsilon^p)\| - \sqrt{\frac{2}{3}}\sigma_{y0} + A,
+.. math:: \Psi(\sigma, A) = f(\sigma, A) = \|\mbox{Dev}(\sigma - H_k\varepsilon^p)\| - \sqrt{\frac{2}{3}}\sigma_{y0} - A,
 
 where :math:`H_k` is the kinematic hardening modulus. The same computation as in the previous section leads to
 
 .. math:: {\mathscr E}^p(u_{n+\theta}, \theta \Delta \xi, \varepsilon^p_{n}) = \Frac{1}{1+(2\mu+H_k)\theta\Delta \xi}(\varepsilon^p_{n} + 2\mu\theta\Delta \xi \mbox{Dev}(\varepsilon(u_{n+\theta}))),
 
-.. math:: {\mathscr A}(u_{n+\theta}, \theta \Delta \xi, \varepsilon^p_{n}, \alpha_n) = \alpha_n + \|\varepsilon^p_{n+\theta}-\varepsilon^p_{n}\| = \alpha_n + \| {\mathscr E}^p(u_{n+\theta}, \theta \Delta \xi, \varepsilon^p_{n})-\varepsilon^p_{n}\|
+.. math:: \begin{array}{rcl} {\mathscr A}(u_{n+\theta}, \theta \Delta \xi, \varepsilon^p_{n}, \alpha_n) &=& \alpha_n + \theta \Delta \xi\|\mbox{Dev}(\sigma_{n+\theta} - H_k\varepsilon^p_{n+\theta})\| = \alpha_n + \theta \Delta \xi\|2\mu\mbox{Dev}(\varepsilon(u_{n+\theta})) - (2\mu+H_k)\varepsilon^p_{n+\theta}\| \\ &=&  \alpha_n + \Frac{\theta \Delta \xi}{1+(2\mu+H_k)\theta\Delta \xi}\|2\mu\mbox{Dev}(\varepsilon(u_{n+\theta})) - (2\mu+H_k)\varepsilon^p_{n}\| \\ &=& \alpha_n + \|\varepsilon^p_{n+\theta}- \varepsilon^p_{n}\|.\end{array}
 
 Note that the isotropic hardening modulus do not intervene in :math:`{\mathscr E}^p(u_{n+\theta}, \theta \Delta \xi, \varepsilon^p_{n})` but only in :math:`f(\sigma, A)`.
+
+**Closest point projection approach**
+
+Using the same approach as for the perfect isotropic plasticity, the flow rule can be written
+
+.. math:: \dot{\varepsilon}^p \in  \partial I_K(\sigma-H_k \varepsilon^p),
+
+where :math:`K = \left\{ \sigma : \|\mbox{Dev}(\sigma)\| \le \sqrt{\frac{2}{3}}(\sigma_{y0}+H_i\alpha)\right\}`. Writting
+
+.. math:: ({\cal A} + H_k I)(\bar{\tau} - ({\cal A} + H_k I)^{-1}{\cal A}\varepsilon(u) + \varepsilon^p) : \dot{\varepsilon}^p \le 0 ~~ \forall \bar{\tau} \in ({\cal A} + H_k I)^{-1}K
+
+we conclude applying the generalized mid-point scheme by
+
+.. math:: \varepsilon^p_{n+\theta} =  \varepsilon^p_{n} + \left(I-P^{{\cal A} + H_k I}_{({\cal A} + H_k I)^{-1}K}\right)\left(({\cal A} + H_k I)^{-1}{\cal A}\varepsilon(u_{n+\theta}) - \varepsilon^p_n\right).
+
+Now, since
+
+.. math:: \left(I-P^{{\cal A} + H_k I}_{({\cal A} + H_k I)^{-1}K}\right)(\varepsilon) =  \left(1 - \sqrt{\frac{2}{3}}\Frac{(\sigma_{y0}+H_i\alpha_{n+\theta})}{(2\mu+H_k)\|\mbox{Dev}(\varepsilon)\|}\right)_+ \mbox{Dev}(\varepsilon),
+
+and :math:`\mbox{Dev}(({\cal A} + H_k I)^{-1}{\cal A}\varepsilon(u_{n+\theta})) = \Frac{2\mu}{2\mu+H_k}\mbox{Dev}(\varepsilon(u_{n+\theta}))` and with :math:`B = 2\mu\mbox{Dev}(\varepsilon(u_{n+\theta})) - (2\mu+H_k)\varepsilon^p_n` one has
+
+.. math:: \varepsilon^p_{n+\theta} =  \varepsilon^p_{n}  + \Frac{1}{2\mu+H_k}\left(1 - \sqrt{\frac{2}{3}}\Frac{(\sigma_{y0}+H_i\alpha_{n+\theta})}{\|B\|}\right)_+ B.
+
+The problem is not completely solved since :math:`\alpha_{n+\theta}` is still undetermined. However
+
+.. math:: \alpha_{n+\theta} = \alpha_{n} + \|\varepsilon^p_{n+\theta} - \varepsilon^p_{n}\| = \alpha_{n} + \Frac{1}{2\mu+H_k}\left(\|B\| - \sqrt{\frac{2}{3}}(\sigma_{y0}+H_i\alpha_{n+\theta})\right)_+.
+
+Thus
+
+.. math:: \alpha_{n+\theta} = \max\left(\alpha_{n}, \Frac{(2\mu+H_k)\alpha_n+\|B\| - \sqrt{\frac{2}{3}}\sigma_{y0}}{2\mu+H_k+\sqrt{\frac{2}{3}}H_i}\right),
+
+which complete the expression.
 
 **Plane strain approximation**
 
@@ -339,9 +407,9 @@ See for instance [GR-ST2015]_ for the justification of the construction of this 
 with the complementarity condition
 
 .. math::
-   \delta \ge 0, \|\varepsilon^p\| \le c_3,  \delta \|\varepsilon^p\| = 0,
+   \delta \ge 0, \|\varepsilon^p\| \le c_3,  \delta (\|\varepsilon^p\|-c_3) = 0,
 
-where :math:`c_1, c_2 \mbox{ and } c_3` are some physical parameters. Note that :math:`\Frac{\varepsilon^p}{\|\varepsilon^p\|}` has to be understood as the wall unit ball for :math:`\varepsilon^p = 0`.
+where :math:`c_1, c_2 \mbox{ and } c_3` are some physical parameters. Note that :math:`\Frac{\varepsilon^p}{\|\varepsilon^p\|}` has to be understood to be the whole unit ball for :math:`\varepsilon^p = 0`.
 
 
 The integration of the flow rule reads
@@ -359,23 +427,21 @@ With
 
 .. math:: B = \varepsilon^p_{n} + \theta\Delta \xi 2\mu \mbox{Dev}(\varepsilon(u_{n+\theta})),
 
-we conclude that :math:`\Frac{\varepsilon^p_{n+\theta}}{\|\varepsilon^p_{n+\theta}\|} = \Frac{B}{\|B\|}` and then :math:`\varepsilon^p_{n+\theta} = 0` for :math:`\|B\| \le c_1` and
+we conclude that :math:`\Frac{\varepsilon^p_{n+\theta}}{\|\varepsilon^p_{n+\theta}\|} = \Frac{B}{\|B\|}` and then :math:`\varepsilon^p_{n+\theta} = 0` for :math:`\|B\| \le \theta\Delta \xi c_1` and
 
 .. math:: (1+(2\mu+c_2)\theta\Delta \xi)\varepsilon^p_{n+\theta} = \Frac{B}{\|B\|} (\|B\| - \theta\Delta \xi(c_1+\delta)).
 
-Since :math:`\varepsilon^p_{n+\theta} = c_3` for :math:`\delta > 0` (complementarity condition), we can deduce the follwoing expression for :math:`\varepsilon^p_{n+\theta}`: 
+Since :math:`\|\varepsilon^p_{n+\theta}\| = c_3` for :math:`\delta > 0` (complementarity condition), we can deduce the following expression for :math:`\varepsilon^p_{n+\theta}`: 
 
-.. math:: {\mathscr E}^p(u_{n+\theta}, \theta \Delta \xi, \varepsilon^p_{n}) = \Frac{B}{\|B\|} \min\left(c_3, \Frac{\max(0, \|B\| - \theta\Delta \xi c_1)}{1+(2\mu+c_2)\theta\Delta \xi}\right).
+.. math:: {\mathscr E}^p(u_{n+\theta}, \theta \Delta \xi, \varepsilon^p_{n}) = B \min\left(\Frac{c_3}{\|B\|}, \Frac{\left(1 - \Frac{\theta\Delta \xi c_1}{\|B\|}\right)_+}{1+(2\mu+c_2)\theta\Delta \xi}\right).
 
 The yield condition reads then
 
-.. math:: f(\sigma_{n+\theta}) = \left\|2\mu\mbox{Dev}(\varepsilon(u_{n+\theta})) - (2\mu+c_2)\varepsilon^p_{n+\theta} - (c_1+\delta)\Frac{\varepsilon^p_{n+\theta}}{\|\varepsilon^p_{n+\theta}\|} \right\| - \sqrt{\frac{2}{3}}\sigma_{y} \le 0,
+.. math:: \begin{array}{l} f(\sigma_{n+\theta}) = \left\|2\mu\mbox{Dev}(\varepsilon(u_{n+\theta})) - (2\mu+c_2)\varepsilon^p_{n+\theta} - \max\left(c_1, \Frac{\|B\|-c3}{\theta\Delta \xi} - (2\mu+c2)c_3\right)\varepsilon^p_{n+\theta} \right\| \\ ~~~ - \sqrt{\frac{2}{3}}\sigma_{y} \le 0,\end{array}
 
-or using :eq:`souza_auri_comp`
-
-.. math:: \|{\mathscr E}^p(u_{n+\theta}, \theta \Delta \xi, \varepsilon^p_{n}) - \varepsilon^p_{n}\| \le \theta\Delta \xi\sqrt{\frac{2}{3}}\sigma_{y}.
-
-stupid ? 
+.. or using :eq:`souza_auri_comp`
+.. .. math:: \|{\mathscr E}^p(u_{n+\theta}, \theta \Delta \xi, \varepsilon^p_{n}) - \varepsilon^p_{n}\| \le \theta\Delta \xi\sqrt{\frac{2}{3}}\sigma_{y}.
+.. stupid ? Yes a priori ! 
 
 **Plane strain approximation**
 
@@ -402,7 +468,7 @@ Generic brick
 
 The generic brick add the following terms:
 
-.. math:: \int_{\Omega} \sigma_{n+1} : \nabla v dx +  \int_{\Omega} .. math:: \ds \int_{\Omega} (\Delta \xi - (\Delta \xi + r f(\sigma_{n+\theta}, A_{n+\theta}))_+) \lambda dx = 0,   \forall \lambda
+.. math:: \int_{\Omega} \sigma_{n+1} : \nabla v dx +  \ds \int_{\Omega} (\Delta \xi - (\Delta \xi + r f(\sigma_{n+\theta}, A_{n+\theta}))_+) \lambda dx = 0,   \forall \lambda
 
 
 Other bricks
