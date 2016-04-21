@@ -22,7 +22,7 @@
 """  This program performs a test for several implementations of
      small strain isotropic plasticity in GetFEM++
 
-  $Id: demo_plasticity.py 5189 2015-12-15 10:24:07Z renard $
+  $Id: test_small_strain_plasticity.py 5189 2015-12-15 10:24:07Z renard $
 """
 
 import getfem as gf
@@ -72,6 +72,7 @@ LX = 100.
 LY = 20.
 NX = 40
 theta = 1.; # Parameter for the generalized mid point scheme.
+order = 2;
 
 # Arguments from the command line if any
 for i in range(1,len(sys.argv)):
@@ -85,6 +86,8 @@ for i in range(1,len(sys.argv)):
       NX = int(a[3:]); print 'NX set to %d from argv' % NX; continue
   if (a[0:3] == 'NT='):
       NT = int(a[3:]); print 'NT set to %d from argv' % NT; continue
+  if (a[0:6] == 'order='):
+      order = int(a[6:]); print 'order set to %d from argv' % order; continue
   if (a[0:3] == 'Hk='):
       Hk = float(a[3:]); print 'Hk set to %g from argv' % Hk; continue
   if (a[0:3] == 'Hi='):
@@ -131,7 +134,7 @@ mim=gf.MeshIm(m, gf.Integ('IM_TRIANGLE(6)'))
 
 # Define used MeshFem
 mf_u=gf.MeshFem(m,2)
-mf_u.set_fem(gf.Fem('FEM_PK(2,2)'))
+mf_u.set_fem(gf.Fem('FEM_PK(2,%d)' % order))
 
 if (option == 1):
     mf_sigma=gf.MeshFem(m,2,2)

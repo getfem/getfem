@@ -21,7 +21,7 @@ A framework for the approximation of plasticity models in |gf|.
 Theoretical background
 ++++++++++++++++++++++
 
-We present a short introduction to small strain plasticity (mainly elastoplasticity). We refer mainly to [SI-HU1998]_ and [SO-PE-OW2008]_ for a more detailed presentation.
+We present a short introduction to small strain plasticity. We refer mainly to [SI-HU1998]_ and [SO-PE-OW2008]_ for a more detailed presentation.
 
 Additive decomposition of the small strain tensor
 =================================================
@@ -85,7 +85,7 @@ with the additional complementary condition
 The variable :math:`\dot{\gamma}` is called the plastic multiplier. Note that when :math:`\psi(\varepsilon^e, \alpha), f(\sigma, A) \mbox{ or } \Psi(\sigma, A)` are not differentiable, subdifferentials have to be used. Associated plasticity corresponds to the choice :math:`\Psi(\sigma, A) = f(\sigma, A)`.
 
 Initial boundary value problem
-++++++++++++++++++++++++++++++
+==============================
 
 The weak formulation of a dynamic elastoplastic problem can be written as follows for an arbitrary cinematically admissible test function :math:`v`:
 
@@ -124,9 +124,16 @@ with the complementary condition
 
 where :math:`0 < \theta \le 1` is the parameter of the mid-point scheme. We exclude :math:`\theta = 0` because we will not consider explicit integration of plasticity. Let us recall that :math:`\theta = 1` corresponds to the backward Euler scheme and :math:`\theta = 1/2` to the mid-point scheme which is a second order consistent scheme.
 
-A solution would be to solve the whole problem with all the unknows, that is :math:`u_{n+1}, \Delta \gamma, \varepsilon^p_{n+1} \mbox{ and } A_{n+1}`. This is of course possible but would be a rather expensive strategy because of the resulting high number of degrees of freedom. A classical strategy (the return mapping one for instance, see [SO-PE-OW2008]_) consist in integrating locally the plastic flow on each Gauss point of the considered integration method separately, or more precisely to consider on each Gauss point the map :math:`F : u_{n+1} \mapsto \sigma_{n+1}` which results from the local flow rule integration. Both this map and its tangent modulus (usually called consistent tangent modulus) is then used in the global solve of the problem with a Newton method and for :math:`u_{n+1}` the unique remaining variable. The advantage of the return mapping strategy is that the unique variable of the global solve is the displacement :math:`u_{n+1}`. However, a nonlinear solve on each Gauss point is necessary which is often performed with a local Newton method, and the expression of the consistent tangent modulus is often quite complex.
+A solution would be to solve the whole problem with all the unknows, that is :math:`u_{n+1}, \Delta \gamma, \varepsilon^p_{n+1} \mbox{ and } A_{n+1}`. This is of course possible but would be a rather expensive strategy because of the resulting high number of degrees of freedom. A classical strategy (the return mapping one for instance, see [SO-PE-OW2008]_ or the closes point projection one) consist in integrating locally the plastic flow on each Gauss point of the considered integration method separately, or more precisely to consider on each Gauss point the maps
 
-The approach developped below is mainly inspired from  [PO-NI2016]_,  [SE-PO-WO2015]_ and [HA-WO2009]_ and allow more simple tangent moduli. It consists in keeping (a multiple of) :math:`\Delta \gamma` as an additional unknown with respect to :math:`u_{n+1}`. As we will see, this will allow a more generic treatment of the yield functions, the price for the simplicity being this additional unknown scalar field.
+.. math::
+   {\mathscr E}^p : (u_{n+\theta}, \varepsilon^p_{n}, \alpha_n) \mapsto \varepsilon^p_{n+\theta}
+
+   {\mathscr A} : (u_{n+\theta}, \varepsilon^p_{n}, \alpha_n) \mapsto \alpha_{n+\theta}
+
+which results from the local flow rule integration  (the pair :math:`(\varepsilon^p_{n+\theta}, \alpha_{n+\theta}) = ({\mathscr E}^p(u_{n+\theta},  \varepsilon^p_{n}, \alpha_n), {\mathscr A}(u_{n+\theta}, \varepsilon^p_{n}, \alpha_n))` is the solution to equations :eq:`flowrule1`, :eq:`flowrule2` and  :eq:`flowrule3`). Both these maps and their tangent moduli (usually called consistent tangent moduli) are then used in the global solve of the problem with a Newton method and for :math:`u_{n+1}` the unique remaining variable. The advantage of the return mapping strategy is that the unique variable of the global solve is the displacement :math:`u_{n+1}`. A nonlinear solve on each Gauss point is often necessary which is usualy performed with a local Newton method.
+
+In |gf| we propose both the return mapping trategy and also an alternative strategy developped below which is mainly inspired from  [PO-NI2016]_,  [SE-PO-WO2015]_ and [HA-WO2009]_ and allow more simple tangent moduli. It consists in keeping (a multiple of) :math:`\Delta \gamma` as an additional unknown with respect to :math:`u_{n+1}`. As we will see, this will allow a more generic treatment of the yield functions, the price for the simplicity being this additional unknown scalar field.
 
 First, we consider an additional (and optional) given function :math:`\alpha(\sigma_{n+\theta}, A_{n+\theta}) > 0` whose interest will appear later on (it will allow simple local inverses) and the new unknown scalar field
 
@@ -146,12 +153,12 @@ so that our two main unknows are now :math:`u_{n+1} \mbox{ and } \Delta \xi`. Th
 For :math:`u_{n+1} \mbox{ and } \Delta \xi` be given, we define the two maps
 
 .. math::
-   {\mathscr E}^p : (u_{n+\theta}, \theta \Delta \xi, \varepsilon^p_{n}, \alpha_n) \mapsto \varepsilon^p_{n+\theta}
+   \tilde{\mathscr E}^p : (u_{n+\theta}, \theta \Delta \xi, \varepsilon^p_{n}, \alpha_n) \mapsto \varepsilon^p_{n+\theta}
 
-   {\mathscr A} : (u_{n+\theta}, \theta \Delta \xi, \varepsilon^p_{n}, \alpha_n) \mapsto \alpha_{n+\theta}
+   \tilde{\mathscr A} : (u_{n+\theta}, \theta \Delta \xi, \varepsilon^p_{n}, \alpha_n) \mapsto \alpha_{n+\theta}
 
 
-where the pair :math:`(\varepsilon^p_{n+\theta}, \alpha_{n+\theta}) = ({\mathscr E}^p(u_{n+\theta}, \theta \Delta \xi, \varepsilon^p_{n}, \alpha_n), {\mathscr A}(u_{n+\theta}, \theta \Delta \xi, \varepsilon^p_{n}, \alpha_n))` is the solution to equations :eq:`flowrule1`, :eq:`flowrule2` (without the consideration of  :eq:`flowrule3`). We will see later, that, at least for simple isotropic plastic flow rules, these maps have a simple expression, even sometimes a linear one with respect to :math:`u_{n+\theta}`.
+where the pair :math:`(\varepsilon^p_{n+\theta}, \alpha_{n+\theta}) = (\tilde{\mathscr E}^p(u_{n+\theta}, \theta \Delta \xi, \varepsilon^p_{n}, \alpha_n), \tilde{\mathscr A}(u_{n+\theta}, \theta \Delta \xi, \varepsilon^p_{n}, \alpha_n))` is the solution to equations :eq:`flowrule1`, :eq:`flowrule2` (without the consideration of  :eq:`flowrule3`). We will see later, that, at least for simple isotropic plastic flow rules, these maps have a simple expression, even sometimes a linear one with respect to :math:`u_{n+\theta}`.
 
 Still :math:`u_{n+1} \mbox{ and } \Delta \xi` be given the stress :math:`\sigma_{n+1}` reads
 
@@ -173,7 +180,7 @@ pb : need of :math:`A_{n+\theta}`
 
 
 Plane strain approximation
-++++++++++++++++++++++++++
+==========================
 
 A plane strain approximation is a 2D problem which corresponds to the deformation of a long cylindrical object where the strain in  the length direction (assumed to be along the :math:`z` axis) is considered small compared to the ones in the other directions and is neglected. It result in a plane strain tensor of the form
 
@@ -204,7 +211,7 @@ thus
 
 
 Plane stress approximation
-++++++++++++++++++++++++++
+==========================
 
 The plane stress approximation describe generally the 2D membrane deformation of a thin plate. It consist in prescribing the stress tensor to have only in-plane nonzero components, i.e.
 
@@ -263,7 +270,7 @@ Choosing the factor :math:`\alpha(\sigma_{n+\theta}) = \|\mbox{Dev}(\sigma_{n+\t
 
 Since :math:`\mbox{Dev}(\sigma_{n+\theta}) = 2\mu\mbox{Dev}(\varepsilon(u_{n+\theta})) - 2\mu\varepsilon^p_{n+\theta}` this directly gives:
 
-.. math:: {\mathscr E}^p(u_{n+\theta}, \theta \Delta \xi, \varepsilon^p_{n}) = \Frac{1}{1+2\mu\theta\Delta \xi}(\varepsilon^p_{n} + 2\mu\theta\Delta \xi \mbox{Dev}(\varepsilon(u_{n+\theta}))),
+.. math:: \tilde{\mathscr E}^p(u_{n+\theta}, \theta \Delta \xi, \varepsilon^p_{n}) = \Frac{1}{1+2\mu\theta\Delta \xi}(\varepsilon^p_{n} + 2\mu\theta\Delta \xi \mbox{Dev}(\varepsilon(u_{n+\theta}))),
 
 which is a linear expression with respect to :math:`u_{n+1}` (but not with respect to :math:`\Delta \xi`).
 
@@ -301,7 +308,7 @@ Since :math:`P^{{\cal A}}_{{\cal A}^{-1}K}` can be expressed as
 
 We finally find with :math:`B = \mbox{Dev}(\varepsilon(u_{n+\theta}))-\varepsilon^p_{n}`
 
-.. math:: \varepsilon(u_{n+\theta}) = \tilde{\mathscr E}^p(u_{n+\theta}, \varepsilon^p_{n}) = \varepsilon^p_{n} + \left( 1 - \sqrt{\frac{2}{3}}\Frac{\sigma_y}{2\mu\|B\|}\right)_+ B
+.. math:: \varepsilon(u_{n+\theta}) = {\mathscr E}^p(u_{n+\theta}, \varepsilon^p_{n}) = \varepsilon^p_{n} + \left( 1 - \sqrt{\frac{2}{3}}\Frac{\sigma_y}{2\mu\|B\|}\right)_+ B
 
 **Plane strain approximation**
 
@@ -354,11 +361,11 @@ for :math:`\sigma_{y0}` the initial uniaxial yield stress. The yield function (a
 
 where :math:`H_k` is the kinematic hardening modulus. The same computation as in the previous section leads to
 
-.. math:: {\mathscr E}^p(u_{n+\theta}, \theta \Delta \xi, \varepsilon^p_{n}) = \Frac{1}{1+(2\mu+H_k)\theta\Delta \xi}(\varepsilon^p_{n} + 2\mu\theta\Delta \xi \mbox{Dev}(\varepsilon(u_{n+\theta}))),
+.. math:: \tilde{\mathscr E}^p(u_{n+\theta}, \theta \Delta \xi, \varepsilon^p_{n}) = \Frac{1}{1+(2\mu+H_k)\theta\Delta \xi}(\varepsilon^p_{n} + 2\mu\theta\Delta \xi \mbox{Dev}(\varepsilon(u_{n+\theta}))),
 
-.. math:: \begin{array}{rcl} {\mathscr A}(u_{n+\theta}, \theta \Delta \xi, \varepsilon^p_{n}, \alpha_n) &=& \alpha_n + \theta \Delta \xi\|\mbox{Dev}(\sigma_{n+\theta} - H_k\varepsilon^p_{n+\theta})\| = \alpha_n + \theta \Delta \xi\|2\mu\mbox{Dev}(\varepsilon(u_{n+\theta})) - (2\mu+H_k)\varepsilon^p_{n+\theta}\| \\ &=&  \alpha_n + \Frac{\theta \Delta \xi}{1+(2\mu+H_k)\theta\Delta \xi}\|2\mu\mbox{Dev}(\varepsilon(u_{n+\theta})) - (2\mu+H_k)\varepsilon^p_{n}\| \\ &=& \alpha_n + \|\varepsilon^p_{n+\theta}- \varepsilon^p_{n}\|.\end{array}
+.. math:: \begin{array}{rcl} \tilde{\mathscr A}(u_{n+\theta}, \theta \Delta \xi, \varepsilon^p_{n}, \alpha_n) &=& \alpha_n + \theta \Delta \xi\|\mbox{Dev}(\sigma_{n+\theta} - H_k\varepsilon^p_{n+\theta})\| = \alpha_n + \theta \Delta \xi\|2\mu\mbox{Dev}(\varepsilon(u_{n+\theta})) - (2\mu+H_k)\varepsilon^p_{n+\theta}\| \\ &=&  \alpha_n + \Frac{\theta \Delta \xi}{1+(2\mu+H_k)\theta\Delta \xi}\|2\mu\mbox{Dev}(\varepsilon(u_{n+\theta})) - (2\mu+H_k)\varepsilon^p_{n}\| \\ &=& \alpha_n + \|\varepsilon^p_{n+\theta}- \varepsilon^p_{n}\|.\end{array}
 
-Note that the isotropic hardening modulus do not intervene in :math:`{\mathscr E}^p(u_{n+\theta}, \theta \Delta \xi, \varepsilon^p_{n})` but only in :math:`f(\sigma, A)`.
+Note that the isotropic hardening modulus do not intervene in :math:`\tilde{\mathscr E}^p(u_{n+\theta}, \theta \Delta \xi, \varepsilon^p_{n})` but only in :math:`f(\sigma, A)`.
 
 **Closest point projection approach**
 
@@ -380,7 +387,7 @@ Now, since
 
 and :math:`\mbox{Dev}(({\cal A} + H_k I)^{-1}{\cal A}\varepsilon(u_{n+\theta})) = \Frac{2\mu}{2\mu+H_k}\mbox{Dev}(\varepsilon(u_{n+\theta}))` and with :math:`B = 2\mu\mbox{Dev}(\varepsilon(u_{n+\theta})) - (2\mu+H_k)\varepsilon^p_n` one has
 
-.. math:: \varepsilon^p_{n+\theta} =  \varepsilon^p_{n}  + \Frac{1}{2\mu+H_k}\left(1 - \sqrt{\frac{2}{3}}\Frac{(\sigma_{y0}+H_i\alpha_{n+\theta})}{\|B\|}\right)_+ B.
+.. math:: {\mathscr E}^p(u_{n+\theta}, \varepsilon^p_{n}) = \varepsilon^p_{n+\theta} =  \varepsilon^p_{n}  + \Frac{1}{2\mu+H_k}\left(1 - \sqrt{\frac{2}{3}}\Frac{(\sigma_{y0}+H_i\alpha_{n+\theta})}{\|B\|}\right)_+ B.
 
 The problem is not completely solved since :math:`\alpha_{n+\theta}` is still undetermined. However
 
@@ -388,7 +395,7 @@ The problem is not completely solved since :math:`\alpha_{n+\theta}` is still un
 
 Thus
 
-.. math:: \alpha_{n+\theta} = \max\left(\alpha_{n}, \Frac{(2\mu+H_k)\alpha_n+\|B\| - \sqrt{\frac{2}{3}}\sigma_{y0}}{2\mu+H_k+\sqrt{\frac{2}{3}}H_i}\right),
+.. math:: {\mathscr A}(u_{n+\theta}, \varepsilon^p_{n}) = \alpha_{n+\theta} = \max\left(\alpha_{n}, \Frac{(2\mu+H_k)\alpha_n+\|B\| - \sqrt{\frac{2}{3}}\sigma_{y0}}{2\mu+H_k+\sqrt{\frac{2}{3}}H_i}\right),
 
 which complete the expression.
 
@@ -433,14 +440,14 @@ we conclude that :math:`\Frac{\varepsilon^p_{n+\theta}}{\|\varepsilon^p_{n+\thet
 
 Since :math:`\|\varepsilon^p_{n+\theta}\| = c_3` for :math:`\delta > 0` (complementarity condition), we can deduce the following expression for :math:`\varepsilon^p_{n+\theta}`: 
 
-.. math:: {\mathscr E}^p(u_{n+\theta}, \theta \Delta \xi, \varepsilon^p_{n}) = B \min\left(\Frac{c_3}{\|B\|}, \Frac{\left(1 - \Frac{\theta\Delta \xi c_1}{\|B\|}\right)_+}{1+(2\mu+c_2)\theta\Delta \xi}\right).
+.. math:: \tilde{\mathscr E}^p(u_{n+\theta}, \theta \Delta \xi, \varepsilon^p_{n}) = B \min\left(\Frac{c_3}{\|B\|}, \Frac{\left(1 - \Frac{\theta\Delta \xi c_1}{\|B\|}\right)_+}{1+(2\mu+c_2)\theta\Delta \xi}\right).
 
 The yield condition reads then
 
 .. math:: \begin{array}{l} f(\sigma_{n+\theta}) = \left\|2\mu\mbox{Dev}(\varepsilon(u_{n+\theta})) - (2\mu+c_2)\varepsilon^p_{n+\theta} - \max\left(c_1, \Frac{\|B\|-c3}{\theta\Delta \xi} - (2\mu+c2)c_3\right)\varepsilon^p_{n+\theta} \right\| \\ ~~~ - \sqrt{\frac{2}{3}}\sigma_{y} \le 0,\end{array}
 
 .. or using :eq:`souza_auri_comp`
-.. .. math:: \|{\mathscr E}^p(u_{n+\theta}, \theta \Delta \xi, \varepsilon^p_{n}) - \varepsilon^p_{n}\| \le \theta\Delta \xi\sqrt{\frac{2}{3}}\sigma_{y}.
+.. .. math:: \|\tilde{\mathscr E}^p(u_{n+\theta}, \theta \Delta \xi, \varepsilon^p_{n}) - \varepsilon^p_{n}\| \le \theta\Delta \xi\sqrt{\frac{2}{3}}\sigma_{y}.
 .. stupid ? Yes a priori ! 
 
 **Plane strain approximation**
