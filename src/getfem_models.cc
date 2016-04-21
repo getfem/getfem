@@ -2741,7 +2741,6 @@ namespace getfem {
 
     // Generic expressions
     if (generic_expressions.size()) {
-
       model_real_plain_vector residual;
       if (version & BUILD_RHS) gmm::resize(residual, gmm::vect_size(rrhs));
 
@@ -2757,7 +2756,11 @@ namespace getfem {
         {
           exception.run([&]
           {
-            GMM_TRACE2("Global generic assembly");
+	    if (version & BUILD_RHS)
+	      GMM_TRACE2("Global generic assembly RHS");
+	    if (version & BUILD_MATRIX)
+	      GMM_TRACE2("Global generic assembly tangent term");
+
             ga_workspace workspace(*this);
 
             for (const auto &ge : generic_expressions)

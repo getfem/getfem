@@ -275,6 +275,26 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        }
        out.pop().from_dcvector(result);
        );
+
+    /*@GET V = ('local_projection', @tmim mim, @str expr, @tmf mf[, @int region])
+      Make an elementwise L2 projection of an expression with respect
+      to the mesh_fem `mf`. This mesh_fem has to be
+      a discontinuous one.
+      The expression has to be valid according to the high-level generic
+      assembly language possibly including references to the variables
+      and data of the model. @*/
+    sub_command
+      ("local_projection", 3, 4, 0, 1,
+       getfem::mesh_im *mim = to_meshim_object(in.pop());
+       std::string expr = in.pop().to_string();
+       const getfem::mesh_fem *mf = to_meshfem_object(in.pop());
+       GMM_ASSERT1(!(mf->is_reduced()), "Sorry, cannot apply to reduced fems");
+       size_type region = in.remaining() ? in.pop().to_integer():size_type(-1);
+
+       getfem::base_vector result;
+       getfem::ga_local_projection(*md, *mim, expr, *mf, result, region);
+       out.pop().from_dcvector(result);
+       );
     
     /*@GET mf = ('mesh fem of variable', @str name)
       Gives access to the `mesh_fem` of a variable or data.@*/

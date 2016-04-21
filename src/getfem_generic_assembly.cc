@@ -7358,9 +7358,10 @@ namespace getfem {
         break;
 
       case GA_DIV:
-        if (child1->tensor_order() > 0)
+        if (child1->tensor_proper_size() > 1)
           ga_throw_error(expr, pnode->pos,
-                         "Only the division by a scalar is allowed.");
+                         "Only the division by a scalar is allowed. "
+			 "Got a size of " << child1->tensor_proper_size());
         if (child1->test_function_type)
           ga_throw_error(expr, pnode->pos,
                          "Division by test functions is not allowed.");
@@ -7836,7 +7837,9 @@ namespace getfem {
         size_type s2 = (nbargs == 2) ? child2->t.size() : s1;
         if (s1 != s2 && (s1 != 1 || s2 != 1))
           ga_throw_error(expr, pnode->pos,
-                         "Invalid argument size for a scalar function.");
+                         "Invalid argument size for a scalar function. "
+			 "Size of first argument: " << s1 <<
+			 ". Size of second argument: " << s2 << ".");
 
         if (nbargs == 1) {
           pnode->t = child1->t;
@@ -11592,6 +11595,50 @@ namespace getfem {
     ga_interpolation(workspace, gic);
   }
 
+  //=========================================================================
+  // Local projection functions
+  //=========================================================================
+
+  void ga_local_projection(const getfem::model &md, const mesh_im &mim,
+			   const std::string &expr, const mesh_fem &mf,
+			   base_vector &result, const mesh_region &region) {
+
+    // The case where the expression is a vector one and mf a scalar fem is
+    // not taken into account for the moment.
+
+    // Could be improved by not make the assembly of the global mass matrix
+    // working locally. This means a specific assembly.
+    model_real_sparse_matrix M(mf.nb_dof(), mf.nb_dof());
+    asm_mass_matrix(M, mim, mf, region);
+       
+    ga_workspace workspace(md);
+    size_type nbdof = md.nb_dof();
+    gmm::sub_interval I(nbdof, mf.nb_dof());
+    workspace.add_fem_variable("c__dummy_var_95_", mf, I, base_vector(nbdof));
+    workspace.add_expression("("+expr+").Test_c__dummy_var_95_",
+			     mim, region, 2);
+    base_vector residual(nbdof+mf.nb_dof());
+    workspace.set_assembled_vector(residual);
+    workspace.assembly(1);
+    getfem::base_vector F(mf.nb_dof());
+    gmm::resize(result, mf.nb_dof());
+    gmm::copy(gmm::sub_vector(residual, I), F);
+
+    mesh_region rg(region);
+    mf.linked_mesh().intersect_with_mpi_region(rg);
+
+    getfem::base_matrix loc_M;
+    getfem::base_vector loc_U;
+    for (mr_visitor v(rg); !v.finished(); v.next()) {
+      size_type nd =  mf.nb_basic_dof_of_element(v.cv());
+      gmm::resize(loc_M, nd, nd); gmm::resize(loc_U, nd);
+      gmm::sub_index J(mf.ind_basic_dof_of_element(v.cv()));
+      gmm::copy(gmm::sub_matrix(M, J, J), loc_M);
+      gmm::lu_solve(loc_M, loc_U, gmm::sub_vector(F, J));
+      gmm::copy(loc_U, gmm::sub_vector(result, J));
+    }
+    MPI_SUM_VECTOR(result);
+  }
 
   //=========================================================================
   // Interpolate transformation with an expression

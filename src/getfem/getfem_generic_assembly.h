@@ -1,7 +1,7 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
 
- Copyright (C) 2013-2015 Yves Renard
+ Copyright (C) 2013-2016 Yves Renard
 
  This file is a part of GetFEM++
 
@@ -429,11 +429,9 @@ namespace getfem {
     virtual ~ga_interpolation_context() {}
   };
 
-
   //=========================================================================
   // Interpolation functions
   //=========================================================================
-
 
   void ga_interpolation(ga_workspace &workspace,
                         ga_interpolation_context &gic);
@@ -448,7 +446,8 @@ namespace getfem {
   void ga_interpolation_mti
   (const getfem::model &md, const std::string &expr, mesh_trans_inv &mti,
    base_vector &result, const mesh_region &rg=mesh_region::all_convexes(),
-   int extrapolation = 0, const mesh_region &rg_source=mesh_region::all_convexes(),
+   int extrapolation = 0,
+   const mesh_region &rg_source=mesh_region::all_convexes(),
    size_type nbdof_ = size_type(-1));
 
   void ga_interpolation_im_data
@@ -458,6 +457,21 @@ namespace getfem {
   void ga_interpolation_im_data
   (ga_workspace &workspace, const im_data &imd, base_vector &result,
    const mesh_region &rg=mesh_region::all_convexes());
+
+  //=========================================================================
+  // Local projection functions
+  //=========================================================================
+
+  /** Make an elementwise L2 projection of an expression with respect
+      to the mesh_fem `mf`. This mesh_fem has to be a discontinuous one.
+      The expression has to be valid according to the high-level generic
+      assembly language possibly including references to the variables
+      and data of the model. 
+  */
+  void ga_local_projection(const getfem::model &md, const mesh_im &mim,
+			   const std::string &expr, const mesh_fem &mf,
+			   base_vector &result,
+			   const mesh_region &rg=mesh_region::all_convexes());
 
   //=========================================================================
   // Interpolate transformations
