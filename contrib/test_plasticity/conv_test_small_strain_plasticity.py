@@ -121,8 +121,6 @@ for order in [1, 2]:
     plt.show(block=False)
     plt.rc('text', usetex=True)
     ax1.clear()
-    print errors1[1,:,0]
-    print errors1[2,:,0]
     l1, = ax1.loglog(hrange, 100.*errors1[1,:,0],linewidth=2,label='option = 1')
     l2, = ax1.loglog(hrange, 100.*errors1[2,:,0],linewidth=2,label='option = 2')
     l3, = ax1.loglog(hrange, 100.*errors1[3,:,0],linewidth=2,label='option = 3')
@@ -186,7 +184,7 @@ for order in [1, 2]:
 
         for i in range(0, len(hrange)):
             NX = round(LX/hrange[i]); NT = NX;
-            if (errors1[option, i, 1] < 0.):
+            if (errors1[option-3, i, 1] < 0.):
                 if (call_test_plasticity() != 0):
                     print 'Not converged solution'
                     err_L2 = 400
@@ -230,8 +228,6 @@ for order in [1, 2]:
     plt.show(block=False)
     plt.rc('text', usetex=True)
     ax1.clear()
-    print errors1[1,:,0]
-    print errors1[2,:,0]
     l1, = ax1.loglog(hrange, 100.*errors1[0,:,0],linewidth=2,label='option = 3')
     l2, = ax1.loglog(hrange, 100.*errors1[1,:,0],linewidth=2,label='option = 4')
     ax1.legend(loc='best')
