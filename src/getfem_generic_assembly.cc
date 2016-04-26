@@ -1529,20 +1529,20 @@ namespace getfem {
             t_type = ga_get_token(expr, pos, token_pos, token_length);
             if (t_type != GA_NAME)
               ga_throw_error(expr, pos,
-                             "First argument of Elementary_transformation should be a "
-                             "variable or a test function.");
+                             "First argument of Elementary_transformation "
+			     "should be a variable or a test function.");
             tree.current_node->name = std::string(&(expr[token_pos]),
                                                   token_length);
 
             t_type = ga_get_token(expr, pos, token_pos, token_length);
             if (t_type != GA_COMMA)
-              ga_throw_error(expr, pos, "Bad format for Elementary_transformation"
-                             "arguments.");
+              ga_throw_error(expr, pos, "Bad format for "
+			     "Elementary_transformation arguments.");
             t_type = ga_get_token(expr, pos, token_pos, token_length);
             if (t_type != GA_NAME)
               ga_throw_error(expr, pos,
-                             "Second argument of Elementary_transformation should "
-                             "be a transformation name.");
+                             "Second argument of Elementary_transformation "
+			     "should be a transformation name.");
             tree.current_node->elementary_name
               = std::string(&(expr[token_pos]), token_length);
             t_type = ga_get_token(expr, pos, token_pos, token_length);
@@ -1837,6 +1837,40 @@ namespace getfem {
     default: ga_throw_error(expr, pos-1, "Unexpected token.");
     }
   }
+
+  // Small tool to make basic substitutions into an assembly string
+  std::string ga_substitute(const std::string &expr,
+			    const std::vector<std::string> &org,
+			    const std::vector<std::string> &subst) {
+    GMM_ASSERT1(org.size() == subst.size(), "Invalid size of arguments");
+
+    if (org.size()) {
+      size_type pos = 0, token_pos, token_length;
+      std::stringstream exprs;
+      GA_TOKEN_TYPE t_type = ga_get_token(expr, pos, token_pos, token_length);
+      if (t_type == GA_END) return expr;
+      pos = 0;
+
+      for (;;) {
+	bool found = false;
+	t_type = ga_get_token(expr, pos, token_pos, token_length);
+	std::string name(&(expr[token_pos]), token_length);
+
+	switch (t_type) {
+	case GA_END : return exprs.str();
+	case GA_NAME : 
+	  for (size_type i = 0; i < org.size(); ++i)
+	    if (name.compare(org[i]) == 0)
+	      { exprs << subst[i]; found = true; break; }
+	default : if (!found) exprs << name; break;
+	}
+      }
+      return exprs.str();
+    }
+    return expr;
+  }
+  
+
 
   //=========================================================================
   // Structure to gather instructions

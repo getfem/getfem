@@ -202,9 +202,9 @@ and
 
 thus 
 
-.. math:: \mbox{tr}(\sigma) = \Frac{3\lambda+2\mu}{2(\lambda+\mu))} \mbox{tr}(\bar{\sigma}),
+.. math:: \mbox{tr}(\sigma) = \Frac{3\lambda+2\mu}{2(\lambda+\mu)} \mbox{tr}(\bar{\sigma}),
 
-.. math:: \mbox{Dev}(\sigma) = \sigma - \Frac{3\lambda+2\mu}{6(\lambda+\mu))} \mbox{tr}(\bar{\sigma}) I.
+.. math:: \mbox{Dev}(\sigma) = \sigma - \Frac{3\lambda+2\mu}{6(\lambda+\mu)} \mbox{tr}(\bar{\sigma}) I.
 
 
 

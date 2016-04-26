@@ -32,7 +32,7 @@ import matplotlib.pyplot as plt
 import os
 import sys
 
-option = 3     # 1 : without hardening, im_data and plastic multiplier
+option = 2     # 1 : without hardening, im_data and plastic multiplier
                # 2 : without hardening, with im_data and plastic multiplier
                # 3 : with kinematic and isotropic hardening,
                #     with plastic multiplier
@@ -42,7 +42,7 @@ option = 3     # 1 : without hardening, im_data and plastic multiplier
                #     multiplier
                # 6 : Souza-Auricchio model with plastic multiplier (not working)
             
-load_type = 2  # 1 : vertical
+load_type = 1  # 1 : vertical
                # 2 : horizontal
                
 bi_material = False
@@ -68,7 +68,7 @@ Hk = mu_top/5.; Hi = Hk; Hi = 0. # Kinematic and isotropic hardening parameters
 # Numerical parameters
 T = 10.
 NT = 50
-LX = 100.
+LX = 40.
 LY = 20.
 NX = 40
 theta = 1.; # Parameter for the generalized mid point scheme.
@@ -209,6 +209,10 @@ if (option == 2):
     md.add_initialized_data('theta', [theta])
     md.add_initialized_data('r', [1e-8])
     md.add_im_data('Epn', mim_data)
+
+    # md.add_small_strain_elastoplasticity_brick(mim, 'u', 'Epn', 'lambda', 'mu', 'von_mises_threshold', 'theta');
+    # exit(1);
+    
     
     if (theta == 1):
         Etheta = '(Sym(Grad_u))';

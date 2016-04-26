@@ -47,6 +47,21 @@
 
 namespace getfem {
 
+  //=================================================================
+  //  Small strain Elastoplasticity Brick
+  //=================================================================
+
+  // In construction ...
+
+  size_type add_small_strain_elastoplasticity_brick
+  (model &md, const mesh_im &mim,  std::string lawname,
+   const std::vector<std::string> &varnames,
+   const std::vector<std::string> &internal_variables,
+   const std::vector<std::string> &params,
+   const std::string &theta, bool with_plastic_multiplier, size_type region);
+  
+
+
 
   //=================================================================
   // Abstract contraints projection
@@ -229,9 +244,7 @@ namespace getfem {
 
 
   //=================================================================
-  //
   //  Elastoplasticity Brick
-  //
   //=================================================================
 
 
