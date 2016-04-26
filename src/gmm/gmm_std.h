@@ -195,7 +195,7 @@ namespace std {
 namespace gmm {
 
 	using std::endl; using std::cout; using std::cerr;
-	using std::ends; using std::cin;
+        using std::ends; using std::cin; using std::isnan;
 
 #ifdef _WIN32
 
