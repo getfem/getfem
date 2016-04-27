@@ -1840,37 +1840,24 @@ namespace getfem {
 
   // Small tool to make basic substitutions into an assembly string
   std::string ga_substitute(const std::string &expr,
-			    const std::vector<std::string> &org,
-			    const std::vector<std::string> &subst) {
-    GMM_ASSERT1(org.size() == subst.size(), "Invalid size of arguments");
-
-    if (org.size()) {
+			    const std::map<std::string, std::string> &dict) {
+    if (dict.size()) {
       size_type pos = 0, token_pos, token_length;
       std::stringstream exprs;
-      GA_TOKEN_TYPE t_type = ga_get_token(expr, pos, token_pos, token_length);
-      if (t_type == GA_END) return expr;
-      pos = 0;
 
       for (;;) {
-	bool found = false;
-	t_type = ga_get_token(expr, pos, token_pos, token_length);
+	GA_TOKEN_TYPE t_type = ga_get_token(expr, pos, token_pos, token_length);
+	if (t_type == GA_END) return exprs.str();
 	std::string name(&(expr[token_pos]), token_length);
-
-	switch (t_type) {
-	case GA_END : return exprs.str();
-	case GA_NAME : 
-	  for (size_type i = 0; i < org.size(); ++i)
-	    if (name.compare(org[i]) == 0)
-	      { exprs << subst[i]; found = true; break; }
-	default : if (!found) exprs << name; break;
-	}
+	if (t_type == GA_NAME) {
+	  auto it = dict.find(name);
+	  if (it != dict.end()) exprs << it->second; else exprs << name;
+	} else
+	  exprs << name;
       }
-      return exprs.str();
     }
     return expr;
   }
-  
-
 
   //=========================================================================
   // Structure to gather instructions

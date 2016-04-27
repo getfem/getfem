@@ -552,28 +552,29 @@ namespace getfem {
                 "Wrong size of " << Previous_Ep);
     
 
-    std::vector<std::string> // Dictionnary for substitution
-      o = { "Grad_u", "Grad_Previous_u", "theta", "Previous_Ep",
-	    "lambda", "mu", "sigma_y" },
-      s = { "Grad_"+dispname, "Grad_Previous_"+dispname, theta, Previous_Ep,
-	    lambda, mu, sigma_y };
+    std::map<std::string, std::string> dict;
+    dict["Grad_u"] = "Grad_"+dispname;
+    dict["Grad_Previous_u"] = "Grad_Previous_"+dispname;
+    dict["theta"] = theta; dict["Previous_Ep"] = Previous_Ep;
+    dict["lambda"] = lambda; dict["mu"] = mu; dict["sigma_y"] = sigma_y;
 
     std::string Etheta =
-      ga_substitute("Sym((theta)*Grad_u+(1-(theta))*Grad_Previous_u)",o,s);
-    o.push_back("Etheta"); s.push_back(Etheta);
-    std::string Enp1 = ga_substitute("Sym(Grad_u)",o,s);
-    o.push_back("Enp1"); s.push_back(Enp1);
-    std::string Btheta = ga_substitute("Deviator(Etheta)-Epn",o,s);
-    o.push_back("Btheta"); s.push_back(Btheta);
-    Eptheta = ga_substitute("(Previous_Ep)+pos_part(1-sqrt(2/3)*(sigma_y)/(2*(mu)*Norm(Btheta)+1e-25))*(Btheta)",o,s);
-    o.push_back("Eptheta"); s.push_back(Eptheta);
-    Epnp1 = ga_substitute("(Eptheta - (1-(theta))*Epn)/(theta)",o,s);
-    o.push_back("Epnp1"); s.push_back(Epnp1);
+      ga_substitute("Sym((theta)*Grad_u+(1-(theta))*Grad_Previous_u)", dict);
+    dict["Etheta"] = Etheta;
+    std::string Enp1 = ga_substitute("Sym(Grad_u)", dict);
+    dict["Enp1"] = Enp1;
+    std::string Btheta = ga_substitute("Deviator(Etheta)-Epn", dict);
+    dict["Btheta"] = Btheta;
+    Eptheta = ga_substitute("(Previous_Ep)+pos_part(1-sqrt(2/3)*(sigma_y)/(2*(mu)*Norm(Btheta)+1e-25))*(Btheta)", dict);
+    dict["Eptheta"] = Eptheta;
+    Epnp1 = ga_substitute("(Eptheta - (1-(theta))*Epn)/(theta)", dict);
+    dict["Epnp1"] = Epnp1;
     sigma_np1 = ga_substitute("(lambda)*Trace((Enp1)-(Epnp1))*Id(meshdim)"
-			      " + 2*(mu)*((Enp1)-(Epnp1))",o,s);
+			      " + 2*(mu)*((Enp1)-(Epnp1))", dict);
     sigma_theta = ga_substitute("(lambda)*Trace((Etheta)-(Eptheta))*Id(meshdim)"
-				"+ 2*(mu)*((Etheta)-(Eptheta))",o,s);
-    sigma_after = ga_substitute("(lambda)*Trace((Enp1)-(Previous_Ep))*Id(meshdim) + 2*(mu)*((Enp1)-(Previous_Ep))",o,s);
+				"+ 2*(mu)*((Etheta)-(Eptheta))", dict);
+    sigma_after = ga_substitute("(lambda)*Trace((Enp1)-(Previous_Ep))*Id(meshdim) + 2*(mu)*((Enp1)-(Previous_Ep))", dict);
+    cout << "Eptheta = " <<  Eptheta << endl;
   }
 
   static void filter_lawname(std::string &lawname) {

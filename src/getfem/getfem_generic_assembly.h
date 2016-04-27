@@ -384,31 +384,30 @@ namespace getfem {
 
   // Small tool to make basic substitutions into an assembly string
   std::string ga_substitute(const std::string &expr,
-			    const std::vector<std::string> &org,
-			    const std::vector<std::string> &subst);
+			    const std::map<std::string, std::string> &dict);
 
   inline std::string ga_subsitute(const std::string &expr,
 				  const std::string &o1,const std::string &s1) {
-    std::vector<std::string> org = { o1 };
-    std::vector<std::string> subst = { s1 };
-    return ga_substitute(expr, org, subst);
+    std::map<std::string, std::string> dict;
+    dict[o1] = s1;
+    return ga_substitute(expr, dict);
   }
 
   inline std::string ga_subsitute(const std::string &expr,
 				  const std::string &o1,const std::string &s1,
 				  const std::string &o2,const std::string &s2) {
-    std::vector<std::string> org = { o1, o2 };
-    std::vector<std::string> subst = { s1, s2 };
-    return ga_substitute(expr, org, subst);
+    std::map<std::string, std::string> dict;
+    dict[o1] = s1; dict[o2] = s2; 
+    return ga_substitute(expr, dict);
   }
 
   inline std::string ga_subsitute(const std::string &expr,
 				  const std::string &o1,const std::string &s1,
 				  const std::string &o2,const std::string &s2,
 				  const std::string &o3,const std::string &s3) {
-    std::vector<std::string> org = { o1, o2, o3 };
-    std::vector<std::string> subst = { s1, s2, s3 };
-    return ga_substitute(expr, org, subst);
+    std::map<std::string, std::string> dict;
+    dict[o1] = s1; dict[o2] = s2; dict[o3] = s3; 
+    return ga_substitute(expr, dict);
   }
 
   inline std::string ga_subsitute(const std::string &expr,
@@ -416,9 +415,9 @@ namespace getfem {
 				  const std::string &o2,const std::string &s2,
 				  const std::string &o3,const std::string &s3,
 				  const std::string &o4,const std::string &s4) {
-    std::vector<std::string> org = { o1, o2, o3, o4 };
-    std::vector<std::string> subst = { s1, s2, s3, s4 };
-    return ga_substitute(expr, org, subst);
+    std::map<std::string, std::string> dict;
+    dict[o1] = s1; dict[o2] = s2;  dict[o3] = s3; dict[o4] = s4; 
+    return ga_substitute(expr, dict);
   }
 
 
