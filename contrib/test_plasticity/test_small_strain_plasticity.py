@@ -454,7 +454,7 @@ for step in range(0, len(t)):
         sigma_fig[step]=sigma[N*N*ind_gauss_pt]
         Epsilon_u_fig[step]=Epsilon_u[N*N*ind_gauss_pt]
     
-    # Compute new plasticity internal variables
+    # Compute new plastic internal variables
     if (option == 1):
         md.elastoplasticity_next_iter(mim, 'u', 'Previous_u', 'VM', 'lambda',
                                       'mu', 'von_mises_threshold', 'sigma')

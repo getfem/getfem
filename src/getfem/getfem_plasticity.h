@@ -51,14 +51,14 @@ namespace getfem {
   //  Small strain Elastoplasticity Brick
   //=================================================================
 
-  // In construction ...
+  // Under construction ...
 
   size_type add_small_strain_elastoplasticity_brick
   (model &md, const mesh_im &mim,  std::string lawname,
+   bool with_plastic_multiplier,
    const std::vector<std::string> &varnames,
-   const std::vector<std::string> &internal_variables,
    const std::vector<std::string> &params,
-   const std::string &theta, bool with_plastic_multiplier, size_type region);
+   const std::string &theta, size_type region);
   
 
 
@@ -241,98 +241,6 @@ namespace getfem {
   };
 
 
-
-
-  //=================================================================
-  //  Elastoplasticity Brick
-  //=================================================================
-
-
-  /** Add a nonlinear elastoplasticity term to the model for small
-      deformations and an isotropic material, with respect
-      to the variable `varname`.
-      Note that the constitutive lawtype of projection
-      to be used is described by `ACP` which should not be
-      freed while the model is used.
-      `datalambda` and `datamu` describe the Lamé coeffcients
-      of the studied material. Could be scalar or vector fields
-      described on a finite element method.
-      `datathreshold` represents the elasticity threshold
-      of the material. It could be a scalar or a vector field
-      described on the same finite element method as
-      the Lamé coefficients.
-      `datasigma` represents the stress constraints values
-      supported by the material. It should be a vector field
-      described on a finite element method.
-      `previous_dep_name` represents the displacement at the previous time step.
-      Moreover, if `varname` is described
-      onto a K-th order mesh_fem, `datasigma` has to be described
-      on a mesh_fem of order at least K-1.
-  */
-  size_type add_elastoplasticity_brick(model &md,
-                                       const mesh_im &mim,
-                                       const pconstraints_projection &ACP,
-                                       const std::string &varname,
-                                       const std::string &previous_dep_name,
-                                       const std::string &datalambda,
-                                       const std::string &datamu,
-                                       const std::string &datathreshold,
-                                       const std::string &datasigma,
-                                       size_type region = size_type(-1));
-
-  /** This function permits to compute the new stress constraints
-      values supported by the material after a load or an unload.
-      `varname` is the main unknown of the problem
-      (the displacement),
-      `previous_dep_name` represents the displacement at the previous time step,
-      `ACP` is the type of projection to be used that could only be
-      `Von Mises` for the moment,
-      `datalambda` and `datamu` are the Lamé coefficients
-      of the material,
-      `datathreshold` is the elasticity threshold of the material,
-      `datasigma` is the vector which will contains the new
-      computed values. */
-  void elastoplasticity_next_iter(model &md,
-                                  const mesh_im &mim,
-                                  const std::string &varname,
-                                  const std::string &previous_dep_name,
-                                  const pconstraints_projection &ACP,
-                                  const std::string &datalambda,
-                                  const std::string &datamu,
-                                  const std::string &datathreshold,
-                                  const std::string &datasigma);
-
-  /** This function computes on mf_vm the Von Mises or Tresca stress
-      of a field for elastoplasticity and return it into the vector VM.
-      Note that `datasigma` should be the vector containing the new
-      stress constraints values, i.e. after a load or an unload
-      of the material. If `tresca` = 'true', the Tresca stress will
-      be computed, otherwise it will be the Von Mises one.*/
-  void compute_elastoplasticity_Von_Mises_or_Tresca
-  (model &md,
-   const std::string &datasigma,
-   const mesh_fem &mf_vm,
-   model_real_plain_vector &VM,
-   bool tresca);
-
-  /** This function computes on mf_pl the plastic part, that could appear
-      after a load and an unload, into the vector `plast`.
-      Note that `datasigma` should be the vector containing the new
-      stress constraints values, i.e. after a load or an unload
-      of the material. */
-  void compute_plastic_part(model &md,
-                            const mesh_im &mim,
-                            const mesh_fem &mf_pl,
-                            const std::string &varname,
-                            const std::string &previous_dep_name,
-                            const pconstraints_projection &ACP,
-                            const std::string &datalambda,
-                            const std::string &datamu,
-                            const std::string &datathreshold,
-                            const std::string &datasigma,
-                            model_real_plain_vector &plast);
-
-
   // Finite strain elastoplasticity
 
   /** Add a linear function with the name specified by `name` to represent
@@ -426,6 +334,103 @@ namespace getfem {
    const std::string &lawname, const std::vector<std::string> &params,
    const mesh_fem &mf_vm, model_real_plain_vector &VM, bool assemble=false,
    size_type region = size_type(-1));
+
+
+
+  //=================================================================
+  //
+  //  Old version of an elastoplasticity Brick for isotropic perfect
+  //  plasticity with the low level generic assembly.
+  //  Particularity of this brick: the flow rule is integrated on
+  //  finite element nodes (not on Gauss points).
+  //
+  //=================================================================
+
+
+  /** Add a nonlinear elastoplasticity term to the model for small
+      deformations and an isotropic material, with respect
+      to the variable `varname`.
+      Note that the constitutive lawtype of projection
+      to be used is described by `ACP` which should not be
+      freed while the model is used.
+      `datalambda` and `datamu` describe the Lamé coeffcients
+      of the studied material. Could be scalar or vector fields
+      described on a finite element method.
+      `datathreshold` represents the elasticity threshold
+      of the material. It could be a scalar or a vector field
+      described on the same finite element method as
+      the Lamé coefficients.
+      `datasigma` represents the stress constraints values
+      supported by the material. It should be a vector field
+      described on a finite element method.
+      `previous_dep_name` represents the displacement at the previous time step.
+      Moreover, if `varname` is described
+      onto a K-th order mesh_fem, `datasigma` has to be described
+      on a mesh_fem of order at least K-1.
+  */
+  size_type add_elastoplasticity_brick(model &md,
+                                       const mesh_im &mim,
+                                       const pconstraints_projection &ACP,
+                                       const std::string &varname,
+                                       const std::string &previous_dep_name,
+                                       const std::string &datalambda,
+                                       const std::string &datamu,
+                                       const std::string &datathreshold,
+                                       const std::string &datasigma,
+                                       size_type region = size_type(-1));
+
+  /** This function permits to compute the new stress constraints
+      values supported by the material after a load or an unload.
+      `varname` is the main unknown of the problem
+      (the displacement),
+      `previous_dep_name` represents the displacement at the previous time step,
+      `ACP` is the type of projection to be used that could only be
+      `Von Mises` for the moment,
+      `datalambda` and `datamu` are the Lamé coefficients
+      of the material,
+      `datathreshold` is the elasticity threshold of the material,
+      `datasigma` is the vector which will contains the new
+      computed values. */
+  void elastoplasticity_next_iter(model &md,
+                                  const mesh_im &mim,
+                                  const std::string &varname,
+                                  const std::string &previous_dep_name,
+                                  const pconstraints_projection &ACP,
+                                  const std::string &datalambda,
+                                  const std::string &datamu,
+                                  const std::string &datathreshold,
+                                  const std::string &datasigma);
+
+  /** This function computes on mf_vm the Von Mises or Tresca stress
+      of a field for elastoplasticity and return it into the vector VM.
+      Note that `datasigma` should be the vector containing the new
+      stress constraints values, i.e. after a load or an unload
+      of the material. If `tresca` = 'true', the Tresca stress will
+      be computed, otherwise it will be the Von Mises one.*/
+  void compute_elastoplasticity_Von_Mises_or_Tresca
+  (model &md,
+   const std::string &datasigma,
+   const mesh_fem &mf_vm,
+   model_real_plain_vector &VM,
+   bool tresca);
+
+  /** This function computes on mf_pl the plastic part, that could appear
+      after a load and an unload, into the vector `plast`.
+      Note that `datasigma` should be the vector containing the new
+      stress constraints values, i.e. after a load or an unload
+      of the material. */
+  void compute_plastic_part(model &md,
+                            const mesh_im &mim,
+                            const mesh_fem &mf_pl,
+                            const std::string &varname,
+                            const std::string &previous_dep_name,
+                            const pconstraints_projection &ACP,
+                            const std::string &datalambda,
+                            const std::string &datamu,
+                            const std::string &datathreshold,
+                            const std::string &datasigma,
+                            model_real_plain_vector &plast);
+
 
 
 } /* namespace getfem */

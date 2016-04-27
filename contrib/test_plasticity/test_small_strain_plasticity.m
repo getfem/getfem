@@ -24,14 +24,14 @@ clc;
 % small strain isotropic plasticity in GetFEM++
 
 
-option = 2; % 1 : without hardening, without im_data, without plastic multiplier
+option = 6; % 1 : without hardening, without im_data, without plastic multiplier
             % 2 : without hardening, with plastic multiplier
             % 3 : with kinematic and isotropic hardening, with plastic multiplier
             % 4 : with kinematic and isotropic hardening, with im_data, without plastic multiplier
             % 5 : with kinematic hardening, with im_data, without plastic multiplier
             % 6 : Souza-Auricchio model with plastic multiplier
             
-load_type = 1; % 1 : vertical
+load_type = 2; % 1 : vertical
                % 2 : horizontal
                
 bi_material = false;
@@ -52,7 +52,7 @@ mu_bottom = 80769;       % Steel
 von_mises_threshold_top = 8000;
 von_mises_threshold_bottom = 7000;
 
-Hk = mu_top/5; Hi = Hk; Hi = 0; % Kinematic and isotropic hardening parameters
+Hk = mu_top/5; Hi = Hk; % Kinematic and isotropic hardening parameters
 
 
 % Numerica parameters

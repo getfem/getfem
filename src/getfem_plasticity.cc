@@ -515,17 +515,14 @@ namespace getfem {
 
   void build_isotropic_perfect_elastoplasticity_expressions
   (model &md, const std::vector<std::string> &varnames,
-   const std::vector<std::string> &internal_variables,
    const std::vector<std::string> &params,
    const std::string &theta, std::string &sigma_np1, std::string &Epnp1,
-   std::string &sigma_theta, std::string &Eptheta, std::string &sigma_after) {
+   std::string &sigma_after) {
     
-    GMM_ASSERT1(varnames.size() == 1, "Incorrect number of variables");
+    GMM_ASSERT1(varnames.size() == 2, "Incorrect number of variables");
     GMM_ASSERT1(params.size() == 3, "Incorrect number of parameters");
-    GMM_ASSERT1(internal_variables.size() == 1,
-		"Incorrect number of internal variables");
     const std::string &dispname    = varnames[0];
-    const std::string &Previous_Ep = internal_variables[0];
+    const std::string &Previous_Ep = varnames[1];
     const std::string &lambda      = params[0];
     const std::string &mu          = params[1];
     const std::string &sigma_y     = params[2];
@@ -555,26 +552,29 @@ namespace getfem {
     std::map<std::string, std::string> dict;
     dict["Grad_u"] = "Grad_"+dispname;
     dict["Grad_Previous_u"] = "Grad_Previous_"+dispname;
-    dict["theta"] = theta; dict["Previous_Ep"] = Previous_Ep;
+    dict["theta"] = theta; dict["Epn"] = Previous_Ep;
     dict["lambda"] = lambda; dict["mu"] = mu; dict["sigma_y"] = sigma_y;
 
-    std::string Etheta =
-      ga_substitute("Sym((theta)*Grad_u+(1-(theta))*Grad_Previous_u)", dict);
+    std::string Etheta = ga_substitute
+      ("Sym((theta)*Grad_u+(1-(theta))*Grad_Previous_u)", dict);
     dict["Etheta"] = Etheta;
     std::string Enp1 = ga_substitute("Sym(Grad_u)", dict);
     dict["Enp1"] = Enp1;
     std::string Btheta = ga_substitute("Deviator(Etheta)-Epn", dict);
     dict["Btheta"] = Btheta;
-    Eptheta = ga_substitute("(Previous_Ep)+pos_part(1-sqrt(2/3)*(sigma_y)/(2*(mu)*Norm(Btheta)+1e-25))*(Btheta)", dict);
+    std::string Eptheta = ga_substitute
+      ("(Epn)"
+       "+pos_part(1-sqrt(2/3)*(sigma_y)/(2*(mu)*Norm(Btheta)+1e-25))*(Btheta)",
+       dict);
     dict["Eptheta"] = Eptheta;
     Epnp1 = ga_substitute("(Eptheta - (1-(theta))*Epn)/(theta)", dict);
     dict["Epnp1"] = Epnp1;
     sigma_np1 = ga_substitute("(lambda)*Trace((Enp1)-(Epnp1))*Id(meshdim)"
 			      " + 2*(mu)*((Enp1)-(Epnp1))", dict);
-    sigma_theta = ga_substitute("(lambda)*Trace((Etheta)-(Eptheta))*Id(meshdim)"
-				"+ 2*(mu)*((Etheta)-(Eptheta))", dict);
-    sigma_after = ga_substitute("(lambda)*Trace((Enp1)-(Previous_Ep))*Id(meshdim) + 2*(mu)*((Enp1)-(Previous_Ep))", dict);
-    cout << "Eptheta = " <<  Eptheta << endl;
+    // sigma_theta = ga_substitute("(lambda)*Trace((Etheta)-(Eptheta))*Id(meshdim)"
+    //				"+ 2*(mu)*((Etheta)-(Eptheta))", dict);
+    sigma_after = ga_substitute("(lambda)*Trace((Enp1)-(Epn))*Id(meshdim) "
+				"+ 2*(mu)*((Enp1)-(Epn))", dict);
   }
 
   static void filter_lawname(std::string &lawname) {
@@ -584,19 +584,18 @@ namespace getfem {
 
   size_type add_small_strain_elastoplasticity_brick
   (model &md, const mesh_im &mim,  std::string lawname,
+   bool with_plastic_multiplier,
    const std::vector<std::string> &varnames,
-   const std::vector<std::string> &internal_variables,
    const std::vector<std::string> &params,
-   const std::string &theta, bool with_plastic_multiplier, size_type region)  {
+   const std::string &theta, size_type region)  {
     
     filter_lawname(lawname);
     if (!with_plastic_multiplier &&
 	 (lawname.compare("isotropic_perfect_plasticity") == 0 ||
 	  lawname.compare("prandtl_reuss") == 0)) {
-      std::string sigma_np1, Epnp1, sigma_theta, Eptheta, sigma_after;
+      std::string sigma_np1, Epnp1, sigma_after;
       build_isotropic_perfect_elastoplasticity_expressions
-	(md, varnames, internal_variables, params,
-	 theta, sigma_np1, Epnp1, sigma_theta, Eptheta, sigma_after);
+	(md, varnames, params, theta, sigma_np1, Epnp1, sigma_after);
        
       return add_nonlinear_generic_assembly_brick
 	(md, mim, "("+sigma_np1+"):Grad_Test_u", region, true, false,
@@ -608,24 +607,23 @@ namespace getfem {
 
   void small_strain_elastoplasticity_next_iter
   (model &md, const mesh_im &mim,  std::string lawname,
+   bool with_plastic_multiplier, 
    const std::vector<std::string> &varnames,
-   const std::vector<std::string> &internal_variables,
    const std::vector<std::string> &params,
-   const std::string &theta, bool with_plastic_multiplier, size_type region)  {
+   const std::string &theta, size_type region)  {
 
     filter_lawname(lawname);
     if (!with_plastic_multiplier &&
 	(lawname.compare("isotropic_perfect_plasticity") == 0 ||
 	 lawname.compare("prandtl_reuss") == 0)) {
-      std::string sigma_np1, Epnp1, sigma_theta, Eptheta, sigma_after;
+      std::string sigma_np1, Epnp1, sigma_after;
       build_isotropic_perfect_elastoplasticity_expressions
-	(md, varnames, internal_variables, params,
-	 theta, sigma_np1, Epnp1, sigma_theta, Eptheta, sigma_after);
+	(md, varnames, params, theta, sigma_np1, Epnp1, sigma_after);
 
       const std::string &dispname = varnames[0];
-      const std::string &Previous_Ep = internal_variables[0];
+      const std::string &Previous_Ep = varnames[1];
 
-      base_vector tmpv(gmm::vect_size(md.real_variable(internal_variables[0])));
+      base_vector tmpv(gmm::vect_size(md.real_variable(Previous_Ep)));
       const im_data *pimd = md.pim_data_of_variable(Previous_Ep);
       if (pimd)
 	ga_interpolation_im_data(md, Epnp1, *pimd, tmpv, region);
@@ -644,10 +642,10 @@ namespace getfem {
   // To be called after next_iter, not before
   void compute_small_strain_elastoplasticity_Von_Mises
   (model &md, const mesh_im &mim,  std::string lawname,
+   bool with_plastic_multiplier, 
    const std::vector<std::string> &varnames,
-   const std::vector<std::string> &internal_variables,
    const std::vector<std::string> &params,
-   const std::string &theta, bool with_plastic_multiplier, const mesh_fem &mf_vm,
+   const std::string &theta, const mesh_fem &mf_vm,
    model_real_plain_vector &VM, size_type region) {
     
     GMM_ASSERT1(mf_vm.get_qdim() == 1,
@@ -658,18 +656,17 @@ namespace getfem {
     if (!with_plastic_multiplier &&
 	(lawname.compare("isotropic_perfect_plasticity") == 0 ||
 	 lawname.compare("prandtl_reuss") == 0)) {
-      std::string sigma_np1, Epnp1, sigma_theta, Eptheta, sigma_after;
+      std::string sigma_np1, Epnp1, sigma_after;
       build_isotropic_perfect_elastoplasticity_expressions
-	(md, varnames, internal_variables, params,
-	 theta, sigma_np1, Epnp1, sigma_theta, Eptheta, sigma_after);
+	(md, varnames, params, theta, sigma_np1, Epnp1, sigma_after);
 
-      const im_data *pimd = md.pim_data_of_variable(internal_variables[0]);
+      const im_data *pimd = md.pim_data_of_variable(varnames[1]);
       std::string vm = "sqrt(3/2)*Norm(Deviator("+sigma_after+"))";
       if (pimd)
 	ga_local_projection(md, mim, vm, mf_vm, VM, region);
       else {
-	const mesh_fem *pmf = md.pmesh_fem_of_variable(internal_variables[0]);
-	GMM_ASSERT1(pmf, "Provided data " << internal_variables[0]
+	const mesh_fem *pmf = md.pmesh_fem_of_variable(varnames[1]);
+	GMM_ASSERT1(pmf, "Provided data " << varnames[1]
 		    << " should be defined on a im_data or a mesh_fem object");
 	ga_interpolation_Lagrange_fem(md, vm, mf_vm, VM, region);
       }

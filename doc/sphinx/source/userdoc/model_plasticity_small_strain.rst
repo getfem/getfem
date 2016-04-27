@@ -196,17 +196,15 @@ An isotropic linearized elastic response reads
 
 .. math:: \bar{\sigma} = \lambda \mbox{tr}(\bar{\varepsilon}^e) I + 2\mu\bar{\varepsilon}^e,
 
-and
+Normally, one also has
 
-.. math:: \sigma_{33} = \lambda \mbox{tr}(\bar{\varepsilon}^e) = \Frac{\lambda}{2(\lambda+\mu)}.\mbox{tr}(\bar{\sigma})
+.. math:: \sigma_{3,3} = \lambda \mbox{tr}(\bar{\varepsilon}^e) = \Frac{\lambda}{2(\lambda+\mu)}.\mbox{tr}(\bar{\sigma})
 
-thus 
+however, the fact that :math:`\dot{\varepsilon}_{3,3} = 0` and the normality law prescribes in general a relation of the type
 
-.. math:: \mbox{tr}(\sigma) = \Frac{3\lambda+2\mu}{2(\lambda+\mu)} \mbox{tr}(\bar{\sigma}),
+.. math :: \sigma_{3,3} = \Frac{\sigma_{1,1}+\sigma_{2,2}}{2}
 
-.. math:: \mbox{Dev}(\sigma) = \sigma - \Frac{3\lambda+2\mu}{6(\lambda+\mu)} \mbox{tr}(\bar{\sigma}) I.
-
-
+A compromize has to be made ...
 
 
 
@@ -486,6 +484,76 @@ to be done: ::
       getfem::add_elastoplasticity_brick
           (md, mim, ACP, varname, datalambda, datamu, datathreshold, datasigma, region);
 
+
+
+
+
+A specific brick based on the low-level generic assembly for perfect plasticity
+================================================================================
+
+This is an previous version of a elastoplasticity brick which is restricted to  isotropic perfect plasticity and is based on the low-level generic assembly. Its specificity which could be interesting for testing is that the flow rule is integrated on  finite element nodes (not on Gauss points).
+
+The function adding this brick to a model is: ::
+
+      getfem::add_elastoplasticity_brick
+          (md, mim, ACP, varname, previous_varname, datalambda, datamu, datathreshold, datasigma, region);
+
+where:
+      - ``varname`` represents the main displacement unknown on which the brick is added (u).
+      - ``previous_varname`` is the displacement at the previous time step.
+      - ``datalambda`` and ``datamu`` are the data corresponding to the Lame coefficients.
+      - ``datathreshold`` represents the plastic threshold of the studied material.
+      - ``datasigma`` represents the stress constraint values supported by the material. It should be composed of 2 iterates for the time scheme needed for the Newton algorithm used. Note that the finite element method on which ``datasigma`` is defined should be able to represent the derivative of ``varname``.
+      - ``ACP`` corresponds to the type of projection to be used. It has an `abstract_constraints_projection` type and for the moment, only exists the `VM_projection` corresponding to the Von Mises one.
+
+
+Be careful: ``datalambda``, ``datamu`` and ``datathreshold`` could be constants or described on the same finite element method.
+
+This function assembles the tangent matrix and the right hand side vector which will be solved using a Newton algorithm.
+
+
+Other useful functions
+**********************
+
+The function: ::
+
+      getfem::elastoplasticity_next_iter
+          (md, mim, varname, previous_varname, ACP, datalambda, datamu, datathreshold, datasigma);
+
+computes the new stress constraint values supported by the material after a load or an unload (once a solve has been done earlier) and upload the variables ``varname`` and ``datasigma`` as follows:
+
+.. math::
+   
+   u^{n+1} \Rightarrow u^n \ \ \ \ \ \textrm{ and } \ \ \ \ \ \sigma^{n+1} \Rightarrow \sigma^n
+
+Then, :math:`u^n` and :math:`\sigma^n` contains the new values computed and one can restart the process.
+
+
+
+########################
+
+
+The function: ::
+
+      getfem::compute_elastoplasticity_Von_Mises_or_Tresca
+          (md, datasigma, mf_vm, VM, tresca=false);
+
+computes the Von Mises (or Tresca if ``tresca`` = true) criterion on the stress tensor stored in ``datasigma`` . The stress is evaluated on the `mesh_fem` ``mf_vm`` and stored into the vector ``VM``.
+Of course, this function can be used if and only if the previous function ``elastoplasticity_next_iter`` has been called earlier.
+
+
+
+##########################
+
+
+The function: ::
+
+      getfem::compute_plastic_part
+          (md, mim, mf_pl, varname, previous_varname, ACP, datalambda, datamu, datathreshold, datasigma, Plast);
+
+computes on ``mf_pl`` the plastic part of the material, that could appear after a load and an unload, into the vector ``Plast``. 
+
+Note that ``datasigma`` should be the vector containing the new stress constraint values, i.e. after a load or an unload of the material.
 
 
 

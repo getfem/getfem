@@ -1849,11 +1849,8 @@ namespace getfem {
 	GA_TOKEN_TYPE t_type = ga_get_token(expr, pos, token_pos, token_length);
 	if (t_type == GA_END) return exprs.str();
 	std::string name(&(expr[token_pos]), token_length);
-	if (t_type == GA_NAME) {
-	  auto it = dict.find(name);
-	  if (it != dict.end()) exprs << it->second; else exprs << name;
-	} else
-	  exprs << name;
+	if (t_type == GA_NAME && dict.find(name) != dict.end())
+	  exprs << dict.at(name); else exprs << name;
       }
     }
     return expr;

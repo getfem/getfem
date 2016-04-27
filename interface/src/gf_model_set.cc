@@ -1754,15 +1754,13 @@ void gf_model_set(getfemint::mexargs_in& m_in,
 
        std::vector<std::string> varnames;
        varnames.push_back(varname);
-       std::vector<std::string> internal_variables;
-       internal_variables.push_back(Epname);
+       varnames.push_back(Epname);
        std::vector<std::string> params;
        params.push_back(lambda); params.push_back(mu);params.push_back(sigma_y);
        
        size_type ind = config::base_index() +
        add_small_strain_elastoplasticity_brick
-       (*md, *mim, "Prandtl Reuss", varnames, internal_variables,
-	params, theta, false, region);
+       (*md, *mim, "Prandtl Reuss", false, varnames, params, theta, region);
        workspace().set_dependence(md, mim);
        out.pop().from_integer(int(ind));
        );
