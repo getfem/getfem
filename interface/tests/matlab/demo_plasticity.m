@@ -159,7 +159,7 @@ if (with_hardening)
     B, '*sigma), von_mises_threshold) + (H)*(((1-alpha)*',En,')+(alpha*', Enp1, '))))');
   
   gf_model_set(md, 'add nonlinear generic assembly brick', mim, strcat(expr_sigma, ':Grad_Test_u'));
-  % gf_model_set(md, 'add finite strain elasticity brick', mim, 'u', 'SaintVenant Kirchhoff', '[lambda; mu]');
+  % gf_model_set(md, 'add finite strain elasticity brick', mim, 'SaintVenant Kirchhoff', 'u', '[lambda; mu]');
 else
   gf_model_set(md, 'add fem data', 'previous_u', mf_u);
   % Declare that sigma is a data of the system on mf_sigma

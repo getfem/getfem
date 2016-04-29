@@ -88,6 +88,10 @@ template <typename T> static inline void dummy_func(T &) {}
     subc_tab[cmd_normalize(name)] = psubc;                              \
   }
 
+static void filter_lawname(std::string &lawname) {
+  for (auto &c : lawname)
+    { if (c == ' ') c = '_'; if (c >= 'A' && c <= 'Z') c = char(c+'a'-'A'); }
+}
 
 void gf_model_get(getfemint::mexargs_in& m_in,
                   getfemint::mexargs_out& m_out) {
@@ -799,7 +803,7 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        out.pop().from_dcvector(VMM);
        );
 
-    /*@GET V = ('compute finite strain elasticity Von Mises', @str varname, @str lawname, @str params, @tmf mf_vm[, @int region])
+    /*@GET V = ('compute finite strain elasticity Von Mises',  @str lawname, @str varname, @str params, @tmf mf_vm[, @int region])
       Compute on `mf_vm` the Von-Mises stress of a field `varname`
       for nonlinear elasticity in 3D. `lawname` is the constitutive law which
       should be a valid name. `params` are the parameters law. It could be
@@ -809,15 +813,31 @@ void gf_model_get(getfemint::mexargs_in& m_in,
       @*/
     sub_command
       ("compute finite strain elasticity Von Mises", 4, 5, 0, 1,
-       std::string varname = in.pop().to_string();
        std::string lawname = in.pop().to_string();
+       std::string varname = in.pop().to_string();
        std::string params = in.pop().to_string();
        const getfem::mesh_fem *mf = to_meshfem_object(in.pop());
        size_type rg = size_type(-1);
        if (in.remaining()) rg = in.pop().to_integer();
+
+       std::string ln = varname; // tolerance for the compatibility with 5.0
+       filter_lawname(ln);
+       if (ln.compare("saintvenant_kirchhoff") == 0 ||
+	   ln.compare("saint_venant_kirchhoff") == 0 ||
+	   ln.compare("generalized_blatz_ko") == 0 ||
+	   ln.compare("ciarlet_geymonat") == 0 ||
+	   ln.compare("incompressible_mooney_rivlin") == 0 ||
+	   ln.compare("compressible_mooney_rivlin") == 0 ||
+	   ln.compare("incompressible_neo_hookean") == 0 ||
+	   ln.compare("compressible_neo_hookean") == 0 ||
+	   ln.compare("compressible_neo_hookean_bonet") == 0 ||
+	   ln.compare("compressible_neo_hookean_ciarlet") == 0) {
+	 std::swap(lawname, varname);
+       }
+
        getfem::model_real_plain_vector VMM(mf->nb_dof());
        getfem::compute_finite_strain_elasticity_Von_Mises
-       (*md, varname, lawname, params, *mf, VMM, rg);
+       (*md, lawname, varname, params, *mf, VMM, rg);
        out.pop().from_dcvector(VMM);
        );
 

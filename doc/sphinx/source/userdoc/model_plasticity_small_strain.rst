@@ -342,7 +342,7 @@ Isotropic elastoplasticity with linear isotropic and kinematic hardening and Von
 
 We consider an isotropic elastic reponse and the internal variable :math:`\alpha : \Omega \rightarrow \R` being the accumulated plastic strain which satisfies
 
-.. math:: \dot{\alpha} = \dot{\gamma}
+.. math:: \dot{\alpha} = \sqrt{\Frac{2}{3}}\dot{\gamma}
 
 For :math:`H_i` the isotropic hardening modulus, the linear hardening consists in
 
@@ -361,7 +361,7 @@ where :math:`H_k` is the kinematic hardening modulus. The same computation as in
 
 .. math:: \tilde{\mathscr E}^p(u_{n+\theta}, \theta \Delta \xi, \varepsilon^p_{n}) = \Frac{1}{1+(2\mu+H_k)\theta\Delta \xi}(\varepsilon^p_{n} + 2\mu\theta\Delta \xi \mbox{Dev}(\varepsilon(u_{n+\theta}))),
 
-.. math:: \begin{array}{rcl} \tilde{\mathscr A}(u_{n+\theta}, \theta \Delta \xi, \varepsilon^p_{n}, \alpha_n) &=& \alpha_n + \theta \Delta \xi\|\mbox{Dev}(\sigma_{n+\theta} - H_k\varepsilon^p_{n+\theta})\| = \alpha_n + \theta \Delta \xi\|2\mu\mbox{Dev}(\varepsilon(u_{n+\theta})) - (2\mu+H_k)\varepsilon^p_{n+\theta}\| \\ &=&  \alpha_n + \Frac{\theta \Delta \xi}{1+(2\mu+H_k)\theta\Delta \xi}\|2\mu\mbox{Dev}(\varepsilon(u_{n+\theta})) - (2\mu+H_k)\varepsilon^p_{n}\| \\ &=& \alpha_n + \|\varepsilon^p_{n+\theta}- \varepsilon^p_{n}\|.\end{array}
+.. math:: \begin{array}{rcl} \tilde{\mathscr A}(u_{n+\theta}, \theta \Delta \xi, \varepsilon^p_{n}, \alpha_n) &=& \alpha_n + \sqrt{\Frac{2}{3}}\theta \Delta \xi\|\mbox{Dev}(\sigma_{n+\theta} - H_k\varepsilon^p_{n+\theta})\| = \alpha_n + \sqrt{\Frac{2}{3}}\theta \Delta \xi\|2\mu\mbox{Dev}(\varepsilon(u_{n+\theta})) - (2\mu+H_k)\varepsilon^p_{n+\theta}\| \\ &=&  \alpha_n + \sqrt{\Frac{2}{3}}\Frac{\theta \Delta \xi}{1+(2\mu+H_k)\theta\Delta \xi}\|2\mu\mbox{Dev}(\varepsilon(u_{n+\theta})) - (2\mu+H_k)\varepsilon^p_{n}\| \\ &=& \alpha_n + \sqrt{\Frac{2}{3}}\|\varepsilon^p_{n+\theta}- \varepsilon^p_{n}\|.\end{array}
 
 Note that the isotropic hardening modulus do not intervene in :math:`\tilde{\mathscr E}^p(u_{n+\theta}, \theta \Delta \xi, \varepsilon^p_{n})` but only in :math:`f(\sigma, A)`.
 
@@ -389,11 +389,11 @@ and :math:`\mbox{Dev}(({\cal A} + H_k I)^{-1}{\cal A}\varepsilon(u_{n+\theta})) 
 
 The problem is not completely solved since :math:`\alpha_{n+\theta}` is still undetermined. However
 
-.. math:: \alpha_{n+\theta} = \alpha_{n} + \|\varepsilon^p_{n+\theta} - \varepsilon^p_{n}\| = \alpha_{n} + \Frac{1}{2\mu+H_k}\left(\|B\| - \sqrt{\frac{2}{3}}(\sigma_{y0}+H_i\alpha_{n+\theta})\right)_+.
+.. math:: \alpha_{n+\theta} = \alpha_{n} + \sqrt{\Frac{2}{3}}\|\varepsilon^p_{n+\theta} - \varepsilon^p_{n}\| = \alpha_{n} + \sqrt{\Frac{2}{3}}\Frac{1}{2\mu+H_k}\left(\|B\| - \sqrt{\frac{2}{3}}(\sigma_{y0}+H_i\alpha_{n+\theta})\right)_+.
 
 Thus
 
-.. math:: {\mathscr A}(u_{n+\theta}, \varepsilon^p_{n}) = \alpha_{n+\theta} = \max\left(\alpha_{n}, \Frac{(2\mu+H_k)\alpha_n+\|B\| - \sqrt{\frac{2}{3}}\sigma_{y0}}{2\mu+H_k+\sqrt{\frac{2}{3}}H_i}\right),
+.. math:: {\mathscr A}(u_{n+\theta}, \varepsilon^p_{n}) = \alpha_{n+\theta} = \max\left(\alpha_{n}, \Frac{\sqrt{\Frac{3}{2}}(2\mu+H_k)\alpha_n+\|B\| - \sqrt{\frac{2}{3}}\sigma_{y0}}{\sqrt{\Frac{3}{2}}(2\mu+H_k)+\sqrt{\frac{2}{3}}H_i}\right),
 
 which complete the expression.
 

@@ -85,7 +85,7 @@ md=gf_model('real');
 gf_model_set(md, 'add fem variable', 'u', mfu);
 gf_model_set(md,'add initialized data','params', params);
 % gf_model_set(md, 'add nonlinear elasticity brick', mim, 'u', lawname, 'params');
-gf_model_set(md, 'add finite strain elasticity brick', mim, 'u', lawname, 'params');
+gf_model_set(md, 'add finite strain elasticity brick', mim, lawname, 'u',  'params');
 % gf_model_set(md, 'add nonlinear generic assembly brick', mim, ...
 %             'sqr(Trace(Green_Lagrangian(Id(meshdim)+Grad_u)))/8 + Norm_sqr(Green_Lagrangian(Id(meshdim)+Grad_u))/4');
 % gf_model_set(md, 'add nonlinear generic assembly brick', mim, ...
@@ -204,15 +204,15 @@ for step=1:nbstep,
     end;
        
     U = gf_model_get(md, 'variable', 'u');
-    VM0 = gf_model_get(md, 'compute Von Mises or Tresca', 'u', lawname, 'params', mfdu);
+    % VM0 = gf_model_get(md, 'compute Von Mises or Tresca', 'u', lawname, 'params', mfdu);
     % sigma = gf_model_get(md, 'compute second Piola Kirchhoff tensor', 'u', lawname, 'params', mfdu);
     
     % Direct interpolation of the Von Mises stress
     % VM = gf_model_get(md, 'interpolation', '(sqrt(3/2)/Det(Id(meshdim)+Grad_u))*Norm((Id(meshdim)+Grad_u)*Saint_Venant_Kirchhoff_sigma(Grad_u,params)*(Id(meshdim)+Grad_u'') - Id(meshdim)*Trace((Id(meshdim)+Grad_u)*Saint_Venant_Kirchhoff_sigma(Grad_u,params)*(Id(meshdim)+Grad_u''))/meshdim)', mfdu);
     % VM = gf_model_get(md, 'interpolation', '(sqrt(3/2)/Det(Id(meshdim)+Grad_u))*Norm(Deviator((Id(meshdim)+Grad_u)*Saint_Venant_Kirchhoff_sigma(Grad_u,params)*(Id(meshdim)+Grad_u'')))', mfdu);
     % VM = gf_model_get(md, 'interpolation', 'sqrt(3/2)*Norm(Deviator(Cauchy_stress_from_PK2(Saint_Venant_Kirchhoff_sigma(Grad_u,params),Grad_u)))', mfdu);
-    VM = gf_model_get(md, 'compute finite strain elasticity Von Mises', 'u', lawname, 'params', mfdu);
-    norm(VM-VM0)
+    VM = gf_model_get(md, 'compute finite strain elasticity Von Mises', lawname, 'u', 'params', mfdu);
+    % norm(VM-VM0)
     
     UU = [UU;U]; 
     VVM = [VVM;VM];

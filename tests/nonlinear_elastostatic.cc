@@ -29,8 +29,7 @@
    a good example of use of GetFEM++.
 */
 
-#include "getfem/getfem_assembling.h" /* import assembly methods (and norms comp.) */
-#include "getfem/getfem_export.h"   /* export functions (save solution in a file)  */
+#include "getfem/getfem_export.h"
 #include "getfem/getfem_regular_meshes.h"
 #include "getfem/getfem_model_solvers.h"
 #include "getfem/getfem_nonlinear_elasticity.h"
@@ -41,7 +40,7 @@ using std::endl; using std::cout; using std::cerr;
 using std::ends; using std::cin;
 
 /* some GetFEM++ types that we will be using */
-using bgeot::base_small_vector; /* special class for small (dim<16) vectors */
+using bgeot::base_small_vector; /* special class for small (dim<16) vectors  */
 using bgeot::base_node;  /* geometrical nodes(derived from base_small_vector)*/
 using bgeot::base_vector;
 using bgeot::scalar_type; /* = double */
@@ -90,7 +89,8 @@ struct elastostatic_problem {
 void elastostatic_problem::init(void) {
   std::string MESH_TYPE = PARAM.string_value("MESH_TYPE","Mesh type ");
   std::string FEM_TYPE  = PARAM.string_value("FEM_TYPE","FEM name");
-  std::string FEM_TYPE_P= PARAM.string_value("FEM_TYPE_P","FEM name for the pressure");
+  std::string FEM_TYPE_P= PARAM.string_value("FEM_TYPE_P",
+					     "FEM name for the pressure");
   std::string INTEGRATION = PARAM.string_value("INTEGRATION",
 					       "Name of integration method");
   cout << "MESH_TYPE=" << MESH_TYPE << "\n";
@@ -105,7 +105,8 @@ void elastostatic_problem::init(void) {
   std::fill(nsubdiv.begin(),nsubdiv.end(),
 	    PARAM.int_value("NX", "Nomber of space steps "));
   nsubdiv[1] = PARAM.int_value("NY") ? PARAM.int_value("NY") : nsubdiv[0];
-  if (N>2) nsubdiv[2] = PARAM.int_value("NZ") ? PARAM.int_value("NZ") : nsubdiv[0];
+  if (N>2)
+    nsubdiv[2] = PARAM.int_value("NZ") ? PARAM.int_value("NZ") : nsubdiv[0];
   getfem::regular_unit_mesh(mesh, nsubdiv, pgt,
 			    PARAM.int_value("MESH_NOISED") != 0);
   
@@ -208,7 +209,7 @@ bool elastostatic_problem::solve(plain_vector &U) {
 
   // Nonlinear elasticity brick
   model.add_initialized_fixed_size_data("params", p);
-  getfem::add_finite_strain_elasticity_brick(model, mim, "u", lawname, "params");
+  getfem::add_finite_strain_elasticity_brick(model, mim, lawname, "u","params");
 
   // Incompressibility
   if (law_num == 1 || law_num == 3) {
@@ -250,7 +251,8 @@ bool elastostatic_problem::solve(plain_vector &U) {
   */
   getfem::dx_export exp(datafilename + ".dx",
 			PARAM.int_value("VTK_EXPORT")==1);
-  getfem::stored_mesh_slice sl; sl.build(mesh, getfem::slicer_boundary(mesh),8); 
+  getfem::stored_mesh_slice sl;
+  sl.build(mesh, getfem::slicer_boundary(mesh),8); 
   exp.exporting(sl,true); exp.exporting_mesh_edges();
   //exp.begin_series("deformationsteps");
   exp.write_point_data(mf_u, U, "stepinit"); 
@@ -269,7 +271,8 @@ bool elastostatic_problem::solve(plain_vector &U) {
 
     if (N>2) {
       /* Apply the gradual torsion/extension */
-      scalar_type torsion = PARAM.real_value("TORSION","Amplitude of the torsion");
+      scalar_type torsion = PARAM.real_value("TORSION",
+					     "Amplitude of the torsion");
       torsion *= (step+1)/scalar_type(nb_step);
       scalar_type extension = PARAM.real_value("EXTENSION",
                                                "Amplitude of the extension");
@@ -287,7 +290,8 @@ bool elastostatic_problem::solve(plain_vector &U) {
     /* update the imposed displacement  */
     gmm::copy(F2, model.set_real_variable("DirichletData"));
 
-    cout << "step " << step << ", number of variables : " << model.nb_dof() << endl;
+    cout << "step " << step << ", number of variables : "
+	 << model.nb_dof() << endl;
     iter = gmm::iteration(residual, int(PARAM.int_value("NOISY")),
                           maxit ? maxit : 40000);
 

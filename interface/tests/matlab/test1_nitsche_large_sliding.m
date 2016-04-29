@@ -170,7 +170,7 @@ if (nonlinear_elasticity)
   lawname = 'Ciarlet Geymonat';
   params1 = [clambda1;cmu1;cmu1/2-clambda1/8];
   gf_model_set(md,'add initialized data','params1', params1);
-  gf_model_set(md, 'add finite strain elasticity brick', mim1, 'u1', lawname, 'params1');
+  gf_model_set(md, 'add finite strain elasticity brick', mim1, lawname, 'u1', 'params1');
 else
   gf_model_set(md, 'add initialized data', 'clambda1', clambda1);
   gf_model_set(md, 'add initialized data', 'cmu1', cmu1);
@@ -201,7 +201,7 @@ if (two_meshes)
     lawname = 'Ciarlet Geymonat';
     params2 = [clambda2;cmu2;cmu2/2-clambda2/8];
     gf_model_set(md,'add initialized data','params2', params2);
-    gf_model_set(md, 'add finite strain elasticity brick', mim2, 'u2', lawname, 'params2');
+    gf_model_set(md, 'add finite strain elasticity brick', mim2, lawname, 'u2', 'params2');
   else
     gf_model_set(md, 'add initialized data', 'clambda2', clambda2);
     gf_model_set(md, 'add initialized data', 'cmu2', cmu2);

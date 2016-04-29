@@ -141,8 +141,8 @@ NX = floor(Nxy*R)/R
       lawname = 'Ciarlet Geymonat';
       params = [clambda;cmu;cmu/2-clambda/8];
       gf_model_set(md,'add initialized data','params', params);
-      gf_model_set(md, 'add finite strain elasticity brick', mim1, 'u1', lawname, 'params');
-      gf_model_set(md, 'add finite strain elasticity brick', mim2, 'u2', lawname, 'params');
+      gf_model_set(md, 'add finite strain elasticity brick', mim1, lawname, 'u1', 'params');
+      gf_model_set(md, 'add finite strain elasticity brick', mim2, lawname, 'u2', 'params');
     else
       gf_model_set(md, 'add isotropic linearized elasticity brick', mim1, 'u1','clambda', 'cmu');
       gf_model_set(md, 'add isotropic linearized elasticity brick', mim2, 'u2','clambda', 'cmu');
@@ -227,12 +227,10 @@ gf_model_set(md, 'add slave contact boundary to raytracing transformation', 'con
 
     U1 = gf_model_get(md, 'variable', 'u1');
     UU1 = gf_model_get(md, 'variable', 'u1');
-    VM1 = gf_model_get(md, 'compute_isotropic_linearized_Von_Mises_or_Tresca', ...
-                              'u1', 'clambda', 'cmu', mfvm1);
+    VM1 = gf_model_get(md, 'compute_isotropic_linearized_Von_Mises_or_Tresca', 'u1', 'clambda', 'cmu', mfvm1);
     U2 = gf_model_get(md, 'variable', 'u2');  
     UU2 = gf_model_get(md, 'variable', 'u2');
-    VM2 = gf_model_get(md, 'compute_isotropic_linearized_Von_Mises_or_Tresca', ...
-                              'u2', 'clambda', 'cmu', mfvm2);                         
+    VM2 = gf_model_get(md, 'compute_isotropic_linearized_Von_Mises_or_Tresca', 'u2', 'clambda', 'cmu', mfvm2);                         
     
 
 % Von Mises stress contour plot (for ref_sol=0):   

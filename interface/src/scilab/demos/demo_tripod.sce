@@ -82,12 +82,12 @@ else
   gf_model_set(md,'add initialized data','params', params);
   if (incompressible)
     lawname = 'Incompressible Mooney Rivlin';
-    gf_model_set(md, 'add finite strain elasticity brick', mim, 'u', lawname,'params');
+    gf_model_set(md, 'add finite strain elasticity brick', mim, lawname, 'u', 'params');
     gf_model_set(md, 'add fem variable', 'p', mfp);
     gf_model_set(md, 'add finite strain incompressibility brick',  mim, 'u', 'p');
   else
     lawname = 'SaintVenant Kirchhoff';
-    gf_model_set(md, 'add finite strain elasticity brick', mim, 'u', lawname,'params');
+    gf_model_set(md, 'add finite strain elasticity brick', mim, lawname, 'u', 'params');
   end;
 end
 
@@ -111,7 +111,7 @@ gf_mesh_fem_set(mfdu,'fem',gf_fem('FEM_PK_DISCONTINUOUS(3,1)'));
 if (linear)
   VM = gf_model_get(md, 'compute isotropic linearized Von Mises or Tresca', 'u', 'clambda', 'cmu', mfdu);
 else
-  VM = gf_model_get(md, 'compute finite strain elasticity Von Mises', 'u', lawname, 'params', mfdu);
+  VM = gf_model_get(md, 'compute finite strain elasticity Von Mises', lawname, 'u', 'params', mfdu);
 end
 
 

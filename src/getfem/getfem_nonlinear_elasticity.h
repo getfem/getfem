@@ -645,8 +645,8 @@ namespace getfem {
       High-level generic assembly version.
   */
   size_type add_finite_strain_elasticity_brick
-  (model &md, const mesh_im &mim, const std::string &varname,
-   const std::string &lawname, const std::string &params,
+  (model &md, const mesh_im &mim, const std::string &lawname,
+   const std::string &varname, const std::string &params,
    size_type region = size_type(-1));
 
 
@@ -665,7 +665,7 @@ namespace getfem {
      with parameters `params` (only valid in 3D).
   */
   void compute_finite_strain_elasticity_Von_Mises
-  (model &md, const std::string &varname, const std::string &lawname,
+  (model &md, const std::string &lawname, const std::string &varname, 
    const std::string &params, const mesh_fem &mf_vm,
    model_real_plain_vector &VM,
    const mesh_region &rg=mesh_region::all_convexes());

@@ -163,7 +163,7 @@ expr_sigma = strcat('(', B_inv, '*(Von_Mises_projection((',B,'*((1-alpha)*sigma)
   
 % gf_model_set(md, 'add nonlinear generic assembly brick', mim, strcat(expr_sigma, 'Grad_u:Grad_Test_u'));
 gf_model_set(md, 'add nonlinear generic assembly brick', mim, strcat(expr_sigma, ':Grad_Test_u'));
-% gf_model_set(md, 'add finite strain elasticity brick', mim, 'u', 'SaintVenant Kirchhoff', '[lambda; mu]');
+% gf_model_set(md, 'add finite strain elasticity brick', mim, 'SaintVenant Kirchhoff', 'u', '[lambda; mu]');
 
 return;
 

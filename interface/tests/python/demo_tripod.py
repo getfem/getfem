@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: UTF8 -*-
+# -*- coding: utf-8 -*-
 # Python GetFEM++ interface
 #
 # Copyright (C) 2004-2009 Yves Renard, Julien Pommier.
@@ -92,12 +92,12 @@ else:
     md.add_initialized_data('params', [Lambda, Mu]);
     if incompressible:
         lawname = 'Incompressible Mooney Rivlin';
-        md.add_finite_strain_elasticity_brick(mim, 'u', lawname, 'params')
+        md.add_finite_strain_elasticity_brick(mim, lawname, 'u', 'params')
         md.add_fem_variable('p', mfp);
         md.add_finite_strain_incompressibility_brick(mim, 'u', 'p');
     else:
         lawname = 'SaintVenant Kirchhoff';
-        md.add_finite_strain_elasticity_brick(mim, 'u', lawname,'params');
+        md.add_finite_strain_elasticity_brick(mim, lawname, 'u', 'params');
   
 
 md.add_initialized_data('VolumicData', [0,-1,0]);
@@ -117,7 +117,7 @@ mfdu.set_fem(gf.Fem('FEM_PK_DISCONTINUOUS(3,1)'))
 if linear:
   VM = md.compute_isotropic_linearized_Von_Mises_or_Tresca('u','clambda','cmu', mfdu);
 else:
-  VM = md.compute_finite_strain_elasticity_Von_Mises('u', lawname, 'params', mfdu);
+  VM = md.compute_finite_strain_elasticity_Von_Mises(lawname, 'u', 'params', mfdu);
 
 # post-processing
 sl=gf.Slice(('boundary',), mfu, degree)

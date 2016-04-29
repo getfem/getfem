@@ -70,6 +70,11 @@ template <typename T> static inline void dummy_func(T &) {}
     subc_tab[cmd_normalize(name)] = psubc;                              \
   }
 
+static void filter_lawname(std::string &lawname) {
+  for (auto &c : lawname)
+    { if (c == ' ') c = '_'; if (c >= 'A' && c <= 'Z') c = char(c+'a'-'A'); }
+}
+
 
 void gf_model_set(getfemint::mexargs_in& m_in,
                   getfemint::mexargs_out& m_out) {
@@ -1702,7 +1707,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        out.pop().from_integer(int(ind));
        );
 
-    /*@SET ind = ('add finite strain elasticity brick', @tmim mim, @str varname, @str constitutive_law, @str params[, @int region])
+    /*@SET ind = ('add finite strain elasticity brick', @tmim mim, @str constitutive_law, @str varname, @str params[, @int region])
     Add a nonlinear elasticity term to the model relatively to the
     variable `varname`. `lawname` is the constitutive law which
     could be 'SaintVenant Kirchhoff', 'Mooney Rivlin', 'Neo Hookean',
@@ -1726,14 +1731,30 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       ("add finite strain elasticity brick", 4, 5, 0, 1,
        getfem::mesh_im *mim = to_meshim_object(in.pop());
        // size_type N = *mim.linked_mesh().dim();
-       std::string varname = in.pop().to_string();
        std::string lawname = in.pop().to_string();
+       std::string varname = in.pop().to_string();
        std::string params = in.pop().to_string();
        size_type region = size_type(-1);
        if (in.remaining()) region = in.pop().to_integer();
+
+       std::string ln = varname; // tolerance for the compatibility with 5.0
+       filter_lawname(ln);
+       if (ln.compare("saintvenant_kirchhoff") == 0 ||
+	   ln.compare("saint_venant_kirchhoff") == 0 ||
+	   ln.compare("generalized_blatz_ko") == 0 ||
+	   ln.compare("ciarlet_geymonat") == 0 ||
+	   ln.compare("incompressible_mooney_rivlin") == 0 ||
+	   ln.compare("compressible_mooney_rivlin") == 0 ||
+	   ln.compare("incompressible_neo_hookean") == 0 ||
+	   ln.compare("compressible_neo_hookean") == 0 ||
+	   ln.compare("compressible_neo_hookean_bonet") == 0 ||
+	   ln.compare("compressible_neo_hookean_ciarlet") == 0) {
+	 std::swap(lawname, varname);
+       }
+
        size_type ind = config::base_index() +
        add_finite_strain_elasticity_brick
-       (*md, *mim, varname, lawname, params, region);
+       (*md, *mim, lawname, varname, params, region);
        workspace().set_dependence(md, mim);
        out.pop().from_integer(int(ind));
        );

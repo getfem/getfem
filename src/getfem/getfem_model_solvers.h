@@ -259,7 +259,7 @@ namespace getfem {
       conv_r = r;
       return ((it <= 1 && r < first_res)
               || (r <= first_res * alpha_max_ratio && r <= alpha_threshold_res)
-              || (conv_alpha <= alpha_min)
+              || (conv_alpha <= alpha_min && r < first_res * 1e5)
               || it >= itmax);
     }
     simplest_newton_line_search

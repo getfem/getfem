@@ -2233,8 +2233,8 @@ namespace getfem {
 
 
   size_type add_finite_strain_elasticity_brick
-  (model &md, const mesh_im &mim, const std::string &varname,
-   const std::string &lawname, const std::string &params,
+  (model &md, const mesh_im &mim, const std::string &lawname, 
+   const std::string &varname, const std::string &params,
    size_type region) {
     std::string test_varname = "Test_" + sup_previous_and_dot_to_varname(varname);
     size_type N = mim.linked_mesh().dim();
@@ -2275,7 +2275,7 @@ namespace getfem {
   }
 
   void compute_finite_strain_elasticity_Von_Mises
-    (model &md, const std::string &varname, const std::string &lawname,
+    (model &md, const std::string &lawname, const std::string &varname, 
      const std::string &params, const mesh_fem &mf_vm,
      model_real_plain_vector &VM, const mesh_region &rg) {
     size_type N = mf_vm.linked_mesh().dim();

@@ -10,7 +10,7 @@
 # under  the  terms  of the  GNU  Lesser General Public License as published
 # by  the  Free Software Foundation;  either version 3 of the License,  or
 # (at your option) any later version along with the GCC Runtime Library
-# Exception either version 3.1 or (at your option) any later version.
+# Exception either version 3.1 or (at your optifn) any later version.
 # This program  is  distributed  in  the  hope  that it will be useful,  but
 # WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
 # or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
@@ -79,7 +79,7 @@ md.add_fem_variable('u', mfu)
 md.add_initialized_data('params', params)
 
 if (not(explicit_potential)):
-    md.add_finite_strain_elasticity_brick(mim, 'u', lawname, 'params')
+    md.add_finite_strain_elasticity_brick(mim, lawname, 'u', 'params')
 else:
     print "Explicit elastic potential"
     K = 1.2; mu = 3.0;
@@ -213,7 +213,7 @@ for step in range(1,nbstep+1):
     # Direct interpolation of the Von Mises stress
     # VM = md.interpolation('(sqrt(3/2)/Det(Id(meshdim)+Grad_u))*Norm((Id(meshdim)+Grad_u)*Saint_Venant_Kirchhoff_sigma(Grad_u,params)*(Id(meshdim)+Grad_u'') - Id(meshdim)*Trace((Id(meshdim)+Grad_u)*Saint_Venant_Kirchhoff_sigma(Grad_u,params)*(Id(meshdim)+Grad_u''))/meshdim)', mfdu);
 
-    VM = md.finite_strain_elasticity_Von_Mises('u', lawname, 'params', mfdu)
+    VM = md.compute_finite_strain_elasticity_Von_Mises(lawname, 'u', 'params', mfdu)
     print(npla.norm(VM-VM0))
     
     sl=gf.Slice(('boundary',), mfu, 4)

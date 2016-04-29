@@ -264,12 +264,12 @@ if (option == 3):
                      +')*Id(meshdim) + 2*mu*(Sym(Grad_u)-'+Epnp1+'))')
         sigma_theta = ('(lambda*Trace('+Etheta+'-'+Eptheta
                        +')*Id(meshdim) + 2*mu*('+Etheta+'-'+Eptheta+'))')
-        alpha_theta = '(alphan+theta*xi*(Norm(2*mu*Deviator('+Etheta+')-(2*mu+Hk)*'+Eptheta+')))'
+        alpha_theta = '(alphan+sqrt(2/3)*theta*xi*(Norm(2*mu*Deviator('+Etheta+')-(2*mu+Hk)*'+Eptheta+')))'
         # alpha_np1 = '(('+alpha_theta+' - (1-theta)*alphan)/theta)'
-        alpha_np1 = ('(alphan+xi*(Norm(2*mu*Deviator('+Etheta
+        alpha_np1 = ('(alphan+sqrt(2/3)*xi*(Norm(2*mu*Deviator('+Etheta
                      +')-(2*mu+Hk)*'+Eptheta+')))')
-        # alpha_theta = '(alphan+Norm('+Eptheta+'-Epn))'  # do not work
-        # alpha_np1 = '(alphan+Norm('+Eptheta+'-Epn)/theta)' # do not work
+        # alpha_theta = '(alphan+sqrt(2/3)*Norm('+Eptheta+'-Epn))'  # do not work
+        # alpha_np1 = '(alphan+sqrt(2/3)*Norm('+Eptheta+'-Epn)/theta)' # do not work
     
     # fbound = ('(Norm(Deviator('+sigma_theta+')-Hk*'+Eptheta
     #           +') - von_mises_threshold - Hi*'+alpha_theta+')')
@@ -290,8 +290,9 @@ if (option == 4):
     
     Etheta = '(Sym(theta*Grad_u+(1-theta)*Grad_Previous_u))'
     Btheta = '((2*mu)*Deviator('+Etheta+')-(2*mu+Hk)*Epn)'
-    alpha_theta = ('(max(alphan, ((2*mu+Hk)*alphan+Norm('+Btheta+
-                ') - sqrt(2/3)*von_mises_threshold)/(2*mu+Hk+sqrt(2/3)*Hi)))')
+    alpha_theta = ('(max(alphan, (sqrt(3/2)*(2*mu+Hk)*alphan+Norm('+Btheta+
+                   ') - sqrt(2/3)*von_mises_threshold)/(sqrt(3/2)*(2*mu+Hk)'+
+                   '+sqrt(2/3)*Hi)))')
     alpha_np1 = '(('+alpha_theta+' - (1-theta)*alphan)/theta)'
     Eptheta= ('(Epn+(1/(2*mu+Hk))*pos_part(1-sqrt(2/3)*(von_mises_threshold+Hi*'
               +alpha_theta+')/(Norm('+Btheta+')+1e-25))*'+Btheta+')')

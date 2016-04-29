@@ -421,7 +421,7 @@ This brick just adds the term ``p*(1-Det(Id(meshdim)+Grad_u))`` if ``p`` is the 
 
 The addition of an hyperelastic term to a model can also be done thanks to the following function::
 
-  ind = add_finite_strain_elasticity_brick(md, mim, varname, lawname, params,
+  ind = add_finite_strain_elasticity_brick(md, mim, lawname, varname, params,
                                            region = size_type(-1));
 
 where ``md`` is the model, ``mim`` the integration method, ``varname`` the variable of the model representing the large strain displacement, ``lawname`` is the constitutive law name which could be ``Saint_Venant_Kirchhoff``, ``Generalized_Blatz_Ko``, ``Ciarlet_Geymonat``, ``Incompressible_Mooney_Rivlin``, ``Compressible_Mooney_Rivlin``, ``Incompressible_Neo_Hookean``, ``Compressible_Neo_Hookean``, ``Compressible_Neo_Hookean_Bonet`` or ``Compressible_Neo_Hookean_Ciarlet``. ``params`` is a string representing the parameters of the law defined as a small vector or a vector field.
