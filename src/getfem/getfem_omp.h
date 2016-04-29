@@ -161,6 +161,10 @@ namespace getfem
     omp_distribute() : thread_values(num_threads()) {}
     omp_distribute(const T& value) :
       thread_values(num_threads(),value) {}
+    template <class... Args>
+    omp_distribute(Args&&... value){
+      for (size_type i = 0; i < num_threads(); ++i) thread_values.emplace_back(value...);
+    }
     operator T& (){return thread_values[this_thread()];}
     operator const T& () const {return thread_values[this_thread()];}
     T& thrd_cast(){return thread_values[this_thread()];}
