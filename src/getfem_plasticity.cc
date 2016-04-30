@@ -710,7 +710,8 @@ namespace getfem {
 
       const std::string dispname=sup_previous_and_dot_to_varname(varnames[0]);
       const std::string xi      =sup_previous_and_dot_to_varname(varnames[0]);
-      
+      const std::string &Previous_Ep = varnames[1];
+
       base_vector tmpv(gmm::vect_size(md.real_variable(Previous_Ep)));
       const im_data *pimd = md.pim_data_of_variable(Previous_Ep);
       if (pimd)
