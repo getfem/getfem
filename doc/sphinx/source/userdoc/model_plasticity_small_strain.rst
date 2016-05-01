@@ -201,11 +201,15 @@ and
 
 The adaptation to the plane strain approximation to plastic model is most of the time an  easy task. An isotropic linearized elastic response reads
 
-.. math:: \bar{\sigma} = \lambda (\mbox{tr}(\bar{\varepsilon}^e) + \varepsilon^e_{3,3}) I + 2\mu\bar{\varepsilon}^e,
+.. math:: \sigma = \lambda \mbox{tr}(\varepsilon(u)) I + 2\mu(\varepsilon(u) - \varepsilon^p),
+
+and thus
+
+.. math:: \bar{\sigma} = \lambda \mbox{tr}(\bar{\varepsilon}(u)) \bar{I} + 2\mu(\bar{\varepsilon}(u) -\bar{\varepsilon}^p),
 
 The nonzero :math:`\sigma_{3,3}` component of the stress tensor is given by
 
-.. math:: \sigma_{3,3} = \lambda (\mbox{tr}(\bar{\varepsilon}^e) + \varepsilon^e_{3,3}) + 2\mu\varepsilon^e_{3,3}.
+.. math:: \sigma_{3,3} = \lambda \mbox{tr}(\bar{\varepsilon}(u)) - 2\mu \varepsilon^p_{3,3}
 
 Note that in the common case where isochoric plastic strain is assumed, one has
 
@@ -224,7 +228,7 @@ We will still denote
 
 .. math:: \bar{\sigma} =  \left(\hspace{-0.5em}\begin{array}{cc} \sigma_{1,1} & \sigma_{1,2} \\ \sigma_{1,2} & \sigma_{2,2} \end{array}\hspace{-0.5em}\right)
 
-the in-plane components of the stress tensor. For elastoplasticity, it consists generally to apply the 2D plastic flow rule, prescribing the out-plane components of the stress tensor to be zero with the additionnal variables :math:`\varepsilon^e_1`, :math:`\varepsilon^e_2`, :math:`\varepsilon^e_3` being unknown (see for instance [SO-PE-OW2008]_).
+the in-plane components of the stress tensor. For elastoplasticity, it consists generally to apply the 2D plastic flow rule, prescribing the out-plane components of the stress tensor to be zero with the additionnal variables :math:`\varepsilon^e_{1,3}`, :math:`\varepsilon^e_{2,3}`, :math:`\varepsilon^e_{3,3}` being unknown (see for instance [SO-PE-OW2008]_).
 
 For an isotropic linearized elastic response, one has :math:`\sigma = \lambda \mbox{tr}(\varepsilon^e) + 2\mu\varepsilon^e` such that
 
@@ -242,6 +246,11 @@ so that
 Moreover
 
 .. math:: \|\mbox{Dev}(\sigma)\| = \left(\|\bar{\sigma}\|^2 - \Frac{1}{3}(\mbox{tr}(\bar{\sigma}))^2\right)^{1/2}.
+
+Note that in the case where isochoric plastic strain is assumed, one still has
+
+.. math:: \mbox{ tr}(\varepsilon^p) = 0 ~~~~ \Rightarrow  ~~~ \varepsilon^p_{3,3} = - (\varepsilon^p_{1,1} + \varepsilon^p_{2,2}).
+
 
 Some classical laws
 +++++++++++++++++++
