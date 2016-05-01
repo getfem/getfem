@@ -182,7 +182,7 @@ pb : need of :math:`A_{n+\theta}`
 Plane strain approximation
 ==========================
 
-A plane strain approximation is a 2D problem which corresponds to the deformation of a long cylindrical object where the strain in  the length direction (assumed to be along the :math:`z` axis) is considered small compared to the ones in the other directions and is neglected. It result in a plane strain tensor of the form
+A plane strain approximation is a 2D problem which corresponds to the deformation of a long cylindrical object where the strain in the length direction (assumed to be along the :math:`z` axis) is considered small compared to the ones in the other directions and is neglected. It result in a plane strain tensor of the form
 
 .. math:: \varepsilon(u) = \left(\hspace{-0.5em}\begin{array}{ccc} \varepsilon_{1,1} & \varepsilon_{1,2} & 0 \\ \varepsilon_{1,2} & \varepsilon_{2,2} & 0 \\ 0 & 0 & 0 \end{array}\hspace{-0.5em}\right).
 
@@ -190,21 +190,26 @@ We denote
 
 .. math:: \bar{\varepsilon}(u) =  \left(\hspace{-0.5em}\begin{array}{cc} \varepsilon_{1,1} & \varepsilon_{1,2} \\ \varepsilon_{1,2} & \varepsilon_{2,2} \end{array}\hspace{-0.5em}\right)
 
-the non neglected components of the strain tensor. The adaptation to the plane strain approximation to plastic model is most of the time an  easy task.
+the non neglected components of the strain tensor.
+In the decomposition of plastic and elastic part of the strain tensor, we assume
 
-An isotropic linearized elastic response reads
+.. math:: \varepsilon^p_{1,3} = \varepsilon^p_{2,3} = \varepsilon^e_{1,3} = \varepsilon^e_{2,3} = 0
 
-.. math:: \bar{\sigma} = \lambda \mbox{tr}(\bar{\varepsilon}^e) I + 2\mu\bar{\varepsilon}^e,
+and
 
-Normally, one also has
+.. math:: \varepsilon^e_{3,3} + \varepsilon^p_{3,3} = \varepsilon_{3,3} = 0. 
 
-.. math:: \sigma_{3,3} = \lambda \mbox{tr}(\bar{\varepsilon}^e) = \Frac{\lambda}{2(\lambda+\mu)}.\mbox{tr}(\bar{\sigma})
+The adaptation to the plane strain approximation to plastic model is most of the time an  easy task. An isotropic linearized elastic response reads
 
-however, the fact that :math:`\dot{\varepsilon}_{3,3} = 0` and the normality law prescribes in general a relation of the type
+.. math:: \bar{\sigma} = \lambda (\mbox{tr}(\bar{\varepsilon}^e) + \varepsilon^e_{3,3}) I + 2\mu\bar{\varepsilon}^e,
 
-.. math :: \sigma_{3,3} = \Frac{\sigma_{1,1}+\sigma_{2,2}}{2}
+The nonzero :math:`\sigma_{3,3}` component of the stress tensor is given by
 
-A compromize has to be made ...
+.. math:: \sigma_{3,3} = \lambda (\mbox{tr}(\bar{\varepsilon}^e) + \varepsilon^e_{3,3}) + 2\mu\varepsilon^e_{3,3}.
+
+Note that in the common case where isochoric plastic strain is assumed, one has
+
+.. math:: \mbox{ tr}(\varepsilon^p) = 0 ~~~~ \Rightarrow  ~~~ \varepsilon^p_{3,3} = - (\varepsilon^p_{1,1} + \varepsilon^p_{2,2}).
 
 
 

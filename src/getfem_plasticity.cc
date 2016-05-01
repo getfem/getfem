@@ -566,9 +566,9 @@ namespace getfem {
     dict["Eptheta"] = Eptheta;
     Epnp1 = ga_substitute("(Eptheta - (1-(theta))*Epn)/(theta)", dict);
     dict["Epnp1"] = Epnp1;
-    sigma_np1 = ga_substitute("(lambda)*Trace((Enp1)-(Epnp1))*Id(meshdim)"
+    sigma_np1 = ga_substitute("(lambda)*Trace(Enp1)*Id(meshdim)"
 			      " + 2*(mu)*((Enp1)-(Epnp1))", dict);
-    sigma_after = ga_substitute("(lambda)*Trace((Enp1)-(Epn))*Id(meshdim) "
+    sigma_after = ga_substitute("(lambda)*Trace(Enp1)*Id(meshdim) "
 				"+ 2*(mu)*((Enp1)-(Epn))", dict);
   }
 
@@ -629,12 +629,12 @@ namespace getfem {
     Epnp1 = ga_substitute("((Eptheta-(1-theta)*Epn)/theta)", dict);
     dict["Epnp1"] = Epnp1;
     sigma_np1 = ga_substitute
-      ("(lambda*Trace(Sym(Grad_u)-Epnp1)*Id(meshdim)+2*mu*(Sym(Grad_u)-Epnp1))",
+      ("(lambda*Trace(Sym(Grad_u))*Id(meshdim)+2*mu*(Sym(Grad_u)-Epnp1))",
        dict);
     fbound = ga_substitute
       ("(Norm(2*mu*Deviator(Etheta)-(2*mu)*Eptheta)-sqrt(2/3)*(sigma_y))",dict);
 
-    sigma_after = ga_substitute("(lambda)*Trace((Enp1)-(Epn))*Id(meshdim) "
+    sigma_after = ga_substitute("(lambda)*Trace(Enp1)*Id(meshdim) "
 				"+ 2*(mu)*((Enp1)-(Epn))", dict);
   }
 
