@@ -191,7 +191,8 @@ static bool dal_static_stored_tab_valid__ = true;
     return 0;
   }
 
-  stored_object_tab::iterator iterator_of_object(pstatic_stored_object o)
+  std::pair<stored_object_tab::iterator, stored_object_tab::iterator> iterators_of_object(
+    pstatic_stored_object o)
   {
     for(size_t thread=0; thread < num_threads(); ++thread)
     {
@@ -199,9 +200,10 @@ static bool dal_static_stored_tab_valid__ = true;
         = dal::singleton<stored_object_tab>::instance(thread);
       if (!dal_static_stored_tab_valid__) continue;
       stored_object_tab::iterator it = stored_objects.iterator_of_object_(o);
-      if (it != stored_objects.end()) return it;
+      if (it != stored_objects.end()) return {it, stored_objects.end()};
     }
-    return dal::singleton<stored_object_tab>::instance().end();
+    return {dal::singleton<stored_object_tab>::instance().end(),
+            dal::singleton<stored_object_tab>::instance().end()};
   }
 
 
@@ -219,14 +221,15 @@ static bool dal_static_stored_tab_valid__ = true;
       for (stored_object_tab::stored_key_tab::iterator it = stored_keys.begin();
         it != stored_keys.end(); ++it)
       {
-        stored_object_tab::iterator ito = iterator_of_object(it->first);
-        GMM_ASSERT1(ito !=dal::singleton<stored_object_tab>::instance().end(), 
-          "Key without object is found");
+        auto itos = iterators_of_object(it->first);
+        GMM_ASSERT1(itos.first != itos.second, "Key without object is found");
       }
       for (stored_object_tab::iterator it = stored_objects.begin();
         it != stored_objects.end(); ++it)
-        GMM_ASSERT1(iterator_of_object(it->second.p) != stored_objects.end(),
-        "Object has key but cannot be found");
+      {
+        auto itos = iterators_of_object(it->second.p);
+        GMM_ASSERT1(itos.first != itos.second, "Object has key but cannot be found");
+      }
     }
   }
 
@@ -348,9 +351,9 @@ static bool dal_static_stored_tab_valid__ = true;
       for (it = to_delete.begin(); it != to_delete.end(); it = itnext) 
       {
         itnext = it; itnext++;
-    
-        stored_object_tab::iterator ito = iterator_of_object(*it);
-        if (ito == stored_objects.end()) 
+
+        auto itos = iterators_of_object(*it);
+        if (itos.first == itos.second)
         {
           if (ignore_unstored)
             to_delete.erase(it);
@@ -368,43 +371,43 @@ static bool dal_static_stored_tab_valid__ = true;
             }
         }
         else
-          ito->second.valid = false;
+          itos.first->second.valid = false;
       }
 
       std::set<pstatic_stored_object>::iterator itd;
       for (it = to_delete.begin(); it != to_delete.end(); ++it) 
       {
-        if (*it) 
+        if (*it)
         {
-          stored_object_tab::iterator ito = iterator_of_object(*it);
-          GMM_ASSERT1(ito != stored_objects.end(), "An object disapeared !");
-          ito->second.valid = false;
-          std::set<pstatic_stored_object> dep = ito->second.dependencies;
-          for (itd = dep.begin(); itd != dep.end(); ++itd) 
+          auto itos = iterators_of_object(*it);
+          GMM_ASSERT1(itos.first != itos.second, "An object disapeared !");
+          itos.first->second.valid = false;
+          std::set<pstatic_stored_object> dep = itos.first->second.dependencies;
+          for (itd = dep.begin(); itd != dep.end(); ++itd)
           {
-            if (del_dependency(*it, *itd)) 
+            if (del_dependency(*it, *itd))
             {
-              stored_object_tab::iterator itod=iterator_of_object(*itd);
-              if (itod->second.perm == AUTODELETE_STATIC_OBJECT
-                && itod->second.valid) 
+              auto itods = iterators_of_object(*itd);
+              if (itods.first->second.perm == AUTODELETE_STATIC_OBJECT
+                && itods.first->second.valid)
               {
-                  itod->second.valid = false;
+                  itods.first->second.valid = false;
                   to_delete.push_back(*itd);
               }
             }
           }
-          for (itd = ito->second.dependent_object.begin();
-                          itd != ito->second.dependent_object.end(); ++itd) 
+          for (itd = itos.first->second.dependent_object.begin();
+                          itd != itos.first->second.dependent_object.end(); ++itd)
           {
-            stored_object_tab::iterator itod=iterator_of_object(*itd);
-            if (itod != stored_objects.end()) 
+            auto itods = iterators_of_object(*itd);
+            if (itods.first != itods.second)
             {
-              GMM_ASSERT1(itod->second.perm != PERMANENT_STATIC_OBJECT,
+              GMM_ASSERT1(itods.first->second.perm != PERMANENT_STATIC_OBJECT,
               "Trying to delete a permanent object " << *itd);
-              if (itod->second.valid) 
+              if (itods.first->second.valid)
               {
-                itod->second.valid = false;
-                to_delete.push_back(itod->second.p);
+                itods.first->second.valid = false;
+                to_delete.push_back(itods.first->second.p);
               }
             }
           }
