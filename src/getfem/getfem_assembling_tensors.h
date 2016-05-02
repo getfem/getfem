@@ -345,32 +345,35 @@ namespace getfem {
 	} while (mti.qnext1());
       }
 
+      bool valid_mf_r = mf_r.nb_dof() > 0;
+      bool valid_mf_c = mf_c.nb_dof() > 0;
+
       if (mf_r.is_reduced()) {
-	if (mf_c.is_reduced()) {
-	  for (unsigned i=0; i < it.size(); ++i) if (*it[i].p)
-	    asmrankoneupdate(m, gmm::mat_row(mf_r.extension_matrix(),
-					     cvdof_r[it[i].i]),
-			     gmm::mat_row(mf_c.extension_matrix(),
-					  cvdof_c[it[i].j]), *it[i].p);
-	}
-	else {
-	  for (unsigned i=0; i < it.size(); ++i) if (*it[i].p)
-	    asmrankoneupdate(m, gmm::mat_row(mf_r.extension_matrix(),
-					     cvdof_r[it[i].i]),
-			     cvdof_c[it[i].j], *it[i].p);
-	}
+          if (mf_c.is_reduced() && valid_mf_r && valid_mf_c) {
+            for (unsigned i = 0; i < it.size(); ++i) if (*it[i].p)
+              asmrankoneupdate(m, gmm::mat_row(mf_r.extension_matrix(),
+              cvdof_r[it[i].i]),
+              gmm::mat_row(mf_c.extension_matrix(),
+              cvdof_c[it[i].j]), *it[i].p);
+          }
+          else if (valid_mf_r) {
+            for (unsigned i = 0; i < it.size(); ++i) if (*it[i].p)
+              asmrankoneupdate(m, gmm::mat_row(mf_r.extension_matrix(),
+              cvdof_r[it[i].i]),
+              cvdof_c[it[i].j], *it[i].p);
+          }
       }
       else {
-	if (mf_c.is_reduced()) {
-	  for (unsigned i=0; i < it.size(); ++i) if (*it[i].p)
-	    asmrankoneupdate(m, cvdof_r[it[i].i],
-			     gmm::mat_row(mf_c.extension_matrix(),
-					  cvdof_c[it[i].j]), *it[i].p);
-	}
-	else {
-	    for (unsigned i=0; i < it.size(); ++i) if (*it[i].p)
-	      m(cvdof_r[it[i].i], cvdof_c[it[i].j]) += *it[i].p;
-	}
+        if (mf_c.is_reduced() && valid_mf_c) {
+          for (unsigned i = 0; i < it.size(); ++i) if (*it[i].p)
+            asmrankoneupdate(m, cvdof_r[it[i].i],
+            gmm::mat_row(mf_c.extension_matrix(),
+            cvdof_c[it[i].j]), *it[i].p);
+        }
+        else {
+          for (unsigned i = 0; i < it.size(); ++i) if (*it[i].p)
+            m(cvdof_r[it[i].i], cvdof_c[it[i].j]) += *it[i].p;
+        }
       }
     }
   };
