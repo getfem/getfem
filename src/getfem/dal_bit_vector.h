@@ -464,7 +464,7 @@ namespace dal {
   class bv_iterable_c
   {
   public:
-    bv_iterable_c(const bit_vector &v) : v_(v), visitor_(v){}
+    bv_iterable_c(const bit_vector &v) : v_(v), visitor_(v_){}
     const_bv_iterator<bv_iterable_c> begin() const;
     const_bv_iterator<bv_iterable_c> end() const;
     inline bool operator++(){return ++visitor_;};
