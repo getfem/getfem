@@ -111,6 +111,7 @@ namespace getfem {
   dal::bit_vector mesh_fem::dof_on_region(const mesh_region &b) const {
     dal::bit_vector res = basic_dof_on_region(b);
     if (is_reduced()) {
+      if (nb_dof() == 0) return dal::bit_vector();
       dal::bit_vector basic = res;
       res.clear();
       for (dal::bv_visitor i(basic); !i.finished(); ++i)
