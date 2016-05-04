@@ -19,6 +19,8 @@ clear all;
 gf_workspace('clear all');
 clc;
 
+gf_util('trace level', 1);
+
 
 % This program performs a test for several implementations of
 % small strain isotropic plasticity in GetFEM++
@@ -45,6 +47,11 @@ end
                
 
 % Physical parameters
+% E = 70000;
+% nu = 0.33;
+% lambda_top = E*nu/((1+nu)*(1-2*nu));
+% mu_top = E / (2*(1+nu));
+
 lambda_top = 84605;      % Iron
 mu_top = 77839;          % Iron
 lambda_bottom = 121150;  % Steel
@@ -52,12 +59,12 @@ mu_bottom = 80769;       % Steel
 von_mises_threshold_top = 8000;
 von_mises_threshold_bottom = 7000;
 
-Hk = mu_top/5; Hi = Hk; % Kinematic and isotropic hardening parameters
+Hk = mu_top/5; Hi = 0; % Kinematic and isotropic hardening parameters
 
 
 % Numerica parameters
 T = 10;
-NT = 50;
+NT = 200;
 LX = 100;
 LY = 20;
 NX = 40;
@@ -95,7 +102,7 @@ else
   mf_sigma=gfMeshFem(m,2,2); set(mf_sigma, 'fem',gfFem('FEM_PK_DISCONTINUOUS(2,0)'));
 end
 % mf_xi = gfMeshFem(m); set(mf_xi, 'fem', gfFem('FEM_PK(2,2)'));
-mf_xi = gfMeshFem(m); set(mf_xi, 'fem', gfFem('FEM_PK_DISCONTINUOUS(2,1)'));
+mf_xi = gfMeshFem(m); set(mf_xi, 'fem', gfFem('FEM_PK_DISCONTINUOUS(2,2)'));
 mf_data=gfMeshFem(m); set(mf_data, 'fem', gfFem('FEM_PK_DISCONTINUOUS(2,0)'));
 mf_vm = gfMeshFem(m); set(mf_vm, 'fem', gfFem('FEM_PK_DISCONTINUOUS(2,1)'));
 
@@ -259,49 +266,49 @@ switch (option)
     set(md, 'add initialized data', 'r1', [1e-8]);
     set(md, 'add initialized data', 'r2', [1]);
     set(md, 'add im data', 'Epn', mim_data);
-    set(md, 'add initialized data', 'c1', [0]);
+    set(md, 'add initialized data', 'c1', [0]); % [7.5*3]);
     set(md, 'add initialized data', 'c2', [Hk]);
-    set(md, 'add initialized data', 'c3', [0.3]);
+    set(md, 'add initialized data', 'c3', [0.1]); % [0.03]);
     
     
     
-    % modele simplifié sans c1 et theta = 1 et delta comme
-    % multiplicateur additionel (not working ...)
+    if (1)
+        Etheta = '(Sym(theta*Grad_u+(1-theta)*Grad_Previous_u))';
+        Btheta = strcat('(Epn+theta*xi*2*mu*Deviator(',Etheta,'))');
+        Eptheta = strcat('((',Btheta,')/(1+(2*mu+c2+delta)*theta*xi))'); % version sans c1
+        % Eptheta = strcat('(',Btheta,'*pos_part(1-theta*xi*c1/(Norm(',Btheta,')+1E-6))/(1+(2*mu+c2+delta)*theta*xi))');
+        Epnp1 = strcat('((', Eptheta, ' - (1-theta)*Epn)/theta)');
+        sigma_np1 = strcat('(lambda*Trace(Sym(Grad_u)-',Epnp1, ')*Id(meshdim) + 2*mu*(Sym(Grad_u)-', Epnp1,'))');
+        sigma_theta = strcat('(lambda*Trace(',Etheta,'-',Eptheta, ')*Id(meshdim) + 2*mu*(',Etheta,'-', Eptheta,'))');
     
-    Etheta = '(Sym(theta*Grad_u+(1-theta)*Grad_Previous_u))';
-    Btheta = strcat('(Epn+theta*xi*2*mu*Deviator(',Etheta,'))');
-    Eptheta = strcat('(',Btheta,'/(1+(2*mu+c2+delta)*theta*xi))');
-    % Eptheta = strcat('(',Btheta,'*min(c3/(Norm(',Btheta,')+1e-5), 1/(1+2*mu*theta*xi)))');
-    Epnp1 = strcat('((', Eptheta, ' - (1-theta)*Epn)/theta)');
-    sigma_np1 = strcat('(lambda*Trace(Sym(Grad_u)-',Epnp1, ')*Id(meshdim) + 2*mu*(Sym(Grad_u)-', Epnp1,'))');
-    sigma_theta = strcat('(lambda*Trace(',Etheta,'-',Eptheta, ')*Id(meshdim) + 2*mu*(',Etheta,'-', Eptheta,'))');
+        
+        fbound = strcat('(Norm(2*mu*Deviator(',Etheta,')-(2*mu+c2+delta)*',Eptheta,') - sqrt(2/3)*von_mises_threshold)');
+        
+        
+        % fbound = strcat('(Norm(2*mu*Deviator(',Etheta,')-(2*mu+c2+delta)*',Eptheta,'-c1*Normalized_reg(',Eptheta,',1E-6)) - sqrt(2/3)*von_mises_threshold)');
+        fbound_delta = strcat('(Norm(',Eptheta,')-c3)');
+        % fbound = strcat('(Norm(2*mu*Deviator(',Etheta,')-(2*mu+c2)*',Eptheta,') - sqrt(2/3)*von_mises_threshold)');
+        expr = strcat(sigma_np1, ':Grad_Test_u + (1/r1)*(xi - pos_part(xi+r1*',fbound,'))*Test_xi - (1/r2)*(delta - pos_part(delta+r2*',fbound_delta,'))*Test_delta');
+        gf_model_set(md, 'add nonlinear generic assembly brick', mim, expr);
     
-    % fbound = strcat('(Norm(2*mu*Deviator(',Etheta,')-(2*mu+pos_part((Norm(',Btheta,')-c3)/(c3*theta*xi+1e-25)-2*mu))*',Eptheta,') - sqrt(2/3)*von_mises_threshold)');
-    fbound = strcat('(Norm(2*mu*Deviator(',Etheta,')-(2*mu+c2+delta)*',Eptheta,') - sqrt(2/3)*von_mises_threshold)');
-    fbound_delta = strcat('(Norm(',Eptheta,')-c3)');
-    % fbound = strcat('(Norm(2*mu*Deviator(',Etheta,')-(2*mu+c2)*',Eptheta,') - sqrt(2/3)*von_mises_threshold)');
-    expr = strcat(sigma_np1, ':Grad_Test_u + (1/r1)*(xi - pos_part(xi+r1*',fbound,'))*Test_xi - (1/r2)*(delta - pos_part(delta+r2*',fbound_delta,'))*Test_delta');
-    gf_model_set(md, 'add nonlinear generic assembly brick', mim, expr);
+    else
     
-    
-    
-    if (0)
-    Etheta = '(Sym(theta*Grad_u+(1-theta)*Grad_Previous_u))';
-    Btheta = strcat('(Epn+theta*xi*2*mu*Deviator(',Etheta,'))');
-    % Eptheta = strcat('(Print(',Btheta,')*min(c3/(max(Norm(',Btheta,'), c3/2)), pos_part(1-theta*xi*c1/(Norm(',Btheta,')+0.001))/(1+(2*mu+c2)*theta*xi)))');
-    % Eptheta = strcat('(',Btheta,'*min(c3/(max(Norm(',Btheta,'), c3/2)), 1/(1+(2*mu+c2)*theta*xi)))');
-    Eptheta = strcat('(',Btheta,'*min(c3/(Norm(',Btheta,')+1e-10), 1/(1+(2*mu+c2)*theta*xi)))');
-    Epnp1 = strcat('((', Eptheta, ' - (1-theta)*Epn)/theta)');
-    sigma_np1 = strcat('(lambda*Trace(Sym(Grad_u)-',Epnp1, ')*Id(meshdim) + 2*mu*(Sym(Grad_u)-', Epnp1,'))');
-    sigma_theta = strcat('(lambda*Trace(',Etheta,'-',Eptheta, ')*Id(meshdim) + 2*mu*(',Etheta,'-', Eptheta,'))');
+        Etheta = '(Sym(theta*Grad_u+(1-theta)*Grad_Previous_u))';
+        Btheta = strcat('(Epn+theta*xi*2*mu*Deviator(',Etheta,'))');
+        Eptheta = strcat('((',Btheta,')*min(c3/(max(Norm(',Btheta,'), c3/2)), pos_part(1-theta*xi*c1/(Norm(',Btheta,')+0.001))/(1+(2*mu+c2)*theta*xi)))');
+        % Eptheta = strcat('(',Btheta,'*min(c3/(max(Norm(',Btheta,'), c3/2)), 1/(1+(2*mu+c2)*theta*xi)))');
+        % Eptheta = strcat('(',Btheta,'*min(c3/(Norm(',Btheta,')+1e-10), 1/(1+(2*mu+c2)*theta*xi)))');
+        Epnp1 = strcat('((', Eptheta, ' - (1-theta)*Epn)/theta)');
+        sigma_np1 = strcat('(lambda*Trace(Sym(Grad_u)-',Epnp1, ')*Id(meshdim) + 2*mu*(Sym(Grad_u)-', Epnp1,'))');
+        sigma_theta = strcat('(lambda*Trace(',Etheta,'-',Eptheta, ')*Id(meshdim) + 2*mu*(',Etheta,'-', Eptheta,'))');
       
-    % fbound = strcat('(Norm(2*mu*Deviator(',Etheta,')-(2*mu+c2)*',Eptheta,'-max(c1, (Norm(',Btheta,')-c3)/(theta*xi+1e-25)-(2*mu+c2)*c3)*Normalized(',Eptheta,')) - sqrt(2/3)*von_mises_threshold)');
-    fbound = strcat('(Norm(2*mu*Deviator(',Etheta,')-(2*mu+c2)*',Eptheta,'-pos_part( pos_part(Norm(',Btheta,')/(theta*xi+1e-10) - c1)/c3 - (1/(theta*xi+1e-10)+2*mu+c2))*',Eptheta,') - sqrt(2/3)*von_mises_threshold)');
-    fbound = strcat('(Norm(2*mu*Deviator(',Etheta,')-(2*mu+c2)*',Eptheta,'-pos_part( Norm(',Btheta,')/(c3*(theta*xi+1e-10)) - (1/(theta*xi+1e-10)+2*mu+c2))*',Eptheta,') - sqrt(2/3)*von_mises_threshold)');
-    % fbound = strcat('(Norm(2*mu*Deviator(',Etheta,')-(2*mu+c2)*',Eptheta,') - sqrt(2/3)*von_mises_threshold)');
-    expr = strcat(sigma_np1, ':Grad_Test_u + (1/r)*(xi - pos_part(xi+r*',fbound,'))*Test_xi');
-    % expr = strcat(sigma_np1, ':Grad_Test_u + (',fbound,' + pos_part(-xi/r-',fbound,'))*Test_xi');
-    gf_model_set(md, 'add nonlinear generic assembly brick', mim, expr);
+        % fbound = strcat('(Norm(2*mu*Deviator(',Etheta,')-(2*mu+c2)*',Eptheta,'-max(c1, (Norm(',Btheta,')-c3)/(theta*xi+1e-25)-(2*mu+c2)*c3)*Normalized(',Eptheta,')) - sqrt(2/3)*von_mises_threshold)');
+        fbound = strcat('(Norm(2*mu*Deviator(',Etheta,')-(2*mu+c2)*',Eptheta,'-pos_part( pos_part(Norm(',Btheta,')/(theta*xi+1e-10) - c1)/c3 - (1/(theta*xi+1e-10)+2*mu+c2))*',Eptheta,') - sqrt(2/3)*von_mises_threshold)');
+        % fbound = strcat('(Norm(2*mu*Deviator(',Etheta,')-(2*mu+c2)*',Eptheta,'-pos_part( Norm(',Btheta,')/(c3*(theta*xi+1e-10)) - (1/(theta*xi+1e-10)+2*mu+c2))*',Eptheta,') - sqrt(2/3)*von_mises_threshold)');
+        % fbound = strcat('(Norm(2*mu*Deviator(',Etheta,')-(2*mu+c2)*',Eptheta,') - sqrt(2/3)*von_mises_threshold)');
+        expr = strcat(sigma_np1, ':Grad_Test_u + (1/r1)*(xi - pos_part(xi+r1*',fbound,'))*Test_xi');
+        % expr = strcat(sigma_np1, ':Grad_Test_u + (',fbound,' + pos_part(-xi/r1-',fbound,'))*Test_xi');
+        gf_model_set(md, 'add nonlinear generic assembly brick', mim, expr);
     end
     
       
@@ -319,10 +326,20 @@ for step=1:size(t,2),
     if (test_tangent_matrix)
       gf_model_get(md, 'test tangent matrix', 1E-8, 10, 0.000001);
     end;
+    
+    if (option == 6)
+       set(md, 'variable', 'delta', zeros(1, get(mf_xi, 'nbdof')));
+       set(md, 'variable', 'xi', zeros(1, get(mf_xi, 'nbdof')));
+    end
    
     % Solve the system
-    get(md, 'solve', 'noisy', 'lsearch', 'simplest',  'alpha min', 0.8, 'max_iter', 50, 'max_res', 1e-6);
+    get(md, 'solve', 'noisy', 'max_iter', 50, 'lsearch', 'simplest',  'alpha min', 0.1, 'max_res', 1e-6);
     % get(md, 'solve', 'noisy', 'max_iter', 80);
+    
+    if (option == 6)
+       delta = get(md, 'variable', 'delta');
+       norm(delta)
+    end
 
     U = get(md, 'variable', 'u');
     
