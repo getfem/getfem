@@ -26,12 +26,12 @@ We present a short introduction to small strain plasticity. We refer mainly to [
 Additive decomposition of the small strain tensor
 =================================================
 
-Let :math:`\Omega \subset \R^3` be the reference configuration of a deformable body and :math:`u : \Omega \rightarrow \R^3` be the displacement. Small strain plasticity is based on the additive decomposition of the small deformation tensor :math:`\varepsilon(u) = \Frac{\nabla u + \nabla u^T}{2}` in
+Let :math:`\Omega \subset \R^3` be the reference configuration of a deformable body and :math:`u : \Omega \rightarrow \R^3` be the displacement field. Small strain plasticity is based on the additive decomposition of the small strain tensor :math:`\varepsilon(u) = \Frac{\nabla u + \nabla u^T}{2}` in
 
 .. math::
    \varepsilon(u) = \varepsilon^e + \varepsilon^p
 
-where :math:`\varepsilon^e` is the elastic part of the deformation and :math:`\varepsilon^p` the plastic one.
+where :math:`\varepsilon^e` is the elastic part of the strain tensor and :math:`\varepsilon^p` the plastic one.
 
 Internal variables, free energy potential and elastic law
 =========================================================
@@ -46,12 +46,12 @@ a vector field of :math:`d_{\alpha}` strain type internal variables (:math:`d_{\
 .. math::
    \psi(\varepsilon^e, \alpha),
 
-such that the stress type variables are determined by
+such that corresponding stress type variables are determined by
 
 .. math::
    \sigma = \Frac{\partial \psi}{\partial \varepsilon^e}(\varepsilon^e, \alpha), ~~~~ A =  \Frac{\partial \psi}{\partial \alpha}(\varepsilon^e, \alpha),
 
-where :math:`\sigma` is the Cauchy stress tensor and :math:`A` the stress type internal variables. The plastic dissipation being given by
+where :math:`\sigma` is the Cauchy stress tensor and :math:`A` the stress type internal variables. The plastic dissipation is given by
 
 .. math::
 
@@ -61,24 +61,24 @@ In the standard cases, :math:`\psi(\varepsilon^e, \alpha)` is decomposed into
 
 .. math:: \psi(\varepsilon^e, \alpha) = \psi^e(\varepsilon^e) + \psi^p(\alpha).
 
-In the case of linearized elasticity, one has :math:`\psi^e(\varepsilon^e) = \frac{1}{2} ({\cal A}\varepsilon^e) :\varepsilon^e` for :math:`{\cal A}` the fourth order elasticity tensor en more precisely :math:`\psi^e(\varepsilon^e) = \mu \mbox{dev}(\varepsilon^e) : \mbox{dev}(\varepsilon^e) + \frac{1}{2} K (\mbox{tr}(\varepsilon^e))^2` for isotropic linearized elasticity for :math:`\mu, K = \lambda + 2\mu/3` the shear and bulk modulus, respectively.
+In the case of linearized elasticity, one has :math:`\psi^e(\varepsilon^e) = \frac{1}{2} ({\cal A}\varepsilon^e) :\varepsilon^e` where :math:`{\cal A}` is the fourth order elasticity tensor. For isotropic linearized elasticity this expression reduces to :math:`\psi^e(\varepsilon^e) = \mu \mbox{dev}(\varepsilon^e) : \mbox{dev}(\varepsilon^e) + \frac{1}{2} K (\mbox{tr}(\varepsilon^e))^2` where :math:`\mu` is the shear modulus and :math:`K = \lambda + 2\mu/3` is the bulk modulus.
 
 
 
 Plastic potential, yield function and plastic flow rule
 =======================================================
 
-The plastic deformation is supposed to occurs when the stress attains a critical value. This is determinated by a yield function :math:`f(\sigma, A)` and the condition
+Plastic yielding is supposed to occur when the stress attains a critical value. This is determinated by a yield function :math:`f(\sigma, A)` and the condition
 
 .. math:: f(\sigma, A) \le 0.
 
-The surface :math:`f(\sigma, A) = 0` being the yield surface where the plastic deformation may occur.
+The surface :math:`f(\sigma, A) = 0` is the yield surface where the plastic deformation may occur.
 
-Let us consider also the plastic potential :math:`\Psi(\sigma, A)`, (convex with respect to both its two variables) which determine the plastic flow direction in the sense that the flow rule reads as
+Let us also consider the plastic potential :math:`\Psi(\sigma, A)`, (convex with respect to its both variables) which determines the plastic flow direction in the sense that the flow rule is defined as
 
 .. math:: \dot{\varepsilon}^p = \dot{\gamma} \Frac{\partial \Psi}{\partial \sigma}(\sigma, A), ~~~~~~ \dot{\alpha} = \dot{\gamma} \Frac{\partial \Psi}{\partial A}(\sigma, A),
 
-with the additional complementary condition
+with the additional complementarity condition
 
 .. math:: f(\sigma, A) \le 0, ~~~ \dot{\gamma} \ge 0, ~~~ f(\sigma, A) \dot{\gamma} = 0.
 
@@ -87,27 +87,27 @@ The variable :math:`\dot{\gamma}` is called the plastic multiplier. Note that wh
 Initial boundary value problem
 ==============================
 
-The weak formulation of a dynamic elastoplastic problem can be written as follows for an arbitrary cinematically admissible test function :math:`v`:
+The weak formulation of a dynamic elastoplastic problem can be written, for an arbitrary kinematically admissible test function :math:`v`, as follows:
 
 .. math::
 
    \left| \begin{array}{l}
    \ds \int_{\Omega} \rho \ddot{u}\cdot v + \sigma : \nabla v dx =  \int_{\Omega} f\dot v dx + \int_{\Gamma_N} g\dot v dx, \\
-   u(0,x) = u_0(x), ~~~\dot{u}(0) = v_0(x), \\
+   u(0,x) = u_0(x), ~~~\dot{u}(0) = \mathrm{v}_0(x), \\
    \varepsilon^p(0,x) = \varepsilon^p_0, ~~~ \alpha(0,x) = \alpha_0,
    \end{array} \right.
 
-for :math:`u_0, v_0, \varepsilon^p_0, \alpha_0` the initial values and :math:`g` the force prescribed on the part of the boundary :math:`\Gamma_N`.
+for :math:`u_0, \mathrm{v}_0, \varepsilon^p_0, \alpha_0` being initial values and :math:`f` and :math:`g` being prescribed forces in the interior of domain :math:`\Omega` and on the part of the boundary :math:`\Gamma_N`.
 
-Note that plasticity models are often applied on quasitistic problem which corresponds to neglect the term :math:`\rho \ddot{u}`.
+Note that plasticity models are often applied on quasi-static problems which correspond to the term :math:`\rho \ddot{u}` being neglected.
 
-Given a time step :math:`\Delta t` we will denote in the sequel :math:`u_n, \varepsilon^p_n  \mbox{ and } \alpha_n` the approximation at time :math:`n\Delta t` of :math:`u(t), \varepsilon^p_n \mbox{ and } \alpha(t)` respectively. This approximation is given by a chose time integration scheme (for instance one of the proposed schemes in :ref:`ud-model-time-integration`) which can be different than the time integration scheme used for the integration of the flow rule (see below).
+Given a time step :math:`\Delta t = t_{n+1} -t_n`, from time :math:`t_n` to :math:`t_{n+1}`, we will denote in the sequel :math:`u_n, \varepsilon^p_n  \mbox{ and } \alpha_n` the approximations at time :math:`t_n` of :math:`u(t_n), \varepsilon^p_n(t_n) \mbox{ and } \alpha(t_n)` respectively. These approximations correspond to the chosen time integration scheme (for instance one of the proposed schemes in :ref:`ud-model-time-integration`) which can be different than the time integration scheme used for the integration of the flow rule (see below).
 
 
 Flow rule integration
 +++++++++++++++++++++
 
-The plastic flow rule have to be integrated with its own time integration scheme.  Among standards schemes, backward Euler scheme, :math:`\theta`-scheme and generalized mid-point scheme are the most commonly used in that context. We make here the choice of the generalized mid-point scheme.
+The plastic flow rule has to be integrated with its own time integration scheme. Among standards schemes, the backward Euler scheme, the :math:`\theta`-scheme and the generalized mid-point scheme are the most commonly used in that context. We make here the choice of the generalized mid-point scheme.
 
 
 Let :math:`u_{n+1}` be the displacement at the considered time step and  :math:`u_{n}` at the previous one. For a quantity :math:`B` we denote :math:`B_{n+\theta} = \theta B_{n+1} + (1-\theta)B_n` the convex combination of the quantity at iterations :math:`n` and :math:`n+1`.
