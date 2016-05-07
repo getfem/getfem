@@ -291,6 +291,7 @@ namespace getfem {
 
   /// Enumeration of dofs
   void mesh_fem::enumerate_dof(void) const {
+    bgeot::index_node_pair ipt;
     GMM_ASSERT1(linked_mesh_ != 0, "Uninitialized mesh_fem");
     context_check();
     if (fe_convex.card() == 0)
@@ -304,7 +305,9 @@ namespace getfem {
 
     // Information stored per element
     size_type nb_max_cv = linked_mesh().convex_index().last_true()+1;
-    std::vector<bgeot::node_tab> dof_nodes(nb_max_cv, bgeot::node_tab(1.e5));
+    // std::vector<bgeot::node_tab> dof_nodes2(nb_max_cv, bgeot::node_tab(1.e5));
+    std::vector<bgeot::kdtree> dof_nodes(nb_max_cv);
+    std::vector<scalar_type> elt_car_sizes(nb_max_cv);
     std::vector< std::map<fem_dof, size_type, dof_comp_> >
       dof_sorts(nb_max_cv);
 
@@ -315,6 +318,7 @@ namespace getfem {
     // Auxilliary variables
     std::vector<size_type> itab;
     base_node P(linked_mesh().dim());
+    base_node bmin(linked_mesh().dim()), bmax(linked_mesh().dim());
     fem_dof fd;
     bgeot::mesh_structure::ind_set s;
 
@@ -325,6 +329,16 @@ namespace getfem {
 
     for (size_type cv : cmk) { // Loop on elements
       if (!fe_convex.is_in(cv)) continue;
+      gmm::copy(linked_mesh().points_of_convex(cv)[0], bmin);
+      gmm::copy(bmin, bmax);
+      for (size_type i = 0; i <  linked_mesh().nb_points_of_convex(cv); ++i) {
+       	const base_node &pt = linked_mesh().points_of_convex(cv)[i];
+       	for (size_type d = 1; d < bmin.size(); ++d) {
+       	  bmin[d] = std::min(bmin[d], pt[d]);
+       	  bmax[d] = std::max(bmax[d], pt[d]);
+       	}
+      }	
+      elt_car_sizes[cv] = gmm::vect_dist2(bmin, bmax);
       pfem pf = fem_of_element(cv);
       bgeot::pgeometric_trans pgt = linked_mesh().trans_of_convex(cv);
       bgeot::pstored_point_tab pspt = pf->node_tab(cv);
@@ -356,7 +370,12 @@ namespace getfem {
           linked_mesh().neighbours_of_convex(cv, pf->faces_of_dof(cv, i), s);
           for (size_type ncv : s) { // For each neighbour
                                     // control if the dof already exists.
-            fd.ind_node = dof_nodes[ncv].search_node(P);
+	    fd.ind_node = size_type(-1);
+            // size_type ii = fd.ind_node = dof_nodes2[ncv].search_node(P);
+	    if (dof_nodes[ncv].nb_points() > 0) {
+	       scalar_type dist = dof_nodes[ncv].nearest_neighbor(ipt, P);
+	       if (gmm::abs(dist) <= 1e-6*elt_car_sizes[ncv]) fd.ind_node=ipt.i;
+	    }
             if (fd.ind_node != size_type(-1)) {
               auto it = dof_sorts[ncv].find(fd);
               if (it != dof_sorts[ncv].end()) { idof = it->second; break; }
@@ -364,7 +383,12 @@ namespace getfem {
           }
           if (idof == nbdof) nbdof += Qdim / pf->target_dim();
           itab[i] = idof;
-          fd.ind_node = dof_nodes[cv].add_node(P);
+          // fd.ind_node = dof_nodes2[cv].add_node(P);
+	  scalar_type dist = dof_nodes[cv].nearest_neighbor(ipt, P);
+	  if (gmm::abs(dist) <= 1e-6*elt_car_sizes[cv])
+	    fd.ind_node = ipt.i;
+	  else
+	    fd.ind_node = dof_nodes[cv].add_point(P);
           dof_sorts[cv][fd] = idof;
         }
       }
