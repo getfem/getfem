@@ -13,9 +13,7 @@
 Small strain plasticity
 -----------------------
 
-Work in progress. Not available for the moment ...
-
-A framework for the approximation of plasticity models in |gf|.
+A framework for the approximation of plasticity models in |gf|. See in :file:`src/getfem_plasticity.cc` and :file:`interface/src/gf_model_set.cc` for the brick implementation and to extend the implementation to new plasticity models.
 
 
 Theoretical background
@@ -175,9 +173,6 @@ or
 .. math:: \ds \int_{\Omega} (f(\sigma_{n+\theta} + (-f(\sigma_{n+\theta}, A_{n+\theta}) - \Delta \xi/r)_+ , A_{n+\theta}) ) \lambda dx = 0,   \forall \lambda
 
 
-pb : need of :math:`A_{n+\theta}` 
-
-
 
 Plane strain approximation
 ==========================
@@ -246,6 +241,7 @@ so that
 Moreover
 
 .. math:: \|\mbox{Dev}(\sigma)\| = \left(\|\bar{\sigma}\|^2 - \Frac{1}{3}(\mbox{tr}(\bar{\sigma}))^2\right)^{1/2}.
+   :label: plane_stress_dev
 
 Note that in the case where isochoric plastic strain is assumed, one still has
 
@@ -326,30 +322,31 @@ We finally find with :math:`B = \mbox{Dev}(\varepsilon(u_{n+\theta}))-\varepsilo
 
 The plane strain approximation has the same expression replacing the 3D strain tensors by the in-plane ones :math:`\bar{\varepsilon}^p` and  :math:`\bar{\varepsilon}(u_{n+\theta})`.
 
-.. math:: \bar{{\mathscr E}}^p(\bar{u}_{n+\theta}, \theta \Delta \xi, \bar{\varepsilon}^p_{n}) = \Frac{1}{1+2\mu\theta\Delta \xi}(\bar{\varepsilon}^p_{n} + 2\mu\theta\Delta \xi \mbox{Dev}^*(\bar{\varepsilon}(\bar{u}_{n+\theta}))),
+.. math:: \bar{\tilde{\mathscr E}}^p(\bar{u}_{n+\theta}, \theta \Delta \xi, \bar{\varepsilon}^p_{n}) = \Frac{1}{1+2\mu\theta\Delta \xi}(\bar{\varepsilon}^p_{n} + 2\mu\theta\Delta \xi \overline{\mbox{Dev}}(\bar{\varepsilon}(\bar{u}_{n+\theta}))),
 
-where :math:`\mbox{Dev}^*(\bar{\varepsilon}) = \bar{\varepsilon} - \Frac{\mbox{tr}(\bar{\varepsilon})}{3} \bar{I}` is still the 3D deviator.
+where :math:`\overline{\mbox{Dev}}(\bar{\varepsilon}) = \bar{\varepsilon} - \Frac{\mbox{tr}(\bar{\varepsilon})}{3} \bar{I}` is still the 3D deviator.
 
 Moreover, for the yield condition, 
 
-.. math:: \mbox{Dev}(\sigma) = 2\mu\mbox{Dev}(\varepsilon(u) - \varepsilon^p) = 2\mu\left(\varepsilon(u) - \varepsilon^p - \Frac{\mbox{tr}(\bar{\varepsilon}(u)) - \mbox{tr}(\bar{\varepsilon}^p)}{3} I\right)
+.. math:: \|\mbox{Dev}(\sigma)\|^2 = 4\mu^2\left(\|\overline{\mbox{Dev}}\bar{\varepsilon}(u) - \bar{\varepsilon}^p\|^2 + \left(\Frac{\mbox{tr}(\bar{\varepsilon}(u))}{3} -\mbox{tr}(\bar{\varepsilon}^p) \right)^2\right)
 
-.. math:: \begin{array}{rcl} \|\mbox{Dev}(\sigma)\| &=& 2\mu\sqrt{\left\|\bar{\varepsilon}(u) - \bar{\varepsilon}^p - \Frac{\mbox{tr}(\bar{\varepsilon}(u)) - \mbox{tr}(\bar{\varepsilon}^p)}{3} \bar{I}\right\|^2 + \Frac{(\mbox{tr}(\bar{\varepsilon}(u)) - \mbox{tr}(\bar{\varepsilon}^p))^2}{9}} \\ &=& \sqrt{\left\|\bar{\sigma} - \Frac{3\lambda+2\mu}{6(\lambda+\mu)}\mbox{tr}(\bar{\sigma})\bar{I} \right\|^2 + \Frac{\mu^2}{9(\lambda+\mu)^2}\mbox{tr}(\bar{\sigma})^2 } \end{array}
+And for the closest point projection approach,
+
+.. math:: \bar{\mathscr E}^p(\bar{u}_{n+\theta}, \bar{\varepsilon}^p_{n}) = \bar{\varepsilon}^p_{n} + \left( 1 - \sqrt{\frac{2}{3}}\Frac{\sigma_y}{2\mu\|B\|}\right)_+ \bar{B}
+
+with :math:`\bar{B} = \overline{\mbox{Dev}}(\bar{\varepsilon}(u_{n+\theta}))-\bar{\varepsilon}^p_{n}` and :math:`\|B\|^2 = \|\overline{\mbox{Dev}}(\bar{\varepsilon}(u_{n+\theta})) - \bar{\varepsilon}^p_n\|^2 + \left(\Frac{\mbox{tr}(\bar{\varepsilon}(u_{n+\theta}))}{3} -\mbox{tr}(\bar{\varepsilon}^p_n) \right)^2`.
 
 **Plane stress approximation**
 
-For plane stress approximation, we use :eq:`plane_stress_iso` which gives
+For plane stress approximation, using :eq:`plane_stress_iso` we deduce from the expression of the 3D case
 
-.. math::  \bar{\varepsilon}^p_{n+\theta} - \bar{\varepsilon}^p_{n} = \theta \Delta \xi \mbox{Dev}^*(\bar{\sigma}_{n+\theta}) =  \theta \Delta \xi \mbox{Dev}^*(\lambda^*\mbox{tr}(\bar{\varepsilon}^e_{n+\theta})\bar{I} + 2\mu \bar{\varepsilon}^e_{n+\theta}) = \theta \Delta \xi\left(\Frac{\lambda^*-2\mu}{3}\mbox{tr}(\bar{\varepsilon}^e_{n+\theta})\bar{I} + 2\mu\bar{\varepsilon}^e_{n+\theta}\right)
+.. math::  \bar{\varepsilon}^p_{n+\theta} = \Frac{1}{1+2\mu\theta\Delta \xi}\left(\bar{\varepsilon}^p_{n} +2\mu\theta\Delta \xi\left(\bar{\varepsilon}(u_{n+\theta}) - \Frac{2\mu}{3(\lambda+2\mu)}(\mbox{tr}(\bar{\varepsilon}(u_{n+\theta})) - \mbox{tr}(\bar{\varepsilon}_{n+\theta}^p))\bar{I}\right) \right),
 
-thus with :math:`\beta = \Frac{\lambda^*-2\mu}{3}` one has
+since :math:`\mbox{Dev}(\varepsilon(u)) = \varepsilon(u) - \Frac{2\mu}{3(\lambda+2\mu)}(\mbox{tr}(\bar{\varepsilon}(u)) - \mbox{tr}(\bar{\varepsilon}^p))`. Of course, this relation still has to be inverted. Denoting :math:`\alpha = 1+2\mu\theta\Delta \xi`, :math:`\beta = \Frac{4\mu^2\theta\Delta \xi}{3\lambda+6\mu}` and :math:`C = \bar{\varepsilon}^p_{n} +2\mu\theta\Delta \xi\left(\bar{\varepsilon}(u_{n+\theta}) - \Frac{2\mu}{3(\lambda+2\mu)}(\mbox{tr}(\bar{\varepsilon}(u_{n+\theta}))))\bar{I}\right)` one obtains
 
-.. math::  (1+2\mu\theta \Delta \xi)\bar{\varepsilon}^p_{n+\theta} + \beta\theta \Delta \xi \mbox{tr}(\bar{\varepsilon}^p_{n+\theta})\bar{I} = \bar{\varepsilon}^p_{n} + \theta \Delta \xi\left(\beta\mbox{tr}(\bar{\varepsilon}(u_{n+\theta}))\bar{I} + 2\mu\bar{\varepsilon}(u_{n+\theta})\right)
+.. math:: \bar{\varepsilon}^p_{n+\theta} = \Frac{\beta \mbox{tr}(C)}{\alpha(\alpha-2\beta)}\bar{I} + \Frac{1}{\alpha}C.
 
-By inverting this relation we find for :math:`A = \bar{\varepsilon}^p_{n} + \theta \Delta \xi\left(\beta\mbox{tr}(\bar{\varepsilon}(u_{n+\theta}))\bar{I} + 2\mu\bar{\varepsilon}(u_{n+\theta})\right)`
-
-.. math::  \bar{{\mathscr E}}^p(\bar{u}_{n+\theta}, \theta \Delta \xi, \bar{\varepsilon}^p_{n}) = \Frac{1}{1+2\mu\theta\Delta \xi} A - \left( \Frac{\beta\theta\Delta \xi}{(1+2\mu\theta\Delta \xi)(1+(2\mu+2\beta)\theta\Delta \xi)} \right) \mbox{tr}(A)\bar{I}
-
+Moreover, for the yield condition, expression :eq:`label: plane_stress_dev` can be used.
 
 Isotropic elastoplasticity with linear isotropic and kinematic hardening and Von-Mises criterion
 ================================================================================================
@@ -411,10 +408,6 @@ Thus
 
 which complete the expression.
 
-**Plane strain approximation**
-
-
-The plane strain approximation has the same expression replacing the 3D strain tensors by the in-plane ones :math:`\bar{\varepsilon}^p` and  :math:`\bar{\varepsilon}(u_{n+\theta})`.
 
 Souza-Auricchio elastoplasticity law (for shape memory alloys)
 ==============================================================
@@ -461,11 +454,6 @@ The yield condition reads then
 .. or using :eq:`souza_auri_comp`
 .. .. math:: \|\tilde{\mathscr E}^p(u_{n+\theta}, \theta \Delta \xi, \varepsilon^p_{n}) - \varepsilon^p_{n}\| \le \theta\Delta \xi\sqrt{\frac{2}{3}}\sigma_{y}.
 .. stupid ? Yes a priori ! 
-
-**Plane strain approximation**
-
-
-The plane strain approximation has the same expression replacing the 3D strain tensors by the in-plane ones :math:`\bar{\varepsilon}^p` and  :math:`\bar{\varepsilon}(u_{n+\theta})`.
 
 
 

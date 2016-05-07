@@ -159,7 +159,7 @@ for order in [1, 2]:
 # Computation of the reference solution if necessary
 refname_U  = resultspath+'/ref_hardening_plasticity_U.dat'
 refname_mf = resultspath+'/ref_hardening_plasticity_mf.mf'
-NT = 256; NX = 256; option = 4; Hi = 12000; Hk = 12000; load_type = 2;
+NT = 256; NX = 256; option = 4; Hi = 12000; Hk = 12000; load_type = 2; theta = 0.5; LX=100.; order = 2;
 if (not(os.path.exists(refname_U)) or not(os.path.isfile(refname_U))):
   if (call_test_plasticity() != 0):
       print ('Error in the computation of the reference solution'); exit(1)

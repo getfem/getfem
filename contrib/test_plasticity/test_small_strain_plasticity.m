@@ -64,7 +64,7 @@ Hk = mu_top/5; Hi = 0; % Kinematic and isotropic hardening parameters
 
 % Numerica parameters
 T = 10;
-NT = 200;
+NT = 40;
 LX = 100;
 LY = 20;
 NX = 40;
@@ -102,7 +102,8 @@ else
   mf_sigma=gfMeshFem(m,2,2); set(mf_sigma, 'fem',gfFem('FEM_PK_DISCONTINUOUS(2,0)'));
 end
 % mf_xi = gfMeshFem(m); set(mf_xi, 'fem', gfFem('FEM_PK(2,2)'));
-mf_xi = gfMeshFem(m); set(mf_xi, 'fem', gfFem('FEM_PK_DISCONTINUOUS(2,2)'));
+mf_xi = gfMeshFem(m); set(mf_xi, 'fem', gfFem('FEM_PK_DISCONTINUOUS(2,1)'));
+mf_delta = gfMeshFem(m); set(mf_delta, 'fem', gfFem('FEM_PK_DISCONTINUOUS(2,1)'));
 mf_data=gfMeshFem(m); set(mf_data, 'fem', gfFem('FEM_PK_DISCONTINUOUS(2,0)'));
 mf_vm = gfMeshFem(m); set(mf_vm, 'fem', gfFem('FEM_PK_DISCONTINUOUS(2,1)'));
 
@@ -261,34 +262,33 @@ switch (option)
     
   case 6
     set(md, 'add fem variable', 'xi', mf_xi);
-    set(md, 'add fem variable', 'delta', mf_xi);
     set(md, 'add initialized data', 'theta', [theta]);
     set(md, 'add initialized data', 'r1', [1e-8]);
     set(md, 'add initialized data', 'r2', [1]);
     set(md, 'add im data', 'Epn', mim_data);
     set(md, 'add initialized data', 'c1', [0]); % [7.5*3]);
     set(md, 'add initialized data', 'c2', [Hk]);
-    set(md, 'add initialized data', 'c3', [0.1]); % [0.03]);
+    set(md, 'add initialized data', 'c3', [0.15]); % [0.03]);
     
     
     
-    if (1)
+    if (1) % Version with two multipliers
+        set(md, 'add fem variable', 'delta', mf_delta);
         Etheta = '(Sym(theta*Grad_u+(1-theta)*Grad_Previous_u))';
         Btheta = strcat('(Epn+theta*xi*2*mu*Deviator(',Etheta,'))');
-        Eptheta = strcat('((',Btheta,')/(1+(2*mu+c2+delta)*theta*xi))'); % version sans c1
-        % Eptheta = strcat('(',Btheta,'*pos_part(1-theta*xi*c1/(Norm(',Btheta,')+1E-6))/(1+(2*mu+c2+delta)*theta*xi))');
+        Eptheta = strcat('((',Btheta,')/(1+(2*mu+c2+delta)*theta*xi))'); % version without c1
+        % Eptheta = strcat('(',Btheta,'*pos_part(1-theta*xi*c1/(Norm(',Btheta,')+1E-6))/(1+(2*mu+c2)*theta*xi + theta*delta))');
         Epnp1 = strcat('((', Eptheta, ' - (1-theta)*Epn)/theta)');
         sigma_np1 = strcat('(lambda*Trace(Sym(Grad_u)-',Epnp1, ')*Id(meshdim) + 2*mu*(Sym(Grad_u)-', Epnp1,'))');
         sigma_theta = strcat('(lambda*Trace(',Etheta,'-',Eptheta, ')*Id(meshdim) + 2*mu*(',Etheta,'-', Eptheta,'))');
     
         
-        fbound = strcat('(Norm(2*mu*Deviator(',Etheta,')-(2*mu+c2+delta)*',Eptheta,') - sqrt(2/3)*von_mises_threshold)');
+        fbound = strcat('(Norm(2*mu*Deviator(',Etheta,')-(2*mu+c2+delta)*',Eptheta,') - sqrt(2/3)*von_mises_threshold)'); % version without c1
         
         
         % fbound = strcat('(Norm(2*mu*Deviator(',Etheta,')-(2*mu+c2+delta)*',Eptheta,'-c1*Normalized_reg(',Eptheta,',1E-6)) - sqrt(2/3)*von_mises_threshold)');
         fbound_delta = strcat('(Norm(',Eptheta,')-c3)');
-        % fbound = strcat('(Norm(2*mu*Deviator(',Etheta,')-(2*mu+c2)*',Eptheta,') - sqrt(2/3)*von_mises_threshold)');
-        expr = strcat(sigma_np1, ':Grad_Test_u + (1/r1)*(xi - pos_part(xi+r1*',fbound,'))*Test_xi - (1/r2)*(delta - pos_part(delta+r2*',fbound_delta,'))*Test_delta');
+        expr = strcat(sigma_np1, ':Grad_Test_u + (10/r1)*(xi - pos_part(xi+r1*',fbound,'))*Test_xi - (100/r2)*(delta - pos_part(delta+r2*',fbound_delta,'))*Test_delta');
         gf_model_set(md, 'add nonlinear generic assembly brick', mim, expr);
     
     else
@@ -296,7 +296,7 @@ switch (option)
         Etheta = '(Sym(theta*Grad_u+(1-theta)*Grad_Previous_u))';
         Btheta = strcat('(Epn+theta*xi*2*mu*Deviator(',Etheta,'))');
         Eptheta = strcat('((',Btheta,')*min(c3/(max(Norm(',Btheta,'), c3/2)), pos_part(1-theta*xi*c1/(Norm(',Btheta,')+0.001))/(1+(2*mu+c2)*theta*xi)))');
-        % Eptheta = strcat('(',Btheta,'*min(c3/(max(Norm(',Btheta,'), c3/2)), 1/(1+(2*mu+c2)*theta*xi)))');
+        Eptheta = strcat('(',Btheta,'*min(c3/(max(Norm(',Btheta,'),c3/2)), 1/(1+(2*mu+c2)*theta*xi)))'); % version without c1
         % Eptheta = strcat('(',Btheta,'*min(c3/(Norm(',Btheta,')+1e-10), 1/(1+(2*mu+c2)*theta*xi)))');
         Epnp1 = strcat('((', Eptheta, ' - (1-theta)*Epn)/theta)');
         sigma_np1 = strcat('(lambda*Trace(Sym(Grad_u)-',Epnp1, ')*Id(meshdim) + 2*mu*(Sym(Grad_u)-', Epnp1,'))');
@@ -328,13 +328,12 @@ for step=1:size(t,2),
     end;
     
     if (option == 6)
-       set(md, 'variable', 'delta', zeros(1, get(mf_xi, 'nbdof')));
+       set(md, 'variable', 'delta', zeros(1, get(mf_delta, 'nbdof')));
        set(md, 'variable', 'xi', zeros(1, get(mf_xi, 'nbdof')));
     end
    
     % Solve the system
-    get(md, 'solve', 'noisy', 'max_iter', 50, 'lsearch', 'simplest',  'alpha min', 0.1, 'max_res', 1e-6);
-    % get(md, 'solve', 'noisy', 'max_iter', 80);
+    get(md, 'solve', 'noisy', 'max_iter', 50, 'lsearch', 'simplest',  'alpha min', 0.5, 'max_res', 1e-6);
     
     if (option == 6)
        delta = get(md, 'variable', 'delta');
@@ -428,7 +427,8 @@ for step=1:size(t,2),
       title(['Von Mises criterion for t = ', num2str(step)]);
 
       subplot(3,1,2);
-      gf_plot(mf_vm,plast, 'deformation',U,'deformation_mf',mf_u,'refine', 4, 'deformation_scale',1, 'disp_options', 0);  % 'deformed_mesh', 'on')
+      % gf_plot(mf_vm,plast, 'deformation',U,'deformation_mf',mf_u,'refine', 4, 'deformation_scale',1, 'disp_options', 0);  % 'deformed_mesh', 'on')
+      gf_plot(mf_vm,plast,'refine', 4, 'disp_options', 0);  % 'deformed_mesh', 'on')
       colorbar;
       axis([-20 120 -20 40]);
       % caxis([0 10000]);

@@ -44,6 +44,8 @@ option = 2     # 1 : without hardening, im_data and plastic multiplier
             
 load_type = 1  # 1 : vertical
                # 2 : horizontal
+
+constraint_at_np1 = True
                
 bi_material = False
 test_tangent_matrix = False
@@ -71,7 +73,7 @@ NT = 50
 LX = 40.
 LY = 20.
 NX = 40
-theta = 1.; # Parameter for the generalized mid point scheme.
+theta = 0.5; # Parameter for the generalized mid point scheme.
 order = 2;
 
 # Arguments from the command line if any
@@ -230,7 +232,11 @@ if (option == 2):
         sigma_theta = ('(lambda*Trace('+Etheta+'-'+Eptheta
                        +')*Id(meshdim) + 2*mu*('+Etheta+'-'+Eptheta+'))')
     
-    fbound = '(Norm(Deviator('+sigma_theta+'))-sqrt(2/3)*von_mises_threshold)'
+    if (constraint_at_np1):
+      fbound = '(Norm(Deviator('+sigma_np1+'))-sqrt(2/3)*von_mises_threshold)'
+    else:
+      fbound = '(Norm(Deviator('+sigma_theta+'))-sqrt(2/3)*von_mises_threshold)'
+    
     # fbound = '(Norm('+Eptheta+'-Epn)-theta*xi*von_mises_threshold)'
     expr = sigma_np1+':Grad_Test_u+(1/r)*(xi-pos_part(xi+r*'+fbound+'))*Test_xi'
     # expr = sigma_np1+':Grad_Test_u+('+fbound+'+pos_part(-xi/r-'+fbound+
@@ -273,8 +279,12 @@ if (option == 3):
     
     # fbound = ('(Norm(Deviator('+sigma_theta+')-Hk*'+Eptheta
     #           +') - von_mises_threshold - Hi*'+alpha_theta+')')
-    fbound = ('(Norm(2*mu*Deviator('+Etheta+')-(2*mu+Hk)*'+Eptheta
-              +') - sqrt(2/3)*(von_mises_threshold + Hi*'+alpha_theta+'))')
+    if (constraint_at_np1):
+      fbound = ('(Norm(2*mu*Deviator(Sym(Grad_u))-(2*mu+Hk)*'+Epnp1
+                +') - sqrt(2/3)*(von_mises_threshold + Hi*'+alpha_np1+'))')
+    else:
+      fbound = ('(Norm(2*mu*Deviator('+Etheta+')-(2*mu+Hk)*'+Eptheta
+                +') - sqrt(2/3)*(von_mises_threshold + Hi*'+alpha_theta+'))')
     expr = (sigma_np1+':Grad_Test_u + (1/r)*(xi - pos_part(xi+r*'+fbound
             +'))*Test_xi')
     # expr = (sigma_np1+':Grad_Test_u + ('+fbound+' + pos_part(-xi/r-'+fbound
