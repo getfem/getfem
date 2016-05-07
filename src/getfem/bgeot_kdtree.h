@@ -107,7 +107,7 @@ namespace bgeot {
   public:
     kdtree() : N(0) {}
     /// reset the tree, remove all points
-    void clear() { clear_tree(); pts.clear(); N = 0; }
+    void clear() { clear_tree(); pts = kdtree_tab_type(); N = 0; }
     void reserve(size_type n) { pts.reserve(n); }
     /// insert a new point
     size_type add_point(const base_node& n) { 
