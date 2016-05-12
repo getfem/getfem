@@ -123,14 +123,14 @@ namespace getfem {
     gmm::clear(daexp.as_vector());
     gmm::scale(factnn, scale);
     for (--n; n >= 1; --n) {
-	   scalar_type factn = factnn[n];
+      scalar_type factn = factnn[n];
       for (size_type m=1; m <= n; ++m)
         for (size_type l=0; l < N; ++l)
           for (size_type k=0; k < N; ++k)
             for (size_type j=0; j < N; ++j)
               for (size_type i=0; i < N; ++i)
                 daexp(i,j,k,l) += factn*ann(i,k,m-1)*ann(l,j,n-m);
-	 }
+    }
 
     // unscale result
     base_matrix atmp1(a), atmp2(a);
@@ -277,16 +277,16 @@ namespace getfem {
       scalar_type eps = 1E-25;
       scalar_type no = ::sqrt(gmm::vect_norm2_sqr(t.as_vector())+gmm::sqr(eps));
       gmm::copy(gmm::scaled(t.as_vector(), scalar_type(1)/no),
-		result.as_vector());
+                result.as_vector());
     }
 #   else
     void value(const arg_list &args, base_tensor &result) const {
       scalar_type no = gmm::vect_norm2(args[0]->as_vector());
       if (no < 1E-15)
-	gmm::clear(result.as_vector());
+        gmm::clear(result.as_vector());
       else
-	gmm::copy(gmm::scaled(args[0]->as_vector(), scalar_type(1)/no),
-      result.as_vector());
+        gmm::copy(gmm::scaled(args[0]->as_vector(), scalar_type(1)/no),
+                  result.as_vector());
     }
 #   endif
 
@@ -302,18 +302,18 @@ namespace getfem {
       scalar_type no3 = no*no*no;
 
       for (size_type i = 0; i < N; ++i) {
-	result[i*N+i] += scalar_type(1)/no;
-	for (size_type j = 0; j < N; ++j)
-	  result[j*N+i] -= t[i]*t[j] / no3;
+        result[i*N+i] += scalar_type(1)/no;
+        for (size_type j = 0; j < N; ++j)
+          result[j*N+i] -= t[i]*t[j] / no3;
       }
     }
 #   else
     void derivative(const arg_list &args, size_type,
-		    base_tensor &result) const {
+                    base_tensor &result) const {
       const base_tensor &t = *args[0];
       size_type N = t.size();
       scalar_type no = gmm::vect_norm2(t.as_vector());
-      
+
       gmm::clear(result.as_vector());
       if (no >= 1E-15) {
         scalar_type no3 = no*no*no;
@@ -352,7 +352,7 @@ namespace getfem {
       scalar_type eps = (*args[1])[0];
       scalar_type no = ::sqrt(gmm::vect_norm2_sqr(t.as_vector())+gmm::sqr(eps));
       gmm::copy(gmm::scaled(t.as_vector(), scalar_type(1)/no),
-		result.as_vector());
+                result.as_vector());
     }
 
     // Derivative / u : ((|u|^2+eps^2) Id - u x u)/(|u|^2+eps^2)^(3/2)
@@ -368,17 +368,17 @@ namespace getfem {
 
       switch (nder) {
       case 1:
-	for (size_type i = 0; i < N; ++i) {
-	  result[i*N+i] += scalar_type(1)/no;
-	  for (size_type j = 0; j < N; ++j)
-	    result[j*N+i] -= t[i]*t[j] / no3;
-	}
-	break;
-	
+        for (size_type i = 0; i < N; ++i) {
+          result[i*N+i] += scalar_type(1)/no;
+          for (size_type j = 0; j < N; ++j)
+            result[j*N+i] -= t[i]*t[j] / no3;
+        }
+        break;
+
       case 2:
-	gmm::copy(gmm::scaled(t.as_vector(), -scalar_type(eps)/no3),
-		  result.as_vector());
-	break;
+        gmm::copy(gmm::scaled(t.as_vector(), -scalar_type(eps)/no3),
+                  result.as_vector());
+        break;
       }
     }
 
@@ -485,7 +485,7 @@ namespace getfem {
       = dal::singleton<ga_predef_operator_tab>::instance();
 
     PREDEF_OPERATORS.add_method("Expm",
-                               std::make_shared<matrix_exponential_operator>());
+                                std::make_shared<matrix_exponential_operator>());
     PREDEF_OPERATORS.add_method("Logm",
                                 std::make_shared<matrix_logarithm_operator>());
     PREDEF_OPERATORS.add_method("Normalized",
@@ -493,7 +493,7 @@ namespace getfem {
     PREDEF_OPERATORS.add_method("Normalized_reg",
                                 std::make_shared<normalized_reg_operator>());
     PREDEF_OPERATORS.add_method("Von_Mises_projection",
-                            std::make_shared<Von_Mises_projection_operator>());
+                                std::make_shared<Von_Mises_projection_operator>());
     return true;
    }
 
@@ -527,8 +527,8 @@ namespace getfem {
     const mesh_fem *mfu = md.pmesh_fem_of_variable(dispname);
     size_type N = mfu->linked_mesh().dim();
     GMM_ASSERT1(mfu && mfu->get_qdim() == N, "The small strain "
-	       "elastoplasticity brick can only be applied on a fem "
-	       "variable of the same dimension as the mesh");
+               "elastoplasticity brick can only be applied on a fem "
+               "variable of the same dimension as the mesh");
 
     GMM_ASSERT1(md.is_data(Previous_Ep) &&
                 (md.pim_data_of_variable(Previous_Ep) ||
@@ -540,7 +540,7 @@ namespace getfem {
     bgeot::multi_index Ep_size(N, N);
     GMM_ASSERT1((md.pim_data_of_variable(Previous_Ep) &&
                  md.pim_data_of_variable(Previous_Ep)->tensor_size() == Ep_size)
-		||
+                ||
                 (md.pmesh_fem_of_variable(Previous_Ep) &&
                  md.pmesh_fem_of_variable(Previous_Ep)->get_qdims() == Ep_size),
                 "Wrong size of " << Previous_Ep);
@@ -567,9 +567,9 @@ namespace getfem {
     Epnp1 = ga_substitute("(Eptheta - (1-(theta))*Epn)/(theta)", dict);
     dict["Epnp1"] = Epnp1;
     sigma_np1 = ga_substitute("(lambda)*Trace(Enp1)*Id(meshdim)"
-			      " + 2*(mu)*((Enp1)-(Epnp1))", dict);
+                              " + 2*(mu)*((Enp1)-(Epnp1))", dict);
     sigma_after = ga_substitute("(lambda)*Trace(Enp1)*Id(meshdim) "
-				"+ 2*(mu)*((Enp1)-(Epn))", dict);
+                                "+ 2*(mu)*((Enp1)-(Epn))", dict);
   }
 
 
@@ -594,8 +594,8 @@ namespace getfem {
     const mesh_fem *mfu = md.pmesh_fem_of_variable(dispname);
     size_type N = mfu->linked_mesh().dim();
     GMM_ASSERT1(mfu && mfu->get_qdim() == N, "The small strain "
-	       "elastoplasticity brick can only be applied on a fem "
-	       "variable of the same dimension as the mesh");
+               "elastoplasticity brick can only be applied on a fem "
+               "variable of the same dimension as the mesh");
 
     GMM_ASSERT1(md.is_data(Previous_Ep) &&
                 (md.pim_data_of_variable(Previous_Ep) ||
@@ -607,7 +607,7 @@ namespace getfem {
     bgeot::multi_index Ep_size(N, N);
     GMM_ASSERT1((md.pim_data_of_variable(Previous_Ep) &&
                  md.pim_data_of_variable(Previous_Ep)->tensor_size() == Ep_size)
-		||
+                ||
                 (md.pmesh_fem_of_variable(Previous_Ep) &&
                  md.pmesh_fem_of_variable(Previous_Ep)->get_qdims() == Ep_size),
                 "Wrong size of " << Previous_Ep);
@@ -635,7 +635,7 @@ namespace getfem {
       ("(Norm(2*mu*Deviator(Etheta)-(2*mu)*Eptheta)-sqrt(2/3)*(sigma_y))",dict);
 
     sigma_after = ga_substitute("(lambda)*Trace(Enp1)*Id(meshdim) "
-				"+ 2*(mu)*((Enp1)-(Epn))", dict);
+                                "+ 2*(mu)*((Enp1)-(Epn))", dict);
   }
 
 
@@ -655,41 +655,41 @@ namespace getfem {
     filter_lawname(lawname);
 
     if (with_plastic_multiplier) {
-      if ((lawname.compare("isotropic_perfect_plasticity") == 0 ||
-	   lawname.compare("prandtl_reuss") == 0)) {
-	
-	std::string sigma_np1, Epnp1, fbound, sigma_after;
-	build_isotropic_perfect_elastoplasticity_expressions_with_multiplier
-	  (md, varnames, params, theta, sigma_np1, Epnp1, fbound, sigma_after);
+      if (lawname.compare("isotropic_perfect_plasticity") == 0 ||
+          lawname.compare("prandtl_reuss") == 0) {
 
-	const std::string dispname=sup_previous_and_dot_to_varname(varnames[0]);
-	const std::string xi      =sup_previous_and_dot_to_varname(varnames[0]);
+        std::string sigma_np1, Epnp1, fbound, sigma_after;
+        build_isotropic_perfect_elastoplasticity_expressions_with_multiplier
+          (md, varnames, params, theta, sigma_np1, Epnp1, fbound, sigma_after);
 
-	std::string expr = ("("+sigma_np1+"):Grad_Test_"+dispname
-		      + "+(1/r)*("+xi+"-pos_part(xi+r*"+fbound+"))*Test_"+xi);
+        const std::string dispname=sup_previous_and_dot_to_varname(varnames[0]);
+        const std::string xi      =sup_previous_and_dot_to_varname(varnames[0]);
 
-	return add_nonlinear_generic_assembly_brick
-	  (md, mim, expr, region, true, false,
-	   "Small strain isotropic perfect elastoplasticity brick");
-	
+        std::string expr = ("("+sigma_np1+"):Grad_Test_"+dispname
+                         + "+(1/r)*("+xi+"-pos_part(xi+r*"+fbound+"))*Test_"+xi);
+
+        return add_nonlinear_generic_assembly_brick
+          (md, mim, expr, region, true, false,
+           "Small strain isotropic perfect elastoplasticity brick");
+
       }  else
-	GMM_ASSERT1(false,
-		    lawname << " is not an implemented elastoplastic law");
+        GMM_ASSERT1(false,
+                    lawname << " is not an implemented elastoplastic law");
     } else {
 
-      if ((lawname.compare("isotropic_perfect_plasticity") == 0 ||
-	   lawname.compare("prandtl_reuss") == 0)) {
-	std::string sigma_np1, Epnp1, sigma_after;
-	build_isotropic_perfect_elastoplasticity_expressions_without_multiplier
-	  (md, varnames, params, theta, sigma_np1, Epnp1, sigma_after);
-	
-	return add_nonlinear_generic_assembly_brick
-	  (md, mim, "("+sigma_np1+"):Grad_Test_u", region, true, false,
-	   "Small strain isotropic perfect elastoplasticity brick");
+      if (lawname.compare("isotropic_perfect_plasticity") == 0 ||
+          lawname.compare("prandtl_reuss") == 0) {
+        std::string sigma_np1, Epnp1, sigma_after;
+        build_isotropic_perfect_elastoplasticity_expressions_without_multiplier
+          (md, varnames, params, theta, sigma_np1, Epnp1, sigma_after);
+        
+        return add_nonlinear_generic_assembly_brick
+          (md, mim, "("+sigma_np1+"):Grad_Test_u", region, true, false,
+           "Small strain isotropic perfect elastoplasticity brick");
       
       } else
-	GMM_ASSERT1(false,
-		    lawname << " is not an implemented elastoplastic law");
+        GMM_ASSERT1(false,
+                    lawname << " is not an implemented elastoplastic law");
     }
   }
 
@@ -702,11 +702,11 @@ namespace getfem {
 
     filter_lawname(lawname);
     if (!with_plastic_multiplier &&
-	(lawname.compare("isotropic_perfect_plasticity") == 0 ||
-	 lawname.compare("prandtl_reuss") == 0)) {
+        (lawname.compare("isotropic_perfect_plasticity") == 0 ||
+         lawname.compare("prandtl_reuss") == 0)) {
       std::string sigma_np1, Epnp1, sigma_after;
       build_isotropic_perfect_elastoplasticity_expressions_without_multiplier
-	(md, varnames, params, theta, sigma_np1, Epnp1, sigma_after);
+        (md, varnames, params, theta, sigma_np1, Epnp1, sigma_after);
 
       const std::string dispname=sup_previous_and_dot_to_varname(varnames[0]);
       const std::string xi      =sup_previous_and_dot_to_varname(varnames[0]);
@@ -715,16 +715,16 @@ namespace getfem {
       base_vector tmpv(gmm::vect_size(md.real_variable(Previous_Ep)));
       const im_data *pimd = md.pim_data_of_variable(Previous_Ep);
       if (pimd)
-	ga_interpolation_im_data(md, Epnp1, *pimd, tmpv, region);
+        ga_interpolation_im_data(md, Epnp1, *pimd, tmpv, region);
       else {
-	const mesh_fem *pmf = md.pmesh_fem_of_variable(Previous_Ep);
-	GMM_ASSERT1(pmf, "Provided data " << Previous_Ep
-		    << " should be defined on a im_data or a mesh_fem object");
-	ga_local_projection(md, mim, Epnp1, *pmf, tmpv, region);
+        const mesh_fem *pmf = md.pmesh_fem_of_variable(Previous_Ep);
+        GMM_ASSERT1(pmf, "Provided data " << Previous_Ep
+                    << " should be defined on a im_data or a mesh_fem object");
+        ga_local_projection(md, mim, Epnp1, *pmf, tmpv, region);
       }
       gmm::copy(tmpv, md.set_real_variable(Previous_Ep));
       gmm::copy(md.real_variable("Previous_"+dispname),
-		md.set_real_variable(dispname));
+                md.set_real_variable(dispname));
     }
   }
 
@@ -738,26 +738,26 @@ namespace getfem {
    model_real_plain_vector &VM, size_type region) {
     
     GMM_ASSERT1(mf_vm.get_qdim() == 1,
-		"Von mises stress can only be approximated on a scalar fem");
+                "Von mises stress can only be approximated on a scalar fem");
     VM.resize(mf_vm.nb_dof());
       
     filter_lawname(lawname);
     if (!with_plastic_multiplier &&
-	(lawname.compare("isotropic_perfect_plasticity") == 0 ||
-	 lawname.compare("prandtl_reuss") == 0)) {
+        (lawname.compare("isotropic_perfect_plasticity") == 0 ||
+         lawname.compare("prandtl_reuss") == 0)) {
       std::string sigma_np1, Epnp1, sigma_after;
       build_isotropic_perfect_elastoplasticity_expressions_without_multiplier
-	(md, varnames, params, theta, sigma_np1, Epnp1, sigma_after);
+        (md, varnames, params, theta, sigma_np1, Epnp1, sigma_after);
 
       const im_data *pimd = md.pim_data_of_variable(varnames[1]);
       std::string vm = "sqrt(3/2)*Norm(Deviator("+sigma_after+"))";
       if (pimd)
-	ga_local_projection(md, mim, vm, mf_vm, VM, region);
+        ga_local_projection(md, mim, vm, mf_vm, VM, region);
       else {
-	const mesh_fem *pmf = md.pmesh_fem_of_variable(varnames[1]);
-	GMM_ASSERT1(pmf, "Provided data " << varnames[1]
-		    << " should be defined on a im_data or a mesh_fem object");
-	ga_interpolation_Lagrange_fem(md, vm, mf_vm, VM, region);
+        const mesh_fem *pmf = md.pmesh_fem_of_variable(varnames[1]);
+        GMM_ASSERT1(pmf, "Provided data " << varnames[1]
+                    << " should be defined on a im_data or a mesh_fem object");
+        ga_interpolation_Lagrange_fem(md, vm, mf_vm, VM, region);
       }
     }
     
@@ -1486,8 +1486,8 @@ namespace getfem {
       const model_real_plain_vector &u_n = md.real_variable(dl[4]);
       const mesh_fem &mf_u = *(md.pmesh_fem_of_variable(vl[0]));
       GMM_ASSERT1(&mf_u == md.pmesh_fem_of_variable(dl[4]),
-		  "The previous displacement data have to be defined on the "
-		  "same mesh_fem as the displacement variable");
+                  "The previous displacement data have to be defined on the "
+                  "same mesh_fem as the displacement variable");
 
       const model_real_plain_vector &lambda = md.real_variable(dl[0]);
       const model_real_plain_vector &mu = md.real_variable(dl[1]);

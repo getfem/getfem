@@ -138,7 +138,7 @@ namespace getfem {
       ``real'' and the ``complex'' models.
   */
   class APIDECL model : public context_dependencies,
-			virtual public dal::static_stored_object {
+                        virtual public dal::static_stored_object {
 
   protected:
 
@@ -215,7 +215,7 @@ namespace getfem {
       // im data description
       const im_data *pim_data;
 
-      size_type qdim(void) const { return qdims.total_size(); }
+      size_type qdim() const { return qdims.total_size(); }
 
       var_description(bool is_var = false, bool is_com = false,
                       bool is_fem = false, size_type n_it = 1,
@@ -374,7 +374,7 @@ namespace getfem {
       real_dof_constraints;
     mutable std::map<std::string, complex_dof_constraints_var>
       complex_dof_constraints;
-    void clear_dof_constraints(void)
+    void clear_dof_constraints()
     { real_dof_constraints.clear(); complex_dof_constraints.clear(); }
 
     // Structure dealing with nonlinear expressions
@@ -395,12 +395,12 @@ namespace getfem {
     std::map<std::string, std::string> macros;
 
 
-    virtual void actualize_sizes(void) const;
+    virtual void actualize_sizes() const;
     bool check_name_validity(const std::string &name, bool assert=true) const;
     void brick_init(size_type ib, build_version version,
                     size_type rhs_ind = 0) const;
 
-    void init(void) { complex_version = false; act_size_to_be_done = false; }
+    void init() { complex_version = false; act_size_to_be_done = false; }
 
     void resize_global_system() const;
 
@@ -419,12 +419,12 @@ namespace getfem {
     { generic_expressions.push_back(gen_expr(expr, mim, region)); }
     void add_external_load(size_type ib, scalar_type e) const
     { bricks[ib].external_load = e; }
-    scalar_type approx_external_load(void) { return approx_external_load_; }
+    scalar_type approx_external_load() { return approx_external_load_; }
     // call the brick if necessary
     void update_brick(size_type ib, build_version version) const;
     void linear_brick_add_to_rhs(size_type ib, size_type ind_data,
                                  size_type n_iter) const;
-    void update_affine_dependent_variables(void);
+    void update_affine_dependent_variables();
     void brick_call(size_type ib, build_version version,
                     size_type rhs_ind = 0) const;
     model_real_plain_vector &rhs_coeffs_of_brick(size_type ib) const
@@ -443,15 +443,13 @@ namespace getfem {
       return bricks[ib].pbr;
     }
 
-    void variable_list(varnamelist &vl) const {
-      for (VAR_SET::const_iterator it = variables.begin();
-             it != variables.end(); ++it) vl.push_back(it->first);
-    }
+    void variable_list(varnamelist &vl) const
+    { for (const auto &v : variables) vl.push_back(v.first); }
 
     void define_variable_group(const std::string &group_name,
                                const std::vector<std::string> &nl);
     bool variable_group_exists(const std::string &group_name) const
-    { return variable_groups.find(group_name) != variable_groups.end(); }
+    { return variable_groups.count(group_name) > 0; }
 
     const std::vector<std::string> &
     variable_group(const std::string &group_name) const {
@@ -498,12 +496,12 @@ namespace getfem {
 
     /* function to be called by Dirichlet bricks */
     void add_real_dof_constraint(const std::string &varname, size_type dof,
-                            scalar_type val) const
-    { (real_dof_constraints[varname])[dof] = val; }
+                                 scalar_type val) const
+    { real_dof_constraints[varname][dof] = val; }
     /* function to be called by Dirichlet bricks */
     void add_complex_dof_constraint(const std::string &varname, size_type dof,
-                               complex_type val) const
-    { (complex_dof_constraints[varname])[dof] = val; }
+                                    complex_type val) const
+    { complex_dof_constraints[varname][dof] = val; }
 
 
     void add_temporaries(const varnamelist &vl, gmm::uint64_type id_num) const;
@@ -521,18 +519,18 @@ namespace getfem {
     { return bricks[ib].region; }
 
     bool temporary_uptodate(const std::string &varname,
-                            gmm::uint64_type  id_num, size_type &ind) const;
+                            gmm::uint64_type id_num, size_type &ind) const;
 
     size_type n_iter_of_variable(const std::string &name) const {
-      return (variables.find(name) == variables.end()) ?
-                                      size_type(0) : variables[name].n_iter;
+      return variables.count(name) == 0 ? size_type(0)
+                                        : variables[name].n_iter;
     }
 
     void set_default_iter_of_variable(const std::string &varname,
                                       size_type ind) const;
     void reset_default_iter_of_variables(const varnamelist &vl) const;
 
-    void update_from_context(void) const { act_size_to_be_done = true; }
+    void update_from_context() const { act_size_to_be_done = true; }
 
     const model_real_sparse_matrix &linear_real_matrix_term
     (size_type ib, size_type iterm);
@@ -559,9 +557,8 @@ namespace getfem {
     void enable_variable(const std::string &name);
 
     /** Says if a name corresponds to a declared variable.  */
-    bool variable_exists(const std::string &name) const {
-      return (variables.find(name) != variables.end());
-    }
+    bool variable_exists(const std::string &name) const
+    { return variables.count(name) > 0; }
 
     bool is_disabled_variable(const std::string &name) const;
 
@@ -605,7 +602,7 @@ namespace getfem {
     size_type nb_dof() const;
 
     /** Leading dimension of the meshes used in the model. */
-    dim_type leading_dimension(void) const { return leading_dim; }
+    dim_type leading_dimension() const { return leading_dim; }
 
     /** Gives a non already existing variable name begining by `name`. */
     std::string new_name(const std::string &name);
@@ -645,22 +642,20 @@ namespace getfem {
 
     template<typename VECTOR, typename T>
     void from_variables(VECTOR &V, T) const {
-      for (VAR_SET::iterator it = variables.begin();
-        it != variables.end(); ++it)
-        if (it->second.is_variable && !(it->second.is_affine_dependent)
-            && !(it->second.is_disabled))
-          gmm::copy(it->second.real_value[0],
-                    gmm::sub_vector(V, it->second.I));
+      for (const auto &v : variables)
+        if (v.second.is_variable && !(v.second.is_affine_dependent)
+            && !(v.second.is_disabled))
+          gmm::copy(v.second.real_value[0],
+                    gmm::sub_vector(V, v.second.I));
     }
 
     template<typename VECTOR, typename T>
     void from_variables(VECTOR &V, std::complex<T>) const {
-      for (VAR_SET::iterator it = variables.begin();
-        it != variables.end(); ++it)
-      if (it->second.is_variable && !(it->second.is_affine_dependent)
-          && !(it->second.is_disabled))
-        gmm::copy(it->second.complex_value[0],
-                  gmm::sub_vector(V, it->second.I));
+      for (const auto &v : variables)
+        if (v.second.is_variable && !(v.second.is_affine_dependent)
+            && !(v.second.is_disabled))
+          gmm::copy(v.second.complex_value[0],
+                    gmm::sub_vector(V, v.second.I));
     }
 
     template<typename VECTOR> void from_variables(VECTOR &V) const {
@@ -671,28 +666,26 @@ namespace getfem {
 
     template<typename VECTOR, typename T>
     void to_variables(const VECTOR &V, T) {
-      for (VAR_SET::iterator it = variables.begin();
-        it != variables.end(); ++it)
-      if (it->second.is_variable && !(it->second.is_affine_dependent)
-          && !(it->second.is_disabled)) {
-        gmm::copy(gmm::sub_vector(V, it->second.I),
-          it->second.real_value[0]);
-        it->second.v_num_data = act_counter();
-      }
+      for (auto &&v : variables)
+        if (v.second.is_variable && !(v.second.is_affine_dependent)
+            && !(v.second.is_disabled)) {
+          gmm::copy(gmm::sub_vector(V, v.second.I),
+                    v.second.real_value[0]);
+          v.second.v_num_data = act_counter();
+        }
       update_affine_dependent_variables();
       this->post_to_variables_step();
     }
 
     template<typename VECTOR, typename T>
     void to_variables(const VECTOR &V, std::complex<T>) {
-      for (VAR_SET::iterator it = variables.begin();
-        it != variables.end(); ++it)
-      if (it->second.is_variable && !(it->second.is_affine_dependent)
-          && !(it->second.is_disabled)) {
-        gmm::copy(gmm::sub_vector(V, it->second.I),
-          it->second.complex_value[0]);
-        it->second.v_num_data = act_counter();
-      }
+      for (auto &&v : variables)
+        if (v.second.is_variable && !(v.second.is_affine_dependent)
+            && !(v.second.is_disabled)) {
+          gmm::copy(gmm::sub_vector(V, v.second.I),
+                    v.second.complex_value[0]);
+          v.second.v_num_data = act_counter();
+        }
       update_affine_dependent_variables();
       this->post_to_variables_step();
     }
@@ -1038,22 +1031,22 @@ namespace getfem {
     /** Add a time dispacther to a brick. */
     void add_time_dispatcher(size_type ibrick, pdispatcher pdispatch);
 
-    void set_dispatch_coeff(void);
+    void set_dispatch_coeff();
 
     /** For transient problems. Initialisation of iterations. */
-    virtual void first_iter(void);
+    virtual void first_iter();
 
     /** For transient problems. Prepare the next iterations. In particular
         shift the version of the variables.
     */
-    virtual void next_iter(void);
+    virtual void next_iter();
 
     /** Add a interpolate transformation to the model to be used with the
         generic assembly.
     */
     void add_interpolate_transformation(const std::string &name,
                                         pinterpolate_transformation ptrans) {
-      if (transformations.find(name) != transformations.end())
+      if (transformations.count(name) > 0)
         GMM_ASSERT1(name.compare("neighbour_elt"), "neighbour_elt is a "
                     "reserved interpolate transformation name");
        transformations[name] = ptrans;
@@ -1071,9 +1064,8 @@ namespace getfem {
 
     /** Tests if `name` correpsonds to an interpolate transformation.
     */
-    bool interpolate_transformation_exists(const std::string &name) const {
-      return (transformations.find(name) != transformations.end());
-    }
+    bool interpolate_transformation_exists(const std::string &name) const
+    { return transformations.count(name) > 0; }
 
     /** Add an elementary transformation to the model to be used with the
         generic assembly.
@@ -1096,9 +1088,8 @@ namespace getfem {
 
     /** Tests if `name` correpsonds to an elementary transformation.
     */
-    bool elementary_transformation_exists(const std::string &name) const {
-      return (elem_transformations.find(name) != elem_transformations.end());
-    }
+    bool elementary_transformation_exists(const std::string &name) const
+    { return elem_transformations.count(name) > 0; }
 
     /** Gives the name of the variable of index `ind_var` of the brick
         of index `ind_brick`. */
@@ -1148,15 +1139,13 @@ namespace getfem {
   **/
   class APIDECL virtual_time_scheme {
 
-  protected:
-
   public:
 
     virtual void init_affine_dependent_variables(model &md) const = 0;
     virtual void init_affine_dependent_variables_precomputation(model &md)
       const = 0;
-     virtual void time_derivative_to_be_intialized(std::string &name_v,
-                                      std::string &name_previous_v) const = 0;
+    virtual void time_derivative_to_be_intialized
+      (std::string &name_v, std::string &name_previous_v) const = 0;
     virtual void shift_variables(model &md) const = 0;
     virtual ~virtual_time_scheme() {}
   };
@@ -1190,7 +1179,7 @@ namespace getfem {
 
   public:
 
-    size_type nbrhs(void) const { return nbrhs_; }
+    size_type nbrhs() const { return nbrhs_; }
 
     typedef model::build_version build_version;
 
@@ -1390,15 +1379,15 @@ namespace getfem {
     }
 
 #   define BRICK_NOT_INIT GMM_ASSERT1(isinit, "Set brick flags !")
-    bool is_linear(void)    const { BRICK_NOT_INIT; return islinear;    }
-    bool is_symmetric(void) const { BRICK_NOT_INIT; return issymmetric; }
-    bool is_coercive(void)  const { BRICK_NOT_INIT; return iscoercive;  }
-    bool is_real(void)      const { BRICK_NOT_INIT; return isreal;      }
-    bool is_complex(void)   const { BRICK_NOT_INIT; return iscomplex;   }
-    bool has_Neumann_term(void) const {BRICK_NOT_INIT; return hasNeumannterm; }
-    bool is_to_be_computed_each_time(void) const
+    bool is_linear()    const { BRICK_NOT_INIT; return islinear;    }
+    bool is_symmetric() const { BRICK_NOT_INIT; return issymmetric; }
+    bool is_coercive()  const { BRICK_NOT_INIT; return iscoercive;  }
+    bool is_real()      const { BRICK_NOT_INIT; return isreal;      }
+    bool is_complex()   const { BRICK_NOT_INIT; return iscomplex;   }
+    bool has_Neumann_term() const {BRICK_NOT_INIT; return hasNeumannterm; }
+    bool is_to_be_computed_each_time() const
     { BRICK_NOT_INIT; return compute_each_time; }
-    const std::string &brick_name(void) const { BRICK_NOT_INIT; return name; }
+    const std::string &brick_name() const { BRICK_NOT_INIT; return name; }
 
 
     /** Assembly of bricks real tangent terms.
@@ -1575,7 +1564,7 @@ namespace getfem {
      base_node &P_ref, base_small_vector &N_y,
      std::map<var_trans_pair, base_tensor> &derivatives,
      bool compute_derivatives) const = 0;
-    virtual void finalize(void) const = 0;
+    virtual void finalize() const = 0;
 
     virtual ~virtual_interpolate_transformation() {}
   };

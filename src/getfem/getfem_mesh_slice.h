@@ -242,16 +242,7 @@ namespace getfem {
       size_type pos = 0;
       coeff.resize(qqdim);
       std::vector<T> U(mf.nb_basic_dof()*qqdim);
-      if (mf.is_reduced()) {
-        for (size_type k = 0; k < qqdim; ++k)
-          gmm::mult(mf.extension_matrix(),
-                    gmm::sub_vector(UU, gmm::sub_slice(k, mf.nb_dof(),
-                                                       qqdim)),
-                    gmm::sub_vector(U,gmm::sub_slice(k, mf.nb_basic_dof(),
-                                                     qqdim)));
-      }
-      else
-        gmm::copy(UU, U);
+      mf.extend_vector(UU, U);
 
       gmm::clear(V);
       for (size_type i=0; i < nb_convex(); ++i) {

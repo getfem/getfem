@@ -110,17 +110,14 @@ namespace getfem {
         papprox_integration pai = pim->approx_method();
 
         for (const auto &box : boxlst) {
-          bool is_in(false);
           for (size_type k = 0; k < pai->nb_points(); ++k) {
             base_node gpt = pgt->transform(pai->point(k),
                                            m.points_of_convex(cv));
             if (functions[box->id]->is_in_support(gpt)) {
-              is_in = true;
+              index_of_global_dof_[cv].push_back(box->id);
               break;
             }
           }
-          if (is_in)
-            index_of_global_dof_[cv].push_back(box->id);
         }
       } else { // !has_mesh_im
         for (const auto &box : boxlst)

@@ -2220,16 +2220,16 @@ namespace getfem {
       variables[vl[i]].default_iter = 0;
   }
 
-  const model_real_sparse_matrix &model::linear_real_matrix_term
-  (size_type ib, size_type iterm) {
+  const model_real_sparse_matrix &
+  model::linear_real_matrix_term(size_type ib, size_type iterm) {
     GMM_ASSERT1(bricks[ib].tlist[iterm].is_matrix_term,
                 "Not a matrix term !");
     GMM_ASSERT1(bricks[ib].pbr->is_linear(), "Nonlinear term !");
     return bricks[ib].rmatlist[iterm];
   }
 
-  const model_complex_sparse_matrix &model::linear_complex_matrix_term
-  (size_type ib, size_type iterm) {
+  const model_complex_sparse_matrix &
+  model::linear_complex_matrix_term(size_type ib, size_type iterm) {
     GMM_ASSERT1(bricks[ib].tlist[iterm].is_matrix_term,
                 "Not a matrix term !");
     GMM_ASSERT1(bricks[ib].pbr->is_linear(), "Nonlinear term !");
