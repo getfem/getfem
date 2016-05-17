@@ -23,6 +23,7 @@
 #include <queue>
 #include "getfem/dal_singleton.h"
 #include "getfem/getfem_mesh_fem.h"
+#include "getfem/getfem_torus.h"
 
 namespace getfem {
 
@@ -791,7 +792,9 @@ namespace getfem {
       assert(it == mfs.end() || it->second->is_context_valid());
 
       if (it == mfs.end()) {
-        auto pmf = std::make_shared<mesh_fem>(msh, qdim);
+        auto p_torus_mesh = dynamic_cast<const getfem::torus_mesh *>(&msh);
+        auto pmf = (p_torus_mesh) ? std::make_shared<torus_mesh_fem>(*p_torus_mesh, qdim)
+                                  : std::make_shared<mesh_fem>(msh, qdim);
         pmf->set_classical_finite_element(o);
         pmf->set_auto_add(o, false);
         return *(mfs[key] = pmf);
