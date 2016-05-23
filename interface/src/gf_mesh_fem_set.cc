@@ -67,7 +67,7 @@ static void set_classical_fem(getfem::mesh_fem *mf, getfemint::mexargs_in& in,
   dim_type K = dim_type(in.pop().to_integer(0,255));
 
   scalar_type alpha = 0.0;
-  if (in.remaining()) alpha = in.pop().to_scalar();
+  if (discontinuous && in.remaining()) alpha = in.pop().to_scalar();
 
   dal::bit_vector bv;
   if (in.remaining()) {
