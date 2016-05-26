@@ -33,14 +33,14 @@ import os
 import sys
 
 NT = 128; NX = 256; option = 3; Hi = 0; Hk = 0; load_type = 1; theta = 0.5;
-LX=100.; order = 2;
+LX=100.; order = 2; do_export = 1;
 resultspath = './exported_solutions'
 
 
 def call_test_plasticity():
     return os.system("python test_small_strain_plasticity.py option"+
-        ("=%d NX=%d NT=%d Hi=%g Hk=%g theta=%g resultspath=%s load_type=%d order=%d"
-         % (option, NX, NT, Hi, Hk, theta, resultspath, load_type, order)))
+        ("=%d NX=%d NT=%d Hi=%g Hk=%g theta=%g resultspath=%s load_type=%d order=%d do_export=%d"
+         % (option, NX, NT, Hi, Hk, theta, resultspath, load_type, order, do_export)))
   
 
 
@@ -52,7 +52,7 @@ def call_test_plasticity():
 # Computation of the reference solution if necessary
 refname_U  = resultspath+'/ref_perfect_plasticity_U.dat'
 refname_mf = resultspath+'/ref_perfect_plasticity_mf.mf'
-NT = 256; NX = 256; option = 4; Hi = 0; Hk = 0; load_type = 1;
+NT = 256; NX = 256; option = 3; Hi = 0; Hk = 0; load_type = 1; theta = 0.5; order = 2;
 if (not(os.path.exists(refname_U)) or not(os.path.isfile(refname_U))):
   if (call_test_plasticity() != 0):
       print ('Error in the computation of the reference solution'); exit(1)
@@ -61,7 +61,8 @@ if (not(os.path.exists(refname_U)) or not(os.path.isfile(refname_U))):
   filename = resultspath+('/U_%d.dat' % (NT))
   os.system("cp %s %s" % (filename, refname_U))
 
-hrange=[LX/16, LX/22.5, LX/32, LX/45, LX/64, LX/90., LX/128]
+# hrange=[LX/16, LX/22.5, LX/32, LX/45, LX/64, LX/90., LX/128.]
+hrange=[LX/16, LX/22.5, LX/32, LX/45, LX/64]
 
 for order in [1, 2]:
 
@@ -159,7 +160,7 @@ for order in [1, 2]:
 # Computation of the reference solution if necessary
 refname_U  = resultspath+'/ref_hardening_plasticity_U.dat'
 refname_mf = resultspath+'/ref_hardening_plasticity_mf.mf'
-NT = 256; NX = 256; option = 4; Hi = 12000; Hk = 12000; load_type = 2; theta = 0.5; LX=100.; order = 2;
+NT = 256; NX = 256; option = 3; Hi = 12000; Hk = 12000; load_type = 2; theta = 0.5; LX=100.; order = 2; do_plot = 0;
 if (not(os.path.exists(refname_U)) or not(os.path.isfile(refname_U))):
   if (call_test_plasticity() != 0):
       print ('Error in the computation of the reference solution'); exit(1)

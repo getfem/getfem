@@ -341,8 +341,8 @@ static bool dal_static_stored_tab_valid__ = true;
   {
       getfem::omp_guard lock;
       GMM_NOPERATION(lock);
-      stored_object_tab& stored_objects
-        = dal::singleton<stored_object_tab>::instance();
+      // stored_object_tab& stored_objects
+      //   = dal::singleton<stored_object_tab>::instance();
 
       if (dal_static_stored_tab_valid__) {
 

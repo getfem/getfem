@@ -131,7 +131,7 @@ A solution would be to solve the whole problem with all the unknows, that is :ma
 
 which results from the local flow rule integration  (the pair :math:`(\varepsilon^p_{n+\theta}, \alpha_{n+\theta}) = ({\mathscr E}^p(u_{n+\theta},  \varepsilon^p_{n}, \alpha_n), {\mathscr A}(u_{n+\theta}, \varepsilon^p_{n}, \alpha_n))` is the solution to equations :eq:`flowrule1`, :eq:`flowrule2` and  :eq:`flowrule3`). Both these maps and their tangent moduli (usually called consistent tangent moduli) are then used in the global solve of the problem with a Newton method and for :math:`u_{n+1}` the unique remaining variable. The advantage of the return mapping strategy is that the unique variable of the global solve is the displacement :math:`u_{n+1}`. A nonlinear solve on each Gauss point is often necessary which is usualy performed with a local Newton method.
 
-In |gf| we propose both the return mapping trategy and also an alternative strategy developped below which is mainly inspired from  [PO-NI2016]_,  [SE-PO-WO2015]_ and [HA-WO2009]_ and allow more simple tangent moduli. It consists in keeping (a multiple of) :math:`\Delta \gamma` as an additional unknown with respect to :math:`u_{n+1}`. As we will see, this will allow a more generic treatment of the yield functions, the price for the simplicity being this additional unknown scalar field.
+In |gf| we propose both the return mapping strategy and also an alternative strategy developped below which is mainly inspired from  [PO-NI2016]_,  [SE-PO-WO2015]_ and [HA-WO2009]_ and allow more simple tangent moduli. It consists in keeping (a multiple of) :math:`\Delta \gamma` as an additional unknown with respect to :math:`u_{n+1}`. As we will see, this will allow a more generic treatment of the yield functions, the price for the simplicity being this additional unknown scalar field.
 
 First, we consider an additional (and optional) given function :math:`\alpha(\sigma_{n+\theta}, A_{n+\theta}) > 0` whose interest will appear later on (it will allow simple local inverses) and the new unknown scalar field
 
@@ -288,7 +288,7 @@ The flow rule can be written in term of differential inclusion
 
 .. math:: \dot{\varepsilon}^p \in  \partial I_K(\sigma),
 
-where :math:`K = \left\{ \sigma : \|\mbox{Dev}(\sigma)\| \le \sqrt{\frac{2}{3}}\sigma_y\right\}` is the set of admissible stres tensors, :math:`I_K` is the indicator function of this set and :math:`\partial I_K` its sub-differential (normal cone to :math:`K`). This can be equivalently written
+where :math:`K = \left\{ \sigma : \|\mbox{Dev}(\sigma)\| \le \sqrt{\frac{2}{3}}\sigma_y\right\}` is the set of admissible stress tensors, :math:`I_K` is the indicator function of this set and :math:`\partial I_K` its sub-differential (normal cone to :math:`K`). This can be equivalently written
 
 .. math:: \sigma\in K, ~~~(\tau - \sigma):\dot{\varepsilon}^p \le 0 ~~~ \forall \tau \in K.
 

@@ -46,10 +46,11 @@ load_type = 1  # 1 : vertical
                # 2 : horizontal
 
 constraint_at_np1 = True
+trapezoidal = False  # trapezoidal or generalized mid-point  (for option 2 only for the moment ...)
                
 bi_material = False
 test_tangent_matrix = False
-do_plot = True
+do_export = True
 
 resultspath = './exported_solutions'
 
@@ -99,13 +100,16 @@ for i in range(1,len(sys.argv)):
   if (a[0:12] == 'resultspath='):
       resultspath=a[12:]; print 'resultspath set to %s from argv' % resultspath
       continue
+  if (a[0:10] == 'do_export='):
+      do_export=a[10:]; print 'do_export set to %s from argv' % do_export
+      continue
   print "Unknow argument '%s' from the command line, exiting" % a; exit(1);
 
 NY = int(np.ceil(NX * LY / (2 * LX))*2)
 DT = T/NT
 
 
-if (do_plot):
+if (do_export):
     if (not os.path.exists(resultspath)):
         os.makedirs(resultspath)
     print('You can vizualize the optimization steps by launching')
@@ -224,20 +228,26 @@ if (option == 2):
                      +')*Id(meshdim) + 2*mu*(Sym(Grad_u)-'+Epnp1+'))')
         sigma_theta = sigma_np1;
     else:
-        Etheta = '(Sym(theta*Grad_u+(1-theta)*Grad_Previous_u))'
-        Eptheta = '((Epn+2*mu*theta*xi*Deviator('+Etheta+'))/(1+2*mu*theta*xi))'
-        Epnp1 = '(('+Eptheta+'-(1-theta)*Epn)/theta)'
+        En = '(Sym(Grad_Previous_u))'
+        Enp1 =  '(Sym(Grad_u))'
+        Etheta = '(theta*'+Enp1+'+(1-theta)*'+En+')'
+        if (trapezoidal):
+            md.add_fem_variable('Previous_xi', mf_xi)
+            Epnp1='((Epn+(1-theta)*2*mu*Previous_xi*(Deviator('+En+')-Epn) + 2*mu*theta*xi*Deviator('+Enp1+'))/(1+2*mu*theta*xi))'
+            Eptheta='(theta*'+Epnp1+'+(1-theta)*'+Epn+')'
+        else:
+          Eptheta='((Epn+2*mu*theta*xi*Deviator('+Etheta+'))/(1+2*mu*theta*xi))'
+          Epnp1 = '(('+Eptheta+'-(1-theta)*Epn)/theta)'
         sigma_np1 = ('(lambda*Trace(Sym(Grad_u)-'+Epnp1
                      +')*Id(meshdim) + 2*mu*(Sym(Grad_u)-'+Epnp1+'))')
         sigma_theta = ('(lambda*Trace('+Etheta+'-'+Eptheta
                        +')*Id(meshdim) + 2*mu*('+Etheta+'-'+Eptheta+'))')
     
-    if (constraint_at_np1):
+    if (constraint_at_np1 or trapezoidal):
       fbound = '(Norm(Deviator('+sigma_np1+'))-sqrt(2/3)*von_mises_threshold)'
     else:
       fbound = '(Norm(Deviator('+sigma_theta+'))-sqrt(2/3)*von_mises_threshold)'
     
-    # fbound = '(Norm('+Eptheta+'-Epn)-theta*xi*von_mises_threshold)'
     expr = sigma_np1+':Grad_Test_u+(1/r)*(xi-pos_part(xi+r*'+fbound+'))*Test_xi'
     # expr = sigma_np1+':Grad_Test_u+('+fbound+'+pos_part(-xi/r-'+fbound+
     #        '))*Test_xi'
@@ -433,13 +443,13 @@ for step in range(0, len(t)):
    
     # Solve the system
     md.solve('noisy', 'lsearch', 'simplest',  'alpha min', 0.4, 'max_iter', 50,
-             'max_res', 1e-6)
+             'max_res', 1e-6, 'lsolver', 'mumps')
     # md.solve('noisy', 'max_iter', 80)
 
     U = md.variable('u')
 
     # Compute Von Mises and plastic part for graphical post-treatment
-    if (do_plot):
+    if (do_export):
         if (option == 1):
             sigma_np1 = 'sigma';
         else:
@@ -480,6 +490,8 @@ for step in range(0, len(t)):
         NewEpn = md.interpolation(Epnp1, mim_data)
         md.set_variable('Epn', NewEpn)
         md.set_variable('Previous_u', U)
+        if (trapezoidal):
+            md.set_variable('Previous_xi', md.variable('xi'))
         
     if (option == 3 or option == 4):
         NewEpn = md.interpolation(Epnp1, mim_data)
@@ -504,7 +516,7 @@ for step in range(0, len(t)):
         md.set_variable('Previous_u', U)
       
        
-    if (do_plot):
+    if (do_export):
         # Export Von Mises and plastic part
         filename = resultspath+('/von_mises_%d.vtk' % (step))
         mf_vm.export_to_vtk(filename, mf_vm, VM.reshape((len(VM))),
