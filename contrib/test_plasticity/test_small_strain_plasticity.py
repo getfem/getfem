@@ -32,7 +32,7 @@ import matplotlib.pyplot as plt
 import os
 import sys
 
-option = 2     # 1 : without hardening, im_data and plastic multiplier
+option = 1     # 1 : without hardening, im_data and plastic multiplier
                # 2 : without hardening, with im_data and plastic multiplier
                # 3 : with kinematic and isotropic hardening,
                #     with plastic multiplier
@@ -45,12 +45,14 @@ option = 2     # 1 : without hardening, im_data and plastic multiplier
 load_type = 1  # 1 : vertical
                # 2 : horizontal
 
-constraint_at_np1 = True
-trapezoidal = False  # trapezoidal or generalized mid-point  (for option 2 only for the moment ...)
+constraint_at_np1 = False
+trapezoidal = False  # Trapezoidal or generalized mid-point  (for option 2 only for the moment ...)
                
 bi_material = False
 test_tangent_matrix = False
-do_export = True
+do_export = 2  # 0 : no export,
+               # 1 : export_solution only,
+               # 2 : export for graphical post-treatment.
 
 resultspath = './exported_solutions'
 
@@ -70,7 +72,7 @@ Hk = mu_top/5.; Hi = Hk; Hi = 0. # Kinematic and isotropic hardening parameters
 
 # Numerical parameters
 T = 10.
-NT = 50
+NT = 40
 LX = 40.
 LY = 20.
 NX = 40
@@ -101,15 +103,17 @@ for i in range(1,len(sys.argv)):
       resultspath=a[12:]; print 'resultspath set to %s from argv' % resultspath
       continue
   if (a[0:10] == 'do_export='):
-      do_export=a[10:]; print 'do_export set to %s from argv' % do_export
+      do_export=int(a[10:]); print 'do_export set to %s from argv' % do_export
       continue
   print "Unknow argument '%s' from the command line, exiting" % a; exit(1);
 
 NY = int(np.ceil(NX * LY / (2 * LX))*2)
 DT = T/NT
 
+gf.util('trace_level', 1);
 
-if (do_export):
+
+if (do_export >= 2):
     if (not os.path.exists(resultspath)):
         os.makedirs(resultspath)
     print('You can vizualize the optimization steps by launching')
@@ -121,7 +125,7 @@ if (load_type == 2 and option < 3):
     exit(1)
 
 if (load_type == 1):
-    f = np.array([0., -400.]);
+    f = np.array([0., -1150.]);
     t = np.sin(2*np.pi*(np.arange(0, T+DT/2, DT))/20.);
 else:
     f = np.array([15000., 0.]);
@@ -220,7 +224,7 @@ if (option == 2):
     # exit(1);
     
     
-    if (theta == 1):
+    if (theta == 1.):
         Etheta = '(Sym(Grad_u))';
         Eptheta = '((Epn+2*mu*xi*Deviator('+Etheta+'))/(1+2*mu*xi))'
         Epnp1 = Eptheta
@@ -232,9 +236,9 @@ if (option == 2):
         Enp1 =  '(Sym(Grad_u))'
         Etheta = '(theta*'+Enp1+'+(1-theta)*'+En+')'
         if (trapezoidal):
-            md.add_fem_variable('Previous_xi', mf_xi)
+            md.add_fem_data('Previous_xi', mf_xi)
             Epnp1='((Epn+(1-theta)*2*mu*Previous_xi*(Deviator('+En+')-Epn) + 2*mu*theta*xi*Deviator('+Enp1+'))/(1+2*mu*theta*xi))'
-            Eptheta='(theta*'+Epnp1+'+(1-theta)*'+Epn+')'
+            Eptheta='(theta*'+Epnp1+'+(1-theta)*Epn)'
         else:
           Eptheta='((Epn+2*mu*theta*xi*Deviator('+Etheta+'))/(1+2*mu*theta*xi))'
           Epnp1 = '(('+Eptheta+'-(1-theta)*Epn)/theta)'
@@ -449,7 +453,7 @@ for step in range(0, len(t)):
     U = md.variable('u')
 
     # Compute Von Mises and plastic part for graphical post-treatment
-    if (do_export):
+    if (do_export >= 2):
         if (option == 1):
             sigma_np1 = 'sigma';
         else:
@@ -515,8 +519,13 @@ for step in range(0, len(t)):
         md.set_variable('Epn', NewEpn)
         md.set_variable('Previous_u', U)
       
-       
-    if (do_export):
+    if (do_export >= 1):
+        filename = resultspath+('/mf_%d.mf' % (step))
+        mf_u.save(filename, 'with_mesh')
+        filename = resultspath+('/U_%d.dat' % (step))
+        np.savetxt(filename, U)
+        
+    if (do_export >= 2):
         # Export Von Mises and plastic part
         filename = resultspath+('/von_mises_%d.vtk' % (step))
         mf_vm.export_to_vtk(filename, mf_vm, VM.reshape((len(VM))),
@@ -525,11 +534,6 @@ for step in range(0, len(t)):
         mf_vm.export_to_vtk(filename, mf_vm, plast.reshape((len(plast))),
                             'Norm of plastic strain tensor', mf_u, U,
                             'Displacements')
-        filename = resultspath+('/mf_%d.mf' % (step))
-        mf_u.save(filename, 'with_mesh')
-        filename = resultspath+('/U_%d.dat' % (step))
-        np.savetxt(filename, U)
-        
 
         # Draw the stress/strain evolution on a selected Gauss point
         if (step == 0):

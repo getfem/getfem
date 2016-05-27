@@ -61,8 +61,8 @@ if (not(os.path.exists(refname_U)) or not(os.path.isfile(refname_U))):
   filename = resultspath+('/U_%d.dat' % (NT))
   os.system("cp %s %s" % (filename, refname_U))
 
-# hrange=[LX/16, LX/22.5, LX/32, LX/45, LX/64, LX/90., LX/128.]
-hrange=[LX/16, LX/22.5, LX/32, LX/45, LX/64]
+hrange=[LX/16, LX/22.5, LX/32, LX/45, LX/64, LX/90., LX/128.]
+# hrange=[LX/16, LX/22.5, LX/32, LX/45, LX/64]
 
 for order in [1, 2]:
 
