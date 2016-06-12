@@ -313,7 +313,12 @@ bool elastostatic_contact_problem::solve() {
 
 //  getfem::default_newton_line_search ls;
   getfem::simplest_newton_line_search ls(50, 5., 5., 0.6, 1e-1);
-  getfem::standard_solve(md, iter, getfem::rselect_linear_solver(md,"mumps"), ls);
+
+  #ifdef GMM_USES_MUMPS
+    getfem::standard_solve(md, iter, getfem::rselect_linear_solver(md,"mumps"), ls);
+  #else
+    getfem::standard_solve(md, iter, getfem::default_linear_solver<getfem::model_real_sparse_matrix, getfem::model_real_plain_vector>(md), ls);
+  #endif
 
   if (!iter.converged()) return false; // Solution has not converged
 
