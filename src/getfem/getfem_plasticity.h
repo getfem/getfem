@@ -58,7 +58,7 @@ namespace getfem {
    bool with_plastic_multiplier,
    const std::vector<std::string> &varnames,
    const std::vector<std::string> &params,
-   const std::string &theta, size_type region);
+   const std::string &theta, const std::string &dt, size_type region);
   
 
 

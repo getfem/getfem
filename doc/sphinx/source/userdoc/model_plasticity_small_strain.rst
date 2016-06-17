@@ -74,13 +74,13 @@ The surface :math:`f(\sigma, A) = 0` is the yield surface where the plastic defo
 
 Let us also consider the plastic potential :math:`\Psi(\sigma, A)`, (convex with respect to its both variables) which determines the plastic flow direction in the sense that the flow rule is defined as
 
-.. math:: \dot{\varepsilon}^p = \dot{\gamma} \Frac{\partial \Psi}{\partial \sigma}(\sigma, A), ~~~~~~ \dot{\alpha} = \dot{\gamma} \Frac{\partial \Psi}{\partial A}(\sigma, A),
+.. math:: \dot{\varepsilon}^p = \gamma \Frac{\partial \Psi}{\partial \sigma}(\sigma, A), ~~~~~~ \dot{\alpha} = -\gamma \Frac{\partial \Psi}{\partial A}(\sigma, A),
 
 with the additional complementarity condition
 
-.. math:: f(\sigma, A) \le 0, ~~~ \dot{\gamma} \ge 0, ~~~ f(\sigma, A) \dot{\gamma} = 0.
+.. math:: f(\sigma, A) \le 0, ~~~ \gamma \ge 0, ~~~ f(\sigma, A) \gamma = 0.
 
-The variable :math:`\dot{\gamma}` is called the plastic multiplier. Note that when :math:`\psi(\varepsilon^e, \alpha), f(\sigma, A) \mbox{ or } \Psi(\sigma, A)` are not differentiable, subdifferentials have to be used. Associated plasticity corresponds to the choice :math:`\Psi(\sigma, A) = f(\sigma, A)`.
+The variable :math:`\gamma` is called the plastic multiplier. Note that when :math:`\psi(\varepsilon^e, \alpha), f(\sigma, A) \mbox{ or } \Psi(\sigma, A)` are not differentiable, subdifferentials have to be used. Associated plasticity corresponds to the choice :math:`\Psi(\sigma, A) = f(\sigma, A)`.
 
 Initial boundary value problem
 ==============================
@@ -105,60 +105,72 @@ Given a time step :math:`\Delta t = t_{n+1} -t_n`, from time :math:`t_n` to :mat
 Flow rule integration
 +++++++++++++++++++++
 
-The plastic flow rule has to be integrated with its own time integration scheme. Among standards schemes, the backward Euler scheme, the :math:`\theta`-scheme and the generalized mid-point scheme are the most commonly used in that context. We make here the choice of the generalized mid-point scheme.
+The plastic flow rule has to be integrated with its own time integration scheme. Among standards schemes, the backward Euler scheme, the :math:`\theta`-scheme (or generalized trapezoidal rule) and the generalized mid-point scheme are the most commonly used in that context. We make here the choice of the :math:`\theta`-scheme (:math:`\theta = 1` corresponds to the backward Euler scheme as a special case).
 
 
-Let :math:`u_{n+1}` be the displacement at the considered time step and  :math:`u_{n}` at the previous one. For a quantity :math:`B` we denote :math:`B_{n+\theta} = \theta B_{n+1} + (1-\theta)B_n` the convex combination of the quantity at iterations :math:`n` and :math:`n+1`.
+Let :math:`u_{n+1}` be the displacement at the considered time step and  :math:`u_{n}` at the previous one.
 
-The mid-point scheme for the integration of the plastic flow rules reads as
+The :math:`\theta`-scheme for the integration of the plastic flow rules reads as
 
-.. math:: \varepsilon^p_{n+1} - \varepsilon^p_{n} = \Delta \gamma \Frac{\Psi}{\partial \sigma}(\sigma_{n+\theta}, A_{n+\theta}),
+.. math:: \varepsilon^p_{n+1} - \varepsilon^p_{n} = (1-\theta)\Delta t \gamma_n \Frac{\partial \Psi}{\partial \sigma}(\sigma_{n}, A_{n}) + \theta \Delta t \gamma_{n+1} \Frac{\partial \Psi}{\partial \sigma}(\sigma_{n+1}, A_{n+1}),
+  :label: thetascheme1
 
-.. math:: \alpha_{n+1} - \alpha_n = \Delta \gamma \Frac{\Psi}{\partial A}(\sigma_{n+\theta}, A_{n+\theta}),
+.. math:: \alpha_{n+1} - \alpha_n = -(1-\theta)\Delta t \gamma_n \Frac{\partial \Psi}{\partial A}(\sigma_{n}, A_{n}) - \theta\Delta t \gamma_{n+1} \Frac{\partial \Psi}{\partial A}(\sigma_{n+1}, A_{n+1}),
+  :label: thetascheme2
 
 with the complementary condition
 
-.. math:: f(\sigma_{n+\theta}, A_{n+\theta}) \le 0, ~~~ \Delta\gamma \ge 0, ~~~ f(\sigma_{n+\theta}, A_{n+\theta}) \Delta \gamma = 0.
+.. math:: f(\sigma_{n+1}, A_{n+1}) \le 0, ~~~ \gamma_{n+1} \ge 0, ~~~ f(\sigma_{n+1}, A_{n+1}) \gamma_{n+1} = 0.
 
-where :math:`0 < \theta \le 1` is the parameter of the mid-point scheme. We exclude :math:`\theta = 0` because we will not consider explicit integration of plasticity. Let us recall that :math:`\theta = 1` corresponds to the backward Euler scheme and :math:`\theta = 1/2` to the mid-point scheme which is a second order consistent scheme.
+where :math:`0 < \theta \le 1` is the parameter of the :math:`\theta`-scheme. We exclude :math:`\theta = 0` because we will not consider explicit integration of plasticity. Let us recall that :math:`\theta = 1` corresponds to the backward Euler scheme and :math:`\theta = 1/2` to the Crank-Nicolson scheme (or trapezoidal rule) which is a second order consistent scheme. Note that the complementarity condition for the quantities at time step :math:`n` is prescribed at the previous time step (:math:`\sigma_{n}, \alpha_n, \mbox{and } \gamma_n` are supposed to be already determined).
 
-A solution would be to solve the whole problem with all the unknows, that is :math:`u_{n+1}, \Delta \gamma, \varepsilon^p_{n+1} \mbox{ and } A_{n+1}`. This is of course possible but would be a rather expensive strategy because of the resulting high number of degrees of freedom. A classical strategy (the return mapping one for instance, see [SO-PE-OW2008]_ or the closes point projection one) consist in integrating locally the plastic flow on each Gauss point of the considered integration method separately, or more precisely to consider on each Gauss point the maps
-
-.. math::
-   {\mathscr E}^p : (u_{n+\theta}, \varepsilon^p_{n}, \alpha_n) \mapsto \varepsilon^p_{n+\theta}
-
-   {\mathscr A} : (u_{n+\theta}, \varepsilon^p_{n}, \alpha_n) \mapsto \alpha_{n+\theta}
-
-which results from the local flow rule integration  (the pair :math:`(\varepsilon^p_{n+\theta}, \alpha_{n+\theta}) = ({\mathscr E}^p(u_{n+\theta},  \varepsilon^p_{n}, \alpha_n), {\mathscr A}(u_{n+\theta}, \varepsilon^p_{n}, \alpha_n))` is the solution to equations :eq:`flowrule1`, :eq:`flowrule2` and  :eq:`flowrule3`). Both these maps and their tangent moduli (usually called consistent tangent moduli) are then used in the global solve of the problem with a Newton method and for :math:`u_{n+1}` the unique remaining variable. The advantage of the return mapping strategy is that the unique variable of the global solve is the displacement :math:`u_{n+1}`. A nonlinear solve on each Gauss point is often necessary which is usualy performed with a local Newton method.
-
-In |gf| we propose both the return mapping strategy and also an alternative strategy developped below which is mainly inspired from  [PO-NI2016]_,  [SE-PO-WO2015]_ and [HA-WO2009]_ and allow more simple tangent moduli. It consists in keeping (a multiple of) :math:`\Delta \gamma` as an additional unknown with respect to :math:`u_{n+1}`. As we will see, this will allow a more generic treatment of the yield functions, the price for the simplicity being this additional unknown scalar field.
-
-First, we consider an additional (and optional) given function :math:`\alpha(\sigma_{n+\theta}, A_{n+\theta}) > 0` whose interest will appear later on (it will allow simple local inverses) and the new unknown scalar field
-
-.. math:: \Delta \xi = \Frac{\Delta \gamma}{\alpha(\sigma_{n+\theta}, A_{n+\theta})} ,
-
-so that our two main unknows are now :math:`u_{n+1} \mbox{ and } \Delta \xi`. The plastic flow rule integration may now read:
-
-.. math:: \varepsilon^p_{n+\theta} - \varepsilon^p_{n} = \alpha(\sigma_{n+\theta}, A_{n+\theta}) \theta \Delta \xi \Frac{\Psi}{\partial \sigma}(\sigma_{n+\theta}, A_{n+\theta}).
-   :label: flowrule1
-
-.. math::  \alpha_{n+\theta} - \alpha_n = \alpha(\sigma_{n+\theta}, A_{n+\theta}) \theta \Delta \xi \Frac{\Psi}{\partial A}(\sigma_{n+\theta}, A_{n+\theta}),
-   :label: flowrule2
-
-.. math:: f(\sigma_{n+\theta}, A_{n+\theta}) \le 0, ~~~ \Delta\xi \ge 0, ~~~ f(\sigma_{n+\theta}, A_{n+\theta}) \Delta \xi = 0.
-   :label: flowrule3
-
-For :math:`u_{n+1} \mbox{ and } \Delta \xi` be given, we define the two maps
+A solution would be to solve the whole problem with all the unknows, that is :math:`u_{n+1},  \gamma_{n+1}, \varepsilon^p_{n+1} \mbox{ and } A_{n+1}`. This is of course possible but would be a rather expensive strategy because of the resulting high number of degrees of freedom. A classical strategy (the return mapping one for instance, see [SO-PE-OW2008]_ or the closest point projection one) consist in integrating locally the plastic flow on each Gauss point of the considered integration method separately, or more precisely to consider on each Gauss point the maps
 
 .. math::
-   \tilde{\mathscr E}^p : (u_{n+\theta}, \theta \Delta \xi, \varepsilon^p_{n}, \alpha_n) \mapsto \varepsilon^p_{n+\theta}
+   {\mathscr E}^p : (u_{n+1}, \zeta_n, \eta_n) \mapsto \varepsilon^p_{n+1}
 
-   \tilde{\mathscr A} : (u_{n+\theta}, \theta \Delta \xi, \varepsilon^p_{n}, \alpha_n) \mapsto \alpha_{n+\theta}
+   {\mathscr A} : (u_{n+1}, \zeta_{n}, \eta_n) \mapsto \alpha_{n+1}
+
+   
+
+with :math:`\eta_n, \zeta_{n}` the right hand side of equations :eq:`thetascheme1`, :eq:`thetascheme2`, i.e.
+
+.. math::
+   \zeta_n = \varepsilon^p_{n} + (1-\theta)\Delta t \gamma_n \Frac{\partial \Psi}{\partial \sigma}(\sigma_{n}, A_{n}) ,
+
+   \eta_n = \alpha_n - (1-\theta)\Delta t \gamma_n \Frac{\partial \Psi}{\partial A}(\sigma_{n}, A_{n})
+
+This means in particular that :math:`(\varepsilon^p_{n+1}, \alpha_{n+1}) = ({\mathscr E}^p(u_{n+1},  \zeta_n, \eta_n), {\mathscr A}(u_{n+1}, \zeta_{n}, \eta_n))` is the solution to equations :eq:`thetascheme1` and :eq:`thetascheme2`. Both these maps and their tangent moduli (usually called consistent tangent moduli) are then used in the global solve of the problem with a Newton method and for :math:`u_{n+1}` the unique remaining variable. The advantage of the return mapping strategy is that the unique variable of the global solve is the displacement :math:`u_{n+1}`. A nonlinear solve on each Gauss point is often necessary which is usualy performed with a local Newton method.
+
+In |gf| we propose both the return mapping strategy and also an alternative strategy developped below which is mainly inspired from  [PO-NI2016]_,  [SE-PO-WO2015]_ and [HA-WO2009]_ and allow more simple tangent moduli. It consists in keeping (a multiple of) :math:`\gamma_{n+1}` as an additional unknown with respect to :math:`u_{n+1}`. As we will see, this will allow a more generic treatment of the yield functions, the price for the simplicity being this additional unknown scalar field.
+
+First, we consider an additional (and optional) given function :math:`\alpha(\sigma_{n+1}, A_{n+1}) > 0` whose interest will appear later on (it will allow simple local inverses) and the new unknown scalar field
+
+.. math:: \xi_{n+1} = \Frac{\gamma_{n+1}}{\alpha(\sigma_{n+1}, A_{n+1})} ,
+
+so that our two main unknows are now :math:`u_{n+1} \mbox{ and } \xi_{n+1}`. The discretized plastic flow rule integration now reads:
+
+.. math:: \varepsilon^p_{n+1} - \varepsilon^p_{n} = (1-\theta)\alpha(\sigma_n,A_n)\Delta t \xi_n \Frac{\partial \Psi}{\partial \sigma}(\sigma_{n}, A_{n}) + \theta \alpha(\sigma_{n+1},A_{n+1}) \Delta t \xi_{n+1} \Frac{\partial \Psi}{\partial \sigma}(\sigma_{n+1}, A_{n+1}),
+  :label: flowrule1
+
+.. math:: \alpha_{n+1} - \alpha_n = (1-\theta) \alpha(\sigma_n,A_n)\Delta t \xi_n \Frac{\partial \Psi}{\partial A}(\sigma_{n}, A_{n}) + \theta \alpha(\sigma_{n+1},A_{n+1}) \Delta t \xi_{n+1} \Frac{\partial \Psi}{\partial A}(\sigma_{n+1}, A_{n+1}),
+  :label: flowrule2
+
+.. math:: f(\sigma_{n+1}, A_{n+1}) \le 0, ~~~ \xi_{n+1} \ge 0, ~~~ f(\sigma_{n+1}, A_{n+1}) \xi_{n+1} = 0.
+  :label: flowrule3
 
 
-where the pair :math:`(\varepsilon^p_{n+\theta}, \alpha_{n+\theta}) = (\tilde{\mathscr E}^p(u_{n+\theta}, \theta \Delta \xi, \varepsilon^p_{n}, \alpha_n), \tilde{\mathscr A}(u_{n+\theta}, \theta \Delta \xi, \varepsilon^p_{n}, \alpha_n))` is the solution to equations :eq:`flowrule1`, :eq:`flowrule2` (without the consideration of  :eq:`flowrule3`). We will see later, that, at least for simple isotropic plastic flow rules, these maps have a simple expression, even sometimes a linear one with respect to :math:`u_{n+\theta}`.
+For :math:`u_{n+1} \mbox{ and } \xi_{n+1}` be given, we define the two maps
 
-Still :math:`u_{n+1} \mbox{ and } \Delta \xi` be given the stress :math:`\sigma_{n+1}` reads
+.. math::
+   \tilde{\mathscr E}^p : (u_{n+1}, \theta \Delta t \xi_{n+1}, \zeta_{n}, \eta_n) \mapsto \varepsilon^p_{n+1}
+
+   \tilde{\mathscr A} : (u_{n+1}, \theta \Delta t \xi_{n+1}, \zeta_{n}, \eta_n) \mapsto \alpha_{n+1}
+
+
+where the pair :math:`(\varepsilon^p_{n+1}, \alpha_{n+1}) = (\tilde{\mathscr E}^p(u_{n+1}, \theta \xi_{n+1}, \zeta_{n}, \eta_n), \tilde{\mathscr A}(u_{n+1}, \theta \xi_{n+1}, \zeta_{n}, \eta_n))` is the solution to equations :eq:`flowrule1`, :eq:`flowrule2` (without the consideration of  :eq:`flowrule3`). We will see later, that, at least for simple isotropic plastic flow rules, these maps have a simple expression, even sometimes a linear one with respect to :math:`u_{n+1}`.
+
+Still :math:`u_{n+1} \mbox{ and } \xi_{n+1}` be given the stress :math:`\sigma_{n+1}` reads
 
 .. math:: \sigma_{n+1} = \Frac{\partial \psi^e}{\partial \varepsilon^e}(\varepsilon(u_{n+1}) -\varepsilon^p_{n+1}).
 
@@ -166,12 +178,13 @@ Still :math:`u_{n+1} \mbox{ and } \Delta \xi` be given the stress :math:`\sigma_
 
 The complementarity equation :eq:`flowrule3` is then prescribed with the use of a well chosen complementarity function, as in [HA-WO2009]_ for :math:`r > 0` such as:
 
-.. math:: \ds \int_{\Omega} (\Delta \xi - (\Delta \xi + r f(\sigma_{n+\theta}, A_{n+\theta}))_+) \lambda dx = 0,   \forall \lambda
+.. math:: \ds \int_{\Omega} (\xi_{n+1} - (\xi_{n+1} + r f(\sigma_{n+1}, A_{n+1}))_+) \lambda dx = 0,   \forall \lambda
 
 or
 
-.. math:: \ds \int_{\Omega} (f(\sigma_{n+\theta} + (-f(\sigma_{n+\theta}, A_{n+\theta}) - \Delta \xi/r)_+ , A_{n+\theta}) ) \lambda dx = 0,   \forall \lambda
+.. math:: \ds \int_{\Omega} (f(\sigma_{n+1} + (-f(\sigma_{n+1}, A_{n+1}) - \xi_{n+1}/r)_+ , A_{n+1}) ) \lambda dx = 0,   \forall \lambda
 
+NOTE : The notation :math:`\Delta \xi_{n+1} = \Delta t \xi_{n+1}` is often used in the litterature. The choice here is to preserve the distinction between the two quantities, mainly because ot the possible use of adaptative time step : when the time step is changing, the value :math:`\xi_n` has to be multiplied by the new time step, so that it is preferable to store :math:`\xi_n` instead of :math:`\Delta \xi_{n}` when using the :math:`\theta`-scheme.
 
 
 Plane strain approximation
@@ -252,7 +265,7 @@ Some classical laws
 +++++++++++++++++++
 
 
-Tresca : :math:`\rho(\sigma) \le \sigma_y` where :math:`\rho(\sigma)` spectral radius of the Cauchy stress tensor and :math:`\sigma_y` the uniaxial yield stress (which may depend on some hardening internal variables.
+Tresca : :math:`\rho(\sigma) \le \sigma_y` where :math:`\rho(\sigma)` spectral radius of the Cauchy stress tensor and :math:`\sigma_y` the uniaxial yield stress (which may depend on some hardening internal variables).
 
 Von Mises :  :math:`\|\mbox{Dev}(\sigma)\| \le \sqrt{\frac{2}{3}}\sigma_y` where
 :math:`\mbox{Dev}(\sigma) = \sigma - \frac{1}{3}\mbox{tr}(\sigma)I` the deviatoric part of :math:`\sigma` and :math:`\|\sigma\| = \sqrt{\sigma:\sigma}`.
@@ -263,150 +276,165 @@ Perfect isotropic associated elastoplasticity with Von-Mises criterion (Prandl-R
 
 There is no internal variables and we consider an isotropic elastic response. The flow rule reads
 
-.. math:: \dot{\varepsilon}^p = \dot{\gamma} \Frac{\mbox{Dev}(\sigma)}{\|\mbox{Dev}(\sigma)\|}
+.. math:: \dot{\varepsilon}^p = \gamma \Frac{\mbox{Dev}(\sigma)}{\|\mbox{Dev}(\sigma)\|}
 
 This corresponds to :math:`\Psi(\sigma) = f(\sigma) = \|\mbox{Dev}(\sigma)\| - \sqrt{\frac{2}{3}}\sigma_y`.
 
 
-The generalized mid-point scheme for the integration of the plastic flow rule reads:
+The :math:`\theta`-scheme for the integration of the plastic flow rule reads:
 
-.. math:: \varepsilon^p_{n+\theta} - \varepsilon^p_{n} = \theta \alpha(\sigma_{n+\theta}, A_{n+\theta}) \Delta \xi \Frac{\mbox{Dev}(\sigma_{n+\theta})}{\|\mbox{Dev}(\sigma_{n+\theta})\|}.
+.. math:: \varepsilon^p_{n+1} - \varepsilon^p_{n} = (1-\theta)\alpha(\sigma_{n}) \Delta t \xi_n \Frac{\mbox{Dev}(\sigma_{n})}{\|\mbox{Dev}(\sigma_{n})\|} + \theta\alpha(\sigma_{n+1}) \Delta t \xi_{n+1} \Frac{\mbox{Dev}(\sigma_{n+1})}{\|\mbox{Dev}(\sigma_{n+1})\|}.
 
-Choosing the factor :math:`\alpha(\sigma_{n+\theta}) = \|\mbox{Dev}(\sigma_{n+\theta})\|` and still with :math:`\Delta \xi = \Frac{\Delta \gamma}{\alpha(\sigma_{n+\theta})}` this gives the equation
+Choosing the factor :math:`\alpha(\sigma_{n}) = \|\mbox{Dev}(\sigma_{n})\|` and still with :math:`\xi_n = \Frac{\gamma_n}{\alpha(\sigma_{n})}` this gives the equation
 
-.. math::  \varepsilon^p_{n+\theta} - \varepsilon^p_{n} = \theta \Delta \xi \mbox{Dev}(\sigma_{n+\theta}).
+.. math::  \varepsilon^p_{n+1} - \varepsilon^p_{n} = (1-\theta)\Delta t \xi_n \mbox{Dev}(\sigma_{n}) + \theta \Delta t \xi_{n+1} \mbox{Dev}(\sigma_{n+1}).
 
-Since :math:`\mbox{Dev}(\sigma_{n+\theta}) = 2\mu\mbox{Dev}(\varepsilon(u_{n+\theta})) - 2\mu\varepsilon^p_{n+\theta}` this directly gives:
+Since :math:`\mbox{Dev}(\sigma_{n+1}) = 2\mu\mbox{Dev}(\varepsilon(u_{n+1})) - 2\mu\varepsilon^p_{n+1}` this directly gives:
 
-.. math:: \tilde{\mathscr E}^p(u_{n+\theta}, \theta \Delta \xi, \varepsilon^p_{n}) = \Frac{1}{1+2\mu\theta\Delta \xi}(\varepsilon^p_{n} + 2\mu\theta\Delta \xi \mbox{Dev}(\varepsilon(u_{n+\theta}))),
+.. math:: \tilde{\mathscr E}^p(u_{n+1}, \theta \Delta t \xi_{n+1}, \zeta_{n}) = \zeta_n + \left(1-\Frac{1}{1+2\mu\theta\Delta t\xi_{n+1}}\right)(\mbox{Dev}(\varepsilon(u_{n+1})) - \zeta_n),
 
-which is a linear expression with respect to :math:`u_{n+1}` (but not with respect to :math:`\Delta \xi`).
+which is a linear expression with respect to :math:`u_{n+1}` (but not with respect to :math:`\xi_{n+1}`).
 
-**Closest point projection approach (elimination of the multiplier)**
+Moreover, :math:`\zeta_n` is defined by
 
-The flow rule can be written in term of differential inclusion
+.. math:: \zeta_n = \varepsilon^p_n+(1-\theta)\Delta t \xi_n (\mbox{Dev}(\sigma_n)) = \varepsilon^p_n+(1-\theta)\Delta t \xi_n 2\mu \left(\mbox{Dev}(\varepsilon(u_{n}))-\varepsilon^n_p\right).
 
-.. math:: \dot{\varepsilon}^p \in  \partial I_K(\sigma),
+**Elimination of the multiplier (for the return mapping approach)**
 
-where :math:`K = \left\{ \sigma : \|\mbox{Dev}(\sigma)\| \le \sqrt{\frac{2}{3}}\sigma_y\right\}` is the set of admissible stress tensors, :math:`I_K` is the indicator function of this set and :math:`\partial I_K` its sub-differential (normal cone to :math:`K`). This can be equivalently written
+One has
 
-.. math:: \sigma\in K, ~~~(\tau - \sigma):\dot{\varepsilon}^p \le 0 ~~~ \forall \tau \in K.
+.. math:: \|\mbox{Dev}(\sigma_{n+1})\| = 2\mu\|\mbox{Dev}(\varepsilon(u_{n+1})) -\varepsilon^p_{n+1}\| = \Frac{2\mu}{1+2\mu\theta\Delta t \xi_{n+1}}\|\mbox{Dev}(\varepsilon(u_{n+1})) - \zeta_n\|,
 
-or
+Thus, denoting :math:`B = \mbox{Dev}(\varepsilon(u_{n+1})) - \zeta_n`, either 
 
-.. math:: {\cal A}(\bar{\tau} - \varepsilon(u) + \varepsilon^p):\dot{\varepsilon}^p \le 0 ~~~ \forall \bar{\tau} \in {\cal A}^{-1}K,
+.. math:: 2\mu\|B\| \le \sqrt{\frac{2}{3}}\sigma_y,
 
-where :math:`{\cal A}` is the fourth order elasticity tensor. Now, in term of projection it can be expressed as
+and :math:`\xi_{n+1} = 0`, i.e. we are in the elastic case, or  :math:`\|\mbox{Dev}(\sigma_{n+1})\| =  \sqrt{\frac{2}{3}}` and one obtains
 
-.. math:: \varepsilon(u) - \varepsilon^p = P^{{\cal A}}_{{\cal A}^{-1}K}(\varepsilon(u) - \varepsilon^p + r\dot{\varepsilon}^p),
+.. math:: 1+2\mu\theta\Delta t \xi_{n+1} = \Frac{2\mu\|B\|}{\sqrt{\frac{2}{3}}\sigma_y}, 
 
-for any :math:`r > 0` and :math:`P^{{\cal A}}_{{\cal A}^{-1}K}` being the orthogonal projection on :math:`{\cal A}^{-1}K` with respect to the scalar product induced by :math:`{\cal A}`.
+and thus
 
-The generalize mid-point scheme reads
+.. math:: \varepsilon^p_{n+1} = \zeta_n + \left( 1 - \sqrt{\frac{2}{3}}\Frac{\sigma_y}{2\mu\|B\|}\right) B.
 
-.. math:: \varepsilon(u_{n+\theta}) - \varepsilon^p_{n+\theta} = P^{{\cal A}}_{{\cal A}^{-1}K}\left(\varepsilon(u_{n+\theta}) - \varepsilon^p_{n+\theta} + \Frac{r}{\theta}(\varepsilon^p_{n+\theta}-\varepsilon^p_{n})\right).
+The two options can be summarized by
 
-With the choice :math:`\Frac{r}{\theta} = 1` this gives
+.. math:: \varepsilon^p_{n+1} = {\mathscr E}^p(u_{n+1}, \zeta_{n}) = \zeta_n + \left( 1 - \sqrt{\frac{2}{3}}\Frac{\sigma_y}{2\mu\|B\|}\right)_+ B.
 
-.. math:: \varepsilon(u_{n+\theta}) = \varepsilon^p_{n} + (I - P^{{\cal A}}_{{\cal A}^{-1}K})(\varepsilon(u_{n+\theta})-\varepsilon^p_{n}).
+The multiplier :math:`\xi_{n+1}` (needed for the :math:`\theta`-scheme for :math:`\theta \ne 1`) is given by
 
-Since :math:`P^{{\cal A}}_{{\cal A}^{-1}K}` can be expressed as
+.. math:: \xi_{n+1} = \Frac{1}{\theta\Delta t}\left(\sqrt{\frac{3}{2}}\Frac{\|B\|}{\sigma_y} - \Frac{1}{2\mu}\right)_+.
 
-.. math:: P^{{\cal A}}_{{\cal A}^{-1}K}(\varepsilon) = \Frac{\mbox{tr}(\varepsilon)}{3}I + \min\left(\Frac{1}{2\mu}\sqrt{\frac{2}{3}}\sigma_y, \|\mbox{Dev}(\varepsilon)\|\right) \Frac{\mbox{Dev}(\varepsilon)}{\|\mbox{Dev}(\varepsilon)\|},
-
-We finally find with :math:`B = \mbox{Dev}(\varepsilon(u_{n+\theta}))-\varepsilon^p_{n}`
-
-.. math:: \varepsilon(u_{n+\theta}) = {\mathscr E}^p(u_{n+\theta}, \varepsilon^p_{n}) = \varepsilon^p_{n} + \left( 1 - \sqrt{\frac{2}{3}}\Frac{\sigma_y}{2\mu\|B\|}\right)_+ B
 
 **Plane strain approximation**
 
-The plane strain approximation has the same expression replacing the 3D strain tensors by the in-plane ones :math:`\bar{\varepsilon}^p` and  :math:`\bar{\varepsilon}(u_{n+\theta})`.
+The plane strain approximation has the same expression replacing the 3D strain tensors by the in-plane ones :math:`\bar{\varepsilon}^p` and  :math:`\bar{\varepsilon}(u_{n+1})`.
 
-.. math:: \bar{\tilde{\mathscr E}}^p(\bar{u}_{n+\theta}, \theta \Delta \xi, \bar{\varepsilon}^p_{n}) = \Frac{1}{1+2\mu\theta\Delta \xi}(\bar{\varepsilon}^p_{n} + 2\mu\theta\Delta \xi \overline{\mbox{Dev}}(\bar{\varepsilon}(\bar{u}_{n+\theta}))),
+.. math:: \bar{\tilde{\mathscr E}}^p(u_{n+1}, \theta \Delta t \xi_{n+1}, \bar{\zeta}_{n}) = \bar{\zeta}_n + \left(1-\Frac{1}{1+2\mu\theta\Delta t\xi_{n+1}}\right)(\overline{\mbox{Dev}}(\bar{\varepsilon}(u_{n+1})) - \bar{\zeta}_n),
 
-where :math:`\overline{\mbox{Dev}}(\bar{\varepsilon}) = \bar{\varepsilon} - \Frac{\mbox{tr}(\bar{\varepsilon})}{3} \bar{I}` is still the 3D deviator.
+where :math:`\overline{\mbox{Dev}}(\bar{\varepsilon}) = \bar{\varepsilon} - \Frac{\mbox{tr}(\bar{\varepsilon})}{3} \bar{I}` is the 2D restriction of the 3D deviator.
 
 Moreover, for the yield condition, 
 
-.. math:: \|\mbox{Dev}(\sigma)\|^2 = 4\mu^2\left(\|\overline{\mbox{Dev}}\bar{\varepsilon}(u) - \bar{\varepsilon}^p\|^2 + \left(\Frac{\mbox{tr}(\bar{\varepsilon}(u))}{3} -\mbox{tr}(\bar{\varepsilon}^p) \right)^2\right)
+.. math:: \|\mbox{Dev}(\sigma)\|^2 = 4\mu^2\left(\|\overline{\mbox{Dev}}\bar{\varepsilon}(u) - \bar{\varepsilon}^p\|^2 + \left(\Frac{\mbox{tr}(\bar{\varepsilon}(u))}{3} -\mbox{tr}(\bar{\varepsilon}^p) \right)^2\right).
 
-And for the closest point projection approach,
+And for the elimination of the multiplier,
 
-.. math:: \bar{\mathscr E}^p(\bar{u}_{n+\theta}, \bar{\varepsilon}^p_{n}) = \bar{\varepsilon}^p_{n} + \left( 1 - \sqrt{\frac{2}{3}}\Frac{\sigma_y}{2\mu\|B\|}\right)_+ \bar{B}
+.. math:: \bar{\mathscr E}^p(\bar{u}_{n+1}, \bar{\varepsilon}^p_{n}) = \bar{\zeta}^p_{n} + \left( 1 - \sqrt{\frac{2}{3}}\Frac{\sigma_y}{2\mu\|B\|}\right)_+ \bar{B}
 
-with :math:`\bar{B} = \overline{\mbox{Dev}}(\bar{\varepsilon}(u_{n+\theta}))-\bar{\varepsilon}^p_{n}` and :math:`\|B\|^2 = \|\overline{\mbox{Dev}}(\bar{\varepsilon}(u_{n+\theta})) - \bar{\varepsilon}^p_n\|^2 + \left(\Frac{\mbox{tr}(\bar{\varepsilon}(u_{n+\theta}))}{3} -\mbox{tr}(\bar{\varepsilon}^p_n) \right)^2`.
+with :math:`\bar{B} = \overline{\mbox{Dev}}(\bar{\varepsilon}(u_{n+1}))-\bar{\varepsilon}^p_{n}` and :math:`\|B\|^2 = \|\overline{\mbox{Dev}}(\bar{\varepsilon}(u_{n+1})) - \bar{\varepsilon}^p_n\|^2 + \left(\Frac{\mbox{tr}(\bar{\varepsilon}(u_{n+1}))}{3} -\mbox{tr}(\bar{\varepsilon}^p_n) \right)^2`.
 
 **Plane stress approximation**
 
 For plane stress approximation, using :eq:`plane_stress_iso` we deduce from the expression of the 3D case
 
-.. math::  \bar{\varepsilon}^p_{n+\theta} = \Frac{1}{1+2\mu\theta\Delta \xi}\left(\bar{\varepsilon}^p_{n} +2\mu\theta\Delta \xi\left(\bar{\varepsilon}(u_{n+\theta}) - \Frac{2\mu}{3(\lambda+2\mu)}(\mbox{tr}(\bar{\varepsilon}(u_{n+\theta})) - \mbox{tr}(\bar{\varepsilon}_{n+\theta}^p))\bar{I}\right) \right),
+.. math::  \bar{\varepsilon}^p_{n+1} = \Frac{1}{1+2\mu\theta\Delta \xi}\left(\bar{\zeta}_{n} +2\mu\theta\Delta \xi\left(\bar{\varepsilon}(u_{n+1}) - \Frac{2\mu}{3(\lambda+2\mu)}(\mbox{tr}(\bar{\varepsilon}(u_{n+1})) - \mbox{tr}(\bar{\varepsilon}_{n+1}^p))\bar{I}\right) \right),
 
-since :math:`\mbox{Dev}(\varepsilon(u)) = \varepsilon(u) - \Frac{2\mu}{3(\lambda+2\mu)}(\mbox{tr}(\bar{\varepsilon}(u)) - \mbox{tr}(\bar{\varepsilon}^p))`. Of course, this relation still has to be inverted. Denoting :math:`\alpha = 1+2\mu\theta\Delta \xi`, :math:`\beta = \Frac{4\mu^2\theta\Delta \xi}{3\lambda+6\mu}` and :math:`C = \bar{\varepsilon}^p_{n} +2\mu\theta\Delta \xi\left(\bar{\varepsilon}(u_{n+\theta}) - \Frac{2\mu}{3(\lambda+2\mu)}(\mbox{tr}(\bar{\varepsilon}(u_{n+\theta}))))\bar{I}\right)` one obtains
+since :math:`\mbox{Dev}(\varepsilon(u)) = \varepsilon(u) - \Frac{2\mu}{3(\lambda+2\mu)}(\mbox{tr}(\bar{\varepsilon}(u)) - \mbox{tr}(\bar{\varepsilon}^p))`. Of course, this relation still has to be inverted. Denoting :math:`\alpha = 1+2\mu\theta\Delta \xi`, :math:`\beta = \Frac{4\mu^2\theta\Delta \xi}{3\lambda+6\mu}` and :math:`C = \bar{\zeta}_{n} +2\mu\theta\Delta \xi\left(\bar{\varepsilon}(u_{n+1}) - \Frac{2\mu}{3(\lambda+2\mu)}(\mbox{tr}(\bar{\varepsilon}(u_{n+1}))))\bar{I}\right)` one obtains
 
-.. math:: \bar{\varepsilon}^p_{n+\theta} = \Frac{\beta \mbox{tr}(C)}{\alpha(\alpha-2\beta)}\bar{I} + \Frac{1}{\alpha}C.
+.. math:: \bar{\varepsilon}^p_{n+1} = \Frac{\beta \mbox{tr}(C)}{\alpha(\alpha-2\beta)}\bar{I} + \Frac{1}{\alpha}C.
 
-Moreover, for the yield condition, expression :eq:`label: plane_stress_dev` can be used.
+Moreover, for the yield condition, expression :eq:`plane_stress_dev` can be used.
 
 Isotropic elastoplasticity with linear isotropic and kinematic hardening and Von-Mises criterion
 ================================================================================================
 
 We consider an isotropic elastic reponse and the internal variable :math:`\alpha : \Omega \rightarrow \R` being the accumulated plastic strain which satisfies
 
-.. math:: \dot{\alpha} = \sqrt{\Frac{2}{3}}\dot{\gamma}
+.. math:: \dot{\alpha} = \sqrt{\Frac{2}{3}}\gamma
 
 For :math:`H_i` the isotropic hardening modulus, the linear hardening consists in
 
-.. math:: \psi^p(\alpha) = \frac{1}{\sqrt{6}}H_i\alpha^2
+.. math:: \psi^p(\alpha) = \frac{1}{2}H_i\alpha^2
 
-i.e. :math:`A = \sqrt{\frac{2}{3}}H_i\alpha` and a uniaxial yield stress defined by
+i.e. :math:`A = H_i\alpha` and a uniaxial yield stress defined by
 
 
-.. math:: \sigma_y(a) = \sigma_{y0} + \sqrt{\frac{3}{2}}A = \sigma_{y0} + H_i\alpha,
+.. math:: \sigma_y(a) = \sigma_{y0} + A = \sigma_{y0} + H_i\alpha,
 
 for :math:`\sigma_{y0}` the initial uniaxial yield stress. The yield function (and plastic potential since this is an associated plastic model) can be defined by
 
-.. math:: \Psi(\sigma, A) = f(\sigma, A) = \|\mbox{Dev}(\sigma - H_k\varepsilon^p)\| - \sqrt{\frac{2}{3}}\sigma_{y0} - A,
+.. math:: \Psi(\sigma, A) = f(\sigma, A) = \|\mbox{Dev}(\sigma - H_k\varepsilon^p)\| - \sqrt{\frac{2}{3}}(\sigma_{y0} + A),
 
 where :math:`H_k` is the kinematic hardening modulus. The same computation as in the previous section leads to
 
-.. math:: \tilde{\mathscr E}^p(u_{n+\theta}, \theta \Delta \xi, \varepsilon^p_{n}) = \Frac{1}{1+(2\mu+H_k)\theta\Delta \xi}(\varepsilon^p_{n} + 2\mu\theta\Delta \xi \mbox{Dev}(\varepsilon(u_{n+\theta}))),
+.. math:: \tilde{\mathscr E}^p(u_{n+1}, \theta\Delta t \xi_{n+1}, \zeta_n) = \zeta_n + \Frac{1}{2\mu+H_k}\left(1 - \Frac{1}{1+(2\mu+H_k)\theta\Delta t\xi_{n+1}}\right)(2\mu\mbox{Dev}(\varepsilon(u_{n+1}))-(2\mu+H_k)\zeta_n)
 
-.. math:: \begin{array}{rcl} \tilde{\mathscr A}(u_{n+\theta}, \theta \Delta \xi, \varepsilon^p_{n}, \alpha_n) &=& \alpha_n + \sqrt{\Frac{2}{3}}\theta \Delta \xi\|\mbox{Dev}(\sigma_{n+\theta} - H_k\varepsilon^p_{n+\theta})\| = \alpha_n + \sqrt{\Frac{2}{3}}\theta \Delta \xi\|2\mu\mbox{Dev}(\varepsilon(u_{n+\theta})) - (2\mu+H_k)\varepsilon^p_{n+\theta}\| \\ &=&  \alpha_n + \sqrt{\Frac{2}{3}}\Frac{\theta \Delta \xi}{1+(2\mu+H_k)\theta\Delta \xi}\|2\mu\mbox{Dev}(\varepsilon(u_{n+\theta})) - (2\mu+H_k)\varepsilon^p_{n}\| \\ &=& \alpha_n + \sqrt{\Frac{2}{3}}\|\varepsilon^p_{n+\theta}- \varepsilon^p_{n}\|.\end{array}
 
-Note that the isotropic hardening modulus do not intervene in :math:`\tilde{\mathscr E}^p(u_{n+\theta}, \theta \Delta \xi, \varepsilon^p_{n})` but only in :math:`f(\sigma, A)`.
+.. math:: \begin{array}{rcl} \tilde{\mathscr A}(u_{n+1}, \theta \Delta t \xi_{n+1}, \zeta_{n}, \eta_n) &=& \eta_n + \sqrt{\Frac{2}{3}} \theta \Delta t \xi_{n+1}\|\mbox{Dev}(\sigma_{n+1} - H_k\varepsilon^p_{n+1})\| \\ &=& \eta_n + \sqrt{\Frac{2}{3}} \theta \Delta t \xi_{n+1}\|2\mu\mbox{Dev}(\varepsilon(u_{n+1})) - (2\mu+H_k)\varepsilon^p_{n+1}\| \\ &=&  \eta_n + \sqrt{\Frac{2}{3}} \Frac{\theta \Delta t \xi_{n+1}}{1+(2\mu+H_k)\theta\Delta t\xi_{n+1}}\|2\mu\mbox{Dev}(\varepsilon(u_{n+1})) - (2\mu+H_k)\zeta_{n}\|.\end{array}
 
-**Closest point projection approach**
+where :math:`\zeta_n` and :math:`\eta_n` are defined by
 
-Using the same approach as for the perfect isotropic plasticity, the flow rule can be written
+.. math:: \zeta_n = \varepsilon^p_n+(1-\theta)\Delta t \xi_n (\mbox{Dev}(\sigma_n)-H_k\varepsilon^n_p) = \varepsilon^p_n+(1-\theta)\Delta t \xi_n \left(2\mu\mbox{Dev}(\varepsilon(u_{n}))-(2\mu+H_k)\varepsilon^n_p\right),
 
-.. math:: \dot{\varepsilon}^p \in  \partial I_K(\sigma-H_k \varepsilon^p),
+.. math:: \eta_n  = \alpha_n+(1-\theta)\sqrt{\Frac{2}{3}}\Delta t \xi_n \|\mbox{Dev}(\sigma_n)-H_k\varepsilon^n_p\| =  \alpha_n+(1-\theta)\sqrt{\Frac{2}{3}}\Delta t \xi_n \|2\mu\mbox{Dev}(\varepsilon(u_{n}))-(2\mu+H_k)\varepsilon^n_p\|.
 
-where :math:`K = \left\{ \sigma : \|\mbox{Dev}(\sigma)\| \le \sqrt{\frac{2}{3}}(\sigma_{y0}+H_i\alpha)\right\}`. Writting
+Note that the isotropic hardening modulus do not intervene in :math:`\tilde{\mathscr E}^p(u_{n+1}, \theta \Delta \xi, \varepsilon^p_{n})` but only in :math:`f(\sigma, A)`.
 
-.. math:: ({\cal A} + H_k I)(\bar{\tau} - ({\cal A} + H_k I)^{-1}{\cal A}\varepsilon(u) + \varepsilon^p) : \dot{\varepsilon}^p \le 0 ~~ \forall \bar{\tau} \in ({\cal A} + H_k I)^{-1}K
+**Elimination of the multiplier (for the return mapping approach)**
 
-we conclude applying the generalized mid-point scheme by
+Denoting :math:`\delta = \Frac{1}{1+(2\mu+H_k)\theta\Delta t\xi_{n+1}}` and :math:`B = 2\mu\mbox{Dev}(\varepsilon(u_{n+1}))-(2\mu+H_k)\zeta_n` the expression for :math:`\varepsilon^p_{n+1}` and :math:`\alpha_{n+1}` becomes
 
-.. math:: \varepsilon^p_{n+\theta} =  \varepsilon^p_{n} + \left(I-P^{{\cal A} + H_k I}_{({\cal A} + H_k I)^{-1}K}\right)\left(({\cal A} + H_k I)^{-1}{\cal A}\varepsilon(u_{n+\theta}) - \varepsilon^p_n\right).
+.. math:: \varepsilon^p_{n+1} = \zeta_n+\Frac{1}{2\mu+H_k}(1-\delta)B, ~~~ \alpha_{n+1} = \eta_n + \sqrt{\Frac{2}{3}}(1-\delta)\|B\|,
+  :label: hardeningepsalp
 
-Now, since
+and the plastic constraint
 
-.. math:: \left(I-P^{{\cal A} + H_k I}_{({\cal A} + H_k I)^{-1}K}\right)(\varepsilon) =  \left(1 - \sqrt{\frac{2}{3}}\Frac{(\sigma_{y0}+H_i\alpha_{n+\theta})}{(2\mu+H_k)\|\mbox{Dev}(\varepsilon)\|}\right)_+ \mbox{Dev}(\varepsilon),
+.. math:: \delta \|B\| \le \sqrt{\Frac{2}{3}}(\sigma_{y0}+H_i \alpha_{n+1}).
 
-and :math:`\mbox{Dev}(({\cal A} + H_k I)^{-1}{\cal A}\varepsilon(u_{n+\theta})) = \Frac{2\mu}{2\mu+H_k}\mbox{Dev}(\varepsilon(u_{n+\theta}))` and with :math:`B = 2\mu\mbox{Dev}(\varepsilon(u_{n+\theta})) - (2\mu+H_k)\varepsilon^p_n` one has
+Thus, either we are in the elastic case, i.e. :math:`\xi_{n+1} = 0, \delta = 1` and
 
-.. math:: {\mathscr E}^p(u_{n+\theta}, \varepsilon^p_{n}) = \varepsilon^p_{n+\theta} =  \varepsilon^p_{n}  + \Frac{1}{2\mu+H_k}\left(1 - \sqrt{\frac{2}{3}}\Frac{(\sigma_{y0}+H_i\alpha_{n+\theta})}{\|B\|}\right)_+ B.
+.. math:: \|B\| \le \sqrt{\Frac{2}{3}}(\sigma_{y0}+H_i \eta_n),
 
-The problem is not completely solved since :math:`\alpha_{n+\theta}` is still undetermined. However
+or we are in the plastic case and :math:`\xi_{n+1} > 0, \delta < 1`, :math:`\delta \|B\| = \sqrt{\Frac{2}{3}}(\sigma_{y0}+H_i \alpha_{n+1})` and :math:`(1-\delta)` solves the equation
 
-.. math:: \alpha_{n+\theta} = \alpha_{n} + \sqrt{\Frac{2}{3}}\|\varepsilon^p_{n+\theta} - \varepsilon^p_{n}\| = \alpha_{n} + \sqrt{\Frac{2}{3}}\Frac{1}{2\mu+H_k}\left(\|B\| - \sqrt{\frac{2}{3}}(\sigma_{y0}+H_i\alpha_{n+\theta})\right)_+.
+.. math:: \|B\| - (1-\delta)\|B\| = \sqrt{\Frac{2}{3}}\left(\sigma_{y0}+H_i \eta_n + \sqrt{\Frac{2}{3}} \Frac{H_i}{2\mu+H_k}(1-\delta)\|B\|\right),
 
-Thus
+which leads to
 
-.. math:: {\mathscr A}(u_{n+\theta}, \varepsilon^p_{n}) = \alpha_{n+\theta} = \max\left(\alpha_{n}, \Frac{\sqrt{\Frac{3}{2}}(2\mu+H_k)\alpha_n+\|B\| - \sqrt{\frac{2}{3}}\sigma_{y0}}{\sqrt{\Frac{3}{2}}(2\mu+H_k)+\sqrt{\frac{2}{3}}H_i}\right),
+.. math:: 1-\delta = \Frac{2\mu+H_k}{\|B\|(2\mu+H_k+\frac{2}{3}H_i)}\left(\|B\|-\sqrt{\Frac{2}{3}}(\sigma_{y0}+H_i \eta_n) \right)
 
-which complete the expression.
+The two cases can be summarized by
+
+.. math:: 1-\delta = \Frac{2\mu+H_k}{\|B\|(2\mu+H_k+\frac{2}{3}H_i)}\left(\|B\|-\sqrt{\Frac{2}{3}}(\sigma_{y0}+H_i \eta_n) \right)_+
+
+which directly gives :math:`{\mathscr E}^p(u_{n+1}, \zeta_n, \eta_n)` and :math:`{\mathscr A}(u_{n+1}, \zeta_n, \eta_n)` thanks to :eq:`hardeningepsalp`.
+
+The multiplier :math:`\xi_{n+1}` is given by
+
+.. math:: \xi_{n+1} = \Frac{1}{\theta\Delta t}  \Frac{\left(\|B\|-\sqrt{\Frac{2}{3}}(\sigma_{y0}+H_i \eta_n) \right)_+}{(2\mu+H_k+\frac{2}{3}H_i)\|B\| - (2\mu+H_k)\left(\|B\|-\sqrt{\Frac{2}{3}}(\sigma_{y0}+H_i \eta_n) \right)_+}.
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 Souza-Auricchio elastoplasticity law (for shape memory alloys)
@@ -424,37 +452,7 @@ with the complementarity condition
 where :math:`c_1, c_2 \mbox{ and } c_3` are some physical parameters. Note that :math:`\Frac{\varepsilon^p}{\|\varepsilon^p\|}` has to be understood to be the whole unit ball for :math:`\varepsilon^p = 0`.
 
 
-The integration of the flow rule reads
-
-.. math::
-   \varepsilon^p_{n+\theta} - \varepsilon^p_{n} = \theta \Delta \xi \mbox{Dev}\left(\sigma_{n+\theta} - (c_1 + \delta)\Frac{\varepsilon^p_{n+\theta}}{\|\varepsilon^p_{n+\theta}\|} - c_2\varepsilon^p_{n+\theta}\right).
-   :label: souza_auri_comp
-
-which can be transformed in
-
-.. math::
-   (1+(2\mu+c_2)\theta\Delta \xi)\varepsilon^p_{n+\theta} + \theta\Delta \xi(c_1+\delta)\Frac{\varepsilon^p_{n+\theta}}{\|\varepsilon^p_{n+\theta}\|} = \varepsilon^p_{n} + \theta\Delta \xi 2\mu \mbox{Dev}(\varepsilon(u_{n+\theta})).
-
-With
-
-.. math:: B = \varepsilon^p_{n} + \theta\Delta \xi 2\mu \mbox{Dev}(\varepsilon(u_{n+\theta})),
-
-we conclude that :math:`\Frac{\varepsilon^p_{n+\theta}}{\|\varepsilon^p_{n+\theta}\|} = \Frac{B}{\|B\|}` and then :math:`\varepsilon^p_{n+\theta} = 0` for :math:`\|B\| \le \theta\Delta \xi c_1` and
-
-.. math:: (1+(2\mu+c_2)\theta\Delta \xi)\varepsilon^p_{n+\theta} = \Frac{B}{\|B\|} (\|B\| - \theta\Delta \xi(c_1+\delta)).
-
-Since :math:`\|\varepsilon^p_{n+\theta}\| = c_3` for :math:`\delta > 0` (complementarity condition), we can deduce the following expression for :math:`\varepsilon^p_{n+\theta}`: 
-
-.. math:: \tilde{\mathscr E}^p(u_{n+\theta}, \theta \Delta \xi, \varepsilon^p_{n}) = B \min\left(\Frac{c_3}{\|B\|}, \Frac{\left(1 - \Frac{\theta\Delta \xi c_1}{\|B\|}\right)_+}{1+(2\mu+c_2)\theta\Delta \xi}\right).
-
-The yield condition reads then
-
-.. math:: \begin{array}{l} f(\sigma_{n+\theta}) = \left\|2\mu\mbox{Dev}(\varepsilon(u_{n+\theta})) - (2\mu+c_2)\varepsilon^p_{n+\theta} - \max\left(c_1, \Frac{\|B\|-c3}{\theta\Delta \xi} - (2\mu+c2)c_3\right)\varepsilon^p_{n+\theta} \right\| \\ ~~~ - \sqrt{\frac{2}{3}}\sigma_{y} \le 0,\end{array}
-
-.. or using :eq:`souza_auri_comp`
-.. .. math:: \|\tilde{\mathscr E}^p(u_{n+\theta}, \theta \Delta \xi, \varepsilon^p_{n}) - \varepsilon^p_{n}\| \le \theta\Delta \xi\sqrt{\frac{2}{3}}\sigma_{y}.
-.. stupid ? Yes a priori ! 
-
+to be done ...
 
 
 Some classical modelizations
@@ -475,7 +473,7 @@ Generic brick
 
 The generic brick add the following terms:
 
-.. math:: \int_{\Omega} \sigma_{n+1} : \nabla v dx +  \ds \int_{\Omega} (\Delta \xi - (\Delta \xi + r f(\sigma_{n+\theta}, A_{n+\theta}))_+) \lambda dx = 0,   \forall \lambda
+.. math:: \int_{\Omega} \sigma_{n+1} : \nabla v dx +  \ds \int_{\Omega} (\Delta \xi - (\Delta \xi + r f(\sigma_{n+1}, A_{n+1}))_+) \lambda dx = 0,   \forall \lambda
 
 
 Other bricks
