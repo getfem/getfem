@@ -1117,7 +1117,7 @@ namespace getfem {
 
     virtual void clear();
 
-    model(bool comp_version = false);
+    explicit model(bool comp_version = false);
 
     /** check consistency of RHS and Stiffness matrix for brick with
         @param  ind_brick  - index of the brick

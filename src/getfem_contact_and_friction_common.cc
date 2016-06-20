@@ -1330,9 +1330,9 @@ namespace getfem {
 
       void compile() const {
         if (md)
-          f = ga_function(md, expr);
+          f = ga_function(*md, expr);
         else if (parent_workspace)
-          f = ga_function(parent_workspace, expr);
+          f = ga_function(*parent_workspace, expr);
         else
           f = ga_function(expr);
         size_type N = gmm::vect_size(X);
