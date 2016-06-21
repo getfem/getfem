@@ -873,7 +873,9 @@ void gf_model_get(getfemint::mexargs_in& m_in,
 
 
     /*@GET ('elastoplasticity next iter', @tmim mim, @str varname, @str previous_dep_name, @str projname, @str datalambda, @str datamu, @str datathreshold, @str datasigma)
-      Compute and save the stress constraints sigma for other hypothetical iterations.
+      Used with the old (obsolete) elastoplasticity brick to pass from an
+      iteration to the next one. 
+      Compute and save the stress constraints sigma for the next iterations.
       'mim' is the integration method to use for the computation.
       'varname' is the main variable of the problem.
       'previous_dep_name' represents the displacement at the previous time step.
@@ -896,6 +898,36 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        (*md, *mim, varname, previous_dep,
         abstract_constraints_projection_from_name(projname),
         datalambda, datamu, datathreshold, datasigma);
+       );
+
+    /*@GET ('small strain elastoplasticity next iter', @tmim mim , @str varname, @str xiname, @str Epname, @str clambda, @str cmu, @str sigma_y, @str theta, @str dt [, @int region])
+      Under construction ... @*/
+    sub_command
+      ("small strain elastoplasticity next iter", 8, 9, 0, 0,
+       getfem::mesh_im *mim = to_meshim_object(in.pop());
+       std::string varname = in.pop().to_string();
+       std::string xiname = in.pop().to_string();
+       // + version avec ou sans multiplicateur
+
+       std::string Epname = in.pop().to_string();
+       std::string lambda = in.pop().to_string();
+       std::string mu = in.pop().to_string();
+       std::string sigma_y = in.pop().to_string();
+       std::string theta = in.pop().to_string();
+       std::string dt = in.pop().to_string();
+       size_type region = size_type(-1);
+       if (in.remaining()) region = in.pop().to_integer();
+
+       std::vector<std::string> varnames;
+       varnames.push_back(varname);
+       varnames.push_back(xiname);
+       varnames.push_back(Epname);
+       std::vector<std::string> params;
+       params.push_back(lambda); params.push_back(mu);params.push_back(sigma_y);
+       
+       getfem::small_strain_elastoplasticity_next_iter
+       (*md, *mim, "Prandtl Reuss", true, varnames, params, theta, dt, region);
+       workspace().set_dependence(md, mim);
        );
 
     /*@GET V = ('compute elastoplasticity Von Mises or Tresca', @str datasigma, @tmf mf_vm[, @str version])

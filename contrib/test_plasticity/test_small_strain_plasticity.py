@@ -38,9 +38,7 @@ option = 1     # 1 : without hardening, im_data and plastic multiplier
                #     with plastic multiplier
                # 4 : with kinematic and isotropic hardening, with im_data,
                #     without plastic multiplier
-               # 5 : with kinematic hardening, with im_data, without plastic
-               #     multiplier
-               # 6 : Souza-Auricchio model with plastic multiplier (not working)
+               # 5 : Souza-Auricchio model with plastic multiplier (not working)
             
 load_type = 1  # 1 : vertical
                # 2 : horizontal
@@ -64,8 +62,8 @@ lambda_top = 84605.      # Iron
 mu_top = 77839.          # Iron
 lambda_bottom = 121150.  # Steel
 mu_bottom = 80769.       # Steel
-von_mises_threshold_top = 8000.
-von_mises_threshold_bottom = 7000.
+sigma_y_top = 8000.
+sigma_y_bottom = 7000.
 
 Hk = mu_top/5.; Hi = Hk; Hi = 0. # Kinematic and isotropic hardening parameters
 
@@ -181,17 +179,17 @@ CVbottom   = (mf_data.basic_dof_from_cvid(cvidbottom))[0]
 
 # Definition of Lame coeff
 cmu = np.zeros(mf_data.nbdof()); clambda = cmu.copy()
-von_mises_threshold = cmu.copy()
+sigma_y = cmu.copy()
 
 for i in CVbottom:
     clambda[i] = lambda_bottom
     cmu[i] = mu_bottom
-    von_mises_threshold[i] = von_mises_threshold_bottom
+    sigma_y[i] = sigma_y_bottom
 
 for i in CVtop:
     clambda[i] = lambda_top
     cmu[i] = mu_top
-    von_mises_threshold[i] = von_mises_threshold_top
+    sigma_y[i] = sigma_y_top
 
 # Create the model
 md = gf.Model('real')
@@ -200,9 +198,9 @@ md.add_fem_data('Previous_u', mf_u);
 md.add_initialized_fem_data('lambda', mf_data, clambda)
 md.add_initialized_fem_data('mu', mf_data, cmu)
 if (option == 1):
-    md.add_initialized_fem_data('von_mises_threshold', mf_data, von_mises_threshold*np.sqrt(2./3.))
+    md.add_initialized_fem_data('sigma_y', mf_data, sigma_y*np.sqrt(2./3.))
 else:
-    md.add_initialized_fem_data('von_mises_threshold', mf_data, von_mises_threshold)
+    md.add_initialized_fem_data('sigma_y', mf_data, sigma_y)
 md.add_Dirichlet_condition_with_multipliers(mim, 'u', mf_u, 1)
 md.add_initialized_fem_data('VolumicData', mf_data, np.zeros(N*mf_data.nbdof()))
 md.add_source_term_brick(mim, 'u', 'VolumicData', 2)
@@ -212,7 +210,7 @@ mim_data_scal = gf.MeshImData(mim, -1, 1)
 if (option == 1):
     md.add_fem_data('sigma', mf_sigma);
     md.add_elastoplasticity_brick(mim, 'VM', 'u', 'Previous_u', 'lambda', 'mu',
-                                  'von_mises_threshold', 'sigma');
+                                  'sigma_y', 'sigma');
 
 if (option == 2):
     md.add_fem_variable('xi', mf_xi)
@@ -220,7 +218,7 @@ if (option == 2):
     md.add_initialized_data('r', [1e-8])
     md.add_im_data('Epn', mim_data)
 
-    # md.add_small_strain_elastoplasticity_brick(mim, 'u', 'Epn', 'lambda', 'mu', 'von_mises_threshold', 'theta');
+    # md.add_small_strain_elastoplasticity_brick(mim, 'u', 'Epn', 'lambda', 'mu', 'sigma_y', 'theta', 'dt');
     # exit(1);
     
     
@@ -248,9 +246,9 @@ if (option == 2):
                        +')*Id(meshdim) + 2*mu*('+Etheta+'-'+Eptheta+'))')
     
     if (constraint_at_np1 or trapezoidal):
-      fbound = '(Norm(Deviator('+sigma_np1+'))-sqrt(2/3)*von_mises_threshold)'
+      fbound = '(Norm(Deviator('+sigma_np1+'))-sqrt(2/3)*sigma_y)'
     else:
-      fbound = '(Norm(Deviator('+sigma_theta+'))-sqrt(2/3)*von_mises_threshold)'
+      fbound = '(Norm(Deviator('+sigma_theta+'))-sqrt(2/3)*sigma_y)'
     
     expr = sigma_np1+':Grad_Test_u+(1/r)*(xi-pos_part(xi+r*'+fbound+'))*Test_xi'
     # expr = sigma_np1+':Grad_Test_u+('+fbound+'+pos_part(-xi/r-'+fbound+
@@ -292,13 +290,13 @@ if (option == 3):
         # alpha_np1 = '(alphan+sqrt(2/3)*Norm('+Eptheta+'-Epn)/theta)' # do not work
     
     # fbound = ('(Norm(Deviator('+sigma_theta+')-Hk*'+Eptheta
-    #           +') - von_mises_threshold - Hi*'+alpha_theta+')')
+    #           +') - sigma_y - Hi*'+alpha_theta+')')
     if (constraint_at_np1):
       fbound = ('(Norm(2*mu*Deviator(Sym(Grad_u))-(2*mu+Hk)*'+Epnp1
-                +') - sqrt(2/3)*(von_mises_threshold + Hi*'+alpha_np1+'))')
+                +') - sqrt(2/3)*(sigma_y + Hi*'+alpha_np1+'))')
     else:
       fbound = ('(Norm(2*mu*Deviator('+Etheta+')-(2*mu+Hk)*'+Eptheta
-                +') - sqrt(2/3)*(von_mises_threshold + Hi*'+alpha_theta+'))')
+                +') - sqrt(2/3)*(sigma_y + Hi*'+alpha_theta+'))')
     expr = (sigma_np1+':Grad_Test_u + (1/r)*(xi - pos_part(xi+r*'+fbound
             +'))*Test_xi')
     # expr = (sigma_np1+':Grad_Test_u + ('+fbound+' + pos_part(-xi/r-'+fbound
@@ -315,10 +313,10 @@ if (option == 4):
     Etheta = '(Sym(theta*Grad_u+(1-theta)*Grad_Previous_u))'
     Btheta = '((2*mu)*Deviator('+Etheta+')-(2*mu+Hk)*Epn)'
     alpha_theta = ('(max(alphan, (sqrt(3/2)*(2*mu+Hk)*alphan+Norm('+Btheta+
-                   ') - sqrt(2/3)*von_mises_threshold)/(sqrt(3/2)*(2*mu+Hk)'+
+                   ') - sqrt(2/3)*sigma_y)/(sqrt(3/2)*(2*mu+Hk)'+
                    '+sqrt(2/3)*Hi)))')
     alpha_np1 = '(('+alpha_theta+' - (1-theta)*alphan)/theta)'
-    Eptheta= ('(Epn+(1/(2*mu+Hk))*pos_part(1-sqrt(2/3)*(von_mises_threshold+Hi*'
+    Eptheta= ('(Epn+(1/(2*mu+Hk))*pos_part(1-sqrt(2/3)*(sigma_y+Hi*'
               +alpha_theta+')/(Norm('+Btheta+')+1e-25))*'+Btheta+')')
     Epnp1 = '(('+Eptheta+' - (1-theta)*Epn)/theta)'
     sigma_np1 = ('(lambda*Trace(Sym(Grad_u)-'+Epnp1
@@ -329,32 +327,7 @@ if (option == 4):
     expr = sigma_np1+':Grad_Test_u'
     md.add_nonlinear_generic_assembly_brick(mim, expr)
     
-      
 if (option == 5):
-    md.add_im_data('sigma', mim_data)
-    md.add_initialized_data('theta', [theta])
-    md.add_initialized_data('Hk', [Hk])
-
-    Is = 'Reshape(Id(meshdim*meshdim),meshdim,meshdim,meshdim,meshdim)'
-    IxI = 'Id(meshdim)@Id(meshdim)'
-    coeff_long ='((lambda)*(Hk))/((2*(mu)+(Hk))*(meshdim*(lambda)+2*(mu)+(Hk)))'
-    B_inv = '((2*(mu)/(2*(mu)+(Hk)))*('+Is+')+('+coeff_long+')*('+IxI+'))'
-    B = ('((1+(Hk)/(2*(mu)))*('+Is
-         +')-(((lambda)*(Hk))/(2*(mu)*(meshdim*(lambda)+2*(mu))))*('+IxI+'))')
-    ApH = '((2*(mu)+(Hk))*('+Is+') + (lambda)*('+IxI+'))'
-    Enp1 = 'Sym(Grad_u)'
-    En = 'Sym(Grad_Previous_u)'
-  
-    # Expression de sigma for generalized mid-point scheme
-    expr_sigma = ('('+B_inv+'*(Von_Mises_projection(('+B
-                  +'*((1-theta)*sigma))+(-(Hk)*(((1-theta)*'+En+')+(theta*'+Enp1
-                  +')))+(theta*'+ApH+'*('+Enp1+'-'+En+')) + (theta*'+B
-                  +'*sigma), sqrt(2/3)*von_mises_threshold)+(Hk)*(((1-theta)*'
-                  +En+')+(theta*'+Enp1+'))))')
-  
-    md.add_nonlinear_generic_assembly_brick(mim, expr_sigma+':Grad_Test_u')
-    
-if (option == 6):
     md.add_fem_variable('xi', mf_xi)
     md.add_fem_variable('delta', mf_xi)
     md.add_initialized_data('theta', [theta])
@@ -381,12 +354,12 @@ if (option == 6):
     
     # fbound = ('(Norm(2*mu*Deviator('+Etheta+')-(2*mu+pos_part((Norm('+Btheta
     #           +')-c3)/(c3*theta*xi+1e-25)-2*mu))*'+Eptheta
-    #           +')-sqrt(2/3)*von_mises_threshold)')
+    #           +')-sqrt(2/3)*sigma_y)')
     fbound = ('(Norm(2*mu*Deviator('+Etheta+')-(2*mu+c2+delta)*'+Eptheta
-              +') - sqrt(2/3)*von_mises_threshold)')
+              +') - sqrt(2/3)*sigma_y)')
     fbound_delta = '(Norm('+Eptheta+')-c3)'
     # fbound = ('(Norm(2*mu*Deviator('+Etheta+')-(2*mu+c2)*'+Eptheta
-    #           +') - sqrt(2/3)*von_mises_threshold)')
+    #           +') - sqrt(2/3)*sigma_y)')
     expr = (sigma_np1+':Grad_Test_u + (1/r1)*(xi - pos_part(xi+r1*'+fbound
             +'))*Test_xi-(1/r2)*(delta-pos_part(delta+r2*'+fbound_delta
             +'))*Test_delta')
@@ -411,17 +384,17 @@ if (option == 6):
         # fbound = ('(Norm(2*mu*Deviator('+Etheta+')-(2*mu+c2)*'+Eptheta
         #           +'-max(c1, (Norm('+Btheta+')-c3)/(theta*xi+1e-25)'
         #           +'-(2*mu+c2)*c3)*Normalized('+Eptheta
-        #           +'))-sqrt(2/3)*von_mises_threshold)')
+        #           +'))-sqrt(2/3)*sigma_y)')
         # fbound = ('(Norm(2*mu*Deviator('+Etheta+')-(2*mu+c2)*'+Eptheta
         #           +'-pos_part(pos_part(Norm('+Btheta
         #           +')/(theta*xi+1e-10)-c1)/c3-(1/(theta*xi+1e-10)+2*mu+c2))*'
-        #           +Eptheta+') - sqrt(2/3)*von_mises_threshold)')
+        #           +Eptheta+') - sqrt(2/3)*sigma_y)')
         fbound = ('(Norm(2*mu*Deviator('+Etheta+')-(2*mu+c2)*'+Eptheta
                   +'-pos_part( Norm('+Btheta
                   +')/(c3*(theta*xi+1e-10)) - (1/(theta*xi+1e-10)+2*mu+c2))*'
-                  +Eptheta+') - sqrt(2/3)*von_mises_threshold)')
+                  +Eptheta+') - sqrt(2/3)*sigma_y)')
         # fbound = ('(Norm(2*mu*Deviator('+Etheta+')-(2*mu+c2)*'+Eptheta
-        #           +') - sqrt(2/3)*von_mises_threshold)')
+        #           +') - sqrt(2/3)*sigma_y)')
         expr = (sigma_np1+':Grad_Test_u + (1/r)*(xi - pos_part(xi+r*'+fbound
                 +'))*Test_xi')
         # expr = (sigma_np1+':Grad_Test_u + ('+fbound+' + pos_part(-xi/r-'
@@ -451,40 +424,13 @@ for step in range(0, len(t)):
     # md.solve('noisy', 'max_iter', 80)
 
     U = md.variable('u')
-
-    # Compute Von Mises and plastic part for graphical post-treatment
-    if (do_export >= 2):
-        if (option == 1):
-            sigma_np1 = 'sigma';
-        else:
-            if (option == 5):
-                sigma_np1 = expr_sigma;
-                coeff1='-lambda/(2*mu*(meshdim*lambda+2*mu))'
-                coeff2='1/(2*mu)'
-                Ainv = ('(%s)*(%s) + (%s)*(%s)' % (coeff1, IxI, coeff2, Is))
-                Ep = ('Norm(Sym(Grad_u) - (%s)*sigma)' % Ainv)
-            else:
-                Ep ='Norm('+Epnp1+')'
-        
-            von_mises = 'sqrt(3/2)*Norm(Deviator('+sigma_np1+'))'
-            VM = md.local_projection(mim, von_mises, mf_vm);
-            plast = md.local_projection(mim, Ep, mf_vm);
-    
-        sigma = md.interpolation(sigma_np1, mim_data);
-        Epsilon_u = md.interpolation('Sym(Grad_u)', mim_data);
-        ind_gauss_pt = 22500
-        if (sigma.shape[0] <= N*N*(ind_gauss_pt + 1)):
-            ind_gauss_pt = int(3.*sigma.shape[0] / (4*N*N))
-            
-        sigma_fig[step]=sigma[N*N*ind_gauss_pt]
-        Epsilon_u_fig[step]=Epsilon_u[N*N*ind_gauss_pt]
     
     # Compute new plastic internal variables
     if (option == 1):
         md.elastoplasticity_next_iter(mim, 'u', 'Previous_u', 'VM', 'lambda',
-                                      'mu', 'von_mises_threshold', 'sigma')
+                                      'mu', 'sigma_y', 'sigma')
         plast = md.compute_plastic_part(mim, mf_vm, 'u', 'Previous_u', 'VM',
-                                        'lambda', 'mu', 'von_mises_threshold',
+                                        'lambda', 'mu', 'sigma_y',
                                         'sigma')
         # Compute Von Mises or Tresca stress
         VM = md.compute_elastoplasticity_Von_Mises_or_Tresca('sigma', mf_vm,
@@ -505,20 +451,31 @@ for step in range(0, len(t)):
         md.set_variable('Previous_u', U)
         
     if (option == 5):
-        sigma_0 = md.variable('sigma')
-        sigma = md.interpolation(expr_sigma, mim_data)
-        U_0 = md.variable('Previous_u')
-        U_ntheta = theta*U + (1-theta)*U_0
-      
-        sigma = (sigma - (1-theta)*sigma_0)/theta
-        md.set_variable('sigma', sigma)
-        md.set_variable('Previous_u', U)
-        
-    if (option == 6):
         NewEpn = md.interpolation(Epnp1, mim_data)
         md.set_variable('Epn', NewEpn)
         md.set_variable('Previous_u', U)
-      
+
+    # Compute Von Mises and plastic part for graphical post-treatment
+    if (do_export >= 2):
+        if (option == 1):
+            sigma1 = 'sigma';
+        else:
+            Ep ='Norm(Epn)'
+            sigma1 = '(lambda*Trace(Sym(Grad_u)) + 2*mu*(Sym(Grad_u)-Epn))'
+            von_mises = 'sqrt(3/2)*Norm(Deviator('+sigma1+'))'
+            VM = md.local_projection(mim, von_mises, mf_vm);
+            plast = md.local_projection(mim, Ep, mf_vm);
+    
+        sigma = md.interpolation(sigma1, mim_data);
+        Epsilon_u = md.interpolation('Sym(Grad_u)', mim_data);
+        ind_gauss_pt = 22500
+        if (sigma.shape[0] <= N*N*(ind_gauss_pt + 1)):
+            ind_gauss_pt = int(3.*sigma.shape[0] / (4*N*N))
+            
+        sigma_fig[step]=sigma[N*N*ind_gauss_pt]
+        Epsilon_u_fig[step]=Epsilon_u[N*N*ind_gauss_pt]
+
+        
     if (do_export >= 1):
         filename = resultspath+('/mf_%d.mf' % (step))
         mf_u.save(filename, 'with_mesh')

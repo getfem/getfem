@@ -1,7 +1,7 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
 
- Copyright (C) 2002-2015 Amandine Cottaz, Yves Renard
+ Copyright (C) 2002-2016  Konstantinos Poulios, Amandine Cottaz, Yves Renard
 
  This file is a part of GetFEM++
 
@@ -51,8 +51,8 @@ namespace getfem {
   //  Small strain Elastoplasticity Brick
   //=================================================================
 
-  // Under construction ...
-
+  /** Deep explanations here ...
+   */
   size_type add_small_strain_elastoplasticity_brick
   (model &md, const mesh_im &mim,  std::string lawname,
    bool with_plastic_multiplier,
@@ -60,7 +60,24 @@ namespace getfem {
    const std::vector<std::string> &params,
    const std::string &theta, const std::string &dt, size_type region);
   
+  /** Deep explanations here ...
+   */
+  void small_strain_elastoplasticity_next_iter
+  (model &md, const mesh_im &mim,  std::string lawname,
+   bool with_plastic_multiplier, 
+   const std::vector<std::string> &varnames,
+   const std::vector<std::string> &params,
+   const std::string &theta, const std::string &dt, size_type region) ;
 
+  /** Deep explanations here ...
+   */
+  void compute_small_strain_elastoplasticity_Von_Mises
+  (model &md, const mesh_im &mim,  std::string lawname,
+   bool with_plastic_multiplier, 
+   const std::vector<std::string> &varnames,
+   const std::vector<std::string> &params,
+   const std::string &theta, const std::string &dt, const mesh_fem &mf_vm,
+   model_real_plain_vector &VM, size_type region);
 
 
   //=================================================================

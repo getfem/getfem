@@ -68,12 +68,12 @@ for order in [1, 2]:
 
     theta = 1.
     if (order == 2): theta = 0.5
-    errors1 = np.zeros((6,len(hrange),2))-1.
+    errors1 = np.zeros((5,len(hrange),2))-1.
     resname = resultspath+('/conv_test%d.dat' % order)
     if (os.path.exists(resname) and os.path.isfile(resname)):
-        errors1 = (np.loadtxt(resname)).reshape(6,len(hrange),2)
+        errors1 = (np.loadtxt(resname)).reshape(5,len(hrange),2)
 
-    for option in [1, 2, 3, 4, 5]:
+    for option in [1, 2, 3, 4]:
         print 'Experiments for option %d and order %d' % (option, order)
 
         for i in range(0, len(hrange)):

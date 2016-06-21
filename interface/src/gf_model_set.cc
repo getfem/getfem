@@ -232,7 +232,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       Add a data to the model linked to a @tmf. `name` is the data name.
       The data is initiakized with `V`. The data can be a scalar or vector
       field. `sizes` an optional parameter which is either an 
-      integer  or a vector of suplementary dimensions with respect to `mf`.@*/
+      integer or a vector of suplementary dimensions with respect to `mf`.@*/
     sub_command
       ("add initialized fem data", 3, 4, 0, 0,
        std::string name = in.pop().to_string();
@@ -1759,12 +1759,15 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        out.pop().from_integer(int(ind));
        );
 
-    /*@SET ind = ('add small strain elastoplasticity brick', @tmim mim , @str varname, @str Epname, @str clambda, @str cmu, @str sigma_y, @str theta , @str dt [, @int region])
-      Under construction ....@*/
+    /*@SET ind = ('add small strain elastoplasticity brick', @tmim mim , @str varname, @str xiname, @str Epname, @str clambda, @str cmu, @str sigma_y, @str theta, @str dt [, @int region])
+      Under construction ... @*/
     sub_command
-      ("add small strain elastoplasticity brick", 7, 8, 0, 1,
+      ("add small strain elastoplasticity brick", 8, 9, 0, 1,
        getfem::mesh_im *mim = to_meshim_object(in.pop());
        std::string varname = in.pop().to_string();
+       std::string xiname = in.pop().to_string();
+       // + version avec ou sans multiplicateur
+
        std::string Epname = in.pop().to_string();
        std::string lambda = in.pop().to_string();
        std::string mu = in.pop().to_string();
@@ -1776,13 +1779,16 @@ void gf_model_set(getfemint::mexargs_in& m_in,
 
        std::vector<std::string> varnames;
        varnames.push_back(varname);
+       varnames.push_back(xiname);
        varnames.push_back(Epname);
        std::vector<std::string> params;
-       params.push_back(lambda); params.push_back(mu);params.push_back(sigma_y);
+       params.push_back(lambda);
+       params.push_back(mu);
+       params.push_back(sigma_y);
        
        size_type ind = config::base_index() +
-       add_small_strain_elastoplasticity_brick
-       (*md, *mim, "Prandtl Reuss", false, varnames, params, theta, dt, region);
+       getfem::add_small_strain_elastoplasticity_brick
+       (*md, *mim, "Prandtl Reuss", true, varnames, params, theta, dt, region);
        workspace().set_dependence(md, mim);
        out.pop().from_integer(int(ind));
        );
