@@ -326,6 +326,7 @@ namespace getfem {
 
     const model_real_plain_vector &value(const std::string &name) const;
 
+    scalar_type get_time_step() const;
 
     // macros
     bool macro_exists(const std::string &name) const;

@@ -2548,6 +2548,7 @@ namespace getfem {
 
     SPEC_FUNCTIONS.insert("pi");
     SPEC_FUNCTIONS.insert("meshdim");
+    SPEC_FUNCTIONS.insert("timestep");
     SPEC_FUNCTIONS.insert("qdim");
     SPEC_FUNCTIONS.insert("qdims");
     SPEC_FUNCTIONS.insert("Id");
@@ -5509,6 +5510,12 @@ namespace getfem {
     GMM_ASSERT1(false, "Undefined variable or group " << name);
   }
 
+  scalar_type ga_workspace::get_time_step() const {
+    if (md) return md->get_time_step();
+    if (parent_workspace) return parent_workspace->get_time_step();
+    GMM_ASSERT1(false, "No time step defined here");
+  }
+
 
   // Macros
   bool ga_workspace::macro_exists(const std::string &name) const {
@@ -7586,7 +7593,10 @@ namespace getfem {
           } else if (!name.compare("meshdim")) {
             pnode->node_type = GA_NODE_CONSTANT;
             pnode->init_scalar_tensor(scalar_type(meshdim));
-          }
+          } else if (!name.compare("timestep")) {
+	    pnode->node_type = GA_NODE_CONSTANT;
+            pnode->init_scalar_tensor(scalar_type(workspace.get_time_step()));
+	  }
         } else if (PREDEF_OPERATORS.tab.find(name)
                    != PREDEF_OPERATORS.tab.end()) {
           // Nonlinear operator found
@@ -11635,8 +11645,10 @@ namespace getfem {
     size_type nbdof = md.nb_dof();
     gmm::sub_interval I(nbdof, mf.nb_dof());
     workspace.add_fem_variable("c__dummy_var_95_", mf, I, base_vector(nbdof));
-    workspace.add_expression("("+expr+").Test_c__dummy_var_95_",
-                             mim, region, 2);
+    if (mf.get_qdims().size() > 1)
+      workspace.add_expression("("+expr+"):Test_c__dummy_var_95_",mim,region,2);
+    else
+      workspace.add_expression("("+expr+").Test_c__dummy_var_95_",mim,region,2);
     base_vector residual(nbdof+mf.nb_dof());
     workspace.set_assembled_vector(residual);
     workspace.assembly(1);

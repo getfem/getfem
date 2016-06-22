@@ -515,7 +515,7 @@ namespace getfem {
   (model &md, const std::vector<std::string> &varnames,
    const std::vector<std::string> &params,  const std::string &theta,
    const std::string &dt,
-   std::string &sigma_np1, std::string &Epnp1, std::string &fbound,
+   std::string &sigma_np1, std::string &Epnp1, std::string &compcond,
    std::string &sigma_after) {
     
     GMM_ASSERT1(varnames.size() == 3, "Incorrect number of variables");
@@ -561,26 +561,21 @@ namespace getfem {
 
     dict["Enp1"] = ga_substitute("Sym(Grad_u)", dict);
     dict["En"] = ga_substitute("Sym(Grad_Previous_u)", dict);
-    // specific theta = 1
-    Epnp1 = ga_substitute
-      ("((Epn)+(1-(1/(1+(theta)*2*(mu)*(dt)*(xi))))*(Deviator(Enp1)-(Epn)))",
+    dict["zetan"] = ga_substitute
+      ("((Epn)+(1-(theta))*(2*(mu)*(dt)*(Previous_xi))*(Deviator(En)-(Epn)))",
        dict);
-
-    // dict["zetan"] = ga_substitute
-    //   ("((Epn)+(1-(theta))*(2*(mu)*(dt)*(Previous_xi))*(Deviator(En)-(Epn)))",
-    //    dict);
-    // Epnp1 = ga_substitute
-    //   ("((zetan)+(1-1/(1+(theta)*2*(mu)*(dt)*(xi)))*(Deviator(Enp1)-(zetan)))",
-    //    dict);
-
-
+    Epnp1 = ga_substitute
+      ("((zetan)+(1-1/(1+(theta)*2*(mu)*(dt)*(xi)))*(Deviator(Enp1)-(zetan)))",
+       dict);
     dict["Epnp1"] = Epnp1;
     sigma_np1 = ga_substitute
       ("((lambda)*Trace(Enp1)*Id(meshdim)+2*(mu)*((Enp1)-(Epnp1)))", dict);
-    fbound = ga_substitute
+    dict["fbound"] = ga_substitute
       ("(2*(mu)*Norm(Deviator(Enp1)-(Epnp1))-sqrt(2/3)*(sigma_y))",  dict);
-    sigma_after = ga_substitute("((lambda)*Trace(Enp1)*Id(meshdim) "
-                                "+ 2*(mu)*((Enp1)-(Epn)))", dict);
+    sigma_after = ga_substitute
+      ("((lambda)*Trace(Enp1)*Id(meshdim)+2*(mu)*((Enp1)-(Epn)))", dict);
+    compcond = ga_substitute
+      ("((mu)*xi-pos_part((mu)*xi+100*(fbound)/(mu)))", dict);
   }
 
 
@@ -649,14 +644,12 @@ namespace getfem {
     dict["Epnp1"] = Epnp1;
 
     sigma_np1 = ga_substitute
-      ("(lambda)*Trace(Enp1)*Id(meshdim) + 2*(mu)*((Enp1)-(Epnp1))", dict);
+      ("(lambda)*Trace(Enp1)*Id(meshdim)+2*(mu)*((Enp1)-(Epnp1))", dict);
     sigma_after = ga_substitute
-      ("(lambda)*Trace(Enp1)*Id(meshdim) + 2*(mu)*((Enp1)-(Epn))", dict);
+      ("(lambda)*Trace(Enp1)*Id(meshdim)+2*(mu)*((Enp1)-(Epn))", dict);
     xi_np1 = ga_substitute
       ("pos_part(sqrt(3/2)*Norm(B)/(sigma_y)-1/(2*(mu)))/((theta)*(dt))", dict);
   }
-
-
 
   static void filter_lawname(std::string &lawname) {
     for (auto &c : lawname)
@@ -676,22 +669,18 @@ namespace getfem {
       if (lawname.compare("isotropic_perfect_plasticity") == 0 ||
           lawname.compare("prandtl_reuss") == 0) {
 
-        std::string sigma_np1, Epnp1, fbound, sigma_after;
+        std::string sigma_np1, Epnp1, compcond, sigma_after;
         build_isotropic_perfect_elastoplasticity_expressions_with_multiplier
-          (md, varnames, params, theta, dt, sigma_np1,Epnp1,fbound,sigma_after);
+          (md, varnames, params,theta,dt,sigma_np1,Epnp1,compcond,sigma_after);
 
         const std::string dispname=sup_previous_and_dot_to_varname(varnames[0]);
         const std::string xi      =sup_previous_and_dot_to_varname(varnames[1]);
 
         std::string expr = ("("+sigma_np1+"):Grad_Test_"+dispname
-	       + "+(1/r)*("+xi+"-pos_part("+xi+"+r*("+fbound+")))*Test_"+xi);
-
-	cout << "Epnp1 = " << Epnp1 << endl;
-	cout << "fbound = " << fbound << endl;
-	cout << "adding " << expr << endl;
+			    + "+("+compcond+")*Test_"+xi);
 
         return add_nonlinear_generic_assembly_brick
-          (md, mim, expr, region, true, false,
+          (md, mim, expr, region, false, false,
            "Small strain isotropic perfect elastoplasticity brick");
 
       }  else
@@ -727,14 +716,14 @@ namespace getfem {
     filter_lawname(lawname);
     if (lawname.compare("isotropic_perfect_plasticity") == 0 ||
 	lawname.compare("prandtl_reuss") == 0) {
-      std::string sigma_np1, sigma_after, fbound;
+      std::string sigma_np1, sigma_after, compcond;
 
       if (with_plastic_multiplier)
 	build_isotropic_perfect_elastoplasticity_expressions_with_multiplier
-	  (md, varnames, params, theta, dt,sigma_np1,Epnp1,fbound,sigma_after);
+	  (md, varnames, params,theta,dt,sigma_np1,Epnp1,compcond,sigma_after);
       else
 	build_isotropic_perfect_elastoplasticity_expressions_without_multiplier
-	  (md, varnames, params, theta, dt,sigma_np1,Epnp1,xi_np1,sigma_after);
+	  (md, varnames, params,theta,dt,sigma_np1,Epnp1,xi_np1,sigma_after);
 
       disp = sup_previous_and_dot_to_varname(varnames[0]);
       xi   = sup_previous_and_dot_to_varname(varnames[1]);
@@ -797,20 +786,16 @@ namespace getfem {
          lawname.compare("prandtl_reuss") == 0)) {
       std::string sigma_np1, Epnp1, xi_np1;
       build_isotropic_perfect_elastoplasticity_expressions_without_multiplier
-        (md, varnames, params, theta, dt, sigma_np1, Epnp1, xi_np1, sigma_after);
-
+        (md, varnames, params, theta, dt,sigma_np1,Epnp1,xi_np1,sigma_after);
     }
 
     if (with_plastic_multiplier &&
         (lawname.compare("isotropic_perfect_plasticity") == 0 ||
          lawname.compare("prandtl_reuss") == 0)) {
-      std::string sigma_np1, Epnp1, fbound;
+      std::string sigma_np1, Epnp1, compcond;
       build_isotropic_perfect_elastoplasticity_expressions_with_multiplier
-        (md, varnames, params, theta, dt, sigma_np1, Epnp1, fbound, sigma_after);
-
+        (md, varnames, params, theta, dt,sigma_np1,Epnp1,compcond,sigma_after);
     }
-
-
 
     const im_data *pimd = md.pim_data_of_variable(varnames[1]);
     std::string vm = "sqrt(3/2)*Norm(Deviator("+sigma_after+"))";

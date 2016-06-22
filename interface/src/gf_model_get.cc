@@ -903,31 +903,74 @@ void gf_model_get(getfemint::mexargs_in& m_in,
     /*@GET ('small strain elastoplasticity next iter', @tmim mim , @str varname, @str xiname, @str Epname, @str clambda, @str cmu, @str sigma_y, @str theta, @str dt [, @int region])
       Under construction ... @*/
     sub_command
-      ("small strain elastoplasticity next iter", 8, 9, 0, 0,
+      ("small strain elastoplasticity next iter", 7, 30, 0, 0,
        getfem::mesh_im *mim = to_meshim_object(in.pop());
-       std::string varname = in.pop().to_string();
-       std::string xiname = in.pop().to_string();
-       // + version avec ou sans multiplicateur
+       std::string lawname = in.pop().to_string();
+       filter_lawname(lawname);
+       bool var_multiplier = (in.pop().to_integer(0,1) != 0);
 
-       std::string Epname = in.pop().to_string();
-       std::string lambda = in.pop().to_string();
-       std::string mu = in.pop().to_string();
-       std::string sigma_y = in.pop().to_string();
+       size_type nb_var = 0; size_type nb_params = 0;
+       if (lawname.compare("isotropic_perfect_plasticity") == 0 ||
+	   lawname.compare("prandtl_reuss") == 0) {
+	 nb_var = nb_params = 3;
+       } else
+	 GMM_ASSERT1(false,
+		     lawname << " is not an implemented elastoplastic law");
+       
+       std::vector<std::string> varnames;
+       for (size_type i = 0; i < nb_var; ++i)
+	 varnames.push_back(in.pop().to_string());
+
+       std::vector<std::string> params;
+       for (size_type i = 0; i < nb_params; ++i)
+	 params.push_back(in.pop().to_string());
+
        std::string theta = in.pop().to_string();
        std::string dt = in.pop().to_string();
        size_type region = size_type(-1);
        if (in.remaining()) region = in.pop().to_integer();
 
-       std::vector<std::string> varnames;
-       varnames.push_back(varname);
-       varnames.push_back(xiname);
-       varnames.push_back(Epname);
-       std::vector<std::string> params;
-       params.push_back(lambda); params.push_back(mu);params.push_back(sigma_y);
-       
        getfem::small_strain_elastoplasticity_next_iter
-       (*md, *mim, "Prandtl Reuss", true, varnames, params, theta, dt, region);
+       (*md, *mim, lawname, var_multiplier, varnames, params, theta, dt,region);
        workspace().set_dependence(md, mim);
+       );
+
+    /*@GET V = ('small strain elastoplasticity Von Mises', @tmf mf_vm, @tmim mim, @str varname, @str xiname, @str Epname, @str clambda, @str cmu, @str sigma_y, @str theta, @str dt [, @int region])
+      Under construction ... @*/
+    sub_command
+      ("small strain elastoplasticity Von Mises", 8, 31, 0, 0,
+       const getfem::mesh_fem *mf_vm = to_meshfem_object(in.pop());
+       getfem::mesh_im *mim = to_meshim_object(in.pop());
+       std::string lawname = in.pop().to_string();
+       filter_lawname(lawname);
+       bool var_multiplier = (in.pop().to_integer(0,1) != 0);
+
+       size_type nb_var = 0; size_type nb_params = 0;
+       if (lawname.compare("isotropic_perfect_plasticity") == 0 ||
+	   lawname.compare("prandtl_reuss") == 0) {
+	 nb_var = nb_params = 3;
+       } else
+	 GMM_ASSERT1(false,
+		     lawname << " is not an implemented elastoplastic law");
+       
+        std::vector<std::string> varnames;
+       for (size_type i = 0; i < nb_var; ++i)
+	 varnames.push_back(in.pop().to_string());
+
+       std::vector<std::string> params;
+       for (size_type i = 0; i < nb_params; ++i)
+	 params.push_back(in.pop().to_string());
+
+       std::string theta = in.pop().to_string();
+       std::string dt = in.pop().to_string();
+       size_type region = size_type(-1);
+       if (in.remaining()) region = in.pop().to_integer();
+
+       getfem::model_real_plain_vector VMM(mf_vm->nb_dof());
+       getfem::compute_small_strain_elastoplasticity_Von_Mises
+       (*md, *mim, lawname, var_multiplier, varnames, params, theta, dt,
+	*mf_vm, VMM, region);
+       out.pop().from_dcvector(VMM);
        );
 
     /*@GET V = ('compute elastoplasticity Von Mises or Tresca', @str datasigma, @tmf mf_vm[, @str version])

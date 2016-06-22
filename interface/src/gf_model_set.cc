@@ -75,7 +75,6 @@ static void filter_lawname(std::string &lawname) {
     { if (c == ' ') c = '_'; if (c >= 'A' && c <= 'Z') c = char(c+'a'-'A'); }
 }
 
-
 void gf_model_set(getfemint::mexargs_in& m_in,
                   getfemint::mexargs_out& m_out) {
   typedef std::map<std::string, psub_command > SUBC_TAB;
@@ -1759,42 +1758,45 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        out.pop().from_integer(int(ind));
        );
 
-    /*@SET ind = ('add small strain elastoplasticity brick', @tmim mim , @str varname, @str xiname, @str Epname, @str clambda, @str cmu, @str sigma_y, @str theta, @str dt [, @int region])
+    /*@SET ind = ('add small strain elastoplasticity brick', @tmim mim,  @str constitutive_law, @bool multiplier_is_var [, @str varname, ...] [, @str dataname, ...], @str theta, @str dt [, @int region])
       Under construction ... @*/
     sub_command
-      ("add small strain elastoplasticity brick", 8, 9, 0, 1,
+      ("add small strain elastoplasticity brick", 7, 30, 0, 1,
        getfem::mesh_im *mim = to_meshim_object(in.pop());
-       std::string varname = in.pop().to_string();
-       std::string xiname = in.pop().to_string();
-       // + version avec ou sans multiplicateur
+       std::string lawname = in.pop().to_string();
+       filter_lawname(lawname);
+       bool var_multiplier = (in.pop().to_integer(0,1) != 0);
 
-       std::string Epname = in.pop().to_string();
-       std::string lambda = in.pop().to_string();
-       std::string mu = in.pop().to_string();
-       std::string sigma_y = in.pop().to_string();
+       size_type nb_var = 0; size_type nb_params = 0;
+       if (lawname.compare("isotropic_perfect_plasticity") == 0 ||
+	   lawname.compare("prandtl_reuss") == 0) {
+	 nb_var = nb_params = 3;
+       } else
+	 GMM_ASSERT1(false,
+		     lawname << " is not an implemented elastoplastic law");
+       
+       std::vector<std::string> varnames;
+       for (size_type i = 0; i < nb_var; ++i)
+	 varnames.push_back(in.pop().to_string());
+
+       std::vector<std::string> params;
+       for (size_type i = 0; i < nb_params; ++i)
+	 params.push_back(in.pop().to_string());
+
        std::string theta = in.pop().to_string();
        std::string dt = in.pop().to_string();
        size_type region = size_type(-1);
        if (in.remaining()) region = in.pop().to_integer();
 
-       std::vector<std::string> varnames;
-       varnames.push_back(varname);
-       varnames.push_back(xiname);
-       varnames.push_back(Epname);
-       std::vector<std::string> params;
-       params.push_back(lambda);
-       params.push_back(mu);
-       params.push_back(sigma_y);
-       
        size_type ind = config::base_index() +
        getfem::add_small_strain_elastoplasticity_brick
-       (*md, *mim, "Prandtl Reuss", true, varnames, params, theta, dt, region);
+       (*md, *mim, lawname, var_multiplier, varnames, params, theta, dt,region);
        workspace().set_dependence(md, mim);
        out.pop().from_integer(int(ind));
        );
 
     /*@SET ind = ('add elastoplasticity brick', @tmim mim ,@str projname, @str varname, @str previous_dep_name, @str datalambda, @str datamu, @str datathreshold, @str datasigma[, @int region])
-      Old (quite obsolete) brick which do not use the high level generic
+      Old (obsolete) brick which do not use the high level generic
       assembly. Add a nonlinear elastoplastic term to the model relatively
       to the variable `varname`, in small deformations, for an isotropic
       material and for a quasistatic model. `projname` is the type of

@@ -512,6 +512,7 @@ Constant expressions
   - Floating points with standards notations (for instance ``3``, ``1.456``, ``1E-6``)
   - ``pi``: the constant Pi. 
   - ``meshdim``: the dimension of the current mesh (i.e. size of geometrical nodes)
+  - ``timestep``: the main time step of the model on which this assembly string is evaluated (defined by ``md.set_time_step(dt)``). Do not work on pure workspaces. 
   - ``Id(n)``: the identity matrix of size :math:`n\times n`. `n` should be an integer expression. For instance ``Id(meshdim)`` is allowed.
   - ``qdim(u)``: the total dimension of the variable ``u`` (i.e. the  size for fixed size variables and the total dimension of the vector/tensor field for FEM variables)
   - ``qdims(u)``: the dimensions of the variable ``u`` (i.e. the size for fixed size variables and the vector of dimensions of the vector/tensor field for FEM variables)

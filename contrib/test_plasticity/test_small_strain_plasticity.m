@@ -56,7 +56,7 @@ lambda_top = 84605;      % Iron
 mu_top = 77839;          % Iron
 lambda_bottom = 121150;  % Steel
 mu_bottom = 80769;       % Steel
-sigma_y_top = 8000; % remettre à 8000
+sigma_y_top = 8000;
 sigma_y_bottom = 7000;
 
 Hk = mu_top/5; Hi = 0; % Kinematic and isotropic hardening parameters
@@ -95,12 +95,8 @@ N = gf_mesh_get(m, 'dim');
 mim=gfMeshIm(m);  set(mim, 'integ', gfInteg('IM_TRIANGLE(6)')); % Gauss methods on triangles
 
 % Define used MeshFem
-if (option == 1 && ~use_small_strain_pl_brick)
-   mf_u=gfMeshFem(m,2); set(mf_u, 'fem',gfFem('FEM_PK(2,1)'));
-   mf_sigma=gfMeshFem(m,2,2); set(mf_sigma, 'fem',gfFem('FEM_PK_DISCONTINUOUS(2,0)'));
-else 
-  mf_u=gfMeshFem(m,2); set(mf_u, 'fem',gfFem('FEM_PK(2,2)'));
-end
+mf_u=gfMeshFem(m,2); set(mf_u, 'fem',gfFem('FEM_PK(2,2)'));
+mf_sigma=gfMeshFem(m,2,2); set(mf_sigma, 'fem',gfFem('FEM_PK_DISCONTINUOUS(2,1)'));
 % mf_xi = gfMeshFem(m); set(mf_xi, 'fem', gfFem('FEM_PK(2,2)'));
 mf_xi = gfMeshFem(m); set(mf_xi, 'fem', gfFem('FEM_PK_DISCONTINUOUS(2,1)'));
 mf_delta = gfMeshFem(m); set(mf_delta, 'fem', gfFem('FEM_PK_DISCONTINUOUS(2,1)'));
@@ -143,6 +139,7 @@ set(md, 'add initialized fem data', 'sigma_y', mf_data, sigma_y);
 set(md, 'add Dirichlet condition with multipliers', mim, 'u', mf_u, 1);
 set(md, 'add initialized fem data', 'VolumicData', mf_data, zeros(get(mf_data, 'nbdof')*N,1))
 set(md, 'add source term brick', mim, 'u', 'VolumicData', 2);
+set(md, 'set time step', DT);
 mim_data = gf_mesh_im_data(mim, -1, [N, N]);
 mim_data_scal = gf_mesh_im_data(mim, -1, 1);
 
@@ -151,11 +148,9 @@ switch (option)
     if (use_small_strain_pl_brick)
       set(md, 'add fem data', 'xi', mf_xi);
       set(md, 'add fem data', 'Previous_xi', mf_xi);
-      set(md, 'add initialized data', 'dt', [DT]);
       set(md, 'add initialized data', 'theta', [theta]);
-      set(md, 'add initialized data', 'r', [1e-8]);
       set(md, 'add im data', 'Epn', mim_data);
-      set(md, 'add small strain elastoplasticity brick', mim, 'u', 'xi', 'Epn', 'lambda', 'mu', 'sigma_y', 'theta', 'dt');
+      set(md, 'add small strain elastoplasticity brick', mim, 'Prandtl Reuss', false, 'u', 'xi', 'Epn', 'lambda', 'mu', 'sigma_y', 'theta', 'timestep');
     else      
       % Declare that sigma is a data of the system on mf_sigma
       set(md, 'add fem data', 'sigma', mf_sigma);
@@ -167,19 +162,18 @@ switch (option)
     if (use_small_strain_pl_brick)
       set(md, 'add fem variable', 'xi', mf_xi);
       set(md, 'add fem data', 'Previous_xi', mf_xi);
-      set(md, 'add initialized data', 'dt', [DT]);
       set(md, 'add initialized data', 'theta', [theta]);
-      set(md, 'add initialized data', 'r', [1e-8]);
       set(md, 'add im data', 'Epn', mim_data);
-      set(md, 'add small strain elastoplasticity brick', mim, 'u', 'xi', 'Epn', 'lambda', 'mu', 'sigma_y', 'theta', 'dt');
-        
+      % set(md, 'add fem data', 'Epn', mf_sigma);
+      
+      set(md, 'add small strain elastoplasticity brick', mim, 'Prandtl Reuss', true, 'u', 'xi', 'Epn', 'lambda', 'mu', 'sigma_y', 'theta', 'timestep');
     else
       set(md, 'add fem variable', 'xi', mf_xi);
       set(md, 'add initialized data', 'theta', [theta]);
       set(md, 'add initialized data', 'r', [1e-8]);
       set(md, 'add im data', 'Epn', mim_data);
     
-      if (theta == 1)
+      if (theta == 1 || true)
         Etheta = '(Sym(Grad_u))';
         Eptheta = strcat('((Epn+2*mu*xi*Deviator(',Etheta,'))/(1+2*mu*xi))');
         Epnp1 = Eptheta;
@@ -195,7 +189,7 @@ switch (option)
     
       fbound = strcat('(Norm(Deviator(',sigma_theta,')) - sqrt(2/3)*sigma_y)');
       % fbound = strcat('(Norm(',Eptheta,'-Epn)-theta*xi*sigma_y)');
-      expr = strcat(sigma_np1, ':Grad_Test_u + (1/r)*(xi - pos_part(xi+r*',fbound,'))*Test_xi');
+      expr = strcat(sigma_np1, ':Grad_Test_u+(1/r)*(xi-pos_part(xi+r*',fbound,'))*Test_xi');
       % expr = strcat(sigma_np1, ':Grad_Test_u + (',fbound,' + pos_part(-xi/r-',fbound,'))*Test_xi');
       gf_model_set(md, 'add nonlinear generic assembly brick', mim, expr);
     end  
@@ -341,9 +335,7 @@ for step=1:size(t,2),
     switch (option)
       case 1
         if (use_small_strain_pl_brick)
-            get(md, 'small strain elastoplasticity next iter', mim, 'u', 'xi', 'Epn', 'lambda', 'mu', 'sigma_y', 'theta', 'dt');
-            norm(get(md, 'variable', 'Epn'))
-            norm(get(md, 'variable', 'xi'))
+            get(md, 'small strain elastoplasticity next iter', mim, 'Prandtl Reuss', false, 'u', 'xi', 'Epn', 'lambda', 'mu', 'sigma_y', 'theta', 'timestep');
         else
           get(md, 'elastoplasticity next iter', mim, 'u', 'Previous_u', 'VM', 'lambda', 'mu', 'sigma_y', 'sigma');
           plast = get(md, 'compute plastic part', mim, mf_vm, 'u', 'Previous_u', 'VM', 'lambda', 'mu', 'sigma_y', 'sigma');
@@ -352,9 +344,7 @@ for step=1:size(t,2),
         end
       case 2
         if (use_small_strain_pl_brick)
-          get(md, 'small strain elastoplasticity next iter', mim, 'u', 'xi', 'Epn', 'lambda', 'mu', 'sigma_y', 'theta', 'dt');         
-          norm(get(md, 'variable', 'Epn'))
-          norm(get(md, 'variable', 'xi'))
+          get(md, 'small strain elastoplasticity next iter', mim, 'Prandtl Reuss', true, 'u', 'xi', 'Epn', 'lambda', 'mu', 'sigma_y', 'theta', 'timestep');         
         else
           NewEpn = get(md, 'interpolation', Epnp1, mim_data);
           set(md, 'variable', 'Epn', NewEpn);
