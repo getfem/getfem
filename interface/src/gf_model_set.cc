@@ -1798,9 +1798,15 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         should represent a n x n data tensor field stored on mesh_fem or
         (preferably) on an im_data (corresponding to `mim`). The data are
         the first Lame coefficient, the second one (shear modulus) and the
-        uniaxial yield stress. A typicall call is
+        uniaxial yield stress. A typical call is
         MODEL:GET('add small strain elastoplasticity brick', mim, 'Prandtl Reuss', 0, 'u', 'xi', 'Previous_Ep', 'lambda', 'mu', 'sigma_y', '1', 'timestep');
-      - 'cinematic hardening'
+        IMPORTANT: Note that this law implement the
+        3D expressions. If it is used in 2D, the expressions are just
+        transposed to the 2D. For the plane strain approximation, see below.
+      - "plane strain Prandtl Reuss"
+        (or "plane strain isotropic perfect plasticity")
+        The same law as the previous one but adapted to the plane strain
+        case. Can only be used in 2D.
 
       See Getfem user documentation for more explanation on the discretization
       of the plastic flow and on the implemented plastic laws. See also Getfem
@@ -1821,7 +1827,10 @@ void gf_model_set(getfemint::mexargs_in& m_in,
 
        size_type nb_var = 0; size_type nb_params = 0;
        if (lawname.compare("isotropic_perfect_plasticity") == 0 ||
-	   lawname.compare("prandtl_reuss") == 0) {
+	   lawname.compare("prandtl_reuss") == 0 ||
+	   lawname.compare("plane_strain_isotropic_perfect_plasticity") == 0 ||
+	   lawname.compare("plane_strain_prandtl_reuss") == 0
+	   ) {
 	 nb_var = nb_params = 3;
        } else
 	 GMM_ASSERT1(false,

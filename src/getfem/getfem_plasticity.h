@@ -90,7 +90,14 @@ namespace getfem {
 	should represent a n x n data tensor field stored on mesh_fem or
 	(preferably) on an im_data (corresponding to `mim`). The data are
 	the first Lame coefficient, the second one (shear modulus) and the
-	uniaxial yield stress.
+        uniaxial yield stress. IMPORTANT: Note that this law implement the
+        3D expressions. If it is used in 2D, the expressions are just
+        transposed to the 2D. For the plane strain approximation, see below.
+      - "plane strain Prandtl Reuss"
+        (or "plane strain isotropic perfect plasticity")
+        The same law as the previous one but adapted to the plane strain
+        case. Can only be used in 2D.
+
 
       See Getfem user documentation for more explanation on the discretization
       of the plastic flow and on the implemented plastic laws. See also Getfem
