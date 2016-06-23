@@ -411,19 +411,19 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        Possible values are 'superlu', 'mumps' (if supported),
        'cg/ildlt', 'gmres/ilu' and 'gmres/ilut'.
     - 'lsearch', @str LINE_SEARCH_NAME
-       select explicitely the line search method used for the linear systems (the
-       default value is 'default').
+       select explicitely the line search method used for the linear systems
+       (the default value is 'default').
        Possible values are 'simplest', 'systematic', 'quadratic' or 'basic'.
 
-      Return the number of iterations, if an iterative method is used.
+    Return the number of iterations, if an iterative method is used.
       
-      Note that it is possible to disable some variables
-      (see MODEL:SET('disable variable') ) in order to
-      solve the problem only with respect to a subset of variables (the
-      disabled variables are then considered as data) for instance to
-      replace the global Newton strategy with a fixed point one.
+    Note that it is possible to disable some variables
+    (see MODEL:SET('disable variable') ) in order to
+    solve the problem only with respect to a subset of variables (the
+    disabled variables are then considered as data) for instance to
+    replace the global Newton strategy with a fixed point one.
 
-      @*/
+    @*/
     sub_command
       ("solve", 0, 17, 0, 2,
        getfemint::interruptible_iteration iter;
@@ -900,8 +900,18 @@ void gf_model_get(getfemint::mexargs_in& m_in,
         datalambda, datamu, datathreshold, datasigma);
        );
 
-    /*@GET ('small strain elastoplasticity next iter', @tmim mim , @str varname, @str xiname, @str Epname, @str clambda, @str cmu, @str sigma_y, @str theta, @str dt [, @int region])
-      Under construction ... @*/
+    /*@GET ('small strain elastoplasticity next iter', @tmim mim,  @str lawname, @bool multiplier_is_var [, @str varnames, ...] [, @str params, ...] [, @str theta = '1' [, @str dt  = 'timestep' [, @int region = -1]]])
+      Function that allows to pass from a time step to another for the
+      small strain plastic brick. The parameters have to be exactly the
+      same than the one of `add_small_strain_elastoplasticity_brick`,
+      so see the documentation of this function for the explanations.
+      Basically, this brick computes the plastic strain
+      and the plastic multiplier and store them for the next step.
+      Additionnaly, it copies the computed displacement to the data
+      that stores the displacement of the previous time step (typically
+      'u' to 'Previous_u'). It has to be called before any use of
+      `compute_small_strain_elastoplasticity_Von_Mises`.
+      @*/
     sub_command
       ("small strain elastoplasticity next iter", 7, 30, 0, 0,
        getfem::mesh_im *mim = to_meshim_object(in.pop());
@@ -925,8 +935,10 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        for (size_type i = 0; i < nb_params; ++i)
 	 params.push_back(in.pop().to_string());
 
-       std::string theta = in.pop().to_string();
-       std::string dt = in.pop().to_string();
+       std::string theta = "1";
+       if (in.remaining()) theta = in.pop().to_string();
+       std::string dt = "timestep";
+       if (in.remaining()) dt = in.pop().to_string();
        size_type region = size_type(-1);
        if (in.remaining()) region = in.pop().to_integer();
 
@@ -935,12 +947,18 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        workspace().set_dependence(md, mim);
        );
 
-    /*@GET V = ('small strain elastoplasticity Von Mises', @tmf mf_vm, @tmim mim, @str varname, @str xiname, @str Epname, @str clambda, @str cmu, @str sigma_y, @str theta, @str dt [, @int region])
-      Under construction ... @*/
+    /*@GET V = ('small strain elastoplasticity Von Mises', @tmim mim, @tmf mf_vm, @str lawname, @bool multiplier_is_var [, @str varnames, ...] [, @str params, ...] [, @str theta = '1' [, @str dt = 'timestep' [, @int region]]])
+      This function computes on `mf_vm` the Von Mises stress with respect to
+      a finite strain elastoplasticity term.
+      All the remaining parameters have to be exactly the same than for
+      `add_small_strain_elastoplasticity_brick`.
+      Remember that `small_strain_elastoplasticity_next_iter` has to be called
+      before any call of this function.
+      @*/
     sub_command
       ("small strain elastoplasticity Von Mises", 8, 31, 0, 0,
-       const getfem::mesh_fem *mf_vm = to_meshfem_object(in.pop());
        getfem::mesh_im *mim = to_meshim_object(in.pop());
+       const getfem::mesh_fem *mf_vm = to_meshfem_object(in.pop());
        std::string lawname = in.pop().to_string();
        filter_lawname(lawname);
        bool var_multiplier = (in.pop().to_integer(0,1) != 0);
@@ -961,20 +979,22 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        for (size_type i = 0; i < nb_params; ++i)
 	 params.push_back(in.pop().to_string());
 
-       std::string theta = in.pop().to_string();
-       std::string dt = in.pop().to_string();
+       std::string theta = "1";
+       if (in.remaining()) theta = in.pop().to_string();
+       std::string dt = "timestep";
+       if (in.remaining()) dt = in.pop().to_string();
        size_type region = size_type(-1);
        if (in.remaining()) region = in.pop().to_integer();
 
        getfem::model_real_plain_vector VMM(mf_vm->nb_dof());
        getfem::compute_small_strain_elastoplasticity_Von_Mises
-       (*md, *mim, lawname, var_multiplier, varnames, params, theta, dt,
-	*mf_vm, VMM, region);
+       (*md, *mim, lawname, var_multiplier, varnames, params, *mf_vm, VMM,
+	theta, dt, region);
        out.pop().from_dcvector(VMM);
        );
 
     /*@GET V = ('compute elastoplasticity Von Mises or Tresca', @str datasigma, @tmf mf_vm[, @str version])
-      Compute on `mf_vm` the Von-Mises or the Tresca stress of a field for plasticity and return it into the vector V.
+      For the obsolete plasticity brick. Compute on `mf_vm` the Von-Mises or the Tresca stress of a field for plasticity and return it into the vector V.
       `datasigma` is a vector which contains the stress constraints values supported by the mesh.
       `version` should be  'Von_Mises' or 'Tresca' ('Von_Mises' is the default).@*/
     sub_command
@@ -998,7 +1018,7 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        );
 
     /*@GET V = ('compute plastic part', @tmim mim, @tmf mf_pl, @str varname, @str previous_dep_name, @str projname, @str datalambda, @str datamu, @str datathreshold, @str datasigma)
-      Compute on `mf_pl` the plastic part and return it into the vector V.
+      For the obsolete plasticity brick. Compute on `mf_pl` the plastic part and return it into the vector V.
       `datasigma` is a vector which contains the stress constraints values supported by the mesh.@*/
      sub_command
       ("compute plastic part", 9, 9, 0, 1,

@@ -1639,7 +1639,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
 
 
     /*@SET ind = ('add linear incompressibility brick', @tmim mim, @str varname, @str multname_pressure[, @int region[, @str dataexpr_coeff]])
-    Add an linear incompressibility condition on `variable`. `multname_pressure`
+    Add a linear incompressibility condition on `variable`. `multname_pressure`
     is a variable which represent the pressure. Be aware that an inf-sup
     condition between the finite element method describing the pressure and the
     primal variable has to be satisfied. `region` is an optional mesh region on
@@ -1758,8 +1758,60 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        out.pop().from_integer(int(ind));
        );
 
-    /*@SET ind = ('add small strain elastoplasticity brick', @tmim mim,  @str constitutive_law, @bool multiplier_is_var [, @str varname, ...] [, @str dataname, ...], @str theta, @str dt [, @int region])
-      Under construction ... @*/
+    /*@SET ind = ('add small strain elastoplasticity brick', @tmim mim,  @str lawname, @bool multiplier_is_var [, @str varnames, ...] [, @str params, ...] [, @str theta = '1' [, @str dt = 'timestep' [, @int region = -1]]])
+      Adds a small strain plasticity term to the model `M`. This is the
+      main GetFEM brick for small strain plasticity. `lawname` is the name
+      of an implemented plastic law, `plastic_multiplier_is_var` indicates
+      the choice between a discretization where the plastic multiplier
+      is an unknown of the problem or (return mapping approach) just a data
+      of the model stored for the next iteration. Remember that in both case,
+      a multiplier is stored anyway. `varnames` is a set of variable and
+      data names whose length may depend on the plastic law (at least the
+      displacement, the plastic multiplier and the plastic strain). `params`
+      is a list of expressions for the parameters (at least elastic
+      coefficients and the yield stress). These expressions can be some data
+      names (or even variable names) of the model but can also be any scalar
+      valid expression of the high level assembly langage
+      (such as '1/2', '2+sin(X[0])', '1+Norm(v)' ...). `theta` is the
+      parameter of the `theta`-scheme (generalized trapezoidal rule) used
+      for the plastic strain integration. `theta=1` corresponds to the
+      classical Backward Euler scheme which is first order consistent,
+      `theta=1/2` corresponds to the Crank-Nicolson scheme (trapezoidal rule)
+      which is second order consistent. Any value between 1/2 and 1 should be
+      a valid value. `dt` is the time-step. It can be any expression
+      (data name, constant value ...) but if you want it to be linked to the
+      time step defined in the model (by md.set_time_step(dt)) then simply
+      indicate 'timestep'. The time step can be modified from an iteration
+      to another. `region` is a mesh region.
+
+      The available plastic laws are:
+
+      - 'Prandtl Reuss' (or 'isotropic perfect plasticity').
+        Isotropic elasto-plasticity with no hardening. The variables are the
+        displacement, the plastic multiplier and the plastic strain.
+        The displacement should be a variable and have a corresponding data
+        having the same name preceded by 'Previous\_' corresponding to the
+        displacement at the previous time step (typically 'u' and 'Previous_u').
+        The plastic multiplier should also have two versions (typically 'xi'
+        and 'Previous_xi') the first one being a variable if
+        `plastic_multiplier_is_var=true` and a data if not. The plastic strain
+        should represent a n x n data tensor field stored on mesh_fem or
+        (preferably) on an im_data (corresponding to `mim`). The data are
+        the first Lame coefficient, the second one (shear modulus) and the
+        uniaxial yield stress. A typicall call is
+        MODEL:GET('add small strain elastoplasticity brick', mim, 'Prandtl Reuss', 0, 'u', 'xi', 'Previous_Ep', 'lambda', 'mu', 'sigma_y', '1', 'timestep');
+      - 'cinematic hardening'
+
+      See Getfem user documentation for more explanation on the discretization
+      of the plastic flow and on the implemented plastic laws. See also Getfem
+      user documentation on time integration strategy
+      (integration of transient problems).
+
+      IMPORTANT : remember that `small_strain_elastoplasticity_next_iter` has
+      to be called at the end of each time step, before the next one
+      (and before any post-treatment : this sets the value of the plastic
+      strain and plastic multiplier). 
+      @*/
     sub_command
       ("add small strain elastoplasticity brick", 7, 30, 0, 1,
        getfem::mesh_im *mim = to_meshim_object(in.pop());
@@ -1783,8 +1835,10 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        for (size_type i = 0; i < nb_params; ++i)
 	 params.push_back(in.pop().to_string());
 
-       std::string theta = in.pop().to_string();
-       std::string dt = in.pop().to_string();
+       std::string theta = "1";
+       if (in.remaining()) theta = in.pop().to_string();
+       std::string dt = "timestep";
+       if (in.remaining()) dt = in.pop().to_string();
        size_type region = size_type(-1);
        if (in.remaining()) region = in.pop().to_integer();
 
@@ -1909,7 +1963,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
 
 
     /*@SET ind = ('add nonlinear incompressibility brick', @tmim mim, @str varname, @str multname_pressure[, @int region])
-    Add an nonlinear incompressibility condition on `variable` (for large
+    Add a nonlinear incompressibility condition on `variable` (for large
     strain elasticity). `multname_pressure`
     is a variable which represent the pressure. Be aware that an inf-sup
     condition between the finite element method describing the pressure and the
@@ -1933,7 +1987,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
 
 
     /*@SET ind = ('add finite strain incompressibility brick', @tmim mim, @str varname, @str multname_pressure[, @int region])
-    Add an finite strain incompressibility condition on `variable` (for large
+    Add a finite strain incompressibility condition on `variable` (for large
     strain elasticity). `multname_pressure`
     is a variable which represent the pressure. Be aware that an inf-sup
     condition between the finite element method describing the pressure and the

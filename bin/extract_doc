@@ -984,9 +984,9 @@ elif (option == 'matlab-doc'):
                 if (not l[i].isspace()): break
             
             if (nbspace > 0):
-              l = l[:nbspace-1].strip() + l[nbspace:]
+              l = l[:nbspace].strip() + l[nbspace:]
             if (nbspace >= 0):
-              print('    ' + l)
+              print('    '+l)
           print ''
           [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, langage)
     

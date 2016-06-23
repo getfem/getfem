@@ -1,6 +1,6 @@
 /*===========================================================================
 
- Copyright (C) 2000-2016 Konstantinos Poulios, Amandine Cottaz, Yves Renard
+ Copyright (C) 2002-2016 Konstantinos Poulios, Amandine Cottaz, Yves Renard
 
  This file is a part of GetFEM++
 
@@ -771,14 +771,15 @@ namespace getfem {
    bool with_plastic_multiplier, 
    const std::vector<std::string> &varnames,
    const std::vector<std::string> &params,
-   const std::string &theta, const std::string &dt, const mesh_fem &mf_vm,
-   model_real_plain_vector &VM, size_type region) {
+   const mesh_fem &mf_vm, model_real_plain_vector &VM, 
+   const std::string &theta, const std::string &dt, size_type region) {
     
     GMM_ASSERT1(mf_vm.get_qdim() == 1,
                 "Von mises stress can only be approximated on a scalar fem");
     VM.resize(mf_vm.nb_dof());
      
     std::string sigma_after;
+    size_type n_ep = 2; // Index of the plastic strain variable
 
     filter_lawname(lawname);
     if (!with_plastic_multiplier &&
@@ -787,6 +788,7 @@ namespace getfem {
       std::string sigma_np1, Epnp1, xi_np1;
       build_isotropic_perfect_elastoplasticity_expressions_without_multiplier
         (md, varnames, params, theta, dt,sigma_np1,Epnp1,xi_np1,sigma_after);
+      n_ep = 2;
     }
 
     if (with_plastic_multiplier &&
@@ -795,15 +797,18 @@ namespace getfem {
       std::string sigma_np1, Epnp1, compcond;
       build_isotropic_perfect_elastoplasticity_expressions_with_multiplier
         (md, varnames, params, theta, dt,sigma_np1,Epnp1,compcond,sigma_after);
+      n_ep = 2;
     }
 
-    const im_data *pimd = md.pim_data_of_variable(varnames[1]);
+    const im_data *pimd = md.pim_data_of_variable(varnames[n_ep]);
     std::string vm = "sqrt(3/2)*Norm(Deviator("+sigma_after+"))";
-    if (pimd)
+    if (pimd) {
+      cout << "Here it is" << endl;
       ga_local_projection(md, mim, vm, mf_vm, VM, region);
+    }
     else {
-      const mesh_fem *pmf = md.pmesh_fem_of_variable(varnames[1]);
-      GMM_ASSERT1(pmf, "Provided data " << varnames[1]
+      const mesh_fem *pmf = md.pmesh_fem_of_variable(varnames[n_ep]);
+      GMM_ASSERT1(pmf, "Provided data " << varnames[n_ep]
 		  << " should be defined on a im_data or a mesh_fem object");
       ga_interpolation_Lagrange_fem(md, vm, mf_vm, VM, region);
     }

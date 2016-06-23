@@ -78,25 +78,26 @@ struct elastoplasticity_problem {
 
   getfem::mesh mesh;         /* the mesh */
   getfem::mesh_im  mim;      /* integration methods. */
-  getfem::mesh_fem mf_u;     /* main mesh_fem, 
-				for the elastoplastic solution */
-  getfem::mesh_fem mf_sigma; /* main mesh_fem, 
-				for the elastoplastic solution */
+  getfem::im_data mim_data;  /* Mim data for the pastic strain. */
+  getfem::mesh_fem mf_u;     /* main mesh_fem, for the
+				elastoplastic displacement */
+  getfem::mesh_fem mf_xi;    /* mesh_fem, for the plastic multiplier. */
   getfem::mesh_fem mf_rhs;   /* mesh_fem for the right hand side 
 				(f(x),..)   */
-  scalar_type lambda, mu; // lambdaB, lambdaT, muB, muT;    /* Lamé coefficients.*/
+  scalar_type lambda, mu;    /* Lamé coefficients. */
 
   scalar_type residual; /* max residual for the iterative solvers */
-  scalar_type stress_threshold;
+  scalar_type sigma_y;
   size_type flag_hyp;
   std::string datafilename;
   bgeot::md_param PARAM;
+  bool do_export;
 
   bool solve(plain_vector &U);
   void init(void);
 
-  elastoplasticity_problem(void) : mim(mesh), mf_u(mesh), 
-			     mf_sigma(mesh), mf_rhs(mesh) {}
+  elastoplasticity_problem(void) : mim(mesh), mim_data(mim), mf_u(mesh), 
+			     mf_xi(mesh), mf_rhs(mesh) {}
 
 };
 
@@ -113,11 +114,12 @@ void elastoplasticity_problem::init(void) {
     PARAM.string_value("MESH_TYPE","Mesh type ");
   std::string FEM_TYPE  = 
     PARAM.string_value("FEM_TYPE","FEM name");
-  std::string FEM_TYPE_SIGMA = 
-    PARAM.string_value("FEM_TYPE_SIGMA","FEM name");
+  std::string FEM_TYPE_XI = 
+    PARAM.string_value("FEM_TYPE_XI","FEM name");
   std::string INTEGRATION = 
     PARAM.string_value("INTEGRATION", 
 		       "Name of integration method");
+  do_export = (PARAM.int_value("EXPORT", "Perform or not the vtk export") != 0);
 
   cout << "MESH_TYPE=" << MESH_TYPE << "\n";
   cout << "FEM_TYPE="  << FEM_TYPE << "\n";
@@ -139,13 +141,13 @@ void elastoplasticity_problem::init(void) {
     N = pgt->dim();
     std::vector<size_type> nsubdiv(N);
     nsubdiv[0]=PARAM.int_value
-      ("NX", "Nomber of space steps in x direction ");
+      ("NX", "Number of space steps in x direction ");
     nsubdiv[1]=PARAM.int_value
-      ("NY", "Nomber of space steps in y direction ");
+      ("NY", "Number of space steps in y direction ");
 
     if(N==3)
       nsubdiv[2]=PARAM.int_value
-	("NZ", "Nomber of space steps in z direction ");
+	("NZ", "Number of space steps in z direction ");
     getfem::regular_unit_mesh(mesh, nsubdiv, pgt,
 			      PARAM.int_value("MESH_NOISED")!= 0);
     
@@ -184,7 +186,6 @@ void elastoplasticity_problem::init(void) {
   lambda = PARAM.real_value("LAMBDA", 
 			     "Lamé coefficient lambda");
   mf_u.set_qdim(bgeot::dim_type(N));
-  mf_sigma.set_qdim(bgeot::dim_type(N*N));
 
 
   /* set the finite element on the mf_u */
@@ -194,13 +195,13 @@ void elastoplasticity_problem::init(void) {
     getfem::int_method_descriptor(INTEGRATION);
 
   mim.set_integration_method(mesh.convex_index(), ppi);
+  mim_data.set_tensor_size(bgeot::multi_index(N,N));
   mf_u.set_finite_element(mesh.convex_index(), pf_u);
 
 
   /* set the finite element on the mf_sigma */
-  getfem::pfem pf_sigma = 
-    getfem::fem_descriptor(FEM_TYPE_SIGMA);
-  mf_sigma.set_finite_element(mesh.convex_index(), pf_sigma);
+  getfem::pfem pf_xi = getfem::fem_descriptor(FEM_TYPE_XI);
+  mf_xi.set_finite_element(mesh.convex_index(), pf_xi);
 
 
   /* set the finite element on mf_rhs 
@@ -242,8 +243,7 @@ void elastoplasticity_problem::init(void) {
   }
  
   // Plasticity part 
-  stress_threshold = PARAM.real_value("STRESS_THRESHOLD",
-				      "plasticity stress_threshold");
+  sigma_y = PARAM.real_value("SIGMA_Y", "plasticity yield stress");
   flag_hyp=PARAM.int_value("FLAG_HYP");
 }
 
@@ -259,39 +259,30 @@ bool elastoplasticity_problem::solve(plain_vector &U) {
   size_type N = mesh.dim();
   getfem::model model;
 
+  gmm::set_traces_level(1);
+
   // Main unknown of the problem.
   model.add_fem_variable("u", mf_u);
-  model.add_fem_data("previous_u", mf_u);
+  model.add_fem_data("Previous_u", mf_u);
 
-  /*
-  plain_vector lambdaV(nb_dof_rhs), sV(nb_dof_rhs);
-  plain_vector muV(nb_dof_rhs);
-  for(size_type i = 0; i<(nb_dof_rhs/2)-1; ++i) {
-    lambdaV[i] = lambdaB;
-    muV[i] = muB;
-    sV[i] = stress_threshold;
-  }
-  for(size_type i = (nb_dof_rhs/2)-1; i<nb_dof_rhs; ++i) {
-    lambdaV[i] = lambdaT;
-    muV[i] = muT;
-    sV[i] = stress_threshold;
-  }
-  */
+  model.add_initialized_scalar_data("lambda", lambda);
+  model.add_initialized_scalar_data("mu", mu);
+  model.add_initialized_scalar_data("sigma_y", sigma_y);
 
-  // for this example we take lambda, mu and stressthreshold 
-  // scalar so mf_data = 0
-  model.add_initialized_scalar_data("lambda",lambda);
-  model.add_initialized_scalar_data("mu",mu);
-  model.add_initialized_scalar_data("s", stress_threshold);
-
-  model.add_fem_data("sigma", mf_sigma);
+  model.add_fem_data("xi", mf_xi);
+  model.add_fem_data("Previous_xi", mf_xi);
+  model.add_im_data("Previous_Ep", mim_data);
 
   /* choose the projection type */
   getfem::pconstraints_projection
     proj = std::make_shared<getfem::VM_projection>(0);
 
-  add_elastoplasticity_brick(model, mim, proj, "u", "previous_u",
-			     "lambda", "mu",  "s", "sigma");
+  std::vector<std::string> plastic_variables = {"u", "xi", "Previous_Ep"};
+  std::vector<std::string> plastic_data = {"lambda", "mu", "sigma_y"};
+  
+
+  add_small_strain_elastoplasticity_brick
+    (model, mim, "Prandtl Reuss", 0, plastic_variables, plastic_data);
   
   plain_vector F(nb_dof_rhs * N);
   model.add_initialized_fem_data("NeumannData", mf_rhs, F);
@@ -337,34 +328,37 @@ bool elastoplasticity_problem::solve(plain_vector &U) {
 	 << model.nb_dof() << endl;
 
     getfem::simplest_newton_line_search ls;
-
     gmm::iteration iter(residual, 2, 40000);
     getfem::standard_solve(model, iter,
 			   getfem::rselect_linear_solver(model, "superlu"), ls);
  
-    //compute and save sigma_np1
-    //    getfem::mesh_fem *mf_data=0;
-    getfem::elastoplasticity_next_iter(model, mim, "u", "previous_u", proj, 
-			"lambda", "mu", "s", "sigma");
+    getfem::small_strain_elastoplasticity_next_iter
+      (model, mim, "Prandtl Reuss", 0, plastic_variables, plastic_data);
     
     // Get the solution and save it
     gmm::copy(model.real_variable("u"), U);
     
  
-    getfem::compute_elastoplasticity_Von_Mises_or_Tresca
-      (model, "sigma", mf_vm, VM, false);
+    getfem::compute_small_strain_elastoplasticity_Von_Mises
+      (model, mim, "Prandtl Reuss",0,plastic_variables, plastic_data, mf_vm, VM);
     
-//     getfem::vtk_export exp(datafilename+"["+(char)nb+"]" + ".vtk");
-//     exp.exporting(mf_vm);
-//     exp.write_point_data(mf_vm,VM, "Von Mises stress");
-//     exp.write_point_data(mf_u, U, "displacement");
-       
+    std::stringstream fname; fname << datafilename << "_" << nb << ".vtk";
+
+    if (do_export) {
+      getfem::vtk_export exp(fname.str());
+      exp.exporting(mf_vm);
+      exp.write_point_data(mf_vm,VM, "Von Mises stress");
+      exp.write_point_data(mf_u, U, "displacement");
+    }
+    
   }
 
-  cout << "export done, you can view the data file with "
-    "(for example)\n"
-    "mayavi -d " << datafilename << ".vtk -f "
-    "WarpVector -m BandedSurfaceMap -m Outline\n";
+  if (do_export) {
+    cout << "export done, you can view the data file with "
+      "(for example)\n"
+      "mayavi2 -d " << datafilename << "_1.vtk -f "
+      "WarpVector -m Surface -m Outline\n";
+  }
 
   return true;
 }

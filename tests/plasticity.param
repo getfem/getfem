@@ -33,15 +33,13 @@ MESH_NOISED = 0; % Set to one if you want to "shake" the mesh
 
 
 %FEM_TYPE = 'FEM_PK(2,1)';  % P1 for triangles
-FEM_TYPE = 'FEM_PK(2,1)'; % P1 for triangles
-%FEM_TYPE = 'FEM_PK(2,3)'; % P3 for triangles
-%FEM_TYPE = 'FEM_PK(2,4)'; % P4 for triangles
+FEM_TYPE = 'FEM_PK(2,2)'; % P2 for triangles
 %FEM_TYPE = 'FEM_PK(3,2)';  % P2 for tetrahedrons 
 
 %FEM_TYPE = 'FEM_QK(2,1)';  % Q1 fem for quadrangles
 %FEM_TYPE = 'FEM_QK(2,2)';
 
-FEM_TYPE_SIGMA = 'FEM_PK_DISCONTINUOUS(2,0)'; 
+FEM_TYPE_XI = 'FEM_PK_DISCONTINUOUS(2,2)'; 
 
 DATA_FEM_TYPE = ''  %'FEM_PK_DISCONTINUOUS(2,0)';
 % DATA_FEM_TYPE must be defined if your main FEM is not Lagrangian
@@ -75,13 +73,11 @@ GENERIC_DIRICHLET = 0;  % Generic Dirichlet condition for non-lagrangian elts.
 
 %%%%%   saving parameters                                             %%%%%
 ROOTFILENAME = 'plasticity';     % Root of data files.
-
+EXPORT = 1;
 
 %%%%%%%%%DONNEES SPECIFIQUEMENT PLASTIQUES
 
-STRESS_THRESHOLD =7000.;  % plasticity stress_threshold  
-                          % si STRESS_THRESHOLD <VM_max on a un regime plastique;
-                          % si STRESS_THRESHOLD >VM_max on a un regime elastique;
+SIGMA_Y = 9000.;  % plasticity yield stress yield
 RESIDUAL=1E-6;            % RESIDUAL for iterative solvers
 OPTASCII=0;   % option for writing results : 0 for binary and other for ascii
 FLAG_HYP=0;   % option for the calculation hypothesis : 1 for stress plane

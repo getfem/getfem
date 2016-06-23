@@ -455,10 +455,6 @@ where :math:`c_1, c_2 \mbox{ and } c_3` are some physical parameters. Note that 
 to be done ...
 
 
-Some classical modelizations
-++++++++++++++++++++++++++++
-
-
 
 
 
@@ -466,24 +462,106 @@ Some classical modelizations
 Elasto-plasticity bricks 
 +++++++++++++++++++++++++
 
-
+See the test programs :file:`tests/plasticity.cc`, :file:`interface/tests/matlab/demo_plasticity.m`, :file:`interface/tests/matlab/demo_plasticity.py` and in :file:`contrib/test_plasticity`.
 
 Generic brick
 =============
 
-The generic brick add the following terms:
+There is two version of the generic brick. A first one when the plastic multiplier is kept as a variable of the problem where the added term is of the form:
 
-.. math:: \int_{\Omega} \sigma_{n+1} : \nabla v dx +  \ds \int_{\Omega} (\Delta \xi - (\Delta \xi + r f(\sigma_{n+1}, A_{n+1}))_+) \lambda dx = 0,   \forall \lambda
+.. math:: \int_{\Omega} \sigma_{n+1} : \nabla \delta u dx +  \ds \int_{\Omega} (\xi_{n+1} - (\xi_{n+1} + r f(\sigma_{n+1}, A_{n+1}))_+) \delta\xi dx = 0,
 
+whith :math:`r > 0` having a specific value chosen by the brick (in terms of the elasticity coefficients), and when the return mapping strategy is selected (plastic multiplier is just a data), just the added term:
 
-Other bricks
-============
+.. math:: \int_{\Omega} \sigma_{n+1} : \nabla v dx.
 
-to be done: ::
+The function which adds the brick to a model is ::
 
-      getfem::add_elastoplasticity_brick
-          (md, mim, ACP, varname, datalambda, datamu, datathreshold, datasigma, region);
+   getfem::add_small_strain_elastoplasticity_brick
+     (md, mim, lawname, plastic_multiplier_is_var,
+     const std::vector<std::string> &varnames,
+     const std::vector<std::string> &params,
+     theta = "1", dt = "timestep", region = size_type(-1));
 
+where `lawname` is the name of an implemented plastic law,
+`plastic_multiplier_is_var` indicates the choice between a discretization
+where the plastic multiplier is an unknown of the problem or
+(return mapping approach) just a data
+of the model stored for the next iteration. Remember that in both case,
+a multiplier is stored anyway. `varnames` is a set of variable and
+data names whose length may depend on the plastic law (at least the
+displacement, the plastic multiplier and the plastic strain). `params`
+is a list of expressions for the parameters (at least elastic
+coefficients and the yield stress). These expressions can be some data
+names (or even variable names) of the model but can also be any scalar
+valid expression of the high level assembly langage
+(such as "1/2", "2+sin(X[0])", "1+Norm(v)" ...). `theta` is the
+parameter of the `theta`-scheme (generalized trapezoidal rule) used
+for the plastic strain integration. `theta=1` corresponds to the
+classical Backward Euler scheme which is first order consistent,
+`theta=1/2` corresponds to the Crank-Nicolson scheme (trapezoidal rule)
+which is second order consistent. Any value between 1/2 and 1 should be
+a valid value. `dt` is the time-step. It can be any expression
+(data name, constant value ...) but if you want it to be linked to the
+time step defined in the model (by md.set_time_step(dt)) then simply
+indicate 'timestep'. The time step can be modified from an iteration
+to another. `region` is a mesh region.
+
+The available plastic laws are:
+
+- "Prandtl Reuss" (or "isotropic perfect plasticity").
+  Isotropic elasto-plasticity with no hardening. The variables are the
+  displacement, the plastic multiplier and the plastic strain.
+  The displacement should be a variable and have a corresponding data
+  having the same name preceded by "Previous\_" corresponding to the
+  displacement at the previous time step (typically "u" and "Previous_u").
+  The plastic multiplier should also have two versions (typically "xi"
+  and "Previous_xi") the first one being a variable
+  if `plastic_multiplier_is_var=true` and a data if not. The plastic strain
+  should represent a n x n data tensor field stored on mesh_fem or
+  (preferably) on an im_data (corresponding to `mim`). The data are
+  the first Lame coefficient, the second one (shear modulus) and the
+  uniaxial yield stress.
+
+IMPORTANT : remember that `small_strain_elastoplasticity_next_iter` has
+to be called at the end of each time step, before the next one
+(and before any post-treatment : this sets the value of the plastic
+strain and plastic multiplier).
+
+Additionaly, the following function allow to pass from a time step to another for the small strain plastic brick: ::
+
+   getfem::small_strain_elastoplasticity_next_iter
+   (md, mim, lawname, plastic_multiplier_is_var,
+     const std::vector<std::string> &varnames,
+     const std::vector<std::string> &params,
+     theta = "1", dt = "timestep", region = size_type(-1));
+
+The parameters have to be exactly the
+same than the one of `add_small_strain_elastoplasticity_brick`,
+so see the documentation of this functpass from a time step to another for the
+small strain plastic brick. ion for the explanations.
+Basically, this brick computes the plastic strain
+and the plastic multiplier and store them for the next step.
+Additionnaly, it copies the computed displacement to the data
+that stores the displacement of the previous time step (typically
+"u" to "Previous_u"). It has to be called before any use of
+`compute_small_strain_elastoplasticity_Von_Mises`.
+
+The function ::
+
+  getfem::compute_small_strain_elastoplasticity_Von_Mises
+  (md, mim, lawname, plastic_multiplier_is_var,
+     const std::vector<std::string> &varnames,
+     const std::vector<std::string> &params,
+     const mesh_fem &mf_vm, model_real_plain_vector &VM, 
+     theta = "1", dt = "timestep", region = size_type(-1));
+
+computes on `mf_vm` the Von Mises stress with respect to
+a finite strain elastoplasticity term and put the result into `VM`.
+All the remaining parameters have to be exactly the same than for
+`add_small_strain_elastoplasticity_brick`.
+Remember that `small_strain_elastoplasticity_next_iter` has to be called
+before any call of this function.
 
 
 
@@ -512,10 +590,7 @@ Be careful: ``datalambda``, ``datamu`` and ``datathreshold`` could be constants 
 This function assembles the tangent matrix and the right hand side vector which will be solved using a Newton algorithm.
 
 
-Other useful functions
-**********************
-
-The function: ::
+Additionaly, The function: ::
 
       getfem::elastoplasticity_next_iter
           (md, mim, varname, previous_varname, ACP, datalambda, datamu, datathreshold, datasigma);
@@ -529,10 +604,6 @@ computes the new stress constraint values supported by the material after a load
 Then, :math:`u^n` and :math:`\sigma^n` contains the new values computed and one can restart the process.
 
 
-
-########################
-
-
 The function: ::
 
       getfem::compute_elastoplasticity_Von_Mises_or_Tresca
@@ -540,11 +611,6 @@ The function: ::
 
 computes the Von Mises (or Tresca if ``tresca`` = true) criterion on the stress tensor stored in ``datasigma`` . The stress is evaluated on the `mesh_fem` ``mf_vm`` and stored into the vector ``VM``.
 Of course, this function can be used if and only if the previous function ``elastoplasticity_next_iter`` has been called earlier.
-
-
-
-##########################
-
 
 The function: ::
 
