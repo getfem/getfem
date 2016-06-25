@@ -976,17 +976,37 @@ elif (option == 'matlab-doc'):
           print('  ``' + ret + 'gf_'+o+ext+firstarg+mname + params+')``')
           print ''
           doc = FilterDoc(doc, langage, objects, commands)
-          nbspace = -1
+          nbspace = -1; util_pos = -1; nbsp = -1
           for l in doc.split('\n'):
             if (nbspace == -1 and len(l.strip()) > 0):
+              nbspace = 0;
               for i in range(len(l)):
-                nbspace = i
-                if (not l[i].isspace()): break
+                if (l[i] == '\t'):
+                    nbspace = (nbspace/8)*8 + 8;
+                elif (l[i].isspace()):
+                    nbspace = nbspace + 1;
+                else: break
             
             if (nbspace > 0):
-              l = l[:nbspace].strip() + l[nbspace:]
+              util_pos = 0; nbsp = 0
+              for i in range(len(l)):
+                if (l[i] == '\t'):
+                    nbsp = (nbsp/8)*8 + 8;
+                elif (l[i].isspace()):
+                    nbsp = nbsp + 1;
+                else: break
+                util_pos = i + 1
+                if (nbsp >= nbspace): break
+                    
+              l = l[util_pos:]
+              
+            if (nbsp > nbspace):
+                for i in range (nbsp-nbspace):
+                    print '',
+            
             if (nbspace >= 0):
-              print('    '+l)
+                print('    '+l)
+                
           print ''
           [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, langage)
     
@@ -1478,17 +1498,37 @@ elif (option == 'scilab-doc-rst'):
           print('  ``' + ret + 'gf_'+o+ext+firstarg+mname + params+')``')
           print ''
           doc = FilterDoc(doc, langage, objects, commands)
-          nbspace = -1
+          nbspace = -1; util_pos = -1; nbsp = -1
           for l in doc.split('\n'):
             if (nbspace == -1 and len(l.strip()) > 0):
+              nbspace = 0;
               for i in range(len(l)):
-                nbspace = i
-                if (not l[i].isspace()): break
+                if (l[i] == '\t'):
+                    nbspace = (nbspace/8)*8 + 8;
+                elif (l[i].isspace()):
+                    nbspace = nbspace + 1;
+                else: break
             
             if (nbspace > 0):
-              l = l[:nbspace-1].strip() + l[nbspace:]
+              util_pos = 0; nbsp = 0
+              for i in range(len(l)):
+                if (l[i] == '\t'):
+                    nbsp = (nbsp/8)*8 + 8;
+                elif (l[i].isspace()):
+                    nbsp = nbsp + 1;
+                else: break
+                util_pos = i + 1
+                if (nbsp >= nbspace): break
+                    
+              l = l[util_pos:]
+              
+            if (nbsp > nbspace):
+                for i in range (nbsp-nbspace):
+                    print '',
+            
             if (nbspace >= 0):
-              print('    ' + l)
+                print('    '+l)
+
           print ''
           [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, langage)
     
@@ -1663,16 +1703,37 @@ def generic_destructor(self, destructible=True):
           params = params[1:].strip()
         print('  * ``' + ret + oname+firstarg+mname + params+')``')
         doc = FilterDoc(doc, langage, objects, commands, set_replace)
-        nbspace = -1
+        nbspace = -1; util_pos = -1; nbsp = -1
         for l in doc.split('\n'):
           if (nbspace == -1 and len(l.strip()) > 0):
+            nbspace = 0;
             for i in range(len(l)):
-              nbspace = i
-              if (not l[i].isspace()): break
+              if (l[i] == '\t'):
+                  nbspace = (nbspace/8)*8 + 8;
+              elif (l[i].isspace()):
+                  nbspace = nbspace + 1;
+              else: break
+
           if (nbspace > 0):
-            l = l[:nbspace-1].strip() + l[nbspace:]
+            util_pos = 0; nbsp = 0
+            for i in range(len(l)):
+              if (l[i] == '\t'):
+                  nbsp = (nbsp/8)*8 + 8;
+              elif (l[i].isspace()):
+                  nbsp = nbsp + 1;
+              else: break
+              util_pos = i + 1
+              if (nbsp >= nbspace): break
+
+            l = l[util_pos:]
+
+          if (nbsp > nbspace):
+              for i in range (nbsp-nbspace):
+                  print '',
+
           if (nbspace >= 0):
-            print('    ' + l)
+              print('    '+l)
+              
         print ''
         [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, langage)
 
@@ -1741,17 +1802,38 @@ def generic_destructor(self, destructible=True):
               mparams = mparams[1:].strip()
             sys.stdout.write('Synopsis: ' + ret + oname + '.'+ mmname + '(self' + mparams+')\n\n    ')
           doc = FilterDoc(doc, langage, objects, commands)
-          nbspace = -1
+          nbspace = -1; util_pos = -1; nbsp = -1
           for l in doc.split('\n'):
             if (nbspace == -1 and len(l.strip()) > 0):
+              nbspace = 0;
               for i in range(len(l)):
-                nbspace = i
-                if (not l[i].isspace()): break
+                if (l[i] == '\t'):
+                    nbspace = (nbspace/8)*8 + 8;
+                elif (l[i].isspace()):
+                    nbspace = nbspace + 1;
+                else: break
               sys.stdout.write(l.strip())
             elif (nbspace >= 0):
               if (nbspace > 0):
-                l = l[:nbspace-1].strip() + l[nbspace:]
-              sys.stdout.write('\n    ' + l)
+                util_pos = 0; nbsp = 0
+                for i in range(len(l)):
+                  if (l[i] == '\t'):
+                      nbsp = (nbsp/8)*8 + 8;
+                  elif (l[i].isspace()):
+                      nbsp = nbsp + 1;
+                  else: break
+                  util_pos = i + 1
+                  if (nbsp >= nbspace): break
+                    
+                l = l[util_pos:]
+              sys.stdout.write('\n')
+              if (nbsp > nbspace):
+                  for i in range (nbsp-nbspace):
+                      sys.stdout.write(' ')
+            
+              if (nbspace >= 0):
+                  sys.stdout.write('    ' + l)
+                  
           print '"""'
           sys.stdout.write('    return self.' + ext[1:] + '("' + mname + '"')
           for p in params:
@@ -1810,17 +1892,38 @@ def generic_destructor(self, destructible=True):
               mparams = mparams[1:].strip()
             sys.stdout.write('Synopsis: ' + ret + mc + mmname + '(' + margs + mparams+')\n\n  ')
         doc = FilterDoc(doc, langage, objects, commands, set_replace)
-        nbspace = -1
+        nbspace = -1; util_pos = -1; nbsp = -1
         for l in doc.split('\n'):
           if (nbspace == -1 and len(l.strip()) > 0):
+            nbspace = 0;
             for i in range(len(l)):
-              nbspace = i
-              if (not l[i].isspace()): break
+              if (l[i] == '\t'):
+                  nbspace = (nbspace/8)*8 + 8;
+              elif (l[i].isspace()):
+                  nbspace = nbspace + 1;
+              else: break
             sys.stdout.write(l.strip())
           elif (nbspace >= 0):
             if (nbspace > 0):
-              l = l[:nbspace-1].strip() + l[nbspace:]
-            sys.stdout.write('\n  ' + l)
+              util_pos = 0; nbsp = 0
+              for i in range(len(l)):
+                if (l[i] == '\t'):
+                    nbsp = (nbsp/8)*8 + 8;
+                elif (l[i].isspace()):
+                    nbsp = nbsp + 1;
+                else: break
+                util_pos = i + 1
+                if (nbsp >= nbspace): break
+
+              l = l[util_pos:]
+            sys.stdout.write('\n')
+            if (nbsp > nbspace):
+                for i in range (nbsp-nbspace):
+                    sys.stdout.write(' ')
+
+            if (nbspace >= 0):
+                sys.stdout.write('  ' + l)
+
         print '"""'
         sys.stdout.write('  return getfem(\'' + c + '\'')
         for p in args:
@@ -1943,17 +2046,38 @@ elif (option == 'python-doc'):
       print '--------------------------\n'
       [gdoc, args] = ExtractGlobalDoc(src_dir);
       gdoc = FilterDoc(gdoc, langage, objects, commands, set_replace)
-      nbspace = -1
-      for l in gdoc.split('\n'):
+      nbspace = -1; util_pos = -1; nbsp = -1
+      for l in doc.split('\n'):
         if (nbspace == -1 and len(l.strip()) > 0):
+          nbspace = 0;
           for i in range(len(l)):
-            nbspace = i
-            if (not l[i].isspace()): break
+            if (l[i] == '\t'):
+                nbspace = (nbspace/8)*8 + 8;
+            elif (l[i].isspace()):
+                nbspace = nbspace + 1;
+            else: break
           sys.stdout.write(l.strip())
         elif (nbspace >= 0):
           if (nbspace > 0):
-            l = l[:nbspace-1].strip() + l[nbspace:]
-          sys.stdout.write('\n  ' + l)
+            util_pos = 0; nbsp = 0
+            for i in range(len(l)):
+              if (l[i] == '\t'):
+                  nbsp = (nbsp/8)*8 + 8;
+              elif (l[i].isspace()):
+                  nbsp = nbsp + 1;
+              else: break
+              util_pos = i + 1
+              if (nbsp >= nbspace): break
+
+            l = l[util_pos:]
+          sys.stdout.write('\n')
+          if (nbsp > nbspace):
+              for i in range (nbsp-nbspace):
+                  sys.stdout.write(' ')
+
+          if (nbspace >= 0):
+              sys.stdout.write('  ' + l)
+              
       print ''
       fl = open(src_dir)
       doc = '';
