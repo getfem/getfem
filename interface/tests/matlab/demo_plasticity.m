@@ -21,8 +21,7 @@ clc;
 
 
 
-% We compute a plasticity problem with a Von Mises criterion with or
-% without kinematic hardening
+% Plasticity problem with a Von Mises criterion with or without kinematic hardening
 % For convenience we consider an homogenous Dirichlet condition on the left
 % of the domain and an easy computed Neumann Condition on the right
 

@@ -1806,13 +1806,23 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       - "plane strain Prandtl Reuss"
         (or "plane strain isotropic perfect plasticity")
         The same law as the previous one but adapted to the plane strain
-        case. Can only be used in 2D.
+        approximation. Can only be used in 2D.
+      - "Prandtl Reuss linear hardening"
+        (or "isotropic plasticity linear hardening").
+	Isotropic elasto-plasticity with linear isotropic and kinematic
+	hardening. An additional variable compared to "Prandtl Reuss" law:
+	the accumulated plastic strain. Similarly to the plastic strain, it
+	is only stored at the end of the time step, so a simple data is
+	required (preferably on an im_data).
+	Two additional parameters: the kinematic hardening modulus and the
+	isotropic one. 3D expressions only. A typical call is
+        MODEL:GET('add small strain elastoplasticity brick', mim, 'Prandtl Reuss linear hardening', 0, 'u', 'xi', 'Previous_Ep', 'Previous_alpha', 'lambda', 'mu', 'sigma_y', 'H_k', H_i', '1', 'timestep');
 
       See Getfem user documentation for more explanation on the discretization
       of the plastic flow and on the implemented plastic laws. See also Getfem
       user documentation on time integration strategy
       (integration of transient problems).
-
+      
       IMPORTANT : remember that `small_strain_elastoplasticity_next_iter` has
       to be called at the end of each time step, before the next one
       (and before any post-treatment : this sets the value of the plastic
@@ -1829,9 +1839,11 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        if (lawname.compare("isotropic_perfect_plasticity") == 0 ||
 	   lawname.compare("prandtl_reuss") == 0 ||
 	   lawname.compare("plane_strain_isotropic_perfect_plasticity") == 0 ||
-	   lawname.compare("plane_strain_prandtl_reuss") == 0
-	   ) {
+	   lawname.compare("plane_strain_prandtl_reuss") == 0) {
 	 nb_var = nb_params = 3;
+       } else if (lawname.compare("isotropic_plasticity_linear_hardening") == 0
+		  || lawname.compare("prandtl_reuss_linear_hardening") == 0) {
+	 nb_var = 4; nb_params = 5;
        } else
 	 GMM_ASSERT1(false,
 		     lawname << " is not an implemented elastoplastic law");

@@ -528,7 +528,7 @@ The available plastic laws are:
 - "plane strain Prandtl Reuss"
   (or "plane strain isotropic perfect plasticity")
   The same law as the previous one but adapted to the plane strain
-  case. Can only be used in 2D.
+  approximation. Can only be used in 2D.
 
 IMPORTANT : remember that `small_strain_elastoplasticity_next_iter` has
 to be called at the end of each time step, before the next one
