@@ -71,7 +71,7 @@ NX = 40;
 NY = ceil(NX * LY / (2 * LX))*2;
 DT = T/NT;
 
-theta = 1; % Parameter for the generalized mid point scheme.
+theta = 1.0; % Parameter for the generalized mid point scheme or generalized trapezoidal rule.
 
 
 if (load_type == 1)

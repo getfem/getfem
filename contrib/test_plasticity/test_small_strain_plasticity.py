@@ -32,7 +32,7 @@ import matplotlib.pyplot as plt
 import os
 import sys
 
-option = 1     # 1 : without hardening, im_data and plastic multiplier
+option = 3     # 1 : without hardening, im_data and plastic multiplier
                # 2 : without hardening, with im_data and plastic multiplier
                # 3 : with kinematic and isotropic hardening,
                #     with plastic multiplier
@@ -44,13 +44,16 @@ load_type = 1  # 1 : vertical
                # 2 : horizontal
 
 constraint_at_np1 = False
-trapezoidal = False  # Trapezoidal or generalized mid-point  (for option 2 only for the moment ...)
+trapezoidal = False  # Trapezoidal or generalized mid-point (for option 2
+               # only for the moment ..., except when using the predefined
+               # brick : always the generalized trapezoidal rule)
                
 bi_material = False
 test_tangent_matrix = False
 do_export = 2  # 0 : no export,
                # 1 : export_solution only,
                # 2 : export for graphical post-treatment.
+use_small_strain_pl_brick = True; # Use the (new) small strain plasticity brick
 
 resultspath = './exported_solutions'
 
@@ -65,7 +68,7 @@ mu_bottom = 80769.       # Steel
 sigma_y_top = 8000.
 sigma_y_bottom = 7000.
 
-Hk = mu_top/5.; Hi = Hk; Hi = 0. # Kinematic and isotropic hardening parameters
+Hk = mu_top/5.; Hi = Hk; # Kinematic and isotropic hardening parameters
 
 
 # Numerical parameters
@@ -193,6 +196,7 @@ for i in CVtop:
 
 # Create the model
 md = gf.Model('real')
+md.set_time_step(DT)
 md.add_fem_variable('u', mf_u)
 md.add_fem_data('Previous_u', mf_u);
 md.add_initialized_fem_data('lambda', mf_data, clambda)
@@ -208,11 +212,31 @@ mim_data = gf.MeshImData(mim, -1, [N, N])
 mim_data_scal = gf.MeshImData(mim, -1, 1)
 
 if (option == 1):
+  if (use_small_strain_pl_brick):
+    md.add_fem_data('xi', mf_xi)
+    md.add_fem_data('Previous_xi', mf_xi)
+    md.add_initialized_data('theta', [theta])
+    md.add_im_data('Epn', mim_data)
+    md.add_small_strain_elastoplasticity_brick(mim, 'Prandtl Reuss', False,
+                                               'u', 'xi', 'Epn', 'lambda',
+                                               'mu', 'sigma_y', 'theta',
+                                               'timestep');
+  else:
     md.add_fem_data('sigma', mf_sigma);
     md.add_elastoplasticity_brick(mim, 'VM', 'u', 'Previous_u', 'lambda', 'mu',
                                   'sigma_y', 'sigma');
 
 if (option == 2):
+  if (use_small_strain_pl_brick):
+    md.add_fem_variable('xi', mf_xi)
+    md.add_fem_data('Previous_xi', mf_xi)
+    md.add_initialized_data('theta', [theta])
+    md.add_im_data('Epn', mim_data)
+    md.add_small_strain_elastoplasticity_brick(mim, 'Prandtl Reuss', True,
+                                               'u', 'xi', 'Epn', 'lambda',
+                                               'mu', 'sigma_y', 'theta',
+                                               'timestep');
+  else:
     md.add_fem_variable('xi', mf_xi)
     md.add_initialized_data('theta', [theta])
     md.add_initialized_data('r', [1e-8])
@@ -256,6 +280,20 @@ if (option == 2):
     md.add_nonlinear_generic_assembly_brick(mim, expr)
         
 if (option == 3):
+  if (use_small_strain_pl_brick):
+    md.add_fem_variable('xi', mf_xi)
+    md.add_fem_data('Previous_xi', mf_xi)
+    md.add_initialized_data('theta', [theta])
+    md.add_im_data('Epn', mim_data)
+    md.add_im_data('alphan', mim_data_scal)
+    md.add_initialized_data('Hk', [Hk])
+    md.add_initialized_data('Hi', [Hi])
+    md.add_small_strain_elastoplasticity_brick(mim,
+                                               'Prandtl Reuss linear hardening',
+                                               True, 'u', 'xi', 'Epn', 'alphan',
+                                               'lambda', 'mu', 'sigma_y',
+                                               'Hk', 'Hi', 'theta', 'timestep');
+  else:
     md.add_fem_variable('xi', mf_xi)
     md.add_initialized_data('theta', [theta])
     md.add_initialized_data('r', [1e-8])
@@ -304,6 +342,20 @@ if (option == 3):
     md.add_nonlinear_generic_assembly_brick(mim, expr)
     
 if (option == 4):
+  if (use_small_strain_pl_brick):
+    md.add_fem_data('xi', mf_xi)
+    md.add_fem_data('Previous_xi', mf_xi)
+    md.add_initialized_data('theta', [theta])
+    md.add_im_data('Epn', mim_data)
+    md.add_im_data('alphan', mim_data_scal)
+    md.add_initialized_data('Hk', [Hk])
+    md.add_initialized_data('Hi', [Hi])
+    md.add_small_strain_elastoplasticity_brick(mim,
+                                               'Prandtl Reuss linear hardening',
+                                               False, 'u', 'xi', 'Epn','alphan',
+                                               'lambda', 'mu', 'sigma_y',
+                                               'Hk', 'Hi', 'theta', 'timestep');
+  else:
     md.add_initialized_data('theta', [theta])
     md.add_im_data('Epn', mim_data)
     md.add_im_data('alphan', mim_data_scal)
@@ -427,6 +479,12 @@ for step in range(0, len(t)):
     
     # Compute new plastic internal variables
     if (option == 1):
+      if (use_small_strain_pl_brick):
+        md.small_strain_elastoplasticity_next_iter(mim, 'Prandtl Reuss', False,
+                                                   'u', 'xi', 'Epn', 'lambda',
+                                                   'mu', 'sigma_y', 'theta',
+                                                   'timestep');
+      else:
         md.elastoplasticity_next_iter(mim, 'u', 'Previous_u', 'VM', 'lambda',
                                       'mu', 'sigma_y', 'sigma')
         plast = md.compute_plastic_part(mim, mf_vm, 'u', 'Previous_u', 'VM',
@@ -437,18 +495,43 @@ for step in range(0, len(t)):
                                                              'Von Mises')
 
     if (option == 2):
+      if (use_small_strain_pl_brick):
+        md.small_strain_elastoplasticity_next_iter(mim, 'Prandtl Reuss', True,
+                                                   'u', 'xi', 'Epn', 'lambda',
+                                                   'mu', 'sigma_y', 'theta',
+                                                   'timestep');
+      else:
         NewEpn = md.interpolation(Epnp1, mim_data)
         md.set_variable('Epn', NewEpn)
         md.set_variable('Previous_u', U)
         if (trapezoidal):
             md.set_variable('Previous_xi', md.variable('xi'))
         
-    if (option == 3 or option == 4):
+    if (option == 3):
+      if (use_small_strain_pl_brick):
+        md.small_strain_elastoplasticity_next_iter
+        (mim,'Prandtl Reuss linear hardening', True, 'u', 'xi', 'Epn', 'alphan',
+         'lambda', 'mu', 'sigma_y', 'Hk', 'Hi', 'theta', 'timestep');
+      else:
         NewEpn = md.interpolation(Epnp1, mim_data)
         Newalphan = md.interpolation(alpha_np1, mim_data_scal)
         md.set_variable('Epn', NewEpn)
         md.set_variable('alphan', Newalphan)
         md.set_variable('Previous_u', U)
+
+    if (option == 4):
+      if (use_small_strain_pl_brick):
+        md.small_strain_elastoplasticity_next_iter
+        (mim,'Prandtl Reuss linear hardening', False, 'u', 'xi', 'Epn','alphan',
+         'lambda', 'mu', 'sigma_y', 'Hk', 'Hi', 'theta', 'timestep');
+      else:
+        NewEpn = md.interpolation(Epnp1, mim_data)
+        Newalphan = md.interpolation(alpha_np1, mim_data_scal)
+        md.set_variable('Epn', NewEpn)
+        md.set_variable('alphan', Newalphan)
+        md.set_variable('Previous_u', U)
+
+    
         
     if (option == 5):
         NewEpn = md.interpolation(Epnp1, mim_data)
@@ -457,11 +540,11 @@ for step in range(0, len(t)):
 
     # Compute Von Mises and plastic part for graphical post-treatment
     if (do_export >= 2):
-        if (option == 1):
+        if (option == 1 and not(use_small_strain_pl_brick)):
             sigma1 = 'sigma';
         else:
             Ep ='Norm(Epn)'
-            sigma1 = '(lambda*Trace(Sym(Grad_u)) + 2*mu*(Sym(Grad_u)-Epn))'
+            sigma1 = '(lambda*Trace(Sym(Grad_u))*Id(meshdim)+2*mu*(Sym(Grad_u)-Epn))'
             von_mises = 'sqrt(3/2)*Norm(Deviator('+sigma1+'))'
             VM = md.local_projection(mim, von_mises, mf_vm);
             plast = md.local_projection(mim, Ep, mf_vm);
