@@ -1817,6 +1817,10 @@ void gf_model_set(getfemint::mexargs_in& m_in,
 	Two additional parameters: the kinematic hardening modulus and the
 	isotropic one. 3D expressions only. A typical call is
         MODEL:GET('add small strain elastoplasticity brick', mim, 'Prandtl Reuss linear hardening', 0, 'u', 'xi', 'Previous_Ep', 'Previous_alpha', 'lambda', 'mu', 'sigma_y', 'H_k', H_i', '1', 'timestep');
+      - "plane strain Prandtl Reuss linear hardening"
+        (or "plane strain isotropic plasticity linear hardening").
+	The same law as the previous one but adapted to the plane strain
+        approximation. Can only be used in 2D.
 
       See Getfem user documentation for more explanation on the discretization
       of the plastic flow and on the implemented plastic laws. See also Getfem
@@ -1842,7 +1846,9 @@ void gf_model_set(getfemint::mexargs_in& m_in,
 	   lawname.compare("plane_strain_prandtl_reuss") == 0) {
 	 nb_var = nb_params = 3;
        } else if (lawname.compare("isotropic_plasticity_linear_hardening") == 0
-		  || lawname.compare("prandtl_reuss_linear_hardening") == 0) {
+		  || lawname.compare("prandtl_reuss_linear_hardening") == 0 ||
+      lawname.compare("plane_strain_isotropic_plasticity_linear_hardening") == 0
+     || lawname.compare("plane_strain_prandtl_reuss_linear_hardening") == 0) {
 	 nb_var = 4; nb_params = 5;
        } else
 	 GMM_ASSERT1(false,

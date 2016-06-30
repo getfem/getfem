@@ -372,24 +372,24 @@ for step=1:size(t,2),
         end
       case 3
         if (use_small_strain_pl_brick)
-          get(md, 'small strain elastoplasticity next iter', mim, 'Prandtl Reuss linear hardening', true, 'u', 'xi', 'Epn', 'alphan', 'lambda', 'mu', 'Hk', 'Hi', 'sigma_y', 'theta', 'timestep');
-          norm(get(md, 'variable', 'alphan'))
+          get(md, 'small strain elastoplasticity next iter', mim, 'Prandtl Reuss linear hardening', true, 'u', 'xi', 'Epn', 'alphan', 'lambda', 'mu', 'sigma_y', 'Hk', 'Hi', 'theta', 'timestep');
+          % norm(get(md, 'variable', 'alphan'))
         else
           NewEpn = get(md, 'interpolation', Epnp1, mim_data);
           Newalphan = get(md, 'interpolation', alpha_np1, mim_data_scal);
-          norm(Newalphan)
+          % norm(Newalphan)
           set(md, 'variable', 'Epn', NewEpn);
           set(md, 'variable', 'alphan', Newalphan);
           set(md, 'variable', 'Previous_u', U);
         end
       case 4
         if (use_small_strain_pl_brick)
-          get(md, 'small strain elastoplasticity next iter', mim, 'Prandtl Reuss linear hardening', false, 'u', 'xi', 'Epn', 'alphan', 'lambda', 'mu', 'Hk', 'Hi', 'sigma_y', 'theta', 'timestep');
-          norm(get(md, 'variable', 'alphan'))   
+          get(md, 'small strain elastoplasticity next iter', mim, 'Prandtl Reuss linear hardening', false, 'u', 'xi', 'Epn', 'alphan', 'lambda', 'mu', 'sigma_y', 'Hk', 'Hi', 'theta', 'timestep');
+          % norm(get(md, 'variable', 'alphan'))   
         else
           NewEpn = get(md, 'interpolation', Epnp1, mim_data);
           Newalphan = get(md, 'interpolation', alpha_np1, mim_data_scal);
-          norm(Newalphan)
+          % norm(Newalphan)
           set(md, 'variable', 'Epn', NewEpn);
           set(md, 'variable', 'alphan', Newalphan);
           gf_model_set(md, 'variable', 'Previous_u', U);

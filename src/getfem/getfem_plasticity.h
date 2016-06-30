@@ -107,8 +107,10 @@ namespace getfem {
        required (preferably on an im_data).
        Two additional parameters: the kinematic hardening modulus and the
        isotropic one. 3D expressions only.
-      
- 
+     - "plane strain Prandtl Reuss linear hardening"
+       (or "plane strain isotropic plasticity linear hardening").
+       The same law as the previous one but adapted to the plane strain
+       approximation. Can only be used in 2D.
 
      See Getfem user documentation for more explanation on the discretization
      of the plastic flow and on the implemented plastic laws. See also Getfem

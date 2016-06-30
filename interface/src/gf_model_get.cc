@@ -926,7 +926,9 @@ void gf_model_get(getfemint::mexargs_in& m_in,
 	   lawname.compare("plane_strain_prandtl_reuss") == 0) {
 	 nb_var = nb_params = 3;
        } else if (lawname.compare("isotropic_plasticity_linear_hardening") == 0
-		  || lawname.compare("prandtl_reuss_linear_hardening") == 0) {
+		  || lawname.compare("prandtl_reuss_linear_hardening") == 0 ||
+      lawname.compare("plane_strain_isotropic_plasticity_linear_hardening") == 0
+     || lawname.compare("plane_strain_prandtl_reuss_linear_hardening") == 0) {
 	 nb_var = 4; nb_params = 5;
        } else
 	 GMM_ASSERT1(false,
@@ -975,7 +977,9 @@ void gf_model_get(getfemint::mexargs_in& m_in,
 	   lawname.compare("plane_strain_prandtl_reuss") == 0) {
 	 nb_var = nb_params = 3;
        } else if (lawname.compare("isotropic_plasticity_linear_hardening") == 0
-		  || lawname.compare("prandtl_reuss_linear_hardening") == 0) {
+		  || lawname.compare("prandtl_reuss_linear_hardening") == 0 ||
+      lawname.compare("plane_strain_isotropic_plasticity_linear_hardening") == 0
+     || lawname.compare("plane_strain_prandtl_reuss_linear_hardening") == 0) {
 	 nb_var = 4; nb_params = 5;
        } else
 	 GMM_ASSERT1(false,

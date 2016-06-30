@@ -342,7 +342,7 @@ And for the elimination of the multiplier,
 
 .. math:: \bar{\mathscr E}^p(\bar{u}_{n+1}, \bar{\varepsilon}^p_{n}) = \bar{\zeta}^p_{n} + \left( 1 - \sqrt{\frac{2}{3}}\Frac{\sigma_y}{2\mu\|B\|}\right)_+ \bar{B}
 
-with :math:`\bar{B} = \overline{\mbox{Dev}}(\bar{\varepsilon}(u_{n+1}))-\bar{\varepsilon}^p_{n}` and :math:`\|B\|^2 = \|\overline{\mbox{Dev}}(\bar{\varepsilon}(u_{n+1})) - \bar{\varepsilon}^p_n\|^2 + \left(\Frac{\mbox{tr}(\bar{\varepsilon}(u_{n+1}))}{3} -\mbox{tr}(\bar{\varepsilon}^p_n) \right)^2`.
+with :math:`\bar{B} = \overline{\mbox{Dev}}(\bar{\varepsilon}(u_{n+1}))-\bar{\zeta}_{n}` and :math:`\|B\|^2 = \|\overline{\mbox{Dev}}(\bar{\varepsilon}(u_{n+1})) - \bar{\zeta}_n\|^2 + \left(\Frac{\mbox{tr}(\bar{\varepsilon}(u_{n+1}))}{3} -\mbox{tr}(\bar{\zeta}_n) \right)^2`.
 
 **Plane stress approximation**
 
@@ -423,13 +423,24 @@ which directly gives :math:`{\mathscr E}^p(u_{n+1}, \zeta_n, \eta_n)` and :math:
 .. math:: \xi_{n+1} = \Frac{1}{(2\mu+H_k)\theta\Delta t}(\Frac{1}{\delta}-1) = \Frac{1}{\theta\Delta t}~\Frac{\beta}{1-(2\mu+H_k)\beta}.
 
 
+**Plane strain approximation**
+
+Still denoting  :math:`\delta = \Frac{1}{1+(2\mu+H_k)\theta\Delta t\xi_{n+1}}`, :math:`\beta = \Frac{1-\delta}{2\mu+H_k}`, :math:`B = 2\mu\mbox{Dev}(\varepsilon(u_{n+1}))-(2\mu+H_k)\zeta_n` and :math:`\overline{B} = 2\mu\overline{Dev}(\bar{\varepsilon}(u_{n+1}))-(2\mu+H_k)\bar{\zeta}_n` its in-plane part, one has
+
+.. math:: \bar{\tilde{\mathscr E}}^p(u_{n+1}, \theta\Delta t \xi_{n+1}, \bar{\zeta}_n) = \bar{\zeta}_n + \beta \overline{B},
 
 
+.. math:: \tilde{\mathscr A}(u_{n+1}, \theta \Delta t \xi_{n+1}, \zeta_{n}, \eta_n) = \eta_n + \sqrt{\Frac{2}{3}}\beta\|B\|,
 
+with
 
+.. math:: \|B\|^2 = \|2\mu\overline{\mbox{Dev}}(\bar{\varepsilon}(u_{n+1})) - (2\mu+H_k)\bar{\zeta}_n\|^2 + \left(2\mu\Frac{\mbox{tr}(\bar{\varepsilon}(u_{n+1}))}{3} -(2\mu+H_k)\mbox{tr}(\bar{\zeta}_n) \right)^2.
 
+The yield condition still reads
 
+.. math:: \delta \|B\| \le \sqrt{\Frac{2}{3}}(\sigma_{y0}+H_i \alpha_{n+1}).
 
+and for the elimination of the multiplier, :math:`\beta` has the same expression as in the previous section adapting the value of :math:`\|B\|`.
 
 
 
@@ -536,6 +547,10 @@ The available plastic laws are:
   required (preferably on an im_data).
   Two additional parameters: the kinematic hardening modulus and the
   isotropic one. 3D expressions only.
+- "plane strain Prandtl Reuss linear hardening"
+  (or "plane strain isotropic plasticity linear hardening").
+  The same law as the previous one but adapted to the plane strain
+  approximation. Can only be used in 2D.
   
 IMPORTANT : remember that `small_strain_elastoplasticity_next_iter` has
 to be called at the end of each time step, before the next one
