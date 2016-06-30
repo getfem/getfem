@@ -11801,7 +11801,7 @@ namespace getfem {
 
           scalar_type h = bmax[0] - bmin[0];
           for (size_type k = 1; k < N; ++k) h = std::max(h, bmax[k]-bmin[k]);
-          if (pgt->is_linear()) h *= 1E-8;
+          if (pgt->is_linear()) h *= 1E-4;
           for (auto &&val : bmin) val -= h*0.2;
           for (auto &&val : bmax) val += h*0.2;
 

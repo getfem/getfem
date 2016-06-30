@@ -271,7 +271,7 @@ if (option == 3):
         sigma_np1 = ('(lambda*Trace(Sym(Grad_u)-'+Epnp1
                      +')*Id(meshdim) + 2*mu*(Sym(Grad_u)-'+Epnp1+'))')
         sigma_theta = sigma_np1
-        alpha_theta = ('(alphan+xi*(Norm(2*mu*Deviator('+Etheta
+        alpha_theta = ('(alphan+sqrt(2/3)*xi*(Norm(2*mu*Deviator('+Etheta
                        +')-(2*mu+Hk)*'+Eptheta+')))')
         alpha_np1 = alpha_theta
     else:

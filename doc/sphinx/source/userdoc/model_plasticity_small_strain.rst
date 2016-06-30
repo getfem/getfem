@@ -381,7 +381,7 @@ where :math:`H_k` is the kinematic hardening modulus. The same computation as in
 .. math:: \tilde{\mathscr E}^p(u_{n+1}, \theta\Delta t \xi_{n+1}, \zeta_n) = \zeta_n + \Frac{1}{2\mu+H_k}\left(1 - \Frac{1}{1+(2\mu+H_k)\theta\Delta t\xi_{n+1}}\right)(2\mu\mbox{Dev}(\varepsilon(u_{n+1}))-(2\mu+H_k)\zeta_n)
 
 
-.. math:: \begin{array}{rcl} \tilde{\mathscr A}(u_{n+1}, \theta \Delta t \xi_{n+1}, \zeta_{n}, \eta_n) &=& \eta_n + \sqrt{\Frac{2}{3}} \theta \Delta t \xi_{n+1}\|\mbox{Dev}(\sigma_{n+1} - H_k\varepsilon^p_{n+1})\| \\ &=& \eta_n + \sqrt{\Frac{2}{3}} \theta \Delta t \xi_{n+1}\|2\mu\mbox{Dev}(\varepsilon(u_{n+1})) - (2\mu+H_k)\varepsilon^p_{n+1}\| \\ &=&  \eta_n + \sqrt{\Frac{2}{3}} \Frac{\theta \Delta t \xi_{n+1}}{1+(2\mu+H_k)\theta\Delta t\xi_{n+1}}\|2\mu\mbox{Dev}(\varepsilon(u_{n+1})) - (2\mu+H_k)\zeta_{n}\|.\end{array}
+.. math:: \begin{array}{rcl} \tilde{\mathscr A}(u_{n+1}, \theta \Delta t \xi_{n+1}, \zeta_{n}, \eta_n) &=& \eta_n + \sqrt{\Frac{2}{3}} \theta \Delta t \xi_{n+1}\|\mbox{Dev}(\sigma_{n+1} - H_k\varepsilon^p_{n+1})\| \\ &=& \eta_n + \sqrt{\Frac{2}{3}} \theta \Delta t \xi_{n+1}\|2\mu\mbox{Dev}(\varepsilon(u_{n+1})) - (2\mu+H_k)\varepsilon^p_{n+1}\| \\ &=&  \eta_n + \sqrt{\Frac{2}{3}} \Frac{\theta \Delta t \xi_{n+1}}{1+(2\mu+H_k)\theta\Delta t\xi_{n+1}}\|2\mu\mbox{Dev}(\varepsilon(u_{n+1})) - (2\mu+H_k)\zeta_{n}\| \\ &=& \eta_n + \sqrt{\Frac{2}{3}}\Frac{1}{2\mu+H_k}\left(1 - \Frac{1}{1+(2\mu+H_k)\theta\Delta t\xi_{n+1}}\right) \|2\mu\mbox{Dev}(\varepsilon(u_{n+1})) - (2\mu+H_k)\zeta_{n}\|\end{array}
 
 where :math:`\zeta_n` and :math:`\eta_n` are defined by
 
@@ -393,9 +393,9 @@ Note that the isotropic hardening modulus do not intervene in :math:`\tilde{\mat
 
 **Elimination of the multiplier (for the return mapping approach)**
 
-Denoting :math:`\delta = \Frac{1}{1+(2\mu+H_k)\theta\Delta t\xi_{n+1}}` and :math:`B = 2\mu\mbox{Dev}(\varepsilon(u_{n+1}))-(2\mu+H_k)\zeta_n` the expression for :math:`\varepsilon^p_{n+1}` and :math:`\alpha_{n+1}` becomes
+Denoting :math:`\delta = \Frac{1}{1+(2\mu+H_k)\theta\Delta t\xi_{n+1}}`, :math:`\beta = \Frac{1-\delta}{2\mu+H_k}` and :math:`B = 2\mu\mbox{Dev}(\varepsilon(u_{n+1}))-(2\mu+H_k)\zeta_n` the expression for :math:`\varepsilon^p_{n+1}` and :math:`\alpha_{n+1}` becomes
 
-.. math:: \varepsilon^p_{n+1} = \zeta_n+\Frac{1}{2\mu+H_k}(1-\delta)B, ~~~ \alpha_{n+1} = \eta_n + \sqrt{\Frac{2}{3}}(1-\delta)\|B\|,
+.. math:: \varepsilon^p_{n+1} = \zeta_n+\beta B, ~~~ \alpha_{n+1} = \eta_n + \sqrt{\Frac{2}{3}}\beta \|B\|,
   :label: hardeningepsalp
 
 and the plastic constraint
@@ -416,13 +416,11 @@ which leads to
 
 The two cases can be summarized by
 
-.. math:: 1-\delta = \Frac{2\mu+H_k}{\|B\|(2\mu+H_k+\frac{2}{3}H_i)}\left(\|B\|-\sqrt{\Frac{2}{3}}(\sigma_{y0}+H_i \eta_n) \right)_+
+.. math:: \beta = \Frac{1}{\|B\|(2\mu+H_k+\frac{2}{3}H_i)}\left(\|B\|-\sqrt{\Frac{2}{3}}(\sigma_{y0}+H_i \eta_n) \right)_+
 
-which directly gives :math:`{\mathscr E}^p(u_{n+1}, \zeta_n, \eta_n)` and :math:`{\mathscr A}(u_{n+1}, \zeta_n, \eta_n)` thanks to :eq:`hardeningepsalp`.
+which directly gives :math:`{\mathscr E}^p(u_{n+1}, \zeta_n, \eta_n)` and :math:`{\mathscr A}(u_{n+1}, \zeta_n, \eta_n)` thanks to :eq:`hardeningepsalp`. The multiplier :math:`\xi_{n+1}` being given by
 
-The multiplier :math:`\xi_{n+1}` is given by
-
-.. math:: \xi_{n+1} = \Frac{1}{\theta\Delta t}  \Frac{\left(\|B\|-\sqrt{\Frac{2}{3}}(\sigma_{y0}+H_i \eta_n) \right)_+}{(2\mu+H_k+\frac{2}{3}H_i)\|B\| - (2\mu+H_k)\left(\|B\|-\sqrt{\Frac{2}{3}}(\sigma_{y0}+H_i \eta_n) \right)_+}.
+.. math:: \xi_{n+1} = \Frac{1}{(2\mu+H_k)\theta\Delta t}(\Frac{1}{\delta}-1) = \Frac{1}{\theta\Delta t}~\Frac{\beta}{1-(2\mu+H_k)\beta}.
 
 
 
@@ -529,7 +527,16 @@ The available plastic laws are:
   (or "plane strain isotropic perfect plasticity")
   The same law as the previous one but adapted to the plane strain
   approximation. Can only be used in 2D.
-
+- "Prandtl Reuss linear hardening"
+  (or "isotropic plasticity linear hardening").
+  Isotropic elasto-plasticity with linear isotropic and kinematic
+  hardening. An additional variable compared to "Prandtl Reuss" law:
+  the accumulated plastic strain. Similarly to the plastic strain, it
+  is only stored at the end of the time step, so a simple data is
+  required (preferably on an im_data).
+  Two additional parameters: the kinematic hardening modulus and the
+  isotropic one. 3D expressions only.
+  
 IMPORTANT : remember that `small_strain_elastoplasticity_next_iter` has
 to be called at the end of each time step, before the next one
 (and before any post-treatment : this sets the value of the plastic
