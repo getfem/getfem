@@ -297,7 +297,7 @@ which is a linear expression with respect to :math:`u_{n+1}` (but not with respe
 
 Moreover, :math:`\zeta_n` is defined by
 
-.. math:: \zeta_n = \varepsilon^p_n+(1-\theta)\Delta t \xi_n (\mbox{Dev}(\sigma_n)) = \varepsilon^p_n+(1-\theta)\Delta t \xi_n 2\mu \left(\mbox{Dev}(\varepsilon(u_{n}))-\varepsilon^n_p\right).
+.. math:: \zeta_n = \varepsilon^p_n+(1-\theta)\Delta t \xi_n (\mbox{Dev}(\sigma_n)) = \varepsilon^p_n+(1-\theta)\Delta t \xi_n 2\mu \left(\mbox{Dev}(\varepsilon(u_{n}))-\varepsilon^p_n\right).
 
 **Elimination of the multiplier (for the return mapping approach)**
 
@@ -440,7 +440,7 @@ The yield condition still reads
 
 .. math:: \delta \|B\| \le \sqrt{\Frac{2}{3}}(\sigma_{y0}+H_i \alpha_{n+1}).
 
-and for the elimination of the multiplier, :math:`\beta` has the same expression as in the previous section adapting the value of :math:`\|B\|`.
+and for the elimination of the multiplier, :math:`\beta` has the same expression as in the previous section adapting the value of :math:`\|B\|`. The expressions of :math:`\bar{\zeta}_n` and :math:`\eta_n` have to be adpated accoringly.
 
 
 

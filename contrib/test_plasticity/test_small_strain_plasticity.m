@@ -26,7 +26,7 @@ gf_util('trace level', 1);
 % small strain isotropic plasticity in GetFEM++
 
 
-option = 3; % 1 : without hardening, without im_data, without plastic multiplier
+option = 4; % 1 : without hardening, without im_data, without plastic multiplier
             % 2 : without hardening, with plastic multiplier
             % 3 : with kinematic and isotropic hardening, with plastic multiplier
             % 4 : with kinematic and isotropic hardening, with im_data, without plastic multiplier
