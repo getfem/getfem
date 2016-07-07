@@ -177,6 +177,30 @@ namespace getfem {
     }
   };
 
+  std::map<std::string, size_type> read_region_names_from_gmsh_mesh_file(std::istream& f)
+  {
+    std::map<std::string, size_type> region_map;
+    bgeot::read_until(f, "$PhysicalNames");
+    size_type nb_regions;
+    f >> nb_regions;
+    size_type rt,ri;
+    std::string region_name;
+    for (size_type region_cnt=0; region_cnt < nb_regions; ++ region_cnt) {
+      f >> rt >> ri;
+      std::getline(f, region_name);
+      /* trim the string to the quote character front and back*/
+      size_t pos = region_name.find_first_of("\"");
+      if (pos != region_name.npos) {
+        region_name.erase(0, pos+1);
+        pos = region_name.find_last_of("\"");
+        region_name.erase(pos);
+      }
+      region_map[region_name] = ri;
+    }
+
+    return region_map;
+  }
+
   /*
      Format version 1 [for gmsh version < 2.0].
      structure: $NOD list_of_nodes $ENDNOD $ELT list_of_elt $ENDELT
@@ -236,23 +260,7 @@ namespace getfem {
     /* read the region names */
     if (region_map != NULL) {
       if (version == 2) {
-        bgeot::read_until(f, "$PhysicalNames");
-        size_type nb_regions;
-        f >> nb_regions;
-        size_type rt,ri;
-        std::string region_name;
-        for (size_type region_cnt=0; region_cnt < nb_regions; ++ region_cnt) {
-          f >> rt >> ri;
-          std::getline(f, region_name);
-          /* trim the string to the quote character front and back*/
-          size_t pos = region_name.find_first_of("\"");
-          if (pos != region_name.npos) {
-            region_name.erase(0, pos+1);
-            pos = region_name.find_last_of("\"");
-            region_name.erase(pos);
-          }
-          (*region_map)[region_name] = ri;
-        }
+        *region_map = read_region_names_from_gmsh_mesh_file(f);
       }
     }
     /* read the node list */

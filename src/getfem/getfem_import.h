@@ -161,5 +161,8 @@ namespace getfem {
   /** for gmsh and gid meshes, the mesh nodes are always 3D, so for a 2D mesh
       the z-component of nodes should be removed */
   void maybe_remove_last_dimension(mesh &msh);
+
+  /** for gmsh meshes, create table linking region name to region_id. */
+  std::map<std::string, size_type> read_region_names_from_gmsh_mesh_file(std::istream& f);
 }
 #endif /* GETFEM_IMPORT_H__  */
