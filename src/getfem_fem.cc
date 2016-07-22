@@ -3484,11 +3484,11 @@ namespace getfem {
 
   DAL_DOUBLE_KEY(pre_fem_key_, pfem, bgeot::pstored_point_tab);
 
-  fem_precomp_::fem_precomp_(pfem pff, bgeot::pstored_point_tab ps) :
+  fem_precomp_::fem_precomp_(const pfem pff, const bgeot::pstored_point_tab ps) :
     pf(pff), pspt(ps) {
     DAL_STORED_OBJECT_DEBUG_CREATED(this, "Fem_precomp");
-    for (size_type i = 0; i < pspt->size(); ++i)
-      GMM_ASSERT1((*pspt)[i].size() == pf->dim(), "dimensions mismatch");
+    for (const auto &p : *pspt)
+      GMM_ASSERT1(p.size() == pf->dim(), "dimensions mismatch");
   }
 
   void fem_precomp_::init_val() const {
@@ -3521,9 +3521,9 @@ namespace getfem {
     return p;
   }
 
-  void fem_precomp_pool::clear(void) {
-    for (auto it = precomps.begin(); it != precomps.end(); ++it)
-      del_stored_object(*it, true);
+  void fem_precomp_pool::clear() {
+    for (const pfem_precomp &p : precomps)
+      del_stored_object(p, true);
     precomps.clear();
   }
 

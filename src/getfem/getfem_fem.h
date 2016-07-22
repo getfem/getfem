@@ -572,11 +572,11 @@ namespace getfem {
   */
   class fem_precomp_ : virtual public dal::static_stored_object {
   protected:
-    pfem pf;
-    bgeot::pstored_point_tab pspt;
-    mutable std::vector<base_tensor> c;   // store values of base functions
-    mutable std::vector<base_tensor> pc;  // store gradients of base functions
-    mutable std::vector<base_tensor> hpc; // store hessians of base functions
+    const pfem pf;
+    const bgeot::pstored_point_tab pspt;
+    mutable std::vector<base_tensor> c;   // stored values of base functions
+    mutable std::vector<base_tensor> pc;  // stored gradients of base functions
+    mutable std::vector<base_tensor> hpc; // stored hessians of base functions
   public:
     /// returns values of the base functions
     inline const base_tensor &val(size_type i) const
@@ -592,7 +592,7 @@ namespace getfem {
     //  { return *pspt; }
     inline bgeot::pstored_point_tab get_ppoint_tab() const
     { return pspt; }
-    fem_precomp_(pfem, bgeot::pstored_point_tab);
+    fem_precomp_(const pfem, const bgeot::pstored_point_tab);
     ~fem_precomp_() { DAL_STORED_OBJECT_DEBUG_DESTROYED(this, "Fem_precomp"); }
   private:
     void init_val() const;

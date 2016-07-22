@@ -158,8 +158,8 @@ namespace getfem {
                        const base_vector &params, scalar_type det_trans) const;
     virtual void grad_sigma(const base_matrix &E, base_tensor &result,
                             const base_vector &params, scalar_type det_trans) const;
-    Mooney_Rivlin_hyperelastic_law(bool compressible_=false,
-                                   bool neohookean_=false);
+    explicit Mooney_Rivlin_hyperelastic_law(bool compressible_=false,
+                                            bool neohookean_=false);
   };
 
   /** Neo-Hookean hyperelastic law variants
@@ -175,7 +175,7 @@ namespace getfem {
                        const base_vector &params, scalar_type det_trans) const;
     virtual void grad_sigma(const base_matrix &E, base_tensor &result,
                             const base_vector &params, scalar_type det_trans) const;
-    Neo_Hookean_hyperelastic_law(bool bonet_=true);
+    explicit Neo_Hookean_hyperelastic_law(bool bonet_=true);
   };
 
   /** Blatz_Ko hyperelastic law

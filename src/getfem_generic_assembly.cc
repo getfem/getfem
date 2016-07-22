@@ -409,7 +409,7 @@ namespace getfem {
     { return t.sizes()[nb_test_functions()+i]; }
 
 
-    void mult_test(pga_tree_node n0, pga_tree_node n1,
+    void mult_test(const pga_tree_node n0, const pga_tree_node n1,
                    const std::string &expr) {
       size_type test0 = n0->test_function_type, test1 = n1->test_function_type;
       if (test0 && test1 && (test0 == test1 ||
@@ -797,7 +797,7 @@ namespace getfem {
   // version = 0 : strict equality
   //           1 : give the same result
   //           2 : give the same result with transposition of test functions
-  static bool sub_tree_are_equal(pga_tree_node pnode1, pga_tree_node pnode2,
+  static bool sub_tree_are_equal(const pga_tree_node pnode1, const pga_tree_node pnode2,
                                  const ga_workspace &workspace,
                                  int version) {
     size_type ntype1 = pnode1->node_type;
@@ -955,7 +955,7 @@ namespace getfem {
     return true;
   }
 
-  static void verify_tree(pga_tree_node pnode, pga_tree_node parent) {
+  static void verify_tree(const pga_tree_node pnode, const pga_tree_node parent) {
     GMM_ASSERT1(pnode->parent == parent,
                 "Invalid tree node " << pnode->node_type);
     for (size_type i = 0; i < pnode->children.size(); ++i)
@@ -973,7 +973,7 @@ namespace getfem {
       ga_throw_error(expr, pnode->pos, "Invalid term");      \
   }
 
-  static void ga_print_constant_tensor(pga_tree_node pnode,
+  static void ga_print_constant_tensor(const pga_tree_node pnode,
                                        std::ostream &str) {
     size_type nt = pnode->nb_test_functions(); // for printing zero tensors
     switch (pnode->tensor_order()) {
@@ -1040,7 +1040,7 @@ namespace getfem {
     GMM_ASSERT1(pnode->children.size() == 0, "Invalid tree");
   }
 
-  static void ga_print_node(pga_tree_node pnode,
+  static void ga_print_node(const pga_tree_node pnode,
                             std::ostream &str) {
     long prec = str.precision(16);
 
@@ -2049,9 +2049,9 @@ namespace getfem {
                          size_type order);
   static void ga_compile_function(ga_workspace &workspace,
                                   ga_instruction_set &gis, bool scalar);
-  static std::string ga_derivative_scalar_function(const std::string expr,
+  static std::string ga_derivative_scalar_function(const std::string &expr,
                                                    const std::string &var);
-  static bool ga_is_affine(ga_tree &tree, const ga_workspace &workspace,
+  static bool ga_is_affine(const ga_tree &tree, const ga_workspace &workspace,
                            const std::string &varname,
                            const std::string &interpolatename);
 
@@ -2074,12 +2074,12 @@ namespace getfem {
     mutable omp_distribute<ga_workspace> workspace;
     copyable_ptr<instruction_set> gis;
 
-    friend void ga_define_function(const std::string name, size_type nbargs,
-                                   const std::string expr, const std::string der1,
-                                   const std::string der2);
-    friend void ga_define_function(const std::string name, pscalar_func_onearg f,
+    friend void ga_define_function(const std::string &name, size_type nbargs,
+                                   const std::string &expr, const std::string &der1,
+                                   const std::string &der2);
+    friend void ga_define_function(const std::string &name, pscalar_func_onearg f,
                                    const std::string &der);
-    friend void ga_define_function(const std::string name, pscalar_func_twoargs f,
+    friend void ga_define_function(const std::string &name, pscalar_func_twoargs f,
                                    const std::string &der1, const std::string &der2);
   public:
     scalar_type operator()(scalar_type t_, scalar_type u_ = 0.) const {
@@ -2103,7 +2103,7 @@ namespace getfem {
     bool is_affine(const std::string &varname) const {
       if (ftype_ == 1) {
         for (size_type i = 0; i < workspace.thrd_cast().nb_trees(); ++i) {
-          ga_workspace::tree_description &td = workspace.thrd_cast().tree_info(i);
+          const ga_workspace::tree_description &td = workspace.thrd_cast().tree_info(i);
           if (!(ga_is_affine(*(td.ptree), workspace, varname, "")))
             return false;
         }
@@ -2567,16 +2567,16 @@ namespace getfem {
 
   static bool predef_functions_initialized = init_predef_functions();
 
-  bool ga_function_exists(const std::string name) {
+  bool ga_function_exists(const std::string &name) {
     const ga_predef_function_tab &PREDEF_FUNCTIONS
       = dal::singleton<ga_predef_function_tab>::instance(0);
     return PREDEF_FUNCTIONS.find(name) != PREDEF_FUNCTIONS.end();
   }
 
 
-  void ga_define_function(const std::string name, size_type nbargs,
-                          const std::string expr, const std::string der1,
-                          const std::string der2) {
+  void ga_define_function(const std::string &name, size_type nbargs,
+                          const std::string &expr, const std::string &der1,
+                          const std::string &der2) {
     GMM_ASSERT1(nbargs >= 1 && nbargs <= 2, "Generic assembly only allows "
                 "the definition of scalar function with one or two arguments");
     { // Only for syntax analysis
@@ -2615,7 +2615,7 @@ namespace getfem {
     }
   }
 
-  void ga_define_function(const std::string name, pscalar_func_onearg f,
+  void ga_define_function(const std::string &name, pscalar_func_onearg f,
                           const std::string &der) {
     ga_predef_function_tab &PREDEF_FUNCTIONS
       = dal::singleton<ga_predef_function_tab>::instance(0);
@@ -2625,7 +2625,7 @@ namespace getfem {
     else if (!(ga_function_exists(der))) F.dtype_ = 2;
   }
 
-  void ga_define_function(const std::string name, pscalar_func_twoargs f,
+  void ga_define_function(const std::string &name, pscalar_func_twoargs f,
                           const std::string &der1, const std::string &der2) {
     ga_predef_function_tab &PREDEF_FUNCTIONS
       = dal::singleton<ga_predef_function_tab>::instance(0);
@@ -2637,7 +2637,7 @@ namespace getfem {
       F.dtype_ = 2;
   }
 
-  void ga_undefine_function(const std::string name) {
+  void ga_undefine_function(const std::string &name) {
     ga_predef_function_tab &PREDEF_FUNCTIONS
       = dal::singleton<ga_predef_function_tab>::instance(0);
     ga_predef_function_tab::iterator it = PREDEF_FUNCTIONS.find(name);
@@ -2948,7 +2948,7 @@ namespace getfem {
     base_tensor &t;
     fem_interpolation_context &ctx;
     const mesh_fem &mf;
-    pfem_precomp &pfp;
+    const pfem_precomp &pfp;
 
     virtual int exec() { // --> t(ndof,target_dim)
       GA_DEBUG_INFO("Instruction: compute value of base functions");
@@ -2960,7 +2960,7 @@ namespace getfem {
     }
 
     ga_instruction_val_base(base_tensor &tt, fem_interpolation_context &ct,
-                            const mesh_fem &mf_, pfem_precomp &pfp_)
+                            const mesh_fem &mf_, const pfem_precomp &pfp_)
       : t(tt), ctx(ct), mf(mf_), pfp(pfp_) {}
   };
 
@@ -3529,7 +3529,7 @@ namespace getfem {
   };
 
   struct ga_instruction_update_group_info : public ga_instruction {
-    ga_workspace &workspace;
+    const ga_workspace &workspace;
     ga_instruction_set &gis;
     ga_instruction_set::interpolate_info &inin;
     const std::string gname;
@@ -3553,7 +3553,7 @@ namespace getfem {
     }
 
     ga_instruction_update_group_info
-    (ga_workspace &workspace_, ga_instruction_set &gis_,
+    (const ga_workspace &workspace_, ga_instruction_set &gis_,
      ga_instruction_set::interpolate_info &inin_, const std::string &gname_,
      ga_instruction_set::variable_group_info &vgi_) :
       workspace(workspace_), gis(gis_), inin(inin_), gname(gname_),
@@ -4894,7 +4894,7 @@ namespace getfem {
   };
 
   struct ga_instruction_transformation_call : public ga_instruction {
-    ga_workspace &workspace;
+    const ga_workspace &workspace;
     ga_instruction_set::interpolate_info &inin;
     pinterpolate_transformation trans;
     fem_interpolation_context &ctx;
@@ -4938,7 +4938,7 @@ namespace getfem {
       return 0;
     }
     ga_instruction_transformation_call
-    (ga_workspace &w, ga_instruction_set::interpolate_info &i,
+    (const ga_workspace &w, ga_instruction_set::interpolate_info &i,
      pinterpolate_transformation t, fem_interpolation_context &ctxx,
      const base_small_vector &No, const mesh &mm, bool compute_der_)
       : workspace(w), inin(i), trans(t), ctx(ctxx), Normal(No), m(mm),
@@ -4946,7 +4946,7 @@ namespace getfem {
   };
 
   struct ga_instruction_neighbour_transformation_call : public ga_instruction {
-    ga_workspace &workspace;
+    const ga_workspace &workspace;
     ga_instruction_set::interpolate_info &inin;
     pinterpolate_transformation trans;
     fem_interpolation_context &ctx;
@@ -5076,7 +5076,7 @@ namespace getfem {
       return 0;
     }
     ga_instruction_neighbour_transformation_call
-    (ga_workspace &w, ga_instruction_set::interpolate_info &i,
+    (const ga_workspace &w, ga_instruction_set::interpolate_info &i,
      pinterpolate_transformation t, fem_interpolation_context &ctxx,
      base_small_vector &No, const mesh &mm, size_type &ipt_,
      papprox_integration &pai_, bgeot::geotrans_precomp_pool &gp_pool_,
@@ -5308,7 +5308,7 @@ namespace getfem {
       (variables.find(name) != variables.end());
   }
 
-  bool ga_workspace::variable_group_exists(std::string name) const {
+  bool ga_workspace::variable_group_exists(const std::string &name) const {
     return (variable_groups.find(name) != variable_groups.end()) ||
       (md && md->variable_group_exists(name)) ||
       (parent_workspace && parent_workspace->variable_group_exists(name));
@@ -5633,8 +5633,8 @@ namespace getfem {
 
 
 
-  static bool ga_extract_variables(pga_tree_node pnode,
-                                   ga_workspace &workspace,
+  static bool ga_extract_variables(const pga_tree_node pnode,
+                                   const ga_workspace &workspace,
                                    const mesh &m,
                                    std::set<var_trans_pair> &vars,
                                    bool ignore_data) {
@@ -5803,7 +5803,7 @@ namespace getfem {
     return *this;
   }
 
-  size_type ga_workspace::add_expression(const std::string expr,
+  size_type ga_workspace::add_expression(const std::string &expr,
                                          const mesh_im &mim,
                                          const mesh_region &rg_,
                                          size_type add_derivative_order) {
@@ -5854,7 +5854,7 @@ namespace getfem {
     return max_order;
   }
 
-  void ga_workspace::add_function_expression(const std::string expr) {
+  void ga_workspace::add_function_expression(const std::string &expr) {
     ga_tree tree;
     ga_read_string(expr, tree);
     ga_semantic_analysis(expr, tree, *this, 1, 1, false, true);
@@ -5866,7 +5866,7 @@ namespace getfem {
     }
   }
 
-  void ga_workspace::add_interpolation_expression(const std::string expr,
+  void ga_workspace::add_interpolation_expression(const std::string &expr,
                                                   const mesh &m,
                                                   const mesh_region &rg_) {
     const mesh_region &rg = register_region(m, rg_);
@@ -5881,7 +5881,7 @@ namespace getfem {
     }
   }
 
-  void ga_workspace::add_interpolation_expression(const std::string expr,
+  void ga_workspace::add_interpolation_expression(const std::string &expr,
                                                   const mesh_im &mim,
                                                   const mesh_region &rg_) {
     const mesh &m = mim.linked_mesh();
@@ -6193,7 +6193,7 @@ namespace getfem {
     return cos(M_E + scalar_type((e == GA_NODE_ZERO) ? GA_NODE_CONSTANT : e));
   }
 
-  static scalar_type ga_hash_code(pga_tree_node pnode) {
+  static scalar_type ga_hash_code(const pga_tree_node pnode) {
     scalar_type c = ga_hash_code(pnode->node_type);
 
     switch (pnode->node_type) {
@@ -9310,7 +9310,7 @@ namespace getfem {
     }
   }
 
-  static std::string ga_derivative_scalar_function(const std::string expr,
+  static std::string ga_derivative_scalar_function(const std::string &expr,
                                                    const std::string &var) {
     base_vector t(1), u(1);
     ga_workspace workspace;
@@ -9329,7 +9329,7 @@ namespace getfem {
     } else return "0";
   }
 
-  static bool ga_node_is_affine(pga_tree_node pnode) {
+  static bool ga_node_is_affine(const pga_tree_node pnode) {
 
     size_type nbch = pnode->children.size();
     pga_tree_node child0 = (nbch > 0) ? pnode->children[0] : 0;
@@ -9399,7 +9399,7 @@ namespace getfem {
     }
   }
 
-  static bool ga_is_affine(ga_tree &tree, const ga_workspace &workspace,
+  static bool ga_is_affine(const ga_tree &tree, const ga_workspace &workspace,
                            const std::string &varname,
                            const std::string &interpolatename) {
     const mesh &m = *((const mesh *)(0));
@@ -9414,7 +9414,8 @@ namespace getfem {
   // Compilation of assembly trees into a list of basic instructions
   //=========================================================================
 
-  static void add_interval_to_gis(ga_workspace &workspace, std::string varname,
+  static void add_interval_to_gis(const ga_workspace &workspace,
+                                  const std::string &varname,
                                   ga_instruction_set &gis) {
     if (workspace.variable_group_exists(varname)) {
       for (const std::string &v : workspace.variable_group(varname))
@@ -9428,8 +9429,8 @@ namespace getfem {
     }
   }
 
-  static void extend_variable_in_gis(ga_workspace &workspace,
-                                     std::string varname,
+  static void extend_variable_in_gis(const ga_workspace &workspace,
+                                     const std::string &varname,
                                      ga_instruction_set &gis) {
     if (workspace.variable_group_exists(varname)) {
       for (const std::string &v : workspace.variable_group(varname))
@@ -9459,8 +9460,8 @@ namespace getfem {
       ga_clear_node_list(pnode->children[i], node_list);
   }
 
-  static void ga_compile_node(pga_tree_node pnode,
-                              ga_workspace &workspace,
+  static void ga_compile_node(const pga_tree_node pnode,
+                              const ga_workspace &workspace,
                               ga_instruction_set &gis,
                               ga_instruction_set::region_mim_instructions &rmi,
                               const mesh &m, bool function_case,
@@ -10029,7 +10030,7 @@ namespace getfem {
                       " defined on the same mesh");
 
           // An instruction for pfp update
-          if (rmi.pfps.find(mf) == rmi.pfps.end() ||
+          if (rmi.pfps.count(mf) == 0 ||
               !(if_hierarchy.is_compatible(rmi.pfps_hierarchy[mf]))) {
             rmi.pfps[mf] = 0;
             rmi.pfps_hierarchy[mf].push_back(if_hierarchy);
@@ -10093,7 +10094,7 @@ namespace getfem {
             }
             break;
           case GA_NODE_HESS_TEST: case GA_NODE_ELEMENTARY_HESS_TEST:
-            if (rmi.hess.find(mf) == rmi.hess.end() ||
+            if (rmi.hess.count(mf) == 0 ||
                 !(if_hierarchy.is_compatible(rmi.hess_hierarchy[mf]))) {
               rmi.hess_hierarchy[mf].push_back(if_hierarchy);
               pgai = std::make_shared<ga_instruction_hess_base>
@@ -10101,7 +10102,7 @@ namespace getfem {
             }
             break;
           case GA_NODE_XFEM_PLUS_HESS_TEST:
-            if (rmi.xfem_plus_hess.find(mf) == rmi.xfem_plus_hess.end() ||
+            if (rmi.xfem_plus_hess.count(mf) == 0 ||
                 !(if_hierarchy.is_compatible(rmi.xfem_plus_hess_hierarchy[mf]))) {
               rmi.xfem_plus_hess_hierarchy[mf].push_back(if_hierarchy);
               pgai = std::make_shared<ga_instruction_xfem_plus_hess_base>
@@ -10740,7 +10741,7 @@ namespace getfem {
   static void ga_compile_function(ga_workspace &workspace,
                                   ga_instruction_set &gis, bool scalar) {
     for (size_type i = 0; i < workspace.nb_trees(); ++i) {
-      ga_workspace::tree_description &td = workspace.tree_info(i);
+      const ga_workspace::tree_description &td = workspace.tree_info(i);
 
       gis.trees.push_back(*(td.ptree));
       pga_tree_node root = gis.trees.back().root;
@@ -10770,7 +10771,7 @@ namespace getfem {
   }
 
   static bool ga_node_used_interpolates
-  (pga_tree_node pnode, ga_workspace &workspace,
+  (const pga_tree_node pnode, const ga_workspace &workspace,
    std::map<std::string, std::set<std::string> > &interpolates,
    std::set<std::string> &interpolates_der) {
     bool found = false;
@@ -10809,8 +10810,9 @@ namespace getfem {
 
 
   static void ga_compile_interpolate_trans
-  (pga_tree_node pnode, ga_workspace &workspace, ga_instruction_set &gis,
-   ga_instruction_set::region_mim_instructions &rmi, const mesh &m) {
+  (const pga_tree_node pnode, const ga_workspace &workspace,
+   ga_instruction_set &gis, ga_instruction_set::region_mim_instructions &rmi,
+   const mesh &m) {
 
     std::set<std::string> interpolates_der;
     std::map<std::string, std::set<std::string> > transformations;
@@ -10858,7 +10860,7 @@ namespace getfem {
     gis.transformations.clear();
     gis.whole_instructions.clear();
     for (size_type i = 0; i < workspace.nb_trees(); ++i) {
-      ga_workspace::tree_description &td = workspace.tree_info(i);
+      const ga_workspace::tree_description &td = workspace.tree_info(i);
       if (td.order == 0) {
         gis.trees.push_back(*(td.ptree));
 
@@ -10889,8 +10891,8 @@ namespace getfem {
     }
   }
 
-  static void ga_compile(ga_workspace &workspace, ga_instruction_set &gis,
-                         size_type order) {
+  static void ga_compile(ga_workspace &workspace,
+                         ga_instruction_set &gis, size_type order) {
     gis.transformations.clear();
     gis.whole_instructions.clear();
     for (size_type i = 0; i < workspace.nb_trees(); ++i) {

@@ -96,17 +96,17 @@ namespace getfem {
   typedef scalar_type (*pscalar_func_onearg)(scalar_type);
   typedef scalar_type (*pscalar_func_twoargs)(scalar_type, scalar_type);
 
-  void ga_define_function(const std::string name, size_type nb_args,
-                          const std::string expr, const std::string der1="",
-                          const std::string der2="");
-  void ga_define_function(const std::string name, pscalar_func_onearg f,
+  void ga_define_function(const std::string &name, size_type nb_args,
+                          const std::string &expr, const std::string &der1="",
+                          const std::string &der2="");
+  void ga_define_function(const std::string &name, pscalar_func_onearg f,
                           const std::string &der1="");
-  void ga_define_function(const std::string name, pscalar_func_twoargs f2,
+  void ga_define_function(const std::string &name, pscalar_func_twoargs f2,
                           const std::string &der1="",
                           const std::string &der2="");
 
-  void ga_undefine_function(const std::string name);
-  bool ga_function_exists(const std::string name);
+  void ga_undefine_function(const std::string &name);
+  bool ga_function_exists(const std::string &name);
 
   //=========================================================================
   // Structure dealing with user defined environment : constant, variables,
@@ -248,15 +248,15 @@ namespace getfem {
      *  terms in separated test functions, derive if necessary to obtain
      *  the tangent terms. Return the maximal order found in the expression.
      */
-    size_type add_expression(const std::string expr, const mesh_im &mim,
+    size_type add_expression(const std::string &expr, const mesh_im &mim,
                              const mesh_region &rg=mesh_region::all_convexes(),
                              size_type add_derivative_order = 2);
     /* Internal use */
-    void add_function_expression(const std::string expr);
+    void add_function_expression(const std::string &expr);
     /* Internal use */
-    void add_interpolation_expression(const std::string expr, const mesh &m,
+    void add_interpolation_expression(const std::string &expr, const mesh &m,
                                       const mesh_region &rg=mesh_region::all_convexes());
-    void add_interpolation_expression(const std::string expr, const mesh_im &mim,
+    void add_interpolation_expression(const std::string &expr, const mesh_im &mim,
                                       const mesh_region &rg=mesh_region::all_convexes());
 
     /** Delete all previously added expressions. */
@@ -294,7 +294,7 @@ namespace getfem {
     void define_variable_group(const std::string &group_name,
                                const std::vector<std::string> &nl);
 
-    bool variable_group_exists(std::string name) const;
+    bool variable_group_exists(const std::string &name) const;
 
     bool variable_or_group_exists(const std::string &name) const
     { return variable_exists(name) || variable_group_exists(name); }
@@ -385,37 +385,37 @@ namespace getfem {
 
   // Small tool to make basic substitutions into an assembly string
   std::string ga_substitute(const std::string &expr,
-			    const std::map<std::string, std::string> &dict);
+                            const std::map<std::string, std::string> &dict);
 
   inline std::string ga_subsitute(const std::string &expr,
-				  const std::string &o1,const std::string &s1) {
+                                  const std::string &o1,const std::string &s1) {
     std::map<std::string, std::string> dict;
     dict[o1] = s1;
     return ga_substitute(expr, dict);
   }
 
   inline std::string ga_subsitute(const std::string &expr,
-				  const std::string &o1,const std::string &s1,
-				  const std::string &o2,const std::string &s2) {
+                                  const std::string &o1,const std::string &s1,
+                                  const std::string &o2,const std::string &s2) {
     std::map<std::string, std::string> dict;
     dict[o1] = s1; dict[o2] = s2; 
     return ga_substitute(expr, dict);
   }
 
   inline std::string ga_subsitute(const std::string &expr,
-				  const std::string &o1,const std::string &s1,
-				  const std::string &o2,const std::string &s2,
-				  const std::string &o3,const std::string &s3) {
+                                  const std::string &o1,const std::string &s1,
+                                  const std::string &o2,const std::string &s2,
+                                  const std::string &o3,const std::string &s3) {
     std::map<std::string, std::string> dict;
     dict[o1] = s1; dict[o2] = s2; dict[o3] = s3; 
     return ga_substitute(expr, dict);
   }
 
   inline std::string ga_subsitute(const std::string &expr,
-				  const std::string &o1,const std::string &s1,
-				  const std::string &o2,const std::string &s2,
-				  const std::string &o3,const std::string &s3,
-				  const std::string &o4,const std::string &s4) {
+                                  const std::string &o1,const std::string &s1,
+                                  const std::string &o2,const std::string &s2,
+                                  const std::string &o3,const std::string &s3,
+                                  const std::string &o4,const std::string &s4) {
     std::map<std::string, std::string> dict;
     dict[o1] = s1; dict[o2] = s2;  dict[o3] = s3; dict[o4] = s4; 
     return ga_substitute(expr, dict);
@@ -509,9 +509,9 @@ namespace getfem {
       and data of the model. 
   */
   void ga_local_projection(const getfem::model &md, const mesh_im &mim,
-			   const std::string &expr, const mesh_fem &mf,
-			   base_vector &result,
-			   const mesh_region &rg=mesh_region::all_convexes());
+                           const std::string &expr, const mesh_fem &mf,
+                           base_vector &result,
+                           const mesh_region &rg=mesh_region::all_convexes());
 
   //=========================================================================
   // Interpolate transformations
