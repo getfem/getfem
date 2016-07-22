@@ -3187,12 +3187,13 @@ namespace getfem {
   };
 
   struct ga_instruction_hess : public ga_instruction_val {
-    // Z(ndof,target_dim,N*N), coeff(Qmult,ndof) --> t(target_dim*Qmult,N,N)
+    // Z(ndof,target_dim,N,N), coeff(Qmult,ndof) --> t(target_dim*Qmult,N,N)
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: Hessian");
       size_type ndof = Z.sizes()[0];
       size_type target_dim = Z.sizes()[1];
-      size_type N = size_type(round(sqrt(scalar_type(Z.sizes()[2]))));
+      size_type N = Z.sizes()[2];
+      GA_DEBUG_ASSERT(N == Z.sizes()[3], "Internal error");
       size_type Qmult = qdim / target_dim;
       GA_DEBUG_ASSERT((qdim == 1 && t.sizes()[0] == N && t.sizes()[1] == N) ||
                       (t.sizes()[1] == N && t.sizes()[2] == N
@@ -3335,7 +3336,7 @@ namespace getfem {
   };
 
   struct ga_instruction_copy_hess_base : public ga_instruction_copy_val_base {
-    // Z(ndof,target_dim,N*N) --> t(Qmult*ndof,Qmult*target_dim,N,N)
+    // Z(ndof,target_dim,N,N) --> t(Qmult*ndof,Qmult*target_dim,N,N)
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: Hessian of test functions");
       size_type ndof = Z.sizes()[0];
@@ -3488,7 +3489,7 @@ namespace getfem {
 
   struct ga_instruction_elementary_transformation_hess
     : public ga_instruction_hess, ga_instruction_elementary_transformation {
-    // Z(ndof,target_dim,N*N), coeff_in(Qmult,ndof) --> coeff_out --> t(target_dim*Qmult,N,N)
+    // Z(ndof,target_dim,N,N), coeff_in(Qmult,ndof) --> coeff_out --> t(target_dim*Qmult,N,N)
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: Hessian with elementary transformation");
       do_transformation();
@@ -3782,7 +3783,7 @@ namespace getfem {
 
   struct ga_instruction_interpolate_hess_base
     : public ga_instruction_copy_hess_base, ga_instruction_interpolate_base {
-    // ctx --> Z(ndof,target_dim,N*N) --> t(Qmult*ndof,Qmult*target_dim,N,N)
+    // ctx --> Z(ndof,target_dim,N,N) --> t(Qmult*ndof,Qmult*target_dim,N,N)
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: interpolated base hessian");
       ga_instruction_interpolate_base::exec();
@@ -3801,7 +3802,7 @@ namespace getfem {
 
   struct ga_instruction_interpolate_diverg_base
     : public ga_instruction_copy_diverg_base, ga_instruction_interpolate_base {
-    // ctx --> Z(ndof,target_dim,N*N) --> t(Qmult*ndof)
+    // ctx --> Z(ndof,target_dim,N,N) --> t(Qmult*ndof)
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: interpolated base divergence");
       ga_instruction_interpolate_base::exec();
@@ -3899,7 +3900,7 @@ namespace getfem {
   struct ga_instruction_elementary_transformation_hess_base
     : public ga_instruction_copy_hess_base,
              ga_instruction_elementary_transformation_base {
-    // Z(ndof,target_dim,N*N) --> t_in --> t_out(Qmult*ndof,Qmult*target_dim,N,N)
+    // Z(ndof,target_dim,N,N) --> t_in --> t_out(Qmult*ndof,Qmult*target_dim,N,N)
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: Hessian of test functions with elementary "
                     "transformation");
