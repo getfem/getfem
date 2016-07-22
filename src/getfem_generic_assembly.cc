@@ -2717,11 +2717,7 @@ namespace getfem {
         pfem pf = mf.fem_of_element(ctx.convex_num());
         if (!pfp || pf != pfp->get_pfem() ||
             ctx.pgp()->get_ppoint_tab() != pfp->get_ppoint_tab()) {
-          if (pf->is_on_real_element())
-            pfp = 0;
-          else {
-            pfp = fp_pool(pf, ctx.pgp()->get_ppoint_tab());
-          }
+          pfp = fp_pool(pf, ctx.pgp()->get_ppoint_tab());
         }
       } else {
         pfp = 0;

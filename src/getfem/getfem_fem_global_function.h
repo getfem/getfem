@@ -56,6 +56,9 @@ namespace getfem {
     mutable std::vector<std::vector<size_type> > index_of_global_dof_;
     mutable bgeot::pstored_point_tab pspt_override;
 
+    mutable std::vector< std::map<bgeot::pstored_point_tab, std::vector<base_tensor> > >
+      precompval, precompgrad, precomphess; // store values, gradients and hessians of base functions
+
     void init();
     virtual void update_from_context() const;
   public :

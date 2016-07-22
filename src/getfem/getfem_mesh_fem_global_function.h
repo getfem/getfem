@@ -52,10 +52,6 @@ namespace getfem {
     getfem::pfem fem_;
   public :
 
-    void set_functions(pglobal_function f,
-                       const mesh_im &mim=dummy_mesh_im());
-    void set_functions(pglobal_function f1, pglobal_function f2,
-                       const mesh_im &mim=dummy_mesh_im());
     void set_functions(const std::vector<pglobal_function>& f,
                        const mesh_im &mim=dummy_mesh_im());
     // size_type memsize() const;

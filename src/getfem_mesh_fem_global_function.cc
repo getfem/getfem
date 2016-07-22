@@ -24,20 +24,6 @@
 
 namespace getfem {
 
-  void mesh_fem_global_function::set_functions
-  (pglobal_function f, const mesh_im &mim) { 
-    std::vector<pglobal_function> funcs(1);
-    funcs[0]=f;
-    set_functions(funcs, mim);
-  }
-
-  void mesh_fem_global_function::set_functions
-  (pglobal_function f1, pglobal_function f2, const mesh_im &mim) { 
-    std::vector<pglobal_function> funcs(2);
-    funcs[0]=f1;
-    funcs[1] = f2;
-    set_functions(funcs, mim);
-  }
 
   void mesh_fem_global_function::set_functions
   (const std::vector<pglobal_function>& funcs, const mesh_im &mim) {

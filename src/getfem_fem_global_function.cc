@@ -68,6 +68,10 @@ namespace getfem {
 
   void fem_global_function::update_from_context() const {
 
+    precompval.clear();
+    precompgrad.clear();
+    precomphess.clear();
+
     mib.resize(2);
     mib[0] = short_type(1);
     mib[1] = target_dim();
@@ -183,12 +187,30 @@ namespace getfem {
     size_type nbdof = nb_dof(cv);
     mib[0] = short_type(nbdof);
     t.adjust_sizes(mib);
-    for (size_type i=0; i < nbdof; ++i) {
-      /*cerr << "fem_global_function: real_base_value(" << c.xreal() << ")\n";
-      if (c.have_G()) cerr << "G = " << c.G() << "\n";
-      else cerr << "no G\n";*/
-      t[i] = functions[index_of_global_dof_[cv][i]]->val(c);
-    }
+    if (c.have_pfp() && c.ii() != size_type(-1)) {
+      if (precompval.size() == 0)
+        precompval.resize(m.convex_index().last_true()+1);
+      const bgeot::pstored_point_tab ptab = c.pfp()->get_ppoint_tab();
+      auto it = precompval[cv].find(ptab);
+      if (it == precompval[cv].end()) {
+        it = precompval[cv]
+             .emplace(ptab, std::vector<base_tensor>(ptab->size())).first;
+        base_matrix G;
+        bgeot::vectors_to_base_matrix(G, m.points_of_convex(cv));
+        for (size_type k = 0; k < ptab->size(); ++k) {
+          const fem_interpolation_context
+            ctx(m.trans_of_convex(cv), shared_from_this(), (*ptab)[k], G, cv);
+          real_base_value(ctx, it->second[k]);
+        }
+      }
+      gmm::copy(it->second[c.ii()].as_vector(), t.as_vector());
+    } else
+      for (size_type i=0; i < nbdof; ++i) {
+        /*cerr << "fem_global_function: real_base_value(" << c.xreal() << ")\n";
+        if (c.have_G()) cerr << "G = " << c.G() << "\n";
+        else cerr << "no G\n";*/
+        t[i] = functions[index_of_global_dof_[cv][i]]->val(c);
+      }
   }
 
   void fem_global_function::real_grad_base_value
@@ -198,11 +220,30 @@ namespace getfem {
     size_type nbdof = nb_dof(cv);
     mig[0] = short_type(nbdof);
     t.adjust_sizes(mig);
-    base_small_vector G(dim());
-    for (size_type i=0; i < nbdof; ++i) {
-      functions[index_of_global_dof_[cv][i]]->grad(c,G);
-      for (size_type j=0; j < dim(); ++j)
-        t[j*nbdof + i] = G[j];
+    if (c.have_pfp() && c.ii() != size_type(-1)) {
+      if (precompgrad.size() == 0)
+        precompgrad.resize(m.convex_index().last_true()+1);
+      const bgeot::pstored_point_tab ptab = c.pfp()->get_ppoint_tab();
+      auto it = precompgrad[cv].find(ptab);
+      if (it == precompgrad[cv].end()) {
+        it = precompgrad[cv]
+             .emplace(ptab, std::vector<base_tensor>(ptab->size())).first;
+        base_matrix G;
+        bgeot::vectors_to_base_matrix(G, m.points_of_convex(cv));
+        for (size_type k = 0; k < ptab->size(); ++k) {
+          const fem_interpolation_context
+            ctx(m.trans_of_convex(cv), shared_from_this(), (*ptab)[k], G, cv);
+          real_grad_base_value(ctx, it->second[k]);
+        }
+      }
+      gmm::copy(it->second[c.ii()].as_vector(), t.as_vector());
+    } else {
+      base_small_vector G(dim());
+      for (size_type i=0; i < nbdof; ++i) {
+        functions[index_of_global_dof_[cv][i]]->grad(c,G);
+        for (size_type j=0; j < dim(); ++j)
+          t[j*nbdof + i] = G[j];
+      }
     }
   }
 
@@ -213,13 +254,33 @@ namespace getfem {
     size_type nbdof = nb_dof(cv);
     mih[0] = short_type(nbdof);
     t.adjust_sizes(mih);
-    base_matrix H(dim(),dim());
-    for (size_type i=0; i < nbdof; ++i) {
-      functions[index_of_global_dof_[cv][i]]->hess(c,H);
-      for (size_type jk=0; jk < size_type(dim()*dim()); ++jk)
-        t[jk*nbdof + i] = H[jk];
+    if (c.have_pfp() && c.ii() != size_type(-1)) {
+      if (precomphess.size() == 0)
+        precomphess.resize(m.convex_index().last_true()+1);
+      const bgeot::pstored_point_tab ptab = c.pfp()->get_ppoint_tab();
+      auto it = precomphess[cv].find(ptab);
+      if (it == precomphess[cv].end()) {
+        it = precomphess[cv]
+             .emplace(ptab, std::vector<base_tensor>(ptab->size())).first;
+        base_matrix G;
+        bgeot::vectors_to_base_matrix(G, m.points_of_convex(cv));
+        for (size_type k = 0; k < ptab->size(); ++k) {
+          const fem_interpolation_context
+            ctx(m.trans_of_convex(cv), shared_from_this(), (*ptab)[k], G, cv);
+          real_hess_base_value(ctx, it->second[k]);
+        }
+      }
+      gmm::copy(it->second[c.ii()].as_vector(), t.as_vector());
+    } else {
+      base_matrix H(dim(),dim());
+      for (size_type i=0; i < nbdof; ++i) {
+        functions[index_of_global_dof_[cv][i]]->hess(c,H);
+        for (size_type jk=0; jk < size_type(dim()*dim()); ++jk)
+          t[jk*nbdof + i] = H[jk];
+      }
     }
   }
+
 
   DAL_SIMPLE_KEY(special_fem_globf_key, pfem);
 

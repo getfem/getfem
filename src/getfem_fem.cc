@@ -65,6 +65,18 @@ namespace getfem {
     return (face_num_ != short_type(-1));
   }
 
+  // Comment regarding fem defined on the real element:
+  // Precomputed values, gradients and hessians of fem defined on the real
+  // element are not dealt with within fem_interpolation_context.
+  // In that case, any precomputations can be performed within the fem
+  // itself, which has to store the corresponding values internally.
+  // The methods real_base_value, real_grad_base_value or real_hess_base_value
+  // of the fem have the possibility to check if the passed ctx has a pfp
+  // and extract the corresponding internally stored results based on
+  // ctx.convex_num(), ctx.pfp()->get_ppoint_tab() and ctx.ii().
+  // In that case, the storage available in ctx.pfp()->c, ctx.pfp()->pc
+  // and ctx.pfp()->hpc is not used.
+
   void fem_interpolation_context::base_value(base_tensor& t,
                                              bool withM) const {
     if (pf()->is_on_real_element())
@@ -77,7 +89,7 @@ namespace getfem {
           t.mat_transp_reduction(pfp_->val(ii()), K(), 1); break;
         case virtual_fem::VECTORIAL_DUAL_TYPE:
           t.mat_transp_reduction(pfp_->val(ii()), B(), 1); break;
-        default: t=pfp_->val(ii());
+        default: t = pfp_->val(ii());
         }
       }
       else {

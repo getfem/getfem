@@ -226,7 +226,8 @@ namespace getfem {
   class fem_interpolation_context;
 
   /** @brief Base class for finite element description */
-  class virtual_fem : virtual public dal::static_stored_object {
+  class virtual_fem : virtual public dal::static_stored_object,
+                      public std::enable_shared_from_this<const virtual_fem> {
   public :
     enum vec_type { VECTORIAL_NOTRANSFORM_TYPE, VECTORIAL_PRIMAL_TYPE,
                     VECTORIAL_DUAL_TYPE };
@@ -458,7 +459,9 @@ namespace getfem {
       vtype = VECTORIAL_NOTRANSFORM_TYPE;
       cvs_node = bgeot::new_convex_structure();
     }
-    virtual_fem(const virtual_fem& f) : dal::static_stored_object()
+    virtual_fem(const virtual_fem& f)
+      : dal::static_stored_object(),
+        std::enable_shared_from_this<const virtual_fem>()
     { copy(f); DAL_STORED_OBJECT_DEBUG_CREATED(this, "Fem"); }
     virtual ~virtual_fem() { DAL_STORED_OBJECT_DEBUG_DESTROYED(this, "Fem"); }
   private:
