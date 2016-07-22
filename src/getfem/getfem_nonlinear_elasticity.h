@@ -53,7 +53,7 @@ namespace getfem {
   class abstract_hyperelastic_law;
   typedef std::shared_ptr<const abstract_hyperelastic_law> phyperelastic_law;
 
-  /** Base class for material law. 
+  /** Base class for material law.
       Inherit from this class to define a new law.
   */
   class abstract_hyperelastic_law {
@@ -61,66 +61,66 @@ namespace getfem {
     mutable int uvflag;
     size_type nb_params_;
     phyperelastic_law pl; /* optional reference */
-    void reset_unvalid_flag(void) const { uvflag = 0; }
-    void inc_unvalid_flag(void) const { uvflag++; }
-    int get_unvalid_flag(void) const { return uvflag; }
+    void reset_unvalid_flag() const { uvflag = 0; }
+    void inc_unvalid_flag() const { uvflag++; }
+    int get_unvalid_flag() const { return uvflag; }
     std::string adapted_tangent_term_assembly_fem_data; // should be filled
     std::string adapted_tangent_term_assembly_cte_data; // to replace the
                                                         // default assembly
-    
+
     virtual scalar_type strain_energy(const base_matrix &E,
-				      const base_vector &params,
-				      scalar_type det_trans) const = 0;
-	/**True Cauchy stress (for Updated Lagrangian formulation)*/
-	virtual void cauchy_updated_lagrangian(const base_matrix& F, 
-			const base_matrix &E, 
-			base_matrix &cauchy_stress,
-			const base_vector &params,
-			scalar_type det_trans) const;
+                                      const base_vector &params,
+                                      scalar_type det_trans) const = 0;
+        /**True Cauchy stress (for Updated Lagrangian formulation)*/
+        virtual void cauchy_updated_lagrangian(const base_matrix& F,
+                        const base_matrix &E,
+                        base_matrix &cauchy_stress,
+                        const base_vector &params,
+                        scalar_type det_trans) const;
     virtual void sigma(const base_matrix &E, base_matrix &result,
-		       const base_vector &params,
-		       scalar_type det_trans) const = 0;
+                       const base_vector &params,
+                       scalar_type det_trans) const = 0;
     // the result of grad_sigma has to be completely symmetric.
-    virtual void grad_sigma(const base_matrix &E, base_tensor &result, 
-		 const base_vector &params, scalar_type det_trans) const = 0;
+    virtual void grad_sigma(const base_matrix &E, base_tensor &result,
+                 const base_vector &params, scalar_type det_trans) const = 0;
 
-	/**cauchy-truesdel tangent moduli, used in updated lagrangian*/
-	virtual void grad_sigma_updated_lagrangian(const base_matrix& F, 
-			const base_matrix& E,
-			const base_vector &params,
-			scalar_type det_trans,
-			base_tensor &grad_sigma_ul)const;
+        /**cauchy-truesdel tangent moduli, used in updated lagrangian*/
+        virtual void grad_sigma_updated_lagrangian(const base_matrix& F,
+                        const base_matrix& E,
+                        const base_vector &params,
+                        scalar_type det_trans,
+                        base_tensor &grad_sigma_ul)const;
 
-    size_type nb_params(void) const { return nb_params_; }
+    size_type nb_params() const { return nb_params_; }
     abstract_hyperelastic_law() { nb_params_ = 0; }
     virtual ~abstract_hyperelastic_law() {}
     static void random_E(base_matrix &E);
     void test_derivatives(size_type N, scalar_type h,
-			  const base_vector& param) const;
+                          const base_vector& param) const;
   };
 
-  /** Saint-Venant Kirchhoff hyperelastic law. 
-      
-      This is the linear law used in linear elasticity, it is not well 
-      suited to large strain. (the convexes may become flat) 
+  /** Saint-Venant Kirchhoff hyperelastic law.
+
+      This is the linear law used in linear elasticity, it is not well
+      suited to large strain. (the convexes may become flat)
   */
-  struct SaintVenant_Kirchhoff_hyperelastic_law : 
+  struct SaintVenant_Kirchhoff_hyperelastic_law :
     public abstract_hyperelastic_law {
     /* W = lambda*0.5*trace(E)^2 + mu*tr(E^2) */
     virtual scalar_type strain_energy(const base_matrix &E,
-				      const base_vector &params,
-				      scalar_type det_trans) const;
+                                      const base_vector &params,
+                                      scalar_type det_trans) const;
     /* sigma = lambda*trace(E) + 2 mu * E */
     virtual void sigma(const base_matrix &E, base_matrix &result,
-		       const base_vector &params, scalar_type det_trans) const;
+                       const base_vector &params, scalar_type det_trans) const;
     virtual void grad_sigma(const base_matrix &E, base_tensor &result,
-		      const base_vector &params, scalar_type det_trans) const;
-	virtual void grad_sigma_updated_lagrangian(const base_matrix& F, 
-				const base_matrix& E,
-				const base_vector &params,
-				scalar_type det_trans,
-				base_tensor &grad_sigma_ul)const;
-    SaintVenant_Kirchhoff_hyperelastic_law(void);
+                      const base_vector &params, scalar_type det_trans) const;
+        virtual void grad_sigma_updated_lagrangian(const base_matrix& F,
+                                const base_matrix& E,
+                                const base_vector &params,
+                                scalar_type det_trans,
+                                base_tensor &grad_sigma_ul)const;
+    SaintVenant_Kirchhoff_hyperelastic_law();
   };
 
 
@@ -128,20 +128,20 @@ namespace getfem {
       caracterized by Ex, Ey, vYX and G, with optional orthotropic prestresses.
       due to Jean-Yves Heddebaut <jyhed@alpino.be>
   */
-  struct membrane_elastic_law : 
+  struct membrane_elastic_law :
     public abstract_hyperelastic_law {
     virtual scalar_type strain_energy(const base_matrix &E,
-				      const base_vector &params,
-				      scalar_type det_trans) const;
+                                      const base_vector &params,
+                                      scalar_type det_trans) const;
     virtual void sigma(const base_matrix &E, base_matrix &result,
-		       const base_vector &params, scalar_type det_trans) const;
+                       const base_vector &params, scalar_type det_trans) const;
     virtual void grad_sigma(const base_matrix &E, base_tensor &result,
-		       const base_vector &params, scalar_type det_trans) const;
-    membrane_elastic_law(void) { nb_params_ = 6; }
+                       const base_vector &params, scalar_type det_trans) const;
+    membrane_elastic_law() { nb_params_ = 6; }
   };
 
 
-  /** Mooney-Rivlin hyperelastic law 
+  /** Mooney-Rivlin hyperelastic law
 
       To be used for compressible and incompressible problems.
       Following combinations are possible:
@@ -153,11 +153,11 @@ namespace getfem {
   struct Mooney_Rivlin_hyperelastic_law : public abstract_hyperelastic_law {
     const bool compressible, neohookean;
     virtual scalar_type strain_energy(const base_matrix &E,
-				      const base_vector &params, scalar_type det_trans) const;
+                                      const base_vector &params, scalar_type det_trans) const;
     virtual void sigma(const base_matrix &E, base_matrix &result,
-		       const base_vector &params, scalar_type det_trans) const;
+                       const base_vector &params, scalar_type det_trans) const;
     virtual void grad_sigma(const base_matrix &E, base_tensor &result,
-			    const base_vector &params, scalar_type det_trans) const;
+                            const base_vector &params, scalar_type det_trans) const;
     Mooney_Rivlin_hyperelastic_law(bool compressible_=false,
                                    bool neohookean_=false);
   };
@@ -178,18 +178,18 @@ namespace getfem {
     Neo_Hookean_hyperelastic_law(bool bonet_=true);
   };
 
-  /** Blatz_Ko hyperelastic law 
-      
+  /** Blatz_Ko hyperelastic law
+
       To be used for compressible problems.
   */
   struct generalized_Blatz_Ko_hyperelastic_law : public abstract_hyperelastic_law {
     virtual scalar_type strain_energy(const base_matrix &E,
-				      const base_vector &params, scalar_type det_trans) const;
+                                      const base_vector &params, scalar_type det_trans) const;
     virtual void sigma(const base_matrix &E, base_matrix &result,
-		       const base_vector &params, scalar_type det_trans) const;
+                       const base_vector &params, scalar_type det_trans) const;
     virtual void grad_sigma(const base_matrix &E, base_tensor &result,
-			    const base_vector &params, scalar_type det_trans) const;
-    generalized_Blatz_Ko_hyperelastic_law(void);
+                            const base_vector &params, scalar_type det_trans) const;
+    generalized_Blatz_Ko_hyperelastic_law();
   };
 
 
@@ -199,23 +199,23 @@ namespace getfem {
     // parameters are lambda=params[0], mu=params[1], a=params[2]
     // The parameter a has to verify a in ]0, mu/2[
     virtual scalar_type strain_energy(const base_matrix &E,
-				      const base_vector &params, scalar_type det_trans) const;
+                                      const base_vector &params, scalar_type det_trans) const;
     virtual void sigma(const base_matrix &E, base_matrix &result,
-		       const base_vector &params, scalar_type det_trans) const;
+                       const base_vector &params, scalar_type det_trans) const;
     virtual void grad_sigma(const base_matrix &E, base_tensor &result,
-			    const base_vector &params, scalar_type det_trans) const;
-    Ciarlet_Geymonat_hyperelastic_law(void) { nb_params_ = 3; }
+                            const base_vector &params, scalar_type det_trans) const;
+    Ciarlet_Geymonat_hyperelastic_law() { nb_params_ = 3; }
   };
 
   /** Plane strain hyperelastic law (takes another law as a parameter)
    */
   struct plane_strain_hyperelastic_law : public abstract_hyperelastic_law {
     virtual scalar_type strain_energy(const base_matrix &E,
-				      const base_vector &params, scalar_type det_trans) const;
+                                      const base_vector &params, scalar_type det_trans) const;
     virtual void sigma(const base_matrix &E, base_matrix &result,
-		       const base_vector &params, scalar_type det_trans) const;
+                       const base_vector &params, scalar_type det_trans) const;
     virtual void grad_sigma(const base_matrix &E, base_tensor &result,
-			    const base_vector &params, scalar_type det_trans) const;
+                            const base_vector &params, scalar_type det_trans) const;
     plane_strain_hyperelastic_law(const phyperelastic_law &pl_)
     { pl = pl_; nb_params_ = pl->nb_params(); }
   };
@@ -223,7 +223,7 @@ namespace getfem {
 
 
 
-  template<typename VECT1, typename VECT2> class elasticity_nonlinear_term 
+  template<typename VECT1, typename VECT2> class elasticity_nonlinear_term
     : public getfem::nonlinear_elem_term {
     const mesh_fem &mf;
     std::vector<scalar_type> U;
@@ -239,14 +239,14 @@ namespace getfem {
     int version;
   public:
     elasticity_nonlinear_term(const mesh_fem &mf_, const VECT1 &U_,
-			      const mesh_fem *mf_data_, const VECT2 &PARAMS_,
-			      const abstract_hyperelastic_law &AHL_,
-			      int version_) 
-      : mf(mf_), U(mf_.nb_basic_dof()), mf_data(mf_data_), PARAMS(PARAMS_), 
-	N(mf_.linked_mesh().dim()), NFem(mf_.get_qdim()), AHL(AHL_),
-	params(AHL_.nb_params()), E(N, N), Sigma(N, N), gradU(NFem, N),
-	tt(N, N, N, N), sizes_(NFem, N, NFem, N),
-	version(version_) {
+                              const mesh_fem *mf_data_, const VECT2 &PARAMS_,
+                              const abstract_hyperelastic_law &AHL_,
+                              int version_)
+      : mf(mf_), U(mf_.nb_basic_dof()), mf_data(mf_data_), PARAMS(PARAMS_),
+        N(mf_.linked_mesh().dim()), NFem(mf_.get_qdim()), AHL(AHL_),
+        params(AHL_.nb_params()), E(N, N), Sigma(N, N), gradU(NFem, N),
+        tt(N, N, N, N), sizes_(NFem, N, NFem, N),
+        version(version_) {
       switch (version) {
       case 0 : break; // tangent term
       case 1 : sizes_.resize(2); break; // rhs
@@ -256,87 +256,87 @@ namespace getfem {
 
       mf.extend_vector(U_, U);
       if (gmm::vect_size(PARAMS) == AHL_.nb_params())
-	gmm::copy(PARAMS, params);
+        gmm::copy(PARAMS, params);
     }
 
     const bgeot::multi_index &sizes(size_type) const {  return sizes_; }
 
     virtual void compute(getfem::fem_interpolation_context& ctx,
-			 bgeot::base_tensor &t) {
+                         bgeot::base_tensor &t) {
       size_type cv = ctx.convex_num();
       slice_vector_on_basic_dof_of_element(mf, U, cv, coeff);
       ctx.pf()->interpolation_grad(ctx, coeff, gradU, mf.get_qdim());
-      
+
       for (unsigned int alpha = 0; alpha < N; ++alpha)
-	gradU(alpha, alpha) += scalar_type(1);
+        gradU(alpha, alpha) += scalar_type(1);
 
       if (version == 3) {
-	for (size_type n = 0; n < NFem; ++n)
-	  for (size_type m = 0; m < N; ++m)
-	    t(n,m) = gradU(n,m);
-	return;
+        for (size_type n = 0; n < NFem; ++n)
+          for (size_type m = 0; m < N; ++m)
+            t(n,m) = gradU(n,m);
+        return;
       }
 
       gmm::mult(gmm::transposed(gradU), gradU, E);
       for (unsigned int alpha = 0; alpha < N; ++alpha)
-	E(alpha, alpha) -= scalar_type(1);
+        E(alpha, alpha) -= scalar_type(1);
       gmm::scale(E, scalar_type(0.5));
 
       scalar_type det_trans = gmm::lu_det(gradU);
 
       if (version == 2) {
-	t[0] = AHL.strain_energy(E, params, det_trans);
-	return;
+        t[0] = AHL.strain_energy(E, params, det_trans);
+        return;
       }
 
       AHL.sigma(E, Sigma, params, det_trans);
 
-      if (version == 0) {	  
-	AHL.grad_sigma(E, tt, params, det_trans);	
-	for (size_type n = 0; n < NFem; ++n)
-	  for (size_type m = 0; m < N; ++m)
-	    for (size_type l = 0; l < N; ++l)
-	      for (size_type k = 0; k < NFem; ++k) {
-		scalar_type aux = (k == n) ? Sigma(m,l) : 0.0;
-		for (size_type j = 0; j < N; ++j)
-		  for (size_type i = 0; i < N; ++i) {
-		    aux += gradU(n ,j) * gradU(k, i) * tt(j, m, i, l);
-		  }
-		t(n, m, k, l) = aux;
-	      }
+      if (version == 0) {
+        AHL.grad_sigma(E, tt, params, det_trans);
+        for (size_type n = 0; n < NFem; ++n)
+          for (size_type m = 0; m < N; ++m)
+            for (size_type l = 0; l < N; ++l)
+              for (size_type k = 0; k < NFem; ++k) {
+                scalar_type aux = (k == n) ? Sigma(m,l) : 0.0;
+                for (size_type j = 0; j < N; ++j)
+                  for (size_type i = 0; i < N; ++i) {
+                    aux += gradU(n ,j) * gradU(k, i) * tt(j, m, i, l);
+                  }
+                t(n, m, k, l) = aux;
+              }
       } else {
         if (det_trans < scalar_type(0)) AHL.inc_unvalid_flag();
-	for (size_type i = 0; i < NFem; ++i)
-	  for (size_type j = 0; j < N; ++j) {
-	    scalar_type aux(0);
-	    for (size_type k = 0; k < N; ++k)
-	      aux += gradU(i, k) * Sigma(k, j);
-	    t(i,j) = aux;
-	  }
+        for (size_type i = 0; i < NFem; ++i)
+          for (size_type j = 0; j < N; ++j) {
+            scalar_type aux(0);
+            for (size_type k = 0; k < N; ++k)
+              aux += gradU(i, k) * Sigma(k, j);
+            t(i,j) = aux;
+          }
       }
     }
 
     virtual void prepare(fem_interpolation_context& ctx, size_type ) {
       if (mf_data) {
-	size_type cv = ctx.convex_num();
-	size_type nb = AHL.nb_params();
-	coeff.resize(mf_data->nb_basic_dof_of_element(cv)*nb);
-	for (size_type i = 0; i < mf_data->nb_basic_dof_of_element(cv); ++i)
-	  for (size_type k = 0; k < nb; ++k)
-	    coeff[i * nb + k]
-	      = PARAMS[mf_data->ind_basic_dof_of_element(cv)[i]*nb+k];
-	ctx.pf()->interpolation(ctx, coeff, params, dim_type(nb));
+        size_type cv = ctx.convex_num();
+        size_type nb = AHL.nb_params();
+        coeff.resize(mf_data->nb_basic_dof_of_element(cv)*nb);
+        for (size_type i = 0; i < mf_data->nb_basic_dof_of_element(cv); ++i)
+          for (size_type k = 0; k < nb; ++k)
+            coeff[i * nb + k]
+              = PARAMS[mf_data->ind_basic_dof_of_element(cv)[i]*nb+k];
+        ctx.pf()->interpolation(ctx, coeff, params, dim_type(nb));
       }
-    } 
-    
+    }
+
   };
 
 
-  /** 
-      Tangent matrix for the non-linear elasticity 
+  /**
+      Tangent matrix for the non-linear elasticity
       @ingroup asm
   */
-  template<typename MAT, typename VECT1, typename VECT2> 
+  template<typename MAT, typename VECT1, typename VECT2>
   void asm_nonlinear_elasticity_tangent_matrix
   (const MAT &K_, const mesh_im &mim, const getfem::mesh_fem &mf,
    const VECT1 &U, const getfem::mesh_fem *mf_data, const VECT2 &PARAMS,
@@ -344,7 +344,7 @@ namespace getfem {
    const mesh_region &rg = mesh_region::all_convexes()) {
     MAT &K = const_cast<MAT &>(K_);
     GMM_ASSERT1(mf.get_qdim() >= mf.linked_mesh().dim(),
-		"wrong qdim for the mesh_fem");
+                "wrong qdim for the mesh_fem");
 
     elasticity_nonlinear_term<VECT1, VECT2>
       nterm(mf, U, mf_data, PARAMS, AHL, 0);
@@ -354,14 +354,14 @@ namespace getfem {
     getfem::generic_assembly assem;
     if (mf_data)
       if (AHL.adapted_tangent_term_assembly_fem_data.size() > 0)
-	assem.set(AHL.adapted_tangent_term_assembly_cte_data);
+        assem.set(AHL.adapted_tangent_term_assembly_cte_data);
       else
-	assem.set("M(#1,#1)+=sym(comp(NonLin$1(#1,#2)(i,j,k,l).vGrad(#1)(:,i,j).vGrad(#1)(:,k,l)))");
+        assem.set("M(#1,#1)+=sym(comp(NonLin$1(#1,#2)(i,j,k,l).vGrad(#1)(:,i,j).vGrad(#1)(:,k,l)))");
     else
       if (AHL.adapted_tangent_term_assembly_cte_data.size() > 0)
-	assem.set(AHL.adapted_tangent_term_assembly_cte_data);
+        assem.set(AHL.adapted_tangent_term_assembly_cte_data);
       else
-	assem.set("M(#1,#1)+=sym(comp(NonLin$1(#1)(i,j,k,l).vGrad(#1)(:,i,j).vGrad(#1)(:,k,l)))");
+        assem.set("M(#1,#1)+=sym(comp(NonLin$1(#1)(i,j,k,l).vGrad(#1)(:,i,j).vGrad(#1)(:,k,l)))");
     assem.push_mi(mim);
     assem.push_mf(mf);
     if (mf_data) assem.push_mf(*mf_data);
@@ -376,7 +376,7 @@ namespace getfem {
   /**
      @ingroup asm
   */
-  template<typename VECT1, typename VECT2, typename VECT3> 
+  template<typename VECT1, typename VECT2, typename VECT3>
   void asm_nonlinear_elasticity_rhs
   (const VECT1 &R_, const mesh_im &mim, const getfem::mesh_fem &mf,
    const VECT2 &U, const getfem::mesh_fem *mf_data, const VECT3 &PARAMS,
@@ -384,7 +384,7 @@ namespace getfem {
    const mesh_region &rg = mesh_region::all_convexes()) {
     VECT1 &R = const_cast<VECT1 &>(R_);
     GMM_ASSERT1(mf.get_qdim() >= mf.linked_mesh().dim(),
-		"wrong qdim for the mesh_fem");
+                "wrong qdim for the mesh_fem");
 
     elasticity_nonlinear_term<VECT2, VECT3>
       nterm(mf, U, mf_data, PARAMS, AHL, 1);
@@ -409,15 +409,15 @@ namespace getfem {
 
   /**@ingroup asm
    */
-  template<typename VECT2, typename VECT3> 
+  template<typename VECT2, typename VECT3>
   scalar_type asm_elastic_strain_energy
   (const mesh_im &mim, const getfem::mesh_fem &mf,
    const VECT2 &U, const getfem::mesh_fem *mf_data, const VECT3 &PARAMS,
    const abstract_hyperelastic_law &AHL,
    const mesh_region &rg = mesh_region::all_convexes()) {
- 
+
     GMM_ASSERT1(mf.get_qdim() >= mf.linked_mesh().dim(),
-		"wrong qdim for the mesh_fem");
+                "wrong qdim for the mesh_fem");
 
     elasticity_nonlinear_term<VECT2, VECT3>
       nterm(mf, U, mf_data, PARAMS, AHL, 2);
@@ -428,7 +428,7 @@ namespace getfem {
       assem.set("V() += comp(NonLin(#1,#2))(i)");
     else
       assem.set("V() += comp(NonLin(#1))(i)");
-    
+
     assem.push_mi(mim);
     assem.push_mf(mf);
     if (mf_data) assem.push_mf(*mf_data);
@@ -448,10 +448,10 @@ namespace getfem {
 
 
   /* ******************************************************************** */
-  /*		Mixed nonlinear incompressibility assembly procedure      */
+  /*                Mixed nonlinear incompressibility assembly procedure      */
   /* ******************************************************************** */
 
-  template<typename VECT1> class incomp_nonlinear_term 
+  template<typename VECT1> class incomp_nonlinear_term
     : public getfem::nonlinear_elem_term {
 
     const mesh_fem &mf;
@@ -460,15 +460,15 @@ namespace getfem {
     base_vector coeff;
     base_matrix gradPhi;
     bgeot::multi_index sizes_;
-    int version; 
+    int version;
 
   public:
     incomp_nonlinear_term(const mesh_fem &mf_, const VECT1 &U_,
-			  int version_) 
+                          int version_)
       : mf(mf_), U(mf_.nb_basic_dof()),
-	N(mf_.get_qdim()),
-	gradPhi(N, N), sizes_(N, N),
-	version(version_) {
+        N(mf_.get_qdim()),
+        gradPhi(N, N), sizes_(N, N),
+        version(version_) {
       if (version == 1) { sizes_.resize(1); sizes_[0] = 1; }
       mf.extend_vector(U_, U);
     }
@@ -476,7 +476,7 @@ namespace getfem {
     const bgeot::multi_index &sizes(size_type) const { return sizes_; }
 
     virtual void compute(getfem::fem_interpolation_context& ctx,
-			 bgeot::base_tensor &t) {
+                         bgeot::base_tensor &t) {
       size_type cv = ctx.convex_num();
       slice_vector_on_basic_dof_of_element(mf, U, cv, coeff);
       ctx.pf()->interpolation_grad(ctx, coeff, gradPhi, mf.get_qdim());
@@ -484,48 +484,48 @@ namespace getfem {
       scalar_type det = gmm::lu_inverse(gradPhi);
 
       if (version != 1) {
-	if (version == 2) det = sqrt(gmm::abs(det));
-	for (size_type i = 0; i < N; ++i) 
-	  for (size_type j = 0; j < N; ++j) {
-	    t(i,j) = - det * gradPhi(j,i);
-	  }
+        if (version == 2) det = sqrt(gmm::abs(det));
+        for (size_type i = 0; i < N; ++i)
+          for (size_type j = 0; j < N; ++j) {
+            t(i,j) = - det * gradPhi(j,i);
+          }
       }
       else t[0] = scalar_type(1) - det;
-     
+
     }
   };
 
   /**@ingroup asm*/
-  template<typename MAT1, typename MAT2, typename VECT1, typename VECT2> 
+  template<typename MAT1, typename MAT2, typename VECT1, typename VECT2>
   void asm_nonlinear_incomp_tangent_matrix(const MAT1 &K_, const MAT2 &B_,
-					   const mesh_im &mim,
-					   const mesh_fem &mf_u,
-					   const mesh_fem &mf_p,
-					   const VECT1 &U, const VECT2 &P,
-					   const mesh_region &rg = mesh_region::all_convexes()) {
+                                           const mesh_im &mim,
+                                           const mesh_fem &mf_u,
+                                           const mesh_fem &mf_p,
+                                           const VECT1 &U, const VECT2 &P,
+                                           const mesh_region &rg = mesh_region::all_convexes()) {
     MAT1 &K = const_cast<MAT1 &>(K_);
     MAT2 &B = const_cast<MAT2 &>(B_);
     GMM_ASSERT1(mf_u.get_qdim() == mf_u.linked_mesh().dim(),
-		"wrong qdim for the mesh_fem");
+                "wrong qdim for the mesh_fem");
 
     incomp_nonlinear_term<VECT1> ntermk(mf_u, U, 0);
     incomp_nonlinear_term<VECT1> ntermb(mf_u, U, 2);
     getfem::generic_assembly
       assem("P=data(#2);"
-	    "t=comp(NonLin$1(#1).vGrad(#1).Base(#2));"
-	    "M$2(#1,#2)+= t(i,j,:,i,j,:);"
- 	    /*"w=comp(NonLin$2(#1).vGrad(#1).NonLin$2(#1).vGrad(#1).Base(#2));"
-	      "M$1(#1,#1)+= w(j,i,:,j,k, m,k,:,m,i,p).P(p)"
-	      "-w(i,j,:,i,j, k,l,:,k,l,p).P(p)"*/
+            "t=comp(NonLin$1(#1).vGrad(#1).Base(#2));"
+            "M$2(#1,#2)+= t(i,j,:,i,j,:);"
+             /*"w=comp(NonLin$2(#1).vGrad(#1).NonLin$2(#1).vGrad(#1).Base(#2));"
+              "M$1(#1,#1)+= w(j,i,:,j,k, m,k,:,m,i,p).P(p)"
+              "-w(i,j,:,i,j, k,l,:,k,l,p).P(p)"*/
             /*
-	      "w=comp(vGrad(#1).NonLin$2(#1).vGrad(#1).NonLin$2(#1).Base(#2));"
-	      "M$1(#1,#1)+= w(:,j,k, j,i, :,m,i, m,k, p).P(p)"
-	      "-w(:,j,i, j,i, :,m,l, m,l, p).P(p)"
+              "w=comp(vGrad(#1).NonLin$2(#1).vGrad(#1).NonLin$2(#1).Base(#2));"
+              "M$1(#1,#1)+= w(:,j,k, j,i, :,m,i, m,k, p).P(p)"
+              "-w(:,j,i, j,i, :,m,l, m,l, p).P(p)"
             */
             "w1=comp(vGrad(#1)(:,j,k).NonLin$2(#1)(j,i).vGrad(#1)(:,m,i).NonLin$2(#1)(m,k).Base(#2)(p).P(p));"
             "w2=comp(vGrad(#1)(:,j,i).NonLin$2(#1)(j,i).vGrad(#1)(:,m,l).NonLin$2(#1)(m,l).Base(#2)(p).P(p));"
-	    "M$1(#1,#1)+= w1-w2"            
-	    );
+            "M$1(#1,#1)+= w1-w2"
+            );
 
     assem.push_mi(mim);
     assem.push_mf(mf_u);
@@ -541,7 +541,7 @@ namespace getfem {
 
   /**@ingroup asm
    */
-  template<typename VECT1, typename VECT2, typename VECT3> 
+  template<typename VECT1, typename VECT2, typename VECT3>
   void asm_nonlinear_incomp_rhs
   (const VECT1 &R_U_, const VECT1 &R_P_, const mesh_im &mim,
    const getfem::mesh_fem &mf_u, const getfem::mesh_fem &mf_p,
@@ -550,16 +550,16 @@ namespace getfem {
     VECT1 &R_U = const_cast<VECT1 &>(R_U_);
     VECT1 &R_P = const_cast<VECT1 &>(R_P_);
     GMM_ASSERT1(mf_u.get_qdim() == mf_u.linked_mesh().dim(),
-		"wrong qdim for the mesh_fem");
+                "wrong qdim for the mesh_fem");
 
     incomp_nonlinear_term<VECT2> nterm_tg(mf_u, U, 0);
     incomp_nonlinear_term<VECT2> nterm(mf_u, U, 1);
 
     getfem::generic_assembly
       assem("P=data(#2); "
-	    "t=comp(NonLin$1(#1).vGrad(#1).Base(#2));"
-	    "V$1(#1) += t(i,j,:,i,j,k).P(k);"
-	    "w=comp(NonLin$2(#1).Base(#2)); V$2(#2) += w(1,:)");
+            "t=comp(NonLin$1(#1).vGrad(#1).Base(#2));"
+            "V$1(#1) += t(i,j,:,i,j,k).P(k);"
+            "w=comp(NonLin$2(#1).Base(#2)); V$2(#2) += w(1,:)");
     // assem() to be optimized ?
 
     assem.push_mi(mim);
@@ -605,11 +605,11 @@ namespace getfem {
 
 
   void compute_sigmahathat(model &md,
-			   const std::string &varname, 
-			   const phyperelastic_law &AHL,
-			   const std::string &dataname,
-			   const mesh_fem &mf_sigma,
-			   model_real_plain_vector &SIGMA);
+                           const std::string &varname,
+                           const phyperelastic_law &AHL,
+                           const std::string &dataname,
+                           const mesh_fem &mf_sigma,
+                           model_real_plain_vector &SIGMA);
 
 
   /**
@@ -625,7 +625,7 @@ namespace getfem {
       (md, varname, AHL, dataname, mf_vm, VMM, tresca);
     gmm::copy(VMM, VM);
   }
-  
+
   /** Add a nonlinear incompressibility term (for large strain elasticity)
       to the model with respect to the variable
       `varname` (the displacement) and `multname` (the pressure).
@@ -665,7 +665,7 @@ namespace getfem {
      with parameters `params` (only valid in 3D).
   */
   void compute_finite_strain_elasticity_Von_Mises
-  (model &md, const std::string &lawname, const std::string &varname, 
+  (model &md, const std::string &lawname, const std::string &varname,
    const std::string &params, const mesh_fem &mf_vm,
    model_real_plain_vector &VM,
    const mesh_region &rg=mesh_region::all_convexes());

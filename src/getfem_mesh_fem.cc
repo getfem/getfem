@@ -356,7 +356,7 @@ namespace getfem {
       itab.resize(nbd);
 
       for (size_type i = 0; i < nbd; i++) { // Loop on dofs
-	fd.pnd = pf->dof_types()[i];
+        fd.pnd = pf->dof_types()[i];
         fd.part = get_dof_partition(cv);
 
         if (fd.pnd == andof) {              // If the dof is a global one

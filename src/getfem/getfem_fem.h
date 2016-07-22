@@ -186,7 +186,7 @@ namespace getfem {
   /// Returns the xfem_index of dof (0 for normal dof)
   size_type dof_xfem_index(pdof_description);
 
-  size_type reserve_xfem_index(void);
+  size_type reserve_xfem_index();
   dim_type coord_index_of_dof(pdof_description a);
 
   int dof_weak_compatibility(pdof_description a, pdof_description b);
@@ -276,16 +276,16 @@ namespace getfem {
     size_type nb_components(size_type cv) const
       { return nb_dof(cv) * ntarget_dim; }
     /// Get the array of pointer on dof description.
-    const std::vector<pdof_description> &dof_types(void) const
+    const std::vector<pdof_description> &dof_types() const
       { return dof_types_; }
-    short_type hierarchical_raff(void) const { return hier_raff; }
+    short_type hierarchical_raff() const { return hier_raff; }
     /// dimension of the reference element.
-    dim_type dim(void) const { return dim_; }
-    dim_type &dim(void) { return dim_; }
+    dim_type dim() const { return dim_; }
+    dim_type &dim() { return dim_; }
     /// dimension of the target space.
-    dim_type target_dim(void) const { return ntarget_dim; }
+    dim_type target_dim() const { return ntarget_dim; }
     /// Type of vectorial element.
-    vec_type vectorial_type(void) const { return vtype; }
+    vec_type vectorial_type() const { return vtype; }
     /// Return the convex of the reference element.
     virtual bgeot::pconvex_ref ref_convex(size_type) const { return cvr; }
     /// @internal
@@ -299,8 +299,8 @@ namespace getfem {
     /// Gives the convex structure of the reference element nodes.
     bgeot::pconvex_structure structure(size_type cv) const
     { return node_convex(cv).structure(); }
-    const std::string &debug_name(void) const { return debug_name_; }
-    std::string &debug_name(void) { return debug_name_; }
+    const std::string &debug_name() const { return debug_name_; }
+    std::string &debug_name() { return debug_name_; }
     virtual bgeot::pstored_point_tab node_tab(size_type) const {
       if (!pspt_valid) {
         pspt = bgeot::store_point_tab(cv_node.points());
@@ -318,21 +318,21 @@ namespace getfem {
       { return (*(node_tab(cv)))[i];}
     virtual const std::vector<short_type> &
     faces_of_dof(size_type /*cv*/, size_type i) const;
-    bool is_on_real_element(void) const { return real_element_defined; }
-    bool is_equivalent(void) const { return is_equiv; }
-    bool need_G(void) const
+    bool is_on_real_element() const { return real_element_defined; }
+    bool is_equivalent() const { return is_equiv; }
+    bool need_G() const
     { return !(is_equivalent()) || real_element_defined; }
     /// true if the base functions are such that @f$ \varphi_i(\textrm{node\_of\_dof(j)}) = \delta_{ij} @f$
-    bool is_lagrange(void) const { return is_lag; }
+    bool is_lagrange() const { return is_lag; }
     /// true if the base functions are polynomials
-    bool is_polynomial(void) const { return is_pol; }
-    bool is_polynomialcomp(void) const { return is_polycomp; }
-    bool &is_polynomialcomp(void) { return is_polycomp; }
-    bool &is_equivalent(void) { return is_equiv; }
-    bool &is_lagrange(void) { return is_lag; }
-    bool &is_polynomial(void) { return is_pol; }
-    short_type estimated_degree(void) const { return es_degree; }
-    short_type &estimated_degree(void) { return es_degree; }
+    bool is_polynomial() const { return is_pol; }
+    bool is_polynomialcomp() const { return is_polycomp; }
+    bool &is_polynomialcomp() { return is_polycomp; }
+    bool &is_equivalent() { return is_equiv; }
+    bool &is_lagrange() { return is_lag; }
+    bool &is_polynomial() { return is_pol; }
+    short_type estimated_degree() const { return es_degree; }
+    short_type &estimated_degree() { return es_degree; }
 
     virtual void mat_trans(base_matrix &, const base_matrix &,
                            bgeot::pgeometric_trans) const
@@ -442,14 +442,14 @@ namespace getfem {
     void add_node(const pdof_description &d, const base_node &pt,
                   const dal::bit_vector &faces);
     void add_node(const pdof_description &d, const base_node &pt);
-    void init_cvs_node(void);
-    void unfreeze_cvs_node(void);
+    void init_cvs_node();
+    void unfreeze_cvs_node();
 
     virtual_fem &operator =(const virtual_fem &f) {
       copy(f); return *this;
     }
 
-    virtual_fem(void) {
+    virtual_fem() {
       DAL_STORED_OBJECT_DEBUG_CREATED(this, "Fem");
       ntarget_dim = 1; dim_ = 1;
       is_equiv = is_pol = is_polycomp = is_lag = false;
@@ -477,8 +477,8 @@ namespace getfem {
   public :
 
     /// Gives the array of basic functions (components).
-    const std::vector<FUNC> &base(void) const { return base_; }
-    std::vector<FUNC> &base(void) { return base_; }
+    const std::vector<FUNC> &base() const { return base_; }
+    std::vector<FUNC> &base() { return base_; }
     /** Evaluates at point x, all base functions and returns the result in
         t(nb_base,target_dim) */
     void base_value(const base_node &x, base_tensor &t) const {
@@ -654,7 +654,7 @@ namespace getfem {
       precomps.insert(p);
       return p;
     }
-    void clear(void);
+    void clear();
     ~fem_precomp_pool() { clear(); }
   };
 
@@ -706,7 +706,7 @@ namespace getfem {
     pfem_precomp pfp() const { return pfp_; }
     void set_pfp(pfem_precomp newpfp);
     void set_pf(pfem newpf);
-    int xfem_side(void) const { return xfem_side_; }
+    int xfem_side() const { return xfem_side_; }
     void set_xfem_side(int side) { xfem_side_ = side; }
     fem_interpolation_context();
     fem_interpolation_context(bgeot::pgeotrans_precomp pgp__,

@@ -173,7 +173,7 @@ static bool dal_static_stored_tab_valid__ = true;
   bool exists_stored_object(pstatic_stored_object o) 
   {
     stored_object_tab::stored_key_tab& stored_keys 
-       = dal::singleton<stored_object_tab>::instance().stored_keys_;
+      = dal::singleton<stored_object_tab>::instance().stored_keys_;
     if (dal_static_stored_tab_valid__) {
       return  (stored_keys.find(o) != stored_keys.end());
     }
@@ -337,14 +337,14 @@ static bool dal_static_stored_tab_valid__ = true;
   }
   
   void del_stored_objects(std::list<pstatic_stored_object> &to_delete,
-    bool ignore_unstored) 
+                          bool ignore_unstored) 
   {
-      getfem::omp_guard lock;
-      GMM_NOPERATION(lock);
-      // stored_object_tab& stored_objects
-      //   = dal::singleton<stored_object_tab>::instance();
+    getfem::omp_guard lock;
+    GMM_NOPERATION(lock);
+    // stored_object_tab& stored_objects
+    //   = dal::singleton<stored_object_tab>::instance();
 
-      if (dal_static_stored_tab_valid__) {
+    if (dal_static_stored_tab_valid__) {
 
       std::list<pstatic_stored_object>::iterator it, itnext;
 
@@ -448,17 +448,14 @@ static bool dal_static_stored_tab_valid__ = true;
     for(size_t thread=0; thread<getfem::num_threads();thread++)
     {
       stored_object_tab::stored_key_tab& stored_keys 
-      = dal::singleton<stored_object_tab>::instance(thread).stored_keys_;
+        = dal::singleton<stored_object_tab>::instance(thread).stored_keys_;
       if (!dal_static_stored_tab_valid__) continue;
       if (stored_keys.begin() == stored_keys.end())
         ost << "No static stored objects" << endl;
       else ost << "Static stored objects" << endl;
-      for (stored_object_tab::stored_key_tab::iterator it = stored_keys.begin();
-        it != stored_keys.end(); ++it) 
-      {
-          ost << "Object: " << it->first << " typename: "
-            << typeid(*it->first).name() << endl;
-      }
+      for (const auto &t : stored_keys) 
+        ost << "Object: " << t.first << " typename: "
+            << typeid(*(t.first)).name() << endl;
     }
   }
 
@@ -489,8 +486,8 @@ static bool dal_static_stored_tab_valid__ = true;
   stored_object_tab::~stored_object_tab()
   { dal_static_stored_tab_valid__ = false; }
 
-  pstatic_stored_object stored_object_tab::
-    search_stored_object(pstatic_stored_object_key k) const
+  pstatic_stored_object
+  stored_object_tab::search_stored_object(pstatic_stored_object_key k) const
   {
    getfem::local_guard guard = locks_.get_lock();
    stored_object_tab::const_iterator it=find(enr_static_stored_object_key(k));
@@ -578,7 +575,7 @@ static bool dal_static_stored_tab_valid__ = true;
   bool stored_object_tab::has_dependent_objects(pstatic_stored_object o) const
   {
     getfem::local_guard guard = locks_.get_lock();
-     stored_key_tab::const_iterator it = stored_keys_.find(o);
+    stored_key_tab::const_iterator it = stored_keys_.find(o);
     GMM_ASSERT1(it != stored_keys_.end(), "Object is not stored");
     const_iterator ito = find(it->second);
     GMM_ASSERT1(ito != end(), "Object has a key, but cannot be found");

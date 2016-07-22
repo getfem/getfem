@@ -479,7 +479,7 @@ namespace getfem {
       test_function_type = 0;
     }
 
-    ga_tree_node(void)
+    ga_tree_node()
       : node_type(GA_NODE_VOID), test_function_type(-1),
         qdim1(0), qdim2(0), nbc1(0), nbc2(0), nbc3(0),
         pos(0), der1(0), der2(0), symmetric_op(false), hash_value(0) {}
@@ -781,7 +781,7 @@ namespace getfem {
     void swap(ga_tree &tree)
     { std::swap(root, tree.root); std::swap(current_node, tree.current_node); }
 
-    ga_tree(void) : root(0), current_node(0) {}
+    ga_tree() : root(0), current_node(0) {}
 
     ga_tree(const ga_tree &tree) : root(0), current_node(0)
     { if (tree.root) copy_node(tree.root, 0, root); }
@@ -1931,8 +1931,8 @@ namespace getfem {
     std::map<gauss_pt_corresp, bgeot::pstored_point_tab> neighbour_corresp;
 
     struct region_mim : std::pair<const mesh_im *, const mesh_region *> {
-      const mesh_im* mim(void) const { return this->first; }
-      const mesh_region* region(void) const { return this->second; }
+      const mesh_im* mim() const { return this->first; }
+      const mesh_region* region() const { return this->second; }
       region_mim(const mesh_im *mim_, const mesh_region *region_) :
         std::pair<const mesh_im *, const mesh_region *>(mim_, region_) {}
     };
@@ -1948,7 +1948,7 @@ namespace getfem {
       scalar_type alpha;
       const base_vector *U;
       const std::string *varname;
-      variable_group_info(void) : mf(0), U(0), varname(0) {}
+      variable_group_info() : mf(0), U(0), varname(0) {}
     };
 
     struct interpolate_info {
@@ -2732,7 +2732,7 @@ namespace getfem {
     ga_instruction_update_pfp(const mesh_fem &mf_, pfem_precomp &pfp_,
                               const fem_interpolation_context &ctx_,
                               fem_precomp_pool &fp_pool_)
-      : mf(mf_), ctx(ctx_) , fp_pool(fp_pool_), pfp(pfp_) {}
+      : mf(mf_), ctx(ctx_), fp_pool(fp_pool_), pfp(pfp_) {}
   };
 
   struct ga_instruction_first_ind_tensor : public ga_instruction {
@@ -2789,8 +2789,8 @@ namespace getfem {
     }
 
     ga_instruction_second_ind_tensor(base_tensor &t_, fem_interpolation_context &ctx_,
-                                    size_type qdim_, const mesh_fem *mfn_,
-                                    const mesh_fem **mfg_)
+                                     size_type qdim_, const mesh_fem *mfn_,
+                                     const mesh_fem **mfg_)
    : ga_instruction_first_ind_tensor(t_, ctx_, qdim_, mfn_, mfg_)
    {}
 ;
@@ -3007,7 +3007,7 @@ namespace getfem {
     }
 
     ga_instruction_xfem_minus_val_base(base_tensor &tt, fem_interpolation_context &ct,
-                            const mesh_fem &mf_, pfem_precomp &pfp_)
+                                       const mesh_fem &mf_, pfem_precomp &pfp_)
       : t(tt), ctx(ct), mf(mf_), pfp(pfp_) {}
   };
 
@@ -3023,8 +3023,8 @@ namespace getfem {
     }
 
     ga_instruction_grad_base(base_tensor &tt, fem_interpolation_context &ct,
-                            const mesh_fem &mf_, pfem_precomp &pfp_)
-    : ga_instruction_val_base(tt, ct, mf_,pfp_)
+                             const mesh_fem &mf_, pfem_precomp &pfp_)
+    : ga_instruction_val_base(tt, ct, mf_, pfp_)
     {}
   };
 
@@ -3043,8 +3043,8 @@ namespace getfem {
     }
 
     ga_instruction_xfem_plus_grad_base(base_tensor &tt, fem_interpolation_context &ct,
-                            const mesh_fem &mf_, pfem_precomp &pfp_)
-    : ga_instruction_val_base(tt, ct, mf_,pfp_)
+                                       const mesh_fem &mf_, pfem_precomp &pfp_)
+    : ga_instruction_val_base(tt, ct, mf_, pfp_)
     {}
   };
 
@@ -3063,8 +3063,8 @@ namespace getfem {
     }
 
     ga_instruction_xfem_minus_grad_base(base_tensor &tt, fem_interpolation_context &ct,
-                            const mesh_fem &mf_, pfem_precomp &pfp_)
-    : ga_instruction_val_base(tt, ct, mf_,pfp_)
+                                        const mesh_fem &mf_, pfem_precomp &pfp_)
+    : ga_instruction_val_base(tt, ct, mf_, pfp_)
     {}
   };
 
@@ -3081,7 +3081,7 @@ namespace getfem {
     }
 
     ga_instruction_hess_base(base_tensor &tt, fem_interpolation_context &ct,
-                            const mesh_fem &mf_, pfem_precomp &pfp_)
+                             const mesh_fem &mf_, pfem_precomp &pfp_)
     : ga_instruction_val_base(tt, ct, mf_, pfp_)
     {}
   };
@@ -3101,7 +3101,7 @@ namespace getfem {
     }
 
     ga_instruction_xfem_plus_hess_base(base_tensor &tt, fem_interpolation_context &ct,
-                            const mesh_fem &mf_, pfem_precomp &pfp_)
+                                       const mesh_fem &mf_, pfem_precomp &pfp_)
     : ga_instruction_val_base(tt, ct, mf_, pfp_)
     {}
   };
@@ -3121,7 +3121,7 @@ namespace getfem {
     }
 
     ga_instruction_xfem_minus_hess_base(base_tensor &tt, fem_interpolation_context &ct,
-                            const mesh_fem &mf_, pfem_precomp &pfp_)
+                                        const mesh_fem &mf_, pfem_precomp &pfp_)
     : ga_instruction_val_base(tt, ct, mf_, pfp_)
     {}
   };
@@ -3184,7 +3184,7 @@ namespace getfem {
     }
 
     ga_instruction_grad(base_tensor &tt, const base_tensor &Z_,
-                       const base_vector &co, size_type q)
+                        const base_vector &co, size_type q)
     : ga_instruction_val(tt, Z_, co, q)
     {}
 
@@ -3217,7 +3217,7 @@ namespace getfem {
     }
 
     ga_instruction_hess(base_tensor &tt, const base_tensor &Z_,
-                       const base_vector &co, size_type q)
+                        const base_vector &co, size_type q)
     : ga_instruction_val(tt, Z_, co, q)
     {}
   };
@@ -5897,7 +5897,7 @@ namespace getfem {
     }
   }
 
-  size_type ga_workspace::nb_trees(void) const { return trees.size(); }
+  size_type ga_workspace::nb_trees() const { return trees.size(); }
 
   ga_workspace::tree_description &ga_workspace::tree_info(size_type i)
   { return trees[i]; }
@@ -5987,7 +5987,7 @@ namespace getfem {
   }
 
   void ga_workspace::define_variable_group(const std::string &group_name,
-                                         const std::vector<std::string> &nl) {
+                                           const std::vector<std::string> &nl) {
     GMM_ASSERT1(!(variable_exists(group_name)), "The name of a group of "
                 "variables cannot be the same as a variable name");
 
@@ -8437,7 +8437,7 @@ namespace getfem {
 
   static std::string ga_extract_one_Neumann_term
   (const std::string &varname,
-    ga_workspace &workspace, pga_tree_node pnode) {
+   ga_workspace &workspace, pga_tree_node pnode) {
 
     size_type N = workspace.qdim(varname);
     const mesh_fem *mf = workspace.associated_mf(varname);
@@ -9763,7 +9763,7 @@ namespace getfem {
             rmi.pfps[mf] = 0;
             rmi.pfps_hierarchy[mf].push_back(if_hierarchy);
             pgai = std::make_shared<ga_instruction_update_pfp>
-              (*mf,  rmi.pfps[mf], gis.ctx, gis.fp_pool);
+              (*mf, rmi.pfps[mf], gis.ctx, gis.fp_pool);
             rmi.instructions.push_back(std::move(pgai));
           }
 
@@ -10034,7 +10034,7 @@ namespace getfem {
             rmi.pfps[mf] = 0;
             rmi.pfps_hierarchy[mf].push_back(if_hierarchy);
             pgai = std::make_shared<ga_instruction_update_pfp>
-              (*mf,  rmi.pfps[mf], gis.ctx, gis.fp_pool);
+              (*mf, rmi.pfps[mf], gis.ctx, gis.fp_pool);
             rmi.instructions.push_back(std::move(pgai));
           }
 
@@ -10102,7 +10102,7 @@ namespace getfem {
             break;
           case GA_NODE_XFEM_PLUS_HESS_TEST:
             if (rmi.xfem_plus_hess.find(mf) == rmi.xfem_plus_hess.end() ||
-             !(if_hierarchy.is_compatible(rmi.xfem_plus_hess_hierarchy[mf]))) {
+                !(if_hierarchy.is_compatible(rmi.xfem_plus_hess_hierarchy[mf]))) {
               rmi.xfem_plus_hess_hierarchy[mf].push_back(if_hierarchy);
               pgai = std::make_shared<ga_instruction_xfem_plus_hess_base>
                 (rmi.xfem_plus_hess[mf], gis.ctx, *mf, rmi.pfps[mf]);
