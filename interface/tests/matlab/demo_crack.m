@@ -1,4 +1,4 @@
-% Copyright (C) 2009-2015 Luis Saavedra, Yves Renard.
+% Copyright (C) 2009-2016 Luis Saavedra, Yves Renard.
 %
 % This file is a part of GetFEM++
 %

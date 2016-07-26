@@ -1,4 +1,4 @@
-% Copyright (C) 2015-2015 FABRE Mathieu, SECK Mamadou, DALLERIT Valentin,
+% Copyright (C) 2015-2016 FABRE Mathieu, SECK Mamadou, DALLERIT Valentin,
 %
 % This file is a part of GetFEM++
 %

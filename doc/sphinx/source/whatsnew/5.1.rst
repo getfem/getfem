@@ -1,0 +1,31 @@
+.. include:: ../replaces.txt
+
+************************
+  What's New in |gf| 5.1
+************************
+
+This release consists mainly in continue to improve the high-level generic assembly langage, continue the brick adaptation and development. Some small incompatibilites are due to the replacement of simple pointers by smart pointers ones.
+
+Released version, 2016/07/28.
+
+The main changes are:
+
+   * Extensive use of std::shared_ptr and std::unique_ptr in |gf| : almost all new and delete occurences have been suppressed. Some small incompatibilities in the C++ code : most of simple pointers have been replaced by smart ones.
+
+   * Simplification of the python/matlab/scilab interface concerning the object
+     management.
+
+   * Evolution of the small strain plasticity bricks.
+
+   * Large strain plasticity bricks (Simo-Miehe model).
+
+   * Redesign of the dof enumeration algorithm: a local sort instead of a global one (but it still remains to be parallelized !)
+     
+   * Addition of a local projection generic function on discontinuous fems.
+
+   * Addition of a specific transformation allowing inter-element computation in the high-level generic assembly langage (in order to compute inter-element jump of any quantity, average value, error estimator, ...)
+
+   * Addition of a specific tool (Xfem_plus, Xfem_minus) in the high-level generic assembly langage in order to have access to the jump across an interface when using ficitious domain tools.
+
+
+

@@ -1,6 +1,6 @@
 /*===========================================================================
 
- Copyright (C) 2002-2015 Jean-Yves Heddebaut.
+ Copyright (C) 2002-2016 Jean-Yves Heddebaut.
 
  This file is a part of GetFEM++
 

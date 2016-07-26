@@ -1,6 +1,6 @@
 /*===========================================================================
 
- Copyright (C) 2000-2015 Julien Pommier
+ Copyright (C) 2000-2016 Julien Pommier
 
  This file is a part of GetFEM++
 
@@ -1257,14 +1257,14 @@ namespace getfem {
       m.clear();
       throw exc;
     }
-    catch (std::runtime_error& exc) {
-      m.clear();
-      throw exc;
-    }
     catch (std::ios_base::failure& exc) {
       m.clear();
       GMM_ASSERT1(false, "error while importing " << format
                   << " mesh file \"" << filename << "\" : " << exc.what());
+    }
+    catch (std::runtime_error& exc) {
+      m.clear();
+      throw exc;
     }
   }
 
@@ -1312,14 +1312,14 @@ namespace getfem {
       m.clear();
       throw exc;
     }
-    catch (std::runtime_error& exc) {
-      m.clear();
-      throw exc;
-    }
     catch (std::ios_base::failure& exc) {
       m.clear();
       GMM_ASSERT1(false, "error while importing " << "gmsh"
                   << " mesh file \"" << filename << "\" : " << exc.what());
+    }
+    catch (std::runtime_error& exc) {
+      m.clear();
+      throw exc;
     }
   }
 

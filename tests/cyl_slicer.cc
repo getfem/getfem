@@ -1,6 +1,6 @@
 /*===========================================================================
 
- Copyright (C) 2010-2015 Roman Putanowicz.
+ Copyright (C) 2010-2016 Roman Putanowicz.
 
  This file is a part of GetFEM++
 

@@ -17,8 +17,6 @@
 # Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 
 
-use Switch;
-
 sub clean_line {
   $_[0] =~ s/\/\*//g;
   $_[0] =~ s/\/\///g;
@@ -187,15 +185,21 @@ sub process_file  {
 
   }
 
-  switch ($license) {
-    case(0) { print "No copyright detected.\n"; }
-    case(1) { print "Copyright detected: LGPL\n"; }
-    case(2) { print "Copyright detected: LGPL with special exception\n"; }
-    case(3) { print "Copyright detected: Boost\n"; }
-    case(4) { print "Copyright detected: Xerox\n"; }
-    case(5) { print "Copyright detected: special license from Meschach Library\n"; }
-    else { print "Unknown license detected:\n"; }
-  }
+  if ($license == 0)
+  { print "No copyright detected.\n"; }
+  elsif ($license == 1)
+  { print "Copyright detected: LGPL\n"; }
+  elsif ($license == 2)
+  { print "Copyright detected: LGPL with special exception\n"; }
+  elsif ($license == 3)
+  { print "Copyright detected: Boost\n"; }
+  elsif ($license == 4)
+  { print "Copyright detected: Xerox\n"; }
+  elsif ($license == 5)
+  { print "Copyright detected: special license from Meschach Library\n"; }
+  else
+  { print "Unknown license detected:\n"; }
+
   @toyear2 = ();
   for my $i (0 .. $#year2) {
     $toyear2[$i]="     ";
@@ -226,7 +230,7 @@ sub process_file  {
 
   }
 
-  if (($option == 2 || $option == 4 || ($option == 1 && $year2 != $year)) && $license < 3) {
+  if (($option == 2 || $option == 4 || ($option == 1 && $year2[0] != $year)) && $license < 3) {
 
     if ($license == 0) {
       print "Copyright notice has to be added : adding LGPL License ?\n";
@@ -234,7 +238,7 @@ sub process_file  {
       print "Copyright notice has to be updated\n";
     }
 
-    if ($option == 4) {
+    if ($option == 4 || $option == 2) {
       $ans = "y";
     } else {
       print "Perform the modification ? (Y/[N]) ";
@@ -244,7 +248,8 @@ sub process_file  {
       print "Updating license\n\n";
 
       if ($option != 4) {
-        for my $i (0 .. $#year2) { $year2[$i]=$year; }
+	$year2[0]=$year; $toyear2[0]=-$year;
+        for my $i (1 .. $#year2) { $year2[$i]=$year; }
       }
       $enablecpp = "/* -*- c++ -*- (enables emacs c++ mode) */\n";
 
@@ -269,7 +274,7 @@ sub process_file  {
       close(FILE);
 #      `touch $name.newhead -r $name`; # keep original timestamp
       `mv -f $name.newhead $name`;
-
+      
     }
   } else { print"\n"; }
   close(FILE);

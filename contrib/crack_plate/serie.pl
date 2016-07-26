@@ -1,4 +1,4 @@
-# Copyright (C) 2001-2015 Jeremie Lasry
+# Copyright (C) 2001-2016 Jeremie Lasry
 #
 # This file is a part of GetFEM++
 #

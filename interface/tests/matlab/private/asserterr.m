@@ -1,4 +1,4 @@
-% Copyright (C) 2003-2015 Julien Pommier.
+% Copyright (C) 2003-2016 Julien Pommier.
 %
 % This file is a part of GetFEM++
 %

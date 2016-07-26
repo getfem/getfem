@@ -1,6 +1,6 @@
 /*===========================================================================
 
- Copyright (C) 2002-2015 Vanessa Lleras, Yves Renard.
+ Copyright (C) 2002-2016 Vanessa Lleras, Yves Renard.
 
  This file is a part of GetFEM++
 
