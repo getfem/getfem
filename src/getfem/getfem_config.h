@@ -307,8 +307,8 @@ namespace getfem {
           }
         }
 
-        for (int j = 0; j < int(contributors.size()); ++j) {
-          if (column_master == rk) { // receive a column and store
+	if (column_master == rk) { // receive a column and store
+	  for (int j = 0; j < int(contributors.size()); ++j) {
             typename gmm::rsvector<T>::base_type_ &VV = V;
             int si = all_nnz(i, contributors[j]);
             VV.resize(si);
@@ -317,15 +317,15 @@ namespace getfem {
                      MPI_BYTE, contributors[j], 0,
                      MPI_COMM_WORLD, MPI_STATUS_IGNORE);
             gmm::add(V, gmm::mat_col(MM, i));
-          } else { // send the column to the column master
-            typename gmm::rsvector<T>::base_type_ &VV = MM.col(i);
-            MPI_Send((void *)(&(VV[0])),
-                     my_nnz[i]*sizeof(gmm::elt_rsvector_<T>),
-                     MPI_BYTE, column_master, 0,
-                     MPI_COMM_WORLD);
-            MM.col(i).clear();
           }
-        }
+	} else { // send the column to the column master
+	  typename gmm::rsvector<T>::base_type_ &VV = MM.col(i);
+	  MPI_Send((void *)(&(VV[0])),
+		   my_nnz[i]*sizeof(gmm::elt_rsvector_<T>),
+		   MPI_BYTE, column_master, 0,
+		   MPI_COMM_WORLD);
+	  MM.col(i).clear();
+	}
       }
     }
 
