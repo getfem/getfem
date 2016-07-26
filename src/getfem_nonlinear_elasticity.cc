@@ -643,7 +643,7 @@ namespace getfem {
                             (lambda/2 * log(ci.i3()) - mu) / ci.i3()), result);
     else
        gmm::add(gmm::scaled(ci.grad_i3(),
-                            lambda/4 - lambda/(4*ci.i3()) - mu / ci.i3()), result);
+                            lambda/2 - lambda/(2*ci.i3()) - mu / ci.i3()), result);
     
     if (det_trans <= scalar_type(0))
       gmm::add(gmm::scaled(C, 1e200), result);
@@ -672,9 +672,9 @@ namespace getfem {
       coeff = (lambda + 2 * mu - lambda * logi3) / gmm::sqr(ci.i3());
     } else {
       gmm::copy(gmm::scaled(ci.sym_grad_grad_i3().as_vector(),
-                            lambda / 2  - (lambda / 2 + 2 * mu) / ci.i3()),
+                            lambda  - (lambda + 2 * mu) / ci.i3()),
                 result.as_vector());
-      coeff = (lambda / 2 + 2 * mu) / gmm::sqr(ci.i3());
+      coeff = (lambda + 2 * mu) / gmm::sqr(ci.i3());
     }
 
     const base_matrix &di = ci.grad_i3();
