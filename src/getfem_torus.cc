@@ -372,7 +372,7 @@ namespace getfem
     getfem::pfem pfem_torus = std::make_shared<torus_fem>(pf);
     dal::pstatic_stored_object_key
       pk = std::make_shared<torus_fem_key>(key_count);
-    dal::add_stored_object(pk, pfem_torus);
+    dal::add_stored_object(pk, pfem_torus, pfem_torus->node_tab(0));
     return pfem_torus;
   }
 

@@ -11337,6 +11337,7 @@ namespace getfem {
     std::vector<int> dof_count;
     const mesh_fem &mf;
     bool initialized;
+    bool is_torus;
     size_type s;
 
     virtual bgeot::pstored_point_tab
@@ -11372,7 +11373,22 @@ namespace getfem {
       initialized = true;
     }
 
+    void store_result_for_torus(size_type cv, size_type i, base_tensor &t) {
+      size_type target_dim = mf.fem_of_element(cv)->target_dim();
+      GMM_ASSERT2(target_dim == 3, "Invalid torus fem.");
+      size_type qdim = 1;
+      size_type result_dim = 2;
+      if (!initialized) {init_(qdim, qdim, qdim);}
+      size_type idof = mf.ind_basic_dof_of_element(cv)[i];
+      result[idof] = t[idof%result_dim];
+      ++dof_count[idof];
+    }
+
     virtual void store_result(size_type cv, size_type i, base_tensor &t) {
+      if (is_torus){
+        store_result_for_torus(cv, i, t);
+        return;
+      }
       size_type si = t.size();
       size_type q = mf.get_qdim();
       size_type qmult = si / q;
@@ -11417,9 +11433,10 @@ namespace getfem {
     virtual const mesh &linked_mesh(void) { return mf.linked_mesh(); }
 
     ga_interpolation_context_fem_same_mesh(const mesh_fem &mf_, base_vector &r)
-      : result(r), mf(mf_), initialized(false) {
+      : result(r), mf(mf_), initialized(false), is_torus(false) {
       GMM_ASSERT1(!(mf.is_reduced()),
                   "Interpolation on reduced fem is not allowed");
+      if (dynamic_cast<const torus_mesh_fem*>(&mf)) is_torus = true;
     }
   };
 
