@@ -414,6 +414,15 @@ namespace getfem
 
   torus_mesh::torus_mesh(std::string name) : mesh(std::move(name)){}
 
+  scalar_type torus_mesh::convex_radius_estimate(size_type ic) const
+  {
+    base_matrix G;
+    bgeot::vectors_to_base_matrix(G, points_of_convex(ic));
+    G.resize(2, G.ncols());
+    auto pgt_torus = std::dynamic_pointer_cast<const bgeot::torus_geom_trans>(trans_of_convex(ic));
+    getfem::convex_radius_estimate(pgt_torus->get_original_transformation(), G);
+  }
+
   void torus_mesh::adapt(const getfem::mesh &original_mesh){
     clear();
     GMM_ASSERT1(original_mesh.dim() == 2, "Adapting torus feature must be a 2d mesh");

@@ -122,6 +122,8 @@ namespace getfem
     
   public:
     torus_mesh(std::string name = std::string());
+    virtual scalar_type convex_radius_estimate(size_type ic) const;
+
     void adapt();
     void adapt(const getfem::mesh &original_mesh);
   };

@@ -417,7 +417,7 @@ namespace getfem {
     */
     scalar_type convex_area_estimate(size_type ic, size_type degree=2) const;
     /** Return an estimate of the convex largest dimension. @see getfem::convex_quality_estimate */
-    scalar_type convex_radius_estimate(size_type ic) const;
+    virtual scalar_type convex_radius_estimate(size_type ic) const;
     /** Return an estimate of the convex smallest dimension. @see getfem::convex_radius_estimate */
     scalar_type minimal_convex_radius_estimate() const;
     /** Return an estimate of the convex largest dimension. @see getfem::convex_radius_estimate */
