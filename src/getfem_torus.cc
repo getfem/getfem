@@ -420,7 +420,8 @@ namespace getfem
     bgeot::vectors_to_base_matrix(G, points_of_convex(ic));
     G.resize(2, G.ncols());
     auto pgt_torus = std::dynamic_pointer_cast<const bgeot::torus_geom_trans>(trans_of_convex(ic));
-    getfem::convex_radius_estimate(pgt_torus->get_original_transformation(), G);
+    GMM_ASSERT2(pgt_torus, "Internal error, convex is not a torus transformation.");
+    return getfem::convex_radius_estimate(pgt_torus->get_original_transformation(), G);
   }
 
   void torus_mesh::adapt(const getfem::mesh &original_mesh){
