@@ -3193,7 +3193,8 @@ namespace getfem {
       size_type target_dim = Z.sizes()[1];
       size_type N = size_type(round(sqrt(scalar_type(Z.sizes()[2]))));
       size_type Qmult = qdim / target_dim;
-      GA_DEBUG_ASSERT((qdim == 1 && t.sizes()[0] == N && t.sizes()[1] == N) ||
+      GA_DEBUG_ASSERT((qdim == 1 && N == 1 && t.sizes()[0] == 1) ||
+                      (qdim == 1 && t.sizes()[0] == N && t.sizes()[1] == N) ||
                       (t.sizes()[1] == N && t.sizes()[2] == N
                        && t.sizes()[0] == qdim), "dimensions mismatch");
       GA_DEBUG_ASSERT(gmm::vect_size(coeff) == ndof*Qmult,
