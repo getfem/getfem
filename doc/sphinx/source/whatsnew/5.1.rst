@@ -27,5 +27,7 @@ The main changes are:
 
    * Addition of a specific tool (Xfem_plus, Xfem_minus) in the high-level generic assembly langage in order to have access to the jump across an interface when using ficitious domain tools.
 
+   * Extension and partial re-writing of the support for global functions as fem basis functions. Now, storing precomputation of values, gradients and hessians is possible also for global basis functions.
+
 
 
