@@ -269,35 +269,32 @@ namespace getfem {
         ga_init_matrix(sizes, args[0]->sizes()[0], args[0]->sizes()[1]);
       return true;
     }
-    
+
     // Value : u/|u|
-#   if 1
     void value(const arg_list &args, base_tensor &result) const {
+#   if 1
       const base_tensor &t = *args[0];
       scalar_type eps = 1E-25;
       scalar_type no = ::sqrt(gmm::vect_norm2_sqr(t.as_vector())+gmm::sqr(eps));
       gmm::copy(gmm::scaled(t.as_vector(), scalar_type(1)/no),
                 result.as_vector());
-    }
 #   else
-    void value(const arg_list &args, base_tensor &result) const {
       scalar_type no = gmm::vect_norm2(args[0]->as_vector());
       if (no < 1E-15)
         gmm::clear(result.as_vector());
       else
         gmm::copy(gmm::scaled(args[0]->as_vector(), scalar_type(1)/no),
                   result.as_vector());
-    }
 #   endif
+    }
 
     // Derivative : (|u|^2 Id - u x u)/|u|^3
-#   if 1
     void derivative(const arg_list &args, size_type,
                     base_tensor &result) const {
       const base_tensor &t = *args[0];
-      scalar_type eps = 1E-25;
-
       size_type N = t.size();
+#   if 1
+      scalar_type eps = 1E-25;
       scalar_type no = ::sqrt(gmm::vect_norm2_sqr(t.as_vector())+gmm::sqr(eps));
       scalar_type no3 = no*no*no;
 
@@ -306,12 +303,7 @@ namespace getfem {
         for (size_type j = 0; j < N; ++j)
           result[j*N+i] -= t[i]*t[j] / no3;
       }
-    }
 #   else
-    void derivative(const arg_list &args, size_type,
-                    base_tensor &result) const {
-      const base_tensor &t = *args[0];
-      size_type N = t.size();
       scalar_type no = gmm::vect_norm2(t.as_vector());
 
       gmm::clear(result.as_vector());
@@ -323,8 +315,8 @@ namespace getfem {
             result[j*N+i] -= t[i]*t[j] / no3;
         }
       }
-    }
 #   endif
+    }
 
     // Second derivative : not implemented
     void second_derivative(const arg_list &/*args*/, size_type, size_type,
@@ -345,7 +337,7 @@ namespace getfem {
         ga_init_matrix(sizes, args[0]->sizes()[0], args[0]->sizes()[1]);
       return true;
     }
-    
+
     // Value : u/(sqrt([u|^2+\eps^2))
     void value(const arg_list &args, base_tensor &result) const {
       const base_tensor &t = *args[0];
@@ -418,7 +410,7 @@ namespace getfem {
       for (size_type i = 0; i < N; ++i) tau_D(i,i) -= tau_m;
 
       scalar_type norm_tau_D = gmm::mat_euclidean_norm(tau_D);
-      
+
       if (norm_tau_D > s) gmm::scale(tau_D, s / norm_tau_D);
 
       for (size_type i = 0; i < N; ++i) tau_D(i,i) += tau_m;
@@ -442,7 +434,7 @@ namespace getfem {
         gmm::scale(tau_D, scalar_type(1)/norm_tau_D);
 
       switch(nder) {
-      case 1: 
+      case 1:
         if (norm_tau_D <= s) {
           gmm::clear(result.as_vector());
           for (size_type i = 0; i < N; ++i)
@@ -512,20 +504,12 @@ namespace getfem {
   // Assembly strings for isotropic perfect elastoplasticity with Von-Mises
   // criterion (Prandtl-Reuss model). With the use of a plastic multiplier
   void build_isotropic_perfect_elastoplasticity_expressions_mult
-  (model &md, const std::vector<std::string> &varnames,
-   const std::vector<std::string> &params,  const std::string &theta,
-   const std::string &dt,
+  (model &md, const std::string &dispname, const std::string &xi,
+   const std::string &Previous_Ep, const std::string &lambda,
+   const std::string &mu, const std::string &sigma_y,
+   const std::string &theta, const std::string &dt,
    std::string &sigma_np1, std::string &Epnp1, std::string &compcond,
    std::string &sigma_after, std::string &von_mises) {
-    
-    GMM_ASSERT1(varnames.size() == 3, "Incorrect number of variables");
-    GMM_ASSERT1(params.size() == 3, "Incorrect number of parameters");
-    const std::string &dispname = sup_previous_and_dot_to_varname(varnames[0]);
-    const std::string &xi       = sup_previous_and_dot_to_varname(varnames[1]);
-    const std::string &Previous_Ep = varnames[2];
-    const std::string &lambda      = params[0];
-    const std::string &mu          = params[1];
-    const std::string &sigma_y     = params[2];
 
     const mesh_fem *mfu = md.pmesh_fem_of_variable(dispname);
     size_type N = mfu->linked_mesh().dim();
@@ -535,7 +519,7 @@ namespace getfem {
 
     GMM_ASSERT1(!(md.is_data(xi)) && md.pmesh_fem_of_variable(xi),
                 "The provided name '" << xi << "' for the plastic multiplier, "
-		"should be defined as a fem variable");
+                "should be defined as a fem variable");
 
     GMM_ASSERT1(md.is_data(Previous_Ep) &&
                 (md.pim_data_of_variable(Previous_Ep) ||
@@ -551,7 +535,7 @@ namespace getfem {
                 (md.pmesh_fem_of_variable(Previous_Ep) &&
                  md.pmesh_fem_of_variable(Previous_Ep)->get_qdims() == Ep_size),
                 "Wrong size of " << Previous_Ep);
-    
+
     std::map<std::string, std::string> dict;
     dict["Grad_u"] = "Grad_"+dispname; dict["xi"] = xi;
     dict["Previous_xi"] = "Previous_"+xi;
@@ -584,19 +568,12 @@ namespace getfem {
   // Assembly strings for isotropic perfect elastoplasticity with Von-Mises
   // criterion (Prandtl-Reuss model). Without the use of a plastic multiplier
   void build_isotropic_perfect_elastoplasticity_expressions_no_mult
-  (model &md, const std::vector<std::string> &varnames,
-   const std::vector<std::string> &params, const std::string &theta,
-   const std::string &dt, std::string &sigma_np1, std::string &Epnp1,
-   std::string &xi_np1, std::string &sigma_after, std::string &von_mises) {
-    
-    GMM_ASSERT1(varnames.size() == 3, "Incorrect number of variables");
-    GMM_ASSERT1(params.size() == 3, "Incorrect number of parameters");
-    const std::string &dispname = sup_previous_and_dot_to_varname(varnames[0]);
-    const std::string &xi       = sup_previous_and_dot_to_varname(varnames[1]);
-    const std::string &Previous_Ep = varnames[2];
-    const std::string &lambda      = params[0];
-    const std::string &mu          = params[1];
-    const std::string &sigma_y     = params[2];
+  (model &md, const std::string &dispname, const std::string &xi,
+   const std::string &Previous_Ep, const std::string &lambda,
+   const std::string &mu, const std::string &sigma_y,
+   const std::string &theta, const std::string &dt,
+   std::string &sigma_np1, std::string &Epnp1, std::string &xi_np1,
+   std::string &sigma_after, std::string &von_mises) {
 
     const mesh_fem *mfu = md.pmesh_fem_of_variable(dispname);
     size_type N = mfu->linked_mesh().dim();
@@ -608,7 +585,7 @@ namespace getfem {
                 (md.pim_data_of_variable(xi) ||
                  md.pmesh_fem_of_variable(xi)),
                 "The provided name '" << xi << "' for the plastic multiplier, "
-		"should be defined either as fem data or as im data");
+                "should be defined either as fem data or as im data");
 
     GMM_ASSERT1(md.is_data(Previous_Ep) &&
                 (md.pim_data_of_variable(Previous_Ep) ||
@@ -624,7 +601,7 @@ namespace getfem {
                 (md.pmesh_fem_of_variable(Previous_Ep) &&
                  md.pmesh_fem_of_variable(Previous_Ep)->get_qdims() == Ep_size),
                 "Wrong size of " << Previous_Ep);
-    
+
     std::map<std::string, std::string> dict;
     dict["Grad_u"] = "Grad_"+dispname; dict["xi"] = xi;
     dict["Previous_xi"] = "Previous_"+xi;
@@ -634,7 +611,7 @@ namespace getfem {
 
     dict["Enp1"] = ga_substitute("Sym(Grad_u)", dict);
     dict["En"] = ga_substitute("Sym(Grad_Previous_u)", dict) ;
-   
+
 
     dict["zetan"] = ga_substitute
       ("(Epn)+(1-(theta))*(2*(mu)*(dt)*(Previous_xi))*(Deviator(En)-(Epn))",
@@ -659,20 +636,12 @@ namespace getfem {
   // criterion (Prandtl-Reuss model). With the use of a plastic multiplier
   // and plane strain version.
   void build_isotropic_perfect_elastoplasticity_expressions_mult_ps
-  (model &md, const std::vector<std::string> &varnames,
-   const std::vector<std::string> &params,  const std::string &theta,
-   const std::string &dt,
+  (model &md, const std::string &dispname, const std::string &xi,
+   const std::string &Previous_Ep, const std::string &lambda,
+   const std::string &mu, const std::string &sigma_y,
+   const std::string &theta, const std::string &dt,
    std::string &sigma_np1, std::string &Epnp1, std::string &compcond,
    std::string &sigma_after, std::string &von_mises) {
-    
-    GMM_ASSERT1(varnames.size() == 3, "Incorrect number of variables");
-    GMM_ASSERT1(params.size() == 3, "Incorrect number of parameters");
-    const std::string &dispname = sup_previous_and_dot_to_varname(varnames[0]);
-    const std::string &xi       = sup_previous_and_dot_to_varname(varnames[1]);
-    const std::string &Previous_Ep = varnames[2];
-    const std::string &lambda      = params[0];
-    const std::string &mu          = params[1];
-    const std::string &sigma_y     = params[2];
 
     const mesh_fem *mfu = md.pmesh_fem_of_variable(dispname);
     size_type N = mfu->linked_mesh().dim();
@@ -684,7 +653,7 @@ namespace getfem {
 
     GMM_ASSERT1(!(md.is_data(xi)) && md.pmesh_fem_of_variable(xi),
                 "The provided name '" << xi << "' for the plastic multiplier, "
-		"should be defined as a fem variable");
+                "should be defined as a fem variable");
 
     GMM_ASSERT1(md.is_data(Previous_Ep) &&
                 (md.pim_data_of_variable(Previous_Ep) ||
@@ -700,7 +669,7 @@ namespace getfem {
                 (md.pmesh_fem_of_variable(Previous_Ep) &&
                  md.pmesh_fem_of_variable(Previous_Ep)->get_qdims() == Ep_size),
                 "Wrong size of " << Previous_Ep);
-    
+
     std::map<std::string, std::string> dict;
     dict["Grad_u"] = "Grad_"+dispname; dict["xi"] = xi;
     dict["Previous_xi"] = "Previous_"+xi;
@@ -739,19 +708,12 @@ namespace getfem {
   // criterion (Prandtl-Reuss model). Without the use of a plastic multiplier
   // and plane strain version.
   void build_isotropic_perfect_elastoplasticity_expressions_no_mult_ps
-  (model &md, const std::vector<std::string> &varnames,
-   const std::vector<std::string> &params, const std::string &theta,
-   const std::string &dt, std::string &sigma_np1, std::string &Epnp1,
+  (model &md, const std::string &dispname, const std::string &xi,
+   const std::string &Previous_Ep, const std::string &lambda,
+   const std::string &mu, const std::string &sigma_y,
+   const std::string &theta, const std::string &dt,
+   std::string &sigma_np1, std::string &Epnp1,
    std::string &xi_np1, std::string &sigma_after, std::string &von_mises) {
-    
-    GMM_ASSERT1(varnames.size() == 3, "Incorrect number of variables");
-    GMM_ASSERT1(params.size() == 3, "Incorrect number of parameters");
-    const std::string &dispname = sup_previous_and_dot_to_varname(varnames[0]);
-    const std::string &xi       = sup_previous_and_dot_to_varname(varnames[1]);
-    const std::string &Previous_Ep = varnames[2];
-    const std::string &lambda      = params[0];
-    const std::string &mu          = params[1];
-    const std::string &sigma_y     = params[2];
 
     const mesh_fem *mfu = md.pmesh_fem_of_variable(dispname);
     size_type N = mfu->linked_mesh().dim();
@@ -765,7 +727,7 @@ namespace getfem {
                 (md.pim_data_of_variable(xi) ||
                  md.pmesh_fem_of_variable(xi)),
                 "The provided name '" << xi << "' for the plastic multiplier, "
-		"should be defined either as fem data or as im data");
+                "should be defined either as fem data or as im data");
 
     GMM_ASSERT1(md.is_data(Previous_Ep) &&
                 (md.pim_data_of_variable(Previous_Ep) ||
@@ -781,7 +743,7 @@ namespace getfem {
                 (md.pmesh_fem_of_variable(Previous_Ep) &&
                  md.pmesh_fem_of_variable(Previous_Ep)->get_qdims() == Ep_size),
                 "Wrong size of " << Previous_Ep);
-    
+
     std::map<std::string, std::string> dict;
     dict["Grad_u"] = "Grad_"+dispname; dict["xi"] = xi;
     dict["Previous_xi"] = "Previous_"+xi;
@@ -817,23 +779,13 @@ namespace getfem {
   // criterion (Prandtl-Reuss model) and linear isotropic and kinematic
   // hardening. With the use of a plastic multiplier
   void build_isotropic_perfect_elastoplasticity_expressions_hard_mult
-  (model &md, const std::vector<std::string> &varnames,
-   const std::vector<std::string> &params,  const std::string &theta,
-   const std::string &dt,
+  (model &md, const std::string &dispname, const std::string &xi,
+   const std::string &Previous_Ep, const std::string &alpha,
+   const std::string &lambda, const std::string &mu,
+   const std::string &sigma_y, const std::string &Hk, const std::string &Hi,
+   const std::string &theta, const std::string &dt,
    std::string &sigma_np1, std::string &Epnp1, std::string &compcond,
    std::string &sigma_after, std::string &von_mises, std::string &alphanp1) {
-    
-    GMM_ASSERT1(varnames.size() == 4, "Incorrect number of variables");
-    GMM_ASSERT1(params.size() == 5, "Incorrect number of parameters");
-    const std::string &dispname = sup_previous_and_dot_to_varname(varnames[0]);
-    const std::string &xi       = sup_previous_and_dot_to_varname(varnames[1]);
-    const std::string &Previous_Ep = varnames[2];
-    const std::string &alpha       = varnames[3];
-    const std::string &lambda      = params[0];
-    const std::string &mu          = params[1];
-    const std::string &sigma_y     = params[2];
-    const std::string &Hk          = params[3];
-    const std::string &Hi          = params[4];
 
     const mesh_fem *mfu = md.pmesh_fem_of_variable(dispname);
     size_type N = mfu->linked_mesh().dim();
@@ -843,7 +795,7 @@ namespace getfem {
 
     GMM_ASSERT1(!(md.is_data(xi)) && md.pmesh_fem_of_variable(xi),
                 "The provided name '" << xi << "' for the plastic multiplier, "
-		"should be defined as a fem variable");
+                "should be defined as a fem variable");
 
     GMM_ASSERT1(md.is_data(Previous_Ep) &&
                 (md.pim_data_of_variable(Previous_Ep) ||
@@ -859,7 +811,7 @@ namespace getfem {
                 (md.pmesh_fem_of_variable(Previous_Ep) &&
                  md.pmesh_fem_of_variable(Previous_Ep)->get_qdims() == Ep_size),
                 "Wrong size of " << Previous_Ep);
-    
+
     std::map<std::string, std::string> dict;
     dict["Hk"] = Hk; dict["Hi"] = Hi; dict["alphan"] = alpha;
     dict["Grad_u"] = "Grad_"+dispname; dict["xi"] = xi;
@@ -877,10 +829,10 @@ namespace getfem {
       ("((alphan)+sqrt(2/3)*(1-(theta))*((dt)*(Previous_xi))*"
        "Norm((2*(mu))*Deviator(En)-(2*(mu)+(Hk))*(Epn)))", dict);
     dict["B"] = ga_substitute("((2*(mu))*Deviator(Enp1)-(2*(mu)+(Hk))*(zetan))",
-			      dict);
+                              dict);
     dict["beta"] =
       ga_substitute("((theta)*(dt)*(xi)/(1+(2*(mu)+(Hk))*(theta)*(dt)*(xi)))",
-		    dict);
+                    dict);
     dict["Epnp1"] = Epnp1 = ga_substitute("((zetan)+(beta)*(B))", dict);
     alphanp1 = ga_substitute("((etan)+sqrt(2/3)*(beta)*Norm(B))", dict);
     dict["alphanp1"] = alphanp1;
@@ -901,24 +853,14 @@ namespace getfem {
   // criterion (Prandtl-Reuss model) and linear isotropic and kinematic
   // hardening. Without the use of a plastic multiplier
   void build_isotropic_perfect_elastoplasticity_expressions_hard_no_mult
-  (model &md, const std::vector<std::string> &varnames,
-   const std::vector<std::string> &params, const std::string &theta,
-   const std::string &dt, std::string &sigma_np1, std::string &Epnp1,
-   std::string &xi_np1, std::string &sigma_after, std::string &von_mises,
-   std::string &alphanp1) {
-    
-    GMM_ASSERT1(varnames.size() == 4, "Incorrect number of variables");
-    GMM_ASSERT1(params.size() == 5, "Incorrect number of parameters");
-    const std::string &dispname = sup_previous_and_dot_to_varname(varnames[0]);
-    const std::string &xi       = sup_previous_and_dot_to_varname(varnames[1]);
-    const std::string &Previous_Ep = varnames[2];
-    const std::string &alpha       = varnames[3];
-    const std::string &lambda      = params[0];
-    const std::string &mu          = params[1];
-    const std::string &sigma_y     = params[2];
-    const std::string &Hk          = params[3];
-    const std::string &Hi          = params[4];
-   
+  (model &md, const std::string &dispname, const std::string &xi,
+   const std::string &Previous_Ep, const std::string &alpha,
+   const std::string &lambda, const std::string &mu,
+   const std::string &sigma_y, const std::string &Hk, const std::string &Hi,
+   const std::string &theta, const std::string &dt,
+   std::string &sigma_np1, std::string &Epnp1, std::string &xi_np1,
+   std::string &sigma_after, std::string &von_mises, std::string &alphanp1) {
+
     const mesh_fem *mfu = md.pmesh_fem_of_variable(dispname);
     size_type N = mfu->linked_mesh().dim();
     GMM_ASSERT1(mfu && mfu->get_qdim() == N, "The small strain "
@@ -929,7 +871,7 @@ namespace getfem {
                 (md.pim_data_of_variable(xi) ||
                  md.pmesh_fem_of_variable(xi)),
                 "The provided name '" << xi << "' for the plastic multiplier, "
-		"should be defined either as fem data or as im data");
+                "should be defined either as fem data or as im data");
 
     GMM_ASSERT1(md.is_data(Previous_Ep) &&
                 (md.pim_data_of_variable(Previous_Ep) ||
@@ -945,7 +887,7 @@ namespace getfem {
                 (md.pmesh_fem_of_variable(Previous_Ep) &&
                  md.pmesh_fem_of_variable(Previous_Ep)->get_qdims() == Ep_size),
                 "Wrong size of " << Previous_Ep);
-    
+
     std::map<std::string, std::string> dict;
     dict["Hk"] = Hk; dict["Hi"] = Hi; dict["alphan"] = alpha;
     dict["Grad_u"] = "Grad_"+dispname; dict["xi"] = xi;
@@ -964,7 +906,7 @@ namespace getfem {
        "Norm((2*(mu))*Deviator(En)-(2*(mu)+(Hk))*(Epn)))", dict);
 
     dict["B"] = ga_substitute("((2*(mu))*Deviator(Enp1)-(2*(mu)+(Hk))*(zetan))",
-    			      dict);
+                                  dict);
     dict["beta"] =
       ga_substitute("(1/((Norm(B)+1e-40)*(2*(mu)+(Hk)+(2/3)*(Hi))))"
       "*pos_part(Norm(B)-sqrt(2/3)*((sigma_y)+(Hi)*(etan)))", dict);
@@ -986,23 +928,13 @@ namespace getfem {
   // criterion (Prandtl-Reuss model) and linear isotropic and kinematic
   // hardening. With the use of a plastic multiplier and plane strain version.
   void build_isotropic_perfect_elastoplasticity_expressions_hard_mult_ps
-  (model &md, const std::vector<std::string> &varnames,
-   const std::vector<std::string> &params,  const std::string &theta,
-   const std::string &dt,
+  (model &md, const std::string &dispname, const std::string &xi,
+   const std::string &Previous_Ep, const std::string &alpha,
+   const std::string &lambda, const std::string &mu,
+   const std::string &sigma_y, const std::string &Hk, const std::string &Hi,
+   const std::string &theta, const std::string &dt,
    std::string &sigma_np1, std::string &Epnp1, std::string &compcond,
    std::string &sigma_after, std::string &von_mises, std::string &alphanp1) {
-    
-    GMM_ASSERT1(varnames.size() == 4, "Incorrect number of variables");
-    GMM_ASSERT1(params.size() == 5, "Incorrect number of parameters");
-    const std::string &dispname = sup_previous_and_dot_to_varname(varnames[0]);
-    const std::string &xi       = sup_previous_and_dot_to_varname(varnames[1]);
-    const std::string &Previous_Ep = varnames[2];
-    const std::string &alpha       = varnames[3];
-    const std::string &lambda      = params[0];
-    const std::string &mu          = params[1];
-    const std::string &sigma_y     = params[2];
-    const std::string &Hk          = params[3];
-    const std::string &Hi          = params[4];
 
     const mesh_fem *mfu = md.pmesh_fem_of_variable(dispname);
     size_type N = mfu->linked_mesh().dim();
@@ -1014,7 +946,7 @@ namespace getfem {
 
     GMM_ASSERT1(!(md.is_data(xi)) && md.pmesh_fem_of_variable(xi),
                 "The provided name '" << xi << "' for the plastic multiplier, "
-		"should be defined as a fem variable");
+                "should be defined as a fem variable");
 
     GMM_ASSERT1(md.is_data(Previous_Ep) &&
                 (md.pim_data_of_variable(Previous_Ep) ||
@@ -1030,7 +962,7 @@ namespace getfem {
                 (md.pmesh_fem_of_variable(Previous_Ep) &&
                  md.pmesh_fem_of_variable(Previous_Ep)->get_qdims() == Ep_size),
                 "Wrong size of " << Previous_Ep);
-    
+
     std::map<std::string, std::string> dict;
     dict["Hk"] = Hk; dict["Hi"] = Hi; dict["alphan"] = alpha;
     dict["Grad_u"] = "Grad_"+dispname; dict["xi"] = xi;
@@ -1051,13 +983,13 @@ namespace getfem {
        "sqrt(Norm_sqr((2*(mu))*(Dev_En)-(2*(mu)+(Hk))*(Epn))"
        "+sqr(2*(mu)*Trace(En)/3-(2*(mu)+(Hk))*Trace(Epn))))", dict);
     dict["B"] = ga_substitute("((2*(mu))*(Dev_Enp1)-(2*(mu)+(Hk))*(zetan))",
-			      dict);
+                              dict);
     dict["Norm_B"] = ga_substitute("sqrt(Norm_sqr(B)+sqr(2*(mu)*Trace(Enp1)/3"
-				   "-(2*(mu)+(Hk))*Trace(zetan)))", dict);
-    
+                                   "-(2*(mu)+(Hk))*Trace(zetan)))", dict);
+
     dict["beta"] =
       ga_substitute("((theta)*(dt)*(xi)/(1+(2*(mu)+(Hk))*(theta)*(dt)*(xi)))",
-		    dict);
+                    dict);
     dict["Epnp1"] = Epnp1 = ga_substitute("((zetan)+(beta)*(B))", dict);
     alphanp1 = ga_substitute("((etan)+sqrt(2/3)*(beta)*(Norm_B))", dict);
     dict["alphanp1"] = alphanp1;
@@ -1081,24 +1013,14 @@ namespace getfem {
   // hardening.
   // Without the use of a plastic multiplier and plane strain version.
   void build_isotropic_perfect_elastoplasticity_expressions_hard_no_mult_ps
-  (model &md, const std::vector<std::string> &varnames,
-   const std::vector<std::string> &params, const std::string &theta,
-   const std::string &dt, std::string &sigma_np1, std::string &Epnp1,
-   std::string &xi_np1, std::string &sigma_after, std::string &von_mises,
-   std::string &alphanp1) {
-    
-    GMM_ASSERT1(varnames.size() == 4, "Incorrect number of variables");
-    GMM_ASSERT1(params.size() == 5, "Incorrect number of parameters");
-    const std::string &dispname = sup_previous_and_dot_to_varname(varnames[0]);
-    const std::string &xi       = sup_previous_and_dot_to_varname(varnames[1]);
-    const std::string &Previous_Ep = varnames[2];
-    const std::string &alpha       = varnames[3];
-    const std::string &lambda      = params[0];
-    const std::string &mu          = params[1];
-    const std::string &sigma_y     = params[2];
-    const std::string &Hk          = params[3];
-    const std::string &Hi          = params[4];
-   
+  (model &md, const std::string &dispname, const std::string &xi,
+   const std::string &Previous_Ep, const std::string &alpha,
+   const std::string &lambda, const std::string &mu,
+   const std::string &sigma_y, const std::string &Hk, const std::string &Hi,
+   const std::string &theta, const std::string &dt,
+   std::string &sigma_np1, std::string &Epnp1, std::string &xi_np1,
+   std::string &sigma_after, std::string &von_mises, std::string &alphanp1) {
+
     const mesh_fem *mfu = md.pmesh_fem_of_variable(dispname);
     size_type N = mfu->linked_mesh().dim();
     GMM_ASSERT1(N == 2, "This plastic law is restricted to 2D");
@@ -1111,7 +1033,7 @@ namespace getfem {
                 (md.pim_data_of_variable(xi) ||
                  md.pmesh_fem_of_variable(xi)),
                 "The provided name '" << xi << "' for the plastic multiplier, "
-		"should be defined either as fem data or as im data");
+                "should be defined either as fem data or as im data");
 
     GMM_ASSERT1(md.is_data(Previous_Ep) &&
                 (md.pim_data_of_variable(Previous_Ep) ||
@@ -1127,7 +1049,7 @@ namespace getfem {
                 (md.pmesh_fem_of_variable(Previous_Ep) &&
                  md.pmesh_fem_of_variable(Previous_Ep)->get_qdims() == Ep_size),
                 "Wrong size of " << Previous_Ep);
-    
+
     std::map<std::string, std::string> dict;
     dict["Hk"] = Hk; dict["Hi"] = Hi; dict["alphan"] = alpha;
     dict["Grad_u"] = "Grad_"+dispname; dict["xi"] = xi;
@@ -1149,9 +1071,9 @@ namespace getfem {
        "+sqr(2*(mu)*Trace(En)/3-(2*(mu)+(Hk))*Trace(Epn))))", dict);
 
     dict["B"] = ga_substitute("((2*(mu))*(Dev_Enp1)-(2*(mu)+(Hk))*(zetan))",
-    			      dict);
+                                  dict);
     dict["Norm_B"] = ga_substitute("sqrt(Norm_sqr(B)+sqr(2*(mu)*Trace(Enp1)/3"
-				   "-(2*(mu)+(Hk))*Trace(zetan)))", dict);
+                                   "-(2*(mu)+(Hk))*Trace(zetan)))", dict);
     dict["beta"] =
       ga_substitute("(1/(((Norm_B)+1e-40)*(2*(mu)+(Hk)+(2/3)*(Hi))))"
       "*pos_part((Norm_B)-sqrt(2/3)*((sigma_y)+(Hi)*(etan)))", dict);
@@ -1170,8 +1092,101 @@ namespace getfem {
        "+sqr(2*(mu)*Trace(En)/3-(2*(mu)+(Hk))*Trace(Epn)))", dict);
   }
 
+  void build_isotropic_perfect_elastoplasticity_expressions_generic
+  (model &md, const std::string &lawname,
+   plasticity_unknowns_type unknowns_type,
+   const std::vector<std::string> &varnames,
+   const std::vector<std::string> &params,
+   std::string &sigma_np1, std::string &Epnp1,
+   std::string &compcond, std::string &xi_np1,
+   std::string &sigma_after, std::string &von_mises,
+   std::string &alphanp1) {
 
+    GMM_ASSERT1(unknowns_type == DISPLACEMENT_ONLY ||
+                unknowns_type == DISPLACEMENT_AND_PLASTIC_MULTIPLIER,
+                "Not supported type of unknowns");
+    bool plastic_multiplier_is_var
+      = (unknowns_type == DISPLACEMENT_AND_PLASTIC_MULTIPLIER);
 
+    bool hardening = (lawname.find("_hardening") != std::string::npos);
+    size_type nhard = hardening ? 2 : 0;
+
+    GMM_ASSERT1(varnames.size() == hardening ? 4 : 3,
+                "Incorrect number of variables: " << varnames.size());
+    GMM_ASSERT1(params.size() >= 3+nhard &&
+                params.size() <= 5+nhard,
+                "Incorrect number of parameters: " << params.size());
+    const std::string &dispname = sup_previous_and_dot_to_varname(varnames[0]);
+    const std::string &xi       = sup_previous_and_dot_to_varname(varnames[1]);
+    const std::string &Previous_Ep = varnames[2];
+    const std::string &alpha       = hardening ? varnames[3] : "";
+    const std::string &lambda      = params[0];
+    const std::string &mu          = params[1];
+    const std::string &sigma_y     = params[2];
+    const std::string &Hk          = hardening ? params[3] : "";
+    const std::string &Hi          = hardening ? params[4] : "";
+    const std::string &theta       = (params.size() >= 4+nhard)
+                                   ? params[3+nhard] : "1";
+    const std::string &dt          = (params.size() >= 5+nhard)
+                                   ? params[4+nhard] : "timestep";
+
+    sigma_np1 = Epnp1 = compcond = xi_np1 = "";;
+    sigma_after = von_mises = alphanp1 = "";
+
+    if (lawname.compare("isotropic_perfect_plasticity") == 0 ||
+        lawname.compare("prandtl_reuss") == 0) {
+      if (plastic_multiplier_is_var) {
+        build_isotropic_perfect_elastoplasticity_expressions_mult
+          (md, dispname, xi, Previous_Ep, lambda, mu, sigma_y, theta, dt,
+           sigma_np1, Epnp1, compcond, sigma_after, von_mises);
+      } else {
+        build_isotropic_perfect_elastoplasticity_expressions_no_mult
+          (md, dispname, xi, Previous_Ep, lambda, mu, sigma_y, theta, dt,
+           sigma_np1, Epnp1, xi_np1, sigma_after, von_mises);
+      }
+    } else if (lawname.compare("plane_strain_isotropic_perfect_plasticity")
+               == 0 ||
+               lawname.compare("plane_strain_prandtl_reuss") == 0) {
+      if (plastic_multiplier_is_var) {
+        build_isotropic_perfect_elastoplasticity_expressions_mult_ps
+          (md, dispname, xi, Previous_Ep, lambda, mu, sigma_y, theta, dt,
+           sigma_np1, Epnp1, compcond, sigma_after, von_mises);
+      } else {
+        build_isotropic_perfect_elastoplasticity_expressions_no_mult_ps
+          (md, dispname, xi, Previous_Ep, lambda, mu, sigma_y, theta, dt,
+           sigma_np1, Epnp1, xi_np1, sigma_after, von_mises);
+      }
+    } else if (lawname.compare("isotropic_plasticity_linear_hardening") == 0 ||
+               lawname.compare("prandtl_reuss_linear_hardening") == 0) {
+      if (plastic_multiplier_is_var) {
+        build_isotropic_perfect_elastoplasticity_expressions_hard_mult
+          (md, dispname, xi, Previous_Ep, alpha,
+           lambda, mu, sigma_y, Hk, Hi, theta, dt,
+           sigma_np1, Epnp1, compcond, sigma_after, von_mises, alphanp1);
+      } else {
+        build_isotropic_perfect_elastoplasticity_expressions_hard_no_mult
+          (md, dispname, xi, Previous_Ep, alpha,
+           lambda, mu, sigma_y, Hk, Hi, theta, dt,
+           sigma_np1, Epnp1, xi_np1, sigma_after, von_mises, alphanp1);
+      }
+    } else if
+        (lawname.compare("plane_strain_isotropic_plasticity_linear_hardening")
+         == 0 ||
+         lawname.compare("plane_strain_prandtl_reuss_linear_hardening") == 0) {
+      if (plastic_multiplier_is_var) {
+        build_isotropic_perfect_elastoplasticity_expressions_hard_mult_ps
+          (md, dispname, xi, Previous_Ep, alpha,
+           lambda, mu, sigma_y, Hk, Hi, theta, dt,
+           sigma_np1, Epnp1, compcond, sigma_after, von_mises, alphanp1);
+      } else {
+        build_isotropic_perfect_elastoplasticity_expressions_hard_no_mult_ps
+          (md, dispname, xi, Previous_Ep, alpha,
+           lambda, mu, sigma_y, Hk, Hi, theta, dt,
+           sigma_np1, Epnp1, xi_np1, sigma_after, von_mises, alphanp1);
+      }
+    } else
+      GMM_ASSERT1(false, lawname << " is not an implemented elastoplastic law");
+  }
 
   static void filter_lawname(std::string &lawname) {
     for (auto &c : lawname)
@@ -1179,145 +1194,55 @@ namespace getfem {
   }
 
   size_type add_small_strain_elastoplasticity_brick
-  (model &md, const mesh_im &mim,  std::string lawname,
-   bool with_plastic_multiplier,
+  (model &md, const mesh_im &mim,
+   std::string lawname, plasticity_unknowns_type unknowns_type,
    const std::vector<std::string> &varnames,
-   const std::vector<std::string> &params,
-   const std::string &theta, const std::string &dt, size_type region)  {
-    
-    filter_lawname(lawname);
-    std::string sigma_np1, Epnp1, compcond, xi_np1, sigma_after;
-    std::string alphanp1, von_mises;
+   const std::vector<std::string> &params, size_type region)  {
 
-    if (lawname.compare("isotropic_perfect_plasticity") == 0 ||
-	lawname.compare("prandtl_reuss") == 0) {
-      if (with_plastic_multiplier) {
-	build_isotropic_perfect_elastoplasticity_expressions_mult
-          (md, varnames, params,theta,dt,sigma_np1,Epnp1,compcond,sigma_after,
-	   von_mises);
-      } else {
-	build_isotropic_perfect_elastoplasticity_expressions_no_mult
-          (md, varnames, params, theta, dt, sigma_np1, Epnp1, xi_np1,
-	   sigma_after, von_mises);
-      }
-    } else if (lawname.compare("plane_strain_isotropic_perfect_plasticity") == 0
-	       || lawname.compare("plane_strain_prandtl_reuss") == 0) {
-      if (with_plastic_multiplier) {
-	build_isotropic_perfect_elastoplasticity_expressions_mult_ps
-	  (md, varnames, params,theta,dt,sigma_np1,Epnp1,compcond,sigma_after,
-	   von_mises);
-      } else {
-	build_isotropic_perfect_elastoplasticity_expressions_no_mult_ps
-          (md, varnames, params, theta, dt, sigma_np1, Epnp1, xi_np1,
-	   sigma_after, von_mises);
-      }
-    } else if (lawname.compare("isotropic_plasticity_linear_hardening") == 0 ||
-	lawname.compare("prandtl_reuss_linear_hardening") == 0) {
-      if (with_plastic_multiplier) {
-	build_isotropic_perfect_elastoplasticity_expressions_hard_mult
-          (md, varnames, params,theta,dt,sigma_np1,Epnp1,compcond,sigma_after,
-	   von_mises, alphanp1);
-      } else {
-	build_isotropic_perfect_elastoplasticity_expressions_hard_no_mult
-          (md, varnames, params, theta, dt, sigma_np1, Epnp1, xi_np1,
-	   sigma_after, von_mises, alphanp1);
-      }
-    } else if
-	(lawname.compare("plane_strain_isotropic_plasticity_linear_hardening")
-	 == 0 ||
-	 lawname.compare("plane_strain_prandtl_reuss_linear_hardening") == 0) {
-      if (with_plastic_multiplier) {
-	build_isotropic_perfect_elastoplasticity_expressions_hard_mult_ps
-          (md, varnames, params,theta,dt,sigma_np1,Epnp1,compcond,sigma_after,
-	   von_mises, alphanp1);
-      } else {
-	build_isotropic_perfect_elastoplasticity_expressions_hard_no_mult_ps
-          (md, varnames, params, theta, dt, sigma_np1, Epnp1, xi_np1,
-	   sigma_after, von_mises, alphanp1);
-      }
-    } else
-      GMM_ASSERT1(false, lawname << " is not an implemented elastoplastic law");
+    filter_lawname(lawname);
+    std::string sigma_np1, compcond;
+    {
+      std::string dum2, dum4, dum5, dum6, dum7;
+      build_isotropic_perfect_elastoplasticity_expressions_generic
+        (md, lawname, unknowns_type, varnames, params,
+         sigma_np1, dum2, compcond, dum4, dum5, dum6, dum7);
+    }
 
     const std::string dispname=sup_previous_and_dot_to_varname(varnames[0]);
     const std::string xi      =sup_previous_and_dot_to_varname(varnames[1]);
-    
-    if (with_plastic_multiplier) {
+
+    if (unknowns_type == DISPLACEMENT_AND_PLASTIC_MULTIPLIER) {
       std::string expr = ("("+sigma_np1+"):Grad_Test_"+dispname
-			  + "+("+compcond+")*Test_"+xi);
-      
+                          + "+("+compcond+")*Test_"+xi);
       return add_nonlinear_generic_assembly_brick
-	(md, mim, expr, region, false, false,
-	 "Small strain isotropic perfect elastoplasticity brick");
+        (md, mim, expr, region, false, false,
+         "Small strain isotropic perfect elastoplasticity brick");
     } else {
       return add_nonlinear_generic_assembly_brick
-	(md, mim, "("+sigma_np1+"):Grad_Test_"+dispname, region, true, false,
-	 "Small strain isotropic perfect elastoplasticity brick");
+        (md, mim, "("+sigma_np1+"):Grad_Test_"+dispname, region, true, false,
+         "Small strain isotropic perfect elastoplasticity brick");
     }
   }
 
   void small_strain_elastoplasticity_next_iter
-  (model &md, const mesh_im &mim,  std::string lawname,
-   bool with_plastic_multiplier, 
+  (model &md, const mesh_im &mim,
+   std::string lawname, plasticity_unknowns_type unknowns_type,
    const std::vector<std::string> &varnames,
-   const std::vector<std::string> &params,
-   const std::string &theta, const std::string &dt, size_type region)  {
-
-    std::string Epnp1, xi_np1, sigma_np1, sigma_after, von_mises, compcond;
-    std::string alphanp1;
+   const std::vector<std::string> &params, size_type region)  {
 
     filter_lawname(lawname);
-    if (lawname.compare("isotropic_perfect_plasticity") == 0 ||
-	lawname.compare("prandtl_reuss") == 0) {
-      if (with_plastic_multiplier)
-	build_isotropic_perfect_elastoplasticity_expressions_mult
-	  (md, varnames, params,theta,dt,sigma_np1,Epnp1,compcond,sigma_after,
-	   von_mises);
-      else
-	build_isotropic_perfect_elastoplasticity_expressions_no_mult
-	  (md, varnames, params,theta,dt,sigma_np1,Epnp1,xi_np1,sigma_after,
-	   von_mises);
-    } else if (lawname.compare("plane_strain_isotropic_perfect_plasticity") == 0
-	       || lawname.compare("plane_strain_prandtl_reuss") == 0) {
-      if (with_plastic_multiplier) {
-	build_isotropic_perfect_elastoplasticity_expressions_mult_ps
-	  (md, varnames, params,theta,dt,sigma_np1,Epnp1,compcond,sigma_after,
-	   von_mises);
-      } else {
-	build_isotropic_perfect_elastoplasticity_expressions_no_mult_ps
-          (md, varnames, params, theta, dt, sigma_np1, Epnp1, xi_np1,
-	   sigma_after, von_mises);
-      }
-    } else if (lawname.compare("isotropic_plasticity_linear_hardening") == 0 ||
-	lawname.compare("prandtl_reuss_linear_hardening") == 0) {
-      if (with_plastic_multiplier) {
-	build_isotropic_perfect_elastoplasticity_expressions_hard_mult
-          (md, varnames, params,theta,dt,sigma_np1,Epnp1,compcond,sigma_after,
-	   von_mises, alphanp1);
-      } else {
-	build_isotropic_perfect_elastoplasticity_expressions_hard_no_mult
-          (md, varnames, params, theta, dt, sigma_np1, Epnp1, xi_np1,
-	   sigma_after, von_mises, alphanp1);
-      }
-    } else if
-	(lawname.compare("plane_strain_isotropic_plasticity_linear_hardening")
-	 == 0 ||
-	lawname.compare("plane_strain_prandtl_reuss_linear_hardening") == 0) {
-      if (with_plastic_multiplier) {
-	build_isotropic_perfect_elastoplasticity_expressions_hard_mult_ps
-          (md, varnames, params,theta,dt,sigma_np1,Epnp1,compcond,sigma_after,
-	   von_mises, alphanp1);
-      } else {
-	build_isotropic_perfect_elastoplasticity_expressions_hard_no_mult_ps
-          (md, varnames, params, theta, dt, sigma_np1, Epnp1, xi_np1,
-	   sigma_after, von_mises, alphanp1);
-      }
-    } else
-      GMM_ASSERT1(false, lawname << " is not an implemented elastoplastic law");
-  
+    std::string Epnp1, xi_np1, alphanp1;
+    {
+      std::string dum1, dum3, dum5, dum6;
+      build_isotropic_perfect_elastoplasticity_expressions_generic
+        (md, lawname, unknowns_type, varnames, params,
+         dum1, Epnp1, dum3, xi_np1, dum5, dum6, alphanp1);
+    }
+
     std::string disp = sup_previous_and_dot_to_varname(varnames[0]);
     std::string xi   = sup_previous_and_dot_to_varname(varnames[1]);
     std::string Previous_Ep = varnames[2];
-    
+
     std::string Previous_alpha;
     base_vector tmpv_alpha;
     if (alphanp1.size()) { // Interpolation of the accumulated plastic strain
@@ -1325,15 +1250,15 @@ namespace getfem {
       tmpv_alpha.resize(gmm::vect_size(md.real_variable(Previous_alpha)));
       const im_data *pimd = md.pim_data_of_variable(Previous_alpha);
       if (pimd)
-	ga_interpolation_im_data(md, alphanp1, *pimd, tmpv_alpha, region);
+        ga_interpolation_im_data(md, alphanp1, *pimd, tmpv_alpha, region);
       else {
-	const mesh_fem *pmf = md.pmesh_fem_of_variable(Previous_alpha);
-	GMM_ASSERT1(pmf, "Provided data " << Previous_alpha
-		    << " should be defined on a im_data or a mesh_fem object");
-	ga_local_projection(md, mim, alphanp1, *pmf, tmpv_alpha, region);
+        const mesh_fem *pmf = md.pmesh_fem_of_variable(Previous_alpha);
+        GMM_ASSERT1(pmf, "Provided data " << Previous_alpha
+                    << " should be defined on a im_data or a mesh_fem object");
+        ga_local_projection(md, mim, alphanp1, *pmf, tmpv_alpha, region);
       }
     }
- 
+
     base_vector tmpv_xi;
     if (xi_np1.size()) { // Interpolation of the plastic multiplier for the
       // theta-scheme and the case without multiplier (return mapping)
@@ -1341,12 +1266,12 @@ namespace getfem {
       tmpv_xi.resize(gmm::vect_size(md.real_variable(xi)));
       const im_data *pimd = md.pim_data_of_variable(xi);
       if (pimd)
-	ga_interpolation_im_data(md, xi_np1, *pimd, tmpv_xi, region);
+        ga_interpolation_im_data(md, xi_np1, *pimd, tmpv_xi, region);
       else {
-	const mesh_fem *pmf = md.pmesh_fem_of_variable(xi);
-	GMM_ASSERT1(pmf, "Provided data " << xi
-		    << " should be defined on a im_data or a mesh_fem object");
-	ga_local_projection(md, mim, xi_np1, *pmf, tmpv_xi, region);
+        const mesh_fem *pmf = md.pmesh_fem_of_variable(xi);
+        GMM_ASSERT1(pmf, "Provided data " << xi
+                    << " should be defined on a im_data or a mesh_fem object");
+        ga_local_projection(md, mim, xi_np1, *pmf, tmpv_xi, region);
       }
     }
 
@@ -1357,7 +1282,7 @@ namespace getfem {
     else {
       const mesh_fem *pmf = md.pmesh_fem_of_variable(Previous_Ep);
       GMM_ASSERT1(pmf, "Provided data " << Previous_Ep
-		  << " should be defined on a im_data or a mesh_fem object");
+                  << " should be defined on a im_data or a mesh_fem object");
       ga_local_projection(md, mim, Epnp1, *pmf, tmpv_ep, region);
     }
 
@@ -1372,74 +1297,27 @@ namespace getfem {
 
   // To be called after next_iter, not before
   void compute_small_strain_elastoplasticity_Von_Mises
-  (model &md, const mesh_im &mim,  std::string lawname,
-   bool with_plastic_multiplier, 
+  (model &md, const mesh_im &mim,
+   std::string lawname, plasticity_unknowns_type unknowns_type,
    const std::vector<std::string> &varnames,
    const std::vector<std::string> &params,
-   const mesh_fem &mf_vm, model_real_plain_vector &VM, 
-   const std::string &theta, const std::string &dt, size_type region) {
-    
+   const mesh_fem &mf_vm, model_real_plain_vector &VM, size_type region) {
+
     GMM_ASSERT1(mf_vm.get_qdim() == 1,
                 "Von mises stress can only be approximated on a scalar fem");
     VM.resize(mf_vm.nb_dof());
-     
-    std::string sigma_after, von_mises, sigma_np1, Epnp1, compcond, xi_np1;
-    std::string alphanp1;
-    size_type n_ep = 2; // Index of the plastic strain variable
 
     filter_lawname(lawname);
-    if ((lawname.compare("isotropic_perfect_plasticity") == 0 ||
-         lawname.compare("prandtl_reuss") == 0)) {
-      if (with_plastic_multiplier) {
-	build_isotropic_perfect_elastoplasticity_expressions_mult
-	  (md, varnames, params, theta,dt,sigma_np1,Epnp1,compcond,sigma_after,
-	   von_mises);
-	n_ep = 2;
-      } else  {
-	build_isotropic_perfect_elastoplasticity_expressions_no_mult
-	  (md, varnames, params, theta, dt,sigma_np1,Epnp1,xi_np1,sigma_after,
-	   von_mises);
-	n_ep = 2;
-      }
-    } else if (lawname.compare("plane_strain_isotropic_perfect_plasticity") == 0
-	       || lawname.compare("plane_strain_prandtl_reuss") == 0) {
-      if (with_plastic_multiplier) {
-	build_isotropic_perfect_elastoplasticity_expressions_mult_ps
-	  (md, varnames, params,theta,dt,sigma_np1,Epnp1,compcond,sigma_after,
-	   von_mises);
-	n_ep = 2;
-      } else {
-	build_isotropic_perfect_elastoplasticity_expressions_no_mult_ps
-          (md, varnames, params, theta, dt, sigma_np1, Epnp1, xi_np1,
-	   sigma_after, von_mises);
-	n_ep = 2;
-      }
-    } else if (lawname.compare("isotropic_plasticity_linear_hardening") == 0 ||
-	lawname.compare("prandtl_reuss_linear_hardening") == 0) {
-      if (with_plastic_multiplier) {
-	build_isotropic_perfect_elastoplasticity_expressions_hard_mult
-          (md, varnames, params,theta,dt,sigma_np1,Epnp1,compcond,sigma_after,
-	   von_mises, alphanp1);
-      } else {
-	build_isotropic_perfect_elastoplasticity_expressions_hard_no_mult
-          (md, varnames, params, theta, dt, sigma_np1, Epnp1, xi_np1,
-	   sigma_after, von_mises, alphanp1);
-      }
-    }  else if
-	(lawname.compare("plane_strain_isotropic_plasticity_linear_hardening")
-	 == 0 ||
-	lawname.compare("plane_strain_prandtl_reuss_linear_hardening") == 0) {
-      if (with_plastic_multiplier) {
-	build_isotropic_perfect_elastoplasticity_expressions_hard_mult_ps
-          (md, varnames, params,theta,dt,sigma_np1,Epnp1,compcond,sigma_after,
-	   von_mises, alphanp1);
-      } else {
-	build_isotropic_perfect_elastoplasticity_expressions_hard_no_mult_ps
-          (md, varnames, params, theta, dt, sigma_np1, Epnp1, xi_np1,
-	   sigma_after, von_mises, alphanp1);
-      }
-    } else
-      GMM_ASSERT1(false, lawname << " is not an implemented elastoplastic law");
+
+    std::string sigma_after, von_mises;
+    {
+      std::string dum1, dum2, dum3, dum4, dum7;
+      build_isotropic_perfect_elastoplasticity_expressions_generic
+        (md, lawname, unknowns_type, varnames, params,
+         dum1, dum2, dum3, dum4, sigma_after, von_mises, dum7);
+    }
+
+    size_type n_ep = 2; // Index of the plastic strain variable
 
     const im_data *pimd = md.pim_data_of_variable(varnames[n_ep]);
     if (pimd) {
@@ -1448,7 +1326,7 @@ namespace getfem {
     else {
       const mesh_fem *pmf = md.pmesh_fem_of_variable(varnames[n_ep]);
       GMM_ASSERT1(pmf, "Provided data " << varnames[n_ep]
-		  << " should be defined on a im_data or a mesh_fem object");
+                  << " should be defined on a im_data or a mesh_fem object");
       ga_interpolation_Lagrange_fem(md, von_mises, mf_vm, VM, region);
     }
   }
@@ -1494,17 +1372,35 @@ namespace getfem {
 
   // Simo-Miehe
   void build_Simo_Miehe_elastoplasticity_expressions
-  (model &md, const mesh_im &mim, const std::string &dispname,
-   const std::string &multname, const std::string &pressname,
-   const std::string &K, const std::string &G, const std::string &sigma_y,
-   const std::string &plaststrain0, const std::string &invCp0,
+  (model &md, plasticity_unknowns_type unknowns_type,
+   const std::vector<std::string> &varnames,
+   const std::vector<std::string> &params,
    std::string &expr, std::string &plaststrain, std::string &invCp, std::string &vm)
   {
-    size_type N = mim.linked_mesh().dim();
-    GMM_ASSERT1(N >= 2 && N <= 3,
-                "Finite strain elastoplasticity brick works only in 2D or 3D");
+    GMM_ASSERT1(unknowns_type == DISPLACEMENT_AND_PLASTIC_MULTIPLIER ||
+                unknowns_type == DISPLACEMENT_AND_PLASTIC_MULTIPLIER_AND_PRESSURE,
+                "Not supported type of unknowns for this type of plasticity law");
+    bool has_pressure_var(unknowns_type ==
+                          DISPLACEMENT_AND_PLASTIC_MULTIPLIER_AND_PRESSURE);
+    GMM_ASSERT1(varnames.size() == (has_pressure_var ? 5 : 4),
+                "Wrong number of variables.");
+    GMM_ASSERT1(params.size() == 3, "Wrong number of parameters, "
+                                    << params.size() << " != 3.");
+    const std::string &dispname     = sup_previous_and_dot_to_varname(varnames[0]);
+    const std::string &multname     = sup_previous_and_dot_to_varname(varnames[1]);
+    const std::string &pressname    = has_pressure_var ? varnames[2] : "";
+    const std::string &plaststrain0 = varnames[has_pressure_var ? 3 : 2];
+    const std::string &invCp0       = varnames[has_pressure_var ? 4 : 3];
+    const std::string &K            = params[0];
+    const std::string &G            = params[1];
+    const std::string &sigma_y      = params[2];
 
     const mesh_fem *mfu = md.pmesh_fem_of_variable(dispname);
+    GMM_ASSERT1(mfu, "The provided displacement variable " << dispname <<
+                " has to be defined on a mesh_fem");
+    size_type N = mfu->linked_mesh().dim();
+    GMM_ASSERT1(N >= 2 && N <= 3,
+                "Finite strain elastoplasticity brick works only in 2D or 3D");
     GMM_ASSERT1(mfu && mfu->get_qdim() == N, "The finite strain "
                 "elastoplasticity brick can only be applied on a fem "
                 "variable of the same dimension as the mesh");
@@ -1613,23 +1509,17 @@ namespace getfem {
   }
 
   size_type add_finite_strain_elastoplasticity_brick
-  (model &md, const mesh_im &mim, const std::string &dispname,
-   const std::string &multname, const std::string &pressname,
-   const std::string &lawname, const std::vector<std::string> &params,
-   size_type region)
+  (model &md, const mesh_im &mim,
+   std::string lawname, plasticity_unknowns_type unknowns_type,
+   const std::vector<std::string> &varnames,
+   const std::vector<std::string> &params, size_type region)
   {
-    std::string adapted_lawname = lawname;
-    for (auto &c : adapted_lawname) if (c == ' ') c = '_';
-
-    if (adapted_lawname.compare("Simo_Miehe") == 0 ||
-        adapted_lawname.compare("Eterovic_Bathe") == 0) {
-      GMM_ASSERT1(params.size() == 5, "Wrong number of parameters, "
-                                      << params.size() << " != 5.");
+    filter_lawname(lawname);
+    if (lawname.compare("simo_miehe") == 0 ||
+        lawname.compare("eterovic_bathe") == 0) {
       std::string expr, dummy1, dummy2, dummy3;
       build_Simo_Miehe_elastoplasticity_expressions
-      (md, mim, dispname, multname, pressname,
-       params[0], params[1], params[2], params[3], params[4],
-       expr, dummy1, dummy2, dummy3);
+        (md, unknowns_type, varnames, params, expr, dummy1, dummy2, dummy3);
       return add_nonlinear_generic_assembly_brick
         (md, mim, expr, region, true, false, "Simo Miehe elastoplasticity brick");
     } else
@@ -1638,28 +1528,25 @@ namespace getfem {
 
   // Updates any state variables included in params for the given lawname
   void finite_strain_elastoplasticity_next_iter
-  (model &md, const mesh_im &mim, const std::string &dispname,
-   const std::string &multname, const std::string &pressname,
-   const std::string &lawname, const std::vector<std::string> &params,
-   size_type region) {
+  (model &md, const mesh_im &mim,
+   std::string lawname, plasticity_unknowns_type unknowns_type,
+   const std::vector<std::string> &varnames,
+   const std::vector<std::string> &params, size_type region) {
 
-    std::string adapted_lawname = lawname;
-    for (auto &c : adapted_lawname) if (c == ' ') c = '_';
-
-    if (adapted_lawname.compare("Simo_Miehe") == 0 ||
-        adapted_lawname.compare("Eterovic_Bathe") == 0) {
-      GMM_ASSERT1(params.size() == 5, "Wrong number of parameters, "
-                                      << params.size() << " != 5.");
+    filter_lawname(lawname);
+    if (lawname.compare("simo_miehe") == 0 ||
+        lawname.compare("eterovic_bathe") == 0) {
       std::string dummy1, dummy2, plaststrain, invCp;
       build_Simo_Miehe_elastoplasticity_expressions
-        (md, mim, dispname, multname, pressname,
-         params[0], params[1], params[2], params[3], params[4],
-         dummy1, plaststrain, invCp, dummy2);
+        (md, unknowns_type, varnames, params, dummy1, plaststrain, invCp, dummy2);
 
+      bool has_pressure_var(unknowns_type ==
+                            DISPLACEMENT_AND_PLASTIC_MULTIPLIER_AND_PRESSURE);
+      const std::string &multname     = sup_previous_and_dot_to_varname(varnames[1]);
+      const std::string &plaststrain0 = varnames[has_pressure_var ? 3 : 2];
+      const std::string &invCp0       = varnames[has_pressure_var ? 4 : 3];
       { // update plaststrain0
-        const std::string &plaststrain0 = params[3];
         model_real_plain_vector tmpvec(gmm::vect_size(md.real_variable(plaststrain0)));
-
         const im_data *pimd = md.pim_data_of_variable(plaststrain0);
         if (pimd)
           ga_interpolation_im_data(md, plaststrain, *pimd, tmpvec, region);
@@ -1667,13 +1554,13 @@ namespace getfem {
           const mesh_fem *pmf = md.pmesh_fem_of_variable(plaststrain0);
           GMM_ASSERT1(pmf, "Provided data " << plaststrain0 << " should be defined "
                            "either on a im_data or a mesh_fem object");
-          ga_interpolation_Lagrange_fem(md, plaststrain, *pmf, tmpvec, region);
+          //ga_interpolation_Lagrange_fem(md, plaststrain, *pmf, tmpvec, region);
+          ga_local_projection(md, mim, plaststrain, *pmf, tmpvec, region);
         }
         gmm::copy(tmpvec, md.set_real_variable(plaststrain0));
       }
 
       { // update invCp0
-        const std::string &invCp0 = params[4];
         model_real_plain_vector tmpvec(gmm::vect_size(md.real_variable(invCp0)));
         const im_data *pimd = md.pim_data_of_variable(invCp0);
         if (pimd)
@@ -1682,7 +1569,8 @@ namespace getfem {
           const mesh_fem *pmf = md.pmesh_fem_of_variable(invCp0);
           GMM_ASSERT1(pmf, "Provided data " << invCp0 << " should be defined "
                            "either on a im_data or a mesh_fem object");
-          ga_interpolation_Lagrange_fem(md, invCp, *pmf, tmpvec, region);
+          //ga_interpolation_Lagrange_fem(md, invCp, *pmf, tmpvec, region);
+          ga_local_projection(md, mim, invCp, *pmf, tmpvec, region);
         }
         gmm::copy(tmpvec, md.set_real_variable(invCp0));
       }
@@ -1694,46 +1582,39 @@ namespace getfem {
   }
 
   void compute_finite_strain_elastoplasticity_Von_Mises
-  (model &md, const mesh_im &mim, const std::string &dispname,
-   const std::string &multname, const std::string &pressname,
-   const std::string &lawname, const std::vector<std::string> &params,
-   const mesh_fem &mf_vm, model_real_plain_vector &VM, bool assemble,
+  (model &md, const mesh_im &mim,
+   std::string lawname, plasticity_unknowns_type unknowns_type,
+   const std::vector<std::string> &varnames,
+   const std::vector<std::string> &params,
+   const mesh_fem &mf_vm, model_real_plain_vector &VM,
    size_type region) {
 
-    std::string adapted_lawname = lawname;
-    for (auto &c : adapted_lawname) if (c == ' ') c = '_';
-
-    if (adapted_lawname.compare("Simo_Miehe") == 0 ||
-        adapted_lawname.compare("Eterovic_Bathe") == 0) {
-      GMM_ASSERT1(params.size() == 5, "Wrong number of parameters, "
-                                      << params.size() << " != 5.");
-      std::string dummy1, dummy2, dummy3, vm;
+    filter_lawname(lawname);
+    if (lawname.compare("simo_miehe") == 0 ||
+        lawname.compare("eterovic_bathe") == 0) {
+      std::string dummy1, dummy2, dummy3, von_mises;
       build_Simo_Miehe_elastoplasticity_expressions
-        (md, mim, dispname, multname, pressname,
-         params[0], params[1], params[2], params[3], params[4],
-         dummy1, dummy2, dummy3, vm);
-
+        (md, unknowns_type, varnames, params, dummy1, dummy2, dummy3, von_mises);
       VM.resize(mf_vm.nb_dof());
-      if (assemble) {
-        model_real_plain_vector tmpvec(mf_vm.nb_dof());
-        ga_workspace workspace(md);
-        workspace.add_fem_variable("t", mf_vm, gmm::sub_interval(0, mf_vm.nb_dof()),
-                                               tmpvec);
-        workspace.add_expression(vm + "*Test_t", mim, region, 2);
-        workspace.set_assembled_vector(VM);
-        workspace.assembly(1);
+
+      bool has_pressure_var(unknowns_type ==
+                            DISPLACEMENT_AND_PLASTIC_MULTIPLIER_AND_PRESSURE);
+      const std::string &plaststrain0 = varnames[has_pressure_var ? 3 : 2];
+      const std::string &invCp0       = varnames[has_pressure_var ? 4 : 3];
+      bool im_data1 = md.pim_data_of_variable(plaststrain0) != 0;
+      bool im_data2 = md.pim_data_of_variable(invCp0) != 0;
+      bool fem_data1 = md.pmesh_fem_of_variable(plaststrain0) != 0;
+      bool fem_data2 = md.pmesh_fem_of_variable(invCp0) != 0;
+      GMM_ASSERT1(im_data1 || fem_data1,
+                  "Provided data " << plaststrain0 <<
+                  " should be defined on a im_data or a mesh_fem object");
+      GMM_ASSERT1(im_data2 || fem_data2,
+                  "Provided data " << invCp0 <<
+                  " should be defined on a im_data or a mesh_fem object");
+      if (im_data1 || im_data2) {
+        ga_local_projection(md, mim, von_mises, mf_vm, VM, region);
       } else {
-          const std::string &plaststrain0 = params[3];
-          const std::string &invCp0 = params[4];
-          bool fem_data = (md.pmesh_fem_of_variable(plaststrain0) != 0) &&
-                          (md.pmesh_fem_of_variable(invCp0) != 0);
-          GMM_ASSERT1(fem_data,
-                       "Provided data " << plaststrain0 << " and " <<
-                       invCp0 << " should be defined on a mesh_fem object, "
-                       "for interpolating the computed Von-Mises stresses, "
-                       "otherwise use the option 'assemble' to receive the "
-                       "corresponding assembled vector");
-        ga_interpolation_Lagrange_fem(md, vm, mf_vm, VM, region);
+        ga_interpolation_Lagrange_fem(md, von_mises, mf_vm, VM, region);
       }
 
     } else

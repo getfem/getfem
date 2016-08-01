@@ -282,7 +282,8 @@ bool elastoplasticity_problem::solve(plain_vector &U) {
   
 
   add_small_strain_elastoplasticity_brick
-    (model, mim, "Prandtl Reuss", 0, plastic_variables, plastic_data);
+    (model, mim, "Prandtl Reuss", getfem::DISPLACEMENT_ONLY,
+     plastic_variables, plastic_data);
   
   plain_vector F(nb_dof_rhs * N);
   model.add_initialized_fem_data("NeumannData", mf_rhs, F);
@@ -333,14 +334,16 @@ bool elastoplasticity_problem::solve(plain_vector &U) {
 			   getfem::rselect_linear_solver(model, "superlu"), ls);
  
     getfem::small_strain_elastoplasticity_next_iter
-      (model, mim, "Prandtl Reuss", 0, plastic_variables, plastic_data);
+      (model, mim, "Prandtl Reuss", getfem::DISPLACEMENT_ONLY,
+       plastic_variables, plastic_data);
     
     // Get the solution and save it
     gmm::copy(model.real_variable("u"), U);
     
  
     getfem::compute_small_strain_elastoplasticity_Von_Mises
-      (model, mim, "Prandtl Reuss",0,plastic_variables, plastic_data, mf_vm, VM);
+      (model, mim, "Prandtl Reuss", getfem::DISPLACEMENT_ONLY,
+       plastic_variables, plastic_data, mf_vm, VM);
     
     std::stringstream fname; fname << datafilename << "_" << nb << ".vtk";
 

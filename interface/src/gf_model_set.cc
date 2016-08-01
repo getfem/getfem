@@ -61,10 +61,10 @@ template <typename T> static inline void dummy_func(T &) {}
     struct subc : public sub_gf_md_set {                                \
       virtual void run(getfemint::mexargs_in& in,                       \
                        getfemint::mexargs_out& out,                     \
-                       getfem::model *md)				\
+                       getfem::model *md)                               \
       { dummy_func(in); dummy_func(out); code }                         \
     };                                                                  \
-    psub_command psubc = std::make_shared<subc>();			\
+    psub_command psubc = std::make_shared<subc>();                      \
     psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;         \
     psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;     \
     subc_tab[cmd_normalize(name)] = psubc;                              \
@@ -179,14 +179,14 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        getfem::mesh_im *mim = 0;
        size_type region = size_type(-1);
        if (in.remaining()) {
-	 mexarg_in argin = in.pop();
+         mexarg_in argin = in.pop();
          mim = to_meshim_object(argin);
          region = in.pop().to_integer();
        }
        if (mim)
-	 md->add_multiplier(name, *mf, primalname, *mim, region);
+         md->add_multiplier(name, *mf, primalname, *mim, region);
        else
-	 md->add_multiplier(name, *mf, primalname);
+         md->add_multiplier(name, *mf, primalname);
        workspace().set_dependence(md, mf);
        );
 
@@ -420,7 +420,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        getfem::mesh *tm = extract_mesh_object(in.pop());
        std::string expr = in.pop().to_string();
        add_interpolate_transformation_from_expression(*md, transname, *sm,
-						      *tm, expr);
+                                                      *tm, expr);
        );
 
     /*@SET ('add raytracing transformation', @str transname, @scalar release_distance)
@@ -803,11 +803,11 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        scalar_type theta = scalar_type(0);
        std::string dataname;
        if (in.remaining()) {
-	 mexarg_in argin = in.pop();
-	 if (argin.is_string())
-	   dataname = argin.to_string();
-	 else
-	   theta = argin.to_scalar();
+         mexarg_in argin = in.pop();
+         if (argin.is_string())
+           dataname = argin.to_string();
+         else
+           theta = argin.to_scalar();
        }
        if (in.remaining()) dataname = in.pop().to_string();
 
@@ -974,11 +974,11 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        scalar_type theta = scalar_type(1);
        std::string dataname;
        if (in.remaining()) {
-	 mexarg_in argin = in.pop();
-	 if (argin.is_string())
-	   dataname = argin.to_string();
-	 else
-	   theta = argin.to_scalar();
+         mexarg_in argin = in.pop();
+         if (argin.is_string())
+           dataname = argin.to_string();
+         else
+           theta = argin.to_scalar();
        }
        if (in.remaining()) dataname = in.pop().to_string();
 
@@ -1124,11 +1124,11 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        scalar_type theta = scalar_type(1);
        std::string dataname;
        if (in.remaining()) {
-	 mexarg_in argin = in.pop();
-	 if (argin.is_string())
-	   dataname = argin.to_string();
-	 else
-	   theta = argin.to_scalar();
+         mexarg_in argin = in.pop();
+         if (argin.is_string())
+           dataname = argin.to_string();
+         else
+           theta = argin.to_scalar();
        }
        dataname = in.pop().to_string();
        std::string Hname= in.pop().to_string();
@@ -1739,16 +1739,16 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        std::string ln = varname; // tolerance for the compatibility with 5.0
        filter_lawname(ln);
        if (ln.compare("saintvenant_kirchhoff") == 0 ||
-	   ln.compare("saint_venant_kirchhoff") == 0 ||
-	   ln.compare("generalized_blatz_ko") == 0 ||
-	   ln.compare("ciarlet_geymonat") == 0 ||
-	   ln.compare("incompressible_mooney_rivlin") == 0 ||
-	   ln.compare("compressible_mooney_rivlin") == 0 ||
-	   ln.compare("incompressible_neo_hookean") == 0 ||
-	   ln.compare("compressible_neo_hookean") == 0 ||
-	   ln.compare("compressible_neo_hookean_bonet") == 0 ||
-	   ln.compare("compressible_neo_hookean_ciarlet") == 0) {
-	 std::swap(lawname, varname);
+           ln.compare("saint_venant_kirchhoff") == 0 ||
+           ln.compare("generalized_blatz_ko") == 0 ||
+           ln.compare("ciarlet_geymonat") == 0 ||
+           ln.compare("incompressible_mooney_rivlin") == 0 ||
+           ln.compare("compressible_mooney_rivlin") == 0 ||
+           ln.compare("incompressible_neo_hookean") == 0 ||
+           ln.compare("compressible_neo_hookean") == 0 ||
+           ln.compare("compressible_neo_hookean_bonet") == 0 ||
+           ln.compare("compressible_neo_hookean_ciarlet") == 0) {
+         std::swap(lawname, varname);
        }
 
        size_type ind = config::base_index() +
@@ -1758,33 +1758,34 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        out.pop().from_integer(int(ind));
        );
 
-    /*@SET ind = ('add small strain elastoplasticity brick', @tmim mim,  @str lawname, @bool multiplier_is_var [, @str varnames, ...] [, @str params, ...] [, @str theta = '1' [, @str dt = 'timestep' [, @int region = -1]]])
+    /*@SET ind = ('add small strain elastoplasticity brick', @tmim mim,  @str lawname, @str unknowns_type [, @str varnames, ...] [, @str params, ...] [, @str theta = '1' [, @str dt = 'timestep']] [, @int region = -1])
       Adds a small strain plasticity term to the model `M`. This is the
-      main GetFEM brick for small strain plasticity. `lawname` is the name
-      of an implemented plastic law, `plastic_multiplier_is_var` indicates
-      the choice between a discretization where the plastic multiplier
-      is an unknown of the problem or (return mapping approach) just a data
-      of the model stored for the next iteration. Remember that in both case,
-      a multiplier is stored anyway. `varnames` is a set of variable and
-      data names whose length may depend on the plastic law (at least the
-      displacement, the plastic multiplier and the plastic strain). `params`
-      is a list of expressions for the parameters (at least elastic
-      coefficients and the yield stress). These expressions can be some data
-      names (or even variable names) of the model but can also be any scalar
-      valid expression of the high level assembly langage
-      (such as '1/2', '2+sin(X[0])', '1+Norm(v)' ...). `theta` is the
-      parameter of the `theta`-scheme (generalized trapezoidal rule) used
-      for the plastic strain integration. `theta=1` corresponds to the
-      classical Backward Euler scheme which is first order consistent,
-      `theta=1/2` corresponds to the Crank-Nicolson scheme (trapezoidal rule)
-      which is second order consistent. Any value between 1/2 and 1 should be
-      a valid value. `dt` is the time-step. It can be any expression
-      (data name, constant value ...) but if you want it to be linked to the
-      time step defined in the model (by md.set_time_step(dt)) then simply
-      indicate 'timestep'. The time step can be modified from an iteration
-      to another. `region` is a mesh region.
+      main GetFEM++ brick for small strain plasticity. `lawname` is the name
+      of an implemented plastic law, `unknowns_type` indicates the choice
+      between a discretization where the plastic multiplier is an unknown of
+      the problem or (return mapping approach) just a data of the model
+      stored for the next iteration. Remember that in both cases, a multiplier
+      is stored anyway. `varnames` is a set of variable and data names with
+      length which may depend on the plastic law (at least the displacement,
+      the plastic multiplier and the plastic strain). `params` is a list of
+      expressions for the parameters (at least elastic coefficients and the
+      yield stress). These expressions can be some data names (or even
+      variable names) of the model but can also be any scalar valid expression
+      of the high level assembly language (such as '1/2', '2+sin(X[0])',
+      '1+Norm(v)' ...). The last two parameters optionally provided in
+      `params` are the `theta` parameter of the `theta`-scheme (generalized
+      trapezoidal rule) used for the plastic strain integration and the
+      time-step`dt`. The default value for `theta` if omitted is 1, which
+      corresponds to the classical Backward Euler scheme which is first order
+      consistent. `theta=1/2` corresponds to the Crank-Nicolson scheme
+      (trapezoidal rule) which is second order consistent. Any value
+      between 1/2 and 1 should be a valid value. The default value of `dt` is
+      'timestep' which simply indicates the time step defined in the model
+      (by md.set_time_step(dt)). Alternatively it can be any expression
+      (data name, constant value ...). The time step can be altered from one
+      iteration to the next one. `region` is a mesh region.
 
-      The available plastic laws are:
+      The available plasticity laws are:
 
       - 'Prandtl Reuss' (or 'isotropic perfect plasticity').
         Isotropic elasto-plasticity with no hardening. The variables are the
@@ -1793,15 +1794,17 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         having the same name preceded by 'Previous\_' corresponding to the
         displacement at the previous time step (typically 'u' and 'Previous_u').
         The plastic multiplier should also have two versions (typically 'xi'
-        and 'Previous_xi') the first one being a variable if
-        `plastic_multiplier_is_var=true` and a data if not. The plastic strain
-        should represent a n x n data tensor field stored on mesh_fem or
-        (preferably) on an im_data (corresponding to `mim`). The data are
-        the first Lame coefficient, the second one (shear modulus) and the
-        uniaxial yield stress. A typical call is
+        and 'Previous_xi') the first one being defined as data if
+        `unknowns_type ` is 'DISPLACEMENT_ONLY' or the integer value 0, or as
+        a variable if `unknowns_type` is DISPLACEMENT_AND_PLASTIC_MULTIPLIER
+        or the integer value 1.
+        The plastic strain should represent a n x n data tensor field stored
+        on mesh_fem or (preferably) on an im_data (corresponding to `mim`).
+        The data are the first Lame coefficient, the second one (shear modulus)
+        and the uniaxial yield stress. A typical call is
         MODEL:GET('add small strain elastoplasticity brick', mim, 'Prandtl Reuss', 0, 'u', 'xi', 'Previous_Ep', 'lambda', 'mu', 'sigma_y', '1', 'timestep');
-        IMPORTANT: Note that this law implement the
-        3D expressions. If it is used in 2D, the expressions are just
+        IMPORTANT: Note that this law implements
+        the 3D expressions. If it is used in 2D, the expressions are just
         transposed to the 2D. For the plane strain approximation, see below.
       - "plane strain Prandtl Reuss"
         (or "plane strain isotropic perfect plasticity")
@@ -1809,69 +1812,92 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         approximation. Can only be used in 2D.
       - "Prandtl Reuss linear hardening"
         (or "isotropic plasticity linear hardening").
-	Isotropic elasto-plasticity with linear isotropic and kinematic
-	hardening. An additional variable compared to "Prandtl Reuss" law:
-	the accumulated plastic strain. Similarly to the plastic strain, it
-	is only stored at the end of the time step, so a simple data is
-	required (preferably on an im_data).
-	Two additional parameters: the kinematic hardening modulus and the
-	isotropic one. 3D expressions only. A typical call is
+        Isotropic elasto-plasticity with linear isotropic and kinematic
+        hardening. An additional variable compared to "Prandtl Reuss" law:
+        the accumulated plastic strain. Similarly to the plastic strain, it
+        is only stored at the end of the time step, so a simple data is
+        required (preferably on an im_data).
+        Two additional parameters: the kinematic hardening modulus and the
+        isotropic one. 3D expressions only. A typical call is
         MODEL:GET('add small strain elastoplasticity brick', mim, 'Prandtl Reuss linear hardening', 0, 'u', 'xi', 'Previous_Ep', 'Previous_alpha', 'lambda', 'mu', 'sigma_y', 'H_k', H_i', '1', 'timestep');
       - "plane strain Prandtl Reuss linear hardening"
         (or "plane strain isotropic plasticity linear hardening").
-	The same law as the previous one but adapted to the plane strain
+        The same law as the previous one but adapted to the plane strain
         approximation. Can only be used in 2D.
 
-      See Getfem user documentation for more explanation on the discretization
-      of the plastic flow and on the implemented plastic laws. See also Getfem
-      user documentation on time integration strategy
+      See GetFEM++ user documentation for further explanations on the
+      discretization of the plastic flow and on the implemented plastic laws.
+      See also GetFEM++ user documentation on time integration strategy
       (integration of transient problems).
-      
+
       IMPORTANT : remember that `small_strain_elastoplasticity_next_iter` has
       to be called at the end of each time step, before the next one
       (and before any post-treatment : this sets the value of the plastic
-      strain and plastic multiplier). 
+      strain and plastic multiplier).
       @*/
     sub_command
-      ("add small strain elastoplasticity brick", 7, 30, 0, 1,
+      ("add small strain elastoplasticity brick", 10, 15, 0, 1,
        getfem::mesh_im *mim = to_meshim_object(in.pop());
        std::string lawname = in.pop().to_string();
        filter_lawname(lawname);
-       bool var_multiplier = (in.pop().to_integer(0,1) != 0);
-
        size_type nb_var = 0; size_type nb_params = 0;
        if (lawname.compare("isotropic_perfect_plasticity") == 0 ||
-	   lawname.compare("prandtl_reuss") == 0 ||
-	   lawname.compare("plane_strain_isotropic_perfect_plasticity") == 0 ||
-	   lawname.compare("plane_strain_prandtl_reuss") == 0) {
-	 nb_var = nb_params = 3;
-       } else if (lawname.compare("isotropic_plasticity_linear_hardening") == 0
-		  || lawname.compare("prandtl_reuss_linear_hardening") == 0 ||
-      lawname.compare("plane_strain_isotropic_plasticity_linear_hardening") == 0
-     || lawname.compare("plane_strain_prandtl_reuss_linear_hardening") == 0) {
-	 nb_var = 4; nb_params = 5;
+           lawname.compare("prandtl_reuss") == 0 ||
+           lawname.compare("plane_strain_isotropic_perfect_plasticity") == 0 ||
+           lawname.compare("plane_strain_prandtl_reuss") == 0) {
+         nb_var = nb_params = 3;
+       } else if
+         (lawname.compare("isotropic_plasticity_linear_hardening") == 0 ||
+          lawname.compare("prandtl_reuss_linear_hardening") == 0 ||
+          lawname.compare("plane_strain_isotropic_plasticity_linear_hardening") == 0 ||
+          lawname.compare("plane_strain_prandtl_reuss_linear_hardening") == 0) {
+         nb_var = 4; nb_params = 5;
        } else
-	 GMM_ASSERT1(false,
-		     lawname << " is not an implemented elastoplastic law");
-       
+         THROW_BADARG(lawname << " is not an implemented elastoplastic law");
+
+       getfem::plasticity_unknowns_type unknowns_type(getfem::DISPLACEMENT_ONLY);
+       mexarg_in argin = in.pop();
+       if (argin.is_string()) {
+         std::string opt = argin.to_string();
+         filter_lawname(opt);
+         if (opt.compare("displacement_only") == 0)
+           unknowns_type = getfem::DISPLACEMENT_ONLY;
+         else if (opt.compare("displacement_and_plastic_multiplier") == 0)
+           unknowns_type = getfem::DISPLACEMENT_AND_PLASTIC_MULTIPLIER;
+         else
+           THROW_BADARG("Wrong input");
+       } else if (argin.is_integer())
+         unknowns_type = static_cast<getfem::plasticity_unknowns_type>
+                         (argin.to_integer(0,1));
+
        std::vector<std::string> varnames;
        for (size_type i = 0; i < nb_var; ++i)
-	 varnames.push_back(in.pop().to_string());
+         varnames.push_back(in.pop().to_string());
 
        std::vector<std::string> params;
        for (size_type i = 0; i < nb_params; ++i)
-	 params.push_back(in.pop().to_string());
+         params.push_back(in.pop().to_string());
 
        std::string theta = "1";
-       if (in.remaining()) theta = in.pop().to_string();
        std::string dt = "timestep";
-       if (in.remaining()) dt = in.pop().to_string();
        size_type region = size_type(-1);
-       if (in.remaining()) region = in.pop().to_integer();
+       for (size_type i=0; i < 3 && in.remaining(); ++i) {
+         argin = in.pop();
+         if (argin.is_string()) {
+           if (i==0)      theta = argin.to_string();
+           else if (i==1) dt = argin.to_string();
+           else           THROW_BADARG("Wrong input");
+         } else if (argin.is_integer()) {
+           region = argin.to_integer();
+           GMM_ASSERT1(!in.remaining(), "Wrong input");
+         }
+       }
+       params.push_back(theta);
+       params.push_back(dt);
 
        size_type ind = config::base_index() +
-       getfem::add_small_strain_elastoplasticity_brick
-       (*md, *mim, lawname, var_multiplier, varnames, params, theta, dt,region);
+         getfem::add_small_strain_elastoplasticity_brick
+         (*md, *mim, lawname, unknowns_type, varnames, params, region);
        workspace().set_dependence(md, mim);
        out.pop().from_integer(int(ind));
        );
@@ -1923,57 +1949,88 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        );
 
 
-    /*@SET ind = ('add finite strain elastoplasticity brick', @tmim mim ,@str dispname, @str multname, @str pressname, @str lawname, @str param1, @str param2, @str param3, @str param4, @str param5[, @int region])
-      Add a nonlinear elastoplastic term to the model relatively to the
-      variable `dispname`, in large deformations, for an isotropic material
-      and for a quasistatic model. `multname` is a plastic multiplier name
-      previously defined by the user on a mesh_fem. `pressname` can either
-      be an empty string, resulting in a pure displacements based formulation,
-      or it can contain the name of a user defined scalar fem variable to be
-      used as the pressure multiplier in a mixed displacement-pressure
-      formulation. The fem spaces of `dispname` and `pressname` have to
-      fulfill an appropriate inf-sup condition.
-      The argument `lawname` determines the plasticity model to be used
-      and the subsequent parameters are the specific model parameters.
-      Currently there is only one supported plasticity model defined as
-      "Simo_Miehe" and expects the following specific parameters:
-      `param1` is an expression for the initial bulk modulus K
-      `param2` is an expression for the initial shear modulus G,
-      `param3` is the name of a user predefined function that decribes
-      the yield limit as a function of the hardening variable
-      (both the yield limit and the hardening variable values are
-      assumed to be Frobenius norms of appropriate stress and strain
-      tensors, respectively),
-      `param4` is the name of a (scalar) fem_data or im_data field that holds
-      the plastic strain at the previous time step, and
-      `param5` is the name of a fem_data or im_data field that holds all
-      non-repeated components of the inverse of the plastic right
-      Cauchy-Green tensor at the previous time step
-      (it has to be a 4 element vector for plane strain 2D problems
-      and a 6 element vector for 3D problems).
+    /*@SET ind = ('add finite strain elastoplasticity brick', @tmim mim , @str lawname, @str unknowns_type [, @str varnames, ...] [, @str params, ...] [, @int region = -1])
+      Add a finite strain elastoplasticity brick to the model.
+      For the moment there is only one supported law defined through 
+      `lawname` as "Simo_Miehe".
+      This law supports to possibilities of unknown variables to solve for
+      defined by means of `unknowns_type` set to either
+      'DISPLACEMENT_AND_PLASTIC_MULTIPLIER' (integer value 1) or
+      'DISPLACEMENT_AND_PLASTIC_MULTIPLIER_AND_PRESSURE' (integer value 3)
+      The  "Simo_Miehe" law expects as `varnames` a set of the
+      following names that have to be defined as variables in the model:
+      - the displacement variable which has to be defined as an unknown,
+      - the plastic multiplier which has also defined as an unknown,
+      - optionally the pressure variable for a mixed displacement-pressure
+        formulation for 'DISPLACEMENT_AND_PLASTIC_MULTIPLIER_AND_PRESSURE'
+        as `unknowns_type`,
+      - the name of a (scalar) fem_data or im_data field that holds the
+        plastic strain at the previous time step, and
+      - the name of a fem_data or im_data field that holds all
+        non-repeated components of the inverse of the plastic right
+        Cauchy-Green tensor at the previous time step
+        (it has to be a 4 element vector for plane strain 2D problems
+        and a 6 element vector for 3D problems).
+      The  "Simo_Miehe" law also expects as `params` a set of the
+      following three parameters:
+      - an expression for the initial bulk modulus K,
+      - an expression for the initial shear modulus G,
+      - the name of a user predefined function that decribes
+        the yield limit as a function of the hardening variable
+        (both the yield limit and the hardening variable values are
+         assumed to be Frobenius norms of appropriate stress and strain
+         tensors, respectively),
       As usual, `region` is an optional mesh region on which the term is added.
       If it is not specified, it is added on the whole mesh.
       Return the brick index in the model.@*/
     sub_command
       ("add finite strain elastoplasticity brick", 10, 11, 0, 1,
        getfem::mesh_im *mim = to_meshim_object(in.pop());
-       const std::string dispname = in.pop().to_string();
-       const std::string multname = in.pop().to_string();
-       const std::string pressname = in.pop().to_string();
-       const std::string lawname = in.pop().to_string();
+       std::string lawname = in.pop().to_string();
+       filter_lawname(lawname);
+       size_type nb_var = 0; size_type nb_params = 0;
+       if (lawname.compare("simo_miehe") == 0 ||
+           lawname.compare("eterovic_bathe") == 0) {
+         nb_var = 4;
+         nb_params = 3;
+       } else
+         THROW_BADARG(lawname << " is not an implemented finite strain"
+                              << " elastoplastic law");
+
+       getfem::plasticity_unknowns_type unknowns_type(getfem::DISPLACEMENT_ONLY);
+       mexarg_in argin = in.pop();
+       if (argin.is_string()) {
+         std::string opt = argin.to_string();
+         filter_lawname(opt);
+         if (opt.compare("displacement_and_plastic_multiplier") == 0)
+           unknowns_type = getfem::DISPLACEMENT_AND_PLASTIC_MULTIPLIER;
+         else if (opt.compare("displacement_and_plastic_multiplier"
+                              "_and_pressure") == 0)
+           unknowns_type = getfem::DISPLACEMENT_AND_PLASTIC_MULTIPLIER_AND_PRESSURE;
+         else
+           THROW_BADARG("Wrong input");
+       } else if (argin.is_integer()) {
+         unknowns_type = static_cast<getfem::plasticity_unknowns_type>
+                         (argin.to_integer());
+         GMM_ASSERT1
+           (unknowns_type == getfem::DISPLACEMENT_AND_PLASTIC_MULTIPLIER ||
+            unknowns_type == getfem::DISPLACEMENT_AND_PLASTIC_MULTIPLIER_AND_PRESSURE,
+            "Not valid input for unknowns_type");
+       }
+       if (unknowns_type == getfem::DISPLACEMENT_AND_PLASTIC_MULTIPLIER_AND_PRESSURE)
+         nb_var += 1;
+
+       std::vector<std::string> varnames;
+       for (size_type i = 0; i < nb_var; ++i)
+         varnames.push_back(in.pop().to_string());
+
+       std::vector<std::string> params;
+       for (size_type i = 0; i < nb_params; ++i)
+         params.push_back(in.pop().to_string());
 
        size_type region(-1);
-       std::vector<std::string> params;
-       for (int i=0; i < 5 && in.remaining(); ++i) {
-         mexarg_in argin = in.pop();
-         if (argin.is_string())
-           params.push_back(argin.to_string());
-         else
-           break;
-       }
-
        if (in.remaining()) {
-         mexarg_in argin = in.pop();
+         argin = in.pop();
          if (!argin.is_integer())
            THROW_BADARG("Last optional argument must be an integer");
          region = argin.to_integer();
@@ -1981,8 +2038,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
 
        size_type ind = config::base_index() +
          add_finite_strain_elastoplasticity_brick
-         (*md, *mim, dispname, multname, pressname, lawname, params,
-          region);
+         (*md, *mim, lawname, unknowns_type, varnames, params, region);
 
        workspace().set_dependence(md, mim);
        out.pop().from_integer(int(ind));
@@ -2259,14 +2315,14 @@ void gf_model_set(getfemint::mexargs_in& m_in,
      sub_command
         ("add Mindlin Reissner plate brick", 7, 9, 0, 1,
          getfem::mesh_im *mim = to_meshim_object(in.pop());
-	 getfem::mesh_im *mim_reduced = to_meshim_object(in.pop());
+         getfem::mesh_im *mim_reduced = to_meshim_object(in.pop());
          std::string varname_U = in.pop().to_string();
          std::string varname_theta = in.pop().to_string();
          std::string param_E = in.pop().to_string();
          std::string param_nu = in.pop().to_string();
          std::string param_epsilon = in.pop().to_string();
          std::string param_kapa = in.pop().to_string();
-	 size_type variant = size_type(2);
+         size_type variant = size_type(2);
          if (in.remaining()) variant = in.pop().to_integer();
          size_type region = size_type(-1);
          if (in.remaining()) region = in.pop().to_integer();
@@ -2277,7 +2333,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
          workspace().set_dependence(md, mim);
          out.pop().from_integer(int(ind));
          );
-	
+        
 
 
     /*@SET ind = ('add mass brick', @tmim mim, @str varname[, @str dataexpr_rho[, @int region]])
@@ -2410,8 +2466,8 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        a fixed point strategy can the be used. @*/
      sub_command
        ("disable variable", 1, 1, 0, 0,
-	std::string varname = in.pop().to_string();
-	md->disable_variable(varname);
+        std::string varname = in.pop().to_string();
+        md->disable_variable(varname);
         );
 
 
@@ -2420,7 +2476,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
      sub_command
        ("enable variable", 1, 1, 0, 0,
         std::string varname = in.pop().to_string();
-	md->enable_variable(varname);
+        md->enable_variable(varname);
         );
 
 
@@ -2624,9 +2680,9 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         else THROW_BADARG("Matrix BN2 should be a sparse matrix");
 
         size_type ind;
-	ind = getfem::add_basic_contact_brick_two_deformable_bodies
-	(*md, varname_u1, varname_u2, multname_n, dataname_r, BBN1, BBN2,
-	 dataname_gap, dataname_alpha, augmented_version);
+        ind = getfem::add_basic_contact_brick_two_deformable_bodies
+        (*md, varname_u1, varname_u2, multname_n, dataname_r, BBN1, BBN2,
+         dataname_gap, dataname_alpha, augmented_version);
 
         out.pop().from_integer(int(ind + config::base_index()));
         );
@@ -2917,11 +2973,11 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        scalar_type theta = scalar_type(1);
        std::string dataname_fr;
        if (in.remaining()) {
-	 mexarg_in argin = in.pop();
-	 if (argin.is_string())
-	   dataname_fr = argin.to_string();
-	 else
-	   theta = argin.to_scalar();
+         mexarg_in argin = in.pop();
+         if (argin.is_string())
+           dataname_fr = argin.to_string();
+         else
+           theta = argin.to_scalar();
        }
        if (in.remaining()) dataname_fr = in.pop().to_string();
        std::string dataname_alpha;
@@ -2932,8 +2988,8 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        size_type ind = config::base_index();
        ind += getfem::add_Nitsche_contact_with_rigid_obstacle_brick
        (*md, *mim, varname, Neumannterm, dataname_obs,
-	gamma0name, theta,
-	dataname_fr, dataname_alpha, dataname_wt, region);
+        gamma0name, theta,
+        dataname_fr, dataname_alpha, dataname_wt, region);
        workspace().set_dependence(md, mim);
        out.pop().from_integer(int(ind));
        );
@@ -2985,8 +3041,8 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        ind += getfem::add_Nitsche_contact_with_rigid_obstacle_brick_modified_midpoint
        (*md, *mim, varname, Neumannterm, Neumannterm_wt,
         dataname_obs,
-	gamma0name, theta,
-	dataname_fr, dataname_alpha, dataname_wt, region);
+        gamma0name, theta,
+        dataname_fr, dataname_alpha, dataname_wt, region);
        workspace().set_dependence(md, mim);
        out.pop().from_integer(int(ind));
        );
@@ -3029,11 +3085,11 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        scalar_type theta = scalar_type(1);
        std::string dataname_fr;
        if (in.remaining()) {
-	 mexarg_in argin = in.pop();
-	 if (argin.is_string())
-	   dataname_fr = argin.to_string();
-	 else
-	   theta = argin.to_scalar();
+         mexarg_in argin = in.pop();
+         if (argin.is_string())
+           dataname_fr = argin.to_string();
+         else
+           theta = argin.to_scalar();
        }
        if (in.remaining()) dataname_fr = in.pop().to_string();
        std::string dataname_alpha;
@@ -3047,7 +3103,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        ind += getfem::add_Nitsche_fictitious_domain_contact_brick
        (*md, *mim, varname1, varname2, dataname_d1,
         dataname_d2, gamma0name, theta,
-	dataname_fr, dataname_alpha, dataname_wt1, dataname_wt2);
+        dataname_fr, dataname_alpha, dataname_wt1, dataname_wt2);
        workspace().set_dependence(md, mim);
        out.pop().from_integer(int(ind));
        );
@@ -3094,8 +3150,8 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         bool two_variables = true;
         bool friction = false;
 
-	getfem::mesh_im *mim1 = 0;
-	getfem::mesh_im *mim2 = 0;
+        getfem::mesh_im *mim1 = 0;
+        getfem::mesh_im *mim2 = 0;
         std::string varname_u1;
         std::string varname_u2;
         bool slave1=true; bool slave2=false;

@@ -84,7 +84,8 @@ md.add_fem_data('Previous_xi', mfxi)
 md.add_initialized_data('lambda', Lambda)
 md.add_initialized_data('mu', Mu)
 md.add_initialized_data('sigma_y', sigma_y)
-md.add_small_strain_elastoplasticity_brick(mim, 'plane strain Prandtl Reuss', 0, 'u', 'xi', 'Previous_Ep', 'lambda', 'mu', 'sigma_y')
+md.add_small_strain_elastoplasticity_brick(mim, 'plane strain Prandtl Reuss',
+                                           'displacement only', 'u', 'xi', 'Previous_Ep', 'lambda', 'mu', 'sigma_y')
 md.add_initialized_data('VolumicData', [0,0])
 md.add_source_term_brick(mim, 'u', 'VolumicData')
 md.add_Dirichlet_condition_with_multipliers(mim, 'u', mfu, 1)
@@ -99,11 +100,13 @@ for step in range(0, nbstep):
     md.set_variable('VolumicData', [F[step,0],F[step,1]])
     md.solve('noisy', 'lsearch', 'simplest',  'alpha min', 0.8, 'max_iter', 100, 'max_res', 1e-6)
     U = md.variable('u')
-    md.small_strain_elastoplasticity_next_iter(mim, 'plane strain Prandtl Reuss', 0, 'u', 'xi', 'Previous_Ep', 'lambda', 'mu', 'sigma_y')
+    md.small_strain_elastoplasticity_next_iter\
+      (mim, 'plane strain Prandtl Reuss', 'displacement only', 'u', 'xi', 'Previous_Ep', 'lambda', 'mu', 'sigma_y')
     
-    VM = md.small_strain_elastoplasticity_Von_Mises(mim, mfdu, 'plane strain Prandtl Reuss', 0, 'u', 'xi', 'Previous_Ep', 'lambda', 'mu', 'sigma_y')
+    VM = md.small_strain_elastoplasticity_Von_Mises\
+         (mim, mfdu, 'plane strain Prandtl Reuss', 'displacement only', 'u', 'xi', 'Previous_Ep', 'lambda', 'mu', 'sigma_y')
 
-    ERR=gf.compute_error_estimate(mfu, U, mim)
+    ERR = gf.compute_error_estimate(mfu, U, mim)
 
     if with_graphics:
         fig = getfem_tvtk.Figure()

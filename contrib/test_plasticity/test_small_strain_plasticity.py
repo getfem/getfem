@@ -217,7 +217,8 @@ if (option == 1):
     md.add_fem_data('Previous_xi', mf_xi)
     md.add_initialized_data('theta', [theta])
     md.add_im_data('Epn', mim_data)
-    md.add_small_strain_elastoplasticity_brick(mim, 'Prandtl Reuss', False,
+    md.add_small_strain_elastoplasticity_brick(mim, 'Prandtl Reuss',
+                                               'displacement only',
                                                'u', 'xi', 'Epn', 'lambda',
                                                'mu', 'sigma_y', 'theta',
                                                'timestep');
@@ -232,7 +233,8 @@ if (option == 2):
     md.add_fem_data('Previous_xi', mf_xi)
     md.add_initialized_data('theta', [theta])
     md.add_im_data('Epn', mim_data)
-    md.add_small_strain_elastoplasticity_brick(mim, 'Prandtl Reuss', True,
+    md.add_small_strain_elastoplasticity_brick(mim, 'Prandtl Reuss',
+                                               'displacement and plastic multiplier',
                                                'u', 'xi', 'Epn', 'lambda',
                                                'mu', 'sigma_y', 'theta',
                                                'timestep');
@@ -241,9 +243,6 @@ if (option == 2):
     md.add_initialized_data('theta', [theta])
     md.add_initialized_data('r', [1e-8])
     md.add_im_data('Epn', mim_data)
-
-    # md.add_small_strain_elastoplasticity_brick(mim, 'u', 'Epn', 'lambda', 'mu', 'sigma_y', 'theta', 'dt');
-    # exit(1);
     
     
     if (theta == 1.):
@@ -290,7 +289,8 @@ if (option == 3):
     md.add_initialized_data('Hi', [Hi])
     md.add_small_strain_elastoplasticity_brick(mim,
                                                'Prandtl Reuss linear hardening',
-                                               True, 'u', 'xi', 'Epn', 'alphan',
+                                               'displacement and plastic multiplier',
+                                               'u', 'xi', 'Epn', 'alphan',
                                                'lambda', 'mu', 'sigma_y',
                                                'Hk', 'Hi', 'theta', 'timestep');
   else:
@@ -352,7 +352,8 @@ if (option == 4):
     md.add_initialized_data('Hi', [Hi])
     md.add_small_strain_elastoplasticity_brick(mim,
                                                'Prandtl Reuss linear hardening',
-                                               False, 'u', 'xi', 'Epn','alphan',
+                                               'displacement only',
+                                               'u', 'xi', 'Epn','alphan',
                                                'lambda', 'mu', 'sigma_y',
                                                'Hk', 'Hi', 'theta', 'timestep');
   else:
@@ -480,7 +481,8 @@ for step in range(0, len(t)):
     # Compute new plastic internal variables
     if (option == 1):
       if (use_small_strain_pl_brick):
-        md.small_strain_elastoplasticity_next_iter(mim, 'Prandtl Reuss', False,
+        md.small_strain_elastoplasticity_next_iter(mim, 'Prandtl Reuss',
+                                                   'displacement only',
                                                    'u', 'xi', 'Epn', 'lambda',
                                                    'mu', 'sigma_y', 'theta',
                                                    'timestep');
@@ -496,7 +498,8 @@ for step in range(0, len(t)):
 
     if (option == 2):
       if (use_small_strain_pl_brick):
-        md.small_strain_elastoplasticity_next_iter(mim, 'Prandtl Reuss', True,
+        md.small_strain_elastoplasticity_next_iter(mim, 'Prandtl Reuss',
+                                                   'displacement and plastic multiplier',
                                                    'u', 'xi', 'Epn', 'lambda',
                                                    'mu', 'sigma_y', 'theta',
                                                    'timestep');
@@ -510,7 +513,8 @@ for step in range(0, len(t)):
     if (option == 3):
       if (use_small_strain_pl_brick):
         md.small_strain_elastoplasticity_next_iter
-        (mim,'Prandtl Reuss linear hardening', True, 'u', 'xi', 'Epn', 'alphan',
+        (mim,'Prandtl Reuss linear hardening',
+         'displacement and plastic multiplier', 'u', 'xi', 'Epn', 'alphan',
          'lambda', 'mu', 'sigma_y', 'Hk', 'Hi', 'theta', 'timestep');
       else:
         NewEpn = md.interpolation(Epnp1, mim_data)
@@ -522,7 +526,8 @@ for step in range(0, len(t)):
     if (option == 4):
       if (use_small_strain_pl_brick):
         md.small_strain_elastoplasticity_next_iter
-        (mim,'Prandtl Reuss linear hardening', False, 'u', 'xi', 'Epn','alphan',
+        (mim,'Prandtl Reuss linear hardening',
+         'displacement only', 'u', 'xi', 'Epn','alphan',
          'lambda', 'mu', 'sigma_y', 'Hk', 'Hi', 'theta', 'timestep');
       else:
         NewEpn = md.interpolation(Epnp1, mim_data)

@@ -149,7 +149,7 @@ switch (option)
       set(md, 'add fem data', 'Previous_xi', mf_xi);
       set(md, 'add initialized data', 'theta', [theta]);
       set(md, 'add im data', 'Epn', mim_data);
-      set(md, 'add small strain elastoplasticity brick', mim, 'Prandtl Reuss', false, 'u', 'xi', 'Epn', 'lambda', 'mu', 'sigma_y', 'theta', 'timestep');
+      set(md, 'add small strain elastoplasticity brick', mim, 'Prandtl Reuss', 'displacement only', 'u', 'xi', 'Epn', 'lambda', 'mu', 'sigma_y', 'theta', 'timestep');
     else      
       % Declare that sigma is a data of the system on mf_sigma
       set(md, 'add fem data', 'sigma', mf_sigma);
@@ -165,7 +165,7 @@ switch (option)
       set(md, 'add im data', 'Epn', mim_data);
       % set(md, 'add fem data', 'Epn', mf_sigma);
       
-      set(md, 'add small strain elastoplasticity brick', mim, 'Prandtl Reuss', true, 'u', 'xi', 'Epn', 'lambda', 'mu', 'sigma_y', 'theta', 'timestep');
+      set(md, 'add small strain elastoplasticity brick', mim, 'Prandtl Reuss', 'displacement and plastic multiplier', 'u', 'xi', 'Epn', 'lambda', 'mu', 'sigma_y', 'theta', 'timestep');
     else
       set(md, 'add fem variable', 'xi', mf_xi);
       set(md, 'add initialized data', 'theta', [theta]);
@@ -201,7 +201,7 @@ switch (option)
       set(md, 'add im data', 'alphan', mim_data_scal);
       set(md, 'add initialized data', 'Hk', [Hk]);
       set(md, 'add initialized data', 'Hi', [Hi]);
-      set(md, 'add small strain elastoplasticity brick', mim, 'Prandtl Reuss linear hardening', true, 'u', 'xi', 'Epn', 'alphan', 'lambda', 'mu', 'sigma_y', 'Hk', 'Hi', 'theta', 'timestep');
+      set(md, 'add small strain elastoplasticity brick', mim, 'Prandtl Reuss linear hardening', 'displacement and plastic multiplier', 'u', 'xi', 'Epn', 'alphan', 'lambda', 'mu', 'sigma_y', 'Hk', 'Hi', 'theta', 'timestep');
     else
       set(md, 'add fem variable', 'xi', mf_xi);
       set(md, 'add initialized data', 'theta', [theta]);
@@ -248,7 +248,7 @@ switch (option)
       set(md, 'add im data', 'alphan', mim_data_scal);
       set(md, 'add initialized data', 'Hk', [Hk]);
       set(md, 'add initialized data', 'Hi', [Hi]);
-      set(md, 'add small strain elastoplasticity brick', mim, 'Prandtl Reuss linear hardening', false, 'u', 'xi', 'Epn', 'alphan', 'lambda', 'mu', 'sigma_y', 'Hk', 'Hi', 'theta', 'timestep');
+      set(md, 'add small strain elastoplasticity brick', mim, 'Prandtl Reuss linear hardening', 'displacement only', 'u', 'xi', 'Epn', 'alphan', 'lambda', 'mu', 'sigma_y', 'Hk', 'Hi', 'theta', 'timestep');
     else      
       
       set(md, 'add initialized data', 'theta', [theta]);
@@ -355,7 +355,7 @@ for step=1:size(t,2),
     switch (option)
       case 1
         if (use_small_strain_pl_brick)
-            get(md, 'small strain elastoplasticity next iter', mim, 'Prandtl Reuss', false, 'u', 'xi', 'Epn', 'lambda', 'mu', 'sigma_y', 'theta', 'timestep');
+            get(md, 'small strain elastoplasticity next iter', mim, 'Prandtl Reuss', 'displacement only', 'u', 'xi', 'Epn', 'lambda', 'mu', 'sigma_y', 'theta', 'timestep');
         else
           get(md, 'elastoplasticity next iter', mim, 'u', 'Previous_u', 'VM', 'lambda', 'mu', 'sigma_y', 'sigma');
           plast = get(md, 'compute plastic part', mim, mf_vm, 'u', 'Previous_u', 'VM', 'lambda', 'mu', 'sigma_y', 'sigma');
@@ -364,7 +364,7 @@ for step=1:size(t,2),
         end
       case 2
         if (use_small_strain_pl_brick)
-          get(md, 'small strain elastoplasticity next iter', mim, 'Prandtl Reuss', true, 'u', 'xi', 'Epn', 'lambda', 'mu', 'sigma_y', 'theta', 'timestep');         
+          get(md, 'small strain elastoplasticity next iter', mim, 'Prandtl Reuss', 'displacement and plastic multiplier', 'u', 'xi', 'Epn', 'lambda', 'mu', 'sigma_y', 'theta', 'timestep');         
         else
           NewEpn = get(md, 'interpolation', Epnp1, mim_data);
           set(md, 'variable', 'Epn', NewEpn);
@@ -372,7 +372,7 @@ for step=1:size(t,2),
         end
       case 3
         if (use_small_strain_pl_brick)
-          get(md, 'small strain elastoplasticity next iter', mim, 'Prandtl Reuss linear hardening', true, 'u', 'xi', 'Epn', 'alphan', 'lambda', 'mu', 'sigma_y', 'Hk', 'Hi', 'theta', 'timestep');
+          get(md, 'small strain elastoplasticity next iter', mim, 'Prandtl Reuss linear hardening', 'displacement and plastic multiplier', 'u', 'xi', 'Epn', 'alphan', 'lambda', 'mu', 'sigma_y', 'Hk', 'Hi', 'theta', 'timestep');
           % norm(get(md, 'variable', 'alphan'))
         else
           NewEpn = get(md, 'interpolation', Epnp1, mim_data);
@@ -384,7 +384,7 @@ for step=1:size(t,2),
         end
       case 4
         if (use_small_strain_pl_brick)
-          get(md, 'small strain elastoplasticity next iter', mim, 'Prandtl Reuss linear hardening', false, 'u', 'xi', 'Epn', 'alphan', 'lambda', 'mu', 'sigma_y', 'Hk', 'Hi', 'theta', 'timestep');
+          get(md, 'small strain elastoplasticity next iter', mim, 'Prandtl Reuss linear hardening', 'displacement only', 'u', 'xi', 'Epn', 'alphan', 'lambda', 'mu', 'sigma_y', 'Hk', 'Hi', 'theta', 'timestep');
           % norm(get(md, 'variable', 'alphan'))   
         else
           NewEpn = get(md, 'interpolation', Epnp1, mim_data);

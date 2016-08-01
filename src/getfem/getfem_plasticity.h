@@ -47,38 +47,46 @@
 
 namespace getfem {
 
+  enum plasticity_unknowns_type {
+    DISPLACEMENT_ONLY = 0,
+    DISPLACEMENT_AND_PLASTIC_MULTIPLIER = 1,
+    DISPLACEMENT_AND_PRESSURE = 2,
+    DISPLACEMENT_AND_PLASTIC_MULTIPLIER_AND_PRESSURE = 3
+  };
+
   //=================================================================
   //  Small strain Elastoplasticity Brick
   //=================================================================
 
   /**
      Adds a small strain plasticity term to the model `md`. This is the
-     main GetFEM brick for small strain plasticity. `lawname` is the name
-     of an implemented plastic law, `plastic_multiplier_is_var` indicates
-     the choice between a discretization where the plastic multiplier
-     is an unknown of the problem or (return mapping approach) just a data
-     of the model stored for the next iteration. Remember that in both case,
-     a multiplier is stored anyway. `varnames` is a set of variable and
-     data names whose length may depend on the plastic law (at least the
-     displacement, the plastic multiplier and the plastic strain). `params`
-     is a list of expressions for the parameters (at least elastic
-     coefficients and the yield stress). These expressions can be some data
-     names (or even variable names) of the model but can also be any scalar
-     valid expression of the high level assembly langage
-     (such as "1/2", "2+sin(X[0])", "1+Norm(v)" ...). `theta` is the
-     parameter of the `theta`-scheme (generalized trapezoidal rule) used
-     for the plastic strain integration. `theta=1` corresponds to the
-     classical Backward Euler scheme which is first order consistent,
-     `theta=1/2` corresponds to the Crank-Nicolson scheme (trapezoidal rule)
-     which is second order consistent. Any value between 1/2 and 1 should be
-     a valid value. `dt` is the time-step. It can be any expression
-     (data name, constant value ...) but if you want it to be linked to the
-     time step defined in the model (by md.set_time_step(dt)) then simply
-     indicate 'timestep'. The time step can be modified from an iteration
-     to another. `region` is a mesh region.
-     
-     The available plastic laws are:
-     
+     main GetFEM++ brick for small strain plasticity. `lawname` is the name
+     of an implemented plastic law, `unknowns_type` indicates the choice
+     between a discretization where the plastic multiplier is an unknown of
+     the problem or (return mapping approach) just a data of the model
+     stored for the next iteration. Remember that in both cases, a multiplier
+     is stored anyway. `varnames` is a set of variable and data names with
+     length which may depend on the plastic law (at least the displacement,
+     the plastic multiplier and the plastic strain). `params` is a list of
+     expressions for the parameters (at least elastic coefficients and the
+     yield stress). These expressions can be some data names (or even
+     variable names) of the model but can also be any scalar valid expression
+     of the high level assembly language (such as "1/2", "2+sin(X[0])",
+     "1+Norm(v)" ...). The last two parameters optionally provided in
+     `params` are the `theta` parameter of the `theta`-scheme (generalized 
+     trapezoidal rule) used for the plastic strain integration and the
+     time-step`dt`. The default value for `theta` if omitted is 1, which
+     corresponds to the classical Backward Euler scheme which is first order
+     consistent. `theta=1/2` corresponds to the Crank-Nicolson scheme
+     (trapezoidal rule) which is second order consistent. Any value
+     between 1/2 and 1 should be a valid value. The default value of `dt` is
+     'timestep' which simply indicates the time step defined in the model
+     (by md.set_time_step(dt)). Alternatively it can be any expression
+     (data name, constant value ...). The time step can be altered from one
+     iteration to the next one. `region` is a mesh region.
+
+     The available plasticity laws are:
+
      - "Prandtl Reuss" (or "isotropic perfect plasticity").
        Isotropic elasto-plasticity with no hardening. The variables are the
        displacement, the plastic multiplier and the plastic strain.
@@ -86,13 +94,14 @@ namespace getfem {
        having the same name preceded by "Previous_" corresponding to the
        displacement at the previous time step (typically "u" and "Previous_u").
        The plastic multiplier should also have two versions (typically "xi"
-       and "Previous_xi") the first one being a variable if
-       `plastic_multiplier_is_var=true` and a data if not. The plastic strain
-       should represent a n x n data tensor field stored on mesh_fem or
-       (preferably) on an im_data (corresponding to `mim`). The data are
-       the first Lame coefficient, the second one (shear modulus) and the
-       uniaxial yield stress. IMPORTANT: Note that this law implement the
-       3D expressions. If it is used in 2D, the expressions are just
+       and "Previous_xi") the first one being defined as data if
+       `unknowns_type = DISPLACEMENT_ONLY` or as a variable if
+       `unknowns_type = DISPLACEMENT_AND_PLASTIC_MULTIPLIER`.
+       The plastic strain should represent a n x n data tensor field stored
+       on mesh_fem or (preferably) on an im_data (corresponding to `mim`).
+       The data are the first Lame coefficient, the second one (shear modulus)
+       and the uniaxial yield stress. IMPORTANT: Note that this law implements
+       the 3D expressions. If it is used in 2D, the expressions are just
        transposed to the 2D. For the plane strain approximation, see below.
      - "plane strain Prandtl Reuss"
        (or "plane strain isotropic perfect plasticity")
@@ -112,9 +121,9 @@ namespace getfem {
        The same law as the previous one but adapted to the plane strain
        approximation. Can only be used in 2D.
 
-     See Getfem user documentation for more explanation on the discretization
-     of the plastic flow and on the implemented plastic laws. See also Getfem
-     user documentation on time integration strategy
+     See GetFEM++ user documentation for further explanations on the
+     discretization of the plastic flow and on the implemented plastic laws.
+     See also GetFEM++ user documentation on time integration strategy
      (integration of transient problems).
 
      IMPORTANT : remember that `small_strain_elastoplasticity_next_iter` has
@@ -123,46 +132,43 @@ namespace getfem {
      strain and plastic multiplier).
    */
   size_type add_small_strain_elastoplasticity_brick
-  (model &md, const mesh_im &mim,  std::string lawname,
-   bool plastic_multiplier_is_var,
+  (model &md, const mesh_im &mim,
+   std::string lawname, plasticity_unknowns_type unknowns_type,
    const std::vector<std::string> &varnames,
    const std::vector<std::string> &params,
-   const std::string &theta = "1", const std::string &dt = "timestep",
    size_type region = size_type(-1));
   
   /** Function that allows to pass from a time step to another for the
       small strain plastic brick. The parameters have to be exactly the
-      same than the one of `add_small_strain_elastoplasticity_brick`,
-      so see the documentation of this function for the explanations.
-      Basically, this brick computes the plastic strain
-      and the plastic multiplier and store them for the next step.
-      Additionnaly, it copies the computed displacement to the data
-      that stores the displacement of the previous time step (typically
-      "u" to "Previous_u"). It has to be called before any use of
+      same as the ones of the `add_small_strain_elastoplasticity_brick`,
+      so see the documentation of this function for any explanations.
+      Basically, this brick computes the plastic strain and the plastic
+      multiplier and stores them for the next step. Additionaly, it copies
+      the computed displacement to the data that stores the displacement
+      of the previous time step (typically "u" to "Previous_u").
+      It has to be called before any use of
       `compute_small_strain_elastoplasticity_Von_Mises`.
    */
   void small_strain_elastoplasticity_next_iter
-  (model &md, const mesh_im &mim,  std::string lawname,
-   bool with_plastic_multiplier, 
+  (model &md, const mesh_im &mim,
+   std::string lawname, plasticity_unknowns_type unknowns_type,
    const std::vector<std::string> &varnames,
    const std::vector<std::string> &params,
-   const std::string &theta = "1", const std::string &dt = "timestep",
    size_type region = size_type(-1)) ;
 
-  /** This function computes on `mf_vm` the Von Mises stress with respect to
-      a finite strain elastoplasticity term and put the result into `VM`.
-      All the remaining parameters have to be exactly the same than for
-      `add_small_strain_elastoplasticity_brick`.
+  /** This function computes the Von Mises stress field with respect to
+      a small strain elastoplasticity term, approximated on `mf_vm`,
+      and stores the result into `VM`.  All other parameters have to be
+      exactly the same as for `add_small_strain_elastoplasticity_brick`.
       Remember that `small_strain_elastoplasticity_next_iter` has to be called
       before any call of this function.
    */
   void compute_small_strain_elastoplasticity_Von_Mises
-  (model &md, const mesh_im &mim,  std::string lawname,
-   bool with_plastic_multiplier, 
+  (model &md, const mesh_im &mim,
+   std::string lawname, plasticity_unknowns_type unknowns_type,
    const std::vector<std::string> &varnames,
    const std::vector<std::string> &params,
-   const mesh_fem &mf_vm, model_real_plain_vector &VM, 
-   const std::string &theta = "1", const std::string &dt = "timestep",
+   const mesh_fem &mf_vm, model_real_plain_vector &VM,
    size_type region = size_type(-1));
 
 
@@ -382,60 +388,73 @@ namespace getfem {
       (name, sigma_ref, alpha*sigma_ref/E, n, frobenius);
   }
 
-  /** Add a finite strain elastoplasticity brick to the model
-      with respect to the displacement variable `dispname` and the
-      plastic multiplier `multname`. If `pressname` is not empty,
-      a mixed displacement-pressure formulation is defined.
+  /** Add a finite strain elastoplasticity brick to the model.
       For the moment there is only one supported law defined through 
-      `lawname` as "Simo_Miehe" and expects as `params` a vector of
-      the following five parameters:
-      1) an expression for the initial bulk modulus K,
-      2) an expression for the initial shear modulus G,
-      3) the name of a user predefined function that decribes
-         the yield limit as a function of the hardening variable
-         (both the yield limit and the hardening variable values are
-          assumed to be Frobenius norms of appropriate stress and strain
-          tensors, respectively),
-      4) the name of a (scalar) fem_data or im_data field that holds the
-         plastic strain at the previous time step, and
-      5) the name of a fem_data or im_data field that holds all
-         non-repeated components of the inverse of the plastic right
-         Cauchy-Green tensor at the previous time step
-         (it has to be a 4 element vector for plane strain 2D problems
-         and a 6 element vector for 3D problems).
+      `lawname` as "Simo_Miehe".
+      This law supports to possibilities of unknown variables to solve for
+      defined by means of `unknowns_type` set to either
+      `DISPLACEMENT_AND_PLASTIC_MULTIPLIER` or
+      `DISPLACEMENT_AND_PLASTIC_MULTIPLIER_AND_PRESSURE`
+      The  "Simo_Miehe" law expects as `varnames` a vector of
+      the following names that have to be defined as variables in the
+      model:
+      - the displacement variable which has to be defined as an unknown,
+      - the plastic multiplier which has also defined as an unknown,
+      - optionally the pressure variable for a mixed displacement-pressure
+        formulation for `DISPLACEMENT_AND_PLASTIC_MULTIPLIER_AND_PRESSURE`
+        as `unknowns_type`,
+      - the name of a (scalar) fem_data or im_data field that holds the
+        plastic strain at the previous time step, and
+      - the name of a fem_data or im_data field that holds all
+        non-repeated components of the inverse of the plastic right
+        Cauchy-Green tensor at the previous time step
+        (it has to be a 4 element vector for plane strain 2D problems
+        and a 6 element vector for 3D problems).
+      The  "Simo_Miehe" law also expects as `params` a vector of
+      the following three parameters:
+      - an expression for the initial bulk modulus K,
+      - an expression for the initial shear modulus G,
+      - the name of a user predefined function that decribes
+        the yield limit as a function of the hardening variable
+        (both the yield limit and the hardening variable values are
+         assumed to be Frobenius norms of appropriate stress and strain
+         tensors, respectively),
   */
   size_type add_finite_strain_elastoplasticity_brick
-  (model &md, const mesh_im &mim, const std::string &dispname,
-   const std::string &multname, const std::string &pressname,
-   const std::string &lawname, const std::vector<std::string> &params,
+  (model &md, const mesh_im &mim,
+   std::string lawname, plasticity_unknowns_type unknowns_type,
+   const std::vector<std::string> &varnames,
+   const std::vector<std::string> &params,
    size_type region = size_type(-1));
 
   /** This function permits to update the state variables for a finite
       strain elastoplasticity brick, based on the current displacements
-      field defined in `dispname` and the plastic multiplier field
-      defined in `multname`. `pressname` is either empty or the name of
-      the pressure field in a mixed displacement-pressure formulation.
-      `lawname` defines the plasticity model and `params` is a vector
-      that contains both material parameters and the names of the state
-      variables to be updated. Currently only one plasticity model is
-      supported, defined as "Simo_Miehe".
+      and plastic multiplier fields (optionally also the the pressure field
+      in the case of a mixed displacement-pressure formulation).
+      The parameters have to be exactly the same as the ones of the
+     `add_finite_strain_elastoplasticity_brick`, so see the documentation
+      of this function for any explanations.
+      Basically, `varnames` contains both the names of the input fields as
+      well as the names of the fields to be updated.
   */
   void finite_strain_elastoplasticity_next_iter
-  (model &md, const mesh_im &mim, const std::string &dispname,
-   const std::string &multname, const std::string &pressname,
-   const std::string &lawname, const std::vector<std::string> &params,
+  (model &md, const mesh_im &mim,
+   std::string lawname, plasticity_unknowns_type unknowns_type,
+   const std::vector<std::string> &varnames,
+   const std::vector<std::string> &params,
    size_type region = size_type(-1));
 
-  /** This function computes on mf_vm the Von Mises stress with respect to
-      a finite strain elastoplasticity term.
-      If `assemble` = 'true', the Von-Mises stress field is assembled on
-      mf_vm, otherwise for the default value `assemble` = 'false', the field
-      is simply interpolated.*/
+  /** This function computes the Von Mises stress field with respect to
+      a finite strain elastoplasticity term, approximated on `mf_vm`,
+      and stores the result into `VM`.  All other parameters have to be
+      exactly the same as for `add_finite_strain_elastoplasticity_brick`.
+   */
   void compute_finite_strain_elastoplasticity_Von_Mises
-  (model &md, const mesh_im &mim, const std::string &dispname,
-   const std::string &multname, const std::string &pressname,
-   const std::string &lawname, const std::vector<std::string> &params,
-   const mesh_fem &mf_vm, model_real_plain_vector &VM, bool assemble=false,
+  (model &md, const mesh_im &mim,
+   std::string lawname, plasticity_unknowns_type unknowns_type,
+   const std::vector<std::string> &varnames,
+   const std::vector<std::string> &params,
+   const mesh_fem &mf_vm, model_real_plain_vector &VM,
    size_type region = size_type(-1));
 
 

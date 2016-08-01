@@ -38,22 +38,22 @@ using namespace getfemint;
 
 #define RETURN_SPARSE(realmeth, cplxmeth)                            \
   if (!md->is_complex()) {                                           \
-    gf_real_sparse_by_col M(gmm::mat_nrows(md->realmeth),	     \
-                            gmm::mat_ncols(md->realmeth));	     \
-    gmm::copy(md->realmeth, M);					     \
+    gf_real_sparse_by_col M(gmm::mat_nrows(md->realmeth),            \
+                            gmm::mat_ncols(md->realmeth));           \
+    gmm::copy(md->realmeth, M);                                      \
     out.pop().from_sparse(M);                                        \
   } else {                                                           \
-    gf_cplx_sparse_by_col M(gmm::mat_nrows(md->cplxmeth),	     \
-                            gmm::mat_ncols(md->cplxmeth));	     \
-    gmm::copy(md->cplxmeth, M);					     \
+    gf_cplx_sparse_by_col M(gmm::mat_nrows(md->cplxmeth),            \
+                            gmm::mat_ncols(md->cplxmeth));           \
+    gmm::copy(md->cplxmeth, M);                                      \
     out.pop().from_sparse(M);                                        \
   }
 
 #define RETURN_VECTOR(realmeth, cplxmeth)                      \
   if (!md->is_complex()) {                                     \
-    out.pop().from_dcvector(md->realmeth);		       \
+    out.pop().from_dcvector(md->realmeth);                     \
   } else {                                                     \
-    out.pop().from_dcvector(md->cplxmeth);		       \
+    out.pop().from_dcvector(md->cplxmeth);                     \
   }
 
 /*@GFDOC
@@ -79,10 +79,10 @@ template <typename T> static inline void dummy_func(T &) {}
     struct subc : public sub_gf_md_get {                                \
       virtual void run(getfemint::mexargs_in& in,                       \
                        getfemint::mexargs_out& out,                     \
-                       getfem::model *md)				\
+                       getfem::model *md)                               \
       { dummy_func(in); dummy_func(out);  dummy_func(md); code }        \
     };                                                                  \
-    psub_command psubc = std::make_shared<subc>();			\
+    psub_command psubc = std::make_shared<subc>();                      \
     psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;         \
     psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;     \
     subc_tab[cmd_normalize(name)] = psubc;                              \
@@ -185,18 +185,18 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        size_type msz = 0;
        /* Rough estimate. Quite optimistic with sparse matrices! */
        if (!md->is_complex()) {
-	 size_type szd = sizeof(double);
-	 size_type szs = sizeof(size_type);
-	 msz = gmm::nnz(md->real_tangent_matrix()) * (szd + szs)
-	   + gmm::vect_size(md->real_rhs()) *  szd * 3
-	   + sizeof(getfem::model);
+         size_type szd = sizeof(double);
+         size_type szs = sizeof(size_type);
+         msz = gmm::nnz(md->real_tangent_matrix()) * (szd + szs)
+           + gmm::vect_size(md->real_rhs()) *  szd * 3
+           + sizeof(getfem::model);
        }
        else {
-	 size_type szc = sizeof(std::complex<double>);
-	 size_type szs = sizeof(size_type);
-	 msz = gmm::nnz(md->complex_tangent_matrix()) * (szc + szs)
-	   + gmm::vect_size(md->complex_rhs()) *  szc * 3
-	   + sizeof(getfem::model);
+         size_type szc = sizeof(std::complex<double>);
+         size_type szs = sizeof(size_type);
+         msz = gmm::nnz(md->complex_tangent_matrix()) * (szc + szs)
+           + gmm::vect_size(md->complex_rhs()) *  szc * 3
+           + sizeof(getfem::model);
        }
        out.pop().from_integer(int(msz));
        );
@@ -253,7 +253,7 @@ void gf_model_get(getfemint::mexargs_in& m_in,
          size_type rg = in.remaining() ? in.pop().to_integer() : size_type(-1);
          getfem::ga_interpolation_Lagrange_fem(*md, expr, *mf, result, rg);
        } else if (is_meshimdata_object(in.front())) {
-	   getfem::im_data *mimd = to_meshimdata_object(in.pop());
+         getfem::im_data *mimd = to_meshimdata_object(in.pop());
          size_type rg = in.remaining() ? in.pop().to_integer() : size_type(-1);
          getfem::ga_interpolation_im_data(*md, expr, *mimd, result, rg);
        } else {
@@ -308,10 +308,10 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        const getfem::mesh_fem &mf = md->mesh_fem_of_variable(name);
        id_type id = workspace().object(&mf);
        if (id == id_type(-1)) {
-	 id = store_meshfem_object(std::shared_ptr<getfem::mesh_fem>
-				   (std::shared_ptr<getfem::mesh_fem>(),
-				    const_cast<getfem::mesh_fem *>(&mf)));
-	 workspace().set_dependence(&mf, md);
+         id = store_meshfem_object(std::shared_ptr<getfem::mesh_fem>
+                                   (std::shared_ptr<getfem::mesh_fem>(),
+                                    const_cast<getfem::mesh_fem *>(&mf)));
+         workspace().set_dependence(&mf, md);
        }
        out.pop().from_object_id(id, MESHFEM_CLASS_ID);
        );
@@ -535,60 +535,60 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        if (in.remaining()) scalef = in.pop().to_scalar();
 
        if (md->is_linear()) {
-	 GMM_WARNING1("Problem is linear, the test is not relevant");
+         GMM_WARNING1("Problem is linear, the test is not relevant");
        } else {
-	 if (md->is_complex()) {
-	   std::vector<complex_type> U(nbdof);
-	   std::vector<complex_type> dU(nbdof);
-	   std::vector<complex_type> DIR(nbdof);
-	   std::vector<complex_type> D1(nbdof);
-	   std::vector<complex_type> D2(nbdof);
+         if (md->is_complex()) {
+           std::vector<complex_type> U(nbdof);
+           std::vector<complex_type> dU(nbdof);
+           std::vector<complex_type> DIR(nbdof);
+           std::vector<complex_type> D1(nbdof);
+           std::vector<complex_type> D2(nbdof);
            md->from_variables(U);
-	   for (size_type i = 0; i < NN; ++i) {
-	     gmm::fill_random(dU); gmm::scale(dU, complex_type(scalef));
+           for (size_type i = 0; i < NN; ++i) {
+             gmm::fill_random(dU); gmm::scale(dU, complex_type(scalef));
              gmm::add(U, dU);
-	     gmm::fill_random(DIR);
-	     md->to_variables(dU);
-	     md->assembly(getfem::model::BUILD_ALL);
-	     gmm::copy(md->complex_rhs(), D2);
-	     gmm::mult(md->complex_tangent_matrix(), DIR, D1);
-	     gmm::add(gmm::scaled(DIR, complex_type(EPS)), dU);
-	     md->to_variables(dU);
-	     md->assembly(getfem::model::BUILD_RHS);
-	     gmm::add(gmm::scaled(md->complex_rhs(),
-				  -complex_type(1)), D2);
-	     gmm::scale(D2, complex_type(1)/complex_type(EPS));
-	     scalar_type err = gmm::vect_dist2(D1, D2);
-	     cout << "Error at step " << i << " : " << err << endl;
-	     errmax = std::max(err, errmax);
-	   }
+             gmm::fill_random(DIR);
+             md->to_variables(dU);
+             md->assembly(getfem::model::BUILD_ALL);
+             gmm::copy(md->complex_rhs(), D2);
+             gmm::mult(md->complex_tangent_matrix(), DIR, D1);
+             gmm::add(gmm::scaled(DIR, complex_type(EPS)), dU);
+             md->to_variables(dU);
+             md->assembly(getfem::model::BUILD_RHS);
+             gmm::add(gmm::scaled(md->complex_rhs(),
+                                  -complex_type(1)), D2);
+             gmm::scale(D2, complex_type(1)/complex_type(EPS));
+             scalar_type err = gmm::vect_dist2(D1, D2);
+             cout << "Error at step " << i << " : " << err << endl;
+             errmax = std::max(err, errmax);
+           }
            md->to_variables(U);
-	 } else {
-	   std::vector<scalar_type> U(nbdof);
-	   std::vector<scalar_type> dU(nbdof);
-	   std::vector<scalar_type> DIR(nbdof);
-	   std::vector<scalar_type> D1(nbdof);
-	   std::vector<scalar_type> D2(nbdof);
+         } else {
+           std::vector<scalar_type> U(nbdof);
+           std::vector<scalar_type> dU(nbdof);
+           std::vector<scalar_type> DIR(nbdof);
+           std::vector<scalar_type> D1(nbdof);
+           std::vector<scalar_type> D2(nbdof);
            md->from_variables(U);
-	   for (size_type i = 0; i < NN; ++i) {
-	     gmm::fill_random(dU); gmm::scale(dU, scalef);
+           for (size_type i = 0; i < NN; ++i) {
+             gmm::fill_random(dU); gmm::scale(dU, scalef);
              gmm::add(U, dU);
-	     gmm::fill_random(DIR);
-	     md->to_variables(dU);
-	     md->assembly(getfem::model::BUILD_ALL);
-	     gmm::copy(md->real_rhs(), D2);
-	     gmm::mult(md->real_tangent_matrix(), DIR, D1);
-	     gmm::add(gmm::scaled(DIR, EPS), dU);
-	     md->to_variables(dU);
-	     md->assembly(getfem::model::BUILD_RHS);
-	     gmm::add(gmm::scaled(md->real_rhs(),-scalar_type(1)), D2);
-	     gmm::scale(D2, scalar_type(1)/EPS);
-	     scalar_type err = gmm::vect_dist2(D1, D2);
-	     cout << "Error at step " << i << " : " << err << endl;
-	     errmax = std::max(err, errmax);
-	   }
+             gmm::fill_random(DIR);
+             md->to_variables(dU);
+             md->assembly(getfem::model::BUILD_ALL);
+             gmm::copy(md->real_rhs(), D2);
+             gmm::mult(md->real_tangent_matrix(), DIR, D1);
+             gmm::add(gmm::scaled(DIR, EPS), dU);
+             md->to_variables(dU);
+             md->assembly(getfem::model::BUILD_RHS);
+             gmm::add(gmm::scaled(md->real_rhs(),-scalar_type(1)), D2);
+             gmm::scale(D2, scalar_type(1)/EPS);
+             scalar_type err = gmm::vect_dist2(D1, D2);
+             cout << "Error at step " << i << " : " << err << endl;
+             errmax = std::max(err, errmax);
+           }
            md->to_variables(U);
-	 }
+         }
        }
        out.pop().from_scalar(errmax);
        );
@@ -627,63 +627,63 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        if (in.remaining()) scalef = in.pop().to_scalar();
 
        if (md->is_linear()) {
-	 GMM_WARNING1("Problem is linear, the test is not relevant");
+         GMM_WARNING1("Problem is linear, the test is not relevant");
        } else {
-	 if (md->is_complex()) {
-	   std::vector<complex_type> U2(nbdof2);
-	   std::vector<complex_type> dU2(nbdof2);
-	   std::vector<complex_type> DIR2(nbdof2);
-	   std::vector<complex_type> D1(nbdof1);
-	   std::vector<complex_type> D2(nbdof1);
+         if (md->is_complex()) {
+           std::vector<complex_type> U2(nbdof2);
+           std::vector<complex_type> dU2(nbdof2);
+           std::vector<complex_type> DIR2(nbdof2);
+           std::vector<complex_type> D1(nbdof1);
+           std::vector<complex_type> D2(nbdof1);
            gmm::copy(md->complex_variable(varname2), U2);
-	   for (size_type i = 0; i < NN; ++i) {
-	     gmm::fill_random(dU2); gmm::scale(dU2, complex_type(scalef));
+           for (size_type i = 0; i < NN; ++i) {
+             gmm::fill_random(dU2); gmm::scale(dU2, complex_type(scalef));
              gmm::add(U2, dU2);
              gmm::copy(dU2, md->set_complex_variable(varname2));
-	     gmm::fill_random(DIR2);
-	     md->assembly(getfem::model::BUILD_ALL);
-	     gmm::copy(gmm::sub_vector(md->complex_rhs(), I1), D2);
-	     gmm::mult(gmm::sub_matrix(md->complex_tangent_matrix(),
+             gmm::fill_random(DIR2);
+             md->assembly(getfem::model::BUILD_ALL);
+             gmm::copy(gmm::sub_vector(md->complex_rhs(), I1), D2);
+             gmm::mult(gmm::sub_matrix(md->complex_tangent_matrix(),
                                        I1, I2), DIR2, D1);
-	     gmm::add(gmm::scaled(DIR2, complex_type(EPS)), dU2);
-	     gmm::copy(dU2, md->set_complex_variable(varname2));
-	     md->assembly(getfem::model::BUILD_RHS);
-	     gmm::add(gmm::scaled(gmm::sub_vector(md->complex_rhs(),
+             gmm::add(gmm::scaled(DIR2, complex_type(EPS)), dU2);
+             gmm::copy(dU2, md->set_complex_variable(varname2));
+             md->assembly(getfem::model::BUILD_RHS);
+             gmm::add(gmm::scaled(gmm::sub_vector(md->complex_rhs(),
                                                   I1), complex_type(-1)), D2);
-	     gmm::scale(D2, complex_type(1)/complex_type(EPS));
-	     scalar_type err = gmm::vect_dist2(D1, D2);
-	     cout << "Error at step " << i << " : " << err << endl;
-	     errmax = std::max(err, errmax);
-	   }
+             gmm::scale(D2, complex_type(1)/complex_type(EPS));
+             scalar_type err = gmm::vect_dist2(D1, D2);
+             cout << "Error at step " << i << " : " << err << endl;
+             errmax = std::max(err, errmax);
+           }
            gmm::copy(U2, md->set_complex_variable(varname2));
-	 } else {
-	   std::vector<scalar_type> U2(nbdof2);
-	   std::vector<scalar_type> dU2(nbdof2);
-	   std::vector<scalar_type> DIR2(nbdof2);
-	   std::vector<scalar_type> D1(nbdof1);
-	   std::vector<scalar_type> D2(nbdof1);
+         } else {
+           std::vector<scalar_type> U2(nbdof2);
+           std::vector<scalar_type> dU2(nbdof2);
+           std::vector<scalar_type> DIR2(nbdof2);
+           std::vector<scalar_type> D1(nbdof1);
+           std::vector<scalar_type> D2(nbdof1);
            gmm::copy(md->real_variable(varname2), U2);
-	   for (size_type i = 0; i < NN; ++i) {
-	     gmm::fill_random(dU2); gmm::scale(dU2, scalef);
+           for (size_type i = 0; i < NN; ++i) {
+             gmm::fill_random(dU2); gmm::scale(dU2, scalef);
              gmm::add(U2, dU2);
              gmm::copy(dU2, md->set_real_variable(varname2));
-	     gmm::fill_random(DIR2);
-	     md->assembly(getfem::model::BUILD_ALL);
-	     gmm::copy(gmm::sub_vector(md->real_rhs(), I1), D2);
-	     gmm::mult(gmm::sub_matrix(md->real_tangent_matrix(),
+             gmm::fill_random(DIR2);
+             md->assembly(getfem::model::BUILD_ALL);
+             gmm::copy(gmm::sub_vector(md->real_rhs(), I1), D2);
+             gmm::mult(gmm::sub_matrix(md->real_tangent_matrix(),
                                        I1, I2), DIR2, D1);
-	     gmm::add(gmm::scaled(DIR2, scalar_type(EPS)), dU2);
-	     gmm::copy(dU2, md->set_real_variable(varname2));
-	     md->assembly(getfem::model::BUILD_RHS);
-	     gmm::add(gmm::scaled(gmm::sub_vector(md->real_rhs(),
+             gmm::add(gmm::scaled(DIR2, scalar_type(EPS)), dU2);
+             gmm::copy(dU2, md->set_real_variable(varname2));
+             md->assembly(getfem::model::BUILD_RHS);
+             gmm::add(gmm::scaled(gmm::sub_vector(md->real_rhs(),
                                                   I1), scalar_type(-1)), D2);
-	     gmm::scale(D2, scalar_type(1)/EPS);
-	     scalar_type err = gmm::vect_dist2(D1, D2);
-	     cout << "Error at step " << i << " : " << err << endl;
-	     errmax = std::max(err, errmax);
-	   }
+             gmm::scale(D2, scalar_type(1)/EPS);
+             scalar_type err = gmm::vect_dist2(D1, D2);
+             cout << "Error at step " << i << " : " << err << endl;
+             errmax = std::max(err, errmax);
+           }
            gmm::copy(U2, md->set_real_variable(varname2));
-	 }
+         }
        }
        out.pop().from_scalar(errmax);
        );
@@ -823,16 +823,16 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        std::string ln = varname; // tolerance for the compatibility with 5.0
        filter_lawname(ln);
        if (ln.compare("saintvenant_kirchhoff") == 0 ||
-	   ln.compare("saint_venant_kirchhoff") == 0 ||
-	   ln.compare("generalized_blatz_ko") == 0 ||
-	   ln.compare("ciarlet_geymonat") == 0 ||
-	   ln.compare("incompressible_mooney_rivlin") == 0 ||
-	   ln.compare("compressible_mooney_rivlin") == 0 ||
-	   ln.compare("incompressible_neo_hookean") == 0 ||
-	   ln.compare("compressible_neo_hookean") == 0 ||
-	   ln.compare("compressible_neo_hookean_bonet") == 0 ||
-	   ln.compare("compressible_neo_hookean_ciarlet") == 0) {
-	 std::swap(lawname, varname);
+           ln.compare("saint_venant_kirchhoff") == 0 ||
+           ln.compare("generalized_blatz_ko") == 0 ||
+           ln.compare("ciarlet_geymonat") == 0 ||
+           ln.compare("incompressible_mooney_rivlin") == 0 ||
+           ln.compare("compressible_mooney_rivlin") == 0 ||
+           ln.compare("incompressible_neo_hookean") == 0 ||
+           ln.compare("compressible_neo_hookean") == 0 ||
+           ln.compare("compressible_neo_hookean_bonet") == 0 ||
+           ln.compare("compressible_neo_hookean_ciarlet") == 0) {
+         std::swap(lawname, varname);
        }
 
        getfem::model_real_plain_vector VMM(mf->nb_dof());
@@ -900,110 +900,155 @@ void gf_model_get(getfemint::mexargs_in& m_in,
         datalambda, datamu, datathreshold, datasigma);
        );
 
-    /*@GET ('small strain elastoplasticity next iter', @tmim mim,  @str lawname, @bool multiplier_is_var [, @str varnames, ...] [, @str params, ...] [, @str theta = '1' [, @str dt  = 'timestep' [, @int region = -1]]])
+    /*@GET ('small strain elastoplasticity next iter', @tmim mim,  @str lawname, @str unknowns_type [, @str varnames, ...] [, @str params, ...] [, @str theta = '1' [, @str dt = 'timestep']] [, @int region = -1])
       Function that allows to pass from a time step to another for the
       small strain plastic brick. The parameters have to be exactly the
       same than the one of `add_small_strain_elastoplasticity_brick`,
       so see the documentation of this function for the explanations.
       Basically, this brick computes the plastic strain
-      and the plastic multiplier and store them for the next step.
-      Additionnaly, it copies the computed displacement to the data
+      and the plastic multiplier and stores them for the next step.
+      Additionaly, it copies the computed displacement to the data
       that stores the displacement of the previous time step (typically
       'u' to 'Previous_u'). It has to be called before any use of
       `compute_small_strain_elastoplasticity_Von_Mises`.
       @*/
     sub_command
-      ("small strain elastoplasticity next iter", 7, 30, 0, 0,
+      ("small strain elastoplasticity next iter", 10, 15, 0, 0,
        getfem::mesh_im *mim = to_meshim_object(in.pop());
        std::string lawname = in.pop().to_string();
        filter_lawname(lawname);
-       bool var_multiplier = (in.pop().to_integer(0,1) != 0);
-
        size_type nb_var = 0; size_type nb_params = 0;
        if (lawname.compare("isotropic_perfect_plasticity") == 0 ||
-	   lawname.compare("prandtl_reuss") == 0 ||
-	   lawname.compare("plane_strain_isotropic_perfect_plasticity") == 0 ||
-	   lawname.compare("plane_strain_prandtl_reuss") == 0) {
-	 nb_var = nb_params = 3;
-       } else if (lawname.compare("isotropic_plasticity_linear_hardening") == 0
-		  || lawname.compare("prandtl_reuss_linear_hardening") == 0 ||
-      lawname.compare("plane_strain_isotropic_plasticity_linear_hardening") == 0
-     || lawname.compare("plane_strain_prandtl_reuss_linear_hardening") == 0) {
-	 nb_var = 4; nb_params = 5;
+           lawname.compare("prandtl_reuss") == 0 ||
+           lawname.compare("plane_strain_isotropic_perfect_plasticity") == 0 ||
+           lawname.compare("plane_strain_prandtl_reuss") == 0) {
+         nb_var = nb_params = 3;
+       } else if
+         (lawname.compare("isotropic_plasticity_linear_hardening") == 0 ||
+          lawname.compare("prandtl_reuss_linear_hardening") == 0 ||
+          lawname.compare("plane_strain_isotropic_plasticity_linear_hardening") == 0 ||
+          lawname.compare("plane_strain_prandtl_reuss_linear_hardening") == 0) {
+         nb_var = 4; nb_params = 5;
        } else
-	 GMM_ASSERT1(false,
-		     lawname << " is not an implemented elastoplastic law");
-       
+         THROW_BADARG(lawname << " is not an implemented elastoplastic law");
+
+       getfem::plasticity_unknowns_type unknowns_type(getfem::DISPLACEMENT_ONLY);
+       mexarg_in argin = in.pop();
+       if (argin.is_string()) {
+         std::string opt = argin.to_string();
+         filter_lawname(opt);
+         if (opt.compare("displacement_only") == 0)
+           unknowns_type = getfem::DISPLACEMENT_ONLY;
+         else if (opt.compare("displacement_and_plastic_multiplier") == 0)
+           unknowns_type = getfem::DISPLACEMENT_AND_PLASTIC_MULTIPLIER;
+         else
+           THROW_BADARG("Wrong input");
+       } else if (argin.is_integer())
+         unknowns_type = static_cast<getfem::plasticity_unknowns_type>
+                         (argin.to_integer(0,1));
+
        std::vector<std::string> varnames;
        for (size_type i = 0; i < nb_var; ++i)
-	 varnames.push_back(in.pop().to_string());
+         varnames.push_back(in.pop().to_string());
 
        std::vector<std::string> params;
        for (size_type i = 0; i < nb_params; ++i)
-	 params.push_back(in.pop().to_string());
+         params.push_back(in.pop().to_string());
 
        std::string theta = "1";
-       if (in.remaining()) theta = in.pop().to_string();
        std::string dt = "timestep";
-       if (in.remaining()) dt = in.pop().to_string();
        size_type region = size_type(-1);
-       if (in.remaining()) region = in.pop().to_integer();
+       for (size_type i=0; i < 3 && in.remaining(); ++i) {
+         argin = in.pop();
+         if (argin.is_string()) {
+           if (i==0)      theta = argin.to_string();
+           else if (i==1) dt = argin.to_string();
+           else           THROW_BADARG("Wrong input");
+         } else if (argin.is_integer()) {
+           region = argin.to_integer();
+           GMM_ASSERT1(!in.remaining(), "Wrong input");
+         }
+       }
+       params.push_back(theta);
+       params.push_back(dt);
 
        getfem::small_strain_elastoplasticity_next_iter
-       (*md, *mim, lawname, var_multiplier, varnames, params, theta, dt,region);
+         (*md, *mim, lawname, unknowns_type, varnames, params, region);
        workspace().set_dependence(md, mim);
        );
 
-    /*@GET V = ('small strain elastoplasticity Von Mises', @tmim mim, @tmf mf_vm, @str lawname, @bool multiplier_is_var [, @str varnames, ...] [, @str params, ...] [, @str theta = '1' [, @str dt = 'timestep' [, @int region]]])
-      This function computes on `mf_vm` the Von Mises stress with respect to
-      a finite strain elastoplasticity term.
-      All the remaining parameters have to be exactly the same than for
-      `add_small_strain_elastoplasticity_brick`.
+    /*@GET V = ('small strain elastoplasticity Von Mises', @tmim mim, @tmf mf_vm, @str lawname, @str unknowns_type [, @str varnames, ...] [, @str params, ...] [, @str theta = '1' [, @str dt = 'timestep']] [, @int region])
+      This function computes the Von Mises stress field with respect to
+      a small strain elastoplasticity term, approximated on `mf_vm`,
+      and stores the result into `VM`.  All other parameters have to be
+      exactly the same as for `add_small_strain_elastoplasticity_brick`.
       Remember that `small_strain_elastoplasticity_next_iter` has to be called
       before any call of this function.
       @*/
     sub_command
-      ("small strain elastoplasticity Von Mises", 8, 31, 0, 0,
+      ("small strain elastoplasticity Von Mises", 11, 16, 0, 0,
        getfem::mesh_im *mim = to_meshim_object(in.pop());
        const getfem::mesh_fem *mf_vm = to_meshfem_object(in.pop());
        std::string lawname = in.pop().to_string();
        filter_lawname(lawname);
-       bool var_multiplier = (in.pop().to_integer(0,1) != 0);
-
        size_type nb_var = 0; size_type nb_params = 0;
        if (lawname.compare("isotropic_perfect_plasticity") == 0 ||
-	   lawname.compare("prandtl_reuss") == 0 ||
-	   lawname.compare("plane_strain_isotropic_perfect_plasticity") == 0 ||
-	   lawname.compare("plane_strain_prandtl_reuss") == 0) {
-	 nb_var = nb_params = 3;
-       } else if (lawname.compare("isotropic_plasticity_linear_hardening") == 0
-		  || lawname.compare("prandtl_reuss_linear_hardening") == 0 ||
-      lawname.compare("plane_strain_isotropic_plasticity_linear_hardening") == 0
-     || lawname.compare("plane_strain_prandtl_reuss_linear_hardening") == 0) {
-	 nb_var = 4; nb_params = 5;
+           lawname.compare("prandtl_reuss") == 0 ||
+           lawname.compare("plane_strain_isotropic_perfect_plasticity") == 0 ||
+           lawname.compare("plane_strain_prandtl_reuss") == 0) {
+         nb_var = nb_params = 3;
+       } else if
+         (lawname.compare("isotropic_plasticity_linear_hardening") == 0 ||
+          lawname.compare("prandtl_reuss_linear_hardening") == 0 ||
+          lawname.compare("plane_strain_isotropic_plasticity_linear_hardening") == 0 ||
+          lawname.compare("plane_strain_prandtl_reuss_linear_hardening") == 0) {
+         nb_var = 4; nb_params = 5;
        } else
-	 GMM_ASSERT1(false,
-		     lawname << " is not an implemented elastoplastic law");
-       
-        std::vector<std::string> varnames;
+         THROW_BADARG(lawname << " is not an implemented elastoplastic law");
+
+       getfem::plasticity_unknowns_type unknowns_type(getfem::DISPLACEMENT_ONLY);
+       mexarg_in argin = in.pop();
+       if (argin.is_string()) {
+         std::string opt = argin.to_string();
+         filter_lawname(opt);
+         if (opt.compare("displacement_only") == 0)
+           unknowns_type = getfem::DISPLACEMENT_ONLY;
+         else if (opt.compare("displacement_and_plastic_multiplier") == 0)
+           unknowns_type = getfem::DISPLACEMENT_AND_PLASTIC_MULTIPLIER;
+         else
+           THROW_BADARG("Wrong input");
+       } else if (argin.is_integer())
+         unknowns_type = static_cast<getfem::plasticity_unknowns_type>
+                         (argin.to_integer(0,1));
+
+       std::vector<std::string> varnames;
        for (size_type i = 0; i < nb_var; ++i)
-	 varnames.push_back(in.pop().to_string());
+         varnames.push_back(in.pop().to_string());
 
        std::vector<std::string> params;
        for (size_type i = 0; i < nb_params; ++i)
-	 params.push_back(in.pop().to_string());
+         params.push_back(in.pop().to_string());
 
        std::string theta = "1";
-       if (in.remaining()) theta = in.pop().to_string();
        std::string dt = "timestep";
-       if (in.remaining()) dt = in.pop().to_string();
        size_type region = size_type(-1);
-       if (in.remaining()) region = in.pop().to_integer();
+       for (size_type i=0; i < 3 && in.remaining(); ++i) {
+         argin = in.pop();
+         if (argin.is_string()) {
+           if (i==0)      theta = argin.to_string();
+           else if (i==1) dt = argin.to_string();
+           else           THROW_BADARG("Wrong input");
+         } else if (argin.is_integer()) {
+           region = argin.to_integer();
+           GMM_ASSERT1(!in.remaining(), "Wrong input");
+         }
+       }
+       params.push_back(theta);
+       params.push_back(dt);
 
        getfem::model_real_plain_vector VMM(mf_vm->nb_dof());
        getfem::compute_small_strain_elastoplasticity_Von_Mises
-       (*md, *mim, lawname, var_multiplier, varnames, params, *mf_vm, VMM,
-	theta, dt, region);
+       (*md, *mim, lawname, unknowns_type, varnames, params, *mf_vm, VMM, region);
        out.pop().from_dcvector(VMM);
        );
 
@@ -1055,82 +1100,137 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        );
 
 
-    /*@GET ('finite strain elastoplasticity next iter', @tmim mim ,@str dispname, @str multname, @str pressname, @str lawname, @str param1, @str param2, @str param3, @str param4, @str param5)
-      Update the state variables for the finite strain elastoplasticity brick.
-      `mim` is the integration method to use for the computation.
-      `dispname` is the displacement variable.
-      `multname` is the plastic multiplier.
-      `pressname` is an optional pressure multiplier for a mixed
-      displacement pressure formulation, otherwise it is an
-      empty string.
-      `lawname` is the name of the plasticity model (for the moment it can
-      only be the name Simo_Miehe)
-      For the Simo_Miehe model:
-      `params1` is the bulk modulus,
-      `params2` is the shear modulus,
-      `params3` is the name of a user defined function expressing isotropic
-      hardening in terms of the Frobenius norms of the strain
-      and stress tensors.
-      `params4` is the name of the plastic strain variable (which is updated).
-      `params5` is the name of the vector field for storing all non-repeated
-      components of the inverse plastic right Cauchy-Green tensor
-      (which is updated).
+    /*@GET ('finite strain elastoplasticity next iter', @tmim mim, @str lawname, @str unknowns_type, [, @str varnames, ...] [, @str params, ...] [, @int region = -1])
+      Function that allows to pass from a time step to another for the
+      finite strain plastic brick. The parameters have to be exactly the
+      same than the one of `add_finite_strain_elastoplasticity_brick`,
+      so see the documentation of this function for the explanations.
+      Basically, this brick computes the plastic strain
+      and the plastic multiplier and stores them for the next step.
+      For the Simo-Miehe law which is currently the only one implemented,
+      this function updates the state variables defined in the last two
+      entries of `varnames`, and resets the plastic multiplier field given
+      as the second entry of `varnames`.
       @*/
     sub_command
-      ("finite strain elastoplasticity next iter", 10, 10, 0, 1,
+      ("finite strain elastoplasticity next iter", 10, 11, 0, 1,
        getfem::mesh_im *mim = to_meshim_object(in.pop());
-       const std::string dispname = in.pop().to_string();
-       const std::string multname = in.pop().to_string();
-       const std::string pressname = in.pop().to_string();
-       const std::string lawname = in.pop().to_string();
+       std::string lawname = in.pop().to_string();
+       filter_lawname(lawname);
+       size_type nb_var = 0; size_type nb_params = 0;
+       if (lawname.compare("simo_miehe") == 0 ||
+           lawname.compare("eterovic_bathe") == 0) {
+         nb_var = 4;
+         nb_params = 3;
+       } else
+         THROW_BADARG(lawname << " is not an implemented finite strain"
+                              << " elastoplastic law");
+
+       getfem::plasticity_unknowns_type unknowns_type(getfem::DISPLACEMENT_ONLY);
+       mexarg_in argin = in.pop();
+       if (argin.is_string()) {
+         std::string opt = argin.to_string();
+         filter_lawname(opt);
+         if (opt.compare("displacement_and_plastic_multiplier") == 0)
+           unknowns_type = getfem::DISPLACEMENT_AND_PLASTIC_MULTIPLIER;
+         else if (opt.compare("displacement_and_plastic_multiplier"
+                              "_and_pressure") == 0)
+           unknowns_type = getfem::DISPLACEMENT_AND_PLASTIC_MULTIPLIER_AND_PRESSURE;
+         else
+           THROW_BADARG("Wrong input");
+       } else if (argin.is_integer()) {
+         unknowns_type = static_cast<getfem::plasticity_unknowns_type>
+                         (argin.to_integer());
+         GMM_ASSERT1
+           (unknowns_type == getfem::DISPLACEMENT_AND_PLASTIC_MULTIPLIER ||
+            unknowns_type == getfem::DISPLACEMENT_AND_PLASTIC_MULTIPLIER_AND_PRESSURE,
+            "Not valid input for unknowns_type");
+       }
+       if (unknowns_type == getfem::DISPLACEMENT_AND_PLASTIC_MULTIPLIER_AND_PRESSURE)
+         nb_var += 1;
+
+       std::vector<std::string> varnames;
+       for (size_type i = 0; i < nb_var; ++i)
+         varnames.push_back(in.pop().to_string());
 
        std::vector<std::string> params;
-       for (int i=0; i < 5 && in.remaining(); ++i) {
-         mexarg_in argin = in.pop();
-         if (argin.is_string())
-           params.push_back(argin.to_string());
-         else
-           break;
+       for (size_type i = 0; i < nb_params; ++i)
+         params.push_back(in.pop().to_string());
+
+       size_type region(-1);
+       if (in.remaining()) {
+         argin = in.pop();
+         if (!argin.is_integer())
+           THROW_BADARG("Last optional argument must be an integer");
+         region = argin.to_integer();
        }
 
        getfem::finite_strain_elastoplasticity_next_iter
-       (*md, *mim, dispname, multname, pressname, lawname, params);
+         (*md, *mim, lawname, unknowns_type, varnames, params, region);
        );
 
-    /*@GET V = ('compute finite strain elastoplasticity Von Mises', @tmim mim ,@str dispname, @str multname, @str pressname, @str lawname, @str param1, @str param2, @str param3, @str param4, @str param5, @tmf mf_vm, ... [@str 'assemble'])
+    /*@GET V = ('compute finite strain elastoplasticity Von Mises', @tmim mim, @tmf mf_vm, @str lawname, @str unknowns_type, [, @str varnames, ...] [, @str params, ...] [, @int region = -1])
       Compute on `mf_vm` the Von-Mises or the Tresca stress of a field for plasticity and return it into the vector V.
       The first input parameters ar as in the function 'finite strain elastoplasticity next iter'.
       @*/
     sub_command
       ("compute finite strain elastoplasticity Von Mises", 11, 12, 0, 1,
        getfem::mesh_im *mim = to_meshim_object(in.pop());
-       const std::string dispname = in.pop().to_string();
-       const std::string multname = in.pop().to_string();
-       const std::string pressname = in.pop().to_string();
-       const std::string lawname = in.pop().to_string();
+       const getfem::mesh_fem *mf_vm = to_meshfem_object(in.pop());
+
+       std::string lawname = in.pop().to_string();
+       filter_lawname(lawname);
+       size_type nb_var = 0; size_type nb_params = 0;
+       if (lawname.compare("simo_miehe") == 0 ||
+           lawname.compare("eterovic_bathe") == 0) {
+         nb_var = 4;
+         nb_params = 3;
+       } else
+         THROW_BADARG(lawname << " is not an implemented finite strain"
+                              << " elastoplastic law");
+
+       getfem::plasticity_unknowns_type unknowns_type(getfem::DISPLACEMENT_ONLY);
+       mexarg_in argin = in.pop();
+       if (argin.is_string()) {
+         std::string opt = argin.to_string();
+         filter_lawname(opt);
+         if (opt.compare("displacement_and_plastic_multiplier") == 0)
+           unknowns_type = getfem::DISPLACEMENT_AND_PLASTIC_MULTIPLIER;
+         else if (opt.compare("displacement_and_plastic_multiplier"
+                              "_and_pressure") == 0)
+           unknowns_type = getfem::DISPLACEMENT_AND_PLASTIC_MULTIPLIER_AND_PRESSURE;
+         else
+           THROW_BADARG("Wrong input");
+       } else if (argin.is_integer()) {
+         unknowns_type = static_cast<getfem::plasticity_unknowns_type>
+                         (argin.to_integer());
+         GMM_ASSERT1
+           (unknowns_type == getfem::DISPLACEMENT_AND_PLASTIC_MULTIPLIER ||
+            unknowns_type == getfem::DISPLACEMENT_AND_PLASTIC_MULTIPLIER_AND_PRESSURE,
+            "Not valid input for unknowns_type");
+       }
+       if (unknowns_type == getfem::DISPLACEMENT_AND_PLASTIC_MULTIPLIER_AND_PRESSURE)
+         nb_var += 1;
+
+       std::vector<std::string> varnames;
+       for (size_type i = 0; i < nb_var; ++i)
+         varnames.push_back(in.pop().to_string());
 
        std::vector<std::string> params;
-       for (int i=0; i < 5 && in.remaining(); ++i) {
-         mexarg_in argin = in.pop();
-         if (argin.is_string())
-           params.push_back(argin.to_string());
-         else
-           break;
+       for (size_type i = 0; i < nb_params; ++i)
+         params.push_back(in.pop().to_string());
+
+       size_type region(-1);
+       if (in.remaining()) {
+         argin = in.pop();
+         if (!argin.is_integer())
+           THROW_BADARG("Last optional argument must be an integer");
+         region = argin.to_integer();
        }
 
-       const getfem::mesh_fem *mf_vm = to_meshfem_object(in.pop());
-       bool assemble = false;
-       if (in.remaining()) {
-         const std::string option = in.pop().to_string();
-         assemble = cmd_strmatch(option, "assemble");
-         if (!assemble && !cmd_strmatch(option, "interpolate")) {
-           THROW_BADARG("bad option: " << option);
-         }
-       }
        getfem::model_real_plain_vector VMM(mf_vm->nb_dof());
        getfem::compute_finite_strain_elastoplasticity_Von_Mises
-       (*md, *mim, dispname, multname, pressname, lawname, params,
-        *mf_vm, VMM, assemble);
+         (*md, *mim, lawname, unknowns_type, varnames, params, *mf_vm, VMM);
        out.pop().from_dcvector(VMM);
        );
 

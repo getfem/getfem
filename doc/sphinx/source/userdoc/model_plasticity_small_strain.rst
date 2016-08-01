@@ -476,47 +476,47 @@ See the test programs :file:`tests/plasticity.cc`, :file:`interface/tests/matlab
 Generic brick
 =============
 
-There is two version of the generic brick. A first one when the plastic multiplier is kept as a variable of the problem where the added term is of the form:
+There are two versions of the generic brick. A first one when the plastic multiplier is kept as a variable of the problem where the added term is of the form:
 
 .. math:: \int_{\Omega} \sigma_{n+1} : \nabla \delta u dx +  \ds \int_{\Omega} (\xi_{n+1} - (\xi_{n+1} + r f(\sigma_{n+1}, A_{n+1}))_+) \delta\xi dx = 0,
 
-whith :math:`r > 0` having a specific value chosen by the brick (in terms of the elasticity coefficients), and when the return mapping strategy is selected (plastic multiplier is just a data), just the added term:
+with :math:`r > 0` having a specific value chosen by the brick (in terms of the elasticity coefficients), and when the return mapping strategy is selected (plastic multiplier is just a data), just the added term:
 
 .. math:: \int_{\Omega} \sigma_{n+1} : \nabla v dx.
 
-The function which adds the brick to a model is ::
+The function which adds the brick to a model `md` is ::
 
    getfem::add_small_strain_elastoplasticity_brick
-     (md, mim, lawname, plastic_multiplier_is_var,
-     const std::vector<std::string> &varnames,
-     const std::vector<std::string> &params,
-     theta = "1", dt = "timestep", region = size_type(-1));
+     (md, mim, lawname, unknowns_type,
+      const std::vector<std::string> &varnames,
+      const std::vector<std::string> &params, region = size_type(-1));
 
-where `lawname` is the name of an implemented plastic law,
-`plastic_multiplier_is_var` indicates the choice between a discretization
-where the plastic multiplier is an unknown of the problem or
-(return mapping approach) just a data
-of the model stored for the next iteration. Remember that in both case,
-a multiplier is stored anyway. `varnames` is a set of variable and
-data names whose length may depend on the plastic law (at least the
-displacement, the plastic multiplier and the plastic strain). `params`
-is a list of expressions for the parameters (at least elastic
+
+where `lawname` is the name of an implemented plastic law, `unknowns_type`
+indicates the choice between a discretization where the plastic multiplier
+is an unknown of the problem or (return mapping approach) just a data of
+the model stored for the next iteration. Remember that in both cases, a
+multiplier is stored anyway. `varnames` is a set of variable and data
+names with length which may depend on the plastic law (at least the
+displacement, the plastic multiplier and the plastic strain).
+`params` is a list of expressions for the parameters (at least elastic
 coefficients and the yield stress). These expressions can be some data
 names (or even variable names) of the model but can also be any scalar
-valid expression of the high level assembly langage
-(such as "1/2", "2+sin(X[0])", "1+Norm(v)" ...). `theta` is the
-parameter of the `theta`-scheme (generalized trapezoidal rule) used
-for the plastic strain integration. `theta=1` corresponds to the
-classical Backward Euler scheme which is first order consistent,
-`theta=1/2` corresponds to the Crank-Nicolson scheme (trapezoidal rule)
-which is second order consistent. Any value between 1/2 and 1 should be
-a valid value. `dt` is the time-step. It can be any expression
-(data name, constant value ...) but if you want it to be linked to the
-time step defined in the model (by md.set_time_step(dt)) then simply
-indicate 'timestep'. The time step can be modified from an iteration
-to another. `region` is a mesh region.
+valid expression of the high level assembly language (such as "1/2",
+"2+sin(X[0])", "1+Norm(v)" ...). The last two parameters optionally
+provided in `params` are the `theta` parameter of the `theta`-scheme
+(generalized trapezoidal rule) used for the plastic strain integration
+and the time-step`dt`. The default value for `theta` if omitted is 1,
+which corresponds to the classical Backward Euler scheme which is first
+order consistent. `theta=1/2` corresponds to the Crank-Nicolson scheme
+(trapezoidal rule) which is second order consistent. Any value
+between 1/2 and 1 should be a valid value. The default value of `dt` is
+'timestep' which simply indicates the time step defined in the model
+(by md.set_time_step(dt)). Alternatively it can be any expression
+(data name, constant value ...). The time step can be altered from one
+iteration to the next one. `region` is a mesh region.
 
-The available plastic laws are:
+The available plasticity laws are:
 
 - "Prandtl Reuss" (or "isotropic perfect plasticity").
   Isotropic elasto-plasticity with no hardening. The variables are the
@@ -525,14 +525,14 @@ The available plastic laws are:
   having the same name preceded by "Previous\_" corresponding to the
   displacement at the previous time step (typically "u" and "Previous_u").
   The plastic multiplier should also have two versions (typically "xi"
-  and "Previous_xi") the first one being a variable
-  if `plastic_multiplier_is_var=true` and a data if not. The plastic strain
-  should represent a n x n data tensor field stored on mesh_fem or
-  (preferably) on an im_data (corresponding to `mim`). The data are
-  the first Lame coefficient, the second one (shear modulus) and the
-  uniaxial yield stress.
-  IMPORTANT: Note that this law implement the
-  3D expressions. If it is used in 2D, the expressions are just
+  and "Previous_xi") the first one being defined as data if
+  `unknowns_type = DISPLACEMENT_ONLY` or as a variable if
+  `unknowns_type = DISPLACEMENT_AND_PLASTIC_MULTIPLIER`.
+  The plastic strain should represent a n x n data tensor field stored
+  on mesh_fem or (preferably) on an im_data (corresponding to `mim`).
+  The data are the first Lame coefficient, the second one (shear modulus)
+  and the uniaxial yield stress. IMPORTANT: Note that this law implements
+  the 3D expressions. If it is used in 2D, the expressions are just
   transposed to the 2D. For the plane strain approximation, see below.
 - "plane strain Prandtl Reuss"
   (or "plane strain isotropic perfect plasticity")
@@ -551,7 +551,7 @@ The available plastic laws are:
   (or "plane strain isotropic plasticity linear hardening").
   The same law as the previous one but adapted to the plane strain
   approximation. Can only be used in 2D.
-  
+
 IMPORTANT : remember that `small_strain_elastoplasticity_next_iter` has
 to be called at the end of each time step, before the next one
 (and before any post-treatment : this sets the value of the plastic
@@ -560,39 +560,35 @@ strain and plastic multiplier).
 Additionaly, the following function allow to pass from a time step to another for the small strain plastic brick: ::
 
    getfem::small_strain_elastoplasticity_next_iter
-   (md, mim, lawname, plastic_multiplier_is_var,
-     const std::vector<std::string> &varnames,
-     const std::vector<std::string> &params,
-     theta = "1", dt = "timestep", region = size_type(-1));
+     (md, mim, lawname, unknowns_type,
+      const std::vector<std::string> &varnames,
+      const std::vector<std::string> &params, region = size_type(-1));
 
-The parameters have to be exactly the
-same than the one of `add_small_strain_elastoplasticity_brick`,
-so see the documentation of this functpass from a time step to another for the
-small strain plastic brick. ion for the explanations.
-Basically, this brick computes the plastic strain
-and the plastic multiplier and store them for the next step.
-Additionnaly, it copies the computed displacement to the data
-that stores the displacement of the previous time step (typically
-"u" to "Previous_u"). It has to be called before any use of
+The parameters have to be exactly the same as the ones of the
+`add_small_strain_elastoplasticity_brick`,  so see the documentation of
+this function for any explanations.
+Basically, this brick computes the plastic strain and the plastic
+multiplier and stores them for the next step. Additionaly, it copies
+the computed displacement to the data that stores the displacement
+of the previous time step (typically "u" to "Previous\_u").
+It has to be called before any use of
 `compute_small_strain_elastoplasticity_Von_Mises`.
 
 The function ::
 
   getfem::compute_small_strain_elastoplasticity_Von_Mises
-  (md, mim, lawname, plastic_multiplier_is_var,
+    (md, mim, lawname, unknowns_type,
      const std::vector<std::string> &varnames,
      const std::vector<std::string> &params,
-     const mesh_fem &mf_vm, model_real_plain_vector &VM, 
-     theta = "1", dt = "timestep", region = size_type(-1));
+     const mesh_fem &mf_vm, model_real_plain_vector &VM,
+     region = size_type(-1));
 
-computes on `mf_vm` the Von Mises stress with respect to
-a finite strain elastoplasticity term and put the result into `VM`.
-All the remaining parameters have to be exactly the same than for
-`add_small_strain_elastoplasticity_brick`.
+computes the Von Mises stress field with respect to
+a small strain elastoplasticity term, approximated on `mf_vm`,
+and stores the result into `VM`.  All other parameters have to be
+exactly the same as for `add_small_strain_elastoplasticity_brick`.
 Remember that `small_strain_elastoplasticity_next_iter` has to be called
 before any call of this function.
-
-
 
 
 A specific brick based on the low-level generic assembly for perfect plasticity

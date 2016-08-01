@@ -31,12 +31,9 @@ TESTS = 						\
 	demo_laplacian.py				\
 	check_levelset.py
 
-## to be replaced with AM_TESTS_ENVIRONMENT in automake versions >= 1.13
-TESTS_ENVIRONMENT = \
-	PYTHONPATH='$(srcdir):$(srcdir)/../../src/python:.:../../src/python'; \
-	LD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(top_builddir)/src/.libs; \
-	export PYTHONPATH; \
-	export LD_LIBRARY_PATH;
+AM_TESTS_ENVIRONMENT = \
+	export PYTHONPATH=$(top_builddir)/interface/src/python; \
+	export LD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(top_builddir)/src/.libs;
 LOG_COMPILER = python
 endif
 
