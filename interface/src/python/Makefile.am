@@ -12,7 +12,7 @@ EXTRA_DIST = getfem_python.c
 
 # $(warning PSEUDO_FUNCTIONS= $(PSEUDO_FUNCTIONS))
 
-CLEANFILES = getfem.py _getfem.so *.o getfem_python_c.o getfem_python_c.c
+CLEANFILES = getfem.py _getfem.so *.o getfem_python_c.o getfem_python_c.c getfem.pyc
 
 if BUILDPYTHONPAR
 
