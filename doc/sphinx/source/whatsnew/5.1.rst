@@ -4,7 +4,7 @@
   What's New in |gf| 5.1
 ************************
 
-This release consists mainly in continuing to improve the high-level generic assembly langage and continuing the brick adaptation and development. Some small incompatibilites are due to the replacement of simple pointers by smart pointers ones.
+This release consists mainly in continuing to improve the high-level generic assembly langage and continuing the brick adaptation and development. Some small incompatibilites are due to the replacement of simple pointers by smart ones.
 
 Released version, 2016/08/18.
 
