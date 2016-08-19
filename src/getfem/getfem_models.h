@@ -195,7 +195,8 @@ namespace getfem {
       bgeot::multi_index qdims;  // For data having a qdim != of the fem
                                  // (dim per dof for dof data)
                                  // and for constant variables.
-      gmm::uint64_type v_num, v_num_data;
+      gmm::uint64_type v_num;
+      std::vector<gmm::uint64_type> v_num_data;
 
       gmm::sub_interval I; // For a variable : indices on the whole system.
       // For an affine dependent variable, should be the same than the
@@ -230,7 +231,7 @@ namespace getfem {
           n_iter(std::max(size_type(1), n_it)), n_temp_iter(0),
           default_iter(0), ptsc(0), mf(mmf), m_region(m_reg), mim(mim_),
           filter_var(filter_v), qdims(qdims_), v_num(0),
-          v_num_data(act_counter()), I(0,0),
+          v_num_data(n_iter, act_counter()), I(0,0),
           alpha(1), pim_data(pimd) {
         
         if (filter != VDESCRFILTER_NO && mf != 0)
@@ -432,7 +433,7 @@ namespace getfem {
     scalar_type &matrix_coeff_of_brick(size_type ib) const
     { return bricks[ib].matrix_coeff; }
     bool is_var_newer_than_brick(const std::string &varname,
-                                 size_type ib) const;
+                                 size_type ib, size_type niter = size_type(-1)) const;
     bool is_var_mf_newer_than_brick(const std::string &varname,
                                     size_type ib) const;
     bool is_mim_newer_than_brick(const mesh_im &mim,
@@ -581,7 +582,8 @@ namespace getfem {
     const im_data *pim_data_of_variable(const std::string &name) const;
 
     const gmm::uint64_type &
-    version_number_of_data_variable(const std::string &varname) const;
+    version_number_of_data_variable(const std::string &varname,
+                                    size_type niter = size_type(-1)) const;
 
     /** Boolean which says if the model deals with real or complex unknowns
         and data. */
@@ -671,7 +673,7 @@ namespace getfem {
             && !(v.second.is_disabled)) {
           gmm::copy(gmm::sub_vector(V, v.second.I),
                     v.second.real_value[0]);
-          v.second.v_num_data = act_counter();
+          v.second.v_num_data[0] = act_counter();
         }
       update_affine_dependent_variables();
       this->post_to_variables_step();
@@ -684,7 +686,7 @@ namespace getfem {
             && !(v.second.is_disabled)) {
           gmm::copy(gmm::sub_vector(V, v.second.I),
                     v.second.complex_value[0]);
-          v.second.v_num_data = act_counter();
+          v.second.v_num_data[0] = act_counter();
         }
       update_affine_dependent_variables();
       this->post_to_variables_step();

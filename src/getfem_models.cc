@@ -287,7 +287,7 @@ namespace getfem {
     GMM_ASSERT1(it != variables.end(), "Undefined variable " << name);
     if (it->second.alpha != a) {
       it->second.alpha = a;
-      it->second.v_num_data = act_counter();
+      for (auto &v_num : it->second.v_num_data) v_num = act_counter();
     }
   }
 
@@ -303,9 +303,10 @@ namespace getfem {
   }
 
   const gmm::uint64_type &
-  model::version_number_of_data_variable(const std::string &name) const {
+  model::version_number_of_data_variable(const std::string &name, size_type niter) const {
     VAR_SET::const_iterator it = find_variable(name);
-    return it->second.v_num_data;
+    if (niter == size_type(-1)) niter = it->second.default_iter;
+    return it->second.v_num_data[niter];
   }
 
   size_type model::nb_dof() const {
@@ -2005,22 +2006,26 @@ namespace getfem {
     for (VAR_SET::iterator it = variables.begin(); it != variables.end();
          ++it) {
       for (size_type i = 1; i < it->second.n_iter; ++i) {
-        if (is_complex())
+        if (is_complex()){
           gmm::copy(it->second.complex_value[i-1],
                     it->second.complex_value[i]);
-        else
+          it->second.v_num_data[i] = act_counter();
+        }
+        else{
           gmm::copy(it->second.real_value[i-1],
                     it->second.real_value[i]);
+          it->second.v_num_data[i] = act_counter();
+        }
       }
-      if (it->second.n_iter > 1) it->second.v_num_data = act_counter();
     }
   }
 
   bool model::is_var_newer_than_brick(const std::string &varname,
-                                      size_type ib) const {
+                                      size_type ib, size_type niter) const {
     const brick_description &brick = bricks[ib];
     var_description &vd = variables[varname];
-    return (vd.v_num > brick.v_num || vd.v_num_data > brick.v_num);
+    if (niter == size_type(-1)) niter = vd.default_iter;
+    return (vd.v_num > brick.v_num || vd.v_num_data[niter] > brick.v_num);
   }
 
   bool model::is_var_mf_newer_than_brick(const std::string &varname,
@@ -2195,7 +2200,7 @@ namespace getfem {
       if (vd.v_num_var_iter[ind] == id_num) break;
     }
     if (ind <  vd.n_iter + vd.n_temp_iter) {
-      if (vd.v_num_iter[ind] <= vd.v_num_data) {
+      if (vd.v_num_iter[ind] <= vd.v_num_data[vd.default_iter]) {
         vd.v_num_iter[ind] = act_counter();
         return false;
       }
@@ -2255,7 +2260,7 @@ namespace getfem {
     // check data list to test if a vector value of a data has changed.
     for (size_type i = 0; i < brick.dlist.size() && !tobecomputed; ++i) {
       var_description &vd = variables[brick.dlist[i]];
-      if (vd.v_num > brick.v_num || vd.v_num_data > brick.v_num) {
+      if (vd.v_num > brick.v_num || vd.v_num_data[vd.default_iter] > brick.v_num) {
         tobecomputed = true;
         version = build_version(version | BUILD_ON_DATA_CHANGE);
       }
@@ -2384,8 +2389,11 @@ namespace getfem {
                     it->second.affine_real_value, it->second.real_value[0]);
          }
         it->second.v_num = std::max(it->second.v_num, it2->second.v_num);
-        it->second.v_num_data = std::max(it->second.v_num_data,
-                                         it2->second.v_num_data);
+        for (size_type i = 0; i < it->second.n_iter; ++i)
+        {
+          it->second.v_num_data[i] = std::max(it->second.v_num_data[i],
+                                              it2->second.v_num_data[i]);
+        }
       }
   }
 
@@ -3049,8 +3057,8 @@ namespace getfem {
       else
         it->second.set_size();
     }
-    it->second.v_num_data = act_counter();
     if (niter == size_type(-1)) niter = it->second.default_iter;
+    it->second.v_num_data[niter] = act_counter();
     GMM_ASSERT1(it->second.n_iter + it->second.n_temp_iter > niter,
                 "Invalid iteration number "
                 << niter << " for " << name);
@@ -3069,8 +3077,8 @@ namespace getfem {
       else
         it->second.set_size();
     }
-    it->second.v_num_data = act_counter();
     if (niter == size_type(-1)) niter = it->second.default_iter;
+    it->second.v_num_data[niter] = act_counter();
     GMM_ASSERT1(it->second.n_iter + it->second.n_temp_iter > niter,
                 "Invalid iteration number "
                 << niter << " for " << name);
@@ -3091,7 +3099,7 @@ namespace getfem {
       else
         it->second.set_size();
     }
-    it->second.v_num_data = act_counter();
+    for (auto &v_num : it->second.v_num_data) v_num = act_counter();
     return it->second.affine_real_value;
   }
 
@@ -3107,7 +3115,7 @@ namespace getfem {
       else
         it->second.set_size();
     }
-    it->second.v_num_data = act_counter();
+    for (auto &v_num : it->second.v_num_data) v_num = act_counter();
     return it->second.affine_complex_value;
   }
 
