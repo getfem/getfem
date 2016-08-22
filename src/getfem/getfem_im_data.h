@@ -170,8 +170,8 @@ namespace getfem{
       if (V1.size() == 0 && V2.size() == 0)
         return;
       size_type nb_data = V1.size()/nb_filtered_index();
-      GMM_ASSERT1(V1.size() == nb_data*nb_filtered_index(), "Invalid size of vector V1");
-      GMM_ASSERT1(V2.size() == nb_data*nb_index(), "Invalid size of vector V2");
+      GMM_ASSERT2(V1.size() == nb_data*nb_filtered_index(), "Invalid size of vector V1");
+      GMM_ASSERT2(V2.size() == nb_data*nb_index(), "Invalid size of vector V2");
       if (nb_filtered_index() == nb_index()) {
         gmm::copy(V1, V2);
         return;
@@ -199,8 +199,8 @@ namespace getfem{
       if (V1.size() == 0 && V2.size() == 0)
         return;
       size_type nb_data = V1.size()/nb_index();
-      GMM_ASSERT1(V1.size() == nb_data*nb_index(), "Invalid size of vector V1");
-      GMM_ASSERT1(V2.size() == nb_data*nb_filtered_index(), 
+      GMM_ASSERT2(V1.size() == nb_data*nb_index(), "Invalid size of vector V1");
+      GMM_ASSERT2(V2.size() == nb_data*nb_filtered_index(), 
                                "Invalid size of vector V2");
       if (nb_filtered_index() == nb_index()) {
         gmm::copy(V1, V2);
@@ -228,9 +228,9 @@ namespace getfem{
     template <typename VECT>
     typename VECT::value_type get_value(const VECT &V1, size_type cv,
                                         size_type i, bool use_filter = true) const {
-      GMM_ASSERT1(nb_tensor_elem_*nb_index(use_filter) == V1.size(),
+      GMM_ASSERT2(nb_tensor_elem_*nb_index(use_filter) == V1.size(),
                   "Invalid tensorial size for vector V1");
-      GMM_ASSERT1(nb_tensor_elem_ == 1, "im_data is not of scalar type");
+      GMM_ASSERT2(nb_tensor_elem_ == 1, "im_data is not of scalar type");
       size_type ptid = index_of_point(cv,i,use_filter);
       GMM_ASSERT2(ptid != size_type(-1), "Point index of gauss point not found");
       return V1[ptid];
@@ -243,9 +243,9 @@ namespace getfem{
                     VECT2& V2, bool use_filter = true) const {
       if (V1.size() == 0 && V2.size() == 0)
         return;
-      GMM_ASSERT1(nb_tensor_elem_*nb_index(use_filter) == V1.size(),
+      GMM_ASSERT2(nb_tensor_elem_*nb_index(use_filter) == V1.size(),
                   "Invalid tensorial size for vector V1");
-      GMM_ASSERT1(is_equivalent_with_vector(tensor_size_, V2.size()),
+      GMM_ASSERT2(is_equivalent_with_vector(tensor_size_, V2.size()),
                   "V2 is incompatible with im_data tensor size");
       size_type ptid = index_of_point(cv,i,use_filter);
       GMM_ASSERT2(ptid != size_type(-1), "Point index of gauss point not found");
@@ -261,9 +261,9 @@ namespace getfem{
                     MAT& M, bool use_filter = true) const {
       if (V1.size() == 0 && M.size() == 0)
         return;
-      GMM_ASSERT1(nb_tensor_elem_*nb_index(use_filter) == V1.size(),
+      GMM_ASSERT2(nb_tensor_elem_*nb_index(use_filter) == V1.size(),
                   "Invalid tensorial size for vector V1");
-      GMM_ASSERT1(is_equivalent_with_matrix(tensor_size_, M.nrows(), M.ncols()),
+      GMM_ASSERT2(is_equivalent_with_matrix(tensor_size_, M.nrows(), M.ncols()),
                   "M is incompatible with im_data tensor size");
       size_type ptid = index_of_point(cv,i,use_filter);
       GMM_ASSERT2(ptid != size_type(-1), "Point index of gauss point not found");
@@ -279,9 +279,9 @@ namespace getfem{
                     TENSOR& T, bool use_filter = true) const {
       if (V1.size() == 0 && T.size() == 0)
         return;
-      GMM_ASSERT1(nb_tensor_elem_*nb_index(use_filter) == V1.size(),
+      GMM_ASSERT2(nb_tensor_elem_*nb_index(use_filter) == V1.size(),
                   "Invalid tensorial size for vector V1");
-      GMM_ASSERT1(tensor_size_ == T.sizes(),
+      GMM_ASSERT2(tensor_size_ == T.sizes(),
                   "T is incompatible with im_data tensor size");
       size_type ptid = index_of_point(cv,i,use_filter);
       GMM_ASSERT2(ptid != size_type(-1), "Point index of gauss point not found");
@@ -295,9 +295,9 @@ namespace getfem{
     template <typename VECT>
     typename VECT::value_type &set_value(VECT &V1, size_type cv, size_type i,
                                          bool use_filter = true) const {
-      GMM_ASSERT1(nb_tensor_elem_*nb_index(use_filter) == V1.size(),
+      GMM_ASSERT2(nb_tensor_elem_*nb_index(use_filter) == V1.size(),
                   "Invalid tensorial size for vector V1");
-      GMM_ASSERT1(nb_tensor_elem_ == 1, "im_data is not of scalar type");
+      GMM_ASSERT2(nb_tensor_elem_ == 1, "im_data is not of scalar type");
       size_type ptid = index_of_point(cv,i,use_filter);
       GMM_ASSERT2(ptid != size_type(-1), "Point index of gauss point not found");
       return V1[ptid];
@@ -310,9 +310,9 @@ namespace getfem{
                     const VECT2& V2, bool use_filter = true) const {
       if (V1.size() == 0 && V2.size() == 0)
         return;
-      GMM_ASSERT1(nb_tensor_elem_*nb_index(use_filter) == V1.size(),
+      GMM_ASSERT2(nb_tensor_elem_*nb_index(use_filter) == V1.size(),
                   "Invalid tensorial size for vector V1");
-      GMM_ASSERT1(is_equivalent_with_vector(tensor_size_, V2.size()),
+      GMM_ASSERT2(is_equivalent_with_vector(tensor_size_, V2.size()),
                   "V2 is incompatible with im_data tensor size");
       size_type ptid = index_of_point(cv,i,use_filter);
       GMM_ASSERT2(ptid != size_type(-1), "Point index of gauss point not found");
@@ -328,9 +328,9 @@ namespace getfem{
                     const MAT& M, bool use_filter = true) const {
       if (V1.size() == 0 && M.size() == 0)
         return;
-      GMM_ASSERT1(nb_tensor_elem_*nb_index(use_filter) == V1.size(),
+      GMM_ASSERT2(nb_tensor_elem_*nb_index(use_filter) == V1.size(),
                   "Invalid tensorial size for vector V1");
-      GMM_ASSERT1(is_equivalent_with_matrix(tensor_size_, M.nrows(), M.ncols()),
+      GMM_ASSERT2(is_equivalent_with_matrix(tensor_size_, M.nrows(), M.ncols()),
                   "M is incompatible with im_data tensor size");
       size_type ptid = index_of_point(cv,i,use_filter);
       GMM_ASSERT2(ptid != size_type(-1), "Point index of gauss point not found");
@@ -346,9 +346,9 @@ namespace getfem{
                     const TENSOR& T, bool use_filter = true) const {
       if (V1.size() == 0 && T.size() == 0)
         return;
-      GMM_ASSERT1(nb_tensor_elem_*nb_index(use_filter) == V1.size(),
+      GMM_ASSERT2(nb_tensor_elem_*nb_index(use_filter) == V1.size(),
                   "Invalid tensorial size for vector V1");
-      GMM_ASSERT1(tensor_size_ == T.sizes(),
+      GMM_ASSERT2(tensor_size_ == T.sizes(),
                   "T is incompatible with im_data tensor size");
       size_type ptid = index_of_point(cv,i,use_filter);
       GMM_ASSERT2(ptid != size_type(-1), "Point index of gauss point not found");
@@ -360,9 +360,9 @@ namespace getfem{
 
     template <typename VECT1, typename VECT2>
     void set_vector(VECT1 &V1, size_type ptid, const VECT2& V2) const {
-      GMM_ASSERT1(V1.size() != 0, "V1 of zero size");
-      GMM_ASSERT1(V2.size() != 0, "V2 of zero size");
-      GMM_ASSERT1(is_equivalent_with_vector(tensor_size_, V2.size()),
+      GMM_ASSERT2(V1.size() != 0, "V1 of zero size");
+      GMM_ASSERT2(V2.size() != 0, "V2 of zero size");
+      GMM_ASSERT2(is_equivalent_with_vector(tensor_size_, V2.size()),
                   "V2 is incompatible with im_data tensor size");
       gmm::copy(V2,
                 gmm::sub_vector(V1, gmm::sub_interval(ptid*nb_tensor_elem_,
@@ -371,9 +371,9 @@ namespace getfem{
 
     template <typename VECT1, typename TENSOR>
     void set_tensor(VECT1 &V1, size_type ptid, const TENSOR& T) const {
-      GMM_ASSERT1(V1.size() != 0, "V1 of zero size");
-      GMM_ASSERT1(T.size() != 0, "V2 of zero size");
-      GMM_ASSERT1(tensor_size_ == T.sizes(),
+      GMM_ASSERT2(V1.size() != 0, "V1 of zero size");
+      GMM_ASSERT2(T.size() != 0, "V2 of zero size");
+      GMM_ASSERT2(tensor_size_ == T.sizes(),
                   "T is incompatible with im_data tensor size");
       gmm::copy(T.as_vector(),
                 gmm::sub_vector(V1, gmm::sub_interval(ptid*nb_tensor_elem_,
