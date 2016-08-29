@@ -11437,7 +11437,11 @@ namespace getfem {
       : result(r), mf(mf_), initialized(false), is_torus(false) {
       GMM_ASSERT1(!(mf.is_reduced()),
                   "Interpolation on reduced fem is not allowed");
-      if (dynamic_cast<const torus_mesh_fem*>(&mf)) is_torus = true;
+      if (dynamic_cast<const torus_mesh_fem*>(&mf)){
+        auto first_cv = mf.first_convex_of_basic_dof(0);
+        auto target_dim = mf.fem_of_element(first_cv)->target_dim();
+        if (target_dim == 3) is_torus = true;
+      }
     }
   };
 
