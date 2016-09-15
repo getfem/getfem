@@ -104,6 +104,8 @@ namespace getfem {
       if (!(pf()->is_equivalent()) && withM)
         { u = t; t.mat_transp_reduction(u, M(), 0); }
     }
+
+    gmm::clean(t.as_vector(), 1e-13);
   }
 
   void fem_interpolation_context::grad_base_value(base_tensor& t,
@@ -139,6 +141,8 @@ namespace getfem {
       if (!(pf()->is_equivalent()) && withM)
         { u = t; t.mat_transp_reduction(u, M(), 0); }
     }
+
+	gmm::clean(t.as_vector(), 1e-13);
   }
 
   void fem_interpolation_context::hess_base_value(base_tensor& t,

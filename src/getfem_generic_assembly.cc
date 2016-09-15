@@ -11118,6 +11118,7 @@ namespace getfem {
                 gmm::mult(B, un, up);
                 scalar_type nup = gmm::vect_norm2(up);
                 gmm::scale(up,1.0/nup);
+				gmm::clean(up, 1e-13);
                 gis.Normal = up;
               } else gis.Normal.resize(0);
             }
@@ -11241,6 +11242,7 @@ namespace getfem {
                   scalar_type nup = gmm::vect_norm2(up);
                   J *= nup;
                   gmm::scale(up,1.0/nup);
+				  gmm::clean(up, 1e-13);
                   gis.Normal = up;
                 } else gis.Normal.resize(0);
               }
