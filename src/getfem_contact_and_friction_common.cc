@@ -46,7 +46,7 @@ namespace getfem {
         scalar_type J = gmm::lu_inverse(grad);
         if (J <= scalar_type(0)) GMM_WARNING1("Inverted element !" << J);
         gmm::mult(gmm::transposed(grad), n0, n);
-        gmm::scale(n, gmm::sgn(J)); // Test
+        if (J < 0) gmm::scale(n, gmm::sgn(J)); // In case of inverted element
       }
   }
 

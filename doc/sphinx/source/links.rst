@@ -82,15 +82,18 @@ Some publications based on GetFEM++ and/or Gmm++
 
     * Andreykiv A., Rixen D. J., Numerical modelling of electromechanical coupling using fictitious domain and level set methods. Int. J. Numer. Meth. Engng 2009. |link8|_.
 
-.. |link9| replace:: publications of Yves Renard
-.. _link9: http://math.univ-lyon1.fr/~renard/publis.html
-
-
-    * |link9|_.
-
 
     * Mirko Windhoff, Alexander Opitz, and Axel Thielscher, Electric Field Calculations in Brain Stimulation Based on Finite Elements: An Optimized Processing Pipeline for the Generation and Usage of Accurate Individual Head Models. Human Brain Mapping, 2011. DOI: 10.1002/hbm.21479
 
+.. |link9| replace:: publications of Yves Renard
+.. _link9: http://math.univ-lyon1.fr/homes-www/renard/
+
+    * |link9|_.
+
+.. |link11| replace:: link.springer.com
+.. _link11: http://link.springer.com/article/10.1007/s13137-016-0083-2
+
+    * E.V. Vtorushin, Application of mixed finite element to spatially non-local model of inelastic deformations. Int. J. Geomath. 2016 
 
 
 An evaluation of Gmm++ performance

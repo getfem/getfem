@@ -2959,7 +2959,6 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       corresponding to partial differential terms having a Neumann term.
       Moreover, This brick can only be applied to bricks declaring their
       Neumann terms. Returns the brick index in the model.
-      Deprecated brick.
     @*/
     sub_command
       ("add Nitsche contact with rigid obstacle brick", 6, 10, 0, 1,
