@@ -1040,6 +1040,7 @@ contrib/aposteriori/Makefile                                            \
 contrib/level_set_contact/Makefile                                      \
 contrib/static_contact_gears/Makefile                                   \
 contrib/test_plasticity/Makefile                                        \
+contrib/opt_assembly/Makefile                                           \
 bin/Makefile                                                            \
 interface/Makefile                                                      \
 interface/src/Makefile                                                  \

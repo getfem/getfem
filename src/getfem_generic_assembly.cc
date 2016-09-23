@@ -2744,10 +2744,8 @@ namespace getfem {
       // cout << "ctx.is_convex_num_valid() = " << int(ctx.is_convex_num_valid()) << endl;
       size_type cv_1 = ctx.is_convex_num_valid()
                      ? ctx.convex_num() : mf.convex_index().first_true();
-      if (!mf.convex_index().is_in(cv_1))
-        cv_1 = mf.convex_index().first_true();
-
-
+      // if (!mf.convex_index().is_in(cv_1))
+      //    cv_1 = mf.convex_index().first_true();
       // cout << "cv_1 " << cv_1 << endl;
       pfem pf = mf.fem_of_element(cv_1);
       GMM_ASSERT1(pf, "An element without finite element methode defined");
@@ -5190,7 +5188,8 @@ namespace getfem {
           mesh_fem::ind_dof_ct ct1 = pmf1->ind_basic_dof_of_element(ctx1.convex_num());
           GA_DEBUG_ASSERT(ct1.size() == s1,
                           "Internal error, " << ct1.size() << " != " << s1);
-          for (size_type i=0; i < s1; ++i) dofs1[i] += ct1[i];
+	  auto its1 = dofs1.begin();
+	  for (const auto &it1 : ct1) { (*its1) += it1; ++its1; }
         } else
           for (size_type i=0; i < s1; ++i) dofs1[i] += i;
 
@@ -5200,7 +5199,8 @@ namespace getfem {
           mesh_fem::ind_dof_ct ct2 = pmf2->ind_basic_dof_of_element(ctx2.convex_num());
           GA_DEBUG_ASSERT(ct2.size() == s2,
                           "Internal error, " << ct2.size() << " != " << s2);
-          for (size_type i=0; i < s2; ++i) dofs2[i] += ct2[i];
+	  auto its2 = dofs2.begin();
+	  for (const auto &it2 : ct2) { (*its2) += it2; ++its2; }
         } else
           for (size_type i=0; i < s2; ++i) dofs2[i] += i;
 
@@ -9536,6 +9536,7 @@ namespace getfem {
     }
     if (pgai) rmi.instructions.push_back(std::move(pgai));
 
+
     // Optimization: detect if an equivalent node has already been compiled
     if (rmi.node_list.find(pnode->hash_value) != rmi.node_list.end()) {
       std::list<pga_tree_node> &node_list = rmi.node_list[pnode->hash_value];
@@ -11190,7 +11191,8 @@ namespace getfem {
             pim = mim.int_method_of_element(v.cv());
             if (pim->type() == IM_NONE)
               continue;
-            // cout << "pim->type() = " << int(pim->type()) <<  " : " << int(IM_APPROX) << endl;
+            // cout << "pim->type() = " << int(pim->type()) <<  " : "
+	    //      << int(IM_APPROX) << endl;
             GMM_ASSERT1(pim->type() == IM_APPROX, "Sorry, exact methods cannot "
                         "be used in high level generic assembly");
             // cout << "passed ..." << endl;
@@ -11234,7 +11236,7 @@ namespace getfem {
               if (gis.ctx.have_pgp()) gis.ctx.set_ii(first_ind+gis.ipt);
               else gis.ctx.set_xref((*pspt)[first_ind+gis.ipt]);
               if (gis.ipt == 0 || !(pgt->is_linear())) {
-                J = gis.ctx.J();
+		J = gis.ctx.J();
                 // Computation of unit normal vector in case of a boundary
                 if (v.f() != short_type(-1)) {
                   gmm::copy(pgt->normals()[v.f()], un);
