@@ -421,6 +421,10 @@ int main(int /* argc */, char * /* argv */[]) {
 
   GMM_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
+
+  gmm::row_matrix<gmm::dsvector<double>> MM(20, 20);
+  // MM(1, 1) = 5.;
+  
   
   // Mesured times for new assembly, old one, alterantive new assembly,
   // storage estimate part for the new assembly, global assembly part,

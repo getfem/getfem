@@ -209,11 +209,375 @@ namespace gmm {
   typename number_traits<T>::magnitude_type
   imag(const ref_elt_vector<T, V> &re) { return gmm::imag(T(re)); }
 
+  /*************************************************************************/
+  /*                                                                       */
+  /* Class dsvector: sparse vector optimized for random write operations   */
+  /* with constant complexity for read and write operations.               */
+  /* Based on distribution sort principle.                                 */
+  /* Cheap for nearly full vectors.                                        */
+  /*                                                                       */
+  /*************************************************************************/
+
+  template<typename T> class dsvector;
+
+  template<typename T> struct dsvector_iterator {
+    size_type i;    // Current index.
+    T* p;           // Pointer to the current position.
+    dsvector<T> *v; // Pointer to the vector.
+    
+    typedef T                   value_type;
+    typedef value_type*         pointer;
+    typedef value_type&         reference;
+    // typedef size_t              size_type;
+    typedef ptrdiff_t           difference_type;
+    typedef std::bidirectional_iterator_tag iterator_category;
+    typedef dsvector_iterator<T> iterator;
+    
+    reference operator *() const { return *p; }
+    pointer operator->() const { return &(operator*()); }
+
+    iterator &operator ++() {
+      for (size_type k = (i & 15); k < 15; ++k)
+	{ ++p; ++i; if (*p != T(0)) return *this; }
+      v->next_pos(p, i);
+      return *this;
+    }
+    iterator operator ++(int) { iterator tmp = *this; ++(*this); return tmp; }
+    iterator &operator --() {
+      for (size_type k = (i & 15); k > 0; --k)
+	{ --p; --i; if (*p != T(0)) return *this; }
+      v->previous_pos(p, i);
+      return *this;
+    }
+    iterator operator --(int) { iterator tmp = *this; --(*this); return tmp; }
+
+    bool operator ==(const iterator &it) const
+    { return (i == it.i && p == it.p && v == it.v); }
+    bool operator !=(const iterator &it) const
+    { return !(it == *this); }
+    
+    size_type index(void) const { return i; }
+
+    dsvector_iterator(void) : i(size_type(-1)), p(0), v(0) {}
+    dsvector_iterator(dsvector<T> &w) : i(size_type(-1)), p(0), v(&w) {};
+  };
+
+
+  template<typename T> struct dsvector_const_iterator {
+    size_type i;          // Current index.
+    const T* p;           // Pointer to the current position.
+    const dsvector<T> *v; // Pointer to the vector.
+    
+    typedef T                   value_type;
+    typedef const value_type*   pointer;
+    typedef const value_type&   reference;
+    // typedef size_t              size_type;
+    typedef ptrdiff_t           difference_type;
+    typedef std::bidirectional_iterator_tag iterator_category;
+    typedef dsvector_const_iterator<T> iterator;
+    
+    reference operator *() const { return *p; }
+    pointer operator->() const { return &(operator*()); }
+    iterator &operator ++() {
+      for (size_type k = (i & 15); k < 15; ++k)
+	{ ++p; ++i; if (*p != T(0)) return *this; }
+      v->next_pos(p, i);
+      return *this;
+    }
+    iterator operator ++(int) { iterator tmp = *this; ++(*this); return tmp; }
+    iterator &operator --() {
+      for (size_type k = (i & 15); k > 0; --k)
+	{ --p; --i; if (*p != T(0)) return *this; }
+      v->previous_pos(p, i);
+      return *this;
+    }
+    iterator operator --(int) { iterator tmp = *this; --(*this); return tmp; }
+
+    bool operator ==(const iterator &it) const
+    { return (i == it.i && p == it.p && v == it.v); }
+    bool operator !=(const iterator &it) const
+    { return !(it == *this); }
+    
+    size_type index(void) const { return i; }
+
+    dsvector_const_iterator(void) : i(size_type(-1)), p(0) {}
+    dsvector_const_iterator(dsvector_iterator<T> &it)
+      : i(it.i), p(it.p), v(it.v) {}
+    dsvector_const_iterator(const dsvector<T> &w)
+      : i(size_type(-1)), p(0), v(&w) {};
+  };
+
+  
+  /**
+     Sparse vector built on distribution sort principle.
+     Read and write access have a constant complexity depending only on the
+     vector size.
+  */
+  template<typename T> class dsvector {
+
+    typedef dsvector_iterator<T> iterator;
+    typedef dsvector_const_iterator<T> const_iterator;
+    typedef dsvector<T> this_type;
+
+  protected:
+    size_type n;     // Potential vector size
+    size_type depth; // Number of row of pointer arrays
+    size_type mask;  // Mask for the first pointer array
+    size_type shift; // Shift for the first pointer array
+    void *root_ptr;  // Root pointer
+
+    const T *read_access(size_type i) const {
+      GMM_ASSERT1(i < n, "index out of range");
+      size_type my_mask = mask, my_shift = shift;
+      void *p = root_ptr;
+      if (!p) return 0;
+      for (size_type k = 0; k < depth; ++k) {
+	p = ((void **)(p))[(i & my_mask) >> my_shift];
+	if (!p) return 0;
+	my_mask = (my_mask >> 4);
+	my_shift -= 4;
+      }
+      GMM_ASSERT1(my_shift == 0, "internal error");
+      GMM_ASSERT1(my_mask == 15, "internal error");
+      return ((const T *)(p))[i & 15];
+    }
+
+    T *write_access(size_type i) {
+      GMM_ASSERT1(i < n, "index out of range");
+      size_type my_mask = mask, my_shift = shift;
+      if (!root_ptr) {
+	if (depth) {
+	  root_ptr = new void *[16];
+	  std::memset(root_ptr, 0, 16*sizeof(void *));
+	  // for (size_type l = 0; l < 16; ++l) ((void **)(root_ptr))[l] = 0;
+	} else {
+	  root_ptr = new T[16];
+	  for (size_type l = 0; l < 16; ++l) ((T *)(root_ptr))[l] = T(0);
+	}
+      }
+
+      void *p = root_ptr;
+      for (size_type k = 0; k < depth; ++k) {
+	size_type j = (i & my_mask) >> my_shift;
+	void *q = ((void **)(p))[j];
+	if (!q) {
+	  if (k+1 == depth) {
+	    q = new void *[16];
+	    std::memset(q, 0, 16*sizeof(void *));
+	    // for (size_type l = 0; l < 16; ++l) ((void **)(q))[l] = 0;
+	  } else {
+	    q = new T[16];
+	    for (size_type l = 0; l < 16; ++l) ((T *)(q))[l] = T(0);
+	  }
+	  ((void **)(p))[j] = q;
+	}
+	p = q;
+	my_mask = (my_mask >> 4);
+	my_shift -= 4;
+      }
+      GMM_ASSERT1(my_shift == 0, "internal error");
+      GMM_ASSERT1(my_mask == 15, "internal error");
+      return ((T *)(p))[i & 15];
+    }
+
+    void init(size_type n_) {
+      n = n_; depth = 0; shift = 0; mask = 1; if (n_) --n_;
+      while (n_) { n_ /= 16; ++depth; shift += 4; mask *= 16; }
+      mask--; if (shift) shift -= 4; if (depth) --depth;
+      root_ptr = 0;
+    }
+
+    void rec_del(void *p, size_type my_depth) {
+      if (my_depth) {
+	for (size_type k = 0; k < 16; ++k)
+	  if (((void **)(p))[k]) rec_del(((void **)(p))[k], my_depth-1);
+	delete[] ((void **)(p));
+      } else {
+	delete[] ((T *)(p));
+      }
+    }
+
+    void rec_clean(void *p, size_type my_depth, double eps) {
+      if (my_depth) {
+	for (size_type k = 0; k < 16; ++k)
+	  if (((void **)(p))[k]) rec_clean(((void **)(p))[k], my_depth-1, eps);
+      } else {
+	for (size_type k = 0; k < 16; ++k)
+	  if (gmm::abs(((T *)(p))[k]) <= eps) ((T *)(p))[k] = T(0);
+      }
+    }
+
+    void rec_clean_i(void *p, size_type my_depth, size_type my_mask,
+		     size_type i, size_type base) {
+      if (my_depth) {
+	for (size_type k = 0; k < 16; ++k)
+	  if (((void **)(p))[k] && (base + (k+1)*(mask+1)) >= i)
+	    rec_clean_i(((void **)(p))[k], my_depth-1, (my_mask << 4),
+			i, base + k*(mask+1));
+      } else {
+	for (size_type k = 0; k < 16; ++k)
+	  if (base+k > i) ((T *)(p))[k] = T(0);
+      }
+    }
+ 
+      
+    size_type rec_nnz(void *p, size_type my_depth) const {
+      size_type nn = 0;
+      if (my_depth) {
+	for (size_type k = 0; k < 16; ++k)
+	  if (((void **)(p))[k]) nn += rec_nnz(((void **)(p))[k], my_depth-1);
+      } else {
+	for (size_type k = 0; k < 16; ++k)
+	  if (((const T *)(p))[k] != T(0)) nn++;
+      }
+      return nn;
+    }
+
+    void copy_rec(void *&p, const void *q, size_type my_depth) {
+      if (depth) {
+	p = new void *[16];
+	std::memset(root_ptr, 0, 16*sizeof(void *));
+	for (size_type l = 0; l < 16; ++l)
+	  if (((void **)(q))[l])
+	    copy_rec(((void **)(p))[l], ((void **)(q))[l], my_depth-1);
+      } else {
+	p = new T[16];
+	for (size_type l = 0; l < 16; ++l) ((T *)(p))[l] = ((const T *)(q))[l];
+      }
+    }
+
+    void copy(const dsvector<T> &v) {
+      if (root_ptr) rec_del(root_ptr, depth); root_ptr = 0;
+      mask = v.mask; depth = v.depth; n = v.n; shift = v.shift;
+      if (v.root_ptr) copy_rec(root_ptr, v.root_ptr, depth);
+    }
+
+    void next_pos_rec(void *p, size_type my_depth, size_type my_mask,
+		      void *&pp, size_type &i, size_type base) const {
+      size_type ii = i;
+      if (my_depth) {
+	for (size_type k = 0; k < 16; ++k)
+	  if (((void **)(p))[k] && (base + (k+1)*(mask+1)) >= i) {
+	    next_pos_rec(((void **)(p))[k], my_depth-1, (my_mask << 4),
+			 pp, i, base + k*(mask+1));
+	    if (i != size_type(-1)) return; else i = ii;
+	}
+	i = size_type(-1); pp = 0;
+      } else {
+	for (size_type k = 0; k < 16; ++k)
+	  if (base+k > i && ((const T *)(p))[k] != T(0))
+	    { i = base+k; pp = &(((const T *)(p))[k]); return; }
+	i = size_type(-1); pp = 0;
+      }
+    }
+
+    void previous_pos_rec(void *p, size_type my_depth, size_type my_mask,
+		      void *&pp, size_type &i, size_type base) const {
+      size_type ii = i;
+      if (my_depth) {
+	for (size_type k = 15; k != size_type(-1); --k)
+	  if (((void **)(p))[k] && ((base + k*(mask+1)) < i)) {
+	    next_pos_rec(((void **)(p))[k], my_depth-1, (my_mask << 4),
+			 pp, i, base + k*(mask+1));
+	    if (i != size_type(-1)) return; else i = ii;
+	}
+	i = size_type(-1); pp = 0;
+      } else {
+	for (size_type k = 15; k != size_type(-1); --k)
+	  if (base+k < i && ((const T *)(p))[k] != T(0))
+	    { i = base+k; pp = &(((const T *)(p))[k]); return; }
+	i = size_type(-1); pp = 0;
+      }
+    }
+    
+    
+  public:
+    void clean(double eps) { if (root_ptr) rec_clean(root_ptr, depth); }
+    void resize(size_type n_) { 
+      n = n_;
+      if (root_ptr) {
+	if (n_ < n) { // Depth unchanged (a choice)
+	  if (root_ptr) rec_clean_i(root_ptr, n_, 0);
+	} else {
+	  // may change the depth (add some levels)
+	  size_type my_depth = 0, my_shift = 0, my_mask = 1; if (n_) --n_;
+	  while (n_) { n_ /= 16; ++my_depth; my_shift += 4; my_mask *= 16; }
+	  my_mask--; if (my_shift) my_shift -= 4; if (my_depth) --my_depth;
+	  if (my_depth > depth) {
+	    for (size_type k = depth; k < my_depth; ++k) {
+	      void **q = new void *[16];
+	      std::memset(q, 0, 16*sizeof(void *));
+	      q[0] = root_ptr; root_ptr = q;
+	    }
+	    mask = my_mask; depth = my_depth; shift = my_shift;
+	  }
+	}
+      }
+    }
+    
+    void clear(void) { if (root_ptr) rec_del(root_ptr, depth); root_ptr = 0; }
+    
+    void next_pos(void *&pp, size_type &i) const { // go to the next position
+      if (!root_ptr || i >= n) { pp = 0, i = size_type(-1); return; }
+      next_pos_rec(root_ptr, depth, mask, pp, i, 0);
+    }
+
+    void previous_pos(void *&pp, size_type &i) { // go to the previous position
+      if (!root_ptr) { pp = 0, i = size_type(-1); return; }
+      if (i == size_type(-1)) { i = n; }
+      previous_pos_rec(root_ptr, depth, mask, pp, i, 0);
+    }
+
+    iterator begin(void) {
+      iterator it(*this); it.i = 0; it.p = read_access(0);
+      if (!(it.p) || *(it.p) == T(0)) next_pos(it.p, it.i);
+      return it;
+    }
+    iterator end(void) { return iterator(*this); }
+    const_iterator begin(void) const {
+      const_iterator it(*this); it.i = 0; it.p = read_access(0);
+      if (!(it.p) || *(it.p) == T(0)) next_pos(it.p, it.i);
+      return it;
+    }
+    const_iterator end(void) const { return const_iterator(*this); }
+    
+    inline ref_elt_vector<T, dsvector<T> > operator [](size_type c)
+    { return ref_elt_vector<T, dsvector<T> >(this, c); }
+
+    inline void w(size_type c, const T &e) {
+      if (e == T(0)) { if (read_access(c)) *(write_access(c)) = e; }
+      else *(write_access(c)) = e;
+    }
+
+    inline T r(size_type c) const
+    { const T *p = read_access(c); if (p) return *p; else return T(0); }
+
+    inline T operator [](size_type c) const { return r(c); }
+    
+    size_type nnz(void) const
+    { if (root_ptr) return rec_nnz(root_ptr, depth); else return 0; }
+    size_type size(void) const { return n; }
+
+    void swap(dsvector<T> &v) {
+      std::swap(n, v.n); std::swap(root_ptr, v.root_ptr);
+      std::swap(depth, v.depth); std::swap(shift, v.shift);
+      std::swap(mask, v.mask);
+    }
+    
+    /* Constructors */
+    dsvector(const dsvector<T> &v) { root_ptr = 0; copy(v); }
+    dsvector<T> &operator =(const dsvector<T> &v) { copy(v); return *this; }
+    explicit dsvector(size_type l){ init(l); }
+    dsvector(void) { init(0); }
+    ~dsvector() { if (root_ptr) rec_del(root_ptr, depth); root_ptr = 0; }
+  };
   
 
   /*************************************************************************/
   /*                                                                       */
-  /* Class wsvector: sparse vector optimized for random write operations.  */
+  /* Class wsvector: sparse vector optimized for random write operations,  */
+  /* with log(n) complexity for read and write operations.                 */
+  /* Based on std::map                                                     */
   /*                                                                       */
   /*************************************************************************/
   
@@ -300,7 +664,7 @@ namespace gmm {
     { std::swap(nbl, v.nbl); std::map<size_type, T>::swap(v); }
 				       
 
-    /* Constructeurs */
+    /* Constructors */
     void init(size_type l) { nbl = l; this->clear(); }
     explicit wsvector(size_type l){ init(l); }
     wsvector(void) { init(0); }
