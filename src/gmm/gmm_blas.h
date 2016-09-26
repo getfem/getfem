@@ -959,7 +959,6 @@ namespace gmm {
   void copy_mat_by_col(const L1 &l1, L2 &l2) {
     size_type nbc = mat_ncols(l1);
     for (size_type i = 0; i < nbc; ++i) {
-      cout << "copy col " << i << endl;
       copy_vect(mat_const_col(l1, i), mat_col(l2, i),
       		typename linalg_traits<L1>::storage_type(),
 		typename linalg_traits<L2>::storage_type());

@@ -195,40 +195,6 @@ namespace gmm {
     { return gmm::conj(linalg_traits<M>::access(begin_+j, i)); }
   };
 
-  template <typename M>
-  struct linalg_traits<conjugated_row_matrix_const_ref<M> > {
-    typedef conjugated_row_matrix_const_ref<M> this_type;
-    typedef typename linalg_traits<M>::origin_type origin_type;
-    typedef linalg_const is_reference;
-    typedef abstract_matrix linalg_type;
-    typedef typename linalg_traits<M>::value_type value_type;
-    typedef value_type reference;
-    typedef typename linalg_traits<M>::storage_type storage_type;
-    typedef typename org_type<typename linalg_traits<M>::const_sub_row_type>::t vector_type;
-    typedef conjugated_vector_const_ref<vector_type> sub_col_type;
-    typedef conjugated_vector_const_ref<vector_type> const_sub_col_type;
-    typedef conjugated_row_const_iterator<M> col_iterator;
-    typedef conjugated_row_const_iterator<M> const_col_iterator;
-    typedef abstract_null_type const_sub_row_type;
-    typedef abstract_null_type sub_row_type;
-    typedef abstract_null_type const_row_iterator;
-    typedef abstract_null_type row_iterator;
-    typedef col_major sub_orientation;
-    typedef typename linalg_traits<M>::index_sorted index_sorted;
-    static inline size_type ncols(const this_type &m) { return m.nc; }
-    static inline size_type nrows(const this_type &m) { return m.nr; }
-    static inline const_sub_col_type col(const const_col_iterator &it)
-    { return conjugated(linalg_traits<M>::row(it.it)); }
-    static inline const_col_iterator col_begin(const this_type &m)
-    { return const_col_iterator(m.begin_); }
-    static inline const_col_iterator col_end(const this_type &m)
-    { return const_col_iterator(m.end_); }
-    static inline const origin_type* origin(const this_type &m)
-    { return m.origin; }
-    static value_type access(const const_col_iterator &it, size_type i)
-    { return gmm::conj(linalg_traits<M>::access(it.it, i)); }
-  };
-
   template<typename M> std::ostream &operator <<
   (std::ostream &o, const conjugated_row_matrix_const_ref<M>& m)
   { gmm::write(o,m); return o; }
@@ -287,39 +253,7 @@ namespace gmm {
     { return gmm::conj(linalg_traits<M>::access(begin_+i, j)); }
   };
 
-  template <typename M>
-  struct linalg_traits<conjugated_col_matrix_const_ref<M> > {
-    typedef conjugated_col_matrix_const_ref<M> this_type;
-    typedef typename linalg_traits<M>::origin_type origin_type;
-    typedef linalg_const is_reference;
-    typedef abstract_matrix linalg_type;
-    typedef typename linalg_traits<M>::value_type value_type;
-    typedef value_type reference;
-    typedef typename linalg_traits<M>::storage_type storage_type;
-    typedef typename org_type<typename linalg_traits<M>::const_sub_col_type>::t vector_type;
-    typedef conjugated_vector_const_ref<vector_type> sub_row_type;
-    typedef conjugated_vector_const_ref<vector_type> const_sub_row_type;
-    typedef conjugated_col_const_iterator<M> row_iterator;
-    typedef conjugated_col_const_iterator<M> const_row_iterator;
-    typedef abstract_null_type const_sub_col_type;
-    typedef abstract_null_type sub_col_type;
-    typedef abstract_null_type const_col_iterator;
-    typedef abstract_null_type col_iterator;
-    typedef row_major sub_orientation;
-    typedef typename linalg_traits<M>::index_sorted index_sorted;
-    static inline size_type nrows(const this_type &m) { return m.nr; }
-    static inline size_type ncols(const this_type &m) { return m.nc; }
-    static inline const_sub_row_type row(const const_row_iterator &it)
-    { return conjugated(linalg_traits<M>::col(it.it)); }
-    static inline const_row_iterator row_begin(const this_type &m)
-    { return const_row_iterator(m.begin_); }
-    static inline const_row_iterator row_end(const this_type &m)
-    { return const_row_iterator(m.end_); }
-    static inline const origin_type* origin(const this_type &m)
-    { return m.origin; }
-    static value_type access(const const_row_iterator &it, size_type i)
-    { return gmm::conj(linalg_traits<M>::access(it.it, i)); }
-  };
+
 
   template<typename M> std::ostream &operator <<
   (std::ostream &o, const conjugated_col_matrix_const_ref<M>& m)
@@ -387,6 +321,74 @@ namespace gmm {
   template <typename L> inline
   conjugated_col_matrix_const_ref<L> conjugated(const L &v, col_major)
   { return conjugated_col_matrix_const_ref<L>(v); }
+
+  template <typename M>
+  struct linalg_traits<conjugated_row_matrix_const_ref<M> > {
+    typedef conjugated_row_matrix_const_ref<M> this_type;
+    typedef typename linalg_traits<M>::origin_type origin_type;
+    typedef linalg_const is_reference;
+    typedef abstract_matrix linalg_type;
+    typedef typename linalg_traits<M>::value_type value_type;
+    typedef value_type reference;
+    typedef typename linalg_traits<M>::storage_type storage_type;
+    typedef typename org_type<typename linalg_traits<M>::const_sub_row_type>::t vector_type;
+    typedef conjugated_vector_const_ref<vector_type> sub_col_type;
+    typedef conjugated_vector_const_ref<vector_type> const_sub_col_type;
+    typedef conjugated_row_const_iterator<M> col_iterator;
+    typedef conjugated_row_const_iterator<M> const_col_iterator;
+    typedef abstract_null_type const_sub_row_type;
+    typedef abstract_null_type sub_row_type;
+    typedef abstract_null_type const_row_iterator;
+    typedef abstract_null_type row_iterator;
+    typedef col_major sub_orientation;
+    typedef typename linalg_traits<M>::index_sorted index_sorted;
+    static inline size_type ncols(const this_type &m) { return m.nc; }
+    static inline size_type nrows(const this_type &m) { return m.nr; }
+    static inline const_sub_col_type col(const const_col_iterator &it)
+    { return conjugated(linalg_traits<M>::row(it.it)); }
+    static inline const_col_iterator col_begin(const this_type &m)
+    { return const_col_iterator(m.begin_); }
+    static inline const_col_iterator col_end(const this_type &m)
+    { return const_col_iterator(m.end_); }
+    static inline const origin_type* origin(const this_type &m)
+    { return m.origin; }
+    static value_type access(const const_col_iterator &it, size_type i)
+    { return gmm::conj(linalg_traits<M>::access(it.it, i)); }
+  };
+  
+  template <typename M>
+  struct linalg_traits<conjugated_col_matrix_const_ref<M> > {
+    typedef conjugated_col_matrix_const_ref<M> this_type;
+    typedef typename linalg_traits<M>::origin_type origin_type;
+    typedef linalg_const is_reference;
+    typedef abstract_matrix linalg_type;
+    typedef typename linalg_traits<M>::value_type value_type;
+    typedef value_type reference;
+    typedef typename linalg_traits<M>::storage_type storage_type;
+    typedef typename org_type<typename linalg_traits<M>::const_sub_col_type>::t vector_type;
+    typedef conjugated_vector_const_ref<vector_type> sub_row_type;
+    typedef conjugated_vector_const_ref<vector_type> const_sub_row_type;
+    typedef conjugated_col_const_iterator<M> row_iterator;
+    typedef conjugated_col_const_iterator<M> const_row_iterator;
+    typedef abstract_null_type const_sub_col_type;
+    typedef abstract_null_type sub_col_type;
+    typedef abstract_null_type const_col_iterator;
+    typedef abstract_null_type col_iterator;
+    typedef row_major sub_orientation;
+    typedef typename linalg_traits<M>::index_sorted index_sorted;
+    static inline size_type nrows(const this_type &m) { return m.nr; }
+    static inline size_type ncols(const this_type &m) { return m.nc; }
+    static inline const_sub_row_type row(const const_row_iterator &it)
+    { return conjugated(linalg_traits<M>::col(it.it)); }
+    static inline const_row_iterator row_begin(const this_type &m)
+    { return const_row_iterator(m.begin_); }
+    static inline const_row_iterator row_end(const this_type &m)
+    { return const_row_iterator(m.end_); }
+    static inline const origin_type* origin(const this_type &m)
+    { return m.origin; }
+    static value_type access(const const_row_iterator &it, size_type i)
+    { return gmm::conj(linalg_traits<M>::access(it.it, i)); }
+  };
   
   ///@endcond
   

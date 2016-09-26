@@ -237,7 +237,163 @@ namespace gmm {
     typedef typename linalg_traits<VECT>::V_reference ref_t;
     set_to_end(it.it, o, typename linalg_traits<VECT>::pV(), ref_t());
   }
+
+  template <typename PT, typename PART> std::ostream &operator <<
+    (std::ostream &o, const part_vector<PT, PART>& m)
+  { gmm::write(o,m); return o; }
+
+
+  /* ********************************************************************* */
+  /*	Reference to the real or imaginary part of (complex) matrices      */
+  /* ********************************************************************* */
+
+
+  template <typename PT, typename PART> struct  part_row_ref {
+    
+    typedef part_row_ref<PT, PART> this_type;
+    typedef typename std::iterator_traits<PT>::value_type M;
+    typedef M * CPT;
+    typedef typename std::iterator_traits<PT>::reference ref_M;
+    typedef typename select_ref<typename linalg_traits<this_type>
+            ::const_row_iterator, typename linalg_traits<this_type>
+            ::row_iterator, PT>::ref_type iterator;
+    typedef typename linalg_traits<this_type>::value_type value_type;
+    typedef typename linalg_traits<this_type>::reference reference;
+    typedef typename linalg_traits<this_type>::porigin_type porigin_type;
+
+    iterator begin_, end_;
+    porigin_type origin;
+    size_type nr, nc;
+
+    part_row_ref(ref_M m)
+      : begin_(mat_row_begin(m)), end_(mat_row_end(m)),
+	origin(linalg_origin(m)), nr(mat_nrows(m)), nc(mat_ncols(m)) {}
+
+    part_row_ref(const part_row_ref<CPT, PART> &cr) :
+      begin_(cr.begin_),end_(cr.end_), origin(cr.origin),nr(cr.nr),nc(cr.nc) {}
+
+    reference operator()(size_type i, size_type j) const {
+      return reference(ref_or_value_type<reference>::r(
+					 linalg_traits<M>::access(begin_+i, j),
+					 PART(), value_type()));
+    }
+  };
   
+  template<typename PT, typename PART> std::ostream &operator <<
+    (std::ostream &o, const part_row_ref<PT, PART>& m)
+  { gmm::write(o,m); return o; }
+
+  template <typename PT, typename PART> struct  part_col_ref {
+    
+    typedef part_col_ref<PT, PART> this_type;
+    typedef typename std::iterator_traits<PT>::value_type M;
+    typedef M * CPT;
+    typedef typename std::iterator_traits<PT>::reference ref_M;
+    typedef typename select_ref<typename linalg_traits<this_type>
+            ::const_col_iterator, typename linalg_traits<this_type>
+            ::col_iterator, PT>::ref_type iterator;
+    typedef typename linalg_traits<this_type>::value_type value_type;
+    typedef typename linalg_traits<this_type>::reference reference;
+    typedef typename linalg_traits<this_type>::porigin_type porigin_type;
+
+    iterator begin_, end_;
+    porigin_type origin;
+    size_type nr, nc;
+
+    part_col_ref(ref_M m)
+      : begin_(mat_col_begin(m)), end_(mat_col_end(m)),
+	origin(linalg_origin(m)), nr(mat_nrows(m)), nc(mat_ncols(m)) {}
+
+    part_col_ref(const part_col_ref<CPT, PART> &cr) :
+      begin_(cr.begin_),end_(cr.end_), origin(cr.origin),nr(cr.nr),nc(cr.nc) {}
+
+    reference operator()(size_type i, size_type j) const {
+      return reference(ref_or_value_type<reference>::r(
+					 linalg_traits<M>::access(begin_+j, i),
+					 PART(), value_type()));
+    }
+  };
+   
+
+  
+  template<typename PT, typename PART> std::ostream &operator <<
+    (std::ostream &o, const part_col_ref<PT, PART>& m)
+  { gmm::write(o,m); return o; }
+
+  
+
+
+
+
+template <typename TYPE, typename PART, typename PT>
+  struct part_return_ {
+    typedef abstract_null_type return_type;
+  };
+  template <typename PT, typename PART>
+  struct part_return_<row_major, PART, PT> {
+    typedef typename std::iterator_traits<PT>::value_type L;
+    typedef typename select_return<part_row_ref<const L *, PART>,
+		     part_row_ref< L *, PART>, PT>::return_type return_type;
+  };
+  template <typename PT, typename PART>
+  struct part_return_<col_major, PART, PT> {
+    typedef typename std::iterator_traits<PT>::value_type L;
+    typedef typename select_return<part_col_ref<const L *, PART>,
+		     part_col_ref<L *, PART>, PT>::return_type return_type;
+  };
+
+  template <typename PT, typename PART, typename LT> struct part_return__{
+    typedef abstract_null_type return_type;
+  };
+
+  template <typename PT, typename PART>
+  struct part_return__<PT, PART, abstract_matrix> {
+    typedef typename std::iterator_traits<PT>::value_type L;
+    typedef typename part_return_<typename principal_orientation_type<
+      typename linalg_traits<L>::sub_orientation>::potype, PART,
+      PT>::return_type return_type;
+  };
+
+  template <typename PT, typename PART>
+  struct part_return__<PT, PART, abstract_vector> {
+    typedef typename std::iterator_traits<PT>::value_type L;
+    typedef typename select_return<part_vector<const L *, PART>,
+      part_vector<L *, PART>, PT>::return_type return_type;
+  };
+
+  template <typename PT, typename PART> struct part_return {
+    typedef typename std::iterator_traits<PT>::value_type L;
+    typedef typename part_return__<PT, PART,
+      typename linalg_traits<L>::linalg_type>::return_type return_type;
+  };
+
+  template <typename L> inline 
+  typename part_return<const L *, linalg_real_part>::return_type
+  real_part(const L &l) {
+    return typename part_return<const L *, linalg_real_part>::return_type
+      (linalg_cast(const_cast<L &>(l)));
+  }
+
+  template <typename L> inline 
+  typename part_return<L *, linalg_real_part>::return_type
+  real_part(L &l) {
+    return typename part_return<L *, linalg_real_part>::return_type(linalg_cast(l));
+  }
+
+  template <typename L> inline 
+  typename part_return<const L *, linalg_imag_part>::return_type
+  imag_part(const L &l) {
+    return typename part_return<const L *, linalg_imag_part>::return_type
+      (linalg_cast(const_cast<L &>(l)));
+  }
+
+  template <typename L> inline 
+  typename part_return<L *, linalg_imag_part>::return_type
+  imag_part(L &l) {
+    return typename part_return<L *, linalg_imag_part>::return_type(linalg_cast(l));
+  }
+
+
   template <typename PT, typename PART>
   struct linalg_traits<part_vector<PT, PART> > {
     typedef part_vector<PT, PART> this_type;
@@ -323,47 +479,6 @@ namespace gmm {
     { return reference(linalg_traits<V>::access(o, it.it, ite.it,i)); }
   };
 
-  template <typename PT, typename PART> std::ostream &operator <<
-    (std::ostream &o, const part_vector<PT, PART>& m)
-  { gmm::write(o,m); return o; }
-
-
-  /* ********************************************************************* */
-  /*	Reference to the real or imaginary part of (complex) matrices      */
-  /* ********************************************************************* */
-
-
-  template <typename PT, typename PART> struct  part_row_ref {
-    
-    typedef part_row_ref<PT, PART> this_type;
-    typedef typename std::iterator_traits<PT>::value_type M;
-    typedef M * CPT;
-    typedef typename std::iterator_traits<PT>::reference ref_M;
-    typedef typename select_ref<typename linalg_traits<this_type>
-            ::const_row_iterator, typename linalg_traits<this_type>
-            ::row_iterator, PT>::ref_type iterator;
-    typedef typename linalg_traits<this_type>::value_type value_type;
-    typedef typename linalg_traits<this_type>::reference reference;
-    typedef typename linalg_traits<this_type>::porigin_type porigin_type;
-
-    iterator begin_, end_;
-    porigin_type origin;
-    size_type nr, nc;
-
-    part_row_ref(ref_M m)
-      : begin_(mat_row_begin(m)), end_(mat_row_end(m)),
-	origin(linalg_origin(m)), nr(mat_nrows(m)), nc(mat_ncols(m)) {}
-
-    part_row_ref(const part_row_ref<CPT, PART> &cr) :
-      begin_(cr.begin_),end_(cr.end_), origin(cr.origin),nr(cr.nr),nc(cr.nc) {}
-
-    reference operator()(size_type i, size_type j) const {
-      return reference(ref_or_value_type<reference>::r(
-					 linalg_traits<M>::access(begin_+i, j),
-					 PART(), value_type()));
-    }
-  };
-
   template <typename PT, typename PART>
   struct linalg_traits<part_row_ref<PT, PART> > {
     typedef part_row_ref<PT, PART> this_type;
@@ -415,47 +530,6 @@ namespace gmm {
     static reference access(const row_iterator &itrow, size_type i) {
       return reference(ref_or_value_type<reference>::r(
 					 linalg_traits<M>::access(itrow, i),
-					 PART(), value_type()));
-    }
-  };
-   
-  template <typename PT, typename PART> 
-  void linalg_traits<part_row_ref<PT, PART> >::do_clear(this_type &v) { 
-    row_iterator it = mat_row_begin(v), ite = mat_row_end(v);
-    for (; it != ite; ++it) clear(row(it));
-  }
-  
-  template<typename PT, typename PART> std::ostream &operator <<
-    (std::ostream &o, const part_row_ref<PT, PART>& m)
-  { gmm::write(o,m); return o; }
-
-  template <typename PT, typename PART> struct  part_col_ref {
-    
-    typedef part_col_ref<PT, PART> this_type;
-    typedef typename std::iterator_traits<PT>::value_type M;
-    typedef M * CPT;
-    typedef typename std::iterator_traits<PT>::reference ref_M;
-    typedef typename select_ref<typename linalg_traits<this_type>
-            ::const_col_iterator, typename linalg_traits<this_type>
-            ::col_iterator, PT>::ref_type iterator;
-    typedef typename linalg_traits<this_type>::value_type value_type;
-    typedef typename linalg_traits<this_type>::reference reference;
-    typedef typename linalg_traits<this_type>::porigin_type porigin_type;
-
-    iterator begin_, end_;
-    porigin_type origin;
-    size_type nr, nc;
-
-    part_col_ref(ref_M m)
-      : begin_(mat_col_begin(m)), end_(mat_col_end(m)),
-	origin(linalg_origin(m)), nr(mat_nrows(m)), nc(mat_ncols(m)) {}
-
-    part_col_ref(const part_col_ref<CPT, PART> &cr) :
-      begin_(cr.begin_),end_(cr.end_), origin(cr.origin),nr(cr.nr),nc(cr.nc) {}
-
-    reference operator()(size_type i, size_type j) const {
-      return reference(ref_or_value_type<reference>::r(
-					 linalg_traits<M>::access(begin_+j, i),
 					 PART(), value_type()));
     }
   };
@@ -514,92 +588,18 @@ namespace gmm {
 					 PART(), value_type()));
     }
   };
-   
+
   template <typename PT, typename PART> 
   void linalg_traits<part_col_ref<PT, PART> >::do_clear(this_type &v) { 
     col_iterator it = mat_col_begin(v), ite = mat_col_end(v);
     for (; it != ite; ++it) clear(col(it));
   }
   
-  template<typename PT, typename PART> std::ostream &operator <<
-    (std::ostream &o, const part_col_ref<PT, PART>& m)
-  { gmm::write(o,m); return o; }
-
-  
-
-
-
-
-template <typename TYPE, typename PART, typename PT>
-  struct part_return_ {
-    typedef abstract_null_type return_type;
-  };
-  template <typename PT, typename PART>
-  struct part_return_<row_major, PART, PT> {
-    typedef typename std::iterator_traits<PT>::value_type L;
-    typedef typename select_return<part_row_ref<const L *, PART>,
-		     part_row_ref< L *, PART>, PT>::return_type return_type;
-  };
-  template <typename PT, typename PART>
-  struct part_return_<col_major, PART, PT> {
-    typedef typename std::iterator_traits<PT>::value_type L;
-    typedef typename select_return<part_col_ref<const L *, PART>,
-		     part_col_ref<L *, PART>, PT>::return_type return_type;
-  };
-
-  template <typename PT, typename PART, typename LT> struct part_return__{
-    typedef abstract_null_type return_type;
-  };
-
-  template <typename PT, typename PART>
-  struct part_return__<PT, PART, abstract_matrix> {
-    typedef typename std::iterator_traits<PT>::value_type L;
-    typedef typename part_return_<typename principal_orientation_type<
-      typename linalg_traits<L>::sub_orientation>::potype, PART,
-      PT>::return_type return_type;
-  };
-
-  template <typename PT, typename PART>
-  struct part_return__<PT, PART, abstract_vector> {
-    typedef typename std::iterator_traits<PT>::value_type L;
-    typedef typename select_return<part_vector<const L *, PART>,
-      part_vector<L *, PART>, PT>::return_type return_type;
-  };
-
-  template <typename PT, typename PART> struct part_return {
-    typedef typename std::iterator_traits<PT>::value_type L;
-    typedef typename part_return__<PT, PART,
-      typename linalg_traits<L>::linalg_type>::return_type return_type;
-  };
-
-  template <typename L> inline 
-  typename part_return<const L *, linalg_real_part>::return_type
-  real_part(const L &l) {
-    return typename part_return<const L *, linalg_real_part>::return_type
-      (linalg_cast(const_cast<L &>(l)));
+  template <typename PT, typename PART> 
+  void linalg_traits<part_row_ref<PT, PART> >::do_clear(this_type &v) { 
+    row_iterator it = mat_row_begin(v), ite = mat_row_end(v);
+    for (; it != ite; ++it) clear(row(it));
   }
-
-  template <typename L> inline 
-  typename part_return<L *, linalg_real_part>::return_type
-  real_part(L &l) {
-    return typename part_return<L *, linalg_real_part>::return_type(linalg_cast(l));
-  }
-
-  template <typename L> inline 
-  typename part_return<const L *, linalg_imag_part>::return_type
-  imag_part(const L &l) {
-    return typename part_return<const L *, linalg_imag_part>::return_type
-      (linalg_cast(const_cast<L &>(l)));
-  }
-
-  template <typename L> inline 
-  typename part_return<L *, linalg_imag_part>::return_type
-  imag_part(L &l) {
-    return typename part_return<L *, linalg_imag_part>::return_type(linalg_cast(l));
-  }
-
-
-
 }
 
 #endif //  GMM_REAL_PART_H
