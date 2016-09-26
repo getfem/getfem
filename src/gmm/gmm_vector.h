@@ -365,7 +365,7 @@ namespace gmm {
 	size_type j = (i & my_mask) >> my_shift;
 	void_pointer q = ((void_pointer *)(p))[j];
 	if (!q) {
-	  if (k+1 == depth) {
+	  if (k+1 != depth) {
 	    q = new void_pointer[16];
 	    std::memset(q, 0, 16*sizeof(void_pointer));
 	  } else {
@@ -417,7 +417,7 @@ namespace gmm {
       if (my_depth) {
 	for (size_type k = 0; k < 16; ++k)
 	  if (((void_pointer *)(p))[k] && (base + (k+1)*(mask+1)) >= i)
-	    rec_clean_i(((void_pointer *)(p))[k], my_depth-1, (my_mask << 4),
+	    rec_clean_i(((void_pointer *)(p))[k], my_depth-1, (my_mask >> 4),
 			i, base + k*(mask+1));
       } else {
 	for (size_type k = 0; k < 16; ++k)
@@ -441,8 +441,8 @@ namespace gmm {
 
     void copy_rec(void_pointer &p, const_void_pointer q, size_type my_depth) {
       if (depth) {
-	p = new void_pointer [16];
-	std::memset(root_ptr, 0, 16*sizeof(void_pointer));
+	p = new void_pointer[16];
+	std::memset(p, 0, 16*sizeof(void_pointer));
 	for (size_type l = 0; l < 16; ++l)
 	  if (((const const_void_pointer *)(q))[l])
 	    copy_rec(((void_pointer *)(p))[l],
@@ -461,12 +461,15 @@ namespace gmm {
 
     void next_pos_rec(void_pointer p, size_type my_depth, size_type my_mask,
 		      const_pointer &pp, size_type &i, size_type base) const {
+      // cout << "base = " << base << endl;
+      // cout << "mask+1 = " << my_mask+1 << " (mask >> 4) = " << (my_mask >> 4) << endl;
       size_type ii = i;
       if (my_depth) {
+	my_mask = (my_mask >> 4);
 	for (size_type k = 0; k < 16; ++k)
-	  if (((void_pointer *)(p))[k] && (base + (k+1)*(mask+1)) >= i) {
-	    next_pos_rec(((void_pointer *)(p))[k], my_depth-1, (my_mask << 4),
-			 pp, i, base + k*(mask+1));
+	  if (((void_pointer *)(p))[k] && (base + (k+1)*(my_mask+1)) >= i) {
+	    next_pos_rec(((void_pointer *)(p))[k], my_depth-1, my_mask,
+			 pp, i, base + k*(my_mask+1));
 	    if (i != size_type(-1)) return; else i = ii;
 	}
 	i = size_type(-1); pp = 0;
@@ -483,10 +486,11 @@ namespace gmm {
 			  size_type base) const {
       size_type ii = i;
       if (my_depth) {
+	my_mask = (my_mask >> 4);
 	for (size_type k = 15; k != size_type(-1); --k)
-	  if (((void_pointer *)(p))[k] && ((base + k*(mask+1)) < i)) {
-	    next_pos_rec(((void_pointer *)(p))[k], my_depth-1, (my_mask << 4),
-			 pp, i, base + k*(mask+1));
+	  if (((void_pointer *)(p))[k] && ((base + k*(my_mask+1)) < i)) {
+	    previous_pos_rec(((void_pointer *)(p))[k], my_depth-1,
+			     my_mask, pp, i, base + k*(my_mask+1));
 	    if (i != size_type(-1)) return; else i = ii;
 	}
 	i = size_type(-1); pp = 0;

@@ -424,21 +424,19 @@ int main(int /* argc */, char * /* argv */[]) {
   GMM_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
 
-  gmm::row_matrix<gmm::dsvector<double>> MM(15, 15);
+  gmm::row_matrix<gmm::dsvector<double>> MM(15, 200000);
   MM(1, 1) = 5.; MM(1, 1) += 5.;
   MM(1, 3) = 2.;
   MM(2, 2) += 5.; MM(2, 2) -= 4.999;
+  MM(2, 150000) = 6.;
 
   cout << "MM(1, 1) = " << MM(1, 1) << endl;
   cout << "MM(2, 2) = " << MM(2, 2) << endl;
   cout << "nnz(MM) = " << gmm::nnz(MM) << endl;
 
-
-  gmm::resize(MM, 20, 20);
-
   cout << "MM = " << MM << endl;
 
-  gmm::row_matrix<gmm::dsvector<double>> MM2(20, 20);
+  gmm::row_matrix<gmm::dsvector<double>> MM2(15, 200000);
   gmm::copy(MM, MM2);
 
   cout << "MM2 = " << MM2 << endl;

@@ -691,7 +691,7 @@ namespace gmm {
     
     std::vector<R> aux(mat_ncols(m));
     for (size_type i = 0; i < mat_nrows(m); ++i) {
-      auto row = mat_const_row(m, i);
+      typename linalg_traits<M>::const_sub_row_type row = mat_const_row(m, i);
       auto it = vect_const_begin(row), ite = vect_const_end(row);
       for (size_type k = 0; it != ite; ++it, ++k)
 	aux[index_of_it(it, k, store_type())] += gmm::abs(*it);
@@ -745,7 +745,7 @@ namespace gmm {
     
     std::vector<R> aux(mat_nrows(m));
     for (size_type i = 0; i < mat_ncols(m); ++i) {
-      auto col = mat_const_col(m, i);
+      typename linalg_traits<M>::const_sub_col_type col = mat_const_col(m, i);
       auto it = vect_const_begin(col), ite = vect_const_end(col);
       for (size_type k = 0; it != ite; ++it, ++k)
 	aux[index_of_it(it, k, store_type())] += gmm::abs(*it);
@@ -1156,9 +1156,13 @@ namespace gmm {
   void copy_vect(const L1& l1, L2& l2, abstract_sparse, abstract_sparse) {
     auto  it  = vect_const_begin(l1), ite = vect_const_end(l1);
     clear(l2);
-    for (; it != ite; ++it)
+    // cout << "copy " << l1 << " of size " << vect_size(l1) << " nnz = " << nnz(l1) << endl;
+    for (; it != ite; ++it) {
+      // cout << "*it = " << *it << endl;
+      // cout << "it.index() = " << it.index() << endl;
       if (*it != (typename linalg_traits<L1>::value_type)(0))
 	l2[it.index()] = *it;
+    }
   }
   
   template <typename L1, typename L2>
@@ -1950,7 +1954,7 @@ namespace gmm {
       size_type i,j, k = mat_nrows(l1);
       
       for (i = 0; i < k; ++i) {
-	auto r1=mat_const_row(l1, i);
+	typename linalg_traits<L1>::const_sub_row_type r1=mat_const_row(l1, i);
 	for (it2 = it2b, j = 0; it2 != ite; ++it2, ++j)
 	  l3(i,j) = vect_sp(r1, linalg_traits<L2>::col(it2));
       }
@@ -1982,7 +1986,7 @@ namespace gmm {
     clear(l3);
     size_type nn = mat_nrows(l3);
     for (size_type i = 0; i < nn; ++i) {
-      auto rl1 = mat_const_row(l1, i);
+      typename linalg_traits<L1>::const_sub_row_type rl1=mat_const_row(l1, i);
       auto it = vect_const_begin(rl1), ite = vect_const_end(rl1);
       for (; it != ite; ++it)
 	add(scaled(mat_const_row(l2, it.index()), *it), mat_row(l3, i));
@@ -2024,7 +2028,7 @@ namespace gmm {
     clear(l3);
     size_type nn = mat_ncols(l3);
     for (size_type i = 0; i < nn; ++i) {
-      auto rc2 = mat_const_col(l2, i);
+      typename linalg_traits<L2>::const_sub_col_type rc2 = mat_const_col(l2, i);
       auto it = vect_const_begin(rc2), ite = vect_const_end(rc2);
       for (; it != ite; ++it)
 	add(scaled(mat_const_col(l1, it.index()), *it), mat_col(l3, i));
@@ -2075,7 +2079,7 @@ namespace gmm {
     clear(l3);
     size_type nn = mat_ncols(l1);
     for (size_type i = 0; i < nn; ++i) {
-      auto rc1 = mat_const_col(l1, i);
+      typename linalg_traits<L1>::const_sub_col_type rc1 = mat_const_col(l1, i);
       auto it = vect_const_begin(rc1), ite = vect_const_end(rc1);
       for (; it != ite; ++it)
 	add(scaled(mat_const_row(l2, i), *it), mat_row(l3, it.index()));
@@ -2127,7 +2131,7 @@ namespace gmm {
   bool is_symmetric(const MAT &A, magnitude_of_linalg(MAT) tol, 
 		    row_major) {
     for (size_type i = 0; i < mat_nrows(A); ++i) {
-      auto row = mat_const_row(A, i);
+      typename linalg_traits<MAT>::const_sub_row_type row = mat_const_row(A, i);
       auto it = vect_const_begin(row), ite = vect_const_end(row);
       for (; it != ite; ++it)
 	if (gmm::abs(*it - A(it.index(), i)) > tol) return false;
@@ -2139,7 +2143,7 @@ namespace gmm {
   bool is_symmetric(const MAT &A, magnitude_of_linalg(MAT) tol, 
 		    col_major) {
     for (size_type i = 0; i < mat_ncols(A); ++i) {
-      auto col = mat_const_col(A, i);
+      typename linalg_traits<MAT>::const_sub_col_type col = mat_const_col(A, i);
       auto it = vect_const_begin(col), ite = vect_const_end(col);
       for (; it != ite; ++it)
 	if (gmm::abs(*it - A(i, it.index())) > tol) return false;
@@ -2188,7 +2192,7 @@ namespace gmm {
   bool is_hermitian(const MAT &A, magnitude_of_linalg(MAT) tol, 
 		    row_major) {
     for (size_type i = 0; i < mat_nrows(A); ++i) {
-      auto row = mat_const_row(A, i);
+      typename linalg_traits<MAT>::const_sub_row_type row = mat_const_row(A, i);
       auto it = vect_const_begin(row), ite = vect_const_end(row);
       for (; it != ite; ++it)
 	if (gmm::abs(gmm::conj(*it) - A(it.index(), i)) > tol) return false;
@@ -2200,7 +2204,7 @@ namespace gmm {
   bool is_hermitian(const MAT &A, magnitude_of_linalg(MAT) tol, 
 		    col_major) {
     for (size_type i = 0; i < mat_ncols(A); ++i) {
-      auto col = mat_const_col(A, i);
+      typename linalg_traits<MAT>::const_sub_col_type col = mat_const_col(A, i);
       auto it = vect_const_begin(col), ite = vect_const_end(col);
       for (; it != ite; ++it)
 	if (gmm::abs(gmm::conj(*it) - A(i, it.index())) > tol) return false;
