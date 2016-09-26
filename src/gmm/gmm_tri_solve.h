@@ -49,7 +49,7 @@ namespace gmm {
     for (int j = int(k) - 1; j >= 0; --j) {
       typedef typename linalg_traits<TriMatrix>::const_sub_col_type COL;
       COL c = mat_const_col(T, j);
-      typename linalg_traits<COL>::const_iterator 
+      typename linalg_traits<typename org_type<COL>::t>::const_iterator 
 	it = vect_const_begin(c), ite = vect_const_end(c);
       if (!is_unit) x[j] /= c[j];
       for (x_j = x[j]; it != ite ; ++it)
@@ -64,7 +64,7 @@ namespace gmm {
     for (int j = int(k) - 1; j >= 0; --j) {
       typedef typename linalg_traits<TriMatrix>::const_sub_col_type COL;
       COL c = mat_const_col(T, j);
-      typename linalg_traits<COL>::const_iterator
+      typename linalg_traits<typename org_type<COL>::t>::const_iterator
 	it = vect_const_begin(c), ite = it + j;
       typename linalg_traits<VecX>::iterator itx = vect_begin(x);
       if (!is_unit) x[j] /= c[j];
@@ -81,7 +81,7 @@ namespace gmm {
     for (int j = 0; j < int(k); ++j) {
       typedef typename linalg_traits<TriMatrix>::const_sub_col_type COL;
       COL c = mat_const_col(T, j);
-      typename linalg_traits<COL>::const_iterator 
+      typename linalg_traits<typename org_type<COL>::t>::const_iterator 
 	it = vect_const_begin(c), ite = vect_const_end(c);
       if (!is_unit) x[j] /= c[j];
       for (x_j = x[j]; it != ite ; ++it)
@@ -96,7 +96,7 @@ namespace gmm {
     for (int j = 0; j < int(k); ++j) {
       typedef typename linalg_traits<TriMatrix>::const_sub_col_type COL;
       COL c = mat_const_col(T, j);
-      typename linalg_traits<COL>::const_iterator 
+      typename linalg_traits<typename org_type<COL>::t>::const_iterator 
 	it = vect_const_begin(c) + (j+1), ite = vect_const_begin(c) + k;
       typename linalg_traits<VecX>::iterator itx = vect_begin(x) + (j+1);
       if (!is_unit) x[j] /= c[j];
@@ -115,7 +115,7 @@ namespace gmm {
     for (int i = int(k) - 1; i >= 0; --i) {
       --itr;
       ROW c = linalg_traits<TriMatrix>::row(itr);
-      typename linalg_traits<ROW>::const_iterator 
+      typename linalg_traits<typename org_type<ROW>::t>::const_iterator 
 	it = vect_const_begin(c), ite = vect_const_end(c);
       for (t = x[i]; it != ite; ++it)
 	if (int(it.index()) > i && it.index() < k) t -= (*it) * x[it.index()];
@@ -131,7 +131,7 @@ namespace gmm {
     for (int i = int(k) - 1; i >= 0; --i) {
       typedef typename linalg_traits<TriMatrix>::const_sub_row_type ROW;
       ROW c = mat_const_row(T, i);
-      typename linalg_traits<ROW>::const_iterator 
+      typename linalg_traits<typename org_type<ROW>::t>::const_iterator 
 	it = vect_const_begin(c) + (i + 1), ite = vect_const_begin(c) + k;
       typename linalg_traits<VecX>::iterator itx = vect_begin(x) + (i+1);
       
@@ -148,7 +148,7 @@ namespace gmm {
     for (int i = 0; i < int(k); ++i) {
       typedef typename linalg_traits<TriMatrix>::const_sub_row_type ROW;
       ROW c = mat_const_row(T, i);
-      typename linalg_traits<ROW>::const_iterator 
+      typename linalg_traits<typename org_type<ROW>::t>::const_iterator 
 	it = vect_const_begin(c), ite = vect_const_end(c);
 
       for (t = x[i]; it != ite; ++it)
@@ -165,7 +165,7 @@ namespace gmm {
     for (int i = 0; i < int(k); ++i) {
       typedef typename linalg_traits<TriMatrix>::const_sub_row_type ROW;
       ROW c = mat_const_row(T, i);
-      typename linalg_traits<ROW>::const_iterator 
+      typename linalg_traits<typename org_type<ROW>::t>::const_iterator 
 	it = vect_const_begin(c), ite = it + i;
       typename linalg_traits<VecX>::iterator itx = vect_begin(x);
 

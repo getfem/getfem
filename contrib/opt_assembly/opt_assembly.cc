@@ -133,8 +133,10 @@ std::ostream& operator<<(std::ostream& o, const chrono& c) {
   ch.init(); ch.tic(); workspace.assembly(2); ch.toc();                 \
   cout << "Elapsed time for new assembly " << ch.elapsed() << endl;     \
   getfem::model_real_sparse_matrix K(ndof1, ndof2), K2(ndof1, ndof2);   \
-  ch.init(); ch.tic(); old_asm; ch.toc();                               \
+  ch.init(); ch.tic(); old_asm; ch.toc();				\
+  cout << "begin copy" << endl;						\
   gmm::copy(K, K2);                                                     \
+  cout << "end copy" << endl;						\
   cout << "Elapsed time for old assembly " << ch.elapsed() << endl;     \
   gmm::add(gmm::scaled(gmm::sub_matrix(workspace.assembled_matrix(),    \
                                        I1_, I2_), scalar_type(-1)), K); \
@@ -422,8 +424,24 @@ int main(int /* argc */, char * /* argv */[]) {
   GMM_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
 
-  gmm::row_matrix<gmm::dsvector<double>> MM(20, 20);
-  // MM(1, 1) = 5.;
+  gmm::row_matrix<gmm::dsvector<double>> MM(15, 15);
+  MM(1, 1) = 5.; MM(1, 1) += 5.;
+  MM(1, 3) = 2.;
+  MM(2, 2) += 5.; MM(2, 2) -= 4.999;
+
+  cout << "MM(1, 1) = " << MM(1, 1) << endl;
+  cout << "MM(2, 2) = " << MM(2, 2) << endl;
+  cout << "nnz(MM) = " << gmm::nnz(MM) << endl;
+
+
+  gmm::resize(MM, 20, 20);
+
+  cout << "MM = " << MM << endl;
+
+  gmm::row_matrix<gmm::dsvector<double>> MM2(20, 20);
+  gmm::copy(MM, MM2);
+
+  cout << "MM2 = " << MM2 << endl;
   
   
   // Mesured times for new assembly, old one, alterantive new assembly,
@@ -432,18 +450,18 @@ int main(int /* argc */, char * /* argv */[]) {
   // instruction cost.
   //                        new  | old  | sto  | asse | exec |  J   |resize|
   test_new_assembly(2, 400, 1);
-  // Mass                 : 0.96 | 0.95 | 0.19 | 0.32 | 0.26 | 0.09 | 0.16 |
-  // Laplacian            : 0.51 | 0.88 | 0.10 | 0.16 | 0.19 | 0.08 | 0.03 |
+  // Mass                 : 0.94 | 0.93 | 0.19 | 0.32 | 0.26 | 0.09 | 0.16 |
+  // Laplacian            : 0.49 | 0.88 | 0.10 | 0.16 | 0.19 | 0.08 | 0.03 |
   // Homogeneous elas     : 0.85 | 2.06 | 0.23 | 0.30 | 0.18 | 0.07 | 0.08 |
-  // Non-homogeneous elast: 1.05 | 2.43 | 0.26 | 0.32 | 0.18 | 0.08 | 0.08 |
+  // Non-homogeneous elast: 1.04 | 2.43 | 0.26 | 0.32 | 0.18 | 0.08 | 0.08 |
   test_new_assembly(3, 36, 1);
   // Mass                 : 1.67 | 1.85 | 0.34 | 0.54 | 0.31 | 0.15 | 0.12 |
-  // Laplacian            : 0.95 | 1.54 | 0.10 | 0.17 | 0.24 | 0.14 | 0.06 |
+  // Laplacian            : 0.94 | 1.54 | 0.10 | 0.17 | 0.24 | 0.14 | 0.06 |
   // Homogeneous elas     : 2.25 | 5.09 | 0.88 | 0.95 | 0.24 | 0.14 | 0.11 |
   // Non-homogeneous elast: 2.36 | 7.16 | 0.74 | 0.86 | 0.24 | 0.14 | 0.11 |
   test_new_assembly(2, 200, 2);
   // Mass                 : 0.56 | 0.55 | 0.14 | 0.22 | 0.07 | 0.03 | 0.01 |
-  // Laplacian            : 0.28 | 0.42 | 0.06 | 0.10 | 0.06 | 0.03 | 0.03 |
+  // Laplacian            : 0.27 | 0.42 | 0.06 | 0.10 | 0.06 | 0.03 | 0.03 |
   // Homogeneous elas     : 0.72 | 1.50 | 0.22 | 0.25 | 0.05 | 0.02 | 0.11 |
   // Non-homogeneous elast: 0.84 | 2.63 | 0.23 | 0.28 | 0.05 | 0.02 | 0.11 |
   test_new_assembly(3, 18, 2);

@@ -221,23 +221,33 @@ namespace gmm {
   };
 
   /* ******************************************************************** */
-  /*  types to deal with const object representing a modifiable reference */
+  /* Original type from a pointer or a reference.                         */
+  /* ******************************************************************** */
+
+  template <typename V> struct org_type            { typedef V t; };
+  template <typename V> struct org_type<V *>       { typedef V t; };
+  template <typename V> struct org_type<const V *> { typedef V t; };
+  template <typename V> struct org_type<V &>       { typedef V t; };
+  template <typename V> struct org_type<const V &> { typedef V t; };
+
+  /* ******************************************************************** */
+  /*  Types to deal with const object representing a modifiable reference */
   /* ******************************************************************** */
   
   template <typename PT, typename R> struct mref_type_ 
   { typedef abstract_null_type return_type; };
   template <typename L, typename R> struct mref_type_<L *, R>
-  { typedef L & return_type; };
+  { typedef typename org_type<L>::t & return_type; };
   template <typename L, typename R> struct mref_type_<const L *, R>
-  { typedef const L & return_type; };
+  { typedef const typename org_type<L>::t & return_type; };
   template <typename L> struct mref_type_<L *, linalg_const>
-  { typedef const L & return_type; };
+  { typedef const typename org_type<L>::t & return_type; };
   template <typename L> struct mref_type_<const L *, linalg_const>
-  { typedef const L & return_type; };
+  { typedef const typename org_type<L>::t & return_type; };
   template <typename L> struct mref_type_<const L *, linalg_modifiable>
-  { typedef L & return_type; };
+  { typedef typename org_type<L>::t & return_type; };
   template <typename L> struct mref_type_<L *, linalg_modifiable>
-  { typedef L & return_type; };
+  { typedef typename org_type<L>::t & return_type; };
 
   template <typename PT> struct mref_type {
     typedef typename std::iterator_traits<PT>::value_type L;
@@ -255,7 +265,7 @@ namespace gmm {
   template <typename L, typename R> struct cref_type_
   { typedef abstract_null_type return_type; };
   template <typename L> struct cref_type_<L, linalg_modifiable>
-  { typedef L & return_type; };
+  { typedef typename org_type<L>::t & return_type; };
   template <typename L> struct cref_type {
     typedef typename cref_type_<L, 
       typename linalg_traits<L>::is_reference>::return_type return_type;
@@ -476,6 +486,7 @@ namespace gmm {
 
   template <typename T> class wsvector;
   template <typename T> class rsvector;
+  template <typename T> class dsvector;
   template<typename T> struct sparse_vector_type 
   { typedef wsvector<T> vector_type; };
 

@@ -204,7 +204,7 @@ namespace gmm {
     typedef typename linalg_traits<M>::value_type value_type;
     typedef value_type reference;
     typedef typename linalg_traits<M>::storage_type storage_type;
-    typedef typename linalg_traits<M>::const_sub_row_type vector_type;
+    typedef typename org_type<typename linalg_traits<M>::const_sub_row_type>::t vector_type;
     typedef conjugated_vector_const_ref<vector_type> sub_col_type;
     typedef conjugated_vector_const_ref<vector_type> const_sub_col_type;
     typedef conjugated_row_const_iterator<M> col_iterator;
@@ -296,7 +296,7 @@ namespace gmm {
     typedef typename linalg_traits<M>::value_type value_type;
     typedef value_type reference;
     typedef typename linalg_traits<M>::storage_type storage_type;
-    typedef typename linalg_traits<M>::const_sub_col_type vector_type;
+    typedef typename org_type<typename linalg_traits<M>::const_sub_col_type>::t vector_type;
     typedef conjugated_vector_const_ref<vector_type> sub_row_type;
     typedef conjugated_vector_const_ref<vector_type> const_sub_row_type;
     typedef conjugated_col_const_iterator<M> row_iterator;

@@ -193,8 +193,8 @@ namespace gmm
     typedef typename linalg_traits<V>::value_type value_type;
     typedef typename linalg_traits<V>::reference reference;
     typedef typename linalg_traits<V>::storage_type storage_type;
-    typedef simple_vector_ref<V *> sub_row_type;
-    typedef simple_vector_ref<const V *> const_sub_row_type;
+    typedef V & sub_row_type;
+    typedef const V & const_sub_row_type;
     typedef typename std::vector<V>::iterator row_iterator;
     typedef typename std::vector<V>::const_iterator const_row_iterator;
     typedef abstract_null_type sub_col_type;
@@ -299,8 +299,8 @@ namespace gmm
     typedef typename linalg_traits<V>::value_type value_type;
     typedef typename linalg_traits<V>::reference reference;
     typedef typename linalg_traits<V>::storage_type storage_type;
-    typedef simple_vector_ref<V *> sub_col_type;
-    typedef simple_vector_ref<const V *> const_sub_col_type;
+    typedef V &sub_col_type;
+    typedef const V &const_sub_col_type;
     typedef typename std::vector<V>::iterator col_iterator;
     typedef typename std::vector<V>::const_iterator const_col_iterator;
     typedef abstract_null_type sub_row_type;
@@ -318,9 +318,9 @@ namespace gmm
     static const_col_iterator col_end(const this_type &m)
     { return m.end(); }
     static const_sub_col_type col(const const_col_iterator &it)
-    { return const_sub_col_type(*it); }
+    { return *it; }
     static sub_col_type col(const col_iterator &it) 
-    { return sub_col_type(*it); }
+    { return *it; }
     static origin_type* origin(this_type &m) { return &m; }
     static const origin_type* origin(const this_type &m) { return &m; }
     static void do_clear(this_type &m) { m.clear_mat(); }
@@ -546,7 +546,7 @@ namespace gmm
     ir.resize(jc[nc]);
     for (size_type j = 0; j < nc; ++j) {
       col_type col = mat_const_col(B, j);
-      typename linalg_traits<col_type>::const_iterator
+      typename linalg_traits<typename org_type<col_type>::t>::const_iterator
 	it = vect_const_begin(col), ite = vect_const_end(col);
       for (size_type k = 0; it != ite; ++it, ++k) {
 	pr[jc[j]-shift+k] = *it;
@@ -696,7 +696,7 @@ namespace gmm
     ir.resize(jc[nr]);
     for (size_type j = 0; j < nr; ++j) {
       row_type row = mat_const_row(B, j);
-      typename linalg_traits<row_type>::const_iterator
+      typename linalg_traits<typename org_type<row_type>::t>::const_iterator
 	it = vect_const_begin(row), ite = vect_const_end(row);
       for (size_type k = 0; it != ite; ++it, ++k) {
 	pr[jc[j]-shift+k] = *it;

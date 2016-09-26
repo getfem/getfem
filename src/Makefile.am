@@ -162,6 +162,8 @@ SRC =                                      		\
 	bgeot_poly.cc                      		\
 	bgeot_poly_composite.cc            		\
 	bgeot_ftool.cc                     		\
+	getfem_models.cc                 		\
+	getfem_model_solvers.cc                		\
 	getfem_superlu.cc		   		\
 	getfem_mesh.cc                     		\
 	getfem_mesh_region.cc              		\
@@ -198,8 +200,6 @@ SRC =                                      		\
 	getfem_assembling_tensors.cc       		\
 	getfem_generic_assembly.cc       		\
 	getfem_mesher.cc		   		\
-	getfem_models.cc                 		\
-	getfem_model_solvers.cc                		\
 	getfem_fourth_order.cc                		\
 	getfem_nonlinear_elasticity.cc                  \
 	getfem_linearized_plates.cc               	\

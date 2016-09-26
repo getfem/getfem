@@ -144,7 +144,7 @@ namespace gmm {
       for (Tri_loc = 0, i = 0; i < n; ++i) {
 	typedef typename linalg_traits<M>::const_sub_row_type row_type;
 	row_type row = mat_const_row(A, i);
-        typename linalg_traits<row_type>::const_iterator
+        typename linalg_traits<typename org_type<row_type>::t>::const_iterator
 	  it = vect_const_begin(row), ite = vect_const_end(row);
 
 	if (count) { Tri_val[Tri_loc] = T(0); Tri_ind[Tri_loc] = i; }

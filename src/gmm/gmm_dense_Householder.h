@@ -59,7 +59,7 @@ namespace gmm {
     for (size_type i = 0; i < N; ++i, ++itx) {
       typedef typename linalg_traits<Matrix>::sub_row_type row_type;
       row_type row = mat_row(A, i);
-      typename linalg_traits<row_type>::iterator
+      typename linalg_traits<typename org_type<row_type>::t>::iterator
         it = vect_begin(row), ite = vect_end(row);
       typename linalg_traits<VecY>::const_iterator ity = vect_const_begin(y);
       T tx = *itx;
@@ -78,7 +78,7 @@ namespace gmm {
     for (size_type i = 0; i < M; ++i, ++ity) {
       typedef typename linalg_traits<Matrix>::sub_col_type col_type;
       col_type col = mat_col(A, i);
-      typename linalg_traits<col_type>::iterator
+      typename linalg_traits<typename org_type<col_type>::t>::iterator
         it = vect_begin(col), ite = vect_end(col);
       typename linalg_traits<VecX>::const_iterator itx = vect_const_begin(x);
       T ty = *ity;
@@ -112,7 +112,7 @@ namespace gmm {
     for (size_type i = 0; i < N; ++i, ++itx1, ++ity2) {
       typedef typename linalg_traits<Matrix>::sub_row_type row_type;
       row_type row = mat_row(A, i);
-      typename linalg_traits<row_type>::iterator
+      typename linalg_traits<typename org_type<row_type>::t>::iterator
         it = vect_begin(row), ite = vect_end(row);
       typename linalg_traits<VecX>::const_iterator itx2 = vect_const_begin(x);
       typename linalg_traits<VecY>::const_iterator ity1 = vect_const_begin(y);
@@ -134,7 +134,7 @@ namespace gmm {
     for (size_type i = 0; i < M; ++i, ++ity1, ++itx2) {
       typedef typename linalg_traits<Matrix>::sub_col_type col_type;
       col_type col = mat_col(A, i);
-      typename linalg_traits<col_type>::iterator
+      typename linalg_traits<typename org_type<col_type>::t>::iterator
         it = vect_begin(col), ite = vect_end(col);
       typename linalg_traits<VecX>::const_iterator itx1 = vect_const_begin(x);
       typename linalg_traits<VecY>::const_iterator ity2 = vect_const_begin(y);

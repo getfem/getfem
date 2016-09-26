@@ -205,7 +205,7 @@ namespace gmm {
     typedef typename strongest_numeric_type<S, typename linalg_traits<M>::value_type>::T value_type;
     typedef value_type reference;
     typedef typename linalg_traits<M>::storage_type storage_type;
-    typedef typename linalg_traits<M>::const_sub_row_type vector_type;
+    typedef typename org_type<typename linalg_traits<M>::const_sub_row_type>::t vector_type;
     typedef scaled_vector_const_ref<vector_type,S> sub_row_type;
     typedef scaled_vector_const_ref<vector_type,S> const_sub_row_type;
     typedef scaled_row_const_iterator<M,S> row_iterator;
@@ -299,7 +299,7 @@ namespace gmm {
     typedef typename linalg_traits<M>::origin_type origin_type;
     typedef value_type reference;
     typedef typename linalg_traits<M>::storage_type storage_type;
-    typedef typename linalg_traits<M>::const_sub_col_type vector_type;
+    typedef typename org_type<typename linalg_traits<M>::const_sub_col_type>::t vector_type;
     typedef abstract_null_type sub_col_type;
     typedef scaled_vector_const_ref<vector_type,S> const_sub_col_type;
     typedef abstract_null_type  col_iterator;

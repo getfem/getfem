@@ -143,11 +143,11 @@ namespace gmm {
     typedef abstract_null_type col_iterator;
     typedef abstract_null_type const_sub_col_type;
     typedef abstract_null_type const_col_iterator;
-    typedef typename sub_vector_type<const typename
-            linalg_traits<M>::const_sub_row_type *, SUBI2>::vector_type
+    typedef typename sub_vector_type<const typename org_type<typename
+	    linalg_traits<M>::const_sub_row_type>::t *, SUBI2>::vector_type
             const_sub_row_type;
     typedef typename select_ref<abstract_null_type, 
-            typename sub_vector_type<typename linalg_traits<M>::sub_row_type *,
+	    typename sub_vector_type<typename org_type<typename linalg_traits<M>::sub_row_type>::t *,
 	    SUBI2>::vector_type, PT>::ref_type sub_row_type;
     typedef gen_sub_row_matrix_iterator<typename const_pointer<PT>::pointer,
 	    SUBI1, SUBI2> const_row_iterator;
@@ -290,12 +290,8 @@ namespace gmm {
     typedef abstract_null_type row_iterator;
     typedef abstract_null_type const_sub_row_type;
     typedef abstract_null_type const_row_iterator;
-    typedef typename sub_vector_type<const typename
-            linalg_traits<M>::const_sub_col_type *, SUBI1>::vector_type
-            const_sub_col_type;
-    typedef typename select_ref<abstract_null_type, 
-            typename sub_vector_type<typename linalg_traits<M>::sub_col_type *,
-	    SUBI1>::vector_type, PT>::ref_type sub_col_type;
+    typedef typename sub_vector_type<const typename org_type<typename linalg_traits<M>::const_sub_col_type>::t *, SUBI1>::vector_type const_sub_col_type;
+    typedef typename select_ref<abstract_null_type, typename sub_vector_type<typename org_type<typename linalg_traits<M>::sub_col_type>::t *, SUBI1>::vector_type, PT>::ref_type sub_col_type;
     typedef gen_sub_col_matrix_iterator<typename const_pointer<PT>::pointer,
 	    SUBI1, SUBI2> const_col_iterator;
     typedef typename select_ref<abstract_null_type, 

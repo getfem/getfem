@@ -380,9 +380,9 @@ namespace gmm {
     typedef abstract_null_type const_sub_col_type;
     typedef abstract_null_type col_iterator;
     typedef abstract_null_type const_col_iterator;
-    typedef typename linalg_traits<M>::const_sub_row_type
+    typedef typename org_type<typename linalg_traits<M>::const_sub_row_type>::t
             pre_const_sub_row_type;
-    typedef typename linalg_traits<M>::sub_row_type pre_sub_row_type;
+    typedef typename org_type<typename linalg_traits<M>::sub_row_type>::t pre_sub_row_type;
     typedef part_vector<const pre_const_sub_row_type *, PART>
             const_sub_row_type;
     typedef typename select_ref<abstract_null_type,
@@ -476,9 +476,9 @@ namespace gmm {
     typedef abstract_null_type const_sub_row_type;
     typedef abstract_null_type row_iterator;
     typedef abstract_null_type const_row_iterator;
-    typedef typename linalg_traits<M>::const_sub_col_type
+    typedef typename org_type<typename linalg_traits<M>::const_sub_col_type>::t
             pre_const_sub_col_type;
-    typedef typename linalg_traits<M>::sub_col_type pre_sub_col_type;
+    typedef typename org_type<typename linalg_traits<M>::sub_col_type>::t pre_sub_col_type;
     typedef part_vector<const pre_const_sub_col_type *, PART>
             const_sub_col_type;
     typedef typename select_ref<abstract_null_type,

@@ -84,8 +84,8 @@ namespace getfemint {
     std::vector<int> ccnt(nj);
     std::fill(ccnt.begin(), ccnt.end(), 0);
     std::vector<double> rowmax(ni, 0.0), colmax(nj, 0.0);
-    gmm::linalg_traits<gmm::linalg_traits<gf_real_sparse_by_row>
-      ::const_sub_row_type>::const_iterator it, ite;
+    gmm::linalg_traits<gmm::org_type<gmm::linalg_traits<gf_real_sparse_by_row>
+       ::const_sub_row_type>::t>::const_iterator it, ite;
 
     /* first pass : find the maxima / row & column */
     for (int i = 0; i < ni; ++i) {
@@ -159,8 +159,8 @@ namespace getfemint {
     std::vector<int> ccnt(nj);
     std::fill(ccnt.begin(), ccnt.end(), 0);
     std::vector<double> rowmax(ni, 0.0), colmax(nj, 0.0);
-    gmm::linalg_traits<gmm::linalg_traits<gf_real_sparse_by_col>
-      ::const_sub_col_type>::const_iterator it, ite;
+    gmm::linalg_traits<gmm::org_type<gmm::linalg_traits<gf_real_sparse_by_col>
+       ::const_sub_col_type>::t>::const_iterator it, ite;
 
     /* first pass : find the maxima / row & column */
     for (int j = 0; j < nj; ++j) {
