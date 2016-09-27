@@ -134,9 +134,7 @@ std::ostream& operator<<(std::ostream& o, const chrono& c) {
   cout << "Elapsed time for new assembly " << ch.elapsed() << endl;     \
   getfem::model_real_sparse_matrix K(ndof1, ndof2), K2(ndof1, ndof2);   \
   ch.init(); ch.tic(); old_asm; ch.toc();				\
-  cout << "begin copy" << endl;						\
   gmm::copy(K, K2);                                                     \
-  cout << "end copy" << endl;						\
   cout << "Elapsed time for old assembly " << ch.elapsed() << endl;     \
   gmm::add(gmm::scaled(gmm::sub_matrix(workspace.assembled_matrix(),    \
                                        I1_, I2_), scalar_type(-1)), K); \
@@ -423,24 +421,6 @@ int main(int /* argc */, char * /* argv */[]) {
 
   GMM_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
-
-  gmm::row_matrix<gmm::dsvector<double>> MM(15, 200000);
-  MM(1, 1) = 5.; MM(1, 1) += 5.;
-  MM(1, 3) = 2.;
-  MM(2, 2) += 5.; MM(2, 2) -= 4.999;
-  MM(2, 150000) = 6.;
-
-  cout << "MM(1, 1) = " << MM(1, 1) << endl;
-  cout << "MM(2, 2) = " << MM(2, 2) << endl;
-  cout << "nnz(MM) = " << gmm::nnz(MM) << endl;
-
-  cout << "MM = " << MM << endl;
-
-  gmm::row_matrix<gmm::dsvector<double>> MM2(15, 200000);
-  gmm::copy(MM, MM2);
-
-  cout << "MM2 = " << MM2 << endl;
-  
   
   // Mesured times for new assembly, old one, alterantive new assembly,
   // storage estimate part for the new assembly, global assembly part,
@@ -471,7 +451,7 @@ int main(int /* argc */, char * /* argv */[]) {
   // Mass                 : 6.90 | 1.60 | 0.65 | 1.77 | 0.01 | .005 | 0.21 |
   // Laplacian            : 0.90 | 0.89 | 0.32 | 0.43 | 0.01 | .005 | 0.07 |
   // Homogeneous elas     : 11.1 | 6.65 | 0.90 | 1.69 | 0.01 | .005 | 2.50 |
-  // Non-homogeneous elast: 11.0 | 49.1 | 0.55 | 1.48 | 0.01 | .005 | 2.45 |
+  // Non-homogeneous elast: 11.0 | 49.1 | 0.95 | 1.48 | 0.01 | .005 | 2.45 |
 
   // Conclusions :
   // Desactivation of debug test has no sensible effect.

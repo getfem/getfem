@@ -50,7 +50,7 @@ namespace dal {
   /* d'insertion ou de suppression.                                        */
   /* ********************************************************************* */
 
-  static const size_t DEPTHMAX__ = size_t(CHAR_BIT*sizeof(size_t)*3) / 2;
+  static const size_t DEPTHMAX__ = 64;
   static const size_t ST_NIL = size_t(-1);
 
   template<typename T, typename COMP = gmm::less<T>, int pks = 5>
@@ -83,7 +83,7 @@ namespace dal {
     inline size_type father(void) const
     { return (depth<=1) ? ST_NIL : path[depth-2];}
     inline size_type index_(void) const
-    { return path[size_t(depth-1)]; }
+    { return path[(depth-1) & 63]; }
     inline short_type direction(void) const
     { return (depth==0) ? 0 : dir[depth-1];}
     inline void up(void) { if (depth > 0) depth--; }

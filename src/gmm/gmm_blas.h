@@ -950,18 +950,14 @@ namespace gmm {
   void copy_mat_by_row(const L1& l1, L2& l2) {
     size_type nbr = mat_nrows(l1);
     for (size_type i = 0; i < nbr; ++i)
-      copy_vect(mat_const_row(l1, i), mat_row(l2, i),
-      		typename linalg_traits<L1>::storage_type(),
-		typename linalg_traits<L2>::storage_type());
+      copy(mat_const_row(l1, i), mat_row(l2, i));
   }
 
   template <typename L1, typename L2>
   void copy_mat_by_col(const L1 &l1, L2 &l2) {
     size_type nbc = mat_ncols(l1);
     for (size_type i = 0; i < nbc; ++i) {
-      copy_vect(mat_const_col(l1, i), mat_col(l2, i),
-      		typename linalg_traits<L1>::storage_type(),
-		typename linalg_traits<L2>::storage_type());
+      copy(mat_const_col(l1, i), mat_col(l2, i));
     }
   }
 

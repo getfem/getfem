@@ -415,10 +415,11 @@ namespace gmm {
     void rec_clean_i(void_pointer p, size_type my_depth, size_type my_mask,
 		     size_type i, size_type base) {
       if (my_depth) {
+	my_mask = (my_mask >> 4);
 	for (size_type k = 0; k < 16; ++k)
 	  if (((void_pointer *)(p))[k] && (base + (k+1)*(mask+1)) >= i)
-	    rec_clean_i(((void_pointer *)(p))[k], my_depth-1, (my_mask >> 4),
-			i, base + k*(mask+1));
+	    rec_clean_i(((void_pointer *)(p))[k], my_depth-1, my_mask,
+			i, base + k*(my_mask+1));
       } else {
 	for (size_type k = 0; k < 16; ++k)
 	  if (base+k > i) ((T *)(p))[k] = T(0);
@@ -440,7 +441,7 @@ namespace gmm {
     }
 
     void copy_rec(void_pointer &p, const_void_pointer q, size_type my_depth) {
-      if (depth) {
+      if (my_depth) {
 	p = new void_pointer[16];
 	std::memset(p, 0, 16*sizeof(void_pointer));
 	for (size_type l = 0; l < 16; ++l)
@@ -461,8 +462,6 @@ namespace gmm {
 
     void next_pos_rec(void_pointer p, size_type my_depth, size_type my_mask,
 		      const_pointer &pp, size_type &i, size_type base) const {
-      // cout << "base = " << base << endl;
-      // cout << "mask+1 = " << my_mask+1 << " (mask >> 4) = " << (my_mask >> 4) << endl;
       size_type ii = i;
       if (my_depth) {
 	my_mask = (my_mask >> 4);
@@ -506,23 +505,25 @@ namespace gmm {
   public:
     void clean(double eps) { if (root_ptr) rec_clean(root_ptr, depth); }
     void resize(size_type n_) {
-      n = n_;
-      if (n_ < n) { // Depth unchanged (a choice)
-	if (root_ptr) rec_clean_i(root_ptr, depth, mask, n_, 0);
-      } else {
-	// may change the depth (add some levels)
-	size_type my_depth = 0, my_shift = 0, my_mask = 1; if (n_) --n_;
-	while (n_) { n_ /= 16; ++my_depth; my_shift += 4; my_mask *= 16; }
-	my_mask--; if (my_shift) my_shift -= 4; if (my_depth) --my_depth;
-	if (my_depth > depth) {
-	  if (root_ptr) {
-	    for (size_type k = depth; k < my_depth; ++k) {
-	      void_pointer *q = new void_pointer [16];
-	      std::memset(q, 0, 16*sizeof(void_pointer));
-	      q[0] = root_ptr; root_ptr = q;
+      if (n_ != n) {
+	n = n_;
+	if (n_ < n) { // Depth unchanged (a choice)
+	  if (root_ptr) rec_clean_i(root_ptr, depth, mask, n_, 0);
+	} else {
+	  // may change the depth (add some levels)
+	  size_type my_depth = 0, my_shift = 0, my_mask = 1; if (n_) --n_;
+	  while (n_) { n_ /= 16; ++my_depth; my_shift += 4; my_mask *= 16; }
+	  my_mask--; if (my_shift) my_shift -= 4; if (my_depth) --my_depth;
+	  if (my_depth > depth || depth == 0) {
+	    if (root_ptr) {
+	      for (size_type k = depth; k < my_depth; ++k) {
+		void_pointer *q = new void_pointer [16];
+		std::memset(q, 0, 16*sizeof(void_pointer));
+		q[0] = root_ptr; root_ptr = q;
+	      }
 	    }
+	    mask = my_mask; depth = my_depth; shift = my_shift;
 	  }
-	  mask = my_mask; depth = my_depth; shift = my_shift;
 	}
       }
     }
@@ -541,17 +542,23 @@ namespace gmm {
     }
 
     iterator begin(void) {
-      iterator it(*this); it.i = 0; it.p = const_cast<T *>(read_access(0));
-      if (!(it.p) || *(it.p) == T(0))
-	next_pos(*(const_cast<const_pointer *>(&(it.p))), it.i);
+      iterator it(*this); 
+      if (n && root_ptr) {
+	it.i = 0; it.p = const_cast<T *>(read_access(0));
+	if (!(it.p) || *(it.p) == T(0))
+	  next_pos(*(const_cast<const_pointer *>(&(it.p))), it.i);
+      }
       return it;
     }
 
     iterator end(void) { return iterator(*this); }
 
     const_iterator begin(void) const {
-      const_iterator it(*this); it.i = 0; it.p = read_access(0);
-      if (!(it.p) || *(it.p) == T(0)) next_pos(it.p, it.i);
+      const_iterator it(*this);
+      if (n && root_ptr) {
+	it.i = 0; it.p = read_access(0);
+	if (!(it.p) || *(it.p) == T(0)) next_pos(it.p, it.i);
+      }
       return it;
     }
 
@@ -581,7 +588,7 @@ namespace gmm {
     }
     
     /* Constructors */
-    dsvector(const dsvector<T> &v) { root_ptr = 0; copy(v); }
+    dsvector(const dsvector<T> &v) { init(0); copy(v); }
     dsvector<T> &operator =(const dsvector<T> &v) { copy(v); return *this; }
     explicit dsvector(size_type l){ init(l); }
     dsvector(void) { init(0); }
