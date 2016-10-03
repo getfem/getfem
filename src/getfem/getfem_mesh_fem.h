@@ -277,7 +277,7 @@ namespace getfem {
     /// Return a reference to the underlying mesh.
     const mesh &linked_mesh(void) const { return *linked_mesh_; }
 
-    bool is_uniform(void) const;
+    virtual bool is_uniform(void) const;
 
     /** Set the degree of the fem for automatic addition
      *  of element option. K=-1 disables the automatic addition.

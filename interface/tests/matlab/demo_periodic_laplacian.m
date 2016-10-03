@@ -42,7 +42,7 @@ gf_mesh_fem_set(mf,'fem',gf_fem('FEM_QK(2,2)'));
 
 % create a mesh_fem of for a field of dimension 1 for the multiplier
 mf_lambda = gf_mesh_fem(m,1);
-% assign the Q1 fem to all convexes of the mesh_fem (only the boundary will be used),
+% assign the Q1 fem to all elements of the mesh_fem (only the boundary will be used),
 gf_mesh_fem_set(mf_lambda,'fem',gf_fem('FEM_QK(2,1)'));
 
 % Integration which will be used

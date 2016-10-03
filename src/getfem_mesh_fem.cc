@@ -304,7 +304,7 @@ namespace getfem {
     if (fe_convex.card() == 0)
       { dof_enumeration_made = true; nb_total_dof = 0; return; }
     pfem first_pf = f_elems[fe_convex.first_true()];
-    if (first_pf->is_on_real_element()) is_uniform_ = false;
+    if (first_pf && first_pf->is_on_real_element()) is_uniform_ = false;
 
     // Gives the Cuthill McKee ordering to iterate on elements
     const std::vector<size_type> &cmk = linked_mesh().cuthill_mckee_ordering();

@@ -74,6 +74,8 @@ namespace getfem {
     virtual const bgeot::multi_index &get_qdims() const
     { return mf.get_qdims(); }
 
+    virtual bool is_uniform(void) const { return mf.is_uniform(); }
+
     virtual void set_qdim(dim_type) {
       GMM_ASSERT1(false, "The Qdim of a partial_mesh_fem is the same as "
                   "the original fem");

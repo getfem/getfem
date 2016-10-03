@@ -4416,7 +4416,8 @@ namespace getfem {
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: reduction operation of size 2 optimized ");
       size_type s1 = tc1.size()/2, s2 = tc2.size()/2;
-      GA_DEBUG_ASSERT(t.size() == s1*s2, "Internal error");
+      GA_DEBUG_ASSERT(t.size() == s1*s2, "Internal error " << t.size()
+		      << " != " << s1 << "*" << s2);
 
       base_tensor::iterator it1=tc1.begin(), it2=tc2.begin(), it2end=it2 + s2;
       for (base_tensor::iterator it = t.begin(); it != t.end(); ++it) {
@@ -9520,12 +9521,14 @@ namespace getfem {
       if (mf1 || mfg1)
         pgai = std::make_shared<ga_instruction_first_ind_tensor>
           (pnode->t, *pctx1, pnode->qdim1, mf1, mfg1);
+      // cout << "1 : " << int(mf1->is_uniform()) << endl;
       if (mf1 && mf1->is_uniform())
       	{ is_uniform = true; pctx1->invalid_convex_num(); }
     } else if (pnode->test_function_type == 2) {
       if (mf2 || mfg2)
         pgai = std::make_shared<ga_instruction_first_ind_tensor>
           (pnode->t, *pctx2, pnode->qdim2, mf2, mfg2);
+      // cout << "2 : " << int(mf2->is_uniform()) << endl;
       if (mf2 && mf2->is_uniform())
       	{ is_uniform = true; pctx2->invalid_convex_num(); }
     } else if (pnode->test_function_type == 3) {
@@ -9533,26 +9536,31 @@ namespace getfem {
         pgai = std::make_shared<ga_instruction_two_first_ind_tensor>
           (pnode->t, *pctx1, *pctx2, pnode->qdim1, mf1, mfg1,
            pnode->qdim2, mf2, mfg2);
+	// cout << "3 : " << int(mf1->is_uniform()) << " : " << int(mf2->is_uniform()) << endl;
 	if (mf1 && mf1->is_uniform() && mf2 && mf2->is_uniform()) {
-	  is_uniform=true;
+	  is_uniform = true;
 	  pctx1->invalid_convex_num();
 	  pctx2->invalid_convex_num();
 	} 
       } else if (mf1 || mfg1) {
         pgai = std::make_shared<ga_instruction_first_ind_tensor>
           (pnode->t, *pctx1, pnode->qdim1, mf1, mfg1);
+	// cout << "4 : " << int(mf1->is_uniform()) << endl;
 	if (mf1 && mf1->is_uniform())
-	  { is_uniform=true; pctx1->invalid_convex_num(); }
+	  { is_uniform = true; pctx1->invalid_convex_num(); }
       } else if (mf2 || mfg2) {
         pgai = std::make_shared<ga_instruction_second_ind_tensor>
           (pnode->t, *pctx2, pnode->qdim2, mf2, mfg2);
+	// cout << "5 : " << int(mf2->is_uniform()) << endl;
 	if (mf2 && mf2->is_uniform())
-	  { is_uniform=true; pctx2->invalid_convex_num(); }
+	  { is_uniform = true; pctx2->invalid_convex_num(); }
       }
     }
     if (pgai) {
-      if (is_uniform) pgai->exec();
-      else rmi.instructions.push_back(std::move(pgai));
+      // cout << "mf1 = " << mf1 << " mf2 = " << mf2 << endl;
+      if (is_uniform)
+	{ pgai->exec(); /* cout << "Uniform fem " << pnode->t.size() << endl; */ }
+      else { rmi.instructions.push_back(std::move(pgai)); /* cout << "nonUniform fem " << endl; */ }
     }
 
     // Optimization: detect if an equivalent node has already been compiled

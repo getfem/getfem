@@ -659,7 +659,6 @@ static void run_tests(getfem::mesh_im &mim,
     cout << "done " << c << endl;
 
   }
-  cout << "M1 = " << M1 <<  endl;
   if (do_old && do_new) comp_mat(M1,M2);
   }
 }
