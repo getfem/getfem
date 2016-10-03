@@ -9515,29 +9515,45 @@ namespace getfem {
       }
     }
 
+    bool is_uniform = false;
     if (pnode->test_function_type == 1) {
       if (mf1 || mfg1)
         pgai = std::make_shared<ga_instruction_first_ind_tensor>
           (pnode->t, *pctx1, pnode->qdim1, mf1, mfg1);
+      if (mf1 && mf1->is_uniform())
+      	{ is_uniform = true; pctx1->invalid_convex_num(); }
     } else if (pnode->test_function_type == 2) {
       if (mf2 || mfg2)
         pgai = std::make_shared<ga_instruction_first_ind_tensor>
           (pnode->t, *pctx2, pnode->qdim2, mf2, mfg2);
+      if (mf2 && mf2->is_uniform())
+      	{ is_uniform = true; pctx2->invalid_convex_num(); }
     } else if (pnode->test_function_type == 3) {
-      if ((mf1 || mfg1) && (mf2 || mfg2))
+      if ((mf1 || mfg1) && (mf2 || mfg2)) {
         pgai = std::make_shared<ga_instruction_two_first_ind_tensor>
           (pnode->t, *pctx1, *pctx2, pnode->qdim1, mf1, mfg1,
            pnode->qdim2, mf2, mfg2);
-      else if (mf1 || mfg1)
+	if (mf1 && mf1->is_uniform() && mf2 && mf2->is_uniform()) {
+	  is_uniform=true;
+	  pctx1->invalid_convex_num();
+	  pctx2->invalid_convex_num();
+	} 
+      } else if (mf1 || mfg1) {
         pgai = std::make_shared<ga_instruction_first_ind_tensor>
           (pnode->t, *pctx1, pnode->qdim1, mf1, mfg1);
-      else if (mf2 || mfg2)
+	if (mf1 && mf1->is_uniform())
+	  { is_uniform=true; pctx1->invalid_convex_num(); }
+      } else if (mf2 || mfg2) {
         pgai = std::make_shared<ga_instruction_second_ind_tensor>
           (pnode->t, *pctx2, pnode->qdim2, mf2, mfg2);
+	if (mf2 && mf2->is_uniform())
+	  { is_uniform=true; pctx2->invalid_convex_num(); }
+      }
     }
-    // if (pgai) { pgai->exec(); }
-    if (pgai) rmi.instructions.push_back(std::move(pgai));
-
+    if (pgai) {
+      if (is_uniform) pgai->exec();
+      else rmi.instructions.push_back(std::move(pgai));
+    }
 
     // Optimization: detect if an equivalent node has already been compiled
     if (rmi.node_list.find(pnode->hash_value) != rmi.node_list.end()) {

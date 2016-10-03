@@ -573,7 +573,7 @@ namespace gmm {
     }
 
     inline void wa(size_type c, const T &e)
-    { if (e != T(0)) { if (read_access(c)) *(write_access(c)) += e; } }
+    { if (e != T(0)) { *(write_access(c)) += e; } }
 
     inline T r(size_type c) const
     { const T *p = read_access(c); if (p) return *p; else return T(0); }
@@ -750,7 +750,7 @@ namespace gmm {
       GMM_ASSERT2(c < nbl, "out of range");
       if (e != T(0)) {
 	iterator it = this->lower_bound(c);
-	if (it != this->end()) it->second += e;
+	if (it != this->end() && it->first == c) it->second += e;
 	else base_type::operator [](c) = e;
       }
     }
@@ -1440,6 +1440,7 @@ namespace gmm {
       { return data.end(); }
 
     void w(size_type c, const T &e);
+    void wa(size_type c, const T &e);
     T r(size_type c) const {
       GMM_ASSERT2(c < size_, "out of range");
       if (c < shift || c >= shift + data.size()) return T(0);
@@ -1483,11 +1484,35 @@ namespace gmm {
       shift = c;
     }
     else if (c >= shift + s) {
-      data.resize(c - shift + 1);
-      std::fill(data.begin() + s, data.end(), T(0));
+      data.resize(c - shift + 1, T(0));
+      // std::fill(data.begin() + s, data.end(), T(0));
     }
     data[c - shift] = e;
   }
+
+  template<typename T>  void slvector<T>::wa(size_type c, const T &e) {
+    GMM_ASSERT2(c < size_, "out of range");
+    size_type s = data.size();
+    if (!s) { data.resize(1, e); shift = c; return; }
+    else if (c < shift) {
+      data.resize(s + shift - c); 
+      typename std::vector<T>::iterator it = data.begin(),it2=data.end()-1;
+      typename std::vector<T>::iterator it3 = it2 - shift + c;
+      for (; it3 >= it; --it3, --it2) *it2 = *it3;
+      std::fill(it, it + shift - c, T(0));
+      shift = c;
+      data[c - shift] = e;
+      return;
+    }
+    else if (c >= shift + s) {
+      data.resize(c - shift + 1, T(0));
+      data[c - shift] = e;
+      return;
+      // std::fill(data.begin() + s, data.end(), T(0));
+    }
+    data[c - shift] += e;
+  }
+  
   
   template <typename T> struct linalg_traits<slvector<T> > {
     typedef slvector<T> this_type;

@@ -290,13 +290,21 @@ namespace getfem {
     }
   }
 
+  bool mesh_fem::is_uniform() const {
+    context_check(); if (!dof_enumeration_made) enumerate_dof();
+    return is_uniform_;
+  }
+
   /// Enumeration of dofs
   void mesh_fem::enumerate_dof(void) const {
     bgeot::index_node_pair ipt;
+    is_uniform_ = true;
     GMM_ASSERT1(linked_mesh_ != 0, "Uninitialized mesh_fem");
     context_check();
     if (fe_convex.card() == 0)
       { dof_enumeration_made = true; nb_total_dof = 0; return; }
+    pfem first_pf = f_elems[fe_convex.first_true()];
+    if (first_pf->is_on_real_element()) is_uniform_ = false;
 
     // Gives the Cuthill McKee ordering to iterate on elements
     const std::vector<size_type> &cmk = linked_mesh().cuthill_mckee_ordering();
@@ -346,6 +354,7 @@ namespace getfem {
     for (size_type cv : cmk) { // Loop on elements
       if (!fe_convex.is_in(cv)) continue;
       pfem pf = fem_of_element(cv);
+      if (pf != first_pf) is_uniform_ = false;
       bgeot::pgeometric_trans pgt = linked_mesh().trans_of_convex(cv);
       bgeot::pstored_point_tab pspt = pf->node_tab(cv);
       if (pgt != pgt_old || pspt != pspt_old)
@@ -436,6 +445,7 @@ namespace getfem {
   void mesh_fem::clear(void) {
     fe_convex.clear();
     dof_enumeration_made = false;
+    is_uniform_ = true;
     touch(); v_num = act_counter();
     dof_structure.clear();
     use_reduction = false;
@@ -446,6 +456,7 @@ namespace getfem {
   void mesh_fem::init_with_mesh(const mesh &me, dim_type Q) {
     GMM_ASSERT1(linked_mesh_ == 0, "Mesh level set already initialized");
     dof_enumeration_made = false;
+    is_uniform_ = false;
     auto_add_elt_pf = 0;
     auto_add_elt_K = dim_type(-1);
     Qdim = Q;
@@ -467,6 +478,7 @@ namespace getfem {
     E_ = mf.E_;
     dof_structure = mf.dof_structure;
     dof_enumeration_made = mf.dof_enumeration_made;
+    is_uniform_ = mf.is_uniform_;
     nb_total_dof = mf.nb_total_dof;
     auto_add_elt_pf = mf.auto_add_elt_pf;
     auto_add_elt_K = mf.auto_add_elt_K;
@@ -491,8 +503,12 @@ namespace getfem {
   mesh_fem::mesh_fem(const mesh &me, dim_type Q)
     { linked_mesh_ = 0; init_with_mesh(me, Q); }
 
-  mesh_fem::mesh_fem(void)
-    { linked_mesh_ = 0; dof_enumeration_made = false; set_qdim(1); }
+  mesh_fem::mesh_fem(void) {
+    linked_mesh_ = 0;
+    dof_enumeration_made = false;
+    is_uniform_ = true;
+    set_qdim(1);
+  }
 
   mesh_fem::~mesh_fem() { }
 
@@ -538,6 +554,8 @@ namespace getfem {
         } else if (bgeot::casecmp(tmp, "DOF_ENUMERATION") == 0) {
           dal::bit_vector doflst;
           dof_structure.clear(); dof_enumeration_made = false;
+	  is_uniform_ = true;
+	  size_type nbdof_unif = size_type(-1);
           touch(); v_num = act_counter();
           while (true) {
             bgeot::get_token(ist, tmp);
@@ -550,6 +568,11 @@ namespace getfem {
             std::vector<size_type> tab;
             if (convex_index().is_in(ic) && tmp.size() &&
                 isdigit(tmp[0]) && tmp2 == ":") {
+	      size_type nbd = nb_basic_dof_of_element(ic);
+	      if (nbdof_unif == size_type(-1))
+		nbdof_unif = nbd;
+	      else if (nbdof_unif != nbd)
+		is_uniform_ = false;
               tab.resize(nb_basic_dof_of_element(ic));
               for (size_type i=0; i < fem_of_element(ic)->nb_dof(ic);
                    i++) {

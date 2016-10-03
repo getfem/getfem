@@ -471,6 +471,7 @@ static void comp_mat(const sparse_matrix_type& M1,
       gmm::copy(gmm::mat_const_row(M1,i),r1);
       gmm::copy(gmm::mat_const_row(M2,i),r2);    
       cout << "\nrow(" << i+1 << "),\nM1=" << r1 << "\nM2=" << r2 << endl;
+      cout << "mx = " << mx << " d = " << d << endl;
       fail_cnt++;
       GMM_ASSERT1(false, "Failed ! ");
       break;
@@ -658,6 +659,7 @@ static void run_tests(getfem::mesh_im &mim,
     cout << "done " << c << endl;
 
   }
+  cout << "M1 = " << M1 <<  endl;
   if (do_old && do_new) comp_mat(M1,M2);
   }
 }
