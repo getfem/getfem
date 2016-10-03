@@ -5210,6 +5210,7 @@ namespace getfem {
           for (const size_type &dof1 : dofs1) {
             if (gmm::abs(*it) > threshold)
               K(dof1, dof2) += *it;
+	      // K.col(dof2).wa(dof1, *it);
             ++it;
           }
       }

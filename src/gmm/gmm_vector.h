@@ -65,9 +65,9 @@ namespace gmm {
     inline bool operator !=(std::complex<T> v) const
     { return ((*pm).r(l) != v); }
     inline ref_elt_vector &operator +=(T v)
-    { (*pm).w(l,(*pm).r(l) + v); return *this; }
+    { (*pm).wa(l, v); return *this; }
     inline ref_elt_vector &operator -=(T v)
-    { (*pm).w(l,(*pm).r(l) - v); return *this; }
+    { (*pm).wa(l, -v); return *this; }
     inline ref_elt_vector &operator /=(T v)
     { (*pm).w(l,(*pm).r(l) / v); return *this; }
     inline ref_elt_vector &operator *=(T v)
@@ -572,6 +572,9 @@ namespace gmm {
       else *(write_access(c)) = e;
     }
 
+    inline void wa(size_type c, const T &e)
+    { if (e != T(0)) { if (read_access(c)) *(write_access(c)) += e; } }
+
     inline T r(size_type c) const
     { const T *p = read_access(c); if (p) return *p; else return T(0); }
 
@@ -743,6 +746,15 @@ namespace gmm {
       else base_type::operator [](c) = e;
     }
 
+    inline void wa(size_type c, const T &e) {
+      GMM_ASSERT2(c < nbl, "out of range");
+      if (e != T(0)) {
+	iterator it = this->lower_bound(c);
+	if (it != this->end()) it->second += e;
+	else base_type::operator [](c) = e;
+      }
+    }
+
     inline T r(size_type c) const {
       GMM_ASSERT2(c < nbl, "out of range");
       const_iterator it = this->lower_bound(c);
@@ -866,7 +878,7 @@ namespace gmm {
 
   template<typename T> struct elt_rsvector_ {
     size_type c; T e;
-    /* e is initialized by default to avoid some false warnings of valgrind..
+    /* e is initialized by default to avoid some false warnings of valgrind.
        (from http://valgrind.org/docs/manual/mc-manual.html:
       
        When memory is read into the CPU's floating point registers, the
@@ -968,6 +980,7 @@ namespace gmm {
     { return ref_elt_vector<T, rsvector<T> >(this, c); }
 
     void w(size_type c, const T &e);
+    void wa(size_type c, const T &e);
     T r(size_type c) const;
     void swap_indices(size_type i, size_type j);
 
@@ -1020,7 +1033,7 @@ namespace gmm {
       iterator it = std::lower_bound(this->begin(), this->end(), ev);
       if (it != this->end() && it->c == j) {
 	for (iterator ite = this->end() - 1; it != ite; ++it) *it = *(it+1);
-	base_type_::resize(nb_stored()-1);
+	base_resize(nb_stored()-1);
       }
     }
   }
@@ -1039,7 +1052,7 @@ namespace gmm {
     else {
       elt_rsvector_<T> ev(c, e);
       if (nb_stored() == 0) {
-	base_type_::resize(1,ev);
+	base_type_::reserve(16); base_type_::resize(1,ev);
       }
       else {
 	iterator it = std::lower_bound(this->begin(), this->end(), ev);
@@ -1052,8 +1065,35 @@ namespace gmm {
 	  base_type_::resize(nb_stored()+1, ev);
 	  if (ind != this->nb_stored() - 1) {
 	    it = this->begin() + ind;
-	    for (iterator ite = this->end() - 1; ite != it; --ite)
-	      *ite = *(ite-1);
+	    iterator ite = this->end(); --ite; iterator itee = ite; --itee; 
+	    for (; ite != it; --ite, --itee) *ite = *itee;
+	    *it = ev;
+	  }
+	}
+      }
+    }
+  }
+
+  template <typename T> void rsvector<T>::wa(size_type c, const T &e) {
+    GMM_ASSERT2(c < nbl, "out of range");
+    if (e != T(0)) {
+      elt_rsvector_<T> ev(c, e);
+      if (nb_stored() == 0) {
+	base_type_::reserve(16); base_type_::resize(1, ev);
+      }
+      else {
+	iterator it = std::lower_bound(this->begin(), this->end(), ev);
+	if (it != this->end() && it->c == c) it->e += e;
+	else {
+	  size_type ind = it - this->begin();
+          if (this->nb_stored() - ind > 1100)
+            GMM_WARNING2("Inefficient addition of element in rsvector with "
+                         << this->nb_stored() - ind << " non-zero entries");
+	  base_type_::resize(nb_stored()+1, ev);
+	  if (ind != this->nb_stored() - 1) {
+	    it = this->begin() + ind;
+	    iterator ite = this->end(); --ite; iterator itee = ite; --itee; 
+	    for (; ite != it; --ite, --itee) *ite = *itee;
 	    *it = ev;
 	  }
 	}
