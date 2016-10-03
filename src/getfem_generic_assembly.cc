@@ -9535,8 +9535,8 @@ namespace getfem {
         pgai = std::make_shared<ga_instruction_second_ind_tensor>
           (pnode->t, *pctx2, pnode->qdim2, mf2, mfg2);
     }
-    if (pgai) { pgai->exec(); }
-    // if (pgai) rmi.instructions.push_back(std::move(pgai));
+    // if (pgai) { pgai->exec(); }
+    if (pgai) rmi.instructions.push_back(std::move(pgai));
 
 
     // Optimization: detect if an equivalent node has already been compiled
