@@ -4416,9 +4416,8 @@ namespace getfem {
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: reduction operation of size 2 optimized ");
       size_type s1 = tc1.size()/2, s2 = tc2.size()/2;
-      GA_DEBUG_ASSERT(t.size() == s1*s2, "Internal error " << t.size()
+      GA_DEBUG_ASSERT(t.size() == s1*s2, "Internal error, " << t.size()
 		      << " != " << s1 << "*" << s2);
-
       base_tensor::iterator it1=tc1.begin(), it2=tc2.begin(), it2end=it2 + s2;
       for (base_tensor::iterator it = t.begin(); it != t.end(); ++it) {
         *it = (*it1)*(*it2) + it1[s1] * it2[s2];
@@ -5210,8 +5209,7 @@ namespace getfem {
         for (const size_type &dof2 : dofs2)
           for (const size_type &dof1 : dofs1) {
             if (gmm::abs(*it) > threshold)
-              K(dof1, dof2) += *it;
-	      // K.col(dof2).wa(dof1, *it);
+	      K(dof1, dof2) += *it;
             ++it;
           }
       }
@@ -9470,7 +9468,6 @@ namespace getfem {
         pnode->node_type == GA_NODE_SPEC_FUNC ||
         pnode->node_type == GA_NODE_CONSTANT ||
         pnode->node_type == GA_NODE_ALLINDICES ||
-        // pnode->node_type == GA_NODE_ZERO ||   // zero nodes can still have test functions
         pnode->node_type == GA_NODE_RESHAPE) return;
 
     // cout << "compiling "; ga_print_node(pnode, cout); cout << endl;
@@ -10302,8 +10299,6 @@ namespace getfem {
 
        case GA_MINUS:
          if (pnode->t.size() == 1) {
-           // GA_DEBUG_ASSERT(pnode->nb_test_functions() == 0,
-           //              "Internal error: non zero number of test functions");
            GA_DEBUG_ASSERT(child0->t.size() == 1,
                            "Internal error: child0 not scalar");
            GA_DEBUG_ASSERT(child1->t.size() == 1,
@@ -10332,7 +10327,9 @@ namespace getfem {
 
        case GA_DOT: case GA_COLON: case GA_MULT:
          {
-           size_type s1 = (child0->t.size()*child1->t.size())/pnode->t.size();
+	   size_type tps1 = child0->tensor_proper_size();
+	   size_type tps2 = child1->tensor_proper_size();
+           size_type s1 = (tps1 * tps2) / pnode->tensor_proper_size();
            size_type s2 = size_type(round(sqrt(scalar_type(s1))));
 
            pgai = pga_instruction();
@@ -10496,11 +10493,9 @@ namespace getfem {
          break;
 
        case GA_SKEW:
-         {
-           pgai = std::make_shared<ga_instruction_skew>
-             (pnode->t, child0->t);
-           rmi.instructions.push_back(std::move(pgai));
-         }
+	 pgai = std::make_shared<ga_instruction_skew>
+	   (pnode->t, child0->t);
+	 rmi.instructions.push_back(std::move(pgai));
          break;
 
        case GA_TRACE:
@@ -10682,17 +10677,17 @@ namespace getfem {
                 (pnode->t[0], child1->t[0], child2->t[0], F);
           } else if (child1->t.size() == 1) {
             if (F.ftype() == 0)
-              pgai = std::make_shared<ga_instruction_eval_func_2arg_first_scalar>
+              pgai=std::make_shared<ga_instruction_eval_func_2arg_first_scalar>
                 (pnode->t, child1->t, child2->t, F.f2());
             else
-              pgai = std::make_shared<ga_instruction_eval_func_2arg_first_scalar_expr>
+              pgai=std::make_shared<ga_instruction_eval_func_2arg_first_scalar_expr>
                 (pnode->t, child1->t, child2->t, F);
           } else if (child2->t.size() == 1) {
             if (F.ftype() == 0)
-              pgai = std::make_shared<ga_instruction_eval_func_2arg_second_scalar>
+              pgai=std::make_shared<ga_instruction_eval_func_2arg_second_scalar>
                 (pnode->t, child1->t, child2->t, F.f2());
             else
-              pgai = std::make_shared<ga_instruction_eval_func_2arg_second_scalar_expr>
+              pgai=std::make_shared<ga_instruction_eval_func_2arg_second_scalar_expr>
                 (pnode->t, child1->t, child2->t, F);
           } else {
             if (F.ftype() == 0)

@@ -419,42 +419,46 @@ int main(int /* argc */, char * /* argv */[]) {
   GMM_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
   
-  // Mesured times for new assembly, old one,
-  // storage estimate part for the new assembly, global assembly part,
-  // ga_exec cost (instructions not executed), J computation, resizing
-  // instruction cost.
+  // Mesured times for
+  // - new assembly,
+  // - old one,
+  // - estimate of the storage in sparse matrices part for the new assembly,
+  // - global assembly part (assembly instruction),
+  // - ga_exec cost (instructions not executed),
+  // - J computation.
   //                        new  | old  | sto  | asse | exec |  J   |
   test_new_assembly(2, 400, 1); // ndofu = 321602 ndofp = 160801 ndofchi = 1201
-  // Mass                 : 0.79 | 0.86 | 0.19 | 0.32 | 0.26 | 0.09 |
-  // Laplacian            : 0.43 | 0.85 | 0.10 | 0.16 | 0.19 | 0.08 |
-  // Homogeneous elas     : 0.67 | 1.91 | 0.23 | 0.30 | 0.18 | 0.07 |
-  // Non-homogeneous elast: 0.83 | 2.32 | 0.26 | 0.32 | 0.18 | 0.08 |
+  // Mass                 : 0.78 | 0.84 | 0.11 | 0.22 | 0.26 | 0.09 |
+  // Laplacian            : 0.42 | 0.83 | 0.05 | 0.11 | 0.19 | 0.08 |
+  // Homogeneous elas     : 0.65 | 1.89 | 0.14 | 0.21 | 0.18 | 0.07 |
+  // Non-homogeneous elast: 0.82 | 2.32 | 0.13 | 0.23 | 0.18 | 0.08 |
   test_new_assembly(3, 36, 1);  // ndofu = 151959 ndofp = 50653 ndofchi = 6553
-  // Mass                 : 1.36 | 1.68 | 0.34 | 0.54 | 0.31 | 0.15 |
-  // Laplacian            : 0.89 | 1.51 | 0.10 | 0.17 | 0.24 | 0.14 |
-  // Homogeneous elas     : 1.92 | 4.77 | 0.88 | 0.95 | 0.24 | 0.14 |
-  // Non-homogeneous elast: 2.05 | 6.81 | 0.74 | 0.86 | 0.24 | 0.14 |
+  // Mass                 : 1.36 | 1.68 | 0.12 | 0.34 | 0.31 | 0.15 |
+  // Laplacian            : 0.87 | 1.49 | 0.05 | 0.11 | 0.24 | 0.14 |
+  // Homogeneous elas     : 1.87 | 4.73 | 0.50 | 0.62 | 0.24 | 0.14 |
+  // Non-homogeneous elast: 2.03 | 6.81 | 0.45 | 0.63 | 0.24 | 0.14 |
   test_new_assembly(2, 200, 2); // ndofu = 321602 ndofp = 160801 ndofchi = 1201
-  // Mass                 : 0.49 | 0.45 | 0.14 | 0.22 | 0.07 | 0.03 |
-  // Laplacian            : 0.21 | 0.38 | 0.06 | 0.10 | 0.06 | 0.03 |
-  // Homogeneous elas     : 0.53 | 1.28 | 0.22 | 0.25 | 0.05 | 0.02 |
-  // Non-homogeneous elast: 0.64 | 2.43 | 0.23 | 0.28 | 0.05 | 0.02 |
+  // Mass                 : 0.44 | 0.45 | 0.07 | 0.14 | 0.07 | 0.03 |
+  // Laplacian            : 0.21 | 0.38 | 0.03 | 0.06 | 0.06 | 0.03 |
+  // Homogeneous elas     : 0.53 | 1.28 | 0.13 | 0.14 | 0.05 | 0.02 |
+  // Non-homogeneous elast: 0.63 | 2.42 | 0.12 | 0.17 | 0.05 | 0.02 |
   test_new_assembly(3, 18, 2);  // ndofu = 151959 ndofp = 50653 ndofchi = 6553
-  // Mass                 : 1.95 | 0.90 | 0.27 | 0.63 | 0.05 | 0.02 |
-  // Laplacian            : 0.29 | 0.58 | 0.16 | 0.17 | 0.04 | 0.02 |
-  // Homogeneous elas     : 2.48 | 3.48 | 1.53 | 1.72 | 0.04 | 0.02 |
-  // Non-homogeneous elast: 2.55 | 9.32 | 1.48 | 1.68 | 0.04 | 0.02 |
+  // Mass                 : 1.95 | 0.90 | 0.22 | 0.53 | 0.05 | 0.02 |
+  // Laplacian            : 0.29 | 0.57 | 0.09 | 0.11 | 0.04 | 0.02 |
+  // Homogeneous elas     : 2.47 | 3.48 | 0.99 | 1.19 | 0.04 | 0.02 |
+  // Non-homogeneous elast: 2.55 | 9.25 | 0.99 | 1.18 | 0.04 | 0.02 |
   test_new_assembly(3, 9, 4);   // ndofu = 151959 ndofp = 50653 ndofchi = 6553
-  // Mass                 : 6.64 | 1.33 | 0.65 | 1.77 | 0.01 | .005 |
-  // Laplacian            : 0.78 | 0.79 | 0.32 | 0.43 | 0.01 | .005 |
-  // Homogeneous elas     : 10.2 | 5.52 | 0.90 | 1.69 | 0.01 | .005 |
-  // Non-homogeneous elast: 10.1 | 48.0 | 0.95 | 1.48 | 0.01 | .005 |
+  // Mass                 : 6.64 | 1.33 | 0.41 | 1.69 | 0.01 | .005 |
+  // Laplacian            : 0.78 | 0.79 | 0.23 | 0.32 | 0.01 | .005 |
+  // Homogeneous elas     : 10.3 | 5.52 | 0.30 | 0.84 | 0.01 | .005 |
+  // Non-homogeneous elast: 10.2 | 48.0 | 0.30 | 0.70 | 0.01 | .005 |
 
   // Conclusions :
-  // Desactivation of debug test has no sensible effect.
-  // Compile time of assembly strings is negligible (< 0.0004)
-  // J computation takes half the computational time of the exec part
-  // The optimized instruction call is negligible
+  // - Desactivation of debug test has no sensible effect.
+  // - Compile time of assembly strings is negligible (< 0.0004)
+  // - J computation takes half the computational time of the exec part
+  // - The optimized instruction call is negligible
+  // - The resize operations has been suppressed for uniform fems
 
 
   // Possible optimizations (focusing on a case)
@@ -468,7 +472,7 @@ int main(int /* argc */, char * /* argv */[]) {
 #if 0
   //                        new  | old  | sto  | asse | exec |  J   |resize|
   test_new_assembly(2, 400, 1);
-  // Mass                 : 0.94 | 0.93 | 0.19 | 0.32 | 0.26 | 0.09 | 0.16 |
+  // Mass                 : 0.94 | 0.93 | 0.19 | 0.32 | 0.26 | 0.09 | 0.08 |
   // Laplacian            : 0.49 | 0.88 | 0.10 | 0.16 | 0.19 | 0.08 | 0.03 |
   // Homogeneous elas     : 0.85 | 2.06 | 0.23 | 0.30 | 0.18 | 0.07 | 0.08 |
   // Non-homogeneous elast: 1.04 | 2.43 | 0.26 | 0.32 | 0.18 | 0.08 | 0.08 |
