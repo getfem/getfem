@@ -260,11 +260,6 @@ namespace bgeot {
         init(i, j, k, l);
     }
 
-    tensor(const multi_index &c) { init(c); }
-    tensor(size_type i, size_type j, size_type k, size_type l)
-    { init(multi_index(i, j, k, l)); }
-    tensor(void) {}
-
     /** reduction of tensor t with respect to index ni with matrix m:
      *  t(...,j,...) <-- t(...,i,..) m(i, j)
      */
@@ -305,6 +300,21 @@ namespace bgeot {
 
     tensor<T>& operator /=(const scalar_type w)
     { gmm::scale(this->as_vector(), scalar_type(1)/w); return *this; }
+
+    tensor &operator =(const tensor &t) {
+      if (this->size() != t.size()) this->resize(t.size());
+      std::copy(t.begin(), t.end(), this->begin());
+      if (sizes_.size() != t.sizes_.size()) sizes_.resize(t.sizes_.size());
+      std::copy(t.sizes_.begin(), t.sizes_.end(), sizes_.begin());
+      if (coeff.size() != t.coeff.size()) coeff.resize(t.coeff.size());
+      std::copy(t.coeff.begin(), t.coeff.end(), coeff.begin());
+      return *this;
+    }
+
+    tensor(const multi_index &c) { init(c); }
+    tensor(size_type i, size_type j, size_type k, size_type l)
+    { init(multi_index(i, j, k, l)); }
+    tensor(void) {}
   };
 
   template<class T> void tensor<T>::mat_transp_reduction
