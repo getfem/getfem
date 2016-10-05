@@ -778,14 +778,14 @@ namespace getfem {
     }
 
 
+    /** Add data, defined at integration points.*/
+    void add_im_data(const std::string &name, const im_data &im_data, size_type niter = 1);
+
     /** Add a variable being the dofs of a finite element method to the model.
         niter is the number of version of the variable stored, for time
         integration schemes. */
     void add_fem_variable(const std::string &name, const mesh_fem &mf,
                           size_type niter = 1);
-
-    /** Add a data that is described by integration points.*/
-    void add_im_data(const std::string &name, const im_data &im_data, size_type niter = 1);
 
     /** Add a variable linked to a fem with the dof filtered with respect
         to a mesh region. Only the dof returned by the dof_on_region

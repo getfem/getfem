@@ -491,12 +491,11 @@ namespace getfem {
    size_type nbdof_ = size_type(-1));
 
   void ga_interpolation_im_data
-  (const getfem::model &md, const std::string &expr, const im_data &imd,
-   base_vector &result, const mesh_region &rg=mesh_region::all_convexes());
+  (ga_workspace &workspace, const im_data &imd, base_vector &result);
 
   void ga_interpolation_im_data
-  (ga_workspace &workspace, const im_data &imd, base_vector &result,
-   const mesh_region &rg=mesh_region::all_convexes());
+  (const getfem::model &md, const std::string &expr, const im_data &imd,
+   base_vector &result, const mesh_region &rg=mesh_region::all_convexes());
 
   //=========================================================================
   // Local projection functions

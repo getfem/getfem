@@ -56,7 +56,7 @@ namespace getfem {
     bool all_convexes = (rg_source.id() == mesh_region::all_convexes().id());
 
     size_type nbpts = nb_points();
-    size_type nbcvx = msh.convex_index().last_true() + 1;
+    size_type nbcvx = msh.nb_allocated_convex();
     ref_coords.resize(nbpts);
     std::vector<double> dist(nbpts);
     std::vector<size_type> cvx_pts(nbpts);

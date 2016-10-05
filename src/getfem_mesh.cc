@@ -156,7 +156,7 @@ namespace getfem {
       else {
         int ne = int(nb_convex());
         std::vector<int> xadj(ne+1), adjncy, numelt(ne), npart(ne);
-        std::vector<int> indelt(convex_index().last_true()+1);
+        std::vector<int> indelt(nb_allocated_convex());
         
         double t_ref = MPI_Wtime();
 

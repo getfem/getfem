@@ -55,7 +55,7 @@ namespace getfem {
     const mesh &m = mim.linked_mesh();
     rg.from_mesh(m);
     GMM_ASSERT3(&m == &mf.linked_mesh() &&
-		gmm::vect_size(err) >= m.convex_index().last_true()+1, "");
+		gmm::vect_size(err) >= m.nb_allocated_convex(), "");
     
     const mesh_fem &mf0 = classical_mesh_fem(m, 0);
 

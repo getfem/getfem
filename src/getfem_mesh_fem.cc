@@ -313,7 +313,7 @@ namespace getfem {
     size_type nbdof = 0;
 
     // Information stored per element
-    size_type nb_max_cv = linked_mesh().convex_index().last_true()+1;
+    size_type nb_max_cv = linked_mesh().nb_allocated_convex();
     std::vector<bgeot::kdtree> dof_nodes(nb_max_cv);
     std::vector<scalar_type> elt_car_sizes(nb_max_cv);
     std::vector<std::map<fem_dof, size_type, dof_comp_>> dof_sorts(nb_max_cv);

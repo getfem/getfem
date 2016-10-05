@@ -28,11 +28,11 @@ namespace getfem {
     o << "stored_mesh_slice, containing " << m.nb_convex() << " convexes\n";
     for (size_type ic = 0; ic < m.nb_convex(); ++ic) {
       o << "slice convex #" << ic << " (original = " << m.convex_num(ic)
-	<< ")\n";
+        << ")\n";
       for (size_type i = 0; i < m.nodes(ic).size(); ++i) {
         o << "node " << i << ": " << m.nodes(ic)[i].pt << ", ref="
-	  << m.nodes(ic)[i].pt_ref << " flist=" << m.nodes(ic)[i].faces
-	  << endl;
+          << m.nodes(ic)[i].pt_ref << " flist=" << m.nodes(ic)[i].faces
+          << endl;
       }
       for (size_type i = 0; i < m.simplexes(ic).size(); ++i) {
         o << "simplex " << i << ", inodes=";
@@ -46,7 +46,7 @@ namespace getfem {
   }
 
   void stored_mesh_slice::write_to_file(const std::string &name, 
-			       bool with_mesh) const {
+                                        bool with_mesh) const {
     std::ofstream o(name.c_str());
     GMM_ASSERT1(o, "impossible to open file '" << name << "'");
     o << "% GETFEM SLICE FILE " << '\n';
@@ -61,49 +61,48 @@ namespace getfem {
     for (unsigned i=0; i < cvlst.size(); ++i) {
       const convex_slice &cs = cvlst[i];
       os << " CONVEX " << cs.cv_num 
-	 << " " << int(cs.fcnt)
-	 << " " << int(cs.discont) << "\n"
-	 << " " << cs.nodes.size() << " " << cs.simplexes.size() << "\n";
+         << " " << int(cs.fcnt)
+         << " " << int(cs.discont) << "\n"
+         << " " << cs.nodes.size() << " " << cs.simplexes.size() << "\n";
       for (unsigned j=0; j < cs.nodes.size(); ++j) {
-	os << "\t";
-	for (unsigned k=0; k < cs.nodes[j].pt.size(); ++k) {
-	  if (k) os << " ";
-	  os << cs.nodes[j].pt[k];
-	}
-	os << ";";
-	for (unsigned k=0; k < cs.nodes[j].pt_ref.size(); ++k)
-	  os << " " << cs.nodes[j].pt_ref[k];
-	os << "; "; os << cs.nodes[j].faces.to_ulong();;
-	os << "\n";
+        os << "\t";
+        for (unsigned k=0; k < cs.nodes[j].pt.size(); ++k) {
+          if (k) os << " ";
+          os << cs.nodes[j].pt[k];
+        }
+        os << ";";
+        for (unsigned k=0; k < cs.nodes[j].pt_ref.size(); ++k)
+          os << " " << cs.nodes[j].pt_ref[k];
+        os << "; "; os << cs.nodes[j].faces.to_ulong();;
+        os << "\n";
       }
       for (unsigned j=0; j < cs.simplexes.size(); ++j) {
-	os << "\t" << cs.simplexes[j].inodes.size() << ":";
-	for (unsigned k=0; k < cs.simplexes[j].inodes.size(); ++k) {
-	  os << " " << cs.simplexes[j].inodes[k];
-	}
-	os << "\n";
+        os << "\t" << cs.simplexes[j].inodes.size() << ":";
+        for (unsigned k=0; k < cs.simplexes[j].inodes.size(); ++k) {
+          os << " " << cs.simplexes[j].inodes[k];
+        }
+        os << "\n";
       }
     }
     os << "END MESH_SLICE\n";
   }
 
   void stored_mesh_slice::read_from_file(const std::string &name,
-					 const getfem::mesh &m) {
+                                         const getfem::mesh &m) {
     std::ifstream o(name.c_str());
     GMM_ASSERT1(o, "slice file '" << name << "' does not exist");
     read_from_file(o,m);
   }
 
   void stored_mesh_slice::read_from_file(std::istream &ist,
-					 const getfem::mesh &m) {
+                                         const getfem::mesh &m) {
     if (!poriginal_mesh) {
       poriginal_mesh = &m; 
     } else GMM_ASSERT1(poriginal_mesh == &m, "wrong mesh..");
 
     dim_ = m.dim();
     cv2pos.clear(); 
-    cv2pos.resize(m.convex_index().last_true() + 1, 
-		  size_type(-1));
+    cv2pos.resize(m.nb_allocated_convex(), size_type(-1));
 
     std::string tmp;
     ist.precision(16);
@@ -117,70 +116,70 @@ namespace getfem {
     while (true) {
       ist >> std::ws; bgeot::get_token(ist, tmp);
       if (bgeot::casecmp(tmp, "END")==0) {
-	break;
+        break;
       } else if (bgeot::casecmp(tmp, "DIM")==0) {
-	int d; ist >> d;
-	dim_ = d;
+        int d; ist >> d;
+        dim_ = d;
       } else if (bgeot::casecmp(tmp, "CONVEX")==0) {
-	bgeot::get_token(ist,tmp);
-	size_type ic = atoi(tmp.c_str());
-	GMM_ASSERT1(m.convex_index().is_in(ic), "Convex " << ic <<
-		    " does not exist, are you sure "
-		    "that the mesh attached to this object is right one ?");
-	bgeot::pconvex_ref cvr = m.trans_of_convex(ic)->convex_ref();
-	unsigned fcnt, discont, nbn, nbs;
-	ist >> fcnt >> discont >> nbn >> nbs;
-	nod.resize(nbn); 
-	sim.resize(nbs);
-	for (unsigned i=0; i < nbn; ++i) {
-	  nod[i].pt.resize(dim()); 
-	  nod[i].pt_ref.resize(cvr->structure()->dim());
-	  for (unsigned j=0; j < dim(); ++j) 
-	    ist >> nod[i].pt[j];
-	  ist >> bgeot::skip(";");
-	  for (unsigned j=0; j < cvr->structure()->dim(); ++j) 
-	    ist >> nod[i].pt_ref[j];
-	  ist >> bgeot::skip(";");
-	  unsigned long ul; ist >> ul;
-	  nod[i].faces = slice_node::faces_ct(int(ul));
-	}
-	for (unsigned i=0; i < nbs; ++i) {
-	  unsigned np(0);
-	  ist >> np >> bgeot::skip(":");
-	  GMM_ASSERT1(np <= dim()+1, "invalid simplex..");
-	  sim[i].inodes.resize(np);
-	  for (unsigned j=0; j < np; ++j) 
-	    ist >> sim[i].inodes[j];
-	}
-	dal::bit_vector bv; bv.add(0, nbs);
-	set_convex(ic, cvr, nod, sim, dim_type(fcnt), bv, discont);
+        bgeot::get_token(ist,tmp);
+        size_type ic = atoi(tmp.c_str());
+        GMM_ASSERT1(m.convex_index().is_in(ic), "Convex " << ic <<
+                    " does not exist, are you sure "
+                    "that the mesh attached to this object is right one ?");
+        bgeot::pconvex_ref cvr = m.trans_of_convex(ic)->convex_ref();
+        unsigned fcnt, discont, nbn, nbs;
+        ist >> fcnt >> discont >> nbn >> nbs;
+        nod.resize(nbn); 
+        sim.resize(nbs);
+        for (unsigned i=0; i < nbn; ++i) {
+          nod[i].pt.resize(dim()); 
+          nod[i].pt_ref.resize(cvr->structure()->dim());
+          for (unsigned j=0; j < dim(); ++j) 
+            ist >> nod[i].pt[j];
+          ist >> bgeot::skip(";");
+          for (unsigned j=0; j < cvr->structure()->dim(); ++j) 
+            ist >> nod[i].pt_ref[j];
+          ist >> bgeot::skip(";");
+          unsigned long ul; ist >> ul;
+          nod[i].faces = slice_node::faces_ct(int(ul));
+        }
+        for (unsigned i=0; i < nbs; ++i) {
+          unsigned np(0);
+          ist >> np >> bgeot::skip(":");
+          GMM_ASSERT1(np <= dim()+1, "invalid simplex..");
+          sim[i].inodes.resize(np);
+          for (unsigned j=0; j < np; ++j) 
+            ist >> sim[i].inodes[j];
+        }
+        dal::bit_vector bv; bv.add(0, nbs);
+        set_convex(ic, cvr, nod, sim, dim_type(fcnt), bv, discont);
       } else if (tmp.size()) {
-	GMM_ASSERT1(false, "Unexpected token '" << tmp <<
-		    "' [pos=" << std::streamoff(ist.tellg()) << "]");
+        GMM_ASSERT1(false, "Unexpected token '" << tmp <<
+                    "' [pos=" << std::streamoff(ist.tellg()) << "]");
       } else if (ist.eof()) {
-	GMM_ASSERT1(false, "Unexpected end of stream "
-		    << "(missing BEGIN MESH_SLICE/END MESH_SLICE ?)");	
+        GMM_ASSERT1(false, "Unexpected end of stream "
+                    << "(missing BEGIN MESH_SLICE/END MESH_SLICE ?)");
       }
     }
   }
 
   void slicer_build_stored_mesh_slice::exec(mesh_slicer &ms) {
     if (!sl.poriginal_mesh) {
-      sl.poriginal_mesh = &ms.m; sl.dim_ = sl.linked_mesh().dim();
-      sl.cv2pos.clear();
-      sl.cv2pos.resize(sl.linked_mesh().convex_index().last_true() + 1,
-		       size_type(-1));
+      sl.poriginal_mesh = &ms.m;
+      sl.dim_ = sl.linked_mesh().dim();
+      sl.cv2pos.resize(sl.linked_mesh().nb_allocated_convex());
+      gmm::fill(sl.cv2pos, size_type(-1));
     } else if (sl.poriginal_mesh != &ms.m) GMM_ASSERT1(false, "wrong mesh..");
     sl.set_convex(ms.cv, ms.cvr, ms.nodes, ms.simplexes, dim_type(ms.fcnt),
-		  ms.splx_in, ms.discont);
+                  ms.splx_in, ms.discont);
   }
 
   void stored_mesh_slice::set_convex(size_type cv, bgeot::pconvex_ref cvr, 
-				     mesh_slicer::cs_nodes_ct cv_nodes, 
-				     mesh_slicer::cs_simplexes_ct cv_simplexes,
-				     dim_type fcnt,
-				     const dal::bit_vector& splx_in,
-				     bool discont) {
+                                     mesh_slicer::cs_nodes_ct cv_nodes, 
+                                     mesh_slicer::cs_simplexes_ct cv_simplexes,
+                                     dim_type fcnt,
+                                     const dal::bit_vector& splx_in,
+                                     bool discont) {
     /* push the used nodes and simplexes in the final list */
     if (splx_in.card() == 0) return;
     merged_nodes_available = false;
@@ -207,7 +206,7 @@ namespace getfem {
         size_type lnum = s.inodes[i];
         if (nused[lnum] == size_type(-1)) {
           nused[lnum] = sc->nodes.size(); sc->nodes.push_back(cv_nodes[lnum]);
-	  dim_ = std::max(int(dim_), int(cv_nodes[lnum].pt.size()));
+          dim_ = std::max(int(dim_), int(cv_nodes[lnum].pt.size()));
           points_cnt++;
         }
         s.inodes[i] = nused[lnum];
@@ -230,52 +229,52 @@ namespace getfem {
   };
 
   void stored_mesh_slice::get_edges(std::vector<size_type> &edges,
-				    dal::bit_vector &slice_edges,
-				    bool from_merged_nodes) const {
+                                    dal::bit_vector &slice_edges,
+                                    bool from_merged_nodes) const {
     if (from_merged_nodes && !merged_nodes_available) merge_nodes();
     std::set<get_edges_aux> e;
     for (cvlst_ct::const_iterator it=cvlst.begin(); it != cvlst.end(); ++it) {
       for (size_type is=0; is < it->simplexes.size(); ++is) {
-	const slice_simplex &s = it->simplexes[is];
-	for (size_type i=0; i < s.dim(); ++i) {
-	  for (size_type j=i+1; j <= s.dim(); ++j) {
-	    const slice_node& A = it->nodes[s.inodes[i]];
-	    const slice_node& B = it->nodes[s.inodes[j]];
-	    /* duplicate with slicer_build_edges_mesh which also 
-	       builds a list of edges */
-	    if ((A.faces & B.faces).count() >= unsigned(it->cv_dim-1)) {
-	      slice_node::faces_ct fmask((1 << it->cv_nbfaces)-1);
-	      fmask.flip();
-	      size_type iA, iB;
-	      iA = it->global_points_count + s.inodes[i];
-	      iB = it->global_points_count + s.inodes[j];
-	      if (from_merged_nodes) {
-		iA = to_merged_index[iA]; iB = to_merged_index[iB];
-	      }
-	      get_edges_aux a(iA,iB,((A.faces & B.faces) & fmask).any());
-	      std::set<get_edges_aux>::iterator p=e.find(a);
-	      if (p != e.end()) {
-		if (p->slice_edge && !a.slice_edge) p->slice_edge = false;
-	      } else e.insert(a);
-	    }
-	  }
-	}
+        const slice_simplex &s = it->simplexes[is];
+        for (size_type i=0; i < s.dim(); ++i) {
+          for (size_type j=i+1; j <= s.dim(); ++j) {
+            const slice_node& A = it->nodes[s.inodes[i]];
+            const slice_node& B = it->nodes[s.inodes[j]];
+            /* duplicate with slicer_build_edges_mesh which also 
+               builds a list of edges */
+            if ((A.faces & B.faces).count() >= unsigned(it->cv_dim-1)) {
+              slice_node::faces_ct fmask((1 << it->cv_nbfaces)-1);
+              fmask.flip();
+              size_type iA, iB;
+              iA = it->global_points_count + s.inodes[i];
+              iB = it->global_points_count + s.inodes[j];
+              if (from_merged_nodes) {
+                iA = to_merged_index[iA]; iB = to_merged_index[iB];
+              }
+              get_edges_aux a(iA,iB,((A.faces & B.faces) & fmask).any());
+              std::set<get_edges_aux>::iterator p=e.find(a);
+              if (p != e.end()) {
+                if (p->slice_edge && !a.slice_edge) p->slice_edge = false;
+              } else e.insert(a);
+            }
+          }
+        }
       }
     }
     slice_edges.clear(); slice_edges.sup(0, e.size());
     edges.clear(); edges.reserve(2*e.size());
     for (std::set<get_edges_aux>::const_iterator p=e.begin();
-	 p != e.end(); ++p) {
+         p != e.end(); ++p) {
       if (p->slice_edge) slice_edges.add(edges.size()/2);
       edges.push_back(p->iA);edges.push_back(p->iB);
     }
   }
 
   void stored_mesh_slice::build(const getfem::mesh& m, 
-				const slicer_action *a,
-				const slicer_action *b,
-				const slicer_action *c, 
-				size_type nrefine) {
+                                const slicer_action *a,
+                                const slicer_action *b,
+                                const slicer_action *c, 
+                                size_type nrefine) {
     clear();
     mesh_slicer slicer(m);
     slicer.push_back_action(*const_cast<slicer_action*>(a));
@@ -287,7 +286,7 @@ namespace getfem {
   }
 
   void stored_mesh_slice::replay(slicer_action *a, slicer_action *b,
-				 slicer_action *c) const {
+                                 slicer_action *c) const {
     mesh_slicer slicer(linked_mesh());
     slicer.push_back_action(*a); 
     if (b) slicer.push_back_action(*b);
@@ -299,8 +298,8 @@ namespace getfem {
     dim_ = newdim;
     for (size_type ic=0; ic < nb_convex(); ++ic) {
       for (mesh_slicer::cs_nodes_ct::iterator it=nodes(ic).begin();
-	   it != nodes(ic).end(); ++it) {
-	it->pt.resize(newdim);
+           it != nodes(ic).end(); ++it) {
+        it->pt.resize(newdim);
       }
     }
   }
@@ -311,25 +310,26 @@ namespace getfem {
     cv2pos.resize(std::max(cv2pos.size(), sl.cv2pos.size()), size_type(-1));
     for (size_type i=0; i < sl.nb_convex(); ++i) 
       GMM_ASSERT1(cv2pos[sl.convex_num(i)] == size_type(-1) ||
-		  cvlst[cv2pos[sl.convex_num(i)]].cv_dim == sl.cvlst[i].cv_num,
-		  "inconsistent dimensions for convex " << sl.cvlst[i].cv_num
-		  << " on the slices");
+                  cvlst[cv2pos[sl.convex_num(i)]].cv_dim == sl.cvlst[i].cv_num,
+                  "inconsistent dimensions for convex " << sl.cvlst[i].cv_num
+                  << " on the slices");
     for (size_type i=0; i < sl.nb_convex(); ++i) {
       size_type cv = sl.convex_num(i);
       if (cv2pos[cv] == size_type(-1)) {
-	cv2pos[cv] = cvlst.size(); cvlst.push_back(convex_slice());
+        cv2pos[cv] = cvlst.size();
+        cvlst.push_back(convex_slice());
       }
       const stored_mesh_slice::convex_slice *src = &sl.cvlst[i];
       stored_mesh_slice::convex_slice *dst = &cvlst[cv2pos[cv]];
       size_type n = dst->nodes.size();
       dst->nodes.insert(dst->nodes.end(), src->nodes.begin(),
-			src->nodes.end());
+                        src->nodes.end());
       for (mesh_slicer::cs_simplexes_ct::const_iterator
-	     it = src->simplexes.begin(); it != src->simplexes.end(); ++it) {
-	dst->simplexes.push_back(*it);
-	for (size_type j = 0; j < (*it).dim()+1; ++j)
-	  dst->simplexes.back().inodes[j] += n;	
-	simplex_cnt[dst->simplexes.back().dim()]++;
+             it = src->simplexes.begin(); it != src->simplexes.end(); ++it) {
+        dst->simplexes.push_back(*it);
+        for (size_type j = 0; j < (*it).dim()+1; ++j)
+          dst->simplexes.back().inodes[j] += n;        
+        simplex_cnt[dst->simplexes.back().dim()]++;
       }
       points_cnt += src->nodes.size();
     }
@@ -355,10 +355,10 @@ namespace getfem {
     to_merged_index.resize(nb_points());
     for (cvlst_ct::const_iterator it = cvlst.begin(); it != cvlst.end(); ++it) {
       for (size_type i=0; i < it->nodes.size(); ++i) {
-	nv[count] = &it->nodes[i];
-	to_merged_index[count++] = mp.add_point(it->nodes[i].pt);
-	// cout << "orig[" << count-1 << "] = " << nv[count-1]->pt
-	//      << ", idx=" << to_merged_index[count-1] << "\n";
+        nv[count] = &it->nodes[i];
+        to_merged_index[count++] = mp.add_point(it->nodes[i].pt);
+        // cout << "orig[" << count-1 << "] = " << nv[count-1]->pt
+        //      << ", idx=" << to_merged_index[count-1] << "\n";
       }
     }
     gmm::sorted_indexes(to_merged_index,iv);
@@ -373,8 +373,8 @@ namespace getfem {
       // cout << "i=" << i << " -> {" << merged_nodes[i].P->pt
       //      << "," << merged_nodes[i].pos << "}\n";
       if (i == nb_points()-1 ||
-	  to_merged_index[iv[i+1]] != to_merged_index[iv[i]]) 
-	merged_nodes_idx.push_back(i+1);
+          to_merged_index[iv[i+1]] != to_merged_index[iv[i]]) 
+        merged_nodes_idx.push_back(i+1);
     }
     //cout << "merged_nodes_idx = " << merged_nodes_idx << "\n";
     merged_nodes_available = true;
@@ -383,24 +383,24 @@ namespace getfem {
   size_type stored_mesh_slice::memsize() const {
     size_type sz = sizeof(stored_mesh_slice);
     for (cvlst_ct::const_iterator it = cvlst.begin();
-	 it != cvlst.end(); ++it) {
+         it != cvlst.end(); ++it) {
       sz += sizeof(size_type);
       // cerr << "memsize: convex " << it->cv_num << " nodes:" 
       //      << it->nodes.size() << ", splxs:" << it->simplexes.size()
       //      << ", sz=" << sz << "\n";
       for (size_type i=0; i < it->nodes.size(); ++i) {
-	// cerr << "  point " << i << ": size+= " << sizeof(slice_node)
-	//      << "+" << it->nodes[i].pt.memsize() << "+"
-	//      << it->nodes[i].pt_ref.memsize() << "-"
-	//      << sizeof(it->nodes[i].pt)*2 << "\n";*/
+        // cerr << "  point " << i << ": size+= " << sizeof(slice_node)
+        //      << "+" << it->nodes[i].pt.memsize() << "+"
+        //      << it->nodes[i].pt_ref.memsize() << "-"
+        //      << sizeof(it->nodes[i].pt)*2 << "\n";*/
         sz += sizeof(slice_node) + 
           (it->nodes[i].pt.memsize()+it->nodes[i].pt_ref.memsize())
-	  - sizeof(it->nodes[i].pt)*2;
+          - sizeof(it->nodes[i].pt)*2;
       }
       for (size_type i=0; i < it->simplexes.size(); ++i) {
-	// cerr << "  simplex " << i << ": size+= " << sizeof(slice_simplex)
-	//      << "+" << it->simplexes[i].inodes.size()*sizeof(size_type)
-	//      << "\n";*/
+        // cerr << "  simplex " << i << ": size+= " << sizeof(slice_simplex)
+        //      << "+" << it->simplexes[i].inodes.size()*sizeof(size_type)
+        //      << "\n";*/
         sz += sizeof(slice_simplex) + 
           it->simplexes[i].inodes.size()*sizeof(size_type);
       }

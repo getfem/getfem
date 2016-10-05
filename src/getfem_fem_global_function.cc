@@ -93,7 +93,7 @@ namespace getfem {
     scalar_type EPS=1E-13;
     size_type max_dof(0);
     index_of_global_dof_.clear();
-    index_of_global_dof_.resize(m.convex_index().last_true()+1);
+    index_of_global_dof_.resize(m.nb_allocated_convex());
     for (dal::bv_visitor cv(m.convex_index()); !cv.finished(); ++cv) {
       GMM_ASSERT1(dim_ == m.structure_of_convex(cv)->dim(),
                   "Convexes of different dimension: to be done");
@@ -189,7 +189,7 @@ namespace getfem {
     t.adjust_sizes(mib);
     if (c.have_pfp() && c.ii() != size_type(-1)) {
       if (precompval.size() == 0)
-        precompval.resize(m.convex_index().last_true()+1);
+        precompval.resize(m.nb_allocated_convex());
       const bgeot::pstored_point_tab ptab = c.pfp()->get_ppoint_tab();
       auto it = precompval[cv].find(ptab);
       if (it == precompval[cv].end()) {
@@ -222,7 +222,7 @@ namespace getfem {
     t.adjust_sizes(mig);
     if (c.have_pfp() && c.ii() != size_type(-1)) {
       if (precompgrad.size() == 0)
-        precompgrad.resize(m.convex_index().last_true()+1);
+        precompgrad.resize(m.nb_allocated_convex());
       const bgeot::pstored_point_tab ptab = c.pfp()->get_ppoint_tab();
       auto it = precompgrad[cv].find(ptab);
       if (it == precompgrad[cv].end()) {
@@ -256,7 +256,7 @@ namespace getfem {
     t.adjust_sizes(mih);
     if (c.have_pfp() && c.ii() != size_type(-1)) {
       if (precomphess.size() == 0)
-        precomphess.resize(m.convex_index().last_true()+1);
+        precomphess.resize(m.nb_allocated_convex());
       const bgeot::pstored_point_tab ptab = c.pfp()->get_ppoint_tab();
       auto it = precomphess[cv].find(ptab);
       if (it == precomphess[cv].end()) {

@@ -140,12 +140,34 @@ namespace getfem {
       GMM_ASSERT1(f->dim() == dim(), "Incompatible dimensions among the provided"
                                      " global functions");
   }
+
   global_function_sum::global_function_sum(pglobal_function f1, pglobal_function f2)
     : global_function(f1->dim()), functions(2) {
     functions[0] = f1;
     functions[1] = f2;
-    GMM_ASSERT1(f2->dim() == dim(), "Incompatible dimensions between the provided"
-                                    " global functions");
+    GMM_ASSERT1(f1->dim() == dim() && f2->dim() == dim(),
+                "Incompatible dimensions between the provided global functions");
+  }
+
+  global_function_sum::global_function_sum(pglobal_function f1, pglobal_function f2,
+                                           pglobal_function f3)
+    : global_function(f1->dim()), functions(3) {
+    functions[0] = f1;
+    functions[1] = f2;
+    functions[2] = f3;
+    GMM_ASSERT1(f1->dim() == dim() && f2->dim() == dim() && f3->dim() == dim(),
+                "Incompatible dimensions between the provided global functions");
+  }
+
+  global_function_sum::global_function_sum(pglobal_function f1, pglobal_function f2,
+                                           pglobal_function f3, pglobal_function f4)
+    : global_function(f1->dim()), functions(4) {
+    functions[0] = f1;
+    functions[1] = f2;
+    functions[2] = f3;
+    functions[3] = f4;
+    GMM_ASSERT1(f1->dim() == dim() && f2->dim() == dim() && f3->dim() == dim(),
+                "Incompatible dimensions between the provided global functions");
   }
 
 

@@ -117,7 +117,7 @@ namespace getfem {
   static int ga_operator_priorities[GA_NB_TOKEN_TYPE];
 
   // Initialize ga_char_type and ga_operator_priorities arrays
-  static bool init_ga_char_type(void) {
+  static bool init_ga_char_type() {
     for (int i = 0; i < 256; ++i) ga_char_type[i] = GA_INVALID;
     ga_char_type['+'] = GA_PLUS;        ga_char_type['-'] = GA_MINUS;
     ga_char_type['*'] = GA_MULT;        ga_char_type['/'] = GA_DIV;
@@ -388,20 +388,20 @@ namespace getfem {
     scalar_type hash_value;       // Hash value to identify nodes.
     bool marked;                  // For specific use of some algorithms
 
-    inline size_type nb_test_functions(void) const {
+    inline size_type nb_test_functions() const {
       if (test_function_type == size_type(-1)) return 0;
       return test_function_type  - (test_function_type >= 2 ? 1 : 0);
     }
 
-    inline size_type tensor_order(void) const
+    inline size_type tensor_order() const
     { return t.sizes().size() - nb_test_functions(); }
 
-    inline size_type tensor_test_size(void) const {
+    inline size_type tensor_test_size() const {
       size_type st = nb_test_functions();
       return (st >= 1 ? t.sizes()[0] : 1) * (st == 2 ? t.sizes()[1] : 1);
     }
 
-    inline size_type tensor_proper_size(void) const
+    inline size_type tensor_proper_size() const
     { return t.size() / tensor_test_size(); }
 
     inline size_type tensor_proper_size(size_type i) const
@@ -451,7 +451,7 @@ namespace getfem {
       t.adjust_sizes(mi);
     }
 
-    bool tensor_is_zero(void) {
+    bool tensor_is_zero() {
       if (node_type == GA_NODE_ZERO) return true;
       if (node_type != GA_NODE_CONSTANT) return false;
       for (size_type i = 0; i < t.size(); ++i)
@@ -1862,7 +1862,7 @@ namespace getfem {
   class ga_if_hierarchy : public std::vector<size_type> {
 
   public:
-    void increment(void) { (back())++; }
+    void increment() { (back())++; }
     void child_of(const ga_if_hierarchy &gih)
     { *this = gih; push_back(0); }
     bool is_compatible(const std::list<ga_if_hierarchy> &gihl) {
@@ -1880,7 +1880,7 @@ namespace getfem {
       return false;
     }
 
-    ga_if_hierarchy(void) : std::vector<size_type>(1) { (*this)[0] = 0; }
+    ga_if_hierarchy() : std::vector<size_type>(1) { (*this)[0] = 0; }
   };
 
 
@@ -2420,7 +2420,7 @@ namespace getfem {
   //=========================================================================
 
 
-  bool init_predef_functions(void) {
+  bool init_predef_functions() {
 
     // Predefined functions
     ga_predef_function_tab &PREDEF_FUNCTIONS
@@ -5209,7 +5209,7 @@ namespace getfem {
         for (const size_type &dof2 : dofs2)
           for (const size_type &dof1 : dofs1) {
             if (gmm::abs(*it) > threshold)
-	      K(dof1, dof2) += *it;
+              K(dof1, dof2) += *it;
             ++it;
           }
       }
@@ -5788,7 +5788,7 @@ namespace getfem {
     }
   }
 
-  ga_workspace::m_tree::~m_tree(void) { if (ptree) delete ptree; }
+  ga_workspace::m_tree::~m_tree() { if (ptree) delete ptree; }
   ga_workspace::m_tree::m_tree(const m_tree& o)
     : ptree(o.ptree), meshdim(o.meshdim), ignore_X(o.ignore_X)
   { if (o.ptree) ptree = new ga_tree(*(o.ptree)); }
@@ -6132,7 +6132,7 @@ namespace getfem {
     }
   }
 
-  void ga_workspace::clear_expressions(void) {
+  void ga_workspace::clear_expressions() {
     trees.clear();
     macro_trees.clear();
   }
@@ -8391,7 +8391,7 @@ namespace getfem {
   // Extract the order zero term
   //=========================================================================
 
-  std::string ga_workspace::extract_order0_term(void) {
+  std::string ga_workspace::extract_order0_term() {
     std::string term;
     for (size_type i = 0; i < trees.size(); ++i) {
       ga_workspace::tree_description &td =  trees[i];
@@ -9592,10 +9592,12 @@ namespace getfem {
           rmi.instructions.push_back(std::move(pgai));
           return;
         }
-        cerr << "Detected wrong equivalent nodes: ";
-        ga_print_node(pnode, cerr);
-        cerr << " and "; ga_print_node(*it, cout);
-        cerr << " (no problem, but hash code would be adapted) " << endl;
+        std::stringstream ss;
+        ss << "Detected wrong equivalent nodes: ";
+        ga_print_node(pnode, ss);
+        ss << " and "; ga_print_node(*it, ss);
+        ss << " (no problem, but hash code would be adapted) " << endl;
+        GMM_TRACE2(ss.str());
       }
     }
 
@@ -10493,9 +10495,11 @@ namespace getfem {
          break;
 
        case GA_SKEW:
-	 pgai = std::make_shared<ga_instruction_skew>
-	   (pnode->t, child0->t);
-	 rmi.instructions.push_back(std::move(pgai));
+         {
+           pgai = std::make_shared<ga_instruction_skew>
+             (pnode->t, child0->t);
+           rmi.instructions.push_back(std::move(pgai));
+         }
          break;
 
        case GA_TRACE:
@@ -10677,17 +10681,17 @@ namespace getfem {
                 (pnode->t[0], child1->t[0], child2->t[0], F);
           } else if (child1->t.size() == 1) {
             if (F.ftype() == 0)
-              pgai=std::make_shared<ga_instruction_eval_func_2arg_first_scalar>
+              pgai = std::make_shared<ga_instruction_eval_func_2arg_first_scalar>
                 (pnode->t, child1->t, child2->t, F.f2());
             else
-              pgai=std::make_shared<ga_instruction_eval_func_2arg_first_scalar_expr>
+              pgai = std::make_shared<ga_instruction_eval_func_2arg_first_scalar_expr>
                 (pnode->t, child1->t, child2->t, F);
           } else if (child2->t.size() == 1) {
             if (F.ftype() == 0)
-              pgai=std::make_shared<ga_instruction_eval_func_2arg_second_scalar>
+              pgai = std::make_shared<ga_instruction_eval_func_2arg_second_scalar>
                 (pnode->t, child1->t, child2->t, F.f2());
             else
-              pgai=std::make_shared<ga_instruction_eval_func_2arg_second_scalar_expr>
+              pgai = std::make_shared<ga_instruction_eval_func_2arg_second_scalar_expr>
                 (pnode->t, child1->t, child2->t, F);
           } else {
             if (F.ftype() == 0)
@@ -11257,7 +11261,7 @@ namespace getfem {
               if (gis.ctx.have_pgp()) gis.ctx.set_ii(first_ind+gis.ipt);
               else gis.ctx.set_xref((*pspt)[first_ind+gis.ipt]);
               if (gis.ipt == 0 || !(pgt->is_linear())) {
-		J = gis.ctx.J();
+                J = gis.ctx.J();
                 // Computation of unit normal vector in case of a boundary
                 if (v.f() != short_type(-1)) {
                   gmm::copy(pgt->normals()[v.f()], un);
@@ -11299,7 +11303,7 @@ namespace getfem {
     : local_workspace(gaf.local_workspace), expr(gaf.expr), gis(0)
   { if (gaf.gis) compile(); }
 
-  void ga_function::compile(void) const {
+  void ga_function::compile() const {
     if (gis) delete gis;
     gis = new ga_instruction_set;
     local_workspace.clear_expressions();
@@ -11317,7 +11321,7 @@ namespace getfem {
 
   ga_function::~ga_function() { if (gis) delete gis; gis = 0; }
 
-  const base_tensor &ga_function::eval(void) const {
+  const base_tensor &ga_function::eval() const {
     GMM_ASSERT1(gis, "Uncompiled function");
     gmm::clear(local_workspace.assembled_tensor().as_vector());
     ga_function_exec(*gis);
@@ -11388,7 +11392,7 @@ namespace getfem {
     }
 
     virtual bool use_pgp(size_type) const { return true; }
-    virtual bool use_mim(void) const { return false; }
+    virtual bool use_mim() const { return false; }
 
     void init_(size_type si, size_type q, size_type qmult) {
       s = si;
@@ -11428,7 +11432,7 @@ namespace getfem {
       (dof_count[idof/q])++;
     }
 
-    virtual void finalize(void) {
+    virtual void finalize() {
       std::vector<size_type> data(3);
       data[0] = initialized ? result.size() : 0;
       data[1] = initialized ? dof_count.size() : 0;
@@ -11437,13 +11441,11 @@ namespace getfem {
       if (!initialized) {
         if (data[0]) {
           gmm::resize(result, data[0]);
-          gmm::clear(result);
           gmm::resize(dof_count, data[1]);
           gmm::clear(dof_count);
           s = data[2];
-        } else {
-          gmm::clear(result);
         }
+        gmm::clear(result);
       }
       if (initialized)
         GMM_ASSERT1(gmm::vect_size(result) == data[0] &&  s == data[2] &&
@@ -11456,7 +11458,7 @@ namespace getfem {
                      scalar_type(1) / scalar_type(dof_count[i]));
     }
 
-    virtual const mesh &linked_mesh(void) { return mf.linked_mesh(); }
+    virtual const mesh &linked_mesh() { return mf.linked_mesh(); }
 
     ga_interpolation_context_fem_same_mesh(const mesh_fem &mf_, base_vector &r)
       : result(r), mf(mf_), initialized(false), is_torus(false) {
@@ -11507,7 +11509,7 @@ namespace getfem {
     }
 
     virtual bool use_pgp(size_type) const { return false; }
-    virtual bool use_mim(void) const { return false; }
+    virtual bool use_mim() const { return false; }
 
     virtual void store_result(size_type cv, size_type i, base_tensor &t) {
       size_type si = t.size();
@@ -11524,7 +11526,7 @@ namespace getfem {
                gmm::sub_vector(result, gmm::sub_interval(s*dof_t, s)));
     }
 
-    virtual void finalize(void) {
+    virtual void finalize() {
       std::vector<size_type> data(2);
       data[0] = initialized ? result.size() : 0;
       data[1] = initialized ? s : 0;
@@ -11532,11 +11534,9 @@ namespace getfem {
       if (!initialized) {
         if (data[0]) {
           gmm::resize(result, data[0]);
-          gmm::clear(result);
           s = data[1];
-        } else {
-           gmm::clear(result);
         }
+        gmm::clear(result);
       }
       if (initialized)
         GMM_ASSERT1(gmm::vect_size(result) == data[0] &&  s == data[1],
@@ -11544,7 +11544,7 @@ namespace getfem {
       MPI_SUM_VECTOR(result);
     }
 
-    virtual const mesh &linked_mesh(void) { return mti.linked_mesh(); }
+    virtual const mesh &linked_mesh() { return mti.linked_mesh(); }
 
     ga_interpolation_context_mti(const mesh_trans_inv &mti_, base_vector &r,
                                  size_type nbdof_ = size_type(-1))
@@ -11601,7 +11601,7 @@ namespace getfem {
                   "be used in high level generic assembly");
       return !(pim->approx_method()->is_built_on_the_fly());
     }
-    virtual bool use_mim(void) const { return true; }
+    virtual bool use_mim() const { return true; }
 
     virtual void store_result(size_type cv, size_type i, base_tensor &t) {
       size_type si = t.size();
@@ -11626,7 +11626,7 @@ namespace getfem {
                gmm::sub_vector(result, gmm::sub_interval(s*ipt, s)));
     }
 
-    virtual void finalize(void) {
+    virtual void finalize() {
       std::vector<size_type> data(2);
       data[0] = initialized ? result.size() : 0;
       data[1] = initialized ? s : 0;
@@ -11637,21 +11637,24 @@ namespace getfem {
       } else {
         if (data[0]) {
           gmm::resize(result, data[0]);
-          gmm::clear(result);
           s = data[1];
-        } else {
-           gmm::clear(result);
         }
+        gmm::clear(result);
       }
       MPI_SUM_VECTOR(result);
     }
 
-    virtual const mesh &linked_mesh(void)
-    { return imd.linked_mesh_im().linked_mesh(); }
+    virtual const mesh &linked_mesh() { return imd.linked_mesh(); }
 
     ga_interpolation_context_im_data(const im_data &imd_, base_vector &r)
       : result(r), imd(imd_), initialized(false) { }
   };
+
+  void ga_interpolation_im_data
+  (ga_workspace &workspace, const im_data &imd, base_vector &result) {
+    ga_interpolation_context_im_data gic(imd, result);
+    ga_interpolation(workspace, gic);
+  }
 
   void ga_interpolation_im_data
   (const getfem::model &md, const std::string &expr, const im_data &imd,
@@ -11660,13 +11663,7 @@ namespace getfem {
     workspace.add_interpolation_expression
       (expr, imd.linked_mesh_im(), rg);
 
-    ga_interpolation_im_data(workspace, imd, result, rg);
-  }
-
-  void ga_interpolation_im_data
-  (ga_workspace &workspace, const im_data &imd, base_vector &result, const mesh_region &/* rg */) {
-    ga_interpolation_context_im_data gic(imd, result);
-    ga_interpolation(workspace, gic);
+    ga_interpolation_im_data(workspace, imd, result);
   }
 
   //=========================================================================
@@ -11855,7 +11852,7 @@ namespace getfem {
       }
     }
 
-    void finalize(void) const {
+    void finalize() const {
       for (const std::string &transname : local_gis.transformations)
         local_workspace.interpolate_transformation(transname)->finalize();
       local_gis = ga_instruction_set();
@@ -11983,13 +11980,13 @@ namespace getfem {
     : public virtual_interpolate_transformation, public context_dependencies {
 
   public:
-    void update_from_context(void) const {}
+    void update_from_context() const {}
     void extract_variables(const ga_workspace &/* workspace */,
                            std::set<var_trans_pair> &/* vars */,
                            bool /* ignore_data */, const mesh &/* m */,
                            const std::string &/* interpolate_name */) const {}
     void init(const ga_workspace &/* workspace */) const {}
-    void finalize(void) const {}
+    void finalize() const {}
 
     int transform(const ga_workspace &/*workspace*/, const mesh &m_x,
                   fem_interpolation_context &ctx_x,
@@ -12026,7 +12023,7 @@ namespace getfem {
       return ret_type;
     }
 
-    interpolate_transformation_neighbour(void) { }
+    interpolate_transformation_neighbour() { }
 
   };
 

@@ -94,6 +94,9 @@ namespace bgeot {
     dal::bit_vector convex_index(dim_type) const;
     /// The total number of convexes in the mesh
     size_type nb_convex(void) const { return convex_tab.card(); }
+    /// The number of convex indexes from 0 to the index of the last convex
+    size_type nb_allocated_convex() const
+      { return convex_tab.index().last_true()+1; }
     /// Return true if i is in convex_index()
     bool is_convex_valid(size_type i) { return (convex_tab.index())[i]; }
     size_type nb_max_points(void) const { return points_tab.size(); }

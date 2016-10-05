@@ -808,7 +808,7 @@ struct Chrono {
 	for (size_type i = 0; i < msh.nb_points(); ++i)
 	  pts[i] = m.add_point(pgt->transform(msh.points()[i], G));
 	
-	std::vector<size_type> ic2(msh.convex_index().last_true()+1);
+	std::vector<size_type> ic2(msh.nb_allocated_convex());
 
 	for (dal::bv_visitor i(msh.convex_index()); !i.finished(); ++i) {
 	  ic2[i] = m.add_convex(msh.trans_of_convex(i), 

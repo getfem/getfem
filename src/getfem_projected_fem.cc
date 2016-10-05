@@ -765,7 +765,7 @@ namespace getfem {
 
   void projected_fem::gauss_pts_stats(unsigned &ming, unsigned &maxg,
                                       scalar_type &meang) const {
-    std::vector<unsigned> v(mf_source.linked_mesh().convex_index().last_true()+1);
+    std::vector<unsigned> v(mf_source.linked_mesh().nb_allocated_convex());
     std::map<size_type,elt_projection_data>::const_iterator eit;
     for (eit = elements.begin(); eit != elements.end(); ++eit) {
       std::map<size_type,gausspt_projection_data>::const_iterator git;

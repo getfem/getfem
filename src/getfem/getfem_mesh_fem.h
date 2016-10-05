@@ -558,8 +558,8 @@ namespace getfem {
 
     void set_dof_partition(size_type cv, unsigned partition_num) {
       if (dof_partition.empty() && partition_num == 0) return;
-      if (dof_partition.size() < linked_mesh().convex_index().last_true()+1)
-        dof_partition.resize(linked_mesh().convex_index().last_true()+1);
+      if (dof_partition.size() < linked_mesh().nb_allocated_convex())
+        dof_partition.resize(linked_mesh().nb_allocated_convex());
       if (dof_partition.at(cv) != partition_num) {
         dof_partition[cv] = partition_num;
         dof_enumeration_made = false;

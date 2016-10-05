@@ -338,7 +338,7 @@ namespace getfem {
 
   void interpolated_fem::gauss_pts_stats(unsigned &ming, unsigned &maxg,
                                          scalar_type &meang) const {
-    std::vector<unsigned> v(mf.linked_mesh().convex_index().last_true()+1);
+    std::vector<unsigned> v(mf.linked_mesh().nb_allocated_convex());
     for (dal::bv_visitor cv(mim.linked_mesh().convex_index());
          !cv.finished(); ++cv) {
       for (unsigned ii=0; ii < elements.at(cv).gausspt.size(); ++ii) {

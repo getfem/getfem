@@ -119,6 +119,10 @@ namespace getfem {
     virtual void hess(const fem_interpolation_context&, base_matrix&) const;
     global_function_sum(const std::vector<pglobal_function> &funcs);
     global_function_sum(pglobal_function f1, pglobal_function f2);
+    global_function_sum(pglobal_function f1, pglobal_function f2,
+                        pglobal_function f3);
+    global_function_sum(pglobal_function f1, pglobal_function f2,
+                        pglobal_function f3, pglobal_function f4);
     virtual ~global_function_sum()
     { DAL_STORED_OBJECT_DEBUG_DESTROYED(this, "Global function sum"); }
   };
