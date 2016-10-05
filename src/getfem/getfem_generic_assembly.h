@@ -42,6 +42,7 @@
 #include <map>
 #include "getfem/getfem_models.h"
 #include "getfem/getfem_interpolation.h"
+#include "getfem/getfem_mesh_slice.h"
 
 
 #ifdef _WIN32
@@ -496,6 +497,14 @@ namespace getfem {
   void ga_interpolation_im_data
   (const getfem::model &md, const std::string &expr, const im_data &imd,
    base_vector &result, const mesh_region &rg=mesh_region::all_convexes());
+
+  void ga_interpolation_mesh_slice
+  (ga_workspace &workspace, const stored_mesh_slice &sl, base_vector &result);
+
+  void ga_interpolation_mesh_slice
+  (const getfem::model &md, const std::string &expr, const stored_mesh_slice &sl,
+   base_vector &result, const mesh_region &rg=mesh_region::all_convexes());
+
 
   //=========================================================================
   // Local projection functions

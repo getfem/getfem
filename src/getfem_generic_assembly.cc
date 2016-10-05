@@ -11666,6 +11666,91 @@ namespace getfem {
     ga_interpolation_im_data(workspace, imd, result);
   }
 
+
+  // Interpolation on a stored_mesh_slice
+  struct ga_interpolation_context_mesh_slice
+    : public ga_interpolation_context {
+    base_vector &result;
+    const stored_mesh_slice &sl;
+    bool initialized;
+    size_type s;
+    std::vector<size_type> first_node;
+
+    virtual bgeot::pstored_point_tab
+    ppoints_for_element(size_type cv, short_type f,
+                        std::vector<size_type> &ind) const {
+      GMM_ASSERT1(f == short_type(-1), "No support for interpolation on faces"
+                                       " for a stored_mesh_slice yet.");
+      size_type ic = sl.convex_pos(cv);
+      mesh_slicer::cs_nodes_ct nodes = sl.nodes(ic);
+      std::vector<base_node> pt_tab(nodes.size());
+      for (size_type i=0; i < nodes.size(); ++i) {
+        pt_tab[i] = nodes[i].pt_ref;
+        ind.push_back(i);
+      }
+      return store_point_tab(pt_tab);
+    }
+
+    virtual bool use_pgp(size_type /* cv */) const { return false; } // why not?
+    virtual bool use_mim() const { return false; }
+
+    virtual void store_result(size_type cv, size_type i, base_tensor &t) {
+      size_type si = t.size();
+      if (!initialized) {
+        s = si;
+        gmm::resize(result, s * sl.nb_points());
+        gmm::clear(result);
+        initialized = true;
+        first_node.resize(sl.nb_convex());
+        for (size_type ic=0; ic < sl.nb_convex()-1; ++ic)
+          first_node[ic+1] = first_node[ic] + sl.nodes(ic).size();
+      }
+      GMM_ASSERT1(s == si && result.size() == s * sl.nb_points(), "Internal error");
+      size_type ic = sl.convex_pos(cv);
+      size_type ipt = first_node[ic] + i;
+      gmm::add(t.as_vector(),
+               gmm::sub_vector(result, gmm::sub_interval(s*ipt, s)));
+    }
+
+    virtual void finalize() {
+      std::vector<size_type> data(2);
+      data[0] = initialized ? result.size() : 0;
+      data[1] = initialized ? s : 0;
+      MPI_MAX_VECTOR(data);
+      if (initialized) {
+        GMM_ASSERT1(gmm::vect_size(result) == data[0] &&  s == data[1],
+                    "Incompatible sizes");
+      } else {
+        if (data[0]) {
+          gmm::resize(result, data[0]);
+          s = data[1];
+        }
+        gmm::clear(result);
+      }
+      MPI_SUM_VECTOR(result);
+    }
+
+    virtual const mesh &linked_mesh() { return sl.linked_mesh(); }
+
+    ga_interpolation_context_mesh_slice(const stored_mesh_slice &sl_, base_vector &r)
+      : result(r), sl(sl_), initialized(false) { }
+  };
+
+  void ga_interpolation_mesh_slice
+  (ga_workspace &workspace, const stored_mesh_slice &sl, base_vector &result) {
+    ga_interpolation_context_mesh_slice gic(sl, result);
+    ga_interpolation(workspace, gic);
+  }
+
+  void ga_interpolation_mesh_slice
+  (const getfem::model &md, const std::string &expr, const stored_mesh_slice &sl,
+   base_vector &result, const mesh_region &rg) {
+    ga_workspace workspace(md);
+    workspace.add_interpolation_expression(expr, sl.linked_mesh(), rg);
+    ga_interpolation_mesh_slice(workspace, sl, result);
+  }
+
+
   //=========================================================================
   // Local projection functions
   //=========================================================================

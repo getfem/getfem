@@ -99,6 +99,9 @@ namespace getfem {
     /** return the original convex number of the 'ic'th convex
         referenced in the slice */
     size_type convex_num(size_type ic) const { return cvlst[ic].cv_num; }
+    /** return the position ic of the referenced convex in the slice convexes
+        list cvlist, corresponding to the original convex number cv*/
+    size_type convex_pos(size_type cv) const { return cv2pos[cv]; }
     /** change the slice dimension (append zeros or truncate node coordinates..) */
     void set_dim(size_type newdim);
     /** return the slice dimension */
@@ -120,8 +123,15 @@ namespace getfem {
     /** Return the list of simplexes for the 'ic'th convex of the slice. */
     const mesh_slicer::cs_simplexes_ct& simplexes(size_type ic) const { return cvlst[ic].simplexes; }
     size_type memsize() const;
-    void clear() { poriginal_mesh = 0; cvlst.clear(); points_cnt = 0; 
-      dim_ = size_type(-1); cv2pos.clear(); simplex_cnt.clear(); clear_merged_nodes(); }
+    void clear() {
+      poriginal_mesh = 0;
+      cvlst.clear();
+      points_cnt = 0; 
+      dim_ = size_type(-1);
+      gmm::fill(cv2pos, size_type(-1));
+      simplex_cnt.clear();
+      clear_merged_nodes();
+    }
     /** @brief merge with another mesh slice. */
     void merge(const stored_mesh_slice& sl);
 
