@@ -2948,7 +2948,8 @@ namespace getfem {
       if (pfp) ctx.set_pfp(pfp);
       else ctx.set_pf(mf.fem_of_element(ctx.convex_num()));
       GMM_ASSERT1(ctx.pf(), "Undefined finite element method");
-      ctx.pf()->real_base_value(ctx, t);
+      ctx.base_value(t);
+      // ctx.pf()->real_base_value(ctx, t);
       return 0;
     }
 
@@ -3011,7 +3012,8 @@ namespace getfem {
       if (pfp) ctx.set_pfp(pfp);
       else ctx.set_pf(mf.fem_of_element(ctx.convex_num()));
       GMM_ASSERT1(ctx.pf(), "Undefined finite element method");
-      ctx.pf()->real_grad_base_value(ctx, t);
+      ctx.grad_base_value(t);
+      // ctx.pf()->real_grad_base_value(ctx, t);
       return 0;
     }
 
@@ -3069,7 +3071,8 @@ namespace getfem {
       if (pfp) ctx.set_pfp(pfp);
       else ctx.set_pf(mf.fem_of_element(ctx.convex_num()));
       GMM_ASSERT1(ctx.pf(), "Undefined finite element method");
-      ctx.pf()->real_hess_base_value(ctx, t);
+      ctx.hess_base_value(t);
+      // ctx.pf()->real_hess_base_value(ctx, t);
       return 0;
     }
 
