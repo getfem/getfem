@@ -29,7 +29,7 @@ namespace getfem {
     dim_ = cvr->structure()->dim();
     is_equiv = !smart_global_dof_linking_;
     real_element_defined = true;
-    is_polycomp = is_pol = is_lag = false;
+    is_polycomp = is_pol = is_lag = is_standard_fem = false;
     es_degree = 5; /* humm ... */
     ntarget_dim = 1;
 

@@ -815,7 +815,7 @@ namespace getfem {
       store_values(store_val), blocked_dofs(blocked_dofs_), mi2(2), mi3(3) {
     this->add_dependency(mf_source);
     this->add_dependency(mim_target);
-    is_pol = is_lag = false; es_degree = 5;
+    is_pol = is_lag = is_standard_fem = false; es_degree = 5;
     is_equiv = real_element_defined = true;
     ntarget_dim = mf_source.get_qdim();
 

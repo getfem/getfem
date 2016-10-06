@@ -29,7 +29,7 @@ namespace getfem {
     cvr = bfem->ref_convex(0);
     dim_ = cvr->structure()->dim();
     is_equiv = true; real_element_defined = true;
-    is_polycomp = is_pol = is_lag = false;
+    is_polycomp = is_pol = is_lag = is_standard_fem = false;
     es_degree = 5; /* humm ... */
     ntarget_dim = bfem->target_dim();
 

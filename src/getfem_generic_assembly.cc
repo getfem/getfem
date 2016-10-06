@@ -2944,11 +2944,16 @@ namespace getfem {
 
     virtual int exec() { // --> t(ndof,target_dim)
       GA_DEBUG_INFO("Instruction: compute value of base functions");
-      if (pfp) ctx.set_pfp(pfp);
-      else ctx.set_pf(mf.fem_of_element(ctx.convex_num()));
-      GMM_ASSERT1(ctx.pf(), "Undefined finite element method");
-      ctx.base_value(t);
-      // ctx.pf()->real_base_value(ctx, t);
+      // if (pfp) ctx.set_pfp(pfp);
+      // else ctx.set_pf(mf.fem_of_element(ctx.convex_num()));
+      // GMM_ASSERT1(ctx.pf(), "Undefined finite element method");
+      // ctx.base_value(t);
+      if (pfp) ctx.pfp_base_value(t, pfp);
+      else {
+	ctx.set_pf(mf.fem_of_element(ctx.convex_num()));
+	GMM_ASSERT1(ctx.pf(), "Undefined finite element method");
+	ctx.base_value(t);
+      }
       return 0;
     }
 
@@ -2970,7 +2975,7 @@ namespace getfem {
       GMM_ASSERT1(ctx.pf(), "Undefined finite element method");
       int old_xfem_side = ctx.xfem_side();
       ctx.set_xfem_side(1);
-      ctx.pf()->real_base_value(ctx, t);
+      ctx.base_value(t);
       ctx.set_xfem_side(old_xfem_side);
       return 0;
     }
@@ -2994,7 +2999,7 @@ namespace getfem {
       GMM_ASSERT1(ctx.pf(), "Undefined finite element method");
       int old_xfem_side = ctx.xfem_side();
       ctx.set_xfem_side(-1);
-      ctx.pf()->real_base_value(ctx, t);
+      ctx.base_value(t);
       ctx.set_xfem_side(old_xfem_side);
       return 0;
     }
@@ -3008,11 +3013,16 @@ namespace getfem {
 
     virtual int exec() { // --> t(ndof,target_dim,N)
       GA_DEBUG_INFO("Instruction: compute gradient of base functions");
-      if (pfp) ctx.set_pfp(pfp);
-      else ctx.set_pf(mf.fem_of_element(ctx.convex_num()));
-      GMM_ASSERT1(ctx.pf(), "Undefined finite element method");
-      ctx.grad_base_value(t);
-      // ctx.pf()->real_grad_base_value(ctx, t);
+      // if (pfp) ctx.set_pfp(pfp);
+      // else ctx.set_pf(mf.fem_of_element(ctx.convex_num()));
+      // GMM_ASSERT1(ctx.pf(), "Undefined finite element method");
+      // ctx.grad_base_value(t);
+      if (pfp) ctx.pfp_grad_base_value(t, pfp);
+      else {
+	ctx.set_pf(mf.fem_of_element(ctx.convex_num()));
+	GMM_ASSERT1(ctx.pf(), "Undefined finite element method");
+	ctx.grad_base_value(t);
+      }
       return 0;
     }
 
@@ -3031,7 +3041,7 @@ namespace getfem {
       GMM_ASSERT1(ctx.pf(), "Undefined finite element method");
       int old_xfem_side = ctx.xfem_side();
       ctx.set_xfem_side(1);
-      ctx.pf()->real_grad_base_value(ctx, t);
+      ctx.grad_base_value(t);
       ctx.set_xfem_side(old_xfem_side);
       return 0;
     }
@@ -3051,7 +3061,7 @@ namespace getfem {
       GMM_ASSERT1(ctx.pf(), "Undefined finite element method");
       int old_xfem_side = ctx.xfem_side();
       ctx.set_xfem_side(-1);
-      ctx.pf()->real_grad_base_value(ctx, t);
+      ctx.grad_base_value(t);
       ctx.set_xfem_side(old_xfem_side);
       return 0;
     }
@@ -3071,7 +3081,6 @@ namespace getfem {
       else ctx.set_pf(mf.fem_of_element(ctx.convex_num()));
       GMM_ASSERT1(ctx.pf(), "Undefined finite element method");
       ctx.hess_base_value(t);
-      // ctx.pf()->real_hess_base_value(ctx, t);
       return 0;
     }
 
@@ -3090,7 +3099,7 @@ namespace getfem {
       GMM_ASSERT1(ctx.pf(), "Undefined finite element method");
       int old_xfem_side = ctx.xfem_side();
       ctx.set_xfem_side(1);
-      ctx.pf()->real_hess_base_value(ctx, t);
+      ctx.hess_base_value(t);
       ctx.set_xfem_side(old_xfem_side);
       return 0;
     }
@@ -3110,7 +3119,7 @@ namespace getfem {
       GMM_ASSERT1(ctx.pf(), "Undefined finite element method");
       int old_xfem_side = ctx.xfem_side();
       ctx.set_xfem_side(-1);
-      ctx.pf()->real_hess_base_value(ctx, t);
+      ctx.hess_base_value(t);
       ctx.set_xfem_side(old_xfem_side);
       return 0;
     }

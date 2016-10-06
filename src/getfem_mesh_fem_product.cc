@@ -33,7 +33,7 @@ namespace getfem {
     cvr = pfems[0]->ref_convex(cv);
     dim_ = cvr->structure()->dim();
     is_equiv = real_element_defined = true;
-    is_polycomp = is_pol = is_lag = false;
+    is_polycomp = is_pol = is_lag = is_standard_fem = false;
     es_degree = 5; /* humm ... */
     ntarget_dim = 1;
     std::stringstream nm;

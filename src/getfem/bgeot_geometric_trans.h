@@ -394,6 +394,7 @@ namespace bgeot {
      are heavily described in the GetFEM++ Kernel Documentation.
   */
   class APIDECL geotrans_interpolation_context {
+  protected:
     mutable base_node xref_; /** reference point */
     mutable base_node xreal_; /** transformed point */
     const base_matrix *G_; /** pointer to the matrix of real nodes of the convex */

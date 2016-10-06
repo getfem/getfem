@@ -26,7 +26,7 @@ namespace getfem {
 
 
   void fem_global_function::init() {
-    is_pol = is_lag = false; es_degree = 5;
+    is_pol = is_lag = is_standard_fem = false; es_degree = 5;
     is_equiv = real_element_defined = true;
     ntarget_dim = 1; // An extension for vectorial elements should be easy
 

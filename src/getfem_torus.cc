@@ -216,6 +216,7 @@ namespace getfem
   void torus_fem::init(){
     cvr = poriginal_fem_->ref_convex(0);
     dim_ = cvr->structure()->dim();
+    is_standard_fem = false;
     is_equiv = real_element_defined = true;
     is_pol = poriginal_fem_->is_polynomial();
     is_polycomp = poriginal_fem_->is_polynomialcomp();

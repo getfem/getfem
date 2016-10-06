@@ -77,74 +77,156 @@ namespace getfem {
   // In that case, the storage available in ctx.pfp()->c, ctx.pfp()->pc
   // and ctx.pfp()->hpc is not used.
 
-  void fem_interpolation_context::base_value(base_tensor& t,
-					     bool withM) const {
-    if (pf()->is_on_real_element())
-      pf()->real_base_value(*this, t);
+  
+  void fem_interpolation_context::pfp_base_value(base_tensor& t,
+						 const pfem_precomp &pfp__) {
+    const pfem &pf__ = pfp__->get_pfem();
+    GMM_ASSERT1(ii_ != size_type(-1), "Internal error");
+
+    if (pf__->is_standard())
+      t = pfp__->val(ii());
     else {
-      if (have_pfp() && ii() != size_type(-1)) {
-        switch(pf()->vectorial_type()) {
-        case virtual_fem::VECTORIAL_PRIMAL_TYPE:
-          t.mat_transp_reduction(pfp_->val(ii()), K(), 1); break;
-        case virtual_fem::VECTORIAL_DUAL_TYPE:
-          t.mat_transp_reduction(pfp_->val(ii()), B(), 1); break;
-        default: t = pfp_->val(ii());
-        }
-      }
+      if (pf__->is_on_real_element())
+	pf__->real_base_value(*this, t);
       else {
-        switch(pf()->vectorial_type()) {
-        case virtual_fem::VECTORIAL_PRIMAL_TYPE:
-          { base_tensor u; pf()->base_value(xref(), u); t.mat_transp_reduction(u,K(),1); } break;
-        case virtual_fem::VECTORIAL_DUAL_TYPE:
-          { base_tensor u; pf()->base_value(xref(), u); t.mat_transp_reduction(u,B(),1); } break;
-        default: pf()->base_value(xref(), t);
-        }
+	switch(pf__->vectorial_type()) {
+	case virtual_fem::VECTORIAL_NOTRANSFORM_TYPE:
+	  t = pfp__->val(ii()); break;
+	case virtual_fem::VECTORIAL_PRIMAL_TYPE:
+	  t.mat_transp_reduction(pfp__->val(ii()), K(), 1); break;
+	case virtual_fem::VECTORIAL_DUAL_TYPE:
+	  t.mat_transp_reduction(pfp__->val(ii()), B(), 1); break;
+	}
+	if (!(pf__->is_equivalent())) {
+	  set_pfp(pfp__);
+	  { base_tensor u = t; t.mat_transp_reduction(u, M(), 0); }
+	}
       }
-      if (withM && !(pf()->is_equivalent()))
-        { base_tensor u = t; t.mat_transp_reduction(u, M(), 0); }
     }
   }
 
-  void fem_interpolation_context::grad_base_value(base_tensor& t,
-                                                  bool withM) const {
-    if (pf()->is_on_real_element())
-      pf()->real_grad_base_value(*this, t);
+
+  void fem_interpolation_context::base_value(base_tensor& t,
+					     bool withM) const {
+    if (pfp_ && ii_ != size_type(-1) && pf_->is_standard())
+      t = pfp_->val(ii());
     else {
-      if (have_pfp() && ii() != size_type(-1)) {
-        switch(pf()->vectorial_type()) {
-        case virtual_fem::VECTORIAL_PRIMAL_TYPE:
+      if (pf_->is_on_real_element())
+	pf_->real_base_value(*this, t);
+      else {
+	if (pfp_ && ii_ != size_type(-1)) {
+	  switch(pf_->vectorial_type()) {
+	  case virtual_fem::VECTORIAL_NOTRANSFORM_TYPE:
+	    t = pfp_->val(ii()); break;
+	  case virtual_fem::VECTORIAL_PRIMAL_TYPE:
+	    t.mat_transp_reduction(pfp_->val(ii()), K(), 1); break;
+	  case virtual_fem::VECTORIAL_DUAL_TYPE:
+	    t.mat_transp_reduction(pfp_->val(ii()), B(), 1); break;
+	  }
+	}
+	else {
+	  switch(pf_->vectorial_type()) {
+	  case virtual_fem::VECTORIAL_NOTRANSFORM_TYPE:
+	    pf_->base_value(xref(), t); break;
+	  case virtual_fem::VECTORIAL_PRIMAL_TYPE:
+	    {
+	      base_tensor u; pf_->base_value(xref(), u);
+	      t.mat_transp_reduction(u,K(),1);
+	    } break;
+	  case virtual_fem::VECTORIAL_DUAL_TYPE:
+	    {
+	      base_tensor u; pf_->base_value(xref(), u);
+	      t.mat_transp_reduction(u,B(),1);
+	    } break;
+	  }
+	}
+	if (withM && !(pf_->is_equivalent()))
+	  { base_tensor u = t; t.mat_transp_reduction(u, M(), 0); }
+      }
+    }
+  }
+
+  void fem_interpolation_context::pfp_grad_base_value(base_tensor& t,
+						  const pfem_precomp &pfp__) {
+    const pfem &pf__ = pfp__->get_pfem();
+    GMM_ASSERT1(ii_ != size_type(-1), "Internal error");
+
+    if (pf__->is_standard()) {
+      t.mat_transp_reduction(pfp__->grad(ii()), B(), 2);
+    } else {
+      if (pf__->is_on_real_element())
+	pf__->real_grad_base_value(*this, t);
+      else {
+	switch(pf__->vectorial_type()) {
+	case virtual_fem::VECTORIAL_PRIMAL_TYPE:
 	  {
 	    base_tensor u;
-	    u.mat_transp_reduction(pfp_->grad(ii()), B(), 2);
+	    u.mat_transp_reduction(pfp__->grad(ii()), B(), 2);
 	    t.mat_transp_reduction(u, K(), 1);
 	  }
 	  break;
-        case virtual_fem::VECTORIAL_DUAL_TYPE:
+	case virtual_fem::VECTORIAL_DUAL_TYPE:
 	  {
 	    base_tensor u;
-	    u.mat_transp_reduction(pfp_->grad(ii()), B(), 2);
+	    u.mat_transp_reduction(pfp__->grad(ii()), B(), 2);
 	    t.mat_transp_reduction(u, B(), 1);
 	  }
 	  break;
-        default: t.mat_transp_reduction(pfp_->grad(ii()), B(), 2);
-        }
-
-      } else {
-	base_tensor u;
-        pf()->grad_base_value(xref(), u);
-        if (u.size()) { /* only if the FEM can provide grad_base_value */
-          t.mat_transp_reduction(u, B(), 2);
-          switch(pf()->vectorial_type()) {
-          case virtual_fem::VECTORIAL_PRIMAL_TYPE:
-	      u = t; t.mat_transp_reduction(u, K(), 1); break;
-          case virtual_fem::VECTORIAL_DUAL_TYPE:
-	      u = t; t.mat_transp_reduction(u, B(), 1);  break;
-          default: break;
-          }
-        }
+	default: t.mat_transp_reduction(pfp__->grad(ii()), B(), 2);
+	}
+	if (!(pf()->is_equivalent())) {
+	  set_pfp(pfp__);
+	  base_tensor u = t; t.mat_transp_reduction(u, M(), 0);
+	}
       }
-      if (withM && !(pf()->is_equivalent()))
-        { base_tensor u = t; t.mat_transp_reduction(u, M(), 0); }
+    }
+  }
+
+
+  void fem_interpolation_context::grad_base_value(base_tensor& t,
+                                                  bool withM) const {
+    if (pfp_ && ii_ != size_type(-1) && pf_->is_standard()) {
+      t.mat_transp_reduction(pfp_->grad(ii()), B(), 2);
+    } else {
+      if (pf()->is_on_real_element())
+	pf()->real_grad_base_value(*this, t);
+      else {
+	if (have_pfp() && ii() != size_type(-1)) {
+	  switch(pf()->vectorial_type()) {
+	  case virtual_fem::VECTORIAL_PRIMAL_TYPE:
+	    {
+	      base_tensor u;
+	      u.mat_transp_reduction(pfp_->grad(ii()), B(), 2);
+	      t.mat_transp_reduction(u, K(), 1);
+	    }
+	    break;
+	  case virtual_fem::VECTORIAL_DUAL_TYPE:
+	    {
+	      base_tensor u;
+	      u.mat_transp_reduction(pfp_->grad(ii()), B(), 2);
+	      t.mat_transp_reduction(u, B(), 1);
+	    }
+	    break;
+	  default: t.mat_transp_reduction(pfp_->grad(ii()), B(), 2);
+	  }
+	  
+	} else {
+	  base_tensor u;
+	  pf()->grad_base_value(xref(), u);
+	  if (u.size()) { /* only if the FEM can provide grad_base_value */
+	    t.mat_transp_reduction(u, B(), 2);
+	    switch(pf()->vectorial_type()) {
+	    case virtual_fem::VECTORIAL_PRIMAL_TYPE:
+	      u = t; t.mat_transp_reduction(u, K(), 1); break;
+	    case virtual_fem::VECTORIAL_DUAL_TYPE:
+	      u = t; t.mat_transp_reduction(u, B(), 1);  break;
+	    default: break;
+	    }
+	  }
+	}
+	if (withM && !(pf()->is_equivalent()))
+	  { base_tensor u = t; t.mat_transp_reduction(u, M(), 0); }
+      }
     }
   }
 
@@ -155,34 +237,36 @@ namespace getfem {
     else {
       base_tensor tt;
       if (have_pfp() && ii() != size_type(-1))
-        tt = pfp()->hess(ii()); else pf()->hess_base_value(xref(), tt);
-
+	tt = pfp()->hess(ii());
+      else
+	pf()->hess_base_value(xref(), tt);
+      
       switch(pf()->vectorial_type()) {
       case virtual_fem::VECTORIAL_PRIMAL_TYPE:
-        { base_tensor u = tt; tt.mat_transp_reduction(u, K(), 1); } break;
+	{ base_tensor u = tt; tt.mat_transp_reduction(u, K(), 1); } break;
       case virtual_fem::VECTORIAL_DUAL_TYPE:
-        { base_tensor u = tt; tt.mat_transp_reduction(u, B(), 1); } break;
+	{ base_tensor u = tt; tt.mat_transp_reduction(u, B(), 1); } break;
       default: break;
       }
-
+      
       if (tt.size()) { /* only if the FEM can provide hess_base_value */
-        bgeot::multi_index mim(3);
-        mim[2] = gmm::sqr(tt.sizes()[2]); mim[1] = tt.sizes()[1];
-        mim[0] = tt.sizes()[0];
-        tt.adjust_sizes(mim);
-        t.mat_transp_reduction(tt, B3(), 2);
-        if (!pgt()->is_linear()) {
-          if (have_pfp()) {
-            tt.mat_transp_reduction(pfp()->grad(ii()), B32(), 2);
-          } else {
-            base_tensor u;
-            pf()->grad_base_value(xref(), u);
-            tt.mat_transp_reduction(u, B32(), 2);
-          }
-          t -= tt;
-        }
-        if (!(pf()->is_equivalent()) && withM)
-          { tt = t; t.mat_transp_reduction(tt, M(), 0); }
+	bgeot::multi_index mim(3);
+	mim[2] = gmm::sqr(tt.sizes()[2]); mim[1] = tt.sizes()[1];
+	mim[0] = tt.sizes()[0];
+	tt.adjust_sizes(mim);
+	t.mat_transp_reduction(tt, B3(), 2);
+	if (!pgt()->is_linear()) {
+	  if (have_pfp()) {
+	    tt.mat_transp_reduction(pfp()->grad(ii()), B32(), 2);
+	  } else {
+	    base_tensor u;
+	    pf()->grad_base_value(xref(), u);
+	    tt.mat_transp_reduction(u, B32(), 2);
+	  }
+	  t -= tt;
+	}
+	if (!(pf()->is_equivalent()) && withM)
+	  { tt = t; t.mat_transp_reduction(tt, M(), 0); }
       }
     }
   }
@@ -598,6 +682,7 @@ namespace getfem {
     is_pol = f.is_pol;
     is_polycomp = f.is_polycomp;
     real_element_defined = f.real_element_defined;
+    is_standard_fem = f.is_standard_fem;
     es_degree = f.es_degree;
     hier_raff = f.hier_raff;
     debug_name_ = f.debug_name_;
@@ -645,7 +730,7 @@ namespace getfem {
   PK_fem_::PK_fem_(dim_type nc, short_type k) {
     cvr = bgeot::simplex_of_reference(nc);
     dim_ = cvr->structure()->dim();
-    is_equiv = is_pol = is_lag = true;
+    is_standard_fem = is_equiv = is_pol = is_lag = true;
     es_degree = k;
 
     init_cvs_node();
@@ -692,7 +777,8 @@ namespace getfem {
     is_equiv = fi1->is_equivalent() && fi2->is_equivalent();
     GMM_ASSERT1(is_equiv,
                 "Product of non equivalent elements not available, sorry.");
-    is_lag = fi1->is_lagrange() && fi2->is_lagrange();;
+    is_lag = fi1->is_lagrange() && fi2->is_lagrange();
+    is_standard_fem = fi1->is_standard() && fi2->is_standard();
     es_degree = short_type(fi1->estimated_degree() + fi2->estimated_degree());
 
     bgeot::convex<base_node> cv
@@ -997,7 +1083,8 @@ namespace getfem {
     auto p = std::make_shared<fem<base_poly>>();
     p->mref_convex() = bgeot::simplex_of_reference(2);
     p->dim() = 2;
-    p->is_equivalent() = p->is_polynomial() = p->is_lagrange() = true;
+    p->is_standard() = p->is_equivalent() = true;
+    p->is_polynomial() = p->is_lagrange() = true;
     p->estimated_degree() = 1;
     p->init_cvs_node();
     p->base().resize(3);
@@ -1052,7 +1139,8 @@ namespace getfem {
     auto p = std::make_shared<fem<base_poly>>();
     p->mref_convex() = bgeot::parallelepiped_of_reference(n);
     p->dim() = n;
-    p->is_equivalent() = p->is_polynomial() = p->is_lagrange() = true;
+    p->is_standard() = p->is_equivalent() = true;
+    p->is_polynomial() = p->is_lagrange() = true;
     p->estimated_degree() = 2;
     p->init_cvs_node();
     p->base().resize(n == 2 ? 8 : 20);
@@ -1231,7 +1319,7 @@ namespace getfem {
     init_cvs_node();
     es_degree = 1;
     is_pol = true;
-    is_lag = is_equiv = false;
+    is_standard_fem = is_lag = is_equiv = false;
     ntarget_dim = nc;
     vtype = VECTORIAL_PRIMAL_TYPE;
     base_.resize(nc*(nc+1));
@@ -1328,7 +1416,7 @@ namespace getfem {
     init_cvs_node();
     es_degree = 1;
     is_pol = true;
-    is_lag = is_equiv = false;
+    is_standard_fem = is_lag = is_equiv = false;
     ntarget_dim = nc;
     vtype = VECTORIAL_PRIMAL_TYPE;
     base_.resize(nc*2*nc);
@@ -1432,7 +1520,7 @@ namespace getfem {
     init_cvs_node();
     es_degree = 1;
     is_pol = true;
-    is_lag = is_equiv = false;
+    is_standard_fem = is_lag = is_equiv = false;
     ntarget_dim = nc;
     vtype = VECTORIAL_DUAL_TYPE;
     base_.resize(nc*(nc+1)*nc/2);
@@ -2658,7 +2746,7 @@ namespace getfem {
   PK_GL_fem_::PK_GL_fem_(unsigned k) {
     cvr = bgeot::simplex_of_reference(1);
     dim_ = cvr->structure()->dim();
-    is_equiv = is_pol = is_lag = true;
+    is_standard_fem = is_equiv = is_pol = is_lag = true;
     es_degree = short_type(k);
     GMM_ASSERT1(k < fem_coeff_gausslob_max_k && fem_coeff_gausslob[k],
                 "try another degree");
@@ -2744,7 +2832,7 @@ namespace getfem {
     init_cvs_node();
     es_degree = 3;
     is_pol = true;
-    is_lag = is_equiv = false;
+    is_standard_fem = is_lag = is_equiv = false;
     base_.resize(4);
 
     pt[0] = 0.0; add_node(lagrange_dof(1), pt);
@@ -2798,7 +2886,7 @@ namespace getfem {
     init_cvs_node();
     es_degree = 3;
     is_pol = true;
-    is_lag = is_equiv = false;
+    is_standard_fem = is_lag = is_equiv = false;
     base_.resize(10);
 
     add_node(lagrange_dof(2), base_node(0.0, 0.0));
@@ -2869,7 +2957,7 @@ namespace getfem {
     init_cvs_node();
     es_degree = 3;
     is_pol = true;
-    is_lag = is_equiv = false;
+    is_standard_fem = is_lag = is_equiv = false;
     base_.resize(20);
     std::stringstream s
       ( "1 - 3*x*x - 13*x*y - 13*x*z - 3*y*y - 13*y*z - 3*z*z + 2*x*x*x"
@@ -3034,7 +3122,7 @@ namespace getfem {
     es_degree = 5;
     is_pol = true;
     is_lag = false;
-    is_equiv = false;
+    is_standard_fem = is_equiv = false;
     base_.resize(21);
 
     std::stringstream s
@@ -3179,7 +3267,7 @@ namespace getfem {
     init_cvs_node();
     es_degree = 2;
     is_pol = true;
-    is_lag = is_equiv = false;
+    is_standard_fem = is_lag = is_equiv = false;
     base_.resize(6);
 
     std::stringstream s("1 - x - y + 2*x*y;  (x + y + x^2 - 2*x*y - y^2)/2;"

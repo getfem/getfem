@@ -253,6 +253,7 @@ namespace getfem {
     bool is_pol;            // true if the FEM is polynomial
     bool is_polycomp;       // true if the FEM is polynomial composite
     bool real_element_defined;
+    bool is_standard_fem;   // is_equiv && !real_element_defined && scalar
     short_type es_degree;   // estimated polynomial degree of the FEM
     short_type hier_raff;   // hierarchical refinement of the FEM
     vec_type vtype; // for vectorial elements, type of transformation
@@ -328,10 +329,12 @@ namespace getfem {
     /// true if the base functions are polynomials
     bool is_polynomial() const { return is_pol; }
     bool is_polynomialcomp() const { return is_polycomp; }
+    bool is_standard() const { return is_standard_fem; }
     bool &is_polynomialcomp() { return is_polycomp; }
     bool &is_equivalent() { return is_equiv; }
     bool &is_lagrange() { return is_lag; }
     bool &is_polynomial() { return is_pol; }
+    bool &is_standard() { return is_standard_fem; }
     short_type estimated_degree() const { return es_degree; }
     short_type &estimated_degree() { return es_degree; }
 
@@ -453,7 +456,7 @@ namespace getfem {
     virtual_fem() {
       DAL_STORED_OBJECT_DEBUG_CREATED(this, "Fem");
       ntarget_dim = 1; dim_ = 1;
-      is_equiv = is_pol = is_polycomp = is_lag = false;
+      is_equiv = is_pol = is_polycomp = is_lag = is_standard_fem = false;
       pspt_valid = false; hier_raff = 0; real_element_defined = false;
       es_degree = 5;
       vtype = VECTORIAL_NOTRANSFORM_TYPE;
@@ -686,10 +689,14 @@ namespace getfem {
         at point @c this->xref())
     */
     void base_value(base_tensor& t, bool withM = true) const;
+    // Optimized function for high level generic assembly
+    void pfp_base_value(base_tensor& t, const pfem_precomp &pfp__);
     /** fill the tensor with the gradient of the base functions (taken
         at point @c this->xref())
     */
     void grad_base_value(base_tensor& t, bool withM = true) const;
+    // Optimized function for high level generic assembly
+    void pfp_grad_base_value(base_tensor& t, const pfem_precomp &pfp__);
     /** fill the tensor with the hessian of the base functions (taken
         at point @c this->xref())
     */

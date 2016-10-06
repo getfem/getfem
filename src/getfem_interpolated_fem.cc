@@ -381,7 +381,7 @@ namespace getfem {
     DAL_STORED_OBJECT_DEBUG_CREATED(this, "Interpolated fem");
     this->add_dependency(mf);
     this->add_dependency(mim);
-    is_pol = is_lag = false; es_degree = 5;
+    is_pol = is_lag = is_standard_fem = false; es_degree = 5;
     is_equiv = real_element_defined = true;
     gmm::resize(trans, mf.linked_mesh().dim(), mf.linked_mesh().dim());
     ntarget_dim = mef.get_qdim();
