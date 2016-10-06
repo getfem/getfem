@@ -37,7 +37,7 @@ namespace getfem {
     auto p = std::make_shared<fem<bgeot::polynomial_composite>>();
     p->mref_convex() = cr;
     p->dim() = cr->structure()->dim();
-    p->is_polynomialcomp() = p->is_equivalent() = true;
+    p->is_polynomialcomp() = p->is_equivalent() = p->is_standard() = true;
     p->is_polynomial() = false;
     p->is_lagrange() = true;
     p->estimated_degree() = 0;
@@ -181,6 +181,7 @@ namespace getfem {
     is_equivalent() = true;
     is_polynomial() = false;
     is_lagrange() = false;
+    is_standard() = true;
     estimated_degree() = 3;
     init_cvs_node();
 
@@ -346,6 +347,7 @@ namespace getfem {
     is_equivalent() = false;
     is_polynomial() = false;
     is_lagrange() = false;
+    is_standard() = false;
     estimated_degree() = 5;
     init_cvs_node();
 
@@ -421,6 +423,7 @@ namespace getfem {
     is_equivalent() = false;
     is_polynomial() = false;
     is_lagrange() = false;
+    is_standard() = false;
     estimated_degree() = 5;
     base() = HCT->base();
 
@@ -610,6 +613,7 @@ namespace getfem {
     is_equivalent() = false;
     is_polynomial() = false;
     is_lagrange() = false;
+    is_standard() = false;
     estimated_degree() = 5;
     init_cvs_node();
 
@@ -690,6 +694,7 @@ namespace getfem {
     is_equivalent() = false;
     is_polynomial() = false;
     is_lagrange() = false;
+    is_standard() = false;
     estimated_degree() = 5;
     base() = HCT->base();
 

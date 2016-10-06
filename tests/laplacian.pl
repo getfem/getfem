@@ -96,6 +96,7 @@ start_program("-d 'MESH_TYPE=\"GT_QK(2,1)\"' -d 'FEM_TYPE=\"FEM_QK(2,1)\"' -d 'I
 #start_program("-d INTEGRATION=33 -d MESH_TYPE=1");
 print ".";
 start_program("-d 'MESH_TYPE=\"GT_QK(2,1)\"' -d 'FEM_TYPE=\"FEM_QK(2,1)\"' -d 'INTEGRATION=\"IM_QUAD(17)\"'");
+start_program("-d 'MESH_TYPE=\"GT_PK(2,1)\"' -d 'FEM_TYPE=\"FEM_ARGYRIS\"' -d 'INTEGRATION=\"IM_TRIANGLE(5)\"' -d 'DATA_FEM_TYPE=\"FEM_PK(2,5)\"'");
 #start_program("-d INTEGRATION=35 -d MESH_TYPE=1");
 print ".";
 start_program("-d 'MESH_TYPE=\"GT_PRISM(3,1)\"' -d 'FEM_TYPE=\"FEM_PK_PRISM(3,1)\"' -d 'INTEGRATION=\"IM_NC_PRISM(3,2)\"' -d NX=3 -d FT=0.01 -d GENERIC_DIRICHLET=0");

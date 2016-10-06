@@ -174,7 +174,7 @@ namespace getfem {
 	  break;
 	default: t.mat_transp_reduction(pfp__->grad(ii()), B(), 2);
 	}
-	if (!(pf()->is_equivalent())) {
+	if (!(pf__->is_equivalent())) {
 	  set_pfp(pfp__);
 	  base_tensor u = t; t.mat_transp_reduction(u, M(), 0);
 	}
