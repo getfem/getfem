@@ -78,11 +78,10 @@ namespace getfem {
   // and ctx.pfp()->hpc is not used.
 
   void fem_interpolation_context::base_value(base_tensor& t,
-                                             bool withM) const {
+					     bool withM) const {
     if (pf()->is_on_real_element())
       pf()->real_base_value(*this, t);
     else {
-      base_tensor u;
       if (have_pfp() && ii() != size_type(-1)) {
         switch(pf()->vectorial_type()) {
         case virtual_fem::VECTORIAL_PRIMAL_TYPE:
@@ -95,17 +94,15 @@ namespace getfem {
       else {
         switch(pf()->vectorial_type()) {
         case virtual_fem::VECTORIAL_PRIMAL_TYPE:
-          pf()->base_value(xref(), u); t.mat_transp_reduction(u,K(),1); break;
+          { base_tensor u; pf()->base_value(xref(), u); t.mat_transp_reduction(u,K(),1); } break;
         case virtual_fem::VECTORIAL_DUAL_TYPE:
-          pf()->base_value(xref(), u); t.mat_transp_reduction(u,B(),1); break;
+          { base_tensor u; pf()->base_value(xref(), u); t.mat_transp_reduction(u,B(),1); } break;
         default: pf()->base_value(xref(), t);
         }
       }
-      if (!(pf()->is_equivalent()) && withM)
-        { u = t; t.mat_transp_reduction(u, M(), 0); }
+      if (withM && !(pf()->is_equivalent()))
+        { base_tensor u = t; t.mat_transp_reduction(u, M(), 0); }
     }
-
-    gmm::clean(t.as_vector(), 1e-13);
   }
 
   void fem_interpolation_context::grad_base_value(base_tensor& t,
@@ -113,36 +110,42 @@ namespace getfem {
     if (pf()->is_on_real_element())
       pf()->real_grad_base_value(*this, t);
     else {
-      base_tensor u;
       if (have_pfp() && ii() != size_type(-1)) {
         switch(pf()->vectorial_type()) {
         case virtual_fem::VECTORIAL_PRIMAL_TYPE:
-          u.mat_transp_reduction(pfp_->grad(ii()), B(), 2);
-          t.mat_transp_reduction(u, K(), 1); break;
+	  {
+	    base_tensor u;
+	    u.mat_transp_reduction(pfp_->grad(ii()), B(), 2);
+	    t.mat_transp_reduction(u, K(), 1);
+	  }
+	  break;
         case virtual_fem::VECTORIAL_DUAL_TYPE:
-          u.mat_transp_reduction(pfp_->grad(ii()), B(), 2);
-          t.mat_transp_reduction(u, B(), 1); break;
+	  {
+	    base_tensor u;
+	    u.mat_transp_reduction(pfp_->grad(ii()), B(), 2);
+	    t.mat_transp_reduction(u, B(), 1);
+	  }
+	  break;
         default: t.mat_transp_reduction(pfp_->grad(ii()), B(), 2);
         }
 
       } else {
+	base_tensor u;
         pf()->grad_base_value(xref(), u);
         if (u.size()) { /* only if the FEM can provide grad_base_value */
           t.mat_transp_reduction(u, B(), 2);
           switch(pf()->vectorial_type()) {
           case virtual_fem::VECTORIAL_PRIMAL_TYPE:
-            u = t; t.mat_transp_reduction(u, K(), 1); break;
+	      u = t; t.mat_transp_reduction(u, K(), 1); break;
           case virtual_fem::VECTORIAL_DUAL_TYPE:
-            u = t; t.mat_transp_reduction(u, B(), 1); break;
+	      u = t; t.mat_transp_reduction(u, B(), 1);  break;
           default: break;
           }
         }
       }
-      if (!(pf()->is_equivalent()) && withM)
-        { u = t; t.mat_transp_reduction(u, M(), 0); }
+      if (withM && !(pf()->is_equivalent()))
+        { base_tensor u = t; t.mat_transp_reduction(u, M(), 0); }
     }
-
-	gmm::clean(t.as_vector(), 1e-13);
   }
 
   void fem_interpolation_context::hess_base_value(base_tensor& t,

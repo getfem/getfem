@@ -1062,7 +1062,7 @@ namespace gmm {
           if (this->nb_stored() - ind > 1100)
             GMM_WARNING2("Inefficient addition of element in rsvector with "
                          << this->nb_stored() - ind << " non-zero entries");
-	  base_type_::resize(nb_stored()+1, ev);
+	  base_type_::resize(this->nb_stored()+1, ev);
 	  if (ind != this->nb_stored() - 1) {
 	    it = this->begin() + ind;
 	    iterator ite = this->end(); --ite; iterator itee = ite; --itee; 
@@ -1089,7 +1089,7 @@ namespace gmm {
           if (this->nb_stored() - ind > 1100)
             GMM_WARNING2("Inefficient addition of element in rsvector with "
                          << this->nb_stored() - ind << " non-zero entries");
-	  base_type_::resize(nb_stored()+1, ev);
+	  base_type_::resize(this->nb_stored()+1, ev);
 	  if (ind != this->nb_stored() - 1) {
 	    it = this->begin() + ind;
 	    iterator ite = this->end(); --ite; iterator itee = ite; --itee; 

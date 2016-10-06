@@ -209,7 +209,6 @@ static void test_new_assembly(int N, int NX, int pK) {
   getfem::pfem pf_p = getfem::fem_descriptor
     ((std::string("FEM_PK(") + Ns + "," + Ks + ")").c_str());
   mf_p.set_finite_element(m.convex_index(), pf_p);
-  // mf_p.set_qdim(dim_type(N));
   
   getfem::mesh_im mim(m);
   mim.set_integration_method(m.convex_index(), dim_type(2*pK));
@@ -295,8 +294,13 @@ static void test_new_assembly(int N, int NX, int pK) {
   
   
   if (all) {
-    MAT_TEST_1("Test for Mass matrix", ndofu, ndofu, "Test_u.Test2_u", mim,
-	       Iu, Iu,  getfem::asm_mass_matrix(K, mim, mf_u));
+    MAT_TEST_1("Test for scalar Mass matrix", ndofp, ndofp, "Test_p.Test2_p",
+	       mim, Ip, Ip,  getfem::asm_mass_matrix(K, mim, mf_p));
+  }
+  
+  if (all) {
+    MAT_TEST_1("Test for vector Mass matrix", ndofu, ndofu, "Test_u.Test2_u",
+	       mim, Iu, Iu,  getfem::asm_mass_matrix(K, mim, mf_u));
   }
   
   if (all) {
@@ -340,8 +344,8 @@ static void test_new_assembly(int N, int NX, int pK) {
     workspace.add_fixed_size_constant("mu", mu);
     
     MAT_TEST_1("Test for linear homogeneous elasticity stiffness matrix",
-	       ndofu, ndofu, "(lambda*Trace(Grad_Test_u)*Id(qdim(u)) "
-	       "+ mu*(Grad_Test_u'+Grad_Test_u)):Grad_Test2_u", mim2,
+	       ndofu, ndofu, "(Div_Test_u*(lambda*Id(qdim(u))) "
+	       "+ (2*mu)*Sym(Grad_Test_u)):Grad_Test2_u", mim2,
 	       Iu, Iu,
 	       getfem::asm_stiffness_matrix_for_homogeneous_linear_elasticity
 	       (K, mim2, mf_u, lambda, mu));
@@ -404,7 +408,7 @@ static void test_new_assembly(int N, int NX, int pK) {
     workspace.add_fem_constant("mu2", mf_p, mu2);
     
     MAT_TEST_1("Test for linear non homogeneous elasticity stiffness matrix",
-	       ndofu, ndofu, "(lambda2*Trace(Grad_Test_u)*Id(meshdim) "
+	       ndofu, ndofu, "(Div_Test_u*(lambda2*Id(meshdim)) "
 	       "+ mu2*(Grad_Test_u'+Grad_Test_u)):Grad_Test2_u",
 	       mim2, Iu, Iu,
 	       getfem::asm_stiffness_matrix_for_linear_elasticity
@@ -426,76 +430,95 @@ int main(int /* argc */, char * /* argv */[]) {
   // - global assembly part (assembly instruction),
   // - ga_exec cost (instructions not executed),
   // - J computation.
-  //                        new  | old  | sto  | asse | exec |  J   |
+  // - Instructions execution except for assembly ones
+  //                        new  | old  | sto  | asse | exec |  J   | Ins  |
   test_new_assembly(2, 400, 1); // ndofu = 321602 ndofp = 160801 ndofchi = 1201
-  // Mass                 : 0.78 | 0.84 | 0.11 | 0.22 | 0.26 | 0.09 |
-  // Laplacian            : 0.42 | 0.83 | 0.05 | 0.11 | 0.19 | 0.08 |
-  // Homogeneous elas     : 0.65 | 1.89 | 0.14 | 0.21 | 0.18 | 0.07 |
-  // Non-homogeneous elast: 0.82 | 2.32 | 0.13 | 0.23 | 0.18 | 0.08 |
-  test_new_assembly(3, 36, 1);  // ndofu = 151959 ndofp = 50653 ndofchi = 6553
-  // Mass                 : 1.36 | 1.68 | 0.12 | 0.34 | 0.31 | 0.15 |
-  // Laplacian            : 0.87 | 1.49 | 0.05 | 0.11 | 0.24 | 0.14 |
-  // Homogeneous elas     : 1.87 | 4.73 | 0.50 | 0.62 | 0.24 | 0.14 |
-  // Non-homogeneous elast: 2.03 | 6.81 | 0.45 | 0.63 | 0.24 | 0.14 |
+  // Mass (scalar)        : 0.52 | 0.62 | 0.09 | 0.14 | 0.26 | 0.08 | 0.13 |
+  // Mass (vector)        : 0.59 | 0.83 | 0.14 | 0.23 | 0.20 | 0.09 | 0.16 |
+  // Laplacian            : 0.38 | 0.83 | 0.05 | 0.11 | 0.18 | 0.08 | 0.09 |
+  // Homogeneous elas     : 0.58 | 1.88 | 0.14 | 0.21 | 0.18 | 0.07 | 0.19 |
+  // Non-homogeneous elast: 0.74 | 2.26 | 0.15 | 0.23 | 0.18 | 0.08 | 0.33 |
+  test_new_assembly(3, 36, 1);  // ndofu = 151959 ndofp =  50653 ndofchi = 6553
+  // Mass (scalar)        : 0.60 | 0.97 | 0.09 | 0.16 | 0.30 | 0.14 | 0.14 |
+  // Mass (vector)        : 1.09 | 1.68 | 0.20 | 0.40 | 0.26 | 0.15 | 0.43 |
+  // Laplacian            : 0.83 | 1.49 | 0.05 | 0.11 | 0.24 | 0.14 | 0.48 |
+  // Homogeneous elas     : 1.73 | 4.73 | 0.56 | 0.65 | 0.24 | 0.14 | 0.84 |
+  // Non-homogeneous elast: 1.91 | 6.81 | 0.56 | 0.66 | 0.24 | 0.14 | 1.06 |
   test_new_assembly(2, 200, 2); // ndofu = 321602 ndofp = 160801 ndofchi = 1201
-  // Mass                 : 0.44 | 0.45 | 0.07 | 0.14 | 0.07 | 0.03 |
-  // Laplacian            : 0.21 | 0.38 | 0.03 | 0.06 | 0.06 | 0.03 |
-  // Homogeneous elas     : 0.53 | 1.28 | 0.13 | 0.14 | 0.05 | 0.02 |
-  // Non-homogeneous elast: 0.63 | 2.42 | 0.12 | 0.17 | 0.05 | 0.02 |
-  test_new_assembly(3, 18, 2);  // ndofu = 151959 ndofp = 50653 ndofchi = 6553
-  // Mass                 : 1.95 | 0.90 | 0.22 | 0.53 | 0.05 | 0.02 |
-  // Laplacian            : 0.29 | 0.57 | 0.09 | 0.11 | 0.04 | 0.02 |
-  // Homogeneous elas     : 2.47 | 3.48 | 0.99 | 1.19 | 0.04 | 0.02 |
-  // Non-homogeneous elast: 2.55 | 9.25 | 0.99 | 1.18 | 0.04 | 0.02 |
-  test_new_assembly(3, 9, 4);   // ndofu = 151959 ndofp = 50653 ndofchi = 6553
-  // Mass                 : 6.64 | 1.33 | 0.41 | 1.69 | 0.01 | .005 |
-  // Laplacian            : 0.78 | 0.79 | 0.23 | 0.32 | 0.01 | .005 |
-  // Homogeneous elas     : 10.3 | 5.52 | 0.30 | 0.84 | 0.01 | .005 |
-  // Non-homogeneous elast: 10.2 | 48.0 | 0.30 | 0.70 | 0.01 | .005 |
+  // Mass (scalar)        : 0.20 | 0.25 | 0.04 | 0.07 | 0.07 | 0.03 | 0.07 |
+  // Mass (vector)        : 0.38 | 0.45 | 0.08 | 0.15 | 0.06 | 0.03 | 0.17 |
+  // Laplacian            : 0.18 | 0.38 | 0.03 | 0.05 | 0.06 | 0.03 | 0.07 |
+  // Homogeneous elas     : 0.42 | 1.28 | 0.15 | 0.19 | 0.05 | 0.02 | 0.19 |
+  // Non-homogeneous elast: 0.53 | 2.40 | 0.14 | 0.19 | 0.05 | 0.02 | 0.29 |
+  test_new_assembly(3, 18, 2);  // ndofu = 151959 ndofp =  50653 ndofchi = 6553
+  // Mass (scalar)        : 0.28 | 0.30 | 0.11 | 0.16 | 0.05 | 0.02 | 0.07 |
+  // Mass (vector)        : 1.52 | 0.90 | 0.31 | 0.62 | 0.05 | 0.02 | 0.85 |
+  // Laplacian            : 0.22 | 0.57 | 0.09 | 0.11 | 0.04 | 0.02 | 0.09 |
+  // Homogeneous elas     : 2.47 | 3.48 | 1.19 | 1.37 | 0.03 | 0.02 | 1.07 |
+  // Non-homogeneous elast: 2.55 | 9.25 | 1.21 | 1.37 | 0.03 | 0.02 | 1.15 |
+  test_new_assembly(3, 9, 4);   // ndofu = 151959 ndofp =  50653 ndofchi = 6553
+  // Mass (scalar)        : 0.76 | 0.38 | 0.31 | 0.39 | 0.01 | .005 | 0.36 |
+  // Mass (vector)        : 5.14 | 1.33 | 0.56 | 1.85 | 0.01 | .005 | 3.33 |
+  // Laplacian            : 0.62 | 0.79 | 0.25 | 0.34 | 0.01 | .005 | 0.27 |
+  // Homogeneous elas     : 11.0 | 5.52 | 2.23 | 3.14 | 0.01 | .005 | 7.85 |
+  // Non-homogeneous elast: 11.0 | 48.0 | 1.97 | 3.17 | 0.01 | .005 | 7.82 |
 
   // Conclusions :
   // - Desactivation of debug test has no sensible effect.
   // - Compile time of assembly strings is negligible (< 0.0004)
   // - J computation takes half the computational time of the exec part
   // - The optimized instruction call is negligible
-  // - The resize operations has been suppressed for uniform fems
+  // - For uniform mesh_fem, the resize operations has been suppressed and
+  //   the "update pfp" has been isolated in a set  of instruction being
+  //   executed only on change of integration method.
+  // - The mass matrix is more expansive due to a larger number of Gauss points.
+  // - Loop unrolling may have an important impact, especially for high degree 
 
 
   // Possible optimizations (focusing on a case)
   // - Optimization of J computation (especially in 2D and standard cases)
   // - Unroll loop in used instructions
   // - Assembly optimization
+  // - Detection of the very simples cases where the elementary atrix do not
+  //   have to be computed on each element (mass matrix, laplacian ...)
+  //   on uniform mesh_fem and mesh_im ?
   // - storage optimization (matrices ...)
   // - Fem interpolation context optimization.
+  // - Why such a difference between mass matrix and laplacian for 3D and P2 ?
 
   // Original table :
 #if 0
   //                        new  | old  | sto  | asse | exec |  J   |resize|
   test_new_assembly(2, 400, 1);
-  // Mass                 : 0.94 | 0.93 | 0.19 | 0.32 | 0.26 | 0.09 | 0.08 |
+  // Mass (scalar)        : 0.70 | 0.63 |
+  // Mass (vector)        : 0.94 | 0.93 | 0.19 | 0.32 | 0.26 | 0.09 | 0.08 |
   // Laplacian            : 0.49 | 0.88 | 0.10 | 0.16 | 0.19 | 0.08 | 0.03 |
   // Homogeneous elas     : 0.85 | 2.06 | 0.23 | 0.30 | 0.18 | 0.07 | 0.08 |
   // Non-homogeneous elast: 1.04 | 2.43 | 0.26 | 0.32 | 0.18 | 0.08 | 0.08 |
   test_new_assembly(3, 36, 1);
-  // Mass                 : 1.67 | 1.85 | 0.34 | 0.54 | 0.31 | 0.15 | 0.12 |
+  // Mass (scalar)        : 0.83 | 0.97 |
+  // Mass (vector)        : 1.67 | 1.85 | 0.34 | 0.54 | 0.31 | 0.15 | 0.12 |
   // Laplacian            : 0.94 | 1.54 | 0.10 | 0.17 | 0.24 | 0.14 | 0.06 |
   // Homogeneous elas     : 2.25 | 5.09 | 0.88 | 0.95 | 0.24 | 0.14 | 0.11 |
   // Non-homogeneous elast: 2.36 | 7.16 | 0.74 | 0.86 | 0.24 | 0.14 | 0.11 |
   test_new_assembly(2, 200, 2);
-  // Mass                 : 0.56 | 0.55 | 0.14 | 0.22 | 0.07 | 0.03 | 0.01 |
+  // Mass (scalar)        : 0.29 | 0.25 |
+  // Mass (vector)        : 0.56 | 0.55 | 0.14 | 0.22 | 0.07 | 0.03 | 0.01 |
   // Laplacian            : 0.27 | 0.42 | 0.06 | 0.10 | 0.06 | 0.03 | 0.03 |
   // Homogeneous elas     : 0.72 | 1.50 | 0.22 | 0.25 | 0.05 | 0.02 | 0.11 |
   // Non-homogeneous elast: 0.84 | 2.63 | 0.23 | 0.28 | 0.05 | 0.02 | 0.11 |
   test_new_assembly(3, 18, 2);
-  // Mass                 : 2.11 | 1.14 | 0.27 | 0.63 | 0.05 | 0.02 | 0.27 |
+  // Mass (scalar)        : 0.40 | 0.30 |
+  // Mass (vector)        : 2.11 | 1.14 | 0.27 | 0.63 | 0.05 | 0.02 | 0.27 |
   // Laplacian            : 0.37 | 0.66 | 0.16 | 0.17 | 0.04 | 0.02 | 0.02 |
   // Homogeneous elas     : 3.08 | 4.14 | 1.53 | 1.72 | 0.04 | 0.02 | 0.35 |
   // Non-homogeneous elast: 3.10 | 9.92 | 1.48 | 1.68 | 0.04 | 0.02 | 0.37 |
   test_new_assembly(3, 9, 4);
-  // Mass                 : 6.90 | 1.60 | 0.65 | 1.77 | 0.01 | .005 | 0.21 |
+  // Mass (scalar)        : 0.78 | 0.38 |
+  // Mass (vector)        : 6.90 | 1.60 | 0.65 | 1.77 | 0.01 | .005 | 0.21 |
   // Laplacian            : 0.90 | 0.89 | 0.32 | 0.43 | 0.01 | .005 | 0.07 |
-  // Homogeneous elas     : 11.1 | 6.65 | 0.90 | 1.69 | 0.01 | .005 | 2.50 |
-  // Non-homogeneous elast: 11.0 | 49.1 | 0.95 | 1.48 | 0.01 | .005 | 2.45 |
+  // Homogeneous elas     : 13.1 | 6.65 | 0.90 | 1.69 | 0.01 | .005 | 2.50 |
+  // Non-homogeneous elast: 13.0 | 49.1 | 0.95 | 1.48 | 0.01 | .005 | 2.45 |
 #endif
 
   return 0; 
