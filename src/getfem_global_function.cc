@@ -55,11 +55,15 @@ namespace getfem {
   // Implementation of global_function_parser
 
   scalar_type global_function_parser::val(const base_node &pt) const {
-    gmm::copy(pt, pt_);
-    const bgeot::base_tensor &t = f_val.eval();
+    const bgeot::base_tensor &t = tensor_val(pt);
     GMM_ASSERT1(t.size() == 1, "Wrong size of expression result "
                 << f_val.expression());
     return t[0];
+  }
+
+  const base_tensor &global_function_parser::tensor_val(const base_node &pt) const {
+    gmm::copy(pt, pt_);
+    return f_val.eval();
   }
 
   void global_function_parser::grad(const base_node &pt, base_small_vector &g) const {

@@ -99,6 +99,7 @@ namespace getfem {
     mutable model_real_plain_vector pt_;
   public:
     virtual scalar_type val(const base_node &pt) const;
+    virtual const base_tensor &tensor_val(const base_node &pt) const;
     virtual void grad(const base_node &pt, base_small_vector &g) const;
     virtual void hess(const base_node &pt, base_matrix &h) const;
 
