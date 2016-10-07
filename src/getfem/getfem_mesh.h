@@ -601,8 +601,6 @@ namespace getfem {
     (dim_type di, const ITER &ps)
   { return add_convex_by_points(bgeot::prism_geotrans(di, 1), ps); }
 
-  typedef mesh *pmesh;
-
   /** rough estimate of the convex area.
       @param pgt the geometric transformation.
       @param pts the convex nodes.

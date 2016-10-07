@@ -10084,8 +10084,8 @@ namespace getfem {
             rmi.pfps_hierarchy[mf].push_back(if_hierarchy);
             pgai = std::make_shared<ga_instruction_update_pfp>
               (*mf, rmi.pfps[mf], gis.ctx, gis.fp_pool);
-	    rmi.instructions.push_back(std::move(pgai));
-           }
+            rmi.instructions.push_back(std::move(pgai));
+          }
 
           // At this level Xfem needs some particular storage ...
 
@@ -11405,7 +11405,7 @@ namespace getfem {
             }
           }
           if (pgai)
-	    gis.whole_instructions[rm].instructions.push_back(std::move(pgai));
+            gis.whole_instructions[rm].instructions.push_back(std::move(pgai));
         }
       }
     }

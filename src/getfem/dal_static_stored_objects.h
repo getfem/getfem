@@ -219,7 +219,7 @@ namespace dal {
 
   /** Add an object with two optional dependencies. */
   void add_stored_object(pstatic_stored_object_key k, pstatic_stored_object o,
-    permanence perm = STANDARD_STATIC_OBJECT);
+                         permanence perm = STANDARD_STATIC_OBJECT);
 
   inline void
     add_stored_object(pstatic_stored_object_key k, pstatic_stored_object o,
@@ -230,7 +230,7 @@ namespace dal {
   }
 
   inline void
-    add_stored_object(pstatic_stored_object_key k, pstatic_stored_object o,
+  add_stored_object(pstatic_stored_object_key k, pstatic_stored_object o,
     pstatic_stored_object dep1, pstatic_stored_object dep2,
     permanence perm = STANDARD_STATIC_OBJECT) {
       add_stored_object(k, o, perm);
@@ -239,10 +239,10 @@ namespace dal {
   }
 
   inline void
-    add_stored_object(pstatic_stored_object_key k, pstatic_stored_object o,
-    pstatic_stored_object dep1, pstatic_stored_object dep2,
-    pstatic_stored_object dep3,
-    permanence perm = STANDARD_STATIC_OBJECT) {
+  add_stored_object(pstatic_stored_object_key k, pstatic_stored_object o,
+                    pstatic_stored_object dep1, pstatic_stored_object dep2,
+                    pstatic_stored_object dep3,
+                    permanence perm = STANDARD_STATIC_OBJECT) {
       add_stored_object(k, o, perm);
       add_dependency(o, dep1);
       add_dependency(o, dep2);
@@ -250,10 +250,10 @@ namespace dal {
   }
 
   inline void
-    add_stored_object(pstatic_stored_object_key k, pstatic_stored_object o,
-    pstatic_stored_object dep1, pstatic_stored_object dep2,
-    pstatic_stored_object dep3, pstatic_stored_object dep4,
-    permanence perm = STANDARD_STATIC_OBJECT) {
+  add_stored_object(pstatic_stored_object_key k, pstatic_stored_object o,
+                    pstatic_stored_object dep1, pstatic_stored_object dep2,
+                    pstatic_stored_object dep3, pstatic_stored_object dep4,
+                    permanence perm = STANDARD_STATIC_OBJECT) {
       add_stored_object(k, o, perm);
       add_dependency(o, dep1);
       add_dependency(o, dep2);
@@ -291,7 +291,7 @@ namespace dal {
     std::set<pstatic_stored_object> dependencies;
     enr_static_stored_object(pstatic_stored_object o, permanence perma)
       : p(o), perm(perma) {valid = true;}
-    enr_static_stored_object(void)
+    enr_static_stored_object()
       : perm(STANDARD_STATIC_OBJECT) {valid = true;}
     enr_static_stored_object(const enr_static_stored_object& enr_o)
       : p(enr_o.p), perm(enr_o.perm), dependent_object(enr_o.dependent_object),

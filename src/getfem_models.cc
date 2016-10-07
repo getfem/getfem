@@ -2006,16 +2006,13 @@ namespace getfem {
     for (VAR_SET::iterator it = variables.begin(); it != variables.end();
          ++it) {
       for (size_type i = 1; i < it->second.n_iter; ++i) {
-        if (is_complex()){
+        if (is_complex())
           gmm::copy(it->second.complex_value[i-1],
                     it->second.complex_value[i]);
-          it->second.v_num_data[i] = act_counter();
-        }
-        else{
+        else
           gmm::copy(it->second.real_value[i-1],
                     it->second.real_value[i]);
-          it->second.v_num_data[i] = act_counter();
-        }
+        it->second.v_num_data[i] = act_counter();
       }
     }
   }

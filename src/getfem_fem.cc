@@ -79,7 +79,7 @@ namespace getfem {
 
   
   void fem_interpolation_context::pfp_base_value(base_tensor& t,
-						 const pfem_precomp &pfp__) {
+                                                 const pfem_precomp &pfp__) {
     const pfem &pf__ = pfp__->get_pfem();
     GMM_ASSERT1(ii_ != size_type(-1), "Internal error");
 
@@ -87,67 +87,67 @@ namespace getfem {
       t = pfp__->val(ii());
     else {
       if (pf__->is_on_real_element())
-	pf__->real_base_value(*this, t);
+        pf__->real_base_value(*this, t);
       else {
-	switch(pf__->vectorial_type()) {
-	case virtual_fem::VECTORIAL_NOTRANSFORM_TYPE:
-	  t = pfp__->val(ii()); break;
-	case virtual_fem::VECTORIAL_PRIMAL_TYPE:
-	  t.mat_transp_reduction(pfp__->val(ii()), K(), 1); break;
-	case virtual_fem::VECTORIAL_DUAL_TYPE:
-	  t.mat_transp_reduction(pfp__->val(ii()), B(), 1); break;
-	}
-	if (!(pf__->is_equivalent())) {
-	  set_pfp(pfp__);
-	  { base_tensor u = t; t.mat_transp_reduction(u, M(), 0); }
-	}
+        switch(pf__->vectorial_type()) {
+        case virtual_fem::VECTORIAL_NOTRANSFORM_TYPE:
+          t = pfp__->val(ii()); break;
+        case virtual_fem::VECTORIAL_PRIMAL_TYPE:
+          t.mat_transp_reduction(pfp__->val(ii()), K(), 1); break;
+        case virtual_fem::VECTORIAL_DUAL_TYPE:
+          t.mat_transp_reduction(pfp__->val(ii()), B(), 1); break;
+        }
+        if (!(pf__->is_equivalent())) {
+          set_pfp(pfp__);
+          { base_tensor u = t; t.mat_transp_reduction(u, M(), 0); }
+        }
       }
     }
   }
 
 
   void fem_interpolation_context::base_value(base_tensor& t,
-					     bool withM) const {
+                                             bool withM) const {
     if (pfp_ && ii_ != size_type(-1) && pf_->is_standard())
       t = pfp_->val(ii());
     else {
       if (pf_->is_on_real_element())
-	pf_->real_base_value(*this, t);
+        pf_->real_base_value(*this, t);
       else {
-	if (pfp_ && ii_ != size_type(-1)) {
-	  switch(pf_->vectorial_type()) {
-	  case virtual_fem::VECTORIAL_NOTRANSFORM_TYPE:
-	    t = pfp_->val(ii()); break;
-	  case virtual_fem::VECTORIAL_PRIMAL_TYPE:
-	    t.mat_transp_reduction(pfp_->val(ii()), K(), 1); break;
-	  case virtual_fem::VECTORIAL_DUAL_TYPE:
-	    t.mat_transp_reduction(pfp_->val(ii()), B(), 1); break;
-	  }
-	}
-	else {
-	  switch(pf_->vectorial_type()) {
-	  case virtual_fem::VECTORIAL_NOTRANSFORM_TYPE:
-	    pf_->base_value(xref(), t); break;
-	  case virtual_fem::VECTORIAL_PRIMAL_TYPE:
-	    {
-	      base_tensor u; pf_->base_value(xref(), u);
-	      t.mat_transp_reduction(u,K(),1);
-	    } break;
-	  case virtual_fem::VECTORIAL_DUAL_TYPE:
-	    {
-	      base_tensor u; pf_->base_value(xref(), u);
-	      t.mat_transp_reduction(u,B(),1);
-	    } break;
-	  }
-	}
-	if (withM && !(pf_->is_equivalent()))
-	  { base_tensor u = t; t.mat_transp_reduction(u, M(), 0); }
+        if (pfp_ && ii_ != size_type(-1)) {
+          switch(pf_->vectorial_type()) {
+          case virtual_fem::VECTORIAL_NOTRANSFORM_TYPE:
+            t = pfp_->val(ii()); break;
+          case virtual_fem::VECTORIAL_PRIMAL_TYPE:
+            t.mat_transp_reduction(pfp_->val(ii()), K(), 1); break;
+          case virtual_fem::VECTORIAL_DUAL_TYPE:
+            t.mat_transp_reduction(pfp_->val(ii()), B(), 1); break;
+          }
+        }
+        else {
+          switch(pf_->vectorial_type()) {
+          case virtual_fem::VECTORIAL_NOTRANSFORM_TYPE:
+            pf_->base_value(xref(), t); break;
+          case virtual_fem::VECTORIAL_PRIMAL_TYPE:
+            {
+              base_tensor u; pf_->base_value(xref(), u);
+              t.mat_transp_reduction(u,K(),1);
+            } break;
+          case virtual_fem::VECTORIAL_DUAL_TYPE:
+            {
+              base_tensor u; pf_->base_value(xref(), u);
+              t.mat_transp_reduction(u,B(),1);
+            } break;
+          }
+        }
+        if (withM && !(pf_->is_equivalent()))
+          { base_tensor u = t; t.mat_transp_reduction(u, M(), 0); }
       }
     }
   }
 
   void fem_interpolation_context::pfp_grad_base_value(base_tensor& t,
-						  const pfem_precomp &pfp__) {
+                                                      const pfem_precomp &pfp__) {
     const pfem &pf__ = pfp__->get_pfem();
     GMM_ASSERT1(ii_ != size_type(-1), "Internal error");
 
@@ -155,29 +155,29 @@ namespace getfem {
       t.mat_transp_reduction(pfp__->grad(ii()), B(), 2);
     } else {
       if (pf__->is_on_real_element())
-	pf__->real_grad_base_value(*this, t);
+        pf__->real_grad_base_value(*this, t);
       else {
-	switch(pf__->vectorial_type()) {
-	case virtual_fem::VECTORIAL_PRIMAL_TYPE:
-	  {
-	    base_tensor u;
-	    u.mat_transp_reduction(pfp__->grad(ii()), B(), 2);
-	    t.mat_transp_reduction(u, K(), 1);
-	  }
-	  break;
-	case virtual_fem::VECTORIAL_DUAL_TYPE:
-	  {
-	    base_tensor u;
-	    u.mat_transp_reduction(pfp__->grad(ii()), B(), 2);
-	    t.mat_transp_reduction(u, B(), 1);
-	  }
-	  break;
-	default: t.mat_transp_reduction(pfp__->grad(ii()), B(), 2);
-	}
-	if (!(pf__->is_equivalent())) {
-	  set_pfp(pfp__);
-	  base_tensor u = t; t.mat_transp_reduction(u, M(), 0);
-	}
+        switch(pf__->vectorial_type()) {
+        case virtual_fem::VECTORIAL_PRIMAL_TYPE:
+          {
+            base_tensor u;
+            u.mat_transp_reduction(pfp__->grad(ii()), B(), 2);
+            t.mat_transp_reduction(u, K(), 1);
+          }
+          break;
+        case virtual_fem::VECTORIAL_DUAL_TYPE:
+          {
+            base_tensor u;
+            u.mat_transp_reduction(pfp__->grad(ii()), B(), 2);
+            t.mat_transp_reduction(u, B(), 1);
+          }
+          break;
+        default: t.mat_transp_reduction(pfp__->grad(ii()), B(), 2);
+        }
+        if (!(pf__->is_equivalent())) {
+          set_pfp(pfp__);
+          base_tensor u = t; t.mat_transp_reduction(u, M(), 0);
+        }
       }
     }
   }
@@ -189,43 +189,43 @@ namespace getfem {
       t.mat_transp_reduction(pfp_->grad(ii()), B(), 2);
     } else {
       if (pf()->is_on_real_element())
-	pf()->real_grad_base_value(*this, t);
+        pf()->real_grad_base_value(*this, t);
       else {
-	if (have_pfp() && ii() != size_type(-1)) {
-	  switch(pf()->vectorial_type()) {
-	  case virtual_fem::VECTORIAL_PRIMAL_TYPE:
-	    {
-	      base_tensor u;
-	      u.mat_transp_reduction(pfp_->grad(ii()), B(), 2);
-	      t.mat_transp_reduction(u, K(), 1);
-	    }
-	    break;
-	  case virtual_fem::VECTORIAL_DUAL_TYPE:
-	    {
-	      base_tensor u;
-	      u.mat_transp_reduction(pfp_->grad(ii()), B(), 2);
-	      t.mat_transp_reduction(u, B(), 1);
-	    }
-	    break;
-	  default: t.mat_transp_reduction(pfp_->grad(ii()), B(), 2);
-	  }
-	  
-	} else {
-	  base_tensor u;
-	  pf()->grad_base_value(xref(), u);
-	  if (u.size()) { /* only if the FEM can provide grad_base_value */
-	    t.mat_transp_reduction(u, B(), 2);
-	    switch(pf()->vectorial_type()) {
-	    case virtual_fem::VECTORIAL_PRIMAL_TYPE:
-	      u = t; t.mat_transp_reduction(u, K(), 1); break;
-	    case virtual_fem::VECTORIAL_DUAL_TYPE:
-	      u = t; t.mat_transp_reduction(u, B(), 1);  break;
-	    default: break;
-	    }
-	  }
-	}
-	if (withM && !(pf()->is_equivalent()))
-	  { base_tensor u = t; t.mat_transp_reduction(u, M(), 0); }
+        if (have_pfp() && ii() != size_type(-1)) {
+          switch(pf()->vectorial_type()) {
+          case virtual_fem::VECTORIAL_PRIMAL_TYPE:
+            {
+              base_tensor u;
+              u.mat_transp_reduction(pfp_->grad(ii()), B(), 2);
+              t.mat_transp_reduction(u, K(), 1);
+            }
+            break;
+          case virtual_fem::VECTORIAL_DUAL_TYPE:
+            {
+              base_tensor u;
+              u.mat_transp_reduction(pfp_->grad(ii()), B(), 2);
+              t.mat_transp_reduction(u, B(), 1);
+            }
+            break;
+          default: t.mat_transp_reduction(pfp_->grad(ii()), B(), 2);
+          }
+          
+        } else {
+          base_tensor u;
+          pf()->grad_base_value(xref(), u);
+          if (u.size()) { /* only if the FEM can provide grad_base_value */
+            t.mat_transp_reduction(u, B(), 2);
+            switch(pf()->vectorial_type()) {
+            case virtual_fem::VECTORIAL_PRIMAL_TYPE:
+              u = t; t.mat_transp_reduction(u, K(), 1); break;
+            case virtual_fem::VECTORIAL_DUAL_TYPE:
+              u = t; t.mat_transp_reduction(u, B(), 1);  break;
+            default: break;
+            }
+          }
+        }
+        if (withM && !(pf()->is_equivalent()))
+          { base_tensor u = t; t.mat_transp_reduction(u, M(), 0); }
       }
     }
   }
@@ -237,36 +237,36 @@ namespace getfem {
     else {
       base_tensor tt;
       if (have_pfp() && ii() != size_type(-1))
-	tt = pfp()->hess(ii());
+        tt = pfp()->hess(ii());
       else
-	pf()->hess_base_value(xref(), tt);
-      
+        pf()->hess_base_value(xref(), tt);
+
       switch(pf()->vectorial_type()) {
       case virtual_fem::VECTORIAL_PRIMAL_TYPE:
-	{ base_tensor u = tt; tt.mat_transp_reduction(u, K(), 1); } break;
+        { base_tensor u = tt; tt.mat_transp_reduction(u, K(), 1); } break;
       case virtual_fem::VECTORIAL_DUAL_TYPE:
-	{ base_tensor u = tt; tt.mat_transp_reduction(u, B(), 1); } break;
+        { base_tensor u = tt; tt.mat_transp_reduction(u, B(), 1); } break;
       default: break;
       }
-      
+
       if (tt.size()) { /* only if the FEM can provide hess_base_value */
-	bgeot::multi_index mim(3);
-	mim[2] = gmm::sqr(tt.sizes()[2]); mim[1] = tt.sizes()[1];
-	mim[0] = tt.sizes()[0];
-	tt.adjust_sizes(mim);
-	t.mat_transp_reduction(tt, B3(), 2);
-	if (!pgt()->is_linear()) {
-	  if (have_pfp()) {
-	    tt.mat_transp_reduction(pfp()->grad(ii()), B32(), 2);
-	  } else {
-	    base_tensor u;
-	    pf()->grad_base_value(xref(), u);
-	    tt.mat_transp_reduction(u, B32(), 2);
-	  }
-	  t -= tt;
-	}
-	if (!(pf()->is_equivalent()) && withM)
-	  { tt = t; t.mat_transp_reduction(tt, M(), 0); }
+        bgeot::multi_index mim(3);
+        mim[2] = gmm::sqr(tt.sizes()[2]); mim[1] = tt.sizes()[1];
+        mim[0] = tt.sizes()[0];
+        tt.adjust_sizes(mim);
+        t.mat_transp_reduction(tt, B3(), 2);
+        if (!pgt()->is_linear()) {
+          if (have_pfp()) {
+            tt.mat_transp_reduction(pfp()->grad(ii()), B32(), 2);
+          } else {
+            base_tensor u;
+            pf()->grad_base_value(xref(), u);
+            tt.mat_transp_reduction(u, B32(), 2);
+          }
+          t -= tt;
+        }
+        if (!(pf()->is_equivalent()) && withM)
+          { tt = t; t.mat_transp_reduction(tt, M(), 0); }
       }
     }
   }

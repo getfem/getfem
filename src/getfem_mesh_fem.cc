@@ -768,14 +768,14 @@ namespace getfem {
   }
 
   struct mf__key_ : public context_dependencies {
-    const mesh *pmesh;
+    const mesh *pmsh;
     dim_type order, qdim;
     mf__key_(const mesh &msh, dim_type o, dim_type q)
-      : pmesh(&msh), order(o), qdim(q)
+      : pmsh(&msh), order(o), qdim(q)
     { add_dependency(msh); }
     bool operator <(const mf__key_ &a) const {
-      if (pmesh < a.pmesh) return true;
-      else if (pmesh > a.pmesh) return false;
+      if (pmsh < a.pmsh) return true;
+      else if (pmsh > a.pmsh) return false;
       else if (order < a.order) return true;
       else if (order > a.order) return false;
       else if (qdim < a.qdim) return true;
@@ -783,8 +783,8 @@ namespace getfem {
     }
     void update_from_context(void) const {}
     mf__key_(const mf__key_ &mfk) : context_dependencies( ) {
-      pmesh = mfk.pmesh; order = mfk.order; qdim = mfk.qdim;
-      add_dependency(*pmesh);
+      pmsh = mfk.pmsh; order = mfk.order; qdim = mfk.qdim;
+      add_dependency(*pmsh);
     }
   private :
     mf__key_& operator=(const mf__key_ &mfk);
