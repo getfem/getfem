@@ -68,9 +68,17 @@ namespace getfem {
 
   void fem_global_function::update_from_context() const {
 
-    precompval.clear();
-    precompgrad.clear();
-    precomphess.clear();
+    if (precomps) {
+      for (const auto &cv_precomps : *precomps)
+        for (const auto &keyval : cv_precomps)
+          dal::del_dependency(precomps, keyval.first);
+      precomps->clear();
+    } else {
+      precomps = std::make_shared<precomp_pool>();
+      dal::pstatic_stored_object_key pkey
+        = std::make_shared<precomp_pool_key>(precomps);
+      dal::add_stored_object(pkey, precomps);
+    }
 
     mib.resize(2);
     mib[0] = short_type(1);
@@ -188,22 +196,31 @@ namespace getfem {
     mib[0] = short_type(nbdof);
     t.adjust_sizes(mib);
     if (c.have_pfp() && c.ii() != size_type(-1)) {
-      if (precompval.size() == 0)
-        precompval.resize(m.nb_allocated_convex());
+      GMM_ASSERT1(precomps, "Internal error");
+      if (precomps->size() == 0)
+        precomps->resize(m.nb_allocated_convex());
+      GMM_ASSERT1(precomps->size() == m.nb_allocated_convex(), "Internal error");
       const bgeot::pstored_point_tab ptab = c.pfp()->get_ppoint_tab();
-      auto it = precompval[cv].find(ptab);
-      if (it == precompval[cv].end()) {
-        it = precompval[cv]
-             .emplace(ptab, std::vector<base_tensor>(ptab->size())).first;
+      auto it = (*precomps)[cv].find(ptab);
+      if (it == (*precomps)[cv].end()) {
+        it = (*precomps)[cv].emplace(ptab, precomp_data()).first;
+        dal::add_dependency(precomps, ptab);
+        // we could have added the dependency to this->shared_from_this()
+        // instead, but there is a risk that this will shadow the same
+        // dependency through a different path, so that it becomes dangerous
+        // to delete the dependency later
+      }
+      if (it->second.val.size() == 0) {
+        it->second.val.resize(ptab->size());
         base_matrix G;
         bgeot::vectors_to_base_matrix(G, m.points_of_convex(cv));
         for (size_type k = 0; k < ptab->size(); ++k) {
           const fem_interpolation_context
             ctx(m.trans_of_convex(cv), shared_from_this(), (*ptab)[k], G, cv);
-          real_base_value(ctx, it->second[k]);
+          real_base_value(ctx, it->second.val[k]);
         }
       }
-      gmm::copy(it->second[c.ii()].as_vector(), t.as_vector());
+      gmm::copy(it->second.val[c.ii()].as_vector(), t.as_vector());
     } else
       for (size_type i=0; i < nbdof; ++i) {
         /*cerr << "fem_global_function: real_base_value(" << c.xreal() << ")\n";
@@ -221,22 +238,27 @@ namespace getfem {
     mig[0] = short_type(nbdof);
     t.adjust_sizes(mig);
     if (c.have_pfp() && c.ii() != size_type(-1)) {
-      if (precompgrad.size() == 0)
-        precompgrad.resize(m.nb_allocated_convex());
+      GMM_ASSERT1(precomps, "Internal error");
+      if (precomps->size() == 0)
+        precomps->resize(m.nb_allocated_convex());
+      GMM_ASSERT1(precomps->size() == m.nb_allocated_convex(), "Internal error");
       const bgeot::pstored_point_tab ptab = c.pfp()->get_ppoint_tab();
-      auto it = precompgrad[cv].find(ptab);
-      if (it == precompgrad[cv].end()) {
-        it = precompgrad[cv]
-             .emplace(ptab, std::vector<base_tensor>(ptab->size())).first;
+      auto it = (*precomps)[cv].find(ptab);
+      if (it == (*precomps)[cv].end()) {
+        it = (*precomps)[cv].emplace(ptab, precomp_data()).first;
+        dal::add_dependency(precomps, ptab);
+      }
+      if (it->second.grad.size() == 0) {
+        it->second.grad.resize(ptab->size());
         base_matrix G;
         bgeot::vectors_to_base_matrix(G, m.points_of_convex(cv));
         for (size_type k = 0; k < ptab->size(); ++k) {
           const fem_interpolation_context
             ctx(m.trans_of_convex(cv), shared_from_this(), (*ptab)[k], G, cv);
-          real_grad_base_value(ctx, it->second[k]);
+          real_grad_base_value(ctx, it->second.grad[k]);
         }
       }
-      gmm::copy(it->second[c.ii()].as_vector(), t.as_vector());
+      gmm::copy(it->second.grad[c.ii()].as_vector(), t.as_vector());
     } else {
       base_small_vector G(dim());
       for (size_type i=0; i < nbdof; ++i) {
@@ -255,22 +277,27 @@ namespace getfem {
     mih[0] = short_type(nbdof);
     t.adjust_sizes(mih);
     if (c.have_pfp() && c.ii() != size_type(-1)) {
-      if (precomphess.size() == 0)
-        precomphess.resize(m.nb_allocated_convex());
+      GMM_ASSERT1(precomps, "Internal error");
+      if (precomps->size() == 0)
+        precomps->resize(m.nb_allocated_convex());
+      GMM_ASSERT1(precomps->size() == m.nb_allocated_convex(), "Internal error");
       const bgeot::pstored_point_tab ptab = c.pfp()->get_ppoint_tab();
-      auto it = precomphess[cv].find(ptab);
-      if (it == precomphess[cv].end()) {
-        it = precomphess[cv]
-             .emplace(ptab, std::vector<base_tensor>(ptab->size())).first;
+      auto it = (*precomps)[cv].find(ptab);
+      if (it == (*precomps)[cv].end()) {
+        it = (*precomps)[cv].emplace(ptab, precomp_data()).first;
+        dal::add_dependency(precomps, ptab);
+      }
+      if (it->second.hess.size() == 0) {
+        it->second.hess.resize(ptab->size());
         base_matrix G;
         bgeot::vectors_to_base_matrix(G, m.points_of_convex(cv));
         for (size_type k = 0; k < ptab->size(); ++k) {
           const fem_interpolation_context
             ctx(m.trans_of_convex(cv), shared_from_this(), (*ptab)[k], G, cv);
-          real_hess_base_value(ctx, it->second[k]);
+          real_hess_base_value(ctx, it->second.hess[k]);
         }
       }
-      gmm::copy(it->second[c.ii()].as_vector(), t.as_vector());
+      gmm::copy(it->second.hess[c.ii()].as_vector(), t.as_vector());
     } else {
       base_matrix H(dim(),dim());
       for (size_type i=0; i < nbdof; ++i) {

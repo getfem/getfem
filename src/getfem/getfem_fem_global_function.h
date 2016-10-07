@@ -56,8 +56,18 @@ namespace getfem {
     mutable std::vector<std::vector<size_type> > index_of_global_dof_;
     mutable bgeot::pstored_point_tab pspt_override;
 
-    mutable std::vector< std::map<bgeot::pstored_point_tab, std::vector<base_tensor> > >
-      precompval, precompgrad, precomphess; // store values, gradients and hessians of base functions
+    struct precomp_data { std::vector<base_tensor> val, grad, hess; };
+
+    class precomp_pool
+    : virtual public dal::static_stored_object,
+      public std::vector< std::map<bgeot::pstored_point_tab,
+                                   precomp_data > >
+    {};
+
+    // store values, gradients and hessians of base functions
+    mutable std::shared_ptr<precomp_pool> precomps;
+
+    DAL_SIMPLE_KEY(precomp_pool_key, std::shared_ptr<precomp_pool>);
 
     void init();
     virtual void update_from_context() const;
