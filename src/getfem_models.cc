@@ -2769,7 +2769,7 @@ namespace getfem {
             ga_workspace workspace(*this);
 
             for (const auto &ge : generic_expressions)
-              workspace.add_expression(ge.expr, ge.mim, ge.region);
+	      workspace.add_expression(ge.expr, ge.mim, ge.region);
 
             if (version & BUILD_RHS) {
               if (is_complex()) {

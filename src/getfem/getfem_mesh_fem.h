@@ -435,6 +435,9 @@ namespace getfem {
     }
     ind_dof_ct ind_dof_of_element(size_type cv) const IS_DEPRECATED
     { return ind_basic_dof_of_element(cv); }
+    virtual const bgeot::mesh_structure::ind_cv_ct &
+    ind_scalar_basic_dof_of_element(size_type cv) const
+    { return dof_structure.ind_points_of_convex(cv); }
     /** Give an array of the dof numbers lying of a convex face (all
               degrees of freedom whose associated base function is non-zero
         on the convex face).

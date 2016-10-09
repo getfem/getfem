@@ -52,9 +52,25 @@ namespace bgeot {
 
   void geotrans_interpolation_context::compute_J(void) const {
     GMM_ASSERT1(have_G() && have_pgt(), "unable to compute B\n");
+
+
+    // size_type P = pgt_->structure()->dim();
+    // B_.resize(N(), P);
+    // if (P != N()) {
+    //   gmm::resize(CS,P,P);
+    //   gmm::mult(gmm::transposed(K()), K(), CS);
+    //   // gmm::abs below because on flat convexes determinant could be -1e-27.
+    //   J_ = ::sqrt(gmm::abs(gmm::lu_inverse(CS)));
+    //   gmm::mult(K(), CS, B_);
+    // } else {
+    //   gmm::copy(gmm::transposed(K()), B_);
+    //   J_ = gmm::abs(gmm::lu_inverse(B_));
+    // }
+    
+    
     size_type P = pgt_->structure()->dim();
-    base_matrix CS(P,P);
     if (P != N()) {
+      gmm::resize(CS,P,P);
       gmm::mult(gmm::transposed(K()), K(), CS);
       // gmm::abs below because on flat convexes determinant could be -1e-27.
       J_ = ::sqrt(gmm::abs(gmm::lu_det(CS)));
@@ -69,18 +85,11 @@ namespace bgeot {
       size_type P = pgt_->structure()->dim();
       K_.resize(N(), P);
       if (have_pgp()) {
-        GMM_ASSERT1(ii_ < pgp_->get_ppoint_tab()->size(),
-                    "Invalid index " << ii_ << " should be < "
-                    << pgp_->get_ppoint_tab()->size());
-
-        if (&pgp_->grad(ii_) == 0) { cerr << "OULA!! " << ii_ << "\n"; }
-        else if (pgp_->grad(ii_).size() == 0) { cerr << "OUCH\n"; }
-
-        pgt()->compute_K_matrix(G(), pgp_->grad(ii_), K_);
+	gmm::mult(G(), pgp_->grad(ii_), K_);
       } else {
-        base_matrix pc(pgt()->nb_points(), P);
-        pgt()->poly_vector_grad(xref(), pc);
-        pgt()->compute_K_matrix(G(), pc, K_);
+	gmm::resize(PC, pgt()->nb_points(), P);
+        pgt()->poly_vector_grad(xref(), PC);
+        gmm::mult(G(), PC, K_);
       }
     }
     return K_;
@@ -92,7 +101,7 @@ namespace bgeot {
       size_type P = pgt_->structure()->dim();
       B_.resize(N(), P);
       if (P != N()) {
-        base_matrix CS(P,P);
+        gmm::resize(CS,P,P);
         gmm::mult(gmm::transposed(K()), K(), CS);
         // gmm::abs below because on flat convexes determinant could be -1e-27.
         J_ = ::sqrt(gmm::abs(gmm::lu_inverse(CS)));

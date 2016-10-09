@@ -163,11 +163,10 @@ namespace getfem {
       const mesh *m;
       const mesh_region *rg;
       ga_tree *ptree;
-      base_vector elem;
       tree_description()
         : name_test1(""), name_test2(""),
           interpolate_name_test1(""), interpolate_name_test2(""),
-          mim(0), m(0), rg(0), ptree(0), elem(0) {}
+          mim(0), m(0), rg(0), ptree(0) {}
       void copy(const tree_description& td);
       tree_description(const tree_description& td) { copy(td); }
       tree_description &operator =(const tree_description& td);

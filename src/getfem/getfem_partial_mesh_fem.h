@@ -99,6 +99,10 @@ namespace getfem {
     ind_dof_ct ind_basic_dof_of_element(size_type cv) const
     { return  mf.ind_basic_dof_of_element(cv); }
 
+    const bgeot::mesh_structure::ind_cv_ct &
+    ind_scalar_basic_dof_of_element(size_type cv) const
+    { return mf.ind_scalar_basic_dof_of_element(cv); }
+
     ind_dof_face_ct
     ind_basic_dof_of_face_of_element(size_type cv, short_type f) const
     { return  mf.ind_basic_dof_of_face_of_element(cv, f); }

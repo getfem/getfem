@@ -404,6 +404,7 @@ namespace bgeot {
     pstored_point_tab pspt_; /** if pgp != 0, it is the same as pgp's one */
     size_type ii_; /** index of current point in the pgp */
     mutable scalar_type J_; /** Jacobian */
+    mutable base_matrix CS, PC;
     void compute_J(void) const;
   public:
     bool have_xref() const { return !xref_.empty(); }
