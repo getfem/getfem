@@ -190,28 +190,6 @@ namespace bgeot {
     xreal_.resize(0); ii_ = size_type(-1); pspt_ = 0;
   }
 
-  geotrans_interpolation_context::geotrans_interpolation_context() :
-    G_(0), pgt_(0), pgp_(0), pspt_(0), ii_(size_type(-1)),
-    have_J_(false), have_B_(false), have_B3_(false), have_B32_(false),
-    have_K_(false) {}
-  geotrans_interpolation_context::geotrans_interpolation_context
-  (bgeot::pgeotrans_precomp pgp__, size_type ii__, const base_matrix& G__) :
-    G_(&G__), pgt_(pgp__->get_trans()), pgp_(pgp__),
-    pspt_(pgp__->get_ppoint_tab()), ii_(ii__), have_J_(false), have_B_(false),
-    have_B3_(false), have_B32_(false), have_K_(false) {}
-  geotrans_interpolation_context::geotrans_interpolation_context
-  (bgeot::pgeometric_trans pgt__, bgeot::pstored_point_tab pspt__,
-   size_type ii__,  const base_matrix& G__) :
-    G_(&G__), pgt_(pgt__), pgp_(0),
-    pspt_(pspt__), ii_(ii__), have_J_(false), have_B_(false), have_B3_(false),
-    have_B32_(false), have_K_(false) {}
-  geotrans_interpolation_context::geotrans_interpolation_context
-  (bgeot::pgeometric_trans pgt__, const base_node& xref__,
-   const base_matrix& G__) :
-    xref_(xref__), G_(&G__), pgt_(pgt__), pgp_(0), pspt_(0),
-    ii_(size_type(-1)),have_J_(false), have_B_(false), have_B3_(false),
-    have_B32_(false), have_K_(false)  {}
-
 
   base_node geometric_trans::transform(const base_node &pt,
                                        const base_matrix &G) const {

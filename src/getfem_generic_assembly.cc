@@ -5207,8 +5207,8 @@ namespace getfem {
       if (inin.pt_type) {
         if (cv != size_type(-1)) {
           bgeot::vectors_to_base_matrix(inin.G, (inin.m)->points_of_convex(cv));
-          inin.ctx = fem_interpolation_context((inin.m)->trans_of_convex(cv),
-                                               0, P_ref, inin.G, cv, face_num);
+          inin.ctx.change((inin.m)->trans_of_convex(cv),
+			  0, P_ref, inin.G, cv, face_num);
           inin.has_ctx = true;
           if (face_num != short_type(-1)) {
             inin.Normal = bgeot::compute_normal(inin.ctx, face_num);
@@ -5318,8 +5318,7 @@ namespace getfem {
             bgeot::vectors_to_base_matrix(inin.G,
                                           m.points_of_convex(adj_face.cv));
             bgeot::pgeotrans_precomp pgp = gp_pool(gpc.pgt2, pspt);
-            inin.ctx = fem_interpolation_context(pgp, 0, 0, inin.G,
-                                                 adj_face.cv, adj_face.f);
+            inin.ctx.change(pgp, 0, 0, inin.G, adj_face.cv, adj_face.f);
           }
         }
       }
@@ -5344,8 +5343,8 @@ namespace getfem {
           if (cv != size_type(-1)) {
             bgeot::vectors_to_base_matrix(inin.G,
                                           (inin.m)->points_of_convex(cv));
-            inin.ctx = fem_interpolation_context((inin.m)->trans_of_convex(cv),
-                                                 0, P_ref, inin.G, cv, face_num);
+            inin.ctx.change((inin.m)->trans_of_convex(cv),
+			    0, P_ref, inin.G, cv, face_num);
             inin.has_ctx = true;
             if (face_num != short_type(-1)) {
               inin.Normal = bgeot::compute_normal(inin.ctx, face_num);
@@ -11653,16 +11652,12 @@ namespace getfem {
           un.resize(pgt->dim());
 
           if (gis.ctx.have_pgp() && gis.ctx.pgt() == pgt) {
-            gis.ctx = fem_interpolation_context(gis.ctx.pgp(), 0, 0, G,
-                                                v.cv(), v.f());
+            gis.ctx.change(gis.ctx.pgp(), 0, 0, G, v.cv(), v.f());
           } else {
             if (!(gic.use_pgp(v.cv()))) {
-              gis.ctx = fem_interpolation_context(pgt, 0, (*pspt)[0], G,
-                                                  v.cv(), v.f());
+              gis.ctx.change(pgt, 0, (*pspt)[0], G, v.cv(), v.f());
             } else {
-              bgeot::pgeotrans_precomp pgp = gis.gp_pool(pgt, pspt);
-              gis.ctx = fem_interpolation_context(pgp, 0, 0, G,
-                                                  v.cv(), v.f());
+              gis.ctx.change(gis.gp_pool(pgt, pspt), 0, 0, G, v.cv(), v.f());
             }
           }
 
@@ -11761,27 +11756,19 @@ namespace getfem {
             un.resize(pgt->dim());
             pim = mim.int_method_of_element(v.cv());
             if (pim->type() == IM_NONE) continue;
-            // cout << "pim->type() = " << int(pim->type()) <<  " : "
-	    //      << int(IM_APPROX) << endl;
             GMM_ASSERT1(pim->type() == IM_APPROX, "Sorry, exact methods cannot "
                         "be used in high level generic assembly");
-            // cout << "passed ..." << endl;
 
             pspt = pim->approx_method()->pintegration_points();
-
             if (pspt->size()) {
               if (gis.ctx.have_pgp() && gis.pai == pim->approx_method() &&
                   gis.ctx.pgt() == pgt) {
-                gis.ctx = fem_interpolation_context(gis.ctx.pgp(), 0, 0, G,
-                                                    v.cv(), v.f());
+                gis.ctx.change(gis.ctx.pgp(), 0, 0, G, v.cv(), v.f());
               } else {
                 if (pim->approx_method()->is_built_on_the_fly()) {
-                  gis.ctx = fem_interpolation_context(pgt, 0, (*pspt)[0], G,
-                                                      v.cv(), v.f());
+                  gis.ctx.change(pgt, 0, (*pspt)[0], G, v.cv(), v.f());
                 } else {
-                  bgeot::pgeotrans_precomp pgp = gis.gp_pool(pgt, pspt);
-                  gis.ctx = fem_interpolation_context(pgp, 0, 0, G,
-                                                      v.cv(), v.f());
+                  gis.ctx.change(gis.gp_pool(pgt, pspt), 0,0, G, v.cv(), v.f());
                 }
               }
               gis.pai = pim->approx_method();

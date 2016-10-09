@@ -719,23 +719,59 @@ namespace getfem {
     void set_pf(pfem newpf);
     int xfem_side() const { return xfem_side_; }
     void set_xfem_side(int side) { xfem_side_ = side; }
-    fem_interpolation_context();
+    void change(bgeot::pgeotrans_precomp pgp__,
+		pfem_precomp pfp__, size_type ii__,
+		const base_matrix& G__, size_type convex_num__,
+		short_type face_num__ = short_type(-1)) {
+      bgeot::geotrans_interpolation_context::change(pgp__,ii__,G__);
+      convex_num_ = convex_num__; face_num_ = face_num__;  xfem_side_ = 0;
+      set_pfp(pfp__);
+    }
+    void change(bgeot::pgeometric_trans pgt__,
+		pfem_precomp pfp__, size_type ii__,
+		const base_matrix& G__, size_type convex_num__,
+		short_type face_num__ = short_type(-1)) {
+      bgeot::geotrans_interpolation_context::change
+	(pgt__, pfp__->get_ppoint_tab(), ii__, G__);
+      convex_num_ = convex_num__; face_num_ = face_num__; xfem_side_ = 0;
+      set_pfp(pfp__);
+    }
+    void change(bgeot::pgeometric_trans pgt__,
+		pfem pf__, const base_node& xref__, const base_matrix& G__,
+		size_type convex_num__,	short_type face_num__=short_type(-1)) {
+      bgeot::geotrans_interpolation_context::change(pgt__,xref__,G__);
+      pf_ = pf__; pfp_ = 0; convex_num_ = convex_num__; face_num_ = face_num__;
+      xfem_side_ = 0;
+    }
+    fem_interpolation_context()
+      : bgeot::geotrans_interpolation_context(),
+	convex_num_(size_type(-1)), face_num_(short_type(-1)), xfem_side_(0) {}
     fem_interpolation_context(bgeot::pgeotrans_precomp pgp__,
                               pfem_precomp pfp__, size_type ii__,
                               const base_matrix& G__,
                               size_type convex_num__,
-                              short_type face_num__ = short_type(-1));
+                              short_type face_num__ = short_type(-1))
+      : bgeot::geotrans_interpolation_context(pgp__,ii__,G__),
+	convex_num_(convex_num__), face_num_(face_num__), xfem_side_(0)
+    { set_pfp(pfp__); }
     fem_interpolation_context(bgeot::pgeometric_trans pgt__,
                               pfem_precomp pfp__, size_type ii__,
                               const base_matrix& G__,
                               size_type convex_num__,
-                              short_type face_num__ = short_type(-1));
+                              short_type face_num__ = short_type(-1))
+      : bgeot::geotrans_interpolation_context(pgt__,pfp__->get_ppoint_tab(),
+					      ii__, G__),
+	convex_num_(convex_num__), face_num_(face_num__), xfem_side_(0)
+    { set_pfp(pfp__); }
     fem_interpolation_context(bgeot::pgeometric_trans pgt__,
                               pfem pf__,
                               const base_node& xref__,
                               const base_matrix& G__,
                               size_type convex_num__,
-                              short_type face_num__ = short_type(-1));
+                              short_type face_num__ = short_type(-1))
+      : bgeot::geotrans_interpolation_context(pgt__,xref__,G__),
+	pf_(pf__), pfp_(0), convex_num_(convex_num__), face_num_(face_num__),
+	xfem_side_(0) {}
   };
 
   // IN : coeff(Qmult,nb_dof)
