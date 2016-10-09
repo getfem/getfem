@@ -394,7 +394,7 @@ namespace bgeot {
   template <class VEC_CONT>
   void vectors_to_base_matrix(base_matrix &G, const VEC_CONT &a) {
     size_type P = (*(a.begin())).size(), NP = a.end() - a.begin();
-    G.resize(P, NP);
+    G.base_resize(P, NP);
     typename VEC_CONT::const_iterator it = a.begin(), ite = a.end();
     base_matrix::iterator itm = G.begin();
     for (; it != ite; ++it, itm += P)

@@ -11744,13 +11744,22 @@ namespace getfem {
       size_type old_cv = size_type(-1);
       bgeot::pgeometric_trans pgt = 0;
       pintegration_method pim = 0;
+      papprox_integration pai = 0;
       bgeot::pstored_point_tab pspt = 0, old_pspt = 0;
       bool first_gp = true;
       for (getfem::mr_visitor v(rg, m); !v.finished(); ++v) {
         if (mim.convex_index().is_in(v.cv())) {
           // cout << "proceed with element " << v.cv() << endl;
           if (v.cv() != old_cv) {
-            bgeot::vectors_to_base_matrix(G, m.points_of_convex(v.cv()));
+
+	    // const bgeot::mesh_structure::ind_cv_ct &ct=m.ind_points_of_convex(v.cv());
+	    // G.base_resize(m.dim(), ct.size());
+	    // auto it = G.begin();
+	    // for (size_type i = 0; i < ct.size(); ++i, it += m.dim())
+	    //   std::copy(m.points()[ct[i]].begin(),  m.points()[ct[i]].end(), it);
+
+	    
+	    bgeot::vectors_to_base_matrix(G, m.points_of_convex(v.cv()));
             pgt = m.trans_of_convex(v.cv());
             up.resize(G.nrows());
             un.resize(pgt->dim());
@@ -11758,20 +11767,19 @@ namespace getfem {
             if (pim->type() == IM_NONE) continue;
             GMM_ASSERT1(pim->type() == IM_APPROX, "Sorry, exact methods cannot "
                         "be used in high level generic assembly");
-
-            pspt = pim->approx_method()->pintegration_points();
+	    pai = pim->approx_method();
+            pspt = pai->pintegration_points();
             if (pspt->size()) {
-              if (gis.ctx.have_pgp() && gis.pai == pim->approx_method() &&
-                  gis.ctx.pgt() == pgt) {
+              if (gis.ctx.have_pgp() && gis.pai == pai && gis.ctx.pgt()==pgt) {
                 gis.ctx.change(gis.ctx.pgp(), 0, 0, G, v.cv(), v.f());
               } else {
-                if (pim->approx_method()->is_built_on_the_fly()) {
+                if (pai->is_built_on_the_fly()) {
                   gis.ctx.change(pgt, 0, (*pspt)[0], G, v.cv(), v.f());
                 } else {
                   gis.ctx.change(gis.gp_pool(pgt, pspt), 0,0, G, v.cv(), v.f());
                 }
               }
-              gis.pai = pim->approx_method();
+              gis.pai = pai;
               if (gis.need_elt_size)
                 gis.elt_size = m.convex_radius_estimate(v.cv())*scalar_type(2);
             }
@@ -11783,11 +11791,11 @@ namespace getfem {
 	  if (pspt != old_pspt) { first_gp = true; old_pspt = pspt; }
           if (pspt->size()) {
             // iterations on Gauss points
-            gis.nbpt = gis.pai->nb_points_on_convex();
+            gis.nbpt = pai->nb_points_on_convex();
             size_type first_ind = 0;
             if (v.f() != short_type(-1)) {
-              gis.nbpt = gis.pai->nb_points_on_face(v.f());
-              first_ind = gis.pai->ind_first_point_on_face(v.f());
+              gis.nbpt = pai->nb_points_on_face(v.f());
+              first_ind = pai->ind_first_point_on_face(v.f());
             }
             for (gis.ipt = 0; gis.ipt < gis.nbpt; ++(gis.ipt)) {
               if (gis.ctx.have_pgp()) gis.ctx.set_ii(first_ind+gis.ipt);
@@ -11805,7 +11813,7 @@ namespace getfem {
                   gis.Normal = up;
                 } else gis.Normal.resize(0);
               }
-              gis.coeff = J * gis.pai->coeff(first_ind+gis.ipt);
+              gis.coeff = J * pai->coeff(first_ind+gis.ipt);
               if (first_gp) {
 		for (size_type j = 0; j < gilb.size(); ++j) j+=gilb[j]->exec();
 		first_gp = false;
