@@ -404,16 +404,18 @@ namespace bgeot {
     pstored_point_tab pspt_; /** if pgp != 0, it is the same as pgp's one */
     size_type ii_; /** index of current point in the pgp */
     mutable scalar_type J_; /** Jacobian */
-    mutable base_matrix CS, PC;
+    mutable base_matrix PC, B_factors;
+    mutable std::vector<size_type> ipvt;
+    mutable bool have_J_, have_B_, have_B3_, have_B32_, have_K_;
     void compute_J(void) const;
   public:
     bool have_xref() const { return !xref_.empty(); }
     bool have_xreal() const { return !xreal_.empty(); }
     bool have_G() const { return G_ != 0; }
-    bool have_K() const { return !K_.empty(); }
-    bool have_B() const { return !B_.empty(); }
-    bool have_B3() const { return !B3_.empty(); }
-    bool have_B32() const { return !B32_.empty(); }
+    bool have_K() const { return have_K_; }
+    bool have_B() const { return have_B_; }
+    bool have_B3() const { return have_B3_; }
+    bool have_B32() const { return have_B32_; }
     bool have_pgt() const { return pgt_ != 0; }
     bool have_pgp() const { return pgp_ != 0; }
     /// coordinates of the current point, in the reference convex.
@@ -429,7 +431,7 @@ namespace bgeot {
     /** matrix whose columns are the vertices of the convex */
     const base_matrix& G() const { return *G_; }
     /** get the Jacobian of the geometric trans (taken at point @c xref() ) */
-    scalar_type J() const { if (J_ < scalar_type(0)) compute_J(); return J_; }
+    scalar_type J() const { if (!have_J_) compute_J(); return J_; }
     size_type N() const { if (have_G()) return G().nrows();
       else if (have_xreal()) return xreal_.size();
       else GMM_ASSERT2(false, "cannot get N"); return 0; }

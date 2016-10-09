@@ -51,46 +51,46 @@ namespace bgeot {
   }
 
   void geotrans_interpolation_context::compute_J(void) const {
-    GMM_ASSERT1(have_G() && have_pgt(), "unable to compute B\n");
-
-
-    // size_type P = pgt_->structure()->dim();
-    // B_.resize(N(), P);
-    // if (P != N()) {
-    //   gmm::resize(CS,P,P);
-    //   gmm::mult(gmm::transposed(K()), K(), CS);
-    //   // gmm::abs below because on flat convexes determinant could be -1e-27.
-    //   J_ = ::sqrt(gmm::abs(gmm::lu_inverse(CS)));
-    //   gmm::mult(K(), CS, B_);
-    // } else {
-    //   gmm::copy(gmm::transposed(K()), B_);
-    //   J_ = gmm::abs(gmm::lu_inverse(B_));
-    // }
-    
-    
+    GMM_ASSERT1(have_G() && have_pgt(), "unable to compute J\n");
     size_type P = pgt_->structure()->dim();
     if (P != N()) {
-      gmm::resize(CS,P,P);
-      gmm::mult(gmm::transposed(K()), K(), CS);
+      B_factors.base_resize(P, P);
+      gmm::mult(gmm::transposed(K()), K(), B_factors);
+      ipvt.resize(P);
+      gmm::lu_factor(B_factors, ipvt);
       // gmm::abs below because on flat convexes determinant could be -1e-27.
-      J_ = ::sqrt(gmm::abs(gmm::lu_det(CS)));
+      J_ = ::sqrt(gmm::abs(gmm::lu_det(B_factors, ipvt)));
     }
-    else
-      J_ = gmm::abs(gmm::lu_det(K()));
+    else {
+      // J_ = gmm::abs(gmm::lu_det(K()));
+      if (P <= 2) {
+      	const scalar_type *p = &(K()(0,0));
+      	if (P == 1) J_ = gmm::abs(*p);
+      	else J_ = gmm::abs((*p) * (*(p+3)) - (*(p+1)) * (*(p+2)));
+      } else {
+      	B_factors.base_resize(P, P);
+      	gmm::copy(gmm::transposed(K()), B_factors);
+      	ipvt.resize(P);
+      	gmm::lu_factor(B_factors, ipvt);
+      	J_ = gmm::abs(gmm::lu_det(B_factors, ipvt));
+      }
+    }
+    have_J_ = true;
   }
 
   const base_matrix& geotrans_interpolation_context::K() const {
     if (!have_K()) {
       GMM_ASSERT1(have_G() && have_pgt(), "unable to compute K\n");
       size_type P = pgt_->structure()->dim();
-      K_.resize(N(), P);
+      K_.base_resize(N(), P);
       if (have_pgp()) {
 	gmm::mult(G(), pgp_->grad(ii_), K_);
       } else {
-	gmm::resize(PC, pgt()->nb_points(), P);
+	PC.base_resize(pgt()->nb_points(), P);
         pgt()->poly_vector_grad(xref(), PC);
         gmm::mult(G(), PC, K_);
       }
+      have_K_ = true;
     }
     return K_;
   }
@@ -99,17 +99,36 @@ namespace bgeot {
     if (!have_B()) {
       GMM_ASSERT1(have_G() && have_pgt(), "unable to compute B\n");
       size_type P = pgt_->structure()->dim();
-      B_.resize(N(), P);
+      const base_matrix &KK = K();
+      B_.base_resize(N(), P);
       if (P != N()) {
-        gmm::resize(CS,P,P);
-        gmm::mult(gmm::transposed(K()), K(), CS);
-        // gmm::abs below because on flat convexes determinant could be -1e-27.
-        J_ = ::sqrt(gmm::abs(gmm::lu_inverse(CS)));
-        gmm::mult(K(), CS, B_);
+	if (!have_J_) compute_J();
+	PC.base_resize(P, P);
+        gmm::lu_inverse(B_factors, ipvt, PC);
+        gmm::mult(KK, PC, B_);
       } else {
-        gmm::copy(gmm::transposed(K()), B_);
-        J_ = gmm::abs(gmm::lu_inverse(B_));
+	if (P <= 2) {
+	  if (P == 1) {
+	    scalar_type det = KK(0, 0);
+	    GMM_ASSERT1(det != scalar_type(0), "non invertible matrix");
+	    B_(0, 0) = scalar_type(1)/det;
+	    J_ = gmm::abs(det);
+	  } else {
+	    const scalar_type *p = &(KK(0,0));
+	    scalar_type det = (*p) * (*(p+3)) - (*(p+1)) * (*(p+2));
+	    GMM_ASSERT1(det != scalar_type(0), "non invertible matrix");
+	    scalar_type *q = &(B_(0,0));
+	    *q++ =  (*(p+3)) / det;  *q++ = -(*(p+2)) / det;
+	    *q++ = -(*(p+1)) / det;  *q++ =  (*p) / det;
+	    J_ = gmm::abs(det);
+	  }
+	} else {
+	  scalar_type det = J();
+	  GMM_ASSERT1(det != scalar_type(0), "non invertible matrix");
+	  gmm::lu_inverse(B_factors, ipvt, B_);
+	}
       }
+      have_B_ = true;
     }
     return B_;
   }
@@ -118,12 +137,13 @@ namespace bgeot {
     if (!have_B3()) {
       const base_matrix &BB = B();
       size_type P=gmm::mat_ncols(BB), N_=gmm::mat_nrows(BB);
-      B3_.resize(N_*N_, P*P);
+      B3_.base_resize(N_*N_, P*P);
       for (short_type i = 0; i < P; ++i)
         for (short_type j = 0; j < P; ++j)
           for (short_type k = 0; k < N_; ++k)
             for (short_type l = 0; l < N_; ++l)
               B3_(k + N_*l, i + P*j) = BB(k, i) * BB(l, j);
+      have_B3_ = true;
     }
     return B3_;
   }
@@ -132,16 +152,16 @@ namespace bgeot {
     if (!have_B32()) {
       const base_matrix &BB = B();
       size_type P=gmm::mat_ncols(BB), N_=gmm::mat_nrows(BB);
-      B32_.resize(N_*N_, P);
+      B32_.base_resize(N_*N_, P);
       if (!pgt()->is_linear()) {
         base_matrix B2(P*P, P), Htau(N_, P*P);
         if (have_pgp()) {
           gmm::mult(G(), pgp_->hessian(ii_), Htau);
         } else {
           /* very inefficient of course... */
-          base_matrix pc(pgt()->nb_points(), P*P);
-          pgt()->poly_vector_hess(xref(), pc);
-          gmm::mult(G(), pc, Htau);
+	  PC.base_resize(pgt()->nb_points(), P*P);
+          pgt()->poly_vector_hess(xref(), PC);
+          gmm::mult(G(), PC, Htau);
         }
         for (short_type i = 0; i < P; ++i)
           for (short_type j = 0; j < P; ++j)
@@ -150,47 +170,47 @@ namespace bgeot {
                 B2(i + P*j, k) += Htau(l, i + P*j) * BB(l,k);
         gmm::mult(B3(), B2, B32_);
       } else gmm::clear(B32_);
+      have_B32_ = true;
     }
     return B32_;
   }
 
  void geotrans_interpolation_context::set_ii(size_type ii__) {
-    if (ii_ == ii__) return;
-    if (have_K() && !pgt()->is_linear()) { K_.resize(0,0); }
-    if (have_B() && !pgt()->is_linear()) { B_.resize(0,0); }
-    if (have_B3() && !pgt()->is_linear()) {
-      B3_.resize(0,0); B32_.resize(0,0); }
-    if (J_ >= scalar_type(0) && !pgt()->is_linear()) J_ = scalar_type(-1);
-    xref_.clear(); xreal_.clear();
-    ii_=ii__;
-  }
+   if (ii_ == ii__) return;
+   if (pgt_ && !pgt()->is_linear())
+     { have_K_ = have_B_ = have_B3_ = have_B32_ = have_J_ = false; }
+   xref_.resize(0); xreal_.resize(0);
+   ii_=ii__;
+ }
 
   void geotrans_interpolation_context::set_xref(const base_node& P) {
     xref_ = P;
-    if (have_K() && !pgt()->is_linear()) { K_.resize(0,0); }
-    if (have_B() && !pgt()->is_linear()) { B_.resize(0,0); }
-    if (have_B3() && !pgt()->is_linear()) {
-      B3_.resize(0,0); B32_.resize(0,0); }
-    if (J_ >= scalar_type(0) && !pgt()->is_linear()) J_ = scalar_type(-1);
-    xreal_.clear(); ii_ = size_type(-1); pspt_ = 0;
+    if (pgt_ && !pgt()->is_linear())
+      { have_K_ = have_B_ = have_B3_ = have_B32_ = have_J_ = false; }
+    xreal_.resize(0); ii_ = size_type(-1); pspt_ = 0;
   }
 
   geotrans_interpolation_context::geotrans_interpolation_context() :
-    G_(0), pgt_(0), pgp_(0), pspt_(0), ii_(size_type(-1)), J_(-1) {}
+    G_(0), pgt_(0), pgp_(0), pspt_(0), ii_(size_type(-1)),
+    have_J_(false), have_B_(false), have_B3_(false), have_B32_(false),
+    have_K_(false) {}
   geotrans_interpolation_context::geotrans_interpolation_context
   (bgeot::pgeotrans_precomp pgp__, size_type ii__, const base_matrix& G__) :
     G_(&G__), pgt_(pgp__->get_trans()), pgp_(pgp__),
-    pspt_(pgp__->get_ppoint_tab()), ii_(ii__), J_(-1) {}
+    pspt_(pgp__->get_ppoint_tab()), ii_(ii__), have_J_(false), have_B_(false),
+    have_B3_(false), have_B32_(false), have_K_(false) {}
   geotrans_interpolation_context::geotrans_interpolation_context
   (bgeot::pgeometric_trans pgt__, bgeot::pstored_point_tab pspt__,
    size_type ii__,  const base_matrix& G__) :
     G_(&G__), pgt_(pgt__), pgp_(0),
-    pspt_(pspt__), ii_(ii__), J_(-1) {}
+    pspt_(pspt__), ii_(ii__), have_J_(false), have_B_(false), have_B3_(false),
+    have_B32_(false), have_K_(false) {}
   geotrans_interpolation_context::geotrans_interpolation_context
   (bgeot::pgeometric_trans pgt__, const base_node& xref__,
    const base_matrix& G__) :
     xref_(xref__), G_(&G__), pgt_(pgt__), pgp_(0), pspt_(0),
-    ii_(size_type(-1)), J_(-1) {}
+    ii_(size_type(-1)),have_J_(false), have_B_(false), have_B3_(false),
+    have_B32_(false), have_K_(false)  {}
 
 
   base_node geometric_trans::transform(const base_node &pt,
@@ -245,7 +265,7 @@ namespace bgeot {
 
     virtual void poly_vector_grad(const base_node &pt, base_matrix &pc) const {
       FUNC PP;
-      pc.resize(nb_points(),dim());
+      pc.base_resize(nb_points(),dim());
       for (size_type i = 0; i < nb_points(); ++i)
         for (dim_type n = 0; n < dim(); ++n) {
           PP = trans[i];
@@ -259,7 +279,7 @@ namespace bgeot {
                                   base_matrix &pc) const {
       FUNC PP;
       size_type nb_funcs=ind_ct.size();
-      pc.resize(nb_funcs,dim());
+      pc.base_resize(nb_funcs,dim());
       for (size_type i = 0; i < nb_funcs; ++i)
         for (dim_type n = 0; n < dim(); ++n) {
           PP = trans[ind_ct[i]];
@@ -270,7 +290,7 @@ namespace bgeot {
 
     virtual void poly_vector_hess(const base_node &pt, base_matrix &pc) const {
       FUNC PP, QP;
-      pc.resize(nb_points(),dim()*dim());
+      pc.base_resize(nb_points(),dim()*dim());
       for (size_type i = 0; i < nb_points(); ++i)
         for (dim_type n = 0; n < dim(); ++n) {
           QP = trans[i]; QP.derivative(n);

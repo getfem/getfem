@@ -3439,7 +3439,7 @@ namespace getfem {
     void do_transformation() {
       size_type nn = gmm::vect_size(coeff_in);
       if (M.size() == 0 || icv != ctx.convex_num() || &mf != *mf_M) {
-        gmm::resize(M, nn, nn);
+        M.base_resize(nn, nn);
         *mf_M = &mf; icv = ctx.convex_num();
         elemtrans->give_transformation(mf, icv, M);
       }
@@ -3840,7 +3840,7 @@ namespace getfem {
 
     void do_transformation(size_type n) {
       if (M.size() == 0 || icv != ctx.convex_num() || &mf != *mf_M) {
-        gmm::resize(M, n, n);
+        M.base_resize(n, n);
         *mf_M = &mf; icv = ctx.convex_num();
         elemtrans->give_transformation(mf, icv, M);
       }
@@ -5406,7 +5406,7 @@ namespace getfem {
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: vector term assembly for fem variable");
       if (ipt == 0 || interpolate) {
-	gmm::resize(elem, t.size());
+	elem.resize(t.size());
 	gmm::copy(gmm::scaled(t.as_vector(), coeff), elem);
       } else {
       	gmm::add(gmm::scaled(t.as_vector(), coeff), elem);
@@ -5480,7 +5480,7 @@ namespace getfem {
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: matrix term assembly");
       if (ipt == 0 || interpolate) {
-        gmm::resize(elem, t.size());
+        elem.resize(t.size());
         gmm::copy(gmm::scaled(t.as_vector(), coeff*alpha1*alpha2), elem);
       } else {
         gmm::add(gmm::scaled(t.as_vector(), coeff*alpha1*alpha2), elem);
@@ -5581,7 +5581,7 @@ namespace getfem {
       GA_DEBUG_INFO("Instruction: matrix term assembly for standard "
     		    "scalar fems");
       if (ipt == 0) {
-	gmm::resize(elem, t.size());
+	elem.resize(t.size());
         gmm::copy(gmm::scaled(t.as_vector(), coeff*alpha1*alpha2), elem);
       } else {
         gmm::add(gmm::scaled(t.as_vector(), coeff*alpha1*alpha2), elem);
@@ -5644,7 +5644,7 @@ namespace getfem {
       GA_DEBUG_INFO("Instruction: matrix term assembly for standard "
     		    "vector fems");
       if (ipt == 0) {
-	gmm::resize(elem, t.size());
+	elem.resize(t.size());
         gmm::copy(gmm::scaled(t.as_vector(), coeff*alpha1*alpha2), elem);
       } else {
         gmm::add(gmm::scaled(t.as_vector(), coeff*alpha1*alpha2), elem);
@@ -12339,7 +12339,7 @@ namespace getfem {
     getfem::base_vector loc_U;
     for (mr_visitor v(rg); !v.finished(); v.next()) {
       size_type nd = mf.nb_basic_dof_of_element(v.cv());
-      gmm::resize(loc_M, nd, nd); gmm::resize(loc_U, nd);
+      loc_M.base_resize(nd, nd); gmm::resize(loc_U, nd);
       gmm::sub_index J(mf.ind_basic_dof_of_element(v.cv()));
       gmm::copy(gmm::sub_matrix(M, J, J), loc_M);
       gmm::lu_solve(loc_M, loc_U, gmm::sub_vector(F, J));

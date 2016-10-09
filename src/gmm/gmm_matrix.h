@@ -369,6 +369,7 @@ namespace gmm
     const std::vector<T> &as_vector(void) const { return *this; }
 
     void resize(size_type, size_type);
+    void base_resize(size_type, size_type);
     void reshape(size_type, size_type);
     
     void fill(T a, T b = T(0));
@@ -387,6 +388,10 @@ namespace gmm
     nbl = m; nbc = n;
   }
 
+  template<typename T> void dense_matrix<T>::base_resize(size_type m,
+							 size_type n)
+  { std::vector<T>::resize(n*m); nbl = m; nbc = n; }
+  
   template<typename T> void dense_matrix<T>::resize(size_type m, size_type n) {
     if (n*m > nbc*nbl) std::vector<T>::resize(n*m);
     if (m < nbl) {
