@@ -684,6 +684,20 @@ namespace getfem {
 
 
   ///@}
+
+  inline void vectors_to_base_matrix(base_matrix &G, const mesh &m,
+				     size_type cv) {
+    const bgeot::mesh_structure::ind_cv_ct &ct = m.ind_points_of_convex(cv);
+    size_type N = m.dim(), Np = ct.size();
+    G.base_resize(N, Np);
+    auto it = G.begin();
+    for (size_type i = 0; i < Np; ++i, it += N) {
+      const base_node &P = m.points()[ct[i]];
+      std::copy(P.begin(),  P.end(), it);
+    }
+  }
+
+
 }  /* end of namespace getfem.                                             */
 
 

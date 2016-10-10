@@ -5206,7 +5206,7 @@ namespace getfem {
                                       inin.derivatives, compute_der);
       if (inin.pt_type) {
         if (cv != size_type(-1)) {
-          bgeot::vectors_to_base_matrix(inin.G, (inin.m)->points_of_convex(cv));
+          vectors_to_base_matrix(inin.G, *(inin.m), cv);
           inin.ctx.change((inin.m)->trans_of_convex(cv),
 			  0, P_ref, inin.G, cv, face_num);
           inin.has_ctx = true;
@@ -5301,7 +5301,7 @@ namespace getfem {
               const bgeot::stored_point_tab
                 &spt = *(pai->pintegration_points());
               base_matrix G;
-              bgeot::vectors_to_base_matrix(G, m.points_of_convex(cv));
+              vectors_to_base_matrix(G, m, cv);
               fem_interpolation_context ctx_x(gpc.pgt1, 0, spt[0], G, cv, f);
               std::vector<base_node> P_ref(nbpt);
 
@@ -5315,8 +5315,7 @@ namespace getfem {
               pspt = store_point_tab(P_ref);
               neighbour_corresp[gpc] = pspt;
             }
-            bgeot::vectors_to_base_matrix(inin.G,
-                                          m.points_of_convex(adj_face.cv));
+            vectors_to_base_matrix(inin.G, m, adj_face.cv);
             bgeot::pgeotrans_precomp pgp = gp_pool(gpc.pgt2, pspt);
             inin.ctx.change(pgp, 0, 0, inin.G, adj_face.cv, adj_face.f);
           }
@@ -5341,8 +5340,7 @@ namespace getfem {
                                         inin.derivatives, false);
         if (inin.pt_type) {
           if (cv != size_type(-1)) {
-            bgeot::vectors_to_base_matrix(inin.G,
-                                          (inin.m)->points_of_convex(cv));
+            vectors_to_base_matrix(inin.G, *(inin.m), cv);
             inin.ctx.change((inin.m)->trans_of_convex(cv),
 			    0, P_ref, inin.G, cv, face_num);
             inin.has_ctx = true;
@@ -5422,8 +5420,8 @@ namespace getfem {
 	GA_DEBUG_ASSERT(V.size() >= I.first() + mf.nb_basic_dof(),
 			"Bad assembly vector size");
 	auto &ct = mf.ind_scalar_basic_dof_of_element(cv_1);
-  	size_type qmult = size_type(mf.get_qdim()
-  				    / mf.fem_of_element(cv_1)->target_dim());
+	size_type qmult = mf.get_qdim();
+	if (qmult > 1) qmult /= mf.fem_of_element(cv_1)->target_dim();
   	size_type ifirst = I.first();
   	auto ite = elem.begin();
   	for (auto itc = ct.begin(); itc != ct.end(); ++itc)
@@ -5503,8 +5501,8 @@ namespace getfem {
 	  if (!(ctx1.is_convex_num_valid())) return 0;
 	  size_type cv1 = ctx1.convex_num();
 	  auto &ct1 = pmf1->ind_scalar_basic_dof_of_element(cv1);
-	  size_type qmult1 = size_type(pmf1->get_qdim()
-				   / pmf1->fem_of_element(cv1)->target_dim());
+	  size_type qmult1 = pmf1->get_qdim();
+	  if (qmult1 > 1) qmult1 /= pmf1->fem_of_element(cv1)->target_dim();
 	  auto itd = dofs1.begin();
 	  if (qmult1 == 1) {
 	    for (auto itt = ct1.begin(); itt != ct1.end(); ++itt)
@@ -5522,8 +5520,8 @@ namespace getfem {
 	  if (!(ctx2.is_convex_num_valid())) return 0;
 	  size_type cv2 = ctx2.convex_num();
 	  auto &ct2 = pmf2->ind_scalar_basic_dof_of_element(cv2);
-	  size_type qmult2 = size_type(pmf2->get_qdim()
-				   / pmf2->fem_of_element(cv2)->target_dim());
+	  size_type qmult2 = pmf2->get_qdim();
+	  if (qmult2 > 1) qmult2 /= pmf2->fem_of_element(cv2)->target_dim();
 	  auto itd = dofs2.begin();
 	  if (qmult2 == 1) {
 	    for (auto itt = ct2.begin(); itt != ct2.end(); ++itt)
@@ -5541,7 +5539,7 @@ namespace getfem {
         for (const size_type &dof2 : dofs2)
           for (const size_type &dof1 : dofs1) {
             if (gmm::abs(*it) > threshold)
-              K(dof1, dof2) += *it;
+	      K(dof1, dof2) += *it;
             ++it;
           }
       }
@@ -5607,7 +5605,7 @@ namespace getfem {
         for (const size_type &dof2 : ct2)
           for (const size_type &dof1 : ct1) {
             if (gmm::abs(*it) > threshold)
-              K(dof1+i1, dof2+i2) += *it;
+	      K(dof1+i1, dof2+i2) += *it;
             ++it;
           }
       }
@@ -5658,20 +5656,19 @@ namespace getfem {
         size_type cv1 = ctx1.convex_num();
     	if (cv1 == size_type(-1)) return 0;
     	auto &ct1 = pmf1->ind_scalar_basic_dof_of_element(cv1);
-	size_type qmult1 = size_type(pmf1->get_qdim()
-				     / pmf1->fem_of_element(cv1)->target_dim());
+	size_type qmult1 = pmf1->get_qdim();
+	if (qmult1 > 1) qmult1 /= pmf1->fem_of_element(cv1)->target_dim();
 	dofs1.assign(s1, I1.first());
 	auto itd = dofs1.begin();
 	for (auto itt = ct1.begin(); itt != ct1.end(); ++itt)
 	  for (size_type q = 0; q < qmult1; ++q)
 	    *itd++ += *itt + q;
-
 	
     	size_type cv2 = ctx2.convex_num();
     	if (cv2 == size_type(-1)) return 0;
-    	auto &ct2 = pmf2->ind_scalar_basic_dof_of_element(cv2);	
- 	size_type qmult2 = size_type(pmf2->get_qdim()
-				     / pmf2->fem_of_element(cv2)->target_dim());
+    	auto &ct2 = pmf2->ind_scalar_basic_dof_of_element(cv2);
+	size_type qmult2 = pmf2->get_qdim();
+	if (qmult2 > 1) qmult2 /= pmf2->fem_of_element(cv2)->target_dim();
 	dofs2.assign(s2, I2.first());
 	itd = dofs2.begin();
 	for (auto itt = ct2.begin(); itt != ct2.end(); ++itt)
@@ -6484,7 +6481,6 @@ namespace getfem {
 
 
   void ga_workspace::assembly(size_type order) {
-
     GA_TIC;
     ga_instruction_set gis;
     ga_compile(*this, gis, order);
@@ -11646,7 +11642,7 @@ namespace getfem {
           = gic.ppoints_for_element(v.cv(), v.f(), ind);
 
         if (pspt.get() && ind.size() && pspt->size()) {
-          bgeot::vectors_to_base_matrix(G, m.points_of_convex(v.cv()));
+          vectors_to_base_matrix(G, m, v.cv());
           bgeot::pgeometric_trans pgt = m.trans_of_convex(v.cv());
           up.resize(G.nrows());
           un.resize(pgt->dim());
@@ -11751,15 +11747,7 @@ namespace getfem {
         if (mim.convex_index().is_in(v.cv())) {
           // cout << "proceed with element " << v.cv() << endl;
           if (v.cv() != old_cv) {
-
-	    // const bgeot::mesh_structure::ind_cv_ct &ct=m.ind_points_of_convex(v.cv());
-	    // G.base_resize(m.dim(), ct.size());
-	    // auto it = G.begin();
-	    // for (size_type i = 0; i < ct.size(); ++i, it += m.dim())
-	    //   std::copy(m.points()[ct[i]].begin(),  m.points()[ct[i]].end(), it);
-
-	    
-	    bgeot::vectors_to_base_matrix(G, m.points_of_convex(v.cv()));
+	    vectors_to_base_matrix(G, m, v.cv());
             pgt = m.trans_of_convex(v.cv());
             up.resize(G.nrows());
             un.resize(pgt->dim());
