@@ -30,7 +30,7 @@
 ===========================================================================*/
 
 /** @file getfem_continuation.h
-    @author Tomas Ligursky <tomas.ligursky@gmail.com>
+    @author Tomas Ligursky <tomas.ligursky@ugn.cas.cz>
     @author Yves Renard <Yves.Renard@insa-lyon.fr>
     @author Konstantinos Poulios <logari81@googlemail.com>
     @date October 17, 2011.
@@ -102,7 +102,7 @@ namespace getfem {
       gmm::add(gmm::scaled(g, tgamma), y);      // y += tgamma * g
       double r = norm(y);
       if (r > 1.e-10)
-        GMM_WARNING1("Tangent computed with the residual " << r);
+        GMM_WARNING2("Tangent computed with the residual " << r);
     }
 
   private:
@@ -140,7 +140,7 @@ namespace getfem {
       VECT X(x), tX(tx);
 
       if (noisy() > 0) cout << "Trying a simple tangent switch" << endl;
-      if (noisy() > 0) cout << "Starting computing a new tangent" << endl;
+      if (noisy() > 1) cout << "Computing a new tangent" << endl;
       h *= 1.5;
       scaled_add(x, gamma, tx, tgamma, h, X, Gamma);  // [X,Gamma] = [x,gamma] + h * [tx,tgamma]
       compute_tangent(X, Gamma, tX, tGamma);
@@ -148,7 +148,7 @@ namespace getfem {
       // (tx, tgamma), for sure, and increase h_min if it were greater or
       // equal to mincos(). However, this seems to be superfluous.
 
-      if (noisy() > 0)
+      if (noisy() > 1)
         cout << "Starting testing the computed tangent" << endl;
       double h_test = -0.9 * h_min();
       bool accepted(false);
@@ -196,7 +196,7 @@ namespace getfem {
                              const VECT &tx, double tgamma) {
       set_tau_lp(tgamma);
       if (this->singularities > 1) {
-        if (noisy() > 0) cout << "Starting computing an initial value of the "
+        if (noisy() > 1) cout << "Computing an initial value of the "
                               << "test function for bifurcations" << endl;
         set_tau_bp_2(test_function_bp(x, gamma, tx, tgamma));
       }
@@ -225,7 +225,7 @@ namespace getfem {
       double q = sp(cc_x(nn), v_x) + cc_gamma * v_gamma + dd * tau - 1.;
       r = sqrt(sp(y, y) + r * r + q * q);
       if (r > 1.e-10)
-        GMM_WARNING1("Test function evaluated with the residual " << r);
+        GMM_WARNING2("Test function evaluated with the residual " << r);
 
       return tau;
     }
@@ -324,7 +324,7 @@ namespace getfem {
       double Delta_Gamma, res(0), diff;
       VECT f(X), g(X), Delta_X(X), y(X);
 
-      if (noisy() == 1) cout << "Starting correction" << endl;
+      if (noisy() > 1) cout << "Starting correction" << endl;
       F(X, Gamma, f);                                          // f = F(X, Gamma) = -rhs(X, Gamma)
 //CHANGE 1: line search
 //double res0 = norm(f);
@@ -335,7 +335,7 @@ namespace getfem {
                                                                // Delta_X = F_x(X, Gamma)^-1 * f
         Delta_Gamma = sp(tX, Delta_X) / (sp(tX, y) - tGamma);  // Delta_Gamma = tX.Delta_X / (tX.y - tGamma)
         if (isnan(Delta_Gamma)) {
-          if (noisy() > 0) cout << "Newton correction failed with NaN" << endl;
+          if (noisy() > 1) cout << "Newton correction failed with NaN" << endl;
           return false;
         }
         gmm::add(gmm::scaled(y, -Delta_Gamma), Delta_X);       // Delta_X -= Delta_Gamma * y
@@ -372,7 +372,7 @@ namespace getfem {
           break;
         }
       }
-      if (noisy() == 1) cout << "Correction finished with Gamma = "
+      if (noisy() > 1) cout << "Correction finished with Gamma = "
                              << Gamma << endl;
       return converged;
     }
@@ -394,7 +394,7 @@ namespace getfem {
       while (!converged) { //step control
         // prediction
         scaled_add(x, gamma, tx, tgamma, h, X, Gamma);   // [X,Gamma] = [x,gamma] + h * [tx,tgamma]
-        if (noisy() > 0)
+        if (noisy() > 1)
           cout << "(TPD) Prediction   : Gamma = " << Gamma
                << " (for h = " << h << ", tgamma = " << tgamma << ")" << endl;
         copy(tx, tgamma, tX, tGamma);
@@ -427,13 +427,13 @@ namespace getfem {
       VECT x0(x), X(x), tx0(tx), tX(tx), v_x(tx);
 
       if (noisy() > 0)
-        cout  << "Starting locating the bifurcation point" << endl;
+        cout  << "Starting locating a bifurcation point" << endl;
 
       // predictor-corrector steps with a secant-type step-length adaptation
       h *= tau1 / (tau0 - tau1);
       for (size_type i=0; i < 10 && (gmm::abs(h) >= h_min()); ++i) {
         scaled_add(x0, gamma0, tx0, tgamma0, h, X, Gamma); // [X,Gamma] = [x0,gamma0] + h * [tx0,tgamma0]
-        if (noisy() > 0)
+        if (noisy() > 1)
           cout << "(TSBP) Prediction   : Gamma = " << Gamma
                << " (for h = " << h << ", tgamma = " << tgamma << ")" << endl;
         if (newton_corr(X, Gamma, tX, tGamma, tx0, tgamma0)) {
@@ -467,11 +467,11 @@ namespace getfem {
   public:
 
     /* A tool for approximating a non-smooth point close to (x, gamma) and
-       locating one-sided smooth solution branches emanating from there. It is
-       supposed that (x, gamma) is a point on a smooth solution branch within
-       the distance of h_min() from the end point of this branch and
-       (tx, tgamma) is the corresponding tangent that is directed towards the
-       end point. The boolean set_next determines whether the first new
+       consequent locating one-sided smooth solution branches emanating from
+       there. It is supposed that (x, gamma) is a point on a smooth solution
+       branch within the distance of h_min() from the end point of this
+       branch and (tx, tgamma) is the corresponding tangent directed towards
+       the end point. The boolean set_next determines whether the first new
        branch found (if any) is to be chosen for further continuation. */
     void treat_nonsmooth_point(const VECT &x, double gamma,
                                const VECT &tx, double tgamma, bool set_next) {
@@ -494,7 +494,7 @@ namespace getfem {
       h /= 2.;
       for (size_type i = 0; i < 15; i++) {
         scaled_add(x0, gamma0, tx0, tgamma0, h, X, Gamma);    // [X,Gamma] = [x0,gamma0] + h*[tx0,tgamma0]
-        if (noisy() > 0)
+        if (noisy() > 1)
           cout << "(TNSBP) Prediction   : Gamma = " << Gamma
                << " (for h = " << h << ", tgamma = " << tgamma << ")" << endl;
         if (newton_corr(X, Gamma, tX, tGamma, tx0, tgamma0)
@@ -507,13 +507,13 @@ namespace getfem {
         h /= 2.;
       }
       if (noisy() > 0)
-        cout  << "A non-smooth point located" << endl;
+        cout  << "Non-smooth point located" << endl;
       set_sing_point(x0, gamma0);
 
       // take two reference vectors to span a subspace of directions emanating
       // from the end point
       if (noisy() > 0)
-        cout << "Starting a thorough search for other branches" << endl;
+        cout << "Starting a thorough search for different branches" << endl;
       double tgamma1 = tgamma0, tgamma2 = tgamma0;
       VECT tx1(tx0), tx2(tx0);
       scale(tx1, tgamma1, -1.);                                     // [tx1,tgamma1] *= -1
@@ -542,7 +542,7 @@ namespace getfem {
               || (i == 0 && nspan == 0)) {
             copy(tX, tGamma, tx0, tgamma0);
             if (insert_tangent_predict(tX, tGamma)) {
-              if (noisy() > 0)
+              if (noisy() > 1)
                 cout << "New potential tangent vector found, "
                      << "trying one predictor-corrector step" << endl;
               copy(x0, gamma0, X, Gamma);
@@ -553,6 +553,8 @@ namespace getfem {
                       // => (tX, tGamma) = (tx2, tgamma2)
                       && (gmm::abs(cosang(tX, tx0, tGamma, tgamma0))
                           >= mincos())) { i2 = 1; }
+		  if (noisy() > 0) cout << "A new branch located (for nspan = "
+					<< nspan << ")" << endl;
                   if (set_next) set_next_point(X, Gamma);
 
                 }
@@ -562,9 +564,12 @@ namespace getfem {
 
               scale(tX, tGamma, -1.);                               // [tX,tGamma] *= -1
               if (test_predict_dir(X, Gamma, tX, tGamma)
-                  && insert_tangent_sing(tX, tGamma) && set_next)
-                set_next_point(X, Gamma);
-            }
+                  && insert_tangent_sing(tX, tGamma)) {
+		if (noisy() > 0) cout << "A new branch located (for nspan = "
+				      << nspan << ")" << endl;
+		if (set_next) set_next_point(X, Gamma);
+	      }
+	    }
           }
         }
 
@@ -588,7 +593,8 @@ namespace getfem {
       } while (++nspan < nbspan());
 
       if (noisy() > 0)
-        cout << "Located branches " << nb_tangent_sing() << endl;
+        cout << "Number of branches emanating from the non-smooth point "
+	     << nb_tangent_sing() << endl;
     }
 
 
@@ -597,8 +603,8 @@ namespace getfem {
                                          double &tgamma, double &h) {
       gmm::clear(tx);
       tgamma = (tgamma >= 0) ? 1. : -1.;
-      if (noisy() > 0)
-        cout << "Starting computing an initial tangent" << endl;
+      if (noisy() > 1)
+        cout << "Computing an initial tangent" << endl;
       compute_tangent(x, gamma, tx, tgamma);
       h = h_init();
       if (this->singularities > 0)
@@ -623,7 +629,7 @@ namespace getfem {
         h0 = h;
         // prediction
         scaled_add(x, gamma, tx, tgamma, h, X, Gamma);              // [X,Gamma] = [x,gamma] + h*[tx,tgamma]
-        if (noisy() > 0)
+        if (noisy() > 1)
           cout << " Prediction    : Gamma = " << Gamma
                << " (for h = " << std::scientific << std::setprecision(3) << h
                << ", tgamma = " << tgamma << ")" << endl;
@@ -641,8 +647,8 @@ namespace getfem {
               if (noisy() > 0) cout << "Limit point detected!" << endl;
             }
             if (this->singularities > 1) { // Treat bifurcations
-              if (noisy() > 0)
-                cout << "New point found, starting computing a test function "
+              if (noisy() > 1)
+                cout << "New point found, computing a test function "
                      << "for bifurcations" << endl;
               if (!tangent_switched) {
                 if (test_smooth_bifurcation(X, Gamma, tX, tGamma)) {
@@ -678,7 +684,7 @@ namespace getfem {
             if (noisy() > 0)
               cout << "Restarting the classical continuation" << endl;
           } else break;
-        } else new_point = true;
+        } else break;
       } while (!new_point);
 
       if (new_point) {
@@ -692,8 +698,8 @@ namespace getfem {
             set_sing_label("limit point");
             if (noisy() > 0) cout << "Limit point detected!" << endl;
           }
-          if (noisy() > 0)
-            cout << "Starting computing a test function for bifurcations"
+          if (noisy() > 1)
+            cout << "Computing a test function for bifurcations"
                  << endl;
           bool bifurcation_detected = (nb_tangent_sing() > 2);
           if (bifurcation_detected) {

@@ -237,7 +237,7 @@ for step=1:size(t,2),
       clf();
       subplot(3,1,1);
       gf_plot(mf_vm,VM, 'deformation',U,'deformation_mf',mf_u,'refine', 4, 'deformation_scale',1, 'disp_options', 0); // 'deformed_mesh', 'on')
-      colorbar(min(U),max(U));
+      colorbar(min(VM),max(VM));
       a = get("current_axes"); a.data_bounds = [-20 120 -20 40];
       // caxis([0 10000]);
       n = t(step);

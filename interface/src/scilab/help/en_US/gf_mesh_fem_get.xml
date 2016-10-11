@@ -33,6 +33,8 @@
     <synopsis>bB = gf_mesh_fem_get(mesh_fem MF, 'is_reduced')</synopsis>
     <synopsis>bB = gf_mesh_fem_get(mesh_fem MF, 'reduction matrix')</synopsis>
     <synopsis>bB = gf_mesh_fem_get(mesh_fem MF, 'extension matrix')</synopsis>
+    <synopsis>Vr = gf_mesh_fem_get(mesh_fem MF, 'reduce vector', vec V)</synopsis>
+    <synopsis>Ve = gf_mesh_fem_get(mesh_fem MF, 'extend vector', vec V)</synopsis>
     <synopsis>DOFs = gf_mesh_fem_get(mesh_fem MF, 'basic dof on region',mat Rs)</synopsis>
     <synopsis>DOFs = gf_mesh_fem_get(mesh_fem MF, 'dof on region',mat Rs)</synopsis>
     <synopsis>DOFpts = gf_mesh_fem_get(mesh_fem MF, 'dof nodes'[, mat DOFids])</synopsis>
@@ -234,6 +236,20 @@
     <para><literal>bB = gf_mesh_fem_get(mesh_fem MF, 'extension matrix')</literal></para>
 
     <para>       Return the optional extension matrix.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>Vr = gf_mesh_fem_get(mesh_fem MF, 'reduce vector', vec V)</literal></para>
+
+    <para>       Multiply the provided vector V with the extension matrix of the mesh_fem.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>Ve = gf_mesh_fem_get(mesh_fem MF, 'extend vector', vec V)</literal></para>
+
+    <para>       Multiply the provided vector V with the reduction matrix of the mesh_fem.
     </para>
     </listitem>
 

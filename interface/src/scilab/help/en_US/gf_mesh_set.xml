@@ -26,12 +26,13 @@
     <synopsis>gf_mesh_set(mesh M, 'transform', mat T)</synopsis>
     <synopsis>gf_mesh_set(mesh M, 'boundary', int rnum, mat CVFIDs)</synopsis>
     <synopsis>gf_mesh_set(mesh M, 'region', int rnum, mat CVFIDs)</synopsis>
+    <synopsis>gf_mesh_set(mesh M, 'extend region', int rnum, mat CVFIDs)</synopsis>
     <synopsis>gf_mesh_set(mesh M, 'region intersect', int r1, int r2)</synopsis>
     <synopsis>gf_mesh_set(mesh M, 'region merge', int r1, int r2)</synopsis>
     <synopsis>gf_mesh_set(mesh M, 'region subtract', int r1, int r2)</synopsis>
     <synopsis>gf_mesh_set(mesh M, 'delete boundary', int rnum, mat CVFIDs)</synopsis>
     <synopsis>gf_mesh_set(mesh M, 'delete region', ivec RIDs)</synopsis>
-    <synopsis>gf_mesh_set(mesh M, 'merge', mesh m2)</synopsis>
+    <synopsis>gf_mesh_set(mesh M, 'merge', mesh m2[, scalar  tol])</synopsis>
     <synopsis>gf_mesh_set(mesh M, 'optimize structure')</synopsis>
     <synopsis>gf_mesh_set(mesh M, 'refine'[, ivec CVIDs])</synopsis>
   </refsynopsisdiv>
@@ -142,16 +143,25 @@
     <listitem>
     <para><literal>gf_mesh_set(mesh M, 'region', int rnum, mat CVFIDs)</literal></para>
 
-    <para>       Assigns the region number <literal>rnum</literal> to the convex faces (or convexes)
-    stored in each column of the matrix <literal>CVFIDs</literal>.
+    <para>       Assigns the region number <literal>rnum</literal> to the set of convexes or/and convex
+    faces provided in the matrix <literal>CVFIDs</literal>.
 
-    The first row of <literal>CVFIDs</literal> contains a convex #ids, and the second row
+    The first row of <literal>CVFIDs</literal> contains convex #ids, and the second row
     contains a face number in the convex (or 0
     for the whole convex (regions are usually used to store a list of
     convex faces, but you may also use them to store a list of convexes).
 
     If a vector is provided (or a one row matrix) the region will represent
     the corresponding set of convex.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_mesh_set(mesh M, 'extend region', int rnum, mat CVFIDs)</literal></para>
+
+    <para>       Extends the region identified by the region number <literal>rnum</literal> to include
+    the set of convexes or/and convex faces provided in the matrix
+    <literal>CVFIDs</literal>, see also <literal></literal>gf_mesh_set(mesh M, 'set region)<literal></literal>.
     </para>
     </listitem>
 
@@ -192,12 +202,12 @@
     </listitem>
 
     <listitem>
-    <para><literal>gf_mesh_set(mesh M, 'merge', mesh m2)</literal></para>
+    <para><literal>gf_mesh_set(mesh M, 'merge', mesh m2[, scalar  tol])</literal></para>
 
     <para>         Merge with the mesh <literal>m2</literal>.
       
-      Overlapping points won't be duplicated. If <literal>m2</literal> is a mesh_fem object,
-      its linked mesh will be used.
+      Overlapping points, within a tolerance radius <literal>tol</literal>, will not be
+      duplicated. If <literal>m2</literal> is a mesh_fem object, its linked mesh will be used.
     </para>
     </listitem>
 

@@ -94,6 +94,7 @@
 
        The first levelset is always referred to with "a", the second
        with "b", and so on.
+
       for intance INSIDE(a*b*c)
 
       CAUTION: this integration method will be defined only on the element

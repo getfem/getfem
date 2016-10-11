@@ -18,14 +18,18 @@
 
     <synopsis>b = gf_model_get(model M, 'is_complex')</synopsis>
     <synopsis>T = gf_model_get(model M, 'nbdof')</synopsis>
+    <synopsis>dt = gf_model_get(model M, 'get time step')</synopsis>
+    <synopsis>t = gf_model_get(model M, 'get time')</synopsis>
     <synopsis>T = gf_model_get(model M, 'tangent_matrix')</synopsis>
     <synopsis>gf_model_get(model M, 'rhs')</synopsis>
     <synopsis>gf_model_get(model M, 'brick term rhs', int ind_brick[, int ind_term, int sym, int ind_iter])</synopsis>
     <synopsis>z = gf_model_get(model M, 'memsize')</synopsis>
     <synopsis>gf_model_get(model M, 'variable list')</synopsis>
     <synopsis>gf_model_get(model M, 'brick list')</synopsis>
-    <synopsis>V = gf_model_get(model M, 'variable', string name[, int niter])</synopsis>
-    <synopsis>V = gf_model_get(model M, 'interpolation', string expr, {mesh_fem mf | vec pts,  mesh m}[, int region[, int extrapolation[, int rg_source]]])</synopsis>
+    <synopsis>gf_model_get(model M, 'list residuals')</synopsis>
+    <synopsis>V = gf_model_get(model M, 'variable', string name)</synopsis>
+    <synopsis>V = gf_model_get(model M, 'interpolation', string expr, {mesh_fem mf | mesh_imd mimd | vec pts,  mesh m}[, int region[, int extrapolation[, int rg_source]]])</synopsis>
+    <synopsis>V = gf_model_get(model M, 'local_projection', mesh_im mim, string expr, mesh_fem mf[, int region])</synopsis>
     <synopsis>mf = gf_model_get(model M, 'mesh fem of variable', string name)</synopsis>
     <synopsis>name = gf_model_get(model M, 'mult varname Dirichlet', int ind_brick)</synopsis>
     <synopsis>I = gf_model_get(model M, 'interval of variable', string varname)</synopsis>
@@ -34,13 +38,20 @@
     <synopsis>{nbit, converged} = gf_model_get(model M, 'solve'[, ...])</synopsis>
     <synopsis>gf_model_get(model M, 'test tangent matrix'[, scalar EPS[, int NB[, scalar scale]]])</synopsis>
     <synopsis>gf_model_get(model M, 'test tangent matrix term', string varname1, string varname2[, scalar EPS[, int NB[, scalar scale]]])</synopsis>
+    <synopsis>expr = gf_model_get(model M, 'Neumann term', string varname, int region)</synopsis>
     <synopsis>V = gf_model_get(model M, 'compute isotropic linearized Von Mises or Tresca', string varname, string dataname_lambda, string dataname_mu, mesh_fem mf_vm[, string version])</synopsis>
+    <synopsis>V = gf_model_get(model M, 'compute isotropic linearized Von Mises pstrain', string varname, string data_E, string data_nu, mesh_fem mf_vm)</synopsis>
+    <synopsis>V = gf_model_get(model M, 'compute isotropic linearized Von Mises pstress', string varname, string data_E, string data_nu, mesh_fem mf_vm)</synopsis>
     <synopsis>V = gf_model_get(model M, 'compute Von Mises or Tresca', string varname, string lawname, string dataname, mesh_fem mf_vm[, string version])</synopsis>
-    <synopsis>V = gf_model_get(model M, 'compute finite strain elasticity Von Mises', string varname, string lawname, string params, mesh_fem mf_vm[, int region])</synopsis>
+    <synopsis>V = gf_model_get(model M, 'compute finite strain elasticity Von Mises',  string lawname, string varname, string params, mesh_fem mf_vm[, int region])</synopsis>
     <synopsis>V = gf_model_get(model M, 'compute second Piola Kirchhoff tensor', string varname, string lawname, string dataname, mesh_fem mf_sigma)</synopsis>
+    <synopsis>gf_model_get(model M, 'elastoplasticity next iter', mesh_im mim, string varname, string previous_dep_name, string projname, string datalambda, string datamu, string datathreshold, string datasigma)</synopsis>
+    <synopsis>gf_model_get(model M, 'small strain elastoplasticity next iter', mesh_im mim,  string lawname, string unknowns_type [, string varnames, ...] [, string params, ...] [, string theta = '1' [, string dt = 'timestep']] [, int region = -1])</synopsis>
+    <synopsis>V = gf_model_get(model M, 'small strain elastoplasticity Von Mises', mesh_im mim, mesh_fem mf_vm, string lawname, string unknowns_type [, string varnames, ...] [, string params, ...] [, string theta = '1' [, string dt = 'timestep']] [, int region])</synopsis>
     <synopsis>V = gf_model_get(model M, 'compute elastoplasticity Von Mises or Tresca', string datasigma, mesh_fem mf_vm[, string version])</synopsis>
-    <synopsis>gf_model_get(model M, 'elastoplasticity next iter', mesh_im mim, string varname, string projname, string datalambda, string datamu, string datathreshold, string datasigma)</synopsis>
-    <synopsis>V = gf_model_get(model M, 'compute plastic part', mesh_im mim, mesh_fem mf_pl, string varname, string projname, string datalambda, string datamu, string datathreshold, string datasigma)</synopsis>
+    <synopsis>V = gf_model_get(model M, 'compute plastic part', mesh_im mim, mesh_fem mf_pl, string varname, string previous_dep_name, string projname, string datalambda, string datamu, string datathreshold, string datasigma)</synopsis>
+    <synopsis>gf_model_get(model M, 'finite strain elastoplasticity next iter', mesh_im mim, string lawname, string unknowns_type, [, string varnames, ...] [, string params, ...] [, int region = -1])</synopsis>
+    <synopsis>V = gf_model_get(model M, 'compute finite strain elastoplasticity Von Mises', mesh_im mim, mesh_fem mf_vm, string lawname, string unknowns_type, [, string varnames, ...] [, string params, ...] [, int region = -1])</synopsis>
     <synopsis>V = gf_model_get(model M, 'sliding data group name of large sliding contact brick', int indbrick)</synopsis>
     <synopsis>V = gf_model_get(model M, 'displacement group name of large sliding contact brick', int indbrick)</synopsis>
     <synopsis>V = gf_model_get(model M, 'transformation name of large sliding contact brick', int indbrick)</synopsis>
@@ -70,6 +81,21 @@
     <para><literal>T = gf_model_get(model M, 'nbdof')</literal></para>
 
     <para>         Return the total number of degrees of freedom of the model.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>dt = gf_model_get(model M, 'get time step')</literal></para>
+
+    <para>         Gives the value of the time step. 
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>t = gf_model_get(model M, 'get time')</literal></para>
+
+    <para>         Give the value of the data <literal>t</literal> corresponding to the current time.
+      
     </para>
     </listitem>
 
@@ -126,23 +152,43 @@
     </listitem>
 
     <listitem>
-    <para><literal>V = gf_model_get(model M, 'variable', string name[, int niter])</literal></para>
+    <para><literal>gf_model_get(model M, 'list residuals')</literal></para>
 
-    <para>         Gives the value of a variable or data.
+    <para>         print to the output the residuals corresponding to all terms
+      included in the model.
     </para>
     </listitem>
 
     <listitem>
-    <para><literal>V = gf_model_get(model M, 'interpolation', string expr, {mesh_fem mf | vec pts,  mesh m}[, int region[, int extrapolation[, int rg_source]]])</literal></para>
+    <para><literal>V = gf_model_get(model M, 'variable', string name)</literal></para>
+
+    <para>         Gives the value of a variable or data. 
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>V = gf_model_get(model M, 'interpolation', string expr, {mesh_fem mf | mesh_imd mimd | vec pts,  mesh m}[, int region[, int extrapolation[, int rg_source]]])</literal></para>
 
     <para>         Interpolate a certain expression with respect to the mesh_fem <literal>mf</literal>
-      or the set of points <literal>pts</literal> on mesh <literal>m</literal>.
+      or the mesh_im_data <literal>mimd</literal> or the set of points <literal>pts</literal> on mesh <literal>m</literal>.
       The expression has to be valid according to the high-level generic
       assembly language possibly including references to the variables
       and data of the model.
-  
+
       The options <literal>extrapolation</literal> and <literal>rg_source</literal> are specific to
       interpolations with respect to a set of points <literal>pts</literal>. 
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>V = gf_model_get(model M, 'local_projection', mesh_im mim, string expr, mesh_fem mf[, int region])</literal></para>
+
+    <para>         Make an elementwise L2 projection of an expression with respect
+      to the mesh_fem <literal>mf</literal>. This mesh_fem has to be
+      a discontinuous one.
+      The expression has to be valid according to the high-level generic
+      assembly language possibly including references to the variables
+      and data of the model. 
     </para>
     </listitem>
 
@@ -184,8 +230,7 @@
 
     <para>         Assembly of the tangent system taking into account the terms
       from all bricks. <literal>option</literal>, if specified, should be 'build_all',
-      'build_rhs', 'build_matrix' or 'pseudo_potential' (in that case,
-      the pseudo_potential is returned).
+      'build_rhs', 'build_matrix'.
       The default is to build the whole
       tangent linear system (matrix and rhs). This function is useful
       to solve your problem with you own solver. 
@@ -219,23 +264,19 @@
        Possible values are 'superlu', 'mumps' (if supported),
        'cg/ildlt', 'gmres/ilu' and 'gmres/ilut'.
     - 'lsearch', string LINE_SEARCH_NAME
-       select explicitely the line search method used for the linear systems (the
-       default value is 'default').
+       select explicitely the line search method used for the linear systems
+       (the default value is 'default').
        Possible values are 'simplest', 'systematic', 'quadratic' or 'basic'.
-    - 'with pseudo potential'
-      for nonlinear problems, the criterion of the line search will
-      be a pseudo potential instead of the residual. Still experimental since
-      not all bricks define a pseudo potential.
 
-      Return the number of iterations, if an iterative method is used.
+    Return the number of iterations, if an iterative method is used.
       
-      Note that it is possible to disable some variables
-      (see gf_model_set(model M, 'disable variable') ) in order to
-      solve the problem only with respect to a subset of variables (the
-      disabled variables are the considered as data) for instance to
-      replace the global Newton strategy with a fixed point one.
+    Note that it is possible to disable some variables
+    (see gf_model_set(model M, 'disable variable') ) in order to
+    solve the problem only with respect to a subset of variables (the
+    disabled variables are then considered as data) for instance to
+    replace the global Newton strategy with a fixed point one.
 
-      
+    
     </para>
     </listitem>
 
@@ -276,11 +317,47 @@
     </listitem>
 
     <listitem>
+    <para><literal>expr = gf_model_get(model M, 'Neumann term', string varname, int region)</literal></para>
+
+    <para>          Gives the assembly string corresponding to the Neumann term of
+       the fem variable <literal>varname</literal> on <literal>region</literal>. It is deduced from the
+       assembly string declared by the model bricks.
+       <literal>region</literal> should be the index of a boundary region
+       on the mesh where <literal>varname</literal> is defined. Care to call this function
+       only after all the volumic bricks have been declared.
+       Complains, if a brick
+       omit to declare an assembly string. 
+    </para>
+    </listitem>
+
+    <listitem>
     <para><literal>V = gf_model_get(model M, 'compute isotropic linearized Von Mises or Tresca', string varname, string dataname_lambda, string dataname_mu, mesh_fem mf_vm[, string version])</literal></para>
 
     <para>         Compute the Von-Mises stress or the Tresca stress of a field (only
       valid for isotropic linearized elasticity in 3D). <literal>version</literal> should
-      be  'Von_Mises' or 'Tresca' ('Von_Mises' is the default). 
+      be  'Von_Mises' or 'Tresca' ('Von_Mises' is the default).
+      Parametrized by Lame coefficients.
+      
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>V = gf_model_get(model M, 'compute isotropic linearized Von Mises pstrain', string varname, string data_E, string data_nu, mesh_fem mf_vm)</literal></para>
+
+    <para>         Compute the Von-Mises stress  of a displacement field for isotropic
+      linearized elasticity in 3D or in 2D with plane strain assumption.
+      Parametrized by Young modulus and Poisson ratio.
+      
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>V = gf_model_get(model M, 'compute isotropic linearized Von Mises pstress', string varname, string data_E, string data_nu, mesh_fem mf_vm)</literal></para>
+
+    <para>         Compute the Von-Mises stress  of a displacement field for isotropic
+      linearized elasticity in 3D or in 2D with plane stress assumption.
+      Parametrized by Young modulus and Poisson ratio.
+      
     </para>
     </listitem>
 
@@ -294,12 +371,13 @@
       <literal>dataname</literal> is a vector of parameters for the constitutive law. Its length
       depends on the law. It could be a short vector of constant values or a
       vector field described on a finite element method for variable coefficients.
-      <literal>version</literal> should be  'Von_Mises' or 'Tresca' ('Von_Mises' is the default). 
+      <literal>version</literal> should be  'Von_Mises' or 'Tresca' ('Von_Mises' is the default).
+      
     </para>
     </listitem>
 
     <listitem>
-    <para><literal>V = gf_model_get(model M, 'compute finite strain elasticity Von Mises', string varname, string lawname, string params, mesh_fem mf_vm[, int region])</literal></para>
+    <para><literal>V = gf_model_get(model M, 'compute finite strain elasticity Von Mises',  string lawname, string varname, string params, mesh_fem mf_vm[, int region])</literal></para>
 
     <para>         Compute on <literal>mf_vm</literal> the Von-Mises stress of a field <literal>varname</literal>
       for nonlinear elasticity in 3D. <literal>lawname</literal> is the constitutive law which
@@ -307,7 +385,7 @@
       a short vector of constant values or may depend on data or variables
       of the model.
       Uses the high-level generic assembly.
- 
+      
     </para>
     </listitem>
 
@@ -322,36 +400,95 @@
       depends on the law. It could be a short vector of constant values or a
       vector field described on a finite element method for variable
       coefficients.
-     
+      
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_model_get(model M, 'elastoplasticity next iter', mesh_im mim, string varname, string previous_dep_name, string projname, string datalambda, string datamu, string datathreshold, string datasigma)</literal></para>
+
+    <para>         Used with the old (obsolete) elastoplasticity brick to pass from an
+      iteration to the next one. 
+      Compute and save the stress constraints sigma for the next iterations.
+      'mim' is the integration method to use for the computation.
+      'varname' is the main variable of the problem.
+      'previous_dep_name' represents the displacement at the previous time step.
+      'projname' is the type of projection to use. For the moment it could only be 'Von Mises' or 'VM'.
+      'datalambda' and 'datamu' are the Lame coefficients of the material.
+      'datasigma' is a vector which will contain the new stress constraints values.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_model_get(model M, 'small strain elastoplasticity next iter', mesh_im mim,  string lawname, string unknowns_type [, string varnames, ...] [, string params, ...] [, string theta = '1' [, string dt = 'timestep']] [, int region = -1])</literal></para>
+
+    <para>         Function that allows to pass from a time step to another for the
+      small strain plastic brick. The parameters have to be exactly the
+      same than the one of <literal>add_small_strain_elastoplasticity_brick</literal>,
+      so see the documentation of this function for the explanations.
+      Basically, this brick computes the plastic strain
+      and the plastic multiplier and stores them for the next step.
+      Additionaly, it copies the computed displacement to the data
+      that stores the displacement of the previous time step (typically
+      'u' to 'Previous_u'). It has to be called before any use of
+      <literal>compute_small_strain_elastoplasticity_Von_Mises</literal>.
+      
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>V = gf_model_get(model M, 'small strain elastoplasticity Von Mises', mesh_im mim, mesh_fem mf_vm, string lawname, string unknowns_type [, string varnames, ...] [, string params, ...] [, string theta = '1' [, string dt = 'timestep']] [, int region])</literal></para>
+
+    <para>         This function computes the Von Mises stress field with respect to
+      a small strain elastoplasticity term, approximated on <literal>mf_vm</literal>,
+      and stores the result into <literal>VM</literal>.  All other parameters have to be
+      exactly the same as for <literal>add_small_strain_elastoplasticity_brick</literal>.
+      Remember that <literal>small_strain_elastoplasticity_next_iter</literal> has to be called
+      before any call of this function.
+      
     </para>
     </listitem>
 
     <listitem>
     <para><literal>V = gf_model_get(model M, 'compute elastoplasticity Von Mises or Tresca', string datasigma, mesh_fem mf_vm[, string version])</literal></para>
 
-    <para>         Compute on <literal>mf_vm</literal> the Von-Mises or the Tresca stress of a field for plasticity and return it into the vector V.
+    <para>         For the obsolete plasticity brick. Compute on <literal>mf_vm</literal> the Von-Mises or the Tresca stress of a field for plasticity and return it into the vector V.
       <literal>datasigma</literal> is a vector which contains the stress constraints values supported by the mesh.
       <literal>version</literal> should be  'Von_Mises' or 'Tresca' ('Von_Mises' is the default).
     </para>
     </listitem>
 
     <listitem>
-    <para><literal>gf_model_get(model M, 'elastoplasticity next iter', mesh_im mim, string varname, string projname, string datalambda, string datamu, string datathreshold, string datasigma)</literal></para>
+    <para><literal>V = gf_model_get(model M, 'compute plastic part', mesh_im mim, mesh_fem mf_pl, string varname, string previous_dep_name, string projname, string datalambda, string datamu, string datathreshold, string datasigma)</literal></para>
 
-    <para>         Compute and save the stress constraints sigma for other hypothetical iterations.
-      'mim' is the integration method to use for the computation.
-      'varname' is the main variable of the problem.
-      'projname' is the type of projection to use. For the moment it could only be 'Von Mises' or 'VM'.
-      'datalambda' and 'datamu' are the Lame coefficients of the material.
-      'datasigma' is a vector which will contains the new stress constraints values.
+    <para>         For the obsolete plasticity brick. Compute on <literal>mf_pl</literal> the plastic part and return it into the vector V.
+      <literal>datasigma</literal> is a vector which contains the stress constraints values supported by the mesh.
     </para>
     </listitem>
 
     <listitem>
-    <para><literal>V = gf_model_get(model M, 'compute plastic part', mesh_im mim, mesh_fem mf_pl, string varname, string projname, string datalambda, string datamu, string datathreshold, string datasigma)</literal></para>
+    <para><literal>gf_model_get(model M, 'finite strain elastoplasticity next iter', mesh_im mim, string lawname, string unknowns_type, [, string varnames, ...] [, string params, ...] [, int region = -1])</literal></para>
 
-    <para>         Compute on <literal>mf_pl</literal> the plastic part and return it into the vector V.
-      <literal>datasigma</literal> is a vector which contains the stress constraints values supported by the mesh.
+    <para>         Function that allows to pass from a time step to another for the
+      finite strain plastic brick. The parameters have to be exactly the
+      same than the one of <literal>add_finite_strain_elastoplasticity_brick</literal>,
+      so see the documentation of this function for the explanations.
+      Basically, this brick computes the plastic strain
+      and the plastic multiplier and stores them for the next step.
+      For the Simo-Miehe law which is currently the only one implemented,
+      this function updates the state variables defined in the last two
+      entries of <literal>varnames</literal>, and resets the plastic multiplier field given
+      as the second entry of <literal>varnames</literal>.
+      
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>V = gf_model_get(model M, 'compute finite strain elastoplasticity Von Mises', mesh_im mim, mesh_fem mf_vm, string lawname, string unknowns_type, [, string varnames, ...] [, string params, ...] [, int region = -1])</literal></para>
+
+    <para>         Compute on <literal>mf_vm</literal> the Von-Mises or the Tresca stress of a field for plasticity and return it into the vector V.
+      The first input parameters ar as in the function 'finite strain elastoplasticity next iter'.
+      
     </para>
     </listitem>
 

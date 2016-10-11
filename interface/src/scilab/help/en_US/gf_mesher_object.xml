@@ -9,7 +9,7 @@
           xmlns:db="http://docbook.org/ns/docbook">
   <refnamediv>
     <refname>gf_mesher_object</refname>
-    <refpurpose>  This object represents a geometric object to be meshed by the (very)
+    <refpurpose>  This object represents a geometric object to be meshed by the
   experimental meshing procedure of Getfem.
 </refpurpose>
   </refnamediv>
@@ -32,7 +32,7 @@
     <title>Description</title>
     <para>General constructor for mesher_object objects.</para>
 
-    <para>  This object represents a geometric object to be meshed by the (very)
+    <para>  This object represents a geometric object to be meshed by the
   experimental meshing procedure of Getfem.
 </para>
   </refsection>
@@ -63,7 +63,8 @@
     <listitem>
     <para><literal>MF = gf_mesher_object('cylinder', vec origin, vec n, scalar length, scalar radius)</literal></para>
 
-    <para>         Represents a cylinder (in any dimension) of a certain radius whose axis is determined by the origin, a vector <literal>n</literal> and a certain length.
+    <para>         Represents a cylinder (in any dimension) of a certain radius whose axis
+      is determined by the origin, a vector <literal>n</literal> and a certain length.
       
     </para>
     </listitem>
@@ -71,7 +72,8 @@
     <listitem>
     <para><literal>MF = gf_mesher_object('cone', vec origin, vec n, scalar length, scalar half_angle)</literal></para>
 
-    <para>         Represents a cone (in any dimension) of a certain half-angle (in radians) whose axis is determined by the origin, a vector <literal>n</literal> and a certain length.
+    <para>         Represents a cone (in any dimension) of a certain half-angle (in radians)
+      whose axis is determined by the origin, a vector <literal>n</literal> and a certain length.
       
     </para>
     </listitem>

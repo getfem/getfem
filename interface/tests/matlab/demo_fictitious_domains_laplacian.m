@@ -54,7 +54,7 @@ end
 
 ls=gf_levelset(m, ls_degree);
 ls2s=gf_levelset(m, ls_degree, 'with_secondary');
-ls2=gf_levelset(m, ls_degree, 'with_secondary');
+ls2=gf_LevelSet(m, ls_degree, 'with_secondary');
 
 mf_ls=gfObject(gf_levelset_get(ls, 'mf'));
 mf_ls2=gfObject(gf_levelset_get(ls2, 'mf'));
@@ -195,21 +195,21 @@ if (N == 2)
   figure(1);
   gf_plot(mfu, U, 'mesh','on', 'refine', 2);
   xlabel('x'); ylabel('y');
-  title('Displasment solution');
+  title('Displacement solution');
   figure(2);
   gf_plot(mfu0, map_Error, 'mesh','on', 'refine', 2);
   xlabel('x'); ylabel('y');
   title('Map Error in displacement');
 else
  % gf_plot(mfu, U, 'mesh','on', 'cvlst', gf_mesh_get(m, 'outer faces'), 'refine', 2);
- %Plot displasment
+ %Plot displacement
   figure(1);
   sl=gf_slice({'boundary',{'intersection',{'ball', -1,[0;0;0], R},{'planar',1,[0;0;0],[0;0;1]}}},mfu,3);
   %sl=gf_slice({'boundary',{'intersection',{'ball',-1,[0;0;0],R}}},mfu,1);
   Usl=gf_compute(mfu,U,'interpolate on', sl);
   gf_plot_slice(sl,'mesh_faces','on','mesh','off','data',Usl,'mesh_slice_edges','on');
   xlabel('x'); ylabel('y'); zlabel('z');
-  title('Displasment solution');
+  title('Displacement solution');
   
   
   %plot exact solution

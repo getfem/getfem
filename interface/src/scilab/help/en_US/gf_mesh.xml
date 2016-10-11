@@ -25,7 +25,7 @@
     <synopsis>M = gf_mesh('triangles grid', vec X, vec Y)</synopsis>
     <synopsis>M = gf_mesh('regular simplices', vec X[, vec Y[, vec Z,...]]['degree', int k]['noised'])</synopsis>
     <synopsis>M = gf_mesh('curved', mesh m, vec F)</synopsis>
-    <synopsis>M = gf_mesh('prismatic', mesh m, int nl)</synopsis>
+    <synopsis>M = gf_mesh('prismatic', mesh m, int nl[, int degree])</synopsis>
     <synopsis>M = gf_mesh('pt2D', mat P, imat T[, int n])</synopsis>
     <synopsis>M = gf_mesh('ptND', mat P, imat T)</synopsis>
     <synopsis>M = gf_mesh('load', string filename)</synopsis>
@@ -106,12 +106,15 @@
     </listitem>
 
     <listitem>
-    <para><literal>M = gf_mesh('prismatic', mesh m, int nl)</literal></para>
+    <para><literal>M = gf_mesh('prismatic', mesh m, int nl[, int degree])</literal></para>
 
     <para>         Extrude a prismatic mesh <literal>M</literal> from a mesh <literal>m</literal>.
 
-      In the additional dimension there are <literal>nl</literal> layers of elements built
-      from <literal></literal>0<literal></literal> to <literal></literal>1<literal></literal>.
+      In the additional dimension there are <literal>nl</literal> layers of elements
+      distributed from <literal></literal>0<literal></literal> to <literal></literal>1<literal></literal>.
+      If the optional parameter <literal>degree</literal> is provided with a value greater
+      than the default value of <literal></literal>1<literal></literal>, a non-linear transformation of
+      corresponding degree is considered in the extrusion direction.
     </para>
     </listitem>
 
@@ -183,20 +186,21 @@
     <listitem>
     <para><literal>M = gf_mesh('generate', mesher_object mo, scalar h[, int K = 1[, mat vertices]])</literal></para>
 
-    <para>         Call the (very) experimental mesher of Getfem on the geometry
+    <para>         Call the experimental mesher of Getfem on the geometry
       represented by <literal>mo</literal>. please control the conformity of the produced mesh.
-      You can add the mesher by adding a priori vertices in the array
+      You can help the mesher by adding a priori vertices in the array
       <literal>vertices</literal> which should be of size <literal></literal>n x m<literal></literal> where <literal></literal>n<literal></literal> n is the
       dimension of the mesh and <literal></literal>m<literal></literal> the number of points. <literal>h</literal> is
       approximate diameter of the elements. <literal>K</literal> is the degree of the
       mesh ( > 1 for curved boundaries).  The mesher try to optimize the
       quality of the elements. This operation may be time consuming.
       Note that if the mesh generation fails, because of some random
-      procedure used, it will not give necessarily the same result due
-      to random procedures used.
+      procedure used, it can be run again since it will not give necessarily
+      the same result due to random procedures used.
       The messages send to the console by the mesh generation can be
       desactivated using <literal>gf_util('trace level', 2)</literal>. More information
-      can be obtained by <literal>gf_util('trace level', 4)</literal>.
+      can be obtained by <literal>gf_util('trace level', 4)</literal>. See <literal></literal>gf_mesher_object<literal></literal>
+      to manipulate geometric primitives in order to desribe the geometry.
       
     </para>
     </listitem>

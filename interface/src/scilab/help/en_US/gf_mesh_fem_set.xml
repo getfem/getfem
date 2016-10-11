@@ -25,6 +25,8 @@
     <synopsis>gf_mesh_fem_set(mesh_fem MF, 'reduce meshfem', mat RM)</synopsis>
     <synopsis>gf_mesh_fem_set(mesh_fem MF, 'dof partition', ivec DOFP)</synopsis>
     <synopsis>gf_mesh_fem_set(mesh_fem MF, 'set partial', ivec DOFs[, ivec RCVs])</synopsis>
+    <synopsis>gf_mesh_fem_set(mesh_fem MF, 'adapt')</synopsis>
+    <synopsis>gf_mesh_fem_set(mesh_fem MF, 'set enriched dofs', ivec DOFs)</synopsis>
   </refsynopsisdiv>
 
   <refsection>
@@ -63,7 +65,7 @@
 
     <para>       Assigns a classical (Lagrange polynomial) discontinuous fem or order K.
 
-    Similar to gf_mesh_fem_set(mesh_fem MF, 'classical fem') except that
+    Similar to gf_mesh_fem_set(mesh_fem MF, 'set classical fem') except that
     FEM_PK_DISCONTINUOUS is used. Param <literal>alpha</literal> the node inset,
     <latex style="text"><![CDATA[0 \leq alpha < 1]]></latex>, where 0 implies usual dof nodes, greater values
     move the nodes toward the center of gravity, and 1 means that all
@@ -124,6 +126,22 @@
 
       If <literal>RCVs</literal> is given, no FEM will be put on the convexes listed
       in <literal>RCVs</literal>.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_mesh_fem_set(mesh_fem MF, 'adapt')</literal></para>
+
+    <para>         For a mesh_fem levelset object only. Adapt the mesh_fem object to a
+      change of the levelset function. 
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_mesh_fem_set(mesh_fem MF, 'set enriched dofs', ivec DOFs)</literal></para>
+
+    <para>         For a mesh_fem product object only. Set te enriched dofs and adapt the mesh_fem product.
+      
     </para>
     </listitem>
 

@@ -67,6 +67,8 @@
     <para><literal>GF = gf_global_function('parser', string val[, string grad[, string hess]])</literal></para>
 
     <para>         Create a global function from strings <literal>val</literal>, <literal>grad</literal> and <literal>hess</literal>.
+      This function could be improved by using the derivation of the generic
+      assembly language ... to be done. 
     </para>
     </listitem>
 

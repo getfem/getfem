@@ -61,7 +61,7 @@
     <listitem>
     <para><literal>gf_mesh_im_data_get(mesh_im_data MID, 'tensor size')</literal></para>
 
-    <para>         Output the size of the stored data (per integration point).
+    <para>         Output the dimensions of the stored data (per integration point).
     
     </para>
     </listitem>

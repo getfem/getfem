@@ -24,30 +24,33 @@
   <refsynopsisdiv>
     <title>Calling Sequence</title>
 
-    <synopsis>M = gf_asm('mass matrix', mesh_im mim, mesh_fem mf1[, mesh_fem mf2[, boundary_num]])</synopsis>
-    <synopsis>M = gf_asm('lsneuman matrix', mesh_im mim, mesh_fem mf1, mesh_fem mf2, levelset ls)</synopsis>
-    <synopsis>M = gf_asm('nlsgrad matrix', mesh_im mim, mesh_fem mf1, mesh_fem mf2, levelset ls)</synopsis>
-    <synopsis>M = gf_asm('stabilization patch matrix', @tm mesh, mesh_fem mf,  mesh_im mim, real ratio, real h)</synopsis>
-    <synopsis>L = gf_asm('laplacian', mesh_im mim, mesh_fem mf_u, mesh_fem mf_d, vec a)</synopsis>
-    <synopsis>Le = gf_asm('linear elasticity', mesh_im mim, mesh_fem mf_u, mesh_fem mf_d, vec lambda_d, vec mu_d)</synopsis>
+    <synopsis>{...} = gf_asm('generic', mesh_im mim, int order, string expression, int region, [model model,] [string varname, int is_variable[, {mesh_fem mf, mesh_imd mimd}], value], ...)</synopsis>
+    <synopsis>M = gf_asm('mass matrix', mesh_im mim, mesh_fem mf1[, mesh_fem mf2[, int region]])</synopsis>
+    <synopsis>L = gf_asm('laplacian', mesh_im mim, mesh_fem mf_u, mesh_fem mf_d, vec a[, int region])</synopsis>
+    <synopsis>Le = gf_asm('linear elasticity', mesh_im mim, mesh_fem mf_u, mesh_fem mf_d, vec lambda_d, vec mu_d[, int region])</synopsis>
     <synopsis>TRHS = gf_asm('nonlinear elasticity', mesh_im mim, mesh_fem mf_u, vec U, string law, mesh_fem mf_d, mat params, {'tangent matrix'|'rhs'|'incompressible tangent matrix', mesh_fem mf_p, vec P|'incompressible rhs', mesh_fem mf_p, vec P})</synopsis>
-    <synopsis>{K, B} = gf_asm('stokes', mesh_im mim, mesh_fem mf_u, mesh_fem mf_p, mesh_fem mf_d, vec nu)</synopsis>
-    <synopsis>A = gf_asm('helmholtz', mesh_im mim, mesh_fem mf_u, mesh_fem mf_d, vec k)</synopsis>
-    <synopsis>A = gf_asm('bilaplacian', mesh_im mim, mesh_fem mf_u, mesh_fem mf_d, vec a)</synopsis>
-    <synopsis>A = gf_asm('bilaplacian KL', mesh_im mim, mesh_fem mf_u, mesh_fem mf_d, vec a, vec nu)</synopsis>
-    <synopsis>V = gf_asm('volumic source', mesh_im mim, mesh_fem mf_u, mesh_fem mf_d, vec fd)</synopsis>
+    <synopsis>{K, B} = gf_asm('stokes', mesh_im mim, mesh_fem mf_u, mesh_fem mf_p, mesh_fem mf_d, vec nu[, int region])</synopsis>
+    <synopsis>A = gf_asm('helmholtz', mesh_im mim, mesh_fem mf_u, mesh_fem mf_d, vec k[, int region])</synopsis>
+    <synopsis>A = gf_asm('bilaplacian', mesh_im mim, mesh_fem mf_u, mesh_fem mf_d, vec a[, int region])</synopsis>
+    <synopsis>A = gf_asm('bilaplacian KL', mesh_im mim, mesh_fem mf_u, mesh_fem mf_d, vec a, vec nu[, int region])</synopsis>
+    <synopsis>V = gf_asm('volumic source', mesh_im mim, mesh_fem mf_u, mesh_fem mf_d, vec fd[, int region])</synopsis>
     <synopsis>B = gf_asm('boundary source', int bnum, mesh_im mim, mesh_fem mf_u, mesh_fem mf_d, vec G)</synopsis>
-    <synopsis>{HH, RR} = gf_asm('dirichlet', int bnum, mesh_im mim, mesh_fem mf_u, mesh_fem mf_d, mat H, vec R [, threshold])</synopsis>
+    <synopsis>{HH, RR} = gf_asm('dirichlet', int bnum, mesh_im mim, mesh_fem mf_u, mesh_fem mf_d, mat H, vec R [, scalar threshold])</synopsis>
     <synopsis>Q = gf_asm('boundary qu term',int boundary_num, mesh_im mim, mesh_fem mf_u, mesh_fem mf_d, mat q)</synopsis>
     <synopsis>gf_asm('define function', string name, int nb_args, string expression[, string expression_derivative_t[, string expression_derivative_u]])</synopsis>
     <synopsis>gf_asm('undefine function', string name)</synopsis>
-    <synopsis>{...} = gf_asm('generic', mesh_im mim, int order, string expression, int region, [string varname, int is_variable[, {mesh_fem mf, mesh_imd mimd}], value], ...)</synopsis>
+    <synopsis>gf_asm('define linear hardening function', string name, scalar sigma_y0, scalar H, ... [string 'Frobenius'])</synopsis>
+    <synopsis>gf_asm('define Ramberg Osgood hardening function', string name, scalar sigma_ref, {scalar eps_ref | scalar E, scalar alpha}, scalar n[, string 'Frobenius'])</synopsis>
+    <synopsis>gf_asm('expression analysis', string expression [, {@tm mesh | mesh_im mim}] [, der_order] [, model model] [, string varname, int is_variable[, {mesh_fem mf | mesh_imd mimd}], ...])</synopsis>
     <synopsis>{...} = gf_asm('volumic' [,CVLST], expr [, mesh_ims, mesh_fems, data...])</synopsis>
     <synopsis>{...} = gf_asm('boundary', int bnum, string expr [, mesh_im mim, mesh_fem mf, data...])</synopsis>
     <synopsis>Mi = gf_asm('interpolation matrix', mesh_fem mf, {mesh_fem mfi | vec pts})</synopsis>
     <synopsis>Me = gf_asm('extrapolation matrix',mesh_fem mf,  {mesh_fem mfe | vec pts})</synopsis>
     <synopsis>B = gf_asm('integral contact Uzawa projection', int bnum, mesh_im mim, mesh_fem mf_u, vec U, mesh_fem mf_lambda, vec vec_lambda, mesh_fem mf_obstacle, vec obstacle, scalar r [, {scalar coeff | mesh_fem mf_coeff, vec coeff} [, int option[, scalar alpha, vec W]]])</synopsis>
     <synopsis>B = gf_asm('level set normal source term', int bnum, mesh_im mim, mesh_fem mf_u, mesh_fem mf_lambda, vec vec_lambda, mesh_fem mf_levelset, vec levelset)</synopsis>
+    <synopsis>M = gf_asm('lsneuman matrix', mesh_im mim, mesh_fem mf1, mesh_fem mf2, levelset ls[, int region])</synopsis>
+    <synopsis>M = gf_asm('nlsgrad matrix', mesh_im mim, mesh_fem mf1, mesh_fem mf2, levelset ls[, int region])</synopsis>
+    <synopsis>M = gf_asm('stabilization patch matrix', @tm mesh, mesh_fem mf,  mesh_im mim, real ratio, real h)</synopsis>
   </refsynopsisdiv>
 
   <refsection>
@@ -69,65 +72,88 @@
 
     <itemizedlist>
     <listitem>
-    <para><literal>M = gf_asm('mass matrix', mesh_im mim, mesh_fem mf1[, mesh_fem mf2[, boundary_num]])</literal></para>
+    <para><literal>{...} = gf_asm('generic', mesh_im mim, int order, string expression, int region, [model model,] [string varname, int is_variable[, {mesh_fem mf, mesh_imd mimd}], value], ...)</literal></para>
+
+    <para>         High-level generic assembly procedure for volumic or boundary assembly.
+
+      Performs the generic assembly of <literal>expression</literal> with the integration
+      method <literal>mim</literal> on the mesh region of index <literal>region</literal> (-1 means all
+      the element of the mesh). The same mesh should be shared by
+      the integration method and all the finite element methods or
+      mesh_im_data corresponding to the variables.
+
+      <literal>order</literal> indicates either that the (scalar) potential
+      (order = 0) or the (vector) residual (order = 1) or the
+      tangent (matrix) (order = 2) is to be computed.
+
+      <literal>model</literal> is an optional parameter allowing to take into account
+      all variables and data of a model.
+
+      The variables and constant (data) are listed after the
+      region number (or optionally the model).
+      For each variable/constant, first the variable/constant
+      name should be given (as it is referred in the assembly string), then
+      1 if it is a variable or 0 for a constant, then the finite element
+      method if it is a fem variable/constant or the mesh_im_data if it is
+      data defined on integration points, and the vector representing
+      the value of the variable/constant. It is possible to give an arbitrary
+      number of variable/constant. The difference between a variable and a
+      constant is that automatic differentiation is done with respect to
+      variables only (see GetFEM++ user documentation). Test functions are
+      only available for variables, not for constants.
+
+      Note that if several variables are given, the assembly of the
+      tangent matrix/residual vector will be done considering the order
+      in the call of the function (the degrees of freedom of the first
+      variable, then of the second, and so on). If a model is provided,
+      all degrees of freedom of the model will be counted first.
+
+      For example, the L2 norm of a vector field "u" can be computed with::
+
+        gf_compute('L2 norm') or with the square root of:
+
+        gf_asm('generic', mim, 0, 'u.u', -1, 'u', 1, mf, U);
+
+      The nonhomogeneous Laplacian stiffness matrix of a scalar field can be evaluated with::
+
+        gf_asm('laplacian', mim, mf, mf_data, A) or equivalently with:
+
+        gf_asm('generic', mim, 2, 'A*Grad_Test2_u.Grad_Test_u', -1, 'u', 1, mf, U, 'A', 0, mf_data, A);
+
+        
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>M = gf_asm('mass matrix', mesh_im mim, mesh_fem mf1[, mesh_fem mf2[, int region]])</literal></para>
 
     <para>       Assembly of a mass matrix.
-    
+
     Return a spmat object.
     
     </para>
     </listitem>
 
     <listitem>
-    <para><literal>M = gf_asm('lsneuman matrix', mesh_im mim, mesh_fem mf1, mesh_fem mf2, levelset ls)</literal></para>
-
-    <para>         Assembly of a level set Neuman  matrix.
-      
-      Return a spmat object.
-      
-    </para>
-    </listitem>
-
-    <listitem>
-    <para><literal>M = gf_asm('nlsgrad matrix', mesh_im mim, mesh_fem mf1, mesh_fem mf2, levelset ls)</literal></para>
-
-    <para>         Assembly of a nlsgrad matrix.
-      
-      Return a spmat object.
-      
-    </para>
-    </listitem>
-
-    <listitem>
-    <para><literal>M = gf_asm('stabilization patch matrix', @tm mesh, mesh_fem mf,  mesh_im mim, real ratio, real h)</literal></para>
-
-    <para>         Assembly of stabilization patch matrix .
-      
-      Return a spmat object.
-      
-    </para>
-    </listitem>
-
-    <listitem>
-    <para><literal>L = gf_asm('laplacian', mesh_im mim, mesh_fem mf_u, mesh_fem mf_d, vec a)</literal></para>
+    <para><literal>L = gf_asm('laplacian', mesh_im mim, mesh_fem mf_u, mesh_fem mf_d, vec a[, int region])</literal></para>
 
     <para>         Assembly of the matrix for the Laplacian problem.
-      
+
       <latex style="text"><![CDATA[\nabla\cdot(a(x)\nabla u)]]></latex>  with <literal>a</literal> a scalar.
-      
+
       Return a spmat object.
       
     </para>
     </listitem>
 
     <listitem>
-    <para><literal>Le = gf_asm('linear elasticity', mesh_im mim, mesh_fem mf_u, mesh_fem mf_d, vec lambda_d, vec mu_d)</literal></para>
+    <para><literal>Le = gf_asm('linear elasticity', mesh_im mim, mesh_fem mf_u, mesh_fem mf_d, vec lambda_d, vec mu_d[, int region])</literal></para>
 
     <para>       Assembles of the matrix for the linear (isotropic) elasticity problem.
 
     <latex style="text"><![CDATA[\nabla\cdot(C(x):\nabla u)]]></latex>
     with <latex style="text"><![CDATA[C]]></latex> defined via <literal>lambda_d</literal> and <literal>mu_d</literal>.
-    
+
     Return a spmat object.
     
     </para>
@@ -137,10 +163,10 @@
     <para><literal>TRHS = gf_asm('nonlinear elasticity', mesh_im mim, mesh_fem mf_u, vec U, string law, mesh_fem mf_d, mat params, {'tangent matrix'|'rhs'|'incompressible tangent matrix', mesh_fem mf_p, vec P|'incompressible rhs', mesh_fem mf_p, vec P})</literal></para>
 
     <para>         Assembles terms (tangent matrix and right hand side) for nonlinear elasticity.
-      
+
       The solution <literal>U</literal> is required at the current time-step. The <literal>law</literal>
       may be choosen among:
-      
+
       - 'SaintVenant Kirchhoff':
         Linearized law, should be avoided). This law has the two usual
         Lame coefficients as parameters, called lambda and mu.
@@ -155,7 +181,7 @@
       - 'Ciarlet Geymonat':
         This law has 3 parameters, called lambda, mu and gamma, with
         gamma chosen such that gamma is in ]-lambda/2-mu, -mu[.
-      
+
     The parameters of the material law are described on the mesh_fem <literal>mf_d</literal>.
     The matrix <literal>params</literal> should have <literal>nbdof(mf_d)</literal> columns, each row
     correspounds to a parameter.
@@ -173,7 +199,7 @@
     </listitem>
 
     <listitem>
-    <para><literal>{K, B} = gf_asm('stokes', mesh_im mim, mesh_fem mf_u, mesh_fem mf_p, mesh_fem mf_d, vec nu)</literal></para>
+    <para><literal>{K, B} = gf_asm('stokes', mesh_im mim, mesh_fem mf_u, mesh_fem mf_p, mesh_fem mf_d, vec nu[, int region])</literal></para>
 
     <para>       Assembly of matrices for the Stokes problem.
 
@@ -192,7 +218,7 @@
     </listitem>
 
     <listitem>
-    <para><literal>A = gf_asm('helmholtz', mesh_im mim, mesh_fem mf_u, mesh_fem mf_d, vec k)</literal></para>
+    <para><literal>A = gf_asm('helmholtz', mesh_im mim, mesh_fem mf_u, mesh_fem mf_d, vec k[, int region])</literal></para>
 
     <para>       Assembly of the matrix for the Helmholtz problem.
 
@@ -204,7 +230,7 @@
     </listitem>
 
     <listitem>
-    <para><literal>A = gf_asm('bilaplacian', mesh_im mim, mesh_fem mf_u, mesh_fem mf_d, vec a)</literal></para>
+    <para><literal>A = gf_asm('bilaplacian', mesh_im mim, mesh_fem mf_u, mesh_fem mf_d, vec a[, int region])</literal></para>
 
     <para>         Assembly of the matrix for the Bilaplacian problem.
 
@@ -216,7 +242,7 @@
     </listitem>
 
     <listitem>
-    <para><literal>A = gf_asm('bilaplacian KL', mesh_im mim, mesh_fem mf_u, mesh_fem mf_d, vec a, vec nu)</literal></para>
+    <para><literal>A = gf_asm('bilaplacian KL', mesh_im mim, mesh_fem mf_u, mesh_fem mf_d, vec a, vec nu[, int region])</literal></para>
 
     <para>         Assembly of the matrix for the Bilaplacian problem with Kirchhoff-Love formulation.
 
@@ -228,7 +254,7 @@
     </listitem>
 
     <listitem>
-    <para><literal>V = gf_asm('volumic source', mesh_im mim, mesh_fem mf_u, mesh_fem mf_d, vec fd)</literal></para>
+    <para><literal>V = gf_asm('volumic source', mesh_im mim, mesh_fem mf_u, mesh_fem mf_d, vec fd[, int region])</literal></para>
 
     <para>       Assembly of a volumic source term.
 
@@ -256,7 +282,7 @@
     </listitem>
 
     <listitem>
-    <para><literal>{HH, RR} = gf_asm('dirichlet', int bnum, mesh_im mim, mesh_fem mf_u, mesh_fem mf_d, mat H, vec R [, threshold])</literal></para>
+    <para><literal>{HH, RR} = gf_asm('dirichlet', int bnum, mesh_im mim, mesh_fem mf_u, mesh_fem mf_d, mat H, vec R [, scalar threshold])</literal></para>
 
     <para>       Assembly of Dirichlet conditions of type <literal>h.u = r</literal>.
 
@@ -325,50 +351,32 @@
     </listitem>
 
     <listitem>
-    <para><literal>{...} = gf_asm('generic', mesh_im mim, int order, string expression, int region, [string varname, int is_variable[, {mesh_fem mf, mesh_imd mimd}], value], ...)</literal></para>
+    <para><literal>gf_asm('define linear hardening function', string name, scalar sigma_y0, scalar H, ... [string 'Frobenius'])</literal></para>
 
-    <para>         High-level generic assembly procedure for volumic assembly.
+    <para>         Define a new linear hardening function under the name <literal>name</literal>, with
+      initial yield stress <literal>sigma_y0</literal> and hardening modulus H.
+      If an extra string argument with the value 'Frobenius' is provided,
+      the hardening function is expressed in terms of Frobenius norms of its
+      input strain and output stress, instead of their Von-Mises equivalents. 
+    </para>
+    </listitem>
 
-      Performs the generic assembly of <literal>expression</literal> with the integration
-      method <literal>mim</literal> on the mesh region of index <literal>region</literal> (-1 means all 
-      the element of the mesh). The same mesh should be shared by
-      the integration method and all the finite element methods or
-      mesh_im_data corresponding to the variables.
+    <listitem>
+    <para><literal>gf_asm('define Ramberg Osgood hardening function', string name, scalar sigma_ref, {scalar eps_ref | scalar E, scalar alpha}, scalar n[, string 'Frobenius'])</literal></para>
 
-      <literal>order</literal> indicates either that the (scalar) potential
-      (order = 0) or the (vector) residual (order = 1) or the
-      tangent (matrix) (order = 2) is to be computed. 
+    <para>         Define a new Ramberg Osgood hardening function under the name <literal>name</literal>,
+      with initial yield stress <literal>sigma_y0</literal> and hardening modulus H.
+      If an extra string argument with the value 'Frobenius' is provided,
+      the hardening function is expressed in terms of Frobenius norms of its
+      input strain and output stress, instead of their Von-Mises equivalents. 
+    </para>
+    </listitem>
 
-      The variables and constant (data) are listed after the
-      region number. For each variable/constant, first the variable/constant
-      name should be given (as it is referred in the assembly string), then
-      1 if it is a variable or 0 for a constant, then the finite element
-      method if it is a fem variable/constant or the mesh_im_data if it is
-      data defined on integration points, and the vector representing
-      the value of the variable/constant. It is possible to give an arbitrary
-      number of variable/constant. The difference between a variable and a
-      constant is that automatic differentiation is done with respect to
-      variables only (see GetFEM++ user documentation). Test functions are
-      only available for variables, not for constants.
+    <listitem>
+    <para><literal>gf_asm('expression analysis', string expression [, {@tm mesh | mesh_im mim}] [, der_order] [, model model] [, string varname, int is_variable[, {mesh_fem mf | mesh_imd mimd}], ...])</literal></para>
 
-      Note that if several variables are given, the assembly of the
-      tangent matrix/residual vector will be done considering the order
-      in the call of the function (the degrees of freedom of the first
-      variable, then of the second, and so on).
-
-      For example, the L2 norm of a vector field "u" can be computed with::
-
-        gf_compute('L2 norm') or with the square root of:
-
-        gf_asm('generic', mim, 0, 'u.u', -1, 'u', 1, mf, U);
-
-      The nonhomogeneous Laplacian stiffness matrix of a scalar field can be evaluated with::
-
-        gf_asm('laplacian', mim, mf, mf_data, A) or equivalently with:
-
-        gf_asm('generic', mim, 2, 'A*Grad_Test2_u.Grad_Test_u', -1, 'u', 1, mf, U, 'A', 0, mf_data, A);
-
-        
+    <para>         Analyse a high-level generic assembly expression and print
+      information about the provided expression.
     </para>
     </listitem>
 
@@ -459,6 +467,36 @@
 
     Return a vec object.
     
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>M = gf_asm('lsneuman matrix', mesh_im mim, mesh_fem mf1, mesh_fem mf2, levelset ls[, int region])</literal></para>
+
+    <para>         Assembly of a level set Neuman  matrix.
+
+      Return a spmat object.
+      
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>M = gf_asm('nlsgrad matrix', mesh_im mim, mesh_fem mf1, mesh_fem mf2, levelset ls[, int region])</literal></para>
+
+    <para>         Assembly of a nlsgrad matrix.
+
+      Return a spmat object.
+      
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>M = gf_asm('stabilization patch matrix', @tm mesh, mesh_fem mf,  mesh_im mim, real ratio, real h)</literal></para>
+
+    <para>         Assembly of stabilization patch matrix .
+
+      Return a spmat object.
+      
     </para>
     </listitem>
 

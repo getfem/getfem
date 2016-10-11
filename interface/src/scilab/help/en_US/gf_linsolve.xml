@@ -21,6 +21,7 @@
     <synopsis>X = gf_linsolve('bicgstab', spmat M, vec b [, precond P][,'noisy'][,'res', r][,'maxiter', n])</synopsis>
     <synopsis>{U, cond} = gf_linsolve('lu', spmat M, vec b)</synopsis>
     <synopsis>{U, cond} = gf_linsolve('superlu', spmat M, vec b)</synopsis>
+    <synopsis>{U, cond} = gf_linsolve('mumps', spmat M, vec b)</synopsis>
   </refsynopsisdiv>
 
   <refsection>
@@ -74,6 +75,13 @@
     <para>       Solve <literal>M.U = b</literal> apply the SuperLU solver (sparse LU factorization).
 
     The condition number estimate <literal>cond</literal> is returned with the solution <literal>U</literal>.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>{U, cond} = gf_linsolve('mumps', spmat M, vec b)</literal></para>
+
+    <para>       Solve <literal>M.U = b</literal> using the MUMPS solver.
     </para>
     </listitem>
 

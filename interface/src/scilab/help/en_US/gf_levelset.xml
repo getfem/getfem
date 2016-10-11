@@ -64,7 +64,8 @@
 
       If <literal>ws</literal> (with secondary) is set; this levelset is represented by a
       primary function and a secondary function. If <literal>f1</literal> is set; the primary
-      function is defined by that expression. If <literal>f2</literal> is set; this levelset
+      function is defined by that expression (with the syntax of the high
+      generic assembly language). If <literal>f2</literal> is set; this levelset
       is represented by a primary function and a secondary function defined
       by these expressions. 
     </para>

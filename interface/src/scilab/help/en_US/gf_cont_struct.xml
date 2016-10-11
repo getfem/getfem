@@ -44,9 +44,9 @@
     determining the parametrisation, and <literal>dataname_current</literal> serves for actual
     values of this datum. <literal>sc_fac</literal> is a scale factor involved in the weighted
     norm used in the continuation.
-    
+
     Additional options:
-    
+
     - 'lsolver', string SOLVER_NAME
        name of the solver to be used for the incorporated linear systems
        (the default value is 'auto', which lets getfem choose itself);
@@ -83,7 +83,8 @@
        default value is 1e-8);
     - 'singularities', int SING
        activates tools for detection and treatment of singular points (1 for
-       limit points, 2 for bifurcation points);
+       limit points, 2 for bifurcation points and points requiring special
+       branching techniques);
     - 'non-smooth'
        determines that some special methods for non-smooth problems can be
        used;
@@ -98,12 +99,12 @@
        threshold variation for refining the division (the default value is
        0.02);
     - 'nb_dir', int NDIR
-       number of linear combinations of vectors in one subspace when
-       searching for new tangent predictions during location of new one-sided
-       branches (the default value is 40);
-    - 'nb_comb', int NCOMB
-       maximum number of couples of reference vectors forming the linear
-       combinations (the default value is 1);
+       total number of the linear combinations of one couple of reference
+       vectors when searching for new tangent predictions during location of
+       new one-sided branches (the default value is 40);
+    - 'nb_span', int NSPAN
+       total number of the couples of the reference vectors forming the
+       linear combinations (the default value is 1);
     - 'noisy' or 'very_noisy'
        determines how detailed information has to be displayed during the
        continuation process (residual values etc.).

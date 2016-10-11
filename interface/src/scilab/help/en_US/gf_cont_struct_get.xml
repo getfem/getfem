@@ -18,8 +18,14 @@
     <title>Calling Sequence</title>
 
     <synopsis>h = gf_cont_struct_get(cont_struct CS, 'init step size')</synopsis>
+    <synopsis>h = gf_cont_struct_get(cont_struct CS, 'min step size')</synopsis>
+    <synopsis>h = gf_cont_struct_get(cont_struct CS, 'max step size')</synopsis>
+    <synopsis>h = gf_cont_struct_get(cont_struct CS, 'step size decrement')</synopsis>
+    <synopsis>h = gf_cont_struct_get(cont_struct CS, 'step size increment')</synopsis>
+    <synopsis>[vec tangent_sol, scalar tangent_par] = gf_cont_struct_get(cont_struct CS, 'compute tangent', vec solution, scalar parameter, vec tangent_sol, scalar tangent_par)</synopsis>
     <synopsis>E = gf_cont_struct_get(cont_struct CS, 'init Moore-Penrose continuation', vec solution, scalar parameter, scalar init_dir)</synopsis>
     <synopsis>E = gf_cont_struct_get(cont_struct CS, 'Moore-Penrose continuation', vec solution, scalar parameter, vec tangent_sol, scalar tangent_par, scalar h)</synopsis>
+    <synopsis>t = gf_cont_struct_get(cont_struct CS, 'non-smooth bifurcation test', vec solution1, scalar parameter1, vec tangent_sol1, scalar tangent_par1, vec solution2, scalar parameter2, vec tangent_sol2, scalar tangent_par2)</synopsis>
     <synopsis>t = gf_cont_struct_get(cont_struct CS, 'bifurcation test function')</synopsis>
     <synopsis>{X, gamma, T_X, T_gamma} = gf_cont_struct_get(cont_struct CS, 'sing_data')</synopsis>
     <synopsis>s = gf_cont_struct_get(cont_struct CS, 'char')</synopsis>
@@ -45,6 +51,41 @@
     </listitem>
 
     <listitem>
+    <para><literal>h = gf_cont_struct_get(cont_struct CS, 'min step size')</literal></para>
+
+    <para>         Return the minimum step size for continuation.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>h = gf_cont_struct_get(cont_struct CS, 'max step size')</literal></para>
+
+    <para>         Return the maximum step size for continuation.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>h = gf_cont_struct_get(cont_struct CS, 'step size decrement')</literal></para>
+
+    <para>         Return the decrement ratio of the step size for continuation.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>h = gf_cont_struct_get(cont_struct CS, 'step size increment')</literal></para>
+
+    <para>         Return the increment ratio of the step size for continuation.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>[vec tangent_sol, scalar tangent_par] = gf_cont_struct_get(cont_struct CS, 'compute tangent', vec solution, scalar parameter, vec tangent_sol, scalar tangent_par)</literal></para>
+
+    <para>         Compute and return an updated tangent.
+    </para>
+    </listitem>
+
+    <listitem>
     <para><literal>E = gf_cont_struct_get(cont_struct CS, 'init Moore-Penrose continuation', vec solution, scalar parameter, scalar init_dir)</literal></para>
 
     <para>         Initialise the Moore-Penrose continuation: Return a unit tangent to
@@ -61,11 +102,21 @@
     <para>         Compute one step of the Moore-Penrose continuation: Take the point
       given by <literal>solution</literal> and <literal>parameter</literal>, the tangent given by <literal>tangent_sol</literal>
       and <literal>tangent_par</literal>, and the step size <literal>h</literal>. Return a new point on the
-      solution curve, the corresponding tangent and a step size for the next
-      step and optionally the size of the current step. If the returned step
-      size equals zero, the continuation has failed. Optionally, return the
-      type of any detected singular point.
+      solution curve, the corresponding tangent, a step size for the next
+      step and optionally the current step size. If the returned step
+      size equals zero, the continuation has failed. Optionally, return
+      the type of any detected singular point.
       NOTE: The new point need not to be saved in the model in the end!
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>t = gf_cont_struct_get(cont_struct CS, 'non-smooth bifurcation test', vec solution1, scalar parameter1, vec tangent_sol1, scalar tangent_par1, vec solution2, scalar parameter2, vec tangent_sol2, scalar tangent_par2)</literal></para>
+
+    <para>         Test for a non-smooth bifurcation point between the point given by
+      <literal>solution1</literal> and <literal>parameter1</literal> with the tangent given by <literal>tangent_sol1</literal>
+      and <literal>tangent_par1</literal> and the point given by <literal>solution2</literal> and <literal>parameter2</literal>
+      with the tangent given by <literal>tangent_sol2</literal> and <literal>tangent_par2</literal>.
     </para>
     </listitem>
 
@@ -81,9 +132,9 @@
     <listitem>
     <para><literal>{X, gamma, T_X, T_gamma} = gf_cont_struct_get(cont_struct CS, 'sing_data')</literal></para>
 
-    <para>         Return a singular point (<literal>X</literal>, <literal>gamma</literal>) encountered in the last
-      continuation step (if any) and a couple of arrays (<literal>T_X</literal>, <literal>T_gamma</literal>) of
-      tangents to all located solution branches, which emanate from there.
+    <para>         Return a singular point (<literal>X</literal>, <literal>gamma</literal>) stored in the cont_struct object and a
+      couple of arrays (<literal>T_X</literal>, <literal>T_gamma</literal>) of tangents to all located solution
+      branches that emanate from there.
     </para>
     </listitem>
 

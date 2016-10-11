@@ -13,8 +13,6 @@
   description of a model. This includes the global tangent matrix, the right
   hand side and the constraints. There are two kinds of models, the <literal>real</literal>
   and the <literal>complex</literal> models.
-
-  model object is the evolution for getfem++ 4.0 of the mdstate object.
 </refpurpose>
   </refnamediv>
 
@@ -33,8 +31,6 @@
   description of a model. This includes the global tangent matrix, the right
   hand side and the constraints. There are two kinds of models, the <literal>real</literal>
   and the <literal>complex</literal> models.
-
-  model object is the evolution for getfem++ 4.0 of the mdstate object.
 </para>
   </refsection>
 

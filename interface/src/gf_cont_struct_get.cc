@@ -230,8 +230,8 @@ void gf_cont_struct_get(getfemint::mexargs_in& m_in,
        the non-smooth point. It is supposed that the point given by
        `solution` and `parameter` is a point on a smooth solution branch
        within the distance equal to the minimum step size from the end point
-       of this branch, and the corresponding tangent that is directed towards
-       the end point is given by `tangent_sol` and `tangent_par`.@*/
+       of this branch, and the corresponding tangent given by `tangent_sol`
+       and `tangent_par` is directed towards the end point.@*/
     sub_command
       ("non-smooth branching", 4, 4, 0, 0,
 

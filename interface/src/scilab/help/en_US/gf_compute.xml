@@ -30,8 +30,8 @@
     <synopsis>Ui = gf_compute(mesh_fem MF, vec U, 'interpolate on', {mesh_fem mfi | slice sli | vec pts})</synopsis>
     <synopsis>Ue = gf_compute(mesh_fem MF, vec U, 'extrapolate on', mesh_fem mfe)</synopsis>
     <synopsis>E = gf_compute(mesh_fem MF, vec U, 'error estimate', mesh_im mim)</synopsis>
-    <synopsis>E = gf_compute(mesh_fem MF, vec U, 'error estimate nitsche', mesh_im mim, int GAMMAC, int GAMMAN, scalar lambda_, scalar mu_, scalar gamma0, scalar f_coeff)</synopsis>
-    <synopsis>E = gf_compute(mesh_fem MF, vec U, 'convect', mesh_fem mf_v, vec V, scalar dt, int nt[, string option[, vec per_min, vec per_max]])</synopsis>
+    <synopsis>E = gf_compute(mesh_fem MF, vec U, 'error estimate nitsche', mesh_im mim, int GAMMAC, int GAMMAN, scalar lambda_, scalar mu_, scalar gamma0, scalar f_coeff, scalar vertical_force)</synopsis>
+    <synopsis>gf_compute(mesh_fem MF, vec U, 'convect', mesh_fem mf_v, vec V, scalar dt, int nt[, string option[, vec per_min, vec per_max]])</synopsis>
   </refsynopsisdiv>
 
   <refsection>
@@ -210,7 +210,7 @@
     </listitem>
 
     <listitem>
-    <para><literal>E = gf_compute(mesh_fem MF, vec U, 'error estimate nitsche', mesh_im mim, int GAMMAC, int GAMMAN, scalar lambda_, scalar mu_, scalar gamma0, scalar f_coeff)</literal></para>
+    <para><literal>E = gf_compute(mesh_fem MF, vec U, 'error estimate nitsche', mesh_im mim, int GAMMAC, int GAMMAN, scalar lambda_, scalar mu_, scalar gamma0, scalar f_coeff, scalar vertical_force)</literal></para>
 
     <para>       Compute an a posteriori error estimate in the case of Nitsche method.
 
@@ -220,19 +220,21 @@
     </listitem>
 
     <listitem>
-    <para><literal>E = gf_compute(mesh_fem MF, vec U, 'convect', mesh_fem mf_v, vec V, scalar dt, int nt[, string option[, vec per_min, vec per_max]])</literal></para>
+    <para><literal>gf_compute(mesh_fem MF, vec U, 'convect', mesh_fem mf_v, vec V, scalar dt, int nt[, string option[, vec per_min, vec per_max]])</literal></para>
 
     <para>       Compute a convection of <literal>U</literal> with regards to a steady state velocity
-    field <literal>V</literal> with a Characteristic-Galerkin method. This
-    method is restricted to pure Lagrange fems for U. <literal>mf_v</literal> should represent
-    a continuous finite element method. <literal>dt</literal> is the integration time and <literal>nt</literal>
-    is the number of integration step on the caracteristics. <literal>option</literal> is an
-    option for the part of the boundary where there is a re-entrant convection.
+    field <literal>V</literal> with a Characteristic-Galerkin method. The result is returned
+    in-place in <literal>U</literal>.
+    This method is restricted to pure Lagrange fems for U. <literal>mf_v</literal> should
+    represent a continuous finite element method. <literal>dt</literal> is the integration time
+    and <literal>nt</literal> is the number of integration step on the caracteristics. <literal>option</literal>
+    is an option for the part of the boundary where there is a re-entrant
+    convection.
     <literal>option = 'extrapolation'</literal> for an extrapolation on the nearest element,
     <literal>option = 'unchanged'</literal> for a constant value on that boundary or
     <literal>option = 'periodicity'</literal> for a peridiodic boundary. For this latter option
     the two vectors per_min, per_max has to be given and represent the limits
-    of the periodic domain (on components where per_max[k] &lt; per_min[k]
+    of the periodic domain (on components where per_max[k] < per_min[k]
     no operation is done).
     This method is rather dissipative, but stable.
     

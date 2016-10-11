@@ -29,6 +29,7 @@
     <synopsis>gf_spmat_get(spmat S, 'save', string format, string filename)</synopsis>
     <synopsis>s = gf_spmat_get(spmat S, 'char')</synopsis>
     <synopsis>gf_spmat_get(spmat S, 'display')</synopsis>
+    <synopsis>{mantissa_r, mantissa_i, exponent} = gf_spmat_get(spmat S, 'determinant')</synopsis>
   </refsynopsisdiv>
 
   <refsection>
@@ -168,6 +169,13 @@
     <para><literal>gf_spmat_get(spmat S, 'display')</literal></para>
 
     <para>         displays a short summary for a spmat object.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>{mantissa_r, mantissa_i, exponent} = gf_spmat_get(spmat S, 'determinant')</literal></para>
+
+    <para>         returns the matrix determinant calculated using MUMPS.
     </para>
     </listitem>
 

@@ -1956,9 +1956,10 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       This law supports to possibilities of unknown variables to solve for
       defined by means of `unknowns_type` set to either
       'DISPLACEMENT_AND_PLASTIC_MULTIPLIER' (integer value 1) or
-      'DISPLACEMENT_AND_PLASTIC_MULTIPLIER_AND_PRESSURE' (integer value 3)
+      'DISPLACEMENT_AND_PLASTIC_MULTIPLIER_AND_PRESSURE' (integer value 3).
       The  "Simo_Miehe" law expects as `varnames` a set of the
       following names that have to be defined as variables in the model:
+
       - the displacement variable which has to be defined as an unknown,
       - the plastic multiplier which has also defined as an unknown,
       - optionally the pressure variable for a mixed displacement-pressure
@@ -1971,15 +1972,18 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         Cauchy-Green tensor at the previous time step
         (it has to be a 4 element vector for plane strain 2D problems
         and a 6 element vector for 3D problems).
+
       The  "Simo_Miehe" law also expects as `params` a set of the
       following three parameters:
+
       - an expression for the initial bulk modulus K,
       - an expression for the initial shear modulus G,
       - the name of a user predefined function that decribes
         the yield limit as a function of the hardening variable
         (both the yield limit and the hardening variable values are
-         assumed to be Frobenius norms of appropriate stress and strain
-         tensors, respectively),
+        assumed to be Frobenius norms of appropriate stress and strain
+        tensors, respectively).
+
       As usual, `region` is an optional mesh region on which the term is added.
       If it is not specified, it is added on the whole mesh.
       Return the brick index in the model.@*/

@@ -20,7 +20,7 @@
 ===========================================================================*/
 
 /** @file getfem_continuation.cc
-    @author Tomas Ligursky <tomas.ligursky@gmail.com>
+    @author Tomas Ligursky <tomas.ligursky@ugn.cas.cz>
     @author Yves Renard <Yves.Renard@insa-lyon.fr>
     @author Konstantinos Poulios <logari81@googlemail.com>
     @date January 12, 2014.

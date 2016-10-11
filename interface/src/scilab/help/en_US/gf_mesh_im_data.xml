@@ -16,7 +16,7 @@
   <refsynopsisdiv>
     <title>Calling Sequence</title>
 
-    <synopsis>MIMD = gf_mesh_im_data(mesh_im mim)</synopsis>
+    <synopsis>MIMD = gf_mesh_im_data(mesh_im mim, int region, ivec size)</synopsis>
   </refsynopsisdiv>
 
   <refsection>
@@ -32,9 +32,13 @@
 
     <itemizedlist>
     <listitem>
-    <para><literal>MIMD = gf_mesh_im_data(mesh_im mim)</literal></para>
+    <para><literal>MIMD = gf_mesh_im_data(mesh_im mim, int region, ivec size)</literal></para>
 
-    <para>       Build a new mesh_imd object linked to a mesh_im object.
+    <para>       Build a new mesh_imd object linked to a mesh_im object. If <literal>region</literal> is
+    provided, considered integration points are filtered in this region.
+    <literal>size</literal> is a vector of integers that specifies the dimensions of the
+    stored data per integration point. If not given, the scalar stored
+    data are considered.
   
     </para>
     </listitem>

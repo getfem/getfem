@@ -27,7 +27,7 @@
       <varlistentry>
         <term>hobj</term>
         <listitem>
-          <para>a handle for any getfem++ object</para>
+          <para>a handle for any GetFEM++ object</para>
         </listitem>
       </varlistentry>
 
@@ -74,14 +74,14 @@
       <varlistentry>
         <term>spmat</term>
         <listitem>
-          <para>sparse matrix (both matlab native sparse matrices, and getfem sparse matrices)</para>
+          <para>sparse matrix (both Matlab native sparse matrices, and GetFEM sparse matrices)</para>
         </listitem>
       </varlistentry>
 
       <varlistentry>
         <term>precond</term>
         <listitem>
-          <para>getfem preconditioner object</para>
+          <para>GetFEM preconditioner object</para>
         </listitem>
       </varlistentry>
 
@@ -180,13 +180,6 @@
         <term>cont_struct</term>
         <listitem>
           <para>continuation-structure descriptor</para>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry>
-        <term>multi_contact_frame</term>
-        <listitem>
-          <para>multi-contact descriptor</para>
         </listitem>
       </varlistentry>
 
