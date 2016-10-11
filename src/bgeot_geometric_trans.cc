@@ -84,11 +84,11 @@ namespace bgeot {
       size_type P = pgt_->structure()->dim();
       K_.base_resize(N(), P);
       if (have_pgp()) {
-	gmm::mult(G(), pgp_->grad(ii_), K_);
+	      pgt_->compute_K_matrix(G(), pgp_->grad(ii_), K_);
       } else {
 	PC.base_resize(pgt()->nb_points(), P);
         pgt()->poly_vector_grad(xref(), PC);
-        gmm::mult(G(), PC, K_);
+        pgt_->compute_K_matrix(G(), PC, K_);
       }
       have_K_ = true;
     }
