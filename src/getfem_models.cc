@@ -244,6 +244,7 @@ namespace getfem {
   }
 
   bool model::is_disabled_variable(const std::string &name) const {
+    if (!(name.compare(0, 9, "Version1_"))) return false;
     VAR_SET::const_iterator it = find_variable(name);
     if (!(it->second.is_variable)) return false;
     if (it->second.is_affine_dependent)
@@ -252,6 +253,7 @@ namespace getfem {
   }
 
   bool model::is_data(const std::string &name) const {
+    if (!(name.compare(0, 9, "Version1_"))) return true;
     VAR_SET::const_iterator it = find_variable(name);
     if (it->second.is_affine_dependent)
       it = variables.find(it->second.org_name);
@@ -259,11 +261,13 @@ namespace getfem {
   }
 
   bool model::is_true_data(const std::string &name) const {
+    if (!(name.compare(0, 9, "Version1_"))) return true;
     VAR_SET::const_iterator it = find_variable(name);
     return (!(it->second.is_variable));
   }
 
   bool model::is_affine_dependent_variable(const std::string &name) const {
+    if (!(name.compare(0, 9, "Version1_"))) return false;
     VAR_SET::const_iterator it = find_variable(name);
     return (it->second.is_affine_dependent);
   }
@@ -292,13 +296,21 @@ namespace getfem {
   }
 
   bool model::is_im_data(const std::string &name) const {
-    VAR_SET::const_iterator it = find_variable(name);
+    VAR_SET::const_iterator it;
+    if (!(name.compare(0, 9, "Version1_")))
+      it = find_variable(name.substr(9));
+    else
+      it = find_variable(name);
     return (it->second.pim_data != 0);
   }
 
   const im_data *
   model::pim_data_of_variable(const std::string &name) const {
-    VAR_SET::const_iterator it = find_variable(name);
+    VAR_SET::const_iterator it;
+    if (!(name.compare(0, 9, "Version1_")))
+      it = find_variable(name.substr(9));
+    else
+      it = find_variable(name);
     return it->second.pim_data;
   }
 
@@ -3008,7 +3020,13 @@ namespace getfem {
   model::real_variable(const std::string &name, size_type niter) const {
     GMM_ASSERT1(!complex_version, "This model is a complex one");
     context_check();
-    VAR_SET::iterator it = variables.find(name);
+    VAR_SET::iterator it;
+    if (!(name.compare(0, 9, "Version1_"))) {
+      it = variables.find(name.substr(9)); niter = 1;
+    } else {
+      it = variables.find(name);
+    }
+    
     GMM_ASSERT1(it!=variables.end(), "Undefined variable " << name);
     if (act_size_to_be_done && it->second.is_fem_dofs) {
       if (it->second.filter != VDESCRFILTER_NO)
@@ -3018,8 +3036,7 @@ namespace getfem {
     }
     if (niter == size_type(-1)) niter = it->second.default_iter;
     GMM_ASSERT1(it->second.n_iter + it->second.n_temp_iter > niter,
-                "Invalid iteration number "
-                << niter << " for " << name);
+                "Invalid iteration number " << niter << " for " << name);
     return it->second.real_value[niter];
   }
 
@@ -3027,7 +3044,12 @@ namespace getfem {
   model::complex_variable(const std::string &name, size_type niter) const {
     GMM_ASSERT1(complex_version, "This model is a real one");
     context_check();
-    VAR_SET::iterator it = variables.find(name);
+    VAR_SET::iterator it;
+    if (!(name.compare(0, 9, "Version1_"))) {
+      it = variables.find(name.substr(9)); niter = 1;
+    } else {
+      it = variables.find(name);
+    }
     GMM_ASSERT1(it!=variables.end(), "Undefined variable " << name);
     if (act_size_to_be_done && it->second.is_fem_dofs) {
       if (it->second.filter != VDESCRFILTER_NO)
@@ -3046,7 +3068,12 @@ namespace getfem {
   model::set_real_variable(const std::string &name, size_type niter) const {
     GMM_ASSERT1(!complex_version, "This model is a complex one");
     context_check();
-    VAR_SET::iterator it = variables.find(name);
+    VAR_SET::iterator it;
+    if (!(name.compare(0, 9, "Version1_"))) {
+      it = variables.find(name.substr(9)); niter = 1;
+    } else {
+      it = variables.find(name);
+    }
     GMM_ASSERT1(it!=variables.end(), "Undefined variable " << name);
     if (act_size_to_be_done && it->second.is_fem_dofs) {
       if (it->second.filter != VDESCRFILTER_NO)
@@ -3066,7 +3093,12 @@ namespace getfem {
   model::set_complex_variable(const std::string &name, size_type niter) const {
     GMM_ASSERT1(complex_version, "This model is a real one");
     context_check();
-    VAR_SET::iterator it = variables.find(name);
+    VAR_SET::iterator it;
+    if (!(name.compare(0, 9, "Version1_"))) {
+      it = variables.find(name.substr(9)); niter = 1;
+    } else {
+      it = variables.find(name);
+    }
     GMM_ASSERT1(it!=variables.end(), "Undefined variable " << name);
     if (act_size_to_be_done && it->second.is_fem_dofs) {
       if (it->second.filter != VDESCRFILTER_NO)
