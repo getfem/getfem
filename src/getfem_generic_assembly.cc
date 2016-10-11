@@ -7412,7 +7412,8 @@ namespace getfem {
         break;
 
       case GA_SYM: case GA_SKEW:
-        if (dim0 != 2 || size0.back() != size0[size0.size()-2])
+        if (child0->tensor_proper_size() != 1 &&
+	    (dim0 != 2 || size0.back() != size0[size0.size()-2]))
           ga_throw_error(expr, pnode->pos, "Sym and Skew operators are for "
                          "square matrices only.");
         mi = size0;
