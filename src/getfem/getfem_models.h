@@ -2255,6 +2255,16 @@ namespace getfem {
     return ind;
   }
 
+  template <typename MAT>
+  size_type add_constraint_with_multipliers
+  (model &md, const std::string &varname, const std::string &multname,
+   const MAT &B, const std::string &Lname) {
+    size_type ind = add_constraint_with_multipliers(md, varname, multname);
+    set_private_data_rhs(md, ind, Lname);
+    set_private_data_matrix(md, ind, B);
+    return ind;
+  }
+
   size_type APIDECL add_explicit_matrix(model &md, const std::string &varname1,
                                         const std::string &varname2,
                                         bool issymmetric, bool iscoercive);

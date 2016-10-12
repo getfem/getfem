@@ -154,6 +154,17 @@ namespace getfem {
     }
   };
 
+  template <typename MAT, typename VECT>
+  struct linear_solver_dense_lu : public abstract_linear_solver<MAT, VECT> {
+    void operator ()(const MAT &M, VECT &x, const VECT &b,
+                     gmm::iteration &iter) const {
+      typedef typename gmm::linalg_traits<MAT>::value_type T;
+      gmm::dense_matrix<T> MM(gmm::mat_nrows(M),gmm::mat_ncols(M));
+      gmm::copy(M, MM);
+      gmm::lu_solve(MM, x, b);
+      iter.enforce_converged(true);
+    }
+  };
 
 #ifdef GMM_USES_MUMPS
   template <typename MAT, typename VECT>
@@ -611,6 +622,8 @@ namespace getfem {
     std::shared_ptr<abstract_linear_solver<MATRIX, VECTOR>> p;
     if (bgeot::casecmp(name, "superlu") == 0)
       return std::make_shared<linear_solver_superlu<MATRIX, VECTOR>>();
+    else if (bgeot::casecmp(name, "dense_lu") == 0)
+      return std::make_shared<linear_solver_dense_lu<MATRIX, VECTOR>>();
     else if (bgeot::casecmp(name, "mumps") == 0) {
 #ifdef GMM_USES_MUMPS
 # if GETFEM_PARA_LEVEL <= 1
