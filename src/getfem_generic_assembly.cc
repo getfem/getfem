@@ -2717,7 +2717,7 @@ namespace getfem {
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: Pfp update");
       if (ctx.have_pgp()) {
-	size_type cv = ctx.is_convex_num_valid()
+        size_type cv = ctx.is_convex_num_valid()
                      ? ctx.convex_num() : mf.convex_index().first_true();
         pfem pf = mf.fem_of_element(cv);
         if (!pfp || pf != pfp->get_pfem() ||
@@ -2950,9 +2950,9 @@ namespace getfem {
       // ctx.base_value(t);
       if (pfp) ctx.pfp_base_value(t, pfp);
       else {
-	ctx.set_pf(mf.fem_of_element(ctx.convex_num()));
-	GMM_ASSERT1(ctx.pf(), "Undefined finite element method");
-	ctx.base_value(t);
+        ctx.set_pf(mf.fem_of_element(ctx.convex_num()));
+        GMM_ASSERT1(ctx.pf(), "Undefined finite element method");
+        ctx.base_value(t);
       }
       return 0;
     }
@@ -3019,9 +3019,9 @@ namespace getfem {
       // ctx.grad_base_value(t);
       if (pfp) ctx.pfp_grad_base_value(t, pfp);
       else {
-	ctx.set_pf(mf.fem_of_element(ctx.convex_num()));
-	GMM_ASSERT1(ctx.pf(), "Undefined finite element method");
-	ctx.grad_base_value(t);
+        ctx.set_pf(mf.fem_of_element(ctx.convex_num()));
+        GMM_ASSERT1(ctx.pf(), "Undefined finite element method");
+        ctx.grad_base_value(t);
       }
       return 0;
     }
@@ -3281,29 +3281,29 @@ namespace getfem {
       if (Qmult == 1) {
         gmm::copy(Z.as_vector(), t.as_vector());
       } else {
-	size_type ndof = Z.sizes()[0];
-	GA_DEBUG_ASSERT(t.size() == Z.size() * Qmult * Qmult,
-			"Wrong size for base vector");
-	gmm::clear(t.as_vector());
-	base_tensor::const_iterator itZ = Z.begin();
-	size_type s = t.sizes()[0], ss = s * Qmult, sss = s+1;
-	
-	// Performs t(i*Qmult+j, k*Qmult + j) = Z(i,k);
-	for (size_type k = 0; k < target_dim; ++k) {
-	  base_tensor::iterator it = t.begin() + (ss * k);
-	  for (size_type i = 0; i < ndof; ++i, ++itZ) {
-	    if (i) it += Qmult;
-	    base_tensor::iterator it2 = it;
-	    *it2 = *itZ;
-	    for (size_type j = 1; j < Qmult; ++j) { it2 += sss; *it2 = *itZ; }
-	  }
-	}
+        size_type ndof = Z.sizes()[0];
+        GA_DEBUG_ASSERT(t.size() == Z.size() * Qmult * Qmult,
+                        "Wrong size for base vector");
+        gmm::clear(t.as_vector());
+        base_tensor::const_iterator itZ = Z.begin();
+        size_type s = t.sizes()[0], ss = s * Qmult, sss = s+1;
+        
+        // Performs t(i*Qmult+j, k*Qmult + j) = Z(i,k);
+        for (size_type k = 0; k < target_dim; ++k) {
+          base_tensor::iterator it = t.begin() + (ss * k);
+          for (size_type i = 0; i < ndof; ++i, ++itZ) {
+            if (i) it += Qmult;
+            base_tensor::iterator it2 = it;
+            *it2 = *itZ;
+            for (size_type j = 1; j < Qmult; ++j) { it2 += sss; *it2 = *itZ; }
+          }
+        }
       }
       return 0;
     }
 
     ga_instruction_copy_val_base(base_tensor &tt, const base_tensor &Z_,
-				 size_type q) : t(tt), Z(Z_), qdim(q) {}
+                                 size_type q) : t(tt), Z(Z_), qdim(q) {}
   };
 
   struct ga_instruction_copy_grad_base : public ga_instruction_copy_val_base {
@@ -3315,10 +3315,10 @@ namespace getfem {
       if (Qmult == 1) {
         gmm::copy(Z.as_vector(), t.as_vector());
       } else {
-	size_type ndof = Z.sizes()[0];
-	size_type N = Z.sizes()[2];
-	GA_DEBUG_ASSERT(t.size() == Z.size() * Qmult * Qmult,
-			"Wrong size for gradient vector");
+        size_type ndof = Z.sizes()[0];
+        size_type N = Z.sizes()[2];
+        GA_DEBUG_ASSERT(t.size() == Z.size() * Qmult * Qmult,
+                        "Wrong size for gradient vector");
         gmm::clear(t.as_vector());
         base_tensor::const_iterator itZ = Z.begin();
         size_type s = t.sizes()[0], ss = s * Qmult, sss = s+1;
@@ -3340,7 +3340,7 @@ namespace getfem {
     }
 
     ga_instruction_copy_grad_base(base_tensor &tt, const base_tensor &Z_,
-				  size_type q)
+                                  size_type q)
       : ga_instruction_copy_val_base(tt,Z_,q) {}
   };
 
@@ -3353,9 +3353,9 @@ namespace getfem {
       if (Qmult == 1) {
         gmm::copy(Z.as_vector(), t.as_vector());
       } else {
-	size_type ndof = Z.sizes()[0];
-	size_type N2 = Z.sizes()[2];
-	GA_DEBUG_ASSERT(t.size() == Z.size() * Qmult * Qmult,
+        size_type ndof = Z.sizes()[0];
+        size_type N2 = Z.sizes()[2];
+        GA_DEBUG_ASSERT(t.size() == Z.size() * Qmult * Qmult,
                       "Wrong size for Hessian vector");
         gmm::clear(t.as_vector());
         base_tensor::const_iterator itZ = Z.begin();
@@ -3378,7 +3378,7 @@ namespace getfem {
     }
 
     ga_instruction_copy_hess_base(base_tensor &tt, const base_tensor &Z_,
-				  size_type q)
+                                  size_type q)
     : ga_instruction_copy_val_base(tt, Z_, q) {}
   };
 
@@ -3421,7 +3421,7 @@ namespace getfem {
     }
 
     ga_instruction_copy_diverg_base(base_tensor &tt, const base_tensor &Z_,
-				    size_type q)
+                                    size_type q)
       : ga_instruction_copy_val_base(tt, Z_, q) {}
   };
 
@@ -4474,7 +4474,7 @@ namespace getfem {
       GA_DEBUG_INFO("Instruction: unrolled reduction operation of size " << N);
       size_type s1 = tc1.size()/N, s2 = tc2.size()/N;
       GA_DEBUG_ASSERT(t.size() == s1*s2, "Internal error, " << t.size()
-		      << " != " << s1 << "*" << s2);
+                      << " != " << s1 << "*" << s2);
       base_tensor::iterator it1=tc1.begin(), it2=tc2.begin(), it2end=it2 + s2;
       for (base_tensor::iterator it = t.begin(); it != t.end(); ++it) {
         *it = reduc_elem_unrolled__<N>(it1, it2, s1, s2);
@@ -4483,7 +4483,7 @@ namespace getfem {
       return 0;
     }
     ga_instruction_reduction_unrolled(base_tensor &t_, base_tensor &tc1_,
-				      base_tensor &tc2_)
+                                      base_tensor &tc2_)
       : t(t_), tc1(tc1_), tc2(tc2_) {}
   };
 
@@ -4552,15 +4552,15 @@ namespace getfem {
     base_tensor &t, &tc1, &tc2;
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: doubly unrolled reduction operation of size "
-		    << S2 << "x" << N);
+                    << S2 << "x" << N);
       size_type s1 = tc1.size()/N, s2 = tc2.size()/N;
       GA_DEBUG_ASSERT(s2 == S2, "Internal error");
       GA_DEBUG_ASSERT(t.size() == s1*s2, "Internal error, " << t.size()
-		      << " != " << s1 << "*" << s2);
+                      << " != " << s1 << "*" << s2);
       base_tensor::iterator it = t.begin(), it1 = tc1.begin();
       for (size_type ii = 0; ii < s1; ++ii, ++it1) {
-	base_tensor::iterator it2 = tc2.begin();
-	reduc_elem_d_unrolled__<N, S2>(it, it1, it2, s1, s2);
+        base_tensor::iterator it2 = tc2.begin();
+        reduc_elem_d_unrolled__<N, S2>(it, it1, it2, s1, s2);
       }
       GA_DEBUG_ASSERT(it == t.end(), "Internal error");
       return 0;
@@ -4574,37 +4574,37 @@ namespace getfem {
   (base_tensor &t, base_tensor &tc1, base_tensor &tc2, size_type n) {
     switch(n) {
     case  2 : return std::make_shared<ga_instruction_reduction_unrolled< 2>>
-	(t, tc1, tc2);
+                     (t, tc1, tc2);
     case  3 : return std::make_shared<ga_instruction_reduction_unrolled< 3>>
-	(t, tc1, tc2);
+                     (t, tc1, tc2);
     case  4 : return std::make_shared<ga_instruction_reduction_unrolled< 4>>
-	(t, tc1, tc2);
+                     (t, tc1, tc2);
     case  5 : return std::make_shared<ga_instruction_reduction_unrolled< 5>>
-	(t, tc1, tc2);
+                     (t, tc1, tc2);
     case  6 : return std::make_shared<ga_instruction_reduction_unrolled< 6>>
-	(t, tc1, tc2);
+                     (t, tc1, tc2);
     case  7 : return std::make_shared<ga_instruction_reduction_unrolled< 7>>
-	(t, tc1, tc2);
+                     (t, tc1, tc2);
     case  8 : return std::make_shared<ga_instruction_reduction_unrolled< 8>>
-	(t, tc1, tc2);
+                     (t, tc1, tc2);
     case  9 : return std::make_shared<ga_instruction_reduction_unrolled< 9>>
-	(t, tc1, tc2);
+                     (t, tc1, tc2);
     case 10 : return std::make_shared<ga_instruction_reduction_unrolled<10>>
-	(t, tc1, tc2);
+                     (t, tc1, tc2);
     case 11 : return std::make_shared<ga_instruction_reduction_unrolled<11>>
-	(t, tc1, tc2);
+                     (t, tc1, tc2);
     case 12 : return std::make_shared<ga_instruction_reduction_unrolled<12>>
-	(t, tc1, tc2);
+                     (t, tc1, tc2);
     case 13 : return std::make_shared<ga_instruction_reduction_unrolled<13>>
-	(t, tc1, tc2);
+                     (t, tc1, tc2);
     case 14 : return std::make_shared<ga_instruction_reduction_unrolled<14>>
-	(t, tc1, tc2);
+                     (t, tc1, tc2);
     case 15 : return std::make_shared<ga_instruction_reduction_unrolled<15>>
-	(t, tc1, tc2);
+                     (t, tc1, tc2);
     case 16 : return std::make_shared<ga_instruction_reduction_unrolled<16>>
-	(t, tc1, tc2);
-    default :  return std::make_shared<ga_instruction_reduction>
-	(t, tc1, tc2, n);
+                     (t, tc1, tc2);
+    default : return std::make_shared<ga_instruction_reduction>
+                     (t, tc1, tc2, n);
     }
   }
 
@@ -4777,20 +4777,20 @@ namespace getfem {
     virtual int exec() {
       size_type s1 = tc1.size(), s2 = tc2.size();
       GA_DEBUG_INFO("Instruction: simple tensor product, unrolled with "
-		    << s1 << " operations");
+                    << s1 << " operations");
       GA_DEBUG_ASSERT(t.size() == s1 * s2, "Wrong sizes");
       GA_DEBUG_ASSERT(s1 == S1, "Wrong sizes");
 
       base_tensor::iterator it = t.begin(), it2 = tc2.begin();
       for (size_type ii = 0; ii < s2; ++ii, ++it2) {
-	base_tensor::iterator it1 = tc1.begin();
-	tmult_elem_unrolled__<S1>(it, it1, it2);
+        base_tensor::iterator it1 = tc1.begin();
+        tmult_elem_unrolled__<S1>(it, it1, it2);
       }
       GA_DEBUG_ASSERT(it == t.end(), "Internal error");
       return 0;
     }
     ga_instruction_simple_tmult_unrolled(base_tensor &t_, base_tensor &tc1_,
-					 base_tensor &tc2_)
+                                         base_tensor &tc2_)
       : t(t_), tc1(tc1_), tc2(tc2_) {}
   };
 
@@ -4798,37 +4798,37 @@ namespace getfem {
   (base_tensor &t, base_tensor &tc1, base_tensor &tc2) {
     switch(tc1.size()) {
     case  2 : return std::make_shared<ga_instruction_simple_tmult_unrolled< 2>>
-	(t, tc1, tc2);
+                     (t, tc1, tc2);
     case  3 : return std::make_shared<ga_instruction_simple_tmult_unrolled< 3>>
-	(t, tc1, tc2);
+                     (t, tc1, tc2);
     case  4 : return std::make_shared<ga_instruction_simple_tmult_unrolled< 4>>
-	(t, tc1, tc2);
+                     (t, tc1, tc2);
     case  5 : return std::make_shared<ga_instruction_simple_tmult_unrolled< 5>>
-	(t, tc1, tc2);
+                     (t, tc1, tc2);
     case  6 : return std::make_shared<ga_instruction_simple_tmult_unrolled< 6>>
-	(t, tc1, tc2);
+                     (t, tc1, tc2);
     case  7 : return std::make_shared<ga_instruction_simple_tmult_unrolled< 7>>
-	(t, tc1, tc2);
+                     (t, tc1, tc2);
     case  8 : return std::make_shared<ga_instruction_simple_tmult_unrolled< 8>>
-	(t, tc1, tc2);
+                     (t, tc1, tc2);
     case  9 : return std::make_shared<ga_instruction_simple_tmult_unrolled< 9>>
-	(t, tc1, tc2);
+                     (t, tc1, tc2);
     case 10 : return std::make_shared<ga_instruction_simple_tmult_unrolled<10>>
-	(t, tc1, tc2);
+                     (t, tc1, tc2);
     case 11 : return std::make_shared<ga_instruction_simple_tmult_unrolled<11>>
-	(t, tc1, tc2);
+                     (t, tc1, tc2);
     case 12 : return std::make_shared<ga_instruction_simple_tmult_unrolled<12>>
-	(t, tc1, tc2);
+                     (t, tc1, tc2);
     case 13 : return std::make_shared<ga_instruction_simple_tmult_unrolled<13>>
-	(t, tc1, tc2);
+                     (t, tc1, tc2);
     case 14 : return std::make_shared<ga_instruction_simple_tmult_unrolled<14>>
-	(t, tc1, tc2);
+                     (t, tc1, tc2);
     case 15 : return std::make_shared<ga_instruction_simple_tmult_unrolled<15>>
-	(t, tc1, tc2);
+                     (t, tc1, tc2);
     case 16 : return std::make_shared<ga_instruction_simple_tmult_unrolled<16>>
-	(t, tc1, tc2);
-    default :  return std::make_shared<ga_instruction_simple_tmult>
-	(t, tc1, tc2);
+                     (t, tc1, tc2);
+    default : return std::make_shared<ga_instruction_simple_tmult>
+                     (t, tc1, tc2);
     }
   }
 
@@ -5206,9 +5206,9 @@ namespace getfem {
                                       inin.derivatives, compute_der);
       if (inin.pt_type) {
         if (cv != size_type(-1)) {
-          vectors_to_base_matrix(inin.G, *(inin.m), cv);
+          inin.m->points_of_convex(cv, inin.G);
           inin.ctx.change((inin.m)->trans_of_convex(cv),
-			  0, P_ref, inin.G, cv, face_num);
+                          0, P_ref, inin.G, cv, face_num);
           inin.has_ctx = true;
           if (face_num != short_type(-1)) {
             inin.Normal = bgeot::compute_normal(inin.ctx, face_num);
@@ -5301,7 +5301,7 @@ namespace getfem {
               const bgeot::stored_point_tab
                 &spt = *(pai->pintegration_points());
               base_matrix G;
-              vectors_to_base_matrix(G, m, cv);
+              m.points_of_convex(cv, G);
               fem_interpolation_context ctx_x(gpc.pgt1, 0, spt[0], G, cv, f);
               std::vector<base_node> P_ref(nbpt);
 
@@ -5315,7 +5315,7 @@ namespace getfem {
               pspt = store_point_tab(P_ref);
               neighbour_corresp[gpc] = pspt;
             }
-            vectors_to_base_matrix(inin.G, m, adj_face.cv);
+            m.points_of_convex(adj_face.cv, inin.G);
             bgeot::pgeotrans_precomp pgp = gp_pool(gpc.pgt2, pspt);
             inin.ctx.change(pgp, 0, 0, inin.G, adj_face.cv, adj_face.f);
           }
@@ -5340,9 +5340,9 @@ namespace getfem {
                                         inin.derivatives, false);
         if (inin.pt_type) {
           if (cv != size_type(-1)) {
-            vectors_to_base_matrix(inin.G, *(inin.m), cv);
+            inin.m->points_of_convex(cv, inin.G);
             inin.ctx.change((inin.m)->trans_of_convex(cv),
-			    0, P_ref, inin.G, cv, face_num);
+                            0, P_ref, inin.G, cv, face_num);
             inin.has_ctx = true;
             if (face_num != short_type(-1)) {
               inin.Normal = bgeot::compute_normal(inin.ctx, face_num);
@@ -5403,31 +5403,31 @@ namespace getfem {
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: vector term assembly for fem variable");
       if (ipt == 0 || interpolate) {
-	elem.resize(t.size());
-	gmm::copy(gmm::scaled(t.as_vector(), coeff), elem);
+        elem.resize(t.size());
+        gmm::copy(gmm::scaled(t.as_vector(), coeff), elem);
       } else {
-      	gmm::add(gmm::scaled(t.as_vector(), coeff), elem);
+        gmm::add(gmm::scaled(t.as_vector(), coeff), elem);
       }
       if (ipt == nbpt-1 || interpolate) {
-	const mesh_fem &mf = *(mfg ? *mfg : mfn);
-	GMM_ASSERT1(&mf, "Internal error");
-	const gmm::sub_interval &I = mf.is_reduced() ? Ir : In;
-	base_vector &V = mf.is_reduced() ? Vr : Vn;
-	if (!(ctx.is_convex_num_valid())) return 0;
-	size_type cv_1 = ctx.convex_num();
-	// size_type cv_1 = ctx.is_convex_num_valid()
-	//   ? ctx.convex_num() : mf.convex_index().first_true();
-	GA_DEBUG_ASSERT(V.size() >= I.first() + mf.nb_basic_dof(),
-			"Bad assembly vector size");
-	auto &ct = mf.ind_scalar_basic_dof_of_element(cv_1);
-	size_type qmult = mf.get_qdim();
-	if (qmult > 1) qmult /= mf.fem_of_element(cv_1)->target_dim();
-  	size_type ifirst = I.first();
-  	auto ite = elem.begin();
-  	for (auto itc = ct.begin(); itc != ct.end(); ++itc)
-  	  for (size_type q = 0; q < qmult; ++q)
-  	    V[ifirst+(*itc)+q] += *ite++;
-	GMM_ASSERT1(ite == elem.end(), "Internal error");
+        const mesh_fem &mf = *(mfg ? *mfg : mfn);
+        GMM_ASSERT1(&mf, "Internal error");
+        const gmm::sub_interval &I = mf.is_reduced() ? Ir : In;
+        base_vector &V = mf.is_reduced() ? Vr : Vn;
+        if (!(ctx.is_convex_num_valid())) return 0;
+        size_type cv_1 = ctx.convex_num();
+        // size_type cv_1 = ctx.is_convex_num_valid()
+        //   ? ctx.convex_num() : mf.convex_index().first_true();
+        GA_DEBUG_ASSERT(V.size() >= I.first() + mf.nb_basic_dof(),
+                        "Bad assembly vector size");
+        auto &ct = mf.ind_scalar_basic_dof_of_element(cv_1);
+        size_type qmult = mf.get_qdim();
+        if (qmult > 1) qmult /= mf.fem_of_element(cv_1)->target_dim();
+          size_type ifirst = I.first();
+          auto ite = elem.begin();
+          for (auto itc = ct.begin(); itc != ct.end(); ++itc)
+            for (size_type q = 0; q < qmult; ++q)
+              V[ifirst+(*itc)+q] += *ite++;
+        GMM_ASSERT1(ite == elem.end(), "Internal error");
       }
       return 0;
     }
@@ -5462,7 +5462,7 @@ namespace getfem {
 
   template <class MAT = model_real_sparse_matrix>
   struct ga_instruction_matrix_assembly : public ga_instruction {
-    base_tensor &t;
+    const base_tensor &t;
     MAT &Kr, &Kn;
     const fem_interpolation_context &ctx1, &ctx2;
     const gmm::sub_interval &Ir1, &Ir2;
@@ -5498,39 +5498,39 @@ namespace getfem {
 
         dofs1.assign(s1, I1.first());
         if (pmf1) {
-	  if (!(ctx1.is_convex_num_valid())) return 0;
-	  size_type cv1 = ctx1.convex_num();
-	  auto &ct1 = pmf1->ind_scalar_basic_dof_of_element(cv1);
-	  size_type qmult1 = pmf1->get_qdim();
-	  if (qmult1 > 1) qmult1 /= pmf1->fem_of_element(cv1)->target_dim();
-	  auto itd = dofs1.begin();
-	  if (qmult1 == 1) {
-	    for (auto itt = ct1.begin(); itt != ct1.end(); ++itt)
-	      *itd++ += *itt;
-	  } else {
-	    for (auto itt = ct1.begin(); itt != ct1.end(); ++itt)
-	      for (size_type q = 0; q < qmult1; ++q)
-	  	*itd++ += *itt + q;
-	  }
+          if (!(ctx1.is_convex_num_valid())) return 0;
+          size_type cv1 = ctx1.convex_num();
+          auto &ct1 = pmf1->ind_scalar_basic_dof_of_element(cv1);
+          size_type qmult1 = pmf1->get_qdim();
+          if (qmult1 > 1) qmult1 /= pmf1->fem_of_element(cv1)->target_dim();
+          auto itd = dofs1.begin();
+          if (qmult1 == 1) {
+            for (auto itt = ct1.begin(); itt != ct1.end(); ++itt)
+              *itd++ += *itt;
+          } else {
+            for (auto itt = ct1.begin(); itt != ct1.end(); ++itt)
+              for (size_type q = 0; q < qmult1; ++q)
+                  *itd++ += *itt + q;
+          }
         } else
           for (size_type i=0; i < s1; ++i) dofs1[i] += i;
 
         dofs2.assign(s2, I2.first());
         if (pmf2) {
-	  if (!(ctx2.is_convex_num_valid())) return 0;
-	  size_type cv2 = ctx2.convex_num();
-	  auto &ct2 = pmf2->ind_scalar_basic_dof_of_element(cv2);
-	  size_type qmult2 = pmf2->get_qdim();
-	  if (qmult2 > 1) qmult2 /= pmf2->fem_of_element(cv2)->target_dim();
-	  auto itd = dofs2.begin();
-	  if (qmult2 == 1) {
-	    for (auto itt = ct2.begin(); itt != ct2.end(); ++itt)
-	      *itd++ += *itt;
-	  } else {
-	    for (auto itt = ct2.begin(); itt != ct2.end(); ++itt)
-	      for (size_type q = 0; q < qmult2; ++q)
-	  	*itd++ += *itt + q;
-	  }
+          if (!(ctx2.is_convex_num_valid())) return 0;
+          size_type cv2 = ctx2.convex_num();
+          auto &ct2 = pmf2->ind_scalar_basic_dof_of_element(cv2);
+          size_type qmult2 = pmf2->get_qdim();
+          if (qmult2 > 1) qmult2 /= pmf2->fem_of_element(cv2)->target_dim();
+          auto itd = dofs2.begin();
+          if (qmult2 == 1) {
+            for (auto itt = ct2.begin(); itt != ct2.end(); ++itt)
+              *itd++ += *itt;
+          } else {
+            for (auto itt = ct2.begin(); itt != ct2.end(); ++itt)
+              for (size_type q = 0; q < qmult2; ++q)
+                  *itd++ += *itt + q;
+          }
         } else
           for (size_type i=0; i < s2; ++i) dofs2[i] += i;
 
@@ -5539,14 +5539,14 @@ namespace getfem {
         for (const size_type &dof2 : dofs2)
           for (const size_type &dof1 : dofs1) {
             if (gmm::abs(*it) > threshold)
-	      K(dof1, dof2) += *it;
+              K(dof1, dof2) += *it;
             ++it;
           }
       }
       return 0;
     }
     ga_instruction_matrix_assembly
-    (base_tensor &t_, MAT &Kr_, MAT &Kn_,
+    (const base_tensor &t_, MAT &Kr_, MAT &Kn_,
      const fem_interpolation_context &ctx1_,
      const fem_interpolation_context &ctx2_,
      const gmm::sub_interval &Ir1_, const gmm::sub_interval &In1_,
@@ -5566,7 +5566,7 @@ namespace getfem {
 
   template <class MAT = model_real_sparse_matrix>
   struct ga_instruction_matrix_assembly_standard_scalar: public ga_instruction {
-    base_tensor &t;
+    const base_tensor &t;
     MAT &K;
     const fem_interpolation_context &ctx1, &ctx2;
     const gmm::sub_interval &I1, &I2;
@@ -5576,9 +5576,9 @@ namespace getfem {
     mutable base_vector elem;
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: matrix term assembly for standard "
-    		    "scalar fems");
+                    "scalar fems");
       if (ipt == 0) {
-	elem.resize(t.size());
+        elem.resize(t.size());
         gmm::copy(gmm::scaled(t.as_vector(), coeff*alpha1*alpha2), elem);
       } else {
         gmm::add(gmm::scaled(t.as_vector(), coeff*alpha1*alpha2), elem);
@@ -5590,29 +5590,29 @@ namespace getfem {
         if (ninf == scalar_type(0)) return 0;
 
         size_type cv1 = ctx1.convex_num();
-    	if (cv1 == size_type(-1)) return 0;
-    	auto &ct1 = pmf1->ind_scalar_basic_dof_of_element(cv1);
-    	GA_DEBUG_ASSERT(ct1.size() == t.sizes()[0], "Internal error");
-	
-    	size_type cv2 = ctx2.convex_num();
-    	if (cv2 == size_type(-1)) return 0;
-    	auto &ct2 = pmf2->ind_scalar_basic_dof_of_element(cv2);	
+        if (cv1 == size_type(-1)) return 0;
+        auto &ct1 = pmf1->ind_scalar_basic_dof_of_element(cv1);
+        GA_DEBUG_ASSERT(ct1.size() == t.sizes()[0], "Internal error");
+
+        size_type cv2 = ctx2.convex_num();
+        if (cv2 == size_type(-1)) return 0;
+        auto &ct2 = pmf2->ind_scalar_basic_dof_of_element(cv2);
         GA_DEBUG_ASSERT(ct2.size() == t.sizes()[1], "Internal error");
-	
+
         scalar_type threshold = ninf * 1E-14;
         base_vector::const_iterator it = elem.cbegin();
-	size_type i1 = I1.first(), i2 = I2.first();
+        size_type i1 = I1.first(), i2 = I2.first();
         for (const size_type &dof2 : ct2)
           for (const size_type &dof1 : ct1) {
             if (gmm::abs(*it) > threshold)
-	      K(dof1+i1, dof2+i2) += *it;
+              K(dof1+i1, dof2+i2) += *it;
             ++it;
           }
       }
       return 0;
     }
     ga_instruction_matrix_assembly_standard_scalar
-    (base_tensor &t_, MAT &Kn_,
+    (const base_tensor &t_, MAT &Kn_,
      const fem_interpolation_context &ctx1_,
      const fem_interpolation_context &ctx2_,
      const gmm::sub_interval &In1_, const gmm::sub_interval &In2_,
@@ -5628,7 +5628,7 @@ namespace getfem {
 
   template <class MAT = model_real_sparse_matrix>
   struct ga_instruction_matrix_assembly_standard_vector: public ga_instruction {
-    base_tensor &t;
+    const base_tensor &t;
     MAT &K;
     const fem_interpolation_context &ctx1, &ctx2;
     const gmm::sub_interval &I1, &I2;
@@ -5639,9 +5639,9 @@ namespace getfem {
     mutable std::vector<size_type> dofs1, dofs2;
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: matrix term assembly for standard "
-    		    "vector fems");
+                        "vector fems");
       if (ipt == 0) {
-	elem.resize(t.size());
+        elem.resize(t.size());
         gmm::copy(gmm::scaled(t.as_vector(), coeff*alpha1*alpha2), elem);
       } else {
         gmm::add(gmm::scaled(t.as_vector(), coeff*alpha1*alpha2), elem);
@@ -5651,44 +5651,44 @@ namespace getfem {
 
         scalar_type ninf = gmm::vect_norminf(elem);
         if (ninf == scalar_type(0)) return 0;
-	size_type s1 = t.sizes()[0], s2 = t.sizes()[1];
-	
+        size_type s1 = t.sizes()[0], s2 = t.sizes()[1];
+
         size_type cv1 = ctx1.convex_num();
-    	if (cv1 == size_type(-1)) return 0;
-    	auto &ct1 = pmf1->ind_scalar_basic_dof_of_element(cv1);
-	size_type qmult1 = pmf1->get_qdim();
-	if (qmult1 > 1) qmult1 /= pmf1->fem_of_element(cv1)->target_dim();
-	dofs1.assign(s1, I1.first());
-	auto itd = dofs1.begin();
-	for (auto itt = ct1.begin(); itt != ct1.end(); ++itt)
-	  for (size_type q = 0; q < qmult1; ++q)
-	    *itd++ += *itt + q;
-	
-    	size_type cv2 = ctx2.convex_num();
-    	if (cv2 == size_type(-1)) return 0;
-    	auto &ct2 = pmf2->ind_scalar_basic_dof_of_element(cv2);
-	size_type qmult2 = pmf2->get_qdim();
-	if (qmult2 > 1) qmult2 /= pmf2->fem_of_element(cv2)->target_dim();
-	dofs2.assign(s2, I2.first());
-	itd = dofs2.begin();
-	for (auto itt = ct2.begin(); itt != ct2.end(); ++itt)
-	  for (size_type q = 0; q < qmult2; ++q)
-	    *itd++ += *itt + q;
-	
+        if (cv1 == size_type(-1)) return 0;
+        auto &ct1 = pmf1->ind_scalar_basic_dof_of_element(cv1);
+        size_type qmult1 = pmf1->get_qdim();
+        if (qmult1 > 1) qmult1 /= pmf1->fem_of_element(cv1)->target_dim();
+        dofs1.assign(s1, I1.first());
+        auto itd = dofs1.begin();
+        for (auto itt = ct1.begin(); itt != ct1.end(); ++itt)
+          for (size_type q = 0; q < qmult1; ++q)
+            *itd++ += *itt + q;
+
+        size_type cv2 = ctx2.convex_num();
+        if (cv2 == size_type(-1)) return 0;
+        auto &ct2 = pmf2->ind_scalar_basic_dof_of_element(cv2);
+        size_type qmult2 = pmf2->get_qdim();
+        if (qmult2 > 1) qmult2 /= pmf2->fem_of_element(cv2)->target_dim();
+        dofs2.assign(s2, I2.first());
+        itd = dofs2.begin();
+        for (auto itt = ct2.begin(); itt != ct2.end(); ++itt)
+          for (size_type q = 0; q < qmult2; ++q)
+            *itd++ += *itt + q;
+
         scalar_type threshold = ninf * 1E-14;
         base_vector::const_iterator it = elem.cbegin();
         for (const size_type &dof2 : dofs2)
-	  for (const size_type &dof1 : dofs1) {
-	    if (gmm::abs(*it) > threshold)
-	      K(dof1, dof2) += *it;
-	    ++it;
-	  }
-	GMM_ASSERT1(it == elem.end(), "Internal error");
+          for (const size_type &dof1 : dofs1) {
+            if (gmm::abs(*it) > threshold)
+              K(dof1, dof2) += *it;
+            ++it;
+          }
+        GMM_ASSERT1(it == elem.end(), "Internal error");
       }
       return 0;
     }
     ga_instruction_matrix_assembly_standard_vector
-    (base_tensor &t_, MAT &Kn_,
+    (const base_tensor &t_, MAT &Kn_,
      const fem_interpolation_context &ctx1_,
      const fem_interpolation_context &ctx2_,
      const gmm::sub_interval &In1_, const gmm::sub_interval &In2_,
@@ -7413,7 +7413,7 @@ namespace getfem {
 
       case GA_SYM: case GA_SKEW:
         if (child0->tensor_proper_size() != 1 &&
-	    (dim0 != 2 || size0.back() != size0[size0.size()-2]))
+            (dim0 != 2 || size0.back() != size0[size0.size()-2]))
           ga_throw_error(expr, pnode->pos, "Sym and Skew operators are for "
                          "square matrices only.");
         mi = size0;
@@ -8049,9 +8049,9 @@ namespace getfem {
             pnode->node_type = GA_NODE_CONSTANT;
             pnode->init_scalar_tensor(scalar_type(meshdim));
           } else if (!name.compare("timestep")) {
-	    pnode->node_type = GA_NODE_CONSTANT;
+            pnode->node_type = GA_NODE_CONSTANT;
             pnode->init_scalar_tensor(scalar_type(workspace.get_time_step()));
-	  }
+          }
         } else if (PREDEF_OPERATORS.tab.find(name)
                    != PREDEF_OPERATORS.tab.end()) {
           // Nonlinear operator found
@@ -9978,38 +9978,38 @@ namespace getfem {
         pgai = std::make_shared<ga_instruction_first_ind_tensor>
           (pnode->t, *pctx1, pnode->qdim1, mf1, mfg1);
       if (mf1 && mf1->is_uniform())
-      	{ is_uniform = true; pctx1->invalid_convex_num(); }
+        { is_uniform = true; pctx1->invalid_convex_num(); }
     } else if (pnode->test_function_type == 2) {
       if (mf2 || mfg2)
         pgai = std::make_shared<ga_instruction_first_ind_tensor>
           (pnode->t, *pctx2, pnode->qdim2, mf2, mfg2);
       if (mf2 && mf2->is_uniform())
-      	{ is_uniform = true; pctx2->invalid_convex_num(); }
+        { is_uniform = true; pctx2->invalid_convex_num(); }
     } else if (pnode->test_function_type == 3) {
       if ((mf1 || mfg1) && (mf2 || mfg2)) {
         pgai = std::make_shared<ga_instruction_two_first_ind_tensor>
           (pnode->t, *pctx1, *pctx2, pnode->qdim1, mf1, mfg1,
            pnode->qdim2, mf2, mfg2);
-	if (mf1 && mf1->is_uniform() && mf2 && mf2->is_uniform()) {
-	  is_uniform = true;
-	  pctx1->invalid_convex_num();
-	  pctx2->invalid_convex_num();
-	} 
+        if (mf1 && mf1->is_uniform() && mf2 && mf2->is_uniform()) {
+          is_uniform = true;
+          pctx1->invalid_convex_num();
+          pctx2->invalid_convex_num();
+        } 
       } else if (mf1 || mfg1) {
         pgai = std::make_shared<ga_instruction_first_ind_tensor>
           (pnode->t, *pctx1, pnode->qdim1, mf1, mfg1);
-	if (mf1 && mf1->is_uniform())
-	  { is_uniform = true; pctx1->invalid_convex_num(); }
+        if (mf1 && mf1->is_uniform())
+          { is_uniform = true; pctx1->invalid_convex_num(); }
       } else if (mf2 || mfg2) {
         pgai = std::make_shared<ga_instruction_second_ind_tensor>
           (pnode->t, *pctx2, pnode->qdim2, mf2, mfg2);
-	if (mf2 && mf2->is_uniform())
-	  { is_uniform = true; pctx2->invalid_convex_num(); }
+        if (mf2 && mf2->is_uniform())
+          { is_uniform = true; pctx2->invalid_convex_num(); }
       }
     }
     if (pgai) {
       if (is_uniform)
-	{ pgai->exec(); }
+        { pgai->exec(); }
       else { rmi.instructions.push_back(std::move(pgai)); }
     }
 
@@ -10029,9 +10029,9 @@ namespace getfem {
           } else {
             pgai = std::make_shared<ga_instruction_copy_tensor>
               (pnode->t, (*it)->t);
-	    // Double for perf test
-	    // rmi.instructions.push_back(std::move(pgai));
-	    // pgai = std::make_shared<ga_instruction_copy_tensor>
+            // Double for perf test
+            // rmi.instructions.push_back(std::move(pgai));
+            // pgai = std::make_shared<ga_instruction_copy_tensor>
             //   (pnode->t, (*it)->t);
           }
           rmi.instructions.push_back(std::move(pgai));
@@ -10515,10 +10515,10 @@ namespace getfem {
             rmi.pfps_hierarchy[mf].push_back(if_hierarchy);
             pgai = std::make_shared<ga_instruction_update_pfp>
               (*mf, rmi.pfps[mf], gis.ctx, gis.fp_pool);
-	    if (is_uniform)
-	      rmi.begin_instructions.push_back(std::move(pgai));
-	    else
-	      rmi.instructions.push_back(std::move(pgai));
+            if (is_uniform)
+              rmi.begin_instructions.push_back(std::move(pgai));
+            else
+              rmi.instructions.push_back(std::move(pgai));
           }
 
           // An instruction for the base value
@@ -10530,10 +10530,10 @@ namespace getfem {
               rmi.base_hierarchy[mf].push_back(if_hierarchy);
               pgai = std::make_shared<ga_instruction_val_base>
                 (rmi.base[mf], gis.ctx, *mf, rmi.pfps[mf]);
-	      // Double for perf test
-	      // rmi.instructions.push_back(std::move(pgai));
-	      // pgai = std::make_shared<ga_instruction_val_base>
-	      //   (rmi.base[mf], gis.ctx, *mf, rmi.pfps[mf]);
+              // Double for perf test
+              // rmi.instructions.push_back(std::move(pgai));
+              // pgai = std::make_shared<ga_instruction_val_base>
+              //   (rmi.base[mf], gis.ctx, *mf, rmi.pfps[mf]);
              }
              break;
           case GA_NODE_XFEM_PLUS_VAL_TEST:
@@ -10613,11 +10613,11 @@ namespace getfem {
           case GA_NODE_VAL_TEST: // --> t(Qmult*ndof,Qmult*target_dim)
             pgai = std::make_shared<ga_instruction_copy_val_base>
               (pnode->t, rmi.base[mf], mf->get_qdim());
-	    // Double for perf test
-	    // rmi.instructions.push_back(std::move(pgai));
+            // Double for perf test
+            // rmi.instructions.push_back(std::move(pgai));
             // pgai = std::make_shared<ga_instruction_copy_val_base>
             //   (pnode->t, rmi.base[mf], mf->get_qdim());
-	    break;
+            break;
           case GA_NODE_GRAD_TEST: // --> t(Qmult*ndof,Qmult*target_dim,N)
             pgai = std::make_shared<ga_instruction_copy_grad_base>
               (pnode->t, rmi.grad[mf], mf->get_qdim());
@@ -10797,8 +10797,8 @@ namespace getfem {
 
        case GA_DOT: case GA_COLON: case GA_MULT:
          {
-	   size_type tps1 = child0->tensor_proper_size();
-	   size_type tps2 = child1->tensor_proper_size();
+           size_type tps1 = child0->tensor_proper_size();
+           size_type tps2 = child1->tensor_proper_size();
            size_type s1 = (tps1 * tps2) / pnode->tensor_proper_size();
            size_type s2 = size_type(round(sqrt(scalar_type(s1))));
 
@@ -10820,69 +10820,69 @@ namespace getfem {
                  (pnode->t, child0->t, child1->t[0]);
              else if (pnode->test_function_type < 3) {
                if (child0->tensor_proper_size() == 1) {
-		 if (is_uniform) // Unrolled instruction
-		   pgai = ga_uniform_instruction_simple_tmult
-		     (pnode->t, child0->t, child1->t);
-		 else
-		   pgai = std::make_shared<ga_instruction_simple_tmult>
-		     (pnode->t, child0->t, child1->t);
+                 if (is_uniform) // Unrolled instruction
+                   pgai = ga_uniform_instruction_simple_tmult
+                     (pnode->t, child0->t, child1->t);
+                 else
+                   pgai = std::make_shared<ga_instruction_simple_tmult>
+                     (pnode->t, child0->t, child1->t);
                } else {
-		 if (tps1 == 1) {
-		   if (is_uniform) // Unrolled instruction
-		     pgai = ga_uniform_instruction_simple_tmult
-		       (pnode->t, child1->t, child0->t);
-		   else
-		     pgai = std::make_shared<ga_instruction_simple_tmult>
-		       (pnode->t, child1->t, child0->t);
-		 } else if (is_uniform) // Unrolled instruction
-		   pgai = ga_uniform_instruction_reduction_switch
-		     (pnode->t, child0->t, child1->t, s2);
-		 else // Unrolled instruction
-		   pgai = ga_instruction_reduction_switch
-		     (pnode->t, child0->t, child1->t, s2);
-	       }
+                 if (tps1 == 1) {
+                   if (is_uniform) // Unrolled instruction
+                     pgai = ga_uniform_instruction_simple_tmult
+                       (pnode->t, child1->t, child0->t);
+                   else
+                     pgai = std::make_shared<ga_instruction_simple_tmult>
+                       (pnode->t, child1->t, child0->t);
+                 } else if (is_uniform) // Unrolled instruction
+                   pgai = ga_uniform_instruction_reduction_switch
+                     (pnode->t, child0->t, child1->t, s2);
+                 else // Unrolled instruction
+                   pgai = ga_instruction_reduction_switch
+                     (pnode->t, child0->t, child1->t, s2);
+               }
              } else {
                if (child1->test_function_type == 1 ||
                    child1->test_function_type == 3) {
                  if (child1->test_function_type == 3 ||
                      child1->tensor_proper_size() <= s2) {
-		   if (tps1 == 1) {
-		     if (is_uniform) { // Unrolled instruction
-		       pgai = ga_uniform_instruction_simple_tmult
-			 (pnode->t, child1->t, child0->t);
-		     } else
-		       pgai = std::make_shared<ga_instruction_simple_tmult>
-			 (pnode->t, child1->t, child0->t);
-		   } else if (is_uniform) // Unrolled instruction
-		     pgai = ga_uniform_instruction_reduction_switch
-		       (pnode->t, child0->t, child1->t, s2);
-		   else // Unrolled instruction
-		     pgai = ga_instruction_reduction_switch
-		       (pnode->t, child0->t, child1->t, s2);
-		 } else
+                   if (tps1 == 1) {
+                     if (is_uniform) { // Unrolled instruction
+                       pgai = ga_uniform_instruction_simple_tmult
+                         (pnode->t, child1->t, child0->t);
+                     } else
+                       pgai = std::make_shared<ga_instruction_simple_tmult>
+                         (pnode->t, child1->t, child0->t);
+                   } else if (is_uniform) // Unrolled instruction
+                     pgai = ga_uniform_instruction_reduction_switch
+                       (pnode->t, child0->t, child1->t, s2);
+                   else // Unrolled instruction
+                     pgai = ga_instruction_reduction_switch
+                       (pnode->t, child0->t, child1->t, s2);
+                 } else
                    pgai = std::make_shared<ga_instruction_spec_reduction>
                      (pnode->t, child1->t, child0->t, s2);
                } else if (child1->test_function_type == 0 ||
                           (child0->tensor_proper_size() == s2 &&
                            child1->tensor_proper_size() == s2)) {
-		 if (tps1 == 1) {
-		   if (is_uniform) { // Unrolled instruction
-		     pgai = ga_uniform_instruction_simple_tmult
-		       (pnode->t, child0->t, child1->t);
-		     // Double for perf test
-		     // rmi.instructions.push_back(std::move(pgai));
-		     // pgai = ga_uniform_instruction_simple_tmult
-		     //   (pnode->t, child0->t, child1->t);
-		   } else
-		     pgai = std::make_shared<ga_instruction_simple_tmult>
-		       (pnode->t, child0->t, child1->t);
-		 } else if (is_uniform) // Unrolled instruction
-		   pgai = ga_uniform_instruction_reduction_switch
-		     (pnode->t, child1->t, child0->t, s2);
-		 else // Unrolled instruction
-		   pgai = ga_instruction_reduction_switch
-		     (pnode->t, child1->t, child0->t, s2);
-	       } else {
+                 if (tps1 == 1) {
+                   if (is_uniform) { // Unrolled instruction
+                     pgai = ga_uniform_instruction_simple_tmult
+                       (pnode->t, child0->t, child1->t);
+                     // Double for perf test
+                     // rmi.instructions.push_back(std::move(pgai));
+                     // pgai = ga_uniform_instruction_simple_tmult
+                     //   (pnode->t, child0->t, child1->t);
+                   } else
+                     pgai = std::make_shared<ga_instruction_simple_tmult>
+                       (pnode->t, child0->t, child1->t);
+                 } else if (is_uniform) // Unrolled instruction
+                   pgai = ga_uniform_instruction_reduction_switch
+                     (pnode->t, child1->t, child0->t, s2);
+                 else // Unrolled instruction
+                   pgai = ga_instruction_reduction_switch
+                     (pnode->t, child1->t, child0->t, s2);
+               } else {
                  if (child0->tensor_proper_size() == s2)
                    pgai = std::make_shared<ga_instruction_reduction>
                      (pnode->t, child1->t, child0->t, s2);
@@ -10900,19 +10900,19 @@ namespace getfem {
 
              if (pnode->test_function_type < 3) {
                if (child1->tensor_proper_size() == 1) {
-		 if (is_uniform) // Unrolled instruction
-		   pgai = ga_uniform_instruction_simple_tmult
-		     (pnode->t, child1->t, child0->t);
-		 else
-		   pgai = std::make_shared<ga_instruction_simple_tmult>
-		     (pnode->t, child1->t, child0->t);
+                 if (is_uniform) // Unrolled instruction
+                   pgai = ga_uniform_instruction_simple_tmult
+                     (pnode->t, child1->t, child0->t);
+                 else
+                   pgai = std::make_shared<ga_instruction_simple_tmult>
+                     (pnode->t, child1->t, child0->t);
                } else if (child0->tensor_proper_size() == 1) {
-		 if (is_uniform) // Unrolled instruction
-		   pgai = ga_uniform_instruction_simple_tmult
-		     (pnode->t, child0->t, child1->t);
-		 else
-		   pgai = std::make_shared<ga_instruction_simple_tmult>
-		     (pnode->t, child0->t, child1->t);
+                 if (is_uniform) // Unrolled instruction
+                   pgai = ga_uniform_instruction_simple_tmult
+                     (pnode->t, child0->t, child1->t);
+                 else
+                   pgai = std::make_shared<ga_instruction_simple_tmult>
+                     (pnode->t, child0->t, child1->t);
                } else {
                  if (dim0 == 2)
                    pgai = std::make_shared<ga_instruction_matrix_mult>
@@ -10922,12 +10922,12 @@ namespace getfem {
                if (child1->tensor_proper_size() == 1) {
                  if (child1->test_function_type == 0 ||
                      child1->test_function_type == 1) {
-		   if (is_uniform) // Unrolled instruction
-		     pgai = ga_uniform_instruction_simple_tmult
-		       (pnode->t, child1->t, child0->t);
-		   else
-		     pgai = std::make_shared<ga_instruction_simple_tmult>
-		       (pnode->t, child1->t, child0->t);
+                   if (is_uniform) // Unrolled instruction
+                     pgai = ga_uniform_instruction_simple_tmult
+                       (pnode->t, child1->t, child0->t);
+                   else
+                     pgai = std::make_shared<ga_instruction_simple_tmult>
+                       (pnode->t, child1->t, child0->t);
                  } else
                    pgai = std::make_shared<ga_instruction_spec_tmult>
                      (pnode->t, child0->t, child1->t,
@@ -10936,12 +10936,12 @@ namespace getfem {
                } else if (child0->tensor_proper_size() == 1) {
                  if (child0->test_function_type == 0 ||
                      child0->test_function_type == 1) {
-		   if (is_uniform) // Unrolled instruction
-		     pgai = ga_uniform_instruction_simple_tmult
-		       (pnode->t, child0->t, child1->t);
-		   else
-		     pgai = std::make_shared<ga_instruction_simple_tmult>
-		       (pnode->t, child0->t, child1->t);
+                   if (is_uniform) // Unrolled instruction
+                     pgai = ga_uniform_instruction_simple_tmult
+                       (pnode->t, child0->t, child1->t);
+                   else
+                     pgai = std::make_shared<ga_instruction_simple_tmult>
+                       (pnode->t, child0->t, child1->t);
                  } else
                    pgai = std::make_shared<ga_instruction_spec_tmult>
                      (pnode->t, child1->t, child0->t,
@@ -11086,12 +11086,12 @@ namespace getfem {
            pgai = std::make_shared<ga_instruction_scalar_mult>
              (pnode->t, child0->t, child1->t[0]);
          else if (child1->test_function_type == 0) {
-	   if (is_uniform) // Unrolled instruction
-	     pgai = ga_uniform_instruction_simple_tmult
-	       (pnode->t, child0->t, child1->t);
-	   else
-	     pgai = std::make_shared<ga_instruction_simple_tmult>
-	       (pnode->t, child0->t, child1->t);
+           if (is_uniform) // Unrolled instruction
+             pgai = ga_uniform_instruction_simple_tmult
+               (pnode->t, child0->t, child1->t);
+           else
+             pgai = std::make_shared<ga_instruction_simple_tmult>
+               (pnode->t, child0->t, child1->t);
          } else if (child1->tensor_proper_size() == 1)
            pgai = std::make_shared<ga_instruction_spec2_tmult>
              (pnode->t, child0->t, child1->t);
@@ -11490,8 +11490,8 @@ namespace getfem {
                 fem_interpolation_context &ctx
                   = intn1.size() ? rmi.interpolate_infos[intn1].ctx
                                  : gis.ctx;
-		bool interpolate
-		  = (!intn1.empty() && intn1.compare("neighbour_elt")!=0);
+                bool interpolate
+                  = (!intn1.empty() && intn1.compare("neighbour_elt")!=0);
                 pgai = std::make_shared<ga_instruction_fem_vector_assembly>
                   (root->t, workspace.unreduced_vector(),
                    workspace.assembled_vector(), ctx, *Ir, *In, mf, mfg,
@@ -11557,29 +11557,29 @@ namespace getfem {
                 In2 = &(workspace.interval_of_variable(root->name_test2));
               }
 
-	      if (!interpolate && mfg1 == 0 && mfg2 == 0 && mf1 && mf2
-		  && mf1->get_qdim() == 1 && mf2->get_qdim() == 1
-		  && !(mf1->is_reduced()) && !(mf2->is_reduced())) {
-		pgai = std::make_shared
-		  <ga_instruction_matrix_assembly_standard_scalar<>>
-		  (root->t, workspace.assembled_matrix(), ctx1, ctx2,
-		   *In1, *In2, mf1, mf2,
-		   gis.coeff, *alpha1, *alpha2, gis.nbpt, gis.ipt);
-	      } else if (!interpolate && mfg1 == 0 && mfg2 == 0 && mf1 && mf2
-			 && !(mf1->is_reduced()) && !(mf2->is_reduced())) {
-		pgai = std::make_shared
-		  <ga_instruction_matrix_assembly_standard_vector<>>
-		  (root->t, workspace.assembled_matrix(), ctx1, ctx2,
-		   *In1, *In2, mf1, mf2,
-		   gis.coeff, *alpha1, *alpha2, gis.nbpt, gis.ipt);
-		
-	      } else {
-		pgai = std::make_shared<ga_instruction_matrix_assembly<>>
-		  (root->t, workspace.unreduced_matrix(),
-		   workspace.assembled_matrix(), ctx1, ctx2,
-		   *Ir1, *In1, *Ir2, *In2, mf1, mfg1, mf2, mfg2,
-		   gis.coeff, *alpha1, *alpha2, gis.nbpt, gis.ipt, interpolate);
-	      }
+              if (!interpolate && mfg1 == 0 && mfg2 == 0 && mf1 && mf2
+                  && mf1->get_qdim() == 1 && mf2->get_qdim() == 1
+                  && !(mf1->is_reduced()) && !(mf2->is_reduced())) {
+                pgai = std::make_shared
+                  <ga_instruction_matrix_assembly_standard_scalar<>>
+                  (root->t, workspace.assembled_matrix(), ctx1, ctx2,
+                   *In1, *In2, mf1, mf2,
+                   gis.coeff, *alpha1, *alpha2, gis.nbpt, gis.ipt);
+              } else if (!interpolate && mfg1 == 0 && mfg2 == 0 && mf1 && mf2
+                         && !(mf1->is_reduced()) && !(mf2->is_reduced())) {
+                pgai = std::make_shared
+                  <ga_instruction_matrix_assembly_standard_vector<>>
+                  (root->t, workspace.assembled_matrix(), ctx1, ctx2,
+                   *In1, *In2, mf1, mf2,
+                   gis.coeff, *alpha1, *alpha2, gis.nbpt, gis.ipt);
+                
+              } else {
+                pgai = std::make_shared<ga_instruction_matrix_assembly<>>
+                  (root->t, workspace.unreduced_matrix(),
+                   workspace.assembled_matrix(), ctx1, ctx2,
+                   *Ir1, *In1, *Ir2, *In2, mf1, mfg1, mf2, mfg2,
+                   gis.coeff, *alpha1, *alpha2, gis.nbpt, gis.ipt, interpolate);
+              }
               break;
             }
           }
@@ -11643,7 +11643,7 @@ namespace getfem {
           = gic.ppoints_for_element(v.cv(), v.f(), ind);
 
         if (pspt.get() && ind.size() && pspt->size()) {
-          vectors_to_base_matrix(G, m, v.cv());
+          m.points_of_convex(v.cv(), G);
           bgeot::pgeometric_trans pgt = m.trans_of_convex(v.cv());
           up.resize(G.nrows());
           un.resize(pgt->dim());
@@ -11676,14 +11676,14 @@ namespace getfem {
                 gmm::mult(B, un, up);
                 scalar_type nup = gmm::vect_norm2(up);
                 gmm::scale(up,1.0/nup);
-				gmm::clean(up, 1e-13);
+                gmm::clean(up, 1e-13);
                 gis.Normal = up;
               } else gis.Normal.resize(0);
             }
             gmm::clear(workspace.assembled_tensor().as_vector());
             if (ii == 0)
-	      for (size_type j = 0; j < gilb.size(); ++j) j += gilb[j]->exec();
-	    for (size_type j = 0; j < gil.size(); ++j) j += gil[j]->exec();
+              for (size_type j = 0; j < gilb.size(); ++j) j += gilb[j]->exec();
+            for (size_type j = 0; j < gil.size(); ++j) j += gil[j]->exec();
             gic.store_result(v.cv(), gis.ipt, workspace.assembled_tensor());
           }
         }
@@ -11748,7 +11748,7 @@ namespace getfem {
         if (mim.convex_index().is_in(v.cv())) {
           // cout << "proceed with element " << v.cv() << endl;
           if (v.cv() != old_cv) {
-	    vectors_to_base_matrix(G, m, v.cv());
+            m.points_of_convex(v.cv(), G);
             pgt = m.trans_of_convex(v.cv());
             up.resize(G.nrows());
             un.resize(pgt->dim());
@@ -11756,7 +11756,7 @@ namespace getfem {
             if (pim->type() == IM_NONE) continue;
             GMM_ASSERT1(pim->type() == IM_APPROX, "Sorry, exact methods cannot "
                         "be used in high level generic assembly");
-	    pai = pim->approx_method();
+            pai = pim->approx_method();
             pspt = pai->pintegration_points();
             if (pspt->size()) {
               if (gis.ctx.have_pgp() && gis.pai == pai && gis.ctx.pgt()==pgt) {
@@ -11777,7 +11777,7 @@ namespace getfem {
             if (pim->type() == IM_NONE) continue;
             gis.ctx.set_face_num(v.f());
           }
-	  if (pspt != old_pspt) { first_gp = true; old_pspt = pspt; }
+          if (pspt != old_pspt) { first_gp = true; old_pspt = pspt; }
           if (pspt->size()) {
             // iterations on Gauss points
             gis.nbpt = pai->nb_points_on_convex();
@@ -11790,7 +11790,7 @@ namespace getfem {
               if (gis.ctx.have_pgp()) gis.ctx.set_ii(first_ind+gis.ipt);
               else gis.ctx.set_xref((*pspt)[first_ind+gis.ipt]);
               if (gis.ipt == 0 || !(pgt->is_linear())) {
-		J = gis.ctx.J();
+                J = gis.ctx.J();
                 // Computation of unit normal vector in case of a boundary
                 if (v.f() != short_type(-1)) {
                   gmm::copy(pgt->normals()[v.f()], un);
@@ -11798,17 +11798,17 @@ namespace getfem {
                   scalar_type nup = gmm::vect_norm2(up);
                   J *= nup;
                   gmm::scale(up,1.0/nup);
-				  gmm::clean(up, 1e-13);
+                  gmm::clean(up, 1e-13);
                   gis.Normal = up;
                 } else gis.Normal.resize(0);
               }
               gis.coeff = J * pai->coeff(first_ind+gis.ipt);
               if (first_gp) {
-		for (size_type j = 0; j < gilb.size(); ++j) j+=gilb[j]->exec();
-		first_gp = false;
-	      }
+                for (size_type j = 0; j < gilb.size(); ++j) j+=gilb[j]->exec();
+                first_gp = false;
+              }
               for (size_type j = 0; j < gil.size(); ++j) j+=gil[j]->exec();
-	      GA_DEBUG_INFO("");
+              GA_DEBUG_INFO("");
             }
           }
         }

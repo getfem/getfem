@@ -130,7 +130,7 @@ namespace getfem {
     dal::bit_vector kept_dofs;
 
     for (dal::bv_visitor cv(mim.convex_index()); !cv.finished(); ++cv) {
-      bgeot::vectors_to_base_matrix(G, m.points_of_convex(cv));
+      m.points_of_convex(cv, G);
       bgeot::pgeometric_trans pgt = m.trans_of_convex(cv);
       pintegration_method pim = mim.int_method_of_element(cv);
       if (pim == im_none()) continue;

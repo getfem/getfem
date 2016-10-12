@@ -81,7 +81,7 @@ namespace bgeot {
       base_matrix pc(pgt->nb_points() , N);
       base_matrix B0(N, P);
 
-      vectors_to_base_matrix(G, m.points_of_convex(cv));
+      m.points_of_convex(cv, G);
 
       base_node x(N); gmm::clear(x);
       pgt->poly_vector_grad(x, pc);

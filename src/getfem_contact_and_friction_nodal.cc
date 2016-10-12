@@ -352,7 +352,7 @@ namespace getfem {
           pgt->poly_vector_grad(xp, grad_cv);
 
           base_matrix GG(N, nb_pts_cv);
-          vectors_to_base_matrix(GG, m.points_of_convex(cv));
+          m.points_of_convex(cv, GG);
 
           gmm::mult(GG, grad_cv, KK);
         }
@@ -473,7 +473,7 @@ namespace getfem {
           if (BN) {
             base_matrix G;
             base_matrix M(qdim, mf_disp->nb_basic_dof_of_element(cv_sel));
-            bgeot::vectors_to_base_matrix(G, mesh_m.points_of_convex(cv_sel));
+            mesh_m.points_of_convex(cv_sel, G);
             pfem pf = mf_disp->fem_of_element(cv_sel);
             bgeot::pgeometric_trans pgt = mesh_m.trans_of_convex(cv_sel);
             fem_interpolation_context

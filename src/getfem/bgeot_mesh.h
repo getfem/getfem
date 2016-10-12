@@ -46,7 +46,7 @@ namespace bgeot {
 
   /** @internal mesh structure + points
    */
-  class basic_mesh :  public bgeot::mesh_structure {
+  class basic_mesh : public bgeot::mesh_structure {
 
   public :
     
@@ -73,27 +73,52 @@ namespace bgeot {
  
   public :
 
-    dim_type dim(void) const { return pts.dim(); }
+    dim_type dim() const { return pts.dim(); }
 
+    /** Return the bgeot::geometric_trans attached to a convex.
+        @param ic the convex number.
+    */
     bgeot::pgeometric_trans trans_of_convex(size_type ic) const {
-      GMM_ASSERT2(trans_exists[ic], "internal error");
-      return gtab[ic]; 
+      GMM_ASSERT1(trans_exists[ic],
+                  "No geometric transformation or nonexisting element");
+      return gtab[ic];
     }
 
-    const PT_TAB &points(void) const { return pts; }
+    const PT_TAB &points() const { return pts; }
 
+    /// Return a (pseudo)container of the points of a given convex
     ref_mesh_pt_ct points_of_convex(size_type ic) const {
       const ind_cv_ct &rct = ind_points_of_convex(ic);
       return ref_mesh_pt_ct(pts.begin(), rct.begin(), rct.end());
-    } 
+    }
 
+    inline void points_of_convex(size_type ic, base_matrix &G) const {
+      const ind_cv_ct &rct = ind_points_of_convex(ic);
+      size_type N = dim(), Np = rct.size();
+      G.base_resize(N, Np);
+      auto it = G.begin();
+      for (size_type i = 0; i < Np; ++i, it += N) {
+        const base_node &P = pts[rct[i]];
+        std::copy(P.begin(),  P.end(), it);
+      }
+    }
+
+    /** Add the point pt to the mesh and return the index of the
+        point.
+
+        If the point is too close to an existing point and remove_duplicated_nodes = true,
+        the function does not create a new point, and returns the index of the
+        already existing point.
+        @param pt the point coordinates.
+    */
     size_type add_point(const base_node &pt,
-                        const scalar_type tol=scalar_type(0)) {
-      return pts.add_node(pt, tol);
+                        const scalar_type tol=scalar_type(0),
+                        bool remove_duplicated_nodes = true) {
+      return pts.add_node(pt, tol, remove_duplicated_nodes);
     }
 
     template<class ITER>
-    size_type add_convex(bgeot::pgeometric_trans pgt, ITER ipts) { 
+    size_type add_convex(bgeot::pgeometric_trans pgt, ITER ipts) {
       bool present;
       size_type i = mesh_structure::add_convex(pgt->structure(), ipts,
                                                &present);

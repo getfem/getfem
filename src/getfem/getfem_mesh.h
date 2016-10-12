@@ -171,18 +171,13 @@ namespace getfem {
     inline std::string get_name() const {return name_;}
     void update_from_context() const {}
     /// Mesh dimension.
-    dim_type dim() const { return pts.dim(); }
+    using basic_mesh::dim;
     /// Return the array of PT.
-    const PT_TAB &points() const { return pts; }
-    /// Return the array of PT.
-    PT_TAB &points() { return pts; }
+    using basic_mesh::points;
+    PT_TAB &points() { return pts; } // non-const version
 
     /// Return a (pseudo)container of the points of a given convex
-    ref_mesh_pt_ct points_of_convex(size_type ic) const {
-      const ind_cv_ct &rct = ind_points_of_convex(ic);
-      return ref_mesh_pt_ct(pts.begin(), rct.begin(), rct.end());
-    }
-
+    using basic_mesh::points_of_convex;
     /// Return a (pseudo)container of points of face of a given convex
     ref_mesh_face_pt_ct points_of_face_of_convex(size_type ic,
                                                  short_type f) const {
@@ -194,21 +189,7 @@ namespace getfem {
     ref_convex convex(size_type ic) const
     { return ref_convex(structure_of_convex(ic), points_of_convex(ic)); }
 
-    /** Add the point pt to the mesh and return the index of the
-        point.
-
-        If the point is too close to an existing point and remove_duplicated_nodes = true,
-        the function does not create a new point, and returns the index of the
-        already existing point.
-        @param pt the point coordinates.
-    */
-    size_type add_point(const base_node &pt,
-                        const scalar_type tol=scalar_type(0),
-                        bool remove_duplicated_nodes = true) {
-      return pts.add_node(pt, tol, remove_duplicated_nodes);
-    }
-    //                        scalar_type characteristic_size = scalar_type(1));
-
+    using basic_mesh::add_point;
     /// Give the number of geometrical nodes in the mesh.
     size_type nb_points() const { return pts.card(); }
     /// Return the points index
@@ -227,14 +208,8 @@ namespace getfem {
     */
     size_type search_point(const base_node &pt, const scalar_type radius=0) const
     { return pts.search_node(pt,radius); }
-    /** Return the bgeot::geometric_trans attached to a convex.
-        @param ic the convex number.
-    */
-    bgeot::pgeometric_trans trans_of_convex(size_type ic) const {
-      GMM_ASSERT1(trans_exists[ic],
-                  "No geometric transformation or nonexisting element");
-      return gtab[ic];
-    }
+
+    using basic_mesh::trans_of_convex;
 
     /// return the version number of the convex ic.
     gmm::uint64_type convex_version_number(size_type ic) const
@@ -684,20 +659,6 @@ namespace getfem {
 
 
   ///@}
-
-  inline void vectors_to_base_matrix(base_matrix &G, const mesh &m,
-				     size_type cv) {
-    const bgeot::mesh_structure::ind_cv_ct &ct = m.ind_points_of_convex(cv);
-    size_type N = m.dim(), Np = ct.size();
-    G.base_resize(N, Np);
-    auto it = G.begin();
-    for (size_type i = 0; i < Np; ++i, it += N) {
-      const base_node &P = m.points()[ct[i]];
-      std::copy(P.begin(),  P.end(), it);
-    }
-  }
-
-
 }  /* end of namespace getfem.                                             */
 
 

@@ -172,8 +172,7 @@ namespace getfem {
   inline void interpolated_fem::actualize_fictx(pfem pf, size_type cv,
                                                 const base_node &ptr) const {
     if (fictx_cv != cv) {
-      bgeot::vectors_to_base_matrix
-        (G, mf.linked_mesh().points_of_convex(cv));
+      mf.linked_mesh().points_of_convex(cv, G);
       fictx = fem_interpolation_context
         (mf.linked_mesh().trans_of_convex(cv), pf, base_node(), G, cv,
          short_type(-1));

@@ -78,7 +78,7 @@ namespace getfem {
       get_approx_im_or_fail(mim.int_method_of_element(cv));
       getfem::pfem pf1 = mf_u.fem_of_element(cv);
       scalar_type radius = m.convex_radius_estimate(cv);
-      bgeot::vectors_to_base_matrix(G1, m.points_of_convex(cv));
+      m.points_of_convex(cv, G1);
       coeff1.resize(mf_u.nb_basic_dof_of_element(cv));
       gmm::copy(gmm::sub_vector(U, gmm::sub_index(mf_u.ind_basic_dof_of_element(cv))), coeff1);
       getfem::fem_interpolation_context ctx1(pgt1, pf1, base_node(N), G1, cv);
@@ -110,7 +110,7 @@ namespace getfem {
 	
         bgeot::pgeometric_trans pgt2 = m.trans_of_convex(cvn);
         getfem::pfem pf2 = mf_u.fem_of_element(cvn);
-        bgeot::vectors_to_base_matrix(G2, m.points_of_convex(cvn));
+        m.points_of_convex(cvn, G2);
         coeff2.resize(mf_u.nb_basic_dof_of_element(cvn));
         gmm::copy(gmm::sub_vector(U, gmm::sub_index(mf_u.ind_basic_dof_of_element(cvn))), coeff2);
         getfem::fem_interpolation_context ctx2(pgt2, pf2, base_node(N), G2, cvn);
@@ -169,7 +169,7 @@ namespace getfem {
 	getfem::pfem pf1 = mf_u.fem_of_element(v.cv());
 	scalar_type radius = m.convex_radius_estimate(v.cv());
       
-	bgeot::vectors_to_base_matrix(G1, m.points_of_convex(v.cv()));
+	m.points_of_convex(v.cv(), G1);
       
 	coeff1.resize(mf_u.nb_basic_dof_of_element(v.cv()));
 	gmm::copy(gmm::sub_vector(U, gmm::sub_index(mf_u.ind_basic_dof_of_element(v.cv()))), coeff1);
@@ -218,7 +218,7 @@ namespace getfem {
         get_approx_im_or_fail(mim.int_method_of_element(v.cv()));
 	getfem::pfem pf1 = mf_u.fem_of_element(v.cv());
       
-	bgeot::vectors_to_base_matrix(G1, m.points_of_convex(v.cv()));
+	m.points_of_convex(v.cv(), G1);
       
 	coeff1.resize(mf_u.nb_basic_dof_of_element(v.cv()));
 	gmm::copy(gmm::sub_vector(U, gmm::sub_index(mf_u.ind_basic_dof_of_element(v.cv()))), coeff1);

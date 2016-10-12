@@ -378,8 +378,7 @@ namespace getfem {
 
           if (!ref_conf)
             slice_vector_on_basic_dof_of_element(mfu, U, cv, coeff);
-          bgeot::vectors_to_base_matrix
-            (G, mfu.linked_mesh().points_of_convex(cv));
+          mfu.linked_mesh().points_of_convex(cv, G);
 
           pfem_precomp pfp(0);
           size_type nbptf(0);
@@ -577,8 +576,7 @@ namespace getfem {
           pfem_precomp pfp = fppool(pf_s, pgt->pgeometric_nodes());
           if (!ref_conf)
             slice_vector_on_basic_dof_of_element(mfu, U, cv, coeff);
-          bgeot::vectors_to_base_matrix
-            (G, mfu.linked_mesh().points_of_convex(cv));
+          mfu.linked_mesh().points_of_convex(cv, G);
           fem_interpolation_context ctx(pgt,pfp,size_type(-1), G, cv);
 
           size_type nb_pt_on_face = 0;
@@ -1045,7 +1043,7 @@ namespace getfem {
           slice_vector_on_basic_dof_of_element(mfu, disp_of_boundary(ib),
                                                cv, coeff);
 
-        bgeot::vectors_to_base_matrix(G, m.points_of_convex(cv));
+        m.points_of_convex(cv, G);
 
         const base_node &x0 = pf_s->ref_convex(cv)->points_of_face(iff)[0];
         fem_interpolation_context ctx(pgt, pf_s, x0, G, cv, iff);
@@ -1421,8 +1419,7 @@ namespace getfem {
             pfem pf_s = mfu.fem_of_element(cv);
             pfem_precomp pfp = fppool(pf_s, pgt->pgeometric_nodes());
             slice_vector_on_basic_dof_of_element(mfu, U, cv, coeff);
-            bgeot::vectors_to_base_matrix
-              (G, mfu.linked_mesh().points_of_convex(cv));
+            mfu.linked_mesh().points_of_convex(cv, G);
             fem_interpolation_context ctx(pgt, pfp, size_type(-1), G, cv);
             
             bgeot::pconvex_structure cvs = pgt->structure();
@@ -1639,7 +1636,7 @@ namespace getfem {
       // Computation of the deformed point and unit normal vectors
       //
       slice_vector_on_basic_dof_of_element(mfu_x, *(cb_x.U), cv_x, coeff_x);
-      bgeot::vectors_to_base_matrix(G_x, m_x.points_of_convex(cv_x));
+      m_x.points_of_convex(cv_x, G_x);
       ctx_x.set_pf(pfu_x);
       pfu_x->interpolation(ctx_x, coeff_x, pt_x, dim_type(N));
       pt_x += ctx_x.xreal();
@@ -1746,7 +1743,7 @@ namespace getfem {
         // Raytrace search for y by Newton's algorithm
         //
 
-        bgeot::vectors_to_base_matrix(G_y, m_y.points_of_convex(cv_y));
+        m_y.points_of_convex(cv_y, G_y);
         const base_node &Y0
           = pfu_y->ref_convex(cv_y)->points_of_face(face_y)[0];
         fem_interpolation_context ctx_y(pgt_y, pfu_y, Y0, G_y, cv_y, face_y);

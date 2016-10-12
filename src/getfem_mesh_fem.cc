@@ -71,7 +71,7 @@ namespace getfem {
     if (!dof_enumeration_made) enumerate_dof();
     v_num = v_num_update = act_counter();
   }
-  
+
   dal::bit_vector mesh_fem::basic_dof_on_region(const mesh_region &b) const {
     context_check(); if (!dof_enumeration_made) this->enumerate_dof();
     dal::bit_vector res;

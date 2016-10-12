@@ -106,27 +106,23 @@ namespace bgeot {
 	PC.base_resize(P, P);
         gmm::lu_inverse(B_factors, ipvt, PC);
         gmm::mult(KK, PC, B_);
+      } else if (P == 1) {
+        scalar_type det = KK(0, 0);
+        GMM_ASSERT1(det != scalar_type(0), "non invertible matrix");
+        B_(0, 0) = scalar_type(1)/det;
+        J_ = gmm::abs(det);
+      } else if (P == 2) {
+        const scalar_type *p = &(KK(0,0));
+        scalar_type det = (*p) * (*(p+3)) - (*(p+1)) * (*(p+2));
+        GMM_ASSERT1(det != scalar_type(0), "non invertible matrix");
+        scalar_type *q = &(B_(0,0));
+        *q++ =  (*(p+3)) / det;  *q++ = -(*(p+2)) / det;
+        *q++ = -(*(p+1)) / det;  *q++ =  (*p) / det;
+        J_ = gmm::abs(det);
       } else {
-	if (P <= 2) {
-	  if (P == 1) {
-	    scalar_type det = KK(0, 0);
-	    GMM_ASSERT1(det != scalar_type(0), "non invertible matrix");
-	    B_(0, 0) = scalar_type(1)/det;
-	    J_ = gmm::abs(det);
-	  } else {
-	    const scalar_type *p = &(KK(0,0));
-	    scalar_type det = (*p) * (*(p+3)) - (*(p+1)) * (*(p+2));
-	    GMM_ASSERT1(det != scalar_type(0), "non invertible matrix");
-	    scalar_type *q = &(B_(0,0));
-	    *q++ =  (*(p+3)) / det;  *q++ = -(*(p+2)) / det;
-	    *q++ = -(*(p+1)) / det;  *q++ =  (*p) / det;
-	    J_ = gmm::abs(det);
-	  }
-	} else {
-	  scalar_type det = J();
-	  GMM_ASSERT1(det != scalar_type(0), "non invertible matrix");
-	  gmm::lu_inverse(B_factors, ipvt, B_);
-	}
+        scalar_type det = J();
+        GMM_ASSERT1(det != scalar_type(0), "non invertible matrix");
+        gmm::lu_inverse(B_factors, ipvt, B_);
       }
       have_B_ = true;
     }
