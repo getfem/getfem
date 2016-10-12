@@ -238,9 +238,8 @@ namespace getfem {
 
   model::VAR_SET::const_iterator
   model::find_variable(const std::string &name) const {
-    auto it = variables.find(name);
-    if (it == end(variables) && !name.compare(0, 4, "Old_")) it = variables.find(name.substr(4));
-    GMM_ASSERT1(it != end(variables), "Undefined variable " << name);
+    VAR_SET::const_iterator it = variables.find(name);
+    GMM_ASSERT1(it != variables.end(), "Undefined variable " << name);
     return it;
   }
 
@@ -2954,19 +2953,31 @@ namespace getfem {
 
   const mesh_fem &
   model::mesh_fem_of_variable(const std::string &name) const {
-    VAR_SET::const_iterator it = find_variable(name);
+   VAR_SET::const_iterator it;
+   if (!(name.compare(0, 4, "Old_")))
+      it = find_variable(name.substr(4));
+    else
+      it = find_variable(name);
     return it->second.associated_mf();
   }
 
   const mesh_fem *
   model::pmesh_fem_of_variable(const std::string &name) const {
-    VAR_SET::const_iterator it = find_variable(name);
+   VAR_SET::const_iterator it;
+   if (!(name.compare(0, 4, "Old_")))
+      it = find_variable(name.substr(4));
+    else
+      it = find_variable(name);
     return it->second.passociated_mf();
   }
 
   bgeot::multi_index
   model::qdims_of_variable(const std::string &name) const {
-    VAR_SET::const_iterator it = find_variable(name);
+   VAR_SET::const_iterator it;
+   if (!(name.compare(0, 4, "Old_")))
+      it = find_variable(name.substr(4));
+    else
+      it = find_variable(name);
     const mesh_fem *mf = it->second.passociated_mf();
     const im_data *imd = it->second.pim_data;
     size_type n = it->second.qdim();
@@ -2996,7 +3007,11 @@ namespace getfem {
   }
 
   size_type model::qdim_of_variable(const std::string &name) const {
-    VAR_SET::const_iterator it = find_variable(name);
+   VAR_SET::const_iterator it;
+   if (!(name.compare(0, 4, "Old_")))
+      it = find_variable(name.substr(4));
+    else
+      it = find_variable(name);
     const mesh_fem *mf = it->second.passociated_mf();
     const im_data *imd = it->second.pim_data;
     size_type n = it->second.qdim();
