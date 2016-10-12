@@ -129,7 +129,7 @@ namespace getfem {
     if (!(v.compare(0, 3, "Dot")) && (v[3] == '_' || v[4] == '_')) {
       v = v.substr((v[3] == '_') ? 4 : 5);
     }
-    if (!(v.compare(0, 9, "Version1_"))) v = v.substr(9);
+    if (!(v.compare(0, 9, "Old_"))) v = v.substr(9);
     return v;
   }
 
@@ -560,7 +560,7 @@ namespace getfem {
 
     /** Says if a name corresponds to a declared variable.  */
     bool variable_exists(const std::string &name) const {
-      if (!(name.compare(0, 9, "Version1_")))
+      if (!(name.compare(0, 9, "Old_")))
 	return variables.count(name.substr(9)) > 0;
       else
 	return variables.count(name) > 0;

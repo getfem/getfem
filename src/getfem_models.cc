@@ -244,7 +244,7 @@ namespace getfem {
   }
 
   bool model::is_disabled_variable(const std::string &name) const {
-    if (!(name.compare(0, 9, "Version1_"))) return false;
+    if (!(name.compare(0, 9, "Old_"))) return false;
     VAR_SET::const_iterator it = find_variable(name);
     if (!(it->second.is_variable)) return false;
     if (it->second.is_affine_dependent)
@@ -253,7 +253,7 @@ namespace getfem {
   }
 
   bool model::is_data(const std::string &name) const {
-    if (!(name.compare(0, 9, "Version1_"))) return true;
+    if (!(name.compare(0, 9, "Old_"))) return true;
     VAR_SET::const_iterator it = find_variable(name);
     if (it->second.is_affine_dependent)
       it = variables.find(it->second.org_name);
@@ -261,13 +261,13 @@ namespace getfem {
   }
 
   bool model::is_true_data(const std::string &name) const {
-    if (!(name.compare(0, 9, "Version1_"))) return true;
+    if (!(name.compare(0, 9, "Old_"))) return true;
     VAR_SET::const_iterator it = find_variable(name);
     return (!(it->second.is_variable));
   }
 
   bool model::is_affine_dependent_variable(const std::string &name) const {
-    if (!(name.compare(0, 9, "Version1_"))) return false;
+    if (!(name.compare(0, 9, "Old_"))) return false;
     VAR_SET::const_iterator it = find_variable(name);
     return (it->second.is_affine_dependent);
   }
@@ -297,7 +297,7 @@ namespace getfem {
 
   bool model::is_im_data(const std::string &name) const {
     VAR_SET::const_iterator it;
-    if (!(name.compare(0, 9, "Version1_")))
+    if (!(name.compare(0, 9, "Old_")))
       it = find_variable(name.substr(9));
     else
       it = find_variable(name);
@@ -307,7 +307,7 @@ namespace getfem {
   const im_data *
   model::pim_data_of_variable(const std::string &name) const {
     VAR_SET::const_iterator it;
-    if (!(name.compare(0, 9, "Version1_")))
+    if (!(name.compare(0, 9, "Old_")))
       it = find_variable(name.substr(9));
     else
       it = find_variable(name);
@@ -3021,7 +3021,7 @@ namespace getfem {
     GMM_ASSERT1(!complex_version, "This model is a complex one");
     context_check();
     VAR_SET::iterator it;
-    if (!(name.compare(0, 9, "Version1_"))) {
+    if (!(name.compare(0, 9, "Old_"))) {
       it = variables.find(name.substr(9)); niter = 1;
     } else {
       it = variables.find(name);
@@ -3045,7 +3045,7 @@ namespace getfem {
     GMM_ASSERT1(complex_version, "This model is a real one");
     context_check();
     VAR_SET::iterator it;
-    if (!(name.compare(0, 9, "Version1_"))) {
+    if (!(name.compare(0, 9, "Old_"))) {
       it = variables.find(name.substr(9)); niter = 1;
     } else {
       it = variables.find(name);
@@ -3069,7 +3069,7 @@ namespace getfem {
     GMM_ASSERT1(!complex_version, "This model is a complex one");
     context_check();
     VAR_SET::iterator it;
-    if (!(name.compare(0, 9, "Version1_"))) {
+    if (!(name.compare(0, 9, "Old_"))) {
       it = variables.find(name.substr(9)); niter = 1;
     } else {
       it = variables.find(name);
@@ -3094,7 +3094,7 @@ namespace getfem {
     GMM_ASSERT1(complex_version, "This model is a real one");
     context_check();
     VAR_SET::iterator it;
-    if (!(name.compare(0, 9, "Version1_"))) {
+    if (!(name.compare(0, 9, "Old_"))) {
       it = variables.find(name.substr(9)); niter = 1;
     } else {
       it = variables.find(name);
