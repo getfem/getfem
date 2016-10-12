@@ -129,7 +129,7 @@ namespace getfem {
     if (!(v.compare(0, 3, "Dot")) && (v[3] == '_' || v[4] == '_')) {
       v = v.substr((v[3] == '_') ? 4 : 5);
     }
-    if (!(v.compare(0, 9, "Old_"))) v = v.substr(9);
+    if (!(v.compare(0, 4, "Old_"))) v = v.substr(4);
     return v;
   }
 
@@ -560,8 +560,8 @@ namespace getfem {
 
     /** Says if a name corresponds to a declared variable.  */
     bool variable_exists(const std::string &name) const {
-      if (!(name.compare(0, 9, "Old_")))
-	return variables.count(name.substr(9)) > 0;
+      if (!(name.compare(0, 4, "Old_")))
+	return variables.count(name.substr(4)) > 0;
       else
 	return variables.count(name) > 0;
     }
@@ -620,26 +620,42 @@ namespace getfem {
     /** Gives the access to the vector value of a variable. For the real
         version. */
     const model_real_plain_vector &
-    real_variable(const std::string &name,
-                  size_type niter = size_type(-1)) const;
+    real_variable(const std::string &name, size_type niter) const;
+
+    /**The same as above, but either accessing the latest variable version,
+    or the previous, if using "Old_" prefix*/
+    const model_real_plain_vector &
+    real_variable(const std::string &name) const;
 
     /** Gives the access to the vector value of a variable. For the complex
         version. */
     const model_complex_plain_vector &
-    complex_variable(const std::string &name,
-                     size_type niter = size_type(-1)) const;
+    complex_variable(const std::string &name, size_type niter) const;
+
+    /**The same as above, but either accessing the latest variable version,
+    or the previous, if using "Old_" prefix*/
+    const model_complex_plain_vector &
+    complex_variable(const std::string &name) const;
 
     /** Gives the write access to the vector value of a variable. Make a
         change flag of the variable set. For the real version. */
     model_real_plain_vector &
-    set_real_variable(const std::string &name,
-                      size_type niter = size_type(-1)) const;
+    set_real_variable(const std::string &name, size_type niter) const;
+
+    /**The same as above, but for either latest variable, or
+    for the previous, if prefixed with "Old_".*/
+    model_real_plain_vector &
+    set_real_variable(const std::string &name) const;
 
     /** Gives the write access to the vector value of a variable. Make a
         change flag of the variable set. For the complex version. */
     model_complex_plain_vector &
-    set_complex_variable(const std::string &name,
-                         size_type niter = size_type(-1)) const;
+    set_complex_variable(const std::string &name, size_type niter) const;
+
+    /**The same as above, but either accessing the latest variable version,
+    or the previous, if using "Old_" prefix*/
+    model_complex_plain_vector &
+    set_complex_variable(const std::string &name) const;
 
     model_real_plain_vector &
     set_real_constant_part(const std::string &name) const;
