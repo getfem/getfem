@@ -373,8 +373,8 @@ static bool dal_static_stored_tab_valid__ = true;
           auto itos = iterators_of_object(pobj);
           GMM_ASSERT1(itos.first != itos.second, "An object disapeared !");
           itos.first->second.valid = false;
-          for (pstatic_stored_object
-               pdep : itos.first->second.dependencies) {
+          auto second_dep = itos.first->second.dependencies;
+          for (const pstatic_stored_object pdep : second_dep) {
             if (del_dependency(pobj, pdep)) {
               auto itods = iterators_of_object(pdep);
               if (itods.first->second.perm == AUTODELETE_STATIC_OBJECT
