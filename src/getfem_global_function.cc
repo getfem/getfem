@@ -138,6 +138,26 @@ namespace getfem {
     }
   }
 
+  bool global_function_sum::is_in_support(const base_node &p) const {
+    for (const auto &f : functions)
+      if (f->is_in_support(p)) return true;
+    return false;
+  }
+
+  void global_function_sum::bounding_box
+  (base_node &bmin_, base_node &bmax_) const {
+    if (functions.size() > 0)
+      functions[0]->bounding_box(bmin_, bmax_);
+    base_node bmin0(dim()), bmax0(dim());
+    for (const auto &f : functions) {
+      f->bounding_box(bmin0, bmax0);
+      for (size_type i=0; i < dim(); ++i) {
+        if (bmin0[i] < bmin_[i]) bmin_[i] = bmin0[i];
+        if (bmax0[i] > bmax_[i]) bmax_[i] = bmax0[i];
+      }
+    }
+  }
+
   global_function_sum::global_function_sum(const std::vector<pglobal_function> &funcs)
     : global_function((funcs.size() > 0) ? funcs[0]->dim() : 0), functions(funcs) {
     for (const auto &f : functions)
@@ -206,6 +226,23 @@ namespace getfem {
     f2->grad(c, g2);
     gmm::rank_one_update(h, g1, g2);
     gmm::rank_one_update(h, g2, g1);
+  }
+
+  bool global_function_product::is_in_support(const base_node &p) const {
+    return f1->is_in_support(p) && f2->is_in_support(p);
+  }
+
+  void global_function_product::bounding_box
+  (base_node &bmin_, base_node &bmax_) const {
+    base_node bmin0(dim()), bmax0(dim());
+    f1->bounding_box(bmin0, bmax0);
+    f2->bounding_box(bmin_, bmax_);
+    for (size_type i=0; i < dim(); ++i) {
+      if (bmin0[i] > bmin_[i]) bmin_[i] = bmin0[i];
+      if (bmax0[i] < bmax_[i]) bmax_[i] = bmax0[i];
+      if (bmin_[i] > bmax_[i])
+        GMM_WARNING1("Global function product with vanishing basis function");
+    }
   }
 
   global_function_product::global_function_product(pglobal_function f1_, pglobal_function f2_)

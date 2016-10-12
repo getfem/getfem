@@ -118,6 +118,8 @@ namespace getfem {
     virtual scalar_type val(const fem_interpolation_context&) const;
     virtual void grad(const fem_interpolation_context&, base_small_vector&) const;
     virtual void hess(const fem_interpolation_context&, base_matrix&) const;
+    virtual bool is_in_support(const base_node &p) const;
+    virtual void bounding_box(base_node &bmin_, base_node &bmax_) const;
     global_function_sum(const std::vector<pglobal_function> &funcs);
     global_function_sum(pglobal_function f1, pglobal_function f2);
     global_function_sum(pglobal_function f1, pglobal_function f2,
@@ -134,6 +136,8 @@ namespace getfem {
     virtual scalar_type val(const fem_interpolation_context&) const;
     virtual void grad(const fem_interpolation_context&, base_small_vector&) const;
     virtual void hess(const fem_interpolation_context&, base_matrix&) const;
+    virtual bool is_in_support(const base_node &p) const;
+    virtual void bounding_box(base_node &bmin_, base_node &bmax_) const;
     global_function_product(pglobal_function f1_, pglobal_function f2_);
     virtual ~global_function_product()
     { DAL_STORED_OBJECT_DEBUG_DESTROYED(this, "Global function product"); }
