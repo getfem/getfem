@@ -36,7 +36,7 @@ namespace bgeot {
   const base_node& geotrans_interpolation_context::xref() const {
     if (!have_xref()) {
       if (pspt_) xref_ = (*pspt_)[ii_];
-      else GMM_ASSERT1(false, "missing xref");
+      else GMM_ASSERT1(false, "Missing xref");
     }
     return xref_;
   }
@@ -51,7 +51,7 @@ namespace bgeot {
   }
 
   void geotrans_interpolation_context::compute_J(void) const {
-    GMM_ASSERT1(have_G() && have_pgt(), "unable to compute J\n");
+    GMM_ASSERT1(have_G() && have_pgt(), "Unable to compute J\n");
     size_type P = pgt_->structure()->dim();
     if (P != N()) {
       B_factors.base_resize(P, P);
@@ -80,15 +80,15 @@ namespace bgeot {
 
   const base_matrix& geotrans_interpolation_context::K() const {
     if (!have_K()) {
-      GMM_ASSERT1(have_G() && have_pgt(), "unable to compute K\n");
+      GMM_ASSERT1(have_G() && have_pgt(), "Unable to compute K\n");
       size_type P = pgt_->structure()->dim();
       K_.base_resize(N(), P);
       if (have_pgp()) {
-	      pgt_->compute_K_matrix(G(), pgp_->grad(ii_), K_);
+	pgt_->compute_K_matrix(G(), pgp_->grad(ii_), K_);
       } else {
 	PC.base_resize(pgt()->nb_points(), P);
         pgt()->poly_vector_grad(xref(), PC);
-        pgt_->compute_K_matrix(G(), PC, K_);
+	pgt_->compute_K_matrix(G(), PC, K_);
       }
       have_K_ = true;
     }
@@ -97,7 +97,7 @@ namespace bgeot {
 
   const base_matrix& geotrans_interpolation_context::B() const {
     if (!have_B()) {
-      GMM_ASSERT1(have_G() && have_pgt(), "unable to compute B\n");
+      GMM_ASSERT1(have_G() && have_pgt(), "Unable to compute B\n");
       size_type P = pgt_->structure()->dim();
       const base_matrix &KK = K();
       B_.base_resize(N(), P);
@@ -108,20 +108,20 @@ namespace bgeot {
         gmm::mult(KK, PC, B_);
       } else if (P == 1) {
         scalar_type det = KK(0, 0);
-        GMM_ASSERT1(det != scalar_type(0), "non invertible matrix");
+        GMM_ASSERT1(det != scalar_type(0), "Non invertible matrix");
         B_(0, 0) = scalar_type(1)/det;
         J_ = gmm::abs(det);
       } else if (P == 2) {
         const scalar_type *p = &(KK(0,0));
         scalar_type det = (*p) * (*(p+3)) - (*(p+1)) * (*(p+2));
-        GMM_ASSERT1(det != scalar_type(0), "non invertible matrix");
+        GMM_ASSERT1(det != scalar_type(0), "Non invertible matrix");
         scalar_type *q = &(B_(0,0));
         *q++ =  (*(p+3)) / det;  *q++ = -(*(p+2)) / det;
         *q++ = -(*(p+1)) / det;  *q++ =  (*p) / det;
         J_ = gmm::abs(det);
       } else {
         scalar_type det = J();
-        GMM_ASSERT1(det != scalar_type(0), "non invertible matrix");
+        GMM_ASSERT1(det != scalar_type(0), "Non invertible matrix");
         gmm::lu_inverse(B_factors, ipvt, B_);
       }
       have_B_ = true;

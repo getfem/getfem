@@ -1065,8 +1065,8 @@ namespace gmm {
 	  base_type_::resize(this->nb_stored()+1, ev);
 	  if (ind != this->nb_stored() - 1) {
 	    it = this->begin() + ind;
-	    iterator ite = this->end(); --ite; iterator itee = ite; --itee; 
-	    for (; ite != it; --ite, --itee) *ite = *itee;
+	    iterator ite = this->end(); --ite; iterator itee = ite; 
+	    for (; ite != it; --ite) { --itee; *ite = *itee; }
 	    *it = ev;
 	  }
 	}
@@ -1092,8 +1092,8 @@ namespace gmm {
 	  base_type_::resize(this->nb_stored()+1, ev);
 	  if (ind != this->nb_stored() - 1) {
 	    it = this->begin() + ind;
-	    iterator ite = this->end(); --ite; iterator itee = ite; --itee; 
-	    for (; itee != it; --ite, --itee) *ite = *itee;
+	    iterator ite = this->end(); --ite; iterator itee = ite; 
+	    for (; ite != it; --ite) { --itee; *ite = *itee; }
 	    *it = ev;
 	  }
 	}

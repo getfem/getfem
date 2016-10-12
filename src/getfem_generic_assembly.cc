@@ -2749,7 +2749,7 @@ namespace getfem {
       size_type cv_1 = ctx.is_convex_num_valid()
                      ? ctx.convex_num() : mf.convex_index().first_true();
       pfem pf = mf.fem_of_element(cv_1);
-      GMM_ASSERT1(pf, "An element without finite element methode defined");
+      GMM_ASSERT1(pf, "An element without finite element method defined");
       size_type Qmult = qdim / pf->target_dim();
       size_type s = pf->nb_dof(cv_1) * Qmult;
       if (t.sizes()[0] != s)
@@ -6481,10 +6481,16 @@ namespace getfem {
 
 
   void ga_workspace::assembly(size_type order) {
+    size_type ndof;
+    const ga_workspace *w = this;
+    while (w->parent_workspace) w = w->parent_workspace;
+    if (w->md) ndof = w->md->nb_dof(); // To eventually call actualize_sizes()
+
     GA_TIC;
     ga_instruction_set gis;
     ga_compile(*this, gis, order);
-    size_type ndof = gis.nb_dof, max_dof =  gis.max_dof;
+    ndof = gis.nb_dof;
+    size_type max_dof =  gis.max_dof;
     GA_TOCTIC("Compile time");
 
     if (order == 2) {
@@ -11721,7 +11727,7 @@ namespace getfem {
 
   static void ga_exec(ga_instruction_set &gis, ga_workspace &workspace) {
     base_matrix G;
-    base_small_vector un, up;
+    base_small_vector un;
     scalar_type J(0);
 
     for (const std::string &t : gis.transformations)
@@ -11739,10 +11745,11 @@ namespace getfem {
       mesh_region rg(region);
       m.intersect_with_mpi_region(rg);
       size_type old_cv = size_type(-1);
-      bgeot::pgeometric_trans pgt = 0;
+      bgeot::pgeometric_trans pgt = 0, pgt_old = 0;
       pintegration_method pim = 0;
       papprox_integration pai = 0;
       bgeot::pstored_point_tab pspt = 0, old_pspt = 0;
+      bgeot::pgeotrans_precomp pgp = 0;
       bool first_gp = true;
       for (getfem::mr_visitor v(rg, m); !v.finished(); ++v) {
         if (mim.convex_index().is_in(v.cv())) {
@@ -11750,27 +11757,27 @@ namespace getfem {
           if (v.cv() != old_cv) {
             m.points_of_convex(v.cv(), G);
             pgt = m.trans_of_convex(v.cv());
-            up.resize(G.nrows());
-            un.resize(pgt->dim());
-            pim = mim.int_method_of_element(v.cv());
+	    pim = mim.int_method_of_element(v.cv());
             if (pim->type() == IM_NONE) continue;
             GMM_ASSERT1(pim->type() == IM_APPROX, "Sorry, exact methods cannot "
                         "be used in high level generic assembly");
             pai = pim->approx_method();
             pspt = pai->pintegration_points();
             if (pspt->size()) {
-              if (gis.ctx.have_pgp() && gis.pai == pai && gis.ctx.pgt()==pgt) {
-                gis.ctx.change(gis.ctx.pgp(), 0, 0, G, v.cv(), v.f());
+              if (pgp && gis.pai == pai && pgt_old == pgt) {
+                gis.ctx.change(pgp, 0, 0, G, v.cv(), v.f());
               } else {
                 if (pai->is_built_on_the_fly()) {
                   gis.ctx.change(pgt, 0, (*pspt)[0], G, v.cv(), v.f());
+		  pgp = 0;
                 } else {
-                  gis.ctx.change(gis.gp_pool(pgt, pspt), 0,0, G, v.cv(), v.f());
+		  pgp = gis.gp_pool(pgt, pspt);
+                  gis.ctx.change(pgp, 0, 0, G, v.cv(), v.f());
                 }
+		pgt_old = pgt; gis.pai = pai;
               }
-              gis.pai = pai;
-              if (gis.need_elt_size)
-                gis.elt_size = m.convex_radius_estimate(v.cv())*scalar_type(2);
+              if (gis.need_elt_size) 
+                gis.elt_size = convex_radius_estimate(pgt, G)*scalar_type(2);
             }
             old_cv = v.cv();
           } else {
@@ -11787,19 +11794,20 @@ namespace getfem {
               first_ind = pai->ind_first_point_on_face(v.f());
             }
             for (gis.ipt = 0; gis.ipt < gis.nbpt; ++(gis.ipt)) {
-              if (gis.ctx.have_pgp()) gis.ctx.set_ii(first_ind+gis.ipt);
+              if (pgp) gis.ctx.set_ii(first_ind+gis.ipt);
               else gis.ctx.set_xref((*pspt)[first_ind+gis.ipt]);
               if (gis.ipt == 0 || !(pgt->is_linear())) {
                 J = gis.ctx.J();
                 // Computation of unit normal vector in case of a boundary
                 if (v.f() != short_type(-1)) {
-                  gmm::copy(pgt->normals()[v.f()], un);
-                  gmm::mult(gis.ctx.B(), un, up);
-                  scalar_type nup = gmm::vect_norm2(up);
+		  gis.Normal.resize(G.nrows());
+		  un.resize(pgt->dim());
+		  gmm::copy(pgt->normals()[v.f()], un);
+                  gmm::mult(gis.ctx.B(), un, gis.Normal);
+                  scalar_type nup = gmm::vect_norm2(gis.Normal);
                   J *= nup;
-                  gmm::scale(up,1.0/nup);
-                  gmm::clean(up, 1e-13);
-                  gis.Normal = up;
+                  gmm::scale(gis.Normal,1.0/nup);
+                  gmm::clean(gis.Normal, 1e-13);
                 } else gis.Normal.resize(0);
               }
               gis.coeff = J * pai->coeff(first_ind+gis.ipt);
