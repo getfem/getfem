@@ -1093,7 +1093,7 @@ namespace gmm {
 	  if (ind != this->nb_stored() - 1) {
 	    it = this->begin() + ind;
 	    iterator ite = this->end(); --ite; iterator itee = ite; --itee; 
-	    for (; ite != it; --ite, --itee) *ite = *itee;
+	    for (; itee != it; --ite, --itee) *ite = *itee;
 	    *it = ev;
 	  }
 	}
