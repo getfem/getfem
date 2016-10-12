@@ -238,8 +238,9 @@ namespace getfem {
 
   model::VAR_SET::const_iterator
   model::find_variable(const std::string &name) const {
-    VAR_SET::const_iterator it = variables.find(name);
-    GMM_ASSERT1(it != variables.end(), "Undefined variable " << name);
+    auto it = variables.find(name);
+    if (it == end(variables) && !name.compare(0, 4, "Old_")) it = variables.find(name.substr(4));
+    GMM_ASSERT1(it != end(variables), "Undefined variable " << name);
     return it;
   }
 
