@@ -122,16 +122,18 @@ namespace getfem {
   typedef model_complex_sparse_vector modeling_standard_complex_sparse_vector;
   typedef model_complex_sparse_matrix modeling_standard_complex_sparse_matrix;
 
-  inline std::string sup_previous_and_dot_to_varname(std::string v) {
-    if (!(v.compare(0, 8, "Previous")) && (v[8] == '_' || v[9] == '_')) {
-      v = v.substr((v[8] == '_') ? 9 : 10);
-    }
-    if (!(v.compare(0, 3, "Dot")) && (v[3] == '_' || v[4] == '_')) {
-      v = v.substr((v[3] == '_') ? 4 : 5);
-    }
-    if (!(v.compare(0, 4, "Old_"))) v = v.substr(4);
-    return v;
-  }
+
+  /** A prefix to refer to the previous version of a variable*/
+  const auto PREFIX_OLD = std::string{"Old_"};
+  const auto PREFIX_OLD_LENGTH = 4;
+
+  /** Does the variable have Old_ prefix*/
+  bool is_old(const std::string &name);
+
+  /** Strip the variable name from prefix Old_ if it has one*/
+  std::string no_old_prefix_name(const std::string &name);
+
+  std::string sup_previous_and_dot_to_varname(std::string v);
 
   /** ``Model'' variables store the variables, the data and the
       description of a model. This includes the global tangent matrix, the
@@ -559,12 +561,7 @@ namespace getfem {
     void enable_variable(const std::string &name);
 
     /** Says if a name corresponds to a declared variable.  */
-    bool variable_exists(const std::string &name) const {
-      if (!(name.compare(0, 4, "Old_")))
-	return variables.count(name.substr(4)) > 0;
-      else
-	return variables.count(name) > 0;
-    }
+    bool variable_exists(const std::string &name) const;
 
     bool is_disabled_variable(const std::string &name) const;
 

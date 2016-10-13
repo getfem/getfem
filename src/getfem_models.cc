@@ -243,8 +243,27 @@ namespace getfem {
     return it;
   }
 
+  std::string sup_previous_and_dot_to_varname(std::string v) {
+    if (!(v.compare(0, 8, "Previous")) && (v[8] == '_' || v[9] == '_')) {
+      v = v.substr((v[8] == '_') ? 9 : 10);
+    }
+    if (!(v.compare(0, 3, "Dot")) && (v[3] == '_' || v[4] == '_')) {
+      v = v.substr((v[3] == '_') ? 4 : 5);
+    }
+    if (is_old(v)) v = no_old_prefix_name(v);
+    return v;
+  }
+
+  bool is_old(const std::string &name){
+    return name.substr(0, PREFIX_OLD_LENGTH) == PREFIX_OLD;
+  }
+
+  std::string no_old_prefix_name(const std::string &name){
+    return is_old(name) ? name.substr(PREFIX_OLD_LENGTH) : name;
+  }
+
   bool model::is_disabled_variable(const std::string &name) const {
-    if (!(name.compare(0, 4, "Old_"))) return false;
+    if (is_old(name)) return false;
     VAR_SET::const_iterator it = find_variable(name);
     if (!(it->second.is_variable)) return false;
     if (it->second.is_affine_dependent)
@@ -253,7 +272,7 @@ namespace getfem {
   }
 
   bool model::is_data(const std::string &name) const {
-    if (!(name.compare(0, 4, "Old_"))) return true;
+    if (is_old(name)) return true;
     VAR_SET::const_iterator it = find_variable(name);
     if (it->second.is_affine_dependent)
       it = variables.find(it->second.org_name);
@@ -261,13 +280,13 @@ namespace getfem {
   }
 
   bool model::is_true_data(const std::string &name) const {
-    if (!(name.compare(0, 4, "Old_"))) return true;
+    if (is_old(name)) return true;
     VAR_SET::const_iterator it = find_variable(name);
     return (!(it->second.is_variable));
   }
 
   bool model::is_affine_dependent_variable(const std::string &name) const {
-    if (!(name.compare(0, 4, "Old_"))) return false;
+    if (is_old(name)) return false;
     VAR_SET::const_iterator it = find_variable(name);
     return (it->second.is_affine_dependent);
   }
@@ -296,21 +315,13 @@ namespace getfem {
   }
 
   bool model::is_im_data(const std::string &name) const {
-    VAR_SET::const_iterator it;
-    if (!(name.compare(0, 4, "Old_")))
-      it = find_variable(name.substr(4));
-    else
-      it = find_variable(name);
+    auto it = find_variable(no_old_prefix_name(name));
     return (it->second.pim_data != 0);
   }
 
   const im_data *
   model::pim_data_of_variable(const std::string &name) const {
-    VAR_SET::const_iterator it;
-    if (!(name.compare(0, 4, "Old_")))
-      it = find_variable(name.substr(4));
-    else
-      it = find_variable(name);
+    auto it = find_variable(no_old_prefix_name(name));
     return it->second.pim_data;
   }
 
@@ -957,6 +968,10 @@ namespace getfem {
         itv->second.is_disabled = false;
     }
     if (!act_size_to_be_done) resize_global_system();
+  }
+
+  bool model::variable_exists(const std::string &name) const {
+    return variables.count(no_old_prefix_name(name)) > 0;
   }
 
   void model::add_macro(const std::string &name, const std::string &expr)
@@ -2953,31 +2968,19 @@ namespace getfem {
 
   const mesh_fem &
   model::mesh_fem_of_variable(const std::string &name) const {
-   VAR_SET::const_iterator it;
-   if (!(name.compare(0, 4, "Old_")))
-      it = find_variable(name.substr(4));
-    else
-      it = find_variable(name);
+    auto it = find_variable(no_old_prefix_name(name));
     return it->second.associated_mf();
   }
 
   const mesh_fem *
   model::pmesh_fem_of_variable(const std::string &name) const {
-   VAR_SET::const_iterator it;
-   if (!(name.compare(0, 4, "Old_")))
-      it = find_variable(name.substr(4));
-    else
-      it = find_variable(name);
+    auto it = find_variable(no_old_prefix_name(name));
     return it->second.passociated_mf();
   }
 
   bgeot::multi_index
   model::qdims_of_variable(const std::string &name) const {
-   VAR_SET::const_iterator it;
-   if (!(name.compare(0, 4, "Old_")))
-      it = find_variable(name.substr(4));
-    else
-      it = find_variable(name);
+    auto it = find_variable(no_old_prefix_name(name));
     const mesh_fem *mf = it->second.passociated_mf();
     const im_data *imd = it->second.pim_data;
     size_type n = it->second.qdim();
@@ -3007,11 +3010,7 @@ namespace getfem {
   }
 
   size_type model::qdim_of_variable(const std::string &name) const {
-   VAR_SET::const_iterator it;
-   if (!(name.compare(0, 4, "Old_")))
-      it = find_variable(name.substr(4));
-    else
-      it = find_variable(name);
+    auto it = find_variable(no_old_prefix_name(name));
     const mesh_fem *mf = it->second.passociated_mf();
     const im_data *imd = it->second.pim_data;
     size_type n = it->second.qdim();
@@ -3023,7 +3022,7 @@ namespace getfem {
     return n;
   }
 
-  
+
   const gmm::sub_interval &
   model::interval_of_variable(const std::string &name) const {
     context_check();
@@ -3034,15 +3033,15 @@ namespace getfem {
 
   const model_real_plain_vector &
   model::real_variable(const std::string &name) const {
-    if (!name.compare(0, 4, "Old_")) return real_variable(name.substr(4), 1);
+    if (is_old(name)) return real_variable(no_old_prefix_name(name), 1);
     else return real_variable(name, size_type(-1));
   }
 
   const model_real_plain_vector &
   model::real_variable(const std::string &name, size_type niter) const {
     GMM_ASSERT1(!complex_version, "This model is a complex one");
-    GMM_ASSERT1(name.compare(0, 4, "Old_"), "Please don't use Old_ prefix in combination with"
-                                            " variable version");
+    GMM_ASSERT1(!is_old(name), "Please don't use Old_ prefix in combination with"
+                               " variable version");
     context_check();
     auto it = variables.find(name);
     GMM_ASSERT1(it!=variables.end(), "Undefined variable " << name);
@@ -3060,15 +3059,15 @@ namespace getfem {
 
   const model_complex_plain_vector &
   model::complex_variable(const std::string &name) const {
-    if (!name.compare(0, 4, "Old_")) return complex_variable(name.substr(4), 1);
+    if (is_old(name)) return complex_variable(no_old_prefix_name(name), 1);
     else return complex_variable(name, size_type(-1));
   }
 
   const model_complex_plain_vector &
   model::complex_variable(const std::string &name, size_type niter) const {
     GMM_ASSERT1(complex_version, "This model is a real one");
-    GMM_ASSERT1(name.compare(0, 4, "Old_"), "Please don't use Old_ prefix in combination with"
-                                            " variable version");
+    GMM_ASSERT1(!is_old(name), "Please don't use Old_ prefix in combination with"
+                               " variable version");
     context_check();
     auto it = variables.find(name);
     GMM_ASSERT1(it!=variables.end(), "Undefined variable " << name);
@@ -3087,7 +3086,7 @@ namespace getfem {
 
   model_real_plain_vector &
   model::set_real_variable(const std::string &name) const {
-    if (!name.compare(0, 4, "Old_")) return set_real_variable(name.substr(4), 1);
+    if (is_old(name)) return set_real_variable(no_old_prefix_name(name), 1);
     else return set_real_variable(name, size_type(-1));
   }
 
@@ -3095,8 +3094,8 @@ namespace getfem {
   model_real_plain_vector &
   model::set_real_variable(const std::string &name, size_type niter) const {
     GMM_ASSERT1(!complex_version, "This model is a complex one");
-    GMM_ASSERT1(name.compare(0, 4, "Old_"), "Please don't use Old_ prefix in combination with"
-                                            " variable version");
+    GMM_ASSERT1(!is_old(name), "Please don't use Old_ prefix in combination with"
+                               " variable version");
     context_check();
     auto it = variables.find(name);
     GMM_ASSERT1(it!=variables.end(), "Undefined variable " << name);
@@ -3116,15 +3115,15 @@ namespace getfem {
 
 model_complex_plain_vector &
   model::set_complex_variable(const std::string &name) const {
-    if (!name.compare(0, 4, "Old_")) return set_complex_variable(name.substr(4), 1);
+    if (is_old(name)) return set_complex_variable(no_old_prefix_name(name), 1);
     else return set_complex_variable(name, size_type(-1));
   }
 
   model_complex_plain_vector &
   model::set_complex_variable(const std::string &name, size_type niter) const {
     GMM_ASSERT1(complex_version, "This model is a real one");
-    GMM_ASSERT1(name.compare(0, 4, "Old_"), "Please don't use Old_ prefix in combination with"
-                                            " variable version");
+    GMM_ASSERT1(!is_old(name), "Please don't use Old_ prefix in combination with"
+                               " variable version");
     context_check();
     auto it = variables.find(name);
     GMM_ASSERT1(it!=variables.end(), "Undefined variable " << name);
