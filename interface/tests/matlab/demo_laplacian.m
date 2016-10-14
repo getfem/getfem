@@ -36,6 +36,7 @@ if (quadrangles)
 else
   m=gf_mesh('import','structured',sprintf('GT="GT_PK(2,1)";SIZES=[1,1];NOISED=0;NSUBDIV=[%d,%d];', NX, NX));
 end
+gf_mesh_set(m, 'optimize structure')
 
 % Create a mesh_fem of for a field of dimension 1 (i.e. a scalar field)
 mf = gf_mesh_fem(m,1);
@@ -55,7 +56,8 @@ border = gf_mesh_get(m,'outer faces');
 GAMMAD=1;
 gf_mesh_set(m, 'region', GAMMAD, border);
 if (draw)
-  gf_plot_mesh(m, 'regions', [GAMMAD]); % the boundary edges appear in red
+  figure(1);
+  gf_plot_mesh(m, 'regions', [GAMMAD], 'convexes', 'on'); % the boundary edges appear in red
   pause(1);
 end
 
@@ -89,6 +91,7 @@ gf_model_get(md, 'solve');
 U = gf_model_get(md, 'variable', 'u');
 
 if (draw)
+  figure(2);
   subplot(2,1,1); gf_plot(mf,U,'mesh','off'); 
   colorbar; title('computed solution');
 

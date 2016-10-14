@@ -198,7 +198,7 @@ void test_mesh(getfem::mesh &m) {
   m.sup_convex(0);
   m.sup_convex(1);
   assert(!m.region(3).is_in(0));
-  m.optimize_structure();
+  m.optimize_structure(false);
   m.write_to_file("test_mesh.mesh");
 
   getfem::mesh m2; m2.read_from_file("test_mesh.mesh");

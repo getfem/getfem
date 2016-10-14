@@ -190,7 +190,7 @@ regular_simplices_mesh(getfem::mesh *pmesh, getfemint::mexargs_in &in) {
       }
       pmesh->add_convex_by_points(pgt, pts.begin());
     }
-    pmesh->optimize_structure();
+    pmesh->optimize_structure(false);
   }
 
   getfem::base_small_vector diff(N);

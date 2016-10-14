@@ -217,10 +217,9 @@ namespace getfem {
   }
 #endif
 
-  void mesh::optimize_structure() {
+  void mesh::optimize_structure(bool with_renumbering) {
     pts.resort();
-    size_type i, j;
-    j = nb_convex();
+    size_type i, j = nb_convex(), nbc = j;
     for (i = 0; i < j; i++)
       if (!convex_tab.index_valid(i))
         swap_convex(i, convex_tab.ind_last());
@@ -231,14 +230,20 @@ namespace getfem {
         while (i < j && j != ST_NIL && !(pts.index()[j])) --j;
         if (i < j && j != ST_NIL ) swap_points(i, j);
       }
-  }
-
-  const std::vector<size_type> &mesh::cuthill_mckee_ordering() const {
-    if (!cuthill_mckee_uptodate) {
-      bgeot::cuthill_mckee_on_convexes(*this, cmk_order);
-      cuthill_mckee_uptodate = true;
+    if (with_renumbering) { // Could be optimized no using only swap_convex
+      std::vector<size_type> cmk, iord(nbc), iordinv(nbc);
+      for (i = 0; i < nbc; ++i) iord[i] = iordinv[i] = i;
+      
+      bgeot::cuthill_mckee_on_convexes(*this, cmk);
+      for (i = 0; i < nbc; ++i) {
+	j = iordinv[cmk[i]];
+	if (i != j) {
+	  swap_convex(i, j);
+	  std::swap(iord[i], iord[j]);
+	  std::swap(iordinv[iord[i]], iordinv[iord[j]]);
+	}
+      }
     }
-    return cmk_order;
   }
 
   void mesh::translation(const base_small_vector &V)

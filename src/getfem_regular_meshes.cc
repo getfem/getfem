@@ -234,7 +234,7 @@ namespace getfem
     /* apply a continuous deformation + some noise */
     if (noised) noise_unit_mesh(m, nsubdiv, pgt);
 
-    m.optimize_structure();
+    m.optimize_structure(false);
   }
 
 

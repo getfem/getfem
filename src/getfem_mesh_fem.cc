@@ -307,7 +307,15 @@ namespace getfem {
     if (first_pf && first_pf->is_on_real_element()) is_uniform_ = false;
 
     // Gives the Cuthill McKee ordering to iterate on elements
-    const std::vector<size_type> &cmk = linked_mesh().cuthill_mckee_ordering();
+    // const std::vector<size_type> &cmk = linked_mesh().cuthill_mckee_ordering();
+
+
+    // std::vector<size_type> cmk;
+    // for (dal::bv_visitor cv(linked_mesh().convex_index()); !cv.finished(); ++cv)
+    //   cmk.push_back(cv);
+
+    
+
 
     // Dof counter
     size_type nbdof = 0;
@@ -334,7 +342,9 @@ namespace getfem {
     bgeot::pgeometric_trans pgt_old = 0;
     bgeot::pgeotrans_precomp pgp = 0;
 
-    for (size_type cv : cmk) {
+    // for (size_type cv : cmk) {
+    for (dal::bv_visitor cv(linked_mesh().convex_index());
+      	 !cv.finished(); ++cv) {
       if (fe_convex.is_in(cv)) {
 	gmm::copy(linked_mesh().points_of_convex(cv)[0], bmin);
 	gmm::copy(bmin, bmax);
@@ -350,8 +360,10 @@ namespace getfem {
     }
 
     dal::bit_vector cv_done;
-
-    for (size_type cv : cmk) { // Loop on elements
+    
+    //for (size_type cv : cmk) {
+    for (dal::bv_visitor cv(linked_mesh().convex_index());
+	 !cv.finished(); ++cv) { // Loop on elements
       if (!fe_convex.is_in(cv)) continue;
       pfem pf = fem_of_element(cv);
       if (pf != first_pf) is_uniform_ = false;

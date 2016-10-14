@@ -443,7 +443,7 @@ namespace getfem {
     void sup_convex_from_regions(size_type cv);
     /** Pack the mesh : renumber convexes and nodes such that there
         is no holes in their numbering. Do NOT do the Cuthill-McKee. */
-    void optimize_structure();
+    void optimize_structure(bool with_renumbering = true);
     /// Return the list of convex IDs for a Cuthill-McKee ordering
     const std::vector<size_type> &cuthill_mckee_ordering() const;
     /// Erase the mesh.

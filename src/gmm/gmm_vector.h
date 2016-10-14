@@ -1058,12 +1058,12 @@ namespace gmm {
 	iterator it = std::lower_bound(this->begin(), this->end(), ev);
 	if (it != this->end() && it->c == c) it->e = e;
 	else {
-	  size_type ind = it - this->begin();
-          if (this->nb_stored() - ind > 1100)
+	  size_type ind = it - this->begin(), nb = this->nb_stored();
+          if (nb - ind > 1100)
             GMM_WARNING2("Inefficient addition of element in rsvector with "
                          << this->nb_stored() - ind << " non-zero entries");
-	  base_type_::resize(this->nb_stored()+1, ev);
-	  if (ind != this->nb_stored() - 1) {
+	  base_type_::resize(nb+1, ev);
+	  if (ind != nb) {
 	    it = this->begin() + ind;
 	    iterator ite = this->end(); --ite; iterator itee = ite; 
 	    for (; ite != it; --ite) { --itee; *ite = *itee; }
@@ -1085,12 +1085,12 @@ namespace gmm {
 	iterator it = std::lower_bound(this->begin(), this->end(), ev);
 	if (it != this->end() && it->c == c) it->e += e;
 	else {
-	  size_type ind = it - this->begin();
-          if (this->nb_stored() - ind > 1100)
+	  size_type ind = it - this->begin(), nb = this->nb_stored();
+          if (nb - ind > 1100)
             GMM_WARNING2("Inefficient addition of element in rsvector with "
                          << this->nb_stored() - ind << " non-zero entries");
-	  base_type_::resize(this->nb_stored()+1, ev);
-	  if (ind != this->nb_stored() - 1) {
+	  base_type_::resize(nb+1, ev);
+	  if (ind != nb) {
 	    it = this->begin() + ind;
 	    iterator ite = this->end(); --ite; iterator itee = ite; 
 	    for (; ite != it; --ite) { --itee; *ite = *itee; }

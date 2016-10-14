@@ -253,7 +253,7 @@ namespace bgeot {
 
   /** Return the cuthill_mc_kee ordering on the convexes */
   void APIDECL cuthill_mckee_on_convexes(const bgeot::mesh_structure &ms,
-                                 std::vector<size_type> &cmk);
+					 std::vector<size_type> &cmk);
 
   template<class ITER>
     bool mesh_structure::is_convex_having_points(size_type ic,

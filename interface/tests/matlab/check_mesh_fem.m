@@ -167,11 +167,11 @@ function check_mesh_fem(iverbose,idebug)
 
   gf_mesh_fem_get(mf,'nbdof') % should be 99 or 100 (element 0 and 1 are not really neigbhor but can be viewed as such)
   d=gf_mesh_fem_get(mf,'basic dof from cv',[1 5])
-  gfassert(['d==[1 2 3 4 5 6 38 41 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58]']);
+  gfassert(['d==[1 2 3 4 5 6 29 32 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49]']);
   d=gf_mesh_fem_get(mf,'basic dof from cv',[1 5;1 2])
-  gfassert('d==[3 5 6 38 41 43 46 48 51 53 56 58]');
+  gfassert('d==[3 5 6 29 32 34 37 39 42 44 47 49]');
   d=gf_mesh_fem_get(mf,'basic dof from cvid',5)
-  gfassert('d==[38 44 45 46 47 48 41 49 50 51 52 53 43 54 55 56 57 58]');
+  gfassert('d==[29 35 36 37 38 39 32 40 41 42 43 44 34 45 46 47 48 49]');
   
   s2=gf_mesh_get(mf,'char');
   gfassert('length(s2)>500');
@@ -227,9 +227,9 @@ function check_mesh_fem(iverbose,idebug)
   gf_mesh_set(m, 'boundary', 7, [3 4; 3 2]);
   cl=[1:5 7 8];
   asserterr('gf_mesh_fem_get(mf_u, ''non conformal basic dof'')');
-  d=gf_mesh_fem_get(mf_u, 'non conformal basic dof',cl);
+  d=gf_mesh_fem_get(mf_u, 'non conformal basic dof',cl)
   %gf_plot_mesh(mf_u, 'dof', 'on');
-  gfassert('d==[11 12 13 14 15 16 21 22]');
+  gfassert('d==[19 20 21 22 23 24 29 30]');
 
   f=gf_mesh_fem_get(mf2, 'fem');
   f5=gf_mesh_fem_get(mf2, 'fem',5);
@@ -319,7 +319,7 @@ function check_mesh_fem(iverbose,idebug)
   gfassert('ncv < maxcvid');
 
   
-  gf_mesh_set(m,'optimize structure');
+  gf_mesh_set(m,'optimize structure', false);
 
   maxpid=gf_mesh_get(m,'max pid');
   maxcvid=gf_mesh_get(m,'max cvid');

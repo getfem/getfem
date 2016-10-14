@@ -908,6 +908,7 @@ static void test_new_assembly(int N, int NX, int pK) {
       ((std::string("GT_PK(") + Ns + ",1)").c_str());
     std::vector<size_type> nsubdiv(N, NX);
     getfem::regular_unit_mesh(m, nsubdiv, pgt);
+    m.optimize_structure();
 
     const size_type NEUMANN_BOUNDARY_NUM = 1;
     const size_type DIRICHLET_BOUNDARY_NUM = 2;

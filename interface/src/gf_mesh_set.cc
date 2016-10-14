@@ -372,7 +372,7 @@ void gf_mesh_set(getfemint::mexargs_in& m_in,
        );
 
 
-    /*@SET ('optimize structure')
+    /*@SET ('optimize structure'[, @int with_renumbering])
     Reset point and convex numbering.
 
     After optimisation, the points (resp. convexes) will
@@ -381,8 +381,10 @@ void gf_mesh_set(getfemint::mexargs_in& m_in,
     (resp. MESH:GET('max cvid'))}@PYTHON{``0`` to
     ``MESH:GET('max pid')-1`` (resp. ``MESH:GET('max cvid')-1``)}.@*/
     sub_command
-      ("optimize structure", 0, 0, 0, 0,
-       pmesh->optimize_structure();
+      ("optimize structure", 0, 1, 0, 0,
+       bool with_renumbering = true;
+       if (in.remaining()) with_renumbering = (in.pop().to_integer(0,1) != 0);
+       pmesh->optimize_structure(with_renumbering);
        );
 
 

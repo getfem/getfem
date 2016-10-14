@@ -433,35 +433,35 @@ int main(int /* argc */, char * /* argv */[]) {
   // - Instructions execution except for assembly ones
   //                        new  | old  | sto  | asse | exec |  J   | Ins  |
   test_new_assembly(2, 400, 1); // ndofu = 321602 ndofp = 160801 ndofchi = 1201
-  // Mass (scalar)        : 0.36 | 0.61 | 0.07 | 0.10 | 0.20 | 0.06 | 0.06 |
-  // Mass (vector)        : 0.46 | 0.82 | 0.12 | 0.22 | 0.15 | 0.05 | 0.09 |
-  // Laplacian            : 0.26 | 0.83 | 0.05 | 0.07 | 0.14 | 0.06 | 0.05 |
-  // Homogeneous elas     : 0.46 | 1.88 | 0.14 | 0.22 | 0.13 | 0.05 | 0.11 |
-  // Non-homogeneous elast: 0.57 | 2.26 | 0.14 | 0.22 | 0.13 | 0.05 | 0.21 |
+  // Mass (scalar)        : 0.34 | 0.61 | 0.05 | 0.08 | 0.20 | 0.06 | 0.06 |
+  // Mass (vector)        : 0.43 | 0.82 | 0.10 | 0.20 | 0.14 | 0.05 | 0.09 |
+  // Laplacian            : 0.23 | 0.83 | 0.02 | 0.04 | 0.14 | 0.06 | 0.05 |
+  // Homogeneous elas     : 0.43 | 1.88 | 0.11 | 0.19 | 0.13 | 0.05 | 0.11 |
+  // Non-homogeneous elast: 0.53 | 2.26 | 0.10 | 0.18 | 0.13 | 0.05 | 0.21 |
   test_new_assembly(3, 36, 1);  // ndofu = 151959 ndofp =  50653 ndofchi = 6553
-  // Mass (scalar)        : 0.44 | 0.77 | 0.08 | 0.12 | 0.24 | 0.11 | 0.08 |
-  // Mass (vector)        : 0.94 | 1.57 | 0.18 | 0.39 | 0.20 | 0.11 | 0.35 |
-  // Laplacian            : 0.41 | 1.38 | 0.06 | 0.09 | 0.19 | 0.11 | 0.14 |
-  // Homogeneous elas     : 1.28 | 4.58 | 0.48 | 0.59 | 0.19 | 0.11 | 0.51 |
-  // Non-homogeneous elast: 1.42 | 6.81 | 0.49 | 0.63 | 0.18 | 0.11 | 0.61 |
+  // Mass (scalar)        : 0.42 | 0.77 | 0.06 | 0.10 | 0.24 | 0.11 | 0.08 |
+  // Mass (vector)        : 0.92 | 1.54 | 0.17 | 0.38 | 0.19 | 0.11 | 0.35 |
+  // Laplacian            : 0.39 | 1.38 | 0.04 | 0.07 | 0.19 | 0.11 | 0.14 |
+  // Homogeneous elas     : 1.26 | 4.58 | 0.46 | 0.57 | 0.19 | 0.11 | 0.51 |
+  // Non-homogeneous elast: 1.38 | 6.73 | 0.45 | 0.59 | 0.18 | 0.11 | 0.61 |
   test_new_assembly(2, 200, 2); // ndofu = 321602 ndofp = 160801 ndofchi = 1201
-  // Mass (scalar)        : 0.15 | 0.25 | 0.04 | 0.07 | 0.05 | 0.02 | 0.03 |
-  // Mass (vector)        : 0.34 | 0.45 | 0.07 | 0.15 | 0.05 | 0.02 | 0.14 |
+  // Mass (scalar)        : 0.14 | 0.25 | 0.04 | 0.07 | 0.04 | 0.02 | 0.03 |
+  // Mass (vector)        : 0.34 | 0.44 | 0.07 | 0.15 | 0.05 | 0.02 | 0.14 |
   // Laplacian            : 0.13 | 0.37 | 0.03 | 0.05 | 0.04 | 0.02 | 0.04 |
   // Homogeneous elas     : 0.37 | 1.28 | 0.13 | 0.19 | 0.04 | 0.01 | 0.14 |
-  // Non-homogeneous elast: 0.45 | 2.40 | 0.13 | 0.18 | 0.04 | 0.01 | 0.23 |
+  // Non-homogeneous elast: 0.44 | 2.40 | 0.12 | 0.17 | 0.04 | 0.01 | 0.23 |
   test_new_assembly(3, 18, 2);  // ndofu = 151959 ndofp =  50653 ndofchi = 6553
-  // Mass (scalar)        : 0.23 | 0.30 | 0.10 | 0.15 | 0.04 | 0.02 | 0.04 |
+  // Mass (scalar)        : 0.23 | 0.29 | 0.10 | 0.15 | 0.04 | 0.02 | 0.04 |
   // Mass (vector)        : 1.46 | 0.90 | 0.33 | 0.64 | 0.04 | 0.02 | 0.78 |
   // Laplacian            : 0.18 | 0.55 | 0.08 | 0.10 | 0.03 | 0.02 | 0.05 |
   // Homogeneous elas     : 2.37 | 3.47 | 1.20 | 1.37 | 0.03 | 0.02 | 0.97 |
-  // Non-homogeneous elast: 2.45 | 9.25 | 1.20 | 1.37 | 0.03 | 0.02 | 1.05 |
+  // Non-homogeneous elast: 2.44 | 9.25 | 1.20 | 1.37 | 0.03 | 0.02 | 1.04 |
   test_new_assembly(3, 9, 4);   // ndofu = 151959 ndofp =  50653 ndofchi = 6553
-  // Mass (scalar)        : 0.75 | 0.38 | 0.25 | 0.39 | 0.01 | .005 | 0.35 |
-  // Mass (vector)        : 5.10 | 1.33 | 0.42 | 1.86 | 0.01 | .005 | 3.23 |
-  // Laplacian            : 0.61 | 0.79 | 0.25 | 0.34 | 0.01 | .005 | 0.26 |
-  // Homogeneous elas     : 10.8 | 5.52 | 2.40 | 3.29 | 0.01 | .005 | 7.50 |
-  // Non-homogeneous elast: 11.0 | 48.0 | 2.35 | 3.19 | 0.01 | .005 | 7.80 |
+  // Mass (scalar)        : 0.74 | 0.36 | 0.24 | 0.38 | 0.01 | .005 | 0.35 |
+  // Mass (vector)        : 5.08 | 1.33 | 0.41 | 1.85 | 0.01 | .005 | 3.22 |
+  // Laplacian            : 0.60 | 0.79 | 0.25 | 0.34 | 0.01 | .005 | 0.25 |
+  // Homogeneous elas     : 10.7 | 5.47 | 2.40 | 3.29 | 0.01 | .005 | 7.40 |
+  // Non-homogeneous elast: 10.8 | 48.0 | 2.35 | 3.29 | 0.01 | .005 | 7.50 |
 
   // Conclusions :
   // - Desactivation of debug test has no sensible effect.
