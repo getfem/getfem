@@ -1052,7 +1052,7 @@ namespace gmm {
     else {
       elt_rsvector_<T> ev(c, e);
       if (nb_stored() == 0) {
-	base_type_::reserve(16); base_type_::resize(1,ev);
+	base_type_::push_back(ev);
       }
       else {
 	iterator it = std::lower_bound(this->begin(), this->end(), ev);
@@ -1062,7 +1062,7 @@ namespace gmm {
           if (nb - ind > 1100)
             GMM_WARNING2("Inefficient addition of element in rsvector with "
                          << this->nb_stored() - ind << " non-zero entries");
-	  base_type_::resize(nb+1, ev);
+	  base_type_::push_back(ev);
 	  if (ind != nb) {
 	    it = this->begin() + ind;
 	    iterator ite = this->end(); --ite; iterator itee = ite; 
@@ -1079,7 +1079,7 @@ namespace gmm {
     if (e != T(0)) {
       elt_rsvector_<T> ev(c, e);
       if (nb_stored() == 0) {
-	base_type_::reserve(16); base_type_::resize(1, ev);
+	base_type_::push_back(ev);
       }
       else {
 	iterator it = std::lower_bound(this->begin(), this->end(), ev);
@@ -1089,7 +1089,7 @@ namespace gmm {
           if (nb - ind > 1100)
             GMM_WARNING2("Inefficient addition of element in rsvector with "
                          << this->nb_stored() - ind << " non-zero entries");
-	  base_type_::resize(nb+1, ev);
+	  base_type_::push_back(ev);
 	  if (ind != nb) {
 	    it = this->begin() + ind;
 	    iterator ite = this->end(); --ite; iterator itee = ite; 
