@@ -6199,9 +6199,11 @@ namespace getfem {
       return dummy_mesh_region();
 
     std::list<mesh_region> &lmr = registred_mesh_regions[&m];
-    for (const mesh_region &mr : lmr)
-      if (mr.compare(m, region, m)) return mr;
     lmr.push_back(region);
+    m.intersect_with_mpi_region(lmr.back());
+    auto it = lmr.begin(), it2 = it; ++it2;
+    for (; it2 != lmr.end(); ++it, ++it2)
+      if (it->compare(m, region, m)) return *it;
     return lmr.back();
   }
 
@@ -11760,7 +11762,7 @@ namespace getfem {
     for (; it != gis.whole_instructions.end(); ++it) {
 
       const getfem::mesh_im &mim = *(it->first.mim());
-      const mesh_region &region = *(it->first.region());
+      const mesh_region &rg = *(it->first.region());
       const getfem::mesh &m = *(it->second.m);
       GMM_ASSERT1(&m == &(gic.linked_mesh()),
                   "Incompatibility of meshes in interpolation");
@@ -11769,8 +11771,6 @@ namespace getfem {
 
       // iteration on elements (or faces of elements)
       std::vector<size_type> ind;
-      mesh_region rg(region);
-      m.intersect_with_mpi_region(rg);
       for (getfem::mr_visitor v(rg, m); !v.finished(); ++v) {
         if (gic.use_mim()) {
           if (!mim.convex_index().is_in(v.cv())) continue;
@@ -11873,11 +11873,9 @@ namespace getfem {
       GMM_ASSERT1(&m == &(mim.linked_mesh()), "Incompatibility of meshes");
       const ga_instruction_list &gilb = instr.second.begin_instructions;
       const ga_instruction_list &gil = instr.second.instructions;
-      const mesh_region &region = *(instr.first.region());
+      const mesh_region &rg = *(instr.first.region());
 
       // iteration on elements (or faces of elements)
-      mesh_region rg(region);
-      m.intersect_with_mpi_region(rg);
       size_type old_cv = size_type(-1);
       bgeot::pgeometric_trans pgt = 0, pgt_old = 0;
       pintegration_method pim = 0;
@@ -11899,7 +11897,7 @@ namespace getfem {
             pspt = pai->pintegration_points();
             if (pspt->size()) {
               if (pgp && gis.pai == pai && pgt_old == pgt) {
-                gis.ctx.change(pgp, 0, 0, G, v.cv(), v.f());
+		gis.ctx.change(pgp, 0, 0, G, v.cv(), v.f());
               } else {
                 if (pai->is_built_on_the_fly()) {
                   gis.ctx.change(pgt, 0, (*pspt)[0], G, v.cv(), v.f());
