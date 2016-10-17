@@ -582,16 +582,29 @@ namespace getfem {
                   "Target fem not convenient for interpolation");
     }
     /* initialisation of the mesh_trans_inv */
+    bool is_target_torus = dynamic_cast<const torus_mesh *>(&mf_target.linked_mesh());
     if (rg_target.id() == mesh_region::all_convexes().id()) {
       size_type nbpts = mf_target.nb_basic_dof() / qdim_t;
-      for (size_type i = 0; i < nbpts; ++i)
-        mti.add_point(mf_target.point_of_basic_dof(i * qdim_t));
+      for (size_type i = 0; i < nbpts; ++i){
+        if (is_target_torus){
+          auto p = mf_target.point_of_basic_dof(i * qdim_t);
+          p.resize(msh.dim());
+          mti.add_point(p);
+        }
+        else mti.add_point(mf_target.point_of_basic_dof(i * qdim_t));
+      }
       interpolation(mf_source, mti, U, V, M, version, extrapolation);
     }
     else {
       for (dal::bv_visitor_c dof(mf_target.basic_dof_on_region(rg_target)); !dof.finished(); ++dof)
-        if (dof % qdim_t == 0)
-          mti.add_point_with_id(mf_target.point_of_basic_dof(dof), dof/qdim_t);
+        if (dof % qdim_t == 0){
+          if (is_target_torus){
+            auto p = mf_target.point_of_basic_dof(dof);
+            p.resize(msh.dim());
+            mti.add_point_with_id(p, dof/qdim_t);
+          }
+          else mti.add_point_with_id(mf_target.point_of_basic_dof(dof), dof/qdim_t);
+        }
       interpolation(mf_source, mti, U, V, M, version, extrapolation, 0, rg_source);
     }
 
