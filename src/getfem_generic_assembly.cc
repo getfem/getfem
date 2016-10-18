@@ -5620,9 +5620,9 @@ namespace getfem {
           for (size_type i=0; i < s1; ++i) dofs1[i] += i;
 
 	if (pmf1 == pmf2 && cv1 == cv2) {
-	  if (I1.first() == I2.first())
+	  if (I1.first() == I2.first()) {
 	    add_elem_matrix_(K, dofs1, dofs1, dofs1_sort, elem, ninf*1E-14, N);
-	  else {
+	  } else {
 	    dofs2.resize(dofs1.size());
 	    for (size_type i = 0; i < dofs1.size(); ++i)
 	      dofs2[i] =  dofs1[i] + I2.first() - I1.first();
@@ -5707,9 +5707,9 @@ namespace getfem {
 	  dofs1[i] = ct1[i] + I1.first();
 
         if (pmf2 == pmf1 && cv1 == cv2) {
-	  if (I1.first() == I2.first())
+	  if (I1.first() == I2.first()) {
 	    add_elem_matrix_(K, dofs1, dofs1, dofs1_sort, elem, ninf*1E-14, N);
-	  else {
+	  } else {
 	    dofs2.resize(dofs1.size());
 	    for (size_type i = 0; i < dofs1.size(); ++i)
 	      dofs2[i] =  dofs1[i] + I2.first() - I1.first();
@@ -5781,9 +5781,9 @@ namespace getfem {
             *itd++ += *itt + q;
 
 	if (pmf2 == pmf1 && cv1 == cv2) {
-	  if (I1.first() == I2.first())
+	  if (I1.first() == I2.first()) {
 	    add_elem_matrix_(K, dofs1, dofs1, dofs1_sort, elem, ninf*1E-14, N);
-	  else {
+	  } else {
 	    dofs2.resize(dofs1.size());
 	    for (size_type i = 0; i < dofs1.size(); ++i)
 	      dofs2[i] =  dofs1[i] + I2.first() - I1.first();
@@ -6199,11 +6199,9 @@ namespace getfem {
       return dummy_mesh_region();
 
     std::list<mesh_region> &lmr = registred_mesh_regions[&m];
+    for (auto &rg : lmr)
+      if (rg.compare(m, region, m)) return rg;
     lmr.push_back(region);
-    m.intersect_with_mpi_region(lmr.back());
-    auto it = lmr.begin(), it2 = it; ++it2;
-    for (; it2 != lmr.end(); ++it, ++it2)
-      if (it->compare(m, region, m)) return *it;
     return lmr.back();
   }
 
@@ -11762,12 +11760,15 @@ namespace getfem {
     for (; it != gis.whole_instructions.end(); ++it) {
 
       const getfem::mesh_im &mim = *(it->first.mim());
-      const mesh_region &rg = *(it->first.region());
+      const mesh_region &region = *(it->first.region());
       const getfem::mesh &m = *(it->second.m);
       GMM_ASSERT1(&m == &(gic.linked_mesh()),
                   "Incompatibility of meshes in interpolation");
       ga_instruction_list &gilb = it->second.begin_instructions;
       ga_instruction_list &gil = it->second.instructions;
+
+      mesh_region rg(region);
+      m.intersect_with_mpi_region(rg);
 
       // iteration on elements (or faces of elements)
       std::vector<size_type> ind;
@@ -11873,7 +11874,10 @@ namespace getfem {
       GMM_ASSERT1(&m == &(mim.linked_mesh()), "Incompatibility of meshes");
       const ga_instruction_list &gilb = instr.second.begin_instructions;
       const ga_instruction_list &gil = instr.second.instructions;
-      const mesh_region &rg = *(instr.first.region());
+      const mesh_region &region = *(instr.first.region());
+
+      mesh_region rg(region);
+      m.intersect_with_mpi_region(rg);
 
       // iteration on elements (or faces of elements)
       size_type old_cv = size_type(-1);
@@ -11887,9 +11891,10 @@ namespace getfem {
         if (mim.convex_index().is_in(v.cv())) {
           // cout << "proceed with element " << v.cv() << endl;
           if (v.cv() != old_cv) {
-            m.points_of_convex(v.cv(), G);
             pgt = m.trans_of_convex(v.cv());
 	    pim = mim.int_method_of_element(v.cv());
+	    m.points_of_convex(v.cv(), G);
+
             if (pim->type() == IM_NONE) continue;
             GMM_ASSERT1(pim->type() == IM_APPROX, "Sorry, exact methods cannot "
                         "be used in high level generic assembly");
@@ -11938,7 +11943,7 @@ namespace getfem {
                   gmm::mult(gis.ctx.B(), un, gis.Normal);
                   scalar_type nup = gmm::vect_norm2(gis.Normal);
                   J *= nup;
-                  gmm::scale(gis.Normal,1.0/nup);
+                  gmm::scale(gis.Normal, 1.0/nup);
                   gmm::clean(gis.Normal, 1e-13);
                 } else gis.Normal.resize(0);
               }

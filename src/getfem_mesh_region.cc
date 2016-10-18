@@ -81,7 +81,6 @@ namespace getfem {
       }
     }
     index_updated = false;
-    /* TODO? : verifier que la liste des convexes est bien inclue dans m.convex_index */
     return *this;
   }
 
@@ -128,6 +127,7 @@ namespace getfem {
   bool mesh_region::compare(const mesh &m1, const mesh_region &mr,
                             const mesh &m2) const {
     if (&m1 != &m2) return false;
+    if (!p.get() && !mr.p.get()) return (id_ == mr.id_);
     this->from_mesh(m1);
     mr.from_mesh(m2);
     if (this->p.get() && !(mr.p.get())) return false;

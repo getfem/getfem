@@ -342,7 +342,6 @@ namespace getfem {
     bgeot::pgeometric_trans pgt_old = 0;
     bgeot::pgeotrans_precomp pgp = 0;
 
-    // for (size_type cv : cmk) {
     for (dal::bv_visitor cv(linked_mesh().convex_index());
       	 !cv.finished(); ++cv) {
       if (fe_convex.is_in(cv)) {
@@ -361,7 +360,6 @@ namespace getfem {
 
     dal::bit_vector cv_done;
     
-    //for (size_type cv : cmk) {
     for (dal::bv_visitor cv(linked_mesh().convex_index());
 	 !cv.finished(); ++cv) { // Loop on elements
       if (!fe_convex.is_in(cv)) continue;

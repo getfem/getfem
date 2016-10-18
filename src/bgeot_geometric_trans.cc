@@ -53,23 +53,24 @@ namespace bgeot {
   void geotrans_interpolation_context::compute_J(void) const {
     GMM_ASSERT1(have_G() && have_pgt(), "Unable to compute J\n");
     size_type P = pgt_->structure()->dim();
+    const base_matrix &KK = K();
     if (P != N()) {
       B_factors.base_resize(P, P);
-      gmm::mult(gmm::transposed(K()), K(), B_factors);
+      gmm::mult(gmm::transposed(KK), KK, B_factors);
       ipvt.resize(P);
       gmm::lu_factor(B_factors, ipvt);
       // gmm::abs below because on flat convexes determinant could be -1e-27.
       J_ = ::sqrt(gmm::abs(gmm::lu_det(B_factors, ipvt)));
     }
     else {
-      // J_ = gmm::abs(gmm::lu_det(K()));
+      // J_ = gmm::abs(gmm::lu_det(KK));
       if (P <= 2) {
-      	const scalar_type *p = &(K()(0,0));
+      	const scalar_type *p = &(KK(0,0));
       	if (P == 1) J_ = gmm::abs(*p);
       	else J_ = gmm::abs((*p) * (*(p+3)) - (*(p+1)) * (*(p+2)));
       } else {
       	B_factors.base_resize(P, P);
-      	gmm::copy(gmm::transposed(K()), B_factors);
+      	gmm::copy(gmm::transposed(KK), B_factors);
       	ipvt.resize(P);
       	gmm::lu_factor(B_factors, ipvt);
       	J_ = gmm::abs(gmm::lu_det(B_factors, ipvt));
@@ -84,11 +85,11 @@ namespace bgeot {
       size_type P = pgt_->structure()->dim();
       K_.base_resize(N(), P);
       if (have_pgp()) {
-	pgt_->compute_K_matrix(G(), pgp_->grad(ii_), K_);
+	pgt_->compute_K_matrix(*G_, pgp_->grad(ii_), K_);
       } else {
-	PC.base_resize(pgt()->nb_points(), P);
-        pgt()->poly_vector_grad(xref(), PC);
-	pgt_->compute_K_matrix(G(), PC, K_);
+	PC.base_resize(pgt_->nb_points(), P);
+        pgt_->poly_vector_grad(xref(), PC);
+	pgt_->compute_K_matrix(*G_, PC, K_);
       }
       have_K_ = true;
     }
@@ -97,11 +98,10 @@ namespace bgeot {
 
   const base_matrix& geotrans_interpolation_context::B() const {
     if (!have_B()) {
-      GMM_ASSERT1(have_G() && have_pgt(), "Unable to compute B\n");
-      size_type P = pgt_->structure()->dim();
       const base_matrix &KK = K();
-      B_.base_resize(N(), P);
-      if (P != N()) {
+      size_type P = pgt_->structure()->dim(), N_ = gmm::mat_nrows(KK);
+      B_.base_resize(N_, P);
+      if (P != N_) {
 	if (!have_J_) compute_J();
 	PC.base_resize(P, P);
         gmm::lu_inverse(B_factors, ipvt, PC);
@@ -170,14 +170,6 @@ namespace bgeot {
     }
     return B32_;
   }
-
- void geotrans_interpolation_context::set_ii(size_type ii__) {
-   if (ii_ == ii__) return;
-   if (pgt_ && !pgt()->is_linear())
-     { have_K_ = have_B_ = have_B3_ = have_B32_ = have_J_ = false; }
-   xref_.resize(0); xreal_.resize(0);
-   ii_=ii__;
- }
 
   void geotrans_interpolation_context::set_xref(const base_node& P) {
     xref_ = P;

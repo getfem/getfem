@@ -438,7 +438,14 @@ namespace bgeot {
     size_type ii() const { return ii_; }
     bgeot::pgeotrans_precomp pgp() const { return pgp_; }
     /** change the current point (assuming a geotrans_precomp_ is used) */
-    void set_ii(size_type ii__);
+    void set_ii(size_type ii__) {
+      if (ii_ != ii__) {
+	if (pgt_ && !pgt()->is_linear())
+	  { have_K_ = have_B_ = have_B3_ = have_B32_ = have_J_ = false; }
+	xref_.resize(0); xreal_.resize(0);
+	ii_=ii__;
+      }
+    }
     /** change the current point (coordinates given in the reference convex) */
     void set_xref(const base_node& P);
     void change(bgeot::pgeotrans_precomp pgp__,
