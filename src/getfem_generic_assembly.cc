@@ -11957,7 +11957,7 @@ namespace getfem {
       bgeot::pgeotrans_precomp pgp = 0;
       bool first_gp = true;
       for (getfem::mr_visitor v(rg, m); !v.finished(); ++v) {
-        if (mim.convex_index().is_in(v.cv())) {
+	if (mim.convex_index().is_in(v.cv())) {
           // cout << "proceed with element " << v.cv() << endl;
           if (v.cv() != old_cv) {
             pgt = m.trans_of_convex(v.cv());

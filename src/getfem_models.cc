@@ -2090,7 +2090,17 @@ namespace getfem {
     variable_groups[group_name] = nl;
   }
 
-
+  void model::add_assembly_assignments(const std::string &varname,
+				       const std::string &expr, size_type rg,
+				       size_type order, bool before) {
+    GMM_ASSERT1(order < 3 || order == size_type(-1), "Bad order value");
+    const im_data *imd = pim_data_of_variable(varname);
+    GMM_ASSERT1(imd != 0, "Only applicable to im_data");
+    assignement_desc as;
+    as.varname = varname; as.expr = expr; as.region = rg; as.order = order;
+    as.before = before;
+    assignments.push_back(as);
+  }
 
 
 
@@ -2794,6 +2804,10 @@ namespace getfem {
 	      GMM_TRACE2("Global generic assembly tangent term");
 
             ga_workspace workspace(*this);
+
+	    for (const auto &ad : assignments)
+	      workspace.add_assignment_expression
+		(ad.varname, ad.expr, ad.region, ad.order, ad.before);
 
             for (const auto &ge : generic_expressions)
 	      workspace.add_expression(ge.expr, ge.mim, ge.region);

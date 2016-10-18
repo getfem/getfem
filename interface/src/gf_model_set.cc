@@ -566,6 +566,43 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        out.pop().from_integer(int(ind));
        );
 
+    /*@SET ('add assembly assignment', @str dataname, @str expression[, @int region[, @int order[, @int before]]])
+      Adds expression `expr` to be evaluated at assembly time and being
+      assigned to the data `dataname` which has to be of im_data type.
+      This allows for instance to store a sub-expression of an assembly
+      computation to be used on an other assembly. It can be used for instance
+      to store the plastic strain in plasticity models.
+      `order` represents the order of assembly where this assignement has to be
+      done (potential(0), weak form(1) or tangent system(2) or at each
+      order(-1)). The default value is 1.
+      If before = 1, the the assignement is perfromed before the computation
+      of the other assembly terms, such that the data can be used in the
+      remaining of the assembly as an intermediary result (be careful that it is
+      still considered as a data, no derivation of the expression is performed
+      for the tangent system).
+      If before = 0 (default), the assignement is done after the assembly terms.
+      @*/
+    sub_command
+      ("add assembly assignment", 2, 5, 0, 0,
+       std::string dataname = in.pop().to_string();
+       std::string expr = in.pop().to_string();
+       size_type region = size_type(-1);
+       if (in.remaining()) region = in.pop().to_integer();
+       size_type order = 1;
+       if (in.remaining()) order = in.pop().to_integer();
+       bool before = false;
+       if (in.remaining()) before = (in.pop().to_integer() != 0);
+       
+       md->add_assembly_assignments(dataname, expr, region, order, before);
+       );
+
+    /*@SET ('clear assembly assignment')
+      Delete all added assembly assignments
+      @*/
+    sub_command
+      ("clear assembly assignment", 0, 0, 0, 0,
+       md->clear_assembly_assignments();
+       );
 
     /*@SET ind = ('add Laplacian brick', @tmim mim, @str varname[, @int region])
     Add a Laplacian term to the model relatively to the variable `varname`

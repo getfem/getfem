@@ -303,8 +303,7 @@ namespace getfem {
                          BUILD_ALL = 3,
                          BUILD_ON_DATA_CHANGE = 4,
                          BUILD_WITH_COMPLETE_RHS = 8,
-                         BUILD_COMPLETE_RHS = 9,
-    };
+                         BUILD_COMPLETE_RHS = 9, };
 
   protected:
 
@@ -390,6 +389,18 @@ namespace getfem {
                size_type region_) : expr(expr_), mim(mim_), region(region_) {}
     };
 
+    // Structure for assignment in assembly
+    struct assignement_desc {
+      std::string varname;
+      std::string expr;
+      size_type region;
+      bool before;
+      size_type order;
+    };
+
+    std::list<assignement_desc> assignments;
+
+    
     mutable std::list<gen_expr> generic_expressions;
 
     // Groups of variables for interpolation on different meshes
@@ -461,6 +472,13 @@ namespace getfem {
                   "Undefined variable group " << group_name);
       return (variable_groups.find(group_name))->second;
     }
+
+    void clear_assembly_assignments(void) { assignments.clear(); }
+    void add_assembly_assignments(const std::string &dataname,
+				  const std::string &expr,
+				  size_type rg = size_type(-1),
+				  size_type order = 1,
+				  bool before = false);
 
     void add_Neumann_term(pNeumann_elem_term p,
                           const std::string &varname,

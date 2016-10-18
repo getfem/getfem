@@ -269,9 +269,9 @@ namespace getfem {
     (const std::string &expr, const mesh_im &mim,
      const mesh_region &rg = mesh_region::all_convexes());
     void add_assignment_expression
-    (const std::string &varname, const std::string &expr,
+    (const std::string &dataname, const std::string &expr,
      const mesh_region &rg_ = mesh_region::all_convexes(),
-     size_type order = size_type(-1), bool before = false);
+     size_type order = 1, bool before = false);
 
     /** Delete all previously added expressions. */
     void clear_expressions();
