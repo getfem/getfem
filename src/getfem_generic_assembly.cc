@@ -5469,6 +5469,22 @@ namespace getfem {
       : t(t_), V(V_), I(I_), coeff(coeff_) {}
   };
 
+  struct ga_instruction_assignment : public ga_instruction {
+    base_tensor &t;
+    base_vector &V;
+    const fem_interpolation_context &ctx;
+    const im_data *imd;
+    virtual int exec() {
+      GA_DEBUG_INFO("Instruction: Assignement to im_data");
+      imd->set_tensor(V, ctx.convex_num(), ctx.ii(), t);
+      return 0;
+     }
+    ga_instruction_assignment(base_tensor &t_, base_vector &V_,
+			      const fem_interpolation_context &ctx_,
+			      const im_data *imd_)
+      : t(t_), V(V_), ctx(ctx_), imd(imd_) {}
+  };
+
   template <class MAT>
   inline void add_elem_matrix_
   (MAT &K, const std::vector<size_type> &dofs1,
@@ -6277,7 +6293,8 @@ namespace getfem {
                               const mesh_im &mim, const mesh_region &rg,
                               const std::string &expr,
                               size_type add_derivative_order,
-                              bool function_expr) {
+                              bool function_expr, size_type for_interpolation,
+			      const std::string varname_interpolation) {
     if (tree.root) {
 
       // Eliminate the term if it corresponds to disabled variables
@@ -6293,13 +6310,17 @@ namespace getfem {
       //      ga_print_node(tree.root, cout); cout << endl;
       bool remain = true;
       size_type order = 0, ind_tree = 0;
-
-      switch(tree.root->test_function_type) {
-      case 0: order = 0; break;
-      case 1: order = 1; break;
-      case 3: order = 2; break;
-      default: GMM_ASSERT1(false, "Inconsistent term "
-                           << tree.root->test_function_type);
+      
+      if (for_interpolation)
+	order = size_type(-1) - add_derivative_order;
+      else {
+	switch(tree.root->test_function_type) {
+	case 0: order = 0; break;
+	case 1: order = 1; break;
+	case 3: order = 2; break;
+	default: GMM_ASSERT1(false, "Inconsistent term "
+			     << tree.root->test_function_type);
+	}
       }
 
       bool found = false;
@@ -6312,7 +6333,8 @@ namespace getfem {
             trees[i].name_test2.compare(tree.root->name_test2) == 0 &&
             trees[i].interpolate_name_test2.compare
             (tree.root->interpolate_name_test2) == 0 &&
-            trees[i].rg == &rg) {
+            trees[i].rg == &rg && trees[i].interpolation == for_interpolation &&
+	    trees[i].varname_interpolation.compare(varname_interpolation)==0) {
           ga_tree &ftree = *(trees[i].ptree);
 
           ftree.insert_node(ftree.root, GA_NODE_OP);
@@ -6339,9 +6361,11 @@ namespace getfem {
         trees.back().interpolate_name_test1 = root->interpolate_name_test1;
         trees.back().interpolate_name_test2 = root->interpolate_name_test2;
         trees.back().order = order;
-      }
+	trees.back().interpolation = for_interpolation;
+	trees.back().varname_interpolation = varname_interpolation;
+       }
 
-      if (order < add_derivative_order) {
+      if (for_interpolation == 0 && order < add_derivative_order) {
         std::set<var_trans_pair> expr_variables;
         ga_extract_variables((remain ? tree : *(trees[ind_tree].ptree)).root,
                              *this, m, expr_variables, true);
@@ -6359,7 +6383,7 @@ namespace getfem {
             GA_TOCTIC("Analysis after Derivative time");
             // cout << "after analysis "  << ga_tree_to_string(dtree) << endl;
             add_tree(dtree, m, mim, rg, expr, add_derivative_order,
-                     function_expr);
+                     function_expr, for_interpolation, varname_interpolation);
           }
         }
       }
@@ -6420,7 +6444,7 @@ namespace getfem {
           // cout << "adding tree " << ga_tree_to_string(ltrees[i]) << endl;
           max_order = std::max(ltrees[i].root->nb_test_functions(), max_order);
           add_tree(ltrees[i], mim.linked_mesh(), mim, rg, expr,
-                   add_derivative_order);
+                   add_derivative_order, true, 0, "");
         }
       }
     }
@@ -6436,7 +6460,7 @@ namespace getfem {
       // GMM_ASSERT1(tree.root->nb_test_functions() == 0,
       //            "Invalid function expression");
       add_tree(tree, dummy_mesh(), dummy_mesh_im(), dummy_mesh_region(),
-               expr, 0);
+               expr, 0, true, 0, "");
     }
   }
 
@@ -6451,7 +6475,7 @@ namespace getfem {
     if (tree.root) {
       GMM_ASSERT1(tree.root->nb_test_functions() == 0,
                   "Invalid expression containing test functions");
-      add_tree(tree, m, dummy_mesh_im(), rg, expr, 0, false);
+      add_tree(tree, m, dummy_mesh_im(), rg, expr, 0, false, 1, "");
     }
   }
 
@@ -6467,7 +6491,27 @@ namespace getfem {
     if (tree.root) {
       GMM_ASSERT1(tree.root->nb_test_functions() == 0,
                   "Invalid expression containing test functions");
-      add_tree(tree, m, mim, rg, expr, 0, false);
+      add_tree(tree, m, mim, rg, expr, 0, false, 1, "");
+    }
+  }
+
+  void ga_workspace::add_assignment_expression
+  (const std::string &varname, const std::string &expr, const mesh_region &rg_,
+   size_type order, bool before) {
+    const im_data *imd = associated_im_data(varname);
+    GMM_ASSERT1(imd != 0, "Only applicable to im_data");
+    const mesh_im &mim = imd->linked_mesh_im();
+    const mesh &m = mim.linked_mesh();
+    const mesh_region &rg = register_region(m, rg_);
+    ga_tree tree;
+    ga_read_string(expr, tree);
+    ga_semantic_analysis(expr, tree, *this, m.dim(), ref_elt_dim_of_mesh(m),
+                         false, false);
+    if (tree.root) {
+      GMM_ASSERT1(tree.root->nb_test_functions() == 0,
+                  "Invalid expression containing test functions");
+      add_tree(tree, m, mim, rg, expr, order+1, false, (before ? 1 : 2),
+	       varname);
     }
   }
 
@@ -6639,7 +6683,7 @@ namespace getfem {
     }
 
     // Deal with reduced fems.
-    if (order) {
+    if (order > 0) {
       std::set<std::string> vars_vec_done;
       std::set<std::pair<std::string, std::string> > vars_mat_done;
       for (ga_tree &tree : gis.trees) {
@@ -6732,6 +6776,8 @@ namespace getfem {
 
   void ga_workspace::tree_description::copy(const tree_description& td) {
     order = td.order;
+    interpolation = td.interpolation;
+    varname_interpolation = td.varname_interpolation;
     name_test1 = td.name_test1;
     name_test2 = td.name_test2;
     interpolate_name_test1 = td.interpolate_name_test1;
@@ -11539,7 +11585,7 @@ namespace getfem {
     gis.whole_instructions.clear();
     for (size_type i = 0; i < workspace.nb_trees(); ++i) {
       const ga_workspace::tree_description &td = workspace.tree_info(i);
-      if (td.order == 0) {
+      if (td.interpolation > 0) {
         gis.trees.push_back(*(td.ptree));
 
         // Semantic analysis mainly to evaluate fixed size variables and data
@@ -11573,159 +11619,182 @@ namespace getfem {
                          ga_instruction_set &gis, size_type order) {
     gis.transformations.clear();
     gis.whole_instructions.clear();
-    for (size_type i = 0; i < workspace.nb_trees(); ++i) {
-      ga_workspace::tree_description &td = workspace.tree_info(i);
-      if (td.order == order) {
-        gis.trees.push_back(*(td.ptree));
-
-        // Semantic analysis mainly to evaluate fixed size variables and data
-        ga_semantic_analysis("", gis.trees.back(), workspace,
-                             td.mim->linked_mesh().dim(),
-                             ref_elt_dim_of_mesh(td.mim->linked_mesh()),
-                             true, false);
-        pga_tree_node root = gis.trees.back().root;
-        if (root) {
-          // Compiling tree
-          // cout << "Will compile "; ga_print_node(root, cout); cout << endl;
-
-          ga_instruction_set::region_mim rm(td.mim, td.rg);
-          ga_instruction_set::region_mim_instructions &rmi
-            = gis.whole_instructions[rm];
-          rmi.m = td.m;
-          // rmi.interpolate_infos.clear();
-          ga_compile_interpolate_trans(root, workspace, gis, rmi, *(td.m));
-          ga_compile_node(root, workspace, gis, rmi, *(td.m), false,
-                          rmi.current_hierarchy);
-          // cout << "compilation finished "; ga_print_node(root, cout);
-          // cout << endl;
-
-          // Addition of an assembly instruction
-          pga_instruction pgai;
-          switch(order) {
-          case 0:
-            pgai = std::make_shared<ga_instruction_scalar_assembly>
-              (root->tensor(), workspace.assembled_potential(), gis.coeff);
-            break;
-          case 1:
-            {
-              const mesh_fem *mf = workspace.associated_mf(root->name_test1);
-              const mesh_fem **mfg = 0;
-              add_interval_to_gis(workspace, root->name_test1, gis);
-
-              if (mf) {
-                const std::string &intn1 = root->interpolate_name_test1;
-                const gmm::sub_interval *Ir = 0, *In = 0;
-                if (intn1.size() &&
-                    workspace.variable_group_exists(root->name_test1)) {
-                  ga_instruction_set::variable_group_info &vgi =
-                    rmi.interpolate_infos[intn1].groups_info[root->name_test1];
-                  Ir = &(vgi.Ir);
-                  In = &(vgi.In);
-                  mfg = &(vgi.mf);
-                  mf = 0;
-                } else {
-                  Ir = &(gis.var_intervals[root->name_test1]);
-                  In = &(workspace.interval_of_variable(root->name_test1));
-                }
-                fem_interpolation_context &ctx
-                  = intn1.size() ? rmi.interpolate_infos[intn1].ctx
-                                 : gis.ctx;
-                bool interpolate
-                  = (!intn1.empty() && intn1.compare("neighbour_elt")!=0);
-                pgai = std::make_shared<ga_instruction_fem_vector_assembly>
-                  (root->tensor(), workspace.unreduced_vector(),
-                   workspace.assembled_vector(), ctx, *Ir, *In, mf, mfg,
-                   gis.coeff, gis.nbpt, gis.ipt, interpolate);
-              } else {
-                pgai = std::make_shared<ga_instruction_vector_assembly>
-                    (root->tensor(), workspace.assembled_vector(),
-                     workspace.interval_of_variable(root->name_test1),
-                     gis.coeff);
-              }
-            }
-            break;
-          case 2:
-            {
-              const mesh_fem *mf1 = workspace.associated_mf(root->name_test1);
-              const mesh_fem *mf2 = workspace.associated_mf(root->name_test2);
-              const mesh_fem **mfg1 = 0, **mfg2 = 0;
-              const std::string &intn1 = root->interpolate_name_test1;
-              const std::string &intn2 = root->interpolate_name_test2;
-              fem_interpolation_context &ctx1
-                = intn1.empty() ? gis.ctx
-                                : rmi.interpolate_infos[intn1].ctx;
-              fem_interpolation_context &ctx2
-                = intn2.empty() ? gis.ctx
-                                : rmi.interpolate_infos[intn2].ctx;
-              bool interpolate
-                = (!intn1.empty() && intn1.compare("neighbour_elt")!=0)
-                || (!intn2.empty() && intn2.compare("neighbour_elt")!=0);
-
-              add_interval_to_gis(workspace, root->name_test1, gis);
-              add_interval_to_gis(workspace, root->name_test2, gis);
-
-              const gmm::sub_interval *Ir1 = 0, *In1 = 0, *Ir2 = 0, *In2 = 0;
-              const scalar_type *alpha1 = 0, *alpha2 = 0;
-
-              if (!intn1.empty() &&
-                  workspace.variable_group_exists(root->name_test1)) {
-                ga_instruction_set::variable_group_info &vgi =
-                  rmi.interpolate_infos[intn1].groups_info[root->name_test1];
-                Ir1 = &(vgi.Ir);
-                In1 = &(vgi.In);
-                mfg1 = &(vgi.mf);
-                mf1 = 0;
-                alpha1 = &(vgi.alpha);
-              } else {
-                alpha1 = &(workspace.factor_of_variable(root->name_test1));
-                Ir1 = &(gis.var_intervals[root->name_test1]);
-                In1 = &(workspace.interval_of_variable(root->name_test1));
-              }
-
-              if (!intn2.empty() &&
-                  workspace.variable_group_exists(root->name_test2)) {
-                ga_instruction_set::variable_group_info &vgi =
-                  rmi.interpolate_infos[intn2].groups_info[root->name_test2];
-                Ir2 = &(vgi.Ir);
-                In2 = &(vgi.In);
-                mfg2 = &(vgi.mf);
-                mf2 = 0;
-                alpha2 = &(vgi.alpha);
-              } else {
-                alpha2 = &(workspace.factor_of_variable(root->name_test2));
-                Ir2 = &(gis.var_intervals[root->name_test2]);
-                In2 = &(workspace.interval_of_variable(root->name_test2));
-              }
-
-              if (!interpolate && mfg1 == 0 && mfg2 == 0 && mf1 && mf2
-                  && mf1->get_qdim() == 1 && mf2->get_qdim() == 1
-                  && !(mf1->is_reduced()) && !(mf2->is_reduced())) {
-                pgai = std::make_shared
-                  <ga_instruction_matrix_assembly_standard_scalar<>>
-                  (root->tensor(), workspace.assembled_matrix(), ctx1, ctx2,
-                   *In1, *In2, mf1, mf2,
-                   gis.coeff, *alpha1, *alpha2, gis.nbpt, gis.ipt);
-              } else if (!interpolate && mfg1 == 0 && mfg2 == 0 && mf1 && mf2
-                         && !(mf1->is_reduced()) && !(mf2->is_reduced())) {
-                pgai = std::make_shared
-                  <ga_instruction_matrix_assembly_standard_vector<>>
-                  (root->tensor(), workspace.assembled_matrix(), ctx1, ctx2,
-                   *In1, *In2, mf1, mf2,
-                   gis.coeff, *alpha1, *alpha2, gis.nbpt, gis.ipt);
-                
-              } else {
-                pgai = std::make_shared<ga_instruction_matrix_assembly<>>
-                  (root->tensor(), workspace.unreduced_matrix(),
-                   workspace.assembled_matrix(), ctx1, ctx2,
-                   *Ir1, *In1, *Ir2, *In2, mf1, mfg1, mf2, mfg2,
-                   gis.coeff, *alpha1, *alpha2, gis.nbpt, gis.ipt, interpolate);
-              }
-              break;
-            }
-          }
-          if (pgai)
-            gis.whole_instructions[rm].instructions.push_back(std::move(pgai));
-        }
+    for (size_type version = 0; version < 3; ++version) {
+      for (size_type i = 0; i < workspace.nb_trees(); ++i) {
+	ga_workspace::tree_description &td = workspace.tree_info(i);
+	
+	if ((version == td.interpolation) &&
+	    ((version == 0 && td.order == order) || // Assembly
+	     ((version > 0 && (td.order == size_type(-1) || // Assignment
+				td.order == size_type(-2) - order))))) {
+	  gis.trees.push_back(*(td.ptree));
+	  
+	  // Semantic analysis mainly to evaluate fixed size variables and data
+	  ga_semantic_analysis("", gis.trees.back(), workspace,
+			       td.mim->linked_mesh().dim(),
+			       ref_elt_dim_of_mesh(td.mim->linked_mesh()),
+			       true, false);
+	  pga_tree_node root = gis.trees.back().root;
+	  if (root) {
+	    // Compile tree
+	    // cout << "Will compile "; ga_print_node(root, cout); cout << endl;
+	    
+	    ga_instruction_set::region_mim rm(td.mim, td.rg);
+	    ga_instruction_set::region_mim_instructions &rmi
+	      = gis.whole_instructions[rm];
+	    rmi.m = td.m;
+	    // rmi.interpolate_infos.clear();
+	    ga_compile_interpolate_trans(root, workspace, gis, rmi, *(td.m));
+	    ga_compile_node(root, workspace, gis, rmi, *(td.m), false,
+			    rmi.current_hierarchy);
+	    // cout << "compilation finished "; ga_print_node(root, cout);
+	    // cout << endl;
+	    
+	    if (version > 0) { // Assignment
+	      GMM_ASSERT1(td.varname_interpolation.size(), "Internal error");
+	      const im_data *imd = workspace.associated_im_data
+		(td.varname_interpolation);
+	      model_real_plain_vector &V = const_cast<model_real_plain_vector &>
+		(workspace.value(td.varname_interpolation));
+	      gmm::clear(V);
+	      GMM_ASSERT1(imd, "Internal error");
+	      pga_instruction pgai = std::make_shared<ga_instruction_assignment>
+		(root->tensor(), V, gis.ctx, imd);
+	      rmi.instructions.push_back(std::move(pgai));
+	      // add the assignment instruction or delay it to the end
+	      
+	    } else { // assembly
+	      
+	      // Addition of an assembly instruction
+	      pga_instruction pgai;
+	      switch(order) {
+	      case 0:
+		pgai = std::make_shared<ga_instruction_scalar_assembly>
+		  (root->tensor(), workspace.assembled_potential(), gis.coeff);
+		break;
+	      case 1:
+		{
+		  const mesh_fem *mf = workspace.associated_mf(root->name_test1);
+		  const mesh_fem **mfg = 0;
+		  add_interval_to_gis(workspace, root->name_test1, gis);
+		  
+		  if (mf) {
+		    const std::string &intn1 = root->interpolate_name_test1;
+		    const gmm::sub_interval *Ir = 0, *In = 0;
+		    if (intn1.size() &&
+			workspace.variable_group_exists(root->name_test1)) {
+		      ga_instruction_set::variable_group_info &vgi =
+			rmi.interpolate_infos[intn1].groups_info[root->name_test1];
+		      Ir = &(vgi.Ir);
+		      In = &(vgi.In);
+		      mfg = &(vgi.mf);
+		      mf = 0;
+		    } else {
+		      Ir = &(gis.var_intervals[root->name_test1]);
+		      In = &(workspace.interval_of_variable(root->name_test1));
+		    }
+		    fem_interpolation_context &ctx
+		      = intn1.size() ? rmi.interpolate_infos[intn1].ctx
+		      : gis.ctx;
+		    bool interpolate
+		      = (!intn1.empty() && intn1.compare("neighbour_elt")!=0);
+		    pgai = std::make_shared<ga_instruction_fem_vector_assembly>
+		      (root->tensor(), workspace.unreduced_vector(),
+		       workspace.assembled_vector(), ctx, *Ir, *In, mf, mfg,
+		       gis.coeff, gis.nbpt, gis.ipt, interpolate);
+		  } else {
+		    pgai = std::make_shared<ga_instruction_vector_assembly>
+		      (root->tensor(), workspace.assembled_vector(),
+		       workspace.interval_of_variable(root->name_test1),
+		       gis.coeff);
+		  }
+		}
+		break;
+	      case 2:
+		{
+		  const mesh_fem *mf1 = workspace.associated_mf(root->name_test1);
+		  const mesh_fem *mf2 = workspace.associated_mf(root->name_test2);
+		  const mesh_fem **mfg1 = 0, **mfg2 = 0;
+		  const std::string &intn1 = root->interpolate_name_test1;
+		  const std::string &intn2 = root->interpolate_name_test2;
+		  fem_interpolation_context &ctx1
+		    = intn1.empty() ? gis.ctx
+		    : rmi.interpolate_infos[intn1].ctx;
+		  fem_interpolation_context &ctx2
+		    = intn2.empty() ? gis.ctx
+		    : rmi.interpolate_infos[intn2].ctx;
+		  bool interpolate
+		    = (!intn1.empty() && intn1.compare("neighbour_elt")!=0)
+		    || (!intn2.empty() && intn2.compare("neighbour_elt")!=0);
+		  
+		  add_interval_to_gis(workspace, root->name_test1, gis);
+		  add_interval_to_gis(workspace, root->name_test2, gis);
+		  
+		  const gmm::sub_interval *Ir1 = 0, *In1 = 0, *Ir2 = 0, *In2 = 0;
+		  const scalar_type *alpha1 = 0, *alpha2 = 0;
+		  
+		  if (!intn1.empty() &&
+		      workspace.variable_group_exists(root->name_test1)) {
+		    ga_instruction_set::variable_group_info &vgi =
+		      rmi.interpolate_infos[intn1].groups_info[root->name_test1];
+		    Ir1 = &(vgi.Ir);
+		    In1 = &(vgi.In);
+		    mfg1 = &(vgi.mf);
+		    mf1 = 0;
+		    alpha1 = &(vgi.alpha);
+		  } else {
+		    alpha1 = &(workspace.factor_of_variable(root->name_test1));
+		    Ir1 = &(gis.var_intervals[root->name_test1]);
+		    In1 = &(workspace.interval_of_variable(root->name_test1));
+		  }
+		  
+		  if (!intn2.empty() &&
+		      workspace.variable_group_exists(root->name_test2)) {
+		    ga_instruction_set::variable_group_info &vgi =
+		      rmi.interpolate_infos[intn2].groups_info[root->name_test2];
+		    Ir2 = &(vgi.Ir);
+		    In2 = &(vgi.In);
+		    mfg2 = &(vgi.mf);
+		    mf2 = 0;
+		    alpha2 = &(vgi.alpha);
+		  } else {
+		    alpha2 = &(workspace.factor_of_variable(root->name_test2));
+		    Ir2 = &(gis.var_intervals[root->name_test2]);
+		    In2 = &(workspace.interval_of_variable(root->name_test2));
+		  }
+		  
+		  if (!interpolate && mfg1 == 0 && mfg2 == 0 && mf1 && mf2
+		      && mf1->get_qdim() == 1 && mf2->get_qdim() == 1
+		      && !(mf1->is_reduced()) && !(mf2->is_reduced())) {
+		    pgai = std::make_shared
+		      <ga_instruction_matrix_assembly_standard_scalar<>>
+		      (root->tensor(), workspace.assembled_matrix(), ctx1, ctx2,
+		       *In1, *In2, mf1, mf2,
+		       gis.coeff, *alpha1, *alpha2, gis.nbpt, gis.ipt);
+		  } else if (!interpolate && mfg1 == 0 && mfg2 == 0 && mf1 && mf2
+			     && !(mf1->is_reduced()) && !(mf2->is_reduced())) {
+		    pgai = std::make_shared
+		      <ga_instruction_matrix_assembly_standard_vector<>>
+		      (root->tensor(), workspace.assembled_matrix(), ctx1, ctx2,
+		       *In1, *In2, mf1, mf2,
+		       gis.coeff, *alpha1, *alpha2, gis.nbpt, gis.ipt);
+		    
+		  } else {
+		    pgai = std::make_shared<ga_instruction_matrix_assembly<>>
+		      (root->tensor(), workspace.unreduced_matrix(),
+		       workspace.assembled_matrix(), ctx1, ctx2,
+		       *Ir1, *In1, *Ir2, *In2, mf1, mfg1, mf2, mfg2,
+		       gis.coeff, *alpha1, *alpha2, gis.nbpt, gis.ipt,
+		       interpolate);
+		  }
+		  break;
+		}
+	      }
+	      if (pgai)
+		gis.whole_instructions[rm].instructions.push_back(std::move(pgai));
+	    }
+	  }
+	}
       }
     }
   }
