@@ -30,7 +30,23 @@ namespace bgeot {
 
   void geometric_trans::compute_K_matrix
     (const base_matrix &G, const base_matrix &pc, base_matrix &K) const{
-    gmm::mult(G, pc, K);
+    // gmm::mult(G, pc, K);
+
+    // Faster than the lapack call on my config ...
+    size_type N=gmm::mat_nrows(G), P=gmm::mat_nrows(pc), Q=gmm::mat_ncols(pc);
+    if (N && P && Q) {
+      auto itK = K.begin();
+      
+      for (size_type i = 0; i < N; ++i)
+	for (size_type j = 0; j < Q; ++j) {
+	  auto itG = G.begin() + j;
+	  auto itpc = pc.begin() + i*P;
+	  *itK = *(itG) * (*itpc++); itG += N;
+	  for (size_type k = 1; k < P; ++k, itG += N)
+	    *itK += *(itG) * (*itpc++);
+	  ++itK;
+	}
+    }
   }
 
   const base_node& geotrans_interpolation_context::xref() const {

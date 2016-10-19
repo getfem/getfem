@@ -515,47 +515,60 @@ namespace getfem {
                 "of convexes or a set of faces, but not a mixed set");
   }
 
-  mesh_region::visitor::visitor(const mesh_region &s, const mesh &m, bool
+
+
+
 #if GETFEM_PARA_LEVEL > 1
-				intersect_with_mpi
-#endif
-  ) :cv_(size_type(-1)), f_(short_type(-1)), finished_(false) 
+  
+  mesh_region::visitor::visitor(const mesh_region &s, const mesh &m,
+				bool intersect_with_mpi) :
+    cv_(size_type(-1)), f_(short_type(-1)), finished_(false) 
   {
     if ((me_is_multithreaded_now() && s.partitioning_allowed)) {
       s.from_mesh(m);
       init(s);
     } else {
       if (s.id() == size_type(-1)) {
-#if GETFEM_PARA_LEVEL > 1
 	if (intersect_with_mpi)
 	  init(m.get_mpi_region());
 	else
 	  init(m.convex_index());
-#else
-	init(m.convex_index());
-#endif
       } else if (s.p.get())  {
-#if GETFEM_PARA_LEVEL > 1
 	if (intersect_with_mpi)
 	  { mpi_rg = s; m.intersect_with_mpi_region(mpi_rg); init(mpi_rg); }
 	else
 	  init(s);
-#else
-	init(s);
-#endif
       } else {
-#if GETFEM_PARA_LEVEL > 1
 	if (intersect_with_mpi)
 	  init(m.get_mpi_sub_region(s.id()));
 	else
 	  init(m.region(s.id()));
-#else
-	init(m.region(s.id()));
-#endif
       }
     }
   }
 
+#else
+  
+  mesh_region::visitor::visitor(const mesh_region &s, const mesh &m, bool)
+    :cv_(size_type(-1)), f_(short_type(-1)), finished_(false) 
+  {
+    if ((me_is_multithreaded_now() && s.partitioning_allowed)) {
+      s.from_mesh(m);
+      init(s);
+    } else {
+      if (s.id() == size_type(-1)) {
+	init(m.convex_index());
+      } else if (s.p.get())  {
+	init(s);
+      } else {
+	init(m.region(s.id()));
+      }
+    }
+  }
+
+#endif
+
+  
   bool mesh_region::visitor::next() 
   {
     if (whole_mesh) {

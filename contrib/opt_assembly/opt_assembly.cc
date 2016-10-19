@@ -249,7 +249,7 @@ static void test_new_assembly(int N, int NX, int pK) {
   chrono ch;
   
   bool all = false;
-  bool select = false;
+  bool select = true;
   int only_one = 4;
 
   if (all || only_one == 1) {
@@ -443,25 +443,25 @@ int main(int /* argc */, char * /* argv */[]) {
   // Laplacian            : 0.20 | 0.83 | 0.04 | 0.05 | 0.10 | 0.05 |
   // Homogeneous elas     : 0.34 | 1.88 | 0.08 | 0.13 | 0.10 | 0.11 |
   // Non-homogeneous elast: 0.40 | 2.26 | 0.09 | 0.16 | 0.10 | 0.14 |
-  // test_new_assembly(3, 36, 1);  // ndofu = 151959 ndofp =  50653 ndofchi = 6553
+  test_new_assembly(3, 36, 1);  // ndofu = 151959 ndofp =  50653 ndofchi = 6553
   // Mass (scalar)        : 0.33 | 0.77 | 0.05 | 0.10 | 0.17 | 0.06 |
   // Mass (vector)        : 0.86 | 1.54 | 0.17 | 0.34 | 0.17 | 0.35 |
   // Laplacian            : 0.37 | 1.38 | 0.03 | 0.06 | 0.17 | 0.14 |
   // Homogeneous elas     : 0.98 | 4.58 | 0.26 | 0.34 | 0.17 | 0.47 |
   // Non-homogeneous elast: 1.05 | 6.72 | 0.26 | 0.34 | 0.17 | 0.54 |
-  // test_new_assembly(2, 200, 2); // ndofu = 321602 ndofp = 160801 ndofchi = 1201
+  test_new_assembly(2, 200, 2); // ndofu = 321602 ndofp = 160801 ndofchi = 1201
   // Mass (scalar)        : 0.11 | 0.25 | 0.02 | 0.04 | 0.04 | 0.03 |
   // Mass (vector)        : 0.30 | 0.44 | 0.05 | 0.12 | 0.04 | 0.14 |
   // Laplacian            : 0.10 | 0.37 | 0.02 | 0.03 | 0.04 | 0.03 |
   // Homogeneous elas     : 0.28 | 1.28 | 0.06 | 0.10 | 0.04 | 0.14 |
   // Non-homogeneous elast: 0.34 | 2.40 | 0.07 | 0.11 | 0.04 | 0.19 |
-  // test_new_assembly(3, 18, 2);  // ndofu = 151959 ndofp =  50653 ndofchi = 6553
+  test_new_assembly(3, 18, 2);  // ndofu = 151959 ndofp =  50653 ndofchi = 6553
   // Mass (scalar)        : 0.15 | 0.29 | 0.05 | 0.09 | 0.03 | 0.03 |
   // Mass (vector)        : 1.32 | 0.90 | 0.21 | 0.51 | 0.03 | 0.78 |
   // Laplacian            : 0.11 | 0.55 | 0.03 | 0.05 | 0.03 | 0.05 |
   // Homogeneous elas     : 1.73 | 3.47 | 0.59 | 0.76 | 0.03 | 0.94 |
   // Non-homogeneous elast: 1.80 | 9.25 | 0.59 | 0.76 | 0.03 | 1.01 |
-  // test_new_assembly(3, 9, 4);   // ndofu = 151959 ndofp =  50653 ndofchi = 6553
+  test_new_assembly(3, 9, 4);   // ndofu = 151959 ndofp =  50653 ndofchi = 6553
   // Mass (scalar)        : 0.59 | 0.34 | 0.09 | 0.23 | 0.01 | 0.34 |
   // Mass (vector)        : 4.87 | 1.32 | 0.41 | 1.71 | 0.01 | 3.15 |
   // Laplacian            : 0.44 | 0.77 | 0.09 | 0.18 | 0.01 | 0.25 |
