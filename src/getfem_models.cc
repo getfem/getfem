@@ -2440,7 +2440,6 @@ namespace getfem {
     GMM_ASSERT1(mf, "Works only with fem variables.");
     mesh &m = const_cast<mesh &>(mf->linked_mesh());
     mesh_im dummy_mim(m);
-    mesh_region rg = mesh_region(m, region);
 
     for (dal::bv_visitor ib(active_bricks); !ib.finished(); ++ib) {
       brick_description &brick = bricks[ib];
@@ -2451,12 +2450,14 @@ namespace getfem {
           { detected = true; break; }
 
       if (detected) {
-        int ifo = rg.region_is_faces_of(mesh_region(m, brick.region));
+	int ifo = -1;
+	for (auto &pmim :  brick.mims)
+	  ifo = std::max(ifo, mf->linked_mesh().region(region).region_is_faces_of(m, brick.region,
+							pmim->linked_mesh()));
         GMM_ASSERT1(ifo >= 0, "The given region is only partially covered by "
                     "region of brick " << brick.pbr->brick_name()
                     << ". Please subdivise the region");
         if (ifo == 1) {
-        
           std::string expr = brick.pbr->declare_volume_assembly_string
             (*this, ib, brick.vlist, brick.dlist);
 
@@ -6741,7 +6742,7 @@ model_complex_plain_vector &
       // The Lambda part is not necessary for Von Mises stress ...
       // std::string sigma = "("+data_lambda+")*Div_"+varname+"*Id(meshdim)+("
       //   + data_mu+")*(Grad_"+varname+"+Grad_"+varname+"')";
-      std::string sigma_d = "("+data_mu+")*(Grad_"+varname+"+Grad_"+varname+"')";
+      std::string sigma_d="("+data_mu+")*(Grad_"+varname+"+Grad_"+varname+"')";
       std::string expr = "sqrt(3/2)*Norm(Deviator("+sigma_d+"))";
       ga_interpolation_Lagrange_fem(md, expr, mf_vm, VM);
     }

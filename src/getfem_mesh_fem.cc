@@ -75,6 +75,7 @@ namespace getfem {
   dal::bit_vector mesh_fem::basic_dof_on_region(const mesh_region &b) const {
     context_check(); if (!dof_enumeration_made) this->enumerate_dof();
     dal::bit_vector res;
+    cout << "region = " << b << endl;
     for (getfem::mr_visitor v(b,linked_mesh()); !v.finished(); ++v) {
       size_type cv = v.cv();
       if (convex_index().is_in(cv)) {

@@ -73,7 +73,7 @@ for step=1:8,
   U = gf_model_get(md, 'variable', 'u');
   
   VM = gf_model_get(md, 'compute isotropic linearized Von Mises or Tresca', 'u', 'lambda', 'mu', mfdu);
-
+  
   if (N==3) opt = {'cvlst', get(m,'outer_faces')}; 
   else opt = {}; end;
   
@@ -97,7 +97,7 @@ for step=1:8,
     pause(1.5);
   end
   set(m, 'refine', find(ERR > 2e-6));
-  set(m, 'optimize structure');
+  set(m, 'optimize structure', false);
   norm(E)
 end;
 

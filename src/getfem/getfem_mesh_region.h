@@ -93,7 +93,7 @@ namespace getfem {
     // #endif
 
     size_type id_;            /* used temporarily when the 
-                              mesh_region(size_type) constructor is used */
+				 mesh_region(size_type) constructor is used */
 
     size_type type_; //optional type of the region
     omp_distribute<bool> partitioning_allowed; /** specifies that in
@@ -166,7 +166,9 @@ namespace getfem {
     /** Test if the region is a boundary of a list of faces of elements of
         region `rg`. Return 0 if not, -1 if only partially, 1 if the region
         contains only some faces which are all faces of elements of `rg`. */
-    int region_is_faces_of(const mesh_region &rg);
+    int region_is_faces_of(const getfem::mesh& m1,
+			   const mesh_region &rg2,
+			   const getfem::mesh& m2) const;
 
     size_type id() const { return id_; }
 
@@ -213,6 +215,7 @@ namespace getfem {
     void clear();
     void swap_convex(size_type cv1, size_type cv2);
     bool is_in(size_type cv, short_type f = short_type(-1)) const;
+    bool is_in(size_type cv, short_type f, const mesh &m) const;
 
     /**region size, or the size of the region partition on the current
     thread if the region is partitioned*/
@@ -246,42 +249,57 @@ namespace getfem {
     class visitor {
 
       typedef mesh_region::map_t::const_iterator const_iterator;
-      const_iterator it,ite;
+      bool whole_mesh;
+      dal::bit_const_iterator itb, iteb;
+      const_iterator it, ite;
       face_bitset c;
       size_type cv_;
       short_type f_;
       bool finished_;
+#if GETFEM_PARA_LEVEL > 1
+      mesh_region mpi_rg;
+#endif
       void init(const mesh_region &s);
+      void init(const dal::bit_vector &s);
 
     public: 
       visitor(const mesh_region &s);
-      visitor(const mesh_region &s, const mesh &m);
+      visitor(const mesh_region &s, const mesh &m,
+	      bool intersect_with_mpi = false);
       size_type cv() const { return cv_; }
       size_type is_face() const { return f_ != 0; }
       short_type f() const { return short_type(f_-1); }
 
       bool next() 
       {
-        while (c.none()) 
-        {
-          if (it == ite) { finished_=true; return false; }
-          cv_ = it->first;
-          c   = it->second;  
-          f_ = short_type(-1);
-          ++it; 
-          if (c.none()) continue;
-        }
-        next_face();
-        return true;
+	if (whole_mesh) {
+	  if (itb == iteb) { finished_=true; return false; }
+	  cv_ = itb.index();
+	  c = 0;
+	  f_ = 0;
+	  ++itb; while (itb != iteb && !(*itb)) ++itb;
+	  return true;
+	}
+	while (c.none()) 
+	{
+	  if (it == ite) { finished_=true; return false; }
+	  cv_ = it->first;
+	  c   = it->second;  
+	  f_ = short_type(-1);
+	  ++it; 
+	  if (c.none()) continue;
+	}
+	next_face();
+	return true;
       }
-
       bool operator++() { return next(); }
 
-      bool finished() const { return finished_; }//it == ite && c.none(); }
+      bool finished() const { return finished_; }
 
       bool next_face() 
       {
-        if (c.none()) return false;
+	if (whole_mesh) return false;
+	if (c.none()) return false;
         do { ++f_; } while (!c.test(f_));
         c.set(f_,0);
         return true;

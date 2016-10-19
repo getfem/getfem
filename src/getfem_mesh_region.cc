@@ -313,10 +313,28 @@ namespace getfem {
 
   bool mesh_region::is_in(size_type cv, short_type f) const 
   {
+    GMM_ASSERT1(p.get(), "Use from mesh on that region before");
     map_t::const_iterator it = rp().m.find(cv);
     if (it == rp().m.end() || short_type(f+1) >= MAX_FACES_PER_CV) return false;
     return ((*it).second)[short_type(f+1)];
   }
+
+  bool mesh_region::is_in(size_type cv, short_type f, const mesh &m) const 
+  {
+    if (p.get()) {
+      map_t::const_iterator it = rp().m.find(cv);
+      if (it == rp().m.end() || short_type(f+1) >= MAX_FACES_PER_CV)
+	return false;
+      return ((*it).second)[short_type(f+1)];
+    }
+    else
+    {
+      if (id() == size_type(-1)) return true;
+      else return m.region(id()).is_in(cv, f);
+    }
+  }
+
+  
 
   bool mesh_region::is_empty() const 
   {
@@ -386,15 +404,15 @@ namespace getfem {
     for these operations as there are not intended to be manipulated
     (they only exist to provide a default argument to the mesh_region
     parameters of assembly procedures etc. */
-    GMM_ASSERT1(a.id() != all_convexes().id() ||
-      b.id() != all_convexes().id(), "the 'all_convexes' regions "
-      "are not supported for set operations");
-    if (a.id() == all_convexes().id()) 
+    GMM_ASSERT1(a.id() !=  size_type(-1)||
+		b.id() != size_type(-1), "the 'all_convexes' regions "
+		"are not supported for set operations");
+    if (a.id() == size_type(-1)) 
     {
       for (const_iterator it = b.begin();it != b.end(); ++it) r.wp().m.insert(*it);
       return r;
     }
-    else if (b.id() == all_convexes().id()) 
+    else if (b.id() == size_type(-1)) 
     {
       for (const_iterator it = a.begin();it != a.end(); ++it) r.wp().m.insert(*it);
       return r;
@@ -422,10 +440,10 @@ namespace getfem {
   mesh_region mesh_region::merge(const mesh_region &a, 
                                  const mesh_region &b) 
   {
-    GMM_TRACE4("Merger of "<<a.id()<<" and "<<b.id());
+    GMM_TRACE4("Merger of " << a.id() << " and " << b.id());
     mesh_region r;
-    GMM_ASSERT1(a.id() != all_convexes().id() &&
-      b.id() != all_convexes().id(), "the 'all_convexes' regions "
+    GMM_ASSERT1(a.id() != size_type(-1) &&
+      b.id() != size_type(-1), "the 'all_convexes' regions "
       "are not supported for set operations");
     for (const_iterator it = a.begin();it != a.end(); ++it)
     { 
@@ -444,8 +462,8 @@ namespace getfem {
   {
     GMM_TRACE4("subtraction of "<<a.id()<<" and "<<b.id());
     mesh_region r;
-    GMM_ASSERT1(a.id() != all_convexes().id() &&
-      b.id() != all_convexes().id(), "the 'all_convexes' regions "
+    GMM_ASSERT1(a.id() != size_type(-1) &&
+      b.id() != size_type(-1), "the 'all_convexes' regions "
       "are not supported for set operations");
     for (const_iterator ita = a.begin();ita != a.end(); ++ita) 
       r.wp().m.insert(*ita);
@@ -462,10 +480,16 @@ namespace getfem {
     return r;
   }
 
-  int mesh_region::region_is_faces_of(const mesh_region &rg) {
+  int mesh_region::region_is_faces_of(const getfem::mesh& m1,
+				      const mesh_region &rg2,
+				      const getfem::mesh& m2) const {
+    if (&m1 != &m2) return 0;
     int r = 1, partially = 0;
-    for (mr_visitor cv(*this); !cv.finished(); cv.next())
-      if (cv.is_face() && rg.is_in(cv.cv())) partially = -1; else r = 0;
+    for (mr_visitor cv(*this, m1); !cv.finished(); cv.next())
+      if (cv.is_face() && rg2.is_in(cv.cv(),short_type(-1), m2))
+	partially = -1;
+      else
+	r = 0;
     if (r == 1) return 1; else return partially;
   }
 
@@ -491,11 +515,45 @@ namespace getfem {
                 "of convexes or a set of faces, but not a mixed set");
   }
 
-  mesh_region::visitor::visitor(const mesh_region &s, const mesh &m) : 
-    cv_(size_type(-1)), f_(short_type(-1)), finished_(false) 
+  mesh_region::visitor::visitor(const mesh_region &s, const mesh &m, bool
+#if GETFEM_PARA_LEVEL > 1
+				intersect_with_mpi
+#endif
+  ) :cv_(size_type(-1)), f_(short_type(-1)), finished_(false) 
   {
-    s.from_mesh(m);
-    init(s);
+    if ((me_is_multithreaded_now() && s.partitioning_allowed)) {
+      s.from_mesh(m);
+      init(s);
+    } else {
+      if (s.id() == size_type(-1)) {
+#if GETFEM_PARA_LEVEL > 1
+	if (intersect_with_mpi)
+	  init(m.get_mpi_region());
+	else
+	  init(m.convex_index());
+#else
+	init(m.convex_index());
+#endif
+      } else if (s.p.get())  {
+#if GETFEM_PARA_LEVEL > 1
+	if (intersect_with_mpi)
+	  { mpi_rg = s; m.intersect_with_mpi_region(mpi_rg); init(mpi_rg); }
+	else
+	  init(s);
+#else
+	init(s);
+#endif
+      } else {
+#if GETFEM_PARA_LEVEL > 1
+	if (intersect_with_mpi)
+	  init(m.get_mpi_sub_region(s.id()));
+	else
+	  init(m.region(s.id()));
+#else
+	init(m.region(s.id()));
+#endif
+      }
+    }
   }
 
 
@@ -505,11 +563,18 @@ namespace getfem {
     init(s);
   }
 
+  void mesh_region::visitor::init(const dal::bit_vector &bv) 
+  {
+    whole_mesh = true;
+    itb = bv.begin(); iteb = bv.end();
+    next();
+  }
 
   void mesh_region::visitor::init(const mesh_region &s) 
   {
     GMM_ASSERT1(&s != 0, "Attemps to use an invalid mesh_region "
       "(need to call 'from_mesh')");
+    whole_mesh = false;
     it  = s.begin();
     ite = s.end();
     next();
@@ -517,7 +582,7 @@ namespace getfem {
 
   std::ostream & operator <<(std::ostream &os, const mesh_region &w) 
   {
-    if (w.id() == mesh_region::all_convexes().id())
+    if (w.id() == size_type(-1))
       os << " ALL_CONVEXES";
     else 
       for (mr_visitor cv(w); !cv.finished(); cv.next()) 

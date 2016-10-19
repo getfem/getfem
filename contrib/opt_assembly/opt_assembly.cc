@@ -248,15 +248,17 @@ static void test_new_assembly(int N, int NX, int pK) {
   
   chrono ch;
   
-  bool all = true;
-  
-  if (false) {
+  bool all = false;
+  bool select = false;
+  int only_one = 4;
+
+  if (all || only_one == 1) {
     VEC_TEST_1("Test for source term", ndofu, "u.Test_u", mim, size_type(-1),
 	       Iu, getfem::asm_source_term(V, mim, mf_u, mf_u, U));
     
   }
 
-  if (false) {
+  if (all || only_one == 2) {
     
     {VEC_TEST_1("Test for Neumann term", ndofu, "u.Test_u",
 		mim, NEUMANN_BOUNDARY_NUM,
@@ -282,7 +284,7 @@ static void test_new_assembly(int N, int NX, int pK) {
 						     A, NEUMANN_BOUNDARY_NUM));}
   }
   
-  if (false) {
+  if (all || only_one == 3) {
     {VEC_TEST_1("Test for Neumann term with reduced fem", ndofchi,
 		"p*Test_chi", mim, DIRICHLET_BOUNDARY_NUM,
 		Ichi, getfem::asm_source_term(V, mim, mf_chi, mf_p,
@@ -295,17 +297,17 @@ static void test_new_assembly(int N, int NX, int pK) {
   
  
   
-  if (all) {
+  if (all || select || only_one == 4) {
     MAT_TEST_1("Test for scalar Mass matrix", ndofp, ndofp, "Test_p.Test2_p",
 	       mim, Ip, Ip,  getfem::asm_mass_matrix(K, mim, mf_p));
   }
  
-  if (all) {
+  if (all || select || only_one == 5) {
     MAT_TEST_1("Test for vector Mass matrix", ndofu, ndofu, "Test_u.Test2_u",
 	       mim, Iu, Iu,  getfem::asm_mass_matrix(K, mim, mf_u));
   }
 
-  if (all) {
+  if (all || select || only_one == 6) {
     MAT_TEST_1("Test for Laplacian stiffness matrix", ndofp, ndofp,
 	       "Grad_Test_p:Grad_Test2_p", mim2, Ip, Ip,
 	       getfem::asm_stiffness_matrix_for_homogeneous_laplacian
@@ -339,7 +341,7 @@ static void test_new_assembly(int N, int NX, int pK) {
     }
   }
   
-  if (all) {
+  if (all || select || only_one == 7) {
     base_vector lambda(1); lambda[0] = 3.0;
     workspace.add_fixed_size_constant("lambda", lambda);
     base_vector mu(1); mu[0] = 2.0;
@@ -370,7 +372,7 @@ static void test_new_assembly(int N, int NX, int pK) {
     //           "+ mu*(Grad_Test_u'+Grad_Test_u):Grad_Test2_u",
     //           mim2, Iu, Iu);
     
-    if (false && N == 2) {
+    if (N == 2 && (all || only_one == 8)) {
       MAT_TEST_2(ndofu,ndofu,"lambda*Trace(Grad_Test_u)*Trace(Grad_Test2_u) "
 		 "+mu*(Grad_Test_u'(:,1)"
 		 "+Grad_Test_u(:,1)):Grad_Test2_u(:,1)"
@@ -383,7 +385,7 @@ static void test_new_assembly(int N, int NX, int pK) {
 		 "+mu*(Grad_Test_u'(2,:)"
 		 "+Grad_Test_u(2,:)):Grad_Test2_u(2,:) ", mim2, Iu, Iu);
     }
-    if (false && N == 3) {
+    if (N == 3 && (all || only_one == 9)) {
       MAT_TEST_2(ndofu,ndofu,"lambda*Trace(Grad_Test_u)*Trace(Grad_Test2_u) "
 		 "+mu*(Grad_Test_u'(:,1)"
 		 "+Grad_Test_u(:,1)):Grad_Test2_u(:,1)"
@@ -403,7 +405,7 @@ static void test_new_assembly(int N, int NX, int pK) {
     
   }
   
-  if (all) {
+  if (all || select || only_one == 10) {
     base_vector lambda2(ndofp, 3.0);
     workspace.add_fem_constant("lambda2", mf_p, lambda2);
     base_vector mu2(ndofp, 2.0);
@@ -436,34 +438,34 @@ int main(int /* argc */, char * /* argv */[]) {
   // - Instructions execution except for assembly ones
   //                        new  | old  | sto  | asse | exec | Ins  |
   test_new_assembly(2, 400, 1); // ndofu = 321602 ndofp = 160801 ndofchi = 1201
-  // Mass (scalar)        : 0.31 | 0.61 | 0.04 | 0.07 | 0.18 | 0.06 |
-  // Mass (vector)        : 0.44 | 0.82 | 0.09 | 0.17 | 0.18 | 0.09 |
-  // Laplacian            : 0.29 | 0.83 | 0.04 | 0.05 | 0.19 | 0.05 |
-  // Homogeneous elas     : 0.43 | 1.88 | 0.08 | 0.13 | 0.19 | 0.11 |
-  // Non-homogeneous elast: 0.49 | 2.26 | 0.09 | 0.16 | 0.19 | 0.14 |
-  test_new_assembly(3, 36, 1);  // ndofu = 151959 ndofp =  50653 ndofchi = 6553
-  // Mass (scalar)        : 0.40 | 0.77 | 0.05 | 0.10 | 0.24 | 0.06 |
-  // Mass (vector)        : 0.92 | 1.54 | 0.17 | 0.34 | 0.23 | 0.35 |
-  // Laplacian            : 0.43 | 1.38 | 0.03 | 0.06 | 0.23 | 0.14 |
-  // Homogeneous elas     : 1.05 | 4.58 | 0.26 | 0.34 | 0.22 | 0.50 |
-  // Non-homogeneous elast: 1.13 | 6.72 | 0.26 | 0.34 | 0.23 | 0.60 |
-  test_new_assembly(2, 200, 2); // ndofu = 321602 ndofp = 160801 ndofchi = 1201
-  // Mass (scalar)        : 0.12 | 0.25 | 0.02 | 0.04 | 0.05 | 0.03 |
-  // Mass (vector)        : 0.31 | 0.44 | 0.05 | 0.12 | 0.05 | 0.14 |
-  // Laplacian            : 0.12 | 0.37 | 0.02 | 0.03 | 0.05 | 0.04 |
-  // Homogeneous elas     : 0.30 | 1.28 | 0.06 | 0.10 | 0.06 | 0.14 |
-  // Non-homogeneous elast: 0.35 | 2.40 | 0.07 | 0.11 | 0.05 | 0.19 |
-  test_new_assembly(3, 18, 2);  // ndofu = 151959 ndofp =  50653 ndofchi = 6553
-  // Mass (scalar)        : 0.17 | 0.29 | 0.05 | 0.09 | 0.04 | 0.04 |
-  // Mass (vector)        : 1.33 | 0.90 | 0.21 | 0.51 | 0.04 | 0.78 |
-  // Laplacian            : 0.14 | 0.55 | 0.03 | 0.05 | 0.04 | 0.05 |
-  // Homogeneous elas     : 1.75 | 3.47 | 0.59 | 0.76 | 0.04 | 0.95 |
-  // Non-homogeneous elast: 1.81 | 9.25 | 0.59 | 0.76 | 0.04 | 1.01 |
-  test_new_assembly(3, 9, 4);   // ndofu = 151959 ndofp =  50653 ndofchi = 6553
+  // Mass (scalar)        : 0.23 | 0.61 | 0.04 | 0.07 | 0.10 | 0.06 |
+  // Mass (vector)        : 0.36 | 0.82 | 0.09 | 0.17 | 0.10 | 0.09 |
+  // Laplacian            : 0.20 | 0.83 | 0.04 | 0.05 | 0.10 | 0.05 |
+  // Homogeneous elas     : 0.34 | 1.88 | 0.08 | 0.13 | 0.10 | 0.11 |
+  // Non-homogeneous elast: 0.40 | 2.26 | 0.09 | 0.16 | 0.10 | 0.14 |
+  // test_new_assembly(3, 36, 1);  // ndofu = 151959 ndofp =  50653 ndofchi = 6553
+  // Mass (scalar)        : 0.33 | 0.77 | 0.05 | 0.10 | 0.17 | 0.06 |
+  // Mass (vector)        : 0.86 | 1.54 | 0.17 | 0.34 | 0.17 | 0.35 |
+  // Laplacian            : 0.37 | 1.38 | 0.03 | 0.06 | 0.17 | 0.14 |
+  // Homogeneous elas     : 0.98 | 4.58 | 0.26 | 0.34 | 0.17 | 0.47 |
+  // Non-homogeneous elast: 1.05 | 6.72 | 0.26 | 0.34 | 0.17 | 0.54 |
+  // test_new_assembly(2, 200, 2); // ndofu = 321602 ndofp = 160801 ndofchi = 1201
+  // Mass (scalar)        : 0.11 | 0.25 | 0.02 | 0.04 | 0.04 | 0.03 |
+  // Mass (vector)        : 0.30 | 0.44 | 0.05 | 0.12 | 0.04 | 0.14 |
+  // Laplacian            : 0.10 | 0.37 | 0.02 | 0.03 | 0.04 | 0.03 |
+  // Homogeneous elas     : 0.28 | 1.28 | 0.06 | 0.10 | 0.04 | 0.14 |
+  // Non-homogeneous elast: 0.34 | 2.40 | 0.07 | 0.11 | 0.04 | 0.19 |
+  // test_new_assembly(3, 18, 2);  // ndofu = 151959 ndofp =  50653 ndofchi = 6553
+  // Mass (scalar)        : 0.15 | 0.29 | 0.05 | 0.09 | 0.03 | 0.03 |
+  // Mass (vector)        : 1.32 | 0.90 | 0.21 | 0.51 | 0.03 | 0.78 |
+  // Laplacian            : 0.11 | 0.55 | 0.03 | 0.05 | 0.03 | 0.05 |
+  // Homogeneous elas     : 1.73 | 3.47 | 0.59 | 0.76 | 0.03 | 0.94 |
+  // Non-homogeneous elast: 1.80 | 9.25 | 0.59 | 0.76 | 0.03 | 1.01 |
+  // test_new_assembly(3, 9, 4);   // ndofu = 151959 ndofp =  50653 ndofchi = 6553
   // Mass (scalar)        : 0.59 | 0.34 | 0.09 | 0.23 | 0.01 | 0.34 |
-  // Mass (vector)        : 4.96 | 1.32 | 0.41 | 1.71 | 0.01 | 3.24 |
+  // Mass (vector)        : 4.87 | 1.32 | 0.41 | 1.71 | 0.01 | 3.15 |
   // Laplacian            : 0.44 | 0.77 | 0.09 | 0.18 | 0.01 | 0.25 |
-  // Homogeneous elas     : 9.29 | 5.26 | 0.88 | 1.66 | 0.01 | 7.62 |
+  // Homogeneous elas     : 9.22 | 5.26 | 0.88 | 1.66 | 0.01 | 7.55 |
   // Non-homogeneous elast: 9.29 | 48.0 | 0.76 | 1.56 | 0.01 | 7.72 |
 
   // Conclusions :
@@ -498,25 +500,25 @@ int main(int /* argc */, char * /* argv */[]) {
   // Laplacian            : 0.55 | 0.88 | 0.10 | 0.16 | 0.25 | 0.08 | 0.03 |
   // Homogeneous elas     : 0.91 | 2.06 | 0.23 | 0.30 | 0.24 | 0.07 | 0.08 |
   // Non-homogeneous elast: 1.10 | 2.43 | 0.26 | 0.32 | 0.24 | 0.08 | 0.08 |
-  test_new_assembly(3, 36, 1);
+  // test_new_assembly(3, 36, 1);
   // Mass (scalar)        : 0.83 | 0.97 |
   // Mass (vector)        : 1.78 | 1.85 | 0.34 | 0.54 | 0.31 | 0.15 | 0.12 |
   // Laplacian            : 1.01 | 1.54 | 0.10 | 0.17 | 0.24 | 0.14 | 0.06 |
   // Homogeneous elas     : 2.31 | 5.09 | 0.88 | 0.95 | 0.24 | 0.14 | 0.11 |
   // Non-homogeneous elast: 2.42 | 7.16 | 0.74 | 0.86 | 0.24 | 0.14 | 0.11 |
-  test_new_assembly(2, 200, 2);
+  // test_new_assembly(2, 200, 2);
   // Mass (scalar)        : 0.29 | 0.25 |
   // Mass (vector)        : 0.58 | 0.55 | 0.14 | 0.22 | 0.09 | 0.04 | 0.01 |
   // Laplacian            : 0.28 | 0.42 | 0.06 | 0.10 | 0.07 | 0.03 | 0.03 |
   // Homogeneous elas     : 0.74 | 1.50 | 0.22 | 0.25 | 0.07 | 0.02 | 0.11 |
   // Non-homogeneous elast: 0.86 | 2.63 | 0.23 | 0.28 | 0.07 | 0.02 | 0.11 |
-  test_new_assembly(3, 18, 2);
+  // test_new_assembly(3, 18, 2);
   // Mass (scalar)        : 0.42 | 0.30 |
   // Mass (vector)        : 2.12 | 1.14 | 0.27 | 0.63 | 0.06 | 0.02 | 0.27 |
   // Laplacian            : 0.38 | 0.66 | 0.16 | 0.17 | 0.05 | 0.02 | 0.02 |
   // Homogeneous elas     : 3.09 | 4.14 | 1.53 | 1.72 | 0.05 | 0.02 | 0.35 |
   // Non-homogeneous elast: 3.11 | 9.92 | 1.48 | 1.68 | 0.05 | 0.02 | 0.37 |
-  test_new_assembly(3, 9, 4);
+  // test_new_assembly(3, 9, 4);
   // Mass (scalar)        : 0.79 | 0.38 |
   // Mass (vector)        : 6.91 | 1.60 | 0.65 | 1.77 | 0.02 | .005 | 0.21 |
   // Laplacian            : 0.91 | 0.89 | 0.32 | 0.43 | 0.02 | .005 | 0.07 |

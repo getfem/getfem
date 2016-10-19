@@ -11674,7 +11674,7 @@ namespace getfem {
 		break;
 	      case 1:
 		{
-		  const mesh_fem *mf = workspace.associated_mf(root->name_test1);
+		  const mesh_fem *mf=workspace.associated_mf(root->name_test1);
 		  const mesh_fem **mfg = 0;
 		  add_interval_to_gis(workspace, root->name_test1, gis);
 		  
@@ -11684,7 +11684,8 @@ namespace getfem {
 		    if (intn1.size() &&
 			workspace.variable_group_exists(root->name_test1)) {
 		      ga_instruction_set::variable_group_info &vgi =
-			rmi.interpolate_infos[intn1].groups_info[root->name_test1];
+			rmi.interpolate_infos[intn1]
+			.groups_info[root->name_test1];
 		      Ir = &(vgi.Ir);
 		      In = &(vgi.In);
 		      mfg = &(vgi.mf);
@@ -11712,8 +11713,8 @@ namespace getfem {
 		break;
 	      case 2:
 		{
-		  const mesh_fem *mf1 = workspace.associated_mf(root->name_test1);
-		  const mesh_fem *mf2 = workspace.associated_mf(root->name_test2);
+		  const mesh_fem *mf1=workspace.associated_mf(root->name_test1);
+		  const mesh_fem *mf2=workspace.associated_mf(root->name_test2);
 		  const mesh_fem **mfg1 = 0, **mfg2 = 0;
 		  const std::string &intn1 = root->interpolate_name_test1;
 		  const std::string &intn2 = root->interpolate_name_test2;
@@ -11730,13 +11731,14 @@ namespace getfem {
 		  add_interval_to_gis(workspace, root->name_test1, gis);
 		  add_interval_to_gis(workspace, root->name_test2, gis);
 		  
-		  const gmm::sub_interval *Ir1 = 0, *In1 = 0, *Ir2 = 0, *In2 = 0;
+		  const gmm::sub_interval *Ir1 = 0, *In1 = 0, *Ir2 = 0, *In2=0;
 		  const scalar_type *alpha1 = 0, *alpha2 = 0;
 		  
 		  if (!intn1.empty() &&
 		      workspace.variable_group_exists(root->name_test1)) {
 		    ga_instruction_set::variable_group_info &vgi =
-		      rmi.interpolate_infos[intn1].groups_info[root->name_test1];
+		      rmi.interpolate_infos[intn1]
+		      .groups_info[root->name_test1];
 		    Ir1 = &(vgi.Ir);
 		    In1 = &(vgi.In);
 		    mfg1 = &(vgi.mf);
@@ -11751,7 +11753,8 @@ namespace getfem {
 		  if (!intn2.empty() &&
 		      workspace.variable_group_exists(root->name_test2)) {
 		    ga_instruction_set::variable_group_info &vgi =
-		      rmi.interpolate_infos[intn2].groups_info[root->name_test2];
+		      rmi.interpolate_infos[intn2]
+		      .groups_info[root->name_test2];
 		    Ir2 = &(vgi.Ir);
 		    In2 = &(vgi.In);
 		    mfg2 = &(vgi.mf);
@@ -11771,7 +11774,7 @@ namespace getfem {
 		      (root->tensor(), workspace.assembled_matrix(), ctx1, ctx2,
 		       *In1, *In2, mf1, mf2,
 		       gis.coeff, *alpha1, *alpha2, gis.nbpt, gis.ipt);
-		  } else if (!interpolate && mfg1 == 0 && mfg2 == 0 && mf1 && mf2
+		  } else if (!interpolate && mfg1 == 0 && mfg2==0 && mf1 && mf2
 			     && !(mf1->is_reduced()) && !(mf2->is_reduced())) {
 		    pgai = std::make_shared
 		      <ga_instruction_matrix_assembly_standard_vector<>>
@@ -11791,7 +11794,8 @@ namespace getfem {
 		}
 	      }
 	      if (pgai)
-		gis.whole_instructions[rm].instructions.push_back(std::move(pgai));
+		gis.whole_instructions[rm].instructions.push_back
+		  (std::move(pgai));
 	    }
 	  }
 	}
@@ -11836,12 +11840,9 @@ namespace getfem {
       ga_instruction_list &gilb = it->second.begin_instructions;
       ga_instruction_list &gil = it->second.instructions;
 
-      mesh_region rg(region);
-      m.intersect_with_mpi_region(rg);
-
       // iteration on elements (or faces of elements)
       std::vector<size_type> ind;
-      for (getfem::mr_visitor v(rg, m); !v.finished(); ++v) {
+      for (getfem::mr_visitor v(region, m, true); !v.finished(); ++v) {
         if (gic.use_mim()) {
           if (!mim.convex_index().is_in(v.cv())) continue;
           gis.pai = mim.int_method_of_element(v.cv())->approx_method();
@@ -11945,9 +11946,6 @@ namespace getfem {
       const ga_instruction_list &gil = instr.second.instructions;
       const mesh_region &region = *(instr.first.region());
 
-      mesh_region rg(region);
-      m.intersect_with_mpi_region(rg);
-
       // iteration on elements (or faces of elements)
       size_type old_cv = size_type(-1);
       bgeot::pgeometric_trans pgt = 0, pgt_old = 0;
@@ -11956,9 +11954,9 @@ namespace getfem {
       bgeot::pstored_point_tab pspt = 0, old_pspt = 0;
       bgeot::pgeotrans_precomp pgp = 0;
       bool first_gp = true;
-      for (getfem::mr_visitor v(rg, m); !v.finished(); ++v) {
+      for (getfem::mr_visitor v(region, m, true); !v.finished(); ++v) {
 	if (mim.convex_index().is_in(v.cv())) {
-          // cout << "proceed with element " << v.cv() << endl;
+          // cout << "proceed with elt " << v.cv() << " face " << v.f() << endl;
           if (v.cv() != old_cv) {
             pgt = m.trans_of_convex(v.cv());
 	    pim = mim.int_method_of_element(v.cv());
@@ -12530,18 +12528,17 @@ namespace getfem {
     gmm::resize(result, mf.nb_dof());
     gmm::copy(gmm::sub_vector(residual, I), F);
 
-    mesh_region rg(region);
-    mf.linked_mesh().intersect_with_mpi_region(rg);
-
     getfem::base_matrix loc_M;
     getfem::base_vector loc_U;
-    for (mr_visitor v(rg); !v.finished(); v.next()) {
-      size_type nd = mf.nb_basic_dof_of_element(v.cv());
-      loc_M.base_resize(nd, nd); gmm::resize(loc_U, nd);
-      gmm::sub_index J(mf.ind_basic_dof_of_element(v.cv()));
-      gmm::copy(gmm::sub_matrix(M, J, J), loc_M);
-      gmm::lu_solve(loc_M, loc_U, gmm::sub_vector(F, J));
-      gmm::copy(loc_U, gmm::sub_vector(result, J));
+    for (mr_visitor v(region, mf.linked_mesh(), true); !v.finished(); ++v) {
+      if (mf.convex_index().is_in(v.cv())) {
+	size_type nd = mf.nb_basic_dof_of_element(v.cv());
+	loc_M.base_resize(nd, nd); gmm::resize(loc_U, nd);
+	gmm::sub_index J(mf.ind_basic_dof_of_element(v.cv()));
+	gmm::copy(gmm::sub_matrix(M, J, J), loc_M);
+	gmm::lu_solve(loc_M, loc_U, gmm::sub_vector(F, J));
+	gmm::copy(loc_U, gmm::sub_vector(result, J));
+      }
     }
     MPI_SUM_VECTOR(result);
   }
