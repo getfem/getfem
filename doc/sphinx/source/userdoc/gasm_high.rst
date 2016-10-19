@@ -790,7 +790,7 @@ The value ``Xfem_plus(u)`` is the value of ``u`` on the side where the correspon
 Storage of sub-expressions in a getfem::im_data object during assembly
 ----------------------------------------------------------------------
 
-It is possible to store in a vector depending on a getfem::im_data object a part of an assembly computation, for instance to use this compuation in another assembly. This is an alternative to the interpolation functions which allows not to compute twice the same expression.
+It is possible to store in a vector depending on a getfem::im_data object a part of an assembly computation, for instance in order to use this computation in another assembly. This is an alternative to the interpolation functions which allows not to compute twice the same expression.
 
 The method to add such an assignment in the assembly is the following for a model or a ga_workspace::
 
@@ -804,11 +804,12 @@ It adds expression `expr` to be evaluated at assembly time and being
 assigned to the data `dataname` which has to be of im_data type.
 `order` represents the order of assembly where this assignement has to be
 done (potential(0), weak form(1) or tangent system(2) or at each
-order(-1)). The default value is 1 which means at each order.
-If before = 1, the the assignement is perfromed before the computation
+order(-1)). The default value is 1.
+If before = 1, the the assignement is performed before the computation
 of the other assembly terms, such that the data can be used in the
 remaining of the assembly as an intermediary result (be careful that it is
-still considered as a data, no derivation of the expression is performed).
+still considered as a data, no derivation of the expression is performed for
+the tangent system).
 If before = 0 (default), the assignement is done after the assembly terms.
 
 Additionally, In a model, the method::

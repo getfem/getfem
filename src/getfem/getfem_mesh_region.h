@@ -270,28 +270,7 @@ namespace getfem {
       size_type is_face() const { return f_ != 0; }
       short_type f() const { return short_type(f_-1); }
 
-      bool next() 
-      {
-	if (whole_mesh) {
-	  if (itb == iteb) { finished_=true; return false; }
-	  cv_ = itb.index();
-	  c = 0;
-	  f_ = 0;
-	  ++itb; while (itb != iteb && !(*itb)) ++itb;
-	  return true;
-	}
-	while (c.none()) 
-	{
-	  if (it == ite) { finished_=true; return false; }
-	  cv_ = it->first;
-	  c   = it->second;  
-	  f_ = short_type(-1);
-	  ++it; 
-	  if (c.none()) continue;
-	}
-	next_face();
-	return true;
-      }
+      bool next();
       bool operator++() { return next(); }
 
       bool finished() const { return finished_; }

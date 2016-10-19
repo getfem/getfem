@@ -556,6 +556,28 @@ namespace getfem {
     }
   }
 
+  bool mesh_region::visitor::next() 
+  {
+    if (whole_mesh) {
+      if (itb == iteb) { finished_ = true; return false; }
+      cv_ = itb.index();
+      c = 0;
+      f_ = 0;
+      ++itb; while (itb != iteb && !(*itb)) ++itb;
+      return true;
+    }
+    while (c.none()) 
+      {
+	if (it == ite) { finished_=true; return false; }
+	cv_ = it->first;
+	c   = it->second;  
+	f_ = short_type(-1);
+	++it; 
+	if (c.none()) continue;
+      }
+    next_face();
+    return true;
+  }
 
   mesh_region::visitor::visitor(const mesh_region &s) :
     cv_(size_type(-1)), f_(short_type(-1)), finished_(false) 
@@ -567,6 +589,7 @@ namespace getfem {
   {
     whole_mesh = true;
     itb = bv.begin(); iteb = bv.end();
+    while (itb != iteb && !(*itb)) ++itb;
     next();
   }
 
@@ -584,15 +607,20 @@ namespace getfem {
   {
     if (w.id() == size_type(-1))
       os << " ALL_CONVEXES";
-    else 
+    else if (w.p.get())
+    {
       for (mr_visitor cv(w); !cv.finished(); cv.next()) 
-      {
-        os << cv.cv();
-        if (cv.is_face()) os << "/" << cv.f();
-        os << " ";
-      }
-
-      return os;
+	{
+	  os << cv.cv();
+	  if (cv.is_face()) os << "/" << cv.f();
+	  os << " ";
+	}
+    }
+    else
+    {
+      os << " region " << w.id();
+    }
+    return os;
   }
 
   struct dummy_mesh_region_ {
