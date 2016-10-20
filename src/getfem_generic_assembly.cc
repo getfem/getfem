@@ -11671,7 +11671,7 @@ namespace getfem {
                          ga_instruction_set &gis, size_type order) {
     gis.transformations.clear();
     gis.whole_instructions.clear();
-    for (size_type version = 0; version < 3; ++version) {
+    for (size_type version : {1, 0, 2}) {
       for (size_type i = 0; i < workspace.nb_trees(); ++i) {
 	ga_workspace::tree_description &td = workspace.tree_info(i);
 	
@@ -11715,7 +11715,6 @@ namespace getfem {
 		(td.varname_interpolation);
 	      model_real_plain_vector &V = const_cast<model_real_plain_vector &>
 		(workspace.value(td.varname_interpolation));
-	      gmm::clear(V);
 	      GMM_ASSERT1(imd, "Internal error");
 	      pga_instruction pgai = std::make_shared<ga_instruction_assignment>
 		(root->tensor(), V, gis.ctx, imd);
