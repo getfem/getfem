@@ -41,7 +41,7 @@ using bgeot::size_type;
 using bgeot::dim_type;
 
 typedef gmm::wsvector<scalar_type> sparse_vector_type;
-typedef gmm::row_matrix<sparse_vector_type> sparse_matrix_type;
+typedef gmm::col_matrix<sparse_vector_type> sparse_matrix_type;
 typedef std::vector<scalar_type> linalg_vector;
 
 /**************************************************************************/
@@ -302,7 +302,7 @@ void test3() {
   cout << "MM=" << MM << "\n";
   cout << "mflnk.nb_dof()=" << mflnk.nb_dof() << ", mf2.nb_dof()="
        << mf2.nb_dof() << ", mf1.nb_dof=" << mf1.nb_dof() << "\n";
-  cout << "Matrice de masse\n";
+  cout << "Mass matrix\n";
   scalar_type sum = 0.0; 
   for (size_type i = 0; i < MM.nrows(); i++) { 
     scalar_type slig = 0;

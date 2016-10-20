@@ -2025,6 +2025,7 @@ namespace getfem {
 
     std::list<ga_tree> trees; // The trees are stored mainly because they
                               // contain the intermediary tensors.
+    std::list<ga_tree> interpolation_trees;
 
     typedef std::map<region_mim, region_mim_instructions> instructions_set;
 
@@ -5594,9 +5595,26 @@ namespace getfem {
       GA_DEBUG_INFO("Instruction: matrix term assembly");
       if (ipt == 0 || interpolate) {
         elem.resize(t.size());
-        gmm::copy(gmm::scaled(t.as_vector(), coeff*alpha1*alpha2), elem);
+	auto itt = t.begin(); auto it = elem.begin(), ite = elem.end();
+	scalar_type e = coeff*alpha1*alpha2;
+	size_type nd = t.size() / 4;
+	for (size_type i = 0; i < nd; ++i) {
+	  *it++ = (*itt++) * e; *it++ = (*itt++) * e;
+	  *it++ = (*itt++) * e; *it++ = (*itt++) * e;
+	}
+	for (; it != ite;) *it++ = (*itt++) * e;
+        // gmm::copy(gmm::scaled(t.as_vector(), coeff*alpha1*alpha2), elem);
       } else {
-        gmm::add(gmm::scaled(t.as_vector(), coeff*alpha1*alpha2), elem);
+	// Faster than a daxpy blas call on my config
+	auto itt = t.begin(); auto it = elem.begin(), ite = elem.end();
+	scalar_type e = coeff*alpha1*alpha2;
+	size_type nd = t.size() / 4;
+	for (size_type i = 0; i < nd; ++i) {
+	  *it++ += (*itt++) * e; *it++ += (*itt++) * e;
+	  *it++ += (*itt++) * e; *it++ += (*itt++) * e;
+	}
+	for (; it != ite;) *it++ += (*itt++) * e;
+        // gmm::add(gmm::scaled(t.as_vector(), coeff*alpha1*alpha2), elem);
       }
       if (ipt == nbpt-1 || interpolate) {
         const mesh_fem *pmf1 = mfg1 ? *mfg1 : mfn1;
@@ -5704,9 +5722,26 @@ namespace getfem {
                     "scalar fems");
       if (ipt == 0) {
         elem.resize(t.size());
-        gmm::copy(gmm::scaled(t.as_vector(), coeff*alpha1*alpha2), elem);
+	auto itt = t.begin(); auto it = elem.begin(), ite = elem.end();
+	scalar_type e = coeff*alpha1*alpha2;
+	size_type nd = t.size() / 4;
+	for (size_type i = 0; i < nd; ++i) {
+	  *it++ = (*itt++) * e; *it++ = (*itt++) * e;
+	  *it++ = (*itt++) * e; *it++ = (*itt++) * e;
+	}
+	for (; it != ite;) *it++ = (*itt++) * e;
+        // gmm::copy(gmm::scaled(t.as_vector(), coeff*alpha1*alpha2), elem);
       } else {
-        gmm::add(gmm::scaled(t.as_vector(), coeff*alpha1*alpha2), elem);
+	// Faster than a daxpy blas call on my config
+	auto itt = t.begin(); auto it = elem.begin(), ite = elem.end();
+	scalar_type e = coeff*alpha1*alpha2;
+	size_type nd = t.size() / 4;
+	for (size_type i = 0; i < nd; ++i) {
+	  *it++ += (*itt++) * e; *it++ += (*itt++) * e;
+	  *it++ += (*itt++) * e; *it++ += (*itt++) * e;
+	}
+	for (; it != ite;) *it++ += (*itt++) * e;
+        // gmm::add(gmm::scaled(t.as_vector(), coeff*alpha1*alpha2), elem);
       }
       if (ipt == nbpt-1) {
         GA_DEBUG_ASSERT(I1.size() && I2.size(), "Internal error");
@@ -5774,9 +5809,26 @@ namespace getfem {
                         "vector fems");
       if (ipt == 0) {
         elem.resize(t.size());
-        gmm::copy(gmm::scaled(t.as_vector(), coeff*alpha1*alpha2), elem);
+	auto itt = t.begin(); auto it = elem.begin(), ite = elem.end();
+	scalar_type e = coeff*alpha1*alpha2;
+	size_type nd = t.size() / 4;
+	for (size_type i = 0; i < nd; ++i) {
+	  *it++ = (*itt++) * e; *it++ = (*itt++) * e;
+	  *it++ = (*itt++) * e; *it++ = (*itt++) * e;
+	}
+	for (; it != ite;) *it++ = (*itt++) * e;
+        // gmm::copy(gmm::scaled(t.as_vector(), coeff*alpha1*alpha2), elem);
       } else {
-        gmm::add(gmm::scaled(t.as_vector(), coeff*alpha1*alpha2), elem);
+	// (Far) faster than a daxpy blas call on my config.
+	auto itt = t.begin(); auto it = elem.begin(), ite = elem.end();
+	scalar_type e = coeff*alpha1*alpha2;
+	size_type nd = t.size() / 4;
+	for (size_type i = 0; i < nd; ++i) {
+	  *it++ += (*itt++) * e; *it++ += (*itt++) * e;
+	  *it++ += (*itt++) * e; *it++ += (*itt++) * e;
+	}
+	for (; it != ite;) *it++ += (*itt++) * e;
+        // gmm::add(gmm::scaled(t.as_vector(), coeff*alpha1*alpha2), elem);
       }
       if (ipt == nbpt-1) {
         GA_DEBUG_ASSERT(I1.size() && I2.size(), "Internal error");
@@ -11627,14 +11679,21 @@ namespace getfem {
 	    ((version == 0 && td.order == order) || // Assembly
 	     ((version > 0 && (td.order == size_type(-1) || // Assignment
 				td.order == size_type(-2) - order))))) {
-	  gis.trees.push_back(*(td.ptree));
-	  
+	  ga_tree *added_tree = 0;
+	  if (td.interpolation) {
+	    gis.interpolation_trees.push_back(*(td.ptree));
+	    added_tree = &(gis.interpolation_trees.back());
+	  } else {
+	    gis.trees.push_back(*(td.ptree));
+	    added_tree = &(gis.trees.back());
+	  }
+
 	  // Semantic analysis mainly to evaluate fixed size variables and data
-	  ga_semantic_analysis("", gis.trees.back(), workspace,
+	  ga_semantic_analysis("", *added_tree, workspace,
 			       td.mim->linked_mesh().dim(),
 			       ref_elt_dim_of_mesh(td.mim->linked_mesh()),
 			       true, false);
-	  pga_tree_node root = gis.trees.back().root;
+	  pga_tree_node root = added_tree->root;
 	  if (root) {
 	    // Compile tree
 	    // cout << "Will compile "; ga_print_node(root, cout); cout << endl;
