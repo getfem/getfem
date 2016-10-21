@@ -11671,7 +11671,7 @@ namespace getfem {
                          ga_instruction_set &gis, size_type order) {
     gis.transformations.clear();
     gis.whole_instructions.clear();
-    for (size_type version : {1, 0, 2}) {
+    for (size_type version : std::array<size_type, 3>{1, 0, 2}) {
       for (size_type i = 0; i < workspace.nb_trees(); ++i) {
 	ga_workspace::tree_description &td = workspace.tree_info(i);
 	
