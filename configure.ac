@@ -309,6 +309,19 @@ dnl ACX_BLAS([ echo "OK, You have working BLAS libs !"; HAVE_VENDOR_BLAS=1 ], [e
 LIBS="$LIBS $BLAS_LIBS"
 CPPFLAGS="$CPPFLAGS -DGMM_USES_BLAS"
 
+useblasinterface=NO
+AC_ARG_ENABLE(blas_interface,
+ [AS_HELP_STRING([--enable-blas-interface],[enable the use of the blas call for basic algebra routines.])],
+ [case $enableval in
+   yes | "") useblasinterface=YES ;;
+   no) useblasinterface=NO ;;
+  esac],
+ [useblasinterface=NO]
+)
+
+if test x$useblasinterface = xYES; then
+  CPPFLAGS="$CPPFLAGS -DGMM_USES_BLAS_INTERFACE"
+fi
 
 dnl ---------------------------OPENMP------------------------------
 useopenmp=0

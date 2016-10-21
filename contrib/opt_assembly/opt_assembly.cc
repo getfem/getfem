@@ -250,7 +250,7 @@ static void test_new_assembly(int N, int NX, int pK) {
   
   bool all = false;
   bool select = true;
-  int only_one = 4;
+  int only_one = 5;
 
   if (all || only_one == 1) {
     VEC_TEST_1("Test for source term", ndofu, "u.Test_u", mim, size_type(-1),
@@ -438,40 +438,40 @@ int main(int /* argc */, char * /* argv */[]) {
   // - Instructions execution except for assembly ones
   //                        new  | old  | sto  | asse | exec | Ins  |
   test_new_assembly(2, 400, 1); // ndofu = 321602 ndofp = 160801 ndofchi = 1201
-  // Mass (scalar)        : 0.18 | 0.61 | 0.04 | 0.06 | 0.06 | 0.06 |
+  // Mass (scalar)        : 0.18 | 0.59 | 0.04 | 0.06 | 0.06 | 0.06 |
   // Mass (vector)        : 0.30 | 0.82 | 0.09 | 0.15 | 0.06 | 0.09 |
-  // Laplacian            : 0.16 | 0.83 | 0.04 | 0.05 | 0.06 | 0.05 |
+  // Laplacian            : 0.16 | 0.80 | 0.04 | 0.05 | 0.06 | 0.05 |
   // Homogeneous elas     : 0.31 | 1.88 | 0.08 | 0.13 | 0.06 | 0.10 |
   // Non-homogeneous elast: 0.37 | 2.26 | 0.09 | 0.16 | 0.06 | 0.15 |
   test_new_assembly(3, 36, 1);  // ndofu = 151959 ndofp =  50653 ndofchi = 6553
-  // Mass (scalar)        : 0.28 | 0.77 | 0.05 | 0.09 | 0.13 | 0.06 |
-  // Mass (vector)        : 0.76 | 1.54 | 0.17 | 0.29 | 0.13 | 0.34 |
-  // Laplacian            : 0.32 | 1.38 | 0.03 | 0.06 | 0.13 | 0.13 |
-  // Homogeneous elas     : 0.94 | 4.58 | 0.26 | 0.33 | 0.14 | 0.47 |
-  // Non-homogeneous elast: 1.01 | 6.72 | 0.26 | 0.33 | 0.14 | 0.54 |
+  // Mass (scalar)        : 0.27 | 0.75 | 0.05 | 0.08 | 0.13 | 0.06 |
+  // Mass (vector)        : 0.74 | 1.54 | 0.17 | 0.27 | 0.13 | 0.34 |
+  // Laplacian            : 0.29 | 1.37 | 0.03 | 0.06 | 0.13 | 0.10 |
+  // Homogeneous elas     : 0.91 | 4.58 | 0.26 | 0.33 | 0.13 | 0.45 |
+  // Non-homogeneous elast: 0.98 | 6.72 | 0.26 | 0.33 | 0.13 | 0.52 |
   test_new_assembly(2, 200, 2); // ndofu = 321602 ndofp = 160801 ndofchi = 1201
   // Mass (scalar)        : 0.09 | 0.25 | 0.02 | 0.03 | 0.03 | 0.03 |
   // Mass (vector)        : 0.26 | 0.44 | 0.05 | 0.09 | 0.03 | 0.14 |
   // Laplacian            : 0.09 | 0.37 | 0.02 | 0.03 | 0.03 | 0.03 |
   // Homogeneous elas     : 0.26 | 1.28 | 0.06 | 0.09 | 0.03 | 0.14 |
-  // Non-homogeneous elast: 0.31 | 2.40 | 0.07 | 0.10 | 0.03 | 0.18 |
+  // Non-homogeneous elast: 0.31 | 2.38 | 0.07 | 0.10 | 0.03 | 0.18 |
   test_new_assembly(3, 18, 2);  // ndofu = 151959 ndofp =  50653 ndofchi = 6553
-  // Mass (scalar)        : 0.13 | 0.29 | 0.05 | 0.07 | 0.03 | 0.03 |
-  // Mass (vector)        : 1.18 | 0.90 | 0.21 | 0.37 | 0.03 | 0.78 |
+  // Mass (scalar)        : 0.13 | 0.28 | 0.05 | 0.07 | 0.03 | 0.03 |
+  // Mass (vector)        : 1.15 | 0.90 | 0.21 | 0.35 | 0.03 | 0.77 |
   // Laplacian            : 0.11 | 0.55 | 0.03 | 0.05 | 0.03 | 0.05 |
-  // Homogeneous elas     : 1.70 | 3.47 | 0.59 | 0.73 | 0.03 | 0.94 |
-  // Non-homogeneous elast: 1.77 | 9.25 | 0.59 | 0.73 | 0.03 | 1.01 |
+  // Homogeneous elas     : 1.69 | 3.41 | 0.59 | 0.73 | 0.03 | 0.93 |
+  // Non-homogeneous elast: 1.76 | 9.24 | 0.59 | 0.73 | 0.03 | 1.00 |
   test_new_assembly(3, 9, 4);   // ndofu = 151959 ndofp =  50653 ndofchi = 6553
   // Mass (scalar)        : 0.52 | 0.34 | 0.09 | 0.16 | 0.01 | 0.34 |
-  // Mass (vector)        : 4.46 | 1.32 | 0.41 | 1.30 | 0.01 | 3.15 |
-  // Laplacian            : 0.41 | 0.77 | 0.09 | 0.15 | 0.01 | 0.25 |
-  // Homogeneous elas     : 8.99 | 5.26 | 0.88 | 1.43 | 0.01 | 7.55 |
-  // Non-homogeneous elast: 9.14 | 48.0 | 0.76 | 1.41 | 0.01 | 7.72 |
+  // Mass (vector)        : 4.38 | 1.31 | 0.41 | 1.27 | 0.01 | 3.10 |
+  // Laplacian            : 0.40 | 0.77 | 0.09 | 0.14 | 0.01 | 0.25 |
+  // Homogeneous elas     : 8.97 | 5.25 | 0.88 | 1.43 | 0.01 | 7.53 |
+  // Non-homogeneous elast: 9.01 | 47.7 | 0.76 | 1.35 | 0.01 | 7.65 |
 
   // Conclusions :
   // - Desactivation of debug test has no sensible effect.
   // - Compile time of assembly strings is negligible (< 0.0004)
-  // - J computation takes half the computational time of the exec part
+  // - (J, K, B) computation takes half the computational time of the exec part
   // - The optimized instruction call is negligible
   // - For uniform mesh_fem, the resize operations has been suppressed and
   //   the "update pfp" has been isolated in a set  of instruction being
@@ -484,11 +484,10 @@ int main(int /* argc */, char * /* argv */[]) {
   // - Optimization of J computation (especially in 2D and standard cases)
   // - Unroll loop in used instructions
   // - Assembly optimization
-  // - Detection of the very simples cases where the elementary atrix do not
+  // - Detection of the very simples cases where the elementary matrix do not
   //   have to be computed on each element (mass matrix, laplacian ...)
   //   on uniform mesh_fem and mesh_im ?
   // - storage optimization (matrices ...)
-  // - Fem interpolation context optimization.
   // - Why such a difference between mass matrix and laplacian for 3D and P2 ?
 
   // Original table :

@@ -3289,25 +3289,32 @@ namespace getfem {
       size_type target_dim = Z.sizes()[1];
       size_type Qmult = qdim / target_dim;
       if (Qmult == 1) {
-        gmm::copy(Z.as_vector(), t.as_vector());
+	auto itt = Z.begin(); auto it = t.begin(), ite = t.end();
+	size_type nd = ((t.size()) >> 2);
+	for (size_type i = 0; i < nd; ++i) {
+	  *it++ = (*itt++); *it++ = (*itt++);
+	  *it++ = (*itt++); *it++ = (*itt++);
+	}
+	for (; it != ite;) *it++ = (*itt++);
+        // gmm::copy(Z.as_vector(), t.as_vector());
       } else {
         size_type ndof = Z.sizes()[0];
         GA_DEBUG_ASSERT(t.size() == Z.size() * Qmult * Qmult,
                         "Wrong size for base vector");
         gmm::clear(t.as_vector());
-        base_tensor::const_iterator itZ = Z.begin();
-        size_type s = t.sizes()[0], ss = s * Qmult, sss = s+1;
-        
-        // Performs t(i*Qmult+j, k*Qmult + j) = Z(i,k);
-        for (size_type k = 0; k < target_dim; ++k) {
-          base_tensor::iterator it = t.begin() + (ss * k);
-          for (size_type i = 0; i < ndof; ++i, ++itZ) {
-            if (i) it += Qmult;
-            base_tensor::iterator it2 = it;
-            *it2 = *itZ;
-            for (size_type j = 1; j < Qmult; ++j) { it2 += sss; *it2 = *itZ; }
-          }
-        }
+	auto itZ = Z.begin();
+	size_type s = t.sizes()[0], ss = s * Qmult, sss = s+1;
+	
+	// Performs t(i*Qmult+j, k*Qmult + j) = Z(i,k);
+	for (size_type k = 0; k < target_dim; ++k) {
+	  auto it = t.begin() + (ss * k);
+	  
+	  for (size_type i = 0; i < ndof; ++i, ++itZ, it += Qmult) {
+	    auto it2 = it;
+	    *it2 = *itZ;
+	    for (size_type j = 1; j < Qmult; ++j) { it2 += sss; *it2 = *itZ; }
+	  }
+	}
       }
       return 0;
     }
@@ -3323,7 +3330,14 @@ namespace getfem {
       size_type target_dim = Z.sizes()[1];
       size_type Qmult = qdim / target_dim;
       if (Qmult == 1) {
-        gmm::copy(Z.as_vector(), t.as_vector());
+	auto itt = Z.begin(); auto it = t.begin(), ite = t.end();
+	size_type nd = ((t.size()) >> 2);
+	for (size_type i = 0; i < nd; ++i) {
+	  *it++ = (*itt++); *it++ = (*itt++);
+	  *it++ = (*itt++); *it++ = (*itt++);
+	}
+	for (; it != ite;) *it++ = (*itt++);
+        // gmm::copy(Z.as_vector(), t.as_vector());
       } else {
         size_type ndof = Z.sizes()[0];
         size_type N = Z.sizes()[2];
@@ -3332,14 +3346,13 @@ namespace getfem {
         gmm::clear(t.as_vector());
         base_tensor::const_iterator itZ = Z.begin();
         size_type s = t.sizes()[0], ss = s * Qmult, sss = s+1;
-        size_type ssss=ss*target_dim;
+        size_type ssss = ss*target_dim;
 
         // Performs t(i*Qmult+j, k*Qmult + j, l) = Z(i,k,l);
         for (size_type l = 0; l < N; ++l)
           for (size_type k = 0; k < target_dim; ++k) {
             base_tensor::iterator it = t.begin() + (ss * k + ssss*l);
-            for (size_type i = 0; i < ndof; ++i, ++itZ) {
-              if (i) it += Qmult;
+            for (size_type i = 0; i < ndof; ++i, ++itZ, it += Qmult) {
               base_tensor::iterator it2 = it;
               *it2 = *itZ;
               for (size_type j = 1; j < Qmult; ++j) { it2 += sss; *it2 = *itZ; }
@@ -4046,7 +4059,15 @@ namespace getfem {
     const base_tensor &tc1;
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: tensor copy");
-      gmm::copy(tc1.as_vector(), t.as_vector());
+      
+      auto itt = tc1.begin(); auto it = t.begin(), ite = t.end();
+      size_type nd = ((t.size()) >> 2);
+      for (size_type i = 0; i < nd; ++i) {
+	*it++ = (*itt++); *it++ = (*itt++);
+	*it++ = (*itt++); *it++ = (*itt++);
+      }
+      for (; it != ite;) *it++ = (*itt++);
+      // gmm::copy(tc1.as_vector(), t.as_vector());
       return 0;
     }
     ga_instruction_copy_tensor(base_tensor &t_, const base_tensor &tc1_)
@@ -5414,9 +5435,23 @@ namespace getfem {
       GA_DEBUG_INFO("Instruction: vector term assembly for fem variable");
       if (ipt == 0 || interpolate) {
         elem.resize(t.size());
-        gmm::copy(gmm::scaled(t.as_vector(), coeff), elem);
+	auto itt = t.begin(); auto it = elem.begin(), ite = elem.end();
+	size_type nd = ((t.size()) >> 2);
+	for (size_type i = 0; i < nd; ++i) {
+	  *it++ = (*itt++) * coeff; *it++ = (*itt++) * coeff;
+	  *it++ = (*itt++) * coeff; *it++ = (*itt++) * coeff;
+	}
+	for (; it != ite;) *it++ = (*itt++) * coeff;
+        // gmm::copy(gmm::scaled(t.as_vector(), coeff), elem);
       } else {
-        gmm::add(gmm::scaled(t.as_vector(), coeff), elem);
+	auto itt = t.begin(); auto it = elem.begin(), ite = elem.end();
+	size_type nd = ((t.size()) >> 2);
+	for (size_type i = 0; i < nd; ++i) {
+	  *it++ += (*itt++) * coeff; *it++ += (*itt++) * coeff;
+	  *it++ += (*itt++) * coeff; *it++ += (*itt++) * coeff;
+	}
+	for (; it != ite;) *it++ += (*itt++) * coeff;
+        // gmm::add(gmm::scaled(t.as_vector(), coeff), elem);
       }
       if (ipt == nbpt-1 || interpolate) {
         const mesh_fem &mf = *(mfg ? *mfg : mfn);
@@ -5597,7 +5632,7 @@ namespace getfem {
         elem.resize(t.size());
 	auto itt = t.begin(); auto it = elem.begin(), ite = elem.end();
 	scalar_type e = coeff*alpha1*alpha2;
-	size_type nd = t.size() / 4;
+	size_type nd = ((t.size()) >> 2);
 	for (size_type i = 0; i < nd; ++i) {
 	  *it++ = (*itt++) * e; *it++ = (*itt++) * e;
 	  *it++ = (*itt++) * e; *it++ = (*itt++) * e;
@@ -5608,7 +5643,7 @@ namespace getfem {
 	// Faster than a daxpy blas call on my config
 	auto itt = t.begin(); auto it = elem.begin(), ite = elem.end();
 	scalar_type e = coeff*alpha1*alpha2;
-	size_type nd = t.size() / 4;
+	size_type nd = ((t.size()) >> 2);
 	for (size_type i = 0; i < nd; ++i) {
 	  *it++ += (*itt++) * e; *it++ += (*itt++) * e;
 	  *it++ += (*itt++) * e; *it++ += (*itt++) * e;
@@ -5724,7 +5759,7 @@ namespace getfem {
         elem.resize(t.size());
 	auto itt = t.begin(); auto it = elem.begin(), ite = elem.end();
 	scalar_type e = coeff*alpha1*alpha2;
-	size_type nd = t.size() / 4;
+	size_type nd = ((t.size()) >> 2);
 	for (size_type i = 0; i < nd; ++i) {
 	  *it++ = (*itt++) * e; *it++ = (*itt++) * e;
 	  *it++ = (*itt++) * e; *it++ = (*itt++) * e;
@@ -5735,7 +5770,7 @@ namespace getfem {
 	// Faster than a daxpy blas call on my config
 	auto itt = t.begin(); auto it = elem.begin(), ite = elem.end();
 	scalar_type e = coeff*alpha1*alpha2;
-	size_type nd = t.size() / 4;
+	size_type nd = ((t.size()) >> 2);
 	for (size_type i = 0; i < nd; ++i) {
 	  *it++ += (*itt++) * e; *it++ += (*itt++) * e;
 	  *it++ += (*itt++) * e; *it++ += (*itt++) * e;
@@ -5811,8 +5846,10 @@ namespace getfem {
         elem.resize(t.size());
 	auto itt = t.begin(); auto it = elem.begin(), ite = elem.end();
 	scalar_type e = coeff*alpha1*alpha2;
-	size_type nd = t.size() / 4;
+	size_type nd = ((t.size()) >> 3);
 	for (size_type i = 0; i < nd; ++i) {
+	  *it++ = (*itt++) * e; *it++ = (*itt++) * e;
+	  *it++ = (*itt++) * e; *it++ = (*itt++) * e;
 	  *it++ = (*itt++) * e; *it++ = (*itt++) * e;
 	  *it++ = (*itt++) * e; *it++ = (*itt++) * e;
 	}
@@ -5822,8 +5859,10 @@ namespace getfem {
 	// (Far) faster than a daxpy blas call on my config.
 	auto itt = t.begin(); auto it = elem.begin(), ite = elem.end();
 	scalar_type e = coeff*alpha1*alpha2;
-	size_type nd = t.size() / 4;
+	size_type nd = ((t.size()) >> 3);
 	for (size_type i = 0; i < nd; ++i) {
+	  *it++ += (*itt++) * e; *it++ += (*itt++) * e;
+	  *it++ += (*itt++) * e; *it++ += (*itt++) * e;
 	  *it++ += (*itt++) * e; *it++ += (*itt++) * e;
 	  *it++ += (*itt++) * e; *it++ += (*itt++) * e;
 	}

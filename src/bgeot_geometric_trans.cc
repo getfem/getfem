@@ -35,16 +35,16 @@ namespace bgeot {
     size_type N=gmm::mat_nrows(G), P=gmm::mat_nrows(pc), Q=gmm::mat_ncols(pc);
     if (N && P && Q) {
       auto itK = K.begin();
-      
-      for (size_type j = 0; j < Q; ++j)
-	for (size_type i = 0; i < N; ++i) {
-	  auto itG = G.begin() + i;
-	  auto itpc = pc.begin() + j*P;
-	  register scalar_type a = *(itG) * (*itpc++); itG += N;
-	  for (size_type k = 1; k < P; ++k, itG += N)
-	    a += *(itG) * (*itpc++);
+      for (size_type j = 0; j < Q; ++j) {
+	auto itpc_j = pc.begin() + j*P, itG_b = G.begin();
+	for (size_type i = 0; i < N; ++i, ++itG_b) {
+	  auto itG = itG_b, itpc = itpc_j;
+	  register scalar_type a = *(itG) * (*itpc);
+	  for (size_type k = 1; k < P; ++k)
+	    { itG += N; a += *(itG) * (*++itpc); }
 	  *itK++ = a;
 	}
+      }
     } else gmm::clear(K);
   }
 

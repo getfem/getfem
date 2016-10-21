@@ -47,6 +47,10 @@
 
 namespace gmm {
 
+  // Due to poor performance of level 1 and 2 blas on tested configurations,
+  // this interface is deactivated by default.
+  // Use ./configure --enable-blas-interface to activate it.
+
 #define GMMLAPACK_TRACE(f) 
   // #define GMMLAPACK_TRACE(f) cout << "function " << f << " called" << endl;
 
@@ -167,6 +171,8 @@ namespace gmm {
     BLAS_S scnrm2_(...); BLAS_D dznrm2_(...);
     void  sger_(...); void  dger_(...); void  cgerc_(...); void  zgerc_(...); 
   }
+
+#if defined(GMM_USES_BLAS_INTERFACE)
 
   /* ********************************************************************* */
   /* vect_norm2(x).                                                        */
@@ -936,6 +942,7 @@ namespace gmm {
   trsv_interface(upper_tri_solve, trsv_lower, gem_p1_c, gem_trans1_c,
 		 ztrsv_, BLAS_Z)
   
+#endif
 }
 
 #endif // GMM_BLAS_INTERFACE_H
