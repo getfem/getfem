@@ -158,9 +158,7 @@ namespace getfem
       }
     };
   public:
-    omp_distribute() : thread_values(num_threads()) {}
-    omp_distribute(const T& value) :
-      thread_values(num_threads(),value) {}
+
     template <class... Args>
     omp_distribute(Args&&... value){
       for (size_type i = 0; i < num_threads(); ++i) thread_values.emplace_back(value...);
