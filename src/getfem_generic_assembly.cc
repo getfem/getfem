@@ -1050,7 +1050,7 @@ namespace getfem {
 
   static void ga_print_node(const pga_tree_node pnode,
                             std::ostream &str) {
-    long prec = str.precision(16);
+    auto prec = str.precision(16);
 
     bool is_interpolate(false), is_elementary(false);
     bool is_xfem_plus(false), is_xfem_minus(false);
