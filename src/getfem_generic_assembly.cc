@@ -19,7 +19,7 @@
 
 ===========================================================================*/
 
-#include <array>
+
 #include "getfem/getfem_generic_assembly.h"
 #include "gmm/gmm_blas.h"
 #include <iomanip>
@@ -1050,7 +1050,7 @@ namespace getfem {
 
   static void ga_print_node(const pga_tree_node pnode,
                             std::ostream &str) {
-    auto prec = str.precision(16);
+    long prec = str.precision(16);
 
     bool is_interpolate(false), is_elementary(false);
     bool is_xfem_plus(false), is_xfem_minus(false);
@@ -3289,14 +3289,8 @@ namespace getfem {
       size_type target_dim = Z.sizes()[1];
       size_type Qmult = qdim / target_dim;
       if (Qmult == 1) {
-	auto itt = Z.begin(); auto it = t.begin(), ite = t.end();
-	size_type nd = ((t.size()) >> 2);
-	for (size_type i = 0; i < nd; ++i) {
-	  *it++ = (*itt++); *it++ = (*itt++);
-	  *it++ = (*itt++); *it++ = (*itt++);
-	}
-	for (; it != ite;) *it++ = (*itt++);
-        // gmm::copy(Z.as_vector(), t.as_vector());
+	std::copy(Z.begin(), Z.end(), t.begin());
+	// gmm::copy(Z.as_vector(), t.as_vector());
       } else {
         size_type ndof = Z.sizes()[0];
         GA_DEBUG_ASSERT(t.size() == Z.size() * Qmult * Qmult,
@@ -3330,13 +3324,7 @@ namespace getfem {
       size_type target_dim = Z.sizes()[1];
       size_type Qmult = qdim / target_dim;
       if (Qmult == 1) {
-	auto itt = Z.begin(); auto it = t.begin(), ite = t.end();
-	size_type nd = ((t.size()) >> 2);
-	for (size_type i = 0; i < nd; ++i) {
-	  *it++ = (*itt++); *it++ = (*itt++);
-	  *it++ = (*itt++); *it++ = (*itt++);
-	}
-	for (; it != ite;) *it++ = (*itt++);
+	std::copy(Z.begin(), Z.end(), t.begin());
         // gmm::copy(Z.as_vector(), t.as_vector());
       } else {
         size_type ndof = Z.sizes()[0];
@@ -4059,14 +4047,7 @@ namespace getfem {
     const base_tensor &tc1;
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: tensor copy");
-      
-      auto itt = tc1.begin(); auto it = t.begin(), ite = t.end();
-      size_type nd = ((t.size()) >> 2);
-      for (size_type i = 0; i < nd; ++i) {
-	*it++ = (*itt++); *it++ = (*itt++);
-	*it++ = (*itt++); *it++ = (*itt++);
-      }
-      for (; it != ite;) *it++ = (*itt++);
+      std::copy(tc1.begin(), tc1.end(), t.begin());
       // gmm::copy(tc1.as_vector(), t.as_vector());
       return 0;
     }
@@ -11758,8 +11739,6 @@ namespace getfem {
 	      pga_instruction pgai = std::make_shared<ga_instruction_assignment>
 		(root->tensor(), V, gis.ctx, imd);
 	      rmi.instructions.push_back(std::move(pgai));
-	      // add the assignment instruction or delay it to the end
-	      
 	    } else { // assembly
 	      
 	      // Addition of an assembly instruction

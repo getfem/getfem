@@ -126,6 +126,7 @@ case $CXX in
 	AC_CHECK_CXX_FLAG([$with_optimization],CXXFLAGS)
 	AC_CHECK_CXX_FLAG([-Wall -W],CXXFLAGS)
 	AC_CHECK_CXX_FLAG([-fmessage-length=0],CXXFLAGS)
+	AC_CHECK_CXX_FLAG([-fvisibility-inlines-hidden],CXXFLAGS)
 	AC_CHECK_CXX_FLAG([-ftemplate-depth-100],CXXFLAGS)
 	AC_CHECK_CXX_FLAG([-std=c++11], CXXFLAGS,[AC_CHECK_CXX_FLAG([-std=c++0x],CXXFLAGS,[AC_MSG_ERROR([g++ do not support option -std=c++11. Update g++ to at least release 4.8.1.])] )])
 	AC_CHECK_CXX_FLAG([-fPIC],CXXFLAGS)

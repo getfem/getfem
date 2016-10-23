@@ -125,6 +125,12 @@ std::ostream& operator<<(std::ostream& o, const chrono& c) {
   scalar_type norm_error = gmm::vect_norminf(V);                        \
   cout << "Error : " << norm_error << endl;
 
+#define VEC_TEST_3(title, ndof, expr, mim_, region)			\
+  cout << "\n" << title << endl;                                        \
+  ch.init(); ch.tic(); workspace.clear_expressions();			\
+  workspace.add_expression(expr, mim_, region);                         \
+  workspace.assembly(1); ch.toc();					\
+  cout << "Elapsed time for new assembly " << ch.elapsed() << endl;
 
 #define MAT_TEST_1(title, ndof1, ndof2, expr, mim_, I1_, I2_, old_asm)  \
   cout << "\n" << title << endl;					\
@@ -257,8 +263,13 @@ static void test_new_assembly(int N, int NX, int pK) {
 	       Iu, getfem::asm_source_term(V, mim, mf_u, mf_u, U));
     
   }
-
+  
   if (all || only_one == 2) {
+    VEC_TEST_3("Test for nonlinear residual", ndofu, "Det(Grad_u)", mim,
+	       size_type(-1));
+  }
+
+  if (all || only_one == 3) {
     
     {VEC_TEST_1("Test for Neumann term", ndofu, "u.Test_u",
 		mim, NEUMANN_BOUNDARY_NUM,
@@ -284,7 +295,7 @@ static void test_new_assembly(int N, int NX, int pK) {
 						     A, NEUMANN_BOUNDARY_NUM));}
   }
   
-  if (all || only_one == 3) {
+  if (all || only_one == 4) {
     {VEC_TEST_1("Test for Neumann term with reduced fem", ndofchi,
 		"p*Test_chi", mim, DIRICHLET_BOUNDARY_NUM,
 		Ichi, getfem::asm_source_term(V, mim, mf_chi, mf_p,
@@ -297,17 +308,17 @@ static void test_new_assembly(int N, int NX, int pK) {
   
  
   
-  if (all || select || only_one == 4) {
+  if (all || select || only_one == 5) {
     MAT_TEST_1("Test for scalar Mass matrix", ndofp, ndofp, "Test_p.Test2_p",
 	       mim, Ip, Ip,  getfem::asm_mass_matrix(K, mim, mf_p));
   }
  
-  if (all || select || only_one == 5) {
+  if (all || select || only_one == 6) {
     MAT_TEST_1("Test for vector Mass matrix", ndofu, ndofu, "Test_u.Test2_u",
 	       mim, Iu, Iu,  getfem::asm_mass_matrix(K, mim, mf_u));
   }
 
-  if (all || select || only_one == 6) {
+  if (all || select || only_one == 7) {
     MAT_TEST_1("Test for Laplacian stiffness matrix", ndofp, ndofp,
 	       "Grad_Test_p:Grad_Test2_p", mim2, Ip, Ip,
 	       getfem::asm_stiffness_matrix_for_homogeneous_laplacian
@@ -341,7 +352,7 @@ static void test_new_assembly(int N, int NX, int pK) {
     }
   }
   
-  if (all || select || only_one == 7) {
+  if (all || select || only_one == 8) {
     base_vector lambda(1); lambda[0] = 3.0;
     workspace.add_fixed_size_constant("lambda", lambda);
     base_vector mu(1); mu[0] = 2.0;
@@ -372,7 +383,7 @@ static void test_new_assembly(int N, int NX, int pK) {
     //           "+ mu*(Grad_Test_u'+Grad_Test_u):Grad_Test2_u",
     //           mim2, Iu, Iu);
     
-    if (N == 2 && (all || only_one == 8)) {
+    if (N == 2 && (all || only_one == 9)) {
       MAT_TEST_2(ndofu,ndofu,"lambda*Trace(Grad_Test_u)*Trace(Grad_Test2_u) "
 		 "+mu*(Grad_Test_u'(:,1)"
 		 "+Grad_Test_u(:,1)):Grad_Test2_u(:,1)"
@@ -385,7 +396,7 @@ static void test_new_assembly(int N, int NX, int pK) {
 		 "+mu*(Grad_Test_u'(2,:)"
 		 "+Grad_Test_u(2,:)):Grad_Test2_u(2,:) ", mim2, Iu, Iu);
     }
-    if (N == 3 && (all || only_one == 9)) {
+    if (N == 3 && (all || only_one == 10)) {
       MAT_TEST_2(ndofu,ndofu,"lambda*Trace(Grad_Test_u)*Trace(Grad_Test2_u) "
 		 "+mu*(Grad_Test_u'(:,1)"
 		 "+Grad_Test_u(:,1)):Grad_Test2_u(:,1)"
@@ -405,7 +416,7 @@ static void test_new_assembly(int N, int NX, int pK) {
     
   }
   
-  if (all || select || only_one == 10) {
+  if (all || select || only_one == 11) {
     base_vector lambda2(ndofp, 3.0);
     workspace.add_fem_constant("lambda2", mf_p, lambda2);
     base_vector mu2(ndofp, 2.0);
@@ -499,25 +510,25 @@ int main(int /* argc */, char * /* argv */[]) {
   // Laplacian            : 0.55 | 0.88 | 0.10 | 0.16 | 0.25 | 0.08 | 0.03 |
   // Homogeneous elas     : 0.91 | 2.06 | 0.23 | 0.30 | 0.24 | 0.07 | 0.08 |
   // Non-homogeneous elast: 1.10 | 2.43 | 0.26 | 0.32 | 0.24 | 0.08 | 0.08 |
-  // test_new_assembly(3, 36, 1);
+  test_new_assembly(3, 36, 1);
   // Mass (scalar)        : 0.83 | 0.97 |
   // Mass (vector)        : 1.78 | 1.85 | 0.34 | 0.54 | 0.31 | 0.15 | 0.12 |
   // Laplacian            : 1.01 | 1.54 | 0.10 | 0.17 | 0.24 | 0.14 | 0.06 |
   // Homogeneous elas     : 2.31 | 5.09 | 0.88 | 0.95 | 0.24 | 0.14 | 0.11 |
   // Non-homogeneous elast: 2.42 | 7.16 | 0.74 | 0.86 | 0.24 | 0.14 | 0.11 |
-  // test_new_assembly(2, 200, 2);
+  test_new_assembly(2, 200, 2);
   // Mass (scalar)        : 0.29 | 0.25 |
   // Mass (vector)        : 0.58 | 0.55 | 0.14 | 0.22 | 0.09 | 0.04 | 0.01 |
   // Laplacian            : 0.28 | 0.42 | 0.06 | 0.10 | 0.07 | 0.03 | 0.03 |
   // Homogeneous elas     : 0.74 | 1.50 | 0.22 | 0.25 | 0.07 | 0.02 | 0.11 |
   // Non-homogeneous elast: 0.86 | 2.63 | 0.23 | 0.28 | 0.07 | 0.02 | 0.11 |
-  // test_new_assembly(3, 18, 2);
+  test_new_assembly(3, 18, 2);
   // Mass (scalar)        : 0.42 | 0.30 |
   // Mass (vector)        : 2.12 | 1.14 | 0.27 | 0.63 | 0.06 | 0.02 | 0.27 |
   // Laplacian            : 0.38 | 0.66 | 0.16 | 0.17 | 0.05 | 0.02 | 0.02 |
   // Homogeneous elas     : 3.09 | 4.14 | 1.53 | 1.72 | 0.05 | 0.02 | 0.35 |
   // Non-homogeneous elast: 3.11 | 9.92 | 1.48 | 1.68 | 0.05 | 0.02 | 0.37 |
-  // test_new_assembly(3, 9, 4);
+  test_new_assembly(3, 9, 4);
   // Mass (scalar)        : 0.79 | 0.38 |
   // Mass (vector)        : 6.91 | 1.60 | 0.65 | 1.77 | 0.02 | .005 | 0.21 |
   // Laplacian            : 0.91 | 0.89 | 0.32 | 0.43 | 0.02 | .005 | 0.07 |

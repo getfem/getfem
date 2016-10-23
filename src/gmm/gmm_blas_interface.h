@@ -172,18 +172,18 @@ namespace gmm {
     void  sger_(...); void  dger_(...); void  cgerc_(...); void  zgerc_(...); 
   }
 
-#if defined(GMM_USES_BLAS_INTERFACE)
+#if 1
 
   /* ********************************************************************* */
   /* vect_norm2(x).                                                        */
   /* ********************************************************************* */
 
-  # define nrm2_interface(param1, trans1, blas_name, base_type)            \
-  inline number_traits<base_type >::magnitude_type                         \
-    vect_norm2(param1(base_type)) {                                        \
-    GMMLAPACK_TRACE("nrm2_interface");                                     \
-    int inc(1), n(int(vect_size(x))); trans1(base_type);	       	   \
-    return blas_name(&n, &x[0], &inc);                                     \
+# define nrm2_interface(param1, trans1, blas_name, base_type)		   \
+  inline number_traits<base_type >::magnitude_type			   \
+  vect_norm2(param1(base_type)) {					   \
+    GMMLAPACK_TRACE("nrm2_interface");					   \
+    int inc(1), n(int(vect_size(x))); trans1(base_type);		   \
+    return blas_name(&n, &x[0], &inc);					   \
   }
 
 # define nrm2_p1(base_type) const std::vector<base_type > &x
@@ -198,7 +198,7 @@ namespace gmm {
   /* vect_sp(x, y).                                                        */
   /* ********************************************************************* */
 
-  # define dot_interface(param1, trans1, mult1, param2, trans2, mult2,     \
+# define dot_interface(param1, trans1, mult1, param2, trans2, mult2,	   \
                          blas_name, base_type)                             \
   inline base_type vect_sp(param1(base_type), param2(base_type)) {         \
     GMMLAPACK_TRACE("dot_interface");                                      \
@@ -265,8 +265,8 @@ namespace gmm {
   /* vect_hp(x, y).                                                        */
   /* ********************************************************************* */
 
-  # define dotc_interface(param1, trans1, mult1, param2, trans2, mult2,    \
-                         blas_name, base_type)                             \
+# define dotc_interface(param1, trans1, mult1, param2, trans2, mult2,	   \
+			blas_name, base_type)				   \
   inline base_type vect_hp(param1(base_type), param2(base_type)) {         \
     GMMLAPACK_TRACE("dotc_interface");                                     \
     trans1(base_type); trans2(base_type); int inc(1), n(int(vect_size(y)));\
@@ -697,7 +697,7 @@ namespace gmm {
 
 # define gemm_interface_nt(blas_name, base_type, is_const)                 \
   inline void mult_spec(const dense_matrix<base_type > &A,                 \
-         const transposed_col_ref<is_const<base_type > *> &B_,\
+		     const transposed_col_ref<is_const<base_type > *> &B_, \
          dense_matrix<base_type > &C, r_mult) {                            \
     GMMLAPACK_TRACE("gemm_interface_nt");                                  \
     dense_matrix<base_type > &B                                            \
@@ -728,9 +728,9 @@ namespace gmm {
 
 # define gemm_interface_tt(blas_name, base_type, isA_const, isB_const)     \
   inline void mult_spec(                                                   \
-        const transposed_col_ref<isA_const <base_type > *> &A_,\
-        const transposed_col_ref<isB_const <base_type > *> &B_,\
-        dense_matrix<base_type > &C, r_mult) {                             \
+	       const transposed_col_ref<isA_const <base_type > *> &A_,	   \
+               const transposed_col_ref<isB_const <base_type > *> &B_,	   \
+	       dense_matrix<base_type > &C, r_mult) {			   \
     GMMLAPACK_TRACE("gemm_interface_tt");                                  \
     dense_matrix<base_type > &A                                            \
         = const_cast<dense_matrix<base_type > &>(*(linalg_origin(A_)));    \
