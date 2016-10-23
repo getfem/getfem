@@ -19,7 +19,7 @@
 
 ===========================================================================*/
 
-
+#include <array>
 #include "getfem/getfem_generic_assembly.h"
 #include "gmm/gmm_blas.h"
 #include <iomanip>
