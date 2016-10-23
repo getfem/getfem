@@ -56,7 +56,7 @@ namespace getfem {
   typedef std::shared_ptr<const virtual_time_scheme> ptime_scheme;
 
 
-  class Neumann_elem_term;
+  struct Neumann_elem_term;
   typedef std::shared_ptr<const Neumann_elem_term> pNeumann_elem_term;
 
   class virtual_interpolate_transformation;

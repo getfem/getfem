@@ -55,7 +55,7 @@
 
 namespace getfem {
 
-  class ga_tree;
+  struct ga_tree;
 
   int ga_check_name_validity(const std::string &name);
 
