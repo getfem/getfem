@@ -160,7 +160,7 @@ namespace getfem {
     EXTENSION_MATRIX E_;
     mutable bgeot::mesh_structure dof_structure;
     mutable bool dof_enumeration_made;
-    mutable bool is_uniform_;
+    mutable bool is_uniform_, is_uniformly_vectorized_;
     mutable size_type nb_total_dof;
     pfem auto_add_elt_pf; /* fem for automatic addition                   */
                        /* of element option. (0 = no automatic addition)  */
@@ -275,9 +275,10 @@ namespace getfem {
 
 
     /// Return a reference to the underlying mesh.
-    const mesh &linked_mesh(void) const { return *linked_mesh_; }
+    const mesh &linked_mesh() const { return *linked_mesh_; }
 
-    virtual bool is_uniform(void) const;
+    virtual bool is_uniform() const;
+    virtual bool is_uniformly_vectorized() const;
 
     /** Set the degree of the fem for automatic addition
      *  of element option. K=-1 disables the automatic addition.

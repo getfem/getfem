@@ -381,7 +381,7 @@ namespace bgeot {
                 "This operation is for order four tensors only.");
     GMM_ASSERT2(sizes_[2] == gmm::mat_nrows(m) &&
                 sizes_[3] == gmm::mat_ncols(m), "Dimensions mismatch.");
-    gmm::resize(mm, sizes_[0], sizes_[1]);
+    mm.base_resize(sizes_[0], sizes_[1]);
     gmm::clear(mm);
 
     const_iterator pt = this->begin();

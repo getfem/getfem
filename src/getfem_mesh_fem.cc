@@ -295,16 +295,23 @@ namespace getfem {
     return is_uniform_;
   }
 
+  bool mesh_fem::is_uniformly_vectorized() const {
+    context_check(); if (!dof_enumeration_made) enumerate_dof();
+    return is_uniformly_vectorized_;
+  }
+
   /// Enumeration of dofs
   void mesh_fem::enumerate_dof(void) const {
     bgeot::index_node_pair ipt;
     is_uniform_ = true;
+    is_uniformly_vectorized_ = (get_qdim() > 1);
     GMM_ASSERT1(linked_mesh_ != 0, "Uninitialized mesh_fem");
     context_check();
     if (fe_convex.card() == 0)
       { dof_enumeration_made = true; nb_total_dof = 0; return; }
     pfem first_pf = f_elems[fe_convex.first_true()];
     if (first_pf && first_pf->is_on_real_element()) is_uniform_ = false;
+    if (first_pf && first_pf->target_dim() > 1) is_uniformly_vectorized_=false;
 
     // Gives the Cuthill McKee ordering to iterate on elements
     // const std::vector<size_type> &cmk = linked_mesh().cuthill_mckee_ordering();
@@ -365,6 +372,7 @@ namespace getfem {
       if (!fe_convex.is_in(cv)) continue;
       pfem pf = fem_of_element(cv);
       if (pf != first_pf) is_uniform_ = false;
+      if (pf->target_dim() > 1) is_uniformly_vectorized_ = false;
       bgeot::pgeometric_trans pgt = linked_mesh().trans_of_convex(cv);
       bgeot::pstored_point_tab pspt = pf->node_tab(cv);
       if (pgt != pgt_old || pspt != pspt_old)

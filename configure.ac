@@ -317,7 +317,7 @@ AC_ARG_ENABLE(blas_interface,
    yes | "") useblasinterface=YES ;;
    no) useblasinterface=NO ;;
   esac],
- [useblasinterface=NO]
+ [useblasinterface=YES]
 )
 
 if test x$useblasinterface = xYES; then

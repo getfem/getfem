@@ -48,7 +48,7 @@ BoostMathFunction const erfc = boost::math::erfc<double>;
 #endif
 
 
-// #define GA_USES_BLAS // not so interesting, at leat for debian blas
+// #define GA_USES_BLAS // not so interesting, at least for debian blas
 
 // #define GA_DEBUG_INFO(a) { cout << a << endl; }
 #define GA_DEBUG_INFO(a)
@@ -2690,8 +2690,8 @@ namespace getfem {
       size_type ipt = imd.filtered_index_of_point(cv, ctx.ii());
       GMM_ASSERT1(ipt != size_type(-1),
                   "Im data with no data on the current integration point.");
-      gmm::copy(gmm::sub_vector(U, gmm::sub_interval(ipt*qdim, qdim)),
-                t.as_vector());
+      auto it = U.begin()+ipt*qdim;
+      std::copy(it, it+qdim, t.begin());
       return 0;
     }
     ga_instruction_extract_local_im_data
@@ -2790,12 +2790,11 @@ namespace getfem {
       return 0;
     }
 
-    ga_instruction_second_ind_tensor(base_tensor &t_, fem_interpolation_context &ctx_,
+    ga_instruction_second_ind_tensor(base_tensor &t_,
+				     fem_interpolation_context &ctx_,
                                      size_type qdim_, const mesh_fem *mfn_,
                                      const mesh_fem **mfg_)
-   : ga_instruction_first_ind_tensor(t_, ctx_, qdim_, mfn_, mfg_)
-   {}
-;
+   : ga_instruction_first_ind_tensor(t_, ctx_, qdim_, mfn_, mfg_) {}
 
   };
 
@@ -2852,8 +2851,8 @@ namespace getfem {
       return 0;
     }
 
-    ga_instruction_X_component(scalar_type &t_,
-                               const fem_interpolation_context &ctx_, size_type n_)
+    ga_instruction_X_component
+    (scalar_type &t_, const fem_interpolation_context &ctx_, size_type n_)
       : t(t_),  ctx(ctx_), n(n_) {}
   };
 
@@ -3141,6 +3140,7 @@ namespace getfem {
   };
 
   struct ga_instruction_val : public ga_instruction {
+    scalar_type &a;
     base_tensor &t;
     const base_tensor &Z;
     const base_vector &coeff;
@@ -3149,27 +3149,50 @@ namespace getfem {
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: variable value");
       size_type ndof = Z.sizes()[0];
-      size_type target_dim = Z.sizes()[1];
-      size_type Qmult = qdim / target_dim;
+      if (!ndof) { gmm::clear(t.as_vector()); return 0; }
       GA_DEBUG_ASSERT(t.size() == qdim, "dimensions mismatch");
-      GA_DEBUG_ASSERT(gmm::vect_size(coeff) == ndof*Qmult,
-                      "Wrong size for coeff vector");
-
-      gmm::clear(t.as_vector());
-      for (size_type j = 0; j < ndof; ++j) {
-        for (size_type q = 0; q < Qmult; ++q) {
-          scalar_type co = coeff[j*Qmult+q];
-          for (size_type r = 0; r < target_dim; ++r)
-            t[r + q*target_dim] += co * Z[j + r*ndof];
-        }
+      
+      if (qdim == 1) {
+	GA_DEBUG_ASSERT(gmm::vect_size(coeff) == ndof,
+			"Wrong size for coeff vector");
+	auto itc = coeff.begin(); auto itZ = Z.begin();
+	a = (*itc++) * (*itZ++);
+	while (itc != coeff.end()) a += (*itc++) * (*itZ++);
+      } else {
+	size_type target_dim = Z.sizes()[1];
+	if (target_dim == 1) {
+	  GA_DEBUG_ASSERT(gmm::vect_size(coeff) == ndof*qdim,
+			  "Wrong size for coeff vector");
+	  auto itc = coeff.begin(); auto itZ = Z.begin();
+	  for (auto it = t.begin(); it != t.end(); ++it)
+	    *it = (*itc++) * (*itZ);
+	  ++itZ;
+	  for (size_type j = 1; j < ndof; ++j, ++itZ) {
+	    for (auto it = t.begin(); it != t.end(); ++it)
+	      *it += (*itc++) * (*itZ);
+	  }
+	} else {
+	  size_type Qmult = qdim / target_dim;
+	  GA_DEBUG_ASSERT(gmm::vect_size(coeff) == ndof*Qmult,
+			  "Wrong size for coeff vector");
+	  
+	  gmm::clear(t.as_vector());
+	  auto itc = coeff.begin();
+	  for (size_type j = 0; j < ndof; ++j) {
+	    auto it = t.begin();
+	    for (size_type q = 0; q < Qmult; ++q, ++itc) {
+	      for (size_type r = 0; r < target_dim; ++r)
+		*it++ += (*itc) * Z[j + r*ndof];
+	    }
+	  }
+	}
       }
-      GA_DEBUG_INFO("Instruction: end of variable value");
       return 0;
     }
 
     ga_instruction_val(base_tensor &tt, const base_tensor &Z_,
                        const base_vector &co, size_type q)
-      : t(tt), Z(Z_), coeff(co), qdim(q) {}
+      : a(tt[0]), t(tt), Z(Z_), coeff(co), qdim(q) {}
   };
 
   struct ga_instruction_grad : public ga_instruction_val {
@@ -3177,22 +3200,46 @@ namespace getfem {
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: gradient");
       size_type ndof = Z.sizes()[0];
-      size_type target_dim = Z.sizes()[1];
+      if (!ndof) { gmm::clear(t.as_vector()); return 0; }
       size_type N = Z.sizes()[2];
-      size_type Qmult = qdim / target_dim;
-      GA_DEBUG_ASSERT((qdim == 1 && t.sizes()[0] == N) ||
-                      (t.sizes()[1] == N && t.sizes()[0] == qdim) ||
-                      (N == 1 && t.sizes()[0] == qdim),
-                      "dimensions mismatch");
-      GA_DEBUG_ASSERT(gmm::vect_size(coeff) == ndof*Qmult,
-                      "Wrong size for coeff vector");
-      gmm::clear(t.as_vector());
-      for (size_type q = 0; q < Qmult; ++q) {
-        base_tensor::const_iterator it = Z.begin();
-        for (size_type k = 0; k < N; ++k)
-          for (size_type r = 0; r < target_dim; ++r)
-            for (size_type j = 0; j < ndof; ++j, ++it)
-              t[r + q*target_dim + k*qdim] += coeff[j*Qmult+q] * (*it);
+      if (qdim == 1) {
+	GA_DEBUG_ASSERT(t.size() == N, "dimensions mismatch");
+	GA_DEBUG_ASSERT(coeff.size() == ndof, "Wrong size for coeff vector");
+	auto itZ = Z.begin();
+	for (auto it = t.begin(); it != t.end(); ++it) {
+	  auto itc = coeff.begin();
+	  *it =  (*itc++) * (*itZ++);
+	  while (itc != coeff.end()) *it += (*itc++) * (*itZ++);
+	}
+      } else {
+	size_type target_dim = Z.sizes()[1];
+	if (target_dim == 1) {
+	  GA_DEBUG_ASSERT(t.size() == N*qdim, "dimensions mismatch");
+	  GA_DEBUG_ASSERT(coeff.size() == ndof*qdim,
+			  "Wrong size for coeff vector");
+	  for (size_type q = 0; q < qdim; ++q) {
+	    auto itZ = Z.begin(); auto it = t.begin() + q;
+	    for (size_type k = 0; k < N; ++k, it += qdim) {
+	      auto itc = coeff.begin() + q;
+	      *it = (*itc) * (*itZ++); itc += qdim;
+	      for (size_type j = 1; j < ndof; ++j, itc += qdim)
+		*it += (*itc) * (*itZ++);
+	    }
+	  }
+	} else {
+	  size_type Qmult = qdim / target_dim;
+	  GA_DEBUG_ASSERT(t.size() == N*qdim, "dimensions mismatch");
+	  GA_DEBUG_ASSERT(coeff.size() == ndof*Qmult,
+			  "Wrong size for coeff vector");
+	  gmm::clear(t.as_vector());
+	  for (size_type q = 0; q < Qmult; ++q) {
+	    auto itZ = Z.begin();
+	    for (size_type k = 0; k < N; ++k)
+	      for (size_type r = 0; r < target_dim; ++r)
+		for (size_type j = 0; j < ndof; ++j)
+		  t[r + q*target_dim + k*qdim] += coeff[j*Qmult+q] * (*itZ++);
+	  }
+	}
       }
       return 0;
     }
@@ -3209,25 +3256,49 @@ namespace getfem {
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: Hessian");
       size_type ndof = Z.sizes()[0];
-      size_type target_dim = Z.sizes()[1];
+      if (!ndof) { gmm::clear(t.as_vector()); return 0; }
       size_type N = Z.sizes()[2];
       GA_DEBUG_ASSERT(N == Z.sizes()[3], "Internal error");
-      size_type Qmult = qdim / target_dim;
-      GA_DEBUG_ASSERT((qdim == 1 && N == 1 && t.sizes()[0] == 1) ||
-                      (qdim == 1 && t.sizes()[0] == N && t.sizes()[1] == N) ||
-                      (t.sizes()[1] == N && t.sizes()[2] == N
-                       && t.sizes()[0] == qdim), "dimensions mismatch");
-      GA_DEBUG_ASSERT(gmm::vect_size(coeff) == ndof*Qmult,
-                      "Wrong size for coeff vector");
-      gmm::clear(t.as_vector());
-      for (size_type q = 0; q < Qmult; ++q) {
-        base_tensor::const_iterator it = Z.begin();
-        for (size_type k = 0; k < N; ++k)
-          for (size_type l = 0; l < N; ++l)
-            for (size_type r = 0; r < target_dim; ++r)
-              for (size_type j = 0; j < ndof; ++j, ++it)
-                t[r + q*target_dim + k*qdim + l*qdim*N]
-                  += coeff[j*Qmult+q] * (*it);
+      if (qdim == 1) {
+	GA_DEBUG_ASSERT(t.size() == N*N, "dimensions mismatch");
+	GA_DEBUG_ASSERT(gmm::vect_size(coeff) == ndof,
+			"Wrong size for coeff vector");
+	gmm::clear(t.as_vector());
+	base_tensor::const_iterator it = Z.begin();
+	for (size_type k = 0; k < N; ++k)
+	  for (size_type l = 0; l < N; ++l)
+	    for (auto itc = coeff.begin(); itc != coeff.end(); ++itc, ++it)
+	      t[k+l*N] += (*itc) * (*it);
+      } else {
+	size_type target_dim = Z.sizes()[1];
+	if (target_dim == 1) {
+	  GA_DEBUG_ASSERT(t.size() == N*N*qdim, "dimensions mismatch");
+	  GA_DEBUG_ASSERT(gmm::vect_size(coeff) == ndof*qdim,
+			  "Wrong size for coeff vector");
+	  gmm::clear(t.as_vector());
+	  for (size_type q = 0; q < qdim; ++q) {
+	    base_tensor::const_iterator it = Z.begin();
+	    for (size_type k = 0; k < N; ++k)
+	      for (size_type l = 0; l < N; ++l)
+		for (size_type j = 0; j < ndof; ++j, ++it)
+		  t[q + k*qdim + l*qdim*N] += coeff[j*qdim+q] * (*it);
+	  }
+	} else {
+	  size_type Qmult = qdim / target_dim;
+	  GA_DEBUG_ASSERT(t.size() == N*N*qdim, "dimensions mismatch");
+	  GA_DEBUG_ASSERT(gmm::vect_size(coeff) == ndof*Qmult,
+			  "Wrong size for coeff vector");
+	  gmm::clear(t.as_vector());
+	  for (size_type q = 0; q < Qmult; ++q) {
+	    base_tensor::const_iterator it = Z.begin();
+	    for (size_type k = 0; k < N; ++k)
+	      for (size_type l = 0; l < N; ++l)
+		for (size_type r = 0; r < target_dim; ++r)
+		  for (size_type j = 0; j < ndof; ++j, ++it)
+		    t[r + q*target_dim + k*qdim + l*qdim*N]
+		      += coeff[j*Qmult+q] * (*it);
+	  } 
+	}
       }
       return 0;
     }
@@ -3243,6 +3314,7 @@ namespace getfem {
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: divergence");
       size_type ndof = Z.sizes()[0];
+      if (!ndof) { gmm::clear(t.as_vector()); return 0; }
       size_type target_dim = Z.sizes()[1];
       size_type N = Z.sizes()[2];
       size_type Qmult = qdim / target_dim;
@@ -3290,23 +3362,38 @@ namespace getfem {
       size_type Qmult = qdim / target_dim;
       if (Qmult == 1) {
 	std::copy(Z.begin(), Z.end(), t.begin());
-	// gmm::copy(Z.as_vector(), t.as_vector());
       } else {
-        size_type ndof = Z.sizes()[0];
-        GA_DEBUG_ASSERT(t.size() == Z.size() * Qmult * Qmult,
-                        "Wrong size for base vector");
-        gmm::clear(t.as_vector());
-	auto itZ = Z.begin();
-	size_type s = t.sizes()[0], ss = s * Qmult, sss = s+1;
-	
-	// Performs t(i*Qmult+j, k*Qmult + j) = Z(i,k);
-	for (size_type k = 0; k < target_dim; ++k) {
-	  auto it = t.begin() + (ss * k);
+	if (target_dim == 1) {
+	  size_type ndof = Z.sizes()[0];
+	  GA_DEBUG_ASSERT(t.size() == Z.size() * Qmult * Qmult,
+			  "Wrong size for base vector");
+	  gmm::clear(t.as_vector());
+	  auto itZ = Z.begin();
+	  size_type s = t.sizes()[0], sss = s+1;
 	  
+	  // Performs t(i*Qmult+j, k*Qmult + j) = Z(i,k);
+	  auto it = t.begin();
 	  for (size_type i = 0; i < ndof; ++i, ++itZ, it += Qmult) {
 	    auto it2 = it;
 	    *it2 = *itZ;
 	    for (size_type j = 1; j < Qmult; ++j) { it2 += sss; *it2 = *itZ; }
+	  }
+	} else {
+	  size_type ndof = Z.sizes()[0];
+	  GA_DEBUG_ASSERT(t.size() == Z.size() * Qmult * Qmult,
+			  "Wrong size for base vector");
+	  gmm::clear(t.as_vector());
+	  auto itZ = Z.begin();
+	  size_type s = t.sizes()[0], ss = s * Qmult, sss = s+1;
+	  
+	  // Performs t(i*Qmult+j, k*Qmult + j) = Z(i,k);
+	  for (size_type k = 0; k < target_dim; ++k) {
+	    auto it = t.begin() + (ss * k);
+	    for (size_type i = 0; i < ndof; ++i, ++itZ, it += Qmult) {
+	      auto it2 = it;
+	      *it2 = *itZ;
+	      for (size_type j = 1; j < Qmult; ++j) { it2 += sss; *it2 = *itZ; }
+	    }
 	  }
 	}
       }
@@ -3325,27 +3412,46 @@ namespace getfem {
       size_type Qmult = qdim / target_dim;
       if (Qmult == 1) {
 	std::copy(Z.begin(), Z.end(), t.begin());
-        // gmm::copy(Z.as_vector(), t.as_vector());
       } else {
-        size_type ndof = Z.sizes()[0];
-        size_type N = Z.sizes()[2];
-        GA_DEBUG_ASSERT(t.size() == Z.size() * Qmult * Qmult,
-                        "Wrong size for gradient vector");
-        gmm::clear(t.as_vector());
-        base_tensor::const_iterator itZ = Z.begin();
-        size_type s = t.sizes()[0], ss = s * Qmult, sss = s+1;
-        size_type ssss = ss*target_dim;
-
-        // Performs t(i*Qmult+j, k*Qmult + j, l) = Z(i,k,l);
-        for (size_type l = 0; l < N; ++l)
-          for (size_type k = 0; k < target_dim; ++k) {
-            base_tensor::iterator it = t.begin() + (ss * k + ssss*l);
-            for (size_type i = 0; i < ndof; ++i, ++itZ, it += Qmult) {
-              base_tensor::iterator it2 = it;
-              *it2 = *itZ;
-              for (size_type j = 1; j < Qmult; ++j) { it2 += sss; *it2 = *itZ; }
-            }
-          }
+	if (target_dim == 1) {
+	  size_type ndof = Z.sizes()[0];
+	  size_type N = Z.sizes()[2];
+	  GA_DEBUG_ASSERT(t.size() == Z.size() * Qmult * Qmult,
+			  "Wrong size for gradient vector");
+	  gmm::clear(t.as_vector());
+	  base_tensor::const_iterator itZ = Z.begin();
+	  size_type s = t.sizes()[0], sss = s+1, ssss = s*target_dim*Qmult;
+	  
+	  // Performs t(i*Qmult+j, k*Qmult + j, l) = Z(i,k,l);
+	  for (size_type l = 0; l < N; ++l) {
+	    base_tensor::iterator it = t.begin() + (ssss*l);
+	    for (size_type i = 0; i < ndof; ++i, ++itZ, it += Qmult) {
+	      base_tensor::iterator it2 = it;
+	      *it2 = *itZ;
+	      for (size_type j = 1; j < Qmult; ++j) { it2+=sss; *it2=*itZ; }
+	    }
+	  }
+	} else {
+	  size_type ndof = Z.sizes()[0];
+	  size_type N = Z.sizes()[2];
+	  GA_DEBUG_ASSERT(t.size() == Z.size() * Qmult * Qmult,
+			  "Wrong size for gradient vector");
+	  gmm::clear(t.as_vector());
+	  base_tensor::const_iterator itZ = Z.begin();
+	  size_type s = t.sizes()[0], ss = s * Qmult, sss = s+1;
+	  size_type ssss = ss*target_dim;
+	  
+	  // Performs t(i*Qmult+j, k*Qmult + j, l) = Z(i,k,l);
+	  for (size_type l = 0; l < N; ++l)
+	    for (size_type k = 0; k < target_dim; ++k) {
+	      base_tensor::iterator it = t.begin() + (ss * k + ssss*l);
+	      for (size_type i = 0; i < ndof; ++i, ++itZ, it += Qmult) {
+		base_tensor::iterator it2 = it;
+		*it2 = *itZ;
+		for (size_type j = 1; j < Qmult; ++j) { it2+=sss; *it2=*itZ; }
+	      }
+	    }
+	}
       }
       return 0;
     }
@@ -4376,7 +4482,7 @@ namespace getfem {
       : t(t_), tc1(tc1_), tc2(tc2_) {}
   };
 
-  // Performs Amij Bjk -> Cmik
+  // Performs Amij Bjk -> Cmik. To be optimized
   struct ga_instruction_matrix_mult : public ga_instruction {
     base_tensor &t, &tc1, &tc2;
     virtual int exec() {
@@ -4403,7 +4509,7 @@ namespace getfem {
       : t(t_), tc1(tc1_), tc2(tc2_) {}
   };
 
-  // Performs Amij Bnjk -> Cmnik
+  // Performs Amij Bnjk -> Cmnik. To be optimized
   struct ga_instruction_matrix_mult_spec : public ga_instruction {
     base_tensor &t, &tc1, &tc2;
     virtual int exec() {
@@ -4439,7 +4545,7 @@ namespace getfem {
     size_type nn;
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: reduction operation of size " << nn);
-      #ifdef GA_USES_BLAS
+      #if GA_USES_BLAS
       int m = int(tc1.size()/nn), k = int(nn), n = int(tc2.size()/nn);
       int lda = m, ldb = n, ldc = m;
       char T = 'T', N = 'N';
@@ -4702,7 +4808,7 @@ namespace getfem {
   }
 
 
-  // Performs Amij Bnj -> Cmni
+  // Performs Amij Bnj -> Cmni. To be optimized.
   struct ga_instruction_spec_reduction : public ga_instruction {
     base_tensor &t, &tc1, &tc2;
     size_type nn;
@@ -4727,7 +4833,7 @@ namespace getfem {
       : t(t_), tc1(tc1_), tc2(tc2_), nn(n_) {}
   };
 
-  // Performs Amik Bnjk -> Cmnij
+  // Performs Amik Bnjk -> Cmnij. To be optimized.
   struct ga_instruction_spec2_reduction : public ga_instruction {
     base_tensor &t, &tc1, &tc2;
     size_type nn;
@@ -4787,11 +4893,11 @@ namespace getfem {
     : public ga_instruction {
     base_tensor &t, &tc1, &tc2;
     virtual int exec() {
-      size_type s1 = tc1.size(), s2 = tc2.size();
+      size_type s2 = tc2.size();
       GA_DEBUG_INFO("Instruction: simple tensor product, unrolled with "
-                    << s1 << " operations");
-      GA_DEBUG_ASSERT(t.size() == s1 * s2, "Wrong sizes");
-      GA_DEBUG_ASSERT(s1 == S1, "Wrong sizes");
+                    << tc1.size() << " operations");
+      GA_DEBUG_ASSERT(t.size() == tc1.size() * s2, "Wrong sizes");
+      GA_DEBUG_ASSERT(tc1.size() == S1, "Wrong sizes");
 
       base_tensor::iterator it = t.begin(), it2 = tc2.begin();
       for (size_type ii = 0; ii < s2; ++ii, ++it2) {
@@ -4845,7 +4951,7 @@ namespace getfem {
   }
 
 
-  // Performs Ami Bnj -> Cmnij
+  // Performs Ami Bnj -> Cmnij. To be optimized.
   struct ga_instruction_spec_tmult : public ga_instruction {
     base_tensor &t, &tc1, &tc2;
     size_type s1_2, s2_2;
@@ -4870,7 +4976,7 @@ namespace getfem {
       : t(t_), tc1(tc1_), tc2(tc2_), s1_2(s1_2_), s2_2(s2_2_) {}
   };
 
-  // Performs Ai Bmj -> Cmij
+  // Performs Ai Bmj -> Cmij. To be optimized.
   struct ga_instruction_spec2_tmult : public ga_instruction {
     base_tensor &t, &tc1, &tc2;
     virtual int exec() {
@@ -10579,8 +10685,8 @@ namespace getfem {
           switch (pnode->node_type) {
           case GA_NODE_VAL: // --> t(target_dim*Qmult)
             pgai = std::make_shared<ga_instruction_val>
-              (pnode->t, rmi.base[mf],
-               rmi.local_dofs[pnode->name], workspace.qdim(pnode->name));
+	      (pnode->t, rmi.base[mf], rmi.local_dofs[pnode->name],
+	       workspace.qdim(pnode->name));
             break;
           case GA_NODE_GRAD: // --> t(target_dim*Qmult,N)
             pgai = std::make_shared<ga_instruction_grad>
