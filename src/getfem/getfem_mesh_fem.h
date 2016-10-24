@@ -88,7 +88,7 @@ namespace getfem {
     bool operator < (const iterator &i) const
     { return (it < i.it) && (ii < i.ii); }
 
-    tab_scal_to_vect_iterator(void) {}
+    tab_scal_to_vect_iterator() {}
     tab_scal_to_vect_iterator(const ITER &iter, dim_type n, dim_type i)
       : it(iter), N(n), ii(i) { }
 
@@ -120,20 +120,20 @@ namespace getfem {
 
   public :
 
-    bool empty(void) const { return it == ite; }
-    size_type size(void) const { return (ite - it) * N; }
+    bool empty() const { return it == ite; }
+    size_type size() const { return (ite - it) * N; }
 
-    const_iterator begin(void) const { return iterator(it, N, 0); }
-    const_iterator end(void) const { return iterator(ite, N, 0); }
-    const_reverse_iterator rbegin(void) const
+    const_iterator begin() const { return iterator(it, N, 0); }
+    const_iterator end() const { return iterator(ite, N, 0); }
+    const_reverse_iterator rbegin() const
     { return const_reverse_iterator(end()); }
-    const_reverse_iterator rend(void) const
+    const_reverse_iterator rend() const
     { return const_reverse_iterator(begin()); }
 
-    value_type front(void) const { return *begin(); }
-    value_type back(void) const { return *(--(end())); }
+    value_type front() const { return *begin(); }
+    value_type back() const { return *(--(end())); }
 
-    tab_scal_to_vect(void) : N(0) {}
+    tab_scal_to_vect() : N(0) {}
     tab_scal_to_vect(const CONT &cc, dim_type n)
       : it(cc.begin()), ite(cc.end()), N(n) {}
 
@@ -181,24 +181,24 @@ namespace getfem {
     typedef tab_scal_to_vect<mesh::ind_cv_ct> ind_dof_ct;
     typedef tab_scal_to_vect<mesh::ind_pt_face_ct> ind_dof_face_ct;
 
-    void update_from_context(void) const;
+    void update_from_context() const;
 
-    gmm::uint64_type version_number(void) const
+    gmm::uint64_type version_number() const
     { context_check(); return v_num; }
 
     /** Get the set of convexes where a finite element has been assigned.
      */
-    inline const dal::bit_vector &convex_index(void) const
+    inline const dal::bit_vector &convex_index() const
     { context_check(); return fe_convex; }
 
     /// Return true if a reduction matrix is applied to the dofs.
-    bool is_reduced(void) const { return use_reduction; }
+    bool is_reduced() const { return use_reduction; }
 
     /// Return the reduction matrix applied to the dofs.
-    const REDUCTION_MATRIX &reduction_matrix(void) const { return R_; }
+    const REDUCTION_MATRIX &reduction_matrix() const { return R_; }
 
     /// Return the extension matrix corresponding to reduction applied (RE=I).
-    const EXTENSION_MATRIX &extension_matrix(void) const { return E_; }
+    const EXTENSION_MATRIX &extension_matrix() const { return E_; }
 
     /** Allows to set the reduction and the extension matrices.
      * Should satify (RR*EE=I). */
@@ -527,20 +527,20 @@ namespace getfem {
     virtual void get_global_dof_index(std::vector<size_type> &ind) const;
     /** Renumber the degrees of freedom. You should not have
      * to call this function, as it is done automatically */
-    virtual void enumerate_dof(void) const;
+    virtual void enumerate_dof() const;
 
 #if GETFEM_PARA_LEVEL > 1
-    void enumerate_dof_para(void)const;
+    void enumerate_dof_para()const;
 #endif
 
     /** Return the total number of basic degrees of freedom (before the
      * optional reduction). */
-    virtual size_type nb_basic_dof(void) const {
+    virtual size_type nb_basic_dof() const {
       context_check(); if (!dof_enumeration_made) enumerate_dof();
       return nb_total_dof;
     }
     /// Return the total number of degrees of freedom.
-    virtual size_type nb_dof(void) const {
+    virtual size_type nb_dof() const {
       context_check(); if (!dof_enumeration_made) enumerate_dof();
       return use_reduction ? gmm::mat_nrows(R_) : nb_total_dof;
     }
@@ -585,12 +585,12 @@ namespace getfem {
         @param Q the Q dimension (see mesh_fem::get_qdim).
     */
     explicit mesh_fem(const mesh &me, dim_type Q = 1);
-    mesh_fem(void);
+    mesh_fem();
     mesh_fem(const mesh_fem &mf);
     mesh_fem &operator=(const mesh_fem &mf);
 
     virtual ~mesh_fem();
-    virtual void clear(void);
+    virtual void clear();
     /** Read the mesh_fem from a stream.
         @param ist the stream.
      */

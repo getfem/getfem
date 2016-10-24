@@ -27,7 +27,7 @@
 
 namespace getfem {
 
-  void mesh_fem::update_from_context(void) const {
+  void mesh_fem::update_from_context() const {
     for (dal::bv_visitor i(fe_convex); !i.finished(); ++i) {
       if (linked_mesh_->convex_index().is_in(i)) {
         if (v_num_update < linked_mesh_->convex_version_number(i)) {
@@ -301,7 +301,7 @@ namespace getfem {
   }
 
   /// Enumeration of dofs
-  void mesh_fem::enumerate_dof(void) const {
+  void mesh_fem::enumerate_dof() const {
     bgeot::index_node_pair ipt;
     is_uniform_ = true;
     is_uniformly_vectorized_ = (get_qdim() > 1);
@@ -312,17 +312,6 @@ namespace getfem {
     pfem first_pf = f_elems[fe_convex.first_true()];
     if (first_pf && first_pf->is_on_real_element()) is_uniform_ = false;
     if (first_pf && first_pf->target_dim() > 1) is_uniformly_vectorized_=false;
-
-    // Gives the Cuthill McKee ordering to iterate on elements
-    // const std::vector<size_type> &cmk = linked_mesh().cuthill_mckee_ordering();
-
-
-    // std::vector<size_type> cmk;
-    // for (dal::bv_visitor cv(linked_mesh().convex_index()); !cv.finished(); ++cv)
-    //   cmk.push_back(cv);
-
-    
-
 
     // Dof counter
     size_type nbdof = 0;
@@ -460,7 +449,7 @@ namespace getfem {
     set_reduction_matrices(RR, gmm::transposed(RR));
   }
 
-  void mesh_fem::clear(void) {
+  void mesh_fem::clear() {
     fe_convex.clear();
     dof_enumeration_made = false;
     is_uniform_ = true;
@@ -521,7 +510,7 @@ namespace getfem {
   mesh_fem::mesh_fem(const mesh &me, dim_type Q)
     { linked_mesh_ = 0; init_with_mesh(me, Q); }
 
-  mesh_fem::mesh_fem(void) {
+  mesh_fem::mesh_fem() {
     linked_mesh_ = 0;
     dof_enumeration_made = false;
     is_uniform_ = true;
@@ -799,7 +788,7 @@ namespace getfem {
       else if (qdim < a.qdim) return true;
       return false;
     }
-    void update_from_context(void) const {}
+    void update_from_context() const {}
     mf__key_(const mf__key_ &mfk) : context_dependencies( ) {
       pmsh = mfk.pmsh; order = mfk.order; qdim = mfk.qdim;
       add_dependency(*pmsh);
