@@ -28,6 +28,140 @@
 
 namespace bgeot {
 
+  DEFINE_STATIC_THREAD_LOCAL(std::vector<scalar_type>, __aux1)
+  DEFINE_STATIC_THREAD_LOCAL(std::vector<scalar_type>, __aux2)
+  DEFINE_STATIC_THREAD_LOCAL(std::vector<scalar_type>, __aux3)
+  DEFINE_STATIC_THREAD_LOCAL(std::vector<int>, __ipvt_aux)
+  
+  // Optimized lu_factor for small square matrices
+  size_type lu_factor(scalar_type *A, std::vector<int> &ipvt,
+		      size_type N) {
+    size_type info(0), i, j, jp, N_1 = N-1;
+      
+    if (N) {
+      for (j = 0; j < N_1; ++j) {
+	auto it = A + (j*(N+1));
+	scalar_type max = gmm::abs(*it); jp = j;
+	for (i = j+1; i < N; ++i) {
+	  scalar_type ap = gmm::abs(*(++it));
+	  if (ap > max) { jp = i; max = ap; }
+	}
+	ipvt[j] = int(jp + 1);
+	
+	if (max == scalar_type(0)) { info = j + 1; break; }
+        if (jp != j) {
+	  auto it1 = A+jp, it2 = A+j;
+	  for (i = 0; i < N; ++i, it1+=N, it2+=N) std::swap(*it1, *it2);
+	}
+	it = A + (j*(N+1)); max = *it++;
+	for (i = j+1; i < N; ++i) *it++ /= max; 
+	auto it22 = A + (j*N + j+1), it11 = it22;
+	auto it3 = A + ((j+1)*N+j);
+	for (size_type l = j+1; l < N; ++l) {
+	  it11 += N;
+	  auto it1 = it11, it2 = it22;
+	  scalar_type a = *it3; it3 += N;
+	  for (size_type k = j+1; k < N; ++k) *it1++ -= *it2++ * a;
+	}
+
+      }
+      ipvt[N-1] = int(N);
+    }
+    return info;
+  }
+
+  static void lower_tri_solve(const scalar_type *T, scalar_type *x, int N,
+			      bool is_unit) {
+    scalar_type x_j;
+    for (int j = 0; j < N; ++j) {
+      auto itc = T + j*N, it = itc+(j+1), ite = itc+N;
+      auto itx = x + j;
+      if (!is_unit) *itx /= itc[j];
+      x_j = *itx++;
+      for (; it != ite ; ++it, ++itx) *itx -= x_j * (*it);
+    }
+  }
+
+  static void upper_tri_solve(const scalar_type *T, scalar_type *x, int N,
+			      bool is_unit) {
+    scalar_type x_j;
+    for (int j = N - 1; j >= 0; --j) {
+      auto itc = T + j*N, it = itc, ite = itc+j;
+      auto itx = x;
+      if (!is_unit) x[j] /= itc[j];
+      for (x_j = x[j]; it != ite ; ++it, ++itx) *itx -= x_j * (*it);
+    }
+  }
+
+  static void lu_solve(const scalar_type *LU, const std::vector<int> &ipvt, 
+		       scalar_type *x, scalar_type *b, int N) {
+    std::copy(b, b+N, x);
+    for(int i = 0; i < N; ++i)
+      { int perm = ipvt[i]-1; if(i != perm) std::swap(x[i], x[perm]); }
+    bgeot::lower_tri_solve(LU, x, N, true);
+    bgeot::upper_tri_solve(LU, x, N, false);
+  }
+
+  scalar_type lu_det(const scalar_type *LU, const std::vector<int> &ipvt,
+		     size_type N) {
+    scalar_type det(1);
+    for (size_type j = 0; j < N; ++j) det *= *(LU+j*(N+1));
+    for(int i = 0; i < int(N); ++i) if (i != ipvt[i]-1) { det = -det; }
+    return det;
+  }
+
+  scalar_type lu_det(const scalar_type *A, size_type N) {
+    if (N == 1) {
+      return *A;
+    } else if (N == 2) {
+      return (*A) * (A[3]) - (A[1]) * (A[2]);
+    } else {
+      size_type NN = N*N;
+      if (__aux1.size() < NN) __aux1.resize(N*N);
+      std::copy(A, A+NN, __aux1.begin());
+      __ipvt_aux.resize(N);
+      lu_factor(&(*(__aux1.begin())), __ipvt_aux, N);
+      return lu_det(&(*(__aux1.begin())), __ipvt_aux, N);
+    }
+  }
+
+  void lu_inverse(const scalar_type *LU, const std::vector<int> &ipvt,
+		  scalar_type *A, size_type N) {
+    __aux2.resize(N); gmm::clear(__aux2);
+    __aux3.resize(N);
+    for(size_type i = 0; i < N; ++i) {
+      __aux2[i] = scalar_type(1);
+      bgeot::lu_solve(LU, ipvt, A+i*N, &(*(__aux2.begin())), int(N));
+      __aux2[i] = scalar_type(0);
+    }
+  }
+
+  scalar_type lu_inverse(scalar_type *A, size_type N, bool doassert) {
+    if (N == 1) {
+      scalar_type det = *A;
+      GMM_ASSERT1(det != scalar_type(0), "Non invertible matrix");
+      *A = scalar_type(1)/det;
+      return det;
+    } else if (N == 2) {
+      scalar_type a = *A, b = A[2], c = A[1], d = A[3];
+      scalar_type det = a * d - b * c;
+      GMM_ASSERT1(det != scalar_type(0), "Non invertible matrix");
+      *A++ =  d/det;  *A++ /= -det; *A++ /= -det;  *A =  a/det;
+      return det;
+    } else {
+      size_type NN = N*N;
+      if (__aux1.size() < NN) __aux1.resize(NN);
+      std::copy(A, A+NN, __aux1.begin());
+      __ipvt_aux.resize(N);
+      size_type info = lu_factor(&(*(__aux1.begin())), __ipvt_aux, N);
+      if (doassert) GMM_ASSERT1(!info, "Non invertible matrix, pivot = "<<info);
+      if (!info) lu_inverse(&(*(__aux1.begin())), __ipvt_aux, A, N);
+      return lu_det(&(*(__aux1.begin())), __ipvt_aux, N);
+    }
+  }
+
+
+
   void geometric_trans::compute_K_matrix
     (const base_matrix &G, const base_matrix &pc, base_matrix &K) const {
     // gmm::mult(G, pc, K);
@@ -65,6 +199,8 @@ namespace bgeot {
     return xreal_;
   }
 
+
+
   void geotrans_interpolation_context::compute_J(void) const {
     GMM_ASSERT1(have_G() && have_pgt(), "Unable to compute J\n");
     size_type P = pgt_->structure()->dim();
@@ -73,9 +209,9 @@ namespace bgeot {
       B_factors.base_resize(P, P);
       gmm::mult(gmm::transposed(KK), KK, B_factors);
       ipvt.resize(P);
-      gmm::lu_factor(B_factors, ipvt);
+      bgeot::lu_factor(&(*(B_factors.begin())), ipvt, P);
       // gmm::abs below because on flat convexes determinant could be -1e-27.
-      J_ = ::sqrt(gmm::abs(gmm::lu_det(B_factors, ipvt)));
+      J_ = ::sqrt(gmm::abs(bgeot::lu_det(&(*(B_factors.begin())), ipvt, P)));
     }
     else {
       // J_ = gmm::abs(gmm::lu_det(KK));
@@ -84,11 +220,11 @@ namespace bgeot {
       	if (P == 1) J_ = gmm::abs(*it);
       	else J_ = gmm::abs((*it) * (it[3]) - (it[1]) * (it[2]));
       } else {
-      	B_factors.base_resize(P, P);
+      	B_factors.base_resize(P, P); // store factorization for B computation
       	gmm::copy(gmm::transposed(KK), B_factors);
       	ipvt.resize(P);
-      	gmm::lu_factor(B_factors, ipvt);
-      	J_ = gmm::abs(gmm::lu_det(B_factors, ipvt));
+	bgeot::lu_factor(&(*(B_factors.begin())), ipvt, P);
+     	J_ = gmm::abs(bgeot::lu_det(&(*(B_factors.begin())), ipvt, P));
       }
     }
     have_J_ = true;
@@ -137,7 +273,7 @@ namespace bgeot {
       } else {
         scalar_type det = J();
         GMM_ASSERT1(det != scalar_type(0), "Non invertible matrix");
-        gmm::lu_inverse(B_factors, ipvt, B_);
+	bgeot::lu_inverse(&(*(B_factors.begin())), ipvt, &(*(B_.begin())), P);
       }
       have_B_ = true;
     }

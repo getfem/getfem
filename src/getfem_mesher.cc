@@ -269,7 +269,7 @@ namespace getfem {
     gmm::dense_matrix<T> B(n,n), C(n,n);
     gmm::mult(gmm::transposed(M), M, B);
     R trB = gmm::mat_trace(B);
-    gmm::lu_inverse(B);
+    bgeot::lu_inverse(&(*(B.begin())), n);
     R trBinv = gmm::mat_trace(B);
     gmm::mult(B,B,C);
     gmm::mult(gmm::scaled(M, T(-2)*trB), C, G);
@@ -356,7 +356,7 @@ namespace getfem {
             bgeot::equilateral_simplex_of_reference(dim_type(N))->points());
       gmm::mult(G, bgeot::geotrans_precomp(pgt, pgt->convex_ref()->pspt(),
 					   0)->grad(0), W);
-      gmm::lu_inverse(W);
+      bgeot::lu_inverse(&(*(W.begin())), N);
       do_build_mesh(m,fixed_points);
     }
 
@@ -384,7 +384,7 @@ namespace getfem {
           }
         }
         gmm::mult(S,W,SW);
-        if (gmm::lu_det(SW) < 1E-16) cost += 1e30;
+        if (bgeot::lu_det(&(*(SW.begin())), N) < 1E-16) cost += 1e30;
         else {
           scalar_type qual = gmm::Frobenius_condition_number_sqr(SW);
           cost += qual;
@@ -458,7 +458,7 @@ namespace getfem {
             S(k,j) = X[t(j+1,i)*N+k] - X[t(0,i)*N+k];
           }
         }
-        if (gmm::lu_det(S) < 0) {
+        if (bgeot::lu_det(&(*(S.begin())), N) < 0) {
           std::swap(t(0,i), t(1,i));
           for (size_type j=0; j < N; ++j) {
             for (size_type k=0; k < N; ++k) {
@@ -466,7 +466,7 @@ namespace getfem {
             }
           }
         }
-        if (noisy > 0 && gmm::abs(lu_det(S)) < 1e-10)
+        if (noisy > 0 && gmm::abs(bgeot::lu_det(&(*(S.begin())), N)) < 1e-10)
           cout << "Element " << i << " is very bad, det = "
                << gmm::abs(lu_det(S)) << "\n";
         gmm::mult(S,W,SW);

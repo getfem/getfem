@@ -126,7 +126,7 @@ namespace getfem {
     /* Third invariant det(E) */
     void compute_i3(void) {
       Einv = E;
-      i3_ = gmm::lu_inverse(Einv);
+      i3_ = bgeot::lu_inverse(&(*(Einv.begin())), gmm::mat_nrows(Einv));
       i3_c = true;
     }
 
@@ -287,7 +287,7 @@ namespace getfem {
     scalar_type d;
     do {
       gmm::fill_random(Phi);
-      d = gmm::lu_det(Phi);
+      d = bgeot::lu_det(&(*(Phi.begin())), N);
     } while (d < scalar_type(0.01)); 
     gmm::mult(gmm::transposed(Phi),Phi,E);
     gmm::scale(E,-1.); gmm::add(gmm::identity_matrix(),E); 
@@ -820,7 +820,7 @@ namespace getfem {
     base_matrix C(N, N);
     gmm::copy(gmm::scaled(E, scalar_type(2)), C);
     gmm::add(gmm::identity_matrix(), C);
-    scalar_type det = gmm::lu_det(C);
+    scalar_type det = bgeot::lu_det(&(*(C.begin())), N);
     return a * gmm::mat_trace(C)
       + b * (gmm::sqr(gmm::mat_trace(C)) - 
              gmm::mat_euclidean_norm_sqr(C))/scalar_type(2)
@@ -848,7 +848,7 @@ namespace getfem {
     if (det_trans <= scalar_type(0))
       gmm::add(gmm::scaled(C, 1e200), result);
     else {
-      scalar_type det = gmm::lu_inverse(C);
+      scalar_type det = bgeot::lu_inverse(&(*(C.begin())), N);
       gmm::add(gmm::scaled(C, scalar_type(2) * c * det - d), result);
     }
   }
@@ -864,7 +864,7 @@ namespace getfem {
     base_matrix C(N, N);
     gmm::copy(gmm::scaled(E, scalar_type(2)), C);
     gmm::add(gmm::identity_matrix(), C);
-    scalar_type det = gmm::lu_inverse(C);
+    scalar_type det = bgeot::lu_inverse(&(*(C.begin())), N);
     std::fill(result.begin(), result.end(), scalar_type(0));
     for (size_type i = 0; i < N; ++i)
       for (size_type j = 0; j < N; ++j) {
@@ -1103,7 +1103,7 @@ namespace getfem {
         //jyh : end complete graphi
       }
 
-      gmm::scale(sigma, scalar_type(1) / gmm::lu_det(gradphi));
+      gmm::scale(sigma, scalar_type(1) / bgeot::lu_det(&(*(gradphi.begin())), NFem));
 
       if (!tresca) {
         /* von mises: norm(deviator(sigma)) */
@@ -1355,7 +1355,7 @@ namespace getfem {
       size_type N = args[0]->sizes()[0];
       base_matrix M(N, N);
       gmm::copy(args[0]->as_vector(), M.as_vector());
-      scalar_type det = gmm::lu_det(M);
+      scalar_type det = bgeot::lu_det(&(*(M.begin())), N);
       scalar_type tr = scalar_type(0);
       for (size_type i = 0; i < N; ++i) tr += M(i,i);
       if (det > 0)
@@ -1372,7 +1372,7 @@ namespace getfem {
       gmm::copy(args[0]->as_vector(), M.as_vector());
       scalar_type tr = scalar_type(0);
       for (size_type i = 0; i < N; ++i) tr += M(i,i);
-      scalar_type det = gmm::lu_inverse(M);
+      scalar_type det = bgeot::lu_inverse(&(*(M.begin())), N);
       if (det > 0) {
         base_tensor::iterator it = result.begin();
         for (size_type j = 0; j < N; ++j)
@@ -1394,7 +1394,7 @@ namespace getfem {
       gmm::copy(args[0]->as_vector(), M.as_vector());
       scalar_type tr = scalar_type(0);
       for (size_type i = 0; i < N; ++i) tr += M(i,i);
-      scalar_type det = gmm::lu_inverse(M);
+      scalar_type det = bgeot::lu_inverse(&(*(M.begin())), N);
       if (det > 0) {
         base_tensor::iterator it = result.begin();
         for (size_type l = 0; l < N; ++l)
@@ -1434,7 +1434,7 @@ namespace getfem {
         for (size_type j = 0; j < N; ++j)
           tr2 += M(i,j)*M(j,i);
       scalar_type i2 = (tr*tr-tr2)/scalar_type(2);
-      scalar_type det = gmm::lu_det(M);
+      scalar_type det = bgeot::lu_det(&(*(M.begin())), N);
 
       if (det > 0)
         result[0] = i2 / pow(det, scalar_type(2)/scalar_type(3));
@@ -1456,7 +1456,7 @@ namespace getfem {
         for (size_type j = 0; j < N; ++j)
           tr2 += M(i,j)*M(j,i);
       scalar_type i2 = (tr*tr-tr2)/scalar_type(2);
-      scalar_type det = gmm::lu_inverse(M);
+      scalar_type det = bgeot::lu_inverse(&(*(M.begin())), N);
       base_tensor::iterator it = result.begin();
       for (size_type j = 0; j < N; ++j)
         for (size_type i = 0; i < N; ++i, ++it)
@@ -1480,7 +1480,7 @@ namespace getfem {
         for (size_type j = 0; j < N; ++j)
           tr2 += M(i,j)*M(j,i);
       scalar_type i2 = (tr*tr-tr2)/scalar_type(2);
-      scalar_type det = gmm::lu_inverse(M);
+      scalar_type det = bgeot::lu_inverse(&(*(M.begin())), N);
       base_tensor::iterator it = result.begin();
       for (size_type l = 0; l < N; ++l)
         for (size_type k = 0; k < N; ++k)
@@ -1704,7 +1704,7 @@ namespace getfem {
       gmm::add(gmm::identity_matrix(), F);
       gmm::mult(F, sigma, aux);
       gmm::mult(aux, gmm::transposed(F), sigma);
-      scalar_type det = gmm::lu_det(F);
+      scalar_type det = bgeot::lu_det(&(*(F.begin())), N);
       gmm::scale(sigma, scalar_type(1)/det);
       gmm::copy(sigma.as_vector(), result.as_vector());
     }
@@ -1716,7 +1716,7 @@ namespace getfem {
       base_matrix F(N, N);
       gmm::copy(args[1]->as_vector(), F.as_vector());
       gmm::add(gmm::identity_matrix(), F);
-      scalar_type det = gmm::lu_det(F);
+      scalar_type det = bgeot::lu_det(&(*(F.begin())), N);
 
       base_tensor::iterator it = result.begin();
 
@@ -1738,7 +1738,7 @@ namespace getfem {
           gmm::copy(args[0]->as_vector(), sigma.as_vector());
           gmm::mult(sigma, gmm::transposed(F), aux);
           gmm::mult(F, aux, aux2);
-          gmm::lu_inverse(F);
+          bgeot::lu_inverse(&(*(F.begin())), N);
           for (size_type l = 0; l < N; ++l)
             for (size_type k = 0; k < N; ++k)
               for (size_type j = 0; j < N; ++j)
@@ -1783,7 +1783,7 @@ namespace getfem {
       gmm::add(Gu, E); gmm::add(gmm::transposed(Gu), E);
       gmm::scale(E, scalar_type(0.5));
       gmm::add(gmm::identity_matrix(), Gu);
-      scalar_type det = gmm::lu_det(Gu);
+      scalar_type det = bgeot::lu_det(&(*(Gu.begin())), N);
 
       AHL->sigma(E, sigma, params, det);
       gmm::copy(sigma.as_vector(), result.as_vector());
@@ -1802,7 +1802,7 @@ namespace getfem {
       gmm::add(Gu, E); gmm::add(gmm::transposed(Gu), E);
       gmm::scale(E, scalar_type(0.5));
       gmm::add(gmm::identity_matrix(), Gu);
-      scalar_type det = gmm::lu_det(Gu);
+      scalar_type det = bgeot::lu_det(&(*(Gu.begin())), N);
 
       GMM_ASSERT1(nder == 1, "Sorry, the derivative of this hyperelastic "
                   "law with respect to its parameters is not available.");
@@ -1854,7 +1854,7 @@ namespace getfem {
       gmm::add(Gu, E); gmm::add(gmm::transposed(Gu), E);
       gmm::scale(E, scalar_type(0.5));
       gmm::add(gmm::identity_matrix(), Gu);
-      scalar_type det = gmm::lu_det(Gu); // not necessary here
+      scalar_type det = bgeot::lu_det(&(*(Gu.begin())), N); // not necessary here
 
       result[0] = AHL->strain_energy(E, params, det);
     }
@@ -1871,7 +1871,7 @@ namespace getfem {
       gmm::add(Gu, E); gmm::add(gmm::transposed(Gu), E);
       gmm::scale(E, scalar_type(0.5));
       gmm::add(gmm::identity_matrix(), Gu);
-      scalar_type det = gmm::lu_det(Gu); // not necessary here
+      scalar_type det = bgeot::lu_det(&(*(Gu.begin())), N); // not necessary here
 
       GMM_ASSERT1(nder == 1, "Sorry, Cannot derive the potential with "
                   "respect to law parameters.");
@@ -1896,7 +1896,7 @@ namespace getfem {
       gmm::add(Gu, E); gmm::add(gmm::transposed(Gu), E);
       gmm::scale(E, scalar_type(0.5));
       gmm::add(gmm::identity_matrix(), Gu);
-      scalar_type det = gmm::lu_det(Gu);
+      scalar_type det = bgeot::lu_det(&(*(Gu.begin())), N);
 
       GMM_ASSERT1(nder1 == 1 && nder2 == 1, "Sorry, Cannot derive the "
                   "potential with respect to law parameters.");

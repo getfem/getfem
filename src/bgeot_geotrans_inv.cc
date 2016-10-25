@@ -66,7 +66,7 @@ namespace bgeot
     if (P != N) {
       pgt->compute_K_matrix(G, pc, K);
       gmm::mult(gmm::transposed(K), K, CS);
-      gmm::lu_inverse(CS);
+      bgeot::lu_inverse(&(*(CS.begin())), P);
       gmm::mult(K, CS, B);
     }
     else {
@@ -75,8 +75,8 @@ namespace bgeot
       base_matrix KT(K.nrows(), K.ncols());
       pgt->compute_K_matrix(G, pc, KT);
       gmm::copy(gmm::transposed(KT), K);
-      gmm::copy(K,B);
-      gmm::lu_inverse(K); B.swap(K); 
+      gmm::copy(K, B);
+      bgeot::lu_inverse(&(*(K.begin())), P); B.swap(K); 
     }
   }
 

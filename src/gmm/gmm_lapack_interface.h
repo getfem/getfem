@@ -149,14 +149,11 @@ namespace gmm {
   void lu_inverse(const dense_matrix<base_type > &LU,                      \
        std::vector<int> &ipvt, const dense_matrix<base_type > &A_) {       \
     GMMLAPACK_TRACE("getri_interface");                                    \
-    dense_matrix<base_type >&                                              \
-    A = const_cast<dense_matrix<base_type > &>(A_);                        \
-    int n = int(mat_nrows(A)), info, lwork(-1); base_type work1;           \
+    dense_matrix<base_type> &A                                             \
+      = const_cast<dense_matrix<base_type > &>(A_);                        \
+    int n = int(mat_nrows(A)), info, lwork(10000); base_type work[10000];  \
     if (n) {                                                               \
-      gmm::copy(LU, A);                                                    \
-      lapack_name(&n, &A(0,0), &n, &ipvt[0], &work1, &lwork, &info);       \
-      lwork = int(gmm::real(work1));                                       \
-      std::vector<base_type > work(lwork);                                 \
+      std::copy(LU.begin(), LU.end(), A.begin());			   \
       lapack_name(&n, &A(0,0), &n, &ipvt[0], &work[0], &lwork, &info);     \
     }                                                                      \
   }
@@ -199,8 +196,8 @@ namespace gmm {
     GMMLAPACK_TRACE("geqrf_interface2");                                   \
     int m = int(mat_nrows(A)), n = int(mat_ncols(A)), info, lwork(-1);     \
     base_type work1;                                                       \
-    if (m && n) {                                                          \
-      gmm::copy(A, Q);                                                     \
+    if (m && n) {							   \
+      std::copy(A.begin(), A.end(), Q.begin());				   \
       std::vector<base_type > tau(n);                                      \
       lapack_name1(&m, &n, &Q(0,0), &m, &tau[0], &work1  , &lwork, &info); \
       lwork = int(gmm::real(work1));                                       \

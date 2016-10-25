@@ -508,7 +508,7 @@ namespace getfem {
     const base_matrix &grad_phix_inv(void) {
       if (!grad_phix_inv_init) {
         gmm::copy(grad_phix(), grad_phix_inv_);
-        /* scalar_type J = */ gmm::lu_inverse(grad_phix_inv_);
+        /* scalar_type J = */ gmm::lu_inverse(grad_phix_inv_); 
         // if (J <= scalar_type(0)) GMM_WARNING1("Inverted element !" << J);
         grad_phix_inv_init = true;
       }
@@ -1441,7 +1441,7 @@ namespace getfem {
             n0 = bgeot::compute_normal(ctx, v.f());
             pf_s->interpolation_grad(ctx, coeff, grad, dim_type(N));
             gmm::add(gmm::identity_matrix(), grad);
-            scalar_type J = gmm::lu_inverse(grad);
+            scalar_type J = bgeot::lu_inverse(&(*(grad.begin())), N);
             if (J <= scalar_type(0)) GMM_WARNING1("Inverted element ! " << J);
             gmm::mult(gmm::transposed(grad), n0, n);
             n /= gmm::vect_norm2(n);
@@ -1514,7 +1514,7 @@ namespace getfem {
 
     ctxu.pf()->interpolation_grad(ctxu, coeff, gradinv, dim_type(N));
     gmm::add(gmm::identity_matrix(), gradinv);
-    scalar_type J = gmm::lu_inverse(gradinv); // remplacer par une resolution...
+    scalar_type J = bgeot::lu_inverse(&(*(grad_inv.begin())), N); // remplacer par une resolution...
     if (J <= scalar_type(0)) {
       GMM_WARNING1("Inverted element !");
 

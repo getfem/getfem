@@ -44,7 +44,7 @@ namespace gmm {
 
   template <typename TriMatrix, typename VecX>
   void upper_tri_solve__(const TriMatrix& T, VecX& x, size_t k,
-				col_major, abstract_sparse, bool is_unit) {
+			 col_major, abstract_sparse, bool is_unit) {
     typename linalg_traits<TriMatrix>::value_type x_j;
     for (int j = int(k) - 1; j >= 0; --j) {
       typedef typename linalg_traits<TriMatrix>::const_sub_col_type COL;
@@ -59,7 +59,7 @@ namespace gmm {
 
   template <typename TriMatrix, typename VecX>
   void upper_tri_solve__(const TriMatrix& T, VecX& x, size_t k,
-				col_major, abstract_dense, bool is_unit) {
+			 col_major, abstract_dense, bool is_unit) {
     typename linalg_traits<TriMatrix>::value_type x_j;
     for (int j = int(k) - 1; j >= 0; --j) {
       typedef typename linalg_traits<TriMatrix>::const_sub_col_type COL;
@@ -74,7 +74,7 @@ namespace gmm {
 
   template <typename TriMatrix, typename VecX>
   void lower_tri_solve__(const TriMatrix& T, VecX& x, size_t k,
-				col_major, abstract_sparse, bool is_unit) {
+			 col_major, abstract_sparse, bool is_unit) {
     typename linalg_traits<TriMatrix>::value_type x_j;
     // cout << "(lower col)The Tri Matrix = " << T << endl;
     // cout << "k = " << endl;
@@ -91,7 +91,7 @@ namespace gmm {
   
   template <typename TriMatrix, typename VecX>
   void lower_tri_solve__(const TriMatrix& T, VecX& x, size_t k,
-				col_major, abstract_dense, bool is_unit) {
+			 col_major, abstract_dense, bool is_unit) {
     typename linalg_traits<TriMatrix>::value_type x_j;
     for (int j = 0; j < int(k); ++j) {
       typedef typename linalg_traits<TriMatrix>::const_sub_col_type COL;
@@ -107,7 +107,7 @@ namespace gmm {
 
   template <typename TriMatrix, typename VecX>
   void upper_tri_solve__(const TriMatrix& T, VecX& x, size_t k,
-				row_major, abstract_sparse, bool is_unit) {
+			 row_major, abstract_sparse, bool is_unit) {
     typedef typename linalg_traits<TriMatrix>::const_sub_row_type ROW;
     typename linalg_traits<TriMatrix>::value_type t;
     typename linalg_traits<TriMatrix>::const_row_iterator
@@ -125,7 +125,7 @@ namespace gmm {
 
   template <typename TriMatrix, typename VecX>
   void upper_tri_solve__(const TriMatrix& T, VecX& x, size_t k,
-				row_major, abstract_dense, bool is_unit) {
+			 row_major, abstract_dense, bool is_unit) {
     typename linalg_traits<TriMatrix>::value_type t;
    
     for (int i = int(k) - 1; i >= 0; --i) {
@@ -142,7 +142,7 @@ namespace gmm {
 
   template <typename TriMatrix, typename VecX>
   void lower_tri_solve__(const TriMatrix& T, VecX& x, size_t k,
-				row_major, abstract_sparse, bool is_unit) {
+			 row_major, abstract_sparse, bool is_unit) {
     typename linalg_traits<TriMatrix>::value_type t;
    
     for (int i = 0; i < int(k); ++i) {
@@ -159,7 +159,7 @@ namespace gmm {
 
   template <typename TriMatrix, typename VecX>
   void lower_tri_solve__(const TriMatrix& T, VecX& x, size_t k,
-				row_major, abstract_dense, bool is_unit) {
+			 row_major, abstract_dense, bool is_unit) {
     typename linalg_traits<TriMatrix>::value_type t;
    
     for (int i = 0; i < int(k); ++i) {

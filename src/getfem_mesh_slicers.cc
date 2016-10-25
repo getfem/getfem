@@ -479,7 +479,7 @@ namespace getfem {
       for (size_type i=0; i < s.dim(); ++i) 
         for (size_type j=0; j < s.dim(); ++j)
           M(i,j) = ms.nodes[s.inodes[i+1]].pt[j] - ms.nodes[s.inodes[0]].pt[j];
-      scalar_type v = gmm::abs(gmm::lu_det(M));
+      scalar_type v = bgeot::lu_det(&(*(M.begin())), s.dim());
       for (size_type d=2; d <= s.dim(); ++d) v /= scalar_type(d);
       a += v;
     }
@@ -642,7 +642,7 @@ namespace getfem {
         base_small_vector d = nodes[s.inodes[i]].pt - nodes[s.inodes[0]].pt;
         gmm::copy_n(d.const_begin(), N, M.begin() + (i-1)*N);
       }
-      scalar_type J = lu_det(M);
+      scalar_type J = bgeot::lu_det(&(*(M.begin())), N);
       //cout << " lu_det = " << J << "\n";        
       if (J < 0) {
         std::swap(s.inodes[1],s.inodes[0]);
@@ -667,7 +667,7 @@ namespace getfem {
       base_matrix pc; pgt->poly_vector_grad(g,pc);
       base_matrix K(pgt->dim(),pgt->dim());
       gmm::mult(G,pc,K);
-      scalar_type J = gmm::lu_det(K);
+      scalar_type J = bgeot::lu_det(&(*(K.begin())), pgt->dim());
       // bgeot::geotrans_interpolation_context ctx(pgp,0,G);
       // scalar_type J = gmm::lu_det(ctx.B()); // pb car inverse K même
       if (J < 0) return true;

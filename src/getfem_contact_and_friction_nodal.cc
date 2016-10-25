@@ -318,7 +318,7 @@ namespace getfem {
         gmm::mult(grad_fc, gmm::transposed(base_ref_fc), grad_fc1);
         gmm::mult(G, grad_fc1, K);
         gmm::mult(gmm::transposed(K), K, CS);
-        gmm::lu_inverse(CS);
+        bgeot::lu_inverse(&(*(CS.begin())), P-1);
         gmm::mult(K, CS, B);
         gmm::mult(B, base_ref_fc, BB);
 

@@ -405,7 +405,8 @@ namespace bgeot {
     size_type ii_; /** index of current point in the pgp */
     mutable scalar_type J_; /** Jacobian */
     mutable base_matrix PC, B_factors;
-    mutable std::vector<size_type> ipvt;
+    mutable base_vector aux1, aux2;
+    mutable std::vector<int> ipvt;
     mutable bool have_J_, have_B_, have_B3_, have_B32_, have_K_;
     void compute_J(void) const;
   public:
@@ -506,6 +507,10 @@ namespace bgeot {
   void APIDECL add_geometric_trans_name
   (std::string name, dal::naming_system<geometric_trans>::pfunction f);
 
+
+  /* Optimized operation for small matrices                               */
+  scalar_type lu_det(const scalar_type *A, size_type N);
+  scalar_type lu_inverse(scalar_type *A, size_type N, bool doassert = true);
 
 }  /* end of namespace bgeot.                                             */
 

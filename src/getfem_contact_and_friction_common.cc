@@ -43,7 +43,7 @@ namespace getfem {
       } else {
         ctx.pf()->interpolation_grad(ctx, coeff, grad, dim_type(ctx.N()));
         gmm::add(gmm::identity_matrix(), grad);
-        scalar_type J = gmm::lu_inverse(grad);
+        scalar_type J = bgeot::lu_inverse(&(*(grad.begin())), ctx.N());
         if (J <= scalar_type(0)) GMM_WARNING1("Inverted element !" << J);
         gmm::mult(gmm::transposed(grad), n0, n);
         if (J < 0) gmm::scale(n, gmm::sgn(J)); // In case of inverted element
@@ -1098,7 +1098,7 @@ namespace getfem {
 
             for (size_type subiter(0);;) {
               pps(a, hessa);
-              det = gmm::abs(gmm::lu_inverse(hessa, false));
+	      det = gmm::abs(bgeot::lu_inverse(&(*(hessa.begin())),N-1, false));
               if (det > 1E-15) break;
               for (size_type i = 0; i < N-1; ++i)
                 a[i] += gmm::random() * 1E-7;
@@ -1158,7 +1158,7 @@ namespace getfem {
 
             for (size_type subiter(0);;) {
               pps(a, hessa);
-              det = gmm::abs(gmm::lu_inverse(hessa, false));
+	      det = gmm::abs(bgeot::lu_inverse(&(*(hessa.begin())),N-1, false));
               if (det > 1E-15) break;
               for (size_type i = 0; i < N-1; ++i)
                 a[i] += gmm::random() * 1E-7;
@@ -1791,7 +1791,7 @@ namespace getfem {
           
           for (size_type subiter(0); subiter <= 4; ++subiter) {
             pps(a, hessa);
-            det = gmm::abs(gmm::lu_inverse(hessa, false));
+            det = gmm::abs(bgeot::lu_inverse(&(*(hessa.begin())), N-1, false));
             if (det > 1E-15) break;
             for (size_type i = 0; i < N-1; ++i)
               a[i] += gmm::random() * 1E-7;
@@ -1916,7 +1916,7 @@ namespace getfem {
             pfu_y->interpolation_grad(ctx_y, stored_coeff_y, F_y, dim_type(N));
             gmm::add(gmm::identity_matrix(), F_y);
             gmm::copy(F_y, F_y_inv);
-            gmm::lu_inverse(F_y_inv);
+            bgeot::lu_inverse(&(*(F_y_inv.begin())), N);
           } else {
             gmm::copy(gmm::identity_matrix(), F_y);
             gmm::copy(gmm::identity_matrix(), F_y_inv);
@@ -1927,7 +1927,7 @@ namespace getfem {
           pfu_x->interpolation_grad(ctx_x, coeff_x, F_x, dim_type(N));
           gmm::add(gmm::identity_matrix(), F_x);
           gmm::copy(F_x, F_x_inv);
-          gmm::lu_inverse(F_x_inv);
+          bgeot::lu_inverse(&(*(F_x_inv.begin())), N);
         
 
           base_tensor base_ux;
@@ -2111,7 +2111,7 @@ namespace getfem {
       base_matrix F(N, N);
       gmm::copy(args[0]->as_vector(), F.as_vector());
       gmm::add(gmm::identity_matrix(), F);
-      gmm::lu_inverse(F);
+      bgeot::lu_inverse(&(*(F.begin())), N);
       gmm::mult(gmm::transposed(F), args[1]->as_vector(), result.as_vector());
       gmm::scale(result.as_vector(),
                  scalar_type(1)/gmm::vect_norm2(result.as_vector()));
@@ -2132,7 +2132,7 @@ namespace getfem {
       base_small_vector ndef(N), aux(N);
       gmm::copy(args[0]->as_vector(), F.as_vector());
       gmm::add(gmm::identity_matrix(), F);
-      gmm::lu_inverse(F);
+      bgeot::lu_inverse(&(*(F.begin())), N);
       gmm::mult(gmm::transposed(F), args[1]->as_vector(), ndef);
       scalar_type norm_ndef = gmm::vect_norm2(ndef);
       gmm::scale(ndef, scalar_type(1)/norm_ndef);

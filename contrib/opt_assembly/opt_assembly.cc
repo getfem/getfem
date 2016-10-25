@@ -139,7 +139,7 @@ std::ostream& operator<<(std::ostream& o, const chrono& c) {
   ch.init(); ch.tic(); workspace.clear_expressions();			\
   workspace.set_assembled_matrix(K3);					\
   workspace.add_expression(expr, mim_);					\
-  workspace.assembly(2); ch.toc();			\
+  workspace.assembly(2); ch.toc();					\
   cout << "Elapsed time for new assembly " << ch.elapsed() << endl;     \
   ch.init(); ch.tic(); old_asm; ch.toc();				\
   gmm::copy(K, K2);                                                     \
@@ -256,7 +256,7 @@ static void test_new_assembly(int N, int NX, int pK) {
   
   bool all = false;
   bool select = true;
-  int only_one = 6;
+  int only_one = 11;
 
   if (all || select || only_one == 1) {
     VEC_TEST_1("Test for source term", ndofu, "u.Test_u", mim, size_type(-1),
@@ -438,6 +438,9 @@ int main(int /* argc */, char * /* argv */[]) {
   GMM_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
   
+  bool all = true;
+  int only_one = 2;
+
   // Mesured times for
   // - new assembly,
   // - old one,
@@ -448,41 +451,46 @@ int main(int /* argc */, char * /* argv */[]) {
   // - J computation.
   // - Instructions execution except for assembly ones
   //                        new  | old  | sto  | asse | exec | Ins  |
-  test_new_assembly(2, 400, 1);// ndofu = 321602 ndofp = 160801 ndofchi = 1201
+  if (all || only_one == 1) // ndofu = 321602 ndofp = 160801 ndofchi = 1201
+    test_new_assembly(2, 400, 1);
   // Vector source term   : 0.25 | 0.68 |
-  // Nonlinear residual   : 0.38 |      |
-  // Mass (scalar)        : 0.18 | 0.59 | 0.04 | 0.06 | 0.06 | 0.06 |
+  // Nonlinear residual   : 0.35 |      |
+  // Mass (scalar)        : 0.18 | 0.58 | 0.04 | 0.06 | 0.06 | 0.06 |
   // Mass (vector)        : 0.30 | 0.82 | 0.09 | 0.15 | 0.06 | 0.09 |
   // Laplacian            : 0.16 | 0.80 | 0.04 | 0.05 | 0.06 | 0.05 |
   // Homogeneous elas     : 0.31 | 1.88 | 0.08 | 0.13 | 0.06 | 0.10 |
   // Non-homogeneous elast: 0.36 | 2.26 | 0.09 | 0.16 | 0.06 | 0.14 |
-  test_new_assembly(3, 36, 1); // ndofu = 151959 ndofp =  50653 ndofchi = 6553
-  // Vector source term   : 0.37 | 1.00 |
-  // Nonlinear residual   : 1.85 |      |
-  // Mass (scalar)        : 0.27 | 0.75 | 0.05 | 0.08 | 0.13 | 0.06 |
-  // Mass (vector)        : 0.74 | 1.54 | 0.17 | 0.27 | 0.13 | 0.34 |
-  // Laplacian            : 0.32 | 1.37 | 0.03 | 0.07 | 0.13 | 0.12 |
-  // Homogeneous elas     : 0.91 | 4.58 | 0.26 | 0.33 | 0.13 | 0.45 |
-  // Non-homogeneous elast: 0.98 | 6.55 | 0.26 | 0.33 | 0.13 | 0.52 |
-  test_new_assembly(2, 200, 2);// ndofu = 321602 ndofp = 160801 ndofchi = 1201
+  if (all || only_one == 2) // ndofu = 151959 ndofp =  50653 ndofchi = 6553
+    test_new_assembly(3, 36, 1);
+  // Vector source term   : 0.33 | 1.00 |
+  // Nonlinear residual   : 0.84 |      |
+  // Mass (scalar)        : 0.23 | 0.75 | 0.05 | 0.08 | 0.09 | 0.06 |
+  // Mass (vector)        : 0.70 | 1.54 | 0.17 | 0.27 | 0.09 | 0.34 |
+  // Laplacian            : 0.23 | 1.37 | 0.03 | 0.07 | 0.09 | 0.07 |
+  // Homogeneous elas     : 0.85 | 4.58 | 0.26 | 0.33 | 0.09 | 0.43 |
+  // Non-homogeneous elast: 0.91 | 6.55 | 0.26 | 0.33 | 0.09 | 0.49 |
+  if (all || only_one == 3) // ndofu = 321602 ndofp = 160801 ndofchi = 1201
+    test_new_assembly(2, 200, 2);
   // Vector source term   : 0.11 | 0.24 |
-  // Nonlinear residual   : 0.19 |      |
+  // Nonlinear residual   : 0.17 |      |
   // Mass (scalar)        : 0.09 | 0.25 | 0.02 | 0.03 | 0.03 | 0.03 |
   // Mass (vector)        : 0.26 | 0.44 | 0.05 | 0.09 | 0.03 | 0.14 |
   // Laplacian            : 0.09 | 0.37 | 0.02 | 0.03 | 0.03 | 0.03 |
   // Homogeneous elas     : 0.26 | 1.28 | 0.06 | 0.09 | 0.03 | 0.14 |
-  // Non-homogeneous elast: 0.31 | 2.38 | 0.07 | 0.10 | 0.03 | 0.18 |
-  test_new_assembly(3, 18, 2); // ndofu = 151959 ndofp =  50653 ndofchi = 6553
+  // Non-homogeneous elast: 0.30 | 2.38 | 0.07 | 0.10 | 0.03 | 0.17 |
+  if (all || only_one == 4) // ndofu = 151959 ndofp =  50653 ndofchi = 6553
+    test_new_assembly(3, 18, 2);
   // Vector source term   : 0.17 | 0.26 |
-  // Nonlinear residual   : 0.93 |      |
-  // Mass (scalar)        : 0.12 | 0.28 | 0.05 | 0.06 | 0.03 | 0.03 |
-  // Mass (vector)        : 1.15 | 0.90 | 0.21 | 0.35 | 0.03 | 0.77 |
-  // Laplacian            : 0.11 | 0.55 | 0.03 | 0.05 | 0.03 | 0.05 |
-  // Homogeneous elas     : 1.69 | 3.41 | 0.59 | 0.73 | 0.03 | 0.93 |
-  // Non-homogeneous elast: 1.76 | 9.15 | 0.59 | 0.73 | 0.03 | 1.00 |
-  test_new_assembly(3, 9, 4);  // ndofu = 151959 ndofp =  50653 ndofchi = 6553
+  // Nonlinear residual   : 0.50 |      |
+  // Mass (scalar)        : 0.11 | 0.28 | 0.05 | 0.05 | 0.03 | 0.03 |
+  // Mass (vector)        : 1.14 | 0.90 | 0.21 | 0.35 | 0.03 | 0.76 |
+  // Laplacian            : 0.10 | 0.55 | 0.03 | 0.04 | 0.03 | 0.03 |
+  // Homogeneous elas     : 1.66 | 3.41 | 0.59 | 0.73 | 0.03 | 0.90 |
+  // Non-homogeneous elast: 1.72 | 9.15 | 0.59 | 0.73 | 0.03 | 0.96 |
+  if (all || only_one == 5) // ndofu = 151959 ndofp =  50653 ndofchi = 6553
+    test_new_assembly(3, 9, 4);
   // Vector source term   : 0.13 | 0.20 |
-  // Nonlinear residual   : 0.58 |      |
+  // Nonlinear residual   : 0.43 |      |
   // Mass (scalar)        : 0.51 | 0.34 | 0.09 | 0.16 | 0.01 | 0.33 |
   // Mass (vector)        : 4.37 | 1.31 | 0.41 | 1.27 | 0.01 | 3.10 |
   // Laplacian            : 0.40 | 0.77 | 0.09 | 0.14 | 0.01 | 0.25 |

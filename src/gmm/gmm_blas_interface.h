@@ -47,9 +47,7 @@
 
 namespace gmm {
 
-  // Due to poor performance of level 1 and 2 blas on tested configurations,
-  // this interface is deactivated by default.
-  // Use ./configure --enable-blas-interface to activate it.
+  // Use ./configure --enable-blas-interface to activate this interface.
 
 #define GMMLAPACK_TRACE(f) 
   // #define GMMLAPACK_TRACE(f) cout << "function " << f << " called" << endl;

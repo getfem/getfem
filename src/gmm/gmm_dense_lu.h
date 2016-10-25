@@ -112,7 +112,7 @@ namespace gmm {
 	rank_one_update(sub_matrix(A, sub_interval(j+1, M-j-1),
 				 sub_interval(j+1, N-j-1)), c, conjugated(r));
       }
-      ipvt[j] = int_T(j + 1);
+      ipvt[NN-1] = int_T(NN);
     }
     return info;
   }
