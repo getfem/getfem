@@ -219,6 +219,21 @@ namespace bgeot {
 	auto it = KK.begin();
       	if (P == 1) J_ = gmm::abs(*it);
       	else J_ = gmm::abs((*it) * (it[3]) - (it[1]) * (it[2]));
+      } else if (P == 3 && false) {
+	B_factors.base_resize(P, P); // co-factors
+	auto it = KK.begin();
+	auto itB = B_factors.begin();
+	*itB++ = it[4]*it[8]-it[5]*it[7];
+	*itB++ = it[2]*it[7]-it[1]*it[8];
+	*itB++ = it[1]*it[5]-it[2]*it[4];
+	*itB++ = it[5]*it[6]-it[3]*it[8];
+	*itB++ = it[0]*it[8]-it[2]*it[6];
+	*itB++ = it[2]*it[3]-it[0]*it[5];
+	*itB++ = it[3]*it[7]-it[4]*it[6];
+	*itB++ = it[1]*it[6]-it[0]*it[7];
+	*itB++ = it[0]*it[4]-it[1]*it[3];
+	itB = B_factors.begin();
+	J_ = it[0] * itB[0] + it[1] * itB[3] + it[2] * itB[6];
       } else {
       	B_factors.base_resize(P, P); // store factorization for B computation
       	gmm::copy(gmm::transposed(KK), B_factors);
