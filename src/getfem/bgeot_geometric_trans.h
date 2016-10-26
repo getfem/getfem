@@ -395,15 +395,15 @@ namespace bgeot {
   */
   class APIDECL geotrans_interpolation_context {
   protected:
-    mutable base_node xref_; /** reference point */
+    mutable base_node xref_;  /** reference point */
     mutable base_node xreal_; /** transformed point */
-    const base_matrix *G_; /** pointer to the matrix of real nodes of the convex */
-    mutable base_matrix K_,B_, B3_, B32_; /** see documentation (getfem kernel doc) for more details */
+    const base_matrix *G_;    /** pointer to the matrix of real nodes of the convex */
+    mutable base_matrix K_, B_, B3_, B32_; /** see documentation (getfem kernel doc) for more details */
     pgeometric_trans pgt_;
     pgeotrans_precomp pgp_;
     pstored_point_tab pspt_; /** if pgp != 0, it is the same as pgp's one */
-    size_type ii_; /** index of current point in the pgp */
-    mutable scalar_type J_; /** Jacobian */
+    size_type ii_;           /** index of current point in the pgp        */
+    mutable scalar_type J_, J__; /** Jacobian */
     mutable base_matrix PC, B_factors;
     mutable base_vector aux1, aux2;
     mutable std::vector<int> ipvt;
