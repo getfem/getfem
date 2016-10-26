@@ -153,16 +153,16 @@ namespace bgeot {
       *A++ =  d/det;  *A++ /= -det; *A++ /= -det;  *A =  a/det;
       return det;
     } else if (N == 3) {
-      scalar_type a0 = A[4]*A[8] - A[5]*A[7], a3 = A[5]*A[6] - A[3]*A[8];
-      scalar_type a6 = A[3]*A[7] - A[4]*A[6];
-      scalar_type det =  A[0] * a0 + A[1] * a3 + A[2] * a6;
+      scalar_type a0 = A[4]*A[8] - A[5]*A[7], a1 = A[5]*A[6] - A[3]*A[8];
+      scalar_type a2 = A[3]*A[7] - A[4]*A[6];
+      scalar_type det =  A[0] * a0 + A[1] * a1 + A[2] * a2;
       GMM_ASSERT1(det != scalar_type(0), "Non invertible matrix");
-      scalar_type a1 = (A[2]*A[7] - A[1]*A[8]), a2 = (A[1]*A[5] - A[2]*A[4]);
-      scalar_type a4 = (A[0]*A[8] - A[2]*A[6]), a5 = (A[2]*A[3] - A[0]*A[5]);
-      scalar_type a7 = (A[1]*A[6] - A[0]*A[7]), a8 = (A[0]*A[4] - A[1]*A[3]);
-      *A++ = a0 / det; *A++ = a1 / det; *A++ = a2 / det;
-      *A++ = a3 / det; *A++ = a4 / det; *A++ = a5 / det;
-      *A++ = a6 / det; *A++ = a7 / det; *A++ = a8 / det;
+      scalar_type a3 = (A[2]*A[7] - A[1]*A[8]), a6 = (A[1]*A[5] - A[2]*A[4]);
+      scalar_type a4 = (A[0]*A[8] - A[2]*A[6]), a7 = (A[2]*A[3] - A[0]*A[5]);
+      scalar_type a5 = (A[1]*A[6] - A[0]*A[7]), a8 = (A[0]*A[4] - A[1]*A[3]);
+      *A++ = a0 / det; *A++ = a3 / det; *A++ = a6 / det;
+      *A++ = a1 / det; *A++ = a4 / det; *A++ = a7 / det;
+      *A++ = a2 / det; *A++ = a5 / det; *A++ = a8 / det;
       return det;
     } else {
       size_type NN = N*N;
@@ -235,10 +235,10 @@ namespace bgeot {
       } else if (P == 3) {
 	B_.base_resize(P, P); // co-factors
 	auto it = KK.begin(); auto itB = B_.begin();
-	itB[0] = it[4]*it[8] - it[5]*it[7];
-	itB[3] = it[5]*it[6] - it[3]*it[8];
-	itB[6] = it[3]*it[7] - it[4]*it[6];
-	J__ = it[0] * itB[0] + it[1] * itB[3] + it[2] * itB[6];
+	scalar_type a0 = itB[0] = it[4]*it[8] - it[5]*it[7];
+	scalar_type a1 = itB[1] = it[5]*it[6] - it[3]*it[8];
+	scalar_type a2 = itB[2] = it[3]*it[7] - it[4]*it[6];
+	J__ = it[0] * a0 + it[1] * a1 + it[2] * a2;
 	J_ = gmm::abs(J__);
       } else {
       	B_factors.base_resize(P, P); // store factorization for B computation
@@ -284,16 +284,16 @@ namespace bgeot {
         B_(0, 0) = scalar_type(1) / J__;
       } else if (P == 2) {
 	auto it = KK.begin(); auto itB = B_.begin();
-	*itB++ = it[3] / J__; *itB++ = it[2] / J__; 
-	*itB++ = it[1] / J__; *itB = (*it) / J__;
+	*itB++ = it[3] / J__; *itB++ = -it[2] / J__; 
+	*itB++ = -it[1] / J__; *itB = (*it) / J__;
       } else if (P == 3) {
 	auto it = KK.begin(); auto itB = B_.begin();
-	itB[0] /= J__; itB[3] /= J__; itB[6] /= J__; 
-	itB[1] = (it[2]*it[7] - it[1]*it[8]) / J__;
-	itB[2] = (it[1]*it[5] - it[2]*it[4]) / J__;
+	itB[0] /= J__; itB[1] /= J__; itB[2] /= J__; 
+	itB[3] = (it[2]*it[7] - it[1]*it[8]) / J__;
+	itB[6] = (it[1]*it[5] - it[2]*it[4]) / J__;
 	itB[4] = (it[0]*it[8] - it[2]*it[6]) / J__;
-	itB[5] = (it[2]*it[3] - it[0]*it[5]) / J__;
-	itB[7] = (it[1]*it[6] - it[0]*it[7]) / J__;
+	itB[7] = (it[2]*it[3] - it[0]*it[5]) / J__;
+	itB[5] = (it[1]*it[6] - it[0]*it[7]) / J__;
 	itB[8] = (it[0]*it[4] - it[1]*it[3]) / J__;
       } else {
 	bgeot::lu_inverse(&(*(B_factors.begin())), ipvt, &(*(B_.begin())), P);

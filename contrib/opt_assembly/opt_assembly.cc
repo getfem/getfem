@@ -454,7 +454,7 @@ int main(int /* argc */, char * /* argv */[]) {
   if (all || only_one == 1) // ndofu = 321602 ndofp = 160801 ndofchi = 1201
     test_new_assembly(2, 400, 1);
   // Vector source term   : 0.25 | 0.68 |
-  // Nonlinear residual   : 0.35 |      |
+  // Nonlinear residual   : 0.34 |      |
   // Mass (scalar)        : 0.18 | 0.58 | 0.04 | 0.06 | 0.06 | 0.06 |
   // Mass (vector)        : 0.30 | 0.82 | 0.09 | 0.15 | 0.06 | 0.09 |
   // Laplacian            : 0.16 | 0.80 | 0.04 | 0.05 | 0.06 | 0.05 |
@@ -466,9 +466,9 @@ int main(int /* argc */, char * /* argv */[]) {
   // Nonlinear residual   : 0.59 |      |
   // Mass (scalar)        : 0.21 | 0.58 | 0.05 | 0.08 | 0.08 | 0.06 |
   // Mass (vector)        : 0.69 | 1.37 | 0.17 | 0.27 | 0.08 | 0.34 |
-  // Laplacian            : 0.18 | 1.37 | 0.03 | 0.07 | 0.08 | 0.03 |
-  // Homogeneous elas     : 0.84 | 4.58 | 0.26 | 0.33 | 0.08 | 0.43 |
-  // Non-homogeneous elast: 0.90 | 6.55 | 0.26 | 0.33 | 0.08 | 0.49 |
+  // Laplacian            : 0.18 | 1.15 | 0.03 | 0.07 | 0.08 | 0.03 |
+  // Homogeneous elas     : 0.79 | 4.29 | 0.26 | 0.33 | 0.08 | 0.38 |
+  // Non-homogeneous elast: 0.87 | 6.35 | 0.26 | 0.33 | 0.08 | 0.46 |
   if (all || only_one == 3) // ndofu = 321602 ndofp = 160801 ndofchi = 1201
     test_new_assembly(2, 200, 2);
   // Vector source term   : 0.11 | 0.24 |
@@ -481,11 +481,11 @@ int main(int /* argc */, char * /* argv */[]) {
   if (all || only_one == 4) // ndofu = 151959 ndofp =  50653 ndofchi = 6553
     test_new_assembly(3, 18, 2);
   // Vector source term   : 0.16 | 0.24 |
-  // Nonlinear residual   : 0.40 |      |
+  // Nonlinear residual   : 0.39 |      |
   // Mass (scalar)        : 0.11 | 0.25 | 0.05 | 0.05 | 0.03 | 0.03 |
-  // Mass (vector)        : 1.14 | 0.90 | 0.21 | 0.35 | 0.03 | 0.76 |
-  // Laplacian            : 0.10 | 0.55 | 0.03 | 0.04 | 0.03 | 0.03 |
-  // Homogeneous elas     : 1.66 | 3.41 | 0.59 | 0.73 | 0.03 | 0.90 |
+  // Mass (vector)        : 1.14 | 0.89 | 0.21 | 0.35 | 0.03 | 0.76 |
+  // Laplacian            : 0.10 | 0.53 | 0.03 | 0.04 | 0.03 | 0.03 |
+  // Homogeneous elas     : 1.66 | 3.35 | 0.59 | 0.73 | 0.03 | 0.90 |
   // Non-homogeneous elast: 1.72 | 9.15 | 0.59 | 0.73 | 0.03 | 0.96 |
   if (all || only_one == 5) // ndofu = 151959 ndofp =  50653 ndofchi = 6553
     test_new_assembly(3, 9, 4);
@@ -494,7 +494,7 @@ int main(int /* argc */, char * /* argv */[]) {
   // Mass (scalar)        : 0.51 | 0.34 | 0.09 | 0.16 | 0.01 | 0.33 |
   // Mass (vector)        : 4.37 | 1.31 | 0.41 | 1.27 | 0.01 | 3.10 |
   // Laplacian            : 0.40 | 0.77 | 0.09 | 0.14 | 0.01 | 0.25 |
-  // Homogeneous elas     : 8.93 | 5.24 | 0.88 | 1.43 | 0.01 | 7.49 |
+  // Homogeneous elas     : 8.93 | 5.23 | 0.88 | 1.43 | 0.01 | 7.49 |
   // Non-homogeneous elast: 9.01 | 47.4 | 0.76 | 1.35 | 0.01 | 7.65 |
 
   // Conclusions :
