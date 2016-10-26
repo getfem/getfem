@@ -111,21 +111,24 @@ namespace bgeot {
   }
 
   scalar_type lu_det(const scalar_type *A, size_type N) {
-    if (N == 1) {
-      return *A;
-    } else if (N == 2) {
-      return (*A) * (A[3]) - (A[1]) * (A[2]);
-    } else if (N == 3) {
-      scalar_type a0 = A[4]*A[8] - A[5]*A[7], a3 = A[5]*A[6] - A[3]*A[8];
-      scalar_type a6 = A[3]*A[7] - A[4]*A[6];
-      return A[0] * a0 + A[1] * a3 + A[2] * a6;
-    } else {
-      size_type NN = N*N;
-      if (__aux1.size() < NN) __aux1.resize(N*N);
-      std::copy(A, A+NN, __aux1.begin());
-      __ipvt_aux.resize(N);
-      lu_factor(&(*(__aux1.begin())), __ipvt_aux, N);
-      return lu_det(&(*(__aux1.begin())), __ipvt_aux, N);
+    switch (N) {
+    case 1: return *A;
+    case 2: return (*A) * (A[3]) - (A[1]) * (A[2]);
+    case 3: 
+      {
+	scalar_type a0 = A[4]*A[8] - A[5]*A[7], a3 = A[5]*A[6] - A[3]*A[8];
+	scalar_type a6 = A[3]*A[7] - A[4]*A[6];
+	return A[0] * a0 + A[1] * a3 + A[2] * a6;
+      }
+    default:
+      {
+	size_type NN = N*N;
+	if (__aux1.size() < NN) __aux1.resize(N*N);
+	std::copy(A, A+NN, __aux1.begin());
+	__ipvt_aux.resize(N);
+	lu_factor(&(*(__aux1.begin())), __ipvt_aux, N);
+	return lu_det(&(*(__aux1.begin())), __ipvt_aux, N);
+      }
     }
   }
 
@@ -141,38 +144,48 @@ namespace bgeot {
   }
 
   scalar_type lu_inverse(scalar_type *A, size_type N, bool doassert) {
-    if (N == 1) {
-      scalar_type det = *A;
-      GMM_ASSERT1(det != scalar_type(0), "Non invertible matrix");
-      *A = scalar_type(1)/det;
-      return det;
-    } else if (N == 2) {
-      scalar_type a = *A, b = A[2], c = A[1], d = A[3];
-      scalar_type det = a * d - b * c;
-      GMM_ASSERT1(det != scalar_type(0), "Non invertible matrix");
-      *A++ =  d/det;  *A++ /= -det; *A++ /= -det;  *A =  a/det;
-      return det;
-    } else if (N == 3) {
-      scalar_type a0 = A[4]*A[8] - A[5]*A[7], a1 = A[5]*A[6] - A[3]*A[8];
-      scalar_type a2 = A[3]*A[7] - A[4]*A[6];
-      scalar_type det =  A[0] * a0 + A[1] * a1 + A[2] * a2;
-      GMM_ASSERT1(det != scalar_type(0), "Non invertible matrix");
-      scalar_type a3 = (A[2]*A[7] - A[1]*A[8]), a6 = (A[1]*A[5] - A[2]*A[4]);
-      scalar_type a4 = (A[0]*A[8] - A[2]*A[6]), a7 = (A[2]*A[3] - A[0]*A[5]);
-      scalar_type a5 = (A[1]*A[6] - A[0]*A[7]), a8 = (A[0]*A[4] - A[1]*A[3]);
-      *A++ = a0 / det; *A++ = a3 / det; *A++ = a6 / det;
-      *A++ = a1 / det; *A++ = a4 / det; *A++ = a7 / det;
-      *A++ = a2 / det; *A++ = a5 / det; *A++ = a8 / det;
-      return det;
-    } else {
-      size_type NN = N*N;
-      if (__aux1.size() < NN) __aux1.resize(NN);
-      std::copy(A, A+NN, __aux1.begin());
-      __ipvt_aux.resize(N);
-      size_type info = lu_factor(&(*(__aux1.begin())), __ipvt_aux, N);
-      if (doassert) GMM_ASSERT1(!info, "Non invertible matrix, pivot = "<<info);
-      if (!info) lu_inverse(&(*(__aux1.begin())), __ipvt_aux, A, N);
-      return lu_det(&(*(__aux1.begin())), __ipvt_aux, N);
+    switch (N) {
+    case 1:
+      {
+	scalar_type det = *A;
+	GMM_ASSERT1(det != scalar_type(0), "Non invertible matrix");
+	*A = scalar_type(1)/det;
+	return det;
+      }
+    case 2:
+      {
+	scalar_type a = *A, b = A[2], c = A[1], d = A[3];
+	scalar_type det = a * d - b * c;
+	GMM_ASSERT1(det != scalar_type(0), "Non invertible matrix");
+	*A++ =  d/det;  *A++ /= -det; *A++ /= -det;  *A =  a/det;
+	return det;
+      }
+    case 3:
+      {
+	scalar_type a0 = A[4]*A[8] - A[5]*A[7], a1 = A[5]*A[6] - A[3]*A[8];
+	scalar_type a2 = A[3]*A[7] - A[4]*A[6];
+	scalar_type det =  A[0] * a0 + A[1] * a1 + A[2] * a2;
+	GMM_ASSERT1(det != scalar_type(0), "Non invertible matrix");
+	scalar_type a3 = (A[2]*A[7] - A[1]*A[8]), a6 = (A[1]*A[5] - A[2]*A[4]);
+	scalar_type a4 = (A[0]*A[8] - A[2]*A[6]), a7 = (A[2]*A[3] - A[0]*A[5]);
+	scalar_type a5 = (A[1]*A[6] - A[0]*A[7]), a8 = (A[0]*A[4] - A[1]*A[3]);
+	*A++ = a0 / det; *A++ = a3 / det; *A++ = a6 / det;
+	*A++ = a1 / det; *A++ = a4 / det; *A++ = a7 / det;
+	*A++ = a2 / det; *A++ = a5 / det; *A++ = a8 / det;
+	return det;
+      }
+    default:
+      {
+	size_type NN = N*N;
+	if (__aux1.size() < NN) __aux1.resize(NN);
+	std::copy(A, A+NN, __aux1.begin());
+	__ipvt_aux.resize(N);
+	size_type info = lu_factor(&(*(__aux1.begin())), __ipvt_aux, N);
+	if (doassert) GMM_ASSERT1(!info, "Non invertible matrix, pivot = "
+				  << info);
+	if (!info) lu_inverse(&(*(__aux1.begin())), __ipvt_aux, A, N);
+	return lu_det(&(*(__aux1.begin())), __ipvt_aux, N);
+      }
     }
   }
 
@@ -222,32 +235,31 @@ namespace bgeot {
     if (P != N()) {
       B_factors.base_resize(P, P);
       gmm::mult(gmm::transposed(KK), KK, B_factors);
-      ipvt.resize(P);
-      bgeot::lu_factor(&(*(B_factors.begin())), ipvt, P);
       // gmm::abs below because on flat convexes determinant could be -1e-27.
-      J__=J_=::sqrt(gmm::abs(bgeot::lu_det(&(*(B_factors.begin())), ipvt, P)));
+      J__ = J_ =::sqrt(gmm::abs(bgeot::lu_inverse(&(*(B_factors.begin())), P)));
     } else {
-      // J_ = gmm::abs(gmm::lu_det(KK));
-      if (P <= 2) {
-	auto it = KK.begin();
-      	if (P == 1) { J__ = *it; J_ = gmm::abs(J__); } 
-      	else { J__ = (*it) * (it[3]) - (it[1]) * (it[2]); J_ = gmm::abs(J__); } 
-      } else if (P == 3) {
-	B_.base_resize(P, P); // co-factors
-	auto it = KK.begin(); auto itB = B_.begin();
-	scalar_type a0 = itB[0] = it[4]*it[8] - it[5]*it[7];
-	scalar_type a1 = itB[1] = it[5]*it[6] - it[3]*it[8];
-	scalar_type a2 = itB[2] = it[3]*it[7] - it[4]*it[6];
-	J__ = it[0] * a0 + it[1] * a1 + it[2] * a2;
-	J_ = gmm::abs(J__);
-      } else {
+      auto it = &(*(KK.begin()));
+      switch (P) {
+      case 1: J__ = *it; break;
+      case 2: J__ = (*it) * (it[3]) - (it[1]) * (it[2]); break;
+      case 3:
+	{
+	  B_.base_resize(P, P); // co-factors
+	  auto itB = B_.begin();
+	  scalar_type a0 = itB[0] = it[4]*it[8] - it[5]*it[7];
+	  scalar_type a1 = itB[1] = it[5]*it[6] - it[3]*it[8];
+	  scalar_type a2 = itB[2] = it[3]*it[7] - it[4]*it[6];
+	  J__ = it[0] * a0 + it[1] * a1 + it[2] * a2;
+	} break;
+      default:
       	B_factors.base_resize(P, P); // store factorization for B computation
       	gmm::copy(gmm::transposed(KK), B_factors);
       	ipvt.resize(P);
 	bgeot::lu_factor(&(*(B_factors.begin())), ipvt, P);
 	J__ = bgeot::lu_det(&(*(B_factors.begin())), ipvt, P);
-     	J_ = gmm::abs(J__);
+	break;
       }
+      J_ = gmm::abs(J__);
     }
     have_J_ = true;
   }
@@ -277,26 +289,31 @@ namespace bgeot {
       if (!have_J_) compute_J();
       GMM_ASSERT1(J__ != scalar_type(0), "Non invertible matrix");
       if (P != N_) {
-	PC.base_resize(P, P);
-        gmm::lu_inverse(B_factors, ipvt, PC);
-        gmm::mult(KK, PC, B_);
-      } else if (P == 1) {
-        B_(0, 0) = scalar_type(1) / J__;
-      } else if (P == 2) {
-	auto it = KK.begin(); auto itB = B_.begin();
-	*itB++ = it[3] / J__; *itB++ = -it[2] / J__; 
-	*itB++ = -it[1] / J__; *itB = (*it) / J__;
-      } else if (P == 3) {
-	auto it = KK.begin(); auto itB = B_.begin();
-	itB[0] /= J__; itB[1] /= J__; itB[2] /= J__; 
-	itB[3] = (it[2]*it[7] - it[1]*it[8]) / J__;
-	itB[6] = (it[1]*it[5] - it[2]*it[4]) / J__;
-	itB[4] = (it[0]*it[8] - it[2]*it[6]) / J__;
-	itB[7] = (it[2]*it[3] - it[0]*it[5]) / J__;
-	itB[5] = (it[1]*it[6] - it[0]*it[7]) / J__;
-	itB[8] = (it[0]*it[4] - it[1]*it[3]) / J__;
+        gmm::mult(KK, B_factors, B_);
       } else {
-	bgeot::lu_inverse(&(*(B_factors.begin())), ipvt, &(*(B_.begin())), P);
+	switch(P) {
+	case 1: B_(0, 0) = scalar_type(1) / J__;  break;
+	case 2:
+	  {
+	    auto it = &(*(KK.begin())); auto itB = &(*(B_.begin()));
+	    *itB++ = it[3] / J__; *itB++ = -it[2] / J__; 
+	    *itB++ = -it[1] / J__; *itB = (*it) / J__;
+	  } break;
+	case 3:
+	  {
+	    auto it = &(*(KK.begin())); auto itB = &(*(B_.begin()));
+	    *itB++ /= J__; *itB++ /= J__; *itB++ /= J__; 
+	    *itB++ = (it[2]*it[7] - it[1]*it[8]) / J__;
+	    *itB++ = (it[0]*it[8] - it[2]*it[6]) / J__;
+	    *itB++ = (it[1]*it[6] - it[0]*it[7]) / J__;
+	    *itB++ = (it[1]*it[5] - it[2]*it[4]) / J__;
+	    *itB++ = (it[2]*it[3] - it[0]*it[5]) / J__;
+	    *itB   = (it[0]*it[4] - it[1]*it[3]) / J__;
+	  } break;
+	default:
+	  bgeot::lu_inverse(&(*(B_factors.begin())), ipvt, &(*(B_.begin())), P);
+	  break;
+	}
       }
       have_B_ = true;
     }
