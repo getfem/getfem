@@ -28,10 +28,25 @@
 
 namespace bgeot {
 
-  DEFINE_STATIC_THREAD_LOCAL(std::vector<scalar_type>, __aux1)
-  DEFINE_STATIC_THREAD_LOCAL(std::vector<scalar_type>, __aux2)
-  DEFINE_STATIC_THREAD_LOCAL(std::vector<scalar_type>, __aux3)
-  DEFINE_STATIC_THREAD_LOCAL(std::vector<int>, __ipvt_aux)
+std::vector<scalar_type>& __aux1(){
+  DEFINE_STATIC_THREAD_LOCAL(std::vector<scalar_type>, v);
+  return v;
+}
+
+std::vector<scalar_type>& __aux2(){
+  DEFINE_STATIC_THREAD_LOCAL(std::vector<scalar_type>, v);
+  return v;
+}
+
+std::vector<scalar_type>& __aux3(){
+  DEFINE_STATIC_THREAD_LOCAL(std::vector<scalar_type>, v);
+  return v;
+}
+
+std::vector<int>& __ipvt_aux(){
+  DEFINE_STATIC_THREAD_LOCAL(std::vector<int>, vi);
+  return vi;
+}
   
   // Optimized lu_factor for small square matrices
   size_type lu_factor(scalar_type *A, std::vector<int> &ipvt,
@@ -123,23 +138,23 @@ namespace bgeot {
     default:
       {
 	size_type NN = N*N;
-	if (__aux1.size() < NN) __aux1.resize(N*N);
-	std::copy(A, A+NN, __aux1.begin());
-	__ipvt_aux.resize(N);
-	lu_factor(&(*(__aux1.begin())), __ipvt_aux, N);
-	return lu_det(&(*(__aux1.begin())), __ipvt_aux, N);
+	if (__aux1().size() < NN) __aux1().resize(N*N);
+	std::copy(A, A+NN, __aux1().begin());
+	__ipvt_aux().resize(N);
+	lu_factor(&(*(__aux1().begin())), __ipvt_aux(), N);
+	return lu_det(&(*(__aux1().begin())), __ipvt_aux(), N);
       }
     }
   }
 
   void lu_inverse(const scalar_type *LU, const std::vector<int> &ipvt,
 		  scalar_type *A, size_type N) {
-    __aux2.resize(N); gmm::clear(__aux2);
-    __aux3.resize(N);
+    __aux2().resize(N); gmm::clear(__aux2());
+    __aux3().resize(N);
     for(size_type i = 0; i < N; ++i) {
-      __aux2[i] = scalar_type(1);
-      bgeot::lu_solve(LU, ipvt, A+i*N, &(*(__aux2.begin())), int(N));
-      __aux2[i] = scalar_type(0);
+      __aux2()[i] = scalar_type(1);
+      bgeot::lu_solve(LU, ipvt, A+i*N, &(*(__aux2().begin())), int(N));
+      __aux2()[i] = scalar_type(0);
     }
   }
 
@@ -177,14 +192,14 @@ namespace bgeot {
     default:
       {
 	size_type NN = N*N;
-	if (__aux1.size() < NN) __aux1.resize(NN);
-	std::copy(A, A+NN, __aux1.begin());
-	__ipvt_aux.resize(N);
-	size_type info = lu_factor(&(*(__aux1.begin())), __ipvt_aux, N);
+	if (__aux1().size() < NN) __aux1().resize(NN);
+	std::copy(A, A+NN, __aux1().begin());
+	__ipvt_aux().resize(N);
+	size_type info = lu_factor(&(*(__aux1().begin())), __ipvt_aux(), N);
 	if (doassert) GMM_ASSERT1(!info, "Non invertible matrix, pivot = "
 				  << info);
-	if (!info) lu_inverse(&(*(__aux1.begin())), __ipvt_aux, A, N);
-	return lu_det(&(*(__aux1.begin())), __ipvt_aux, N);
+	if (!info) lu_inverse(&(*(__aux1().begin())), __ipvt_aux(), A, N);
+	return lu_det(&(*(__aux1().begin())), __ipvt_aux(), N);
       }
     }
   }
