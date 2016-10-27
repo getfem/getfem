@@ -19,6 +19,7 @@
 
 ===========================================================================*/
 
+#include <array>
 
 #include "getfem/getfem_generic_assembly.h"
 #include "gmm/gmm_blas.h"
@@ -11827,7 +11828,7 @@ namespace getfem {
 	  if (root) {
 	    // Compile tree
 	    // cout << "Will compile "; ga_print_node(root, cout); cout << endl;
-	    
+
 	    ga_instruction_set::region_mim rm(td.mim, td.rg);
 	    ga_instruction_set::region_mim_instructions &rmi
 	      = gis.whole_instructions[rm];
@@ -11838,19 +11839,18 @@ namespace getfem {
 			    rmi.current_hierarchy);
 	    // cout << "compilation finished "; ga_print_node(root, cout);
 	    // cout << endl;
-	    
-	    if (version > 0) { // Assignment
-	      GMM_ASSERT1(td.varname_interpolation.size(), "Internal error");
-	      const im_data *imd = workspace.associated_im_data
-		(td.varname_interpolation);
-	      model_real_plain_vector &V = const_cast<model_real_plain_vector &>
-		(workspace.value(td.varname_interpolation));
-	      GMM_ASSERT1(imd, "Internal error");
-	      pga_instruction pgai = std::make_shared<ga_instruction_assignment>
-		(root->tensor(), V, gis.ctx, imd);
-	      rmi.instructions.push_back(std::move(pgai));
+
+	    if (version > 0) { // Assignment OR interpolation
+	      if(td.varname_interpolation.size() != 0) {// assignment
+	        auto *imd = workspace.associated_im_data(td.varname_interpolation);
+	        auto &V = const_cast<model_real_plain_vector &>
+            (workspace.value(td.varname_interpolation));
+	        GMM_ASSERT1(imd, "Internal error");
+	        auto pgai = std::make_shared<ga_instruction_assignment>
+            (root->tensor(), V, gis.ctx, imd);
+	        rmi.instructions.push_back(std::move(pgai));
+        }
 	    } else { // assembly
-	      
 	      // Addition of an assembly instruction
 	      pga_instruction pgai;
 	      switch(order) {
