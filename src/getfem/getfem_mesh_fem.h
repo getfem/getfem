@@ -153,7 +153,7 @@ namespace getfem {
     void copy_from(const mesh_fem &mf); /* Remember to change copy_from if
                                            adding components to mesh_fem */
 
-    dal::dynamic_array<pfem> f_elems;
+    std::vector<pfem> f_elems;
     dal::bit_vector fe_convex;
     const mesh *linked_mesh_;
     REDUCTION_MATRIX R_;
@@ -424,7 +424,7 @@ namespace getfem {
      *  vectorization due to qdim nor the optional reduction.
      */
     virtual pfem fem_of_element(size_type cv) const
-    { return  f_elems[cv]; }
+    { return f_elems[cv]; }
     /** Give an array of the dof numbers a of convex.
      *  @param cv the convex number.
      *  @return a pseudo-container of the dof number.
@@ -577,7 +577,7 @@ namespace getfem {
     size_type memsize() const {
       return dof_structure.memsize() +
         sizeof(mesh_fem) - sizeof(bgeot::mesh_structure) +
-        f_elems.memsize() + fe_convex.memsize();
+        f_elems.size() * sizeof(pfem) + fe_convex.memsize();
     }
     void init_with_mesh(const mesh &me, dim_type Q = 1);
     /** Build a new mesh_fem. A mesh object must be supplied.
@@ -642,6 +642,29 @@ namespace getfem {
     size_type qmult = gmm::vect_size(vec) / nbdof;
     GMM_ASSERT1(gmm::vect_size(vec) == qmult * nbdof, "Bad dof vector size");
 
+    auto &ct = mf.ind_scalar_basic_dof_of_element(cv);
+    size_type qmult2 = mf.get_qdim();
+    if (qmult2 > 1) qmult2 /= mf.fem_of_element(cv)->target_dim();
+    size_type qmultot = qmult*qmult2;
+    gmm::resize(coeff, ct.size()*qmultot);
+ 
+    auto it = ct.begin();
+    auto itc = coeff.begin();
+    if (qmultot == 1) {
+      for (; it != ct.end(); ++it) *itc++ = vec[*it];
+    } else {
+      for (; it != ct.end(); ++it) {
+	auto itv = vec.begin()+(*it)*qmult;
+	for (size_type m = 0; m < qmultot; ++m) *itc++ = *itv++;
+      }
+    }
+  }
+
+  template <typename VEC1, typename VEC2>
+  void slice_vector_on_basic_dof_of_element(const mesh_fem &mf,
+                                            const VEC1 &vec,
+                                            size_type cv, VEC2 &coeff,
+					    size_type qmult) {
     auto &ct = mf.ind_scalar_basic_dof_of_element(cv);
     size_type qmult2 = mf.get_qdim();
     if (qmult2 > 1) qmult2 /= mf.fem_of_element(cv)->target_dim();

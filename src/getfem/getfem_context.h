@@ -97,15 +97,16 @@ namespace getfem {
 
     void sup_dependent_(const context_dependencies &cd) const;
     void sup_dependency_(const context_dependencies &cd) const;
-    void invalid_context(void) const;
+    void invalid_context() const;
+    bool go_check() const;
 
   public :
     
     /** this function has to be defined and should update the object when
 	the context is modified. */
-    virtual void update_from_context(void) const = 0;
+    virtual void update_from_context() const = 0;
 
-    void change_context(void) const
+    void change_context() const
     { 
       if (state == CONTEXT_NORMAL) 
       { 
@@ -125,11 +126,12 @@ namespace getfem {
     void clear_dependencies();
 
 
-    bool is_context_valid(void) const { return (state != CONTEXT_INVALID); }
+    bool is_context_valid() const { return (state != CONTEXT_INVALID); }
     bool is_context_changed() const { return (state == CONTEXT_CHANGED); }
     /** return true if update_from_context was called */
-    bool context_check(void) const;
-    void touch(void) const;
+    bool context_check() const
+    { if (state == CONTEXT_NORMAL) return false; return go_check(); }
+    void touch() const;
     virtual ~context_dependencies();
     context_dependencies() : state(CONTEXT_NORMAL), touched( ) {touched = false;}
     context_dependencies(const context_dependencies& cd);

@@ -62,7 +62,7 @@ namespace getfem {
     dependencies.resize(s);
   }
 
-  void context_dependencies::invalid_context(void) const {
+  void context_dependencies::invalid_context() const {
     if (state != CONTEXT_INVALID) 
     {
       iterator_list it = dependent.begin(), ite = dependent.end();
@@ -84,7 +84,7 @@ namespace getfem {
     cd.dependent.push_back(this);
   }
   
-  bool context_dependencies::context_check(void) const 
+  bool context_dependencies::go_check() const 
   {
     if (state == CONTEXT_CHANGED) 
     {
@@ -103,7 +103,7 @@ namespace getfem {
     return false;
   }
   
-  void context_dependencies::touch(void) const 
+  void context_dependencies::touch() const 
   {
     if (!touched) 
     {

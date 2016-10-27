@@ -142,11 +142,21 @@ namespace getfem {
                   "Incompatibility between Qdim=" << int(Qdim) <<
                   " and target_dim " << int(pf->target_dim()) << " of " <<
                   name_of_fem(pf));
-      if (!fe_convex.is_in(cv) || f_elems[cv] != pf) {
-        fe_convex.add(cv);
-        f_elems[cv] = pf;
-        dof_enumeration_made = false;
+
+      
+      if (cv == f_elems.size()) {
+	f_elems.push_back(pf);
+	fe_convex.add(cv);
+	dof_enumeration_made = false;
         touch(); v_num = act_counter();
+      } else {
+	if (cv > f_elems.size()) f_elems.resize(cv+1);
+	if (!fe_convex.is_in(cv) || f_elems[cv] != pf) {
+	  fe_convex.add(cv);
+	  f_elems[cv] = pf;
+	  dof_enumeration_made = false;
+	  touch(); v_num = act_counter();
+	}
       }
     }
   }

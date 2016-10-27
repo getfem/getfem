@@ -2708,23 +2708,26 @@ namespace getfem {
         cv_old(-1) {}
   };
 
+
   struct ga_instruction_slice_local_dofs : public ga_instruction {
     const mesh_fem &mf;
     const base_vector &U;
     const fem_interpolation_context &ctx;
     base_vector &coeff;
     const size_type &ipt;
+    size_type qmult;
     virtual int exec() {
-      GA_DEBUG_INFO("Instruction: Slice local dofs");
       if (ipt == 0) {
-	slice_vector_on_basic_dof_of_element(mf, U, ctx.convex_num(), coeff);
+	GA_DEBUG_INFO("Instruction: Slice local dofs");
+      	slice_vector_on_basic_dof_of_element(mf,U,ctx.convex_num(),coeff,qmult);
       }
       return 0;
     }
     ga_instruction_slice_local_dofs(const mesh_fem &mf_, const base_vector &U_,
                                     const fem_interpolation_context &ctx_,
-                                    base_vector &coeff_, const size_type &ipt_)
-      : mf(mf_), U(U_), ctx(ctx_), coeff(coeff_), ipt(ipt_)  {}
+                                    base_vector &coeff_, const size_type &ipt_,
+				    size_type qmult_)
+      : mf(mf_), U(U_), ctx(ctx_), coeff(coeff_), ipt(ipt_), qmult(qmult_) {}
   };
 
   struct ga_instruction_update_pfp : public ga_instruction {
@@ -10597,7 +10600,8 @@ namespace getfem {
             // cout << "local dof of " << pnode->name << endl;
             pgai = std::make_shared<ga_instruction_slice_local_dofs>
               (*mf, *(gis.extended_vars[pnode->name]), gis.ctx,
-               rmi.local_dofs[pnode->name], gis.ipt);
+               rmi.local_dofs[pnode->name], gis.ipt,
+	       gis.extended_vars[pnode->name]->size() / mf->nb_basic_dof());
             rmi.instructions.push_back(std::move(pgai));
           }
 

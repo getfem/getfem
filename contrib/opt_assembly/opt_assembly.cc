@@ -256,7 +256,7 @@ static void test_new_assembly(int N, int NX, int pK) {
   
   bool all = false;
   bool select = true;
-  int only_one = 2;
+  int only_one = 1;
 
   if (all || select || only_one == 1) {
     VEC_TEST_1("Test for source term", ndofu, "u.Test_u", mim, size_type(-1),
