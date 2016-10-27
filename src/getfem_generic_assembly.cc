@@ -72,8 +72,11 @@ namespace getfem {
   extern bool predef_operators_plasticity_initialized;
   extern bool predef_operators_contact_initialized;
 
-  DEFINE_STATIC_THREAD_LOCAL(base_matrix, __mat_aux1)
-
+  base_matrix& __mat_aux1()
+  {
+    DEFINE_STATIC_THREAD_LOCAL(base_matrix, m);
+    return m;
+  }
 
   //=========================================================================
   // Lexical analysis for the generic assembly language
@@ -2337,16 +2340,16 @@ namespace getfem {
     void derivative(const arg_list &args, size_type,
                     base_tensor &result) const { // to be verified
       size_type N = args[0]->sizes()[0];
-      __mat_aux1.base_resize(N, N);
-      gmm::copy(args[0]->as_vector(), __mat_aux1.as_vector());
-      scalar_type det = bgeot::lu_inverse(&(*(__mat_aux1.begin())), N);
+      __mat_aux1().base_resize(N, N);
+      gmm::copy(args[0]->as_vector(), __mat_aux1().as_vector());
+      scalar_type det = bgeot::lu_inverse(&(*(__mat_aux1().begin())), N);
       if (det == scalar_type(0))
         gmm::clear(result.as_vector());
       else {
         base_tensor::iterator it = result.begin();
         for (size_type j = 0; j < N; ++j)
           for (size_type i = 0; i < N; ++i, ++it)
-            *it = __mat_aux1(j, i) * det;
+            *it = __mat_aux1()(j, i) * det;
         GA_DEBUG_ASSERT(it == result.end(), "Internal error");
       }
     }
@@ -2355,9 +2358,9 @@ namespace getfem {
     void second_derivative(const arg_list &args, size_type, size_type,
                            base_tensor &result) const { // To be verified
       size_type N = args[0]->sizes()[0];
-      __mat_aux1.base_resize(N, N);
-      gmm::copy(args[0]->as_vector(), __mat_aux1.as_vector());
-      scalar_type det = bgeot::lu_inverse(&(*(__mat_aux1.begin())), N);
+      __mat_aux1().base_resize(N, N);
+      gmm::copy(args[0]->as_vector(), __mat_aux1().as_vector());
+      scalar_type det = bgeot::lu_inverse(&(*(__mat_aux1().begin())), N);
       if (det == scalar_type(0))
         gmm::clear(result.as_vector());
       else {
@@ -2366,8 +2369,8 @@ namespace getfem {
           for (size_type k = 0; k < N; ++k)
             for (size_type j = 0; j < N; ++j)
               for (size_type i = 0; i < N; ++i, ++it)
-                *it = (__mat_aux1(j, i) * __mat_aux1(l,k)
-		       - __mat_aux1(j,k) * __mat_aux1(l, i)) * det;
+                *it = (__mat_aux1()(j, i) * __mat_aux1()(l,k)
+		       - __mat_aux1()(j,k) * __mat_aux1()(l, i)) * det;
         GA_DEBUG_ASSERT(it == result.end(), "Internal error");
       }
     }
@@ -2387,25 +2390,25 @@ namespace getfem {
     // Value : M^{-1}
     void value(const arg_list &args, base_tensor &result) const {
       size_type N = args[0]->sizes()[0];
-      __mat_aux1.base_resize(N, N);
-      gmm::copy(args[0]->as_vector(), __mat_aux1.as_vector());
-      bgeot::lu_inverse(&(*(__mat_aux1.begin())), N);
-      gmm::copy(__mat_aux1.as_vector(), result.as_vector());
+      __mat_aux1().base_resize(N, N);
+      gmm::copy(args[0]->as_vector(), __mat_aux1().as_vector());
+      bgeot::lu_inverse(&(*(__mat_aux1().begin())), N);
+      gmm::copy(__mat_aux1().as_vector(), result.as_vector());
     }
 
     // Derivative : -M^{-1}{ik}M^{-1}{lj}  (comes from H -> M^{-1}HM^{-1})
     void derivative(const arg_list &args, size_type,
                     base_tensor &result) const { // to be verified
       size_type N = args[0]->sizes()[0];
-      __mat_aux1.base_resize(N, N);
-      gmm::copy(args[0]->as_vector(), __mat_aux1.as_vector());
-      bgeot::lu_inverse(&(*(__mat_aux1.begin())), N);
+      __mat_aux1().base_resize(N, N);
+      gmm::copy(args[0]->as_vector(), __mat_aux1().as_vector());
+      bgeot::lu_inverse(&(*(__mat_aux1().begin())), N);
       base_tensor::iterator it = result.begin();
       for (size_type l = 0; l < N; ++l)
         for (size_type k = 0; k < N; ++k)
           for (size_type j = 0; j < N; ++j)
             for (size_type i = 0; i < N; ++i, ++it)
-              *it = -__mat_aux1(i,k)*__mat_aux1(l,j);
+              *it = -__mat_aux1()(i,k)*__mat_aux1()(l,j);
       GA_DEBUG_ASSERT(it == result.end(), "Internal error");
     }
 
@@ -2415,9 +2418,9 @@ namespace getfem {
     void second_derivative(const arg_list &args, size_type, size_type,
                            base_tensor &result) const { // to be verified
       size_type N = args[0]->sizes()[0];
-      __mat_aux1.base_resize(N, N);
-      gmm::copy(args[0]->as_vector(), __mat_aux1.as_vector());
-      bgeot::lu_inverse(&(*(__mat_aux1.begin())), N);
+      __mat_aux1().base_resize(N, N);
+      gmm::copy(args[0]->as_vector(), __mat_aux1().as_vector());
+      bgeot::lu_inverse(&(*(__mat_aux1().begin())), N);
       base_tensor::iterator it = result.begin();
       for (size_type n = 0; n < N; ++n)
         for (size_type m = 0; m < N; ++m)
@@ -2425,8 +2428,8 @@ namespace getfem {
             for (size_type k = 0; k < N; ++k)
               for (size_type j = 0; j < N; ++j)
                 for (size_type i = 0; i < N; ++i, ++it)
-                  *it = __mat_aux1(i,k)*__mat_aux1(l,m)*__mat_aux1(n,j)
-		    + __mat_aux1(i,m)*__mat_aux1(m,k)*__mat_aux1(l,j);
+                  *it = __mat_aux1()(i,k)*__mat_aux1()(l,m)*__mat_aux1()(n,j)
+		    + __mat_aux1()(i,m)*__mat_aux1()(m,k)*__mat_aux1()(l,j);
       GA_DEBUG_ASSERT(it == result.end(), "Internal error");
     }
   };
