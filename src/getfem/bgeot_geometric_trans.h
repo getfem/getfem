@@ -402,7 +402,7 @@ namespace bgeot {
     pgeometric_trans pgt_;
     pgeotrans_precomp pgp_;
     pstored_point_tab pspt_; /** if pgp != 0, it is the same as pgp's one */
-    size_type ii_;           /** index of current point in the pgp        */
+    size_type ii_;           /** index of current point in the pgp */
     mutable scalar_type J_, J__; /** Jacobian */
     mutable base_matrix PC, B_factors;
     mutable base_vector aux1, aux2;

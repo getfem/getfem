@@ -19,8 +19,6 @@
 
 ===========================================================================*/
 
-#include <array>
-
 #include "getfem/getfem_generic_assembly.h"
 #include "gmm/gmm_blas.h"
 #include <iomanip>
@@ -2715,15 +2713,18 @@ namespace getfem {
     const base_vector &U;
     const fem_interpolation_context &ctx;
     base_vector &coeff;
+    const size_type &ipt;
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: Slice local dofs");
-      slice_vector_on_basic_dof_of_element(mf, U, ctx.convex_num(), coeff);
+      if (ipt == 0) {
+	slice_vector_on_basic_dof_of_element(mf, U, ctx.convex_num(), coeff);
+      }
       return 0;
     }
     ga_instruction_slice_local_dofs(const mesh_fem &mf_, const base_vector &U_,
                                     const fem_interpolation_context &ctx_,
-                                    base_vector &coeff_)
-      : mf(mf_), U(U_), ctx(ctx_), coeff(coeff_) {}
+                                    base_vector &coeff_, const size_type &ipt_)
+      : mf(mf_), U(U_), ctx(ctx_), coeff(coeff_), ipt(ipt_)  {}
   };
 
   struct ga_instruction_update_pfp : public ga_instruction {
@@ -3021,8 +3022,9 @@ namespace getfem {
       return 0;
     }
 
-    ga_instruction_xfem_minus_val_base(base_tensor &tt, fem_interpolation_context &ct,
-                                       const mesh_fem &mf_, pfem_precomp &pfp_)
+    ga_instruction_xfem_minus_val_base
+    (base_tensor &tt, fem_interpolation_context &ct,
+     const mesh_fem &mf_, pfem_precomp &pfp_)
       : t(tt), ctx(ct), mf(mf_), pfp(pfp_) {}
   };
 
@@ -3063,8 +3065,9 @@ namespace getfem {
       return 0;
     }
 
-    ga_instruction_xfem_plus_grad_base(base_tensor &tt, fem_interpolation_context &ct,
-                                       const mesh_fem &mf_, pfem_precomp &pfp_)
+    ga_instruction_xfem_plus_grad_base
+    (base_tensor &tt, fem_interpolation_context &ct,
+     const mesh_fem &mf_, pfem_precomp &pfp_)
     : ga_instruction_val_base(tt, ct, mf_, pfp_)
     {}
   };
@@ -3083,8 +3086,9 @@ namespace getfem {
       return 0;
     }
 
-    ga_instruction_xfem_minus_grad_base(base_tensor &tt, fem_interpolation_context &ct,
-                                        const mesh_fem &mf_, pfem_precomp &pfp_)
+    ga_instruction_xfem_minus_grad_base
+    (base_tensor &tt, fem_interpolation_context &ct,
+     const mesh_fem &mf_, pfem_precomp &pfp_)
     : ga_instruction_val_base(tt, ct, mf_, pfp_)
     {}
   };
@@ -3121,8 +3125,9 @@ namespace getfem {
       return 0;
     }
 
-    ga_instruction_xfem_plus_hess_base(base_tensor &tt, fem_interpolation_context &ct,
-                                       const mesh_fem &mf_, pfem_precomp &pfp_)
+    ga_instruction_xfem_plus_hess_base
+    (base_tensor &tt, fem_interpolation_context &ct,
+     const mesh_fem &mf_, pfem_precomp &pfp_)
     : ga_instruction_val_base(tt, ct, mf_, pfp_)
     {}
   };
@@ -3141,8 +3146,9 @@ namespace getfem {
       return 0;
     }
 
-    ga_instruction_xfem_minus_hess_base(base_tensor &tt, fem_interpolation_context &ct,
-                                        const mesh_fem &mf_, pfem_precomp &pfp_)
+    ga_instruction_xfem_minus_hess_base
+    (base_tensor &tt, fem_interpolation_context &ct,
+     const mesh_fem &mf_, pfem_precomp &pfp_)
     : ga_instruction_val_base(tt, ct, mf_, pfp_)
     {}
   };
@@ -5343,12 +5349,12 @@ namespace getfem {
             inin.Normal.resize(0);
           inin.pt_y = inin.ctx.xreal();
         } else {
-          inin.ctx = fem_interpolation_context();
+          inin.ctx.invalid_convex_num();
           inin.pt_y = P_ref;
           inin.has_ctx = false;
         }
       } else {
-        inin.ctx = fem_interpolation_context();
+        inin.ctx.invalid_convex_num();
         inin.Normal.resize(0);
         inin.pt_y.resize(0);
         inin.has_ctx = false;
@@ -5382,14 +5388,14 @@ namespace getfem {
       if (ipt == 0) {
         if (!(ctx.have_pgp()) || !pai || pai->is_built_on_the_fly()
             || cancel_optimization) {
-          inin.ctx = fem_interpolation_context();
+          inin.ctx.invalid_convex_num();
         } else {
           // Test if the situation has already been encountered
           size_type cv = ctx.convex_num();
           short_type f = ctx.face_num();
           auto adj_face = m.adjacent_face(cv, f);
           if (adj_face.cv == size_type(-1)) {
-            inin.ctx = fem_interpolation_context();
+            inin.ctx.invalid_convex_num();
           } else {
             gauss_pt_corresp gpc;
             gpc.pgt1 = m.trans_of_convex(cv);
@@ -5477,12 +5483,12 @@ namespace getfem {
               inin.Normal.resize(0);
             inin.pt_y = inin.ctx.xreal();
           } else {
-            inin.ctx = fem_interpolation_context();
+            inin.ctx.invalid_convex_num();
             inin.pt_y = P_ref;
             inin.has_ctx = false;
           }
         } else {
-          inin.ctx = fem_interpolation_context();
+          inin.ctx.invalid_convex_num();
           inin.Normal.resize(0);
           inin.pt_y.resize(0);
           inin.has_ctx = false;
@@ -10591,7 +10597,7 @@ namespace getfem {
             // cout << "local dof of " << pnode->name << endl;
             pgai = std::make_shared<ga_instruction_slice_local_dofs>
               (*mf, *(gis.extended_vars[pnode->name]), gis.ctx,
-               rmi.local_dofs[pnode->name]);
+               rmi.local_dofs[pnode->name], gis.ipt);
             rmi.instructions.push_back(std::move(pgai));
           }
 

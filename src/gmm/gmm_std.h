@@ -127,6 +127,7 @@
 #include <sstream>
 #include <numeric>
 #include <memory>
+#include <array>
 #include <locale.h>
 
 namespace std {

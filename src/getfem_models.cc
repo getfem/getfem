@@ -2452,8 +2452,9 @@ namespace getfem {
       if (detected) {
 	int ifo = -1;
 	for (auto &pmim :  brick.mims)
-	  ifo = std::max(ifo, mf->linked_mesh().region(region).region_is_faces_of(m, brick.region,
-							pmim->linked_mesh()));
+	  ifo = std::max(ifo, mf->linked_mesh().region(region)
+			 .region_is_faces_of(m, brick.region,
+					     pmim->linked_mesh()));
         GMM_ASSERT1(ifo >= 0, "The given region is only partially covered by "
                     "region of brick " << brick.pbr->brick_name()
                     << ". Please subdivise the region");
