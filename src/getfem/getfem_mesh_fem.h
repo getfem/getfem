@@ -424,7 +424,7 @@ namespace getfem {
      *  vectorization due to qdim nor the optional reduction.
      */
     virtual pfem fem_of_element(size_type cv) const
-    { return f_elems[cv]; }
+    { return ((cv < f_elems.size()) ? f_elems[cv] : 0); }
     /** Give an array of the dof numbers a of convex.
      *  @param cv the convex number.
      *  @return a pseudo-container of the dof number.
@@ -461,7 +461,7 @@ namespace getfem {
         @param f the face number.
     */
     virtual size_type nb_basic_dof_of_face_of_element(size_type cv,
-                                              short_type f) const {
+						      short_type f) const {
       context_check(); if (!dof_enumeration_made) enumerate_dof();
       pfem pf = f_elems[cv];
       return dof_structure.structure_of_convex(cv)->nb_points_of_face(f)
