@@ -2340,41 +2340,48 @@ namespace getfem {
       size_type N = args[0]->sizes()[0];
       __mat_aux1().base_resize(N, N);
       gmm::copy(args[0]->as_vector(), __mat_aux1().as_vector());
-      scalar_type det = bgeot::lu_inverse(&(*(__mat_aux1().begin())), N);
+      scalar_type det = bgeot::lu_inverse(__mat_aux1());
       if (det == scalar_type(0))
         gmm::clear(result.as_vector());
       else {
-        base_tensor::iterator it = result.begin();
-        for (size_type j = 0; j < N; ++j)
-          for (size_type i = 0; i < N; ++i, ++it)
-            *it = __mat_aux1()(j, i) * det;
+        auto it = result.begin();
+	auto ita = __mat_aux1().begin();
+        for (size_type j = 0; j < N; ++j, ++ita) {
+	  auto itaa = ita;
+          for (size_type i = 0; i < N; ++i, ++it, itaa += N)
+	    *it = (*itaa) * det;
+	}
         GA_DEBUG_ASSERT(it == result.end(), "Internal error");
       }
     }
 
     // Second derivative : det(M)(M^{-T}@M^{-T} - M^{-T}_{jk}M^{-T}_{li})
     void second_derivative(const arg_list &args, size_type, size_type,
-                           base_tensor &result) const { // To be verified
+                           base_tensor &result) const { // to be verified
       size_type N = args[0]->sizes()[0];
       __mat_aux1().base_resize(N, N);
       gmm::copy(args[0]->as_vector(), __mat_aux1().as_vector());
-      scalar_type det = bgeot::lu_inverse(&(*(__mat_aux1().begin())), N);
+      scalar_type det = bgeot::lu_inverse(__mat_aux1());
       if (det == scalar_type(0))
         gmm::clear(result.as_vector());
       else {
-        base_tensor::iterator it = result.begin();
-        for (size_type l = 0; l < N; ++l)
-          for (size_type k = 0; k < N; ++k)
-            for (size_type j = 0; j < N; ++j)
-              for (size_type i = 0; i < N; ++i, ++it)
-                *it = (__mat_aux1()(j, i) * __mat_aux1()(l,k)
-		       - __mat_aux1()(j,k) * __mat_aux1()(l, i)) * det;
+        auto it = result.begin();
+	auto ita = __mat_aux1().begin(), ita_l = ita;
+        for (size_type l = 0; l < N; ++l, ++ita_l) {
+	  auto ita_lk = ita_l, ita_jk = ita;
+	  for (size_type k = 0; k < N; ++k, ita_lk += N, ita_jk += N) {
+	    auto ita_j = ita;
+            for (size_type j = 0; j < N; ++j, ++ita_j, ++ita_jk) {
+	      auto ita_ji = ita_j, ita_li = ita_l;
+              for (size_type i = 0; i < N; ++i, ++it, ita_ji += N, ita_li += N)
+                *it = ((*ita_ji) * (*ita_lk) - (*ita_jk) * (*ita_li)) * det;
+	    }
+	  }
+	}
         GA_DEBUG_ASSERT(it == result.end(), "Internal error");
       }
     }
   };
-
-
 
   // Inverse Operator (for square matrices)
   struct inverse_operator : public ga_nonlinear_operator {
@@ -2390,7 +2397,7 @@ namespace getfem {
       size_type N = args[0]->sizes()[0];
       __mat_aux1().base_resize(N, N);
       gmm::copy(args[0]->as_vector(), __mat_aux1().as_vector());
-      bgeot::lu_inverse(&(*(__mat_aux1().begin())), N);
+      bgeot::lu_inverse(__mat_aux1());
       gmm::copy(__mat_aux1().as_vector(), result.as_vector());
     }
 
@@ -2400,13 +2407,20 @@ namespace getfem {
       size_type N = args[0]->sizes()[0];
       __mat_aux1().base_resize(N, N);
       gmm::copy(args[0]->as_vector(), __mat_aux1().as_vector());
-      bgeot::lu_inverse(&(*(__mat_aux1().begin())), N);
-      base_tensor::iterator it = result.begin();
-      for (size_type l = 0; l < N; ++l)
-        for (size_type k = 0; k < N; ++k)
-          for (size_type j = 0; j < N; ++j)
-            for (size_type i = 0; i < N; ++i, ++it)
-              *it = -__mat_aux1()(i,k)*__mat_aux1()(l,j);
+      bgeot::lu_inverse(__mat_aux1());
+      auto it = result.begin();
+      auto ita = __mat_aux1().begin(), ita_l = ita;
+      for (size_type l = 0; l < N; ++l, ++ita_l) {
+	auto ita_k = ita;
+        for (size_type k = 0; k < N; ++k, ita_k += N) {
+	  auto ita_lj = ita_l;
+          for (size_type j = 0; j < N; ++j, ++ita_lj) {
+	    auto ita_ik = ita_k;
+            for (size_type i = 0; i < N; ++i, ++it, ++ita_ik)
+              *it = -(*ita_ik) * (*ita_lj);
+	  }
+	}
+      }
       GA_DEBUG_ASSERT(it == result.end(), "Internal error");
     }
 
@@ -2418,7 +2432,7 @@ namespace getfem {
       size_type N = args[0]->sizes()[0];
       __mat_aux1().base_resize(N, N);
       gmm::copy(args[0]->as_vector(), __mat_aux1().as_vector());
-      bgeot::lu_inverse(&(*(__mat_aux1().begin())), N);
+      bgeot::lu_inverse(__mat_aux1());
       base_tensor::iterator it = result.begin();
       for (size_type n = 0; n < N; ++n)
         for (size_type m = 0; m < N; ++m)
@@ -2431,9 +2445,6 @@ namespace getfem {
       GA_DEBUG_ASSERT(it == result.end(), "Internal error");
     }
   };
-
-
-
 
   //=========================================================================
   // Initialization of predefined functions and operators.
@@ -2708,26 +2719,27 @@ namespace getfem {
         cv_old(-1) {}
   };
 
-
   struct ga_instruction_slice_local_dofs : public ga_instruction {
     const mesh_fem &mf;
     const base_vector &U;
     const fem_interpolation_context &ctx;
     base_vector &coeff;
     const size_type &ipt;
-    size_type qmult;
+    size_type qmult1, qmult2;
     virtual int exec() {
       if (ipt == 0) {
 	GA_DEBUG_INFO("Instruction: Slice local dofs");
-      	slice_vector_on_basic_dof_of_element(mf,U,ctx.convex_num(),coeff,qmult);
+      	slice_vector_on_basic_dof_of_element(mf, U, ctx.convex_num(),
+					     coeff, qmult1, qmult2);
       }
       return 0;
     }
     ga_instruction_slice_local_dofs(const mesh_fem &mf_, const base_vector &U_,
                                     const fem_interpolation_context &ctx_,
                                     base_vector &coeff_, const size_type &ipt_,
-				    size_type qmult_)
-      : mf(mf_), U(U_), ctx(ctx_), coeff(coeff_), ipt(ipt_), qmult(qmult_) {}
+				    size_type qmult1_, size_type qmult2_)
+      : mf(mf_), U(U_), ctx(ctx_), coeff(coeff_), ipt(ipt_),
+	qmult1(qmult1_), qmult2(qmult2_) {}
   };
 
   struct ga_instruction_update_pfp : public ga_instruction {
@@ -10598,10 +10610,14 @@ namespace getfem {
             rmi.local_dofs_hierarchy[pnode->name].push_back(if_hierarchy);
             extend_variable_in_gis(workspace, pnode->name, gis);
             // cout << "local dof of " << pnode->name << endl;
+	    size_type qmult2 = mf->get_qdim();
+	    if (qmult2 > 1 && !(mf->is_uniformly_vectorized()))
+	      qmult2 = size_type(-1);
             pgai = std::make_shared<ga_instruction_slice_local_dofs>
               (*mf, *(gis.extended_vars[pnode->name]), gis.ctx,
                rmi.local_dofs[pnode->name], gis.ipt,
-	       gis.extended_vars[pnode->name]->size() / mf->nb_basic_dof());
+	       gis.extended_vars[pnode->name]->size() / mf->nb_basic_dof(),
+	       qmult2);
             rmi.instructions.push_back(std::move(pgai));
           }
 

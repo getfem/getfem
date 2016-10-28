@@ -637,47 +637,29 @@ namespace getfem {
   template <typename VEC1, typename VEC2>
   void slice_vector_on_basic_dof_of_element(const mesh_fem &mf,
                                             const VEC1 &vec,
-                                            size_type cv, VEC2 &coeff) {
-    size_type nbdof = mf.nb_basic_dof();
-    size_type qmult = gmm::vect_size(vec) / nbdof;
-    GMM_ASSERT1(gmm::vect_size(vec) == qmult * nbdof, "Bad dof vector size");
-
-    auto &ct = mf.ind_scalar_basic_dof_of_element(cv);
-    size_type qmult2 = mf.get_qdim();
-    if (qmult2 > 1) qmult2 /= mf.fem_of_element(cv)->target_dim();
-    size_type qmultot = qmult*qmult2;
-    gmm::resize(coeff, ct.size()*qmultot);
- 
-    auto it = ct.begin();
-    auto itc = coeff.begin();
-    if (qmultot == 1) {
-      for (; it != ct.end(); ++it) *itc++ = vec[*it];
-    } else {
-      for (; it != ct.end(); ++it) {
-	auto itv = vec.begin()+(*it)*qmult;
-	for (size_type m = 0; m < qmultot; ++m) *itc++ = *itv++;
-      }
-    }
-  }
-
-  template <typename VEC1, typename VEC2>
-  void slice_vector_on_basic_dof_of_element(const mesh_fem &mf,
-                                            const VEC1 &vec,
                                             size_type cv, VEC2 &coeff,
-					    size_type qmult) {
+					    size_type qmult1 = size_type(-1),
+					    size_type qmult2 = size_type(-1)) {
+    if (qmult1 == size_type(-1)) {
+      size_type nbdof = mf.nb_basic_dof();
+      qmult1 = gmm::vect_size(vec) / nbdof;
+      GMM_ASSERT1(gmm::vect_size(vec) == qmult1 * nbdof, "Bad dof vector size");
+    }
+    if (qmult2 == size_type(-1)) {
+      qmult2 = mf.get_qdim();
+      if (qmult2 > 1) qmult2 /= mf.fem_of_element(cv)->target_dim();
+    }
+    size_type qmultot = qmult1*qmult2;
     auto &ct = mf.ind_scalar_basic_dof_of_element(cv);
-    size_type qmult2 = mf.get_qdim();
-    if (qmult2 > 1) qmult2 /= mf.fem_of_element(cv)->target_dim();
-    size_type qmultot = qmult*qmult2;
     gmm::resize(coeff, ct.size()*qmultot);
- 
+    
     auto it = ct.begin();
     auto itc = coeff.begin();
     if (qmultot == 1) {
       for (; it != ct.end(); ++it) *itc++ = vec[*it];
     } else {
       for (; it != ct.end(); ++it) {
-	auto itv = vec.begin()+(*it)*qmult;
+	auto itv = vec.begin()+(*it)*qmult1;
 	for (size_type m = 0; m < qmultot; ++m) *itc++ = *itv++;
       }
     }

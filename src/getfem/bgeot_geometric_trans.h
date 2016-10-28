@@ -511,6 +511,10 @@ namespace bgeot {
   /* Optimized operation for small matrices                               */
   scalar_type lu_det(const scalar_type *A, size_type N);
   scalar_type lu_inverse(scalar_type *A, size_type N, bool doassert = true);
+  inline scalar_type lu_det(const base_matrix &A)
+  { return lu_det(&(*(A.begin())), A.nrows()); }
+  inline scalar_type lu_inverse(base_matrix &A, bool doassert = true)
+  { return lu_inverse(&(*(A.begin())), A.nrows(), doassert); }
 
 }  /* end of namespace bgeot.                                             */
 
