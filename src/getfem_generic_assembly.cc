@@ -2729,6 +2729,7 @@ namespace getfem {
     virtual int exec() {
       if (ipt == 0) {
 	GA_DEBUG_INFO("Instruction: Slice local dofs");
+	GMM_ASSERT1(qmult1 != 0 && qmult2 != 0, "Internal error");
       	slice_vector_on_basic_dof_of_element(mf, U, ctx.convex_num(),
 					     coeff, qmult1, qmult2);
       }
@@ -10616,7 +10617,7 @@ namespace getfem {
             pgai = std::make_shared<ga_instruction_slice_local_dofs>
               (*mf, *(gis.extended_vars[pnode->name]), gis.ctx,
                rmi.local_dofs[pnode->name], gis.ipt,
-	       gis.extended_vars[pnode->name]->size() / mf->nb_basic_dof(),
+	       workspace.qdim(pnode->name) / mf->get_qdim(),
 	       qmult2);
             rmi.instructions.push_back(std::move(pgai));
           }
