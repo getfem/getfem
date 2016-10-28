@@ -12091,8 +12091,8 @@ namespace getfem {
           // iterations on interpolation points
           gis.nbpt = pspt->size();
           for (size_type ii = 0; ii < ind.size(); ++ii) {
-            gis.ipt = ind[ii];
-            if (gis.ctx.have_pgp()) gis.ctx.set_ii(gis.ipt);
+            gis.ipt = ii;
+            if (gis.ctx.have_pgp()) gis.ctx.set_ii(ind[ii]);
             else gis.ctx.set_xref((*pspt)[gis.ipt]);
 
             if (ii == 0 || !(pgt->is_linear())) {
@@ -12111,7 +12111,7 @@ namespace getfem {
             if (ii == 0)
               for (size_type j = 0; j < gilb.size(); ++j) j += gilb[j]->exec();
             for (size_type j = 0; j < gil.size(); ++j) j += gil[j]->exec();
-            gic.store_result(v.cv(), gis.ipt, workspace.assembled_tensor());
+            gic.store_result(v.cv(), ind[ii], workspace.assembled_tensor());
           }
         }
       }
