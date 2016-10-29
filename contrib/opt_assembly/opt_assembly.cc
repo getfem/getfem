@@ -255,7 +255,7 @@ static void test_new_assembly(int N, int NX, int pK) {
   chrono ch;
   
   bool all = false;
-  bool select = false;
+  bool select = true;
   int only_one = 1;
 
   if (all || select || only_one == 1) {
@@ -438,7 +438,7 @@ int main(int /* argc */, char * /* argv */[]) {
   GMM_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
   
-  bool all = false;
+  bool all = true;
   int only_one = 2;
 
   // Mesured times for

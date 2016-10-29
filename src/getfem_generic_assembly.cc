@@ -4239,12 +4239,11 @@ namespace getfem {
       GA_DEBUG_INFO("Instruction: Trace");
       GA_DEBUG_ASSERT(t.size()*n*n == tc1.size(), "Wrong sizes");
       size_type s = t.size() * (n+1);
-      base_tensor::iterator it = t.begin();
-      base_tensor::const_iterator it1 = tc1.begin();
+      auto it = t.begin();
+      auto it1 = tc1.begin();
       for (; it != t.end(); ++it, ++it1) {
-        *it = scalar_type(0);
-        base_tensor::const_iterator it2 = it1;
-        *it += *it2;
+        auto it2 = it1;
+        *it = *it2;
         for (size_type i = 1; i < n; ++i) { it2 += s; *it += *it2; }
       }
       return 0;
