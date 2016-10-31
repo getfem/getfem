@@ -256,7 +256,7 @@ static void test_new_assembly(int N, int NX, int pK) {
   
   bool all = false;
   bool select = true;
-  int only_one = 1;
+  int only_one = 8;
 
   if (all || select || only_one == 1) {
     VEC_TEST_1("Test for source term", ndofu, "u.Test_u", mim, size_type(-1),
@@ -364,8 +364,9 @@ static void test_new_assembly(int N, int NX, int pK) {
 	       Iu, Iu,
 	       getfem::asm_stiffness_matrix_for_homogeneous_linear_elasticity
 	       (K, mim2, mf_u, lambda, mu));
-    MAT_TEST_2(ndofu, ndofu, "lambda*Div_Test_u*Div_Test2_u "
-	       "+ mu*(Grad_Test_u'+Grad_Test_u):Grad_Test2_u", mim2, Iu, Iu);
+    if (all)
+      MAT_TEST_2(ndofu, ndofu, "lambda*Div_Test_u*Div_Test2_u "
+		 "+ mu*(Grad_Test_u'+Grad_Test_u):Grad_Test2_u", mim2, Iu, Iu);
     
     // MAT_TEST_2(ndofu, ndofu,
     //           "lambda*((Grad_Test2_u@Grad_Test_u):Id(meshdim))"
@@ -383,7 +384,7 @@ static void test_new_assembly(int N, int NX, int pK) {
     //           "+ mu*(Grad_Test_u'+Grad_Test_u):Grad_Test2_u",
     //           mim2, Iu, Iu);
     
-    if (N == 2 && (all || only_one == 9)) {
+    if (N == 2 && all) {
       MAT_TEST_2(ndofu,ndofu,"lambda*Trace(Grad_Test_u)*Trace(Grad_Test2_u) "
 		 "+mu*(Grad_Test_u'(:,1)"
 		 "+Grad_Test_u(:,1)):Grad_Test2_u(:,1)"
@@ -396,7 +397,7 @@ static void test_new_assembly(int N, int NX, int pK) {
 		 "+mu*(Grad_Test_u'(2,:)"
 		 "+Grad_Test_u(2,:)):Grad_Test2_u(2,:) ", mim2, Iu, Iu);
     }
-    if (N == 3 && (all || only_one == 10)) {
+    if (N == 3 && all) {
       MAT_TEST_2(ndofu,ndofu,"lambda*Trace(Grad_Test_u)*Trace(Grad_Test2_u) "
 		 "+mu*(Grad_Test_u'(:,1)"
 		 "+Grad_Test_u(:,1)):Grad_Test2_u(:,1)"
@@ -416,7 +417,7 @@ static void test_new_assembly(int N, int NX, int pK) {
     
   }
   
-  if (all || select || only_one == 11) {
+  if (all || select || only_one == 9) {
     base_vector lambda2(ndofp, 3.0);
     workspace.add_fem_constant("lambda2", mf_p, lambda2);
     base_vector mu2(ndofp, 2.0);
@@ -439,7 +440,7 @@ int main(int /* argc */, char * /* argv */[]) {
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
   
   bool all = true;
-  int only_one = 2;
+  int only_one = 5;
 
   // Mesured times for
   // - new assembly,

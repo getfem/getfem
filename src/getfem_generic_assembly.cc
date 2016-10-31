@@ -363,9 +363,11 @@ namespace getfem {
 
   struct assembly_tensor { // The original sizes is always in t
          // If copied, all the properties are taken in the copied tensor
-         // If condensed, a condensed version exists 
+         // If condensed, a condensed version exists
+         // for condensed tensor, resize instructions have to be adapted ...
+         // In some cases both tensor have to be adpated.
     bool is_copied;
-    int condensed; // 0 : no_condensed, 1 : ...
+    int condensed; // 0: not condensed, 1: base, 2: grad, 3: grad transposed, ..
     base_tensor t;
     assembly_tensor *tensor_copied;
     std::shared_ptr<base_tensor> tensor_condensed;
@@ -473,8 +475,7 @@ namespace getfem {
 
     inline size_type tensor_test_size() const {
       size_type st = nb_test_functions();
-      return (st >= 1 ? t.sizes()[0] : 1)
-	* (st == 2 ? t.sizes()[1] : 1);
+      return (st >= 1 ? t.sizes()[0] : 1) * (st == 2 ? t.sizes()[1] : 1);
     }
 
     inline size_type tensor_proper_size() const
@@ -10446,6 +10447,9 @@ namespace getfem {
       }
     }
 
+    // Produce a resize instruction which is stored if no equivalent node is
+    // detected and is the mesh is not uniform.
+    pnode->t.set_to_original();
     bool is_uniform = false;
     if (pnode->test_function_type == 1) {
       if (mf1 || mfg1)
@@ -10487,7 +10491,6 @@ namespace getfem {
       else { rmi.instructions.push_back(std::move(pgai)); }
     }
 
-    // TODO : à déplacer avant les instructions d'ajustement de taille
     // Optimization: detects if an equivalent node has already been compiled
     pnode->t.set_to_original();
     if (rmi.node_list.find(pnode->hash_value) != rmi.node_list.end()) {
@@ -10504,6 +10507,11 @@ namespace getfem {
         if (sub_tree_are_equal(pnode, *it, workspace, 2)) {
           // cout << "confirmed with transpose" << endl;
           if (pnode->nb_test_functions() == 2) {
+	    if (pgai) { // resize instruction if needed
+	      if (is_uniform)
+		{ pgai->exec(); }
+	      else { rmi.instructions.push_back(std::move(pgai)); }
+	    }
             pgai = std::make_shared<ga_instruction_transpose_test>
               (pnode->tensor(), (*it)->tensor());
 	    rmi.instructions.push_back(std::move(pgai));
@@ -10519,6 +10527,12 @@ namespace getfem {
         ss << " (no problem, but hash code would be adapted) " << endl;
         GMM_TRACE2(ss.str());
       }
+    }
+
+    if (pgai) { // resize instruction if needed and no equivalent node detected
+      if (is_uniform)
+        { pgai->exec(); }
+      else { rmi.instructions.push_back(std::move(pgai)); }
     }
 
     size_type interpolate_filter_inst = rmi.instructions.size();
