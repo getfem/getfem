@@ -15,7 +15,7 @@ The high-level generic assembly module in |gf|
 Description
 ^^^^^^^^^^^
 
-The high level generic assembly language of |gf| is a key module which allows to describe weak formulation of partial differential equation problems.
+The high level generic assembly language of |gf| is a key module which allows to describe weak formulation of partial differential equation problems. See the description of the language in the user documentation section :ref:`ud-gasm-high`.
 
 Files
 ^^^^^
@@ -26,27 +26,106 @@ Files
 
    :file:`getfem_generic_assembly.h` and :file:`getfem_generic_assembly.cc`, "In order not to export all the internal of the generic assembly, all is implemented in a single file"
 
+
+For the moment, having a single (giant) file simplify the maintenance.
+
 A few implementation details
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The assembly string is transformed in an assembly tree by a set of function in :file:`src/getfem\_generic\_assembly.cc`. The process has 4 steps:
+The assembly string is transformed in an assembly tree by a set of function in :file:`src/getfem\_generic\_assembly.cc`. The process has 6 steps:
 
- - Lexical analysis with the procedure ``ga_get_token``.
+ - Lexical analysis with the procedure ``ga_get_token(...)``.
 
- - Syntax analysis and transformation into a syntax tree by ``ga_read_string``.
+ - Syntax analysis and transformation into a syntax tree by ``ga_read_string(...)``.
 
- - Semantic analysis, simplification (pre-computation) of constant expressions and enrichment of the tree.
+ - Semantic analysis, simplification (pre-computation) of constant expressions and enrichment of the tree by ``ga_semantic_analysis(...)``.
 
- - Symbolic (automatic) differentiation.
+ - Symbolic (automatic) differentiation of an assembly tree by ``ga_derivative(...)``
 
- - Compilation in a sequence of instructions with optimization not to evaluate several time the same expression.
+ - Compilation in a sequence of instructions with optimizations by ``ga_compile(...)``.
 
- - Execution of the sequence of instructions and assembly.
+ - Execution of the sequence of instructions and assembly by ``ga_exec(...)``.
 
-These steps are performed only once at the beginning of the assembly. The final tree is evaluated on each Gauss point of each element after compilation.
+These steps are performed only once at the beginning of the assembly. The final tree is compiled in a sequence of optimized instructions which are executed on each Gauss point of each element. The compilation performed some optimizations : repeated terms are automatically detected and evaluated only once, simplifications if the mesh has uniform type of elements, simplifications for vectorized fnite element methods.
+
+Moreover, there is specifics function for interpolation operations (ga_interpolation(...), ga_interpolation_exec(...), ga_interpolation_Lagrange_fem, ga_interpolation_mti, ga_interpolation_im_data, ...)
+
+Assembly tree
+^^^^^^^^^^^^^
+
+Assembly strings are transformed into assembly trees by ``ga_read_string(...)``. Assembly trees are syntax trees that are progressively enriched in information in the differents steps (semantic analysis, derivation, compilation).
+
+The object ``ga_tree`` represents an assembly tree. It is a copyable object that only contains a pointer to the root of the tree. Each tree node is an object ``ga_tree_node`` that contains the main following information:
+
+- node_type (function, variable value, variable gradient, operation ...)
+- operation type for operation nodes.
+- assembly tensor: used at execution time by optimized instructions to compute the intermediary results. The final result is in the assembly string of the root node at the end of the execution (for each Gauss point).
+- term type: value, order one term (ith order one test functions),
+  order two term (with order two test functions) or with both order one and
+  order two test functions (tangent term).
+- variable name of tests functions for order 1 or 2 terms.
+- pointer to the parent node.
+- pointers to the children nodes.
+
+For example, the assembly tree for the assembly string "a*Grad_Test2_u.Grad_Test_u" for the stiffness matrix of a Laplacian problem can be represented as follows with its assembly tensors at each node:
+
+.. _dp-fig-tree-laplace-tan:
+.. figure:: images/tree_simple_laplace_tan.png
+   :align: center
+   :scale: 75
 
 
+Assembly tensors
+^^^^^^^^^^^^^^^^
 
+Assembly tensors are represented on each node by a ``bgeot::tensor<double>`` object. However, there is a specific structure in :file:`src/getfem\_generic\_assembly.cc` for assembly tensors because there is several format of assembly tensors :
+
+- Normal tensor. The first and second indices may represent the test function local indices if the node represent a first or second order term. Remember that in |gf| all tensors are stored with a Fortran order. This means that for instance a for a :math:`N\times P\times Q` tensor one has ``t(i, j, k) = t[i + j*N + k*N*P]``. 
+
+- Copied tensor. When a node is detected to have exactly the same expression compared to an already compiled one, the assembly tensor will contain a pointer to the assembly tensor of the already compiled node. The consequence is that no unnecessary copy is made.
+
+- Condensed tensor. When working with a vector field, the finite element method is applied on each component. This results on vector base functions having only one nonzero component and some components are ducplicated. By default, the tensors are fully represented with all the zero and duplicated components. However, it is more efficient to perform some operations on the condensed (i.e. scalar) form of the tensor, appliying the vectorization as late as possible. This results in a certain number of condensed tensor formats that are listed below:
+  
+  - 1: Base condensed format: The tensor represent a vectorized value. Each value of the condensed tensor is repeated on :math:`d` components of the vectorized tensor. The other components are zero. For instance if :math:`\varphi_i` are the :math:`N` local base functions on an element and the evaluation is on a Gauss point :math:`x`, then the condensed tensor is :math:`\bar{t}(i) = \varphi_i(x)` and the vectorized one is :math:`t(j,k) = \varphi_{j/N}(x) \delta_{k, j \mbox{ mod } N}` where :math:`j/N` is the integer division. For :math:`N=2` and :math:`d=3` the components of the two tensors are represented in the following table
+
+    .. csv-table::
+       :header: "Condensed tensor", "Vectorized tensor"
+       :widths: 5, 12
+
+       ":math:`\bar{t}(i) = \varphi_i(x)`", ":math:`t(j,k) = \varphi_{j/N}(x) \delta_{k, (j \mbox{ mod } N)}`"
+       ":math:`[\varphi_0(x), \varphi_1(x)]`", ":math:`[\varphi_0(x), 0, 0, \varphi_1(x), 0, 0, 0, \varphi_0(x), 0, 0, \varphi_1(x), 0, 0, 0, \varphi_0(x), 0, 0, \varphi_1(x)]`"
+  
+  - 2: Grad condensed format
+
+    .. csv-table::
+       :header: "Condensed tensor", "Vectorized tensor"
+       :widths: 5, 12
+
+       ":math:`\bar{t}(i,j) = \partial_j\varphi_i(x)`", ":math:`t(k,l,m) = \partial_m\varphi_{k/N}(x) \delta_{l, (m \mbox{ mod } N)}`"
+       ":math:`[\partial_0\varphi_0(x), \partial_0\varphi_1(x),` :math:`\partial_1\varphi_0(x), \partial_1\varphi_1(x),` :math:`\partial_2\varphi_0(x), \partial_2\varphi_1(x)]`", ":math:`[\partial_0\varphi_0(x), 0, 0, \partial_0\varphi_1(x), 0, 0, 0, \partial_0\varphi_0(x), 0, 0, \partial_0\varphi_1(x), 0, 0, 0, \partial_0\varphi_0(x), 0, 0, \partial_0\varphi_1(x),` :math:`\partial_1\varphi_0(x), 0, 0, \partial_1\varphi_1(x), 0, 0, 0, \partial_1\varphi_0(x), 0, 0, \partial_1\varphi_1(x), 0, 0, 0, \partial_1\varphi_0(x), 0, 0, \partial_1\varphi_1(x),` :math:`\partial_2\varphi_0(x), 0, 0, \partial_2\varphi_1(x), 0, 0, 0, \partial_2\varphi_0(x), 0, 0, \partial_2\varphi_1(x), 0, 0, 0, \partial_2\varphi_0(x), 0, 0, \partial_2\varphi_1(x)]`"
+       
+
+  - 3: Transposed Grad condensed format
+
+    .. csv-table::
+       :header: "Condensed tensor", "Vectorized tensor"
+       :widths: 5, 12
+
+       ":math:`\bar{t}(i,j) = \partial_j\varphi_i(x)`", ":math:`t(k,l,m) = \partial_m\varphi_{k/N}(x) \delta_{m, (l \mbox{ mod } N)}`"
+       ":math:`[\partial_0\varphi_0(x), \partial_0\varphi_1(x),` :math:`\partial_1\varphi_0(x), \partial_1\varphi_1(x),` :math:`\partial_2\varphi_0(x), \partial_2\varphi_1(x)]`", ":math:`[\partial_0\varphi_0(x), 0, 0, \partial_0\varphi_1(x), 0, 0, \partial_1\varphi_0(x), 0, 0, \partial_1\varphi_1(x), 0, 0, \partial_2\varphi_0(x), 0, 0, \partial_2\varphi_1(x), 0, 0,` :math:`0, \partial_0\varphi_0(x), 0, 0, \partial_0\varphi_1(x), 0, 0, \partial_1\varphi_0(x), 0, 0, \partial_1\varphi_1(x), 0, 0, \partial_2\varphi_0(x), 0, 0, \partial_2\varphi_1(x), 0,`  :math:`0, 0, \partial_0\varphi_0(x), 0, 0, \partial_0\varphi_1(x), 0, 0, \partial_1\varphi_0(x), 0, 0, \partial_1\varphi_1(x), 0, 0, \partial_2\varphi_0(x), 0, 0, \partial_2\varphi_1(x)]`"
+  
+  - 4: Hessian condensed format
+
+  - 5: Transpsed Hessian condensed format
+
+  All condensed format have to observe the following rule: be stable by addition, multiplication by a scalar and propose an instruction to build the non-condensed corresponding tensor.
+
+    
+
+Optimized instructions
+^^^^^^^^^^^^^^^^^^^^^^
+
+Optimized instructions for variable evaluation, operations, vector and matrix assembly ... to be described. 
 
 Predefined functions
 ^^^^^^^^^^^^^^^^^^^^
@@ -60,7 +139,10 @@ Some predefined scalar functions are available in |gf| generic assembly langage 
 
 A new predefined function is easy to add. See init_predefined_functions() in file :file:`src/getfem_generic_assembly.cc`. + describe how to give the derivative ...
 
+Predefined nonlinear operators
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+to be described ...
 
 State
 ^^^^^
@@ -71,6 +153,4 @@ Perspectives
 
 - Is a certain extension to complex data possible ?
 
-- More simplifications
-
-- Integation of a tool allowing to compute inter-elements quantities (for a posteriori estimate for instance).
+- More simplifications : study the possibility to automatically factorize some terms (for instance scalar ones) to reduce the number of operations.

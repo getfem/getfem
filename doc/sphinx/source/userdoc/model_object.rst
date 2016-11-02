@@ -58,60 +58,60 @@ different bricks added to the model.
 
 The main useful methods on a |mo| object are
 
-.. cfunction:: m.is_complex()
+.. c:function:: m.is_complex()
 
    A boolean which says if the model deals with real or complex unknowns and data.
 
-.. cfunction:: add_fixed_size_variable(name, size, niter=1)
+.. c:function:: add_fixed_size_variable(name, size, niter=1)
 
    Add a variable of fixed size. ``name`` is a string which designate the
    variable. ``niter`` is the number of copy of the variable.
 
-.. cfunction:: add_fixed_size_variable(name, sizes, niter=1)
+.. c:function:: add_fixed_size_variable(name, sizes, niter=1)
 
    Add a variable of fixed size. ``name`` is a string which designate the
    variable. ``sizes`` is a vector of dimension for matrix or tensor fixed
    size variables. ``niter`` is the number of copy of the variable.
 
-.. cfunction:: add_fixed_size_data(name, size, niter=1)
+.. c:function:: add_fixed_size_data(name, size, niter=1)
 
    Add a data of fixed size. ``name`` is a string which designate the data.
    ``niter`` is the number of copy of the data.
 
-.. cfunction:: add_fixed_size_data(name, sizes, niter=1)
+.. c:function:: add_fixed_size_data(name, sizes, niter=1)
 
    Add a data of fixed size. ``name`` is a string which designate the data.
    ``sizes`` is a vector of dimension for matrix or tensor fixed
    size variables. ``niter`` is the number of copy of the data.
 
-.. cfunction:: add_initialized_fixed_size_data(name, V)
+.. c:function:: add_initialized_fixed_size_data(name, V)
 
    Add a data of fixed size initialized with the given vector ``V``. ``name`` is a
    string which designate the data.
 
-.. cfunction:: add_initialized_scalar_data(name, e)
+.. c:function:: add_initialized_scalar_data(name, e)
 
    Add a data of size 1 initialized with the given scalar value ``e``. ``name`` is
    a string which designate the data.
 
-.. cfunction:: add_fem_variable(name, mf, niter=1)
+.. c:function:: add_fem_variable(name, mf, niter=1)
 
    Add a variable being the dofs of a finite element method ``mf``. ``name`` is a
    string which designate the variable. ``niter`` is the number of copy of the
    variable.
 
-.. cfunction:: add_fem_data(name, mf, niter=1)
+.. c:function:: add_fem_data(name, mf, niter=1)
 
    Add a data being the dofs of a finite element method ``mf``. ``name`` is a
    string which designate the data. ``niter`` is the number of copy of the data.
 
-.. cfunction:: add_initialized_fem_data(name, mf, V, niter=1)
+.. c:function:: add_initialized_fem_data(name, mf, V, niter=1)
 
    Add a data being the dofs of a finite element method ``mf`` initialized with
    the given vector ``V``. ``name`` is a string which designate the data.
    ``niter`` is the number of copy of the data.
 
-.. cfunction:: add_multiplier(name, mf, primal_name, niter=1)
+.. c:function:: add_multiplier(name, mf, primal_name, niter=1)
 
    Add a special variable linked to the finite element method ``mf`` and being a
    multiplier for certain constraints (Dirichlet condition for instance) on a
@@ -125,35 +125,35 @@ The main useful methods on a |mo| object are
    variable. Note that for complex terms, only
    the real part is considered to filter the multiplier.
 
-.. cfunction:: real_variable(name, niter=1)
+.. c:function:: real_variable(name, niter=1)
 
    Gives the access to the vector value of a variable or data. Real version.
 
-.. cfunction:: complex_variable(name, niter=1)
+.. c:function:: complex_variable(name, niter=1)
 
    Gives the access to the vector value of a variable or data. Complex version.
 
-.. cfunction:: mesh_fem_of_variable(name)
+.. c:function:: mesh_fem_of_variable(name)
 
    Gives a reference on the |mf| on which the variable is defined. Throw an
    exception if this is not a fem variable.
 
-.. cfunction:: real_tangent_matrix()
+.. c:function:: real_tangent_matrix()
 
    Gives the access to tangent matrix. Real version. A computation of the tangent
    system have to be done first.
 
-.. cfunction:: complex_tangent_matrix()
+.. c:function:: complex_tangent_matrix()
 
    Gives the access to tangent matrix. Complex version. A computation of the
    tangent system have to be done first.
 
-.. cfunction:: real_rhs()
+.. c:function:: real_rhs()
 
    Gives the access to right hand side vector of the linear system. real version.
    A computation of the tangent system have to be done first.
 
-.. cfunction:: complex_rhs()
+.. c:function:: complex_rhs()
 
    Gives the access to right hand side vector of the linear system. Complex
    version. A computation of the tangent system have to be done first.

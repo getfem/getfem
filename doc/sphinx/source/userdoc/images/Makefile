@@ -90,7 +90,7 @@ PNGFIGS=$(FIGS:.fig=.png)
 	../../../../../bin/fig2eps $(@:.eps=.fig)
 
 .eps.png:
-	convert -density 100 $(@:.png=.eps) $@
+	convert -density 200 $(@:.png=.eps) $@
 
 png: $(PNGFIGS)
 

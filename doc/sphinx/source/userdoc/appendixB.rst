@@ -91,6 +91,7 @@ Gauss Integration methods on dimension 2
        - function to call / order
 
      * - .. image:: images/getfemlistintmethodtriangle1.png
+            :scale: 50
        - (1/3, 1/3)
        - 1/2
        - ``"IM_TRIANGLE(1)"``
@@ -98,6 +99,7 @@ Gauss Integration methods on dimension 2
          1 point, order 1.
 
      * - .. image:: images/getfemlistintmethodtriangle2.png
+            :scale: 50
        - (1/6,  1/6)
 
          (2/3,  1/6)
@@ -122,6 +124,7 @@ Gauss Integration methods on dimension 2
        - function to call / order
 
      * - .. image:: images/getfemlistintmethodtriangle3.png
+            :scale: 50
        - (1/3, 1/3)
 
          (1/5, 1/5)
@@ -141,6 +144,7 @@ Gauss Integration methods on dimension 2
          4 points, order 3.
 
      * - .. image:: images/getfemlistintmethodtriangle4.png
+            :scale: 50
        - (a, a)
 
          (1-2a, a)
@@ -173,6 +177,7 @@ Gauss Integration methods on dimension 2
          :math:`d=0.054975871827661`
 
      * - .. image:: images/getfemlistintmethodtriangle5.png
+            :scale: 50
        - (1/3, 1/3)
 
          (a, a)
@@ -209,6 +214,7 @@ Gauss Integration methods on dimension 2
          :math:`d = 31/240 - c`
 
      * - .. image:: images/getfemlistintmethodtriangle6.png
+            :scale: 50
        - (a, a)
 
          (1-2a, a)
@@ -277,6 +283,7 @@ Gauss Integration methods on dimension 2
        - function to call / order
 
      * - .. image:: images/getfemlistintmethodtriangle7.png
+            :scale: 50
        - (a, a)
 
          (b, a)
@@ -372,6 +379,7 @@ Gauss Integration methods on dimension 2
          (see [EncyclopCubature]_)
 
      * - .. image:: images/getfemlistintmethodquad2.png
+            :scale: 50
        - (:math:`1/2+\sqrt{1/6}, 1/2`)
 
          (:math:`(1/2-\sqrt{1/24}, 1/2\pm\sqrt{1/8}`)
@@ -393,6 +401,7 @@ Gauss Integration methods on dimension 2
        - function to call / order
 
      * - .. image:: images/getfemlistintmethodquad3.png
+            :scale: 50
        - (:math:`1/2\pm\sqrt{1/6}, 1/2`)
 
          (:math:`1/2, 1/2\pm\sqrt{1/6}`)
@@ -404,6 +413,7 @@ Gauss Integration methods on dimension 2
          4 points, order 3
 
      * - .. image:: images/getfemlistintmethodquad5.png
+            :scale: 50
        - (:math:`1/2, 1/2`)
 
          (:math:`1/2 \pm \sqrt{7/30}, 1/2`)
@@ -462,6 +472,7 @@ Gauss Integration methods on dimension 3
        - function to call / order
 
      * - .. image:: images/getfemlistintmethodtetrahedron1.png
+            :scale: 50
        - (1/4, 1/4, 1/4)
        - 1/6
        - ``"IM_TETRAHEDRON(1)"``
@@ -469,6 +480,7 @@ Gauss Integration methods on dimension 3
          1 point, order 1
 
      * - .. image:: images/getfemlistintmethodtetrahedron2.png
+            :scale: 50
        - :math:`(a, a, a)`
 
          :math:`(a, b, a)`
@@ -501,6 +513,7 @@ Gauss Integration methods on dimension 3
        - function to call / order
 
      * - .. image:: images/getfemlistintmethodtetrahedron3.png
+            :scale: 50
        - (1/4, 1/4, 1/4)
 
          (1/6, 1/6, 1/6)
@@ -524,6 +537,7 @@ Gauss Integration methods on dimension 3
          5 points, order 3
 
      * - .. image:: images/getfemlistintmethodtetrahedron5.png
+            :scale: 50
        - :math:`(1/4, 1/4, 1/4)`
 
          :math:`(a, a, a)`

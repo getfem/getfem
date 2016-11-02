@@ -107,11 +107,11 @@ index entries more informative.
 
 The directives are:
 
-.. describe:: cfunction
+.. describe:: c:function
 
    Describes a C function. The signature should be given as in C, e.g.::
 
-      .. cfunction:: PyObject* PyType_GenericAlloc(PyTypeObject *type, Py_ssize_t nitems)
+      .. c:function:: PyObject* PyType_GenericAlloc(PyTypeObject *type, Py_ssize_t nitems)
 
    This is also used to describe function-like preprocessor macros.  The names
    of the arguments should be given so they may be used in the description.

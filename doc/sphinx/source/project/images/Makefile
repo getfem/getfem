@@ -1,5 +1,6 @@
-FIGS=diagram.fig \
-     getfemelemelem.fig \
+FIGS=diagram.fig 		 \
+     getfemelemelem.fig  	 \
+     tree_simple_laplace_tan.fig \
      getfemtransgeo.fig
 
 EPSFIGS=$(FIGS:.fig=.eps)
@@ -11,7 +12,7 @@ PNGFIGS=$(FIGS:.fig=.png)
 	../../../../../bin/fig2eps $(@:.eps=.fig)
 
 .eps.png:
-	convert $(@:.png=.eps) $@
+	convert -density 200 $(@:.png=.eps) $@
 
 png: $(PNGFIGS)
 

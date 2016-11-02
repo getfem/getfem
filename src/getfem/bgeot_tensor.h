@@ -260,6 +260,15 @@ namespace bgeot {
       }
     }
 
+    inline void remove_unit_dim() {
+      if (sizes_.size()) {
+	size_type i = 0, j = 0;
+	for (; i < sizes_.size(); ++i)
+	  if (sizes_[i] != 1) { sizes_[j]=sizes_[i]; coeff[j]=coeff[i]; ++j; }
+	if (!j) ++j; sizes_.resize(j); coeff.resize(j);
+      }
+    }
+
     /** reduction of tensor t with respect to index ni with matrix m:
      *  t(...,j,...) <-- t(...,i,..) m(i, j)
      */
@@ -322,17 +331,8 @@ namespace bgeot {
     /* reduction du tenseur t par son indice ni et la matrice          */
     /* transposee de m.                                                */
 
-    // DEFINE_STATIC_THREAD_LOCAL(std::vector<T>*,tmp);
-    // DEFINE_STATIC_THREAD_LOCAL(multi_index*,mi);
     DEFINE_STATIC_THREAD_LOCAL(std::vector<T>, tmp);
     DEFINE_STATIC_THREAD_LOCAL(multi_index, mi);
-    // DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(bool,isinit,false);
-
-    // if (!isinit) {
-    //  tmp = std::make_shared<std::vector<T>(3);
-    //  mi = std::make_shared<multi_index>();
-    //  isinit = true;
-    // }
 
     mi = t.sizes();
     size_type dimt = mi[ni], dim = m.nrows();
@@ -340,7 +340,6 @@ namespace bgeot {
     GMM_ASSERT2(dimt, "Inconsistent dimension.");
     GMM_ASSERT2(dimt == m.ncols(), "Dimensions mismatch.");
     GMM_ASSERT2(&t != this, "Does not work when t and *this are the same.");
-
 
     mi[ni] = dim;
     if (tmp.size() < dimt) tmp.resize(dimt);
@@ -399,14 +398,9 @@ namespace bgeot {
   template<class T> void tensor<T>::mat_reduction
   (const tensor &t, const gmm::dense_matrix<T> &m, int ni) {
     /* reduction du tenseur t par son indice ni et la matrice m.       */
-    // DEFINE_STATIC_THREAD_LOCAL(std::vector<T>*,tmp);
-    // DEFINE_STATIC_THREAD_LOCAL(multi_index*,mi);
-    // DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(bool,isinit,false);
     DEFINE_STATIC_THREAD_LOCAL(std::vector<T>, tmp);
     DEFINE_STATIC_THREAD_LOCAL(multi_index, mi);
-    // if (!isinit) {
-    //  tmp = new std::vector<T>(3); mi = new multi_index(); isinit = true;
-    // }
+    
     mi = t.sizes();
     size_type dimt = mi[ni], dim = m.ncols();
     GMM_ASSERT2(dimt, "Inconsistent dimension.");

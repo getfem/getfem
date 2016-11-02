@@ -112,7 +112,7 @@ These changes to information units should be noted:
   "desc" has been removed from every name.  Additionally, these directives have
   new names:
 
-  | *cfunction* (previously *cfuncdesc*)
+  | *c:function* (previously *cfuncdesc*)
   | *cmacro* (previously *csimplemacrodesc*)
   | *exception* (previously *excdesc*)
   | *function* (previously *funcdesc*)

@@ -26,7 +26,7 @@ In order to incorporate the contact detection in the high-level generic assembly
 
 .. figure:: images/getfemusermodelmasterslave.png
    :align: center
-   :scale: 60
+   :scale: 45
 
 The slave surface is the "contactor" and the master one the "target". Rigid obstacle are also considered. They are always master surfaces.  The basic rule is that the contact is considered between a slave surface and a master one. However, the multi-contact frame object and the |gf| bricks allow multi-contact situations, including contact between two master surfaces, self-contact of a master surface and an arbitrary number of slave and master surfaces. 
 
@@ -89,7 +89,7 @@ A contact pair is formed by a point of a slave (or master in case of self-contac
 
 .. figure:: images/getfemusermodeldetectcontact.png
    :align: center
-   :scale: 100
+   :scale: 50
 
 
 It is impossible to distinguish without fail between valid and invalid contact situations without a global topological criterion (such as in [Pantz2008]_), a fortiori for self-contact detection. However, this kind of criterion can be very costly to implement. Thus, one generally implements some simple heuristic criteria which cannot cover all the possible cases. We present such a set of criteria here. They are of course perfectible and subject to change. First, in :ref:`figure<ud-fig-invalidcontact>` one can see a certain number of situations of valid or invalid contact that criteria have to distinguish.
@@ -99,12 +99,12 @@ It is impossible to distinguish without fail between valid and invalid contact s
 
 .. figure:: images/getfemusermodelfalsecontact1.png
    :align: center
-   :scale: 90
+   :scale: 50
 
 
 .. figure:: images/getfemusermodelfalsecontact2.png
    :align: center
-   :scale: 90
+   :scale: 50
 
 Some details on the algorithm:
 

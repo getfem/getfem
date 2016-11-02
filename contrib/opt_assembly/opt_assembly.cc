@@ -325,8 +325,10 @@ static void test_new_assembly(int N, int NX, int pK) {
 	       (K, mim2, mf_p));
     // MAT_TEST_2(ndofp, ndofp, "(Grad_p:Grad_p)/2", mim2, Ip, Ip);
     // MAT_TEST_2(ndofp, ndofp, "sqr(Norm(Grad_p))/2", mim2, Ip, Ip);
-    MAT_TEST_2(ndofp, ndofp, "Norm_sqr(Grad_p)/2", mim2, Ip, Ip);
-    if (false && N == 2) {
+    if (all) {
+      MAT_TEST_2(ndofp, ndofp, "Norm_sqr(Grad_p)/2", mim2, Ip, Ip);
+    }
+    if (all && N == 2) {
       MAT_TEST_2(ndofp, ndofp,
 		 "(sqr(Grad_p(1)) + sqr(Grad_p(2)))/2", mim2, Ip, Ip);
       MAT_TEST_2(ndofp, ndofp,
@@ -338,7 +340,7 @@ static void test_new_assembly(int N, int NX, int pK) {
       MAT_TEST_2(ndofp, ndofp, "sqr(Norm([Grad_p(2); Grad_p(1)]))/2",
 		 mim2, Ip, Ip);
     }
-    if (false && N == 3) {
+    if (all && N == 3) {
       MAT_TEST_2(ndofp, ndofp,
 		 "(sqr(Grad_p(1)) + sqr(Grad_p(2)) + sqr(Grad_p(3)))/2",
 		 mim2, Ip, Ip);
@@ -364,6 +366,7 @@ static void test_new_assembly(int N, int NX, int pK) {
 	       Iu, Iu,
 	       getfem::asm_stiffness_matrix_for_homogeneous_linear_elasticity
 	       (K, mim2, mf_u, lambda, mu));
+
     if (all) {
       MAT_TEST_2(ndofu, ndofu, "lambda*Div_Test_u*Div_Test2_u "
 		 "+ mu*(Grad_Test_u'+Grad_Test_u):Grad_Test2_u", mim2, Iu, Iu);
@@ -398,6 +401,7 @@ static void test_new_assembly(int N, int NX, int pK) {
 		 "+mu*(Grad_Test_u'(2,:)"
 		 "+Grad_Test_u(2,:)):Grad_Test2_u(2,:) ", mim2, Iu, Iu);
     }
+
     if (N == 3 && all) {
       MAT_TEST_2(ndofu,ndofu,"lambda*Trace(Grad_Test_u)*Trace(Grad_Test2_u) "
 		 "+mu*(Grad_Test_u'(:,1)"
@@ -415,7 +419,6 @@ static void test_new_assembly(int N, int NX, int pK) {
 		 "+mu*(Grad_Test_u'(3,:)"
 		 "+Grad_Test_u(3,:)):Grad_Test2_u(3,:) ", mim2, Iu, Iu);
     }
-    
   }
   
   if (all || select || only_one == 9) {
@@ -431,7 +434,6 @@ static void test_new_assembly(int N, int NX, int pK) {
 	       getfem::asm_stiffness_matrix_for_linear_elasticity
 	       (K, mim2, mf_u, mf_p, lambda2, mu2));
   }
-  
 }
 
 
