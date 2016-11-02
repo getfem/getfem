@@ -77,6 +77,14 @@ namespace getfem {
   // In that case, the storage available in ctx.pfp()->c, ctx.pfp()->pc
   // and ctx.pfp()->hpc is not used.
 
+
+  // Specific multiplication for fem_interpolation_context use.
+  static inline void spec_mat_tmult_(const base_tensor &g, const base_matrix &B,
+				     base_tensor &t) {
+    size_type P = B.nrows(), N = B.ncols();
+    size_type M = t.adjust_sizes_changing_last(g, P);
+    bgeot::mat_tmult(&(*(g.begin())), &(*(B.begin())), &(*(t.begin())),M,N,P);
+  }
   
   void fem_interpolation_context::pfp_base_value(base_tensor& t,
                                                  const pfem_precomp &pfp__) {
@@ -146,13 +154,14 @@ namespace getfem {
     }
   }
 
-  void fem_interpolation_context::pfp_grad_base_value(base_tensor& t,
-                                                      const pfem_precomp &pfp__) {
+  void fem_interpolation_context::pfp_grad_base_value
+  (base_tensor& t, const pfem_precomp &pfp__) {
     const pfem &pf__ = pfp__->get_pfem();
     GMM_ASSERT1(ii_ != size_type(-1), "Internal error");
 
     if (pf__->is_standard()) {
-      t.mat_transp_reduction(pfp__->grad(ii()), B(), 2);
+      // t.mat_transp_reduction(pfp__->grad(ii()), B(), 2);
+      spec_mat_tmult_(pfp__->grad(ii()), B(), t);
     } else {
       if (pf__->is_on_real_element())
         pf__->real_grad_base_value(*this, t);
@@ -161,18 +170,22 @@ namespace getfem {
         case virtual_fem::VECTORIAL_PRIMAL_TYPE:
           {
             base_tensor u;
-            u.mat_transp_reduction(pfp__->grad(ii()), B(), 2);
+            // u.mat_transp_reduction(pfp__->grad(ii()), B(), 2);
+	    spec_mat_tmult_(pfp__->grad(ii()), B(), u);
             t.mat_transp_reduction(u, K(), 1);
           }
           break;
         case virtual_fem::VECTORIAL_DUAL_TYPE:
           {
             base_tensor u;
-            u.mat_transp_reduction(pfp__->grad(ii()), B(), 2);
+            // u.mat_transp_reduction(pfp__->grad(ii()), B(), 2);
+	    spec_mat_tmult_(pfp__->grad(ii()), B(), u);
             t.mat_transp_reduction(u, B(), 1);
           }
           break;
-        default: t.mat_transp_reduction(pfp__->grad(ii()), B(), 2);
+        default:
+	  // t.mat_transp_reduction(pfp__->grad(ii()), B(), 2);
+	  spec_mat_tmult_(pfp__->grad(ii()), B(), t);
         }
         if (!(pf__->is_equivalent())) {
           set_pfp(pfp__);
@@ -186,7 +199,8 @@ namespace getfem {
   void fem_interpolation_context::grad_base_value(base_tensor& t,
                                                   bool withM) const {
     if (pfp_ && ii_ != size_type(-1) && pf_->is_standard()) {
-      t.mat_transp_reduction(pfp_->grad(ii()), B(), 2);
+      // t.mat_transp_reduction(pfp_->grad(ii()), B(), 2);
+      spec_mat_tmult_(pfp_->grad(ii()), B(), t);
     } else {
       if (pf()->is_on_real_element())
         pf()->real_grad_base_value(*this, t);
@@ -196,25 +210,30 @@ namespace getfem {
           case virtual_fem::VECTORIAL_PRIMAL_TYPE:
             {
               base_tensor u;
-              u.mat_transp_reduction(pfp_->grad(ii()), B(), 2);
+              // u.mat_transp_reduction(pfp_->grad(ii()), B(), 2);
+	      spec_mat_tmult_(pfp_->grad(ii()), B(), u);
               t.mat_transp_reduction(u, K(), 1);
             }
             break;
           case virtual_fem::VECTORIAL_DUAL_TYPE:
             {
               base_tensor u;
-              u.mat_transp_reduction(pfp_->grad(ii()), B(), 2);
+              // u.mat_transp_reduction(pfp_->grad(ii()), B(), 2);
+	      spec_mat_tmult_(pfp_->grad(ii()), B(), u);
               t.mat_transp_reduction(u, B(), 1);
             }
             break;
-          default: t.mat_transp_reduction(pfp_->grad(ii()), B(), 2);
+          default:
+	    // t.mat_transp_reduction(pfp_->grad(ii()), B(), 2);
+	    spec_mat_tmult_(pfp_->grad(ii()), B(), t);
           }
           
         } else {
           base_tensor u;
           pf()->grad_base_value(xref(), u);
           if (u.size()) { /* only if the FEM can provide grad_base_value */
-            t.mat_transp_reduction(u, B(), 2);
+	    // t.mat_transp_reduction(u, B(), 2);
+            spec_mat_tmult_(u, B(), t);
             switch(pf()->vectorial_type()) {
             case virtual_fem::VECTORIAL_PRIMAL_TYPE:
               u = t; t.mat_transp_reduction(u, K(), 1); break;

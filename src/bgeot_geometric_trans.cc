@@ -28,26 +28,86 @@
 
 namespace bgeot {
 
-std::vector<scalar_type>& __aux1(){
-  DEFINE_STATIC_THREAD_LOCAL(std::vector<scalar_type>, v);
-  return v;
-}
-
-std::vector<scalar_type>& __aux2(){
-  DEFINE_STATIC_THREAD_LOCAL(std::vector<scalar_type>, v);
-  return v;
-}
-
-std::vector<scalar_type>& __aux3(){
-  DEFINE_STATIC_THREAD_LOCAL(std::vector<scalar_type>, v);
-  return v;
-}
-
-std::vector<int>& __ipvt_aux(){
-  DEFINE_STATIC_THREAD_LOCAL(std::vector<int>, vi);
-  return vi;
-}
+  std::vector<scalar_type>& __aux1(){
+    DEFINE_STATIC_THREAD_LOCAL(std::vector<scalar_type>, v);
+    return v;
+  }
   
+  std::vector<scalar_type>& __aux2(){
+    DEFINE_STATIC_THREAD_LOCAL(std::vector<scalar_type>, v);
+    return v;
+  }
+  
+  std::vector<scalar_type>& __aux3(){
+    DEFINE_STATIC_THREAD_LOCAL(std::vector<scalar_type>, v);
+    return v;
+  }
+  
+  std::vector<int>& __ipvt_aux(){
+    DEFINE_STATIC_THREAD_LOCAL(std::vector<int>, vi);
+    return vi;
+  }
+  
+  // Optimized matrix mult for small matrices. To be verified.
+  // Multiply the matrix A of size MxN by B of size NxP in C of size MxP
+  void mat_mult(const scalar_type *A, const scalar_type *B, scalar_type *C,
+		size_type M, size_type N, size_type P) {
+    auto itC = C; auto itB = B;
+    for (size_type j = 0; j < P; ++j, itB += N)
+      for (size_type i = 0; i < M; ++i, ++itC) {
+	auto itA = A+i, itB1 = itB;
+	*itC = (*itA) * (*itB1);
+	for (size_type k = 1; k < N; ++k)
+	  { itA += M; ++itB1; *itC += (*itA) * (*itB1); }
+      }
+  }
+
+  // Optimized matrix mult for small matrices.
+  // Multiply the matrix A of size MxN by the transpose of B of size PxN
+  // in C of size MxP
+  void mat_tmult(const scalar_type *A, const scalar_type *B, scalar_type *C,
+		 size_type M, size_type N, size_type P) {
+    auto itC = C;
+    switch (N) {
+    case 0 : std::fill(C, C+M*P, scalar_type(0)); break;
+    case 1 : 
+      for (size_type j = 0; j < P; ++j)
+	for (size_type i = 0; i < M; ++i, ++itC) {
+	  auto itA = A+i, itB = B+j;
+	  *itC = (*itA) * (*itB);
+	}
+      break;
+    case 2 :
+      for (size_type j = 0; j < P; ++j)
+	for (size_type i = 0; i < M; ++i, ++itC) {
+	  auto itA = A+i, itB = B+j;
+	  *itC = (*itA) * (*itB);
+	  itA += M; itB += P; *itC += (*itA) * (*itB);
+	}
+      break;
+    case 3 :
+      for (size_type j = 0; j < P; ++j)
+	for (size_type i = 0; i < M; ++i, ++itC) {
+	  auto itA = A+i, itB = B+j;
+	  *itC = (*itA) * (*itB);
+	  itA += M; itB += P; *itC += (*itA) * (*itB);
+	  itA += M; itB += P; *itC += (*itA) * (*itB);
+	}
+      break;
+    default :
+      for (size_type j = 0; j < P; ++j)
+	for (size_type i = 0; i < M; ++i, ++itC) {
+	  auto itA = A+i, itB = B+j;
+	  *itC = (*itA) * (*itB);
+	  for (size_type k = 1; k < N; ++k)
+	    { itA += M; itB += P; *itC += (*itA) * (*itB); }
+	}
+    }
+  }
+
+
+
+
   // Optimized lu_factor for small square matrices
   size_type lu_factor(scalar_type *A, std::vector<int> &ipvt,
 		      size_type N) {

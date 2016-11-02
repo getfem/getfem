@@ -200,34 +200,34 @@ namespace bgeot {
     inline size_type order(void) const { return sizes_.size(); }
 
     void init(const multi_index &c) {
-      multi_index::const_iterator it = c.begin();
+      auto it = c.begin();
       size_type d = 1;
       sizes_ = c; coeff.resize(c.size());
-      multi_index::iterator p = coeff.begin(), pe = coeff.end();
+      auto p = coeff.begin(), pe = coeff.end();
       for ( ; p != pe; ++p, ++it) { *p = d; d *= *it; }
       this->resize(d);
     }
 
-    void init() { sizes_.resize(0);  coeff.resize(0); this->resize(1); }
+    inline void init() { sizes_.resize(0);  coeff.resize(0); this->resize(1); }
 
-    void init(size_type i) {
+    inline void init(size_type i) {
       sizes_.resize(1); sizes_[0] = i; coeff.resize(1); coeff[0] = 1;
       this->resize(i);
     }
 
-    void init(size_type i, size_type j) {
+    inline void init(size_type i, size_type j) {
       sizes_.resize(2); sizes_[0] = i; sizes_[1] = j;
       coeff.resize(2); coeff[0] = 1; coeff[1] = i;
       this->resize(i*j);
     }
 
-    void init(size_type i, size_type j, size_type k) {
+    inline void init(size_type i, size_type j, size_type k) {
       sizes_.resize(3); sizes_[0] = i; sizes_[1] = j; sizes_[2] = k; 
       coeff.resize(3); coeff[0] = 1; coeff[1] = i; coeff[2] = i*j;
       this->resize(i*j*k);
     }
 
-    void init(size_type i, size_type j, size_type k, size_type l) {
+    inline void init(size_type i, size_type j, size_type k, size_type l) {
       sizes_.resize(4);
       sizes_[0] = i; sizes_[1] = j; sizes_[2] = k; sizes_[3] = k; 
       coeff.resize(4);
@@ -235,29 +235,29 @@ namespace bgeot {
       this->resize(i*j*k*l);
     }
 
-    void adjust_sizes(const multi_index &mi) {
-      if (!mi.size() || (mi.size() != sizes().size())
-          || !(std::equal(mi.begin(), mi.end(), sizes().begin())))
-        init(mi);
-    }
-
-    void adjust_sizes(void) { if (sizes_.size() || this->size() != 1) init(); }
-
-    void adjust_sizes(size_type i)
-    { if (sizes_.size() != 1 || sizes_[0] != i) init(i); }
-
-    void adjust_sizes(size_type i, size_type j)
-    { if (sizes_.size() != 2 || sizes_[0] != i || sizes_[1] != j) init(i, j); }
-
-    void adjust_sizes(size_type i, size_type j, size_type k) {
-      if (sizes_.size() != 3 || sizes_[0] != i || sizes_[1] != j
-          || sizes_[2] != k)
-        init(i, j, k);
-    }
-    void adjust_sizes(size_type i, size_type j, size_type k, size_type l) {
-      if (sizes_.size() != 3 || sizes_[0] != i || sizes_[1] != j
-          || sizes_[2] != k || sizes_[3] != l)
-        init(i, j, k, l);
+    inline void adjust_sizes(const multi_index &mi) { init(mi); }
+    inline void adjust_sizes(void) { init(); }
+    inline void adjust_sizes(size_type i) { init(i); }
+    inline void adjust_sizes(size_type i, size_type j) { init(i, j); }
+    inline void adjust_sizes(size_type i, size_type j, size_type k)
+    { init(i, j, k); }
+    inline void adjust_sizes(size_type i, size_type j, size_type k, size_type l)
+    { init(i, j, k, l); }
+    
+    inline size_type adjust_sizes_changing_last(const tensor &t, size_type P) {
+      const multi_index &mi = t.sizes_; size_type d = mi.size();
+      sizes_.resize(d); coeff.resize(d);
+      if (d) {
+	std::copy(mi.begin(), mi.end(), sizes_.begin());
+	std::copy(t.coeff.begin(), t.coeff.end(), coeff.begin());
+	size_type e = coeff.back();
+	sizes_.back() = P;
+	this->resize(e*P);
+	return e;
+      } else {
+	this->resize(1);
+	return 1;
+      }
     }
 
     /** reduction of tensor t with respect to index ni with matrix m:

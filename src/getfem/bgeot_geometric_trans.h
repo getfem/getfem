@@ -515,6 +515,15 @@ namespace bgeot {
   { return lu_det(&(*(A.begin())), A.nrows()); }
   inline scalar_type lu_inverse(base_matrix &A, bool doassert = true)
   { return lu_inverse(&(*(A.begin())), A.nrows(), doassert); }
+  // Optimized matrix mult for small matrices.
+  // Multiply the matrix A of size MxN by B of size NxP in C of size MxP
+  void mat_mult(const scalar_type *A, const scalar_type *B, scalar_type *C,
+		size_type M, size_type N, size_type P);
+  // Optimized matrix mult for small matrices.
+  // Multiply the matrix A of size MxN by the transpose of B of size PxN
+  // in C of size MxP
+  void mat_tmult(const scalar_type *A, const scalar_type *B, scalar_type *C,
+		 size_type M, size_type N, size_type P);
 
 }  /* end of namespace bgeot.                                             */
 
