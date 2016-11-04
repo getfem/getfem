@@ -801,6 +801,74 @@ namespace getfem {
   (ga_workspace &workspace, const std::string &transname,
    const std::string &expr, size_type N);
 
+  //=========================================================================
+  //
+  //  Projection Interpolate transformation
+  //
+  //=========================================================================
+
+  /** Add a projection interpolate transformation called 'transname' to a model
+      to be used by the generic assembly bricks.
+  */
+  void add_projection_transformation
+  (model &md, const std::string &transname, scalar_type release_distance);
+
+  /** Add a projection interpolate transformation called 'transname' to a
+      workspace to be used by the generic assembly bricks.
+  */
+  void add_projection_transformation
+  (ga_workspace &workspace, const std::string &transname,
+   scalar_type release_distance);
+
+  /** Add a master boundary with corresponding displacement variable
+      'dispname' on a specific boundary 'region' to an existing projection
+      interpolate transformation called 'transname'.
+  */
+  void add_master_contact_boundary_to_projection_transformation
+  (model &md, const std::string &transname,const mesh &m, 
+   const std::string &dispname, size_type region);
+  /** Add a master boundary with corresponding displacement variable
+      'dispname' on a specific boundary 'region' to an existing projection
+      interpolate transformation called 'transname'.
+  */
+  void add_master_contact_boundary_to_projection_transformation
+  (ga_workspace &workspace, const std::string &transname, const mesh &m, 
+   const std::string &dispname, size_type region);
+
+  /** Add a slave boundary with corresponding displacement variable
+      'dispname' on a specific boundary 'region' to an existing projection
+      interpolate transformation called 'transname'.
+  */
+  void add_slave_contact_boundary_to_projection_transformation
+  (model &md, const std::string &transname, const mesh &m, 
+   const std::string &dispname, size_type region);
+
+  /** Add a slave boundary with corresponding displacement variable
+      'dispname' on a specific boundary 'region' to an existing projection
+      interpolate transformation called 'transname'.
+  */
+  void add_slave_contact_boundary_to_projection_transformation
+  (ga_workspace &workspace, const std::string &transname, const mesh &m,
+   const std::string &dispname, size_type region);
+
+  /** Add a rigid obstacle whose geometry corresponds to the zero level-set
+      of the high-level generic assembly expression `expr`
+      to an existing projection interpolate transformation called 'transname'.
+      In `expr`, the current position is denoted `X` with components
+      `X(1), X(2), ...`. It is also allowed to use `x` instead of `X(1)`,
+      `y` instead of `X(2)`, `z` instead of `X(3)` and `w` instead of `X(4)`. 
+  */
+  void add_rigid_obstacle_to_projection_transformation
+  (model &md, const std::string &transname,
+   const std::string &expr, size_type N);
+
+  /** Add a rigid obstacle whose geometry corresponds to the zero level-set
+      of the high-level generic assembly expression 'expr'
+      to an existing projection interpolate transformation called 'transname'.
+  */
+  void add_rigid_obstacle_to_projection_transformation
+  (ga_workspace &workspace, const std::string &transname,
+   const std::string &expr, size_type N);
 }  /* end of namespace getfem.                                             */
 
 

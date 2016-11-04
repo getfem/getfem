@@ -476,7 +476,60 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        add_rigid_obstacle_to_raytracing_transformation
        (*md, transname, expr, N);
        );
+/*@SET ('add projection transformation', @str transname, @scalar release_distance)
+      Add a projection interpolate transformation called `transname` to a model
+      to be used by the generic assembly bricks.
+      CAUTION: For the moment, the derivative of the
+      transformation is not taken into account in the model solve. @*/  
+      sub_command
+      ("add projection transformation", 2, 2, 0, 0,
+       std::string transname = in.pop().to_string();
+       scalar_type d = in.pop().to_scalar();
+       add_projection_transformation(*md, transname, d);
+       );
 
+    /*@SET ('add master contact boundary to projection transformation', @str transname, @tmesh m, @str dispname, @int region)
+      Add a master contact boundary with corresponding displacement variable
+      `dispname` on a specific boundary `region` to an existing projection
+      interpolate transformation called `transname`. @*/
+    sub_command
+      ("add master contact boundary to projection transformation", 4, 4, 0, 0,
+       std::string transname = in.pop().to_string();
+       getfem::mesh *sm = extract_mesh_object(in.pop());
+       std::string dispname = in.pop().to_string();
+       size_type region = in.pop().to_integer();
+       add_master_contact_boundary_to_projection_transformation
+       (*md, transname, *sm, dispname, region);
+       );
+
+    /*@SET ('add slave contact boundary to projection transformation', @str transname, @tmesh m, @str dispname, @int region)
+      Add a slave contact boundary with corresponding displacement variable
+      `dispname` on a specific boundary `region` to an existing projection
+      interpolate transformation called `transname`. @*/
+    sub_command
+      ("add slave contact boundary to projection transformation", 4, 4, 0, 0,
+       std::string transname = in.pop().to_string();
+       getfem::mesh *sm = extract_mesh_object(in.pop());
+       std::string dispname = in.pop().to_string();
+       size_type region = in.pop().to_integer();
+       add_slave_contact_boundary_to_projection_transformation
+       (*md, transname, *sm, dispname, region);
+       );
+
+    /*@SET ('add rigid obstacle to projection transformation', @str transname, @str expr, @int N)
+      Add a rigid obstacle whose geometry corresponds to the zero level-set
+      of the high-level generic assembly expression `expr`
+      to an existing projection interpolate transformation called `transname`.
+      @*/
+    sub_command
+      ("add rigid obstacle to projection transformation", 3, 3, 0, 0,
+       std::string transname = in.pop().to_string();
+       std::string expr = in.pop().to_string();
+       size_type N = in.pop().to_integer();
+       add_rigid_obstacle_to_projection_transformation
+       (*md, transname, expr, N);
+       );
+      
     /*@SET ind = ('add linear generic assembly brick', @tmim mim, @str expression[, @int region[, @int is_symmetric[, @int is_coercive]]])
       Adds a matrix term given by the assembly string `expr` which will
       be assembled in region `region` and with the integration method `mim`.
@@ -566,43 +619,6 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        out.pop().from_integer(int(ind));
        );
 
-    /*@SET ('add assembly assignment', @str dataname, @str expression[, @int region[, @int order[, @int before]]])
-      Adds expression `expr` to be evaluated at assembly time and being
-      assigned to the data `dataname` which has to be of im_data type.
-      This allows for instance to store a sub-expression of an assembly
-      computation to be used on an other assembly. It can be used for instance
-      to store the plastic strain in plasticity models.
-      `order` represents the order of assembly where this assignement has to be
-      done (potential(0), weak form(1) or tangent system(2) or at each
-      order(-1)). The default value is 1.
-      If before = 1, the the assignement is perfromed before the computation
-      of the other assembly terms, such that the data can be used in the
-      remaining of the assembly as an intermediary result (be careful that it is
-      still considered as a data, no derivation of the expression is performed
-      for the tangent system).
-      If before = 0 (default), the assignement is done after the assembly terms.
-      @*/
-    sub_command
-      ("add assembly assignment", 2, 5, 0, 0,
-       std::string dataname = in.pop().to_string();
-       std::string expr = in.pop().to_string();
-       size_type region = size_type(-1);
-       if (in.remaining()) region = in.pop().to_integer();
-       size_type order = 1;
-       if (in.remaining()) order = in.pop().to_integer();
-       bool before = false;
-       if (in.remaining()) before = (in.pop().to_integer() != 0);
-       
-       md->add_assembly_assignments(dataname, expr, region, order, before);
-       );
-
-    /*@SET ('clear assembly assignment')
-      Delete all added assembly assignments
-      @*/
-    sub_command
-      ("clear assembly assignment", 0, 0, 0, 0,
-       md->clear_assembly_assignments();
-       );
 
     /*@SET ind = ('add Laplacian brick', @tmim mim, @str varname[, @int region])
     Add a Laplacian term to the model relatively to the variable `varname`
@@ -3501,6 +3517,117 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        add_contact_boundary_to_large_sliding_contact_brick
        (*md, ind, *mim, region, true, true,
         dispname, lambda, wname);
+       );
+
+       /*@SET ind = ('add Nitsche large sliding contact brick raytracing', @bool unbiased_version @str dataname_r, @scalar release_distance, [, @str dataname_fr[, @str dataname_alpha[, @int version]]])
+      Adds a large sliding contact with friction brick to the model based on the Nitsche's method.
+      This brick is able to deal with self-contact, contact between
+      several deformable bodies and contact with rigid obstacles.
+      It uses the high-level generic assembly. It adds to the model
+      a raytracing_interpolate_transformation object. "unbiased_version" refers to the version of Nische's method to be used.
+      (unbiased or biased one).
+      For each slave boundary a  material law should be defined as a function of the dispacement variable on this boundary.
+      The release distance should be determined with care
+      (generally a few times a mean element size, and less than the
+      thickness of the body). Initially, the brick is added with no contact
+      boundaries. The contact boundaries and rigid bodies are added with
+      special functions. `version` is 0 (the default value) for the
+      non-symmetric version and 1 for the more symmetric one
+      (not fully symmetric even without friction). @*/
+
+     sub_command
+       ("add Nitsche large sliding contact brick raytracing", 2, 6, 0, 1,
+        
+        bool unbiased=(in.pop().to_integer() != 0);
+        std::string dataname_r = in.pop().to_string();
+        scalar_type d = in.pop().to_scalar();
+        std::string dataname_fr = "0";
+        if (in.remaining()) dataname_fr = in.pop().to_string();
+        if (dataname_fr.size() == 0) dataname_fr = "0";
+        std::string dataname_alpha = "1";
+        if (in.remaining()) dataname_alpha = in.pop().to_string();
+        if (dataname_alpha.size() == 0) dataname_alpha = "1";
+        bool sym_v = false;
+        if (in.remaining()) sym_v = (in.pop().to_integer() != 0);
+        bool frame_indifferent = false;
+        if (in.remaining()) frame_indifferent = (in.pop().to_integer() != 0);
+
+        size_type  ind
+        = getfem::add_Nitsche_large_sliding_contact_brick_raytracing
+        (*md, unbiased, dataname_r, d, dataname_fr, dataname_alpha, sym_v,
+         frame_indifferent);
+        out.pop().from_integer(int(ind + config::base_index()));
+        );
+
+     /*@SET ('add rigid obstacle to Nitsche large sliding contact brick', @int indbrick, @str expr, @int N)
+      Adds a rigid obstacle to an existing large sliding contact
+      with friction brick. `expr` is an expression using the high-level
+      generic assembly language (where `x` is the current point n the mesh)
+      which should be a signed distance to the obstacle.
+      `N` is the mesh dimension. @*/
+    sub_command
+      ("add rigid obstacle to Nitsche large sliding contact brick", 3, 3, 0, 0,
+       size_type ind = in.pop().to_integer() - config::base_index();
+       std::string expr = in.pop().to_string();
+       size_type N = in.pop().to_integer();
+
+       add_rigid_obstacle_to_Nitsche_large_sliding_contact_brick
+       (*md, ind, expr, N);
+       );
+
+     /*@SET ('add master contact boundary to biased Nitsche large sliding contact brick', @int indbrick, @tmim mim, @int region, @str dispname[, @str wname])
+      Adds a master contact boundary to an existing biased Nitsche's large sliding contact
+      with friction brick. @*/
+    sub_command
+      ("add master contact boundary to biased Nitsche large sliding contact brick", 4, 5, 0,0,
+       size_type ind = in.pop().to_integer() - config::base_index();
+       getfem::mesh_im *mim = to_meshim_object(in.pop());
+       size_type region = in.pop().to_integer();
+       std::string dispname = in.pop().to_string();
+       std::string wname;
+       if (in.remaining()) wname = in.pop().to_string();
+
+       add_contact_boundary_to_Nitsche_large_sliding_contact_brick
+       (*md, ind, *mim, region, true, false, false,
+        dispname, "", wname);
+       );
+
+
+    /*@SET ('add slave contact boundary to biased Nitsche large sliding contact brick', @int indbrick, @tmim mim, @int region, @str dispname, @str lambdaname[, @str wname])
+      Adds a slave contact boundary to an existing biased Nitsche's large sliding contact
+      with friction brick. @*/
+    sub_command
+      ("add slave contact boundary to biased Nitsche large sliding contact brick", 5, 6, 0,0,
+       size_type ind = in.pop().to_integer() - config::base_index();
+       getfem::mesh_im *mim = to_meshim_object(in.pop());
+       size_type region = in.pop().to_integer();
+       std::string dispname = in.pop().to_string();
+       std::string sigma = in.pop().to_string();
+       std::string wname;
+       if (in.remaining()) wname = in.pop().to_string();
+
+       add_contact_boundary_to_Nitsche_large_sliding_contact_brick
+       (*md, ind, *mim, region, false, true, false,
+        dispname, sigma, wname);
+       );
+
+    /*@SET ('add master slave contact boundary to unbiased Nitsche's large sliding contact brick', @int indbrick, @tmim mim, @int region, @str dispname, @str lambdaname[, @str wname])
+      Adds a contact boundary to an existing unbiased Nitschelarge sliding contact
+      with friction brick which is both master and slave. @*/
+    sub_command
+      ("add contact boundary to unbiased Nitsche large sliding contact brick",
+       5, 6, 0, 0,
+       size_type ind = in.pop().to_integer() - config::base_index();
+       getfem::mesh_im *mim = to_meshim_object(in.pop());
+       size_type region = in.pop().to_integer();
+       std::string dispname = in.pop().to_string();
+       std::string sigma = in.pop().to_string();
+       std::string wname;
+       if (in.remaining()) wname = in.pop().to_string();
+
+       add_contact_boundary_to_Nitsche_large_sliding_contact_brick
+       (*md, ind, *mim, region, true, true, true,
+        dispname, sigma, wname);
        );
   }
 

@@ -508,40 +508,6 @@ void gf_mesh_fem_get(getfemint::mexargs_in& m_in,
        out.pop().from_sparse(M);
        );
 
-    /*@GET Vr = ('reduce vector', @vec V)
-    Multiply the provided vector V with the extension matrix of the @tmf.@*/
-    sub_command
-      ("reduce vector", 1, 1, 0, 1,
-       if (in.front().is_complex()) {
-         carray V = in.pop().to_carray(-1);
-         std::vector<std::complex<double> > Vr(mf->nb_dof());
-         mf->reduce_vector(V, Vr);
-         out.pop().from_dcvector(Vr);
-       } else {
-         darray V = in.pop().to_darray(-1);
-         std::vector<double> Vr(mf->nb_dof());
-         mf->reduce_vector(V, Vr);
-         out.pop().from_dcvector(Vr);
-       }
-       );
-
-    /*@GET Ve = ('extend vector', @vec V)
-    Multiply the provided vector V with the reduction matrix of the @tmf.@*/
-    sub_command
-      ("extend vector", 1, 1, 0, 1,
-       if (in.front().is_complex()) {
-         carray V = in.pop().to_carray(-1);
-         std::vector<std::complex<double> > Ve(mf->nb_basic_dof());
-         mf->extend_vector(V, Ve);
-         out.pop().from_dcvector(Ve);
-       } else {
-         darray V = in.pop().to_darray(-1);
-         std::vector<double> Ve(mf->nb_basic_dof());
-         mf->extend_vector(V, Ve);
-         out.pop().from_dcvector(Ve);
-       }
-       );
-
 
     /*@GET DOFs = ('basic dof on region',@mat Rs)
     Return the list of basic dof (before the optional reduction) lying on one

@@ -174,9 +174,9 @@ namespace bgeot {
     typedef const T * const_iterator;
 
     reference operator[](size_type l)
-    { GMM_ASSERT2(l < size(), "out of range"); return base()[l]; }
+    { GMM_ASSERT2(l <=size(), "out of range, l="<<l<<"size="<<size()); return base()[l]; }
     value_type operator[](size_type l) const
-    { GMM_ASSERT2(l < size(), "out of range"); return const_base()[l]; }
+    { GMM_ASSERT2(l <= size(), "out of range, l="<<l<<"size="<<size()); return const_base()[l]; }
     value_type at(size_type l) const { return const_base()[l]; }
     iterator begin() { return base(); }
     const_iterator begin() const { return const_base(); }

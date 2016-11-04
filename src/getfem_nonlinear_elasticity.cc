@@ -389,16 +389,24 @@ namespace getfem {
   }
   
   scalar_type SaintVenant_Kirchhoff_hyperelastic_law::strain_energy
-  (const base_matrix &E, const base_vector &params, scalar_type) const {
+  (const base_matrix &E, const base_vector &params, scalar_type det_trans) const {
+        // should be optimized, maybe deriving sigma from strain energy
+    if (det_trans <= scalar_type(0))
+    {return 1e200;
+      cout<<"element_inverse"<< endl;}
+
     return gmm::sqr(gmm::mat_trace(E)) * params[0] / scalar_type(2)
     + gmm::mat_euclidean_norm_sqr(E) * params[1];
   }
   
   void SaintVenant_Kirchhoff_hyperelastic_law::sigma
-  (const base_matrix &E, base_matrix &result,const base_vector &params, scalar_type) const {
+  (const base_matrix &E, base_matrix &result,const base_vector &params, scalar_type det_trans) const {
     gmm::copy(gmm::identity_matrix(), result);
     gmm::scale(result, params[0] * gmm::mat_trace(E));
     gmm::add(gmm::scaled(E, 2 * params[1]), result);
+      if (det_trans <= scalar_type(0)){
+        gmm::add(gmm::scaled(E, 1e200), result);
+        cout<<"element_inverse"<< endl;};
   }
   void SaintVenant_Kirchhoff_hyperelastic_law::grad_sigma
   (const base_matrix &E, base_tensor &result,const base_vector &params, scalar_type) const {
@@ -479,7 +487,7 @@ namespace getfem {
     // result(0,0,1,0) = 0;
     result(0,0,1,1) = params[1]*params[0]/(1-params[1]*poisonXY);
     result(1,1,0,0) = params[1]*params[0]/(1-params[1]*poisonXY);
-    // result(1,1,0,1) = 0;
+    // result(1,1,0,1) = 0;out
     // result(1,1,1,0) = 0;
     result(1,1,1,1) = params[2]/(1-params[1]*poisonXY);
     // result(0,1,0,0) = 0;
@@ -493,10 +501,10 @@ namespace getfem {
   }
 
   scalar_type Mooney_Rivlin_hyperelastic_law::strain_energy
-  (const base_matrix &E, const base_vector &params,
-   scalar_type /* det_trans*/) const {
-// shouldn't negative det_trans be handled here???
-//    if (compressible && det_trans <= scalar_type(0)) return 1e200;
+  (const base_matrix &E, const base_vector &params
+   ,scalar_type  det_trans) const {
+    //shouldn't negative det_trans be handled here???
+    if (compressible && det_trans <= scalar_type(0)) return 1e200;
     size_type N = gmm::mat_nrows(E);
     GMM_ASSERT1(N == 3, "Mooney Rivlin hyperelastic law only defined "
                 "on dimension 3, sorry");
@@ -504,7 +512,6 @@ namespace getfem {
     gmm::scale(C, scalar_type(2));
     gmm::add(gmm::identity_matrix(), C);
     compute_invariants ci(C);
-
     size_type i=0;
     scalar_type C1 = params[i++]; // C10
     scalar_type W = C1 * (ci.j1() - scalar_type(3));
@@ -521,7 +528,7 @@ namespace getfem {
 
   void Mooney_Rivlin_hyperelastic_law::sigma
   (const base_matrix &E, base_matrix &result,
-   const base_vector &params, scalar_type /*det_trans*/) const {
+   const base_vector &params, scalar_type det_trans) const {
     size_type N = gmm::mat_nrows(E);
     GMM_ASSERT1(N == 3, "Mooney Rivlin hyperelastic law only defined "
                 "on dimension 3, sorry");
@@ -541,9 +548,10 @@ namespace getfem {
       scalar_type D1 = params[i++];
       scalar_type di3 = D1 - D1 / sqrt(gmm::abs(ci.i3()));
       gmm::add(gmm::scaled(ci.grad_i3(), scalar_type(2) * di3), result);
+
 // shouldn't negative det_trans be handled here???
-//      if (det_trans <= scalar_type(0))
-//        gmm::add(gmm::scaled(C, 1e200), result);
+      if (det_trans <= scalar_type(0))
+          gmm::add(gmm::scaled(C, 1e200), result);
     }
   }
 
@@ -595,15 +603,15 @@ namespace getfem {
     nb_params_ = 2;
     if (compressible) ++nb_params_; // D1 != 0
     if (neohookean) --nb_params_;   // C2 == 0
+
   }
 
 
 
 
   scalar_type Neo_Hookean_hyperelastic_law::strain_energy
-  (const base_matrix &E, const base_vector &params,
-   scalar_type det_trans) const {
-    if (det_trans <= scalar_type(0)) return 1e200;
+  (const base_matrix &E, const base_vector &params, scalar_type det_trans) const {
+   if (det_trans <= scalar_type(0)) return 1e200;
     size_type N = gmm::mat_nrows(E);
     GMM_ASSERT1(N == 3, "Neo Hookean hyperelastic law only defined "
                 "on dimension 3, sorry");
@@ -626,7 +634,7 @@ namespace getfem {
 
   void Neo_Hookean_hyperelastic_law::sigma
   (const base_matrix &E, base_matrix &result,
-   const base_vector &params, scalar_type det_trans) const {
+   const base_vector &params , scalar_type det_trans) const {
     size_type N = gmm::mat_nrows(E);
     GMM_ASSERT1(N == 3, "Neo Hookean hyperelastic law only defined "
                 "on dimension 3, sorry");
@@ -644,7 +652,6 @@ namespace getfem {
     else
        gmm::add(gmm::scaled(ci.grad_i3(),
                             lambda/2 - lambda/(2*ci.i3()) - mu / ci.i3()), result);
-    
     if (det_trans <= scalar_type(0))
       gmm::add(gmm::scaled(C, 1e200), result);
   }
@@ -847,7 +854,7 @@ namespace getfem {
     gmm::add(gmm::scaled(C, -scalar_type(2) * b), result);
     if (det_trans <= scalar_type(0))
       gmm::add(gmm::scaled(C, 1e200), result);
-    else {
+          else {
       scalar_type det = bgeot::lu_inverse(&(*(C.begin())), N);
       gmm::add(gmm::scaled(C, scalar_type(2) * c * det - d), result);
     }

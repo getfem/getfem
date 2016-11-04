@@ -411,19 +411,19 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        Possible values are 'superlu', 'mumps' (if supported),
        'cg/ildlt', 'gmres/ilu' and 'gmres/ilut'.
     - 'lsearch', @str LINE_SEARCH_NAME
-       select explicitely the line search method used for the linear systems
-       (the default value is 'default').
+       select explicitely the line search method used for the linear systems (the
+       default value is 'default').
        Possible values are 'simplest', 'systematic', 'quadratic' or 'basic'.
 
-    Return the number of iterations, if an iterative method is used.
+      Return the number of iterations, if an iterative method is used.
       
-    Note that it is possible to disable some variables
-    (see MODEL:SET('disable variable') ) in order to
-    solve the problem only with respect to a subset of variables (the
-    disabled variables are then considered as data) for instance to
-    replace the global Newton strategy with a fixed point one.
+      Note that it is possible to disable some variables
+      (see MODEL:SET('disable variable') ) in order to
+      solve the problem only with respect to a subset of variables (the
+      disabled variables are then considered as data) for instance to
+      replace the global Newton strategy with a fixed point one.
 
-    @*/
+      @*/
     sub_command
       ("solve", 0, 17, 0, 2,
        getfemint::interruptible_iteration iter;
@@ -873,9 +873,7 @@ void gf_model_get(getfemint::mexargs_in& m_in,
 
 
     /*@GET ('elastoplasticity next iter', @tmim mim, @str varname, @str previous_dep_name, @str projname, @str datalambda, @str datamu, @str datathreshold, @str datasigma)
-      Used with the old (obsolete) elastoplasticity brick to pass from an
-      iteration to the next one. 
-      Compute and save the stress constraints sigma for the next iterations.
+      Compute and save the stress constraints sigma for other hypothetical iterations.
       'mim' is the integration method to use for the computation.
       'varname' is the main variable of the problem.
       'previous_dep_name' represents the displacement at the previous time step.
@@ -900,160 +898,8 @@ void gf_model_get(getfemint::mexargs_in& m_in,
         datalambda, datamu, datathreshold, datasigma);
        );
 
-    /*@GET ('small strain elastoplasticity next iter', @tmim mim,  @str lawname, @str unknowns_type [, @str varnames, ...] [, @str params, ...] [, @str theta = '1' [, @str dt = 'timestep']] [, @int region = -1])
-      Function that allows to pass from a time step to another for the
-      small strain plastic brick. The parameters have to be exactly the
-      same than the one of `add_small_strain_elastoplasticity_brick`,
-      so see the documentation of this function for the explanations.
-      Basically, this brick computes the plastic strain
-      and the plastic multiplier and stores them for the next step.
-      Additionaly, it copies the computed displacement to the data
-      that stores the displacement of the previous time step (typically
-      'u' to 'Previous_u'). It has to be called before any use of
-      `compute_small_strain_elastoplasticity_Von_Mises`.
-      @*/
-    sub_command
-      ("small strain elastoplasticity next iter", 10, 15, 0, 0,
-       getfem::mesh_im *mim = to_meshim_object(in.pop());
-       std::string lawname = in.pop().to_string();
-       filter_lawname(lawname);
-       size_type nb_var = 0; size_type nb_params = 0;
-       if (lawname.compare("isotropic_perfect_plasticity") == 0 ||
-           lawname.compare("prandtl_reuss") == 0 ||
-           lawname.compare("plane_strain_isotropic_perfect_plasticity") == 0 ||
-           lawname.compare("plane_strain_prandtl_reuss") == 0) {
-         nb_var = nb_params = 3;
-       } else if
-         (lawname.compare("isotropic_plasticity_linear_hardening") == 0 ||
-          lawname.compare("prandtl_reuss_linear_hardening") == 0 ||
-          lawname.compare("plane_strain_isotropic_plasticity_linear_hardening") == 0 ||
-          lawname.compare("plane_strain_prandtl_reuss_linear_hardening") == 0) {
-         nb_var = 4; nb_params = 5;
-       } else
-         THROW_BADARG(lawname << " is not an implemented elastoplastic law");
-
-       getfem::plasticity_unknowns_type unknowns_type(getfem::DISPLACEMENT_ONLY);
-       mexarg_in argin = in.pop();
-       if (argin.is_string()) {
-         std::string opt = argin.to_string();
-         filter_lawname(opt);
-         if (opt.compare("displacement_only") == 0)
-           unknowns_type = getfem::DISPLACEMENT_ONLY;
-         else if (opt.compare("displacement_and_plastic_multiplier") == 0)
-           unknowns_type = getfem::DISPLACEMENT_AND_PLASTIC_MULTIPLIER;
-         else
-           THROW_BADARG("Wrong input");
-       } else if (argin.is_integer())
-         unknowns_type = static_cast<getfem::plasticity_unknowns_type>
-                         (argin.to_integer(0,1));
-
-       std::vector<std::string> varnames;
-       for (size_type i = 0; i < nb_var; ++i)
-         varnames.push_back(in.pop().to_string());
-
-       std::vector<std::string> params;
-       for (size_type i = 0; i < nb_params; ++i)
-         params.push_back(in.pop().to_string());
-
-       std::string theta = "1";
-       std::string dt = "timestep";
-       size_type region = size_type(-1);
-       for (size_type i=0; i < 3 && in.remaining(); ++i) {
-         argin = in.pop();
-         if (argin.is_string()) {
-           if (i==0)      theta = argin.to_string();
-           else if (i==1) dt = argin.to_string();
-           else           THROW_BADARG("Wrong input");
-         } else if (argin.is_integer()) {
-           region = argin.to_integer();
-           GMM_ASSERT1(!in.remaining(), "Wrong input");
-         }
-       }
-       params.push_back(theta);
-       params.push_back(dt);
-
-       getfem::small_strain_elastoplasticity_next_iter
-         (*md, *mim, lawname, unknowns_type, varnames, params, region);
-       workspace().set_dependence(md, mim);
-       );
-
-    /*@GET V = ('small strain elastoplasticity Von Mises', @tmim mim, @tmf mf_vm, @str lawname, @str unknowns_type [, @str varnames, ...] [, @str params, ...] [, @str theta = '1' [, @str dt = 'timestep']] [, @int region])
-      This function computes the Von Mises stress field with respect to
-      a small strain elastoplasticity term, approximated on `mf_vm`,
-      and stores the result into `VM`.  All other parameters have to be
-      exactly the same as for `add_small_strain_elastoplasticity_brick`.
-      Remember that `small_strain_elastoplasticity_next_iter` has to be called
-      before any call of this function.
-      @*/
-    sub_command
-      ("small strain elastoplasticity Von Mises", 11, 16, 0, 0,
-       getfem::mesh_im *mim = to_meshim_object(in.pop());
-       const getfem::mesh_fem *mf_vm = to_meshfem_object(in.pop());
-       std::string lawname = in.pop().to_string();
-       filter_lawname(lawname);
-       size_type nb_var = 0; size_type nb_params = 0;
-       if (lawname.compare("isotropic_perfect_plasticity") == 0 ||
-           lawname.compare("prandtl_reuss") == 0 ||
-           lawname.compare("plane_strain_isotropic_perfect_plasticity") == 0 ||
-           lawname.compare("plane_strain_prandtl_reuss") == 0) {
-         nb_var = nb_params = 3;
-       } else if
-         (lawname.compare("isotropic_plasticity_linear_hardening") == 0 ||
-          lawname.compare("prandtl_reuss_linear_hardening") == 0 ||
-          lawname.compare("plane_strain_isotropic_plasticity_linear_hardening") == 0 ||
-          lawname.compare("plane_strain_prandtl_reuss_linear_hardening") == 0) {
-         nb_var = 4; nb_params = 5;
-       } else
-         THROW_BADARG(lawname << " is not an implemented elastoplastic law");
-
-       getfem::plasticity_unknowns_type unknowns_type(getfem::DISPLACEMENT_ONLY);
-       mexarg_in argin = in.pop();
-       if (argin.is_string()) {
-         std::string opt = argin.to_string();
-         filter_lawname(opt);
-         if (opt.compare("displacement_only") == 0)
-           unknowns_type = getfem::DISPLACEMENT_ONLY;
-         else if (opt.compare("displacement_and_plastic_multiplier") == 0)
-           unknowns_type = getfem::DISPLACEMENT_AND_PLASTIC_MULTIPLIER;
-         else
-           THROW_BADARG("Wrong input");
-       } else if (argin.is_integer())
-         unknowns_type = static_cast<getfem::plasticity_unknowns_type>
-                         (argin.to_integer(0,1));
-
-       std::vector<std::string> varnames;
-       for (size_type i = 0; i < nb_var; ++i)
-         varnames.push_back(in.pop().to_string());
-
-       std::vector<std::string> params;
-       for (size_type i = 0; i < nb_params; ++i)
-         params.push_back(in.pop().to_string());
-
-       std::string theta = "1";
-       std::string dt = "timestep";
-       size_type region = size_type(-1);
-       for (size_type i=0; i < 3 && in.remaining(); ++i) {
-         argin = in.pop();
-         if (argin.is_string()) {
-           if (i==0)      theta = argin.to_string();
-           else if (i==1) dt = argin.to_string();
-           else           THROW_BADARG("Wrong input");
-         } else if (argin.is_integer()) {
-           region = argin.to_integer();
-           GMM_ASSERT1(!in.remaining(), "Wrong input");
-         }
-       }
-       params.push_back(theta);
-       params.push_back(dt);
-
-       getfem::model_real_plain_vector VMM(mf_vm->nb_dof());
-       getfem::compute_small_strain_elastoplasticity_Von_Mises
-       (*md, *mim, lawname, unknowns_type, varnames, params, *mf_vm, VMM, region);
-       out.pop().from_dcvector(VMM);
-       );
-
     /*@GET V = ('compute elastoplasticity Von Mises or Tresca', @str datasigma, @tmf mf_vm[, @str version])
-      For the obsolete plasticity brick. Compute on `mf_vm` the Von-Mises or the Tresca stress of a field for plasticity and return it into the vector V.
+      Compute on `mf_vm` the Von-Mises or the Tresca stress of a field for plasticity and return it into the vector V.
       `datasigma` is a vector which contains the stress constraints values supported by the mesh.
       `version` should be  'Von_Mises' or 'Tresca' ('Von_Mises' is the default).@*/
     sub_command
@@ -1077,7 +923,7 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        );
 
     /*@GET V = ('compute plastic part', @tmim mim, @tmf mf_pl, @str varname, @str previous_dep_name, @str projname, @str datalambda, @str datamu, @str datathreshold, @str datasigma)
-      For the obsolete plasticity brick. Compute on `mf_pl` the plastic part and return it into the vector V.
+      Compute on `mf_pl` the plastic part and return it into the vector V.
       `datasigma` is a vector which contains the stress constraints values supported by the mesh.@*/
      sub_command
       ("compute plastic part", 9, 9, 0, 1,
@@ -1265,6 +1111,38 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        size_type ind = in.pop().to_integer() - config::base_index();
        std::string name
        = transformation_name_of_large_sliding_contact_brick(*md, ind);
+       out.pop().from_string(name.c_str());
+       );
+  /*@GET V = ('sliding data group name of Nitsche large sliding contact brick', @int indbrick)
+      Gives the name of the group of variables corresponding to the
+      sliding data for an existing large sliding contact brick.@*/
+      sub_command
+      ("sliding data group name of Nitsche large sliding contact brick", 1, 1, 0, 1,
+       size_type ind = in.pop().to_integer() - config::base_index();
+       std::string name
+       = sliding_data_group_name_of_Nitsche_large_sliding_contact_brick(*md, ind);
+       out.pop().from_string(name.c_str());
+       );
+
+     /*@GET V = ('displacement group name of Nitsche large sliding contact brick', @int indbrick)
+      Gives the name of the group of variables corresponding to the
+      sliding data for an existing large sliding contact brick.@*/
+      sub_command
+      ("displacement group name of Nitsche large sliding contact brick", 1, 1, 0, 1,
+       size_type ind = in.pop().to_integer() - config::base_index();
+       std::string name
+       = displacement_group_name_of_Nitsche_large_sliding_contact_brick(*md, ind);
+       out.pop().from_string(name.c_str());
+       );
+
+     /*@GET V = ('transformation name of Nitsche large sliding contact brick', @int indbrick)
+      Gives the name of the group of variables corresponding to the
+      sliding data for an existing large sliding contact brick.@*/
+      sub_command
+      ("transformation name of Nitsche large sliding contact brick", 1, 1, 0, 1,
+       size_type ind = in.pop().to_integer() - config::base_index();
+       std::string name
+       = transformation_name_of_Nitsche_large_sliding_contact_brick(*md, ind);
        out.pop().from_string(name.c_str());
        );
 

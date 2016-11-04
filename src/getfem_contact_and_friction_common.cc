@@ -44,9 +44,15 @@ namespace getfem {
         ctx.pf()->interpolation_grad(ctx, coeff, grad, dim_type(ctx.N()));
         gmm::add(gmm::identity_matrix(), grad);
         scalar_type J = bgeot::lu_inverse(&(*(grad.begin())), ctx.N());
-        if (J <= scalar_type(0)) GMM_WARNING1("Inverted element !" << J);
+        if (J <= scalar_type(0)) {GMM_WARNING1("Inverted element !" << J);
+            gmm::mult(gmm::transposed(grad), n0, n);
+            gmm::scale(n, gmm::sgn(J));
+            //cout<< "n0 =" <<  n0 << "n =" <<n<< endl;
+            //cout<< "x0=" <<  ctx.xref() << "x =" <<ctx.xreal()<< endl;
+            }
+       else {
         gmm::mult(gmm::transposed(grad), n0, n);
-        if (J < 0) gmm::scale(n, gmm::sgn(J)); // In case of inverted element
+        gmm::scale(n, gmm::sgn(J));} // Test
       }
   }
 
@@ -1281,7 +1287,7 @@ namespace getfem {
   
   class  raytracing_interpolate_transformation
     : public virtual_interpolate_transformation {
-
+  protected:
     // Structure describing a contact boundary
     struct contact_boundary {
       size_type region;            // Boundary number
@@ -1820,14 +1826,13 @@ namespace getfem {
           
           if (niter > 1 && dist_ref > 15) break;
           if (niter > 5 && dist_ref > 8) break;
-          if ((niter > 1 && dist_ref > 7) || nbfail == 3) exited = true;
+          if (/*(niter > 1 && dist_ref > 7) ||*/ nbfail == 3) exited = true;
         }
         bool converged = (gmm::vect_norm2(res) < 2E-6);
         bool is_in = (pfu_y->ref_convex(cv_y)->is_in(ctx_y.xref()) < 1E-6);
-        GMM_ASSERT1(!(exited && converged && is_in),
-                    "A non conformal case !! " << gmm::vect_norm2(res)
-                    << " : " << nbfail << " : " << niter);
-        
+       // GMM_ASSERT1(!(exited && converged && is_in),
+       //             "A non conformal case !! " << gmm::vect_norm2(res)
+       //             << " : " << nbfail << " : " << niter);
         if (is_in) {
           ctx_y.pf()->interpolation(ctx_y, coeff_y, pt_y, dim_type(N));
           pt_y += ctx_y.xreal();
@@ -2004,7 +2009,434 @@ namespace getfem {
     raytracing_interpolate_transformation(scalar_type d)
       : release_distance(d) {}
   };
+//=========================================================================
+  //
+  //  Projection interpolate transformation for generic assembly
+  //
+  //=========================================================================
 
+ class  projection_interpolate_transformation
+    : public raytracing_interpolate_transformation {
+
+    scalar_type release_distance;  // Limit distance beyond which the contact
+                                   // will not be considered.
+  public:
+    int transform(const ga_workspace &workspace, const mesh &m_x,
+                  fem_interpolation_context &ctx_x,
+                  const base_small_vector &/*Normal*/,
+                  const mesh **m_t,
+                  size_type &cv, short_type &face_num, base_node &P_ref,
+                  base_small_vector &N_y,
+                  std::map<var_trans_pair, base_tensor> &derivatives,
+                  bool compute_derivatives) const {
+      size_type cv_x = ctx_x.convex_num();
+      short_type face_x = ctx_x.face_num();
+      GMM_ASSERT1(face_x != short_type(-1), "The contact transformation can "
+                  "only be applied to a boundary");
+
+      //
+      // Find the right (slave) contact boundary
+      //
+      mesh_boundary_cor::const_iterator it =  boundary_for_mesh.find(&m_x);
+      GMM_ASSERT1(it != boundary_for_mesh.end(),
+                  "Mesh with no declared contact boundary");
+      size_type ib_x = size_type(-1);
+      for (const auto &boundary_ind : it->second) {
+        const contact_boundary &cb = contact_boundaries[boundary_ind];
+        if (m_x.region(cb.region).is_in(cv_x, face_x))
+          { ib_x = boundary_ind; break; }
+      }
+      GMM_ASSERT1(ib_x != size_type(-1),
+                  "No contact region found for this point");
+      const contact_boundary &cb_x = contact_boundaries[ib_x];
+      const mesh_fem &mfu_x = *(cb_x.mfu); 
+      pfem pfu_x = mfu_x.fem_of_element(cv_x);
+      size_type N = mfu_x.linked_mesh().dim();
+      GMM_ASSERT1(mfu_x.get_qdim() == N,
+                  "Displacment field with wrong dimension");
+      
+      model_real_plain_vector coeff_x, coeff_y, stored_coeff_y;
+      base_small_vector a(N-1), b(N-1), pt_x(N), pt_y(N), n_x(N);
+      base_small_vector stored_pt_y(N), stored_n_y(N), stored_pt_y_ref(N);
+      base_small_vector n0_x, n_y(N), n0_y, res(N-1), res2(N-1), dir(N-1);
+      base_matrix G_x, G_y, grad(N,N), hessa(N-1, N-1);
+      std::vector<base_small_vector> ti(N-1);
+      scalar_type stored_signed_distance(0);
+      std::string stored_dispname;
+      scalar_type d0 = 1E300, d1, d2;
+      const mesh *stored_m_y(0);
+      size_type stored_cv_y(-1);
+      short_type stored_face_y(-1);
+      fem_interpolation_context stored_ctx_y;
+      size_type nbwarn(0);
+
+
+      //
+      // Computation of the deformed point and unit normal vectors
+      //
+      slice_vector_on_basic_dof_of_element(mfu_x, *(cb_x.U), cv_x, coeff_x);
+      bgeot::vectors_to_base_matrix(G_x, m_x.points_of_convex(cv_x));
+      ctx_x.set_pf(pfu_x);
+      pfu_x->interpolation(ctx_x, coeff_x, pt_x, dim_type(N));
+      pt_x += ctx_x.xreal();
+      compute_normal(ctx_x, face_x, false, coeff_x, n0_x, n_x, grad);
+      n_x /= gmm::vect_norm2(n_x);
+
+      //
+      //  Determine the nearest rigid obstacle, taking into account
+      //  the release distance.
+      //
+
+      bool first_pair_found = false;
+      size_type irigid_obstacle(-1);
+      for (size_type i = 0; i < obstacles.size(); ++i) {
+        const obstacle &obs = obstacles[i];
+        gmm::copy(pt_x, obs.point());
+        const base_tensor &t = obs.eval();
+        
+        GMM_ASSERT1(t.size() == 1, "Obstacle level set function as to be "
+                    "a scalar valued one");
+        d1 = t[0];
+        // cout << "d1 = " << d1 << endl;
+        if (gmm::abs(d1) < release_distance && d1 < d0) {
+          const base_tensor &t_der = obs.eval_derivative();
+          GMM_ASSERT1(t_der.size() == n_x.size(), "Bad derivative size");
+          if (gmm::vect_sp(t_der.as_vector(), n_x) < scalar_type(0)) 
+            { d0 = d1; irigid_obstacle = i; gmm::copy(t_der.as_vector(),n_y); }
+        }
+      }
+
+      if (irigid_obstacle != size_type(-1)) {
+        // cout << "Testing obstacle " << irigid_obstacle << endl;
+        const obstacle &obs = obstacles[irigid_obstacle];
+        gmm::copy(pt_x, obs.point());
+        gmm::copy(pt_x, pt_y);
+        size_type nit = 0, nb_fail = 0;
+        scalar_type alpha(0), beta(0);
+        d1 = d0;
+        
+        while (gmm::abs(d1) > 1E-13 && ++nit < 50 && nb_fail < 3) {
+          if (nit != 1) gmm::copy(obs.eval_derivative().as_vector(), n_y);
+
+          for (scalar_type lambda(1); lambda >= 1E-3; lambda/=scalar_type(2)) {
+          gmm::add(gmm::scaled(n_y, -d1/gmm::vect_norm2_sqr(n_y)), pt_y, pt_x);
+
+            if (gmm::abs(d2) < gmm::abs(d1)) break;
+          }
+          if (gmm::abs(beta - d1 / gmm::vect_sp(n_y, n_x)) > scalar_type(500))
+            nb_fail++;
+          beta = alpha; d1 = d2;
+        }
+        gmm::copy(obs.point(), pt_y);
+
+        if (gmm::abs(d1) > 1E-8) {
+           GMM_WARNING1("Raytrace on rigid obstacle failed");
+        } // CRITERION 4 for rigid bodies : Apply the release distance
+        else if (gmm::vect_dist2(pt_y, pt_x) <= release_distance) {
+          n_y /= gmm::vect_norm2(n_y);
+          d0 = gmm::vect_dist2(pt_y, pt_x) * gmm::sgn(d0);
+          stored_pt_y = stored_pt_y_ref = pt_y; stored_n_y = n_y, 
+          stored_signed_distance = d0;
+          first_pair_found = true;
+        } else
+          irigid_obstacle = size_type(-1);
+      }
+
+      //
+      // Determine the potential contact pairs with deformable bodies
+      //
+      bgeot::rtree::pbox_set bset;
+      base_node bmin(pt_x), bmax(pt_x);
+      for (size_type i = 0; i < N; ++i)
+        { bmin[i] -= release_distance; bmax[i] += release_distance; }
+
+      face_boxes.find_line_intersecting_boxes(pt_x, n_x, bmin, bmax, bset);
+            //
+      // Iteration on potential contact pairs and application
+      // of selection criteria
+      //
+      for (const auto &pbox : bset) {
+        face_box_info &fbox_y = face_boxes_info[pbox->id];
+        size_type ib_y = fbox_y.ind_boundary;
+        const contact_boundary &cb_y =  contact_boundaries[ib_y];
+        const mesh_fem &mfu_y = *(cb_y.mfu);
+        const mesh &m_y = mfu_y.linked_mesh();
+        bool ref_conf=false;
+        size_type cv_y = fbox_y.ind_element;
+        pfem pfu_y = mfu_y.fem_of_element(cv_y);
+        short_type face_y = fbox_y.ind_face;
+        bgeot::pgeometric_trans pgt_y= m_y.trans_of_convex(cv_y);
+
+        // CRITERION 1 : The unit normal vectors are compatible
+        //               and the two points are not in the same element.
+        if (gmm::vect_sp(fbox_y.mean_normal, n_x) >= scalar_type(0) ||
+            (cv_x == cv_y && &m_x == &m_y))
+          continue;
+
+        //
+        // Classical projection for y by quasi Newton algorithm
+        //
+        bgeot::vectors_to_base_matrix(G_y, m_y.points_of_convex(cv_y));
+        const base_node &Y0
+          = pfu_y->ref_convex(cv_y)->points_of_face(face_y)[0];
+        fem_interpolation_context ctx_y(pgt_y, pfu_y, Y0, G_y, cv_y, face_y);
+        
+        const base_small_vector &NY0
+          = pfu_y->ref_convex(cv_y)->normals()[face_y];
+
+         gmm::clear(a);
+
+        for (size_type k = 0; k < N-1; ++k) { // A basis for the face
+          gmm::resize(ti[k], N);
+          scalar_type norm(0);
+          while(norm < 1E-5) {
+            gmm::fill_random(ti[k]);
+            ti[k] -= gmm::vect_sp(ti[k], NY0) * NY0;
+            for (size_type l = 0; l < k; ++l)
+              ti[k] -= gmm::vect_sp(ti[k], ti[l]) * ti[l];
+            norm = gmm::vect_norm2(ti[k]);
+          }
+          ti[k] /= norm;
+        }        
+        slice_vector_on_basic_dof_of_element(mfu_y, *(cb_y.U), cv_y, coeff_y);
+        proj_pt_surf_cost_function_object pps(Y0, pt_x, ctx_y, coeff_y, ti,
+                                                1E-10, ref_conf);
+         base_small_vector grada(N-1);
+          scalar_type det(0);
+          scalar_type residual = gmm::vect_norm2(res);
+          scalar_type dist = pps(a, grada);
+          pps(a, res);
+          for (size_type niter = 0;
+               gmm::vect_norm2(grada) > 1E-7 && niter <= 50; ++niter) {
+
+            for (size_type subiter(0);;) {
+              pps(a, hessa);
+              det = gmm::abs(gmm::lu_inverse(hessa, false));
+              if (det > 1E-15) break;
+              for (size_type i = 0; i < N-1; ++i)
+                a[i] += gmm::random() * 1E-7;
+              if (++subiter > 4) break;
+            }
+            if (det <= 1E-15) break;
+            // Computation of the descent direction
+            gmm::mult(hessa, gmm::scaled(grada, scalar_type(-1)), dir);
+
+            // Line search
+            for (scalar_type lambda(1);
+                 lambda >= 1E-3; lambda /= scalar_type(2)) {
+              gmm::add(a, gmm::scaled(dir, lambda), b);
+              if (pps(b) < dist) break;
+              gmm::add(a, gmm::scaled(dir, -lambda), b);
+              if (pps(b) < dist) break;
+            }
+             //cout<< "b =" << b <<endl;
+            gmm::copy(b, a);
+            dist = pps(a, grada);
+          }
+
+          bool converged = (gmm::vect_norm2(grada) < 2E-6);
+          if (!converged) { // Try with BFGS
+            gmm::iteration iter(1E-10, 0 /* noisy*/, 100 /*maxiter*/);
+            gmm::clear(a);
+            gmm::bfgs(pps, pps, a, 10, iter, 0, 0.5);
+            residual = gmm::abs(iter.get_res());
+            converged = (residual < 2E-5);
+          }
+
+        bool is_in = (pfu_y->ref_convex(cv_y)->is_in(ctx_y.xref()) < 1E-6);
+         
+          //cout<< "y_ref =" << ctx_y.xref() <<endl;
+          //cout<< "x_ref =" << ctx_x.xref() <<endl;
+         // cout<< "y =" << ctx_y.xreal() <<endl;
+         // cout<< "x =" << ctx_x.xreal() <<endl;
+        // cout<< "is_in =" << is_in <<endl;
+
+        if (is_in || (!converged )) {
+          if (!ref_conf) {
+            ctx_y.pf()->interpolation(ctx_y, coeff_y, pt_y, dim_type(N));
+            pt_y += ctx_y.xreal();
+          } else {
+            pt_y = ctx_y.xreal();
+          }
+        }
+        // CRITERION 2 : The contact pair is eliminated when
+        //               projection/raytrace do not converge.
+        if (!converged) {
+          if ( nbwarn < 4) {
+            GMM_WARNING3("Projection algorithm did not converge "
+                         "for point " << pt_x << " residual " << residual
+                         << " projection computed " << pt_y);
+            ++nbwarn;
+          }
+          continue;
+        }
+
+        // CRITERION 3 : The projected point is inside the element
+        //               The test should be completed: If the point is outside
+        //               the element, a rapid reprojection on the face
+        //               (on the reference element, with a linear algorithm)
+        //               can be applied and a test with a neigbhour element
+        //               to decide if the point is in fact ok ...
+        //               (to be done only if there is no projection on other
+        //               element which coincides and with a test on the
+        //               distance ... ?) To be specified (in this case,
+        //               change xref).
+        if (!is_in) continue;
+
+        // CRITERION 4 : Apply the release distance
+
+        scalar_type signed_dist = gmm::vect_dist2(pt_y, pt_x);
+        //cout<< "signd_dist="<< signed_dist << "relaese_dist="<< release_distance <<endl;
+        if (signed_dist > release_distance) continue;
+
+        // compute the unit normal vector at y and the signed distance.
+        base_small_vector ny0(N);
+        compute_normal(ctx_y, face_y, ref_conf, coeff_y, ny0, n_y, grad);
+        // ny /= gmm::vect_norm2(ny); // Useful only if the unit normal is kept
+        signed_dist *= gmm::sgn(gmm::vect_sp(pt_x - pt_y, n_y));
+
+        // CRITERION 5 : comparison with rigid obstacles
+        // CRITERION 7 : smallest signed distance on contact pairs
+        if (first_pair_found && stored_signed_distance < signed_dist)
+            continue;
+
+        // CRITERION 1 : again on found unit normal vector
+        if (gmm::vect_sp(n_y, n_x) >= scalar_type(0)) continue;
+
+        // CRITERION 6 : for self-contact only : apply a test on
+        //               unit normals in reference configuration.
+        if (&m_x == &m_y) {
+
+          base_small_vector diff = ctx_x.xreal() - ctx_y.xreal();
+          scalar_type ref_dist = gmm::vect_norm2(diff);
+
+          if ( (ref_dist < scalar_type(4) * release_distance)
+               && (gmm::vect_sp(diff, ny0) < - 0.01 * ref_dist) )
+            continue;
+        }
+
+        stored_pt_y = pt_y; stored_pt_y_ref = ctx_y.xref();
+        stored_m_y = &m_y; stored_cv_y = cv_y; stored_face_y = face_y;
+        stored_n_y = n_y;
+        stored_ctx_y = ctx_y;
+        stored_coeff_y = coeff_y;
+        stored_signed_distance = signed_dist;
+        stored_dispname = cb_y.dispname;
+        first_pair_found = true;
+        irigid_obstacle = size_type(-1);
+
+          // Projection could be ameliorated by finding a starting point near
+          // x (with respect to the integration method, for instance).
+
+          // A specific (Quasi) Newton algorithm for computing the projection
+      }   
+
+      int ret_type = 0;
+      *m_t = 0; cv = size_type(-1); face_num = short_type(-1);
+      if (irigid_obstacle != size_type(-1)) {
+        P_ref = stored_pt_y; N_y = stored_n_y;
+        ret_type = 2;
+      } else if (first_pair_found) {
+        *m_t = stored_m_y; cv = stored_cv_y; face_num = stored_face_y;
+        P_ref = stored_pt_y_ref;
+        ret_type = 1;
+      }
+      // Note on derivatives of the transformation : for efficiency and
+      // simplicity reasons, the derivative should be computed with
+      // the value of corresponding test functions. This means that
+      // for a transformation F(u) the conputed derivative is F'(u).Test_u
+      // including the Test_u.
+
+      if (compute_derivatives) {
+        if (ret_type >= 1) {
+          fem_interpolation_context &ctx_y = stored_ctx_y;
+          size_type cv_y = 0;
+          if (ret_type == 1) cv_y = ctx_y.convex_num();
+        
+          
+          base_matrix I_nyny(N,N); // I - ny@ny
+          gmm::copy(gmm::identity_matrix(), I_nyny);
+          gmm::rank_one_update(I_nyny, stored_n_y,
+                               gmm::scaled(stored_n_y,scalar_type(-1)));
+        
+          // Computation of F_y
+          base_matrix F_y(N,N), F_y_inv(N,N), M1(N, N), M2(N, N);
+          pfem pfu_y = 0;
+          if (ret_type == 1) {
+            pfu_y = ctx_y.pf();
+            pfu_y->interpolation_grad(ctx_y, stored_coeff_y, F_y, dim_type(N));
+            gmm::add(gmm::identity_matrix(), F_y);
+            gmm::copy(F_y, F_y_inv);
+            gmm::lu_inverse(F_y_inv);
+          } else {
+            gmm::copy(gmm::identity_matrix(), F_y);
+            gmm::copy(gmm::identity_matrix(), F_y_inv);
+          }
+
+
+          base_tensor base_ux;
+          base_matrix vbase_ux;
+          ctx_x.base_value(base_ux);
+          size_type qdim_ux = pfu_x->target_dim();
+          size_type ndof_ux = pfu_x->nb_dof(cv_x) * N / qdim_ux;
+          vectorize_base_tensor(base_ux, vbase_ux, ndof_ux, qdim_ux, N);
+          
+          base_tensor base_uy;
+          base_matrix vbase_uy;
+          size_type ndof_uy = 0;
+          if (ret_type == 1) {
+            ctx_y.base_value(base_uy);
+            size_type qdim_uy = pfu_y->target_dim();
+            ndof_uy = pfu_y->nb_dof(cv_y) * N / qdim_uy;
+            vectorize_base_tensor(base_uy, vbase_uy, ndof_uy, qdim_uy, N);
+          }
+          
+          base_tensor grad_base_ux, vgrad_base_ux;
+          ctx_x.grad_base_value(grad_base_ux);
+          vectorize_grad_base_tensor(grad_base_ux, vgrad_base_ux, ndof_ux,
+                                     qdim_ux, N);
+
+          // Derivative : F_y^{-1}*I_nyny*(Test_u(X)-Test_u(Y))
+          //         and I_nyny*(I - ny@ny) = I_nyny
+          
+          // F_y^{-1}*I_nyny*Test_u(X)
+          gmm::mult(F_y_inv, I_nyny, M1);
+          base_matrix der_x(ndof_ux, N);
+          gmm::mult(vbase_ux, gmm::transposed(M1), der_x);
+          
+          // -F_y^{-1}*I_nyny*Test_u(Y)
+          base_matrix der_y(ndof_uy, N);
+          if (ret_type == 1) {
+            gmm::mult(vbase_uy, gmm::transposed(M1), der_y);
+            gmm::scale(der_y, scalar_type(-1));
+          }
+
+          const std::string &dispname_x
+            = workspace.variable_in_group(cb_x.dispname, m_x);
+
+          for (auto&& d : derivatives) {
+            if (dispname_x.compare(d.first.varname) == 0 &&
+                d.first.transname.size() == 0) {
+              d.second.adjust_sizes(ndof_ux, N);
+              gmm::copy(der_x.as_vector(), d.second.as_vector());
+            } else if (ret_type == 1 &&
+                       stored_dispname.compare(d.first.varname) == 0 &&
+                       d.first.transname.size() != 0) {
+              d.second.adjust_sizes(ndof_uy, N);
+              gmm::copy(der_y.as_vector(), d.second.as_vector());
+            } else
+              d.second.adjust_sizes(0, 0);
+          }
+        } else {
+          for (auto&& d : derivatives)
+            d.second.adjust_sizes(0, 0);
+        }
+      }
+      return ret_type;
+    }
+    projection_interpolate_transformation(const scalar_type &d)
+      :raytracing_interpolate_transformation(d), release_distance(d) {}
+  };
   void add_raytracing_transformation
   (model &md, const std::string &transname, scalar_type d) {
     pinterpolate_transformation
@@ -2074,6 +2506,80 @@ namespace getfem {
    const std::string &expr, size_type N) {
     raytracing_interpolate_transformation *p
       = dynamic_cast<raytracing_interpolate_transformation *>
+      (const_cast<virtual_interpolate_transformation *>
+       (&(*(workspace.interpolate_transformation(transname)))));
+    p->add_rigid_obstacle(workspace, expr, N);
+  }
+
+ void add_projection_transformation
+  (model &md, const std::string &transname, scalar_type d) {
+    pinterpolate_transformation
+      p = std::make_shared<projection_interpolate_transformation>(d);
+    md.add_interpolate_transformation(transname, p);
+  }
+
+  void add_projection_transformation
+  (ga_workspace &workspace, const std::string &transname, scalar_type d) {
+    pinterpolate_transformation
+      p = std::make_shared<projection_interpolate_transformation>(d);
+    workspace.add_interpolate_transformation(transname, p);
+  }
+
+  void add_master_contact_boundary_to_projection_transformation
+  (model &md, const std::string &transname, const mesh &m,
+   const std::string &dispname, size_type region) {
+    projection_interpolate_transformation *p
+      = dynamic_cast<projection_interpolate_transformation *>
+      (const_cast<virtual_interpolate_transformation *>
+       (&(*(md.interpolate_transformation(transname)))));
+    p->add_contact_boundary(md, m, dispname, region, false);
+  }
+
+  void add_slave_contact_boundary_to_projection_transformation
+  (model &md, const std::string &transname, const mesh &m,
+   const std::string &dispname, size_type region) {
+    projection_interpolate_transformation *p
+      = dynamic_cast<projection_interpolate_transformation *>
+      (const_cast<virtual_interpolate_transformation *>
+       (&(*(md.interpolate_transformation(transname)))));
+    p->add_contact_boundary(md, m, dispname, region, true);
+  }
+
+  void add_master_contact_boundary_to_projection_transformation
+  (ga_workspace &workspace, const std::string &transname, const mesh &m,
+   const std::string &dispname, size_type region) {
+    projection_interpolate_transformation *p
+      = dynamic_cast<projection_interpolate_transformation *>
+      (const_cast<virtual_interpolate_transformation *>
+       (&(*(workspace.interpolate_transformation(transname)))));
+    p->add_contact_boundary(workspace, m, dispname, region, false);
+  }
+
+  void add_slave_contact_boundary_to_projection_transformation
+  (ga_workspace &workspace, const std::string &transname, const mesh &m,
+   const std::string &dispname, size_type region) {
+    projection_interpolate_transformation *p
+      = dynamic_cast<projection_interpolate_transformation *>
+      (const_cast<virtual_interpolate_transformation *>
+       (&(*(workspace.interpolate_transformation(transname)))));
+    p->add_contact_boundary(workspace, m, dispname, region, true);
+  }
+
+  void add_rigid_obstacle_to_projection_transformation
+  (model &md, const std::string &transname,
+   const std::string &expr, size_type N) {
+    projection_interpolate_transformation *p
+      = dynamic_cast<projection_interpolate_transformation *>
+      (const_cast<virtual_interpolate_transformation *>
+       (&(*(md.interpolate_transformation(transname)))));
+    p->add_rigid_obstacle(md, expr, N);
+  }
+
+  void add_rigid_obstacle_to_projection_transformation
+  (ga_workspace &workspace, const std::string &transname,
+   const std::string &expr, size_type N) {
+    projection_interpolate_transformation *p
+      = dynamic_cast<projection_interpolate_transformation *>
       (const_cast<virtual_interpolate_transformation *>
        (&(*(workspace.interpolate_transformation(transname)))));
     p->add_rigid_obstacle(workspace, expr, N);

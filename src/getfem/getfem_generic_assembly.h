@@ -339,7 +339,6 @@ namespace getfem {
     bgeot::multi_index qdims(const std::string &name) const;
 
     const model_real_plain_vector &value(const std::string &name) const;
-
     scalar_type get_time_step() const;
 
     // macros

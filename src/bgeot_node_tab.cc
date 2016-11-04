@@ -112,8 +112,7 @@ namespace bgeot {
         id = dal::dynamic_tas<base_node>::add(pt);
         for (size_type i = 0; i < sorters.size(); ++i) {
           sorters[i].insert(id);
-          GMM_ASSERT3(sorters[i].size() == card(), "internal error, "
-		      << sorters[i].size() << " != " << card() << " pt = " << pt);
+          GMM_ASSERT3(sorters[i].size() == card(), "internal error");
         }
       }
     }
