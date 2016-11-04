@@ -552,6 +552,27 @@ namespace getfem {
   (ga_workspace &workspace, const std::string &transname,
    const mesh &source_mesh, const mesh &target_mesh, const std::string &expr);
 
+  /** Add a transformation to the workspace that creates an identity mapping between
+      two meshes in deformed state. Conceptually, it can be viewed as a transformation
+      from expression Xsource + Usource - Utarget, except such an expression
+      cannot be used directly in the transformation from expression (function above),
+      as Utarget needs to be interpolated though an inversion of the transformation of
+      the target domain.
+      Thread safe if added to thread local workspace.
+  */
+  void add_interpolate_transformation_on_deformed_domains
+  (ga_workspace &workspace, const std::string &transname,
+   const mesh &source_mesh, const std::string &source_displacements,
+   const mesh_region &source_region, const mesh &target_mesh,
+   const std::string &target_displacements, const mesh_region &target_region);
+
+  /**.. the same as above, but adding transformation to the model.
+  Note, this version is not thread safe.*/
+  void add_interpolate_transformation_on_deformed_domains
+  (model &md, const std::string &transname,
+   const mesh &source_mesh, const std::string &source_displacements,
+   const mesh_region &source_region, const mesh &target_mesh,
+   const std::string &target_displacements, const mesh_region &target_region);
 
   /** Create a new instance of a transformation corresponding to the
       interpolation on the neighbour element. Can only be applied to the

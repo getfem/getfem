@@ -271,6 +271,7 @@
     <ClCompile Include="..\..\src\getfem_integration_composite.cc" />
     <ClCompile Include="..\..\src\getfem_interpolated_fem.cc" />
     <ClCompile Include="..\..\src\getfem_interpolation.cc" />
+    <ClCompile Include="..\..\src\getfem_interpolation_on_deformed_domains.cpp" />
     <ClCompile Include="..\..\src\getfem_level_set.cc" />
     <ClCompile Include="..\..\src\getfem_level_set_contact.cc" />
     <ClCompile Include="..\..\src\getfem_linearized_plates.cc" />
