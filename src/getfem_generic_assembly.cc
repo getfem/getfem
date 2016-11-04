@@ -362,27 +362,52 @@ namespace getfem {
     GA_NODE_ZERO};
 
   struct assembly_tensor {
-         // If copied, all the properties are taken in the copied tensor
+         // If copied, all the properties are taken in the original
+         // non condensed tensor.
          // If condensed, a condensed version exists
          // for condensed tensor, resize instructions have to be adapted ...
          // In some cases both tensor have to be adpated.
     bool is_copied;
-    int condensed; // 0: not condensed, 1: base, 2: grad, 3: grad transposed, ..
+    int condensed_; // 0: not condensed, 1: base, 2: grad, 3: grad transposed, ..
     base_tensor t;
-    base_tensor *tensor_copied;
-    std::shared_ptr<base_tensor> tensor_condensed;
+    assembly_tensor *tensor_copied;
+    std::shared_ptr<base_tensor> condensed_tensor;
+    size_type qdim_; // Dimension of the vectorization for condensed tensors
 
-    const base_tensor &tensor() const
-    { return (is_copied ? *tensor_copied : t); }
+    const base_tensor &org_tensor() const
+    { return is_copied ? tensor_copied->org_tensor() : t; }
+    base_tensor &org_tensor()
+    { return is_copied ? tensor_copied->org_tensor() : t; }
     
-    base_tensor &tensor()
-    { return (is_copied ? *tensor_copied : t); }
+    const base_tensor &tensor() const {
+      return (is_copied ? tensor_copied->tensor()
+	      : (condensed_ ? *condensed_tensor:t));
+    }
+    
+    base_tensor &tensor() {
+      return (is_copied ? tensor_copied->tensor()
+	      : (condensed_ ? *condensed_tensor:t));
+    }
 
-    inline void set_to_original() { is_copied = false; condensed = 0; }
-    inline void set_to_copy(assembly_tensor &t_)
-    { is_copied = true; condensed = 0; tensor_copied = &(t_.tensor()); }
-    inline void set_to_copy(base_tensor &t_)
-    { is_copied = true; condensed = 0; tensor_copied = &t_; }
+    void set_condensed(int cond, size_type q) {
+      condensed_ = cond; qdim_ = q;
+      condensed_tensor = std::make_shared<base_tensor>();
+      // + resize à la bonne taille suivant les fonctions tests ?
+    }
+
+    size_type qdim(void) { return is_copied ? tensor_copied->qdim() : qdim_; }
+
+    int condensed() const
+    { return is_copied ? tensor_copied->condensed() : condensed_; }
+
+    inline void cancel_condensed() { condensed_ = 0; }
+    inline void set_to_original() { is_copied = false; condensed_ = 0; }
+    inline void set_to_copy(assembly_tensor &t_) {
+      is_copied = true; condensed_ = t_.condensed_; qdim_ = t_.qdim_;
+      t = t_.org_tensor();
+      tensor_copied = &(t_);
+    }
+    
 
     inline void adjust_sizes(const bgeot::multi_index &sizes)
     { t.adjust_sizes(sizes); }
@@ -420,16 +445,15 @@ namespace getfem {
     { set_to_original(); t.adjust_sizes(n, m); }
 
     void init_third_order_tensor(size_type n, size_type m,  size_type l)
-    { set_to_original(); t.adjust_sizes(n,m,l); }
+    { set_to_original(); t.adjust_sizes(n, m, l); }
 
     void init_fourth_order_tensor(size_type n, size_type m,
                                   size_type l, size_type k)
-    { set_to_original(); t.adjust_sizes(n,m,l,k); }
+    { set_to_original(); t.adjust_sizes(n, m, l, k); }
     
-    const bgeot::multi_index &sizes() const { return tensor().sizes(); }
+    const bgeot::multi_index &sizes() const { return t.sizes(); }
 
-
-    assembly_tensor() : is_copied(false), condensed(0), tensor_copied(0) {}
+    assembly_tensor() : is_copied(false), condensed_(0), tensor_copied(0) {}
   };
 
   struct ga_tree_node;
@@ -466,6 +490,7 @@ namespace getfem {
 
     inline const base_tensor &tensor() const { return t.tensor(); }
     inline base_tensor &tensor() { return t.tensor(); }
+    int condensed() const { return t.condensed(); }
     
     inline size_type nb_test_functions() const {
       if (test_function_type == size_type(-1)) return 0;
@@ -481,7 +506,7 @@ namespace getfem {
     }
 
     inline size_type tensor_proper_size() const
-    { return tensor().size() / tensor_test_size(); }
+    { return t.org_tensor().size() / tensor_test_size(); }
 
     inline size_type tensor_proper_size(size_type i) const
     { return t.sizes()[nb_test_functions()+i]; }
@@ -2061,9 +2086,7 @@ namespace getfem {
       const mesh *m;
       ga_if_hierarchy current_hierarchy;
       std::map<std::string, base_vector> local_dofs;
-      std::map<std::string, std::list<ga_if_hierarchy>> local_dofs_hierarchy;
       std::map<const mesh_fem *, pfem_precomp> pfps;
-      std::map<const mesh_fem *, std::list<ga_if_hierarchy>> pfps_hierarchy;
       std::map<const mesh_fem *, base_tensor> base;
       std::map<const mesh_fem *, std::list<ga_if_hierarchy>> base_hierarchy;
       std::map<const mesh_fem *, base_tensor> grad;
@@ -2087,6 +2110,8 @@ namespace getfem {
       // Instructions being executed at the first Gauss point after
       // a change of integration method only.
       ga_instruction_list begin_instructions;
+      // Instructions executed once per element
+      ga_instruction_list elt_instructions;
       // Instructions executed on each integration/interpolation point
       ga_instruction_list instructions;
       std::map<scalar_type, std::list<pga_tree_node> > node_list;
@@ -2799,22 +2824,19 @@ namespace getfem {
     const base_vector &U;
     const fem_interpolation_context &ctx;
     base_vector &coeff;
-    const size_type &ipt;
     size_type qmult1, qmult2;
     virtual int exec() {
-      if (ipt == 0 || true) {
-	GA_DEBUG_INFO("Instruction: Slice local dofs");
-	GMM_ASSERT1(qmult1 != 0 && qmult2 != 0, "Internal error");
-      	slice_vector_on_basic_dof_of_element(mf, U, ctx.convex_num(),
-					     coeff, qmult1, qmult2);
-      }
+      GA_DEBUG_INFO("Instruction: Slice local dofs");
+      GMM_ASSERT1(qmult1 != 0 && qmult2 != 0, "Internal error");
+      slice_vector_on_basic_dof_of_element(mf, U, ctx.convex_num(),
+					   coeff, qmult1, qmult2);
       return 0;
     }
     ga_instruction_slice_local_dofs(const mesh_fem &mf_, const base_vector &U_,
                                     const fem_interpolation_context &ctx_,
-                                    base_vector &coeff_, const size_type &ipt_,
+                                    base_vector &coeff_,
 				    size_type qmult1_, size_type qmult2_)
-      : mf(mf_), U(U_), ctx(ctx_), coeff(coeff_), ipt(ipt_),
+      : mf(mf_), U(U_), ctx(ctx_), coeff(coeff_),
 	qmult1(qmult1_), qmult2(qmult2_) {}
   };
 
@@ -2851,58 +2873,51 @@ namespace getfem {
     const fem_interpolation_context &ctx;
     size_type qdim;
     const mesh_fem *mfn, **mfg;
-    const size_type &ipt;
     
     virtual int exec() {
-      if (ipt == 0 || true) {
-	GA_DEBUG_INFO("Instruction: adapt first index of tensor");
-	const mesh_fem &mf = *(mfg ? *mfg : mfn);
-	GA_DEBUG_ASSERT(&mf, "Internal error");
-	size_type cv_1 = ctx.is_convex_num_valid()
-	  ? ctx.convex_num() : mf.convex_index().first_true();
-	pfem pf = mf.fem_of_element(cv_1);
-	GMM_ASSERT1(pf, "An element without finite element method defined");
-	size_type Qmult = qdim / pf->target_dim();
-	size_type s = pf->nb_dof(cv_1) * Qmult;
-	if (t.sizes()[0] != s)
-	  { bgeot::multi_index mi = t.sizes(); mi[0] = s; t.adjust_sizes(mi); }
-      }
+      GA_DEBUG_INFO("Instruction: adapt first index of tensor");
+      const mesh_fem &mf = *(mfg ? *mfg : mfn);
+      GA_DEBUG_ASSERT(&mf, "Internal error");
+      size_type cv_1 = ctx.is_convex_num_valid()
+	? ctx.convex_num() : mf.convex_index().first_true();
+      pfem pf = mf.fem_of_element(cv_1);
+      GMM_ASSERT1(pf, "An element without finite element method defined");
+      size_type Qmult = qdim / pf->target_dim();
+      size_type s = pf->nb_dof(cv_1) * Qmult;
+      if (t.sizes()[0] != s)
+	{ bgeot::multi_index mi = t.sizes(); mi[0] = s; t.adjust_sizes(mi); }
       return 0;
     }
 
     ga_instruction_first_ind_tensor(base_tensor &t_,
                                     const fem_interpolation_context &ctx_,
                                     size_type qdim_, const mesh_fem *mfn_,
-                                    const mesh_fem **mfg_,
-				    const size_type &ipt_)
-      : t(t_),  ctx(ctx_), qdim(qdim_), mfn(mfn_), mfg(mfg_), ipt(ipt_) {}
+                                    const mesh_fem **mfg_)
+      : t(t_),  ctx(ctx_), qdim(qdim_), mfn(mfn_), mfg(mfg_) {}
   };
 
   struct ga_instruction_second_ind_tensor
     : public ga_instruction_first_ind_tensor {
 
     virtual int exec() {
-      if (ipt == 0 || true) {
-	GA_DEBUG_INFO("Instruction: adapt second index of tensor");
-	const mesh_fem &mf = *(mfg ? *mfg : mfn);
-	size_type cv_1 = ctx.is_convex_num_valid()
-	  ? ctx.convex_num() : mf.convex_index().first_true();
-	pfem pf = mf.fem_of_element(cv_1);
-	GMM_ASSERT1(pf, "An element without finite element methode defined");
-	size_type Qmult = qdim / pf->target_dim();
-	size_type s = pf->nb_dof(cv_1) * Qmult;
-	if (t.sizes()[1] != s)
-	  { bgeot::multi_index mi = t.sizes(); mi[1] = s; t.adjust_sizes(mi); }
-      }
+      GA_DEBUG_INFO("Instruction: adapt second index of tensor");
+      const mesh_fem &mf = *(mfg ? *mfg : mfn);
+      size_type cv_1 = ctx.is_convex_num_valid()
+	? ctx.convex_num() : mf.convex_index().first_true();
+      pfem pf = mf.fem_of_element(cv_1);
+      GMM_ASSERT1(pf, "An element without finite element methode defined");
+      size_type Qmult = qdim / pf->target_dim();
+      size_type s = pf->nb_dof(cv_1) * Qmult;
+      if (t.sizes()[1] != s)
+	{ bgeot::multi_index mi = t.sizes(); mi[1] = s; t.adjust_sizes(mi); }
       return 0;
     }
 
     ga_instruction_second_ind_tensor(base_tensor &t_,
 				     fem_interpolation_context &ctx_,
                                      size_type qdim_, const mesh_fem *mfn_,
-                                     const mesh_fem **mfg_,
-				     const size_type &ipt_)
-      : ga_instruction_first_ind_tensor(t_, ctx_, qdim_, mfn_, mfg_, ipt_) {}
+                                     const mesh_fem **mfg_)
+      : ga_instruction_first_ind_tensor(t_, ctx_, qdim_, mfn_, mfg_) {}
 
   };
 
@@ -2913,30 +2928,27 @@ namespace getfem {
     const mesh_fem *mfn1, **mfg1;
     size_type qdim2;
     const mesh_fem *mfn2, **mfg2;
-    const size_type &ipt;
     
     virtual int exec() {
-      if (ipt == 0 || true) {
-	GA_DEBUG_INFO("Instruction: adapt two first indices of tensor");
-	const mesh_fem &mf1 = *(mfg1 ? *mfg1 : mfn1);
-	const mesh_fem &mf2 = *(mfg2 ? *mfg2 : mfn2);
-	size_type cv_1 = ctx1.is_convex_num_valid()
-	  ? ctx1.convex_num() : mf1.convex_index().first_true();
-	size_type cv_2 = ctx2.is_convex_num_valid()
-	  ? ctx2.convex_num() : mf2.convex_index().first_true();
-	pfem pf1 = mf1.fem_of_element(cv_1);
-	GMM_ASSERT1(pf1, "An element without finite element method defined");
-	pfem pf2 = mf2.fem_of_element(cv_2);
-	GMM_ASSERT1(pf2, "An element without finite element method defined");
-	size_type Qmult1 = qdim1 / pf1->target_dim();
-	size_type s1 = pf1->nb_dof(cv_1) * Qmult1;
-	size_type Qmult2 = qdim2 / pf2->target_dim();
-	size_type s2 = pf2->nb_dof(cv_2) * Qmult2;
-	if (t.sizes()[0] != s1 || t.sizes()[1] != s2) {
-	  bgeot::multi_index mi = t.sizes();
-	  mi[0] = s1; mi[1] = s2;
-	  t.adjust_sizes(mi);
-	}
+      GA_DEBUG_INFO("Instruction: adapt two first indices of tensor");
+      const mesh_fem &mf1 = *(mfg1 ? *mfg1 : mfn1);
+      const mesh_fem &mf2 = *(mfg2 ? *mfg2 : mfn2);
+      size_type cv_1 = ctx1.is_convex_num_valid()
+	? ctx1.convex_num() : mf1.convex_index().first_true();
+      size_type cv_2 = ctx2.is_convex_num_valid()
+	? ctx2.convex_num() : mf2.convex_index().first_true();
+      pfem pf1 = mf1.fem_of_element(cv_1);
+      GMM_ASSERT1(pf1, "An element without finite element method defined");
+      pfem pf2 = mf2.fem_of_element(cv_2);
+      GMM_ASSERT1(pf2, "An element without finite element method defined");
+      size_type Qmult1 = qdim1 / pf1->target_dim();
+      size_type s1 = pf1->nb_dof(cv_1) * Qmult1;
+      size_type Qmult2 = qdim2 / pf2->target_dim();
+      size_type s2 = pf2->nb_dof(cv_2) * Qmult2;
+      if (t.sizes()[0] != s1 || t.sizes()[1] != s2) {
+	bgeot::multi_index mi = t.sizes();
+	mi[0] = s1; mi[1] = s2;
+	t.adjust_sizes(mi);
       }
       return 0;
     }
@@ -2945,10 +2957,9 @@ namespace getfem {
     (base_tensor &t_, const fem_interpolation_context &ctx1_,
      const fem_interpolation_context &ctx2_,
      size_type qdim1_, const mesh_fem *mfn1_, const mesh_fem **mfg1_,
-     size_type qdim2_, const mesh_fem *mfn2_, const mesh_fem **mfg2_,
-     const size_type &ipt_)
+     size_type qdim2_, const mesh_fem *mfn2_, const mesh_fem **mfg2_)
       : t(t_),  ctx1(ctx1_), ctx2(ctx2_), qdim1(qdim1_), mfn1(mfn1_),
-        mfg1(mfg1_), qdim2(qdim2_), mfn2(mfn2_), mfg2(mfg2_), ipt(ipt_) {}
+        mfg1(mfg1_), qdim2(qdim2_), mfn2(mfn2_), mfg2(mfg2_) {}
   };
 
 
@@ -3467,7 +3478,6 @@ namespace getfem {
     {}
   };
 
-
   struct ga_instruction_copy_val_base : public ga_instruction {
     base_tensor &t;
     const base_tensor &Z;
@@ -3609,8 +3619,7 @@ namespace getfem {
         for (size_type l = 0; l < N2; ++l)
           for (size_type k = 0; k < target_dim; ++k) {
             base_tensor::iterator it = t.begin() + (ss * k + ssss*l);
-            for (size_type i = 0; i < ndof; ++i, ++itZ) {
-              if (i) it += Qmult;
+            for (size_type i = 0; i < ndof; ++i, ++itZ, it += Qmult) {
               base_tensor::iterator it2 = it;
               *it2 = *itZ;
               for (size_type j = 1; j < Qmult; ++j) { it2 += sss; *it2 = *itZ; }
@@ -3668,6 +3677,103 @@ namespace getfem {
       : ga_instruction_copy_val_base(tt, Z_, q) {}
   };
 
+
+  struct ga_instruction_expand_base : public ga_instruction {
+    base_tensor &t;
+    const base_tensor &Z;
+    size_type qdim;
+    // Z(ndof) --> t(Qdim*ndof,qdim)
+    virtual int exec() {
+      GA_DEBUG_INFO("Instruction: expand condensed tensor of class 1");
+      
+      size_type ndof = Z.sizes()[0];
+      if (t.sizes()[0] != ndof * qdim) t.adjust_sizes(ndof*qdim, qdim);
+      std::fill(t.begin(), t.end(), scalar_type(0));
+
+      auto itZ = Z.begin();
+      size_type s = t.sizes()[0], sss = s+1;
+      auto it = t.begin();
+      for (size_type i = 0; i < ndof; ++i, ++itZ, it += qdim) {
+	auto it2 = it;
+	*it2 = *itZ;
+	for (size_type j = 1; j < qdim; ++j) { it2 += sss; *it2 = *itZ; }
+      }
+      return 0;
+    }
+
+    ga_instruction_expand_base(base_tensor &tt, const base_tensor &Z_,
+			       size_type q) : t(tt), Z(Z_), qdim(q) {}
+  };
+
+  struct ga_instruction_expand_grad : public ga_instruction_expand_base {
+    // Z(ndof,N) --> t(qdim*ndof,qdim,N)
+    virtual int exec() {
+      GA_DEBUG_INFO("Instruction: gradient of test functions");
+      
+      size_type ndof = Z.sizes()[0];
+      size_type N = Z.size() / ndof;
+      if (t.sizes()[0] != ndof * qdim) t.adjust_sizes(ndof*qdim, qdim,N);
+      std::fill(t.begin(), t.end(), scalar_type(0));
+      
+      base_tensor::const_iterator itZ = Z.begin();
+      size_type s = t.sizes()[0], sss = s+1, ssss = s*qdim;
+	
+      for (size_type l = 0; l < N; ++l) {
+	base_tensor::iterator it = t.begin() + (ssss*l);
+	for (size_type i = 0; i < ndof; ++i, ++itZ, it += qdim) {
+	  base_tensor::iterator it2 = it;
+	  *it2 = *itZ;
+	  for (size_type j = 1; j < qdim; ++j) { it2+=sss; *it2=*itZ; }
+	}
+      }
+      return 0;
+    }
+
+    ga_instruction_expand_grad(base_tensor &tt, const base_tensor &Z_,
+                                  size_type q)
+      : ga_instruction_expand_base(tt,Z_,q) {}
+  };
+
+  struct ga_instruction_expand_hess : public ga_instruction_expand_base {
+    // Z(ndof,N,N) --> t(qdim*ndof,qdim,N,N)
+    virtual int exec() {
+      GA_DEBUG_INFO("Instruction: Hessian of test functions");
+      
+      
+      size_type ndof = Z.sizes()[0];
+      size_type N2 = Z.size() / ndof;
+      if (t.sizes()[0] != ndof * qdim) t.adjust_sizes(ndof*qdim, qdim, N2);
+      std::fill(t.begin(), t.end(), scalar_type(0));
+      
+      base_tensor::const_iterator itZ = Z.begin();
+      size_type s = t.sizes()[0], ss = s * qdim, sss = s+1;
+      size_type ssss=ss;
+
+      for (size_type l = 0; l < N2; ++l) {
+	base_tensor::iterator it = t.begin() + (ssss*l);
+	for (size_type i = 0; i < ndof; ++i, ++itZ, it += qdim) {
+	  base_tensor::iterator it2 = it;
+	  *it2 = *itZ;
+	  for (size_type j = 1; j < qdim; ++j) { it2 += sss; *it2 = *itZ; }
+	}	
+      }
+      return 0;
+    }
+
+      ga_instruction_expand_hess(base_tensor &tt, const base_tensor &Z_,
+				 size_type q)
+	: ga_instruction_expand_base(tt, Z_, q) {}
+  };
+
+  pga_instruction ga_instruction_expand_tensor
+  (int red, base_tensor &t, const base_tensor &Z, size_type qdim) {
+    switch (red) {
+    case 1 : return std::make_shared<ga_instruction_expand_base>(t, Z, qdim);
+    case 2 : return std::make_shared<ga_instruction_expand_grad>(t, Z, qdim);
+    case 4 : return std::make_shared<ga_instruction_expand_hess>(t, Z, qdim);
+    default : GMM_ASSERT1(false, "Unknown condensed format");
+    }
+  }
 
   struct ga_instruction_elementary_transformation {
     const base_vector &coeff_in;
@@ -10476,20 +10582,20 @@ namespace getfem {
     if (pnode->test_function_type == 1) {
       if (mf1 || mfg1)
         pgai = std::make_shared<ga_instruction_first_ind_tensor>
-          (pnode->tensor(), *pctx1, pnode->qdim1, mf1, mfg1, gis.ipt);
+          (pnode->tensor(), *pctx1, pnode->qdim1, mf1, mfg1);
       if (mf1 && mf1->is_uniform())
         { is_uniform = true; pctx1->invalid_convex_num(); }
     } else if (pnode->test_function_type == 2) {
       if (mf2 || mfg2)
         pgai = std::make_shared<ga_instruction_first_ind_tensor>
-          (pnode->tensor(), *pctx2, pnode->qdim2, mf2, mfg2, gis.ipt);
+          (pnode->tensor(), *pctx2, pnode->qdim2, mf2, mfg2);
       if (mf2 && mf2->is_uniform())
         { is_uniform = true; pctx2->invalid_convex_num(); }
     } else if (pnode->test_function_type == 3) {
       if ((mf1 || mfg1) && (mf2 || mfg2)) {
         pgai = std::make_shared<ga_instruction_two_first_ind_tensor>
           (pnode->tensor(), *pctx1, *pctx2, pnode->qdim1, mf1, mfg1,
-           pnode->qdim2, mf2, mfg2, gis.ipt);
+           pnode->qdim2, mf2, mfg2);
         if (mf1 && mf1->is_uniform() && mf2 && mf2->is_uniform()) {
           is_uniform = true;
           pctx1->invalid_convex_num();
@@ -10497,12 +10603,12 @@ namespace getfem {
         } 
       } else if (mf1 || mfg1) {
         pgai = std::make_shared<ga_instruction_first_ind_tensor>
-          (pnode->tensor(), *pctx1, pnode->qdim1, mf1, mfg1, gis.ipt);
+          (pnode->tensor(), *pctx1, pnode->qdim1, mf1, mfg1);
         if (mf1 && mf1->is_uniform())
           { is_uniform = true; pctx1->invalid_convex_num(); }
       } else if (mf2 || mfg2) {
         pgai = std::make_shared<ga_instruction_second_ind_tensor>
-          (pnode->tensor(), *pctx2, pnode->qdim2, mf2, mfg2, gis.ipt);
+          (pnode->tensor(), *pctx2, pnode->qdim2, mf2, mfg2);
         if (mf2 && mf2->is_uniform())
           { is_uniform = true; pctx2->invalid_convex_num(); }
       }
@@ -10547,9 +10653,8 @@ namespace getfem {
     }
 
     if (pgai) { // resize instruction if needed and no equivalent node detected
-      if (is_uniform)
-        { pgai->exec(); }
-      else { rmi.instructions.push_back(std::move(pgai)); }
+      if (is_uniform) { pgai->exec(); }
+      else { rmi.elt_instructions.push_back(std::move(pgai)); }
     }
 
     size_type interpolate_filter_inst = rmi.instructions.size();
@@ -10564,6 +10669,15 @@ namespace getfem {
     for (size_type i = 0; i < pnode->children.size(); ++i)
       ga_compile_node(pnode->children[i], workspace, gis, rmi, m,
                       function_case, *pif_hierarchy);
+    
+    for (size_type i = 0; i < pnode->children.size(); ++i)
+      if (pnode->children[i]->condensed()) {
+	pgai = ga_instruction_expand_tensor(pnode->children[i]->condensed(),
+					    pnode->t.org_tensor(),
+					    pnode->tensor(), pnode->t.qdim());
+	rmi.instructions.push_back(std::move(pgai));
+	pnode->children[i]->t.cancel_condensed();
+      }
 
     if (pnode->node_type == GA_NODE_INTERPOLATE_FILTER) {
       const std::string &intn = pnode->interpolate_name;
@@ -10719,11 +10833,8 @@ namespace getfem {
                       "integration method used");
 
           // An instruction for extracting local dofs of the variable.
-          if (rmi.local_dofs.count(pnode->name) == 0 ||
-              !(if_hierarchy.is_compatible
-                (rmi.local_dofs_hierarchy[pnode->name]))) {
+          if (rmi.local_dofs.count(pnode->name) == 0) {
             rmi.local_dofs[pnode->name] = base_vector(1);
-            rmi.local_dofs_hierarchy[pnode->name].push_back(if_hierarchy);
             extend_variable_in_gis(workspace, pnode->name, gis);
             // cout << "local dof of " << pnode->name << endl;
 	    size_type qmult2 = mf->get_qdim();
@@ -10731,17 +10842,14 @@ namespace getfem {
 	      qmult2 = size_type(-1);
             pgai = std::make_shared<ga_instruction_slice_local_dofs>
               (*mf, *(gis.extended_vars[pnode->name]), gis.ctx,
-               rmi.local_dofs[pnode->name], gis.ipt,
-	       workspace.qdim(pnode->name) / mf->get_qdim(),
-	       qmult2);
-            rmi.instructions.push_back(std::move(pgai));
+               rmi.local_dofs[pnode->name],
+	       workspace.qdim(pnode->name) / mf->get_qdim(), qmult2);
+            rmi.elt_instructions.push_back(std::move(pgai));
           }
 
           // An instruction for pfp update
-          if (rmi.pfps.count(mf) == 0 ||
-              !(if_hierarchy.is_compatible(rmi.pfps_hierarchy[mf]))) {
+          if (rmi.pfps.count(mf) == 0) {
             rmi.pfps[mf] = 0;
-            rmi.pfps_hierarchy[mf].push_back(if_hierarchy);
             pgai = std::make_shared<ga_instruction_update_pfp>
               (*mf, rmi.pfps[mf], gis.ctx, gis.fp_pool);
 	    if (mf->is_uniform())
@@ -11021,10 +11129,8 @@ namespace getfem {
                       " defined on the same mesh");
 
           // An instruction for pfp update
-          if (rmi.pfps.count(mf) == 0 ||
-              !(if_hierarchy.is_compatible(rmi.pfps_hierarchy[mf]))) {
+          if (rmi.pfps.count(mf) == 0) {
             rmi.pfps[mf] = 0;
-            rmi.pfps_hierarchy[mf].push_back(if_hierarchy);
             pgai = std::make_shared<ga_instruction_update_pfp>
               (*mf, rmi.pfps[mf], gis.ctx, gis.fp_pool);
             if (is_uniform)
@@ -12185,6 +12291,7 @@ namespace getfem {
       GMM_ASSERT1(&m == &(gic.linked_mesh()),
                   "Incompatibility of meshes in interpolation");
       ga_instruction_list &gilb = it->second.begin_instructions;
+      ga_instruction_list &gile = it->second.elt_instructions;
       ga_instruction_list &gil = it->second.instructions;
 
       // iteration on elements (or faces of elements)
@@ -12239,8 +12346,10 @@ namespace getfem {
               } else gis.Normal.resize(0);
             }
             gmm::clear(workspace.assembled_tensor().as_vector());
-            if (ii == 0)
+            if (ii == 0) {
               for (size_type j = 0; j < gilb.size(); ++j) j += gilb[j]->exec();
+	      for (size_type j = 0; j < gile.size(); ++j) j += gile[j]->exec();
+	    }
             for (size_type j = 0; j < gil.size(); ++j) j += gil[j]->exec();
             gic.store_result(v.cv(), ind[ii], workspace.assembled_tensor());
           }
@@ -12272,6 +12381,8 @@ namespace getfem {
                   "Incompatibility of meshes in interpolation");
       ga_instruction_list &gilb = it->second.begin_instructions;
       for (size_type j = 0; j < gilb.size(); ++j) j += gilb[j]->exec();
+      ga_instruction_list &gile = it->second.elt_instructions;
+      for (size_type j = 0; j < gile.size(); ++j) j+=gile[j]->exec();
       ga_instruction_list &gil = it->second.instructions;
       for (size_type j = 0; j < gil.size(); ++j) j += gil[j]->exec();
     }
@@ -12290,6 +12401,7 @@ namespace getfem {
       const getfem::mesh &m = *(instr.second.m);
       GMM_ASSERT1(&m == &(mim.linked_mesh()), "Incompatibility of meshes");
       const ga_instruction_list &gilb = instr.second.begin_instructions;
+      const ga_instruction_list &gile = instr.second.elt_instructions;
       const ga_instruction_list &gil = instr.second.instructions;
       const mesh_region &region = *(instr.first.region());
 
@@ -12366,6 +12478,9 @@ namespace getfem {
                 for (size_type j = 0; j < gilb.size(); ++j) j+=gilb[j]->exec();
                 first_gp = false;
               }
+	      if (gis.ipt == 0) {
+		for (size_type j = 0; j < gile.size(); ++j) j+=gile[j]->exec();
+	      }
               for (size_type j = 0; j < gil.size(); ++j) j+=gil[j]->exec();
               GA_DEBUG_INFO("");
             }

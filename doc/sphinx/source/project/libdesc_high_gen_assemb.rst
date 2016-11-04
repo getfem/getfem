@@ -86,14 +86,14 @@ Assembly tensors are represented on each node by a ``bgeot::tensor<double>`` obj
 
 - Condensed tensor. When working with a vector field, the finite element method is applied on each component. This results on vector base functions having only one nonzero component and some components are ducplicated. By default, the tensors are fully represented with all the zero and duplicated components. However, it is more efficient to perform some operations on the condensed (i.e. scalar) form of the tensor, appliying the vectorization as late as possible. This results in a certain number of condensed tensor formats that are listed below:
   
-  - 1: Base condensed format: The tensor represent a vectorized value. Each value of the condensed tensor is repeated on :math:`d` components of the vectorized tensor. The other components are zero. For instance if :math:`\varphi_i` are the :math:`N` local base functions on an element and the evaluation is on a Gauss point :math:`x`, then the condensed tensor is :math:`\bar{t}(i) = \varphi_i(x)` and the vectorized one is :math:`t(j,k) = \varphi_{j/N}(x) \delta_{k, j \mbox{ mod } N}` where :math:`j/N` is the integer division. For :math:`N=2` and :math:`d=3` the components of the two tensors are represented in the following table
+  - 1: Base condensed format: The tensor represent a vectorized value. Each value of the condensed tensor is repeated on :math:`Q` components of the vectorized tensor. The mesh dimensions is denoted :math:`N`. For instance if :math:`\varphi_i` are the :math:`M` local base functions on an element and the evaluation is on a Gauss point :math:`x`, then the condensed tensor is :math:`\bar{t}(i) = \varphi_i(x)` and the vectorized one is :math:`t(j,k) = \varphi_{j/Q}(x) \delta_{k, j \mbox{ mod } Q}` where :math:`j/M` is the integer division. For :math:`M=2`, :math:`Q=2` and :math:`N=3` the components of the two tensors are represented in the following table
 
     .. csv-table::
        :header: "Condensed tensor", "Vectorized tensor"
        :widths: 5, 12
 
-       ":math:`\bar{t}(i) = \varphi_i(x)`", ":math:`t(j,k) = \varphi_{j/N}(x) \delta_{k, (j \mbox{ mod } N)}`"
-       ":math:`[\varphi_0(x), \varphi_1(x)]`", ":math:`[\varphi_0(x), 0, 0, \varphi_1(x), 0, 0, 0, \varphi_0(x), 0, 0, \varphi_1(x), 0, 0, 0, \varphi_0(x), 0, 0, \varphi_1(x)]`"
+       ":math:`\bar{t}(i) = \varphi_i(x)`", ":math:`t(j,k) = \varphi_{j/Q}(x) \delta_{k, (j \mbox{ mod } Q)}`"
+       ":math:`[\varphi_0(x), \varphi_1(x)]`", ":math:`[\varphi_0(x), 0, \varphi_1(x), 0, 0, \varphi_0(x), 0, \varphi_1(x)]`"
   
   - 2: Grad condensed format
 
@@ -101,8 +101,8 @@ Assembly tensors are represented on each node by a ``bgeot::tensor<double>`` obj
        :header: "Condensed tensor", "Vectorized tensor"
        :widths: 5, 12
 
-       ":math:`\bar{t}(i,j) = \partial_j\varphi_i(x)`", ":math:`t(k,l,m) = \partial_m\varphi_{k/N}(x) \delta_{l, (m \mbox{ mod } N)}`"
-       ":math:`[\partial_0\varphi_0(x), \partial_0\varphi_1(x),` :math:`\partial_1\varphi_0(x), \partial_1\varphi_1(x),` :math:`\partial_2\varphi_0(x), \partial_2\varphi_1(x)]`", ":math:`[\partial_0\varphi_0(x), 0, 0, \partial_0\varphi_1(x), 0, 0, 0, \partial_0\varphi_0(x), 0, 0, \partial_0\varphi_1(x), 0, 0, 0, \partial_0\varphi_0(x), 0, 0, \partial_0\varphi_1(x),` :math:`\partial_1\varphi_0(x), 0, 0, \partial_1\varphi_1(x), 0, 0, 0, \partial_1\varphi_0(x), 0, 0, \partial_1\varphi_1(x), 0, 0, 0, \partial_1\varphi_0(x), 0, 0, \partial_1\varphi_1(x),` :math:`\partial_2\varphi_0(x), 0, 0, \partial_2\varphi_1(x), 0, 0, 0, \partial_2\varphi_0(x), 0, 0, \partial_2\varphi_1(x), 0, 0, 0, \partial_2\varphi_0(x), 0, 0, \partial_2\varphi_1(x)]`"
+       ":math:`\bar{t}(i,j) = \partial_j\varphi_i(x)`", ":math:`t(k,l,m) = \partial_m\varphi_{k/Q}(x) \delta_{l, (m \mbox{ mod } Q)}`"
+       ":math:`[\partial_0\varphi_0(x), \partial_0\varphi_1(x),` :math:`\partial_1\varphi_0(x), \partial_1\varphi_1(x),` :math:`\partial_2\varphi_0(x), \partial_2\varphi_1(x)]`",""
        
 
   - 3: Transposed Grad condensed format
@@ -111,12 +111,12 @@ Assembly tensors are represented on each node by a ``bgeot::tensor<double>`` obj
        :header: "Condensed tensor", "Vectorized tensor"
        :widths: 5, 12
 
-       ":math:`\bar{t}(i,j) = \partial_j\varphi_i(x)`", ":math:`t(k,l,m) = \partial_m\varphi_{k/N}(x) \delta_{m, (l \mbox{ mod } N)}`"
-       ":math:`[\partial_0\varphi_0(x), \partial_0\varphi_1(x),` :math:`\partial_1\varphi_0(x), \partial_1\varphi_1(x),` :math:`\partial_2\varphi_0(x), \partial_2\varphi_1(x)]`", ":math:`[\partial_0\varphi_0(x), 0, 0, \partial_0\varphi_1(x), 0, 0, \partial_1\varphi_0(x), 0, 0, \partial_1\varphi_1(x), 0, 0, \partial_2\varphi_0(x), 0, 0, \partial_2\varphi_1(x), 0, 0,` :math:`0, \partial_0\varphi_0(x), 0, 0, \partial_0\varphi_1(x), 0, 0, \partial_1\varphi_0(x), 0, 0, \partial_1\varphi_1(x), 0, 0, \partial_2\varphi_0(x), 0, 0, \partial_2\varphi_1(x), 0,`  :math:`0, 0, \partial_0\varphi_0(x), 0, 0, \partial_0\varphi_1(x), 0, 0, \partial_1\varphi_0(x), 0, 0, \partial_1\varphi_1(x), 0, 0, \partial_2\varphi_0(x), 0, 0, \partial_2\varphi_1(x)]`"
+       ":math:`\bar{t}(i,j) = \partial_j\varphi_i(x)`", ":math:`t(k,l,m) = \partial_l\varphi_{k/Q}(x) \delta_{m, (l \mbox{ mod } Q)}`"
+       ":math:`[\partial_0\varphi_0(x), \partial_0\varphi_1(x),` :math:`\partial_1\varphi_0(x), \partial_1\varphi_1(x),` :math:`\partial_2\varphi_0(x), \partial_2\varphi_1(x)]`", ""
   
   - 4: Hessian condensed format
 
-  - 5: Transpsed Hessian condensed format
+  - 5: Transposed Hessian condensed format
 
   All condensed format have to observe the following rule: be stable by addition, multiplication by a scalar and propose an instruction to build the non-condensed corresponding tensor.
 
