@@ -10654,7 +10654,12 @@ namespace getfem {
 
     if (pgai) { // resize instruction if needed and no equivalent node detected
       if (is_uniform) { pgai->exec(); }
-      else { rmi.elt_instructions.push_back(std::move(pgai)); }
+      else {
+	if (mfg1 || mfg2)
+	  rmi.instructions.push_back(std::move(pgai));
+	else
+	  rmi.elt_instructions.push_back(std::move(pgai));
+      }
     }
 
     size_type interpolate_filter_inst = rmi.instructions.size();
