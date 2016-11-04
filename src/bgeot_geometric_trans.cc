@@ -52,14 +52,16 @@ namespace bgeot {
   // Multiply the matrix A of size MxN by B of size NxP in C of size MxP
   void mat_mult(const scalar_type *A, const scalar_type *B, scalar_type *C,
 		size_type M, size_type N, size_type P) {
-    auto itC = C; auto itB = B;
-    for (size_type j = 0; j < P; ++j, itB += N)
-      for (size_type i = 0; i < M; ++i, ++itC) {
-	auto itA = A+i, itB1 = itB;
-	*itC = (*itA) * (*itB1);
-	for (size_type k = 1; k < N; ++k)
-	  { itA += M; ++itB1; *itC += (*itA) * (*itB1); }
-      }
+    if (N != 0) {
+      auto itC = C; auto itB = B;
+      for (size_type j = 0; j < P; ++j, itB += N)
+	for (size_type i = 0; i < M; ++i, ++itC) {
+	  auto itA = A+i, itB1 = itB;
+	  *itC = (*itA) * (*itB1);
+	  for (size_type k = 1; k < N; ++k)
+	    { itA += M; ++itB1; *itC += (*itA) * (*itB1); }
+	}
+    } else std::fill(C, C+M*P, scalar_type(0));
   }
 
   // Optimized matrix mult for small matrices.

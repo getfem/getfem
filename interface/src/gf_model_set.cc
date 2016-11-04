@@ -3519,7 +3519,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         dispname, lambda, wname);
        );
 
-       /*@SET ind = ('add Nitsche large sliding contact brick raytracing', @bool unbiased_version @str dataname_r, @scalar release_distance, [, @str dataname_fr[, @str dataname_alpha[, @int version]]])
+       /*@SET ind = ('add Nitsche large sliding contact brick raytracing', @bool unbiased_version, @str dataname_r, @scalar release_distance[, @str dataname_fr[, @str dataname_alpha[, @int version]]])
       Adds a large sliding contact with friction brick to the model based on the Nitsche's method.
       This brick is able to deal with self-contact, contact between
       several deformable bodies and contact with rigid obstacles.
@@ -3611,7 +3611,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         dispname, sigma, wname);
        );
 
-    /*@SET ('add master slave contact boundary to unbiased Nitsche's large sliding contact brick', @int indbrick, @tmim mim, @int region, @str dispname, @str lambdaname[, @str wname])
+    /*@SET ('add contact boundary to unbiased Nitsche large sliding contact brick', @int indbrick, @tmim mim, @int region, @str dispname, @str lambdaname[, @str wname])
       Adds a contact boundary to an existing unbiased Nitschelarge sliding contact
       with friction brick which is both master and slave. @*/
     sub_command
