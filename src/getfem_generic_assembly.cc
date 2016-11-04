@@ -2802,14 +2802,12 @@ namespace getfem {
     const size_type &ipt;
     size_type qmult1, qmult2;
     virtual int exec() {
-      cout << "Slice " << ipt << " cvnum = " << ctx.convex_num() << endl;
       if (ipt == 0 || true) {
 	GA_DEBUG_INFO("Instruction: Slice local dofs");
 	GMM_ASSERT1(qmult1 != 0 && qmult2 != 0, "Internal error");
       	slice_vector_on_basic_dof_of_element(mf, U, ctx.convex_num(),
 					     coeff, qmult1, qmult2);
       }
-      cout << "Coeff " << coeff << endl;
       return 0;
     }
     ga_instruction_slice_local_dofs(const mesh_fem &mf_, const base_vector &U_,
