@@ -2802,12 +2802,14 @@ namespace getfem {
     const size_type &ipt;
     size_type qmult1, qmult2;
     virtual int exec() {
-      if (ipt == 0) {
+      cout << "Slice " << ipt << " cvnum = " << ctx.convex_num() << endl;
+      if (ipt == 0 || true) {
 	GA_DEBUG_INFO("Instruction: Slice local dofs");
 	GMM_ASSERT1(qmult1 != 0 && qmult2 != 0, "Internal error");
       	slice_vector_on_basic_dof_of_element(mf, U, ctx.convex_num(),
 					     coeff, qmult1, qmult2);
       }
+      cout << "Coeff " << coeff << endl;
       return 0;
     }
     ga_instruction_slice_local_dofs(const mesh_fem &mf_, const base_vector &U_,
@@ -2854,7 +2856,7 @@ namespace getfem {
     const size_type &ipt;
     
     virtual int exec() {
-      if (ipt == 0) {
+      if (ipt == 0 || true) {
 	GA_DEBUG_INFO("Instruction: adapt first index of tensor");
 	const mesh_fem &mf = *(mfg ? *mfg : mfn);
 	GA_DEBUG_ASSERT(&mf, "Internal error");
@@ -2882,7 +2884,7 @@ namespace getfem {
     : public ga_instruction_first_ind_tensor {
 
     virtual int exec() {
-      if (ipt == 0) {
+      if (ipt == 0 || true) {
 	GA_DEBUG_INFO("Instruction: adapt second index of tensor");
 	const mesh_fem &mf = *(mfg ? *mfg : mfn);
 	size_type cv_1 = ctx.is_convex_num_valid()
@@ -2916,7 +2918,7 @@ namespace getfem {
     const size_type &ipt;
     
     virtual int exec() {
-      if (ipt == 0) {
+      if (ipt == 0 || true) {
 	GA_DEBUG_INFO("Instruction: adapt two first indices of tensor");
 	const mesh_fem &mf1 = *(mfg1 ? *mfg1 : mfn1);
 	const mesh_fem &mf2 = *(mfg2 ? *mfg2 : mfn2);
@@ -12345,7 +12347,7 @@ namespace getfem {
               first_ind = pai->ind_first_point_on_face(v.f());
             }
             for (gis.ipt = 0; gis.ipt < gis.nbpt; ++(gis.ipt)) {
-              if (pgp) gis.ctx.set_ii(first_ind+gis.ipt);
+	      if (pgp) gis.ctx.set_ii(first_ind+gis.ipt);
               else gis.ctx.set_xref((*pspt)[first_ind+gis.ipt]);
               if (gis.ipt == 0 || !(pgt->is_linear())) {
                 J = gis.ctx.J();
