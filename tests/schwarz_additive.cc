@@ -202,11 +202,9 @@ void pb_data::init(bgeot::md_param &params) {
 
   dal::bit_vector nn = mesh.convex_index(dim_type(N));
   char method[500];
-  sprintf(method, "IM_EXACT_SIMPLEX(%d)", N);
-  getfem::pintegration_method ppi = getfem::int_method_descriptor(method);
   
   sprintf(method, "FEM_PK(%d, %d)", N, K);
-  mim.set_integration_method(nn, ppi);
+  mim.set_integration_method(nn, bgeot::dim_type(2*K));
   mef.set_finite_element(nn, getfem::fem_descriptor(method));
   mef_coarse.set_finite_element(mesh_coarse.convex_index(dim_type(N)),
 				getfem::fem_descriptor(method));

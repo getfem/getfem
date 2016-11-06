@@ -209,7 +209,7 @@ bool Helmholtz_problem::solve(plain_vector &U) {
   gmm::resize(U, mf_u.nb_dof());
   gmm::copy(Helmholtz_model.complex_variable("u"), U);
 
-  cout << "U = " << U << endl;
+  // cout << "U = " << U << endl;
 
   return (iter.converged());
 }
@@ -223,27 +223,24 @@ int main(int argc, char *argv[]) {
   GMM_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
 
-  try {    
-    Helmholtz_problem p;
-    p.PARAM.read_command_line(argc, argv);
-    p.init();
-    plain_vector U(p.mf_u.nb_dof());
-    if (!p.solve(U)) GMM_ASSERT1(false, "Solve has failed");
-
-    if (p.PARAM.int_value("VTK_EXPORT")) {
-      cout << "export to " << p.datafilename + ".vtk" << "..\n";
-      getfem::vtk_export exp(p.datafilename + ".vtk",
-			     p.PARAM.int_value("VTK_EXPORT")==1);
-      getfem::stored_mesh_slice sl(p.mesh, p.mesh.nb_convex() < 2000 ? 8 : 6);
-      exp.exporting(sl);
-      exp.write_point_data(p.mf_u, gmm::real_part(U), "helmholtz_rfield");
-      exp.write_point_data(p.mf_u, gmm::imag_part(U), "helmholtz_ifield");
-      cout << "export done, you can view the data file with (for example)\n"
-	"mayavi2 -d helmholtz.vtk -f WarpScalar -m Surface -m Outline"
-	"\n";
-    }
+  Helmholtz_problem p;
+  p.PARAM.read_command_line(argc, argv);
+  p.init();
+  plain_vector U(p.mf_u.nb_dof());
+  if (!p.solve(U)) GMM_ASSERT1(false, "Solve has failed");
+  
+  if (p.PARAM.int_value("VTK_EXPORT")) {
+    cout << "export to " << p.datafilename + ".vtk" << "..\n";
+    getfem::vtk_export exp(p.datafilename + ".vtk",
+			   p.PARAM.int_value("VTK_EXPORT")==1);
+    getfem::stored_mesh_slice sl(p.mesh, p.mesh.nb_convex() < 2000 ? 8 : 6);
+    exp.exporting(sl);
+    exp.write_point_data(p.mf_u, gmm::real_part(U), "helmholtz_rfield");
+    exp.write_point_data(p.mf_u, gmm::imag_part(U), "helmholtz_ifield");
+    cout << "export done, you can view the data file with (for example)\n"
+      "mayavi2 -d helmholtz.vtk -f WarpScalar -m Surface -m Outline"
+      "\n";
   }
-  GMM_STANDARD_CATCH_ERROR;
 
   return 0; 
 }

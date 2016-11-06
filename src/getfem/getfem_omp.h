@@ -370,7 +370,11 @@ namespace getfem
     template <typename Function, typename... Parameters>
     void run(Function f, Parameters... params)
     {
+#ifdef GETFEM_HAVE_OPENMP
       try { f(params...); } catch (...) { captureException(); }
+#else
+      f(params...);
+#endif
     }
 
     /**vector of pointers to caught exceptions*/
