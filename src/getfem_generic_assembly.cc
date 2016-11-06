@@ -4771,21 +4771,21 @@ namespace getfem {
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: reduction operation of size " << nn <<
 		    " optimized for vectorized tensor");
-      size_type s1 = tc1.size()/nn, s2 = tc2.size()/nn, s1_1 = s1+1;
-      GA_DEBUG_ASSERT(t.size() == s1*s2, "Internal error");
+      size_type s1 = tc1.size()/nn, s2 = tc2.size()/nn, s2_1 = s2+1;
+      GA_DEBUG_ASSERT(t.size() == s2*s1, "Internal error");
       size_type ss1 = s1/nn, ss2 = s2/nn;
 
       // std::fill(t.begin(), t.end(), scalar_type(0)); // Factorized
       auto it2 = tc2.begin();
       for (size_type j = 0; j < ss2; ++j, it2 += nn) {
-	auto it1 = tc1.begin(), it = t.begin() + j*tc1.size();
-	for (size_type i = 0; i < ss1; ++i, it1 += nn, it += nn) {
+	auto it1 = tc1.begin(), it = t.begin() + j*nn;
+	for (size_type i = 0; i < ss1; ++i, it1 += nn, it += s2*nn) {
        	  scalar_type a = (*it1) * (*it2);
 	  auto itt = it;
-	  *itt = a; itt += s1_1; *itt = a;
-       	  for (size_type k = 2; k < nn; ++k) { itt += s1_1; *itt = a; }
+	  *itt = a; itt += s2_1; *itt = a;
+       	  for (size_type k = 2; k < nn; ++k) { itt += s2_1; *itt = a; }
        	}
-      }
+      }      
       return 0;
     }
     ga_instruction_reduction_opt1(base_tensor &t_, base_tensor &tc1_,
@@ -4919,7 +4919,7 @@ namespace getfem {
       to_clear = true;
       t.set_sparsity(10, tc1.qdim());
       return std::make_shared<ga_instruction_reduction_opt1>
-	(t.tensor(), tc1.tensor(), tc2.tensor(), n);
+      	(t.tensor(), tc1.tensor(), tc2.tensor(), n);
     }
     
     switch(n) {

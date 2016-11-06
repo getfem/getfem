@@ -558,41 +558,6 @@ namespace getfem {
 
   // -------- Before this : cleaned ----------
 
-  template<typename MAT>
-  void asm_mass_matrix(const MAT &M, const mesh_im &mim,
-		       const mesh_fem &mf_u1,
-		       const mesh_region &rg = mesh_region::all_convexes()) {
-    generic_assembly assem;
-    if (mf_u1.get_qdim() == 1)
-      assem.set("M(#1,#1)+=sym(comp(Base(#1).Base(#1)))");
-    else
-      assem.set("M(#1,#1)+=sym(comp(vBase(#1).vBase(#1))(:,i,:,i));");
-    assem.push_mi(mim);
-    assem.push_mf(mf_u1);
-    assem.push_mat(const_cast<MAT &>(M));
-    assem.assembly(rg);
-  }
-
-  template<typename MAT>
-  void asm_mass_matrix(const MAT &M, const mesh_im &mim, const mesh_fem &mf_u1,
-		       const mesh_fem &mf_u2,
-		       const mesh_region &rg = mesh_region::all_convexes()) {
-    generic_assembly assem;
-    if (mf_u1.get_qdim() == 1 && mf_u2.get_qdim() == 1)
-      assem.set("M(#1,#2)+=comp(Base(#1).Base(#2))");
-    else if (mf_u1.get_qdim() == 1)
-      assem.set("M(#1,#2)+=comp(Base(#1).vBase(#2))(:,:,1);"); // could be i in place of 1
-    else if (mf_u2.get_qdim() == 1)
-      assem.set("M(#1,#2)+=comp(vBase(#1).Base(#2))(:,1,:);");
-    else
-      assem.set("M(#1,#2)+=comp(vBase(#1).vBase(#2))(:,i,:,i);");
-    assem.push_mi(mim);
-    assem.push_mf(mf_u1);
-    assem.push_mf(mf_u2);
-    assem.push_mat(const_cast<MAT &>(M));
-    assem.assembly(rg);
-  }
-
   
   /*
     assembly of a matrix with 1 parameter (real or complex)
@@ -661,7 +626,7 @@ namespace getfem {
       @ingroup asm
   */
   template<typename MAT>
-  inline void new_asm_mass_matrix
+  inline void asm_mass_matrix
   (const MAT &M, const mesh_im &mim, const mesh_fem &mf1,
    const mesh_region &rg = mesh_region::all_convexes()) {
 
@@ -674,7 +639,7 @@ namespace getfem {
     gmm::add(workspace.assembled_matrix(), const_cast<MAT &>(M));
   }
 
-  inline void new_asm_mass_matrix
+  inline void asm_mass_matrix
   (model_real_sparse_matrix &M, const mesh_im &mim,
    const mesh_fem &mf1,
    const mesh_region &rg = mesh_region::all_convexes()) {
@@ -693,7 +658,7 @@ namespace getfem {
    */
 
   template<typename MAT>
-  inline void new_asm_mass_matrix
+  inline void asm_mass_matrix
   (const MAT &M, const mesh_im &mim, const mesh_fem &mf1, const mesh_fem &mf2,
    const mesh_region &rg = mesh_region::all_convexes()) {
     ga_workspace workspace;
@@ -707,7 +672,7 @@ namespace getfem {
 	     const_cast<MAT &>(M));
   }
   
-  inline void new_asm_mass_matrix
+  inline void asm_mass_matrix
   (model_real_sparse_matrix &M, const mesh_im &mim,
    const mesh_fem &mf1, const mesh_fem &mf2,
    const mesh_region &rg = mesh_region::all_convexes()) {

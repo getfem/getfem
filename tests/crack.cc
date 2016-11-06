@@ -549,7 +549,6 @@ base_small_vector ls_function(const base_node P, int num = 0) {
 bool crack_problem::solve(plain_vector &U) {
   size_type N = mesh.dim();
   ls.reinit();  
-  cout << "ls.get_mesh_fem().nb_dof() = " << ls.get_mesh_fem().nb_dof() << "\n";
   for (size_type d = 0; d < ls.get_mesh_fem().nb_basic_dof(); ++d) {
     ls.values(0)[d] = ls_function(ls.get_mesh_fem().point_of_basic_dof(d), 0)[0];
     ls.values(1)[d] = ls_function(ls.get_mesh_fem().point_of_basic_dof(d), 0)[1];
@@ -815,20 +814,8 @@ bool crack_problem::solve(plain_vector &U) {
 
     gmm::clear(H0);
     getfem::asm_mass_matrix(H0, mim, mf_mortar, mf_u(), 
-				 MORTAR_BOUNDARY_IN);
-    // cout << "H0 = " << H0 << "\n H0 " << endl; getchar();
-
-    // sparse_matrix H8(mf_mortar.nb_dof(), mf_u().nb_dof());
-    // gmm::clear(H8);
-    // getfem::asm_mass_matrix(H8, mim, mf_mortar, mf_u(), MORTAR_BOUNDARY_IN);
-    // // gmm::add(gmm::scaled(H0, -1.0), H8);
-    // // cout << "H0 = " << H0 << endl;
-    // cout << "H8 = " << H8 << endl;
-    
-
-
-
-    gmm::add(gmm::scaled(gmm::sub_matrix(H0, sub_i, sub_j), -1), H);
+			    MORTAR_BOUNDARY_IN);
+    gmm::add(gmm::scaled(gmm::sub_matrix(H0, sub_i, sub_j), -1.0), H);
 
 
     /* because of the discontinuous partition of mf_u(), some levelset
