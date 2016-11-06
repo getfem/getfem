@@ -2063,7 +2063,7 @@ namespace getfem {
       std::vector<base_small_vector> ti(N-1);
       scalar_type stored_signed_distance(0);
       std::string stored_dispname;
-      scalar_type d0 = 1E300, d1, d2;
+      scalar_type d0 = 1E300, d1, d2(0);
       const mesh *stored_m_y(0);
       size_type stored_cv_y(-1);
       short_type stored_face_y(-1);

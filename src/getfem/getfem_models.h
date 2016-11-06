@@ -39,6 +39,7 @@
 #ifndef GETFEM_MODELS_H__
 #define GETFEM_MODELS_H__
 
+#include "getfem_generic_assembly.h"
 #include "getfem_assembling.h"
 #include "getfem_partial_mesh_fem.h"
 #include "getfem_im_data.h"
@@ -55,20 +56,8 @@ namespace getfem {
   class virtual_time_scheme;
   typedef std::shared_ptr<const virtual_time_scheme> ptime_scheme;
 
-
   struct Neumann_elem_term;
   typedef std::shared_ptr<const Neumann_elem_term> pNeumann_elem_term;
-
-  class virtual_interpolate_transformation;
-  typedef std::shared_ptr<const virtual_interpolate_transformation>
-  pinterpolate_transformation;
-
-  class virtual_elementary_transformation;
-  typedef std::shared_ptr<const virtual_elementary_transformation>
-  pelementary_transformation;
-  
-
-  class ga_workspace;
 
   // Event management : The model has to react when something has changed in
   //    the context and ask for corresponding (linear) bricks to recompute
@@ -98,21 +87,6 @@ namespace getfem {
   //  Model object.
   //
   //=========================================================================
-
-
-  typedef gmm::rsvector<scalar_type> model_real_sparse_vector;
-  typedef gmm::rsvector<complex_type> model_complex_sparse_vector;
-  typedef std::vector<scalar_type> model_real_plain_vector;
-  typedef std::vector<complex_type> model_complex_plain_vector;
-
-  typedef gmm::col_matrix<model_real_sparse_vector> model_real_sparse_matrix;
-  typedef gmm::col_matrix<model_complex_sparse_vector>
-  model_complex_sparse_matrix;
-
-  typedef gmm::row_matrix<model_real_sparse_vector>
-  model_real_row_sparse_matrix;
-  typedef gmm::row_matrix<model_complex_sparse_vector>
-  model_complex_row_sparse_matrix;
   
   // For backward compatibility with version 3.0
   typedef model_real_plain_vector modeling_standard_plain_vector;
@@ -1568,58 +1542,6 @@ namespace getfem {
         model::real_veclist &,
         model::real_veclist &,
         size_type, build_version) const;
-  };
-
-  //=========================================================================
-  //
-  //  Virtual interpolate_transformation object.
-  //
-  //=========================================================================
-
-  struct var_trans_pair {
-    std::string varname, transname;
-    bool operator <(const var_trans_pair &vt) const {
-      return (varname < vt.varname) ||
-             (!(varname > vt.varname) && transname < vt.transname);
-    }
-    var_trans_pair() : varname(), transname() {}
-    var_trans_pair(const std::string &v, const std::string &t)
-      : varname(v), transname(t) {}
-  };
-
-  class APIDECL virtual_interpolate_transformation {
-
-  public:
-    virtual void extract_variables
-    (const ga_workspace &workspace, std::set<var_trans_pair> &vars,
-     bool ignore_data, const mesh &m,
-     const std::string &interpolate_name) const = 0;
-    virtual void init(const ga_workspace &workspace) const = 0;
-    virtual int transform
-    (const ga_workspace &workspace, const mesh &m,
-     fem_interpolation_context &ctx_x, const base_small_vector &Normal,
-     const mesh **m_t, size_type &cv, short_type &face_num,
-     base_node &P_ref, base_small_vector &N_y,
-     std::map<var_trans_pair, base_tensor> &derivatives,
-     bool compute_derivatives) const = 0;
-    virtual void finalize() const = 0;
-
-    virtual ~virtual_interpolate_transformation() {}
-  };
-
-  //=========================================================================
-  //
-  //  Virtual elementary_transformation object.
-  //
-  //=========================================================================
-
-  class APIDECL virtual_elementary_transformation {
-
-  public:
-    
-    virtual void give_transformation(const mesh_fem &mf, size_type cv,
-                                     base_matrix &M) const = 0;
-    virtual ~virtual_elementary_transformation() {}
   };
 
   //=========================================================================

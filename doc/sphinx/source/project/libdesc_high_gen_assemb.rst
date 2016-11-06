@@ -84,41 +84,46 @@ Assembly tensors are represented on each node by a ``bgeot::tensor<double>`` obj
 
 - Copied tensor. When a node is detected to have exactly the same expression compared to an already compiled one, the assembly tensor will contain a pointer to the assembly tensor of the already compiled node. The consequence is that no unnecessary copy is made.
 
-- Condensed tensor. When working with a vector field, the finite element method is applied on each component. This results on vector base functions having only one nonzero component and some components are ducplicated. By default, the tensors are fully represented with all the zero and duplicated components. However, it is more efficient to perform some operations on the condensed (i.e. scalar) form of the tensor, appliying the vectorization as late as possible. This results in a certain number of condensed tensor formats that are listed below:
+- Sparse tensor with a listed sparsity. When working with a vector field, the finite element method is applied on each component. This results on vector base functions having only one nonzero component and some components are duplicated. The tensor are fully represented because it would be difficul to gain in efficiency with that kind of small sparse tensor format. However, some operation can be optimized with the knoledge of a certain sparsity (and duplication). This can change the order of complexity of a reduction. In order to allows this gain in efficiency, the tensor are labellised with some known sparsity format (vectorisation and format coming from operation applied on vectorized tensors). This results in a certain number of sparsity formats that are listed below:
   
-  - 1: Base condensed format: The tensor represent a vectorized value. Each value of the condensed tensor is repeated on :math:`Q` components of the vectorized tensor. The mesh dimensions is denoted :math:`N`. For instance if :math:`\varphi_i` are the :math:`M` local base functions on an element and the evaluation is on a Gauss point :math:`x`, then the condensed tensor is :math:`\bar{t}(i) = \varphi_i(x)` and the vectorized one is :math:`t(j,k) = \varphi_{j/Q}(x) \delta_{k, j \mbox{ mod } Q}` where :math:`j/M` is the integer division. For :math:`M=2`, :math:`Q=2` and :math:`N=3` the components of the two tensors are represented in the following table
+  - 1: Vectorized base sparsity format: The tensor represent a vectorized
+    value. Each value of the condensed tensor is repeated on :math:`Q`
+    components of the vectorized tensor. The mesh dimensions is denoted
+    :math:`N`. For instance if :math:`\varphi_i` are the :math:`M` local
+    base functions on an element and the evaluation is on a Gauss point
+    :math:`x`, then the non vectorized tensor is
+    :math:`\bar{t}(i) = \varphi_i(x)` and the vectorized one is
+    :math:`t(j,k) = \varphi_{j/Q}(x) \delta_{k, j \mbox{ mod } Q}`
+    where :math:`j/M` is the integer division. For :math:`M=2`,
+    :math:`Q=2` and :math:`N=3` the components of the two tensors are
+    represented in the following table
 
     .. csv-table::
-       :header: "Condensed tensor", "Vectorized tensor"
+       :header: "Scalar tensor", "Vectorized tensor"
        :widths: 5, 12
 
-       ":math:`\bar{t}(i) = \varphi_i(x)`", ":math:`t(j,k) = \varphi_{j/Q}(x) \delta_{k, (j \mbox{ mod } Q)}`"
-       ":math:`[\varphi_0(x), \varphi_1(x)]`", ":math:`[\varphi_0(x), 0, \varphi_1(x), 0, 0, \varphi_0(x), 0, \varphi_1(x)]`"
+       ":math:`\bar{t}(i) = \varphi_i(x)`",
+       ":math:`t(j,k) = \varphi_{j/Q}(x) \delta_{k, (j \mbox{ mod } Q)}`"
+       ":math:`[\varphi_0(x), \varphi_1(x)]`",
+       ":math:`[\varphi_0(x), 0, \varphi_1(x), 0, 0, \varphi_0(x), 0, \varphi_1(x)]`"
   
   - 2: Grad condensed format
 
     .. csv-table::
-       :header: "Condensed tensor", "Vectorized tensor"
+       :header: "Scalar tensor", "Vectorized tensor"
        :widths: 5, 12
 
        ":math:`\bar{t}(i,j) = \partial_j\varphi_i(x)`", ":math:`t(k,l,m) = \partial_m\varphi_{k/Q}(x) \delta_{l, (m \mbox{ mod } Q)}`"
        ":math:`[\partial_0\varphi_0(x), \partial_0\varphi_1(x),` :math:`\partial_1\varphi_0(x), \partial_1\varphi_1(x),` :math:`\partial_2\varphi_0(x), \partial_2\varphi_1(x)]`",""
-       
-
-  - 3: Transposed Grad condensed format
-
-    .. csv-table::
-       :header: "Condensed tensor", "Vectorized tensor"
-       :widths: 5, 12
-
-       ":math:`\bar{t}(i,j) = \partial_j\varphi_i(x)`", ":math:`t(k,l,m) = \partial_l\varphi_{k/Q}(x) \delta_{m, (l \mbox{ mod } Q)}`"
-       ":math:`[\partial_0\varphi_0(x), \partial_0\varphi_1(x),` :math:`\partial_1\varphi_0(x), \partial_1\varphi_1(x),` :math:`\partial_2\varphi_0(x), \partial_2\varphi_1(x)]`", ""
   
-  - 4: Hessian condensed format
+  - 3: Hessian condensed format
 
-  - 5: Transposed Hessian condensed format
 
-  All condensed format have to observe the following rule: be stable by addition, multiplication by a scalar and propose an instruction to build the non-condensed corresponding tensor.
+  - 10: Vectorized mass: the tensor represent a scalar product of two
+    vectorised base functions. This means a tensor :math:`t(\cdot,\cdot)`
+    where :math:`t(i*Q+k, j*Q+l) = 0` for :math:`k \ne l` and
+    :math:`t(i*Q+k, j*Q+k)` are equals for :math:`0 \le k < Q`. 
+   
 
     
 

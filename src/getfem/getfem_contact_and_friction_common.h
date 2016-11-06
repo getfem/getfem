@@ -38,7 +38,7 @@
 #ifndef GETFEM_CONTACT_AND_FRICTION_COMMON_H__
 #define GETFEM_CONTACT_AND_FRICTION_COMMON_H__
 
-#include "getfem_generic_assembly.h"
+#include "getfem_models.h"
 #include "getfem_assembling_tensors.h"
 #include "getfem/bgeot_rtree.h"
 #include <getfem/getfem_mesher.h>

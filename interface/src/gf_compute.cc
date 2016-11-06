@@ -232,7 +232,7 @@ void gf_compute(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
     Compute the L2 norm of the (real or complex) field `U`.
 
     If `CVids` is given, the norm will be computed only on the listed
-    convexes.@*/
+    elements.@*/
     sub_command
       ("L2 norm", 1, 2, 0, 1,
        U_is_a_vector(U, "L2 norm");
@@ -248,7 +248,7 @@ void gf_compute(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
     Compute the L2 distance between `U` and `U2`.
 
     If `CVids` is given, the norm will be computed only on the listed
-    convexes.@*/
+    elements.@*/
     sub_command
       ("L2 dist", 3, 4, 0, 1,
        U_is_a_vector(U, "L2 dist");
@@ -262,15 +262,13 @@ void gf_compute(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
 
 	 out.pop().from_scalar(getfem::asm_L2_dist(*mim, *mf, U.real(),
 						   *mf_2, V, bv));
-       } else {
-	 GMM_ASSERT1(false, "Sorry, complex version to be done");
-//          carray st = in.pop().to_carray();
-//          std::vector<std::complex<double> > V(st.begin(), st.end());
-// 	 dal::bit_vector bv = in.remaining() ?
-// 	   in.pop().to_bit_vector(&mf->convex_index()) : mf->convex_index();
-
-//          out.pop().from_scalar(getfem::asm_L2_dist(*mim, *mf, U.cplx(),
-// 						   *mf_2, V, bv));
+       } else {	 
+	 carray st = in.pop().to_carray();
+	 std::vector<std::complex<double> > V(st.begin(), st.end());
+ 	 dal::bit_vector bv = in.remaining() ?
+ 	   in.pop().to_bit_vector(&mf->convex_index()) : mf->convex_index();
+	 out.pop().from_scalar(getfem::asm_L2_dist(*mim, *mf, U.cplx(),
+						   *mf_2, V, bv));
        }
        );
 
@@ -279,7 +277,7 @@ void gf_compute(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
     Compute the L2 norm of grad(`U`).
 
     If `CVids` is given, the norm will be computed only on the listed
-    convexes.@*/
+    elements.@*/
     sub_command
       ("H1 semi norm", 1, 2, 0, 1,
        U_is_a_vector(U, "H1 semi norm");
@@ -298,7 +296,7 @@ void gf_compute(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
     Compute the semi H1 distance between `U` and `U2`.
 
     If `CVids` is given, the norm will be computed only on the listed
-    convexes.@*/
+    elements.@*/
     sub_command
       ("H1 semi dist", 3, 4, 0, 1,
        U_is_a_vector(U, "H1 semi dist");
@@ -311,16 +309,15 @@ void gf_compute(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
 	   in.pop().to_bit_vector(&mf->convex_index()) : mf->convex_index();
 
 	 out.pop().from_scalar(getfem::asm_H1_semi_dist(*mim, *mf, U.real(),
-						   *mf_2, V, bv));
+							*mf_2, V, bv));
        } else {
-	 GMM_ASSERT1(false, "Sorry, complex version to be done");
-//          carray st = in.pop().to_carray();
-//          std::vector<std::complex<double> > V(st.begin(), st.end());
-// 	 dal::bit_vector bv = in.remaining() ?
-// 	   in.pop().to_bit_vector(&mf->convex_index()) : mf->convex_index();
-
-//          out.pop().from_scalar(getfem::asm_L2_dist(*mim, *mf, U.cplx(),
-// 						   *mf_2, V, bv));
+	 carray st = in.pop().to_carray();
+	 std::vector<std::complex<double> > V(st.begin(), st.end());
+ 	 dal::bit_vector bv = in.remaining() ?
+ 	   in.pop().to_bit_vector(&mf->convex_index()) : mf->convex_index();
+	 
+	 out.pop().from_scalar(getfem::asm_H1_semi_dist(*mim, *mf, U.cplx(),
+							*mf_2, V, bv));
        }
        );
 
@@ -329,7 +326,7 @@ void gf_compute(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
     Compute the H1 norm of `U`.
 
     If `CVids` is given, the norm will be computed only on the listed
-    convexes.@*/
+    elements.@*/
     sub_command
       ("H1 norm", 1, 2, 0, 1,
        U_is_a_vector(U, "H1 norm");
@@ -347,7 +344,7 @@ void gf_compute(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
     Compute the L2 norm of D^2(`U`).
 
     If `CVids` is given, the norm will be computed only on the listed
-    convexes.@*/
+    elements.@*/
     sub_command
       ("H2 semi norm", 1, 2, 0, 1,
        U_is_a_vector(U, "H2 semi norm");
@@ -366,7 +363,7 @@ void gf_compute(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
     Compute the H2 norm of `U`.
 
     If `CVids` is given, the norm will be computed only on the listed
-    convexes.@*/
+    elements.@*/
     sub_command
       ("H2 norm", 1, 2, 0, 1,
        U_is_a_vector(U, "H2 norm");

@@ -33,7 +33,8 @@
     @author  Yves Renard <Yves.Renard@insa-lyon.fr>
     @author  Julien Pommier <Julien.Pommier@insa-toulouse.fr>
     @date November 17, 2000.
-    @brief Miscelleanous assembly routines for common PDEs.
+    @brief Miscelleanous assembly routines for common terms. Use the low-level
+           generic assembly. Prefer the high-level one.
  */
 
 /** @defgroup asm Assembly routines */
@@ -42,72 +43,68 @@
 #define GETFEM_ASSEMBLING_H__
 
 #include "getfem_assembling_tensors.h"
+#include "getfem_generic_assembly.h"
 
 namespace getfem {
-  
-  template <typename VEC>
-  scalar_type asm_mean_value(const mesh_im &mim, const mesh_fem &mf,
-			     const VEC &U,
-			     mesh_region rg = mesh_region::all_convexes()) {
-    // for parallelized getfem, work only on the mesh subset 
-    // assigned to the current thread
-    mim.linked_mesh().intersect_with_mpi_region(rg);
-    generic_assembly assem;
-    std::vector<scalar_type> v(1), w(1);
-    GMM_ASSERT1(mf.get_qdim() == 1, "expecting qdim=1");
-    assem.set("u=data(#1); V$1()+=comp(); V$2()+=comp(Base(#1))(i).u(i);");
-    assem.push_mi(mim);
-    assem.push_mf(mf);
-    assem.push_data(U);
-    assem.push_vec(v);
-    assem.push_vec(w);
-    assem.assembly(rg);
-    v.push_back(w[0]);
-    w.resize(2);
-    MPI_SUM_VECTOR(v, w);
-    return w[1]/w[0];
-  }
 
   /**
      compute @f$ \|U\|_2 @f$, U might be real or complex
      @ingroup asm
    */
   template<typename VEC>
-  scalar_type asm_L2_norm(const mesh_im &mim, const mesh_fem &mf, const VEC &U,
-			  const mesh_region &rg=mesh_region::all_convexes()) {
-    return
-      sqrt(asm_L2_norm_sqr(mim, mf, U, rg,
-			   typename gmm::linalg_traits<VEC>::value_type()));
-  }
+  inline scalar_type asm_L2_norm
+  (const mesh_im &mim, const mesh_fem &mf, const VEC &U,
+   const mesh_region &rg=mesh_region::all_convexes())
+  { return sqrt(asm_L2_norm_sqr(mim, mf, U, rg)); }
 
+  template<typename VEC>
+  scalar_type asm_L2_norm_sqr
+  (const mesh_im &mim, const mesh_fem &mf, const VEC &U,
+   const mesh_region &rg=mesh_region::all_convexes()) {
+    return asm_L2_norm_sqr(mim, mf, U, rg,
+			   typename gmm::linalg_traits<VEC>::value_type());
+  }
+  
   template<typename VEC, typename T>
-  scalar_type asm_L2_norm_sqr(const mesh_im &mim, const mesh_fem &mf,
+  inline scalar_type asm_L2_norm_sqr(const mesh_im &mim, const mesh_fem &mf,
 			      const VEC &U, const mesh_region &rg_, T) {
-    mesh_region rg(rg_);
-    mim.linked_mesh().intersect_with_mpi_region(rg);
-    generic_assembly assem;    
-    if (mf.get_qdim() == 1)
-      assem.set("u=data(#1); V()+=u(i).u(j).comp(Base(#1).Base(#1))(i,j)");
-    else
-      assem.set("u=data(#1);"
-		"V()+=u(i).u(j).comp(vBase(#1).vBase(#1))(i,k,j,k)");
-    assem.push_mi(mim);
-    assem.push_mf(mf);
-    assem.push_data(U);
-    std::vector<scalar_type> v(1);
-    assem.push_vec(v);
-    assem.assembly(rg);
-    return MPI_SUM_SCALAR(v[0]);
+    ga_workspace workspace;
+    model_real_plain_vector UU(mf.nb_dof());
+    gmm::copy(U, UU);
+    gmm::sub_interval Iu(0, mf.nb_dof());
+    workspace.add_fem_variable("u", mf, Iu, UU);
+    workspace.add_expression("u.u", mim, rg_);
+    workspace.assembly(0);
+    return workspace.assembled_potential();
+  }
+
+  inline scalar_type asm_L2_norm_sqr(const mesh_im &mim, const mesh_fem &mf,
+			      const model_real_plain_vector &U,
+			      const mesh_region &rg_, scalar_type) {
+    ga_workspace workspace;
+    gmm::sub_interval Iu(0, mf.nb_dof());
+    workspace.add_fem_variable("u", mf, Iu, U);
+    workspace.add_expression("u.u", mim, rg_);
+    workspace.assembly(0);
+    return workspace.assembled_potential();
   }
 
   template<typename VEC, typename T>
-  scalar_type asm_L2_norm_sqr(const mesh_im &mim, const mesh_fem &mf,
+  inline scalar_type asm_L2_norm_sqr(const mesh_im &mim, const mesh_fem &mf,
 			      const VEC &U,
 			      const mesh_region &rg, std::complex<T>) {
-    return asm_L2_norm_sqr(mim, mf,gmm::real_part(U),rg,T()) + 
-      asm_L2_norm_sqr(mim, mf,gmm::imag_part(U),rg,T());
+    ga_workspace workspace;
+    model_real_plain_vector UUR(mf.nb_dof()), UUI(mf.nb_dof());
+    gmm::copy(gmm::real_part(U), UUR);
+    gmm::copy(gmm::imag_part(U), UUI);
+    gmm::sub_interval Iur(0, mf.nb_dof()), Iui(mf.nb_dof(), mf.nb_dof());
+    workspace.add_fem_variable("u", mf, Iur, UUR);
+    workspace.add_fem_variable("v", mf, Iui, UUI);
+    workspace.add_expression("u.u + v.v", mim, rg);
+    workspace.assembly(0);
+    return workspace.assembled_potential();
   }
-
+  
   /**
      Compute the distance between U1 and U2, defined on two different
      mesh_fems (but sharing the same mesh), without interpolating U1 on mf2.
@@ -115,31 +112,61 @@ namespace getfem {
      @ingroup asm
   */
   template<typename VEC1, typename VEC2>
-  scalar_type asm_L2_dist(const mesh_im &mim, 
-			  const mesh_fem &mf1, const VEC1 &U1,
-			  const mesh_fem &mf2, const VEC2 &U2, 
-			  mesh_region rg = mesh_region::all_convexes()) {
-    mim.linked_mesh().intersect_with_mpi_region(rg);
-    generic_assembly assem;    
-    if (mf1.get_qdim() == 1)
-      assem.set("u1=data$1(#1); u2=data$2(#2); "
-		"V()+=u1(i).u1(j).comp(Base(#1).Base(#1))(i,j)"
-		"+ u2(i).u2(j).comp(Base(#2).Base(#2))(i,j)"
-		"- 2*u1(i).u2(j).comp(Base(#1).Base(#2))(i,j)");
-    else 
-      assem.set("u1=data$1(#1); u2=data$2(#2); "
-		"V()+=u1(i).u1(j).comp(vBase(#1).vBase(#1))(i,k,j,k)"
-		"+ u2(i).u2(j).comp(vBase(#2).vBase(#2))(i,k,j,k)"
-		"- 2*u1(i).u2(j).comp(vBase(#1).vBase(#2))(i,k,j,k)");
-    assem.push_mi(mim);
-    assem.push_mf(mf1);
-    assem.push_mf(mf2);
-    assem.push_data(U1);
-    assem.push_data(U2);
-    std::vector<scalar_type> v(1);
-    assem.push_vec(v);
-    assem.assembly(rg);
-    return sqrt(MPI_SUM_SCALAR(v[0]));
+  inline scalar_type asm_L2_dist
+  (const mesh_im &mim, const mesh_fem &mf1, const VEC1 &U1,
+   const mesh_fem &mf2, const VEC2 &U2,
+   mesh_region rg = mesh_region::all_convexes()) {
+    return sqrt(asm_L2_dist_sqr(mim, mf1, U1, mf2, U2, rg,
+			   typename gmm::linalg_traits<VEC1>::value_type()));
+  }
+
+  template<typename VEC1, typename VEC2, typename T>
+  inline scalar_type asm_L2_dist_sqr
+  (const mesh_im &mim, const mesh_fem &mf1, const VEC1 &U1,
+   const mesh_fem &mf2, const VEC2 &U2, mesh_region rg, T) {
+    ga_workspace workspace;
+    model_real_plain_vector UU1(mf1.nb_dof()), UU2(mf2.nb_dof());
+    gmm::copy(U1, UU1); gmm::copy(U2, UU2);
+    gmm::sub_interval Iu1(0, mf1.nb_dof()), Iu2(mf1.nb_dof(), mf2.nb_dof());
+    workspace.add_fem_variable("u1", mf1, Iu1, UU1);
+    workspace.add_fem_variable("u2", mf2, Iu2, UU2);
+    workspace.add_expression("(u2-u1).(u2-u1)", mim, rg);
+    workspace.assembly(0);
+    return workspace.assembled_potential();
+  }
+
+  inline scalar_type asm_L2_dist_sqr
+  (const mesh_im &mim, const mesh_fem &mf1, const  model_real_plain_vector &U1,
+   const mesh_fem &mf2, const  model_real_plain_vector &U2, 
+   mesh_region rg, scalar_type) {
+    ga_workspace workspace;
+    gmm::sub_interval Iu1(0, mf1.nb_dof()), Iu2(mf1.nb_dof(), mf2.nb_dof());
+    workspace.add_fem_variable("u1", mf1, Iu1, U1);
+    workspace.add_fem_variable("u2", mf2, Iu2, U2);
+    workspace.add_expression("(u2-u1).(u2-u1)", mim, rg);
+    workspace.assembly(0);
+    return workspace.assembled_potential();
+  }
+
+  template<typename VEC1, typename VEC2, typename T>
+  inline scalar_type asm_L2_dist_sqr
+  (const mesh_im &mim, const mesh_fem &mf1, const VEC1 &U1,
+   const mesh_fem &mf2, const VEC2 &U2, mesh_region rg, std::complex<T>) {
+    ga_workspace workspace;
+    model_real_plain_vector UU1R(mf1.nb_dof()), UU2R(mf2.nb_dof());
+    model_real_plain_vector UU1I(mf1.nb_dof()), UU2I(mf2.nb_dof());
+    gmm::copy(gmm::real_part(U1), UU1R); gmm::copy(gmm::imag_part(U1), UU1I);
+    gmm::copy(gmm::real_part(U2), UU2R); gmm::copy(gmm::imag_part(U2), UU2I);
+    gmm::sub_interval Iu1r(0, mf1.nb_dof()), Iu2r(mf1.nb_dof(), mf2.nb_dof());
+    gmm::sub_interval Iu1i(Iu2r.last(), mf1.nb_dof());
+    gmm::sub_interval Iu2i(Iu1i.last(), mf2.nb_dof());
+    workspace.add_fem_variable("u1", mf1, Iu1r, UU1R);
+    workspace.add_fem_variable("u2", mf2, Iu2r, UU2R);
+    workspace.add_fem_variable("v1", mf1, Iu1i, UU1I);
+    workspace.add_fem_variable("v2", mf2, Iu2i, UU2I);
+    workspace.add_expression("(u2-u1).(u2-u1) + (v2-v1).(v2-v1)", mim, rg);
+    workspace.assembly(0);
+    return workspace.assembled_potential();
   }
 
   
@@ -156,74 +183,167 @@ namespace getfem {
   }
 
   template<typename VEC, typename T>
-  scalar_type asm_H1_semi_norm_sqr(const mesh_im &mim, const mesh_fem &mf,
-				   const VEC &U, const mesh_region &rg_, T) {
-    mesh_region rg(rg_);
-    mim.linked_mesh().intersect_with_mpi_region(rg);
-    generic_assembly assem;    
-    if (mf.get_qdim() == 1)
-      assem.set("u=data(#1); V()+=u(i).u(j).comp(Grad(#1).Grad(#1))(i,d,j,d)");
-    else
-      assem.set("u=data(#1);"
-		"V()+=u(i).u(j).comp(vGrad(#1).vGrad(#1))(i,k,d,j,k,d)");
-    assem.push_mi(mim);
-    assem.push_mf(mf);
-    assem.push_data(U);
-    std::vector<scalar_type> v(1);
-    assem.push_vec(v);
-    assem.assembly(rg);
-    return MPI_SUM_SCALAR(v[0]);
+  inline scalar_type asm_H1_semi_norm_sqr
+  (const mesh_im &mim, const mesh_fem &mf, const VEC &U,
+   const mesh_region &rg_, T) {
+    ga_workspace workspace;
+    model_real_plain_vector UU(mf.nb_dof()); gmm::copy(U, UU);
+    gmm::sub_interval Iu(0, mf.nb_dof());
+    workspace.add_fem_variable("u", mf, Iu, UU);
+    workspace.add_expression("Grad_u:Grad_u", mim, rg_);
+    workspace.assembly(0);
+    return workspace.assembled_potential();
   }
+
+  inline scalar_type asm_H1_semi_norm_sqr
+  (const mesh_im &mim, const mesh_fem &mf, const model_real_plain_vector &U,
+   const mesh_region &rg_, scalar_type) {
+    ga_workspace workspace;
+    gmm::sub_interval Iu(0, mf.nb_dof());
+    workspace.add_fem_variable("u", mf, Iu, U);
+    workspace.add_expression("Grad_u:Grad_u", mim, rg_);
+    workspace.assembly(0);
+    return workspace.assembled_potential();
+  }
+  
 
   template<typename VEC, typename T>
-  scalar_type asm_H1_semi_norm_sqr(const mesh_im &mim, const mesh_fem &mf,
-				   const VEC &U,
-				   const mesh_region &rg, std::complex<T>) {
-    return asm_H1_semi_norm_sqr(mim, mf, gmm::real_part(U), rg, T()) + 
-      asm_H1_semi_norm_sqr(mim, mf, gmm::imag_part(U), rg, T());
+  inline scalar_type asm_H1_semi_norm_sqr
+  (const mesh_im &mim, const mesh_fem &mf, const VEC &U,
+   const mesh_region &rg, std::complex<T>) {
+    ga_workspace workspace;
+    model_real_plain_vector UUR(mf.nb_dof()), UUI(mf.nb_dof());
+    gmm::copy(gmm::real_part(U), UUR);
+    gmm::copy(gmm::imag_part(U), UUI);
+    gmm::sub_interval Iur(0, mf.nb_dof()), Iui(mf.nb_dof(), mf.nb_dof());
+    workspace.add_fem_variable("u", mf, Iur, UUR);
+    workspace.add_fem_variable("v", mf, Iui, UUI);
+    workspace.add_expression("Grad_u:Grad_u + Grad_v:Grad_v", mim, rg);
+    workspace.assembly(0);
+    return workspace.assembled_potential();
+  }
+  
+  /**
+     Compute the H1 semi-distance between U1 and U2, defined on two different
+     mesh_fems (but sharing the same mesh), without interpolating U1 on mf2.
+     
+     @ingroup asm
+  */
+  template<typename VEC1, typename VEC2>
+  inline scalar_type asm_H1_semi_dist
+  (const mesh_im &mim, const mesh_fem &mf1, const VEC1 &U1,
+   const mesh_fem &mf2, const VEC2 &U2,
+   mesh_region rg = mesh_region::all_convexes()) {
+    return sqrt(asm_H1_semi_dist_sqr(mim, mf1, U1, mf2, U2, rg,
+			   typename gmm::linalg_traits<VEC1>::value_type()));
   }
 
-  
-  template<typename VEC1, typename VEC2>
-  scalar_type asm_H1_semi_dist(const mesh_im &mim, 
-			       const mesh_fem &mf1, const VEC1 &U1,
-			       const mesh_fem &mf2, const VEC2 &U2,
-			       mesh_region rg = mesh_region::all_convexes()) {
-    mim.linked_mesh().intersect_with_mpi_region(rg);
-    generic_assembly assem;    
-    if (mf1.get_qdim() == 1)
-      assem.set("u1=data$1(#1); u2=data$2(#2); "
-		"V()+=u1(i).u1(j).comp(Grad(#1).Grad(#1))(i,d,j,d)"
-		"+ u2(i).u2(j).comp(Grad(#2).Grad(#2))(i,d,j,d)"
-		"- 2*u1(i).u2(j).comp(Grad(#1).Grad(#2))(i,d,j,d)");
-    else 
-      assem.set("u1=data$1(#1); u2=data$2(#2); "
-		"V()+=u1(i).u1(j).comp(vGrad(#1).vGrad(#1))(i,k,d,j,k,d)"
-		"+ u2(i).u2(j).comp(vGrad(#2).vGrad(#2))(i,k,d,j,k,d)"
-		"- 2*u1(i).u2(j).comp(vGrad(#1).vGrad(#2))(i,k,d,j,k,d)");
-    assem.push_mi(mim);
-    assem.push_mf(mf1);
-    assem.push_mf(mf2);
-    assem.push_data(U1);
-    assem.push_data(U2);
-    std::vector<scalar_type> v(1);
-    assem.push_vec(v);
-    assem.assembly(rg);
-    return sqrt(MPI_SUM_SCALAR(v[0]));    
+  template<typename VEC1, typename VEC2, typename T>
+  inline scalar_type asm_H1_semi_dist_sqr
+  (const mesh_im &mim, const mesh_fem &mf1, const VEC1 &U1,
+   const mesh_fem &mf2, const VEC2 &U2, mesh_region rg, T) {
+    ga_workspace workspace;
+    model_real_plain_vector UU1(mf1.nb_dof()), UU2(mf2.nb_dof());
+    gmm::copy(U1, UU1); gmm::copy(U2, UU2);
+    gmm::sub_interval Iu1(0, mf1.nb_dof()), Iu2(mf1.nb_dof(), mf2.nb_dof());
+    workspace.add_fem_variable("u1", mf1, Iu1, UU1);
+    workspace.add_fem_variable("u2", mf2, Iu2, UU2);
+    workspace.add_expression("(Grad_u2-Grad_u1):(Grad_u2-Grad_u1)", mim, rg);
+    workspace.assembly(0);
+    return workspace.assembled_potential();
+  }
+
+  inline scalar_type asm_H1_semi_dist_sqr
+  (const mesh_im &mim, const mesh_fem &mf1, const  model_real_plain_vector &U1,
+   const mesh_fem &mf2, const  model_real_plain_vector &U2, 
+   mesh_region rg, scalar_type) {
+    ga_workspace workspace;
+    gmm::sub_interval Iu1(0, mf1.nb_dof()), Iu2(mf1.nb_dof(), mf2.nb_dof());
+    workspace.add_fem_variable("u1", mf1, Iu1, U1);
+    workspace.add_fem_variable("u2", mf2, Iu2, U2);
+    workspace.add_expression("(Grad_u2-Grad_u1):(Grad_u2-Grad_u1)", mim, rg);
+    workspace.assembly(0);
+    return workspace.assembled_potential();
+  }
+
+  template<typename VEC1, typename VEC2, typename T>
+  inline scalar_type asm_H1_semi_dist_sqr
+  (const mesh_im &mim, const mesh_fem &mf1, const VEC1 &U1,
+   const mesh_fem &mf2, const VEC2 &U2, mesh_region rg, std::complex<T>) {
+    ga_workspace workspace;
+    model_real_plain_vector UU1R(mf1.nb_dof()), UU2R(mf2.nb_dof());
+    model_real_plain_vector UU1I(mf1.nb_dof()), UU2I(mf2.nb_dof());
+    gmm::copy(gmm::real_part(U1), UU1R); gmm::copy(gmm::imag_part(U1), UU1I);
+    gmm::copy(gmm::real_part(U2), UU2R); gmm::copy(gmm::imag_part(U2), UU2I);
+    gmm::sub_interval Iu1r(0, mf1.nb_dof()), Iu2r(mf1.nb_dof(), mf2.nb_dof());
+    gmm::sub_interval Iu1i(Iu2r.last(), mf1.nb_dof());
+    gmm::sub_interval Iu2i(Iu1i.last(), mf2.nb_dof());
+    workspace.add_fem_variable("u1", mf1, Iu1r, UU1R);
+    workspace.add_fem_variable("u2", mf2, Iu2r, UU2R);
+    workspace.add_fem_variable("v1", mf1, Iu1i, UU1I);
+    workspace.add_fem_variable("v2", mf2, Iu2i, UU2I);
+    workspace.add_expression("(Grad_u2-Grad_u1):(Grad_u2-Grad_u1)"
+			     "+ (Grad_v2-Grad_v1):(Grad_v2-Grad_v1)", mim, rg);
+    workspace.assembly(0);
+    return workspace.assembled_potential();
   }
 
   /** 
       compute the H1 norm of U.
       @ingroup asm
   */
+
+  /**
+     compute @f$\|\nabla U\|_2@f$, U might be real or complex
+     @ingroup asm
+   */
   template<typename VEC>
-  scalar_type asm_H1_norm(const mesh_im &mim, const mesh_fem &mf,
-			  const VEC &U,
-			  const mesh_region &rg
-			  = mesh_region::all_convexes()) {
+  scalar_type asm_H1_norm
+  (const mesh_im &mim, const mesh_fem &mf, const VEC &U,
+   const mesh_region &rg = mesh_region::all_convexes()) {
     typedef typename gmm::linalg_traits<VEC>::value_type T;
-    return sqrt(asm_L2_norm_sqr(mim, mf, U, rg, T()) +
-		asm_H1_semi_norm_sqr(mim, mf, U, rg, T()));
+    return sqrt(asm_H1_norm_sqr(mim, mf, U, rg, T()));
+  }
+
+  template<typename VEC, typename T>
+  inline scalar_type asm_H1_norm_sqr
+  (const mesh_im &mim, const mesh_fem &mf, const VEC &U,
+   const mesh_region &rg_, T) {
+    ga_workspace workspace;
+    model_real_plain_vector UU(mf.nb_dof()); gmm::copy(U, UU);
+    gmm::sub_interval Iu(0, mf.nb_dof());
+    workspace.add_fem_variable("u", mf, Iu, UU);
+    workspace.add_expression("u.u + Grad_u:Grad_u", mim, rg_);
+    workspace.assembly(0);
+    return workspace.assembled_potential();
+  }
+
+  inline scalar_type asm_H1_norm_sqr
+  (const mesh_im &mim, const mesh_fem &mf, const model_real_plain_vector &U,
+   const mesh_region &rg_, scalar_type) {
+    ga_workspace workspace;
+    gmm::sub_interval Iu(0, mf.nb_dof());
+    workspace.add_fem_variable("u", mf, Iu, U);
+    workspace.add_expression("u.u + Grad_u:Grad_u", mim, rg_);
+    workspace.assembly(0);
+    return workspace.assembled_potential();
+  }
+  
+
+  template<typename VEC, typename T>
+  inline scalar_type asm_H1_norm_sqr
+  (const mesh_im &mim, const mesh_fem &mf, const VEC &U,
+   const mesh_region &rg, std::complex<T>) {
+    ga_workspace workspace;
+    model_real_plain_vector UUR(mf.nb_dof()), UUI(mf.nb_dof());
+    gmm::copy(gmm::real_part(U), UUR);
+    gmm::copy(gmm::imag_part(U), UUI);
+    gmm::sub_interval Iur(0, mf.nb_dof()), Iui(mf.nb_dof(), mf.nb_dof());
+    workspace.add_fem_variable("u", mf, Iur, UUR);
+    workspace.add_fem_variable("v", mf, Iui, UUI);
+    workspace.add_expression("u.u+v.v + Grad_u:Grad_u+Grad_v:Grad_v", mim, rg);
+    workspace.assembly(0);
+    return workspace.assembled_potential();
   }
   
   /**
@@ -231,84 +351,179 @@ namespace getfem {
      @ingroup asm
    */
   template<typename VEC1, typename VEC2>
-  scalar_type asm_H1_dist(const mesh_im &mim, 
-			  const mesh_fem &mf1, const VEC1 &U1,
-			  const mesh_fem &mf2, const VEC2 &U2,
-			  const mesh_region &rg
-			  = mesh_region::all_convexes()) {
-    return sqrt(gmm::sqr(asm_L2_dist(mim,mf1,U1,mf2,U2,rg)) + 
-		gmm::sqr(asm_H1_semi_dist(mim,mf1,U1,mf2,U2,rg)));
+  inline scalar_type asm_H1_dist
+  (const mesh_im &mim, const mesh_fem &mf1, const VEC1 &U1,
+   const mesh_fem &mf2, const VEC2 &U2,
+   mesh_region rg = mesh_region::all_convexes()) {
+    return sqrt(asm_H1_dist_sqr(mim, mf1, U1, mf2, U2, rg,
+			     typename gmm::linalg_traits<VEC1>::value_type()));
   }
 
-  template<typename VEC, typename T>
-  scalar_type asm_H2_semi_norm_sqr(const mesh_im &mim, const mesh_fem &mf,
-				   const VEC &U, const mesh_region &rg_, T) {
-    mesh_region rg(rg_);
-    mim.linked_mesh().intersect_with_mpi_region(rg);
-    generic_assembly assem;    
-    if (mf.get_qdim() == 1)
-      assem.set("u=data(#1);"
-		"V()+=u(i).u(j).comp(Hess(#1).Hess(#1))(i,d,e,j,d,e)");
-    else
-      assem.set("u=data(#1);"
-		"V()+=u(i).u(j).comp(vHess(#1).vHess(#1))(i,k,d,e,j,k,d,e)");
-    assem.push_mi(mim);
-    assem.push_mf(mf);
-    assem.push_data(U);
-    std::vector<scalar_type> v(1);
-    assem.push_vec(v);
-    assem.assembly(rg);
-    return MPI_SUM_SCALAR(v[0]);
+  template<typename VEC1, typename VEC2, typename T>
+  inline scalar_type asm_H1_dist_sqr
+  (const mesh_im &mim, const mesh_fem &mf1, const VEC1 &U1,
+   const mesh_fem &mf2, const VEC2 &U2, mesh_region rg, T) {
+    ga_workspace workspace;
+    model_real_plain_vector UU1(mf1.nb_dof()), UU2(mf2.nb_dof());
+    gmm::copy(U1, UU1); gmm::copy(U2, UU2);
+    gmm::sub_interval Iu1(0, mf1.nb_dof()), Iu2(mf1.nb_dof(), mf2.nb_dof());
+    workspace.add_fem_variable("u1", mf1, Iu1, UU1);
+    workspace.add_fem_variable("u2", mf2, Iu2, UU2);
+    workspace.add_expression("(u2-u1).(u2-u1)"
+			     "+ (Grad_u2-Grad_u1):(Grad_u2-Grad_u1)", mim, rg);
+    workspace.assembly(0);
+    return workspace.assembled_potential();
   }
 
-  template<typename VEC, typename T>
-  scalar_type asm_H2_semi_norm_sqr(const mesh_im &mim, const mesh_fem &mf,
-				   const VEC &U,
-				   const mesh_region &rg, std::complex<T>) {
-    return asm_H2_semi_norm_sqr(mim, mf, gmm::real_part(U), rg, T()) + 
-      asm_H2_semi_norm_sqr(mim, mf, gmm::imag_part(U), rg, T());
+  inline scalar_type asm_H1_dist_sqr
+  (const mesh_im &mim, const mesh_fem &mf1, const  model_real_plain_vector &U1,
+   const mesh_fem &mf2, const  model_real_plain_vector &U2, 
+   mesh_region rg, scalar_type) {
+    ga_workspace workspace;
+    gmm::sub_interval Iu1(0, mf1.nb_dof()), Iu2(mf1.nb_dof(), mf2.nb_dof());
+    workspace.add_fem_variable("u1", mf1, Iu1, U1);
+    workspace.add_fem_variable("u2", mf2, Iu2, U2);
+    workspace.add_expression("(u2-u1).(u2-u1)"
+			     "+ (Grad_u2-Grad_u1):(Grad_u2-Grad_u1)", mim, rg);
+    workspace.assembly(0);
+    return workspace.assembled_potential();
   }
 
-  template<typename VEC1, typename VEC2>
-  scalar_type asm_H2_semi_dist(const mesh_im &mim, 
-			       const mesh_fem &mf1, const VEC1 &U1,
-			       const mesh_fem &mf2, const VEC2 &U2,
-			       mesh_region rg = mesh_region::all_convexes()) {
-    mim.linked_mesh().intersect_with_mpi_region(rg);
-    generic_assembly assem;    
-    if (mf1.get_qdim() == 1)
-      assem.set("u1=data$1(#1); u2=data$2(#2); "
-		"V()+=u1(i).u1(j).comp(Hess(#1).Hess(#1))(i,d,e,j,d,e)"
-		"+ u2(i).u2(j).comp(Hess(#2).Hess(#2))(i,d,e,j,d,e)"
-		"- 2*u1(i).u2(j).comp(Hess(#1).Hess(#2))(i,d,e,j,d,e)");
-    else 
-      assem.set("u1=data$1(#1); u2=data$2(#2); "
-		"V()+=u1(i).u1(j).comp(vHess(#1).vHess(#1))(i,k,d,e,j,k,d,e)"
-		"+ u2(i).u2(j).comp(vHess(#2).vHess(#2))(i,k,d,e,j,k,d,e)"
-		"- 2*u1(i).u2(j).comp(vHess(#1).vHess(#2))(i,k,d,e,j,k,d,e)");
-    assem.push_mi(mim);
-    assem.push_mf(mf1);
-    assem.push_mf(mf2);
-    assem.push_data(U1);
-    assem.push_data(U2);
-    std::vector<scalar_type> v(1);
-    assem.push_vec(v);
-    assem.assembly(rg);
-    return sqrt(MPI_SUM_SCALAR(v[0]));    
+  template<typename VEC1, typename VEC2, typename T>
+  inline scalar_type asm_H1_dist_sqr
+  (const mesh_im &mim, const mesh_fem &mf1, const VEC1 &U1,
+   const mesh_fem &mf2, const VEC2 &U2, mesh_region rg, std::complex<T>) {
+    ga_workspace workspace;
+    model_real_plain_vector UU1R(mf1.nb_dof()), UU2R(mf2.nb_dof());
+    model_real_plain_vector UU1I(mf1.nb_dof()), UU2I(mf2.nb_dof());
+    gmm::copy(gmm::real_part(U1), UU1R); gmm::copy(gmm::imag_part(U1), UU1I);
+    gmm::copy(gmm::real_part(U2), UU2R); gmm::copy(gmm::imag_part(U2), UU2I);
+    gmm::sub_interval Iu1r(0, mf1.nb_dof()), Iu2r(mf1.nb_dof(), mf2.nb_dof());
+    gmm::sub_interval Iu1i(Iu2r.last(), mf1.nb_dof());
+    gmm::sub_interval Iu2i(Iu1i.last(), mf2.nb_dof());
+    workspace.add_fem_variable("u1", mf1, Iu1r, UU1R);
+    workspace.add_fem_variable("u2", mf2, Iu2r, UU2R);
+    workspace.add_fem_variable("v1", mf1, Iu1i, UU1I);
+    workspace.add_fem_variable("v2", mf2, Iu2i, UU2I);
+    workspace.add_expression("(u2-u1).(u2-u1) + (v2-v1).(v2-v1)"
+			     "+ (Grad_u2-Grad_u1):(Grad_u2-Grad_u1)"
+			     "+ (Grad_v2-Grad_v1):(Grad_v2-Grad_v1)", mim, rg);
+    workspace.assembly(0);
+    return workspace.assembled_potential();
   }
-
 
   /**
      compute @f$\|Hess U\|_2@f$, U might be real or complex. For C^1 elements
      @ingroup asm
-   */
+  */
+  
   template<typename VEC>
-  scalar_type asm_H2_semi_norm(const mesh_im &mim, const mesh_fem &mf,
-			       const VEC &U,
-			       const mesh_region &rg
-			       = mesh_region::all_convexes()) {
+  scalar_type asm_H2_semi_norm
+  (const mesh_im &mim, const mesh_fem &mf, const VEC &U,
+   const mesh_region &rg = mesh_region::all_convexes()) {
     typedef typename gmm::linalg_traits<VEC>::value_type T;
     return sqrt(asm_H2_semi_norm_sqr(mim, mf, U, rg, T()));
+  }
+
+  template<typename VEC, typename T>
+  inline scalar_type asm_H2_semi_norm_sqr
+  (const mesh_im &mim, const mesh_fem &mf, const VEC &U,
+   const mesh_region &rg_, T) {
+    ga_workspace workspace;
+    model_real_plain_vector UU(mf.nb_dof()); gmm::copy(U, UU);
+    gmm::sub_interval Iu(0, mf.nb_dof());
+    workspace.add_fem_variable("u", mf, Iu, UU);
+    workspace.add_expression("Hess_u:Hess_u", mim, rg_);
+    workspace.assembly(0);
+    return workspace.assembled_potential();
+  }
+
+  inline scalar_type asm_H2_semi_norm_sqr
+  (const mesh_im &mim, const mesh_fem &mf, const model_real_plain_vector &U,
+   const mesh_region &rg_, scalar_type) {
+    ga_workspace workspace;
+    gmm::sub_interval Iu(0, mf.nb_dof());
+    workspace.add_fem_variable("u", mf, Iu, U);
+    workspace.add_expression("Hess_u:Hess_u", mim, rg_);
+    workspace.assembly(0);
+    return workspace.assembled_potential();
+  }
+  
+
+  template<typename VEC, typename T>
+  inline scalar_type asm_H2_semi_norm_sqr
+  (const mesh_im &mim, const mesh_fem &mf, const VEC &U,
+   const mesh_region &rg, std::complex<T>) {
+    ga_workspace workspace;
+    model_real_plain_vector UUR(mf.nb_dof()), UUI(mf.nb_dof());
+    gmm::copy(gmm::real_part(U), UUR);
+    gmm::copy(gmm::imag_part(U), UUI);
+    gmm::sub_interval Iur(0, mf.nb_dof()), Iui(mf.nb_dof(), mf.nb_dof());
+    workspace.add_fem_variable("u", mf, Iur, UUR);
+    workspace.add_fem_variable("v", mf, Iui, UUI);
+    workspace.add_expression("Hess_u:Hess_u + Hess_v:Hess_v", mim, rg);
+    workspace.assembly(0);
+    return workspace.assembled_potential();
+  }
+
+
+  template<typename VEC1, typename VEC2>
+  inline scalar_type asm_H2_semi_dist
+  (const mesh_im &mim, const mesh_fem &mf1, const VEC1 &U1,
+   const mesh_fem &mf2, const VEC2 &U2,
+   mesh_region rg = mesh_region::all_convexes()) {
+    return sqrt(asm_H2_semi_dist_sqr(mim, mf1, U1, mf2, U2, rg,
+			   typename gmm::linalg_traits<VEC1>::value_type()));
+  }
+
+  template<typename VEC1, typename VEC2, typename T>
+  inline scalar_type asm_H2_semi_dist_sqr
+  (const mesh_im &mim, const mesh_fem &mf1, const VEC1 &U1,
+   const mesh_fem &mf2, const VEC2 &U2, mesh_region rg, T) {
+    ga_workspace workspace;
+    model_real_plain_vector UU1(mf1.nb_dof()), UU2(mf2.nb_dof());
+    gmm::copy(U1, UU1); gmm::copy(U2, UU2);
+    gmm::sub_interval Iu1(0, mf1.nb_dof()), Iu2(mf1.nb_dof(), mf2.nb_dof());
+    workspace.add_fem_variable("u1", mf1, Iu1, UU1);
+    workspace.add_fem_variable("u2", mf2, Iu2, UU2);
+    workspace.add_expression("(Hess_u2-Hess_u1):(Hess_u2-Hess_u1)", mim, rg);
+    workspace.assembly(0);
+    return workspace.assembled_potential();
+  }
+
+  inline scalar_type asm_H2_semi_dist_sqr
+  (const mesh_im &mim, const mesh_fem &mf1, const  model_real_plain_vector &U1,
+   const mesh_fem &mf2, const  model_real_plain_vector &U2, 
+   mesh_region rg, scalar_type) {
+    ga_workspace workspace;
+    gmm::sub_interval Iu1(0, mf1.nb_dof()), Iu2(mf1.nb_dof(), mf2.nb_dof());
+    workspace.add_fem_variable("u1", mf1, Iu1, U1);
+    workspace.add_fem_variable("u2", mf2, Iu2, U2);
+    workspace.add_expression("(Hess_u2-Hess_u1):(Hess_u2-Hess_u1)", mim, rg);
+    workspace.assembly(0);
+    return workspace.assembled_potential();
+  }
+
+  template<typename VEC1, typename VEC2, typename T>
+  inline scalar_type asm_H2_semi_dist_sqr
+  (const mesh_im &mim, const mesh_fem &mf1, const VEC1 &U1,
+   const mesh_fem &mf2, const VEC2 &U2, mesh_region rg, std::complex<T>) {
+    ga_workspace workspace;
+    model_real_plain_vector UU1R(mf1.nb_dof()), UU2R(mf2.nb_dof());
+    model_real_plain_vector UU1I(mf1.nb_dof()), UU2I(mf2.nb_dof());
+    gmm::copy(gmm::real_part(U1), UU1R); gmm::copy(gmm::imag_part(U1), UU1I);
+    gmm::copy(gmm::real_part(U2), UU2R); gmm::copy(gmm::imag_part(U2), UU2I);
+    gmm::sub_interval Iu1r(0, mf1.nb_dof()), Iu2r(mf1.nb_dof(), mf2.nb_dof());
+    gmm::sub_interval Iu1i(Iu2r.last(), mf1.nb_dof());
+    gmm::sub_interval Iu2i(Iu1i.last(), mf2.nb_dof());
+    workspace.add_fem_variable("u1", mf1, Iu1r, UU1R);
+    workspace.add_fem_variable("u2", mf2, Iu2r, UU2R);
+    workspace.add_fem_variable("v1", mf1, Iu1i, UU1I);
+    workspace.add_fem_variable("v2", mf2, Iu2i, UU2I);
+    workspace.add_expression("(Hess_u2-Hess_u1):(Hess_u2-Hess_u1)"
+			     "+ (Hess_v2-Hess_v1):(Hess_v2-Hess_v1)", mim, rg);
+    workspace.assembly(0);
+    return workspace.assembled_potential();
   }
 
   /** 
@@ -321,8 +536,7 @@ namespace getfem {
 			  const mesh_region &rg
 			  = mesh_region::all_convexes()) {
     typedef typename gmm::linalg_traits<VEC>::value_type T;
-    return sqrt(asm_L2_norm_sqr(mim, mf, U, rg, T())
-		+ asm_H1_semi_norm_sqr(mim, mf, U, rg, T())
+    return sqrt(asm_H1_norm_sqr(mim, mf, U, rg, T())
 		+ asm_H2_semi_norm_sqr(mim, mf, U, rg, T()));
   }
   
@@ -336,12 +550,50 @@ namespace getfem {
 			  const mesh_fem &mf2, const VEC2 &U2,
 			  const mesh_region &rg
 			  = mesh_region::all_convexes()) {
-    return sqrt(gmm::sqr(asm_L2_dist(mim,mf1,U1,mf2,U2,rg)) + 
-		gmm::sqr(asm_H1_semi_dist(mim,mf1,U1,mf2,U2,rg)) +
-		gmm::sqr(asm_H2_semi_dist(mim,mf1,U1,mf2,U2,rg)));
+    typedef typename gmm::linalg_traits<VEC1>::value_type T;
+    return sqrt(asm_H1_dist_sqr(mim,mf1,U1,mf2,U2,rg,T()) +
+		asm_H2_semi_dist_sqr(mim,mf1,U1,mf2,U2,rg,T()));
+  }
+ 
+
+  // -------- Before this : cleaned ----------
+
+  template<typename MAT>
+  void asm_mass_matrix(const MAT &M, const mesh_im &mim,
+		       const mesh_fem &mf_u1,
+		       const mesh_region &rg = mesh_region::all_convexes()) {
+    generic_assembly assem;
+    if (mf_u1.get_qdim() == 1)
+      assem.set("M(#1,#1)+=sym(comp(Base(#1).Base(#1)))");
+    else
+      assem.set("M(#1,#1)+=sym(comp(vBase(#1).vBase(#1))(:,i,:,i));");
+    assem.push_mi(mim);
+    assem.push_mf(mf_u1);
+    assem.push_mat(const_cast<MAT &>(M));
+    assem.assembly(rg);
   }
 
+  template<typename MAT>
+  void asm_mass_matrix(const MAT &M, const mesh_im &mim, const mesh_fem &mf_u1,
+		       const mesh_fem &mf_u2,
+		       const mesh_region &rg = mesh_region::all_convexes()) {
+    generic_assembly assem;
+    if (mf_u1.get_qdim() == 1 && mf_u2.get_qdim() == 1)
+      assem.set("M(#1,#2)+=comp(Base(#1).Base(#2))");
+    else if (mf_u1.get_qdim() == 1)
+      assem.set("M(#1,#2)+=comp(Base(#1).vBase(#2))(:,:,1);"); // could be i in place of 1
+    else if (mf_u2.get_qdim() == 1)
+      assem.set("M(#1,#2)+=comp(vBase(#1).Base(#2))(:,1,:);");
+    else
+      assem.set("M(#1,#2)+=comp(vBase(#1).vBase(#2))(:,i,:,i);");
+    assem.push_mi(mim);
+    assem.push_mf(mf_u1);
+    assem.push_mf(mf_u2);
+    assem.push_mat(const_cast<MAT &>(M));
+    assem.assembly(rg);
+  }
 
+  
   /*
     assembly of a matrix with 1 parameter (real or complex)
     (the most common here for the assembly routines below)
@@ -370,6 +622,23 @@ namespace getfem {
     assem.push_data(A);
     assem.push_mat_or_vec(const_cast<MAT&>(M));
     assem.assembly(rg);
+    // return;
+
+
+    // ga_workspace workspace;
+    // gmm::sub_interval Iu(0, mf_u.nb_dof()), Il;
+    // base_vector u(mf_u.nb_dof()), lambda, A(mf_data.nb_dof());
+    // gmm::copy(A, AA);
+    // if (mf_mult) {
+    //   Il = gmm::sub_interval(Iu.last(), mf_lambda->nb_dof());
+    //   lambda.resize(mf_lambda->nb_dof());
+    //   workspace.add_fem_variable("lambda", mf_u, Iu, lambda);
+    // }
+    // workspace.add_fem_variable("u", mf_u, Iu, u);
+    // workspace.add_fem_constant("A", mf_data, AA);
+    // workspace.add_expression(ssembly_description, mim, rg);
+    // workspace.assembly(2);
+    // gmm::add(workspace.assembled_matrix(), const_cast<MAT &>(M));
   }
 
   /* complex version */
@@ -392,43 +661,67 @@ namespace getfem {
       @ingroup asm
   */
   template<typename MAT>
-  void asm_mass_matrix(const MAT &M, const mesh_im &mim,
-		       const mesh_fem &mf_u1,
-		       const mesh_region &rg = mesh_region::all_convexes()) {
-    generic_assembly assem;
-    if (mf_u1.get_qdim() == 1)
-      assem.set("M(#1,#1)+=sym(comp(Base(#1).Base(#1)))");
-    else
-      assem.set("M(#1,#1)+=sym(comp(vBase(#1).vBase(#1))(:,i,:,i));");
-    assem.push_mi(mim);
-    assem.push_mf(mf_u1);
-    assem.push_mat(const_cast<MAT &>(M));
-    assem.assembly(rg);
+  inline void new_asm_mass_matrix
+  (const MAT &M, const mesh_im &mim, const mesh_fem &mf1,
+   const mesh_region &rg = mesh_region::all_convexes()) {
+
+    ga_workspace workspace;
+    gmm::sub_interval Iu1(0, mf1.nb_dof());
+    base_vector u1(mf1.nb_dof());
+    workspace.add_fem_variable("u1", mf1, Iu1, u1);
+    workspace.add_expression("Test_u1.Test2_u1", mim, rg);
+    workspace.assembly(2);
+    gmm::add(workspace.assembled_matrix(), const_cast<MAT &>(M));
+  }
+
+  inline void new_asm_mass_matrix
+  (model_real_sparse_matrix &M, const mesh_im &mim,
+   const mesh_fem &mf1,
+   const mesh_region &rg = mesh_region::all_convexes()) {
+    ga_workspace workspace;
+    gmm::sub_interval Iu1(0, mf1.nb_dof());
+    base_vector u1(mf1.nb_dof());
+    workspace.add_fem_variable("u1", mf1, Iu1, u1);
+    workspace.add_expression("Test_u1.Test2_u1", mim, rg);
+    workspace.set_assembled_matrix(M);
+    workspace.assembly(2);
   }
 
   /** 
    *  generic mass matrix assembly (on the whole mesh or on the specified
    *  boundary) 
    */
+
   template<typename MAT>
-  void asm_mass_matrix(const MAT &M, const mesh_im &mim, const mesh_fem &mf_u1,
-		       const mesh_fem &mf_u2,
-		       const mesh_region &rg = mesh_region::all_convexes()) {
-    generic_assembly assem;
-    if (mf_u1.get_qdim() == 1 && mf_u2.get_qdim() == 1)
-      assem.set("M(#1,#2)+=comp(Base(#1).Base(#2))");
-    else if (mf_u1.get_qdim() == 1)
-      assem.set("M(#1,#2)+=comp(Base(#1).vBase(#2))(:,:,1);"); // could be i in place of 1
-    else if (mf_u2.get_qdim() == 1)
-      assem.set("M(#1,#2)+=comp(vBase(#1).Base(#2))(:,1,:);");
-    else
-      assem.set("M(#1,#2)+=comp(vBase(#1).vBase(#2))(:,i,:,i);");
-    assem.push_mi(mim);
-    assem.push_mf(mf_u1);
-    assem.push_mf(mf_u2);
-    assem.push_mat(const_cast<MAT &>(M));
-    assem.assembly(rg);
+  inline void new_asm_mass_matrix
+  (const MAT &M, const mesh_im &mim, const mesh_fem &mf1, const mesh_fem &mf2,
+   const mesh_region &rg = mesh_region::all_convexes()) {
+    ga_workspace workspace;
+    gmm::sub_interval Iu1(0, mf1.nb_dof()), Iu2(Iu1.last(), mf2.nb_dof());
+    base_vector u1(mf1.nb_dof()), u2(mf2.nb_dof());
+    workspace.add_fem_variable("u1", mf1, Iu1, u1);
+    workspace.add_fem_variable("u2", mf2, Iu2, u2);
+    workspace.add_expression("Test_u1.Test2_u2", mim, rg);
+    workspace.assembly(2);
+    gmm::add(gmm::sub_matrix(workspace.assembled_matrix(), Iu1, Iu2),
+	     const_cast<MAT &>(M));
   }
+  
+  inline void new_asm_mass_matrix
+  (model_real_sparse_matrix &M, const mesh_im &mim,
+   const mesh_fem &mf1, const mesh_fem &mf2,
+   const mesh_region &rg = mesh_region::all_convexes()) {
+    ga_workspace workspace;
+    gmm::sub_interval Iu1(0, mf1.nb_dof()), Iu2(0, mf2.nb_dof());
+    base_vector u1(mf1.nb_dof()), u2(mf2.nb_dof());
+    workspace.add_fem_variable("u1", mf1, Iu1, u1);
+    workspace.add_fem_variable("u2", mf2, Iu2, u2);
+    workspace.add_expression("Test_u1.Test2_u2", mim, rg);
+    workspace.set_assembled_matrix(M);
+    workspace.assembly(2);
+  }
+  
+
 
   /** 
      generic mass matrix assembly with an additional parameter
@@ -1423,87 +1716,6 @@ namespace getfem {
 	      }
 	    }
 	  }
-	}
-      }
-    }
-  }
-
-  /**
-     Faster (and simpler) assembly of simple Dirichlet conditions (
-     u(x) = F(x) on a boundary). 
-
-     @param mf should be Lagrangian.
-     @param boundary the boundary number.
-     @param F the dirichlet condition value.
-     @param RM,B are modified to enforce the Dirichlet condition. The
-     symmetry properties of RM are kept.
-
-     @ingroup asm
-  */
-  template<typename MATRM, typename VECT1, typename VECT2>
-  void assembling_Dirichlet_condition
-  (MATRM &RM, VECT1 &B, const mesh_fem &mf, size_type boundary,
-   const VECT2 &F) {
-    // Marche uniquement pour des ddl de lagrange.
-    size_type Q=mf.get_qdim();
-    GMM_ASSERT1(!(mf.is_reduced()), "This function is not adapted to "
-		"reduced finite element methods"); 
-    dal::bit_vector nndof = mf.basic_dof_on_region(boundary);
-    pfem pf1;
-    for (dal::bv_visitor cv(mf.convex_index()); !cv.finished(); ++cv) {
-      pf1 = mf.fem_of_element(cv);
-      pdof_description ldof = lagrange_dof(pf1->dim());
-      size_type nbd = pf1->nb_dof(cv);
-      for (size_type i = 0; i < nbd; i++) {
-	size_type dof1 = mf.ind_basic_dof_of_element(cv)[i*Q];
-	if (nndof.is_in(dof1) && pf1->dof_types()[i] == ldof) {
-	  // cout << "dof : " << i << endl;
-	  for (size_type j = 0; j < nbd; j++) {
-	    size_type dof2 = mf.ind_basic_dof_of_element(cv)[j*Q];
-	    for (size_type k = 0; k < Q; ++k)
-	      for (size_type l = 0; l < Q; ++l) {
-		if (!(nndof.is_in(dof2)) &&
-		    dof_compatibility(pf1->dof_types()[j],
-				      lagrange_dof(pf1->dim())))
-		  B[dof2+k] -= RM(dof2+k, dof1+l) * F[dof1+l];
-		RM(dof2+k, dof1+l) = RM(dof1+l, dof2+k) = 0;
-	      }
-	  }
-	  for (size_type k = 0; k < Q; ++k)
-	    { RM(dof1+k, dof1+k) = 1; B[dof1+k] = F[dof1+k]; }
-	}
-      }
-    }
-  }
-  
-  /* add a dirichlet condition on a single dof, modifiying the matrix
-     RM and the rhs B.  (keeping the symmetry properties) */
-  template<typename MATRM, typename VECT1>
-  void add_Dirichlet_dof(MATRM &RM, VECT1 &B,
-			 const mesh_fem &mf,
-			 size_type dof, 
-			 typename gmm::linalg_traits<MATRM>::value_type
-			 dof_val) {
-    size_type Q=mf.get_qdim();
-    const mesh::ind_cv_ct &dofcv = mf.convex_to_dof(dof);
-    pfem pf1;
-
-    for (mesh::ind_cv_ct::const_iterator it = dofcv.begin();
-	 it != dofcv.end(); ++it) {
-      pf1 = mf.fem_of_element(*it);
-      GMM_ASSERT1(pf1->target_dim() == 1, "sorry, to be done ... ");
-      size_type nbd = pf1->nb_dof(*it);
-      for (size_type i = 0; i < nbd * Q; i++) {
-	size_type dof1 = mf.ind_dof_of_element(*it)[i];
-	if (dof == dof1) {
-	  for (size_type j = 0; j < nbd * Q; j++) {
-	    size_type dof2 = mf.ind_dof_of_element(*it)[j];
-	    if (!(dof == dof2)) {
-	      B[dof2] -= RM(dof2, dof1) * dof_val;
-	      RM(dof2, dof1) = RM(dof1, dof2) = 0;
-	    }
-	  }
-	  RM(dof1, dof1) = 1; B[dof1] = dof_val;
 	}
       }
     }

@@ -791,6 +791,7 @@ bool crack_problem::solve(plain_vector &U) {
     GMM_ASSERT1(!mf_mortar.is_reduced(), "To be adapted");
     sparse_matrix M(mf_mortar.nb_dof(), mf_mortar.nb_dof());
     getfem::asm_mass_matrix(M, mim, mf_mortar, MORTAR_BOUNDARY_OUT);
+    
     for (dal::bv_visitor_c d(mf_mortar.basic_dof_on_region(MORTAR_BOUNDARY_OUT)); 
 	 !d.finished(); ++d) {
       if (M(d,d) > 1e-8) ind_mortar.push_back(d);
@@ -809,13 +810,24 @@ bool crack_problem::solve(plain_vector &U) {
     /* build the mortar constraint matrix -- note that the integration
        method is conformal to the crack
      */
-    getfem::asm_mass_matrix(H0, mim, mf_mortar, mf_u(), 
-			    MORTAR_BOUNDARY_OUT);
+    getfem::asm_mass_matrix(H0, mim, mf_mortar, mf_u(), MORTAR_BOUNDARY_OUT);   
     gmm::copy(gmm::sub_matrix(H0, sub_i, sub_j), H);
 
     gmm::clear(H0);
     getfem::asm_mass_matrix(H0, mim, mf_mortar, mf_u(), 
-			    MORTAR_BOUNDARY_IN);
+				 MORTAR_BOUNDARY_IN);
+    // cout << "H0 = " << H0 << "\n H0 " << endl; getchar();
+
+    // sparse_matrix H8(mf_mortar.nb_dof(), mf_u().nb_dof());
+    // gmm::clear(H8);
+    // getfem::asm_mass_matrix(H8, mim, mf_mortar, mf_u(), MORTAR_BOUNDARY_IN);
+    // // gmm::add(gmm::scaled(H0, -1.0), H8);
+    // // cout << "H0 = " << H0 << endl;
+    // cout << "H8 = " << H8 << endl;
+    
+
+
+
     gmm::add(gmm::scaled(gmm::sub_matrix(H0, sub_i, sub_j), -1), H);
 
 

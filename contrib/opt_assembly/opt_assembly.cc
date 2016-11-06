@@ -94,7 +94,211 @@ std::ostream& operator<<(std::ostream& o, const chrono& c) {
   return o;
 }
 
+namespace getfem { // old assembly procedures with low level generic assembly
 
+  /*
+    assembly of a matrix with 1 parameter (real or complex)
+    (the most common here for the assembly routines below)
+  */
+  template <typename MAT, typename VECT>
+  void old_asm_real_or_complex_1_param
+  (MAT &M, const mesh_im &mim, const mesh_fem &mf_u, const mesh_fem &mf_data,
+   const VECT &A, const mesh_region &rg, const char *assembly_description,
+   const mesh_fem *mf_mult = 0) {
+    old_asm_real_or_complex_1_param_
+      (M, mim, mf_u, mf_data, A, rg, assembly_description, mf_mult,
+       typename gmm::linalg_traits<VECT>::value_type());
+  }
+
+  /* real version */
+  template<typename MAT, typename VECT, typename T>
+  void old_asm_real_or_complex_1_param_
+  (const MAT &M, const mesh_im &mim,  const mesh_fem &mf_u,
+   const mesh_fem &mf_data, const VECT &A,  const mesh_region &rg,
+   const char *assembly_description, const mesh_fem *mf_mult, T) {
+    generic_assembly assem(assembly_description);
+    assem.push_mi(mim);
+    assem.push_mf(mf_u);
+    assem.push_mf(mf_data);
+    if (mf_mult) assem.push_mf(*mf_mult);
+    assem.push_data(A);
+    assem.push_mat_or_vec(const_cast<MAT&>(M));
+    assem.assembly(rg);
+  }
+
+  /* complex version */
+  template<typename MAT, typename VECT, typename T>
+  void old_asm_real_or_complex_1_param_
+  (MAT &M, const mesh_im &mim, const mesh_fem &mf_u, const mesh_fem &mf_data,
+   const VECT &A, const mesh_region &rg,const char *assembly_description,
+   const mesh_fem *mf_mult, std::complex<T>) {
+    old_asm_real_or_complex_1_param_(gmm::real_part(M),mim,mf_u,mf_data,
+				 gmm::real_part(A),rg,
+				 assembly_description, mf_mult, T());
+    old_asm_real_or_complex_1_param_(gmm::imag_part(M),mim,mf_u,mf_data,
+				 gmm::imag_part(A),rg,
+				 assembly_description, mf_mult, T());
+  }
+
+  
+  template<typename VECT1, typename VECT2>
+  void old_asm_source_term
+  (const VECT1 &B, const mesh_im &mim, const mesh_fem &mf,
+   const mesh_fem &mf_data, const VECT2 &F,
+   const mesh_region &rg = mesh_region::all_convexes()) {
+    GMM_ASSERT1(mf_data.get_qdim() == 1 ||
+		mf_data.get_qdim() == mf.get_qdim(),
+		"invalid data mesh fem (same Qdim or Qdim=1 required)");
+
+    const char *st;
+    if (mf.get_qdim() == 1)
+      st = "F=data(#2); V(#1)+=comp(Base(#1).Base(#2))(:,j).F(j);";
+    else if (mf_data.get_qdim() == 1)
+      st = "F=data(qdim(#1),#2);"
+	"V(#1)+=comp(vBase(#1).Base(#2))(:,i,j).F(i,j);";
+    else
+      st = "F=data(#2);"
+	"V(#1)+=comp(vBase(#1).vBase(#2))(:,i,j,i).F(j);";
+    
+    old_asm_real_or_complex_1_param(const_cast<VECT1 &>(B),mim,mf,
+				    mf_data,F,rg,st);
+  }
+
+  template<typename VECT1, typename VECT2>
+  void old_asm_normal_source_term(VECT1 &B, const mesh_im &mim,
+				  const mesh_fem &mf,
+				  const mesh_fem &mf_data, const VECT2 &F,
+				  const mesh_region &rg) {
+    GMM_ASSERT1(mf_data.get_qdim() == 1 ||
+		mf_data.get_qdim() == mf.get_qdim(),
+		"invalid data mesh_fem (same Qdim or Qdim=1 required)");
+
+    const char *st;
+    if (mf.get_qdim() == 1)
+      st = "F=data(mdim(#1),#2);"
+	"V(#1)+=comp(Base(#1).Base(#2).Normal())(:,j,k).F(k,j);";
+    else if (mf_data.get_qdim() == 1)
+      st = "F=data(qdim(#1),mdim(#1),#2);"
+	"V(#1)+=comp(vBase(#1).Base(#2).Normal())(:,i,j,k).F(i,k,j);";
+    else
+      st = "F=data(mdim(#1),#2);"
+	"V(#1)+=comp(vBase(#1).vBase(#2).Normal())(:,i,j,i,k).F(k,j);";
+
+    old_asm_real_or_complex_1_param(B, mim, mf, mf_data, F, rg, st);
+  }
+
+  template<typename MAT>
+  void old_asm_mass_matrix(const MAT &M, const mesh_im &mim,
+		       const mesh_fem &mf_u1,
+		       const mesh_region &rg = mesh_region::all_convexes()) {
+    generic_assembly assem;
+    if (mf_u1.get_qdim() == 1)
+      assem.set("M(#1,#1)+=sym(comp(Base(#1).Base(#1)))");
+    else
+      assem.set("M(#1,#1)+=sym(comp(vBase(#1).vBase(#1))(:,i,:,i));");
+    assem.push_mi(mim);
+    assem.push_mf(mf_u1);
+    assem.push_mat(const_cast<MAT &>(M));
+    assem.assembly(rg);
+  }
+
+  template<typename MAT>
+  void old_asm_mass_matrix(const MAT &M, const mesh_im &mim, const mesh_fem &mf_u1,
+		       const mesh_fem &mf_u2,
+		       const mesh_region &rg = mesh_region::all_convexes()) {
+    generic_assembly assem;
+    if (mf_u1.get_qdim() == 1 && mf_u2.get_qdim() == 1)
+      assem.set("M(#1,#2)+=comp(Base(#1).Base(#2))");
+    else if (mf_u1.get_qdim() == 1)
+      assem.set("M(#1,#2)+=comp(Base(#1).vBase(#2))(:,:,1);"); // could be i in place of 1
+    else if (mf_u2.get_qdim() == 1)
+      assem.set("M(#1,#2)+=comp(vBase(#1).Base(#2))(:,1,:);");
+    else
+      assem.set("M(#1,#2)+=comp(vBase(#1).vBase(#2))(:,i,:,i);");
+    assem.push_mi(mim);
+    assem.push_mf(mf_u1);
+    assem.push_mf(mf_u2);
+    assem.push_mat(const_cast<MAT &>(M));
+    assem.assembly(rg);
+  }
+
+  /** 
+      Stiffness matrix for linear elasticity, with Lamé coefficients
+      @ingroup asm
+  */
+  template<class MAT, class VECT>
+  void old_asm_stiffness_matrix_for_linear_elasticity
+  (const MAT &RM_, const mesh_im &mim, const mesh_fem &mf,
+   const mesh_fem &mf_data, const VECT &LAMBDA, const VECT &MU,
+   const mesh_region &rg = mesh_region::all_convexes()) {
+    MAT &RM = const_cast<MAT &>(RM_);
+    GMM_ASSERT1(mf_data.get_qdim() == 1,
+		"invalid data mesh fem (Qdim=1 required)");
+    
+    GMM_ASSERT1(mf.get_qdim() == mf.linked_mesh().dim(),
+		"wrong qdim for the mesh_fem");
+    /* e = strain tensor,
+       M = 2*mu*e(u):e(v) + lambda*tr(e(u))*tr(e(v))
+    */
+    generic_assembly assem("lambda=data$1(#2); mu=data$2(#2);"
+			   "t=comp(vGrad(#1).vGrad(#1).Base(#2));"
+			   //"e=(t{:,2,3,:,5,6,:}+t{:,3,2,:,5,6,:}"
+			   //"+t{:,2,3,:,6,5,:}+t{:,3,2,:,6,5,:})/4;"
+			   //"e=(t{:,2,3,:,5,6,:}+t{:,3,2,:,5,6,:})*0.5;"
+			   /*"M(#1,#1)+= sym(2*e(:,i,j,:,i,j,k).mu(k)"
+                             " + e(:,i,i,:,j,j,k).lambda(k))");*/
+                           "M(#1,#1)+= sym(t(:,i,j,:,i,j,k).mu(k)"
+			   "+ t(:,j,i,:,i,j,k).mu(k)"
+			   "+ t(:,i,i,:,j,j,k).lambda(k))");
+    assem.push_mi(mim);
+    assem.push_mf(mf);
+    assem.push_mf(mf_data);
+    assem.push_data(LAMBDA);
+    assem.push_data(MU);
+    assem.push_mat(RM);
+    assem.assembly(rg);
+  }
+
+
+  /** 
+      Stiffness matrix for linear elasticity, with constant Lamé coefficients
+      @ingroup asm
+  */
+  template<class MAT, class VECT>
+  void old_asm_stiffness_matrix_for_homogeneous_linear_elasticity
+  (const MAT &RM_, const mesh_im &mim, const mesh_fem &mf,
+   const VECT &LAMBDA, const VECT &MU,
+   const mesh_region &rg = mesh_region::all_convexes()) {
+    MAT &RM = const_cast<MAT &>(RM_);
+    GMM_ASSERT1(mf.get_qdim() == mf.linked_mesh().dim(),
+		"wrong qdim for the mesh_fem");
+    generic_assembly assem("lambda=data$1(1); mu=data$2(1);"
+			   "t=comp(vGrad(#1).vGrad(#1));"
+                           "M(#1,#1)+= sym(t(:,i,j,:,i,j).mu(1)"
+			   "+ t(:,j,i,:,i,j).mu(1)"
+			   "+ t(:,i,i,:,j,j).lambda(1))");
+    assem.push_mi(mim);
+    assem.push_mf(mf);
+    assem.push_data(LAMBDA);
+    assem.push_data(MU);
+    assem.push_mat(RM);
+    assem.assembly(rg);
+  }
+
+  template<typename MAT>
+  void old_asm_stiffness_matrix_for_homogeneous_laplacian
+  (const MAT &M_, const mesh_im &mim, const mesh_fem &mf,
+   const mesh_region &rg = mesh_region::all_convexes()) {
+    MAT &M = const_cast<MAT &>(M_);
+    generic_assembly 
+      assem("M$1(#1,#1)+=sym(comp(Grad(#1).Grad(#1))(:,i,:,i))");
+    assem.push_mi(mim);
+    assem.push_mf(mf);
+    assem.push_mat(M);
+    assem.assembly(rg);
+  }
+  
+}
 
 
 
@@ -256,11 +460,11 @@ static void test_new_assembly(int N, int NX, int pK) {
   
   bool all = false;
   bool select = true;
-  int only_one = 8;
+  int only_one = 6;
 
   if (all || select || only_one == 1) {
     VEC_TEST_1("Test for source term", ndofu, "u.Test_u", mim, size_type(-1),
-	       Iu, getfem::asm_source_term(V, mim, mf_u, mf_u, U));
+	       Iu, getfem::old_asm_source_term(V, mim, mf_u, mf_u, U));
     
   }
   
@@ -273,55 +477,62 @@ static void test_new_assembly(int N, int NX, int pK) {
     
     {VEC_TEST_1("Test for Neumann term", ndofu, "u.Test_u",
 		mim, NEUMANN_BOUNDARY_NUM,
-		Iu, getfem::asm_source_term(V, mim, mf_u, mf_u,
+		Iu, getfem::old_asm_source_term(V, mim, mf_u, mf_u,
 					    U, NEUMANN_BOUNDARY_NUM));}
     
     {VEC_TEST_1("Test for Neumann term", ndofu,
 		"(((Reshape(A,meshdim,meshdim))')*Normal).Test_u",
 		mim, NEUMANN_BOUNDARY_NUM,
-		Iu, getfem::asm_normal_source_term(V, mim, mf_u, mf_u,
+		Iu, getfem::old_asm_normal_source_term(V, mim, mf_u, mf_u,
 						   A, NEUMANN_BOUNDARY_NUM));}
     
     if (N == 2)
       {VEC_TEST_1("Test for Neumann term", ndofu,
                   "(A'*Normal).Test_u", mim,
                   NEUMANN_BOUNDARY_NUM,
-                  Iu, getfem::asm_normal_source_term(V, mim, mf_u, mf_u,
+                  Iu, getfem::old_asm_normal_source_term(V, mim, mf_u, mf_u,
 						     A, NEUMANN_BOUNDARY_NUM));}
     if (N == 3)
       {VEC_TEST_1("Test for Neumann term", ndofu,
                   "(A'*Normal).Test_u", mim, NEUMANN_BOUNDARY_NUM,
-                  Iu, getfem::asm_normal_source_term(V, mim, mf_u, mf_u,
+                  Iu, getfem::old_asm_normal_source_term(V, mim, mf_u, mf_u,
 						     A, NEUMANN_BOUNDARY_NUM));}
   }
   
   if (all || only_one == 4) {
     {VEC_TEST_1("Test for Neumann term with reduced fem", ndofchi,
 		"p*Test_chi", mim, DIRICHLET_BOUNDARY_NUM,
-		Ichi, getfem::asm_source_term(V, mim, mf_chi, mf_p,
+		Ichi, getfem::old_asm_source_term(V, mim, mf_chi, mf_p,
 					      P, DIRICHLET_BOUNDARY_NUM));}
   }
   
   
   
   
-  
- 
-  
   if (all || select || only_one == 5) {
     MAT_TEST_1("Test for scalar Mass matrix", ndofp, ndofp, "Test_p.Test2_p",
-	       mim, Ip, Ip,  getfem::asm_mass_matrix(K, mim, mf_p));
+	       mim, Ip, Ip,  getfem::old_asm_mass_matrix(K, mim, mf_p));
   }
- 
+
+  // if (all || select || only_one == 6) {
+  //   std::vector<scalar_type> Ca(mf_p.nb_dof());
+  //   gmm::fill_random(Ca);
+  //   workspace.add_fem_constant("Ca", mf_p, Ca);
+  //   MAT_TEST_1("Test for vector Mass matrix", ndofu, ndofu,
+  //              "(Ca*Test_u).Test2_u",
+  // 	          mim, Iu, Iu,
+  //              getfem::old_asm_mass_matrix_param(K, mim, mf_u, mf_p, Ca));
+  // }
+  
   if (all || select || only_one == 6) {
-    MAT_TEST_1("Test for vector Mass matrix", ndofu, ndofu, "Test_u.Test2_u",
-	       mim, Iu, Iu,  getfem::asm_mass_matrix(K, mim, mf_u));
+    MAT_TEST_1("Test for vector Mass matrix", ndofu, ndofu, "(Test_u).Test2_u",
+   	       mim, Iu, Iu,  getfem::old_asm_mass_matrix(K, mim, mf_u));
   }
 
   if (all || select || only_one == 7) {
     MAT_TEST_1("Test for Laplacian stiffness matrix", ndofp, ndofp,
 	       "Grad_Test_p:Grad_Test2_p", mim2, Ip, Ip,
-	       getfem::asm_stiffness_matrix_for_homogeneous_laplacian
+	       getfem::old_asm_stiffness_matrix_for_homogeneous_laplacian
 	       (K, mim2, mf_p));
     // MAT_TEST_2(ndofp, ndofp, "(Grad_p:Grad_p)/2", mim2, Ip, Ip);
     // MAT_TEST_2(ndofp, ndofp, "sqr(Norm(Grad_p))/2", mim2, Ip, Ip);
@@ -364,7 +575,7 @@ static void test_new_assembly(int N, int NX, int pK) {
 	       ndofu, ndofu, "(Div_Test_u*(lambda*Id(qdim(u))) "
 	       "+ (2*mu)*Sym(Grad_Test_u)):Grad_Test2_u", mim2,
 	       Iu, Iu,
-	       getfem::asm_stiffness_matrix_for_homogeneous_linear_elasticity
+	       getfem::old_asm_stiffness_matrix_for_homogeneous_linear_elasticity
 	       (K, mim2, mf_u, lambda, mu));
 
     if (all) {
@@ -431,7 +642,7 @@ static void test_new_assembly(int N, int NX, int pK) {
 	       ndofu, ndofu, "(Div_Test_u*(lambda2*Id(meshdim)) "
 	       "+ (2*mu2)*Sym(Grad_Test_u)):Grad_Test2_u",
 	       mim2, Iu, Iu,
-	       getfem::asm_stiffness_matrix_for_linear_elasticity
+	       getfem::old_asm_stiffness_matrix_for_linear_elasticity
 	       (K, mim2, mf_u, mf_p, lambda2, mu2));
   }
 }
