@@ -668,46 +668,46 @@ int main(int /* argc */, char * /* argv */[]) {
   //                        new  | old  | sto  | asse | exec | Ins  |
   if (all || only_one == 1) // ndofu = 321602 ndofp = 160801 ndofchi = 1201
     test_new_assembly(2, 400, 1);
-  // Vector source term   : 0.20 | 0.66 |
-  // Nonlinear residual   : 0.27 |      |
+  // Vector source term   : 0.19 | 0.66 |
+  // Nonlinear residual   : 0.26 |      |
   // Mass (scalar)        : 0.18 | 0.56 | 0.04 | 0.06 | 0.06 | 0.06 |
-  // Mass (vector)        : 0.30 | 0.80 | 0.09 | 0.15 | 0.06 | 0.09 |
+  // Mass (vector)        : 0.27 | 0.80 | 0.08 | 0.11 | 0.06 | 0.09 |
   // Laplacian            : 0.15 | 0.80 | 0.04 | 0.05 | 0.06 | 0.04 |
-  // Homogeneous elas     : 0.30 | 1.88 | 0.08 | 0.13 | 0.06 | 0.09 |
-  // Non-homogeneous elast: 0.34 | 2.26 | 0.09 | 0.16 | 0.06 | 0.12 |
+  // Homogeneous elas     : 0.30 | 1.88 | 0.08 | 0.14 | 0.06 | 0.10 |
+  // Non-homogeneous elast: 0.34 | 2.26 | 0.09 | 0.15 | 0.06 | 0.13 |
   if (all || only_one == 2) // ndofu = 151959 ndofp =  50653 ndofchi = 6553
     test_new_assembly(3, 36, 1);
-  // Vector source term   : 0.26 | 0.79 |
-  // Nonlinear residual   : 0.49 |      |
-  // Mass (scalar)        : 0.21 | 0.58 | 0.05 | 0.08 | 0.08 | 0.06 |
-  // Mass (vector)        : 0.68 | 1.37 | 0.17 | 0.27 | 0.08 | 0.33 |
+  // Vector source term   : 0.25 | 0.79 |
+  // Nonlinear residual   : 0.46 |      |
+  // Mass (scalar)        : 0.21 | 0.58 | 0.05 | 0.09 | 0.08 | 0.05 |
+  // Mass (vector)        : 0.36 | 1.37 | 0.12 | 0.17 | 0.08 | 0.11 |
   // Laplacian            : 0.17 | 1.15 | 0.03 | 0.06 | 0.08 | 0.03 |
-  // Homogeneous elas     : 0.78 | 4.25 | 0.26 | 0.33 | 0.08 | 0.37 |
-  // Non-homogeneous elast: 0.83 | 6.29 | 0.26 | 0.33 | 0.08 | 0.42 |
+  // Homogeneous elas     : 0.76 | 4.25 | 0.26 | 0.33 | 0.08 | 0.35 |
+  // Non-homogeneous elast: 0.81 | 6.29 | 0.26 | 0.33 | 0.08 | 0.40 |
   if (all || only_one == 3) // ndofu = 321602 ndofp = 160801 ndofchi = 1201
     test_new_assembly(2, 200, 2);
   // Vector source term   : 0.09 | 0.23 |
   // Nonlinear residual   : 0.12 |      |
   // Mass (scalar)        : 0.08 | 0.25 | 0.02 | 0.03 | 0.03 | 0.02 |
-  // Mass (vector)        : 0.26 | 0.44 | 0.05 | 0.09 | 0.03 | 0.14 |
-  // Laplacian            : 0.08 | 0.37 | 0.02 | 0.03 | 0.03 | 0.02 |
-  // Homogeneous elas     : 0.24 | 1.28 | 0.06 | 0.09 | 0.03 | 0.12 |
+  // Mass (vector)        : 0.15 | 0.44 | 0.05 | 0.07 | 0.03 | 0.05 |
+  // Laplacian            : 0.07 | 0.37 | 0.02 | 0.03 | 0.03 | 0.01 |
+  // Homogeneous elas     : 0.24 | 1.28 | 0.06 | 0.10 | 0.03 | 0.11 |
   // Non-homogeneous elast: 0.26 | 2.38 | 0.06 | 0.10 | 0.03 | 0.13 |
   if (all || only_one == 4) // ndofu = 151959 ndofp =  50653 ndofchi = 6553
     test_new_assembly(3, 18, 2);
-  // Vector source term   : 0.13 | 0.23 |
-  // Nonlinear residual   : 0.31 |      |
+  // Vector source term   : 0.12 | 0.23 |
+  // Nonlinear residual   : 0.28 |      |
   // Mass (scalar)        : 0.11 | 0.25 | 0.05 | 0.05 | 0.03 | 0.03 |
-  // Mass (vector)        : 1.13 | 0.89 | 0.21 | 0.35 | 0.03 | 0.75 |
-  // Laplacian            : 0.08 | 0.53 | 0.03 | 0.03 | 0.03 | 0.02 |
+  // Mass (vector)        : 0.29 | 0.89 | 0.11 | 0.16 | 0.03 | 0.10 |
+  // Laplacian            : 0.08 | 0.53 | 0.03 | 0.04 | 0.03 | 0.01 |
   // Homogeneous elas     : 1.65 | 3.35 | 0.59 | 0.73 | 0.03 | 0.89 |
   // Non-homogeneous elast: 1.68 | 9.08 | 0.59 | 0.73 | 0.03 | 0.92 |
   if (all || only_one == 5) // ndofu = 151959 ndofp =  50653 ndofchi = 6553
     test_new_assembly(3, 9, 4);
-  // Vector source term   : 0.11 | 0.19 |
-  // Nonlinear residual   : 0.29 |      |
-  // Mass (scalar)        : 0.51 | 0.34 | 0.09 | 0.16 | 0.01 | 0.33 |
-  // Mass (vector)        : 4.37 | 1.31 | 0.41 | 1.27 | 0.01 | 3.10 |
+  // Vector source term   : 0.10 | 0.19 |
+  // Nonlinear residual   : 0.27 |      |
+  // Mass (scalar)        : 0.51 | 0.34 | 0.09 | 0.16 | 0.01 | 0.34 |
+  // Mass (vector)        : 1.29 | 1.31 | 0.23 | 0.41 | 0.01 | 0.87 |
   // Laplacian            : 0.36 | 0.76 | 0.09 | 0.14 | 0.01 | 0.21 |
   // Homogeneous elas     : 8.85 | 5.23 | 0.82 | 1.41 | 0.01 | 7.41 |
   // Non-homogeneous elast: 8.94 | 47.4 | 0.82 | 1.41 | 0.01 | 7.50 |
