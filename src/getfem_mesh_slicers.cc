@@ -655,11 +655,13 @@ namespace getfem {
     exec_(&n, 0, cvlst);
   }
 
-  void mesh_slicer::exec(const std::vector<short_type> &nrefine, const mesh_region& cvlst) {
+  void mesh_slicer::exec(const std::vector<short_type> &nrefine,
+			 const mesh_region& cvlst) {
     exec_(&nrefine[0], 1, cvlst);
   }
 
-  static bool check_orient(size_type cv, bgeot::pgeometric_trans pgt, const mesh& m) {
+  static bool check_orient(size_type cv, bgeot::pgeometric_trans pgt,
+			   const mesh& m) {
     if (pgt->dim() == m.dim() && m.dim()>=2) { /* no orient check for 
                                                   convexes of lower dim */
       base_matrix G; bgeot::vectors_to_base_matrix(G,m.points_of_convex(cv));
@@ -677,7 +679,8 @@ namespace getfem {
   }
 
 #if OLD_MESH_SLICER
-  void mesh_slicer::exec_(const short_type *pnrefine, int nref_stride, const mesh_region& cvlst) {
+  void mesh_slicer::exec_(const short_type *pnrefine, int nref_stride,
+			  const mesh_region& cvlst) {
     std::vector<base_node> cvm_pts;
     const bgeot::basic_mesh *cvm = 0;
     const bgeot::mesh_structure *cvms = 0;
@@ -829,16 +832,14 @@ namespace getfem {
       bool revert_orientation = check_orient(cv, pgt,m);
 
       /* update structure-dependent data */
-      
       /* TODO : fix levelset handling when slicing faces .. */
-      if (prev_cvr != cvr || nrefine != prev_nrefine || discont || prev_discont) {
+      if (prev_cvr != cvr || nrefine != prev_nrefine
+	  || discont || prev_discont) {
         if (discont) {
-          //if (prev_cv != it.cv())
           cvm = &refined_simplex_mesh_for_convex_cut_by_level_set
             (mls->mesh_of_convex(cv), unsigned(nrefine));
         } else {
-          cvm = bgeot::refined_simplex_mesh_for_convex(cvr,
-                                                       short_type(nrefine));
+          cvm = bgeot::refined_simplex_mesh_for_convex(cvr,short_type(nrefine));
         }
         cvm_pts.resize(cvm->points().card());
         std::copy(cvm->points().begin(), cvm->points().end(), cvm_pts.begin());
@@ -848,15 +849,14 @@ namespace getfem {
       }
       if (face < dim_type(-1)) {
         if (!discont) {
-          cvms = bgeot::refined_simplex_mesh_for_convex_faces(cvr, short_type(nrefine))[face].get();
+          cvms = bgeot::refined_simplex_mesh_for_convex_faces
+	    (cvr, short_type(nrefine))[face].get();
         } else {
           cvms = &refined_simplex_mesh_for_convex_faces_cut_by_level_set(face);
         }
       } else {
         cvms = cvm; 
       }
-
-
 
       /* apply the initial geometric transformation */
       std::vector<size_type> ptsid(cvm_pts.size()); std::fill(ptsid.begin(), ptsid.end(), size_type(-1));
@@ -880,7 +880,6 @@ namespace getfem {
           }
           G /= scalar_type(simplexes[snum].inodes.size());
         }
-          
 
         for (std::vector<size_type>::iterator itp = 
                simplexes[snum].inodes.begin();

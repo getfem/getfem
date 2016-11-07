@@ -214,29 +214,16 @@ namespace bgeot {
   /* By Yao Koutsawa  <yao.koutsawa@tudor.lu> 2012-12-10                  */
 
   class Q2_incomplete_of_ref_ : public convex_of_reference {
+    pconvex_ref pllref;
   public :
-    scalar_type is_in(const base_node& pt) const {
-      // return a negative or null number if pt is in the convex
-      GMM_ASSERT1(pt.size() == cvs->dim(),
-                  "Q2_incomplete_of_ref_::is_in: Dimension does not match");
-      scalar_type e = -1.0, r = (pt.size() > 0) ? -pt[0] : 0.0;
-      base_node::const_iterator it = pt.begin(), ite = pt.end();
-      for (; it != ite; e += *it, ++it) r = std::max(r, -(*it));
-      return std::max(r, e);
-    }
-    scalar_type is_in_face(short_type f, const base_node& pt) const {
-      // return a null number if pt is in the face of the convex
-      // negative if the point is on the side of the face where the element is
-      GMM_ASSERT1(pt.size() == cvs->dim(), "Q2_incomplete_of_ref_::is_in_face: "
-                  "Dimension does not match");
-      if (f > 0) return -pt[f-1];
-      scalar_type e = -1.0;
-      base_node::const_iterator it = pt.begin(), ite = pt.end();
-      for (; it != ite; e += *it, ++it) {};
-      return e / sqrt(scalar_type(pt.size()));
-    }
+    scalar_type is_in(const base_node& pt) const
+    { return pllref->is_in(pt); }
+    scalar_type is_in_face(short_type f, const base_node& pt) const
+    { return pllref->is_in_face(f, pt); }
     
     Q2_incomplete_of_ref_(dim_type nc) {
+      GMM_ASSERT1(nc == 2 || nc == 3, "Sorry exist only in dimension 2 or 3");
+      pllref = parallelepiped_of_reference(nc);
       cvs = Q2_incomplete_structure(nc);
       convex<base_node>::points().resize(cvs->nb_points());
       normals_.resize(nc == 2 ? 4: 6);

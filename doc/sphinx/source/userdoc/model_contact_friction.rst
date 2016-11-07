@@ -84,13 +84,7 @@ where :math:`d` is the dimension of the domain and :math:`k = 1..d-1`. The expre
 where :math:`\alpha_i` is a parameter which can be added for the homogenization of the augmentation parameter, :math:`(B_T U)_i` denotes here the sub-vector of indices from :math:`(d-1)(i-1)+1` to :math:`(d-1)i` for the sake of simplicity and the sliding velocity :math:`B_T \dot{U}` have been discretized into :math:`\frac{(B_T U - B_T U^{0})}{\Delta t}` with :math:`U^{0}` the displacement at the previous time step. Note that of course another discretization of the sliding velocity is possible and that the time step :math:`\Delta t` do not appear in the expression of the friction condition since it does not influence the direction of the sliding velocity.
 
 
-In that case, the homogenization coefficient :math:`\alpha_i` can be taken
-
-.. math::
-
-  \alpha_i = \frac{\int_{\Gamma_c} \varphi_i d\Gamma}{\ell}
-
-where :math:`\Gamma_c` is the contact boundary, :math:`\varphi_i` is the displacement shape function corresponding to the node :math:`a_i` and :math:`\ell` is a characteristic length, for instance the radius of the domain. In this way, the augmentation parameter :math:`r` can be expressed in :math:`N/m^2` and chosen closed to the Young modulus of the elastic body. Note that the solution is not very sensitive to the value of the augmentation parameter.
+In that case, the homogenization coefficient :math:`\alpha_i` can be taken proportional to :math:`h^{d-2}` (:math:`h` being the diameter of the element). In this way, the augmentation parameter :math:`r` can be expressed in :math:`N/m^2` and chosen closed to the Young modulus of the elastic body. Note that the solution is not sensitive to the value of the augmentation parameter.
 
 
 Weak nodal contact condition
@@ -134,13 +128,7 @@ Finally, the expression of the direct nodal contact condition are recovered
 
   -\frac{1}{r\alpha_i}(\lambda_T^i - P_{{\mathscr B}(-{\mathscr F}P_{]-\infty, 0]}(\lambda_N^i - \alpha_i r ((B_N U)_i - \text{gap}_i)))}(\lambda_T^i - \alpha_i r (B_T U - B_T U^{0})_i)) = 0, ~~ i = 1..N_c,
 
-except that now :math:`\lambda_N^i` and :math:`\lambda_T^i` are force densities, and a good value for :math:`\alpha_i` is now
-
-.. math::
-
-  \alpha_i = \frac{1}{\ell \int_{\Gamma_c}\psi_i},
-
-where :math:`\psi_i` is the shape function of the multiplier for the node :math:`a_i`. In that case, the augmentation parameter :math:`r` can still be chosen close to the Young modulus of the elastic body.
+except that now :math:`\lambda_N^i` and :math:`\lambda_T^i` are force densities, and :math:`\alpha_i` has to be now chosen proportional to :math:`1/h^d` such that the augmentation parameter :math:`r` can still be chosen close to the Young modulus of the elastic body.
 
 
 Note that without additional stabilization technique (see [HI-RE2010]_) an inf-sup condition have to be satisfied between the finite element of the displacement and the one for the multipliers. This means in particular that the finite element for the multiplier have to be "less rich" than the one for the displacement.
@@ -190,12 +178,12 @@ GetFEM++ bricks implement four versions of the contact condition derived from th
 .. math::
 
   \left\{\begin{array}{l}
-  a(u^h, v^h) + \displaystyle \int_{\Gamma_c} \lambda^h \cdot v^h d\Gamma = l(v^h) ~~~~ \forall v^h \in V^h, \\
+  a(u^h, v^h) + \displaystyle \int_{\Gamma_c} \lambda^h \cdot v^h d\Gamma = \ell(v^h) ~~~~ \forall v^h \in V^h, \\
   \displaystyle -\frac{1}{r}\int_{\Gamma_c} (\lambda^h_N + (\lambda^h_N - r(u^h_N-gap))_-)\mu^h_N d\Gamma \\
   ~~~~~~~~~~\displaystyle -\frac{1}{r}\int_{\Gamma_c} (\lambda^h_T -P_{B(\rho)}(\lambda^h_T - r\alpha(u^h_T-w^h_T)))\cdot \mu^h_T d\Gamma = 0 ~~~~ \forall \mu^h \in W^h,
   \end{array}\right.
 
-where :math:`a(\cdot, \cdot)` and :math:`l(v)` represent the remaining parts of the problem in  :math:`u`, for instance linear elasticity and :math:`\rho={\mathscr F}(\lambda^h_N - r(u^h_N-gap))_-`. In order to write a Newton iteration, one has to derive the tangent system. It can be written, reporting only the contact and friction terms and not the right hand side:
+where :math:`a(\cdot, \cdot)` and :math:`\ell(v)` represent the remaining parts of the problem in  :math:`u`, for instance linear elasticity and :math:`\rho={\mathscr F}(\lambda^h_N - r(u^h_N-gap))_-`. Note that in this case, the mathematical analysis leads to choose a value for the augmentation parameter of the kind :math:`r = r_0 / r` with :math:`r_0` having the dimension of a elasticity modulus (a classical choice is the value of Young's modulus). In order to write a Newton iteration, one has to derive the tangent system. It can be written, reporting only the contact and friction terms and not the right hand side:
 
 .. math::
 
@@ -218,7 +206,7 @@ The second version corresponds to the "symmetric" version. It is in fact symmetr
 
   \left\{\begin{array}{l}
   a(u^h, v^h) + \displaystyle \int_{\Gamma_c} (\lambda^h_N - r(u^h_N-gap))_- v^h_N d\Gamma \\
-  ~~~~~~ - \displaystyle \int_{\Gamma_c} P_{B(\rho)}(\lambda^h_T - r\alpha(u^h_T-w^h_T)))\cdot v^h_T d\Gamma = l(v^h) ~~~~ \forall v^h \in V^h, \\
+  ~~~~~~ - \displaystyle \int_{\Gamma_c} P_{B(\rho)}(\lambda^h_T - r\alpha(u^h_T-w^h_T)))\cdot v^h_T d\Gamma = \ell(v^h) ~~~~ \forall v^h \in V^h, \\
   \displaystyle -\frac{1}{r}\int_{\Gamma_c} (\lambda^h_N + (\lambda^h_N - r(u^h_N-gap))_-)\mu^h_N d\Gamma \\
   ~~~~~~~~~~\displaystyle -\frac{1}{r}\int_{\Gamma_c} (\lambda^h_T -P_{B(\rho)}(\lambda^h_T - r\alpha(u^h_T-w^h_T)))\cdot \mu^h_T d\Gamma = 0 ~~~~ \forall \mu^h \in W^h,
   \end{array}\right.
@@ -249,7 +237,7 @@ The third version corresponds to a penalized contact and friction condition. It 
 
   \left\{\begin{array}{l}
   a(u^h, v^h) + \displaystyle \int_{\Gamma_c} r(u^h_N-gap)_+ v^h_N d\Gamma \\
-  ~~~~~~ + \displaystyle \int_{\Gamma_c} P_{B(\mathscr F r(u^h_N-gap)_+)}(r\alpha(u^h_T-w^h_T))\cdot v^h_T d\Gamma = l(v^h) ~~~~ \forall v^h \in V^h,
+  ~~~~~~ + \displaystyle \int_{\Gamma_c} P_{B(\mathscr F r(u^h_N-gap)_+)}(r\alpha(u^h_T-w^h_T))\cdot v^h_T d\Gamma = \ell(v^h) ~~~~ \forall v^h \in V^h,
   \end{array}\right.
 
 and the tangent system:
