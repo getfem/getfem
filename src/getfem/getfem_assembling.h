@@ -724,11 +724,11 @@ namespace getfem {
    const VECT &A, const mesh_region &rg,const char *assembly_description,
    std::complex<T>) {
     asm_real_or_complex_1_param_mat_(gmm::real_part(M),mim,mf_u,mf_data,
-					 gmm::real_part(A),rg,
-					 assembly_description, T());
+				     gmm::real_part(A),rg,
+				     assembly_description, T());
     asm_real_or_complex_1_param_mat_(gmm::imag_part(M),mim,mf_u,mf_data,
-					 gmm::imag_part(A),rg,
-					 assembly_description, T());
+				     gmm::imag_part(A),rg,
+				     assembly_description, T());
   }
 
   /*
@@ -790,11 +790,11 @@ namespace getfem {
    const VECT &A, const mesh_region &rg,const char *assembly_description,
    std::complex<T>) {
     asm_real_or_complex_1_param_vec_(gmm::real_part(M),mim,mf_u,mf_data,
-					 gmm::real_part(A),rg,
-					 assembly_description, T());
+				     gmm::real_part(A),rg,
+				     assembly_description, T());
     asm_real_or_complex_1_param_vec_(gmm::imag_part(M),mim,mf_u,mf_data,
-					 gmm::imag_part(A),rg,
-					 assembly_description, T());
+				     gmm::imag_part(A),rg,
+				     assembly_description, T());
   }
 
   /** 
@@ -810,6 +810,19 @@ namespace getfem {
       (M, mim, mf_u, &mf_data, F, rg, "(A*Test_u):Test2_u");
   }
     
+  /** 
+     generic mass matrix assembly with an additional constant parameter
+     (on the whole mesh or on the specified boundary) 
+     @ingroup asm
+   */
+  template<typename MAT, typename VECT>
+  void asm_mass_matrix_homogeneous_param
+  (MAT &M, const mesh_im &mim, const mesh_fem &mf_u,
+   const VECT &F, const mesh_region &rg = mesh_region::all_convexes()) {
+    asm_real_or_complex_1_param_mat
+      (M, mim, mf_u, 0, F, rg, "(A*Test_u):Test2_u");
+  }
+
   /** 
       source term (for both volumic sources and boundary (Neumann) sources).
       @ingroup asm
@@ -1107,10 +1120,6 @@ namespace getfem {
     asm_stiffness_matrix_for_laplacian(M, mim, mf, mf_data, A, rg);
   }
   
-  // -------- Before this : cleaned ----------
-
-
-
   /*
     assembly of a matrix with 1 parameter (real or complex)
     (the most common here for the assembly routines below)
@@ -1155,13 +1164,6 @@ namespace getfem {
 				 assembly_description, mf_mult, T());
   }
 
-  
-
-
-  
-
-
-
 
   /**
      assembly of @f$\int_\Omega A(x)\nabla u.\nabla v@f$, where @f$A(x)@f$
@@ -1191,7 +1193,7 @@ namespace getfem {
   (MAT &M, const mesh_im &mim, const mesh_fem &mf, const mesh_fem &mf_data,
    const VECT &A, const mesh_region &rg = mesh_region::all_convexes()) {
     asm_real_or_complex_1_param_mat
-      (M,mim,mf,&mf_data,A,rg,
+      (M, mim, mf, &mf_data, A, rg,
        "(Reshape(A,meshdim,meshdim)*Grad_Test_u):Grad_Test2_u");
   }
 
@@ -1202,7 +1204,7 @@ namespace getfem {
   (MAT &M, const mesh_im &mim, const mesh_fem &mf,
    const VECT &A, const mesh_region &rg = mesh_region::all_convexes()) {
     asm_real_or_complex_1_param_mat
-      (M,mim,mf,0,A,rg,
+      (M, mim, mf, 0, A, rg,
        "(Reshape(A,meshdim,meshdim)*Grad_Test_u):Grad_Test2_u");
   }
 
@@ -1213,12 +1215,9 @@ namespace getfem {
   (MAT &M, const mesh_im &mim, const mesh_fem &mf,
    const mesh_fem &mf_data, const VECT &A, 
    const mesh_region &rg = mesh_region::all_convexes()) {
-    /* GMM_ASSERT1(mf_data.get_qdim() == 1,
-       "invalid data mesh fem (Qdim=1 required)");*/
-    asm_real_or_complex_1_param
-      (M,mim,mf,mf_data,A,rg, "a=data$1(mdim(#1),mdim(#1),#2);"
-       "M$1(#1,#1)+=comp(vGrad(#1).vGrad(#1).Base(#2))"
-       "(:,l,i,:,l,j,k).a(j,i,k)");
+    asm_real_or_complex_1_param_mat
+      (M, mim, mf, &mf_data, A, rg,
+       "(Grad_Test_u*(Reshape(A,meshdim,meshdim)')):Grad_Test2_u");
   }
 
   /** The same but with a constant matrix 
@@ -1227,54 +1226,39 @@ namespace getfem {
   void asm_stiffness_matrix_for_homogeneous_scalar_elliptic_componentwise
   (MAT &M, const mesh_im &mim, const mesh_fem &mf, const VECT &A, 
    const mesh_region &rg = mesh_region::all_convexes()) {
-    /* GMM_ASSERT1(mf_data.get_qdim() == 1,
-       "invalid data mesh fem (Qdim=1 required)");*/
-    asm_real_or_complex_1_param
-      (M,mim,mf,mf,A,rg, "a=data$1(mdim(#1),mdim(#1));"
-       "M$1(#1,#1)+=comp(vGrad(#1).vGrad(#1))"
-       "(:,l,i,:,l,j).a(j,i)");
+    asm_real_or_complex_1_param_mat
+      (M, mim, mf, 0, A, rg,
+       "(Grad_Test_u*(Reshape(A,meshdim,meshdim)')):Grad_Test2_u");
   }
 
 
   /**
      Assembly of @f$\int_\Omega A(x)\nabla u.\nabla v@f$, where @f$A(x)@f$
-     is a NxNxNxN (symmetric positive definite) tensor defined on mf_data.
+     is a NxNxQxQ (symmetric positive definite) tensor defined on mf_data.
   */
   template<typename MAT, typename VECT> void
   asm_stiffness_matrix_for_vector_elliptic
   (MAT &M, const mesh_im &mim, const mesh_fem &mf, const mesh_fem &mf_data, 
    const VECT &A, const mesh_region &rg = mesh_region::all_convexes()) {
-    /* GMM_ASSERT1(mf_data.get_qdim() == 1,
-       "invalid data mesh fem (Qdim=1 required)");*/
-    /* 
-       M = a_{i,j,k,l}D_{i,j}(u)D_{k,l}(v)
-    */
-    asm_real_or_complex_1_param
-      (M,mim,mf,mf_data,A,rg, 
-       "a=data$1(qdim(#1),mdim(#1),qdim(#1),mdim(#1),#2);"
-       "t=comp(vGrad(#1).vGrad(#1).Base(#2));"
-       "M(#1,#1)+= t(:,i,j,:,k,l,p).a(i,j,k,l,p)");
+   /* M = a_{i,j,k,l}D_{i,j}(u)D_{k,l}(v) */
+    asm_real_or_complex_1_param_mat
+      (M, mim, mf, &mf_data, A, rg,
+       "(Reshape(A,qdim(u),meshdim,qdim(u),meshdim):Grad_Test_u):Grad_Test2_u");
   }
 
   /**
      Assembly of @f$\int_\Omega A(x)\nabla u.\nabla v@f$, where @f$A(x)@f$
-     is a NxNxNxN (symmetric positive definite) constant tensor.
+     is a NxNxQxQ (symmetric positive definite) constant tensor.
   */
   template<typename MAT, typename VECT> void
   asm_stiffness_matrix_for_homogeneous_vector_elliptic
   (MAT &M, const mesh_im &mim, const mesh_fem &mf,
    const VECT &A, const mesh_region &rg = mesh_region::all_convexes()) {
-    /* 
-       M = a_{i,j,k,l}D_{i,j}(u)D_{k,l}(v)
-    */
-    asm_real_or_complex_1_param
-      (M,mim,mf,mf,A,rg, 
-       "a=data$1(qdim(#1),mdim(#1),qdim(#1),mdim(#1));"
-       "t=comp(vGrad(#1).vGrad(#1));"
-       "M(#1,#1)+= t(:,i,j,:,k,l).a(i,j,k,l)");
+    /* M = a_{i,j,k,l}D_{i,j}(u)D_{k,l}(v) */
+    asm_real_or_complex_1_param_mat
+      (M, mim, mf, 0, A, rg,
+       "(Reshape(A,qdim(u),meshdim,qdim(u),meshdim):Grad_Test_u):Grad_Test2_u");
   }
-
-
 
   /** 
       assembly of the term @f$\int_\Omega Kuv - \nabla u.\nabla v@f$, 
@@ -1288,64 +1272,13 @@ namespace getfem {
   void asm_Helmholtz(MAT &M, const mesh_im &mim, const mesh_fem &mf_u,
 		     const mesh_fem &mf_data, const VECT &K_squared, 
 		     const mesh_region &rg = mesh_region::all_convexes()) {
-    asm_Helmholtz(M, mim, mf_u, mf_data, K_squared,rg,
-		  typename gmm::linalg_traits<VECT>::value_type());
+    asm_real_or_complex_1_param_mat
+      (M, mim, mf_u, &mf_data, gmm::real_part(K_squared), rg,
+       "(A*Test_u).Test2_u - Grad_Test_u:Grad_Test2_u");
+    asm_real_or_complex_1_param_mat
+      (M, mim, mf_u, &mf_data, gmm::imag_part(K_squared), rg,
+       "(A*Test_u).Test2_u");
   }
-
-  template<typename MAT, typename VECT, typename T>
-  void asm_Helmholtz(MAT &M, const mesh_im &mim, const mesh_fem &mf_u,
-		     const mesh_fem &mf_data,
-		     const VECT &K_squared, const mesh_region &rg, T) {
-    asm_Helmholtz_real(M, mim, mf_u, mf_data, K_squared, rg);
-  }
-
-  template<typename MAT, typename VECT, typename T>
-  void asm_Helmholtz(MAT &M, const mesh_im &mim, const mesh_fem &mf_u,
-		     const mesh_fem &mf_data, const VECT &K_squared,
-		     const mesh_region &rg, std::complex<T>) {
-    asm_Helmholtz_cplx(gmm::real_part(M), gmm::imag_part(M), mim, mf_u,
-		       mf_data, gmm::real_part(K_squared),
-		       gmm::imag_part(K_squared), rg);
-  }
-
-
-  template<typename MATr, typename MATi, typename VECTr, typename VECTi>  
-  void asm_Helmholtz_cplx(const MATr &Mr, const MATi &Mi, const mesh_im &mim,
-			  const mesh_fem &mf_u, const mesh_fem &mf_data,
-			  const VECTr &K_squaredr, const VECTi &K_squaredi, 
-			  const mesh_region &rg=mesh_region::all_convexes()) {
-    generic_assembly assem("Kr=data$1(#2); Ki=data$2(#2);"
-			   "m = comp(Base(#1).Base(#1).Base(#2)); "
-			   "M$1(#1,#1)+=sym(m(:,:,i).Kr(i) - "
-			   "comp(Grad(#1).Grad(#1))(:,i,:,i));"
-			   "M$2(#1,#1)+=sym(m(:,:,i).Ki(i));");
-    assem.push_mi(mim);
-    assem.push_mf(mf_u);
-    assem.push_mf(mf_data);
-    assem.push_data(K_squaredr); //gmm::real_part(K_squared));
-    assem.push_data(K_squaredi); //gmm::imag_part(K_squared));
-    assem.push_mat(const_cast<MATr&>(Mr));
-    assem.push_mat(const_cast<MATi&>(Mi));
-    assem.assembly(rg);
-  }
-
-  template<typename MAT, typename VECT>  
-  void asm_Helmholtz_real(const MAT &M, const mesh_im &mim,
-			  const mesh_fem &mf_u, const mesh_fem &mf_data,
-			  const VECT &K_squared, 
-			  const mesh_region &rg=mesh_region::all_convexes()) {
-    generic_assembly assem("K=data$1(#2);"
-			   "m = comp(Base(#1).Base(#1).Base(#2)); "
-			   "M$1(#1,#1)+=sym(m(:,:,i).K(i) - "
-			   "comp(Grad(#1).Grad(#1))(:,i,:,i));");
-    assem.push_mi(mim);
-    assem.push_mf(mf_u);
-    assem.push_mf(mf_data);
-    assem.push_data(K_squared);
-    assem.push_mat(const_cast<MAT&>(M));
-    assem.assembly(rg);
-  }
-
 
   /** 
       assembly of the term @f$\int_\Omega Kuv - \nabla u.\nabla v@f$, 
@@ -1359,65 +1292,12 @@ namespace getfem {
   void asm_homogeneous_Helmholtz
   (MAT &M, const mesh_im &mim, const mesh_fem &mf_u, const VECT &K_squared, 
    const mesh_region &rg = mesh_region::all_convexes()) {
-    asm_homogeneous_Helmholtz(M, mim, mf_u, K_squared, rg,
-		  typename gmm::linalg_traits<VECT>::value_type());
-  }
-
-  template<typename MAT, typename VECT, typename T>
-  void asm_homogeneous_Helmholtz(MAT &M, const mesh_im &mim,
-				 const mesh_fem &mf_u,
-				 const VECT &K_squared,
-				 const mesh_region &rg, T) {
-    asm_homogeneous_Helmholtz_real(M, mim, mf_u, K_squared, rg);
-  }
-
-  template<typename MAT, typename VECT, typename T>
-  void asm_homogeneous_Helmholtz(MAT &M, const mesh_im &mim,
-				 const mesh_fem &mf_u,
-				 const VECT &K_squared,
-				 const mesh_region &rg, std::complex<T>) {
-    asm_homogeneous_Helmholtz_cplx(gmm::real_part(M),
-				   gmm::imag_part(M), mim, mf_u,
-				   gmm::real_part(K_squared),
-				   gmm::imag_part(K_squared), rg);
-  }
-
-
-  template<typename MATr, typename MATi, typename VECTr, typename VECTi>  
-  void asm_homogeneous_Helmholtz_cplx(const MATr &Mr, const MATi &Mi,
-				      const mesh_im &mim,
-				      const mesh_fem &mf_u,
-				      const VECTr &K_squaredr,
-				      const VECTi &K_squaredi, 
-				      const mesh_region &rg) {
-    generic_assembly assem("Kr=data$1(1); Ki=data$2(1);"
-			   "m = comp(Base(#1).Base(#1)); "
-			   "M$1(#1,#1)+=sym(m(:,:).Kr(j) - "
-			   "comp(Grad(#1).Grad(#1))(:,i,:,i));"
-			   "M$2(#1,#1)+=sym(m(:,:).Ki(j));");
-    assem.push_mi(mim);
-    assem.push_mf(mf_u);
-    assem.push_data(K_squaredr);
-    assem.push_data(K_squaredi);
-    assem.push_mat(const_cast<MATr&>(Mr));
-    assem.push_mat(const_cast<MATi&>(Mi));
-    assem.assembly(rg);
-  }
-
-  template<typename MAT, typename VECT>  
-  void asm_homogeneous_Helmholtz_real(const MAT &M, const mesh_im &mim,
-				      const mesh_fem &mf_u,
-				      const VECT &K_squared, 
-				      const mesh_region &rg) {
-    generic_assembly assem("K=data(1);"
-			   "m = comp(Base(#1).Base(#1)); "
-			   "M$1(#1,#1)+=sym(m(:,:).K(j) - "
-			   "comp(Grad(#1).Grad(#1))(:,i,:,i));");
-    assem.push_mi(mim);
-    assem.push_mf(mf_u);
-    assem.push_data(K_squared);
-    assem.push_mat(const_cast<MAT&>(M));
-    assem.assembly(rg);
+    asm_real_or_complex_1_param_mat
+      (M, mim, mf_u, 0, gmm::real_part(K_squared), rg,
+       "(A*Test_u).Test2_u - Grad_Test_u:Grad_Test2_u");
+    asm_real_or_complex_1_param_mat
+      (M, mim, mf_u, 0, gmm::imag_part(K_squared), rg,
+       "(A*Test_u).Test2_u");
   }
 
   enum { ASMDIR_BUILDH = 1, ASMDIR_BUILDR = 2, ASMDIR_SIMPLIFY = 4,
