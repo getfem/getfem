@@ -472,14 +472,14 @@ namespace getfem {
   std::string ga_substitute(const std::string &expr,
                             const std::map<std::string, std::string> &dict);
 
-  inline std::string ga_subsitute(const std::string &expr,
+  inline std::string ga_substitute(const std::string &expr,
                                   const std::string &o1,const std::string &s1) {
     std::map<std::string, std::string> dict;
     dict[o1] = s1;
     return ga_substitute(expr, dict);
   }
 
-  inline std::string ga_subsitute(const std::string &expr,
+  inline std::string ga_substitute(const std::string &expr,
                                   const std::string &o1,const std::string &s1,
                                   const std::string &o2,const std::string &s2) {
     std::map<std::string, std::string> dict;
@@ -487,7 +487,7 @@ namespace getfem {
     return ga_substitute(expr, dict);
   }
 
-  inline std::string ga_subsitute(const std::string &expr,
+  inline std::string ga_substitute(const std::string &expr,
                                   const std::string &o1,const std::string &s1,
                                   const std::string &o2,const std::string &s2,
                                   const std::string &o3,const std::string &s3) {
@@ -496,7 +496,7 @@ namespace getfem {
     return ga_substitute(expr, dict);
   }
 
-  inline std::string ga_subsitute(const std::string &expr,
+  inline std::string ga_substitute(const std::string &expr,
                                   const std::string &o1,const std::string &s1,
                                   const std::string &o2,const std::string &s2,
                                   const std::string &o3,const std::string &s3,

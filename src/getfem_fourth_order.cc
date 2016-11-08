@@ -470,9 +470,11 @@ namespace getfem {
 	      asm_source_term(*R, mim, mf_mult, *mf_data, *A, rg);
 	  }
 	  else {
-	    asm_real_or_complex_1_param
-	      (*R, mim, mf_mult, *mf_data, *A, rg,
-	       "R=data(#2); V(#1)+=comp(Base(#1).Grad(#2).Normal())(:,i,j,j).R(i)");
+	    asm_real_or_complex_1_param_vec
+	      (*R, mim, mf_mult, mf_data, *A, rg, "(Grad_A.Normal)*Test_u");
+	    // asm_real_or_complex_1_param
+	    //   (*R, mim, mf_mult, *mf_data, *A, rg,
+	    //    "R=data(#2); V(#1)+=comp(Base(#1).Grad(#2).Normal())(:,i,j,j).R(i)");
 	  }
 	} else {
 	  GMM_ASSERT1(!R_must_be_derivated, "Incoherent situation");
@@ -580,9 +582,11 @@ namespace getfem {
 	      asm_source_term(*R, mim, mf_mult, *mf_data, *A, rg);
 	  }
 	  else {
-	    asm_real_or_complex_1_param
-	      (*R, mim, mf_mult, *mf_data, *A, rg,
-	       "R=data(#2); V(#1)+=comp(Base(#1).Grad(#2).Normal())(:,i,j,j).R(i)");
+	    asm_real_or_complex_1_param_vec
+	      (*R, mim, mf_mult, mf_data, *A, rg, "(Grad_A.Normal)*Test_u");
+	    // asm_real_or_complex_1_param
+	    //   (*R, mim, mf_mult, *mf_data, *A, rg,
+	    //    "R=data(#2); V(#1)+=comp(Base(#1).Grad(#2).Normal())(:,i,j,j).R(i)");
 	  }
 	} else {
 	  GMM_ASSERT1(!R_must_be_derivated, "Incoherent situation");

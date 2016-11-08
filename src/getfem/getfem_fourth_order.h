@@ -165,25 +165,39 @@ namespace getfem {
 
     size_type Q = gmm::vect_size(F) / mf_data.nb_dof();
 
+    // const char *s;
+    // if (mf.get_qdim() == 1 && Q == 1)
+    //   s = "F=data(#2);"
+    //     "V(#1)+=comp(Grad(#1).Normal().Base(#2))(:,i,i,j).F(j);";
+    // else if (mf.get_qdim() == 1 && Q == gmm::sqr(mf.linked_mesh().dim()))
+    //   s = "F=data(mdim(#1),mdim(#1),#2);"
+    //     "V(#1)+=comp(Grad(#1).Normal().Normal().Normal().Base(#2))"
+    //     "(:,i,i,k,l,j).F(k,l,j);";
+    // else if (mf.get_qdim() > size_type(1) && Q == mf.get_qdim())
+    //   s = "F=data(qdim(#1),#2);"
+    //     "V(#1)+=comp(vGrad(#1).Normal().Base(#2))(:,i,k,k,j).F(i,j);";
+    // else if (mf.get_qdim() > size_type(1) &&
+    //          Q == size_type(mf.get_qdim()*gmm::sqr(mf.linked_mesh().dim())))
+    //   s = "F=data(qdim(#1),mdim(#1),mdim(#1),#2);"
+    //     "V(#1)+=comp(vGrad(#1).Normal().Normal().Normal().Base(#2))"
+    //     "(:,i,k,k,l,m,j).F(i,l,m,j);";
+    // else
+    //   GMM_ASSERT1(false, "invalid rhs vector");
+    // asm_real_or_complex_1_param(B, mim, mf, mf_data, F, rg, s);
+
     const char *s;
     if (mf.get_qdim() == 1 && Q == 1)
-      s = "F=data(#2);"
-        "V(#1)+=comp(Grad(#1).Normal().Base(#2))(:,i,i,j).F(j);";
+      s = "Grad_Test_u.(A*Normal)";
     else if (mf.get_qdim() == 1 && Q == gmm::sqr(mf.linked_mesh().dim()))
-      s = "F=data(mdim(#1),mdim(#1),#2);"
-        "V(#1)+=comp(Grad(#1).Normal().Normal().Normal().Base(#2))"
-        "(:,i,i,k,l,j).F(k,l,j);";
+      s = "Grad_Test_u.(((Reshape(A,meshdim,meshdim)*Normal).Normal)*Normal)";
     else if (mf.get_qdim() > size_type(1) && Q == mf.get_qdim())
-      s = "F=data(qdim(#1),#2);"
-        "V(#1)+=comp(vGrad(#1).Normal().Base(#2))(:,i,k,k,j).F(i,j);";
+      s = "((Grad_Test_u')*A).Normal";
     else if (mf.get_qdim() > size_type(1) &&
              Q == size_type(mf.get_qdim()*gmm::sqr(mf.linked_mesh().dim())))
-      s = "F=data(qdim(#1),mdim(#1),mdim(#1),#2);"
-        "V(#1)+=comp(vGrad(#1).Normal().Normal().Normal().Base(#2))"
-        "(:,i,k,k,l,m,j).F(i,l,m,j);";
+      s = "((((Grad_Test_u').Reshape(A,qdim(u),meshdim,meshdim)).Normal).Normal).Normal";
     else
       GMM_ASSERT1(false, "invalid rhs vector");
-    asm_real_or_complex_1_param(B, mim, mf, mf_data, F, rg, s);
+    asm_real_or_complex_1_param_vec(B, mim, mf, &mf_data, F, rg, s);
   }
 
   template<typename VECT1, typename VECT2>
@@ -193,25 +207,39 @@ namespace getfem {
     
     size_type Q = gmm::vect_size(F);
 
+    // const char *s;
+    // if (mf.get_qdim() == 1 && Q == 1)
+    //   s = "F=data(1);"
+    //     "V(#1)+=comp(Grad(#1).Normal())(:,i,i).F(1);";
+    // else if (mf.get_qdim() == 1 && Q == gmm::sqr(mf.linked_mesh().dim()))
+    //   s = "F=data(mdim(#1),mdim(#1));"
+    //     "V(#1)+=comp(Grad(#1).Normal().Normal().Normal())"
+    //     "(:,i,i,l,j).F(l,j);";
+    // else if (mf.get_qdim() > size_type(1) && Q == mf.get_qdim())
+    //   s = "F=data(qdim(#1));"
+    //     "V(#1)+=comp(vGrad(#1).Normal())(:,i,k,k).F(i);";
+    // else if (mf.get_qdim() > size_type(1) &&
+    //          Q == size_type(mf.get_qdim()*gmm::sqr(mf.linked_mesh().dim())))
+    //   s = "F=data(qdim(#1),mdim(#1),mdim(#1));"
+    //     "V(#1)+=comp(vGrad(#1).Normal().Normal().Normal())"
+    //     "(:,i,k,k,l,m).F(i,l,m);";
+    // else
+    //   GMM_ASSERT1(false, "invalid rhs vector");
+    // asm_real_or_complex_1_param(B, mim, mf, mf, F, rg, s);
+
     const char *s;
     if (mf.get_qdim() == 1 && Q == 1)
-      s = "F=data(1);"
-        "V(#1)+=comp(Grad(#1).Normal())(:,i,i).F(1);";
+      s = "Test_Grad_u.(A*Normal)";
     else if (mf.get_qdim() == 1 && Q == gmm::sqr(mf.linked_mesh().dim()))
-      s = "F=data(mdim(#1),mdim(#1));"
-        "V(#1)+=comp(Grad(#1).Normal().Normal().Normal())"
-        "(:,i,i,l,j).F(l,j);";
+      s = "Test_Grad_u.(((Reshape(A,meshdim,meshdim)*Normal).Normal)*Normal)";
     else if (mf.get_qdim() > size_type(1) && Q == mf.get_qdim())
-      s = "F=data(qdim(#1));"
-        "V(#1)+=comp(vGrad(#1).Normal())(:,i,k,k).F(i);";
+      s = "((Test_Grad_u')*A).Normal";
     else if (mf.get_qdim() > size_type(1) &&
              Q == size_type(mf.get_qdim()*gmm::sqr(mf.linked_mesh().dim())))
-      s = "F=data(qdim(#1),mdim(#1),mdim(#1));"
-        "V(#1)+=comp(vGrad(#1).Normal().Normal().Normal())"
-        "(:,i,k,k,l,m).F(i,l,m);";
+      s = "((((Test_Grad_u').Reshape(A,qdim(u),meshdim,meshdim)).Normal).Normal).Normal";
     else
       GMM_ASSERT1(false, "invalid rhs vector");
-    asm_real_or_complex_1_param(B, mim, mf, mf, F, rg, s);
+    asm_real_or_complex_1_param_vec(B, mim, mf, 0, F, rg, s);
   }
 
 
@@ -352,9 +380,11 @@ namespace getfem {
       if (!R_must_be_derivated) {
         asm_normal_source_term(R, mim, mf_mult, mf_r, r_data, rg);
       } else {
-        asm_real_or_complex_1_param
-          (R, mim, mf_mult, mf_r, r_data, rg,
-           "R=data(#2); V(#1)+=comp(Base(#1).Grad(#2).Normal())(:,i,j,j).R(i)");
+	asm_real_or_complex_1_param_vec(R, mim, mf_mult, &mf_r, r_data, rg,
+					"(Grad_A.Normal)*Test_u");
+        // asm_real_or_complex_1_param
+        //   (R, mim, mf_mult, mf_r, r_data, rg,
+        //    "R=data(#2); V(#1)+=comp(Base(#1).Grad(#2).Normal())(:,i,j,j).R(i)");
       }
     }
   }

@@ -4842,7 +4842,7 @@ model_complex_plain_vector &
 	  model_real_sparse_matrix BB(mf_mult.nb_dof(), mf_u.nb_dof());
 	  workspace.set_assembled_matrix(BB);
 	  workspace.assembly(2);
-	  gmm::add(BB, B);
+	  gmm::add(BB, *B);
 
           // generic_assembly assem;
           // if (mf_mult.get_qdim() == 1)

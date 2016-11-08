@@ -554,6 +554,138 @@ namespace getfem {
     return sqrt(asm_H1_dist_sqr(mim,mf1,U1,mf2,U2,rg,T()) +
 		asm_H2_semi_dist_sqr(mim,mf1,U1,mf2,U2,rg,T()));
   }
+
+  /*
+    assembly of a matrix with 1 parameter (real or complex)
+    (the most common here for the assembly routines below)
+  */
+  template <typename MAT, typename VECT>
+  inline void asm_real_or_complex_1_param_mat
+  (MAT &M, const mesh_im &mim, const mesh_fem &mf_u, const mesh_fem *mf_data,
+   const VECT &A, const mesh_region &rg, const char *assembly_description) {
+    asm_real_or_complex_1_param_mat_
+      (M, mim, mf_u, mf_data, A, rg, assembly_description,
+       typename gmm::linalg_traits<VECT>::value_type());
+  }
+
+  /* real version */
+  template<typename MAT, typename VECT, typename T>
+  inline void asm_real_or_complex_1_param_mat_
+  (const MAT &M, const mesh_im &mim,  const mesh_fem &mf_u,
+   const mesh_fem *mf_data, const VECT &A,  const mesh_region &rg,
+   const char *assembly_description, T) {
+    ga_workspace workspace;
+    gmm::sub_interval Iu(0, mf_u.nb_dof());
+    base_vector u(mf_u.nb_dof()), AA(gmm::vect_size(A));
+    gmm::copy(A, AA);
+    workspace.add_fem_variable("u", mf_u, Iu, u);
+    if (mf_data)
+      workspace.add_fem_constant("A", *mf_data, AA);
+    else
+      workspace.add_fixed_size_constant("A", AA);
+    workspace.add_expression(assembly_description, mim, rg);
+    workspace.assembly(2);
+    if (gmm::mat_nrows(workspace.assembled_matrix()))
+	gmm::add(workspace.assembled_matrix(), const_cast<MAT &>(M));
+  }
+
+  inline void asm_real_or_complex_1_param_mat_
+  (model_real_sparse_matrix &M, const mesh_im &mim,  const mesh_fem &mf_u,
+   const mesh_fem *mf_data, const model_real_plain_vector &A,
+   const mesh_region &rg,
+   const char *assembly_description, scalar_type) {
+    ga_workspace workspace;
+    gmm::sub_interval Iu(0, mf_u.nb_dof());
+    base_vector u(mf_u.nb_dof());
+    workspace.add_fem_variable("u", mf_u, Iu, u);
+    if (mf_data)
+      workspace.add_fem_constant("A", *mf_data, A);
+    else
+      workspace.add_fixed_size_constant("A", A);
+    workspace.add_expression(assembly_description, mim, rg);
+    workspace.set_assembled_matrix(M);
+    workspace.assembly(2);
+  }
+
+  /* complex version */
+  template<typename MAT, typename VECT, typename T>
+  inline void asm_real_or_complex_1_param_mat_
+  (MAT &M, const mesh_im &mim, const mesh_fem &mf_u, const mesh_fem *mf_data,
+   const VECT &A, const mesh_region &rg, const char *assembly_description,
+   std::complex<T>) {
+    asm_real_or_complex_1_param_mat_(gmm::real_part(M),mim,mf_u,mf_data,
+    				     gmm::real_part(A),rg,
+    				     assembly_description, T());
+    asm_real_or_complex_1_param_mat_(gmm::imag_part(M),mim,mf_u,mf_data,
+    				     gmm::imag_part(A),rg,
+    				     assembly_description, T());
+  }
+
+  /*
+    assembly of a vector with 1 parameter (real or complex)
+    (the most common here for the assembly routines below)
+  */
+  template <typename MAT, typename VECT>
+  inline void asm_real_or_complex_1_param_vec
+  (MAT &M, const mesh_im &mim, const mesh_fem &mf_u, const mesh_fem *mf_data,
+   const VECT &A, const mesh_region &rg, const char *assembly_description) {
+    asm_real_or_complex_1_param_vec_
+      (M, mim, mf_u, mf_data, A, rg, assembly_description,
+       typename gmm::linalg_traits<VECT>::value_type());
+  }
+
+  /* real version */
+  template<typename VECTA, typename VECT, typename T>
+  inline void asm_real_or_complex_1_param_vec_
+  (const VECTA &V, const mesh_im &mim,  const mesh_fem &mf_u,
+   const mesh_fem *mf_data, const VECT &A,  const mesh_region &rg,
+   const char *assembly_description, T) {
+    ga_workspace workspace;
+    gmm::sub_interval Iu(0, mf_u.nb_dof());
+    base_vector u(mf_u.nb_dof()), AA(gmm::vect_size(A));
+    gmm::copy(A, AA);
+    workspace.add_fem_variable("u", mf_u, Iu, u);
+    if (mf_data)
+      workspace.add_fem_constant("A", *mf_data, AA);
+    else
+      workspace.add_fixed_size_constant("A", AA);
+    workspace.add_expression(assembly_description, mim, rg);
+    workspace.assembly(1);
+    if (gmm::vect_size(workspace.assembled_vector()))
+	gmm::add(workspace.assembled_vector(), const_cast<VECTA &>(V));
+  }
+
+  inline void asm_real_or_complex_1_param_vec_
+  (model_real_plain_vector &V, const mesh_im &mim,  const mesh_fem &mf_u,
+   const mesh_fem *mf_data, const model_real_plain_vector &A,
+   const mesh_region &rg,
+   const char *assembly_description, scalar_type) {
+    ga_workspace workspace;
+    gmm::sub_interval Iu(0, mf_u.nb_dof());
+    base_vector u(mf_u.nb_dof());
+    workspace.add_fem_variable("u", mf_u, Iu, u);
+    if (mf_data)
+      workspace.add_fem_constant("A", *mf_data, A);
+    else
+      workspace.add_fixed_size_constant("A", A);
+    workspace.add_expression(assembly_description, mim, rg);
+    workspace.set_assembled_vector(V);
+    workspace.assembly(1);
+  }
+
+  /* complex version */
+  template<typename MAT, typename VECT, typename T>
+  inline void asm_real_or_complex_1_param_vec_
+  (MAT &M, const mesh_im &mim, const mesh_fem &mf_u, const mesh_fem *mf_data,
+   const VECT &A, const mesh_region &rg,const char *assembly_description,
+   std::complex<T>) {
+    asm_real_or_complex_1_param_vec_(gmm::real_part(M),mim,mf_u,mf_data,
+				     gmm::real_part(A),rg,
+				     assembly_description, T());
+    asm_real_or_complex_1_param_vec_(gmm::imag_part(M),mim,mf_u,mf_data,
+				     gmm::imag_part(A),rg,
+				     assembly_description, T());
+  }
  
   /** 
       generic mass matrix assembly (on the whole mesh or on the specified
@@ -665,137 +797,7 @@ namespace getfem {
     workspace.assembly(2);
   }
     
-  /*
-    assembly of a matrix with 1 parameter (real or complex)
-    (the most common here for the assembly routines below)
-  */
-  template <typename MAT, typename VECT>
-  inline void asm_real_or_complex_1_param_mat
-  (MAT &M, const mesh_im &mim, const mesh_fem &mf_u, const mesh_fem *mf_data,
-   const VECT &A, const mesh_region &rg, const char *assembly_description) {
-    asm_real_or_complex_1_param_mat_
-      (M, mim, mf_u, mf_data, A, rg, assembly_description,
-       typename gmm::linalg_traits<VECT>::value_type());
-  }
 
-  /* real version */
-  template<typename MAT, typename VECT, typename T>
-  inline void asm_real_or_complex_1_param_mat_
-  (const MAT &M, const mesh_im &mim,  const mesh_fem &mf_u,
-   const mesh_fem *mf_data, const VECT &A,  const mesh_region &rg,
-   const char *assembly_description, T) {
-    ga_workspace workspace;
-    gmm::sub_interval Iu(0, mf_u.nb_dof());
-    base_vector u(mf_u.nb_dof()), AA(gmm::vect_size(A));
-    gmm::copy(A, AA);
-    workspace.add_fem_variable("u", mf_u, Iu, u);
-    if (mf_data)
-      workspace.add_fem_constant("A", *mf_data, AA);
-    else
-      workspace.add_fixed_size_constant("A", AA);
-    workspace.add_expression(assembly_description, mim, rg);
-    workspace.assembly(2);
-    if (gmm::mat_nrows(workspace.assembled_matrix()))
-	gmm::add(workspace.assembled_matrix(), const_cast<MAT &>(M));
-  }
-
-  inline void asm_real_or_complex_1_param_mat_
-  (model_real_sparse_matrix &M, const mesh_im &mim,  const mesh_fem &mf_u,
-   const mesh_fem *mf_data, const model_real_plain_vector &A,
-   const mesh_region &rg,
-   const char *assembly_description, scalar_type) {
-    ga_workspace workspace;
-    gmm::sub_interval Iu(0, mf_u.nb_dof());
-    base_vector u(mf_u.nb_dof());
-    workspace.add_fem_variable("u", mf_u, Iu, u);
-    if (mf_data)
-      workspace.add_fem_constant("A", *mf_data, A);
-    else
-      workspace.add_fixed_size_constant("A", A);
-    workspace.add_expression(assembly_description, mim, rg);
-    workspace.set_assembled_matrix(M);
-    workspace.assembly(2);
-  }
-
-  /* complex version */
-  template<typename MAT, typename VECT, typename T>
-  inline void asm_real_or_complex_1_param_mat_
-  (MAT &M, const mesh_im &mim, const mesh_fem &mf_u, const mesh_fem *mf_data,
-   const VECT &A, const mesh_region &rg,const char *assembly_description,
-   std::complex<T>) {
-    asm_real_or_complex_1_param_mat_(gmm::real_part(M),mim,mf_u,mf_data,
-				     gmm::real_part(A),rg,
-				     assembly_description, T());
-    asm_real_or_complex_1_param_mat_(gmm::imag_part(M),mim,mf_u,mf_data,
-				     gmm::imag_part(A),rg,
-				     assembly_description, T());
-  }
-
-  /*
-    assembly of a vector with 1 parameter (real or complex)
-    (the most common here for the assembly routines below)
-  */
-  template <typename MAT, typename VECT>
-  inline void asm_real_or_complex_1_param_vec
-  (MAT &M, const mesh_im &mim, const mesh_fem &mf_u, const mesh_fem *mf_data,
-   const VECT &A, const mesh_region &rg, const char *assembly_description) {
-    asm_real_or_complex_1_param_vec_
-      (M, mim, mf_u, mf_data, A, rg, assembly_description,
-       typename gmm::linalg_traits<VECT>::value_type());
-  }
-
-  /* real version */
-  template<typename VECTA, typename VECT, typename T>
-  inline void asm_real_or_complex_1_param_vec_
-  (const VECTA &V, const mesh_im &mim,  const mesh_fem &mf_u,
-   const mesh_fem *mf_data, const VECT &A,  const mesh_region &rg,
-   const char *assembly_description, T) {
-    ga_workspace workspace;
-    gmm::sub_interval Iu(0, mf_u.nb_dof());
-    base_vector u(mf_u.nb_dof()), AA(gmm::vect_size(A));
-    gmm::copy(A, AA);
-    workspace.add_fem_variable("u", mf_u, Iu, u);
-    if (mf_data)
-      workspace.add_fem_constant("A", *mf_data, AA);
-    else
-      workspace.add_fixed_size_constant("A", AA);
-    workspace.add_expression(assembly_description, mim, rg);
-    workspace.assembly(1);
-    if (gmm::vect_size(workspace.assembled_vector()))
-	gmm::add(workspace.assembled_vector(), const_cast<VECTA &>(V));
-  }
-
-  inline void asm_real_or_complex_1_param_vec_
-  (model_real_plain_vector &V, const mesh_im &mim,  const mesh_fem &mf_u,
-   const mesh_fem *mf_data, const model_real_plain_vector &A,
-   const mesh_region &rg,
-   const char *assembly_description, scalar_type) {
-    ga_workspace workspace;
-    gmm::sub_interval Iu(0, mf_u.nb_dof());
-    base_vector u(mf_u.nb_dof());
-    workspace.add_fem_variable("u", mf_u, Iu, u);
-    if (mf_data)
-      workspace.add_fem_constant("A", *mf_data, A);
-    else
-      workspace.add_fixed_size_constant("A", A);
-    workspace.add_expression(assembly_description, mim, rg);
-    workspace.set_assembled_vector(V);
-    workspace.assembly(1);
-  }
-
-  /* complex version */
-  template<typename MAT, typename VECT, typename T>
-  inline void asm_real_or_complex_1_param_vec_
-  (MAT &M, const mesh_im &mim, const mesh_fem &mf_u, const mesh_fem *mf_data,
-   const VECT &A, const mesh_region &rg,const char *assembly_description,
-   std::complex<T>) {
-    asm_real_or_complex_1_param_vec_(gmm::real_part(M),mim,mf_u,mf_data,
-				     gmm::real_part(A),rg,
-				     assembly_description, T());
-    asm_real_or_complex_1_param_vec_(gmm::imag_part(M),mim,mf_u,mf_data,
-				     gmm::imag_part(A),rg,
-				     assembly_description, T());
-  }
 
   /** 
      generic mass matrix assembly with an additional parameter
@@ -1119,51 +1121,6 @@ namespace getfem {
    const VECT &A, const mesh_region &rg = mesh_region::all_convexes()) {
     asm_stiffness_matrix_for_laplacian(M, mim, mf, mf_data, A, rg);
   }
-  
-  /*
-    assembly of a matrix with 1 parameter (real or complex)
-    (the most common here for the assembly routines below)
-  */
-  template <typename MAT, typename VECT>
-  void asm_real_or_complex_1_param
-  (MAT &M, const mesh_im &mim, const mesh_fem &mf_u, const mesh_fem &mf_data,
-   const VECT &A, const mesh_region &rg, const char *assembly_description,
-   const mesh_fem *mf_mult = 0) {
-    asm_real_or_complex_1_param_
-      (M, mim, mf_u, mf_data, A, rg, assembly_description, mf_mult,
-       typename gmm::linalg_traits<VECT>::value_type());
-  }
-
-  /* real version */
-  template<typename MAT, typename VECT, typename T>
-  void asm_real_or_complex_1_param_
-  (const MAT &M, const mesh_im &mim,  const mesh_fem &mf_u,
-   const mesh_fem &mf_data, const VECT &A,  const mesh_region &rg,
-   const char *assembly_description, const mesh_fem *mf_mult, T) {
-    generic_assembly assem(assembly_description);
-    assem.push_mi(mim);
-    assem.push_mf(mf_u);
-    assem.push_mf(mf_data);
-    if (mf_mult) assem.push_mf(*mf_mult);
-    assem.push_data(A);
-    assem.push_mat_or_vec(const_cast<MAT&>(M));
-    assem.assembly(rg);
-  }
-
-  /* complex version */
-  template<typename MAT, typename VECT, typename T>
-  void asm_real_or_complex_1_param_
-  (MAT &M, const mesh_im &mim, const mesh_fem &mf_u, const mesh_fem &mf_data,
-   const VECT &A, const mesh_region &rg,const char *assembly_description,
-   const mesh_fem *mf_mult, std::complex<T>) {
-    asm_real_or_complex_1_param_(gmm::real_part(M),mim,mf_u,mf_data,
-				 gmm::real_part(A),rg,
-				 assembly_description, mf_mult, T());
-    asm_real_or_complex_1_param_(gmm::imag_part(M),mim,mf_u,mf_data,
-				 gmm::imag_part(A),rg,
-				 assembly_description, mf_mult, T());
-  }
-
 
   /**
      assembly of @f$\int_\Omega A(x)\nabla u.\nabla v@f$, where @f$A(x)@f$
@@ -1272,12 +1229,61 @@ namespace getfem {
   void asm_Helmholtz(MAT &M, const mesh_im &mim, const mesh_fem &mf_u,
 		     const mesh_fem &mf_data, const VECT &K_squared, 
 		     const mesh_region &rg = mesh_region::all_convexes()) {
+    typedef typename gmm::linalg_traits<MAT>::value_type T;
+    asm_Helmholtz_(M, mim, mf_u, &mf_data, K_squared, rg, T());
+  }
+
+  template<typename MAT, typename VECT, typename T>
+  void asm_Helmholtz_(MAT &M, const mesh_im &mim, const mesh_fem &mf_u,
+		      const mesh_fem *mf_data, const VECT &K_squared, 
+		      const mesh_region &rg, T) {
     asm_real_or_complex_1_param_mat
-      (M, mim, mf_u, &mf_data, gmm::real_part(K_squared), rg,
+      (M, mim, mf_u, mf_data, K_squared, rg,
        "(A*Test_u).Test2_u - Grad_Test_u:Grad_Test2_u");
-    asm_real_or_complex_1_param_mat
-      (M, mim, mf_u, &mf_data, gmm::imag_part(K_squared), rg,
-       "(A*Test_u).Test2_u");
+  }
+
+  template<typename MAT, typename VECT, typename T>
+  void asm_Helmholtz_(MAT &M, const mesh_im &mim, const mesh_fem &mf_u,
+		     const mesh_fem *mf_data, const VECT &K_squared, 
+		      const mesh_region &rg, std::complex<T>) {
+    // asm_real_or_complex_1_param_mat
+    //   (M, mim, mf_u, &mf_data, gmm::real_part(K_squared), rg,
+    //    "(A*Test_u).Test2_u - Grad_Test_u:Grad_Test2_u");
+    // asm_real_or_complex_1_param_mat
+    //   (M, mim, mf_u, &mf_data, gmm::imag_part(K_squared), rg,
+    //    "(A*Test_u).Test2_u");
+
+
+    ga_workspace workspace;
+    gmm::sub_interval Iur(0, mf_u.nb_dof()), Iui(Iur.last(), mf_u.nb_dof());
+    base_vector u(mf_u.nb_dof());
+    base_vector AR(gmm::vect_size(K_squared)), AI(gmm::vect_size(K_squared));
+    gmm::copy(gmm::real_part(K_squared), AR);
+    gmm::copy(gmm::imag_part(K_squared), AI);
+    workspace.add_fem_variable("u", mf_u, Iur, u);
+    workspace.add_fem_variable("ui", mf_u, Iui, u);
+
+    if (mf_data) {
+      workspace.add_fem_constant("A",  *mf_data, AR);
+      workspace.add_fem_constant("AI", *mf_data, AI);
+    } else {
+      workspace.add_fixed_size_constant("A",  AR);
+      workspace.add_fixed_size_constant("AI", AI);
+    }
+    workspace.add_expression("(A*Test_u).Test2_u - Grad_Test_u:Grad_Test2_u",
+			     mim, rg);
+    workspace.add_expression("(AI*Test_ui).Test2_ui", mim, rg);
+    workspace.assembly(2);
+    
+    if (gmm::mat_nrows(workspace.assembled_matrix()))
+      gmm::add(gmm::sub_matrix(workspace.assembled_matrix(),Iur,Iur),
+    	       const_cast<MAT &>(M));
+    if (gmm::mat_nrows(workspace.assembled_matrix()) > mf_u.nb_dof())
+      gmm::add(gmm::sub_matrix(workspace.assembled_matrix(),Iui,Iui),
+    	       gmm::imag_part(const_cast<MAT &>(M)));
+      
+
+
   }
 
   /** 
@@ -1292,12 +1298,8 @@ namespace getfem {
   void asm_homogeneous_Helmholtz
   (MAT &M, const mesh_im &mim, const mesh_fem &mf_u, const VECT &K_squared, 
    const mesh_region &rg = mesh_region::all_convexes()) {
-    asm_real_or_complex_1_param_mat
-      (M, mim, mf_u, 0, gmm::real_part(K_squared), rg,
-       "(A*Test_u).Test2_u - Grad_Test_u:Grad_Test2_u");
-    asm_real_or_complex_1_param_mat
-      (M, mim, mf_u, 0, gmm::imag_part(K_squared), rg,
-       "(A*Test_u).Test2_u");
+    typedef typename gmm::linalg_traits<MAT>::value_type T;
+    asm_Helmholtz_(M, mim, mf_u, 0, K_squared, rg, T());
   }
 
   enum { ASMDIR_BUILDH = 1, ASMDIR_BUILDR = 2, ASMDIR_SIMPLIFY = 4,

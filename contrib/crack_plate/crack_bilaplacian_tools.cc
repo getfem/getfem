@@ -79,9 +79,11 @@ void asm_normal_derivative_dirichlet_constraints_bis
     if (!R_must_be_derivated) {
       asm_normal_source_term(R, mim, mf_mult, mf_r, r_data, rg);
     } else {
-      asm_real_or_complex_1_param
-        (R, mim, mf_mult, mf_r, r_data, rg,
-         "R=data(#2); V(#1)+=comp(Grad(#1).Normal().Grad(#2).Normal())(i,j,k,k).R(j)");
+      asm_real_or_complex_1_param_vec
+	(R, mim, mf_mult, &mf_r, r_data, rg, "(Grad_A.Normal)*(Grad_Test_u.Normal)");
+      // asm_real_or_complex_1_param
+      //   (R, mim, mf_mult, mf_r, r_data, rg,
+      //    "R=data(#2); V(#1)+=comp(Grad(#1).Normal().Grad(#2).Normal())(:,i,i,j,k,k).R(j)");
     }
   }
 }

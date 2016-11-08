@@ -277,15 +277,22 @@ namespace getfem {
 			       const mesh_region &rg) {
      GMM_ASSERT1(mf_data.get_qdim() == 1, "invalid data mesh_fem");
 
-    const char *st;
-    if (mf.get_qdim_n() == 1)
-      st = "F=data(#2);"
-	"V(#1)+=comp(vBase(#1).Base(#2).Normal())(:,j,k,j).F(k);";
-    else
-      st = "F=data(mdim(#1),#2);" // a corriger pour les tenseurs non carres
-	"V(#1)+=comp(mBase(#1).Base(#2).Normal())(:,i,j,k,j).F(i,k);";
+    // const char *st;
+    // if (mf.get_qdim_n() == 1)
+    //   st = "F=data(#2);"
+    // 	"V(#1)+=comp(vBase(#1).Base(#2).Normal())(:,j,k,j).F(k);";
+    // else
+    //   st = "F=data(mdim(#1),#2);" // a corriger pour les tenseurs non carres
+    // 	"V(#1)+=comp(mBase(#1).Base(#2).Normal())(:,i,j,k,j).F(i,k);";
 
-    asm_real_or_complex_1_param(B, mim, mf, mf_data, F, rg, st);
+    // asm_real_or_complex_1_param(B, mim, mf, mf_data, F, rg, st);
+
+    if (mf.get_qdim_n() == 1)
+      asm_real_or_complex_1_param_vec(B, mim, mf, &mf_data, F, rg, 
+				      "(A*Test_u).Normal");
+    else
+      asm_real_or_complex_1_param_vec(B, mim, mf, &mf_data, F, rg, 
+				      "((Test_u')*A).Normal");
   }
 
   
