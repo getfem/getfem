@@ -6597,10 +6597,9 @@ model_complex_plain_vector &
     std::string test_varname
       = "Test_" + sup_previous_and_dot_to_varname(varname);
     
-    std::string expr1 = "("+dataexpr1+")*(Div_"+varname+"-Div_"+dataname3
-      +")*Div_"+test_varname+"+(2*("+dataexpr2+"))*(Sym(Grad_"+varname
-      +")-Sym(Grad_"+dataname3+")):Grad_"
-      +test_varname;
+    std::string expr1 = "((("+dataexpr1+")*(Div_"+varname+"-Div_"+dataname3
+      +"))*Id(meshdim)+(2*("+dataexpr2+"))*(Sym(Grad_"+varname
+      +")-Sym(Grad_"+dataname3+"))):Grad_" +test_varname;
     std::string expr2 = "(Div_"+varname+"*(("+dataexpr1+")*Id(meshdim))"
       +"+(2*("+dataexpr2+"))*Sym(Grad_"+varname+")):Grad_"+test_varname;
     

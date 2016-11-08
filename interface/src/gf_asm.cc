@@ -933,40 +933,6 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
          THROW_BADARG("too much arguments for asm(nonlinear_elasticity)");
        );
 
-
-    /*@FUNC @CELL{K, B} = ('stokes', @tmim mim, @tmf mf_u, @tmf mf_p, @tmf mf_d, @dvec nu[, @int region])
-    Assembly of matrices for the Stokes problem.
-
-    :math:`-\nu(x)\Delta u + \nabla p = 0`
-    :math:`\nabla\cdot u  = 0`
-    with :math:`\nu` (`nu`), the fluid's dynamic viscosity.
-
-    On output, `K` is the usual linear elasticity stiffness matrix with
-    :math:`\lambda = 0` and
-    :math:`2\mu = \nu`. `B` is a matrix
-    corresponding to :math:`\int p\nabla\cdot\phi`.
-
-    `K` and `B` are @tsp object's.
-    @*/
-    sub_command
-      ("stokes", 5, 6, 0, 2,
-       const getfem::mesh_im *mim = get_mim(in);
-       const getfem::mesh_fem *mf_u = to_meshfem_object(in.pop());
-       const getfem::mesh_fem *mf_p = to_meshfem_object(in.pop());
-       const getfem::mesh_fem *mf_d = to_meshfem_object(in.pop());
-       darray           vec_d = in.pop().to_darray(int(mf_d->nb_dof()));
-       gf_real_sparse_by_col  K(mf_u->nb_dof(), mf_u->nb_dof());
-       gf_real_sparse_by_col  B(mf_u->nb_dof(), mf_p->nb_dof());
-       size_type region = size_type(-1);
-       if (in.remaining()) region = in.pop().to_integer();
-       getfem::mesh_region rg(region);
-       mf_u->linked_mesh().intersect_with_mpi_region(rg);
-       getfem::asm_stokes(K, B, *mim, *mf_u, *mf_p, *mf_d, vec_d, rg);
-       out.pop().from_sparse(K);
-       out.pop().from_sparse(B);
-       );
-
-
     /*@FUNC A = ('helmholtz', @tmim mim, @tmf mf_u, @tmf mf_d, @cvec k[, @int region])
     Assembly of the matrix for the Helmholtz problem.
 

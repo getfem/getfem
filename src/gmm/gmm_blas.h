@@ -1220,7 +1220,9 @@ namespace gmm {
   template <typename L1, typename L2> inline
     void add_spec(const L1& l1, L2& l2, abstract_matrix) {
     GMM_ASSERT2(mat_nrows(l1)==mat_nrows(l2) && mat_ncols(l1)==mat_ncols(l2),
-                "dimensions mismatch");
+                "dimensions mismatch l1 is " << mat_nrows(l1) << "x"
+		<< mat_ncols(l1) << " and l2 is " << mat_nrows(l2)
+		<< "x" << mat_ncols(l2));
     add(l1, l2, typename linalg_traits<L1>::sub_orientation(),
 	typename linalg_traits<L2>::sub_orientation());
   }

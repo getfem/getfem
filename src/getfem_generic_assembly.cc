@@ -7259,7 +7259,7 @@ namespace getfem {
 
     if (order == 2) {
       if (K.use_count()) {
-        gmm::clear(*K);
+	gmm::clear(*K);
         gmm::resize(*K, max_dof, max_dof);
       }
       gmm::clear(unreduced_K);
