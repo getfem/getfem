@@ -232,7 +232,6 @@
   <ItemGroup>
     <None Include="..\..\superlu\License.txt" />
     <None Include="..\..\superlu\LOCAL_PATCHES.txt" />
-    <None Include="ReadMe.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
