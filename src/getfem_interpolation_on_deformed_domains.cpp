@@ -20,22 +20,25 @@
 ===========================================================================*/
 
 #include "getfem/getfem_generic_assembly.h"
+#include "getfem/getfem_models.h"
 
 namespace getfem {
 
 // Structure describing a contact boundary (or contact body)
 struct contact_boundary {
   size_type region;            // boundary region for the slave (source)
-                                // and volume region for the master (target)
+                               // and volume region for the master (target)
   const getfem::mesh_fem *mfu; // F.e.m. for the displacement.
   std::string dispname;        // Variable name for the displacement
   mutable const model_real_plain_vector *U;// Displacement
   mutable model_real_plain_vector U_unred; // Unreduced displacement
 
   contact_boundary(size_type r, const mesh_fem *mf, const std::string &dn)
-    : region(r), mfu(mf), dispname(dn) {}
+    : region(r), mfu(mf), dispname(dn)
+  {}
 };
 
+//extract element displacements from a contact boundary object
 base_small_vector element_U(const contact_boundary &cb, size_type cv)
 {
   auto U_elm = base_small_vector{};
@@ -54,7 +57,7 @@ auto most_central_box(const bgeot::rtree::pbox_set &bset,
   auto it = itmax;
   if (bset.size() > 1) {
     auto rate_max = scalar_type{-1};
-    for (; it != bset.end(); ++it) {
+    for (; it != end(bset); ++it) {
       auto rate_box = scalar_type{1};
       for (size_type i = 0; i < pt.size(); ++i) {
         auto h = (*it)->max[i] - (*it)->min[i];
@@ -73,11 +76,13 @@ auto most_central_box(const bgeot::rtree::pbox_set &bset,
   return itmax;
 }
 
+//Transformation that creates identity mapping between two contact boundaries,
+//deformed with provided displacement fields
 class  interpolate_transformation_on_deformed_domains
   : public virtual_interpolate_transformation {
 
-  contact_boundary master;
-  contact_boundary slave;
+  contact_boundary master;//also marked with a target or Y prefix/suffix
+  contact_boundary slave; //also marked with a source or X prefix/suffix
 
   mutable bgeot::rtree element_boxes;
   mutable std::vector<size_type> box_to_convex; //index to obtain
@@ -133,7 +138,7 @@ class  interpolate_transformation_on_deformed_domains
           Xdeformed = transformed_points[ind];
         } else {
           pf_s->interpolation(ctx, Uelm, Xdeformed, dim_type{N});
-          Xdeformed += ctx.xreal(); //Xdeformed = U + Xref
+          Xdeformed += ctx.xreal(); //Xdeformed = U + Xo
           transformed_points[ind] = Xdeformed;
           points_already_interpolated.add(ind);
         }
@@ -160,54 +165,15 @@ class  interpolate_transformation_on_deformed_domains
     }
   }
 
-public:
-
-  interpolate_transformation_on_deformed_domains(
-    size_type              source_region,
-    const getfem::mesh_fem &mf_source,
-    const std::string      &source_displacements,
-    size_type              target_region,
-    const getfem::mesh_fem &mf_target,
-    const std::string      &target_displacements)
-    :
-      slave{source_region, &mf_source, source_displacements},
-      master{target_region, &mf_target, target_displacements}
-{}
-
-
-  void extract_variables(const ga_workspace           &workspace,
-                         std::set<var_trans_pair>     &vars,
-                         bool                         ignore_data,
-                         const mesh                   &m_x,
-                         const std::string            &interpolate_name) const override {
-    if (!ignore_data || !(workspace.is_constant(master.dispname))){
-      vars.emplace(master.dispname, interpolate_name);
-      vars.emplace(slave.dispname, "");
-    }
-  }
-
-  void init(const ga_workspace &workspace) const override {
-
-    for (auto pcb : {&master, &slave}) {
-      auto &mfu = *(pcb->mfu);
-      if (mfu.is_reduced()) {
-        gmm::resize(pcb->U_unred, mfu.nb_basic_dof());
-        mfu.extend_vector(workspace.value(pcb->dispname), pcb->U_unred);
-        pcb->U = &(pcb->U_unred);
-      } else {
-        pcb->U = &(workspace.value(pcb->dispname));
-      }
-    }
-
-    compute_element_boxes();
-  };
-
-  void finalize() const override {
-    element_boxes.clear();
-    box_to_convex.clear();
-    master.U_unred.clear();
-    slave.U_unred.clear();
-    fppool.clear();
+  fem_interpolation_context deformed_master_context(size_type cv) const
+  {
+    auto &mfu  = *(master.mfu);
+    auto G     = base_matrix{};
+    auto pfu   = mfu.fem_of_element(cv);
+    auto pgt   = master.mfu->linked_mesh().trans_of_convex(cv);
+    auto pfp   = fppool(pfu, pgt->pgeometric_nodes());
+    master.mfu->linked_mesh().points_of_convex(cv, G);
+    return {pgt, pfp, size_type(-1), G, cv};
   }
 
   std::vector<bgeot::base_node> deformed_master_nodes(size_type cv) const {
@@ -239,6 +205,55 @@ public:
     return nodes;
   }
 
+public:
+
+  interpolate_transformation_on_deformed_domains(
+    size_type              source_region,
+    const getfem::mesh_fem &mf_source,
+    const std::string      &source_displacements,
+    size_type              target_region,
+    const getfem::mesh_fem &mf_target,
+    const std::string      &target_displacements)
+    :
+      slave{source_region, &mf_source, source_displacements},
+      master{target_region, &mf_target, target_displacements}
+{}
+
+
+  void extract_variables(const ga_workspace           &workspace,
+                         std::set<var_trans_pair>     &vars,
+                         bool                         ignore_data,
+                         const mesh                   &m_x,
+                         const std::string            &interpolate_name) const override {
+    if (!ignore_data || !(workspace.is_constant(master.dispname))){
+      vars.emplace(master.dispname, interpolate_name);
+      vars.emplace(slave.dispname, "");
+    }
+  }
+
+  void init(const ga_workspace &workspace) const override {
+
+    for (auto pcb : std::list<const contact_boundary*>{&master, &slave}) {
+      auto &mfu = *(pcb->mfu);
+      if (mfu.is_reduced()) {
+        gmm::resize(pcb->U_unred, mfu.nb_basic_dof());
+        mfu.extend_vector(workspace.value(pcb->dispname), pcb->U_unred);
+        pcb->U = &(pcb->U_unred);
+      } else {
+        pcb->U = &(workspace.value(pcb->dispname));
+      }
+    }
+    compute_element_boxes();
+  };
+
+  void finalize() const override {
+    element_boxes.clear();
+    box_to_convex.clear();
+    master.U_unred.clear();
+    slave.U_unred.clear();
+    fppool.clear();
+  }
+
   int transform(const ga_workspace                    &workspace,
                 const mesh                            &m_x,
                 fem_interpolation_context             &ctx_x,
@@ -253,13 +268,13 @@ public:
 
     auto &target_mesh = master.mfu->linked_mesh();
     *m_t = &target_mesh;
-    int ret_type = 0;
+    auto transformation_success = false;
 
     using namespace gmm;
     using namespace bgeot;
     using namespace std;
 
-    //compute a deformed point of the slave (also using terminology: source or x)
+    //compute a deformed point of the slave
     auto cv_x    = ctx_x.convex_num();
     auto U_elm_x = element_U(slave, cv_x);
     auto &mfu_x  = *(slave.mfu);
@@ -291,7 +306,7 @@ public:
       auto is_in = gic.invert(pt_x, P_ref, converged, 1E-4);
       if (is_in && converged) {
         face_num = static_cast<short_type>(-1);
-        ret_type = 1;
+        transformation_success = true;
         break;
       }
       if (bset.size() == 1) break;
@@ -300,25 +315,48 @@ public:
 
     //Since this transformation can be seen as Xsource + Usource - Utarget,
     //the corresponding stiffnesses are identity matrix for Usource and
-    //minus identity for Utarget
-    if (compute_derivatives && ret_type == 1) {
+    //minus identity for Utarget. The required answer in this function is
+    //stiffness X shape function. Hence, returning shape function for Usource
+    //and min shape function for Utarget
+    if (compute_derivatives && transformation_success) {
       GMM_ASSERT2(derivatives.size() == 2,
                   "Expecting to return derivatives only for Umaster and Uslave");
+
       for (auto &pair : derivatives)
       {
         if (pair.first.varname == slave.dispname)
         {
-          for (size_type i = 0; i < m_x.dim(); ++i) pair.second(i, i) = 1.0;
+          auto base_ux = base_tensor{};
+          auto vbase_ux = base_matrix{} ;
+          ctx_x.base_value(base_ux);
+          auto qdim_ux = pfu_x->target_dim();
+          auto ndof_ux = pfu_x->nb_dof(cv_x) * N / qdim_ux;
+          vectorize_base_tensor(base_ux, vbase_ux, ndof_ux, qdim_ux, N);
+          pair.second.adjust_sizes(ndof_ux, N);
+          copy(vbase_ux.as_vector(), pair.second.as_vector());
         }
         else
         if (pair.first.varname == master.dispname)
         {
-          for (size_type i = 0; i < target_mesh.dim(); ++i) pair.second(i, i) = -1.0;
+          auto ctx_y = deformed_master_context(cv);
+          ctx_y.set_xref(P_ref);
+          auto base_uy = base_tensor{};
+          auto vbase_uy = base_matrix{} ;
+          ctx_y.base_value(base_uy);
+          auto pfu_y   = master.mfu->fem_of_element(cv);
+          auto dim_y = master.mfu->linked_mesh().dim();
+          auto qdim_uy = pfu_y->target_dim();
+          auto ndof_uy = pfu_y->nb_dof(cv) * dim_y / qdim_uy;
+          vectorize_base_tensor(base_uy, vbase_uy, ndof_uy, qdim_uy, dim_y);
+          pair.second.adjust_sizes(ndof_uy, dim_y);
+          copy(vbase_uy.as_vector(), pair.second.as_vector());
+          scale(pair.second.as_vector(), -1.);
         }
         else GMM_ASSERT2(false, "unexpected derivative variable");
       }
     }
-    return ret_type;
+
+    return transformation_success ? 1 : 0;
   }
 
 };
@@ -333,11 +371,11 @@ public:
     auto pmf_target = workspace.associated_mf(target_displacements);
     auto p_transformation
       = std::make_shared<interpolate_transformation_on_deformed_domains>(source_region.id(),
-                                                                        *pmf_source,
-                                                                        source_displacements,
-                                                                        target_region.id(),
-                                                                        *pmf_target,
-                                                                        target_displacements);
+                                                                         *pmf_source,
+                                                                         source_displacements,
+                                                                         target_region.id(),
+                                                                         *pmf_target,
+                                                                         target_displacements);
     workspace.add_interpolate_transformation(transname, p_transformation);
   }
 
@@ -351,11 +389,11 @@ public:
     auto mf_target = md.mesh_fem_of_variable(target_displacements);
     auto p_transformation
       = std::make_shared<interpolate_transformation_on_deformed_domains>(source_region.id(),
-                                                                        mf_source,
-                                                                        source_displacements,
-                                                                        target_region.id(),
-                                                                        mf_target,
-                                                                        target_displacements);
+                                                                         mf_source,
+                                                                         source_displacements,
+                                                                         target_region.id(),
+                                                                         mf_target,
+                                                                         target_displacements);
     md.add_interpolate_transformation(transname, p_transformation);
   }
 
