@@ -2691,6 +2691,10 @@ namespace getfem {
   void ga_define_function(const std::string &name, size_type nbargs,
                           const std::string &expr, const std::string &der1,
                           const std::string &der2) {
+    auto guard = omp_guard{};
+
+    auto &PREDEF_FUNCTIONS = dal::singleton<ga_predef_function_tab>::instance(0);
+    if(PREDEF_FUNCTIONS.find(name) != PREDEF_FUNCTIONS.end()) return;
     GMM_ASSERT1(nbargs >= 1 && nbargs <= 2, "Generic assembly only allows "
                 "the definition of scalar function with one or two arguments");
     { // Only for syntax analysis
@@ -2702,14 +2706,8 @@ namespace getfem {
       workspace.add_function_expression(expr);
     }
 
-    ga_predef_function_tab &PREDEF_FUNCTIONS
-      = dal::singleton<ga_predef_function_tab>::instance(0);
-    GMM_ASSERT1(PREDEF_FUNCTIONS.find(name) == PREDEF_FUNCTIONS.end(),
-                "Already defined function " << name);
     PREDEF_FUNCTIONS[name] = ga_predef_function(expr);
     ga_predef_function &F = PREDEF_FUNCTIONS[name];
-    GMM_ASSERT1(!me_is_multithreaded_now(),
-                "functions should not be defined in multi-threaded code");
     F.gis = std::make_unique<instruction_set>();
     for (size_type thread = 0; thread < num_threads(); ++thread)
     {
