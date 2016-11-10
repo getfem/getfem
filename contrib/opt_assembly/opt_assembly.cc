@@ -677,7 +677,7 @@ int main(int /* argc */, char * /* argv */[]) {
   // Non-homogeneous elast: 0.34 | 2.26 | 0.09 | 0.15 | 0.06 | 0.13 |
   if (all || only_one == 2) // ndofu = 151959 ndofp =  50653 ndofchi = 6553
     test_new_assembly(3, 36, 1);
-  // Vector source term   : 0.25 | 0.79 |
+  // Vector source term   : 0.23 | 0.79 |
   // Nonlinear residual   : 0.46 |      |
   // Mass (scalar)        : 0.21 | 0.58 | 0.05 | 0.09 | 0.08 | 0.05 |
   // Mass (vector)        : 0.36 | 1.37 | 0.12 | 0.17 | 0.08 | 0.11 |
@@ -695,7 +695,7 @@ int main(int /* argc */, char * /* argv */[]) {
   // Non-homogeneous elast: 0.26 | 2.38 | 0.06 | 0.10 | 0.03 | 0.13 |
   if (all || only_one == 4) // ndofu = 151959 ndofp =  50653 ndofchi = 6553
     test_new_assembly(3, 18, 2);
-  // Vector source term   : 0.12 | 0.23 |
+  // Vector source term   : 0.10 | 0.23 |
   // Nonlinear residual   : 0.28 |      |
   // Mass (scalar)        : 0.11 | 0.25 | 0.05 | 0.05 | 0.03 | 0.03 |
   // Mass (vector)        : 0.29 | 0.89 | 0.11 | 0.16 | 0.03 | 0.10 |
@@ -704,7 +704,7 @@ int main(int /* argc */, char * /* argv */[]) {
   // Non-homogeneous elast: 1.68 | 9.08 | 0.59 | 0.73 | 0.03 | 0.92 |
   if (all || only_one == 5) // ndofu = 151959 ndofp =  50653 ndofchi = 6553
     test_new_assembly(3, 9, 4);
-  // Vector source term   : 0.10 | 0.19 |
+  // Vector source term   : 0.08 | 0.19 |
   // Nonlinear residual   : 0.27 |      |
   // Mass (scalar)        : 0.51 | 0.34 | 0.09 | 0.16 | 0.01 | 0.34 |
   // Mass (vector)        : 1.29 | 1.31 | 0.23 | 0.41 | 0.01 | 0.87 |
@@ -716,7 +716,9 @@ int main(int /* argc */, char * /* argv */[]) {
   // - Deactivation of debug test has no sensible effect.
   // - Compile time of assembly strings is negligible (< 0.0004)
   // - (J, K, B) computation takes half the computational time of the exec part
-  // - The optimized instruction call is negligible
+  // - The call itself of optimized instruction virtual functions is negligible
+  //   It means that a real compilation (g++) avoiding them is not necessary
+  //   and would we far more expensive in compilation time.
   // - For uniform mesh_fem, the resize operations has been suppressed and
   //   the "update pfp" has been isolated in a set  of instruction being
   //   executed only on change of integration method.

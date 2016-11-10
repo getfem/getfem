@@ -102,10 +102,8 @@ Assembly tensors are represented on each node by a ``bgeot::tensor<double>`` obj
        :header: "Scalar tensor", "Vectorized tensor"
        :widths: 5, 12
 
-       ":math:`\bar{t}(i) = \varphi_i(x)`",
-       ":math:`t(j,k) = \varphi_{j/Q}(x) \delta_{k, (j \mbox{ mod } Q)}`"
-       ":math:`[\varphi_0(x), \varphi_1(x)]`",
-       ":math:`[\varphi_0(x), 0, \varphi_1(x), 0, 0, \varphi_0(x), 0, \varphi_1(x)]`"
+       ":math:`\bar{t}(i) = \varphi_i(x)`", ":math:`t(j,k) = \varphi_{j/Q}(x) \delta_{k, (j \mbox{ mod } Q)}`"
+       ":math:`[\varphi_0(x), \varphi_1(x)]`", ":math:`[\varphi_0(x), 0, \varphi_1(x), 0, 0, \varphi_0(x), 0, \varphi_1(x)]`"
   
   - 2: Grad condensed format
 
