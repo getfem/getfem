@@ -4744,15 +4744,22 @@ namespace getfem {
       size_type s1 = tc1.size()/nn, s2 = tc2.size()/nn;
       GA_DEBUG_ASSERT(t.size() == s1*s2, "Internal error");
 
-      base_tensor::iterator it1=tc1.begin(), it2=tc2.begin(), it2end=it2 + s2;
-      for (base_tensor::iterator it = t.begin(); it != t.end(); ++it) {
-        base_tensor::iterator it11 = it1, it22 = it2;
+      auto it1=tc1.begin(), it2=tc2.begin(), it2end=it2 + s2;
+      for (auto it = t.begin(); it != t.end(); ++it) {
+        auto it11 = it1, it22 = it2;
         scalar_type a = (*it11) * (*it22);
         for (size_type i = 1; i < nn; ++i)
           { it11 += s1; it22 += s2; a += (*it11) * (*it22); }
         *it = a;
         ++it2; if (it2 == it2end) { it2 = tc2.begin(), ++it1; }
       }
+      // auto it = t.begin(); // Unoptimized version.
+      // for (size_type i = 0; i < s1; ++i)
+      //  	for (size_type j = 0; j < s2; ++j, ++it) {
+      // 	  *it = scalar_type(0);
+      //  	  for (size_type k = 0; k < nn; ++k)
+      // 	    *it += tc1[i+k*s1] * tc2[j+k*s2];
+      // 	}
       #endif
       return 0;
     }
@@ -4762,26 +4769,222 @@ namespace getfem {
   };
 
   // Performs Ani Bmi -> Cmn
+  struct ga_instruction_reduction_opt0_2 : public ga_instruction {
+    base_tensor &t, &tc1, &tc2;
+    size_type n, q;
+    virtual int exec() {
+      GA_DEBUG_INFO("Instruction: reduction operation of size " << n*q <<
+		    " optimized for vectorized second tensor of type 2");
+      size_type nn = n*q, s1 = tc1.size()/nn, s2 = tc2.size()/nn, s2_q = s2/q;
+      size_type s1_qq = s1*q, s2_qq = s2*q;
+      GA_DEBUG_ASSERT(t.size() == s1*s2, "Internal error");
+      
+      auto it = t.begin(), it1 = tc1.begin();
+      for (size_type i = 0; i < s1; ++i, ++it1) {
+      	auto it2 = tc2.begin();
+       	for (size_type j = 0; j < s2_q; ++j, it2+=q) {
+      	  auto itt1 = it1;
+      	  for (size_type l = 0; l < q; ++l, ++it, itt1 += s1) {
+      	    auto ittt1 = itt1, ittt2 = it2;
+      	    *it = *ittt1 * (*ittt2);
+      	    for (size_type m = 1; m < n; ++m) {
+      	      ittt1 += s1_qq, ittt2 += s2_qq; *it += *ittt1 * (*ittt2);
+      	    }
+      	  }
+      	}
+      }
+      // base_tensor u = t;
+      // ga_instruction_reduction toto(t, tc1, tc2, n*q);
+      // toto.exec();
+      // GMM_ASSERT1(gmm::vect_dist2(t.as_vector(), u.as_vector()) < 1E-9, "Erroneous");
+      return 0;
+    }
+    ga_instruction_reduction_opt0_2(base_tensor &t_, base_tensor &tc1_,
+				    base_tensor &tc2_, size_type n_,
+				    size_type q_)
+      : t(t_), tc1(tc1_), tc2(tc2_), n(n_), q(q_) {}
+  };
+  
+  // Performs Ani Bmi -> Cmn
+  template <int N>
+  struct ga_instruction_reduction_opt0_2_unrolled : public ga_instruction {
+    base_tensor &t, &tc1, &tc2;
+    size_type q;
+    virtual int exec() {
+      GA_DEBUG_INFO("Instruction: unrolled reduction operation of size " << N*q
+		    << " optimized for vectorized second tensor of type 2");
+      size_type nn = N*q, s1 = tc1.size()/nn, s2 = tc2.size()/nn, s2_q = s2/q;
+      size_type s1_qq = s1*q, s2_qq = s2*q;
+      GA_DEBUG_ASSERT(t.size() == s1*s2, "Internal error");
+      
+      auto it = t.begin(), it1 = tc1.begin();
+      for (size_type i = 0; i < s1; ++i, ++it1) {
+      	auto it2 = tc2.begin();
+       	for (size_type j = 0; j < s2_q; ++j, it2+=q) {
+      	  auto itt1 = it1;
+      	  for (size_type l = 0; l < q; ++l, ++it, itt1 += s1) {
+      	    auto ittt1 = itt1, ittt2 = it2;
+      	    *it = *ittt1 * (*ittt2);
+      	    for (size_type m = 1; m < N; ++m) {
+      	      ittt1 += s1_qq, ittt2 += s2_qq; *it += *ittt1 * (*ittt2);
+      	    }
+      	  }
+      	}
+      }
+      return 0;
+    }
+    ga_instruction_reduction_opt0_2_unrolled(base_tensor &t_, base_tensor &tc1_,
+					     base_tensor &tc2_, size_type q_)
+      : t(t_), tc1(tc1_), tc2(tc2_), q(q_) {}
+  };
+
+  // Performs Ani Bmi -> Cmn
+  template <int N, int Q>
+  struct ga_instruction_reduction_opt0_2_dunrolled : public ga_instruction {
+    base_tensor &t, &tc1, &tc2;
+    virtual int exec() {
+      GA_DEBUG_INFO("Instruction: unrolled reduction operation of size " << N*Q
+		    << " optimized for vectorized second tensor of type 2");
+      size_type s1 = tc1.size()/(N*Q), s2 = tc2.size()/(N*Q), s2_q = s2/Q;
+      size_type s1_qq = s1*Q, s2_qq = s2*Q;
+      GA_DEBUG_ASSERT(t.size() == s1*s2, "Internal error");
+      
+      auto it = t.begin(), it1 = tc1.begin();
+      for (size_type i = 0; i < s1; ++i, ++it1) {
+      	auto it2 = tc2.begin();
+       	for (size_type j = 0; j < s2_q; ++j, it2+=Q) {
+      	  auto itt1 = it1;
+      	  for (size_type l = 0; l < Q; ++l, ++it, itt1 += s1) {
+      	    auto ittt1 = itt1, ittt2 = it2;
+      	    *it = *ittt1 * (*ittt2);
+      	    for (size_type m = 1; m < N; ++m) {
+      	      ittt1 += s1_qq, ittt2 += s2_qq; *it += *ittt1 * (*ittt2);
+      	    }
+      	  }
+      	}
+      }
+      return 0;
+    }
+    ga_instruction_reduction_opt0_2_dunrolled
+    (base_tensor &t_, base_tensor &tc1_, base_tensor &tc2_)
+      : t(t_), tc1(tc1_), tc2(tc2_) {}
+  };
+
+  // Performs Ani Bmi -> Cmn
+  struct ga_instruction_reduction_opt2_0 : public ga_instruction {
+    base_tensor &t, &tc1, &tc2;
+    size_type n, q;
+    virtual int exec() {
+      GA_DEBUG_INFO("Instruction: reduction operation of size " << n*q <<
+		    " optimized for vectorized second tensor of type 2");
+      size_type nn = n*q, s1 = tc1.size()/nn, s2 = tc2.size()/nn;
+      size_type s1_q = s1/q, s1_qq = s1*q, s2_qq = s2*q;
+      GA_DEBUG_ASSERT(t.size() == s1*s2, "Internal error");
+
+      auto it = t.begin();
+      for (size_type i = 0; i < s1_q; ++i)  {
+	auto it1 = tc1.begin() + i*q;
+	for (size_type l = 0; l < q; ++l) {
+	  auto it2 = tc2.begin() + l*s2;
+	  for (size_type j = 0; j < s2; ++j, ++it, ++it2) {
+	    auto itt1 = it1, itt2 = it2;
+	    *it = *itt1 * (*itt2);
+	    for (size_type m = 1; m < n; ++m) {
+	      itt1 += s1_qq, itt2 += s2_qq; *it += *itt1 * (*itt2);
+	    }
+	  }
+	}
+      }
+      return 0;
+    }
+    ga_instruction_reduction_opt2_0(base_tensor &t_, base_tensor &tc1_,
+				    base_tensor &tc2_, size_type n_,
+				    size_type q_)
+      : t(t_), tc1(tc1_), tc2(tc2_), n(n_), q(q_) { }
+  };
+
+  // Performs Ani Bmi -> Cmn
+  template <int N>
+  struct ga_instruction_reduction_opt2_0_unrolled : public ga_instruction {
+    base_tensor &t, &tc1, &tc2;
+    size_type q;
+    virtual int exec() {
+      GA_DEBUG_INFO("Instruction: unrolled reduction operation of size " << N*q
+		    << " optimized for vectorized second tensor of type 2");
+      size_type nn = N*q, s1 = tc1.size()/nn, s2 = tc2.size()/nn;
+      size_type s1_q = s1/q, s1_qq = s1*q, s2_qq = s2*q;
+      GA_DEBUG_ASSERT(t.size() == s1*s2, "Internal error");
+
+      auto it = t.begin(), it1 = tc1.begin();
+      for (size_type i = 0; i < s1_q; ++i, it1 += q)  {
+	for (size_type l = 0; l < q; ++l) {
+	  auto it2 = tc2.begin() + l*s2;
+	  for (size_type j = 0; j < s2; ++j, ++it, ++it2) {
+	    auto itt1 = it1, itt2 = it2;
+	    *it = *itt1 * (*itt2);
+	    for (size_type m = 1; m < N; ++m) {
+	      itt1 += s1_qq, itt2 += s2_qq; *it += *itt1 * (*itt2);
+	    }
+	  }
+	}
+      }
+      return 0;
+    }
+    ga_instruction_reduction_opt2_0_unrolled(base_tensor &t_, base_tensor &tc1_,
+					     base_tensor &tc2_, size_type q_)
+      : t(t_), tc1(tc1_), tc2(tc2_), q(q_) {}
+  };
+
+  // Performs Ani Bmi -> Cmn
+  template <int N, int Q>
+  struct ga_instruction_reduction_opt2_0_dunrolled : public ga_instruction {
+    base_tensor &t, &tc1, &tc2;
+    virtual int exec() {
+      GA_DEBUG_INFO("Instruction: unrolled reduction operation of size " << N*q
+		    << " optimized for vectorized second tensor of type 2");
+      size_type s1 = tc1.size()/(N*Q), s2 = tc2.size()/(N*Q);
+      size_type s1_q = s1/Q, s1_qq = s1*Q, s2_qq = s2*Q;
+      GA_DEBUG_ASSERT(t.size() == s1*s2, "Internal error");
+
+      auto it = t.begin(), it1 = tc1.begin();
+      for (size_type i = 0; i < s1_q; ++i, it1 += Q)  {
+	for (size_type l = 0; l < Q; ++l) {
+	  auto it2 = tc2.begin() + l*s2;
+	  for (size_type j = 0; j < s2; ++j, ++it, ++it2) {
+	    auto itt1 = it1, itt2 = it2;
+	    *it = *itt1 * (*itt2);
+	    for (size_type m = 1; m < N; ++m) {
+	      itt1 += s1_qq, itt2 += s2_qq; *it += *itt1 * (*itt2);
+	    }
+	  }
+	}
+      }
+      return 0;
+    }
+    ga_instruction_reduction_opt2_0_dunrolled
+    (base_tensor &t_, base_tensor &tc1_, base_tensor &tc2_)
+      : t(t_), tc1(tc1_), tc2(tc2_) {}
+  };
+
+  // Performs Ani Bmi -> Cmn
   struct ga_instruction_reduction_opt0_1 : public ga_instruction {
     base_tensor &t, &tc1, &tc2;
     size_type nn;
     virtual int exec() {
-      cout << "Not unrolled " << nn << " tc1 = " << tc1 << endl;
-      cout << "tc2 = " << tc2 << endl;
-      GA_DEBUG_INFO("Instruction: reduction operation of size " << nn
+      GA_DEBUG_INFO("Instruction: reduction operation of size " << nn <<
 		    " optimized for vectorized second tensor of type 1");
-      size_type ss1=tc1.size(), s2=tc2.size()/nn, s2_n=s2/nn;
-      auto it = t.begin(), it2 = tc2.begin();
-      for (size_type i = 0; i < s2_n; ++i, it2 += nn) {
-	auto it1 = tc1.begin();
-	for (size_type j = 0; j < ss1; ++j) *it++ = (*it1++) * (*it2);
+      size_type ss1=tc1.size(), s1 = ss1/nn, s2=tc2.size()/nn, s2_n=s2/nn;
+      
+      auto it = t.begin(), it1 = tc1.begin();
+      for (size_type i = 0; i < s1; ++i, ++it1) {
+	auto it2 = tc2.begin();
+	for (size_type j = 0; j < s2_n; ++j, it2 += nn) {
+	  auto itt1 = it1;
+	  *it++ = (*itt1) * (*it2);
+	  for (size_type k = 1; k < nn; ++k)
+	    { itt1 += s1; *it++ = (*itt1) * (*it2); }
+	}
       }
-      cout << "t = " << t << endl;
-      ga_instruction_reduction toto(t, tc1, tc2, nn);
-      toto.exec();
-      cout << "t = " << t << endl;
-
-      getchar();
       return 0;
     }
     ga_instruction_reduction_opt0_1(base_tensor &t_, base_tensor &tc1_,
@@ -4790,33 +4993,35 @@ namespace getfem {
   };
 
   template<int N> inline void reduc_elem_unrolled_opt1_
-  (base_vector::iterator &it, base_vector::iterator &it1, scalar_type a) {
-    *it++ = (*it1++) * a;
-    reduc_elem_unrolled_opt1_<N-1>(it, it1, a);
+  (const base_vector::iterator &it, const base_vector::iterator &it1,
+   scalar_type a, size_type s1) {
+    it[N-1] = it1[(N-1)*s1] * a;
+    reduc_elem_unrolled_opt1_<N-1>(it, it1, a, s1);
   }
   template<> inline void reduc_elem_unrolled_opt1_<1>
-  (base_vector::iterator &it, base_vector::iterator &it1, scalar_type a)
-  { *it++ = (*it1++) * a; }
+  (const base_vector::iterator &it, const base_vector::iterator &it1,
+   scalar_type a, size_type /* s1 */)
+  { *it = (*it1) * a; }
 
   // Performs Ani Bmi -> Cmn
   template <int N>
   struct ga_instruction_reduction_opt0_1_unrolled : public ga_instruction {
     base_tensor &t, &tc1, &tc2;
-    size_type nn;
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: unrolled reduction operation of size " << nn
 		    " optimized for vectorized second tensor of type 1");
-      size_type s2=tc2.size()/nn, s2_n=s2/nn;
-      base_vector::iterator it = t.begin(), it2 = tc2.begin();
-      for (size_type i = 0; i < s2_n; ++i, it2 += nn) {
-	auto it1 = tc1.begin();
-	reduc_elem_unrolled_opt1_<N>(it, it1, *it2);
+      size_type s1 = tc1.size()/N, s2 = tc2.size()/N;
+      auto it = t.begin(), it1 = tc1.begin();
+      for (size_type i = 0; i < s1; ++i, ++it1) {
+	auto it2 = tc2.begin(), it2e = it2 + s2;
+	for (; it2 != it2e; it2 += N, it += N)
+	  reduc_elem_unrolled_opt1_<N>(it, it1, *it2, s1);
       }
       return 0;
     }
     ga_instruction_reduction_opt0_1_unrolled(base_tensor &t_, base_tensor &tc1_,
-					     base_tensor &tc2_, size_type n_)
-      : t(t_), tc1(tc1_), tc2(tc2_), nn(n_) {}
+					     base_tensor &tc2_)
+      : t(t_), tc1(tc1_), tc2(tc2_) {}
   };
 
   // Performs Ani Bmi -> Cmn
@@ -4861,7 +5066,7 @@ namespace getfem {
    size_type /*s1*/, size_type /*s2*/)
   { return (*it1)*(*it2); }
 
-  // Performs Ani Bmi -> Cmn. Automatically unrolled operation.
+  // Performs Ani Bmi -> Cmn. Unrolled operation.
   template<int N> struct ga_instruction_reduction_unrolled
     : public ga_instruction {
     base_tensor &t, &tc1, &tc2;
@@ -4969,15 +5174,176 @@ namespace getfem {
   (assembly_tensor &t_, assembly_tensor &tc1_, assembly_tensor &tc2_,
    size_type n, bool &to_clear) {
     base_tensor &t = t_.tensor(), &tc1 = tc1_.tensor(), &tc2 = tc2_.tensor();
-
+   
     if (tc1_.sparsity() == 1 && tc2_.sparsity() == 1 &&
 	tc1_.qdim() == n && tc2_.qdim() == n) {
       to_clear = true;
       t_.set_sparsity(10, tc1_.qdim());
       return std::make_shared<ga_instruction_reduction_opt1_1>(t, tc1, tc2, n);
     }
-    if (tc2_.sparsity() == 1 && false)
-      return std::make_shared<ga_instruction_reduction_opt0_1>(t, tc1, tc2, n);
+
+    if (tc2_.sparsity() == 1) {
+      switch(n) {
+      case 2:
+	return std::make_shared<ga_instruction_reduction_opt0_1_unrolled<2>>
+	  (t, tc1, tc2);
+      case 3:
+	return std::make_shared<ga_instruction_reduction_opt0_1_unrolled<3>>
+	  (t, tc1, tc2);
+      case 4:
+	return std::make_shared<ga_instruction_reduction_opt0_1_unrolled<4>>
+	  (t, tc1, tc2);
+      case 5:
+	return std::make_shared<ga_instruction_reduction_opt0_1_unrolled<5>>
+	  (t, tc1, tc2);
+      default:
+	return std::make_shared<ga_instruction_reduction_opt0_1>(t,tc1,tc2, n);
+      }
+    }
+        if (tc2_.sparsity() == 2) {
+      size_type q2 = tc2.sizes()[1];
+      size_type n2 = (tc2.sizes().size() > 2) ? tc2.sizes()[1] : 1;
+      if (n2*q2 == n) {
+	switch (n2) {
+	case 1:
+	  switch (q2) {
+	  case 2:
+	    return
+	      std::make_shared<ga_instruction_reduction_opt0_2_dunrolled<1,2>>
+	      (t, tc1, tc2);
+	  case 3:
+	    return
+	      std::make_shared<ga_instruction_reduction_opt0_2_dunrolled<1,3>>
+	      (t, tc1, tc2);
+	  case 4:
+	    return
+	      std::make_shared<ga_instruction_reduction_opt0_2_dunrolled<1,4>>
+	      (t, tc1, tc2);
+	  default :
+	    return std::make_shared<ga_instruction_reduction_opt0_2_unrolled<1>>
+	      (t, tc1, tc2, q2);
+	  }
+	case 2:
+	  switch (q2) {
+	  case 2:
+	    return
+	      std::make_shared<ga_instruction_reduction_opt0_2_dunrolled<2,2>>
+	      (t, tc1, tc2);
+	  case 3:
+	    return
+	      std::make_shared<ga_instruction_reduction_opt0_2_dunrolled<2,3>>
+	      (t, tc1, tc2);
+	  case 4:
+	    return
+	      std::make_shared<ga_instruction_reduction_opt0_2_dunrolled<2,4>>
+	      (t, tc1, tc2);
+	  default :
+	    return std::make_shared<ga_instruction_reduction_opt0_2_unrolled<2>>
+	      (t, tc1, tc2, q2);
+	  }
+	case 3:
+	  switch (q2) {
+	  case 2:
+	    return
+	      std::make_shared<ga_instruction_reduction_opt0_2_dunrolled<3,2>>
+	      (t, tc1, tc2);
+	  case 3:
+	    return
+	      std::make_shared<ga_instruction_reduction_opt0_2_dunrolled<3,3>>
+	      (t, tc1, tc2);
+	  case 4:
+	    return
+	      std::make_shared<ga_instruction_reduction_opt0_2_dunrolled<3,4>>
+	      (t, tc1, tc2);
+	  default :
+	    return std::make_shared<ga_instruction_reduction_opt0_2_unrolled<3>>
+	      (t, tc1, tc2, q2);
+	  }
+	case 4:
+	  return std::make_shared<ga_instruction_reduction_opt0_2_unrolled<4>>
+	    (t, tc1, tc2, q2);
+	case 5:
+	  return std::make_shared<ga_instruction_reduction_opt0_2_unrolled<5>>
+	    (t, tc1, tc2, q2);
+	default:
+	  return std::make_shared<ga_instruction_reduction_opt0_2>
+	    (t,tc1,tc2,n2,q2);
+	}
+      }
+    }
+    if (tc1_.sparsity() == 2) {
+      size_type q1 = tc1.sizes()[1];
+      size_type n1 = (tc1.sizes().size() > 2) ? tc1.sizes()[1] : 1;
+      if (n1*q1 == n) {
+	switch (n1) {
+	case 1:
+	  switch (q1) {
+	  case 2:
+	    return
+	      std::make_shared<ga_instruction_reduction_opt2_0_dunrolled<1,2>>
+	      (t, tc1, tc2);
+	  case 3:
+	    return
+	      std::make_shared<ga_instruction_reduction_opt2_0_dunrolled<1,3>>
+	      (t, tc1, tc2);
+	  case 4:
+	    return
+	      std::make_shared<ga_instruction_reduction_opt2_0_dunrolled<1,4>>
+	      (t, tc1, tc2);
+	  default :
+	    return std::make_shared<ga_instruction_reduction_opt2_0_unrolled<1>>
+	      (t, tc1, tc2, q1);
+	  }
+	case 2:
+	  switch (q1) {
+	  case 2:
+	    return
+	      std::make_shared<ga_instruction_reduction_opt2_0_dunrolled<2,2>>
+	      (t, tc1, tc2);
+	  case 3:
+	    return
+	      std::make_shared<ga_instruction_reduction_opt2_0_dunrolled<2,3>>
+	      (t, tc1, tc2);
+	  case 4:
+	    return
+	      std::make_shared<ga_instruction_reduction_opt2_0_dunrolled<2,4>>
+	      (t, tc1, tc2);
+	  default :
+	    return std::make_shared<ga_instruction_reduction_opt2_0_unrolled<2>>
+	      (t, tc1, tc2, q1);
+	  }
+	case 3:
+	  switch (q1) {
+	  case 2:
+	    return
+	      std::make_shared<ga_instruction_reduction_opt2_0_dunrolled<3,2>>
+	      (t, tc1, tc2);
+	  case 3:
+	    return
+	      std::make_shared<ga_instruction_reduction_opt2_0_dunrolled<3,3>>
+	      (t, tc1, tc2);
+	  case 4:
+	    return
+	      std::make_shared<ga_instruction_reduction_opt2_0_dunrolled<3,4>>
+	      (t, tc1, tc2);
+	  default :
+	    return std::make_shared<ga_instruction_reduction_opt2_0_unrolled<3>>
+	      (t, tc1, tc2, q1);
+	  }
+	  return std::make_shared<ga_instruction_reduction_opt2_0_unrolled<3>>
+	    (t, tc1, tc2, q1);
+	case 4:
+	  return std::make_shared<ga_instruction_reduction_opt2_0_unrolled<4>>
+	    (t, tc1, tc2, q1);
+	case 5:
+	  return std::make_shared<ga_instruction_reduction_opt2_0_unrolled<5>>
+	    (t, tc1, tc2, q1);
+	default:
+	  return std::make_shared<ga_instruction_reduction_opt2_0>
+	    (t,tc1,tc2, n1, q1);
+	}
+      }
+    }
 
     switch(n) {
     case  2 : return std::make_shared<ga_instruction_reduction_unrolled< 2>>
@@ -5026,35 +5392,166 @@ namespace getfem {
       t_.set_sparsity(10, tc1_.qdim());
       return std::make_shared<ga_instruction_reduction_opt1_1>(t,tc1,tc2,n);
     }
-    if (tc2_.sparsity() == 1 && false) {
-      cout << "tc1.size() = " << tc1.size() << endl;
-      switch(tc1.size()) {
-      case 1 : break;
+    if (tc2_.sparsity() == 1) {
+      switch(n) {
       case 2:
-	if (tc2.size() > 16)
-	  return std::make_shared<ga_instruction_reduction_opt0_1_unrolled<2>>
-	    (t, tc1, tc2, n);
-	break;
+	return std::make_shared<ga_instruction_reduction_opt0_1_unrolled<2>>
+	  (t, tc1, tc2);
       case 3:
 	return std::make_shared<ga_instruction_reduction_opt0_1_unrolled<3>>
-	  (t, tc1, tc2, n);
+	  (t, tc1, tc2);
       case 4:
 	return std::make_shared<ga_instruction_reduction_opt0_1_unrolled<4>>
-	  (t, tc1, tc2, n);
+	  (t, tc1, tc2);
       case 5:
 	return std::make_shared<ga_instruction_reduction_opt0_1_unrolled<5>>
-	  (t, tc1, tc2, n);
-      case 6:
-	return std::make_shared<ga_instruction_reduction_opt0_1_unrolled<6>>
-	  (t, tc1, tc2, n);
-      case 7:
-	return std::make_shared<ga_instruction_reduction_opt0_1_unrolled<7>>
-	  (t, tc1, tc2, n);
-      case 8:
-	return std::make_shared<ga_instruction_reduction_opt0_1_unrolled<8>>
-	  (t, tc1, tc2, n);
+	  (t, tc1, tc2);
       default:
 	return std::make_shared<ga_instruction_reduction_opt0_1>(t,tc1,tc2, n);
+      }
+    }
+    if (tc2_.sparsity() == 2) {
+      size_type q2 = tc2.sizes()[1];
+      size_type n2 = (tc2.sizes().size() > 2) ? tc2.sizes()[1] : 1;
+      if (n2*q2 == n) {
+	switch (n2) {
+	case 1:
+	  switch (q2) {
+	  case 2:
+	    return
+	      std::make_shared<ga_instruction_reduction_opt0_2_dunrolled<1,2>>
+	      (t, tc1, tc2);
+	  case 3:
+	    return
+	      std::make_shared<ga_instruction_reduction_opt0_2_dunrolled<1,3>>
+	      (t, tc1, tc2);
+	  case 4:
+	    return
+	      std::make_shared<ga_instruction_reduction_opt0_2_dunrolled<1,4>>
+	      (t, tc1, tc2);
+	  default :
+	    return std::make_shared<ga_instruction_reduction_opt0_2_unrolled<1>>
+	      (t, tc1, tc2, q2);
+	  }
+	case 2:
+	  switch (q2) {
+	  case 2:
+	    return
+	      std::make_shared<ga_instruction_reduction_opt0_2_dunrolled<2,2>>
+	      (t, tc1, tc2);
+	  case 3:
+	    return
+	      std::make_shared<ga_instruction_reduction_opt0_2_dunrolled<2,3>>
+	      (t, tc1, tc2);
+	  case 4:
+	    return
+	      std::make_shared<ga_instruction_reduction_opt0_2_dunrolled<2,4>>
+	      (t, tc1, tc2);
+	  default :
+	    return std::make_shared<ga_instruction_reduction_opt0_2_unrolled<2>>
+	      (t, tc1, tc2, q2);
+	  }
+	case 3:
+	  switch (q2) {
+	  case 2:
+	    return
+	      std::make_shared<ga_instruction_reduction_opt0_2_dunrolled<3,2>>
+	      (t, tc1, tc2);
+	  case 3:
+	    return
+	      std::make_shared<ga_instruction_reduction_opt0_2_dunrolled<3,3>>
+	      (t, tc1, tc2);
+	  case 4:
+	    return
+	      std::make_shared<ga_instruction_reduction_opt0_2_dunrolled<3,4>>
+	      (t, tc1, tc2);
+	  default :
+	    return std::make_shared<ga_instruction_reduction_opt0_2_unrolled<3>>
+	      (t, tc1, tc2, q2);
+	  }
+	case 4:
+	  return std::make_shared<ga_instruction_reduction_opt0_2_unrolled<4>>
+	    (t, tc1, tc2, q2);
+	case 5:
+	  return std::make_shared<ga_instruction_reduction_opt0_2_unrolled<5>>
+	    (t, tc1, tc2, q2);
+	default:
+	  return std::make_shared<ga_instruction_reduction_opt0_2>
+	    (t,tc1,tc2,n2,q2);
+	}
+      }
+    }
+    if (tc1_.sparsity() == 2) {
+      size_type q1 = tc1.sizes()[1];
+      size_type n1 = (tc1.sizes().size() > 2) ? tc1.sizes()[1] : 1;
+      if (n1*q1 == n) {
+	switch (n1) {
+	case 1:
+	  switch (q1) {
+	  case 2:
+	    return
+	      std::make_shared<ga_instruction_reduction_opt2_0_dunrolled<1,2>>
+	      (t, tc1, tc2);
+	  case 3:
+	    return
+	      std::make_shared<ga_instruction_reduction_opt2_0_dunrolled<1,3>>
+	      (t, tc1, tc2);
+	  case 4:
+	    return
+	      std::make_shared<ga_instruction_reduction_opt2_0_dunrolled<1,4>>
+	      (t, tc1, tc2);
+	  default :
+	    return std::make_shared<ga_instruction_reduction_opt2_0_unrolled<1>>
+	      (t, tc1, tc2, q1);
+	  }
+	case 2:
+	  switch (q1) {
+	  case 2:
+	    return
+	      std::make_shared<ga_instruction_reduction_opt2_0_dunrolled<2,2>>
+	      (t, tc1, tc2);
+	  case 3:
+	    return
+	      std::make_shared<ga_instruction_reduction_opt2_0_dunrolled<2,3>>
+	      (t, tc1, tc2);
+	  case 4:
+	    return
+	      std::make_shared<ga_instruction_reduction_opt2_0_dunrolled<2,4>>
+	      (t, tc1, tc2);
+	  default :
+	    return std::make_shared<ga_instruction_reduction_opt2_0_unrolled<2>>
+	      (t, tc1, tc2, q1);
+	  }
+	case 3:
+	  switch (q1) {
+	  case 2:
+	    return
+	      std::make_shared<ga_instruction_reduction_opt2_0_dunrolled<3,2>>
+	      (t, tc1, tc2);
+	  case 3:
+	    return
+	      std::make_shared<ga_instruction_reduction_opt2_0_dunrolled<3,3>>
+	      (t, tc1, tc2);
+	  case 4:
+	    return
+	      std::make_shared<ga_instruction_reduction_opt2_0_dunrolled<3,4>>
+	      (t, tc1, tc2);
+	  default :
+	    return std::make_shared<ga_instruction_reduction_opt2_0_unrolled<3>>
+	      (t, tc1, tc2, q1);
+	  }
+	  return std::make_shared<ga_instruction_reduction_opt2_0_unrolled<3>>
+	    (t, tc1, tc2, q1);
+	case 4:
+	  return std::make_shared<ga_instruction_reduction_opt2_0_unrolled<4>>
+	    (t, tc1, tc2, q1);
+	case 5:
+	  return std::make_shared<ga_instruction_reduction_opt2_0_unrolled<5>>
+	    (t, tc1, tc2, q1);
+	default:
+	  return std::make_shared<ga_instruction_reduction_opt2_0>
+	    (t,tc1,tc2, n1, q1);
+	}
       }
     }
 
