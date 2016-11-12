@@ -863,7 +863,7 @@ namespace getfem {
 			      const mesh_fem &mf_data, const VECT2 &F,
 			      const mesh_region &rg) {
     asm_real_or_complex_1_param_vec(B, mim, mf, &mf_data, F, rg,
-             			    "(A.Normal):Test_u");
+             		  "(Reshape(A, qdim(u), meshdim).Normal):Test_u");
   }
 
   /** 
@@ -874,7 +874,8 @@ namespace getfem {
   void asm_homogeneous_normal_source_term
   (VECT1 &B, const mesh_im &mim, const mesh_fem &mf, const VECT2 &F,
    const mesh_region &rg)
-  { asm_real_or_complex_1_param_vec(B, mim, mf, 0,F,rg, "(A.Normal):Test_u"); }
+  { asm_real_or_complex_1_param_vec(B, mim, mf, 0,F,rg,
+			 "(Reshape(A, qdim(u), meshdim).Normal):Test_u"); }
 
   /**
      assembly of @f$\int{qu.v}@f$
