@@ -678,12 +678,12 @@ int main(int /* argc */, char * /* argv */[]) {
   if (all || only_one == 2) // ndofu = 151959 ndofp =  50653 ndofchi = 6553
     test_new_assembly(3, 36, 1);
   // Vector source term   : 0.23 | 0.79 |
-  // Nonlinear residual   : 0.46 |      |
+  // Nonlinear residual   : 0.42 |      |
   // Mass (scalar)        : 0.21 | 0.58 | 0.05 | 0.09 | 0.08 | 0.05 |
   // Mass (vector)        : 0.36 | 1.37 | 0.12 | 0.17 | 0.08 | 0.11 |
   // Laplacian            : 0.17 | 1.15 | 0.03 | 0.06 | 0.08 | 0.03 |
-  // Homogeneous elas     : 0.76 | 4.25 | 0.26 | 0.33 | 0.08 | 0.35 |
-  // Non-homogeneous elast: 0.81 | 6.29 | 0.26 | 0.33 | 0.08 | 0.40 |
+  // Homogeneous elas     : 0.61 | 4.25 | 0.26 | 0.33 | 0.08 | 0.20 |
+  // Non-homogeneous elast: 0.68 | 6.29 | 0.26 | 0.33 | 0.08 | 0.27 |
   if (all || only_one == 3) // ndofu = 321602 ndofp = 160801 ndofchi = 1201
     test_new_assembly(2, 200, 2);
   // Vector source term   : 0.09 | 0.23 |
@@ -691,26 +691,26 @@ int main(int /* argc */, char * /* argv */[]) {
   // Mass (scalar)        : 0.08 | 0.25 | 0.02 | 0.03 | 0.03 | 0.02 |
   // Mass (vector)        : 0.15 | 0.44 | 0.05 | 0.07 | 0.03 | 0.05 |
   // Laplacian            : 0.07 | 0.37 | 0.02 | 0.03 | 0.03 | 0.01 |
-  // Homogeneous elas     : 0.24 | 1.28 | 0.06 | 0.10 | 0.03 | 0.11 |
-  // Non-homogeneous elast: 0.26 | 2.38 | 0.06 | 0.10 | 0.03 | 0.13 |
+  // Homogeneous elas     : 0.23 | 1.28 | 0.06 | 0.10 | 0.03 | 0.10 |
+  // Non-homogeneous elast: 0.25 | 2.38 | 0.06 | 0.10 | 0.03 | 0.12 |
   if (all || only_one == 4) // ndofu = 151959 ndofp =  50653 ndofchi = 6553
     test_new_assembly(3, 18, 2);
   // Vector source term   : 0.10 | 0.23 |
-  // Nonlinear residual   : 0.28 |      |
+  // Nonlinear residual   : 0.22 |      |
   // Mass (scalar)        : 0.11 | 0.25 | 0.05 | 0.05 | 0.03 | 0.03 |
   // Mass (vector)        : 0.29 | 0.89 | 0.11 | 0.16 | 0.03 | 0.10 |
   // Laplacian            : 0.08 | 0.53 | 0.03 | 0.04 | 0.03 | 0.01 |
-  // Homogeneous elas     : 1.65 | 3.35 | 0.59 | 0.73 | 0.03 | 0.89 |
-  // Non-homogeneous elast: 1.68 | 9.08 | 0.59 | 0.73 | 0.03 | 0.92 |
+  // Homogeneous elas     : 1.07 | 3.35 | 0.59 | 0.73 | 0.03 | 0.31 |
+  // Non-homogeneous elast: 1.08 | 9.08 | 0.59 | 0.73 | 0.03 | 0.32 |
   if (all || only_one == 5) // ndofu = 151959 ndofp =  50653 ndofchi = 6553
     test_new_assembly(3, 9, 4);
   // Vector source term   : 0.08 | 0.19 |
-  // Nonlinear residual   : 0.27 |      |
+  // Nonlinear residual   : 0.18 |      |
   // Mass (scalar)        : 0.51 | 0.34 | 0.09 | 0.16 | 0.01 | 0.34 |
   // Mass (vector)        : 1.29 | 1.31 | 0.23 | 0.41 | 0.01 | 0.87 |
   // Laplacian            : 0.36 | 0.76 | 0.09 | 0.14 | 0.01 | 0.21 |
-  // Homogeneous elas     : 8.85 | 5.23 | 0.82 | 1.41 | 0.01 | 7.41 |
-  // Non-homogeneous elast: 8.94 | 47.4 | 0.82 | 1.41 | 0.01 | 7.50 |
+  // Homogeneous elas     : 2.95 | 5.23 | 0.82 | 1.41 | 0.01 | 1.53 |
+  // Non-homogeneous elast: 2.95 | 47.4 | 0.82 | 1.41 | 0.01 | 1.53 |
 
   // Conclusions :
   // - Deactivation of debug test has no sensible effect.
