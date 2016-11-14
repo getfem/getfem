@@ -333,6 +333,7 @@ namespace gmm {
   inline void add(param1(base_type), std::vector<base_type > &y) {         \
     GMMLAPACK_TRACE("axpy_interface");                                     \
     int inc(1), n(int(vect_size(y))); trans1(base_type);	 	   \
+    if (n == 0) return;							   \
     blas_name(&n, &a, &x[0], &inc, &y[0], &inc);                           \
   }
 

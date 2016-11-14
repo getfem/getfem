@@ -392,8 +392,7 @@ namespace getfem {
   (const base_matrix &E, const base_vector &params, scalar_type det_trans) const {
         // should be optimized, maybe deriving sigma from strain energy
     if (det_trans <= scalar_type(0))
-    {return 1e200;
-      cout<<"element_inverse"<< endl;}
+    { return 1e200; }
 
     return gmm::sqr(gmm::mat_trace(E)) * params[0] / scalar_type(2)
     + gmm::mat_euclidean_norm_sqr(E) * params[1];
@@ -404,9 +403,9 @@ namespace getfem {
     gmm::copy(gmm::identity_matrix(), result);
     gmm::scale(result, params[0] * gmm::mat_trace(E));
     gmm::add(gmm::scaled(E, 2 * params[1]), result);
-      if (det_trans <= scalar_type(0)){
-        gmm::add(gmm::scaled(E, 1e200), result);
-        cout<<"element_inverse"<< endl;};
+    if (det_trans <= scalar_type(0)) {
+      gmm::add(gmm::scaled(E, 1e200), result);
+    }
   }
   void SaintVenant_Kirchhoff_hyperelastic_law::grad_sigma
   (const base_matrix &E, base_tensor &result,const base_vector &params, scalar_type) const {

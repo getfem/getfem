@@ -677,40 +677,40 @@ int main(int /* argc */, char * /* argv */[]) {
   // Non-homogeneous elast: 0.34 | 2.26 | 0.09 | 0.15 | 0.06 | 0.13 |
   if (all || only_one == 2) // ndofu = 151959 ndofp =  50653 ndofchi = 6553
     test_new_assembly(3, 36, 1);
-  // Vector source term   : 0.23 | 0.79 |
-  // Nonlinear residual   : 0.42 |      |
+  // Vector source term   : 0.22 | 0.79 |
+  // Nonlinear residual   : 0.40 |      |
   // Mass (scalar)        : 0.21 | 0.58 | 0.05 | 0.09 | 0.08 | 0.05 |
   // Mass (vector)        : 0.36 | 1.37 | 0.12 | 0.17 | 0.08 | 0.11 |
-  // Laplacian            : 0.17 | 1.15 | 0.03 | 0.06 | 0.08 | 0.03 |
-  // Homogeneous elas     : 0.61 | 4.25 | 0.26 | 0.33 | 0.08 | 0.20 |
-  // Non-homogeneous elast: 0.68 | 6.29 | 0.26 | 0.33 | 0.08 | 0.27 |
+  // Laplacian            : 0.17 | 1.13 | 0.03 | 0.06 | 0.08 | 0.03 |
+  // Homogeneous elas     : 0.59 | 4.25 | 0.26 | 0.33 | 0.08 | 0.18 |
+  // Non-homogeneous elast: 0.63 | 6.29 | 0.26 | 0.33 | 0.08 | 0.22 |
   if (all || only_one == 3) // ndofu = 321602 ndofp = 160801 ndofchi = 1201
     test_new_assembly(2, 200, 2);
-  // Vector source term   : 0.09 | 0.23 |
-  // Nonlinear residual   : 0.12 |      |
+  // Vector source term   : 0.08 | 0.23 |
+  // Nonlinear residual   : 0.11 |      |
   // Mass (scalar)        : 0.08 | 0.25 | 0.02 | 0.03 | 0.03 | 0.02 |
   // Mass (vector)        : 0.15 | 0.44 | 0.05 | 0.07 | 0.03 | 0.05 |
   // Laplacian            : 0.07 | 0.37 | 0.02 | 0.03 | 0.03 | 0.01 |
-  // Homogeneous elas     : 0.23 | 1.28 | 0.06 | 0.10 | 0.03 | 0.10 |
-  // Non-homogeneous elast: 0.25 | 2.38 | 0.06 | 0.10 | 0.03 | 0.12 |
+  // Homogeneous elas     : 0.22 | 1.28 | 0.06 | 0.10 | 0.03 | 0.09 |
+  // Non-homogeneous elast: 0.24 | 2.38 | 0.06 | 0.10 | 0.03 | 0.11 |
   if (all || only_one == 4) // ndofu = 151959 ndofp =  50653 ndofchi = 6553
     test_new_assembly(3, 18, 2);
-  // Vector source term   : 0.10 | 0.23 |
-  // Nonlinear residual   : 0.22 |      |
+  // Vector source term   : 0.09 | 0.23 |
+  // Nonlinear residual   : 0.20 |      |
   // Mass (scalar)        : 0.11 | 0.25 | 0.05 | 0.05 | 0.03 | 0.03 |
   // Mass (vector)        : 0.29 | 0.89 | 0.11 | 0.16 | 0.03 | 0.10 |
   // Laplacian            : 0.08 | 0.53 | 0.03 | 0.04 | 0.03 | 0.01 |
-  // Homogeneous elas     : 1.07 | 3.35 | 0.59 | 0.73 | 0.03 | 0.31 |
-  // Non-homogeneous elast: 1.08 | 9.08 | 0.59 | 0.73 | 0.03 | 0.32 |
+  // Homogeneous elas     : 0.99 | 3.35 | 0.59 | 0.73 | 0.03 | 0.23 |
+  // Non-homogeneous elast: 1.00 | 9.08 | 0.59 | 0.73 | 0.03 | 0.24 |
   if (all || only_one == 5) // ndofu = 151959 ndofp =  50653 ndofchi = 6553
     test_new_assembly(3, 9, 4);
   // Vector source term   : 0.08 | 0.19 |
-  // Nonlinear residual   : 0.18 |      |
+  // Nonlinear residual   : 0.16 |      |
   // Mass (scalar)        : 0.51 | 0.34 | 0.09 | 0.16 | 0.01 | 0.34 |
   // Mass (vector)        : 1.29 | 1.31 | 0.23 | 0.41 | 0.01 | 0.87 |
   // Laplacian            : 0.36 | 0.76 | 0.09 | 0.14 | 0.01 | 0.21 |
-  // Homogeneous elas     : 2.95 | 5.23 | 0.82 | 1.41 | 0.01 | 1.53 |
-  // Non-homogeneous elast: 2.95 | 47.4 | 0.82 | 1.41 | 0.01 | 1.53 |
+  // Homogeneous elas     : 2.74 | 5.23 | 0.82 | 1.41 | 0.01 | 1.32 |
+  // Non-homogeneous elast: 2.66 | 47.4 | 0.82 | 1.41 | 0.01 | 1.24 |
 
   // Conclusions :
   // - Deactivation of debug test has no sensible effect.
@@ -718,7 +718,7 @@ int main(int /* argc */, char * /* argv */[]) {
   // - (J, K, B) computation takes half the computational time of the exec part
   // - The call itself of optimized instruction virtual functions is negligible
   //   It means that a real compilation (g++) avoiding them is not necessary
-  //   and would we far more expensive in compilation time.
+  //   and would be far more expensive in compilation time.
   // - For uniform mesh_fem, the resize operations has been suppressed and
   //   the "update pfp" has been isolated in a set  of instruction being
   //   executed only on change of integration method.
@@ -726,59 +726,56 @@ int main(int /* argc */, char * /* argv */[]) {
   // - Loop unrolling may have an important impact, especially for high degree 
 
 
-  // Possible optimizations (focusing on a case)
-  // - Optimization of J computation (especially in 2D and standard cases)
-  // - Unroll loop in used instructions
-  // - Assembly optimization
-  // - Detection of the very simples cases where the elementary matrix do not
-  //   have to be computed on each element (mass matrix, laplacian ...)
-  //   on uniform mesh_fem and mesh_im ?
-  // - storage optimization (matrices ...)
-  // - Why such a difference between mass matrix and laplacian for 3D and P2 ?
+  // Remaining possible optimizations
+  // - Computations in geotrans_interpolation_context (J, K, B) can be
+  //   transformed into some optimized instruction specialized with respect
+  //   to the dimension.
+  // - Optimization of the non-linear terms (mainly loops)
 
   // Original table (r5370) :
 #if 0
-  //                        new  | old  | 
+  //                             |      | after| Gain |
+  //                        new  | old  |  opt |factor|
   test_new_assembly(2, 400, 1);
-  // Vector source term   : 0.76 | 0.77 |
-  // Nonlinear residual   : 1.03 |      |
-  // Mass (scalar)        : 0.80 | 0.64 |
-  // Mass (vector)        : 0.94 | 0.91 |
-  // Laplacian            : 0.55 | 0.88 | 
-  // Homogeneous elas     : 0.95 | 2.02 | 
-  // Non-homogeneous elast: 1.16 | 2.41 |
+  // Vector source term   : 0.76 | 0.77 | 0.19 | 4.00 |
+  // Nonlinear residual   : 1.03 |      | 0.26 | 3.96 |
+  // Mass (scalar)        : 0.80 | 0.64 | 0.18 | 4.44 |
+  // Mass (vector)        : 0.94 | 0.91 | 0.27 | 3.48 |
+  // Laplacian            : 0.55 | 0.88 | 0.15 | 3.66 |
+  // Homogeneous elas     : 0.95 | 2.02 | 0.30 | 3.16 |
+  // Non-homogeneous elast: 1.16 | 2.41 | 0.34 | 3.41 |
   test_new_assembly(3, 36, 1);
-  // Vector source term   : 0.99 | 1.26 |
-  // Nonlinear residual   : 2.82 |      |
-  // Mass (scalar)        : 0.92 | 0.97 |
-  // Mass (vector)        : 1.70 | 1.80 |
-  // Laplacian            : 0.98 | 1.54 |
-  // Homogeneous elas     : 2.48 | 5.09 |
-  // Non-homogeneous elast: 2.72 | 7.10 | 
+  // Vector source term   : 0.99 | 1.26 | 0.22 | 4.50 |
+  // Nonlinear residual   : 2.82 |      | 0.40 | 7.05 |
+  // Mass (scalar)        : 0.92 | 0.97 | 0.21 | 4.38 |
+  // Mass (vector)        : 1.70 | 1.80 | 0.36 | 4.72 |
+  // Laplacian            : 0.98 | 1.54 | 0.17 | 5.76 |
+  // Homogeneous elas     : 2.48 | 5.09 | 0.59 | 4.20 |
+  // Non-homogeneous elast: 2.72 | 7.10 | 0.63 | 4.31 |
   test_new_assembly(2, 200, 2);
-  // Vector source term   : 0.33 | 0.26 |
-  // Nonlinear residual   : 0.47 |      |
-  // Mass (scalar)        : 0.35 | 0.29 |
-  // Mass (vector)        : 0.57 | 0.54 |
-  // Laplacian            : 0.28 | 0.42 |
-  // Homogeneous elas     : 0.74 | 1.42 |
-  // Non-homogeneous elast: 0.89 | 2.56 |
+  // Vector source term   : 0.33 | 0.26 | 0.08 | 4.12 |
+  // Nonlinear residual   : 0.47 |      | 0.11 | 4.27 |
+  // Mass (scalar)        : 0.35 | 0.29 | 0.08 | 4.37 |
+  // Mass (vector)        : 0.57 | 0.54 | 0.15 | 3.80 |
+  // Laplacian            : 0.28 | 0.42 | 0.07 | 4.00 |
+  // Homogeneous elas     : 0.74 | 1.42 | 0.22 | 3.36 |
+  // Non-homogeneous elast: 0.89 | 2.56 | 0.24 | 3.71 |
   test_new_assembly(3, 18, 2);
-  // Vector source term   : 0.49 | 0.28 |
-  // Nonlinear residual   : 1.30 |      |
-  // Mass (scalar)        : 0.51 | 0.37 |
-  // Mass (vector)        : 2.31 | 1.09 |
-  // Laplacian            : 0.38 | 0.65 |
-  // Homogeneous elas     : 3.35 | 4.13 |
-  // Non-homogeneous elast: 3.48 | 10.2 |
+  // Vector source term   : 0.49 | 0.28 | 0.09 | 5.44 |
+  // Nonlinear residual   : 1.30 |      | 0.20 | 6.50 |
+  // Mass (scalar)        : 0.51 | 0.37 | 0.11 | 4.64 |
+  // Mass (vector)        : 2.31 | 1.09 | 0.29 | 7.96 |
+  // Laplacian            : 0.38 | 0.65 | 0.08 | 4.75 |
+  // Homogeneous elas     : 3.35 | 4.13 | 0.99 | 3.38 |
+  // Non-homogeneous elast: 3.48 | 10.2 | 1.00 | 3.48 |
   test_new_assembly(3, 9, 4);
-  // Vector source term   : 0.40 | 0.20 |
-  // Nonlinear residual   : 0.93 |      |
-  // Mass (scalar)        : 0.79 | 0.47 |
-  // Mass (vector)        : 7.11 | 1.59 |
-  // Laplacian            : 0.96 | 0.91 |
-  // Homogeneous elas     : 13.4 | 6.61 |
-  // Non-homogeneous elast: 13.7 | 49.1 |
+  // Vector source term   : 0.40 | 0.20 | 0.08 | 5.00 |
+  // Nonlinear residual   : 0.93 |      | 0.16 | 5.81 |
+  // Mass (scalar)        : 0.79 | 0.47 | 0.51 | 1.55 |
+  // Mass (vector)        : 7.11 | 1.59 | 1.29 | 5.51 |
+  // Laplacian            : 0.96 | 0.91 | 0.36 | 2.66 |
+  // Homogeneous elas     : 13.4 | 6.61 | 2.74 | 4.89 |
+  // Non-homogeneous elast: 13.7 | 49.1 | 2.66 | 5.15 |
 #endif
 
   return 0; 
