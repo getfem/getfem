@@ -4642,7 +4642,7 @@ model_complex_plain_vector &
 					    "(A*Test_u).Test2_u");
 	  else
 	    asm_real_or_complex_1_param_mat(*B, mim, mf_mult, mf_H, *H, rg,
-			    "(Reshape(A,qdim(u),qdim(u))*Test_2u).Test_u");
+			    "(Reshape(A,qdim(u),qdim(u))*Test2_u).Test_u");
           // if (mf_H)
           //   asm_real_or_complex_1_param
           //     (*B, mim, mf_mult, *mf_H, *H, rg, (mf_u.get_qdim() == 1) ?
