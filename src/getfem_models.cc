@@ -4636,49 +4636,27 @@ model_complex_plain_vector &
           gmm::clear(matl[0]);
         }
         GMM_TRACE2("Mass term assembly for Dirichlet condition");
-        if (H_version) {
-	  if (mf_u.get_qdim() == 1)
-	    asm_real_or_complex_1_param_mat(*B, mim, mf_mult, mf_H, *H, rg,
-					    "(A*Test_u).Test2_u");
-	  else
-	    asm_real_or_complex_1_param_mat(*B, mim, mf_mult, mf_H, *H, rg,
-			    "(Reshape(A,qdim(u),qdim(u))*Test2_u).Test_u");
-          // if (mf_H)
-          //   asm_real_or_complex_1_param
-          //     (*B, mim, mf_mult, *mf_H, *H, rg, (mf_u.get_qdim() == 1) ?
-          //      "F=data(#2);"
-          //      "M(#1,#3)+=comp(Base(#1).Base(#3).Base(#2))(:,:,i).F(i)"
-          //      : "F=data(qdim(#1),qdim(#1),#2);"
-          //      "M(#1,#3)+=comp(vBase(#1).vBase(#3).Base(#2))(:,i,:,j,k).F(i,j,k);", &mf_u);
-          // else {
-          //   asm_real_or_complex_1_param
-          //     (*B, mim, mf_mult, mf_u, *H, rg, (mf_u.get_qdim() == 1) ?
-          //      "F=data(1);"
-          //      "M(#1,#2)+=comp(Base(#1).Base(#2).F(1))"
-          //      : "F=data(qdim(#1),qdim(#1));"
-          //      "M(#1,#2)+=comp(vBase(#1).vBase(#2))(:,i,:,j).F(i,j);");
-          // }
-        }
-        else if (normal_component) {
-	  ga_workspace workspace;
-	  gmm::sub_interval Imult(0, mf_mult.nb_dof()), Iu(0, mf_u.nb_dof());
-	  base_vector mult(mf_mult.nb_dof()), u(mf_u.nb_dof());
-	  workspace.add_fem_variable("mult", mf_mult, Imult, mult);
-	  workspace.add_fem_variable("u", mf_u, Iu, u);
-	  workspace.add_expression("Test_mult.(Test2_u.Normal)", mim, rg);
-	  workspace.set_assembled_matrix(*B);
-	  workspace.assembly(2);
-
-          // generic_assembly assem;
-          // if (mf_mult.get_qdim() == 1)
-          //   assem.set("M(#2,#1)+=comp(Base(#2).vBase(#1).Normal())(:,:,i,i);");
-          // else
-          //   assem.set("M(#2,#1)+=comp(vBase(#2).mBase(#1).Normal())(:,i,:,i,j,j);");
-          // assem.push_mi(mim);
-          // assem.push_mf(mf_u);
-          // assem.push_mf(mf_mult);
-          // assem.push_mat(*B);
-          // assem.assembly(rg);
+        if (H_version || normal_component) {
+          ga_workspace workspace;
+	        gmm::sub_interval Imult(0, mf_mult.nb_dof()), Iu(0, mf_u.nb_dof());
+          base_vector u(mf_u.nb_dof());
+          base_vector mult(mf_mult.nb_dof());
+          workspace.add_fem_variable("u", mf_u, Iu, u);
+          workspace.add_fem_variable("mult", mf_mult, Imult, mult);
+          auto expression = std::string{};
+          if (H_version){
+            if (mf_H) workspace.add_fem_constant("A", *mf_H, *H);
+            else workspace.add_fixed_size_constant("A", *H);
+            expression = (mf_u.get_qdim() == 1) ?
+                          "Test_mult . (A . Test2_u)"
+                          :
+                          "Test_mult. (Reshape(A, qdim(u), qdim(u)) . Test2_u)";
+          } else if (normal_component){
+	          expression = "Test_mult . (Test2_u . Normal)";
+          }
+          workspace.add_expression(expression, mim, rg);
+          workspace.set_assembled_matrix(*B);
+	        workspace.assembly(2);
         } else {
           asm_mass_matrix(*B, mim, mf_mult, mf_u, rg);
         }
