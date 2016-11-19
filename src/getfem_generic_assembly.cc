@@ -3370,7 +3370,8 @@ namespace getfem {
       size_type ndof = Z.sizes()[0];
       if (!ndof) { gmm::clear(t.as_vector()); return 0; }
       size_type N = t.sizes().back();
-      GA_DEBUG_ASSERT(N*N == Z.sizes()[2], "Internal error");
+      GA_DEBUG_ASSERT(N == Z.sizes()[2], "Internal error");
+      GA_DEBUG_ASSERT(N == Z.sizes()[3], "Internal error");
       if (qdim == 1) {
 	GA_DEBUG_ASSERT(gmm::vect_size(coeff) == ndof,
 			"Wrong size for coeff vector");
@@ -4733,14 +4734,14 @@ namespace getfem {
     size_type nn;
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: reduction operation of size " << nn);
-      #if GA_USES_BLAS
+#if GA_USES_BLAS
       int m = int(tc1.size()/nn), k = int(nn), n = int(tc2.size()/nn);
       int lda = m, ldb = n, ldc = m;
       char T = 'T', N = 'N';
       scalar_type alpha(1), beta(0);
       gmm::dgemm_(&N, &T, &m, &n, &k, &alpha, &(tc1[0]), &lda, &(tc2[0]), &ldb,
                   &beta, &(t[0]), &ldc);
-      #else
+#else
       size_type s1 = tc1.size()/nn, s2 = tc2.size()/nn;
       GA_DEBUG_ASSERT(t.size() == s1*s2, "Internal error");
 
@@ -4760,7 +4761,7 @@ namespace getfem {
       //  	  for (size_type k = 0; k < nn; ++k)
       // 	    *it += tc1[i+k*s1] * tc2[j+k*s2];
       // 	}
-      #endif
+#endif
       return 0;
     }
     ga_instruction_reduction(base_tensor &t_, base_tensor &tc1_,
@@ -7403,7 +7404,7 @@ namespace getfem {
       return dummy_mesh_region();
 
     std::list<mesh_region> &lmr = registred_mesh_regions[&m];
-    for (auto &rg : lmr)
+    for (const mesh_region &rg : lmr)
       if (rg.compare(m, region, m)) return rg;
     lmr.push_back(region);
     return lmr.back();
