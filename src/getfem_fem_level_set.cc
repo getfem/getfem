@@ -201,10 +201,7 @@ namespace getfem {
   
   void fem_level_set::real_hess_base_value(const fem_interpolation_context &c,
                                            base_tensor &t, bool) const {
-    // bgeot::multi_index mi(4);
-    // mi[3] = mi[2] = short_type(c.N()); mi[1] = target_dim();
-    // mi[0] = short_type(nb_base(0));
-    t.adjust_sizes(nb_base(0), target_dim(), c.N(), c.N());
+    t.adjust_sizes(nb_base(0), target_dim(), gmm::sqr(c.N()));
     fem_interpolation_context c0 = c;
     if (c0.have_pfp())
       c0.set_pfp(fem_precomp(bfem, c0.pfp()->get_ppoint_tab(), c0.pfp()));

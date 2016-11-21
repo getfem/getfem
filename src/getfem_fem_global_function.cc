@@ -80,16 +80,6 @@ namespace getfem {
       dal::add_stored_object(pkey, precomps);
     }
 
-    mib.resize(2);
-    mib[0] = short_type(1);
-    mib[1] = target_dim();
-    mig.resize(3);
-    mig[0] = short_type(1);
-    mig[1] = target_dim(); mig[2] = dim();
-    mih.resize(4);
-    mih[0] = short_type(1);
-    mih[1] = target_dim(); mih[3] = mih[2] = dim();
-
     size_type nb_total_dof(functions.size());
     base_node bmin(dim()), bmax(dim());
     bgeot::rtree boxtree;
@@ -193,8 +183,7 @@ namespace getfem {
     assert(target_dim() == 1);
     size_type cv = c.convex_num();
     size_type nbdof = nb_dof(cv);
-    mib[0] = short_type(nbdof);
-    t.adjust_sizes(mib);
+    t.adjust_sizes(nbdof, target_dim());
     if (c.have_pfp() && c.ii() != size_type(-1)) {
       GMM_ASSERT1(precomps, "Internal error");
       if (precomps->size() == 0)
@@ -235,8 +224,7 @@ namespace getfem {
     assert(target_dim() == 1);
     size_type cv = c.convex_num();
     size_type nbdof = nb_dof(cv);
-    mig[0] = short_type(nbdof);
-    t.adjust_sizes(mig);
+    t.adjust_sizes(nbdof, target_dim(), dim());
     if (c.have_pfp() && c.ii() != size_type(-1)) {
       GMM_ASSERT1(precomps, "Internal error");
       if (precomps->size() == 0)
@@ -274,8 +262,7 @@ namespace getfem {
     assert(target_dim() == 1);
     size_type cv = c.convex_num();
     size_type nbdof = nb_dof(cv);
-    mih[0] = short_type(nbdof);
-    t.adjust_sizes(mih);
+    t.adjust_sizes(nbdof, target_dim(), gmm::sqr(dim()));
     if (c.have_pfp() && c.ii() != size_type(-1)) {
       GMM_ASSERT1(precomps, "Internal error");
       if (precomps->size() == 0)

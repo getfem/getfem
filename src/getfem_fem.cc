@@ -269,10 +269,7 @@ namespace getfem {
       }
 
       if (tt.size()) { /* only if the FEM can provide hess_base_value */
-        bgeot::multi_index mim(3);
-        mim[2] = gmm::sqr(tt.sizes()[2]); mim[1] = tt.sizes()[1];
-        mim[0] = tt.sizes()[0];
-        tt.adjust_sizes(mim);
+        tt.adjust_sizes(tt.sizes()[0], tt.sizes()[1], gmm::sqr(tt.sizes()[2]));
         t.mat_transp_reduction(tt, B3(), 2);
         if (!pgt()->is_linear()) {
           if (have_pfp()) {

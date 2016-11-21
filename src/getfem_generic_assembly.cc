@@ -3194,7 +3194,7 @@ namespace getfem {
 
   struct ga_instruction_hess_base : public ga_instruction_val_base {
 
-    virtual int exec() { // --> t(ndof,target_dim,N,N)
+    virtual int exec() { // --> t(ndof,target_dim,N*N)
       GA_DEBUG_INFO("Instruction: compute Hessian of base functions");
       if (ctx.have_pgp()) ctx.set_pfp(pfp);
       else ctx.set_pf(mf.fem_of_element(ctx.convex_num()));
@@ -3211,7 +3211,7 @@ namespace getfem {
 
   struct ga_instruction_xfem_plus_hess_base : public ga_instruction_val_base {
 
-    virtual int exec() { // --> t(ndof,target_dim,N,N)
+    virtual int exec() { // --> t(ndof,target_dim,N*N)
       GA_DEBUG_INFO("Instruction: compute Hessian of base functions");
       if (ctx.have_pgp()) ctx.set_pfp(pfp);
       else ctx.set_pf(mf.fem_of_element(ctx.convex_num()));
@@ -3232,7 +3232,7 @@ namespace getfem {
 
   struct ga_instruction_xfem_minus_hess_base : public ga_instruction_val_base {
 
-    virtual int exec() { // --> t(ndof,target_dim,N,N)
+    virtual int exec() { // --> t(ndof,target_dim,N*N)
       GA_DEBUG_INFO("Instruction: compute Hessian of base functions");
       if (ctx.have_pgp()) ctx.set_pfp(pfp);
       else ctx.set_pf(mf.fem_of_element(ctx.convex_num()));
@@ -3364,55 +3364,50 @@ namespace getfem {
   };
 
   struct ga_instruction_hess : public ga_instruction_val {
-    // Z(ndof,target_dim,N,N), coeff(Qmult,ndof) --> t(target_dim*Qmult,N,N)
+    // Z(ndof,target_dim,N*N), coeff(Qmult,ndof) --> t(target_dim*Qmult,N,N)
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: Hessian");
       size_type ndof = Z.sizes()[0];
       if (!ndof) { gmm::clear(t.as_vector()); return 0; }
-      size_type N = t.sizes().back();
-      GA_DEBUG_ASSERT(N == Z.sizes()[2], "Internal error");
-      GA_DEBUG_ASSERT(N == Z.sizes()[3], "Internal error");
+      size_type NN = gmm::sqr(t.sizes().back());
+      GA_DEBUG_ASSERT(NN == Z.sizes()[2], "Internal error");
       if (qdim == 1) {
-	GA_DEBUG_ASSERT(gmm::vect_size(coeff) == ndof,
-			"Wrong size for coeff vector");
-	auto it = Z.begin(); auto itt = t.begin();
-	for (size_type k = 0; k < N; ++k)
-	  for (size_type l = 0; l < N; ++l, ++itt) {
-	    *itt = scalar_type(0);
-	    for (auto itc = coeff.begin(); itc != coeff.end(); ++itc, ++it)
-	      *itt += (*itc) * (*it);
-	  }
-	GMM_ASSERT1(itt == t.end(),  "dimensions mismatch");
+        GA_DEBUG_ASSERT(gmm::vect_size(coeff) == ndof,
+                        "Wrong size for coeff vector");
+        auto it = Z.begin(); auto itt = t.begin();
+        for (size_type kl = 0; kl < NN; ++kl, ++itt) {
+          *itt = scalar_type(0);
+          for (auto itc = coeff.begin(); itc != coeff.end(); ++itc, ++it)
+            *itt += (*itc) * (*it);
+        }
+        GMM_ASSERT1(itt == t.end(),  "dimensions mismatch");
       } else {
-	size_type target_dim = Z.sizes()[1];
-	if (target_dim == 1) {
-	  GA_DEBUG_ASSERT(t.size() == N*N*qdim, "dimensions mismatch");
-	  GA_DEBUG_ASSERT(gmm::vect_size(coeff) == ndof*qdim,
-			  "Wrong size for coeff vector");
-	  gmm::clear(t.as_vector());
-	  for (size_type q = 0; q < qdim; ++q) {
-	    base_tensor::const_iterator it = Z.begin();
-	    for (size_type k = 0; k < N; ++k)
-	      for (size_type l = 0; l < N; ++l)
-		for (size_type j = 0; j < ndof; ++j, ++it)
-		  t[q + k*qdim + l*qdim*N] += coeff[j*qdim+q] * (*it);
-	  }
-	} else {
-	  size_type Qmult = qdim / target_dim;
-	  GA_DEBUG_ASSERT(t.size() == N*N*qdim, "dimensions mismatch");
-	  GA_DEBUG_ASSERT(gmm::vect_size(coeff) == ndof*Qmult,
-			  "Wrong size for coeff vector");
-	  gmm::clear(t.as_vector());
-	  for (size_type q = 0; q < Qmult; ++q) {
-	    base_tensor::const_iterator it = Z.begin();
-	    for (size_type k = 0; k < N; ++k)
-	      for (size_type l = 0; l < N; ++l)
-		for (size_type r = 0; r < target_dim; ++r)
-		  for (size_type j = 0; j < ndof; ++j, ++it)
-		    t[r + q*target_dim + k*qdim + l*qdim*N]
-		      += coeff[j*Qmult+q] * (*it);
-	  } 
-	}
+        size_type target_dim = Z.sizes()[1];
+        if (target_dim == 1) {
+          GA_DEBUG_ASSERT(t.size() == NN*qdim, "dimensions mismatch");
+          GA_DEBUG_ASSERT(gmm::vect_size(coeff) == ndof*qdim,
+                          "Wrong size for coeff vector");
+          gmm::clear(t.as_vector());
+          for (size_type q = 0; q < qdim; ++q) {
+            base_tensor::const_iterator it = Z.begin();
+            for (size_type kl = 0; kl < NN; ++kl)
+              for (size_type j = 0; j < ndof; ++j, ++it)
+                t[q + kl*qdim] += coeff[j*qdim+q] * (*it);
+          }
+        } else {
+          size_type Qmult = qdim / target_dim;
+          GA_DEBUG_ASSERT(t.size() == NN*qdim, "dimensions mismatch");
+          GA_DEBUG_ASSERT(gmm::vect_size(coeff) == ndof*Qmult,
+                          "Wrong size for coeff vector");
+          gmm::clear(t.as_vector());
+          for (size_type q = 0; q < Qmult; ++q) {
+            base_tensor::const_iterator it = Z.begin();
+            for (size_type kl = 0; kl < NN; ++kl)
+              for (size_type r = 0; r < target_dim; ++r)
+                for (size_type j = 0; j < ndof; ++j, ++it)
+                  t[r + q*target_dim + kl*qdim] += coeff[j*Qmult+q] * (*it);
+          } 
+        }
       }
       return 0;
     }
@@ -3643,7 +3638,7 @@ namespace getfem {
   };
 
   struct ga_instruction_copy_hess_base : public ga_instruction_copy_val_base {
-    // Z(ndof,target_dim,N,N) --> t(Qmult*ndof,Qmult*target_dim,N,N)
+    // Z(ndof,target_dim,N*N) --> t(Qmult*ndof,Qmult*target_dim,N,N)
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: Hessian of test functions");
       size_type target_dim = Z.sizes()[1];
@@ -3652,24 +3647,22 @@ namespace getfem {
         gmm::copy(Z.as_vector(), t.as_vector());
       } else {
         size_type ndof = Z.sizes()[0];
-        size_type N2 = Z.sizes()[2];
         GA_DEBUG_ASSERT(t.size() == Z.size() * Qmult * Qmult,
                       "Wrong size for Hessian vector");
         gmm::clear(t.as_vector());
         base_tensor::const_iterator itZ = Z.begin();
         size_type s = t.sizes()[0], ss = s * Qmult, sss = s+1;
-        size_type ssss=ss*target_dim;
 
         // Performs t(i*Qmult+j, k*Qmult + j, l, m) = Z(i,k,l*N+m)
-        for (size_type l = 0; l < N2; ++l)
-          for (size_type k = 0; k < target_dim; ++k) {
-            base_tensor::iterator it = t.begin() + (ss * k + ssss*l);
-            for (size_type i = 0; i < ndof; ++i, ++itZ, it += Qmult) {
-              base_tensor::iterator it2 = it;
-              *it2 = *itZ;
-              for (size_type j = 1; j < Qmult; ++j) { it2 += sss; *it2 = *itZ; }
-            }
+        size_type NNdim = Z.sizes()[2]*target_dim;
+        for (size_type klm = 0; klm < NNdim; ++klm) {
+          base_tensor::iterator it = t.begin() + (ss * klm);
+          for (size_type i = 0; i < ndof; ++i, ++itZ, it += Qmult) {
+            base_tensor::iterator it2 = it;
+            *it2 = *itZ;
+            for (size_type j = 1; j < Qmult; ++j) { it2 += sss; *it2 = *itZ; }
           }
+        }
       }
       return 0;
     }
@@ -3976,7 +3969,7 @@ namespace getfem {
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: interpolated variable hessian");
       ga_instruction_interpolate::exec();
-      base_matrix v(qdim, ctx.N()*ctx.N());
+      base_matrix v(qdim, ctx.N()*ctx.N()); // To be optimized
       ctx.pf()->interpolation_hess(ctx, coeff, v, dim_type(qdim));
       gmm::copy(v.as_vector(), t.as_vector());
       return 0;
@@ -4087,7 +4080,7 @@ namespace getfem {
 
   struct ga_instruction_interpolate_hess_base
     : public ga_instruction_copy_hess_base, ga_instruction_interpolate_base {
-    // ctx --> Z(ndof,target_dim,N,N) --> t(Qmult*ndof,Qmult*target_dim,N,N)
+    // ctx --> Z(ndof,target_dim,N*N) --> t(Qmult*ndof,Qmult*target_dim,N,N)
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: interpolated base hessian");
       ga_instruction_interpolate_base::exec();
@@ -4204,7 +4197,7 @@ namespace getfem {
   struct ga_instruction_elementary_transformation_hess_base
     : public ga_instruction_copy_hess_base,
              ga_instruction_elementary_transformation_base {
-    // Z(ndof,target_dim,N,N) --> t_out(Qmult*ndof,Qmult*target_dim,N,N)
+    // Z(ndof,target_dim,N*N) --> t_out(Qmult*ndof,Qmult*target_dim,N,N)
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: Hessian of test functions with elementary "
                     "transformation");

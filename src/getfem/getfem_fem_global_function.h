@@ -52,7 +52,6 @@ namespace getfem {
     const mesh_im &mim;
     const bool has_mesh_im;
 
-    mutable bgeot::multi_index mib,mig,mih;
     mutable std::vector<std::vector<size_type> > index_of_global_dof_;
     mutable bgeot::pstored_point_tab pspt_override;
 

@@ -215,10 +215,7 @@ namespace getfem {
   
   void fem_sum::real_hess_base_value(const fem_interpolation_context &c,
                                      base_tensor &t, bool withM) const {
-    bgeot::multi_index mi(4);
-    mi[3] = mi[2] = short_type(c.N()); mi[1] = target_dim();
-    mi[0] = short_type(nb_dof(0));
-    t.adjust_sizes(mi);
+    t.adjust_sizes(nb_dof(0), target_dim(), gmm::sqr(c.N()));
     base_tensor::iterator it = t.begin(), itf;
     
     fem_interpolation_context c0 = c;
