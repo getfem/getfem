@@ -214,17 +214,15 @@ namespace getfem {
     std::vector<bool> zid;
     find_zone_id(c, zid, c.xfem_side());
 
-    for (dim_type i = 0; i < c.N() ; ++i) {
-      for (dim_type j = 0; j < c.N() ; ++j) {
-	for (dim_type q = 0; q < target_dim(); ++q) {
-	  unsigned cnt = 0;
-	  for (size_type d = 0; d < bfem->nb_dof(0); ++d, ++itf) {
-	    if (dofzones[d]) { /* enriched dof ? */
-	      for (size_type k = 0; k < dofzones[d]->size(); ++k, ++cnt)
-		*it++ = zid[cnt] ? *itf : 0;
-	    } else *it++ = *itf;
-	  }
-	}
+    dim_type NNdim = dim_type(gmm::sqr(c.N())*target_dim());
+    for (dim_type ijq = 0; ijq < NNdim ; ++ijq) {
+      unsigned cnt = 0;
+      for (size_type d = 0; d < bfem->nb_dof(0); ++d, ++itf) {
+        if (dofzones[d]) /* enriched dof ? */
+          for (size_type k = 0; k < dofzones[d]->size(); ++k, ++cnt)
+            *it++ = zid[cnt] ? *itf : 0;
+        else
+          *it++ = *itf;
       }
     }
     assert(it == t.end());

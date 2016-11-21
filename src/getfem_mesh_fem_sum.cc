@@ -228,16 +228,12 @@ namespace getfem {
       c0.hess_base_value(hess_e[k]);
     }
 
-    for (dim_type j = 0; j < c.N() ; ++j) {
-      for (dim_type k = 0; k < c.N() ; ++k) {
-        for (dim_type q = 0; q < target_dim(); ++q) {
-          for (size_type f = 0; f < pfems.size(); ++f) {
-            itf = hess_e[f].begin()
-              + ((j * c.N() + k) * target_dim() + q) * pfems[f]->nb_dof(cv); 
-            for (size_type i = 0; i < pfems[f]->nb_dof(cv); ++i)
-              *it++ = *itf++;
-          }
-        }
+    dim_type NNdim = dim_type(gmm::sqr(c.N())*target_dim());
+    for (dim_type jkq = 0; jkq < NNdim ; ++jkq) {
+      for (size_type f = 0; f < pfems.size(); ++f) {
+        itf = hess_e[f].begin() + (jkq * pfems[f]->nb_dof(cv)); 
+        for (size_type i = 0; i < pfems[f]->nb_dof(cv); ++i)
+          *it++ = *itf++;
       }
     }
     assert(it == t.end());
