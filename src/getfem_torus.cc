@@ -289,9 +289,7 @@ namespace getfem
   {
     GMM_ASSERT1(!(poriginal_fem_->is_on_real_element()), "Original FEM must not be real.");
 
-    bgeot::scalar_type radius = c.xreal()[0];
-    GMM_ASSERT1(radius > 0, "Negative radius in axisymmetry gradient calculation!");
-
+    bgeot::scalar_type radius = std::abs(c.xreal()[0]);
     base_tensor u;
     bgeot::pstored_point_tab ppt = c.pgp()->get_ppoint_tab();
     getfem::pfem_precomp pfp = getfem::fem_precomp(poriginal_fem_, ppt, 0);
