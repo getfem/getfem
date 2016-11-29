@@ -653,6 +653,36 @@ namespace getfem {
   */
   pinterpolate_transformation interpolate_transformation_neighbour_instance();
 
+  /* Add a special interpolation transformation which represents the identity
+     transformation but allows to evaluate the expression on another element
+     than the current element by polynomial extrapolation. It is used for
+     stabilization term in fictitious domain applications. the map elt_cor
+     list the element concerned by the transformation and associate them
+     to the element on which the extrapolation has to be made. If an element
+     is not listed in elt_cor the evaluation i just made on the current element.
+  */
+  void add_interpolate_transformation_element_extrapolation
+  (model &md, const std::string &name, const mesh &sm,
+   std::map<size_type, size_type> &elt_corr);
+
+  void add_interpolate_transformation_element_extrapolation
+  (ga_workspace &workspace, const std::string &name, const mesh &sm,
+   std::map<size_type, size_type> &elt_corr);
+  
+  /* Change the correspondance map of an element extrapolation interpolate
+     transformation.
+  */
+  void set_element_extrapolation_correspondance
+  (model &md, const std::string &name,
+   std::map<size_type, size_type> &elt_corr);
+  
+  void set_element_extrapolation_correspondance
+  (ga_workspace &workspace, const std::string &name,
+   std::map<size_type, size_type> &elt_corr);
+    
+ 
+
+
 }  /* end of namespace getfem.                                             */
 
 

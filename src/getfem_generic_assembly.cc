@@ -14179,5 +14179,114 @@ namespace getfem {
     return p;
   }
 
+  //=========================================================================
+  // Interpolate transformation on neighbour element (for extrapolation)
+  //=========================================================================
+
+  class interpolate_transformation_element_extrapolation
+    : public virtual_interpolate_transformation, public context_dependencies {
+
+    const mesh &sm;
+    std::map<size_type, size_type> elt_corr;
+
+  public:
+    void update_from_context() const {}
+    void extract_variables(const ga_workspace &/* workspace */,
+                           std::set<var_trans_pair> &/* vars */,
+                           bool /* ignore_data */, const mesh &/* m */,
+                           const std::string &/* interpolate_name */) const {}
+    void init(const ga_workspace &/* workspace */) const {}
+    void finalize() const {}
+
+    int transform(const ga_workspace &/*workspace*/, const mesh &m_x,
+                  fem_interpolation_context &ctx_x,
+                  const base_small_vector &/*Normal*/, const mesh **m_t,
+                  size_type &cv, short_type &face_num,
+                  base_node &P_ref,
+                  base_small_vector &/*N_y*/,
+                  std::map<var_trans_pair, base_tensor> &/*derivatives*/,
+                  bool compute_derivatives) const {
+
+      int ret_type = 0;
+      *m_t = &m_x;
+      GMM_ASSERT1(&sm == &m_x, "Bad mesh");
+      size_type cv_x = ctx_x.convex_num(), cv_y = cv_x;
+      auto it = elt_corr.find(cv_x);
+      if (it != elt_corr.end()) cv_y = it->second;
+
+      if (cv_x != cv_y) {
+        bgeot::geotrans_inv_convex gic;
+        gic.init(m_x.points_of_convex(cv_y),
+                 m_x.trans_of_convex(cv_y));
+        bool converged = true;
+        gic.invert(ctx_x.xreal(), P_ref, converged, 1E-4);
+        GMM_ASSERT1(converged, "Geometric transformation inversion "
+                    "has failed in element extrapolation transformation");
+        face_num = short_type(-1);
+        cv = cv_y;
+        ret_type = 1;
+      } else {
+	cv = cv_x;
+	P_ref = ctx_x.xref();
+	ret_type = 1;
+      }
+      GMM_ASSERT1(!compute_derivatives,
+                  "No derivative for this transformation");
+      return ret_type;
+    }
+
+    void set_correspondance(const std::map<size_type, size_type> &ec) {
+      elt_corr = ec;
+    }
+
+    interpolate_transformation_element_extrapolation
+    (const mesh &sm_, const std::map<size_type, size_type> &ec)
+      : sm(sm_), elt_corr(ec) { }
+  };
+
+
+  void add_interpolate_transformation_element_extrapolation
+  (model &md, const std::string &name, const mesh &sm,
+   std::map<size_type, size_type> &elt_corr) {
+    pinterpolate_transformation
+      p = std::make_shared<interpolate_transformation_element_extrapolation>
+      (sm, elt_corr);
+    md.add_interpolate_transformation(name, p);
+  }
+
+  void add_interpolate_transformation_element_extrapolation
+  (ga_workspace &workspace, const std::string &name, const mesh &sm,
+   std::map<size_type, size_type> &elt_corr) {
+    pinterpolate_transformation
+      p = std::make_shared<interpolate_transformation_element_extrapolation>
+      (sm, elt_corr);
+    workspace.add_interpolate_transformation(name, p);
+  }
+
+  void set_element_extrapolation_correspondance
+  (ga_workspace &workspace, const std::string &name,
+   std::map<size_type, size_type> &elt_corr) {
+    GMM_ASSERT1(workspace.interpolate_transformation_exists(name),
+		"Unknown transformation");
+    auto pit=workspace.interpolate_transformation(name).get();
+    auto cpext
+      = dynamic_cast<const interpolate_transformation_element_extrapolation *>
+      (pit);
+    const_cast<interpolate_transformation_element_extrapolation *>(cpext)
+      ->set_correspondance(elt_corr);
+  }
+    
+  void set_element_extrapolation_correspondance
+  (model &md, const std::string &name,
+   std::map<size_type, size_type> &elt_corr) {
+    GMM_ASSERT1(md.interpolate_transformation_exists(name),
+		"Unknown transformation");
+    auto pit=md.interpolate_transformation(name).get();
+    auto cpext
+      = dynamic_cast<const interpolate_transformation_element_extrapolation *>
+      (pit);
+    const_cast<interpolate_transformation_element_extrapolation *>(cpext)
+      ->set_correspondance(elt_corr);
+  }
 
 } /* end of namespace */

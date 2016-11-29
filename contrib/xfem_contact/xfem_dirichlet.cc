@@ -882,7 +882,7 @@ int main(int argc, char *argv[]) {
       //cout<<"vwgt="<<vwgt<<endl;
 
       scalar_type ratio_size = PARAM.real_value("RATIO_GR_MESH", "ratio size between mesh and patches");
-      cout<<"ratio size beween mesh and coarse mesh= "<< ratio_size <<endl;
+      cout<<"ratio size between mesh and coarse mesh= "<< ratio_size <<endl;
 
       int nparts = 1;
 #if GETFEM_HAVE_METIS
