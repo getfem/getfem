@@ -14245,7 +14245,7 @@ namespace getfem {
   };
 
 
-  void add_interpolate_transformation_element_extrapolation
+  void add_element_extrapolation_transformation
   (model &md, const std::string &name, const mesh &sm,
    std::map<size_type, size_type> &elt_corr) {
     pinterpolate_transformation
@@ -14254,7 +14254,7 @@ namespace getfem {
     md.add_interpolate_transformation(name, p);
   }
 
-  void add_interpolate_transformation_element_extrapolation
+  void add_element_extrapolation_transformation
   (ga_workspace &workspace, const std::string &name, const mesh &sm,
    std::map<size_type, size_type> &elt_corr) {
     pinterpolate_transformation

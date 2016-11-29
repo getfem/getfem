@@ -659,13 +659,14 @@ namespace getfem {
      stabilization term in fictitious domain applications. the map elt_cor
      list the element concerned by the transformation and associate them
      to the element on which the extrapolation has to be made. If an element
-     is not listed in elt_cor the evaluation i just made on the current element.
+     is not listed in elt_cor the evaluation is just made on the current
+     element.
   */
-  void add_interpolate_transformation_element_extrapolation
+  void add_element_extrapolation_transformation
   (model &md, const std::string &name, const mesh &sm,
    std::map<size_type, size_type> &elt_corr);
 
-  void add_interpolate_transformation_element_extrapolation
+  void add_element_extrapolation_transformation
   (ga_workspace &workspace, const std::string &name, const mesh &sm,
    std::map<size_type, size_type> &elt_corr);
   

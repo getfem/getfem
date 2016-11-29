@@ -54,6 +54,8 @@ struct sub_gf_md_set : virtual public dal::static_stored_object {
 
 typedef std::shared_ptr<sub_gf_md_set> psub_command;
 
+typedef std::map<size_type, size_type> elt_corr_cont;
+
 // Function to avoid warning in macro with unused arguments.
 template <typename T> static inline void dummy_func(T &) {}
 
@@ -423,6 +425,46 @@ void gf_model_set(getfemint::mexargs_in& m_in,
                                                       *tm, expr);
        );
 
+    /*@SET ('add element extrapolation transformation', @str transname, @tmesh source_mesh, @mat elt_corr)
+      Add a special interpolation transformation which represents the identity
+      transformation but allows to evaluate the expression on another element
+      than the current element by polynomial extrapolation. It is used for
+      stabilization term in fictitious domain applications. the array elt_cor
+      should be a two entry array whose first line contains the elements
+      concerned by the transformation and the second line the respective
+      elements on which the extrapolation has to be made. If an element
+      is not listed in elt_cor the evaluation is just made on the current
+      element. @*/
+    sub_command
+      ("add element extrapolation transformation", 3, 3, 0, 0,
+       std::string transname = in.pop().to_string();
+       getfem::mesh *sm = extract_mesh_object(in.pop());
+       iarray v = in.pop().to_iarray();
+       if (v.getm() != 2 || v.getp() != 1 || v.getq() != 1)
+       	 THROW_BADARG("Invalid format for the convex correspondance list");
+       elt_corr_cont elt_corr;
+       for (size_type j=0; j < v.getn(); j++)
+	 elt_corr[v(0,j)-config::base_index()] = v(1,j)-config::base_index();
+       getfem::add_element_extrapolation_transformation(*md, transname, *sm,
+							elt_corr);
+       );
+
+      /*@SET ('set element extrapolation correspondance', @str transname, @mat elt_corr)
+      Change the correspondance map of an element extrapolation interpolate
+     transformation. @*/
+    sub_command
+      ("set element extrapolation correspondance", 2, 2, 0, 0,
+       std::string transname = in.pop().to_string();
+       iarray v = in.pop().to_iarray();
+       if (v.getm() != 2 || v.getp() != 1 || v.getq() != 1)
+       	 THROW_BADARG("Invalid format for the convex correspondance list");
+       elt_corr_cont elt_corr;
+       for (size_type j=0; j < v.getn(); j++)
+	 elt_corr[v(0,j)-config::base_index()] = v(1,j)-config::base_index();
+       getfem::set_element_extrapolation_correspondance(*md, transname,
+							elt_corr);
+       );
+    
     /*@SET ('add raytracing transformation', @str transname, @scalar release_distance)
       Add a raytracing interpolate transformation called `transname` to a model
       to be used by the generic assembly bricks.
