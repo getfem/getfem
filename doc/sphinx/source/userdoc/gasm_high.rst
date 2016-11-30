@@ -684,7 +684,7 @@ In that case, the equality will only be prescribed in the part of the domain whe
 Element extrapolation transformation
 ------------------------------------
 
-A specific transformation (see previous section) is defined in order to allows the evaluation of certain quantities by extrapolation with respect to another element (in general a neighbour element). This is not strictly speaking a transformation since the point remain unchanged, but the evaluation is just made in another element extrapolating the shape functions outside this element. This transformation is used for stabilization term in fictitious domain applications (with cut elements) where it is more robust to extrapolate some quantities on a neighbour element having a sufficiently large intersection with the real domain than evaluating them on the current element if it has a small intersection with the real domain. The functions allowing to add such a transformation to a workspace or a model are::
+A specific transformation (see previous section) is defined in order to allows the evaluation of certain quantities by extrapolation with respect to another element (in general a neighbour element). This is not strictly speaking a transformation since the point location remain unchanged, but the evaluation is made on another element extrapolating the shape functions outside it. This transformation is used for stabilization term in fictitious domain applications (with cut elements) where it is more robust to extrapolate some quantities on a neighbour element having a sufficiently large intersection with the real domain than evaluating them on the current element if it has a small intersection with the real domain. The functions allowing to add such a transformation to a model or a workspace are::
 
   add_element_extrapolation_transformation
   (md, transname, my_mesh, std::map<size_type, size_type> &elt_corr);
@@ -692,9 +692,9 @@ A specific transformation (see previous section) is defined in order to allows t
   add_element_extrapolation_transformation
   (workspace, transname, my_mesh, std::map<size_type, size_type> &elt_corr);
 
-The map elt_corr should contains the correspondances between the elements where the transformation is to be applied and the respective elements where the extrapolation has to be made. On the element not listed in the map, no transformation is applied and the evaluation is made normally on the current element.
+The map elt_corr should contain the correspondances between the elements where the transformation is to be applied and the respective elements where the extrapolation has to be made. On the element not listed in the map, no transformation is applied and the evaluation is performed normally on the current element.
   
-The following functions allows to change the element correspondance of an already added element extrapolation transformation::
+The following functions allow to change the element correspondance of a previously added element extrapolation transformation::
 
   set_element_extrapolation_correspondance
   (md, transname, std::map<size_type, size_type> &elt_corr);

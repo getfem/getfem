@@ -14272,6 +14272,8 @@ namespace getfem {
     auto cpext
       = dynamic_cast<const interpolate_transformation_element_extrapolation *>
       (pit);
+    GMM_ASSERT1(cpext,
+		"The transformation is not of element extrapolation type");
     const_cast<interpolate_transformation_element_extrapolation *>(cpext)
       ->set_correspondance(elt_corr);
   }
@@ -14285,6 +14287,8 @@ namespace getfem {
     auto cpext
       = dynamic_cast<const interpolate_transformation_element_extrapolation *>
       (pit);
+    GMM_ASSERT1(cpext,
+		"The transformation is not of element extrapolation type");
     const_cast<interpolate_transformation_element_extrapolation *>(cpext)
       ->set_correspondance(elt_corr);
   }
