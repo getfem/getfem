@@ -11267,7 +11267,8 @@ namespace getfem {
     } else if (gis.extended_vars.find(varname)==gis.extended_vars.end()) {
       const mesh_fem *mf = workspace.associated_mf(varname);
       if (mf->is_reduced()) {
-        base_vector U(mf->nb_basic_dof());
+        auto n = (mf->get_qdim() == 1) ? workspace.qdim(varname) : 1;
+        base_vector U(mf->nb_basic_dof() * n);
         mf->extend_vector(workspace.value(varname), U);
         gis.really_extended_vars[varname] = U;
         gis.extended_vars[varname] = &(gis.really_extended_vars[varname]);
