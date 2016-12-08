@@ -738,17 +738,23 @@ namespace getfem {
     // typedef typename gmm::linalg_traits<const VECT>::value_type T;
 
     dim_type qdim = mf_source.get_qdim();
-    GMM_ASSERT1(qdim == im_target.nb_tensor_elem(),
+    size_type nb_dof = mf_source.nb_dof();
+    size_type nb_basic_dof = mf_source.nb_basic_dof();
+    size_type nodal_data_size = gmm::vect_size(nodal_data);
+    dim_type data_qdim = nodal_data_size / nb_dof;
+
+    GMM_ASSERT1(data_qdim * mf_source.nb_dof() == nodal_data_size,
+                "Incompatible size of mesh fem " << mf_source.nb_dof() * data_qdim <<
+                " with the data " << nodal_data_size);
+
+    GMM_ASSERT1(qdim * data_qdim == im_target.nb_tensor_elem(),
                 "Incompatible size of qdim for mesh_fem " << qdim
                 << " and im_data " << im_target.nb_tensor_elem());
     GMM_ASSERT1(&mf_source.linked_mesh() == &im_target.linked_mesh(),
                 "mf_source and im_data do not share the same mesh.");
 
-    size_type nb_dof = mf_source.nb_dof();
-    size_type nb_basic_dof = mf_source.nb_basic_dof();
-
-    GMM_ASSERT1(nb_dof == gmm::vect_size(nodal_data),
-                "Provided nodal data size is " << gmm::vect_size(nodal_data)
+    GMM_ASSERT1(nb_dof * data_qdim == nodal_data_size,
+                "Provided nodal data size is " << nodal_data_size
                 << " but expecting vector size of " << nb_dof);
 
     size_type size_im_data = im_target.nb_index(use_im_data_filter)
@@ -757,7 +763,7 @@ namespace getfem {
                 "Provided im data size is " << gmm::vect_size(int_pt_data)
                 << " but expecting vector size of " << size_im_data);
 
-    VECT extended_nodal_data_((nb_dof != nb_basic_dof) ? nb_basic_dof : 0);
+    VECT extended_nodal_data_((nb_dof != nb_basic_dof) ? nb_basic_dof * data_qdim : 0);
     if (nb_dof != nb_basic_dof)
       mf_source.extend_vector(nodal_data, extended_nodal_data_);
     const VECT &extended_nodal_data = (nb_dof == nb_basic_dof) ? nodal_data : extended_nodal_data_;
@@ -796,7 +802,7 @@ namespace getfem {
         fem_interpolation_context ctx(pgt, pfp, size_type(-1), G, cv);
         for (size_type i = 0; i < nb_int_pts; ++i, ++int_pt_id) {
           ctx.set_ii(i);
-          ctx.pf()->interpolation(ctx, coeff, tensor_int_point.as_vector(), qdim);
+          ctx.pf()->interpolation(ctx, coeff, tensor_int_point.as_vector(), qdim * data_qdim);
           im_target.set_tensor(int_pt_data, int_pt_id, tensor_int_point);
         }
       }
@@ -811,7 +817,7 @@ namespace getfem {
           size_type i0 = pim->ind_first_point_on_face(f);
           for (size_type i = 0; i < nb_int_pts; ++i, ++int_pt_id) {
             ctx.set_ii(i+i0);
-            ctx.pf()->interpolation(ctx, coeff, tensor_int_point.as_vector(), qdim);
+            ctx.pf()->interpolation(ctx, coeff, tensor_int_point.as_vector(), qdim * data_qdim);
             im_target.set_tensor(int_pt_data, int_pt_id, tensor_int_point);
           }
         }
