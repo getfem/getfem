@@ -2824,6 +2824,7 @@ namespace getfem {
           gmm::add(gmm::scaled(n, g/nn), dg);
         for (size_type i = 0; i < N; ++i, ++it)
           *it = dg[i];
+        it = result.end();
         break;
       case 6:
         base_small_vector dtau_df(s_f);
