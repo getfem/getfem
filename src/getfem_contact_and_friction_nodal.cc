@@ -416,7 +416,9 @@ namespace getfem {
         const mesh &mesh_m = cn_m->mf->linked_mesh();
         base_node slave_node = cn_s->mf->point_of_basic_dof(cn_s->dof);
         base_node master_node = cn_m->mf->point_of_basic_dof(cn_m->dof);
-        base_node un_sel(3), proj_node_sel(3), proj_node_ref_sel(3);
+        GMM_ASSERT1(slave_node.size() == qdim && master_node.size() == qdim,
+                    "Internal error");
+        base_node un_sel(qdim), proj_node_sel(qdim), proj_node_ref_sel(qdim);
         scalar_type is_in_min = 1e5;  //FIXME
         size_type cv_sel = 0;
         short_type fc_sel = 0;
@@ -424,7 +426,7 @@ namespace getfem {
         std::vector<short_type>::iterator fc;
         for (cv = cn_m->cvs.begin(), fc = cn_m->fcs.begin();
              cv != cn_m->cvs.end() && fc != cn_m->fcs.end(); cv++, fc++) {
-          base_node un(3), proj_node(3), proj_node_ref(3);
+          base_node un(qdim), proj_node(qdim), proj_node_ref(qdim);
           scalar_type is_in = projection_on_convex_face
             (mesh_m, *cv, *fc, master_node, slave_node, un, proj_node, proj_node_ref);
           if (is_in < is_in_min) {
@@ -439,7 +441,7 @@ namespace getfem {
         if (is_in_min < 0.05) {  //FIXME
           gap[row] = gmm::vect_sp(slave_node-proj_node_sel, un_sel);
 
-          base_node ut[3];
+          base_node ut[d];
           if (BT1) orthonormal_basis_to_unit_vec(d, un_sel, ut);
 
           CONTACT_B_MATRIX *BN = 0;
