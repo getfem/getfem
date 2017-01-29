@@ -1,4 +1,4 @@
-% Copyright (C) 2006-2016 Mathieu Fabre.
+% Copyright (C) 2006-2017 Mathieu Fabre.
 %
 % This file is a part of GetFEM++
 %

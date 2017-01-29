@@ -1,6 +1,6 @@
 /*===========================================================================
 
- Copyright (C) 2009-2016 Yann Collette
+ Copyright (C) 2009-2017 Yann Collette
 
  This file is a part of GetFEM++
 

@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2016 Yves Renard
+# Copyright (C) 2014-2017 Yves Renard
 #
 # This file is a part of GetFEM++
 #

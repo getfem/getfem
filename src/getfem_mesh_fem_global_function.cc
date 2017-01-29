@@ -1,6 +1,6 @@
 /*===========================================================================
 
- Copyright (C) 2004-2016 Yves Renard
+ Copyright (C) 2004-2017 Yves Renard
  Copyright (C) 2016      Konstantinos Poulios
 
  This file is a part of GetFEM++

@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# Copyright (C) 1998-2015 Yves Renard
+# Copyright (C) 1998-2017 Yves Renard
 #
 # This file is a part of GetFEM++
 #
@@ -56,7 +56,8 @@ sub print_license  {
 
 ;
 
-  } elsif ($NAME =~ /\.m$/) {
+  } elsif ($NAME =~ /\.m$/ || $NAME =~ /\.IM$/ || $NAME =~ /\.mesh$/
+	   || $NAME =~ /\.param$/) {
     for my $i (0 .. $#year1) {
       print RES "% Copyright (C) $year1[$i]$toyear2[$i] $copyauth[$i]\n";
     }
@@ -181,7 +182,7 @@ sub process_file  {
     if (($license == 1 || $license == 2) && ($li =~ /=========/))
       { $li = <FILE>; last; }
     if ($li =~ /^#/ && !($name =~ /\.pl$/)) { last; }
-    if ($li =~ /USA\./ && ($name =~ /\.pl$/ || $name =~ /\.m$/)) { $li = <FILE>; last; }
+    if ($li =~ /USA\./ && ($name =~ /\.pl$/ || $name =~ /\.m$/ || $name =~ /\.mesh$/   || $name =~ /\.IM$/  || $name =~ /\.param$/)) { $li = <FILE>; last; }
 
   }
 
@@ -254,6 +255,7 @@ sub process_file  {
       $enablecpp = "/* -*- c++ -*- (enables emacs c++ mode) */\n";
 
       if (!($license) && $option != 4) {
+	print "No license !!!!!!";
         @year1 = ($year);
         @year2 = (0);
         @toyear2 = ("");
@@ -323,7 +325,8 @@ $allfiles =  `find . -name \"*\"`;
 while ($name) {
   if (($name =~ /\.c$/ || $name =~ /\.cc$/ || $name =~ /\.h$/
        || $name =~ /\.hpp$/ || $name =~ /\.cpp$/ || $name =~ /\.pl$/
-       || $name =~ /\.m$/)
+       || $name =~ /\.m$/ || $name =~ /\.IM$/ || $name =~ /\.mesh$/
+       || $name =~ /\.param$/)
       && !($name =~ /\/superlu\// )
 #      && !($name =~ /\/scilab\// )
       && !($name =~ /\/getfem_arch_config\.h$/)

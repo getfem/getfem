@@ -1,6 +1,6 @@
 /*===========================================================================
 
- Copyright (C) 2011-2016 Andriy Andreykiv.
+ Copyright (C) 2011-2017 Andriy Andreykiv.
 
  This file is a part of GetFEM++
 

@@ -1,4 +1,4 @@
-% Copyright (C) 2011-2016 Cedric POZZOLINI
+% Copyright (C) 2011-2017 Cedric POZZOLINI
 %
 % This file is a part of GetFEM++
 %

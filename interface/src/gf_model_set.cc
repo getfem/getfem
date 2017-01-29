@@ -1,6 +1,6 @@
 /*===========================================================================
 
- Copyright (C) 2009-2016 Yves Renard.
+ Copyright (C) 2009-2017 Yves Renard.
 
  This file is a part of GetFEM++
 
@@ -3303,6 +3303,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
           mim2 = to_meshim_object(argin);
           varname_u1 = in.pop().to_string();
           varname_u2 = in.pop().to_string();
+	  cout << "ok here" << endl;
         }
         std::string multname_n = in.pop().to_string();
         std::string multname_t;

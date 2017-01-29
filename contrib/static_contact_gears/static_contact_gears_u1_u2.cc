@@ -1,6 +1,6 @@
 /*===========================================================================
 
- Copyright (C) 2009-2016 Konstantinos Poulios.
+ Copyright (C) 2009-2017 Konstantinos Poulios.
 
  This file is a part of GetFEM++
 

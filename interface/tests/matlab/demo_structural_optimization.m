@@ -1,4 +1,4 @@
-% Copyright (C) 2009-2016 Alassane SY, Yves Renard.
+% Copyright (C) 2009-2017 Alassane SY, Yves Renard.
 %
 % This file is a part of GetFEM++
 %
