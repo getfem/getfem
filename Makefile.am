@@ -20,7 +20,7 @@ ACLOCAL_AMFLAGS = -I m4
 
 SUBDIRS = m4 cubature @SUPERLU_SRC@ src tests interface contrib bin doc
 
-EXTRA_DIST = GNU_LGPL_V3 GNU_GCC_RUNTIME_EXCEPTION
+EXTRA_DIST = GNU_LGPL_V3 GNU_GPL_V3 GNU_GCC_RUNTIME_EXCEPTION
 
 CLEANFILES = so_locations _configs.sed
 
