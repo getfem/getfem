@@ -1,3 +1,7 @@
+dnl ACX_BLAS([ACTION-IF-FOUND[, ACTION-IF-NOT-FOUND]])
+dnl @author Steven G. Johnson <stevenj@alum.mit.edu>
+dnl @license GPLWithACException
+
 AC_DEFUN([ACX_BLAS], [
 AC_PREREQ(2.50)
 

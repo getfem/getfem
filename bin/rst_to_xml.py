@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- python -*-
 #
-# Copyright (C) 2010-2010 Yves Renard.
+# Copyright (C) 2010-2017 Yves Renard.
 #                                                       
 # This file is a part of GetFEM++                                         
 #                                                                         
