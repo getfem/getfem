@@ -6,7 +6,16 @@
  *
  */
 /*
-  Copyright (c) 1994 by Xerox Corporation.  All rights reserved.
+Copyright (c) 2003, The Regents of the University of California, through
+Lawrence Berkeley National Laboratory (subject to receipt of any required 
+approvals from U.S. Dept. of Energy) 
+
+All rights reserved. 
+
+The source code is distributed under BSD license, see the file License.txt
+*/
+/*
+  Copyright (c) 1997 by Xerox Corporation.  All rights reserved.
  
   THIS MATERIAL IS PROVIDED AS IS, WITH ABSOLUTELY NO WARRANTY
   EXPRESSED OR IMPLIED.  ANY USE IS AT YOUR OWN RISK.

@@ -1,3 +1,18 @@
+/*
+  Copyright: 1992-2007 The University of Tennessee.  All rights reserved.
+  License:
+    LAPACK is a freely-available software package. It is available from
+    netlib via anonymous ftp and the World Wide Web. Thus, it can be
+    included in commercial software packages (and has been). We only ask
+    that proper credit be given to the authors.
+ 
+    Like all software, it is copyrighted. It is not trademarked, but we do
+    ask the following:
+
+    If you modify the source for these routines we ask that you change the
+    name of the routine and comment the changes made to the original.
+*/
+
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>

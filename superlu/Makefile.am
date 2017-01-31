@@ -1,34 +1,13 @@
-# Copyright (c) 2003, The Regents of the University of California, through
-# Lawrence Berkeley National Laboratory (subject to receipt of any required 
-# approvals from U.S. Dept. of Energy) 
+#  Copyright (c) 1997 by Xerox Corporation.  All rights reserved.
 # 
-# All rights reserved. 
+#  THIS MATERIAL IS PROVIDED AS IS, WITH ABSOLUTELY NO WARRANTY
+#  EXPRESSED OR IMPLIED.  ANY USE IS AT YOUR OWN RISK.
 # 
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions are met: 
-# 
-# (1) Redistributions of source code must retain the above copyright notice,
-# this list of conditions and the following disclaimer. 
-# (2) Redistributions in binary form must reproduce the above copyright notice,
-# this list of conditions and the following disclaimer in the documentation
-# and/or other materials provided with the distribution. 
-# (3) Neither the name of Lawrence Berkeley National Laboratory, U.S. Dept. of
-# Energy nor the names of its contributors may be used to endorse or promote
-# products derived from this software without specific prior written permission.
-# 
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
-# IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-# PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
-# CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-# EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-# PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-# LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
-
-
+#  Permission is hereby granted to use or copy this program for any
+#  purpose, provided the above notices are retained on all copies.
+#  Permission to modify the code and to distribute modified code is
+#  granted, provided the above notices are retained, and a notice that
+#  the code was modified is included with the above copyright notice.
 
 
 noinst_HEADERS=\

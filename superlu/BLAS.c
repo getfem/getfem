@@ -3,6 +3,8 @@
 	-lf2c -lm   (in that order)
 
    the f2c-ed file has been slightly modified (removal of lsame_, added r_sign)
+
+   BLAS License: see https://www.openhub.net/licenses/blas
 */
 
 #include "BLAS_f2c.h"
