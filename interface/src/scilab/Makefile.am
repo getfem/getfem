@@ -1,7 +1,9 @@
 ## Scilab Getfem Interface
 ## Copyright (C) 2009 Yann COLLETTE
 ##
-## This program is free software; you can redistribute it and/or modify
+## This scilab getfem interface is a part of GetFEM++
+##
+## GefFEM++ is free software; you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
 ## the Free Software Foundation; either version 3 of the License, or
 ## (at your option) any later version.
