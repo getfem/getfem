@@ -234,7 +234,7 @@
     <literal>option = 'unchanged'</literal> for a constant value on that boundary or
     <literal>option = 'periodicity'</literal> for a peridiodic boundary. For this latter option
     the two vectors per_min, per_max has to be given and represent the limits
-    of the periodic domain (on components where per_max[k] < per_min[k]
+    of the periodic domain (on components where per_max[k] \le per_min[k]
     no operation is done).
     This method is rather dissipative, but stable.
     
