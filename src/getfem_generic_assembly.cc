@@ -395,8 +395,8 @@ namespace getfem {
       t = t_.org_tensor(); tensor_copied = &(t_);
     }
     
-    inline void adjust_sizes(const bgeot::multi_index &sizes)
-    { t.adjust_sizes(sizes); }
+    inline void adjust_sizes(const bgeot::multi_index &ssizes)
+    { t.adjust_sizes(ssizes); }
 
     inline void adjust_sizes()
     { if (t.sizes().size() || t.size() != 1) t.init(); }

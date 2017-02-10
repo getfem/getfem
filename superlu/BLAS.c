@@ -1,10 +1,46 @@
-/* BLAS.f -- translated by f2c (version 20020621).
+/* BLAS.f -- translated by f2c
    You must link the resulting object file with the libraries:
 	-lf2c -lm   (in that order)
 
    the f2c-ed file has been slightly modified (removal of lsame_, added r_sign)
 
-   BLAS License: see https://www.openhub.net/licenses/blas
+   Original fortran source files are distributed along with this package in the sub-directory BLAS
+*/
+
+/*
+
+  The reference BLAS is a freely-available software package. It is available from netlib via anonymous ftp
+  and the World Wide Web. Thus, it can be included in commercial software packages (and has been). We only
+  ask that proper credit be given to the authors.
+
+  Like all software, it is copyrighted. It is not trademarked, but we do ask the following:
+
+  If you modify the source for these routines we ask that you change the name of the routine and comment
+  the changes made to the original.
+
+  We will gladly answer any questions regarding the software. If a modification is done, however, it is the
+  responsibility of the person who modified the routine to provide support.
+
+  see https://www.openhub.net/licenses/blas
+*/
+
+/* Copyright (C) 2004-2006 Julien Pommier
+
+  This file is a part of GetFEM++
+
+  GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+  under  the  terms  of the  GNU  Lesser General Public License as published
+  by  the  Free Software Foundation;  either  version 3  of the License,  or
+  (at your option) any later version along with the GCC Runtime Library
+  Exception either version 3.1 or (at your option) any later version.
+  This program  is  distributed  in  the  hope  that it will be useful,  but
+  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+  or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
+  License and GCC Runtime Library Exception for more details.
+  You  should  have received a copy of the GNU Lesser General Public License
+  along  with  this program;  if not, write to the Free Software Foundation,
+  Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
+
 */
 
 #include "BLAS_f2c.h"
