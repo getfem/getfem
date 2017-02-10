@@ -4,7 +4,7 @@
 #
 #  GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
 #  under  the  terms  of the  GNU  Lesser General Public License as published
-#  by  the  Free Software Foundation;  either version 3 of the License,  or
+#  by  the  Free Software Foundation;  either  version 3  of the License,  or
 #  (at your option) any later version along with the GCC Runtime Library
 #  Exception either version 3.1 or (at your option) any later version.
 #  This program  is  distributed  in  the  hope  that it will be useful,  but
@@ -20,7 +20,7 @@ ACLOCAL_AMFLAGS = -I m4
 
 SUBDIRS = m4 cubature @SUPERLU_SRC@ src tests interface contrib bin doc
 
-EXTRA_DIST = GNU_LGPL_V3 GNU_GPL_V3 GNU_GCC_RUNTIME_EXCEPTION
+EXTRA_DIST = GNU_LGPL_V3 GNU_GPL_V3 GNU_GCC_RUNTIME_EXCEPTION GNU_FDL_V3
 
 CLEANFILES = so_locations _configs.sed
 
