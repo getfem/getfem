@@ -11,7 +11,7 @@ Linear algebra procedures
 
 The linear algebra library used by |gf| is |gmm| which is now a separate library.
 Please see the `GMM++ user documentation
-<http://home.gna.org/getfem/gmm_intro.htm>`_.
+<http://getfem.org/gmm.html>`_.
 
 Note that |gf| includes (since release 1.7) its own version of |sLU| 3.0 (see
 `SuperLU web site <http://crd.lbl.gov/~xiaoye/SuperLU>`_) hence a direct sparse

@@ -28,5 +28,4 @@ Not so many changes, but some of them are incompatible with |gf| 2.0:
 
    * Levelset support has been improved.
 
-The full list of changes is available in the `ChangeLog
-<http://svn.gna.org/viewcvs/getfem/trunk/getfem%2B%2B/ChangeLog?rev=2640&view=auto>`_.
+The full list of changes is available in the `ChangeLog`.

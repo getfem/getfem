@@ -58,7 +58,7 @@ The latest stable release of |gf| is getfem++-|version|\.tar.gz
 
 * download package:
 
-   wget http://download.gna.org/getfem/stable/getfem++-|version|\.tar.gz
+   wget http://getfem.org/stable/getfem++-|version|\.tar.gz
 
 * unpack:
 

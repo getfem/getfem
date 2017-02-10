@@ -46,7 +46,7 @@ interface, and can be found here: :ref:`tripod-source`.
 If you want to see what is inside the tripod, download the following animation (mpeg-4 
 movie, 6MB, 45secs) `tripod_slice.avi`_
 
-.. _tripod_slice.avi: http://download.gna.org/getfem/misc/tripod_slice.avi
+.. _tripod_slice.avi: http://getfem.org/misc/tripod_slice.avi
 
 
 Stokes equation
@@ -99,9 +99,9 @@ eigenmode of a vibrating structure You can look at a small movie showing the 24 
 modes of the structure: (mpeg1, 4MB) `oggetto_modes.mpeg`_ or (mpeg4, 8MB) 
 `oggetto_modes.avi`_.
 
-.. _oggetto_modes.mpeg: http://download.gna.org/getfem/misc/oggetto_modes.mpeg
+.. _oggetto_modes.mpeg: http://getfem.org/misc/oggetto_modes.mpeg
 
-.. _oggetto_modes.avi: http://download.gna.org/getfem/misc/oggetto_modes.avi
+.. _oggetto_modes.avi: http://getfem.org/misc/oggetto_modes.avi
   
 Contact with friction problem (Houari Khenous)
 ----------------------------------------------
@@ -119,7 +119,7 @@ An animation of a (soft) elastic disk is also available (mpeg-4 movie, 4MB, 12se
 `disk_in_contact.avi`_ (mpeg1, 1MB) (A newmark scheme adapted for the unilateral contact 
 condition).
 
-.. _disk_in_contact.avi: http://download.gna.org/getfem/misc/disk_in_contact.avi
+.. _disk_in_contact.avi: http://getfem.org/misc/disk_in_contact.avi
 
  
 Xfem cracks in a beam
@@ -165,7 +165,7 @@ made with OpenDX.
  
 A short animation is also available: (mpeg-4 movie, 3MB) `torsion.avi`_. 
 
-.. _torsion.avi: http://download.gna.org/getfem/misc/torsion.avi
+.. _torsion.avi: http://getfem.org/misc/torsion.avi
 
 Shape and topological optimization
 ----------------------------------

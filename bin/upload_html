@@ -65,6 +65,7 @@ if [ "$do_mrproper" != 0 ]; then
   mkdir -p /tmp/toto00
   cd /tmp/toto00 || die "arg"
   rsync --delete  -rlptDv --rsh="ssh" "." "$me@download.gna.org:/upload/getfem/$where/"
+  # rsync --delete  -rlptDv --rsh="ssh" "." "getfe806916@ftp.getfem.org:/$where/"
   rm -rf /tmp/toto00
 fi
 
@@ -72,4 +73,5 @@ if [ "$f" != "" ]; then
   echo "uploading directory $f to download.gna.org:/upload/getfem/$where/"
   chmod -R a+rw $f
   rsync $options  -rlptDv --rsh="ssh" "$f" "$me@download.gna.org:/upload/getfem/$where/"
+  # rsync $options -rlptDv --rsh="ssh" "." "getfe806916@ftp.getfem.org:/$where/"
 fi

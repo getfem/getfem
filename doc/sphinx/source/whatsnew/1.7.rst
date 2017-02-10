@@ -52,9 +52,8 @@ provides an interface for Matlab and `Python
 <http://www.python.org>`_ (with the `Numarray
 <http://www.stsci.edu/resources/software_hardware/numarray>`_
 package). Note that, while it is `documented
-<http://home.gna.org/getfem/getfem_python_reference.html>`_ and
+<http://getfem.org/python/index.html>`_ and
 working, the python interface is still considered a *work in
 progress*. You have to enable it explicitly with ``./configure
---enable-python``. An example of use can be found `here
-<http://home.gna.org/getfem/demo_tripod.py.html>`_. An interface to 
+--enable-python``. An interface to 
 the Gmm++ sparse matrices and solvers is also provided.

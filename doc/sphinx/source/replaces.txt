@@ -80,9 +80,9 @@
 .. |mlab_int| replace:: gfInteg
 .. |mlab_mbr| replace:: gfMdBrick
 .. |mlab_ms| replace:: gfMdState
-.. _specific guides: http://download.gna.org/getfem/html/homepage/index.html
-.. _user documentation: http://download.gna.org/getfem/html/homepage/userdoc/index.html
-.. _vocabulary: http://download.gna.org/getfem/doc/getfem_reference/index.html
+.. _specific guides: http://getfem.org/index.html
+.. _user documentation: http://getfem.org/userdoc/index.html
+.. _vocabulary: http://getfem.org/getfem_reference/index.html
 .. _VTK: http://www.vtk.org
 .. _MayaVi: http://mayavi.sourceforge.net
 .. _OpenDX: http://www.opendx.org
