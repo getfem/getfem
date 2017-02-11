@@ -70,7 +70,8 @@ namespace gmm {
     c = std::max(a, b); a = std::min(a, b); b = c;
     while (d > tol) {
       c = b - (b - a) * (Gb / (Gb - Ga)); /* regula falsi.     */
-      if (c > b) c = b; if (c < a) c = a; 
+      if (c > b) c = b;
+      if (c < a) c = a; 
       Gc = G(c);
       if (Gc*Gb > 0) { b = c; Gb = Gc; } else { a = c; Ga = Gc; }
       c = (b + a) / 2.0 ; Gc = G(c); /* Dichotomie.                       */

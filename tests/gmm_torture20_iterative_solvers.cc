@@ -163,14 +163,15 @@ bool test_procedure(const MAT1 &m1_, const VECT1 &v1_, const VECT2 &v2_) {
     gmm::set_warning_level(3);
   }
   
-  R det = gmm::abs(gmm::lu_det(m1)), cond = gmm::condest(m1);
-  
+  R det = gmm::abs(gmm::lu_det(m1));
+  if (det < sqrt(prec)*R(10)) return false;
+  R cond = gmm::condest(m1);
   if (print_debug)
     cout << "condition number = " << cond << " det = " << det << endl;
   if (det == R(0) && cond < R(1) / prec && cond != R(0))
     GMM_ASSERT1(false, "Inconsistent condition number: " << cond);
 
-  if (sqrt(prec) * cond >= R(1)/R(100) || det < sqrt(prec)*R(10)) return false;
+  if (sqrt(prec) * cond >= R(1)/R(100)) return false;
     
   ++effexpe; cout << "."; cout.flush();
   
@@ -229,7 +230,7 @@ bool test_procedure(const MAT1 &m1_, const VECT1 &v1_, const VECT2 &v2_) {
   if (print_debug) cout << "\nGmres with ilutp preconditionner\n";
   do_test(GMRES(), m1, v1, v2, P5b, cond);
   
-  if (sizeof(R) > 4 || m < 20) {
+  if (sizeof(R) > 5 || m < 15) {
 
     if (print_debug) cout << "\nQmr with no preconditionner\n";
     do_test(QMR(), m1, v1, v2, P1, cond);

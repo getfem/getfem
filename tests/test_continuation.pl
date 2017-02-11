@@ -1,4 +1,4 @@
-# Copyright (C) 2015-2017 Yves Renard
+# Copyright (C) 2015-2017 Tomas Ligursky
 #
 # This file is a part of GetFEM++
 #
@@ -50,15 +50,23 @@ NOISY = 1;
 close(TMPF);
 
 $er = 0;
-open F, "./test_continuation $tmp 2>&1 |" or die "could not open $tmp\n";
-while (<F>) {
-  #print $_; #uncomment this line in case of problem..
-  if ($_ =~ /smooth bifurcation point/) {
-    ($a, $b) = split(',', $_);
-    if (abs($b - 2) > 0) { print "\nWrong number of bifurcation points\n"; $er = 1; }
+$ok=0;
+$nbtest=0;
+while ($ok==0) {
+  $nbtest=$nbtest+1;
+  open F, "./test_continuation $tmp 2>&1 |" or die "could not open $tmp\n";
+  while (<F>) {
+    #print $_; #uncomment this line in case of problem..
+    if ($_ =~ /smooth bifurcation point/) {
+      ($a, $b) = split(',', $_);
+      if (abs($b - 2) == 0) { $ok = 1; }
+    }
   }
+  close(F);
+  if ($nbtest == 100)
+  { print "\nWrong number of bifurcation points\n"; $er = 1;  $ok = 1; }
 }
-close(F); if ($?) { `rm -f $tmp`; exit(1); }
+if ($?) { `rm -f $tmp`; exit(1); }
 if ($er == 1) { `rm -f $tmp`; exit(1); }
 `rm -f $tmp`;
 

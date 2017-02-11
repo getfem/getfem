@@ -60,6 +60,10 @@ namespace gmm {
     typedef typename linalg_traits<MAT>::value_type T;
     typedef typename number_traits<T>::magnitude_type R;
 
+    // Added because of errors in complex with zero det
+    if (sizeof(T) != sizeof(R) && gmm::abs(gmm::lu_det(M)) == R(0))
+      return  gmm::default_max(R());
+      
     size_type m = mat_nrows(M), n = mat_ncols(M);
     emax = emin = R(0);
     std::vector<R> eig(m+n);

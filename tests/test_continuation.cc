@@ -203,7 +203,7 @@ bool state_problem::cont(plain_vector &U) {
       }
       sing_out.push_back(s1);
     }
-    cout << "End of Step nº " << step + 1 << " / " << nb_step << endl;
+    cout << "End of Step n " << step + 1 << " / " << nb_step << endl;
   }
 
   if (sing_out.size() > 0) {
@@ -228,6 +228,8 @@ bool state_problem::cont(plain_vector &U) {
 
 int main(int argc, char *argv[]) {
 
+  srand(7689);
+  
   GMM_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
 

@@ -138,11 +138,13 @@ int main(int argc, char **argv) {
     getfem::pmesher_signed_distance dist = D0;
     switch (opt) {
     case 0: dist = D0; break; /* disk */
-    case 1: {
-      getfem::scalar_type z = sqrt(4 - 1.5*1.5);
-      fixed.push_back(base_node(0,z));
-      fixed.push_back(base_node(0,-z));
-    }
+    case 1:
+      {
+	getfem::scalar_type z = sqrt(4 - 1.5*1.5);
+	fixed.push_back(base_node(0,z));
+	fixed.push_back(base_node(0,-z));
+      }
+      dist = D2; break;  /* union of 2 disks */
     case 2: dist = D2; break; /* union of 2 disks */
     case 3: dist = D3; break; /* cube */
     case 4: dist = D4; break; /* cylinder */

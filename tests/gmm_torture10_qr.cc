@@ -203,7 +203,7 @@ bool test_procedure(const MAT1 &m1_, const MAT2 &m2_) {
   std::complex<R> det1(gmm::lu_det(ca)), det2(1);
   implicit_qr_algorithm(ca, eigc, cq);
   for (size_type i = 0; i < m; ++i) det2 *= eigc[i];
-  if (gmm::abs(det1 - det2) > (gmm::abs(det1)+gmm::abs(det2))/R(100))
+  if (gmm::abs(det1 - det2) > (gmm::abs(det1)+gmm::abs(det2))/R(50))
     GMM_ASSERT1(false, "Error in QR or det. det lu: " << det1
 	      << " det qr: " << det2);
   if (print_debug)

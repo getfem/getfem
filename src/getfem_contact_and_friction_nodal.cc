@@ -441,8 +441,8 @@ namespace getfem {
         if (is_in_min < 0.05) {  //FIXME
           gap[row] = gmm::vect_sp(slave_node-proj_node_sel, un_sel);
 
-          base_node ut[d];
-          if (BT1) orthonormal_basis_to_unit_vec(d, un_sel, ut);
+	  std::vector<base_node> ut(d);
+          if (BT1) orthonormal_basis_to_unit_vec(d, un_sel, &(ut[0]));
 
           CONTACT_B_MATRIX *BN = 0;
           CONTACT_B_MATRIX *BT = 0;
