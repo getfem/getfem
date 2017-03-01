@@ -102,42 +102,6 @@ struct laplacian_problem {
 			    mf_coef(mesh) {}
 };
 
-template<typename MATRM, typename VECT1, typename VECT2>
-void assembling_Dirichlet_condition
-(MATRM &RM, VECT1 &B, const getfem::mesh_fem &mf, size_type boundary,
- const VECT2 &F) {
-  // Marche uniquement pour des ddl de lagrange.
-  size_type Q=mf.get_qdim();
-  GMM_ASSERT1(!(mf.is_reduced()), "This function is not adapted to "
-	      "reduced finite element methods"); 
-  dal::bit_vector nndof = mf.basic_dof_on_region(boundary);
-  getfem::pfem pf1;
-  for (dal::bv_visitor cv(mf.convex_index()); !cv.finished(); ++cv) {
-    pf1 = mf.fem_of_element(cv);
-    getfem::pdof_description ldof = getfem::lagrange_dof(pf1->dim());
-    size_type nbd = pf1->nb_dof(cv);
-    for (size_type i = 0; i < nbd; i++) {
-      size_type dof1 = mf.ind_basic_dof_of_element(cv)[i*Q];
-      if (nndof.is_in(dof1) && pf1->dof_types()[i] == ldof) {
-	// cout << "dof : " << i << endl;
-	for (size_type j = 0; j < nbd; j++) {
-	  size_type dof2 = mf.ind_basic_dof_of_element(cv)[j*Q];
-	  for (size_type k = 0; k < Q; ++k)
-	    for (size_type l = 0; l < Q; ++l) {
-	      if (!(nndof.is_in(dof2)) &&
-		  getfem::dof_compatibility(pf1->dof_types()[j],
-				    getfem::lagrange_dof(pf1->dim())))
-		B[dof2+k] -= RM(dof2+k, dof1+l) * F[dof1+l];
-	      RM(dof2+k, dof1+l) = RM(dof1+l, dof2+k) = 0;
-	    }
-	}
-	for (size_type k = 0; k < Q; ++k)
-	  { RM(dof1+k, dof1+k) = 1; B[dof1+k] = F[dof1+k]; }
-      }
-    }
-  }
-}
-
 /* Read parameters from the .param file, build the mesh, set finite element
  * and integration methods and selects the boundaries.
  */
@@ -257,7 +221,8 @@ void laplacian_problem::assembly(void) {
   if (!gen_dirichlet) {    
     std::vector<scalar_type> D(nb_dof);
     getfem::interpolation_function(mf_u, D, sol_u);
-    assembling_Dirichlet_condition(SM, B, mf_u, DIRICHLET_BOUNDARY_NUM, D);
+    getfem::assembling_Dirichlet_condition(SM, B, mf_u,
+					   DIRICHLET_BOUNDARY_NUM, D);
   } else {
     gmm::resize(F, nb_dof_rhs);
     getfem::interpolation_function(mf_rhs, F, sol_u);
