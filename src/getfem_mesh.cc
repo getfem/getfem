@@ -90,7 +90,7 @@ namespace getfem {
                 giv.invert(pt, barycentre);
 
         
-                if (gmm::abs(pgt->convex_ref()->is_in_face(f, barycentre)) < 0.1)
+                if (gmm::abs(pgt->convex_ref()->is_in_face(f,barycentre)) < 0.001)
                   r.add(icv[jc], fsub);
               }
             }
@@ -115,7 +115,7 @@ namespace getfem {
               giv.invert(pt, barycentre);
         
               for (short_type f = 0; f < pgt->structure()->nb_faces(); ++f)
-                if (gmm::abs(pgt->convex_ref()->is_in_face(f, barycentre)) < 0.1)
+                if (gmm::abs(pgt->convex_ref()->is_in_face(f,barycentre)) < 0.001)
                   { r.add(ic, f); break; }
           }
         }

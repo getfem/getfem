@@ -51,7 +51,7 @@ else
 end
 
 % Detect the border of the mesh
-border = gf_mesh_get(m,'outer faces');
+border = gf_mesh_get(m, 'outer faces');
 % Mark it as boundary GAMMAD=1
 GAMMAD=1;
 gf_mesh_set(m, 'region', GAMMAD, border);
