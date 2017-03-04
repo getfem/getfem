@@ -292,7 +292,10 @@ bool test_procedure(const MAT1 &m1_, const VECT1 &v1_, const VECT2 &v2_) {
     print_stat(P5b, "ilutp precond");
     print_stat(P6, "ildlt precond");
     print_stat(P7, "ildltt precond");
-    if (ratio_max > 0.2) GMM_ASSERT1(false, "something wrong ..");
+    if (sizeof(R) > 4 && ratio_max > 0.16)
+      GMM_ASSERT1(false, "something wrong ..");
+    if (sizeof(R) <= 4 && ratio_max > 0.3)
+      GMM_ASSERT1(false, "something wrong ..");
     return true;
   }
  
