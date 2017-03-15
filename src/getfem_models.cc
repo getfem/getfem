@@ -1835,14 +1835,33 @@ namespace getfem {
       GMM_ASSERT1(!me_is_multithreaded_now(),
                   "List accumulation should not run in parallel");
 
-      for(size_type thread = 1; thread < num_threads(); thread++)
+      using namespace std;
+      auto to_add = vector<CONTAINER_LIST*>{};
+      to_add.push_back(&original_list);
+      for (size_type thread = 1; thread < num_threads(); ++thread)
+        to_add.push_back(&distributed_list(thread));
+
+      //List accumulation in parallel.
+      //Adding, for instance, elements 1 to 0, 2 to 3, 5 to 4 and 7 to 6
+      //on separate 4 threads in case of parallelization of the assembly
+      //on 8 threads.
+      while (to_add.size() > 1)
       {
-        auto it_original=original_list.begin();
-        auto it_distributed = distributed_list(thread).begin();
-        for(; it_original != original_list.end(); ++it_original, ++it_distributed)
-                gmm::add(*it_distributed, *it_original);
+        #pragma omp parallel default(shared)
+        {
+          auto i = this_thread() * 2;
+          if (i + 1 < to_add.size()){
+            auto &target = *to_add[i];
+            auto &source = *to_add[i + 1];
+            for (size_type j = 0; j < source.size(); ++j) gmm::add(source[j], target[j]);
+          }
+        }
+        //erase every second item , as it was already added
+        for (auto it = begin(to_add); it < end(to_add);){
+          if (next(it) < end(to_add)) it = to_add.erase(next(it));
         }
       }
+    }
   };
 
   void model::brick_call(size_type ib, build_version version,
