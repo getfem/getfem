@@ -303,7 +303,7 @@ public:
       auto deformed_nodes_y = deformed_master_nodes(cv);
       gic.init(deformed_nodes_y, target_mesh.trans_of_convex(cv));
       auto converged = true;
-      auto is_in = gic.invert(pt_x, P_ref, converged, 1E-4);
+      auto is_in = gic.invert(pt_x, P_ref, converged);
       if (is_in && converged) {
         face_num = static_cast<short_type>(-1);
         transformation_success = true;
