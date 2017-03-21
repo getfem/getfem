@@ -153,12 +153,6 @@ class  interpolate_transformation_on_deformed_domains
         }
       }
 
-      // Safety coefficient of 1.3 (for nonlinear transformations)
-      // Expanding the box by 15% of the largest edge in every direction
-      auto h = bmax[0] - bmin[0];
-      for (size_type k = 1; k < N; ++k) h = std::max(h, bmax[k] - bmin[k]);
-      for (size_type k = 0; k < N; ++k) {bmin[k] -= h * 0.15; bmax[k] += h * 0.15;}
-
       // Store the bounding box and additional information.
       element_boxes.add_box(bmin, bmax, box_to_convex.size());
       box_to_convex.push_back(cv);
