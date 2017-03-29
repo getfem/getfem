@@ -34,7 +34,7 @@ somewhat standard.
 Requirements
 ^^^^^^^^^^^^
 
-It requires the python developpement files (python.h etc.) to be available
+It requires the python development files (python.h etc.) to be available
 (package `python-all-dev` in debian distribution), and also the numpy and scipy
 packages to be installed (package `python-numpy` and `python-scipy` in debian distribution).
 In case of troubles with a non-GNU compiler, gcc/g++ (>= 4.8) should be a
@@ -98,7 +98,7 @@ necessary link flags and libs to the configure script, for example with::
 
   ./configure --enable-python=yes BLAS_LIBS="-L/usr/lib/sse2/atlas -lblas"
 
-More specific instruccions can be found in the README\* files of the
+More specific instructions can be found in the README\* files of the
 distribution.
 
 .. warning::

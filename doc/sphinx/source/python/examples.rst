@@ -87,12 +87,12 @@ The array ``border`` has two rows, on the first row is a convex number, on the
 second row is a face number (which is local to the convex, there is no global 
 numbering of faces). Then this set of faces is assigned to the region number 42.
 
-At this point, we just have to desribe the model and run the solver to get the 
+At this point, we just have to describe the model and run the solver to get the 
 solution! The ":envvar:`model`" is created with the |py_md| constructor. A model 
 is basically an object which build a global linear system (tangent matrix for 
 non-linear problems) and its associated right hand side. Typical modifications are 
 insertion of the stiffness matrix for the problem considered (linear elasticity, 
-laplacian, etc), handling of a set of contraints, Dirichlet condition, addition of 
+laplacian, etc), handling of a set of constraints, Dirichlet condition, addition of 
 a source term to the right hand side etc. The global tangent matrix and its right 
 hand side are stored in the ":envvar:`model`" structure.
 

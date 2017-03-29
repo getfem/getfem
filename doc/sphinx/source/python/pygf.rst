@@ -28,7 +28,7 @@ or::
 
 If the getfem.py (and the internal \_getfem.so) module is not installed in a
 standard location for python, you may have to set the ``PYTHONPATH``
-environnement variable to its location. For example with::
+environment variable to its location. For example with::
 
   import sys
   sys.path.append('.../getfem/getfem++/interface/src/python/')
@@ -43,7 +43,7 @@ Memory Management
 -----------------
 
 A nice advantage over the Matlab interface is that you do not have to
-explicitely delete objects that are not used any more, this is done
+explicitly delete objects that are not used any more, this is done
 automagically. You can however inspect the content of the getfem workspace
 with the function ``getfem.memstats()``.
 
