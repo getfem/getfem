@@ -31,10 +31,11 @@ if [ "$srcdir" == "" ]; then
   srcdir="."
 fi
 
-me=$((cd $srcdir && svn info) | grep "svn+ssh" | sed "1,1d" | awk -F"//" '{print $2}' | awk -F"@" '{print $1}')
-echo "gna login : $me"
+me=$((cd $srcdir && git ls-remote) 2>&1| grep "git.sv.gnu.org" | awk -F"//" '{print $2}' | awk -F"@" '{print $1}')
+echo "Savannah login : $me"
 if [ "$me" == "" ]; then
-  die "Cannot determine gna login in upload_documentation"
+  me="renard"
+#  die "Cannot determine Savannah login in upload_documentation"
 fi
 
 while test "$#" -gt 0; do
@@ -55,7 +56,6 @@ while test "$#" -gt 0; do
   shift
 done
 
-
 options=""
 if [ "$do_delete" != 0 ]; then
   options="$options --delete"
@@ -64,11 +64,11 @@ fi
 if [ "$do_mrproper" != 0 ]; then
   mkdir -p /tmp/toto00
   cd /tmp/toto00 || die "arg"
-  rsync --delete  -rlptDv --rsh="ssh" "." "$me@download.gna.org:/upload/getfem/doc/"
+  rsync --delete  -rlptDv --rsh="ssh" "." "$me@download.savannah.nongnu.org:/releases/getfem/doc/"
 fi
 
 if [ "$f" != "" ]; then
-  echo "uploading directory $f to download.gna.org:/upload/getfem/doc/"
+  echo "uploading directory $f to download.savannah.nongnu.org:/releases/getfem/doc/"
   chmod -R a+rw $f
-  rsync $options  -rlptDv --rsh="ssh" "$f" "$me@download.gna.org:/upload/getfem/doc/"
+  rsync $options  -rlptDv --rsh="ssh" "$f" "$me@download.savannah.nongnu.org:/releases/getfem/doc/"
 fi
