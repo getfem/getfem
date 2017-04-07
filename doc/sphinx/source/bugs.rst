@@ -4,8 +4,8 @@
 Reporting Bugs in GetFEM++
 **************************
 
-Bug reports should be submitted via the GNA Bug Tracker (in
-https://gna.org/projects/getfem).  The bug tracker offers a Web form
+Bug reports should be submitted via the Savannah Bug Tracker (in
+https://savannah.nongnu.org/projects/getfem).  The bug tracker offers a Web form
 which allows pertinent information to be entered and submitted to the
 developers.
 
@@ -18,14 +18,14 @@ welcome to provide it if you can!). To do this, search the bug database
 using the search box on the top of the page.
 
 If the problem you're reporting is not already in the bug tracker, go
-back to the GNA Bug Tracker. If you don't already have a tracker
+back to the Savannah Bug Tracker. If you don't already have a tracker
 account, select the "New User" link in the sidebar and undergo the
 registration procedure. Otherwise, if you're not logged in, select
 "Login" and enter your credentials. It is not possible to submit a bug
 report anonymously.
 
 Being now logged in, you can submit a bug.  Go to
-https://gna.org/projects/getfem and select the "Submit a new item" link 
+https://savannah.nongnu.org/projects/getfem and select the "Submit a new item" link 
 (in the "Bug Tracker" table) to open the bug reporting form.
 
 The submission form has a number of fields.  For the "Summary" field, 

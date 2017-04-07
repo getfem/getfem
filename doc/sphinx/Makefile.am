@@ -46,7 +46,7 @@ help:
 	@echo "  latex     to make LaTeX files, you can set PAPER=a4 or PAPER=letter"
 	@echo "  pdf       to make pdfLaTeX files, you can set PAPER=a4 or PAPER=letter"
 	@echo "  linkcheck to check all external links for integrity"
-	@echo "  upload    to make HTML and LATEX docs and upload it to gna.org"
+	@echo "  upload    to make HTML and LATEX docs and upload it to Savannah.org"
 
 checkout:
 	@if [ ! -d tools ]; then \
