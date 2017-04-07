@@ -80,10 +80,8 @@ Your role stops here, since you are not allowed to modify the master branch of G
 Ask for an admin to merge your modifications to the master branch of |gf|
 -------------------------------------------------------------------------
 
-Once you validated your modifications with sufficient tests, you can ask an admin of |gf| to merge your modifications. For this you have to send an e-mail to ...
-
-With just the message : please merge branch devel-me
-
+Once you validated your modifications with sufficient tests, you can ask an admin of |gf| to merge your modifications. For this you have to send an e-mail to *getfem-commits@Savannah.org* with the message : "please merge branch devel-me"
+and eventually some short description of the modifications. 
 
 
 Merge modifications done by other contributors
@@ -103,6 +101,6 @@ So useful git commands
 
   git status  : status of your repository / branch
 
-  git log --follow "filepath"   : Show all the commits modifying the specified file (and follow the possible change of name of the file).
+  git log --follow "filepath"   : Show all the commits modifying the specified file (and follow the eventual change of name of the file).
 
   gitk --follow filename : same as previous but with a graphical interface
