@@ -37,8 +37,8 @@ fi
 me=$((cd $srcdir && git ls-remote) 2>&1| grep "git.sv.gnu.org" | awk -F"//" '{print $2}' | awk -F"@" '{print $1}')
 echo "Savannah login : $me"
 if [ "$me" == "" ]; then
-  me="renard"
-#  die "Cannot determine Savannah login in upload_version"
+#  me="renard"
+  die "Cannot determine Savannah login in upload_version"
 fi
 
 while test "$#" -gt 0; do
