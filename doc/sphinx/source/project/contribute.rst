@@ -16,8 +16,10 @@ How to contribute / Git repository on Savannah
 .. _sawebg: https://savannah.nongnu.org/projects/getfem
 
 .. |linktask| replace:: https://savannah.nongnu.org/task/?group=getfem
-.. _linktask: https://savannah.nongnu.org/task/?group=getfem
-
+			.. _linktask: https://savannah.nongnu.org/task/?group=getfem
+			
+.. |sawebgsrc| replace:: Getfem sources on Savannah
+.. _sawebgsrc: http://git.savannah.nongnu.org/gitweb/?p=getfem.git;a=tree
 
 |gf| is an  open source finite element library based on a collaborative development. If you intend to make some contributions, you can ask for membership of the project there. Contributions of all kinds are welcome: documentation, bug reports, constructive comments, changes suggestions, bug fix, new models, etc ...
 
@@ -27,8 +29,7 @@ See |linktask|_ for a list of task and discussions about |gf| development.
 
 **IMPORTANT** : a contributor implicitly accepts that his/her contribution will be distributed under the LGPL licence of |gf|.
 
-The main repository of |gf| is on Savannah, the software forge of the Free Software Foundation (see |sawebg|_). The page of the project on Savannah is |sawebg|_
-
+The main repository of |gf| is on Savannah, the software forge of the Free Software Foundation (see |saweb|_). The page of the project on Savannah is |sawebg|_. See also |sawebgsrc|_.
 
 How to get the sources
 ----------------------
