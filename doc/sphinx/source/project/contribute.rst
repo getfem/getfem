@@ -15,8 +15,8 @@ How to contribute / Git repository on Savannah
 .. |sawebg| replace:: Getfem on Savannah
 .. _sawebg: https://savannah.nongnu.org/projects/getfem
 
-.. |linktask| replace:: https://savannah.nongnu.org/task/?group=getfem
-			.. _linktask: https://savannah.nongnu.org/task/?group=getfem
+.. |linktask| replace:: here
+.. _linktask: https://savannah.nongnu.org/task/?group=getfem
 			
 .. |sawebgsrc| replace:: Getfem sources on Savannah
 .. _sawebgsrc: http://git.savannah.nongnu.org/gitweb/?p=getfem.git;a=tree

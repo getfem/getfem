@@ -650,6 +650,7 @@ namespace getfem {
     void push_mf(const mesh_fem& mf_) { mftab.push_back(&mf_); }
     /// Add a new mesh_im
     void push_mi(const mesh_im& im_) { imtab.push_back(&im_); }
+    void push_im(const mesh_im& im_) { imtab.push_back(&im_); }
     /// Add a new non-linear term
     void push_nonlinear_term(pnonlinear_elem_term net) {
       innonlin.push_back(net);

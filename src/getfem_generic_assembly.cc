@@ -6374,11 +6374,11 @@ namespace getfem {
         auto &ct = mf.ind_scalar_basic_dof_of_element(cv_1);
         size_type qmult = mf.get_qdim();
         if (qmult > 1) qmult /= mf.fem_of_element(cv_1)->target_dim();
-          size_type ifirst = I.first();
-          auto ite = elem.begin();
-          for (auto itc = ct.begin(); itc != ct.end(); ++itc)
-            for (size_type q = 0; q < qmult; ++q)
-              V[ifirst+(*itc)+q] += *ite++;
+	size_type ifirst = I.first();
+	auto ite = elem.begin();
+	for (auto itc = ct.begin(); itc != ct.end(); ++itc)
+	  for (size_type q = 0; q < qmult; ++q)
+	    V[ifirst+(*itc)+q] += *ite++;
         GMM_ASSERT1(ite == elem.end(), "Internal error");
       }
       return 0;
