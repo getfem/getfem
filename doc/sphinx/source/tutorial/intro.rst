@@ -21,7 +21,7 @@ The main presented functionalities are the following
 
 This tutorial does not of course takes the place of the various documentations. The user documentation (that of the C++ library) is the reference one concerning the description of implemented methods. Interfaces documentations describe the use of the different functionalities from interfaces but do not repeat the description of methods. 'Developpers's guide' documentation describes more internal concerning the organization of the library.
 
-| Gf | is a free collaborative project hosted by the http://gna.org site (see http://gna.org/projects/getfem). New contributors are welcome to all aspects of the project.
+| Gf | is a free collaborative project hosted by the `Savannah <http://savannah.gnu.org>`_ site (see https://savannah.nongnu.org/projects/getfem). New contributors are welcome to all aspects of the project.
 
 
 

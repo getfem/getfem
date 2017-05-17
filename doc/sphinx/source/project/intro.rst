@@ -9,15 +9,15 @@
 Introduction
 ============
 
-.. |linktask| replace:: https://gna.org/task/?group=getfem
-.. _linktask: https://gna.org/task/?group=getfem
+.. |linktask| replace:: https://savannah.nongnu.org/task/?group=getfem
+.. _linktask: https://savannah.nongnu.org/task/?group=getfem
 
 
 The aim of this document is to report details of the internal of |gf|
 useful for developers that have no place in the user documentation.
 It is also to outline the main prospects for the future development
 of |gf|. A list of modifications to be done and main tasks is updated
-on the Gna! site |linktask|_.
+on Savannah |linktask|_.
 
 
 The |gf| project focuses on the development of an open source generic

@@ -70,17 +70,13 @@ The latest stable release of |gf| is getfem++-|version|\.tar.gz
 
 The latest unstable releases is:
 
-* checkout over SVN protocol (TCP 3690)::
+* checkout over GIT protocol::
 
-   svn co svn://svn.gna.org/svn/getfem/trunk getfem
-
-* or checkout over HTTP protocol (TCP 80)::
-
-   svn co http://svn.gna.org/svn/getfem/trunk getfem
+   git clone https://git.savannah.nongnu.org/git/getfem.git
 
 * go to the root directory of getfem::
 
-   cd getfem/getfem++
+   cd getfem
  
 * and run ``autogen.sh`` script::
 

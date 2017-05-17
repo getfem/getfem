@@ -10,7 +10,7 @@ In the online version of these documents, you can submit comments and
 suggest changes directly on the documentation pages.
 
 Development of the documentation and its toolchain takes place on the
-getfem-users@gna.org mailing list.  We're always looking for volunteers
+getfem-users@nongnu.org mailing list (see `getfem mailing lists <https://savannah.nongnu.org/mail/?group=getfem>`_ .  We're always looking for volunteers
 wanting to help with the docs, so feel free to send a mail there!
 
 Many thanks go to:
