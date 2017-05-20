@@ -38,6 +38,8 @@
 #ifndef GMM_STD_H__
 #define GMM_STD_H__
 
+#include <getfem/getfem_arch_config.h>
+
 #ifndef __USE_STD_IOSTREAM
 # define __USE_STD_IOSTREAM
 #endif
