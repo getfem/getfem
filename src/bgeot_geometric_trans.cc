@@ -461,17 +461,18 @@ namespace bgeot {
     return P;
   }
 
-  void geometric_trans::fill_standard_vertices(void) {
+  void geometric_trans::fill_standard_vertices() {
     vertices_.resize(0);
     for (size_type ip = 0; ip < nb_points(); ++ip) {
       bool vertex = true;
       for (size_type i = 0; i < cvr->points()[ip].size(); ++i)
         if (gmm::abs(cvr->points()[ip][i]) > 1e-10
-            && gmm::abs(cvr->points()[ip][i]-1.0) > 1e-10)
+            && gmm::abs(cvr->points()[ip][i]-1.0) > 1e-10
+	    && gmm::abs(cvr->points()[ip][i]+1.0) > 1e-10)
           { vertex = false; break; }
       if (vertex) vertices_.push_back(ip);
     }
-    assert(vertices_.size() >= dim());
+    assert(vertices_.size() > dim());
   }
 
   /* ******************************************************************** */
@@ -539,6 +540,7 @@ namespace bgeot {
 
   typedef igeometric_trans<base_poly> poly_geometric_trans;
   typedef igeometric_trans<polynomial_composite> comppoly_geometric_trans;
+  typedef igeometric_trans<base_rational_fraction> fraction_geometric_trans;
 
   /* ******************************************************************** */
   /* transformation on simplex.                                           */
@@ -820,6 +822,51 @@ namespace bgeot {
     return geometric_trans_descriptor(name.str());
   }
 
+  /* ******************************************************************** */
+  /*	Pyramidal geometric transformation of order k=1 or 2.             */
+  /* ******************************************************************** */
+
+  struct pyramidal_trans_: public fraction_geometric_trans  {
+    pyramidal_trans_(short_type k) {
+      cvr = pyramidal_element_of_reference(k);
+      size_type R = cvr->structure()->nb_points();
+      is_lin = false;
+      complexity_ = k;
+      trans.resize(R);
+
+      if (k == 1) {
+	base_rational_fraction Q(read_base_poly(3, "xy"),    // Q = xy/(1-z)
+				 read_base_poly(3, "1-z"));
+	trans[0] = (read_base_poly(3, "1-x-y-z") + Q)*0.25;
+	trans[1] = (read_base_poly(3, "1+x-y-z") - Q)*0.25;
+	trans[2] = (read_base_poly(3, "1+x+y-z") + Q)*0.25;
+	trans[3] = (read_base_poly(3, "1-x+y-z") - Q)*0.25;
+	trans[4] = read_base_poly(3, "z");
+      } else if (k == 2) {
+        // ... to be implemented
+	GMM_ASSERT1(false, "to be done");
+      }
+      fill_standard_vertices();
+    }
+  };
+  
+  static pgeometric_trans
+    pyramidal_gt(gt_param_list& params,
+                     std::vector<dal::pstatic_stored_object> &dependencies) {
+    GMM_ASSERT1(params.size() == 1, "Bad number of parameters : "
+		<< params.size() << " should be 1.");
+    GMM_ASSERT1(params[0].type() == 0, "Bad type of parameters");
+    int k = int(::floor(params[0].num() + 0.01));
+    
+    dependencies.push_back(pyramidal_element_of_reference(dim_type(k)));
+    return std::make_shared<pyramidal_trans_>(dim_type(k));
+  }
+  
+  pgeometric_trans pyramidal_geotrans(short_type k) {
+    std::stringstream name;
+    name << "GT_PYRAMID(" << k << ")";
+    return geometric_trans_descriptor(name.str());
+  }
 
   /* ******************************************************************** */
   /*    Misc function.                                                    */
@@ -899,6 +946,7 @@ namespace bgeot {
       add_suffix("LINEAR_PRODUCT", linear_product_gt);
       add_suffix("LINEAR_QK", linear_qk);
       add_suffix("Q2_INCOMPLETE", Q2_incomplete_gt);
+      add_suffix("PYRAMID", pyramidal_gt);
     }
   };
 

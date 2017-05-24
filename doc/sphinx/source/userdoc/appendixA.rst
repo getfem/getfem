@@ -64,8 +64,8 @@ Appendix A. Finite element method list
             :scale: 50
      * - Value of the whole second derivative (hessian) at the node.
        - Scalar product with a certain vector (for instance an edge) for a
-         vectorial elements.
-       - Scalar product with the normal to a face for a vectorial elements.
+         vector elements.
+       - Scalar product with the normal to a face for a vector elements.
      * - .. image:: images/getfemlistsymbols12.png
             :align: center
             :scale: 50
@@ -212,7 +212,7 @@ the classical :math:`P_K` Lagrange element.
        - dimension
        - d.o.f. number
        - class
-       - vectorial
+       - vector
        - :math:`\tau`-equivalent
        - Polynomial
 
@@ -234,7 +234,7 @@ the classical :math:`P_K` Lagrange element.
        - dimension
        - d.o.f. number
        - class
-       - vectorial
+       - vector
        - :math:`\tau`-equivalent
        - Polynomial
 
@@ -338,7 +338,7 @@ not to have the same degree on each dimension. An example is shown on figure
        - dimension
        - d.o.f. number
        - class
-       - vectorial
+       - vector
        - :math:`\tau`-equivalent
        - Polynomial
 
@@ -360,7 +360,7 @@ not to have the same degree on each dimension. An example is shown on figure
        - dimension
        - d.o.f. number
        - class
-       - vectorial
+       - vector
        - :math:`\tau`-equivalent
        - Polynomial
 
@@ -382,7 +382,7 @@ not to have the same degree on each dimension. An example is shown on figure
        - dimension
        - d.o.f. number
        - class
-       - vectorial
+       - vector
        - :math:`\tau`-equivalent
        - Polynomial
 
@@ -412,7 +412,7 @@ not to have the same degree on each dimension. An example is shown on figure
        - dimension
        - d.o.f. number
        - class
-       - vectorial
+       - vector
        - :math:`\tau`-equivalent
        - Polynomial
 
@@ -458,7 +458,7 @@ Hierarchical elements with respect to the degree
        - dimension
        - d.o.f. number
        - class
-       - vectorial
+       - vector
        - :math:`\tau`-equivalent
        - Polynomial
 
@@ -480,7 +480,7 @@ Hierarchical elements with respect to the degree
        - dimension
        - d.o.f. number
        - class
-       - vectorial
+       - vector
        - :math:`\tau`-equivalent
        - Polynomial
 
@@ -502,7 +502,7 @@ Hierarchical elements with respect to the degree
        - dimension
        - d.o.f. number
        - class
-       - vectorial
+       - vector
        - :math:`\tau`-equivalent
        - Polynomial
 
@@ -546,7 +546,7 @@ elements. But this tool can also be used to build piecewise polynomial elements.
        - dimension
        - d.o.f. number
        - class
-       - vectorial
+       - vector
        - :math:`\tau`-equivalent
        - Polynomial
 
@@ -581,7 +581,7 @@ Hierarchical composite elements
        - dimension
        - d.o.f. number
        - class
-       - vectorial
+       - vector
        - :math:`\tau`-equivalent
        - Polynomial
 
@@ -603,7 +603,7 @@ Hierarchical composite elements
        - dimension
        - d.o.f. number
        - class
-       - vectorial
+       - vector
        - :math:`\tau`-equivalent
        - Polynomial
 
@@ -621,7 +621,7 @@ and ``"FEM_STRUCTURED_COMPOSITE(FEM1, S)"``.
 It is important to use a corresponding composite integration method.
 
 
-Classical vectorial elements
+Classical vector elements
 ----------------------------
 
 Raviart-Thomas of lowest order elements
@@ -644,7 +644,7 @@ Raviart-Thomas of lowest order elements
        - dimension
        - d.o.f. number
        - class
-       - vectorial
+       - vector
        - :math:`\tau`-equivalent
        - Polynomial
 
@@ -666,7 +666,7 @@ Raviart-Thomas of lowest order elements
        - dimension
        - d.o.f. number
        - class
-       - vectorial
+       - vector
        - :math:`\tau`-equivalent
        - Polynomial
 
@@ -699,7 +699,7 @@ Nedelec (or Whitney) edge elements
        - dimension
        - d.o.f. number
        - class
-       - vectorial
+       - vector
        - :math:`\tau`-equivalent
        - Polynomial
 
@@ -739,7 +739,7 @@ following values of :math:`K`: :math:`1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13,
        - dimension
        - d.o.f. number
        - class
-       - vectorial
+       - vector
        - :math:`\tau`-equivalent
        - Polynomial
 
@@ -784,7 +784,7 @@ is still diagonal.
        - dimension
        - d.o.f. number
        - class
-       - vectorial
+       - vector
        - :math:`\tau`-equivalent
        - Polynomial
 
@@ -817,7 +817,7 @@ Lagrange element with an additional bubble function
        - dimension
        - d.o.f. number
        - class
-       - vectorial
+       - vector
        - :math:`\tau`-equivalent
        - Polynomial
 
@@ -862,7 +862,7 @@ Elements with additional bubble functions
        - dimension
        - d.o.f. number
        - class
-       - vectorial
+       - vector
        - :math:`\tau`-equivalent
        - Polynomial
 
@@ -893,7 +893,7 @@ Elements with additional bubble functions
        - dimension
        - d.o.f. number
        - class
-       - vectorial
+       - vector
        - :math:`\tau`-equivalent
        - Polynomial
 
@@ -924,7 +924,7 @@ Elements with additional bubble functions
        - dimension
        - d.o.f. number
        - class
-       - vectorial
+       - vector
        - :math:`\tau`-equivalent
        - Polynomial
 
@@ -955,7 +955,7 @@ Elements with additional bubble functions
        - dimension
        - d.o.f. number
        - class
-       - vectorial
+       - vector
        - :math:`\tau`-equivalent
        - Polynomial
 
@@ -988,7 +988,7 @@ Non-conforming :math:`P_1` element
        - dimension
        - d.o.f. number
        - class
-       - vectorial
+       - vector
        - :math:`\tau`-equivalent
        - Polynomial
 
@@ -1042,7 +1042,7 @@ Idem for the two couples :math:`(\widehat{\varphi}_5`, :math:`\widehat{\varphi}_
        - dimension
        - d.o.f. number
        - class
-       - vectorial
+       - vector
        - :math:`\tau`-equivalent
        - Polynomial
 
@@ -1078,7 +1078,7 @@ fourth order problems, despite the fact that it is not :math:`{\cal C}^1`.
        - dimension
        - d.o.f. number
        - class
-       - vectorial
+       - vector
        - :math:`\tau`-equivalent
        - Polynomial
 
@@ -1144,7 +1144,7 @@ transformations (for instance to treat curved boundaries).
        - dimension
        - d.o.f. number
        - class
-       - vectorial
+       - vector
        - :math:`\tau`-equivalent
        - Polynomial
 
@@ -1185,7 +1185,7 @@ and 9, 10, 11 for the normal derivatives on face 0, 1, 2 respectively.
        - dimension
        - d.o.f. number
        - class
-       - vectorial
+       - vector
        - :math:`\tau`-equivalent
        - Polynomial
 
@@ -1218,7 +1218,7 @@ assumed to be polynomial of degree one on each edge (see figure
        - dimension
        - d.o.f. number
        - class
-       - vectorial
+       - vector
        - :math:`\tau`-equivalent
        - Polynomial
 
@@ -1256,7 +1256,7 @@ to use a ``"IM_QUADC1_COMPOSITE"`` integration method with this finite element.
        - dimension
        - d.o.f. number
        - class
-       - vectorial
+       - vector
        - :math:`\tau`-equivalent
        - Polynomial
 
@@ -1290,7 +1290,7 @@ assumed to be polynomial of degree one on each edge (see figure
        - dimension
        - d.o.f. number
        - class
-       - vectorial
+       - vector
        - :math:`\tau`-equivalent
        - Polynomial
 
@@ -1339,7 +1339,7 @@ Elements with additional bubble functions
        - dimension
        - d.o.f. number
        - class
-       - vectorial
+       - vector
        - :math:`\tau`-equivalent
        - Polynomial
 
@@ -1370,7 +1370,7 @@ Elements with additional bubble functions
        - dimension
        - d.o.f. number
        - class
-       - vectorial
+       - vector
        - :math:`\tau`-equivalent
        - Polynomial
 
@@ -1434,7 +1434,7 @@ the corresponding vertex. Idem on the other vertices.
        - dimension
        - d.o.f. number
        - class
-       - vectorial
+       - vector
        - :math:`\tau`-equivalent
        - Polynomial
 

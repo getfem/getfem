@@ -23,7 +23,7 @@
 #include "getfem/bgeot_convex_ref.h"
 
 
- namespace bgeot {
+namespace bgeot {
 
 
   static size_type simplexified_parallelepiped_2[6] = {
@@ -250,9 +250,14 @@
   };
 
   static size_type simplexified_prism_6_nb = 6;
+ 
+  static size_type simplexified_pyramid[30] = {
+     0, 1, 2, 4, 3, 2, 1, 4
+  };
 
-
-
+  static size_type simplexified_pyramid_nb = 3;
+   
+  
   size_type simplexified_tab(pconvex_structure cvs,
                              size_type **tab) {
     if (cvs == parallelepiped_structure(2)) {
@@ -298,6 +303,11 @@
     if (cvs == prism_structure(6)) {
       *tab = simplexified_prism_6;
       return simplexified_prism_6_nb;
+    }
+
+    if (cvs == pyramidal_structure(1)) {
+      *tab = simplexified_pyramid;
+      return simplexified_pyramid_nb;
     }
 
     GMM_ASSERT1(false, "No simplexification for this element");
