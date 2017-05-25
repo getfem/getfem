@@ -72,7 +72,8 @@ namespace bgeot {
 
   using std::endl; using std::cout; using std::cerr;
   using std::ends; using std::cin;
-  
+  template <typename T> std::ostream &operator <<
+  (std::ostream &o, const std::vector<T>& m) { gmm::write(o,m); return o; }
 
   static const size_t ST_NIL = size_t(-1);
   typedef gmm::uint16_type dim_type;

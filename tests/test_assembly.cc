@@ -33,6 +33,8 @@
 #endif
 using std::endl; using std::cout; using std::cerr;
 using std::ends; using std::cin;
+template <typename T> std::ostream &operator <<
+  (std::ostream &o, const std::vector<T>& m) { gmm::write(o,m); return o; }
 
 using bgeot::base_vector;
 using bgeot::base_matrix;
