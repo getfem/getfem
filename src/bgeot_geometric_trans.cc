@@ -839,8 +839,8 @@ namespace bgeot {
 				 read_base_poly(3, "1-z"));
 	trans[0] = (read_base_poly(3, "1-x-y-z") + Q)*0.25;
 	trans[1] = (read_base_poly(3, "1+x-y-z") - Q)*0.25;
-	trans[2] = (read_base_poly(3, "1+x+y-z") + Q)*0.25;
-	trans[3] = (read_base_poly(3, "1-x+y-z") - Q)*0.25;
+	trans[2] = (read_base_poly(3, "1-x+y-z") - Q)*0.25;
+	trans[3] = (read_base_poly(3, "1+x+y-z") + Q)*0.25;
 	trans[4] = read_base_poly(3, "z");
       } else if (k == 2) {
         // ... to be implemented

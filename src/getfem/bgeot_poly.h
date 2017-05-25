@@ -240,8 +240,10 @@ namespace bgeot
     /// Derivative of P with respect to the variable k. P contains the result.
     void derivative(short_type k);
     /// Makes P = 1.
-    void one(void) { change_degree(0); (*this)[0] = T(1); }
-    void clear(void) { change_degree(0); (*this)[0] = T(0); }
+    void one() { change_degree(0); (*this)[0] = T(1); }
+    void clear() { change_degree(0); (*this)[0] = T(0); }
+    bool is_zero()
+    { return(this->real_degree()==0) && (this->size()==0 || (*this)[0]==T(0)); }
     template <typename ITER> T horner(power_index &mi, short_type k,
 				   short_type de, const ITER &it) const;
     /** Evaluate the polynomial. "it" is an iterator pointing to the list
@@ -702,8 +704,12 @@ namespace bgeot
     void derivative(short_type k) {
       polynomial<T> der_num = numerator_;   der_num.derivative(k);
       polynomial<T> der_den = denominator_; der_den.derivative(k);
-      numerator_ = der_num * denominator_ - der_den * numerator_;
-      denominator_ =  denominator_ * denominator_;
+      if (der_den.is_zero()) {
+	if (der_num.is_zero()) this->clear(); else numerator_ = der_num;
+      } else {
+	numerator_ = der_num * denominator_ - der_den * numerator_;
+	denominator_ =  denominator_ * denominator_;
+      }
     }
     /// Makes P = 1.
     void one() { numerator_.one(); denominator_.one(); }

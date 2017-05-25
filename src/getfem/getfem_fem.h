@@ -88,23 +88,29 @@
    - "FEM_REDUCED_QUADC1_COMPOSITE" : quadrilateral element, composite
       P3 element and C^1 (12 dof).
 
-   - "FEM_PK_HIERARCHICAL(N,K)" : PK element with a hierarchical basis
+   - "FEM_PK_HIERARCHICAL(N,K)" : PK element with a hierarchical basis.
 
-   - "FEM_QK_HIERARCHICAL(N,K)" : QK element with a hierarchical basis
+   - "FEM_QK_HIERARCHICAL(N,K)" : QK element with a hierarchical basis.
 
    - "FEM_PK_PRISM_HIERARCHICAL(N,K)" : PK element on a prism with a
-   hierarchical basis
+   hierarchical basis.
 
    - "FEM_STRUCTURED_COMPOSITE(FEM, K)" : Composite fem on a grid with
-   K divisions
+   K divisions.
 
    - "FEM_PK_HIERARCHICAL_COMPOSITE(N,K,S)" : PK composite element on
-   a grid with S subdivisions and with a hierarchical basis
+   a grid with S subdivisions and with a hierarchical basis.
 
    - "FEM_PK_FULL_HIERARCHICAL_COMPOSITE(N,K,S)" : PK composite
    element with S subdivisions and a hierarchical basis on both degree
-   and subdivision
+   and subdivision.
 
+   - "FEM_PYRAMID_LAGRANGE(K)" : Lagrange element on a 3D pyramid of degree
+   K=0, 1 or 2. Can be connected to a standard P1/P2 lagrange on its
+   triangular faces and standard Q1/Q2 Lagrange on its quadrangular face.
+
+   - "FEM_PYRAMID_DISCONTINUOUS_LAGRANGE(K)" : Discontinuous Lagrange element
+   on a 3D pyramid of degree K = 0, 1 or 2.
 */
 
 #ifndef GETFEM_FEM_H__
@@ -533,9 +539,11 @@ namespace getfem {
   };
 
   /** Classical polynomial FEM. */
-  typedef const fem<base_poly> * ppolyfem;
+  typedef const fem<bgeot::base_poly> * ppolyfem;
   /** Polynomial composite FEM */
   typedef const fem<bgeot::polynomial_composite> * ppolycompfem;
+  /** Rational fration FEM */
+  typedef const fem<bgeot::base_rational_fraction> * prationalfracfem;
 
   /** Give a pointer on the structures describing the classical
       polynomial fem of degree k on a given convex type.

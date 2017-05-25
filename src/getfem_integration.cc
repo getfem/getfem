@@ -1033,6 +1033,9 @@ namespace getfem {
   pintegration_method QUADC1_composite_int_method(im_param_list &params,
    std::vector<dal::pstatic_stored_object> &dependencies);
 
+  pintegration_method pyramid_composite_int_method(im_param_list &params,
+   std::vector<dal::pstatic_stored_object> &dependencies);
+
   struct im_naming_system : public dal::naming_system<integration_method> {
     im_naming_system() : dal::naming_system<integration_method>("IM") {
       add_suffix("NONE",im_none);
@@ -1052,6 +1055,8 @@ namespace getfem {
                  HCT_composite_int_method);
       add_suffix("QUADC1_COMPOSITE",
                  QUADC1_composite_int_method);
+      add_suffix("PYRAMID_COMPOSITE",
+                 pyramid_composite_int_method);
       add_generic_function(im_list_integration);
     }
   };

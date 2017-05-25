@@ -183,7 +183,41 @@ namespace getfem {
     return p;
   }
 
+  struct just_for_singleton_pyramidc__ { mesh m; bgeot::mesh_precomposite mp; };
+  
+  pintegration_method pyramid_composite_int_method(im_param_list &params,
+	std::vector<dal::pstatic_stored_object> &dependencies) {
 
+    just_for_singleton_pyramidc__ &jfs
+      = dal::singleton<just_for_singleton_pyramidc__>::instance();
+
+    GMM_ASSERT1(params.size() == 1, "Bad number of parameters : "
+		<< params.size() << " should be 1.");
+    GMM_ASSERT1(params[0].type() == 1, "Bad type of parameters");
+    pintegration_method pim = params[0].method();
+    GMM_ASSERT1(pim->type() == IM_APPROX, "Bad parameters");
+    
+    jfs.m.clear();
+    size_type i0 = jfs.m.add_point(base_node(-1.0, -1.0, 0.0));
+    size_type i1 = jfs.m.add_point(base_node( 1.0, -1.0, 0.0));
+    size_type i2 = jfs.m.add_point(base_node(-1.0,  1.0, 0.0));
+    size_type i3 = jfs.m.add_point(base_node( 1.0,  1.0, 0.0));
+    size_type i4 = jfs.m.add_point(base_node( 0.0,  0.0, 1.0));
+    jfs.m.add_tetrahedron(i0, i1, i2, i4);
+    jfs.m.add_tetrahedron(i1, i3, i2, i4);
+    jfs.mp = bgeot::mesh_precomposite(jfs.m);
+
+    mesh_im mi(jfs.m);
+    mi.set_integration_method(jfs.m.convex_index(), pim);
+
+    pintegration_method
+      p = std::make_shared<integration_method>
+      (composite_approx_int_method(jfs.mp, mi,
+				   bgeot::pyramidal_element_of_reference(3)));
+    dependencies.push_back(p->approx_method()->ref_convex());
+    dependencies.push_back(p->approx_method()->pintegration_points());
+    return p;
+  }
 
 
   
