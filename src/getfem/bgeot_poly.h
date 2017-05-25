@@ -608,8 +608,8 @@ namespace bgeot
   }
   
   template<typename U, typename T>
-  polynomial<T> operator *(U c, const polynomial<T> &p)
-  { polynomial<T> q = p; q *= T(c); return q; }
+  polynomial<T> operator *(T c, const polynomial<T> &p)
+  { polynomial<T> q = p; q *= c; return q; }
 
   typedef polynomial<opt_long_scalar_type> base_poly;
 

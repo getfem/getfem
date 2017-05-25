@@ -1306,6 +1306,147 @@ assumed to be polynomial of degree one on each edge (see figure
 Specific elements in dimension 3
 --------------------------------
 
+Lagrange elements on 3D pyramid
++++++++++++++++++++++++++++++++
+
+|gf| proposes some LAgrange pyramidal elements of dergree 0, 1 and two based on [GR-GH1999]_ and [BE-CO-DU2010]_. See these references for more details. The proposed element can be raccorded to standard :math:`P_1` or :math:`P_2` Lagrange fem on the triangular faces and to a standard :math:`Q_1` or :math:`Q_2` Lagrange fem on the quatrilateral face.
+
+.. _ud-fig-pyramid-lagrange:
+.. list-table:: Lagrange element on a pyramidal element of order 0, 1 and 2
+   :widths: 20 20 20
+   :header-rows: 0
+   :class: figure
+
+   * - .. image:: images/getfemlistpyramidP0.png
+          :align: center
+          :scale: 50
+     - .. image:: images/getfemlistpyramidP1.png
+          :align: center
+          :scale: 50
+     - .. image:: images/getfemlistpyramidP2.png
+          :align: center
+          :scale: 50
+
+   * - Degree 0 pyramidal element with 1 dof
+     - Degree 1 pyramidal element with 5 dof
+     - Degree 2 pyramidal element with 14 dof
+
+
+The associated geometric transformations are ``"GT_PYRAMID(K)"`` for K = 1 or 2.
+The shape functions are not polynomial ones but rational fractions. For the first degree :
+
+.. math::
+
+   \begin{array}{l}
+   \widehat{\varphi}_{0}(x,y,z) =  \frac{1}{4}\left(1-x-y-z+\Frac{xy}{1-z}\right), \\
+   \widehat{\varphi}_{1}(x,y,z) =  \frac{1}{4}\left(1+x-y-z-\Frac{xy}{1-z}\right), \\
+   \widehat{\varphi}_{2}(x,y,z) =  \frac{1}{4}\left(1-x+y-z-\Frac{xy}{1-z}\right), \\
+   \widehat{\varphi}_{3}(x,y,z) =  \frac{1}{4}\left(1+x+y-z+\Frac{xy}{1-z}\right), \\
+   \widehat{\varphi}_{4}(x,y,z) =  z.\\
+   \end{array}
+
+For the second degree, en posant
+
+.. math::
+
+   \xi_0 = \Frac{1-z-x}{2}, ~~~\xi_1 = \Frac{1-z-y}{2}, ~~~\xi_2 = \Frac{1-z+x}{2}, ~~~\xi_3 = \Frac{1-z+y}{2},
+
+
+.. math::
+
+   \begin{array}{l}
+   \widehat{\varphi}_{0}(x,y,z) = \Frac{\xi_0 \xi_1}{1-z}((1-z-2\xi_0)(1-z-2\xi_1) -z), \\
+   \widehat{\varphi}_{1}(x,y,z) = 4\Frac{\xi_0\xi_1\xi_2}{(1-z)^2}(2\xi_1-(1-z)), \\
+   \widehat{\varphi}_{2}(x,y,z) = \Frac{\xi_1 \xi_2}{1-z}((1-z-2\xi_1)(1-z-2\xi_2) -z), \\
+   \widehat{\varphi}_{3}(x,y,z) = 4\Frac{\xi_3\xi_0\xi_1}{(1-z)^2}(2\xi_0-(1-z)), \\
+   \widehat{\varphi}_{4}(x,y,z) = 16\Frac{\xi_0\xi_1\xi_2\xi_3}{(1-z)^2}, \\
+   \widehat{\varphi}_{5}(x,y,z) = 4\Frac{\xi_1\xi_2\xi_3}{(1-z)^2}(2\xi_2-(1-z)), \\
+   \widehat{\varphi}_{6}(x,y,z) = \Frac{\xi_3 \xi_0}{1-z}((1-z-2\xi_3)(1-z-2\xi_0) -z), \\
+   \widehat{\varphi}_{7}(x,y,z) = 4\Frac{\xi_2\xi_3\xi_0}{(1-z)^2}(2\xi_3-(1-z)), \\
+   \widehat{\varphi}_{8}(x,y,z) = \Frac{\xi_2 \xi_3}{1-z}((1-z-2\xi_2)(1-z-2\xi_3) -z), \\
+   \widehat{\varphi}_{9}(x,y,z) = 4\Frac{z}{1-z}\xi_0\xi_1, \\
+   \widehat{\varphi}_{10}(x,y,z) = 4\Frac{z}{1-z}\xi_1\xi_2,  \\
+   \widehat{\varphi}_{11}(x,y,z) = 4\Frac{z}{1-z}\xi_3\xi_0,  \\
+   \widehat{\varphi}_{12}(x,y,z) = 4\Frac{z}{1-z}\xi_2\xi_3,  \\
+   \widehat{\varphi}_{13}(x,y,z) = z(2z-1). \\
+   \end{array}
+
+.. list-table:: Continuous Lagrange element of order 0, 1 or 2 ``"FEM_PYRAMID_LAGRANGE(K)"``
+   :widths: 10 10 10 10 10 10 10
+   :header-rows: 1
+
+   * - degree
+     - dimension
+     - d.o.f. number
+     - class
+     - vector
+     - :math:`\tau`-equivalent
+     - Polynomial
+
+   * - :math:`0`
+     - :math:`3`
+     - :math:`1`
+     - discontinuous
+     - No :math:`(Q = 1)`
+     - Yes
+     - No
+       
+   * - :math:`1`
+     - :math:`3`
+     - :math:`5`
+     - :math:`C^0`
+     - No :math:`(Q = 1)`
+     - Yes
+     - No
+
+   * - :math:`2`
+     - :math:`3`
+     - :math:`14`
+     - :math:`C^0`
+     - No :math:`(Q = 1)`
+     - Yes
+     - No
+
+
+   
+.. list-table:: Discontinuous Lagrange element of order 0, 1 or 2 ``"FEM_PYRAMID_DISCONTINUOUS_LAGRANGE(K)"``
+   :widths: 10 10 10 10 10 10 10
+   :header-rows: 1
+
+   * - degree
+     - dimension
+     - d.o.f. number
+     - class
+     - vector
+     - :math:`\tau`-equivalent
+     - Polynomial
+
+   * - :math:`0`
+     - :math:`3`
+     - :math:`1`
+     - discontinuous
+     - No :math:`(Q = 1)`
+     - Yes
+     - No
+       
+   * - :math:`1`
+     - :math:`3`
+     - :math:`5`
+     - discontinuous
+     - No :math:`(Q = 1)`
+     - Yes
+     - No
+
+   * - :math:`2`
+     - :math:`3`
+     - :math:`14`
+     - discontinuous
+     - No :math:`(Q = 1)`
+     - Yes
+     - No
+
+       
+	 
 
 Elements with additional bubble functions
 +++++++++++++++++++++++++++++++++++++++++
@@ -1331,7 +1472,7 @@ Elements with additional bubble functions
 
 :math:`.\\`
 
-  .. list-table:: . :math:`P_K` Lagrange element with an additional internal bubble function ``"FEM_PK_WITH_CUBIC_BUBBLE(3, K)"``
+  .. list-table:: :math:`P_K` Lagrange element with an additional internal bubble function ``"FEM_PK_WITH_CUBIC_BUBBLE(3, K)"``
      :widths: 10 10 10 10 10 10 10
      :header-rows: 1
 

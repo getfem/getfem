@@ -843,8 +843,27 @@ namespace bgeot {
 	trans[3] = (read_base_poly(3, "1+x+y-z") + Q)*0.25;
 	trans[4] = read_base_poly(3, "z");
       } else if (k == 2) {
-        // ... to be implemented
-	GMM_ASSERT1(false, "to be done");
+        base_poly xi0 = read_base_poly(3, "(1-z-x)*0.5");
+        base_poly xi1 = read_base_poly(3, "(1-z-y)*0.5");
+        base_poly xi2 = read_base_poly(3, "(1-z+x)*0.5");
+        base_poly xi3 = read_base_poly(3, "(1-z+y)*0.5");
+	base_poly z = read_base_poly(3, "z");
+	base_poly un_z = read_base_poly(3, "1-z");
+	base_rational_fraction Q(read_base_poly(3, "1"), un_z); // Q = 1/(1-z)
+	trans[ 0] = Q*xi0*xi1*((un_z-xi0*2.)*(un_z-xi1*2.)-z);
+	trans[ 1] = Q*Q*xi0*xi1*xi2*(xi1*2.-un_z)*4.;
+	trans[ 2] = Q*xi1*xi2*((un_z-xi1*2.)*(un_z-xi2*2.)-z);
+	trans[ 3] = Q*Q*xi3*xi0*xi1*(xi0*2.-un_z)*4.;
+	trans[ 4] = Q*Q*xi0*xi1*xi2*xi3*16.;
+	trans[ 5] = Q*Q*xi1*xi2*xi3*(xi2*2.-un_z)*4.;
+	trans[ 6] = Q*xi3*xi0*((un_z-xi3*2.)*(un_z-xi0*2.)-z);
+	trans[ 7] = Q*Q*xi2*xi3*xi0*(xi3*2.-un_z)*4.;
+	trans[ 8] = Q*xi2*xi3*((un_z-xi2*2.)*(un_z-xi3*2.)-z);
+	trans[ 9] = Q*z*xi0*xi1*4.;
+	trans[10] = Q*z*xi1*xi2*4.;
+	trans[11] = Q*z*xi3*xi0*4.;
+	trans[12] = Q*z*xi2*xi3*4.;
+	trans[13] = read_base_poly(3, "z*(2*z-1)");
       }
       fill_standard_vertices();
     }

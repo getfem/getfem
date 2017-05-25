@@ -688,3 +688,5 @@ not defined on the boundary of sub-elements).
 
 For the HCT element, it is advised to use the ``"IM_HCT_COMPOSITE(im)"`` composite
 integration (which split the original triangle into 3 sub-triangles).
+
+For pyramidal elements, ``"IM_PYRAMID_COMPOSITE(im)"`` provide an integration method ase on the decomposition of the pyramid into two tetrahedrons.
