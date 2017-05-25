@@ -28,6 +28,8 @@
 
 using std::endl; using std::cout; using std::cerr;
 using std::ends; using std::cin;
+template <typename T> std::ostream &operator <<
+  (std::ostream &o, const std::vector<T>& m) { gmm::write(o,m); return o; }
 
 size_type is_global_dof_type_bis(getfem::pdof_description dof){
 size_type global_dof = 0 ;
