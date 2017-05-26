@@ -544,7 +544,7 @@ namespace bgeot {
 
   template<class T> std::ostream &operator <<
     (std::ostream &o, const tensor<T>& t) {
-    o << "sizes " << t.sizes() << " " << t.as_vector();
+    o << "sizes " << t.sizes() << " " << vref(t.as_vector());
     return o;
   }
 
