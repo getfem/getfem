@@ -98,6 +98,87 @@ cartesian_mesh(getfem::mesh *pmesh, getfemint::mexargs_in &in,
   }
 }
 
+static void
+pyramidal_mesh(getfem::mesh *pmesh, getfemint::mexargs_in &in) {
+  getfemint::size_type dim = 3;
+
+  std::vector<darray> ppos(dim);
+  std::vector<size_type> npts(dim);
+  size_type grid_npoints=1, grid_nconvex=1;
+  for (size_type i = 0; i < dim; i++) {
+    ppos[i] = in.pop().to_darray();
+    npts[i] = ppos[i].size();
+    grid_npoints *= npts[i];
+    grid_nconvex *= (npts[i]-1);
+  }
+
+  /* add the points in 'fortran style' order */
+  getfem::base_node pt(dim);
+  for (size_type i=0; i < grid_npoints; i++) {
+    size_type k = i;
+    for (size_type j = 0; j < dim; j++) {
+      pt[j] = ppos[j][k % (npts[j])];
+      k /= (npts[j]);
+    }
+
+    size_type id_pt = pmesh->add_point(pt);
+    if (id_pt != i) {
+      THROW_ERROR(
+		"something has changed in getfem, you need to reconsider "
+		"gf_mesh('cartesian')\nfor point " << i <<
+		", the index is " << id_pt << endl);
+    }
+  }
+
+
+  std::vector<int> ipt(dim);
+  std::vector<getfem::base_node> pts(1 << (dim+1));
+
+  bgeot::pgeometric_trans pgt = bgeot::pyramidal_geotrans(1);
+
+  /* add the convexes */
+  for (size_type i=0; i < grid_nconvex; i++) {
+    size_type k = i;
+
+    /* find point location */
+    for (size_type j = 0; j < dim; j++) {
+      ipt[j] = int(k % (npts[j]-1));
+      k /= (npts[j]-1);
+    }
+
+    /* build the vertices list */
+    for (size_type j = 0; j < (unsigned(1)<<dim); j++) {
+      pts[j].resize(dim);
+      for (size_type d=0; d < dim; d++) {
+	if ((j >> d) & 1) {
+	  pts[j][d] = ppos[d][ipt[d]+1];
+	} else {
+	  pts[j][d] = ppos[d][ipt[d]];
+	}
+      }
+    }
+    bgeot::base_node barycenter;
+    std::vector<size_type> iipts(8);
+    for (size_type j = 0; j < 8; j++) {
+	barycenter += pts[j];
+	iipts[j] = pmesh->add_point(pts[j]);
+    }
+    barycenter /= 8.; size_type ib = pmesh->add_point(barycenter);
+   
+
+    // we don't use the add_parall since the geometric transformation
+    // is linear (the mesh is cartesian)
+    //pmesh->add_parallelepiped_by_points(dim, pts.begin());
+    //pmesh->add_convex_by_points(pgt, pts.begin());
+    pmesh->add_pyramid(iipts[0],iipts[1],iipts[2],iipts[3],ib);
+    pmesh->add_pyramid(iipts[4],iipts[6],iipts[5],iipts[7],ib);
+    pmesh->add_pyramid(iipts[0],iipts[4],iipts[1],iipts[5],ib);
+    pmesh->add_pyramid(iipts[1],iipts[5],iipts[3],iipts[7],ib);
+    pmesh->add_pyramid(iipts[3],iipts[7],iipts[2],iipts[6],ib);
+    pmesh->add_pyramid(iipts[2],iipts[6],iipts[0],iipts[4],ib);
+
+  }
+}
 
 static void
 triangles_grid_mesh(getfem::mesh *pmesh, getfemint::mexargs_in &in)
@@ -355,6 +436,12 @@ void gf_mesh(getfemint::mexargs_in& m_in,
        cartesian_mesh(pmesh, in);
        );
 
+    /*@INIT M = ('pyramidal', @dvec X[, @dvec Y[, @dvec Z,..]])
+      Build quickly a regular mesh of pyramids, etc.@*/
+    sub_command
+      ("pyramidal", 1, 32, 0, 1,
+       pyramidal_mesh(pmesh, in);
+       );
 
     /*@INIT M = ('cartesian Q1', @dvec X, @dvec Y[, @dvec Z,..])
       Build quickly a regular mesh of quadrangles, cubes, etc. with

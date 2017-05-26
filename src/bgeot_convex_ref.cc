@@ -318,7 +318,7 @@ namespace bgeot {
     }
     
     pyramid_of_ref_(dim_type k) {
-      GMM_ASSERT1(k == 1 || k == 2, "Sorry exist only in degree 2 or 3");
+      GMM_ASSERT1(k == 1 || k == 2, "Sorry exist only in degree 1 or 2");
 
       cvs = pyramidal_structure(k);
       convex<base_node>::points().resize(cvs->nb_points());
@@ -401,7 +401,7 @@ namespace bgeot {
 
     scalar_type is_in_face(short_type f, const base_node &pt) const {
       // ne controle pas si le point est dans le convexe mais si un point
-      // supposé appartenir au convexe est dans une face donnée
+      // suppos\E9 appartenir au convexe est dans une face donn\E9e
       dim_type n1 = cvr1->structure()->dim(), n2 = cvr2->structure()->dim();
       base_node pt1(n1), pt2(n2);
       GMM_ASSERT1(pt.size() == cvs->dim(), "Dimensions mismatch");

@@ -100,8 +100,6 @@ namespace getfem
     }
   }
 
-
-
   void parallelepiped_regular_mesh_
   (mesh &me, dim_type N, const base_node &org,
    const base_small_vector *ivect, const size_type *iref, bool linear_gt) {
@@ -139,6 +137,52 @@ namespace getfem
       }
     }
   }
+
+  void parallelepiped_regular_pyramid_mesh_
+  (mesh &me, const base_node &org,
+   const base_small_vector *ivect, const size_type *iref) {
+    dim_type N = 3;
+    bgeot::convex<base_node>
+      pararef = *(bgeot::parallelepiped_of_reference(N));
+    base_node a = org, barycenter;
+    size_type i, nbpt = pararef.nb_points();
+
+    for (i = 0; i < nbpt; ++i) {
+      gmm::clear(a);
+      for (dim_type n = 0; n < N; ++n)
+        gmm::add(gmm::scaled(ivect[n],pararef.points()[i][n]),a);
+      //a.addmul(pararef.points()[i][n], ivect[n]);
+      pararef.points()[i] = a;
+      barycenter += a;
+    }
+    barycenter /= double(nbpt);
+
+    std::vector<size_type> tab1(N+1), tab(N), tab3(nbpt);
+    size_type total = 0;
+    std::fill(tab.begin(), tab.end(), 0);
+    while (tab[N-1] != iref[N-1]) {
+      for (a = org, i = 0; i < N; i++)
+        gmm::add(gmm::scaled(ivect[i], scalar_type(tab[i])),a);
+      //a.addmul(scalar_type(tab[i]), ivect[i]);
+
+      for (i = 0; i < nbpt; i++)
+        tab3[i] = me.add_point(a + pararef.points()[i]);
+      size_type ib = me.add_point(a + barycenter);
+      me.add_pyramid(tab3[0],tab3[1],tab3[2],tab3[3],ib);
+      me.add_pyramid(tab3[4],tab3[6],tab3[5],tab3[7],ib);
+      me.add_pyramid(tab3[0],tab3[4],tab3[1],tab3[5],ib);
+      me.add_pyramid(tab3[1],tab3[5],tab3[3],tab3[7],ib);
+      me.add_pyramid(tab3[3],tab3[7],tab3[2],tab3[6],ib);
+      me.add_pyramid(tab3[2],tab3[6],tab3[0],tab3[4],ib);
+
+      for (dim_type l = 0; l < N; l++) {
+        tab[l]++; total++;
+        if (l < N-1 && tab[l] >= iref[l]) { total -= tab[l]; tab[l] = 0; }
+        else break;
+      }
+    }
+  }
+
 
   /* deformation inside a unit square  -- ugly */
   static base_node shake_func(const base_node& x) {
@@ -210,6 +254,9 @@ namespace getfem
     } else if (pgt->basic_structure() == bgeot::prism_structure(N)) {
       getfem::parallelepiped_regular_prism_mesh
         (msh, N, org, vtab.begin(), nsubdiv.begin());
+    } else if (pgt->basic_structure() == bgeot::pyramidal_structure(1)) {
+      getfem::parallelepiped_regular_pyramid_mesh
+        (msh, org, vtab.begin(), nsubdiv.begin());
     } else {
       GMM_ASSERT1(false, "cannot build a regular mesh for "
                   << bgeot::name_of_geometric_trans(pgt));

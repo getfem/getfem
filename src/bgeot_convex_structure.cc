@@ -481,7 +481,7 @@ namespace bgeot {
     p->dir_points_ = std::vector<short_type>(p->Nc + 1);
     
 
-    if (k == 2) {
+    if (k == 1) {
       p->nbpt = 5;
       p->nbf = 5;
       p->auto_basic = true;

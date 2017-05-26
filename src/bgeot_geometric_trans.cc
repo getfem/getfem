@@ -882,9 +882,14 @@ namespace bgeot {
   }
   
   pgeometric_trans pyramidal_geotrans(short_type k) {
-    std::stringstream name;
-    name << "GT_PYRAMID(" << k << ")";
-    return geometric_trans_descriptor(name.str());
+    static short_type k_ = -1;
+    static pgeometric_trans pgt = 0;
+    if (k != k_) {
+      std::stringstream name;
+      name << "GT_PYRAMID(" << k << ")";
+      pgt = geometric_trans_descriptor(name.str());
+    }
+    return pgt;  
   }
 
   /* ******************************************************************** */

@@ -298,6 +298,12 @@ namespace getfem {
     return add_simplex(3, &(ipt[0]));
   }
 
+  size_type mesh::add_pyramid(size_type a, size_type b,
+                                  size_type c, size_type d, size_type e) {
+    size_type ipt[5]; ipt[0] = a; ipt[1] = b; ipt[2] = c; ipt[3] = d; ipt[4] = e;
+    return add_convex(bgeot::pyramidal_geotrans(1), &(ipt[0]));
+  }
+
   size_type mesh::add_tetrahedron_by_points
   (const base_node &p1, const base_node &p2,
    const base_node &p3, const base_node &p4) {
