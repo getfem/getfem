@@ -1264,7 +1264,7 @@ namespace getfem {
     } else if (k == 1) {
       p->base().resize(5);
       bgeot::base_rational_fraction // Q = xy/(1-z)
-	Q(bgeot::read_base_poly(3, "xy"), bgeot::read_base_poly(3, "1-z"));
+	Q(bgeot::read_base_poly(3, "x*y"), bgeot::read_base_poly(3, "1-z"));
       p->base()[0] = (bgeot::read_base_poly(3, "1-x-y-z") + Q)*0.25;
       p->base()[1] = (bgeot::read_base_poly(3, "1+x-y-z") - Q)*0.25;
       p->base()[2] = (bgeot::read_base_poly(3, "1-x+y-z") - Q)*0.25;
@@ -3534,7 +3534,7 @@ namespace getfem {
     DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(short_type, k_last, short_type(-1));
     DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(pfem, fm_last, 0);
     DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(char, isuffix_last, 0);
-    bool found = false, isuffix = suffix[0];
+    bool found = false, isuffix = suffix[0], spec_dim = true;
 
     if (pgt_last == pgt && k_last == k && isuffix == isuffix_last)
       return fm_last;
@@ -3551,22 +3551,30 @@ namespace getfem {
     /* Identifying P1-simplexes.                                          */
     if (nbp == n+1)
       if (pgt->basic_structure() == bgeot::simplex_structure(dim_type(n)))
-            { name << "FEM_PK" << suffix << "("; found = true; }
+	{ name << "FEM_PK" << suffix << "("; found = true; }
 
     /* Identifying Q1-parallelepiped.                                     */
     if (!found && nbp == (size_type(1) << n))
       if (pgt->basic_structure()==bgeot::parallelepiped_structure(dim_type(n)))
-            { name << "FEM_QK" << suffix << "("; found = true; }
+	{ name << "FEM_QK" << suffix << "("; found = true; }
 
     /* Identifying Q1-prisms.                                             */
     if (!found && nbp == 2 * n)
       if (pgt->basic_structure() == bgeot::prism_structure(dim_type(n)))
-             { name << "FEM_PK_PRISM" << suffix << "("; found = true; }
+	{ name << "FEM_PK_PRISM" << suffix << "("; found = true; }
+    
+    /* Identifying pyramids.                                              */
+    if (!found && nbp == 5)
+      if (pgt->basic_structure() == bgeot::pyramidal_structure(1)) {
+	name << "FEM_PYRAMID" << suffix << "_LAGRANGE(";
+	found = true; spec_dim = false;
+      }
 
     // To be completed
 
     if (found) {
-      name << int(n) << ',' << int(k) << arg << ')';
+      if (spec_dim) name << int(n) << ',';
+      name << int(k) << arg << ')';
       fm_last = fem_descriptor(name.str());
       pgt_last = pgt;
       k_last = k;

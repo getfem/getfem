@@ -19,19 +19,25 @@
 # Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 #
 ############################################################################
-"""  2D Poisson problem test.
+"""  3D Poisson problem test with pyramidal elements.
 
   This program is used to check that python-getfem is working. This is
   also a good example of use of GetFEM++.
 
+  This programs aims at verifying the convergence on a Poisson problem
+  with 3D pyramidal finite element.
+
   $Id$
 """
+
 # Import basic modules
 import getfem as gf
 import numpy as np
 
+export_mesh = True;
+
 ## Parameters
-NX = 100                           # Mesh parameter.
+NX = 2                             # Mesh parameter.
 Dirichlet_with_multipliers = True  # Dirichlet condition with multipliers
                                    # or penalization
 dirichlet_coefficient = 1e10       # Penalization coefficient
@@ -39,16 +45,27 @@ dirichlet_coefficient = 1e10       # Penalization coefficient
 # Create a simple cartesian mesh
 m = gf.Mesh('pyramidal', np.arange(0,1+1./NX,1./NX),
             np.arange(0,1+1./NX,1./NX), np.arange(0,1+1./NX,1./NX) )
+# m = gf.Mesh('regular_simplices', np.arange(0,1+1./NX,1./NX),
+#            np.arange(0,1+1./NX,1./NX), np.arange(0,1+1./NX,1./NX) )
 
 # Create a MeshFem for u and rhs fields of dimension 1 (i.e. a scalar field)
 mfu   = gf.MeshFem(m, 1)
 mfrhs = gf.MeshFem(m, 1)
-# assign the P2 fem to all convexes of the both MeshFem
+# assign the Lagrange linear fem to all pyramids of the both MeshFem
 mfu.set_fem(gf.Fem('FEM_PYRAMID_LAGRANGE(1)'))
 mfrhs.set_fem(gf.Fem('FEM_PYRAMID_LAGRANGE(1)'))
+# mfu.set_fem(gf.Fem('FEM_PK(3,1)'))
+# mfrhs.set_fem(gf.Fem('FEM_PK(3,1)'))
+
+if (export_mesh):
+  m.export_to_vtk('mesh.vtk');
+  print ('\nYou can view the mesh for instance with');
+  print ('mayavi2 -d mesh.vtk -f ExtractEdges -m Surface \n');
+
 
 #  Integration method used
-mim = gf.MeshIm(m, gf.Integ('IM_PYRAMID_COMPOSITE(IM_TETRAHEDRON(4))'))
+mim = gf.MeshIm(m, gf.Integ('IM_PYRAMID_COMPOSITE(IM_TETRAHEDRON(5))'))
+# mim = gf.MeshIm(m, gf.Integ('IM_TETRAHEDRON(5)'))
 
 # Boundary selection
 flst  = m.outer_faces()
@@ -72,7 +89,7 @@ Ue = mfu.eval('y*(y-1)*x*(x-1)+x*x*x*x*x')
 
 # Interpolate the source term
 F1 = mfrhs.eval('-(2*(x*x+y*y)-2*x-2*y+20*x*x*x)')
-F2 = mfrhs.eval('[y*(y-1)*(2*x-1) + 5*x*x*x*x, x*(x-1)*(2*y-1)]')
+F2 = mfrhs.eval('[y*(y-1)*(2*x-1) + 5*x*x*x*x, x*(x-1)*(2*y-1), 0]')
 
 # Model
 md = gf.Model('real')
@@ -115,7 +132,7 @@ else:
   md.add_Dirichlet_condition_with_penalization(mim, 'u', dirichlet_coefficient,
                                                DIRICHLET_BOUNDARY_NUM2,
                                                'DirichletData')
-gf.memstats()
+# gf.memstats()
 # md.listvar()
 # md.listbricks()
 
@@ -128,14 +145,20 @@ L2error = gf.compute(mfu, U-Ue, 'L2 norm', mim)
 H1error = gf.compute(mfu, U-Ue, 'H1 norm', mim)
 print 'Error in L2 norm : ', L2error
 print 'Error in H1 norm : ', H1error
+UU = np.zeros(U.size);
+UU[4] = 1.;
 
 # Export data
-mfu.export_to_pos('laplacian.pos', Ue,'Exact solution',
-                                    U,'Computed solution')
+mfu.export_to_pos('laplacian.pos', Ue, 'Exact solution',
+                  U, 'Computed solution', UU, 'Test field')
 print 'You can view the solution with (for example):'
 print 'gmsh laplacian.pos'
 
+mfu.export_to_vtk('laplacian.vtk', mfu, Ue, 'Exact solution', mfu, U, 'Computed solution', mfu, UU, 'Test field');
+print ('\nYou can view the solution for instance with');
+print ('mayavi2 -d laplacian.vtk -m Surface \n');
 
-if (H1error > 1e-3):
+
+if (H1error > 1e-2):
     print 'Error too large !'
     exit(1)

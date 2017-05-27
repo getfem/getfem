@@ -130,7 +130,6 @@ pyramidal_mesh(getfem::mesh *pmesh, getfemint::mexargs_in &in) {
     }
   }
 
-
   std::vector<int> ipt(dim);
   std::vector<getfem::base_node> pts(1 << (dim+1));
 
@@ -157,19 +156,15 @@ pyramidal_mesh(getfem::mesh *pmesh, getfemint::mexargs_in &in) {
 	}
       }
     }
-    bgeot::base_node barycenter;
+	
+    bgeot::base_node barycenter(3);
     std::vector<size_type> iipts(8);
     for (size_type j = 0; j < 8; j++) {
 	barycenter += pts[j];
 	iipts[j] = pmesh->add_point(pts[j]);
     }
-    barycenter /= 8.; size_type ib = pmesh->add_point(barycenter);
-   
-
-    // we don't use the add_parall since the geometric transformation
-    // is linear (the mesh is cartesian)
-    //pmesh->add_parallelepiped_by_points(dim, pts.begin());
-    //pmesh->add_convex_by_points(pgt, pts.begin());
+    barycenter /= 8.;
+    size_type ib = pmesh->add_point(barycenter);
     pmesh->add_pyramid(iipts[0],iipts[1],iipts[2],iipts[3],ib);
     pmesh->add_pyramid(iipts[4],iipts[6],iipts[5],iipts[7],ib);
     pmesh->add_pyramid(iipts[0],iipts[4],iipts[1],iipts[5],ib);

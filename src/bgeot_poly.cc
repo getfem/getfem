@@ -244,8 +244,10 @@ namespace bgeot {
     return value_list[0];
   }
 
-  base_poly read_base_poly(short_type n, const std::string &s)
-  { std::stringstream f(s); return read_base_poly(n, f); }
+  base_poly read_base_poly(short_type n, const std::string &s) {
+    std::stringstream f(s);
+    return read_base_poly(n, f);
+  }
 
 
 }  /* end of namespace bgeot.                                             */

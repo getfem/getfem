@@ -144,7 +144,7 @@ namespace getfem
     dim_type N = 3;
     bgeot::convex<base_node>
       pararef = *(bgeot::parallelepiped_of_reference(N));
-    base_node a = org, barycenter;
+    base_node a = org, barycenter(N);
     size_type i, nbpt = pararef.nb_points();
 
     for (i = 0; i < nbpt; ++i) {

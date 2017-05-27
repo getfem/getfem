@@ -213,7 +213,7 @@ namespace getfem {
     pintegration_method
       p = std::make_shared<integration_method>
       (composite_approx_int_method(jfs.mp, mi,
-				   bgeot::pyramidal_element_of_reference(3)));
+				   bgeot::pyramidal_element_of_reference(1)));
     dependencies.push_back(p->approx_method()->ref_convex());
     dependencies.push_back(p->approx_method()->pintegration_points());
     return p;

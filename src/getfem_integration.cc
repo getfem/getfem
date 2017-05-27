@@ -832,7 +832,7 @@ namespace getfem {
 			    size_type ip1, size_type ip2=size_type(-1)) : 
       approx_integration
       ((base_im->structure() == bgeot::parallelepiped_structure(3)) ?
-       bgeot::pyramidal_element_of_reference(base_im->dim())
+       bgeot::pyramidal_element_of_reference(1)
        : bgeot::simplex_of_reference(base_im->dim()))  {
       size_type N = base_im->dim();
 

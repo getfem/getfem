@@ -88,12 +88,14 @@ namespace getfem {
                    VTK_VOXEL = 11,
                    VTK_HEXAHEDRON = 12,
                    VTK_WEDGE = 13,
+                   VTK_PYRAMID = 14,
                    VTK_QUADRATIC_EDGE = 21,
                    VTK_QUADRATIC_TRIANGLE = 22,
                    VTK_QUADRATIC_QUAD = 23,
                    VTK_QUADRATIC_TETRA = 24,
                    VTK_QUADRATIC_HEXAHEDRON = 25,
                    /*VTK_QUADRATIC_WEDGE = 26,*/
+		   VTK_QUADRATIC_PYRAMID = 27,
                    VTK_BIQUADRATIC_QUAD = 28,
                    VTK_TRIQUADRATIC_HEXAHEDRON = 29 } vtk_cell_type;
     vtk_export(const std::string& fname, bool ascii_ = false);
@@ -568,13 +570,14 @@ namespace getfem {
 
   public:
     typedef enum {
-                   POS_PT = 0, //point
-                   POS_LN = 1, //line
-                   POS_TR = 2, //triangles
-                   POS_QU = 3, //quadrangles
-                   POS_SI = 4, //tetrahedra
-                   POS_HE = 5, //hexahedra
-                   POS_PR = 6  //prisms
+                   POS_PT = 0, // point
+                   POS_LN = 1, // line
+                   POS_TR = 2, // triangles
+                   POS_QU = 3, // quadrangles
+                   POS_SI = 4, // tetrahedra
+                   POS_HE = 5, // hexahedra
+                   POS_PR = 6, // prisms
+                   POS_PY = 7  // pyramids
     } pos_cell_types;
 
     pos_export(const std::string& fname);
@@ -667,7 +670,7 @@ namespace getfem {
   }
 
   template <class VECT>
-  void pos_export::write(const VECT& V, const size_type qdim_v){
+  void pos_export::write(const VECT& V, const size_type qdim_v) {
     int t;
     std::vector<unsigned> cell_dof;
     std::vector<scalar_type> cell_dof_val;
@@ -684,7 +687,7 @@ namespace getfem {
 
   template <class VECT>
   void pos_export::write_cell(const int& t, const std::vector<unsigned>& dof,
-                                            const VECT& val){
+                                            const VECT& val) {
     size_type qdim_cell = val.size()/dof.size();
     size_type dim3D = size_type(-1);
     if (1==qdim_cell){
@@ -705,6 +708,7 @@ namespace getfem {
       case POS_SI: os << "S("; break; // tetrahedra (simplex)
       case POS_HE: os << "H("; break; // hexahedra
       case POS_PR: os << "I("; break; // prism
+      case POS_PY: os << "Y("; break; // pyramid
     }
     for (size_type i=0; i<dof.size(); ++i){
       for(size_type j=0; j<dim; ++j){

@@ -835,7 +835,7 @@ namespace bgeot {
       trans.resize(R);
 
       if (k == 1) {
-	base_rational_fraction Q(read_base_poly(3, "xy"),    // Q = xy/(1-z)
+	base_rational_fraction Q(read_base_poly(3, "x*y"),    // Q = xy/(1-z)
 				 read_base_poly(3, "1-z"));
 	trans[0] = (read_base_poly(3, "1-x-y-z") + Q)*0.25;
 	trans[1] = (read_base_poly(3, "1+x-y-z") - Q)*0.25;
