@@ -1322,8 +1322,6 @@ namespace getfem {
 		       "implemented only for degree 0, 1 or 2");
     
     return pfem(p);
-    
-
   }
   
   

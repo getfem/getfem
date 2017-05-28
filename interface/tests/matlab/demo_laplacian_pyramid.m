@@ -16,6 +16,7 @@
 % Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 
 % Options for prescribing the Dirichlet condition
+clear all;
 dirichlet_version = 1; % 0 = simplification, 1 = with multipliers,
                        % 2 = penalization,  3 = Nitsche's method
 theta = 1;       % Nitsche's method parameter theta
@@ -24,14 +25,13 @@ r = 1e8;         % Penalization parameter
 draw = true;
 draw_mesh = false;
 
-K = 1;           % Degree of the finite element method
+K = 2;           % Degree of the finite element method
 
 asize =  size(who('automatic_var654'));
 if (asize(1)) draw = false; end;
 
 % trace on;
-gf_workspace('clear all');
-NX = 2;
+NX = 1;
 m = gf_mesh('pyramidal', [0:1/NX:1], [0:1/NX:1], [0:1/NX:1]);
 
 
@@ -57,9 +57,11 @@ end
 % Interpolate the exact solution
 % Uexact = gf_mesh_fem_get(mf, 'eval', { '10*y.*(y-1).*x.*(x-1)+10*x.^5' });
 Uexact = gf_mesh_fem_get(mf, 'eval', { 'x.*sin(2*pi*x).*sin(2*pi*y)' });
+% Uexact = gf_mesh_fem_get(mf, 'eval', { 'sin(x).*sin(y).*sin(z)' });
 % Opposite of its laplacian
 % F      = gf_mesh_fem_get(mf, 'eval', { '-(20*(x.^2+y.^2)-20*x-20*y+200*x.^3)' });
 F      = gf_mesh_fem_get(mf, 'eval', { '4*pi*(2*pi*x.*sin(2*pi*x) - cos(2*pi*x)).*sin(2*pi*y)' });
+% F = gf_mesh_fem_get(mf, 'eval', { '-3*sin(x).*sin(y).*sin(z)' });
 
 md=gf_model('real');
 gf_model_set(md, 'add fem variable', 'u', mf);
@@ -82,7 +84,6 @@ switch (dirichlet_version)
 end
 gf_model_get(md, 'solve');
 U = gf_model_get(md, 'variable', 'u');
-Utest = U*0;
 if (draw)
   figure(2);
   subplot(2,1,1); gf_plot(mf,U,'mesh','off', 'cvlst', gf_mesh_get(m, 'outer faces'), 'refine', 4); 
@@ -92,7 +93,32 @@ if (draw)
   colorbar;title('exact solution');
 end
 
-if(0)
+err = gf_compute(mf, Uexact-U, 'H1 norm', mim);
+
+disp(sprintf('H1 norm of error: %g', err));
+
+M = gf_asm('mass matrix', mim, mf);
+K = gf_asm('laplacian', mim, mf, mf, ones(1, gf_mesh_fem_get(mf, 'nbdof')));
+
+if (0) % Drawing the shape functions on the reference element
+  m2 = gf_mesh('empty', 3);
+  gf_mesh_set(m2, 'add convex', gf_geotrans('GT_PYRAMID(1)'), [-1 -1 0;  1, -1, 0; -1,  1, 0;  1,  1, 0;  0,  0, 1]');
+  mf2 = gf_mesh_fem(m2,1);
+  gf_mesh_fem_set(mf2,'fem',gf_fem('FEM_PYRAMID_LAGRANGE(1)'));
+  Utest = zeros(1,gf_mesh_fem_get(mf2, 'nbdof'));
+  gf_mesh_fem_get(mf2, 'basic dof nodes')
+  for i = 1:size(Utest,2)
+    Utest(i) = 1;
+    figure(3);
+    gf_plot(mf2,Utest,'mesh','on', 'cvlst', gf_mesh_get(m2, 'outer faces'), 'refine', 8); 
+    colorbar;title('shape function');
+    pause;
+    Utest(i) = 0;
+  end
+end
+
+if (0) % Drawing the shape functions on the whole mesh
+  Utest = U*0;
   for i = 1:size(U,2)
     Utest(i) = 1;
     figure(3);
@@ -102,10 +128,6 @@ if(0)
     pause;
   end
 end
-
-err = gf_compute(mf, Uexact-U, 'H1 norm', mim);
-
-disp(sprintf('H1 norm of error: %g', err));
 
 if (err > 2E-4)
    error('Laplacian test: error to big');

@@ -175,8 +175,6 @@ namespace bgeot
    *        variables of P plus the number of variables of Q.
    *        The resulting polynomials have a smaller degree.
    *
-   *  @todo <h3>Horner scheme to evaluate polynomials.</h3>
-   *
    */
   template<typename T> class polynomial : public std::vector<T> {
   protected :

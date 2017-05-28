@@ -318,7 +318,8 @@ namespace bgeot {
     }
     
     pyramid_of_ref_(dim_type k) {
-      GMM_ASSERT1(k == 1 || k == 2, "Sorry exist only in degree 1 or 2, not " << k);
+      GMM_ASSERT1(k == 1 || k == 2,
+		  "Sorry exist only in degree 1 or 2, not " << k);
 
       cvs = pyramidal_structure(k);
       convex<base_node>::points().resize(cvs->nb_points());
