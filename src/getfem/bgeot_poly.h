@@ -749,6 +749,11 @@ namespace bgeot
     return R;
   }
   
+  template<typename T>  std::ostream &operator <<
+  (std::ostream &o, const rational_fraction<T>& P) {
+    o << "[" << P.numerator() << "]/[" << P.denominator() << "]";
+    return o;
+  }
 
   typedef rational_fraction<opt_long_scalar_type> base_rational_fraction;
 

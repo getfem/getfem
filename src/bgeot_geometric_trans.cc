@@ -483,14 +483,43 @@ namespace bgeot {
   struct igeometric_trans : public geometric_trans {
 
     std::vector<FUNC> trans;
+    mutable std::vector<std::vector<FUNC>> grad_, hess_;
 
+    void compute_grad_() const {
+      size_type R = trans.size();
+      dim_type n = dim();
+      grad_.resize(R);
+      for (size_type i = 0; i < R; ++i) {
+	grad_[i].resize(n);
+	for (dim_type j = 0; j < n; ++j) {
+	  grad_[i][j] = trans[i]; grad_[i][j].derivative(j);
+	}
+      }
+    }
+
+    void compute_hess_() const {
+      size_type R = trans.size();
+      dim_type n = dim();
+      hess_.resize(R);
+      for (size_type i = 0; i < R; ++i) {
+	hess_[i].resize(n*n);
+	for (dim_type j = 0; j < n; ++j) {
+	  for (dim_type k = 0; k < n; ++k) {
+	    hess_[i][j+k*n] = trans[i];
+	    hess_[i][j+k*n].derivative(j); hess_[i][j+k*n].derivative(k);
+	  }
+	}
+      }
+    }
+    
     virtual void poly_vector_val(const base_node &pt, base_vector &val) const {
       val.resize(nb_points());
       for (size_type k = 0; k < nb_points(); ++k)
         val[k] = to_scalar(trans[k].eval(pt.begin()));
     }
 
-    virtual void poly_vector_val(const base_node &pt, const convex_ind_ct &ind_ct,
+    virtual void poly_vector_val(const base_node &pt,
+				 const convex_ind_ct &ind_ct,
                                  base_vector &val) const {
       size_type nb_funcs=ind_ct.size();
       val.resize(nb_funcs);
@@ -499,40 +528,35 @@ namespace bgeot {
     }
 
     virtual void poly_vector_grad(const base_node &pt, base_matrix &pc) const {
+      if (!(grad_.size())) compute_grad_();
       FUNC PP;
       pc.base_resize(nb_points(),dim());
       for (size_type i = 0; i < nb_points(); ++i)
-        for (dim_type n = 0; n < dim(); ++n) {
-          PP = trans[i];
-          PP.derivative(n);
-          pc(i, n) = to_scalar(PP.eval(pt.begin()));
-        }
+        for (dim_type n = 0; n < dim(); ++n)
+          pc(i, n) = to_scalar(grad_[i][n].eval(pt.begin()));
     }
 
     virtual void poly_vector_grad(const base_node &pt,
 				  const convex_ind_ct &ind_ct,
                                   base_matrix &pc) const {
+      if (!(grad_.size())) compute_grad_();
       FUNC PP;
       size_type nb_funcs=ind_ct.size();
       pc.base_resize(nb_funcs,dim());
       for (size_type i = 0; i < nb_funcs; ++i)
-        for (dim_type n = 0; n < dim(); ++n) {
-          PP = trans[ind_ct[i]];
-          PP.derivative(n);
-          pc(i, n) = to_scalar(PP.eval(pt.begin()));
-        }
+        for (dim_type n = 0; n < dim(); ++n)
+          pc(i, n) = to_scalar(grad_[ind_ct[i]][n].eval(pt.begin()));
     }
 
     virtual void poly_vector_hess(const base_node &pt, base_matrix &pc) const {
+      if (!(grad_.size())) compute_grad_();
       FUNC PP, QP;
       pc.base_resize(nb_points(),dim()*dim());
       for (size_type i = 0; i < nb_points(); ++i)
         for (dim_type n = 0; n < dim(); ++n) {
-          QP = trans[i]; QP.derivative(n);
-          for (dim_type m = 0; m <= n; ++m) {
-            PP = QP; PP.derivative(m);
-            pc(i, n*dim()+m) = pc(i, m*dim()+n) = to_scalar(PP.eval(pt.begin()));
-          }
+          for (dim_type m = 0; m <= n; ++m)
+            pc(i, n*dim()+m) = pc(i, m*dim()+n) =
+	      to_scalar(hess_[i][m*dim()+n].eval(pt.begin()));
         }
     }
 

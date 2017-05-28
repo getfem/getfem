@@ -1280,11 +1280,11 @@ namespace getfem {
     } else if (k == 2) {
       p->base().resize(14);
 
-      base_poly xi0 = bgeot::read_base_poly(3, "(1-z-x)*0.5");
-      base_poly xi1 = bgeot::read_base_poly(3, "(1-z-y)*0.5");
-      base_poly xi2 = bgeot::read_base_poly(3, "(1-z+x)*0.5");
-      base_poly xi3 = bgeot::read_base_poly(3, "(1-z+y)*0.5");
-      base_poly z = bgeot::read_base_poly(3, "z");
+      base_poly xi0  = bgeot::read_base_poly(3, "(1-z-x)*0.5");
+      base_poly xi1  = bgeot::read_base_poly(3, "(1-z-y)*0.5");
+      base_poly xi2  = bgeot::read_base_poly(3, "(1-z+x)*0.5");
+      base_poly xi3  = bgeot::read_base_poly(3, "(1-z+y)*0.5");
+      base_poly z    = bgeot::read_base_poly(3, "z");
       base_poly un_z = bgeot::read_base_poly(3, "1-z");
       bgeot::base_rational_fraction Q(bgeot::read_base_poly(3, "1"), un_z);
       
@@ -1317,8 +1317,6 @@ namespace getfem {
       p->add_node(lag_dof, base_small_vector(-0.5,  0.5, 0.5));
       p->add_node(lag_dof, base_small_vector( 0.5,  0.5, 0.5));
       p->add_node(lag_dof, base_small_vector( 0.0,  0.0, 1.0));
-
-      GMM_ASSERT1(false, "to be completed");
 
     } else GMM_ASSERT1(false, "Sorry, pyramidal Lagrange fem "
 		       "implemented only for degree 0, 1 or 2");
