@@ -280,9 +280,8 @@ namespace getfem {
       if ((shape_updated_ = child(0).is_shape_updated())) {
         if (reorder.size() != child(0).ranges().size())
           ASM_THROW_TENSOR_ERROR("can't reorder tensor '" << name()
-          << "' of dimensions " 
-          << child(0).ranges() << 
-          " with this permutation: " << reorder);
+				 << "' of dimensions " << child(0).ranges() << 
+				 " with this permutation: " << vref(reorder));
         r_.resize(reorder.size());
         std::fill(r_.begin(), r_.end(), dim_type(-1));
 
@@ -1462,9 +1461,9 @@ namespace getfem {
       }
       if (check_permut.first_false() != reorder.size()) {
         cerr << check_permut << endl;
-        cerr << reorder << endl;
+        cerr << vref(reorder) << endl;
         ASM_THROW_PARSE_ERROR("you did not give a real permutation:"
-          << reorder);
+			      << vref(reorder));
       }
       t = tnode(record(std::make_unique<ATN_permuted_tensor>(*t.tensor(), reorder)));
     }

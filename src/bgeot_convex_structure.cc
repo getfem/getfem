@@ -28,9 +28,9 @@
 namespace bgeot {
 
   /* ******************************************************************** */
-  /*                                                                          */
+  /*                                                                      */
   /* class   convex_structure                                             */
-  /*                                                                          */
+  /*                                                                      */
   /* ******************************************************************** */
 
   void convex_structure::add_point_adaptative(short_type i, short_type f) {
@@ -358,26 +358,25 @@ namespace bgeot {
     { DAL_STORED_OBJECT_DEBUG_DESTROYED(this, "parallelepiped structure"); }
   };
 
-  DAL_SIMPLE_KEY(parallelepiped_key_, dim_type);
+  DAL_DOUBLE_KEY(parallelepiped_key_, dim_type, dim_type);
 
-  pconvex_structure parallelepiped_structure(dim_type nc) {
-    if (nc <= 1) return simplex_structure(nc);
+  pconvex_structure parallelepiped_structure(dim_type nc, dim_type k) {
+    if (nc <= 1) return simplex_structure(nc, k);
     dal::pstatic_stored_object_key
-      pcsk = std::make_shared<parallelepiped_key_>(nc);
+      pcsk = std::make_shared<parallelepiped_key_>(nc, k);
 
     dal::pstatic_stored_object o = dal::search_stored_object(pcsk);
     if (o) return ((std::dynamic_pointer_cast<const parallelepiped_>(o))->p);
     auto p = std::make_shared<parallelepiped_>();
-    p->p = convex_product_structure(parallelepiped_structure(dim_type(nc-1)),
-                                    simplex_structure(1));
+    p->p = convex_product_structure(parallelepiped_structure(dim_type(nc-1),k),
+                                    simplex_structure(1,k));
     dal::add_stored_object(pcsk, dal::pstatic_stored_object(p), p->p,
                            dal::PERMANENT_STATIC_OBJECT);
     return p->p;
   }
 
-
   /* ******************************************************************** */
-  /*        Incomplete Q2 structure for n=2 or 3.                             */
+  /*        Incomplete Q2 structure for n=2 or 3.                         */
   /* ******************************************************************** */
   /* By Yao Koutsawa  <yao.koutsawa@tudor.lu> 2012-12-10                  */
 
@@ -456,8 +455,106 @@ namespace bgeot {
   }
 
 
+
   /* ******************************************************************** */
-  /*        Generic dummy convex with n global nodes.                         */
+  /*        Pyramidal 3D structure for k=1 or 2.                          */
+  /* ******************************************************************** */
+
+  struct pyramidal_structure_ : public convex_structure {
+    friend pconvex_structure pyramidal_structure(dim_type k);
+  };
+
+  DAL_SIMPLE_KEY(pyramidal_structure_key_, dim_type);
+
+  pconvex_structure pyramidal_structure(dim_type k) {
+    GMM_ASSERT1(k == 1 || k == 2, "Sorry, pyramidal elements implemented "
+		"only for degree one or two.");
+    dal::pstatic_stored_object_key
+      pcsk = std::make_shared<pyramidal_structure_key_>(k);
+    dal::pstatic_stored_object o = dal::search_stored_object(pcsk);
+    if (o) return std::dynamic_pointer_cast<const convex_structure>(o);
+
+    auto p = std::make_shared<pyramidal_structure_>();
+    pconvex_structure pcvs(p);
+    
+    p->Nc = 3;
+    p->dir_points_ = std::vector<short_type>(p->Nc + 1);
+    
+
+    if (k == 1) {
+      p->nbpt = 5;
+      p->nbf = 5;
+      p->auto_basic = true;
+      //    4 
+      //   /|||
+      //  / || |
+      // 2-|--|-3
+      // | |  | |
+      // ||    ||
+      // ||    ||
+      // 0------1
+      p->faces_struct.resize(p->nbf);
+      p->faces = std::vector< std::vector<short_type> >(p->nbf);
+      sc(p->faces[0]) = 0,1,2,3;
+      sc(p->faces[1]) = 0,1,4;
+      sc(p->faces[2]) = 1,3,4;
+      sc(p->faces[3]) = 3,2,4;
+      sc(p->faces[4]) = 2,0,4;
+
+      p->dir_points_[0] = 0;
+      p->dir_points_[1] = 1;
+      p->dir_points_[2] = 2;
+      p->dir_points_[3] = 4;
+
+      p->faces_struct[0] = parallelepiped_structure(2);
+      for (int i = 1; i < p->nbf; i++)
+	p->faces_struct[i] = simplex_structure(2);
+
+      dal::add_stored_object(pcsk, pcvs, parallelepiped_structure(2),
+			     simplex_structure(2),
+			     dal::PERMANENT_STATIC_OBJECT);
+      
+    } else {
+      p->nbpt = 14;
+      p->nbf = 5;
+      p->basic_pcvs = pyramidal_structure(1);
+      //    13
+      //   /  |
+      //  11--12
+      //  |   |
+      //  9---10
+      //  /    |
+      // 6--7--8
+      // |     |
+      // 3  4  5
+      // |     |
+      // 0--1--2
+      p->faces_struct.resize(p->nbf);
+      p->faces = std::vector< std::vector<short_type> >(p->nbf);
+      sc(p->faces[0]) = 0,1,2,3,4,5,6,7,8;
+      sc(p->faces[1]) = 0,1,2,9,10,13;
+      sc(p->faces[2]) = 2,5,8,10,12,13;
+      sc(p->faces[3]) = 8,7,6,12,11,13;
+      sc(p->faces[4]) = 6,3,0,11,9,13;
+
+      p->dir_points_[0] = 0;
+      p->dir_points_[1] = 2;
+      p->dir_points_[2] = 6;
+      p->dir_points_[3] = 13;
+
+      p->faces_struct[0] = parallelepiped_structure(2, 2);
+      for (int i = 1; i < p->nbf; i++)
+	p->faces_struct[i] = simplex_structure(2, 2);
+
+      dal::add_stored_object(pcsk, pcvs, parallelepiped_structure(2, 2),
+			     simplex_structure(2, 2),
+			     dal::PERMANENT_STATIC_OBJECT);
+    }
+    return pcvs;
+  }
+  
+  /* ******************************************************************** */
+  /*        Generic dummy convex with n global nodes.                     */
   /* ******************************************************************** */
 
   struct dummy_structure_ : public convex_structure {

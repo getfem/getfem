@@ -27,6 +27,10 @@ References
    *Improved implementation and robustness study of the X-FEM for stress analysis around cracks*.
    Internat. J. Numer. Methods Engrg., 64, 1033-1056, 2005.
 
+.. [BE-CO-DU2010] M. Bergot, G. Cohen, M. |durufle|.
+   *Higher-order finite elements for hybrid meshes using new nodal pyramidal elements*
+   J. Sci. Comput., 42, 345-381, 2010.
+   
 .. [br-ba-fo1989] F. Brezzi, K.J. Bathe, M. Fortin.
    *Mixed-interpolated element for Reissner-Mindlin plates*. Internat. J. Numer. Methods Engrg., 28, 1787-1801, 1989.
 
@@ -78,6 +82,10 @@ References
 .. [Georg2001] K. Georg.
    *Matrix-free numerical continuation and bifurcation*. Numer. Funct. Anal. Optimization 22, 303-320, 2001.
 
+.. [GR-GH1999] R.D. Graglia, I.-L. Gheorma.
+   *Higher order interpolatory vector bases on pyramidal elements*
+   IEEE transactions on antennas and propagation, 47:5, 775-782, 1999.
+   
 .. [GR-ST2015] D. Grandi, U. Stefanelli.
    *The Souza-Auricchio model for shape-memory alloys*
    Discrete and Continuous Dynamical Systems, Series S, 8(4):723-747, 2015.
@@ -178,6 +186,7 @@ References
 .. |dolezel| unicode:: Dole U+017E el 
    :rtrim:
 .. |ligursky| unicode:: Ligursk U+00FD
+.. |durufle| unicode:: Durufl U+00E9
 .. |solin| unicode:: U+0160 ol U+00ED n 
    :rtrim:
 

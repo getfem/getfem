@@ -194,6 +194,12 @@ namespace gmm {
   std::ostream &operator << (std::ostream &o, const simple_vector_ref<PT>& v)
   { gmm::write(o,v); return o; }
 
+  template <typename T, typename alloc>
+  simple_vector_ref<const std::vector<T,alloc> *>
+    vref(const std::vector<T, alloc> &vv)
+  { return simple_vector_ref<const std::vector<T,alloc> *>(vv); }
+  
+
   /* ********************************************************************* */
   /*		                                         		   */
   /*		Traits for S.T.L. object                     		   */
@@ -230,13 +236,9 @@ namespace gmm {
     { return it[i]; }
     static void resize(this_type &v, size_type n) { v.resize(n); }
   };
-}
-namespace std {
-  template <typename T> ostream &operator <<
-  (std::ostream &o, const vector<T>& m) { gmm::write(o,m); return o; }
-}
-namespace gmm {
 
+  
+  
   template <typename T>
   inline size_type nnz(const std::vector<T>& l) { return l.size(); }
 

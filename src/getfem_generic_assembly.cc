@@ -9517,7 +9517,7 @@ namespace getfem {
                     pnode->tensor()(i,j)
 		      = ((i == j) ? scalar_type(1) : scalar_type(0));
               } else {
-                pnode->init_vector_tensor(n);
+                pnode->t.adjust_sizes(workspace.qdims(name));
                 gmm::copy(workspace.value(name), pnode->tensor().as_vector());
               }
             }

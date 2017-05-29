@@ -1095,7 +1095,7 @@ namespace getfem {
 
 
   /* ******************************************************************** */
-  /*        Quad8/Hexa20 SERENDIPITY ELEMENT (dim 2 or 3) (incomplete Q2)     */
+  /*     Quad8/Hexa20 SERENDIPITY ELEMENT (dim 2 or 3) (incomplete Q2)    */
   /* ******************************************************************** */
 
   // local dof numeration for 2D:
@@ -1218,8 +1218,143 @@ namespace getfem {
   }
 
 
+  /* ******************************************************************** */
+  /*    Lagrange Pyramidal element of degree 0, 1 and 2                   */
+  /* ******************************************************************** */
+
+  // local dof numeration for K=1:
+  //    4 
+  //   /|||
+  //  / || |
+  // 2-|--|-3
+  // | |  | |
+  // ||    ||
+  // ||    ||
+  // 0------1
+  //
+  // local dof numeration for K=2:
+  //
+  //    13
+  //   /  |
+  //  11---12
+  //  |    |
+  //  9----10
+  //  /     |
+  // 6---7---8
+  // |       |
+  // 3   4   5
+  // |       |
+  // 0---1---2
+
+  static pfem build_pyramidal_pk_fem(short_type k, bool disc) {
+    auto p = std::make_shared<fem<bgeot::base_rational_fraction>>();
+    p->mref_convex() = bgeot::pyramidal_element_of_reference(1);
+    p->dim() = 3;
+    p->is_standard() = p->is_equivalent() = true;
+    p->is_polynomial() = false;
+    p->is_lagrange() = true;
+    p->estimated_degree() = k;
+    p->init_cvs_node();
+    auto lag_dof = disc ? lagrange_nonconforming_dof(3) : lagrange_dof(3);
+
+    if (k == 0) {
+      p->base().resize(1);
+      p->base()[0] = bgeot::read_base_poly(3, "1");
+      p->add_node(lagrange_0_dof(3), base_small_vector(0.0, 0.0, 0.5));
+    } else if (k == 1) {
+      p->base().resize(5);
+      bgeot::base_rational_fraction // Q = xy/(1-z)
+	Q(bgeot::read_base_poly(3, "x*y"), bgeot::read_base_poly(3, "1-z"));
+      p->base()[0] = (bgeot::read_base_poly(3, "1-x-y-z") + Q)*0.25;
+      p->base()[1] = (bgeot::read_base_poly(3, "1+x-y-z") - Q)*0.25;
+      p->base()[2] = (bgeot::read_base_poly(3, "1-x+y-z") - Q)*0.25;
+      p->base()[3] = (bgeot::read_base_poly(3, "1+x+y-z") + Q)*0.25;
+      p->base()[4] = bgeot::read_base_poly(3, "z");
+
+      p->add_node(lag_dof, base_small_vector(-1.0, -1.0, 0.0));
+      p->add_node(lag_dof, base_small_vector( 1.0, -1.0, 0.0));
+      p->add_node(lag_dof, base_small_vector(-1.0,  1.0, 0.0));
+      p->add_node(lag_dof, base_small_vector( 1.0,  1.0, 0.0));
+      p->add_node(lag_dof, base_small_vector( 0.0,  0.0, 1.0));
+
+    } else if (k == 2) {
+      p->base().resize(14);
+
+      base_poly xi0  = bgeot::read_base_poly(3, "(1-z-x)*0.5");
+      base_poly xi1  = bgeot::read_base_poly(3, "(1-z-y)*0.5");
+      base_poly xi2  = bgeot::read_base_poly(3, "(1-z+x)*0.5");
+      base_poly xi3  = bgeot::read_base_poly(3, "(1-z+y)*0.5");
+      base_poly z    = bgeot::read_base_poly(3, "z");
+      base_poly un_z = bgeot::read_base_poly(3, "1-z");
+      bgeot::base_rational_fraction Q(bgeot::read_base_poly(3, "1"), un_z);
+      
+      p->base()[ 0] = Q*xi0*xi1*((un_z-xi0*2.)*(un_z-xi1*2.)-z);
+      p->base()[ 1] = Q*Q*xi0*xi1*xi2*(xi1*2.-un_z)*4.;
+      p->base()[ 2] = Q*xi1*xi2*((un_z-xi1*2.)*(un_z-xi2*2.)-z);
+      p->base()[ 3] = Q*Q*xi3*xi0*xi1*(xi0*2.-un_z)*4.;
+      p->base()[ 4] = Q*Q*xi0*xi1*xi2*xi3*16.;
+      p->base()[ 5] = Q*Q*xi1*xi2*xi3*(xi2*2.-un_z)*4.;
+      p->base()[ 6] = Q*xi3*xi0*((un_z-xi3*2.)*(un_z-xi0*2.)-z);
+      p->base()[ 7] = Q*Q*xi2*xi3*xi0*(xi3*2.-un_z)*4.;
+      p->base()[ 8] = Q*xi2*xi3*((un_z-xi2*2.)*(un_z-xi3*2.)-z);
+      p->base()[ 9] = Q*z*xi0*xi1*4.;
+      p->base()[10] = Q*z*xi1*xi2*4.;
+      p->base()[11] = Q*z*xi3*xi0*4.;
+      p->base()[12] = Q*z*xi2*xi3*4.;
+      p->base()[13] = bgeot::read_base_poly(3, "z*(2*z-1)");
+      
+      p->add_node(lag_dof, base_small_vector(-1.0, -1.0, 0.0));
+      p->add_node(lag_dof, base_small_vector( 0.0, -1.0, 0.0));
+      p->add_node(lag_dof, base_small_vector( 1.0, -1.0, 0.0));
+      p->add_node(lag_dof, base_small_vector(-1.0,  0.0, 0.0));
+      p->add_node(lag_dof, base_small_vector( 0.0,  0.0, 0.0));
+      p->add_node(lag_dof, base_small_vector( 1.0,  0.0, 0.0));
+      p->add_node(lag_dof, base_small_vector(-1.0,  1.0, 0.0));
+      p->add_node(lag_dof, base_small_vector( 0.0,  1.0, 0.0));
+      p->add_node(lag_dof, base_small_vector( 1.0,  1.0, 0.0));
+      p->add_node(lag_dof, base_small_vector(-0.5, -0.5, 0.5));
+      p->add_node(lag_dof, base_small_vector( 0.5, -0.5, 0.5));
+      p->add_node(lag_dof, base_small_vector(-0.5,  0.5, 0.5));
+      p->add_node(lag_dof, base_small_vector( 0.5,  0.5, 0.5));
+      p->add_node(lag_dof, base_small_vector( 0.0,  0.0, 1.0));
+
+    } else GMM_ASSERT1(false, "Sorry, pyramidal Lagrange fem "
+		       "implemented only for degree 0, 1 or 2");
+    
+    return pfem(p);
+  }
+  
+  
+  static pfem pyramidal_pk_fem(fem_param_list &params,
+		      std::vector<dal::pstatic_stored_object> &dependencies) {
+    GMM_ASSERT1(params.size() <= 1, "Bad number of parameters");
+    short_type k = 2;
+    if (params.size() > 0) {
+      GMM_ASSERT1(params[0].type() == 0, "Bad type of parameters");
+      k = dim_type(::floor(params[0].num() + 0.01));
+    }
+    pfem p = build_pyramidal_pk_fem(k, false);
+    dependencies.push_back(p->ref_convex(0));
+    dependencies.push_back(p->node_tab(0));
+    return p;
+  }
+
+  static pfem pyramidal_disc_pk_fem(fem_param_list &params,
+		     std::vector<dal::pstatic_stored_object> &dependencies) {
+    GMM_ASSERT1(params.size() <= 1, "Bad number of parameters");
+    short_type k = 2;
+    if (params.size() > 0) {
+      GMM_ASSERT1(params[0].type() == 0, "Bad type of parameters");
+      k = dim_type(::floor(params[0].num() + 0.01));
+    }
+    pfem p = build_pyramidal_pk_fem(k, false);
+    dependencies.push_back(p->ref_convex(0));
+    dependencies.push_back(p->node_tab(0));
+    return p;
+  }
+
    /* ******************************************************************** */
-   /*        P1 element with a bubble base fonction on a face                   */
+   /*        P1 element with a bubble base fonction on a face              */
    /* ******************************************************************** */
 
    struct P1_wabbfoaf_ : public PK_fem_ {
@@ -3395,7 +3530,7 @@ namespace getfem {
     DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(short_type, k_last, short_type(-1));
     DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(pfem, fm_last, 0);
     DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(char, isuffix_last, 0);
-    bool found = false, isuffix = suffix[0];
+    bool found = false, isuffix = suffix[0], spec_dim = true;
 
     if (pgt_last == pgt && k_last == k && isuffix == isuffix_last)
       return fm_last;
@@ -3412,22 +3547,30 @@ namespace getfem {
     /* Identifying P1-simplexes.                                          */
     if (nbp == n+1)
       if (pgt->basic_structure() == bgeot::simplex_structure(dim_type(n)))
-            { name << "FEM_PK" << suffix << "("; found = true; }
+	{ name << "FEM_PK" << suffix << "("; found = true; }
 
     /* Identifying Q1-parallelepiped.                                     */
     if (!found && nbp == (size_type(1) << n))
       if (pgt->basic_structure()==bgeot::parallelepiped_structure(dim_type(n)))
-            { name << "FEM_QK" << suffix << "("; found = true; }
+	{ name << "FEM_QK" << suffix << "("; found = true; }
 
     /* Identifying Q1-prisms.                                             */
     if (!found && nbp == 2 * n)
       if (pgt->basic_structure() == bgeot::prism_structure(dim_type(n)))
-             { name << "FEM_PK_PRISM" << suffix << "("; found = true; }
+	{ name << "FEM_PK_PRISM" << suffix << "("; found = true; }
+    
+    /* Identifying pyramids.                                              */
+    if (!found && nbp == 5)
+      if (pgt->basic_structure() == bgeot::pyramidal_structure(1)) {
+	name << "FEM_PYRAMID" << suffix << "_LAGRANGE(";
+	found = true; spec_dim = false;
+      }
 
     // To be completed
 
     if (found) {
-      name << int(n) << ',' << int(k) << arg << ')';
+      if (spec_dim) name << int(n) << ',';
+      name << int(k) << arg << ')';
       fm_last = fem_descriptor(name.str());
       pgt_last = pgt;
       k_last = k;
@@ -3503,6 +3646,8 @@ namespace getfem {
       add_suffix("RT0", P1_RT0);
       add_suffix("RT0Q", P1_RT0Q);
       add_suffix("NEDELEC", P1_nedelec);
+      add_suffix("PYRAMID_LAGRANGE", pyramidal_pk_fem);
+      add_suffix("PYRAMID_DISCONTINUOUS_LAGRANGE", pyramidal_disc_pk_fem);
     }
   };
 

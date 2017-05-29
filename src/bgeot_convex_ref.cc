@@ -134,19 +134,19 @@ namespace bgeot {
   class K_simplex_of_ref_ : public convex_of_reference {
   public :
     scalar_type is_in(const base_node &pt) const {
-      // return a negative or null number if pt is in the convex
+      // return a negative number if pt is in the convex
       GMM_ASSERT1(pt.size() == cvs->dim(),
-                  "K_simplex_of_ref_::is_in: Dimension does not match");
+                  "K_simplex_of_ref_::is_in: Dimensions mismatch");
       scalar_type e = -1.0, r = (pt.size() > 0) ? -pt[0] : 0.0;
       base_node::const_iterator it = pt.begin(), ite = pt.end();
       for (; it != ite; e += *it, ++it) r = std::max(r, -(*it));
       return std::max(r, e);
     }
     scalar_type is_in_face(short_type f, const base_node &pt) const {
-      // return a null number if pt is in the face of the convex
+      // return zero if pt is in the face of the convex
       // negative if the point is on the side of the face where the element is
       GMM_ASSERT1(pt.size() == cvs->dim(),
-                  "K_simplex_of_ref_::is_in_face: Dimension does not match");
+                  "K_simplex_of_ref_::is_in_face: Dimensions mismatch");
       if (f > 0) return -pt[f-1];
       scalar_type e = -1.0;
       base_node::const_iterator it = pt.begin(), ite = pt.end();
@@ -295,6 +295,91 @@ namespace bgeot {
     return p;
   }
 
+  /* ******************************************************************** */
+  /*    Pyramidal element of reference.                                   */
+  /* ******************************************************************** */
+
+  class pyramid_of_ref_ : public convex_of_reference {
+  public :
+    scalar_type is_in_face(short_type f, const base_node& pt) const {
+      // return zero if pt is in the face of the convex
+      // negative if the point is on the side of the face where the element is
+      GMM_ASSERT1(pt.size() == 3, "Dimensions mismatch");
+      if (f == 0)
+	return -pt[2];
+      else
+	return gmm::vect_sp(normals_[f], pt) - sqrt(2.)/2.;
+    }
+    scalar_type is_in(const base_node& pt) const {
+      // return a negative number if pt is in the convex
+      scalar_type r = is_in_face(0, pt);
+      for (short_type i = 1; i < 5; ++i) r = std::max(r, is_in_face(i, pt));
+      return r;
+    }
+    
+    pyramid_of_ref_(dim_type k) {
+      GMM_ASSERT1(k == 1 || k == 2,
+		  "Sorry exist only in degree 1 or 2, not " << k);
+
+      cvs = pyramidal_structure(k);
+      convex<base_node>::points().resize(cvs->nb_points());
+      normals_.resize(cvs->nb_faces());
+      if (k == 1)
+	auto_basic = true;
+      else
+	basic_convex_ref_ = pyramidal_element_of_reference(1);
+
+      sc(normals_[0]) =  0., 0., 1.;
+      sc(normals_[1]) =  0.,-1., 1.;
+      sc(normals_[2]) =  1., 0., 1.;
+      sc(normals_[3]) =  0., 1., 1.;
+      sc(normals_[4]) = -1., 0., 1.;
+
+      for (size_type i = 0; i < normals_.size(); ++i)
+	gmm::scale(normals_[i], 1. / gmm::vect_norm2(normals_[i]));
+      
+      if (k==1) {
+        convex<base_node>::points()[0]  = base_node(-1.0, -1.0, 0.0);
+        convex<base_node>::points()[1]  = base_node( 1.0, -1.0, 0.0);
+        convex<base_node>::points()[2]  = base_node(-1.0,  1.0, 0.0);
+        convex<base_node>::points()[3]  = base_node( 1.0,  1.0, 0.0);
+        convex<base_node>::points()[4]  = base_node( 0.0,  0.0, 1.0);
+      } else if (k==2) {
+        convex<base_node>::points()[0]  = base_node(-1.0, -1.0, 0.0);
+        convex<base_node>::points()[1]  = base_node( 0.0, -1.0, 0.0);
+        convex<base_node>::points()[2]  = base_node( 1.0, -1.0, 0.0);
+        convex<base_node>::points()[3]  = base_node(-1.0,  0.0, 0.0);
+        convex<base_node>::points()[4]  = base_node( 0.0,  0.0, 0.0);
+        convex<base_node>::points()[5]  = base_node( 1.0,  0.0, 0.0);
+        convex<base_node>::points()[6]  = base_node(-1.0,  1.0, 0.0);
+        convex<base_node>::points()[7]  = base_node( 0.0,  1.0, 0.0);
+        convex<base_node>::points()[8]  = base_node( 1.0,  1.0, 0.0);
+        convex<base_node>::points()[9]  = base_node(-0.5, -0.5, 0.5);
+        convex<base_node>::points()[10] = base_node( 0.5, -0.5, 0.5);
+        convex<base_node>::points()[11] = base_node(-0.5,  0.5, 0.5);
+        convex<base_node>::points()[12] = base_node( 0.5,  0.5, 0.5);
+        convex<base_node>::points()[13] = base_node( 0.0,  0.0, 1.0);
+      }
+      ppoints = store_point_tab(convex<base_node>::points());
+    }
+  };
+  
+  
+  DAL_SIMPLE_KEY(pyramidal_reference_key_, dim_type);
+  
+  pconvex_ref pyramidal_element_of_reference(dim_type k) {
+     dal::pstatic_stored_object_key
+      pk = std::make_shared<pyramidal_reference_key_>(k);
+    dal::pstatic_stored_object o = dal::search_stored_object(pk);
+    if (o) return std::dynamic_pointer_cast<const convex_of_reference>(o);
+    pconvex_ref p = std::make_shared<pyramid_of_ref_>(k);
+    dal::add_stored_object(pk, p, p->structure(), p->pspt(),
+                           dal::PERMANENT_STATIC_OBJECT);
+    pconvex_ref p1 = basic_convex_ref(p);
+    if (p != p1) add_dependency(p, p1); 
+    return p;
+  }
+
 
   /* ******************************************************************** */
   /*    Products.                                                         */
@@ -317,7 +402,7 @@ namespace bgeot {
 
     scalar_type is_in_face(short_type f, const base_node &pt) const {
       // ne controle pas si le point est dans le convexe mais si un point
-      // supposé appartenir au convexe est dans une face donnée
+      // suppos\E9 appartenir au convexe est dans une face donn\E9e
       dim_type n1 = cvr1->structure()->dim(), n2 = cvr2->structure()->dim();
       base_node pt1(n1), pt2(n2);
       GMM_ASSERT1(pt.size() == cvs->dim(), "Dimensions mismatch");
@@ -370,20 +455,10 @@ namespace bgeot {
     return p;
   }
 
-  struct parallelepiped_of_reference_tab
-    : public dal::dynamic_array<pconvex_ref> {};
-
-  pconvex_ref parallelepiped_of_reference(dim_type nc) {
-    parallelepiped_of_reference_tab &tab
-      = dal::singleton<parallelepiped_of_reference_tab>::instance();
-    static dim_type ncd = 1;
-    if (nc <= 1) return simplex_of_reference(nc);
-    if (nc > ncd) { 
-      tab[nc] = convex_ref_product(parallelepiped_of_reference(dim_type(nc-1)),
-                                   simplex_of_reference(1));
-      ncd = nc;
-    }
-    return tab[nc];
+  pconvex_ref parallelepiped_of_reference(dim_type nc, dim_type k) {
+    if (nc <= 1) return simplex_of_reference(nc,k);
+    return convex_ref_product(parallelepiped_of_reference(dim_type(nc-1),k),
+			      simplex_of_reference(k));
   }
 
   pconvex_ref prism_of_reference(dim_type nc) {

@@ -43,11 +43,6 @@ This is the kernel of getfem.
 #include <vector>
 #include <algorithm>
 
-#ifdef GETFEM_HAVE_OPENMP
-#include <omp.h>
-#include <boost/thread.hpp>
-#endif
-
 #ifdef _WIN32
 #include <mbctype.h>
 #endif
@@ -57,6 +52,8 @@ This is the kernel of getfem.
 #include "gmm/gmm_std.h"
 #include "bgeot_config.h"
 #ifdef GETFEM_HAVE_OPENMP
+#include <omp.h>
+#include <boost/thread.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/make_shared.hpp>
 #endif

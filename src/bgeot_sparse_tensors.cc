@@ -628,9 +628,9 @@ namespace bgeot {
       cout << "  pri[" << int(i) << "]: n=" << int(pri[i].n) 
            << ", range=" << pri[i].range << ", mean_increm=" 
            << pri[i].mean_increm << ", regular = " << pri[i].have_regular_strides 
-           << ", inc=" << pri[i].inc << "\n";
-    cout << "bloc_rank: " << bloc_rank << ", bloc_nelt: " << bloc_nelt << "\n";    
-    cout << "vectorized_size : " << vectorized_size_ << ", strides = " << vectorized_strides_ << ", pr_dim=" << vectorized_pr_dim << "\n";
+           << ", inc=" << vref(pri[i].inc) << "\n";
+    cout << "bloc_rank: " << vref(bloc_rank) << ", bloc_nelt: " << vref(bloc_nelt) << "\n";    
+    cout << "vectorized_size : " << vectorized_size_ << ", strides = " << vref(vectorized_strides_) << ", pr_dim=" << vectorized_pr_dim << "\n";
   }
 
   void tensor_reduction::insert(const tensor_ref& tr_, const std::string& s) {

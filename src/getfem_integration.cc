@@ -830,57 +830,75 @@ namespace getfem {
   struct quasi_polar_integration : public approx_integration {
     quasi_polar_integration(papprox_integration base_im, 
 			    size_type ip1, size_type ip2=size_type(-1)) : 
-      approx_integration(bgeot::simplex_of_reference(base_im->dim()))  {
+      approx_integration
+      ((base_im->structure() == bgeot::parallelepiped_structure(3)) ?
+       bgeot::pyramidal_element_of_reference(1)
+       : bgeot::simplex_of_reference(base_im->dim()))  {
       size_type N = base_im->dim();
 
-      enum { SQUARE, PRISM, PYRAMID, PRISM2 } what;
+      enum { SQUARE, PRISM, TETRA_CYL, PRISM2, PYRAMID } what;
       if (N == 2) what = SQUARE;
       else if (base_im->structure() == bgeot::prism_structure(3))
 	what = (ip2 == size_type(-1) || ip1 == ip2) ? PRISM2 : PRISM;
       else if (base_im->structure() == bgeot::simplex_structure(3))
+	what = TETRA_CYL;
+      else if (base_im->structure() == bgeot::parallelepiped_structure(3))
 	what = PYRAMID;
       else GMM_ASSERT1(false, "Incoherent integration method");
 
       // The first geometric transformation collapse a face of
-      // a parallelepiped.
+      // a parallelepiped or collapse a parrallelepiped on a pyramid.
       // The second geometric transformation chooses the orientation.
-      // The third is used for the PYRAMID case only.
+      // The third is used for the TETRA_CYL case only.
       bgeot::pgeometric_trans pgt1 = bgeot::parallelepiped_geotrans(N,1);
-      bgeot::pgeometric_trans pgt2 = bgeot::simplex_geotrans(N, 1);
-      bgeot::pgeometric_trans pgt3 = bgeot::simplex_geotrans(N, 1);
       std::vector<base_node> nodes1 = pgt1->convex_ref()->points();
-      std::vector<base_node> nodes2(N+1), nodes3(N+1);
-      std::vector<size_type> other_nodes;
+      bgeot::pgeometric_trans pgt2 = bgeot::simplex_geotrans(N, 1);
+      std::vector<base_node> nodes2(N+1);
+      std::vector<size_type> other_nodes; // for the construction of node2
+      bgeot::pgeometric_trans pgt3 = bgeot::simplex_geotrans(N, 1);
+      std::vector<base_node> nodes3(N+1);
 
       switch (what) {
-	case SQUARE :
-	  nodes1[3] = nodes1[1];
-	  nodes2[ip1] = nodes1[1]; ip2 = ip1;
-	  other_nodes.push_back(0);
-	  other_nodes.push_back(2);
-	  break;
-	case PRISM :
-	  nodes1[4] = nodes1[0]; nodes1[5] = nodes1[1];
-	  nodes2[ip1] = nodes1[0];
-	  nodes2[ip2] = nodes1[1];
-	  other_nodes.push_back(2);
-	  other_nodes.push_back(6);
-	  break;
-	case PYRAMID :
-	  nodes3[0] = nodes1[0]; nodes3[1] = nodes1[1];
-	  nodes3[2] = nodes1[2]; nodes3[3] = nodes1[4];
-	  // nodes1[4] = nodes1[0]; nodes1[7] = base_node(1.0, 1.0, 2.0);
-	  nodes2[ip1] = nodes1[1]; ip2 = ip1;
-	  other_nodes.push_back(0);
-	  other_nodes.push_back(2);
-	  other_nodes.push_back(4);
-	  break;
-	case PRISM2 :
-	  nodes2[ip1] = nodes1[4];
-	  other_nodes.push_back(0);
-	  other_nodes.push_back(1);
-	  other_nodes.push_back(2);
-	  break;
+      case SQUARE :
+	nodes1[3] = nodes1[1];
+	nodes2[ip1] = nodes1[1]; ip2 = ip1;
+	other_nodes.push_back(0);
+	other_nodes.push_back(2);
+	break;
+      case PRISM :
+	nodes1[4] = nodes1[0]; nodes1[5] = nodes1[1];
+	nodes2[ip1] = nodes1[0];
+	nodes2[ip2] = nodes1[1];
+	other_nodes.push_back(2);
+	other_nodes.push_back(6);
+	break;
+      case TETRA_CYL :
+	nodes3[0] = nodes1[0]; nodes3[1] = nodes1[1];
+	nodes3[2] = nodes1[2]; nodes3[3] = nodes1[4];
+	// nodes1[4] = nodes1[0]; nodes1[7] = base_node(1.0, 1.0, 2.0);
+	nodes2[ip1] = nodes1[1]; ip2 = ip1;
+	other_nodes.push_back(0);
+	other_nodes.push_back(2);
+	other_nodes.push_back(4);
+	break;
+      case PRISM2 :
+	nodes2[ip1] = nodes1[4];
+	other_nodes.push_back(0);
+	other_nodes.push_back(1);
+	other_nodes.push_back(2);
+	break;
+      case PYRAMID :
+	ip2 = ip1 = 0; // ?
+	nodes2[ip1] = nodes1[4];  // ?
+	other_nodes.push_back(0); // ?
+	other_nodes.push_back(1); // ?
+	other_nodes.push_back(2); // ?
+	nodes1[0] =  base_node(-1.,-1., 0.);
+	nodes1[1] =  base_node( 1.,-1., 0.);
+	nodes1[2] =  base_node(-1., 1., 0.);
+	nodes1[3] =  base_node( 1., 1., 0.);
+	nodes1[4] =  base_node( 0., 0., 1.);
+	nodes1[5] =  nodes1[6] = nodes1[7] =  nodes1[4];
       }
 
       for (size_type i = 0; i <= N; ++i)
@@ -890,7 +908,8 @@ namespace getfem {
 	  other_nodes.pop_back();
 	}
 
-      //cout << "nodes2 = " << nodes2 << endl;
+      cout << "nodes1 = " << vref(nodes1) << endl;
+      cout << "nodes2 = " << vref(nodes2) << endl;
 
       base_matrix G1, G2, G3; 
       base_matrix K(N, N), grad(N, N), K3(N, N), K4(N, N);
@@ -903,7 +922,7 @@ namespace getfem {
 
       for (size_type nc = 0; nc < 2; ++nc) {
 	
-	if (what == PYRAMID) {
+	if (what == TETRA_CYL) {
 	  if (nc == 1) nodes3[0] = nodes1[3];
 	  bgeot::vectors_to_base_matrix(G3, nodes3);
 	  pgt3->poly_vector_grad(nodes1[0], grad);
@@ -926,7 +945,7 @@ namespace getfem {
 	  }
 
 	  base_node P = base_im->point(i);
-	  if (what == PYRAMID) { 
+	  if (what == TETRA_CYL) { 
 	    P = pgt3->transform(P, nodes3);
 	    scalar_type x = P[0], y = P[1], one_minus_z = 1.0 - P[2];
 	    K4(0, 1) = - y / one_minus_z;
@@ -950,7 +969,7 @@ namespace getfem {
 	  J1 = gmm::abs(gmm::lu_det(K)) * J3 * J4;
 
 	  if (fp != size_type(-1) && J1 > 1E-10 && J4 > 1E-10) {
-	    if (what == PYRAMID) {
+	    if (what == TETRA_CYL) {
 	      gmm::mult(K3, normal1, normal2);
 	      normal1 = normal2;
 	    }
@@ -988,7 +1007,7 @@ namespace getfem {
 	    // else { cout << "Point " << P2 << " eliminated" << endl; }
 	  }  
 	}
-	if (what != PYRAMID) break;
+	if (what != TETRA_CYL) break;
       }
       valid_method();
     }
@@ -1033,6 +1052,9 @@ namespace getfem {
   pintegration_method QUADC1_composite_int_method(im_param_list &params,
    std::vector<dal::pstatic_stored_object> &dependencies);
 
+  pintegration_method pyramid_composite_int_method(im_param_list &params,
+   std::vector<dal::pstatic_stored_object> &dependencies);
+
   struct im_naming_system : public dal::naming_system<integration_method> {
     im_naming_system() : dal::naming_system<integration_method>("IM") {
       add_suffix("NONE",im_none);
@@ -1052,6 +1074,8 @@ namespace getfem {
                  HCT_composite_int_method);
       add_suffix("QUADC1_COMPOSITE",
                  QUADC1_composite_int_method);
+      add_suffix("PYRAMID_COMPOSITE",
+                 pyramid_composite_int_method);
       add_generic_function(im_list_integration);
     }
   };

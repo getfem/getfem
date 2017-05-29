@@ -218,7 +218,7 @@ namespace getfem {
 
   using std::endl; using std::cout; using std::cerr;
   using std::ends; using std::cin;
-
+  using gmm::vref;
 
 #if GETFEM_PARA_LEVEL > 1
   template <typename T> inline T MPI_SUM_SCALAR(T a) {

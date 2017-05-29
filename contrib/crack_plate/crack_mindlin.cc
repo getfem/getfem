@@ -42,7 +42,8 @@
 
 using std::endl; using std::cout; using std::cerr;
 using std::ends; using std::cin;
-
+template <typename T> std::ostream &operator <<
+  (std::ostream &o, const std::vector<T>& m) { gmm::write(o,m); return o; }
 
 /* some GetFEM++ types that we will be using */
 using bgeot::base_small_vector; /* special class for small (dim<16) vectors */

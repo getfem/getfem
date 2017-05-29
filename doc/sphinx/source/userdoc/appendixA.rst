@@ -64,8 +64,8 @@ Appendix A. Finite element method list
             :scale: 50
      * - Value of the whole second derivative (hessian) at the node.
        - Scalar product with a certain vector (for instance an edge) for a
-         vectorial elements.
-       - Scalar product with the normal to a face for a vectorial elements.
+         vector elements.
+       - Scalar product with the normal to a face for a vector elements.
      * - .. image:: images/getfemlistsymbols12.png
             :align: center
             :scale: 50
@@ -212,7 +212,7 @@ the classical :math:`P_K` Lagrange element.
        - dimension
        - d.o.f. number
        - class
-       - vectorial
+       - vector
        - :math:`\tau`-equivalent
        - Polynomial
 
@@ -234,7 +234,7 @@ the classical :math:`P_K` Lagrange element.
        - dimension
        - d.o.f. number
        - class
-       - vectorial
+       - vector
        - :math:`\tau`-equivalent
        - Polynomial
 
@@ -338,7 +338,7 @@ not to have the same degree on each dimension. An example is shown on figure
        - dimension
        - d.o.f. number
        - class
-       - vectorial
+       - vector
        - :math:`\tau`-equivalent
        - Polynomial
 
@@ -360,7 +360,7 @@ not to have the same degree on each dimension. An example is shown on figure
        - dimension
        - d.o.f. number
        - class
-       - vectorial
+       - vector
        - :math:`\tau`-equivalent
        - Polynomial
 
@@ -382,7 +382,7 @@ not to have the same degree on each dimension. An example is shown on figure
        - dimension
        - d.o.f. number
        - class
-       - vectorial
+       - vector
        - :math:`\tau`-equivalent
        - Polynomial
 
@@ -412,7 +412,7 @@ not to have the same degree on each dimension. An example is shown on figure
        - dimension
        - d.o.f. number
        - class
-       - vectorial
+       - vector
        - :math:`\tau`-equivalent
        - Polynomial
 
@@ -458,7 +458,7 @@ Hierarchical elements with respect to the degree
        - dimension
        - d.o.f. number
        - class
-       - vectorial
+       - vector
        - :math:`\tau`-equivalent
        - Polynomial
 
@@ -480,7 +480,7 @@ Hierarchical elements with respect to the degree
        - dimension
        - d.o.f. number
        - class
-       - vectorial
+       - vector
        - :math:`\tau`-equivalent
        - Polynomial
 
@@ -502,7 +502,7 @@ Hierarchical elements with respect to the degree
        - dimension
        - d.o.f. number
        - class
-       - vectorial
+       - vector
        - :math:`\tau`-equivalent
        - Polynomial
 
@@ -546,7 +546,7 @@ elements. But this tool can also be used to build piecewise polynomial elements.
        - dimension
        - d.o.f. number
        - class
-       - vectorial
+       - vector
        - :math:`\tau`-equivalent
        - Polynomial
 
@@ -581,7 +581,7 @@ Hierarchical composite elements
        - dimension
        - d.o.f. number
        - class
-       - vectorial
+       - vector
        - :math:`\tau`-equivalent
        - Polynomial
 
@@ -603,7 +603,7 @@ Hierarchical composite elements
        - dimension
        - d.o.f. number
        - class
-       - vectorial
+       - vector
        - :math:`\tau`-equivalent
        - Polynomial
 
@@ -621,7 +621,7 @@ and ``"FEM_STRUCTURED_COMPOSITE(FEM1, S)"``.
 It is important to use a corresponding composite integration method.
 
 
-Classical vectorial elements
+Classical vector elements
 ----------------------------
 
 Raviart-Thomas of lowest order elements
@@ -644,7 +644,7 @@ Raviart-Thomas of lowest order elements
        - dimension
        - d.o.f. number
        - class
-       - vectorial
+       - vector
        - :math:`\tau`-equivalent
        - Polynomial
 
@@ -666,7 +666,7 @@ Raviart-Thomas of lowest order elements
        - dimension
        - d.o.f. number
        - class
-       - vectorial
+       - vector
        - :math:`\tau`-equivalent
        - Polynomial
 
@@ -699,7 +699,7 @@ Nedelec (or Whitney) edge elements
        - dimension
        - d.o.f. number
        - class
-       - vectorial
+       - vector
        - :math:`\tau`-equivalent
        - Polynomial
 
@@ -739,7 +739,7 @@ following values of :math:`K`: :math:`1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13,
        - dimension
        - d.o.f. number
        - class
-       - vectorial
+       - vector
        - :math:`\tau`-equivalent
        - Polynomial
 
@@ -784,7 +784,7 @@ is still diagonal.
        - dimension
        - d.o.f. number
        - class
-       - vectorial
+       - vector
        - :math:`\tau`-equivalent
        - Polynomial
 
@@ -817,7 +817,7 @@ Lagrange element with an additional bubble function
        - dimension
        - d.o.f. number
        - class
-       - vectorial
+       - vector
        - :math:`\tau`-equivalent
        - Polynomial
 
@@ -862,7 +862,7 @@ Elements with additional bubble functions
        - dimension
        - d.o.f. number
        - class
-       - vectorial
+       - vector
        - :math:`\tau`-equivalent
        - Polynomial
 
@@ -893,7 +893,7 @@ Elements with additional bubble functions
        - dimension
        - d.o.f. number
        - class
-       - vectorial
+       - vector
        - :math:`\tau`-equivalent
        - Polynomial
 
@@ -924,7 +924,7 @@ Elements with additional bubble functions
        - dimension
        - d.o.f. number
        - class
-       - vectorial
+       - vector
        - :math:`\tau`-equivalent
        - Polynomial
 
@@ -955,7 +955,7 @@ Elements with additional bubble functions
        - dimension
        - d.o.f. number
        - class
-       - vectorial
+       - vector
        - :math:`\tau`-equivalent
        - Polynomial
 
@@ -988,7 +988,7 @@ Non-conforming :math:`P_1` element
        - dimension
        - d.o.f. number
        - class
-       - vectorial
+       - vector
        - :math:`\tau`-equivalent
        - Polynomial
 
@@ -1042,7 +1042,7 @@ Idem for the two couples :math:`(\widehat{\varphi}_5`, :math:`\widehat{\varphi}_
        - dimension
        - d.o.f. number
        - class
-       - vectorial
+       - vector
        - :math:`\tau`-equivalent
        - Polynomial
 
@@ -1078,7 +1078,7 @@ fourth order problems, despite the fact that it is not :math:`{\cal C}^1`.
        - dimension
        - d.o.f. number
        - class
-       - vectorial
+       - vector
        - :math:`\tau`-equivalent
        - Polynomial
 
@@ -1144,7 +1144,7 @@ transformations (for instance to treat curved boundaries).
        - dimension
        - d.o.f. number
        - class
-       - vectorial
+       - vector
        - :math:`\tau`-equivalent
        - Polynomial
 
@@ -1185,7 +1185,7 @@ and 9, 10, 11 for the normal derivatives on face 0, 1, 2 respectively.
        - dimension
        - d.o.f. number
        - class
-       - vectorial
+       - vector
        - :math:`\tau`-equivalent
        - Polynomial
 
@@ -1218,7 +1218,7 @@ assumed to be polynomial of degree one on each edge (see figure
        - dimension
        - d.o.f. number
        - class
-       - vectorial
+       - vector
        - :math:`\tau`-equivalent
        - Polynomial
 
@@ -1256,7 +1256,7 @@ to use a ``"IM_QUADC1_COMPOSITE"`` integration method with this finite element.
        - dimension
        - d.o.f. number
        - class
-       - vectorial
+       - vector
        - :math:`\tau`-equivalent
        - Polynomial
 
@@ -1290,7 +1290,7 @@ assumed to be polynomial of degree one on each edge (see figure
        - dimension
        - d.o.f. number
        - class
-       - vectorial
+       - vector
        - :math:`\tau`-equivalent
        - Polynomial
 
@@ -1306,6 +1306,147 @@ assumed to be polynomial of degree one on each edge (see figure
 Specific elements in dimension 3
 --------------------------------
 
+Lagrange elements on 3D pyramid
++++++++++++++++++++++++++++++++
+
+|gf| proposes some Lagrange pyramidal elements of degree 0, 1 and two based on [GR-GH1999]_ and [BE-CO-DU2010]_. See these references for more details. The proposed element can be raccorded to standard :math:`P_1` or :math:`P_2` Lagrange fem on the triangular faces and to a standard :math:`Q_1` or :math:`Q_2` Lagrange fem on the quatrilateral face.
+
+.. _ud-fig-pyramid-lagrange:
+.. list-table:: Lagrange element on a pyramidal element of order 0, 1 and 2
+   :widths: 20 20 20
+   :header-rows: 0
+   :class: figure
+
+   * - .. image:: images/getfemlistpyramidP0.png
+          :align: center
+          :scale: 50
+     - .. image:: images/getfemlistpyramidP1.png
+          :align: center
+          :scale: 50
+     - .. image:: images/getfemlistpyramidP2.png
+          :align: center
+          :scale: 50
+
+   * - Degree 0 pyramidal element with 1 dof
+     - Degree 1 pyramidal element with 5 dof
+     - Degree 2 pyramidal element with 14 dof
+
+
+The associated geometric transformations are ``"GT_PYRAMID(K)"`` for K = 1 or 2.
+The shape functions are not polynomial ones but rational fractions. For the first degree :
+
+.. math::
+
+   \begin{array}{l}
+   \widehat{\varphi}_{0}(x,y,z) =  \frac{1}{4}\left(1-x-y-z+\Frac{xy}{1-z}\right), \\
+   \widehat{\varphi}_{1}(x,y,z) =  \frac{1}{4}\left(1+x-y-z-\Frac{xy}{1-z}\right), \\
+   \widehat{\varphi}_{2}(x,y,z) =  \frac{1}{4}\left(1-x+y-z-\Frac{xy}{1-z}\right), \\
+   \widehat{\varphi}_{3}(x,y,z) =  \frac{1}{4}\left(1+x+y-z+\Frac{xy}{1-z}\right), \\
+   \widehat{\varphi}_{4}(x,y,z) =  z.\\
+   \end{array}
+
+For the second degree, setting
+
+.. math::
+
+   \xi_0 = \Frac{1-z-x}{2}, ~~~\xi_1 = \Frac{1-z-y}{2}, ~~~\xi_2 = \Frac{1-z+x}{2}, ~~~\xi_3 = \Frac{1-z+y}{2},
+
+
+.. math::
+
+   \begin{array}{l}
+   \widehat{\varphi}_{0}(x,y,z) = \Frac{\xi_0 \xi_1}{1-z}((1-z-2\xi_0)(1-z-2\xi_1) -z), \\
+   \widehat{\varphi}_{1}(x,y,z) = 4\Frac{\xi_0\xi_1\xi_2}{(1-z)^2}(2\xi_1-(1-z)), \\
+   \widehat{\varphi}_{2}(x,y,z) = \Frac{\xi_1 \xi_2}{1-z}((1-z-2\xi_1)(1-z-2\xi_2) -z), \\
+   \widehat{\varphi}_{3}(x,y,z) = 4\Frac{\xi_3\xi_0\xi_1}{(1-z)^2}(2\xi_0-(1-z)), \\
+   \widehat{\varphi}_{4}(x,y,z) = 16\Frac{\xi_0\xi_1\xi_2\xi_3}{(1-z)^2}, \\
+   \widehat{\varphi}_{5}(x,y,z) = 4\Frac{\xi_1\xi_2\xi_3}{(1-z)^2}(2\xi_2-(1-z)), \\
+   \widehat{\varphi}_{6}(x,y,z) = \Frac{\xi_3 \xi_0}{1-z}((1-z-2\xi_3)(1-z-2\xi_0) -z), \\
+   \widehat{\varphi}_{7}(x,y,z) = 4\Frac{\xi_2\xi_3\xi_0}{(1-z)^2}(2\xi_3-(1-z)), \\
+   \widehat{\varphi}_{8}(x,y,z) = \Frac{\xi_2 \xi_3}{1-z}((1-z-2\xi_2)(1-z-2\xi_3) -z), \\
+   \widehat{\varphi}_{9}(x,y,z) = 4\Frac{z}{1-z}\xi_0\xi_1, \\
+   \widehat{\varphi}_{10}(x,y,z) = 4\Frac{z}{1-z}\xi_1\xi_2,  \\
+   \widehat{\varphi}_{11}(x,y,z) = 4\Frac{z}{1-z}\xi_3\xi_0,  \\
+   \widehat{\varphi}_{12}(x,y,z) = 4\Frac{z}{1-z}\xi_2\xi_3,  \\
+   \widehat{\varphi}_{13}(x,y,z) = z(2z-1). \\
+   \end{array}
+
+.. list-table:: Continuous Lagrange element of order 0, 1 or 2 ``"FEM_PYRAMID_LAGRANGE(K)"``
+   :widths: 10 10 10 10 10 10 10
+   :header-rows: 1
+
+   * - degree
+     - dimension
+     - d.o.f. number
+     - class
+     - vector
+     - :math:`\tau`-equivalent
+     - Polynomial
+
+   * - :math:`0`
+     - :math:`3`
+     - :math:`1`
+     - discontinuous
+     - No :math:`(Q = 1)`
+     - Yes
+     - No
+       
+   * - :math:`1`
+     - :math:`3`
+     - :math:`5`
+     - :math:`C^0`
+     - No :math:`(Q = 1)`
+     - Yes
+     - No
+
+   * - :math:`2`
+     - :math:`3`
+     - :math:`14`
+     - :math:`C^0`
+     - No :math:`(Q = 1)`
+     - Yes
+     - No
+
+
+   
+.. list-table:: Discontinuous Lagrange element of order 0, 1 or 2 ``"FEM_PYRAMID_DISCONTINUOUS_LAGRANGE(K)"``
+   :widths: 10 10 10 10 10 10 10
+   :header-rows: 1
+
+   * - degree
+     - dimension
+     - d.o.f. number
+     - class
+     - vector
+     - :math:`\tau`-equivalent
+     - Polynomial
+
+   * - :math:`0`
+     - :math:`3`
+     - :math:`1`
+     - discontinuous
+     - No :math:`(Q = 1)`
+     - Yes
+     - No
+       
+   * - :math:`1`
+     - :math:`3`
+     - :math:`5`
+     - discontinuous
+     - No :math:`(Q = 1)`
+     - Yes
+     - No
+
+   * - :math:`2`
+     - :math:`3`
+     - :math:`14`
+     - discontinuous
+     - No :math:`(Q = 1)`
+     - Yes
+     - No
+
+       
+	 
 
 Elements with additional bubble functions
 +++++++++++++++++++++++++++++++++++++++++
@@ -1331,7 +1472,7 @@ Elements with additional bubble functions
 
 :math:`.\\`
 
-  .. list-table:: . :math:`P_K` Lagrange element with an additional internal bubble function ``"FEM_PK_WITH_CUBIC_BUBBLE(3, K)"``
+  .. list-table:: :math:`P_K` Lagrange element with an additional internal bubble function ``"FEM_PK_WITH_CUBIC_BUBBLE(3, K)"``
      :widths: 10 10 10 10 10 10 10
      :header-rows: 1
 
@@ -1339,7 +1480,7 @@ Elements with additional bubble functions
        - dimension
        - d.o.f. number
        - class
-       - vectorial
+       - vector
        - :math:`\tau`-equivalent
        - Polynomial
 
@@ -1370,7 +1511,7 @@ Elements with additional bubble functions
        - dimension
        - d.o.f. number
        - class
-       - vectorial
+       - vector
        - :math:`\tau`-equivalent
        - Polynomial
 
@@ -1434,7 +1575,7 @@ the corresponding vertex. Idem on the other vertices.
        - dimension
        - d.o.f. number
        - class
-       - vectorial
+       - vector
        - :math:`\tau`-equivalent
        - Polynomial
 

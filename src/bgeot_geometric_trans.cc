@@ -461,17 +461,18 @@ namespace bgeot {
     return P;
   }
 
-  void geometric_trans::fill_standard_vertices(void) {
+  void geometric_trans::fill_standard_vertices() {
     vertices_.resize(0);
     for (size_type ip = 0; ip < nb_points(); ++ip) {
       bool vertex = true;
       for (size_type i = 0; i < cvr->points()[ip].size(); ++i)
         if (gmm::abs(cvr->points()[ip][i]) > 1e-10
-            && gmm::abs(cvr->points()[ip][i]-1.0) > 1e-10)
+            && gmm::abs(cvr->points()[ip][i]-1.0) > 1e-10
+	    && gmm::abs(cvr->points()[ip][i]+1.0) > 1e-10)
           { vertex = false; break; }
       if (vertex) vertices_.push_back(ip);
     }
-    assert(vertices_.size() >= dim());
+    assert(vertices_.size() > dim());
   }
 
   /* ******************************************************************** */
@@ -482,14 +483,43 @@ namespace bgeot {
   struct igeometric_trans : public geometric_trans {
 
     std::vector<FUNC> trans;
+    mutable std::vector<std::vector<FUNC>> grad_, hess_;
 
+    void compute_grad_() const {
+      size_type R = trans.size();
+      dim_type n = dim();
+      grad_.resize(R);
+      for (size_type i = 0; i < R; ++i) {
+	grad_[i].resize(n);
+	for (dim_type j = 0; j < n; ++j) {
+	  grad_[i][j] = trans[i]; grad_[i][j].derivative(j);
+	}
+      }
+    }
+
+    void compute_hess_() const {
+      size_type R = trans.size();
+      dim_type n = dim();
+      hess_.resize(R);
+      for (size_type i = 0; i < R; ++i) {
+	hess_[i].resize(n*n);
+	for (dim_type j = 0; j < n; ++j) {
+	  for (dim_type k = 0; k < n; ++k) {
+	    hess_[i][j+k*n] = trans[i];
+	    hess_[i][j+k*n].derivative(j); hess_[i][j+k*n].derivative(k);
+	  }
+	}
+      }
+    }
+    
     virtual void poly_vector_val(const base_node &pt, base_vector &val) const {
       val.resize(nb_points());
       for (size_type k = 0; k < nb_points(); ++k)
         val[k] = to_scalar(trans[k].eval(pt.begin()));
     }
 
-    virtual void poly_vector_val(const base_node &pt, const convex_ind_ct &ind_ct,
+    virtual void poly_vector_val(const base_node &pt,
+				 const convex_ind_ct &ind_ct,
                                  base_vector &val) const {
       size_type nb_funcs=ind_ct.size();
       val.resize(nb_funcs);
@@ -498,40 +528,35 @@ namespace bgeot {
     }
 
     virtual void poly_vector_grad(const base_node &pt, base_matrix &pc) const {
+      if (!(grad_.size())) compute_grad_();
       FUNC PP;
       pc.base_resize(nb_points(),dim());
       for (size_type i = 0; i < nb_points(); ++i)
-        for (dim_type n = 0; n < dim(); ++n) {
-          PP = trans[i];
-          PP.derivative(n);
-          pc(i, n) = to_scalar(PP.eval(pt.begin()));
-        }
+        for (dim_type n = 0; n < dim(); ++n)
+          pc(i, n) = to_scalar(grad_[i][n].eval(pt.begin()));
     }
 
     virtual void poly_vector_grad(const base_node &pt,
 				  const convex_ind_ct &ind_ct,
                                   base_matrix &pc) const {
+      if (!(grad_.size())) compute_grad_();
       FUNC PP;
       size_type nb_funcs=ind_ct.size();
       pc.base_resize(nb_funcs,dim());
       for (size_type i = 0; i < nb_funcs; ++i)
-        for (dim_type n = 0; n < dim(); ++n) {
-          PP = trans[ind_ct[i]];
-          PP.derivative(n);
-          pc(i, n) = to_scalar(PP.eval(pt.begin()));
-        }
+        for (dim_type n = 0; n < dim(); ++n)
+          pc(i, n) = to_scalar(grad_[ind_ct[i]][n].eval(pt.begin()));
     }
 
     virtual void poly_vector_hess(const base_node &pt, base_matrix &pc) const {
+      if (!(grad_.size())) compute_grad_();
       FUNC PP, QP;
       pc.base_resize(nb_points(),dim()*dim());
       for (size_type i = 0; i < nb_points(); ++i)
         for (dim_type n = 0; n < dim(); ++n) {
-          QP = trans[i]; QP.derivative(n);
-          for (dim_type m = 0; m <= n; ++m) {
-            PP = QP; PP.derivative(m);
-            pc(i, n*dim()+m) = pc(i, m*dim()+n) = to_scalar(PP.eval(pt.begin()));
-          }
+          for (dim_type m = 0; m <= n; ++m)
+            pc(i, n*dim()+m) = pc(i, m*dim()+n) =
+	      to_scalar(hess_[i][m*dim()+n].eval(pt.begin()));
         }
     }
 
@@ -539,6 +564,7 @@ namespace bgeot {
 
   typedef igeometric_trans<base_poly> poly_geometric_trans;
   typedef igeometric_trans<polynomial_composite> comppoly_geometric_trans;
+  typedef igeometric_trans<base_rational_fraction> fraction_geometric_trans;
 
   /* ******************************************************************** */
   /* transformation on simplex.                                           */
@@ -820,6 +846,75 @@ namespace bgeot {
     return geometric_trans_descriptor(name.str());
   }
 
+  /* ******************************************************************** */
+  /*	Pyramidal geometric transformation of order k=1 or 2.             */
+  /* ******************************************************************** */
+
+  struct pyramidal_trans_: public fraction_geometric_trans  {
+    pyramidal_trans_(short_type k) {
+      cvr = pyramidal_element_of_reference(k);
+      size_type R = cvr->structure()->nb_points();
+      is_lin = false;
+      complexity_ = k;
+      trans.resize(R);
+
+      if (k == 1) {
+	base_rational_fraction Q(read_base_poly(3, "x*y"),    // Q = xy/(1-z)
+				 read_base_poly(3, "1-z"));
+	trans[0] = (read_base_poly(3, "1-x-y-z") + Q)*0.25;
+	trans[1] = (read_base_poly(3, "1+x-y-z") - Q)*0.25;
+	trans[2] = (read_base_poly(3, "1-x+y-z") - Q)*0.25;
+	trans[3] = (read_base_poly(3, "1+x+y-z") + Q)*0.25;
+	trans[4] = read_base_poly(3, "z");
+      } else if (k == 2) {
+        base_poly xi0 = read_base_poly(3, "(1-z-x)*0.5");
+        base_poly xi1 = read_base_poly(3, "(1-z-y)*0.5");
+        base_poly xi2 = read_base_poly(3, "(1-z+x)*0.5");
+        base_poly xi3 = read_base_poly(3, "(1-z+y)*0.5");
+	base_poly z = read_base_poly(3, "z");
+	base_poly un_z = read_base_poly(3, "1-z");
+	base_rational_fraction Q(read_base_poly(3, "1"), un_z); // Q = 1/(1-z)
+	trans[ 0] = Q*xi0*xi1*((un_z-xi0*2.)*(un_z-xi1*2.)-z);
+	trans[ 1] = Q*Q*xi0*xi1*xi2*(xi1*2.-un_z)*4.;
+	trans[ 2] = Q*xi1*xi2*((un_z-xi1*2.)*(un_z-xi2*2.)-z);
+	trans[ 3] = Q*Q*xi3*xi0*xi1*(xi0*2.-un_z)*4.;
+	trans[ 4] = Q*Q*xi0*xi1*xi2*xi3*16.;
+	trans[ 5] = Q*Q*xi1*xi2*xi3*(xi2*2.-un_z)*4.;
+	trans[ 6] = Q*xi3*xi0*((un_z-xi3*2.)*(un_z-xi0*2.)-z);
+	trans[ 7] = Q*Q*xi2*xi3*xi0*(xi3*2.-un_z)*4.;
+	trans[ 8] = Q*xi2*xi3*((un_z-xi2*2.)*(un_z-xi3*2.)-z);
+	trans[ 9] = Q*z*xi0*xi1*4.;
+	trans[10] = Q*z*xi1*xi2*4.;
+	trans[11] = Q*z*xi3*xi0*4.;
+	trans[12] = Q*z*xi2*xi3*4.;
+	trans[13] = read_base_poly(3, "z*(2*z-1)");
+      }
+      fill_standard_vertices();
+    }
+  };
+  
+  static pgeometric_trans
+    pyramidal_gt(gt_param_list& params,
+                     std::vector<dal::pstatic_stored_object> &dependencies) {
+    GMM_ASSERT1(params.size() == 1, "Bad number of parameters : "
+		<< params.size() << " should be 1.");
+    GMM_ASSERT1(params[0].type() == 0, "Bad type of parameters");
+    int k = int(::floor(params[0].num() + 0.01));
+    
+    dependencies.push_back(pyramidal_element_of_reference(dim_type(k)));
+    return std::make_shared<pyramidal_trans_>(dim_type(k));
+  }
+  
+  pgeometric_trans pyramidal_geotrans(short_type k) {
+    static short_type k_ = -1;
+    static pgeometric_trans pgt = 0;
+    if (k != k_) {
+      std::stringstream name;
+      name << "GT_PYRAMID(" << k << ")";
+      pgt = geometric_trans_descriptor(name.str());
+    }
+    return pgt;  
+  }
 
   /* ******************************************************************** */
   /*    Misc function.                                                    */
@@ -899,6 +994,7 @@ namespace bgeot {
       add_suffix("LINEAR_PRODUCT", linear_product_gt);
       add_suffix("LINEAR_QK", linear_qk);
       add_suffix("Q2_INCOMPLETE", Q2_incomplete_gt);
+      add_suffix("PYRAMID", pyramidal_gt);
     }
   };
 
