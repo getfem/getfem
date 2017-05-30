@@ -854,6 +854,10 @@ namespace getfem {
       std::vector<base_node> nodes1 = pgt1->convex_ref()->points();
       bgeot::pgeometric_trans pgt2 = bgeot::simplex_geotrans(N, 1);
       std::vector<base_node> nodes2(N+1);
+      if (what == PYRAMID) {
+	pgt2 = bgeot::pyramidal_geotrans(1);
+	nodes2.resize(5);
+      }
       std::vector<size_type> other_nodes; // for the construction of node2
       bgeot::pgeometric_trans pgt3 = bgeot::simplex_geotrans(N, 1);
       std::vector<base_node> nodes3(N+1);
@@ -888,20 +892,21 @@ namespace getfem {
 	other_nodes.push_back(2);
 	break;
       case PYRAMID :
-	ip2 = ip1 = 0; // ?
-	nodes2[ip1] = nodes1[4];  // ?
-	other_nodes.push_back(0); // ?
-	other_nodes.push_back(1); // ?
-	other_nodes.push_back(2); // ?
+	ip2 = ip1 = 0;
 	nodes1[0] =  base_node(-1.,-1., 0.);
 	nodes1[1] =  base_node( 1.,-1., 0.);
 	nodes1[2] =  base_node(-1., 1., 0.);
 	nodes1[3] =  base_node( 1., 1., 0.);
 	nodes1[4] =  base_node( 0., 0., 1.);
 	nodes1[5] =  nodes1[6] = nodes1[7] =  nodes1[4];
+	nodes2[ip1] = nodes1[0];
+	other_nodes.push_back(4);
+	other_nodes.push_back(3);
+	other_nodes.push_back(2);
+	other_nodes.push_back(1);
       }
 
-      for (size_type i = 0; i <= N; ++i)
+      for (size_type i = 0; i <= nodes2.size()-1; ++i)
 	if (i != ip1 && i != ip2) {
 	  GMM_ASSERT3(!other_nodes.empty(), "");
 	  nodes2[i] = nodes1[other_nodes.back()];
@@ -931,11 +936,12 @@ namespace getfem {
 	}
 
 	for (size_type i=0; i <  base_im->nb_points(); ++i) {
+	  cout << "proceeding with point " << i << endl;
 
-	  gmm::copy(gmm::identity_matrix(), K4); J4=J1=scalar_type(1);
+	  gmm::copy(gmm::identity_matrix(), K4); J4 = J1 = scalar_type(1);
 
-	  size_type fp = size_type(-1);
-	  if (i >= base_im->nb_points_on_convex()) {
+	  size_type fp = size_type(-1); // Search the face number in the
+	  if (i >= base_im->nb_points_on_convex()) { // original element
 	    size_type ii = i - base_im->nb_points_on_convex();
 	    for (short_type ff=0; ff < base_im->structure()->nb_faces(); ++ff) {
 	      if (ii < base_im->nb_points_on_face(ff)) { fp = ff; break; }
@@ -943,8 +949,10 @@ namespace getfem {
 	    }
 	    normal1 =  base_im->ref_convex()->normals()[fp];
 	  }
+	  cout << "face number : " << int(fp) << endl;
 
 	  base_node P = base_im->point(i);
+	  cout << "coords P : " << P << endl;
 	  if (what == TETRA_CYL) { 
 	    P = pgt3->transform(P, nodes3);
 	    scalar_type x = P[0], y = P[1], one_minus_z = 1.0 - P[2];
@@ -964,6 +972,7 @@ namespace getfem {
 	  }
 
 	  base_node P1 = pgt1->transform(P, nodes1), P2(N);
+	  cout << "coords P1 : " << P1 << endl;
 	  pgt1->poly_vector_grad(P, grad);
 	  gmm::mult(gmm::transposed(grad), gmm::transposed(G1), K);
 	  J1 = gmm::abs(gmm::lu_det(K)) * J3 * J4;
@@ -981,15 +990,19 @@ namespace getfem {
 	    J1 *= gmm::vect_norm2(normal2);
 	    normal2 /= gmm::vect_norm2(normal2);
 	  }
+	  cout << "here 1" << endl;
 	  
 	  gic.invert(P1, P2);
+	  cout << "coords P2 : " << P2 << endl;
 	  GMM_ASSERT1(pgt2->convex_ref()->is_in(P2) < 1E-8,
 		      "Point not in the convex ref : " << P2);
 	  
+	  cout << "here 2" << endl;
 	  pgt2->poly_vector_grad(P2, grad);
 	  gmm::mult(gmm::transposed(grad), gmm::transposed(G2), K);
 	  J2 = gmm::abs(gmm::lu_det(K)); /* = 1 */
 	  
+	  cout << "here 3" << endl;
 	  if (i <  base_im->nb_points_on_convex())
 	    add_point(P2, base_im->coeff(i)*J1/J2, short_type(-1));
 	  else if (J1 > 1E-10) {
@@ -1016,16 +1029,23 @@ namespace getfem {
 
   static pintegration_method quasi_polar(im_param_list &params,
 	std::vector<dal::pstatic_stored_object> &dependencies) {
-    GMM_ASSERT1(params.size() == 2 || params.size() == 3,
-		"Bad number of parameters : " << params.size()
-		<< " should be 2 or 3.");
-    GMM_ASSERT1(params[0].type() == 1 && params[1].type() == 0
-		&& params.back().type() == 0, "Bad type of parameters");
+    GMM_ASSERT1(params.size() >= 1 && params[0].type() == 1,
+		"Bad parameters for quasi polar integration: the first "
+		"parameter should be an integration method");
     pintegration_method a = params[0].method();
     GMM_ASSERT1(a->type()==IM_APPROX,"need an approximate integration method");
-
-    int ip1 = int(::floor(params[1].num() + 0.01));
-    int ip2 = int(::floor(params.back().num() + 0.01));
+    int ip1 = 0, ip2 = 0;
+    if (a->approx_method()->structure() == bgeot::parallelepiped_structure(3)) {
+      GMM_ASSERT1(params.size() == 1, "Bad number of parameters");
+    } else {
+      GMM_ASSERT1(params.size() == 2 || params.size() == 3,
+		  "Bad number of parameters : " << params.size()
+		  << " should be 2 or 3.");
+      GMM_ASSERT1(params[1].type() == 0
+		  && params.back().type() == 0, "Bad type of parameters");
+      ip1 = int(::floor(params[1].num() + 0.01));
+      ip2 = int(::floor(params.back().num() + 0.01));
+    }
     int N = a->approx_method()->dim();
     GMM_ASSERT1(N >= 2 && N <= 3 && ip1 >= 0 && ip2 >= 0 && ip1 <= N
 		&& ip2 <= N, "Bad parameters");

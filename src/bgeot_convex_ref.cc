@@ -329,11 +329,11 @@ namespace bgeot {
       else
 	basic_convex_ref_ = pyramidal_element_of_reference(1);
 
-      sc(normals_[0]) =  0., 0., 1.;
-      sc(normals_[1]) =  0.,-1., 1.;
-      sc(normals_[2]) =  1., 0., 1.;
-      sc(normals_[3]) =  0., 1., 1.;
-      sc(normals_[4]) = -1., 0., 1.;
+      sc(normals_[0]) =  0., 0., -1.;
+      sc(normals_[1]) =  0.,-1.,  1.;
+      sc(normals_[2]) =  1., 0.,  1.;
+      sc(normals_[3]) =  0., 1.,  1.;
+      sc(normals_[4]) = -1., 0.,  1.;
 
       for (size_type i = 0; i < normals_.size(); ++i)
 	gmm::scale(normals_[i], 1. / gmm::vect_norm2(normals_[i]));
