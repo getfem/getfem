@@ -32,7 +32,7 @@ asize =  size(who('automatic_var654'));
 if (asize(1)) draw = false; end;
 
 % trace on;
-NX = 10;
+NX = 5;
 if (with_pyramids)
   m = gf_mesh('pyramidal', [0:1/NX:1], [0:1/NX:1], [0:1/NX:1]);
 else
@@ -111,7 +111,7 @@ disp(sprintf('H1 norm of error: %g', err));
 M = gf_asm('mass matrix', mim, mf);
 K = gf_asm('laplacian', mim, mf, mf, ones(1, gf_mesh_fem_get(mf, 'nbdof')));
 
-if (0) % Drawing the shape functions on the reference element
+if (1) % Drawing the shape functions on the reference element
   m2 = gf_mesh('empty', 3);
   gf_mesh_set(m2, 'add convex', gf_geotrans('GT_PYRAMID(1)'), [-1 -1 0;  1, -1, 0; -1,  1, 0;  1,  1, 0;  0,  0, 1]');
   % gf_mesh_set(m2, 'add convex', gf_geotrans('GT_PYRAMID(1)'), [-1 -1 2;  1, -1, 2; -1,  1, 2;  1,  1, 2;  0,  0, 1]');
@@ -121,7 +121,7 @@ if (0) % Drawing the shape functions on the reference element
   Utest = zeros(1,gf_mesh_fem_get(mf2, 'nbdof'));
   % gf_mesh_fem_get(mf2, 'basic dof nodes')
   %mim2 = gf_mesh_im(m2, gf_integ('IM_PYRAMID_COMPOSITE(IM_TETRAHEDRON(5))'));
-  mim2 = gf_mesh_im(m2, gf_integ('IM_PYRAMID(IM_GAUSS_PARALLELEPIPED(3,9))'));
+  mim2 = gf_mesh_im(m2, gf_integ('IM_PYRAMID(IM_GAUSS_PARALLELEPIPED(3,5))'));
   % mim2 = gf_mesh_im(m2, gf_integ('IM_PYRAMID_COMPOSITE(IM_STRUCTURED_COMPOSITE(IM_TETRAHEDRON(5),10))'));
   format long
   M2 = gf_asm('mass matrix', mim2, mf2)

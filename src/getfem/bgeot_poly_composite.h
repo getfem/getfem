@@ -106,12 +106,21 @@ namespace bgeot {
     void derivative(short_type k);
     base_poly &poly_of_subelt(size_type l) { return polytab[l]; }
     const base_poly &poly_of_subelt(size_type l) const { return polytab[l]; }
-    
+    size_type nb_subelt() const { return polytab.size(); }
 
     polynomial_composite(bool lc = true) : local_coordinate(lc) {}
     polynomial_composite(const mesh_precomposite &m, bool lc = true);
 
   };
+
+  inline std::ostream &operator <<
+  (std::ostream &o, const polynomial_composite& P) {
+    o << "poly_composite [";
+    for (size_type i = 0; i < P.nb_subelt(); ++i) 
+      { if (i != 0) o << ", ";  o << P.poly_of_subelt(i); }
+    o << "]";
+    return o;
+  }
 
   template <class ITER>
   scalar_type polynomial_composite::eval(const ITER &it) const {
