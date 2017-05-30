@@ -37,7 +37,7 @@ import numpy as np
 export_mesh = True;
 
 ## Parameters
-NX = 2                             # Mesh parameter.
+NX = 10                            # Mesh parameter.
 Dirichlet_with_multipliers = True  # Dirichlet condition with multipliers
                                    # or penalization
 dirichlet_coefficient = 1e10       # Penalization coefficient
@@ -52,8 +52,8 @@ m = gf.Mesh('pyramidal', np.arange(0,1+1./NX,1./NX),
 mfu   = gf.MeshFem(m, 1)
 mfrhs = gf.MeshFem(m, 1)
 # assign the Lagrange linear fem to all pyramids of the both MeshFem
-mfu.set_fem(gf.Fem('FEM_PYRAMID_LAGRANGE(1)'))
-mfrhs.set_fem(gf.Fem('FEM_PYRAMID_LAGRANGE(1)'))
+mfu.set_fem(gf.Fem('FEM_PYRAMID_LAGRANGE(2)'))
+mfrhs.set_fem(gf.Fem('FEM_PYRAMID_LAGRANGE(2)'))
 # mfu.set_fem(gf.Fem('FEM_PK(3,1)'))
 # mfrhs.set_fem(gf.Fem('FEM_PK(3,1)'))
 
@@ -64,7 +64,8 @@ if (export_mesh):
 
 
 #  Integration method used
-mim = gf.MeshIm(m, gf.Integ('IM_PYRAMID_COMPOSITE(IM_TETRAHEDRON(5))'))
+# mim = gf.MeshIm(m, gf.Integ('IM_PYRAMID_COMPOSITE(IM_TETRAHEDRON(6))'))
+mim = gf.MeshIm(m, gf.Integ('IM_PYRAMID(IM_GAUSS_PARALLELEPIPED(3,3))'))
 # mim = gf.MeshIm(m, gf.Integ('IM_TETRAHEDRON(5)'))
 
 # Boundary selection
@@ -159,6 +160,6 @@ print ('\nYou can view the solution for instance with');
 print ('mayavi2 -d laplacian.vtk -m Surface \n');
 
 
-if (H1error > 1e-2):
+if (H1error > 0.09):
     print 'Error too large !'
     exit(1)

@@ -549,7 +549,7 @@ namespace bgeot {
     }
 
     virtual void poly_vector_hess(const base_node &pt, base_matrix &pc) const {
-      if (!(grad_.size())) compute_grad_();
+      if (!(hess_.size())) compute_hess_();
       FUNC PP, QP;
       pc.base_resize(nb_points(),dim()*dim());
       for (size_type i = 0; i < nb_points(); ++i)

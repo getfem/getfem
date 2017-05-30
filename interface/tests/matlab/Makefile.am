@@ -44,6 +44,7 @@ EXTRA_DIST=						\
 	demo_laplacian_DG.m 				\
 	demo_Mindlin_Reissner_plate.m 			\
 	demo_laplacian.m 				\
+	demo_laplacian_pyramid.m			\
 	demo_periodic_laplacian.m 			\
 	demo_nonlinear_elasticity.m 			\
 	demo_nonlinear_elasticity_anim.m 		\

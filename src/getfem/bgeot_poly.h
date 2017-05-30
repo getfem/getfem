@@ -713,8 +713,17 @@ namespace bgeot
     void one() { numerator_.one(); denominator_.one(); }
     void clear() { numerator_.clear(); denominator_.one(); }
     template <typename ITER> T eval(const ITER &it) const {
-      T a = numerator_.eval(it);
-      if (a != T(0)) a /= denominator_.eval(it);
+      typedef typename gmm::number_traits<T>::magnitude_type R;
+      T a = numerator_.eval(it), b = denominator_.eval(it);
+      if (b == T(0)) { // The better should be to evaluate the derivatives ...
+	std::vector<T> p(it, it+dim()), q(dim(), T(1));
+	R no = gmm::vect_norm2(p);
+	if (no == R(0)) no = R(1E-35); else no*=gmm::default_tol(R())*R(100000);
+	gmm::add(gmm::scaled(q, T(no)), p);
+	a = numerator_.eval(p.begin());
+	b = denominator_.eval(p.begin());
+      }
+      if (a != T(0)) a /= b;
       return a;
     }
     /// Constructor.

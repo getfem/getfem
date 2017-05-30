@@ -913,9 +913,6 @@ namespace getfem {
 	  other_nodes.pop_back();
 	}
 
-      cout << "nodes1 = " << vref(nodes1) << endl;
-      cout << "nodes2 = " << vref(nodes2) << endl;
-
       base_matrix G1, G2, G3; 
       base_matrix K(N, N), grad(N, N), K3(N, N), K4(N, N);
       base_node normal1(N), normal2(N);
@@ -936,7 +933,6 @@ namespace getfem {
 	}
 
 	for (size_type i=0; i <  base_im->nb_points(); ++i) {
-	  cout << "proceeding with point " << i << endl;
 
 	  gmm::copy(gmm::identity_matrix(), K4); J4 = J1 = scalar_type(1);
 
@@ -949,10 +945,8 @@ namespace getfem {
 	    }
 	    normal1 =  base_im->ref_convex()->normals()[fp];
 	  }
-	  cout << "face number : " << int(fp) << endl;
 
 	  base_node P = base_im->point(i);
-	  cout << "coords P : " << P << endl;
 	  if (what == TETRA_CYL) { 
 	    P = pgt3->transform(P, nodes3);
 	    scalar_type x = P[0], y = P[1], one_minus_z = 1.0 - P[2];
@@ -972,7 +966,6 @@ namespace getfem {
 	  }
 
 	  base_node P1 = pgt1->transform(P, nodes1), P2(N);
-	  cout << "coords P1 : " << P1 << endl;
 	  pgt1->poly_vector_grad(P, grad);
 	  gmm::mult(gmm::transposed(grad), gmm::transposed(G1), K);
 	  J1 = gmm::abs(gmm::lu_det(K)) * J3 * J4;
@@ -990,19 +983,14 @@ namespace getfem {
 	    J1 *= gmm::vect_norm2(normal2);
 	    normal2 /= gmm::vect_norm2(normal2);
 	  }
-	  cout << "here 1" << endl;
-	  
 	  gic.invert(P1, P2);
-	  cout << "coords P2 : " << P2 << endl;
 	  GMM_ASSERT1(pgt2->convex_ref()->is_in(P2) < 1E-8,
 		      "Point not in the convex ref : " << P2);
 	  
-	  cout << "here 2" << endl;
 	  pgt2->poly_vector_grad(P2, grad);
 	  gmm::mult(gmm::transposed(grad), gmm::transposed(G2), K);
 	  J2 = gmm::abs(gmm::lu_det(K)); /* = 1 */
 	  
-	  cout << "here 3" << endl;
 	  if (i <  base_im->nb_points_on_convex())
 	    add_point(P2, base_im->coeff(i)*J1/J2, short_type(-1));
 	  else if (J1 > 1E-10) {
@@ -1059,6 +1047,25 @@ namespace getfem {
     return p;
   }
 
+  static pintegration_method pyramid(im_param_list &params,
+	std::vector<dal::pstatic_stored_object> &dependencies) {
+    GMM_ASSERT1(params.size() == 1 && params[0].type() == 1,
+		"Bad parameters for pyramid integration: the first "
+		"parameter should be an integration method");
+    pintegration_method a = params[0].method();
+    GMM_ASSERT1(a->type()==IM_APPROX,"need an approximate integration method");
+    int N = a->approx_method()->dim();
+    GMM_ASSERT1(N == 3, "Bad parameters");
+
+    papprox_integration
+      pai = std::make_shared<quasi_polar_integration>(a->approx_method(), 0, 0);
+    pintegration_method p = std::make_shared<integration_method>(pai);
+    dependencies.push_back(p->approx_method()->ref_convex());
+    dependencies.push_back(p->approx_method()->pintegration_points());
+    return p;
+  }
+
+
 
   /* ******************************************************************** */
   /*    Naming system                                                     */
@@ -1088,6 +1095,7 @@ namespace getfem {
       add_suffix("NC_PRISM", Newton_Cotes_prism);
       add_suffix("GAUSS_PARALLELEPIPED", Gauss_paramul);
       add_suffix("QUASI_POLAR", quasi_polar);
+      add_suffix("PYRAMID", pyramid);
       add_suffix("STRUCTURED_COMPOSITE",
                  structured_composite_int_method);
       add_suffix("HCT_COMPOSITE",

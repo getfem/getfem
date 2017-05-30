@@ -1332,7 +1332,7 @@ Lagrange elements on 3D pyramid
      - Degree 2 pyramidal element with 14 dof
 
 
-The associated geometric transformations are ``"GT_PYRAMID(K)"`` for K = 1 or 2.
+The associated geometric transformations are ``"GT_PYRAMID(K)"`` for K = 1 or 2. The associated integration methods ``"IM_PYRAMID(im)"`` where ``im`` is an integration method on a hexahedron (or alternatively ``"IM_PYRAMID_COMPOSITE(im)"`` where ``im`` is an integration method on a tetrahedron, but it is theoretically less accurate)
 The shape functions are not polynomial ones but rational fractions. For the first degree :
 
 .. math::

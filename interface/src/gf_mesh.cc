@@ -166,7 +166,7 @@ pyramidal_mesh(getfem::mesh *pmesh, getfemint::mexargs_in &in) {
     barycenter /= 8.;
     size_type ib = pmesh->add_point(barycenter);
     pmesh->add_pyramid(iipts[0],iipts[1],iipts[2],iipts[3],ib);
-    pmesh->add_pyramid(iipts[4],iipts[6],iipts[5],iipts[7],ib);
+    pmesh->add_pyramid(iipts[7],iipts[6],iipts[5],iipts[4],ib);
     pmesh->add_pyramid(iipts[0],iipts[4],iipts[1],iipts[5],ib);
     pmesh->add_pyramid(iipts[1],iipts[5],iipts[3],iipts[7],ib);
     pmesh->add_pyramid(iipts[3],iipts[7],iipts[2],iipts[6],ib);

@@ -1347,7 +1347,7 @@ namespace getfem {
       GMM_ASSERT1(params[0].type() == 0, "Bad type of parameters");
       k = dim_type(::floor(params[0].num() + 0.01));
     }
-    pfem p = build_pyramidal_pk_fem(k, false);
+    pfem p = build_pyramidal_pk_fem(k, true);
     dependencies.push_back(p->ref_convex(0));
     dependencies.push_back(p->node_tab(0));
     return p;
