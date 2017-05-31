@@ -1333,7 +1333,7 @@ Lagrange elements on 3D pyramid
 
 
 The associated geometric transformations are ``"GT_PYRAMID(K)"`` for K = 1 or 2. The associated integration methods ``"IM_PYRAMID(im)"`` where ``im`` is an integration method on a hexahedron (or alternatively ``"IM_PYRAMID_COMPOSITE(im)"`` where ``im`` is an integration method on a tetrahedron, but it is theoretically less accurate)
-The shape functions are not polynomial ones but rational fractions. For the first degree :
+The shape functions are not polynomial ones but rational fractions. For the first degree the shape functions read:
 
 .. math::
 
@@ -1349,26 +1349,27 @@ For the second degree, setting
 
 .. math::
 
-   \xi_0 = \Frac{1-z-x}{2}, ~~~\xi_1 = \Frac{1-z-y}{2}, ~~~\xi_2 = \Frac{1-z+x}{2}, ~~~\xi_3 = \Frac{1-z+y}{2},
+   \xi_0 = \Frac{1-z-x}{2}, ~~~\xi_1 = \Frac{1-z-y}{2}, ~~~\xi_2 = \Frac{1-z+x}{2}, ~~~\xi_3 = \Frac{1-z+y}{2}, ~~~\xi_4 = z,
 
+the shape functions read:
 
 .. math::
 
    \begin{array}{l}
-   \widehat{\varphi}_{0}(x,y,z) = \Frac{\xi_0 \xi_1}{(1-z)^2}((1-z-2\xi_0)(1-z-2\xi_1) -z(1-z)), \\
-   \widehat{\varphi}_{1}(x,y,z) = 4\Frac{\xi_0\xi_1\xi_2}{(1-z)^2}(2\xi_1-(1-z)), \\
-   \widehat{\varphi}_{2}(x,y,z) = \Frac{\xi_1 \xi_2}{(1-z)^2}((1-z-2\xi_1)(1-z-2\xi_2) -z(1-z)), \\
-   \widehat{\varphi}_{3}(x,y,z) = 4\Frac{\xi_3\xi_0\xi_1}{(1-z)^2}(2\xi_0-(1-z)), \\
-   \widehat{\varphi}_{4}(x,y,z) = 16\Frac{\xi_0\xi_1\xi_2\xi_3}{(1-z)^2}, \\
-   \widehat{\varphi}_{5}(x,y,z) = 4\Frac{\xi_1\xi_2\xi_3}{(1-z)^2}(2\xi_2-(1-z)), \\
-   \widehat{\varphi}_{6}(x,y,z) = \Frac{\xi_3 \xi_0}{(1-z)^2}((1-z-2\xi_3)(1-z-2\xi_0) -z(1-z)), \\
-   \widehat{\varphi}_{7}(x,y,z) = 4\Frac{\xi_2\xi_3\xi_0}{(1-z)^2}(2\xi_3-(1-z)), \\
-   \widehat{\varphi}_{8}(x,y,z) = \Frac{\xi_2 \xi_3}{(1-z)^2}((1-z-2\xi_2)(1-z-2\xi_3) -z(1-z)), \\
-   \widehat{\varphi}_{9}(x,y,z) = 4\Frac{z}{1-z}\xi_0\xi_1, \\
-   \widehat{\varphi}_{10}(x,y,z) = 4\Frac{z}{1-z}\xi_1\xi_2,  \\
-   \widehat{\varphi}_{11}(x,y,z) = 4\Frac{z}{1-z}\xi_3\xi_0,  \\
-   \widehat{\varphi}_{12}(x,y,z) = 4\Frac{z}{1-z}\xi_2\xi_3,  \\
-   \widehat{\varphi}_{13}(x,y,z) = z(2z-1). \\
+   \widehat{\varphi}_{0}(x,y,z) = \Frac{\xi_0 \xi_1}{(1-\xi_4)^2}((1-\xi_4-2\xi_0)(1-\xi_4-2\xi_1) -\xi_4(1-\xi_4)), \\
+   \widehat{\varphi}_{1}(x,y,z) = 4\Frac{\xi_0\xi_1\xi_2}{(1-\xi_4)^2}(2\xi_1-(1-\xi_4)), \\
+   \widehat{\varphi}_{2}(x,y,\xi_4) = \Frac{\xi_1 \xi_2}{(1-\xi_4)^2}((1-\xi_4-2\xi_1)(1-\xi_4-2\xi_2) -\xi_4(1-\xi_4)), \\
+   \widehat{\varphi}_{3}(x,y,z) = 4\Frac{\xi_3\xi_0\xi_1}{(1-\xi_4)^2}(2\xi_0-(1-\xi_4)), \\
+   \widehat{\varphi}_{4}(x,y,z) = 16\Frac{\xi_0\xi_1\xi_2\xi_3}{(1-\xi_4)^2}, \\
+   \widehat{\varphi}_{5}(x,y,z) = 4\Frac{\xi_1\xi_2\xi_3}{(1-\xi_4)^2}(2\xi_2-(1-\xi_4)), \\
+   \widehat{\varphi}_{6}(x,y,z) = \Frac{\xi_3 \xi_0}{(1-\xi_4)^2}((1-\xi_4-2\xi_3)(1-\xi_4-2\xi_0) -\xi_4(1-\xi_4)), \\
+   \widehat{\varphi}_{7}(x,y,z) = 4\Frac{\xi_2\xi_3\xi_0}{(1-\xi_4)^2}(2\xi_3-(1-\xi_4)), \\
+   \widehat{\varphi}_{8}(x,y,z) = \Frac{\xi_2 \xi_3}{(1-\xi_4)^2}((1-\xi_4-2\xi_2)(1-\xi_4-2\xi_3) -\xi_4(1-\xi_4)), \\
+   \widehat{\varphi}_{9}(x,y,z) = 4\Frac{\xi_4}{1-\xi_4}\xi_0\xi_1, \\
+   \widehat{\varphi}_{10}(x,y,z) = 4\Frac{\xi_4}{1-\xi_4}\xi_1\xi_2,  \\
+   \widehat{\varphi}_{11}(x,y,z) = 4\Frac{\xi_4}{1-\xi_4}\xi_3\xi_0,  \\
+   \widehat{\varphi}_{12}(x,y,z) = 4\Frac{\xi_4}{1-\xi_4}\xi_2\xi_3,  \\
+   \widehat{\varphi}_{13}(x,y,z) = \xi_4(2\xi_4-1). \\
    \end{array}
 
 .. list-table:: Continuous Lagrange element of order 0, 1 or 2 ``"FEM_PYRAMID_LAGRANGE(K)"``
