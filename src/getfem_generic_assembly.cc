@@ -4581,7 +4581,7 @@ namespace getfem {
     base_tensor &t, &tc1;
     const scalar_type &c;
     virtual int exec() {
-      GA_DEBUG_INFO("Instruction: multiplication of a tensor by a scalar");
+      GA_DEBUG_INFO("Instruction: multiplication of a tensor by a scalar " << c);
       gmm::copy(gmm::scaled(tc1.as_vector(), c), t.as_vector());
       return 0;
     }
@@ -4934,7 +4934,7 @@ namespace getfem {
   struct ga_instruction_reduction_opt2_0_dunrolled : public ga_instruction {
     base_tensor &t, &tc1, &tc2;
     virtual int exec() {
-      GA_DEBUG_INFO("Instruction: unrolled reduction operation of size " << N*q
+      GA_DEBUG_INFO("Instruction: unrolled reduction operation of size " << N*Q
 		    << " optimized for vectorized second tensor of type 2");
       size_type s1 = tc1.size()/(N*Q), s2 = tc2.size()/(N*Q);
       size_type s1_q = s1/Q, s1_qq = s1*Q, s2_qq = s2*Q;
@@ -5002,8 +5002,8 @@ namespace getfem {
   struct ga_instruction_reduction_opt0_1_unrolled : public ga_instruction {
     base_tensor &t, &tc1, &tc2;
     virtual int exec() {
-      GA_DEBUG_INFO("Instruction: unrolled reduction operation of size " << nn
-		    " optimized for vectorized second tensor of type 1");
+      GA_DEBUG_INFO("Instruction: unrolled reduction operation of size " << N
+		    << " optimized for vectorized second tensor of type 1");
       size_type s1 = tc1.size()/N, s2 = tc2.size()/N;
       auto it = t.begin(), it1 = tc1.begin();
       for (size_type i = 0; i < s1; ++i, ++it1) {

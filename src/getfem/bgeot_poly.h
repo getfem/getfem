@@ -667,7 +667,7 @@ namespace bgeot
     rational_fraction operator -(const polynomial<T> &Q) const
     { rational_fraction R(numerator_-Q*denominator_, denominator_); return R; }
     rational_fraction operator -(void) const
-    { numerator_ = -numerator_; }
+    { rational_fraction R(-numerator_, denominator_); return R; }
     /// Multiply P with Q. P contains the result.
     rational_fraction &operator *=(const rational_fraction &Q)
     { numerator_*=Q.numerator(); denominator_*=Q.denominator(); return *this; }

@@ -1355,15 +1355,15 @@ For the second degree, setting
 .. math::
 
    \begin{array}{l}
-   \widehat{\varphi}_{0}(x,y,z) = \Frac{\xi_0 \xi_1}{1-z}((1-z-2\xi_0)(1-z-2\xi_1) -z), \\
+   \widehat{\varphi}_{0}(x,y,z) = \Frac{\xi_0 \xi_1}{(1-z)^2}((1-z-2\xi_0)(1-z-2\xi_1) -z(1-z)), \\
    \widehat{\varphi}_{1}(x,y,z) = 4\Frac{\xi_0\xi_1\xi_2}{(1-z)^2}(2\xi_1-(1-z)), \\
-   \widehat{\varphi}_{2}(x,y,z) = \Frac{\xi_1 \xi_2}{1-z}((1-z-2\xi_1)(1-z-2\xi_2) -z), \\
+   \widehat{\varphi}_{2}(x,y,z) = \Frac{\xi_1 \xi_2}{(1-z)^2}((1-z-2\xi_1)(1-z-2\xi_2) -z(1-z)), \\
    \widehat{\varphi}_{3}(x,y,z) = 4\Frac{\xi_3\xi_0\xi_1}{(1-z)^2}(2\xi_0-(1-z)), \\
    \widehat{\varphi}_{4}(x,y,z) = 16\Frac{\xi_0\xi_1\xi_2\xi_3}{(1-z)^2}, \\
    \widehat{\varphi}_{5}(x,y,z) = 4\Frac{\xi_1\xi_2\xi_3}{(1-z)^2}(2\xi_2-(1-z)), \\
-   \widehat{\varphi}_{6}(x,y,z) = \Frac{\xi_3 \xi_0}{1-z}((1-z-2\xi_3)(1-z-2\xi_0) -z), \\
+   \widehat{\varphi}_{6}(x,y,z) = \Frac{\xi_3 \xi_0}{(1-z)^2}((1-z-2\xi_3)(1-z-2\xi_0) -z(1-z)), \\
    \widehat{\varphi}_{7}(x,y,z) = 4\Frac{\xi_2\xi_3\xi_0}{(1-z)^2}(2\xi_3-(1-z)), \\
-   \widehat{\varphi}_{8}(x,y,z) = \Frac{\xi_2 \xi_3}{1-z}((1-z-2\xi_2)(1-z-2\xi_3) -z), \\
+   \widehat{\varphi}_{8}(x,y,z) = \Frac{\xi_2 \xi_3}{(1-z)^2}((1-z-2\xi_2)(1-z-2\xi_3) -z(1-z)), \\
    \widehat{\varphi}_{9}(x,y,z) = 4\Frac{z}{1-z}\xi_0\xi_1, \\
    \widehat{\varphi}_{10}(x,y,z) = 4\Frac{z}{1-z}\xi_1\xi_2,  \\
    \widehat{\varphi}_{11}(x,y,z) = 4\Frac{z}{1-z}\xi_3\xi_0,  \\

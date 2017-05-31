@@ -52,7 +52,7 @@ namespace getfem
       bgeot::sc(dm[vtk_export::VTK_VOXEL]) = 0, 1, 2, 3, 4, 5, 6, 7;
       bgeot::sc(dm[vtk_export::VTK_HEXAHEDRON]) = 0, 1, 3, 2, 4, 5, 7, 6;
       bgeot::sc(dm[vtk_export::VTK_QUADRATIC_HEXAHEDRON]) = 0, 2, 7, 5, 12, 14, 19, 17, 1, 4, 6, 3, 13, 16, 18, 15, 8, 9, 11, 10;
-      bgeot::sc(dm[vtk_export::VTK_QUADRATIC_PYRAMID]) = 0, 2, 8, 6, 13, 1, 3, 5, 7, 9, 10, 12, 11; // to be verified
+      bgeot::sc(dm[vtk_export::VTK_QUADRATIC_PYRAMID]) = 0, 2, 8, 6, 13, 1, 5, 7, 3, 9, 10, 12, 11; // to be verified
       bgeot::sc(dm[vtk_export::VTK_BIQUADRATIC_QUAD]) = 0, 2, 8, 6, 1, 5, 7, 3, 4;
       bgeot::sc(dm[vtk_export::VTK_TRIQUADRATIC_HEXAHEDRON]) = 0, 2, 8, 6, 18, 20, 26, 24, 1, 5, 7, 3, 19, 23, 25, 21, 9, 11, 17, 15, 12, 14, 10, 16, 4, 22;
     }
@@ -207,7 +207,7 @@ namespace getfem
 	else if (nbd == 27) t = VTK_TRIQUADRATIC_HEXAHEDRON;
 	else if (nbd == 6) t = VTK_WEDGE;
 	else if (nbd == 5) t = VTK_PYRAMID;
-	else if (nbd == 13) t = VTK_QUADRATIC_PYRAMID;
+	else if (nbd == 14) t = VTK_QUADRATIC_PYRAMID;
 	break;
       }
       GMM_ASSERT1(t != -1, "semi internal error. Could not map " <<
