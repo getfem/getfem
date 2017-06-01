@@ -109,15 +109,16 @@ Specialized functions exist also::
   mymesh.add_prism_by_points(N, itp);
 
 The order of the points in the array of points is not important for simplices 
-(except if you care about the orientation of your simplices). For other elements, 
-it is important to respect the order shown in :ref:`ud-fig-elem`.
+(except if you care about the orientation of your simplices). For other elements, it is important to respect the vertex order shown in :ref:`ud-fig-elem` (first order elements).
 
 .. _ud-fig-elem:
 .. figure:: images/getfemuserelem.png
    :align: center
-   :width: 12cm
+   :width: 15cm
 
-   vertex numeration for usual elements
+   Vertex numeration for usual first order elements
+
+Note that a general rule, including for higher order transformations, is that the vertex numeration follows the one of the corresponding Lagrange finite element method (see  :ref:`ud-appendixa`).
 
 
 Remove an element from a mesh
@@ -155,6 +156,7 @@ More specialized regular mesh functions are also available::
 
   getfem::parallelepiped_regular_simplex_mesh(mymesh, N, org, ivect, iref);
   getfem::parallelepiped_regular_prism_mesh(mymesh, N, org, ivect, iref);
+  getfem::parallelepiped_regular_pyramid_mesh(mymesh, N, org, ivect, iref);
   getfem::parallelepiped_regular_mesh(mymesh, N, org, ivect, iref);
 
 where ``mymesh`` is a mesh variable in which the structured mesh will be built,
