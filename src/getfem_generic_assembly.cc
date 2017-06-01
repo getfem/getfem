@@ -7984,14 +7984,14 @@ namespace getfem {
   static scalar_type ga_hash_code(const std::string &s) {
     scalar_type c(0);
     for (size_type i = 0; i < s.size(); ++i)
-      c += sin(M_E+scalar_type(s[i])+M_PI*scalar_type(i+1));
+      c += sin(M_E+scalar_type(s[i]))+M_PI*M_E*scalar_type(i+1);
     return c;
   }
 
   static scalar_type ga_hash_code(const base_tensor &t) {
     scalar_type c(0);
     for (size_type i = 0; i < t.size(); ++i)
-      c += sin(M_E+t[i]+M_E*M_E*scalar_type(i+1));
+      c += sin(M_E+t[i]+M_E*M_E*scalar_type(i+1))+scalar_type(i+1)*M_PI;
     return c;
   }
 
@@ -8020,8 +8020,7 @@ namespace getfem {
       c += ga_hash_code(pnode->name); break;
 
     case GA_NODE_INTERPOLATE_FILTER:
-      c += 1.73*ga_hash_code(pnode->interpolate_name)
-        + 0.84*M_PI*scalar_type(pnode->nbc1);
+      c += 1.73*ga_hash_code(pnode->interpolate_name);
       break;
     case GA_NODE_INTERPOLATE_DERIVATIVE:
       c += 2.321*ga_hash_code(pnode->interpolate_name_der);
