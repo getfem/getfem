@@ -447,6 +447,18 @@ static void print_some_methods() {
 
 int main(/* int argc, char **argv */) {
 
+
+  try {
+   cout << "goulp1.1 ..." << endl;
+    throw std::string("toto");
+    cout << "goulp1.2 ..." << endl;
+    cout << "nbpts=" << im_none->structure()->nb_points() << "\n";
+    cout << "goulp1.3 ..." << endl;
+  } catch (const std::string &e) {
+    ok = 1;
+  }
+  
+
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
 
   try {
@@ -459,11 +471,17 @@ int main(/* int argc, char **argv */) {
 
     int ok = 0;
     getfem::pintegration_method im_none = getfem::int_method_descriptor("IM_NONE()");
+    cout << "goulp1 ..." << endl;
     try {
+      cout << "goulp1.1 ..." << endl;
+      throw std::string("toto");
+      cout << "goulp1.2 ..." << endl;
       cout << "nbpts=" << im_none->structure()->nb_points() << "\n";
-    } catch (gmm::gmm_error e) {
+      cout << "goulp1.3 ..." << endl;
+    } catch (const std::string &e) {
       ok = 1;
     }
+    cout << "goulp2 ..." << endl;
     GMM_ASSERT1(ok, "IM_NONE failed");
     print_some_methods();
     check_orders();

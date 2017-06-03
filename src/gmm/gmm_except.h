@@ -69,7 +69,7 @@ namespace gmm {
   //               defined.
   //          GMM_ASSERT3 : For internal checks. Hidden by default. Active
   //               only when DEBUG_MODE is defined.
-// __EXCEPTIONS is defined by gcc, _CPPUNWIND is defined by visual c++
+  // __EXCEPTIONS is defined by gcc, _CPPUNWIND is defined by visual c++
 #if defined(__EXCEPTIONS) || defined(_CPPUNWIND)
   inline void short_error_throw(const char *file, int line, const char *func,
 				const char *errormsg) {
@@ -115,7 +115,6 @@ namespace gmm {
 # define GMM_ASSERT1(test, errormsg)		        		\
   { if (!(test)) GMM_THROW_(gmm::gmm_error, errormsg); }
 
-  // inline void GMM_THROW() IS_DEPRECATED;
   inline void GMM_THROW() {}
 #define GMM_THROW(a, b) { GMM_THROW_(a,b); gmm::GMM_THROW(); }
 
@@ -270,7 +269,7 @@ namespace gmm {
       std::cerr << e.what() << std::endl << std::endl;			\
       exit(1);								\
     }									\
-  catch(std::runtime_error e)						\
+  catch(const std::runtime_error &e)					\
     {									\
       std::cerr << "============================================\n";	\
       std::cerr << "|      An error has been detected !!!      |\n";	\
@@ -278,25 +277,25 @@ namespace gmm {
       std::cerr << e.what() << std::endl << std::endl;			\
       exit(1);								\
     }									\
-  catch(std::bad_alloc) {						\
+  catch(const std::bad_alloc &) {					\
     std::cerr << "============================================\n";	\
     std::cerr << "|  A bad allocation has been detected !!!  |\n";	\
     std::cerr << "============================================\n";	\
     exit(1);								\
   }									\
-  catch(std::bad_typeid) {						\
+  catch(const std::bad_typeid &) {					\
     std::cerr << "============================================\n";	\
     std::cerr << "|  A bad typeid     has been detected !!!  |\n";	\
     std::cerr << "============================================\n";	\
     exit(1);								\
   }									\
-  catch(std::bad_exception) {						\
+  catch(const std::bad_exception &) {					\
     std::cerr << "============================================\n";	\
     std::cerr << "|  A bad exception  has been detected !!!  |\n";	\
     std::cerr << "============================================\n";	\
     exit(1);								\
   }									\
-  catch(std::bad_cast) {						\
+  catch(const std::bad_cast &) {					\
     std::cerr << "============================================\n";	\
     std::cerr << "|    A bad cast  has been detected !!!     |\n";	\
     std::cerr << "============================================\n";	\

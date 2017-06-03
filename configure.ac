@@ -543,15 +543,23 @@ AC_ARG_WITH(mumps-include-dir,
 CPPFLAGS="$CPPFLAGS $MUMPSINC"
 
 MUMPS_LIBS=""
+case $host in
+    *apple*)
+        MUMPS_SEQ_LIBS="-lsmumps -ldmumps -lcmumps -lzmumps -lmumps_common -lmpiseq -lpord"
+        ;;
+    *)
+        MUMPS_SEQ_LIBS="-lsmumps_seq -ldmumps_seq -lcmumps_seq -lzmumps_seq"
+        ;;
+esac
 acx_mumps_ok="no"
 usemumps="no"
 AC_ARG_ENABLE(mumps,
  [AS_HELP_STRING([--enable-mumps],[enable the use of the (sequential) MUMPS library. A direct solver for large sparse linear systems.])],
  [case $enableval in
-   yes | "") usemumps="yes"; acx_mumps_ok="yes"; MUMPS_LIBS="-lsmumps_seq -ldmumps_seq -lcmumps_seq -lzmumps_seq";;
+   yes | "") usemumps="yes"; acx_mumps_ok="yes"; MUMPS_LIBS="$MUMPS_SEQ_LIBS";;
    no) usemumps="no";;
   esac],
- [usemumps="test"; acx_mumps_ok="test"; MUMPS_LIBS="-lsmumps_seq -ldmumps_seq -lcmumps_seq -lzmumps_seq"]
+ [usemumps="test"; acx_mumps_ok="test"; MUMPS_LIBS="$MUMPS_SEQ_LIBS"]
 )
 
 AC_ARG_ENABLE(par-mumps,
