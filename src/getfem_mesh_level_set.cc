@@ -766,7 +766,7 @@ struct Chrono {
       scalar_type error = test_integration_error(new_approx, 1);
       if (noisy) cout << " max monomial integration err: " << error << "\n";
       if (error > 1e-5) {
-	if (noisy) cout << "Not Good ! Let us make a finer cut.\n"; if (noisy) getchar();
+	if (noisy) cout << "Not Good ! Let us make a finer cut.\n";
 	if (dmin > 3*h0) { dmin /= 2.; }
 	else { h0 /= 2.0; dmin = 2.*h0; }
 	h0_is_ok = false;

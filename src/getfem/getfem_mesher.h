@@ -439,15 +439,24 @@ namespace getfem {
      const pmesher_signed_distance &t = pmesher_signed_distance()) {
       dists.push_back(a); dists.push_back(b);
       with_min = true;
-      if (c) dists.push_back(c); if (d) dists.push_back(d);
-      if (e) dists.push_back(e); if (f) dists.push_back(f);
-      if (g) dists.push_back(g); if (h) dists.push_back(h);
-      if (i) dists.push_back(i); if (j) dists.push_back(j);
-      if (k) dists.push_back(k); if (l) dists.push_back(l);
-      if (m) dists.push_back(m); if (n) dists.push_back(n);
-      if (o) dists.push_back(o); if (p) dists.push_back(p);
-      if (q) dists.push_back(q); if (r) dists.push_back(r);
-      if (s) dists.push_back(s); if (t) dists.push_back(t);
+      if (c) dists.push_back(c);
+      if (d) dists.push_back(d);
+      if (e) dists.push_back(e);
+      if (f) dists.push_back(f);
+      if (g) dists.push_back(g);
+      if (h) dists.push_back(h);
+      if (i) dists.push_back(i);
+      if (j) dists.push_back(j);
+      if (k) dists.push_back(k);
+      if (l) dists.push_back(l);
+      if (m) dists.push_back(m);
+      if (n) dists.push_back(n);
+      if (o) dists.push_back(o);
+      if (p) dists.push_back(p);
+      if (q) dists.push_back(q);
+      if (r) dists.push_back(r);
+      if (s) dists.push_back(s);
+      if (t) dists.push_back(t);
       vd.resize(dists.size());
     }
     

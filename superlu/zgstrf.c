@@ -17,6 +17,8 @@ The source code is distributed under BSD license, see the file License.txt
 */
 
 #include "slu_zdefs.h"
+extern void countnz();
+extern void fixupL();
 
 void
 zgstrf (superlu_options_t *options, SuperMatrix *A, double drop_tol,

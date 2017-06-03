@@ -21,6 +21,8 @@ The source code is distributed under BSD license, see the file License.txt
  */
 
 #include "slu_sdefs.h"
+extern void strsv_();
+extern void sgemv_();
 
 /* 
  * Function prototypes 

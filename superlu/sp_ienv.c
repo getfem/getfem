@@ -25,6 +25,7 @@ The source code is distributed under BSD license, see the file License.txt
  * History:             Modified from lapack routine ILAENV
  */
 #include "slu_Cnames.h"
+extern void xerbla_();
 
 int
 sp_ienv(int ispec)

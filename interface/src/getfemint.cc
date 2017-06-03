@@ -82,8 +82,9 @@ namespace getfemint {
 
   static std::string dim_of_gfi_array(const gfi_array *t) {
     std::stringstream ss;
-    for (size_type i=0; i < static_cast<size_type>(gfi_array_get_ndim(t)); ++i) {
-      if (i) ss << "x"; ss << gfi_array_get_dim(t)[i];
+    for (size_type i=0; i<static_cast<size_type>(gfi_array_get_ndim(t)); ++i) {
+      if (i) ss << "x";
+      ss << gfi_array_get_dim(t)[i];
     }
     return ss.str();
   }

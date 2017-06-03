@@ -572,22 +572,20 @@ namespace getfem {
 
       switch (n) {
       case 2:
-	{
-	  for (short_type k = 0; k < n; ++k) {
-	    size_type ipt = msh.structure_of_convex(i)->ind_dir_points()[k];
-	    if (ptinter.is_in(ipt)) {
-	      
-	      const base_node &P = msh.points_of_convex(i)[ipt];
-	      cc.set_xref(P);
-
-	      if (global_intersection.search_point(cc.xreal())
-		  == size_type(-1)) {
-		global_intersection.add_point(cc.xreal());
-		new_approx->add_point(msh.points_of_convex(i)[ipt],
-				      scalar_type(1)); 
-	      }
-
+	for (short_type k = 0; k < n; ++k) {
+	  size_type ipt = msh.structure_of_convex(i)->ind_dir_points()[k];
+	  if (ptinter.is_in(ipt)) {
+	    
+	    const base_node &P = msh.points_of_convex(i)[ipt];
+	    cc.set_xref(P);
+	    
+	    if (global_intersection.search_point(cc.xreal())
+		== size_type(-1)) {
+	      global_intersection.add_point(cc.xreal());
+	      new_approx->add_point(msh.points_of_convex(i)[ipt],
+				    scalar_type(1)); 
 	    }
+	    
 	  }
 	}
       case 3:

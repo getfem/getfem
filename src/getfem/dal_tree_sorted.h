@@ -53,10 +53,10 @@ namespace dal {
   static const size_t DEPTHMAX__ = 64;
   static const size_t ST_NIL = size_t(-1);
 
-  template<typename T, typename COMP = gmm::less<T>, int pks = 5>
+  template<typename T, typename COMP = gmm::less<T>, unsigned char pks = 5>
     class dynamic_tree_sorted;
 
-  template<typename T, typename COMP, int pks> struct tsa_iterator {
+  template<typename T, typename COMP, unsigned char pks> struct tsa_iterator {
     typedef T                value_type;
     typedef value_type&      reference;
     typedef value_type*      pointer;
@@ -112,7 +112,7 @@ namespace dal {
     { return !((i.depth == 0 && depth == 0) || (i.index_() == index_())); }
   };
 
-  template<typename T, typename COMP, int pks> 
+  template<typename T, typename COMP, unsigned char pks> 
   void tsa_iterator<T, COMP, pks>::copy(const tsa_iterator<T, COMP, pks> &it) {
     p = it.p; depth = it.depth;
     size_type *p1it=&(path[0]), *pend=&path[depth];
@@ -122,29 +122,29 @@ namespace dal {
     while (p1it != pend) { *p1it++ = *p2it++; *d1it++ = *d2it++; }
   }
   
-  template<typename T, typename COMP, int pks> 
+  template<typename T, typename COMP, unsigned char pks> 
     void tsa_iterator<T, COMP, pks>::down_left(void) {
     GMM_ASSERT3(depth > 0 && depth < DEPTHMAX__ && index() != ST_NIL,
 		"internal error");
     path[depth] = p->left_elt(index_()); dir[depth++] = -1;
   }
 
-  template<typename T, typename COMP, int pks> 
+  template<typename T, typename COMP, unsigned char pks> 
     void tsa_iterator<T, COMP, pks>::down_right(void) { 
     GMM_ASSERT3(depth > 0 && depth < DEPTHMAX__ && index() != ST_NIL,
 		"internal error");
     path[depth] = p->right_elt(index_()); dir[depth++] = 1;
   }
 
-  template<typename T, typename COMP, int pks> 
+  template<typename T, typename COMP, unsigned char pks> 
     void tsa_iterator<T, COMP, pks>::down_left_all(void)
   { while (index_() != ST_NIL) down_left(); up(); }
 
-  template<typename T, typename COMP, int pks> 
+  template<typename T, typename COMP, unsigned char pks> 
     void tsa_iterator<T, COMP, pks>::down_right_all(void)
   { while (index_() != ST_NIL) down_right(); up();}
    
-  template<typename T, typename COMP, int pks>
+  template<typename T, typename COMP, unsigned char pks>
     tsa_iterator<T, COMP, pks> &tsa_iterator<T, COMP, pks>::operator ++() {
     if (depth == 0) first();
     if (p->right_elt(index_()) != ST_NIL) { down_right(); down_left_all(); }
@@ -152,7 +152,7 @@ namespace dal {
     return *this;
   }
   
-  template<typename T, typename COMP, int pks>
+  template<typename T, typename COMP, unsigned char pks>
     tsa_iterator<T, COMP, pks> &tsa_iterator<T, COMP, pks>::operator --() {
     if (depth == 0) last();
     if (p->left_elt(index_()) != ST_NIL) { down_left(); down_right_all(); }
@@ -161,7 +161,7 @@ namespace dal {
   }
 
 
-  template<typename T, typename COMP, int pks> struct const_tsa_iterator {
+  template<typename T, typename COMP, unsigned char pks> struct const_tsa_iterator {
     typedef T                  value_type;
     typedef const value_type&  reference;
     typedef const value_type*  pointer;
@@ -217,7 +217,7 @@ namespace dal {
     { return !((i.depth == 0 && depth == 0) || (i.index_() == index_())); }
   };
 
-  template<typename T, typename COMP, int pks>
+  template<typename T, typename COMP, unsigned char pks>
   std::ostream& operator<<(std::ostream& o,
 			   const const_tsa_iterator<T,COMP,pks>& it) {
     o << "const_tsa_iterator : depth=" << it.depth << ", path/dir=[";
@@ -227,7 +227,7 @@ namespace dal {
     return o;
   }
 
-  template<typename T, typename COMP, int pks> 
+  template<typename T, typename COMP, unsigned char pks> 
   void const_tsa_iterator<T, COMP, pks>::copy
   (const const_tsa_iterator<T, COMP, pks> &it) {
     p = it.p; depth = it.depth;
@@ -238,7 +238,7 @@ namespace dal {
     while (p1it != pend) { *p1it++ = *p2it++; *d1it++ = *d2it++; }
   }
   
-  template<typename T, typename COMP, int pks>
+  template<typename T, typename COMP, unsigned char pks>
   const_tsa_iterator<T, COMP, pks>::const_tsa_iterator
   (const tsa_iterator<T, COMP, pks> &it) {
     p = it.p; depth = it.depth;
@@ -249,29 +249,29 @@ namespace dal {
     while (p1it != pend) { *p1it++ = *p2it++; *d1it++ = *d2it++; }
   }
 
-  template<typename T, typename COMP, int pks>
+  template<typename T, typename COMP, unsigned char pks>
   void const_tsa_iterator<T, COMP, pks>::down_left(void) {
     GMM_ASSERT3(depth > 0 && depth < DEPTHMAX__ && index() != ST_NIL,
 		"internal error");
     path[depth] = p->left_elt(index_()); dir[depth++] = -1;
   }
   
-  template<typename T, typename COMP, int pks>
+  template<typename T, typename COMP, unsigned char pks>
   void const_tsa_iterator<T, COMP, pks>::down_right(void) { 
     GMM_ASSERT3(depth > 0 && depth < DEPTHMAX__ && index() != ST_NIL,
 		"internal error");
     path[depth] = p->right_elt(index_()); dir[depth++] = 1;
   }
 
-  template<typename T, typename COMP, int pks>
+  template<typename T, typename COMP, unsigned char pks>
   void const_tsa_iterator<T, COMP, pks>::down_left_all(void)
   { while (index_() != ST_NIL) down_left(); up(); }
 
-  template<typename T, typename COMP, int pks> 
+  template<typename T, typename COMP, unsigned char pks> 
     void const_tsa_iterator<T, COMP, pks>::down_right_all(void) 
   { while (index_() != ST_NIL) down_right(); up();}
   
-  template<typename T, typename COMP, int pks>
+  template<typename T, typename COMP, unsigned char pks>
   const_tsa_iterator<T, COMP, pks> &
   const_tsa_iterator<T, COMP, pks>::operator ++() {  
     if (depth == 0) last();
@@ -280,7 +280,7 @@ namespace dal {
     return *this;
   }
 
-  template<typename T, typename COMP, int pks>
+  template<typename T, typename COMP, unsigned char pks>
   const_tsa_iterator<T, COMP, pks> &
   const_tsa_iterator<T, COMP, pks>::operator --() {
     if (depth == 0) last();
@@ -293,7 +293,7 @@ namespace dal {
   /* Definitition of dynamic_tree_sorted.                                  */
   /* ********************************************************************* */
 
-  template<typename T, typename COMP, int pks>
+  template<typename T, typename COMP, unsigned char pks>
     class dynamic_tree_sorted : public dynamic_tas<T, pks> {
     public :
 
@@ -404,7 +404,7 @@ namespace dal {
       const_sorted_iterator sorted_ge(const T &elt) const;
   }; 
 
-  template<typename T, typename COMP, int pks>
+  template<typename T, typename COMP, unsigned char pks>
   std::ostream& operator <<(std::ostream& o,
 			    dynamic_tree_sorted<T, COMP, pks> &m) {
     o << "Nomber of elt :" << m.card() << '\n';
@@ -415,7 +415,7 @@ namespace dal {
     return o;
   }
 
-  template<typename T, typename COMP, int pks>
+  template<typename T, typename COMP, unsigned char pks>
     typename dynamic_tree_sorted<T, COMP, pks>::size_type
       dynamic_tree_sorted<T, COMP, pks>::rotate_right(size_type i) {
     tree_elt *pni = &(nodes[i]);
@@ -425,7 +425,7 @@ namespace dal {
     return f;
   }
 
-  template<typename T, typename COMP, int pks>
+  template<typename T, typename COMP, unsigned char pks>
     typename dynamic_tree_sorted<T, COMP, pks>::size_type
       dynamic_tree_sorted<T, COMP, pks>::rotate_left(size_type i) {
     tree_elt *pni = &(nodes[i]);
@@ -435,7 +435,7 @@ namespace dal {
     return f;
   }
 
-  template<typename T, typename COMP, int pks>
+  template<typename T, typename COMP, unsigned char pks>
     typename dynamic_tree_sorted<T, COMP, pks>::size_type
       dynamic_tree_sorted<T, COMP, pks>::rotate_left_right(size_type i) {
     tree_elt *pni = &(nodes[i]);
@@ -456,7 +456,7 @@ namespace dal {
     return f;
   }
 
-  template<typename T, typename COMP, int pks>
+  template<typename T, typename COMP, unsigned char pks>
   typename dynamic_tree_sorted<T, COMP, pks>::size_type
   dynamic_tree_sorted<T, COMP, pks>::rotate_right_left(size_type i) {
     size_type f = nodes[i].r;
@@ -473,7 +473,7 @@ namespace dal {
     return f;
   }
 
-  template<typename T, typename COMP, int pks>
+  template<typename T, typename COMP, unsigned char pks>
     typename dynamic_tree_sorted<T, COMP, pks>::size_type
       dynamic_tree_sorted<T, COMP, pks>::balance_again(size_type i) {
     tree_elt *pn = &(nodes[i]);
@@ -488,7 +488,7 @@ namespace dal {
     return ST_NIL;
   }
 
-  template<typename T, typename COMP, int pks>
+  template<typename T, typename COMP, unsigned char pks>
   void dynamic_tree_sorted<T, COMP, pks>::search_sorted_iterator
   (const T &elt, const_sorted_iterator &it) const{
     it.root();
@@ -499,7 +499,7 @@ namespace dal {
     }
   }
 
-  template<typename T, typename COMP, int pks>
+  template<typename T, typename COMP, unsigned char pks>
   void dynamic_tree_sorted<T, COMP, pks>::find_sorted_iterator
   (size_type i, const_sorted_iterator &it) const {
     const T *pelt = &((*this)[i]);
@@ -515,7 +515,7 @@ namespace dal {
     /* pour eviter de faire tout le tableau en cas de faux indice.         */
   }
 
-  template<typename T, typename COMP, int pks>
+  template<typename T, typename COMP, unsigned char pks>
   void dynamic_tree_sorted<T, COMP, pks>::insert_path
   (const T &elt, const_sorted_iterator &it) const {
     it.root();
@@ -525,7 +525,7 @@ namespace dal {
     }
   }
 
-  template<typename T, typename COMP, int pks>
+  template<typename T, typename COMP, unsigned char pks>
   typename dynamic_tree_sorted<T, COMP, pks>::size_type
   dynamic_tree_sorted<T, COMP, pks>::search_ge(const T &elt) const {
     const_sorted_iterator it(*this); insert_path(elt, it);
@@ -535,7 +535,7 @@ namespace dal {
     return it.index();
   }
   
-//   template<typename T, typename COMP, int pks>
+//   template<typename T, typename COMP, unsigned char pks>
 //     typename dynamic_tree_sorted<T, COMP, pks>::sorted_iterator
 //       dynamic_tree_sorted<T, COMP, pks>::sorted_ge(const T &elt)
 //   {
@@ -545,7 +545,7 @@ namespace dal {
 //     return it;
 //   } 
 
-  template<typename T, typename COMP, int pks>
+  template<typename T, typename COMP, unsigned char pks>
   typename dynamic_tree_sorted<T, COMP, pks>::const_sorted_iterator
   dynamic_tree_sorted<T, COMP, pks>::sorted_ge(const T &elt) const {
     const_sorted_iterator it(*this); insert_path(elt, it);
@@ -556,21 +556,21 @@ namespace dal {
   }
   
 
-  template<typename T, typename COMP, int pks>
+  template<typename T, typename COMP, unsigned char pks>
   typename dynamic_tree_sorted<T, COMP, pks>::size_type
   dynamic_tree_sorted<T, COMP, pks>::memsize(void) const {
     return dynamic_tas<T, pks>::memsize() + nodes.memsize()
       + sizeof(dynamic_tree_sorted<T, COMP, pks>);
   }
 
-  template<typename T, typename COMP, int pks>
+  template<typename T, typename COMP, unsigned char pks>
   void dynamic_tree_sorted<T, COMP, pks>::compact(void) {
     if (!this->empty())
       while (this->ind.last_true() >= this->ind.card())
 	swap(this->ind.first_false(), this->ind.last_true());
   }
   
-  template<typename T, typename COMP, int pks>
+  template<typename T, typename COMP, unsigned char pks>
   void dynamic_tree_sorted<T, COMP, pks>::add_index
   (size_type i, const_sorted_iterator &it) {
     nodes[i].init();
@@ -602,7 +602,7 @@ namespace dal {
     }
   }
 
-  template<typename T, typename COMP, int pks>
+  template<typename T, typename COMP, unsigned char pks>
   typename dynamic_tree_sorted<T, COMP, pks>::size_type
   dynamic_tree_sorted<T, COMP, pks>::add(const T &f) {
     const_sorted_iterator it(*this); insert_path(f, it);
@@ -611,7 +611,7 @@ namespace dal {
     return num;
   }
 
-  template<typename T, typename COMP, int pks> void
+  template<typename T, typename COMP, unsigned char pks> void
   dynamic_tree_sorted<T, COMP, pks>::add_to_index(size_type i,const T &f) {
     if (!(this->index_valid(i) && compar(f, (*this)[i]) == 0)) {
       if (this->index_valid(i)) sup(i);
@@ -621,7 +621,7 @@ namespace dal {
     }
   }
 
-  template<typename T, typename COMP, int pks>
+  template<typename T, typename COMP, unsigned char pks>
   typename dynamic_tree_sorted<T, COMP, pks>::size_type
   dynamic_tree_sorted<T, COMP, pks>::add_norepeat
   (const T &f, bool replace, bool *present) {
@@ -638,7 +638,7 @@ namespace dal {
     return num;
   }
 
-  template<typename T, typename COMP, int pks> 
+  template<typename T, typename COMP, unsigned char pks> 
   void dynamic_tree_sorted<T, COMP, pks>::resort(void)  {
     const_tas_iterator itb
       = ((const dynamic_tree_sorted<T, COMP, pks> *)(this))->tas_begin();
@@ -650,7 +650,7 @@ namespace dal {
     { insert_path(*itb, it); add_index(itb.index(), it); ++itb; }
   }     
 
-  template<typename T, typename COMP, int pks>
+  template<typename T, typename COMP, unsigned char pks>
   void dynamic_tree_sorted<T, COMP, pks>::sup_index
   (size_type i, const_sorted_iterator &it) {
     size_type f, ni = i, ic;
@@ -700,7 +700,7 @@ namespace dal {
     }
   }
   
-  template<typename T, typename COMP, int pks>
+  template<typename T, typename COMP, unsigned char pks>
   void dynamic_tree_sorted<T, COMP, pks>::sup(size_type i) {
     GMM_ASSERT2(i < INT_MAX, "out of range");
     const_sorted_iterator it(*this); find_sorted_iterator(i, it);
@@ -708,7 +708,7 @@ namespace dal {
     { sup_index(i, it); dynamic_tas<T, pks>::sup(i); }
   }
 
-  template<typename T, typename COMP, int pks>
+  template<typename T, typename COMP, unsigned char pks>
   void dynamic_tree_sorted<T, COMP, pks>::swap(size_type i, size_type j) {
     GMM_ASSERT2(i < INT_MAX && j < INT_MAX, "out of range");
 
@@ -754,7 +754,7 @@ namespace dal {
   };
 
 
-  template<typename T, typename TAB, typename COMP = gmm::less<T>, int pks = 5>
+  template<typename T, typename TAB, typename COMP = gmm::less<T>, unsigned char pks = 5>
   class dynamic_tree_sorted_index : public
   dynamic_tree_sorted<size_t, less_index<T,TAB,COMP>, pks> {
   public :

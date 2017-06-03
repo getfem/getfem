@@ -60,7 +60,7 @@ namespace getfemint {
       getfemint_class_id class_id;
       std::vector<dal::pstatic_stored_object> dependent_on;
 
-      object_info() : raw_pointer(0), class_id(GETFEMINT_NB_CLASS) {}
+      object_info() : raw_pointer(0), workspace(-1), class_id(GETFEMINT_NB_CLASS) {}
     };
 
     typedef std::vector<object_info>  obj_ct;

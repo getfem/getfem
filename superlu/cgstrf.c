@@ -19,6 +19,9 @@ The source code is distributed under BSD license, see the file License.txt
 
 #include "slu_cdefs.h"
 
+extern void countnz();
+extern void fixupL();
+
 void
 cgstrf (superlu_options_t *options, SuperMatrix *A, float drop_tol,
         int relax, int panel_size, int *etree, void *work, int lwork,

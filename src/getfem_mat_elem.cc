@@ -44,9 +44,12 @@ namespace getfem {
     bool prefer_comp_on_real_element;
     virtual bool compare(const static_stored_object_key &oo) const {
       const emelem_comp_key_ &o = dynamic_cast<const emelem_comp_key_ &>(oo);
-      if (pmt < o.pmt) return true; if (o.pmt < pmt) return false;
-      if (ppi < o.ppi) return true; if (o.ppi < ppi) return false;
-      if (pgt < o.pgt) return true; if (o.pgt < pgt) return false;
+      if (pmt < o.pmt) return true;
+      if (o.pmt < pmt) return false;
+      if (ppi < o.ppi) return true;
+      if (o.ppi < ppi) return false;
+      if (pgt < o.pgt) return true;
+      if (o.pgt < pgt) return false;
       if (prefer_comp_on_real_element < o.prefer_comp_on_real_element)
         return true;
       return false;

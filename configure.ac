@@ -151,6 +151,8 @@ case $CXX in
 	AC_CHECK_CXX_FLAG([-fPIC],CXXFLAGS)
 	AC_CHECK_CXX_FLAG([-pedantic],CXXFLAGS)
 	AC_CHECK_CXX_FLAG([-Wshadow],CXXFLAGS)
+	AC_CHECK_CXX_FLAG([-Wno-terminate],CXXFLAGS)
+	AC_CHECK_CXX_FLAG([-Wno-implicit-fallthrough],CXXFLAGS)
 	AC_CHECK_CXX_FLAG([-Wno-unknown-pragmas],CXXFLAGS)
 	AC_CHECK_CXX_FLAG([-Wno-variadic-macros],CXXFLAGS)
 	AC_CHECK_CXX_FLAG([-Wno-unused-but-set-variable],CXXFLAGS)

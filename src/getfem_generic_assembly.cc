@@ -786,7 +786,8 @@ namespace getfem {
     }
 
     void clear() {
-      if (root) clear_node_rec(root); root = current_node = 0;
+      if (root) clear_node_rec(root);
+      root = current_node = 0;
     }
 
     void clear_children(pga_tree_node pnode) {
@@ -2861,7 +2862,7 @@ namespace getfem {
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: adapt first index of tensor");
       const mesh_fem &mf = *(mfg ? *mfg : mfn);
-      GA_DEBUG_ASSERT(&mf, "Internal error");
+      GA_DEBUG_ASSERT(mfg ? *mfg : mfn, "Internal error");
       size_type cv_1 = ctx.is_convex_num_valid()
 	? ctx.convex_num() : mf.convex_index().first_true();
       pfem pf = mf.fem_of_element(cv_1);
@@ -6362,7 +6363,7 @@ namespace getfem {
       }
       if (ipt == nbpt-1 || interpolate) {
         const mesh_fem &mf = *(mfg ? *mfg : mfn);
-        GMM_ASSERT1(&mf, "Internal error");
+        GMM_ASSERT1(mfg ? *mfg : mfn, "Internal error");
         const gmm::sub_interval &I = mf.is_reduced() ? Ir : In;
         base_vector &V = mf.is_reduced() ? Vr : Vn;
         if (!(ctx.is_convex_num_valid())) return 0;
@@ -13372,7 +13373,8 @@ namespace getfem {
   }
 
   ga_function &ga_function::operator =(const ga_function &gaf) {
-    if (gis) delete gis; gis = 0;
+    if (gis) delete gis;
+    gis = 0;
     local_workspace = gaf.local_workspace;
     expr = gaf.expr;
     if (gaf.gis) compile();
@@ -13404,7 +13406,8 @@ namespace getfem {
       }
       expr = ga_tree_to_string(tree);
     }
-    if (gis) delete gis; gis = 0;
+    if (gis) delete gis;
+    gis = 0;
     compile();
   }
 

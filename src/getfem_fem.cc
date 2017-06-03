@@ -328,10 +328,12 @@ namespace getfem {
     gmm::int16_type hier_degree;
     short_type hier_raff;
     bool operator < (const ddl_elem &l) const {
-      if (t < l.t) return true; if (t > l.t) return false;
+      if (t < l.t) return true;
+      if (t > l.t) return false;
       if (hier_degree < l.hier_degree) return true;
       if (hier_degree > l.hier_degree) return false;
-      if (hier_raff < l.hier_raff) return true; return false;
+      if (hier_raff < l.hier_raff) return true;
+      return false;
     }
     ddl_elem(ddl_type s = LAGRANGE, gmm::int16_type k = -1, short_type l = 0)
       : t(s), hier_degree(k), hier_raff(l) {}
@@ -358,15 +360,20 @@ namespace getfem {
                                          const dof_description &n) const {
     int nn = gmm::lexicographical_less<std::vector<ddl_elem> >()
       (m.ddl_desc, n.ddl_desc);
-    if (nn < 0) return -1; if (nn > 0) return 1;
+    if (nn < 0) return -1;
+    if (nn > 0) return 1;
     nn = int(m.linkable) - int(n.linkable);
-    if (nn < 0) return -1; if (nn > 0) return 1;
+    if (nn < 0) return -1;
+    if (nn > 0) return 1;
     nn = int(m.coord_index) - int(n.coord_index);
-    if (nn < 0) return -1; if (nn > 0) return 1;
+    if (nn < 0) return -1;
+    if (nn > 0) return 1;
     nn = int(m.xfem_index) - int(n.xfem_index);
-    if (nn < 0) return -1; if (nn > 0) return 1;
+    if (nn < 0) return -1;
+    if (nn > 0) return 1;
     nn = int(m.all_faces) - int(n.all_faces);
-    if (nn < 0) return -1; if (nn > 0) return 1;
+    if (nn < 0) return -1;
+    if (nn > 0) return 1;
     return 0;
   }
 
@@ -3439,8 +3446,8 @@ namespace getfem {
       if (alpha != scalar_type(0)) {
         base_node G =
           gmm::mean_value(cv_node.points().begin(), cv_node.points().end());
-      for (size_type i=0; i < cv_node.nb_points(); ++i)
-        cv_node.points()[i] = (1-alpha)*cv_node.points()[i] + alpha*G;
+	for (size_type i=0; i < cv_node.nb_points(); ++i)
+	  cv_node.points()[i] = (1-alpha)*cv_node.points()[i] + alpha*G;
         for (size_type d = 0; d < nc; ++d) {
           base_poly S(1,2);
           S[0] = -alpha * G[d] / (1-alpha);

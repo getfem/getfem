@@ -126,7 +126,8 @@ namespace getfem {
     // one-dimensional tensors [N]
 
     case RHS_U_V1:
-      for (i=0; i<N; ++i) t[i] = ln * no[i]; break;
+      for (i=0; i<N; ++i) t[i] = ln * no[i];
+      break;
     case RHS_U_V2:
       e = -gmm::neg(ln-r*(un - g));
       for (i=0; i<N; ++i) t[i] = e * no[i];
@@ -157,7 +158,8 @@ namespace getfem {
       for (i=0; i<N; ++i) t[i] = auxN[i];
       break;
     case RHS_U_FRICT_V1:
-      for (i=0; i<N; ++i) t[i] = lnt[i]; break;
+      for (i=0; i<N; ++i) t[i] = lnt[i];
+      break;
     case RHS_U_FRICT_V4:
       e = gmm::neg(ln);
       // if (e > 0. && ctx.xreal()[1] > 1.)
@@ -2226,7 +2228,7 @@ namespace getfem {
         }
       }
 
-      GMM_ASSERT1(matl.size() == contact_only ? 3 : 4,
+      GMM_ASSERT1(matl.size() == (contact_only ? 3 : 4),
                   "Wrong number of terms for penalized contact "
                   "between nonmatching meshes brick");
 

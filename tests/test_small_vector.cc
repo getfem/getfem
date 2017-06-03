@@ -98,6 +98,7 @@ namespace test {
       node_id(gmm::uint32_type b, gmm::uint32_type cid, bool al_) : p((b*BLOCKSZ+cid)+(al_?0x80000000:0)) {}
       bool null() const { return p == 0; }
       void nullify() { p = 0; }
+      bool operator ==(const node_id &a) { return p == a.p; }
     };
 
 
@@ -270,7 +271,7 @@ namespace test {
       : id(allocate(a.size())) { std::transform(a.begin(), a.end(), begin(), op); }
     template<class BINOP> small_vector(const small_vector<T>& a, const small_vector<T>& b, BINOP op) 
       : id(allocate(a.size())) { std::transform(a.begin(), a.end(), b.begin(), begin(), op); }
-    bool empty() const { return this->id==node_id(0); }
+    bool empty() const { return this->id == node_id(0); }
     unsigned char refcnt() const { return allocator().refcnt(id); }
     dim_type size() const { return allocator().obj_sz(id)/sizeof(value_type); }
     small_vector<T> operator+(const small_vector<T>& other) const 
@@ -550,10 +551,11 @@ namespace getfem {
       for (size_type j=0; j < vv.size(); ++j) {
 	for (size_type k=0; k < vv[j].size(); ++k) {
 	  vv[j][k] = double(j+k);
-	  assert(vv[j][k] == j+k);
+	  assert(vv[j][k] == double(j+k));
 	}
 	vv[j] = vv[j];
-	for (size_type k=0; k < vv[j].size(); ++k) assert(vv[j][k] == j+k);
+	for (size_type k=0; k < vv[j].size(); ++k)
+	  assert(vv[j][k] == double(j+k));
       }
     }
     cout << "remplissage : " << c.toc().cpu() << " sec\n";

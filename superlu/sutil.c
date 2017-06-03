@@ -468,7 +468,7 @@ sPrintPerf(SuperMatrix *L, SuperMatrix *U, mem_usage_t *mem_usage,
 
 
 
-print_float_vec(char *what, int n, float *vec)
+int print_float_vec(char *what, int n, float *vec)
 {
     int i;
     printf("%s: n %d\n", what, n);

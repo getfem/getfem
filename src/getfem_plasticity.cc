@@ -1111,7 +1111,7 @@ namespace getfem {
     bool hardening = (lawname.find("_hardening") != std::string::npos);
     size_type nhard = hardening ? 2 : 0;
 
-    GMM_ASSERT1(varnames.size() == hardening ? 4 : 3,
+    GMM_ASSERT1(varnames.size() == (hardening ? 4 : 3),
                 "Incorrect number of variables: " << varnames.size());
     GMM_ASSERT1(params.size() >= 3+nhard &&
                 params.size() <= 5+nhard,
@@ -1991,6 +1991,8 @@ namespace getfem {
     GMM_ASSERT1(mf_u.get_qdim() == mf_u.linked_mesh().dim(),
                 "wrong qdim for the mesh_fem");
 
+    const mesh_fem *pmf_data = &mf_data;
+
     elastoplasticity_nonlinear_term gradplast(mim, mf_u, mf_sigma, &mf_data,
                                               u_n, u_np1, sigma_n,
                                               threshold, lambda, mu,
@@ -1998,7 +2000,7 @@ namespace getfem {
 
     generic_assembly assem;
 
-    if (&(mf_data)!=NULL)
+    if (pmf_data)
       assem.set("lambda=data$1(#3); mu=data$2(#3);"
                 "t=comp(NonLin(#2).vGrad(#1).vGrad(#1).Base(#3))(i,j,:,:,:,:,:,:,i,j,:);"
                 "M(#1,#1)+=  sym(t(k,l,:,l,k,:,m).mu(m)+t(k,l,:,k,l,:,m).mu(m)+t(k,k,:,l,l,:,m).lambda(m))");
@@ -2010,7 +2012,7 @@ namespace getfem {
     assem.push_mi(mim);
     assem.push_mf(mf_u);
     assem.push_mf(mf_sigma);
-    if (&(mf_data)!=NULL)
+    if (pmf_data)
       assem.push_mf(mf_data);
     assem.push_data(lambda);
     assem.push_data(mu);

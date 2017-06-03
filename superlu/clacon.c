@@ -31,6 +31,7 @@ The source code is distributed under BSD license, see the file License.txt
 #include <math.h>
 #include "slu_Cnames.h"
 #include "slu_scomplex.h"
+extern void ccopy_();
 
 int
 clacon_(int *n, complex *v, complex *x, float *est, int *kase)

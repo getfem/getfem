@@ -39,8 +39,8 @@ namespace bgeot {
     int ret = 0;
     for (; itx != itex; ++itx, ++ity) {
       long a = long(sfloor((*itx) * c1)), b = long(sfloor((*ity) * c1));
-      if ((gmm::abs(a) > scalar_type(base))
-          || (gmm::abs(b) > scalar_type(base))) { 
+      if ((scalar_type(gmm::abs(a)) > scalar_type(base))
+          || (scalar_type(gmm::abs(b)) > scalar_type(base))) { 
         exp_max++; c_max /= scalar_type(base);
         return (*this)(x,y);
       }

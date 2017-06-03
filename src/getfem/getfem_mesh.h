@@ -605,9 +605,9 @@ namespace getfem {
   struct APIDECL convex_face  {
     size_type cv;
     short_type f;
-    inline bool operator < (const convex_face &e) const
-    {
-      if (cv < e.cv) return true; if (cv > e.cv) return false;
+    inline bool operator < (const convex_face &e) const {
+      if (cv < e.cv) return true;
+      if (cv > e.cv) return false;
       if (f < e.f) return true; else if (f > e.f) return false;
       return false;
     }

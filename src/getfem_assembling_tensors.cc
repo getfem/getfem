@@ -162,16 +162,16 @@ namespace getfem {
               "of size " << rn << " with '"
               << s << "'");
           }
-          //cerr << "ts = " << child(n).ranges() << ", red="
-          //     << red[n].second << "\n";
-          bgeot::tensor_reduction::diag_shape(ts, red[n].second);
-          // cerr << "REDUCTION '" << red[n].second
-          //        << "' -> sending required to child#" << int(n)
-          //	<< " " << child(n).name() << ":" << endl;
-          // cerr << ts << endl;
-          child(n).merge_required_shape(ts);
-          // cerr << "------>required shape is now: "
-          //      << child(n).required_shape() << endl;
+	//cerr << "ts = " << child(n).ranges() << ", red="
+	//     << red[n].second << "\n";
+	bgeot::tensor_reduction::diag_shape(ts, red[n].second);
+	// cerr << "REDUCTION '" << red[n].second
+	//        << "' -> sending required to child#" << int(n)
+	//	<< " " << child(n).name() << ":" << endl;
+	// cerr << ts << endl;
+	child(n).merge_required_shape(ts);
+	// cerr << "------>required shape is now: "
+	//      << child(n).required_shape() << endl;
       }
     }
 

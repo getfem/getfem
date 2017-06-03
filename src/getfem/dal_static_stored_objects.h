@@ -150,7 +150,7 @@ namespace dal {
   public :
     virtual bool compare(const static_stored_object_key &oo) const {
       const simple_key &o = dynamic_cast<const simple_key &>(oo);
-      if (a < o.a) return true; return false;
+      if (a < o.a) return true; else return false;
     }
     simple_key(var_type aa) : a(aa) {}
   };

@@ -17,7 +17,8 @@ The source code is distributed under BSD license, see the file License.txt
 */
 
 #include "slu_ddefs.h"
-
+extern void dtrsm_();
+extern void dgemm_();
 
 /* 
  * Function prototypes 

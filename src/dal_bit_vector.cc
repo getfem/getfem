@@ -52,7 +52,8 @@ namespace dal {
   void bit_vector::fill_false(size_type i1, size_type i2) {
     size_type f = i1 / WD_BIT, r = i1 & (WD_BIT-1), l = i2 / WD_BIT;
     (*((bit_container *)(this)))[l];
-    if (r != 0) f++; l++;
+    if (r != 0) f++;
+    l++;
     if (f < l) std::fill(dal::bit_container::begin()+f,
 			 dal::bit_container::begin()+l, 0);
     ilast_false = i2;
