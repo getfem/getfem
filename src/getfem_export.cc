@@ -46,11 +46,13 @@ namespace getfem
       bgeot::sc(dm[vtk_export::VTK_QUADRATIC_QUAD]) = 0, 2, 7, 5, 1, 4, 6, 3;
       bgeot::sc(dm[vtk_export::VTK_TETRA]) = 0, 1, 2, 3;
       bgeot::sc(dm[vtk_export::VTK_QUADRATIC_TETRA]) = 0, 2, 5, 9, 1, 4, 3, 6, 7, 8;
+      bgeot::sc(dm[vtk_export::VTK_PYRAMID]) = 0, 1, 3, 2, 4;
       bgeot::sc(dm[vtk_export::VTK_WEDGE]) = 0, 1, 2, 3, 4, 5;
       //bgeot::sc(dm[vtk_export::VTK_QUADRATIC_WEDGE]) = 0, 6, 1, 7, 2, 8, 3, 4, 5;
       bgeot::sc(dm[vtk_export::VTK_VOXEL]) = 0, 1, 2, 3, 4, 5, 6, 7;
       bgeot::sc(dm[vtk_export::VTK_HEXAHEDRON]) = 0, 1, 3, 2, 4, 5, 7, 6;
       bgeot::sc(dm[vtk_export::VTK_QUADRATIC_HEXAHEDRON]) = 0, 2, 7, 5, 12, 14, 19, 17, 1, 4, 6, 3, 13, 16, 18, 15, 8, 9, 11, 10;
+      bgeot::sc(dm[vtk_export::VTK_QUADRATIC_PYRAMID]) = 0, 2, 8, 6, 13, 1, 5, 7, 3, 9, 10, 12, 11; // to be verified
       bgeot::sc(dm[vtk_export::VTK_BIQUADRATIC_QUAD]) = 0, 2, 8, 6, 1, 5, 7, 3, 4;
       bgeot::sc(dm[vtk_export::VTK_TRIQUADRATIC_HEXAHEDRON]) = 0, 2, 8, 6, 18, 20, 26, 24, 1, 5, 7, 3, 19, 23, 25, 21, 9, 11, 17, 15, 12, 14, 10, 16, 4, 22;
     }
@@ -163,10 +165,12 @@ namespace getfem
       else {
         pfem classical_pf1 = discontinuous ? classical_discontinuous_fem(pgt, 1)
                                            : classical_fem(pgt, 1);
-        short_type degree = short_type(((pf != classical_pf1 &&
-                                         pf->estimated_degree() > 1) ||
-                                        pgt->structure() !=
-                                        pgt->basic_structure()) ? 2 : 1);
+
+	short_type degree = 1;
+	if ((pf != classical_pf1 && pf->estimated_degree() > 1) ||
+		pgt->structure() != pgt->basic_structure())
+	  degree = 2;
+	  
         pmf->set_finite_element(cv, discontinuous ?
                                 classical_discontinuous_fem(pgt, degree) :
                                 classical_fem(pgt, degree));
@@ -181,25 +185,32 @@ namespace getfem
       int t = -1;
       size_type nbd = pmf->fem_of_element(cv)->nb_dof(cv);
       switch (pmf->fem_of_element(cv)->dim()) {
-        case 0: t = VTK_VERTEX; break;
-        case 1:
-          if (nbd == 2) t = VTK_LINE;
-          else if (nbd == 3) t = VTK_QUADRATIC_EDGE; break;
-        case 2:
-          if (nbd == 3) t = VTK_TRIANGLE;
-          else if (nbd == 4) t = check_voxel(m.points_of_convex(cv)) ? VTK_PIXEL : VTK_QUAD;
-          else if (nbd == 6) t = VTK_QUADRATIC_TRIANGLE;
-          else if (nbd == 8) t = VTK_QUADRATIC_QUAD;
-          else if (nbd == 9) t = VTK_BIQUADRATIC_QUAD; break;
-        case 3:
-          if (nbd == 4) t = VTK_TETRA;
-          else if (nbd == 10) t = VTK_QUADRATIC_TETRA;
-          else if (nbd == 8) t = check_voxel(m.points_of_convex(cv)) ? VTK_VOXEL : VTK_HEXAHEDRON;
-          else if (nbd == 20) t = VTK_QUADRATIC_HEXAHEDRON;
-          else if (nbd == 27) t = VTK_TRIQUADRATIC_HEXAHEDRON;
-          else if (nbd == 6) t = VTK_WEDGE; break;
+      case 0: t = VTK_VERTEX; break;
+      case 1:
+	if (nbd == 2) t = VTK_LINE;
+	else if (nbd == 3) t = VTK_QUADRATIC_EDGE;
+	break;
+      case 2:
+	if (nbd == 3) t = VTK_TRIANGLE;
+	else if (nbd == 4)
+	  t = check_voxel(m.points_of_convex(cv)) ? VTK_PIXEL : VTK_QUAD;
+	else if (nbd == 6) t = VTK_QUADRATIC_TRIANGLE;
+	else if (nbd == 8) t = VTK_QUADRATIC_QUAD;
+	else if (nbd == 9) t = VTK_BIQUADRATIC_QUAD;
+	break;
+      case 3:
+	if (nbd == 4) t = VTK_TETRA;
+	else if (nbd == 10) t = VTK_QUADRATIC_TETRA;
+	else if (nbd == 8)
+	  t = check_voxel(m.points_of_convex(cv)) ? VTK_VOXEL:VTK_HEXAHEDRON;
+	else if (nbd == 20) t = VTK_QUADRATIC_HEXAHEDRON;
+	else if (nbd == 27) t = VTK_TRIQUADRATIC_HEXAHEDRON;
+	else if (nbd == 6) t = VTK_WEDGE;
+	else if (nbd == 5) t = VTK_PYRAMID;
+	else if (nbd == 14) t = VTK_QUADRATIC_PYRAMID;
+	break;
       }
-      GMM_ASSERT1(t != -1, "semi internal error.. could not map " <<
+      GMM_ASSERT1(t != -1, "semi internal error. Could not map " <<
                   name_of_fem(pmf->fem_of_element(cv))
                 << " to a VTK cell type");
       pmf_cell_type[cv] = t;
@@ -789,7 +800,7 @@ namespace getfem
   static const std::vector<unsigned>& getfem_to_pos_dof_mapping(int t) {
     gf2pos_dof_mapping &dm = dal::singleton<gf2pos_dof_mapping>::instance();
     if (dm.size() == 0) {
-      dm.resize(7);
+      dm.resize(8);
       bgeot::sc(dm[pos_export::POS_PT]) = 0;
       bgeot::sc(dm[pos_export::POS_LN]) = 0, 1;
       bgeot::sc(dm[pos_export::POS_TR]) = 0, 1, 2;
@@ -797,6 +808,7 @@ namespace getfem
       bgeot::sc(dm[pos_export::POS_SI]) = 0, 1, 2, 3;
       bgeot::sc(dm[pos_export::POS_HE]) = 0, 1, 3, 2, 4, 5, 7, 6;
       bgeot::sc(dm[pos_export::POS_PR]) = 0, 1, 2, 3, 4, 5;
+      bgeot::sc(dm[pos_export::POS_PY]) = 0, 1, 3, 2, 4;
     }
     return dm[t];
   }
@@ -859,7 +871,8 @@ namespace getfem
         // could be a better test for discontinuity ...
         if (!dof_linkable(pf->dof_types()[i])) { discontinuous = true; break; }
       }
-      pfem classical_pf1 = discontinuous ? classical_discontinuous_fem(pgt, 1) : classical_fem(pgt, 1);
+      pfem classical_pf1 = discontinuous ?
+	classical_discontinuous_fem(pgt, 1) : classical_fem(pgt, 1);
       pmf->set_finite_element(cv, classical_pf1);
     }
     psl = NULL;
@@ -876,8 +889,9 @@ namespace getfem
           else if (3 == pmf->fem_of_element(cv)->dim()) t = POS_SI; break;
         case 6: t = POS_PR; break;
         case 8: t = POS_HE; break;
+        case 5: t = POS_PY; break;
       }
-      GMM_ASSERT1(t != -1, "semi internal error.. could not map "
+      GMM_ASSERT1(t != -1, "semi internal error. Could not map "
                            << name_of_fem(pmf->fem_of_element(cv))
                            << " to a POS primitive type");
       pos_cell_type.push_back(unsigned(t));

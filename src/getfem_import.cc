@@ -56,7 +56,7 @@ namespace getfem {
         pgt = bgeot::prism_geotrans(3,1);
       } break;
       case 7: { /* PYRAMID */
-        GMM_ASSERT1(false, "sorry pyramidal elements not yet supported.");
+	pgt = bgeot::pyramidal_geotrans(1);
       } break;
       case 8: { /* 2ND ORDER LINE */
         pgt = bgeot::simplex_geotrans(1,2);
@@ -123,8 +123,7 @@ namespace getfem {
         nodes.resize(6);
       } break;
       case 7: { /* PYRAMID */
-        GMM_ASSERT1(false,
-                    "sorry pyramidal elements not done for the moment..");
+	nodes.resize(5);
       } break;
       case 8: { /* 2ND ORDER LINE */
         nodes.resize(3);
@@ -354,6 +353,13 @@ namespace getfem {
         //ci.nodes[5] = tmp_nodes[5];
         ci.nodes[6] = tmp_nodes[7];
         ci.nodes[7] = tmp_nodes[6];
+      } break;
+      case 7 : { /* first order pyramid */
+        //ci.nodes[0] = tmp_nodes[0];
+        ci.nodes[1] = tmp_nodes[2];
+        ci.nodes[2] = tmp_nodes[1];
+        // ci.nodes[3] = tmp_nodes[3];
+        // ci.nodes[4] = tmp_nodes[4];
       } break;
       case 8 : { /* Second order line */
         //ci.nodes[0] = tmp_nodes[0];
@@ -1017,9 +1023,9 @@ namespace getfem {
             if (itype < elt_cnt.size())
               elt_cnt[itype] += 1;
           } else if (MM == NN && NN == OO && OO == PP) { // assume 13-node pyramid
-            GMM_ASSERT1(false, "Ansys 13-node pyramid elements are not supported yet");
+            GMM_ASSERT1(false, "Ansys 13-node pyramid elements are not supported yet, import to be done");
           } else if (KK == LL && OO == PP) { // assume 15-node pyramid
-            GMM_ASSERT1(false, "Ansys 15-node prism elements are not supported yet");
+            GMM_ASSERT1(false, "Ansys 15-node pyramid elements are not supported yet, import to be done");
           } else {
             getfem_cv_nodes.resize(20);
             getfem_cv_nodes[0] = cdb_node_2_getfem_node[II];

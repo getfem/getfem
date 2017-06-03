@@ -174,7 +174,7 @@ namespace bgeot {
   /// Give a pointer on the structures of a simplex of dimension d.
   pconvex_structure simplex_structure(dim_type d);
   /// Give a pointer on the structures of a parallelepiped of dimension d.
-  pconvex_structure parallelepiped_structure(dim_type d);
+  pconvex_structure parallelepiped_structure(dim_type d, dim_type k = 1);
   /// Give a pointer on the structures of a polygon with n vertex.
   pconvex_structure polygon_structure(short_type);
   /** Give a pointer on the structures of a incomplete Q2
@@ -193,6 +193,9 @@ namespace bgeot {
     return convex_product_structure(simplex_structure(dim_type(nc-1)),
                                     simplex_structure(1));
   }
+  /// Give a pointer on the 3D pyramid structure for a degree k = 1 or 2.
+  pconvex_structure pyramidal_structure(short_type k);
+  
 
   /** Simplex structure with the Lagrange grid of degree k.
       @param n the simplex dimension.

@@ -175,8 +175,6 @@ namespace bgeot
    *        variables of P plus the number of variables of Q.
    *        The resulting polynomials have a smaller degree.
    *
-   *  @todo <h3>Horner scheme to evaluate polynomials.</h3>
-   *
    */
   template<typename T> class polynomial : public std::vector<T> {
   protected :
@@ -240,8 +238,10 @@ namespace bgeot
     /// Derivative of P with respect to the variable k. P contains the result.
     void derivative(short_type k);
     /// Makes P = 1.
-    void one(void) { change_degree(0); (*this)[0] = T(1); }
-    void clear(void) { change_degree(0); (*this)[0] = T(0); }
+    void one() { change_degree(0); (*this)[0] = T(1); }
+    void clear() { change_degree(0); (*this)[0] = T(0); }
+    bool is_zero()
+    { return(this->real_degree()==0) && (this->size()==0 || (*this)[0]==T(0)); }
     template <typename ITER> T horner(power_index &mi, short_type k,
 				   short_type de, const ITER &it) const;
     /** Evaluate the polynomial. "it" is an iterator pointing to the list
@@ -606,8 +606,8 @@ namespace bgeot
   }
   
   template<typename U, typename T>
-  polynomial<T> operator *(U c, const polynomial<T> &p)
-  { polynomial<T> q = p; q *= T(c); return q; }
+  polynomial<T> operator *(T c, const polynomial<T> &p)
+  { polynomial<T> q = p; q *= c; return q; }
 
   typedef polynomial<opt_long_scalar_type> base_poly;
 
@@ -624,6 +624,145 @@ namespace bgeot
 
   /** read a base_poly on the string s. */
   base_poly read_base_poly(short_type n, const std::string &s);
+
+
+  /**********************************************************************/
+  /* A class for rational fractions                                     */
+  /**********************************************************************/
+
+  template<typename T> class rational_fraction : public std::vector<T> {
+  protected :
+    
+    polynomial<T> numerator_, denominator_;
+    
+  public :
+
+    const polynomial<T> &numerator() const { return numerator_; }
+    const polynomial<T> &denominator() const { return denominator_; }
+
+    short_type dim(void) const { return numerator_.dim(); }
+    
+    /// Add Q to P. P contains the result.
+    rational_fraction &operator +=(const rational_fraction &Q) {
+      numerator_ = numerator_*Q.denominator() + Q.numerator()*denominator_;
+      denominator_ *= Q.denominator();
+      return *this;
+    }
+    /// Subtract Q from P. P contains the result.
+    rational_fraction &operator -=(const rational_fraction &Q) {
+      numerator_ = numerator_*Q.denominator() - Q.numerator()*denominator_;
+      denominator_ *= Q.denominator();
+      return *this;
+    }
+    /// Add Q to P.
+    rational_fraction operator +(const rational_fraction &Q) const
+    { rational_fraction R = *this; R += Q; return R; }
+    /// Subtract Q from P.
+    rational_fraction operator -(const rational_fraction &Q) const
+    { rational_fraction R = *this; R -= Q; return R; }
+    /// Add Q to P.
+    rational_fraction operator +(const polynomial<T> &Q) const
+    { rational_fraction R(numerator_+Q*denominator_, denominator_); return R; }
+    /// Subtract Q from P.
+    rational_fraction operator -(const polynomial<T> &Q) const
+    { rational_fraction R(numerator_-Q*denominator_, denominator_); return R; }
+    rational_fraction operator -(void) const
+    { rational_fraction R(-numerator_, denominator_); return R; }
+    /// Multiply P with Q. P contains the result.
+    rational_fraction &operator *=(const rational_fraction &Q)
+    { numerator_*=Q.numerator(); denominator_*=Q.denominator(); return *this; }
+    /// Divide P by Q. P contains the result.
+    rational_fraction &operator /=(const rational_fraction &Q)
+    { numerator_*=Q.denominator(); denominator_*=Q.numerator(); return *this; }
+    /// Multiply P with Q. 
+    rational_fraction operator *(const rational_fraction &Q) const
+    { rational_fraction R = *this; R *= Q; return R; }
+    /// Divide P by Q. 
+    rational_fraction operator /(const rational_fraction &Q) const
+    { rational_fraction R = *this; R /= Q; return R; }
+    /// Multiply P with the scalar a. P contains the result.
+    rational_fraction &operator *=(const T &e)
+    { numerator_ *= e; return *this; }
+    /// Multiply P with the scalar a.
+    rational_fraction operator *(const T &e) const
+    { rational_fraction R = *this; R *= e; return R; }
+    /// Divide P with the scalar a. P contains the result.
+    rational_fraction &operator /=(const T &e)
+    { denominator_ *= e; return *this; }
+    /// Divide P with the scalar a.
+    rational_fraction operator /(const T &e) const
+    { rational_fraction res = *this; res /= e; return res; }   
+    /// operator ==.
+    bool operator ==(const rational_fraction &Q) const
+    { return  (numerator_==Q.numerator() && denominator_==Q.denominator()); }
+    /// operator !=.
+    bool operator !=(const rational_fraction  &Q) const
+    { return !(operator ==(*this,Q)); }   
+    /// Derivative of P with respect to the variable k. P contains the result.
+    void derivative(short_type k) {
+      polynomial<T> der_num = numerator_;   der_num.derivative(k);
+      polynomial<T> der_den = denominator_; der_den.derivative(k);
+      if (der_den.is_zero()) {
+	if (der_num.is_zero()) this->clear(); else numerator_ = der_num;
+      } else {
+	numerator_ = der_num * denominator_ - der_den * numerator_;
+	denominator_ =  denominator_ * denominator_;
+      }
+    }
+    /// Makes P = 1.
+    void one() { numerator_.one(); denominator_.one(); }
+    void clear() { numerator_.clear(); denominator_.one(); }
+    template <typename ITER> T eval(const ITER &it) const {
+      typedef typename gmm::number_traits<T>::magnitude_type R;
+      T a = numerator_.eval(it), b = denominator_.eval(it);
+      if (b == T(0)) { // The better should be to evaluate the derivatives ...
+	std::vector<T> p(it, it+dim()), q(dim(), T(1));
+	R no = gmm::vect_norm2(p);
+	if (no == R(0)) no = R(1E-35); else no*=gmm::default_tol(R())*R(100000);
+	gmm::add(gmm::scaled(q, T(no)), p);
+	a = numerator_.eval(p.begin());
+	b = denominator_.eval(p.begin());
+      }
+      if (a != T(0)) a /= b;
+      return a;
+    }
+    /// Constructor.
+    rational_fraction()
+      : numerator_(1,0), denominator_(1,0) { clear(); }
+    /// Constructor.
+    rational_fraction(short_type dim_)
+      : numerator_(dim_,0), denominator_(dim_,0)  { clear(); }
+    /// Constructor
+    rational_fraction(const polynomial<T> &numer)
+      : numerator_(numer), denominator_(numer.dim(),0) { denominator_.one(); }
+    /// Constructor
+    rational_fraction(const polynomial<T> &numer, const polynomial<T> &denom)
+      : numerator_(numer), denominator_(denom)
+    { GMM_ASSERT1(numer.dim() == denom.dim(), "Dimensions mismatch"); }
+  };
+
+  /// Add Q to P.
+  template<typename T>
+  rational_fraction<T> operator +(const polynomial<T> &P,
+				  const rational_fraction<T> &Q) {
+    rational_fraction<T> R(P*Q.denominator()+Q.numerator(), Q.denominator());
+    return R;
+  }
+  /// Subtract Q from P.
+  template<typename T>
+  rational_fraction<T> operator -(const polynomial<T> &P,
+				  const rational_fraction<T> &Q) {
+    rational_fraction<T> R(P*Q.denominator()-Q.numerator(), Q.denominator());
+    return R;
+  }
+  
+  template<typename T>  std::ostream &operator <<
+  (std::ostream &o, const rational_fraction<T>& P) {
+    o << "[" << P.numerator() << "]/[" << P.denominator() << "]";
+    return o;
+  }
+
+  typedef rational_fraction<opt_long_scalar_type> base_rational_fraction;
 
 }  /* end of namespace bgeot.                                           */
 

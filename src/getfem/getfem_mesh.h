@@ -279,6 +279,9 @@ namespace getfem {
                                         const base_node &p2,
                                         const base_node &p3,
                                         const base_node &p4);
+    /** Add a pyramid to the mesh, given the point id of its vertices. */
+    size_type add_pyramid(size_type a,
+                          size_type b, size_type c, size_type d, size_type e);
     /** Add a parallelepiped to the mesh.
         @param di dimension of the parallelepiped
         @param ipts iterator on the list of point id.

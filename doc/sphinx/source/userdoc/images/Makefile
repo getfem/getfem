@@ -94,6 +94,9 @@ FIGS=getfemlistargyris.fig                   \
      getfemusermodeldetectcontact.fig        \
      getfemusermodelfalsecontact1.fig        \
      getfemusermodelfalsecontact2.fig        \
+     getfemlistpyramidP0.fig                 \
+     getfemlistpyramidP1.fig                 \
+     getfemlistpyramidP2.fig                 \
      ALE_rotating_body.fig		     \
      ALE_translation_body.fig		     \
      ALE_rotating_conf.fig

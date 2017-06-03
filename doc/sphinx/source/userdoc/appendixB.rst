@@ -668,6 +668,11 @@ For instance ``"IM_GAUSS_PARALLELEPIPED(2,k)"`` is an alias for
 ``"IM_PRODUCT(IM_GAUSS1D(2,k),IM_GAUSS1D(2,k))"`` and can be use instead of the
 ``"IM_QUAD"`` integrations.
 
+Specific integration methods
+----------------------------
+
+For pyramidal elements, ``"IM_PYRAMID(im)"`` provides an integration method corresponding to the transformation of an integration ``im`` from a hexahedron (for instance ``"IM_GAUSS_PARALLELEPIPED(3,5)"``) onto a pyramid. It is a singular integration method specically adapted to rational fraction shape functions of the pyramidal elements.
+
 Composite integration methods
 -----------------------------
 
@@ -688,3 +693,5 @@ not defined on the boundary of sub-elements).
 
 For the HCT element, it is advised to use the ``"IM_HCT_COMPOSITE(im)"`` composite
 integration (which split the original triangle into 3 sub-triangles).
+
+For pyramidal elements, ``"IM_PYRAMID_COMPOSITE(im)"`` provides an integration method ase on the decomposition of the pyramid into two tetrahedrons (``im`` should be an integration method on a tetrahedron). Note that the integraton method ``"IM_PYRAMID(im)"`` where ``im`` is an integration method on an hexahedron, should be prefered.

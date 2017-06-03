@@ -100,6 +100,22 @@ namespace getfem
     parallelepiped_regular_mesh_(me, N, org, &(vect[0]), &(ref[0]), linear_gt);
   } 
 
+  void parallelepiped_regular_pyramid_mesh_(mesh &me, const base_node &org,
+   const base_small_vector *ivect, const size_type *iref);
+
+  template<class ITER1, class ITER2>
+    void parallelepiped_regular_pyramid_mesh(mesh &me,
+                                     const base_node &org, ITER1 ivect, ITER2 iref)
+  { 
+    int N=3;
+    std::vector<base_small_vector> vect(N);
+    std::copy(ivect, ivect+N, vect.begin());
+    std::vector<size_type> ref(N);
+    std::copy(iref, iref+N, ref.begin());
+    parallelepiped_regular_pyramid_mesh_(me, org, &(vect[0]), &(ref[0]));
+  } 
+
+
   /**
      Build a regular mesh of the unit square/cube/, etc.
      @param m the output mesh.

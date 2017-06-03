@@ -72,7 +72,7 @@ namespace bgeot {
 
   using std::endl; using std::cout; using std::cerr;
   using std::ends; using std::cin;
-  
+  using gmm::vref;
 
   static const size_t ST_NIL = size_t(-1);
   typedef gmm::uint16_type dim_type;

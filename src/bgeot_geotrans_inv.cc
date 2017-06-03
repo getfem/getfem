@@ -108,7 +108,6 @@ namespace bgeot
 
     //    for (size_type j = 0; j < pgt->nb_points(); ++j) 
     //       cout << "point " << j << " : " << cvpts[j] << endl;
-
     converged = true;
     base_node xn(P), y, z,x0;
     /* find an initial guess */
@@ -123,7 +122,6 @@ namespace bgeot
 
     base_node vres(P);
     base_node rn(xreal); rn -= y; 
-
     pgt->poly_vector_grad(x, pc);
     update_B();
     

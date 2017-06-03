@@ -111,7 +111,7 @@ namespace bgeot {
     size_type complexity_; /* either the degree or the refinement of the
                             *  transformation */
 
-    void fill_standard_vertices(void);
+    void fill_standard_vertices();
   public :
 
     /// Dimension of the reference element.
@@ -221,6 +221,7 @@ namespace bgeot {
   pgeometric_trans APIDECL linear_product_geotrans(pgeometric_trans pg1,
                                            pgeometric_trans pg2);
   pgeometric_trans APIDECL Q2_incomplete_geotrans(dim_type nc);
+  pgeometric_trans APIDECL pyramidal_geotrans(short_type k);
 
   /**
      Get the geometric transformation from its string name.

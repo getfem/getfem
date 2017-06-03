@@ -60,7 +60,7 @@ void check_inversion(bgeot::pgeometric_trans pgt, const std::vector<base_node>& 
   bool multiple_solutions = false;
   if (err < 1e-10 && gmm::vect_dist2(Pref,expected_Pref) > 1e-5) { multiple_solutions = true; }
   if ((is_in != expected_in && !multiple_solutions) || err > 1e-10) {
-    cerr << "Error with inversion of " << bgeot::name_of_geometric_trans(pgt) << " on convex: " << cvpts << "\n";
+    cerr << "Error with inversion of " << bgeot::name_of_geometric_trans(pgt) << " on convex: " << gmm::vref(cvpts) << "\n";
     cerr << "  inversion of point " << P << " gave point " << Pref;
     if (expected_in) cerr << "  the point is known to be IN the convex.";
     else cerr << "  the point is known to be OUTSIDE the convex.";

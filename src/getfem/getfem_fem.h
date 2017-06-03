@@ -88,23 +88,29 @@
    - "FEM_REDUCED_QUADC1_COMPOSITE" : quadrilateral element, composite
       P3 element and C^1 (12 dof).
 
-   - "FEM_PK_HIERARCHICAL(N,K)" : PK element with a hierarchical basis
+   - "FEM_PK_HIERARCHICAL(N,K)" : PK element with a hierarchical basis.
 
-   - "FEM_QK_HIERARCHICAL(N,K)" : QK element with a hierarchical basis
+   - "FEM_QK_HIERARCHICAL(N,K)" : QK element with a hierarchical basis.
 
    - "FEM_PK_PRISM_HIERARCHICAL(N,K)" : PK element on a prism with a
-   hierarchical basis
+   hierarchical basis.
 
    - "FEM_STRUCTURED_COMPOSITE(FEM, K)" : Composite fem on a grid with
-   K divisions
+   K divisions.
 
    - "FEM_PK_HIERARCHICAL_COMPOSITE(N,K,S)" : PK composite element on
-   a grid with S subdivisions and with a hierarchical basis
+   a grid with S subdivisions and with a hierarchical basis.
 
    - "FEM_PK_FULL_HIERARCHICAL_COMPOSITE(N,K,S)" : PK composite
    element with S subdivisions and a hierarchical basis on both degree
-   and subdivision
+   and subdivision.
 
+   - "FEM_PYRAMID_LAGRANGE(K)" : Lagrange element on a 3D pyramid of degree
+   K=0, 1 or 2. Can be connected to a standard P1/P2 lagrange on its
+   triangular faces and standard Q1/Q2 Lagrange on its quadrangular face.
+
+   - "FEM_PYRAMID_DISCONTINUOUS_LAGRANGE(K)" : Discontinuous Lagrange element
+   on a 3D pyramid of degree K = 0, 1 or 2.
 */
 
 #ifndef GETFEM_FEM_H__
@@ -479,7 +485,35 @@ namespace getfem {
   template <class FUNC> class fem : public virtual_fem {
   protected :
     std::vector<FUNC> base_;
+    mutable std::vector<std::vector<FUNC>> grad_, hess_;
 
+    void compute_grad_() const {
+      size_type R = nb_base_components(0);
+      dim_type n = dim();
+      grad_.resize(R);
+      for (size_type i = 0; i < R; ++i) {
+	grad_[i].resize(n);
+	for (dim_type j = 0; j < n; ++j) {
+	  grad_[i][j] = base_[i]; grad_[i][j].derivative(j);
+	}
+      }
+    }
+
+    void compute_hess_() const {
+      size_type R = nb_base_components(0);
+      dim_type n = dim();
+      hess_.resize(R);
+      for (size_type i = 0; i < R; ++i) {
+	hess_[i].resize(n*n);
+	for (dim_type j = 0; j < n; ++j) {
+	  for (dim_type k = 0; k < n; ++k) {
+	    hess_[i][j+k*n] = base_[i];
+	    hess_[i][j+k*n].derivative(j); hess_[i][j+k*n].derivative(k);
+	  }
+	}
+      }
+    }
+    
   public :
 
     /// Gives the array of basic functions (components).
@@ -500,6 +534,7 @@ namespace getfem {
         reference element directions 0,..,dim-1 and returns the result in
         t(nb_base,target_dim,dim) */
     void grad_base_value(const base_node &x, base_tensor &t) const {
+      if (!(grad_.size())) compute_grad_();
       bgeot::multi_index mi(3);
       dim_type n = dim();
       mi[2] = n; mi[1] = target_dim(); mi[0] = short_type(nb_base(0));
@@ -508,12 +543,13 @@ namespace getfem {
       base_tensor::iterator it = t.begin();
       for (dim_type j = 0; j < n; ++j)
         for (size_type i = 0; i < R; ++i, ++it)
-          { FUNC f = base_[i]; f.derivative(j); *it = bgeot::to_scalar(f.eval(x.begin())); }
+	  *it = bgeot::to_scalar(grad_[i][j].eval(x.begin()));
     }
     /** Evaluates at point x, the hessian of all base functions w.r.t. the
         reference element directions 0,..,dim-1 and returns the result in
         t(nb_base,target_dim,dim,dim) */
     void hess_base_value(const base_node &x, base_tensor &t) const {
+      if (!(hess_.size())) compute_hess_();
       bgeot::multi_index mi(4);
       dim_type n = dim();
       mi[3] = n; mi[2] = n; mi[1] = target_dim();
@@ -523,19 +559,18 @@ namespace getfem {
       base_tensor::iterator it = t.begin();
       for (dim_type k = 0; k < n; ++k)
         for (dim_type j = 0; j < n; ++j)
-          for (size_type i = 0; i < R; ++i, ++it) {
-            FUNC f = base_[i];
-            f.derivative(j); f.derivative(k);
-            *it = bgeot::to_scalar(f.eval(x.begin()));
-          }
+          for (size_type i = 0; i < R; ++i, ++it)
+	    *it = bgeot::to_scalar(hess_[i][j+k*n].eval(x.begin()));
     }
 
   };
 
   /** Classical polynomial FEM. */
-  typedef const fem<base_poly> * ppolyfem;
+  typedef const fem<bgeot::base_poly> * ppolyfem;
   /** Polynomial composite FEM */
   typedef const fem<bgeot::polynomial_composite> * ppolycompfem;
+  /** Rational fration FEM */
+  typedef const fem<bgeot::base_rational_fraction> * prationalfracfem;
 
   /** Give a pointer on the structures describing the classical
       polynomial fem of degree k on a given convex type.

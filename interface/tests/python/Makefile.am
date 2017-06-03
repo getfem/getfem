@@ -22,7 +22,9 @@ EXTRA_DIST= 						\
 	demo_crack.py 					\
 	demo_fictitious_domains.py 			\
 	demo_laplacian.py 				\
+	demo_laplacian_pyramid.py			\
 	demo_laplacian_DG.py 				\
+	demo_laplacian_aposteriori.py			\
 	demo_mortar.py 					\
 	demo_plasticity.py              		\
 	demo_plate.py 					\
