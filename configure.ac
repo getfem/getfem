@@ -547,7 +547,7 @@ CPPFLAGS="$CPPFLAGS $MUMPSINC"
 MUMPS_LIBS=""
 case $host in
     *apple*)
-        MUMPS_SEQ_LIBS="-lsmumps -ldmumps -lcmumps -lzmumps -lmumps_common -lmpiseq -lpord"
+        MUMPS_SEQ_LIBS="-lsmumps -ldmumps -lcmumps -lzmumps -lmpiseq -lpord -lmumps_common"
         ;;
     *)
         MUMPS_SEQ_LIBS="-lsmumps_seq -ldmumps_seq -lcmumps_seq -lzmumps_seq"
@@ -585,7 +585,7 @@ AC_ARG_WITH(mumps,
   esac]
 )
 
-
+save_LIBS="$LIBS";
 if test "x$usemumps" = "xno" -o "x$acx_mumps_ok" = "xno"; then
   echo "Building with MUMPS explicitly disabled";
 else
@@ -627,8 +627,10 @@ else
 
  if test "x$usemumps" = "xyes"; then
    echo "Building with MUMPS (use --enable-mumps=no to disable it)"
+   LIBS="$MUMPS_LIBS $save_LIBS"
  else
    MUMPS_LIBS=""
+   LIBS="$save_LIBS"
  fi;
 fi;
 

@@ -278,7 +278,7 @@ PyObject_to_gfi_array(gcollect *gc, PyObject *o)
   if (PyString_Check(o)) {
     //printf("String\n");
     /* for strings, the pointer is shared, no copy */
-    int L = strlen(PyString_AsString(o));
+    int L = (int)(strlen(PyString_AsString(o)));
     char *s = PyString_AsString(o);
     gc_ref(gc, o, 0);
 
@@ -420,8 +420,8 @@ PyObject_to_gfi_array(gcollect *gc, PyObject *o)
     t->storage.type = GFI_CELL;
     t->dim.dim_len = 1; t->dim.dim_val = &TGFISTORE(cell,len);
 
-    if (PyTuple_Check(o)) TGFISTORE(cell,len) = PyTuple_GET_SIZE(o);
-    else TGFISTORE(cell,len) = PyList_GET_SIZE(o);
+    if (PyTuple_Check(o)) TGFISTORE(cell,len) = (unsigned)(PyTuple_GET_SIZE(o));
+    else TGFISTORE(cell,len) = (unsigned)(PyList_GET_SIZE(o));
 
     if (!(TGFISTORE(cell,val)
           = gc_alloc(gc,sizeof(gfi_array*)*TGFISTORE(cell,len)))) return NULL;
@@ -489,7 +489,7 @@ build_gfi_array_list(gcollect *gc, PyObject *tuple, char **pfunction_name,
     return NULL;
   }
   *pfunction_name = PyString_AsString(PyTuple_GET_ITEM(tuple,0));
-  *nb = PyTuple_GET_SIZE(tuple) - 1;
+  *nb = (int)(PyTuple_GET_SIZE(tuple) - 1);
   if (!(l = gc_alloc(gc, sizeof(gfi_array*) * *nb))) return NULL;
   for (i=0, j = 0; i < *nb; ++i) {
     PyObject *o = PyTuple_GET_ITEM(tuple,i+1);
