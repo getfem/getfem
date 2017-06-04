@@ -140,7 +140,8 @@ bool bilaplacian_crack_problem::solve_moment(plain_vector &U) {
 	 if (gmm::sqr(mesh.points_of_convex(i)[j][0]) + 
 	     gmm::sqr(mesh.points_of_convex(i)[j][1]) > 
 	     gmm::sqr(enr_area_radius)) 
-	   pm_convexes.sup(i); break;
+	   pm_convexes.sup(i);
+	 break;
        }
      }
       

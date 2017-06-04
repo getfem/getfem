@@ -602,7 +602,8 @@ void bilaplacian_crack_problem::compute_error(plain_vector &U) {
 	  if (gmm::sqr(mesh.points_of_convex(cv)[j][0] ) + 
 	      gmm::sqr(mesh.points_of_convex(cv)[j][1] ) > 
 	      gmm::sqr(radius_split_domain)) 
-	    in_area = false; break; 
+	    in_area = false;
+	  break; 
 	}
 	  if (in_area) r_center.add(cv) ;
 	  else r_ext.add(cv) ;
@@ -742,7 +743,8 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
 	 if (gmm::sqr(mesh.points_of_convex(i)[j][0]) + 
 	     gmm::sqr(mesh.points_of_convex(i)[j][1]) > 
 	     gmm::sqr(enr_area_radius)) 
-	   pm_convexes.sup(i); break;
+	   pm_convexes.sup(i);
+	 break;
        }
      }
       
