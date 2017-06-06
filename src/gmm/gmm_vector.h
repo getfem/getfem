@@ -455,7 +455,8 @@ namespace gmm {
     }
 
     void copy(const dsvector<T> &v) {
-      if (root_ptr) rec_del(root_ptr, depth); root_ptr = 0;
+      if (root_ptr) rec_del(root_ptr, depth);
+      root_ptr = 0;
       mask = v.mask; depth = v.depth; n = v.n; shift = v.shift;
       if (v.root_ptr) copy_rec(root_ptr, v.root_ptr, depth);
     }

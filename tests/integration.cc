@@ -456,13 +456,11 @@ int main(/* int argc, char **argv */) {
     getfem::pfem pf = getfem::QK_fem(2,1); //getfem::classical_fem(bgeot::parallelepiped_linear_geotrans(2),1);
     return 100;*/
 
-
-
     int ok = 0;
     getfem::pintegration_method im_none = getfem::int_method_descriptor("IM_NONE()");
     try {
       cout << "nbpts=" << im_none->structure()->nb_points() << "\n";
-    } catch (gmm::gmm_error e) {
+    } catch (const gmm::gmm_error &e) {
       ok = 1;
     }
     GMM_ASSERT1(ok, "IM_NONE failed");

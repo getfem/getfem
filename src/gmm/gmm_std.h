@@ -76,7 +76,8 @@
 # define SECURE_STRDUP(s) strdup(s)
 #endif
 
-#define GMM_NOPERATION(a) { abs(&(a) != &(a)); }
+inline void GMM_NOPERATION_(int) { }
+#define GMM_NOPERATION(a) { GMM_NOPERATION_(abs(&(a) != &(a))); }
 
 /* ********************************************************************** */
 /*	Compilers detection.						  */

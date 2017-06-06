@@ -64,10 +64,14 @@ namespace getfemint {
   }
 
   void gsparse::destroy() {
-    if (pwscmat_r) delete pwscmat_r; pwscmat_r = 0;
-    if (pwscmat_c) delete pwscmat_c; pwscmat_c = 0;
-    if (pcscmat_r) delete pcscmat_r; pcscmat_r = 0;
-    if (pcscmat_c) delete pcscmat_c; pcscmat_c = 0;
+    if (pwscmat_r) delete pwscmat_r;
+    pwscmat_r = 0;
+    if (pwscmat_c) delete pwscmat_c;
+    pwscmat_c = 0;
+    if (pcscmat_r) delete pcscmat_r;
+    pcscmat_r = 0;
+    if (pcscmat_c) delete pcscmat_c;
+    pcscmat_c = 0;
   }
 
   void gsparse::allocate(size_type m, size_type n, storage_type s_, value_type v_) {

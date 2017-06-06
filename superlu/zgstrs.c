@@ -17,6 +17,8 @@ The source code is distributed under BSD license, see the file License.txt
 */
 
 #include "slu_zdefs.h"
+extern void ztrsm_();
+extern void zgemm_();
 
 
 /* 

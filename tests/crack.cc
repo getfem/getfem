@@ -231,13 +231,13 @@ void sol_ref_infinite_plane(scalar_type nu, scalar_type E, scalar_type sigma,
 				+9*cost*s2*mu*c2*c2)/(lambda-3*mu);
     }
   } else GMM_ASSERT1(false, "Unvalid mode");
-  if (!finite(U[0]))
+  if (!std::isfinite(U[0]))
     cerr << "raaah not a number ... nu=" << nu << ", E=" << E << ", sig="
 	 << sigma << ", a=" << a << ", xx=" << xx << ", y=" << y << ", r="
 	 << r << ", sqrtr=" << sqrtr << ", cost=" << cost << ", U=" << U[0]
 	 << "," << U[1] << endl;
-  assert(finite(U[0]));
-  assert(finite(U[1]));
+  assert(std::isfinite(U[0]));
+  assert(std::isfinite(U[1]));
 }
 
 struct exact_solution {

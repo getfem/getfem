@@ -110,7 +110,9 @@ namespace gmm {
     int i;
     for ( ; b1 != e1 && b2 != e2; ++b1, ++b2)
       if ((i = c(*b1, *b2)) != 0) return i;
-    if (b1 != e1) return 1; if (b2 != e2) return -1; return 0; 
+    if (b1 != e1) return 1;
+    if (b2 != e2) return -1;
+    return 0; 
   }
 
   template<class CONT, class COMP = gmm::less<typename CONT::value_type> >

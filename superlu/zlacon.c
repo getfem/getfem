@@ -30,6 +30,8 @@ The source code is distributed under BSD license, see the file License.txt
 #include <math.h>
 #include "slu_Cnames.h"
 #include "slu_dcomplex.h"
+extern void zcopy_();
+
 
 int
 zlacon_(int *n, doublecomplex *v, doublecomplex *x, double *est, int *kase)

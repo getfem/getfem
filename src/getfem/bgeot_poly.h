@@ -562,7 +562,8 @@ namespace bgeot
 	if (gmm::abs(*it)!=T(1)) { o << gmm::abs(*it); first_var = false; }
 	for (short_type j = 0; j < P.dim(); ++j)
 	  if (mi[j] != 0) {
-	    if (!first_var) o << "*"; first_var = false;
+	    if (!first_var) o << "*";
+	    first_var = false;
             if (P.dim() <= 7) o << "xyzwvut"[j];
             else o << "x_" << j; 
 	    if (mi[j] > 1) o << "^" << mi[j];

@@ -320,11 +320,12 @@ namespace bgeot {
   struct APIDECL edge_list_elt  {
     size_type i, j;
     size_type cv;
-    inline bool operator < (const edge_list_elt &e) const
-    {
-      if (i < e.i) return true; if (i > e.i) return false;
+    inline bool operator < (const edge_list_elt &e) const {
+      if (i < e.i) return true;
+      if (i > e.i) return false;
       if (j < e.j) return true; else if (j > e.j) return false;
-      if (cv < e.cv) return true; return false;
+      if (cv < e.cv) return true;
+      return false;
     }
     edge_list_elt(size_type ii, size_type jj, size_type ic = 0) : cv(ic)
     { i = std::min(ii, jj); j = std::max(ii, jj); }

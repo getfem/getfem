@@ -71,7 +71,8 @@ spmat_set_or_add_sub_matrix(gsparse &gsp, getfemint::mexargs_in& in,
 	break;
       case gsparse::CSCMAT:
 	if (do_add) gmm::add (src->csc(T()), gmm::sub_matrix(gsp.wsc(T()), ii, jj));
-	else        gmm::copy(src->csc(T()), gmm::sub_matrix(gsp.wsc(T()), ii, jj)); break;
+	else        gmm::copy(src->csc(T()), gmm::sub_matrix(gsp.wsc(T()), ii, jj));
+	break;
       default: THROW_INTERNAL_ERROR;
     }
   } else {

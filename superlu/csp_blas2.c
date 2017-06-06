@@ -22,6 +22,8 @@ The source code is distributed under BSD license, see the file License.txt
  */
 
 #include "slu_cdefs.h"
+extern void ctrsv_();
+extern void cgemv_();
 
 /* 
  * Function prototypes 

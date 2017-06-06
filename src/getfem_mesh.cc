@@ -928,9 +928,12 @@ namespace bgeot {
 namespace getfem {
 
   bool mesh::edge::operator <(const edge &e) const {
-    if (i0 < e.i0) return true; if (i0 > e.i0) return false;
-    if (i1 < e.i1) return true; if (i1 > e.i1) return false;
-    if (i2 < e.i2) return true; return false;
+    if (i0 < e.i0) return true;
+    if (i0 > e.i0) return false;
+    if (i1 < e.i1) return true;
+    if (i1 > e.i1) return false;
+    if (i2 < e.i2) return true;
+    return false;
   }
 
   void mesh::Bank_sup_convex_from_green(size_type i) {

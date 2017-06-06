@@ -27,10 +27,13 @@
 namespace getfem {
 
   bool operator < (const constituant &m, const constituant &n) {
-    if (m.t < n.t) return true; if (m.t > n.t) return false;
+    if (m.t < n.t) return true;
+    if (m.t > n.t) return false;
     if (m.t == GETFEM_NONLINEAR_) {
-      if (m.nlt < n.nlt) return true; if (n.nlt < m.nlt) return false;
-      if (m.nl_part < n.nl_part) return true; if (m.nl_part > n.nl_part) return false;
+      if (m.nlt < n.nlt) return true;
+      if (n.nlt < m.nlt) return false;
+      if (m.nl_part < n.nl_part) return true;
+      if (m.nl_part > n.nl_part) return false;
     }
     if (m.pfi < n.pfi) return true;
     return false;

@@ -608,8 +608,6 @@ namespace getfem {
 
   void mesh_region::visitor::init(const mesh_region &s) 
   {
-    GMM_ASSERT1(&s != 0, "Attemps to use an invalid mesh_region "
-      "(need to call 'from_mesh')");
     whole_mesh = false;
     it  = s.begin();
     ite = s.end();

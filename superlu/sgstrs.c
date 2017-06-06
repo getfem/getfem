@@ -17,6 +17,8 @@ The source code is distributed under BSD license, see the file License.txt
 */
 
 #include "slu_sdefs.h"
+extern void strsm_();
+extern void sgemm_();
 
 
 /* 

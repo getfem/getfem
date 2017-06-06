@@ -313,10 +313,11 @@ void bilaplacian_problem::init(void) {
         un /= gmm::vect_norm2(un);
 	if (un[0] < - 0.5 ) { 
            mesh.region(CLAMPED_BOUNDARY_NUM).add(i.cv(), i.f());
- 	   mesh.region(SIMPLE_SUPPORT_BOUNDARY_NUM).add(i.cv(), i.f()); }
-	else
-	   mesh.region(FORCE_BOUNDARY_NUM).add(i.cv(), i.f());
-           mesh.region(MOMENTUM_BOUNDARY_NUM).add(i.cv(), i.f());
+ 	   mesh.region(SIMPLE_SUPPORT_BOUNDARY_NUM).add(i.cv(), i.f());
+	} else { 
+	  mesh.region(FORCE_BOUNDARY_NUM).add(i.cv(), i.f());
+	  mesh.region(MOMENTUM_BOUNDARY_NUM).add(i.cv(), i.f());
+	}
      }
   }
 }

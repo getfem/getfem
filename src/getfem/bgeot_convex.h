@@ -187,7 +187,8 @@ namespace bgeot {
     virtual bool compare(const static_stored_object_key &oo) const {
       const special_convex_structure_key_ &o
         = dynamic_cast<const special_convex_structure_key_ &>(oo);
-      if (p < o.p) return true;  return false;
+      if (p < o.p) return true;
+      return false;
     }
     special_convex_structure_key_(pconvex_structure pp) : p(pp) {}
   };

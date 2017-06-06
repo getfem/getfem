@@ -1497,7 +1497,7 @@ namespace getfem {
                       - 2.*tr*M(j,i)*((k==l) ? 1. : 0.)/3.
                       + 2.*tr*M(j,i)*M(l,k)/3.
                       - 2.*i2*M(i,k)*M(l,j)/3.
-                      - 2.*((tr*(i==j) ? 1. : 0.)-t[j+N*i]
+                      - 2.*((tr*((i==j) ? 1. : 0.))-t[j+N*i]
                             - 2.*i2*M(j,i)/3)*M(l,k)/3.)
                 / pow(det, scalar_type(2)/scalar_type(3));
     }

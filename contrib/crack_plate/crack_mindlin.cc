@@ -1033,14 +1033,14 @@ int main(int argc, char *argv[]) {
       assert(pts.size() == 1);
       size_type j=pts[0].i;
       scalar_type x3 = P[2];
-      assert(finite(VTHETA[2*j]));
-      assert(finite(VT[2*j]));
+      assert(std::isfinite(VTHETA[2*j]));
+      assert(std::isfinite(VT[2*j]));
       V[3*i+0] = VT[2*j+0] + x3 * VTHETA.at(2*j+0);
       V[3*i+1] = VT[2*j+1] + x3 * VTHETA[2*j+1];
       V[3*i+2] = V3[j];
-      assert(finite(V[3*i]));
-      assert(finite(V[3*i+1]));
-      assert(finite(V[3*i+2]));
+      assert(std::isfinite(V[3*i]));
+      assert(std::isfinite(V[3*i+1]));
+      assert(std::isfinite(V[3*i+2]));
     }
 
     

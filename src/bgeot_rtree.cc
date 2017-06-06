@@ -334,7 +334,8 @@ namespace bgeot {
       rtree_leaf *rl = static_cast<rtree_leaf*>(p);
       cout << "Leaf [" << rl->lst.size() << " elts] = ";
       for (size_type i=0; i < rl->lst.size(); ++i)
-        cout << " " << rl->lst[i]->id; cout << "\n";
+        cout << " " << rl->lst[i]->id;
+      cout << "\n";
       count += rl->lst.size();
     } else {
       cout << "Node\n";

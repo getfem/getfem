@@ -472,7 +472,7 @@ zPrintPerf(SuperMatrix *L, SuperMatrix *U, mem_usage_t *mem_usage,
 
 
 
-print_doublecomplex_vec(char *what, int n, doublecomplex *vec)
+int print_doublecomplex_vec(char *what, int n, doublecomplex *vec)
 {
     int i;
     printf("%s: n %d\n", what, n);

@@ -265,7 +265,9 @@ namespace bgeot {
 	size_type i = 0, j = 0;
 	for (; i < sizes_.size(); ++i)
 	  if (sizes_[i] != 1) { sizes_[j]=sizes_[i]; coeff[j]=coeff[i]; ++j; }
-	if (!j) ++j; sizes_.resize(j); coeff.resize(j);
+	if (!j) ++j;
+	sizes_.resize(j);
+	coeff.resize(j);
       }
     }
 
