@@ -1707,7 +1707,7 @@ namespace getfem {
       base_vector coeff_data;
       pfem pf_data;
       fem_interpolation_context ctx_data;
-      if (pmf_data) {
+      if (int(long(pmf_data))) {
         pf_data = pmf_data->fem_of_element(cv);
         size_type nbd_data = pf_data->nb_dof(cv);
         coeff_data.resize(nbd_data*3);
@@ -1749,7 +1749,7 @@ namespace getfem {
 
       for (size_type ii = 0; ii < nbd_sigma; ++ii) {
 
-        if (pmf_data) {
+        if (int(long(pmf_data))) {
           // interpolation of the data on sigma dof
           ctx_data.set_ii(ii);
           pf_data->interpolation(ctx_data, coeff_data, params, 3);
@@ -1853,7 +1853,7 @@ namespace getfem {
                                              gmm::sub_interval(0,mf_sigma.nb_dof())),
                              Sigma_n);
 
-      if (pmf_data != NULL) {
+      if (int(long(pmf_data))) {
         gmm::resize(mu, pmf_data->nb_basic_dof());
         gmm::resize(lambda, pmf_data->nb_basic_dof());
         gmm::resize(threshold, pmf_data->nb_basic_dof());
@@ -2000,7 +2000,7 @@ namespace getfem {
 
     generic_assembly assem;
 
-    if (pmf_data)
+    if (int(long(pmf_data)))
       assem.set("lambda=data$1(#3); mu=data$2(#3);"
                 "t=comp(NonLin(#2).vGrad(#1).vGrad(#1).Base(#3))(i,j,:,:,:,:,:,:,i,j,:);"
                 "M(#1,#1)+=  sym(t(k,l,:,l,k,:,m).mu(m)+t(k,l,:,k,l,:,m).mu(m)+t(k,k,:,l,l,:,m).lambda(m))");
@@ -2012,7 +2012,7 @@ namespace getfem {
     assem.push_mi(mim);
     assem.push_mf(mf_u);
     assem.push_mf(mf_sigma);
-    if (pmf_data)
+    if (int(long(pmf_data)))
       assem.push_mf(mf_data);
     assem.push_data(lambda);
     assem.push_data(mu);
