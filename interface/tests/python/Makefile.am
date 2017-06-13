@@ -15,6 +15,13 @@
 #  along  with  this program;  if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 
+if QHULL
+optpy = check_levelset.py
+else
+optpy =
+endif
+
+
 EXTRA_DIST= 						\
 	check_export.py 				\
 	check_global_functions.py			\
@@ -48,7 +55,7 @@ TESTS = 						\
 	check_global_functions.py			\
 	demo_wave.py					\
 	demo_laplacian.py				\
-	check_levelset.py
+	$(optpy)
 
 AM_TESTS_ENVIRONMENT = \
 	export PYTHONPATH=$(top_builddir)/interface/src/python; \
