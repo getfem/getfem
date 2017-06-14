@@ -12,9 +12,12 @@
    gmm/index.rst
 
    matlab/index.rst
-   matlab/install_on_mac.rst
    python/index.rst
    scilab/index.rst
+
+   install/install_linux.rst
+   install/install_mac.rst
+   install/install_windows.rst
 
    whatsnew/index.rst
    documenting/index.rst

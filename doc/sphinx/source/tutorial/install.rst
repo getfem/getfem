@@ -9,7 +9,7 @@
 How to install
 ==============
 
-Since |gf| is developped on linux (Ubuntu), the installation is simpler on linux, especially on Debian-based distributions (Debian/Ubuntu/Mint). However, |gf| can be installed also on other linux distributions, on Mac os X and Windows. In order to compile |gf| from sources, you need a recent C++ complier (supporting C++-11 standard) and a recent version of python.
+Since |gf| is developped on linux (Ubuntu), the installation is simpler on linux, especially on Debian-based distributions (Debian/Ubuntu/Mint). However, |gf| can be installed also on other linux distributions, on Mac os X and Windows. In order to compile |gf| from sources, you need a recent C++ complier (supporting C++ 11 standard) and a recent version of python 2.
 
 The main dependences of |Gf| on other libraries are
 
@@ -32,4 +32,4 @@ The main dependences of |Gf| on other libraries are
 You can also install the stable release of Getfem on linux distributions using the corresponding package management system. 
 
 
-More specific information on how to build Getfem C++ library can be found :ref:`here <ud-install>`, for the Python interface :ref:`here <ud-install-python>`, the Scilab one :ref:`here <sci-install>` and the Matlab one :ref:`here <mlab-install>`.
+More specific information on how to build Getfem C++ library can be found on the `download and install <../download.html>`_ page.
