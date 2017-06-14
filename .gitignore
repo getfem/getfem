@@ -60,7 +60,7 @@ Makefile
 /interface/src/matlab/gf_levelset_get.m
 /interface/src/matlab/gf_levelset_set.m
 /interface/src/matlab/gf_linsolve.m
-/interface/src/matlab/gf_matlab.mexa64
+/interface/src/matlab/gf_matlab.*
 /interface/src/matlab/gf_mesh.m
 /interface/src/matlab/gf_mesh_fem.m
 /interface/src/matlab/gf_mesh_fem_get.m

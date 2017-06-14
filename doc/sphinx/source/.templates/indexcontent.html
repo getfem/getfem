@@ -86,19 +86,19 @@
 <p><h1>What is GetFEM++<a class="headerlink" href="#what-is-getfem" title="Permalink to this headline">¶</a></h1></p>
 
     <p>
-    GetFEM++ is an open source library based on collaborative development. It aims to offer a framework for solving potentially coupled systems of linear and nonlinear partial differential equations with the finite element method. GetFEM++ is interfaced with some script languages (Python, Scilab and Matlab) so that almost all of the functionalities can be used just writing scripts. It works in arbitrary dimension and allow to couple 1D, 2D and 3D problems. The strong points of GetFEM++ can be summarized as follows:
+    GetFEM++ is an open source library based on collaborative development. It aims to offer the most flexible framework for solving potentially coupled systems of linear and nonlinear partial differential equations with the finite element method. GetFEM++ is interfaced with some script languages (Python, Scilab and Matlab) so that almost all of the functionalities can be used just writing scripts. It works in arbitrary dimension and allow to couple 1D, 2D and 3D problems. The strong points of GetFEM++ can be summarized as follows:
     </p>
 
     <ul>
-      <li> A generic assembly language (in terms of operators) that allows to rapidly translate quite arbitrary weak formulations.  A symbolic derivation that allows to automatically obtain the tangent system for nonlinear problems. A compilation of assembly terms into optimized basic instructions. </li>
+      <li> A generic assembly language (in terms of operators) that allows to translate quite arbitrary weak formulations.  A symbolic derivation that allows to automatically obtain the tangent system for nonlinear problems. A compilation of assembly terms into optimized basic instructions. </li>
       <li> A model description that gather the variables, data and terms of a problem and some predefined bricks representing classical models : elasticity in small and large deformations, Helmholtz problem, scalar elliptic problem, Dirichlet, contact and Neumann boundary conditions, incompressibility constraint, ... </li>
       <li> A complete separation between geometric transformation, finite element method, integration methods and partial differential term description, which allows to easily switch from a method to another. </li>
-      <li> A large set of predefined methods : isoparametric elements, Pk on simplices of arbitrary degree and dimension, Qk on parallelepipeds, P1, P2 with bubble functions, Hermite elements, Argyris element, HCT and FVS, elements with hierarchical basis (for multigrid methods for instance), discontinuous Pk and Qk, vector elements (RT0, Nedelec) ...  </li>
+      <li> A large set of predefined methods : isoparametric/subparametric/overparametric elements, Pk on simplices of arbitrary degree and dimension, Qk on parallelepipeds, pyramidal elements, P1, P2 with bubble functions, Hermite elements, Argyris element, HCT and FVS, elements with hierarchical basis (for multigrid methods for instance), discontinuous Pk and Qk, vector elements (RT0, Nedelec) ...  </li>
       <li> A large set of predefined integration methods.  </li>
       <li> Structural mechanics terms (elasticity, contact with friction, plasticity ...) </li>
       <li> Level-set and finite element cut by one or several level-set (Xfem) </li>
       <li> Computation of terms between to meshes with an arbitrary transformation: this is a very powerful tool of the generic assembly that allows to use a parameterized transformation. The derivative of the transformation with respect to the potential dependance with respect of the variables is taken into account. Possible use : contact problems, fluid-structure interaction, special boundary conditions ... </li>
-      <li> Post-processing directly with Scilab or Matlab interfaces or with the export of vtk or pos files. Many possibility to interpolate arbitrary quantities, make slices, projections ... </li>
+      <li> Post-processing directly with Scilab or Matlab interfaces or with the export of vtk or gmsh files. Many possibility to interpolate arbitrary quantities, make slices, projections ... </li>
     </ul>
 
     <p>  
