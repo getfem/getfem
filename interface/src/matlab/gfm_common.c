@@ -48,11 +48,9 @@ mxClassID2string(mxClassID id) {
 #endif
     case mxOPAQUE_CLASS: return "OPAQUE_CLASS";
     default:
-#if MATLAB_RELEASE >= 14
       if (id != (mxClassID)(-1))
 	return "OBJECT";
-      else 
-#endif
+      else
 	return "unknown class...did you use the correct mex version ?";
   }
 }
@@ -176,9 +174,7 @@ mxarray_to_gfi_array(const mxArray *mx, gfi_array *t)
     } break;
     case mxOBJECT_CLASS:
     case mxSTRUCT_CLASS: 
-#if MATLAB_RELEASE >= 14
     default: 
-#endif
       {
       mxArray *fid = mxGetField(mx, 0, "id");
       mxArray *fcid = mxGetField(mx, 0, "cid");
@@ -201,12 +197,6 @@ mxarray_to_gfi_array(const mxArray *mx, gfi_array *t)
         mexPrintf("matlab structures (except getfem object ids) not handled"); return 1; 
       }
     } break;
-#if MATLAB_RELEASE < 14
-    default: {
-      mexPrintf("unhandled class type : %s\n", mxClassID2string(mxGetClassID(mx)));
-      return 1;
-    } break;
-#endif
   }
   {
     mwSize *pm;

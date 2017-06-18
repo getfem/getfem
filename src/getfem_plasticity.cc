@@ -1707,7 +1707,7 @@ namespace getfem {
       base_vector coeff_data;
       pfem pf_data;
       fem_interpolation_context ctx_data;
-      if (int(long(pmf_data))) {
+      if (pmf_data) {
         pf_data = pmf_data->fem_of_element(cv);
         size_type nbd_data = pf_data->nb_dof(cv);
         coeff_data.resize(nbd_data*3);
@@ -1749,7 +1749,7 @@ namespace getfem {
 
       for (size_type ii = 0; ii < nbd_sigma; ++ii) {
 
-        if (int(long(pmf_data))) {
+        if (pmf_data) {
           // interpolation of the data on sigma dof
           ctx_data.set_ii(ii);
           pf_data->interpolation(ctx_data, coeff_data, params, 3);
@@ -1853,7 +1853,7 @@ namespace getfem {
                                              gmm::sub_interval(0,mf_sigma.nb_dof())),
                              Sigma_n);
 
-      if (int(long(pmf_data))) {
+      if (pmf_data) {
         gmm::resize(mu, pmf_data->nb_basic_dof());
         gmm::resize(lambda, pmf_data->nb_basic_dof());
         gmm::resize(threshold, pmf_data->nb_basic_dof());
@@ -1978,7 +1978,7 @@ namespace getfem {
      const mesh_im &mim,
      const mesh_fem &mf_u,
      const mesh_fem &mf_sigma,
-     const mesh_fem &mf_data,
+     const mesh_fem *pmf_data,
      const model_real_plain_vector &u_n,
      const model_real_plain_vector &u_np1,
      const model_real_plain_vector &sigma_n,
@@ -1991,16 +1991,14 @@ namespace getfem {
     GMM_ASSERT1(mf_u.get_qdim() == mf_u.linked_mesh().dim(),
                 "wrong qdim for the mesh_fem");
 
-    const mesh_fem *pmf_data = &mf_data;
-
-    elastoplasticity_nonlinear_term gradplast(mim, mf_u, mf_sigma, &mf_data,
+    elastoplasticity_nonlinear_term gradplast(mim, mf_u, mf_sigma, pmf_data,
                                               u_n, u_np1, sigma_n,
                                               threshold, lambda, mu,
                                               t_proj, GRADPROJ, false);
 
     generic_assembly assem;
 
-    if (int(long(pmf_data)))
+    if (pmf_data)
       assem.set("lambda=data$1(#3); mu=data$2(#3);"
                 "t=comp(NonLin(#2).vGrad(#1).vGrad(#1).Base(#3))(i,j,:,:,:,:,:,:,i,j,:);"
                 "M(#1,#1)+=  sym(t(k,l,:,l,k,:,m).mu(m)+t(k,l,:,k,l,:,m).mu(m)+t(k,k,:,l,l,:,m).lambda(m))");
@@ -2012,8 +2010,8 @@ namespace getfem {
     assem.push_mi(mim);
     assem.push_mf(mf_u);
     assem.push_mf(mf_sigma);
-    if (int(long(pmf_data)))
-      assem.push_mf(mf_data);
+    if (pmf_data)
+      assem.push_mf(*pmf_data);
     assem.push_data(lambda);
     assem.push_data(mu);
     assem.push_nonlinear_term(&gradplast);
@@ -2079,7 +2077,7 @@ namespace getfem {
       if (version & model::BUILD_MATRIX) {
         gmm::clear(matl[0]);
         asm_elastoplasticity_tangent_matrix
-          (matl[0], mim, mf_u, mf_sigma, *mf_data, u_n,
+          (matl[0], mim, mf_u, mf_sigma, mf_data, u_n,
            u_np1, sigma_n, lambda, mu, threshold, *t_proj, rg);
       }
 
