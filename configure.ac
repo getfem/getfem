@@ -872,7 +872,7 @@ if test "$usematlab" != NO; then
      if $(echo "" | $MEX 2>&1 | grep 'This is .*TeX'); then
 	  AC_MSG_ERROR([the mex binary which is in the PATH appears to be part of LaTeX, not matlab !! run ./configure MEX=/path/to/matlab/mex]);
      fi;
-     MATLAB_ROOT=`$MEX -v 2>&1 | grep "MATLAB_" | awk '{print $4}'|sed -e '2,$d'`
+     MATLAB_ROOT=`$MEX -v 2>&1 | grep "MATLAB  " | awk '{print $4}'|sed -e '2,$d'`
      Matlab_INC_DIR=$MATLAB_ROOT/extern/include
      echo "checking for matlab path... " $MATLAB_ROOT
      MATLAB_COM_EXT=`$MEX -v 2>&1 | grep "LDEXTENSION " | awk '{print $3}'`
@@ -883,8 +883,6 @@ if test "$usematlab" != NO; then
   fi
 fi
 AM_CONDITIONAL(BUILDMEX, test x$usematlab = xYES)
-
-
 
 AC_SUBST(MATLAB_ROOT)
 AC_SUBST(MATLAB_INC_DIR)

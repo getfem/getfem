@@ -168,7 +168,8 @@ function check_spmat(iverbose,idebug)
   A=gf_asm('laplacian',mim,mf,mf,ones(1,gf_mesh_fem_get(mf,'nbdof')));
   A=A+.1*speye(size(A,1));
   B=rand(gf_mesh_fem_get(mf,'nbdof'),1);
-  [L,U]=ilu(A);
+  setup.type='nofill';
+  [L,U]=ilu(A,setup);
   X1=gf_linsolve('cg',A,B);
   mm=gf_spmat('copy',inv(L));
   p=gf_precond('spmat',mm);
