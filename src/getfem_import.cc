@@ -775,10 +775,13 @@ namespace getfem {
         if (only_digits) {
           size_type type_num;
           sscanf(type_name, "%lu", &type_num);
-          if (type_num == 45 || type_num == 87 || type_num == 90 ||
-              type_num == 92 || type_num == 95 || type_num == 162 ||
-              type_num == 185 || type_num == 186 || type_num == 187 ||
-              type_num == 191)
+          if (type_num == 42 || type_num == 82 ||
+              type_num == 182 || type_num == 183)
+            elt_types[itype] = "PLANE";
+          else if (type_num == 45 || type_num == 73 || type_num == 87 ||
+                   type_num == 90 || type_num == 92 || type_num == 95 ||
+                   type_num == 162 || type_num == 185 || type_num == 186 ||
+                   type_num == 187 || type_num == 191)
             elt_types[itype] = "SOLID";
           else if (type_num == 89)
             elt_types[itype] = "VISCO";
@@ -845,55 +848,91 @@ namespace getfem {
       std::getline(f,line);
     }
 
-    // EBLOCK, NUM_NODES, SOLKEY
-    //EBLOCK,19,SOLID,    825431,    110833
-    size_type elements2read;
-    pos = line.find_last_of(",");
-    sscanf(line.substr(pos+1).c_str(), "%lu", &elements2read);
 
     //(19i8)
     size_type fieldsno, fieldwidth; // 19,8
-    std::string elt_info_fmt;
+    std::string elt_info_fmt, imat_fmt;
     { // "%8lu%8lu%8lu%8lu%8lu%8lu%8lu%8lu"
       std::string fortran_fmt;
       std::getline(f,fortran_fmt);
       sscanf(fortran_fmt.c_str(),"(%lu%*[i]%lu)", &fieldsno, &fieldwidth);
       GMM_ASSERT1(fieldsno == 19, "Ansys mesh import routine requires EBLOCK entries "
                                   "with 19 fields");
-      std::stringstream ss;
-      for (size_type i=0; i < 19; ++i)
+      std::stringstream ss0, ss;
+      ss0 << "%" << fieldwidth << "li";
+      imat_fmt = ss0.str();
+      for (size_type i=0; i < 10; ++i)
         ss << "%" << fieldwidth << "lu";
       elt_info_fmt = ss.str();
     }
 
     size_type II,JJ,KK,LL,MM,NN,OO,PP,QQ,RR,SS,TT,UU,VV,WW,XX,YY,ZZ,AA,BB;
-    for (size_type i=0; i < elements2read; ++i) {
+    while (true) {
       GMM_ASSERT1(!f.eof(), "File ended before all elements could be read");
       size_type imat, itype, realconst, isection, coordsys, deathflag,
                 modelref, shapeflag, nodesno, notused, eltid;
       std::getline(f,line);
-      sscanf(line.substr(0,11*fieldwidth).c_str(), elt_info_fmt.c_str(),
-             &imat, &itype, &realconst, &isection, &coordsys, &deathflag,
+      {
+        long int ii;
+        sscanf(line.substr(0,fieldwidth).c_str(), imat_fmt.c_str(),
+               &ii);
+        if (ii < 0)
+          break;
+        else
+          imat = size_type(ii);
+
+        if (imat_filt != size_type(-1) && imat != imat_filt) { // skip current element
+          if (nodesno > 8)
+            std::getline(f,line);
+          continue;
+        }
+      }
+      sscanf(line.substr(fieldwidth,11*fieldwidth).c_str(), elt_info_fmt.c_str(),
+             &itype, &realconst, &isection, &coordsys, &deathflag,
              &modelref, &shapeflag, &nodesno, &notused, &eltid);
       line = line.substr(11*fieldwidth);
-
-      if (imat_filt != size_type(-1) && imat != imat_filt) { // skip current element
-        if (nodesno > 8)
-          std::getline(f,line);
-        continue;
-      }
 
       if (imat+1 > regions.size())
         regions.resize(imat+1);
 
       if (nodesno == 3) {
-        // TODO MESH200_2
-      }
-      else if (nodesno == 3) {
-        // TODO MESH200_3, MESH200_4
+        // TODO MESH200_2, MESH200_3, MESH200_4
       }
       else if (nodesno == 4) {
-        // TODO MESH200_6, MESH200_8
+
+        sscanf(line.c_str(), elt_info_fmt.c_str(),
+               &II, &JJ, &KK, &LL);
+
+        // assume MESH200_6 (4-node quadrilateral)
+        std::string eltname("MESH200_6");
+        if (elt_types.size() > itype && elt_types[itype].size() > 0)
+          eltname = elt_types[itype];
+
+        if (eltname.compare("MESH200_6") == 0 ||
+            eltname.compare("PLANE42") == 0 ||
+            eltname.compare("PLANE182") == 0) {
+          getfem_cv_nodes.resize(4);
+          getfem_cv_nodes[0] = cdb_node_2_getfem_node[II];
+          getfem_cv_nodes[1] = cdb_node_2_getfem_node[JJ];
+          getfem_cv_nodes[2] = cdb_node_2_getfem_node[LL];
+          getfem_cv_nodes[3] = cdb_node_2_getfem_node[KK];
+          regions[imat].add(m.add_convex(bgeot::parallelepiped_geotrans(2,1),
+                                         getfem_cv_nodes.begin()));
+          if (itype < elt_cnt.size())
+            elt_cnt[itype] += 1;
+        }
+        else if (eltname.compare("MESH200_8") == 0 ||
+                 eltname.compare("SOLID72") == 0) {
+          getfem_cv_nodes.resize(4);
+          getfem_cv_nodes[0] = cdb_node_2_getfem_node[II];
+          getfem_cv_nodes[1] = cdb_node_2_getfem_node[JJ];
+          getfem_cv_nodes[2] = cdb_node_2_getfem_node[KK];
+          getfem_cv_nodes[3] = cdb_node_2_getfem_node[LL];
+          regions[imat].add(m.add_convex(bgeot::simplex_geotrans(3,1),
+                                         getfem_cv_nodes.begin()));
+          if (itype < elt_cnt.size())
+            elt_cnt[itype] += 1;
+        }
       }
       else if (nodesno == 6) {
         // TODO MESH200_5
@@ -908,8 +947,22 @@ namespace getfem {
         if (elt_types.size() > itype && elt_types[itype].size() > 0)
           eltname = elt_types[itype];
 
-        if (eltname.compare("MESH200_7") == 0) {
-          // TODO 8-node quadrilateral
+        if (eltname.compare("MESH200_7") == 0 ||
+            eltname.compare("PLANE82") == 0 ||
+            eltname.compare("PLANE183") == 0) {
+          getfem_cv_nodes.resize(8);
+          getfem_cv_nodes[0] = cdb_node_2_getfem_node[II];
+          getfem_cv_nodes[1] = cdb_node_2_getfem_node[MM];
+          getfem_cv_nodes[2] = cdb_node_2_getfem_node[JJ];
+          getfem_cv_nodes[3] = cdb_node_2_getfem_node[PP];
+          getfem_cv_nodes[4] = cdb_node_2_getfem_node[NN];
+          getfem_cv_nodes[5] = cdb_node_2_getfem_node[LL];
+          getfem_cv_nodes[6] = cdb_node_2_getfem_node[OO];
+          getfem_cv_nodes[7] = cdb_node_2_getfem_node[KK];
+          regions[imat].add(m.add_convex(bgeot::Q2_incomplete_geotrans(2),
+                                         getfem_cv_nodes.begin()));
+          if (itype < elt_cnt.size())
+            elt_cnt[itype] += 1;
         }
         else if (eltname.compare("MESH200_10") == 0 ||
                  eltname.compare("SOLID45") == 0 ||
@@ -1024,8 +1077,8 @@ namespace getfem {
               elt_cnt[itype] += 1;
           } else if (MM == NN && NN == OO && OO == PP) { // assume 13-node pyramid
             GMM_ASSERT1(false, "Ansys 13-node pyramid elements are not supported yet, import to be done");
-          } else if (KK == LL && OO == PP) { // assume 15-node pyramid
-            GMM_ASSERT1(false, "Ansys 15-node pyramid elements are not supported yet, import to be done");
+          } else if (KK == LL && OO == PP) { // assume 15-node prism
+            GMM_ASSERT1(false, "Ansys 15-node prism elements are not supported yet, import to be done");
           } else {
             getfem_cv_nodes.resize(20);
             getfem_cv_nodes[0] = cdb_node_2_getfem_node[II];
