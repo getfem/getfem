@@ -656,10 +656,21 @@ namespace getfem {
   /** Select in the region mr the faces of the mesh m lying entirely in the
       box delimated by pt1 and pt2.
    */
-  mesh_region APIDECL select_faces_in_box(const mesh &m, const mesh_region &mr,
-                                          const base_node &pt1,
-                                          const base_node &pt2);
+  mesh_region APIDECL
+  select_faces_in_box(const mesh &m, const mesh_region &mr,
+                      const base_node &pt1,
+                      const base_node &pt2);
 
+  mesh_region APIDECL
+  select_convexes_in_box(const mesh &m, const mesh_region &mr,
+                         const base_node &pt1,
+                         const base_node &pt2);
+
+  inline mesh_region APIDECL
+  select_convexes_in_box(const mesh &m,
+                         const base_node &pt1,
+                         const base_node &pt2)
+  { return select_convexes_in_box(m, m.region(-1), pt1, pt2); }
 
   ///@}
 }  /* end of namespace getfem.                                             */
