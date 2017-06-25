@@ -466,7 +466,7 @@ option = sys.argv[2]
 # List the filenames and extract object and command names.
 #
 
-fl = os.popen('(cd ' + directory + ' ; ls gf_*.cc)');
+fl = os.popen('sh -c "(cd ' + directory + ' ; ls gf_*.cc)"');
 lines = fl.readlines();
 fl.close()
 objects = set()

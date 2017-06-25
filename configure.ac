@@ -435,6 +435,9 @@ if test x$usesuperlu = xYES; then
     *apple*)
         SUPERLU_LIBS="../$SUPERLU_SRC/libsuperlu.la"
         ;;
+    *mingw*)
+        SUPERLU_LIBS="../$SUPERLU_SRC/.libs/libsuperlu.a"
+        ;;
     *)
         SUPERLU_LIBS="`readlink -f .`/$SUPERLU_SRC/libsuperlu.la"
         ;;
@@ -457,7 +460,7 @@ else
   ])
 
   SUPERLU_LIBS="-lsuperlu"
-  LIBS="$LIBS $SUPERLU_LIBS"
+  LIBS="$SUPERLU_LIBS $LIBS"
 fi
 
 AC_SUBST([SUPERLU_CPPFLAGS])
@@ -569,8 +572,11 @@ CPPFLAGS="$CPPFLAGS $MUMPSINC"
 
 MUMPS_LIBS=""
 case $host in
+    *mingw*)
+        MUMPS_SEQ_LIBS="-lsmumps -ldmumps -lcmumps -lzmumps -lmumps_common -lmpiseq -lpord"
+        ;;
     *apple*)
-        MUMPS_SEQ_LIBS="-lsmumps -ldmumps -lcmumps -lzmumps -lmpiseq -lpord -lmumps_common"
+        MUMPS_SEQ_LIBS="-lsmumps -ldmumps -lcmumps -lzmumps -lmumps_common -lmpiseq -lpord"
         ;;
     *)
         MUMPS_SEQ_LIBS="-lsmumps_seq -ldmumps_seq -lcmumps_seq -lzmumps_seq"
@@ -982,6 +988,21 @@ if test x$usepython = xYES; then
   AM_PATH_PYTHON(2.2, usepython=YES, usepython=NO)
 fi
 echo $PYTHON
+
+case $host in
+    *mingw*)
+        PYTHON_CC_ARG="--compiler=mingw32"
+	PYTHON_EXTRA_EXT_PARAM="extra_compile_args=[['-D MS_WIN64']]"
+        ;;
+    *)
+        PYTHON_CC_ARG=""
+	PYTHON_EXTRA_EXT_PARAM=""
+        ;;
+esac
+
+AC_SUBST(PYTHON_CC_ARG)
+AC_SUBST(PYTHON_EXTRA_EXT_PARAM)
+
 
 
 if test "x$usepython" = "xYES"; then
