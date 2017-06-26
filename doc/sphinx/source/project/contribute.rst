@@ -82,7 +82,7 @@ Your role stops here, since you are not allowed to modify the master branch of |
 Ask for an admin to merge your modifications to the master branch of |gf|
 -------------------------------------------------------------------------
 
-Once you validated your modifications with sufficient tests, you can ask an admin of |gf| to merge your modifications. For this you just have to send an e-mail to *getfem-commits@nongnu.org* with the message : "please merge branch devel-me" with eventually a short description of the modifications. 
+Once you validated your modifications with sufficient tests, you can ask an admin of |gf| to merge your modifications. For this, contact one of them directly, or send an e-mail to *getfem-commits@nongnu.org* with the message : "please merge branch devel-me" with eventually a short description of the modifications.
 
 
 Merge modifications done by other contributors
