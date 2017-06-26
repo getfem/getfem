@@ -2,6 +2,7 @@
 *.log
 *.lo
 *.la
+*.tar.gz
 .deps
 .libs
 *.trs

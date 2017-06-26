@@ -458,7 +458,7 @@ namespace getfem {
     typedef double *iterator;
     typedef const double * const_iterator;
     pointer p;
-    pointer base() const { return (double*)((unsigned long)p&(~7UL)); }
+    pointer base() const { return (double*)((size_type)p&(~7UL)); }
     reference operator[](size_type i) { return base()[i]; }
     const double& operator[](size_type i) const { return base()[i]; }
     micro_vec() : p(0) {}
@@ -491,7 +491,7 @@ namespace getfem {
       return *this;
     }
     ~micro_vec() { deallocate(); }
-    size_type size() const { return (unsigned long)p & 7UL; }
+    size_type size() const { return (size_type)(p) & 7UL; }
     micro_vec(const micro_vec& va, const micro_vec& vb) : p(alloc(va.size())) { 
       /*double * restrict__ pb = base(), *pe = base()+size(), *pva = va.base(), *pvb = vb.base();
 	for (; pb < pe;) *pb++=*pva+++*pvb++;*/

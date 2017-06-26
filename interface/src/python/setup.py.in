@@ -61,10 +61,10 @@ libdirs = [l for l in libdirs if len(l.strip())]
 #print "libdirs = ", libdirs
 getfemmod = Extension('_getfem',
                       include_dirs = ['@top_srcdir@/src/getfem','../../../src/getfem','@srcdir@/..','@srcdir@',npy_include_dir],
-                      libraries = libnames, #['getfemint','getfem','stdc++','m'],
-                      library_dirs = libdirs, #['../src/.libs',
-#                                      '@GETFEM_STATICLIBS@'],
-                      sources = ['getfem_python_c.c'])
+                      libraries = libnames,
+                      library_dirs = libdirs,
+                      sources = ['getfem_python_c.c'],
+                      @PYTHON_EXTRA_EXT_PARAM@)
 
 setup (name = 'getfem-interface',
        license='LGPL',

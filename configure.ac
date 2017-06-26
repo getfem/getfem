@@ -194,6 +194,7 @@ dnl option pic-only is not working: a libtool bug ...
 LT_INIT([pic-only disable-shared])
 AC_SUBST([LIBTOOL_DEPS])
 
+
 dnl -------------------------------BLAS----------------------------------
 
 dnl why I hate autoconf: if the code below is put into a separate file,
@@ -345,6 +346,26 @@ if test x$useblasinterface = xYES; then
   CPPFLAGS="$CPPFLAGS -DGMM_USES_BLAS_INTERFACE"
 fi
 
+dnl ------------------------------LAPACK TEST--------------------------------
+
+if test x"$acx_blas_ok" = xyes; then
+  if test x"$FC" = "x"; then
+    dgetrf=dgetrf_
+  else
+    AC_FC_FUNC(dgetrf)
+  fi;
+
+  AC_CHECK_LIB(lapack, dgetrf_, [acx_lapack_ok=yes; LAPACK_LIBS="-llapack "])
+
+  if test x"$acx_lapack_ok" = xyes; then
+     CPPFLAGS="$CPPFLAGS -DGMM_USES_LAPACK"
+     LIBS="$LAPACK_LIBS $LIBS"
+  fi
+fi
+
+dnl -----------------------------END OF LAPACK TEST--------------------------
+
+
 dnl ---------------------------OPENMP------------------------------
 useopenmp=0
 AC_ARG_ENABLE(openmp,
@@ -414,6 +435,9 @@ if test x$usesuperlu = xYES; then
     *apple*)
         SUPERLU_LIBS="../$SUPERLU_SRC/libsuperlu.la"
         ;;
+    *mingw*)
+        SUPERLU_LIBS="../$SUPERLU_SRC/.libs/libsuperlu.a"
+        ;;
     *)
         SUPERLU_LIBS="`readlink -f .`/$SUPERLU_SRC/libsuperlu.la"
         ;;
@@ -436,7 +460,7 @@ else
   ])
 
   SUPERLU_LIBS="-lsuperlu"
-  LIBS="$LIBS $SUPERLU_LIBS"
+  LIBS="$SUPERLU_LIBS $LIBS"
 fi
 
 AC_SUBST([SUPERLU_CPPFLAGS])
@@ -509,11 +533,15 @@ AC_ARG_ENABLE(qhull,
  [AS_HELP_STRING([--enable-qhull],[enable the use of the qhull library (required for generation of non regular meshes)])],
  [ if   test "x$enableval" = "xyes" ; then useQHULL="yes"; fi], [useQHULL="test"])
 QHULL_LIBS=""
+save_LIBS="$LIBS";
 
 if test "x$useQHULL" = "xno"; then
   echo "Building with libqhull explicitly disabled";
 else
-  AC_CHECK_LIB(qhull, qh_new_qhull)
+  AC_CHECK_LIB(qhull, qh_new_qhull, [QHULL_LIBS="-lqhull"],
+  [
+    AC_CHECK_LIB(qhullstatic, qh_new_qhull,[QHULL_LIBS="-lqhullstatic"],[QHULL_LIBS=""])
+  ])
   AC_CHECK_HEADERS(libqhull/qhull_a.h,[useQHULL="yes"],
   [
     if test "x$useQHULL" = "xyes"; then
@@ -521,13 +549,11 @@ else
       useQHULL="no"
     fi;
   ])
-  if test "x$useQHULL" = "xyes"; then
-    QHULL_LIBS="-lqhull"
-  fi;
   echo "Building with libqhull (use --enable-qhull=no to disable it)"
 fi;
 AM_CONDITIONAL(QHULL, test x$useQHULL = xyes)
 
+LIBS="$QHULL_LIBS $save_LIBS"
 AC_SUBST([QHULL_LIBS])
 echo "Configuration of qhull done"
 dnl -----------------------------END OF QHULL TEST---------------------------
@@ -546,8 +572,11 @@ CPPFLAGS="$CPPFLAGS $MUMPSINC"
 
 MUMPS_LIBS=""
 case $host in
+    *mingw*)
+        MUMPS_SEQ_LIBS="-lsmumps -ldmumps -lcmumps -lzmumps -lmumps_common -lmpiseq -lpord"
+        ;;
     *apple*)
-        MUMPS_SEQ_LIBS="-lsmumps -ldmumps -lcmumps -lzmumps -lmpiseq -lpord -lmumps_common"
+        MUMPS_SEQ_LIBS="-lsmumps -ldmumps -lcmumps -lzmumps -lmumps_common -lmpiseq -lpord"
         ;;
     *)
         MUMPS_SEQ_LIBS="-lsmumps_seq -ldmumps_seq -lcmumps_seq -lzmumps_seq"
@@ -688,26 +717,6 @@ AC_SUBST([METIS_LIBS])
 
 
 dnl ---------------------------END OF METIS--------------------------
-
-
-dnl ------------------------------LAPACK TEST--------------------------------
-
-if test x"$acx_blas_ok" = xyes; then
-  if test x"$FC" = "x"; then
-    dgetrf=dgetrf_
-  else
-    AC_FC_FUNC(dgetrf)
-  fi;
-
-  AC_CHECK_LIB(lapack, dgetrf_, [acx_lapack_ok=yes; LAPACK_LIBS="-llapack "])
-
-  if test x"$acx_lapack_ok" = xyes; then
-     CPPFLAGS="$CPPFLAGS -DGMM_USES_LAPACK"
-     LIBS="$LIBS $LAPACK_LIBS"
-  fi
-fi
-
-dnl -----------------------------END OF LAPACK TEST--------------------------
 
 
 AC_CHECK_HEADERS(sys/times.h,[],[SUPERLU_CPPFLAGS="$SUPERLU_CPPFLAGS -DNO_TIMER"])
@@ -869,8 +878,8 @@ if test "$usematlab" != NO; then
      if $(echo "" | $MEX 2>&1 | grep 'This is .*TeX'); then
 	  AC_MSG_ERROR([the mex binary which is in the PATH appears to be part of LaTeX, not matlab !! run ./configure MEX=/path/to/matlab/mex]);
      fi;
-     MATLAB_ROOT=`$MEX -v 2>&1 | grep "MATLAB " | awk '{print $4}'|sed -e '2,$d'`
-     MATLAB_INC_DIR=$MATLAB_ROOT/extern/include
+     MATLAB_ROOT=`$MEX -v 2>&1 | grep "MATLAB  " | awk '{print $4}'|sed -e '2,$d'`
+     Matlab_INC_DIR=$MATLAB_ROOT/extern/include
      echo "checking for matlab path... " $MATLAB_ROOT
      MATLAB_COM_EXT=`$MEX -v 2>&1 | grep "LDEXTENSION " | awk '{print $3}'`
      echo "checking for mex extension... " $MATLAB_COM_EXT
@@ -880,8 +889,6 @@ if test "$usematlab" != NO; then
   fi
 fi
 AM_CONDITIONAL(BUILDMEX, test x$usematlab = xYES)
-
-
 
 AC_SUBST(MATLAB_ROOT)
 AC_SUBST(MATLAB_INC_DIR)
@@ -981,6 +988,21 @@ if test x$usepython = xYES; then
   AM_PATH_PYTHON(2.2, usepython=YES, usepython=NO)
 fi
 echo $PYTHON
+
+case $host in
+    *mingw*)
+        PYTHON_CC_ARG="--compiler=mingw32"
+	PYTHON_EXTRA_EXT_PARAM="extra_compile_args=[['-D MS_WIN64']]"
+        ;;
+    *)
+        PYTHON_CC_ARG=""
+	PYTHON_EXTRA_EXT_PARAM=""
+        ;;
+esac
+
+AC_SUBST(PYTHON_CC_ARG)
+AC_SUBST(PYTHON_EXTRA_EXT_PARAM)
+
 
 
 if test "x$usepython" = "xYES"; then
