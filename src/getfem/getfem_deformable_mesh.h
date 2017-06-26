@@ -71,15 +71,14 @@ namespace getfem {
 
     void deform(){
       if (is_deformed_) return;
+      initial_nodes_ = mf_.linked_mesh().points();
       deforming_mesh_(dU_);
       is_deformed_ = true;
     }
 
     void undeform(){
       if (!is_deformed_) return;
-      VECTOR dU_inverted(dU_);
-      gmm::scale(dU_inverted, scalar_type(-1.0));
-      deforming_mesh_(dU_inverted);
+      restore_();
       is_deformed_ = false;
     }
 
@@ -129,8 +128,16 @@ namespace getfem {
                   "Error, after deforming the mesh, number of nodes are different.");
     }
 
+    void restore_()
+    {
+      auto &pts = const_cast<getfem::mesh &>(mf_.linked_mesh()).points();
+      GMM_ASSERT1(pts.size() == initial_nodes_.size(), "Internal error, incorrect number of points.");
+      for (size_type i = 0; i < pts.size(); ++i) gmm::copy(initial_nodes_[i], pts[i]);
+    }
+
     VECTOR dU_;
     const mesh_fem &mf_;
+    getfem::mesh::PT_TAB initial_nodes_;
     bool deform_on_construct_;
     bool is_deformed_;
     bool to_be_restored_;

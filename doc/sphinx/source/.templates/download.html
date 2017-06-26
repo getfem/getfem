@@ -35,18 +35,72 @@ combinations of OS and compilers. The last stable version has been tested on the
 configurations:<p>
 
 <ul>
-  <li>Linux with g++ 4.8.x</li>
-  <li>MacOS X (with the python interface)</li>
+  <li>Linux with g++ (versions 4.8 to 7.1) </li>
+  <li>MacOS X (with the python and Matlab interfaces)</li>
   <li>Windows with <a href="http://www.mingw.org">MinGW</a> and
   <a href="http://www.mingw.org/wiki/msys">MSys</a>
   ({{ project }} only -- see specific notes for the matlab interface)</li>
 </ul>
 
-<p>Concerning the compilation on MacOS X, the simplest seems to be to install the package qhull and the sequential version of Mumps with the package manager Homebrew. For the python interface, python 2 should be installed with numpy and scipy packages (you can use pip to install them). The compilation of the python interface may fail. Go to interface/src/python directory and try to add the right libraries to build the _getfem.so dynamic library.
-</p>
+<h1>Install {{ project }} {{ release }} on different plateforms </h1>
 
-<p>You can find some help on how to build the Matlab interface on <a href="http://windhoff.net/wiki/how_to/build_getfem_matlab_toolbox_on_windows_xp">Windows XP</a> and <a href="http://windhoff.net/wiki/how_to/build_getfem_matlab_toolbox_on_ubuntu_linux">Ubuntu</a> on the page of Mirko Windhoff.
-</p>
+<h2>Installation from sources</h2>
+
+Since standard GNU tools are used, the installation of the {{ project }} library is somewhat standard. From a general viewpoint, the installation from sources will require the following ingredients for any platform:
+
+<ul>
+  <li> A decently recent C/C++ compiler accepting C++ 11 standard
+       (gcc/g++ >= 4.8 for instance).  </li>
+  <li> If you want to build binaries from git to get the latest changes,
+    improvements, bugfixes, new bugs, etc. It requires a git client,
+    automake, and libtool (otherwise, use the lastest stable package). </li>
+  <li> By default, the Python Getfem interface is built. It requires the python
+    development files (Python.h etc.) to be available (package
+    ``python-all-dev`` in debian distribution), and also the Numpy and Scipy
+    packages to be installed (package ``python-numpy`` and ``python-scipy``
+    in debian distribution). In case of troubles with a non-gnu compiler,
+    gcc/g++ (>= 4.8) should be a safe solution (package ``build-essential``
+    in debian distribution). If you do not want to build the python interface,
+    use the configure option `./configure --disable-python` </li>
+  <li> If you want to build the Matlab interface, it requires a recent Matlab
+    version installed on your system and the associated mex compiler
+    correctly configured. </li>
+  <li> If you want to build the Scilab interface, it requires a recent Scilab
+    version installed on your system.  </li>
+  <li> If you want mesh generation and fictitious domain facilities
+    (such as Xfem),
+    it requires the package qhull installed on your system
+    (package ``libqhull-dev`` in debian distribution). </li>
+  <li> If you want to use MUMPS linear sparse solver instead of SUPERLU, you
+  need to  install the sequential version of MUMPS on your system
+  (or the parallel one if you intend to use the parallel version of {{ project }}).  </li>
+</ul>
+
+Depending on the plateform, find some specific help here for the installation on <a class="biglink" href="{{ pathto("install/install_linux") }}">Linux</a>, <a class="biglink" href="{{ pathto("install/install_mac") }}">MacOS X</a>, or <a class="biglink" href="{{ pathto("install/install_windows") }}">Windows</a>.
+
+
+<h2>Installation from pre-compiled packages</h2>
+
+
+
+<h3> On a Debian/Ubuntu system </h3>
+
+GetFEM++ packages are available in the official repositories of Debian
+and Ubuntu distributions.
+
+Information about the GetFEM++ versions available in different Debian
+releases can be found e.g. at
+
+<a href="https://packages.debian.org/source/sid/getfem++"> https://packages.debian.org/source/sid/getfem++</a>
+
+and with respect to different Ubuntu releases at
+
+<a href="https://launchpad.net/ubuntu/+source/getfem++"> https://launchpad.net/ubuntu/+source/getfem++</a>
+
+GetFEM++ including its python interface can be installed from a terminal
+by executing <b>aptitude update</b> and <b>aptitude install python-getfem++</b>.
+
+<h3> On Windows </h3>
 
 <p>Installer of the Scilab interface for 32bits Windows and Scilab 5.3 provided by Yann Colette (2011/11/18):
       <a href="http://download-mirror.savannah.gnu.org/releases/getfem/misc/sci_getfem-rev2914-scilab-5.3-setup.exe">sci_getfem-rev2914-scilab-5.3-setup.exe</a>.</p>
@@ -61,14 +115,15 @@ configurations:<p>
 <p>A binary for the matlab-interface for matlab 2009 on Windows XP(2010/04/08):
       <a href="http://download-mirror.savannah.gnu.org/releases/getfem/misc/getfem-matlab-4.0_R2009_win32.tar.gz">getfem-matlab-4.0_R2009_win32.tar.gz</a>.</p>
 
-<p>A binary for the matlab-interface for matlab-2009b on MAC OSX (2010/03/10):
-      <a href="http://download-mirror.savannah.gnu.org/releases/getfem/misc/getfem-4.0.0-matlab-toolbox-MACOSX-i386.tar.gz">getfem-4.0.0-matlab-toolbox-MACOSX-i386.tar.gz</a>.</p>
+
 
 <p>A binary for the matlab-interface for matlab-R14 on Windows XP(2006/04/18):
       <a href="http://download-mirror.savannah.gnu.org/releases/getfem/misc/getfem-matlab-2.0_R14_win32.zip">getfem-matlab-2.0_R14_win32.zip</a> (and some <a href="http://download-mirror.savannah.gnu.org/releases/getfem/misc/getfem-matlab-2.0_R14_win32.README.txt">notes</a>).</p>
 
+<h3> On MacOS X </h3>
 
-
+<p>A binary for the matlab-interface for matlab-2009b on MacOS X (2010/03/10):
+      <a href="http://download-mirror.savannah.gnu.org/releases/getfem/misc/getfem-4.0.0-matlab-toolbox-MACOSX-i386.tar.gz">getfem-4.0.0-matlab-toolbox-MACOSX-i386.tar.gz</a>.</p>
 {% endif %}
 
 <h1>Download {{ project }} {{ release }} Documentation</h1>

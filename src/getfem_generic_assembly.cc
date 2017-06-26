@@ -8021,7 +8021,8 @@ namespace getfem {
       c += ga_hash_code(pnode->name); break;
 
     case GA_NODE_INTERPOLATE_FILTER:
-      c += 1.73*ga_hash_code(pnode->interpolate_name);
+      c += 1.73*ga_hash_code(pnode->interpolate_name)
+	+ 2.486*double(pnode->nbc1 + 1);
       break;
     case GA_NODE_INTERPOLATE_DERIVATIVE:
       c += 2.321*ga_hash_code(pnode->interpolate_name_der);
