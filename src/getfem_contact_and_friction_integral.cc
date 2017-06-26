@@ -2666,6 +2666,7 @@ namespace getfem {
   //
   //=========================================================================
 
+#if (0) // Deprecated brick : uses the old Neumann terms
 
   struct Nitsche_fictitious_domain_contact_brick : public virtual_brick {
 
@@ -3212,8 +3213,7 @@ namespace getfem {
   }
 
 
-
-
+#endif
 
 
 }  /* end of namespace getfem.                                             */

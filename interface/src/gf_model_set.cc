@@ -3184,7 +3184,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
 
 #endif
 
-
+#if (0) // Deprecated brick : uses the old Neumann terms
 
     /*@SET ind = ('add Nitsche fictitious domain contact brick', @tmim mim, @str varname1, @str varname2, @str dataname_d1, @str dataname_d2, @str gamma0name [, @scalar theta[, @str dataname_friction_coeff[, @str dataname_alpha, @str dataname_wt1,@str dataname_wt2]]])
      Adds a contact condition with or without Coulomb friction between
@@ -3243,6 +3243,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        out.pop().from_integer(int(ind));
        );
 
+#endif
 
     // CONTACT BETWEEN NON-MATCHING MESHES
 

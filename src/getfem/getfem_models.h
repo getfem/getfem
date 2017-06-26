@@ -56,9 +56,6 @@ namespace getfem {
   class virtual_time_scheme;
   typedef std::shared_ptr<const virtual_time_scheme> ptime_scheme;
 
-  struct Neumann_elem_term;
-  typedef std::shared_ptr<const Neumann_elem_term> pNeumann_elem_term;
-
   // Event management : The model has to react when something has changed in
   //    the context and ask for corresponding (linear) bricks to recompute
   //    some terms.
@@ -329,12 +326,6 @@ namespace getfem {
     mutable VAR_SET variables;             // Variables list of the model
     std::vector<brick_description> bricks; // Bricks list of the model
     dal::bit_vector valid_bricks, active_bricks;
-    typedef std::pair<std::string, size_type> Neumann_pair;
-    typedef std::map<Neumann_pair, pNeumann_elem_term> Neumann_SET;
-    mutable Neumann_SET Neumann_term_list; // Neumann terms list (mainly for
-                                           // Nitsche's method)
-    mutable std::map<std::string, std::vector<std::string> >
-      Neumann_terms_auxilliary_variables;
     std::map<std::string, pinterpolate_transformation> transformations;
     std::map<std::string, pelementary_transformation> elem_transformations;
 
@@ -453,42 +444,6 @@ namespace getfem {
 				  size_type rg = size_type(-1),
 				  size_type order = 1,
 				  bool before = false);
-
-    void add_Neumann_term(pNeumann_elem_term p,
-                          const std::string &varname,
-                          size_type brick_num) const
-    { Neumann_term_list[Neumann_pair(varname, brick_num)] = p; }
-
-    size_type check_Neumann_terms_consistency(const std::string &varname)const;
-
-    bool check_Neumann_terms_linearity(const std::string &varname) const;
-
-    void auxilliary_variables_of_Neumann_terms
-    (const std::string &varname, std::vector<std::string> &aux_var) const;
-
-    void add_auxilliary_variables_of_Neumann_terms
-    (const std::string &varname, const std::vector<std::string> &aux_vars) const;
-
-    void add_auxilliary_variables_of_Neumann_terms
-    (const std::string &varname, const std::string &aux_var) const;
-
-    /* Compute the approximation of the Neumann condition for a variable
-        with the declared terms.
-        The output tensor has to have the right size. No verification.
-    */
-    void compute_Neumann_terms(int version, const std::string &varname,
-                               const mesh_fem &mfvar,
-                               const model_real_plain_vector &var,
-                               fem_interpolation_context &ctx,
-                               base_small_vector &n,
-                               bgeot::base_tensor &output) const;
-
-    void compute_auxilliary_Neumann_terms
-    (int version, const std::string &varname,
-     const mesh_fem &mfvar, const model_real_plain_vector &var,
-     const std::string &aux_varname,
-     fem_interpolation_context &ctx, base_small_vector &n,
-     bgeot::base_tensor &output) const;
 
     /* function to be called by Dirichlet bricks */
     void add_real_dof_constraint(const std::string &varname, size_type dof,
@@ -1370,7 +1325,6 @@ namespace getfem {
     bool isinit;      // internal flag.
     bool compute_each_time; // The brick is linear but needs to be computed
     // each time it is evaluated.
-    bool hasNeumannterm; // The brick declares at list a Neumann term.
     bool isUpdateBrick;  // The brick does not contribute any terms to the
     // system matrix or right-hand side, but only updates state variables.
     std::string name; // Name of the brick.
@@ -1382,12 +1336,11 @@ namespace getfem {
     virtual_brick() { isinit = false; }
     virtual ~virtual_brick() { }
     void set_flags(const std::string &bname, bool islin, bool issym,
-                   bool iscoer, bool ire, bool isco, bool each_time = false,
-                   bool hasNeumannt = true) {
+                   bool iscoer, bool ire, bool isco, bool each_time = false) {
       name = bname;
       islinear = islin; issymmetric = issym; iscoercive = iscoer;
       isreal = ire; iscomplex = isco; isinit = true;
-      compute_each_time = each_time; hasNeumannterm = hasNeumannt;
+      compute_each_time = each_time;
     }
 
 #   define BRICK_NOT_INIT GMM_ASSERT1(isinit, "Set brick flags !")
@@ -1396,7 +1349,6 @@ namespace getfem {
     bool is_coercive()  const { BRICK_NOT_INIT; return iscoercive;  }
     bool is_real()      const { BRICK_NOT_INIT; return isreal;      }
     bool is_complex()   const { BRICK_NOT_INIT; return iscomplex;   }
-    bool has_Neumann_term() const {BRICK_NOT_INIT; return hasNeumannterm; }
     bool is_to_be_computed_each_time() const
     { BRICK_NOT_INIT; return compute_each_time; }
     const std::string &brick_name() const { BRICK_NOT_INIT; return name; }
@@ -1543,49 +1495,6 @@ namespace getfem {
         model::real_veclist &,
         size_type, build_version) const;
   };
-
-  //=========================================================================
-  //
-  //  Neumann term object.
-  //
-  //=========================================================================
-
-  /* For a PDE in a weak form, the Neumann condition correspond to
-     prescribe a certain derivative of the unkown (the normal derivative
-     for the Poisson problem for instance). The Neumann term objects allows
-     to compute the finite element approximation of this certain derivative.
-     This allows, first ot have an estimate of this term (for instance, it can
-     give an approximation of the stress at the boundary in a problem of
-     linear elasticity) but also it allows to prescribe some boundary
-     conditions with Nitsche's method (For dirichlet or contact boundary
-     conditions for instance).
-  */
-
-  struct APIDECL Neumann_elem_term  {
-
-    std::vector<std::string> auxilliary_variables;
-
-    // The function should return the Neumann term when version = 1,
-    // its derivative when version = 2 and its second derivative
-    // when version = 3.
-    // CAUTION : The output tensor has the right size and the reult has to
-    //           be ADDED. previous additions of other term have not to be
-    //           erased.
-
-    virtual void compute_Neumann_term
-    (int version, const mesh_fem &/*mfvar*/,
-     const model_real_plain_vector &/*var*/,
-     fem_interpolation_context& /*ctx*/,
-     base_small_vector &/*n*/, base_tensor &/*output*/,
-     size_type /*auxilliary_ind*/ = 0) const = 0;
-
-    virtual ~Neumann_elem_term() {}
-
-  };
-
-
-
-
 
   //=========================================================================
   //

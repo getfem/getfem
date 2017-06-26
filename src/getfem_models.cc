@@ -1015,12 +1015,6 @@ namespace getfem {
        is_coercive_ = is_coercive_ &&  bricks[ibb].pbr->is_coercive();
      }
 
-     Neumann_SET::iterator it = Neumann_term_list.begin(), it2 = it;
-     for (; it != Neumann_term_list.end(); it = it2) {
-       it2++;
-       if (it->first.second == ib) Neumann_term_list.erase(it);
-     }
-
      bricks[ib] = brick_description();
   }
 
@@ -1064,13 +1058,6 @@ namespace getfem {
     }
 
     if (it->second.pim_data != 0) sup_dependency(*(it->second.pim_data));
-
-    Neumann_SET::iterator itn = Neumann_term_list.begin(), itn2 = itn;
-    for (; itn != Neumann_term_list.end(); itn = itn2) {
-      itn2++;
-      if (!(varname.compare(itn->first.first))) Neumann_term_list.erase(itn);
-    }
-    Neumann_terms_auxilliary_variables.erase(varname);
 
     variables.erase(varname);
     act_size_to_be_done = true;
@@ -2121,119 +2108,6 @@ namespace getfem {
     assignments.push_back(as);
   }
 
-
-
-  void model::auxilliary_variables_of_Neumann_terms
-  (const std::string &varname, std::vector<std::string> &aux_vars) const {
-    std::map<std::string, std::vector<std::string> >::const_iterator
-      it = Neumann_terms_auxilliary_variables.find(varname);
-    if (it !=  Neumann_terms_auxilliary_variables.end())
-      aux_vars = it->second;
-    else
-      aux_vars.resize(0);
-  }
-
-  /* Pb on this function: depend only on the variable and not on the term
-     and brick. Not well managed at brick deletion.
-  */
-  void model::add_auxilliary_variables_of_Neumann_terms
-  (const std::string &varname,
-   const std::vector<std::string> &aux_vars) const {
-
-    for (size_type i = 0; i < aux_vars.size(); ++i) {
-      bool found = false;
-      for (size_type j = 0;
-           j < Neumann_terms_auxilliary_variables[varname].size(); ++j)
-        if (!(Neumann_terms_auxilliary_variables[varname][j].compare
-              (aux_vars[i])))
-          found = true;
-      if (!found)
-        Neumann_terms_auxilliary_variables[varname].push_back(aux_vars[i]);
-    }
-  }
-
-  void model::add_auxilliary_variables_of_Neumann_terms
-  (const std::string &varname, const std::string &aux_var) const {
-    std::vector<std::string> aux_vars(1,  aux_var);
-    add_auxilliary_variables_of_Neumann_terms(varname, aux_vars);
-  }
-
-  size_type
-  model::check_Neumann_terms_consistency(const std::string &varname) const {
-
-    dal::bit_vector bnum;
-    Neumann_SET::const_iterator it = Neumann_term_list.begin();
-    for (; it != Neumann_term_list.end(); ++it) bnum.add(it->first.second);
-
-    for (dal::bv_visitor ib(active_bricks); !ib.finished(); ++ib) {
-      if (bricks[ib].pbr->has_Neumann_term() && !(bnum.is_in(ib))) {
-        for (size_type j = 0; j < bricks[ib].vlist.size(); ++j)
-          if (!(bricks[ib].vlist[j].compare(varname))) return ib;
-      }
-    }
-    return size_type(-1);
-
-  }
-
-  bool model::check_Neumann_terms_linearity(const std::string &varname) const {
-
-    Neumann_SET::const_iterator it
-      = Neumann_term_list.lower_bound(Neumann_pair(varname, 0));
-
-    while (it != Neumann_term_list.end()
-           && !(it->first.first.compare(varname))) {
-      if (!(bricks[it->first.second].pbr->is_linear())) return false;
-    }
-    return true;
-  }
-
-
-  void model::compute_Neumann_terms(int version, const std::string &varname,
-                                    const mesh_fem &mfvar,
-                                    const model_real_plain_vector &var,
-                                    fem_interpolation_context &ctx,
-                                    base_small_vector &n,
-                                    bgeot::base_tensor &t) const {
-
-    // The output tensor has to have the right size. No verification.
-    Neumann_SET::const_iterator it
-      = Neumann_term_list.lower_bound(Neumann_pair(varname, 0));
-
-    gmm::clear(t.as_vector());
-    while (it != Neumann_term_list.end()
-           && !(it->first.first.compare(varname))) {
-      if (active_bricks.is_in(it->first.second))
-        it->second->compute_Neumann_term(version, mfvar, var, ctx, n, t);
-      ++it;
-    }
-  }
-
-  void model::compute_auxilliary_Neumann_terms
-  (int version, const std::string &varname,
-   const mesh_fem &mfvar, const model_real_plain_vector &var,
-   const std::string &aux_varname,
-   fem_interpolation_context &ctx, base_small_vector &n,
-   bgeot::base_tensor &t) const {
-
-    // The output tensor has to have the right size. No verification.
-    Neumann_SET::const_iterator it
-      = Neumann_term_list.lower_bound(Neumann_pair(varname, 0));
-
-    gmm::clear(t.as_vector());
-    while (it != Neumann_term_list.end()
-           && !(it->first.first.compare(varname))) {
-      if (active_bricks.is_in(it->first.second)) {
-        size_type ind = size_type(-1);
-        for (size_type i = 0; i < it->second->auxilliary_variables.size(); ++i)
-          if (!(aux_varname.compare(it->second->auxilliary_variables[i])))
-            ind = i;
-        if (ind != size_type(-1))
-          it->second->compute_Neumann_term(version,mfvar,var,ctx,n,t,ind+1);
-      }
-      ++it;
-    }
-  }
-
   void model::add_temporaries(const varnamelist &vl,
                               gmm::uint64_type id_num) const {
     for (size_type i = 0; i < vl.size(); ++i) {
@@ -3224,7 +3098,6 @@ model_complex_plain_vector &
     variables.clear();
     active_bricks.clear();
     valid_bricks.clear();
-    Neumann_term_list.clear();
     real_dof_constraints.clear();
     complex_dof_constraints.clear();
     bricks.resize(0);
@@ -3485,7 +3358,7 @@ model_complex_plain_vector &
       set_flags(brickname, true /* is linear*/,
                 true /* is symmetric */, true /* is coercive */,
                 true /* is real */, false /* is complex */,
-                false /* compute each time */, false /* has a Neumann term */);
+                false /* compute each time */);
       directvarname = directvarname_; directdataname = directdataname_;
     }
 
@@ -3754,196 +3627,6 @@ model_complex_plain_vector &
   //
   // ----------------------------------------------------------------------
 
-  // Deprecated
-  struct generic_elliptic_Neumann_elem_term : public Neumann_elem_term {
-
-    const mesh_fem *mf_a;
-    const model_real_plain_vector *A;
-
-    mutable fem_interpolation_context ctx_a;
-    mutable base_vector coeff, val;
-    mutable base_matrix grad, G;
-
-    void compute_Neumann_term
-    (int version, const mesh_fem &mfvar, const model_real_plain_vector &var,
-     fem_interpolation_context& ctx, base_small_vector &n,
-     base_tensor &output, size_type /*auxilliary_ind*/ = 0) const {
-
-      if (version == 3) return;  // No contribution because the term is linear
-
-      const mesh &m = mfvar.linked_mesh();
-      size_type N = m.dim(), Q = mfvar.get_qdim(), s = 1, cv=ctx.convex_num();
-
-      if (A) {
-        s = gmm::vect_size(*A);
-        if (mf_a) s = s * mf_a->get_qdim() / mf_a->nb_dof();
-      }
-      gmm::resize(val, s);
-
-      if (mf_a) {
-        GMM_ASSERT1(!(mf_a->is_reduced()),
-                    "Sorry, to be adapted for reduced mesh fems");
-
-        if (!(ctx_a.have_pf()) || ctx_a.convex_num() != cv
-            || (ctx_a.have_pfp() != ctx.have_pfp())
-            || (ctx_a.have_pfp()
-                && (ctx.pfp()->get_ppoint_tab()
-                    != ctx_a.pfp()->get_ppoint_tab()))) {
-
-          bgeot::vectors_to_base_matrix
-            (G, mf_a->linked_mesh().points_of_convex(cv));
-
-          pfem_precomp pfp = fem_precomp(mf_a->fem_of_element(cv),
-                                         ctx.pfp()->get_ppoint_tab(), 0);
-
-          if (ctx.have_pfp())
-            ctx_a = fem_interpolation_context
-              (mf_a->linked_mesh().trans_of_convex(cv), pfp, ctx.ii(),
-               G, cv, ctx.face_num());
-          else
-            ctx_a = fem_interpolation_context
-              (mf_a->linked_mesh().trans_of_convex(cv),
-               mf_a->fem_of_element(cv), ctx.xref(), G, cv, ctx.face_num());
-
-        } else {
-          if (ctx.have_pfp())  ctx_a.set_ii(ctx.ii());
-          else ctx_a.set_xref(ctx.xref());
-        }
-
-        slice_vector_on_basic_dof_of_element(*mf_a, *A, cv, coeff);
-        // coeff.resize(mf_a->nb_basic_dof_of_element(cv));
-        // gmm::copy(gmm::sub_vector(*A, gmm::sub_index
-        //                      (mfvar.ind_basic_dof_of_element(cv))), coeff);
-        ctx_a.pf()->interpolation(ctx_a, coeff, val, dim_type(s));
-      } else if (A) {
-        gmm::copy(*A, val);
-      } else {
-        val[0] = scalar_type(1);
-      }
-
-      switch (version) {
-      case 1:
-        gmm::resize(grad, Q, N);
-        slice_vector_on_basic_dof_of_element(mfvar, var, cv, coeff);
-        // coeff.resize(mfvar.nb_basic_dof_of_element(cv));
-        // gmm::copy(gmm::sub_vector(var, gmm::sub_index
-        //                      (mfvar.ind_basic_dof_of_element(cv))), coeff);
-        ctx.pf()->interpolation_grad(ctx, coeff, grad, dim_type(Q));
-
-        if (s == 1)
-          gmm::mult_add(grad, gmm::scaled(n, val[0]), output.as_vector());
-        else if (s == N*N) {
-          base_vector::const_iterator it = val.begin();
-          for (size_type j = 0; j < N; ++j)
-            for (size_type i = 0; i < N; ++i, ++it)
-              for (size_type k = 0; k < Q; ++k)
-                output[k] += (*it)*grad(k,j)*n[i];
-        }
-        else if (s == N*N*Q*Q) {
-          base_vector::const_iterator it = val.begin();
-          for (size_type l = 0; l < N; ++l)
-            for (size_type k = 0; k < Q; ++k)
-              for (size_type j = 0; j < N; ++j)
-                for (size_type i = 0; i < Q; ++i, ++it)
-                  output[i] += (*it) * grad(k, l) * n[j];
-        }
-        break;
-      case 2:
-        {
-          base_tensor t;
-          dim_type tdim = ctx.pf()->target_dim(), qmult = dim_type(Q) / tdim;
-          size_type ndof = ctx.pf()->nb_dof(cv);
-          // The return tensor is t(i,j,k) with 0<=i<ndof, 0<=j<target_dim,
-          // 0<=k<dim. In order to iterate on the tensor values, i should
-          // increment the faster, then j, then k.
-          // If target_dim == qdim, grad(phi_i)(j,k) = t(i,j,k)
-          // If target_dim == 1, grad(phi_i * e_l)(l,k) = t(i,1,k)
-          // General case, psi_{i*qmult+l} = phi_i * e_l  and
-          //    grad(psi_{i*qmult+l})(j+tdim*l,k) = t(i,j,k)
-          ctx.pf()->real_grad_base_value(ctx, t);
-
-          if (s == 1) {
-//            for (size_type l = 0; l < qmult; ++l) {
-//              for (size_type p = 0; p < Q; ++p) {
-//                base_tensor::const_iterator it = t.begin();
-//                for (size_type k = 0; k < Q; ++k)
-//                  for (size_type j = 0; j < tdim; ++j)
-//                    for (size_type i = 0; i < ndof; ++i, ++it) {
-//                      size_type jj = j + tdim*l;
-//                      if (p == jj) output(i*qmult+l, p) += val[0]*(*it)*n[k];
-//                    }
-//                GMM_ASSERT1(it ==  t.end(), "Internal error");
-//              }
-//            }
-            if (Q == 1) {
-              base_tensor::const_iterator it = t.begin();
-              for (size_type k = 0; k < N; ++k)
-                for (size_type i = 0; i < ndof; ++i, ++it)
-                  output[i] += val[0]*(*it)*n[k];
-              GMM_ASSERT1(it ==  t.end(), "Internal error");
-            } else {
-              for (size_type l = 0; l < qmult; ++l) {
-                base_tensor::const_iterator it = t.begin();
-                for (size_type k = 0; k < N; ++k)
-                  for (size_type j = 0; j < tdim; ++j)
-                    for (size_type i = 0; i < ndof; ++i, ++it) {
-                      size_type jj = j + tdim*l;
-                      output(i*qmult+l, jj) += val[0]*(*it)*n[k];
-                    }
-                GMM_ASSERT1(it ==  t.end(), "Internal error");
-              }
-            }
-          } else if (s == N*N) {
-            if (Q == 1) {
-              base_tensor::const_iterator it = t.begin();
-              for (size_type k = 0; k < N; ++k)
-                for (size_type i = 0; i < ndof; ++i, ++it) {
-                  for (size_type q = 0; q < N; ++q)
-                    output[i] += val[q+k*N]*(*it)*n[q];
-                }
-              GMM_ASSERT1(it ==  t.end(), "Internal error");
-            } else {
-              for (size_type l = 0; l < qmult; ++l) {
-                base_tensor::const_iterator it = t.begin();
-                for (size_type k = 0; k < N; ++k)
-                  for (size_type j = 0; j < tdim; ++j)
-                    for (size_type i = 0; i < ndof; ++i, ++it) {
-                      size_type jj = j + tdim*l;
-                      for (size_type q = 0; q < N; ++q)
-                        output(i*qmult+l, jj) += val[q+k*N]*(*it)*n[q];
-                    }
-                GMM_ASSERT1(it ==  t.end(), "Internal error");
-              }
-            }
-          } else if (s == N*N*Q*Q) {
-            for (size_type l = 0; l < qmult; ++l) {
-              for (size_type p = 0; p < Q; ++p) {
-                base_tensor::const_iterator it = t.begin();
-                for (size_type k = 0; k < N; ++k)
-                  for (size_type j = 0; j < tdim; ++j)
-                    for (size_type i = 0; i < ndof; ++i, ++it) {
-                      size_type jj = j + tdim*l;
-                      for (size_type q = 0; q < N; ++q)
-                        output(i*qmult+l, p)
-                          += val[p+q*Q+jj*N*Q+k*N*Q*Q]*(*it)*n[q];
-                    }
-                GMM_ASSERT1(it ==  t.end(), "Internal error");
-              }
-            }
-          }
-        }
-        break;
-      }
-    }
-
-    generic_elliptic_Neumann_elem_term
-    (const mesh_fem *mf_a_, const model_real_plain_vector *A_)
-      : mf_a(mf_a_), A(A_) {}
-
-  };
-
-
-
   // Kept only for the complex version
   struct generic_elliptic_brick : public virtual_brick {
 
@@ -4026,8 +3709,8 @@ model_complex_plain_vector &
 
     }
 
-    virtual void real_post_assembly_in_serial(const model &md, size_type ib,
-                                              const model::varnamelist &vl,
+    virtual void real_post_assembly_in_serial(const model &md, size_type,
+                                              const model::varnamelist &,
                                               const model::varnamelist &dl,
                                               const model::mimlist &/* mims */,
                                               model::real_matlist &/*matl*/,
@@ -4043,13 +3726,10 @@ model_complex_plain_vector &
         A = &(md.real_variable(dl[0]));
         mf_a = md.pmesh_fem_of_variable(dl[0]);
       }
-      pNeumann_elem_term pNt
-        = std::make_shared<generic_elliptic_Neumann_elem_term>(mf_a, A);
-      md.add_Neumann_term(pNt, vl[0], ib);
     }
 
-    virtual void complex_post_assembly_in_serial(const model &md, size_type ib,
-                                              const model::varnamelist &vl,
+    virtual void complex_post_assembly_in_serial(const model &md, size_type,
+                                              const model::varnamelist &,
                                               const model::varnamelist &dl,
                                               const model::mimlist &/*mims*/,
                                               model::complex_matlist &/*matl*/,
@@ -4065,9 +3745,6 @@ model_complex_plain_vector &
         A = &(md.real_variable(dl[0]));
         mf_a = md.pmesh_fem_of_variable(dl[0]);
       }
-      pNeumann_elem_term pNt
-        = std::make_shared<generic_elliptic_Neumann_elem_term>(mf_a, A);
-      md.add_Neumann_term(pNt, vl[0], ib);
     }
 
     virtual scalar_type asm_complex_tangent_terms(const model &md, size_type,
@@ -4373,7 +4050,7 @@ model_complex_plain_vector &
       set_flags("Source term", true /* is linear*/,
                 true /* is symmetric */, true /* is coercive */,
                 true /* is real */, true /* is complex */,
-                false /* compute each time */, false /* has a Neumann term */);
+                false /* compute each time */);
     }
 
 
@@ -4526,7 +4203,7 @@ model_complex_plain_vector &
       set_flags("Normal source term", true /* is linear*/,
                 true /* is symmetric */, true /* is coercive */,
                 true /* is real */, true /* is complex */,
-                false /* compute each time */, false /* has a Neumann term */);
+                false /* compute each time */);
     }
 
 
@@ -4919,7 +4596,7 @@ model_complex_plain_vector &
                 true /* is linear*/,
                 true /* is symmetric */, penalized /* is coercive */,
                 true /* is real */, true /* is complex */,
-                false /* compute each time */, false /* has a Neumann term */);
+                false /* compute each time */);
     }
   };
 
@@ -5271,7 +4948,7 @@ model_complex_plain_vector &
                 true /* is linear*/,
                 true /* is symmetric */, true /* is coercive */,
                 true /* is real */, true /* is complex */,
-                true /* compute each time */, false /* has a Neumann term */);
+                true /* compute each time */);
     }
   };
 
@@ -5616,7 +5293,7 @@ model_complex_plain_vector &
                 true /* is linear*/,
                 true /* is symmetric */, penalized /* is coercive */,
                 true /* is real */, true /* is complex */,
-                false /* compute each time */, false /* has a Neumann term */);
+                false /* compute each time */);
     }
   };
 
@@ -5892,7 +5569,7 @@ model_complex_plain_vector &
       set_flags("Fourier Robin condition", true /* is linear*/,
                 true /* is symmetric */, true /* is coercive */,
                 true /* is real */, true /* is complex */,
-                false /* compute each time */, false /* has a Neumann term */);
+                false /* compute each time */);
     }
 
   };
@@ -6039,7 +5716,7 @@ model_complex_plain_vector &
                 true /* is linear*/,
                 true /* is symmetric */, penalized /* is coercive */,
                 true /* is real */, true /* is complex */,
-                false /* compute each time */, false /* has a Neumann term */);
+                false /* compute each time */);
     }
 
   };
@@ -6182,8 +5859,7 @@ model_complex_plain_vector &
                 true /* is linear*/,
                 symmetric_ /* is symmetric */, coercive_ /* is coercive */,
                 true /* is real */, true /* is complex */,
-                true /* is to be computed each time */,
-                false /* has a Neumann term */);
+                true /* is to be computed each time */);
     }
   };
 
@@ -6257,8 +5933,7 @@ model_complex_plain_vector &
                 true /* is linear*/,
                 true /* is symmetric */, true /* is coercive */,
                 true /* is real */, true /* is complex */,
-                true /* is to be computed each time */,
-                false /* has a Neumann term */);
+                true /* is to be computed each time */);
     }
 
   };
@@ -6279,257 +5954,6 @@ model_complex_plain_vector &
   // Isotropic linearized elasticity brick
   //
   // ----------------------------------------------------------------------
-
-  // deprecated
-  struct iso_lin_elasticity_Neumann_elem_term : public Neumann_elem_term {
-
-    const mesh_fem *mf_lambda;
-    const model_real_plain_vector *lambda;
-    const mesh_fem *mf_mu;
-    const model_real_plain_vector *mu;
-
-    mutable fem_interpolation_context ctx_mu;
-    mutable base_vector coeff, val;
-    mutable base_matrix grad, E, G;
-
-    void compute_Neumann_term
-    (int version, const mesh_fem &mfvar, const model_real_plain_vector &var,
-     fem_interpolation_context& ctx, base_small_vector &n,
-     base_tensor &output, size_type /*auxilliary_ind*/ = 0) const {
-
-      if (version == 3) return;  // No contribution because the term is linear
-
-      dim_type qdim = mfvar.linked_mesh().dim();
-      gmm::resize(grad, qdim, qdim);
-      gmm::resize(E, qdim, qdim);
-      gmm::resize(val, 1);
-      size_type cv = ctx.convex_num();
-      scalar_type val_lambda = scalar_type(0), val_mu = scalar_type(0);
-
-      if (mf_mu) {
-        GMM_ASSERT1(!(mf_mu->is_reduced()),
-                    "Sorry, to be adapted for reduced mesh fems");
-
-        if (!(ctx_mu.have_pf()) || ctx_mu.convex_num() != cv
-            || (ctx_mu.have_pfp() != ctx.have_pfp())
-            || (ctx_mu.have_pfp()
-                && (ctx.pfp()->get_ppoint_tab()
-                    != ctx_mu.pfp()->get_ppoint_tab()))) {
-
-          bgeot::vectors_to_base_matrix
-            (G, mf_mu->linked_mesh().points_of_convex(cv));
-
-          pfem_precomp pfp = fem_precomp(mf_mu->fem_of_element(cv),
-                                         ctx.pfp()->get_ppoint_tab(), 0);
-
-          if (ctx.have_pfp())
-            ctx_mu = fem_interpolation_context
-              (mf_mu->linked_mesh().trans_of_convex(cv), pfp, ctx.ii(),
-               G, cv, ctx.face_num());
-          else
-            ctx_mu = fem_interpolation_context
-              (mf_mu->linked_mesh().trans_of_convex(cv),
-               mf_mu->fem_of_element(cv), ctx.xref(), G, cv, ctx.face_num());
-
-        } else {
-          if (ctx.have_pfp())  ctx_mu.set_ii(ctx.ii());
-          else ctx_mu.set_xref(ctx.xref());
-        }
-        slice_vector_on_basic_dof_of_element(*mf_mu, *mu, cv, coeff);
-        // coeff.resize(mf_mu->nb_basic_dof_of_element(cv));
-        // gmm::copy(gmm::sub_vector(*mu, gmm::sub_index
-        //                      (mf_mu->ind_basic_dof_of_element(cv))), coeff);
-        ctx_mu.pf()->interpolation(ctx_mu, coeff, val, 1);
-        val_mu = val[0];
-        slice_vector_on_basic_dof_of_element(*mf_mu, *lambda, cv, coeff);
-        // gmm::copy(gmm::sub_vector(*lambda, gmm::sub_index
-        //                      (mf_mu->ind_basic_dof_of_element(cv))), coeff);
-        ctx_mu.pf()->interpolation(ctx_mu, coeff, val, 1);
-        val_mu = val[0];
-      } else {
-        val_lambda = (*lambda)[0]; val_mu = (*mu)[0];
-      }
-
-      switch (version) {
-      case 1:
-        slice_vector_on_basic_dof_of_element(mfvar, var, cv, coeff);
-        // coeff.resize(mfvar.nb_basic_dof_of_element(cv));
-        // gmm::copy(gmm::sub_vector(var, gmm::sub_index
-        //                      (mfvar.ind_basic_dof_of_element(cv))), coeff);
-        ctx.pf()->interpolation_grad(ctx, coeff, grad, qdim);
-        gmm::copy(gmm::identity_matrix(), E);
-        gmm::scale(E, val_lambda * gmm::mat_trace(grad));
-        gmm::add(gmm::scaled(grad, val_mu), E);
-        gmm::add(gmm::scaled(gmm::transposed(grad), val_mu), E);
-        gmm::mult_add(E, n, output.as_vector());
-        break;
-      case 2:
-        {
-          base_tensor t;
-          dim_type tdim = ctx.pf()->target_dim(), qmult = qdim / tdim;
-          size_type ndof = ctx.pf()->nb_dof(cv);
-          // The return tensor is t(i,j,k) with 0<=i<ndof, 0<=j<target_dim,
-          // 0<=k<dim. In order to iterate on the tensor values, i should
-          // increment the faster, then j, then k.
-          // If target_dim == qdim, grad(phi_i)(j,k) = t(i,j,k)
-          // If target_dim == 1, grad(phi_i * e_l)(l,k) = t(i,1,k)
-          // General case, psi_{i*qmult+l} = phi_i * e_l  and
-          //    grad(psi_{i*qmult+l})(j+tdim*l,k) = t(i,j,k)
-          ctx.pf()->real_grad_base_value(ctx, t);
-
-          for (size_type l = 0; l < qmult; ++l) {
-            for (size_type p = 0; p < qdim; ++p) {
-              base_tensor::const_iterator it = t.begin();
-              for (size_type k = 0; k < qdim; ++k)
-                for (size_type j = 0; j < tdim; ++j)
-                  for (size_type i = 0; i < ndof; ++i, ++it) {
-                    size_type jj = j + tdim*l;
-                    if (k == jj) output(i*qmult+l, p) += val_lambda*(*it)*n[p];
-                    if (p == jj) output(i*qmult+l, p) += val_mu*(*it)*n[k];
-                    if (k == p) output(i*qmult+l, p) += val_mu*(*it)*n[jj];
-                  }
-              GMM_ASSERT1(it ==  t.end(), "Internal error");
-            }
-          }
-        }
-        break;
-      }
-
-    }
-
-    iso_lin_elasticity_Neumann_elem_term
-    (const mesh_fem *mf_lambda_,
-     const model_real_plain_vector *lambda_,
-     const mesh_fem *mf_mu_, const model_real_plain_vector *mu_) :
-      mf_lambda(mf_lambda_), lambda(lambda_), mf_mu(mf_mu_), mu(mu_) {
-      GMM_ASSERT1(mf_lambda == mf_mu,
-                  "The two coefficients should be described on the same "
-                  "finite element method.");
-    }
-
-  };
-
-  // deprecated brick
-  struct iso_lin_elasticity_brick : public virtual_brick {
-
-    std::string expr;
-
-    virtual void asm_real_tangent_terms(const model &md, size_type ib,
-                                        const model::varnamelist &vl,
-                                        const model::varnamelist &dl,
-                                        const model::mimlist &mims,
-                                        model::real_matlist &matl,
-                                        model::real_veclist &vecl,
-                                        model::real_veclist &,
-                                        size_type region,
-                                        build_version version) const {
-      GMM_ASSERT1(matl.size() == 1,
-                  "isotropic linearized elasticity brick has one and only "
-                  "one term");
-      GMM_ASSERT1(mims.size() == 1,
-                  "isotropic linearized elasticity brick need one and only "
-                  "one mesh_im");
-      GMM_ASSERT1(vl.size() == 1 && dl.size() >= 2 && dl.size() <= 3,
-                  "Wrong number of variables for isotropic linearized "
-                  "elasticity brick");
-
-      bool recompute_matrix = !((version & model::BUILD_ON_DATA_CHANGE) != 0)
-        || md.is_var_newer_than_brick(dl[0], ib)
-        || md.is_var_newer_than_brick(dl[1], ib);
-
-      if (recompute_matrix) {
-
-        const mesh_fem &mf_u = md.mesh_fem_of_variable(vl[0]);
-        const mesh &m = mf_u.linked_mesh();
-        size_type N = m.dim(), Q = mf_u.get_qdim();
-        GMM_ASSERT1(Q == N, "isotropic linearized elasticity brick is only "
-                    "for vector field of the same dimension as the mesh");
-        const mesh_im &mim = *mims[0];
-        mesh_region rg(region);
-        m.intersect_with_mpi_region(rg);
-        const mesh_fem *mf_lambda = md.pmesh_fem_of_variable(dl[0]);
-        const model_real_plain_vector *lambda = &(md.real_variable(dl[0]));
-        const mesh_fem *mf_mu = md.pmesh_fem_of_variable(dl[1]);
-        const model_real_plain_vector *mu = &(md.real_variable(dl[1]));
-
-        size_type sl = gmm::vect_size(*lambda);
-        if (mf_lambda) sl = sl * mf_lambda->get_qdim() / mf_lambda->nb_dof();
-        size_type sm = gmm::vect_size(*mu);
-        if (mf_mu) sm = sm * mf_mu->get_qdim() / mf_mu->nb_dof();
-
-        GMM_ASSERT1(sl == 1 && sm == 1, "Bad format of isotropic linearized "
-                    "elasticity brick coefficients");
-        GMM_ASSERT1(mf_lambda == mf_mu,
-                    "The two coefficients should be described on the same "
-                    "finite element method.");
-
-        GMM_TRACE2("Stiffness matrix assembly for isotropic linearized "
-                   "elasticity");
-        gmm::clear(matl[0]);
-        if (mf_lambda)
-          asm_stiffness_matrix_for_linear_elasticity
-            (matl[0], mim, mf_u, *mf_lambda, *lambda, *mu, rg);
-        else
-          asm_stiffness_matrix_for_homogeneous_linear_elasticity
-            (matl[0], mim, mf_u, *lambda, *mu, rg);
-
-      }
-
-
-      if  (dl.size() == 3) { // Pre-constraints given by an "initial"
-        // displacement u0. Means that the computed displacement will be u - u0
-        // The displacement u0 should be discribed on the same fem as the
-        // variable.
-        gmm::mult(matl[0],
-                  gmm::scaled(md.real_variable(dl[2]), scalar_type(-1)),
-                  vecl[0]);
-      }
-    }
-
-    virtual void real_post_assembly_in_serial(const model &md, size_type ib,
-                                              const model::varnamelist &vl,
-                                              const model::varnamelist &dl,
-                                              const model::mimlist &/*mims*/,
-                                              model::real_matlist &/*matl*/,
-                                              model::real_veclist &,
-                                              model::real_veclist &,
-                                              size_type /*region*/,
-                                              build_version version) const
-    {
-      bool recompute_matrix = !((version & model::BUILD_ON_DATA_CHANGE) != 0)
-        || md.is_var_newer_than_brick(dl[0], ib)
-        || md.is_var_newer_than_brick(dl[1], ib);
-
-      if (recompute_matrix)
-      {
-          const mesh_fem *mf_lambda = md.pmesh_fem_of_variable(dl[0]);
-          const model_real_plain_vector *lambda = &(md.real_variable(dl[0]));
-          const mesh_fem *mf_mu = md.pmesh_fem_of_variable(dl[1]);
-          const model_real_plain_vector *mu = &(md.real_variable(dl[1]));
-
-          pNeumann_elem_term pNt
-            = std::make_shared<iso_lin_elasticity_Neumann_elem_term>
-            (mf_lambda, lambda, mf_mu, mu);
-          md.add_Neumann_term(pNt, vl[0], ib);
-      }
-    }
-
-    virtual std::string declare_volume_assembly_string
-    (const model &, size_type, const model::varnamelist &,
-     const model::varnamelist &) const {
-      return expr;
-    }
-
-
-    iso_lin_elasticity_brick(const std::string &expr_) {
-      expr = expr_;
-      set_flags("isotropic linearized elasticity", true /* is linear*/,
-                true /* is symmetric */, true /* is coercive */,
-                true /* is real */, false /* is complex */);
-    }
-
-  };
-
 
   struct iso_lin_elasticity_new_brick : public virtual_brick {
 
@@ -6632,19 +6056,6 @@ model_complex_plain_vector &
     std::string expr2 = "(Div_"+varname+"*(("+dataexpr1+")*Id(meshdim))"
       +"+(2*("+dataexpr2+"))*Sym(Grad_"+varname+")):Grad_"+test_varname;
     
-
-#if 0 // Old brick
-    pbrick pbr = std::make_shared<iso_lin_elasticity_brick>
-      (dataname3.size() ? expr1:expr2);
-    model::termlist tl;
-    tl.push_back(model::term_description(varname, varname, true));
-    model::varnamelist dl(1, dataexpr1);
-    dl.push_back(dataexpr2);
-    if (dataname3.size()) dl.push_back(dataname3);
-    return md.add_brick(pbr, model::varnamelist(1, varname), dl, tl,
-                        model::mimlist(1, &mim), region);
-#else // New brick with high-level generic assembly
-    
     ga_workspace workspace(md, true);
     workspace.add_expression(expr2, mim, region);
     model::varnamelist vl, vl_test1, vl_test2, dl;
@@ -6663,7 +6074,6 @@ model_complex_plain_vector &
         (md, mim, dataname3.size() ? expr1 : expr2, region, false, false,
          "Linearized isotropic elasticity (with nonlinear dependance)");
     }
-#endif
   }
 
   size_type add_isotropic_linearized_elasticity_brick_pstrain
@@ -6820,102 +6230,6 @@ model_complex_plain_vector &
   //
   // ----------------------------------------------------------------------
 
-  struct lin_incomp_Neumann_elem_term : public Neumann_elem_term {
-
-    const gmm::uint64_type &var_vnum;
-    const mesh_fem *mf_p;
-    const model_real_plain_vector *org_P;
-    mutable model_real_plain_vector P;
-    mutable gmm::uint64_type vnum;
-
-    mutable fem_interpolation_context ctx_p;
-    mutable base_vector coeff, val;
-    mutable base_matrix G;
-
-    void compute_Neumann_term
-    (int version, const mesh_fem &mfvar,
-     const model_real_plain_vector &/* var */,
-     fem_interpolation_context& ctx, base_small_vector &n,
-     base_tensor &output, size_type auxilliary_ind = 0) const {
-
-      if (version == 3) return;  // No contribution because the term is linear
-      if (version == 2 && auxilliary_ind == 0) return;
-
-      dim_type qdim = mfvar.linked_mesh().dim();
-      size_type cv = ctx.convex_num();
-
-      if (vnum != var_vnum || !(ctx_p.have_pf()) || ctx_p.convex_num() != cv
-          || (ctx_p.have_pfp() != ctx.have_pfp())
-          || (ctx_p.have_pfp()
-              && (ctx.pfp()->get_ppoint_tab()
-                  != ctx_p.pfp()->get_ppoint_tab()))) {
-
-        if (vnum != var_vnum) {
-          gmm::resize(P, mf_p->nb_basic_dof());
-          mf_p->extend_vector(*org_P, P);
-          vnum = var_vnum;
-        }
-
-        bgeot::vectors_to_base_matrix
-          (G, mf_p->linked_mesh().points_of_convex(cv));
-
-        if (ctx.have_pfp()) {
-          pfem_precomp pfp = fem_precomp(mf_p->fem_of_element(cv),
-                                         ctx.pfp()->get_ppoint_tab(), 0);
-          ctx_p = fem_interpolation_context
-            (mf_p->linked_mesh().trans_of_convex(cv), pfp, ctx.ii(),
-             G, cv, ctx.face_num());
-        } else
-          ctx_p = fem_interpolation_context
-            (mf_p->linked_mesh().trans_of_convex(cv),
-             mf_p->fem_of_element(cv), ctx.xref(), G, cv, ctx.face_num());
-      } else {
-        if (ctx_p.have_pfp()) ctx_p.set_ii(ctx.ii());
-        else ctx_p.set_xref(ctx.xref());
-
-      }
-
-      switch (version) {
-      case 1:
-        slice_vector_on_basic_dof_of_element(*mf_p, P, cv, coeff);
-        // coeff.resize(mf_p->nb_basic_dof_of_element(cv));
-        // gmm::copy(gmm::sub_vector(P, gmm::sub_index
-        //                      (mf_p->ind_basic_dof_of_element(cv))), coeff);
-        ctx_p.pf()->interpolation(ctx_p, coeff, val, 1);
-
-        for (size_type k = 0; k < qdim; ++k) output[k] -= val[0] * n[k];
-        break;
-      case 2:
-        {
-          base_tensor t;
-          size_type ndof = ctx_p.pf()->nb_dof(cv);
-          ctx_p.pf()->real_base_value(ctx_p, t);
-
-          for (size_type i = 0; i < ndof; ++i)
-            for (size_type k = 0; k < qdim; ++k)
-              output(i, k) -= t[i]*n[k];
-        }
-        break;
-      }
-
-    }
-
-    lin_incomp_Neumann_elem_term
-    (const gmm::uint64_type &var_vnum_, const mesh_fem *mf_p_,
-     const model_real_plain_vector *P_,
-     const std::string &auxvarname)
-      : var_vnum(var_vnum_), mf_p(mf_p_), org_P(P_)  {
-      auxilliary_variables.push_back(auxvarname);
-      gmm::resize(P, mf_p->nb_basic_dof());
-      mf_p->extend_vector(*P_, P);
-      vnum = var_vnum;
-      gmm::resize(val, 1);
-    }
-
-  };
-
-
-
   struct linear_incompressibility_brick : public virtual_brick {
 
     virtual void asm_real_tangent_terms(const model &md, size_type /*ib*/,
@@ -6974,8 +6288,8 @@ model_complex_plain_vector &
     }
 
 
-    virtual void real_post_assembly_in_serial(const model &md, size_type ib,
-                                              const model::varnamelist &vl,
+    virtual void real_post_assembly_in_serial(const model &, size_type,
+                                              const model::varnamelist &,
                                               const model::varnamelist &/*dl*/,
                                               const model::mimlist &/*mims*/,
                                               model::real_matlist &/*matl*/,
@@ -6983,14 +6297,7 @@ model_complex_plain_vector &
                                               model::real_veclist &,
                                               size_type /*region*/,
                                               build_version) const
-    {
-        const mesh_fem &mf_p = md.mesh_fem_of_variable(vl[1]);
-        pNeumann_elem_term pNt = std::make_shared<lin_incomp_Neumann_elem_term>
-          (md.version_number_of_data_variable( vl[1]), &mf_p,
-           &(md.real_variable(vl[1])), vl[1]);
-        md.add_Neumann_term(pNt, vl[0], ib);
-        md.add_auxilliary_variables_of_Neumann_terms(vl[0], vl[1]);
-    }
+    { }
 
 
     linear_incompressibility_brick(void) {
@@ -7146,7 +6453,7 @@ model_complex_plain_vector &
       set_flags("Mass brick", true /* is linear*/,
                 true /* is symmetric */, true /* is coercive */,
                 true /* is real */, true /* is complex */,
-                false /* compute each time */, false /* has a Neumann term */);
+                false /* compute each time */);
     }
 
   };
@@ -7328,7 +6635,7 @@ model_complex_plain_vector &
       set_flags("Basic d/dt brick", true /* is linear*/,
                 true /* is symmetric */, true /* is coercive */,
                 true /* is real */, true /* is complex */,
-                false /* compute each time */, false /* has a Neumann term */);
+                false /* compute each time */);
     }
 
   };
@@ -7503,7 +6810,7 @@ model_complex_plain_vector &
       set_flags("Basic d2/dt2 brick", true /* is linear*/,
                 true /* is symmetric */, true /* is coercive */,
                 true /* is real */, true /* is complex */,
-                false /* compute each time */, false /* has a Neumann term */);
+                false /* compute each time */);
     }
 
   };

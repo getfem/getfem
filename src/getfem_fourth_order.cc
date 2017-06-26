@@ -240,7 +240,7 @@ namespace getfem {
       set_flags("Normal derivative source term", true /* is linear*/,
 		true /* is symmetric */, true /* is coercive */,
 		true /* is real */, true /* is complex */,
-		false /* compute each time */, false /* has a Neumann term */);
+		false /* compute each time */);
     }
 
 
@@ -323,7 +323,7 @@ namespace getfem {
       set_flags("Kirchhoff Love Neumann term", true /* is linear*/,
 		true /* is symmetric */, true /* is coercive */,
 		true /* is real */, false /* is complex */,
-		false /* compute each time */, false /* has a Neumann term */);
+		false /* compute each time */);
     }
 
 
@@ -612,7 +612,7 @@ namespace getfem {
 		true /* is linear*/,
 		true /* is symmetric */, penalized /* is coercive */,
 		true /* is real */, true /* is complex */,
-		false /* compute each time */, false /* has a Neumann term */);
+		false /* compute each time */);
     }
   };
 
