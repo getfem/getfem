@@ -127,7 +127,8 @@ possible with `Cygwin <https://www.cygwin.com/>`_.
 
     the ``make check`` is not necessary, but it is to verify that the
     compilation is correctly done. Note the separate compilation of
-    the ``superlu`` library is due to some difficulties with Msys command `ar`.
+    the ``superlu`` library is due to some difficulties with Msys
+    command ``ar``.
 
 Build with the Python interface
 *******************************
@@ -135,20 +136,20 @@ Build with the Python interface
 Additionnaly to build the Python interface, you will have first to install a 64bits version of Python 2 on your system together with Numpy and Scipy packages. This is not completely simple, but you can follow the following steps 
 
   - Install a 64 bits Python 2 version
-    (see `here <https://www.python.org/downloads/windows/>`_).
+    (see `Python 2 <https://www.python.org/downloads/windows/>`_).
     Then, if it is not done by the installer you used, add ``C:\Pythonxx``
     to your Windows path (where ``xx`` is the version number).
     Close you Msys and Windows shell and re-open them to take into
     account the changes.
 
-  - Install Pip (see `here <https://pip.pypa.io/en/latest/installing/>`_)
+  - Install Pip (see `Pip <https://pip.pypa.io/en/latest/installing/>`_)
 
   - Downloads the precompiled packages of numpy and scipy for 64 bits
     and Python 2 `here <http://www.lfd.uci.edu/~gohlke/pythonlibs/>`_
     (i.e. the wheel packages `numpy-1.11.3+mkl-cp27-cp27m-win_amd64.whl`
     and `scipy-0.19.0-cp27-cp27m-win_amd64.whl`).
 
-  - Install then. Enter into the directory where you downloaded the two
+  - Enter into the directory where you downloaded the two
     wheel Python packages and install them with::
 
       $ python -m pip install numpy-1.11.3+mkl-cp27-cp27m-win_amd64.whl
@@ -160,7 +161,7 @@ Additionnaly to build the Python interface, you will have first to install a 64b
 
     if all is ok, the configure script should detect the Python installation
     and the presence of Numpy and Scipy packages and allow the compilation
-    of the Python interface. Then::
+    of the Python interface. Then just perform a::
 
       $ make
 
@@ -177,13 +178,13 @@ Build with the Matlab interface
 
 Here follows the additional step to build the Matlab interface. You have first, of course to have installed a (recent) version of Matlab on your system.
 
-   - You also need a installation of Python 2, because some Python scripts
-     are used to build the interface. You can follow the step describes
-     in the previous section for Python interface installation.
-     However, for the Matlab interface, Numpy and Scipy are not required.
+  - You also need a installation of Python 2, because some Python scripts
+    are used to build the interface. You can follow the steps described
+    in the previous section for Python interface installation.
+    However, for the Matlab interface, Numpy and Scipy are not required.
 
   - Upload `gnumex <http://gnumex.sourceforge.net/>`_ and run it under Matlab
-    (see the indications on the website). Make it generates the
+    (see the indications on gnumex website). Make it generate the
     ``mexopts.bat`` et ``mexopts.stp`` files in an accessible directory.
 
   - In the source top directory of |gf|, add the file ``gnumex.opts``
@@ -201,7 +202,7 @@ Here follows the additional step to build the Matlab interface. You have first, 
       $ make
 
     The Matlab interface should be compiled without error. If there is some
-    link errors, go to the ``interface\src\matlab`` directory
+    linker errors, go to the ``interface\src\matlab`` directory
     and try to adapt the library list in the matlab/mex call by copy/past the
     command building the interface.
 
@@ -213,7 +214,8 @@ Here follows the additional step to build the Matlab interface. You have first, 
     and try the demo matlab programs of the interface in
     ``interface\tests\matlab``. In order not to have to call the ``addpath``
     command each time you open Matlab, you can add a Windows system variable
-    ``MATLABPATH`` to ``c:\msys\home\login\getfem-5.?\interface/tests/matlab``.
+    ``MATLABPATH`` set to
+    ``c:\msys\home\login\getfem-5.?\interface/tests/matlab``.
     You can also move the ``interface\tests\matlab`` directory into your 
     Matlab installation directory.
 
