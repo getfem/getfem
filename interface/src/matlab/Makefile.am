@@ -49,7 +49,7 @@ if USE_MINGW_MEX
 # (gfm_mex.c must be first, libstdc++.a must be last)
 
 gf_matlab@MATLAB_COM_EXT@: gfm_mex.c gfm_common.c ../libgetfemint.la ../gfi_array.c $(GETFEM_LIB_LA)
-	matlab -nodesktop -nosplash -nojvm -r "mex -v -output gf_matlab -g ./gfm_mex.c ./gfm_common.c -I. -I.. ./../gfi_array.c ../.libs/libgetfemint.a ../../../src/.libs/libgetfem.a ../../../superlu/.libs/libsuperlu.a /msys/local/lib/libsmumps.a /msys/local/lib/libcmumps.a /msys/local/lib/libdmumps.a /msys/local/lib/libzmumps.a /msys/local/lib/libmumps_common.a /msys/local/lib/libmpiseq.a /msys/local/lib/libpord.a /msys/local/lib/liblapack.a /msys/local/lib/libblas.a /msys/local/lib/libqhull.a /Mingw64/lib/gcc/x86_64-w64-mingw32/4.9.1/libgfortran.a c:/Mingw64/lib/gcc/x86_64-w64-mingw32/4.9.1/libstdc++.a c:/Mingw64/lib/gcc/x86_64-w64-mingw32/4.9.1/libquadmath.a; exit(0);"
+	matlab -nodesktop -nosplash -nojvm -r "mex -v -output gf_matlab -g ./gfm_mex.c ./gfm_common.c -largeArrayDims -I. -I.. ./../gfi_array.c ../.libs/libgetfemint.a ../../../src/.libs/libgetfem.a ../../../superlu/.libs/libsuperlu.a /msys/local/lib/libsmumps.a /msys/local/lib/libcmumps.a /msys/local/lib/libdmumps.a /msys/local/lib/libzmumps.a /msys/local/lib/libmumps_common.a /msys/local/lib/libmpiseq.a /msys/local/lib/libpord.a /msys/local/lib/liblapack.a /msys/local/lib/libblas.a /msys/local/lib/libqhull.a /Mingw64/lib/gcc/x86_64-w64-mingw32/4.9.1/libgfortran.a c:/Mingw64/lib/gcc/x86_64-w64-mingw32/4.9.1/libstdc++.a c:/Mingw64/lib/gcc/x86_64-w64-mingw32/4.9.1/libquadmath.a; exit(0);"
 
 
 #	$(GNUMEX) $(GNUMEXOPTS) -output gf_matlab -g @srcdir@/gfm_mex.c \
