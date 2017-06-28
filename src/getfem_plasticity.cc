@@ -326,6 +326,73 @@ namespace getfem {
   };
 
 
+  // Ball Projection operator.
+  struct Ball_projection_operator : public ga_nonlinear_operator {
+    bool result_size(const arg_list &args, bgeot::multi_index &sizes) const {
+      if (args.size() != 2 || args[0]->sizes().size() > 2
+          || args[0]->sizes().size() < 1 || args[1]->size() != 1) return false;
+      if (args[0]->sizes().size() == 1)
+        ga_init_vector(sizes, args[0]->sizes()[0]);
+      else
+        ga_init_matrix(sizes, args[0]->sizes()[0], args[0]->sizes()[1]);
+      return true;
+    }
+
+    // Value : ru/|u| if |u| > r, else u 
+    void value(const arg_list &args, base_tensor &result) const {
+      const base_tensor &t = *args[0];
+      scalar_type r = (*args[1])[0];
+      scalar_type no = gmm::vect_norm2(t.as_vector());
+      if (no > r)
+	gmm::copy(gmm::scaled(t.as_vector(), r/no), result.as_vector());
+      else
+	gmm::copy(t.as_vector(), result.as_vector());
+    }
+
+    // Derivative
+    void derivative(const arg_list &args, size_type n,
+                    base_tensor &result) const {
+      const base_tensor &t = *args[0];
+      size_type N = t.size();
+      scalar_type r = (*args[1])[0];
+      scalar_type no = gmm::vect_norm2(t.as_vector()), rno3 = r/(no*no*no);
+
+      gmm::clear(result.as_vector());
+
+      switch(n) {
+
+      case 1 : // derivative with respect to u
+	if (r > 0) {
+	  if (no <= r) {
+	    for (size_type i = 0; i < N; ++i)
+	      result[i*N+i] += scalar_type(1);
+	  } else {
+	    for (size_type i = 0; i < N; ++i) {
+	      result[i*N+i] += r/no;
+	      for (size_type j = 0; j < N; ++j)
+		result[j*N+i] -= t[i]*t[j]*rno3;
+	    }
+	  }
+	}
+	break;
+      case 2 : // derivative with respect to r
+	if (r > 0 && no > r) {
+	  for (size_type i = 0; i < N; ++i)
+	    result[i] = t[i]/no;
+	}
+	break;
+      default : GMM_ASSERT1(false, "Wrong derivative number");
+      }
+    }
+    
+    // Second derivative : not implemented
+    void second_derivative(const arg_list &/*args*/, size_type, size_type,
+                           base_tensor &/*result*/) const {
+      GMM_ASSERT1(false, "Sorry, second derivative not implemented");
+    }
+  };
+
+
   // Normalized_reg vector/matrix operator : Regularized Vector/matrix divided by its Frobenius norm
   struct normalized_reg_operator : public ga_nonlinear_operator {
     bool result_size(const arg_list &args, bgeot::multi_index &sizes) const {
@@ -484,6 +551,8 @@ namespace getfem {
                                 std::make_shared<normalized_operator>());
     PREDEF_OPERATORS.add_method("Normalized_reg",
                                 std::make_shared<normalized_reg_operator>());
+    PREDEF_OPERATORS.add_method("Ball_projection",
+                                std::make_shared<Ball_projection_operator>());
     PREDEF_OPERATORS.add_method("Von_Mises_projection",
                                 std::make_shared<Von_Mises_projection_operator>());
     return true;
