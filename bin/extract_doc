@@ -49,7 +49,7 @@ def find_closing_brace(s):
         if (lev == -1):
           return cnt
       cnt += 1
-    raise ParseError, s
+    raise ParseError(s)
 
 
 def find_closing_bracket(s):
@@ -63,7 +63,7 @@ def find_closing_bracket(s):
         if (lev == -1):
           return cnt
       cnt += 1
-    raise ParseError, s
+    raise ParseError(s)
 
 
 def CellToTuples(d):
@@ -197,13 +197,13 @@ def ExtractSubDoc(fl, langage):
             re = re[re.find("=")+1:].strip()
                 
           if (not re.startswith('(') or not re.endswith(')')):
-            raise ParseError, 'Syntax error in function definition ' + l
+            raise ParseError('Syntax error in function definition ' + l)
           re = (re[1:-1]).strip()
           if (not re.startswith("'")):
-            raise ParseError, 'Syntax error in function definition ' + l
+            raise ParseError('Syntax error in function definition ' + l)
           re = re[1:]
           if (re.find("'") == -1):
-            raise ParseError, 'Syntax error in function definition ' + l
+            raise ParseError('Syntax error in function definition ' + l)
           mname = re[:re.find("'")]
           params = re[re.find("'")+1:]
           in_doc = 2
@@ -269,54 +269,54 @@ def FilterDoc(d, langage, objects, commands, set_replace = set()):
     for o in objects:
       [r, I] = StandardObjectName(o)
       # transforme OBJET:INIT en gf_objet
-      d = string.replace(d, o.upper()+':INIT','gf_'+o)
+      d = d.replace(o.upper()+':INIT','gf_'+o)
       # transforme OBJET:GET(...) en gf_objet_get(O, ...)
-      d = string.replace(d, o.upper()+':GET(','gf_'+o+'_get('+o+' '+I+', ')
-      d = string.replace(d, o.upper()+':SET(','gf_'+o+'_set('+o+' '+I+', ')
-      d = string.replace(d, '@t'+o, o)
+      d = d.replace(o.upper()+':GET(','gf_'+o+'_get('+o+' '+I+', ')
+      d = d.replace(o.upper()+':SET(','gf_'+o+'_set('+o+' '+I+', ')
+      d = d.replace('@t'+o, o)
 
     for c in commands:
-      d = string.replace(d, '::'+c.upper(),'gf_'+c)
+      d = d.replace('::'+c.upper(),'gf_'+c)
 
-    d = string.replace(d, '@CELL',   '')
-    d = string.replace(d, '@imat',   'imat')
-    d = string.replace(d, '@ivec',   'ivec')
-    d = string.replace(d, '@cvec',   'vec')
-    d = string.replace(d, '@dcvec',  'vec')
-    d = string.replace(d, '@dvec',   'vec')
-    d = string.replace(d, '@vec',    'vec')
-    d = string.replace(d, '@dmat',   'mat')
-    d = string.replace(d, '@mat',    'mat')
-    d = string.replace(d, '@str',    'string')
-    d = string.replace(d, '@int',    'int')
-    d = string.replace(d, '@bool',   'bool')
-    d = string.replace(d, '@real',   'real')
-    d = string.replace(d, '@scalar', 'scalar')
-    d = string.replace(d, '@list',   'list')
+    d = d.replace('@CELL',   '')
+    d = d.replace('@imat',   'imat')
+    d = d.replace('@ivec',   'ivec')
+    d = d.replace('@cvec',   'vec')
+    d = d.replace('@dcvec',  'vec')
+    d = d.replace('@dvec',   'vec')
+    d = d.replace('@vec',    'vec')
+    d = d.replace('@dmat',   'mat')
+    d = d.replace('@mat',    'mat')
+    d = d.replace('@str',    'string')
+    d = d.replace('@int',    'int')
+    d = d.replace('@bool',   'bool')
+    d = d.replace('@real',   'real')
+    d = d.replace('@scalar', 'scalar')
+    d = d.replace('@list',   'list')
 
     # Objects with no mfiles
-    d = string.replace(d, '@tpoly',  'poly')
+    d = d.replace('@tpoly',  'poly')
 
     # Authorized abbreviations
-    d = string.replace(d, '@tcs',    'cont_struct')
-    d = string.replace(d, '@tmf',    'mesh_fem')
-    d = string.replace(d, '@tgt',    'geotrans')
-    d = string.replace(d, '@tgf',    'global_function')
-    d = string.replace(d, '@tmo',    'mesher_object')
-    d = string.replace(d, '@tmls',   'mesh_levelset')
-    d = string.replace(d, '@tmim',   'mesh_im')
-    d = string.replace(d, '@tmimd',  'mesh_im_data')
-    d = string.replace(d, '@tls',    'levelset')
-    d = string.replace(d, '@tsl',    'slice')
-    d = string.replace(d, '@tsp',    'spmat')
-    d = string.replace(d, '@tpre',   'precond')
+    d = d.replace('@tcs',    'cont_struct')
+    d = d.replace('@tmf',    'mesh_fem')
+    d = d.replace('@tgt',    'geotrans')
+    d = d.replace('@tgf',    'global_function')
+    d = d.replace('@tmo',    'mesher_object')
+    d = d.replace('@tmls',   'mesh_levelset')
+    d = d.replace('@tmim',   'mesh_im')
+    d = d.replace('@tmimd',  'mesh_im_data')
+    d = d.replace('@tls',    'levelset')
+    d = d.replace('@tsl',    'slice')
+    d = d.replace('@tsp',    'spmat')
+    d = d.replace('@tpre',   'precond')
 
   elif (langage == 'python'):
-    d = string.replace(d, '\\', '\\\\')
+    d = d.replace('\\', '\\\\')
     for o in objects:
       [oname, I] = StandardObjectName(o)
       # transforme OBJET:INIT en gf_objet
-      d = string.replace(d, o.upper()+':INIT',oname)
+      d = d.replace(o.upper()+':INIT',oname)
       # transforme OBJET:GET(...) en gf_objet_get(O, ...)
       i = d.find(o.upper()+':GET(')
       while (i != -1):
@@ -327,8 +327,8 @@ def FilterDoc(d, langage, objects, commands, set_replace = set()):
         else:
           j = r[1:].find('\'')
           com = r[1:(j+1)]
-          com = string.replace(com, ' ', '_');
-          com = string.replace(com, '-', '_');
+          com = com.replace(' ', '_');
+          com = com.replace('-', '_');
           r = r[j+2:].strip()
           if (r[0] == ','):
             r = r[1:].strip()
@@ -343,8 +343,8 @@ def FilterDoc(d, langage, objects, commands, set_replace = set()):
         else:
           j = r[1:].find('\'')
           com = r[1:(j+1)]
-          com = string.replace(com, ' ', '_');
-          com = string.replace(com, '-', '_');
+          com = com.replace(' ', '_');
+          com = com.replace('-', '_');
           r = r[j+2:].strip()
           if (r[0] == ','):
             r = r[1:].strip()
@@ -355,43 +355,43 @@ def FilterDoc(d, langage, objects, commands, set_replace = set()):
         i = d.find(o.upper()+':SET(')
       
       
-      d = string.replace(d, '@t'+o, oname)
+      d = d.replace('@t'+o, oname)
 
     for c in commands:
-      d = string.replace(d, '::'+c.upper(),'gf_'+c)
+      d = d.replace('::'+c.upper(),'gf_'+c)
 
     d = CellToTuples(d);
-    d = string.replace(d, '@imat',   'imat')
-    d = string.replace(d, '@ivec',   'ivec')
-    d = string.replace(d, '@cvec',   'vec')
-    d = string.replace(d, '@dcvec',  'vec')
-    d = string.replace(d, '@dvec',   'vec')
-    d = string.replace(d, '@vec',    'vec')
-    d = string.replace(d, '@dmat',   'mat')
-    d = string.replace(d, '@mat',    'mat')
-    d = string.replace(d, '@str',    'string')
-    d = string.replace(d, '@int',    'int')
-    d = string.replace(d, '@bool',   'bool')
-    d = string.replace(d, '@real',   'real')
-    d = string.replace(d, '@scalar', 'scalar')
-    d = string.replace(d, '@list',   'list')
+    d = d.replace('@imat',   'imat')
+    d = d.replace('@ivec',   'ivec')
+    d = d.replace('@cvec',   'vec')
+    d = d.replace('@dcvec',  'vec')
+    d = d.replace('@dvec',   'vec')
+    d = d.replace('@vec',    'vec')
+    d = d.replace('@dmat',   'mat')
+    d = d.replace('@mat',    'mat')
+    d = d.replace('@str',    'string')
+    d = d.replace('@int',    'int')
+    d = d.replace('@bool',   'bool')
+    d = d.replace('@real',   'real')
+    d = d.replace('@scalar', 'scalar')
+    d = d.replace('@list',   'list')
 
     # Objects with no mfiles
-    d = string.replace(d, '@tpoly',  'poly')
+    d = d.replace('@tpoly',  'poly')
 
     # Authorized abbreviations
-    d = string.replace(d, '@tcs',    'ContStruct')
-    d = string.replace(d, '@tmf',    'MeshFem')
-    d = string.replace(d, '@tgt',    'GeoTrans')
-    d = string.replace(d, '@tgf',    'GlobalFunction')
-    d = string.replace(d, '@tmo',    'MesherObject')
-    d = string.replace(d, '@tmls',   'MeshLevelSet')
-    d = string.replace(d, '@tmim',   'MeshIm')
-    d = string.replace(d, '@tmimd',  'MeshImData')
-    d = string.replace(d, '@tls',    'LevelSet')
-    d = string.replace(d, '@tsl',    'Slice')
-    d = string.replace(d, '@tsp',    'SpMat')
-    d = string.replace(d, '@tpre',   'Mrecond')
+    d = d.replace('@tcs',    'ContStruct')
+    d = d.replace('@tmf',    'MeshFem')
+    d = d.replace('@tgt',    'GeoTrans')
+    d = d.replace('@tgf',    'GlobalFunction')
+    d = d.replace('@tmo',    'MesherObject')
+    d = d.replace('@tmls',   'MeshLevelSet')
+    d = d.replace('@tmim',   'MeshIm')
+    d = d.replace('@tmimd',  'MeshImData')
+    d = d.replace('@tls',    'LevelSet')
+    d = d.replace('@tsl',    'Slice')
+    d = d.replace('@tsp',    'SpMat')
+    d = d.replace('@tpre',   'Mrecond')
 
   return d
 
@@ -440,7 +440,24 @@ def SynopsisToPythonArgs(s0):
       args += ['*args']
     return args
 
- 
+def cmp_to_key(mycmp):
+    'Convert a cmp= function into a key= function'
+    class K:
+        def __init__(self, obj, *args):
+            self.obj = obj
+        def __lt__(self, other):
+            return mycmp(self.obj, other.obj) < 0
+        def __gt__(self, other):
+            return mycmp(self.obj, other.obj) > 0
+        def __eq__(self, other):
+            return mycmp(self.obj, other.obj) == 0
+        def __le__(self, other):
+            return mycmp(self.obj, other.obj) <= 0
+        def __ge__(self, other):
+            return mycmp(self.obj, other.obj) >= 0
+        def __ne__(self, other):
+            return mycmp(self.obj, other.obj) != 0
+    return K
 
 #######################################################################
 #
@@ -456,7 +473,7 @@ def SynopsisToPythonArgs(s0):
 valid_options = 'matlab-com, matlab-doc, scilab-com, scilab-doc, python-com, python-doc'
 
 if (len(sys.argv) != 3):
-    raise SystemExit, 'Format : extract_doc directory option'
+    raise SystemExit('Format : extract_doc directory option')
 
 directory = sys.argv[1]
 option = sys.argv[2]
@@ -491,8 +508,8 @@ def cmpobj(x, y):
 set_objects = objects
 set_commands = commands
 
-objects = sorted(objects, cmpobj)
-commands = sorted(commands, cmpobj)
+objects = sorted(objects, key=cmp_to_key(cmpobj))
+commands = sorted(commands, key=cmp_to_key(cmpobj))
 
 if (option == 'pseudo_loc'):
 
@@ -634,8 +651,8 @@ elif (option == 'matlab-com'):
         fl = open(src_dir)
         [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, langage)
         while (ok):
-          mname = string.replace(mname, ' ', '_');
-          mname = string.replace(mname, '-', '_');
+          mname = mname.replace(' ', '_');
+          mname = mname.replace('-', '_');
           if (mname in sub_com or mname=='classical_fem' or mname=='classical_discontinuous_fem'):
             set_replace.add(oname+'::'+mname)
           sub_com.add(mname)
@@ -743,8 +760,8 @@ elif (option == 'matlab-com'):
       doc = '';
       [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, langage)
       while (ok):
-        mname = string.replace(mname, ' ', '_');
-        mname = string.replace(mname, '-', '_');
+        mname = mname.replace(' ', '_');
+        mname = mname.replace('-', '_');
         if (oname[2:]+'::'+mname in set_replace):
           mfile.write('        case \'set_' + mname + '\'\n')
         else:
@@ -952,7 +969,7 @@ elif (option == 'matlab-doc'):
         print('')
         print('')
         if ((o in set_objects) and (ext == '')):
-          print 'General constructor for ' + o + ' objects.\n'
+          print('General constructor for ' + o + ' objects.\n')
         gdoc = FilterDoc(gdoc, langage, objects, commands)
         print(gdoc)
         print('')
@@ -1474,7 +1491,7 @@ elif (option == 'scilab-doc-rst'):
         print('')
         print('')
         if ((o in set_objects) and (ext == '')):
-          print 'General constructor for ' + o + ' objects.\n'
+          print('General constructor for ' + o + ' objects.\n')
         gdoc = FilterDoc(gdoc, langage, objects, commands)
         print(gdoc)
         print('')
@@ -1647,8 +1664,8 @@ def generic_destructor(self, destructible=True):
         fl = open(src_dir)
         [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, langage)
         while (ok):
-          mname = string.replace(mname, ' ', '_');
-          mname = string.replace(mname, '-', '_');
+          mname = mname.replace(' ', '_');
+          mname = mname.replace('-', '_');
           if (mname in sub_com or mname=='classical_fem' or mname=='classical_discontinuous_fem'):
             set_replace.add(oname+'::'+mname)
           sub_com.add(mname)
@@ -1777,8 +1794,8 @@ def generic_destructor(self, destructible=True):
         doc = '';
         [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, langage)
         while (ok):
-          mname = string.replace(mname, ' ', '_');
-          mname = string.replace(mname, '-', '_');
+          mname = mname.replace(' ', '_');
+          mname = mname.replace('-', '_');
           set_extend = False
           if ((ext == '_set') and (oname+'::'+mname in set_replace)):
             set_extend = True
@@ -1860,8 +1877,8 @@ def generic_destructor(self, destructible=True):
       doc = '';
       [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, langage)
       while (ok):
-        mname = string.replace(mname, ' ', '_');
-        mname = string.replace(mname, '-', '_');
+        mname = mname.replace(' ', '_');
+        mname = mname.replace('-', '_');
         mparams = FilterDoc(params, langage, objects, commands).strip()
         params = SynopsisToPythonArgs(params)
         print('')
@@ -2019,8 +2036,8 @@ elif (option == 'python-doc'):
         fl = open(src_dir)
         [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, langage)
         while (ok):
-          mname = string.replace(mname, ' ', '_');
-          mname = string.replace(mname, '-', '_');
+          mname = mname.replace(' ', '_');
+          mname = mname.replace('-', '_');
           if (mname in sub_com or mname=='classical_fem' or mname=='classical_discontinuous_fem'):
             set_replace.add(oname+'::'+mname)
           sub_com.add(mname)
@@ -2083,8 +2100,8 @@ elif (option == 'python-doc'):
       doc = '';
       [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, langage)
       while (ok):
-        mname = string.replace(mname, ' ', '_');
-        mname = string.replace(mname, '-', '_');
+        mname = mname.replace(' ', '_');
+        mname = mname.replace('-', '_');
         print('')
         if (mname[0] == '.'):
           print('.. autofunction:: getfem.' + c)
