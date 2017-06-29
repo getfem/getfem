@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: UTF8 -*-
+# -*- coding: utf-8 -*-
 # Python GetFEM++ interface
 #
 # Copyright (C) 2004-2017 Yves Renard, Julien Pommier.
@@ -30,9 +30,9 @@ P = fromfile('tank_3D.P', 'd')
 
 sl=getfem.Slice(('boundary',('intersection',('planar',+1,[0,0,0],[0,1,0]),('planar',+1,[0,0,0],[1,0,0]))),m,3);
 
-print "importing tvtk.."
+print("importing tvtk..")
 import getfem_tvtk
-print "import done"
+print("import done")
 
 fig = getfem_tvtk.Figure(gui='tvtk')
 
@@ -48,7 +48,7 @@ sl=getfem.Slice(('boundary',('intersection',('planar',+1,[0,0,6],[0,0,-1]),
 fig.show(sl, data=(mfp, P), scalar_bar=True, edges=False)
 fig.scalar_range((-40,40));
 
-#print fig.scalar_range()
+#print(fig.scalar_range())
 
 m.set_region(42, m.outer_faces());
 m.region_subtract(42, 3);

@@ -34,7 +34,16 @@
 #include "getfem_arch_config.h"
 #include <assert.h>
 
-
+#if PY_MAJOR_VERSION >= 3
+#define PyString_AsString(o) PyUnicode_AsUTF8(o)
+#define PyString_FromFormat(a,b,c) PyUnicode_FromFormat(a,b,c)
+#define PyString_Check(o) PyUnicode_Check(o)
+#define PyInt_Check(o) PyLong_Check(o)
+#define PyInt_AsLong(o) PyLong_AsLong(o)
+#define PyString_FromString(o) PyUnicode_FromString(o)
+#define PyString_FromStringAndSize(o,l) PyUnicode_FromStringAndSize(o,l)
+#define PyInt_FromLong(o) PyLong_FromLong(o)
+#endif
 
 static PyObject *call_getfem(PyObject *self, PyObject *args);
 static PyObject *getfem_env(PyObject *self, PyObject *args);
@@ -53,8 +62,7 @@ typedef struct PyGetfemObject {
 } PyGetfemObject;
 
 static PyObject *
-GetfemObject_name(PyGetfemObject *self)
-{
+GetfemObject_name(PyGetfemObject *self) {
   return PyString_FromFormat("getfem.GetfemObject(classid=%d,objid=%d)",
                              self->classid, self->objid);
 }
@@ -67,8 +75,24 @@ GetfemObject_hash(PyGetfemObject *key) {
 static int
 GetfemObject_compare(PyGetfemObject *self, PyGetfemObject *other) {
   if (self->classid < other->classid) return -1;
-  else if (self->objid < other->objid) return +1;
-  else return 0;
+  if (self->classid > other->classid) return +1;
+  if (self->objid < other->objid) return -1;
+  if (self->objid > other->objid) return +1;
+  return 0;
+}
+
+static PyObject *
+GfObject_richcompare(PyGetfemObject *self, PyGetfemObject *other, int op) {
+  int bc = GetfemObject_compare(self, other);
+  switch(op) {
+  case Py_LT : if (bc <  0) Py_RETURN_TRUE; else Py_RETURN_FALSE;
+  case Py_LE : if (bc <= 0) Py_RETURN_TRUE; else Py_RETURN_FALSE;
+  case Py_EQ : if (bc == 0) Py_RETURN_TRUE; else Py_RETURN_FALSE;
+  case Py_NE : if (bc != 0) Py_RETURN_TRUE; else Py_RETURN_FALSE;
+  case Py_GT : if (bc == 1) Py_RETURN_TRUE; else Py_RETURN_FALSE;
+  case Py_GE : if (bc >= 0) Py_RETURN_TRUE; else Py_RETURN_FALSE;
+  }
+  return NULL;
 }
 
 static PyMethodDef module_methods[] = {
@@ -101,8 +125,12 @@ static PyMemberDef GetfemObject_members[] = {
 };
 
 static PyTypeObject PyGetfemObject_Type = {
+#if PY_MAJOR_VERSION >= 3
+    PyVarObject_HEAD_INIT(NULL, 0)
+#else
     PyObject_HEAD_INIT(NULL)
     0,                                 /* ob_size (deprecated) */
+#endif
     "_getfem.GetfemObject",            /* tp_name */
     sizeof(PyGetfemObject),            /* tp_basicsize */
     0,                                 /* tp_itemsize */
@@ -110,7 +138,11 @@ static PyTypeObject PyGetfemObject_Type = {
     0,                                 /* tp_print */
     0,                                 /* tp_getattr */
     0,                                 /* tp_setattr */
+#if PY_MAJOR_VERSION >= 3
+    GetfemObject_compare,              /* tp_compare, necessary for dictionary*/
+#else
     (cmpfunc)GetfemObject_compare,     /* tp_compare, necessary for dictionary*/
+#endif
     0,                                 /* tp_repr */
     0,                                 /* tp_as_number */
     0,                                 /* tp_as_sequence */
@@ -125,7 +157,7 @@ static PyTypeObject PyGetfemObject_Type = {
     "Generic GetFEM objects",          /* tp_doc */
     0,                                 /* tp_traverse */
     0,                                 /* tp_clear */
-    0,                                 /* tp_richcompare */
+    (richcmpfunc)GfObject_richcompare, /* tp_richcompare */
     0,                                 /* tp_weaklistoffset */
     0,                                 /* tp_iter */
     0,                                 /* tp_iternext */
@@ -153,6 +185,37 @@ static PyTypeObject PyGetfemObject_Type = {
 #ifndef PyMODINIT_FUNC        /* declarations for DLL import/export */
 #define PyMODINIT_FUNC void
 #endif
+
+#if PY_MAJOR_VERSION >= 3
+
+static struct PyModuleDef moduledef = {
+  PyModuleDef_HEAD_INIT,
+  "_getfem",     /* m_name */
+  "getfem-python3 interface module.",  /* m_doc */
+  -1,                  /* m_size */
+  module_methods,    /* m_methods */
+  NULL,                /* m_reload */
+  NULL,                /* m_traverse */
+  NULL,                /* m_clear */
+  NULL,                /* m_free */
+};
+
+PyMODINIT_FUNC
+PyInit__getfem(void)
+{
+  PyObject *m;
+  PyGetfemObject_Type.tp_new = PyType_GenericNew;
+  if (PyType_Ready(&PyGetfemObject_Type) < 0)
+    return NULL;
+  m = PyModule_Create(&moduledef);
+  import_array(); /* init Numpy */
+  Py_INCREF(&PyGetfemObject_Type);
+  PyModule_AddObject(m, "GetfemObject", (PyObject *)&PyGetfemObject_Type);
+  return m;
+}
+
+#else
+
 PyMODINIT_FUNC
 init_getfem(void)
 {
@@ -167,7 +230,7 @@ init_getfem(void)
   PyModule_AddObject(m, "GetfemObject", (PyObject *)&PyGetfemObject_Type);
 }
 
-
+#endif
 
 #define COLLECTCHUNK 2
 typedef struct ptr_collect {

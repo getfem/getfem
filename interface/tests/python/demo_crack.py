@@ -33,7 +33,7 @@ except ImportError:
   sys.path.append('../../src/python/')
   import getfem as gf
 else:
-  print "module getfem not found!"
+  print("module getfem not found!")
 
 import numpy as np
 import math
@@ -187,5 +187,5 @@ VM = md.compute_isotropic_linearized_Von_Mises_or_Tresca('u_cut', 'lambda', 'mu'
 
 mfv.export_to_pos('crack.pos', V, 'V', Ve, 'Ve', mfvm, VM, 'Von Mises')
 
-print 'You can view the solution with (for example):'
-print 'gmsh crack.pos'
+print('You can view the solution with (for example):')
+print('gmsh crack.pos')

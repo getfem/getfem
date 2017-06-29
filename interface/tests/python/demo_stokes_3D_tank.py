@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: UTF8 -*-
+# -*- coding: utf-8 -*-
 # Python GetFEM++ interface
 #
 # Copyright (C) 2004-2017 Yves Renard, Julien Pommier.
@@ -22,13 +22,13 @@
 from getfem import *
 from numpy import *
 
-print '3D stokes demonstration on a quadratic mesh -- 512MB needed for the solve.'
+print('3D stokes demonstration on a quadratic mesh')
 
 viscosity = 10
 
 
 m=Mesh('import','GiD','../meshes/tank_quadratic_2500.GiD.msh')
-print 'mesh loaded!'
+print('mesh loaded!')
 mfu=MeshFem(m,3) # velocity
 mfulag=MeshFem(m,3)
 mfp=MeshFem(m,1) # pressure
@@ -41,8 +41,8 @@ mfd.set_fem(Fem('FEM_PK(3,2)'))
 mfp.set_fem(Fem('FEM_PK(3,1)'))
 mfe.set_fem(Fem('FEM_PK_DISCONTINUOUS(3,1,0.01)'))
 
-print 'nbcvs=%d, nbpts=%d, qdim=%d, fem = %s, nbdof=%d' % \
-      (m.nbcvs(), m.nbpts(), mfu.qdim(), mfu.fem()[0].char(), mfu.nbdof())
+print('nbcvs=%d, nbpts=%d, qdim=%d, fem = %s, nbdof=%d' % \
+      (m.nbcvs(), m.nbpts(), mfu.qdim(), mfu.fem()[0].char(), mfu.nbdof()))
 
 
 P=m.pts()
@@ -89,9 +89,9 @@ md.add_Dirichlet_condition_with_multipliers(mim, 'u', mfu, 2, 'Dir2data');
 md.add_Dirichlet_condition_with_multipliers(mim, 'u', mfu, 3);
 md.add_Dirichlet_condition_with_multipliers(mim, 'u', mfu, 4);
 
-print 'running solve...'
+print('running solve...')
 md.solve('noisy', 'lsolver','superlu')
-print 'solve done!'
+print('solve done!')
 
 
 U = md.variable('u');

@@ -970,18 +970,18 @@ void gf_mesh_fem_get(getfemint::mexargs_in& m_in,
       nbd = P.shape[1]
     vars = ('x','y','z','u','v','w')
     nbvars = min(P.shape[0],len(vars))
-    for i in xrange(0,nbvars):
+    for i in range(0,nbvars):
       gl[vars[i]] = P[i,0]
       lo[vars[i]] = P[i,0]
     ccode = compile(expression, '<string>', 'eval');
     r = numpy.array(eval(ccode,gl,lo))
     Z = numpy.zeros(r.shape + (nbd,), r.dtype)
-    nbd_p = nbd/nbp
+    nbd_p = int(nbd/nbp)
     nbd_end = nbd_p*(rk+1)
     if (rk == nbp-1):
       nbd_end = nbd
-    for j in xrange(nbd_p*rk,nbd_end):
-      for i in xrange(0,nbvars):
+    for j in range(nbd_p*rk,nbd_end):
+      for i in range(0,nbvars):
         gl[vars[i]] = P[i,j]
         lo[vars[i]] = P[i,j]
       Z[...,j] = eval(ccode,gl,lo)

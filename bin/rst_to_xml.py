@@ -123,7 +123,7 @@ for iform in range(count_math_f):
     temprst = open(filename+'_temp_f.tex', 'w')
     math_form = math_forms[iform];
     math_form = math_form.replace('\\mathscr', '\\cal')
-    print math_form
+    print(math_form)
     if (math_form.count('&')):
         temprst.write('\\begin{eqnarray*}\n')
         temprst.write(math_form[2:len(math_form)-2] + '\n')
@@ -136,11 +136,11 @@ for iform in range(count_math_f):
     for l in fl:
         if (l[:13] == '<formula type'):
             math_forms_trans.append(l)
-            print ("Formule %d : " % iform) + l
+            print(("Formule %d : " % iform) + l)
             break
         if (l[:16] == '<p><formula type'):
             math_forms_trans.append(l[3:])
-            print ("Formule %d : " % iform) + l
+            print(("Formule %d : " % iform) + l)
             break
     fl.close()
 
@@ -152,20 +152,20 @@ for l in fl:
         j = l.find("MATHZFORMULE")
         while (j != -1):
           r = l[j+12:j+18]
-          print r
+          print(r)
           nf = int(r)
-          print nf
-          print ("MATHZFORMULE%06d" % nf)
-          print math_forms_trans[nf-1]
+          print(nf)
+          print("MATHZFORMULE%06d" % nf)
+          print(math_forms_trans[nf-1])
           l = string.replace(l, ("MATHZFORMULE%06d" % nf), math_forms_trans[nf-1])
-          print l
+          print(l)
           j = l.find("MATHZFORMULE")
     rfl.write(l)
 rfl.close()
     
 
 
-print "there were ", count_math_f, " formulaes"
+print("there were ", count_math_f, " formulaes")
 
 
 

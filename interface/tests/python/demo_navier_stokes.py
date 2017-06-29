@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: UTF8 -*-
+# -*- coding: utf-8 -*-
 # Python GetFEM++ interface
 #
 # Copyright (C) 2015 Konstantinos Poulios.
@@ -117,7 +117,6 @@ md.add_nonlinear_generic_assembly_brick\
 mmat_v = gf.asm_mass_matrix(mim, mfv)
 #mmat_v = gf.asm_generic(mim, 2, "Test2_v.Test_v", -1, "v", 1, mfv, np.zeros(mfv.nbdof()))
 IV = md.interval_of_variable("v")
-IV = range(IV[0],IV[0]+IV[1])
 
 t = 0
 step = 0
@@ -127,7 +126,7 @@ while t < T+1e-8:
    ("p_in", mfp_.eval(p_in_str.format(t), globals(), locals()).flatten("F"))
    md.set_variable("v0", md.variable("v"))
    md.solve("noisy", "lsolver", "mumps", "max_res", 1e-8)
-   vv = gf.asm_generic(mim, 1, "(v-dt*Grad_p).Test_v", -1, md)[IV]
+   vv = (gf.asm_generic(mim, 1, "(v-dt*Grad_p).Test_v", -1, md))[IV[0]:IV[0]+IV[1]]
    md.set_variable("v", gf.linsolve_mumps(mmat_v, vv))
 
    mfv.export_to_vtk("results_%i.vtk" % step,

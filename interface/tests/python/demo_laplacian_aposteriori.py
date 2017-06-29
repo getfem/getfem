@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 # Python GetFEM++ interface
 #
 # Copyright (C) 2015-2017 Yves Renard
@@ -105,56 +106,57 @@ else:
                                                LEFT_BOUND)
 
 for refiter in range(5):
+    
+    if (export_mesh):
+      mesh.export_to_vtk('mesh%d.vtk' % refiter)
+    
+    print('\nYou can view the mesh for instance with')
+    print('mayavi2 -d mesh%d.vtk -f ExtractEdges -m Surface \n'%refiter)
+    
+    # Assembly of the linear system and solve.
+    md.solve()
+    
+    # Main unknown
+    U = md.variable('u')
+    
+    # Residual a posteriori estimator
+    
+    grad_jump = '( (Grad_u-Interpolate(Grad_u,neighbour_elt)).Normal )'
 
-	if (export_mesh):
-    		mesh.export_to_vtk('mesh%d.vtk'%refiter);
-		print ('\nYou can view the mesh for instance with');
-		print ('mayavi2 -d mesh%d.vtk -f ExtractEdges -m Surface \n'%refiter);
-    		
-	# Assembly of the linear system and solve.
-	md.solve()
+    bulkresidual = 'sqr(element_size*Trace(Hess_u))*Test_psi'
+    edgeresidual = '0.25*element_size*sqr(%s)*(Test_psi + Interpolate(Test_psi,neighbour_elt))'%grad_jump
 
-	# Main unknown
-	U = md.variable('u')
-
-	# Residual a posteriori estimator
-
-	grad_jump = '( (Grad_u-Interpolate(Grad_u,neighbour_elt)).Normal )'
-
-	bulkresidual = 'sqr(element_size*Trace(Hess_u))*Test_psi'
-	edgeresidual = '0.25*element_size*sqr(%s)*(Test_psi + Interpolate(Test_psi,neighbour_elt))'%grad_jump
-
-	ETA1tmp = gf.asm('generic',mim,1,bulkresidual,-1,md,'psi',1,mfP0,np.zeros(mfP0.nbdof()))
-	ETA1 = ETA1tmp [ ETA1tmp.size - mfP0.nbdof() : ETA1tmp.size ]
-	ETA2tmp = gf.asm('generic',mim,1,edgeresidual,INNER_FACES,md,'psi',1,mfP0,np.zeros(mfP0.nbdof()))
-	ETA2 = ETA2tmp [ ETA2tmp.size - mfP0.nbdof() : ETA2tmp.size ]
-	ETA  = np.sqrt ( ETA1 + ETA2 )
-
-	# Export data
-	mfu.export_to_pos('laplacian%d.pos'%refiter, U, 'Computed solution')
-	print 'You can view the solution with (for example):'
-	print 'gmsh laplacian%d.pos'%refiter
-
-	mfP0.export_to_pos('eta1_%d.pos'%refiter, ETA1, 'Bulk residual')
-	print 'You can view eta1 with (for example):'
-	print 'gmsh eta1_%d.pos'%refiter
-
-	mfP0.export_to_pos('eta2_%d.pos'%refiter, ETA2, 'Edge residual')
-	print 'You can view eta2 with (for example):'
-	print 'gmsh eta2_%d.pos'%refiter
-
-	mfu.export_to_vtk('laplacian%d.vtk'%refiter, mfu, U, 'u', mfP0, ETA1, 'eta1', mfP0, ETA2, 'eta2')
-	print ('mayavi2 -d laplacian%d.vtk -f WarpScalar -m Surface'%refiter)
-
-	# Refine the mesh
-	dd=mfP0.basic_dof_from_cvid()
-
-	ETAElt = np.zeros(dd[0].size)
-	for i in range(dd[0].size):
-		ETAElt[i] = ETA[ dd[0][i] ] 
-
-	mesh.refine(np.where( ETAElt > 0.6*np.max(ETA) ))
-	mesh.optimize_structure()
+    ETA1tmp = gf.asm('generic',mim,1,bulkresidual,-1,md,'psi',1,mfP0,np.zeros(mfP0.nbdof()))
+    ETA1 = ETA1tmp [ ETA1tmp.size - mfP0.nbdof() : ETA1tmp.size ]
+    ETA2tmp = gf.asm('generic',mim,1,edgeresidual,INNER_FACES,md,'psi',1,mfP0,np.zeros(mfP0.nbdof()))
+    ETA2 = ETA2tmp [ ETA2tmp.size - mfP0.nbdof() : ETA2tmp.size ]
+    ETA  = np.sqrt ( ETA1 + ETA2 )
+    
+    # Export data
+    mfu.export_to_pos('laplacian%d.pos'%refiter, U, 'Computed solution')
+    print('You can view the solution with (for example):')
+    print('gmsh laplacian%d.pos'%refiter)
+    
+    mfP0.export_to_pos('eta1_%d.pos'%refiter, ETA1, 'Bulk residual')
+    print('You can view eta1 with (for example):')
+    print('gmsh eta1_%d.pos'%refiter)
+    
+    mfP0.export_to_pos('eta2_%d.pos'%refiter, ETA2, 'Edge residual')
+    print('You can view eta2 with (for example):')
+    print('gmsh eta2_%d.pos'%refiter)
+    
+    mfu.export_to_vtk('laplacian%d.vtk'%refiter, mfu, U, 'u', mfP0, ETA1, 'eta1', mfP0, ETA2, 'eta2')
+    print('mayavi2 -d laplacian%d.vtk -f WarpScalar -m Surface'%refiter)
+    
+    # Refine the mesh
+    dd=mfP0.basic_dof_from_cvid()
+    
+    ETAElt = np.zeros(dd[0].size)
+    for i in range(dd[0].size):
+        ETAElt[i] = ETA[ dd[0][i] ] 
+    
+    mesh.refine(np.where( ETAElt > 0.6*np.max(ETA) ))
+    mesh.optimize_structure()
 
 
 

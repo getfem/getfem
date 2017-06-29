@@ -55,14 +55,9 @@ getfem_python_c.c : getfem_python.c
 # ARCHFLAGS is set to empty to disable universal binaries with python 2.5 on macos 10.5
 _getfem.so: getfem_python_c.c ../libgetfemint.la $(GETFEM_LIB_LA)
 	touch _getfem.so && rm _getfem.so
-	ARCHFLAGS="" CC="$(CC)" CFLAGS="$(CFLAGS)" python setup.py -v build @PYTHON_CC_ARG@ --build-temp . --build-base . --build-lib . --force
+	ARCHFLAGS="" CC="$(CC)" CFLAGS="$(CFLAGS)" $(PYTHON) setup.py -v build @PYTHON_CC_ARG@ --build-temp . --build-base . --build-lib . --force
 #LDSHARED="$(CXX) -shared" ARCHFLAGS="" python setup.py -v build --build-temp . --build-base . --build-lib . --force
 
-
-# getfem_python_reference.html: getfem.py _getfem.so
-#	cp getfem.py getfem_python_reference.py
-#	(export LD_LIBRARY_PATH=$(LD_LIBRARY_PATH):../../../src/.libs && pydoc -w getfem_python_reference) &&  if test -d $(top_srcdir)/interface/doc; then cp getfem_python_reference.html $(top_srcdir)/interface/doc/getfem_python_reference.html; fi;
-#	rm -f getfem_python_reference.py
 
 all: _getfem.so getfem.py
 #pyexec_LTLIBRARIES = libgfpython.la

@@ -135,8 +135,8 @@ Build with the Python interface
 
 Additionnaly to build the Python interface, you will have first to install a 64bits version of Python 2 on your system together with Numpy and Scipy packages. This is not completely simple, but you can follow the following steps 
 
-  - Install a 64 bits Python 2 version
-    (see `Python 2 <https://www.python.org/downloads/windows/>`_).
+  - Install a 64 bits Python 2 or 3 version
+    (see `Python website <https://www.python.org/downloads/windows/>`_).
     Then, if it is not done by the installer you used, add ``C:\Pythonxx``
     to your Windows path (where ``xx`` is the version number).
     Close you Msys and Windows shell and re-open them to take into
@@ -145,9 +145,10 @@ Additionnaly to build the Python interface, you will have first to install a 64b
   - Install Pip (see `Pip <https://pip.pypa.io/en/latest/installing/>`_)
 
   - Downloads the precompiled packages of numpy and scipy for 64 bits
-    and Python 2 `here <http://www.lfd.uci.edu/~gohlke/pythonlibs/>`_
-    (i.e. the wheel packages `numpy-1.11.3+mkl-cp27-cp27m-win_amd64.whl`
-    and `scipy-0.19.0-cp27-cp27m-win_amd64.whl`).
+    and Python `here <http://www.lfd.uci.edu/~gohlke/pythonlibs/>`_
+    (i.e. for isntance wheel packages
+    ``numpy-1.11.3+mkl-cp27-cp27m-win_amd64.whl``
+    and ``scipy-0.19.0-cp27-cp27m-win_amd64.whl`` for python 2).
 
   - Enter into the directory where you downloaded the two
     wheel Python packages and install them with::
@@ -178,7 +179,7 @@ Build with the Matlab interface
 
 Here follows the additional step to build the Matlab interface. You have first, of course to have installed a (recent) version of Matlab on your system.
 
-  - You also need a installation of Python 2, because some Python scripts
+  - You also need a installation of Python, because some Python scripts
     are used to build the interface. You can follow the steps described
     in the previous section for Python interface installation.
     However, for the Matlab interface, Numpy and Scipy are not required.

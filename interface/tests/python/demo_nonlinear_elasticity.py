@@ -30,7 +30,7 @@ gf.util_trace_level(1)
 dirichlet_version = 2          # 1 = simplification, 2 = penalisation
 test_tangent_matrix = False    # Test or not tangent system validity
 incompressible = False;        # Incompressibility option
-explicit_potential = True;     # Elasticity law with explicit potential
+explicit_potential = False;    # Elasticity law with explicit potential
 
 # lawname = 'Ciarlet Geymonat'
 # params = [1.,1.,0.25]
@@ -81,7 +81,7 @@ md.add_initialized_data('params', params)
 if (not(explicit_potential)):
     md.add_finite_strain_elasticity_brick(mim, lawname, 'u', 'params')
 else:
-    print "Explicit elastic potential"
+    print("Explicit elastic potential")
     K = 1.2; mu = 3.0;
     _F_ = "(Id(3)+Grad_u)"
     _J_= "Det{F}".format(F=_F_)

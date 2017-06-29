@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: UTF8 -*-
+# -*- coding: utf-8 -*-
 # Python GetFEM++ interface
 #
 # Copyright (C) 2011-2017 Yves Renard.
@@ -243,7 +243,7 @@ elif version == 9: # The integral version, Uzawa on the augmented Lagrangian
      (mim_friction, 'u', 'obstacle', 'r', GAMMAC, 2, 'lambda_n')
 
    for ii in range(100):
-      print 'iteration %d' % (ii+1)
+      print('iteration %d' % (ii+1))
       md.solve('max_res', 1E-9, 'max_iter', niter)
       U = md.get('variable', 'u')
       lambda_n_old = lambda_n
@@ -251,7 +251,7 @@ elif version == 9: # The integral version, Uzawa on the augmented Lagrangian
       lambda_n = sol[0].transpose()
       md.set_variable('lambda_n', lambda_n)
       difff = max(abs(lambda_n-lambda_n_old))[0]/max(abs(lambda_n))[0]
-      print 'diff : %g' % difff
+      print('diff : %g' % difff)
       if difff < penalty_parameter:
          break
 
@@ -287,7 +287,7 @@ elif version == 14: # The integral version, Uzawa on the augmented Lagrangian wi
      (mim_friction, 'u', 'obstacle', 'r', 'friction_coeff', GAMMAC, 2, 'lambda')
 
    for ii in range(100):
-      print 'iteration %d' % (ii+1)
+      print('iteration %d' % (ii+1))
       md.solve('max_res', 1E-9, 'max_iter', niter)
       U = md.get('variable', 'u')
       lambda_nt_old = lambda_nt
@@ -297,7 +297,7 @@ elif version == 14: # The integral version, Uzawa on the augmented Lagrangian wi
       lambda_nt = sol[0].transpose()
       md.set_variable('lambda', lambda_nt)
       difff = max(abs(lambda_nt-lambda_nt_old))[0]/max(abs(lambda_nt))[0]
-      print 'diff : %g' % difff
+      print('diff : %g' % difff)
       if difff < penalty_parameter:
          break
  
@@ -313,7 +313,7 @@ elif version == 15:
      (mim_friction, 'u', 'obstacle', 'r', 'friction_coeff', GAMMAC)
 
 else:
-   print 'Inexistent version'
+   print('Inexistent version')
 
 # Solve the problem
 if not solved:

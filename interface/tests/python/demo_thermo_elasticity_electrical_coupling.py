@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: UTF8 -*-
+# -*- coding: utf-8 -*-
 # Python GetFEM++ interface
 #
 # Copyright (C)  2015-2017 Yves Renard.
@@ -93,7 +93,7 @@ mo4 = gf.MesherObject('ball', [75., 12.5], 8.)
 mo5 = gf.MesherObject('union', mo2, mo3, mo4)
 mo  = gf.MesherObject('set minus', mo1, mo5)
 
-print 'Mesh generation';
+print('Mesh generation')
 gf.util('trace level', 2)   # No trace for mesh generation
 mesh = gf.Mesh('generate', mo, h, 2)
 
@@ -120,8 +120,8 @@ mesh.region_subtract(BOTTOM_BOUND, HOLE_BOUND)
 
 if (export_mesh):
     mesh.export_to_vtk('mesh.vtk');
-    print ('\nYou can view the mesh for instance with');
-    print ('mayavi2 -d mesh.vtk -f ExtractEdges -m Surface \n');
+    print('\nYou can view the mesh for instance with');
+    print('mayavi2 -d mesh.vtk -f ExtractEdges -m Surface \n');
 
 #
 # Definition of finite elements methods and integration method
@@ -192,15 +192,15 @@ md.add_linear_generic_assembly_brick(mim, 'beta*(T0-theta)*Trace(Grad_Test_u)')
 #
 if (solve_in_two_steps):
   md.disable_variable('u')
-  print 'First problem with', md.nbdof(), ' dofs'
+  print('First problem with', md.nbdof(), ' dofs')
   md.solve('max_res', 1E-9, 'max_iter', 100, 'noisy')
   md.enable_variable('u')
   md.disable_variable('theta')
   md.disable_variable('V')
-  print 'Second problem with ', md.nbdof(), ' dofs'
+  print('Second problem with ', md.nbdof(), ' dofs')
   md.solve('max_res', 1E-9, 'max_iter', 100, 'noisy')
 else:
-  print 'Global problem with ', md.nbdof(), ' dofs'
+  print('Global problem with ', md.nbdof(), ' dofs')
   md.solve('max_res', 1E-9, 'max_iter', 100, 'noisy')
 
 
@@ -214,11 +214,11 @@ VM = md.compute_isotropic_linearized_Von_Mises_or_Tresca('u', 'clambdastar', 'cm
 CO = np.reshape(md.interpolation('-'+sigmaeps+'*Grad_V', mfvm), (2, mfvm.nbdof()), 'F')
 
 mfvm.export_to_vtk('displacement_with_von_mises.vtk', mfvm,  VM, 'Von Mises Stresses', mfu, U, 'Displacements')
-print ('You can view solutions with for instance:\nmayavi2 -d displacement_with_von_mises.vtk -f WarpVector -m Surface')
+print('You can view solutions with for instance:\nmayavi2 -d displacement_with_von_mises.vtk -f WarpVector -m Surface')
 mft.export_to_vtk('temperature.vtk', mft, THETA, 'Temperature')
-print ('mayavi2 -d temperature.vtk -f WarpScalar -m Surface')
+print('mayavi2 -d temperature.vtk -f WarpScalar -m Surface')
 mft.export_to_vtk('electric_potential.vtk', mft, V, 'Electric potential')
-print ('mayavi2 -d electric_potential.vtk -f WarpScalar -m Surface')
+print('mayavi2 -d electric_potential.vtk -f WarpScalar -m Surface')
 
 
 

@@ -51,8 +51,8 @@ y = P[1,:]
 ULS = 1000*np.ones(x.shape)
 
 if True:
-  for ix in xrange(0,5):
-    for iy in xrange(0,5):
+  for ix in range(0,5):
+    for iy in range(0,5):
       xc = (ix/4) * 0.8 - 0.4
       yc = (iy/4) * 0.8 - 0.4
       if (iy%2)==1:
@@ -62,7 +62,7 @@ if True:
       R = 0.03 + 0.005*iy
       ULS = np.minimum(ULS, ((x - xc)**2 + (y - yc)**2) - R**2);
 else:
-  for i in xrange(8):
+  for i in range(8):
     xc = rand() - 0.5
     yc = rand() - 0.5
     R = rand() * 0.09 + 0.02
@@ -71,7 +71,7 @@ ls.set_values(ULS)
 
 ULS2 = 1000*np.ones(x.shape);
 ULS2s = 1000*np.ones(x.shape);
-for i in xrange(1):
+for i in range(1):
   xc = 0.0 # rand() - 0.5
   yc = 0.0 # rand() - 0.5
   theta = np.pi/3 # np.pi*rand()
@@ -132,5 +132,5 @@ mfdu.export_to_pos('vm.pos', VM, 'Von Mises', mfu0, U, 'deformation')
 
 mf_ls.export_to_pos('ls.pos',ls.values(0),'ls values 0')
 
-print 'You can view the solution with (for instance):'
-print 'gmsh vm.pos ls.pos'
+print('You can view the solution with (for instance):')
+print('gmsh vm.pos ls.pos')

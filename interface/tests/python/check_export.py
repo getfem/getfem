@@ -76,7 +76,7 @@ mf1.export_to_vtk('check_export3.vtk','ascii')
 try:
     m0.export_to_dx('check_export0.dx')
 except RuntimeError as detail:
-    print detail
+    print(detail)
 
 m1.export_to_dx('check_export0.dx','ascii','edges')
 m1.export_to_dx('check_export0.dx','ascii','append')

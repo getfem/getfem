@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: UTF8 -*-
+# -*- coding: utf-8 -*-
 # Python GetFEM++ interface
 #
 # Copyright (C) 2004-2017 Yves Renard, Julien Pommier.
@@ -30,7 +30,7 @@ from numpy import *
 from getfem import *
 import os
 
-make_check=os.environ.has_key('srcdir');
+make_check=('srcdir' in os.environ);
 
 filename='../meshes/holed_disc_with_quadratic_2D_triangles.msh';
 if (make_check):
@@ -89,5 +89,5 @@ if (not(make_check)):
     sl.export_to_vtk('wave.vtk', mfu, real(U), 'rWave',
                      mfu, imag(U), 'iWave')
 
-    print 'You can view the solution with (for instance):'
-    print 'mayavi2 -d wave.vtk -f WarpScalar -m Surface'
+    print('You can view the solution with (for instance):')
+    print('mayavi2 -d wave.vtk -f WarpScalar -m Surface')

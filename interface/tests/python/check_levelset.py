@@ -56,7 +56,7 @@ if True:
   mls.add(ls3)
 mls.adapt()
 
-#print mls.linked_mesh()
+#print(mls.linked_mesh())
 
 lls = mls.levelsets()
 

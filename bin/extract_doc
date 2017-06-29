@@ -466,7 +466,7 @@ option = sys.argv[2]
 # List the filenames and extract object and command names.
 #
 
-fl = os.popen('sh -c "(cd ' + directory + ' ; ls gf_*.cc)"');
+fl = os.popen('(cd ' + directory + ' ; ls gf_*.cc)');
 lines = fl.readlines();
 fl.close()
 objects = set()
@@ -848,67 +848,67 @@ elif (option == 'matlab-doc'):
 
   langage = 'matlab'
   
-  print '.. Automatically generated file, do not edit it.'
-  print '.. If some modification are necessary, please modify'
-  print '.. the corresponding C++ source or the python program extract_doc'
-  print ''
-  print ''
-  print '.. include:: ../replaces.txt'
-  print ''
-  print '.. highlightlang:: matlab'
-  print ''
-  print '.. _mlab-cmdref:'
-  print ''
-  print 'Command reference'
-  print '================='
-  print ''
-  print 'Please remember that this documentation is not self contained.'
-  print 'You should in particular refer to the `user documentation`_ '
-  print 'to have a more extensive description of the structures algorithms '
-  print 'and concepts used.'
-  print ''
-  # print 'Types'
-  # print '-----'
-  print ''
-  print 'The expected type of each function argument is indicated in this '
-  print 'reference. Here is a list of these types:'
-  print ''
-  print '=====================  =================================================='
-  print '`int`                  integer value'
-  print '`hobj`                 a handle for any GetFEM++ object'
-  print '`scalar`               scalar value'
-  print '`string`               string'
-  print '`ivec`                 vector of integer values'
-  print '`vec`                  vector'
-  print '`imat`                 matrix of integer values'
-  print '`mat`                  matrix'
-  print '`spmat`                sparse matrix (both matlab native sparse'
-  print '                       matrices, and GetFEM sparse matrices)'
-  print '`precond`              GetFEM preconditioner object'
-  print '`mesh mesh`            object descriptor (or gfMesh object)'
-  print '`mesh_fem`             mesh fem object descriptor (or gfMeshFem object)'
-  print '`mesh_im`              mesh im object descriptor (or gfMeshIm object)'
-  print '`mesh_im_data`         mesh im data object descriptor (or gfMeshImData object)'
-  print '`mesh_slice`           mesh slice object descriptor (or gfSlice object)'
-  print '`cvstruct`             convex structure descriptor (or gfCvStruct object)'
-  print '`geotrans`             geometric transformation descriptor (or '
-  print '                       gfGeoTrans object)'
-  print '`fem`                  fem descriptor (or gfFem object)'
-  print '`eltm`                 elementary matrix descriptor (or gfEltm object)'
-  print '`integ`                integration method descriptor (or gfInteg object)'
-  print '`model`                model descriptor (or gfModel object)'
-  print '`global_function`      global function descriptor'
-  print '`mesher_object`        mesher object descriptor'
-  print '`cont_struct`          continuation-structure descriptor'
-  print '=====================  =================================================='
-  print ''  
-  print 'Arguments listed between square brackets are optional. Lists between braces indicate that the argument must match one of the elements of the list. For example::'
-  print ''
-  print '  >> [X,Y]=dummy(int i, \'foo\' | \'bar\' [,vec v])'
-  print ''
-  print 'means that the dummy function takes two or three arguments, its first being an integer value, the second a string which is either \'foo\' or \'bar\', and a third optional argument. It returns two values (with the usual matlab meaning, i.e. the caller can always choose to ignore them).'
-  print ''
-  print ''
+  print('.. Automatically generated file, do not edit it.')
+  print('.. If some modification are necessary, please modify')
+  print('.. the corresponding C++ source or the python program extract_doc')
+  print('')
+  print('')
+  print('.. include:: ../replaces.txt')
+  print('')
+  print('.. highlightlang:: matlab')
+  print('')
+  print('.. _mlab-cmdref:')
+  print('')
+  print('Command reference')
+  print('=================')
+  print('')
+  print('Please remember that this documentation is not self contained.')
+  print('You should in particular refer to the `user documentation`_ ')
+  print('to have a more extensive description of the structures algorithms ')
+  print('and concepts used.')
+  print('')
+  # print('Types')
+  # print('-----')
+  print('')
+  print('The expected type of each function argument is indicated in this ')
+  print('reference. Here is a list of these types:')
+  print('')
+  print('=====================  ==================================================')
+  print('`int`                  integer value')
+  print('`hobj`                 a handle for any GetFEM++ object')
+  print('`scalar`               scalar value')
+  print('`string`               string')
+  print('`ivec`                 vector of integer values')
+  print('`vec`                  vector')
+  print('`imat`                 matrix of integer values')
+  print('`mat`                  matrix')
+  print('`spmat`                sparse matrix (both matlab native sparse')
+  print('                       matrices, and GetFEM sparse matrices)')
+  print('`precond`              GetFEM preconditioner object')
+  print('`mesh mesh`            object descriptor (or gfMesh object)')
+  print('`mesh_fem`             mesh fem object descriptor (or gfMeshFem object)')
+  print('`mesh_im`              mesh im object descriptor (or gfMeshIm object)')
+  print('`mesh_im_data`         mesh im data object descriptor (or gfMeshImData object)')
+  print('`mesh_slice`           mesh slice object descriptor (or gfSlice object)')
+  print('`cvstruct`             convex structure descriptor (or gfCvStruct object)')
+  print('`geotrans`             geometric transformation descriptor (or ')
+  print('                       gfGeoTrans object)')
+  print('`fem`                  fem descriptor (or gfFem object)')
+  print('`eltm`                 elementary matrix descriptor (or gfEltm object)')
+  print('`integ`                integration method descriptor (or gfInteg object)')
+  print('`model`                model descriptor (or gfModel object)')
+  print('`global_function`      global function descriptor')
+  print('`mesher_object`        mesher object descriptor')
+  print('`cont_struct`          continuation-structure descriptor')
+  print('=====================  ==================================================')
+  print('') 
+  print('Arguments listed between square brackets are optional. Lists between braces indicate that the argument must match one of the elements of the list. For example::')
+  print('')
+  print('  >> [X,Y]=dummy(int i, \'foo\' | \'bar\' [,vec v])')
+  print('')
+  print('means that the dummy function takes two or three arguments, its first being an integer value, the second a string which is either \'foo\' or \'bar\', and a third optional argument. It returns two values (with the usual matlab meaning, i.e. the caller can always choose to ignore them).')
+  print('')
+  print('')
   allc = sorted(objects+commands)
   for o in allc:
     for ext in ['', '_get', '_set']:
@@ -916,13 +916,13 @@ elif (option == 'matlab-doc'):
       [r, initiale] = StandardObjectName(o)
       if (os.path.exists(src_dir) and os.path.isfile(src_dir)):
         
-        print 'gf_' + o + ext
-        print '-------------------------------------------'
-        print ''
-        print '**Synopsis**'
-        print ''
-        print '::'
-        print ''
+        print('gf_' + o + ext)
+        print('-------------------------------------------')
+        print('')
+        print('**Synopsis**')
+        print('')
+        print('::')
+        print('')
         [gdoc, args] = ExtractGlobalDoc(src_dir);
         if (args != ''):
           args = FilterDoc(args, langage, objects, commands) + ', '
@@ -947,18 +947,18 @@ elif (option == 'matlab-doc'):
           [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, langage)
 
         fl.close()
-        print ''
-        print '**Description :**'
-        print ''
-        print ''
+        print('')
+        print('**Description :**')
+        print('')
+        print('')
         if ((o in set_objects) and (ext == '')):
           print 'General constructor for ' + o + ' objects.\n'
         gdoc = FilterDoc(gdoc, langage, objects, commands)
-        print gdoc
-        print ''
-        print '**Command list :**'
-        print ''
-        print ''
+        print(gdoc)
+        print('')
+        print('**Command list :**')
+        print('')
+        print('')
         fl = open(src_dir)
         doc = '';
         [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, langage)
@@ -972,9 +972,9 @@ elif (option == 'matlab-doc'):
           else:
             mname = ''
             params = params[1:].strip()
-          print ''
+          print('')
           print('  ``' + ret + 'gf_'+o+ext+firstarg+mname + params+')``')
-          print ''
+          print('')
           doc = FilterDoc(doc, langage, objects, commands)
           nbspace = -1; util_pos = -1; nbsp = -1
           for l in doc.split('\n'):
@@ -1002,12 +1002,12 @@ elif (option == 'matlab-doc'):
               
             if (nbsp > nbspace):
                 for i in range (nbsp-nbspace):
-                    print '',
+                    print(''),
             
             if (nbspace >= 0):
                 print('    '+l)
                 
-          print ''
+          print('')
           [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, langage)
     
         fl.close()
@@ -1370,67 +1370,67 @@ elif (option == 'scilab-doc-rst'):
 
   langage = 'scilab'
   
-  print '.. Automatically generated file, do not edit it.'
-  print '.. If some modification are necessary, please modify'
-  print '.. the corresponding C++ source or the python program extract_doc'
-  print ''
-  print ''
-  print '.. include:: ../replaces.txt'
-  print ''
-  print '.. highlightlang:: matlab'
-  print ''
-  print '.. _scilab-cmdref:'
-  print ''
-  print 'Command reference'
-  print '================='
-  print ''
-  print 'Please remember that this documentation is not self contained.'
-  print 'You should in particular refer to the `user documentation`_ '
-  print 'to have a more extensive description of the structures algorithms '
-  print 'and concepts used.'
-  print ''
-  # print 'Types'
-  # print '-----'
-  print ''
-  print 'The expected type of each function argument is indicated in this '
-  print 'reference. Here is a list of these types:'
-  print ''
-  print '=====================  =================================================='
-  print '`int`                  integer value'
-  print '`hobj`                 a handle for any GetFEM++ object'
-  print '`scalar`               scalar value'
-  print '`string`               string'
-  print '`ivec`                 vector of integer values'
-  print '`vec`                  vector'
-  print '`imat`                 matrix of integer values'
-  print '`mat`                  matrix'
-  print '`spmat`                sparse matrix (both matlab native sparse'
-  print '                       matrices, and GetFEM sparse matrices)'
-  print '`precond`              GetFEM preconditioner object'
-  print '`mesh mesh`            object descriptor (or gfMesh object)'
-  print '`mesh_fem`             mesh fem object descriptor (or gfMeshFem object)'
-  print '`mesh_im`              mesh im object descriptor (or gfMeshIm object)'
-  print '`mesh_im_data`         mesh im data object descriptor (or gfMeshImData object)'
-  print '`mesh_slice`           mesh slice object descriptor (or gfSlice object)'
-  print '`cvstruct`             convex structure descriptor (or gfCvStruct object)'
-  print '`geotrans`             geometric transformation descriptor (or '
-  print '                       gfGeoTrans object)'
-  print '`fem`                  fem descriptor (or gfFem object)'
-  print '`eltm`                 elementary matrix descriptor (or gfEltm object)'
-  print '`integ`                integration method descriptor (or gfInteg object)'
-  print '`model`                model descriptor (or gfModel object)'
-  print '`global_function`      global function descriptor'
-  print '`mesher_object`        mesher object descriptor'
-  print '`cont_struct`          continuation-structure descriptor'
-  print '=====================  =================================================='
-  print ''  
-  print 'Arguments listed between square brackets are optional. Lists between braces indicate that the argument must match one of the elements of the list. For example::'
-  print ''
-  print '  >> [X,Y]=dummy(int i, \'foo\' | \'bar\' [,vec v])'
-  print ''
-  print 'means that the dummy function takes two or three arguments, its first being an integer value, the second a string which is either \'foo\' or \'bar\', and a third optional argument. It returns two values (with the usual matlab meaning, i.e. the caller can always choose to ignore them).'
-  print ''
-  print ''
+  print('.. Automatically generated file, do not edit it.')
+  print('.. If some modification are necessary, please modify')
+  print('.. the corresponding C++ source or the python program extract_doc')
+  print('')
+  print('')
+  print('.. include:: ../replaces.txt')
+  print('')
+  print('.. highlightlang:: matlab')
+  print('')
+  print('.. _scilab-cmdref:')
+  print('')
+  print('Command reference')
+  print('=================')
+  print('')
+  print('Please remember that this documentation is not self contained.')
+  print('You should in particular refer to the `user documentation`_ ')
+  print('to have a more extensive description of the structures algorithms ')
+  print('and concepts used.')
+  print('')
+  # print('Types')
+  # print('-----')
+  print('')
+  print('The expected type of each function argument is indicated in this ')
+  print('reference. Here is a list of these types:')
+  print('')
+  print('=====================  ==================================================')
+  print('`int`                  integer value')
+  print('`hobj`                 a handle for any GetFEM++ object')
+  print('`scalar`               scalar value')
+  print('`string`               string')
+  print('`ivec`                 vector of integer values')
+  print('`vec`                  vector')
+  print('`imat`                 matrix of integer values')
+  print('`mat`                  matrix')
+  print('`spmat`                sparse matrix (both matlab native sparse')
+  print('                       matrices, and GetFEM sparse matrices)')
+  print('`precond`              GetFEM preconditioner object')
+  print('`mesh mesh`            object descriptor (or gfMesh object)')
+  print('`mesh_fem`             mesh fem object descriptor (or gfMeshFem object)')
+  print('`mesh_im`              mesh im object descriptor (or gfMeshIm object)')
+  print('`mesh_im_data`         mesh im data object descriptor (or gfMeshImData object)')
+  print('`mesh_slice`           mesh slice object descriptor (or gfSlice object)')
+  print('`cvstruct`             convex structure descriptor (or gfCvStruct object)')
+  print('`geotrans`             geometric transformation descriptor (or ')
+  print('                       gfGeoTrans object)')
+  print('`fem`                  fem descriptor (or gfFem object)')
+  print('`eltm`                 elementary matrix descriptor (or gfEltm object)')
+  print('`integ`                integration method descriptor (or gfInteg object)')
+  print('`model`                model descriptor (or gfModel object)')
+  print('`global_function`      global function descriptor')
+  print('`mesher_object`        mesher object descriptor')
+  print('`cont_struct`          continuation-structure descriptor')
+  print('=====================  ==================================================')
+  print('')
+  print('Arguments listed between square brackets are optional. Lists between braces indicate that the argument must match one of the elements of the list. For example::')
+  print('')
+  print('  >> [X,Y]=dummy(int i, \'foo\' | \'bar\' [,vec v])')
+  print('')
+  print('means that the dummy function takes two or three arguments, its first being an integer value, the second a string which is either \'foo\' or \'bar\', and a third optional argument. It returns two values (with the usual matlab meaning, i.e. the caller can always choose to ignore them).')
+  print('')
+  print('')
   allc = sorted(objects+commands)
   for o in allc:
     for ext in ['', '_get', '_set']:
@@ -1438,13 +1438,13 @@ elif (option == 'scilab-doc-rst'):
       [r, initiale] = StandardObjectName(o)
       if (os.path.exists(src_dir) and os.path.isfile(src_dir)):
         
-        print 'gf_' + o + ext
-        print '-------------------------------------------'
-        print ''
-        print '**Synopsis**'
-        print ''
-        print '::'
-        print ''
+        print('gf_' + o + ext)
+        print('-------------------------------------------')
+        print('')
+        print('**Synopsis**')
+        print('')
+        print('::')
+        print('')
         [gdoc, args] = ExtractGlobalDoc(src_dir);
         if (args != ''):
           args = FilterDoc(args, langage, objects, commands) + ', '
@@ -1469,18 +1469,18 @@ elif (option == 'scilab-doc-rst'):
           [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, langage)
 
         fl.close()
-        print ''
-        print '**Description :**'
-        print ''
-        print ''
+        print('')
+        print('**Description :**')
+        print('')
+        print('')
         if ((o in set_objects) and (ext == '')):
           print 'General constructor for ' + o + ' objects.\n'
         gdoc = FilterDoc(gdoc, langage, objects, commands)
-        print gdoc
-        print ''
-        print '**Command list :**'
-        print ''
-        print ''
+        print(gdoc)
+        print('')
+        print('**Command list :**')
+        print('')
+        print('')
         fl = open(src_dir)
         doc = '';
         [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, langage)
@@ -1494,9 +1494,9 @@ elif (option == 'scilab-doc-rst'):
           else:
             mname = ''
             params = params[1:].strip()
-          print ''
+          print('')
           print('  ``' + ret + 'gf_'+o+ext+firstarg+mname + params+')``')
-          print ''
+          print('')
           doc = FilterDoc(doc, langage, objects, commands)
           nbspace = -1; util_pos = -1; nbsp = -1
           for l in doc.split('\n'):
@@ -1524,12 +1524,12 @@ elif (option == 'scilab-doc-rst'):
               
             if (nbsp > nbspace):
                 for i in range (nbsp-nbspace):
-                    print '',
+                    print (''),
             
             if (nbspace >= 0):
                 print('    '+l)
 
-          print ''
+          print('')
           [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, langage)
     
         fl.close()
@@ -1551,7 +1551,7 @@ elif (option == 'scilab-doc-rst'):
 elif (option == 'python-com' or option == 'python-com-par'):
   langage = 'python'
 
-  print """#!/usr/bin/env python
+  print("""#!/usr/bin/env python
 # -*- coding: iso-8859-1 -*-
 #
 # Python GetFEM++ interface
@@ -1582,14 +1582,14 @@ elif (option == 'python-com' or option == 'python-com-par'):
 
 import sys
 import numpy
-"""
+""")
   if (option == 'python-com-par'):
-      print "import mpi4py.MPI as mpi"
-      print "getfem_python_par=True"
+      print("import mpi4py.MPI as mpi")
+      print("getfem_python_par=True")
   else:
-      print "getfem_python_par=False"
+      print("getfem_python_par=False")
 
-  print """
+  print("""
 
 try:
   import numbers
@@ -1605,12 +1605,12 @@ getfem('workspace', 'clear all')
 
 def generic_constructor(self, clname, *args):
     \"\"\"Internal function -- acts as a constructor for all GetFEM objects.\"\"\"
-    #print 'generic_constructor.'+clname+'('+str(args)+')'
+    #print('generic_constructor.'+clname+'('+str(args)+')')
     if (len(args)==1 and type(args[0]) is GetfemObject):
       if hasattr(self,'id'):
-        print \"warning: hasattr(self,'id')!\"
-        print \"self.id: \",self.id
-        print \"args[0]: \",args[0]
+        print(\"warning: hasattr(self,'id')!\")
+        print(\"self.id: \",self.id)
+        print(\"args[0]: \",args[0])
       else:
         self.id = args[0]
         #if obj_count.get(self.id,0)==0:
@@ -1623,14 +1623,14 @@ def generic_destructor(self, destructible=True):
     \"\"\"Internal function -- acts as a destructor for all GetFEM objects.\"\"\"
     if (not hasattr(self,'id')):
       return
-    #print \"Mesh.__del__       \",self.id,'count=',obj_count[self.id]
-    if (obj_count.has_key(self.id)):
+    #print(\"Mesh.__del__       \",self.id,'count=',obj_count[self.id])
+    if (self.id in obj_count):
       obj_count[self.id] = obj_count[self.id]-1
       if (destructible and obj_count[self.id] == 0):
         getfem('delete',self.id)
-        #print \"effective deletion\"
+        #print(\"effective deletion\")
 
-"""
+""")
 
   # one pass to find the set methods having identical name with a get method
   # in that case 'set_' is added to the set method.
@@ -1679,14 +1679,14 @@ def generic_destructor(self, destructible=True):
     firstarg = '(' + args
 
 
-    print '\n#\n# GetFEM class ' + oname + ' definition.\n#\n'
-    print 'class ' + oname + ':'
-    print '  """GetFEM ' + oname + ' object\n'
+    print('\n#\n# GetFEM class ' + oname + ' definition.\n#\n')
+    print('class ' + oname + ':')
+    print('  """GeFEM ' + oname + ' object\n')
     gdoc = FilterDoc(gdoc, langage, objects, commands, set_replace)
-    print gdoc
-    print '  """'
-    print '  def __init__(self, *args):'
-    print '    """General constructor for ' + oname + " objects\n"
+    print(gdoc)
+    print('  """')
+    print('  def __init__(self, *args):')
+    print('    """General constructor for ' + oname + " objects\n")
     # documentation for constructors
     if (os.path.exists(src_dir) and os.path.isfile(src_dir)):
       fl = open(src_dir)
@@ -1729,37 +1729,37 @@ def generic_destructor(self, destructible=True):
 
           if (nbsp > nbspace):
               for i in range (nbsp-nbspace):
-                  print '',
+                  print(''),
 
           if (nbspace >= 0):
               print('    '+l)
               
-        print ''
+        print('')
         [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, langage)
 
       fl.close()
-    print '    """'
-    print '    generic_constructor(self,\'' + o + '\',*args)'
-    print '  def __del__(self):'
+    print('    """')
+    print('    generic_constructor(self,\'' + o + '\',*args)')
+    print('  def __del__(self):')
     if (o in non_destructible_objects):
-      print '    generic_destructor(self, destructible=False)'
+      print('    generic_destructor(self, destructible=False)')
     else:
-      print '    generic_destructor(self, destructible=True)'
+      print('    generic_destructor(self, destructible=True)')
     if (os.path.exists(directory + '/gf_' + o + '_get.cc')):
-      print '  def get(self, *args):'
-      print '    return getfem(\''+o+'_get\',self.id, *args)'
-      print '  def __repr__(self):'
-      print '    getfem(\''+o+'_get\',self.id, \'display\')'
-      print '    return \'\''
+      print('  def get(self, *args):')
+      print('    return getfem(\''+o+'_get\',self.id, *args)')
+      print('  def __repr__(self):')
+      print('    getfem(\''+o+'_get\',self.id, \'display\')')
+      print('    return \'\'')
     if (os.path.exists(directory + '/gf_' + o + '_set.cc')):
-      print '  def set(self, *args):'
-      print '    return getfem(\''+o+'_set\',self.id, *args)'
-    print '  def __str__(self):'
-    print '    return self.char()'
+      print('  def set(self, *args):')
+      print('    return getfem(\''+o+'_set\',self.id, *args)')
+    print('  def __str__(self):')
+    print('    return self.char()')
     if (os.path.exists(src_dir) and os.path.isfile(src_dir)):
       pythonext = ExtractExt(src_dir, langage);
       if (pythonext != ''):
-        print '\n' + pythonext
+        print('\n' + pythonext)
     # add the list of get and set methods
     sub_com = set()
     for ext in ['_get', '_set']:
@@ -1785,7 +1785,7 @@ def generic_destructor(self, destructible=True):
           sub_com.add(mname)
           mparams = FilterDoc(params, langage, objects, commands)
           params = SynopsisToPythonArgs(params)
-          print ''
+          print('')
           sys.stdout.write('  def ')
           mmname = mname
           if (set_extend): mmname = 'set_' + mname
@@ -1834,7 +1834,7 @@ def generic_destructor(self, destructible=True):
               if (nbspace >= 0):
                   sys.stdout.write('    ' + l)
                   
-          print '"""'
+          print('"""')
           sys.stdout.write('    return self.' + ext[1:] + '("' + mname + '"')
           for p in params:
             sys.stdout.write(', ' + p.split('=')[0])
@@ -1844,7 +1844,7 @@ def generic_destructor(self, destructible=True):
         fl.close()
         pythonext = ExtractExt(src_dir, langage);
         if (pythonext != ''):
-          print '\n' + pythonext
+          print('\n' + pythonext)
 
 
 
@@ -1852,7 +1852,7 @@ def generic_destructor(self, destructible=True):
   for c in co:
     src_dir = directory + '/gf_' + c + '.cc'
     if (c != 'workspace' and os.path.exists(src_dir) and os.path.isfile(src_dir)):
-      print '#\n# ' + c + ' module\n#\n'
+      print('#\n# ' + c + ' module\n#\n')
       [gdoc, args] = ExtractGlobalDoc(src_dir);
       margs = FilterDoc(args, langage, objects, commands).strip()
       args = SynopsisToPythonArgs(args)
@@ -1864,7 +1864,7 @@ def generic_destructor(self, destructible=True):
         mname = string.replace(mname, '-', '_');
         mparams = FilterDoc(params, langage, objects, commands).strip()
         params = SynopsisToPythonArgs(params)
-        print ''
+        print('')
         if (mname[0] == '.'):
           sys.stdout.write('def ' + c + '(')
         else:
@@ -1924,7 +1924,7 @@ def generic_destructor(self, destructible=True):
             if (nbspace >= 0):
                 sys.stdout.write('  ' + l)
 
-        print '"""'
+        print('"""')
         sys.stdout.write('  return getfem(\'' + c + '\'')
         for p in args:
           sys.stdout.write(', ' + p.split('=')[0])
@@ -1938,30 +1938,30 @@ def generic_destructor(self, destructible=True):
       fl.close()
       pythonext = ExtractExt(src_dir, langage);
       if (pythonext != ''):
-        print '\n' + pythonext
+        print('\n' + pythonext)
 
 
 
 
-  print '\ndef memstats():'
-  print '  print "*** GetFEM view of the workspace:"'
-  print '  getfem(\'workspace\',\'stats\')'
-  print '  print "*** Python view of the workspace:"'
-  print '  for id,c in obj_count.iteritems():'
-  print '    if (c):'
-  print '      name=str(factory(id).__class__)'
-  print '      print "%s class %d, id %d : instances=%d" % (name,id.classid,id.objid,c)\n'
+  print('\ndef memstats():')
+  print('  print("*** GetFEM view of the workspace:")')
+  print('  getfem(\'workspace\',\'stats\')')
+  print('  print("*** Python view of the workspace:")')
+  print('  for id,c in obj_count.items():')
+  print('    if (c):')
+  print('      name=str(factory(id).__class__)')
+  print('      print("%s class %d, id %d : instances=%d" % (name,id.classid,id.objid,c))\n')
 
-  print 'def linsolve(what, *args):'
-  print '  return getfem(\'linsolve\', what, *args)'
-  print 'def compute(mf, U, what, *args):'
-  print '  return getfem(\'compute\', mf, U, what, *args)'
-  print 'def asm(what, *args):'
-  print '  return getfem(\'asm\', what, *args)'
-  print 'def util(what, *args):'
-  print '  return getfem(\'util\', what, *args)\n'
+  print('def linsolve(what, *args):')
+  print('  return getfem(\'linsolve\', what, *args)')
+  print('def compute(mf, U, what, *args):')
+  print('  return getfem(\'compute\', mf, U, what, *args)')
+  print('def asm(what, *args):')
+  print('  return getfem(\'asm\', what, *args)')
+  print('def util(what, *args):')
+  print('  return getfem(\'util\', what, *args)\n')
 
-  print '\ndef factory(id):'
+  print('\ndef factory(id):')
   sys.stdout.write('  t = ( ')
   ob = sorted(objects)
   first = True
@@ -1970,9 +1970,9 @@ def generic_destructor(self, destructible=True):
     if (not first): sys.stdout.write(',\n        ')
     sys.stdout.write(oname)
     first = False
-  print ')[id.classid]'
-  print '  return t(id)\n'
-  print 'register_python_factory(factory)'
+  print(')[id.classid]')
+  print('  return t(id)\n')
+  print('register_python_factory(factory)')
 
 
 
@@ -1992,17 +1992,17 @@ elif (option == 'python-doc'):
 
   langage = 'python'
 
-  print ".. Autogenerated by interface/bin/extract_doc. Do not edit it.\n"
-  print ".. include:: ../replaces.txt\n"
-  print ".. _api:\n"
-  print "API reference"
-  print "=============\n"
-  print ''
-  print 'Please remember that this documentation is not self contained.'
-  print 'You should in particular refer to the `user documentation`_ '
-  print 'to have a more extensive description of the structures algorithms '
-  print 'and concepts used.'
-  print ''
+  print(".. Autogenerated by interface/bin/extract_doc. Do not edit it.\n")
+  print(".. include:: ../replaces.txt\n")
+  print(".. _api:\n")
+  print("API reference")
+  print("=============\n")
+  print('')
+  print('Please remember that this documentation is not self contained.')
+  print('You should in particular refer to the `user documentation`_ ')
+  print('to have a more extensive description of the structures algorithms ')
+  print('and concepts used.')
+  print('')
 
   # one pass to find the set methods having identical name with a get method
   # in that case 'set_' is added to the set method.
@@ -2032,18 +2032,18 @@ elif (option == 'python-doc'):
   for o in ob:
     src_dir = directory + '/gf_' + o + '.cc'
     [oname, initiale] = StandardObjectName(o)
-    print ''
-    print oname
-    print '------------------------'
-    print '.. autoclass:: getfem.' + oname
-    print '  :members:\n'
+    print('')
+    print(oname)
+    print('------------------------')
+    print('.. autoclass:: getfem.' + oname)
+    print('  :members:\n')
     
   co = sorted(commands)
   for c in co:
     src_dir = directory + '/gf_' + c + '.cc'
     if (c != 'workspace' and os.path.exists(src_dir) and os.path.isfile(src_dir)):
-      print '\nModule ' + c
-      print '--------------------------\n'
+      print('\nModule ' + c)
+      print('--------------------------\n')
       [gdoc, args] = ExtractGlobalDoc(src_dir);
       gdoc = FilterDoc(gdoc, langage, objects, commands, set_replace)
       nbspace = -1; util_pos = -1; nbsp = -1
@@ -2078,14 +2078,14 @@ elif (option == 'python-doc'):
           if (nbspace >= 0):
               sys.stdout.write('  ' + l)
               
-      print ''
+      print('')
       fl = open(src_dir)
       doc = '';
       [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, langage)
       while (ok):
         mname = string.replace(mname, ' ', '_');
         mname = string.replace(mname, '-', '_');
-        print ''
+        print('')
         if (mname[0] == '.'):
           print('.. autofunction:: getfem.' + c)
         else:
@@ -2096,4 +2096,4 @@ elif (option == 'python-doc'):
 
 
 else:
-    print 'Unrecognized option. Valid options are ' + valid_options
+    print('Unrecognized option. Valid options are ' + valid_options)

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: UTF8 -*-
+# -*- coding: utf-8 -*-
 # Python GetFEM++ interface
 #
 # Copyright (C) 2004-2017 Yves Renard, Julien Pommier.
@@ -32,8 +32,8 @@
 try:
     from tvtk.api import tvtk
 except:
-    print "\n\n** Could not load tvtk. Did you install it ?\n"
-    print "   ( https://svn.enthought.com/enthought/wiki/TVTK ) **\n\n"
+    print("\n\n** Could not load tvtk. Did you install it ?\n")
+    print("   ( https://svn.enthought.com/enthought/wiki/TVTK ) **\n\n")
     raise
 
 import os
@@ -216,7 +216,7 @@ class FigureItem:
                 scale = float(scale[:-1]) * 0.01 * a/b;
         P=P + scale * deform
         self.sl.set_pts(P)
-        #print "deformation!", repr(mf), U.size(), repr(self.sl), "\nDEFORM=",self.deform,"\n"
+        #print("deformation!", repr(mf), U.size(), repr(self.sl), "\nDEFORM=",self.deform,"\n")
         sys.stdout.flush()
 
 
@@ -510,7 +510,7 @@ class Figure:
 ##    E1.transpose()
 ##    edges=tvtk.PolyData(points=array(Pe),polys=array(E1))
 
-##    print mesh.get()
+##    print(mesh.get())
 
 
 ##    #data = array([[0,0,0,10], [1,0,0,20],
@@ -555,7 +555,7 @@ class Figure:
 ##    # across the entire range of colors
 ##    mapper = tvtk.PolyDataMapper(input=mesh);
 ##    mapper_edges = tvtk.PolyDataMapper(input=edges);
-##    print mapper
+##    print(mapper)
 
 ##    #mapper = tvtk.PolyDataMapper(input=mesh)
 ##    #mapper.scalar_range = min(temperature), max(temperature)
@@ -588,7 +588,7 @@ class Figure:
 ##    gui.start_event_loop()
 
 
-##    print "finished!"
+##    print("finished!")
 
 
 ##    #f=mlab.figure()

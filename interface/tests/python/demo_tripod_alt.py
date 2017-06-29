@@ -31,9 +31,9 @@
 from getfem import *
 from numpy import *
 
-print 'importing the mesh..',
+print('importing the mesh..',)
 m=Mesh('import','gid','../meshes/tripod.GiD.msh')
-print 'done!'
+print('done!')
 mfu=MeshFem(m,3)
 mfd=MeshFem(m,1)
 mfe=MeshFem(m,1)
@@ -43,8 +43,8 @@ mfu.set_fem(Fem('FEM_PK(3,%d)' % (degree,)));
 mfe.set_fem(Fem('FEM_PK_DISCONTINUOUS(3,%d,0.01)' % (degree,)))
 mfd.set_fem(Fem('FEM_PK(3,0)'))
 
-print 'nbcvs=%d, nbpts=%d, qdim=%d, fem = %s, nbdof=%d' % \
-      (m.nbcvs(), m.nbpts(), mfu.qdim(), mfu.fem()[0].char(), mfu.nbdof())
+print('nbcvs=%d, nbpts=%d, qdim=%d, fem = %s, nbdof=%d' % \
+      (m.nbcvs(), m.nbpts(), mfu.qdim(), mfu.fem()[0].char(), mfu.nbdof()))
 
 P=m.pts()
 
@@ -80,11 +80,11 @@ KK=Nt*K*N
 FF=Nt*F
 
 # solve ...
-print "preconditioner.."
+print("preconditioner..")
 P=Precond('ildlt',KK)
-print "solving...",
+print("solving..."),
 UU=linsolve_cg(KK,FF,P)
-print "done!"
+print("done!")
 U=N*UU+U0
 
 # post-processing
@@ -101,7 +101,7 @@ for i in range(0, DU.shape[2]):
   Sigma[:,:,i]=E
   VM[i] = sum(E.ravel()**2) - (1./3.)*sum(diagonal(E))**2
 
-print 'Von Mises range: ', VM.min(), VM.max()
+print('Von Mises range: ', VM.min(), VM.max())
 
 # export results to VTK you can use
 # i.e. with  "mayavi2 -d tripod.vtk -f WarpScalar -m Surface"
@@ -118,7 +118,7 @@ sl.export_to_vtk('tripod_ev.vtk', mfu, U, 'Displacement', SigmaSL, 'stress')
 # export to Gmsh POS
 sl.export_to_pos('tripod.pos', mfe, VM, 'Von Mises Stress', mfu, U, 'Displacement')
 
-print 'You can view the tripod with (for example) mayavi:'
-print 'mayavi2 -d tripod.vtk -f WarpScalar -m Surface'
-print 'or'
-print 'gmsh tripod.pos'
+print('You can view the tripod with (for example) mayavi:')
+print('mayavi2 -d tripod.vtk -f WarpScalar -m Surface')
+print('or')
+print('gmsh tripod.pos')

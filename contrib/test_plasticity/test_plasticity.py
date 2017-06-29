@@ -36,7 +36,7 @@ with_graphics=True
 try:
     import getfem_tvtk
 except:
-    print "\n** Could NOT import getfem_tvtk -- graphical output disabled **\n"
+    print("\n** Could NOT import getfem_tvtk -- graphical output disabled **\n")
     import time
     time.sleep(2)
     with_graphics=False
@@ -92,9 +92,9 @@ nbstep = F.shape[0]
 
 dd=mf0.basic_dof_from_cvid()
 
-print 'nbstep:', nbstep
+print('nbstep:', nbstep)
 for step in range(0, nbstep):
-    print 'step %d' % (step,)
+    print('step %d' % (step,))
     md.set_variable('VolumicData', [F[step,0],F[step,1]])
     md.solve('noisy', 'lsearch', 'simplest',  'alpha min', 0.8, 'max_iter', 100, 'max_res', 1e-6)
     U = md.variable('u')
@@ -115,5 +115,5 @@ for step in range(0, nbstep):
     if with_graphics:
         fig = getfem_tvtk.Figure()
         fig.show(mfu, deformation=U, deformation_scale=1, data=(mfdu,VM))
-        print "Press Q to continue.."
+        print("Press Q to continue..")
         fig.loop()

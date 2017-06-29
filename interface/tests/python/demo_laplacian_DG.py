@@ -83,7 +83,7 @@ if (verify_neighbour_computation):
   TEST_FACES=5
   adjf = m.adjacent_face(42, 0);
   if (len(adjf) != 2):
-    print ('No adjacent edge found, change the element number')
+    print('No adjacent edge found, change the element number')
     exit(1)
   m.set_region(TEST_FACES, np.array([[42,adjf[0][0]], [0,adjf[1][0]]]));
   
@@ -156,14 +156,14 @@ md.solve()
 U = md.variable('u')
 L2error = gf.compute(mfu, U-Ue, 'L2 norm', mim)
 H1error = gf.compute(mfu, U-Ue, 'H1 norm', mim)
-print 'Error in L2 norm : ', L2error
-print 'Error in H1 norm : ', H1error
+print('Error in L2 norm : ', L2error)
+print('Error in H1 norm : ', H1error)
 
 # Export data
 mfu.export_to_pos('laplacian.pos', Ue,'Exact solution',
                                     U,'Computed solution')
-print 'You can view the solution with (for example):'
-print 'gmsh laplacian.pos'
+print('You can view the solution with (for example):')
+print('gmsh laplacian.pos')
 
 if (verify_neighbour_computation):
   A=gf.asm('generic', mim, 1, 'u*Test_u*(Normal.Normal)', TEST_FACES, md)
@@ -173,10 +173,10 @@ if (verify_neighbour_computation):
   B=gf.asm('generic', mim, 1, '(Interpolate(Grad_u,neighbour_elt).Normal)*(Interpolate(Grad_Test_u,neighbour_elt).Normal)', TEST_FACES, md)
   err_v = err_v + np.linalg.norm(A-B)
   if (err_v > 1E-13):
-    print 'Test on neighbour element computation: error to big: ', err_v
+    print('Test on neighbour element computation: error to big: ', err_v)
     exit(1)
   
 if (H1error > 1e-3):
-    print 'Error too large !'
+    print('Error too large !')
     exit(1)
 

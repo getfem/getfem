@@ -59,8 +59,8 @@ mfrhs.set_fem(gf.Fem('FEM_PYRAMID_LAGRANGE(2)'))
 
 if (export_mesh):
   m.export_to_vtk('mesh.vtk');
-  print ('\nYou can view the mesh for instance with');
-  print ('mayavi2 -d mesh.vtk -f ExtractEdges -m Surface \n');
+  print('\nYou can view the mesh for instance with');
+  print('mayavi2 -d mesh.vtk -f ExtractEdges -m Surface \n');
 
 
 #  Integration method used
@@ -144,22 +144,22 @@ md.solve()
 U = md.variable('u')
 L2error = gf.compute(mfu, U-Ue, 'L2 norm', mim)
 H1error = gf.compute(mfu, U-Ue, 'H1 norm', mim)
-print 'Error in L2 norm : ', L2error
-print 'Error in H1 norm : ', H1error
+print('Error in L2 norm : ', L2error)
+print('Error in H1 norm : ', H1error)
 UU = np.zeros(U.size);
 UU[4] = 1.;
 
 # Export data
 mfu.export_to_pos('laplacian.pos', Ue, 'Exact solution',
                   U, 'Computed solution', UU, 'Test field')
-print 'You can view the solution with (for example):'
-print 'gmsh laplacian.pos'
+print('You can view the solution with (for example):')
+print('gmsh laplacian.pos')
 
 mfu.export_to_vtk('laplacian.vtk', mfu, Ue, 'Exact solution', mfu, U, 'Computed solution', mfu, UU, 'Test field');
-print ('\nYou can view the solution for instance with');
-print ('mayavi2 -d laplacian.vtk -m Surface \n');
+print('\nYou can view the solution for instance with');
+print('mayavi2 -d laplacian.vtk -m Surface \n');
 
 
 if (H1error > 0.09):
-    print 'Error too large !'
+    print('Error too large !')
     exit(1)

@@ -25,7 +25,7 @@ TESTS = test_plasticity.py
 AM_TESTS_ENVIRONMENT = \
 	export PYTHONPATH=$(top_builddir)/interface/src/python; \
 	export LD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(top_builddir)/src/.libs;
-LOG_COMPILER = python
+LOG_COMPILER = $(PYTHON)
 endif
 
 EXTRA_DIST = \

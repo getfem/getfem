@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: UTF8 -*-
+# -*- coding: utf-8 -*-
 # Python GetFEM++ interface
 #
 # Copyright (C)  2015-2017 Yves Renard.
@@ -57,7 +57,7 @@ mo1 = gf.MesherObject('ball', [0., 15.], 15.)
 mo2 = gf.MesherObject('ball', [0., 15.], 8.)
 mo3 = gf.MesherObject('set minus', mo1, mo2)
 
-print ('Meshes generation')
+print('Meshes generation')
 mesh1 = gf.Mesh('generate', mo3, h, 2)
 mesh2 = gf.Mesh('import','structured','GT="GT_PK(2,1)";SIZES=[30,10];NOISED=0;NSUBDIV=[%d,%d];' % (int(30/h)+1, int(10/h)+1));
 mesh2.translate([-15.,-10.])
@@ -66,8 +66,8 @@ mesh2.translate([-15.,-10.])
 if (export_mesh):
   mesh1.export_to_vtk('mesh1.vtk')
   mesh2.export_to_vtk('mesh2.vtk')
-  print ('\nYou can view the meshes for instance with')
-  print ('mayavi2  -d mesh1.vtk -f ExtractEdges -m Surface -d mesh2.vtk -f ExtractEdges -m Surface \n')
+  print('\nYou can view the meshes for instance with')
+  print('mayavi2  -d mesh1.vtk -f ExtractEdges -m Surface -d mesh2.vtk -f ExtractEdges -m Surface \n')
 
 
 #
@@ -147,11 +147,11 @@ else:
 # Model solve
 #
 
-print 'Solve problem with ', md.nbdof(), ' dofs'
+print('Solve problem with ', md.nbdof(), ' dofs')
 md.solve('max_res', 1E-9, 'max_iter', 40, 'noisy') # , 'lsearch', 'simplest',  'alpha min', 0.8)
 if not(Dirichlet_version):
-  print 'alpha_D = ', md.variable('alpha_D')[0]
-# print 'Contact multiplier ', md.variable('lambda1')
+  print('alpha_D = ', md.variable('alpha_D')[0])
+# print('Contact multiplier ', md.variable('lambda1'))
 
 #
 # Solution export
@@ -164,5 +164,5 @@ VM2 = md.compute_isotropic_linearized_Von_Mises_or_Tresca('u2', 'clambdastar', '
 mfvm1.export_to_vtk('displacement_with_von_mises1.vtk', mfvm1,  VM1, 'Von Mises Stresses', mfu1, U1, 'Displacements')
 
 mfvm2.export_to_vtk('displacement_with_von_mises2.vtk', mfvm2,  VM2, 'Von Mises Stresses', mfu2, U2, 'Displacements')
-print ('You can view solutions with for instance:\nmayavi2 -d displacement_with_von_mises1.vtk -f WarpVector -m Surface -d displacement_with_von_mises2.vtk -f WarpVector -m Surface')
+print('You can view solutions with for instance:\nmayavi2 -d displacement_with_von_mises1.vtk -f WarpVector -m Surface -d displacement_with_von_mises2.vtk -f WarpVector -m Surface')
 

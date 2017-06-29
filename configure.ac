@@ -835,14 +835,6 @@ AC_ARG_WITH(matlab-toolbox-dir,
             TOOLBOXDIR="$withval",TOOLBOXDIR="$GFPREFIX/getfem_toolbox")
 AC_SUBST(TOOLBOXDIR)
 
-AC_ARG_ENABLE(python,
- [AS_HELP_STRING([--enable-python],[turn on/off python support])],
- [case "${enableval}" in
-   yes) usepython=YES ;;
-   no)  usepython=NO ;;
-   *) AC_MSG_ERROR([bad value ${enableval} for --enable-python]) ;;
- esac],[usepython=YES])
-
 if test "$usematlab" != NO; then
   AC_CHECK_PROGS(MEX, mex)
   if test x"$MEX" = x""; then
@@ -984,10 +976,27 @@ dnl ----------------------------------------------
 dnl python 
 dnl ----------------------------------------------
 
-if test x$usepython = xYES; then
-  AM_PATH_PYTHON(2.2, usepython=YES, usepython=NO)
+AC_ARG_ENABLE(python,
+ [AS_HELP_STRING([--enable-python],[turn on/off python support])],
+ [case "${enableval}" in
+   yes) usepython=YES ;;
+   no)  usepython=NO ;;
+   *) AC_MSG_ERROR([bad value ${enableval} for --enable-python]) ;;
+ esac],[usepython=YES])
+
+AC_ARG_ENABLE(python3,
+ [AS_HELP_STRING([--enable-python3],[turn on/off python3 (instead of python2) support])],
+ [case "${enableval}" in
+   yes) usepython3=YES ;;
+   no)  usepython3=NO ;;
+   *) AC_MSG_ERROR([bad value ${enableval} for --enable-python3]) ;;
+ esac],[usepython3=NO])
+
+if test x$usepython3 = xYES; then
+  AM_PATH_PYTHON(3.4, usepython=YES, usepython=NO)
+elif test x$usepython = xYES; then
+  AM_PATH_PYTHON(2.7, usepython=YES, usepython=NO)
 fi
-echo $PYTHON
 
 case $host in
     *mingw*)
@@ -1003,21 +1012,19 @@ esac
 AC_SUBST(PYTHON_CC_ARG)
 AC_SUBST(PYTHON_EXTRA_EXT_PARAM)
 
-
-
 if test "x$usepython" = "xYES"; then
-  echo "Building with python support (use --enable-python=no to disable it)"
+  echo "Building with python ($PYTHON) support (use --enable-python=no to disable it) "
   echo "You will need the python-numpy and python-scipy packages."
 dnl  AM_PATH_PYTHON(2.2)
   AC_PYTHON_DEVEL
-  ac_python_numpy=`$PYTHON -c 'import numpy; print "YES"' 2>/dev/null`
+  ac_python_numpy=`$PYTHON -c 'import numpy; print("YES")' 2>/dev/null`
   if  test "x$ac_python_numpy" != "xYES"; then
     usepython=NO
     MSG="PYTHON DISABLED: numpy not found. You need to install the python-numpy package."
     echo $MSG
     WARNING_MSG="$WARNING_MSG\n$MSG"
   fi
-  ac_python_scipy=`$PYTHON -c 'import scipy; print "YES"' 2>/dev/null`
+  ac_python_scipy=`$PYTHON -c 'import scipy; print("YES")' 2>/dev/null`
   if  test "x$ac_python_scipy" != "xYES"; then
     usepython=NO
     MSG="PYTHON DISABLED: scipy not found. You need to install the python-scipy package."
@@ -1025,7 +1032,7 @@ dnl  AM_PATH_PYTHON(2.2)
     WARNING_MSG="$WARNING_MSG\n$MSG"
   fi
   if  test $paralevel -ge 1; then
-    ac_python_mpi4py=`$PYTHON -c 'import mpi4py; print "YES"' 2>/dev/null`
+    ac_python_mpi4py=`$PYTHON -c 'import mpi4py; print("YES")' 2>/dev/null`
     if test "x$ac_python_mpi4py" != "xYES"; then
       usepython=NO
       MSG="PARALLEL PYTHON DISABLED: mpi4py not found. You need to install the python-mpi4py package."

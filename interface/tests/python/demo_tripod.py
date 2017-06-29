@@ -35,14 +35,14 @@ with_graphics=True
 try:
     import getfem_tvtk
 except:
-    print "\n** Could NOT import getfem_tvtk -- graphical output disabled **\n"
+    print("\n** Could NOT import getfem_tvtk -- graphical output disabled **\n")
     import time
     time.sleep(2)
     with_graphics=False
 
 
 m=gf.Mesh('import','gid','../meshes/tripod.GiD.msh')
-print 'done!'
+print('done!')
 mfu=gf.MeshFem(m,3) # displacement
 mfp=gf.MeshFem(m,1) # pressure
 mfd=gf.MeshFem(m,1) # data
@@ -55,11 +55,11 @@ mfu.set_fem(gf.Fem('FEM_PK(3,%d)' % (degree,)))
 mfd.set_fem(gf.Fem('FEM_PK(3,0)'))
 mfp.set_fem(gf.Fem('FEM_PK_DISCONTINUOUS(3,0)'))
 
-print 'nbcvs=%d, nbpts=%d, qdim=%d, fem = %s, nbdof=%d' % \
-      (m.nbcvs(), m.nbpts(), mfu.qdim(), mfu.fem()[0].char(), mfu.nbdof())
+print('nbcvs=%d, nbpts=%d, qdim=%d, fem = %s, nbdof=%d' % \
+      (m.nbcvs(), m.nbpts(), mfu.qdim(), mfu.fem()[0].char(), mfu.nbdof()))
 
 P=m.pts()
-print 'test', P[1,:]
+print('test', P[1,:])
 ctop=(abs(P[1,:] - 13) < 1e-6)
 cbot=(abs(P[1,:] + 10) < 1e-6)
 pidtop=np.compress(ctop, range(0, m.nbpts()))
@@ -106,10 +106,10 @@ md.add_source_term_brick(mim, 'u', 'VolumicData');
 # Attach the tripod to the ground
 md.add_Dirichlet_condition_with_multipliers(mim, 'u', mfu, 2);
 
-print 'running solve...'
+print('running solve...')
 md.solve('noisy', 'max iter', 1);
 U = md.variable('u');
-print 'solve done!'
+print('solve done!')
 
 
 mfdu=gf.MeshFem(m,1)
@@ -122,7 +122,7 @@ else:
 # post-processing
 sl=gf.Slice(('boundary',), mfu, degree)
 
-print 'Von Mises range: ', VM.min(), VM.max()
+print('Von Mises range: ', VM.min(), VM.max())
 
 # export results to VTK
 sl.export_to_vtk('tripod.vtk', 'ascii', mfdu,  VM, 'Von Mises Stress', mfu, U, 'Displacement')
@@ -130,10 +130,10 @@ sl.export_to_pos('tripod.pos', mfdu, VM, 'Von Mises Stress', mfu, U, 'Displaceme
 
 gf.memstats()
 
-print 'You can view the tripod with (for example) mayavi:'
-print 'mayavi2 -d tripod.vtk -f WarpVector -m Surface'
-print 'or'
-print 'gmsh tripod.pos'
+print('You can view the tripod with (for example) mayavi:')
+print('mayavi2 -d tripod.vtk -f WarpVector -m Surface')
+print('or')
+print('gmsh tripod.pos')
 
 # mfu.save('tripod.mf', 'with_mesh')
 # U.tofile('tripod.U')
@@ -143,6 +143,6 @@ print 'gmsh tripod.pos'
 if with_graphics:
   fig = getfem_tvtk.Figure()
   fig.show(mfu, deformation=U, data=(mfdu,VM), deformation_scale='20%')
-  print "Press Q to continue.."
+  print("Press Q to continue..")
   fig.set_colormap('tripod')
   fig.loop()

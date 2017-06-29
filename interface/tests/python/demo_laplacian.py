@@ -126,16 +126,16 @@ md.solve()
 U = md.variable('u')
 L2error = gf.compute(mfu, U-Ue, 'L2 norm', mim)
 H1error = gf.compute(mfu, U-Ue, 'H1 norm', mim)
-print 'Error in L2 norm : ', L2error
-print 'Error in H1 norm : ', H1error
+print('Error in L2 norm : ', L2error)
+print('Error in H1 norm : ', H1error)
 
 # Export data
 mfu.export_to_pos('laplacian.pos', Ue,'Exact solution',
                                     U,'Computed solution')
-print 'You can view the solution with (for example):'
-print 'gmsh laplacian.pos'
+print('You can view the solution with (for example):')
+print('gmsh laplacian.pos')
 
 
 if (H1error > 1e-3):
-    print 'Error too large !'
+    print('Error too large !')
     exit(1)

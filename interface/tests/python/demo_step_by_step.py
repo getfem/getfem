@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: UTF8 -*-
+# -*- coding: utf-8 -*-
 # Python GetFEM++ interface
 #
 # Copyright (C) 2004-2017 Julien Pommier.
@@ -33,7 +33,7 @@ mf = gf.MeshFem(m, 1)
 mf.set_fem(gf.Fem('FEM_QK(2,2)'))
 
 # view the expression of its basis functions on the reference convex
-print gf.Fem('FEM_QK(2,2)').poly_str()
+print(gf.Fem('FEM_QK(2,2)').poly_str())
 
 # an exact integration will be used
 mim = gf.MeshIm(m, gf.Integ('IM_GAUSS_PARALLELEPIPED(2,4)'))

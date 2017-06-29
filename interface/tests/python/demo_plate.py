@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: UTF8 -*-
+# -*- coding: utf-8 -*-
 # Python GetFEM++ interface
 #
 # Copyright (C) 2004-2017 Yves Renard, Julien Pommier.
@@ -78,9 +78,9 @@ md.add_Dirichlet_condition_with_multipliers(mim, 'u3', mfu3, SIMPLE_SUPPORT_BOUN
                                              
 
 
-print 'running solve...'
+print('running solve...')
 md.solve()
-print 'solve done!'
+print('solve done!')
 
 
 u3 = md.variable('u3')
@@ -90,7 +90,7 @@ sl=gf.Slice(('none',), mfu3, 4)
 sl.export_to_vtk('plate.vtk', mfu3, u3, 'Displacement')
 sl.export_to_pos('plate.pos', mfu3, u3, 'Displacement')
 
-print 'You can view the solution with (for example):'
-print 'mayavi2 -d plate.vtk -f WarpScalar -m Surface'
-print 'or'
-print 'gmsh plate.pos'
+print('You can view the solution with (for example):')
+print('mayavi2 -d plate.vtk -f WarpScalar -m Surface')
+print('or')
+print('gmsh plate.pos')
