@@ -3332,11 +3332,12 @@ namespace getfem {
 			  "Wrong size for coeff vector");
 	  for (size_type q = 0; q < qdim; ++q) {
 	    auto itZ = Z.begin(); auto it = t.begin() + q;
-	    for (size_type k = 0; k < N; ++k, it += qdim) {
+	    for (size_type k = 0; k < N; ++k) {
+	      if (k)  it += qdim;
 	      auto itc = coeff.begin() + q;
-	      *it = (*itc) * (*itZ++); itc += qdim;
-	      for (size_type j = 1; j < ndof; ++j, itc += qdim)
-		*it += (*itc) * (*itZ++);
+	      *it = (*itc) * (*itZ++);
+	      for (size_type j = 1; j < ndof; ++j)
+		{ itc += qdim; *it += (*itc) * (*itZ++); }
 	    }
 	  }
 	} else {
@@ -3485,7 +3486,8 @@ namespace getfem {
 	    
 	    // Performs t(i*Qmult+j, k*Qmult + j) = Z(i,k);
 	    auto it = t.begin();
-	    for (size_type i = 0; i < ndof; ++i, ++itZ, it += Qmult) {
+	    for (size_type i = 0; i < ndof; ++i, ++itZ) {
+	      if (i) it += Qmult;
 	      auto it2 = it;
 	      *it2 = *itZ;
 	      for (size_type j = 1; j < Qmult; ++j) { it2 += sss; *it2 = *itZ; }
@@ -3501,7 +3503,8 @@ namespace getfem {
 	    // Performs t(i*Qmult+j, k*Qmult + j) = Z(i,k);
 	    for (size_type k = 0; k < target_dim; ++k) {
 	      auto it = t.begin() + (ss * k);
-	      for (size_type i = 0; i < ndof; ++i, ++itZ, it += Qmult) {
+	      for (size_type i = 0; i < ndof; ++i, ++itZ) {
+		if (i) it += Qmult;
 		auto it2 = it;
 		*it2 = *itZ;
 		for (size_type j = 1; j < Qmult; ++j)
@@ -3542,7 +3545,8 @@ namespace getfem {
 	    // Performs t(i*Qmult+j, k*Qmult + j, l) = Z(i,k,l);
 	    for (size_type l = 0; l < N; ++l) {
 	      base_tensor::iterator it = t.begin() + (ssss*l);
-	      for (size_type i = 0; i < ndof; ++i, ++itZ, it += Qmult) {
+	      for (size_type i = 0; i < ndof; ++i, ++itZ) {
+		if (i) it += Qmult;
 		base_tensor::iterator it2 = it;
 		*it2 = *itZ;
 		for (size_type j = 1; j < Qmult; ++j) { it2+=sss; *it2=*itZ; }
@@ -3562,7 +3566,8 @@ namespace getfem {
 	    for (size_type l = 0; l < N; ++l)
 	      for (size_type k = 0; k < target_dim; ++k) {
 		base_tensor::iterator it = t.begin() + (ss * k + ssss*l);
-		for (size_type i = 0; i < ndof; ++i, ++itZ, it += Qmult) {
+		for (size_type i = 0; i < ndof; ++i, ++itZ) {
+		  if (i) it += Qmult;
 		  base_tensor::iterator it2 = it;
 		  *it2 = *itZ;
 		  for (size_type j = 1; j < Qmult; ++j) { it2+=sss; *it2=*itZ; }
@@ -3596,7 +3601,8 @@ namespace getfem {
       
       // Performs t(i*qdim+j, k*qdim + j) = Z(i,k);
       auto it = t.begin();
-      for (size_type i = 0; i < ndof; ++i, ++itZ, it += qdim) {
+      for (size_type i = 0; i < ndof; ++i, ++itZ) {
+	if (i) it += qdim;
 	auto it2 = it;
 	*it2 = *itZ;
 	for (size_type j = 1; j < qdim; ++j) { it2 += sss; *it2 = *itZ; }
@@ -3624,7 +3630,8 @@ namespace getfem {
       // Performs t(i*qdim+j, k*qdim + j, l) = Z(i,k,l);
       for (size_type l = 0; l < N; ++l) {
 	base_tensor::iterator it = t.begin() + (ssss*l);
-	for (size_type i = 0; i < ndof; ++i, ++itZ, it += qdim) {
+	for (size_type i = 0; i < ndof; ++i, ++itZ) {
+	  if (i) it += qdim;
 	  base_tensor::iterator it2 = it;
 	  *it2 = *itZ;
 	  for (size_type j = 1; j < qdim; ++j) { it2+=sss; *it2=*itZ; }
@@ -3658,7 +3665,8 @@ namespace getfem {
         size_type NNdim = Z.sizes()[2]*target_dim;
         for (size_type klm = 0; klm < NNdim; ++klm) {
           base_tensor::iterator it = t.begin() + (ss * klm);
-          for (size_type i = 0; i < ndof; ++i, ++itZ, it += Qmult) {
+          for (size_type i = 0; i < ndof; ++i, ++itZ) {
+	    if (i) it += Qmult;
             base_tensor::iterator it2 = it;
             *it2 = *itZ;
             for (size_type j = 1; j < Qmult; ++j) { it2 += sss; *it2 = *itZ; }
@@ -4777,9 +4785,11 @@ namespace getfem {
       auto it = t.begin(), it1 = tc1.begin();
       for (size_type i = 0; i < s1; ++i, ++it1) {
       	auto it2 = tc2.begin();
-       	for (size_type j = 0; j < s2_q; ++j, it2+=q) {
+       	for (size_type j = 0; j < s2_q; ++j) {
+	  if (j) it2+=q;
       	  auto itt1 = it1;
-      	  for (size_type l = 0; l < q; ++l, ++it, itt1 += s1) {
+      	  for (size_type l = 0; l < q; ++l, ++it) {
+	    if (l) itt1 += s1;
       	    auto ittt1 = itt1, ittt2 = it2;
       	    *it = *ittt1 * (*ittt2);
       	    for (size_type m = 1; m < n; ++m) {
@@ -4815,9 +4825,11 @@ namespace getfem {
       auto it = t.begin(), it1 = tc1.begin();
       for (size_type i = 0; i < s1; ++i, ++it1) {
       	auto it2 = tc2.begin();
-       	for (size_type j = 0; j < s2_q; ++j, it2+=q) {
+       	for (size_type j = 0; j < s2_q; ++j) {
+	  if (j) it2+=q;
       	  auto itt1 = it1;
-      	  for (size_type l = 0; l < q; ++l, ++it, itt1 += s1) {
+      	  for (size_type l = 0; l < q; ++l, ++it) {
+	    if (l) itt1 += s1;
       	    auto ittt1 = itt1, ittt2 = it2;
       	    *it = *ittt1 * (*ittt2);
       	    for (size_type m = 1; m < N; ++m) {
@@ -4847,9 +4859,11 @@ namespace getfem {
       auto it = t.begin(), it1 = tc1.begin();
       for (size_type i = 0; i < s1; ++i, ++it1) {
       	auto it2 = tc2.begin();
-       	for (size_type j = 0; j < s2_q; ++j, it2+=Q) {
+       	for (size_type j = 0; j < s2_q; ++j) {
+	  if (j) it2+=Q;
       	  auto itt1 = it1;
-      	  for (size_type l = 0; l < Q; ++l, ++it, itt1 += s1) {
+      	  for (size_type l = 0; l < Q; ++l, ++it) {
+	    if (l) itt1 += s1;
       	    auto ittt1 = itt1, ittt2 = it2;
       	    *it = *ittt1 * (*ittt2);
       	    for (size_type m = 1; m < N; ++m) {
@@ -4973,7 +4987,8 @@ namespace getfem {
       auto it = t.begin(), it1 = tc1.begin();
       for (size_type i = 0; i < s1; ++i, ++it1) {
 	auto it2 = tc2.begin();
-	for (size_type j = 0; j < s2_n; ++j, it2 += nn) {
+	for (size_type j = 0; j < s2_n; ++j) {
+	  if (j) it2 += nn;
 	  auto itt1 = it1;
 	  *it++ = (*itt1) * (*it2);
 	  for (size_type k = 1; k < nn; ++k)
@@ -5032,9 +5047,11 @@ namespace getfem {
 
       // std::fill(t.begin(), t.end(), scalar_type(0)); // Factorized
       auto it2 = tc2.begin();
-      for (size_type j = 0; j < ss2; ++j, it2 += nn) {
+      for (size_type j = 0; j < ss2; ++j) {
+	if (j) it2 += nn;
 	auto it1 = tc1.begin(), it = t.begin() + j*nn;
-	for (size_type i = 0; i < ss1; ++i, it1 += nn, it += s2*nn) {
+	for (size_type i = 0; i < ss1; ++i) {
+	  if (i) { it1 += nn, it += s2*nn; }
        	  scalar_type a = (*it1) * (*it2);
 	  auto itt = it;
 	  *itt = a; itt += s2_1; *itt = a;
@@ -6473,7 +6490,8 @@ namespace getfem {
     // qsort(&(dofs1_sort[0]), s1, sizeof(size_type), compare_my_indices);
 
     base_vector::const_iterator it = elem.cbegin();
-    for (size_type j = 0; j < s2; ++j, it += s1) { // Iteration on columns
+    for (size_type j = 0; j < s2; ++j) { // Iteration on columns
+      if (j) it += s1;
       std::vector<gmm::elt_rsvector_<scalar_type>> &col = K[dofs2[j]];
       size_type nb = col.size();
       
