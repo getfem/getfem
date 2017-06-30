@@ -1,0 +1,29 @@
+.. include:: ../replaces.txt
+
+************************
+  What's New in |gf| 5.2
+************************
+
+The main contribution of this release is the sharp optimization of the high level generic assembly. Speed up in assembly time can be very important. The first pyramidal elements were also designed.
+
+Released version, 2016/06/29.
+
+The main changes are:
+
+   * |gf| project is now hosted by `Savannah <https://savannah.nongnu.org/projects/getfem>`_.
+
+   * Sharp optimization of the high level generic assembly: optimization of
+     the most used instructions and most used elements, optimization of the
+     storage into sparse matrix optimization, factorization of some elementary
+     operations, etc.
+
+   * Isoparametric Lagrange pyramidal elements of degree 1 and 2 have been
+     added together with corresponding quadrature methods.
+
+   * Python interface is now compatible with Python 3.x versions.
+
+   * A new transformation has been added to the high level generic assembly
+     language for the extrapolation on a neighbour element.
+
+   * Compatibility for Windows and Mac installation has been checked.
+
