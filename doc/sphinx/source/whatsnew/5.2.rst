@@ -22,6 +22,8 @@ The main changes are:
 
    * Python interface is now compatible with Python 3.x versions.
 
+   * Import of Ansys meshes.
+
    * A new transformation has been added to the high level generic assembly
      language for the extrapolation on a neighbour element.
 
