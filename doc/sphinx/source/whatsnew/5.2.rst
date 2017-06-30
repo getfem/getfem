@@ -6,7 +6,7 @@
 
 The main contribution of this release is the sharp optimization of the high level generic assembly. Speed up in assembly time can be very important. The first pyramidal elements were also designed.
 
-Released version, 2016/06/29.
+Released version, 2017/06/30.
 
 The main changes are:
 

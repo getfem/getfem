@@ -1,3 +1,4 @@
+# -*- perl -*-
 #  Copyright (C) 1999-2017 Yves Renard
 #
 #  This file is a part of GetFEM++
@@ -15,13 +16,12 @@
 #  along  with  this program;  if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 
-# -*- perl -*-
 eval 'exec perl -S $0 "$@"'
   if 0;
 
 $getfem_root = ".";
 $MAJOR_VERSION = "5";
-$MINOR_VERSION = "1";
+$MINOR_VERSION = "2";
 # $DATE_VERSION = -`date +%Y%m%d`;
 # $DATE_VERSION = ".0";
 
