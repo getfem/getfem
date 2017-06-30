@@ -2420,28 +2420,31 @@ namespace getfem {
 
     // Derivative : det(M)M^{-T}
     void derivative(const arg_list &args, size_type,
-                    base_tensor &result) const { // to be verified
+                    base_tensor &result) const {
       size_type N = args[0]->sizes()[0];
-      __mat_aux1().base_resize(N, N);
-      gmm::copy(args[0]->as_vector(), __mat_aux1().as_vector());
-      scalar_type det = bgeot::lu_inverse(__mat_aux1());
-      if (det == scalar_type(0))
-        gmm::clear(result.as_vector());
-      else {
-        auto it = result.begin();
-	auto ita = __mat_aux1().begin();
-        for (size_type j = 0; j < N; ++j, ++ita) {
-	  auto itaa = ita;
-          for (size_type i = 0; i < N; ++i, ++it, itaa += N)
-	    *it = (*itaa) * det;
+      if (N) {
+	__mat_aux1().base_resize(N, N);
+	gmm::copy(args[0]->as_vector(), __mat_aux1().as_vector());
+	scalar_type det = bgeot::lu_inverse(__mat_aux1());
+	if (det == scalar_type(0))
+	  gmm::clear(result.as_vector());
+	else {
+	  auto it = result.begin();
+	  auto ita = __mat_aux1().begin();
+	  for (size_type j = 0; j < N; ++j, ++ita) {
+	    auto itaa = ita;
+	    *it = (*itaa) * det; ++it;
+	    for (size_type i = 1; i < N; ++i, ++it)
+	      { itaa += N; *it = (*itaa) * det; }
+	  }
+	  GA_DEBUG_ASSERT(it == result.end(), "Internal error");
 	}
-        GA_DEBUG_ASSERT(it == result.end(), "Internal error");
       }
     }
 
     // Second derivative : det(M)(M^{-T}@M^{-T} - M^{-T}_{jk}M^{-T}_{li})
     void second_derivative(const arg_list &args, size_type, size_type,
-                           base_tensor &result) const { // to be verified
+                           base_tensor &result) const {
       size_type N = args[0]->sizes()[0];
       __mat_aux1().base_resize(N, N);
       gmm::copy(args[0]->as_vector(), __mat_aux1().as_vector());
