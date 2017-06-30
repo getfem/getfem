@@ -556,6 +556,7 @@ void gf_mesh(getfemint::mexargs_in& m_in,
 
       - 'gmsh' for a mesh created with `Gmsh`
       - 'gid' for a mesh created with `GiD`
+      - 'cdb' for a mesh created with `ANSYS`
       - 'am_fmt' for a mesh created with `EMC2`@*/
     sub_command
       ("import", 2, 2, 0, 1,

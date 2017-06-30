@@ -1297,13 +1297,15 @@ M = gf_mesh('clone', \tcmesh M0)
   @@s=gf_mesh_get(M,'char')@@.
 
   \sep{@@gf_mesh('import', format, filename)@@} \index{mesh import} import
-  a mesh from a file. For the moment, only three formats are
+  a mesh from a file. For the moment, only four formats are
   supported:
   \begin{itemize}
   \item mesh objects created with \WEB{http://www.geuz.org/gmsh}{gmsh}\index{gmsh} (GPL meshing/post processing tool): @@gf_mesh('import', 'gmsh', filename)@@. Note that gmsh meshes always use 3D points, even for planar meshes. However, you can remove the z-component of the planar mesh with @@gf_mesh_set(m, 'transform', [1 0 0; 0 1 0])@@. Use @@gf_mesh('import', 'gmshv2', filename)@@ for gmsh file-format version 2.0.
   \item mesh objects created with \WEB{http://gid.cimne.upc.es}{GiD}\index{GiD} (only
     limited version is free, but it is able to generate quadratic elements):
     @@gf_mesh('import', 'gid', filename)@@.
+  \item mesh objects as part of a model exported from ANSYS in blocked format with the CDWRITE command, can be imported with:
+    @@gf_mesh('import', 'cdb', filename)@@.
   \item 2D triangular meshes from \WEB{http://pauillac.inria.fr/cdrom/www/emc2/fra.htm}{emc2}\index{emc2}, saved with the am\_fmt format: @@gf_mesh('import', 'am_fmt', filename)@@.
   \end{itemize}
   Support for other file-formats should be quickly available.
