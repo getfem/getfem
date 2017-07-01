@@ -5,6 +5,7 @@
 *.tar.gz
 .deps
 .libs
+.DS_Store
 *.trs
 Makefile.in
 Makefile

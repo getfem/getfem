@@ -133,46 +133,33 @@ possible with `Cygwin <https://www.cygwin.com/>`_.
 Build with the Python interface
 *******************************
 
-Additionnaly to build the Python interface, you will have first to install a 64bits version of Python 2 on your system together with Numpy and Scipy packages. This is not completely simple, but you can follow the following steps 
+Additionnaly to build the Python interface, you will have first to install a 64bits version of Python 2 or 3 on your system together with Numpy and Scipy packages. The simpler way is to install Anaconda2 or 3 (it already contains Numpy and Scipy packages which are necessary). For instance with Anaconda2  
 
-  - Install a 64 bits Python 2 or 3 version
-    (see `Python website <https://www.python.org/downloads/windows/>`_).
-    Then, if it is not done by the installer you used, add ``C:\Pythonxx``
-    to your Windows path (where ``xx`` is the version number).
-    Close you Msys and Windows shell and re-open them to take into
-    account the changes.
+  - Install Anaconda2 and add to windows path ``C:\install_dir\Anaconda2``
+    and ``C:\install_dir\Anaconda2\Scripts`` where ``install_dir`` is the
+    installation directory of Anaconda2 (``ProgramData`` by default for
+    a system installation)
 
-  - Install Pip (see `Pip <https://pip.pypa.io/en/latest/installing/>`_)
+  - close an re-open a windows command shell and msys
 
-  - Downloads the precompiled packages of numpy and scipy for 64 bits
-    and Python `here <http://www.lfd.uci.edu/~gohlke/pythonlibs/>`_
-    (i.e. for isntance wheel packages
-    ``numpy-1.11.3+mkl-cp27-cp27m-win_amd64.whl``
-    and ``scipy-0.19.0-cp27-cp27m-win_amd64.whl`` for python 2).
-
-  - Enter into the directory where you downloaded the two
-    wheel Python packages and install them with::
-
-      $ python -m pip install numpy-1.11.3+mkl-cp27-cp27m-win_amd64.whl
-      $ python -m pip install scipy-0.19.0-cp27-cp27m-win_amd64.whl
-
-  - Go to the Getfem source directory and perform again::
+  - run again::
 
       $ ./configure --with-blas="-lblas -lgfortran" --disable-superlu
 
-    if all is ok, the configure script should detect the Python installation
-    and the presence of Numpy and Scipy packages and allow the compilation
-    of the Python interface. Then just perform a::
+    Python should be detected and the Python interface prepared to be built.
+
+  - Then just run::
 
       $ make
 
-    You just remain to add as a Windows system variable ``PYTHONPATH`` with the
+    It normally build the interface correctly. Then just add as a Windows
+    system variable ``PYTHONPATH`` with the
     value ``c:\msys\home\login\getfem-5.?\interface\src\python`` where
     ``login`` and ``5.?`` have tobe adapted. You can either copy the
     directory ``interface\src\python`` where the interface has been built
-    in a Python 2 directory.
+    in a Python 2 directory. You can then run the test programs in
+    ``interface/tests/python`` using python.
 
-Still some problems ... to be completed soon
 
 Build with the Matlab interface
 *******************************
