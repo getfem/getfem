@@ -31,7 +31,7 @@ if [ "$srcdir" == "" ]; then
   srcdir="."
 fi
 
-me=$((cd $srcdir && git ls-remote) 2>&1| grep "git.sv.gnu.org" | awk -F"//" '{print $2}' | awk -F"@" '{print $1}')
+me=$((cd $srcdir && git ls-remote) 2>&1| grep "git.sv.gnu.org" | awk -F"From " '{print $2}' | awk -F"@" '{print $1}')
 echo "Savannah login : $me"
 if [ "$me" == "" ]; then
 #  me="renard"

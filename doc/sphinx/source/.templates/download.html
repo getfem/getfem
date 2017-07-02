@@ -98,9 +98,26 @@ and with respect to different Ubuntu releases at
 GetFEM++ including its python interface can be installed from a terminal
 by executing <b>aptitude update</b> and <b>aptitude install python-getfem++</b>.
 
-<h3> On Windows </h3>
+<h3> On Windows (last release)</h3>
 
-<p>Installer of the Scilab interface for 32bits Windows and Scilab 5.3 provided by Yann Colette (2011/11/18):
+<p>Installer of the GetFEM 5.2 interface for 64bits Windows and Matlab 2016:
+  <a href="http://download-mirror.savannah.gnu.org/releases/getfem/misc/getfem5.2-matlab2016-interface-setup.exe">getfem5.2-matlab2016-interface-setup.exe</a>.</p>
+
+<p>IMPORTANT : Unfortunately, it seems that recent Matlab versions on Windows do not take properly into account the MATLABPATH environment variable (Matlab is unable to run correctly with a defined MATLABPATH variable). So, the installer do not set it and you have to add the install path specified on the installer yourself using Matlab (Click on "home" and "add path" in Matlab).</p>
+
+<p>Once installed, you can test under Matlab the tests programs included.</p>
+
+
+<p>Installer of the GetFEM 5.2 interface for 64bits Windows and Python 2.7 of Anaconda 2-4.4.0:
+  <a href="http://download-mirror.savannah.gnu.org/releases/getfem/misc/getfem5.2-python-2.7-interface-setup.exe">getfem5.2-python-2.7-interface-setup.exe</a>.</p>
+<p>Note that you have to install first Anaconda 2. The interface is only built for Anaconda 2, if you want to use Anaconda 3 (Python 3.x) you have to build the interface following <a href="{{ pathto("install/install_windows") }}">this</a>.</p>
+
+<p>Once installed, you can test under for instance command shell the Python tests programs included.</p>
+
+
+<h3> On Windows (old releases)</h3>
+
+<p>Installer of the GetFEM 4.1 Scilab interface for 32bits Windows and Scilab 5.3 provided by Yann Colette (2011/11/18):
       <a href="http://download-mirror.savannah.gnu.org/releases/getfem/misc/sci_getfem-rev2914-scilab-5.3-setup.exe">sci_getfem-rev2914-scilab-5.3-setup.exe</a>.</p>
 
 <p>Binaries for the python-interface (python 2.4, 2.5 and 2.6) on Windows XP (2010/08/28) kindly provided by Yao Koutsawa:
