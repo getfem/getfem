@@ -29,7 +29,7 @@
 
 ===========================================================================*/
 
-/** @file gmm_except.h 
+/** @file gmm_except.h
     @author Yves Renard <Yves.Renard@insa-lyon.fr>
     @author Julien Pommier <Julien.Pommier@insa-toulouse.fr>
     @date September 01, 2002.
@@ -47,7 +47,7 @@
 namespace gmm {
 
 /* *********************************************************************** */
-/*	GetFEM++ generic errors.                     			   */
+/*  GetFEM++ generic errors.                                               */
 /* *********************************************************************** */
 
   class gmm_error: public std::logic_error {
@@ -57,7 +57,7 @@ namespace gmm {
 
 #ifdef GETFEM_HAVE_PRETTY_FUNCTION
 #  define GMM_PRETTY_FUNCTION __PRETTY_FUNCTION__
-#else 
+#else
 #  define GMM_PRETTY_FUNCTION ""
 #endif
 
@@ -72,18 +72,18 @@ namespace gmm {
   // __EXCEPTIONS is defined by gcc, _CPPUNWIND is defined by visual c++
 #if defined(__EXCEPTIONS) || defined(_CPPUNWIND)
   inline void short_error_throw(const char *file, int line, const char *func,
-				const char *errormsg) {
+                                const char *errormsg) {
     std::stringstream msg__;
     msg__ << "Error in " << file << ", line " << line << " " << func
-	  << ": \n" << errormsg << std::ends;
+          << ": \n" << errormsg << std::ends;
     throw gmm::gmm_error(msg__.str());
   }
-# define GMM_THROW_(type, errormsg) {					\
-    std::stringstream msg__;						\
+# define GMM_THROW_(type, errormsg) {                                   \
+    std::stringstream msg__;                                            \
     msg__ << "Error in " << __FILE__ << ", line "                       \
-	  << __LINE__ << " " << GMM_PRETTY_FUNCTION << ": \n"		\
-	  << errormsg << std::ends;				       	\
-    throw (type)(msg__.str());						\
+          << __LINE__ << " " << GMM_PRETTY_FUNCTION << ": \n"           \
+          << errormsg << std::ends;                                     \
+    throw (type)(msg__.str());                                          \
   }
 #else
 #ifndef _MSC_VER
@@ -94,25 +94,25 @@ namespace gmm {
 #endif
 
   inline void short_error_throw(const char *file, int line, const char *func,
-				const char *errormsg) {
+                                const char *errormsg) {
     std::stringstream msg__;
     msg__ << "Error in " << file << ", line " << line << " " << func
-	  << ": \n" << errormsg << std::ends;
+          << ": \n" << errormsg << std::ends;
     std::cerr << msg__.str() << std::endl;
-    abort_no_return();	
+    abort_no_return();
   }
 
-# define GMM_THROW_(type, errormsg) {					\
-    std::stringstream msg__;						\
-    msg__ << "Error in " << __FILE__ << ", line "	       		\
-	  << __LINE__ << " " << GMM_PRETTY_FUNCTION << ": \n"		\
-	  << errormsg;					        	\
-    std::cerr << msg__.str() << std::endl;                              \
-    abort_no_return();							\
+# define GMM_THROW_(type, errormsg) {                                       \
+    std::stringstream msg__;                                                \
+    msg__ << "Error in " << __FILE__ << ", line "                           \
+          << __LINE__ << " " << GMM_PRETTY_FUNCTION << ": \n"               \
+          << errormsg;                                                      \
+    std::cerr << msg__.str() << std::endl;                                  \
+    abort_no_return();                                                      \
   }
 #endif
 
-# define GMM_ASSERT1(test, errormsg)		        		\
+# define GMM_ASSERT1(test, errormsg)                                        \
   { if (!(test)) GMM_THROW_(gmm::gmm_error, errormsg); }
 
   inline void GMM_THROW() {}
@@ -122,18 +122,18 @@ namespace gmm {
 # define GMM_ASSERT2(test, errormsg) {}
 # define GMM_ASSERT3(test, errormsg) {}
 #elif !defined(GMM_FULL_NDEBUG)
-# define GMM_ASSERT2(test, errormsg)				        \
+# define GMM_ASSERT2(test, errormsg)                                        \
   { if (!(test)) GMM_THROW_(gmm::gmm_error, errormsg); }
-# define GMM_ASSERT3(test, errormsg)				        \
+# define GMM_ASSERT3(test, errormsg)                                        \
   { if (!(test)) GMM_THROW_(gmm::gmm_error, errormsg); }
 #else
-# define GMM_ASSERT2(test, errormsg)          				\
+# define GMM_ASSERT2(test, errormsg)                                        \
   { if (!(test)) GMM_THROW_(gmm::gmm_error, errormsg); }
 # define GMM_ASSERT3(test, errormsg)
 #endif
 
 /* *********************************************************************** */
-/*	GetFEM++ warnings.                         			   */
+/*   GetFEM++ warnings.                                                    */
 /* *********************************************************************** */
 
   // This allows to dynamically hide warnings
@@ -156,10 +156,10 @@ namespace gmm {
   //                  3 remark
   //                  4 ignored by default.
 
-#define GMM_WARNING_MSG(level_, thestr)  {			             \
+#define GMM_WARNING_MSG(level_, thestr)  {                                   \
       std::stringstream msg__;                                               \
       msg__ << "Level " << level_ << " Warning in " << __FILE__ << ", line " \
-            << __LINE__ << ": " << thestr;		                     \
+            << __LINE__ << ": " << thestr;                                   \
        std::cerr << msg__.str() << std::endl;                                \
     }
 
@@ -174,27 +174,27 @@ namespace gmm {
 
 #if GMM_WARNING_LEVEL > 1
 # define GMM_WARNING2(thestr)                                           \
-  { if (2 <= gmm::warning_level::level()) GMM_WARNING_MSG(2, thestr) } 
+  { if (2 <= gmm::warning_level::level()) GMM_WARNING_MSG(2, thestr) }
 #else
 # define GMM_WARNING2(thestr) {}
 #endif
 
 #if GMM_WARNING_LEVEL > 2
 # define GMM_WARNING3(thestr)                                           \
-  { if (3 <= gmm::warning_level::level()) GMM_WARNING_MSG(3, thestr) } 
+  { if (3 <= gmm::warning_level::level()) GMM_WARNING_MSG(3, thestr) }
 #else
 # define GMM_WARNING3(thestr) {}
 #endif
 
 #if GMM_WARNING_LEVEL > 3
 # define GMM_WARNING4(thestr)                                           \
-  { if (4 <= gmm::warning_level::level()) GMM_WARNING_MSG(4, thestr) } 
+  { if (4 <= gmm::warning_level::level()) GMM_WARNING_MSG(4, thestr) }
 #else
 # define GMM_WARNING4(thestr) {}
 #endif
 
 /* *********************************************************************** */
-/*	GetFEM++ traces.                         			   */
+/*     GetFEM++ traces.                                                    */
 /* *********************************************************************** */
 
   // This allows to dynamically hide traces
@@ -217,105 +217,105 @@ namespace gmm {
   //                 4 Susceptible to occur very often (>1000).
 
 #define GMM_TRACE_MSG_MPI     // for Parallelized version
-#define GMM_TRACE_MSG(level_, thestr)  {			       \
-    GMM_TRACE_MSG_MPI {						       \
+#define GMM_TRACE_MSG(level_, thestr)  {                               \
+    GMM_TRACE_MSG_MPI {                                                \
       std::stringstream msg__;                                         \
       msg__ << "Trace " << level_ << " in " << __FILE__ << ", line "   \
-            << __LINE__ << ": " << thestr;        		       \
-      std::cout << msg__.str() << std::endl;			       \
+            << __LINE__ << ": " << thestr;                             \
+      std::cout << msg__.str() << std::endl;                           \
     }                                                                  \
-  }        
+  }
 
 #define GMM_TRACE0(thestr) GMM_TRACE_MSG(0, thestr)
 
 #if GMM_TRACES_LEVEL > 0
-# define GMM_TRACE1(thestr)						\
+# define GMM_TRACE1(thestr)                                                \
   { if (1 <= gmm::traces_level::level()) GMM_TRACE_MSG(1, thestr) }
 #else
 # define GMM_TRACE1(thestr) {}
 #endif
   
 #if GMM_TRACES_LEVEL > 1
-# define GMM_TRACE2(thestr)						\
-  { if (2 <= gmm::traces_level::level()) GMM_TRACE_MSG(2, thestr) } 
+# define GMM_TRACE2(thestr)                                                \
+  { if (2 <= gmm::traces_level::level()) GMM_TRACE_MSG(2, thestr) }
 #else
 # define GMM_TRACE2(thestr) {}
 #endif
-  
+
 #if GMM_TRACES_LEVEL > 2
-# define GMM_TRACE3(thestr)						\
-  { if (3 <= gmm::traces_level::level()) GMM_TRACE_MSG(3, thestr) } 
+# define GMM_TRACE3(thestr)                                                \
+  { if (3 <= gmm::traces_level::level()) GMM_TRACE_MSG(3, thestr) }
 #else
 # define GMM_TRACE3(thestr) {}
 #endif
-  
+
 #if GMM_TRACES_LEVEL > 3
-# define GMM_TRACE4(thestr)						\
-  { if (4 <= gmm::traces_level::level()) GMM_TRACE_MSG(4, thestr) } 
+# define GMM_TRACE4(thestr)                                                \
+  { if (4 <= gmm::traces_level::level()) GMM_TRACE_MSG(4, thestr) }
 #else
 # define GMM_TRACE4(thestr) {}
 #endif
-  
-  
+
+
   /* ********************************************************************* */
-  /*    Definitions for compatibility with old versions.        	   */
-  /* ********************************************************************* */ 
-  
-#define GMM_STANDARD_CATCH_ERROR   catch(std::logic_error e)		\
-    {									\
-      std::cerr << "============================================\n";	\
-      std::cerr << "|      An error has been detected !!!      |\n";	\
-      std::cerr << "============================================\n";	\
-      std::cerr << e.what() << std::endl << std::endl;			\
-      exit(1);								\
-    }									\
-  catch(const std::runtime_error &e)					\
-    {									\
-      std::cerr << "============================================\n";	\
-      std::cerr << "|      An error has been detected !!!      |\n";	\
-      std::cerr << "============================================\n";	\
-      std::cerr << e.what() << std::endl << std::endl;			\
-      exit(1);								\
-    }									\
-  catch(const std::bad_alloc &) {					\
-    std::cerr << "============================================\n";	\
-    std::cerr << "|  A bad allocation has been detected !!!  |\n";	\
-    std::cerr << "============================================\n";	\
-    exit(1);								\
-  }									\
-  catch(const std::bad_typeid &) {					\
-    std::cerr << "============================================\n";	\
-    std::cerr << "|  A bad typeid     has been detected !!!  |\n";	\
-    std::cerr << "============================================\n";	\
-    exit(1);								\
-  }									\
-  catch(const std::bad_exception &) {					\
-    std::cerr << "============================================\n";	\
-    std::cerr << "|  A bad exception  has been detected !!!  |\n";	\
-    std::cerr << "============================================\n";	\
-    exit(1);								\
-  }									\
-  catch(const std::bad_cast &) {					\
-    std::cerr << "============================================\n";	\
-    std::cerr << "|    A bad cast  has been detected !!!     |\n";	\
-    std::cerr << "============================================\n";	\
-    exit(1);								\
-  }									\
-  catch(...) {								\
-    std::cerr << "============================================\n";	\
-    std::cerr << "|  An unknown error has been detected !!!  |\n";	\
-    std::cerr << "============================================\n";	\
-    exit(1);								\
+  /*    Definitions for compatibility with old versions.                   */
+  /* ********************************************************************* */
+
+#define GMM_STANDARD_CATCH_ERROR   catch(std::logic_error e)                \
+    {                                                                       \
+      std::cerr << "============================================\n";        \
+      std::cerr << "|      An error has been detected !!!      |\n";        \
+      std::cerr << "============================================\n";        \
+      std::cerr << e.what() << std::endl << std::endl;                      \
+      exit(1);                                                              \
+    }                                                                       \
+  catch(const std::runtime_error &e)                                        \
+    {                                                                       \
+      std::cerr << "============================================\n";        \
+      std::cerr << "|      An error has been detected !!!      |\n";        \
+      std::cerr << "============================================\n";        \
+      std::cerr << e.what() << std::endl << std::endl;                      \
+      exit(1);                                                              \
+    }                                                                       \
+  catch(const std::bad_alloc &) {                                           \
+    std::cerr << "============================================\n";          \
+    std::cerr << "|  A bad allocation has been detected !!!  |\n";          \
+    std::cerr << "============================================\n";          \
+    exit(1);                                                                \
+  }                                                                         \
+  catch(const std::bad_typeid &) {                                          \
+    std::cerr << "============================================\n";          \
+    std::cerr << "|  A bad typeid     has been detected !!!  |\n";          \
+    std::cerr << "============================================\n";          \
+    exit(1);                                                                \
+  }                                                                         \
+  catch(const std::bad_exception &) {                                       \
+    std::cerr << "============================================\n";          \
+    std::cerr << "|  A bad exception  has been detected !!!  |\n";          \
+    std::cerr << "============================================\n";          \
+    exit(1);                                                                \
+  }                                                                         \
+  catch(const std::bad_cast &) {                                            \
+    std::cerr << "============================================\n";          \
+    std::cerr << "|    A bad cast  has been detected !!!     |\n";          \
+    std::cerr << "============================================\n";          \
+    exit(1);                                                                \
+  }                                                                         \
+  catch(...) {                                                              \
+    std::cerr << "============================================\n";          \
+    std::cerr << "|  An unknown error has been detected !!!  |\n";          \
+    std::cerr << "============================================\n";          \
+    exit(1);                                                                \
   }
-  //   catch(ios_base::failure) { 
+  //   catch(ios_base::failure) {
   //     std::cerr << "============================================\n";
   //     std::cerr << "| A ios_base::failure has been detected !!!|\n";
   //     std::cerr << "============================================\n";
   //     exit(1);
-  //   } 
+  //   }
 
 #if defined(__GNUC__) && (__GNUC__ > 3)
-# define GMM_SET_EXCEPTION_DEBUG				\
+# define GMM_SET_EXCEPTION_DEBUG                                \
   std::set_terminate(__gnu_cxx::__verbose_terminate_handler);
 #else
 # define GMM_SET_EXCEPTION_DEBUG
