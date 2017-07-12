@@ -302,56 +302,89 @@ namespace gmm {
 # define GMM_SIMPLE_TRACE4(thestr) {}
 #endif
 
-
-  /* ********************************************************************* */
-  /*    Definitions for compatibility with old versions.                   */
-  /* ********************************************************************* */
-
-#define GMM_STANDARD_CATCH_ERROR   catch(std::logic_error e)                \
-    {                                                                       \
-      std::cerr << "============================================\n";        \
-      std::cerr << "|      An error has been detected !!!      |\n";        \
-      std::cerr << "============================================\n";        \
-      std::cerr << e.what() << std::endl << std::endl;                      \
-      exit(1);                                                              \
-    }                                                                       \
-  catch(const std::runtime_error &e)                                        \
-    {                                                                       \
-      std::cerr << "============================================\n";        \
-      std::cerr << "|      An error has been detected !!!      |\n";        \
-      std::cerr << "============================================\n";        \
-      std::cerr << e.what() << std::endl << std::endl;                      \
-      exit(1);                                                              \
-    }                                                                       \
-  catch(const std::bad_alloc &) {                                           \
-    std::cerr << "============================================\n";          \
-    std::cerr << "|  A bad allocation has been detected !!!  |\n";          \
-    std::cerr << "============================================\n";          \
-    exit(1);                                                                \
-  }                                                                         \
-  catch(const std::bad_typeid &) {                                          \
-    std::cerr << "============================================\n";          \
-    std::cerr << "|  A bad typeid     has been detected !!!  |\n";          \
-    std::cerr << "============================================\n";          \
-    exit(1);                                                                \
-  }                                                                         \
-  catch(const std::bad_exception &) {                                       \
-    std::cerr << "============================================\n";          \
-    std::cerr << "|  A bad exception  has been detected !!!  |\n";          \
-    std::cerr << "============================================\n";          \
-    exit(1);                                                                \
-  }                                                                         \
-  catch(const std::bad_cast &) {                                            \
-    std::cerr << "============================================\n";          \
-    std::cerr << "|    A bad cast  has been detected !!!     |\n";          \
-    std::cerr << "============================================\n";          \
-    exit(1);                                                                \
-  }                                                                         \
-  catch(...) {                                                              \
-    std::cerr << "============================================\n";          \
-    std::cerr << "|  An unknown error has been detected !!!  |\n";          \
-    std::cerr << "============================================\n";          \
-    exit(1);                                                                \
+#define GMM_STANDARD_CATCH_ERROR                                           \
+  catch(gmm::gmm_error e)                                                  \
+  {                                                                        \
+    std::stringstream strStream;                                           \
+    strStream << "============================================\n";         \
+    strStream << "|    A GMM error has been detected !!!     |\n";         \
+    strStream << "============================================\n";         \
+    strStream << e.what() << std::endl << std::endl;                       \
+    gmm::feedback_manager::send(strStream.str(),                           \
+                               gmm::FeedbackType::ASSERT, e.errLevel());   \
+    gmm::feedback_manager::terminating_action();                           \
+  }                                                                        \
+  catch(std::logic_error e)                                                \
+  {                                                                        \
+    std::stringstream strStream;                                           \
+    strStream << "============================================\n";         \
+    strStream << "|       An error has been detected !!!     |\n";         \
+    strStream << "============================================\n";         \
+    strStream << e.what() << std::endl << std::endl;                       \
+    gmm::feedback_manager::send(strStream.str(),                           \
+                               gmm::FeedbackType::ASSERT, 0);              \
+    gmm::feedback_manager::terminating_action();                           \
+  }                                                                        \
+  catch(std::runtime_error e)                                              \
+  {                                                                        \
+    std::stringstream strStream;                                           \
+    strStream << "============================================\n";         \
+    strStream << "| A runtime error has been detected !!!    |\n";         \
+    strStream << "============================================\n";         \
+    strStream << e.what() << std::endl << std::endl;                       \
+    gmm::feedback_manager::send(strStream.str(),                           \
+                               gmm::FeedbackType::ASSERT, 0);              \
+    gmm::feedback_manager::terminating_action();                           \
+  }                                                                        \
+  catch(std::bad_alloc)                                                    \
+  {                                                                        \
+    std::stringstream strStream;                                           \
+    strStream << "============================================\n";         \
+    strStream << "| A bad allocation has been detected !!!   |\n";         \
+    strStream << "============================================\n";         \
+    gmm::feedback_manager::send(strStream.str(),                           \
+                               gmm::FeedbackType::ASSERT, 0);              \
+    gmm::feedback_manager::terminating_action();                           \
+  }                                                                        \
+  catch(std::bad_typeid)                                                   \
+  {                                                                        \
+    std::stringstream strStream;                                           \
+    strStream << "============================================\n";         \
+    strStream << "|  A bad typeid has been detected !!!      |\n";         \
+    strStream << "============================================\n";         \
+    gmm::feedback_manager::send(strStream.str(),                           \
+                               gmm::FeedbackType::ASSERT, 0);              \
+    gmm::feedback_manager::terminating_action();                           \
+  }                                                                        \
+  catch(std::bad_exception)                                                \
+  {                                                                        \
+    std::stringstream strStream;                                           \
+    strStream << "============================================\n";         \
+    strStream << "|  A bad exception has been detected !!!   |\n";         \
+    strStream << "============================================\n";         \
+    gmm::feedback_manager::send(strStream.str(),                           \
+                               gmm::FeedbackType::ASSERT, 0);              \
+    gmm::feedback_manager::terminating_action();                           \
+  }                                                                        \
+  catch(std::bad_cast)                                                     \
+  {                                                                        \
+    std::stringstream strStream;                                           \
+    strStream << "============================================\n";         \
+    strStream << "|      A bad_cast has been detected !!!    |\n";         \
+    strStream << "============================================\n";         \
+    gmm::feedback_manager::send(strStream.str(),                           \
+                               gmm::FeedbackType::ASSERT, 0);              \
+    gmm::feedback_manager::terminating_action();                           \
+  }                                                                        \
+  catch(...)                                                               \
+  {                                                                        \
+    std::stringstream strStream;                                           \
+    strStream << "============================================\n";         \
+    strStream << "|  An unknown error has been detected !!!  |\n";         \
+    strStream << "============================================\n";         \
+    gmm::feedback_manager::send(strStream.str(),                           \
+                               gmm::FeedbackType::ASSERT, 0);              \
+    gmm::feedback_manager::terminating_action();                           \
   }
   //   catch(ios_base::failure) {
   //     std::cerr << "============================================\n";
