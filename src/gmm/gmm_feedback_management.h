@@ -37,6 +37,9 @@
 
 #ifndef GMM_FEEDBACK_MANAGEMENT_H__
 #define GMM_FEEDBACK_MANAGEMENT_H__
+#include <iostream>
+#include <string>
+#include <memory>
 
 namespace gmm {
 
