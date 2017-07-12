@@ -40,6 +40,8 @@
 #define GMM_EXCEPT_H__
 
 #include "gmm_std.h"
+#include "gmm_feedback_management.h"
+
 
 //provides external implementation of gmm_exception and logging.
 #ifndef EXTERNAL_EXCEPT_
@@ -175,15 +177,6 @@ namespace gmm {
 /*   GetFEM++ warnings.                                                    */
 /* *********************************************************************** */
 
-  // This allows to dynamically hide warnings
-  struct warning_level {
-    static int level(int l = -2)
-    { static int level_ = 3; return (l != -2) ? (level_ = l) : level_; }
-  };
-
-  inline void set_warning_level(int l) { warning_level::level(std::max(0,l)); }
-  inline int  get_warning_level(void)  { return warning_level::level(-2); }
-
   // This allows not to compile some Warnings
 #ifndef GMM_WARNING_LEVEL
 # define GMM_WARNING_LEVEL 4
@@ -235,14 +228,6 @@ namespace gmm {
 /* *********************************************************************** */
 /*     GetFEM++ traces.                                                    */
 /* *********************************************************************** */
-
-  // This allows to dynamically hide traces
-  struct traces_level {
-    static int level(int l = -2)
-    { static int level_ = 3; return (l != -2) ? (level_ = l) : level_; }
-  };
-
-  inline void set_traces_level(int l) { traces_level::level(std::max(0,l)); }
 
   // This allow not too compile some Warnings
 #ifndef GMM_TRACES_LEVEL
