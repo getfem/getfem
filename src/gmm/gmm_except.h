@@ -39,6 +39,7 @@
 #ifndef GMM_EXCEPT_H__
 #define GMM_EXCEPT_H__
 
+#include <sstream>
 #include "gmm_std.h"
 #include "gmm_feedback_management.h"
 
