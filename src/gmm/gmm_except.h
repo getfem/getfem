@@ -140,25 +140,35 @@ namespace gmm {
   }
 #endif
 
-# define GMM_ASSERT1(test, errormsg)                                        \
-  { if (!(test)) GMM_THROW_(gmm::gmm_error, errormsg); }
 
   inline void GMM_THROW() {}
 #define GMM_THROW(a, b) { GMM_THROW_(a,b); gmm::GMM_THROW(); }
 
 # define GMM_THROW_DEFAULT(errormsg) GMM_THROW_AT_LEVEL(errormsg, 1)
+
+// This allows not to compile some assertions 
+#ifndef GMM_ASSERT_LEVEL
 #if defined(NDEBUG)
+# define GMM_ASSERT_LEVEL 1
+#elif defined(DEBUG_MODE)
+# define GMM_ASSERT_LEVEL 3
+#else
+# define GMM_ASSERT_LEVEL 2
+#endif
+#endif
+
+
+# define GMM_ASSERT1(test, errormsg) { if (!(test)) GMM_THROW_AT_LEVEL(errormsg, 1); }
+
+#if GMM_ASSERT_LEVEL < 2
 # define GMM_ASSERT2(test, errormsg) {}
 # define GMM_ASSERT3(test, errormsg) {}
-#elif !defined(GMM_FULL_NDEBUG)
-# define GMM_ASSERT2(test, errormsg)                                        \
-  { if (!(test)) GMM_THROW_(gmm::gmm_error, errormsg); }
-# define GMM_ASSERT3(test, errormsg)                                        \
-  { if (!(test)) GMM_THROW_(gmm::gmm_error, errormsg); }
+#elif GMM_ASSERT_LEVEL < 3
+# define GMM_ASSERT2(test, errormsg){ if (!(test)) GMM_THROW_AT_LEVEL(errormsg, 2); }
+# define GMM_ASSERT3(test, errormsg){}
 #else
-# define GMM_ASSERT2(test, errormsg)                                        \
-  { if (!(test)) GMM_THROW_(gmm::gmm_error, errormsg); }
-# define GMM_ASSERT3(test, errormsg)
+# define GMM_ASSERT2(test, errormsg){ if (!(test)) GMM_THROW_AT_LEVEL(errormsg, 2); }
+# define GMM_ASSERT3(test, errormsg){ if (!(test)) GMM_THROW_AT_LEVEL(errormsg, 3); }
 #endif
 
 /* *********************************************************************** */
