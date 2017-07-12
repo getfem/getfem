@@ -44,7 +44,6 @@
 
 
 //provides external implementation of gmm_exception and logging.
-#ifndef EXTERNAL_EXCEPT_
 
 namespace gmm {
 
@@ -70,6 +69,7 @@ namespace gmm {
 #else 
 #  define GMM_PRETTY_FUNCTION ""
 #endif
+
 
   // Errors : GMM_THROW should not be used on its own.
   //          GMM_ASSERT1 : Non-maskable errors. Typically for in/ouput and
@@ -345,8 +345,6 @@ namespace gmm {
 # define GMM_SET_EXCEPTION_DEBUG
 #endif
 
-}
-#else
-#include <external_except.h>
-#endif /* EXTERNAL_EXCEPT_*/
+} // namespace gmm
+
 #endif /* GMM_EXCEPT_H__ */
