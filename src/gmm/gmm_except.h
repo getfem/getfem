@@ -146,6 +146,7 @@ namespace gmm {
   inline void GMM_THROW() {}
 #define GMM_THROW(a, b) { GMM_THROW_(a,b); gmm::GMM_THROW(); }
 
+# define GMM_THROW_DEFAULT(errormsg) GMM_THROW_AT_LEVEL(errormsg, 1)
 #if defined(NDEBUG)
 # define GMM_ASSERT2(test, errormsg) {}
 # define GMM_ASSERT3(test, errormsg) {}
