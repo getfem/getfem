@@ -50,9 +50,15 @@ namespace gmm {
 /*  GetFEM++ generic errors.                                               */
 /* *********************************************************************** */
 
+  //! std logic_error with error level information
   class gmm_error: public std::logic_error {
   public:
-    gmm_error(const std::string& what_arg): std::logic_error (what_arg) {}
+    gmm_error(const std::string& what_arg, int errorLevel = 1):
+      std::logic_error (what_arg), errorLevel_(errorLevel) {}
+    int errLevel() {return errorLevel_;}
+
+  private:
+    int errorLevel_;
   };
 
 #ifdef GETFEM_HAVE_PRETTY_FUNCTION
