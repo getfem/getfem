@@ -63,7 +63,9 @@ namespace gmm {
 
 #ifdef GETFEM_HAVE_PRETTY_FUNCTION
 #  define GMM_PRETTY_FUNCTION __PRETTY_FUNCTION__
-#else
+#elif _MSC_VER
+#  define GMM_PRETTY_FUNCTION __FUNCTION__
+#else 
 #  define GMM_PRETTY_FUNCTION ""
 #endif
 
