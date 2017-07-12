@@ -93,6 +93,16 @@ namespace gmm {
           << errormsg << std::ends;                                     \
     throw (type)(msg__.str());                                          \
   }
+
+# define GMM_THROW_AT_LEVEL(errormsg, level)                            \
+  {                                                                     \
+  std::stringstream msg;                                                \
+  msg << "Error in " << __FILE__ << ", line "                           \
+  << __LINE__ << " " << GMM_PRETTY_FUNCTION << ": \n"                   \
+  << errormsg << std::ends;                                             \
+  throw gmm::gmm_error(msg.str(), level);                               \
+  }
+
 #else
 #ifndef _MSC_VER
 # define abort_no_return() ::abort()
@@ -117,6 +127,16 @@ namespace gmm {
           << errormsg;                                                      \
     std::cerr << msg__.str() << std::endl;                                  \
     abort_no_return();                                                      \
+  }
+
+# define GMM_THROW_AT_LEVEL(errormsg, level)                                \
+  {                                                                         \
+  std::stringstream msg__;                                                  \
+  msg__ << "Error in " << __FILE__ << ", line "                             \
+  << __LINE__ << " " << GMM_PRETTY_FUNCTION << ": \n"                       \
+  << errormsg <<  " at level " << level;                                    \
+  std::cerr << msg__.str()  << std::endl;                                   \
+  abort_no_return();                                                        \
   }
 #endif
 
