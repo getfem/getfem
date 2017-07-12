@@ -188,39 +188,40 @@ namespace gmm {
   //                  3 remark
   //                  4 ignored by default.
 
-#define GMM_WARNING_MSG(level_, thestr)  {                                   \
-      std::stringstream msg__;                                               \
-      msg__ << "Level " << level_ << " Warning in " << __FILE__ << ", line " \
-            << __LINE__ << ": " << thestr;                                   \
-       std::cerr << msg__.str() << std::endl;                                \
-    }
+#define GMM_WARNING_MSG(level_, thestr)  {                                                \
+  std::stringstream msg__;                                                                \
+  msg__ << "Level " << level_ << " Warning in " << __FILE__ << ", line "                  \
+  << __LINE__ << ": " << thestr;                                                          \
+  gmm::feedback_manager::manage()->send(msg__.str(), gmm::FeedbackType::WARNING, level_); \
+}
 
 #define GMM_WARNING0(thestr) GMM_WARNING_MSG(0, thestr)
 
+
 #if GMM_WARNING_LEVEL > 0
 # define GMM_WARNING1(thestr)                                           \
-  { if (1 <= gmm::warning_level::level()) GMM_WARNING_MSG(1, thestr) }
+  { if (1 <= gmm::feedback_manager::warning_level()) GMM_WARNING_MSG(1, thestr) }
 #else
 # define GMM_WARNING1(thestr) {}
 #endif
 
 #if GMM_WARNING_LEVEL > 1
 # define GMM_WARNING2(thestr)                                           \
-  { if (2 <= gmm::warning_level::level()) GMM_WARNING_MSG(2, thestr) }
+  { if (2 <= gmm::feedback_manager::warning_level()) GMM_WARNING_MSG(2, thestr) }
 #else
 # define GMM_WARNING2(thestr) {}
 #endif
 
 #if GMM_WARNING_LEVEL > 2
 # define GMM_WARNING3(thestr)                                           \
-  { if (3 <= gmm::warning_level::level()) GMM_WARNING_MSG(3, thestr) }
+  { if (3 <= gmm::feedback_manager::warning_level()) GMM_WARNING_MSG(3, thestr) }
 #else
 # define GMM_WARNING3(thestr) {}
 #endif
 
 #if GMM_WARNING_LEVEL > 3
 # define GMM_WARNING4(thestr)                                           \
-  { if (4 <= gmm::warning_level::level()) GMM_WARNING_MSG(4, thestr) }
+  { if (4 <= gmm::feedback_manager::warning_level()) GMM_WARNING_MSG(4, thestr) }
 #else
 # define GMM_WARNING4(thestr) {}
 #endif
