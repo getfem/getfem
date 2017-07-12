@@ -40,5 +40,29 @@
 
 namespace gmm {
 
+/* *********************************************************************** */
+/*	GetFEM++ feedback management                  			   */
+/* *********************************************************************** */
+
+enum class FeedbackType {
+  TRACE = 0,
+  WARNING,
+  ASSERT
+};
+
+// Abstract class providing feedback management interface.
+// The interface consist of three functions:
+//   * for sending feedback message
+//   * for getting traces level
+//   * for getting warning level
+//   * for action to be done after feedback is handled
+struct base_feedback_handler {
+  virtual ~base_feedback_handler() = default;
+  virtual void send(const std::string &message, FeedbackType messageType, size_t level) = 0;
+  virtual size_t traces_level() { return get_traces_level(); }
+  virtual size_t warning_level() { return get_warning_level(); }
+  virtual void terminating_action() = 0;
+};
+
 } // namespace gmm
 #endif /* GMM_FEEDBACK_MANAGEMENT_H__ */
