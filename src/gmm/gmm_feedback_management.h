@@ -64,5 +64,16 @@ struct base_feedback_handler {
   virtual void terminating_action() = 0;
 };
 
+
+// Provides the default implementation of feedback handling.
+struct default_feedback_handler final : public base_feedback_handler {
+  void send(const std::string &message, FeedbackType, size_t) override {
+    std::cerr << message << std::endl;
+  }
+  void terminating_action() override {
+    std::exit(1);
+  }
+};
+
 } // namespace gmm
 #endif /* GMM_FEEDBACK_MANAGEMENT_H__ */
