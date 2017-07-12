@@ -49,10 +49,10 @@
 namespace gmm {
 
 /* *********************************************************************** */
-/*  GetFEM++ generic errors.                                               */
+/*        GetFEM++ generic errors.                                         */
 /* *********************************************************************** */
 
-  //! std logic_error with error level information
+  // std logic_error with error level information
   class gmm_error: public std::logic_error {
   public:
     gmm_error(const std::string& what_arg, int errorLevel = 1):
@@ -89,21 +89,21 @@ namespace gmm {
           << ": \n" << errormsg << std::ends;
     throw gmm::gmm_error(msg__.str());
   }
-# define GMM_THROW_(type, errormsg) {                                   \
-    std::stringstream msg__;                                            \
-    msg__ << "Error in " << __FILE__ << ", line "                       \
-          << __LINE__ << " " << GMM_PRETTY_FUNCTION << ": \n"           \
-          << errormsg << std::ends;                                     \
-    throw (type)(msg__.str());                                          \
+# define GMM_THROW_(type, errormsg) {                         \
+    std::stringstream msg__;                                  \
+    msg__ << "Error in " << __FILE__ << ", line "             \
+          << __LINE__ << " " << GMM_PRETTY_FUNCTION << ": \n" \
+          << errormsg << std::ends;                           \
+    throw (type)(msg__.str());                                \
   }
 
-# define GMM_THROW_AT_LEVEL(errormsg, level)                            \
-  {                                                                     \
-  std::stringstream msg;                                                \
-  msg << "Error in " << __FILE__ << ", line "                           \
-  << __LINE__ << " " << GMM_PRETTY_FUNCTION << ": \n"                   \
-  << errormsg << std::ends;                                             \
-  throw gmm::gmm_error(msg.str(), level);                               \
+# define GMM_THROW_AT_LEVEL(errormsg, level)                  \
+  {                                                           \
+  std::stringstream msg;                                      \
+  msg << "Error in " << __FILE__ << ", line "                 \
+  << __LINE__ << " " << GMM_PRETTY_FUNCTION << ": \n"         \
+  << errormsg << std::ends;                                   \
+  throw gmm::gmm_error(msg.str(), level);                     \
   }
 
 #else
@@ -123,28 +123,28 @@ namespace gmm {
     abort_no_return();
   }
 
-# define GMM_THROW_(type, errormsg) {                                       \
-    std::stringstream msg__;                                                \
-    msg__ << "Error in " << __FILE__ << ", line "                           \
-          << __LINE__ << " " << GMM_PRETTY_FUNCTION << ": \n"               \
-          << errormsg;                                                      \
-    std::cerr << msg__.str() << std::endl;                                  \
-    abort_no_return();                                                      \
+# define GMM_THROW_(type, errormsg) {                         \
+    std::stringstream msg__;                                  \
+    msg__ << "Error in " << __FILE__ << ", line "             \
+          << __LINE__ << " " << GMM_PRETTY_FUNCTION << ": \n" \
+          << errormsg;                                        \
+    std::cerr << msg__.str() << std::endl;                    \
+    abort_no_return();                                        \
   }
 
-# define GMM_THROW_AT_LEVEL(errormsg, level)                                \
-  {                                                                         \
-  std::stringstream msg__;                                                  \
-  msg__ << "Error in " << __FILE__ << ", line "                             \
-  << __LINE__ << " " << GMM_PRETTY_FUNCTION << ": \n"                       \
-  << errormsg <<  " at level " << level;                                    \
-  std::cerr << msg__.str()  << std::endl;                                   \
-  abort_no_return();                                                        \
+# define GMM_THROW_AT_LEVEL(errormsg, level)                  \
+  {                                                           \
+  std::stringstream msg__;                                    \
+  msg__ << "Error in " << __FILE__ << ", line "               \
+  << __LINE__ << " " << GMM_PRETTY_FUNCTION << ": \n"         \
+  << errormsg <<  " at level " << level;                      \
+  std::cerr << msg__.str()  << std::endl;                     \
+  abort_no_return();                                          \
   }
 #endif
 
 
-  inline void GMM_THROW() {}
+inline void GMM_THROW() {}
 #define GMM_THROW(a, b) { GMM_THROW_(a,b); gmm::GMM_THROW(); }
 
 # define GMM_THROW_DEFAULT(errormsg) GMM_THROW_AT_LEVEL(errormsg, 1)
@@ -175,7 +175,7 @@ namespace gmm {
 #endif
 
 /* *********************************************************************** */
-/*   GetFEM++ warnings.                                                    */
+/*        GetFEM++ warnings.                                               */
 /* *********************************************************************** */
 
   // This allows not to compile some Warnings
@@ -228,7 +228,7 @@ namespace gmm {
 #endif
 
 /* *********************************************************************** */
-/*     GetFEM++ traces.                                                    */
+/*        GetFEM++ traces.                                                 */
 /* *********************************************************************** */
 
   // This allow not too compile some Warnings
