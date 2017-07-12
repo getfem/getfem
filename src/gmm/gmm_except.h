@@ -242,43 +242,64 @@ namespace gmm {
   //                 4 Susceptible to occur very often (>1000).
 
 #define GMM_TRACE_MSG_MPI     // for Parallelized version
-#define GMM_TRACE_MSG(level_, thestr)  {                               \
-    GMM_TRACE_MSG_MPI {                                                \
-      std::stringstream msg__;                                         \
-      msg__ << "Trace " << level_ << " in " << __FILE__ << ", line "   \
-            << __LINE__ << ": " << thestr;                             \
-      std::cout << msg__.str() << std::endl;                           \
-    }                                                                  \
-  }
+#define GMM_TRACE_MSG(level_, thestr)  {                                        \
+  GMM_TRACE_MSG_MPI {                                                           \
+    std::stringstream msg__;                                                    \
+    msg__ << "Trace " << level_ << " in " << __FILE__ << ", line "              \
+          << __LINE__ << ": " << thestr;                                        \
+    gmm::feedback_manager::send(msg__.str(), gmm::FeedbackType::TRACE, level_); \
+  }                                                                             \
+}
+
+#define GMM_TRACE_SIMPLE_MSG(level_, thestr)  {                               \
+  GMM_TRACE_MSG_MPI {                                                         \
+  std::stringstream msg__;                                                    \
+  msg__ << "Trace " << level_ << ": " << thestr;                              \
+  gmm::feedback_manager::send(msg__.str(), gmm::FeedbackType::TRACE, level_); \
+  }                                                                           \
+}
 
 #define GMM_TRACE0(thestr) GMM_TRACE_MSG(0, thestr)
+#define GMM_SIMPLE_TRACE0(thestr) GMM_TRACE_MSG_SIMPLE(0, thestr)
 
 #if GMM_TRACES_LEVEL > 0
-# define GMM_TRACE1(thestr)                                                \
-  { if (1 <= gmm::traces_level::level()) GMM_TRACE_MSG(1, thestr) }
+# define GMM_TRACE1(thestr)                                                          \
+  { if (1 <= gmm::feedback_manager::traces_level()) GMM_TRACE_MSG(1, thestr) }
+# define GMM_SIMPLE_TRACE1(thestr)                                                  \
+  { if (1 <= gmm::feedback_manager::traces_level()) GMM_TRACE_SIMPLE_MSG(1, thestr) }
 #else
 # define GMM_TRACE1(thestr) {}
+# define GMM_SIMPLE_TRACE1(thestr) {}
 #endif
-  
+
 #if GMM_TRACES_LEVEL > 1
-# define GMM_TRACE2(thestr)                                                \
-  { if (2 <= gmm::traces_level::level()) GMM_TRACE_MSG(2, thestr) }
+# define GMM_TRACE2(thestr)                                                           \
+  { if (2 <= gmm::feedback_manager::traces_level()) GMM_TRACE_MSG(2, thestr) }
+# define GMM_SIMPLE_TRACE2(thestr)                                                   \
+  { if (2 <= gmm::feedback_manager::traces_level()) GMM_TRACE_SIMPLE_MSG(2, thestr) }
 #else
 # define GMM_TRACE2(thestr) {}
+# define GMM_SIMPLE_TRACE2(thestr) {}
 #endif
 
 #if GMM_TRACES_LEVEL > 2
-# define GMM_TRACE3(thestr)                                                \
-  { if (3 <= gmm::traces_level::level()) GMM_TRACE_MSG(3, thestr) }
+# define GMM_TRACE3(thestr)                                                        \
+  { if (3 <= gmm::feedback_manager::traces_level()) GMM_TRACE_MSG(3, thestr) }
+# define GMM_SIMPLE_TRACE3(thestr)                                                \
+  { if (3 <= gmm::feedback_manager::traces_level()) GMM_TRACE_SIMPLE_MSG(3, thestr) }
 #else
 # define GMM_TRACE3(thestr) {}
+# define GMM_SIMPLE_TRACE3(thestr) {}
 #endif
 
 #if GMM_TRACES_LEVEL > 3
-# define GMM_TRACE4(thestr)                                                \
-  { if (4 <= gmm::traces_level::level()) GMM_TRACE_MSG(4, thestr) }
+# define GMM_TRACE4(thestr)                                                         \
+  { if (4 <= gmm::feedback_manager::traces_level()) GMM_TRACE_MSG(4, thestr) }
+# define GMM_SIMPLE_TRACE4(thestr)                                                 \
+  { if (4 <= gmm::feedback_manager::traces_level()) GMM_TRACE_SIMPLE_MSG(4, thestr) }
 #else
 # define GMM_TRACE4(thestr) {}
+# define GMM_SIMPLE_TRACE4(thestr) {}
 #endif
 
 
