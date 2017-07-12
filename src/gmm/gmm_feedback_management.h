@@ -75,5 +75,48 @@ struct default_feedback_handler final : public base_feedback_handler {
   }
 };
 
+// This class acts as a run-time dispatcher for sending feedback
+// messages and getting trace and warning levels.
+class feedback_manager {
+public:
+    // Steals the pointer to a messenger object that provides
+    // feedback handling implementation.
+    //
+    // Example:
+    //   feedback_manager::manage(new default_feedback_handler);
+    //
+    static base_feedback_handler* manage(base_feedback_handler *pHandler=nullptr);
+    static void send(const std::string &message, FeedbackType type, size_t level);
+    static size_t traces_level();
+    static size_t warning_level();
+    // Action to be taken when feedback handling is done
+    static void terminating_action();
+};
+
+inline base_feedback_handler* feedback_manager::manage(base_feedback_handler *pHandler) {
+  static std::unique_ptr<base_feedback_handler> pHandler_ =
+    std::move(std::unique_ptr<base_feedback_handler>(new default_feedback_handler));
+  if (pHandler != nullptr) {
+    pHandler_.reset(pHandler);
+  }
+  return pHandler_.get();
+}
+
+inline void feedback_manager::send(const std::string &message, FeedbackType type, size_t level) {
+  feedback_manager::manage()->send(message, type, level);
+}
+
+inline void feedback_manager::terminating_action() {
+  feedback_manager::manage()->terminating_action();
+}
+
+inline size_t feedback_manager::traces_level() {
+  return feedback_manager::manage()->traces_level();
+}
+
+inline size_t feedback_manager::warning_level() {
+  return feedback_manager::manage()->warning_level();
+}
+
 } // namespace gmm
 #endif /* GMM_FEEDBACK_MANAGEMENT_H__ */
