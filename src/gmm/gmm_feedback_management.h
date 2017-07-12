@@ -109,13 +109,22 @@ struct default_feedback_handler final : public base_feedback_handler {
 // messages and getting trace and warning levels.
 class feedback_manager {
 public:
+    // Management actions
+    enum Action {
+       SET,      // Sets the feedback handler, releasing the one previously set.
+       GET,      // Returns currently managed handler (it is still managed).
+       REPLACE,  // Replace manager with a new one, stop managing the old one
+                 // and returns it unmanaged to the caller. The caller is
+                 // then responsible for managing the memory of the handler.
+    };
+
     // Steals the pointer to a messenger object that provides
     // feedback handling implementation.
     //
     // Example:
     //   feedback_manager::manage(new default_feedback_handler);
     //
-    static base_feedback_handler* manage(base_feedback_handler *pHandler=nullptr);
+    static base_feedback_handler* manage(enum Action action=GET, base_feedback_handler *pHandler=nullptr);
     static void send(const std::string &message, FeedbackType type, size_t level);
     static size_t traces_level();
     static size_t warning_level();
@@ -123,13 +132,26 @@ public:
     static void terminating_action();
 };
 
-inline base_feedback_handler* feedback_manager::manage(base_feedback_handler *pHandler) {
+// Depending on action either gets, sets or replaces feedback handler. Setting handler to null resets
+// it to gmm::default_feedback_handler.
+inline base_feedback_handler* feedback_manager::manage(enum Action action, base_feedback_handler *pHandler) {
   static std::unique_ptr<base_feedback_handler> pHandler_ =
     std::move(std::unique_ptr<base_feedback_handler>(new default_feedback_handler));
-  if (pHandler != nullptr) {
-    pHandler_.reset(pHandler);
+  base_feedback_handler *rethandler = nullptr;
+  switch(action) {
+    case SET:
+      pHandler_.reset(pHandler != nullptr ? pHandler : new default_feedback_handler);
+      rethandler =  pHandler_.get();
+      break;
+    case GET:
+      rethandler = pHandler_.get();
+      break;
+    case REPLACE:
+      rethandler = pHandler_.release();
+      pHandler_.reset(pHandler != nullptr ? pHandler : new default_feedback_handler);
+      break;
   }
-  return pHandler_.get();
+  return rethandler;
 }
 
 inline void feedback_manager::send(const std::string &message, FeedbackType type, size_t level) {
