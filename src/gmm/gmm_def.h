@@ -925,20 +925,20 @@ namespace gmm {
 
 
   template <typename IT, typename ORG, typename VECT> inline
-  void set_to_begin(IT &, ORG, VECT *v, linalg_modifiable)
-  { GMM_ASSERT3(!is_sparse(*v), "internal_error"); v = 0; }
+  void set_to_begin(IT &, ORG, VECT *, linalg_modifiable)
+  { GMM_ASSERT3(!is_sparse(*v), "internal_error"); }
 
   template <typename IT, typename ORG, typename VECT> inline
-  void set_to_begin(IT &, ORG, const VECT *v, linalg_modifiable)
-  { GMM_ASSERT3(!is_sparse(*v), "internal_error"); v = 0; }
+  void set_to_begin(IT &, ORG, const VECT *, linalg_modifiable)
+  { GMM_ASSERT3(!is_sparse(*v), "internal_error"); }
  
   template <typename IT, typename ORG, typename VECT> inline
-  void set_to_end(IT &, ORG, VECT *v, linalg_modifiable)
-  { GMM_ASSERT3(!is_sparse(*v), "internal_error"); v = 0; }
+  void set_to_end(IT &, ORG, VECT *, linalg_modifiable)
+  { GMM_ASSERT3(!is_sparse(*v), "internal_error"); }
   
   template <typename IT, typename ORG, typename VECT> inline
-  void set_to_end(IT &, ORG, const VECT *v, linalg_modifiable)
-  { GMM_ASSERT3(!is_sparse(*v), "internal_error"); v = 0; }
+  void set_to_end(IT &, ORG, const VECT *, linalg_modifiable)
+  { GMM_ASSERT3(!is_sparse(*v), "internal_error"); }
 
   /* ******************************************************************** */
   /*		General index for certain algorithms.         		  */
