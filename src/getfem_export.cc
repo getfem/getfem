@@ -63,7 +63,9 @@ namespace getfem
     : os(os_), ascii(ascii_) { init(); }
 
   vtk_export::vtk_export(const std::string& fname, bool ascii_)
-    : os(real_os), ascii(ascii_), real_os(fname.c_str()) {
+    : os(real_os), ascii(ascii_),
+    real_os(fname.c_str(), !ascii ? std::ios_base::binary | std::ios_base::out :
+                                    std::ios_base::out) {
     GMM_ASSERT1(real_os, "impossible to write to vtk file '" << fname << "'");
     init();
   }
