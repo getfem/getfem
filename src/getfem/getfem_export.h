@@ -78,6 +78,12 @@ namespace getfem {
     bool reverse_endian;
     enum { EMPTY, HEADER_WRITTEN, STRUCTURE_WRITTEN, IN_CELL_DATA,
            IN_POINT_DATA } state;
+
+    template<class T> void write_val(T v);
+    template<class V> void write_vec(V p, size_type qdim);
+    template<class IT> void write_3x3tensor(IT p);
+    void write_separ();
+
   public:
     typedef enum { VTK_VERTEX = 1,
                    VTK_LINE = 3,
@@ -136,7 +142,7 @@ namespace getfem {
         convex_index().card() elements.  */
 
     template<class VECT> void write_cell_data(const VECT& U,
-                                              const std::string& name, 
+                                              const std::string& name,
                                               size_type qdim = 1);
     /** export a data_set correspounding to measures of quality for each convex
         of the supplied mesh (which should have the same number of convex than
@@ -157,10 +163,6 @@ namespace getfem {
     void write_mesh_structure_from_mesh_fem();
     void switch_to_cell_data();
     void switch_to_point_data();
-    template<class T> void write_val(T v);
-    template<class V> void write_vec(V p, size_type qdim);
-    template<class IT> void write_3x3tensor(IT p);
-    void write_separ();
     template<class VECT> void write_dataset_(const VECT& U,
                                              const std::string& name,
                                              size_type qdim,
