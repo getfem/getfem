@@ -399,6 +399,7 @@ namespace bgeot {
     mutable base_node xref_;  /** reference point */
     mutable base_node xreal_; /** transformed point */
     const base_matrix *G_;    /** pointer to the matrix of real nodes of the convex */
+    mutable base_node cv_center_; /** real center of convex (average of columns of G) */
     mutable base_matrix K_, B_, B3_, B32_; /** see documentation (getfem kernel doc) for more details */
     pgeometric_trans pgt_;
     pgeotrans_precomp pgp_;
@@ -408,7 +409,7 @@ namespace bgeot {
     mutable base_matrix PC, B_factors;
     mutable base_vector aux1, aux2;
     mutable std::vector<int> ipvt;
-    mutable bool have_J_, have_B_, have_B3_, have_B32_, have_K_;
+    mutable bool have_J_, have_B_, have_B3_, have_B32_, have_K_, have_cv_center_;
     void compute_J() const;
   public:
     bool have_xref() const { return !xref_.empty(); }
@@ -424,6 +425,8 @@ namespace bgeot {
     const base_node& xref() const;
     /// coordinates of the current point, in the real convex.
     const base_node& xreal() const;
+    /// coordinates of the center of the real convex.
+    const base_node& cv_center() const;
     /// See getfem kernel doc for these matrices
     const base_matrix& K() const;
     const base_matrix& B() const;
@@ -459,7 +462,8 @@ namespace bgeot {
       G_ = &G__; pgt_ = pgp__->get_trans(); pgp_ = pgp__;
       pspt_ = pgp__->get_ppoint_tab(); ii_ = ii__;
       have_J_ = have_B_ = have_B3_ = have_B32_ = have_K_ = false;
-      xref_.resize(0); xreal_.resize(0);
+      have_cv_center_ = false;
+      xref_.resize(0); xreal_.resize(0); cv_center_.resize(0);
     }
     void change(bgeot::pgeometric_trans pgt__,
                 bgeot::pstored_point_tab pspt__,
@@ -467,7 +471,8 @@ namespace bgeot {
                 const base_matrix& G__) {
       G_ = &G__; pgt_ = pgt__; pgp_ = 0; pspt_ = pspt__; ii_ = ii__;
       have_J_ = have_B_ = have_B3_ = have_B32_ = have_K_ = false;
-      xref_.resize(0); xreal_.resize(0);
+      have_cv_center_ = false;
+      xref_.resize(0); xreal_.resize(0); cv_center_.resize(0);
     }
     void change(bgeot::pgeometric_trans pgt__,
                 const base_node& xref__,
@@ -475,32 +480,33 @@ namespace bgeot {
       xref_ = xref__; G_ = &G__; pgt_ = pgt__; pgp_ = 0; pspt_ = 0;
       ii_ = size_type(-1);
       have_J_ = have_B_ = have_B3_ = have_B32_ = have_K_ = false;
-      xreal_.resize(0);
+      have_cv_center_ = false;
+      xreal_.resize(0); cv_center_.resize(0);
     }
 
     geotrans_interpolation_context()
       : G_(0), pgt_(0), pgp_(0), pspt_(0), ii_(size_type(-1)),
       have_J_(false), have_B_(false), have_B3_(false), have_B32_(false),
-      have_K_(false) {}
+      have_K_(false), have_cv_center_(false) {}
     geotrans_interpolation_context(bgeot::pgeotrans_precomp pgp__,
                                    size_type ii__,
                                    const base_matrix& G__)
       : G_(&G__), pgt_(pgp__->get_trans()), pgp_(pgp__),
       pspt_(pgp__->get_ppoint_tab()), ii_(ii__), have_J_(false), have_B_(false),
-      have_B3_(false), have_B32_(false), have_K_(false) {}
+      have_B3_(false), have_B32_(false), have_K_(false), have_cv_center_(false) {}
     geotrans_interpolation_context(bgeot::pgeometric_trans pgt__,
                                    bgeot::pstored_point_tab pspt__,
                                    size_type ii__,
                                    const base_matrix& G__)
       : G_(&G__), pgt_(pgt__), pgp_(0),
       pspt_(pspt__), ii_(ii__), have_J_(false), have_B_(false), have_B3_(false),
-      have_B32_(false), have_K_(false) {}
+      have_B32_(false), have_K_(false), have_cv_center_(false) {}
     geotrans_interpolation_context(bgeot::pgeometric_trans pgt__,
                                    const base_node& xref__,
                                    const base_matrix& G__)
       : xref_(xref__), G_(&G__), pgt_(pgt__), pgp_(0), pspt_(0),
       ii_(size_type(-1)),have_J_(false), have_B_(false), have_B3_(false),
-      have_B32_(false), have_K_(false)  {}
+      have_B32_(false), have_K_(false), have_cv_center_(false) {}
   };
 
   /* Function allowing the add of an geometric transformation method outwards
