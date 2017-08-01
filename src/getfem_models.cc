@@ -2738,17 +2738,13 @@ namespace getfem {
         std::vector<size_type> dof_indices;
         std::vector<complex_type> dof_pr_values;
         std::vector<complex_type> dof_go_values;
-        std::map<std::string, complex_dof_constraints_var>::const_iterator it;
-
-        for (it = complex_dof_constraints.begin();
-             it != complex_dof_constraints.end(); ++it) {
-          const gmm::sub_interval &I = interval_of_variable(it->first);
-          const model_complex_plain_vector &V = complex_variable(it->first);
-          complex_dof_constraints_var::const_iterator itv;
-          for (itv = it->second.begin(); itv != it->second.end(); ++itv) {
-            dof_indices.push_back(itv->first + I.first());
-            dof_go_values.push_back(itv->second);
-            dof_pr_values.push_back(V[itv->first]);
+        for (const auto &keyval : complex_dof_constraints) {
+          const gmm::sub_interval &I = interval_of_variable(keyval.first);
+          const model_complex_plain_vector &V = complex_variable(keyval.first);
+          for (const auto &val : keyval.second) {
+            dof_indices.push_back(val.first + I.first());
+            dof_go_values.push_back(val.second);
+            dof_pr_values.push_back(V[val.first]);
           }
         }
 
@@ -2793,17 +2789,13 @@ namespace getfem {
         std::vector<size_type> dof_indices;
         std::vector<scalar_type> dof_pr_values;
         std::vector<scalar_type> dof_go_values;
-        std::map<std::string, real_dof_constraints_var>::const_iterator it;
-
-        for (it = real_dof_constraints.begin();
-             it != real_dof_constraints.end(); ++it) {
-          const gmm::sub_interval &I = interval_of_variable(it->first);
-          const model_real_plain_vector &V = real_variable(it->first);
-          real_dof_constraints_var::const_iterator itv;
-          for (itv = it->second.begin(); itv != it->second.end(); ++itv) {
-            dof_indices.push_back(itv->first + I.first());
-            dof_go_values.push_back(itv->second);
-            dof_pr_values.push_back(V[itv->first]);
+        for (const auto &keyval : real_dof_constraints) {
+          const gmm::sub_interval &I = interval_of_variable(keyval.first);
+          const model_real_plain_vector &V = real_variable(keyval.first);
+          for (const auto &val : keyval.second) {
+            dof_indices.push_back(val.first + I.first());
+            dof_go_values.push_back(val.second);
+            dof_pr_values.push_back(V[val.first]);
           }
         }
 
@@ -4829,7 +4821,7 @@ model_complex_plain_vector &
 
           if (mf_data) {
             GMM_ASSERT1(mf_data == &mf_u, "Sorry, for this brick, the data has"
-                        " to be define on the same f.e.m. than the unknown");
+                        " to be defined on the same f.e.m. as the unknown");
           } else {
             s = gmm::vect_size(*A);
             GMM_ASSERT1(mf_u.get_qdim() == s, ": bad format of "

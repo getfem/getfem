@@ -1719,26 +1719,25 @@ namespace getfem {
       cerr << mftab[k]->nb_basic_dof_of_element(cv) << " "; cerr << "\n";
       */
 
-      for (size_type i=0; i < atn_tensors.size(); ++i) {
-        atn_tensors[i]->init_required_shape();
-      }
-      for (size_type i=0; i < outvars.size(); ++i) {
-        outvars[i]->update_childs_required_shape();
-      }
-      for (size_type i=atn_tensors.size()-1; i!=size_type(-1); --i) {
+      for (auto &&t : atn_tensors)
+        t->init_required_shape();
+
+      for (auto &&v : outvars)
+        v->update_childs_required_shape();
+
+      for (size_type i=atn_tensors.size()-1; i!=size_type(-1); --i)
         atn_tensors[i]->update_childs_required_shape();
-      }
-      for (size_type i=0; i < atn_tensors.size(); ++i) {
-        atn_tensors[i]->reinit();
-      }
-      for (size_type i=0; i < outvars.size(); ++i) {
-        outvars[i]->reinit();
-      }
+
+      for (auto &&t : atn_tensors)
+        t->reinit();
+
+      for (auto &&v : outvars)
+        v->reinit();
     }
-    for (size_type i=0; i < atn_tensors.size(); ++i)
-      atn_tensors[i]->exec(cv,face);
-    for (size_type i=0; i < outvars.size(); ++i)
-      outvars[i]->exec(cv, face);
+    for (auto &&t : atn_tensors)
+      t->exec(cv,face);
+    for (auto &&v : outvars)
+      v->exec(cv, face);
   }
 
   struct cv_fem_compare {

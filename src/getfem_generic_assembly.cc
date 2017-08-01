@@ -13766,7 +13766,7 @@ namespace getfem {
       GMM_ASSERT1(f == short_type(-1), "No support for interpolation on faces"
                                        " for a stored_mesh_slice yet.");
       size_type ic = sl.convex_pos(cv);
-      mesh_slicer::cs_nodes_ct nodes = sl.nodes(ic);
+      const mesh_slicer::cs_nodes_ct &nodes = sl.nodes(ic);
       std::vector<base_node> pt_tab(nodes.size());
       for (size_type i=0; i < nodes.size(); ++i) {
         pt_tab[i] = nodes[i].pt_ref;

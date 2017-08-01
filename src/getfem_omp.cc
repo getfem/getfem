@@ -20,8 +20,7 @@
 ===========================================================================*/
 
 #include "getfem/getfem_omp.h"
-#include "getfem/getfem_omp.h"
-#include "getfem/getfem_level_set_contact.h"
+#include "getfem/getfem_mesh.h"
 
 namespace getfem{
 
