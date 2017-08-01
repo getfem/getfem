@@ -435,9 +435,11 @@ namespace bgeot {
     }
   }
 
-  double md_param::real_value(const std::string &name, const char *comment) {
+  double md_param::real_value(const std::string &name, const char *comment,
+                              double default_val) {
     if (parameters.find(name) == parameters.end()) {
-      if (comment == 0) return 0.0;
+      if (comment == 0)
+        return default_val;
       else {
         double f;
         gmm::standard_locale sl;
@@ -452,9 +454,11 @@ namespace bgeot {
     return p.real();
   }
 
-  long md_param::int_value(const std::string &name, const char *comment) {
+  long md_param::int_value(const std::string &name, const char *comment,
+                           long default_val) {
     if (parameters.find(name) == parameters.end()) {
-      if (comment == 0) return 0;
+      if (comment == 0)
+        return default_val;
       else {
         long f;
         gmm::standard_locale sl;
@@ -470,10 +474,11 @@ namespace bgeot {
   }
 
   const std::string &md_param::string_value(const std::string &name,
-                                            const char *comment) {
-    static const std::string empty_string;
+                                            const char *comment,
+                                            const std::string &default_val) {
     if (parameters.find(name) == parameters.end()) {
-      if (comment == 0) return empty_string;
+      if (comment == 0)
+        return default_val;
       else {
         std::string s;
         gmm::standard_locale sl;

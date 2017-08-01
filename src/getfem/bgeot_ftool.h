@@ -174,10 +174,13 @@ namespace bgeot
 
   public :
 
-    double real_value(const std::string &name, const char *comment = 0);
-    long int_value(const std::string &name, const char *comment = 0);
+    double real_value(const std::string &name, const char *comment = 0,
+                      double default_val=0.);
+    long int_value(const std::string &name, const char *comment = 0,
+                   long default_val=0);
     const std::string &string_value(const std::string &name,
-                                    const char *comment = 0);
+                                    const char *comment = 0,
+                                    const std::string &default_val="");
     const std::vector<param_value> &array_value(const std::string &name,
                                                 const char *comment = 0);
     void add_int_param(const std::string &name, long e)
