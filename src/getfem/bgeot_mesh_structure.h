@@ -50,9 +50,9 @@ namespace bgeot {
     pconvex_structure cstruct;       /* type of convex.                  */
     ind_pt_ct pts;                   /* point list indices.               */
 
-    pconvex_structure structure(void) const { return cstruct; }
-    pconvex_structure &structure(void) { return cstruct; }
-    mesh_convex_structure(void) : cstruct(0) {}
+    pconvex_structure structure() const { return cstruct; }
+    pconvex_structure &structure() { return cstruct; }
+    mesh_convex_structure() : cstruct(0) {}
   };
 
   struct convex_face
@@ -88,18 +88,18 @@ namespace bgeot {
   public :
 
     /// Return the list of valid convex IDs
-    const dal::bit_vector &convex_index(void) const
+    const dal::bit_vector &convex_index() const
       { return convex_tab.index(); }
     /// Return the list of valid convex IDs of a given dimension
     dal::bit_vector convex_index(dim_type) const;
     /// The total number of convexes in the mesh
-    size_type nb_convex(void) const { return convex_tab.card(); }
+    size_type nb_convex() const { return convex_tab.card(); }
     /// The number of convex indexes from 0 to the index of the last convex
     size_type nb_allocated_convex() const
       { return convex_tab.index().last_true()+1; }
     /// Return true if i is in convex_index()
     bool is_convex_valid(size_type i) { return (convex_tab.index())[i]; }
-    size_type nb_max_points(void) const { return points_tab.size(); }
+    size_type nb_max_points() const { return points_tab.size(); }
     /// Return true if the point i is used by at least one convex
     bool is_point_valid(size_type i) const { return !(points_tab[i].empty()); }
     /** Return a container to the list of points attached to convex ic.
@@ -156,7 +156,7 @@ namespace bgeot {
     void to_faces(dim_type n);
     /** build a new mesh, such that its convexes are the edges of the
         convexes of the previous one */
-    void to_edges(void);
+    void to_edges();
 
     size_type nb_convex_with_edge(size_type i1, size_type i2);
     void convex_with_edge(size_type i1, size_type i2,
@@ -185,13 +185,13 @@ namespace bgeot {
     ind_pt_face_ct ind_points_of_face_of_convex(size_type ic,
                                                 short_type f) const;
 
-    size_type memsize(void) const;
+    size_type memsize() const;
     /** Reorder the convex IDs and point IDs, such that there is no
         hole in their numbering. */
-    void optimize_structure(void);
+    void optimize_structure();
     /// erase the mesh
-    void clear(void);
-    void stat(void);
+    void clear();
+    void stat();
 
     /** Return in s a list of neighbours of a given convex face.
         @param ic the convex id.
@@ -201,14 +201,14 @@ namespace bgeot {
     void neighbours_of_convex(size_type ic, short_type f, ind_set &s) const;
 
     /** Return in s a list of neighbours of a given convex sharing the
-	intersection of a given list of faces
+        intersection of a given list of faces
         @param ic the convex id.
         @param f the face number of the convex.
         @param s the resulting ind_set.
      */
     void neighbours_of_convex(size_type ic,
-			      const std::vector<short_type> &ftab,
-			      ind_set &s) const;
+                              const std::vector<short_type> &ftab,
+                              ind_set &s) const;
 
     /** Return a list of neighbours of a given convex.
         @param ic the convex id.
@@ -253,7 +253,7 @@ namespace bgeot {
 
   /** Return the cuthill_mc_kee ordering on the convexes */
   void APIDECL cuthill_mckee_on_convexes(const bgeot::mesh_structure &ms,
-					 std::vector<size_type> &cmk);
+                                         std::vector<size_type> &cmk);
 
   template<class ITER>
     bool mesh_structure::is_convex_having_points(size_type ic,
@@ -329,7 +329,7 @@ namespace bgeot {
     }
     edge_list_elt(size_type ii, size_type jj, size_type ic = 0) : cv(ic)
     { i = std::min(ii, jj); j = std::max(ii, jj); }
-    edge_list_elt(void) {}
+    edge_list_elt() {}
   };
 
   typedef dal::dynamic_tree_sorted<edge_list_elt> edge_list;

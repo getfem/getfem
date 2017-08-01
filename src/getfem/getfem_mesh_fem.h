@@ -461,7 +461,7 @@ namespace getfem {
         @param f the face number.
     */
     virtual size_type nb_basic_dof_of_face_of_element(size_type cv,
-						      short_type f) const {
+                                                      short_type f) const {
       context_check(); if (!dof_enumeration_made) enumerate_dof();
       pfem pf = f_elems[cv];
       return dof_structure.structure_of_convex(cv)->nb_points_of_face(f)
@@ -638,8 +638,8 @@ namespace getfem {
   void slice_vector_on_basic_dof_of_element(const mesh_fem &mf,
                                             const VEC1 &vec,
                                             size_type cv, VEC2 &coeff,
-					    size_type qmult1 = size_type(-1),
-					    size_type qmult2 = size_type(-1)) {
+                                            size_type qmult1 = size_type(-1),
+                                            size_type qmult2 = size_type(-1)) {
     if (qmult1 == size_type(-1)) {
       size_type nbdof = mf.nb_basic_dof();
       qmult1 = gmm::vect_size(vec) / nbdof;
@@ -652,15 +652,15 @@ namespace getfem {
     size_type qmultot = qmult1*qmult2;
     auto &ct = mf.ind_scalar_basic_dof_of_element(cv);
     gmm::resize(coeff, ct.size()*qmultot);
-    
+
     auto it = ct.begin();
     auto itc = coeff.begin();
     if (qmultot == 1) {
       for (; it != ct.end(); ++it) *itc++ = vec[*it];
     } else {
       for (; it != ct.end(); ++it) {
-	auto itv = vec.begin()+(*it)*qmult1;
-	for (size_type m = 0; m < qmultot; ++m) *itc++ = *itv++;
+        auto itv = vec.begin()+(*it)*qmult1;
+        for (size_type m = 0; m < qmultot; ++m) *itc++ = *itv++;
       }
     }
   }

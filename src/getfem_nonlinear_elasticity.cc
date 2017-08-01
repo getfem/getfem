@@ -44,55 +44,55 @@ namespace getfem {
   }
 
   struct compute_invariants {
-    
+
     const base_matrix &E;
     base_matrix Einv;
     size_type N;
     scalar_type i1_, i2_, i3_, j1_, j2_;
     bool i1_c, i2_c, i3_c, j1_c, j2_c;
 
-    base_matrix di1, di2, di3, dj1, dj2; 
+    base_matrix di1, di2, di3, dj1, dj2;
     bool di1_c, di2_c, di3_c, dj1_c, dj2_c;
 
-    base_tensor ddi1, ddi2, ddi3, ddj1, ddj2; 
+    base_tensor ddi1, ddi2, ddi3, ddj1, ddj2;
     bool ddi1_c, ddi2_c, ddi3_c, ddj1_c, ddj2_c;
 
 
     /* First invariant tr(E) */
-    void compute_i1(void) {
+    void compute_i1() {
       i1_ = gmm::mat_trace(E);
       i1_c = true;
     }
 
-    void compute_di1(void) {
+    void compute_di1() {
       gmm::resize(di1, N, N);
       gmm::copy(gmm::identity_matrix(), di1);
       di1_c = true;
     }
 
-    void compute_ddi1(void) { // not very useful, null tensor
-      ddi1 = base_tensor(N, N, N, N); 
+    void compute_ddi1() { // not very useful, null tensor
+      ddi1 = base_tensor(N, N, N, N);
       ddi1_c = true;
     }
 
-    inline scalar_type i1(void)
+    inline scalar_type i1()
     { if (!i1_c) compute_i1(); return i1_; }
 
-    inline const base_matrix &grad_i1(void)
+    inline const base_matrix &grad_i1()
     { if (!di1_c) compute_di1(); return di1; }
 
-    inline const base_tensor &sym_grad_grad_i1(void)
+    inline const base_tensor &sym_grad_grad_i1()
     { if (!ddi1_c) compute_ddi1(); return ddi1; }
 
 
     /* Second invariant (tr(E)^2 - tr(E^2))/2 */
-    void compute_i2(void) {
+    void compute_i2() {
       i2_ = (gmm::sqr(gmm::mat_trace(E))
              - frobenius_product_trans(E, E)) / scalar_type(2);
       i2_c = true;
     }
 
-    void compute_di2(void) {
+    void compute_di2() {
       gmm::resize(di2, N, N);
       gmm::copy(gmm::identity_matrix(), di2);
       gmm::scale(di2, i1());
@@ -101,7 +101,7 @@ namespace getfem {
       di2_c = true;
     }
 
-    void compute_ddi2(void) {
+    void compute_ddi2() {
       ddi2 = base_tensor(N, N, N, N);
       for (size_type i = 0; i < N; ++i)
         for (size_type k = 0; k < N; ++k)
@@ -114,23 +114,23 @@ namespace getfem {
       ddi2_c = true;
     }
 
-    inline scalar_type i2(void)
+    inline scalar_type i2()
     { if (!i2_c) compute_i2(); return i2_; }
 
-    inline const base_matrix &grad_i2(void)
+    inline const base_matrix &grad_i2()
     { if (!di2_c) compute_di2(); return di2; }
 
-    inline const base_tensor &sym_grad_grad_i2(void)
+    inline const base_tensor &sym_grad_grad_i2()
     { if (!ddi2_c) compute_ddi2(); return ddi2; }
 
     /* Third invariant det(E) */
-    void compute_i3(void) {
+    void compute_i3() {
       Einv = E;
       i3_ = bgeot::lu_inverse(&(*(Einv.begin())), gmm::mat_nrows(Einv));
       i3_c = true;
     }
 
-    void compute_di3(void) {
+    void compute_di3() {
       scalar_type det = i3();
       // gmm::resize(di3, N, N);
       // gmm::copy(gmm::transposed(E), di3);
@@ -140,7 +140,7 @@ namespace getfem {
       di3_c = true;
     }
 
-    void compute_ddi3(void) {
+    void compute_ddi3() {
       ddi3 = base_tensor(N, N, N, N);
       scalar_type det = i3() / scalar_type(2); // computes also E inverse.
       for (size_type i = 0; i < N; ++i)
@@ -152,36 +152,36 @@ namespace getfem {
       ddi3_c = true;
     }
 
-    inline scalar_type i3(void)
+    inline scalar_type i3()
     { if (!i3_c) compute_i3(); return i3_; }
 
-    inline const base_matrix &grad_i3(void)
+    inline const base_matrix &grad_i3()
     { if (!di3_c) compute_di3(); return di3; }
 
-    inline const base_tensor &sym_grad_grad_i3(void)
+    inline const base_tensor &sym_grad_grad_i3()
     { if (!ddi3_c) compute_ddi3(); return ddi3; }
 
     /* Invariant j1(E) = i1(E)*i3(E)^(-1/3) */
-    void compute_j1(void) {
+    void compute_j1() {
       j1_ = i1() * ::pow(gmm::abs(i3()), -scalar_type(1) / scalar_type(3));
       j1_c = true;
     }
 
-    void compute_dj1(void) {
+    void compute_dj1() {
       dj1 = grad_i1();
       gmm::add(gmm::scaled(grad_i3(), -i1() / (scalar_type(3) * i3())), dj1);
       gmm::scale(dj1, ::pow(gmm::abs(i3()), -scalar_type(1) / scalar_type(3)));
       dj1_c = true;
     }
 
-    void compute_ddj1(void) {
-      const base_matrix &di1_ = grad_i1(); 
+    void compute_ddj1() {
+      const base_matrix &di1_ = grad_i1();
       const base_matrix &di3_ = grad_i3();
       scalar_type coeff1 = scalar_type(1) / (scalar_type(3)*i3());
       scalar_type coeff2 = scalar_type(4) * coeff1 * coeff1 * i1();
       ddj1 = sym_grad_grad_i3();
       gmm::scale(ddj1.as_vector(), -i1() * coeff1);
-      
+
       for (size_type i = 0; i < N; ++i)
          for (size_type j = 0; j < N; ++j)
            for (size_type k = 0; k < N; ++k)
@@ -195,30 +195,30 @@ namespace getfem {
       ddj1_c = true;
     }
 
-    inline scalar_type j1(void)
+    inline scalar_type j1()
     { if (!j1_c) compute_j1(); return j1_; }
 
-    inline const base_matrix &grad_j1(void)
+    inline const base_matrix &grad_j1()
     { if (!dj1_c) compute_dj1(); return dj1; }
 
-    inline const base_tensor &sym_grad_grad_j1(void)
+    inline const base_tensor &sym_grad_grad_j1()
     { if (!ddj1_c) compute_ddj1(); return ddj1; }
 
     /* Invariant j2(E) = i2(E)*i3(E)^(-2/3) */
-    void compute_j2(void) {
+    void compute_j2() {
       j2_ = i2() * ::pow(gmm::abs(i3()), -scalar_type(2) / scalar_type(3));
       j2_c = true;
     }
 
-    void compute_dj2(void) {
+    void compute_dj2() {
       dj2 = grad_i2();
       gmm::add(gmm::scaled(grad_i3(), -scalar_type(2) * i2() / (scalar_type(3) * i3())), dj2);
       gmm::scale(dj2, ::pow(gmm::abs(i3()), -scalar_type(2) / scalar_type(3)));
       dj2_c = true;
     }
 
-    void compute_ddj2(void) {
-      const base_matrix &di2_ = grad_i2(); 
+    void compute_ddj2() {
+      const base_matrix &di2_ = grad_i2();
       const base_matrix &di3_ = grad_i3();
       scalar_type coeff1 = scalar_type(2) / (scalar_type(3)*i3());
       scalar_type coeff2 = scalar_type(5) * coeff1 * coeff1 * i2()
@@ -226,7 +226,7 @@ namespace getfem {
       ddj2 = sym_grad_grad_i2();
       gmm::add(gmm::scaled(sym_grad_grad_i3().as_vector(), -i2() * coeff1),
                ddj2.as_vector());
-      
+
       for (size_type i = 0; i < N; ++i)
          for (size_type j = 0; j < N; ++j)
            for (size_type k = 0; k < N; ++k)
@@ -241,13 +241,13 @@ namespace getfem {
     }
 
 
-    inline scalar_type j2(void)
+    inline scalar_type j2()
     { if (!j2_c) compute_j2(); return j2_; }
-   
-    inline const base_matrix &grad_j2(void)
+
+    inline const base_matrix &grad_j2()
     { if (!dj2_c) compute_dj2(); return dj2; }
 
-    inline const base_tensor &sym_grad_grad_j2(void)
+    inline const base_tensor &sym_grad_grad_j2()
     { if (!ddj2_c) compute_ddj2(); return ddj2; }
 
 
@@ -261,7 +261,7 @@ namespace getfem {
   };
 
 
- 
+
 
 
   /* Symmetry check */
@@ -272,8 +272,8 @@ namespace getfem {
       for (size_type m = 0; m < N; ++m)
         for (size_type l = 0; l < N; ++l)
           for (size_type k = 0; k < N; ++k) {
-            if (gmm::abs(t(n,m,l,k) - t(l,k,n,m))>1e-5) flags &= (~1); 
-            if (gmm::abs(t(n,m,l,k) - t(m,n,l,k))>1e-5) flags &= (~2); 
+            if (gmm::abs(t(n,m,l,k) - t(l,k,n,m))>1e-5) flags &= (~1);
+            if (gmm::abs(t(n,m,l,k) - t(m,n,l,k))>1e-5) flags &= (~2);
             if (gmm::abs(t(n,m,l,k) - t(n,m,k,l))>1e-5) flags &= (~4);
           }
     return flags;
@@ -288,9 +288,9 @@ namespace getfem {
     do {
       gmm::fill_random(Phi);
       d = bgeot::lu_det(&(*(Phi.begin())), N);
-    } while (d < scalar_type(0.01)); 
+    } while (d < scalar_type(0.01));
     gmm::mult(gmm::transposed(Phi),Phi,E);
-    gmm::scale(E,-1.); gmm::add(gmm::identity_matrix(),E); 
+    gmm::scale(E,-1.); gmm::add(gmm::identity_matrix(),E);
     gmm::scale(E,-0.5);
   }
 
@@ -303,25 +303,25 @@ namespace getfem {
       random_E(E); random_E(DE);
       gmm::scale(DE, h);
       gmm::add(E, DE, E2);
-      
+
       base_matrix sigma1(N,N), sigma2(N,N);
       getfem::base_tensor tdsigma(N,N,N,N);
       base_matrix dsigma(N,N);
       gmm::copy(E, E2); gmm::add(DE, E2);
       sigma(E, sigma1, param, scalar_type(1));
       sigma(E2, sigma2, param, scalar_type(1));
-      
+
       scalar_type d = strain_energy(E2, param, scalar_type(1))
         - strain_energy(E, param, scalar_type(1));
       scalar_type d2 = 0;
-      for (size_type i=0; i < N; ++i) 
+      for (size_type i=0; i < N; ++i)
         for (size_type j=0; j < N; ++j) d2 += sigma1(i,j)*DE(i,j);
       if (gmm::abs(d-d2)/(gmm::abs(d)+1e-40) > 1e-4) {
         cout << "Test " << count << " wrong derivative of strain_energy, d="
              << d/h << ", d2=" << d2/h << endl;
         ok = false;
       }
-      
+
       grad_sigma(E,tdsigma,param, scalar_type(1));
       for (size_type i=0; i < N; ++i) {
         for (size_type j=0; j < N; ++j) {
@@ -344,9 +344,9 @@ namespace getfem {
     }
     GMM_ASSERT1(ok, "Derivative test has failed");
   }
-    
+
   void abstract_hyperelastic_law::cauchy_updated_lagrangian
-  (const base_matrix& F, const base_matrix &E, 
+  (const base_matrix& F, const base_matrix &E,
    base_matrix &cauchy_stress, const base_vector &params,
    scalar_type det_trans) const
   {
@@ -358,7 +358,7 @@ namespace getfem {
     gmm::mult(aux,gmm::transposed(F),cauchy_stress);
     gmm::scale(cauchy_stress,scalar_type(1.0/det_trans)); //cauchy = 1/J*F*PK2*F^T
   }
-  
+
 
   void abstract_hyperelastic_law::grad_sigma_updated_lagrangian
   (const base_matrix& F, const base_matrix& E,
@@ -381,13 +381,13 @@ namespace getfem {
                 {    for(size_type n = 0; n < N; ++n)
                     for(size_type p = 0; p < N; ++p)
                       for(size_type q = 0; q < N; ++q)
-                        grad_sigma_ul(i,j,k,l)+= 
+                        grad_sigma_ul(i,j,k,l)+=
                           F(i,m)*F(j,n)*F(k,p)*F(l,q)*Cse(m,n,p,q);
                 }
               grad_sigma_ul(i,j,k,l) *= mult;
             }
   }
-  
+
   scalar_type SaintVenant_Kirchhoff_hyperelastic_law::strain_energy
   (const base_matrix &E, const base_vector &params, scalar_type det_trans) const {
         // should be optimized, maybe deriving sigma from strain energy
@@ -397,7 +397,7 @@ namespace getfem {
     return gmm::sqr(gmm::mat_trace(E)) * params[0] / scalar_type(2)
     + gmm::mat_euclidean_norm_sqr(E) * params[1];
   }
-  
+
   void SaintVenant_Kirchhoff_hyperelastic_law::sigma
   (const base_matrix &E, base_matrix &result,const base_vector &params, scalar_type det_trans) const {
     gmm::copy(gmm::identity_matrix(), result);
@@ -421,7 +421,7 @@ namespace getfem {
       }
   }
 
-  void SaintVenant_Kirchhoff_hyperelastic_law::grad_sigma_updated_lagrangian(const base_matrix& F, 
+  void SaintVenant_Kirchhoff_hyperelastic_law::grad_sigma_updated_lagrangian(const base_matrix& F,
     const base_matrix& E,
     const base_vector &params,
     scalar_type det_trans,
@@ -430,7 +430,7 @@ namespace getfem {
     size_type N = E.ncols();
     base_tensor Cse(N,N,N,N);
     grad_sigma(E,Cse,params,det_trans);
-    base_matrix Cinv(N,N); // left Cauchy-Green deform. tens. 
+    base_matrix Cinv(N,N); // left Cauchy-Green deform. tens.
     gmm::mult(F,gmm::transposed(F),Cinv);
     scalar_type mult=1.0/det_trans;
     for(size_type i = 0; i < N; ++i)
@@ -441,7 +441,7 @@ namespace getfem {
             params[1]*(Cinv(i,k)*Cinv(j,l) + Cinv(i,l)*Cinv(j,k)))*mult;
   }
 
-  SaintVenant_Kirchhoff_hyperelastic_law::SaintVenant_Kirchhoff_hyperelastic_law(void) {
+  SaintVenant_Kirchhoff_hyperelastic_law::SaintVenant_Kirchhoff_hyperelastic_law() {
     nb_params_ = 2;
   }
 
@@ -451,7 +451,7 @@ namespace getfem {
     GMM_ASSERT1(false, "To be done");
     return 0;
   }
-  
+
   void membrane_elastic_law::sigma
   (const base_matrix &E, base_matrix &result,const base_vector &params, scalar_type det_trans) const {
     // should be optimized, maybe deriving sigma from strain energy
@@ -462,7 +462,7 @@ namespace getfem {
       for (size_type j = 0; j < N; ++j) {
         result(i,j)=0.0;
         for (size_type k = 0; k < N; ++k)
-          for (size_type l = 0; l < N; ++l) 
+          for (size_type l = 0; l < N; ++l)
             result(i,j)+=tt(i,j,k,l)*E(k,l);
       }
     // add pretension in X' direction
@@ -471,7 +471,7 @@ namespace getfem {
     if(params[5]!=0) result(1,1)+=params[5];
     // cout<<"sigma="<<result<<endl;
   }
-  
+
   void membrane_elastic_law::grad_sigma
   (const base_matrix & /* E */, base_tensor &result,
    const base_vector &params, scalar_type) const {
@@ -486,7 +486,7 @@ namespace getfem {
     // result(0,0,1,0) = 0;
     result(0,0,1,1) = params[1]*params[0]/(1-params[1]*poisonXY);
     result(1,1,0,0) = params[1]*params[0]/(1-params[1]*poisonXY);
-    // result(1,1,0,1) = 0;out
+    // result(1,1,0,1) = 0;
     // result(1,1,1,0) = 0;
     result(1,1,1,1) = params[2]/(1-params[1]*poisonXY);
     // result(0,1,0,0) = 0;
@@ -550,7 +550,7 @@ namespace getfem {
 
 // shouldn't negative det_trans be handled here???
       if (det_trans <= scalar_type(0))
-          gmm::add(gmm::scaled(C, 1e200), result);
+        gmm::add(gmm::scaled(C, 1e200), result);
     }
   }
 
@@ -699,7 +699,7 @@ namespace getfem {
   {
     nb_params_ = 2;
   }
-  
+
 
 
   scalar_type generalized_Blatz_Ko_hyperelastic_law::strain_energy
@@ -788,8 +788,8 @@ namespace getfem {
 
     typedef const base_matrix * pointer_base_matrix__;
     pointer_base_matrix__ di[3];
-    di[0] = &(ci.grad_i1()); 
-    di[1] = &(ci.grad_i2()); 
+    di[0] = &(ci.grad_i1());
+    di[1] = &(ci.grad_i2());
     di[2] = &(ci.grad_i3());
 
     for (size_type j = 0; j < N; ++j)
@@ -806,7 +806,7 @@ namespace getfem {
 //                 "Fourth order tensor not symmetric : " << result);
   }
 
-  generalized_Blatz_Ko_hyperelastic_law::generalized_Blatz_Ko_hyperelastic_law(void) {
+  generalized_Blatz_Ko_hyperelastic_law::generalized_Blatz_Ko_hyperelastic_law() {
     nb_params_ = 5;
     base_vector V(5);
     V[0] = 1.0;  V[1] = 1.0, V[2] = 1.5; V[3] = -0.5; V[4] = 1.5;
@@ -828,7 +828,7 @@ namespace getfem {
     gmm::add(gmm::identity_matrix(), C);
     scalar_type det = bgeot::lu_det(&(*(C.begin())), N);
     return a * gmm::mat_trace(C)
-      + b * (gmm::sqr(gmm::mat_trace(C)) - 
+      + b * (gmm::sqr(gmm::mat_trace(C)) -
              gmm::mat_euclidean_norm_sqr(C))/scalar_type(2)
       + c * det - d * log(det) / scalar_type(2) + e;
   }
@@ -853,7 +853,7 @@ namespace getfem {
     gmm::add(gmm::scaled(C, -scalar_type(2) * b), result);
     if (det_trans <= scalar_type(0))
       gmm::add(gmm::scaled(C, 1e200), result);
-          else {
+    else {
       scalar_type det = bgeot::lu_inverse(&(*(C.begin())), N);
       gmm::add(gmm::scaled(C, scalar_type(2) * c * det - d), result);
     }
@@ -879,7 +879,7 @@ namespace getfem {
         result(i, j, j, i) -= b2;
         for (size_type  k = 0; k < N; ++k)
           for (size_type  l = 0; l < N; ++l)
-            result(i, j, k, l) += 
+            result(i, j, k, l) +=
               (C(i, k)*C(l, j) + C(i, l)*C(k, j)) * (d-scalar_type(2)*det*c)
               + (C(i, j) * C(k, l)) * det*c*scalar_type(4);
       }
@@ -906,7 +906,7 @@ namespace getfem {
   (const base_matrix &E, const base_vector &params, scalar_type det_trans) const {
     GMM_ASSERT1(gmm::mat_nrows(E) == 2, "Plane strain law is for 2D only.");
     base_matrix E3D(3,3);
-    E3D(0,0)=E(0,0); E3D(1,0)=E(1,0); E3D(0,1)=E(0,1); E3D(1,1)=E(1,1); 
+    E3D(0,0)=E(0,0); E3D(1,0)=E(1,0); E3D(0,1)=E(0,1); E3D(1,1)=E(1,1);
     return pl->strain_energy(E3D, params, det_trans);
   }
 
@@ -952,7 +952,7 @@ namespace getfem {
   struct nonlinear_elasticity_brick : public virtual_brick {
 
     phyperelastic_law AHL;
-    
+
     virtual void asm_real_tangent_terms(const model &md, size_type /* ib */,
                                         const model::varnamelist &vl,
                                         const model::varnamelist &dl,
@@ -1011,9 +1011,9 @@ namespace getfem {
     }
 
   };
-  
+
   //=========================================================================
-  //  Add a nonlinear elasticity brick.  
+  //  Add a nonlinear elasticity brick.
   //=========================================================================
 
   // Deprecated brick
@@ -1031,11 +1031,11 @@ namespace getfem {
   }
 
   //=========================================================================
-  //  Von Mises or Tresca stress computation.  
+  //  Von Mises or Tresca stress computation.
   //=========================================================================
 
   void compute_Von_Mises_or_Tresca(model &md,
-                                   const std::string &varname, 
+                                   const std::string &varname,
                                    const phyperelastic_law &AHL,
                                    const std::string &dataname,
                                    const mesh_fem &mf_vm,
@@ -1047,12 +1047,12 @@ namespace getfem {
     const model_real_plain_vector &u = md.real_variable(varname);
     const mesh_fem *mf_params = md.pmesh_fem_of_variable(dataname);
     const model_real_plain_vector &params = md.real_variable(dataname);
-    
+
     size_type sl = gmm::vect_size(params);
     if (mf_params) sl = sl * mf_params->get_qdim() / mf_params->nb_dof();
     GMM_ASSERT1(sl == AHL->nb_params(), "Wrong number of coefficients for "
                 "the nonlinear constitutive elastic law");
-    
+
     unsigned N = unsigned(mf_u.linked_mesh().dim());
     unsigned NP = unsigned(AHL->nb_params()), NFem = mf_u.get_qdim();
     model_real_plain_vector GRAD(mf_vm.nb_dof()*NFem*N);
@@ -1086,7 +1086,7 @@ namespace getfem {
         //jyh : compute ez, normal on deformed surface
         for (unsigned int l = 0; l <NFem; ++l)  {
           ez[l]=0;
-          for (unsigned int m = 0; m <NFem; ++m) 
+          for (unsigned int m = 0; m <NFem; ++m)
             for (unsigned int n = 0; n <NFem; ++n){
               ez[l]+=levi_civita(l,m,n)*gradphi(m,0)*gradphi(n,1);
             }
@@ -1096,14 +1096,14 @@ namespace getfem {
       }
       gmm::mult(gradphi, sigmahathat, aux);
       gmm::mult(aux, gmm::transposed(gradphi), sigma);
-      
+
       /* jyh : complete gradphi for virtual 3rd dim (perpendicular to
          deformed surface, same thickness) */
       if (NFem == 3 && N == 2) {
         gmm::resize(gradphi,NFem,NFem);
-        for (unsigned int ll = 0; ll <NFem; ++ll) 
-          for (unsigned int ii = 0; ii <NFem; ++ii) 
-            for (unsigned int jj = 0; jj <NFem; ++jj) 
+        for (unsigned int ll = 0; ll <NFem; ++ll)
+          for (unsigned int ii = 0; ii <NFem; ++ii)
+            for (unsigned int jj = 0; jj <NFem; ++jj)
               gradphi(ll,2)+=(levi_civita(ll,ii,jj)*gradphi(ii,0)
                               *gradphi(jj,1))/normEz;
         //jyh : end complete graphi
@@ -1129,7 +1129,7 @@ namespace getfem {
 
 
   void compute_sigmahathat(model &md,
-                           const std::string &varname, 
+                           const std::string &varname,
                            const phyperelastic_law &AHL,
                            const std::string &dataname,
                            const mesh_fem &mf_sigma,
@@ -1143,13 +1143,13 @@ namespace getfem {
     if (mf_params) sl = sl * mf_params->get_qdim() / mf_params->nb_dof();
     GMM_ASSERT1(sl == AHL->nb_params(), "Wrong number of coefficients for "
                 "the nonlinear constitutive elastic law");
-    
+
     unsigned N = unsigned(mf_u.linked_mesh().dim());
     unsigned NP = unsigned(AHL->nb_params()), NFem = mf_u.get_qdim();
     GMM_ASSERT1(mf_sigma.nb_dof() > 0, "Bad mf_sigma");
     size_type qqdim = mf_sigma.get_qdim();
     size_type ratio = N*N / qqdim;
-    
+
     GMM_ASSERT1(((ratio == 1) || (ratio == N*N)) &&
                 (gmm::vect_size(SIGMA) == mf_sigma.nb_dof()*ratio),
                 "The vector has not the good size");
@@ -1169,7 +1169,7 @@ namespace getfem {
     base_matrix E(N, N), gradphi(NFem,N),gradphit(N,NFem), Id(N, N),
       sigmahathat(N,N),aux(NFem,N), sigma(NFem,NFem),
       IdNFem(NFem, NFem);
-    
+
 
     base_vector p(NP);
     if (!mf_params) gmm::copy(params, p);
@@ -1205,7 +1205,7 @@ namespace getfem {
     }
   }
 
-  
+
 
   // ----------------------------------------------------------------------
   //
@@ -1214,7 +1214,7 @@ namespace getfem {
   // ----------------------------------------------------------------------
 
   struct nonlinear_incompressibility_brick : public virtual_brick {
-    
+
     virtual void asm_real_tangent_terms(const model &md, size_type,
                                         const model::varnamelist &vl,
                                         const model::varnamelist &dl,
@@ -1224,7 +1224,7 @@ namespace getfem {
                                         model::real_veclist &veclsym,
                                         size_type region,
                                         build_version version) const {
-      
+
       GMM_ASSERT1(matl.size() == 2,  "Wrong number of terms for nonlinear "
                   "incompressibility brick");
       GMM_ASSERT1(dl.size() == 0, "Nonlinear incompressibility brick need no "
@@ -1257,7 +1257,7 @@ namespace getfem {
     }
 
 
-    nonlinear_incompressibility_brick(void) {
+    nonlinear_incompressibility_brick() {
       set_flags("Nonlinear incompressibility brick",
                 false /* is linear*/,
                 true /* is symmetric */, false /* is coercive */,
@@ -1305,7 +1305,7 @@ namespace getfem {
       ga_init_scalar_(sizes);
       return true;
     }
-    
+
     // Value : (Trace(M))^2 - Trace(M^2))/2
     void value(const arg_list &args, base_tensor &result) const {
       size_type N = args[0]->sizes()[0];
@@ -1332,7 +1332,7 @@ namespace getfem {
           *it = ((i == j) ? tr : scalar_type(0)) - t[i*N+j];
       GMM_ASSERT1(it == result.end(), "Internal error");
     }
-    
+
     // Second derivative : I@I - \delta_{il}\delta_{jk}
     void second_derivative(const arg_list &args, size_type, size_type,
                            base_tensor &result) const { // To be verified
@@ -1347,7 +1347,7 @@ namespace getfem {
   };
 
 
-  // Matrix_j1 Operator 
+  // Matrix_j1 Operator
   struct matrix_j1_operator : public ga_nonlinear_operator {
     bool result_size(const arg_list &args, bgeot::multi_index &sizes) const {
       if (args.size() != 1 || args[0]->sizes().size() != 2
@@ -1355,7 +1355,7 @@ namespace getfem {
       ga_init_scalar_(sizes);
       return true;
     }
-    
+
     // Value : Trace(M)/(det(M)^1/3)
     void value(const arg_list &args, base_tensor &result) const {
       size_type N = args[0]->sizes()[0];
@@ -1390,7 +1390,7 @@ namespace getfem {
       } else
         std::fill(result.begin(), result.end(), 1.E200);
     }
-    
+
     // Second derivative : (-M^{-T}@I + Trace(M)*M^{-T}_{ik}M^{-T}_{lj}
     //                      -I@M^{-T} + Trace(M)*M^{-T}@M^{-T}/3)/(3det(M)^1/3)
     void second_derivative(const arg_list &args, size_type, size_type,
@@ -1413,13 +1413,13 @@ namespace getfem {
                        + tr*M(j,i)*M(k,l)/ scalar_type(3))
                   / (scalar_type(3)*pow(det, scalar_type(1)/scalar_type(3)));
         GMM_ASSERT1(it == result.end(), "Internal error");
-      } else 
+      } else
         std::fill(result.begin(), result.end(), 1.E200);
     }
   };
 
 
-  // Matrix_j2 Operator 
+  // Matrix_j2 Operator
   struct matrix_j2_operator : public ga_nonlinear_operator {
     bool result_size(const arg_list &args, bgeot::multi_index &sizes) const {
       if (args.size() != 1 || args[0]->sizes().size() != 2
@@ -1427,7 +1427,7 @@ namespace getfem {
       ga_init_scalar_(sizes);
       return true;
     }
-    
+
     // Value : i2(M)/(det(M)^2/3)
     void value(const arg_list &args, base_tensor &result) const {
       size_type N = args[0]->sizes()[0];
@@ -1471,7 +1471,7 @@ namespace getfem {
             / pow(det, scalar_type(2)/scalar_type(3));
       GMM_ASSERT1(it == result.end(), "Internal error");
     }
-    
+
     // Second derivative
     void second_derivative(const arg_list &args, size_type, size_type,
                            base_tensor &result) const { // To be verified
@@ -1510,7 +1510,7 @@ namespace getfem {
       ga_init_square_matrix_(sizes, args[0]->sizes()[1]);
       return true;
     }
-    
+
     // Value : F^{T}F
     void value(const arg_list &args, base_tensor &result) const {
       // to be verified
@@ -1540,7 +1540,7 @@ namespace getfem {
             }
       GMM_ASSERT1(it == result.end(), "Internal error");
     }
-    
+
     // Second derivative :
     // A{ijklop}=delta{ok}delta{li}delta{pj} + delta{ok}delta{pi}delta{lj}
     // comes from (H,K) -> H^{T}K + K^{T}H
@@ -1571,7 +1571,7 @@ namespace getfem {
       ga_init_square_matrix_(sizes, args[0]->sizes()[0]);
       return true;
     }
-    
+
     // Value : FF^{T}
     void value(const arg_list &args, base_tensor &result) const {
       // to be verified
@@ -1601,7 +1601,7 @@ namespace getfem {
             }
       GMM_ASSERT1(it == result.end(), "Internal error");
     }
-    
+
     // Second derivative :
     // A{ijklop}=delta{ki}delta{lp}delta{oj} + delta{oi}delta{pl}delta{kj}
     // comes from (H,K) -> HK^{T} + KH^{T}
@@ -1633,7 +1633,7 @@ namespace getfem {
       ga_init_square_matrix_(sizes, args[0]->sizes()[1]);
       return true;
     }
-    
+
     // Value : F^{T}F
     void value(const arg_list &args, base_tensor &result) const {
       // to be verified
@@ -1664,7 +1664,7 @@ namespace getfem {
             }
       GMM_ASSERT1(it == result.end(), "Internal error");
     }
-    
+
     // Second derivative :
     // A{ijklop}=(delta{ok}delta{li}delta{pj} + delta{ok}delta{pi}delta{lj})/2
     // comes from (H,K) -> (H^{T}K + K^{T}H)/2
@@ -1695,12 +1695,12 @@ namespace getfem {
       if (args.size() != 2 || args[0]->sizes().size() != 2
           || args[1]->sizes().size() != 2
           || args[0]->sizes()[0] !=  args[0]->sizes()[1]
-          || args[1]->sizes()[0] !=  args[0]->sizes()[1] 
+          || args[1]->sizes()[0] !=  args[0]->sizes()[1]
           || args[1]->sizes()[1] !=  args[0]->sizes()[1]) return false;
       ga_init_square_matrix_(sizes, args[0]->sizes()[1]);
       return true;
     }
-    
+
     // Value : (I+Grad_u)\sigma(I+Grad_u')/det(I+Grad_u)
     void value(const arg_list &args, base_tensor &result) const {
       size_type N = args[0]->sizes()[0];
@@ -1759,7 +1759,7 @@ namespace getfem {
       }
       GMM_ASSERT1(it == result.end(), "Internal error");
     }
-    
+
     // Second derivative : to be implemented
     void second_derivative(const arg_list &, size_type, size_type,
                            base_tensor &) const {
@@ -1771,7 +1771,7 @@ namespace getfem {
   struct AHL_wrapper_sigma : public ga_nonlinear_operator {
     phyperelastic_law AHL;
     bool result_size(const arg_list &args, bgeot::multi_index &sizes) const {
-      if (args.size() != 2 || args[0]->sizes().size() != 2 
+      if (args.size() != 2 || args[0]->sizes().size() != 2
           || args[1]->size() != AHL->nb_params()
           || args[0]->sizes()[0] != args[0]->sizes()[1]) return false;
       ga_init_square_matrix_(sizes, args[0]->sizes()[0]);
@@ -1814,7 +1814,7 @@ namespace getfem {
                   "law with respect to its parameters is not available.");
 
       AHL->grad_sigma(E, grad_sigma, params, det);
-      
+
       base_tensor::iterator it = result.begin();
       for (size_type l = 0; l < N; ++l)
         for (size_type k = 0; k < N; ++k)
@@ -1842,7 +1842,7 @@ namespace getfem {
   struct AHL_wrapper_potential : public ga_nonlinear_operator {
     phyperelastic_law AHL;
     bool result_size(const arg_list &args, bgeot::multi_index &sizes) const {
-      if (args.size() != 2 || args[0]->sizes().size() != 2 
+      if (args.size() != 2 || args[0]->sizes().size() != 2
           || args[1]->size() != AHL->nb_params()
           || args[0]->sizes()[0] != args[0]->sizes()[1]) return false;
       ga_init_scalar_(sizes);
@@ -1891,7 +1891,7 @@ namespace getfem {
     // Second derivative :
     void second_derivative(const arg_list &args, size_type nder1,
                            size_type nder2, base_tensor &result) const {
-      
+
       size_type N = args[0]->sizes()[0];
       base_vector params(AHL->nb_params());
       gmm::copy(args[1]->as_vector(), params);
@@ -1909,7 +1909,7 @@ namespace getfem {
 
       AHL->sigma(E, sigma, params, det);
       AHL->grad_sigma(E, grad_sigma, params, det);
-      
+
       base_tensor::iterator it = result.begin();
       for (size_type l = 0; l < N; ++l)
         for (size_type k = 0; k < N; ++k)
@@ -1935,13 +1935,13 @@ namespace getfem {
   // lambda Tr(E)Id + 2*mu*E with E = (Grad_u+Grad_u'+Grad_u'Grad_u)/2
   struct Saint_Venant_Kirchhoff_sigma : public ga_nonlinear_operator {
     bool result_size(const arg_list &args, bgeot::multi_index &sizes) const {
-      if (args.size() != 2 || args[0]->sizes().size() != 2 
+      if (args.size() != 2 || args[0]->sizes().size() != 2
           || args[1]->size() != 2
           || args[0]->sizes()[0] != args[0]->sizes()[1]) return false;
       ga_init_square_matrix_(sizes, args[0]->sizes()[0]);
       return true;
     }
-    
+
     // Value : Tr(E) + 2*mu*E
     void value(const arg_list &args, base_tensor &result) const {
       size_type N = args[0]->sizes()[0];
@@ -1952,7 +1952,7 @@ namespace getfem {
       gmm::add(Gu, E); gmm::add(gmm::transposed(Gu), E);
       gmm::scale(E, scalar_type(0.5));
       scalar_type trE = gmm::mat_trace(E);
-      
+
       base_tensor::iterator it = result.begin();
       for (size_type j = 0; j < N; ++j)
         for (size_type i = 0; i < N; ++i, ++it) {
@@ -2010,7 +2010,7 @@ namespace getfem {
       }
       GMM_ASSERT1(it == result.end(), "Internal error");
     }
-    
+
     // Second derivative : not implemented
     void second_derivative(const arg_list &, size_type, size_type,
                            base_tensor &) const {
@@ -2020,11 +2020,11 @@ namespace getfem {
 
 
 
-  static bool init_predef_operators(void) {
+  static bool init_predef_operators() {
 
     ga_predef_operator_tab &PREDEF_OPERATORS
       = dal::singleton<ga_predef_operator_tab>::instance();
-    
+
     PREDEF_OPERATORS.add_method
       ("Matrix_i2", std::make_shared<matrix_i2_operator>());
     PREDEF_OPERATORS.add_method
@@ -2073,7 +2073,7 @@ namespace getfem {
       ("Plane_Strain_Generalized_Blatz_Ko_potential",
        std::make_shared<AHL_wrapper_potential>
        (std::make_shared<plane_strain_hyperelastic_law>(gbklaw)));
-    
+
     phyperelastic_law cigelaw
       = std::make_shared<Ciarlet_Geymonat_hyperelastic_law>();
     PREDEF_OPERATORS.add_method
@@ -2090,9 +2090,9 @@ namespace getfem {
       ("Plane_Strain_Ciarlet_Geymonat_potential",
        std::make_shared<AHL_wrapper_potential>
        (std::make_shared<plane_strain_hyperelastic_law>(cigelaw)));
-    
+
     phyperelastic_law morilaw
-      = std::make_shared<Mooney_Rivlin_hyperelastic_law>();    
+      = std::make_shared<Mooney_Rivlin_hyperelastic_law>();
     PREDEF_OPERATORS.add_method
       ("Incompressible_Mooney_Rivlin_sigma",
        std::make_shared<AHL_wrapper_sigma>(morilaw));
@@ -2126,7 +2126,7 @@ namespace getfem {
       ("Plane_Strain_Compressible_Mooney_Rivlin_potential",
        std::make_shared<AHL_wrapper_potential>
        (std::make_shared<plane_strain_hyperelastic_law>(cmorilaw)));
-    
+
     phyperelastic_law ineolaw
       = std::make_shared<Mooney_Rivlin_hyperelastic_law>(false, true);
     PREDEF_OPERATORS.add_method
@@ -2162,7 +2162,7 @@ namespace getfem {
       ("Plane_Strain_Compressible_Neo_Hookean_potential",
        std::make_shared<AHL_wrapper_potential>
        (std::make_shared<plane_strain_hyperelastic_law>(cneolaw)));
-    
+
     phyperelastic_law cneobolaw
       = std::make_shared<Neo_Hookean_hyperelastic_law>(true);
     PREDEF_OPERATORS.add_method
@@ -2239,7 +2239,7 @@ namespace getfem {
 
 
   size_type add_finite_strain_elasticity_brick
-  (model &md, const mesh_im &mim, const std::string &lawname, 
+  (model &md, const mesh_im &mim, const std::string &lawname,
    const std::string &varname, const std::string &params,
    size_type region) {
     std::string test_varname = "Test_" + sup_previous_and_dot_to_varname(varname);
@@ -2281,11 +2281,11 @@ namespace getfem {
   }
 
   void compute_finite_strain_elasticity_Von_Mises
-    (model &md, const std::string &lawname, const std::string &varname, 
+    (model &md, const std::string &lawname, const std::string &varname,
      const std::string &params, const mesh_fem &mf_vm,
      model_real_plain_vector &VM, const mesh_region &rg) {
     size_type N = mf_vm.linked_mesh().dim();
-    
+
     std::string adapted_lawname = adapt_law_name(lawname, N);
 
     std::string expr = "sqrt(3/2)*Norm(Deviator(Cauchy_stress_from_PK2("

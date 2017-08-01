@@ -32,35 +32,35 @@ namespace bgeot {
     DEFINE_STATIC_THREAD_LOCAL(std::vector<scalar_type>, v);
     return v;
   }
-  
+
   std::vector<scalar_type>& __aux2(){
     DEFINE_STATIC_THREAD_LOCAL(std::vector<scalar_type>, v);
     return v;
   }
-  
+
   std::vector<scalar_type>& __aux3(){
     DEFINE_STATIC_THREAD_LOCAL(std::vector<scalar_type>, v);
     return v;
   }
-  
+
   std::vector<int>& __ipvt_aux(){
     DEFINE_STATIC_THREAD_LOCAL(std::vector<int>, vi);
     return vi;
   }
-  
+
   // Optimized matrix mult for small matrices. To be verified.
   // Multiply the matrix A of size MxN by B of size NxP in C of size MxP
   void mat_mult(const scalar_type *A, const scalar_type *B, scalar_type *C,
-		size_type M, size_type N, size_type P) {
+                size_type M, size_type N, size_type P) {
     if (N != 0) {
       auto itC = C; auto itB = B;
       for (size_type j = 0; j < P; ++j, itB += N)
-	for (size_type i = 0; i < M; ++i, ++itC) {
-	  auto itA = A+i, itB1 = itB;
-	  *itC = (*itA) * (*itB1);
-	  for (size_type k = 1; k < N; ++k)
-	    { itA += M; ++itB1; *itC += (*itA) * (*itB1); }
-	}
+        for (size_type i = 0; i < M; ++i, ++itC) {
+          auto itA = A+i, itB1 = itB;
+          *itC = (*itA) * (*itB1);
+          for (size_type k = 1; k < N; ++k)
+            { itA += M; ++itB1; *itC += (*itA) * (*itB1); }
+        }
     } else std::fill(C, C+M*P, scalar_type(0));
   }
 
@@ -68,42 +68,42 @@ namespace bgeot {
   // Multiply the matrix A of size MxN by the transpose of B of size PxN
   // in C of size MxP
   void mat_tmult(const scalar_type *A, const scalar_type *B, scalar_type *C,
-		 size_type M, size_type N, size_type P) {
+                 size_type M, size_type N, size_type P) {
     auto itC = C;
     switch (N) {
     case 0 : std::fill(C, C+M*P, scalar_type(0)); break;
-    case 1 : 
+    case 1 :
       for (size_type j = 0; j < P; ++j)
-	for (size_type i = 0; i < M; ++i, ++itC) {
-	  auto itA = A+i, itB = B+j;
-	  *itC = (*itA) * (*itB);
-	}
+        for (size_type i = 0; i < M; ++i, ++itC) {
+          auto itA = A+i, itB = B+j;
+          *itC = (*itA) * (*itB);
+        }
       break;
     case 2 :
       for (size_type j = 0; j < P; ++j)
-	for (size_type i = 0; i < M; ++i, ++itC) {
-	  auto itA = A+i, itB = B+j;
-	  *itC = (*itA) * (*itB);
-	  itA += M; itB += P; *itC += (*itA) * (*itB);
-	}
+        for (size_type i = 0; i < M; ++i, ++itC) {
+          auto itA = A+i, itB = B+j;
+          *itC = (*itA) * (*itB);
+          itA += M; itB += P; *itC += (*itA) * (*itB);
+        }
       break;
     case 3 :
       for (size_type j = 0; j < P; ++j)
-	for (size_type i = 0; i < M; ++i, ++itC) {
-	  auto itA = A+i, itB = B+j;
-	  *itC = (*itA) * (*itB);
-	  itA += M; itB += P; *itC += (*itA) * (*itB);
-	  itA += M; itB += P; *itC += (*itA) * (*itB);
-	}
+        for (size_type i = 0; i < M; ++i, ++itC) {
+          auto itA = A+i, itB = B+j;
+          *itC = (*itA) * (*itB);
+          itA += M; itB += P; *itC += (*itA) * (*itB);
+          itA += M; itB += P; *itC += (*itA) * (*itB);
+        }
       break;
     default :
       for (size_type j = 0; j < P; ++j)
-	for (size_type i = 0; i < M; ++i, ++itC) {
-	  auto itA = A+i, itB = B+j;
-	  *itC = (*itA) * (*itB);
-	  for (size_type k = 1; k < N; ++k)
-	    { itA += M; itB += P; *itC += (*itA) * (*itB); }
-	}
+        for (size_type i = 0; i < M; ++i, ++itC) {
+          auto itA = A+i, itB = B+j;
+          *itC = (*itA) * (*itB);
+          for (size_type k = 1; k < N; ++k)
+            { itA += M; itB += P; *itC += (*itA) * (*itB); }
+        }
     }
   }
 
@@ -112,34 +112,34 @@ namespace bgeot {
 
   // Optimized lu_factor for small square matrices
   size_type lu_factor(scalar_type *A, std::vector<int> &ipvt,
-		      size_type N) {
+                      size_type N) {
     size_type info(0), i, j, jp, N_1 = N-1;
-      
+
     if (N) {
       for (j = 0; j < N_1; ++j) {
-	auto it = A + (j*(N+1));
-	scalar_type max = gmm::abs(*it); jp = j;
-	for (i = j+1; i < N; ++i) {
-	  scalar_type ap = gmm::abs(*(++it));
-	  if (ap > max) { jp = i; max = ap; }
-	}
-	ipvt[j] = int(jp + 1);
-	
-	if (max == scalar_type(0)) { info = j + 1; break; }
+        auto it = A + (j*(N+1));
+        scalar_type max = gmm::abs(*it); jp = j;
+        for (i = j+1; i < N; ++i) {
+          scalar_type ap = gmm::abs(*(++it));
+          if (ap > max) { jp = i; max = ap; }
+        }
+        ipvt[j] = int(jp + 1);
+
+        if (max == scalar_type(0)) { info = j + 1; break; }
         if (jp != j) {
-	  auto it1 = A+jp, it2 = A+j;
-	  for (i = 0; i < N; ++i, it1+=N, it2+=N) std::swap(*it1, *it2);
-	}
-	it = A + (j*(N+1)); max = *it++;
-	for (i = j+1; i < N; ++i) *it++ /= max; 
-	auto it22 = A + (j*N + j+1), it11 = it22;
-	auto it3 = A + ((j+1)*N+j);
-	for (size_type l = j+1; l < N; ++l) {
-	  it11 += N;
-	  auto it1 = it11, it2 = it22;
-	  scalar_type a = *it3; it3 += N;
-	  for (size_type k = j+1; k < N; ++k) *it1++ -= *it2++ * a;
-	}
+          auto it1 = A+jp, it2 = A+j;
+          for (i = 0; i < N; ++i, it1+=N, it2+=N) std::swap(*it1, *it2);
+        }
+        it = A + (j*(N+1)); max = *it++;
+        for (i = j+1; i < N; ++i) *it++ /= max;
+        auto it22 = A + (j*N + j+1), it11 = it22;
+        auto it3 = A + ((j+1)*N+j);
+        for (size_type l = j+1; l < N; ++l) {
+          it11 += N;
+          auto it1 = it11, it2 = it22;
+          scalar_type a = *it3; it3 += N;
+          for (size_type k = j+1; k < N; ++k) *it1++ -= *it2++ * a;
+        }
 
       }
       ipvt[N-1] = int(N);
@@ -148,7 +148,7 @@ namespace bgeot {
   }
 
   static void lower_tri_solve(const scalar_type *T, scalar_type *x, int N,
-			      bool is_unit) {
+                              bool is_unit) {
     scalar_type x_j;
     for (int j = 0; j < N; ++j) {
       auto itc = T + j*N, it = itc+(j+1), ite = itc+N;
@@ -160,7 +160,7 @@ namespace bgeot {
   }
 
   static void upper_tri_solve(const scalar_type *T, scalar_type *x, int N,
-			      bool is_unit) {
+                              bool is_unit) {
     scalar_type x_j;
     for (int j = N - 1; j >= 0; --j) {
       auto itc = T + j*N, it = itc, ite = itc+j;
@@ -170,8 +170,8 @@ namespace bgeot {
     }
   }
 
-  static void lu_solve(const scalar_type *LU, const std::vector<int> &ipvt, 
-		       scalar_type *x, scalar_type *b, int N) {
+  static void lu_solve(const scalar_type *LU, const std::vector<int> &ipvt,
+                       scalar_type *x, scalar_type *b, int N) {
     std::copy(b, b+N, x);
     for(int i = 0; i < N; ++i)
       { int perm = ipvt[i]-1; if(i != perm) std::swap(x[i], x[perm]); }
@@ -180,7 +180,7 @@ namespace bgeot {
   }
 
   scalar_type lu_det(const scalar_type *LU, const std::vector<int> &ipvt,
-		     size_type N) {
+                     size_type N) {
     scalar_type det(1);
     for (size_type j = 0; j < N; ++j) det *= *(LU+j*(N+1));
     for(int i = 0; i < int(N); ++i) if (i != ipvt[i]-1) { det = -det; }
@@ -191,26 +191,26 @@ namespace bgeot {
     switch (N) {
     case 1: return *A;
     case 2: return (*A) * (A[3]) - (A[1]) * (A[2]);
-    case 3: 
+    case 3:
       {
-	scalar_type a0 = A[4]*A[8] - A[5]*A[7], a3 = A[5]*A[6] - A[3]*A[8];
-	scalar_type a6 = A[3]*A[7] - A[4]*A[6];
-	return A[0] * a0 + A[1] * a3 + A[2] * a6;
+        scalar_type a0 = A[4]*A[8] - A[5]*A[7], a3 = A[5]*A[6] - A[3]*A[8];
+        scalar_type a6 = A[3]*A[7] - A[4]*A[6];
+        return A[0] * a0 + A[1] * a3 + A[2] * a6;
       }
     default:
       {
-	size_type NN = N*N;
-	if (__aux1().size() < NN) __aux1().resize(N*N);
-	std::copy(A, A+NN, __aux1().begin());
-	__ipvt_aux().resize(N);
-	lu_factor(&(*(__aux1().begin())), __ipvt_aux(), N);
-	return lu_det(&(*(__aux1().begin())), __ipvt_aux(), N);
+        size_type NN = N*N;
+        if (__aux1().size() < NN) __aux1().resize(N*N);
+        std::copy(A, A+NN, __aux1().begin());
+        __ipvt_aux().resize(N);
+        lu_factor(&(*(__aux1().begin())), __ipvt_aux(), N);
+        return lu_det(&(*(__aux1().begin())), __ipvt_aux(), N);
       }
     }
   }
 
   void lu_inverse(const scalar_type *LU, const std::vector<int> &ipvt,
-		  scalar_type *A, size_type N) {
+                  scalar_type *A, size_type N) {
     __aux2().resize(N); gmm::clear(__aux2());
     __aux3().resize(N);
     for(size_type i = 0; i < N; ++i) {
@@ -224,44 +224,44 @@ namespace bgeot {
     switch (N) {
     case 1:
       {
-	scalar_type det = *A;
-	GMM_ASSERT1(det != scalar_type(0), "Non invertible matrix");
-	*A = scalar_type(1)/det;
-	return det;
+        scalar_type det = *A;
+        GMM_ASSERT1(det != scalar_type(0), "Non invertible matrix");
+        *A = scalar_type(1)/det;
+        return det;
       }
     case 2:
       {
-	scalar_type a = *A, b = A[2], c = A[1], d = A[3];
-	scalar_type det = a * d - b * c;
-	GMM_ASSERT1(det != scalar_type(0), "Non invertible matrix");
-	*A++ =  d/det;  *A++ /= -det; *A++ /= -det;  *A =  a/det;
-	return det;
+        scalar_type a = *A, b = A[2], c = A[1], d = A[3];
+        scalar_type det = a * d - b * c;
+        GMM_ASSERT1(det != scalar_type(0), "Non invertible matrix");
+        *A++ =  d/det;  *A++ /= -det; *A++ /= -det;  *A =  a/det;
+        return det;
       }
     case 3:
       {
-	scalar_type a0 = A[4]*A[8] - A[5]*A[7], a1 = A[5]*A[6] - A[3]*A[8];
-	scalar_type a2 = A[3]*A[7] - A[4]*A[6];
-	scalar_type det =  A[0] * a0 + A[1] * a1 + A[2] * a2;
-	GMM_ASSERT1(det != scalar_type(0), "Non invertible matrix");
-	scalar_type a3 = (A[2]*A[7] - A[1]*A[8]), a6 = (A[1]*A[5] - A[2]*A[4]);
-	scalar_type a4 = (A[0]*A[8] - A[2]*A[6]), a7 = (A[2]*A[3] - A[0]*A[5]);
-	scalar_type a5 = (A[1]*A[6] - A[0]*A[7]), a8 = (A[0]*A[4] - A[1]*A[3]);
-	*A++ = a0 / det; *A++ = a3 / det; *A++ = a6 / det;
-	*A++ = a1 / det; *A++ = a4 / det; *A++ = a7 / det;
-	*A++ = a2 / det; *A++ = a5 / det; *A++ = a8 / det;
-	return det;
+        scalar_type a0 = A[4]*A[8] - A[5]*A[7], a1 = A[5]*A[6] - A[3]*A[8];
+        scalar_type a2 = A[3]*A[7] - A[4]*A[6];
+        scalar_type det =  A[0] * a0 + A[1] * a1 + A[2] * a2;
+        GMM_ASSERT1(det != scalar_type(0), "Non invertible matrix");
+        scalar_type a3 = (A[2]*A[7] - A[1]*A[8]), a6 = (A[1]*A[5] - A[2]*A[4]);
+        scalar_type a4 = (A[0]*A[8] - A[2]*A[6]), a7 = (A[2]*A[3] - A[0]*A[5]);
+        scalar_type a5 = (A[1]*A[6] - A[0]*A[7]), a8 = (A[0]*A[4] - A[1]*A[3]);
+        *A++ = a0 / det; *A++ = a3 / det; *A++ = a6 / det;
+        *A++ = a1 / det; *A++ = a4 / det; *A++ = a7 / det;
+        *A++ = a2 / det; *A++ = a5 / det; *A++ = a8 / det;
+        return det;
       }
     default:
       {
-	size_type NN = N*N;
-	if (__aux1().size() < NN) __aux1().resize(NN);
-	std::copy(A, A+NN, __aux1().begin());
-	__ipvt_aux().resize(N);
-	size_type info = lu_factor(&(*(__aux1().begin())), __ipvt_aux(), N);
-	if (doassert) GMM_ASSERT1(!info, "Non invertible matrix, pivot = "
-				  << info);
-	if (!info) lu_inverse(&(*(__aux1().begin())), __ipvt_aux(), A, N);
-	return lu_det(&(*(__aux1().begin())), __ipvt_aux(), N);
+        size_type NN = N*N;
+        if (__aux1().size() < NN) __aux1().resize(NN);
+        std::copy(A, A+NN, __aux1().begin());
+        __ipvt_aux().resize(N);
+        size_type info = lu_factor(&(*(__aux1().begin())), __ipvt_aux(), N);
+        if (doassert) GMM_ASSERT1(!info, "Non invertible matrix, pivot = "
+                                  << info);
+        if (!info) lu_inverse(&(*(__aux1().begin())), __ipvt_aux(), A, N);
+        return lu_det(&(*(__aux1().begin())), __ipvt_aux(), N);
       }
     }
   }
@@ -276,14 +276,14 @@ namespace bgeot {
     if (N && P && Q) {
       auto itK = K.begin();
       for (size_type j = 0; j < Q; ++j) {
-	auto itpc_j = pc.begin() + j*P, itG_b = G.begin();
-	for (size_type i = 0; i < N; ++i, ++itG_b) {
-	  auto itG = itG_b, itpc = itpc_j;
-	  register scalar_type a = *(itG) * (*itpc);
-	  for (size_type k = 1; k < P; ++k)
-	    { itG += N; a += *(itG) * (*++itpc); }
-	  *itK++ = a;
-	}
+        auto itpc_j = pc.begin() + j*P, itG_b = G.begin();
+        for (size_type i = 0; i < N; ++i, ++itG_b) {
+          auto itG = itG_b, itpc = itpc_j;
+          register scalar_type a = *(itG) * (*itpc);
+          for (size_type k = 1; k < P; ++k)
+            { itG += N; a += *(itG) * (*++itpc); }
+          *itK++ = a;
+        }
       }
     } else gmm::clear(K);
   }
@@ -305,7 +305,7 @@ namespace bgeot {
     return xreal_;
   }
 
-  void geotrans_interpolation_context::compute_J(void) const {
+  void geotrans_interpolation_context::compute_J() const {
     GMM_ASSERT1(have_G() && have_pgt(), "Unable to compute J\n");
     size_type P = pgt_->structure()->dim();
     const base_matrix &KK = K();
@@ -320,21 +320,21 @@ namespace bgeot {
       case 1: J__ = *it; break;
       case 2: J__ = (*it) * (it[3]) - (it[1]) * (it[2]); break;
       case 3:
-	{
-	  B_.base_resize(P, P); // co-factors
-	  auto itB = B_.begin();
-	  scalar_type a0 = itB[0] = it[4]*it[8] - it[5]*it[7];
-	  scalar_type a1 = itB[1] = it[5]*it[6] - it[3]*it[8];
-	  scalar_type a2 = itB[2] = it[3]*it[7] - it[4]*it[6];
-	  J__ = it[0] * a0 + it[1] * a1 + it[2] * a2;
-	} break;
+        {
+          B_.base_resize(P, P); // co-factors
+          auto itB = B_.begin();
+          scalar_type a0 = itB[0] = it[4]*it[8] - it[5]*it[7];
+          scalar_type a1 = itB[1] = it[5]*it[6] - it[3]*it[8];
+          scalar_type a2 = itB[2] = it[3]*it[7] - it[4]*it[6];
+          J__ = it[0] * a0 + it[1] * a1 + it[2] * a2;
+        } break;
       default:
-      	B_factors.base_resize(P, P); // store factorization for B computation
-      	gmm::copy(gmm::transposed(KK), B_factors);
-      	ipvt.resize(P);
-	bgeot::lu_factor(&(*(B_factors.begin())), ipvt, P);
-	J__ = bgeot::lu_det(&(*(B_factors.begin())), ipvt, P);
-	break;
+              B_factors.base_resize(P, P); // store factorization for B computation
+              gmm::copy(gmm::transposed(KK), B_factors);
+              ipvt.resize(P);
+        bgeot::lu_factor(&(*(B_factors.begin())), ipvt, P);
+        J__ = bgeot::lu_det(&(*(B_factors.begin())), ipvt, P);
+        break;
       }
       J_ = gmm::abs(J__);
     }
@@ -347,11 +347,11 @@ namespace bgeot {
       size_type P = pgt_->structure()->dim();
       K_.base_resize(N(), P);
       if (have_pgp()) {
-	pgt_->compute_K_matrix(*G_, pgp_->grad(ii_), K_);
+        pgt_->compute_K_matrix(*G_, pgp_->grad(ii_), K_);
       } else {
-	PC.base_resize(pgt_->nb_points(), P);
+        PC.base_resize(pgt_->nb_points(), P);
         pgt_->poly_vector_grad(xref(), PC);
-	pgt_->compute_K_matrix(*G_, PC, K_);
+        pgt_->compute_K_matrix(*G_, PC, K_);
       }
       have_K_ = true;
     }
@@ -368,29 +368,29 @@ namespace bgeot {
       if (P != N_) {
         gmm::mult(KK, B_factors, B_);
       } else {
-	switch(P) {
-	case 1: B_(0, 0) = scalar_type(1) / J__;  break;
-	case 2:
-	  {
-	    auto it = &(*(KK.begin())); auto itB = &(*(B_.begin()));
-	    *itB++ = it[3] / J__; *itB++ = -it[2] / J__; 
-	    *itB++ = -it[1] / J__; *itB = (*it) / J__;
-	  } break;
-	case 3:
-	  {
-	    auto it = &(*(KK.begin())); auto itB = &(*(B_.begin()));
-	    *itB++ /= J__; *itB++ /= J__; *itB++ /= J__; 
-	    *itB++ = (it[2]*it[7] - it[1]*it[8]) / J__;
-	    *itB++ = (it[0]*it[8] - it[2]*it[6]) / J__;
-	    *itB++ = (it[1]*it[6] - it[0]*it[7]) / J__;
-	    *itB++ = (it[1]*it[5] - it[2]*it[4]) / J__;
-	    *itB++ = (it[2]*it[3] - it[0]*it[5]) / J__;
-	    *itB   = (it[0]*it[4] - it[1]*it[3]) / J__;
-	  } break;
-	default:
-	  bgeot::lu_inverse(&(*(B_factors.begin())), ipvt, &(*(B_.begin())), P);
-	  break;
-	}
+        switch(P) {
+        case 1: B_(0, 0) = scalar_type(1) / J__;  break;
+        case 2:
+          {
+            auto it = &(*(KK.begin())); auto itB = &(*(B_.begin()));
+            *itB++ = it[3] / J__; *itB++ = -it[2] / J__;
+            *itB++ = -it[1] / J__; *itB = (*it) / J__;
+          } break;
+        case 3:
+          {
+            auto it = &(*(KK.begin())); auto itB = &(*(B_.begin()));
+            *itB++ /= J__; *itB++ /= J__; *itB++ /= J__;
+            *itB++ = (it[2]*it[7] - it[1]*it[8]) / J__;
+            *itB++ = (it[0]*it[8] - it[2]*it[6]) / J__;
+            *itB++ = (it[1]*it[6] - it[0]*it[7]) / J__;
+            *itB++ = (it[1]*it[5] - it[2]*it[4]) / J__;
+            *itB++ = (it[2]*it[3] - it[0]*it[5]) / J__;
+            *itB   = (it[0]*it[4] - it[1]*it[3]) / J__;
+          } break;
+        default:
+          bgeot::lu_inverse(&(*(B_factors.begin())), ipvt, &(*(B_.begin())), P);
+          break;
+        }
       }
       have_B_ = true;
     }
@@ -423,7 +423,7 @@ namespace bgeot {
           gmm::mult(G(), pgp_->hessian(ii_), Htau);
         } else {
           /* very inefficient of course... */
-	  PC.base_resize(pgt()->nb_points(), P*P);
+          PC.base_resize(pgt()->nb_points(), P*P);
           pgt()->poly_vector_hess(xref(), PC);
           gmm::mult(G(), PC, Htau);
         }
@@ -468,7 +468,7 @@ namespace bgeot {
       for (size_type i = 0; i < cvr->points()[ip].size(); ++i)
         if (gmm::abs(cvr->points()[ip][i]) > 1e-10
             && gmm::abs(cvr->points()[ip][i]-1.0) > 1e-10
-	    && gmm::abs(cvr->points()[ip][i]+1.0) > 1e-10)
+            && gmm::abs(cvr->points()[ip][i]+1.0) > 1e-10)
           { vertex = false; break; }
       if (vertex) vertices_.push_back(ip);
     }
@@ -490,10 +490,10 @@ namespace bgeot {
       dim_type n = dim();
       grad_.resize(R);
       for (size_type i = 0; i < R; ++i) {
-	grad_[i].resize(n);
-	for (dim_type j = 0; j < n; ++j) {
-	  grad_[i][j] = trans[i]; grad_[i][j].derivative(j);
-	}
+        grad_[i].resize(n);
+        for (dim_type j = 0; j < n; ++j) {
+          grad_[i][j] = trans[i]; grad_[i][j].derivative(j);
+        }
       }
     }
 
@@ -502,16 +502,16 @@ namespace bgeot {
       dim_type n = dim();
       hess_.resize(R);
       for (size_type i = 0; i < R; ++i) {
-	hess_[i].resize(n*n);
-	for (dim_type j = 0; j < n; ++j) {
-	  for (dim_type k = 0; k < n; ++k) {
-	    hess_[i][j+k*n] = trans[i];
-	    hess_[i][j+k*n].derivative(j); hess_[i][j+k*n].derivative(k);
-	  }
-	}
+        hess_[i].resize(n*n);
+        for (dim_type j = 0; j < n; ++j) {
+          for (dim_type k = 0; k < n; ++k) {
+            hess_[i][j+k*n] = trans[i];
+            hess_[i][j+k*n].derivative(j); hess_[i][j+k*n].derivative(k);
+          }
+        }
       }
     }
-    
+
     virtual void poly_vector_val(const base_node &pt, base_vector &val) const {
       val.resize(nb_points());
       for (size_type k = 0; k < nb_points(); ++k)
@@ -519,7 +519,7 @@ namespace bgeot {
     }
 
     virtual void poly_vector_val(const base_node &pt,
-				 const convex_ind_ct &ind_ct,
+                                 const convex_ind_ct &ind_ct,
                                  base_vector &val) const {
       size_type nb_funcs=ind_ct.size();
       val.resize(nb_funcs);
@@ -537,7 +537,7 @@ namespace bgeot {
     }
 
     virtual void poly_vector_grad(const base_node &pt,
-				  const convex_ind_ct &ind_ct,
+                                  const convex_ind_ct &ind_ct,
                                   base_matrix &pc) const {
       if (!(grad_.size())) compute_grad_();
       FUNC PP;
@@ -556,7 +556,7 @@ namespace bgeot {
         for (dim_type n = 0; n < dim(); ++n) {
           for (dim_type m = 0; m <= n; ++m)
             pc(i, n*dim()+m) = pc(i, m*dim()+n) =
-	      to_scalar(hess_[i][m*dim()+n].eval(pt.begin()));
+              to_scalar(hess_[i][m*dim()+n].eval(pt.begin()));
         }
     }
 
@@ -767,7 +767,7 @@ namespace bgeot {
 
 
   /* ******************************************************************** */
-  /*	Incomplete Q2 geometric transformation for n=2 or 3.              */
+  /*    Incomplete Q2 geometric transformation for n=2 or 3.              */
   /* ******************************************************************** */
   /* By Yao Koutsawa  <yao.koutsawa@tudor.lu> 2012-12-10                  */
 
@@ -778,7 +778,7 @@ namespace bgeot {
       is_lin = false;
       complexity_ = 2;
       trans.resize(R);
-      
+
       if (nc == 2) {
         std::stringstream s
           ( "1 - 2*x^2*y - 2*x*y^2 + 2*x^2 + 5*x*y + 2*y^2 - 3*x - 3*y;"
@@ -789,7 +789,7 @@ namespace bgeot {
             "2*x*x*y - 2*x*y*y - x*y + 2*y*y - y;"
             "4*(x*y - x*x*y);"
             "2*x*x*y + 2*x*y*y - 3*x*y;");
-        
+
         for (int i = 0; i < 8; ++i)
           trans[i] = bgeot::read_base_poly(2, s);
       } else {
@@ -819,27 +819,27 @@ namespace bgeot {
            "2*x^2*y*z - 2*x*y^2*z - 2*x*y*z^2 + 2*y^2*z + 2*y*z^2 + x*y*z - 3*y*z;"
            "4*( - x^2*y*z + x*y*z);"
            "2*x^2*y*z + 2*x*y^2*z + 2*x*y*z^2 - 5*x*y*z;");
-        
+
         for (int i = 0; i < 20; ++i)
           trans[i] = bgeot::read_base_poly(3, s);
       }
       fill_standard_vertices();
     }
   };
-  
+
   static pgeometric_trans
     Q2_incomplete_gt(gt_param_list& params,
                      std::vector<dal::pstatic_stored_object> &dependencies) {
     GMM_ASSERT1(params.size() == 1, "Bad number of parameters : "
-		<< params.size() << " should be 1.");
+                << params.size() << " should be 1.");
     GMM_ASSERT1(params[0].type() == 0, "Bad type of parameters");
     int n = int(::floor(params[0].num() + 0.01));
     GMM_ASSERT1(n == 2 || n == 3, "Bad parameter, expected value 2 or 3");
-    
+
     dependencies.push_back(Q2_incomplete_reference(dim_type(n)));
     return std::make_shared<Q2_incomplete_trans_>(dim_type(n));
   }
-  
+
   pgeometric_trans Q2_incomplete_geotrans(dim_type nc) {
     std::stringstream name;
     name << "GT_Q2_INCOMPLETE(" << nc << ")";
@@ -847,7 +847,7 @@ namespace bgeot {
   }
 
   /* ******************************************************************** */
-  /*	Pyramidal geometric transformation of order k=1 or 2.             */
+  /*    Pyramidal geometric transformation of order k=1 or 2.             */
   /* ******************************************************************** */
 
   struct pyramidal_trans_: public fraction_geometric_trans  {
@@ -859,55 +859,55 @@ namespace bgeot {
       trans.resize(R);
 
       if (k == 1) {
-	base_rational_fraction Q(read_base_poly(3, "x*y"),    // Q = xy/(1-z)
-				 read_base_poly(3, "1-z"));
-	trans[0] = (read_base_poly(3, "1-x-y-z") + Q)*0.25;
-	trans[1] = (read_base_poly(3, "1+x-y-z") - Q)*0.25;
-	trans[2] = (read_base_poly(3, "1-x+y-z") - Q)*0.25;
-	trans[3] = (read_base_poly(3, "1+x+y-z") + Q)*0.25;
-	trans[4] = read_base_poly(3, "z");
+        base_rational_fraction Q(read_base_poly(3, "x*y"),    // Q = xy/(1-z)
+                                 read_base_poly(3, "1-z"));
+        trans[0] = (read_base_poly(3, "1-x-y-z") + Q)*0.25;
+        trans[1] = (read_base_poly(3, "1+x-y-z") - Q)*0.25;
+        trans[2] = (read_base_poly(3, "1-x+y-z") - Q)*0.25;
+        trans[3] = (read_base_poly(3, "1+x+y-z") + Q)*0.25;
+        trans[4] = read_base_poly(3, "z");
       } else if (k == 2) {
         base_poly xi0  = read_base_poly(3, "(1-z-x)*0.5");
         base_poly xi1  = read_base_poly(3, "(1-z-y)*0.5");
         base_poly xi2  = read_base_poly(3, "(1-z+x)*0.5");
         base_poly xi3  = read_base_poly(3, "(1-z+y)*0.5");
-	base_poly x    = read_base_poly(3, "x");
-	base_poly y    = read_base_poly(3, "y");
-	base_poly z    = read_base_poly(3, "z");
-	base_poly ones = read_base_poly(3, "1");
-	base_poly un_z = read_base_poly(3, "1-z");
-	base_rational_fraction Q(read_base_poly(3, "1"), un_z); // Q = 1/(1-z)
-	trans[ 0] = Q*Q*xi0*xi1*(x*y-z*un_z);
-	trans[ 1] = Q*Q*xi0*xi1*xi2*(xi1*2.-un_z)*4.;
-	trans[ 2] = Q*Q*xi1*xi2*(-x*y-z*un_z);
-	trans[ 3] = Q*Q*xi3*xi0*xi1*(xi0*2.-un_z)*4.;
-	trans[ 4] = Q*Q*xi0*xi1*xi2*xi3*16.;
-	trans[ 5] = Q*Q*xi1*xi2*xi3*(xi2*2.-un_z)*4.;
-	trans[ 6] = Q*Q*xi3*xi0*(-x*y-z*un_z);
-	trans[ 7] = Q*Q*xi2*xi3*xi0*(xi3*2.-un_z)*4.;
-	trans[ 8] = Q*Q*xi2*xi3*(x*y-z*un_z);
-	trans[ 9] = Q*z*xi0*xi1*4.;
-	trans[10] = Q*z*xi1*xi2*4.;
-	trans[11] = Q*z*xi3*xi0*4.;
-	trans[12] = Q*z*xi2*xi3*4.;
-	trans[13] = read_base_poly(3, "z*(2*z-1)");
+        base_poly x    = read_base_poly(3, "x");
+        base_poly y    = read_base_poly(3, "y");
+        base_poly z    = read_base_poly(3, "z");
+        base_poly ones = read_base_poly(3, "1");
+        base_poly un_z = read_base_poly(3, "1-z");
+        base_rational_fraction Q(read_base_poly(3, "1"), un_z); // Q = 1/(1-z)
+        trans[ 0] = Q*Q*xi0*xi1*(x*y-z*un_z);
+        trans[ 1] = Q*Q*xi0*xi1*xi2*(xi1*2.-un_z)*4.;
+        trans[ 2] = Q*Q*xi1*xi2*(-x*y-z*un_z);
+        trans[ 3] = Q*Q*xi3*xi0*xi1*(xi0*2.-un_z)*4.;
+        trans[ 4] = Q*Q*xi0*xi1*xi2*xi3*16.;
+        trans[ 5] = Q*Q*xi1*xi2*xi3*(xi2*2.-un_z)*4.;
+        trans[ 6] = Q*Q*xi3*xi0*(-x*y-z*un_z);
+        trans[ 7] = Q*Q*xi2*xi3*xi0*(xi3*2.-un_z)*4.;
+        trans[ 8] = Q*Q*xi2*xi3*(x*y-z*un_z);
+        trans[ 9] = Q*z*xi0*xi1*4.;
+        trans[10] = Q*z*xi1*xi2*4.;
+        trans[11] = Q*z*xi3*xi0*4.;
+        trans[12] = Q*z*xi2*xi3*4.;
+        trans[13] = read_base_poly(3, "z*(2*z-1)");
       }
       fill_standard_vertices();
     }
   };
-  
+
   static pgeometric_trans
     pyramidal_gt(gt_param_list& params,
                      std::vector<dal::pstatic_stored_object> &dependencies) {
     GMM_ASSERT1(params.size() == 1, "Bad number of parameters : "
-		<< params.size() << " should be 1.");
+                << params.size() << " should be 1.");
     GMM_ASSERT1(params[0].type() == 0, "Bad type of parameters");
     int k = int(::floor(params[0].num() + 0.01));
-    
+
     dependencies.push_back(pyramidal_element_of_reference(dim_type(k)));
     return std::make_shared<pyramidal_trans_>(dim_type(k));
   }
-  
+
   pgeometric_trans pyramidal_geotrans(short_type k) {
     static short_type k_ = -1;
     static pgeometric_trans pgt = 0;
@@ -916,7 +916,7 @@ namespace bgeot {
       name << "GT_PYRAMID(" << k << ")";
       pgt = geometric_trans_descriptor(name.str());
     }
-    return pgt;  
+    return pgt;
   }
 
   /* ******************************************************************** */
@@ -1004,7 +1004,7 @@ namespace bgeot {
   void add_geometric_trans_name
     (std::string name, dal::naming_system<geometric_trans>::pfunction f) {
     dal::singleton<geometric_trans_naming_system>::instance().add_suffix(name,
-									 f);
+                                                                         f);
   }
 
   pgeometric_trans geometric_trans_descriptor(std::string name) {

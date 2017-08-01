@@ -115,17 +115,17 @@ namespace bgeot {
   public :
 
     /// Dimension of the reference element.
-    dim_type dim(void) const { return cvr->structure()->dim(); }
+    dim_type dim() const { return cvr->structure()->dim(); }
     /// True if the transformation is linear (affine in fact).
-    bool is_linear(void) const { return is_lin; }
+    bool is_linear() const { return is_lin; }
     /// Number of geometric nodes.
-    size_type nb_points(void) const { return cvr->nb_points(); }
+    size_type nb_points() const { return cvr->nb_points(); }
     /// Pointer on the convex of reference.
-    pconvex_ref convex_ref(void) const { return cvr; }
+    pconvex_ref convex_ref() const { return cvr; }
     /// Structure of the reference element.
-    pconvex_structure structure(void) const { return cvr->structure(); }
+    pconvex_structure structure() const { return cvr->structure(); }
     /// Basic structure of the reference element.
-    pconvex_structure basic_structure(void) const
+    pconvex_structure basic_structure() const
     { return bgeot::basic_structure(cvr->structure()); }
     /// Gives the value of the functions vector at a certain point.
     virtual void poly_vector_val(const base_node &pt, base_vector &val) const = 0;
@@ -142,17 +142,17 @@ namespace bgeot {
     /// compute K matrix from multiplication of G with gradient
     virtual void compute_K_matrix(const base_matrix &G, const base_matrix &pc, base_matrix &K) const;
     /// Gives the number of vertices.
-    size_type nb_vertices(void) const { return vertices_.size(); }
+    size_type nb_vertices() const { return vertices_.size(); }
     /// Gives the indices of vertices between the nodes.
-    const std::vector<size_type> &vertices(void) const { return vertices_; }
+    const std::vector<size_type> &vertices() const { return vertices_; }
     /// Gives the array of geometric nodes (on reference convex)
-    const stored_point_tab &geometric_nodes(void) const
+    const stored_point_tab &geometric_nodes() const
     { return cvr->points(); }
     /// Gives the array of geometric nodes (on reference convex)
-    pstored_point_tab pgeometric_nodes(void) const
+    pstored_point_tab pgeometric_nodes() const
     { return cvr->pspt(); }
     /// Gives the array of the normals to faces (on reference convex)
-    const std::vector<base_small_vector> &normals(void) const
+    const std::vector<base_small_vector> &normals() const
     { return cvr->normals(); }
     /** Apply the geometric transformation to point pt,
         PTAB contains the points of the real convex */
@@ -161,7 +161,7 @@ namespace bgeot {
     base_node transform(const base_node &pt, const base_matrix &G) const;
     /** Compute the gradient at point x, pc is resized to [nb_points() x dim()]
         if the transformation is linear, x is not used at all */
-    size_type complexity(void) const { return complexity_; }
+    size_type complexity() const { return complexity_; }
     virtual ~geometric_trans()
     { DAL_STORED_OBJECT_DEBUG_DESTROYED(this, "Geometric transformation"); }
     geometric_trans()
@@ -233,7 +233,7 @@ namespace bgeot {
 
      List of possible names:
      GT_PK(N,K)   : Transformation on simplexes, dim N, degree K
-     
+
      GT_QK(N,K)   : Transformation on parallelepipeds, dim N, degree K
      GT_PRISM(N,K)          : Transformation on prisms, dim N, degree K
      GT_Q2_INCOMPLETE(N)    : Q2 incomplete transformation in dim N=2 or 3.
@@ -409,7 +409,7 @@ namespace bgeot {
     mutable base_vector aux1, aux2;
     mutable std::vector<int> ipvt;
     mutable bool have_J_, have_B_, have_B3_, have_B32_, have_K_;
-    void compute_J(void) const;
+    void compute_J() const;
   public:
     bool have_xref() const { return !xref_.empty(); }
     bool have_xreal() const { return !xreal_.empty(); }
@@ -434,47 +434,50 @@ namespace bgeot {
     const base_matrix& G() const { return *G_; }
     /** get the Jacobian of the geometric trans (taken at point @c xref() ) */
     scalar_type J() const { if (!have_J_) compute_J(); return J_; }
-    size_type N() const { if (have_G()) return G().nrows();
+    size_type N() const {
+      if (have_G()) return G().nrows();
       else if (have_xreal()) return xreal_.size();
-      else GMM_ASSERT2(false, "cannot get N"); return 0; }
+      else GMM_ASSERT2(false, "cannot get N");
+      return 0;
+    }
     size_type ii() const { return ii_; }
     bgeot::pgeotrans_precomp pgp() const { return pgp_; }
     /** change the current point (assuming a geotrans_precomp_ is used) */
     void set_ii(size_type ii__) {
       if (ii_ != ii__) {
-	if (pgt_ && !pgt()->is_linear())
-	  { have_K_ = have_B_ = have_B3_ = have_B32_ = have_J_ = false; }
-	xref_.resize(0); xreal_.resize(0);
-	ii_=ii__;
+        if (pgt_ && !pgt()->is_linear())
+          { have_K_ = have_B_ = have_B3_ = have_B32_ = have_J_ = false; }
+        xref_.resize(0); xreal_.resize(0);
+        ii_=ii__;
       }
     }
     /** change the current point (coordinates given in the reference convex) */
     void set_xref(const base_node& P);
     void change(bgeot::pgeotrans_precomp pgp__,
-		size_type ii__,
-		const base_matrix& G__) {
+                size_type ii__,
+                const base_matrix& G__) {
       G_ = &G__; pgt_ = pgp__->get_trans(); pgp_ = pgp__;
       pspt_ = pgp__->get_ppoint_tab(); ii_ = ii__;
       have_J_ = have_B_ = have_B3_ = have_B32_ = have_K_ = false;
       xref_.resize(0); xreal_.resize(0);
     }
     void change(bgeot::pgeometric_trans pgt__,
-		bgeot::pstored_point_tab pspt__,
-		size_type ii__,
-		const base_matrix& G__) {
+                bgeot::pstored_point_tab pspt__,
+                size_type ii__,
+                const base_matrix& G__) {
       G_ = &G__; pgt_ = pgt__; pgp_ = 0; pspt_ = pspt__; ii_ = ii__;
       have_J_ = have_B_ = have_B3_ = have_B32_ = have_K_ = false;
       xref_.resize(0); xreal_.resize(0);
     }
     void change(bgeot::pgeometric_trans pgt__,
-		const base_node& xref__,
-		const base_matrix& G__) {
+                const base_node& xref__,
+                const base_matrix& G__) {
       xref_ = xref__; G_ = &G__; pgt_ = pgt__; pgp_ = 0; pspt_ = 0;
       ii_ = size_type(-1);
       have_J_ = have_B_ = have_B3_ = have_B32_ = have_K_ = false;
       xreal_.resize(0);
     }
-    
+
     geotrans_interpolation_context()
       : G_(0), pgt_(0), pgp_(0), pspt_(0), ii_(size_type(-1)),
       have_J_(false), have_B_(false), have_B3_(false), have_B32_(false),
@@ -502,7 +505,7 @@ namespace bgeot {
 
   /* Function allowing the add of an geometric transformation method outwards
      of getfem_integration.cc */
-  
+
   typedef dal::naming_system<geometric_trans>::param_list gt_param_list;
 
   void APIDECL add_geometric_trans_name
@@ -519,12 +522,12 @@ namespace bgeot {
   // Optimized matrix mult for small matrices.
   // Multiply the matrix A of size MxN by B of size NxP in C of size MxP
   void mat_mult(const scalar_type *A, const scalar_type *B, scalar_type *C,
-		size_type M, size_type N, size_type P);
+                size_type M, size_type N, size_type P);
   // Optimized matrix mult for small matrices.
   // Multiply the matrix A of size MxN by the transpose of B of size PxN
   // in C of size MxP
   void mat_tmult(const scalar_type *A, const scalar_type *B, scalar_type *C,
-		 size_type M, size_type N, size_type P);
+                 size_type M, size_type N, size_type P);
 
 }  /* end of namespace bgeot.                                             */
 

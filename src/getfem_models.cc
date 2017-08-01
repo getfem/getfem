@@ -96,7 +96,7 @@ namespace getfem {
       ("neighbour_elt", interpolate_transformation_neighbour_instance());
   }
 
-  void model::var_description::set_size(void) {
+  void model::var_description::set_size() {
     n_temp_iter = 0;
     default_iter = 0;
     if (is_complex)
@@ -145,7 +145,7 @@ namespace getfem {
     return nit;
   }
 
-  void model::var_description::clear_temporaries(void) {
+  void model::var_description::clear_temporaries() {
     n_temp_iter = 0;
     default_iter = 0;
     if (is_complex)
@@ -374,7 +374,7 @@ namespace getfem {
         }
   }
 
-  void model::actualize_sizes(void) const {
+  void model::actualize_sizes() const {
     // cout << "begin act size" << endl;
     bool actualized = false;
     getfem::local_guard lock = locks_.get_lock();
@@ -434,7 +434,7 @@ namespace getfem {
         default : break;
         }
       }
-    
+
       if (vdescr.pim_data != 0
           && vdescr.v_num < vdescr.pim_data->version_number()) {
         // const im_data *pimd = vdescr.pim_data;
@@ -570,7 +570,7 @@ namespace getfem {
                              MM);
                     termadded = true;
                   }
-                } else if (multname.compare(term.var1) == 0 && 
+                } else if (multname.compare(term.var1) == 0 &&
                            vname.compare(term.var2) == 0) {
                   if (!bupd) {
                     brick.terms_to_be_computed = true;
@@ -583,7 +583,7 @@ namespace getfem {
                   else
                     gmm::add(gmm::transposed(brick.rmatlist[j]), MM);
                   termadded = true;
-                  
+
                 } else if (multname.compare(term.var2) == 0 &&
                            vname.compare(term.var1) == 0) {
                   if (!bupd) {
@@ -1177,7 +1177,7 @@ namespace getfem {
       if (is_complex())
         set_complex_variable(varname)[0] = complex_type(t);
       else
-        set_real_variable(varname)[0] = t; 
+        set_real_variable(varname)[0] = t;
     }
   }
 
@@ -1201,7 +1201,7 @@ namespace getfem {
       }
   }
 
-  void model::shift_variables_for_time_integration(void) {
+  void model::shift_variables_for_time_integration() {
     for (VAR_SET::iterator it = variables.begin();
          it != variables.end(); ++it)
       if (it->second.is_variable && it->second.ptsc)
@@ -1224,7 +1224,7 @@ namespace getfem {
     time_integration = 1;
   }
 
-  void model::copy_init_time_derivative(void) {
+  void model::copy_init_time_derivative() {
 
     for (VAR_SET::iterator it = variables.begin();
          it != variables.end(); ++it)
@@ -1983,7 +1983,7 @@ namespace getfem {
   }
 
 
-  void model::set_dispatch_coeff(void) {
+  void model::set_dispatch_coeff() {
     for (dal::bv_visitor ib(active_bricks); !ib.finished(); ++ib) {
       brick_description &brick = bricks[ib];
       if (brick.pdispatch)
@@ -1992,7 +1992,7 @@ namespace getfem {
     }
   }
 
-  void model::first_iter(void) {
+  void model::first_iter() {
     context_check(); if (act_size_to_be_done) actualize_sizes();
     for (VAR_SET::iterator it = variables.begin(); it != variables.end(); ++it)
       it->second.clear_temporaries();
@@ -2016,7 +2016,7 @@ namespace getfem {
     }
   }
 
-  void model::next_iter(void) {
+  void model::next_iter() {
     context_check(); if (act_size_to_be_done) actualize_sizes();
     set_dispatch_coeff();
 
@@ -2097,8 +2097,8 @@ namespace getfem {
   }
 
   void model::add_assembly_assignments(const std::string &varname,
-				       const std::string &expr, size_type rg,
-				       size_type order, bool before) {
+                                       const std::string &expr, size_type rg,
+                                       size_type order, bool before) {
     GMM_ASSERT1(order < 3 || order == size_type(-1), "Bad order value");
     const im_data *imd = pim_data_of_variable(varname);
     GMM_ASSERT1(imd != 0, "Only applicable to im_data");
@@ -2300,7 +2300,7 @@ namespace getfem {
     }
   }
 
-  void model::update_affine_dependent_variables(void) {
+  void model::update_affine_dependent_variables() {
     for (VAR_SET::iterator it = variables.begin(); it != variables.end(); ++it)
       if (it->second.is_affine_dependent) {
         VAR_SET::iterator it2 = variables.find(it->second.org_name);
@@ -2343,11 +2343,11 @@ namespace getfem {
           { detected = true; break; }
 
       if (detected) {
-	int ifo = -1;
-	for (auto &pmim :  brick.mims)
-	  ifo = std::max(ifo, mf->linked_mesh().region(region)
-			 .region_is_faces_of(m, brick.region,
-					     pmim->linked_mesh()));
+        int ifo = -1;
+        for (auto &pmim :  brick.mims)
+          ifo = std::max(ifo, mf->linked_mesh().region(region)
+                              .region_is_faces_of(m, brick.region,
+                                                  pmim->linked_mesh()));
         GMM_ASSERT1(ifo >= 0, "The given region is only partially covered by "
                     "region of brick " << brick.pbr->brick_name()
                     << ". Please subdivise the region");
@@ -2366,7 +2366,6 @@ namespace getfem {
               result = workspace.extract_Neumann_term(varname);
           }
         }
-      
       }
     }
     return result;
@@ -2693,19 +2692,19 @@ namespace getfem {
         {
           exception.run([&]
           {
-	    if (version & BUILD_RHS)
-	      GMM_TRACE2("Global generic assembly RHS");
-	    if (version & BUILD_MATRIX)
-	      GMM_TRACE2("Global generic assembly tangent term");
+            if (version & BUILD_RHS)
+              GMM_TRACE2("Global generic assembly RHS");
+            if (version & BUILD_MATRIX)
+              GMM_TRACE2("Global generic assembly tangent term");
 
             ga_workspace workspace(*this);
 
-	    for (const auto &ad : assignments)
-	      workspace.add_assignment_expression
-		(ad.varname, ad.expr, ad.region, ad.order, ad.before);
+            for (const auto &ad : assignments)
+              workspace.add_assignment_expression
+                (ad.varname, ad.expr, ad.region, ad.order, ad.before);
 
             for (const auto &ge : generic_expressions)
-	      workspace.add_expression(ge.expr, ge.mim, ge.region);
+              workspace.add_expression(ge.expr, ge.mim, ge.region);
 
             if (version & BUILD_RHS) {
               if (is_complex()) {
@@ -3305,11 +3304,11 @@ model_complex_plain_vector &
         size_type nbgdof = md.nb_dof();
         ga_workspace workspace(md, true);
         GMM_TRACE2(name << ": generic source term assembly");
-        workspace.add_expression(expr, *(mims[0]), region);  
+        workspace.add_expression(expr, *(mims[0]), region);
         model::varnamelist vlmd; md.variable_list(vlmd);
         for (size_type i = 0; i < vlmd.size(); ++i)
           if (md.is_disabled_variable(vlmd[i]))
-            nbgdof = std::max(nbgdof, 
+            nbgdof = std::max(nbgdof,
                               workspace.interval_of_variable(vlmd[i]).last());
         GMM_TRACE2(name << ": generic matrix assembly");
         model_real_plain_vector V(nbgdof);
@@ -3397,7 +3396,7 @@ model_complex_plain_vector &
       vl.push_back(directvarname);
       dl.push_back(directdataname);
     } else directvarname = "";
-    
+
     pbrick pbr = std::make_shared<gen_source_term_assembly_brick>
       (expr, brickname, vl_test1, directvarname, directdataname);
     model::termlist tl;
@@ -3448,10 +3447,10 @@ model_complex_plain_vector &
         model::varnamelist vlmd; md.variable_list(vlmd);
         for (size_type i = 0; i < vlmd.size(); ++i)
           if (md.is_disabled_variable(vlmd[i]))
-            nbgdof = std::max(nbgdof, 
+            nbgdof = std::max(nbgdof,
                               workspace.interval_of_variable(vlmd[i]).last());
         GMM_TRACE2(name << ": generic matrix assembly");
-        model_real_sparse_matrix R(nbgdof, nbgdof); 
+        model_real_sparse_matrix R(nbgdof, nbgdof);
         workspace.set_assembled_matrix(R);
         workspace.assembly(2);
         for (size_type i = 0; i < vl_test1.size(); ++i) {
@@ -3841,7 +3840,7 @@ model_complex_plain_vector &
                     "Bad format generic elliptic brick coefficient");
     }
 
-    generic_elliptic_brick(void) {
+    generic_elliptic_brick() {
       set_flags("Generic elliptic", true /* is linear*/,
                 true /* is symmetric */, true /* is coercive */,
                 true /* is real */, true /* is complex */);
@@ -3898,7 +3897,7 @@ model_complex_plain_vector &
         if (mf) qdim_data = mf->get_qdim() * (n / mf->nb_dof());
         else  qdim_data = n;
       }
-      
+
       if (qdim == 1) {
         if (qdim_data != 1) {
           GMM_ASSERT1(qdim_data == gmm::sqr(dim),
@@ -3913,7 +3912,7 @@ model_complex_plain_vector &
           if (qdim_data == gmm::sqr(dim))
             expr = "((Reshape("+dataname+",meshdim,meshdim))*Grad_"+varname+"):Grad_"
               +test_varname;
-          else if (qdim_data == gmm::sqr(gmm::sqr(dim))) 
+          else if (qdim_data == gmm::sqr(gmm::sqr(dim)))
             expr = "((Reshape("+dataname+",meshdim,meshdim,meshdim,meshdim))*Grad_"
               +varname+"):Grad_"+test_varname;
           else GMM_ASSERT1(false, "Wrong data size for generic elliptic brick");
@@ -4046,7 +4045,7 @@ model_complex_plain_vector &
 
 
 
-    source_term_brick(void) {
+    source_term_brick() {
       set_flags("Source term", true /* is linear*/,
                 true /* is symmetric */, true /* is coercive */,
                 true /* is real */, true /* is complex */,
@@ -4150,7 +4149,7 @@ model_complex_plain_vector &
                                       build_version) const override {
       md.add_external_load(ib, gmm::vect_norm1(vecl[0]));
     }
-    
+
 
     virtual void asm_complex_tangent_terms(const model &md, size_type /* ib */,
                                            const model::varnamelist &vl,
@@ -4199,7 +4198,7 @@ model_complex_plain_vector &
       md.add_external_load(ib, gmm::vect_norm1(vecl[0]));
     }
 
-    normal_source_term_brick(void) {
+    normal_source_term_brick() {
       set_flags("Normal source term", true /* is linear*/,
                 true /* is symmetric */, true /* is coercive */,
                 true /* is real */, true /* is complex */,
@@ -4334,7 +4333,7 @@ model_complex_plain_vector &
         GMM_TRACE2("Mass term assembly for Dirichlet condition");
         if (H_version || normal_component) {
           ga_workspace workspace;
-	        gmm::sub_interval Imult(0, mf_mult.nb_dof()), Iu(0, mf_u.nb_dof());
+          gmm::sub_interval Imult(0, mf_mult.nb_dof()), Iu(0, mf_u.nb_dof());
           base_vector u(mf_u.nb_dof());
           base_vector mult(mf_mult.nb_dof());
           workspace.add_fem_variable("u", mf_u, Iu, u);
@@ -4347,12 +4346,12 @@ model_complex_plain_vector &
                           "Test_mult . (A . Test2_u)"
                           :
                           "Test_mult. (Reshape(A, qdim(u), qdim(u)) . Test2_u)";
-          } else if (normal_component){
-	          expression = "Test_mult . (Test2_u . Normal)";
+          } else if (normal_component) {
+            expression = "Test_mult . (Test2_u . Normal)";
           }
           workspace.add_expression(expression, mim, rg);
           workspace.set_assembled_matrix(*B);
-	        workspace.assembly(2);
+          workspace.assembly(2);
         } else {
           asm_mass_matrix(*B, mim, mf_mult, mf_u, rg);
         }
@@ -4485,12 +4484,12 @@ model_complex_plain_vector &
         }
         GMM_TRACE2("Mass term assembly for Dirichlet condition");
         if (H_version) {
-	  if (mf_u.get_qdim() == 1)
-	    asm_real_or_complex_1_param_mat(*B, mim, mf_mult, mf_H, *H, rg,
-					    "(A*Test_u).Test2_u");
-	  else
-	    asm_real_or_complex_1_param_mat(*B, mim, mf_mult, mf_H, *H, rg,
-			    "(Reshape(A,qdim(u),qdim(u))*Test2_u).Test_u");
+          if (mf_u.get_qdim() == 1)
+            asm_real_or_complex_1_param_mat(*B, mim, mf_mult, mf_H, *H, rg,
+                                            "(A*Test_u).Test2_u");
+          else
+            asm_real_or_complex_1_param_mat(*B, mim, mf_mult, mf_H, *H, rg,
+                            "(Reshape(A,qdim(u),qdim(u))*Test2_u).Test_u");
           // if (mf_H)
           //   asm_real_or_complex_1_param
           //     (*B, mim, mf_mult, *mf_H, *H, rg, (mf_u.get_qdim() == 1) ?
@@ -4507,16 +4506,16 @@ model_complex_plain_vector &
           //      "M(#1,#2)+=sym(comp(vBase(#1).vBase(#2))(:,i,:,j).F(i,j));");
         }
         else if (normal_component) {
-	  ga_workspace workspace;
-	  gmm::sub_interval Imult(0, mf_mult.nb_dof()), Iu(0, mf_u.nb_dof());
-	  base_vector mult(mf_mult.nb_dof()), u(mf_u.nb_dof());
-	  workspace.add_fem_variable("mult", mf_mult, Imult, mult);
-	  workspace.add_fem_variable("u", mf_u, Iu, u);
-	  workspace.add_expression("Test_mult.(Test2_u.Normal)", mim, rg);
-	  model_real_sparse_matrix BB(mf_mult.nb_dof(), mf_u.nb_dof());
-	  workspace.set_assembled_matrix(BB);
-	  workspace.assembly(2);
-	  gmm::add(BB, *B);
+          ga_workspace workspace;
+          gmm::sub_interval Imult(0, mf_mult.nb_dof()), Iu(0, mf_u.nb_dof());
+          base_vector mult(mf_mult.nb_dof()), u(mf_u.nb_dof());
+          workspace.add_fem_variable("mult", mf_mult, Imult, mult);
+          workspace.add_fem_variable("u", mf_u, Iu, u);
+          workspace.add_expression("Test_mult.(Test2_u.Normal)", mim, rg);
+          model_real_sparse_matrix BB(mf_mult.nb_dof(), mf_u.nb_dof());
+          workspace.set_assembled_matrix(BB);
+          workspace.assembly(2);
+          gmm::add(BB, *B);
 
           // generic_assembly assem;
           // if (mf_mult.get_qdim() == 1)
@@ -4936,14 +4935,14 @@ model_complex_plain_vector &
       }
     }
 
-    
+
     virtual std::string declare_volume_assembly_string
     (const model &, size_type, const model::varnamelist &,
      const model::varnamelist &) const {
       return std::string();
     }
 
-    simplification_Dirichlet_condition_brick(void) {
+    simplification_Dirichlet_condition_brick() {
       set_flags("Dirichlet with simplification brick",
                 true /* is linear*/,
                 true /* is symmetric */, true /* is coercive */,
@@ -4981,20 +4980,20 @@ model_complex_plain_vector &
     GMM_ASSERT1(order == 0, "Wrong expression of the Neumann term");
     model::varnamelist vl, vl_test1, vl_test2, dl;
     bool is_lin = workspace.used_variables(vl, vl_test1, vl_test2, dl, 1);
-    
+
     std::string condition = "("+varname + (datag.size() ? "-("+datag+"))":")");
     std::string gamma = "(("+datagamma0+")*element_size)";
     std::string r = "(1/"+gamma+")";
     std::string expr = "("+r+"*"+condition+"-("+Neumannterm+")).Test_"+varname;
     if (theta_ != scalar_type(0)) {
       std::string derivative_Neumann = workspace.extract_order1_term(varname);
-      if (derivative_Neumann.size()) 
+      if (derivative_Neumann.size())
         expr+="-"+theta+"*"+condition+".("+derivative_Neumann+")";
     }
 
     // cout << "Nitsche expression : " << expr << endl;
     // cout << "is_lin : " << int(is_lin) << endl;
-    
+
     if (is_lin) {
       return add_linear_generic_assembly_brick
         (md, mim, expr, region, false, false,
@@ -5017,7 +5016,7 @@ model_complex_plain_vector &
     GMM_ASSERT1(order == 0, "Wrong expression of the Neumann term");
     model::varnamelist vl, vl_test1, vl_test2, dl;
     bool is_lin = workspace.used_variables(vl, vl_test1, vl_test2, dl, 1);
-    
+
     std::string condition = "("+varname+".Normal"
       + (datag.size() ? "-("+datag+"))":")");
     std::string gamma = "(("+datagamma0+")*element_size)";
@@ -5026,7 +5025,7 @@ model_complex_plain_vector &
       +"))*(Normal.Test_"+varname+")";
     if (theta_ != scalar_type(0)) {
       std::string derivative_Neumann = workspace.extract_order1_term(varname);
-      if (derivative_Neumann.size()) 
+      if (derivative_Neumann.size())
         expr+="-"+theta+"*"+condition+"*Normal.("
           +derivative_Neumann+")";
     }
@@ -5052,7 +5051,7 @@ model_complex_plain_vector &
     GMM_ASSERT1(order == 0, "Wrong expression of the Neumann term");
     model::varnamelist vl, vl_test1, vl_test2, dl;
     bool is_lin = workspace.used_variables(vl, vl_test1, vl_test2, dl, 1);
-    
+
     std::string condition = "(("+dataH+")*"+varname
       + (datag.size() ? "-("+datag+"))":")");
     std::string gamma = "(("+datagamma0+")*element_size)";
@@ -5061,7 +5060,7 @@ model_complex_plain_vector &
       +"))*(("+dataH+")*Test_"+varname+")";
     if (theta_ != scalar_type(0)) {
       std::string derivative_Neumann = workspace.extract_order1_term(varname);
-      if (derivative_Neumann.size()) 
+      if (derivative_Neumann.size())
         expr+="-"+theta+"*"+condition+"*(("+dataH+")*("
           +derivative_Neumann+"))";
     }
@@ -5445,7 +5444,7 @@ model_complex_plain_vector &
         GMM_ASSERT1(false, "Bad format Helmholtz brick coefficient");
     }
 
-    Helmholtz_brick(void) {
+    Helmholtz_brick() {
       set_flags("Helmholtz", true /* is linear*/,
                 true /* is symmetric */, true /* is coercive */,
                 true /* is real */, true /* is complex */);
@@ -5565,7 +5564,7 @@ model_complex_plain_vector &
         asm_homogeneous_qu_term(matl[0], mim, mf_u, *A, rg);
     }
 
-    Fourier_Robin_brick(void) {
+    Fourier_Robin_brick() {
       set_flags("Fourier Robin condition", true /* is linear*/,
                 true /* is symmetric */, true /* is coercive */,
                 true /* is real */, true /* is complex */,
@@ -5928,7 +5927,7 @@ model_complex_plain_vector &
       return std::string();
     }
 
-    explicit_rhs_brick(void) {
+    explicit_rhs_brick() {
       set_flags("Explicit rhs brick",
                 true /* is linear*/,
                 true /* is symmetric */, true /* is coercive */,
@@ -5989,9 +5988,9 @@ model_complex_plain_vector &
         model::varnamelist vlmd; md.variable_list(vlmd);
         for (size_type i = 0; i < vlmd.size(); ++i)
           if (md.is_disabled_variable(vlmd[i]))
-            nbgdof = std::max(nbgdof, 
+            nbgdof = std::max(nbgdof,
                               workspace.interval_of_variable(vlmd[i]).last());
-        model_real_sparse_matrix R(nbgdof, nbgdof); 
+        model_real_sparse_matrix R(nbgdof, nbgdof);
         workspace.set_assembled_matrix(R);
         workspace.assembly(2);
         scalar_type alpha = scalar_type(1)
@@ -6049,18 +6048,18 @@ model_complex_plain_vector &
    size_type region, const std::string &dataname3) {
     std::string test_varname
       = "Test_" + sup_previous_and_dot_to_varname(varname);
-    
+
     std::string expr1 = "((("+dataexpr1+")*(Div_"+varname+"-Div_"+dataname3
       +"))*Id(meshdim)+(2*("+dataexpr2+"))*(Sym(Grad_"+varname
       +")-Sym(Grad_"+dataname3+"))):Grad_" +test_varname;
     std::string expr2 = "(Div_"+varname+"*(("+dataexpr1+")*Id(meshdim))"
       +"+(2*("+dataexpr2+"))*Sym(Grad_"+varname+")):Grad_"+test_varname;
-    
+
     ga_workspace workspace(md, true);
     workspace.add_expression(expr2, mim, region);
     model::varnamelist vl, vl_test1, vl_test2, dl;
     bool is_lin = workspace.used_variables(vl, vl_test1, vl_test2, dl, 2);
-    
+
     if (is_lin) {
       pbrick pbr = std::make_shared<iso_lin_elasticity_new_brick>
         (expr2, dataname3);
@@ -6082,18 +6081,18 @@ model_complex_plain_vector &
    size_type region) {
     std::string test_varname
       = "Test_" + sup_previous_and_dot_to_varname(varname);
-    
+
     std::string mu = "(("+data_E+")/(2*(1+("+data_nu+"))))";
     std::string lambda = "(("+data_E+")*("+data_nu+")/((1+("+data_nu+"))*(1-2*("
       +data_nu+"))))";
     std::string expr = lambda+"*Div_"+varname+"*Div_"+test_varname
       + "+"+mu+"*(Grad_"+varname+"+Grad_"+varname+"'):Grad_"+test_varname;
-    
+
     ga_workspace workspace(md, true);
     workspace.add_expression(expr, mim, region);
     model::varnamelist vl, vl_test1, vl_test2, dl;
     bool is_lin = workspace.used_variables(vl, vl_test1, vl_test2, dl, 2);
-    
+
     if (is_lin) {
       return add_linear_generic_assembly_brick
         (md, mim, expr, region, false, false, "Linearized isotropic elasticity");
@@ -6110,7 +6109,7 @@ model_complex_plain_vector &
    size_type region) {
     std::string test_varname
       = "Test_" + sup_previous_and_dot_to_varname(varname);
-    
+
     const mesh_fem *mfu = md.pmesh_fem_of_variable(varname);
     GMM_ASSERT1(mfu, "The variable should be a fem variable");
     size_type N = mfu->linked_mesh().dim();
@@ -6122,12 +6121,12 @@ model_complex_plain_vector &
       lambda = "(("+data_E+")*("+data_nu+")/((1-sqr("+data_nu+"))))";
     std::string expr = lambda+"*Div_"+varname+"*Div_"+test_varname
       + "+"+mu+"*(Grad_"+varname+"+Grad_"+varname+"'):Grad_"+test_varname;
-    
+
     ga_workspace workspace(md, true);
     workspace.add_expression(expr, mim, region);
     model::varnamelist vl, vl_test1, vl_test2, dl;
     bool is_lin = workspace.used_variables(vl, vl_test1, vl_test2, dl, 2);
-    
+
     if (is_lin) {
       return add_linear_generic_assembly_brick
         (md, mim, expr, region, false, false, "Linearized isotropic elasticity");
@@ -6150,7 +6149,7 @@ model_complex_plain_vector &
       const model_real_plain_vector *lambda=&(md.real_variable(data_lambda));
       const mesh_fem *mf_mu = md.pmesh_fem_of_variable(data_mu);
       const model_real_plain_vector *mu = &(md.real_variable(data_mu));
-      
+
       size_type sl = gmm::vect_size(*lambda);
       if (mf_lambda) sl = sl * mf_lambda->get_qdim() / mf_lambda->nb_dof();
       size_type sm = gmm::vect_size(*mu);
@@ -6160,7 +6159,7 @@ model_complex_plain_vector &
       GMM_ASSERT1(mf_lambda == mf_mu,
                   "The two Lame coefficients should be described on the same "
                   "finite element method.");
-      
+
       if (mf_lambda) {
         getfem::interpolation_von_mises_or_tresca(mf_u, mf_vm,
                                                   md.real_variable(varname), VM,
@@ -6300,7 +6299,7 @@ model_complex_plain_vector &
     { }
 
 
-    linear_incompressibility_brick(void) {
+    linear_incompressibility_brick() {
       set_flags("Linear incompressibility brick",
                 true /* is linear*/,
                 true /* is symmetric */, false /* is coercive */,
@@ -6449,7 +6448,7 @@ model_complex_plain_vector &
       return std::string();
     }
 
-    mass_brick(void) {
+    mass_brick() {
       set_flags("Mass brick", true /* is linear*/,
                 true /* is symmetric */, true /* is coercive */,
                 true /* is real */, true /* is complex */,
@@ -6631,7 +6630,7 @@ model_complex_plain_vector &
       return std::string();
     }
 
-    basic_d_on_dt_brick(void) {
+    basic_d_on_dt_brick() {
       set_flags("Basic d/dt brick", true /* is linear*/,
                 true /* is symmetric */, true /* is coercive */,
                 true /* is real */, true /* is complex */,
@@ -6806,7 +6805,7 @@ model_complex_plain_vector &
       return std::string();
     }
 
-    basic_d2_on_dt2_brick(void) {
+    basic_d2_on_dt2_brick() {
       set_flags("Basic d2/dt2 brick", true /* is linear*/,
                 true /* is symmetric */, true /* is coercive */,
                 true /* is real */, true /* is complex */,
@@ -7205,7 +7204,7 @@ model_complex_plain_vector &
         md.reset_default_iter_of_variables(vl);
     }
 
-    midpoint_dispatcher(void) : virtual_dispatcher(2)
+    midpoint_dispatcher() : virtual_dispatcher(2)
     { id_num = act_counter(); }
 
   };

@@ -80,12 +80,12 @@ namespace getfem {
 
   // Specific multiplication for fem_interpolation_context use.
   static inline void spec_mat_tmult_(const base_tensor &g, const base_matrix &B,
-				     base_tensor &t) {
+                                     base_tensor &t) {
     size_type P = B.nrows(), N = B.ncols();
     size_type M = t.adjust_sizes_changing_last(g, P);
     bgeot::mat_tmult(&(*(g.begin())), &(*(B.begin())), &(*(t.begin())),M,N,P);
   }
-  
+
   void fem_interpolation_context::pfp_base_value(base_tensor& t,
                                                  const pfem_precomp &pfp__) {
     const pfem &pf__ = pfp__->get_pfem();
@@ -171,7 +171,7 @@ namespace getfem {
           {
             base_tensor u;
             // u.mat_transp_reduction(pfp__->grad(ii()), B(), 2);
-	    spec_mat_tmult_(pfp__->grad(ii()), B(), u);
+            spec_mat_tmult_(pfp__->grad(ii()), B(), u);
             t.mat_transp_reduction(u, K(), 1);
           }
           break;
@@ -179,13 +179,13 @@ namespace getfem {
           {
             base_tensor u;
             // u.mat_transp_reduction(pfp__->grad(ii()), B(), 2);
-	    spec_mat_tmult_(pfp__->grad(ii()), B(), u);
+            spec_mat_tmult_(pfp__->grad(ii()), B(), u);
             t.mat_transp_reduction(u, B(), 1);
           }
           break;
         default:
-	  // t.mat_transp_reduction(pfp__->grad(ii()), B(), 2);
-	  spec_mat_tmult_(pfp__->grad(ii()), B(), t);
+          // t.mat_transp_reduction(pfp__->grad(ii()), B(), 2);
+          spec_mat_tmult_(pfp__->grad(ii()), B(), t);
         }
         if (!(pf__->is_equivalent())) {
           set_pfp(pfp__);
@@ -211,7 +211,7 @@ namespace getfem {
             {
               base_tensor u;
               // u.mat_transp_reduction(pfp_->grad(ii()), B(), 2);
-	      spec_mat_tmult_(pfp_->grad(ii()), B(), u);
+              spec_mat_tmult_(pfp_->grad(ii()), B(), u);
               t.mat_transp_reduction(u, K(), 1);
             }
             break;
@@ -219,20 +219,20 @@ namespace getfem {
             {
               base_tensor u;
               // u.mat_transp_reduction(pfp_->grad(ii()), B(), 2);
-	      spec_mat_tmult_(pfp_->grad(ii()), B(), u);
+              spec_mat_tmult_(pfp_->grad(ii()), B(), u);
               t.mat_transp_reduction(u, B(), 1);
             }
             break;
           default:
-	    // t.mat_transp_reduction(pfp_->grad(ii()), B(), 2);
-	    spec_mat_tmult_(pfp_->grad(ii()), B(), t);
+            // t.mat_transp_reduction(pfp_->grad(ii()), B(), 2);
+            spec_mat_tmult_(pfp_->grad(ii()), B(), t);
           }
-          
+
         } else {
           base_tensor u;
           pf()->grad_base_value(xref(), u);
           if (u.size()) { /* only if the FEM can provide grad_base_value */
-	    // t.mat_transp_reduction(u, B(), 2);
+            // t.mat_transp_reduction(u, B(), 2);
             spec_mat_tmult_(u, B(), t);
             switch(pf()->vectorial_type()) {
             case virtual_fem::VECTORIAL_PRIMAL_TYPE:
@@ -346,7 +346,7 @@ namespace getfem {
     size_type xfem_index;
     bool all_faces;
 
-    dof_description(void)
+    dof_description()
     { linkable = true; all_faces = false; coord_index = 0; xfem_index = 0; }
   };
 
@@ -417,7 +417,7 @@ namespace getfem {
     return &(tab[tab.add_norepeat(l)]);
   }
 
-  size_type reserve_xfem_index(void) {
+  size_type reserve_xfem_index() {
     static size_type ind = 100;
     return ind += 1000;
   }
@@ -646,14 +646,14 @@ namespace getfem {
      add_node(d, pt, faces);
   }
 
-  void virtual_fem::init_cvs_node(void) {
+  void virtual_fem::init_cvs_node() {
     cvs_node->init_for_adaptative(cvr->structure());
     cv_node = bgeot::convex<base_node>(cvs_node);
     face_tab.resize(0);
     pspt_valid = false;
   }
 
-  void virtual_fem::unfreeze_cvs_node(void) {
+  void virtual_fem::unfreeze_cvs_node() {
     cv_node.structure() = cvs_node;
     pspt_valid = false;
   }
@@ -687,7 +687,7 @@ namespace getfem {
     debug_name_ = f.debug_name_;
     face_tab = f.face_tab;
   }
-  
+
   /* ******************************************************************** */
   /*        PK class.                                                         */
   /* ******************************************************************** */
@@ -1230,7 +1230,7 @@ namespace getfem {
   /* ******************************************************************** */
 
   // local dof numeration for K=1:
-  //    4 
+  //    4
   //   /|||
   //  / || |
   // 2-|--|-3
@@ -1271,7 +1271,7 @@ namespace getfem {
     } else if (k == 1) {
       p->base().resize(5);
       bgeot::base_rational_fraction // Q = xy/(1-z)
-	Q(bgeot::read_base_poly(3, "x*y"), bgeot::read_base_poly(3, "1-z"));
+        Q(bgeot::read_base_poly(3, "x*y"), bgeot::read_base_poly(3, "1-z"));
       p->base()[0] = (bgeot::read_base_poly(3, "1-x-y-z") + Q)*0.25;
       p->base()[1] = (bgeot::read_base_poly(3, "1+x-y-z") - Q)*0.25;
       p->base()[2] = (bgeot::read_base_poly(3, "1-x+y-z") - Q)*0.25;
@@ -1297,7 +1297,7 @@ namespace getfem {
       base_poly ones = bgeot::read_base_poly(3, "1");
       base_poly un_z = bgeot::read_base_poly(3, "1-z");
       bgeot::base_rational_fraction Q(bgeot::read_base_poly(3, "1"), un_z);
-      
+
       p->base()[ 0] = Q*Q*xi0*xi1*(x*y-z*un_z);
       p->base()[ 1] = -Q*Q*xi0*xi1*xi2*y*4.;
       p->base()[ 2] = Q*Q*xi1*xi2*(-x*y-z*un_z);
@@ -1312,7 +1312,7 @@ namespace getfem {
       p->base()[11] = Q*z*xi3*xi0*4.;
       p->base()[12] = Q*z*xi2*xi3*4.;
       p->base()[13] = bgeot::read_base_poly(3, "z*(2*z-1)");
-      
+
       p->add_node(lag_dof, base_small_vector(-1.0, -1.0, 0.0));
       p->add_node(lag_dof, base_small_vector( 0.0, -1.0, 0.0));
       p->add_node(lag_dof, base_small_vector( 1.0, -1.0, 0.0));
@@ -1329,14 +1329,15 @@ namespace getfem {
       p->add_node(lag_dof, base_small_vector( 0.0,  0.0, 1.0));
 
     } else GMM_ASSERT1(false, "Sorry, pyramidal Lagrange fem "
-		       "implemented only for degree 0, 1 or 2");
-    
+                       "implemented only for degree 0, 1 or 2");
+
     return pfem(p);
   }
-  
-  
-  static pfem pyramidal_pk_fem(fem_param_list &params,
-		      std::vector<dal::pstatic_stored_object> &dependencies) {
+
+
+  static pfem pyramidal_pk_fem
+  (fem_param_list &params,
+   std::vector<dal::pstatic_stored_object> &dependencies) {
     GMM_ASSERT1(params.size() <= 1, "Bad number of parameters");
     short_type k = 2;
     if (params.size() > 0) {
@@ -1349,8 +1350,9 @@ namespace getfem {
     return p;
   }
 
-  static pfem pyramidal_disc_pk_fem(fem_param_list &params,
-		     std::vector<dal::pstatic_stored_object> &dependencies) {
+  static pfem pyramidal_disc_pk_fem
+  (fem_param_list &params,
+   std::vector<dal::pstatic_stored_object> &dependencies) {
     GMM_ASSERT1(params.size() <= 1, "Bad number of parameters");
     short_type k = 2;
     if (params.size() > 0) {
@@ -1713,10 +1715,10 @@ namespace getfem {
 
   struct P1_wabbfoafla_ : public PK_fem_
   { // idem elt prec mais avec raccord lagrange. A faire en dim. quelconque ..
-    P1_wabbfoafla_(void);
+    P1_wabbfoafla_();
   };
 
-  P1_wabbfoafla_::P1_wabbfoafla_(void) : PK_fem_(2, 1) {
+  P1_wabbfoafla_::P1_wabbfoafla_() : PK_fem_(2, 1) {
     unfreeze_cvs_node();
     es_degree = 2;
     base_node pt(2); pt.fill(0.5);
@@ -2927,7 +2929,7 @@ namespace getfem {
   struct hermite_segment__ : public fem<base_poly> {
     virtual void mat_trans(base_matrix &M, const base_matrix &G,
                            bgeot::pgeometric_trans pgt) const;
-    hermite_segment__(void);
+    hermite_segment__();
   };
 
   void hermite_segment__::mat_trans(base_matrix &M,
@@ -2962,7 +2964,7 @@ namespace getfem {
   // Hermite element on the segment. when the real element lies in
   // a 2 or 3 dimensional domain, the element should still work if
   // the tangent coincides.
-  hermite_segment__::hermite_segment__(void) {
+  hermite_segment__::hermite_segment__() {
     base_node pt(1);
     cvr = bgeot::simplex_of_reference(1);
     dim_ = cvr->structure()->dim();
@@ -2992,7 +2994,7 @@ namespace getfem {
   struct hermite_triangle__ : public fem<base_poly> {
     virtual void mat_trans(base_matrix &M, const base_matrix &G,
                            bgeot::pgeometric_trans pgt) const;
-    hermite_triangle__(void);
+    hermite_triangle__();
   };
 
   void hermite_triangle__::mat_trans(base_matrix &M,
@@ -3017,7 +3019,7 @@ namespace getfem {
     }
   }
 
-  hermite_triangle__::hermite_triangle__(void) {
+  hermite_triangle__::hermite_triangle__() {
     cvr = bgeot::simplex_of_reference(2);
     dim_ = cvr->structure()->dim();
     init_cvs_node();
@@ -3065,7 +3067,7 @@ namespace getfem {
   struct hermite_tetrahedron__ : public fem<base_poly> {
     virtual void mat_trans(base_matrix &M, const base_matrix &G,
                            bgeot::pgeometric_trans pgt) const;
-    hermite_tetrahedron__(void);
+    hermite_tetrahedron__();
   };
 
   void hermite_tetrahedron__::mat_trans(base_matrix &M,
@@ -3088,7 +3090,7 @@ namespace getfem {
     }
   }
 
-  hermite_tetrahedron__::hermite_tetrahedron__(void) {
+  hermite_tetrahedron__::hermite_tetrahedron__() {
     cvr = bgeot::simplex_of_reference(3);
     dim_ = cvr->structure()->dim();
     init_cvs_node();
@@ -3168,7 +3170,7 @@ namespace getfem {
   struct argyris_triangle__ : public fem<base_poly> {
     virtual void mat_trans(base_matrix &M, const base_matrix &G,
                            bgeot::pgeometric_trans pgt) const;
-    argyris_triangle__(void);
+    argyris_triangle__();
   };
 
   void argyris_triangle__::mat_trans(base_matrix &M,
@@ -3252,7 +3254,7 @@ namespace getfem {
     }
   }
 
-  argyris_triangle__::argyris_triangle__(void) {
+  argyris_triangle__::argyris_triangle__() {
     cvr = bgeot::simplex_of_reference(2);
     dim_ = cvr->structure()->dim();
     init_cvs_node();
@@ -3339,7 +3341,7 @@ namespace getfem {
   struct morley_triangle__ : public fem<base_poly> {
     virtual void mat_trans(base_matrix &M, const base_matrix &G,
                            bgeot::pgeometric_trans pgt) const;
-    morley_triangle__(void);
+    morley_triangle__();
   };
 
   void morley_triangle__::mat_trans(base_matrix &M,
@@ -3398,7 +3400,7 @@ namespace getfem {
     }
   }
 
-  morley_triangle__::morley_triangle__(void) {
+  morley_triangle__::morley_triangle__() {
     cvr = bgeot::simplex_of_reference(2);
     dim_ = cvr->structure()->dim();
     init_cvs_node();
@@ -3446,8 +3448,8 @@ namespace getfem {
       if (alpha != scalar_type(0)) {
         base_node G =
           gmm::mean_value(cv_node.points().begin(), cv_node.points().end());
-	for (size_type i=0; i < cv_node.nb_points(); ++i)
-	  cv_node.points()[i] = (1-alpha)*cv_node.points()[i] + alpha*G;
+        for (size_type i=0; i < cv_node.nb_points(); ++i)
+          cv_node.points()[i] = (1-alpha)*cv_node.points()[i] + alpha*G;
         for (size_type d = 0; d < nc; ++d) {
           base_poly S(1,2);
           S[0] = -alpha * G[d] / (1-alpha);
@@ -3557,23 +3559,23 @@ namespace getfem {
     /* Identifying P1-simplexes.                                          */
     if (nbp == n+1)
       if (pgt->basic_structure() == bgeot::simplex_structure(dim_type(n)))
-	{ name << "FEM_PK" << suffix << "("; found = true; }
+        { name << "FEM_PK" << suffix << "("; found = true; }
 
     /* Identifying Q1-parallelepiped.                                     */
     if (!found && nbp == (size_type(1) << n))
       if (pgt->basic_structure()==bgeot::parallelepiped_structure(dim_type(n)))
-	{ name << "FEM_QK" << suffix << "("; found = true; }
+        { name << "FEM_QK" << suffix << "("; found = true; }
 
     /* Identifying Q1-prisms.                                             */
     if (!found && nbp == 2 * n)
       if (pgt->basic_structure() == bgeot::prism_structure(dim_type(n)))
-	{ name << "FEM_PK_PRISM" << suffix << "("; found = true; }
-    
+        { name << "FEM_PK_PRISM" << suffix << "("; found = true; }
+
     /* Identifying pyramids.                                              */
     if (!found && nbp == 5)
       if (pgt->basic_structure() == bgeot::pyramidal_structure(1)) {
-	name << "FEM_PYRAMID" << suffix << "_LAGRANGE(";
-	found = true; spec_dim = false;
+        name << "FEM_PYRAMID" << suffix << "_LAGRANGE(";
+        found = true; spec_dim = false;
       }
 
     // To be completed

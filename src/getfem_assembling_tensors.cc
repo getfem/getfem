@@ -26,11 +26,11 @@ extern "C" void daxpy_(const int *n, const double *alpha, const double *x,
                        const int *incx, double *y, const int *incy);
 
 namespace getfem {
-  size_type vdim_specif_list::nb_mf() const { 
+  size_type vdim_specif_list::nb_mf() const {
     return std::count_if(begin(),end(),
       std::mem_fun_ref(&vdim_specif::is_mf_ref));
   }
-  size_type vdim_specif_list::nbelt() const { 
+  size_type vdim_specif_list::nbelt() const {
     size_type sz = 1;
     for (const_iterator it = begin(); it != end(); ++it) sz *= (*it).dim;
     return sz;
@@ -39,10 +39,10 @@ namespace getfem {
     (size_type cv, tensor_ranges& r, std::vector<tensor_strides >& str) const {
       stride_type s = 1, cnt = 0;
       str.resize(size());
-      r.resize(size());      
+      r.resize(size());
       for (const_iterator it = begin(); it != end(); ++it, ++cnt) {
         if ((*it).is_mf_ref()) {
-          r[cnt] = unsigned((*it).pmf->nb_basic_dof_of_element(cv)); 
+          r[cnt] = unsigned((*it).pmf->nb_basic_dof_of_element(cv));
           //mesh_fem::ind_dof_ct::const_iterator ii
           //       = (*it).pmf->ind_basic_dof_of_element(cv).begin();
           str[cnt].resize(r[cnt]);
@@ -65,7 +65,7 @@ namespace getfem {
       child(i).merge_required_shape(tensor_shape(child(i).ranges()));
     }
   }
-  void ATN::set_number(unsigned &gcnt) { 
+  void ATN::set_number(unsigned &gcnt) {
     if (number_ == unsigned(-1)) {
       for (unsigned i=0; i < nchilds(); ++i) child(i).set_number(gcnt);
       number_ = ++gcnt;
@@ -76,7 +76,7 @@ namespace getfem {
     return child(0).is_zero_size();
   }
 
-  /* 
+  /*
   general class for tensor who store their data
   */
   class ATN_tensor_w_data : public ATN_tensor {
@@ -94,12 +94,12 @@ namespace getfem {
     tr.init_strides();
     if (tr.card() > 10000000) {
       cerr << "warning, a tensor of size " << tr.card()
-        << " will be created, it needs " 
+        << " will be created, it needs "
         << tr.card()*sizeof(scalar_type) << " bytes of memory\n";
     }
     if (tr.card() == 0) {
       cerr << "WARNING: tensor " << name()
-        << " will be created with a size of " 
+        << " will be created with a size of "
         << ranges() << " and 0 non-null elements!" << endl;
     }
     data.resize(tr.card());
@@ -108,7 +108,7 @@ namespace getfem {
   }
 
 
-  /* 
+  /*
   general class for the computation of a reduced product of tensors
   (templated by the number of product tensors)
 
@@ -120,7 +120,7 @@ namespace getfem {
   class ATN_reduced_tensor : public ATN_tensor_w_data {
     /* used for specification of tensors and reduction indices , see below */
     reduced_tensor_arg_type red;
-    bgeot::tensor_reduction tred;    
+    bgeot::tensor_reduction tred;
   public:
     void check_shape_update(size_type , dim_type) {
       shape_updated_ = false;
@@ -135,9 +135,9 @@ namespace getfem {
           std::string s = red_n(i);
           if (s.size() != child(i).ranges().size()) {
             ASM_THROW_TENSOR_ERROR("wrong number of indexes for the "
-              << int(i+1) 
+              << int(i+1)
               << "th argument of the reduction "
-              << name() 
+              << name()
               << " (ranges=" << child(i).ranges() << ")");
           }
           for (size_type j=0; j < s.length(); ++j) {
@@ -147,7 +147,7 @@ namespace getfem {
       }
     }
     void update_childs_required_shape() {
-      /* pourrait etre mieux, cf les commentaires de la fonction 
+      /* pourrait etre mieux, cf les commentaires de la fonction
       tensor_reduction::required_shape */
       for (dim_type n=0; n < nchilds(); ++n) {
         tensor_shape ts(child(n).ranges());
@@ -157,32 +157,32 @@ namespace getfem {
         for (unsigned i=0; i < rn.size(); ++i)
           if (s[i] != ' ') {
             size_type p = s.find(s[i]);
-            if (p != size_type(-1) && p < i && rn[p] != rn[i]) 
+            if (p != size_type(-1) && p < i && rn[p] != rn[i])
               ASM_THROW_TENSOR_ERROR("can't reduce the diagonal of a tensor "
               "of size " << rn << " with '"
               << s << "'");
           }
-	//cerr << "ts = " << child(n).ranges() << ", red="
-	//     << red[n].second << "\n";
-	bgeot::tensor_reduction::diag_shape(ts, red[n].second);
-	// cerr << "REDUCTION '" << red[n].second
-	//        << "' -> sending required to child#" << int(n)
-	//	<< " " << child(n).name() << ":" << endl;
-	// cerr << ts << endl;
-	child(n).merge_required_shape(ts);
-	// cerr << "------>required shape is now: "
-	//      << child(n).required_shape() << endl;
+          //cerr << "ts = " << child(n).ranges() << ", red="
+          //     << red[n].second << "\n";
+          bgeot::tensor_reduction::diag_shape(ts, red[n].second);
+          // cerr << "REDUCTION '" << red[n].second
+          //        << "' -> sending required to child#" << int(n)
+          //        << " " << child(n).name() << ":" << endl;
+          // cerr << ts << endl;
+          child(n).merge_required_shape(ts);
+          // cerr << "------>required shape is now: "
+          //      << child(n).required_shape() << endl;
       }
     }
 
-    /* 
-    r is a container of pair<vtensor&,std::string> 
+    /*
+    r is a container of pair<vtensor&,std::string>
     where the strings specify the reduction indices:
 
-    if a_{ik}b_{kjl} is reduced against k and l, then the strings are 
+    if a_{ik}b_{kjl} is reduced against k and l, then the strings are
     " k" and "k l"
     */
-    ATN_reduced_tensor(reduced_tensor_arg_type& r) : red(r) { 
+    ATN_reduced_tensor(reduced_tensor_arg_type& r) : red(r) {
       for (size_type i=0; i < r.size(); ++i) add_child(*red[i].first);
     }
 
@@ -197,19 +197,19 @@ namespace getfem {
     void reinit_() {
       tred.clear();
       for (dim_type i=0; i < red.size(); ++i) {
-        // cerr << "ATN_reduced_tensor::reinit : insertion of r(" << red_n(i) 
+        // cerr << "ATN_reduced_tensor::reinit : insertion of r(" << red_n(i)
         //      << "), tr[" << red[i].first->ranges() << "\n"
         //      << red[i].first->tensor() << endl;*/
         // if (red[i].first->ranges().size() != red_n(i).length()) {
         // ASM_THROW_TENSOR_ERROR("wrong number of indexes for the "
         //                        << int(i+1)
-        //                        << "th argument of the reduction " << name() 
+        //                        << "th argument of the reduction " << name()
         //                        << " (ranges=" << red[i].first->ranges()
         //                        << ")");
         // }
         tred.insert(red[i].first->tensor(), red_n(i));
       }
-      /* reserve the memory for the output 
+      /* reserve the memory for the output
       the memory is set to zero since the reduction may only affect a
       subset of this tensor hence a part of it would not be initialized
       */
@@ -227,7 +227,7 @@ namespace getfem {
   };
 
 
-  /* slice tensor: 
+  /* slice tensor:
   no need of a temporary storage for the slice, since direct access
   can be provided via strides.
   */
@@ -236,7 +236,7 @@ namespace getfem {
     size_type slice_idx;
   public:
     ATN_sliced_tensor(ATN_tensor& a, dim_type slice_dim_,
-      size_type slice_idx_) : 
+      size_type slice_idx_) :
     slice_dim(slice_dim_), slice_idx(slice_idx_)  { add_child(a); }
     void check_shape_update(size_type , dim_type) {
       if ((shape_updated_ = child(0).is_shape_updated())) {
@@ -250,7 +250,7 @@ namespace getfem {
       }
     }
     void update_childs_required_shape() {
-      tensor_shape ts = req_shape; 
+      tensor_shape ts = req_shape;
       ts.set_ndim_noclean(dim_type(ts.ndim()+1));
       ts.shift_dim_num_ge(slice_dim,+1);
       ts.push_mask(tensor_mask(child(0).ranges()[slice_dim],
@@ -280,8 +280,8 @@ namespace getfem {
       if ((shape_updated_ = child(0).is_shape_updated())) {
         if (reorder.size() != child(0).ranges().size())
           ASM_THROW_TENSOR_ERROR("can't reorder tensor '" << name()
-				 << "' of dimensions " << child(0).ranges() << 
-				 " with this permutation: " << vref(reorder));
+                                 << "' of dimensions " << child(0).ranges()
+                                 << " with this permutation: " << vref(reorder));
         r_.resize(reorder.size());
         std::fill(r_.begin(), r_.end(), dim_type(-1));
 
@@ -305,14 +305,14 @@ namespace getfem {
   };
 
   /* diagonal tensor: take the "diagonal" of a tensor
-  (ie diag(t(i,j,k), {i,k}) == t(i,j,i)) 
+  (ie diag(t(i,j,k), {i,k}) == t(i,j,i))
 
-  /!\ the number of dimensions DO NOT change 
+  /!\ the number of dimensions DO NOT change
   */
   class ATN_diagonal_tensor : public ATN_tensor {
     dim_type i1, i2;
   public:
-    ATN_diagonal_tensor(ATN_tensor& a, dim_type i1_, dim_type i2_) : 
+    ATN_diagonal_tensor(ATN_tensor& a, dim_type i1_, dim_type i2_) :
       i1(i1_), i2(i2_) { add_child(a); }
   private:
     void check_shape_update(size_type , dim_type) {
@@ -320,7 +320,7 @@ namespace getfem {
         if (i1 >= child(0).ranges().size() || i2 >= child(0).ranges().size() ||
           i1 == i2 || child(0).ranges()[i1] != child(0).ranges()[i2])
           ASM_THROW_TENSOR_ERROR("can't take the diagonal of a tensor of "
-          "sizes " << child(0).ranges() << 
+          "sizes " << child(0).ranges() <<
           " at indexes " << int(i1) << " and "
           << int(i2));
         r_ = child(0).ranges();
@@ -337,7 +337,7 @@ namespace getfem {
   };
 
   /* called (if possible, i.e. if not an exact integration) for each
-  integration point during mat_elem->compute() */    
+  integration point during mat_elem->compute() */
   struct computed_tensor_integration_callback
     : public mat_elem_integration_callback {
       bgeot::tensor_reduction red;
@@ -345,11 +345,11 @@ namespace getfem {
       std::vector<TDIter> tensor_bases; /* each tref of 'red' has a   */
       /* reference into this vector */
       virtual void exec(bgeot::base_tensor &t, bool first, scalar_type c) {
-        if (first) { 
+        if (first) {
           resize_t(t);
           std::fill(t.begin(), t.end(), 0.);
           was_called = true;
-        }      
+        }
         assert(t.size());
         for (unsigned k=0; k!=eltm.size(); ++k) { /* put in the 'if (first)' ? */
           tensor_bases[k] = const_cast<TDIter>(&(*eltm[k]->begin()));
@@ -360,11 +360,11 @@ namespace getfem {
           &one, (double*)&(t[0]), &one);
       }
       void resize_t(bgeot::base_tensor &t) {
-        bgeot::multi_index r; 
+        bgeot::multi_index r;
         if (red.reduced_range.size())
           r.assign(red.reduced_range.begin(), red.reduced_range.end());
         else { r.resize(1); r[0]=1; }
-        t.adjust_sizes(r);      
+        t.adjust_sizes(r);
       }
   };
 
@@ -392,7 +392,7 @@ namespace getfem {
       NONLIN=7, DATA=8 } op_type;
     typedef enum { PLAIN_SHAPE = 0, VECTORIZED_SHAPE = 1,
       MATRIXIZED_SHAPE = 2 } field_shape_type;
-    op_type op; /* the numerical values indicates the number 
+    op_type op; /* the numerical values indicates the number
                 of dimensions in the tensor */
     field_shape_type vshape; /* VECTORIZED_SHAPE if vectorization was required
                              (adds an addiational dimension to the tensor
@@ -416,9 +416,9 @@ namespace getfem {
       field_shape_type fst) :
     nlt(0), pmf(pmf_), owner(ow), data(0), op(op_), vshape(fst) { }
     mf_comp(mf_comp_vect *ow, const std::vector<const mesh_fem*> vmf,
-      pnonlinear_elem_term nlt_) : 
+      pnonlinear_elem_term nlt_) :
     nlt(nlt_), pmf(vmf[0]), owner(ow), data(0),
-      auxmf(vmf.begin()+1, vmf.end()), op(NONLIN), 
+      auxmf(vmf.begin()+1, vmf.end()), op(NONLIN),
       vshape(PLAIN_SHAPE) { }
     mf_comp(mf_comp_vect *ow, ATN_tensor *t) :
       nlt(0), pmf(0), owner(ow), data(t), op(DATA), vshape(PLAIN_SHAPE) {}
@@ -456,8 +456,8 @@ namespace getfem {
         }
         break;
       case DATA:
-        for (unsigned i=0; i < data->ranges().size(); ++i) 
-          if (!only_reduced || !reduced(i)) 
+        for (unsigned i=0; i < data->ranges().size(); ++i)
+          if (!only_reduced || !reduced(i))
             rng.push_back(data->ranges()[i]);
         break;
       case NORMAL:
@@ -477,7 +477,7 @@ namespace getfem {
         unsigned d = 0;
         if (!only_reduced || !reduced(d))
           rng.push_back(unsigned(pmf->nb_basic_dof_of_element(cv)));
-        ++d; 
+        ++d;
         if (vshape == mf_comp::VECTORIZED_SHAPE) {
           if (!only_reduced || !reduced(d)) rng.push_back(pmf->get_qdim());
           ++d;
@@ -489,7 +489,7 @@ namespace getfem {
           }
           ++d;
           if (!only_reduced || !reduced(d)) rng.push_back(dim_type(pmf->get_qdims()[1]));
-          ++d;	  
+          ++d;
         }
 
         if (op == GRAD || op == HESS) {
@@ -515,11 +515,11 @@ namespace getfem {
     pintegration_method pim;
     bgeot::pgeometric_trans pgt;
     base_tensor t;
-    std::vector<scalar_type> data;     
+    std::vector<scalar_type> data;
     TDIter data_base;
     stride_type tsize;
     dal::bit_vector req_bv;  /* bit_vector of values the mat_elem has to compute
-                             (useful when only a subset is required from the 
+                             (useful when only a subset is required from the
                              possibly very large elementary tensor) */
     bool has_inline_reduction; /* true if used with reductions inside the comp, for example:
                                "comp(Grad(#1)(:,i).Grad(#2)(:,i))" */
@@ -528,20 +528,20 @@ namespace getfem {
     /* if inline reduction are to be done, but were not possible (i.e. if exact
     integration was used) then a fallback is used: apply the reduction
     afterward, on the large expanded tensor */
-    bgeot::tensor_reduction fallback_red; 
+    bgeot::tensor_reduction fallback_red;
     bool fallback_red_uptodate;
     TDIter fallback_base;
 
     size_type cv_shape_update;
     //mat_elem_inline_reduction inline_red;
   public:
-    ATN_computed_tensor(const mf_comp_vect &mfcomp_) : 
-      mfcomp(mfcomp_), pmec(0), pme(0), pim(0), pgt(0), data_base(0) { 
+    ATN_computed_tensor(const mf_comp_vect &mfcomp_) :
+      mfcomp(mfcomp_), pmec(0), pme(0), pim(0), pgt(0), data_base(0) {
         has_inline_reduction = false;
         bool in_data = false;
         for (size_type i=0; i < mfcomp.size(); ++i) {
           if (mfcomp[i].reduction.size() || mfcomp[i].op == mf_comp::DATA) {
-            has_inline_reduction = true; 
+            has_inline_reduction = true;
             if (mfcomp[i].op == mf_comp::DATA) { add_child(*mfcomp[i].data); in_data = true; }
           }
           if (mfcomp[i].op != mf_comp::DATA && in_data) {
@@ -551,7 +551,7 @@ namespace getfem {
         }
     }
 
-  private:    
+  private:
     /* mostly for non-linear terms, such as a 3x3x3x3 tensor which may have
     many symmetries or many null elements..  in that case, it is preferable
     for getfem_mat_elem to handle only a sufficient subset of the tensor,
@@ -562,7 +562,7 @@ namespace getfem {
       assert(d < rng.size());
       tensor_strides v;
       index_type r = rng[d];
-      tensor_mask m; m.set_full(d, r);	    
+      tensor_mask m; m.set_full(d, r);
       v.resize(r);
       for (index_type i=0; i < r; ++i) v[i] = s*i;
       assert(tref.masks().size() == tref.strides().size());
@@ -575,7 +575,7 @@ namespace getfem {
     /* append a vectorized dimension to tref -- works also for cases
     where target_dim > 1
     */
-    stride_type add_vdim(const tensor_ranges& rng, dim_type d, 
+    stride_type add_vdim(const tensor_ranges& rng, dim_type d,
       index_type target_dim, stride_type s,
       tensor_ref &tref) {
         assert(d < rng.size()-1);
@@ -606,13 +606,13 @@ namespace getfem {
     /* append a matrixized dimension to tref -- works also for cases
     where target_dim > 1 (in that case the rows are "vectorized")
 
-    for example, the Base(RT0) in 2D (3 dof, target_dim=2) is: 
-    [0 1 2; 
+    for example, the Base(RT0) in 2D (3 dof, target_dim=2) is:
+    [0 1 2;
     3 4 5]
 
 
     if we set it in a mesh_fem of qdim = 3x2 , we produce the sparse
-    elementary tensor 9x3x2 = 
+    elementary tensor 9x3x2 =
 
     x x x y y y
     0 . . 3 . . <- phi1
@@ -626,7 +626,7 @@ namespace getfem {
     . . 2 . . 5 <- phi9
 
     */
-    stride_type add_mdim(const tensor_ranges& rng, dim_type d, 
+    stride_type add_mdim(const tensor_ranges& rng, dim_type d,
       index_type target_dim, stride_type s, tensor_ref &tref) {
         assert(d < rng.size()-2);
 
@@ -634,7 +634,7 @@ namespace getfem {
         index_type r = rng[d], q=rng[d+1], p=rng[d+2];
         index_type qmult = (q*p)/target_dim;
 
-        assert(r % q == 0); 
+        assert(r % q == 0);
         assert(p % target_dim == 0);
         assert(r % (p/target_dim) == 0);
 
@@ -680,18 +680,18 @@ namespace getfem {
         case mf_comp::HESS: pme2 = mat_elem_hessian(fem); break;
         case mf_comp::NORMAL: pme2 = mat_elem_unit_normal(); break;
         case mf_comp::GRADGT:
-        case mf_comp::GRADGTINV: 
+        case mf_comp::GRADGTINV:
           pme2 = mat_elem_grad_geotrans(mfcomp[i].op == mf_comp::GRADGTINV);
           break;
         case mf_comp::NONLIN: {
-          std::vector<pfem> ftab(1+mfcomp[i].auxmf.size()); 
+          std::vector<pfem> ftab(1+mfcomp[i].auxmf.size());
           ftab[0] = fem;
-          for (unsigned k=0; k < mfcomp[i].auxmf.size(); ++k) 
+          for (unsigned k=0; k < mfcomp[i].auxmf.size(); ++k)
             ftab[k+1] = mfcomp[i].auxmf[k]->fem_of_element(cv);
           pme2 = mat_elem_nonlinear(mfcomp[i].nlt, ftab);
                               } break;
         case mf_comp::DATA: /*ignore*/;
-        } 
+        }
         if (pme == 0) pme = pme2;
         else pme = mat_elem_product(pme, pme2);
       }
@@ -702,8 +702,8 @@ namespace getfem {
 
 
 
-    size_type 
-      push_back_mfcomp_dimensions(size_type cv, const mf_comp& mc, 
+    size_type
+      push_back_mfcomp_dimensions(size_type cv, const mf_comp& mc,
       unsigned &d, const bgeot::tensor_ranges &rng,
       bgeot::tensor_ref &tref, size_type tsz=1) {
         if (mc.op == mf_comp::NONLIN) {
@@ -716,7 +716,7 @@ namespace getfem {
           d += tref.ndim();
         } else if (mc.op == mf_comp::NORMAL) {
           tsz = add_dim(rng, dim_type(d++), stride_type(tsz), tref);
-        } else if (mc.op == mf_comp::GRADGT || 
+        } else if (mc.op == mf_comp::GRADGT ||
           mc.op == mf_comp::GRADGTINV) {
             tsz = add_dim(rng, dim_type(d++), stride_type(tsz), tref);
             tsz = add_dim(rng, dim_type(d++), stride_type(tsz), tref);
@@ -764,17 +764,17 @@ namespace getfem {
         tensor_ranges rng;
         unsigned d = 0;
         mfcomp[i].push_back_dimensions(cv,rng);
-        push_back_mfcomp_dimensions(cv,mfcomp[i], d, rng, tref); 
+        push_back_mfcomp_dimensions(cv,mfcomp[i], d, rng, tref);
         assert(tref.ndim() == rng.size() && d == rng.size());
-        if (mfcomp[i].reduction.size() == 0) 
+        if (mfcomp[i].reduction.size() == 0)
           mfcomp[i].reduction.insert(size_type(0), tref.ndim(), ' ');
         if (mfcomp[i].op != mf_comp::DATA) /* should already have the correct base */
           tref.set_base(icb.tensor_bases[i]);
         tref.update_idx2mask();
         if (mfcomp[i].reduction.size() != tref.ndim()) {
-          ASM_THROW_TENSOR_ERROR("wrong number of indices for the "<< int(i+1) 
-            << "th argument of the reduction "<< name() 
-            << " (expected " << int(tref.ndim()) 
+          ASM_THROW_TENSOR_ERROR("wrong number of indices for the "<< int(i+1)
+            << "th argument of the reduction "<< name()
+            << " (expected " << int(tref.ndim())
             << " indexes, got "
             << mfcomp[i].reduction.size());
         }
@@ -782,7 +782,7 @@ namespace getfem {
       }
       icb.red.prepare();
       icb.red.result(tensor());
-      r_.resize(tensor().ndim()); 
+      r_.resize(tensor().ndim());
       for (dim_type i=0; i < tensor().ndim(); ++i) r_[i] = tensor().dim(i);
       tsize = tensor().card();
       //cerr << "update_shape_with_inline_reduction: tensor=" << tensor()
@@ -819,23 +819,23 @@ namespace getfem {
         if  (current_cv == size_type(-1)) {
           shape_updated_ = true; fem_changed = true;
         } else {
-          fem_changed = fem_changed || 
-            (mfcomp[i].pmf->fem_of_element(current_cv) != 
+          fem_changed = fem_changed ||
+            (mfcomp[i].pmf->fem_of_element(current_cv) !=
             mfcomp[i].pmf->fem_of_element(cv));
-          /* for FEM with non-constant nb_dof.. */ 
+          /* for FEM with non-constant nb_dof.. */
           shape_updated_ = shape_updated_ ||
-            (mfcomp[i].pmf->nb_basic_dof_of_element(current_cv) != 
-            mfcomp[i].pmf->nb_basic_dof_of_element(cv)); 
+            (mfcomp[i].pmf->nb_basic_dof_of_element(current_cv) !=
+            mfcomp[i].pmf->nb_basic_dof_of_element(cv));
         }
       }
       if (shape_updated_) {
         r_.resize(0);
         /* get the new ranges */
-        for (unsigned i=0; i < mfcomp.size(); ++i) 
+        for (unsigned i=0; i < mfcomp.size(); ++i)
           mfcomp[i].push_back_dimensions(cv, r_, true);
       }
       if (fem_changed || shape_updated_) {
-        /* build the new mat_elem structure */      
+        /* build the new mat_elem structure */
         update_pmat_elem(cv);
       }
       if (shape_updated_ || fem_changed || pgt != pgt2 || pim != pim2) {
@@ -898,17 +898,17 @@ namespace getfem {
           size_type fullsz = 1;
           for (unsigned j=0; j < mfcomp[i].data->ranges().size(); ++j)
             fullsz *= mfcomp[i].data->ranges()[j];
-          if (fullsz != size_type(mfcomp[i].data->tensor().card())) 
+          if (fullsz != size_type(mfcomp[i].data->tensor().card()))
             ASM_THROW_TENSOR_ERROR("aaarg inline reduction will explode with non-full tensors. "
             "Complain to the author, I was too lazy to do that properly");
         }
       }
       icb.was_called = false;
       if (face == dim_type(-1)) {
-        pmec->gen_compute(t, mim.linked_mesh().points_of_convex(cv), cv, 
+        pmec->gen_compute(t, mim.linked_mesh().points_of_convex(cv), cv,
           has_inline_reduction ? &icb : 0);
       } else {
-        pmec->gen_compute_on_face(t, mim.linked_mesh().points_of_convex(cv), face, cv, 
+        pmec->gen_compute_on_face(t, mim.linked_mesh().points_of_convex(cv), face, cv,
           has_inline_reduction ? &icb : 0);
       }
 
@@ -930,7 +930,7 @@ namespace getfem {
     tensor_ranges e_r;
     std::vector< tensor_strides > e_str;
   public:
-    ATN_tensor_from_dofs_data(const base_asm_data *basm_, 
+    ATN_tensor_from_dofs_data(const base_asm_data *basm_,
       const vdim_specif_list& d) :
     basm(basm_), vdim(d) {
     }
@@ -963,7 +963,7 @@ namespace getfem {
     }
   };
 
-  /* enforce symmetry of a 2D tensor 
+  /* enforce symmetry of a 2D tensor
   (requiring only the upper-triangle of its child and
   duplicating it) */
   class ATN_symmetrized_tensor : public ATN_tensor_w_data {
@@ -972,7 +972,7 @@ namespace getfem {
     ATN_symmetrized_tensor(ATN_tensor& a) { add_child(a); }
     void check_shape_update(size_type , dim_type) {
       if ((shape_updated_ = child(0).is_shape_updated())) {
-        if (child(0).ranges().size() != 2 || 
+        if (child(0).ranges().size() != 2 ||
           child(0).ranges()[0] != child(0).ranges()[1])
           ASM_THROW_TENSOR_ERROR("can't symmetrize a non-square tensor "
           "of sizes " << child(0).ranges());
@@ -981,7 +981,7 @@ namespace getfem {
     }
     void update_childs_required_shape() {
       tensor_shape ts = req_shape;
-      tensor_shape ts2 = req_shape; 
+      tensor_shape ts2 = req_shape;
       index_set perm(2); perm[0] = 1; perm[1] = 0; ts2.permute(perm);
       ts.merge(ts2, false);
       tensor_mask dm; dm.set_triangular(ranges()[0],0,1);
@@ -1014,7 +1014,7 @@ namespace getfem {
   public:
     ATN_unary_op_tensor(ATN_tensor& a) { add_child(a); }
     void check_shape_update(size_type , dim_type) {
-      if ((shape_updated_ = (ranges() != child(0).ranges())))      
+      if ((shape_updated_ = (ranges() != child(0).ranges())))
         r_ = child(0).ranges();
     }
   private:
@@ -1046,12 +1046,12 @@ namespace getfem {
       if ((shape_updated_ = child(0).is_shape_updated()))
         r_ = child(0).ranges();
       for (size_type i=1; i < nchilds(); ++i)
-        if (ranges() != child(i).ranges()) 
-          ASM_THROW_TENSOR_ERROR("can't add two tensors of sizes " << 
+        if (ranges() != child(i).ranges())
+          ASM_THROW_TENSOR_ERROR("can't add two tensors of sizes " <<
           ranges() << " and " << child(i).ranges());
     }
-    void apply_scale(scalar_type s) { 
-      for (size_type i=0; i < scales.size(); ++i) scales[i] *= s; 
+    void apply_scale(scalar_type s) {
+      for (size_type i=0; i < scales.size(); ++i) scales[i] *= s;
     }
     ATN_tensors_sum_scaled* is_tensors_sum_scaled() { return this; }
   private:
@@ -1085,7 +1085,7 @@ namespace getfem {
     multi_tensor_iterator mti;
     int sgn; /* v+t or v-t ? */
   public:
-    ATN_tensor_scalar_add(ATN_tensor& a, scalar_type v_, int sgn_) : 
+    ATN_tensor_scalar_add(ATN_tensor& a, scalar_type v_, int sgn_) :
       v(v_), sgn(sgn_) { add_child(a); }
     void check_shape_update(size_type , dim_type) {
       if ((shape_updated_ = child(0).is_shape_updated()))
@@ -1110,14 +1110,14 @@ namespace getfem {
   class ATN_print_tensor : public ATN {
     std::string name;
   public:
-    ATN_print_tensor(ATN_tensor& a, std::string n_) 
+    ATN_print_tensor(ATN_tensor& a, std::string n_)
       : name(n_) { add_child(a); }
   private:
     void reinit_() {}
     void exec_(size_type cv, dim_type face) {
       multi_tensor_iterator mti(child(0).tensor(), true);
       cout << "------- > evaluation of " << name << ", at" << endl;
-      cout << "convex " << cv; 
+      cout << "convex " << cv;
       if (face != dim_type(-1)) cout << ", face " << int(face);
       cout << endl;
       cout << "  size   = " << child(0).ranges() << endl;
@@ -1132,13 +1132,13 @@ namespace getfem {
   };
 
 
-  /* 
+  /*
   -------------------
   analysis of the supplied string
   -----------------
   */
 
-  std::string asm_tokenizer::syntax_err_print() {      
+  std::string asm_tokenizer::syntax_err_print() {
     std::string s;
     if (tok_pos - err_msg_mark > 80) err_msg_mark = tok_pos - 40;
     if (str.length() - err_msg_mark < 80) s = tok_substr(err_msg_mark, str.length());
@@ -1151,17 +1151,17 @@ namespace getfem {
     gmm::standard_locale sl;
     curr_tok_ival = -1;
     while (tok_pos < str.length() && isspace(str[tok_pos])) ++tok_pos;
-    if (tok_pos == str.length()) { 
+    if (tok_pos == str.length()) {
       curr_tok_type = END; tok_len = 0;
-    } else if (strchr("{}(),;:=-.*/+", str[tok_pos])) { 
+    } else if (strchr("{}(),;:=-.*/+", str[tok_pos])) {
       curr_tok_type = tok_type_enum(str[tok_pos]); tok_len = 1;
-    } else if (str[tok_pos] == '$' || str[tok_pos] == '#' || str[tok_pos] == '%') { 
-      curr_tok_type = str[tok_pos] == '$' ? ARGNUM_SELECTOR : 
+    } else if (str[tok_pos] == '$' || str[tok_pos] == '#' || str[tok_pos] == '%') {
+      curr_tok_type = str[tok_pos] == '$' ? ARGNUM_SELECTOR :
         (str[tok_pos] == '#' ? MFREF : IMREF);
-    tok_len = 1; 
+    tok_len = 1;
     curr_tok_ival = 0;
-    while (isdigit(str[tok_pos+tok_len])) { 
-      curr_tok_ival*=10; 
+    while (isdigit(str[tok_pos+tok_len])) {
+      curr_tok_ival*=10;
       curr_tok_ival += str[tok_pos+tok_len] - '0';
       ++tok_len;
     }
@@ -1184,7 +1184,7 @@ namespace getfem {
 
   const mesh_fem& generic_assembly::do_mf_arg_basic() {
     if (tok_type() != MFREF) ASM_THROW_PARSE_ERROR("expecting mesh_fem reference");
-    if (tok_mfref_num() >= mftab.size()) 
+    if (tok_mfref_num() >= mftab.size())
       ASM_THROW_PARSE_ERROR("reference to a non-existant mesh_fem #" << tok_mfref_num()+1);
     const mesh_fem& mf_ = *mftab[tok_mfref_num()]; advance();
     return mf_;
@@ -1198,7 +1198,7 @@ namespace getfem {
       multimf->resize(1); (*multimf)[0] = &mf_;
       while (advance_if(COMMA)) {
         if (tok_type() != MFREF) ASM_THROW_PARSE_ERROR("expecting mesh_fem reference");
-        if (tok_mfref_num() >= mftab.size()) 
+        if (tok_mfref_num() >= mftab.size())
           ASM_THROW_PARSE_ERROR("reference to a non-existant mesh_fem #" << tok_mfref_num()+1);
         multimf->push_back(mftab[tok_mfref_num()]); advance();
       }
@@ -1218,7 +1218,7 @@ namespace getfem {
         } else if (tok_type() == IDENT) {
           if ((tok().length()==1 && isalpha(tok()[0])) || islower(tok()[0])) {
             s.push_back(tok()[0]); advance(); j++;
-          } else ASM_THROW_PARSE_ERROR("invalid reduction index '" << tok() << 
+          } else ASM_THROW_PARSE_ERROR("invalid reduction index '" << tok() <<
             "', only lower case characters allowed");
         }
       } while (advance_if(COMMA));
@@ -1245,7 +1245,7 @@ namespace getfem {
     meshes).
     */
     if (tok_type() == IMREF) {
-      if (tok_imref_num() >= imtab.size()) 
+      if (tok_imref_num() >= imtab.size())
         ASM_THROW_PARSE_ERROR("reference to a non-existant mesh_im %" << tok_imref_num()+1);
       what.set_im(*imtab[tok_imref_num()]); advance();
       accept(COMMA, "expecting ','");
@@ -1255,18 +1255,18 @@ namespace getfem {
     do {
       if (tok_type() == CLOSE_PAR) break;
       if (tok_type() != IDENT) ASM_THROW_PARSE_ERROR("expecting Base or Grad or Hess, Normal, etc..");
-      std::string f = tok(); 
+      std::string f = tok();
       const mesh_fem *pmf = 0;
       if (f.compare("Base")==0 || f.compare("vBase")==0 || f.compare("mBase")==0) {
-        pmf = &do_mf_arg(); 
+        pmf = &do_mf_arg();
         what.push_back(mf_comp(&what, pmf, mf_comp::BASE, get_shape(f)));
       } else if (f.compare("Grad")==0 || f.compare("vGrad")==0 || f.compare("mGrad")==0) {
-        pmf = &do_mf_arg(); 
+        pmf = &do_mf_arg();
         what.push_back(mf_comp(&what, pmf, mf_comp::GRAD, get_shape(f)));
       } else if (f.compare("Hess")==0 || f.compare("vHess")==0 || f.compare("mHess")==0) {
-        pmf = &do_mf_arg(); 
+        pmf = &do_mf_arg();
         what.push_back(mf_comp(&what, pmf, mf_comp::HESS, get_shape(f)));
-      } else if (f.compare("NonLin")==0) {	
+      } else if (f.compare("NonLin")==0) {
         size_type num = 0; /* default value */
         advance();
         if (tok_type() == ARGNUM_SELECTOR) { num = tok_argnum(); advance(); }
@@ -1281,10 +1281,10 @@ namespace getfem {
         f.compare("GradGTInv") == 0) {
           advance();
           accept(OPEN_PAR,"expecting '('"); accept(CLOSE_PAR,"expecting ')'");
-          pmf = 0; 
-          what.push_back(mf_comp(&what, pmf, 
+          pmf = 0;
+          what.push_back(mf_comp(&what, pmf,
             f.compare("GradGT") == 0 ?
-            mf_comp::GRADGT : 
+            mf_comp::GRADGT :
           mf_comp::GRADGTINV, mf_comp::PLAIN_SHAPE));
       } else {
         if (vars.find(f) != vars.end()) {
@@ -1308,7 +1308,7 @@ namespace getfem {
 
   void generic_assembly::do_dim_spec(vdim_specif_list& lst) {
     lst.resize(0);
-    accept(OPEN_PAR, "expecting '('");    
+    accept(OPEN_PAR, "expecting '('");
     while (true) {
       if (tok_type() == IDENT) {
         if (tok().compare("mdim")==0) lst.push_back(vdim_specif(do_mf_arg().linked_mesh().dim()));
@@ -1335,7 +1335,7 @@ namespace getfem {
       if (tok_type() != ARGNUM_SELECTOR)
         ASM_THROW_PARSE_ERROR("expecting dataset number");
       datanum = tok_argnum();
-      advance(); 
+      advance();
     }
     if (datanum >= indata.size())
       ASM_THROW_PARSE_ERROR("wrong dataset number: " << datanum);
@@ -1343,8 +1343,8 @@ namespace getfem {
     vdim_specif_list sz;
     do_dim_spec(sz);
 
-    if (sz.nbelt() != indata[datanum]->vect_size()) 
-      ASM_THROW_PARSE_ERROR("invalid size for data argument " << datanum+1 << 
+    if (sz.nbelt() != indata[datanum]->vect_size())
+      ASM_THROW_PARSE_ERROR("invalid size for data argument " << datanum+1 <<
       " real size is " << indata[datanum]->vect_size()
       << " expected size is " << sz.nbelt());
     return record(std::make_unique<ATN_tensor_from_dofs_data>(indata[datanum].get(), sz));
@@ -1365,7 +1365,7 @@ namespace getfem {
           } else if (tok_type() == IDENT) {
             if ((tok().length()==1 && isalpha(tok()[0])) || islower(tok()[0])) {
               s.push_back(tok()[0]); advance(); j++;
-            } else ASM_THROW_PARSE_ERROR("invalid reduction index '" << tok() << 
+            } else ASM_THROW_PARSE_ERROR("invalid reduction index '" << tok() <<
               "', only lower case chars allowed");
           }
         } while (advance_if(COMMA));
@@ -1375,7 +1375,7 @@ namespace getfem {
   }
 
   /*
-  ( expr ) 
+  ( expr )
   variable
   comp(..)
   data(data)
@@ -1396,7 +1396,7 @@ namespace getfem {
       } else if (tok().compare("data")==0) {
         advance(); t.assign(do_data());
       } else if (tok().compare("sym")==0) {
-        advance(); 
+        advance();
         tnode t2 = do_expr();
         if (t2.type() != tnode::TNTENSOR)
           ASM_THROW_PARSE_ERROR("can't symmetrise a scalar!");
@@ -1451,7 +1451,7 @@ namespace getfem {
             dim_type(j))));
           check_permut.add(j);
           reorder.push_back(dim_type(j));
-        } else { 
+        } else {
           check_permut.add(i);
           reorder.push_back(dim_type(i));
         }
@@ -1463,14 +1463,14 @@ namespace getfem {
         cerr << check_permut << endl;
         cerr << vref(reorder) << endl;
         ASM_THROW_PARSE_ERROR("you did not give a real permutation:"
-			      << vref(reorder));
+                              << vref(reorder));
       }
       t = tnode(record(std::make_unique<ATN_permuted_tensor>(*t.tensor(), reorder)));
     }
     return t;
   }
 
-  /* 
+  /*
   term := prod_trans*prod_trans/prod_trans ...
   */
   tnode generic_assembly::do_term() {
@@ -1484,14 +1484,18 @@ namespace getfem {
       else break;
       tnode t2 = do_prod();
       if (mult == false && t.type() == tnode::TNCONST
-        && t2.type() == tnode::TNTENSOR) 
+        && t2.type() == tnode::TNTENSOR)
         ASM_THROW_PARSE_ERROR("can't divide a constant by a tensor");
       if (t.type() == tnode::TNTENSOR && t2.type() == tnode::TNTENSOR) {
         ASM_THROW_PARSE_ERROR("tensor term-by-term productor division not "
           "implemented yet! are you sure you need it ?");
       } else if (t.type() == tnode::TNCONST && t2.type() == tnode::TNCONST) {
-        if (mult) t.assign(t.xval()*t2.xval());
-        else 	{ t2.check0(); t.assign(t.xval()/t2.xval()); }
+        if (mult)
+          t.assign(t.xval()*t2.xval());
+        else {
+          t2.check0();
+          t.assign(t.xval()/t2.xval());
+        }
       } else {
         if (t.type() != tnode::TNTENSOR) std::swap(t,t2);
         scalar_type v = t2.xval();
@@ -1510,7 +1514,7 @@ namespace getfem {
     return t;
   }
 
-  /* 
+  /*
   expr := term + term - term + ...
   suboptimal for things like t1+1-2-1 (which gives (((t1+1)-2)-1) )
   ... could be fixed but noone needs that i guess
@@ -1532,20 +1536,20 @@ namespace getfem {
       tnode t2 = do_term();
       if (t.type() == tnode::TNTENSOR && t2.type() == tnode::TNTENSOR) {
         if (!t.tensor()->is_tensors_sum_scaled() || t.tensor()->is_frozen()) {
-          t.assign(record(std::make_unique<ATN_tensors_sum_scaled>(*t.tensor(), +1))); 
+          t.assign(record(std::make_unique<ATN_tensors_sum_scaled>(*t.tensor(), +1)));
         }
         t.tensor()->is_tensors_sum_scaled()
           ->push_scaled_tensor(*t2.tensor(), scalar_type(plus));
       } else if (t.type() == tnode::TNCONST && t2.type() == tnode::TNCONST) {
         t.assign(t.xval()+t2.xval()*plus);
       } else {
-        int tsgn = 1;	
+        int tsgn = 1;
         if (t.type() != tnode::TNTENSOR)
         { std::swap(t,t2); if (plus<0) tsgn = -1; }
         else if (plus<0) t2.assign(-t2.xval());
         t.assign(record(std::make_unique<ATN_tensor_scalar_add>(*t.tensor(), t2.xval(),
           tsgn)));
-      } 
+      }
     }
     pop_mark();
     return t;
@@ -1581,7 +1585,7 @@ namespace getfem {
       tok_type() == OPEN_PAR) {
         if (tok_type() == ARGNUM_SELECTOR) {
           arg_num = tok_argnum();
-          advance(); 
+          advance();
         } else { arg_num = 0; }
 
         do_dim_spec(vds);
@@ -1609,14 +1613,16 @@ namespace getfem {
           /* if we are allowed to dynamically create matrices */
           if (outmat[arg_num] == 0) {
             if (mat_fact != 0)
-              outmat[arg_num] = std::shared_ptr<base_asm_mat>(std::shared_ptr<base_asm_mat>(), mat_fact->create_mat(vds[0].pmf->nb_dof(),
-														     vds[1].pmf->nb_dof()));
+              outmat[arg_num] = std::shared_ptr<base_asm_mat>
+                                (std::shared_ptr<base_asm_mat>(),
+                                 mat_fact->create_mat(vds[0].pmf->nb_dof(),
+                                                      vds[1].pmf->nb_dof()));
             else ASM_THROW_PARSE_ERROR("output matrix $" << arg_num+1
               << " does not exist");
           }
         } else ASM_THROW_PARSE_ERROR("not a valid output statement");
 
-        accept(PLUS); 
+        accept(PLUS);
         accept(EQUAL);
     } else if (advance_if(EQUAL)) {
       what = wALIAS;
@@ -1628,7 +1634,7 @@ namespace getfem {
 
     switch (what) {
     case wPRINT: {
-      record_out(std::make_unique<ATN_print_tensor>(*t.tensor(), tok_substr(print_mark, 
+      record_out(std::make_unique<ATN_print_tensor>(*t.tensor(), tok_substr(print_mark,
         tok_mark())));
                  } break;
     case wOUTPUT_ARRAY: {
@@ -1636,8 +1642,8 @@ namespace getfem {
                         } break;
     case wOUTPUT_MATRIX: {
       record_out(outmat[arg_num]->build_output_tensor(*t.tensor(),
-						      *vds[0].pmf,
-						      *vds[1].pmf));
+                                                      *vds[0].pmf,
+                                                      *vds[1].pmf));
                          } break;
     case wALIAS: {
       vars[ident] = t.tensor(); t.tensor()->freeze();
@@ -1649,7 +1655,7 @@ namespace getfem {
 
   struct atn_number_compare {
     bool operator()(const std::unique_ptr<ATN_tensor> &a,
-		    const std::unique_ptr<ATN_tensor> &b) {
+                    const std::unique_ptr<ATN_tensor> &b) {
       assert(a.get() && b.get());
       return (a->number() < b->number());
     }
@@ -1657,7 +1663,7 @@ namespace getfem {
 
   struct outvar_compare {
     bool operator()(const std::unique_ptr<ATN> &a,
-		    const std::unique_ptr<ATN> &b) {
+                    const std::unique_ptr<ATN> &b) {
       assert(a.get() && b.get());
       return (a->number() < b->number());
     }
@@ -1672,10 +1678,10 @@ namespace getfem {
     if (tok_type() != END) ASM_THROW_PARSE_ERROR("unexpected token: '"
       << tok() << "'");
     if (outvars.size() == 0) cerr << "warning: assembly without output\n";
-    
+
     /* reordering of atn_tensors and outvars */
     unsigned gcnt = 0;
-    for (size_type i=0; i < outvars.size(); ++i) 
+    for (size_type i=0; i < outvars.size(); ++i)
       outvars[i]->set_number(gcnt);
 
     std::sort(atn_tensors.begin(), atn_tensors.end(), atn_number_compare());
@@ -1699,10 +1705,10 @@ namespace getfem {
       update_shapes =  (update_shapes || atn_tensors[i]->is_shape_updated());
       /* if (atn_tensors[i]->is_shape_updated()) {
       cerr << "[cv=" << cv << ",f=" << int(face) << "], shape_updated: "
-      << typeid(*atn_tensors[i]).name() 
+      << typeid(*atn_tensors[i]).name()
       << " [" << atn_tensors[i]->name()
       << "]\n  -> r=" << atn_tensors[i]->ranges() << "\n    ";
-      } 
+      }
       */
     }
 
@@ -1761,9 +1767,9 @@ namespace getfem {
   shape modifications during the assembly (since this can be
   very expensive) */
   static void get_convex_order(const dal::bit_vector& cvlst,
-    const std::vector<const mesh_im *>& imtab, 
-    const std::vector<const mesh_fem *>& mftab, 
-    const dal::bit_vector& candidates, 
+    const std::vector<const mesh_im *>& imtab,
+    const std::vector<const mesh_fem *>& mftab,
+    const dal::bit_vector& candidates,
     std::vector<size_type>& cvorder) {
       cvorder.reserve(candidates.card()); cvorder.resize(0);
 
@@ -1775,7 +1781,7 @@ namespace getfem {
               if (!mftab[i]->convex_index().is_in(cv)) {
                 ok = false;
                 // ASM_THROW_ERROR("the convex " << cv << " has no FEM for the #"
-                //                               << i+1 << " mesh_fem");	  
+                //                               << i+1 << " mesh_fem");
               }
             }
             if (ok) {
@@ -1803,7 +1809,7 @@ namespace getfem {
       if (&imtab[i]->linked_mesh() != &m)
         ASM_THROW_ERROR("the mesh_fem/mesh_im live on different meshes!");
     }
-    if (imtab.size() == 0) 
+    if (imtab.size() == 0)
       ASM_THROW_ERROR("no integration method !");
   }
 
@@ -1812,7 +1818,7 @@ namespace getfem {
     r.from_mesh(imtab.at(0)->linked_mesh());
     r.error_if_not_homogeneous();
 
- 
+
     consistency_check();
     get_convex_order(imtab.at(0)->convex_index(), imtab, mftab, r.index(), cv);
     parse();
@@ -1820,10 +1826,10 @@ namespace getfem {
     for (size_type i=0; i < cv.size(); ++i) {
       mesh_region::face_bitset nf = r[cv[i]];
       dim_type f = dim_type(-1);
-      while (nf.any()) 
+      while (nf.any())
       {
         if (nf[0]) exec(cv[i],f);
-        nf >>= 1; 
+        nf >>= 1;
         f++;
       }
     }

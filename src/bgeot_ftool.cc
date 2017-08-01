@@ -37,20 +37,20 @@ namespace bgeot {
       { ist.get(c); if (toupper(c) == toupper(st[i])) i++; else i = 0; }
     if (ist.eof()) return false; else return true;
   }
-  
-#define get_c__(r, c) {	ist.get(c);					\
-    if (ist.eof()) { if (!st.size()) st.push_back('\n'); return r; }	\
+
+#define get_c__(r, c) { ist.get(c);                                        \
+    if (ist.eof()) { if (!st.size()) st.push_back('\n'); return r; }       \
     if (to_up) c = char(toupper(c)); }
 
-#define sdouble__(c, e) {  st.push_back(c); get_c__(5, d); \
-    if (d == e) { st.push_back(e); return 6; }		   \
-    else { ist.putback(d); return 5; } }		   \
+#define sdouble__(c, e) { st.push_back(c); get_c__(5, d);  \
+    if (d == e) { st.push_back(e); return 6; }             \
+    else { ist.putback(d); return 5; } }                   \
 
   int get_token(std::istream &ist, std::string &st,
-		bool ignore_cr, bool to_up, bool read_un_pm, int *linenb) {
+                bool ignore_cr, bool to_up, bool read_un_pm, int *linenb) {
     st.clear();
     char c = char(-1), d, e;
-   
+
     get_c__(0, c);
 
     for(;;) { // Go through spaces, commentaries and '...'
@@ -58,39 +58,39 @@ namespace bgeot {
       if (isspace(c)) { while (isspace(c)) get_c__(0, c); }
       else if (c == '%') { while (c != '\n') get_c__(0, c); }
       else if (c == '.') {
-	if (ist.eof()) break; else {
-	  get_c__(0, d);
-	  if (d == '.'  && !ist.eof()) {
-	    get_c__(0, e);
-	    if (e == '.') {
-	      while (c != '\n') get_c__(0, c);
-	      if (linenb) (*linenb)++; 
-	      get_c__(0, c);
-	    }
-	    else { ist.putback(e); ist.putback(d); break; }
-	  }
-	  else { ist.putback(d); break; }
-	}
+        if (ist.eof()) break; else {
+          get_c__(0, d);
+          if (d == '.'  && !ist.eof()) {
+            get_c__(0, e);
+            if (e == '.') {
+              while (c != '\n') get_c__(0, c);
+              if (linenb) (*linenb)++;
+              get_c__(0, c);
+            }
+            else { ist.putback(e); ist.putback(d); break; }
+          }
+          else { ist.putback(d); break; }
+        }
       }
       else break;
     }
 
     if (read_un_pm)
       if (c == '-' || c == '+') { // reading a number beginning with '+' or '-'
-	get_c__(2, d);
-	if (isdigit(d) || d == '.') { st.push_back(c); c = d; }
-	else ist.putback(d);
+        get_c__(2, d);
+        if (isdigit(d) || d == '.') { st.push_back(c); c = d; }
+        else ist.putback(d);
       }
 
     if (isdigit(c) || c == '.') { // reading a number
       while (isdigit(c) || c == '.' || c == 'e'  || c == 'E') {
-	st.push_back(c); 
-	if (c == 'e' || c == 'E') {
-	  get_c__(2, c);
-	  if (c == '+' || c == '-') st.push_back(c);
-	  else ist.putback(c);
-	} 
-	get_c__(2, c);
+        st.push_back(c);
+        if (c == 'e' || c == 'E') {
+          get_c__(2, c);
+          if (c == '+' || c == '-') st.push_back(c);
+          else ist.putback(c);
+        }
+        get_c__(2, c);
       }
       ist.putback(c);
       return 2;
@@ -99,9 +99,9 @@ namespace bgeot {
     if (c == '\"') { // reading a string
       get_c__(3, c);
       while (true) {
-	if (c == '\"' || c == '\n') return 3;
-	if (c == '\\') { st.push_back(c); get_c__(3, c); }
-	st.push_back(c);
+        if (c == '\"' || c == '\n') return 3;
+        if (c == '\\') { st.push_back(c); get_c__(3, c); }
+        st.push_back(c);
         get_c__(3, c);
       }
       return 3;
@@ -110,9 +110,9 @@ namespace bgeot {
     if (c == '\'') { // reading a string
       get_c__(3, c);
       while (true) {
-	if (c == '\'' || c == '\n') return 3;
-	if (c == '\\') { st.push_back(c); get_c__(3, c); }
-	st.push_back(c);
+        if (c == '\'' || c == '\n') return 3;
+        if (c == '\\') { st.push_back(c); get_c__(3, c); }
+        st.push_back(c);
         get_c__(3, c);
       }
       return 3;
@@ -132,7 +132,7 @@ namespace bgeot {
     if (c == '=') sdouble__(c, '=');
     if (c == '~') sdouble__(c, '=');
     if (c == '<') sdouble__(c, '=');
-    if (c == '>') sdouble__(c, '=');   
+    if (c == '>') sdouble__(c, '=');
 
     st.push_back(c); return 5; // return the symbol read.
   }
@@ -140,11 +140,11 @@ namespace bgeot {
   std::istream& operator>>(std::istream& is, const skip& t) {
     char c;
     int i = 0;
-    while (!is.get(c).eof() && isspace(c)) /*continue*/;    
+    while (!is.get(c).eof() && isspace(c)) /*continue*/;
     for (i=0; t.s[i]; ++i) {
       if (i) is.get(c);
       GMM_ASSERT1(toupper(c) == toupper(t.s[i]) && !is.eof(),
-		  "expected token '" << t.s << "' not found");
+                  "expected token '" << t.s << "' not found");
     }
     return is;
   }
@@ -159,44 +159,44 @@ namespace bgeot {
     else if (b[i]) return -1;
     else return 0;
   }
-  
+
   void md_param::parse_error(const std::string &t) {
     GMM_ASSERT1(false, "Parse error reading "
-		<< current_file << " line " << current_line << " near " << t);
+                << current_file << " line " << current_line << " near " << t);
   }
 
   void md_param::syntax_error(const std::string &t) {
     GMM_ASSERT1(false, "Error reading "
-		<< current_file << " line " << current_line << " : " << t);
+                << current_file << " line " << current_line << " : " << t);
   }
 
   int md_param::get_next_token(std::istream &f) {
     static int token_type = 0;
     if (!token_is_valid)
       token_type = get_token(f, temp_string, false, false, false,
-			     &current_line);
+                             &current_line);
     token_is_valid = false;
     return token_type;
   }
 
-  void md_param::valid_token(void) { token_is_valid = true; }
+  void md_param::valid_token() { token_is_valid = true; }
 
   std::ostream &operator <<(std::ostream &o, const md_param::param_value& p) {
     switch (p.type_of_param()) {
     case md_param::REAL_VALUE : o << p.real(); break;
     case md_param::STRING_VALUE : o << '\'' << p.string() << '\''; break;
-    case md_param::ARRAY_VALUE : 
+    case md_param::ARRAY_VALUE :
       o << "[";
       if (p.array().size()) o << p.array()[0];
       for (unsigned i = 1; i < p.array().size(); ++i)
-	o << ", " << p.array()[i];
+        o << ", " << p.array()[i];
       o << "]";
     }
     return o;
   }
 
   md_param::param_value md_param::read_expression(std::istream &f,
-						  bool skipped) {
+                                                  bool skipped) {
     param_value result;
     int i = get_next_token(f);
     if (i == 2) { // a number
@@ -206,63 +206,63 @@ namespace bgeot {
       result = param_value(temp_string);
       int j = get_next_token(f);
       while (j == 3) {
-	result.string() += temp_string;
-	j = get_next_token(f);
+        result.string() += temp_string;
+        j = get_next_token(f);
       }
       valid_token();
     }
     else if (i == 4) { // a parameter name
       std::string name(temp_string);
       if (parameters.find(name) != parameters.end())
-	result = parameters[name];
+        result = parameters[name];
       else if (!skipped) {
-	std::stringstream s; s << "Parameter " << name << " not found";
-	syntax_error(s.str());
+        std::stringstream s; s << "Parameter " << name << " not found";
+        syntax_error(s.str());
       }
     }
     else if (i == 5) { // unary operators, parentheses and arrays
       switch (temp_string[0]) {
       case '(' :
-	{
-	  result = read_expression_list(f, skipped);
-	  int j = get_next_token(f);
-	  if (j != 5 || temp_string[0] != ')') parse_error(temp_string);
-	}
-	break;
+        {
+          result = read_expression_list(f, skipped);
+          int j = get_next_token(f);
+          if (j != 5 || temp_string[0] != ')') parse_error(temp_string);
+        }
+        break;
       case '+' :
-	result = read_expression(f, skipped);
-	if (result.type_of_param() != REAL_VALUE)
-	  syntax_error("Sorry, unary + does not support string "
-		       "or array values");
-	break;
+        result = read_expression(f, skipped);
+        if (result.type_of_param() != REAL_VALUE)
+          syntax_error("Sorry, unary + does not support string "
+                       "or array values");
+        break;
       case '-' :
-	result = read_expression(f, skipped);
-	if (result.type_of_param() != REAL_VALUE)
-	  syntax_error("Sorry, unary - does not support string "
-			 "or array values");
-	result.real() *= -1.0;
-	break;
-      case '~' : 
-	result = read_expression(f, skipped);
-	if (result.type_of_param() != REAL_VALUE)
-	  syntax_error("Sorry, unary ! does not support string "
-			 "or array values");
-	result.real() = !(result.real());
-	break;
+        result = read_expression(f, skipped);
+        if (result.type_of_param() != REAL_VALUE)
+          syntax_error("Sorry, unary - does not support string "
+                         "or array values");
+        result.real() *= -1.0;
+        break;
+      case '~' :
+        result = read_expression(f, skipped);
+        if (result.type_of_param() != REAL_VALUE)
+          syntax_error("Sorry, unary ! does not support string "
+                         "or array values");
+        result.real() = !(result.real());
+        break;
       case '[' :
-	{
-	  bool first = true;
-	  result = param_value(ARRAY_VALUE);
-	  while (true) {
-	    int j = get_next_token(f);
-	    if (j == 5 && temp_string[0] == ']') break;
-	    if (!first && temp_string[0] != ',') parse_error(temp_string);
-	    if (first) valid_token();
-	    result.array().push_back(read_expression_list(f, skipped));
-	    first = false;
-	  }
-	}
-	break;
+        {
+          bool first = true;
+          result = param_value(ARRAY_VALUE);
+          while (true) {
+            int j = get_next_token(f);
+            if (j == 5 && temp_string[0] == ']') break;
+            if (!first && temp_string[0] != ',') parse_error(temp_string);
+            if (first) valid_token();
+            result.array().push_back(read_expression_list(f, skipped));
+            first = false;
+          }
+        }
+        break;
       default : parse_error(temp_string);
       }
     }
@@ -283,25 +283,25 @@ namespace bgeot {
       }
     if (i == 6)
       switch (c) {
-      case '<' : prior = 3; op =  7; return; // <= 
-      case '>' : prior = 3; op =  8; return; // >= 
-      case '=' : prior = 3; op =  9; return; // == 
-      case '~' : prior = 3; op = 10; return; // != 
-      case '&' : prior = 4; op = 11; return; // && 
+      case '<' : prior = 3; op =  7; return; // <=
+      case '>' : prior = 3; op =  8; return; // >=
+      case '=' : prior = 3; op =  9; return; // ==
+      case '~' : prior = 3; op = 10; return; // !=
+      case '&' : prior = 4; op = 11; return; // &&
       case '|' : prior = 4; op = 12; return; // ||
       }
     prior = op = 0;
   }
 
   void md_param::do_bin_op(std::vector<md_param::param_value> &value_list,
-			std::vector<int> &op_list,
-			std::vector<int> &prior_list) {
+                           std::vector<int> &op_list,
+                           std::vector<int> &prior_list) {
     param_value &p1(*(value_list.end() - 2));
     param_value &p2(*(value_list.end() - 1));
     if (p1.type_of_param() != REAL_VALUE || p2.type_of_param() != REAL_VALUE)
       syntax_error("Sorry, binary operators does not support string "
-		     "or array values");
-    
+                   "or array values");
+
     switch (op_list.back()) {
     case 1  : p1.real() *= p2.real(); break;
     case 2  : p1.real() /= p2.real(); break;
@@ -321,7 +321,7 @@ namespace bgeot {
 
 
   md_param::param_value md_param::read_expression_list(std::istream &f,
-						       bool skipped) {
+                                                       bool skipped) {
     std::vector<param_value> value_list;
     value_list.push_back(read_expression(f, skipped));
     std::vector<int> op_list, prior_list;
@@ -329,7 +329,7 @@ namespace bgeot {
     operator_priority_ftool(i, temp_string[0], prior, op);
     while (op) {
       while (!prior_list.empty() && prior_list.back() <= prior)
-	do_bin_op(value_list, op_list, prior_list);
+        do_bin_op(value_list, op_list, prior_list);
 
       value_list.push_back(read_expression(f, skipped));
       op_list.push_back(op);
@@ -356,30 +356,30 @@ namespace bgeot {
     if (temp_string == "if") {
       param_value p = read_expression_list(f, skipped);
       if (p.type_of_param() != REAL_VALUE)
-	syntax_error("if instruction needs a condition");
+        syntax_error("if instruction needs a condition");
       bool b = (p.real() != 0.0);
       int j = read_instruction_list(f, !b || skipped);
       if (j == 0) syntax_error("Unterminated if");
       if (j == 2) {
-	int k = read_instruction_list(f, b || skipped);
-	if (k != 1) syntax_error("Unterminated else");
+        int k = read_instruction_list(f, b || skipped);
+        if (k != 1) syntax_error("Unterminated else");
       }
       if (j == 3) {
-	int k = 0;
-	do {
-	  if (b) skipped = true;
-	  p = read_expression_list(f, skipped);
-	  if (p.type_of_param() != REAL_VALUE)
-	    syntax_error("elseif instruction needs a condition");
-	  b = (p.real() != 0.0);
-	  k = read_instruction_list(f, !b || skipped);
-	  if (k == 2) {
-	    k = read_instruction_list(f, b || skipped);
-	    break;
-	  }
-	} while (k == 3);
-	if (k != 1) syntax_error("Unterminated elseif");
-      }     
+        int k = 0;
+        do {
+          if (b) skipped = true;
+          p = read_expression_list(f, skipped);
+          if (p.type_of_param() != REAL_VALUE)
+            syntax_error("elseif instruction needs a condition");
+          b = (p.real() != 0.0);
+          k = read_instruction_list(f, !b || skipped);
+          if (k == 2) {
+            k = read_instruction_list(f, b || skipped);
+            break;
+          }
+        } while (k == 3);
+        if (k != 1) syntax_error("Unterminated elseif");
+      }
       return 0;
     }
     if (temp_string == "error") {
@@ -409,85 +409,85 @@ namespace bgeot {
     if (read_instruction_list(f) > 1)
       syntax_error("Parameter file terminated by an else");
   }
-  
+
   void md_param::read_command_line(int argc, char *argv[]) {
     gmm::standard_locale sl;
     for (int aa = 1; aa < argc; aa++) {
       if (argv[aa][0] != '-') {
-	current_file = std::string(argv[aa]);
-	std::ifstream f1(current_file.c_str());
-	if (f1) { read_param_file(f1); f1.close(); }
-	else {
-	  std::string r = current_file;
-	  current_file += ".param";
-	  std::ifstream f2(current_file.c_str());
-	  if (f2) { read_param_file(f2); f2.close(); }
-	  else GMM_ASSERT1(false,  "Parameter file " << r << "not found");
-	}
+        current_file = std::string(argv[aa]);
+        std::ifstream f1(current_file.c_str());
+        if (f1) { read_param_file(f1); f1.close(); }
+        else {
+          std::string r = current_file;
+          current_file += ".param";
+          std::ifstream f2(current_file.c_str());
+          if (f2) { read_param_file(f2); f2.close(); }
+          else GMM_ASSERT1(false,  "Parameter file " << r << "not found");
+        }
       }
       else if (argv[aa][1] == 'd') {
-	current_file = "command line";
-	if (strlen(argv[aa]) == 2)
-	  { std::stringstream ss(argv[++aa]); read_param_file(ss); }
-	else 
-	  { std::stringstream ss(&(argv[aa][2])); read_param_file(ss); }
+        current_file = "command line";
+        if (strlen(argv[aa]) == 2)
+          { std::stringstream ss(argv[++aa]); read_param_file(ss); }
+        else
+          { std::stringstream ss(&(argv[aa][2])); read_param_file(ss); }
       }
     }
   }
-  
+
   double md_param::real_value(const std::string &name, const char *comment) {
     if (parameters.find(name) == parameters.end()) {
       if (comment == 0) return 0.0;
       else {
-	double f;
-	gmm::standard_locale sl;
-	cout << "No parameter " << name << " found, please enter its value\n";
-	cout << comment << " : "; cin >> f;
-	parameters[name] = param_value(f);
+        double f;
+        gmm::standard_locale sl;
+        cout << "No parameter " << name << " found, please enter its value\n";
+        cout << comment << " : "; cin >> f;
+        parameters[name] = param_value(f);
       }
     }
     param_value &p(parameters[name]);
     GMM_ASSERT1(p.type_of_param() == REAL_VALUE,
-		"Parameter " << name << " is not real");
+                "Parameter " << name << " is not real");
     return p.real();
   }
-  
+
   long md_param::int_value(const std::string &name, const char *comment) {
     if (parameters.find(name) == parameters.end()) {
       if (comment == 0) return 0;
       else {
-	long f;
-	gmm::standard_locale sl;
-	cout << "No parameter " << name << " found, please enter its value\n";
-	cout << comment << " : "; cin >> f;
-	parameters[name] = param_value(double(f));
+        long f;
+        gmm::standard_locale sl;
+        cout << "No parameter " << name << " found, please enter its value\n";
+        cout << comment << " : "; cin >> f;
+        parameters[name] = param_value(double(f));
       }
     }
     param_value &p(parameters[name]);
     GMM_ASSERT1(p.type_of_param() == REAL_VALUE,
-		"Parameter " << name << " is not real");
+                "Parameter " << name << " is not real");
     return long(p.real());
   }
-  
+
   const std::string &md_param::string_value(const std::string &name,
-				     const char *comment) {
+                                            const char *comment) {
     static const std::string empty_string;
     if (parameters.find(name) == parameters.end()) {
       if (comment == 0) return empty_string;
       else {
-	std::string s;
-	gmm::standard_locale sl;
-	cout << "No parameter " << name << " found, please enter its value\n";
-	cout << comment << " : "; cin >> s;
-	parameters[name] = param_value(s);
+        std::string s;
+        gmm::standard_locale sl;
+        cout << "No parameter " << name << " found, please enter its value\n";
+        cout << comment << " : "; cin >> s;
+        parameters[name] = param_value(s);
       }
     }
     param_value &p(parameters[name]);
     GMM_ASSERT1(p.type_of_param() == STRING_VALUE, "Parameter " << name
-		<< " is not a character string");
+                << " is not a character string");
     return p.string();
   }
-  
+
   const std::vector<md_param::param_value> &
   md_param::array_value(const std::string &name, const char *comment) {
 
@@ -495,16 +495,16 @@ namespace bgeot {
     if (parameters.find(name) == parameters.end()) {
       if (comment == 0) return empty_array;
       else {
-	std::string s;
-	gmm::standard_locale sl;
-	cout << "No parameter " << name << " found, please enter its value\n";
-	cout << comment << " : "; cin >> s;
-	parameters[name] = param_value(s);
+        std::string s;
+        gmm::standard_locale sl;
+        cout << "No parameter " << name << " found, please enter its value\n";
+        cout << comment << " : "; cin >> s;
+        parameters[name] = param_value(s);
       }
     }
     param_value &p(parameters[name]);
     GMM_ASSERT1(p.type_of_param() == ARRAY_VALUE, "Parameter " << name
-		<< " is not an array");
+                << " is not an array");
     return p.array();
   }
 }
