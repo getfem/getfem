@@ -472,7 +472,9 @@ namespace bgeot {
           { vertex = false; break; }
       if (vertex) vertices_.push_back(ip);
     }
-    assert(vertices_.size() > dim());
+    auto dimension = dim();
+    if (dynamic_cast<const torus_geom_trans *>(this)) dimension -= 1;
+    GMM_ASSERT1(vertices_.size() > dimension, "Internal error");
   }
 
   /* ******************************************************************** */
@@ -484,8 +486,12 @@ namespace bgeot {
 
     std::vector<FUNC> trans;
     mutable std::vector<std::vector<FUNC>> grad_, hess_;
+    mutable bool grad_computed_ = false;
+    mutable bool hess_computed_ = false;
 
     void compute_grad_() const {
+      auto guard = getfem::omp_guard{};
+      if (grad_computed_) return;
       size_type R = trans.size();
       dim_type n = dim();
       grad_.resize(R);
@@ -495,9 +501,12 @@ namespace bgeot {
           grad_[i][j] = trans[i]; grad_[i][j].derivative(j);
         }
       }
+      grad_computed_ = true;
     }
 
     void compute_hess_() const {
+      auto guard = getfem::omp_guard{};
+      if (hess_computed_) return;
       size_type R = trans.size();
       dim_type n = dim();
       hess_.resize(R);
@@ -510,6 +519,7 @@ namespace bgeot {
           }
         }
       }
+      hess_computed_ = true;
     }
 
     virtual void poly_vector_val(const base_node &pt, base_vector &val) const {
@@ -528,7 +538,7 @@ namespace bgeot {
     }
 
     virtual void poly_vector_grad(const base_node &pt, base_matrix &pc) const {
-      if (!(grad_.size())) compute_grad_();
+      if (!grad_computed_) compute_grad_();
       FUNC PP;
       pc.base_resize(nb_points(),dim());
       for (size_type i = 0; i < nb_points(); ++i)
@@ -539,7 +549,7 @@ namespace bgeot {
     virtual void poly_vector_grad(const base_node &pt,
                                   const convex_ind_ct &ind_ct,
                                   base_matrix &pc) const {
-      if (!(grad_.size())) compute_grad_();
+      if (!grad_computed_) compute_grad_();
       FUNC PP;
       size_type nb_funcs=ind_ct.size();
       pc.base_resize(nb_funcs,dim());
@@ -549,7 +559,7 @@ namespace bgeot {
     }
 
     virtual void poly_vector_hess(const base_node &pt, base_matrix &pc) const {
-      if (!(hess_.size())) compute_hess_();
+      if (!hess_computed_) compute_hess_();
       FUNC PP, QP;
       pc.base_resize(nb_points(),dim()*dim());
       for (size_type i = 0; i < nb_points(); ++i)
