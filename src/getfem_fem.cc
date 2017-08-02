@@ -828,6 +828,8 @@ namespace getfem {
 
   thierach_femi::thierach_femi(ppolyfem fi1, ppolyfem fi2)
     : fem<base_poly>(*fi1) {
+    grad_computed_ = false;
+    hess_computed_ = false;
     GMM_ASSERT1(fi2->target_dim()==fi1->target_dim(), "dimensions mismatch.");
     GMM_ASSERT1(fi2->basic_structure(0) == fi1->basic_structure(0),
                 "Incompatible elements.");
