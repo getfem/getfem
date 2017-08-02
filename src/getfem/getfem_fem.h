@@ -486,8 +486,12 @@ namespace getfem {
   protected :
     std::vector<FUNC> base_;
     mutable std::vector<std::vector<FUNC>> grad_, hess_;
+    mutable bool grad_computed_;
+    mutable bool hess_computed_;
 
     void compute_grad_() const {
+      auto guard = getfem::omp_guard{};
+      if (grad_computed_) return;
       size_type R = nb_base_components(0);
       dim_type n = dim();
       grad_.resize(R);
@@ -497,9 +501,12 @@ namespace getfem {
 	  grad_[i][j] = base_[i]; grad_[i][j].derivative(j);
 	}
       }
+      grad_computed_ = true;
     }
 
     void compute_hess_() const {
+      auto guard = getfem::omp_guard{};
+      if (hess_computed_) return;
       size_type R = nb_base_components(0);
       dim_type n = dim();
       hess_.resize(R);
@@ -512,6 +519,7 @@ namespace getfem {
 	  }
 	}
       }
+      hess_computed_ = true;
     }
     
   public :
@@ -534,7 +542,7 @@ namespace getfem {
         reference element directions 0,..,dim-1 and returns the result in
         t(nb_base,target_dim,dim) */
     void grad_base_value(const base_node &x, base_tensor &t) const {
-      if (!(grad_.size())) compute_grad_();
+      if (!grad_computed_) compute_grad_();
       bgeot::multi_index mi(3);
       dim_type n = dim();
       mi[2] = n; mi[1] = target_dim(); mi[0] = short_type(nb_base(0));
@@ -549,7 +557,7 @@ namespace getfem {
         reference element directions 0,..,dim-1 and returns the result in
         t(nb_base,target_dim,dim,dim) */
     void hess_base_value(const base_node &x, base_tensor &t) const {
-      if (!(hess_.size())) compute_hess_();
+      if (!hess_computed_) compute_hess_();
       bgeot::multi_index mi(4);
       dim_type n = dim();
       mi[3] = n; mi[2] = n; mi[1] = target_dim();
@@ -562,6 +570,8 @@ namespace getfem {
           for (size_type i = 0; i < R; ++i, ++it)
 	    *it = bgeot::to_scalar(hess_[i][j+k*n].eval(x.begin()));
     }
+
+    fem() : grad_computed_(false), hess_computed_(false){}
 
   };
 
