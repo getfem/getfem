@@ -360,7 +360,7 @@ namespace getfem {
 	    bmax[d] = std::max(bmax[d], pt[d]);
 	  }
 	}	
-	elt_car_sizes[cv] = gmm::vect_dist2(bmin, bmax);
+	elt_car_sizes[cv] = gmm::vect_dist2_sqr(bmin, bmax);
       }
     }
 
