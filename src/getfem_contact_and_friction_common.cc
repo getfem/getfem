@@ -1104,7 +1104,7 @@ namespace getfem {
 
             for (size_type subiter(0);;) {
               pps(a, hessa);
-	      det = gmm::abs(bgeot::lu_inverse(&(*(hessa.begin())),N-1, false));
+              det = gmm::abs(bgeot::lu_inverse(&(*(hessa.begin())),N-1, false));
               if (det > 1E-15) break;
               for (size_type i = 0; i < N-1; ++i)
                 a[i] += gmm::random() * 1E-7;
@@ -1164,7 +1164,7 @@ namespace getfem {
 
             for (size_type subiter(0);;) {
               pps(a, hessa);
-	      det = gmm::abs(bgeot::lu_inverse(&(*(hessa.begin())),N-1, false));
+              det = gmm::abs(bgeot::lu_inverse(&(*(hessa.begin())),N-1, false));
               if (det > 1E-15) break;
               for (size_type i = 0; i < N-1; ++i)
                 a[i] += gmm::random() * 1E-7;
@@ -2677,8 +2677,8 @@ namespace getfem {
       if (args.size() != 6) return false;
       size_type N =  args[0]->size();
       if (N == 0 || args[1]->size() != N || args[2]->size() != N
-	  || args[3]->size() != 1 || args[4]->size() > 3
-	  || args[4]->size() == 0 || args[5]->size() != 1 ) return false;
+          || args[3]->size() != 1 || args[4]->size() > 3
+          || args[4]->size() == 0 || args[5]->size() != 1 ) return false;
       ga_init_vector(sizes, N);
       return true;
     }

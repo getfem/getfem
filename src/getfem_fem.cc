@@ -36,6 +36,8 @@
 
 namespace getfem {
 
+  using bgeot::read_base_poly;
+  using bgeot::base_rational_fraction;
 
   const base_matrix& fem_interpolation_context::M() const {
     if (gmm::mat_nrows(M_) == 0) {
@@ -1157,7 +1159,7 @@ namespace getfem {
           "4*(x*y - x*x*y);"
           "2*x*x*y + 2*x*y*y - 3*x*y;");
 
-      for (int i = 0; i < 8; ++i) p->base()[i] = bgeot::read_base_poly(2, s);
+      for (int i = 0; i < 8; ++i) p->base()[i] = read_base_poly(2, s);
 
       p->add_node(lagrange_dof(2), base_small_vector(0.0, 0.0));
       p->add_node(lagrange_dof(2), base_small_vector(0.5, 0.0));
@@ -1195,7 +1197,7 @@ namespace getfem {
          "4*( - x^2*y*z + x*y*z);"
          "2*x^2*y*z + 2*x*y^2*z + 2*x*y*z^2 - 5*x*y*z;");
 
-      for (int i = 0; i < 20; ++i) p->base()[i] = bgeot::read_base_poly(3, s);
+      for (int i = 0; i < 20; ++i) p->base()[i] = read_base_poly(3, s);
 
       p->add_node(lagrange_dof(3), base_small_vector(0.0, 0.0, 0.0));
       p->add_node(lagrange_dof(3), base_small_vector(0.5, 0.0, 0.0));
@@ -1256,7 +1258,7 @@ namespace getfem {
   // 0---1---2
 
   static pfem build_pyramidal_pk_fem(short_type k, bool disc) {
-    auto p = std::make_shared<fem<bgeot::base_rational_fraction>>();
+    auto p = std::make_shared<fem<base_rational_fraction>>();
     p->mref_convex() = bgeot::pyramidal_element_of_reference(1);
     p->dim() = 3;
     p->is_standard() = p->is_equivalent() = true;
@@ -1268,17 +1270,17 @@ namespace getfem {
 
     if (k == 0) {
       p->base().resize(1);
-      p->base()[0] = bgeot::read_base_poly(3, "1");
+      p->base()[0] = read_base_poly(3, "1");
       p->add_node(lagrange_0_dof(3), base_small_vector(0.0, 0.0, 0.5));
     } else if (k == 1) {
       p->base().resize(5);
-      bgeot::base_rational_fraction // Q = xy/(1-z)
-        Q(bgeot::read_base_poly(3, "x*y"), bgeot::read_base_poly(3, "1-z"));
-      p->base()[0] = (bgeot::read_base_poly(3, "1-x-y-z") + Q)*0.25;
-      p->base()[1] = (bgeot::read_base_poly(3, "1+x-y-z") - Q)*0.25;
-      p->base()[2] = (bgeot::read_base_poly(3, "1-x+y-z") - Q)*0.25;
-      p->base()[3] = (bgeot::read_base_poly(3, "1+x+y-z") + Q)*0.25;
-      p->base()[4] = bgeot::read_base_poly(3, "z");
+      base_rational_fraction // Q = xy/(1-z)
+        Q(read_base_poly(3, "x*y"), read_base_poly(3, "1-z"));
+      p->base()[0] = (read_base_poly(3, "1-x-y-z") + Q)*0.25;
+      p->base()[1] = (read_base_poly(3, "1+x-y-z") - Q)*0.25;
+      p->base()[2] = (read_base_poly(3, "1-x+y-z") - Q)*0.25;
+      p->base()[3] = (read_base_poly(3, "1+x+y-z") + Q)*0.25;
+      p->base()[4] = read_base_poly(3, "z");
 
       p->add_node(lag_dof, base_small_vector(-1.0, -1.0, 0.0));
       p->add_node(lag_dof, base_small_vector( 1.0, -1.0, 0.0));
@@ -1289,16 +1291,16 @@ namespace getfem {
     } else if (k == 2) {
       p->base().resize(14);
 
-      base_poly xi0  = bgeot::read_base_poly(3, "(1-z-x)*0.5");
-      base_poly xi1  = bgeot::read_base_poly(3, "(1-z-y)*0.5");
-      base_poly xi2  = bgeot::read_base_poly(3, "(1-z+x)*0.5");
-      base_poly xi3  = bgeot::read_base_poly(3, "(1-z+y)*0.5");
-      base_poly x    = bgeot::read_base_poly(3, "x");
-      base_poly y    = bgeot::read_base_poly(3, "y");
-      base_poly z    = bgeot::read_base_poly(3, "z");
-      base_poly ones = bgeot::read_base_poly(3, "1");
-      base_poly un_z = bgeot::read_base_poly(3, "1-z");
-      bgeot::base_rational_fraction Q(bgeot::read_base_poly(3, "1"), un_z);
+      base_poly xi0  = read_base_poly(3, "(1-z-x)*0.5");
+      base_poly xi1  = read_base_poly(3, "(1-z-y)*0.5");
+      base_poly xi2  = read_base_poly(3, "(1-z+x)*0.5");
+      base_poly xi3  = read_base_poly(3, "(1-z+y)*0.5");
+      base_poly x    = read_base_poly(3, "x");
+      base_poly y    = read_base_poly(3, "y");
+      base_poly z    = read_base_poly(3, "z");
+      base_poly ones = read_base_poly(3, "1");
+      base_poly un_z = read_base_poly(3, "1-z");
+      base_rational_fraction Q(read_base_poly(3, "1"), un_z);
 
       p->base()[ 0] = Q*Q*xi0*xi1*(x*y-z*un_z);
       p->base()[ 1] = -Q*Q*xi0*xi1*xi2*y*4.;
@@ -1313,7 +1315,7 @@ namespace getfem {
       p->base()[10] = Q*z*xi1*xi2*4.;
       p->base()[11] = Q*z*xi3*xi0*4.;
       p->base()[12] = Q*z*xi2*xi3*4.;
-      p->base()[13] = bgeot::read_base_poly(3, "z*(2*z-1)");
+      p->base()[13] = read_base_poly(3, "z*(2*z-1)");
 
       p->add_node(lag_dof, base_small_vector(-1.0, -1.0, 0.0));
       p->add_node(lag_dof, base_small_vector( 0.0, -1.0, 0.0));
@@ -1338,8 +1340,7 @@ namespace getfem {
 
 
   static pfem pyramidal_pk_fem
-  (fem_param_list &params,
-   std::vector<dal::pstatic_stored_object> &dependencies) {
+  (fem_param_list &params, std::vector<dal::pstatic_stored_object> &deps) {
     GMM_ASSERT1(params.size() <= 1, "Bad number of parameters");
     short_type k = 2;
     if (params.size() > 0) {
@@ -1347,14 +1348,13 @@ namespace getfem {
       k = dim_type(::floor(params[0].num() + 0.01));
     }
     pfem p = build_pyramidal_pk_fem(k, false);
-    dependencies.push_back(p->ref_convex(0));
-    dependencies.push_back(p->node_tab(0));
+    deps.push_back(p->ref_convex(0));
+    deps.push_back(p->node_tab(0));
     return p;
   }
 
   static pfem pyramidal_disc_pk_fem
-  (fem_param_list &params,
-   std::vector<dal::pstatic_stored_object> &dependencies) {
+  (fem_param_list &params, std::vector<dal::pstatic_stored_object> &deps) {
     GMM_ASSERT1(params.size() <= 1, "Bad number of parameters");
     short_type k = 2;
     if (params.size() > 0) {
@@ -1362,18 +1362,18 @@ namespace getfem {
       k = dim_type(::floor(params[0].num() + 0.01));
     }
     pfem p = build_pyramidal_pk_fem(k, true);
-    dependencies.push_back(p->ref_convex(0));
-    dependencies.push_back(p->node_tab(0));
+    deps.push_back(p->ref_convex(0));
+    deps.push_back(p->node_tab(0));
     return p;
   }
 
-   /* ******************************************************************** */
-   /*        P1 element with a bubble base fonction on a face              */
-   /* ******************************************************************** */
+  /* ******************************************************************** */
+  /*        P1 element with a bubble base fonction on a face              */
+  /* ******************************************************************** */
 
-   struct P1_wabbfoaf_ : public PK_fem_ {
-     P1_wabbfoaf_(dim_type nc);
-   };
+  struct P1_wabbfoaf_ : public PK_fem_ {
+    P1_wabbfoaf_(dim_type nc);
+  };
 
   P1_wabbfoaf_::P1_wabbfoaf_(dim_type nc) : PK_fem_(nc, 1) {
     is_lag = false; es_degree = 2;
@@ -3136,7 +3136,7 @@ namespace getfem {
     base_node pt(3);
     for (unsigned k = 0; k < 5; ++k) {
       for (unsigned i = 0; i < 4; ++i) {
-        base_[k*4+i] = bgeot::read_base_poly(3, s);
+        base_[k*4+i] = read_base_poly(3, s);
         pt[0] = pt[1] = pt[2] = ((k == 4) ? 1.0/3.0 : 0.0);
         if (k == 4 && i) pt[i-1] = 0.0;
         if (k < 4 && k) pt[k-1] = 1.0;
@@ -3308,7 +3308,7 @@ namespace getfem {
     base_node pt(2);
     for (unsigned k = 0; k < 7; ++k) {
       for (unsigned i = 0; i < 3; ++i) {
-        base_[k*3+i] = bgeot::read_base_poly(2, s);
+        base_[k*3+i] = read_base_poly(2, s);
         if (k == 6) {
           pt[0] = pt[1] = 0.5; if (i) pt[i-1] = 0.0;
           add_node(normal_derivative_dof(2), pt);
@@ -3416,7 +3416,7 @@ namespace getfem {
                         "((x+y)^2 - x - y)*sqrt(2)/2;  x*(x-1);  y*(y-1);");
 
     for (unsigned k = 0; k < 6; ++k)
-      base_[k] = bgeot::read_base_poly(2, s);
+      base_[k] = read_base_poly(2, s);
 
     add_node(lagrange_dof(2), base_node(0.0, 0.0));
     add_node(lagrange_dof(2), base_node(1.0, 0.0));
@@ -3556,7 +3556,7 @@ namespace getfem {
     std::stringstream name;
 
     // Identifying if it is a torus structure
-    if(bgeot::is_torus_geom_trans(pgt) && n == 3) n = 2;
+    if (bgeot::is_torus_geom_trans(pgt) && n == 3) n = 2;
 
     /* Identifying P1-simplexes.                                          */
     if (nbp == n+1)

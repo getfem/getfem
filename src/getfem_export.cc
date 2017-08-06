@@ -168,11 +168,11 @@ namespace getfem
         pfem classical_pf1 = discontinuous ? classical_discontinuous_fem(pgt, 1)
                                            : classical_fem(pgt, 1);
 
-	short_type degree = 1;
-	if ((pf != classical_pf1 && pf->estimated_degree() > 1) ||
-		pgt->structure() != pgt->basic_structure())
-	  degree = 2;
-	  
+        short_type degree = 1;
+        if ((pf != classical_pf1 && pf->estimated_degree() > 1) ||
+            pgt->structure() != pgt->basic_structure())
+          degree = 2;
+
         pmf->set_finite_element(cv, discontinuous ?
                                 classical_discontinuous_fem(pgt, degree) :
                                 classical_fem(pgt, degree));
@@ -480,9 +480,9 @@ namespace getfem
     for (dal::bv_visitor cv(mf.convex_index()); !cv.finished(); ++cv) {
       bgeot::pgeometric_trans pgt2 = mf.linked_mesh().trans_of_convex(cv);
       GMM_ASSERT1(basic_structure(pgt->structure()) ==
-		  basic_structure(pgt2->structure()),
-		  "Cannot export this mesh to opendx, it contains "
-		  "different convex types. Slice it first.");
+                  basic_structure(pgt2->structure()),
+                  "Cannot export this mesh to opendx, it contains "
+                  "different convex types. Slice it first.");
       pfem pf = mf.fem_of_element(cv);
       bool discontinuous = false;
       for (unsigned i=0; i < pf->nb_dof(cv); ++i) {
@@ -875,7 +875,7 @@ namespace getfem
         if (!dof_linkable(pf->dof_types()[i])) { discontinuous = true; break; }
       }
       pfem classical_pf1 = discontinuous ?
-	classical_discontinuous_fem(pgt, 1) : classical_fem(pgt, 1);
+        classical_discontinuous_fem(pgt, 1) : classical_fem(pgt, 1);
       pmf->set_finite_element(cv, classical_pf1);
     }
     psl = NULL;
@@ -890,7 +890,7 @@ namespace getfem
         case 4:
           if ( 2 == pmf->fem_of_element(cv)->dim() ) t = POS_QU;
           else if (3 == pmf->fem_of_element(cv)->dim()) t = POS_SI;
-	  break;
+          break;
         case 6: t = POS_PR; break;
         case 8: t = POS_HE; break;
         case 5: t = POS_PY; break;

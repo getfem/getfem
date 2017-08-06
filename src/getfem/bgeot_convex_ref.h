@@ -111,12 +111,12 @@ namespace bgeot {
      */
     virtual scalar_type is_in_face(short_type, const base_node &) const =0;
     /// return the normal vector for each face.
-    const std::vector<base_small_vector> &normals(void) const
+    const std::vector<base_small_vector> &normals() const
     { return normals_; }
     /// return the vertices of the reference convex.
-    const stored_point_tab &points(void) const { return *ppoints; }
-    const stored_point_tab &points(void) { return *ppoints; }
-    pstored_point_tab pspt(void) const { return ppoints; }
+    const stored_point_tab &points() const { return *ppoints; }
+    const stored_point_tab &points() { return *ppoints; }
+    pstored_point_tab pspt() const { return ppoints; }
     virtual ~convex_of_reference()
     { DAL_STORED_OBJECT_DEBUG_DESTROYED(this, "Convex of reference"); }
 
@@ -130,7 +130,7 @@ namespace bgeot {
 
   /// return the associated order 1 reference convex.
   inline pconvex_ref basic_convex_ref(pconvex_ref cvr)
-  { if (cvr->auto_basic) return cvr; else return cvr->basic_convex_ref_; }
+  { return cvr->auto_basic ? cvr : cvr->basic_convex_ref_; }
 
 
   //@name public functions for obtaining a convex of reference
@@ -147,13 +147,11 @@ namespace bgeot {
   */
   pconvex_ref Q2_incomplete_reference(dim_type d);
   /** tensorial product of two convex ref.
-      in order to ensure unicity, it is required the a->dim() >= b->dim()
-  */
+      in order to ensure unicity, it is required the a->dim() >= b->dim() */
   /** Pyramidal element of reference of degree k (k = 1 or 2 only) */
   pconvex_ref pyramidal_element_of_reference(dim_type k);
   pconvex_ref convex_ref_product(pconvex_ref a, pconvex_ref b);
-  /** equilateral simplex (degree 1). used only for mesh quality estimations
-   */
+  /** equilateral simplex (degree 1). used only for mesh quality estimations */
   pconvex_ref equilateral_simplex_of_reference(dim_type nc);
 
   /** generic convex with n global nodes      */

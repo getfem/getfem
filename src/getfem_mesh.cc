@@ -299,8 +299,8 @@ namespace getfem {
   }
 
   size_type mesh::add_pyramid(size_type a, size_type b,
-                                  size_type c, size_type d, size_type e) {
-    size_type ipt[5]; ipt[0] = a; ipt[1] = b; ipt[2] = c; ipt[3] = d; ipt[4] = e;
+                              size_type c, size_type d, size_type e) {
+    size_type ipt[5] = {a, b, c, d, e};
     return add_convex(bgeot::pyramidal_geotrans(1), &(ipt[0]));
   }
 

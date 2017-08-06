@@ -126,7 +126,7 @@ namespace bgeot {
     pconvex_structure structure() const { return cvr->structure(); }
     /// Basic structure of the reference element.
     pconvex_structure basic_structure() const
-    { return bgeot::basic_structure(cvr->structure()); }
+      { return bgeot::basic_structure(cvr->structure()); }
     /// Gives the value of the functions vector at a certain point.
     virtual void poly_vector_val(const base_node &pt, base_vector &val) const = 0;
     /// Gives the value of a subgroup of the functions vector at a certain point.
@@ -163,7 +163,7 @@ namespace bgeot {
         if the transformation is linear, x is not used at all */
     size_type complexity() const { return complexity_; }
     virtual ~geometric_trans()
-    { DAL_STORED_OBJECT_DEBUG_DESTROYED(this, "Geometric transformation"); }
+      { DAL_STORED_OBJECT_DEBUG_DESTROYED(this, "Geometric transformation"); }
     geometric_trans()
       { DAL_STORED_OBJECT_DEBUG_CREATED(this, "Geometric transformation"); }
   };
@@ -251,14 +251,14 @@ namespace bgeot {
    *
    *  pt is the position of the evaluation point on the reference element
    */
-  base_small_vector APIDECL compute_normal(const geotrans_interpolation_context& c,
-                                   size_type face);
+  base_small_vector APIDECL
+  compute_normal(const geotrans_interpolation_context& c, size_type face);
 
   /** return the local basis (i.e. the normal in the first column, and the
    *  tangent vectors in the other columns
    */
-  base_matrix
-  APIDECL compute_local_basis(const geotrans_interpolation_context& c,
+  base_matrix APIDECL
+  compute_local_basis(const geotrans_interpolation_context& c,
                       size_type face);
     //@}
 

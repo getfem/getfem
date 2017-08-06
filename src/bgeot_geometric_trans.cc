@@ -472,8 +472,8 @@ namespace bgeot {
           { vertex = false; break; }
       if (vertex) vertices_.push_back(ip);
     }
-    auto dimension = dim();
-    if (dynamic_cast<const torus_geom_trans *>(this)) dimension -= 1;
+    dim_type dimension = dim();
+    if (dynamic_cast<const torus_geom_trans *>(this)) --dimension;
     GMM_ASSERT1(vertices_.size() > dimension, "Internal error");
   }
 
@@ -801,7 +801,7 @@ namespace bgeot {
             "2*x*x*y + 2*x*y*y - 3*x*y;");
 
         for (int i = 0; i < 8; ++i)
-          trans[i] = bgeot::read_base_poly(2, s);
+          trans[i] = read_base_poly(2, s);
       } else {
         std::stringstream s
           ("1 + 2*x^2*y*z + 2*x*y^2*z + 2*x*y*z^2"
@@ -831,7 +831,7 @@ namespace bgeot {
            "2*x^2*y*z + 2*x*y^2*z + 2*x*y*z^2 - 5*x*y*z;");
 
         for (int i = 0; i < 20; ++i)
-          trans[i] = bgeot::read_base_poly(3, s);
+          trans[i] = read_base_poly(3, s);
       }
       fill_standard_vertices();
     }
@@ -907,14 +907,14 @@ namespace bgeot {
   };
 
   static pgeometric_trans
-    pyramidal_gt(gt_param_list& params,
-                     std::vector<dal::pstatic_stored_object> &dependencies) {
+  pyramidal_gt(gt_param_list& params,
+               std::vector<dal::pstatic_stored_object> &deps) {
     GMM_ASSERT1(params.size() == 1, "Bad number of parameters : "
                 << params.size() << " should be 1.");
     GMM_ASSERT1(params[0].type() == 0, "Bad type of parameters");
     int k = int(::floor(params[0].num() + 0.01));
 
-    dependencies.push_back(pyramidal_element_of_reference(dim_type(k)));
+    deps.push_back(pyramidal_element_of_reference(dim_type(k)));
     return std::make_shared<pyramidal_trans_>(dim_type(k));
   }
 

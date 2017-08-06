@@ -118,7 +118,7 @@ namespace bgeot {
     /** Give a pointer array on the structures of the faces.
      *   faces_structure()[i] is a pointer on the structure of the face i.
      */
-    inline const convex_structure_faces_ct &faces_structure(void) const
+    inline const convex_structure_faces_ct &faces_structure() const
     { return faces_struct; }
     /** Return "direct" points indexes for a given face.
      *  @param i the face number.

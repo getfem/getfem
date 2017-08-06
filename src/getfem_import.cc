@@ -123,7 +123,7 @@ namespace getfem {
         nodes.resize(6);
       } break;
       case 7: { /* PYRAMID */
-	nodes.resize(5);
+        nodes.resize(5);
       } break;
       case 8: { /* 2ND ORDER LINE */
         nodes.resize(3);
@@ -329,10 +329,10 @@ namespace getfem {
         size_type j;
         f >> j;
         std::map<size_type, size_type>::iterator
-	      it = msh_node_2_getfem_node.find(j);
+          it = msh_node_2_getfem_node.find(j);
         GMM_ASSERT1(it != msh_node_2_getfem_node.end(),
-		    "Invalid node ID " << j << " in gmsh element "
-		    << (ci.id + 1));
+                    "Invalid node ID " << j << " in gmsh element "
+                    << (ci.id + 1));
         ci.nodes[i] = it->second;
       }
       if(ci.type != 15) ci.set_pgt();
@@ -715,11 +715,11 @@ namespace getfem {
         for (size_type i=0; i < nnode; ++i) {
           size_type j;
           s >> j;
-	  std::map<size_type, size_type>::iterator
-	    it = msh_node_2_getfem_node.find(j);
+          std::map<size_type, size_type>::iterator
+            it = msh_node_2_getfem_node.find(j);
           GMM_ASSERT1(it != msh_node_2_getfem_node.end(),
-		      "Invalid node ID " << j << " in GiD element " << cv_id);
-	  cv_nodes[i] = it->second;
+                      "Invalid node ID " << j << " in GiD element " << cv_id);
+          cv_nodes[i] = it->second;
         }
         getfem_cv_nodes.resize(nnode);
         for (size_type i=0; i < nnode; ++i) {
@@ -1105,7 +1105,7 @@ namespace getfem {
                                            getfem_cv_nodes.begin()));
             if (itype < elt_cnt.size())
               elt_cnt[itype] += 1;
-    	    }
+          }
         }
       }
     }
@@ -1157,12 +1157,14 @@ namespace getfem {
 
     /*NE: nombre d'elements (premier nombre du fichier .noboite)
       NP: nombre de points (deuxieme nombre du fichier .noboite)
-      ligne_debut_NP: la ligne commence la liste des coordonnees des points dans le 		fichier .noboite*/
+      ligne_debut_NP: la ligne commence la liste des coordonnees des points dans le
+                      fichier .noboite*/
 
     f >> NE>>NP;
     ligne_debut_NP=NE*4/6+3;
 
-    //passer 3 premiers lignes du fichier .noboite (la liste des elements commence a la 		quatrieme ligne)
+    //passer 3 premiers lignes du fichier .noboite (la liste des elements commence a la
+    //quatrieme ligne)
     string contenu;
     for (i=1; i<=ligne_debut_NP; i++){
       getline(f, contenu);
@@ -1211,16 +1213,16 @@ namespace getfem {
 
     if(fichier_GiD)  // si l'ouverture a réussi
       {
-	// instructions
-	fichier_GiD.close();  // on referme le fichier
+        // instructions
+        fichier_GiD.close();  // on referme le fichier
       }
     else  // sinon
       cerr << "Erreur à l'ouverture !" << endl;
 
     if(f)  // si l'ouverture a réussi
       {
-	// instructions
-	//f.close();  // on referme le fichier
+        // instructions
+        //f.close();  // on referme le fichier
       }
     else  // sinon
       cerr << "Erreur à l'ouverture !" << endl;

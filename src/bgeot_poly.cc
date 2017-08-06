@@ -33,9 +33,9 @@ namespace bgeot {
     static bool init = false;
     if (!init) {
       for (short_type i = 0; i < STORED; ++i) {
-	alpha_M_(i, 0) = alpha_M_(0, i) = 1;
-	for (short_type j = 1; j <= i; ++j)
-	  alpha_M_(i,j) = alpha_M_(j,i) = (alpha_M_(i, j-1) * (i+j)) / j;
+        alpha_M_(i, 0) = alpha_M_(0, i) = 1;
+        for (short_type j = 1; j <= i; ++j)
+          alpha_M_(i,j) = alpha_M_(j,i) = (alpha_M_(i, j-1) * (i+j)) / j;
       }
       init = true;
     }
@@ -46,7 +46,7 @@ namespace bgeot {
   size_type alpha(short_type n, short_type d) {
     alpha_init_();
     GMM_ASSERT1(n < STORED && d < STORED,
-		"alpha called with n = " << n << " and d = " << d);
+                "alpha called with n = " << n << " and d = " << d);
     return alpha_(n,d);
   }
 
@@ -56,7 +56,7 @@ namespace bgeot {
       size_type g_idx = global_index_; short_type deg = degree_;
       reverse_iterator it = rbegin() + 1;
       for (l = short_type(n-2); l != short_type(-1); --l, ++it)
-	if (*it != 0) break;
+        if (*it != 0) break;
       short_type a = (*this)[n-1]; (*this)[n-1] = 0;
       (*this)[short_type(l+1)] = short_type(a + 1);
       if (l != short_type(-1)) ((*this)[l])--;
@@ -73,12 +73,12 @@ namespace bgeot {
       size_type g_idx = global_index_; short_type deg = degree_;
       reverse_iterator it = rbegin();
       for (l = short_type(n-1); l != short_type(-1); --l, ++it) {
-	if (*it != 0) break;
+        if (*it != 0) break;
       }
       if (l != short_type(-1)) {
-	short_type a = (*this)[l];
-	(*this)[l] = 0; (*this)[n-1] = short_type(a - 1);
-	if (l > 0) ((*this)[l-1])++; 
+        short_type a = (*this)[l];
+        (*this)[l] = 0; (*this)[n-1] = short_type(a - 1);
+        if (l > 0) ((*this)[l-1])++; 
         else if (short_type(deg+1)) degree_ = short_type(deg-1);
       }
       if (g_idx+1) global_index_ = g_idx-1;
@@ -144,20 +144,20 @@ namespace bgeot {
       else if (s == "u" && n > 5) result = base_poly(n, 1, 5);
       else if (s == "t" && n > 6) result = base_poly(n, 1, 6);
       else if (s == "sqrt") {
-	base_poly p = read_expression(n, f);
-	if (p.degree() > 0) parse_error(1);
-	result.one();  result *= sqrt(p[0]);
+        base_poly p = read_expression(n, f);
+        if (p.degree() > 0) parse_error(1);
+        result.one();  result *= sqrt(p[0]);
       }
       else { parse_error(2); }
       break;
     case 5 :
       switch (s[0]) {
       case '(' :
-	result = read_base_poly(n, f);
-	j = get_next_token(s, f);
-	if (j != 5 || s[0] != ')') parse_error(3);
-	break;
-	default : parse_error(4);
+        result = read_base_poly(n, f);
+        j = get_next_token(s, f);
+        if (j != 5 || s[0] != ')') parse_error(3);
+        break;
+        default : parse_error(4);
       }
       break;
     default : parse_error(5);
@@ -178,8 +178,8 @@ namespace bgeot {
   }
 
   void do_bin_op(std::vector<base_poly> &value_list,
-		 std::vector<int> &op_list,
-		 std::vector<int> &prior_list) {
+                 std::vector<int> &op_list,
+                 std::vector<int> &prior_list) {
     base_poly &p2 = *(value_list.rbegin());
     if (op_list.back() != 6) {
       assert(value_list.size()>1);
@@ -190,14 +190,14 @@ namespace bgeot {
         case 3  : p1 += p2; break;
         case 4  : p1 -= p2; break;
         case 5  : 
-	  {
-	    if (p2.degree() > 0) parse_error(7);
-	    int pow = int(to_scalar(p2[0]));
-	    if (p2[0] !=  opt_long_scalar_type(pow) || pow < 0) parse_error(8);
-	    base_poly p = p1; p1.one();
-	    for (int i = 0; i < pow; ++i) p1 *= p;
-	  }
-	  break;
+          {
+            if (p2.degree() > 0) parse_error(7);
+            int pow = int(to_scalar(p2[0]));
+            if (p2[0] !=  opt_long_scalar_type(pow) || pow < 0) parse_error(8);
+            base_poly p = p1; p1.one();
+            for (int i = 0; i < pow; ++i) p1 *= p;
+          }
+          break;
         default: assert(0);
       }
       value_list.pop_back(); 
@@ -223,7 +223,7 @@ namespace bgeot {
     operator_priority_(i, i ? s[0] : '0', prior, op);
     while (op) {
       while (!prior_list.empty() && prior_list.back() <= prior)
-	do_bin_op(value_list, op_list, prior_list);
+        do_bin_op(value_list, op_list, prior_list);
 
       value_list.push_back(read_expression(n, f));
       op_list.push_back(op);

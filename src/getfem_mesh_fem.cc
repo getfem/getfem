@@ -143,20 +143,20 @@ namespace getfem {
                   " and target_dim " << int(pf->target_dim()) << " of " <<
                   name_of_fem(pf));
 
-      
+
       if (cv == f_elems.size()) {
-	f_elems.push_back(pf);
-	fe_convex.add(cv);
-	dof_enumeration_made = false;
+        f_elems.push_back(pf);
+        fe_convex.add(cv);
+        dof_enumeration_made = false;
         touch(); v_num = act_counter();
       } else {
-	if (cv > f_elems.size()) f_elems.resize(cv+1);
-	if (!fe_convex.is_in(cv) || f_elems[cv] != pf) {
-	  fe_convex.add(cv);
-	  f_elems[cv] = pf;
-	  dof_enumeration_made = false;
-	  touch(); v_num = act_counter();
-	}
+        if (cv > f_elems.size()) f_elems.resize(cv+1);
+        if (!fe_convex.is_in(cv) || f_elems[cv] != pf) {
+          fe_convex.add(cv);
+          f_elems[cv] = pf;
+          dof_enumeration_made = false;
+          touch(); v_num = act_counter();
+        }
       }
     }
   }
@@ -335,7 +335,7 @@ namespace getfem {
     // Information for global dof
     dal::bit_vector encountered_global_dof, processed_elt;
     dal::dynamic_array<size_type> ind_global_dof;
-    
+
     // Auxilliary variables
     std::vector<size_type> itab;
     base_node P(linked_mesh().dim());
@@ -349,25 +349,25 @@ namespace getfem {
     bgeot::pgeotrans_precomp pgp = 0;
 
     for (dal::bv_visitor cv(linked_mesh().convex_index());
-      	 !cv.finished(); ++cv) {
+         !cv.finished(); ++cv) {
       if (fe_convex.is_in(cv)) {
-	gmm::copy(linked_mesh().points_of_convex(cv)[0], bmin);
-	gmm::copy(bmin, bmax);
-	for (size_type i = 0; i <  linked_mesh().nb_points_of_convex(cv); ++i) {
-	  const base_node &pt = linked_mesh().points_of_convex(cv)[i];
-	  for (size_type d = 1; d < bmin.size(); ++d) {
-	    bmin[d] = std::min(bmin[d], pt[d]);
-	    bmax[d] = std::max(bmax[d], pt[d]);
-	  }
-	}	
-	elt_car_sizes[cv] = gmm::vect_dist2_sqr(bmin, bmax);
+        gmm::copy(linked_mesh().points_of_convex(cv)[0], bmin);
+        gmm::copy(bmin, bmax);
+        for (size_type i = 0; i < linked_mesh().nb_points_of_convex(cv); ++i) {
+          const base_node &pt = linked_mesh().points_of_convex(cv)[i];
+          for (size_type d = 1; d < bmin.size(); ++d) {
+            bmin[d] = std::min(bmin[d], pt[d]);
+            bmax[d] = std::max(bmax[d], pt[d]);
+          }
+        }
+        elt_car_sizes[cv] = gmm::vect_dist2_sqr(bmin, bmax);
       }
     }
 
     dal::bit_vector cv_done;
-    
+
     for (dal::bv_visitor cv(linked_mesh().convex_index());
-	 !cv.finished(); ++cv) { // Loop on elements
+         !cv.finished(); ++cv) { // Loop on elements
       if (!fe_convex.is_in(cv)) continue;
       pfem pf = fem_of_element(cv);
       if (pf != first_pf) is_uniform_ = false;
@@ -400,34 +400,34 @@ namespace getfem {
           pgp->transform(linked_mesh().points_of_convex(cv), i, P);
           size_type idof = nbdof;
 
-	  if (dof_nodes[cv].nb_points() > 0) {
-	    scalar_type dist = dof_nodes[cv].nearest_neighbor(ipt, P);
-	    if (gmm::abs(dist) <= 1e-6*elt_car_sizes[cv]) {
-	      fd.ind_node=ipt.i;
-	      auto it = dof_sorts[cv].find(fd);
-	      if (it != dof_sorts[cv].end()) idof = it->second;
-	    }
-	  }
-	  
+          if (dof_nodes[cv].nb_points() > 0) {
+            scalar_type dist = dof_nodes[cv].nearest_neighbor(ipt, P);
+            if (gmm::abs(dist) <= 1e-6*elt_car_sizes[cv]) {
+              fd.ind_node=ipt.i;
+              auto it = dof_sorts[cv].find(fd);
+              if (it != dof_sorts[cv].end()) idof = it->second;
+            }
+          }
+
           if (idof == nbdof) {
-	    nbdof += Qdim / pf->target_dim();
+            nbdof += Qdim / pf->target_dim();
 
-	    linked_mesh().neighbours_of_convex(cv, pf->faces_of_dof(cv, i), s);
-	    for (size_type ncv : s) { // For each unscanned neighbour
-	      if (!cv_done[ncv] && fe_convex.is_in(ncv)) { // add the dof
+            linked_mesh().neighbours_of_convex(cv, pf->faces_of_dof(cv, i), s);
+            for (size_type ncv : s) { // For each unscanned neighbour
+              if (!cv_done[ncv] && fe_convex.is_in(ncv)) { // add the dof
 
-		fd.ind_node = size_type(-1);
-		if (dof_nodes[ncv].nb_points() > 0) {
-		  scalar_type dist = dof_nodes[ncv].nearest_neighbor(ipt, P);
-		  if (gmm::abs(dist) <= 1e-6*elt_car_sizes[ncv])
-		    fd.ind_node=ipt.i;
-		}
-		if (fd.ind_node == size_type(-1))
-		  fd.ind_node = dof_nodes[ncv].add_point(P);
-		dof_sorts[ncv][fd] = idof;
-	      }
-	    }
-	  }
+                fd.ind_node = size_type(-1);
+                if (dof_nodes[ncv].nb_points() > 0) {
+                  scalar_type dist = dof_nodes[ncv].nearest_neighbor(ipt, P);
+                  if (gmm::abs(dist) <= 1e-6*elt_car_sizes[ncv])
+                    fd.ind_node=ipt.i;
+                }
+                if (fd.ind_node == size_type(-1))
+                  fd.ind_node = dof_nodes[ncv].add_point(P);
+                dof_sorts[ncv][fd] = idof;
+              }
+            }
+          }
           itab[i] = idof;
         }
       }
@@ -571,8 +571,8 @@ namespace getfem {
         } else if (bgeot::casecmp(tmp, "DOF_ENUMERATION") == 0) {
           dal::bit_vector doflst;
           dof_structure.clear(); dof_enumeration_made = false;
-	  is_uniform_ = true;
-	  size_type nbdof_unif = size_type(-1);
+          is_uniform_ = true;
+          size_type nbdof_unif = size_type(-1);
           touch(); v_num = act_counter();
           while (true) {
             bgeot::get_token(ist, tmp);
@@ -585,11 +585,11 @@ namespace getfem {
             std::vector<size_type> tab;
             if (convex_index().is_in(ic) && tmp.size() &&
                 isdigit(tmp[0]) && tmp2 == ":") {
-	      size_type nbd = nb_basic_dof_of_element(ic);
-	      if (nbdof_unif == size_type(-1))
-		nbdof_unif = nbd;
-	      else if (nbdof_unif != nbd)
-		is_uniform_ = false;
+              size_type nbd = nb_basic_dof_of_element(ic);
+              if (nbdof_unif == size_type(-1))
+                nbdof_unif = nbd;
+              else if (nbdof_unif != nbd)
+                is_uniform_ = false;
               tab.resize(nb_basic_dof_of_element(ic));
               for (size_type i=0; i < fem_of_element(ic)->nb_dof(ic);
                    i++) {

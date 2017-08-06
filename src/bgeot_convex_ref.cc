@@ -444,15 +444,18 @@ namespace bgeot {
     dal::pstatic_stored_object_key
       pk = std::make_shared<product_ref_key_>(a, b);
     dal::pstatic_stored_object o = dal::search_stored_object(pk);
-    if (o) return std::dynamic_pointer_cast<const convex_of_reference>(o);
-    pconvex_ref p = std::make_shared<product_ref_>(a, b);
-    dal::add_stored_object(pk, p, a, b,
-                           convex_product_structure(a->structure(),
-                                                    b->structure()),
-                           p->pspt(), dal::PERMANENT_STATIC_OBJECT);
-    pconvex_ref p1 = basic_convex_ref(p);
-    if (p != p1) add_dependency(p, p1);
-    return p;
+    if (o)
+      return std::dynamic_pointer_cast<const convex_of_reference>(o);
+    else {
+      pconvex_ref p = std::make_shared<product_ref_>(a, b);
+      dal::add_stored_object(pk, p, a, b,
+                             convex_product_structure(a->structure(),
+                                                      b->structure()),
+                             p->pspt(), dal::PERMANENT_STATIC_OBJECT);
+      pconvex_ref p1 = basic_convex_ref(p);
+      if (p != p1) add_dependency(p, p1);
+      return p;
+    }
   }
 
   pconvex_ref parallelepiped_of_reference(dim_type nc, dim_type k) {
