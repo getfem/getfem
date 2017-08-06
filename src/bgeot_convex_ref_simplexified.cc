@@ -251,7 +251,7 @@ namespace bgeot {
 
   static size_type simplexified_prism_6_nb = 6;
  
-  static size_type simplexified_pyramid[30] = {
+  static size_type simplexified_pyramid[8] = {
      0, 1, 2, 4, 3, 2, 1, 4
   };
 
@@ -305,7 +305,7 @@ namespace bgeot {
       return simplexified_prism_6_nb;
     }
 
-    if (cvs == pyramidal_structure(1)) {
+    if (cvs == pyramid_structure(1)) {
       *tab = simplexified_pyramid;
       return simplexified_pyramid_nb;
     }

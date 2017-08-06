@@ -465,22 +465,22 @@ namespace bgeot {
   /*        Pyramidal 3D structure for k=1 or 2.                          */
   /* ******************************************************************** */
 
-  struct pyramidal_structure_ : public convex_structure {
-    friend pconvex_structure pyramidal_structure(dim_type k);
+  struct pyramid_structure_ : public convex_structure {
+    friend pconvex_structure pyramid_structure(dim_type k);
   };
 
-  DAL_SIMPLE_KEY(pyramidal_structure_key_, dim_type);
+  DAL_SIMPLE_KEY(pyramid_structure_key_, dim_type);
 
-  pconvex_structure pyramidal_structure(dim_type k) {
+  pconvex_structure pyramid_structure(dim_type k) {
     GMM_ASSERT1(k == 1 || k == 2, "Sorry, pyramidal elements implemented "
                 "only for degree one or two.");
     dal::pstatic_stored_object_key
-      pcsk = std::make_shared<pyramidal_structure_key_>(k);
+      pcsk = std::make_shared<pyramid_structure_key_>(k);
     dal::pstatic_stored_object o = dal::search_stored_object(pcsk);
     if (o)
       return std::dynamic_pointer_cast<const convex_structure>(o);
 
-    auto p = std::make_shared<pyramidal_structure_>();
+    auto p = std::make_shared<pyramid_structure_>();
     pconvex_structure pcvs(p);
 
     p->Nc = 3;
@@ -522,7 +522,7 @@ namespace bgeot {
     } else {
       p->nbpt = 14;
       p->nbf = 5;
-      p->basic_pcvs = pyramidal_structure(1);
+      p->basic_pcvs = pyramid_structure(1);
       //    13
       //   /  |
       //  11--12

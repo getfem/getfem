@@ -783,7 +783,7 @@ namespace bgeot {
 
   struct Q2_incomplete_trans_: public poly_geometric_trans  {
     Q2_incomplete_trans_(dim_type nc) {
-      cvr = Q2_incomplete_reference(nc);
+      cvr = Q2_incomplete_of_reference(nc);
       size_type R = cvr->structure()->nb_points();
       is_lin = false;
       complexity_ = 2;
@@ -846,7 +846,7 @@ namespace bgeot {
     int n = int(::floor(params[0].num() + 0.01));
     GMM_ASSERT1(n == 2 || n == 3, "Bad parameter, expected value 2 or 3");
 
-    dependencies.push_back(Q2_incomplete_reference(dim_type(n)));
+    dependencies.push_back(Q2_incomplete_of_reference(dim_type(n)));
     return std::make_shared<Q2_incomplete_trans_>(dim_type(n));
   }
 
@@ -860,9 +860,9 @@ namespace bgeot {
   /*    Pyramidal geometric transformation of order k=1 or 2.             */
   /* ******************************************************************** */
 
-  struct pyramidal_trans_: public fraction_geometric_trans  {
-    pyramidal_trans_(short_type k) {
-      cvr = pyramidal_element_of_reference(k);
+  struct pyramid_trans_: public fraction_geometric_trans  {
+    pyramid_trans_(short_type k) {
+      cvr = pyramid_of_reference(k);
       size_type R = cvr->structure()->nb_points();
       is_lin = false;
       complexity_ = k;
@@ -907,18 +907,18 @@ namespace bgeot {
   };
 
   static pgeometric_trans
-  pyramidal_gt(gt_param_list& params,
-               std::vector<dal::pstatic_stored_object> &deps) {
+  pyramid_gt(gt_param_list& params,
+             std::vector<dal::pstatic_stored_object> &deps) {
     GMM_ASSERT1(params.size() == 1, "Bad number of parameters : "
                 << params.size() << " should be 1.");
     GMM_ASSERT1(params[0].type() == 0, "Bad type of parameters");
     int k = int(::floor(params[0].num() + 0.01));
 
-    deps.push_back(pyramidal_element_of_reference(dim_type(k)));
-    return std::make_shared<pyramidal_trans_>(dim_type(k));
+    deps.push_back(pyramid_of_reference(dim_type(k)));
+    return std::make_shared<pyramid_trans_>(dim_type(k));
   }
 
-  pgeometric_trans pyramidal_geotrans(short_type k) {
+  pgeometric_trans pyramid_geotrans(short_type k) {
     static short_type k_ = -1;
     static pgeometric_trans pgt = 0;
     if (k != k_) {
@@ -1007,7 +1007,7 @@ namespace bgeot {
       add_suffix("LINEAR_PRODUCT", linear_product_gt);
       add_suffix("LINEAR_QK", linear_qk);
       add_suffix("Q2_INCOMPLETE", Q2_incomplete_gt);
-      add_suffix("PYRAMID", pyramidal_gt);
+      add_suffix("PYRAMID", pyramid_gt);
     }
   };
 

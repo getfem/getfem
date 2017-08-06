@@ -844,7 +844,7 @@ namespace getfem {
                             size_type ip1, size_type ip2=size_type(-1)) :
       approx_integration
       ((base_im->structure() == bgeot::parallelepiped_structure(3)) ?
-       bgeot::pyramidal_element_of_reference(1)
+       bgeot::pyramid_of_reference(1)
        : bgeot::simplex_of_reference(base_im->dim()))  {
       size_type N = base_im->dim();
 
@@ -867,7 +867,7 @@ namespace getfem {
       bgeot::pgeometric_trans pgt2 = bgeot::simplex_geotrans(N, 1);
       std::vector<base_node> nodes2(N+1);
       if (what == PYRAMID) {
-        pgt2 = bgeot::pyramidal_geotrans(1);
+        pgt2 = bgeot::pyramid_geotrans(1);
         nodes2.resize(5);
       }
       std::vector<size_type> other_nodes; // for the construction of node2

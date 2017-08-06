@@ -280,11 +280,11 @@ namespace bgeot {
   };
 
 
-  DAL_SIMPLE_KEY(Q2_incomplete_reference_key_, dim_type);
+  DAL_SIMPLE_KEY(Q2_incomplete_of_reference_key_, dim_type);
 
-  pconvex_ref Q2_incomplete_reference(dim_type nc) {
+  pconvex_ref Q2_incomplete_of_reference(dim_type nc) {
      dal::pstatic_stored_object_key
-      pk = std::make_shared<Q2_incomplete_reference_key_>(nc);
+      pk = std::make_shared<Q2_incomplete_of_reference_key_>(nc);
     dal::pstatic_stored_object o = dal::search_stored_object(pk);
     if (o) return std::dynamic_pointer_cast<const convex_of_reference>(o);
     pconvex_ref p = std::make_shared<Q2_incomplete_of_ref_>(nc);
@@ -321,13 +321,13 @@ namespace bgeot {
       GMM_ASSERT1(k == 1 || k == 2,
                   "Sorry exist only in degree 1 or 2, not " << k);
 
-      cvs = pyramidal_structure(k);
+      cvs = pyramid_structure(k);
       convex<base_node>::points().resize(cvs->nb_points());
       normals_.resize(cvs->nb_faces());
       if (k == 1)
         auto_basic = true;
       else
-        basic_convex_ref_ = pyramidal_element_of_reference(1);
+        basic_convex_ref_ = pyramid_of_reference(1);
 
       sc(normals_[0]) =  0., 0., -1.;
       sc(normals_[1]) =  0.,-1.,  1.;
@@ -365,11 +365,11 @@ namespace bgeot {
   };
 
 
-  DAL_SIMPLE_KEY(pyramidal_reference_key_, dim_type);
+  DAL_SIMPLE_KEY(pyramid_reference_key_, dim_type);
 
-  pconvex_ref pyramidal_element_of_reference(dim_type k) {
+  pconvex_ref pyramid_of_reference(dim_type k) {
      dal::pstatic_stored_object_key
-      pk = std::make_shared<pyramidal_reference_key_>(k);
+      pk = std::make_shared<pyramid_reference_key_>(k);
     dal::pstatic_stored_object o = dal::search_stored_object(pk);
     if (o) return std::dynamic_pointer_cast<const convex_of_reference>(o);
     pconvex_ref p = std::make_shared<pyramid_of_ref_>(k);

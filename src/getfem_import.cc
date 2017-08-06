@@ -56,7 +56,7 @@ namespace getfem {
         pgt = bgeot::prism_geotrans(3,1);
       } break;
       case 7: { /* PYRAMID */
-	pgt = bgeot::pyramidal_geotrans(1);
+        pgt = bgeot::pyramid_geotrans(1);
       } break;
       case 8: { /* 2ND ORDER LINE */
         pgt = bgeot::simplex_geotrans(1,2);

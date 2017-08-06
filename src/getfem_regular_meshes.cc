@@ -254,7 +254,7 @@ namespace getfem
     } else if (pgt->basic_structure() == bgeot::prism_structure(N)) {
       getfem::parallelepiped_regular_prism_mesh
         (msh, N, org, vtab.begin(), nsubdiv.begin());
-    } else if (pgt->basic_structure() == bgeot::pyramidal_structure(1)) {
+    } else if (pgt->basic_structure() == bgeot::pyramid_structure(1)) {
       getfem::parallelepiped_regular_pyramid_mesh
         (msh, org, vtab.begin(), nsubdiv.begin());
     } else {

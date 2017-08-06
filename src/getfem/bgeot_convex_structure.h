@@ -194,7 +194,7 @@ namespace bgeot {
                                     simplex_structure(1));
   }
   /// Give a pointer on the 3D pyramid structure for a degree k = 1 or 2.
-  pconvex_structure pyramidal_structure(short_type k);
+  pconvex_structure pyramid_structure(short_type k);
   
 
   /** Simplex structure with the Lagrange grid of degree k.

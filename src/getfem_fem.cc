@@ -1257,9 +1257,9 @@ namespace getfem {
   // |       |
   // 0---1---2
 
-  static pfem build_pyramidal_pk_fem(short_type k, bool disc) {
+  static pfem build_pyramid_pk_fem(short_type k, bool disc) {
     auto p = std::make_shared<fem<base_rational_fraction>>();
-    p->mref_convex() = bgeot::pyramidal_element_of_reference(1);
+    p->mref_convex() = bgeot::pyramid_of_reference(1);
     p->dim() = 3;
     p->is_standard() = p->is_equivalent() = true;
     p->is_polynomial() = false;
@@ -1339,7 +1339,7 @@ namespace getfem {
   }
 
 
-  static pfem pyramidal_pk_fem
+  static pfem pyramid_pk_fem
   (fem_param_list &params, std::vector<dal::pstatic_stored_object> &deps) {
     GMM_ASSERT1(params.size() <= 1, "Bad number of parameters");
     short_type k = 2;
@@ -1347,13 +1347,13 @@ namespace getfem {
       GMM_ASSERT1(params[0].type() == 0, "Bad type of parameters");
       k = dim_type(::floor(params[0].num() + 0.01));
     }
-    pfem p = build_pyramidal_pk_fem(k, false);
+    pfem p = build_pyramid_pk_fem(k, false);
     deps.push_back(p->ref_convex(0));
     deps.push_back(p->node_tab(0));
     return p;
   }
 
-  static pfem pyramidal_disc_pk_fem
+  static pfem pyramid_disc_pk_fem
   (fem_param_list &params, std::vector<dal::pstatic_stored_object> &deps) {
     GMM_ASSERT1(params.size() <= 1, "Bad number of parameters");
     short_type k = 2;
@@ -1361,7 +1361,7 @@ namespace getfem {
       GMM_ASSERT1(params[0].type() == 0, "Bad type of parameters");
       k = dim_type(::floor(params[0].num() + 0.01));
     }
-    pfem p = build_pyramidal_pk_fem(k, true);
+    pfem p = build_pyramid_pk_fem(k, true);
     deps.push_back(p->ref_convex(0));
     deps.push_back(p->node_tab(0));
     return p;
@@ -3575,7 +3575,7 @@ namespace getfem {
 
     /* Identifying pyramids.                                              */
     if (!found && nbp == 5)
-      if (pgt->basic_structure() == bgeot::pyramidal_structure(1)) {
+      if (pgt->basic_structure() == bgeot::pyramid_structure(1)) {
         name << "FEM_PYRAMID" << suffix << "_LAGRANGE(";
         found = true; spec_dim = false;
       }
@@ -3660,8 +3660,8 @@ namespace getfem {
       add_suffix("RT0", P1_RT0);
       add_suffix("RT0Q", P1_RT0Q);
       add_suffix("NEDELEC", P1_nedelec);
-      add_suffix("PYRAMID_LAGRANGE", pyramidal_pk_fem);
-      add_suffix("PYRAMID_DISCONTINUOUS_LAGRANGE", pyramidal_disc_pk_fem);
+      add_suffix("PYRAMID_LAGRANGE", pyramid_pk_fem);
+      add_suffix("PYRAMID_DISCONTINUOUS_LAGRANGE", pyramid_disc_pk_fem);
     }
   };
 

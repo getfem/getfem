@@ -145,11 +145,11 @@ namespace bgeot {
   /** incomplete Q2 quadrilateral/hexahedral of reference of dimension
       d = 2 or 3
   */
-  pconvex_ref Q2_incomplete_reference(dim_type d);
+  pconvex_ref Q2_incomplete_of_reference(dim_type d);
+  /** pyramidal element of reference of degree k (k = 1 or 2 only) */
+  pconvex_ref pyramid_of_reference(dim_type k);
   /** tensorial product of two convex ref.
       in order to ensure unicity, it is required the a->dim() >= b->dim() */
-  /** Pyramidal element of reference of degree k (k = 1 or 2 only) */
-  pconvex_ref pyramidal_element_of_reference(dim_type k);
   pconvex_ref convex_ref_product(pconvex_ref a, pconvex_ref b);
   /** equilateral simplex (degree 1). used only for mesh quality estimations */
   pconvex_ref equilateral_simplex_of_reference(dim_type nc);
