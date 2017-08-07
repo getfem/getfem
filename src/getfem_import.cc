@@ -750,31 +750,31 @@ namespace getfem {
     std::vector<size_type> elt_cnt;
     std::vector<dal::bit_vector> regions;
 
-    size_type pos;
+    size_type pos, pos2;
     std::string line;
     while (true) {
       std::getline(f,line);
       pos = line.find_first_not_of(" ");
       if (bgeot::casecmp(line.substr(pos,2),"ET") == 0) {
         size_type itype;
-        char type_name[32] = "";
-        pos = line.find_first_of(",");
-        sscanf(line.substr(pos+1).c_str(), "%lu,%s", &itype, type_name);
-
-        bool only_digits=true;
-        for (size_type i=strlen(type_name); i != 0; --i)
-          if (!isdigit(type_name[i-1])) {
-            type_name[i-1] = char(toupper(type_name[i-1]));
-            only_digits = false;
-          }
+        std::string type_name;
+        pos = line.find_first_of(",")+1;
+        pos2 = line.find_first_of(",", pos);
+        itype = std::stol(line.substr(pos, pos2-pos));
+        pos = line.find_first_not_of(" ,\n\r\t", pos2);
+        pos2 = line.find_first_of(" ,\n\r\t", pos);
+        type_name = line.substr(pos, pos2-pos);
+        bool only_digits
+          = (type_name.find_first_not_of("0123456789") == std::string::npos);
+        const std::locale loc;
+        for (auto&& c : type_name) c = std::toupper(c, loc);
 
         if (elt_types.size() < itype+1)
           elt_types.resize(itype+1);
 
         elt_types[itype] = "";
         if (only_digits) {
-          size_type type_num;
-          sscanf(type_name, "%lu", &type_num);
+          size_type type_num = std::stol(type_name);
           if (type_num == 42 || type_num == 82 ||
               type_num == 182 || type_num == 183)
             elt_types[itype] = "PLANE";
@@ -790,8 +790,13 @@ namespace getfem {
       }
       else if (bgeot::casecmp(line.substr(pos,5),"KEYOP") == 0) {
         size_type itype, knum, keyval;
-        pos = line.find_first_of(",");
-        sscanf(line.substr(pos+1).c_str(), "%lu,%lu,%lu", &itype, &knum, &keyval);
+        pos = line.find_first_of(",")+1;
+        pos2 = line.find_first_of(",", pos);
+        itype = std::stol(line.substr(pos, pos2-pos));
+        pos = pos2+1;
+        pos2 = line.find_first_of(",", pos);
+        knum = std::stol(line.substr(pos+1, pos2-pos));
+        keyval = std::stol(line.substr(pos2+1));
         if (knum == 1 && itype < elt_types.size() &&
             elt_types[itype].size() == 7 &&
             bgeot::casecmp(elt_types[itype].substr(0,7),"MESH200") == 0) {
@@ -807,39 +812,41 @@ namespace getfem {
     }
     elt_cnt.resize(elt_types.size());
 
-    // NBLOCK, NUMFIELD, SOLKEY, NDMAX, NDSEL
-    //NBLOCK,6,SOLID,     45876,     45876
-    size_type nodes2read;
-    pos = line.find_last_of(",");
-    sscanf(line.substr(pos+1).c_str(), "%lu", &nodes2read);
-
     //(3i8,6e20.13)
     size_type fields1, fieldwidth1, fields2, fieldwidth2; // 3,8,6,20
-    std::string node_info_fmt;
     { // "%8lu%*8u%*8u%20lf%20lf%20lf"
-      std::string fortran_fmt;
+      std::string fortran_fmt; // "(%lu%*[i]%lu,%lu%*[e,E]%lu.%*u)"
       std::getline(f,fortran_fmt);
-      sscanf(fortran_fmt.c_str(), "(%lu%*[i]%lu,%lu%*[e,E]%lu.%*u)",
-             &fields1, &fieldwidth1, &fields2, &fieldwidth2);
+      pos = fortran_fmt.find_first_of("(")+1;
+      pos2 = fortran_fmt.find_first_of("iI", pos);
+      fields1 = std::stol(fortran_fmt.substr(pos, pos2-pos));
+      pos = pos2+1;
+      pos2 = fortran_fmt.find_first_of(",", pos);
+      fieldwidth1 = std::stol(fortran_fmt.substr(pos, pos2-pos));
+      pos = pos2+1;
+      pos2 = fortran_fmt.find_first_of("eE", pos);
+      fields2 = std::stol(fortran_fmt.substr(pos, pos2-pos));
+      pos = pos2+1;
+      pos2 = fortran_fmt.find_first_of(".", pos);
+      fieldwidth2 = std::stol(fortran_fmt.substr(pos, pos2-pos));
       GMM_ASSERT1(fields1 >= 1 && fields2 >= 3 ,
                   "Ansys mesh import routine requires NBLOCK entries with at least "
                   "1 integer field and 3 float number fields");
-      std::stringstream ss;
-      ss << "%" << fieldwidth1 << "lu";
-      for (size_type i=1; i < fields1; ++i)
-        ss << "%*" << fieldwidth1 << "lu";
-      for (size_type i=0; i < 3; ++i)
-        ss << "%" << fieldwidth2 << "lf";
-      node_info_fmt = ss.str();
     }
 
     base_node pt(3);
-    for (size_type i=0; i < nodes2read; ++i) {
+    for (size_type i=0; i < size_type(-1); ++i) {
       size_type nodeid;
       std::getline(f,line);
+      if (line.compare(0,1,"N") == 0)
+        break;
       //       1       0       0-3.0000000000000E+00 2.0000000000000E+00 1.0000000000000E+00
-      sscanf(line.c_str(), node_info_fmt.c_str(), &nodeid, &pt[0], &pt[1], &pt[2]);
-      cdb_node_2_getfem_node[nodeid] = m.add_point(pt);
+      nodeid = std::stol(line.substr(0, fieldwidth1));
+      pos = fields1*fieldwidth1;
+      for (size_type j=0; j < 3; ++j, pos += fieldwidth2)
+        pt[j] = std::stod(line.substr(pos, fieldwidth2));
+
+      cdb_node_2_getfem_node[nodeid] = m.add_point(pt, 0., false);
     }
 
     while (bgeot::casecmp(line.substr(0,6),"EBLOCK") != 0) {
@@ -851,46 +858,65 @@ namespace getfem {
 
     //(19i8)
     size_type fieldsno, fieldwidth; // 19,8
-    std::string elt_info_fmt, imat_fmt;
     { // "%8lu%8lu%8lu%8lu%8lu%8lu%8lu%8lu"
       std::string fortran_fmt;
       std::getline(f,fortran_fmt);
-      sscanf(fortran_fmt.c_str(),"(%lu%*[i]%lu)", &fieldsno, &fieldwidth);
-      GMM_ASSERT1(fieldsno == 19, "Ansys mesh import routine requires EBLOCK entries "
-                                  "with 19 fields");
-      std::stringstream ss0, ss;
-      ss0 << "%" << fieldwidth << "li";
-      imat_fmt = ss0.str();
-      for (size_type i=0; i < 10; ++i)
-        ss << "%" << fieldwidth << "lu";
-      elt_info_fmt = ss.str();
+
+      pos = fortran_fmt.find_first_of("(")+1;
+      pos2 = fortran_fmt.find_first_of("iI", pos);
+      fieldsno = std::stol(fortran_fmt.substr(pos, pos2-pos));
+      pos = pos2+1;
+      pos2 = fortran_fmt.find_first_of(")\n", pos);
+      fieldwidth = std::stol(fortran_fmt.substr(pos, pos2-pos));
+      GMM_ASSERT1(fieldsno == 19, "Ansys mesh import routine requires EBLOCK "
+                                  "entries with 19 fields");
     }
 
     size_type II,JJ,KK,LL,MM,NN,OO,PP,QQ,RR,SS,TT,UU,VV,WW,XX,YY,ZZ,AA,BB;
-    while (true) {
+    for (size_type i=0; i < size_type(-1); ++i) {
       GMM_ASSERT1(!f.eof(), "File ended before all elements could be read");
-      size_type imat, itype, realconst, isection, coordsys, deathflag,
-                modelref, shapeflag, nodesno, notused, eltid;
+      size_type imat, itype, nodesno(0);
       std::getline(f,line);
       {
-        long int ii;
-        sscanf(line.substr(0,fieldwidth).c_str(), imat_fmt.c_str(),
-               &ii);
+        long int ii = std::stol(line.substr(0,fieldwidth));
         if (ii < 0)
           break;
         else
           imat = size_type(ii);
-
-        if (imat_filt != size_type(-1) && imat != imat_filt) { // skip current element
-          if (nodesno > 8)
-            std::getline(f,line);
-          continue;
-        }
       }
-      sscanf(line.substr(fieldwidth,11*fieldwidth).c_str(), elt_info_fmt.c_str(),
-             &itype, &realconst, &isection, &coordsys, &deathflag,
-             &modelref, &shapeflag, &nodesno, &notused, &eltid);
+      itype = std::stol(line.substr(fieldwidth,fieldwidth));
+      nodesno = std::stol(line.substr(8*fieldwidth,fieldwidth));
       line = line.substr(11*fieldwidth);
+
+      if (imat_filt != size_type(-1) && imat != imat_filt) { // skip current element
+        if (nodesno > 8)
+          std::getline(f,line);
+        continue;
+      }
+
+      if (nodesno >= 1) II = std::stol(line.substr(0,fieldwidth));
+      if (nodesno >= 2) JJ = std::stol(line.substr(1*fieldwidth,fieldwidth));
+      if (nodesno >= 3) KK = std::stol(line.substr(2*fieldwidth,fieldwidth));
+      if (nodesno >= 4) LL = std::stol(line.substr(3*fieldwidth,fieldwidth));
+      if (nodesno >= 5) MM = std::stol(line.substr(4*fieldwidth,fieldwidth));
+      if (nodesno >= 6) NN = std::stol(line.substr(5*fieldwidth,fieldwidth));
+      if (nodesno >= 7) OO = std::stol(line.substr(6*fieldwidth,fieldwidth));
+      if (nodesno >= 8) PP = std::stol(line.substr(7*fieldwidth,fieldwidth));
+      if (nodesno >= 9) {
+        std::getline(f,line);
+        if (nodesno >= 9) QQ = std::stol(line.substr(0,fieldwidth));
+        if (nodesno >= 10) RR = std::stol(line.substr(1*fieldwidth,fieldwidth));
+        if (nodesno >= 11) SS = std::stol(line.substr(2*fieldwidth,fieldwidth));
+        if (nodesno >= 12) TT = std::stol(line.substr(3*fieldwidth,fieldwidth));
+        if (nodesno >= 13) UU = std::stol(line.substr(4*fieldwidth,fieldwidth));
+        if (nodesno >= 14) VV = std::stol(line.substr(5*fieldwidth,fieldwidth));
+        if (nodesno >= 15) WW = std::stol(line.substr(6*fieldwidth,fieldwidth));
+        if (nodesno >= 16) XX = std::stol(line.substr(7*fieldwidth,fieldwidth));
+        if (nodesno >= 17) YY = std::stol(line.substr(8*fieldwidth,fieldwidth));
+        if (nodesno >= 18) ZZ = std::stol(line.substr(9*fieldwidth,fieldwidth));
+        if (nodesno >= 19) AA = std::stol(line.substr(10*fieldwidth,fieldwidth));
+        if (nodesno >= 20) BB = std::stol(line.substr(11*fieldwidth,fieldwidth));
+      }
 
       if (imat+1 > regions.size())
         regions.resize(imat+1);
@@ -899,9 +925,6 @@ namespace getfem {
         // TODO MESH200_2, MESH200_3, MESH200_4
       }
       else if (nodesno == 4) {
-
-        sscanf(line.c_str(), elt_info_fmt.c_str(),
-               &II, &JJ, &KK, &LL);
 
         // assume MESH200_6 (4-node quadrilateral)
         std::string eltname("MESH200_6");
@@ -938,9 +961,6 @@ namespace getfem {
         // TODO MESH200_5
       }
       else if (nodesno == 8) {
-
-        sscanf(line.c_str(), elt_info_fmt.c_str(),
-               &II, &JJ, &KK, &LL, &MM, &NN, &OO, &PP);
 
         // assume MESH200_10
         std::string eltname("MESH200_10");
@@ -1008,11 +1028,6 @@ namespace getfem {
       }
       else if (nodesno == 10) {
 
-        sscanf(line.c_str(), elt_info_fmt.c_str(),
-               &II, &JJ, &KK, &LL, &MM, &NN, &OO, &PP);
-        std::getline(f,line);
-        sscanf(line.c_str(), elt_info_fmt.c_str(), &QQ, &RR);
-
         // assume MESH200_9 (10-node tetrahedral)
         std::string eltname("MESH200_9");
         if (elt_types.size() > itype && elt_types[itype].size() > 0)
@@ -1041,12 +1056,6 @@ namespace getfem {
         }
       }
       else if (nodesno == 20) { //  # assume SOLID186/SOLID95
-
-        sscanf(line.c_str(), elt_info_fmt.c_str(),
-               &II, &JJ, &KK, &LL, &MM, &NN, &OO, &PP);
-        std::getline(f,line);
-        sscanf(line.c_str(), elt_info_fmt.c_str(),
-               &QQ, &RR, &SS, &TT, &UU, &VV, &WW, &XX, &YY, &ZZ, &AA, &BB);
 
         // assume MESH200_11 (20-node hexahedral)
         std::string eltname("MESH200_11");
@@ -1410,8 +1419,18 @@ namespace getfem {
     else if (bgeot::casecmp(format,"cdb")==0)
       import_cdb_mesh_file(f,m);
     else if (bgeot::casecmp(format.substr(0,4),"cdb:")==0) {
-      size_type imat;
-      if (sscanf(format.substr(4).c_str(), "%lu", &imat))
+      size_type imat(-1);
+      bool success(true);
+      try {
+        size_t sz;
+        imat = std::stol(format.substr(4), &sz);
+        success = (sz == format.substr(4).size() && imat != size_type(-1));
+      } catch (const std::invalid_argument&) {
+        success = false;
+      } catch (const std::out_of_range&) {
+        success = false;
+      }
+      if (success)
         import_cdb_mesh_file(f,m,imat);
       else GMM_ASSERT1(false, "cannot import "
                        << format << " mesh type : wrong cdb mesh type input");
