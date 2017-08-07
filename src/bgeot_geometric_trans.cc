@@ -305,6 +305,20 @@ namespace bgeot {
     return xreal_;
   }
 
+  const base_node& geotrans_interpolation_context::cv_center() const {
+    GMM_ASSERT1(have_G(),
+                "Convex center can be provided only if matrix G is available");
+    if (!have_cv_center_) {
+      cv_center_.resize(G().nrows());
+      size_type nb_pts = G().ncols();
+      for (size_type i=0; i < nb_pts; i++)
+        gmm::add(gmm::mat_col(G(),i), cv_center_);
+      gmm::scale(cv_center_, scalar_type(1)/scalar_type(nb_pts));
+      have_cv_center_ = true;
+    }
+    return cv_center_;
+  }
+
   void geotrans_interpolation_context::compute_J() const {
     GMM_ASSERT1(have_G() && have_pgt(), "Unable to compute J\n");
     size_type P = pgt_->structure()->dim();
