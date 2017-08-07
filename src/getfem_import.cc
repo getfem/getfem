@@ -1085,9 +1085,46 @@ namespace getfem {
             if (itype < elt_cnt.size())
               elt_cnt[itype] += 1;
           } else if (MM == NN && NN == OO && OO == PP) { // assume 13-node pyramid
-            GMM_ASSERT1(false, "Ansys 13-node pyramid elements are not supported yet, import to be done");
+            getfem_cv_nodes.resize(13);
+            getfem_cv_nodes[0] = cdb_node_2_getfem_node[II];
+            getfem_cv_nodes[1] = cdb_node_2_getfem_node[QQ];
+            getfem_cv_nodes[2] = cdb_node_2_getfem_node[JJ];
+            getfem_cv_nodes[3] = cdb_node_2_getfem_node[TT];
+            getfem_cv_nodes[4] = cdb_node_2_getfem_node[RR];
+            getfem_cv_nodes[5] = cdb_node_2_getfem_node[LL];
+            getfem_cv_nodes[6] = cdb_node_2_getfem_node[SS];
+            getfem_cv_nodes[7] = cdb_node_2_getfem_node[KK];
+            getfem_cv_nodes[8] = cdb_node_2_getfem_node[YY];
+            getfem_cv_nodes[9] = cdb_node_2_getfem_node[ZZ];
+            getfem_cv_nodes[10] = cdb_node_2_getfem_node[BB];
+            getfem_cv_nodes[11] = cdb_node_2_getfem_node[AA];
+            getfem_cv_nodes[12] = cdb_node_2_getfem_node[MM];
+            regions[imat].add(m.add_convex(bgeot::pyramid2_incomplete_geotrans(),
+                                           getfem_cv_nodes.begin()));
+            if (itype < elt_cnt.size())
+              elt_cnt[itype] += 1;
+
           } else if (KK == LL && OO == PP) { // assume 15-node prism
-            GMM_ASSERT1(false, "Ansys 15-node prism elements are not supported yet, import to be done");
+            getfem_cv_nodes.resize(15);
+            getfem_cv_nodes[0]  = cdb_node_2_getfem_node[II];
+            getfem_cv_nodes[1]  = cdb_node_2_getfem_node[QQ];
+            getfem_cv_nodes[2]  = cdb_node_2_getfem_node[JJ];
+            getfem_cv_nodes[3]  = cdb_node_2_getfem_node[TT];
+            getfem_cv_nodes[4]  = cdb_node_2_getfem_node[RR];
+            getfem_cv_nodes[5]  = cdb_node_2_getfem_node[LL];
+            getfem_cv_nodes[6]  = cdb_node_2_getfem_node[YY];
+            getfem_cv_nodes[7]  = cdb_node_2_getfem_node[ZZ];
+            getfem_cv_nodes[8]  = cdb_node_2_getfem_node[AA];
+            getfem_cv_nodes[9]  = cdb_node_2_getfem_node[MM];
+            getfem_cv_nodes[10] = cdb_node_2_getfem_node[UU];
+            getfem_cv_nodes[11] = cdb_node_2_getfem_node[NN];
+            getfem_cv_nodes[12] = cdb_node_2_getfem_node[XX];
+            getfem_cv_nodes[13] = cdb_node_2_getfem_node[VV];
+            getfem_cv_nodes[14] = cdb_node_2_getfem_node[OO];
+            regions[imat].add(m.add_convex(bgeot::prism2_incomplete_geotrans(),
+                                           getfem_cv_nodes.begin()));
+            if (itype < elt_cnt.size())
+              elt_cnt[itype] += 1;
           } else {
             getfem_cv_nodes.resize(20);
             getfem_cv_nodes[0] = cdb_node_2_getfem_node[II];
