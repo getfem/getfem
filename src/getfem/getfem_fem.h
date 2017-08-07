@@ -111,6 +111,17 @@
 
    - "FEM_PYRAMID_DISCONTINUOUS_LAGRANGE(K)" : Discontinuous Lagrange element
    on a 3D pyramid of degree K = 0, 1 or 2.
+
+   - "FEM_PYRAMID2_INCOMPLETE_LAGRANGE" : Incomplete Lagrange element on a
+   quadratic 3D pyramid (serendipity, 13-node element). Can be connected to
+   a standard P2 Lagrange element on its triangular faces and a Q2_INCOMPLETE
+   Lagrange element on its quadrangular face.
+
+   - "FEM_PRISM2_INCOMPLETE_LAGRANGE" : Incomplete Lagrange element on a
+   quadratic 3D prism (serendipity, 15-node wedge element). Can be connected
+   toa standard P2 Lagrange on its triangular faces and a Q2_INCOMPLETE
+   Lagrange element on its quadrangular faces.
+
 */
 
 #ifndef GETFEM_FEM_H__

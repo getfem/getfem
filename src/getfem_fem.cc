@@ -1367,6 +1367,199 @@ namespace getfem {
     return p;
   }
 
+
+  /* ******************************************************************** */
+  /*    Incomplete quadratic Lagrange pyramidal element.                  */
+  /* ******************************************************************** */
+
+  // local dof numeration:
+  //
+  //    12
+  //   /  |
+  //  10---11
+  //  |    |
+  //  8----9
+  //  /     |
+  // 5---6---7
+  // |       |
+  // 3       4
+  // |       |
+  // 0---1---2
+
+  static pfem build_pyramid2_incomplete_fem(bool disc) {
+    auto p = std::make_shared<fem<base_rational_fraction>>();
+    p->mref_convex() = bgeot::pyramid_of_reference(1);
+    p->dim() = 3;
+    p->is_standard() = p->is_equivalent() = true;
+    p->is_polynomial() = false;
+    p->is_lagrange() = true;
+    p->estimated_degree() = 2;
+    p->init_cvs_node();
+    auto lag_dof = disc ? lagrange_nonconforming_dof(3) : lagrange_dof(3);
+
+    p->base().resize(13);
+
+    base_poly xy = read_base_poly(3, "x*y");
+    base_poly z = read_base_poly(3, "z");
+
+    base_poly p00m = read_base_poly(3, "1-z");
+
+    base_poly pmmm = read_base_poly(3, "1-x-y-z");
+    base_poly ppmm = read_base_poly(3, "1+x-y-z");
+    base_poly pmpm = read_base_poly(3, "1-x+y-z");
+    base_poly pppm = read_base_poly(3, "1+x+y-z");
+
+    base_poly mmm0_ = read_base_poly(3, "-1-x-y")*0.25;
+    base_poly mpm0_ = read_base_poly(3, "-1+x-y")*0.25;
+    base_poly mmp0_ = read_base_poly(3, "-1-x+y")*0.25;
+    base_poly mpp0_ = read_base_poly(3, "-1+x+y")*0.25;
+
+    base_poly pp0m = read_base_poly(3, "1+x-z");
+    base_poly pm0m = read_base_poly(3, "1-x-z");
+    base_poly p0mm = read_base_poly(3, "1-y-z");
+    base_poly p0pm = read_base_poly(3, "1+y-z");
+
+    // (Bedrosian, 1992)
+    p->base()[ 0] = mmm0_ * pmmm + base_rational_fraction(mmm0_ * xy, p00m); // N5
+    p->base()[ 1] = base_rational_fraction(pp0m * pm0m * p0mm * 0.5, p00m);  // N6
+    p->base()[ 2] = mpm0_ * ppmm - base_rational_fraction(mpm0_ * xy, p00m); // N7
+    p->base()[ 3] = base_rational_fraction(p0pm * p0mm * pm0m * 0.5, p00m);  // N4
+    p->base()[ 4] = base_rational_fraction(p0pm * p0mm * pp0m * 0.5, p00m);  // N8
+    p->base()[ 5] = mmp0_ * pmpm - base_rational_fraction(mmp0_ * xy, p00m); // N3
+    p->base()[ 6] = base_rational_fraction(pp0m * pm0m * p0pm * 0.5, p00m);  // N2
+    p->base()[ 7] = mpp0_ * pppm + base_rational_fraction(mpp0_ * xy, p00m); // N1
+    p->base()[ 8] = base_rational_fraction(pm0m * p0mm * z, p00m);           // N11
+    p->base()[ 9] = base_rational_fraction(pp0m * p0mm * z, p00m);           // N12
+    p->base()[10] = base_rational_fraction(pm0m * p0pm * z, p00m);           // N10
+    p->base()[11] = base_rational_fraction(pp0m * p0pm * z, p00m);           // N9
+    p->base()[12] = read_base_poly(3, "2*z^2-z");                            // N13
+
+    p->add_node(lag_dof, base_small_vector(-1.0, -1.0, 0.0));
+    p->add_node(lag_dof, base_small_vector( 0.0, -1.0, 0.0));
+    p->add_node(lag_dof, base_small_vector( 1.0, -1.0, 0.0));
+    p->add_node(lag_dof, base_small_vector(-1.0,  0.0, 0.0));
+    p->add_node(lag_dof, base_small_vector( 1.0,  0.0, 0.0));
+    p->add_node(lag_dof, base_small_vector(-1.0,  1.0, 0.0));
+    p->add_node(lag_dof, base_small_vector( 0.0,  1.0, 0.0));
+    p->add_node(lag_dof, base_small_vector( 1.0,  1.0, 0.0));
+    p->add_node(lag_dof, base_small_vector(-0.5, -0.5, 0.5));
+    p->add_node(lag_dof, base_small_vector( 0.5, -0.5, 0.5));
+    p->add_node(lag_dof, base_small_vector(-0.5,  0.5, 0.5));
+    p->add_node(lag_dof, base_small_vector( 0.5,  0.5, 0.5));
+    p->add_node(lag_dof, base_small_vector( 0.0,  0.0, 1.0));
+
+    return pfem(p);
+  }
+
+
+  static pfem pyramid2_incomplete_fem
+  (fem_param_list &params, std::vector<dal::pstatic_stored_object> &deps) {
+    GMM_ASSERT1(params.size() == 0, "Bad number of parameters");
+    pfem p = build_pyramid2_incomplete_fem(false);
+    deps.push_back(p->ref_convex(0));
+    deps.push_back(p->node_tab(0));
+    return p;
+  }
+
+  static pfem pyramid2_incomplete_disc_fem
+  (fem_param_list &params, std::vector<dal::pstatic_stored_object> &deps) {
+    GMM_ASSERT1(params.size() <= 1, "Bad number of parameters");
+    pfem p = build_pyramid2_incomplete_fem(true);
+    deps.push_back(p->ref_convex(0));
+    deps.push_back(p->node_tab(0));
+    return p;
+  }
+
+  /* ******************************************************************** */
+  /*    Incomplete quadratic Lagrange prism element.                      */
+  /* ******************************************************************** */
+
+  // local dof numeration:
+  //
+  //    14
+  //    /|`
+  //  12 | 13
+  //  /  8  `
+  // 9--10--11
+  // |   |   |
+  // |   5   |
+  // 6  / `  7
+  // | 3   4 |
+  // |/     `|
+  // 0---1---2
+
+  static pfem build_prism2_incomplete_fem(bool disc) {
+    auto p = std::make_shared<fem<base_rational_fraction>>();
+    p->mref_convex() = bgeot::prism_of_reference(3);
+    p->dim() = 3;
+    p->is_standard() = p->is_equivalent() = true;
+    p->is_polynomial() = false;
+    p->is_lagrange() = true;
+    p->estimated_degree() = 2;
+    p->init_cvs_node();
+    auto lag_dof = disc ? lagrange_nonconforming_dof(3) : lagrange_dof(3);
+
+    p->base().resize(15);
+
+    std::stringstream s
+      ( "-2*y*z^2-2*x*z^2+2*z^2-2*y^2*z-4*x*y*z+5*y*z-2*x^2*z+5*x*z"
+          "-3*z+2*y^2+4*x*y-3*y+2*x^2-3*x+1;"
+        "4*(x*y*z+x^2*z-x*z-x*y-x^2+x);"
+        "2*x*z^2-2*x^2*z-x*z+2*x^2-x;"
+        "4*(y^2*z+x*y*z-y*z-y^2-x*y+y);"
+        "4*(x*y-x*y*z);"
+        "2*y*z^2-2*y^2*z-y*z+2*y^2-y;"
+        "4*(y*z^2+x*z^2-z^2-y*z-x*z+z);"
+        "4*(x*z-x*z^2);"
+        "4*(y*z-y*z^2);"
+        "-2*y*z^2-2*x*z^2+2*z^2+2*y^2*z+4*x*y*z-y*z+2*x^2*z-x*z-z;"
+        "4*(-x*y*z-x^2*z+x*z);"
+        "2*x*z^2+2*x^2*z-3*x*z;"
+        "4*(-y^2*z-x*y*z+y*z);"
+        "4*x*y*z;"
+        "2*y*z^2+2*y^2*z-3*y*z;");
+
+    for (int i = 0; i < 15; ++i)
+      p->base()[i] = read_base_poly(3, s);
+
+    p->add_node(lag_dof, base_small_vector(0.0, 0.0, 0.0));
+    p->add_node(lag_dof, base_small_vector(0.5, 0.0, 0.0));
+    p->add_node(lag_dof, base_small_vector(1.0, 0.0, 0.0));
+    p->add_node(lag_dof, base_small_vector(0.0, 0.5, 0.0));
+    p->add_node(lag_dof, base_small_vector(0.5, 0.5, 0.0));
+    p->add_node(lag_dof, base_small_vector(0.0, 1.0, 0.0));
+    p->add_node(lag_dof, base_small_vector(0.0, 0.0, 0.5));
+    p->add_node(lag_dof, base_small_vector(1.0, 0.0, 0.5));
+    p->add_node(lag_dof, base_small_vector(0.0, 1.0, 0.5));
+    p->add_node(lag_dof, base_small_vector(0.0, 0.0, 1.0));
+    p->add_node(lag_dof, base_small_vector(0.5, 0.0, 1.0));
+    p->add_node(lag_dof, base_small_vector(1.0, 0.0, 1.0));
+    p->add_node(lag_dof, base_small_vector(0.0, 0.5, 1.0));
+    p->add_node(lag_dof, base_small_vector(0.5, 0.5, 1.0));
+    p->add_node(lag_dof, base_small_vector(0.0, 1.0, 1.0));
+
+    return pfem(p);
+  }
+
+
+  static pfem prism2_incomplete_fem
+  (fem_param_list &params, std::vector<dal::pstatic_stored_object> &deps) {
+    GMM_ASSERT1(params.size() == 0, "Bad number of parameters");
+    pfem p = build_prism2_incomplete_fem(false);
+    deps.push_back(p->ref_convex(0));
+    deps.push_back(p->node_tab(0));
+    return p;
+  }
+
+  static pfem prism2_incomplete_disc_fem
+  (fem_param_list &params, std::vector<dal::pstatic_stored_object> &deps) {
+    GMM_ASSERT1(params.size() <= 1, "Bad number of parameters");
+    pfem p = build_prism2_incomplete_fem(true);
+    deps.push_back(p->ref_convex(0));
+    deps.push_back(p->node_tab(0));
+    return p;
+  }
+
   /* ******************************************************************** */
   /*        P1 element with a bubble base fonction on a face              */
   /* ******************************************************************** */
@@ -3663,6 +3856,12 @@ namespace getfem {
       add_suffix("NEDELEC", P1_nedelec);
       add_suffix("PYRAMID_LAGRANGE", pyramid_pk_fem);
       add_suffix("PYRAMID_DISCONTINUOUS_LAGRANGE", pyramid_disc_pk_fem);
+      add_suffix("PYRAMID2_INCOMPLETE_LAGRANGE", pyramid2_incomplete_fem);
+      add_suffix("PYRAMID2_INCOMPLETE_DISCONTINUOUS_LAGRANGE",
+                 pyramid2_incomplete_disc_fem);
+      add_suffix("PRISM2_INCOMPLETE_LAGRANGE", prism2_incomplete_fem);
+      add_suffix("PRISM2_INCOMPLETE_DISCONTINUOUS_LAGRANGE",
+                 prism2_incomplete_disc_fem);
     }
   };
 

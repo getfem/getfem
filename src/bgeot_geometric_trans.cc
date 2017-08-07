@@ -944,6 +944,127 @@ namespace bgeot {
   }
 
   /* ******************************************************************** */
+  /*    Incomplete quadratic pyramidal geometric transformation.          */
+  /* ******************************************************************** */
+
+  struct pyramid2_incomplete_trans_: public fraction_geometric_trans  {
+    pyramid2_incomplete_trans_() {
+      cvr = pyramid2_incomplete_of_reference();
+      size_type R = cvr->structure()->nb_points();
+      is_lin = false;
+      complexity_ = 2;
+      trans.resize(R);
+
+      base_poly xy = read_base_poly(3, "x*y");
+      base_poly z = read_base_poly(3, "z");
+
+      base_poly p00m = read_base_poly(3, "1-z");
+
+      base_poly pmmm = read_base_poly(3, "1-x-y-z");
+      base_poly ppmm = read_base_poly(3, "1+x-y-z");
+      base_poly pmpm = read_base_poly(3, "1-x+y-z");
+      base_poly pppm = read_base_poly(3, "1+x+y-z");
+
+      base_poly mmm0_ = read_base_poly(3, "-1-x-y")*0.25;
+      base_poly mpm0_ = read_base_poly(3, "-1+x-y")*0.25;
+      base_poly mmp0_ = read_base_poly(3, "-1-x+y")*0.25;
+      base_poly mpp0_ = read_base_poly(3, "-1+x+y")*0.25;
+
+      base_poly pp0m = read_base_poly(3, "1+x-z");
+      base_poly pm0m = read_base_poly(3, "1-x-z");
+      base_poly p0mm = read_base_poly(3, "1-y-z");
+      base_poly p0pm = read_base_poly(3, "1+y-z");
+
+      trans[ 0] = mmm0_ * pmmm + base_rational_fraction(mmm0_ * xy, p00m); // N5 (Bedrosian, 1992)
+      trans[ 1] = base_rational_fraction(pp0m * pm0m * p0mm * 0.5, p00m);  // N6
+      trans[ 2] = mpm0_ * ppmm - base_rational_fraction(mpm0_ * xy, p00m); // N7
+      trans[ 3] = base_rational_fraction(p0pm * p0mm * pm0m * 0.5, p00m);  // N4
+      trans[ 4] = base_rational_fraction(p0pm * p0mm * pp0m * 0.5, p00m);  // N8
+      trans[ 5] = mmp0_ * pmpm - base_rational_fraction(mmp0_ * xy, p00m); // N3
+      trans[ 6] = base_rational_fraction(pp0m * pm0m * p0pm * 0.5, p00m);  // N2
+      trans[ 7] = mpp0_ * pppm + base_rational_fraction(mpp0_ * xy, p00m); // N1
+      trans[ 8] = base_rational_fraction(pm0m * p0mm * z, p00m);           // N11
+      trans[ 9] = base_rational_fraction(pp0m * p0mm * z, p00m);           // N12
+      trans[10] = base_rational_fraction(pm0m * p0pm * z, p00m);           // N10
+      trans[11] = base_rational_fraction(pp0m * p0pm * z, p00m);           // N9
+      trans[12] = read_base_poly(3, "2*z^2-z");                            // N13
+
+      fill_standard_vertices();
+    }
+  };
+
+  static pgeometric_trans
+  pyramid2_incomplete_gt(gt_param_list& params,
+                         std::vector<dal::pstatic_stored_object> &deps) {
+    GMM_ASSERT1(params.size() == 0, "Bad number of parameters : "
+                << params.size() << " should be 0.");
+
+    deps.push_back(pyramid2_incomplete_of_reference());
+    return std::make_shared<pyramid2_incomplete_trans_>();
+  }
+
+  pgeometric_trans pyramid2_incomplete_geotrans() {
+    static pgeometric_trans pgt = 0;
+    if (!pgt)
+      pgt = geometric_trans_descriptor("GT_PYRAMID2_INCOMPLETE");
+    return pgt;
+  }
+
+  /* ******************************************************************** */
+  /*    Incomplete quadratic prism geometric transformation.              */
+  /* ******************************************************************** */
+
+  struct prism2_incomplete_trans_: public poly_geometric_trans  {
+    prism2_incomplete_trans_() {
+      cvr = prism2_incomplete_of_reference();
+      size_type R = cvr->structure()->nb_points();
+      is_lin = false;
+      complexity_ = 2;
+      trans.resize(R);
+
+      std::stringstream s
+        ( "-2*y*z^2-2*x*z^2+2*z^2-2*y^2*z-4*x*y*z+5*y*z-2*x^2*z+5*x*z"
+            "-3*z+2*y^2+4*x*y-3*y+2*x^2-3*x+1;"
+          "4*(x*y*z+x^2*z-x*z-x*y-x^2+x);"
+          "2*x*z^2-2*x^2*z-x*z+2*x^2-x;"
+          "4*(y^2*z+x*y*z-y*z-y^2-x*y+y);"
+          "4*(x*y-x*y*z);"
+          "2*y*z^2-2*y^2*z-y*z+2*y^2-y;"
+          "4*(y*z^2+x*z^2-z^2-y*z-x*z+z);"
+          "4*(x*z-x*z^2);"
+          "4*(y*z-y*z^2);"
+          "-2*y*z^2-2*x*z^2+2*z^2+2*y^2*z+4*x*y*z-y*z+2*x^2*z-x*z-z;"
+          "4*(-x*y*z-x^2*z+x*z);"
+          "2*x*z^2+2*x^2*z-3*x*z;"
+          "4*(-y^2*z-x*y*z+y*z);"
+          "4*x*y*z;"
+          "2*y*z^2+2*y^2*z-3*y*z;");
+
+        for (int i = 0; i < 15; ++i)
+          trans[i] = read_base_poly(3, s);
+
+      fill_standard_vertices();
+    }
+  };
+
+  static pgeometric_trans
+  prism2_incomplete_gt(gt_param_list& params,
+                       std::vector<dal::pstatic_stored_object> &deps) {
+    GMM_ASSERT1(params.size() == 0, "Bad number of parameters : "
+                << params.size() << " should be 0.");
+
+    deps.push_back(prism2_incomplete_of_reference());
+    return std::make_shared<prism2_incomplete_trans_>();
+  }
+
+  pgeometric_trans prism2_incomplete_geotrans() {
+    static pgeometric_trans pgt = 0;
+    if (!pgt)
+      pgt = geometric_trans_descriptor("GT_PRISM2_INCOMPLETE");
+    return pgt;
+  }
+
+  /* ******************************************************************** */
   /*    Misc function.                                                    */
   /* ******************************************************************** */
 
@@ -1022,6 +1143,8 @@ namespace bgeot {
       add_suffix("LINEAR_QK", linear_qk);
       add_suffix("Q2_INCOMPLETE", Q2_incomplete_gt);
       add_suffix("PYRAMID", pyramid_gt);
+      add_suffix("PYRAMID2_INCOMPLETE", pyramid2_incomplete_gt);
+      add_suffix("PRISM2_INCOMPLETE", prism2_incomplete_gt);
     }
   };
 

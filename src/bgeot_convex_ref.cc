@@ -380,6 +380,124 @@ namespace bgeot {
 
 
   /* ******************************************************************** */
+  /*    Incomplete quadratic pyramidal element of reference.              */
+  /* ******************************************************************** */
+
+  class pyramid2_incomplete_of_ref_ : public convex_of_reference {
+  public :
+    scalar_type is_in(const base_node& pt) const
+    { return basic_convex_ref_->is_in(pt); }
+    scalar_type is_in_face(short_type f, const base_node& pt) const
+    { return basic_convex_ref_->is_in_face(f, pt); }
+
+    pyramid2_incomplete_of_ref_() {
+
+      cvs = pyramid2_incomplete_structure();
+      convex<base_node>::points().resize(cvs->nb_points());
+      normals_.resize(cvs->nb_faces());
+      basic_convex_ref_ = pyramid_of_reference(1);
+
+      normals_ = basic_convex_ref_->normals();
+
+      convex<base_node>::points()[0]  = base_node(-1.0, -1.0, 0.0);
+      convex<base_node>::points()[1]  = base_node( 0.0, -1.0, 0.0);
+      convex<base_node>::points()[2]  = base_node( 1.0, -1.0, 0.0);
+      convex<base_node>::points()[3]  = base_node(-1.0,  0.0, 0.0);
+      convex<base_node>::points()[4]  = base_node( 1.0,  0.0, 0.0);
+      convex<base_node>::points()[5]  = base_node(-1.0,  1.0, 0.0);
+      convex<base_node>::points()[6]  = base_node( 0.0,  1.0, 0.0);
+      convex<base_node>::points()[7]  = base_node( 1.0,  1.0, 0.0);
+      convex<base_node>::points()[8]  = base_node(-0.5, -0.5, 0.5);
+      convex<base_node>::points()[9]  = base_node( 0.5, -0.5, 0.5);
+      convex<base_node>::points()[10] = base_node(-0.5,  0.5, 0.5);
+      convex<base_node>::points()[11] = base_node( 0.5,  0.5, 0.5);
+      convex<base_node>::points()[12] = base_node( 0.0,  0.0, 1.0);
+
+      ppoints = store_point_tab(convex<base_node>::points());
+    }
+  };
+
+
+  DAL_SIMPLE_KEY(pyramid2_incomplete_reference_key_, dim_type);
+
+  pconvex_ref pyramid2_incomplete_of_reference() {
+    dal::pstatic_stored_object_key
+      pk = std::make_shared<pyramid2_incomplete_reference_key_>(0);
+    dal::pstatic_stored_object o = dal::search_stored_object(pk);
+    if (o)
+      return std::dynamic_pointer_cast<const convex_of_reference>(o);
+    else {
+      pconvex_ref p = std::make_shared<pyramid2_incomplete_of_ref_>();
+      dal::add_stored_object(pk, p, p->structure(), p->pspt(),
+                             dal::PERMANENT_STATIC_OBJECT);
+      pconvex_ref p1 = basic_convex_ref(p);
+      if (p != p1) add_dependency(p, p1);
+      return p;
+    }
+  }
+
+
+  /* ******************************************************************** */
+  /*    Incomplete quadratic triangular prism element of reference.       */
+  /* ******************************************************************** */
+
+  class prism2_incomplete_of_ref_ : public convex_of_reference {
+  public :
+    scalar_type is_in(const base_node& pt) const
+    { return basic_convex_ref_->is_in(pt); }
+    scalar_type is_in_face(short_type f, const base_node& pt) const
+    { return basic_convex_ref_->is_in_face(f, pt); }
+
+    prism2_incomplete_of_ref_() {
+
+      cvs = prism2_incomplete_structure();
+      convex<base_node>::points().resize(cvs->nb_points());
+      normals_.resize(cvs->nb_faces());
+      basic_convex_ref_ = prism_of_reference(3);
+
+      normals_ = basic_convex_ref_->normals();
+
+      convex<base_node>::points()[0]  = base_node(0.0, 0.0, 0.0);
+      convex<base_node>::points()[1]  = base_node(0.5, 0.0, 0.0);
+      convex<base_node>::points()[2]  = base_node(1.0, 0.0, 0.0);
+      convex<base_node>::points()[3]  = base_node(0.0, 0.5, 0.0);
+      convex<base_node>::points()[4]  = base_node(0.5, 0.5, 0.0);
+      convex<base_node>::points()[5]  = base_node(0.0, 1.0, 0.0);
+      convex<base_node>::points()[6]  = base_node(0.0, 0.0, 0.5);
+      convex<base_node>::points()[7]  = base_node(1.0, 0.0, 0.5);
+      convex<base_node>::points()[8]  = base_node(0.0, 1.0, 0.5);
+      convex<base_node>::points()[9]  = base_node(0.0, 0.0, 1.0);
+      convex<base_node>::points()[10] = base_node(0.5, 0.0, 1.0);
+      convex<base_node>::points()[11] = base_node(1.0, 0.0, 1.0);
+      convex<base_node>::points()[12] = base_node(0.0, 0.5, 1.0);
+      convex<base_node>::points()[13] = base_node(0.5, 0.5, 1.0);
+      convex<base_node>::points()[14] = base_node(0.0, 1.0, 1.0);
+
+      ppoints = store_point_tab(convex<base_node>::points());
+    }
+  };
+
+
+  DAL_SIMPLE_KEY(prism2_incomplete_reference_key_, dim_type);
+
+  pconvex_ref prism2_incomplete_of_reference() {
+    dal::pstatic_stored_object_key
+      pk = std::make_shared<prism2_incomplete_reference_key_>(0);
+    dal::pstatic_stored_object o = dal::search_stored_object(pk);
+    if (o)
+      return std::dynamic_pointer_cast<const convex_of_reference>(o);
+    else {
+      pconvex_ref p = std::make_shared<prism2_incomplete_of_ref_>();
+      dal::add_stored_object(pk, p, p->structure(), p->pspt(),
+                             dal::PERMANENT_STATIC_OBJECT);
+      pconvex_ref p1 = basic_convex_ref(p);
+      if (p != p1) add_dependency(p, p1);
+      return p;
+    }
+  }
+
+
+  /* ******************************************************************** */
   /*    Products.                                                         */
   /* ******************************************************************** */
 

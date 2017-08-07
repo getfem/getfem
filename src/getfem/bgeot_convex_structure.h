@@ -195,6 +195,10 @@ namespace bgeot {
   }
   /// Give a pointer on the 3D pyramid structure for a degree k = 1 or 2.
   pconvex_structure pyramid_structure(short_type k);
+  /// Give a pointer on the 3D quadratic incomplete pyramid structure.
+  pconvex_structure pyramid2_incomplete_structure();
+  /// Give a pointer on the 3D quadratic incomplete prism structure.
+  pconvex_structure prism2_incomplete_structure();
   
 
   /** Simplex structure with the Lagrange grid of degree k.

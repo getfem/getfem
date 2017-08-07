@@ -559,6 +559,127 @@ namespace bgeot {
   }
 
   /* ******************************************************************** */
+  /*        Incomplete quadratic pyramidal 3D structure.                  */
+  /* ******************************************************************** */
+
+  struct pyramid2_incomplete_structure_ : public convex_structure {
+    friend pconvex_structure pyramid2_incomplete_structure();
+  };
+
+  DAL_SIMPLE_KEY(pyramid2_incomplete_structure_key_, dim_type);
+
+  pconvex_structure pyramid2_incomplete_structure() {
+    dal::pstatic_stored_object_key
+      pcsk = std::make_shared<pyramid2_incomplete_structure_key_>(0);
+    dal::pstatic_stored_object o = dal::search_stored_object(pcsk);
+    if (o)
+      return std::dynamic_pointer_cast<const convex_structure>(o);
+
+    auto p = std::make_shared<pyramid2_incomplete_structure_>();
+    pconvex_structure pcvs(p);
+
+    p->Nc = 3;
+    p->dir_points_ = std::vector<short_type>(p->Nc + 1);
+
+    p->nbpt = 13;
+    p->nbf = 5;
+    p->basic_pcvs = pyramid_structure(1);
+    //    12
+    //   /  |
+    //  10--11
+    //  |   |
+    //  8---9
+    //  /    |
+    // 5--6--7
+    // |     |
+    // 3     4
+    // |     |
+    // 0--1--2
+    p->faces_struct.resize(p->nbf);
+    p->faces = std::vector< std::vector<short_type> >(p->nbf);
+    p->faces[0] = {0,1,2,3,4,5,6,7};
+    p->faces[1] = {0,1,2,8,9,12};
+    p->faces[2] = {2,4,7,9,11,12};
+    p->faces[3] = {7,6,5,11,10,12};
+    p->faces[4] = {5,3,0,10,8,12};
+
+    p->dir_points_[0] = 0;
+    p->dir_points_[1] = 2;
+    p->dir_points_[2] = 5;
+    p->dir_points_[3] = 12;
+
+    p->faces_struct[0] = Q2_incomplete_structure(2);
+    for (int i = 1; i < p->nbf; i++)
+      p->faces_struct[i] = simplex_structure(2, 2);
+
+    dal::add_stored_object(pcsk, pcvs, Q2_incomplete_structure(2),
+                           simplex_structure(2, 2),
+                           dal::PERMANENT_STATIC_OBJECT);
+    return pcvs;
+  }
+
+  /* ******************************************************************** */
+  /*        Incomplete quadratic triangular prism 3D structure.           */
+  /* ******************************************************************** */
+
+  struct prism2_incomplete_structure_ : public convex_structure {
+    friend pconvex_structure prism2_incomplete_structure();
+  };
+
+  DAL_SIMPLE_KEY(prism2_incomplete_structure_key_, dim_type);
+
+  pconvex_structure prism2_incomplete_structure() {
+    dal::pstatic_stored_object_key
+      pcsk = std::make_shared<prism2_incomplete_structure_key_>(0);
+    dal::pstatic_stored_object o = dal::search_stored_object(pcsk);
+    if (o)
+      return std::dynamic_pointer_cast<const convex_structure>(o);
+
+    auto p = std::make_shared<prism2_incomplete_structure_>();
+    pconvex_structure pcvs(p);
+
+    p->Nc = 3;
+    p->dir_points_ = std::vector<short_type>(p->Nc + 1);
+
+    p->nbpt = 15;
+    p->nbf = 5;
+    p->basic_pcvs = prism_structure(3);
+    //    14
+    //    /|`
+    //  12 | 13
+    //  /  8  `
+    // 9--10--11
+    // |   |   |
+    // |   5   |
+    // 6  / `  7
+    // | 3   4 |
+    // |/     `|
+    // 0---1---2
+    p->faces_struct.resize(p->nbf);
+    p->faces = std::vector< std::vector<short_type> >(p->nbf);
+    p->faces[0] = {2,4,5,7,8,11,13,14};
+    p->faces[1] = {0,3,5,6,8,9,12,14};
+    p->faces[2] = {0,1,2,6,7,9,10,11};
+    p->faces[3] = {9,10,11,12,13,14};
+    p->faces[4] = {0,1,2,3,4,5};
+
+    p->dir_points_[0] = 0;
+    p->dir_points_[1] = 2;
+    p->dir_points_[2] = 5;
+    p->dir_points_[3] = 9;
+
+    for (int i = 0; i < 3; i++)
+      p->faces_struct[i] = Q2_incomplete_structure(2);
+    p->faces_struct[3] = simplex_structure(2, 2);
+    p->faces_struct[4] = simplex_structure(2, 2);
+
+    dal::add_stored_object(pcsk, pcvs, simplex_structure(2, 2),
+                           Q2_incomplete_structure(2),
+                           dal::PERMANENT_STATIC_OBJECT);
+    return pcvs;
+  }
+
+  /* ******************************************************************** */
   /*        Generic dummy convex with n global nodes.                     */
   /* ******************************************************************** */
 

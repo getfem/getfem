@@ -222,6 +222,8 @@ namespace bgeot {
                                            pgeometric_trans pg2);
   pgeometric_trans APIDECL Q2_incomplete_geotrans(dim_type nc);
   pgeometric_trans APIDECL pyramid_geotrans(short_type k);
+  pgeometric_trans APIDECL pyramid2_incomplete_geotrans();
+  pgeometric_trans APIDECL prism2_incomplete_geotrans();
 
   /**
      Get the geometric transformation from its string name.
@@ -237,6 +239,10 @@ namespace bgeot {
      GT_QK(N,K)   : Transformation on parallelepipeds, dim N, degree K
      GT_PRISM(N,K)          : Transformation on prisms, dim N, degree K
      GT_Q2_INCOMPLETE(N)    : Q2 incomplete transformation in dim N=2 or 3.
+     GT_PYRAMID2_INCOMPLETE : incomplete quadratic pyramid transformation in
+                              dim 3
+     GT_PRISM2_INCOMPLETE   : incomplete quadratic prism transformation in
+                              dim 3
      GT_PRODUCT(a,b)        : tensorial product of two transformations
      GT_LINEAR_PRODUCT(a,b) : Linear tensorial product of two transformations
      GT_LINEAR_QK(N) : shortcut for GT_LINEAR_PRODUCT(GT_LINEAR_QK(N-1),
