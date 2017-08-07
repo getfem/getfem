@@ -238,6 +238,7 @@ namespace bgeot {
 
      GT_QK(N,K)   : Transformation on parallelepipeds, dim N, degree K
      GT_PRISM(N,K)          : Transformation on prisms, dim N, degree K
+     GT_PYRAMID(K)          : Transformation on pyramids, dim 3, degree K=0,1,2
      GT_Q2_INCOMPLETE(N)    : Q2 incomplete transformation in dim N=2 or 3.
      GT_PYRAMID2_INCOMPLETE : incomplete quadratic pyramid transformation in
                               dim 3

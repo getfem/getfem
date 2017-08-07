@@ -106,8 +106,9 @@
    and subdivision.
 
    - "FEM_PYRAMID_LAGRANGE(K)" : Lagrange element on a 3D pyramid of degree
-   K=0, 1 or 2. Can be connected to a standard P1/P2 lagrange on its
-   triangular faces and standard Q1/Q2 Lagrange on its quadrangular face.
+   K=0, 1 or 2. Can be connected to a standard P1/P2 Lagrange element on its
+   triangular faces and a standard Q1/Q2 Lagrange element on its quadrangular
+   face.
 
    - "FEM_PYRAMID_DISCONTINUOUS_LAGRANGE(K)" : Discontinuous Lagrange element
    on a 3D pyramid of degree K = 0, 1 or 2.
