@@ -214,16 +214,14 @@ namespace bgeot {
   /* By Yao Koutsawa  <yao.koutsawa@tudor.lu> 2012-12-10                  */
 
   class Q2_incomplete_of_ref_ : public convex_of_reference {
-    pconvex_ref pllref;
   public :
     scalar_type is_in(const base_node& pt) const
-    { return pllref->is_in(pt); }
+    { return basic_convex_ref_->is_in(pt); }
     scalar_type is_in_face(short_type f, const base_node& pt) const
-    { return pllref->is_in_face(f, pt); }
+    { return basic_convex_ref_->is_in_face(f, pt); }
 
     Q2_incomplete_of_ref_(dim_type nc) {
       GMM_ASSERT1(nc == 2 || nc == 3, "Sorry exist only in dimension 2 or 3");
-      pllref = parallelepiped_of_reference(nc);
       cvs = Q2_incomplete_structure(nc);
       convex<base_node>::points().resize(cvs->nb_points());
       normals_.resize(nc == 2 ? 4: 6);

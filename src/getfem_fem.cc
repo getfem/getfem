@@ -3544,15 +3544,15 @@ namespace getfem {
     DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(short_type, k_last, short_type(-1));
     DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(pfem, fm_last, 0);
     DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(char, isuffix_last, 0);
-    bool found = false, isuffix = suffix[0], spec_dim = true;
+    bool found = false, isuffix = suffix[0];
 
     if (pgt_last == pgt && k_last == k && isuffix == isuffix_last)
       return fm_last;
 
     isuffix_last = isuffix;
 
-    size_type n = pgt->structure()->dim();
-    size_type nbp = pgt->basic_structure()->nb_points();
+    dim_type n = pgt->structure()->dim();
+    dim_type nbp = dim_type(pgt->basic_structure()->nb_points());
     std::stringstream name;
 
     // Identifying if it is a torus structure
@@ -3560,38 +3560,39 @@ namespace getfem {
 
     /* Identifying P1-simplexes.                                          */
     if (nbp == n+1)
-      if (pgt->basic_structure() == bgeot::simplex_structure(dim_type(n)))
-        { name << "FEM_PK" << suffix << "("; found = true; }
+      if (pgt->basic_structure() == bgeot::simplex_structure(n)) {
+        name << "FEM_PK" << suffix << "(" << n << ',' << k << arg << ')';
+        found = true;
+      }
 
     /* Identifying Q1-parallelepiped.                                     */
     if (!found && nbp == (size_type(1) << n))
-      if (pgt->basic_structure()==bgeot::parallelepiped_structure(dim_type(n)))
-        { name << "FEM_QK" << suffix << "("; found = true; }
+      if (pgt->basic_structure() == bgeot::parallelepiped_structure(n)) {
+        name << "FEM_QK" << suffix << "(" << n << ',' << k << arg << ')';
+        found = true;
+      }
 
     /* Identifying Q1-prisms.                                             */
     if (!found && nbp == 2 * n)
-      if (pgt->basic_structure() == bgeot::prism_structure(dim_type(n)))
-        { name << "FEM_PK_PRISM" << suffix << "("; found = true; }
+      if (pgt->basic_structure() == bgeot::prism_structure(n)) {
+        name << "FEM_PK_PRISM" << suffix << "(" << n << ',' << k << arg << ')';
+        found = true;
+      }
 
     /* Identifying pyramids.                                              */
     if (!found && nbp == 5)
       if (pgt->basic_structure() == bgeot::pyramid_structure(1)) {
-        name << "FEM_PYRAMID" << suffix << "_LAGRANGE(";
-        found = true; spec_dim = false;
+        name << "FEM_PYRAMID" << suffix << "_LAGRANGE(" << k << arg << ')';
+        found = true;;
       }
 
     // To be completed
 
-    if (found) {
-      if (spec_dim) name << int(n) << ',';
-      name << int(k) << arg << ')';
-      fm_last = fem_descriptor(name.str());
-      pgt_last = pgt;
-      k_last = k;
-      return fm_last;
-    }
-
-    GMM_ASSERT1(false, "This element is not taken into account. Contact us");
+    GMM_ASSERT1(found, "This element is not taken into account. Contact us");
+    fm_last = fem_descriptor(name.str());
+    pgt_last = pgt;
+    k_last = k;
+    return fm_last;
   }
 
   pfem classical_fem(bgeot::pgeometric_trans pgt, short_type k) {
