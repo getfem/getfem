@@ -230,10 +230,10 @@ namespace bgeot {
       basic_convex_ref_ = parallelepiped_of_reference(nc);
 
       if(nc==2) {
-        sc(normals_[0]) =  1, 0;
-        sc(normals_[1]) = -1, 0;
-        sc(normals_[2]) =  0, 1;
-        sc(normals_[3]) =  0,-1;
+        normals_[0] = { 1, 0};
+        normals_[1] = {-1, 0};
+        normals_[2] = { 0, 1};
+        normals_[3] = { 0,-1};
 
         convex<base_node>::points()[0] = base_node(0.0, 0.0);
         convex<base_node>::points()[1] = base_node(0.5, 0.0);
@@ -245,12 +245,12 @@ namespace bgeot {
         convex<base_node>::points()[7] = base_node(1.0, 1.0);
 
       } else {
-        sc(normals_[0]) =  1, 0, 0;
-        sc(normals_[1]) = -1, 0, 0;
-        sc(normals_[2]) =  0, 1, 0;
-        sc(normals_[3]) =  0,-1, 0;
-        sc(normals_[4]) =  0, 0, 1;
-        sc(normals_[5]) =  0, 0,-1;
+        normals_[0] = { 1, 0, 0};
+        normals_[1] = {-1, 0, 0};
+        normals_[2] = { 0, 1, 0};
+        normals_[3] = { 0,-1, 0};
+        normals_[4] = { 0, 0, 1};
+        normals_[5] = { 0, 0,-1};
 
         convex<base_node>::points()[0] = base_node(0.0, 0.0, 0.0);
         convex<base_node>::points()[1] = base_node(0.5, 0.0, 0.0);
@@ -329,11 +329,11 @@ namespace bgeot {
       else
         basic_convex_ref_ = pyramid_of_reference(1);
 
-      sc(normals_[0]) =  0., 0., -1.;
-      sc(normals_[1]) =  0.,-1.,  1.;
-      sc(normals_[2]) =  1., 0.,  1.;
-      sc(normals_[3]) =  0., 1.,  1.;
-      sc(normals_[4]) = -1., 0.,  1.;
+      normals_[0] = { 0., 0., -1.};
+      normals_[1] = { 0.,-1.,  1.};
+      normals_[2] = { 1., 0.,  1.};
+      normals_[3] = { 0., 1.,  1.};
+      normals_[4] = {-1., 0.,  1.};
 
       for (size_type i = 0; i < normals_.size(); ++i)
         gmm::scale(normals_[i], 1. / gmm::vect_norm2(normals_[i]));

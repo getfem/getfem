@@ -804,14 +804,14 @@ namespace getfem
     gf2pos_dof_mapping &dm = dal::singleton<gf2pos_dof_mapping>::instance();
     if (dm.size() == 0) {
       dm.resize(8);
-      bgeot::sc(dm[pos_export::POS_PT]) = 0;
-      bgeot::sc(dm[pos_export::POS_LN]) = 0, 1;
-      bgeot::sc(dm[pos_export::POS_TR]) = 0, 1, 2;
-      bgeot::sc(dm[pos_export::POS_QU]) = 0, 1, 3, 2;
-      bgeot::sc(dm[pos_export::POS_SI]) = 0, 1, 2, 3;
-      bgeot::sc(dm[pos_export::POS_HE]) = 0, 1, 3, 2, 4, 5, 7, 6;
-      bgeot::sc(dm[pos_export::POS_PR]) = 0, 1, 2, 3, 4, 5;
-      bgeot::sc(dm[pos_export::POS_PY]) = 0, 1, 3, 2, 4;
+      dm[pos_export::POS_PT] = {0};
+      dm[pos_export::POS_LN] = {0, 1};
+      dm[pos_export::POS_TR] = {0, 1, 2};
+      dm[pos_export::POS_QU] = {0, 1, 3, 2};
+      dm[pos_export::POS_SI] = {0, 1, 2, 3};
+      dm[pos_export::POS_HE] = {0, 1, 3, 2, 4, 5, 7, 6};
+      dm[pos_export::POS_PR] = {0, 1, 2, 3, 4, 5};
+      dm[pos_export::POS_PY] = {0, 1, 3, 2, 4};
     }
     return dm[t];
   }

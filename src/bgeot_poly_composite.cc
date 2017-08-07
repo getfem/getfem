@@ -245,14 +245,14 @@ namespace bgeot {
               for (short_type ck = 0; ck < k-ci-cj; ck++) {
                 scalar_type z=ck*h;
 
-                sc(A) = x,y,z;
-                sc(B) = x+h,y,z;
-                sc(C) = x,y+h,z;
-                sc(D) = x+h,y+h,z;
-                sc(E) = x,y,z+h;
-                sc(F) = x+h,y,z+h;
-                sc(G) = x,y+h,z+h;
-                sc(H) = x+h,y+h,z+h;
+                A = {x, y, z};
+                B = {x+h, y, z};
+                C = {x, y+h, z};
+                D = {x+h, y+h, z};
+                E = {x, y, z+h};
+                F = {x+h, y, z+h};
+                G = {x, y+h, z+h};
+                H = {x+h, y+h, z+h};
                 if (opt_gt) { 
                   A = opt_gt->transform(A, *opt_gt_pts); 
                   B = opt_gt->transform(B, *opt_gt_pts); 

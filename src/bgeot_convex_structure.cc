@@ -414,10 +414,10 @@ namespace bgeot {
       // 3     4
       // |     |
       // 0--1--2
-      sc(p->faces[0]) = 2,4,7;
-      sc(p->faces[1]) = 0,3,5;
-      sc(p->faces[2]) = 5,6,7;
-      sc(p->faces[3]) = 0,1,2;
+      p->faces[0] = {2,4,7};
+      p->faces[1] = {0,3,5};
+      p->faces[2] = {5,6,7};
+      p->faces[3] = {0,1,2};
 
       p->dir_points_[0] = 0;
       p->dir_points_[1] = 2;
@@ -434,14 +434,14 @@ namespace bgeot {
       // 8 /       9 /
       // |/        |/
       // 0----1----2
-      sc(p->faces[0]) = 2,4,7,9,11,14,16,19;
-      sc(p->faces[1]) = 0,3,5,8,10,12,15,17;
+      p->faces[0] = {2,4,7,9,11,14,16,19};
+      p->faces[1] = {0,3,5,8,10,12,15,17};
 
-      sc(p->faces[2]) = 5,6,7,10,11,17,18,19;
-      sc(p->faces[3]) = 0,1,2,8,9,12,13,14;
+      p->faces[2] = {5,6,7,10,11,17,18,19};
+      p->faces[3] = {0,1,2,8,9,12,13,14};
 
-      sc(p->faces[4]) = 12,13,14,15,16,17,18,19;
-      sc(p->faces[5]) = 0,1,2,3,4,5,6,7;
+      p->faces[4] = {12,13,14,15,16,17,18,19};
+      p->faces[5] = {0,1,2,3,4,5,6,7};
 
       p->dir_points_[0] = 0;
       p->dir_points_[1] = 2;
@@ -500,11 +500,11 @@ namespace bgeot {
       // 0------1
       p->faces_struct.resize(p->nbf);
       p->faces = std::vector< std::vector<short_type> >(p->nbf);
-      sc(p->faces[0]) = 0,1,2,3;
-      sc(p->faces[1]) = 0,1,4;
-      sc(p->faces[2]) = 1,3,4;
-      sc(p->faces[3]) = 3,2,4;
-      sc(p->faces[4]) = 2,0,4;
+      p->faces[0] = {0,1,2,3};
+      p->faces[1] = {0,1,4};
+      p->faces[2] = {1,3,4};
+      p->faces[3] = {3,2,4};
+      p->faces[4] = {2,0,4};
 
       p->dir_points_[0] = 0;
       p->dir_points_[1] = 1;
@@ -536,11 +536,11 @@ namespace bgeot {
       // 0--1--2
       p->faces_struct.resize(p->nbf);
       p->faces = std::vector< std::vector<short_type> >(p->nbf);
-      sc(p->faces[0]) = 0,1,2,3,4,5,6,7,8;
-      sc(p->faces[1]) = 0,1,2,9,10,13;
-      sc(p->faces[2]) = 2,5,8,10,12,13;
-      sc(p->faces[3]) = 8,7,6,12,11,13;
-      sc(p->faces[4]) = 6,3,0,11,9,13;
+      p->faces[0] = {0,1,2,3,4,5,6,7,8};
+      p->faces[1] = {0,1,2,9,10,13};
+      p->faces[2] = {2,5,8,10,12,13};
+      p->faces[3] = {8,7,6,12,11,13};
+      p->faces[4] = {6,3,0,11,9,13};
 
       p->dir_points_[0] = 0;
       p->dir_points_[1] = 2;

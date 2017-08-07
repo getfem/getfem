@@ -268,15 +268,13 @@ test_convex_simplif(void) {
   getfem::mesh(*mprr).write_to_file(cout);
 }
 
-using bgeot::sc;
-
 void test_convex_quality(getfem::scalar_type dx, getfem::scalar_type dy) {
   getfem::mesh m;
   getfem::base_node A,B,C;
   getfem::scalar_type h = sqrt(3.0);
-  sc(B)+=0,0;
-  sc(C)+=2,0;
-  sc(A)+=0,h;
+  B = {0,0};
+  C = {2,0};
+  A = {0,h};
   cout << "quality of triangles, and their radius estimates "
        << " (should decrease): ";
   for (size_type i=0; i < 10; ++i) {    

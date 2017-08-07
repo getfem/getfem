@@ -70,17 +70,17 @@ main() {
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
 
   getfem::mesh m;
-  getfem::base_node A; bgeot::sc(A)=0,0;
-  getfem::base_node B; bgeot::sc(B)=1,0;
-  getfem::base_node C; bgeot::sc(C)=0,2;
-  getfem::base_node D; bgeot::sc(D)=1,1;
+  getfem::base_node A{0,0};
+  getfem::base_node B{1,0};
+  getfem::base_node C{0,2};
+  getfem::base_node D{1,1};
   m.add_triangle_by_points(A,B,C);
   m.add_triangle_by_points(B,C,D);
 
-  getfem::base_node x0; bgeot::sc(x0) = .4,0;
-  getfem::base_node n0;  bgeot::sc(n0) = 1,0;  
-  getfem::base_node x1; bgeot::sc(x1) = 0,0.1;
-  getfem::base_node n1;  bgeot::sc(n1) = 1,-1;  
+  getfem::base_node x0{.4,0};
+  getfem::base_node n0{1,0};
+  getfem::base_node x1{0,0.1};
+  getfem::base_node n1{1,-1};
 
   getfem::mesh_region cvlst; 
   cvlst.add(0);
