@@ -72,6 +72,7 @@ nobase_include_HEADERS =                   		\
 	gmm/gmm_ref.h                      		\
 	gmm/gmm_std.h                      		\
 	gmm/gmm_except.h                   		\
+	gmm/gmm_feedback_management.h      		\
 	gmm/gmm_MUMPS_interface.h          		\
 	getfem/dal_config.h		   		\
 	getfem/dal_singleton.h		   		\
