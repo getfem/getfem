@@ -863,7 +863,7 @@ namespace getfem {
     mesh_region mrr;
     size_type N = m.dim();
     GMM_ASSERT1(pt1.size() == N && pt2.size() == N, "Wrong dimensions"); 
-    for (getfem::mr_visitor i(mr); !i.finished(); ++i)
+    for (getfem::mr_visitor i(mr, m); !i.finished(); ++i)
       if (i.f() != short_type(-1)) {
         bgeot::mesh_structure::ind_pt_face_ct pt
           = m.ind_points_of_face_of_convex(i.cv(), i.f());
