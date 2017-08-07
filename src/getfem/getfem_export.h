@@ -72,7 +72,7 @@ namespace getfem {
     const stored_mesh_slice *psl;
     std::unique_ptr<mesh_fem> pmf;
     dal::bit_vector pmf_dof_used;
-    std::vector<unsigned> pmf_cell_type;
+    std::vector<unsigned> pmf_mapping_type;
     std::ofstream real_os;
     dim_type dim_;
     bool reverse_endian;
@@ -100,10 +100,11 @@ namespace getfem {
                    VTK_QUADRATIC_QUAD = 23,
                    VTK_QUADRATIC_TETRA = 24,
                    VTK_QUADRATIC_HEXAHEDRON = 25,
-                   /*VTK_QUADRATIC_WEDGE = 26,*/
-		   VTK_QUADRATIC_PYRAMID = 27,
+                   VTK_QUADRATIC_WEDGE = 26,
+                   VTK_QUADRATIC_PYRAMID = 27,
                    VTK_BIQUADRATIC_QUAD = 28,
-                   VTK_TRIQUADRATIC_HEXAHEDRON = 29 } vtk_cell_type;
+                   VTK_TRIQUADRATIC_HEXAHEDRON = 29,
+                   VTK_BIQUADRATIC_QUADRATIC_WEDGE = 32 } vtk_cell_type;
     vtk_export(const std::string& fname, bool ascii_ = false);
     vtk_export(std::ostream &os_, bool ascii_ = false);
 

@@ -31,32 +31,97 @@ namespace getfem
    * ------------------------------------------------------------- */
 
   struct gf2vtk_dof_mapping : public std::vector<std::vector<unsigned> > {};
+  struct gf2vtk_vtk_type : public std::vector<int> {};
 
-  static const std::vector<unsigned> &getfem_to_vtk_dof_mapping(int t) {
-    gf2vtk_dof_mapping &dm = dal::singleton<gf2vtk_dof_mapping>::instance();
-    if (dm.size() == 0) {
-      dm.resize(30);
-      bgeot::sc(dm[vtk_export::VTK_VERTEX]) = 0;
-      bgeot::sc(dm[vtk_export::VTK_LINE]) = 0, 1;
-      bgeot::sc(dm[vtk_export::VTK_QUADRATIC_EDGE]) = 0, 2, 1;
-      bgeot::sc(dm[vtk_export::VTK_TRIANGLE]) = 0, 1, 2;
-      bgeot::sc(dm[vtk_export::VTK_QUADRATIC_TRIANGLE]) = 0, 2, 5, 1, 4, 3;
-      bgeot::sc(dm[vtk_export::VTK_QUAD]) = 0, 1, 3, 2;
-      bgeot::sc(dm[vtk_export::VTK_PIXEL]) = 0, 1, 2, 3;
-      bgeot::sc(dm[vtk_export::VTK_QUADRATIC_QUAD]) = 0, 2, 7, 5, 1, 4, 6, 3;
-      bgeot::sc(dm[vtk_export::VTK_TETRA]) = 0, 1, 2, 3;
-      bgeot::sc(dm[vtk_export::VTK_QUADRATIC_TETRA]) = 0, 2, 5, 9, 1, 4, 3, 6, 7, 8;
-      bgeot::sc(dm[vtk_export::VTK_PYRAMID]) = 0, 1, 3, 2, 4;
-      bgeot::sc(dm[vtk_export::VTK_WEDGE]) = 0, 1, 2, 3, 4, 5;
-      //bgeot::sc(dm[vtk_export::VTK_QUADRATIC_WEDGE]) = 0, 6, 1, 7, 2, 8, 3, 4, 5;
-      bgeot::sc(dm[vtk_export::VTK_VOXEL]) = 0, 1, 2, 3, 4, 5, 6, 7;
-      bgeot::sc(dm[vtk_export::VTK_HEXAHEDRON]) = 0, 1, 3, 2, 4, 5, 7, 6;
-      bgeot::sc(dm[vtk_export::VTK_QUADRATIC_HEXAHEDRON]) = 0, 2, 7, 5, 12, 14, 19, 17, 1, 4, 6, 3, 13, 16, 18, 15, 8, 9, 11, 10;
-      bgeot::sc(dm[vtk_export::VTK_QUADRATIC_PYRAMID]) = 0, 2, 8, 6, 13, 1, 5, 7, 3, 9, 10, 12, 11; // to be verified
-      bgeot::sc(dm[vtk_export::VTK_BIQUADRATIC_QUAD]) = 0, 2, 8, 6, 1, 5, 7, 3, 4;
-      bgeot::sc(dm[vtk_export::VTK_TRIQUADRATIC_HEXAHEDRON]) = 0, 2, 8, 6, 18, 20, 26, 24, 1, 5, 7, 3, 19, 23, 25, 21, 9, 11, 17, 15, 12, 14, 10, 16, 4, 22;
-    }
-    return dm[t];
+  typedef enum { NO_VTK_MAPPING,
+                 N1_TO_VTK_VERTEX,
+                 N2_TO_VTK_LINE,
+                 N3_TO_VTK_TRIANGLE,
+                 N4_TO_VTK_PIXEL,
+                 N4_TO_VTK_QUAD,
+                 N4_TO_VTK_TETRA,
+                 N8_TO_VTK_VOXEL,
+                 N8_TO_VTK_HEXAHEDRON,
+                 N6_TO_VTK_WEDGE,
+                 N5_TO_VTK_PYRAMID,
+                 N3_TO_VTK_QUADRATIC_EDGE,
+                 N6_TO_VTK_QUADRATIC_TRIANGLE,
+                 N8_TO_VTK_QUADRATIC_QUAD,
+                 N10_TO_VTK_QUADRATIC_TETRA,
+                 N20_TO_VTK_QUADRATIC_HEXAHEDRON,
+                 N15_TO_VTK_QUADRATIC_WEDGE,
+                 N13_TO_VTK_QUADRATIC_PYRAMID,
+                 N14_TO_VTK_QUADRATIC_PYRAMID,
+                 N9_TO_VTK_BIQUADRATIC_QUAD,
+                 N27_TO_VTK_TRIQUADRATIC_HEXAHEDRON,
+                 N18_TO_VTK_BIQUADRATIC_QUADRATIC_WEDGE } vtk_mapping_type;
+
+
+  void init_gf2vtk() {
+    // see https://www.kitware.com/products/books/VTKUsersGuide.pdf
+    // and https://www.kitware.com/products/books/VTKTextbook.pdf
+    // (there are some conflicts between the two)
+    gf2vtk_dof_mapping &vtkmaps = dal::singleton<gf2vtk_dof_mapping>::instance();
+    gf2vtk_vtk_type &vtktypes = dal::singleton<gf2vtk_vtk_type>::instance();
+    vtkmaps.resize(25);
+    vtktypes.resize(25);
+
+    vtktypes[N1_TO_VTK_VERTEX] = vtk_export::VTK_VERTEX;
+    vtkmaps [N1_TO_VTK_VERTEX] = {0};
+    vtktypes[N2_TO_VTK_LINE] = vtk_export::VTK_LINE;
+    vtkmaps [N2_TO_VTK_LINE] = {0, 1};
+    vtktypes[N3_TO_VTK_TRIANGLE] = vtk_export::VTK_TRIANGLE;
+    vtkmaps [N3_TO_VTK_TRIANGLE] = {0, 1, 2};
+    vtktypes[N4_TO_VTK_PIXEL] = vtk_export::VTK_PIXEL;
+    vtkmaps [N4_TO_VTK_PIXEL] = {0, 1, 2, 3};
+    vtktypes[N4_TO_VTK_QUAD] = vtk_export::VTK_QUAD;
+    vtkmaps [N4_TO_VTK_QUAD] = {0, 1, 3, 2};
+    vtktypes[N4_TO_VTK_TETRA] = vtk_export::VTK_TETRA;
+    vtkmaps [N4_TO_VTK_TETRA] = {0, 1, 2, 3};
+    vtktypes[N8_TO_VTK_VOXEL] = vtk_export::VTK_VOXEL;
+    vtkmaps [N8_TO_VTK_VOXEL] = {0, 1, 2, 3, 4, 5, 6, 7};
+    vtktypes[N8_TO_VTK_HEXAHEDRON] = vtk_export::VTK_HEXAHEDRON;
+    vtkmaps [N8_TO_VTK_HEXAHEDRON] = {0, 1, 3, 2, 4, 5, 7, 6};
+    vtktypes[N6_TO_VTK_WEDGE] = vtk_export::VTK_WEDGE;
+    vtkmaps [N6_TO_VTK_WEDGE] = {0, 1, 2, 3, 4, 5};
+    vtktypes[N5_TO_VTK_PYRAMID] = vtk_export::VTK_PYRAMID;
+    vtkmaps [N5_TO_VTK_PYRAMID] = {0, 1, 3, 2, 4};
+    vtktypes[N3_TO_VTK_QUADRATIC_EDGE] = vtk_export::VTK_QUADRATIC_EDGE;
+    vtkmaps [N3_TO_VTK_QUADRATIC_EDGE] = {0, 2, 1};
+    vtktypes[N6_TO_VTK_QUADRATIC_TRIANGLE] = vtk_export::VTK_QUADRATIC_TRIANGLE;
+    vtkmaps [N6_TO_VTK_QUADRATIC_TRIANGLE] = {0, 2, 5, 1, 4, 3};
+    vtktypes[N8_TO_VTK_QUADRATIC_QUAD] = vtk_export::VTK_QUADRATIC_QUAD;
+    vtkmaps [N8_TO_VTK_QUADRATIC_QUAD] = {0, 2, 7, 5, 1, 4, 6, 3};
+    vtktypes[N10_TO_VTK_QUADRATIC_TETRA] = vtk_export::VTK_QUADRATIC_TETRA;
+    vtkmaps [N10_TO_VTK_QUADRATIC_TETRA] = {0, 2, 5, 9, 1, 4, 3, 6, 7, 8};
+    vtktypes[N20_TO_VTK_QUADRATIC_HEXAHEDRON] = vtk_export::VTK_QUADRATIC_HEXAHEDRON;
+    vtkmaps [N20_TO_VTK_QUADRATIC_HEXAHEDRON] = {0, 2, 7, 5, 12, 14, 19, 17, 1, 4, 6, 3, 13, 16, 18, 15, 8, 9, 11, 10};
+    vtktypes[N15_TO_VTK_QUADRATIC_WEDGE] = vtk_export::VTK_QUADRATIC_WEDGE;
+    vtkmaps [N15_TO_VTK_QUADRATIC_WEDGE] = {0, 2, 5, 9, 11, 14, 1, 4, 3, 10, 13, 12, 6, 7, 8};
+                                      // = {0, 5, 2, 9, 14, 11, 3, 4, 1, 12, 13, 10, 6, 8, 7};
+    vtktypes[N13_TO_VTK_QUADRATIC_PYRAMID] = vtk_export::VTK_QUADRATIC_PYRAMID;
+    vtkmaps [N13_TO_VTK_QUADRATIC_PYRAMID] = {0, 2, 7, 5, 12, 1, 4, 6, 3, 8, 9, 11, 10};
+    vtktypes[N14_TO_VTK_QUADRATIC_PYRAMID] = vtk_export::VTK_QUADRATIC_PYRAMID;
+    vtkmaps [N14_TO_VTK_QUADRATIC_PYRAMID] = {0, 2, 8, 6, 13, 1, 5, 7, 3, 9, 10, 12, 11};
+    vtktypes[N9_TO_VTK_BIQUADRATIC_QUAD] = vtk_export::VTK_BIQUADRATIC_QUAD;
+    vtkmaps [N9_TO_VTK_BIQUADRATIC_QUAD] = {0, 2, 8, 6, 1, 5, 7, 3, 4};
+    vtktypes[N27_TO_VTK_TRIQUADRATIC_HEXAHEDRON] = vtk_export::VTK_TRIQUADRATIC_HEXAHEDRON;
+    vtkmaps [N27_TO_VTK_TRIQUADRATIC_HEXAHEDRON] = {0, 2, 8, 6, 18, 20, 26, 24, 1, 5, 7, 3, 19, 23, 25, 21, 9, 11, 17, 15, 12, 14, 10, 16, 4, 22};
+    vtktypes[N18_TO_VTK_BIQUADRATIC_QUADRATIC_WEDGE] = vtk_export::VTK_BIQUADRATIC_QUADRATIC_WEDGE;
+    vtkmaps [N18_TO_VTK_BIQUADRATIC_QUADRATIC_WEDGE]  = {0, 2, 5, 12, 14, 17, 1, 4, 3, 13, 16, 15, 6, 8, 11, 7, 10, 9};
+  }
+
+  static const std::vector<unsigned> &
+  select_vtk_dof_mapping(unsigned t) {
+    gf2vtk_dof_mapping &vtkmaps = dal::singleton<gf2vtk_dof_mapping>::instance();
+    if (vtkmaps.size() == 0) init_gf2vtk();
+    return vtkmaps[t];
+  }
+
+  int select_vtk_type(unsigned t) {
+    gf2vtk_vtk_type &vtktypes = dal::singleton<gf2vtk_vtk_type>::instance();
+    if (vtktypes.size() == 0) init_gf2vtk();
+    return vtktypes[t];
   }
 
   vtk_export::vtk_export(std::ostream &os_, bool ascii_)
@@ -139,7 +204,21 @@ namespace getfem
     GMM_ASSERT1(dim_ <= 3, "attempt to export a " << int(dim_)
               << "D slice (not supported)");
     pmf = std::make_unique<mesh_fem>(const_cast<mesh&>(m), dim_type(1));
-    pmf->set_classical_finite_element(1);
+    for (dal::bv_visitor cv(m.convex_index()); !cv.finished(); ++cv) {
+      bgeot::pgeometric_trans pgt = m.trans_of_convex(cv);
+      pfem pf;
+      if (pgt == bgeot::geometric_trans_descriptor("GT_Q2_INCOMPLETE(2)"))
+        pf =  fem_descriptor("FEM_Q2_INCOMPLETE(2)");
+      else if (pgt == bgeot::geometric_trans_descriptor("GT_Q2_INCOMPLETE(3)"))
+        pf =  fem_descriptor("FEM_Q2_INCOMPLETE(3)");
+      else if (pgt == bgeot::geometric_trans_descriptor("GT_PYRAMID2_INCOMPLETE"))
+        pf =  fem_descriptor("FEM_PYRAMID2_INCOMPLETE_LAGRANGE");
+      else if (pgt == bgeot::geometric_trans_descriptor("GT_PRISM2_INCOMPLETE"))
+        pf =  fem_descriptor("FEM_PRISM2_INCOMPLETE_LAGRANGE");
+      else
+        pf = getfem::classical_fem(pgt, pgt->complexity() > 1 ? 2 : 1);
+      pmf->set_finite_element(cv, pf);
+    }
     exporting(*pmf);
   }
 
@@ -155,16 +234,20 @@ namespace getfem
       bgeot::pgeometric_trans pgt = mf.linked_mesh().trans_of_convex(cv);
       pfem pf = mf.fem_of_element(cv);
 
-      bool discontinuous = false;
-      for (unsigned i=0; i < pf->nb_dof(cv); ++i) {
-        /* could be a better test for discontinuity .. */
-        if (!dof_linkable(pf->dof_types()[i])) { discontinuous = true; break; }
-      }
-
       if (pf == fem_descriptor("FEM_Q2_INCOMPLETE(2)") ||
-          pf == fem_descriptor("FEM_Q2_INCOMPLETE(3)"))
+          pf == fem_descriptor("FEM_Q2_INCOMPLETE(3)") ||
+          pf == fem_descriptor("FEM_PYRAMID2_INCOMPLETE_LAGRANGE") ||
+          pf == fem_descriptor("FEM_PYRAMID2_INCOMPLETE_DISCONTINUOUS_LAGRANGE") ||
+          pf == fem_descriptor("FEM_PRISM2_INCOMPLETE_LAGRANGE") ||
+          pf == fem_descriptor("FEM_PRISM2_INCOMPLETE_DISCONTINUOUS_LAGRANGE"))
         pmf->set_finite_element(cv, pf);
       else {
+        bool discontinuous = false;
+        for (unsigned i=0; i < pf->nb_dof(cv); ++i) {
+          /* could be a better test for discontinuity .. */
+          if (!dof_linkable(pf->dof_types()[i])) { discontinuous = true; break; }
+        }
+
         pfem classical_pf1 = discontinuous ? classical_discontinuous_fem(pgt, 1)
                                            : classical_fem(pgt, 1);
 
@@ -181,43 +264,48 @@ namespace getfem
     /* find out which dof will be exported to VTK */
 
     const mesh &m = pmf->linked_mesh();
-    pmf_cell_type.resize(pmf->convex_index().last_true() + 1, unsigned(-1));
+    pmf_mapping_type.resize(pmf->convex_index().last_true() + 1, unsigned(-1));
     pmf_dof_used.sup(0, pmf->nb_basic_dof());
     for (dal::bv_visitor cv(pmf->convex_index()); !cv.finished(); ++cv) {
-      int t = -1;
+      vtk_mapping_type t = NO_VTK_MAPPING;
       size_type nbd = pmf->fem_of_element(cv)->nb_dof(cv);
       switch (pmf->fem_of_element(cv)->dim()) {
-      case 0: t = VTK_VERTEX; break;
+      case 0: t = N1_TO_VTK_VERTEX; break;
       case 1:
-	if (nbd == 2) t = VTK_LINE;
-	else if (nbd == 3) t = VTK_QUADRATIC_EDGE;
-	break;
+        if (nbd == 2) t = N2_TO_VTK_LINE;
+        else if (nbd == 3) t = N3_TO_VTK_QUADRATIC_EDGE;
+        break;
       case 2:
-	if (nbd == 3) t = VTK_TRIANGLE;
-	else if (nbd == 4)
-	  t = check_voxel(m.points_of_convex(cv)) ? VTK_PIXEL : VTK_QUAD;
-	else if (nbd == 6) t = VTK_QUADRATIC_TRIANGLE;
-	else if (nbd == 8) t = VTK_QUADRATIC_QUAD;
-	else if (nbd == 9) t = VTK_BIQUADRATIC_QUAD;
-	break;
+        if (nbd == 3) t = N3_TO_VTK_TRIANGLE;
+        else if (nbd == 4)
+          t = check_voxel(m.points_of_convex(cv)) ? N4_TO_VTK_PIXEL
+                                                  : N4_TO_VTK_QUAD;
+        else if (nbd == 6) t = N6_TO_VTK_QUADRATIC_TRIANGLE;
+        else if (nbd == 8) t = N8_TO_VTK_QUADRATIC_QUAD;
+        else if (nbd == 9) t = N9_TO_VTK_BIQUADRATIC_QUAD;
+        break;
       case 3:
-	if (nbd == 4) t = VTK_TETRA;
-	else if (nbd == 10) t = VTK_QUADRATIC_TETRA;
-	else if (nbd == 8)
-	  t = check_voxel(m.points_of_convex(cv)) ? VTK_VOXEL:VTK_HEXAHEDRON;
-	else if (nbd == 20) t = VTK_QUADRATIC_HEXAHEDRON;
-	else if (nbd == 27) t = VTK_TRIQUADRATIC_HEXAHEDRON;
-	else if (nbd == 6) t = VTK_WEDGE;
-	else if (nbd == 5) t = VTK_PYRAMID;
-	else if (nbd == 14) t = VTK_QUADRATIC_PYRAMID;
-	break;
+        if (nbd == 4) t = N4_TO_VTK_TETRA;
+        else if (nbd == 10) t = N10_TO_VTK_QUADRATIC_TETRA;
+        else if (nbd == 8)
+          t = check_voxel(m.points_of_convex(cv)) ? N8_TO_VTK_VOXEL
+                                                  : N8_TO_VTK_HEXAHEDRON;
+        else if (nbd == 20) t = N20_TO_VTK_QUADRATIC_HEXAHEDRON;
+        else if (nbd == 27) t = N27_TO_VTK_TRIQUADRATIC_HEXAHEDRON;
+        else if (nbd == 5) t = N5_TO_VTK_PYRAMID;
+        else if (nbd == 13) t = N13_TO_VTK_QUADRATIC_PYRAMID;
+        else if (nbd == 14) t = N14_TO_VTK_QUADRATIC_PYRAMID;
+        else if (nbd == 6) t = N6_TO_VTK_WEDGE;
+        else if (nbd == 15) t = N15_TO_VTK_QUADRATIC_WEDGE;
+        else if (nbd == 18) t = N18_TO_VTK_BIQUADRATIC_QUADRATIC_WEDGE;
+        break;
       }
       GMM_ASSERT1(t != -1, "semi internal error. Could not map " <<
                   name_of_fem(pmf->fem_of_element(cv))
                 << " to a VTK cell type");
-      pmf_cell_type[cv] = t;
+      pmf_mapping_type[cv] = t;
 
-      const std::vector<unsigned> &dmap = getfem_to_vtk_dof_mapping(t);
+      const std::vector<unsigned> &dmap = select_vtk_dof_mapping(t);
       //cout << "nbd = " << nbd << ", t = " << t << ", dmap = "<<dmap << "\n";
       GMM_ASSERT1(dmap.size() <= pmf->nb_basic_dof_of_element(cv),
                 "inconsistency in vtk_dof_mapping");
@@ -332,12 +420,12 @@ namespace getfem
 
     size_type nb_cell_values = 0;
     for (dal::bv_visitor cv(pmf->convex_index()); !cv.finished(); ++cv)
-      nb_cell_values += (1 + getfem_to_vtk_dof_mapping(pmf_cell_type[cv]).size());
+      nb_cell_values += (1 + select_vtk_dof_mapping(pmf_mapping_type[cv]).size());
 
     write_separ(); os << "CELLS " << pmf->convex_index().card() << " " << nb_cell_values << "\n";
 
     for (dal::bv_visitor cv(pmf->convex_index()); !cv.finished(); ++cv) {
-      const std::vector<unsigned> &dmap = getfem_to_vtk_dof_mapping(pmf_cell_type[cv]);
+      const std::vector<unsigned> &dmap = select_vtk_dof_mapping(pmf_mapping_type[cv]);
       write_val(int(dmap.size()));
       for (size_type i=0; i < dmap.size(); ++i)
         write_val(int(dofmap[pmf->ind_basic_dof_of_element(cv)[dmap[i]]]));
@@ -346,7 +434,7 @@ namespace getfem
 
     write_separ(); os << "CELL_TYPES " << pmf->convex_index().card() << "\n";
     for (dal::bv_visitor cv(pmf->convex_index()); !cv.finished(); ++cv) {
-      write_val(int(pmf_cell_type[cv]));
+      write_val(select_vtk_type(pmf_mapping_type[cv]));
       write_separ();
     }
 
