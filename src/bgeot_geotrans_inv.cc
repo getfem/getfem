@@ -105,9 +105,6 @@ namespace bgeot
   bool geotrans_inv_convex::invert_nonlin(const base_node& xreal,
 	       			  base_node& x, scalar_type IN_EPS,
 				  bool &converged, bool throw_except) {
-
-    //    for (size_type j = 0; j < pgt->nb_points(); ++j) 
-    //       cout << "point " << j << " : " << cvpts[j] << endl;
     converged = true;
     base_node xn(P), y, z,x0;
     /* find an initial guess */
