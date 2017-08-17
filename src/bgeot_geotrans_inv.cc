@@ -87,13 +87,13 @@ namespace bgeot
     geotrans_inv_convex_bfgs(geotrans_inv_convex &gic_, 
 			     const base_node &xr) : gic(gic_), xreal(xr) {}
     scalar_type operator()(const base_node& x) const {
-      base_node r = gic.pgt->transform(x, gic.cvpts) - xreal;
+      base_node r = gic.pgt->transform(x, gic.G) - xreal;
       return gmm::vect_norm2_sqr(r)/2.;
     }
     void operator()(const base_node& x, base_small_vector& gr) const {
       gic.pgt->poly_vector_grad(x, gic.pc);
       gic.update_B();
-      base_node r = gic.pgt->transform(x, gic.cvpts) - xreal;
+      base_node r = gic.pgt->transform(x, gic.G) - xreal;
       gr.resize(x.size());
       gmm::mult(gmm::transposed(gic.K), r, gr); 
     }
@@ -105,15 +105,17 @@ namespace bgeot
   bool geotrans_inv_convex::invert_nonlin(const base_node& xreal,
 	       			  base_node& x, scalar_type IN_EPS,
 				  bool &converged, bool throw_except) {
+    using namespace gmm;
+
     converged = true;
     base_node xn(P), y, z,x0;
     /* find an initial guess */
-    x0 = (pgt->geometric_nodes())[0]; y = cvpts[0];  
+    x0 = (pgt->geometric_nodes())[0]; copy(mat_col(G, 0), y);  
     scalar_type d = gmm::vect_dist2_sqr(y, xreal);
     for (size_type j = 1; j < pgt->nb_points(); ++j) { 
-      scalar_type d2 = gmm::vect_dist2_sqr(cvpts[j], xreal);
+      scalar_type d2 = gmm::vect_dist2_sqr(mat_col(G, j), xreal);
       if (d2 < d)
-        { d = d2; x0 = pgt->geometric_nodes()[j]; y = cvpts[j]; }
+        { d = d2; x0 = pgt->geometric_nodes()[j]; copy(mat_col(G, j), y); }
     }
     x = x0;
 
@@ -132,7 +134,7 @@ namespace bgeot
       scalar_type newres;
       for (unsigned i=1; i<=256; i*=2) {
 	z = x + xn / scalar_type(i);
-	y = pgt->transform(z, cvpts);
+	y = pgt->transform(z, G);
 	
 	rn = xreal - y; 
 	
@@ -160,7 +162,7 @@ namespace bgeot
       gmm::iteration iter(EPS,0);
       x = x0;
       gmm::bfgs(b,b,x,10,iter);
-      rn = pgt->transform(x,cvpts) - xreal; 
+      rn = pgt->transform(x, G) - xreal; 
       
       if (pgt->convex_ref()->is_in(x) < IN_EPS &&
 	  (N==P && gmm::vect_norm2(rn) > IN_EPS)) {

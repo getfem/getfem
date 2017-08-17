@@ -64,8 +64,6 @@ namespace bgeot {
     size_type N, P;
     base_matrix G, pc, K, B, CS;
     pgeometric_trans pgt;
-    std::vector<base_node> cvpts; /* used only for non-linear geotrans
-				  -- we should use the matrix a instead... */
     scalar_type EPS;
   public:
     const base_matrix &get_G() const { return G; }
@@ -145,9 +143,6 @@ namespace bgeot {
       }
       // computation of the pseudo inverse
       update_B();
-    } else { /* not much to precompute for non-linear geometric
-		transformations .. */
-      cvpts.assign(nodes.begin(), nodes.end());
     }
   }
 
