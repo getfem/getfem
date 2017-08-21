@@ -20,7 +20,12 @@
 ===========================================================================*/
 
 #include "getfem/bgeot_geotrans_inv.h"
+#include "getfem/bgeot_mesh_structure.h"
 #include "gmm/gmm_solver_bfgs.h"
+
+using namespace gmm;
+using namespace std;
+
 namespace bgeot
 { 
   bool geotrans_inv_convex::invert(const base_node& n, base_node& n_ref,
@@ -99,6 +104,194 @@ namespace bgeot
     }
   };
 
+string element_type_of_pgt(const string &pgt_name) {
+  return pgt_name.substr(3, pgt_name.find("(") - 3);
+}
+
+pair<string, string> get_pgt_names(const string &pgt_name) {
+  auto pos_start = pgt_name.find("(") + 1;
+  auto pos_end = pgt_name.find(")") + 1;
+  auto pgt_name_1 = pgt_name.substr(pos_start, pos_end - pos_start);
+
+  pos_start = pos_end + 1;
+  pos_end = pgt_name.find(")", pos_start) + 1;
+  auto pgt_name_2 = pgt_name.substr(pos_start, pos_end - pos_start);
+
+  return {pgt_name_1, pgt_name_2};
+}
+
+dim_type get_dim_of_pgt(const string &pgt_name)
+{
+  auto element_type = element_type_of_pgt(pgt_name);
+  if ((element_type == "PK") || (element_type == "QK") || (element_type == "PRISM")
+      || (element_type == "Q2_INCOMPLETE")) {
+    auto pos_start = pgt_name.find("(") + 1;
+    auto end_symbol = (element_type == "Q2_INCOMPLETE") ? ")" : ",";
+    return stoi(pgt_name.substr(pos_start, pgt_name.find(end_symbol) - pos_start));
+  }
+  else if (element_type == "PRODUCT") {
+    auto pgt_names = get_pgt_names(pgt_name);
+    return get_dim_of_pgt(pgt_names.first) + get_dim_of_pgt(pgt_names.second);
+  }
+  else
+  {
+    GMM_THROW_DEFAULT("Could not determine type of " + pgt_name);
+    return -1;
+  }
+}
+
+string create_linear_pgt_name(const string &original_pgt) {
+  string linear_pgt;
+  auto element_type = element_type_of_pgt(original_pgt);
+
+  if ((element_type == "PK") || (element_type == "QK") || (element_type == "PRISM"))
+  {
+    linear_pgt = original_pgt;
+
+    auto start_pos = linear_pgt.find(",") + 1;
+    linear_pgt.replace(start_pos, linear_pgt.find(")") - start_pos, "1");
+  }
+  else if (element_type == "Q2_INCOMPLETE") {
+    linear_pgt = "GT_QK(" + std::to_string(get_dim_of_pgt(original_pgt)) + ",1)";
+  }
+  else if (element_type == "PRODUCT") {
+    auto pgt_names = get_pgt_names(original_pgt);
+    auto linear_pgt1 = create_linear_pgt_name(pgt_names.first);
+    auto linear_pgt2 = create_linear_pgt_name(pgt_names.second);
+    linear_pgt = "GT_PRODUCT(" + linear_pgt1 + "," + linear_pgt2 + ")";
+  }
+  else GMM_THROW_DEFAULT("Could not determine type of " + original_pgt);
+
+  return linear_pgt;
+}
+
+pgeometric_trans create_linear_pgt(const string &original_pgt) {
+  return geometric_trans_descriptor(create_linear_pgt_name(original_pgt));
+}
+
+base_vector get_degrees_of_pgt(const string &pgt_name, dim_type dim) {
+  auto element_type = element_type_of_pgt(pgt_name);
+  base_vector degrees(dim);
+
+  if ((element_type == "PK") || (element_type == "QK") || (element_type == "PRISM")) {
+    auto pos = pgt_name.find(",") + 1;
+    fill(degrees, stoi(pgt_name.substr(pos, pgt_name.find(")") - pos)));
+  }
+  else if (element_type == "Q2_INCOMPLETE") fill(degrees, 2);
+  else if (element_type == "PRODUCT") {
+    auto pgt_names = get_pgt_names(pgt_name);
+    auto dim1 = get_dim_of_pgt(pgt_names.first);
+    auto degrees1 = sub_vector(degrees, sub_interval(0, dim1));
+    copy(get_degrees_of_pgt(pgt_names.first, dim1), degrees1);
+    auto dim2 = get_dim_of_pgt(pgt_names.second);
+    auto degrees2 = sub_vector(degrees, sub_interval(dim1, dim2));
+    copy(get_degrees_of_pgt(pgt_names.second, dim2), degrees2);
+  }
+  else GMM_THROW_DEFAULT("Could not determine type of " + pgt_name);
+
+  return degrees;
+}
+
+vector<size_type> get_linear_nodes_indices(
+  const string &pgt_name, const base_vector &degrees)
+{
+  auto dim = degrees.size();
+  auto element_type = element_type_of_pgt(pgt_name);
+  vector<size_type> indices;
+
+  if (element_type == "PK") {
+    indices.push_back(0);
+    indices.push_back(degrees[0]);
+    if (dim > 1) indices.push_back((degrees[0] + 1) * (degrees[1] + 2) / 2 - 1);
+    if (dim > 2) {
+      indices.push_back(
+        (degrees[0] + 1) * (degrees[1] + 2) * ((2 * degrees[2] + 3) / 3 + 1) / 4 - 1);
+    }
+  }
+  else if (element_type == "QK") {
+    indices.push_back(0);
+    indices.push_back(degrees[0]);
+    if (dim > 1) {
+      indices.push_back(degrees[0] * (degrees[1] + 1));
+      indices.push_back((degrees[0] + 1) * (degrees[1] + 1) - 1);
+    }
+    if (dim > 2) {
+      auto nb_nodes_plane = (degrees[0] + 1) * (degrees[1] + 1);
+      indices.push_back(nb_nodes_plane * degrees[2]);
+      indices.push_back(nb_nodes_plane * degrees[2] + degrees[0]);
+      indices.push_back(nb_nodes_plane * degrees[2] + degrees[0] * (degrees[1] + 1));
+      indices.push_back(nb_nodes_plane * (degrees[2] + 1) - 1);
+    }
+  }
+  else if (element_type == "PRISM") {
+    indices.push_back(0);
+    indices.push_back(degrees[0]);
+    indices.push_back((degrees[0] + 1) * (degrees[1] + 2) / 2 - 1);
+    indices.push_back((degrees[0] + 1) * (degrees[1] + 2) / 2);
+    indices.push_back((degrees[0] + 1) * (degrees[1] + 2) * (degrees[2] + 1) / 2 - 1);
+  }
+  else if (element_type == "Q2_INCOMPLETE") {
+    indices.push_back(0);
+    indices.push_back(2);
+    if (dim > 1) {
+      indices.push_back(5);
+      indices.push_back(7);
+    }
+    if (dim > 2) {
+      indices.push_back(12);
+      indices.push_back(14);
+      indices.push_back(17);
+      indices.push_back(19);
+    }
+  }
+  else if (element_type == "PRODUCT") {
+    auto pgt_name1 = get_pgt_names(pgt_name).first;
+    auto dim1 = get_dim_of_pgt(pgt_name1);
+    auto indices_plane = get_linear_nodes_indices(pgt_name1, dim1);
+
+    for (auto i : indices_plane) indices.push_back(i);
+
+    for (auto d = dim1; d < dim; ++d) {
+      auto indices_old = indices;
+
+      for (auto i : indices_old) indices.push_back(degrees[d] * indices_old.size() + i);
+    }
+  }
+
+  return indices;
+}
+
+void project_into_convex(base_node &x, const geometric_trans &geo_trans) {
+  auto dim = geo_trans.dim();
+
+  for (auto d = 0; d < dim; ++d) {
+    if (x[d] < 0.0) x[d] = 0.0;
+    if (x[d] > 1.0) x[d] = 1.0;
+  }
+
+  auto nb_simplices = geo_trans.convex_ref()->simplexified_convex()->nb_convex();
+
+  if (nb_simplices == 1) { //simplex
+    auto sum_coordinates = 0.0;
+
+    for (auto d = 0; d < dim; ++d) sum_coordinates += x[d];
+
+    if (sum_coordinates > 1.0) scale(x, 1.0 / sum_coordinates);
+  }
+  else if ((dim == 3) && (nb_simplices != 4)) { //prism
+    auto sum_coordinates = x[0] + x[1];
+
+    if (sum_coordinates > 1.0) {
+      x[0] /= sum_coordinates;
+      x[1] /= sum_coordinates;
+    }
+  }
+}
+
+vector<size_type> get_linear_nodes_indices(const string &pgt_name, dim_type dim) {
+  return get_linear_nodes_indices(pgt_name, get_degrees_of_pgt(pgt_name, dim));
+}
+
   /* inversion for non-linear geometric transformations 
      (Newton on Grad(pgt)(y - pgt(x)) = 0 )
   */
@@ -110,14 +303,8 @@ namespace bgeot
     converged = true;
     base_node xn(P), y, z,x0;
     /* find an initial guess */
-    x0 = (pgt->geometric_nodes())[0]; copy(mat_col(G, 0), y);  
-    scalar_type d = gmm::vect_dist2_sqr(y, xreal);
-    for (size_type j = 1; j < pgt->nb_points(); ++j) { 
-      scalar_type d2 = gmm::vect_dist2_sqr(mat_col(G, j), xreal);
-      if (d2 < d)
-        { d = d2; x0 = pgt->geometric_nodes()[j]; copy(mat_col(G, j), y); }
-    }
-    x = x0;
+    nonlinear_storage.plinear_inversion->invert(xreal, x);
+    project_into_convex(x, *nonlinear_storage.plinear_inversion->pgt);
 
     base_node vres(P);
     base_node rn(xreal); rn -= y; 

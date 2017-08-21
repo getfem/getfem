@@ -57,6 +57,14 @@
 #include "bgeot_kdtree.h"
 
 namespace bgeot {
+  class geotrans_inv_convex;
+
+  struct nonlinear_storage {
+    base_node diff;
+    base_node x_real;
+    base_node x_ref;
+    std::shared_ptr<geotrans_inv_convex> plinear_inversion;
+  };
   /** 
       does the inversion of the geometric transformation for a given convex
   */
@@ -120,8 +128,15 @@ namespace bgeot {
     bool invert_nonlin(const base_node& n, base_node& n_ref,
 		       scalar_type IN_EPS, bool &converged, bool throw_except);
     void update_B();
+
+    nonlinear_storage nonlinear_storage;
+
     friend class geotrans_inv_convex_bfgs;
   };
+
+  pgeometric_trans create_linear_pgt(const std::string &original_pgt);
+  std::vector<size_type> get_linear_nodes_indices(const std::string &pgt_name, dim_type dim);
+
 
   template<class TAB>
   void geotrans_inv_convex::init(const TAB &nodes,  pgeometric_trans pgt_) {
@@ -143,6 +158,21 @@ namespace bgeot {
       }
       // computation of the pseudo inverse
       update_B();
+    } else {
+      nonlinear_storage.diff.resize(P);
+      nonlinear_storage.x_real.resize(P);
+      nonlinear_storage.x_ref.resize(P);
+
+      auto name_pgt = name_of_geometric_trans(pgt);
+      auto linear_pgt = create_linear_pgt(name_pgt);
+      std::vector<base_node> linear_nodes;
+
+      for (auto &&i : get_linear_nodes_indices(name_pgt, P)) {
+        linear_nodes.push_back(nodes[i]);
+      }
+
+      nonlinear_storage.plinear_inversion
+        = std::make_shared<geotrans_inv_convex>(linear_nodes, linear_pgt);
     }
   }
 
