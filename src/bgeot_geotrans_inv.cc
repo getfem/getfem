@@ -298,80 +298,33 @@ vector<size_type> get_linear_nodes_indices(const string &pgt_name, dim_type dim)
   bool geotrans_inv_convex::invert_nonlin(const base_node& xreal,
 	       			  base_node& x, scalar_type IN_EPS,
 				  bool &converged, bool throw_except) {
-    using namespace gmm;
-
     converged = true;
-    base_node xn(P), y, z,x0;
     /* find an initial guess */
     nonlinear_storage.plinear_inversion->invert(xreal, x);
     project_into_convex(x, *nonlinear_storage.plinear_inversion->pgt);
+    nonlinear_storage.x_real = pgt->transform(x, G);
+    add(nonlinear_storage.x_real, scaled(xreal, -1.0), nonlinear_storage.diff);
 
-    base_node vres(P);
-    base_node rn(xreal); rn -= y; 
-    pgt->poly_vector_grad(x, pc);
-    update_B();
-    
-    gmm::mult(gmm::transposed(K), rn, vres);
-    scalar_type res = gmm::vect_norm2(vres);
+    auto res = vect_norm2(nonlinear_storage.diff);
+    double res0 = 1e10;
+    auto cnt = 0;
 
-    //cerr << "DEBUT: res0=" << res << ", X=" << xreal << "\nB=" << B << ", K=" << K << "\n" << ", pc=" << pc << "\n";
-    unsigned cnt = 50;
-    while (res > EPS/10 && --cnt) {
-      gmm::mult(gmm::transposed(B), rn, xn);
-      scalar_type newres;
-      for (unsigned i=1; i<=256; i*=2) {
-	z = x + xn / scalar_type(i);
-	y = pgt->transform(z, G);
-	
-	rn = xreal - y; 
-	
-	pgt->poly_vector_grad(z, pc);
-	update_B();
+    while (res > IN_EPS) {
+      if (abs(res - res0) < IN_EPS) return false;
 
-	// cout << "K =  " << K << endl;
-	
-	if (P != N) {
-	  gmm::mult(gmm::transposed(K), rn, vres);
-	  newres = gmm::vect_norm2(vres); 
-	} else {
-	  newres = gmm::vect_norm2(rn); // "better" residu
-	}
-	if (newres < 1.5*res) break;
-      }
-      x = z; res = newres;
-      // cerr << "cnt=" << cnt << ", x=" << x << ", res=" << res << "\n";
+      pgt->poly_vector_grad(x, pc);
+      update_B();
+      mult(transposed(B), nonlinear_storage.diff, nonlinear_storage.x_ref);
+      add(scaled(nonlinear_storage.x_ref, -1.0), x);
+      project_into_convex(x, *nonlinear_storage.plinear_inversion->pgt);
+      nonlinear_storage.x_real = pgt->transform(x, G);
+      add(nonlinear_storage.x_real, scaled(xreal, -1.0), nonlinear_storage.diff);
+      res0 = res;
+      res = vect_norm2(nonlinear_storage.diff);
+      ++cnt;
     }
-    //cerr << " invert_nonlin done\n";
-    //cerr << "cnt=" << cnt << ", P=" << P << ", N=" << N << ", G=" << G << "\nX=" << xreal << " Xref=" << x << "\nresidu=" << res << "\nB=" << B << ", K=" << K << "\n" << ", pc=" << pc << "\n-------------------^^^^^^^^\n";
-    if (cnt == 0) {
-      //cout << "BFGS in geotrans_inv_convex!\n";
-      geotrans_inv_convex_bfgs b(*this, xreal);
-      gmm::iteration iter(EPS,0);
-      x = x0;
-      gmm::bfgs(b,b,x,10,iter);
-      rn = pgt->transform(x, G) - xreal; 
-      
-      if (pgt->convex_ref()->is_in(x) < IN_EPS &&
-	  (N==P && gmm::vect_norm2(rn) > IN_EPS)) {
-	GMM_ASSERT1(!throw_except,
-		    "inversion of non-linear geometric transformation "
-		    "failed ! (too much iterations -- xreal=" << xreal
-		    << ", rn=" << rn 
-		    << ", xref=" << x 
-		    << ", is_in(x)=" << pgt->convex_ref()->is_in(x) 
-		    << ", eps=" << IN_EPS << ")");
-	converged = false;
-	return false;
-      }
-    }
-    // Test un peu sevère peut-être en ce qui concerne rn.
-    if (pgt->convex_ref()->is_in(x) < IN_EPS
-        && (P == N || gmm::vect_norm2(rn) < IN_EPS)) {
-      // cout << "point " << x << "is IN (" << pgt->convex_ref()->is_in(x)
-      //      << ")\n";
-      return true;
-    } // else cout << "point IS OUT\n";
-    return false;
+
+    return true;
   }
 
 }  /* end of namespace bgeot.                                             */
