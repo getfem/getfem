@@ -649,10 +649,17 @@ namespace bgeot {
   /* direct product transformation                                        */
   /* ******************************************************************** */
 
+  size_type get_degree(const poly_geometric_trans &poly_trans) {
+    auto degree = 1;
+    for (auto &&poly : poly_trans.trans) degree *= poly.real_degree();
+
+    return degree;
+  }
+
   struct cv_pr_t_ : public poly_geometric_trans {
     cv_pr_t_(const poly_geometric_trans *a, const poly_geometric_trans *b) {
       cvr = convex_ref_product(a->convex_ref(), b->convex_ref());
-      is_lin = false;
+      is_lin = get_degree(*a) * get_degree(*b) == 1 ? true : false;
       complexity_ = a->complexity() * b->complexity();
 
       size_type n1 = a->nb_points(), n2 = b->nb_points();
