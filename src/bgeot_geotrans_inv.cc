@@ -166,8 +166,13 @@ string create_linear_pgt_name(const string &original_pgt) {
   return linear_pgt;
 }
 
-pgeometric_trans create_linear_pgt(const string &original_pgt) {
-  return geometric_trans_descriptor(create_linear_pgt_name(original_pgt));
+pgeometric_trans create_linear_pgt(pgeometric_trans poriginal_gt) {
+  auto is_axisymmetric = is_torus_geom_trans(poriginal_gt);
+  auto name_original_pgt = name_of_geometric_trans(poriginal_gt);
+  auto plinear_pgt = geometric_trans_descriptor(create_linear_pgt_name(name_original_pgt));
+
+  return is_axisymmetric ? std::make_shared<const torus_geom_trans>(move(plinear_pgt))
+                         : plinear_pgt;
 }
 
 base_vector get_degrees_of_pgt(const string &pgt_name, dim_type dim) {
@@ -194,9 +199,8 @@ base_vector get_degrees_of_pgt(const string &pgt_name, dim_type dim) {
 }
 
 vector<size_type> get_linear_nodes_indices(
-  const string &pgt_name, const base_vector &degrees)
+  const string &pgt_name, const base_vector &degrees, dim_type dim)
 {
-  auto dim = degrees.size();
   auto element_type = element_type_of_pgt(pgt_name);
   vector<size_type> indices;
 
@@ -248,7 +252,8 @@ vector<size_type> get_linear_nodes_indices(
   else if (element_type == "PRODUCT") {
     auto pgt_name1 = get_pgt_names(pgt_name).first;
     auto dim1 = get_dim_of_pgt(pgt_name1);
-    auto indices_plane = get_linear_nodes_indices(pgt_name1, dim1);
+    auto indices_plane = get_linear_nodes_indices(
+                           pgt_name, get_degrees_of_pgt(pgt_name1, dim1), dim1);
 
     for (auto i : indices_plane) indices.push_back(i);
 
@@ -262,15 +267,21 @@ vector<size_type> get_linear_nodes_indices(
   return indices;
 }
 
-void project_into_convex(base_node &x, const geometric_trans &geo_trans) {
-  auto dim = geo_trans.dim();
+void project_into_convex(base_node &x, pgeometric_trans &pgeo_trans) {
+  auto dim = pgeo_trans->dim();
 
   for (auto d = 0; d < dim; ++d) {
     if (x[d] < 0.0) x[d] = 0.0;
     if (x[d] > 1.0) x[d] = 1.0;
   }
 
-  auto nb_simplices = geo_trans.convex_ref()->simplexified_convex()->nb_convex();
+  auto poriginal_trans = pgeo_trans.get();
+
+  if (auto ptorus_trans = dynamic_cast<const torus_geom_trans*>(pgeo_trans.get())) {
+    poriginal_trans = ptorus_trans->get_original_transformation().get();
+  }
+
+  auto nb_simplices = poriginal_trans->convex_ref()->simplexified_convex()->nb_convex();
 
   if (nb_simplices == 1) { //simplex
     auto sum_coordinates = 0.0;
@@ -289,8 +300,11 @@ void project_into_convex(base_node &x, const geometric_trans &geo_trans) {
   }
 }
 
-vector<size_type> get_linear_nodes_indices(const string &pgt_name, dim_type dim) {
-  return get_linear_nodes_indices(pgt_name, get_degrees_of_pgt(pgt_name, dim));
+vector<size_type> get_linear_nodes_indices(pgeometric_trans pgt) {
+  auto pgt_name = name_of_geometric_trans(pgt);
+  auto original_dim = is_torus_geom_trans(pgt) ? 2 : pgt->dim();
+  return get_linear_nodes_indices(
+    pgt_name, get_degrees_of_pgt(pgt_name, pgt->dim()), original_dim);
 }
 
   /* inversion for non-linear geometric transformations 
@@ -302,7 +316,7 @@ vector<size_type> get_linear_nodes_indices(const string &pgt_name, dim_type dim)
     converged = true;
     /* find an initial guess */
     nonlinear_storage.plinear_inversion->invert(xreal, x);
-    project_into_convex(x, *nonlinear_storage.plinear_inversion->pgt);
+    project_into_convex(x, nonlinear_storage.plinear_inversion->pgt);
     nonlinear_storage.x_real = pgt->transform(x, G);
     add(nonlinear_storage.x_real, scaled(xreal, -1.0), nonlinear_storage.diff);
 
@@ -311,13 +325,16 @@ vector<size_type> get_linear_nodes_indices(const string &pgt_name, dim_type dim)
     auto cnt = 0;
 
     while (res > IN_EPS) {
-      if (abs(res - res0) < IN_EPS) return false;
+      if (abs(res - res0) < IN_EPS) {
+        converged = false;
+        return false;
+      }
 
       pgt->poly_vector_grad(x, pc);
       update_B();
       mult(transposed(B), nonlinear_storage.diff, nonlinear_storage.x_ref);
       add(scaled(nonlinear_storage.x_ref, -1.0), x);
-      project_into_convex(x, *nonlinear_storage.plinear_inversion->pgt);
+      project_into_convex(x, nonlinear_storage.plinear_inversion->pgt);
       nonlinear_storage.x_real = pgt->transform(x, G);
       add(nonlinear_storage.x_real, scaled(xreal, -1.0), nonlinear_storage.diff);
       res0 = res;

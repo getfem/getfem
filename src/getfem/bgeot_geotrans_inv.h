@@ -134,8 +134,8 @@ namespace bgeot {
     friend class geotrans_inv_convex_bfgs;
   };
 
-  pgeometric_trans create_linear_pgt(const std::string &original_pgt);
-  std::vector<size_type> get_linear_nodes_indices(const std::string &pgt_name, dim_type dim);
+  pgeometric_trans create_linear_pgt(pgeometric_trans poriginal_gt);
+  std::vector<size_type> get_linear_nodes_indices(pgeometric_trans pgt);
 
 
   template<class TAB>
@@ -163,16 +163,15 @@ namespace bgeot {
       nonlinear_storage.x_real.resize(P);
       nonlinear_storage.x_ref.resize(P);
 
-      auto name_pgt = name_of_geometric_trans(pgt);
-      auto linear_pgt = create_linear_pgt(name_pgt);
+      auto plinear_pgt = create_linear_pgt(pgt);
       std::vector<base_node> linear_nodes;
 
-      for (auto &&i : get_linear_nodes_indices(name_pgt, P)) {
+      for (auto &&i : get_linear_nodes_indices(pgt)) {
         linear_nodes.push_back(nodes[i]);
       }
 
       nonlinear_storage.plinear_inversion
-        = std::make_shared<geotrans_inv_convex>(linear_nodes, linear_pgt);
+        = std::make_shared<geotrans_inv_convex>(linear_nodes, plinear_pgt);
     }
   }
 
