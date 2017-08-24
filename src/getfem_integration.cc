@@ -19,7 +19,7 @@
 
 ===========================================================================*/
 
-
+#include "getfem/bgeot_torus.h"
 #include "getfem/dal_singleton.h"
 #include "getfem/getfem_integration.h"
 #include "gmm/gmm_dense_lu.h"

@@ -25,6 +25,7 @@
     @brief implementation of some finite elements.
  */
 
+#include "getfem/bgeot_torus.h"
 #include "getfem/dal_singleton.h"
 #include "getfem/dal_tree_sorted.h"
 #include "gmm/gmm_algobase.h"

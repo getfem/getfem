@@ -24,7 +24,7 @@
 #include "getfem/dal_tree_sorted.h"
 #include "getfem/bgeot_geometric_trans.h"
 #include "getfem/bgeot_poly_composite.h"
-#include "getfem/getfem_torus.h"
+#include "getfem/bgeot_torus.h"
 
 namespace bgeot {
 

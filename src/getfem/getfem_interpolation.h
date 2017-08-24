@@ -40,7 +40,7 @@
 #define GETFEM_INTERPOLATION_H__
 
 #include "getfem_mesh_fem.h"
-#include "bgeot_geotrans_inv.h"
+#include "bgeot_torus.h"
 #include "dal_tree_sorted.h"
 #include "getfem_im_data.h"
 #include "getfem_torus.h"

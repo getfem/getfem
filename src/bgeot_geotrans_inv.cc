@@ -21,6 +21,7 @@
 
 #include "getfem/bgeot_geotrans_inv.h"
 #include "getfem/bgeot_mesh_structure.h"
+#include "getfem/bgeot_torus.h"
 #include "gmm/gmm_solver_bfgs.h"
 
 using namespace gmm;
