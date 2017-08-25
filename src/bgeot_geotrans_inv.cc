@@ -253,7 +253,7 @@ vector<size_type> get_linear_nodes_indices(
     auto pgt_name1 = get_pgt_names(pgt_name).first;
     auto dim1 = get_dim_of_pgt(pgt_name1);
     auto indices_plane = get_linear_nodes_indices(
-                           pgt_name, get_degrees_of_pgt(pgt_name1, dim1), dim1);
+                           pgt_name1, get_degrees_of_pgt(pgt_name1, dim1), dim1);
 
     for (auto i : indices_plane) indices.push_back(i);
 
