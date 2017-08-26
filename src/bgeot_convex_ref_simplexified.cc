@@ -255,7 +255,7 @@ namespace bgeot {
      0, 1, 2, 4, 3, 2, 1, 4
   };
 
-  static size_type simplexified_pyramid_nb = 3;
+  static size_type simplexified_pyramid_nb = 2;
    
   
   size_type simplexified_tab(pconvex_structure cvs,
