@@ -72,7 +72,7 @@ namespace bgeot {
   class geotrans_inv_convex {
     size_type N, P;
     base_matrix G, pc, K, B, CS;
-    pgeometric_trans pgt;
+    pgeometric_trans pgt = nullptr;
     scalar_type EPS;
   public:
     const base_matrix &get_G() const { return G; }

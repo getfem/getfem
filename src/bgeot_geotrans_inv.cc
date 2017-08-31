@@ -281,9 +281,9 @@ void project_into_convex(base_node &x, const geometric_trans *pgeo_trans, bool p
     if (x[d] > 1.0) x[d] = 1.0;
   }
 
-  auto poriginal_trans = pgeo_trans.get();
+  auto poriginal_trans = pgeo_trans;
 
-  if (auto ptorus_trans = dynamic_cast<const torus_geom_trans*>(pgeo_trans.get())) {
+  if (auto ptorus_trans = dynamic_cast<const torus_geom_trans*>(pgeo_trans)) {
     poriginal_trans = ptorus_trans->get_original_transformation().get();
   }
 
@@ -306,6 +306,38 @@ void project_into_convex(base_node &x, const geometric_trans *pgeo_trans, bool p
   }
 }
 
+void find_initial_guess(
+  base_node &x,
+  nonlinear_storage &storage,
+  const base_node &xreal,
+  const base_matrix &G,
+  const geometric_trans *pgt,
+  scalar_type IN_EPS)
+{
+  storage.x_ref = pgt->geometric_nodes()[0];
+
+  auto res = vect_dist2(mat_col(G, 0), xreal);
+  double res0;
+
+  for (size_type j = 1; j < pgt->nb_points(); ++j) { 
+    res0 = vect_dist2(mat_col(G, j), xreal);
+    if (res > res0) {
+      res = res0;
+      storage.x_ref = pgt->geometric_nodes()[j];
+    }
+  }
+
+  res0 = std::numeric_limits<scalar_type>::max();
+
+  if (storage.plinear_inversion != nullptr) {
+    storage.plinear_inversion->invert(xreal, x, IN_EPS);
+    project_into_convex(x, pgt, storage.project_into_element);
+    res0 = vect_dist2(pgt->transform(x, G), xreal);
+  }
+
+  if (res < res0) copy(storage.x_ref, x);
+}
+
 vector<size_type> get_linear_nodes_indices(pgeometric_trans pgt) {
   auto pgt_name = name_of_geometric_trans(pgt);
   auto original_dim = is_torus_geom_trans(pgt) ? 2 : pgt->dim();
@@ -320,14 +352,10 @@ vector<size_type> get_linear_nodes_indices(pgeometric_trans pgt) {
 	       			  base_node& x, scalar_type IN_EPS,
 				  bool &converged, bool throw_except) {
     converged = true;
-    /* find an initial guess */
-    nonlinear_storage.plinear_inversion->invert(xreal, x);
-    project_into_convex(x, nonlinear_storage.plinear_inversion->pgt);
-    nonlinear_storage.x_real = pgt->transform(x, G);
-    add(nonlinear_storage.x_real, scaled(xreal, -1.0), nonlinear_storage.diff);
-
+    find_initial_guess(x, nonlinear_storage, xreal, G, pgt.get(), IN_EPS);
+    add(pgt->transform(x, G), scaled(xreal, -1.0), nonlinear_storage.diff);
     auto res = vect_norm2(nonlinear_storage.diff);
-    double res0 = 1e10;
+    auto res0 = std::numeric_limits<scalar_type>::max();
     auto cnt = 0;
 
     while (res > IN_EPS) {
@@ -343,7 +371,6 @@ vector<size_type> get_linear_nodes_indices(pgeometric_trans pgt) {
       project_into_convex(x, pgt.get(), nonlinear_storage.project_into_element);
       nonlinear_storage.x_real = pgt->transform(x, G);
       add(nonlinear_storage.x_real, scaled(xreal, -1.0), nonlinear_storage.diff);
-      res0 = res;
       res = vect_norm2(nonlinear_storage.diff);
       ++cnt;
     }
