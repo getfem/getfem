@@ -236,6 +236,7 @@ vector<size_type> get_linear_nodes_indices(
     indices.push_back(degrees[0]);
     indices.push_back((degrees[0] + 1) * (degrees[1] + 2) / 2 - 1);
     indices.push_back((degrees[0] + 1) * (degrees[1] + 2) / 2);
+    indices.push_back((degrees[0] + 1) * (degrees[1] + 2) / 2 + degrees[2]);
     indices.push_back((degrees[0] + 1) * (degrees[1] + 2) * (degrees[2] + 1) / 2 - 1);
   }
   else if (element_type == "Q2_INCOMPLETE") {
