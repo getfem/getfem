@@ -101,6 +101,7 @@ nobase_include_HEADERS =                   		\
 	getfem/bgeot_sparse_tensors.h      		\
 	getfem/bgeot_tensor.h              		\
 	getfem/bgeot_comma_init.h	   		\
+	getfem/bgeot_torus.h              		\
 	getfem/bgeot_ftool.h               		\
 	getfem/getfem_arch_config.h        		\
 	getfem/getfem_copyable_ptr.h        		\
@@ -177,6 +178,7 @@ SRC =                                      		\
 	bgeot_node_tab.cc		          	\
 	bgeot_small_vector.cc              		\
 	bgeot_sparse_tensors.cc            		\
+	bgeot_torus.cc 		           		\
 	bgeot_poly.cc                      		\
 	bgeot_poly_composite.cc            		\
 	bgeot_ftool.cc                     		\
