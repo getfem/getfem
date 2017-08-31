@@ -57,7 +57,7 @@ bool point_in_convex(
   const base_node &x,
   scalar_type res,
   scalar_type IN_EPS) {
-  // Test un peu sevï¿½re peut-ï¿½tre en ce qui concerne res.
+  // Test un peu sevère peut-être en ce qui concerne res.
   return (geoTrans.convex_ref()->is_in(x) < IN_EPS) && (res < IN_EPS);
 }
 
@@ -356,6 +356,7 @@ vector<size_type> get_linear_nodes_indices(pgeometric_trans pgt) {
     add(pgt->transform(x, G), scaled(xreal, -1.0), nonlinear_storage.diff);
     auto res = vect_norm2(nonlinear_storage.diff);
     auto res0 = std::numeric_limits<scalar_type>::max();
+    double factor = 1.0;
     auto cnt = 0;
 
     while (res > IN_EPS) {
@@ -364,10 +365,21 @@ vector<size_type> get_linear_nodes_indices(pgeometric_trans pgt) {
         return point_in_convex(*pgt, x, res, IN_EPS);
       }
 
+      if (res > res0) {
+        add(scaled(nonlinear_storage.x_ref, factor), x);
+        nonlinear_storage.x_real = pgt->transform(x, G);
+        add(nonlinear_storage.x_real, scaled(xreal, -1.0), nonlinear_storage.diff);
+        factor *= 0.5;
+      }
+      else {
+        if (factor < 1.0) factor *= 2.0;
+        res0 = res;
+      }
+
       pgt->poly_vector_grad(x, pc);
       update_B();
       mult(transposed(B), nonlinear_storage.diff, nonlinear_storage.x_ref);
-      add(scaled(nonlinear_storage.x_ref, -1.0), x);
+      add(scaled(nonlinear_storage.x_ref, -1.0 * factor), x);
       project_into_convex(x, pgt.get(), nonlinear_storage.project_into_element);
       nonlinear_storage.x_real = pgt->transform(x, G);
       add(nonlinear_storage.x_real, scaled(xreal, -1.0), nonlinear_storage.diff);
