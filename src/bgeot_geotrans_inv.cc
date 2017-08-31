@@ -52,20 +52,23 @@ namespace bgeot
     } else return invert_nonlin(n, n_ref,IN_EPS,converged, false);
   }
 
+bool point_in_convex(
+  const geometric_trans &geoTrans,
+  const base_node &x,
+  scalar_type res,
+  scalar_type IN_EPS) {
+  // Test un peu sev�re peut-�tre en ce qui concerne res.
+  return (geoTrans.convex_ref()->is_in(x) < IN_EPS) && (res < IN_EPS);
+}
 
   /* inversion for linear geometric transformations */
   bool geotrans_inv_convex::invert_lin(const base_node& n, base_node& n_ref, scalar_type IN_EPS) {
     base_node y(n); for (size_type i=0; i < N; ++i) y[i] -= G(i,0);
-    gmm::mult(gmm::transposed(B), y, n_ref);
-    if (pgt->convex_ref()->is_in(n_ref) < IN_EPS) {
-      if (P == N) return true;
-      else {
-	gmm::mult(K,gmm::scaled(n_ref,-1.0),y,y);
-	//        y -= K * n_ref;
-        if (gmm::vect_norm2(y) < IN_EPS) return true;
-      }
-    }
-    return false;
+    mult(transposed(B), y, n_ref);
+	y = pgt->transform(n_ref, G);
+    add(scaled(n, -1.0), y);
+
+    return point_in_convex(*pgt, n_ref, vect_norm2(y), IN_EPS);
   }
   
   void geotrans_inv_convex::update_B() {
@@ -327,7 +330,7 @@ vector<size_type> get_linear_nodes_indices(pgeometric_trans pgt) {
     while (res > IN_EPS) {
       if (abs(res - res0) < IN_EPS) {
         converged = false;
-        return false;
+        return point_in_convex(*pgt, x, res, IN_EPS);
       }
 
       pgt->poly_vector_grad(x, pc);
@@ -342,7 +345,7 @@ vector<size_type> get_linear_nodes_indices(pgeometric_trans pgt) {
       ++cnt;
     }
 
-    return true;
+    return point_in_convex(*pgt, x, res, IN_EPS);
   }
 
 }  /* end of namespace bgeot.                                             */
