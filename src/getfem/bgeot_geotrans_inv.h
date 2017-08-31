@@ -59,7 +59,7 @@
 namespace bgeot {
   class geotrans_inv_convex;
 
-  struct nonlinear_storage {
+  struct nonlinear_storage_struct {
     base_node diff;
     base_node x_real;
     base_node x_ref;
@@ -148,7 +148,7 @@ namespace bgeot {
 		       scalar_type IN_EPS, bool &converged, bool throw_except);
     void update_B();
 
-    nonlinear_storage nonlinear_storage;
+    nonlinear_storage_struct nonlinear_storage;
 
     friend class geotrans_inv_convex_bfgs;
   };

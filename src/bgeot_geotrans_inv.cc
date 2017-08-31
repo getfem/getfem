@@ -308,7 +308,7 @@ void project_into_convex(base_node &x, const geometric_trans *pgeo_trans, bool p
 
 void find_initial_guess(
   base_node &x,
-  nonlinear_storage &storage,
+  nonlinear_storage_struct &storage,
   const base_node &xreal,
   const base_matrix &G,
   const geometric_trans *pgt,
