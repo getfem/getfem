@@ -652,8 +652,8 @@ namespace bgeot {
   struct cv_pr_t_ : public poly_geometric_trans {
     cv_pr_t_(const poly_geometric_trans *a, const poly_geometric_trans *b) {
       cvr = convex_ref_product(a->convex_ref(), b->convex_ref());
+      is_lin = false;
       complexity_ = a->complexity() * b->complexity();
-      is_lin = complexity_ == 1 ? true : false;
 
       size_type n1 = a->nb_points(), n2 = b->nb_points();
       trans.resize(n1 * n2);
