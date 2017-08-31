@@ -63,6 +63,7 @@ namespace bgeot {
     base_node diff;
     base_node x_real;
     base_node x_ref;
+    bool project_into_element;
     std::shared_ptr<geotrans_inv_convex> plinear_inversion;
   };
   /** 
@@ -75,14 +76,32 @@ namespace bgeot {
     scalar_type EPS;
   public:
     const base_matrix &get_G() const { return G; }
-    geotrans_inv_convex(scalar_type e=10e-12) : N(0), P(0), pgt(0), EPS(e) {};
-    template<class TAB> geotrans_inv_convex(const convex<base_node, TAB> &cv,
-					    pgeometric_trans pgt_, 
-                                            scalar_type e=10e-12)
-      : N(0), P(0), pgt(0), EPS(e) { init(cv.points(),pgt_); }
-    geotrans_inv_convex(const std::vector<base_node> &nodes,
-			pgeometric_trans pgt_, scalar_type e=10e-12)
-      : N(0), P(0), pgt(0), EPS(e) { init(nodes,pgt_); }
+    geotrans_inv_convex(scalar_type e=10e-12, bool project_into_element = false) :
+      N(0), P(0), pgt(0), EPS(e)
+    {
+      nonlinear_storage.project_into_element = project_into_element;
+    };
+
+    template<class TAB> geotrans_inv_convex(
+      const convex<base_node, TAB> &cv,
+	  pgeometric_trans pgt_, 
+      scalar_type e=10e-12,
+      bool project_into_element = false) : N(0), P(0), pgt(0), EPS(e)
+   {
+     nonlinear_storage.project_into_element = project_into_element;
+     init(cv.points(),pgt_);
+    }
+
+    geotrans_inv_convex(
+      const std::vector<base_node> &nodes,
+      pgeometric_trans pgt_,
+      scalar_type e=10e-12,
+      bool project_into_element = false) : N(0), P(0), pgt(0), EPS(e)
+    {
+      nonlinear_storage.project_into_element = project_into_element;
+      init(nodes,pgt_);
+    }
+
     template<class TAB> void init(const TAB &nodes, pgeometric_trans pgt_);
     
     /**

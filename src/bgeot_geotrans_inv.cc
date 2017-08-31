@@ -271,7 +271,9 @@ vector<size_type> get_linear_nodes_indices(
   return indices;
 }
 
-void project_into_convex(base_node &x, pgeometric_trans &pgeo_trans) {
+void project_into_convex(base_node &x, const geometric_trans *pgeo_trans, bool project) {
+  if (project == false) return;
+
   auto dim = pgeo_trans->dim();
 
   for (auto d = 0; d < dim; ++d) {
@@ -338,7 +340,7 @@ vector<size_type> get_linear_nodes_indices(pgeometric_trans pgt) {
       update_B();
       mult(transposed(B), nonlinear_storage.diff, nonlinear_storage.x_ref);
       add(scaled(nonlinear_storage.x_ref, -1.0), x);
-      project_into_convex(x, nonlinear_storage.plinear_inversion->pgt);
+      project_into_convex(x, pgt.get(), nonlinear_storage.project_into_element);
       nonlinear_storage.x_real = pgt->transform(x, G);
       add(nonlinear_storage.x_real, scaled(xreal, -1.0), nonlinear_storage.diff);
       res0 = res;
