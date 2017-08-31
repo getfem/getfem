@@ -182,15 +182,17 @@ namespace bgeot {
       nonlinear_storage.x_real.resize(P);
       nonlinear_storage.x_ref.resize(P);
 
-      auto plinear_pgt = create_linear_pgt(pgt);
-      std::vector<base_node> linear_nodes;
+      if (pgt->complexity() > 1) {
+        auto plinear_pgt = create_linear_pgt(pgt);
+        std::vector<base_node> linear_nodes;
 
-      for (auto &&i : get_linear_nodes_indices(pgt)) {
-        linear_nodes.push_back(nodes[i]);
+        for (auto &&i : get_linear_nodes_indices(pgt)) {
+          linear_nodes.push_back(nodes[i]);
+        }
+
+        nonlinear_storage.plinear_inversion
+          = std::make_shared<geotrans_inv_convex>(linear_nodes, plinear_pgt);
       }
-
-      nonlinear_storage.plinear_inversion
-        = std::make_shared<geotrans_inv_convex>(linear_nodes, plinear_pgt);
     }
   }
 
