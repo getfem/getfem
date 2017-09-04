@@ -227,18 +227,14 @@ namespace getfem {
     base_node rmin, rmax;
     std::vector<mesher_half_space> hfs;
   public:
-    // modified to fix internal errors caused by INTEL C++ compiler 2017
-    // internal errors were caused in the following circumstances:
-    // modification of hfs directly
-    // call to push_back, emplace_back etc. on a std::vector<mesher_half_space>  
     mesher_rectangle(base_node rmin_, base_node rmax_)
-      : rmin(rmin_), rmax(rmax_), hfs(std::vector<mesher_half_space>(rmin.size() * 2)) {
+      : rmin(rmin_), rmax(rmax_), hfs(std::vector<mesher_half_space>(rmin.size()*2)) {
       base_node n(rmin_.size());
       for (unsigned k = 0; k < rmin.size(); ++k) {
         n[k] = 1.0;
-        hfs[k * 2] = mesher_half_space(rmin, n);
+        hfs[k*2] = mesher_half_space(rmin, n);
         n[k] = -1.0;
-        hfs[k * 2 + 1] = mesher_half_space(rmax, n);
+        hfs[k*2+1] = mesher_half_space(rmax, n);
         n[k] = 0.0;
       }
     }
@@ -291,11 +287,7 @@ namespace getfem {
     unsigned N;
     base_node org;
   public:
-    // modified to fix internal errors caused by INTEL C++ compiler 2017
-    // internal errors were caused in the following circumstances:
-    // modification of hfs directly
-    // call to push_back, emplace_back etc. on a std::vector<mesher_half_space>  
-    mesher_simplex_ref(unsigned N_) : N(N_), hfs(std::vector<mesher_half_space>(N + 1)) {
+    mesher_simplex_ref(unsigned N_) : N(N_), hfs(std::vector<mesher_half_space>(N+1)) {
       base_node no(N);
       org = no;
       for (unsigned k = 0; k < N; ++k) {
@@ -303,7 +295,7 @@ namespace getfem {
         hfs[k] = mesher_half_space(org, no);
         no[k] = 0.0;
       }
-      std::fill(org.begin(), org.end(), 1.0 / N);
+      std::fill(org.begin(), org.end(), 1.0/N);
       no = -org;
       hfs[N] = mesher_half_space(org, no);
     }
@@ -352,11 +344,7 @@ namespace getfem {
     unsigned N;
     base_node org;
   public:
-    // modified to fix internal errors caused by INTEL C++ compiler 2017
-    // internal errors were caused in the following circumstances:
-    // modification of hfs directly
-    // call to push_back, emplace_back etc. on a std::vector<mesher_half_space>
-    mesher_prism_ref(unsigned N_) : N(N_), hfs(std::vector<mesher_half_space>(N + 2)) {  
+    mesher_prism_ref(unsigned N_) : N(N_), hfs(std::vector<mesher_half_space>(N+2)) {  
       base_node no(N);
       org = no;
       for (unsigned k = 0; k < N; ++k) {
@@ -364,13 +352,13 @@ namespace getfem {
         hfs[k] = mesher_half_space(org, no);
         no[k] = 0.0;
       }
-      no[N - 1] = -1.0;
-      org[N - 1] = 1.0;
+      no[N-1] = -1.0;
+      org[N-1] = 1.0;
       hfs[N] = mesher_half_space(org, no);
-      std::fill(org.begin(), org.end(), 1.0 / N);
-      org[N - 1] = 0.0;
+      std::fill(org.begin(), org.end(), 1.0/N);
+      org[N-1] = 0.0;
       no = -org;
-      hfs[N + 1] = mesher_half_space(org, no)      
+      hfs[N+1] = mesher_half_space(org, no)      
     }
     bool bounding_box(base_node &bmin, base_node &bmax) const {
       bmin.resize(N); bmax.resize(N);
