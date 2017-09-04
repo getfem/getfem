@@ -69,8 +69,7 @@ namespace bgeot {
       linearised_structure(
         const convex_ind_ct &direct_points_indices,
         const stored_point_tab &reference_nodes,
-        const std::vector<base_node> &real_nodes,
-        dim_type P);
+        const std::vector<base_node> &real_nodes);
       void invert(const base_node &x_real, base_node &x_ref, scalar_type IN_EPS) const;
 
       base_matrix K_ref_linear;
@@ -199,7 +198,7 @@ namespace bgeot {
         std::vector<base_node> real_nodes(nodes.begin(), nodes.end());
         nonlinear_storage.plinearised_structure
           = std::make_shared<nonlinear_storage::linearised_structure>(
-              pgt->structure()->ind_dir_points(), pgt->geometric_nodes(), real_nodes, P);
+              pgt->structure()->ind_dir_points(), pgt->geometric_nodes(), real_nodes);
       }
     }
   }

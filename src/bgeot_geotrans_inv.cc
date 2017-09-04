@@ -111,8 +111,8 @@ bool point_in_convex(
 nonlinear_storage::linearised_structure::linearised_structure(
   const convex_ind_ct &direct_points_indices,
   const stored_point_tab &reference_nodes,
-  const std::vector<base_node> &real_nodes,
-  dim_type P) : diff(real_nodes.begin()->size()), diff_ref(real_nodes.begin()->size())
+  const std::vector<base_node> &real_nodes) :
+    diff(real_nodes.begin()->size()), diff_ref(direct_points_indices.size() - 1)
 {
   auto n_points = direct_points_indices.size();
   std::vector<base_node> direct_points;
@@ -126,31 +126,33 @@ nonlinear_storage::linearised_structure::linearised_structure(
   }
 
   auto N = direct_points_ref.begin()->size();
+  base_matrix K_linear(N, n_points - 1);
   B_linear.base_resize(N, n_points - 1);
   K_ref_linear.base_resize(N, n_points - 1);
   P_linear = direct_points[0];
   P_ref_linear = direct_points_ref[0];
 
   for (size_type i = 1; i < n_points; ++i) {
-    add(direct_points[i], scaled(P_linear, -1.0), mat_col(B_linear, i - 1));
+    add(direct_points[i], scaled(P_linear, -1.0), mat_col(K_linear, i - 1));
     add(direct_points_ref[i], scaled(P_ref_linear, -1.0), mat_col(K_ref_linear, i - 1));
   }
 
-  if (N == P) lu_inverse(B_linear);
-  else {
-    base_matrix K_linear(n_points - 1, n_points - 1);
-    mult(transposed(B_linear), B_linear, K_linear);
+  if (K_linear.nrows() == K_linear.ncols()) {
     lu_inverse(K_linear);
+    copy(transposed(K_linear), B_linear);
+  }
+  else {
     base_matrix temp(n_points - 1, n_points - 1);
-    mult(B_linear, K_linear, temp);
-    copy(temp, B_linear);
+    mult(transposed(K_linear), K_linear, temp);
+    lu_inverse(temp);
+    mult(K_linear, temp, B_linear);
   }
 }
 
 void nonlinear_storage::linearised_structure::invert(
   const base_node &x_real, base_node &x_ref, scalar_type IN_EPS) const
 {
-  add(scaled(P_linear, -1.0), diff);
+  add(x_real, scaled(P_linear, -1.0), diff);
   mult(transposed(B_linear), diff, diff_ref);
   mult(K_ref_linear, diff_ref, x_ref);
   add(P_ref_linear, x_ref);
@@ -172,7 +174,8 @@ void project_into_convex(base_node &x, const geometric_trans *pgeo_trans, bool p
     poriginal_trans = ptorus_trans->get_original_transformation().get();
   }
 
-  auto nb_simplices = poriginal_trans->convex_ref()->simplexified_convex()->nb_convex();
+  auto pbasic_convex_ref = basic_convex_ref(poriginal_trans->convex_ref());
+  auto nb_simplices = pbasic_convex_ref->simplexified_convex()->nb_convex();
 
   if (nb_simplices == 1) { //simplex
     auto sum_coordinates = 0.0;
@@ -239,7 +242,7 @@ void find_initial_guess(
     auto cnt = 0;
 
     while (res > IN_EPS) {
-      if (abs(res - res0) < IN_EPS) {
+      if ((abs(res - res0) < IN_EPS) || (factor < IN_EPS)) {
         converged = false;
         return point_in_convex(*pgt, x, res, IN_EPS);
       }
