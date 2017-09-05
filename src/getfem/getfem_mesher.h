@@ -228,7 +228,7 @@ namespace getfem {
     std::vector<mesher_half_space> hfs;
   public:
     mesher_rectangle(base_node rmin_, base_node rmax_)
-      : rmin(rmin_), rmax(rmax_), hfs(std::vector<mesher_half_space>(rmin.size()*2)) {
+      : rmin(rmin_), rmax(rmax_), hfs(rmin.size()*2) {
       base_node n(rmin_.size());
       for (unsigned k = 0; k < rmin.size(); ++k) {
         n[k] = 1.0;
@@ -282,14 +282,13 @@ namespace getfem {
   { return std::make_shared<mesher_rectangle>(rmin, rmax); }
 
   class mesher_simplex_ref : public mesher_signed_distance {
-    // ajouter une rotation rigide, homothetie,  et translation ..
+    // To be added : rigid motion, dilatation ...
     std::vector<mesher_half_space> hfs;
     unsigned N;
     base_node org;
   public:
-    mesher_simplex_ref(unsigned N_) : N(N_), hfs(std::vector<mesher_half_space>(N+1)) {
+    mesher_simplex_ref(unsigned N_) : hfs(N_+1), N(N_), org(N_) {
       base_node no(N);
-      org = no;
       for (unsigned k = 0; k < N; ++k) {
         no[k] = 1.0;
         hfs[k] = mesher_half_space(org, no);
@@ -339,12 +338,12 @@ namespace getfem {
 
 
   class mesher_prism_ref : public mesher_signed_distance {
-    // ajouter une rotation rigide, homothetie,  et translation ..
+    // To be added : rigid motion, dilatation ...
     std::vector<mesher_half_space> hfs;
     unsigned N;
     base_node org;
   public:
-    mesher_prism_ref(unsigned N_) : N(N_), hfs(std::vector<mesher_half_space>(N+2)) {  
+    mesher_prism_ref(unsigned N_) : hfs(N_+2), N(N_) {  
       base_node no(N);
       org = no;
       for (unsigned k = 0; k < N; ++k) {
@@ -358,7 +357,7 @@ namespace getfem {
       std::fill(org.begin(), org.end(), 1.0/N);
       org[N-1] = 0.0;
       no = -org;
-      hfs[N+1] = mesher_half_space(org, no)      
+      hfs[N+1] = mesher_half_space(org, no);    
     }
     bool bounding_box(base_node &bmin, base_node &bmax) const {
       bmin.resize(N); bmax.resize(N);
