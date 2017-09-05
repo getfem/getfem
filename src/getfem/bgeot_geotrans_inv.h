@@ -190,8 +190,8 @@ namespace bgeot {
       // computation of the pseudo inverse
       update_B();
     } else {
-      nonlinear_storage.diff.resize(P);
-      nonlinear_storage.x_real.resize(P);
+      nonlinear_storage.diff.resize(N);
+      nonlinear_storage.x_real.resize(N);
       nonlinear_storage.x_ref.resize(P);
 
       if (pgt->complexity() > 1) {

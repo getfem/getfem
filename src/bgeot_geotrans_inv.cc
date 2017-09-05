@@ -125,10 +125,11 @@ nonlinear_storage::linearised_structure::linearised_structure(
     direct_points_ref.push_back(reference_nodes[i]);
   }
 
-  auto N = direct_points_ref.begin()->size();
+  auto N = direct_points.begin()->size();
+  auto N_ref = direct_points_ref.begin()->size();
   base_matrix K_linear(N, n_points - 1);
   B_linear.base_resize(N, n_points - 1);
-  K_ref_linear.base_resize(N, n_points - 1);
+  K_ref_linear.base_resize(N_ref, n_points - 1);
   P_linear = direct_points[0];
   P_ref_linear = direct_points_ref[0];
 
