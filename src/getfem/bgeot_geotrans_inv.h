@@ -64,7 +64,23 @@ namespace bgeot {
     base_node x_real;
     base_node x_ref;
     bool project_into_element;
-    std::shared_ptr<geotrans_inv_convex> plinear_inversion;
+
+    struct linearised_structure {
+      linearised_structure(
+        const convex_ind_ct &direct_points_indices,
+        const stored_point_tab &reference_nodes,
+        const std::vector<base_node> &real_nodes);
+      void invert(const base_node &x_real, base_node &x_ref, scalar_type IN_EPS) const;
+
+      base_matrix K_ref_linear;
+      base_matrix B_linear;
+      base_node P_linear;
+      base_node P_ref_linear;
+      mutable base_node diff;
+      mutable base_node diff_ref;
+    };
+
+    std::shared_ptr<linearised_structure> plinearised_structure = nullptr;
   };
   /** 
       does the inversion of the geometric transformation for a given convex
@@ -153,10 +169,6 @@ namespace bgeot {
     friend class geotrans_inv_convex_bfgs;
   };
 
-  pgeometric_trans create_linear_pgt(pgeometric_trans poriginal_gt);
-  std::vector<size_type> get_linear_nodes_indices(pgeometric_trans pgt);
-
-
   template<class TAB>
   void geotrans_inv_convex::init(const TAB &nodes,  pgeometric_trans pgt_) {
     bool geotrans_changed = (pgt != pgt_); if (geotrans_changed) pgt = pgt_;
@@ -178,20 +190,15 @@ namespace bgeot {
       // computation of the pseudo inverse
       update_B();
     } else {
-      nonlinear_storage.diff.resize(P);
-      nonlinear_storage.x_real.resize(P);
+      nonlinear_storage.diff.resize(N);
+      nonlinear_storage.x_real.resize(N);
       nonlinear_storage.x_ref.resize(P);
 
       if (pgt->complexity() > 1) {
-        auto plinear_pgt = create_linear_pgt(pgt);
-        std::vector<base_node> linear_nodes;
-
-        for (auto &&i : get_linear_nodes_indices(pgt)) {
-          linear_nodes.push_back(nodes[i]);
-        }
-
-        nonlinear_storage.plinear_inversion
-          = std::make_shared<geotrans_inv_convex>(linear_nodes, plinear_pgt);
+        std::vector<base_node> real_nodes(nodes.begin(), nodes.end());
+        nonlinear_storage.plinearised_structure
+          = std::make_shared<nonlinear_storage::linearised_structure>(
+              pgt->structure()->ind_dir_points(), pgt->geometric_nodes(), real_nodes);
       }
     }
   }
