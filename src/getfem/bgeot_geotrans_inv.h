@@ -70,7 +70,8 @@ namespace bgeot {
         const convex_ind_ct &direct_points_indices,
         const stored_point_tab &reference_nodes,
         const std::vector<base_node> &real_nodes);
-      void invert(const base_node &x_real, base_node &x_ref, scalar_type IN_EPS) const;
+      void invert(const base_node &x_real, base_node &x_ref,
+		  scalar_type IN_EPS) const;
 
       base_matrix K_ref_linear;
       base_matrix B_linear;
@@ -90,31 +91,29 @@ namespace bgeot {
     base_matrix G, pc, K, B, CS;
     pgeometric_trans pgt = nullptr;
     scalar_type EPS;
+    nonlinear_storage_struct nonlinear_storage;
+
   public:
     const base_matrix &get_G() const { return G; }
-    geotrans_inv_convex(scalar_type e=10e-12, bool project_into_element = false) :
+    geotrans_inv_convex(scalar_type e=10e-12, bool project_into_element=false) :
       N(0), P(0), pgt(0), EPS(e)
-    {
-      nonlinear_storage.project_into_element = project_into_element;
-    };
+    { this->nonlinear_storage.project_into_element = project_into_element; }
 
-    template<class TAB> geotrans_inv_convex(
-      const convex<base_node, TAB> &cv,
-	  pgeometric_trans pgt_, 
-      scalar_type e=10e-12,
-      bool project_into_element = false) : N(0), P(0), pgt(0), EPS(e)
-   {
-     nonlinear_storage.project_into_element = project_into_element;
-     init(cv.points(),pgt_);
+    template<class TAB> geotrans_inv_convex(const convex<base_node, TAB> &cv,
+					    pgeometric_trans pgt_, 
+					    scalar_type e=10e-12,
+					    bool project_into_element = false)
+      : N(0), P(0), pgt(0), EPS(e) {
+      this->nonlinear_storage.project_into_element = project_into_element;
+      init(cv.points(),pgt_);
     }
 
-    geotrans_inv_convex(
-      const std::vector<base_node> &nodes,
-      pgeometric_trans pgt_,
-      scalar_type e=10e-12,
-      bool project_into_element = false) : N(0), P(0), pgt(0), EPS(e)
-    {
-      nonlinear_storage.project_into_element = project_into_element;
+    geotrans_inv_convex(const std::vector<base_node> &nodes,
+			pgeometric_trans pgt_,
+			scalar_type e=10e-12,
+			bool project_into_element = false)
+      : N(0), P(0), pgt(0), EPS(e) {
+      this->nonlinear_storage.project_into_element = project_into_element;
       init(nodes,pgt_);
     }
 
@@ -164,8 +163,6 @@ namespace bgeot {
 		       scalar_type IN_EPS, bool &converged, bool throw_except);
     void update_B();
 
-    nonlinear_storage_struct nonlinear_storage;
-
     friend class geotrans_inv_convex_bfgs;
   };
 
@@ -190,15 +187,16 @@ namespace bgeot {
       // computation of the pseudo inverse
       update_B();
     } else {
-      nonlinear_storage.diff.resize(N);
-      nonlinear_storage.x_real.resize(N);
-      nonlinear_storage.x_ref.resize(P);
+      this->nonlinear_storage.diff.resize(N);
+      this->nonlinear_storage.x_real.resize(N);
+      this->nonlinear_storage.x_ref.resize(P);
 
       if (pgt->complexity() > 1) {
         std::vector<base_node> real_nodes(nodes.begin(), nodes.end());
-        nonlinear_storage.plinearised_structure
-          = std::make_shared<nonlinear_storage::linearised_structure>(
-              pgt->structure()->ind_dir_points(), pgt->geometric_nodes(), real_nodes);
+        this->nonlinear_storage.plinearised_structure
+          = std::make_shared<nonlinear_storage_struct::linearised_structure>
+	  (pgt->structure()->ind_dir_points(), pgt->geometric_nodes(),
+	   real_nodes);
       }
     }
   }
@@ -255,7 +253,7 @@ namespace bgeot {
      *
      *  @param itab the indices of points found in the convex.
      *
-     *  @param bruteforce use a brute force search (only for debugging purposes).
+     *  @param bruteforce use a brute force search(only for debugging purposes).
      *
      *  @return the number of points in the convex (i.e. the size of itab,
      *  and pftab)
