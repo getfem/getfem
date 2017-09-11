@@ -621,7 +621,7 @@ namespace getfem {
                                       ITER b, ITER e) {
     for ( ; b != e; ++b) {
       size_type i = b.index();
-      ost << "CONVEX " << i << "    \'"
+      ost << "  CONVEX " << i << "    \'"
           << bgeot::name_of_geometric_trans(ms.trans_of_convex(i)).c_str()
           << "\'    ";
       write_tab_to_file_(ost, ms.ind_points_of_convex(i).begin(),
