@@ -479,24 +479,29 @@ namespace getfem {
       { te = true; }
       else if (!bgeot::casecmp(tmp, "POINT")) {
         bgeot::get_token(ist, tmp);
-        size_type ip = atoi(tmp.c_str());
-        dim_type d = 0;
-        GMM_ASSERT1(!npt.is_in(ip),
-                    "Two points with the same index. loading aborted.");
-        npt.add(ip);
-        bgeot::get_token(ist, tmp);
-        while (isdigit(tmp[0]) || tmp[0] == '-' || tmp[0] == '+'
-                               || tmp[0] == '.')
-          { tmpv[d++] = atof(tmp.c_str()); bgeot::get_token(ist, tmp); }
-        please_get = false;
-        base_node v(d);
-        for (size_type i = 0; i < d; i++) v[i] = tmpv[i];
-        size_type ipl = add_point(v);
-        if (ip != ipl) {
-          GMM_ASSERT1(!npt.is_in(ipl), "Two points [#" << ip << " and #" << ipl
-                      << "] with the same coords "<< v <<". loading aborted.");
-          swap_points(ip, ipl);
-        }
+	if (!bgeot::casecmp(tmp, "COUNT")) {
+	  bgeot::get_token(ist, tmp); // Ignored. Used in some applications
+	} else {
+	  size_type ip = atoi(tmp.c_str());
+	  dim_type d = 0;
+	  GMM_ASSERT1(!npt.is_in(ip),
+		      "Two points with the same index. loading aborted.");
+	  npt.add(ip);
+	  bgeot::get_token(ist, tmp);
+	  while (isdigit(tmp[0]) || tmp[0] == '-' || tmp[0] == '+'
+		 || tmp[0] == '.')
+	    { tmpv[d++] = atof(tmp.c_str()); bgeot::get_token(ist, tmp); }
+	  please_get = false;
+	  base_node v(d);
+	  for (size_type i = 0; i < d; i++) v[i] = tmpv[i];
+	  size_type ipl = add_point(v);
+	  if (ip != ipl) {
+	    GMM_ASSERT1(!npt.is_in(ipl), "Two points [#" << ip << " and #"
+			<< ipl << "] with the same coords "<< v
+			<< ". loading aborted.");
+	    swap_points(ip, ipl);
+	  }
+	}
       } else if (tmp.size()) {
         GMM_ASSERT1(false, "Syntax error in file, at token '" << tmp
                     << "', pos=" << std::streamoff(ist.tellg()));
@@ -520,26 +525,30 @@ namespace getfem {
       else if (!bgeot::casecmp(tmp, "CONVEX")) {
         size_type ic;
         bgeot::get_token(ist, tmp);
-        ic = gmm::abs(atoi(tmp.c_str()));
-        GMM_ASSERT1(!ncv.is_in(ic),
-                    "Negative or repeated index, loading aborted.");
-        ncv.add(ic);
-
-        int rgt = bgeot::get_token(ist, tmp);
-        if (rgt != 3) { // for backward compatibility with version 1.7
-          char c; ist.get(c);
-          while (!isspace(c)) { tmp.push_back(c); ist.get(c); }
-        }
-        
-        bgeot::pgeometric_trans pgt = bgeot::geometric_trans_descriptor(tmp);
-        size_type nb = pgt->nb_points();
-
-        cv[ic].cstruct = pgt;
-        cv[ic].pts.resize(nb);
-        for (size_type i = 0; i < nb; i++) {
-          bgeot::get_token(ist, tmp);        
-          cv[ic].pts[i] = gmm::abs(atoi(tmp.c_str()));
-        }
+	if (!bgeot::casecmp(tmp, "COUNT")) {
+	  bgeot::get_token(ist, tmp); // Ignored. Used in some applications
+	} else {
+	  ic = gmm::abs(atoi(tmp.c_str()));
+	  GMM_ASSERT1(!ncv.is_in(ic),
+		      "Negative or repeated index, loading aborted.");
+	  ncv.add(ic);
+	  
+	  int rgt = bgeot::get_token(ist, tmp);
+	  if (rgt != 3) { // for backward compatibility with version 1.7
+	    char c; ist.get(c);
+	    while (!isspace(c)) { tmp.push_back(c); ist.get(c); }
+	  }
+	  
+	  bgeot::pgeometric_trans pgt = bgeot::geometric_trans_descriptor(tmp);
+	  size_type nb = pgt->nb_points();
+	  
+	  cv[ic].cstruct = pgt;
+	  cv[ic].pts.resize(nb);
+	  for (size_type i = 0; i < nb; i++) {
+	    bgeot::get_token(ist, tmp);        
+	    cv[ic].pts[i] = gmm::abs(atoi(tmp.c_str()));
+	  }
+	}
       }
       else if (tmp.size()) {
         GMM_ASSERT1(false, "Syntax error reading a mesh file "
@@ -629,6 +638,7 @@ namespace getfem {
     ost.precision(16);
     gmm::stream_standard_locale sl(ost);
     ost << '\n' << "BEGIN POINTS LIST" << '\n' << '\n';
+    ost << "  POINT COUNT " << points().index().last_true()+1 << '\n';
     for (size_type i = 0; i < points_tab.size(); ++i)
       if (is_point_valid(i) ) {
         ost << "  POINT  " << i;
@@ -637,6 +647,7 @@ namespace getfem {
     ost << '\n' << "END POINTS LIST" << '\n' << '\n' << '\n';
 
     ost << '\n' << "BEGIN MESH STRUCTURE DESCRIPTION" << '\n' << '\n';
+    ost << "  CONVEX COUNT " << convex_index().last_true()+1 << '\n';
     write_convex_to_file_(*this, ost, convex_tab.tas_begin(),
                                       convex_tab.tas_end());
     ost << '\n' << "END MESH STRUCTURE DESCRIPTION" << '\n';
