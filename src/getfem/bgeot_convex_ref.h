@@ -95,10 +95,8 @@ namespace bgeot {
     pstored_point_tab ppoints;
     std::shared_ptr<mesh_structure> psimplexified_convex;
     pconvex_ref basic_convex_ref_;
-    bool auto_basic;
-    convex_of_reference() : convex<base_node>(),
-                            basic_convex_ref_(0), auto_basic(false)
-    { DAL_STORED_OBJECT_DEBUG_CREATED(this, "convex of refrence"); }
+    const bool auto_basic;
+    convex_of_reference(pconvex_structure cvs, bool auto_basic);
 
   public :
     /// return a negative or null number if the base_node is in the convex.
