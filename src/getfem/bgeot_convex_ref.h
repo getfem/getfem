@@ -93,7 +93,7 @@ namespace bgeot {
   protected :
     std::vector<base_small_vector> normals_;
     pstored_point_tab ppoints;
-    mutable std::shared_ptr<mesh_structure> psimplexified_convex;
+    std::shared_ptr<mesh_structure> psimplexified_convex;
     pconvex_ref basic_convex_ref_;
     bool auto_basic;
     convex_of_reference() : convex<base_node>(),
