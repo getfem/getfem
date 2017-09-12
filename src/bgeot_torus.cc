@@ -44,9 +44,10 @@ namespace bgeot{
       point2D.resize(2);
       return ori_ref_convex_->is_in_face(f, point2D);
     }  
-    torus_reference(bgeot::pconvex_ref ori_ref_convex){
+    torus_reference(bgeot::pconvex_ref ori_ref_convex) :
+      convex_of_reference(torus_structure_descriptor(ori_ref_convex->structure()), false)
+    {
       ori_ref_convex_ = ori_ref_convex;
-      cvs = torus_structure_descriptor(ori_ref_convex->structure());
       convex<base_node>::points().resize(cvs->nb_points());
       normals_.resize(ori_ref_convex->normals().size());
 
