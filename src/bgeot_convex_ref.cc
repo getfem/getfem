@@ -30,16 +30,16 @@ namespace bgeot {
 
   static void simplexify_convex(pconvex_structure cvs, mesh_structure &m) {
     m.clear();
-    cvs = basic_structure(cvs);
-    dim_type n = cvs->dim();
+    auto basic_cvs = basic_structure(cvs);
+    dim_type n = basic_cvs->dim();
     std::vector<size_type> ipts(n+1);
-    if (cvs->nb_points() == n + 1) {
+    if (basic_cvs->nb_points() == n + 1) {
       for (size_type i = 0; i <= n; ++i) ipts[i] = i;
       m.add_simplex(n, ipts.begin());
     }
     else {
       size_type *tab;
-      size_type nb = simplexified_tab(cvs, &tab);
+      size_type nb = simplexified_tab(basic_cvs, &tab);
       for (size_type nc = 0; nc < nb; ++nc) {
         for (size_type i = 0; i <= n; ++i) ipts[i] = *tab++;
         m.add_simplex(n, ipts.begin());
