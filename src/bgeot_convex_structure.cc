@@ -129,7 +129,7 @@ namespace bgeot {
     auto p = std::make_shared<simplex_structure_>();
     pconvex_structure pcvs = pconvex_structure(p);
     p->Nc = dim_type(nc); p->nbpt = short_type(nc+1);
-    p->nbf = short_type(nc > 1 ? nc+1 : 0);
+    p->nbf = short_type(nc ? nc+1 : 0);
     p->faces_struct.resize(p->nbf);
     p->faces.resize(p->nbf);
     p->dir_points_.resize(p->Nc + 1);
