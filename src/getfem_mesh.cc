@@ -19,6 +19,7 @@
 
 ===========================================================================*/
 
+#include "getfem/bgeot_torus.h"
 #include "getfem/dal_singleton.h"
 #include "gmm/gmm_condition_number.h"
 #include "getfem/getfem_mesh.h"
@@ -408,7 +409,12 @@ namespace getfem {
   scalar_type  mesh::convex_quality_estimate(size_type ic) const {
     base_matrix G;
     bgeot::vectors_to_base_matrix(G, points_of_convex(ic));
-    return getfem::convex_quality_estimate(trans_of_convex(ic), G);
+    auto pgt = trans_of_convex(ic);
+    if (auto pgt_torus = dynamic_cast<const bgeot::torus_geom_trans*>(pgt.get())) {
+      pgt = pgt_torus->get_original_transformation();
+      G.resize(pgt->dim(), G.ncols());
+    }
+    return getfem::convex_quality_estimate(pgt, G);
   }
 
   scalar_type  mesh::convex_radius_estimate(size_type ic) const {
