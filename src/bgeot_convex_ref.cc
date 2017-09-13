@@ -159,9 +159,9 @@ namespace bgeot {
       return e / sqrt(scalar_type(pt.size()));
     }
     K_simplex_of_ref_(dim_type NN, short_type KK) :
-      convex_of_reference(simplex_structure(NN, KK), KK == 1)
+      convex_of_reference(simplex_structure(NN, KK), (KK == 1) || (NN == 0))
     {
-      if (KK != 1) basic_convex_ref_ = simplex_of_reference(NN, 1);
+      if ((KK != 1) && (NN != 0)) basic_convex_ref_ = simplex_of_reference(NN, 1);
       size_type R = cvs->nb_points();
       convex<base_node>::points().resize(R);
       normals_.resize(NN+1);
