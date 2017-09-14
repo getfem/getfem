@@ -572,6 +572,17 @@ namespace getfem {
       children.back()->parent = this;
     }
 
+    inline void replace_child(pga_tree_node oldchild,
+                              pga_tree_node newchild) {
+        bool found = false;
+        for (pga_tree_node &child : children)
+          if (child == oldchild) {
+            child = newchild;
+            found = true;
+          }
+        GMM_ASSERT1(found, "Internal error");
+    }
+
     ga_tree_node()
       : node_type(GA_NODE_VOID), test_function_type(-1), qdim1(0), qdim2(0),
         nbc1(0), nbc2(0), nbc3(0), pos(0), der1(0), der2(0),
@@ -674,15 +685,11 @@ namespace getfem {
              ga_operator_priorities[current_node->parent->op_type] >= 4)
         current_node = current_node->parent;
       pga_tree_node new_node = new ga_tree_node(GA_NODE_PARAMS, pos);
-      pga_tree_node parent =  current_node->parent;
-      if (parent) {
-        for (size_type i = 0; i < parent->children.size(); ++i)
-          if (parent->children[i] == current_node)
-            parent->children[i] = new_node;
-      }
+      new_node->parent = current_node->parent;
+      if (current_node->parent)
+        current_node->parent->replace_child(current_node, new_node);
       else
         root = new_node;
-      new_node->parent = current_node->parent;
       new_node->adopt_child(current_node);
       current_node = new_node;
     }
@@ -738,15 +745,11 @@ namespace getfem {
             || op_type == GA_PRINT) {
           current_node->adopt_child(new_node);
         } else {
-          pga_tree_node parent = current_node->parent;
-          if (parent) {
-            new_node->parent = parent;
-            for (size_type i = 0; i < parent->children.size(); ++i)
-              if (parent->children[i] == current_node)
-                parent->children[i] = new_node;
-          } else {
-            root = new_node; new_node->parent = 0;
-          }
+          new_node->parent = current_node->parent;
+          if (current_node->parent)
+            current_node->parent->replace_child(current_node, new_node);
+          else
+            root = new_node;
           new_node->adopt_child(current_node);
         }
       } else {
@@ -759,8 +762,8 @@ namespace getfem {
 
     void clear_node_rec(pga_tree_node pnode) {
       if (pnode) {
-        for (size_type i = 0; i < pnode->children.size(); ++i)
-          clear_node_rec(pnode->children[i]);
+        for (pga_tree_node &child : pnode->children)
+          clear_node_rec(child);
         delete pnode;
         current_node = 0;
       }
@@ -769,41 +772,39 @@ namespace getfem {
     void clear_node(pga_tree_node pnode) {
       if (pnode) {
         pga_tree_node parent = pnode->parent;
-        if (parent) {
-          for (size_type i = 0, j = 0; i < parent->children.size(); ++i)
-            if (parent->children[i] != pnode)
-              { parent->children[j] = parent->children[i]; ++j; }
-          parent->children.pop_back();
+        if (parent) { // keep all siblings of pnode
+          size_type j = 0;
+          for (pga_tree_node &sibling : parent->children)
+            if (sibling != pnode)
+              parent->children[j++] = sibling;
+          parent->children.resize(j);
         } else root = 0;
       }
       clear_node_rec(pnode);
     }
 
     void clear() {
-      if (root) clear_node_rec(root);
+      clear_node_rec(root);
       root = current_node = 0;
     }
 
     void clear_children(pga_tree_node pnode) {
-      for (size_type i = 0; i < pnode->children.size(); ++i)
-        clear_node_rec(pnode->children[i]);
+      for (pga_tree_node &child : pnode->children)
+        clear_node_rec(child);
       pnode->children.resize(0);
     }
 
     void replace_node_by_child(pga_tree_node pnode, size_type i) {
       GMM_ASSERT1(i < pnode->children.size(), "Internal error");
       pga_tree_node child = pnode->children[i];
-      if (pnode->parent) {
-        bool found = false;
-        for (size_type j = 0; j < pnode->parent->children.size(); ++j)
-          if (pnode->parent->children[j] == pnode)
-            { pnode->parent->children[j] = child; found = true; }
-        GMM_ASSERT1(found, "Internal error");
-      } else root = child;
-      current_node = 0;
       child->parent = pnode->parent;
-      for (size_type j = 0; j < pnode->children.size(); ++j)
-        if (j != i) clear_node_rec(pnode->children[j]);
+      if (pnode->parent)
+        pnode->parent->replace_child(pnode, child);
+      else
+        root = child;
+      current_node = 0;
+      for (pga_tree_node &sibling : pnode->children)
+        if (sibling != child) clear_node_rec(sibling);
       delete pnode;
     }
 
@@ -812,8 +813,8 @@ namespace getfem {
       child = new ga_tree_node();
       *child = *pnode;
       child->parent = parent;
-      for (size_type j = 0; j < child->children.size(); ++j)
-        child->children[j] = 0;
+      for (pga_tree_node &grandchild : child->children)
+        grandchild = 0;
       for (size_type j = 0; j < child->children.size(); ++j)
         copy_node(pnode->children[j], child, child->children[j]);
     }
@@ -824,11 +825,10 @@ namespace getfem {
       newop->children.resize(2);
       newop->children[0] = pnode;
       newop->parent = pnode->parent;
-      if (pnode->parent) {
-        for (size_type j = 0; j < pnode->parent->children.size(); ++j)
-          if (pnode->parent->children[j] == pnode)
-            pnode->parent->children[j] = newop;
-      } else root = newop;
+      if (pnode->parent)
+        pnode->parent->replace_child(pnode, newop);
+      else
+        root = newop;
       pnode->parent = newop;
       copy_node(pnode, newop, newop->children[1]);
     }
@@ -843,13 +843,12 @@ namespace getfem {
 
     void insert_node(pga_tree_node pnode, GA_NODE_TYPE node_type) {
       pga_tree_node newnode = new ga_tree_node();
-      newnode->parent = pnode->parent;
       newnode->node_type = node_type;
-      if (pnode->parent) {
-        for (size_type j = 0; j < pnode->parent->children.size(); ++j)
-          if (pnode->parent->children[j] == pnode)
-            pnode->parent->children[j] = newnode;
-      } else root = newnode;
+      newnode->parent = pnode->parent;
+      if (pnode->parent)
+        pnode->parent->replace_child(pnode, newnode);
+      else
+        root = newnode;
       newnode->adopt_child(pnode);
     }
 
@@ -9439,21 +9438,16 @@ namespace getfem {
         } else if (workspace.macro_exists(name)) {
           GMM_ASSERT1(pnode->der1 == 0 && pnode->der2 == 0,
                       "Derivativation of a macro is not allowed");
-          pga_tree_node parent = pnode->parent;
-          size_type ind_in_parent = size_type(-1);
-          if (parent) {
-            for (size_type i = 0; i < parent->children.size(); ++i)
-              if (parent->children[i] == pnode)
-                ind_in_parent = i;
-            GMM_ASSERT1(ind_in_parent != size_type(-1), "Internal error");
-          }
           ga_tree &ma_tree
             = workspace.macro_tree(name, meshdim, ref_elt_dim, ignore_X);
-          pga_tree_node &newnode = (ind_in_parent == size_type(-1))
-            ? tree.root : pnode->parent->children[ind_in_parent];
-          tree.copy_node(ma_tree.root, pnode->parent, newnode);
-          delete pnode;
-          pnode = newnode;
+          pga_tree_node pnode_old = pnode;
+          pnode = nullptr;
+          tree.copy_node(ma_tree.root, pnode_old->parent, pnode);
+          if (pnode_old->parent)
+            pnode_old->parent->replace_child(pnode_old, pnode);
+          else
+            tree.root = pnode;
+          delete pnode_old;
           ga_node_analysis(expr, tree, workspace, pnode, meshdim,
                            ref_elt_dim, eval_fixed_size, ignore_X, option);
         } else {
@@ -10827,9 +10821,8 @@ namespace getfem {
             tree.insert_node(pnode, GA_NODE_OP);
             pnode->parent->op_type = GA_MULT;
             tree.add_child(pnode->parent);
-            pga_tree_node pnode_cte = pnode->parent->children[1];
-            pnode_cte->node_type = GA_NODE_CONSTANT;
-            pnode_cte->init_scalar_tensor(scalar_type(2));
+            pnode->parent->children[1]->node_type = GA_NODE_CONSTANT;
+            pnode->parent->children[1]->init_scalar_tensor(scalar_type(2));
           } else {
             tree.duplicate_with_addition(pnode);
             if ((pnode->op_type == GA_COLON && child0->tensor_order() == 2) ||
