@@ -567,6 +567,11 @@ namespace getfem {
                                          size_type l, size_type k)
     { t.init_fourth_order_tensor(n, m, l, k); test_function_type = 0; }
 
+    inline void adopt_child(pga_tree_node new_child) {
+      children.push_back(new_child);
+      children.back()->parent = this;
+    }
+
     ga_tree_node()
       : node_type(GA_NODE_VOID), test_function_type(-1), qdim1(0), qdim2(0),
         nbc1(0), nbc2(0), nbc3(0), pos(0), der1(0), der2(0),
@@ -600,10 +605,8 @@ namespace getfem {
       while (current_node && current_node->node_type != GA_NODE_OP)
         current_node = current_node->parent;
       if (current_node) {
-        pga_tree_node new_node = new ga_tree_node(val, pos);
-        current_node->children.push_back(new_node);
-        new_node->parent = current_node;
-        current_node = new_node;
+        current_node->adopt_child(new ga_tree_node(val, pos));
+        current_node = current_node->children.back();
       }
       else {
         GMM_ASSERT1(root == 0, "Invalid tree operation");
@@ -616,10 +619,8 @@ namespace getfem {
       while (current_node && current_node->node_type != GA_NODE_OP)
         current_node = current_node->parent;
       if (current_node) {
-        pga_tree_node new_node = new ga_tree_node(GA_NODE_ALLINDICES, pos);
-        current_node->children.push_back(new_node);
-        new_node->parent = current_node;
-        current_node = new_node;
+        current_node->adopt_child(new ga_tree_node(GA_NODE_ALLINDICES, pos));
+        current_node = current_node->children.back();
       }
       else {
         GMM_ASSERT1(root == 0, "Invalid tree operation");
@@ -632,10 +633,8 @@ namespace getfem {
       while (current_node && current_node->node_type != GA_NODE_OP)
         current_node = current_node->parent;
       if (current_node) {
-        pga_tree_node new_node = new ga_tree_node(name, length, pos);
-        current_node->children.push_back(new_node);
-        new_node->parent = current_node;
-        current_node = new_node;
+        current_node->adopt_child(new ga_tree_node(name, length, pos));
+        current_node = current_node->children.back();
       }
       else {
         GMM_ASSERT1(root == 0, "Invalid tree operation");
@@ -650,15 +649,13 @@ namespace getfem {
            current_node->node_type == GA_NODE_INTERPOLATE_FILTER ||
            current_node->node_type == GA_NODE_C_MATRIX)) {
         GMM_ASSERT1(sub_tree.root, "Invalid tree operation");
-        current_node->children.push_back(sub_tree.root);
-        sub_tree.root->parent = current_node;
+        current_node->adopt_child(sub_tree.root);
       } else {
         GMM_ASSERT1(sub_tree.root, "Invalid tree operation");
         while (current_node && current_node->node_type != GA_NODE_OP)
           current_node = current_node->parent;
         if (current_node) {
-          current_node->children.push_back(sub_tree.root);
-          sub_tree.root->parent = current_node;
+          current_node->adopt_child(sub_tree.root);
           current_node = sub_tree.root;
         }
         else {
@@ -686,8 +683,7 @@ namespace getfem {
       else
         root = new_node;
       new_node->parent = current_node->parent;
-      current_node->parent = new_node;
-      new_node->children.push_back(current_node);
+      new_node->adopt_child(current_node);
       current_node = new_node;
     }
 
@@ -695,10 +691,8 @@ namespace getfem {
       while (current_node && current_node->node_type != GA_NODE_OP)
         current_node = current_node->parent;
       if (current_node) {
-        pga_tree_node new_node = new ga_tree_node(GA_NODE_C_MATRIX, pos);
-        current_node->children.push_back(new_node);
-        new_node->parent = current_node;
-        current_node = new_node;
+        current_node->adopt_child(new ga_tree_node(GA_NODE_C_MATRIX, pos));
+        current_node = current_node->children.back();
       }
       else {
         GMM_ASSERT1(root == 0, "Invalid tree operation");
@@ -742,8 +736,7 @@ namespace getfem {
             || op_type == GA_SYM || op_type == GA_SKEW
             || op_type == GA_TRACE || op_type == GA_DEVIATOR
             || op_type == GA_PRINT) {
-          current_node->children.push_back(new_node);
-          new_node->parent = current_node;
+          current_node->adopt_child(new_node);
         } else {
           pga_tree_node parent = current_node->parent;
           if (parent) {
@@ -754,12 +747,12 @@ namespace getfem {
           } else {
             root = new_node; new_node->parent = 0;
           }
-          new_node->children.push_back(current_node);
-          current_node->parent = new_node;
+          new_node->adopt_child(current_node);
         }
       } else {
         if (root) new_node->children.push_back(root);
-        root = new_node; new_node->parent = 0;
+        root = new_node;
+        root->parent = 0;
       }
       current_node = new_node;
     }
@@ -857,14 +850,12 @@ namespace getfem {
           if (pnode->parent->children[j] == pnode)
             pnode->parent->children[j] = newnode;
       } else root = newnode;
-      newnode->children.push_back(pnode);
-      pnode->parent = newnode;
+      newnode->adopt_child(pnode);
     }
 
     void add_child(pga_tree_node pnode) {
       pga_tree_node newnode = new ga_tree_node();
-      newnode->parent = pnode;
-      pnode->children.push_back(newnode);
+      pnode->adopt_child(newnode);
     }
 
     void swap(ga_tree &tree)
