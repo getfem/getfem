@@ -104,6 +104,10 @@ namespace bgeot {
     simplexify_convex(structure(), *psimplexified_convex);
   }
 
+  bool convex_of_reference::is_basic() const {
+    return auto_basic;
+  }
+
   /* should be called on the basic_convex_ref */
   const mesh_structure* convex_of_reference::simplexified_convex() const {
     return psimplexified_convex.get();
