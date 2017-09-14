@@ -366,7 +366,7 @@ namespace getfem {
   struct assembly_tensor {
     bool is_copied;
     int sparsity_; // 0: plain, 1: vectorized base, 2: vectorised grad, ...
-    size_type qdim_; // Dimension of the vectorization for sparsityy tensors
+    size_type qdim_; // Dimension of the vectorization for sparsity tensors
     base_tensor t;
     assembly_tensor *tensor_copied;
 
@@ -439,7 +439,8 @@ namespace getfem {
 
     const bgeot::multi_index &sizes() const { return t.sizes(); }
 
-    assembly_tensor() : is_copied(false), sparsity_(0), tensor_copied(0) {}
+    assembly_tensor()
+    : is_copied(false), sparsity_(0), qdim_(0), tensor_copied(0) {}
   };
 
   struct ga_tree_node;
@@ -480,7 +481,7 @@ namespace getfem {
 
     inline size_type nb_test_functions() const {
       if (test_function_type == size_type(-1)) return 0;
-      return test_function_type  - (test_function_type >= 2 ? 1 : 0);
+      return test_function_type - (test_function_type >= 2 ? 1 : 0);
     }
 
     inline size_type tensor_order() const
