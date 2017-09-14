@@ -7544,7 +7544,7 @@ namespace getfem {
 
           ftree.insert_node(ftree.root, GA_NODE_OP);
           ftree.root->op_type = GA_PLUS;
-          ftree.add_child(ftree.root);
+          ftree.root->children.resize(2, nullptr);
           ftree.copy_node(tree.root, ftree.root, ftree.root->children[1]);
           ga_semantic_analysis("", ftree, *this, m.dim(),
                                ref_elt_dim_of_mesh(m), false, function_expr);
