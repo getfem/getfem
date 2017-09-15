@@ -1263,6 +1263,9 @@ namespace getfem {
       }
       GMM_ASSERT1(false, "could not find an " << name.str()
                   << " of degree >= " << int(degree));
+    } else if (bgeot::basic_structure(cvs) == bgeot::pyramid_QK_structure(1)) {
+      GMM_ASSERT1(n == 3, "Wrong dimension");
+      name << "IM_PYRAMID(IM_GAUSS_PARALLELEPIPED(3," << degree << "))";
     } else if (cvs->is_product(&a,&b) ||
                (bgeot::basic_structure(cvs).get() &&
                 bgeot::basic_structure(cvs)->is_product(&a,&b))) {
