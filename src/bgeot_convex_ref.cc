@@ -97,7 +97,7 @@ namespace bgeot {
     psimplexified_convex = std::make_shared<mesh_structure>();
     // dal::singleton<cleanup_simplexified_convexes>::instance()
     //        .push_back(psimplexified_convex);
-    simplexify_convex(structure(), *psimplexified_convex);
+    if (auto_basic) simplexify_convex(structure(), *psimplexified_convex);
   }
 
   bool convex_of_reference::is_basic() const {
