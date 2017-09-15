@@ -97,10 +97,6 @@ namespace bgeot {
     psimplexified_convex = std::make_shared<mesh_structure>();
     // dal::singleton<cleanup_simplexified_convexes>::instance()
     //        .push_back(psimplexified_convex);
-    GMM_ASSERT1(auto_basic,
-                "always use simplexified_convex on the basic_convex_ref() "
-                "[this=" << nb_points() << ", basic="
-                << basic_convex_ref_->nb_points());
     simplexify_convex(structure(), *psimplexified_convex);
   }
 
@@ -110,6 +106,10 @@ namespace bgeot {
 
   /* should be called on the basic_convex_ref */
   const mesh_structure* convex_of_reference::simplexified_convex() const {
+    GMM_ASSERT1(auto_basic,
+                "always use simplexified_convex on the basic_convex_ref() "
+                "[this=" << nb_points() << ", basic="
+                << basic_convex_ref_->nb_points());
     return psimplexified_convex.get();
   }
 
