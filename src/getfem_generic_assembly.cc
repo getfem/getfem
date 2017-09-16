@@ -728,6 +728,7 @@ namespace getfem {
       }
       source_node->children.resize(0); // so that the destructor of source_node
                                        // will not destruct the children
+      GMM_ASSERT1(current_node->children.size() == 0, "Internal error");
       current_node->children = new_children;
     }
 
@@ -753,7 +754,7 @@ namespace getfem {
           new_node->adopt_child(current_node);
         }
       } else {
-        if (root) new_node->children.push_back(root);
+        if (root) new_node->adopt_child(root);
         root = new_node;
         root->parent = nullptr;
       }
@@ -9449,6 +9450,7 @@ namespace getfem {
             pnode_old->parent->replace_child(pnode_old, pnode);
           else
             tree.root = pnode;
+          GMM_ASSERT1(pnode_old->children.empty(), "Internal error");
           delete pnode_old;
           ga_node_analysis(expr, tree, workspace, pnode, meshdim,
                            ref_elt_dim, eval_fixed_size, ignore_X, option);
@@ -10017,12 +10019,10 @@ namespace getfem {
         result_tree.root->pos = pnode->pos;
         result_tree.root->children.resize(pnode->children.size(), nullptr);
         result_tree.root->children[1] = result_tree.root->children[0];
-        for (size_type i = 0; i < pnode->children.size(); ++i) {
-          if (i != 1) {
+        for (size_type i = 0; i < pnode->children.size(); ++i)
+          if (i != 1)
             result_tree.copy_node(pnode->children[i], result_tree.root,
                                   result_tree.root->children[i]);
-          }
-        }
         break;
 
       case GA_NODE_C_MATRIX:
