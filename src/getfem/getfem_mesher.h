@@ -1067,12 +1067,6 @@ namespace getfem {
 
   inline pmesher_signed_distance new_mesher_torus(scalar_type R, scalar_type r)
   { return std::make_shared<mesher_torus>(R,r); }
-
-
-  // interface with qhull
-  void delaunay(const std::vector<base_node> &pts,
-		gmm::dense_matrix<size_type>& simplexes);
-
   
   // mesher
   void build_mesh(mesh &m, const pmesher_signed_distance& dist_,

@@ -306,7 +306,7 @@ struct Chrono {
     double t0=gmm::uclock_sec();
     if (noisy) cout << "running delaunay with " << fixed_points.size()
 		    << " points.." << std::flush;
-    delaunay(fixed_points, simplexes);
+    bgeot::qhull_delaunay(fixed_points, simplexes);
     if (noisy) cout << " -> " << gmm::mat_ncols(simplexes)
 		    << " simplexes [" << gmm::uclock_sec()-t0 << "sec]\n";
   }

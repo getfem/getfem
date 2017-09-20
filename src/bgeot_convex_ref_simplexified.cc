@@ -310,7 +310,8 @@ namespace bgeot {
       return simplexified_pyramid_nb;
     }
 
-    GMM_ASSERT1(false, "No simplexification for this element");
+    *tab = nullptr; // Not taken into account
+    return 0;
   }
 
 
