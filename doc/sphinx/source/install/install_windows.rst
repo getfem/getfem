@@ -152,7 +152,7 @@ Additionnaly to build the Python interface, you will have first to install a 64b
 
       $ make
 
-    It normally build the interface correctly. Then just add as a Windows
+    It normally builds the interface correctly. Then just add as a Windows
     system variable ``PYTHONPATH`` with the
     value ``c:\msys\home\login\getfem-5.?\interface\src\python`` where
     ``login`` and ``5.?`` have tobe adapted. You can either copy the
