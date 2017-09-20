@@ -460,7 +460,7 @@ namespace getfem {
     //   gmm::fill_random(rr);
     //   boundary_points[i] += 1E-9*rr;
     // }
-    getfem::delaunay(boundary_points, simplexes);
+    bgeot::qhull_delaunay(boundary_points, simplexes);
 
     // connectivity analysis
     for (size_type is = 0; is < gmm::mat_ncols(simplexes); ++is) {

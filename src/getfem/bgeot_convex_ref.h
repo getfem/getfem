@@ -131,7 +131,11 @@ namespace bgeot {
   inline pconvex_ref basic_convex_ref(pconvex_ref cvr)
   { return cvr->auto_basic ? cvr : cvr->basic_convex_ref_; }
 
-
+  // interface with qhull
+  void qhull_delaunay(const std::vector<base_node> &pts,
+		      gmm::dense_matrix<size_type>& simplexes);
+  
+  
   //@name public functions for obtaining a convex of reference
   //@{
 

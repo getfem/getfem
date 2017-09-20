@@ -1171,7 +1171,7 @@ namespace getfem {
         cout << "NEW DELAUNAY, running on " << pts.size() << " points\n";
       size_type nbpt = pts.size();
       add_point_hull();
-      delaunay(pts, t);
+      bgeot::qhull_delaunay(pts, t);
       pts.resize(nbpt);
       if (noisy > 1) cout << "number of elements before selection = "
                           << gmm::mat_ncols(t) << "\n";
@@ -1309,7 +1309,7 @@ namespace getfem {
           control_mesh_surface();
           size_type nbpt = pts.size();
           add_point_hull();          
-          delaunay(pts, t);
+	  bgeot::qhull_delaunay(pts, t);
           pts.resize(nbpt);
           select_elements((prefind == 3) ? 0 : 1);
           suppress_flat_boundary_elements();
@@ -1343,7 +1343,7 @@ namespace getfem {
             control_mesh_surface();
             nbpt = pts.size();
             add_point_hull();
-            delaunay(pts, t);
+	    bgeot::qhull_delaunay(pts, t);
             pts.resize(nbpt);
             select_elements((prefind == 3) ? 0 : 1);
             suppress_flat_boundary_elements();
@@ -1426,88 +1426,5 @@ namespace getfem {
               iter_max, prefind, dist_point_hull, boundary_threshold_flatness);
   }
   
-
-  // ******************************************************************
-  //    Interface with qhull
-  // ******************************************************************
-
-# ifndef GETFEM_HAVE_LIBQHULL_QHULL_A_H
-  void delaunay(const std::vector<base_node> &,
-                gmm::dense_matrix<size_type>&) {
-    GMM_ASSERT1(false, "Qhull header files not installed. "
-                "Install qhull library and reinstall GetFEM++ library.");
-  }
-# else
-
-  extern "C" {
-// #ifdef _MSC_VER
-# include <libqhull/qhull_a.h>
-// #else
-// # include <qhull/qhull.h>
-// # include <qhull/mem.h>
-// # include <qhull/qset.h>
-// # include <qhull/geom.h>
-// # include <qhull/merge.h>
-// # include <qhull/poly.h>
-// # include <qhull/io.h>
-// # include <qhull/stat.h>
-// #endif
-}
-
-  void delaunay(const std::vector<base_node> &pts,
-                gmm::dense_matrix<size_type>& simplexes) {
-    // cout << "running delaunay with " << pts.size() << " points\n";
-    size_type dim = pts[0].size();   /* points dimension.           */
-    if (pts.size() <= dim) { gmm::resize(simplexes, dim+1, 0); return; }
-    if (pts.size() == dim+1) {
-      gmm::resize(simplexes, dim+1, 1);
-      for (size_type i=0; i <= dim; ++i) simplexes(i, 0) = i;
-      return;
-    }
-    std::vector<coordT> Pts(dim * pts.size());
-    for (size_type i=0; i < pts.size(); ++i)
-      gmm::copy(pts[i], gmm::sub_vector(Pts, gmm::sub_interval(i*dim, dim)));
-    boolT ismalloc=0;  /* True if qhull should free points in
-                        * qh_freeqhull() or reallocation      */
-    /* Be Aware: option QJ could destabilizate all, it can break everything. */
-    /* option Qbb -> QbB (????) */
-    /* option flags for qhull, see qh_opt.htm */
-    char flags[]= "qhull QJ d Qbb Pp T0"; //QJ s i TO";//"qhull Tv";
-    FILE *outfile= 0;    /* output from qh_produce_output()
-                          *  use NULL to skip qh_produce_output() */ 
-    FILE *errfile= stderr;    /* error messages from qhull code */ 
-    int exitcode;             /* 0 if no error from qhull */
-    facetT *facet;                  /* set by FORALLfacets */
-    int curlong, totlong;          /* memory remaining after qh_memfreeshort */
-    vertexT *vertex, **vertexp;
-    exitcode = qh_new_qhull (int(dim), int(pts.size()), &Pts[0], ismalloc,
-                             flags, outfile, errfile);
-    if (!exitcode) { /* if no error */ 
-      size_type nbf=0;
-      FORALLfacets { if (!facet->upperdelaunay) nbf++; }
-      gmm::resize(simplexes, dim+1, nbf);
-        /* 'qh facet_list' contains the convex hull */
-      nbf=0;
-      FORALLfacets {
-        if (!facet->upperdelaunay) {
-          size_type s=0;
-          FOREACHvertex_(facet->vertices) {
-            assert(s < (unsigned)(dim+1));
-            simplexes(s++,nbf) = qh_pointid(vertex->point);
-          }
-          nbf++;
-        }
-      }
-    }
-    qh_freeqhull(!qh_ALL);
-    qh_memfreeshort (&curlong, &totlong);
-    if (curlong || totlong)
-      cerr << "qhull internal warning (main): did not free " << totlong << 
-        " bytes of long memory (" << curlong << " pieces)\n";
-
-  }
-
-#endif
-
 }
 
