@@ -133,9 +133,8 @@ namespace bgeot {
 	}
       }	else {
 #       ifdef GETFEM_HAVE_LIBQHULL_QHULL_A_H
-	cout << "COUCOU\n" << endl;
 	gmm::dense_matrix<size_type> t;
-	delaunay(cvr->points(), t);
+	qhull_delaunay(cvr->points(), t);
 	for (size_type nc = 0; nc < gmm::mat_ncols(t); ++nc) {
 	  for (size_type i = 0; i <= n; ++i) ipts[i] = t(i,nc);
 	  m.add_simplex(n, ipts.begin());
