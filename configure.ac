@@ -870,13 +870,16 @@ if test "$usematlab" != NO; then
      if $(echo "" | $MEX 2>&1 | grep 'This is .*TeX'); then
 	  AC_MSG_ERROR([the mex binary which is in the PATH appears to be part of LaTeX, not matlab !! run ./configure MEX=/path/to/matlab/mex]);
      fi;
-     MATLAB_ROOT=`$MEX -v 2>&1 | grep "MATLAB  " | awk '{print $4}'|sed -e '2,$d'`
+     AC_CHECK_PROGS(MEXEXT, mexext)
+     # MATLAB_ROOT=`$MEX -v 2>&1 | grep "MATLAB  " | awk '{print $4}'|sed -e '2,$d'`
+     MATLAB_ROOT=`which $MEX | sed -e 's/bin.*$//'` 
      Matlab_INC_DIR=$MATLAB_ROOT/extern/include
      echo "checking for matlab path... " $MATLAB_ROOT
-     MATLAB_COM_EXT=`$MEX -v 2>&1 | grep "LDEXTENSION " | awk '{print $3}'`
+     MATLAB_COM_EXT=.`$MEXEXT`
      echo "checking for mex extension... " $MATLAB_COM_EXT
 #    MATLAB_RELEASE=`grep "MATLAB R" $MATLAB_ROOT/extern/src/mexversion.c | awk '{print $4}' | sed -e 's/R//'`
-     MATLAB_RELEASE=`grep "full_ver=" $(which $MEX) | sed 's/[[^0-9]]//g'` # double brackets are for escaping reasons.
+#    MATLAB_RELEASE=`grep "full_ver="$(which $MEX) | sed 's/[[^0-9]]//g'` # double brackets are for escaping reasons.
+     MATLAB_RELEASE=`echo $MATLAB_ROOT | sed 's/^.*R//g' | sed 's/\/$//'`
      echo "Matlab release is : R$MATLAB_RELEASE"
   fi
 fi
