@@ -132,33 +132,6 @@ namespace gmm {
   getrf_interface(zgetrf_, BLAS_Z)
 
   /* ********************************************************************** */
-  /* LU inverse.                                                            */
-  /* ********************************************************************** */
-  
-# define getri_interface(lapack_name, base_type) inline                    \
-  void lu_inverse(const dense_matrix<base_type > &LU,                      \
-       std::vector<long> &ipvt, const dense_matrix<base_type > &A_) {      \
-    GMMLAPACK_TRACE("getri_interface");                                    \
-    dense_matrix<base_type> &A                                             \
-      = const_cast<dense_matrix<base_type > &>(A_);                        \
-    long n=long(mat_nrows(A)), info(-1L), lwork(10000);			   \
-    base_type work[10000];						   \
-    if (n) {                                                               \
-      std::copy(LU.begin(), LU.end(), A.begin());			   \
-      lapack_name(&n, &A(0,0), &n, &ipvt[0], &work[0], &lwork, &info);     \
-      if ((info & 0xFFFFFFFF00000000L) && !(info & 0x00000000FFFFFFFFL))   \
-	/* For compatibility with lapack version with 32 bit integer. */   \
-        int_to_long_ipvt(ipvt);						   \
-    }                                                                      \
-  }
-
-  getri_interface(sgetri_, BLAS_S)
-  getri_interface(dgetri_, BLAS_D)
-  getri_interface(cgetri_, BLAS_C)
-  getri_interface(zgetri_, BLAS_Z)
-
-
-  /* ********************************************************************** */
   /* QR factorization.                                                      */
   /* ********************************************************************** */
 
