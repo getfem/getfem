@@ -4734,8 +4734,8 @@ namespace getfem {
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: reduction operation of size " << nn);
 #if GA_USES_BLAS
-      int m = int(tc1.size()/nn), k = int(nn), n = int(tc2.size()/nn);
-      int lda = m, ldb = n, ldc = m;
+      long m = int(tc1.size()/nn), k = int(nn), n = int(tc2.size()/nn);
+      long lda = m, ldb = n, ldc = m;
       char T = 'T', N = 'N';
       scalar_type alpha(1), beta(0);
       gmm::dgemm_(&N, &T, &m, &n, &k, &alpha, &(tc1[0]), &lda, &(tc2[0]), &ldb,
@@ -13860,7 +13860,11 @@ namespace getfem {
         loc_M.base_resize(nd, nd); gmm::resize(loc_U, nd);
         gmm::sub_index J(mf.ind_basic_dof_of_element(v.cv()));
         gmm::copy(gmm::sub_matrix(M, J, J), loc_M);
+	cout << "will loch lu_solve" << endl;
+	cout << "loc_M = " << loc_M << endl;
+        cout << "sub_F = " << gmm::sub_vector(F, J) << endl;
         gmm::lu_solve(loc_M, loc_U, gmm::sub_vector(F, J));
+	cout << "result : " << vref(loc_U) << endl;
         gmm::copy(loc_U, gmm::sub_vector(result, J));
       }
     }

@@ -907,10 +907,10 @@ namespace bgeot {
   }
 
   static bool do_reduction2v(bgeot::multi_tensor_iterator &mti) {
-    int n = mti.vectorized_size();
+    long n = mti.vectorized_size();
     const std::vector<stride_type> &s = mti.vectorized_strides();
     if (n && s[0] && s[1] && s[2] == 0) {
-      int incx = s[1], incy = s[0];
+      long incx = s[1], incy = s[0];
       /*mti.print();
         scalar_type *b[3]; 
         for (int i=0; i < 3; ++i)       b[i] = &mti.p(i);*/
@@ -945,10 +945,10 @@ namespace bgeot {
   }
 
   static bool do_reduction3v(bgeot::multi_tensor_iterator &mti) {
-    int n = mti.vectorized_size();
+    long n = mti.vectorized_size();
     const std::vector<stride_type> &s = mti.vectorized_strides();
     if (n && s[0] && s[1] && s[2] == 0 && s[3] == 0) {
-      int incx = s[1], incy = s[0];
+      long incx = s[1], incy = s[0];
       do {
         double v = mti.p(2)*mti.p(3);
 	gmm::daxpy_(&n, &v, &mti.p(1), &incx, &mti.p(0), &incy);

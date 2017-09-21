@@ -22,9 +22,6 @@
 #include "getfem/getfem_assembling_tensors.h"
 #include "getfem/getfem_mat_elem.h"
 
-extern "C" void daxpy_(const int *n, const double *alpha, const double *x,
-                       const int *incx, double *y, const int *incy);
-
 namespace getfem {
   size_type vdim_specif_list::nb_mf() const {
     return std::count_if(begin(),end(),
@@ -355,9 +352,9 @@ namespace getfem {
           tensor_bases[k] = const_cast<TDIter>(&(*eltm[k]->begin()));
         }
         red.do_reduction();
-        int one = 1, n = int(red.out_data.size()); assert(n);
-        daxpy_(&n, &c, const_cast<double*>(&(red.out_data[0])),
-          &one, (double*)&(t[0]), &one);
+        long one = 1, n = int(red.out_data.size()); assert(n);
+	gmm::daxpy_(&n, &c, const_cast<double*>(&(red.out_data[0])),
+		    &one, (double*)&(t[0]), &one);
       }
       void resize_t(bgeot::base_tensor &t) {
         bgeot::multi_index r;

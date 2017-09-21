@@ -110,7 +110,7 @@ namespace gmm {
  	  }
       default : {
   	    dense_matrix<T> B(mat_nrows(A), mat_ncols(A));
-	    std::vector<int> ipvt(mat_nrows(A));
+	    std::vector<long> ipvt(mat_nrows(A));
 	    gmm::copy(A, B);
     	size_type info = lu_factor(B, ipvt);
 	    GMM_ASSERT1(!info, "non invertible matrix");
