@@ -43,8 +43,8 @@ namespace bgeot {
     return v;
   }
 
-  std::vector<int>& __ipvt_aux(){
-    DEFINE_STATIC_THREAD_LOCAL(std::vector<int>, vi);
+  std::vector<long>& __ipvt_aux(){
+    DEFINE_STATIC_THREAD_LOCAL(std::vector<long>, vi);
     return vi;
   }
 
@@ -111,7 +111,7 @@ namespace bgeot {
 
 
   // Optimized lu_factor for small square matrices
-  size_type lu_factor(scalar_type *A, std::vector<int> &ipvt,
+  size_type lu_factor(scalar_type *A, std::vector<long> &ipvt,
                       size_type N) {
     size_type info(0), i, j, jp, N_1 = N-1;
 
@@ -123,7 +123,7 @@ namespace bgeot {
           scalar_type ap = gmm::abs(*(++it));
           if (ap > max) { jp = i; max = ap; }
         }
-        ipvt[j] = int(jp + 1);
+        ipvt[j] = long(jp + 1);
 
         if (max == scalar_type(0)) { info = j + 1; break; }
         if (jp != j) {
@@ -142,7 +142,7 @@ namespace bgeot {
         }
 
       }
-      ipvt[N-1] = int(N);
+      ipvt[N-1] = long(N);
     }
     return info;
   }
@@ -170,20 +170,20 @@ namespace bgeot {
     }
   }
 
-  static void lu_solve(const scalar_type *LU, const std::vector<int> &ipvt,
+  static void lu_solve(const scalar_type *LU, const std::vector<long> &ipvt,
                        scalar_type *x, scalar_type *b, int N) {
     std::copy(b, b+N, x);
     for(int i = 0; i < N; ++i)
-      { int perm = ipvt[i]-1; if(i != perm) std::swap(x[i], x[perm]); }
+      { long perm = ipvt[i]-1; if(i != perm) std::swap(x[i], x[perm]); }
     bgeot::lower_tri_solve(LU, x, N, true);
     bgeot::upper_tri_solve(LU, x, N, false);
   }
 
-  scalar_type lu_det(const scalar_type *LU, const std::vector<int> &ipvt,
+  scalar_type lu_det(const scalar_type *LU, const std::vector<long> &ipvt,
                      size_type N) {
     scalar_type det(1);
     for (size_type j = 0; j < N; ++j) det *= *(LU+j*(N+1));
-    for(int i = 0; i < int(N); ++i) if (i != ipvt[i]-1) { det = -det; }
+    for(long i = 0; i < long(N); ++i) if (i != ipvt[i]-1) { det = -det; }
     return det;
   }
 
@@ -209,7 +209,7 @@ namespace bgeot {
     }
   }
 
-  void lu_inverse(const scalar_type *LU, const std::vector<int> &ipvt,
+  void lu_inverse(const scalar_type *LU, const std::vector<long> &ipvt,
                   scalar_type *A, size_type N) {
     __aux2().resize(N); gmm::clear(__aux2());
     __aux3().resize(N);

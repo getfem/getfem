@@ -109,7 +109,7 @@ namespace getfem {
     // cout << "nbco = " << nbco << endl;
     std::vector<const mesher_signed_distance*> ls(nbco);
     std::vector<scalar_type> d(nbco), v(nbco);
-    std::vector<int> ipvt(nbco);
+    std::vector<long> ipvt(nbco);
     gmm::col_matrix<base_node> G(N, nbco);
     gmm::dense_matrix<scalar_type> H(nbco, nbco);
     base_small_vector dd(N);

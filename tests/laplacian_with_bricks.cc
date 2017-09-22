@@ -242,6 +242,9 @@ bool laplacian_problem::solve(void) {
 
   model.listvar(cout);
 
+  std::string expr = model.Neumann_term("u", DIRICHLET_BOUNDARY_NUM);
+  cout << "Neumann term : " << expr << endl;
+
   gmm::iteration iter(residual, 1, 40000);
   getfem::standard_solve(model, iter);
 

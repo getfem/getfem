@@ -58,8 +58,8 @@ template <class T> void test_logm(T) {
   gmm::copy(gmm::identity_matrix(), X);
   X(0,1) = -T(1);
   Z(0,1) = -T(1);
-  gmm::logm(X, LOGMX);
   std::cout << "X = " << X << std::endl;
+  gmm::logm(X, LOGMX);
   std::cout << "logm(X) = " << LOGMX << std::endl;
   gmm::add(gmm::scaled(Z, -T(1)), LOGMX);
   std::cout << "err(logm(X)) = " << LOGMX << std::endl;
@@ -94,19 +94,15 @@ int main(void)
 {
   srand(1459);
 
-  try {
-
-    test_sqrtm(float());
-    test_sqrtm(double());
-    test_sqrtm(std::complex<float>());
-    test_sqrtm(std::complex<double>());
-    
-    test_logm(float());
-    test_logm(double());
-    test_logm(std::complex<float>());
-    test_logm(std::complex<double>());
-  }
-  GMM_STANDARD_CATCH_ERROR;
-
+  test_sqrtm(float());
+  test_sqrtm(double());
+  test_sqrtm(std::complex<float>());
+  test_sqrtm(std::complex<double>());
+  
+  test_logm(float());
+  test_logm(double());
+  test_logm(std::complex<float>());
+  test_logm(std::complex<double>());
+ 
   return 0;
 }

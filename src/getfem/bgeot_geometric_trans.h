@@ -415,7 +415,7 @@ namespace bgeot {
     mutable scalar_type J_, J__; /** Jacobian */
     mutable base_matrix PC, B_factors;
     mutable base_vector aux1, aux2;
-    mutable std::vector<int> ipvt;
+    mutable std::vector<long> ipvt;
     mutable bool have_J_, have_B_, have_B3_, have_B32_, have_K_, have_cv_center_;
     void compute_J() const;
   public:

@@ -26,9 +26,6 @@
 #include "getfem/getfem_mat_elem.h"
 #include "getfem/getfem_omp.h"
 
-extern "C" void daxpy_(const int *n, const double *alpha, const double *x,
-                       const int *incx, double *y, const int *incy);
-
 namespace getfem {
   /* ********************************************************************* */
   /*       Elementary matrices computation.                                */
@@ -384,19 +381,19 @@ namespace getfem {
       if (nm == 0) {
         t[0] += J;
       } else {
-        int n0 = int(es_end[0] - es_beg[0]);
+        long n0 = int(es_end[0] - es_beg[0]);
         base_tensor::const_iterator pts0 = pts[0];
 
         /* very heavy reduction .. takes much time */
         k = nm-1; Vtab[k] = J;
-        int one = 1;
+        long one = 1;
         scalar_type V;
         do {
           for (V = Vtab[k]; k; --k)
             Vtab[k-1] = V = *pts[k] * V;
           GMM_ASSERT1(pt+n0 <= t.end(), "Internal error");
-          daxpy_(&n0, &V, const_cast<double*>(&(pts0[0])), &one,
-                 (double*)&(*pt), &one);
+	  gmm::daxpy_(&n0, &V, const_cast<double*>(&(pts0[0])), &one,
+		      (double*)&(*pt), &one);
           pt+=n0;
           for (k=1; k != nm && ++pts[k] == es_end[k]; ++k)
             pts[k] = es_beg[k];

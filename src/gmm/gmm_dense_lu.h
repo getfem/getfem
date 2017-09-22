@@ -138,7 +138,7 @@ namespace gmm {
   void lu_solve(const DenseMatrix &A, VectorX &x, const VectorB &b) {
     typedef typename linalg_traits<DenseMatrix>::value_type T;
     dense_matrix<T> B(mat_nrows(A), mat_ncols(A));
-    std::vector<int> ipvt(mat_nrows(A));
+    std::vector<long> ipvt(mat_nrows(A));
     gmm::copy(A, B);
     size_type info = lu_factor(B, ipvt);
     GMM_ASSERT1(!info, "Singular system, pivot = " << info);
@@ -212,7 +212,7 @@ namespace gmm {
     typedef typename linalg_traits<DenseMatrix>::value_type T;
     DenseMatrix& A = const_cast<DenseMatrix&>(A_);
     dense_matrix<T> B(mat_nrows(A), mat_ncols(A));
-    std::vector<int> ipvt(mat_nrows(A));
+    std::vector<long> ipvt(mat_nrows(A));
     gmm::copy(A, B);
     size_type info = lu_factor(B, ipvt);
     if (doassert) GMM_ASSERT1(!info, "Non invertible matrix, pivot = "<<info);
@@ -238,7 +238,7 @@ namespace gmm {
   lu_det(const DenseMatrix& A) {
     typedef typename linalg_traits<DenseMatrix>::value_type T;
     dense_matrix<T> B(mat_nrows(A), mat_ncols(A));
-    std::vector<int> ipvt(mat_nrows(A));
+    std::vector<long> ipvt(mat_nrows(A));
     gmm::copy(A, B);
     lu_factor(B, ipvt);
     return lu_det(B, ipvt);

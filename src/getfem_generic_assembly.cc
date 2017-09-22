@@ -28,6 +28,9 @@
 #include "getfem/bgeot_rtree.h"
 #include "getfem/bgeot_geotrans_inv.h"
 #include "getfem/getfem_copyable_ptr.h"
+extern "C"{
+#include <unistd.h>
+}
 
 /**
    Providing for special Math functions unavailable on Intel or MSVS C++
@@ -1128,6 +1131,7 @@ namespace getfem {
 
   static void ga_print_node(const pga_tree_node pnode,
                             std::ostream &str) {
+    if (!pnode) return;
     long prec = str.precision(16);
 
     bool is_interpolate(false), is_elementary(false);
@@ -4734,8 +4738,8 @@ namespace getfem {
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: reduction operation of size " << nn);
 #if GA_USES_BLAS
-      int m = int(tc1.size()/nn), k = int(nn), n = int(tc2.size()/nn);
-      int lda = m, ldb = n, ldc = m;
+      long m = int(tc1.size()/nn), k = int(nn), n = int(tc2.size()/nn);
+      long lda = m, ldb = n, ldc = m;
       char T = 'T', N = 'N';
       scalar_type alpha(1), beta(0);
       gmm::dgemm_(&N, &T, &m, &n, &k, &alpha, &(tc1[0]), &lda, &(tc2[0]), &ldb,
@@ -9952,7 +9956,6 @@ namespace getfem {
   //=========================================================================
   static void ga_extract_factor(ga_tree &result_tree, pga_tree_node pnode,
                                 pga_tree_node &new_pnode) {
-
     result_tree.clear();
     result_tree.copy_node(pnode, 0,  result_tree.root);
     new_pnode = result_tree.root;
@@ -9968,9 +9971,7 @@ namespace getfem {
       pga_tree_node child0 = (nbch > 0) ? pnode->children[0] : 0;
       pga_tree_node child1 = (nbch > 1) ? pnode->children[1] : 0;
 
-
       switch (pnode->node_type) {
-
 
       case GA_NODE_OP:
         switch(pnode->op_type) {
@@ -9995,11 +9996,12 @@ namespace getfem {
           result_tree.root->op_type = pnode->op_type;
           result_tree.root->pos = pnode->pos;
           result_tree.root->children.resize(2, nullptr);
-          if (child0 == pnode_child) {
-            result_tree.copy_node(child1, result_tree.root,
+	  if (child0 == pnode_child) {
+	    result_tree.copy_node(child1, result_tree.root,
                                   result_tree.root->children[1]);
           } else if (child1 == pnode_child) {
-            result_tree.root->children[1] = result_tree.root->children[0];
+            std::swap(result_tree.root->children[1],
+		      result_tree.root->children[0]);
             result_tree.copy_node(child0, result_tree.root,
                                   result_tree.root->children[0]);
           } else GMM_ASSERT1(false, "Corrupted tree");
@@ -10018,7 +10020,7 @@ namespace getfem {
         result_tree.insert_node(result_tree.root, pnode->node_type);
         result_tree.root->pos = pnode->pos;
         result_tree.root->children.resize(pnode->children.size(), nullptr);
-        result_tree.root->children[1] = result_tree.root->children[0];
+	std::swap(result_tree.root->children[1], result_tree.root->children[0]);
         for (size_type i = 0; i < pnode->children.size(); ++i)
           if (i != 1)
             result_tree.copy_node(pnode->children[i], result_tree.root,
@@ -10272,13 +10274,12 @@ namespace getfem {
   static std::string ga_extract_one_Neumann_term
   (const std::string &varname,
    ga_workspace &workspace, pga_tree_node pnode) {
-
     size_type N = workspace.qdim(varname);
     const mesh_fem *mf = workspace.associated_mf(varname);
     GMM_ASSERT1(mf, "Works only with fem variables.");
     size_type meshdim = mf->linked_mesh().dim();
     ga_tree factor;
-    pga_tree_node new_pnode;
+    pga_tree_node new_pnode = nullptr;
     ga_extract_factor(factor, pnode, new_pnode);
     std::string result;
     pga_tree_node nnew_pnode = new_pnode;
@@ -10426,6 +10427,7 @@ namespace getfem {
     for (size_type i = 0; i < pnode->children.size(); ++i)
       ga_extract_Neumann_term_rec(tree, varname, workspace,
                                   pnode->children[i], result);
+
 
     switch (pnode->node_type) {
     case GA_NODE_DIVERG_TEST: case GA_NODE_GRAD_TEST:
@@ -13252,17 +13254,17 @@ namespace getfem {
       const ga_instruction_list &gilb = instr.second.begin_instructions;
       const ga_instruction_list &gile = instr.second.elt_instructions;
       const ga_instruction_list &gil = instr.second.instructions;
-#if 0
-      if (gilb.size()) cout << "Begin instructions\n";
-      for (size_type j = 0; j < gilb.size(); ++j)
-        cout << typeid(*(gilb[j])).name() << endl;
-      if (gile.size()) cout << "\nElement instructions\n";
-      for (size_type j = 0; j < gile.size(); ++j)
-        cout << typeid(*(gile[j])).name() << endl;
-      cout << "\nGauss pt instructions\n";
-      for (size_type j = 0; j < gil.size(); ++j)
-        cout << typeid(*(gil[j])).name() << endl;
-#endif
+
+      // if (gilb.size()) cout << "Begin instructions\n";
+      // for (size_type j = 0; j < gilb.size(); ++j)
+      //   cout << typeid(*(gilb[j])).name() << endl;
+      // if (gile.size()) cout << "\nElement instructions\n";
+      // for (size_type j = 0; j < gile.size(); ++j)
+      //   cout << typeid(*(gile[j])).name() << endl;
+      // cout << "\nGauss pt instructions\n";
+      // for (size_type j = 0; j < gil.size(); ++j)
+      //   cout << typeid(*(gil[j])).name() << endl;
+
       const mesh_region &region = *(instr.first.region());
 
       // iteration on elements (or faces of elements)
