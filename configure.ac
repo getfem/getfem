@@ -872,7 +872,9 @@ if test "$usematlab" != NO; then
      fi;
      AC_CHECK_PROGS(MEXEXT, mexext)
      # MATLAB_ROOT=`$MEX -v 2>&1 | grep "MATLAB  " | awk '{print $4}'|sed -e '2,$d'`
-     MATLAB_ROOT=`which $MEX | sed -e 's/bin.*$//'` 
+     MEX_EXE=`which $MEX`
+     MEX_EXE=`readlink -e $MEX_EXE`
+     MATLAB_ROOT=`echo $MEX_EXE | sed -e 's/bin.*$//'` 
      Matlab_INC_DIR=$MATLAB_ROOT/extern/include
      echo "checking for matlab path... " $MATLAB_ROOT
      MATLAB_COM_EXT=.`$MEXEXT`
