@@ -37,6 +37,8 @@
 #ifndef GMM_OPT_H__
 #define GMM_OPT_H__
 
+#include <gmm/gmm_dense_lu.h>
+
 namespace gmm {
 
   /* ********************************************************************* */
@@ -58,7 +60,7 @@ namespace gmm {
       default :
 	{
 	  dense_matrix<T> B(mat_nrows(A), mat_ncols(A));
-	  std::vector<size_type> ipvt(mat_nrows(A));
+	  lapack_ipvt ipvt(mat_nrows(A));
 	  gmm::copy(A, B);
 	  lu_factor(B, ipvt);
 	  return lu_det(B, ipvt);	
@@ -69,7 +71,8 @@ namespace gmm {
   }
 
 
-  template <typename T> T lu_inverse(const dense_matrix<T> &A_, bool doassert = true) {
+  template <typename T> T lu_inverse(const dense_matrix<T> &A_,
+				     bool doassert = true) {
     dense_matrix<T>& A = const_cast<dense_matrix<T> &>(A_);
     size_type N = mat_nrows(A);
     T det(1);
@@ -110,7 +113,7 @@ namespace gmm {
  	  }
       default : {
   	    dense_matrix<T> B(mat_nrows(A), mat_ncols(A));
-	    std::vector<long> ipvt(mat_nrows(A));
+	    lapack_ipvt ipvt(mat_nrows(A));
 	    gmm::copy(A, B);
     	size_type info = lu_factor(B, ipvt);
 	    GMM_ASSERT1(!info, "non invertible matrix");

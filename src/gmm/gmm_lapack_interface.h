@@ -96,33 +96,19 @@ namespace gmm {
     void sgeesx_(...); void dgeesx_(...); void cgeesx_(...); void zgeesx_(...);
     void sgesvd_(...); void dgesvd_(...); void cgesvd_(...); void zgesvd_(...);
   }
-
-  // For compatibility with lapack version with 32 bit integer.
-# define int_to_long_ipvt(ipvt)				\
-  {							\
-    for (size_type ii = ipvt.size(); ii != 0; --ii)	\
-      ipvt[ii-1] = long(((int *)(&ipvt[0]))[ii-1]);	\
-  }
-  
-// # define long_to_int_ipvt(ipvt)			
-//   {							
-//     long *ipvt_ = const_cast<long *>(&ipvt[0]);
-//     for (size_type ii = 0; ii < ipvt.size(); ++ii)
-//       ((int *)(&ipvt_[0]))[ii] = int(ipvt_[ii]);
-//   }
   
   /* ********************************************************************** */
   /* LU decomposition.                                                      */
   /* ********************************************************************** */
   
 # define getrf_interface(lapack_name, base_type) inline                      \
-  size_type lu_factor(dense_matrix<base_type > &A, std::vector<long> &ipvt){ \
+    size_type lu_factor(dense_matrix<base_type > &A, lapack_ipvt &ipvt){     \
     GMMLAPACK_TRACE("getrf_interface");                                      \
     long m = long(mat_nrows(A)), n = long(mat_ncols(A)), lda(m), info(-1L);  \
-    if (m && n) lapack_name(&m, &n, &A(0,0), &lda, &ipvt[0], &info);         \
+    if (m && n) lapack_name(&m, &n, &A(0,0), &lda, ipvt.pfirst(), &info);    \
     if ((info & 0xFFFFFFFF00000000L) && !(info & 0x00000000FFFFFFFFL))	     \
       /* For compatibility with lapack version with 32 bit integer. */	     \
-      int_to_long_ipvt(ipvt);						     \
+      ipvt.set_to_int32();						     \
     return size_type(int(info & 0x00000000FFFFFFFFL));			     \
   }
 
@@ -130,6 +116,58 @@ namespace gmm {
   getrf_interface(dgetrf_, BLAS_D)
   getrf_interface(cgetrf_, BLAS_C)
   getrf_interface(zgetrf_, BLAS_Z)
+
+  /* ********************************************************************* */
+  /* LU solve.                                                             */
+  /* ********************************************************************* */
+
+# define getrs_interface(f_name, trans1, lapack_name, base_type) inline    \
+  void f_name(const dense_matrix<base_type > &A,                           \
+              const lapack_ipvt &ipvt, std::vector<base_type > &x,	   \
+              const std::vector<base_type > &b) {                          \
+    GMMLAPACK_TRACE("getrs_interface");                                    \
+    long n = long(mat_nrows(A)), info(0), nrhs(1);			   \
+    gmm::copy(b, x); trans1;                                               \
+    if (n)                                                                 \
+      lapack_name(&t,&n,&nrhs,&(A(0,0)),&n,ipvt.pfirst(),&x[0],&n,&info);  \
+  }
+  
+# define getrs_trans_n const char t = 'N'
+# define getrs_trans_t const char t = 'T'
+
+  getrs_interface(lu_solve, getrs_trans_n, sgetrs_, BLAS_S)
+  getrs_interface(lu_solve, getrs_trans_n, dgetrs_, BLAS_D)
+  getrs_interface(lu_solve, getrs_trans_n, cgetrs_, BLAS_C)
+  getrs_interface(lu_solve, getrs_trans_n, zgetrs_, BLAS_Z)
+  getrs_interface(lu_solve_transposed, getrs_trans_t, sgetrs_, BLAS_S)
+  getrs_interface(lu_solve_transposed, getrs_trans_t, dgetrs_, BLAS_D)
+  getrs_interface(lu_solve_transposed, getrs_trans_t, cgetrs_, BLAS_C)
+  getrs_interface(lu_solve_transposed, getrs_trans_t, zgetrs_, BLAS_Z)
+
+  /* ********************************************************************* */
+  /* LU inverse.                                                           */
+  /* ********************************************************************* */
+
+# define getri_interface(lapack_name, base_type) inline                    \
+  void lu_inverse(const dense_matrix<base_type > &LU,                      \
+	    const lapack_ipvt &ipvt, const dense_matrix<base_type > &A_) { \
+    GMMLAPACK_TRACE("getri_interface");                                    \
+    dense_matrix<base_type >&                                              \
+    A = const_cast<dense_matrix<base_type > &>(A_);                        \
+    long n = int(mat_nrows(A)), info(0), lwork(-1); base_type work1;	   \
+    if (n) {                                                               \
+      gmm::copy(LU, A);                                                    \
+      lapack_name(&n, &A(0,0), &n, ipvt.pfirst(), &work1, &lwork, &info);  \
+      lwork = int(gmm::real(work1));                                       \
+      std::vector<base_type > work(lwork);                                 \
+      lapack_name(&n, &A(0,0), &n, ipvt.pfirst(), &work[0], &lwork,&info); \
+    }                                                                      \
+  }
+
+  getri_interface(sgetri_, BLAS_S)
+  getri_interface(dgetri_, BLAS_D)
+  getri_interface(cgetri_, BLAS_C)
+  getri_interface(zgetri_, BLAS_Z)
 
   /* ********************************************************************** */
   /* QR factorization.                                                      */
