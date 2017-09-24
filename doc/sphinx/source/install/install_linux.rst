@@ -232,3 +232,10 @@ More specific instructions can be found in the ``README*`` files of the
 distribution.
 
 A few precompiled versions of the Matlab interface are available on the `download and install <../download.html>`_ page of |gf|.
+
+
+A second problem arising with recent distribution of Matlab (2016a), is the incompatibility of some libraries with ILP64 version of MKL loaded by MATLAB which uses 64 bits integers instead of 32 bits ones contrarily to most system blas/lapack libraries. New releases of |gf| are compatible with both 64 bits and 32 bits integer blas/lapack libraries. However, for instance, Mumps should be recompiled in a 64 bit integer version to be compatible with MKL ILP64. Mumps version on the system is the 32 bits integer version. If problem of this kind are encountered, you can try to force Matlab to load 32 bit blas and lapack libraries with::
+
+  LD_PRELOAD=/usr/lib/libblas.so:/usr/lib/liblapack.so matlab
+
+
