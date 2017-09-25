@@ -882,7 +882,7 @@ if test "$usematlab" != NO; then
      echo "checking for mex extension... " $MATLAB_COM_EXT
 #    MATLAB_RELEASE=`grep "MATLAB R" $MATLAB_ROOT/extern/src/mexversion.c | awk '{print $4}' | sed -e 's/R//'`
 #    MATLAB_RELEASE=`grep "full_ver="$(which $MEX) | sed 's/[[^0-9]]//g'` # double brackets are for escaping reasons.
-     MATLAB_RELEASE=`matlab -nosplash -nojvm -r "exit" | grep "(R2" | sed 's/^.*R//g' | sed 's/).*$//'`
+     MATLAB_RELEASE=`matlab -nosplash -nojvm -r "a=version;display(a);exit" | grep "(R2" | sed -n '1p' | sed 's/^.*R//g' | sed 's/).*$//'`
      echo "Matlab release is : R$MATLAB_RELEASE"
   fi
 fi
