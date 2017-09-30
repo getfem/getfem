@@ -13,7 +13,7 @@ Dense LU decomposition
 The following procedures are available in the file ``gmm/gmm\_dense\_lu.h`` for dense real and complex matrices (``gmm::dense_matrix<T>``, ``gmm::row_matrix< std::vector<T> >`` and ``gmm::col_matrix< std::vector<T> >``)::
 
   gmm::lu_factor(M, ipvt) : compute the LU factorization of M in M. ipvt should be
-                       an std::vector<size_t> (of size gmm::mat_nrows(M))
+                       an gmm::lapack_ipvt (of size gmm::mat_nrows(M))
                        which will contain the indices of the pivots.
 
   gmm::lu_solve(LU, ipvt, x, b) : solve the system LUx = b. LU is the LU
