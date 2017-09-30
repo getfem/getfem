@@ -48,7 +48,7 @@ You have more than one possibility to solve a linear system. If you have a dense
 
   gmm::mult(M, X, Bagain);
 
-  std::cout << M << " times " << X << " is equal to " << Bagain << endl;
+  std::cout << M << " times " << gmm::vref(X) << " is equal to " << gmm::vref(Bagain) << endl;
 
 
 If, now, you have a sparse system coming for example from a pde discretization, you have various iterative solvers, with or without preconditioners. This is an example with a precontionned GMRES::
@@ -68,7 +68,7 @@ If, now, you have a sparse system coming for example from a pde discretization, 
 
   gmm::gmres(M, X, B, P, 50, iter);  // execute the GMRES algorithm
 
-  std::cout << "The result " << X << endl;
+  std::cout << "The result " << gmm::vref(X) << endl;
 
 
 How can I transform a vector into a matrix and reshape it ?

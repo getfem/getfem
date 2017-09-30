@@ -54,10 +54,10 @@ addition of vectors or matrices. It is alway possible to mix different type of v
   gmm::clear(V1);
   ...
   gmm::add(V1, V2); // V1 + V2 --> V2
-  cout << V2;
+  cout << gmm::vref(V2);
 
   gmm::add(V1, gmm::scaled(V2, -2.0), V2); // V1 - 2.0 * V2 --> V2
-  cout << V2;
+  cout << gmm::vref(V2);
 
   gmm::row_matrix< std::vector<double> > M1(10, 10);
   gmm::col_matrix< gmm::wsvector<double> > M2(1000, 1000);

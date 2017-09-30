@@ -50,7 +50,7 @@ Miscellaneous methods
 
 Most of the time it is more convenient to use::
 
-  std::cout << V << std::endl;
+  std::cout << gmm::vref(V) << std::endl;
   std::cout << M << std::endl;
 
 
