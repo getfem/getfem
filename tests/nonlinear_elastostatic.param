@@ -81,7 +81,7 @@ INTEGRATION = 'IM_TETRAHEDRON(6)'
 %INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(7), 3)';
 
 RESIDUAL = 1E-6;     	% residu for iterative solvers.
-MAXITER = 100;
+MAXITER = 100000;
 DIRICHLET_VERSION=0;
 NBSTEP = 40;
 %%%%%   saving parameters                                             %%%%%
