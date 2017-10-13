@@ -480,14 +480,14 @@ namespace getfem {
 	gmm::add(dr, pb.state_vector());
 	pb.compute_residual();
 	R res = gmm::vect_dist1(pb.residual(), gmm::scaled(b0, R(1)-alpha));
-	R dec = R(1)/R(2);
+	R dec = R(1)/R(2), coeff2 = coeff * R(1.5);
 	
 	while (dec > R(1E-5) && res >= res0 * coeff) {
 	  gmm::add(gmm::scaled(dr, -dec), pb.state_vector());
 	  pb.compute_residual();
 	  R res2 = gmm::vect_dist1(pb.residual(), gmm::scaled(b0, R(1)-alpha));
-	  if (res2 < res*R(0.95)) {
-	    dec /= R(2); res = res2;
+	  if (res2 < res*R(0.95) || res2 >= res0 * coeff2) {
+	    dec /= R(2); res = res2; coeff2 *= R(1.5);
 	  } else {
 	    gmm::add(gmm::scaled(dr, dec), pb.state_vector());
 	    break;
@@ -496,12 +496,15 @@ namespace getfem {
 	dec *= R(2);
 
 	nit++;
-	coeff = std::max(R(1), coeff*R(0.93));
-	if (res > minres && nit > 4) {
+	coeff = std::max(R(1.05), coeff*R(0.93));
+	bool near_end = (iter.get_iteration() > iter.get_maxiter()/2);
+	bool cut = (alpha < R(1)) && near_end;
+	if ((res > minres && nit > 4) || cut) {
 	  stagn++;
 
-	  if (stagn > 10 && alpha > alpha0 + 5E-2) {
+	  if ((stagn > 10 && alpha > alpha0 + R(5E-2)) || cut) {
 	    alpha = (alpha + alpha0) / R(2);
+	    if (near_end) alpha = R(1);
 	    gmm::copy(Xi, pb.state_vector());
 	    pb.compute_residual();
 	    res = gmm::vect_dist1(pb.residual(), gmm::scaled(b0, R(1)-alpha));
@@ -529,7 +532,7 @@ namespace getfem {
 	  alpha0 = a;
 	  gmm::copy(pb.state_vector(), Xi);
 	  nit = 0; stagn = 0; coeff = R(2);
-	} else if (alpha == 1) return;
+	} else return;
       }
     }
   }

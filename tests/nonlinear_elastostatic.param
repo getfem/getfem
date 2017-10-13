@@ -26,7 +26,7 @@ LZ = 2.0;		% size in Z.
 P1 = 1.;	        % First elastic coefficient.
 P2 = 1.;   	        % Second elastic coefficient.
 P3 = 0.5;   	        % Third elastic coefficient.
-LAW = 3;     % 0 : SaintVenant-Kirchhoff
+LAW = 2;     % 0 : SaintVenant-Kirchhoff
              % 1 : SaintVenant-Kirchhoff+incompressibility
              % 2 : Ciarlet-Geymonat
              % 3 : Mooney-Rivlin (+incompressibility)
@@ -81,7 +81,7 @@ INTEGRATION = 'IM_TETRAHEDRON(6)'
 %INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(7), 3)';
 
 RESIDUAL = 1E-6;     	% residu for iterative solvers.
-MAXITER = 100000;
+MAXITER = 500;
 DIRICHLET_VERSION=0;
 NBSTEP = 40;
 %%%%%   saving parameters                                             %%%%%
