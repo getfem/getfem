@@ -11485,8 +11485,19 @@ namespace getfem {
 
     case GA_NODE_PREDEF_FUNC: case GA_NODE_OPERATOR: case GA_NODE_SPEC_FUNC:
     case GA_NODE_CONSTANT: case GA_NODE_ALLINDICES: case GA_NODE_ZERO:
-    case GA_NODE_RESHAPE: case GA_NODE_INTERPOLATE_FILTER:
+    case GA_NODE_RESHAPE:
       break;
+
+    case GA_NODE_INTERPOLATE_FILTER:
+    {
+      if (pnode->name_test1 != "")
+        gis.max_dof = std::max(gis.max_dof,
+                               workspace.interval_of_variable(pnode->name_test1).last());
+      if (pnode->name_test2 != "")
+        gis.max_dof = std::max(gis.max_dof,
+                               workspace.interval_of_variable(pnode->name_test2).last());
+      break;
+    }
 
     case GA_NODE_X:
       GMM_ASSERT1(!function_case,
