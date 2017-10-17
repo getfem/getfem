@@ -28,9 +28,11 @@
 #include "getfem/bgeot_rtree.h"
 #include "getfem/bgeot_geotrans_inv.h"
 #include "getfem/getfem_copyable_ptr.h"
+#ifndef _WIN32
 extern "C"{
 #include <unistd.h>
 }
+#endif
 
 /**
    Providing for special Math functions unavailable on Intel or MSVS C++
