@@ -733,7 +733,6 @@ namespace getfem {
       }
       source_node->children.resize(0); // so that the destructor of source_node
                                        // will not destruct the children
-      GMM_ASSERT1(current_node->children.size() == 0, "Internal error");
       current_node->children = new_children;
     }
 
