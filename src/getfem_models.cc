@@ -2342,15 +2342,16 @@ namespace getfem {
         if (brick.vlist[i].compare(varname) == 0)
           { detected = true; break; }
 
-      if (detected) {
+      if (detected && brick.mims.size()) {
         int ifo = -1;
         for (auto &pmim :  brick.mims)
           ifo = std::max(ifo, mf->linked_mesh().region(region)
                               .region_is_faces_of(m, brick.region,
                                                   pmim->linked_mesh()));
-        GMM_ASSERT1(ifo >= 0, "The given region is only partially covered by "
-                    "region of brick " << brick.pbr->brick_name()
-                    << ". Please subdivise the region");
+        GMM_ASSERT1(ifo >= 0,
+		    "The given region is only partially covered by "
+                    "region of brick \"" << brick.pbr->brick_name()
+                    << "\". Please subdivise the region");
         if (ifo == 1) {
           std::string expr = brick.pbr->declare_volume_assembly_string
             (*this, ib, brick.vlist, brick.dlist);
