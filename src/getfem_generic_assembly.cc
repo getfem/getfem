@@ -7883,6 +7883,8 @@ namespace getfem {
     if (order == 1) {
       MPI_SUM_VECTOR(assembled_vector());
       MPI_SUM_VECTOR(unreduced_V);
+    } else if (order == 0) {
+      assembled_potential() = MPI_SUM_SCALAR(assembled_potential());
     }
 
     // Deal with reduced fems.

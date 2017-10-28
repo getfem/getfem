@@ -153,8 +153,10 @@ namespace getfem {
       MPI_Comm_rank(MPI_COMM_WORLD, &rank);
       MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-      if (size < 2) { mpi_region = mesh_region::all_convexes(); }
-      else {
+      if (size < 2) {
+	mpi_region = mesh_region::all_convexes();
+	mpi_region.from_mesh(*this);
+      } else {
         int ne = int(nb_convex());
         std::vector<int> xadj(ne+1), adjncy, numelt(ne), npart(ne);
         std::vector<int> indelt(nb_allocated_convex());

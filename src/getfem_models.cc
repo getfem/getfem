@@ -2672,10 +2672,6 @@ namespace getfem {
       if (version & BUILD_RHS) approx_external_load_ += brick.external_load;
     }
 
-    if (version & BUILD_RHS) {
-      if (is_complex()) MPI_SUM_VECTOR(crhs); else MPI_SUM_VECTOR(rrhs);
-    }
-
     // Generic expressions
     if (generic_expressions.size()) {
       model_real_plain_vector residual;

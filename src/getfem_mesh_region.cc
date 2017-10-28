@@ -190,12 +190,13 @@ namespace getfem {
 
   mesh_region::const_iterator mesh_region::begin( ) const 
   {
+    GMM_ASSERT1(p != 0, "Internal error");
     if (me_is_multithreaded_now() && partitioning_allowed) 
     { 
       update_partition_iterators();
       return itbegin;
     }
-    else return rp().m.begin();
+    else { return rp().m.begin(); }
   }
 
   mesh_region::const_iterator mesh_region::end  ( ) const 
@@ -534,9 +535,12 @@ namespace getfem {
 	else
 	  init(m.convex_index());
       } else if (s.p.get())  {
-	if (intersect_with_mpi)
-	  { mpi_rg = s; m.intersect_with_mpi_region(mpi_rg); init(mpi_rg); }
-	else
+	if (intersect_with_mpi) {
+	  mpi_rg = std::make_unique<mesh_region>(s);
+	  mpi_rg->from_mesh(m);
+	  m.intersect_with_mpi_region(*mpi_rg);
+	  init(*mpi_rg);
+	} else
 	  init(s);
       } else {
 	if (intersect_with_mpi)
