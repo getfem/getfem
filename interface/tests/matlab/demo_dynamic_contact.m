@@ -26,10 +26,10 @@ gf_workspace('clear all');
 clear all;
 gf_util('trace level', 0);
 
-% NX = 20; m=gf_mesh('cartesian', [0:1/NX:1]); % Cas 1D
+NX = 20; m=gf_mesh('cartesian', [0:1/NX:1]); % Cas 1D
 
 % Import the mesh : disc
-m=gf_mesh('load', '../../../tests/meshes/disc_P2_h4.mesh');
+% m=gf_mesh('load', '../../../tests/meshes/disc_P2_h4.mesh');
 % m=gf_mesh('load', '../../../tests/meshes/disc_P2_h2.mesh');
 % m=gf_mesh('load', '../../../tests/meshes/disc_P2_h1.mesh');
 % m=gf_mesh('load', '../../../tests/meshes/disc_P2_h0_5.mesh');
@@ -47,54 +47,50 @@ d = gf_mesh_get(m, 'dim'); % Mesh dimension
 
 
 % Parameters of the model
-
 if (d == 1)
   clambda = 1;             % Lame coefficient
   cmu = 1;                 % Lame coefficient
-  friction = 0;            % Friction coefficient
   vertical_force = 0.0;    % Volumic load in the vertical direction
   r = 10;                  % Augmentation parameter
+  gamma0_N = 0.05;         % Parameter gamma0 for Nitsche's method
   dt = 0.001;              % Time step
-  T = 4;                   % Simulation time
+  T = 6;                   % Simulation time
   dt_plot = 0.01;          % Drawing step;
-  beta = 0.5;              % Newmark scheme coefficient
-  gamma = 1.0;             % Newmark scheme coefficient
-  theta = 0.5;             % Theta-method scheme coefficient
   dirichlet = 1;           % Dirichlet condition or not
   dirichlet_val = 0.0;
-  scheme = 4              % 1 = theta-method, 2 = Newmark, 3 = Newmark with beta = 0, 4 = midpoint modified
   u_degree = 1;
   v_degree = 1;
   lambda_degree = 1;
-  Nitsche = 1;             % Use Nitsche's method or not
-  gamma0_N = 0.001;        % Parameter gamma0 for Nitsche's method
-  theta_N = 1;             % Parameter theta for Nitsche's method
 else
   clambda = 20;            % Lame coefficient
   cmu = 20;                % Lame coefficient
-  friction = 0;            % Friction coefficient
   vertical_force = 0.1;    % Volumic load in the vertical direction
   r = 10;                  % Augmentation parameter
+  gamma0_N = 0.001;        % Parameter gamma0 for Nitsche's method
   dt = 0.01;               % Time step
   T = 40;                  % Simulation time
   dt_plot = 0.5;           % Drawing step;
-  beta = 0.25;             % Newmark scheme coefficient
-  gamma = 0.5;             % Newmark scheme coefficient
-  theta = 1.0;             % Theta-method scheme coefficient
   dirichlet = 0;           % Dirichlet condition or not
   dirichlet_val = 0.45;
-  scheme = 4;              % 1 = theta-method, 2 = Newmark, 3 = Newmark with beta = 0, 4 = midpoint modified (Experimental: compile GetFEM with --enable-experimental)
   u_degree = 2;
   v_degree = 1;
   lambda_degree = 1;
-  Nitsche = 1;             % Use Nitsche's method or not
-  gamma0_N = 0.001;        % Parameter gamma0 for Nitsche's method
-  theta_N =  1;            % Parameter theta for Nitsche's method
 end
   
+friction = 0;              % Friction coefficient
+
+beta = 0.25;               % Newmark scheme coefficient
+gamma = 0.5;               % Newmark scheme coefficient
+theta = 1.0;               % Theta-method scheme coefficient
+
+Nitsche = 1;               % Use Nitsche's method or not
+theta_N = 0;               % Parameter theta for Nitsche's method
+
 singular_mass = 0;         % 0 = standard method
                            % 1 = Mass elimination on boundary
                            % 2 = Mixed displacement/velocity
+
+scheme = 4;                % 1 = theta-method, 2 = Newmark, 3 = Newmark with beta = 0, 4 = midpoint modified (Experimental: compile GetFEM with --enable-experimental)
 niter = 100;               % Maximum number of iterations for Newton's algorithm.
 plot_mesh = false;
 make_movie = 0;
@@ -169,6 +165,12 @@ end
 if (singular_mass == 2)
   B = gf_asm('mass matrix', mim, mfv, mfu);
   C = gf_asm('mass matrix', mim, mfv, mfv);
+end
+
+
+if (dirichlet == 1 && scheme == 3) % penalisation of homogeneous Dirichlet condition for explicit scheme
+    GD = gf_asm('mass matrix', mim, mfu, mfu, GAMMAD);
+    M = M + 1e12*GD'*GD;
 end
 
 % Plot the mesh
@@ -367,6 +369,8 @@ for t = 0:dt:T
       MV1 = MV0 + dt*(gamma*MA1 + (1-gamma)*MA0);
     case 3
       MA1 = (gf_model_get(md, 'rhs'))';
+      I = gf_model_get(md, 'interval of variable', 'u');
+      MA1 = MA1(I(1):(I(1)+I(2)-1));
       MV1 = MV0 + dt*(gamma*MA1+(1-gamma)*MA0);
     case 4
       U1_2 = U1;
