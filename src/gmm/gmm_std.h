@@ -38,8 +38,6 @@
 #ifndef GMM_STD_H__
 #define GMM_STD_H__
 
-#include <getfem/getfem_arch_config.h>
-
 #ifndef __USE_STD_IOSTREAM
 # define __USE_STD_IOSTREAM
 #endif
@@ -83,13 +81,6 @@ inline void GMM_NOPERATION_(int) { }
 /*	Compilers detection.						  */
 /* ********************************************************************** */
 
-/* for sun CC 5.0 ...
-#if defined(__SUNPRO_CC) && __SUNPRO_CC >= 0x500
-# include <stdcomp.h>
-# undef _RWSTD_NO_CLASS_PARTIAL_SPEC
-# undef _RWSTD_NO_NAMESPACE
-#endif
-*/
 /* for VISUAL C++ ...
 #if defined(_MSC_VER) //  && !defined(__MWERKS__)
 #define _GETFEM_MSVCPP_ _MSC_VER
@@ -222,7 +213,7 @@ namespace gmm {
 		}
 	};
 #else
-	/**this is the above solutions for linux, but I still needs to be tested.*/
+	/**this is the above solutions for linux, but it still needs to be tested.*/
 	//class standard_locale {
 	//	locale_t oldloc;
 	//	locale_t temploc;
