@@ -1,4 +1,4 @@
-% Copyright (C) 2009-2017 Yves Renard.
+% Copyright (C) 2009-2017 Yves Renard, Franz Chouly.
 %
 % This file is a part of GetFEM++
 %
@@ -16,7 +16,8 @@
 % Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 %
 % Elastodynamic problem with unilateral contact with a rigid obstacle.
-% Newmark and theta-method schemes.
+% Newmark, theta-method schemes with Nitsche's method or singular
+% mass method.
 %
 % This program is used to check that matlab-getfem is working. This is also
 % a good example of use of GetFEM++.
@@ -25,6 +26,7 @@
 gf_workspace('clear all');
 clear all;
 gf_util('trace level', 0);
+figure(1);
 
 NX = 20; m=gf_mesh('cartesian', [0:1/NX:1]); % Cas 1D
 
@@ -49,12 +51,13 @@ d = gf_mesh_get(m, 'dim'); % Mesh dimension
 % Parameters of the model
 if (d == 1)
   clambda = 1;             % Lame coefficient
-  cmu = 1;                 % Lame coefficient
+  cmu = 0;                 % Lame coefficient
   vertical_force = 0.0;    % Volumic load in the vertical direction
   r = 10;                  % Augmentation parameter
-  gamma0_N = 0.05;         % Parameter gamma0 for Nitsche's method
-  dt = 0.001;              % Time step
-  T = 6;                   % Simulation time
+  % gamma0_N = 0.05;       % Parameter gamma0 for Nitsche's method
+  gamma0_N = 1e-4;         % Parameter gamma0 for Nitsche's method
+  dt = 0.0001;             % Time step
+  T = 3;                   % Simulation time
   dt_plot = 0.01;          % Drawing step;
   dirichlet = 1;           % Dirichlet condition or not
   dirichlet_val = 0.0;
@@ -81,16 +84,16 @@ friction = 0;              % Friction coefficient
 
 beta = 0.25;               % Newmark scheme coefficient
 gamma = 0.5;               % Newmark scheme coefficient
-theta = 1.0;               % Theta-method scheme coefficient
+theta = 0.5;               % Theta-method scheme coefficient
 
 Nitsche = 1;               % Use Nitsche's method or not
-theta_N = 0;               % Parameter theta for Nitsche's method
+theta_N = -1;              % Parameter theta for Nitsche's method
 
 singular_mass = 0;         % 0 = standard method
                            % 1 = Mass elimination on boundary
                            % 2 = Mixed displacement/velocity
 
-scheme = 4;                % 1 = theta-method, 2 = Newmark, 3 = Newmark with beta = 0, 4 = midpoint modified (Experimental: compile GetFEM with --enable-experimental)
+scheme = 3;                % 1 = theta-method, 2 = Newmark, 3 = Newmark with beta = 0, 4 = midpoint modified (Experimental: compile GetFEM with --enable-experimental)
 niter = 100;               % Maximum number of iterations for Newton's algorithm.
 plot_mesh = false;
 make_movie = 0;
@@ -103,6 +106,30 @@ end
 if (friction ~= 0 && d == 1)
     error('Not taken into account');
 end
+
+% To store 
+% - the energy / augmented energy / augmentation term
+% - the displacement / velocity / velocity at midpoint
+% - the normal and contact stress / contact stress at midpoint
+Etime = zeros(1,round(T/dt)+1);
+Eatime = zeros(1,round(T/dt)+1);
+Rtime = zeros(1,round(T/dt)+1);
+Utime = zeros(1,round(T/dt)+1);
+Vtime = zeros(1,round(T/dt)+1);
+Vmtime = zeros(1,round(T/dt)+1);
+Stime = zeros(1,round(T/dt)+1);  % Direct computation of the normal stress
+SRtime = zeros(1,round(T/dt)+1); % Computation with VR of the normal stress
+CStime = zeros(1,round(T/dt)+1); % Contact stress
+CSmtime = zeros(1,round(T/dt)+1); % Contact stress at midpoint
+errL2 = zeros(1,round(T/dt)+1);
+errH1 = zeros(1,round(T/dt)+1);
+
+% Compute and display the wave speed and the Courant number
+c0 = sqrt((clambda+2*cmu)); % rho = 1 ...
+courantN = c0 * dt * NX; % h = 1/NX; 
+disp(sprintf('Wave speed c0 = %g', c0));
+disp(sprintf('Courant number nuC = %g', courantN));
+ hold off;
 
 % Signed distance representing the obstacle
 if (d == 1) obstacle = 'x'; elseif (d == 2) obstacle = 'y'; else obstacle = 'z'; end;
@@ -167,14 +194,13 @@ if (singular_mass == 2)
   C = gf_asm('mass matrix', mim, mfv, mfv);
 end
 
-
 if (dirichlet == 1 && scheme == 3) % penalisation of homogeneous Dirichlet condition for explicit scheme
     GD = gf_asm('mass matrix', mim, mfu, mfu, GAMMAD);
     M = M + 1e12*GD'*GD;
 end
 
 % Plot the mesh
-if (plot_mesh)
+if (plot_mesh) hold off;
   figure(1);
   gf_plot_mesh(m, 'regions', [GAMMAC]);
   title('Mesh and contact boundary (in red)');
@@ -233,7 +259,7 @@ gf_model_set(md, 'add initialized fem data', 'obstacle', mfd, OBS);
 
 if (Nitsche)
   gf_model_set(md, 'add initialized data', 'gamma0', [gamma0_N]);
-  expr_Neumann = gf_model_get(md, 'Neumann term', 'u', GAMMAC)
+  expr_Neumann = gf_model_get(md, 'Neumann term', 'u', GAMMAC);
   if (scheme == 4)
       if (friction ~= 0)
          error('To be adapted for friction');
@@ -309,7 +335,25 @@ if (make_movie)
   mov = avifile('toto.avi');
 end
 
-for t = 0:dt:T
+% Init the vector of physical quantities
+E = (U0'*K*U0)/2 - FF'*U0;
+Etime(1) = E;
+Utime(1) = U0(1);
+Vtime(1) = 0;
+Stime(1) = -(clambda + 2*cmu)*(NX/1)*(U0(1)-U0(2));
+SRtime(1) = - ( U0'*K(:,1) + MA0(1) - FF(1) );
+CStime(1) = 0; % Contact stress (initial) -> 0 in this case
+               % (in fact, no contact stress)
+
+Rtime(1) = 0.5*gamma0_N*(1/NX)*( Stime(1)^2 - CStime(1)^2 );
+Eatime(1) = Etime(1) - theta_N * Rtime(1);
+Vmtime(1) = NaN; % No mid time-step already
+CSmtime(1) = NaN; % No mid time-step already
+
+errL2(1) = 0;
+errH1(1) = 0;
+
+for t = dt:dt:T
   disp(sprintf('t=%g', t));
   % calcul de LL
   
@@ -389,10 +433,45 @@ for t = 0:dt:T
     V1 = M \ MV1;
   end
 
+  if (d == 1)
+    % Compute the analytical solution
+    X = [0:1/NX:1]';
+    UA = []; GUA = [];
+    for i=1:length(X) [ UA(i) GUA(i) ] = uAnalytic(X(i),t+dt); end % Should be improved
+  
+    % Compute the norm here with U1
+    % disp ('**** Compute the L2/H1 errors ****');
+    errL2(nit+2) = gf_compute(mfu,U1'-UA,'L2 norm',mim);
+    errH1(nit+2) = gf_compute(mfu,U1'-UA,'H1 norm',mim);
+  end
   
   E = (V1'*MV1 + U1'*K*U1)/2 - FF'*U1;
   disp(sprintf('energy = %g', E));
   
+  % Save relevant physical quantities
+  Etime(nit+2) = E;
+  Utime(nit+2) = U1(1);
+  if (d == 1)
+    if (singular_mass == 1)
+      Vtime(nit+2) = V1(2);
+    else
+      Vtime(nit+2) = V1(1);
+    end
+    Stime(nit+2) = -(clambda + 2*cmu)*(NX/1)*(U1(1)-U1(2));
+    SRtime(nit+2) = - ( U1'*K(:,1) + MA1(1) - FF(1) );
+    % Contact stress: depend on Nitsche or not
+    if (Nitsche == 0)
+      CStime(nit+2) = lambda(1);
+    else
+      CStime(nit+2) = -1/gamma0_N*max(0,-U1(1)-gamma0_N*Stime(nit+2)); 
+    end;
+  
+    Rtime(nit+2) = 0.5*gamma0_N*(1/NX)*( Stime(nit+2)^2 - CStime(nit+2)^2 );
+    Eatime(nit+2) = Etime(nit+2) - theta_N * Rtime(nit+2);
+    Vmtime(nit+2) = 0.5*(Vtime(nit+1)+Vtime(nit+2));
+    CSmtime(nit+2) = 0.5*(CStime(nit+1)+CStime(nit+2)); 
+  end;
+    
   nit = nit + 1;
   if (t >= tplot)
       if (d >= 2)
@@ -473,6 +552,68 @@ if (make_movie)
   mov = close(mov);
   mov = aviread('toto.avi');
   movie(mov);
+end
+
+% Final display
+
+if (d == 1)
+  figure(2), grid on;
+  t=0:dt:T; tp = rem(t,3);
+  u = (tp<=1) .* (0.5-0.5*tp) + (tp>1).*(tp<=2) .* 0 + (tp>2) .* (0.5*tp-1);
+  plot(0:dt:T,Utime,'linewidth',1); hold on;
+  plot(0:dt:T,u,'linewidth',1,'color',[1 0 1]); hold off;
+  legend('numerical','analytical');
+  xlabel('time'); ylabel('displacement u');
+
+  figure(3), grid on;
+  tp = rem(t,3);
+  u = (tp<=1) .* (-0.5) + (tp>1).*(tp<=2) .* 0 + (tp>2) .* (0.5);
+  plot(0:dt:T,Vtime,'linewidth',1); hold on;
+  plot(0:dt:T,u,'linewidth',1,'color',[1 0 1]); hold off;
+  legend('numerical','analytical');
+  xlabel('time'); ylabel('velocity v');
+
+  figure(4), grid on;
+  %plot(0:dt:T,Stime,'linewidth',1);
+  %plot(0:dt:T,SRtime,'linewidth',1,'color',[0 1 0]);
+  tp = rem(t,3);
+  u = (tp<=1) .* 0 + (tp>1).*(tp<=2) .* (-0.5) + (tp>2) .* 0;
+  plot(0:dt:T,CStime,'linewidth',1,'color',[1 0 0]); hold on;
+  plot(0:dt:T,u,'linewidth',1,'color',[1 0 1]); hold off;
+  legend(...%'sigma_n num (D)','sigma_n num (VR)',
+      'contact stress','analytical');
+  xlabel('time'); ylabel('normal / contact stress \sigma');
+
+  figure(5), grid on;
+  plot(0:dt:T,Etime,'linewidth',1);
+  xlabel('time'); ylabel('energy E');
+
+  figure(6), grid on;
+  tp = rem(t,3);
+  u = (tp<=1) .* (-0.5) + (tp>1).*(tp<=2) .* 0 + (tp>2) .* (0.5);
+  plot(0:dt:T,Vmtime,'linewidth',1); hold on;
+  plot(0:dt:T,u,'linewidth',1,'color',[1 0 1]); hold off;
+  legend('numerical','analytical');
+  xlabel('time'); ylabel('velocity v (midpoint)');
+
+  figure(7), grid on;
+  %plot(0:dt:T,Stime,'linewidth',1);
+  %plot(0:dt:T,SRtime,'linewidth',1,'color',[0 1 0]);
+  tp = rem(t,3);
+  u = (tp<=1) .* 0 + (tp>1).*(tp<=2) .* (-0.5) + (tp>2) .* 0;
+  plot(0:dt:T,CSmtime,'linewidth',1,'color',[1 0 0]); hold on;
+  plot(0:dt:T,u,'linewidth',1,'color',[1 0 1]); hold off;
+  legend(...%'sigma_n num (D)','sigma_n num (VR)',
+      'contact stress','analytical');
+  xlabel('time'); ylabel('normal / contact stress \sigma (midpoint)');
+
+  figure(8), grid on;
+  plot(0:dt:T,Rtime,'linewidth',1);
+  xlabel('time'); ylabel('R(t)');
+
+  figure(9), grid on;
+  plot(0:dt:T,Eatime,'linewidth',1);
+  xlabel('time'); ylabel('augmented energy E_\Theta');
 end
 
 
