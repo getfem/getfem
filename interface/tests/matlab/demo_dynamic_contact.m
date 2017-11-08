@@ -54,9 +54,9 @@ if (d == 1)
   cmu = 0;                 % Lame coefficient
   vertical_force = 0.0;    % Volumic load in the vertical direction
   r = 10;                  % Augmentation parameter
-  % gamma0_N = 0.05;       % Parameter gamma0 for Nitsche's method
-  gamma0_N = 1e-4;         % Parameter gamma0 for Nitsche's method
-  dt = 0.0001;             % Time step
+  gamma0_N = 0.1;          % Parameter gamma0 for Nitsche's method
+  % gamma0_N = 1e-4;       % Parameter gamma0 for Nitsche's method
+  dt = 0.002;              % Time step
   T = 3;                   % Simulation time
   dt_plot = 0.01;          % Drawing step;
   dirichlet = 1;           % Dirichlet condition or not
@@ -87,7 +87,7 @@ gamma = 0.5;               % Newmark scheme coefficient
 theta = 0.5;               % Theta-method scheme coefficient
 
 Nitsche = 1;               % Use Nitsche's method or not
-theta_N = -1;              % Parameter theta for Nitsche's method
+theta_N = 1;               % Parameter theta for Nitsche's method
 
 singular_mass = 0;         % 0 = standard method
                            % 1 = Mass elimination on boundary
@@ -129,7 +129,6 @@ c0 = sqrt((clambda+2*cmu)); % rho = 1 ...
 courantN = c0 * dt * NX; % h = 1/NX; 
 disp(sprintf('Wave speed c0 = %g', c0));
 disp(sprintf('Courant number nuC = %g', courantN));
- hold off;
 
 % Signed distance representing the obstacle
 if (d == 1) obstacle = 'x'; elseif (d == 2) obstacle = 'y'; else obstacle = 'z'; end;
@@ -145,7 +144,6 @@ dirichlet_boundary=border(:, find(normals(d, :) > 0.01));
 gf_mesh_set(m, 'region', GAMMAD, dirichlet_boundary);
 
 % Finite element methods
-
 mfu=gf_mesh_fem(m, d);
 gf_mesh_fem_set(mfu, 'classical fem', u_degree);
 mfv=gf_mesh_fem(m, d);
@@ -196,7 +194,7 @@ end
 
 if (dirichlet == 1 && scheme == 3) % penalisation of homogeneous Dirichlet condition for explicit scheme
     GD = gf_asm('mass matrix', mim, mfu, mfu, GAMMAD);
-    M = M + 1e12*GD'*GD;
+    M = M + 1e13*GD'*GD;
 end
 
 % Plot the mesh
@@ -259,6 +257,7 @@ gf_model_set(md, 'add initialized fem data', 'obstacle', mfd, OBS);
 
 if (Nitsche)
   gf_model_set(md, 'add initialized data', 'gamma0', [gamma0_N]);
+  gf_model_set(md, 'add initialized data', 'theta_N', [theta_N]);
   expr_Neumann = gf_model_get(md, 'Neumann term', 'u', GAMMAC);
   if (scheme == 4)
       if (friction ~= 0)
@@ -317,8 +316,17 @@ end
 MV0 = zeros(nbdofu, 1);
 V1 = zeros(nbdofu, 1);
 FF = gf_asm('volumic source', mim, mfu, mfd, F);
-K = gf_asm('linear elasticity', mim, mfu, mfd, ones(nbdofd,1)*clambda, ones(nbdofd,1)*cmu);
-MA0 = FF-K*U0;
+% K = gf_asm('linear elasticity', mim, mfu, mfd, ones(nbdofd,1)*clambda, ones(nbdofd,1)*cmu);
+K = gf_asm('generic', mim, 2, '(clambda*Div_u*Id(meshdim)+2*cmu*Sym(Grad_u)):Grad_Test_u', -1, md);
+I = gf_model_get(md, 'interval of variable', 'u'); I = I(1):(I(1)+I(2)-1);
+K = K(I, I); K2 = K;
+if (Nitsche)
+  KK = gf_asm('generic', mim, 2, '-theta_N*gamma0*element_size*((clambda*Div_u*Id(meshdim)+2*cmu*Sym(Grad_u))*Normal).((clambda*Div_Test_u*Id(meshdim)+2*cmu*Sym(Grad_Test_u))*Normal)', GAMMAC, md);
+  K2 = K + KK(I,I);
+end
+    
+
+MA0 = FF-K2*U0
 if (singular_mass == 1)
   if (d == 1)
     MA0(1) = 0;
