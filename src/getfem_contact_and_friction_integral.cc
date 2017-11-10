@@ -2557,7 +2557,7 @@ namespace getfem {
     // model::varnamelist vl, vl_test1, vl_test2, dl;
     // bool is_lin = workspace.used_variables(vl, vl_test1, vl_test2, dl, 1);
 
-    std::string gamma = "(("+dataname_gamma0+")*element_size)";
+    std::string gamma = "((1/("+dataname_gamma0+"))*element_size)";
     std::string thetagamma = "("+theta+"*"+gamma+")";
     std::string contact_normal = "(-Normalized(Grad_"+obs+"))";
     std::string gap = "("+obs+"-"+varname_u+"."+contact_normal+")";
@@ -2609,7 +2609,7 @@ namespace getfem {
     size_type order = workspace.add_expression(Neumannterm, mim, region, 1);
     GMM_ASSERT1(order == 0, "Wrong expression of the Neumann term");
 
-    std::string gamma = "(("+dataname_gamma0+")*element_size)";
+    std::string gamma = "((1/("+dataname_gamma0+"))*element_size)";
     std::string thetagamma = "("+theta+"*"+gamma+")";
     std::string contact_normal = "(-Normalized(Grad_"+obs+"))";
     std::string gap = "("+obs+"-"+varname_u+"."+contact_normal+")";

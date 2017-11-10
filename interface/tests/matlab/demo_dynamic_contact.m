@@ -54,9 +54,11 @@ if (d == 1)
   cmu = 0;                 % Lame coefficient
   vertical_force = 0.0;    % Volumic load in the vertical direction
   r = 10;                  % Augmentation parameter
-  gamma0_N = 0.1;          % Parameter gamma0 for Nitsche's method
-  % gamma0_N = 1e-4;       % Parameter gamma0 for Nitsche's method
-  dt = 0.002;              % Time step
+  gamma0_N = 10;           % Parameter gamma0 for Nitsche's method
+  % gamma0_N = 1e+4;       % Parameter gamma0 for Nitsche's method
+  % penalty_coeff = gamma0_N*NX; % Penalty coefficient for penalty method
+  penalty_coeff = 10;      % Penalty coefficient for penalty method
+  dt = 0.001;              % Time step
   T = 3;                   % Simulation time
   dt_plot = 0.01;          % Drawing step;
   dirichlet = 1;           % Dirichlet condition or not
@@ -69,7 +71,8 @@ else
   cmu = 20;                % Lame coefficient
   vertical_force = 0.1;    % Volumic load in the vertical direction
   r = 10;                  % Augmentation parameter
-  gamma0_N = 0.001;        % Parameter gamma0 for Nitsche's method
+  gamma0_N = 1000;         % Parameter gamma0 for Nitsche's method
+  penalty_coeff = 100;     % Penalty coefficient for penalty method
   dt = 0.01;               % Time step
   T = 40;                  % Simulation time
   dt_plot = 0.5;           % Drawing step;
@@ -86,7 +89,7 @@ beta = 0.25;               % Newmark scheme coefficient
 gamma = 0.5;               % Newmark scheme coefficient
 theta = 0.5;               % Theta-method scheme coefficient
 
-Nitsche = 1;               % Use Nitsche's method or not
+Contact_option = 3;        % 0 : Lagrange multiplier, 1 : Nitsche, 2 : Penalty method, 3 : experimental method
 theta_N = 1;               % Parameter theta for Nitsche's method
 
 singular_mass = 0;         % 0 = standard method
@@ -99,7 +102,7 @@ plot_mesh = false;
 make_movie = 0;
 residual = 1E-8;
 
-if (scheme >= 3 && (Nitsche ~= 1 || singular_mass ~= 0))
+if ((scheme >= 3 && (Contact_option < 1 || singular_mass ~= 0)) || (scheme == 3 && Contact_option < 1))
     error('Incompatibility');
 end
 
@@ -215,6 +218,7 @@ F(d,:) = -vertical_force;
 % Elasticity model
 md=gf_model('real');
 gf_model_set(md, 'add fem variable', 'u', mfu);
+gf_model_set(md, 'add fem data', 'wt', mfu);
 gf_model_set(md, 'add initialized data', 'cmu', [cmu]);
 gf_model_set(md, 'add initialized data', 'clambda', [clambda]);
 gf_model_set(md, 'add isotropic linearized elasticity brick', mim, 'u', ...
@@ -255,7 +259,7 @@ end
 OBS = gf_mesh_fem_get(mfd, 'eval', { obstacle });
 gf_model_set(md, 'add initialized fem data', 'obstacle', mfd, OBS);
 
-if (Nitsche)
+if (Contact_option == 1)
   gf_model_set(md, 'add initialized data', 'gamma0', [gamma0_N]);
   gf_model_set(md, 'add initialized data', 'theta_N', [theta_N]);
   expr_Neumann = gf_model_get(md, 'Neumann term', 'u', GAMMAC);
@@ -265,7 +269,6 @@ if (Nitsche)
       end
       gf_model_set(md, 'add initialized data', 'friction_coeff', [0]);
       gf_model_set(md, 'add initialized data', 'alpha_f', [0]);
-      gf_model_set(md, 'add fem data', 'wt', mfu);
       
       % Very experimental brick : compile GetFEM with the option --enable-experimental
       expr_Neumann_wt = '((clambda*Div_wt)*Normal + (cmu*(Grad_wt+(Grad_wt'')))*Normal)';
@@ -279,12 +282,11 @@ if (Nitsche)
     else
       gf_model_set(md, 'add initialized data', 'friction_coeff', [friction]);
       gf_model_set(md, 'add initialized data', 'alpha_f', [1./dt]);
-      gf_model_set(md, 'add fem data', 'wt', mfu);
       gf_model_set(md, 'add Nitsche contact with rigid obstacle brick', mim_friction, 'u', ...
            expr_Neumann, 'obstacle', 'gamma0', GAMMAC, theta_N, 'friction_coeff', 'alpha_f', 'wt');
     end
   end
-else
+elseif (Contact_option == 0)
   ldof = gf_mesh_fem_get(mflambda, 'dof on region', GAMMAC);
   mflambda_partial = gf_mesh_fem('partial', mflambda, ldof);
   gf_model_set(md, 'add fem variable', 'lambda', mflambda_partial);
@@ -295,10 +297,26 @@ else
   else
     gf_model_set(md, 'add initialized data', 'friction_coeff', [friction]);
     gf_model_set(md, 'add initialized data', 'alpha_f', [1./dt]);
-    gf_model_set(md, 'add fem data', 'wt', mfu);
     gf_model_set(md, 'add integral contact with rigid obstacle brick', mim_friction, 'u', ...
                  'lambda', 'obstacle', 'r', 'friction_coeff', GAMMAC, 1, 'alpha_f', 'wt');
   end
+elseif (Contact_option == 2)
+    gf_model_set(md, 'add initialized data', 'penalty_coeff', [penalty_coeff]);
+    gf_model_set(md, 'add nonlinear generic assembly brick', mim_friction, 'penalty_coeff*sqr(neg_part(obstacle + u.(Normalized(Grad_obstacle))))', GAMMAC);
+    if (friction ~= 0)
+        error('Sorry friction to be taken into account for penalty method')
+    end
+elseif (Contact_option == 3)
+    gf_model_set(md, 'add nonlinear generic assembly brick', mim_friction, '0', GAMMAC); % In order to have at list a nonlinear term ...
+    gf_model_set(md, 'add fem data', 'uel', mfu);
+    if (scheme ~= 3)
+        error('experimental method only implemented for explicit scheme, sorry')
+    end
+    if (friction ~= 0)
+        error('Sorry friction to be taken into account for decoupled dynamic method')
+    end
+else
+    error('Invalid contact option')
 end
 
 if (d == 1)
@@ -318,15 +336,14 @@ V1 = zeros(nbdofu, 1);
 FF = gf_asm('volumic source', mim, mfu, mfd, F);
 % K = gf_asm('linear elasticity', mim, mfu, mfd, ones(nbdofd,1)*clambda, ones(nbdofd,1)*cmu);
 K = gf_asm('generic', mim, 2, '(clambda*Div_u*Id(meshdim)+2*cmu*Sym(Grad_u)):Grad_Test_u', -1, md);
-I = gf_model_get(md, 'interval of variable', 'u'); I = I(1):(I(1)+I(2)-1);
-K = K(I, I); K2 = K;
-if (Nitsche)
-  KK = gf_asm('generic', mim, 2, '-theta_N*gamma0*element_size*((clambda*Div_u*Id(meshdim)+2*cmu*Sym(Grad_u))*Normal).((clambda*Div_Test_u*Id(meshdim)+2*cmu*Sym(Grad_Test_u))*Normal)', GAMMAC, md);
-  K2 = K + KK(I,I);
+Iu = gf_model_get(md, 'interval of variable', 'u'); Iu = Iu(1):(Iu(1)+Iu(2)-1);
+K = K(Iu, Iu); K2 = K;
+if (Contact_option == 1)
+  KK = gf_asm('generic', mim, 2, '(-theta_N*element_size/gamma0)*((clambda*Div_u*Id(meshdim)+2*cmu*Sym(Grad_u))*Normal).((clambda*Div_Test_u*Id(meshdim)+2*cmu*Sym(Grad_Test_u))*Normal)', GAMMAC, md);
+  K2 = K + KK(Iu,Iu);
 end
-    
+MA0 = FF-K2*U0;
 
-MA0 = FF-K2*U0
 if (singular_mass == 1)
   if (d == 1)
     MA0(1) = 0;
@@ -353,7 +370,7 @@ SRtime(1) = - ( U0'*K(:,1) + MA0(1) - FF(1) );
 CStime(1) = 0; % Contact stress (initial) -> 0 in this case
                % (in fact, no contact stress)
 
-Rtime(1) = 0.5*gamma0_N*(1/NX)*( Stime(1)^2 - CStime(1)^2 );
+Rtime(1) = (0.5/gamma0_N)*(1/NX)*( Stime(1)^2 - CStime(1)^2 );
 Eatime(1) = Etime(1) - theta_N * Rtime(1);
 Vmtime(1) = NaN; % No mid time-step already
 CSmtime(1) = NaN; % No mid time-step already
@@ -376,10 +393,7 @@ for t = dt:dt:T
       LL = MU0/(dt*dt*0.25) + MV0/(dt*0.5);
   end
   
-  if (friction ~= 0 || scheme == 4)
-    gf_model_set(md, 'variable', 'wt', U0);
-    % disp(gf_model_get(md, 'variable', 'wt'));
-  end
+  gf_model_set(md, 'variable', 'wt', U0);
   
   if (scheme == 3)
     A0 = M \ MA0;
@@ -402,7 +416,7 @@ for t = dt:dt:T
   if (d == 1)
     disp(sprintf('u1(1) = %g', U1(1)));
     Msize = size(M,1);
-    if (Nitsche == 0)
+    if (Contact_option == 0)
       lambda = gf_model_get(md, 'variable', 'lambda');
       disp(sprintf('lambda_n = %g', lambda(1)));
     end
@@ -420,10 +434,55 @@ for t = dt:dt:T
       MA1 = (MU1-MU0-dt*MV0-dt*dt*(1/2-beta)*MA0)/(dt*dt*beta);
       MV1 = MV0 + dt*(gamma*MA1 + (1-gamma)*MA0);
     case 3
+      if (1)  
       MA1 = (gf_model_get(md, 'rhs'))';
-      I = gf_model_get(md, 'interval of variable', 'u');
-      MA1 = MA1(I(1):(I(1)+I(2)-1));
+      MA1 = MA1(Iu);
+      
+      if (Contact_option == 3)
+      if (0)
+        % Computation of U_el 
+        U_el = U1;
+        U_el2 = (gf_model_get(md, 'interpolation', 'u + pos_part(obstacle-u.(Normalized(Grad_obstacle)))*Normalized(Grad_obstacle)', mfu, GAMMAC))';
+        I = gf_mesh_fem_get(mfu, 'basic dof on region', GAMMAC);
+        U_el(I) = U_el2(I);
+        gf_model_set(md, 'variable', 'u', U_el);
+        gf_model_get(md, 'assembly', 'build_rhs');
+        gf_model_set(md, 'variable', 'uel', U_el);
+        % F = gf_asm('generic', mim_friction, 1, 'Test_u*Normalized(Grad_obstacle)', GAMMAC, md)
+        % pause
+        F = gf_asm('generic', mim_friction, 1, '(((clambda*(Div_uel-Div_u)*Id(meshdim)+2*cmu*Sym(Grad_uel-Grad_u))*Normal).(Normalized(Grad_obstacle)))*(Test_u.(Normalized(Grad_obstacle)))', GAMMAC, md);
+        gf_model_set(md, 'variable', 'u', U_el);
+        U1 = U_el;
+        gf_model_get(md, 'assembly', 'build_rhs');
+        
+        MA1 = (gf_model_get(md, 'rhs'))';
+        MA1 = MA1(Iu);
+        MA1 = MA1 - 10*F(Iu);
+      end
       MV1 = MV0 + dt*(gamma*MA1+(1-gamma)*MA0);
+      
+      
+      else
+      
+      MA1 = (gf_model_get(md, 'rhs'))';
+      MA1 = MA1(Iu);
+      if (Contact_option == 3)
+       % Computation of U_el 
+       U_el = U1;
+       U_el2 = (gf_model_get(md, 'interpolation', 'u + pos_part(obstacle-u.(Normalized(Grad_obstacle)))*Normalized(Grad_obstacle)', mfu, GAMMAC))';
+       I = gf_mesh_fem_get(mfu, 'basic dof on region', GAMMAC);
+       U_el(I) = U_el2(I);
+       % Additional term
+       gf_model_set(md, 'variable', 'uel', U_el);
+       % F = gf_asm('generic', mim_friction, 1, 'Test_u*Normalized(Grad_obstacle)', GAMMAC, md)
+       % pause
+       F = gf_asm('generic', mim_friction, 1, '(((clambda*(Div_uel-Div_u)*Id(meshdim)+2*cmu*Sym(Grad_uel-Grad_u))*Normal).(Normalized(Grad_obstacle)))*(Test_u.(Normalized(Grad_obstacle)))', GAMMAC, md);
+       MA1 = MA1 + F(Iu);
+      end
+      MV1 = MV0 + dt*(gamma*MA1+(1-gamma)*MA0);
+      
+      end
+      end
     case 4
       U1_2 = U1;
       U1 = 2*U1_2 - U0;
@@ -443,7 +502,7 @@ for t = dt:dt:T
 
   if (d == 1)
     % Compute the analytical solution
-    X = [0:1/NX:1]';
+    X = [0:1/(NX*u_degree):1]';
     UA = []; GUA = [];
     for i=1:length(X) [ UA(i) GUA(i) ] = uAnalytic(X(i),t+dt); end % Should be improved
   
@@ -468,13 +527,13 @@ for t = dt:dt:T
     Stime(nit+2) = -(clambda + 2*cmu)*(NX/1)*(U1(1)-U1(2));
     SRtime(nit+2) = - ( U1'*K(:,1) + MA1(1) - FF(1) );
     % Contact stress: depend on Nitsche or not
-    if (Nitsche == 0)
+    if (Contact_option == 0)
       CStime(nit+2) = lambda(1);
     else
-      CStime(nit+2) = -1/gamma0_N*max(0,-U1(1)-gamma0_N*Stime(nit+2)); 
+      CStime(nit+2) = -gamma0_N*max(0,-U1(1)-(1/gamma0_N)*Stime(nit+2)); 
     end;
   
-    Rtime(nit+2) = 0.5*gamma0_N*(1/NX)*( Stime(nit+2)^2 - CStime(nit+2)^2 );
+    Rtime(nit+2) = (0.5/gamma0_N)*(1/NX)*( Stime(nit+2)^2 - CStime(nit+2)^2 );
     Eatime(nit+2) = Etime(nit+2) - theta_N * Rtime(nit+2);
     Vmtime(nit+2) = 0.5*(Vtime(nit+1)+Vtime(nit+2));
     CSmtime(nit+2) = 0.5*(CStime(nit+1)+CStime(nit+2)); 
@@ -487,11 +546,11 @@ for t = dt:dt:T
 		    'u', 'clambda', 'cmu', mfvm);
       end
       if (d == 1)
-        X = [0:1/NX:1]';
+        X = [0:1/(NX*u_degree):1]';
         plot(zeros(1, Msize)-0.05, X+U1, '-b');
         hold on;
         plot(zeros(1, Msize)+0.05, U1+X, '-b');
-        for i = 1:NX+1
+        for i = 1:(NX*u_degree)+1
            plot([-0.05 0.05], (U1(i)+X(i))*[1 1], 'b'); 
         end
         hold off;
@@ -591,11 +650,12 @@ if (d == 1)
   legend(...%'sigma_n num (D)','sigma_n num (VR)',
       'contact stress','analytical');
   xlabel('time'); ylabel('normal / contact stress \sigma');
-
+  
   figure(5), grid on;
   plot(0:dt:T,Etime,'linewidth',1);
   xlabel('time'); ylabel('energy E');
 
+  if (0) 
   figure(6), grid on;
   tp = rem(t,3);
   u = (tp<=1) .* (-0.5) + (tp>1).*(tp<=2) .* 0 + (tp>2) .* (0.5);
@@ -622,6 +682,7 @@ if (d == 1)
   figure(9), grid on;
   plot(0:dt:T,Eatime,'linewidth',1);
   xlabel('time'); ylabel('augmented energy E_\Theta');
+  end
 end
 
 
