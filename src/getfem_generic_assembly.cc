@@ -13153,6 +13153,7 @@ namespace getfem {
 
       // iteration on elements (or faces of elements)
       std::vector<size_type> ind;
+      auto pai_old = papprox_integration{};
       for (getfem::mr_visitor v(region, m, true); !v.finished(); ++v) {
         if (gic.use_mim()) {
           if (!mim.convex_index().is_in(v.cv())) continue;
@@ -13170,7 +13171,7 @@ namespace getfem {
           up.resize(G.nrows());
           un.resize(pgt->dim());
 
-          if (gis.ctx.have_pgp() && gis.ctx.pgt() == pgt) {
+          if (gis.ctx.have_pgp() && gis.ctx.pgt() == pgt && pai_old == gis.pai) {
             gis.ctx.change(gis.ctx.pgp(), 0, 0, G, v.cv(), v.f());
           } else {
             if (!(gic.use_pgp(v.cv()))) {
@@ -13179,6 +13180,7 @@ namespace getfem {
               gis.ctx.change(gis.gp_pool(pgt, pspt), 0, 0, G, v.cv(), v.f());
             }
           }
+          pai_old = gis.pai;
 
           if (gis.need_elt_size)
             gis.elt_size = m.convex_radius_estimate(v.cv()) * scalar_type(2);
