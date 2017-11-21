@@ -9362,7 +9362,10 @@ namespace getfem {
         }
         if (!(name.compare("element_K"))) {
           pnode->node_type = GA_NODE_ELT_K;
-          pnode->init_matrix_tensor(meshdim, ref_elt_dim);
+	  if (ref_elt_dim == 1)
+	    pnode->init_vector_tensor(meshdim);
+	  else
+	    pnode->init_matrix_tensor(meshdim, ref_elt_dim);
           break;
         }
         if (!(name.compare("element_B"))) {
