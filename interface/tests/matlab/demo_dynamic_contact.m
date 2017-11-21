@@ -28,7 +28,7 @@ clear all;
 gf_util('trace level', 0);
 figure(1);
 
-NX = 20; m=gf_mesh('cartesian', [0:1/NX:1]); % Cas 1D
+NX = 10; m=gf_mesh('cartesian', [0:1/NX:1]); % Cas 1D
 
 % Import the mesh : disc
 % m=gf_mesh('load', '../../../tests/meshes/disc_P2_h4.mesh');
@@ -54,13 +54,14 @@ if (d == 1)
   cmu = 0;                 % Lame coefficient
   vertical_force = 0.0;    % Volumic load in the vertical direction
   r = 10;                  % Augmentation parameter
-  gamma0_N = 10;           % Parameter gamma0 for Nitsche's method
+  gamma0_N = 200;          % Parameter gamma0 for Nitsche's method
   % gamma0_N = 1e+4;       % Parameter gamma0 for Nitsche's method
   % penalty_coeff = gamma0_N*NX; % Penalty coefficient for penalty method
-  penalty_coeff = 10;      % Penalty coefficient for penalty method
+  penalty_coeff = clambda*NX;      % Penalty coefficient for penalty method
+  int_penalty_coeff = 1;   % Penalty coefficient for experimental method
   dt = 0.001;              % Time step
-  T = 3;                   % Simulation time
-  dt_plot = 0.01;          % Drawing step;
+  T = 12;                   % Simulation time
+  dt_plot = 0.04;          % Drawing step;
   dirichlet = 1;           % Dirichlet condition or not
   dirichlet_val = 0.0;
   u_degree = 1;
@@ -113,7 +114,7 @@ end
 % To store 
 % - the energy / augmented energy / augmentation term
 % - the displacement / velocity / velocity at midpoint
-% - the normal and contact stress / contact stress at midpoint
+% - the normal and contact stress / contact stress at midpointMass elimination on boundary
 Etime = zeros(1,round(T/dt)+1);
 Eatime = zeros(1,round(T/dt)+1);
 Rtime = zeros(1,round(T/dt)+1);
@@ -130,8 +131,8 @@ errH1 = zeros(1,round(T/dt)+1);
 % Compute and display the wave speed and the Courant number
 c0 = sqrt((clambda+2*cmu)); % rho = 1 ...
 courantN = c0 * dt * NX; % h = 1/NX; 
-disp(sprintf('Wave speed c0 = %g', c0));
-disp(sprintf('Courant number nuC = %g', courantN));
+fprintf('Wave speed c0 = %g\n', c0);
+fprintf('Courant number nuC = %g\n', courantN);
 
 % Signed distance representing the obstacle
 if (d == 1) obstacle = 'x'; elseif (d == 2) obstacle = 'y'; else obstacle = 'z'; end;
@@ -273,7 +274,7 @@ if (Contact_option == 1)
       % Very experimental brick : compile GetFEM with the option --enable-experimental
       expr_Neumann_wt = '((clambda*Div_wt)*Normal + (cmu*(Grad_wt+(Grad_wt'')))*Normal)';
       gf_model_set(md, 'add Nitsche midpoint contact with rigid obstacle brick', mim_friction, 'u', ...
-       expr_Neumann, expr_Neumann_wt, 'obstacle', 'gamma0', GAMMAC, theta_N, 'friction_coeff', 'alpha_f', 'wt');
+      expr_Neumann, expr_Neumann_wt, 'obstacle', 'gamma0', GAMMAC, theta_N, 'friction_coeff', 'alpha_f', 'wt');
       
   else
     if (friction == 0)
@@ -414,16 +415,16 @@ for t = dt:dt:T
   end
   
   if (d == 1)
-    disp(sprintf('u1(1) = %g', U1(1)));
+    fprintf('u1(1) = %g\n', U1(1));
     Msize = size(M,1);
     if (Contact_option == 0)
       lambda = gf_model_get(md, 'variable', 'lambda');
-      disp(sprintf('lambda_n = %g', lambda(1)));
+      fprintf('lambda_n = %g\n', lambda(1));
     end
   
-    disp(sprintf('U0(N) = %g', U0(Msize)));
-    disp(sprintf('U1(N) = %g', U1(Msize)));
-    disp(sprintf('MV0(N) = %g', MV0(Msize)));
+    fprintf('U0(N) = %g\n', U0(Msize));
+    fprintf('U1(N) = %g\n', U1(Msize));
+    fprintf('MV0(N) = %g\n', MV0(Msize));
   end
   
   switch(scheme)
@@ -433,13 +434,12 @@ for t = dt:dt:T
     case 2
       MA1 = (MU1-MU0-dt*MV0-dt*dt*(1/2-beta)*MA0)/(dt*dt*beta);
       MV1 = MV0 + dt*(gamma*MA1 + (1-gamma)*MA0);
-    case 3
-      if (1)  
+    case 3 
       MA1 = (gf_model_get(md, 'rhs'))';
       MA1 = MA1(Iu);
       
       if (Contact_option == 3)
-      if (0)
+        if (0) % New version  
         % Computation of U_el 
         U_el = U1;
         U_el2 = (gf_model_get(md, 'interpolation', 'u + pos_part(obstacle-u.(Normalized(Grad_obstacle)))*Normalized(Grad_obstacle)', mfu, GAMMAC))';
@@ -447,42 +447,35 @@ for t = dt:dt:T
         U_el(I) = U_el2(I);
         gf_model_set(md, 'variable', 'u', U_el);
         gf_model_get(md, 'assembly', 'build_rhs');
+        MA2 = (gf_model_get(md, 'rhs'))';
+        MA2 = MA2(Iu);
+        gf_model_set(md, 'variable', 'u', U1);
+        gf_model_get(md, 'assembly', 'build_rhs');
+        MA3=(MA1+MA2)/2;
+        MA3(I) = MA1(I);
+        MA1 = MA3;
+        % MA2(I) = MA1(I);
+        % MA1 = MA2;
+        
+        elseif(0) % Old approximately working version
+        % Computation of U_el 
+        U_el = U1;
+        U_el2 = (gf_model_get(md, 'interpolation', 'u + pos_part(obstacle-u.(Normalized(Grad_obstacle)))*Normalized(Grad_obstacle)', mfu, GAMMAC))';
+        I = gf_mesh_fem_get(mfu, 'basic dof on region', GAMMAC);
+        U_el(I) = U_el2(I);
+        % Additional term
         gf_model_set(md, 'variable', 'uel', U_el);
         % F = gf_asm('generic', mim_friction, 1, 'Test_u*Normalized(Grad_obstacle)', GAMMAC, md)
         % pause
         F = gf_asm('generic', mim_friction, 1, '(((clambda*(Div_uel-Div_u)*Id(meshdim)+2*cmu*Sym(Grad_uel-Grad_u))*Normal).(Normalized(Grad_obstacle)))*(Test_u.(Normalized(Grad_obstacle)))', GAMMAC, md);
-        gf_model_set(md, 'variable', 'u', U_el);
-        U1 = U_el;
-        gf_model_get(md, 'assembly', 'build_rhs');
-        
-        MA1 = (gf_model_get(md, 'rhs'))';
-        MA1 = MA1(Iu);
-        MA1 = MA1 - 10*F(Iu);
+        MA1 = MA1 + F(Iu);
+        else % penalty on the second node, very experimental
+            if (U1(1) <= 0 && U1(2) <= 0)
+              MA1(2) = MA1(2) - NX*int_penalty_coeff*(U1(2));
+            end
+        end
       end
       MV1 = MV0 + dt*(gamma*MA1+(1-gamma)*MA0);
-      
-      
-      else
-      
-      MA1 = (gf_model_get(md, 'rhs'))';
-      MA1 = MA1(Iu);
-      if (Contact_option == 3)
-       % Computation of U_el 
-       U_el = U1;
-       U_el2 = (gf_model_get(md, 'interpolation', 'u + pos_part(obstacle-u.(Normalized(Grad_obstacle)))*Normalized(Grad_obstacle)', mfu, GAMMAC))';
-       I = gf_mesh_fem_get(mfu, 'basic dof on region', GAMMAC);
-       U_el(I) = U_el2(I);
-       % Additional term
-       gf_model_set(md, 'variable', 'uel', U_el);
-       % F = gf_asm('generic', mim_friction, 1, 'Test_u*Normalized(Grad_obstacle)', GAMMAC, md)
-       % pause
-       F = gf_asm('generic', mim_friction, 1, '(((clambda*(Div_uel-Div_u)*Id(meshdim)+2*cmu*Sym(Grad_uel-Grad_u))*Normal).(Normalized(Grad_obstacle)))*(Test_u.(Normalized(Grad_obstacle)))', GAMMAC, md);
-       MA1 = MA1 + F(Iu);
-      end
-      MV1 = MV0 + dt*(gamma*MA1+(1-gamma)*MA0);
-      
-      end
-      end
     case 4
       U1_2 = U1;
       U1 = 2*U1_2 - U0;
@@ -513,7 +506,7 @@ for t = dt:dt:T
   end
   
   E = (V1'*MV1 + U1'*K*U1)/2 - FF'*U1;
-  disp(sprintf('energy = %g', E));
+  fprintf('energy = %g\n', E);
   
   % Save relevant physical quantities
   Etime(nit+2) = E;
@@ -531,13 +524,13 @@ for t = dt:dt:T
       CStime(nit+2) = lambda(1);
     else
       CStime(nit+2) = -gamma0_N*max(0,-U1(1)-(1/gamma0_N)*Stime(nit+2)); 
-    end;
+    end
   
     Rtime(nit+2) = (0.5/gamma0_N)*(1/NX)*( Stime(nit+2)^2 - CStime(nit+2)^2 );
     Eatime(nit+2) = Etime(nit+2) - theta_N * Rtime(nit+2);
     Vmtime(nit+2) = 0.5*(Vtime(nit+1)+Vtime(nit+2));
     CSmtime(nit+2) = 0.5*(CStime(nit+1)+CStime(nit+2)); 
-  end;
+  end
     
   nit = nit + 1;
   if (t >= tplot)
@@ -546,6 +539,7 @@ for t = dt:dt:T
 		    'u', 'clambda', 'cmu', mfvm);
       end
       if (d == 1)
+        figure(1);
         X = [0:1/(NX*u_degree):1]';
         plot(zeros(1, Msize)-0.05, X+U1, '-b');
         hold on;
@@ -556,6 +550,7 @@ for t = dt:dt:T
         hold off;
         axis([-0.4 0.4 0.0 1.5]);
       elseif (d == 2)
+        figure(1);
         gf_plot(mfvm, VM, 'deformed_mesh', 'on', 'deformation', U1', ...
             'deformation_mf', mfu, 'deformation_scale', 1, 'refine', 8, 'disp_options', 'off');
         xlabel('x'); ylabel('y');
@@ -569,6 +564,7 @@ for t = dt:dt:T
         caxis([0 32]);
         axis([-25 25 -1 50]);
       else
+        figure(1);
         c=[0.1;0;20]; x=[1;0;0]; y=[0;1;0]; z=[0;0;1];
         % Whole boundary
         % sl2=gf_slice({'boundary',{'none'}}, m, 5);
@@ -605,7 +601,7 @@ for t = dt:dt:T
       Mov(:,nim) = getframe;
     end
     tplot = tplot + dt_plot;
-  end;
+  end
   
 
   U0 = U1;
