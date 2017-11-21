@@ -298,6 +298,7 @@ namespace getfem {
       scalar_type no = ::sqrt(gmm::vect_norm2_sqr(t.as_vector())+gmm::sqr(eps));
       scalar_type no3 = no*no*no;
 
+      gmm::clear(result.as_vector());
       for (size_type i = 0; i < N; ++i) {
         result[i*N+i] += scalar_type(1)/no;
         for (size_type j = 0; j < N; ++j)
@@ -427,6 +428,7 @@ namespace getfem {
 
       switch (nder) {
       case 1:
+        gmm::clear(result.as_vector());
         for (size_type i = 0; i < N; ++i) {
           result[i*N+i] += scalar_type(1)/no;
           for (size_type j = 0; j < N; ++j)
