@@ -692,11 +692,10 @@ namespace getfem {
       ost << "Model with no variable nor data" << endl;
     else {
       ost << "List of model variables and data:" << endl;
-      for (VAR_SET::const_iterator it = variables.begin();
-           it != variables.end(); ++it) {
-        if (it->second.is_variable) ost << "Variable ";
-        else ost << "Data     ";
-        ost << std::setw(20) << std::left << it->first;
+      for (auto it = variables.begin(); it != variables.end(); ++it) {
+        if (it->second.is_variable) ost << "Variable       ";
+        else ost << "Data           ";
+        ost << std::setw(30) << std::left << it->first;
         if (it->second.n_iter == 1)
           ost << " 1 copy   ";
         else
@@ -714,6 +713,17 @@ namespace getfem {
         if (it->second.pim_data != 0) ost << "\t (is im_data)";
         if (it->second.is_affine_dependent) ost << "\t (is affine dependent)";
         ost << endl;
+      }
+      for (auto it = variable_groups.begin();
+	   it != variable_groups.end(); ++it) {
+	ost << "Variable group " << std::setw(30) << std::left
+	    << it->first;
+	if (it->second.size()) {
+	  auto it2 = it->second.begin();
+	  ost << " " << *it2; ++it2;
+	  for (; it2 != it->second.end(); ++it2) ost << ", " << *it2;
+	  ost << endl;
+	} else ost << " empty" << endl;
       }
     }
   }

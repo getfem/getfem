@@ -11271,6 +11271,9 @@ namespace getfem {
         gmm::vect_size(workspace.value(varname));
       gis.var_intervals[varname]=gmm::sub_interval(gis.nb_dof, nd);
       gis.nb_dof += nd;
+      gis.max_dof = gis.nb_dof;
+    } else {
+      gis.max_dof = workspace.interval_of_variable(varname).last();
     }
   }
 
@@ -12147,8 +12150,6 @@ namespace getfem {
           if (pgai) rmi.instructions.push_back(std::move(pgai));
         }
         add_interval_to_gis(workspace, pnode->name, gis);
-        gis.max_dof = std::max
-          (gis.max_dof, workspace.interval_of_variable(pnode->name).last());
       }
       break;
 
@@ -12191,8 +12192,6 @@ namespace getfem {
         }
         rmi.instructions.push_back(std::move(pgai));
         add_interval_to_gis(workspace, pnode->name, gis);
-        gis.max_dof = std::max
-          (gis.max_dof, workspace.interval_of_variable(pnode->name).last());
       }
       break;
 
