@@ -19,6 +19,8 @@
 
 ===========================================================================*/
 
+#include "gmm/gmm_blas_interface.h"
+#include "getfem/getfem_arch_config.h"
 #include "getfem/getfem_assembling_tensors.h"
 #include "getfem/getfem_mat_elem.h"
 
