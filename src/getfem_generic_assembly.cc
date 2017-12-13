@@ -11273,7 +11273,7 @@ namespace getfem {
       gis.nb_dof += nd;
       gis.max_dof = gis.nb_dof;
     } else {
-      gis.max_dof = workspace.interval_of_variable(varname).last();
+      gis.max_dof = std::max(gis.max_dof, workspace.interval_of_variable(varname).last());
     }
   }
 
