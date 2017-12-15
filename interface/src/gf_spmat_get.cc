@@ -357,9 +357,15 @@ void gf_spmat_get(getfemint::mexargs_in& m_in,
       @*/
     sub_command
       ("char", 0, 0, 0, 1,
-       GMM_ASSERT1(false, "Sorry, function to be done");
-       // std::string s = ...;
-       // out.pop().from_string(s.c_str());
+       std::stringstream s;
+       if (gsp.storage() == getfemint::gsparse::WSCMAT) {
+	 if (!gsp.is_complex()) s << gsp.wsc(scalar_type());
+	 else                   s << gsp.wsc(complex_type());
+       } else {
+	 if (!gsp.is_complex()) s << gsp.csc(scalar_type());
+	 else           	s << gsp.csc(complex_type());
+       }
+       out.pop().from_string(s.str().c_str());
        );
 
 
