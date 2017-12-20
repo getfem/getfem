@@ -124,8 +124,6 @@ inline void GMM_NOPERATION_(int) { }
 #include <array>
 #include <locale.h>
 
-#include "getfem/getfem_arch_config.h"
-
 namespace std {
 #if defined(__GNUC__) && (__cplusplus <= 201103L)
   template<typename _Tp>
@@ -171,23 +169,6 @@ namespace std {
   { return shared_array_ptr<T>(new T[num]); }
 }
 
-
-
-
-#ifdef GETFEM_HAVE_OPENMP
-
-#include <omp.h>
-	/**number of OpenMP threads*/
-	inline size_t num_threads(){return omp_get_max_threads();}
-	/**index of the current thread*/
-	inline size_t this_thread() {return omp_get_thread_num();}
-	/**is the program running in the parallel section*/
-	inline bool me_is_multithreaded_now(){return static_cast<bool>(omp_in_parallel());}
-#else
-	inline size_t num_threads(){return size_t(1);}
-	inline size_t this_thread() {return size_t(0);}
-	inline bool me_is_multithreaded_now(){return false;}
-#endif
 
 namespace gmm {
 
