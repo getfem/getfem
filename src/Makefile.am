@@ -19,6 +19,7 @@ nobase_include_HEADERS =                   		\
 	getfem_boost/workaround.hpp        		\
 	getfem_boost/noncopyable.hpp       		\
 	gmm/gmm.h                          		\
+	gmm/gmm_arch_config.h                  		\
 	gmm/gmm_matrix.h                   		\
 	gmm/gmm_iter_solvers.h             		\
 	gmm/gmm_iter.h                     		\

@@ -60,7 +60,7 @@ print `cp -r $getfem_root/m4 $root`;
 
 open(F, ">$root/AUTHORS") or die "Open file impossible : $!\n";
 print F <<""
-Authors of GetFEM++\n
+Authors of GMM++\n
 Yves RENARD. Initial project. All the project.\n
 Julien POMMIER. All the project.\n
 
@@ -95,7 +95,7 @@ close(F);
 
 open(F, ">$root/include/Makefile.am") or die "Open file impossible : $!\n";
 print F <<""
-nobase_include_HEADERS=$gmm_files_bis
+nobase_include_HEADERS=$gmm_files_bis gmm/gmm_arch_config.h
 
 ;
 close(F);
@@ -125,6 +125,7 @@ CLEANFILES = so_locations\n
 ;
 close(F);
 
+
 open(F, ">$root/configure.ac") or die "Open file impossible : $!\n";
 print F <<""
 dnl Process this file with autoconf to produce a configure script.
@@ -136,8 +137,10 @@ dnl thus, updating cache ./config.cache avoided.
 define([AC_CACHE_LOAD], )dnl
 define([AC_CACHE_SAVE], )dnl\n
 AC_INIT(gmm, $MAJOR_VERSION.$MINOR_VERSION)
+AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADERS(config.h)
-AC_PREREQ(2.56)
+AX_PREFIX_CONFIG_H(src/gmm/gmm_arch_config.h,GMM)
+AC_PREREQ(2.61)
 AC_ARG_PROGRAM\n
 PACKAGE="gmm"
 MAJOR_VERSION="$MAJOR_VERSION"
@@ -239,6 +242,27 @@ dnl -Xc is for ansi conformance
         ;;
 esac\n
 AC_SUBST(SUPLDFLAGS)\n
+dnl ---------------------------OPENMP------------------------------
+useopenmp=0
+AC_ARG_ENABLE(openmp,
+   [AS_HELP_STRING([--enable-openmp],[enable the multithreaded version of GMM++])],
+   [ case \$enableval in
+        yes | "") useopenmp=YES ;;
+        no) useopenmp=NO ;;
+        *) AC_MSG_ERROR([bad value \${enableval} for --enable-openmp]) ;;
+     esac],
+   [useopenmp=NO]
+)
+if test x\$useopenmp = xYES; then
+  AC_OPENMP
+  if test "x\$ac_cv_prog_cxx_openmp" != "xunsupported" && test "x\$ac_cv_prog_cxx_openmp" != "x"; then
+    AC_SUBST(AM_CXXFLAGS,"\$OPENMP_CXXFLAGS")
+    CPPFLAGS="\$CPPFLAGS -DGMM_HAVE_OPENMP"
+  else
+    AC_MSG_ERROR([OpenMP support not found. Use --enable-openmp=no flag to compile GMM++ without OpenMP]);
+  fi
+fi;
+dnl ---------------------------END OF OPENMP-----------------------
 dnl ------------------------------------------------------------------------
 dnl   init libtools for shared libraries
 dnl ------------------------------------------------------------------------\n
@@ -271,11 +295,22 @@ chmod a+x gmm-config
 ;
 close(F);
 
-
-
-
 print `(cd $root && chmod a+x autogen.sh && ./autogen.sh)`;
 print `(cd $root && ./configure)`;
+
+open(F, ">$root/include/gmm/gmm_arch_config.h") or die "Open file impossible : $!\n";
+print F <<""
+#  ifndef _SRC_GMM_GMM_ARCH_CONFIG_H
+#define _SRC_GMM_GMM_ARCH_CONFIG_H 1
+// enable the following line for OpenMP support
+// #define GMM_HAVE_OPENMP
+//
+/* once: _SRC_GMM_GMM_ARCH_CONFIG_H */
+#endif
+
+;
+close(F);
+
 print `(cd $root && make dist)`;
 print `(mv -f $root/gmm-*.tar.gz $getfem_root)`;
 `/bin/rm -fr $root`;
