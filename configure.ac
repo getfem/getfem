@@ -36,6 +36,7 @@ AC_CONFIG_SRCDIR([install-sh])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADER(config.h)
 AX_PREFIX_CONFIG_H(src/getfem/getfem_arch_config.h,GETFEM) 
+AX_PREFIX_CONFIG_H(src/gmm/gmm_arch_config.h,GMM) 
 AC_PREREQ(2.61)
 AC_ARG_PROGRAM
 

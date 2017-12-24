@@ -124,6 +124,8 @@ inline void GMM_NOPERATION_(int) { }
 #include <array>
 #include <locale.h>
 
+#include <gmm/gmm_arch_config.h>
+
 namespace std {
 #if defined(__GNUC__) && (__cplusplus <= 201103L)
   template<typename _Tp>
@@ -172,7 +174,7 @@ namespace std {
 
 
 
-#ifdef GETFEM_HAVE_OPENMP
+#ifdef GMM_HAVE_OPENMP
 
 #include <omp.h>
 	/**number of OpenMP threads*/
