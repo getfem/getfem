@@ -30,46 +30,58 @@
 import getfem as gf
 import numpy as np
 import matplotlib.pyplot as plt
-import time # time.sleep(6)
+import time, os, sys
 
 # Numerical parameters
-NX = 100              # Number of elements
+NX = 20               # Number of elements
 T = 9                 # Simulation time
 dt = 0.001            # Time step
-u_degree = 1          # Degree of the finite element method for u
+u_degree = 2          # Degree of the finite element method for u
 
-gamma0_N = 0.5        # Nitsche parameter gamma
+gamma0_N = 1          # Nitsche parameter gamma
 theta_N =  0          # Nitsche parameter theta
 
-gamma0_P = 0.5        # Penalization parameter
+gamma0_P = 10          # Penalization parameter
 
 beta = 0.             # Newmark parameter beta
 gamma = 0.5           # Newmark parameter gamma
 
-e_PS = 1.0            # Restitution coefficient for Paoli-Schatzman scheme
+e_PS = 0.             # Restitution coefficient for Paoli-Schatzman scheme
 
-version = 0           # 0 = pure Signorini contact
+version = 3           # 0 = pure Signorini contact
                       # 1 = pure Signorini contact with Paoli-Schatzman scheme
                       # 2 = penalized contact
                       # 3 = Nitsche's method
 
-mass_matrix_type = 2  # 0 = standard mass matrix
+lump_mass_matrix = 0  # 0 = standard mass matrix
+                      # 1 = basic lumped mass matrix
+
+mass_matrix_type = 0  # 0 = standard mass matrix
                       # 1 = redistributed mass matrix
                       # 2 = singular dynamic mass matrix
 
-# Plot parameters
+
+# Output parameters
 dtplot = 0.05         # Time step for intermediate plots
 do_inter_plot = False # Intermediate plots or not
 do_final_plot = True  # Final plots or not
+output_directory = './expe_num'
+root_filename = 'dyn1d'
+do_export_in_files = False;
+
+
+# Read optional parameters on the command line 
+for i in range(1,len(sys.argv)): exec(sys.argv[i])
 
 # Deduced parameters
 h = 1./NX
 TT = np.arange(0, T+dt, dt)
 NT = TT.size
 dt_max_approx = h/(2* u_degree);
-if (version == 2): dt_max_approx = min(dt_max_approx, h/(20*gamma0_P))
+if (version == 2): dt_max_approx = min(dt_max_approx, 2*h/(gamma0_P))
+if (version == 3): dt_max_approx = min(dt_max_approx, 2*h/(gamma0_N))
 print 'Approximative dt_max for CFL :', dt_max_approx
-if (dt > dt_max_approx): print 'Time step too large'; exit(1)
+if (beta == 0 and dt > dt_max_approx): print 'Time step too large'; exit(1)
 
 
 # Exact solution. The solution is periodic of period 3
@@ -107,8 +119,6 @@ def uExact(x, t, d = 0):
 
 def linsolve(M, B): # Call Superlu to solve a sparse linear system
     return (((gf.linsolve_superlu(M, B))[0]).T)[0]
-
-
 
 # Mesh
 m=gf.Mesh('cartesian', np.arange(0,1+1./NX,1./NX))
@@ -148,6 +158,12 @@ md.set_variable('u', U0); md.set_variable('v', V0)
 
 # Mass and stiffness matrices
 M = gf.asm_generic(mim, 2, 'u*Test_u', -1, md)
+if (lump_mass_matrix == 1):
+    assert (u_degree == 1), "Sorry, basic lump only for affine elements"
+    for j in range(0, Ndof):
+        for i in range(1, u_degree+1):
+            if (j+i < Ndof): M[j,j] += M[j,j+i]; M[j,j+i] = 0.;
+            if (j-i >= 0): M[j,j] += M[j,j-i]; M[j,j-i] = 0.;
 K = gf.asm_generic(mim, 2, 'Grad_u*Grad_Test_u', -1, md)
 
 # Dirichlet condition on the top
@@ -157,8 +173,8 @@ M[Ndof-1,Ndof-1] = 1.; K[Ndof-1,Ndof-1] = 1.;
 M2 = gf.Spmat('copy', M);
 
 if (mass_matrix_type == 1): # Redistributed mass matrix
-    M[1,1] += M[0,0];
-    for i in range(0, u_degree+1):
+    M[1,1] += M[0,0]; M[0,0] = 0.;
+    for i in range(1, u_degree+1):
         M[i,i] += M[i,0]; M[0,i] = M[i,0] = 0.
     M2 = gf.Spmat('copy', M); M2[0,0] = 1.
 elif (mass_matrix_type == 2): # Singular dynamic mass matrix
@@ -196,7 +212,7 @@ elif (version == 3):   # Nitsche contact
     K_N2.scale(dt*dt*beta);
     K_N_C = gf.Spmat('add', K_N, K_N2)
     asstr_Nitsche = '(t_N/g_N)*Grad_u*Grad_Test_u ' \
-              + '+(1/g_N)*neg_part(g_N*u+Grad_u)*(g_N*Test_u+t_N*Grad_Test_u)'
+             + '+(1/g_N)*neg_part(g_N*u+Grad_u)*(g_N*Test_u+t_N*Grad_Test_u)'
 else: assert(false), "Unvalid version"
               
 # Misc initializations
@@ -212,11 +228,11 @@ store_UH1 = np.zeros(NT); store_UH1_ex = np.zeros(NT)
 store_u0  = np.zeros(NT); store_u0_ex  = np.zeros(NT)
 store_v0  = np.zeros(NT); store_v0_ex  = np.zeros(NT)
 store_s0  = np.zeros(NT); store_s0_ex  = np.zeros(NT)
-fem_nodes = mfu.basic_dof_nodes();
+fem_nodes = mfu.basic_dof_nodes(); s0 = s1 = ux = 0.;
 
 # Time steps
 for nit in range(0, NT):
-    t = TT[nit]; 
+    t = TT[nit];
 
     if (t > 0.):
         if (beta == 0): # Newmark Explicit scheme (beta = 0)
@@ -234,14 +250,14 @@ for nit in range(0, NT):
                         + 'pure Signorini contact and standard mass matrix'
             elif (version == 1): # Pure Signorini contact with P.-S. scheme
                 if (mass_matrix_type >= 1):
-                    U1[0] = max((e_PS/2.)*Um1[0]/(1.-e_PS/2.), -a) / K[0,0];
-                    s1 = min((e_PS/2.)*Um1[0]/(1.-e_PS/2.), -a);
+                    U1[0] = max(-e_PS*Um1[0], -a) / K[0,0];
+                    s1 = min(-e_PS*Um1[0], -a);
                 else:
                     s1 = 0;
-                    if ((1.-e_PS/2.)*U1[0] + (e_PS/2.)*Um1[0] < 0):
+                    if ((1./(1.+e_PS))*U1[0] + (e_PS/(1.+e_PS))*Um1[0] < 0):
                         U1_0 = np.copy(U1);
                         B=M.mult(U0)+dt*M.mult(V0)-(dt*dt/2.)*K.mult(U0)
-                        B0 = np.copy(B); B0[0] = (e_PS/2.)*Um1[0]/(1.-e_PS/2.);
+                        B0 = np.copy(B); B0[0] = -e_PS*Um1[0];
                         U1=linsolve(K_N_C, B0)
                         F=M.mult(U1)-B; s1 = -F[0]/(dt*dt)
                         V1 += (U1-U1_0)/dt
@@ -262,7 +278,7 @@ for nit in range(0, NT):
                         U1[0] = -a / K_Nitsche2[0,0]
                 md.set_variable('u', U1); ux = md.interpolation('Grad_u',[0.],m)
                 Fc = gf.asm_generic(mim, 1, asstr_Nitsche, GAMMAC, md)
-                s1 = min(0,(gamma0_P/h)*U1[0]+ux)
+                s1 = min(0.,(gamma0_N/h)*U1[0]+ux)
             FF = linsolve(M2, Fc-K.mult(U1))
             V1 += dt*gamma*FF;
             if (mass_matrix_type >= 1): V1[0] = (U1[0] - U0[0])/dt
@@ -276,8 +292,8 @@ for nit in range(0, NT):
                     Fc1 = (K_N.mult(U1) - B)/(beta*dt*dt); s1 = -Fc1[0]
                 else: Fc1 = 0.*Fc; s1 = 0
             elif (version == 1): # Pure Signorini contact with P.-S. scheme
-                if ((1.-2*e_PS)*U1[0] + 2*e_PS*Um1[0] < 0):
-                    B2 = np.copy(B); B2[0]=(e_PS/2.)*Um1[0]/(1.-e_PS/2.);
+                if ((1./(1.+e_PS))*U1[0] + (e_PS/(1.+e_PS))*Um1[0] < 0):
+                    B2 = np.copy(B); B2[0]= -e_PS*Um1[0];
                     U1 = linsolve(K_N_C, B2)
                     Fc1 = (K_N.mult(U1) - B)/(dt*dt); s1 = -Fc1[0]
                     MV1 += dt*Fc1
@@ -294,7 +310,7 @@ for nit in range(0, NT):
                     U1 = linsolve(K_N_C, B); md.set_variable('u', U1);
                     ux = md.interpolation('Grad_u',[0.],m)
                 Fc1 = (K_N.mult(U1) - B)/(beta*dt*dt)
-                s1 = min(0,(gamma0_N/h)*U1[0]+ux)
+                s1 = min(0.,(gamma0_N/h)*U1[0]+ux)
             MA1 = Fc1-K.mult(U1);
             MV1 += dt*((1.-gamma)*MA0 + gamma*MA1);
             V1 = linsolve(M2, MV1); V1[Ndof-1] = 0.
@@ -315,12 +331,15 @@ for nit in range(0, NT):
     E = (np.vdot(MMV0, V0) + np.vdot(KU0, U0))*0.5
     if (version == 2): # Energy stored in the penalized contact
         E += (gamma0_P/h)*pow(min(0., U0[0]),2)/2
+    if (version == 3): # Nitsche Energy
+        E += (0.5*theta_N)*(h/gamma0_N)*(s0*s0-ux*ux);
     
     # Store the data to be ploted at the end
     store_u0[nit] = U0[0]; store_u0_ex[nit] = uExact(0., t)
     store_v0[nit] = V0[0]; store_v0_ex[nit] = uExact(0., t, 2)
     store_s0[nit] = s0
-    store_s0_ex[nit] = uExact(0., t, 1); store_E[nit] = E
+    store_s0_ex[nit] = uExact(0., t, 1);
+    store_E[nit] = E;
     store_VL2_ex[nit] = gf.compute_L2_norm(mfu, Vex, mim)
     store_UL2_ex[nit] = gf.compute_L2_norm(mfu, Uex, mim)
     store_UH1_ex[nit] = gf.compute_H1_norm(mfu, Uex, mim)
@@ -328,7 +347,7 @@ for nit in range(0, NT):
     store_UL2[nit] = gf.compute_L2_norm(mfu, U0-Uex, mim)
     store_UH1[nit] = gf.compute_H1_norm(mfu, U0-Uex, mim)
 
-    print "Time ", t, "/", T, " Energy :", store_E[nit]
+    print ("Time %6f"% t), "/", T, " Energy :", store_E[nit]
         
     # Draw the approximated and exact solutions
     if (do_inter_plot and t >= tplot):
@@ -357,24 +376,57 @@ for nit in range(0, NT):
 
     
 # print the main relative errors
-Err = np.amax(store_UL2) / np.amax(store_UL2_ex)
-print 'L^\intfy(0,T,L^2)-norm of the error on u: ', Err
-Err = np.amax(store_UH1) / np.amax(store_UH1_ex)
-print 'L^\intfy(0,T,H^1)-norm of the error on u: ', Err
-Err = np.amax(store_VL2) / np.amax(store_VL2_ex)
-print 'L^\intfy(0,T,L^2)-norm of the error on v: ', Err
+LinfL2u = np.amax(store_UL2) / np.amax(store_UL2_ex)
+print 'L^\intfy(0,T,L^2)-norm of the error on u: ', LinfL2u
+LinfH1u = np.amax(store_UH1) / np.amax(store_UH1_ex)
+print 'L^\intfy(0,T,H^1)-norm of the error on u: ', LinfH1u
+LinfL2v = np.amax(store_VL2) / np.amax(store_VL2_ex)
+print 'L^\intfy(0,T,L^2)-norm of the error on v: ', LinfL2v
 Nor = np.sqrt(np.sum(np.square(store_UL2_ex))*dt)
-Err = np.sqrt(np.sum(np.square(store_UL2))*dt) / Nor
-print 'L^2(0,T,L^2)-norm of the error on u: ', Err
+L2L2u = np.sqrt(np.sum(np.square(store_UL2))*dt) / Nor
+print 'L^2(0,T,L^2)-norm of the error on u: ', L2L2u
 Nor = np.sqrt(np.sum(np.square(store_UH1_ex))*dt)
-Err = np.sqrt(np.sum(np.square(store_UH1))*dt) / Nor
-print 'L^2(0,T,H^1)-norm of the error on u: ', Err
+L2H1u = np.sqrt(np.sum(np.square(store_UH1))*dt) / Nor
+print 'L^2(0,T,H^1)-norm of the error on u: ', L2H1u
 Nor = np.sqrt(np.sum(np.square(store_VL2_ex))*dt)
-Err = np.sqrt(np.sum(np.square(store_VL2))*dt) / Nor
-print 'L^2(0,T)-norm of the error on v: ', Err
+L2L2v = np.sqrt(np.sum(np.square(store_VL2))*dt) / Nor
+print 'L^2(0,T)-norm of the error on v: ', L2L2v
 Nor = np.sqrt(np.sum(np.square(store_s0_ex))*dt)
-Err = np.sqrt(np.sum(np.square(store_s0-store_s0_ex))*dt) / Nor
-print 'L^2(0,T)-norm of the error on contact stress: ', Err
+L2sn = np.sqrt(np.sum(np.square(store_s0-store_s0_ex))*dt) / Nor
+print 'L^2(0,T)-norm of the error on contact stress: ', L2sn
+
+
+if (do_export_in_files):
+    if (not os.path.exists(output_directory)):
+        os.makedirs(output_directory)
+
+    # Parameter file
+    pf = open(output_directory+'/' + root_filename + '.params', 'w')
+    pf.write('NX = %d;' % NX);            pf.write('T = %g;' % T)
+    pf.write('dt = %g;' % dt);            pf.write('u_degree = %d;' % u_degree)
+    pf.write('gamma0_N = %g;' % gamma0_N);pf.write('theta_N =  %g;' % theta_N)
+    pf.write('gamma0_P = %g;' % gamma0_P);pf.write('beta = %g;' % beta)
+    pf.write('gamma = %g;' % gamma);      pf.write('e_PS = %g;' % e_PS);
+    pf.write('version = %d;' % version)
+    pf.write('mass_matrix_type = %d;' % mass_matrix_type)
+    pf.close()
+
+    # Export solutions
+    np.save(output_directory+'/' + root_filename + '.u0.npy', store_u0);
+    np.save(output_directory+'/' + root_filename + '.v0.npy', store_v0);
+    np.save(output_directory+'/' + root_filename + '.s0.npy', store_s0);
+    np.save(output_directory+'/' + root_filename + '.E.npy' , store_E );
+    
+    # write error norms
+    pf = open(output_directory+'/' + root_filename + '.err_norms', 'w')
+    pf.write('LinfL2u = %g;' % LinfL2u); pf.write('LinfH1u = %g;' % LinfH1u)
+    pf.write('LinfL2v = %g;' % LinfL2v); pf.write('L2L2u = %g;' % L2L2u)
+    pf.write('L2H1u = %g;' % L2H1u);     pf.write('L2L2v = %g;' % L2L2v)
+    pf.write('L2sn = %g;' % L2sn)
+    pf.close()
+    
+    
+
 
 
 if (do_final_plot):
@@ -417,8 +469,3 @@ if (do_final_plot):
     plt.ylabel('$L^2$-error on $v$'); plt.xlabel('t')
     
     plt.show()
-
-
-
-
-
