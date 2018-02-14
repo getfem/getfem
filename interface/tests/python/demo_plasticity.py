@@ -32,7 +32,7 @@ import getfem as gf
 import numpy as np
 
 
-with_graphics=True
+with_graphics=False
 try:
     import getfem_tvtk
 except:

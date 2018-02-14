@@ -1968,7 +1968,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       strain and plastic multiplier).
       @*/
     sub_command
-      ("add small strain elastoplasticity brick", 10, 15, 0, 1,
+      ("add small strain elastoplasticity brick", 3, 15, 0, 1,
        getfem::mesh_im *mim = to_meshim_object(in.pop());
        std::string lawname = in.pop().to_string();
        filter_lawname(lawname);

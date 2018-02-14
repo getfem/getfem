@@ -770,8 +770,8 @@ namespace getfem {
     compcond = ga_substitute
       ("((mu)*xi-pos_part((mu)*xi+100*(fbound)/(mu)))", dict);
     von_mises = ga_substitute
-      ("sqrt(3/2)*sqrt(Norm_sqr((2*(mu))*(Dev_En)-(2*(mu)+(Hk))*(Epn))"
-       "+sqr(2*(mu)*Trace(En)/3-(2*(mu)+(Hk))*Trace(Epn)))", dict);
+      ("sqrt(3/2)*sqrt(Norm_sqr((2*(mu))*(Dev_En)-(2*(mu))*(Epn))"
+       "+sqr(2*(mu)*Trace(En)/3-(2*(mu))*Trace(Epn)))", dict);
   }
 
 
@@ -842,8 +842,8 @@ namespace getfem {
     xi_np1 = ga_substitute
       ("pos_part(sqrt(3/2)*Norm(B)/(sigma_y)-1/(2*(mu)))/((theta)*(dt))", dict);
     von_mises = ga_substitute
-      ("sqrt(3/2)*sqrt(Norm_sqr((2*(mu))*(Dev_En)-(2*(mu)+(Hk))*(Epn))"
-       "+sqr(2*(mu)*Trace(En)/3-(2*(mu)+(Hk))*Trace(Epn)))", dict);
+      ("sqrt(3/2)*sqrt(Norm_sqr((2*(mu))*(Dev_En)-(2*(mu))*(Epn))"
+       "+sqr(2*(mu)*Trace(En)/3-(2*(mu))*Trace(Epn)))", dict);
   }
 
   // Assembly strings for isotropic elastoplasticity with Von-Mises
@@ -1385,7 +1385,7 @@ namespace getfem {
       std::string dum1, dum2, dum3, dum4, dum7;
       build_isotropic_perfect_elastoplasticity_expressions_generic
         (md, lawname, unknowns_type, varnames, params,
-         dum1, dum2, dum3, dum4, sigma_after, von_mises, dum7);
+         dum1, dum2, dum3, dum4, sigma_after, von_mises, dum7);      
     }
 
     size_type n_ep = 2; // Index of the plastic strain variable

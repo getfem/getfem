@@ -34,24 +34,25 @@ import time, os, sys
 
 # Numerical parameters
 NX = 20               # Number of elements
-T = 9                 # Simulation time
-dt = 0.001            # Time step
-u_degree = 2          # Degree of the finite element method for u
+T = 12                # Simulation time
+dt = 0.002            # Time step
+u_degree = 1          # Degree of the finite element method for u
 
-gamma0_N = 1          # Nitsche parameter gamma
-theta_N =  0          # Nitsche parameter theta
+gamma0_N = 5.         # Nitsche parameter gamma
+theta_N =  0.         # Nitsche parameter theta
 
-gamma0_P = 10          # Penalization parameter
+gamma0_P = 1.         # Penalization parameter
 
 beta = 0.             # Newmark parameter beta
 gamma = 0.5           # Newmark parameter gamma
 
 e_PS = 0.             # Restitution coefficient for Paoli-Schatzman scheme
 
-version = 3           # 0 = pure Signorini contact
+version = 4           # 0 = pure Signorini contact
                       # 1 = pure Signorini contact with Paoli-Schatzman scheme
                       # 2 = penalized contact
                       # 3 = Nitsche's method
+                      # 4 = Taylor-Flanagan method
 
 lump_mass_matrix = 0  # 0 = standard mass matrix
                       # 1 = basic lumped mass matrix
@@ -69,9 +70,18 @@ output_directory = './expe_num'
 root_filename = 'dyn1d'
 do_export_in_files = False;
 
-
 # Read optional parameters on the command line 
 for i in range(1,len(sys.argv)): exec(sys.argv[i])
+
+print "Begin experiment for",
+if    (version == 0): print "Pure Signorini contact",
+elif  (version == 1): print "Paoli-Schatzman scheme",
+elif  (version == 2): print "Penalized contact",
+elif  (version == 3): print "Nitsche's method",
+elif  (version == 4): print "Taylor-Flanagan method",
+print " in P%d, with NX = %d, dt = %g" % (u_degree,NX, dt)
+
+if (version == 4 and beta != 0): print 'Incompatibility'; exit(1)
 
 # Deduced parameters
 h = 1./NX
@@ -82,7 +92,6 @@ if (version == 2): dt_max_approx = min(dt_max_approx, 2*h/(gamma0_P))
 if (version == 3): dt_max_approx = min(dt_max_approx, 2*h/(gamma0_N))
 print 'Approximative dt_max for CFL :', dt_max_approx
 if (beta == 0 and dt > dt_max_approx): print 'Time step too large'; exit(1)
-
 
 # Exact solution. The solution is periodic of period 3
 # Return the displacement (d=0), x derivative (d=1) or time derivative (d=2)
@@ -195,7 +204,8 @@ K_N_C = gf.Spmat('copy', K_N);  # Newmark matrix with effective contact
 if (version == 0):     # Pure Signorini contact
     for i in range(0, u_degree+1): K_N_C[0,i] = 0.
     K_N_C[0,0] = 1;
-elif (version == 1):   # Pure Signorini contact with Paoli-Schatzman scheme
+elif (version == 1 or version == 4):
+    # Pure Signorini contact with Paoli-Schatzman scheme
     for i in range(0, u_degree+1): K_N_C[0,i] = 0.
     K_N_C[0,0] = 1;
 elif (version == 2):   # Penalized contact
@@ -260,8 +270,22 @@ for nit in range(0, NT):
                         B0 = np.copy(B); B0[0] = -e_PS*Um1[0];
                         U1=linsolve(K_N_C, B0)
                         F=M.mult(U1)-B; s1 = -F[0]/(dt*dt)
-                        V1 += (U1-U1_0)/dt
+                        V1 += (U1-U1_0)/dt; 
                 Fc[0] = 0;
+            elif (version == 4): # Pure Signorini with Taylor-Flanagan scheme
+                if (mass_matrix_type >= 1):
+                    U1[0] = max(0., -a) / K[0,0];
+                    s1 = min(0., -a);
+                else:
+                    s1 = 0;
+                    if (U1[0] < 0):
+                        F *= 0.; F[0] = 1;
+                        F2=linsolve(M, F);
+                        s1 = V1[0]/(F2[0]*dt);
+                        F *= 0.; F[0] = -s1;
+                        F2=linsolve(M, F);
+                        U1 += dt*dt*F2;
+                        V1 += dt*F2;
             elif (version == 2): # Penalized contact
                 if (mass_matrix_type >= 1):
                     U1[0] = -a / K[0,0];
@@ -329,6 +353,7 @@ for nit in range(0, NT):
     # Compute the Energy
     MMV0 = M.mult(V0); KU0 = K.mult(U0)
     E = (np.vdot(MMV0, V0) + np.vdot(KU0, U0))*0.5
+    E_org = E
     if (version == 2): # Energy stored in the penalized contact
         E += (gamma0_P/h)*pow(min(0., U0[0]),2)/2
     if (version == 3): # Nitsche Energy
@@ -347,31 +372,36 @@ for nit in range(0, NT):
     store_UL2[nit] = gf.compute_L2_norm(mfu, U0-Uex, mim)
     store_UH1[nit] = gf.compute_H1_norm(mfu, U0-Uex, mim)
 
-    print ("Time %6f"% t), "/", T, " Energy :", store_E[nit]
+    
         
     # Draw the approximated and exact solutions
-    if (do_inter_plot and t >= tplot):
-        tplot = t + dtplot; UUex = np.copy(Xdraw)
-        plt.figure(1); plt.rc('text', usetex=True)
-        plt.subplot(311) # Displacement
-        for i in range(0,Ndraw): UUex[i] = uExact(Xdraw[i], t)
-        UU = md.interpolation('u', Xdraw, m)
-        plt.cla(); plt.axis([0.,1.,-0.6,0.6])
-        plt.plot(Xdraw, UUex, 'red'); plt.plot(Xdraw, UU, 'blue')
-        plt.ylabel('u'); plt.xlabel('x')
-        plt.subplot(312) # Velocity
-        for i in range(0,Ndraw): UUex[i] = uExact(Xdraw[i], t, 2)
-        UU = md.interpolation('v', Xdraw, m)
-        plt.cla(); plt.axis([0.,1.,-0.6,0.6])
-        plt.plot(Xdraw, UUex, 'red'); plt.plot(Xdraw, UU, 'blue')
-        plt.ylabel('v'); plt.xlabel('x')
-        plt.subplot(313) # Stress
-        for i in range(0,Ndraw): UUex[i] = uExact(Xdraw[i], t, 1)
-        UU = md.interpolation('Grad_u', Xdraw, m)
-        plt.cla(); plt.axis([0.,1.,-0.6,0.6])
-        plt.plot(Xdraw, UUex, 'red'); plt.plot(Xdraw, UU, 'blue')
-        plt.ylabel('$\partial_x u$'); plt.xlabel('x')
-        plt.pause(0.01); plt.show(0)
+    if (t >= tplot-(1e-10)):
+        tplot += dtplot;
+        print ("Time %3f"% t), "/", T,
+        print (" Energy %7f" % E), (" Mech energy %7f" % E_org)
+        
+        if (do_inter_plot):
+            UUex = np.copy(Xdraw)
+            plt.figure(1); plt.rc('text', usetex=True)
+            plt.subplot(311) # Displacement
+            for i in range(0,Ndraw): UUex[i] = uExact(Xdraw[i], t)
+            UU = md.interpolation('u', Xdraw, m)
+            plt.cla(); plt.axis([0.,1.,-0.6,0.6])
+            plt.plot(Xdraw, UUex, 'red'); plt.plot(Xdraw, UU, 'blue')
+            plt.ylabel('u'); plt.xlabel('x')
+            plt.subplot(312) # Velocity
+            for i in range(0,Ndraw): UUex[i] = uExact(Xdraw[i], t, 2)
+            UU = md.interpolation('v', Xdraw, m)
+            plt.cla(); plt.axis([0.,1.,-0.6,0.6])
+            plt.plot(Xdraw, UUex, 'red'); plt.plot(Xdraw, UU, 'blue')
+            plt.ylabel('v'); plt.xlabel('x')
+            plt.subplot(313) # Stress
+            for i in range(0,Ndraw): UUex[i] = uExact(Xdraw[i], t, 1)
+            UU = md.interpolation('Grad_u', Xdraw, m)
+            plt.cla(); plt.axis([0.,1.,-0.6,0.6])
+            plt.plot(Xdraw, UUex, 'red'); plt.plot(Xdraw, UU, 'blue')
+            plt.ylabel('$\partial_x u$'); plt.xlabel('x')
+            plt.pause(0.01); plt.show(0)
     
 
     

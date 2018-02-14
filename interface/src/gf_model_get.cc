@@ -913,7 +913,7 @@ void gf_model_get(getfemint::mexargs_in& m_in,
       `compute_small_strain_elastoplasticity_Von_Mises`.
       @*/
     sub_command
-      ("small strain elastoplasticity next iter", 10, 15, 0, 0,
+      ("small strain elastoplasticity next iter", 3, 15, 0, 0,
        getfem::mesh_im *mim = to_meshim_object(in.pop());
        std::string lawname = in.pop().to_string();
        filter_lawname(lawname);
@@ -986,7 +986,7 @@ void gf_model_get(getfemint::mexargs_in& m_in,
       before any call of this function.
       @*/
     sub_command 	 
-      ("small strain elastoplasticity Von Mises", 11, 16, 0, 0,
+      ("small strain elastoplasticity Von Mises", 4, 16, 0, 0,
        getfem::mesh_im *mim = to_meshim_object(in.pop());
        const getfem::mesh_fem *mf_vm = to_meshfem_object(in.pop());
        std::string lawname = in.pop().to_string();

@@ -114,6 +114,7 @@ Makefile
 /interface/src/scilab/src/c/libsp_get.so
 /interface/src/scilab/src/c/loader.sce
 /interface/src/scilab/unloader.sce
+/interface/tests/python/*.pyc
 /doc/sphinx/tools/
 /doc/sphinx/source/scilab/cmdref*
 /doc/sphinx/source/python/cmdref*
