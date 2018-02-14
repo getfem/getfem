@@ -11265,15 +11265,16 @@ namespace getfem {
     if (workspace.variable_group_exists(varname)) {
       for (const std::string &v : workspace.variable_group(varname))
         add_interval_to_gis(workspace, v, gis);
-    } else if (gis.var_intervals.find(varname) == gis.var_intervals.end()) {
-      const mesh_fem *mf = workspace.associated_mf(varname);
-      size_type nd = mf ? mf->nb_basic_dof() :
-        gmm::vect_size(workspace.value(varname));
-      gis.var_intervals[varname]=gmm::sub_interval(gis.nb_dof, nd);
-      gis.nb_dof += nd;
-      gis.max_dof = gis.nb_dof;
     } else {
-      gis.max_dof = std::max(gis.max_dof, workspace.interval_of_variable(varname).last());
+      if (gis.var_intervals.find(varname) == gis.var_intervals.end()) {
+	const mesh_fem *mf = workspace.associated_mf(varname);
+	size_type nd = mf ? mf->nb_basic_dof() :
+	  gmm::vect_size(workspace.value(varname));
+	gis.var_intervals[varname]=gmm::sub_interval(gis.nb_dof, nd);
+	gis.nb_dof += nd;
+      }
+      gis.max_dof = std::max(gis.max_dof,
+			     workspace.interval_of_variable(varname).last());
     }
   }
 
