@@ -24,7 +24,7 @@ if (asize(1)) is_automatic = true; else is_automatic = false; end
 
 gf_workspace('clear all');
 clear all;
-approximation_type = 2  % 0 : Augmentend Lagrangian
+approximation_type = 0  % 0 : Augmentend Lagrangian
                         % 1 : Nitsche (biased)
                         % 2 : Unbiased Nitsche method
 
@@ -240,7 +240,8 @@ NX = Nxy(zz)
     max_res = 1E-8;
     max_iter = 100;
 
-    gf_model_get(md, 'solve', 'max_res', 1E-9, 'max_iter', niter, 'noisy', 'lsearch', 'simplest',  'alpha min', 0.8, 'lsolver', 'mumps');
+    % gf_model_get(md, 'solve', 'max_res', 1E-9, 'max_iter', niter, 'noisy', 'lsearch', 'simplest',  'alpha min', 0.8, 'lsolver', 'mumps');
+    gf_model_get(md, 'solve', 'max_res', 1E-9, 'max_iter', niter, 'noisy', 'lsolver', 'mumps');
 
     U1 = gf_model_get(md, 'variable', 'u1');
     UU1 = gf_model_get(md, 'variable', 'u1');

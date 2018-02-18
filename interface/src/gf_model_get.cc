@@ -476,7 +476,8 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        if (alpha_mult < scalar_type(0))
          alpha_mult = 3.0/5.0;
 
-       getfem::default_newton_line_search default_ls;
+       // getfem::default_newton_line_search default_ls;
+       getfem::newton_search_with_step_control default_ls;
        getfem::simplest_newton_line_search simplest_ls(size_type(-1), alpha_max_ratio,
                                                        alpha_min, alpha_mult, alpha_threshold_res);
        getfem::systematic_newton_line_search systematic_ls(size_type(-1), alpha_min, alpha_mult);
