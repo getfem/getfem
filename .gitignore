@@ -42,6 +42,7 @@ Makefile
 /interface/src/scilab/sci_gateway/c/builder_gateway_c.sce
 /libtool
 /src/getfem/getfem_arch_config.h
+/src/gmm/gmm_arch_config.h
 /stamp-h1
 /interface/src/matlab/@gf*
 /interface/src/matlab/gf_asm.m
@@ -277,6 +278,7 @@ Makefile
 /tests/laplacian_with_bricks
 /tests/nonlinear_elastostatic
 /tests/nonlinear_elastostatic.mf
+/tests/nonlinear_elastostatic.U
 /tests/nonlinear_elastostatic.mfd
 /tests/nonlinear_membrane
 /tests/nonlinear_membrane.mf
