@@ -2241,6 +2241,14 @@ namespace getfem {
 
   static scalar_type ga_Heaviside(scalar_type t) { return (t >= 0.) ? 1.: 0.; }
   static scalar_type ga_pos_part(scalar_type t) { return (t >= 0.) ? t : 0.; }
+  static scalar_type ga_reg_pos_part(scalar_type t, scalar_type eps)
+  { return (t >= eps) ? t-eps/2. : ((t <= 0) ? 0. : t*t/(2.*eps)); }
+  static scalar_type ga_der_reg_pos_part(scalar_type t, scalar_type eps)
+  { return (t >= eps) ? 1. : ((t <= 0) ? 0. : t/eps); }
+  static scalar_type ga_der2_reg_pos_part(scalar_type t, scalar_type eps)
+  { return (t >= eps) ? 0. : ((t <= 0) ? 0. : 1./eps); }
+
+
   static scalar_type ga_half_sqr_pos_part(scalar_type t)
   { return (t >= 0.) ? 0.5*t*t : 0.; }
   static scalar_type ga_neg_part(scalar_type t) { return (t >= 0.) ? 0. : -t; }
@@ -2548,6 +2556,7 @@ namespace getfem {
     PREDEF_FUNCTIONS["sqr"] = ga_predef_function(ga_sqr, 2, "2*t");
     PREDEF_FUNCTIONS["pow"] = ga_predef_function(pow, 1, "DER_PDFUNC1_POW",
                                                  "DER_PDFUNC2_POW");
+    
     PREDEF_FUNCTIONS["DER_PDFUNC_SQRT"] =
       ga_predef_function(ga_der_sqrt, 2, "-0.25/(t*sqrt(t))");
     PREDEF_FUNCTIONS["DER_PDFUNC1_POW"] =
@@ -2649,7 +2658,13 @@ namespace getfem {
       = ga_predef_function(ga_neg_part, 1, "DER_PDFUNC_NEG_PART");
     PREDEF_FUNCTIONS["half_sqr_neg_part"]
       = ga_predef_function(ga_half_sqr_neg_part, 2, "-neg_part(t)");
-
+    PREDEF_FUNCTIONS["reg_pos_part"]
+      = ga_predef_function(ga_reg_pos_part, 1, "DER_REG_POS_PART", "");
+    PREDEF_FUNCTIONS["DER_REG_POS_PART"]
+      = ga_predef_function(ga_der_reg_pos_part, 1, "DER2_REG_POS_PART", "");
+    PREDEF_FUNCTIONS["DER_REG_POS_PART"]
+      = ga_predef_function(ga_der2_reg_pos_part);
+    
     PREDEF_FUNCTIONS["max"]
       = ga_predef_function(ga_max, 1, "DER_PDFUNC1_MAX", "DER_PDFUNC2_MAX");
     PREDEF_FUNCTIONS["min"]
