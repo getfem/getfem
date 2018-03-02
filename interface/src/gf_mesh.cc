@@ -329,7 +329,7 @@ ptND_mesh(getfem::mesh *mesh, bool is2D, getfemint::mexargs_in &in)
 {
   darray P = in.pop().to_darray(-1, -1);
   iarray T = in.pop().to_iarray(-1, -1);
-  cout << "T(" << T.getm() << ", " << T.getn() << "), size=" << T.size() << "\n";
+  // cout << "T(" << T.getm() << ", " << T.getn() << "), size=" << T.size() << "\n";
   size_type mdim = P.getm();
   size_type N = is2D ? 2 : T.getm() - 1;
   if (is2D && T.getm() != 3 && T.getm() != 4) {
