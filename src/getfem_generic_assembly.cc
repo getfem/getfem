@@ -11619,7 +11619,7 @@ namespace getfem {
           GMM_ASSERT1(&(mf->linked_mesh()) == &(m),
                       "The finite element of variable " << pnode->name <<
                       " has to be defined on the same mesh than the "
-                      "integration method used");
+                      "integration method or interpolation used");
 
           // An instruction for extracting local dofs of the variable.
           if (rmi.local_dofs.count(pnode->name) == 0) {

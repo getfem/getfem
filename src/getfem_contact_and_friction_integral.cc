@@ -2557,8 +2557,8 @@ namespace getfem {
     // model::varnamelist vl, vl_test1, vl_test2, dl;
     // bool is_lin = workspace.used_variables(vl, vl_test1, vl_test2, dl, 1);
 
-    std::string gamma = "((1/("+dataname_gamma0+"))*element_size)";
-    std::string thetagamma = "("+theta+"*"+gamma+")";
+    std::string gamma = "(("+dataname_gamma0+")/element_size)";
+    std::string thetagamma = "("+theta+"/"+gamma+")";
     std::string contact_normal = "(-Normalized(Grad_"+obs+"))";
     std::string gap = "("+obs+"-"+varname_u+"."+contact_normal+")";
     std::string Vs = "("+varname_u +
@@ -2569,7 +2569,7 @@ namespace getfem {
 
     std::string expr = "Coulomb_friction_coupled_projection("+Neumannterm
       +", "+contact_normal+", "+Vs+", "+gap+", "+dataname_friction_coeff
-      +",1/"+gamma+").(";
+      +","+gamma+").(";
 
     if (theta_ != scalar_type(0)) {
       std::string derivative_Neumann=workspace.extract_order1_term(varname_u);
