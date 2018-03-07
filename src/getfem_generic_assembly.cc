@@ -7691,8 +7691,8 @@ namespace getfem {
     ga_semantic_analysis(expr, tree, *this, m.dim(), ref_elt_dim_of_mesh(m),
                          false, false);
     if (tree.root) {
-      GMM_ASSERT1(tree.root->nb_test_functions() == 0,
-                  "Invalid expression containing test functions");
+      // GMM_ASSERT1(tree.root->nb_test_functions() == 0,
+      //            "Invalid expression containing test functions");
       add_tree(tree, m, dummy_mesh_im(), rg, expr, 0, false, 1, "");
     }
   }
