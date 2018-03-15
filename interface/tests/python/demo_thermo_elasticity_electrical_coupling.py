@@ -168,12 +168,16 @@ md.add_Dirichlet_condition_with_multipliers(mim, 'V', elements_degree-1, LEFT_BO
 # Thermal problem
 md.add_initialized_data('kaeps', [kappa*epsilon])
 md.add_generic_elliptic_brick(mim, 'theta', 'kaeps')
+
 md.add_initialized_data('D2', [D*2])
 md.add_initialized_data('D2airt', [air_temp*D*2])
 md.add_mass_brick(mim, 'theta', 'D2')
+
 md.add_source_term_brick(mim, 'theta', 'D2airt')
+
 md.add_initialized_data('Deps', [D/epsilon])
 md.add_initialized_data('Depsairt', [air_temp*D/epsilon])
+
 md.add_Fourier_Robin_brick(mim, 'theta', 'Deps', TOP_BOUND)
 md.add_source_term_brick(mim, 'theta', 'Depsairt', TOP_BOUND)
 md.add_Fourier_Robin_brick(mim, 'theta', 'Deps', BOTTOM_BOUND)
