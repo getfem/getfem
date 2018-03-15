@@ -320,9 +320,12 @@ std::map<std::string, size_type> read_region_names_from_gmsh_mesh_file(std::istr
 
 //Phuoc
 /*
+   * import ascii vtk mesh file
    *
-   *     for gmsh and gid meshes, the mesh nodes are always 3D, so for a 2D mesh
+   * for vtk meshes, the mesh nodes are always 3D, so for a 2D mesh
      if remove_last_dimension == true the z-component of nodes will be removed
+
+     Note: should not have the empty line at the end of the vtk mesh file!
    */
 static void import_vtk_mesh_file(std::istream& f, mesh& m,
                                  bool remove_last_dimension = true,
@@ -354,19 +357,27 @@ static void import_vtk_mesh_file(std::istream& f, mesh& m,
     do
         std::getline(inVTKFile, line);
     while(line=="");
-    int binary;
+    bool binary = false;
     if (line == "BINARY" || line == "BINARY\r" )
     {
-        binary = 1;
+        binary = true;
     }
     else if ( line == "ASCII" || line == "ASCII\r")
     {
-        binary = 0;
+        binary = false;
     }
     else
     {
         std::cout << "Error: Unrecognized format in file " << std::endl;
+        return;
     }
+
+    if(binary)
+    {
+        std::cout << "Not supported binary vtk format for now!" << std::endl;
+        return;
+    }
+
     // Part 4
     do
         std::getline(inVTKFile, line);
@@ -378,18 +389,13 @@ static void import_vtk_mesh_file(std::istream& f, mesh& m,
         std::cout << "Error: Unsupported data type in file " << std::endl;
     }
 
-    std::cout << (binary == 0 ? "Text" : (binary == 1) ? "Binary" : "Swapped Binary") << " VTK File (version " << version << "): " << header << std::endl;
 
     std::map<size_type, size_type> msh_node_2_getfem_node;
     std::vector<vtk_cv_info> cvlst;
 
-    int myloop = 0;
-    while(!inVTKFile.fail() && inVTKFile.good())
+    while(inVTKFile.good())
     {
-        std::cout << "myloop: " << myloop << std::endl;
-
         std::getline(inVTKFile, line);
-        std::cout << "BBBBBBBBBBBBBBBBBBBB After getline   line: " << line << std::endl;
 
         if (line.empty()) continue;
         std::istringstream ln(line);
@@ -420,19 +426,10 @@ static void import_vtk_mesh_file(std::istream& f, mesh& m,
                 node_id++;
             }
 
-            std::cout << "msh_node_2_getfem_node: " << std::endl;
-            for(std::map<size_type, size_type>::iterator it = msh_node_2_getfem_node.begin(); it!=msh_node_2_getfem_node.end(); ++it)
-                std::cout << it->first << "=> " << it->second << std::endl;
-
         }
 
         else if (kw == "CELLS")
         {
-
-            std::cout << "msh_node_2_getfem_node: " << std::endl;
-            for(std::map<size_type, size_type>::iterator it = msh_node_2_getfem_node.begin(); it!=msh_node_2_getfem_node.end(); ++it)
-                std::cout << it->first << "=> " << it->second << std::endl;
-
 
             size_type nb_cv, ni;
             ln >> nb_cv >> ni;
@@ -449,8 +446,6 @@ static void import_vtk_mesh_file(std::istream& f, mesh& m,
 
                 dataline >> cv_nb_nodes;
 
-                std::cout << "XXXXXXXXXXXXXX cv_nb_nodes: " << cv_nb_nodes << std::endl;
-
                 cvlst.push_back(vtk_cv_info());
                 vtk_cv_info &ci = cvlst.back();
                 ci.id = id;
@@ -461,8 +456,6 @@ static void import_vtk_mesh_file(std::istream& f, mesh& m,
                 for (size_type i=0; i < cv_nb_nodes; ++i) {
                     size_type j;
                     dataline >> j;
-
-                    std::cout << "j: " << j << std::endl;
 
                     j++; // Node ID starts at 1 for GetFEM
 
@@ -484,8 +477,6 @@ static void import_vtk_mesh_file(std::istream& f, mesh& m,
             unsigned nb_cv;
             ln >> nb_cv;
 
-            std::cout << "YYYYYYYYYYYYYYYY nb_cv: " << nb_cv << std::endl;
-
             for(unsigned cv=0; cv<nb_cv; ++cv)
             {
 
@@ -498,8 +489,6 @@ static void import_vtk_mesh_file(std::istream& f, mesh& m,
 
                 dataline >> type;
                 ci.type = type;
-
-                std::cout << "type: " << type << std::endl;
 
                 if(ci.type != 1) ci.set_pgt();
                 // Reordering nodes for certain elements (should be completed ?)
@@ -595,19 +584,39 @@ static void import_vtk_mesh_file(std::istream& f, mesh& m,
         else if (!kw.empty())
             std::cerr << "WARNING: Unknown keyword " << kw << std::endl;
 
-        myloop++;
-
-        bool eof = inVTKFile.eof();
-
-        std::cout << "end of file?: " << eof << " good?: " << inVTKFile.good() << std::endl;
-
-
-
     }
 
-    std::cout << "read vtk file done!!!" << std::endl;
+    // add convex
+    size_type nb_cv = cvlst.size();
+    if (cvlst.size()) {
+        std::sort(cvlst.begin(), cvlst.end());
+        if (cvlst.front().type == 1){
+            GMM_WARNING2("Only nodes defined in the mesh! No elements are added.");
+            return;
+        }
+
+        unsigned N = cvlst.front().pgt->dim(); // pgt: pointer geometric transformation
+        for (size_type cv=0; cv < nb_cv; ++cv) {
+            bool cvok = false;
+            vtk_cv_info &ci = cvlst[cv];
+            bool is_node = (ci.type == 1);
+            unsigned ci_dim = (is_node) ? 0 : ci.pgt->dim();
+            //cout << "importing cv dim=" << int(ci.pgt->dim()) << " N=" << N
+            //     << " region: " << ci.region << "\n";
+
+            //main convex import
+            if (ci_dim == N) {
+                size_type ic = m.add_convex(ci.pgt, ci.nodes.begin());
+                cvok = true;
+                //m.region(ci.region).add(ic);
+
+            }
+        }
+    }
+
+    std::cout << "import_vtk_mesh_file, read vtk file done!!!" << std::endl;
+
     if (remove_last_dimension) maybe_remove_last_dimension(m);
-    std::cout << "remove last dimension done!" << std::endl;
 }
 
 
