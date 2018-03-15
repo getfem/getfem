@@ -333,9 +333,7 @@ static void import_vtk_mesh_file(std::istream& f, mesh& m,
 {
     /* read the version */
     std::istream &inVTKFile=f;
-
     std::string line;
-
     // Part 1
     do
         std::getline(inVTKFile, line);
@@ -389,10 +387,8 @@ static void import_vtk_mesh_file(std::istream& f, mesh& m,
         std::cout << "Error: Unsupported data type in file " << std::endl;
     }
 
-
     std::map<size_type, size_type> msh_node_2_getfem_node;
     std::vector<vtk_cv_info> cvlst;
-
     while(inVTKFile.good())
     {
         std::getline(inVTKFile, line);
@@ -420,76 +416,53 @@ static void import_vtk_mesh_file(std::istream& f, mesh& m,
                 base_node n(3); n[0]=n[1]=n[2]=0.0;
                 dataline >> n[0] >> n[1] >> n[2];
 
-                std::cout << "n0: " << n[0] << ", n1: " << n[1] << ", n2: "<< n[2] << std::endl;
-
                 msh_node_2_getfem_node[node_id] = m.add_point(n, 0.0, remove_duplicated_nodes);
                 node_id++;
             }
-
         }
-
         else if (kw == "CELLS")
         {
-
             size_type nb_cv, ni;
             ln >> nb_cv >> ni;
             std::cout << "Found " << nb_cv << " cells" << std::endl;
-
             cvlst.reserve(nb_cv);
             unsigned id=0; // element ID starts at 0
             for (size_type cv=0; cv < nb_cv; ++cv) {
-
                 std::getline(inVTKFile, line);
                 std::istringstream dataline(line);
-
                 unsigned cv_nb_nodes;
-
                 dataline >> cv_nb_nodes;
-
                 cvlst.push_back(vtk_cv_info());
                 vtk_cv_info &ci = cvlst.back();
                 ci.id = id;
-
                 // nodes of convex
                 ci.nodes.resize(cv_nb_nodes);
-
                 for (size_type i=0; i < cv_nb_nodes; ++i) {
                     size_type j;
                     dataline >> j;
-
                     j++; // Node ID starts at 1 for GetFEM
-
                     std::map<size_type, size_type>::iterator it = msh_node_2_getfem_node.find(j);
                     GMM_ASSERT1(it != msh_node_2_getfem_node.end(),
                                 "Invalid node ID " << j << " in vtk element "
                                 << (ci.id + 1));
                     ci.nodes[i] = it->second;
-
                 }
-
                 id++;
             }
 
         }
         else if (kw == "CELL_TYPES")
         {
-
             unsigned nb_cv;
             ln >> nb_cv;
-
             for(unsigned cv=0; cv<nb_cv; ++cv)
             {
-
                 std::getline(inVTKFile, line);
                 std::istringstream dataline(line);
-
                 vtk_cv_info &ci = cvlst[cv];
-
                 unsigned type;
-
                 dataline >> type;
                 ci.type = type;
-
                 if(ci.type != 1) ci.set_pgt();
                 // Reordering nodes for certain elements (should be completed ?)
                 std::vector<size_type> tmp_nodes(ci.nodes);
@@ -578,8 +551,6 @@ static void import_vtk_mesh_file(std::istream& f, mesh& m,
 
                 }
             }
-
-
         }
         else if (!kw.empty())
             std::cerr << "WARNING: Unknown keyword " << kw << std::endl;
@@ -609,7 +580,6 @@ static void import_vtk_mesh_file(std::istream& f, mesh& m,
                 size_type ic = m.add_convex(ci.pgt, ci.nodes.begin());
                 cvok = true;
                 //m.region(ci.region).add(ic);
-
             }
         }
     }
@@ -618,8 +588,6 @@ static void import_vtk_mesh_file(std::istream& f, mesh& m,
 
     if (remove_last_dimension) maybe_remove_last_dimension(m);
 }
-
-
 
 
 /*
