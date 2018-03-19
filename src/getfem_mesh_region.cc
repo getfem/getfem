@@ -215,6 +215,18 @@ namespace getfem {
     else partitioning_allowed.all_threads() = true;
   }
 
+  void mesh_region::bounding_box(base_node& Pmin, base_node& Pmax) const {
+    auto &mesh = *this->get_parent_mesh();
+    for (auto cv : dal::bv_iterable_c(index())) {
+      for (auto &&pt : mesh.points_of_convex(cv)) {
+        for (auto j = 0; j < Pmin.size(); j++){
+          Pmin[j] = std::min(Pmin[j], pt[j]);
+          Pmax[j] = std::max(Pmax[j], pt[j]);
+        }
+      }
+    }
+  }
+
   void  mesh_region::prohibit_partitioning()
   {
     if (me_is_multithreaded_now()) partitioning_allowed = false;

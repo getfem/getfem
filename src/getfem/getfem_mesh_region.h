@@ -181,6 +181,9 @@ namespace getfem {
     iterations with mr_visitor. This is a default behaviour*/
     void  allow_partitioning();
 
+    /** Return the bounding box [Pmin - Pmax] of the mesh_region. */
+    void bounding_box(base_node& Pmin, base_node& Pmax) const;
+
     /** Disregard partitioning, which means being able to see the whole region
     in multirheaded code. Can be used, for instance, for contact problems
     where master region is partitioned, while the slave region is not*/
