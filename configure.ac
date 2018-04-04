@@ -58,6 +58,8 @@ dnl AM_INIT_AUTOMAKE($PACKAGE,$VERSION)
 AM_INIT_AUTOMAKE([1.11 parallel-tests]) 
 WARNING_MSG=""
 
+CPPFLAGS="$CPPFLAGS -I/usr/local/include"
+
 dnl --------------------------
 dnl set the optimization level
 dnl --------------------------
@@ -66,8 +68,7 @@ AC_ARG_WITH(optimization,
 	    AC_HELP_STRING([--with-optimization=FLAG],[Set the optimization level (-O3 by default)]),
 	    [with_optimization=$withval],
 	    [with_optimization='-O3']
-	    )
-
+	    )	    
 
 dnl ---------------------------PARA LEVEL--------------------------
 paralevel=0

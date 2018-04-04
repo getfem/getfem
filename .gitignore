@@ -39,6 +39,7 @@ Makefile
 /getfem-config-notinstalled
 /gmm-config
 /interface/src/python/setup.py
+/interface/src/python/_getfem.*
 /interface/src/scilab/sci_gateway/c/builder_gateway_c.sce
 /libtool
 /src/getfem/getfem_arch_config.h

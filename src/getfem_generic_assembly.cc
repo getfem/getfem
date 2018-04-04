@@ -13345,6 +13345,7 @@ namespace getfem {
               first_ind = pai->ind_first_point_on_face(v.f());
             }
             for (gis.ipt = 0; gis.ipt < gis.nbpt; ++(gis.ipt)) {
+	      // cout << "Gauss pt " << gis.ipt << endl;
               if (pgp) gis.ctx.set_ii(first_ind+gis.ipt);
               else gis.ctx.set_xref((*pspt)[first_ind+gis.ipt]);
               if (gis.ipt == 0 || !(pgt->is_linear())) {
@@ -14244,7 +14245,6 @@ namespace getfem {
                   base_small_vector &/*N_y*/,
                   std::map<var_trans_pair, base_tensor> &/*derivatives*/,
                   bool compute_derivatives) const {
-
       int ret_type = 0;
       *m_t = &m_x;
       GMM_ASSERT1(&sm == &m_x, "Bad mesh");
@@ -14265,6 +14265,7 @@ namespace getfem {
         ret_type = 1;
       } else {
         cv = cv_x;
+        face_num = short_type(-1);
         P_ref = ctx_x.xref();
         ret_type = 1;
       }
