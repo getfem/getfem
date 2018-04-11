@@ -89,6 +89,10 @@ namespace bgeot
     }
   }
 
+  void geotrans_inv_convex::set_projection_into_element(bool active){
+      nonlinear_storage.project_into_element = active;
+    }
+
   class geotrans_inv_convex_bfgs {
     geotrans_inv_convex &gic;
     base_node xreal;

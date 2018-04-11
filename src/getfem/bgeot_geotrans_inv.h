@@ -117,6 +117,8 @@ namespace bgeot {
       init(nodes,pgt_);
     }
 
+    void set_projection_into_element(bool activate);
+
     template<class TAB> void init(const TAB &nodes, pgeometric_trans pgt_);
     
     /**
