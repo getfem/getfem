@@ -16,7 +16,7 @@
 % Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 
 
-function check_asm(iverbose,idebug)
+function check_plasticity(iverbose,idebug)
   global gverbose;
   global gdebug;  
   if (nargin >= 1),

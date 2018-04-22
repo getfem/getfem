@@ -701,7 +701,7 @@ namespace getfem {
     gmm::sub_interval Iu1(0, mf1.nb_dof());
     base_vector u1(mf1.nb_dof());
     workspace.add_fem_variable("u1", mf1, Iu1, u1);
-    workspace.add_expression("Test_u1.Test2_u1", mim, rg);
+    workspace.add_expression("Test_u1:Test2_u1", mim, rg);
     workspace.assembly(2);
     if (gmm::mat_nrows(workspace.assembled_matrix()))
 	gmm::add(workspace.assembled_matrix(), const_cast<MAT &>(M));
@@ -715,7 +715,7 @@ namespace getfem {
     gmm::sub_interval Iu1(0, mf1.nb_dof());
     base_vector u1(mf1.nb_dof());
     workspace.add_fem_variable("u1", mf1, Iu1, u1);
-    workspace.add_expression("Test_u1.Test2_u1", mim, rg);
+    workspace.add_expression("Test_u1:Test2_u1", mim, rg);
     workspace.set_assembled_matrix(M);
     workspace.assembly(2);
   }
@@ -734,7 +734,7 @@ namespace getfem {
     base_vector u1(mf1.nb_dof()), u2(mf2.nb_dof());
     workspace.add_fem_variable("u1", mf1, Iu1, u1);
     workspace.add_fem_variable("u2", mf2, Iu2, u2);
-    workspace.add_expression("Test_u1.Test2_u2", mim, rg);
+    workspace.add_expression("Test_u1:Test2_u2", mim, rg);
     workspace.assembly(2);
     if (gmm::mat_nrows(workspace.assembled_matrix()))
 	gmm::add(gmm::sub_matrix(workspace.assembled_matrix(), Iu1, Iu2),
@@ -750,7 +750,7 @@ namespace getfem {
     base_vector u1(mf1.nb_dof()), u2(mf2.nb_dof());
     workspace.add_fem_variable("u1", mf1, Iu1, u1);
     workspace.add_fem_variable("u2", mf2, Iu2, u2);
-    workspace.add_expression("Test_u1.Test2_u2", mim, rg);
+    workspace.add_expression("Test_u1:Test2_u2", mim, rg);
     workspace.set_assembled_matrix(M);
     workspace.assembly(2);
   }
