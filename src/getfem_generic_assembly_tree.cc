@@ -1,0 +1,1597 @@
+/*===========================================================================
+
+ Copyright (C) 2013-2018 Yves Renard
+
+ This file is a part of GetFEM++
+
+ GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ under  the  terms  of the  GNU  Lesser General Public License as published
+ by  the  Free Software Foundation;  either version 3 of the License,  or
+ (at your option) any later version along with the GCC Runtime Library
+ Exception either version 3.1 or (at your option) any later version.
+ This program  is  distributed  in  the  hope  that it will be useful,  but
+ WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
+ License and GCC Runtime Library Exception for more details.
+ You  should  have received a copy of the GNU Lesser General Public License
+ along  with  this program;  if not, write to the Free Software Foundation,
+ Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
+
+===========================================================================*/
+
+#include "getfem/getfem_generic_assembly_tree.h"
+#include "getfem/getfem_generic_assembly_functions_and_operators.h"
+
+
+namespace getfem {
+
+  //=========================================================================
+  // Lexical analysis for the generic assembly language
+  //=========================================================================
+
+  static GA_TOKEN_TYPE ga_char_type[256];
+  static int ga_operator_priorities[GA_NB_TOKEN_TYPE];
+
+  // Initialize ga_char_type and ga_operator_priorities arrays
+  static bool init_ga_char_type() {
+    for (int i = 0; i < 256; ++i) ga_char_type[i] = GA_INVALID;
+    ga_char_type['+'] = GA_PLUS;        ga_char_type['-']  = GA_MINUS;
+    ga_char_type['*'] = GA_MULT;        ga_char_type['/']  = GA_DIV;
+    ga_char_type[':'] = GA_COLON;       ga_char_type['\''] = GA_QUOTE;
+    ga_char_type['.'] = GA_DOT;         ga_char_type['@']  = GA_TMULT;
+    ga_char_type[','] = GA_COMMA;       ga_char_type[';']  = GA_SEMICOLON;
+    ga_char_type['('] = GA_LPAR;        ga_char_type[')']  = GA_RPAR;
+    ga_char_type['['] = GA_LBRACKET;    ga_char_type[']']  = GA_RBRACKET;
+    ga_char_type['_'] = GA_NAME;
+    for (unsigned i = 'a'; i <= 'z'; ++i)  ga_char_type[i] = GA_NAME;
+    for (unsigned i = 'A'; i <= 'Z'; ++i)  ga_char_type[i] = GA_NAME;
+    for (unsigned i = '0'; i <= '9'; ++i)  ga_char_type[i] = GA_SCALAR;
+
+    for (unsigned i = 0; i < GA_NB_TOKEN_TYPE; ++i)
+      ga_operator_priorities[i] = 0;
+    ga_operator_priorities[GA_PLUS] = 1;
+    ga_operator_priorities[GA_MINUS] = 1;
+    ga_operator_priorities[GA_MULT] = 2;
+    ga_operator_priorities[GA_DIV] = 2;
+    ga_operator_priorities[GA_COLON] = 2;
+    ga_operator_priorities[GA_DOT] = 2;
+    ga_operator_priorities[GA_DOTMULT] = 2;
+    ga_operator_priorities[GA_DOTDIV] = 2;
+    ga_operator_priorities[GA_TMULT] = 2;
+    ga_operator_priorities[GA_QUOTE] = 3;
+    ga_operator_priorities[GA_UNARY_MINUS] = 3;
+    ga_operator_priorities[GA_SYM] = 4;
+    ga_operator_priorities[GA_SKEW] = 4;
+    ga_operator_priorities[GA_TRACE] = 4;
+    ga_operator_priorities[GA_DEVIATOR] = 4;
+    ga_operator_priorities[GA_PRINT] = 4;
+
+    return true;
+  }
+
+  static bool ga_initialized = init_ga_char_type();
+
+  // Get the next token in the string at position 'pos' end return its type
+  static GA_TOKEN_TYPE ga_get_token(const std::string &expr,
+                                    size_type &pos,
+                                    size_type &token_pos,
+                                    size_type &token_length) {
+    bool fdot = false, fE = false;
+    GMM_ASSERT1(ga_initialized, "Internal error");
+
+    // Ignore white spaces
+    while (expr[pos] == ' ' && pos < expr.size()) ++pos;
+    token_pos = pos;
+    token_length = 0;
+
+    // Detecting end of expression
+    if (pos >= expr.size()) return GA_END;
+
+    // Treating the different cases (Operation, name or number)
+    GA_TOKEN_TYPE type = ga_char_type[unsigned(expr[pos])];
+    ++pos; ++token_length;
+    switch (type) {
+    case GA_DOT:
+      if (pos >= expr.size()) return type;
+      if (expr[pos] == '*') { ++pos; ++token_length; return GA_DOTMULT; }
+      if (expr[pos] == '/') { ++pos; ++token_length; return GA_DOTDIV; }
+      if (ga_char_type[unsigned(expr[pos])] != GA_SCALAR)
+        return type;
+      fdot = true; type = GA_SCALAR;
+    case GA_SCALAR:
+      while (pos < expr.size()) {
+        GA_TOKEN_TYPE ctype = ga_char_type[unsigned(expr[pos])];
+        switch (ctype) {
+        case GA_DOT:
+          if (fdot) return type;
+          fdot = true; ++pos; ++token_length;
+          break;
+        case GA_NAME:
+          if (fE || (expr[pos] != 'E' && expr[pos] != 'e')) return type;
+          fE = true; fdot = true; ++pos; ++token_length;
+          if (pos < expr.size()) {
+            if (expr[pos] == '+' || expr[pos] == '-')
+              { ++pos; ++token_length; }
+          }
+          if (pos >= expr.size()
+              || ga_char_type[unsigned(expr[pos])] != GA_SCALAR)
+            return GA_INVALID;
+          break;
+        case GA_SCALAR:
+          ++pos; ++token_length; break;
+        default:
+          return type;
+        }
+      }
+      return type;
+    case GA_NAME:
+      while (pos < expr.size()) {
+        GA_TOKEN_TYPE ctype = ga_char_type[unsigned(expr[pos])];
+        if (ctype != GA_SCALAR && ctype != GA_NAME) break;
+        ++pos; ++token_length;
+      }
+      if (expr.compare(token_pos, token_length, "Sym") == 0)
+        return GA_SYM;
+      if (expr.compare(token_pos, token_length, "Skew") == 0)
+        return GA_SKEW;
+      if (expr.compare(token_pos, token_length, "Trace") == 0)
+        return GA_TRACE;
+      if (expr.compare(token_pos, token_length, "Deviator") == 0)
+        return GA_DEVIATOR;
+      if (expr.compare(token_pos, token_length, "Interpolate") == 0)
+        return GA_INTERPOLATE;
+      if (expr.compare(token_pos, token_length, "Interpolate_filter") == 0)
+        return GA_INTERPOLATE_FILTER;
+      if (expr.compare(token_pos, token_length,
+                       "Elementary_transformation") == 0)
+        return GA_ELEMENTARY;
+      if (expr.compare(token_pos, token_length, "Xfem_plus") == 0)
+        return GA_XFEM_PLUS;
+      if (expr.compare(token_pos, token_length, "Xfem_minus") == 0)
+        return GA_XFEM_MINUS;
+      if (expr.compare(token_pos, token_length, "Print") == 0)
+        return GA_PRINT;
+      return type;
+    case GA_COMMA:
+      if (pos < expr.size() &&
+          ga_char_type[unsigned(expr[pos])] == GA_COMMA) {
+        ++pos; return GA_DCOMMA;
+      }
+      return type;
+    case GA_SEMICOLON:
+      if (pos < expr.size() &&
+          ga_char_type[unsigned(expr[pos])] == GA_SEMICOLON) {
+        ++pos; return GA_DSEMICOLON;
+      }
+      return type;
+    default: return type;
+    }
+  }
+
+
+  //=========================================================================
+  // Error handling
+  //=========================================================================
+
+  void ga_throw_error_msg(const std::string &expr, size_type pos,
+                                 const std::string &msg) {
+    int length_before = 70, length_after = 70;
+    if (expr.size()) {
+      int first = std::max(0, int(pos)-length_before);
+      int last = std::min(int(pos)+length_after, int(expr.size()));
+      if (last - first < length_before+length_after)
+      first = std::max(0, int(pos)-length_before
+                       -(length_before+length_after-last+first));
+      if (last - first < length_before+length_after)
+        last = std::min(int(pos)+length_after
+                        +(length_before+length_after-last+first),
+                        int(expr.size()));
+      if (first > 0) cerr << "...";
+      cerr << expr.substr(first, last-first);
+      if (last < int(expr.size())) cerr << "...";
+      cerr << endl;
+      if (first > 0) cerr << "   ";
+      if (int(pos) > first)
+        cerr << std::setfill ('-') << std::setw(int(pos)-first) << '-'
+             << std::setfill (' ');
+      cerr << "^" << endl;
+    }
+    cerr << msg << endl;
+  }
+
+  //=========================================================================
+  // Tree structure
+  //=========================================================================
+
+  void ga_tree_node::mult_test(const pga_tree_node n0, const pga_tree_node n1,
+			       const std::string &expr) {
+    
+    size_type test0 = n0->test_function_type, test1 = n1->test_function_type;
+    if (test0 && test1 && (test0 == test1 ||
+			   test0 >= 3 || test1 >= 3))
+      ga_throw_error(expr, pos,
+		     "Incompatibility of test functions in product.");
+    GMM_ASSERT1(test0 != size_type(-1) && test1 != size_type(-1),
+		"internal error");
+    
+    test_function_type = test0 + test1;
+    
+    size_type st = nb_test_functions();
+    bgeot::multi_index mi(st);
+    
+    switch (test0) {
+    case 1: mi[0] = n0->t.sizes()[0]; break;
+    case 2: mi[st-1] = n0->t.sizes()[0]; break;
+    case 3: mi[0] = n0->t.sizes()[0]; mi[1] = n0->t.sizes()[1]; break;
+    }
+    switch (test1) {
+    case 1: mi[0] = n1->t.sizes()[0]; break;
+    case 2: mi[st-1] = n1->t.sizes()[0]; break;
+    case 3: mi[0] = n1->t.sizes()[0]; mi[1] = n1->t.sizes()[1]; break;
+    }
+    
+    if (n0->name_test1.size()) {
+      name_test1 = n0->name_test1; qdim1 = n0->qdim1;
+      interpolate_name_test1 = n0->interpolate_name_test1;
+    } else {
+      name_test1 = n1->name_test1; qdim1 = n1->qdim1;
+      interpolate_name_test1 = n1->interpolate_name_test1;
+    }
+    
+    if (n0->name_test2.size()) {
+      name_test2 = n0->name_test2; qdim2 = n0->qdim2;
+      interpolate_name_test2 = n0->interpolate_name_test2;
+    } else {
+      name_test2 = n1->name_test2; qdim2 = n1->qdim2;
+      interpolate_name_test2 = n1->interpolate_name_test2;
+    }
+    t.adjust_sizes(mi);
+  }
+
+  void ga_tree::add_scalar(scalar_type val, size_type pos) {
+    while (current_node && current_node->node_type != GA_NODE_OP)
+      current_node = current_node->parent;
+    if (current_node) {
+      current_node->adopt_child(new ga_tree_node(val, pos));
+      current_node = current_node->children.back();
+    }
+    else {
+      GMM_ASSERT1(root == nullptr, "Invalid tree operation");
+      current_node = root = new ga_tree_node(val, pos);
+      root->parent = nullptr;
+    }
+  }
+
+  void ga_tree::add_allindices(size_type pos) {
+    while (current_node && current_node->node_type != GA_NODE_OP)
+      current_node = current_node->parent;
+    if (current_node) {
+      current_node->adopt_child(new ga_tree_node(GA_NODE_ALLINDICES, pos));
+      current_node = current_node->children.back();
+    }
+    else {
+      GMM_ASSERT1(root == nullptr, "Invalid tree operation");
+      current_node = root = new ga_tree_node(GA_NODE_ALLINDICES, pos);
+      root->parent = nullptr;
+    }
+  }
+  
+  void ga_tree::add_name(const char *name, size_type length, size_type pos) {
+    while (current_node && current_node->node_type != GA_NODE_OP)
+      current_node = current_node->parent;
+    if (current_node) {
+      current_node->adopt_child(new ga_tree_node(name, length, pos));
+      current_node = current_node->children.back();
+    }
+    else {
+      GMM_ASSERT1(root == nullptr, "Invalid tree operation");
+      current_node = root = new ga_tree_node(name, length, pos);
+      root->parent = nullptr;
+    }
+  }
+  
+  void ga_tree::add_sub_tree(ga_tree &sub_tree) {
+    if (current_node &&
+	(current_node->node_type == GA_NODE_PARAMS ||
+	 current_node->node_type == GA_NODE_INTERPOLATE_FILTER ||
+	 current_node->node_type == GA_NODE_C_MATRIX)) {
+      GMM_ASSERT1(sub_tree.root, "Invalid tree operation");
+      current_node->adopt_child(sub_tree.root);
+    } else {
+      GMM_ASSERT1(sub_tree.root, "Invalid tree operation");
+      while (current_node && current_node->node_type != GA_NODE_OP)
+	current_node = current_node->parent;
+      if (current_node) {
+	current_node->adopt_child(sub_tree.root);
+	current_node = sub_tree.root;
+      }
+      else {
+	GMM_ASSERT1(root == nullptr, "Invalid tree operation");
+	current_node = root = sub_tree.root;
+	root->parent = nullptr;
+      }
+    }
+    sub_tree.root = sub_tree.current_node = nullptr;
+  }
+  
+  void ga_tree::add_params(size_type pos) {
+    GMM_ASSERT1(current_node, "internal error");
+    while (current_node && current_node->parent &&
+	   current_node->parent->node_type == GA_NODE_OP &&
+	   ga_operator_priorities[current_node->parent->op_type] >= 4)
+      current_node = current_node->parent;
+    pga_tree_node new_node = new ga_tree_node(GA_NODE_PARAMS, pos);
+    new_node->parent = current_node->parent;
+    if (current_node->parent)
+      current_node->parent->replace_child(current_node, new_node);
+    else
+      root = new_node;
+    new_node->adopt_child(current_node);
+    current_node = new_node;
+  }
+  
+  void ga_tree::add_matrix(size_type pos) {
+    while (current_node && current_node->node_type != GA_NODE_OP)
+      current_node = current_node->parent;
+    if (current_node) {
+      current_node->adopt_child(new ga_tree_node(GA_NODE_C_MATRIX, pos));
+      current_node = current_node->children.back();
+    }
+    else {
+      GMM_ASSERT1(root == nullptr, "Invalid tree operation");
+      current_node = root = new ga_tree_node(GA_NODE_C_MATRIX, pos);
+      root->parent = nullptr;
+    }
+    current_node->nbc1 = current_node->nbc2 = current_node->nbc3 = 0;
+  }
+  
+  void ga_tree::zip_matrix(const pga_tree_node source_node) {
+    GMM_ASSERT1(current_node->node_type == GA_NODE_C_MATRIX &&
+		source_node->node_type == GA_NODE_C_MATRIX,
+		"Internal error");
+    size_type target_size = current_node->children.size();
+    size_type source_size = source_node->children.size();
+    size_type last_dim_size = target_size/source_size;
+    GMM_ASSERT1(target_size == source_size*last_dim_size,
+		"Internal error, " << target_size << " != " <<
+		source_size << "*" << last_dim_size);
+    std::vector<pga_tree_node> new_children;
+    for (size_type i = 0; i < source_size; ++i) {
+      for (size_type j = 0; j < last_dim_size; ++j)
+	new_children.push_back(current_node->children[i*last_dim_size+j]);
+      new_children.push_back(source_node->children[i]);
+      source_node->children[i]->parent = current_node;
+    }
+    source_node->children.resize(0); // so that the destructor of source_node
+                                     // will not destruct the children
+    current_node->children = new_children;
+  }
+  
+  void ga_tree::add_op(GA_TOKEN_TYPE op_type, size_type pos) {
+    while (current_node && current_node->parent &&
+	   current_node->parent->node_type == GA_NODE_OP &&
+	   ga_operator_priorities[current_node->parent->op_type]
+	   >= ga_operator_priorities[op_type])
+      current_node = current_node->parent;
+    pga_tree_node new_node = new ga_tree_node(op_type, pos);
+    if (current_node) {
+      if (op_type == GA_UNARY_MINUS
+	  || op_type == GA_SYM || op_type == GA_SKEW
+	  || op_type == GA_TRACE || op_type == GA_DEVIATOR
+	  || op_type == GA_PRINT) {
+	current_node->adopt_child(new_node);
+      } else {
+	new_node->parent = current_node->parent;
+	if (current_node->parent)
+	  current_node->parent->replace_child(current_node, new_node);
+	else
+	  root = new_node;
+	new_node->adopt_child(current_node);
+      }
+    } else {
+      if (root) new_node->adopt_child(root);
+      root = new_node;
+      root->parent = nullptr;
+    }
+    current_node = new_node;
+  }
+
+  void ga_tree::clear_node_rec(pga_tree_node pnode) {
+    if (pnode) {
+      for (pga_tree_node &child : pnode->children)
+	clear_node_rec(child);
+      delete pnode;
+      current_node = nullptr;
+    }
+  }
+  
+  void ga_tree::clear_node(pga_tree_node pnode) {
+    if (pnode) {
+      pga_tree_node parent = pnode->parent;
+      if (parent) { // keep all siblings of pnode
+	size_type j = 0;
+	for (pga_tree_node &sibling : parent->children)
+	  if (sibling != pnode)
+	    parent->children[j++] = sibling;
+	parent->children.resize(j);
+      } else
+	root = nullptr;
+    }
+    clear_node_rec(pnode);
+  }
+  
+  void ga_tree::clear_children(pga_tree_node pnode) {
+    for (pga_tree_node &child : pnode->children)
+      clear_node_rec(child);
+    pnode->children.resize(0);
+  }
+
+  void ga_tree::replace_node_by_child(pga_tree_node pnode, size_type i) {
+    GMM_ASSERT1(i < pnode->children.size(), "Internal error");
+    pga_tree_node child = pnode->children[i];
+    child->parent = pnode->parent;
+    if (pnode->parent)
+      pnode->parent->replace_child(pnode, child);
+    else
+      root = child;
+    current_node = nullptr;
+    for (pga_tree_node &sibling : pnode->children)
+      if (sibling != child) clear_node_rec(sibling);
+    delete pnode;
+  }
+  
+  void ga_tree::copy_node(pga_tree_node pnode, pga_tree_node parent,
+			  pga_tree_node &child) {
+    GMM_ASSERT1(child == nullptr, "Internal error");
+    child = new ga_tree_node();
+    *child = *pnode;
+    child->parent = parent;
+    for (pga_tree_node &grandchild : child->children)
+      grandchild = nullptr;
+    for (size_type j = 0; j < child->children.size(); ++j)
+      copy_node(pnode->children[j], child, child->children[j]);
+  }
+  
+  void ga_tree::duplicate_with_operation(pga_tree_node pnode,
+					 GA_TOKEN_TYPE op_type) {
+    pga_tree_node newop = new ga_tree_node(op_type, pnode->pos);
+    newop->children.resize(2, nullptr);
+    newop->children[0] = pnode;
+    newop->parent = pnode->parent;
+    if (pnode->parent)
+      pnode->parent->replace_child(pnode, newop);
+    else
+      root = newop;
+    pnode->parent = newop;
+    copy_node(pnode, newop, newop->children[1]);
+  }
+
+  void ga_tree::insert_node(pga_tree_node pnode, GA_NODE_TYPE node_type) {
+    pga_tree_node newnode = new ga_tree_node();
+    newnode->node_type = node_type;
+    newnode->parent = pnode->parent;
+    if (pnode->parent)
+      pnode->parent->replace_child(pnode, newnode);
+    else
+      root = newnode;
+    newnode->adopt_child(pnode);
+  }
+  
+  bool sub_tree_are_equal
+  (const pga_tree_node pnode1, const pga_tree_node pnode2,
+   const ga_workspace &workspace, int version) {
+    size_type ntype1 = pnode1->node_type;
+    if (ntype1 == GA_NODE_ZERO) ntype1 = GA_NODE_CONSTANT;
+    size_type ntype2 = pnode2->node_type;
+    if (ntype2 == GA_NODE_ZERO) ntype2 = GA_NODE_CONSTANT;
+
+    if (ntype1 != ntype2) return false;
+    if (pnode1->children.size() != pnode2->children.size()) return false;
+
+    switch(ntype1) {
+    case GA_NODE_OP:
+      if (pnode1->op_type != pnode2->op_type) return false;
+      if (pnode1->symmetric_op != pnode2->symmetric_op)  return false;
+      break;
+    case GA_NODE_OPERATOR:
+      if (pnode1->der1 != pnode2->der1 || pnode1->der2 != pnode2->der2)
+        return false;
+    case GA_NODE_PREDEF_FUNC: case GA_NODE_SPEC_FUNC:
+      if (pnode1->name.compare(pnode2->name)) return false;
+      break;
+    case GA_NODE_CONSTANT: case GA_NODE_ZERO:
+      if (pnode1->tensor().size() != pnode2->tensor().size()) return false;
+
+      switch(version) {
+      case 0: case 1:
+        if (pnode1->test_function_type != pnode2->test_function_type)
+          return false;
+        if ((pnode1->test_function_type & 1) &&
+            pnode1->name_test1.compare(pnode2->name_test1) != 0)
+          return false;
+        if ((pnode1->test_function_type & 2) &&
+            pnode1->name_test2.compare(pnode2->name_test2) != 0)
+          return false;
+        break;
+      case 2:
+        if ((pnode1->test_function_type == 1 &&
+             pnode2->test_function_type == 1) ||
+            (pnode1->test_function_type == 2 &&
+             pnode2->test_function_type == 2))
+          return false;
+        if ((pnode1->test_function_type & 1) &&
+            pnode1->name_test1.compare(pnode2->name_test2) != 0)
+          return false;
+        if ((pnode1->test_function_type & 2) &&
+            pnode1->name_test2.compare(pnode2->name_test1) != 0)
+          return false;
+        break;
+      }
+      if (pnode1->tensor().size() != 1 &&
+          pnode1->t.sizes().size() != pnode2->t.sizes().size()) return false;
+      for (size_type i = 0; i < pnode1->t.sizes().size(); ++i)
+        if (pnode1->t.sizes()[i] != pnode2->t.sizes()[i]) return false;
+      for (size_type i = 0; i < pnode1->tensor().size(); ++i)
+        if (gmm::abs(pnode1->tensor()[i] - pnode2->tensor()[i]) > 1E-25)
+          return false;
+      break;
+    case GA_NODE_C_MATRIX:
+      if (pnode1->nbc1 != pnode2->nbc1 || pnode1->nbc2 != pnode2->nbc2 ||
+          pnode1->nbc3 != pnode2->nbc3)
+        return false;
+      break;
+    case GA_NODE_INTERPOLATE_FILTER:
+      if (pnode1->interpolate_name.compare(pnode2->interpolate_name) ||
+          pnode1->nbc1 != pnode2->nbc1)
+        return false;
+      break;
+    case GA_NODE_INTERPOLATE_X: case GA_NODE_INTERPOLATE_NORMAL:
+      if (pnode1->interpolate_name.compare(pnode2->interpolate_name))
+        return false;
+      break;
+    case GA_NODE_INTERPOLATE_DERIVATIVE:
+      if (pnode1->interpolate_name_der.compare(pnode2->interpolate_name_der))
+        return false;
+      // The test continues with what follows
+    case GA_NODE_INTERPOLATE_VAL_TEST: case GA_NODE_INTERPOLATE_GRAD_TEST:
+    case GA_NODE_INTERPOLATE_HESS_TEST: case GA_NODE_INTERPOLATE_DIVERG_TEST:
+    case GA_NODE_ELEMENTARY_VAL_TEST: case GA_NODE_ELEMENTARY_GRAD_TEST:
+    case GA_NODE_ELEMENTARY_HESS_TEST: case GA_NODE_ELEMENTARY_DIVERG_TEST:
+    case GA_NODE_XFEM_PLUS_VAL_TEST: case GA_NODE_XFEM_PLUS_GRAD_TEST:
+    case GA_NODE_XFEM_PLUS_HESS_TEST: case GA_NODE_XFEM_PLUS_DIVERG_TEST:
+    case GA_NODE_XFEM_MINUS_VAL_TEST: case GA_NODE_XFEM_MINUS_GRAD_TEST:
+    case GA_NODE_XFEM_MINUS_HESS_TEST: case GA_NODE_XFEM_MINUS_DIVERG_TEST:
+      if (pnode1->interpolate_name.compare(pnode2->interpolate_name) ||
+          pnode1->elementary_name.compare(pnode2->elementary_name))
+        return false;
+      // The test continues with what follows
+    case GA_NODE_VAL_TEST: case GA_NODE_GRAD_TEST:
+    case GA_NODE_HESS_TEST: case GA_NODE_DIVERG_TEST:
+      {
+        const mesh_fem *mf1 = workspace.associated_mf(pnode1->name);
+        const mesh_fem *mf2 = workspace.associated_mf(pnode2->name);
+        switch (version) {
+        case 0:
+          if (pnode1->name.compare(pnode2->name) ||
+              pnode1->test_function_type != pnode2->test_function_type)
+            return false;
+          break;
+        case 1:
+          if (mf1 != mf2 ||
+              workspace.qdim(pnode1->name) != workspace.qdim(pnode2->name) ||
+              pnode1->test_function_type != pnode2->test_function_type)
+            return false;
+          break;
+        case 2:
+          if (mf1 != mf2 ||
+              workspace.qdim(pnode1->name) != workspace.qdim(pnode2->name) ||
+              pnode1->test_function_type == pnode2->test_function_type)
+            return false;
+          break;
+        }
+      }
+      break;
+    case GA_NODE_VAL: case GA_NODE_GRAD:
+    case GA_NODE_HESS: case GA_NODE_DIVERG:
+      if (pnode1->name.compare(pnode2->name)) return false;
+      break;
+    case GA_NODE_INTERPOLATE_VAL: case GA_NODE_INTERPOLATE_GRAD:
+    case GA_NODE_INTERPOLATE_HESS: case GA_NODE_INTERPOLATE_DIVERG:
+    case GA_NODE_ELEMENTARY_VAL: case GA_NODE_ELEMENTARY_GRAD:
+    case GA_NODE_ELEMENTARY_HESS: case GA_NODE_ELEMENTARY_DIVERG:
+    case GA_NODE_XFEM_PLUS_VAL: case GA_NODE_XFEM_PLUS_GRAD:
+    case GA_NODE_XFEM_PLUS_HESS: case GA_NODE_XFEM_PLUS_DIVERG:
+    case GA_NODE_XFEM_MINUS_VAL: case GA_NODE_XFEM_MINUS_GRAD:
+    case GA_NODE_XFEM_MINUS_HESS: case GA_NODE_XFEM_MINUS_DIVERG:
+      if (pnode1->interpolate_name.compare(pnode2->interpolate_name) ||
+          pnode1->elementary_name.compare(pnode2->elementary_name) ||
+          pnode1->name.compare(pnode2->name))
+        return false;
+      break;
+    case GA_NODE_X:
+      if (pnode1->nbc1 != pnode2->nbc1) return false;
+      break;
+
+    default:break;
+    }
+
+    if (version && ntype1 == GA_NODE_OP && pnode1->symmetric_op) {
+      if (sub_tree_are_equal(pnode1->children[0], pnode2->children[0],
+                             workspace, version) &&
+          sub_tree_are_equal(pnode1->children[1], pnode2->children[1],
+                             workspace, version))
+        return true;
+      if (sub_tree_are_equal(pnode1->children[1], pnode2->children[0],
+                             workspace, version) &&
+          sub_tree_are_equal(pnode1->children[0], pnode2->children[1],
+                             workspace, version) )
+        return true;
+      return false;
+    } else {
+      for (size_type i = 0; i < pnode1->children.size(); ++i)
+        if (!(sub_tree_are_equal(pnode1->children[i], pnode2->children[i],
+                                 workspace, version)))
+          return false;
+    }
+    return true;
+  }
+
+  static void verify_tree(const pga_tree_node pnode,
+                          const pga_tree_node parent) {
+    GMM_ASSERT1(pnode->parent == parent,
+                "Invalid tree node " << pnode->node_type);
+    for (pga_tree_node &child : pnode->children)
+      verify_tree(child, pnode);
+  }
+
+
+  static void ga_print_constant_tensor(const pga_tree_node pnode,
+                                       std::ostream &str) {
+    size_type nt = pnode->nb_test_functions(); // for printing zero tensors
+    switch (pnode->tensor_order()) {
+    case 0:
+      str << (nt ? scalar_type(0) : pnode->tensor()[0]);
+      break;
+
+    case 1:
+      str << "[";
+      for (size_type i = 0; i < pnode->tensor_proper_size(0); ++i) {
+        if (i != 0) str << "; ";
+        str << (nt ? scalar_type(0) : pnode->tensor()[i]);
+      }
+      str << "]";
+      break;
+
+    case 2: case 3: case 4:
+      {
+        size_type ii(0);
+        size_type n0 = pnode->tensor_proper_size(0);
+        size_type n1 = pnode->tensor_proper_size(1);
+        size_type n2 = ((pnode->tensor_order() > 2) ?
+                        pnode->tensor_proper_size(2) : 1);
+        size_type n3 = ((pnode->tensor_order() > 3) ?
+                        pnode->tensor_proper_size(3) : 1);
+        if (n3 > 1) str << "[";
+        for (size_type l = 0; l < n3; ++l) {
+          if (l != 0) str << ",";
+          if (n2 > 1) str << "[";
+          for (size_type k = 0; k < n2; ++k) {
+            if (k != 0) str << ",";
+            if (n1 > 1) str << "[";
+            for (size_type j = 0; j < n1; ++j) {
+              if (j != 0) str << ",";
+              if (n0 > 1) str << "[";
+              for (size_type i = 0; i < n0; ++i) {
+                if (i != 0) str << ",";
+                str << (nt ? scalar_type(0) : pnode->tensor()[ii++]);
+              }
+              if (n0 > 1) str << "]";
+            }
+            if (n1 > 1) str << "]";
+          }
+          if (n2 > 1) str << "]";
+        }
+        if (n3 > 1) str << "]";
+      }
+      break;
+
+    case 5: case 6:
+      str << "Reshape([";
+      for (size_type i = 0; i < pnode->tensor_proper_size(); ++i) {
+        if (i != 0) str << "; ";
+        str << (nt ? scalar_type(0) : pnode->tensor()[i]);
+      }
+      str << "]";
+      for (size_type i = 0; i < pnode->tensor_order(); ++i) {
+        if (i != 0) str << ", ";
+        str << pnode->tensor_proper_size(i);
+      }
+      str << ")";
+      break;
+
+    default: GMM_ASSERT1(false, "Invalid tensor dimension");
+    }
+    GMM_ASSERT1(pnode->children.size() == 0, "Invalid tree");
+  }
+
+  void ga_print_node(const pga_tree_node pnode,
+                            std::ostream &str) {
+    if (!pnode) return;
+    long prec = str.precision(16);
+
+    bool is_interpolate(false), is_elementary(false);
+    bool is_xfem_plus(false), is_xfem_minus(false);
+    switch(pnode->node_type) {
+    case GA_NODE_INTERPOLATE:
+    case GA_NODE_INTERPOLATE_FILTER:
+    case GA_NODE_INTERPOLATE_X:
+    case GA_NODE_INTERPOLATE_NORMAL:
+    case GA_NODE_INTERPOLATE_VAL:
+    case GA_NODE_INTERPOLATE_GRAD:
+    case GA_NODE_INTERPOLATE_HESS:
+    case GA_NODE_INTERPOLATE_DIVERG:
+    case GA_NODE_INTERPOLATE_VAL_TEST:
+    case GA_NODE_INTERPOLATE_GRAD_TEST:
+    case GA_NODE_INTERPOLATE_HESS_TEST:
+    case GA_NODE_INTERPOLATE_DIVERG_TEST:
+      str << "Interpolate(";
+      is_interpolate = true;
+      break;
+    case GA_NODE_ELEMENTARY:
+    case GA_NODE_ELEMENTARY_VAL:
+    case GA_NODE_ELEMENTARY_GRAD:
+    case GA_NODE_ELEMENTARY_HESS:
+    case GA_NODE_ELEMENTARY_DIVERG:
+    case GA_NODE_ELEMENTARY_VAL_TEST:
+    case GA_NODE_ELEMENTARY_GRAD_TEST:
+    case GA_NODE_ELEMENTARY_HESS_TEST:
+    case GA_NODE_ELEMENTARY_DIVERG_TEST:
+      is_elementary = true;
+      str << "Elementary_transformation(";
+      break;
+    case GA_NODE_XFEM_PLUS:
+    case GA_NODE_XFEM_PLUS_VAL:
+    case GA_NODE_XFEM_PLUS_GRAD:
+    case GA_NODE_XFEM_PLUS_HESS:
+    case GA_NODE_XFEM_PLUS_DIVERG:
+    case GA_NODE_XFEM_PLUS_VAL_TEST:
+    case GA_NODE_XFEM_PLUS_GRAD_TEST:
+    case GA_NODE_XFEM_PLUS_HESS_TEST:
+    case GA_NODE_XFEM_PLUS_DIVERG_TEST:
+      is_xfem_plus = true;
+      str << "Xfem_plus(";
+      break;
+    case GA_NODE_XFEM_MINUS:
+    case GA_NODE_XFEM_MINUS_VAL:
+    case GA_NODE_XFEM_MINUS_GRAD:
+    case GA_NODE_XFEM_MINUS_HESS:
+    case GA_NODE_XFEM_MINUS_DIVERG:
+    case GA_NODE_XFEM_MINUS_VAL_TEST:
+    case GA_NODE_XFEM_MINUS_GRAD_TEST:
+    case GA_NODE_XFEM_MINUS_HESS_TEST:
+    case GA_NODE_XFEM_MINUS_DIVERG_TEST:
+      is_xfem_minus = true;
+      str << "Xfem_minus(";
+      break;
+    default:
+      break;
+    }
+
+    switch(pnode->node_type) {
+    case GA_NODE_GRAD:
+    case GA_NODE_INTERPOLATE_GRAD:
+    case GA_NODE_ELEMENTARY_GRAD:
+    case GA_NODE_XFEM_PLUS_GRAD:
+    case GA_NODE_XFEM_MINUS_GRAD:
+    case GA_NODE_GRAD_TEST:
+    case GA_NODE_INTERPOLATE_GRAD_TEST:
+    case GA_NODE_ELEMENTARY_GRAD_TEST:
+    case GA_NODE_XFEM_PLUS_GRAD_TEST:
+    case GA_NODE_XFEM_MINUS_GRAD_TEST:
+      str << "Grad_";
+      break;
+    case GA_NODE_HESS:
+    case GA_NODE_INTERPOLATE_HESS:
+    case GA_NODE_ELEMENTARY_HESS:
+    case GA_NODE_XFEM_PLUS_HESS:
+    case GA_NODE_XFEM_MINUS_HESS:
+    case GA_NODE_HESS_TEST:
+    case GA_NODE_INTERPOLATE_HESS_TEST:
+    case GA_NODE_ELEMENTARY_HESS_TEST:
+    case GA_NODE_XFEM_PLUS_HESS_TEST:
+    case GA_NODE_XFEM_MINUS_HESS_TEST:
+      str << "Hess_";
+      break;
+    case GA_NODE_DIVERG:
+    case GA_NODE_INTERPOLATE_DIVERG:
+    case GA_NODE_ELEMENTARY_DIVERG:
+    case GA_NODE_XFEM_PLUS_DIVERG:
+    case GA_NODE_XFEM_MINUS_DIVERG:
+    case GA_NODE_DIVERG_TEST:
+    case GA_NODE_INTERPOLATE_DIVERG_TEST:
+    case GA_NODE_ELEMENTARY_DIVERG_TEST:
+    case GA_NODE_XFEM_PLUS_DIVERG_TEST:
+    case GA_NODE_XFEM_MINUS_DIVERG_TEST:
+      str << "Div_";
+      break;
+    default:
+      break;
+    }
+
+    switch(pnode->node_type) {
+    case GA_NODE_OP:
+      {
+        bool par = false;
+        if (pnode->parent) {
+          if (pnode->parent->node_type == GA_NODE_OP &&
+              (ga_operator_priorities[pnode->op_type] >= 2 ||
+               ga_operator_priorities[pnode->op_type]
+               < ga_operator_priorities[pnode->parent->op_type]))
+            par = true;
+          if (pnode->parent->node_type == GA_NODE_PARAMS) par = true;
+        }
+
+
+        if (par) str << "(";
+        if (pnode->op_type == GA_UNARY_MINUS) {
+          GMM_ASSERT1(pnode->children.size() == 1, "Invalid tree");
+          str << "-"; ga_print_node(pnode->children[0], str);
+        } else if (pnode->op_type == GA_QUOTE) {
+          GMM_ASSERT1(pnode->children.size() == 1, "Invalid tree");
+          ga_print_node(pnode->children[0], str); str << "'";
+        } else if (pnode->op_type == GA_SYM) {
+          GMM_ASSERT1(pnode->children.size() == 1, "Invalid tree");
+          str << "Sym("; ga_print_node(pnode->children[0], str); str << ")";
+        } else if (pnode->op_type == GA_SKEW) {
+          GMM_ASSERT1(pnode->children.size() == 1, "Invalid tree");
+          str << "Skew("; ga_print_node(pnode->children[0], str); str << ")";
+        } else if (pnode->op_type == GA_TRACE) {
+          GMM_ASSERT1(pnode->children.size() == 1, "Invalid tree");
+          str << "Trace("; ga_print_node(pnode->children[0], str); str << ")";
+        } else if (pnode->op_type == GA_DEVIATOR) {
+          GMM_ASSERT1(pnode->children.size() == 1, "Invalid tree with "
+                      << pnode->children.size() << " children instead of 1");
+          str << "Deviator("; ga_print_node(pnode->children[0], str); str<<")";
+        } else if (pnode->op_type == GA_PRINT) {
+          GMM_ASSERT1(pnode->children.size() == 1, "Invalid tree");
+          str << "Print("; ga_print_node(pnode->children[0], str); str << ")";
+        } else {
+          // GMM_ASSERT1(pnode->children.size() == 2, "Invalid tree");
+          if (!par && pnode->op_type == GA_MULT &&
+              (pnode->children.size() == 1 ||
+               pnode->test_function_type == size_type(-1) ||
+               (pnode->children[0]->tensor_order() == 4 &&
+                pnode->children[1]->tensor_order() == 2)))
+            { par = true; str << "("; }
+          ga_print_node(pnode->children[0], str);
+          switch (pnode->op_type) {
+          case GA_PLUS: str << "+"; break;
+          case GA_MINUS: str << "-"; break;
+          case GA_MULT: str << "*"; break;
+          case GA_DIV: str << "/"; break;
+          case GA_COLON: str << ":"; break;
+          case GA_DOT: str << "."; break;
+          case GA_DOTMULT: str << ".*"; break;
+          case GA_DOTDIV: str << "./"; break;
+          case GA_TMULT: str << "@"; break;
+          default: GMM_ASSERT1(false, "Invalid or not taken into account "
+                               "operation");
+          }
+          if (pnode->children.size() >= 2)
+            ga_print_node(pnode->children[1], str);
+          else
+            str << "(unknown second argument)";
+        }
+        if (par) str << ")";
+      }
+      break;
+
+    case GA_NODE_X:
+      if (pnode->nbc1) str << "X(" << pnode->nbc1 << ")"; else str << "X";
+      break;
+    case GA_NODE_ELT_SIZE: str << "element_size"; break;
+    case GA_NODE_ELT_K: str << "element_K"; break;
+    case GA_NODE_ELT_B: str << "element_B"; break;
+    case GA_NODE_NORMAL: str << "Normal"; break;
+    case GA_NODE_INTERPOLATE_FILTER:
+      str << "Interpolate_filter(" << pnode->interpolate_name << ",";
+      ga_print_node(pnode->children[0], str);
+      if (pnode->children.size() == 2)
+        {  str << ","; ga_print_node(pnode->children[1], str); }
+      else if (pnode->nbc1 != size_type(-1)) str << "," << pnode->nbc1;
+      str << ")";
+      break;
+    case GA_NODE_INTERPOLATE_X:
+      str << "X";
+      break;
+    case GA_NODE_INTERPOLATE_NORMAL:
+      str << "Normal";
+      break;
+    case GA_NODE_INTERPOLATE_DERIVATIVE:
+      str << (pnode->test_function_type == 1 ? "Test_" : "Test2_")
+          << "Interpolate_derivative(" << pnode->interpolate_name_der << ","
+          << pnode->interpolate_name << "," << pnode->name << ")";
+      break;
+    case GA_NODE_INTERPOLATE:
+    case GA_NODE_ELEMENTARY:
+    case GA_NODE_XFEM_PLUS:
+    case GA_NODE_XFEM_MINUS:
+    case GA_NODE_VAL:
+    case GA_NODE_INTERPOLATE_VAL:
+    case GA_NODE_ELEMENTARY_VAL:
+    case GA_NODE_XFEM_PLUS_VAL:
+    case GA_NODE_XFEM_MINUS_VAL:
+    case GA_NODE_GRAD:
+    case GA_NODE_INTERPOLATE_GRAD:
+    case GA_NODE_ELEMENTARY_GRAD:
+    case GA_NODE_XFEM_PLUS_GRAD:
+    case GA_NODE_XFEM_MINUS_GRAD:
+    case GA_NODE_HESS:
+    case GA_NODE_INTERPOLATE_HESS:
+    case GA_NODE_ELEMENTARY_HESS:
+    case GA_NODE_XFEM_PLUS_HESS:
+    case GA_NODE_XFEM_MINUS_HESS:
+    case GA_NODE_DIVERG:
+    case GA_NODE_INTERPOLATE_DIVERG:
+    case GA_NODE_ELEMENTARY_DIVERG:
+    case GA_NODE_XFEM_PLUS_DIVERG:
+    case GA_NODE_XFEM_MINUS_DIVERG:
+      str << pnode->name;
+      break;
+    case GA_NODE_VAL_TEST:
+    case GA_NODE_INTERPOLATE_VAL_TEST:
+    case GA_NODE_ELEMENTARY_VAL_TEST:
+    case GA_NODE_XFEM_PLUS_VAL_TEST:
+    case GA_NODE_XFEM_MINUS_VAL_TEST:
+    case GA_NODE_GRAD_TEST:
+    case GA_NODE_INTERPOLATE_GRAD_TEST:
+    case GA_NODE_ELEMENTARY_GRAD_TEST:
+    case GA_NODE_XFEM_PLUS_GRAD_TEST:
+    case GA_NODE_XFEM_MINUS_GRAD_TEST:
+    case GA_NODE_HESS_TEST:
+    case GA_NODE_INTERPOLATE_HESS_TEST:
+    case GA_NODE_ELEMENTARY_HESS_TEST:
+    case GA_NODE_XFEM_PLUS_HESS_TEST:
+    case GA_NODE_XFEM_MINUS_HESS_TEST:
+    case GA_NODE_DIVERG_TEST:
+    case GA_NODE_INTERPOLATE_DIVERG_TEST:
+    case GA_NODE_ELEMENTARY_DIVERG_TEST:
+    case GA_NODE_XFEM_PLUS_DIVERG_TEST:
+    case GA_NODE_XFEM_MINUS_DIVERG_TEST:
+      str << (pnode->test_function_type == 1 ? "Test_" : "Test2_")
+          << pnode->name;
+      break;
+    case GA_NODE_SPEC_FUNC: str << pnode->name; break;
+    case GA_NODE_OPERATOR:
+    case GA_NODE_PREDEF_FUNC:
+      if (pnode->der1) {
+        str << "Derivative_" << pnode->der1 << "_";
+        if (pnode->der2) str << pnode->der2 << "_";
+      }
+      str << pnode->name; break;
+    case GA_NODE_ZERO:
+      GMM_ASSERT1(pnode->test_function_type != size_type(-1),
+                  "Internal error");
+      if (pnode->test_function_type) str << "(";
+      ga_print_constant_tensor(pnode, str);
+      if (pnode->name_test1.size()) {
+        GMM_ASSERT1(pnode->qdim1 > 0, "Internal error");
+        if (pnode->qdim1 == 1)
+          str << "*Test_" << pnode->name_test1;
+        else {
+          str << "*(Reshape(Test_" << pnode->name_test1 << ","
+              << pnode->qdim1<< ")(1))";
+        }
+      }
+      if (pnode->name_test2.size()) {
+        GMM_ASSERT1(pnode->qdim2 > 0, "Internal error");
+        if (pnode->qdim2 == 1)
+          str << "*Test2_" << pnode->name_test2;
+        else {
+          str << "*(Reshape(Test2_" << pnode->name_test2 << ","
+              << pnode->qdim2<< ")(1))";
+        }
+      }
+      if (pnode->test_function_type) str << ")";
+      break;
+
+    case GA_NODE_CONSTANT:
+      ga_print_constant_tensor(pnode, str);
+      break;
+
+    case GA_NODE_ALLINDICES:
+      str << ":";
+      GMM_ASSERT1(pnode->children.size() == 0, "Invalid tree");
+      break;
+
+    case GA_NODE_PARAMS:
+      GMM_ASSERT1(pnode->children.size(), "Invalid tree");
+      ga_print_node(pnode->children[0], str);
+      str << "(";
+      for (size_type i = 1; i < pnode->children.size(); ++i) {
+        if (i > 1) str << ", ";
+        ga_print_node(pnode->children[i], str);
+      }
+      str << ")";
+      break;
+
+    case GA_NODE_NAME:
+      str << pnode->name;
+      GMM_ASSERT1(pnode->children.size() == 0, "Invalid tree");
+      break;
+
+    case GA_NODE_RESHAPE:
+      str << "Reshape";
+      GMM_ASSERT1(pnode->children.size() == 0, "Invalid tree");
+      break;
+
+    case GA_NODE_C_MATRIX:
+      {
+        GMM_ASSERT1(pnode->children.size(), "Invalid tree");
+        size_type nbc1 = pnode->nbc1;
+        size_type nbc2 = pnode->nbc2;
+        size_type nbc3 = pnode->nbc3;
+        size_type nbcl = pnode->children.size()/(nbc1*nbc2*nbc3);
+        if (nbc1 > 1) str << "[";
+        for (size_type i1 = 0; i1 < nbc1; ++i1) {
+          if (i1 != 0) str << ",";
+          if (nbc2 > 1) str << "[";
+          for (size_type i2 = 0; i2 < nbc2; ++i2) {
+            if (i2 != 0) str << ",";
+            if (nbc3 > 1) str << "[";
+            for (size_type i3 = 0; i3 < nbc3; ++i3) {
+              if (i3 != 0) str << ",";
+              if (nbcl > 1) str << "[";
+              for (size_type i4 = 0; i4 < nbcl; ++i4) {
+                if (i4 != 0) str << ",";
+                size_type ii = ((i4*nbc3 + i3)*nbc2 + i2)*nbc1 + i1;
+                ga_print_node(pnode->children[ii], str);
+              }
+              if (nbcl > 1) str << "]";
+            }
+            if (nbc3 > 1) str << "]";
+          }
+          if (nbc2 > 1) str << "]";
+        }
+        if (nbc1 > 1) str << "]";
+      }
+      break;
+
+    default:
+      str << "Invalid or not taken into account node type "
+           << pnode->node_type;
+      break;
+    }
+
+    if (is_interpolate)
+      str << "," << pnode->interpolate_name << ")";
+    else if (is_elementary)
+      str << "," << pnode->elementary_name << ")";
+    else if (is_xfem_plus || is_xfem_minus)
+      str << ")";
+
+    str.precision(prec);
+  }
+
+  std::string ga_tree_to_string(const ga_tree &tree) {
+    std::stringstream str;
+    str.precision(16);
+    if (tree.root) verify_tree(tree.root, 0);
+    if (tree.root) ga_print_node(tree.root, str); else str << "0";
+    return str.str();
+  }
+
+
+  size_type ga_parse_prefix_operator(std::string &name) {
+    if (name.size() >= 5 && name.compare(0, 5, "Grad_") == 0)
+      { name = name.substr(5); return 1; }
+    else if (name.size() >= 5 && name.compare(0, 5, "Hess_") == 0)
+      { name = name.substr(5); return 2; }
+    else if (name.size() >= 4 && name.compare(0, 4, "Div_") == 0)
+      { name = name.substr(4); return 3; }
+    return 0;
+  }
+
+  size_type ga_parse_prefix_test(std::string &name) {
+    if (name.size() >= 5 && name.compare(0, 5, "Test_") == 0)
+      { name = name.substr(5); return 1; }
+    else if (name.size() >= 6 && name.compare(0, 6, "Test2_") == 0)
+      { name = name.substr(6); return 2; }
+    return 0;
+  }
+
+  // 0 : ok
+  // 1 : function or operator name or "X"
+  // 2 : reserved prefix Grad, Hess, Div, Test and Test2
+  // 3 : reserved prefix Dot and Previous
+  int ga_check_name_validity(const std::string &name) {
+
+    if (!(name.compare("X")) ||
+        !(name.compare("Normal")) ||
+        !(name.compare("Reshape")))
+      return 1;
+
+
+    if (name.compare(0, 11, "Derivative_") == 0)
+      return 2;
+
+    ga_predef_function_tab &PREDEF_FUNCTIONS
+      = dal::singleton<ga_predef_function_tab>::instance(0);
+    ga_predef_operator_tab &PREDEF_OPERATORS
+      = dal::singleton<ga_predef_operator_tab>::instance(0);
+    ga_predef_function_tab::const_iterator it=PREDEF_FUNCTIONS.find(name);
+    if (it != PREDEF_FUNCTIONS.end())
+      return 1;
+
+    if (SPEC_FUNCTIONS.find(name) != SPEC_FUNCTIONS.end())
+      return 1;
+
+    if (PREDEF_OPERATORS.tab.find(name) != PREDEF_OPERATORS.tab.end())
+      return 1;
+
+    if (name.size() >= 5 && name.compare(0, 5, "Grad_") == 0)
+      return 2;
+
+    if (name.size() >= 5 && name.compare(0, 5, "Hess_") == 0)
+      return 2;
+
+    if (name.size() >= 4 && name.compare(0, 4, "Div_") == 0)
+      return 2;
+
+    if (name.size() >= 6 && name.compare(0, 6, "Test2_") == 0)
+      return 2;
+
+    if (name.size() >= 5 && name.compare(0, 5, "Test_") == 0)
+      return 2;
+
+//     if (name.size() >= 4 && name.compare(0, 4, "Dot_") == 0)
+//       return 3;
+//     if (name.size() >= 5 && name.compare(0, 5, "Dot2_") == 0)
+//       return 3;
+
+//     if (name.size() >= 9 && name.compare(0, 9, "Previous_") == 0)
+//       return 3;
+//     if (name.size() >= 10 && name.compare(0, 10, "Previous2_") == 0)
+//       return 3;
+//     if (name.size() >= 12 && name.compare(0, 12, "Previous1_2_") == 0)
+//       return 3;
+
+
+    return 0;
+  }
+  
+  //=========================================================================
+  // Syntax analysis for the generic assembly langage
+  //=========================================================================
+
+  // Read a term with an (implicit) pushdown automaton.
+  static GA_TOKEN_TYPE ga_read_term(const std::string &expr, size_type &pos,
+                                    ga_tree &tree) {
+    size_type token_pos, token_length;
+    GA_TOKEN_TYPE t_type;
+    int state = 1; // 1 = reading term, 2 = reading after term
+
+    for (;;) {
+
+      t_type = ga_get_token(expr, pos, token_pos, token_length);
+
+      switch (state) {
+
+      case 1:
+        switch (t_type) {
+        case GA_SCALAR:
+          {
+            char *endptr; const char *nptr = &(expr[token_pos]);
+            scalar_type s_read = ::strtod(nptr, &endptr);
+            if (endptr == nptr)
+              ga_throw_error(expr, token_pos, "Bad numeric format.");
+            tree.add_scalar(s_read, token_pos);
+          }
+          state = 2; break;
+
+        case GA_COLON:
+          tree.add_allindices(token_pos);
+          state = 2; break;
+
+        case GA_NAME:
+          tree.add_name(&(expr[token_pos]), token_length, token_pos);
+          state = 2; break;
+
+        case GA_MINUS: // unary -
+          tree.add_op(GA_UNARY_MINUS, token_pos);
+        case GA_PLUS:  // unary +
+          state = 1; break;
+
+        case GA_SYM:
+          tree.add_op(GA_SYM, token_pos);
+          state = 1; break;
+
+        case GA_SKEW:
+          tree.add_op(GA_SKEW, token_pos);
+          state = 1; break;
+
+        case GA_TRACE:
+          tree.add_op(GA_TRACE, token_pos);
+          state = 1; break;
+
+        case GA_DEVIATOR:
+          tree.add_op(GA_DEVIATOR, token_pos);
+          state = 1; break;
+
+        case GA_INTERPOLATE:
+          {
+            tree.add_scalar(scalar_type(0), token_pos);
+            tree.current_node->node_type = GA_NODE_INTERPOLATE;
+            t_type = ga_get_token(expr, pos, token_pos, token_length);
+            if (t_type != GA_LPAR)
+              ga_throw_error(expr, pos-1, "Missing interpolate arguments.");
+            t_type = ga_get_token(expr, pos, token_pos, token_length);
+            if (t_type != GA_NAME)
+              ga_throw_error(expr, pos,
+                             "First argument of Interpolate should be a "
+                             "variable, test function, X or Normal.");
+            tree.current_node->name = std::string(&(expr[token_pos]),
+                                                  token_length);
+
+            t_type = ga_get_token(expr, pos, token_pos, token_length);
+            if (t_type != GA_COMMA)
+              ga_throw_error(expr, pos, "Bad format for Interpolate "
+                             "arguments.");
+            t_type = ga_get_token(expr, pos, token_pos, token_length);
+            if (t_type != GA_NAME)
+              ga_throw_error(expr, pos,
+                             "Second argument of Interpolate should be a "
+                             "transformation name.");
+            tree.current_node->interpolate_name
+              = std::string(&(expr[token_pos]), token_length);
+            t_type = ga_get_token(expr, pos, token_pos, token_length);
+            if (t_type != GA_RPAR)
+              ga_throw_error(expr, pos-1, "Missing a parenthesis after "
+                             "interpolate arguments.");
+            state = 2;
+          }
+          break;
+
+        case GA_ELEMENTARY:
+          {
+            tree.add_scalar(scalar_type(0), token_pos);
+            tree.current_node->node_type = GA_NODE_ELEMENTARY;
+            t_type = ga_get_token(expr, pos, token_pos, token_length);
+            if (t_type != GA_LPAR)
+              ga_throw_error(expr, pos-1,
+                             "Missing Elementary_transformation arguments.");
+            t_type = ga_get_token(expr, pos, token_pos, token_length);
+            if (t_type != GA_NAME)
+              ga_throw_error(expr, pos,
+                             "First argument of Elementary_transformation "
+                             "should be a variable or a test function.");
+            tree.current_node->name = std::string(&(expr[token_pos]),
+                                                  token_length);
+
+            t_type = ga_get_token(expr, pos, token_pos, token_length);
+            if (t_type != GA_COMMA)
+              ga_throw_error(expr, pos, "Bad format for "
+                             "Elementary_transformation arguments.");
+            t_type = ga_get_token(expr, pos, token_pos, token_length);
+            if (t_type != GA_NAME)
+              ga_throw_error(expr, pos,
+                             "Second argument of Elementary_transformation "
+                             "should be a transformation name.");
+            tree.current_node->elementary_name
+              = std::string(&(expr[token_pos]), token_length);
+            t_type = ga_get_token(expr, pos, token_pos, token_length);
+            if (t_type != GA_RPAR)
+              ga_throw_error(expr, pos-1, "Missing a parenthesis after "
+                             "Elementary_transformation arguments.");
+            state = 2;
+          }
+          break;
+
+        case GA_XFEM_PLUS:
+          {
+            tree.add_scalar(scalar_type(0), token_pos);
+            tree.current_node->node_type = GA_NODE_XFEM_PLUS;
+            t_type = ga_get_token(expr, pos, token_pos, token_length);
+            if (t_type != GA_LPAR)
+              ga_throw_error(expr, pos-1,
+                             "Missing Xfem_plus arguments.");
+            t_type = ga_get_token(expr, pos, token_pos, token_length);
+            if (t_type != GA_NAME)
+              ga_throw_error(expr, pos,
+                             "The argument of Xfem_plus should be a "
+                             "variable or a test function.");
+            tree.current_node->name = std::string(&(expr[token_pos]),
+                                                  token_length);
+            t_type = ga_get_token(expr, pos, token_pos, token_length);
+            if (t_type != GA_RPAR)
+              ga_throw_error(expr, pos-1, "Missing a parenthesis after "
+                             "Xfem_plus argument.");
+            state = 2;
+          }
+          break;
+
+        case GA_XFEM_MINUS:
+          {
+            tree.add_scalar(scalar_type(0), token_pos);
+            tree.current_node->node_type = GA_NODE_XFEM_MINUS;
+            t_type = ga_get_token(expr, pos, token_pos, token_length);
+            if (t_type != GA_LPAR)
+              ga_throw_error(expr, pos-1,
+                             "Missing Xfem_minus arguments.");
+            t_type = ga_get_token(expr, pos, token_pos, token_length);
+            if (t_type != GA_NAME)
+              ga_throw_error(expr, pos,
+                             "The argument of Xfem_minus should be a "
+                             "variable or a test function.");
+            tree.current_node->name = std::string(&(expr[token_pos]),
+                                                  token_length);
+            t_type = ga_get_token(expr, pos, token_pos, token_length);
+            if (t_type != GA_RPAR)
+              ga_throw_error(expr, pos-1, "Missing a parenthesis after "
+                             "Xfem_minus argument.");
+            state = 2;
+          }
+          break;
+
+        case GA_INTERPOLATE_FILTER:
+          {
+            tree.add_scalar(scalar_type(0), token_pos);
+            tree.current_node->node_type = GA_NODE_INTERPOLATE_FILTER;
+            tree.current_node->nbc1 = size_type(-1);
+            t_type = ga_get_token(expr, pos, token_pos, token_length);
+            if (t_type != GA_LPAR)
+              ga_throw_error(expr, pos-1, "Missing interpolate arguments.");
+            t_type = ga_get_token(expr, pos, token_pos, token_length);
+            if (t_type != GA_NAME)
+              ga_throw_error(expr, pos, "First argument of Interpolate_filter "
+                             "should be a transformation name.");
+            tree.current_node->interpolate_name
+              = std::string(&(expr[token_pos]), token_length);
+            t_type = ga_get_token(expr, pos, token_pos, token_length);
+            if (t_type != GA_COMMA)
+              ga_throw_error(expr,pos,
+                             "Bad format for Interpolate_filter arguments.");
+            ga_tree sub_tree;
+            t_type = ga_read_term(expr, pos, sub_tree);
+            if (t_type != GA_RPAR && t_type != GA_COMMA)
+              ga_throw_error(expr, pos-1,
+                             "Bad format for Interpolate_filter arguments.");
+            tree.add_sub_tree(sub_tree);
+            if (t_type == GA_COMMA) {
+               ga_tree sub_tree2;
+               t_type = ga_read_term(expr, pos, sub_tree2);
+               tree.add_sub_tree(sub_tree2);
+            }
+            if (t_type != GA_RPAR)
+              ga_throw_error(expr, pos-1, "Unbalanced parenthesis.");
+            state = 2;
+          }
+          break;
+
+        case GA_PRINT:
+          tree.add_op(GA_PRINT, token_pos);
+          state = 1; break;
+
+        case GA_LPAR: // Parenthesed expression
+          {
+            ga_tree sub_tree;
+            GA_TOKEN_TYPE r_type;
+            r_type = ga_read_term(expr, pos, sub_tree);
+            if (r_type != GA_RPAR)
+              ga_throw_error(expr, pos-1, "Unbalanced parenthesis.");
+            tree.add_sub_tree(sub_tree);
+            state = 2;
+          }
+          break;
+
+        case GA_LBRACKET: // Explicit vector/matrix or tensor
+          {
+            ga_tree sub_tree;
+            GA_TOKEN_TYPE r_type;
+            size_type nbc1(0), nbc2(0), nbc3(0), n1(0), n2(0), n3(0);
+            size_type tensor_order(1);
+            bool foundcomma(false), foundsemi(false), nested_format(false);
+
+            tree.add_matrix(token_pos);
+            do {
+              r_type = ga_read_term(expr, pos, sub_tree);
+
+              if (sub_tree.root->node_type == GA_NODE_C_MATRIX) {
+                // nested format
+                if (r_type != GA_COMMA && r_type != GA_RBRACKET)
+                  // in the nested format only "," and "]" are expected
+                  ga_throw_error(expr, pos-1, "Bad explicit "
+                                 "vector/matrix/tensor format.")
+                else if (sub_tree.root->nbc3 != 1)
+                  // the sub-tensor to be merged cannot be of fourth order
+                  ga_throw_error(expr, pos-1, "Definition of explicit "
+                                 "tensors is limitted to the fourth order. "
+                                 "Limit exceeded.")
+                else if (foundsemi || // Cannot mix with the non-nested format.
+                         (sub_tree.root->children.size() > 1 &&
+                          // The sub-tensor cannot be a column vector [a;b],
+                          sub_tree.root->nbc1 == 1))
+                  // the nested format only accepts row vectors [a,b]
+                  // and converts them to column vectors internally
+                  ga_throw_error(expr, pos-1, "Bad explicit "
+                                 "vector/matrix/tensor format.")  // (see below)
+
+                // convert a row vector [a,b] to a column vector [a;b]
+                if (sub_tree.root->children.size() == sub_tree.root->nbc1)
+                  sub_tree.root->nbc1 = 1;
+
+                nested_format = true;
+
+                size_type sub_tensor_order = 3;
+                if (sub_tree.root->nbc1 == 1)
+                  sub_tensor_order = 1;
+                else if (sub_tree.root->nbc2 == 1)
+                  sub_tensor_order = 2;
+
+                if (tensor_order == 1) {
+                  if (nbc1 != 0 || nbc2 != 0 || nbc3 != 0)
+                    ga_throw_error(expr, pos-1, "Bad explicit "
+                                   "vector/matrix/tensor format.");
+                  nbc1 = 1;
+                  nbc2 = sub_tree.root->nbc1;
+                  nbc3 = sub_tree.root->nbc2;
+                  tensor_order = sub_tensor_order + 1;
+                } else {
+                  if ((tensor_order != sub_tensor_order + 1) ||
+                      (tensor_order > 2 && nbc2 != sub_tree.root->nbc1) ||
+                      (tensor_order > 3 && nbc3 != sub_tree.root->nbc2))
+                    ga_throw_error(expr, pos-1, "Bad explicit "
+                                   "vector/matrix/tensor format.");
+                  nbc1 += 1;
+                }
+
+                tree.zip_matrix(sub_tree.root);
+                sub_tree.clear();
+                if (r_type == GA_RBRACKET) {
+                  tree.current_node->nbc1 = nbc1;
+                  tree.current_node->nbc2 = nbc2;
+                  tree.current_node->nbc3 = nbc3;
+                }
+
+              } else {
+
+                // non-nested format
+
+                tree.add_sub_tree(sub_tree);
+
+                ++n1; ++n2; ++n3;
+                if (tensor_order < 2) ++nbc1;
+                if (tensor_order < 3) ++nbc2;
+                if (tensor_order < 4) ++nbc3;
+
+                if (r_type == GA_COMMA) {
+                  if (!foundcomma && tensor_order > 1)
+                    ga_throw_error(expr, pos-1, "Bad explicit "
+                                   "vector/matrix/tensor format.");
+                  foundcomma = true;
+                } else if (r_type == GA_SEMICOLON) {
+                  if (n1 != nbc1)
+                    ga_throw_error(expr, pos-1, "Bad explicit "
+                                   "vector/matrix/tensor format.");
+                  n1 = 0;
+                  tensor_order = std::max(tensor_order, size_type(2));
+                } else if (r_type == GA_DCOMMA) {
+                  if (n1 != nbc1 || n2 != nbc2)
+                    ga_throw_error(expr, pos-1, "Bad explicit "
+                                   "vector/matrix/tensor format.");
+                  foundsemi = true;
+                  n2 = n1 = 0;
+                  tensor_order = std::max(tensor_order, size_type(3));
+                } else if (r_type == GA_DSEMICOLON) {
+                  if (n1 != nbc1 || n2 != nbc2 || n3 != nbc3 ||
+                      tensor_order < 3)
+                    ga_throw_error(expr, pos-1, "Bad explicit "
+                                   "vector/matrix/tensor format.");
+                  n3 = n2 = n1 = 0;
+                  tensor_order = std::max(tensor_order, size_type(4));
+                } else if (r_type == GA_RBRACKET) {
+                  if (n1 != nbc1 || n2 != nbc2 || n3 != nbc3 ||
+                      tensor_order == 3)
+                    ga_throw_error(expr, pos-1, "Bad explicit "
+                                   "vector/matrix/tensor format.");
+                  tree.current_node->nbc1 = nbc1;
+                  if (tensor_order == 4) {
+                    tree.current_node->nbc2 = nbc2/nbc1;
+                    tree.current_node->nbc3 = nbc3/nbc2;
+                  } else {
+                    tree.current_node->nbc2 = tree.current_node->nbc3 = 1;
+                  }
+                } else {
+                  ga_throw_error(expr, pos-1, "The explicit "
+                                 "vector/matrix/tensor components should be "
+                                 "separated by ',', ';', ',,' and ';;' and "
+                                 "be ended by ']'.");
+                }
+              }
+
+            } while (r_type != GA_RBRACKET);
+
+            state = 2;
+          }
+          break;
+
+        default:
+          ga_throw_error(expr, token_pos, "Unexpected token.");
+        }
+        break;
+
+      case 2:
+        switch (t_type) {
+        case GA_PLUS: case GA_MINUS: case GA_MULT: case GA_DIV:
+        case GA_COLON: case GA_DOT: case GA_DOTMULT: case GA_DOTDIV:
+        case GA_TMULT:
+          tree.add_op(t_type, token_pos);
+          state = 1; break;
+        case GA_QUOTE:
+          tree.add_op(t_type, token_pos);
+          state = 2; break;
+        case GA_END: case GA_RPAR: case GA_COMMA: case GA_DCOMMA:
+        case GA_RBRACKET: case GA_SEMICOLON: case GA_DSEMICOLON:
+          return t_type;
+        case GA_LPAR: // Parameter list
+          {
+            ga_tree sub_tree;
+            GA_TOKEN_TYPE r_type;
+            tree.add_params(token_pos);
+            do {
+              r_type = ga_read_term(expr, pos, sub_tree);
+              if (r_type != GA_RPAR && r_type != GA_COMMA)
+                ga_throw_error(expr, pos-((r_type != GA_END)?1:0),
+                               "Parameters should be separated "
+                               "by ',' and parameter list ended by ')'.");
+              tree.add_sub_tree(sub_tree);
+            } while (r_type != GA_RPAR);
+            state = 2;
+          }
+          break;
+
+        default:
+          ga_throw_error(expr, token_pos, "Unexpected token.");
+        }
+        break;
+      }
+    }
+
+    return GA_INVALID;
+  }
+
+  // Syntax analysis of a string. Conversion to a tree.
+  void ga_read_string(const std::string &expr, ga_tree &tree) {
+    size_type pos = 0, token_pos, token_length;
+    tree.clear();
+    GA_TOKEN_TYPE t = ga_get_token(expr, pos, token_pos, token_length);
+    if (t == GA_END) return;
+    pos = 0;
+    t = ga_read_term(expr, pos, tree);
+    switch (t) {
+    case GA_RPAR: ga_throw_error(expr, pos-1, "Unbalanced parenthesis.");
+    case GA_RBRACKET: ga_throw_error(expr, pos-1, "Unbalanced braket.");
+    case GA_END: break;
+    default: ga_throw_error(expr, pos-1, "Unexpected token.");
+    }
+  }
+
+  // Small tool to make basic substitutions into an assembly string
+  std::string ga_substitute(const std::string &expr,
+                            const std::map<std::string, std::string> &dict) {
+    if (dict.size()) {
+      size_type pos = 0, token_pos, token_length;
+      std::stringstream exprs;
+
+      while (true) {
+        GA_TOKEN_TYPE t_type = ga_get_token(expr, pos, token_pos, token_length);
+        if (t_type == GA_END) return exprs.str();
+        std::string name(&(expr[token_pos]), token_length);
+        if (t_type == GA_NAME && dict.find(name) != dict.end())
+          exprs << dict.at(name); else exprs << name;
+      }
+    }
+    return expr;
+  }
+
+} /* end of namespace */

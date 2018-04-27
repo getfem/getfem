@@ -110,6 +110,10 @@ nobase_include_HEADERS =                   		\
 	getfem/getfem_assembling.h         		\
 	getfem/getfem_assembling_tensors.h 		\
 	getfem/getfem_generic_assembly.h 		\
+	getfem/getfem_generic_assembly_tree.h 		\
+	getfem/getfem_generic_assembly_functions_and_operators.h \
+	getfem/getfem_generic_assembly_semantic.h 	\
+	getfem/getfem_generic_assembly_compile_and_exec.h \
 	getfem/getfem_context.h 			\
 	getfem/getfem_config.h             		\
 	getfem/getfem_interpolation.h      		\
@@ -220,6 +224,9 @@ SRC =                                      		\
 	getfem_export.cc                   		\
 	getfem_assembling_tensors.cc       		\
 	getfem_generic_assembly.cc       		\
+	getfem_generic_assembly_tree.cc       		\
+	getfem_generic_assembly_functions_and_operators.cc \
+	getfem_generic_assembly_semantic.cc    		\
 	getfem_mesher.cc		   		\
 	getfem_fourth_order.cc                		\
 	getfem_nonlinear_elasticity.cc                  \

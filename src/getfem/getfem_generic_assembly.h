@@ -72,7 +72,9 @@ namespace getfem {
   typedef gmm::row_matrix<model_complex_sparse_vector>
   model_complex_row_sparse_matrix;
   
-
+  // 0 : ok
+  // 1 : function or operator name or "X"
+  // 2 : reserved prefix Grad, Hess, Div, Test and Test2
   int ga_check_name_validity(const std::string &name);
 
   //=========================================================================
