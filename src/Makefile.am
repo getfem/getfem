@@ -223,10 +223,12 @@ SRC =                                      		\
 	getfem_error_estimate.cc            		\
 	getfem_export.cc                   		\
 	getfem_assembling_tensors.cc       		\
-	getfem_generic_assembly.cc       		\
 	getfem_generic_assembly_tree.cc       		\
 	getfem_generic_assembly_functions_and_operators.cc \
 	getfem_generic_assembly_semantic.cc    		\
+	getfem_generic_assembly_workspace.cc   		\
+	getfem_generic_assembly_compile_and_exec.cc	\
+	getfem_generic_assembly_interpolation.cc	\
 	getfem_mesher.cc		   		\
 	getfem_fourth_order.cc                		\
 	getfem_nonlinear_elasticity.cc                  \

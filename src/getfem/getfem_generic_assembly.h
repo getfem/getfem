@@ -160,6 +160,7 @@ namespace getfem {
     void add_method(const std::string &name,
                     const std::shared_ptr<ga_nonlinear_operator> &pt)
     { tab[name] = pt; }
+    ga_predef_operator_tab();
   };
 
   //=========================================================================

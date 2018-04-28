@@ -43,23 +43,13 @@ BoostMathFunction const erfc = boost::math::erfc<double>;
 
 namespace getfem {
 
-  extern bool predef_operators_nonlinear_elasticity_initialized;
-  extern bool predef_operators_plasticity_initialized;
-  extern bool predef_operators_contact_initialized;
-
   base_matrix& __mat_aux1()
   {
     DEFINE_STATIC_THREAD_LOCAL(base_matrix, m);
     return m;
   }
 
-  //=========================================================================
-  // Structure dealing with predefined special functions
-  // such as mesh_dim, pi, qdim ...
-  //=========================================================================
 
-  typedef std::set<std::string> ga_spec_function_tab;
-  static ga_spec_function_tab SPEC_FUNCTIONS;
 
   //=========================================================================
   // Structure dealing with predefined scalar functions.
@@ -402,12 +392,28 @@ namespace getfem {
   // Initialization of predefined functions and operators.
   //=========================================================================
 
+  ga_predef_function::ga_predef_function()
+    : expr_(""), derivative1_(""), derivative2_(""), gis(nullptr) {}
 
-  bool init_predef_functions() {
+  ga_predef_function::ga_predef_function(pscalar_func_onearg f,
+					 size_type dtype__,
+					 const std::string &der)
+    : ftype_(0), dtype_(dtype__), nbargs_(1), f1_(f), expr_(""),
+        derivative1_(der), derivative2_("") {}
+  ga_predef_function::ga_predef_function(pscalar_func_twoargs f,
+					 size_type dtype__,
+					 const std::string &der1,
+					 const std::string &der2)
+    : ftype_(0), dtype_(dtype__), nbargs_(2), f2_(f),
+      expr_(""), derivative1_(der1), derivative2_(der2), gis(nullptr) {}
+  ga_predef_function::ga_predef_function(const std::string &expr__)
+    : ftype_(1), dtype_(3), nbargs_(1), expr_(expr__),
+      derivative1_(""), derivative2_(""), t(1, 0.), u(1, 0.), gis(nullptr) {}
 
-    // Predefined functions
-    ga_predef_function_tab &PREDEF_FUNCTIONS
-      = dal::singleton<ga_predef_function_tab>::instance(0);
+  
+  ga_predef_function_tab::ga_predef_function_tab() {
+    
+    ga_predef_function_tab &PREDEF_FUNCTIONS = *this;
 
     // Power functions and their derivatives
     PREDEF_FUNCTIONS["sqrt"] = ga_predef_function(sqrt, 1, "DER_PDFUNC_SQRT");
@@ -533,29 +539,33 @@ namespace getfem {
     PREDEF_FUNCTIONS["DER_PDFUNC1_MAX"] = ga_predef_function(ga_der_t_max);
     PREDEF_FUNCTIONS["DER_PDFUNC2_MAX"] = ga_predef_function(ga_der_u_max);
 
+  }
 
+  ga_spec_function_tab::ga_spec_function_tab() {
     // Predefined special functions
-
+    ga_spec_function_tab &SPEC_FUNCTIONS = *this;
+    
     SPEC_FUNCTIONS.insert("pi");
     SPEC_FUNCTIONS.insert("meshdim");
     SPEC_FUNCTIONS.insert("timestep");
     SPEC_FUNCTIONS.insert("qdim");
     SPEC_FUNCTIONS.insert("qdims");
     SPEC_FUNCTIONS.insert("Id");
+  }
 
+
+  ga_predef_operator_tab::ga_predef_operator_tab(void) {
     // Predefined operators
-    ga_predef_operator_tab &PREDEF_OPERATORS
-      = dal::singleton<ga_predef_operator_tab>::instance();
+    ga_predef_operator_tab &PREDEF_OPERATORS = *this;
 
     PREDEF_OPERATORS.add_method("Norm", std::make_shared<norm_operator>());
     PREDEF_OPERATORS.add_method("Norm_sqr",
                                 std::make_shared<norm_sqr_operator>());
     PREDEF_OPERATORS.add_method("Det", std::make_shared<det_operator>());
     PREDEF_OPERATORS.add_method("Inv", std::make_shared<inverse_operator>());
-    return true;
   }
 
-  bool predef_functions_initialized = init_predef_functions();
+
 
   bool ga_function_exists(const std::string &name) {
     const ga_predef_function_tab &PREDEF_FUNCTIONS
@@ -640,6 +650,71 @@ namespace getfem {
       std::string name2 = "DER_PDFUNC2_" + name;
       ga_undefine_function(name2);
     }
+  }
+
+  //=========================================================================
+  // User defined functions
+  //=========================================================================
+
+  ga_function::ga_function(const ga_workspace &workspace_,
+                           const std::string &e)
+    : local_workspace(true, workspace_), expr(e), gis(0) {}
+
+  ga_function::ga_function(const model &md, const std::string &e)
+    : local_workspace(md), expr(e), gis(0) {}
+
+  ga_function::ga_function(const std::string &e)
+    : local_workspace(), expr(e), gis(0) {}
+
+  ga_function::ga_function(const ga_function &gaf)
+    : local_workspace(gaf.local_workspace), expr(gaf.expr), gis(0)
+  { if (gaf.gis) compile(); }
+
+  void ga_function::compile() const {
+    if (gis) delete gis;
+    gis = new ga_instruction_set;
+    local_workspace.clear_expressions();
+    local_workspace.add_function_expression(expr);
+    ga_compile_function(local_workspace, *gis, false);
+  }
+
+  ga_function &ga_function::operator =(const ga_function &gaf) {
+    if (gis) delete gis;
+    gis = 0;
+    local_workspace = gaf.local_workspace;
+    expr = gaf.expr;
+    if (gaf.gis) compile();
+    return *this;
+  }
+
+  ga_function::~ga_function() { if (gis) delete gis; gis = 0; }
+
+  const base_tensor &ga_function::eval() const {
+    GMM_ASSERT1(gis, "Uncompiled function");
+    gmm::clear(local_workspace.assembled_tensor().as_vector());
+    ga_function_exec(*gis);
+    return local_workspace.assembled_tensor();
+  }
+
+  void ga_function::derivative(const std::string &var) {
+    GMM_ASSERT1(gis, "Uncompiled function");
+    if (local_workspace.nb_trees()) {
+      ga_tree tree = *(local_workspace.tree_info(0).ptree);
+      ga_derivative(tree, local_workspace, *((const mesh *)(0)), var, "", 1);
+      if (tree.root) {
+        ga_semantic_analysis(expr, tree, local_workspace, 1, 1, false, true);
+        // To be improved to suppress test functions in the expression ...
+        // ga_replace_test_by_cte do not work in all operations like
+        // vector components x(1)
+        // ga_replace_test_by_cte(tree.root, false);
+        // ga_semantic_analysis(expr, tree, local_workspace, 1, 1,
+        //                      false, true);
+      }
+      expr = ga_tree_to_string(tree);
+    }
+    if (gis) delete gis;
+    gis = 0;
+    compile();
   }
 
 } /* end of namespace */

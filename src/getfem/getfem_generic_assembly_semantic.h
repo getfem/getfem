@@ -60,7 +60,7 @@ namespace getfem {
 			    size_type meshdim,
 			    size_type ref_elt_dim,
 			    bool eval_fixed_size,
-			    bool ignore_X, int option);
+			    bool ignore_X, int option = 0);
 
   /* Extract the variables used in a sub-tree, ignoring or not the data.
      Variable groups are taken into account. Return if at least one variable

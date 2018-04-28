@@ -21,6 +21,7 @@
 
 #include "getfem/getfem_generic_assembly_tree.h"
 #include "getfem/getfem_generic_assembly_functions_and_operators.h"
+#include "getfem/getfem_generic_assembly_compile_and_exec.h"
 
 
 namespace getfem {
@@ -1115,14 +1116,17 @@ namespace getfem {
     if (name.compare(0, 11, "Derivative_") == 0)
       return 2;
 
-    ga_predef_function_tab &PREDEF_FUNCTIONS
+    const ga_predef_function_tab &PREDEF_FUNCTIONS
       = dal::singleton<ga_predef_function_tab>::instance(0);
-    ga_predef_operator_tab &PREDEF_OPERATORS
+    const ga_predef_operator_tab &PREDEF_OPERATORS
       = dal::singleton<ga_predef_operator_tab>::instance(0);
+    const ga_spec_function_tab &SPEC_FUNCTIONS
+      = dal::singleton<ga_spec_function_tab>::instance(0);
+    
     ga_predef_function_tab::const_iterator it=PREDEF_FUNCTIONS.find(name);
     if (it != PREDEF_FUNCTIONS.end())
       return 1;
-
+    
     if (SPEC_FUNCTIONS.find(name) != SPEC_FUNCTIONS.end())
       return 1;
 

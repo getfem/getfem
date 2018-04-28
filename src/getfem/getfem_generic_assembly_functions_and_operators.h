@@ -78,32 +78,33 @@ namespace getfem {
 
     bool is_affine(const std::string &varname) const;
 
-    size_type ftype() const {return ftype_;}
-    size_type dtype() const {return dtype_;}
-    size_type nbargs() const {return nbargs_;}
-    const std::string &derivative1() const {return derivative1_;}
-    const std::string &derivative2() const {return derivative2_;}
-    const std::string &expr() const {return expr_;}
-    pscalar_func_onearg f1() const {return f1_;}
-    pscalar_func_twoargs f2() const {return f2_;}
+    size_type ftype() const { return ftype_;}
+    size_type dtype() const { return dtype_;}
+    size_type nbargs() const { return nbargs_;}
+    const std::string &derivative1() const { return derivative1_;}
+    const std::string &derivative2() const { return derivative2_;}
+    const std::string &expr() const { return expr_;}
+    pscalar_func_onearg f1() const { return f1_;}
+    pscalar_func_twoargs f2() const { return f2_;}
 
-    ga_predef_function() : expr_(""), derivative1_(""),
-                           derivative2_(""), gis(nullptr) {}
+    ga_predef_function();
     ga_predef_function(pscalar_func_onearg f, size_type dtype__ = 0,
-                       const std::string &der = "")
-      : ftype_(0), dtype_(dtype__), nbargs_(1), f1_(f), expr_(""),
-        derivative1_(der), derivative2_("") {}
+                       const std::string &der = "");
     ga_predef_function(pscalar_func_twoargs f, size_type dtype__ = 0,
                        const std::string &der1 = "",
-                       const std::string &der2 = "")
-      : ftype_(0), dtype_(dtype__), nbargs_(2), f2_(f),
-        expr_(""), derivative1_(der1), derivative2_(der2), gis(nullptr) {}
-    ga_predef_function(const std::string &expr__)
-      : ftype_(1), dtype_(3), nbargs_(1), expr_(expr__),
-        derivative1_(""), derivative2_(""), t(1, 0.), u(1, 0.), gis(nullptr) {}
+                       const std::string &der2 = "");
+    ga_predef_function(const std::string &expr__);
   };
 
-  typedef std::map<std::string, ga_predef_function> ga_predef_function_tab;
+  struct ga_predef_function_tab
+    : public std::map<std::string, ga_predef_function> {
+
+    ga_predef_function_tab(); 
+  };
+
+  struct ga_spec_function_tab : public std::set<std::string> {
+    ga_spec_function_tab();
+  };
 
 } /* end of namespace */
 

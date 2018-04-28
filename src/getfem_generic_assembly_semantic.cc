@@ -24,10 +24,14 @@
 
 #include <getfem/getfem_generic_assembly_functions_and_operators.h>
 #include <getfem/getfem_generic_assembly_semantic.h>
+#include <getfem/getfem_generic_assembly_compile_and_exec.h>
 
 namespace getfem {
 
-  
+  extern bool predef_operators_nonlinear_elasticity_initialized;
+  extern bool predef_operators_plasticity_initialized;
+  extern bool predef_operators_contact_initialized;
+
   bool ga_extract_variables(const pga_tree_node pnode,
 			    const ga_workspace &workspace,
 			    const mesh &m,
@@ -209,7 +213,9 @@ namespace getfem {
       = dal::singleton<ga_predef_function_tab>::instance(0);
     const ga_predef_operator_tab &PREDEF_OPERATORS
       = dal::singleton<ga_predef_operator_tab>::instance(0);
-
+    const ga_spec_function_tab &SPEC_FUNCTIONS
+      = dal::singleton<ga_spec_function_tab>::instance(0);
+ 
     switch (pnode->node_type) {
     case GA_NODE_PREDEF_FUNC: case GA_NODE_OPERATOR: case GA_NODE_SPEC_FUNC :
     case GA_NODE_CONSTANT: case GA_NODE_X: case GA_NODE_ELT_SIZE:
@@ -1930,10 +1936,6 @@ namespace getfem {
     // cout << " final hash code = " << pnode->hash_value << endl;
   }
 
-  extern bool predef_operators_nonlinear_elasticity_initialized;
-  extern bool predef_operators_plasticity_initialized;
-  extern bool predef_operators_contact_initialized;
-  extern bool predef_functions_initialized;
 
   void ga_semantic_analysis(const std::string &expr, ga_tree &tree,
                                    const ga_workspace &workspace,
@@ -1941,8 +1943,7 @@ namespace getfem {
                                    size_type ref_elt_dim,
                                    bool eval_fixed_size,
                                    bool ignore_X, int option) {
-    GMM_ASSERT1(predef_functions_initialized &&
-                predef_operators_nonlinear_elasticity_initialized &&
+    GMM_ASSERT1(predef_operators_nonlinear_elasticity_initialized &&
                 predef_operators_plasticity_initialized &&
                 predef_operators_contact_initialized, "Internal error");
     if (!(tree.root)) return;

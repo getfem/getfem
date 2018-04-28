@@ -82,20 +82,7 @@ namespace getfem {
   };
 
   bool operator <(const gauss_pt_corresp &gpc1,
-                  const gauss_pt_corresp &gpc2) {
-    if (gpc1.pai != gpc2.pai)
-      return (gpc1.pai  <  gpc2.pai );
-    if (gpc1.nodes.size() !=  gpc2.nodes.size())
-      return (gpc1.nodes.size() < gpc2.nodes.size());
-    for (size_type i = 0; i < gpc1.nodes.size(); ++i)
-      if (gpc1.nodes[i] != gpc2.nodes[i])
-        return (gpc1.nodes[i] < gpc2.nodes[i]);
-    if (gpc1.pgt1 != gpc2.pgt1)
-      return (gpc1.pgt1 <  gpc2.pgt1);
-    if (gpc1.pgt2 !=  gpc2.pgt2)
-      return (gpc1.pgt2 <  gpc2.pgt2);
-    return false;
-  }
+                  const gauss_pt_corresp &gpc2);
 
   struct ga_instruction_set {
 
@@ -210,6 +197,15 @@ namespace getfem {
                          size_type order);
   void ga_compile_function(ga_workspace &workspace,
                                   ga_instruction_set &gis, bool scalar);
+  void ga_compile_interpolation(ga_workspace &workspace,
+				ga_instruction_set &gis);
+  void ga_interpolation_exec(ga_instruction_set &gis,
+			     ga_workspace &workspace,
+			     ga_interpolation_context &gic);
+  void ga_interpolation_single_point_exec
+    (ga_instruction_set &gis, ga_workspace &workspace,
+     const fem_interpolation_context &ctx_x, const base_small_vector &Normal,
+     const mesh &interp_mesh);
   
 } /* end of namespace */
 
