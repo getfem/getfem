@@ -1200,7 +1200,46 @@ namespace getfem {
     return *this;
   }
 
-  void ga_expand_macro(const pga_tree_node pnode,
+  void ga_replace_macro_params(const std::string expr, ga_tree &tree,
+			       pga_tree_node pnode,
+			       const std::vector<pga_tree_node> &children) {
+    if (!pnode) return;
+    for (size_type i = 0; i < pnode->children.size(); ++i)
+      ga_replace_macro_params(expr, tree, pnode->children[i], children);
+    
+    if (pnode->node_type == GA_NODE_MACRO_PARAM) {
+      size_type po = pnode->nbc2;
+      size_type pt = pnode->nbc3;
+      GMM_ASSERT1(pnode->nbc1+1 < children.size(), "Internal error");
+      pga_tree_node pchild = children[pnode->nbc1+1];
+
+      if (po || pt) {
+	if (!(pchild->children.empty()) || pchild->node_type != GA_NODE_NAME)
+	  ga_throw_error(expr, pchild->pos, "Error in macro expansion. "
+			 "Only variable name are allowed for macro parameter "
+			 "preceded by Grad_ Hess_ Test_ or Test2_ prefixes.");
+	pnode->node_type = GA_NODE_NAME;
+	pnode->name = pchild->name;
+	if (pt == 1) pnode->name = "Test_" + pnode->name;
+	if (pt == 2) pnode->name = "Test2_" + pnode->name;
+	if (po == 1) pnode->name = "Grad_" + pnode->name;
+	if (po == 2) pnode->name = "Hess_" + pnode->name;
+	if (po == 3) pnode->name = "Div_" + pnode->name;
+      } else {   
+	pga_tree_node pnode_old = pnode;
+	pnode = nullptr;
+	tree.copy_node(pchild, pnode_old->parent, pnode);
+	if (pnode_old->parent)
+	  pnode_old->parent->replace_child(pnode_old, pnode);
+	else
+	  tree.root = pnode;
+	GMM_ASSERT1(pnode_old->children.empty(), "Internal error");
+	delete pnode_old;
+      }
+    }
+  }
+  
+  void ga_expand_macro(ga_tree &tree, pga_tree_node pnode,
 		       const ga_macro_dictionnary &macro_dict,
 		       const std::string &expr) {
     if (!pnode) return;
@@ -1208,32 +1247,51 @@ namespace getfem {
     if (pnode->node_type == GA_NODE_PARAMS) {
       
       for (size_type i = 1; i < pnode->children.size(); ++i)
-	ga_expand_macro(pnode->children[i], macro_dict, expr);
+	ga_expand_macro(tree, pnode->children[i], macro_dict, expr);
 
-      if (macro_dict.macro_exists(pnode->children[0]->name)) { // Macro with parameters
-
-     
-
+      if (macro_dict.macro_exists(pnode->children[0]->name)) {
+	// Macro with parameters
 	const ga_macro &gam = macro_dict.get_macro(pnode->children[0]->name);
 	if (gam.nb_params()+1 != pnode->children.size())
 	  ga_throw_error(expr, pnode->pos,
 			 "Bad number of parameters in the use of macro '"
 			 << gam.name() << "'. Expected " << gam.nb_params()
 			 << " found " << pnode->children.size()-1 << ".");
-	// performs expand
+
+	pga_tree_node pnode_old = pnode;
+	pnode = nullptr;
+	tree.copy_node(gam.tree().root, pnode_old->parent, pnode);
+	if (pnode_old->parent)
+	  pnode_old->parent->replace_child(pnode_old, pnode);
+	else
+	  tree.root = pnode;
+	ga_replace_macro_params(expr, tree, pnode, pnode_old->children);
       }
 
-    } else if (pnode->node_type == GA_NODE_NAME && // Macro without parameters
+    } else if (pnode->node_type == GA_NODE_NAME &&
 	       macro_dict.macro_exists(pnode->name)) {
+      // Macro without parameters
+      const ga_macro &gam = macro_dict.get_macro(pnode->name);
+      if (gam.nb_params() != 0)
+	  ga_throw_error(expr, pnode->pos,
+			 "Bad number of parameters in the use of macro '"
+			 << gam.name() << "'. Expected " << gam.nb_params()
+			 << " none found.");
 
-
-
+      pga_tree_node pnode_old = pnode;
+      pnode = nullptr;
+      tree.copy_node(gam.tree().root, pnode_old->parent, pnode);
+      if (pnode_old->parent)
+	pnode_old->parent->replace_child(pnode_old, pnode);
+      else
+	tree.root = pnode;
+      GMM_ASSERT1(pnode_old->children.empty(), "Internal error");
+      delete pnode_old;
     } else {
       for (size_type i = 0; i < pnode->children.size(); ++i)
-	ga_expand_macro(pnode->children[i], macro_dict, expr);
+	ga_expand_macro(tree, pnode->children[i], macro_dict, expr);
     }
   }
-
 
   static void ga_mark_macro_params_rec(const pga_tree_node pnode,
 				       const std::vector<std::string> &params) {
@@ -1259,7 +1317,7 @@ namespace getfem {
 				   const std::string &expr) {
     if (gam.tree().root) {
       ga_mark_macro_params_rec(gam.tree().root, params);
-      ga_expand_macro(gam.tree().root, macro_dict, expr);
+      ga_expand_macro(gam.tree(), gam.tree().root, macro_dict, expr);
     }
   }
 
@@ -1751,7 +1809,7 @@ namespace getfem {
     
     t = ga_read_term(expr, pos, tree, macro_dict_loc);
 
-    if (tree.root) ga_expand_macro(tree.root, macro_dict_loc, expr);
+    if (tree.root) ga_expand_macro(tree, tree.root, macro_dict_loc, expr);
     
     switch (t) {
     case GA_RPAR: ga_throw_error(expr, pos-1, "Unbalanced parenthesis.");
