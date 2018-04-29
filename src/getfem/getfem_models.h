@@ -373,6 +373,8 @@ namespace getfem {
     std::map<std::string, std::vector<std::string> > variable_groups;
 
     std::map<std::string, std::string> macros;
+    ga_macro_dictionnary macro_dict;
+    
 
 
     virtual void actualize_sizes() const;
@@ -834,6 +836,8 @@ namespace getfem {
                         const std::string &primal_name, const mesh_im &mim,
                         size_type region, size_type niter = 1);
 
+    /** Dictonnary of user defined macros. */
+    const ga_macro_dictionnary &macro_dictionnary() const { return macro_dict; }
 
     /** Add a macro definition for the high generic assembly langage.
         This macro can be used for the definition of generic assembly bricks.

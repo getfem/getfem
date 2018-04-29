@@ -337,7 +337,7 @@ namespace getfem {
     }
     if (to_be_analyzed) {
       ga_tree tree;
-      ga_read_string(get_macro(name), tree);
+      ga_read_string(get_macro(name), tree, macro_dictionnary());
       ga_semantic_analysis(get_macro(name), tree, *this, meshdim, ref_elt_dim,
                            false, ignore_X, 3);
       GMM_ASSERT1(tree.root, "Invalid macro");
@@ -532,7 +532,7 @@ namespace getfem {
     GA_TIC;
     size_type max_order = 0;
     std::vector<ga_tree> ltrees(1);
-    ga_read_string(expr, ltrees[0]);
+    ga_read_string(expr, ltrees[0], macro_dictionnary());
     // cout << "read : " << ga_tree_to_string(ltrees[0])  << endl;
     ga_semantic_analysis(expr, ltrees[0], *this, mim.linked_mesh().dim(),
                          ref_elt_dim_of_mesh(mim.linked_mesh()),
@@ -576,7 +576,7 @@ namespace getfem {
 
   void ga_workspace::add_function_expression(const std::string &expr) {
     ga_tree tree;
-    ga_read_string(expr, tree);
+    ga_read_string(expr, tree, macro_dictionnary());
     ga_semantic_analysis(expr, tree, *this, 1, 1, false, true);
     if (tree.root) {
       // GMM_ASSERT1(tree.root->nb_test_functions() == 0,
@@ -591,7 +591,7 @@ namespace getfem {
                                                   const mesh_region &rg_) {
     const mesh_region &rg = register_region(m, rg_);
     ga_tree tree;
-    ga_read_string(expr, tree);
+    ga_read_string(expr, tree, macro_dictionnary());
     ga_semantic_analysis(expr, tree, *this, m.dim(), ref_elt_dim_of_mesh(m),
                          false, false);
     if (tree.root) {
@@ -607,7 +607,7 @@ namespace getfem {
     const mesh &m = mim.linked_mesh();
     const mesh_region &rg = register_region(m, rg_);
     ga_tree tree;
-    ga_read_string(expr, tree);
+    ga_read_string(expr, tree, macro_dictionnary());
     ga_semantic_analysis(expr, tree, *this, m.dim(), ref_elt_dim_of_mesh(m),
                          false, false);
     if (tree.root) {
@@ -626,7 +626,7 @@ namespace getfem {
     const mesh &m = mim.linked_mesh();
     const mesh_region &rg = register_region(m, rg_);
     ga_tree tree;
-    ga_read_string(expr, tree);
+    ga_read_string(expr, tree, macro_dictionnary());
     ga_semantic_analysis(expr, tree, *this, m.dim(), ref_elt_dim_of_mesh(m),
                          false, false);
     if (tree.root) {
@@ -919,7 +919,20 @@ namespace getfem {
   ga_workspace::tree_description::~tree_description()
   { if (ptree) delete ptree; ptree = 0; }
 
-
+  ga_workspace::ga_workspace(const getfem::model &md_,
+			     bool enable_all_variables)
+    : md(&md_), parent_workspace(0),
+      enable_all_md_variables(enable_all_variables),
+      macro_dict(md_.macro_dictionnary())
+  { init(); }
+  ga_workspace::ga_workspace(bool, const ga_workspace &gaw)
+    : md(0), parent_workspace(&gaw), enable_all_md_variables(false),
+      macro_dict(gaw.macro_dictionnary())
+  { init(); }
+  ga_workspace::ga_workspace()
+    : md(0), parent_workspace(0), enable_all_md_variables(false)
+  { init(); }
+  ga_workspace::~ga_workspace() { clear_expressions(); }
 
   //=========================================================================
   // Extract the constant term of degree 1 expressions

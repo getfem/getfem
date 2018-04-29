@@ -87,6 +87,8 @@ namespace getfem {
     GA_DIV,         // '/'
     GA_COLON,       // ':'
     GA_QUOTE,       // ''' transpose
+    GA_COLON_EQ,    // ':=' macro def
+    GA_DEF,         // 'Def' macro def
     GA_SYM,         // 'Sym' operator
     GA_SKEW,        // 'Skew' operator
     GA_TRACE,       // 'Trace' operator
@@ -126,6 +128,7 @@ namespace getfem {
     GA_NODE_OPERATOR,
     GA_NODE_CONSTANT,
     GA_NODE_NAME,
+    GA_NODE_MACRO_PARAM,
     GA_NODE_PARAMS,
     GA_NODE_RESHAPE,
     GA_NODE_ALLINDICES,
@@ -292,7 +295,7 @@ namespace getfem {
     std::string interpolate_name_test1, interpolate_name_test2; // name
                                   // of interpolation transformation if any
     size_type qdim1, qdim2;       // Qdims when test_function_type > 0.
-    size_type nbc1, nbc2, nbc3;   // For explicit matrices and x.
+    size_type nbc1, nbc2, nbc3;   // For explicit matrices, X and macros.
     size_type pos;                // Position of the first character in string
     std::string name;             // variable/constant/function/operator name
     std::string interpolate_name; // For Interpolate : name of transformation
@@ -463,7 +466,8 @@ namespace getfem {
 
   // Syntax analysis of an assembly string. Conversion to a tree.
   // No semantic analysis is done. The tree can be inconsistent.
-  void ga_read_string(const std::string &expr, ga_tree &tree);
+  void ga_read_string(const std::string &expr, ga_tree &tree,
+		      const ga_macro_dictionnary &macro_dict);
 
 
 } /* end of namespace */

@@ -43,13 +43,12 @@ namespace getfem {
     ga_char_type[','] = GA_COMMA;       ga_char_type[';']  = GA_SEMICOLON;
     ga_char_type['('] = GA_LPAR;        ga_char_type[')']  = GA_RPAR;
     ga_char_type['['] = GA_LBRACKET;    ga_char_type[']']  = GA_RBRACKET;
-    ga_char_type['_'] = GA_NAME;
+    ga_char_type['_'] = GA_NAME;        ga_char_type['=']  = GA_COLON_EQ;
     for (unsigned i = 'a'; i <= 'z'; ++i)  ga_char_type[i] = GA_NAME;
     for (unsigned i = 'A'; i <= 'Z'; ++i)  ga_char_type[i] = GA_NAME;
     for (unsigned i = '0'; i <= '9'; ++i)  ga_char_type[i] = GA_SCALAR;
 
-    for (unsigned i = 0; i < GA_NB_TOKEN_TYPE; ++i)
-      ga_operator_priorities[i] = 0;
+    for (unsigned i=0; i < GA_NB_TOKEN_TYPE; ++i) ga_operator_priorities[i] = 0;
     ga_operator_priorities[GA_PLUS] = 1;
     ga_operator_priorities[GA_MINUS] = 1;
     ga_operator_priorities[GA_MULT] = 2;
@@ -133,6 +132,8 @@ namespace getfem {
       }
       if (expr.compare(token_pos, token_length, "Sym") == 0)
         return GA_SYM;
+      if (expr.compare(token_pos, token_length, "Def") == 0)
+        return GA_DEF;
       if (expr.compare(token_pos, token_length, "Skew") == 0)
         return GA_SKEW;
       if (expr.compare(token_pos, token_length, "Trace") == 0)
@@ -165,10 +166,17 @@ namespace getfem {
         ++pos; return GA_DSEMICOLON;
       }
       return type;
+    case GA_COLON:
+      if (pos < expr.size() &&
+          ga_char_type[unsigned(expr[pos])] == GA_COLON_EQ) {
+        ++pos; return GA_COLON_EQ;
+      }
+      return type;
+    case GA_COLON_EQ:
+      return GA_INVALID;
     default: return type;
     }
   }
-
 
   //=========================================================================
   // Error handling
@@ -1020,6 +1028,16 @@ namespace getfem {
       str << pnode->name;
       GMM_ASSERT1(pnode->children.size() == 0, "Invalid tree");
       break;
+      
+    case GA_NODE_MACRO_PARAM:
+      if (pnode->nbc2 == 1) str << "Grad_";
+      if (pnode->nbc2 == 2) str << "Hess_";
+      if (pnode->nbc2 == 3) str << "Div_";
+      if (pnode->nbc3 == 1) str << "Test_";
+      if (pnode->nbc3 == 2) str << "Test2_";
+      str << "P" << pnode->nbc1;
+      GMM_ASSERT1(pnode->children.size() == 0, "Invalid tree");
+      break;
 
     case GA_NODE_RESHAPE:
       str << "Reshape";
@@ -1163,6 +1181,108 @@ namespace getfem {
 
     return 0;
   }
+
+  //=========================================================================
+  // Structure dealing with macros.
+  //=========================================================================
+
+  ga_macro::ga_macro() : ptree(new ga_tree), nbp(0) {}
+  ga_macro::~ga_macro() { delete ptree; }
+  ga_macro::ga_macro(const std::string &name, const ga_tree &t, size_type nbp_)
+    : ptree(new ga_tree(t)), macro_name_(name), nbp(nbp_) {}
+  ga_macro::ga_macro(const ga_macro &gam)
+    : ptree(new ga_tree(gam.tree())), macro_name_(gam.name()),
+      nbp(gam.nb_params()) {}
+  ga_macro &ga_macro::operator =(const ga_macro &gam) {
+    delete ptree; ptree = new ga_tree(gam.tree());
+    macro_name_ = gam.name();
+    nbp = gam.nb_params();
+    return *this;
+  }
+
+  void ga_expand_macro(const pga_tree_node pnode,
+		       const ga_macro_dictionnary &macro_dict,
+		       const std::string &expr) {
+    if (!pnode) return;
+    
+    if (pnode->node_type == GA_NODE_PARAMS) {
+      
+      for (size_type i = 1; i < pnode->children.size(); ++i)
+	ga_expand_macro(pnode->children[i], macro_dict, expr);
+
+      if (macro_dict.macro_exists(pnode->children[0]->name)) { // Macro with parameters
+
+     
+
+	const ga_macro &gam = macro_dict.get_macro(pnode->children[0]->name);
+	if (gam.nb_params()+1 != pnode->children.size())
+	  ga_throw_error(expr, pnode->pos,
+			 "Bad number of parameters in the use of macro '"
+			 << gam.name() << "'. Expected " << gam.nb_params()
+			 << " found " << pnode->children.size()-1 << ".");
+	// performs expand
+      }
+
+    } else if (pnode->node_type == GA_NODE_NAME && // Macro without parameters
+	       macro_dict.macro_exists(pnode->name)) {
+
+
+
+    } else {
+      for (size_type i = 0; i < pnode->children.size(); ++i)
+	ga_expand_macro(pnode->children[i], macro_dict, expr);
+    }
+  }
+
+
+  static void ga_mark_macro_params_rec(const pga_tree_node pnode,
+				       const std::vector<std::string> &params) {
+    if (!pnode) return;
+    for (size_type i = 0; i < pnode->children.size(); ++i)
+      ga_mark_macro_params_rec(pnode->children[i], params);
+    
+    if (pnode->node_type == GA_NODE_NAME) {
+      size_type po = ga_parse_prefix_operator(pnode->name);
+      size_type pt = ga_parse_prefix_test(pnode->name);
+      
+      for (size_type i = 0; i < params.size(); ++i)
+	if (pnode->name.compare(params[i]) == 0) {
+	  pnode->node_type = GA_NODE_MACRO_PARAM;
+	  pnode->nbc1 = i; pnode->nbc2 = po; pnode->nbc3 = pt;
+	}
+    }
+  }
+  
+  static void ga_mark_macro_params(ga_macro &gam,
+				   const std::vector<std::string> &params,
+				   const ga_macro_dictionnary &macro_dict,
+				   const std::string &expr) {
+    if (gam.tree().root) {
+      ga_mark_macro_params_rec(gam.tree().root, params);
+      ga_expand_macro(gam.tree().root, macro_dict, expr);
+    }
+  }
+
+  bool ga_macro_dictionnary::macro_exists(const std::string &name) const {
+    if (macros.find(name) != macros.end()) return true;
+    if (parent && parent->macro_exists(name)) return true;
+    return false;
+  }
+
+
+  const ga_macro &
+  ga_macro_dictionnary::get_macro(const std::string &name) const {
+    auto it = macros.find(name);
+    if (it != macros.end()) return it->second;
+    if (parent) return parent->get_macro(name);
+    GMM_ASSERT1(false, "Undefined macro");
+  }
+
+  void ga_macro_dictionnary::add_macro(const ga_macro &gam) {
+    macros[gam.name()] = gam;
+  }
+
+
   
   //=========================================================================
   // Syntax analysis for the generic assembly langage
@@ -1170,7 +1290,8 @@ namespace getfem {
 
   // Read a term with an (implicit) pushdown automaton.
   static GA_TOKEN_TYPE ga_read_term(const std::string &expr, size_type &pos,
-                                    ga_tree &tree) {
+                                    ga_tree &tree,
+				    ga_macro_dictionnary &macro_dict) {
     size_type token_pos, token_length;
     GA_TOKEN_TYPE t_type;
     int state = 1; // 1 = reading term, 2 = reading after term
@@ -1178,6 +1299,8 @@ namespace getfem {
     for (;;) {
 
       t_type = ga_get_token(expr, pos, token_pos, token_length);
+
+      // cout << "t_type = " << int(t_type) << " state = " << state << endl;
 
       switch (state) {
 
@@ -1221,6 +1344,57 @@ namespace getfem {
         case GA_DEVIATOR:
           tree.add_op(GA_DEVIATOR, token_pos);
           state = 1; break;
+
+	case GA_DEF:
+	  {
+	    ga_macro gam;
+	    t_type = ga_get_token(expr, pos, token_pos, token_length);
+	    if (t_type != GA_NAME)
+              ga_throw_error(expr, pos,
+                             "Macro definition should begin with macro name");
+	    gam.name() = std::string(&(expr[token_pos]), token_length);
+	    if (ga_check_name_validity(gam.name()))
+	      ga_throw_error(expr, pos-1, "Invalid macro name.")
+	    t_type = ga_get_token(expr, pos, token_pos, token_length);
+	    std::vector<std::string> params;
+            if (t_type == GA_LPAR) {
+	      t_type = ga_get_token(expr, pos, token_pos, token_length);
+	      while (t_type == GA_NAME) {
+		params.push_back(std::string(&(expr[token_pos]), token_length));
+		if (ga_check_name_validity(params.back()))
+		  ga_throw_error(expr, pos-1, "Invalid macro parameter name.");
+		for (size_type i = 0; i+1 < params.size(); ++i)
+		  if (params.back().compare(params[i]) == 0)
+		    ga_throw_error(expr, pos-1,
+				   "Invalid repeated macro parameter name.");
+		t_type = ga_get_token(expr, pos, token_pos, token_length);
+		if (t_type == GA_COMMA)
+		  t_type = ga_get_token(expr, pos, token_pos, token_length);
+	      }
+	      if (t_type != GA_RPAR)
+		ga_throw_error(expr, pos-1,
+			       "Missing right parenthesis in macro definition.");
+	      t_type = ga_get_token(expr, pos, token_pos, token_length);
+	    }
+	    if (t_type != GA_COLON_EQ)
+	      ga_throw_error(expr, pos-1, "Missing := for macro definition.");
+
+	    t_type = ga_read_term(expr, pos, gam.tree(), macro_dict);
+	    gam.nb_params() = params.size();
+	    ga_mark_macro_params(gam, params, macro_dict, expr);
+	    macro_dict.add_macro(gam);
+
+	    cout << "macro \"" << gam.name() << "\" registered with "
+		 << gam.nb_params() << " params  := "
+		 << ga_tree_to_string(gam.tree()) << endl;
+	    
+	    if (t_type == GA_END) return t_type;
+            else if (t_type != GA_SEMICOLON)
+              ga_throw_error(expr, pos-1,
+			     "Syntax error at the end of macro definition.");
+	    state = 1; // ?? 
+	  }
+	  break;
 
         case GA_INTERPOLATE:
           {
@@ -1356,14 +1530,14 @@ namespace getfem {
               ga_throw_error(expr,pos,
                              "Bad format for Interpolate_filter arguments.");
             ga_tree sub_tree;
-            t_type = ga_read_term(expr, pos, sub_tree);
+            t_type = ga_read_term(expr, pos, sub_tree, macro_dict);
             if (t_type != GA_RPAR && t_type != GA_COMMA)
               ga_throw_error(expr, pos-1,
                              "Bad format for Interpolate_filter arguments.");
             tree.add_sub_tree(sub_tree);
             if (t_type == GA_COMMA) {
                ga_tree sub_tree2;
-               t_type = ga_read_term(expr, pos, sub_tree2);
+               t_type = ga_read_term(expr, pos, sub_tree2, macro_dict);
                tree.add_sub_tree(sub_tree2);
             }
             if (t_type != GA_RPAR)
@@ -1380,7 +1554,7 @@ namespace getfem {
           {
             ga_tree sub_tree;
             GA_TOKEN_TYPE r_type;
-            r_type = ga_read_term(expr, pos, sub_tree);
+            r_type = ga_read_term(expr, pos, sub_tree, macro_dict);
             if (r_type != GA_RPAR)
               ga_throw_error(expr, pos-1, "Unbalanced parenthesis.");
             tree.add_sub_tree(sub_tree);
@@ -1398,7 +1572,7 @@ namespace getfem {
 
             tree.add_matrix(token_pos);
             do {
-              r_type = ga_read_term(expr, pos, sub_tree);
+              r_type = ga_read_term(expr, pos, sub_tree, macro_dict);
 
               if (sub_tree.root->node_type == GA_NODE_C_MATRIX) {
                 // nested format
@@ -1543,7 +1717,7 @@ namespace getfem {
             GA_TOKEN_TYPE r_type;
             tree.add_params(token_pos);
             do {
-              r_type = ga_read_term(expr, pos, sub_tree);
+              r_type = ga_read_term(expr, pos, sub_tree, macro_dict);
               if (r_type != GA_RPAR && r_type != GA_COMMA)
                 ga_throw_error(expr, pos-((r_type != GA_END)?1:0),
                                "Parameters should be separated "
@@ -1565,13 +1739,20 @@ namespace getfem {
   }
 
   // Syntax analysis of a string. Conversion to a tree.
-  void ga_read_string(const std::string &expr, ga_tree &tree) {
+  void ga_read_string(const std::string &expr, ga_tree &tree,
+		      const ga_macro_dictionnary &macro_dict) {
     size_type pos = 0, token_pos, token_length;
     tree.clear();
     GA_TOKEN_TYPE t = ga_get_token(expr, pos, token_pos, token_length);
     if (t == GA_END) return;
     pos = 0;
-    t = ga_read_term(expr, pos, tree);
+
+    ga_macro_dictionnary macro_dict_loc(true, macro_dict);
+    
+    t = ga_read_term(expr, pos, tree, macro_dict_loc);
+
+    if (tree.root) ga_expand_macro(tree.root, macro_dict_loc, expr);
+    
     switch (t) {
     case GA_RPAR: ga_throw_error(expr, pos-1, "Unbalanced parenthesis.");
     case GA_RBRACKET: ga_throw_error(expr, pos-1, "Unbalanced braket.");

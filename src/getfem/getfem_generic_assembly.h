@@ -132,8 +132,54 @@ namespace getfem {
   pelementary_transformation;
 
   //=========================================================================
+  // Structure dealing with macros.
+  //=========================================================================
+
+  class ga_macro {
+
+  protected:
+    ga_tree *ptree;
+    std::string macro_name_;
+    size_type nbp;
+
+  public:
+    ga_macro();
+    ga_macro(const std::string &name, const ga_tree &t, size_type nbp_);
+    ga_macro(const ga_macro &);
+    ~ga_macro();
+    ga_macro &operator =(const ga_macro &);
+
+    const std::string &name() const { return macro_name_; }
+    std::string &name() { return macro_name_; }
+    size_type nb_params() const { return nbp; }
+    size_type &nb_params() { return nbp; }
+    const ga_tree& tree() const { return *ptree; }
+    ga_tree& tree() { return *ptree; }
+  };
+
+
+  class ga_macro_dictionnary {
+
+  protected:
+    const ga_macro_dictionnary *parent;
+    std::map<std::string, ga_macro> macros;
+
+  public:
+    bool macro_exists(const std::string &name) const;
+    const ga_macro &get_macro(const std::string &name) const;
+    
+    void add_macro(const ga_macro &gam);
+    
+    ga_macro_dictionnary() : parent(0) {}
+    ga_macro_dictionnary(bool, const ga_macro_dictionnary& gamd)
+      : parent(&gamd) {}
+    
+  };
+
+  //=========================================================================
   // Structure dealing with predefined operators.
   //=========================================================================
+
 
   struct ga_nonlinear_operator {
 
@@ -274,7 +320,8 @@ namespace getfem {
     std::vector<tree_description> trees;
 
     std::map<std::string, std::vector<std::string> > variable_groups;
-    std::map<std::string, std::string> macros;
+    std::map<std::string, std::string> macros; // A SUPPRIMER
+    ga_macro_dictionnary macro_dict;
 
     struct m_tree {
       ga_tree *ptree;
@@ -427,6 +474,8 @@ namespace getfem {
     ga_tree& macro_tree(const std::string &name, size_type meshdim,
                         size_type ref_elt_dim, bool ignore_X) const;
 
+    const ga_macro_dictionnary &macro_dictionnary() const { return macro_dict; }
+
 
     // interpolate and elementary transformations
     void add_interpolate_transformation(const std::string &name,
@@ -457,17 +506,10 @@ namespace getfem {
     void assembly(size_type order);
 
 
-    ga_workspace(const getfem::model &md_, bool enable_all_variables = false)
-      : md(&md_), parent_workspace(0),
-        enable_all_md_variables(enable_all_variables)
-    { init(); }
-    ga_workspace(bool, const ga_workspace &gaw)
-      : md(0), parent_workspace(&gaw), enable_all_md_variables(false)
-    { init(); }
-    ga_workspace()
-      : md(0), parent_workspace(0), enable_all_md_variables(false)
-    { init(); }
-    ~ga_workspace() { clear_expressions(); }
+    ga_workspace(const getfem::model &md_, bool enable_all_variables = false);
+    ga_workspace(bool, const ga_workspace &gaw);
+    ga_workspace();
+    ~ga_workspace();
 
   };
 

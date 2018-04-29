@@ -3126,6 +3126,8 @@ namespace getfem {
     case GA_NODE_XFEM_MINUS_VAL: case GA_NODE_XFEM_MINUS_GRAD:
     case GA_NODE_XFEM_MINUS_HESS: case GA_NODE_XFEM_MINUS_DIVERG:
       return true;
+    case GA_NODE_INTERPOLATE_FILTER:
+       return ga_node_is_affine(child0);
     case GA_NODE_OP:
       switch(pnode->op_type) {
       case GA_PLUS: case GA_MINUS:
@@ -3136,8 +3138,7 @@ namespace getfem {
         return ga_node_is_affine(child1);
 
       case GA_UNARY_MINUS: case GA_QUOTE: case GA_SYM: case GA_SKEW:
-      case GA_TRACE: case GA_DEVIATOR:
-      case GA_PRINT: case GA_NODE_INTERPOLATE_FILTER:
+      case GA_TRACE: case GA_DEVIATOR: case GA_PRINT:
         return ga_node_is_affine(child0);
 
       case GA_DOT: case GA_MULT: case GA_COLON: case GA_TMULT:
