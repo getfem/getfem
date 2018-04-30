@@ -55,7 +55,7 @@ namespace getfem {
               3 : do not complain about incompatible test functions neither
                   store them.
   */
-  void ga_semantic_analysis(const std::string &expr, ga_tree &tree,
+  void ga_semantic_analysis(ga_tree &tree,
 			    const ga_workspace &workspace,
 			    size_type meshdim,
 			    size_type ref_elt_dim,

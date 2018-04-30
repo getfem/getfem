@@ -176,7 +176,17 @@ namespace getfem {
     return c;
   }
 
-  static void ga_node_analysis(const std::string &expr, ga_tree &tree,
+# define ga_valid_operand(pnode)				\
+  {								\
+    if (pnode && (pnode->node_type == GA_NODE_PREDEF_FUNC ||	\
+                  pnode->node_type == GA_NODE_SPEC_FUNC ||	\
+                  pnode->node_type == GA_NODE_NAME ||		\
+                  pnode->node_type == GA_NODE_OPERATOR ||	\
+                  pnode->node_type == GA_NODE_ALLINDICES))	\
+      ga_throw_error(pnode->expr, pnode->pos, "Invalid term");	\
+  }
+
+  static void ga_node_analysis(ga_tree &tree,
                                const ga_workspace &workspace,
                                pga_tree_node pnode, size_type meshdim,
                                size_type ref_elt_dim, bool eval_fixed_size,
@@ -185,14 +195,14 @@ namespace getfem {
     pnode->symmetric_op = false;
 
     for (size_type i = 0; i < pnode->children.size(); ++i) {
-      ga_node_analysis(expr, tree, workspace, pnode->children[i], meshdim,
+      ga_node_analysis(tree, workspace, pnode->children[i], meshdim,
                        ref_elt_dim, eval_fixed_size, ignore_X, option);
       all_cte = all_cte && (pnode->children[i]->node_type == GA_NODE_CONSTANT);
       all_sc = all_sc && (pnode->children[i]->tensor_proper_size() == 1);
       GMM_ASSERT1(pnode->children[i]->test_function_type != size_type(-1),
                   "internal error on child " << i);
       if (pnode->node_type != GA_NODE_PARAMS)
-        ga_valid_operand(expr, pnode->children[i]);
+        ga_valid_operand(pnode->children[i]);
     }
 
     size_type nbch = pnode->children.size();
@@ -270,7 +280,8 @@ namespace getfem {
               (var_trans_pair(pnode->name_test1,
                               pnode->interpolate_name_test1));
           if (!(pnode->qdim1))
-            ga_throw_error(expr, pnode->pos, "Invalid null size of variable");
+            ga_throw_error(pnode->expr, pnode->pos,
+			   "Invalid null size of variable");
         } else {
           pnode->interpolate_name_test1 = pnode->name_test1 = "";
           pnode->name_test2 = pnode->name;
@@ -282,12 +293,14 @@ namespace getfem {
               (var_trans_pair(pnode->name_test2,
                               pnode->interpolate_name_test2));
           if (!(pnode->qdim2))
-            ga_throw_error(expr, pnode->pos, "Invalid null size of variable");
+            ga_throw_error(pnode->expr, pnode->pos,
+			   "Invalid null size of variable");
         }
         if (!mf) {
           size_type n = workspace.qdim(pnode->name);
           if (!n)
-            ga_throw_error(expr, pnode->pos, "Invalid null size of variable");
+            ga_throw_error(pnode->expr, pnode->pos,
+			   "Invalid null size of variable");
           if (n == 1) {
             pnode->init_vector_tensor(1);
             pnode->tensor()[0] = scalar_type(1);
@@ -337,21 +350,21 @@ namespace getfem {
 
         // Group must be tested and it should be a fem variable
         if (!(workspace.variable_or_group_exists(name)))
-          ga_throw_error(expr, pnode->pos,
+          ga_throw_error(pnode->expr, pnode->pos,
                          "Unknown variable or group of variables");
 
         const mesh_fem *mf = workspace.associated_mf(name);
         if (!mf)
-          ga_throw_error(expr, pnode->pos, op__name
+          ga_throw_error(pnode->expr, pnode->pos, op__name
                          << " can only apply to finite element variables/data");
 
         size_type q = workspace.qdim(name), n = mf->linked_mesh().dim();
-        if (!q) ga_throw_error(expr, pnode->pos,
+        if (!q) ga_throw_error(pnode->expr, pnode->pos,
                                "Invalid null size of variable");
 
         bgeot::multi_index mii = workspace.qdims(name);
         if (mii.size() > 6)
-          ga_throw_error(expr, pnode->pos,
+          ga_throw_error(pnode->expr, pnode->pos,
                          "Tensor with too many dimensions. Limited to 6");
 
         if (test == 1) {
@@ -363,7 +376,7 @@ namespace getfem {
                               pnode->interpolate_name_test1));
           pnode->qdim1 = workspace.qdim(name);
           if (!(pnode->qdim1))
-            ga_throw_error(expr, pnode->pos,
+            ga_throw_error(pnode->expr, pnode->pos,
                            "Invalid null size of variable");
         } else if (test == 2) {
           pnode->name_test2 = name;
@@ -374,7 +387,7 @@ namespace getfem {
                               pnode->interpolate_name_test2));
           pnode->qdim2 = workspace.qdim(name);
           if (!(pnode->qdim2))
-            ga_throw_error(expr, pnode->pos,
+            ga_throw_error(pnode->expr, pnode->pos,
                            "Invalid null size of variable");
         }
 
@@ -463,7 +476,7 @@ namespace getfem {
           break;
         case 3: // divergence
           if (q != n)
-            ga_throw_error(expr, pnode->pos,
+            ga_throw_error(pnode->expr, pnode->pos,
                            "Divergence operator requires fem qdim ("
                            << q << ") to be equal to dim (" << n << ")");
           if (!test) {
@@ -495,13 +508,13 @@ namespace getfem {
         if (ndt == 1) {
           if (!(workspace.interpolate_transformation_exists
                 (pnode->interpolate_name)))  {
-            ga_throw_error(expr, pnode->pos,
+            ga_throw_error(pnode->expr, pnode->pos,
                            "Unknown interpolate transformation");
           }
         } else if (ndt == 2) {
           if (!(workspace.elementary_transformation_exists
                 (pnode->elementary_name))) {
-            ga_throw_error(expr, pnode->pos,
+            ga_throw_error(pnode->expr, pnode->pos,
                            "Unknown elementary transformation");
           }
         }
@@ -514,7 +527,7 @@ namespace getfem {
           bool valid = (child1->node_type == GA_NODE_CONSTANT);
           int n = valid ? int(round(child1->tensor()[0])) : -1;
           if (n < 0 || n > 100 || child1->tensor_order() > 0)
-            ga_throw_error(expr, pnode->pos, "The third argument of "
+            ga_throw_error(pnode->expr, pnode->pos, "The third argument of "
                            "Interpolate_filter should be a (small) "
                            "non-negative integer.");
           pnode->nbc1 = size_type(n);
@@ -522,7 +535,7 @@ namespace getfem {
         }
         if (!(workspace.interpolate_transformation_exists
               (pnode->interpolate_name)))
-          ga_throw_error(expr, pnode->pos,
+          ga_throw_error(pnode->expr, pnode->pos,
                          "Unknown interpolate transformation");
         pnode->t = child0->t;
         pnode->test_function_type = child0->test_function_type;
@@ -558,9 +571,9 @@ namespace getfem {
             if (size1[i] != 1) compatible = false;
 
           if (!compatible)
-            ga_throw_error(expr, pnode->pos, "Addition or subtraction of "
-                           "expressions of different sizes: "
-                           << size0 << " != " << size1);
+            ga_throw_error(pnode->expr, pnode->pos,
+			   "Addition or subtraction of expressions of "
+			   "different sizes: " << size0 << " != " << size1);
           if (child0->test_function_type || child1->test_function_type) {
             switch (option) {
             case 0: case 2:
@@ -579,8 +592,8 @@ namespace getfem {
 
           if (child0->test_function_type != child1->test_function_type ||
               (!compatible && option != 2))
-            ga_throw_error(expr, pnode->pos, "Addition or subtraction of "
-                           "incompatible test functions");
+            ga_throw_error(pnode->expr, pnode->pos, "Addition or subtraction "
+			   "of incompatible test functions");
           if (all_cte) {
             pnode->node_type = GA_NODE_CONSTANT;
             pnode->test_function_type = 0;
@@ -676,14 +689,14 @@ namespace getfem {
           }
 
           if (!compatible)
-            ga_throw_error(expr, pnode->pos,
+            ga_throw_error(pnode->expr, pnode->pos,
                            "Arguments of different sizes for .* or ./");
 
           if (pnode->op_type == GA_DOTDIV && child1->test_function_type)
-            ga_throw_error(expr, pnode->pos,
+            ga_throw_error(pnode->expr, pnode->pos,
                            "Division by test functions is not allowed");
 
-          pnode->mult_test(child0, child1, expr);
+          pnode->mult_test(child0, child1);
           mi = pnode->t.sizes();
           for (size_type i = 0; i < child0->tensor_order(); ++i)
             mi.push_back(child0->tensor_proper_size(i));
@@ -698,7 +711,7 @@ namespace getfem {
             } else {
               for (size_type i = 0; i < child0->tensor().size(); ++i) {
                 if (child1->tensor()[i] == scalar_type(0))
-                  ga_throw_error(expr, pnode->pos, "Division by zero.");
+                  ga_throw_error(pnode->expr, pnode->pos, "Division by zero.");
                 pnode->tensor()[i] = child0->tensor()[i] / child1->tensor()[i];
               }
             }
@@ -710,7 +723,7 @@ namespace getfem {
               tree.clear_children(pnode);
             }
             if (child1->tensor_is_zero() && pnode->op_type == GA_DOTDIV)
-              ga_throw_error(expr, pnode->pos, "Division by zero.");
+              ga_throw_error(pnode->expr, pnode->pos, "Division by zero.");
           }
         }
         break;
@@ -737,7 +750,7 @@ namespace getfem {
 
       case GA_QUOTE:
         if (dim0 > 2)
-          ga_throw_error(expr, pnode->pos, "Transpose operator is for "
+          ga_throw_error(pnode->expr, pnode->pos, "Transpose operator is for "
                          "vectors or matrices only.");
         mi = size0;
         if (child0->tensor_proper_size() == 1)
@@ -775,8 +788,8 @@ namespace getfem {
       case GA_SYM: case GA_SKEW:
         if (child0->tensor_proper_size() != 1 &&
             (dim0 != 2 || size0.back() != size0[size0.size()-2]))
-          ga_throw_error(expr, pnode->pos, "Sym and Skew operators are for "
-                         "square matrices only.");
+          ga_throw_error(pnode->expr, pnode->pos, "Sym and Skew operators are "
+			 "for square matrices only.");
         mi = size0;
         if (child0->tensor_proper_size() == 1) {
           if (pnode->op_type == GA_SYM)
@@ -826,7 +839,7 @@ namespace getfem {
 
           if ((dim0 != 2 && child0->tensor_proper_size() != 1) ||
               (dim0 == 2 && mi[mi.size()-2] != N))
-            ga_throw_error(expr, pnode->pos,
+            ga_throw_error(pnode->expr, pnode->pos,
                            "Trace operator is for square matrices only.");
 
           if (dim0 == 2) { mi.pop_back(); mi.pop_back(); }
@@ -864,7 +877,7 @@ namespace getfem {
 
           if ((dim0 != 2 && child0->tensor_proper_size() != 1) ||
               (dim0 == 2 && mi[mi.size()-2] != N))
-            ga_throw_error(expr, pnode->pos,
+            ga_throw_error(pnode->expr, pnode->pos,
                            "Deviator operator is for square matrices only.");
 
           if (child0->tensor_proper_size() == 1) {
@@ -932,16 +945,16 @@ namespace getfem {
 
       case GA_DOT:
         if (dim1 > 1)
-          ga_throw_error(expr, pnode->pos, "The second argument of the dot "
-                         "product has to be a vector.")
+          ga_throw_error(pnode->expr, pnode->pos, "The second argument of the "
+			 "dot product has to be a vector.")
         else {
           size_type s0 = dim0 == 0 ? 1 : size0.back();
           size_type s1 = dim1 == 0 ? 1 : size1.back();
-          if (s0 != s1) ga_throw_error(expr, pnode->pos, "Dot product "
+          if (s0 != s1) ga_throw_error(pnode->expr, pnode->pos, "Dot product "
                                        "of expressions of different sizes ("
                                        << s0 << " != " << s1 << ").");
           if (child0->tensor_order() <= 1) pnode->symmetric_op = true;
-          pnode->mult_test(child0, child1, expr);
+          pnode->mult_test(child0, child1);
           if (dim0 > 1) {
             mi = pnode->t.sizes();
             for (size_type i = 1; i < dim0; ++i)
@@ -971,7 +984,7 @@ namespace getfem {
 
       case GA_COLON:
         if (dim1 > 2)
-          ga_throw_error(expr, pnode->pos,
+          ga_throw_error(pnode->expr, pnode->pos,
                           "Frobenius product acts only on matrices.")
         else {
           size_type s00 = (dim0 == 0) ? 1
@@ -981,12 +994,12 @@ namespace getfem {
             : (dim1 == 1 ? size1.back() : size1[size1.size()-2]);
           size_type s11 = (dim1 >= 2) ? size1.back() : 1;
           if (s00 != s10 || s01 != s11)
-            ga_throw_error(expr, pnode->pos, "Frobenius product "
+            ga_throw_error(pnode->expr, pnode->pos, "Frobenius product "
                            "of expressions of different sizes ("
                            << s00 << "," << s01 << " != " << s10 << ","
                            << s11 << ").");
           if (child0->tensor_order() <= 2) pnode->symmetric_op = true;
-          pnode->mult_test(child0, child1, expr);
+          pnode->mult_test(child0, child1);
           if (dim0 > 2) {
             mi = pnode->t.sizes();
             for (size_type i = 2; i < dim0; ++i)
@@ -1030,7 +1043,7 @@ namespace getfem {
                        scalar_type(child1->tensor()[0]));
           } else {
             if (dim0+dim1 > 6)
-              ga_throw_error(expr, pnode->pos, "Unauthorized "
+              ga_throw_error(pnode->expr, pnode->pos, "Unauthorized "
                               "tensor multiplication.");
             for (size_type i = 0; i < dim0; ++i)
               mi.push_back(child0->tensor().size(i));
@@ -1045,7 +1058,7 @@ namespace getfem {
           }
           tree.clear_children(pnode);
         } else {
-          pnode->mult_test(child0, child1, expr);
+          pnode->mult_test(child0, child1);
           mi = pnode->t.sizes();
           if (child0->tensor_proper_size() != 1
               || child1->tensor_proper_size() != 1) {
@@ -1057,7 +1070,7 @@ namespace getfem {
                 mi.push_back(child0->tensor_proper_size(i));
             } else {
               if (dim0+dim1 > 6)
-                ga_throw_error(expr, pnode->pos, "Unauthorized "
+                ga_throw_error(pnode->expr, pnode->pos, "Unauthorized "
                                 "tensor multiplication.");
               for (size_type i = 0; i < dim0; ++i)
                 mi.push_back(child0->tensor_proper_size(i));
@@ -1090,7 +1103,7 @@ namespace getfem {
           } else if (dim0 == 2 && dim1 == 1) {
             size_type m=child0->tensor().size(0), n=child0->tensor().size(1);
             if (n != child1->tensor().size(0))
-              ga_throw_error(expr, pnode->pos,
+              ga_throw_error(pnode->expr, pnode->pos,
                              "Incompatible sizes in matrix-vector "
                              "multiplication (" << n << " != "
                              << child1->tensor().size(0) << ").");
@@ -1104,7 +1117,7 @@ namespace getfem {
             size_type n = child0->tensor().size(1);
             size_type p = child1->tensor().size(1);
             if (n != child1->tensor().size(0))
-              ga_throw_error(expr, pnode->pos,
+              ga_throw_error(pnode->expr, pnode->pos,
                              "Incompatible sizes in matrix-matrix "
                              "multiplication (" << n << " != "
                              << child1->tensor().size(0) << ").");
@@ -1120,7 +1133,7 @@ namespace getfem {
             size_type m=child0->tensor().size(0), n=child0->tensor().size(1);
             size_type o=child0->tensor().size(2), p=child0->tensor().size(3);
             if (o != child1->tensor().size(0) || p != child1->tensor().size(1))
-              ga_throw_error(expr, pnode->pos,
+              ga_throw_error(pnode->expr, pnode->pos,
                              "Incompatible sizes in tensor-matrix "
                              "multiplication (" << o << "," << p << " != "
                              << child1->tensor().size(0) << ","
@@ -1133,11 +1146,11 @@ namespace getfem {
                   for (size_type l = 0; l < p; ++l)
                     pnode->tensor()(i,j) += child0->tensor()(i,j,k,l)
                                             * child1->tensor()(k,l);
-          } else ga_throw_error(expr, pnode->pos,
+          } else ga_throw_error(pnode->expr, pnode->pos,
                                  "Unauthorized multiplication.");
           tree.clear_children(pnode);
         } else {
-          pnode->mult_test(child0, child1, expr);
+          pnode->mult_test(child0, child1);
           mi = pnode->t.sizes();
 
           if (child0->tensor_proper_size() == 1 &&
@@ -1157,7 +1170,7 @@ namespace getfem {
             size_type n = child0->tensor_proper_size(1);
             mi.push_back(m);
             if (n != child1->tensor_proper_size(0))
-              ga_throw_error(expr, pnode->pos,
+              ga_throw_error(pnode->expr, pnode->pos,
                              "Incompatible sizes in matrix-vector "
                              "multiplication (" << n << " != "
                              << child1->tensor_proper_size(0) << ").");
@@ -1168,7 +1181,7 @@ namespace getfem {
             size_type p = child1->tensor_proper_size(1);
             mi.push_back(m); mi.push_back(p);
             if (n != child1->tensor_proper_size(0))
-              ga_throw_error(expr, pnode->pos,
+              ga_throw_error(pnode->expr, pnode->pos,
                              "Incompatible sizes in matrix-matrix "
                              "multiplication (" << n << " != "
                              << child1->tensor_proper_size(0) << ").");
@@ -1182,12 +1195,12 @@ namespace getfem {
             mi.push_back(m); mi.push_back(n);
             if (o != child1->tensor_proper_size(0) ||
                 p != child1->tensor_proper_size(1))
-              ga_throw_error(expr, pnode->pos,
+              ga_throw_error(pnode->expr, pnode->pos,
                              "Incompatible sizes in tensor-matrix "
                              "multiplication (" << o << "," << p << " != "
                              << child1->tensor_proper_size(0) << ","
                              << child1->tensor_proper_size(1) << ").");
-          } else ga_throw_error(expr, pnode->pos,
+          } else ga_throw_error(pnode->expr, pnode->pos,
                                 "Unauthorized multiplication.");
           pnode->t.adjust_sizes(mi);
           // Simplifications
@@ -1211,15 +1224,16 @@ namespace getfem {
 
       case GA_DIV:
         if (child1->tensor_proper_size() > 1)
-          ga_throw_error(expr, pnode->pos,
+          ga_throw_error(pnode->expr, pnode->pos,
                          "Only the division by a scalar is allowed. "
                          "Got a size of " << child1->tensor_proper_size());
         if (child1->test_function_type)
-          ga_throw_error(expr, pnode->pos,
+          ga_throw_error(pnode->expr, pnode->pos,
                          "Division by test functions is not allowed.");
         if (child1->node_type == GA_NODE_CONSTANT &&
             child1->tensor()[0] == scalar_type(0))
-          ga_throw_error(expr, pnode->children[1]->pos, "Division by zero");
+          ga_throw_error(pnode->expr, pnode->children[1]->pos,
+			 "Division by zero");
 
         pnode->t = child0->t;
         pnode->test_function_type = child0->test_function_type;
@@ -1256,7 +1270,8 @@ namespace getfem {
     case GA_NODE_C_MATRIX:
       {
         if (!all_sc) {
-          ga_throw_error(expr, pnode->pos, "Constant vector/matrix/tensor "
+          ga_throw_error(pnode->expr, pnode->pos,
+			 "Constant vector/matrix/tensor "
                          "components should be scalar valued.");
         }
 
@@ -1285,8 +1300,8 @@ namespace getfem {
                   (pnode->children[i]->interpolate_name_test1) ||
                   pnode->interpolate_name_test2.compare
                   (pnode->children[i]->interpolate_name_test2))
-                ga_throw_error(expr, pnode->pos, "Inconsistent use of test "
-                               "function in constant matrix.");
+                ga_throw_error(pnode->expr, pnode->pos, "Inconsistent use of "
+			       "test function in constant matrix.");
             }
           }
         }
@@ -1389,7 +1404,7 @@ namespace getfem {
               name = name.substr(s+1);
           }
           if (!valid || pnode->der1 == 0)
-            ga_throw_error(expr, pnode->pos, "Invalid derivative format");
+            ga_throw_error(pnode->expr, pnode->pos,"Invalid derivative format");
         }
 
         ga_predef_function_tab::const_iterator it=PREDEF_FUNCTIONS.find(name);
@@ -1401,7 +1416,7 @@ namespace getfem {
           if (pnode->der1) {
             if (pnode->der1 > it->second.nbargs()
                 || pnode->der2 > it->second.nbargs())
-              ga_throw_error(expr, pnode->pos, "Invalid derivative.");
+              ga_throw_error(pnode->expr, pnode->pos, "Invalid derivative.");
             const ga_predef_function &F = it->second;
             if ((F.ftype() == 0 || F.dtype() == 2) && !(pnode->der2)) {
               pnode->name = ((pnode->der1 == 1) ?
@@ -1412,7 +1427,7 @@ namespace getfem {
         } else if (SPEC_FUNCTIONS.find(name) != SPEC_FUNCTIONS.end()) {
           // Special function found
           if (pnode->der1)
-            ga_throw_error(expr, pnode->pos, "Special functions do not "
+            ga_throw_error(pnode->expr, pnode->pos, "Special functions do not "
                            "support derivatives.");
           pnode->node_type = GA_NODE_SPEC_FUNC;
           pnode->name = name;
@@ -1441,12 +1456,13 @@ namespace getfem {
           size_type test = ga_parse_prefix_test(name);
 
           if (!(workspace.variable_exists(name)))
-            ga_throw_error(expr, pnode->pos, "Unknown variable, function, "
-                           "operator or data " + name);
+            ga_throw_error(pnode->expr, pnode->pos, "Unknown variable, "
+			   "function, operator or data " + name);
 
           if (pnode->der1)
-            ga_throw_error(expr, pnode->pos, "Derivative is for functions or "
-                           "operators, not for variables. Use Grad instead.");
+            ga_throw_error(pnode->expr, pnode->pos, "Derivative is for "
+			   "functions or operators, not for variables. "
+			   "Use Grad instead.");
           pnode->name = name;
 
           const mesh_fem *mf = workspace.associated_mf(name);
@@ -1454,8 +1470,8 @@ namespace getfem {
 
           if (test && workspace.is_constant(name) &&
               !(workspace.is_disabled_variable(name)))
-            ga_throw_error(expr, pnode->pos, "Test functions of constants "
-                           "are not allowed.");
+            ga_throw_error(pnode->expr, pnode->pos, "Test functions of "
+			   "constants are not allowed.");
           if (test == 1) {
             pnode->name_test1 = name;
             pnode->interpolate_name_test1 = "";
@@ -1466,7 +1482,7 @@ namespace getfem {
             pnode->qdim1 = mf ? workspace.qdim(name)
                               : gmm::vect_size(workspace.value(name));
             if (!(pnode->qdim1))
-              ga_throw_error(expr, pnode->pos,
+              ga_throw_error(pnode->expr, pnode->pos,
                              "Invalid null size of variable");
           } else if (test == 2) {
             pnode->name_test2 = name;
@@ -1478,14 +1494,14 @@ namespace getfem {
             pnode->qdim2 = mf ? workspace.qdim(name)
                               : gmm::vect_size(workspace.value(name));
             if (!(pnode->qdim2))
-              ga_throw_error(expr, pnode->pos,
+              ga_throw_error(pnode->expr, pnode->pos,
                              "Invalid null size of variable");
           }
 
           if (!mf && (test || !imd)) {
             if (prefix_id)
-              ga_throw_error(expr, pnode->pos, "Gradient, Hessian or Divergence"
-                             " cannot be evaluated for fixed size data.");
+              ga_throw_error(pnode->expr, pnode->pos, "Gradient, Hessian or "
+			"Divergence cannot be evaluated for fixed size data.");
             if (test)
               pnode->node_type = GA_NODE_VAL_TEST;
             else if (eval_fixed_size)
@@ -1514,8 +1530,8 @@ namespace getfem {
             }
           } else if (!test && imd) {
             if (prefix_id)
-              ga_throw_error(expr, pnode->pos, "Gradient, Hessian or Divergence"
-                              " cannot be evaluated for im data.");
+              ga_throw_error(pnode->expr, pnode->pos, "Gradient, Hessian or "
+			     "Divergence cannot be evaluated for im data.");
             pnode->node_type = GA_NODE_VAL;
             pnode->t.adjust_sizes(workspace.qdims(name));
           } else {
@@ -1523,10 +1539,10 @@ namespace getfem {
             size_type n = mf->linked_mesh().dim();
             bgeot::multi_index mii = workspace.qdims(name);
 
-            if (!q) ga_throw_error(expr, pnode->pos,
+            if (!q) ga_throw_error(pnode->expr, pnode->pos,
                                    "Invalid null size of variable " << name);
             if (mii.size() > 6)
-              ga_throw_error(expr, pnode->pos,
+              ga_throw_error(pnode->expr, pnode->pos,
                             "Tensor with too much dimensions. Limited to 6");
 
             switch (prefix_id) {
@@ -1574,7 +1590,7 @@ namespace getfem {
             case 3: // divergence
               pnode->node_type = test ? GA_NODE_DIVERG_TEST : GA_NODE_DIVERG;
               if (q != n)
-                ga_throw_error(expr, pnode->pos,
+                ga_throw_error(pnode->expr, pnode->pos,
                                "Divergence operator can only be applied to"
                                "Fields with qdim (" << q << ") equal to dim ("
                                << n << ")");
@@ -1593,15 +1609,16 @@ namespace getfem {
       if (child0->node_type == GA_NODE_X) {
         child0->init_scalar_tensor(0);
         if (pnode->children.size() != 2)
-          ga_throw_error(expr, child1->pos, "X stands for the coordinates on "
+          ga_throw_error(pnode->expr, child1->pos,
+			 "X stands for the coordinates on "
                          "the real elements. It accepts only one index.");
         if (!(child1->node_type == GA_NODE_CONSTANT) ||
             child1->tensor().size() != 1)
-          ga_throw_error(expr, child1->pos, "Index for X has to be constant "
-                         "and of size 1.");
+          ga_throw_error(pnode->expr, child1->pos,
+			 "Index for X has to be constant and of size 1.");
         child0->nbc1 = size_type(round(child1->tensor()[0]));
         if (child0->nbc1 == 0 || child0->nbc1 > meshdim)
-          ga_throw_error(expr, child1->pos, "Index for X not convenient. "
+          ga_throw_error(pnode->expr, child1->pos,"Index for X not convenient. "
                          "Found " << child0->nbc1 << " with meshdim = "
                          << meshdim);
         tree.replace_node_by_child(pnode, 0);
@@ -1609,10 +1626,10 @@ namespace getfem {
 
       } else if (child0->node_type == GA_NODE_RESHAPE) {
         if (pnode->children.size() < 3)
-          ga_throw_error(expr, child1->pos,
+          ga_throw_error(pnode->expr, child1->pos,
                          "Not enough parameters for Reshape");
         if (pnode->children.size() > 8)
-          ga_throw_error(expr, child1->pos,
+          ga_throw_error(pnode->expr, child1->pos,
                          "Too many parameters for Reshape");
         pnode->t = child1->t;
         pnode->test_function_type = child1->test_function_type;
@@ -1628,18 +1645,18 @@ namespace getfem {
 
         for (size_type i = 2; i < pnode->children.size(); ++i) {
           if (pnode->children[i]->node_type != GA_NODE_CONSTANT)
-            ga_throw_error(expr, pnode->children[i]->pos, "Reshape sizes "
+            ga_throw_error(pnode->expr, pnode->children[i]->pos,"Reshape sizes "
                            "should be constant positive integers.");
           mi.push_back(size_type(round(pnode->children[i]->tensor()[0])));
           if (mi.back() == 0)
-            ga_throw_error(expr, pnode->children[i]->pos, "Wrong zero size "
-                           "for Reshape.");
+            ga_throw_error(pnode->expr, pnode->children[i]->pos,
+			   "Wrong zero size for Reshape.");
         }
         size_type total_size(1);
         for (size_type i = 0; i < mi.size(); ++i)
           total_size *= mi[i];
         if (total_size != pnode->tensor().size())
-           ga_throw_error(expr, pnode->pos, "Invalid sizes for reshape.");
+           ga_throw_error(pnode->expr, pnode->pos,"Invalid sizes for reshape.");
         pnode->t.adjust_sizes(mi);
 
         if (child1->node_type == GA_NODE_CONSTANT) {
@@ -1654,14 +1671,14 @@ namespace getfem {
         // Evaluation of a predefined function
 
         for (size_type i = 1; i < pnode->children.size(); ++i)
-          ga_valid_operand(expr, pnode->children[i]);
+          ga_valid_operand(pnode->children[i]);
         std::string name = child0->name;
         ga_predef_function_tab::const_iterator it = PREDEF_FUNCTIONS.find(name);
         const ga_predef_function &F = it->second;
         size_type nbargs = F.nbargs();
         if (nbargs+1 != pnode->children.size()) {
-            ga_throw_error(expr, pnode->pos, "Bad number of arguments for "
-                "predefined function " << name << ". Found "
+            ga_throw_error(pnode->expr, pnode->pos, "Bad number of arguments "
+		 "for predefined function " << name << ". Found "
                  << pnode->children.size()-1 << ", should be "<<nbargs << ".");
         }
         pnode->test_function_type = 0;
@@ -1670,15 +1687,15 @@ namespace getfem {
         if (nbargs == 2)
           all_cte = all_cte && (child2->node_type == GA_NODE_CONSTANT);
         if (child1->test_function_type || child2->test_function_type)
-          ga_throw_error(expr, pnode->pos, "Test functions cannot be passed "
-                         "as argument of a predefined function.");
+          ga_throw_error(pnode->expr, pnode->pos, "Test functions cannot be "
+			 "passed as argument of a predefined function.");
         if (child1->tensor_order() > 2 || child2->tensor_order() > 2)
-          ga_throw_error(expr, pnode->pos, "Sorry, function can be applied "
-                         "to scalar, vector and matrices only.");
+          ga_throw_error(pnode->expr, pnode->pos, "Sorry, function can be "
+			 "applied to scalar, vector and matrices only.");
         size_type s1 = child1->tensor().size();
         size_type s2 = (nbargs == 2) ? child2->tensor().size() : s1;
         if (s1 != s2 && (s1 != 1 || s2 != 1))
-          ga_throw_error(expr, pnode->pos,
+          ga_throw_error(pnode->expr, pnode->pos,
                          "Invalid argument size for a scalar function. "
                          "Size of first argument: " << s1 <<
                          ". Size of second argument: " << s2 << ".");
@@ -1724,32 +1741,32 @@ namespace getfem {
         // Special constant functions: meshdim, qdim(u) ...
 
         for (size_type i = 1; i < pnode->children.size(); ++i)
-          ga_valid_operand(expr, pnode->children[i]);
+          ga_valid_operand(pnode->children[i]);
         if (pnode->children.size() != 2)
-          ga_throw_error(expr, pnode->pos,
+          ga_throw_error(pnode->expr, pnode->pos,
                          "One and only one argument is allowed for function "
                          +child0->name+".");
 
         if (!(child0->name.compare("qdim"))) {
           if (child1->node_type != GA_NODE_VAL)
-            ga_throw_error(expr, pnode->pos, "The argument of qdim "
+            ga_throw_error(pnode->expr, pnode->pos, "The argument of qdim "
                            "function can only be a variable name.");
           pnode->node_type = GA_NODE_CONSTANT;
           pnode->init_scalar_tensor(scalar_type(workspace.qdim(child1->name)));
           if (pnode->tensor()[0] <= 0)
-            ga_throw_error(expr, pnode->pos,
+            ga_throw_error(pnode->expr, pnode->pos,
                            "Invalid null size of variable");
         } else if (!(child0->name.compare("qdims"))) {
           if (child1->node_type != GA_NODE_VAL)
-            ga_throw_error(expr, pnode->pos, "The argument of qdim "
+            ga_throw_error(pnode->expr, pnode->pos, "The argument of qdim "
                            "function can only be a variable name.");
           pnode->node_type = GA_NODE_CONSTANT;
           bgeot::multi_index mii = workspace.qdims(child1->name);
           if (mii.size() > 6)
-            ga_throw_error(expr, pnode->pos,
+            ga_throw_error(pnode->expr, pnode->pos,
                            "Tensor with too much dimensions. Limited to 6");
           if (mii.size() == 0 || scalar_type(mii[0]) <= 0)
-            ga_throw_error(expr, pnode->pos,
+            ga_throw_error(pnode->expr, pnode->pos,
                            "Invalid null size of variable");
           if (mii.size() == 1)
             pnode->init_scalar_tensor(scalar_type(mii[0]));
@@ -1762,7 +1779,7 @@ namespace getfem {
           bool valid = (child1->node_type == GA_NODE_CONSTANT);
           int n = valid ? int(round(child1->tensor()[0])) : -1;
           if (n <= 0 || n > 100 || child1->tensor_order() > 0)
-            ga_throw_error(expr, pnode->pos, "The argument of Id "
+            ga_throw_error(pnode->expr, pnode->pos, "The argument of Id "
                            "should be a (small) positive integer.");
           pnode->node_type = GA_NODE_CONSTANT;
           if (n == 1)
@@ -1771,7 +1788,7 @@ namespace getfem {
             pnode->init_matrix_tensor(n,n);
             for (int i = 0; i < n; ++i) pnode->tensor()(i,i) = scalar_type(1);
           }
-        } else ga_throw_error(expr, pnode->children[0]->pos,
+        } else ga_throw_error(pnode->expr, pnode->children[0]->pos,
                               "Unknown special function.");
         tree.clear_children(pnode);
       } else if (child0->node_type == GA_NODE_OPERATOR) {
@@ -1779,7 +1796,7 @@ namespace getfem {
         // Call to a nonlinear operator
 
         for (size_type i = 1; i < pnode->children.size(); ++i)
-          ga_valid_operand(expr, pnode->children[i]);
+          ga_valid_operand(pnode->children[i]);
         all_cte = true;
         ga_nonlinear_operator::arg_list args;
         for (size_type i = 1; i < pnode->children.size(); ++i) {
@@ -1787,29 +1804,30 @@ namespace getfem {
             && (pnode->children[i]->node_type == GA_NODE_CONSTANT);
           args.push_back(&(pnode->children[i]->tensor()));
           if (pnode->children[i]->node_type == GA_NODE_ALLINDICES)
-            ga_throw_error(expr, pnode->children[i]->pos,
+            ga_throw_error(pnode->expr, pnode->children[i]->pos,
                            "Colon operator is not allowed in nonlinear "
                            "operator call.");
           if (pnode->children[i]->test_function_type)
-            ga_throw_error(expr, pnode->pos, "Test functions cannot be passed "
-                           "as argument of a nonlinear operator.");
+            ga_throw_error(pnode->expr, pnode->pos, "Test functions cannot be "
+			   "passed as argument of a nonlinear operator.");
           if (pnode->children[i]->tensor_order() > 2)
-            ga_throw_error(expr, pnode->pos, "Sorry, arguments to nonlinear "
-                        "operators should only be scalar, vector or matrices");
+            ga_throw_error(pnode->expr, pnode->pos,
+			   "Sorry, arguments to nonlinear operators should "
+			   "only be scalar, vector or matrices");
         }
         ga_predef_operator_tab::T::const_iterator it
           = PREDEF_OPERATORS.tab.find(child0->name);
         const ga_nonlinear_operator &OP = *(it->second);
         mi.resize(0);
         if (!(OP.result_size(args, mi)))
-          ga_throw_error(expr, pnode->pos,
+          ga_throw_error(pnode->expr, pnode->pos,
                          "Wrong number or wrong size of arguments for the "
                          "call of nonlinear operator " + child0->name);
 
         pnode->test_function_type = 0;
 
         if (child0->der1 > args.size() || child0->der2 > args.size())
-           ga_throw_error(expr, child0->pos,
+           ga_throw_error(pnode->expr, child0->pos,
                          "Invalid derivative number for nonlinear operator "
                           + child0->name);
 
@@ -1850,12 +1868,12 @@ namespace getfem {
         // cout << endl << "child0->t.sizes() = "
         //      << child0->t.sizes() << endl;
         if (pnode->children.size() != child0->tensor_order() + 1)
-          ga_throw_error(expr, pnode->pos, "Bad number of indices.");
+          ga_throw_error(pnode->expr, pnode->pos, "Bad number of indices.");
         for (size_type i = 1; i < pnode->children.size(); ++i)
           if (pnode->children[i]->node_type != GA_NODE_ALLINDICES &&
               (pnode->children[i]->node_type != GA_NODE_CONSTANT ||
                pnode->children[i]->tensor().size() != 1))
-            ga_throw_error(expr, pnode->children[i]->pos,
+            ga_throw_error(pnode->expr, pnode->children[i]->pos,
                             "Indices should be constant integers or colon.");
 
         bgeot::multi_index mi1(size0.size()), mi2, indices;
@@ -1867,7 +1885,7 @@ namespace getfem {
           } else {
             mi1[i] = size_type(round(pnode->children[i+1]->tensor()[0])-1);
             if (mi1[i] >= child0->tensor_proper_size(i))
-              ga_throw_error(expr, pnode->children[i+1]->pos,
+              ga_throw_error(pnode->expr, pnode->children[i+1]->pos,
                              "Index out of range, " << mi1[i]+1
                              << ". Should be between 1 and "
                              << child0->tensor_proper_size(i) << ".");
@@ -1921,19 +1939,19 @@ namespace getfem {
   }
 
 
-  void ga_semantic_analysis(const std::string &expr, ga_tree &tree,
-                                   const ga_workspace &workspace,
-                                   size_type meshdim,
-                                   size_type ref_elt_dim,
-                                   bool eval_fixed_size,
-                                   bool ignore_X, int option) {
+  void ga_semantic_analysis(ga_tree &tree,
+			    const ga_workspace &workspace,
+			    size_type meshdim,
+			    size_type ref_elt_dim,
+			    bool eval_fixed_size,
+			    bool ignore_X, int option) {
     GMM_ASSERT1(predef_operators_nonlinear_elasticity_initialized &&
                 predef_operators_plasticity_initialized &&
                 predef_operators_contact_initialized, "Internal error");
     if (!(tree.root)) return;
     if (option == 1) { workspace.test1.clear(); workspace.test2.clear(); }
     // cout << "semantic analysis of " << ga_tree_to_string(tree) << endl;
-    ga_node_analysis(expr, tree, workspace, tree.root, meshdim, ref_elt_dim,
+    ga_node_analysis(tree, workspace, tree.root, meshdim, ref_elt_dim,
                      eval_fixed_size, ignore_X, option);
     if (tree.root && option == 2) {
       if (((tree.root->test_function_type & 1) &&
@@ -1948,7 +1966,7 @@ namespace getfem {
         tree.clear();
     }
     // cout << "semantic analysis done " << endl;
-    ga_valid_operand(expr, tree.root);
+    ga_valid_operand(tree.root);
   }
 
 
@@ -2037,7 +2055,8 @@ namespace getfem {
 
         for (size_type i = 0; i < pnode->children.size(); ++i) {
           if (pnode_child == pnode->children[i]) {
-            pnode->children[i] = new ga_tree_node(GA_NODE_ZERO, pnode->pos);
+            pnode->children[i] = new ga_tree_node(GA_NODE_ZERO, pnode->pos,
+						  pnode->expr);
             pnode->children[i]->init_scalar_tensor(scalar_type(0));
             pnode->children[i]->parent = pnode;
           }
@@ -2325,20 +2344,20 @@ namespace getfem {
           for (size_type k = 0; k < meshdim; ++k) {
             if (j == i) {
               pga_tree_node param_node = new_pnode->children[k*N+j]
-                = new ga_tree_node(GA_NODE_PARAMS, pnode->pos);
+                = new ga_tree_node(GA_NODE_PARAMS, pnode->pos, pnode->expr);
               new_pnode->children[k*N+j]->parent = new_pnode;
               param_node->children.resize(2);
-              param_node->children[0] = new ga_tree_node(GA_NODE_NORMAL,
-                                                         pnode->pos);
+              param_node->children[0]
+		= new ga_tree_node(GA_NODE_NORMAL, pnode->pos, pnode->expr);
               param_node->children[0]->parent = param_node;
-              param_node->children[1] = new ga_tree_node(GA_NODE_CONSTANT,
-                                                         pnode->pos);
+              param_node->children[1]
+		= new ga_tree_node(GA_NODE_CONSTANT, pnode->pos, pnode->expr);
               param_node->children[1]->parent = param_node;
               param_node->children[1]->init_scalar_tensor(scalar_type(k));
 
             } else {
-              new_pnode->children[k*N+j] = new ga_tree_node(GA_NODE_ZERO,
-                                                            pnode->pos);
+              new_pnode->children[k*N+j]
+		= new ga_tree_node(GA_NODE_ZERO, pnode->pos, pnode->expr);
               new_pnode->children[k*N+j]->init_scalar_tensor(scalar_type(0));
               new_pnode->children[k*N+j]->parent = new_pnode;
             }
@@ -3083,7 +3102,7 @@ namespace getfem {
       ga_derivative(tree, workspace, *((const mesh *)(0)), var, "", 1);
       if (tree.root) {
         ga_replace_test_by_cte(tree.root, true);
-        ga_semantic_analysis(expr, tree, workspace, 1, 1, false, true);
+        ga_semantic_analysis(tree, workspace, 1, 1, false, true);
       }
       return ga_tree_to_string(tree);
     } else return "0";

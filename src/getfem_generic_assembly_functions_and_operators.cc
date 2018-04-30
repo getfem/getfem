@@ -702,13 +702,12 @@ namespace getfem {
       ga_tree tree = *(local_workspace.tree_info(0).ptree);
       ga_derivative(tree, local_workspace, *((const mesh *)(0)), var, "", 1);
       if (tree.root) {
-        ga_semantic_analysis(expr, tree, local_workspace, 1, 1, false, true);
+        ga_semantic_analysis(tree, local_workspace, 1, 1, false, true);
         // To be improved to suppress test functions in the expression ...
         // ga_replace_test_by_cte do not work in all operations like
         // vector components x(1)
         // ga_replace_test_by_cte(tree.root, false);
-        // ga_semantic_analysis(expr, tree, local_workspace, 1, 1,
-        //                      false, true);
+        // ga_semantic_analysis(tree, local_workspace, 1, 1, false, true);
       }
       expr = ga_tree_to_string(tree);
     }

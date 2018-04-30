@@ -410,7 +410,7 @@ namespace getfem {
           ftree.root->op_type = GA_PLUS;
           ftree.root->children.resize(2, nullptr);
           ftree.copy_node(tree.root, ftree.root, ftree.root->children[1]);
-          ga_semantic_analysis("", ftree, *this, m.dim(),
+          ga_semantic_analysis(ftree, *this, m.dim(),
                                ref_elt_dim_of_mesh(m), false, function_expr);
           found = true;
           break;
@@ -447,7 +447,7 @@ namespace getfem {
             ga_derivative(dtree, *this, m, var.varname, var.transname, 1+order);
             // cout << "Result : " << ga_tree_to_string(dtree) << endl;
             GA_TOCTIC("Derivative time");
-            ga_semantic_analysis(expr, dtree, *this, m.dim(),
+            ga_semantic_analysis(dtree, *this, m.dim(),
                                  ref_elt_dim_of_mesh(m), false, function_expr);
             GA_TOCTIC("Analysis after Derivative time");
             // cout << "after analysis "  << ga_tree_to_string(dtree) << endl;
@@ -481,7 +481,7 @@ namespace getfem {
     std::vector<ga_tree> ltrees(1);
     ga_read_string(expr, ltrees[0], macro_dictionnary());
     // cout << "read : " << ga_tree_to_string(ltrees[0])  << endl;
-    ga_semantic_analysis(expr, ltrees[0], *this, mim.linked_mesh().dim(),
+    ga_semantic_analysis(ltrees[0], *this, mim.linked_mesh().dim(),
                          ref_elt_dim_of_mesh(mim.linked_mesh()),
                          false, false, 1);
     // cout << "analysed : " << ga_tree_to_string(ltrees[0]) << endl;
@@ -499,7 +499,7 @@ namespace getfem {
             selected_test1 = *it1;
             if (test2.size()) selected_test2 = *it2++;
             // cout << "analysis with " << selected_test1.first << endl;
-            ga_semantic_analysis(expr, ltrees[i*ntest2+j], *this,
+            ga_semantic_analysis(ltrees[i*ntest2+j], *this,
                                  mim.linked_mesh().dim(),
                                  ref_elt_dim_of_mesh(mim.linked_mesh()),
                                  false, false, 2);
@@ -524,7 +524,7 @@ namespace getfem {
   void ga_workspace::add_function_expression(const std::string &expr) {
     ga_tree tree;
     ga_read_string(expr, tree, macro_dictionnary());
-    ga_semantic_analysis(expr, tree, *this, 1, 1, false, true);
+    ga_semantic_analysis(tree, *this, 1, 1, false, true);
     if (tree.root) {
       // GMM_ASSERT1(tree.root->nb_test_functions() == 0,
       //            "Invalid function expression");
@@ -539,7 +539,7 @@ namespace getfem {
     const mesh_region &rg = register_region(m, rg_);
     ga_tree tree;
     ga_read_string(expr, tree, macro_dictionnary());
-    ga_semantic_analysis(expr, tree, *this, m.dim(), ref_elt_dim_of_mesh(m),
+    ga_semantic_analysis(tree, *this, m.dim(), ref_elt_dim_of_mesh(m),
                          false, false);
     if (tree.root) {
       // GMM_ASSERT1(tree.root->nb_test_functions() == 0,
@@ -555,7 +555,7 @@ namespace getfem {
     const mesh_region &rg = register_region(m, rg_);
     ga_tree tree;
     ga_read_string(expr, tree, macro_dictionnary());
-    ga_semantic_analysis(expr, tree, *this, m.dim(), ref_elt_dim_of_mesh(m),
+    ga_semantic_analysis(tree, *this, m.dim(), ref_elt_dim_of_mesh(m),
                          false, false);
     if (tree.root) {
       GMM_ASSERT1(tree.root->nb_test_functions() == 0,
@@ -574,7 +574,7 @@ namespace getfem {
     const mesh_region &rg = register_region(m, rg_);
     ga_tree tree;
     ga_read_string(expr, tree, macro_dictionnary());
-    ga_semantic_analysis(expr, tree, *this, m.dim(), ref_elt_dim_of_mesh(m),
+    ga_semantic_analysis(tree, *this, m.dim(), ref_elt_dim_of_mesh(m),
                          false, false);
     if (tree.root) {
       GMM_ASSERT1(tree.root->nb_test_functions() == 0,
@@ -892,7 +892,7 @@ namespace getfem {
         if (local_tree.root)
           ga_node_extract_constant_term(local_tree, local_tree.root, *this, m);
         if (local_tree.root)
-          ga_semantic_analysis("", local_tree, *this, m.dim(),
+          ga_semantic_analysis(local_tree, *this, m.dim(),
                                ref_elt_dim_of_mesh(m), false, false);
         if (local_tree.root && local_tree.root->node_type != GA_NODE_ZERO) {
           constant_term += "-("+ga_tree_to_string(local_tree)+")";

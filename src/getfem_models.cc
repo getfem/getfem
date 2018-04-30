@@ -984,8 +984,10 @@ namespace getfem {
     return variables.count(no_old_prefix_name(name)) > 0;
   }
 
-  void model::add_macro(const std::string &name, const std::string &expr)
-  { check_name_validity(name); macro_dict.add_macro(name, expr); }
+  void model::add_macro(const std::string &name, const std::string &expr) {
+    check_name_validity(name.substr(0, name.find("(")));
+    macro_dict.add_macro(name, expr);
+  }
 
   void model::del_macro(const std::string &name)
   { macro_dict.del_macro(name); }

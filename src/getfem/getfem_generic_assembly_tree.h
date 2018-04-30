@@ -188,8 +188,9 @@ namespace getfem {
     GA_NODE_XFEM_MINUS_DIVERG_TEST,
     GA_NODE_ZERO};
 
+  typedef std::shared_ptr<std::string> pstring;
   // Print error message indicating the position in the assembly string
-  void ga_throw_error_msg(const std::string &expr, size_type pos,
+  void ga_throw_error_msg(pstring expr, size_type pos,
 			  const std::string &msg);
 
 # define ga_throw_error(expr, pos, msg)               \
@@ -282,6 +283,7 @@ namespace getfem {
   struct ga_tree_node;
   typedef ga_tree_node *pga_tree_node;
 
+  
   struct ga_tree_node {
     GA_NODE_TYPE node_type;
     GA_TOKEN_TYPE op_type;
@@ -297,6 +299,7 @@ namespace getfem {
     size_type qdim1, qdim2;       // Qdims when test_function_type > 0.
     size_type nbc1, nbc2, nbc3;   // For explicit matrices, X and macros.
     size_type pos;                // Position of the first character in string
+    pstring expr;                 // Original string, for error messages.
     std::string name;             // variable/constant/function/operator name
     std::string interpolate_name; // For Interpolate : name of transformation
     std::string interpolate_name_der; // For Interpolate derivative:
@@ -335,8 +338,7 @@ namespace getfem {
     { return t.sizes()[nb_test_functions()+i]; }
 
 
-    void mult_test(const pga_tree_node n0, const pga_tree_node n1,
-                   const std::string &expr);
+    void mult_test(const pga_tree_node n0, const pga_tree_node n1);
 
     bool tensor_is_zero() {
       if (node_type == GA_NODE_ZERO) return true;
@@ -375,51 +377,43 @@ namespace getfem {
 
     ga_tree_node()
       : node_type(GA_NODE_VOID), test_function_type(-1), qdim1(0), qdim2(0),
-        nbc1(0), nbc2(0), nbc3(0), pos(0), der1(0), der2(0),
+      nbc1(0), nbc2(0), nbc3(0), pos(0), expr(0), der1(0), der2(0),
         symmetric_op(false), hash_value(0) {}
-    ga_tree_node(GA_NODE_TYPE ty, size_type p)
+  ga_tree_node(GA_NODE_TYPE ty, size_type p, pstring expr_)
       : node_type(ty), test_function_type(-1),
         qdim1(0), qdim2(0), nbc1(0), nbc2(0), nbc3(0),
-        pos(p), der1(0), der2(0), symmetric_op(false), hash_value(0) {}
-    ga_tree_node(scalar_type v, size_type p)
+      pos(p), expr(expr_), der1(0), der2(0), symmetric_op(false),
+      hash_value(0) {}
+    ga_tree_node(scalar_type v, size_type p, pstring expr_)
       : node_type(GA_NODE_CONSTANT), test_function_type(-1),
         qdim1(0), qdim2(0), nbc1(0), nbc2(0), nbc3(0),
-        pos(p), der1(0), der2(0), symmetric_op(false),
+        pos(p), expr(expr_), der1(0), der2(0), symmetric_op(false),
         hash_value(0)
     { init_scalar_tensor(v); }
-    ga_tree_node(const char *n, size_type l, size_type p)
+    ga_tree_node(const char *n, size_type l, size_type p, pstring expr_)
       : node_type(GA_NODE_NAME), test_function_type(-1),
         qdim1(0), qdim2(0), nbc1(0), nbc2(0), nbc3(0),
-        pos(p), name(n, l), der1(0), der2(0), symmetric_op(false),
+        pos(p), expr(expr_), name(n, l), der1(0), der2(0), symmetric_op(false),
         hash_value(0) {}
-    ga_tree_node(GA_TOKEN_TYPE op, size_type p)
+    ga_tree_node(GA_TOKEN_TYPE op, size_type p, pstring expr_)
       : node_type(GA_NODE_OP), op_type(op), test_function_type(-1),
         qdim1(0), qdim2(0), nbc1(0), nbc2(0), nbc3(0),
-        pos(p), der1(0), der2(0), symmetric_op(false),
+        pos(p), expr(expr_), der1(0), der2(0), symmetric_op(false),
         hash_value(0) {}
   };
-
-# define ga_valid_operand(expr, pnode)                        \
-  {							      \
-    if (pnode && (pnode->node_type == GA_NODE_PREDEF_FUNC ||  \
-                  pnode->node_type == GA_NODE_SPEC_FUNC ||    \
-                  pnode->node_type == GA_NODE_NAME ||	      \
-                  pnode->node_type == GA_NODE_OPERATOR ||     \
-                  pnode->node_type == GA_NODE_ALLINDICES))    \
-      ga_throw_error(expr, pnode->pos, "Invalid term");	      \
-  }
 
   struct ga_tree {
     pga_tree_node root, current_node;
 
-    void add_scalar(scalar_type val, size_type pos);
-    void add_allindices(size_type pos);
-    void add_name(const char *name, size_type length, size_type pos);
+    void add_scalar(scalar_type val, size_type pos, pstring expr);
+    void add_allindices(size_type pos, pstring expr);
+    void add_name(const char *name, size_type length, size_type pos,
+		  pstring expr);
     void add_sub_tree(ga_tree &sub_tree);
-    void add_params(size_type pos);
-    void add_matrix(size_type pos);
+    void add_params(size_type pos, pstring expr);
+    void add_matrix(size_type pos, pstring expr);
     void zip_matrix(const pga_tree_node source_node);
-    void add_op(GA_TOKEN_TYPE op_type, size_type pos);
+    void add_op(GA_TOKEN_TYPE op_type, size_type pos, pstring expr);
     void clear_node_rec(pga_tree_node pnode);
     void clear_node(pga_tree_node pnode);
     void clear() { clear_node_rec(root); root = current_node = nullptr; }
@@ -440,7 +434,7 @@ namespace getfem {
 
     ga_tree() : root(nullptr), current_node(nullptr) {}
 
-    ga_tree(const ga_tree &tree) : root(nullptr), current_node(nullptr)
+  ga_tree(const ga_tree &tree) : root(nullptr), current_node(nullptr)
     { if (tree.root) copy_node(tree.root, nullptr, root); }
 
     ga_tree &operator = (const ga_tree &tree)
