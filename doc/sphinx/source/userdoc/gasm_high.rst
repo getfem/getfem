@@ -60,7 +60,7 @@ A specific language has been developed to describe the weak formulation of bound
 
   - A certain number of linear and nonlinear operators (``Trace``, ``Norm``, ``Det``, ``Deviator``, ...). The nonlinear operators cannot be applied to test functions.
 
-  - Possiblility of macro definition (in the model or ga_workspace object). The macros should be some valid expressions that are expanded inline at the semantic analysis phase (if they are used several times, the computation is automatically factorized at the compilation stage).
+  - Possiblility of macro definition (in the model, the ga_workspace object or directly in the assembly string). The macros should be some valid expressions that are expanded inline at the lexical analysis phase (if they are used several times, the computation is automatically factorized at the compilation stage).
 
   - ``Interpolate(variable, transformation)``: Powerful operation which allows to interpolate the variables, or test functions either on the same mesh on other elements or on another mesh. ``transformation`` is an object stored by the workspace or model object which describes the map from the current point to the point where to perform the interpolation. This functionality can be used for instance to prescribe periodic conditions or to compute mortar matrices for two finite element spaces defined on different meshes or more generally for fictitious domain methods such as fluid-structure interaction.
 
@@ -596,7 +596,7 @@ The assembly language provide some predefined nonlinear operator. Each nonlinear
 Macro definition
 ----------------
 
-A macro definition can be added to the assembly language by declaring it to the ga_workspace or model object by::
+The assembly language allows the use of macros that are either predefined in the model or ga_workspace object or directly defined at the begining of an assembly string. The definition into a ga_workspace or model object is done as follows::
 
   workspace.add_macro(name, expr)
 
@@ -604,18 +604,42 @@ or::
 
   model.add_macro(name, expr)
 
-where ``name`` is he macro name which then can be used in the assembly language and ``expr`` is a valid expression of the assembly language (which may itself contain some macro definitions). For instance, a valid macro is::
+The definition of a macro into an assembly string is inserted before any regular expression, separated by a semicolon with the following syntax::
+
+  "Def name:=expr; regular_expression"
+
+where ``name`` is he macro name which then can be used in the assembly language and contains also the macro parameters, ``expr`` is a valid expression of the assembly language (which may itself contain some macro definitions). For instance, a valid macro with no parameter is::
 
   model.add_macro("my_transformation", "[cos(alpha)*X(1);sin(alpha)*X(2)]");
 
-where ``alpha`` should be a valid declared variable or data.
+where ``alpha`` should be a valid declared variable or data. A valid macro with two parameters is for instance::
 
-The macros are expanded inline at the semantic analysis phase. At the compilation phase, if several call of the same macro is performed, the computation is automatically factorized.
+  model.add_macro("ps(a,b)", "a.b");
+
+The following assembly string is then valid (if ``u`` is a valid variable)::
+
+  "Def ps(a,b):=a.b; ps(Grad_u, Grad_Test_u)"
+
+Parameter are allowed to be post-fixed to ``Grad_``, ``Hess_``, ``Test_`` and ``Test2_`` prefixes. So that the following assembly string is then valid::
+
+  "Def psgrad(a,b):=Grad_a.Grad_b; psgrad(u, Test_u)"
+
+or with an imbrication of two macros::
+
+  "Def ps(a,b):=a.b; Def psgrad(a,b):=ps(Grad_a,Grad_b); psgrad(u, Test_u)"
+
+A macro can be deleted from a ga_workspace or model object as follows::
+
+  workspace.del_macro(name)
+  model.del_macro(name)
+
+The macros are expanded inline at the lexical analysis phase. Note that a the compilation phase, the repeated expressions are automatically factorized and computed only once.
 
 .. _ud-gasm-high-transf:
 
 Interpolate transformations
 ---------------------------
+
 The ``Interpolate`` operation allows to compute integrals between quantities which are either defined on different part of a mesh or even on different meshes. It is a powerful operation which allows to compute mortar matrices or take into account periodic conditions. However, one have to remember that it is based on interpolation which may have a non-negligible computational cost.
 
 In order to use this functionality, the user have first to declare to the workspace or to the model object an interpolate transformation which described the map between the current integration point and the point lying on the same mesh or on another mesh.
