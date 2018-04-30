@@ -1433,22 +1433,6 @@ namespace getfem {
           pnode->node_type = GA_NODE_OPERATOR;
           pnode->name = name;
           pnode->test_function_type = 0;
-        } else if (workspace.macro_exists(name)) {
-          GMM_ASSERT1(pnode->der1 == 0 && pnode->der2 == 0,
-                      "Derivativation of a macro is not allowed");
-          ga_tree &ma_tree
-            = workspace.macro_tree(name, meshdim, ref_elt_dim, ignore_X);
-          pga_tree_node pnode_old = pnode;
-          pnode = nullptr;
-          tree.copy_node(ma_tree.root, pnode_old->parent, pnode);
-          if (pnode_old->parent)
-            pnode_old->parent->replace_child(pnode_old, pnode);
-          else
-            tree.root = pnode;
-          GMM_ASSERT1(pnode_old->children.empty(), "Internal error");
-          delete pnode_old;
-          ga_node_analysis(expr, tree, workspace, pnode, meshdim,
-                           ref_elt_dim, eval_fixed_size, ignore_X, option);
         } else {
           // Search for a variable name with optional gradient, Hessian,
           // divergence or test functions

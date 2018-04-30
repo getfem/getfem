@@ -1336,10 +1336,18 @@ namespace getfem {
     GMM_ASSERT1(false, "Undefined macro");
   }
 
-  void ga_macro_dictionnary::add_macro(const ga_macro &gam) {
-    macros[gam.name()] = gam;
-  }
+  void ga_macro_dictionnary::add_macro(const ga_macro &gam)
+  { macros[gam.name()] = gam; }
 
+  void ga_macro_dictionnary::add_macro(const std::string &name,
+				       const std::string &expr)
+  { ga_tree tree; ga_read_string_reg("Def "+name+":="+expr, tree, *this); }
+
+  void ga_macro_dictionnary::del_macro(const std::string &name) {
+    auto it = macros.find(name);
+    GMM_ASSERT1(it != macros.end(), "Undefined macro (at this level)");
+    macros.erase(it);
+  }
 
   
   //=========================================================================
@@ -1357,8 +1365,6 @@ namespace getfem {
     for (;;) {
 
       t_type = ga_get_token(expr, pos, token_pos, token_length);
-
-      // cout << "t_type = " << int(t_type) << " state = " << state << endl;
 
       switch (state) {
 
@@ -1431,7 +1437,7 @@ namespace getfem {
 	      }
 	      if (t_type != GA_RPAR)
 		ga_throw_error(expr, pos-1,
-			       "Missing right parenthesis in macro definition.");
+			      "Missing right parenthesis in macro definition.");
 	      t_type = ga_get_token(expr, pos, token_pos, token_length);
 	    }
 	    if (t_type != GA_COLON_EQ)
@@ -1440,17 +1446,19 @@ namespace getfem {
 	    t_type = ga_read_term(expr, pos, gam.tree(), macro_dict);
 	    gam.nb_params() = params.size();
 	    ga_mark_macro_params(gam, params, macro_dict, expr);
+	    if (gam.tree().root)
+	      ga_expand_macro(gam.tree(), gam.tree().root, macro_dict, expr);
 	    macro_dict.add_macro(gam);
 
-	    cout << "macro \"" << gam.name() << "\" registered with "
-		 << gam.nb_params() << " params  := "
-		 << ga_tree_to_string(gam.tree()) << endl;
+	    // cout << "macro \"" << gam.name() << "\" registered with "
+	    // 	 << gam.nb_params() << " params  := "
+	    // 	 << ga_tree_to_string(gam.tree()) << endl;
 	    
 	    if (t_type == GA_END) return t_type;
             else if (t_type != GA_SEMICOLON)
               ga_throw_error(expr, pos-1,
 			     "Syntax error at the end of macro definition.");
-	    state = 1; // ?? 
+	    state = 1;
 	  }
 	  break;
 
@@ -1796,20 +1804,17 @@ namespace getfem {
     return GA_INVALID;
   }
 
-  // Syntax analysis of a string. Conversion to a tree.
-  void ga_read_string(const std::string &expr, ga_tree &tree,
-		      const ga_macro_dictionnary &macro_dict) {
+  // Syntax analysis of a string. Conversion to a tree. register the macros.
+  void ga_read_string_reg(const std::string &expr, ga_tree &tree,
+			  ga_macro_dictionnary &macro_dict) {
     size_type pos = 0, token_pos, token_length;
     tree.clear();
     GA_TOKEN_TYPE t = ga_get_token(expr, pos, token_pos, token_length);
     if (t == GA_END) return;
     pos = 0;
-
-    ga_macro_dictionnary macro_dict_loc(true, macro_dict);
     
-    t = ga_read_term(expr, pos, tree, macro_dict_loc);
-
-    if (tree.root) ga_expand_macro(tree, tree.root, macro_dict_loc, expr);
+    t = ga_read_term(expr, pos, tree, macro_dict);
+    if (tree.root) ga_expand_macro(tree, tree.root, macro_dict, expr);
     
     switch (t) {
     case GA_RPAR: ga_throw_error(expr, pos-1, "Unbalanced parenthesis.");
@@ -1818,6 +1823,15 @@ namespace getfem {
     default: ga_throw_error(expr, pos-1, "Unexpected token.");
     }
   }
+  
+  // Syntax analysis of a string. Conversion to a tree.
+  // Do not register the macros (but expand them).
+  void ga_read_string(const std::string &expr, ga_tree &tree,
+		      const ga_macro_dictionnary &macro_dict) {
+    ga_macro_dictionnary macro_dict_loc(true, macro_dict);
+    ga_read_string_reg(expr, tree, macro_dict_loc);
+  }
+  
 
   // Small tool to make basic substitutions into an assembly string
   std::string ga_substitute(const std::string &expr,

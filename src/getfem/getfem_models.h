@@ -372,7 +372,6 @@ namespace getfem {
     // generic assembly
     std::map<std::string, std::vector<std::string> > variable_groups;
 
-    std::map<std::string, std::string> macros;
     ga_macro_dictionnary macro_dict;
     
 
@@ -844,11 +843,12 @@ namespace getfem {
         The name of a macro cannot coincide with a variable name. */
     void add_macro(const std::string &name, const std::string &expr);
 
-    /** Says if a macro of that name has been defined. */
-    bool macro_exists(const std::string &name) const;
+    /** Delete a previously defined macro definition. */
+    void del_macro(const std::string &name);
 
-    /** Gives the exression string of a macro. */
-    const std::string& get_macro(const std::string &name) const;
+    /** Says if a macro of that name has been defined. */
+    bool macro_exists(const std::string &name) const
+    { return macro_dict.macro_exists(name); }
 
     /** Delete a variable or data of the model. */
     void delete_variable(const std::string &varname);

@@ -168,7 +168,7 @@ namespace getfem {
       return false;
     }
 
-    if (macros.find(name) != macros.end()) {
+    if (macro_exists(name)) {
       GMM_ASSERT1(!assert,
                   name << " corresponds to an already existing macro");
       return false;
@@ -985,17 +985,10 @@ namespace getfem {
   }
 
   void model::add_macro(const std::string &name, const std::string &expr)
-  { check_name_validity(name); macros[name] = expr; }
+  { check_name_validity(name); macro_dict.add_macro(name, expr); }
 
-  bool model::macro_exists(const std::string &name) const
-  { return (macros.find(name) != macros.end()); }
-
-  const std::string &model::get_macro(const std::string &name) const {
-    std::map<std::string, std::string>::const_iterator it = macros.find(name);
-    GMM_ASSERT1(it != macros.end(), "Undefined macro");
-    return it->second;
-  }
-
+  void model::del_macro(const std::string &name)
+  { macro_dict.del_macro(name); }
 
   void model::delete_brick(size_type ib) {
      GMM_ASSERT1(valid_bricks[ib], "Inexistent brick");

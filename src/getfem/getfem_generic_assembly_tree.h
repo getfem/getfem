@@ -468,6 +468,8 @@ namespace getfem {
   // No semantic analysis is done. The tree can be inconsistent.
   void ga_read_string(const std::string &expr, ga_tree &tree,
 		      const ga_macro_dictionnary &macro_dict);
+  void ga_read_string_reg(const std::string &expr, ga_tree &tree,
+			  ga_macro_dictionnary &macro_dict);
 
 
 } /* end of namespace */

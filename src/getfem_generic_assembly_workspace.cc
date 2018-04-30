@@ -295,59 +295,6 @@ namespace getfem {
     GMM_ASSERT1(false, "No time step defined here");
   }
 
-
-  // Macros
-  bool ga_workspace::macro_exists(const std::string &name) const {
-    if (macros.find(name) != macros.end()) return true;
-    if (md && md->macro_exists(name)) return true;
-    if (parent_workspace &&
-        parent_workspace->macro_exists(name)) return true;
-    return false;
-  }
-
-  const std::string&
-  ga_workspace::get_macro(const std::string &name) const {
-    std::map<std::string, std::string>::const_iterator it=macros.find(name);
-    if (it != macros.end()) return it->second;
-    if (md && md->macro_exists(name)) return md->get_macro(name);
-    if (parent_workspace &&
-        parent_workspace->macro_exists(name))
-      return parent_workspace->get_macro(name);
-    GMM_ASSERT1(false, "Undefined macro");
-  }
-
-  ga_tree &
-  ga_workspace::macro_tree(const std::string &name, size_type meshdim,
-                           size_type ref_elt_dim, bool ignore_X) const {
-    GMM_ASSERT1(macro_exists(name), "Undefined macro");
-    auto it = macro_trees.find(name);
-    bool to_be_analyzed = false;
-    m_tree *mt = 0;
-
-    if (it == macro_trees.end()) {
-      mt = &(macro_trees[name]);
-      to_be_analyzed = true;
-    } else {
-      mt = &(it->second);
-      GMM_ASSERT1(mt->ptree, "Recursive definition of macro " << name);
-      if (mt->meshdim != meshdim || mt->ignore_X != ignore_X) {
-        to_be_analyzed = true;
-        delete mt->ptree; mt->ptree = 0;
-      }
-    }
-    if (to_be_analyzed) {
-      ga_tree tree;
-      ga_read_string(get_macro(name), tree, macro_dictionnary());
-      ga_semantic_analysis(get_macro(name), tree, *this, meshdim, ref_elt_dim,
-                           false, ignore_X, 3);
-      GMM_ASSERT1(tree.root, "Invalid macro");
-      mt->ptree = new ga_tree(tree);
-      mt->meshdim = meshdim;
-      mt->ignore_X = ignore_X;
-    }
-    return *(mt->ptree);
-  }
-
   void ga_workspace::add_interpolate_transformation
   (const std::string &name, pinterpolate_transformation ptrans) {
     if (transformations.find(name) != transformations.end())
@@ -883,10 +830,7 @@ namespace getfem {
     }
   }
 
-  void ga_workspace::clear_expressions() {
-    trees.clear();
-    macro_trees.clear();
-  }
+  void ga_workspace::clear_expressions() { trees.clear(); }
 
   void ga_workspace::print(std::ostream &str) {
     for (size_type i = 0; i < trees.size(); ++i)
