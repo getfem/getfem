@@ -106,6 +106,10 @@ namespace getfem {
     ga_spec_function_tab();
   };
 
+  struct ga_spec_op_tab : public std::set<std::string> {
+    ga_spec_op_tab();
+  };
+
 } /* end of namespace */
 
 

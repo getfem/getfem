@@ -91,6 +91,70 @@ namespace getfem {
     return found_var;
   }
 
+
+  static bool ga_node_mark_tree_for_variable
+  (pga_tree_node pnode, const ga_workspace &workspace, const mesh &m,
+   const std::string &varname,
+   const std::string &interpolatename) {
+    bool marked = false;
+    for (size_type i = 0; i < pnode->children.size(); ++i)
+      if (ga_node_mark_tree_for_variable(pnode->children[i], workspace, m,
+                                         varname, interpolatename))
+        marked = true;
+
+    bool plain_node(pnode->node_type == GA_NODE_VAL ||
+                    pnode->node_type == GA_NODE_GRAD ||
+                    pnode->node_type == GA_NODE_HESS ||
+                    pnode->node_type == GA_NODE_DIVERG);
+    bool interpolate_node(pnode->node_type == GA_NODE_INTERPOLATE_VAL ||
+                          pnode->node_type == GA_NODE_INTERPOLATE_GRAD ||
+                          pnode->node_type == GA_NODE_INTERPOLATE_HESS ||
+                          pnode->node_type == GA_NODE_INTERPOLATE_DIVERG);
+    bool elementary_node(pnode->node_type == GA_NODE_ELEMENTARY_VAL ||
+                         pnode->node_type == GA_NODE_ELEMENTARY_GRAD ||
+                         pnode->node_type == GA_NODE_ELEMENTARY_HESS ||
+                         pnode->node_type == GA_NODE_ELEMENTARY_DIVERG);
+    bool xfem_node(pnode->node_type == GA_NODE_XFEM_PLUS_VAL ||
+                   pnode->node_type == GA_NODE_XFEM_PLUS_GRAD ||
+                   pnode->node_type == GA_NODE_XFEM_PLUS_HESS ||
+                   pnode->node_type == GA_NODE_XFEM_PLUS_DIVERG ||
+                   pnode->node_type == GA_NODE_XFEM_MINUS_VAL ||
+                   pnode->node_type == GA_NODE_XFEM_MINUS_GRAD ||
+                   pnode->node_type == GA_NODE_XFEM_MINUS_HESS ||
+                   pnode->node_type == GA_NODE_XFEM_MINUS_DIVERG);
+    bool interpolate_test_node
+      (pnode->node_type == GA_NODE_INTERPOLATE_VAL_TEST ||
+       pnode->node_type == GA_NODE_INTERPOLATE_GRAD_TEST ||
+       pnode->node_type == GA_NODE_INTERPOLATE_HESS_TEST ||
+       pnode->node_type == GA_NODE_INTERPOLATE_DIVERG_TEST);
+
+    if ((plain_node || interpolate_node || elementary_node || xfem_node) &&
+        (pnode->name.compare(varname) == 0 &&
+         pnode->interpolate_name.compare(interpolatename) == 0)) marked = true;
+
+    if (interpolate_node || interpolate_test_node ||
+        pnode->node_type == GA_NODE_INTERPOLATE_X ||
+        pnode->node_type == GA_NODE_INTERPOLATE_NORMAL) {
+      std::set<var_trans_pair> vars;
+      workspace.interpolate_transformation(pnode->interpolate_name)
+        ->extract_variables(workspace, vars, true,
+                            m, pnode->interpolate_name);
+      for (std::set<var_trans_pair>::iterator it=vars.begin();
+           it != vars.end(); ++it) {
+        if (it->varname.compare(varname) == 0 &&
+            it->transname.compare(interpolatename) == 0) marked = true;
+      }
+    }
+    pnode->marked = marked;
+    return marked;
+  }
+
+  static void ga_node_derivation(ga_tree &tree, const ga_workspace &workspace,
+                                 const mesh &m,
+                                 pga_tree_node pnode,
+                                 const std::string &varname,
+                                 const std::string &interpolatename,
+                                 size_type order); 
   //=========================================================================
   // Some hash code functions for node identification
   //=========================================================================
@@ -188,14 +252,15 @@ namespace getfem {
 
   static void ga_node_analysis(ga_tree &tree,
                                const ga_workspace &workspace,
-                               pga_tree_node pnode, size_type meshdim,
+                               pga_tree_node pnode, const mesh &me,
                                size_type ref_elt_dim, bool eval_fixed_size,
                                bool ignore_X, int option) {
     bool all_cte = true, all_sc = true;
+    size_type meshdim = &me ? me.dim() : 1;
     pnode->symmetric_op = false;
 
     for (size_type i = 0; i < pnode->children.size(); ++i) {
-      ga_node_analysis(tree, workspace, pnode->children[i], meshdim,
+      ga_node_analysis(tree, workspace, pnode->children[i], me,
                        ref_elt_dim, eval_fixed_size, ignore_X, option);
       all_cte = all_cte && (pnode->children[i]->node_type == GA_NODE_CONSTANT);
       all_sc = all_sc && (pnode->children[i]->tensor_proper_size() == 1);
@@ -1355,6 +1420,10 @@ namespace getfem {
           pnode->init_vector_tensor(meshdim);
           break;
         }
+	if (!(name.compare("Diff"))) {
+	  pnode->test_function_type = 0;
+          break;
+        }
         if (!(name.compare("element_size"))) {
           pnode->node_type = GA_NODE_ELT_SIZE;
           pnode->init_scalar_tensor(0);
@@ -1606,7 +1675,41 @@ namespace getfem {
       break;
 
     case GA_NODE_PARAMS:
-      if (child0->node_type == GA_NODE_X) {
+      if (child0->node_type == GA_NODE_NAME) {
+	if (child0->name.compare("Diff") == 0) { // Diff operator
+	  
+	  if (pnode->children.size() != 3)
+	    ga_throw_error(pnode->expr, child0->pos,
+			   "Bad number of parameters for Diff operator");
+	  pga_tree_node child2 = pnode->children[2];
+	  if (child2->node_type != GA_NODE_VAL)
+	    ga_throw_error(pnode->expr, child2->pos, "Second parameter of "
+			   "Diff operator has to be a variable name");
+	  std::string vardiff = child2->name;
+	  size_type order = child1->test_function_type;
+	  if (order > 1)
+	    ga_throw_error(pnode->expr, child2->pos, "Cannot derive further "
+			   "this order two expression");
+	  
+	  if (ga_node_mark_tree_for_variable(child1,workspace,me,vardiff,"")) {
+	    ga_node_derivation(tree, workspace, me, child1, vardiff,"",order+1);
+	    child1 = pnode->children[1];
+	    ga_node_analysis(tree, workspace, child1, me, ref_elt_dim,
+			     eval_fixed_size, ignore_X, option);
+	    child1 = pnode->children[1];
+	  } else {
+	    mi = child1->t.sizes(); mi.insert(mi.begin(), 2);
+	    child1->t.adjust_sizes(mi);
+	    child1->node_type = GA_NODE_ZERO;
+	    child1->test_function_type = order ? 3 : 1;
+	    gmm::clear(child1->tensor().as_vector());
+	    tree.clear_children(child1);
+	  }
+	  tree.replace_node_by_child(pnode, 1);
+	  pnode = child1;
+	} else
+	  ga_throw_error(pnode->expr, child0->pos, "Unknown special operator");
+      } else if (child0->node_type == GA_NODE_X) {
         child0->init_scalar_tensor(0);
         if (pnode->children.size() != 2)
           ga_throw_error(pnode->expr, child1->pos,
@@ -1941,7 +2044,7 @@ namespace getfem {
 
   void ga_semantic_analysis(ga_tree &tree,
 			    const ga_workspace &workspace,
-			    size_type meshdim,
+			    const mesh &m,
 			    size_type ref_elt_dim,
 			    bool eval_fixed_size,
 			    bool ignore_X, int option) {
@@ -1951,7 +2054,7 @@ namespace getfem {
     if (!(tree.root)) return;
     if (option == 1) { workspace.test1.clear(); workspace.test2.clear(); }
     // cout << "semantic analysis of " << ga_tree_to_string(tree) << endl;
-    ga_node_analysis(tree, workspace, tree.root, meshdim, ref_elt_dim,
+    ga_node_analysis(tree, workspace, tree.root, m, ref_elt_dim,
                      eval_fixed_size, ignore_X, option);
     if (tree.root && option == 2) {
       if (((tree.root->test_function_type & 1) &&
@@ -2407,62 +2510,6 @@ namespace getfem {
   //   ga_semantic_analysis for enrichment.
   //=========================================================================
 
-  static bool ga_node_mark_tree_for_variable
-  (pga_tree_node pnode, const ga_workspace &workspace, const mesh &m,
-   const std::string &varname,
-   const std::string &interpolatename) {
-    bool marked = false;
-    for (size_type i = 0; i < pnode->children.size(); ++i)
-      if (ga_node_mark_tree_for_variable(pnode->children[i], workspace, m,
-                                         varname, interpolatename))
-        marked = true;
-
-    bool plain_node(pnode->node_type == GA_NODE_VAL ||
-                    pnode->node_type == GA_NODE_GRAD ||
-                    pnode->node_type == GA_NODE_HESS ||
-                    pnode->node_type == GA_NODE_DIVERG);
-    bool interpolate_node(pnode->node_type == GA_NODE_INTERPOLATE_VAL ||
-                          pnode->node_type == GA_NODE_INTERPOLATE_GRAD ||
-                          pnode->node_type == GA_NODE_INTERPOLATE_HESS ||
-                          pnode->node_type == GA_NODE_INTERPOLATE_DIVERG);
-    bool elementary_node(pnode->node_type == GA_NODE_ELEMENTARY_VAL ||
-                         pnode->node_type == GA_NODE_ELEMENTARY_GRAD ||
-                         pnode->node_type == GA_NODE_ELEMENTARY_HESS ||
-                         pnode->node_type == GA_NODE_ELEMENTARY_DIVERG);
-    bool xfem_node(pnode->node_type == GA_NODE_XFEM_PLUS_VAL ||
-                   pnode->node_type == GA_NODE_XFEM_PLUS_GRAD ||
-                   pnode->node_type == GA_NODE_XFEM_PLUS_HESS ||
-                   pnode->node_type == GA_NODE_XFEM_PLUS_DIVERG ||
-                   pnode->node_type == GA_NODE_XFEM_MINUS_VAL ||
-                   pnode->node_type == GA_NODE_XFEM_MINUS_GRAD ||
-                   pnode->node_type == GA_NODE_XFEM_MINUS_HESS ||
-                   pnode->node_type == GA_NODE_XFEM_MINUS_DIVERG);
-    bool interpolate_test_node
-      (pnode->node_type == GA_NODE_INTERPOLATE_VAL_TEST ||
-       pnode->node_type == GA_NODE_INTERPOLATE_GRAD_TEST ||
-       pnode->node_type == GA_NODE_INTERPOLATE_HESS_TEST ||
-       pnode->node_type == GA_NODE_INTERPOLATE_DIVERG_TEST);
-
-    if ((plain_node || interpolate_node || elementary_node || xfem_node) &&
-        (pnode->name.compare(varname) == 0 &&
-         pnode->interpolate_name.compare(interpolatename) == 0)) marked = true;
-
-    if (interpolate_node || interpolate_test_node ||
-        pnode->node_type == GA_NODE_INTERPOLATE_X ||
-        pnode->node_type == GA_NODE_INTERPOLATE_NORMAL) {
-      std::set<var_trans_pair> vars;
-      workspace.interpolate_transformation(pnode->interpolate_name)
-        ->extract_variables(workspace, vars, true,
-                            m, pnode->interpolate_name);
-      for (std::set<var_trans_pair>::iterator it=vars.begin();
-           it != vars.end(); ++it) {
-        if (it->varname.compare(varname) == 0 &&
-            it->transname.compare(interpolatename) == 0) marked = true;
-      }
-    }
-    pnode->marked = marked;
-    return marked;
-  }
 
   static void ga_node_derivation(ga_tree &tree, const ga_workspace &workspace,
                                  const mesh &m,
@@ -3062,9 +3109,8 @@ namespace getfem {
   // The tree is modified. Should be copied first and passed to
   // ga_semantic_analysis after for enrichment
   void ga_derivative(ga_tree &tree, const ga_workspace &workspace,
-                            const mesh &m, const std::string &varname,
-                            const std::string &interpolatename,
-                            size_type order) {
+		     const mesh &m, const std::string &varname,
+		     const std::string &interpolatename, size_type order) {
     // cout << "compute derivative of " << ga_tree_to_string(tree)
     //  << " with respect to " << varname << " : " << interpolatename << endl;
     if (!(tree.root)) return;
@@ -3102,7 +3148,8 @@ namespace getfem {
       ga_derivative(tree, workspace, *((const mesh *)(0)), var, "", 1);
       if (tree.root) {
         ga_replace_test_by_cte(tree.root, true);
-        ga_semantic_analysis(tree, workspace, 1, 1, false, true);
+        ga_semantic_analysis(tree, workspace, *((const mesh *)(0)), 1,
+			     false, true);
       }
       return ga_tree_to_string(tree);
     } else return "0";

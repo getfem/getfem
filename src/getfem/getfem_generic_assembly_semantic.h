@@ -57,7 +57,7 @@ namespace getfem {
   */
   void ga_semantic_analysis(ga_tree &tree,
 			    const ga_workspace &workspace,
-			    size_type meshdim,
+			    const mesh &m,
 			    size_type ref_elt_dim,
 			    bool eval_fixed_size,
 			    bool ignore_X, int option = 0);
@@ -93,9 +93,9 @@ namespace getfem {
      The tree is modified and should be copied first and passed to
      ga_semantic_analysis after for enrichment. */
   void ga_derivative(ga_tree &tree, const ga_workspace &workspace,
-                            const mesh &m, const std::string &varname,
-                            const std::string &interpolatename,
-                            size_type order);
+		     const mesh &m, const std::string &varname,
+		     const std::string &interpolatename,
+		     size_type order);
 
   std::string ga_derivative_scalar_function(const std::string &expr,
 					    const std::string &var);

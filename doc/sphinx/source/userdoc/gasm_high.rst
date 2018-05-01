@@ -60,6 +60,8 @@ A specific language has been developed to describe the weak formulation of bound
 
   - A certain number of linear and nonlinear operators (``Trace``, ``Norm``, ``Det``, ``Deviator``, ...). The nonlinear operators cannot be applied to test functions.
 
+  - ``Diff(expression, variable)``: The possibility to explicity differentiate an expression with respect to a variable
+
   - Possiblility of macro definition (in the model, the ga_workspace object or directly in the assembly string). The macros should be some valid expressions that are expanded inline at the lexical analysis phase (if they are used several times, the computation is automatically factorized at the compilation stage).
 
   - ``Interpolate(variable, transformation)``: Powerful operation which allows to interpolate the variables, or test functions either on the same mesh on other elements or on another mesh. ``transformation`` is an object stored by the workspace or model object which describes the map from the current point to the point where to perform the interpolation. This functionality can be used for instance to prescribe periodic conditions or to compute mortar matrices for two finite element spaces defined on different meshes or more generally for fictitious domain methods such as fluid-structure interaction.
@@ -620,7 +622,7 @@ The following assembly string is then valid (if ``u`` is a valid variable)::
 
   "Def ps(a,b):=a.b; ps(Grad_u, Grad_Test_u)"
 
-Parameter are allowed to be post-fixed to ``Grad_``, ``Hess_``, ``Test_`` and ``Test2_`` prefixes. So that the following assembly string is then valid::
+Parameter are allowed to be post-fixed to ``Grad_``, ``Hess_``, ``Test_`` and ``Test2_`` prefixes, so that the following assembly string is valid::
 
   "Def psgrad(a,b):=Grad_a.Grad_b; psgrad(u, Test_u)"
 
@@ -633,8 +635,31 @@ A macro can be deleted from a ga_workspace or model object as follows::
   workspace.del_macro(name)
   model.del_macro(name)
 
+Note that a macro defined at the begining of an assembly string is only defined in the assembly string and cannot be used later without being added in a model or ga_workspace object.
+
 The macros are expanded inline at the lexical analysis phase. Note that a the compilation phase, the repeated expressions are automatically factorized and computed only once.
 
+Explixit Differentiation
+------------------------
+The workspace object automatically differentiate terms that are of lower deriation order. However, it is also allowed to explicitely differentiate an expression with respect to a variable. One interest is that the automatic differentiation performs a derivative with respect to all the declared variables of model/workspace but this is not necessarily the expected behavior when using a potential energy, for instance. The syntax is::
+
+  Diff(expression, variable)
+
+For instance, the following expression::
+
+  Diff(u.u, u)
+
+will result in::
+
+  2*(u.Test_u)
+
+So that::
+
+  Grad_u:Grad_test_u + Diff(u.u, u)
+
+is a valid expression.  
+
+  
 .. _ud-gasm-high-transf:
 
 Interpolate transformations

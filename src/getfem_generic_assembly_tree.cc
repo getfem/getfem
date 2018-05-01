@@ -866,7 +866,6 @@ namespace getfem {
           GMM_ASSERT1(pnode->children.size() == 1, "Invalid tree");
           str << "Print("; ga_print_node(pnode->children[0], str); str << ")";
         } else {
-          // GMM_ASSERT1(pnode->children.size() == 2, "Invalid tree");
           if (!par && pnode->op_type == GA_MULT &&
               (pnode->children.size() == 1 ||
                pnode->test_function_type == size_type(-1) ||
@@ -1121,7 +1120,7 @@ namespace getfem {
 
   // 0 : ok
   // 1 : function or operator name or "X"
-  // 2 : reserved prefix Grad, Hess, Div, Test and Test2
+  // 2 : reserved prefix Grad, Hess, Div, Derivative_ Test and Test2
   // 3 : reserved prefix Dot and Previous
   int ga_check_name_validity(const std::string &name) {
 
@@ -1140,9 +1139,13 @@ namespace getfem {
       = dal::singleton<ga_predef_operator_tab>::instance(0);
     const ga_spec_function_tab &SPEC_FUNCTIONS
       = dal::singleton<ga_spec_function_tab>::instance(0);
+    const ga_spec_op_tab &SPEC_OP
+      = dal::singleton<ga_spec_op_tab>::instance(0);
     
-    ga_predef_function_tab::const_iterator it=PREDEF_FUNCTIONS.find(name);
-    if (it != PREDEF_FUNCTIONS.end())
+    if (SPEC_OP.find(name) != SPEC_OP.end())
+      return 1;
+
+    if (PREDEF_FUNCTIONS.find(name) != PREDEF_FUNCTIONS.end())
       return 1;
     
     if (SPEC_FUNCTIONS.find(name) != SPEC_FUNCTIONS.end())
@@ -1833,11 +1836,8 @@ namespace getfem {
     pos = 0;
     pstring nexpr(new std::string(expr));
     
-    cout << "Original " << expr << endl;
     t = ga_read_term(nexpr, pos, tree, macro_dict);
-    cout << "Before expand " << ga_tree_to_string(tree) << endl;
     if (tree.root) ga_expand_macro(tree, tree.root, macro_dict);
-    cout << "After expand " << ga_tree_to_string(tree) << endl;
     
     switch (t) {
     case GA_RPAR: ga_throw_error(nexpr, pos-1, "Unbalanced parenthesis.");

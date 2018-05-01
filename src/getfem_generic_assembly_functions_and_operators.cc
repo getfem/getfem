@@ -553,6 +553,29 @@ namespace getfem {
     SPEC_FUNCTIONS.insert("Id");
   }
 
+  ga_spec_op_tab::ga_spec_op_tab() {
+    // Predefined special operators
+    ga_spec_op_tab &SPEC_OP = *this;
+    SPEC_OP.insert("X");
+    SPEC_OP.insert("element_size");
+    SPEC_OP.insert("element_K");
+    SPEC_OP.insert("element_B");
+    SPEC_OP.insert("Normal");
+    SPEC_OP.insert("Reshape");
+    SPEC_OP.insert("Sym");
+    SPEC_OP.insert("Skew");
+    SPEC_OP.insert("Def");
+    SPEC_OP.insert("Trace");
+    SPEC_OP.insert("Deviator");
+    SPEC_OP.insert("Interpolate");
+    SPEC_OP.insert("Interpolate_filter");
+    SPEC_OP.insert("Elementary_transformation");
+    SPEC_OP.insert("Xfem_plus");
+    SPEC_OP.insert("Xfem_minus");
+    SPEC_OP.insert("Print");
+    SPEC_OP.insert("Diff");
+  }
+
 
   ga_predef_operator_tab::ga_predef_operator_tab(void) {
     // Predefined operators
@@ -702,12 +725,14 @@ namespace getfem {
       ga_tree tree = *(local_workspace.tree_info(0).ptree);
       ga_derivative(tree, local_workspace, *((const mesh *)(0)), var, "", 1);
       if (tree.root) {
-        ga_semantic_analysis(tree, local_workspace, 1, 1, false, true);
+        ga_semantic_analysis(tree, local_workspace, *((const mesh *)(0)),
+			     1, false, true);
         // To be improved to suppress test functions in the expression ...
         // ga_replace_test_by_cte do not work in all operations like
         // vector components x(1)
         // ga_replace_test_by_cte(tree.root, false);
-        // ga_semantic_analysis(tree, local_workspace, 1, 1, false, true);
+        // ga_semantic_analysis(tree, local_workspace, *((const mesh *)(0)), 1,
+	//                      false, true);
       }
       expr = ga_tree_to_string(tree);
     }
