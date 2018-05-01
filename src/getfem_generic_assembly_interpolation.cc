@@ -695,8 +695,7 @@ namespace getfem {
       // the value of corresponding test functions. This means that
       // for a transformation F(u) the computed derivative is F'(u).Test_u
       // including the Test_u.
-      if (compute_derivatives) { // To be tested both with the computation
-                                 // of derivative. Could be optimized ?
+      if (compute_derivatives) { // Could be optimized ?
         for (auto &&d : derivatives) {
           workspace_gis_pair &pwi = compiled_derivatives[d.first];
 

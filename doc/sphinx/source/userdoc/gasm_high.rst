@@ -639,7 +639,7 @@ Note that a macro defined at the begining of an assembly string is only defined 
 
 The macros are expanded inline at the lexical analysis phase. Note that a the compilation phase, the repeated expressions are automatically factorized and computed only once.
 
-Explixit Differentiation
+Explicit Differentiation
 ------------------------
 The workspace object automatically differentiate terms that are of lower deriation order. However, it is also allowed to explicitely differentiate an expression with respect to a variable. One interest is that the automatic differentiation performs a derivative with respect to all the declared variables of model/workspace but this is not necessarily the expected behavior when using a potential energy, for instance. The syntax is::
 

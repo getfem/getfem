@@ -149,12 +149,11 @@ namespace getfem {
     return marked;
   }
 
-  static void ga_node_derivation(ga_tree &tree, const ga_workspace &workspace,
-                                 const mesh &m,
-                                 pga_tree_node pnode,
-                                 const std::string &varname,
-                                 const std::string &interpolatename,
-                                 size_type order); 
+  static void ga_node_derivation
+  (ga_tree &tree, const ga_workspace &workspace, const mesh &m,
+   pga_tree_node pnode, const std::string &varname,
+   const std::string &interpolatename, size_type order);
+  
   //=========================================================================
   // Some hash code functions for node identification
   //=========================================================================
@@ -2510,7 +2509,6 @@ namespace getfem {
   //   ga_semantic_analysis for enrichment.
   //=========================================================================
 
-
   static void ga_node_derivation(ga_tree &tree, const ga_workspace &workspace,
                                  const mesh &m,
                                  pga_tree_node pnode,
@@ -3122,6 +3120,669 @@ namespace getfem {
       tree.clear();
     // cout << "derived tree : " << ga_tree_to_string(tree) << endl;
   }
+
+  //=========================================================================
+  // Gradient algorithm: gradient of a tree.
+  //   The result tree is not ready to use. It has to be passed again in
+  //   ga_semantic_analysis for enrichment.
+  //=========================================================================
+
+  static bool ga_node_mark_tree_for_grad(pga_tree_node pnode) {
+    bool marked = false;
+    for (size_type i = 0; i < pnode->children.size(); ++i)
+      if (ga_node_mark_tree_for_grad(pnode->children[i]))
+        marked = true;
+
+    bool plain_node(pnode->node_type == GA_NODE_VAL ||
+                    pnode->node_type == GA_NODE_GRAD ||
+                    pnode->node_type == GA_NODE_HESS ||
+                    pnode->node_type == GA_NODE_DIVERG);
+    bool test_node(pnode->node_type == GA_NODE_VAL_TEST ||
+		   pnode->node_type == GA_NODE_GRAD_TEST ||
+		   pnode->node_type == GA_NODE_HESS_TEST ||
+		   pnode->node_type == GA_NODE_DIVERG_TEST);
+    bool interpolate_node(pnode->node_type == GA_NODE_INTERPOLATE_VAL ||
+                          pnode->node_type == GA_NODE_INTERPOLATE_GRAD ||
+                          pnode->node_type == GA_NODE_INTERPOLATE_HESS ||
+                          pnode->node_type == GA_NODE_INTERPOLATE_DIVERG);
+    bool elementary_node(pnode->node_type == GA_NODE_ELEMENTARY_VAL ||
+                         pnode->node_type == GA_NODE_ELEMENTARY_GRAD ||
+                         pnode->node_type == GA_NODE_ELEMENTARY_HESS ||
+                         pnode->node_type == GA_NODE_ELEMENTARY_DIVERG);
+    bool xfem_node(pnode->node_type == GA_NODE_XFEM_PLUS_VAL ||
+                   pnode->node_type == GA_NODE_XFEM_PLUS_GRAD ||
+                   pnode->node_type == GA_NODE_XFEM_PLUS_HESS ||
+                   pnode->node_type == GA_NODE_XFEM_PLUS_DIVERG ||
+                   pnode->node_type == GA_NODE_XFEM_MINUS_VAL ||
+                   pnode->node_type == GA_NODE_XFEM_MINUS_GRAD ||
+                   pnode->node_type == GA_NODE_XFEM_MINUS_HESS ||
+                   pnode->node_type == GA_NODE_XFEM_MINUS_DIVERG);
+    bool interpolate_test_node
+      (pnode->node_type == GA_NODE_INTERPOLATE_VAL_TEST ||
+       pnode->node_type == GA_NODE_INTERPOLATE_GRAD_TEST ||
+       pnode->node_type == GA_NODE_INTERPOLATE_HESS_TEST ||
+       pnode->node_type == GA_NODE_INTERPOLATE_DIVERG_TEST);
+
+    if (plain_node || test_node || interpolate_node ||
+	elementary_node || xfem_node ||
+	pnode->node_type == GA_NODE_X ||
+	pnode->node_type == GA_NODE_NORMAL) marked = true;
+
+    if (interpolate_node || interpolate_test_node ||
+        pnode->node_type == GA_NODE_INTERPOLATE_X ||
+        pnode->node_type == GA_NODE_INTERPOLATE_NORMAL) marked = true;
+    
+    pnode->marked = marked;
+    return marked;
+  }
+
+  static void ga_node_grad(ga_tree &tree, const ga_workspace &workspace,
+			   const mesh &m, pga_tree_node pnode) {
+    
+    size_type meshdim = &m ? m.dim() : 1;
+    size_type nbch = pnode->children.size();
+    pga_tree_node child0 = (nbch > 0) ? pnode->children[0] : 0;
+    pga_tree_node child1 = (nbch > 1) ? pnode->children[1] : 0;
+    bool mark0 = ((nbch > 0) ? child0->marked : false);
+    bool mark1 = ((nbch > 1) ? child1->marked : false);
+    bgeot::multi_index mi;
+
+    const ga_predef_function_tab &PREDEF_FUNCTIONS
+      = dal::singleton<ga_predef_function_tab>::instance(0);
+
+    switch (pnode->node_type) {
+    case GA_NODE_VAL: pnode->node_type = GA_NODE_GRAD; break;
+    case GA_NODE_GRAD: pnode->node_type = GA_NODE_HESS; break;
+    case GA_NODE_HESS:
+      GMM_ASSERT1(false, "Sorry, cannot derive an Hessian once more");
+    case GA_NODE_DIVERG: // Hess_u : Id(meshdim)
+      pnode->node_type = GA_NODE_HESS;
+      tree.duplicate_with_operation(pnode, GA_COLON);
+      child0 = pnode; pnode = pnode->parent; child1 = pnode->children[1];
+      child1->init_matrix_tensor(meshdim, meshdim);
+      for (size_type i = 0; i < meshdim; ++i)
+	child1->tensor()(i,i) = scalar_type(1);
+      child1->node_type = GA_NODE_CONSTANT;
+      break;
+
+  #ifdef continue_here
+
+    case GA_NODE_INTERPOLATE_VAL:
+    case GA_NODE_INTERPOLATE_GRAD:
+    case GA_NODE_INTERPOLATE_HESS:
+    case GA_NODE_INTERPOLATE_DIVERG:
+      {
+        bool is_val(pnode->node_type == GA_NODE_INTERPOLATE_VAL);
+        bool is_grad(pnode->node_type == GA_NODE_INTERPOLATE_GRAD);
+        bool is_hess(pnode->node_type == GA_NODE_INTERPOLATE_HESS);
+        bool is_diverg(pnode->node_type == GA_NODE_INTERPOLATE_DIVERG);
+
+        bool ivar = (pnode->name.compare(varname) == 0 &&
+                     pnode->interpolate_name.compare(interpolatename) == 0);
+        bool itrans = !ivar;
+        if (!itrans) {
+          std::set<var_trans_pair> vars;
+          workspace.interpolate_transformation(pnode->interpolate_name)
+            ->extract_variables(workspace, vars, true, m,
+                                pnode->interpolate_name);
+          for (const var_trans_pair &var : vars) {
+            if (var.varname.compare(varname) == 0 &&
+                var.transname.compare(interpolatename) == 0)
+              itrans = true;
+          }
+        }
+
+        pga_tree_node pnode_trans = pnode;
+        if (is_hess) {
+          GMM_ASSERT1(!itrans, "Sorry, cannot derive a hessian once more");
+        } else if (itrans && ivar) {
+          tree.duplicate_with_addition(pnode);
+          pnode_trans = pnode->parent->children[1];
+        }
+
+        if (ivar) {
+          mi.resize(1); mi[0] = 2;
+          for (size_type i = 0; i < pnode->tensor_order(); ++i)
+            mi.push_back(pnode->tensor_proper_size(i));
+          pnode->t.adjust_sizes(mi);
+          if (is_val) // --> t(Qmult*ndof,Qmult*target_dim)
+            pnode->node_type = GA_NODE_INTERPOLATE_VAL_TEST;
+          else if (is_grad) // --> t(Qmult*ndof,Qmult*target_dim,N)
+            pnode->node_type = GA_NODE_INTERPOLATE_GRAD_TEST;
+          else if (is_hess) // --> t(Qmult*ndof,Qmult*target_dim,N,N)
+            pnode->node_type = GA_NODE_INTERPOLATE_HESS_TEST;
+          else if (is_diverg) // --> t(Qmult*ndof)
+            pnode->node_type = GA_NODE_INTERPOLATE_DIVERG_TEST;
+          pnode->test_function_type = order;
+        }
+
+        if (itrans) {
+          const mesh_fem *mf = workspace.associated_mf(pnode_trans->name);
+          size_type q = workspace.qdim(pnode_trans->name);
+          size_type n = mf->linked_mesh().dim();
+          bgeot::multi_index mii = workspace.qdims(pnode_trans->name);
+
+          if (is_val)  // --> t(target_dim*Qmult,N)
+            pnode_trans->node_type = GA_NODE_INTERPOLATE_GRAD;
+          else if (is_grad || is_diverg)  // --> t(target_dim*Qmult,N,N)
+            pnode_trans->node_type = GA_NODE_INTERPOLATE_HESS;
+
+          if (n > 1) {
+            if (q == 1 && mii.size() <= 1) { mii.resize(1); mii[0] = n; }
+            else mii.push_back(n);
+
+            if (is_grad || is_diverg) mii.push_back(n);
+          }
+          pnode_trans->t.adjust_sizes(mii);
+          tree.duplicate_with_operation(pnode_trans,
+                                        (n > 1) ? GA_DOT : GA_MULT);
+          pga_tree_node pnode_der = pnode_trans->parent->children[1];
+          pnode_der->node_type = GA_NODE_INTERPOLATE_DERIVATIVE;
+          if (n == 1)
+            pnode_der->init_vector_tensor(2);
+          else
+            pnode_der->init_matrix_tensor(2, n);
+          pnode_der->test_function_type = order;
+          pnode_der->name = varname;
+          pnode_der->interpolate_name_der = pnode_der->interpolate_name;
+          pnode_der->interpolate_name = interpolatename;
+
+          if (is_diverg) { // --> t(Qmult*ndof)
+            tree.insert_node(pnode_trans->parent, GA_NODE_OP);
+            pga_tree_node pnode_tr = pnode_trans->parent->parent;
+            pnode_tr->op_type = GA_TRACE;
+            pnode_tr->init_vector_tensor(2);
+//            pnode_tr->test_function_type = order;
+//            pnode_tr->name_test1 = pnode_trans->name_test1;
+//            pnode_tr->name_test2 = pnode_trans->name_test2;
+          }
+        }
+      }
+      break;
+
+    case GA_NODE_INTERPOLATE_VAL_TEST:
+    case GA_NODE_INTERPOLATE_GRAD_TEST:
+    case GA_NODE_INTERPOLATE_DIVERG_TEST:
+      {
+        bool is_val(pnode->node_type == GA_NODE_INTERPOLATE_VAL_TEST);
+        bool is_grad(pnode->node_type == GA_NODE_INTERPOLATE_GRAD_TEST);
+        bool is_diverg(pnode->node_type == GA_NODE_INTERPOLATE_DIVERG_TEST);
+
+        pga_tree_node pnode_trans = pnode;
+        const mesh_fem *mf = workspace.associated_mf(pnode_trans->name);
+        size_type q = workspace.qdim(pnode_trans->name);
+        size_type n = mf->linked_mesh().dim();
+        bgeot::multi_index mii = workspace.qdims(pnode_trans->name);
+        if (is_val) // --> t(Qmult*ndof,Qmult*target_dim,N)
+          pnode_trans->node_type = GA_NODE_INTERPOLATE_GRAD_TEST;
+        else if (is_grad || is_diverg) // --> t(Qmult*ndof,Qmult*target_dim,N,N)
+          pnode_trans->node_type = GA_NODE_INTERPOLATE_HESS_TEST;
+
+        if (q == 1 && mii.size() <= 1) { mii.resize(1); mii[0] = 2; }
+        else mii.insert(mii.begin(), 2);
+
+        if (n > 1) {
+          mii.push_back(n);
+          if (is_grad || is_diverg) mii.push_back(n);
+        }
+        pnode_trans->t.adjust_sizes(mii);
+        // pnode_trans->test_function_type = order;
+        tree.duplicate_with_operation(pnode_trans,
+                                      (n > 1 ? GA_DOT : GA_MULT));
+        pga_tree_node pnode_der = pnode_trans->parent->children[1];
+        pnode_der->node_type = GA_NODE_INTERPOLATE_DERIVATIVE;
+        if (n == 1)
+          pnode_der->init_vector_tensor(2);
+        else
+          pnode_der->init_matrix_tensor(2, n);
+        pnode_der->test_function_type = order;
+        pnode_der->name = varname;
+        pnode_der->interpolate_name_der = pnode_der->interpolate_name;
+        pnode_der->interpolate_name = interpolatename;
+
+        if (is_diverg) { // --> t(Qmult*ndof)
+          tree.insert_node(pnode_trans->parent, GA_NODE_OP);
+          pga_tree_node pnode_tr = pnode_trans->parent->parent;
+          pnode_tr->op_type = GA_TRACE;
+          pnode_tr->init_vector_tensor(2);
+//          pnode_tr->test_function_type = order;
+//          pnode_tr->name_test1 = pnode_trans->name_test1;
+//          pnode_tr->name_test2 = pnode_trans->name_test2;
+        }
+      }
+      break;
+
+    case GA_NODE_INTERPOLATE_HESS_TEST:
+      GMM_ASSERT1(false, "Sorry, cannot derive a hessian once more");
+      break;
+
+    case GA_NODE_INTERPOLATE_X:
+      {
+        size_type n = m.dim();
+        pga_tree_node pnode_der = pnode;
+        pnode_der->node_type = GA_NODE_INTERPOLATE_DERIVATIVE;
+        if (n == 1)
+          pnode_der->init_vector_tensor(2);
+        else
+          pnode_der->init_matrix_tensor(2, n);
+        pnode_der->test_function_type = order;
+        pnode_der->name = varname;
+        pnode_der->interpolate_name_der = pnode_der->interpolate_name;
+        pnode_der->interpolate_name = interpolatename;
+      }
+      break;
+
+    case GA_NODE_INTERPOLATE_NORMAL:
+      GMM_ASSERT1(false, "Sorry, cannot derive the interpolated Normal");
+      break;
+
+    case GA_NODE_INTERPOLATE_DERIVATIVE:
+      GMM_ASSERT1(false, "Sorry, second order transformation derivative "
+                  "not taken into account");
+      break;
+
+    case GA_NODE_INTERPOLATE_FILTER:
+      ga_node_derivation(tree, workspace, m, child0, varname,
+                         interpolatename, order);
+      break;
+
+    case GA_NODE_ELEMENTARY_VAL:
+    case GA_NODE_ELEMENTARY_GRAD:
+    case GA_NODE_ELEMENTARY_HESS:
+    case GA_NODE_ELEMENTARY_DIVERG:
+    case GA_NODE_XFEM_PLUS_VAL:
+    case GA_NODE_XFEM_PLUS_GRAD:
+    case GA_NODE_XFEM_PLUS_HESS:
+    case GA_NODE_XFEM_PLUS_DIVERG:
+    case GA_NODE_XFEM_MINUS_VAL:
+    case GA_NODE_XFEM_MINUS_GRAD:
+    case GA_NODE_XFEM_MINUS_HESS:
+    case GA_NODE_XFEM_MINUS_DIVERG:
+      mi.resize(1); mi[0] = 2;
+      for (size_type i = 0; i < pnode->tensor_order(); ++i)
+        mi.push_back(pnode->tensor_proper_size(i));
+      pnode->t.adjust_sizes(mi);
+      switch(pnode->node_type) {
+      case GA_NODE_ELEMENTARY_VAL:
+        pnode->node_type = GA_NODE_ELEMENTARY_VAL_TEST; break;
+      case GA_NODE_ELEMENTARY_GRAD:
+        pnode->node_type = GA_NODE_ELEMENTARY_GRAD_TEST; break;
+      case GA_NODE_ELEMENTARY_HESS:
+        pnode->node_type = GA_NODE_ELEMENTARY_HESS_TEST; break;
+      case GA_NODE_ELEMENTARY_DIVERG:
+        pnode->node_type = GA_NODE_ELEMENTARY_DIVERG_TEST; break;
+      case GA_NODE_XFEM_PLUS_VAL:
+        pnode->node_type = GA_NODE_XFEM_PLUS_VAL_TEST; break;
+      case GA_NODE_XFEM_PLUS_GRAD:
+        pnode->node_type = GA_NODE_XFEM_PLUS_GRAD_TEST; break;
+      case GA_NODE_XFEM_PLUS_HESS:
+        pnode->node_type = GA_NODE_XFEM_PLUS_HESS_TEST; break;
+      case GA_NODE_XFEM_PLUS_DIVERG:
+        pnode->node_type = GA_NODE_XFEM_PLUS_DIVERG_TEST; break;
+      case GA_NODE_XFEM_MINUS_VAL:
+        pnode->node_type = GA_NODE_XFEM_MINUS_VAL_TEST; break;
+      case GA_NODE_XFEM_MINUS_GRAD:
+        pnode->node_type = GA_NODE_XFEM_MINUS_GRAD_TEST; break;
+      case GA_NODE_XFEM_MINUS_HESS:
+        pnode->node_type = GA_NODE_XFEM_MINUS_HESS_TEST; break;
+      case GA_NODE_XFEM_MINUS_DIVERG:
+        pnode->node_type = GA_NODE_XFEM_MINUS_DIVERG_TEST; break;
+      default : GMM_ASSERT1(false, "internal error");
+      }
+      pnode->test_function_type = order;
+      break;
+
+    case GA_NODE_OP:
+      switch(pnode->op_type) {
+        case GA_PLUS: case GA_MINUS:case GA_NODE_DIVERG:
+          if (mark0 && mark1) {
+            ga_node_derivation(tree, workspace, m, child0, varname,
+                               interpolatename, order);
+            ga_node_derivation(tree, workspace, m, child1, varname,
+                               interpolatename, order);
+          } else if (mark0) {
+            ga_node_derivation(tree, workspace, m, child0, varname,
+                               interpolatename, order);
+            tree.replace_node_by_child(pnode, 0);
+          } else {
+            ga_node_derivation(tree, workspace, m, child1, varname,
+                               interpolatename, order);
+            if (pnode->op_type == GA_MINUS) {
+              pnode->op_type = GA_UNARY_MINUS;
+              tree.clear_node(child0);
+            }
+            else
+              tree.replace_node_by_child(pnode, 1);
+          }
+          break;
+
+      case GA_UNARY_MINUS: case GA_QUOTE: case GA_SYM: case GA_SKEW:
+      case GA_TRACE: case GA_DEVIATOR: case GA_PRINT:
+        ga_node_derivation(tree, workspace, m, child0, varname,
+                           interpolatename, order);
+        break;
+
+      case GA_DOT: case GA_MULT: case GA_COLON: case GA_TMULT:
+      case GA_DOTMULT:
+        if (mark0 && mark1) {
+          if (sub_tree_are_equal(child0, child1, workspace, 0) &&
+              (pnode->op_type != GA_MULT || child0->tensor_order() < 2)) {
+            ga_node_derivation(tree, workspace, m, child1, varname,
+                               interpolatename, order);
+            tree.insert_node(pnode, GA_NODE_OP);
+            pnode->parent->op_type = GA_MULT;
+            tree.add_child(pnode->parent);
+            pnode->parent->children[1]->node_type = GA_NODE_CONSTANT;
+            pnode->parent->children[1]->init_scalar_tensor(scalar_type(2));
+          } else {
+            tree.duplicate_with_addition(pnode);
+            if ((pnode->op_type == GA_COLON && child0->tensor_order() == 2) ||
+                (pnode->op_type == GA_DOT && child0->tensor_order() == 1) ||
+                pnode->op_type == GA_DOTMULT ||
+                (child0->tensor_proper_size()== 1 &&
+                 child1->tensor_proper_size()== 1))
+              std::swap(pnode->children[0], pnode->children[1]);
+            ga_node_derivation(tree, workspace, m, child0, varname,
+                               interpolatename, order);
+            ga_node_derivation(tree, workspace, m,
+                               pnode->parent->children[1]->children[1],
+                               varname, interpolatename, order);
+          }
+        } else if (mark0) {
+          ga_node_derivation(tree, workspace, m, child0, varname,
+                             interpolatename, order);
+        } else
+          ga_node_derivation(tree, workspace, m, child1, varname,
+                             interpolatename, order);
+        break;
+
+      case GA_DIV: case GA_DOTDIV:
+        if (mark1) {
+          if (pnode->children[0]->node_type == GA_NODE_CONSTANT)
+            gmm::scale(pnode->children[0]->tensor().as_vector(),
+                       scalar_type(-1));
+          else {
+            if (mark0) {
+              tree.duplicate_with_subtraction(pnode);
+              ga_node_derivation(tree, workspace, m, child0, varname,
+                                 interpolatename, order);
+              pnode = pnode->parent->children[1];
+            } else {
+              tree.insert_node(pnode, GA_NODE_OP);
+              pnode->parent->op_type = GA_UNARY_MINUS;
+            }
+          }
+          tree.insert_node(pnode->children[1], GA_NODE_PARAMS);
+          pga_tree_node pnode_param = pnode->children[1];
+          tree.add_child(pnode_param);
+          std::swap(pnode_param->children[0], pnode_param->children[1]);
+          pnode_param->children[0]->node_type = GA_NODE_PREDEF_FUNC;
+          pnode_param->children[0]->name = "sqr";
+          tree.insert_node(pnode, GA_NODE_OP);
+          pga_tree_node pnode_mult = pnode->parent;
+          if (pnode->op_type == GA_DOTDIV)
+            pnode_mult->op_type = GA_DOTMULT;
+          else
+            pnode_mult->op_type = GA_MULT;
+          pnode_mult->children.resize(2, nullptr);
+          tree.copy_node(pnode_param->children[1],
+                         pnode_mult, pnode_mult->children[1]);
+          ga_node_derivation(tree, workspace, m, pnode_mult->children[1],
+                             varname, interpolatename, order);
+        } else {
+          ga_node_derivation(tree, workspace, m, child0, varname,
+                             interpolatename, order);
+        }
+        break;
+
+      default: GMM_ASSERT1(false, "Unexpected operation. Internal error.");
+      }
+      break;
+
+    case GA_NODE_C_MATRIX:
+      for (size_type i = 0; i < pnode->children.size(); ++i) {
+        if (pnode->children[i]->marked)
+          ga_node_derivation(tree, workspace, m, pnode->children[i],
+                             varname, interpolatename, order);
+        else {
+          pnode->children[i]->init_scalar_tensor(scalar_type(0));
+          pnode->children[i]->node_type = GA_NODE_ZERO;
+          tree.clear_children(pnode->children[i]);
+        }
+      }
+      break;
+
+    case GA_NODE_PARAMS:
+      if (child0->node_type == GA_NODE_RESHAPE) {
+        ga_node_derivation(tree, workspace, m, pnode->children[1],
+                           varname, interpolatename, order);
+      } else if (child0->node_type == GA_NODE_PREDEF_FUNC) {
+        std::string name = child0->name;
+        ga_predef_function_tab::const_iterator it = PREDEF_FUNCTIONS.find(name);
+        const ga_predef_function &F = it->second;
+
+        if (F.nbargs() == 1) {
+          switch (F.dtype()) {
+          case 0:
+            GMM_ASSERT1(false, "Cannot derive function " << child0->name
+                     << ". No derivative provided or not derivable function.");
+          case 1:
+            child0->name = F.derivative1();
+            break;
+          case 2: case 3:
+            {
+              child0->name = "DER_PDFUNC_" + child0->name;
+              if (!(ga_function_exists(child0->name))) {
+                if (F.dtype() == 2)
+                  ga_define_function(child0->name, 1, F.derivative1());
+                else {
+                  std::string expr=ga_derivative_scalar_function(F.expr(),"t");
+                  ga_define_function(child0->name, 1, expr);
+                }
+              }
+              // Inline extension if the derivative is affine (for instance
+              // for sqr)
+              ga_predef_function_tab::const_iterator
+                itp = PREDEF_FUNCTIONS.find(child0->name);
+              const ga_predef_function &Fp = itp->second;
+              if (Fp.is_affine("t")) {
+                scalar_type b = Fp(scalar_type(0));
+                scalar_type a = Fp(scalar_type(1)) - b;
+                pnode->node_type = GA_NODE_OP;
+                pnode->op_type = GA_MULT;
+                child0->init_scalar_tensor(a);
+                child0->node_type = ((a == scalar_type(0)) ?
+                                     GA_NODE_ZERO : GA_NODE_CONSTANT);
+                if (b != scalar_type(0)) {
+                  tree.insert_node(pnode, GA_NODE_OP);
+                  pnode->parent->op_type = (b > 0) ? GA_PLUS : GA_MINUS;
+                  tree.add_child(pnode->parent);
+                  pga_tree_node pnode_cte = pnode->parent->children[1];
+                  pnode_cte->node_type = GA_NODE_CONSTANT;
+                  pnode_cte->t = pnode->t;
+                  std::fill(pnode_cte->tensor().begin(),
+                            pnode_cte->tensor().end(), gmm::abs(b));
+                  pnode = pnode->parent;
+                }
+              }
+            }
+            break;
+          }
+          if (pnode->children.size() >= 2) {
+            tree.insert_node(pnode, GA_NODE_OP);
+            pga_tree_node pnode_op = pnode->parent;
+            if (child1->tensor_order() == 0)
+              pnode_op->op_type = GA_MULT;
+            else
+              pnode_op->op_type = GA_DOTMULT;
+            pnode_op->children.resize(2, nullptr);
+            tree.copy_node(child1, pnode_op, pnode_op->children[1]);
+            ga_node_derivation(tree, workspace, m, pnode_op->children[1],
+                               varname, interpolatename, order);
+          }
+        } else {
+          pga_tree_node child2 = pnode->children[2];
+
+          if (child1->marked && child2->marked)
+            tree.duplicate_with_addition(pnode);
+
+          if (child1->marked) {
+            switch (F.dtype()) {
+            case 0:
+              GMM_ASSERT1(false, "Cannot derive function " << child0->name
+                          << ". No derivative provided");
+            case 1:
+              child0->name = F.derivative1();
+              break;
+            case 2:
+              child0->name = "DER_PDFUNC1_" + child0->name;
+              if (!(ga_function_exists(child0->name)))
+                ga_define_function(child0->name, 2, F.derivative1());
+              break;
+            case 3:
+              child0->name = "DER_PDFUNC1_" + child0->name;
+              if (!(ga_function_exists(child0->name))) {
+                std::string expr = ga_derivative_scalar_function(F.expr(), "t");
+                ga_define_function(child0->name, 2, expr);
+              }
+              break;
+            }
+            tree.insert_node(pnode, GA_NODE_OP);
+            pga_tree_node pnode_op = pnode->parent;
+            if (child1->tensor_order() == 0)
+              pnode_op->op_type = GA_MULT;
+            else
+              pnode_op->op_type = GA_DOTMULT;
+            pnode_op->children.resize(2, nullptr);
+            tree.copy_node(child1, pnode_op, pnode_op->children[1]);
+            ga_node_derivation(tree, workspace, m, pnode_op->children[1],
+                               varname, interpolatename, order);
+          }
+          if (child2->marked) {
+            if (child1->marked && child2->marked)
+              pnode = pnode->parent->parent->children[1];
+            child0 = pnode->children[0]; child1 = pnode->children[1];
+            child2 = pnode->children[2];
+
+            switch (F.dtype()) {
+            case 0:
+              GMM_ASSERT1(false, "Cannot derive function " << child0->name
+                          << ". No derivative provided");
+            case 1:
+              child0->name = F.derivative2();
+              break;
+            case 2:
+              child0->name = "DER_PDFUNC2_" + child0->name;
+              if (!(ga_function_exists(child0->name)))
+                ga_define_function(child0->name, 2, F.derivative2());
+              break;
+            case 3:
+              child0->name = "DER_PDFUNC2_" + child0->name;
+              if (!(ga_function_exists(child0->name))) {
+                std::string expr = ga_derivative_scalar_function(F.expr(), "u");
+                ga_define_function(child0->name, 2, expr);
+              }
+              break;
+            }
+            tree.insert_node(pnode, GA_NODE_OP);
+            pga_tree_node pnode_op = pnode->parent;
+            if (child2->tensor_order() == 0)
+              pnode_op->op_type = GA_MULT;
+            else
+              pnode_op->op_type = GA_DOTMULT;
+            pnode_op->children.resize(2, nullptr);
+            tree.copy_node(child2, pnode_op, pnode_op->children[1]);
+            ga_node_derivation(tree, workspace, m, pnode_op->children[1],
+                               varname, interpolatename, order);
+          }
+        }
+      } else if (child0->node_type == GA_NODE_SPEC_FUNC) {
+        GMM_ASSERT1(false, "internal error");
+      } else if (child0->node_type == GA_NODE_OPERATOR) {
+        if (child0->der2)
+          GMM_ASSERT1(false, "Error in derivation of the assembly string. "
+                      "Cannot derive again operator " <<  child0->name);
+
+        size_type nbargs_der = 0;
+        for (size_type i = 1; i < pnode->children.size(); ++i)
+          if (pnode->children[i]->marked) ++nbargs_der;
+        pga_tree_node pnode2 = 0;
+
+        size_type j = 0;
+        for (size_type i = 1; i < pnode->children.size(); ++i) {
+          if (pnode->children[i]->marked) {
+            ++j;
+            if (j != nbargs_der) {
+              tree.insert_node(pnode, GA_NODE_OP);
+              pga_tree_node pnode_op = pnode->parent;
+              pnode_op->node_type = GA_NODE_OP;
+              pnode_op->op_type = GA_PLUS;
+              pnode_op->children.resize(2, nullptr);
+              tree.copy_node(pnode, pnode_op , pnode_op->children[1]);
+              pnode2 = pnode_op->children[1];
+            }
+            else pnode2 = pnode;
+
+            if (child0->der1)
+              pnode2->children[0]->der2 = i;
+            else
+              pnode2->children[0]->der1 = i;
+            tree.insert_node(pnode2, GA_NODE_OP);
+            pga_tree_node pnode_op = pnode2->parent;
+            // calcul de l'ordre de reduction
+            size_type red = pnode->children[i]->tensor_order();
+            switch (red) {
+            case 0 : pnode_op->op_type = GA_MULT; break;
+            case 1 : pnode_op->op_type = GA_DOT; break;
+            case 2 : pnode_op->op_type = GA_COLON; break;
+            default: GMM_ASSERT1(false, "Error in derivation of the assembly "
+                                 "string. Bad reduction order.")
+            }
+            pnode_op->children.resize(2, nullptr);
+            tree.copy_node(pnode->children[i], pnode_op,
+                           pnode_op->children[1]);
+            ga_node_derivation(tree, workspace, m, pnode_op->children[1],
+                               varname, interpolatename, order);
+
+            if (pnode2->children[0]->name.compare("Norm_sqr") == 0
+                && pnode2->children[0]->der1 == 1) {
+              pnode2->node_type = GA_NODE_OP;
+              pnode2->op_type = GA_MULT;
+              pnode2->children[0]->node_type = GA_NODE_CONSTANT;
+              pnode2->children[0]->init_scalar_tensor(scalar_type(2));
+            }
+
+
+          }
+        }
+
+      } else {
+        ga_node_derivation(tree, workspace, m, child0, varname,
+                           interpolatename, order);
+      }
+      break;
+
+#endif
+
+    default: GMM_ASSERT1(false, "Unexpected node type " << pnode->node_type
+                         << " in derivation. Internal error.");
+    }
+  }
+ 
+  
+  // The tree is modified. Should be copied first and passed to
+  // ga_semantic_analysis after for enrichment
+  void ga_grad(ga_tree &tree, const ga_workspace &workspace, const mesh &m) {
+    // cout << "compute gradient of " << ga_tree_to_string(tree) << endl;
+    if (!(tree.root)) return;
+    if (ga_node_mark_tree_for_grad(tree.root))
+      ga_node_grad(tree, workspace, m, tree.root);
+    else
+      tree.clear();
+    // cout << "gradient tree : " << ga_tree_to_string(tree) << endl;
+  }
+
+
 
   static void ga_replace_test_by_cte(pga_tree_node pnode,  bool full_replace) {
     for (size_type i = 0; i < pnode->children.size(); ++i)
