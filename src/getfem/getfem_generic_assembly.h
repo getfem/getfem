@@ -108,6 +108,7 @@ namespace getfem {
      std::map<var_trans_pair, base_tensor> &derivatives,
      bool compute_derivatives) const = 0;
     virtual void finalize() const = 0;
+    virtual std::string expression(void) const { return std::string(); }
 
     virtual ~virtual_interpolate_transformation() {}
   };

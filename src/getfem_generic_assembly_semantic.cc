@@ -3205,100 +3205,117 @@ namespace getfem {
       child1->node_type = GA_NODE_CONSTANT;
       break;
 
-  #ifdef continue_here
 
+    case GA_NODE_INTERPOLATE_HESS_TEST:
+    case GA_NODE_INTERPOLATE_HESS:
+      GMM_ASSERT1(false, "Sorry, cannot derive a hessian once more");
+      break;
+      
     case GA_NODE_INTERPOLATE_VAL:
     case GA_NODE_INTERPOLATE_GRAD:
-    case GA_NODE_INTERPOLATE_HESS:
     case GA_NODE_INTERPOLATE_DIVERG:
       {
         bool is_val(pnode->node_type == GA_NODE_INTERPOLATE_VAL);
         bool is_grad(pnode->node_type == GA_NODE_INTERPOLATE_GRAD);
-        bool is_hess(pnode->node_type == GA_NODE_INTERPOLATE_HESS);
         bool is_diverg(pnode->node_type == GA_NODE_INTERPOLATE_DIVERG);
+	
+	std::string &tname = pnode->interpolate_name;
+	std::string expr_trans = 
+	  workspace.interpolate_transformation(tname)->expression();
+	if (expr_trans.size() == 0)
+	  GMM_ASSERT1(false, "Sorry, the gradient of tranformation "
+		      << tname << " cannot be calculated. "
+		      "The gradient computation is available only for "
+		      "transformations having an explicit expression");
 
-        bool ivar = (pnode->name.compare(varname) == 0 &&
-                     pnode->interpolate_name.compare(interpolatename) == 0);
-        bool itrans = !ivar;
-        if (!itrans) {
-          std::set<var_trans_pair> vars;
-          workspace.interpolate_transformation(pnode->interpolate_name)
-            ->extract_variables(workspace, vars, true, m,
-                                pnode->interpolate_name);
-          for (const var_trans_pair &var : vars) {
-            if (var.varname.compare(varname) == 0 &&
-                var.transname.compare(interpolatename) == 0)
-              itrans = true;
-          }
-        }
 
-        pga_tree_node pnode_trans = pnode;
-        if (is_hess) {
-          GMM_ASSERT1(!itrans, "Sorry, cannot derive a hessian once more");
-        } else if (itrans && ivar) {
-          tree.duplicate_with_addition(pnode);
-          pnode_trans = pnode->parent->children[1];
-        }
+	// bool ivar = (pnode->name.compare(varname) == 0 &&
+        //              pnode->interpolate_name.compare(interpolatename) == 0);
+        // bool itrans = !ivar;
+        // if (!itrans) {
+        //   std::set<var_trans_pair> vars;
+        //   workspace.interpolate_transformation(pnode->interpolate_name)
+        //     ->extract_variables(workspace, vars, true, m,
+        //                         pnode->interpolate_name);
+        //   for (const var_trans_pair &var : vars) {
+        //     if (var.varname.compare(varname) == 0 &&
+        //         var.transname.compare(interpolatename) == 0)
+        //       itrans = true;
+        //   }
+        // }
+	
+	pga_tree_node pnode_trans = pnode;
+	tree.duplicate_with_operation(pnode_trans, GA_MULT);
+	pga_tree_node pnode_grad_trans = pnode_trans->parent->children[1];
+	
+	if (is_val) pnode_trans->node_type = GA_NODE_INTERPOLATE_GRAD;
+	if (is_grad) pnode_trans->node_type = GA_NODE_INTERPOLATE_HESS;
+	// if (is_diverg) ??;
+	  
+	// Pour le Hessien, il s'agit vraiment d'une multiplication ? ou d'un "." ?
 
-        if (ivar) {
-          mi.resize(1); mi[0] = 2;
-          for (size_type i = 0; i < pnode->tensor_order(); ++i)
-            mi.push_back(pnode->tensor_proper_size(i));
-          pnode->t.adjust_sizes(mi);
-          if (is_val) // --> t(Qmult*ndof,Qmult*target_dim)
-            pnode->node_type = GA_NODE_INTERPOLATE_VAL_TEST;
-          else if (is_grad) // --> t(Qmult*ndof,Qmult*target_dim,N)
-            pnode->node_type = GA_NODE_INTERPOLATE_GRAD_TEST;
-          else if (is_hess) // --> t(Qmult*ndof,Qmult*target_dim,N,N)
-            pnode->node_type = GA_NODE_INTERPOLATE_HESS_TEST;
-          else if (is_diverg) // --> t(Qmult*ndof)
-            pnode->node_type = GA_NODE_INTERPOLATE_DIVERG_TEST;
-          pnode->test_function_type = order;
-        }
+	// Calcul et insertion du gradient de la transformation
+	
+//         if (ivar) {
+//           mi.resize(1); mi[0] = 2;
+//           for (size_type i = 0; i < pnode->tensor_order(); ++i)
+//             mi.push_back(pnode->tensor_proper_size(i));
+//           pnode->t.adjust_sizes(mi);
+//           if (is_val) // --> t(Qmult*ndof,Qmult*target_dim)
+//             pnode->node_type = GA_NODE_INTERPOLATE_VAL_TEST;
+//           else if (is_grad) // --> t(Qmult*ndof,Qmult*target_dim,N)
+//             pnode->node_type = GA_NODE_INTERPOLATE_GRAD_TEST;
+//           else if (is_hess) // --> t(Qmult*ndof,Qmult*target_dim,N,N)
+//             pnode->node_type = GA_NODE_INTERPOLATE_HESS_TEST;
+//           else if (is_diverg) // --> t(Qmult*ndof)
+//             pnode->node_type = GA_NODE_INTERPOLATE_DIVERG_TEST;
+//           pnode->test_function_type = order;
+//         }
 
-        if (itrans) {
-          const mesh_fem *mf = workspace.associated_mf(pnode_trans->name);
-          size_type q = workspace.qdim(pnode_trans->name);
-          size_type n = mf->linked_mesh().dim();
-          bgeot::multi_index mii = workspace.qdims(pnode_trans->name);
+//         if (itrans) {
+//           const mesh_fem *mf = workspace.associated_mf(pnode_trans->name);
+//           size_type q = workspace.qdim(pnode_trans->name);
+//           size_type n = mf->linked_mesh().dim();
+//           bgeot::multi_index mii = workspace.qdims(pnode_trans->name);
 
-          if (is_val)  // --> t(target_dim*Qmult,N)
-            pnode_trans->node_type = GA_NODE_INTERPOLATE_GRAD;
-          else if (is_grad || is_diverg)  // --> t(target_dim*Qmult,N,N)
-            pnode_trans->node_type = GA_NODE_INTERPOLATE_HESS;
+//           if (is_val)  // --> t(target_dim*Qmult,N)
+//             pnode_trans->node_type = GA_NODE_INTERPOLATE_GRAD;
+//           else if (is_grad || is_diverg)  // --> t(target_dim*Qmult,N,N)
+//             pnode_trans->node_type = GA_NODE_INTERPOLATE_HESS;
 
-          if (n > 1) {
-            if (q == 1 && mii.size() <= 1) { mii.resize(1); mii[0] = n; }
-            else mii.push_back(n);
+//           if (n > 1) {
+//             if (q == 1 && mii.size() <= 1) { mii.resize(1); mii[0] = n; }
+//             else mii.push_back(n);
 
-            if (is_grad || is_diverg) mii.push_back(n);
-          }
-          pnode_trans->t.adjust_sizes(mii);
-          tree.duplicate_with_operation(pnode_trans,
-                                        (n > 1) ? GA_DOT : GA_MULT);
-          pga_tree_node pnode_der = pnode_trans->parent->children[1];
-          pnode_der->node_type = GA_NODE_INTERPOLATE_DERIVATIVE;
-          if (n == 1)
-            pnode_der->init_vector_tensor(2);
-          else
-            pnode_der->init_matrix_tensor(2, n);
-          pnode_der->test_function_type = order;
-          pnode_der->name = varname;
-          pnode_der->interpolate_name_der = pnode_der->interpolate_name;
-          pnode_der->interpolate_name = interpolatename;
+//             if (is_grad || is_diverg) mii.push_back(n);
+//           }
+//           pnode_trans->t.adjust_sizes(mii);
+//           tree.duplicate_with_operation(pnode_trans,
+//                                         (n > 1) ? GA_DOT : GA_MULT);
+//           pga_tree_node pnode_der = pnode_trans->parent->children[1];
+//           pnode_der->node_type = GA_NODE_INTERPOLATE_DERIVATIVE;
+//           if (n == 1)
+//             pnode_der->init_vector_tensor(2);
+//           else
+//             pnode_der->init_matrix_tensor(2, n);
+//           pnode_der->test_function_type = order;
+//           pnode_der->name = varname;
+//           pnode_der->interpolate_name_der = pnode_der->interpolate_name;
+//           pnode_der->interpolate_name = interpolatename;
 
-          if (is_diverg) { // --> t(Qmult*ndof)
-            tree.insert_node(pnode_trans->parent, GA_NODE_OP);
-            pga_tree_node pnode_tr = pnode_trans->parent->parent;
-            pnode_tr->op_type = GA_TRACE;
-            pnode_tr->init_vector_tensor(2);
-//            pnode_tr->test_function_type = order;
-//            pnode_tr->name_test1 = pnode_trans->name_test1;
-//            pnode_tr->name_test2 = pnode_trans->name_test2;
-          }
-        }
+//           if (is_diverg) { // --> t(Qmult*ndof)
+//             tree.insert_node(pnode_trans->parent, GA_NODE_OP);
+//             pga_tree_node pnode_tr = pnode_trans->parent->parent;
+//             pnode_tr->op_type = GA_TRACE;
+//             pnode_tr->init_vector_tensor(2);
+// //            pnode_tr->test_function_type = order;
+// //            pnode_tr->name_test1 = pnode_trans->name_test1;
+// //            pnode_tr->name_test2 = pnode_trans->name_test2;
+//           }
+//        }
       }
       break;
+  #ifdef continue_here
 
     case GA_NODE_INTERPOLATE_VAL_TEST:
     case GA_NODE_INTERPOLATE_GRAD_TEST:
@@ -3352,9 +3369,6 @@ namespace getfem {
       }
       break;
 
-    case GA_NODE_INTERPOLATE_HESS_TEST:
-      GMM_ASSERT1(false, "Sorry, cannot derive a hessian once more");
-      break;
 
     case GA_NODE_INTERPOLATE_X:
       {

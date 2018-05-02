@@ -620,6 +620,7 @@ namespace getfem {
       local_gis = ga_instruction_set();
     }
 
+    std::string expression(void) const { return expr; }
 
     int transform(const ga_workspace &/*workspace*/, const mesh &m,
                   fem_interpolation_context &ctx_x,
@@ -748,6 +749,8 @@ namespace getfem {
                            const std::string &/* interpolate_name */) const {}
     void init(const ga_workspace &/* workspace */) const {}
     void finalize() const {}
+    
+    std::string expression(void) const { return "Id(meshdim)"; }
 
     int transform(const ga_workspace &/*workspace*/, const mesh &m_x,
                   fem_interpolation_context &ctx_x,
@@ -789,11 +792,8 @@ namespace getfem {
   };
 
 
-  pinterpolate_transformation interpolate_transformation_neighbour_instance()
-  {
-    pinterpolate_transformation
-      p = std::make_shared<interpolate_transformation_neighbour>();
-    return p;
+  pinterpolate_transformation interpolate_transformation_neighbour_instance() {
+    return (std::make_shared<interpolate_transformation_neighbour>());
   }
 
   //=========================================================================
@@ -814,6 +814,7 @@ namespace getfem {
                            const std::string &/* interpolate_name */) const {}
     void init(const ga_workspace &/* workspace */) const {}
     void finalize() const {}
+    std::string expression(void) const { return "Id(meshdim)"; }
 
     int transform(const ga_workspace &/*workspace*/, const mesh &m_x,
                   fem_interpolation_context &ctx_x,
