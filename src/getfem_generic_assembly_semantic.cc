@@ -1800,12 +1800,13 @@ namespace getfem {
 			     "Invalid parameter for Contract. "
 			     "Should be an index number.");
 	    ind[kk] = size_type(round(pnode->children[i]->tensor()[0]));
-	    indsize[kk] =  pnode->children[ll]->tensor_proper_size(ind[kk]);
 	    order = pnode->children[ll]->tensor_order();
 	    if (ind[kk] < 1 || ind[kk] > order)
 	      ga_throw_error(pnode->children[i]->expr, pnode->children[i]->pos,
 			     "Parameter out of range for Contract (should be "
 			     "between 1 and " << order << ")");
+	    ind[kk]--;
+	    indsize[kk] =  pnode->children[ll]->tensor_proper_size(ind[kk]);
 	    if (kk >= ind.size()/2 && indsize[kk] != indsize[kk-ind.size()/2])
 		ga_throw_error(child0->expr, child0->pos,
 			       "Invalid parameters for Contract. Cannot "
@@ -1827,7 +1828,7 @@ namespace getfem {
 	  size_type i1 = ind[0], i2 = ind[1];
 	  if (i1 == i2)
 	    ga_throw_error(child0->expr, child0->pos,
-			   "Invalid parameters for Contract. Repeated index");
+			   "Invalid parameters for Contract. Repeated index.");
 	  
 	  mi.resize(0);
 	  for (size_type i = 0; i < pnode->nb_test_functions(); ++i)

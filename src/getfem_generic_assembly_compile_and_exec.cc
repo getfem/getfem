@@ -1969,7 +1969,7 @@ namespace getfem {
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: single contraction on a single tensor");
 
-      size_type ii1 = tc1.size() / (nn*ii2*ii3);
+      size_type ii1 = tc1.size() / (nn*nn*ii2*ii3);
       
       base_tensor::iterator it = t.begin();
       for (size_type i = 0; i < ii3; ++i)
@@ -5923,7 +5923,7 @@ namespace getfem {
 	size_type kk = 0, ll = 1;
 	for (size_type i = 1; i < pnode->children.size(); ++i) {
 	  if (i == ind[kk]) {
-	    ind[kk] = size_type(round(pnode->children[i]->tensor()[0]));
+	    ind[kk] = size_type(round(pnode->children[i]->tensor()[0])-1);
 	    indsize[kk] =  pnode->children[ll]->tensor_proper_size(ind[kk]);
 	    ++kk;
 	  } else ll = i;
@@ -5963,10 +5963,11 @@ namespace getfem {
 	} 
 	else if (pnode->children.size() == 7) {
 	  // Particular cases should be detected (ii2=ii3=1 in particular).
-	  GMM_ASSERT1(false, "to be done !");
 	  size_type i1 = ind[0], i2 = ind[1], i3 = ind[2], i4 = ind[3];
 	  size_type nn1 = indsize[0], nn2 = indsize[1];
 	  size_type ii1 = 1, ii2 = 1, ii3 = 1, ii4 = 1, ii5 = 1, ii6 = 1;
+	  if (i1 > i2)
+	    { std::swap(i1, i2); std::swap(i3, i4); std::swap(nn1, nn2); }
 	  for (size_type i = 0; i < child1->tensor_order(); ++i) {
 	    if (i < i1) ii1 *= child1->tensor_proper_size(i);
 	    if (i > i1 && i < i2) ii2 *= child1->tensor_proper_size(i);
@@ -5978,8 +5979,6 @@ namespace getfem {
 	      ii5 *= child2->tensor_proper_size(i);
 	    if (i > i3 && i > i4) ii6 *= child2->tensor_proper_size(i);
 	  }
-	  if (i1 > i2)
-	    { std::swap(i1, i2); std::swap(i3, i4); std::swap(nn1, nn2); }
 	  if (child1->test_function_type==1 && child2->test_function_type==2)
 	    pgai = std::make_shared<ga_instruction_contract_2_2_rev>
 	      (pnode->tensor(), child1->tensor(), child2->tensor(),
@@ -6331,6 +6330,9 @@ namespace getfem {
                 break;
               case 1:
                 {
+		  GMM_ASSERT1(root->tensor_proper_size() == 1,
+			      "Invalid vector or tensor quantity. An order 1 "
+			      "weak form has to be a scalar quantity");
                   const mesh_fem *mf=workspace.associated_mf(root->name_test1);
                   const mesh_fem **mfg = 0;
                   add_interval_to_gis(workspace, root->name_test1, gis);
@@ -6370,6 +6372,9 @@ namespace getfem {
                 break;
               case 2:
                 {
+		  GMM_ASSERT1(root->tensor_proper_size() == 1,
+			      "Invalid vector or tensor quantity. An order 2 "
+			      "weak form has to be a scalar quantity");
                   const mesh_fem *mf1=workspace.associated_mf(root->name_test1);
                   const mesh_fem *mf2=workspace.associated_mf(root->name_test2);
                   const mesh_fem **mfg1 = 0, **mfg2 = 0;

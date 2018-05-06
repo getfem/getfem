@@ -35,7 +35,7 @@ import os
 NX = 4
 m = gf.Mesh('triangles grid', np.arange(0,1+1./NX,1./NX),
             np.arange(0,1+1./NX,1./NX))     # Structured mesh
-fem =  gf.Fem('FEM_PK(2,1)')
+fem = gf.Fem('FEM_PK(2,1)')
 mfu = gf.MeshFem(m, 1); mfu.set_fem(fem)    # Lagrange P1 scalar fem
 mim = gf.MeshIm(m, gf.Integ('IM_TRIANGLE(4)'))
 mfv = gf.MeshFem(m, 3); mfv.set_fem(fem)    # Lagrange P1 vector fem
@@ -52,10 +52,44 @@ md.set_variable('u', U)
 md.add_fem_variable('v', mfv)
 md.set_variable('v', V)
 
+# Simple test on the integral of u
+result = gf.asm('generic', mim, 0, "u", -1, md)
+if (abs(result-1) > 1e-8) : print "Bad value"; exit(1)
 
-print gf.asm('generic', mim, 0, "Def P(a):=a*(a'); Print(P(Grad_v))", -1, md)
-print gf.asm('generic', mim, 1, "Print(Grad_Test_u)", -1, md)
-print gf.asm('generic', mim, 0, "Def P(a):=a*(a'); Contract(P(Grad_v), 1, 2)", -1, md)
+# Single contraction and comparison with Trace
+result1 = gf.asm('generic', mim, 0,
+                 "Def P(a):=a*(a'); Contract(P(Grad_v), 1, 2)", -1, md)
+result2 = gf.asm('generic', mim, 0,
+                 "Def P(a):=a*(a'); Trace(P(Grad_v))", -1, md)
+if (abs(result1-result2) > 1e-8) : print "Bad value"; exit(1)
+
+# Constant order 3 tensor contraction test
+result1 = gf.asm('generic', mim, 0,
+                 "Contract([[[1,1],[2,2]],[[1,1],[2,2]]], 1, 2)", -1, md)
+result2 = np.array([3., 3.]);
+if (np.linalg.norm(result1-result2) > 1e-8) : print "Bad value"; exit(1)
+
+# Single contraction, comparison with "*"
+result1 = gf.asm('generic', mim, 0, "Contract(Grad_v, 2, Grad_u, 1)", -1, md)
+result2 = gf.asm('generic', mim, 0, "Grad_v * Grad_u", -1, md)
+if (np.linalg.norm(result1-result2) > 1e-8) : print "Bad value"; exit(1)
+
+# Double contraction order one expression, comparison with ":"
+result1 = gf.asm('generic', mim, 1,
+                 "Contract(Grad_v, 1, 2, Grad_Test_v, 1, 2)", -1, md)
+result2 = gf.asm('generic', mim, 1, "Grad_v : Grad_Test_v", -1, md)
+if (np.linalg.norm(result1-result2) > 1e-8) : print "Bad value"; exit(1)
+
+# Double contraction order two expression, comparison with ":"
+result1 = gf.asm('generic', mim, 2,
+                 "Contract(Grad_Test2_v, 1, 2, Grad_Test_v, 1, 2)", -1, md)
+result2 = gf.asm('generic', mim, 2, "Grad_Test2_v : Grad_Test_v", -1, md)
+if (np.linalg.norm(result1.full()-result2.full()) > 1e-8) :
+  print "Bad value"; exit(1)
+result1 = gf.asm('generic', mim, 2,
+                 "Contract(Grad_Test_v, 2, 1, Grad_Test2_v, 2, 1)", -1, md)
+if (np.linalg.norm(result1.full()-result2.full()) > 1e-8) :
+  print "Bad value"; exit(1)
 
 
 
