@@ -750,7 +750,7 @@ namespace getfem {
     void init(const ga_workspace &/* workspace */) const {}
     void finalize() const {}
     
-    std::string expression(void) const { return "Id(meshdim)"; }
+    std::string expression(void) const { return "X"; }
 
     int transform(const ga_workspace &/*workspace*/, const mesh &m_x,
                   fem_interpolation_context &ctx_x,
@@ -814,7 +814,7 @@ namespace getfem {
                            const std::string &/* interpolate_name */) const {}
     void init(const ga_workspace &/* workspace */) const {}
     void finalize() const {}
-    std::string expression(void) const { return "Id(meshdim)"; }
+    std::string expression(void) const { return "X"; }
 
     int transform(const ga_workspace &/*workspace*/, const mesh &m_x,
                   fem_interpolation_context &ctx_x,

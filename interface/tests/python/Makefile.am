@@ -26,6 +26,7 @@ EXTRA_DIST= 						\
 	check_export.py 				\
 	check_global_functions.py			\
 	check_levelset.py				\
+	check_asm.py    				\
 	demo_crack.py 					\
 	demo_fictitious_domains.py 			\
 	demo_laplacian.py 				\
@@ -54,6 +55,7 @@ if BUILDPYTHON
 TESTS = 						\
 	check_export.py					\
 	check_global_functions.py			\
+	check_asm.py	  				\
 	demo_wave.py					\
 	demo_laplacian.py				\
 	$(optpy)

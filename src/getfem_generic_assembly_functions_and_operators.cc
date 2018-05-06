@@ -561,7 +561,6 @@ namespace getfem {
     SPEC_OP.insert("element_K");
     SPEC_OP.insert("element_B");
     SPEC_OP.insert("Normal");
-    SPEC_OP.insert("Reshape");
     SPEC_OP.insert("Sym");
     SPEC_OP.insert("Skew");
     SPEC_OP.insert("Def");
@@ -573,6 +572,8 @@ namespace getfem {
     SPEC_OP.insert("Xfem_plus");
     SPEC_OP.insert("Xfem_minus");
     SPEC_OP.insert("Print");
+    SPEC_OP.insert("Reshape");
+    SPEC_OP.insert("Contract");
     SPEC_OP.insert("Diff");
   }
 

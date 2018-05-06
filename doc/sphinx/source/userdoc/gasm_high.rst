@@ -58,9 +58,9 @@ A specific language has been developed to describe the weak formulation of bound
 
   - ``Reshape(t, i, j, ...)``: Reshape a vector/matrix/tensor. Note that all tensors in |gf| are stored in the Fortran order.
 
-  - A certain number of linear and nonlinear operators (``Trace``, ``Norm``, ``Det``, ``Deviator``, ...). The nonlinear operators cannot be applied to test functions.
+  - A certain number of linear and nonlinear operators (``Trace``, ``Norm``, ``Det``, ``Deviator``, ``Contract``, ...). The nonlinear operators cannot be applied to test functions.
 
-  - ``Diff(expression, variable)``: The possibility to explicity differentiate an expression with respect to a variable
+  - ``Diff(expression, variable)``: The possibility to explicity differentiate an expression with respect to a variable.
 
   - Possiblility of macro definition (in the model, the ga_workspace object or directly in the assembly string). The macros should be some valid expressions that are expanded inline at the lexical analysis phase (if they are used several times, the computation is automatically factorized at the compilation stage).
 
@@ -460,9 +460,9 @@ A certain number of binary operations between tensors are available:
 
     - ``/`` stands for the division by a scalar.
 
-    - ``.`` stands for the scalar product of vectors, or more generally to the reduction of a tensor with respect to the last index with a vector. Note that ``*`` and ``.`` are equivalent for matrix-vector multiplication.
+    - ``.`` stands for the scalar product of vectors, or more generally to the contraction of a tensor with respect to its last index with a vector or with the first index of another tensor. Note that ``*`` and ``.`` are equivalent for matrix-vector or matrix-matrix multiplication.
 
-    - ``:`` stands for the the |Frobenius| product of matrices or more generally to the reduction of a tensor with respect to the two last indices with a matrix. Note that ``*`` and ``:`` are equivalent for (fourth order tensor)-matrix multiplication.
+    - ``:`` stands for the the |Frobenius| product of matrices or more generally to the contraction of a tensor with respect to the two last indices with a matrix. Note that ``*`` and ``:`` are equivalent for (fourth order tensor)-matrix multiplication.
 
     - ``.*`` stands for the multiplication of two vectors/matrix/tensor componentwise.
 
@@ -470,6 +470,10 @@ A certain number of binary operations between tensors are available:
 
     - ``@`` stands for the tensor product.
 
+    - ``Contract(A, i, B, j)`` stands for the contraction of tensors A and B with respect to the ith index of A and jth index of B. The first index is numbered 1. For instance ``Contract(V,1,W,1)`` is equivalent to ``V.W`` for two vectors ``V`` and ``W``.
+      
+    - ``Contract(A, i, j, B, k, l)`` stands for the double contraction of tensors A and B with respect to indices i,j of A and indices k,l of B. The first index is numbered 1. For instance ``Contract(A,1,2,B,1,2)`` is equivalent to ``A:B`` for two matrices ``A`` and ``B``.
+      
 
 Unary operators
 ---------------
@@ -478,7 +482,9 @@ Unary operators
   
   - ``'`` stands for the transpose of a matrix or line view of a vector.
   
+  - ``Contract(A, i, j)`` stands for the contraction of tensor A with respect to its ith and jth indices. The first index is numbered 1. For instance, ``Contract(A, 1, 2)`` is equivalent to ``Trace(A)`` for a matrix ``A``.
 
+    
 Parentheses
 -----------
 

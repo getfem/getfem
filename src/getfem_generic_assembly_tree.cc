@@ -1044,6 +1044,11 @@ namespace getfem {
       GMM_ASSERT1(pnode->children.size() == 0, "Invalid tree");
       break;
 
+    case GA_NODE_CONTRACT:
+      str << "Contract";
+      GMM_ASSERT1(pnode->children.size() == 0, "Invalid tree");
+      break;
+
     case GA_NODE_C_MATRIX:
       {
         GMM_ASSERT1(pnode->children.size(), "Invalid tree");
@@ -1123,12 +1128,6 @@ namespace getfem {
   // 2 : reserved prefix Grad, Hess, Div, Derivative_ Test and Test2
   // 3 : reserved prefix Dot and Previous
   int ga_check_name_validity(const std::string &name) {
-
-    if (!(name.compare("X")) ||
-        !(name.compare("Normal")) ||
-        !(name.compare("Reshape")))
-      return 1;
-
 
     if (name.compare(0, 11, "Derivative_") == 0)
       return 2;
