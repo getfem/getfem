@@ -347,15 +347,16 @@ namespace getfem {
     model_real_sparse_matrix unreduced_K;
     std::shared_ptr<base_vector> V;
     base_vector unreduced_V;
-    scalar_type E = scalar_type(0.);
     base_tensor assemb_t;
 
   public:
 
     const model_real_sparse_matrix &assembled_matrix() const { return *K;}
     model_real_sparse_matrix &assembled_matrix() { return *K; }
-    scalar_type &assembled_potential() { return E; }
-    const scalar_type &assembled_potential() const { return E; }
+    scalar_type &assembled_potential()
+    { GMM_ASSERT1(assemb_t.size() == 1, "Bad result size"); return assemb_t[0]; }
+    const scalar_type &assembled_potential() const
+    { GMM_ASSERT1(assemb_t.size() == 1, "Bad result size"); return assemb_t[0]; }
     const base_vector &assembled_vector() const { return *V; }
     base_vector &assembled_vector() { return *V; }
     void set_assembled_matrix(model_real_sparse_matrix &K_) {

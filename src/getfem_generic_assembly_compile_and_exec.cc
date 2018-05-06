@@ -1559,6 +1559,22 @@ namespace getfem {
       : t(t_), tc1(tc1_) {}
   };
 
+  struct ga_instruction_add_to_coeff : public ga_instruction {
+    base_tensor &t;
+    const base_tensor &tc1;
+    scalar_type &coeff;
+    virtual int exec() {
+      GA_DEBUG_INFO("Instruction: addition with scale");
+      GA_DEBUG_ASSERT(t.size() == tc1.size(), "internal error " << t.size()
+                      << " incompatible with " << tc1.size());
+      gmm::add(gmm::scaled(tc1.as_vector(), coeff), t.as_vector());
+      return 0;
+    }
+    ga_instruction_add_to_coeff(base_tensor &t_, const base_tensor &tc1_,
+				scalar_type &coeff_)
+      : t(t_), tc1(tc1_), coeff(coeff_) {}
+  };
+
   struct ga_instruction_sub : public ga_instruction {
     base_tensor &t;
     const base_tensor &tc1, &tc2;
@@ -6122,15 +6138,9 @@ namespace getfem {
 
         gis.coeff = scalar_type(1);
         pga_instruction pgai;
-        if (scalar) {
-          pgai = std::make_shared<ga_instruction_scalar_assembly>
-            (root->tensor(), workspace.assembled_potential(), gis.coeff);
-
-        } else {
-          workspace.assembled_tensor() = root->tensor();
-          pgai = std::make_shared<ga_instruction_add_to>
-            (workspace.assembled_tensor(), root->tensor());
-        }
+	workspace.assembled_tensor() = root->tensor();
+	pgai = std::make_shared<ga_instruction_add_to_coeff>
+	  (workspace.assembled_tensor(), root->tensor(), gis.coeff);
         gis.whole_instructions[rm].instructions.push_back(std::move(pgai));
       }
     }
@@ -6259,7 +6269,7 @@ namespace getfem {
   }
 
   void ga_compile(ga_workspace &workspace,
-                         ga_instruction_set &gis, size_type order) {
+		  ga_instruction_set &gis, size_type order) {
     gis.transformations.clear();
     gis.whole_instructions.clear();
     for (size_type version : std::array<size_type, 3>{1, 0, 2}) {
@@ -6305,19 +6315,19 @@ namespace getfem {
                 auto *imd
                   = workspace.associated_im_data(td.varname_interpolation);
                 auto &V = const_cast<model_real_plain_vector &>
-            (workspace.value(td.varname_interpolation));
+		  (workspace.value(td.varname_interpolation));
                 GMM_ASSERT1(imd, "Internal error");
                 auto pgai = std::make_shared<ga_instruction_assignment>
-            (root->tensor(), V, gis.ctx, imd);
+		  (root->tensor(), V, gis.ctx, imd);
                 rmi.instructions.push_back(std::move(pgai));
-        }
-            } else { // assembly
-              // Addition of an assembly instruction
+	      }
+            } else { // Addition of an assembly instruction
               pga_instruction pgai;
               switch(order) {
               case 0:
-                pgai = std::make_shared<ga_instruction_scalar_assembly>
-                  (root->tensor(), workspace.assembled_potential(), gis.coeff);
+		workspace.assembled_tensor() = root->tensor();
+		pgai = std::make_shared<ga_instruction_add_to_coeff>
+		  (workspace.assembled_tensor(), root->tensor(), gis.coeff);
                 break;
               case 1:
                 {

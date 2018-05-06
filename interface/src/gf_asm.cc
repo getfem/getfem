@@ -480,7 +480,10 @@ static void do_high_level_generic_assembly(mexargs_in& in, mexargs_out& out) {
   switch (order) {
   case 0:
     workspace.assembly(0);
-    out.pop().from_scalar(workspace.assembled_potential());
+    if (workspace.assembled_tensor().size() == 1)
+      out.pop().from_scalar(workspace.assembled_potential());
+    else
+      out.pop().from_dlvector(workspace.assembled_tensor().as_vector());
     break;
 
   case 1:

@@ -739,7 +739,7 @@ namespace getfem {
       gmm::clear(unreduced_V);
       gmm::resize(unreduced_V, ndof);
     }
-    E = 0;
+    gmm::clear(assembled_tensor().as_vector());
     GA_TOCTIC("Init time");
 
     ga_exec(gis, *this);
@@ -749,7 +749,7 @@ namespace getfem {
       MPI_SUM_VECTOR(assembled_vector());
       MPI_SUM_VECTOR(unreduced_V);
     } else if (order == 0) {
-      assembled_potential() = MPI_SUM_SCALAR(assembled_potential());
+      MPI_SUM_VECTOR(assembled_tensor().as_vector());
     }
 
     // Deal with reduced fems.
