@@ -480,7 +480,7 @@ Unary operators
  
   - ``-`` the unary minus operator: change the sign of an expression.
   
-  - ``'`` stands for the transpose of a matrix or line view of a vector.
+  - ``'`` stands for the transpose of a matrix or line view of a vector. It a tensor ``A`` is of order greater than two,``A'`` denotes the inversion of the two first indices.
   
   - ``Contract(A, i, j)`` stands for the contraction of tensor A with respect to its ith and jth indices. The first index is numbered 1. For instance, ``Contract(A, 1, 2)`` is equivalent to ``Trace(A)`` for a matrix ``A``.
 

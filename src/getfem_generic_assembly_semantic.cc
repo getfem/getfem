@@ -819,8 +819,11 @@ namespace getfem {
         mi = size0;
         if (child0->tensor_proper_size() == 1)
           { tree.replace_node_by_child(pnode, 0); pnode = child0; break; }
-        else if (dim0 == 2) std::swap(mi.back(), mi[size0.size()-2]);
-        else { size_type N = mi.back(); mi.back() = 1; mi.push_back(N); }
+        else if (dim0 == 1)
+	  { size_type N = mi.back(); mi.back() = 1; mi.push_back(N); }
+	else std::swap(mi[child0->nb_test_functions()],
+		       mi[child0->nb_test_functions()+1]);
+        
 
         pnode->t.adjust_sizes(mi);
         pnode->test_function_type = child0->test_function_type;
@@ -830,21 +833,28 @@ namespace getfem {
         pnode->interpolate_name_test2 = child0->interpolate_name_test2;
         pnode->qdim1 = child0->qdim1;
         pnode->qdim2 = child0->qdim2;
-        if (all_cte) {
-          pnode->node_type = GA_NODE_CONSTANT;
-          pnode->test_function_type = 0;
-          if (dim0 == 2) {
-            for (size_type i = 0; i < mi.back(); ++i)
-              for (size_type j = 0; j < mi[size0.size()-2]; ++j)
-                pnode->tensor()(j, i) = child0->tensor()(i,j);
-          } else if (dim0 == 1) {
-            for (size_type i = 0; i < mi.back(); ++i)
-              pnode->tensor()(0, i) = child0->tensor()[i];
-          }
-          tree.clear_children(pnode);
-        } else if (child0->node_type == GA_NODE_ZERO) {
+	if (child0->node_type == GA_NODE_ZERO) {
           pnode->node_type = GA_NODE_ZERO;
           gmm::clear(pnode->tensor().as_vector());
+          tree.clear_children(pnode);
+        } else if (all_cte) {
+          pnode->node_type = GA_NODE_CONSTANT;
+          pnode->test_function_type = 0;
+
+	  if (dim0 == 1) {
+	    for (size_type i = 0; i < mi.back(); ++i)
+              pnode->tensor()(0, i) = child0->tensor()[i];
+          } else {
+	    size_type n1 = child0->tensor_proper_size(0);
+	    size_type n2 = child0->tensor_proper_size(1);
+	    size_type nn = child0->tensor().size()/(n1*n2);
+	    auto it = pnode->tensor().begin();
+	    for (size_type i = 0; i < nn; ++i)
+	      for (size_type j = 0; j < n1; ++j)
+		for (size_type k = 0; k < n2; ++k, ++it)
+		  *it = child0->tensor()[j+k*n1+i*n1*n2];
+	    GA_DEBUG_ASSERT(it == pnode->tensor().end(), "Wrong sizes");
+          }
           tree.clear_children(pnode);
         }
         break;
@@ -3628,8 +3638,15 @@ namespace getfem {
 	ga_node_grad(tree, workspace, m, child0);
         break;
 
-     
-	  
+	//       case GA_QUOTE:
+	// Si vecteur alors reshape(grad argument)
+	// Si matrice, alors inversion premier indice du gradient de l'argument
+	//    .. il faut donc étendre le quote aux indices multiples ...
+	// ga_node_grad(tree, workspace, m, child0);
+
+	// case GA_SYM: remplacer par (T+T')/2 et appel recursif (avec marked
+	// mis à jour sur les fils)
+	
  #ifdef continue_here
 
       case GA_QUOTE: case GA_SYM: case GA_SKEW:

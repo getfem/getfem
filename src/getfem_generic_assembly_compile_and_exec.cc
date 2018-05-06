@@ -1741,22 +1741,56 @@ namespace getfem {
   struct ga_instruction_transpose : public ga_instruction {
     base_tensor &t;
     const base_tensor &tc1;
+    size_type n1, n2, nn;
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: transpose");
       GA_DEBUG_ASSERT(t.size() == tc1.size(), "Wrong sizes");
-      size_type order = t.sizes().size();
-      size_type s1 = t.sizes()[order-2], s2 = t.sizes()[order-1];
-      size_type s = t.size() / (s1*s2);
-      for (size_type i = 0; i < s1;  ++i)
-        for (size_type j = 0; j < s2;  ++j) {
-          base_tensor::iterator it = t.begin() + s*(i + s1*j);
-          base_tensor::const_iterator it1 = tc1.begin() + s*(j + s2*i);
-          for (size_type k = 0; k < s; ++k) *it++ = *it1++;
-        }
+
+      size_type n0 = tc1.size() / (n1*n2*nn);
+      auto it = t.begin();
+      for (size_type i = 0; i < nn; ++i) {
+	size_type s1 = i*n1*n2*n0;
+	for (size_type j = 0; j < n1; ++j) {
+	  size_type s2 = s1 + j*n0;
+	  for (size_type k = 0; k < n2; ++k) {
+	    size_type s3 = s2 + k*n1*n0;
+	    for (size_type l = 0; l < n0; ++l, ++it)
+	      *it = tc1[s3+l];
+	  }
+	}
+      }
+      GA_DEBUG_ASSERT(it == t.end(), "Wrong sizes");
       return 0;
     }
-    ga_instruction_transpose(base_tensor &t_, const base_tensor &tc1_)
-      : t(t_), tc1(tc1_) {}
+    ga_instruction_transpose(base_tensor &t_, const base_tensor &tc1_,
+			     size_type n1_, size_type n2_, size_type nn_)
+      : t(t_), tc1(tc1_), n1(n1_), n2(n2_), nn(nn_) {}
+  };
+
+  struct ga_instruction_transpose_no_test : public ga_instruction {
+    base_tensor &t;
+    const base_tensor &tc1;
+    size_type n1, n2, nn;
+    virtual int exec() {
+      GA_DEBUG_INFO("Instruction: transpose");
+      GA_DEBUG_ASSERT(t.size() == tc1.size(), "Wrong sizes");
+
+      auto it = t.begin();
+      for (size_type i = 0; i < nn; ++i) {
+	size_type s1 = i*n1*n2;
+	for (size_type j = 0; j < n1; ++j) {
+	  size_type s2 = s1 + j;
+	  for (size_type k = 0; k < n2; ++k, ++it)
+	    *it = tc1[s2 + k*n1];
+	}
+      }
+      GA_DEBUG_ASSERT(it == t.end(), "Wrong sizes");
+      return 0;
+    }
+    ga_instruction_transpose_no_test(base_tensor &t_, const base_tensor &tc1_,
+				     size_type n1_, size_type n2_,
+				     size_type nn_)
+      : t(t_), tc1(tc1_), n1(n1_), n2(n2_), nn(nn_) {}
   };
 
   struct ga_instruction_transpose_test : public ga_instruction {
@@ -5719,9 +5753,18 @@ namespace getfem {
          break;
 
        case GA_QUOTE:
-         if (pnode->tensor_proper_size() != 1) {
-           pgai = std::make_shared<ga_instruction_transpose>
-             (pnode->tensor(), child0->tensor());
+         if (pnode->tensor_proper_size() > 1) {
+	   size_type n1 = child0->tensor_proper_size(0);
+	   size_type n2 = child0->tensor_proper_size(1);
+	   size_type nn = 1;
+	   for (size_type i = 2; i < child0->tensor_order(); ++i)
+	     nn *= child0->tensor_proper_size(i);
+	   if (child0->nb_test_functions() == 0)
+	     pgai = std::make_shared<ga_instruction_transpose_no_test>
+	       (pnode->tensor(), child0->tensor(), n1, n2, nn);
+	   else
+	     pgai = std::make_shared<ga_instruction_transpose>
+	       (pnode->tensor(), child0->tensor(), n1, n2, nn);
            rmi.instructions.push_back(std::move(pgai));
          } else {
            pnode->t.set_to_copy(child0->t);
