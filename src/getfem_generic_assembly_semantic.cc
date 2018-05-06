@@ -2348,7 +2348,8 @@ namespace getfem {
 	  result_tree.root->pos = pnode->pos;
 	  result_tree.root->expr = pnode->expr;
 	  result_tree.root->children.resize(pnode->children.size(), nullptr);
-	  std::swap(result_tree.root->children[1],result_tree.root->children[0]);
+	  std::swap(result_tree.root->children[1],
+		    result_tree.root->children[0]);
 	  for (size_type i = 0; i < pnode->children.size(); ++i)
 	    if (i != 1)
 	      result_tree.copy_node(pnode->children[i], result_tree.root,
@@ -3638,15 +3639,40 @@ namespace getfem {
 	ga_node_grad(tree, workspace, m, child0);
         break;
 
-	//       case GA_QUOTE:
-	// Si vecteur alors reshape(grad argument)
-	// Si matrice, alors inversion premier indice du gradient de l'argument
-	//    .. il faut donc étendre le quote aux indices multiples ...
-	// ga_node_grad(tree, workspace, m, child0);
-
-	// case GA_SYM: remplacer par (T+T')/2 et appel recursif (avec marked
-	// mis à jour sur les fils)
+      case GA_QUOTE:
+	if (child1->tensor_order() == 1) {
+	  size_type nn = child1->tensor_proper_size(0);
+	  ga_node_grad(tree, workspace, m, child0);
+	  pnode->node_type = GA_NODE_PARAMS;
+	  tree.add_child(pnode);
+	  std::swap(pnode->children[0], pnode->children[1]);
+	  pnode->children[0]->node_type = GA_NODE_RESHAPE;
+	  tree.add_child(pnode); tree.add_child(pnode); tree.add_child(pnode);
+	  pnode->children[2]->node_type = GA_NODE_CONSTANT;
+	  pnode->children[3]->node_type = GA_NODE_CONSTANT;
+	  pnode->children[4]->node_type = GA_NODE_CONSTANT;
+	  pnode->parent->children[2]->init_scalar_tensor(scalar_type(1));
+	  pnode->parent->children[3]->init_scalar_tensor(scalar_type(nn));
+	  pnode->parent->children[4]->init_scalar_tensor(scalar_type(m.dim()));
+	} else {
+	  ga_node_grad(tree, workspace, m, child0);
+	}
+	break;
 	
+      case GA_SYM: // Replace Sym(T) by (T+T')/2 
+	tree.replace_node_by_child(pnode, 0);
+	tree.duplicate_with_addition(child0);
+	tree.insert_node(child0->parent, GA_NODE_OP);
+	tree.add_child(child0->parent->parent);
+	child0->parent->parent->op_type = GA_MULT;
+	child0->parent->parent->children[1].init_scalar_tensor(0.5);
+	tree.insert_node(child0->parent->children[1], GA_NODE_OP);
+	child0->parent->children[1]->op_type = GA_QUOTE;
+	ga_node_grad(tree, workspace, m, child0);
+	ga_node_grad(tree, workspace, m,
+		     child0->parent->children[1]->children[0]);
+	break;
+
  #ifdef continue_here
 
       case GA_QUOTE: case GA_SYM: case GA_SKEW:
