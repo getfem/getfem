@@ -37,12 +37,14 @@ m = gf.Mesh('triangles grid', np.arange(0,1+1./NX,1./NX),
             np.arange(0,1+1./NX,1./NX))     # Structured mesh
 fem = gf.Fem('FEM_PK(2,1)')
 mfu = gf.MeshFem(m, 1); mfu.set_fem(fem)    # Lagrange P1 scalar fem
-mim = gf.MeshIm(m, gf.Integ('IM_TRIANGLE(4)'))
 mfv = gf.MeshFem(m, 3); mfv.set_fem(fem)    # Lagrange P1 vector fem
+mfw = gf.MeshFem(m, 2); mfw.set_fem(fem)    # Lagrange P1 vector fem
+mim = gf.MeshIm(m, gf.Integ('IM_TRIANGLE(4)'))
 
 
 U = mfu.eval('x+y')
 V = mfv.eval('[x*y, x*y, x*y]')
+W = mfw.eval('[x*y, x*y]')
 
 
 md = gf.Model('real')
@@ -51,6 +53,8 @@ md.add_fem_variable('u', mfu)
 md.set_variable('u', U)
 md.add_fem_variable('v', mfv)
 md.set_variable('v', V)
+md.add_fem_variable('w', mfw)
+md.set_variable('w', W)
 
 # Simple test on the integral of u
 result = gf.asm('generic', mim, 0, "u", -1, md)
@@ -91,6 +95,22 @@ result1 = gf.asm('generic', mim, 2,
 if (np.linalg.norm(result1.full()-result2.full()) > 1e-8) :
   print "Bad value"; exit(1)
 
+print 'Assembly string "Def P(u):= Grad(u); P(Grad(u)+[1;1])" gives:'
+res = gf.asm('expression analysis', 'Def P(u):= Grad(u); P(Grad(u)+[1;1])',  mim, 0, md)
+if (res != "(Hess_u)"): print "Bad gradient"; exit(1)
 
+print 'Assembly string "Grad(Grad_u\')" gives:'
+res = gf.asm('expression analysis', "Grad(Grad_u')",  mim, 0, md)
+if (res != "(Reshape(Hess_u, 1, 2, 2))"): print "Bad gradient"; exit(1)
 
+print 'Assembly string "Grad(Sym(Grad_w))" gives:'
+res = gf.asm('expression analysis', "Grad(Sym(Grad_w))",  mim, 0, md)
+if (res != "((Hess_w+(Hess_w'))*0.5)"): print "Bad gradient"; exit(1)
 
+print 'Assembly string "Grad(Skew(Grad_w))" gives:'
+res = gf.asm('expression analysis', "Grad(Skew(Grad_w))",  mim, 0, md)
+if (res != "((Hess_w-(Hess_w'))*0.5)"): print "Bad gradient"; exit(1)
+
+print 'Assembly string "Grad(Deviator(Grad_w))" gives:'
+res = gf.asm('expression analysis', "Grad(Deviator(Grad_w))",  mim, 0, md)
+print res

@@ -510,7 +510,7 @@ static void do_high_level_generic_assembly(mexargs_in& in, mexargs_out& out) {
   }
 }
 
-static void do_expression_analysis(mexargs_in& in) {
+static void do_expression_analysis(mexargs_in& in, mexargs_out& out) {
 
   std::string expr = in.pop().to_string();
 
@@ -572,6 +572,8 @@ static void do_expression_analysis(mexargs_in& in) {
 
   workspace.add_expression(expr, mim, getfem::dummy_mesh_region(), der_order);
   workspace.print(cout);
+  std::string result = workspace.extract_order0_term();
+  out.pop().from_string(result.c_str());
 }
 
 // To be parallelized
@@ -1207,8 +1209,8 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
       Analyse a high-level generic assembly expression and print
       information about the provided expression.@*/
     sub_command
-      ("expression analysis", 1, -1, 0, 0,
-       do_expression_analysis(in);
+      ("expression analysis", 1, -1, 0, 1,
+       do_expression_analysis(in, out);
        );
 
 
