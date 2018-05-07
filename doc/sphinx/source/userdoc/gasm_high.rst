@@ -60,7 +60,9 @@ A specific language has been developed to describe the weak formulation of bound
 
   - A certain number of linear and nonlinear operators (``Trace``, ``Norm``, ``Det``, ``Deviator``, ``Contract``, ...). The nonlinear operators cannot be applied to test functions.
 
-  - ``Diff(expression, variable)``: The possibility to explicity differentiate an expression with respect to a variable.
+  - ``Diff(expression, variable)``: The possibility to explicit differentiate an expression with respect to a variable (symbolic differentiation). 
+
+  - ``Grad(expression)``: When possible, symbolically derive the gradient of the given expression.
 
   - Possiblility of macro definition (in the model, the ga_workspace object or directly in the assembly string). The macros should be some valid expressions that are expanded inline at the lexical analysis phase (if they are used several times, the computation is automatically factorized at the compilation stage).
 
@@ -462,7 +464,7 @@ A certain number of binary operations between tensors are available:
 
     - ``.`` stands for the scalar product of vectors, or more generally to the contraction of a tensor with respect to its last index with a vector or with the first index of another tensor. Note that ``*`` and ``.`` are equivalent for matrix-vector or matrix-matrix multiplication.
 
-    - ``:`` stands for the the |Frobenius| product of matrices or more generally to the contraction of a tensor with respect to the two last indices with a matrix. Note that ``*`` and ``:`` are equivalent for (fourth order tensor)-matrix multiplication.
+    - ``:`` stands for the |Frobenius| product of matrices or more generally to the contraction of a tensor with respect to the two last indices with a matrix. Note that ``*`` and ``:`` are equivalent for (fourth order tensor)-matrix multiplication.
 
     - ``.*`` stands for the multiplication of two vectors/matrix/tensor componentwise.
 
@@ -483,6 +485,8 @@ Unary operators
   - ``'`` stands for the transpose of a matrix or line view of a vector. It a tensor ``A`` is of order greater than two,``A'`` denotes the inversion of the two first indices.
   
   - ``Contract(A, i, j)`` stands for the contraction of tensor A with respect to its ith and jth indices. The first index is numbered 1. For instance, ``Contract(A, 1, 2)`` is equivalent to ``Trace(A)`` for a matrix ``A``.
+
+  - ``Swap_indices(A, i, j)`` exchange indices number i and j. The first index is numbered 1. For instance ``Swap_indices(A, 1, 2)`` is equivalent to ``A'`` for a matrix ``A``.
 
     
 Parentheses
@@ -665,6 +669,23 @@ So that::
 
 is a valid expression.  
 
+Explicit Gradient
+-----------------
+It is possible to ask for symbolic computation of the gradient of an expression with::
+
+  Grad(expression)
+
+It will be computed as far as it is possible. The limitations come from the fact that |gf| is limited to second order derivative of shape function and nonlinear operators are supposed to provide only first and second order derivatives.
+
+Of course::
+
+  Grad(u)
+
+is equivalent to::
+
+  Grad_u
+
+for a varible ``u``.
   
 .. _ud-gasm-high-transf:
 

@@ -131,6 +131,7 @@ namespace getfem {
     GA_NODE_MACRO_PARAM,
     GA_NODE_PARAMS,
     GA_NODE_RESHAPE,
+    GA_NODE_SWAP_IND,
     GA_NODE_CONTRACT,
     GA_NODE_ALLINDICES,
     GA_NODE_C_MATRIX,
@@ -425,7 +426,7 @@ namespace getfem {
     void duplicate_with_operation(pga_tree_node pnode, GA_TOKEN_TYPE op_type);
     void duplicate_with_addition(pga_tree_node pnode)
     { duplicate_with_operation(pnode, GA_PLUS); }
-    void duplicate_with_subtraction(pga_tree_node pnode)
+    void duplicate_with_substraction(pga_tree_node pnode)
     { duplicate_with_operation(pnode, GA_MINUS); }
     void insert_node(pga_tree_node pnode, GA_NODE_TYPE node_type);
     void add_child(pga_tree_node pnode)

@@ -1043,6 +1043,11 @@ namespace getfem {
       str << "Reshape";
       GMM_ASSERT1(pnode->children.size() == 0, "Invalid tree");
       break;
+      
+    case GA_NODE_SWAP_IND:
+      str << "Swap_indices";
+      GMM_ASSERT1(pnode->children.size() == 0, "Invalid tree");
+      break;
 
     case GA_NODE_CONTRACT:
       str << "Contract";

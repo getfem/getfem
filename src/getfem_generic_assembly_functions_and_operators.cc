@@ -573,8 +573,10 @@ namespace getfem {
     SPEC_OP.insert("Xfem_minus");
     SPEC_OP.insert("Print");
     SPEC_OP.insert("Reshape");
+    SPEC_OP.insert("Swap_indices");
     SPEC_OP.insert("Contract");
     SPEC_OP.insert("Diff");
+    SPEC_OP.insert("Grad");
   }
 
 
