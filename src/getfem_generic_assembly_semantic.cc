@@ -3912,7 +3912,6 @@ namespace getfem {
 	}
 	break;
 
-#ifdef continue_here
 
       case GA_MULT:
 	{
@@ -3940,46 +3939,81 @@ namespace getfem {
 		pg1->op_type == GA_DOTMULT ||
 		(child0->tensor_proper_size()== 1 ||
 		 child1->tensor_proper_size()== 1)) {
-	      std::swap(pg1->children[0], pg1->children[1]); 
-	      // on se ramène au cas pg2 ... TODO
+	      std::swap(pg1->children[0], pg1->children[1]);
 	    } else {
-	      // la partie ingrate ... !
-
+	      if (pg1->children[0].tensor_order() <= 2) {
+		pg1->op_type = GA_DOT;
+		pg1->op_type = GA_NODE_PARAMS;
+		tree.add_child(pg1);tree.add_child(pg1);tree.add_child(pg1);
+		std::swap(pg1->children[1], pg1->children[3]);
+		std::swap(pg1->children[0], pg1->children[1]);
+		pg1->children[0]->node_type = GA_NODE_NAME;
+		pg1->children[0]->name = "Contract";
+		pg1->children[2]->node_type = GA_NODE_CONSTANT;
+		pg1->children[2]->init_scalar_tensor
+		  (pg1->children[1]->tensor_order());
+		pg1->children[4]->node_type = GA_NODE_CONSTANT;
+		pg1->children[4]->init_scalar_tensor(scalar_type(1));
+		ga_node_grad(tree, workspace, m, pg1->children[1]);
+	      } else {
+		pg1->op_type = GA_NODE_PARAMS; // A adapter
+		tree.add_child(pg1);tree.add_child(pg1);tree.add_child(pg1);
+		tree.add_child(pg1);tree.add_child(pg1);
+		std::swap(pg1->children[1], pg1->children[4]);
+		std::swap(pg1->children[0], pg1->children[1]);
+		pg1->children[0]->node_type = GA_NODE_NAME;
+		pg1->children[0]->name = "Contract";
+		pg1->children[2]->node_type = GA_NODE_CONSTANT;
+		pg1->children[2]->init_scalar_tensor
+		  (scalar_type(pg1->children[4].tensor_order()-1));
+		pg1->children[3]->node_type = GA_NODE_CONSTANT;
+		pg1->children[3]->init_scalar_tensor
+		  (scalar_type(pg1->children[4].tensor_order()));
+		pg1->children[5]->node_type = GA_NODE_CONSTANT;
+		pg1->children[5]->init_scalar_tensor(scalar_type(1));
+		pg1->children[6]->node_type = GA_NODE_CONSTANT;
+		pg1->children[6]->init_scalar_tensor(scalar_type(2));
+		ga_node_grad(tree, workspace, m, pg1->children[4]);
+	      }
+	      // Faire un post de l'indice de gradient
+	      pg1 = 0;
 	    }
 
 	  }
 
-	  if (pg2) { // specific GA_MULT ...
-	    if (pg2->children[1].tensor_proper_size() == 1) {
-	      pg2->op_type = GA_TMULT;
-	      ga_node_grad(tree, workspace, m, pg2->children[1]);
-	    } else if (pg2->children[1].tensor_order() == 1) {
-	      pg2->op_type = GA_DOT;
-	      ga_node_grad(tree, workspace, m, pg2->children[1]);
-	    } else {
-	      pg2->op_type = GA_NODE_PARAMS;
-	      tree.add_child(pg2);tree.add_child(pg2);tree.add_child(pg2);
-	      tree.add_child(pg2);tree.add_child(pg2);
-	      std::swap(pg2->children[1], pg2->children[4]);
-	      std::swap(pg2->children[0], pg2->children[1]);
-	      pg2->children[0]->node_type = GA_NODE_NAME;
-	      pg2->children[0]->name = "Contract";
-	      pg2->children[2]->node_type = GA_NODE_CONSTANT;
-	      pg2->children[2]->init_scalar_tensor
-		(scalar_type(pg2->children[4].tensor_order()-1));
-	      pg2->children[3]->node_type = GA_NODE_CONSTANT;
-	      pg2->children[3]->init_scalar_tensor
-		(scalar_type(pg2->children[4].tensor_order()));
-	      pg2->children[5]->node_type = GA_NODE_CONSTANT;
-	      pg2->children[5]->init_scalar_tensor(scalar_type(1));
-	      pg2->children[6]->node_type = GA_NODE_CONSTANT;
-	      pg2->children[6]->init_scalar_tensor(scalar_type(2));
-	      ga_node_grad(tree, workspace, m, pg2->children[4]);
+	  for (; pg2||pg1;pg2=pg1, pg1=0) {
+	    if (pg2) { // specific to GA_MULT ...
+	      if (pg2->children[1].tensor_proper_size() == 1) {
+		pg2->op_type = GA_TMULT;
+		ga_node_grad(tree, workspace, m, pg2->children[1]);
+	      } else if (pg2->children[0].tensor_order() <= 2) {
+		pg2->op_type = GA_DOT;
+		ga_node_grad(tree, workspace, m, pg2->children[1]);
+	      } else {
+		pg2->op_type = GA_NODE_PARAMS;
+		tree.add_child(pg2);tree.add_child(pg2);tree.add_child(pg2);
+		tree.add_child(pg2);tree.add_child(pg2);
+		std::swap(pg2->children[1], pg2->children[4]);
+		std::swap(pg2->children[0], pg2->children[1]);
+		pg2->children[0]->node_type = GA_NODE_NAME;
+		pg2->children[0]->name = "Contract";
+		pg2->children[2]->node_type = GA_NODE_CONSTANT;
+		pg2->children[2]->init_scalar_tensor
+		  (scalar_type(pg2->children[4].tensor_order()-1));
+		pg2->children[3]->node_type = GA_NODE_CONSTANT;
+		pg2->children[3]->init_scalar_tensor
+		  (scalar_type(pg2->children[4].tensor_order()));
+		pg2->children[5]->node_type = GA_NODE_CONSTANT;
+		pg2->children[5]->init_scalar_tensor(scalar_type(1));
+		pg2->children[6]->node_type = GA_NODE_CONSTANT;
+		pg2->children[6]->init_scalar_tensor(scalar_type(2));
+		ga_node_grad(tree, workspace, m, pg2->children[4]);
+	      }
 	    }
 	  }
 	}
 	break;
-	// #ifdef continue_here
+#ifdef continue_here
 
       case GA_DOT: case GA_MULT: case GA_COLON: case GA_TMULT:
       case GA_DOTMULT:
