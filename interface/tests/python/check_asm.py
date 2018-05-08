@@ -111,6 +111,48 @@ print 'Assembly string "Grad(Skew(Grad_w))" gives:'
 res = gf.asm('expression analysis', "Grad(Skew(Grad_w))",  mim, 0, md)
 if (res != "((Hess_w-(Hess_w'))*0.5)"): print "Bad gradient"; exit(1)
 
-print 'Assembly string "Grad(Deviator(Grad_w))" gives:'
-res = gf.asm('expression analysis', "Grad(Deviator(Grad_w))",  mim, 0, md)
+print 'Assembly string "Grad(Grad_w*Grad_u)" gives:'
+res = gf.asm('expression analysis', "Grad(Grad_w*Grad_u)",  mim, 0, md)
 print res
+if (res != "(Contract(Hess_w, 2, Grad_u, 1)+(Grad_w.Hess_u))"):
+  print "Bad gradient"; exit(1)
+
+print 'Assembly string "Grad(u*Grad_w)" gives:'
+res = gf.asm('expression analysis', "Grad(u*Grad_w)",  mim, 0, md)
+if (res != "((Grad_w@Grad_u)+(u*Hess_w))"): print "Bad gradient"; exit(1)
+
+print 'Assembly string "Grad(Grad_w:Id(meshdim))" gives:'
+res = gf.asm('expression analysis', "Grad(Grad_w:Id(meshdim))",  mim, 0, md)
+if (res != "(Contract([[1,0],[0,1]], 1, 2, Hess_w, 1, 2))"):
+  print "Bad gradient"; exit(1)
+
+print 'Assembly string "Grad(Grad_w:Id(meshdim))" gives:'
+res = gf.asm('expression analysis', "Grad(Grad_w@Grad_v)",  mim, 0, md)
+if (res != "(Index_move_last((Hess_w@Grad_v), 3)+(Grad_w@Hess_v))"):
+  print "Bad gradient"; exit(1)
+  
+print 'Assembly string "Grad(Grad_w.Grad_w)" gives:'
+res = gf.asm('expression analysis', "Grad(Grad_w.Grad_w)",  mim, 0, md)
+if (res !=
+    "(Index_move_last(Contract(Hess_w, 2, Grad_w, 1), 2)+(Grad_w.Hess_w))"):
+  print "Bad gradient"; exit(1)
+
+print 'Assembly string "Grad(Grad_w./Grad_w)" gives:'
+res = gf.asm('expression analysis', "Grad(Grad_w./Grad_w)",  mim, 0, md)
+if (res !=
+    "((Hess_w./(Grad_w@[1; 1]))-(((Grad_w./sqr(Grad_w))@[1; 1]).*Hess_w))"):
+  print "Bad gradient"; exit(1)
+  
+print 'Assembly string "Grad(Grad_w/u)" gives:'
+res = gf.asm('expression analysis', "Grad(Grad_w/u)",  mim, 0, md)
+if (res != "((Hess_w/u)-((Grad_w/sqr(u))@Grad_u))"):
+  print "Bad gradient"; exit(1)
+  
+print 'Assembly string "Grad([u; 1; u])" gives:'
+res = gf.asm('expression analysis', "Grad([u; 1; u])",  mim, 0, md)
+
+print 'Assembly string "Grad([u, 1, u])" gives:'
+res = gf.asm('expression analysis', "Grad([u, 1, u])",  mim, 0, md)
+
+print 'Assembly string "[[Grad_u(1),Grad_u(2)],[0,0],[Grad_u(1),Grad_u(2)]]" gives:'
+res = gf.asm('expression analysis', "[[Grad_u(1),Grad_u(2)],[0,0],[Grad_u(1),Grad_u(2)]]",  mim, 0, md)

@@ -1049,6 +1049,11 @@ namespace getfem {
       GMM_ASSERT1(pnode->children.size() == 0, "Invalid tree");
       break;
 
+    case GA_NODE_IND_MOVE_LAST:
+      str << "Index_move_last";
+      GMM_ASSERT1(pnode->children.size() == 0, "Invalid tree");
+      break;
+
     case GA_NODE_CONTRACT:
       str << "Contract";
       GMM_ASSERT1(pnode->children.size() == 0, "Invalid tree");

@@ -1794,6 +1794,30 @@ namespace getfem {
       : t(t_), tc1(tc1_), nn1(n1_), nn2(n2_), ii2(i2_), ii3(i3_) {}
   };
 
+  struct ga_instruction_index_move_last : public ga_instruction {// To be optimized
+    base_tensor &t;
+    const base_tensor &tc1;
+    size_type nn, ii2;
+    virtual int exec() {
+      GA_DEBUG_INFO("Instruction: swap indices");
+      GA_DEBUG_ASSERT(t.size() == tc1.size(), "Wrong sizes");
+      size_type ii1 = t.size() / (nn*ii2);
+
+      auto it = t.begin();
+      for (size_type i = 0; i < nn; ++i)
+	for (size_type j = 0; j < ii2; ++j) {
+	  size_type ind = i*ii1+j*ii1*nn;
+	  for (size_type k = 0; k < ii1; ++k, ++it)
+	    *it = tc1[k+ind];
+	}
+      GA_DEBUG_ASSERT(it == t.end(), "Wrong sizes");
+      return 0;
+    }
+    ga_instruction_index_move_last(base_tensor &t_, const base_tensor &tc1_,
+				   size_type n_, size_type i2_)
+      : t(t_), tc1(tc1_), nn(n_), ii2(i2_) {}
+  };
+  
   struct ga_instruction_transpose_no_test : public ga_instruction {
     base_tensor &t;
     const base_tensor &tc1;
@@ -4680,6 +4704,7 @@ namespace getfem {
         pnode->node_type == GA_NODE_ALLINDICES ||
         pnode->node_type == GA_NODE_RESHAPE ||
         pnode->node_type == GA_NODE_SWAP_IND ||
+        pnode->node_type == GA_NODE_IND_MOVE_LAST ||
         pnode->node_type == GA_NODE_CONTRACT) return;
 
     // cout << "compiling "; ga_print_node(pnode, cout); cout << endl;
@@ -4853,8 +4878,8 @@ namespace getfem {
 
     case GA_NODE_PREDEF_FUNC: case GA_NODE_OPERATOR: case GA_NODE_SPEC_FUNC:
     case GA_NODE_CONSTANT: case GA_NODE_ALLINDICES: case GA_NODE_ZERO:
-    case GA_NODE_RESHAPE:  case GA_NODE_SWAP_IND: case GA_NODE_CONTRACT:
-    case GA_NODE_INTERPOLATE_FILTER:
+    case GA_NODE_RESHAPE:  case GA_NODE_SWAP_IND: case GA_NODE_IND_MOVE_LAST:
+    case GA_NODE_CONTRACT: case GA_NODE_INTERPOLATE_FILTER:
       break;
 
     case GA_NODE_X:
@@ -5979,6 +6004,16 @@ namespace getfem {
       if (child0->node_type == GA_NODE_RESHAPE) {
         pgai = std::make_shared<ga_instruction_copy_tensor>(pnode->tensor(),
                                                             child1->tensor());
+        rmi.instructions.push_back(std::move(pgai));
+      } else if (child0->node_type == GA_NODE_IND_MOVE_LAST) {
+	size_type ind;
+	ind = size_type(round(pnode->children[2]->tensor()[0])-1);
+	size_type ii2 = 1;
+	for (size_type i = 0; i < child1->tensor_order(); ++i)
+	  if (i>ind) ii2 *= child1->tensor_proper_size(i);
+	size_type nn = child1->tensor_proper_size(ind);
+        pgai = std::make_shared<ga_instruction_index_move_last>
+	  (pnode->tensor(), child1->tensor(), nn, ii2);
         rmi.instructions.push_back(std::move(pgai));
       } else if (child0->node_type == GA_NODE_SWAP_IND) {
 	size_type ind[4];

@@ -488,6 +488,10 @@ Unary operators
 
   - ``Swap_indices(A, i, j)`` exchange indices number i and j. The first index is numbered 1. For instance ``Swap_indices(A, 1, 2)`` is equivalent to ``A'`` for a matrix ``A``.
 
+  - ``Index_move_last(A, i)`` move the index number i in order to be the ast one. For instance, if ``A`` is a fourth order tensor :math:`A_{i_1i_2i_3i_4}`, then the result of ``Index_move_last(A, 2)`` will be the tensor :math:`B_{i_1i_3i_4i_2} = A_{i_1i_2i_3i_4}`. For a matrix, ``Index_move_last(A, 1)`` is equivalent to ``A'``.
+
+  exchange indices number i and j. The first index is numbered 1. For instance ``Swap_indices(A, 1, 2)`` is equivalent to ``A'`` for a matrix ``A``.
+
     
 Parentheses
 -----------
