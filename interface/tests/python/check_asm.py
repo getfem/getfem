@@ -148,11 +148,31 @@ res = gf.asm('expression analysis', "Grad(Grad_w/u)",  mim, 0, md)
 if (res != "((Hess_w/u)-((Grad_w/sqr(u))@Grad_u))"):
   print "Bad gradient"; exit(1)
   
-print 'Assembly string "Grad([u; 1; u])" gives:'
-res = gf.asm('expression analysis', "Grad([u; 1; u])",  mim, 0, md)
+# To be controlled after fixing C_MATRIX
+print 'Assembly string "Grad([u,u; 2,1; u,u])" gives:'
+res = gf.asm('expression analysis', "Grad([u,u; 2,1; u,u])",  mim, 0, md)
 
-print 'Assembly string "Grad([u, 1, u])" gives:'
-res = gf.asm('expression analysis', "Grad([u, 1, u])",  mim, 0, md)
 
-print 'Assembly string "[[Grad_u(1),Grad_u(2)],[0,0],[Grad_u(1),Grad_u(2)]]" gives:'
-res = gf.asm('expression analysis', "[[Grad_u(1),Grad_u(2)],[0,0],[Grad_u(1),Grad_u(2)]]",  mim, 0, md)
+# To be controlled after fixing C_MATRIX
+print 'Assembly string "Grad([[u,2,u],[u,1,u]])" gives:'
+res = gf.asm('expression analysis', "Grad([[u,2,u],[u,1,u]])",  mim, 0, md)
+
+
+
+print 'Assembly string "Grad(Reshape(Grad_w, 1, 4))" gives:'
+res = gf.asm('expression analysis', "Grad(Reshape(Grad_w, 1, 4))",  mim, 0, md)
+if (res != "(Reshape(Hess_w, 1, 4, 2))"): print "Bad gradient"; exit(1)
+
+print 'Assembly string "Grad(Grad_w(1,2))" gives:'
+res = gf.asm('expression analysis', "Grad(Grad_w(1,2))",  mim, 0, md)
+if (res != "(Hess_w(1, 2, :))"): print "Bad gradient"; exit(1)
+
+print 'Assembly string "Grad(Index_move_last(Grad_w, 1))" gives:'
+res = gf.asm('expression analysis', "Grad(Index_move_last(Grad_w, 1))", mim, 0, md)
+if (res != "(Swap_indices(Index_move_last(Hess_w, 1), 2, 3))"):
+  print "Bad gradient"; exit(1)
+
+print 'Assembly string "Grad(Contract(Grad_w, 1, 2, Grad_w, 1, 2))" gives:'
+res = gf.asm('expression analysis', "Grad(Contract(Grad_w, 1, 2, Grad_w, 1, 2))", mim, 0, md)
+if (res != "(Contract(Hess_w, 1, 2, Grad_w, 1, 2)+Contract(Grad_w, 1, 2, Hess_w, 1, 2))"):
+  print "Bad gradient"; exit(1)

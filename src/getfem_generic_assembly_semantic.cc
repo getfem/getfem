@@ -1395,16 +1395,16 @@ namespace getfem {
             if (nbc1 == 1 && nbc2 == 1 && nbc3 == 1)
               for (size_type i = 0; i < nbl; ++i)
                 pnode->tensor()[i] = pnode->children[i]->tensor()[0];
-            else if (nbc2 == 1 && nbc3 == 1) // TODO: verify order
+            else if (nbc2 == 1 && nbc3 == 1)
               for (size_type i = 0; i < nbl; ++i)
                 for (size_type j = 0; j < nbc1; ++j)
                   pnode->tensor()(i,j) = pnode->children[n++]->tensor()[0];
-            else if (nbc3 == 1) // TODO: verify order
+            else if (nbc3 == 1)
               for (size_type i = 0; i < nbl; ++i)
                 for (size_type j = 0; j < nbc2; ++j)
                   for (size_type k = 0; k < nbc1; ++k)
                     pnode->tensor()(i,j,k) = pnode->children[n++]->tensor()[0];
-            else // TODO: verify order
+            else
               for (size_type i = 0; i < nbl; ++i)
                 for (size_type j = 0; j < nbc3; ++j)
                   for (size_type k = 0; k < nbc2; ++k)
@@ -4209,15 +4209,25 @@ namespace getfem {
 	  }
 	}
 	if (m.dim() > 1) {
-	  cout << "mi = " << pnode->tensor().sizes() << " : " <<  pnode->tensor_order() << endl;
-	  mi = pnode->tensor().sizes(); mi.push_back(m.dim());
-	  cout << "mi = " << mi << endl;
-	  pnode->t.adjust_sizes(mi);
-	  size_type orgsize = pnode->children.size();
-	  pnode->children.resize(pnode->tensor_proper_size(), nullptr);
-	  for (size_type i = orgsize; i < pnode->children.size(); ++i) {
-	    tree.copy_node(pnode->children[i-orgsize], pnode,
-			   pnode->children[i]);
+	  size_type nbl = pnode->children.size() /
+	    (pnode->nbc1*pnode->nbc2*pnode->nbc3);
+	  if (pnode->nbc1==1 && pnode->nbc2==1 && pnode->nbc3==1)
+	    pnode->nbc1 = m.dim();
+	  else if (pnode->nbc2==1 && pnode->nbc3==1)
+	    { pnode->nbc2 = pnode->nbc1; pnode->nbc1 = m.dim(); }
+	  else if (pnode->nbc3==1)
+	    { pnode->nbc3 = pnode->nbc2; pnode->nbc2 = pnode->nbc1;
+	      pnode->nbc1 = m.dim(); }
+	  else GMM_ASSERT1(false, "Sorry this exceed the current limit of "
+			   "constant tensors (limited to order four)");
+	  pnode->children.resize(pnode->nbc1*pnode->nbc2*pnode->nbc3*nbl,
+				 nullptr);
+	  for (size_type i = pnode->children.size()-1; i > 0; --i) {
+	    if (i % m.dim())
+	      tree.copy_node(pnode->children[i/m.dim()], pnode,
+			     pnode->children[i]);
+	    else
+	      std::swap(pnode->children[i/m.dim()], pnode->children[i]);
 	  }
 	  for (size_type i = 0; i < pnode->children.size(); ++i) {
 	    pga_tree_node child = pnode->children[i];
@@ -4225,24 +4235,66 @@ namespace getfem {
 	      tree.insert_node(child, GA_NODE_PARAMS);
 	      tree.add_child(child->parent, GA_NODE_CONSTANT);
 	      child->parent->children[1]
-		->init_scalar_tensor(scalar_type(1+i/orgsize));
+		->init_scalar_tensor(scalar_type(1+i%m.dim()));
 	    }
 	  }
 	}
       }
       break;
 
-#ifdef continue_here
     case GA_NODE_PARAMS:
       if (child0->node_type == GA_NODE_RESHAPE) {
-        ga_node_grad(tree, workspace, m, pnode->children[1],
-                           varname, interpolatename, order);
-      }	else if (child0->node_type == GA_NODE_IND_MOVE_LAST) {
-        // TODO !!!!
+        ga_node_grad(tree, workspace, m, pnode->children[1]);
+	tree.add_child(pnode, GA_NODE_CONSTANT);
+	pnode->children.back()->init_scalar_tensor(scalar_type(m.dim()));
+      } else if (child0->node_type == GA_NODE_IND_MOVE_LAST) {
+	size_type order = pnode->tensor_order();
+	ga_node_grad(tree, workspace, m, pnode->children[1]);
+	tree.insert_node(pnode, GA_NODE_PARAMS);
+	tree.add_child(pnode->parent); tree.add_child(pnode->parent);
+	tree.add_child(pnode->parent);
+	std::swap(pnode->parent->children[0], pnode->parent->children[1]);
+	pnode->parent->children[0]->node_type = GA_NODE_SWAP_IND;
+	pnode->parent->children[2]->node_type = GA_NODE_CONSTANT;
+	pnode->parent->children[3]->node_type = GA_NODE_CONSTANT;
+	pnode->parent->children[2]->init_scalar_tensor(scalar_type(order));
+	pnode->parent->children[3]->init_scalar_tensor(scalar_type(order+1));
       }	else if (child0->node_type == GA_NODE_SWAP_IND) {
-        // TODO !!!!
+        ga_node_grad(tree, workspace, m, pnode->children[1]);
       }	else if (child0->node_type == GA_NODE_CONTRACT) {
-        // TODO !!!! (avec mark1 et "child2"->marked
+	mark0 = mark1;
+	size_type ch2 = 0;
+	if (pnode->children.size() == 5) ch2 = 3;
+	if (pnode->children.size() == 7) ch2 = 4;
+	mark1 = pnode->children[ch2]->marked;
+	  
+	if (pnode->children.size() == 4) {
+	  ga_node_grad(tree, workspace, m, pnode->children[1]);
+	} else {
+	  pga_tree_node pg1(pnode), pg2(pnode);
+	  if (mark0 && mark1) {
+	    tree.duplicate_with_addition(pnode);
+	    pg2 = pnode->parent->children[1];
+	  }
+	  if (mark0) {
+	    size_type nred = pg1->children[1]->tensor_order();
+	    if (pnode->children.size() == 7) nred--;
+	    ga_node_grad(tree, workspace, m, pg1->children[1]);
+	    tree.insert_node(pg1, GA_NODE_PARAMS);
+	    tree.add_child(pg1->parent); tree.add_child(pg1->parent);
+	    std::swap(pg1->parent->children[0], pg1->parent->children[1]);
+	    pg1->parent->children[0]->node_type = GA_NODE_IND_MOVE_LAST;
+	    pg1->parent->children[2]->node_type = GA_NODE_CONSTANT;
+	    pg1->parent->children[2]->init_scalar_tensor(scalar_type(nred));
+	  }
+	  if (mark1) {
+	    ga_node_grad(tree, workspace, m, pg2->children[ch2]);
+	  }
+	  ga_print_node(pg1, cout); cout << endl;
+	  ga_print_node(pg2, cout); cout << endl;
+	}
+#ifdef continue_here
+
       } else if (child0->node_type == GA_NODE_PREDEF_FUNC) {
         std::string name = child0->name;
         ga_predef_function_tab::const_iterator it = PREDEF_FUNCTIONS.find(name);
@@ -4442,14 +4494,13 @@ namespace getfem {
 
           }
         }
-
+#endif
       } else {
-        ga_node_derivation(tree, workspace, m, child0, varname,
-                           interpolatename, order);
+        ga_node_grad(tree, workspace, m, child0);
+	tree.add_child(pnode, GA_NODE_ALLINDICES);
       }
       break;
 
-#endif
 
     default: GMM_ASSERT1(false, "Unexpected node type " << pnode->node_type
                          << " in derivation. Internal error.");

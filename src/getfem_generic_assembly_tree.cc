@@ -1062,8 +1062,7 @@ namespace getfem {
     case GA_NODE_C_MATRIX:
       {
         GMM_ASSERT1(pnode->children.size(), "Invalid tree");
-        size_type nbc1 = pnode->nbc1;
-        size_type nbc2 = pnode->nbc2;
+        size_type nbc1 = pnode->nbc1, nbc2 = pnode->nbc2;
         size_type nbc3 = pnode->nbc3;
         size_type nbcl = pnode->children.size()/(nbc1*nbc2*nbc3);
         if (nbc1 > 1) str << "[";
