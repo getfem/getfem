@@ -32,6 +32,21 @@ namespace getfem {
   extern bool predef_operators_plasticity_initialized;
   extern bool predef_operators_contact_initialized;
 
+  static void ga_node_derivation
+  (ga_tree &tree, const ga_workspace &workspace, const mesh &m,
+   pga_tree_node pnode, const std::string &varname,
+   const std::string &interpolatename, size_type order);
+
+  static void ga_node_grad(ga_tree &tree, const ga_workspace &workspace,
+			   const mesh &m, pga_tree_node pnode);
+  static bool ga_node_mark_tree_for_grad(pga_tree_node pnode);
+  static void ga_node_analysis(ga_tree &tree,
+                               const ga_workspace &workspace,
+                               pga_tree_node pnode, const mesh &me,
+                               size_type ref_elt_dim, bool eval_fixed_size,
+                               bool ignore_X, int option);
+
+
   bool ga_extract_variables(const pga_tree_node pnode,
 			    const ga_workspace &workspace,
 			    const mesh &m,
@@ -149,15 +164,107 @@ namespace getfem {
     return marked;
   }
 
-  static void ga_node_derivation
-  (ga_tree &tree, const ga_workspace &workspace, const mesh &m,
-   pga_tree_node pnode, const std::string &varname,
-   const std::string &interpolatename, size_type order);
+  static void ga_node_expand_expression_in_place_of_test
+  (ga_tree &tree, const ga_workspace &workspace,
+   pga_tree_node &pnode, const std::string &varname,
+   pga_tree_node pexpr, ga_tree &grad_expr, ga_tree &hess_expr,
+   size_type order, const mesh &me, size_type ref_elt_dim, bool eval_fixed_size,
+   bool ignore_X, int option) {
+    pga_tree_node parent = pnode->parent; 
+    for (size_type i = 0; i < pnode->children.size(); ++i)
+      ga_node_expand_expression_in_place_of_test
+	(tree, workspace, pnode->children[i], varname, pexpr, grad_expr,
+	 hess_expr, order, me, ref_elt_dim, eval_fixed_size, ignore_X, option);
+    const std::string &name = pnode->name;
+    size_type loc_order = pnode->test_function_type;
 
-  static void ga_node_grad(ga_tree &tree, const ga_workspace &workspace,
-			   const mesh &m, pga_tree_node pnode);
-  static bool ga_node_mark_tree_for_grad(pga_tree_node pnode);
-  
+    if (loc_order == order && !(name.compare(varname))) {
+      bool need_grad = (pnode->node_type == GA_NODE_GRAD_TEST ||
+			pnode->node_type == GA_NODE_DIVERG_TEST ||
+			pnode->node_type == GA_NODE_HESS_TEST);
+      bool need_hess = (pnode->node_type == GA_NODE_HESS_TEST);
+
+      if (need_grad && grad_expr.root == nullptr) {
+	tree.copy_node(pexpr, nullptr, grad_expr.root);
+	if (ga_node_mark_tree_for_grad(grad_expr.root)) {
+	  ga_node_grad(grad_expr, workspace, me, grad_expr.root);
+	  ga_node_analysis(grad_expr, workspace, grad_expr.root, me,
+			   ref_elt_dim, eval_fixed_size, ignore_X, option);
+	} else {
+	  bgeot::multi_index mi = grad_expr.root->t.sizes();
+	  mi.push_back(me.dim());
+	  grad_expr.root->t.adjust_sizes(mi);
+	  grad_expr.root->node_type = GA_NODE_ZERO;
+	  gmm::clear(grad_expr.root->tensor().as_vector());
+	  grad_expr.clear_children(grad_expr.root);
+	}
+      }
+
+      if (need_hess && hess_expr.root == nullptr) {
+	tree.copy_node(grad_expr.root, nullptr, hess_expr.root);
+	if (ga_node_mark_tree_for_grad(hess_expr.root)) {
+	  ga_node_grad(hess_expr, workspace, me, hess_expr.root);
+	  ga_node_analysis(hess_expr, workspace, hess_expr.root, me,
+			   ref_elt_dim, eval_fixed_size, ignore_X, option);
+	} else {
+	  bgeot::multi_index mi = hess_expr.root->t.sizes();
+	  mi.push_back(me.dim());
+	  hess_expr.root->t.adjust_sizes(mi);
+	  hess_expr.root->node_type = GA_NODE_ZERO;
+	  gmm::clear(hess_expr.root->tensor().as_vector());
+	  hess_expr.clear_children(grad_expr.root);
+	}
+      }
+      switch(pnode->node_type) {
+      case GA_NODE_VAL_TEST:
+	delete pnode; pnode = nullptr;
+	tree.copy_node(pexpr, parent, pnode);
+	break;
+      case GA_NODE_GRAD_TEST:
+	delete pnode; pnode = nullptr;
+	tree.copy_node(grad_expr.root, parent, pnode);
+	break;
+      case GA_NODE_HESS_TEST:
+	delete pnode; pnode = nullptr;
+	tree.copy_node(hess_expr.root, parent, pnode);
+	break;
+      case GA_NODE_DIVERG_TEST:
+	{
+	  delete pnode; pnode = nullptr;
+	  tree.copy_node(grad_expr.root, parent, pnode);
+	  tree.insert_node(pnode, GA_NODE_OP);
+	  pnode->parent->op_type = GA_COLON;
+	  tree.add_child(pnode->parent, GA_NODE_PARAMS);
+	  pga_tree_node pid = pnode->parent->children[1];
+	  tree.add_child(pid); tree.add_child(pid);
+	  pid->children[0]->node_type = GA_NODE_NAME;
+	  pid->children[0]->name = "Id";
+	  pid->children[1]->node_type = GA_NODE_CONSTANT;
+	  pid->children[1]->init_scalar_tensor(me.dim());
+	}
+	break;
+      case GA_NODE_INTERPOLATE_VAL_TEST: case GA_NODE_INTERPOLATE_GRAD_TEST:
+      case GA_NODE_INTERPOLATE_HESS_TEST: case GA_NODE_INTERPOLATE_DIVERG_TEST:
+	GMM_ASSERT1(false,
+		    "Sorry, directional derivative do not work for the moment "
+		    "with interpolate transformations. Future work.");
+      case GA_NODE_ELEMENTARY_VAL_TEST: case GA_NODE_ELEMENTARY_GRAD_TEST:
+      case GA_NODE_ELEMENTARY_HESS_TEST: case GA_NODE_ELEMENTARY_DIVERG_TEST:
+	GMM_ASSERT1(false,
+		    "Sorry, directional derivative do not work for the moment "
+		    "with elementary transformations. Future work.");
+      case GA_NODE_XFEM_PLUS_VAL_TEST: case GA_NODE_XFEM_PLUS_GRAD_TEST:
+      case GA_NODE_XFEM_PLUS_HESS_TEST: case GA_NODE_XFEM_PLUS_DIVERG_TEST:
+      case GA_NODE_XFEM_MINUS_VAL_TEST: case GA_NODE_XFEM_MINUS_GRAD_TEST:
+      case GA_NODE_XFEM_MINUS_HESS_TEST: case GA_NODE_XFEM_MINUS_DIVERG_TEST:
+	GMM_ASSERT1(false,
+		    "Sorry, directional derivative do not work for the moment "
+		    "with Xfem_plus and Xfem_minus operations. Future work.");
+      default: break;
+      }
+    }
+  }
+
   //=========================================================================
   // Some hash code functions for node identification
   //=========================================================================
@@ -1696,7 +1803,7 @@ namespace getfem {
 			     ref_elt_dim, eval_fixed_size, ignore_X, option);
 	    child1 = pnode->children[1];
 	  } else {
-	    mi = child1->t.sizes(); mi.push_back(2);
+	    mi = child1->t.sizes(); mi.push_back(me.dim());
 	    child1->t.adjust_sizes(mi);
 	    child1->node_type = GA_NODE_ZERO;
 	    gmm::clear(child1->tensor().as_vector());
@@ -1706,7 +1813,7 @@ namespace getfem {
 	  pnode = child1;
 	} else if (child0->name.compare("Diff") == 0) {
 	  
-	  if (pnode->children.size() != 3)
+	  if (pnode->children.size() != 3 && pnode->children.size() != 4)
 	    ga_throw_error(pnode->expr, child0->pos,
 			   "Bad number of parameters for Diff operator");
 	  pga_tree_node child2 = pnode->children[2];
@@ -1732,6 +1839,15 @@ namespace getfem {
 	    child1->test_function_type = order ? 3 : 1;
 	    gmm::clear(child1->tensor().as_vector());
 	    tree.clear_children(child1);
+	  }
+	  if (pnode->children.size() == 4) {
+	    ga_tree grad_expr, hess_expr;
+	    ga_node_expand_expression_in_place_of_test
+	      (tree, workspace, pnode->children[1], vardiff, pnode->children[3],
+	       grad_expr, hess_expr, order+1, me, ref_elt_dim, eval_fixed_size,
+	       ignore_X, option);
+            ga_node_analysis(tree, workspace, pnode->children[1], me,
+			     ref_elt_dim, eval_fixed_size, ignore_X, option);
 	  }
 	  tree.replace_node_by_child(pnode, 1);
 	  pnode = child1;
@@ -3724,10 +3840,16 @@ namespace getfem {
 	    child1->node_type = GA_NODE_CONSTANT;
 	  } else if (pnode->node_type == GA_NODE_INTERPOLATE_X) {
 	    pnode->node_type = GA_NODE_CONSTANT;
-	    pnode->init_matrix_tensor(trans_dim, trans_dim);
-	    gmm::clear(pnode->tensor().as_vector());
-	    for (size_type i = 0; i < trans_dim; ++i)
-	      pnode->tensor()(i,i) = scalar_type(1);
+	    if (pnode->nbc1) {
+	      pnode->init_vector_tensor(trans_dim);
+	      gmm::clear(pnode->tensor().as_vector());
+	      pnode->tensor()[pnode->nbc1-1] = scalar_type(1);
+	    } else {
+	      pnode->init_matrix_tensor(trans_dim, trans_dim);
+	      gmm::clear(pnode->tensor().as_vector());
+	      for (size_type i = 0; i < trans_dim; ++i)
+		pnode->tensor()(i,i) = scalar_type(1);
+	    }
 	  }
 	  
 	  tree.clear_node_rec(pnode->parent->children[1]);
@@ -3744,10 +3866,16 @@ namespace getfem {
       
     case GA_NODE_X:
       pnode->node_type = GA_NODE_CONSTANT;
-      pnode->init_matrix_tensor(meshdim, meshdim);
-      gmm::clear(pnode->tensor().as_vector());
-      for (size_type i = 0; i < meshdim; ++i)
-	pnode->tensor()(i,i) = scalar_type(1);
+      if (pnode->nbc1) {
+	pnode->init_vector_tensor(meshdim);
+	gmm::clear(pnode->tensor().as_vector());
+	 pnode->tensor()[pnode->nbc1-1] = scalar_type(1);
+      } else {
+	pnode->init_matrix_tensor(meshdim, meshdim);
+	gmm::clear(pnode->tensor().as_vector());
+	for (size_type i = 0; i < meshdim; ++i)
+	  pnode->tensor()(i,i) = scalar_type(1);
+      }
       break;
 
     case GA_NODE_NORMAL:

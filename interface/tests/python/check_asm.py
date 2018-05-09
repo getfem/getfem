@@ -201,3 +201,26 @@ str = "Grad(Norm(v))"; print 'Assembly string "%s" gives:' % str
 res = gf.asm('expression analysis', str,  mim, 0, md)
 if (res != "(Derivative_1_Norm(v).Grad_v)"):
   print "Bad gradient"; exit(1)
+
+str = "Diff((v*u).v, v)"; print 'Assembly string "%s" gives:' % str
+res = gf.asm('expression analysis', str,  mim, 1, md)
+
+str = "Diff((v*u).v, v, [0, 1, 3])"; print 'Assembly string "%s" gives:' % str
+res = gf.asm('expression analysis', str,  mim, 0, md)
+if (res != "((v.([0,1,3]*u))+((v*u).[0,1,3]))"):
+  print "Bad gradient"; exit(1)
+
+str = "Diff((w*u).Grad_u, u, 3)"; print 'Assembly string "%s" gives:' % str
+res = gf.asm('expression analysis', str,  mim, 0, md)
+if (res != "(Grad_u.(w*3))"):
+  print "Bad gradient"; exit(1)
+
+str = "Diff((w*u).Grad_u, u, X.w)"; print 'Assembly string "%s" gives:' % str
+res = gf.asm('expression analysis', str,  mim, 0, md)
+if (res != "((Grad_u.(w*(X.w)))+((w*u).((w.[[1,0],[0,1]])+(X.Grad_w))))"):
+  print "Bad gradient"; exit(1)
+
+str = "Diff((w*u).Grad_u, u, X(1))"; print 'Assembly string "%s" gives:' % str
+res = gf.asm('expression analysis', str,  mim, 0, md)
+if (res != "((Grad_u.(w*X(1)))+((w*u).[1,0]))"):
+  print "Bad gradient"; exit(1)

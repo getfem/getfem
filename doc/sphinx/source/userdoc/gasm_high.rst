@@ -50,7 +50,7 @@ A specific language has been developed to describe the weak formulation of bound
 
   - Explicit matrices: For instance ``[1,3;2,4]`` and ``[[1,2],[3,4]]`` denote the same 2x2 matrix. Each component can be an expression.
 
-  - Explicit fourth order tensors: Supplementary dimensions are separated with ``,,`` and ``;;``. For instance ``[[[[1,2,3],[1,2,3]],[[1,2,3],[1,2,3]]],[[[1,2,3],[1,2,3]],[[1,2,3],[1,2,3]]]]`` is a 2x2x2x2 valid tensor.
+  - Explicit fourth order tensors: example of explicit 3x2x2x2 fourth order tensor in the nested format: ``[[[[1,2,3],[1,2,3]],[[1,2,3],[1,2,3]]],[[[1,2,3],[1,2,3]],[[1,2,3],[1,2,3]]]]``.
 
   - ``X`` is the current coordinate on the real element, ``X(i)`` is its i-th component.
 
@@ -61,6 +61,8 @@ A specific language has been developed to describe the weak formulation of bound
   - A certain number of linear and nonlinear operators (``Trace``, ``Norm``, ``Det``, ``Deviator``, ``Contract``, ...). The nonlinear operators cannot be applied to test functions.
 
   - ``Diff(expression, variable)``: The possibility to explicit differentiate an expression with respect to a variable (symbolic differentiation). 
+
+  - ``Diff(expression, variable, direction)``: computes the derivative of ``expression`` with respect to ``variable`` in the direction ``direction``.
 
   - ``Grad(expression)``: When possible, symbolically derive the gradient of the given expression.
 
@@ -514,7 +516,7 @@ Similarly to explicit vectors, it is possible to define explicit matrices (i.e. 
 Explicit tensors
 ----------------
 
-Explicit tensors of any order are permitted with the nested format. A tensor of order ``n`` is written as a succession of tensor of order ``n-1`` of equal dimensions and separated by a comma. For instance ``[[[[1,2,3],[1,2,3]],[[1,2,3],[1,2,3]]],[[[1,2,3],[1,2,3]],[[1,2,3],[1,2,3]]]]`` is a fourth order tensor. Another possibility is to use the syntax ``Reshape([1,2,3,1,2,3,1,2,3,1,2,3,1,2,3,1,2,3,1,2,3,1,2,3], 2, 2, 2, 2)`` where the components have to be given in Fortran order.
+Explicit tensors of any order are permitted with the nested format. A tensor of order ``n`` is written as a succession of tensor of order ``n-1`` of equal dimensions and separated by a comma. For instance ``[[[[1,2,3],[1,2,3]],[[1,2,3],[1,2,3]]],[[[1,2,3],[1,2,3]],[[1,2,3],[1,2,3]]]]`` is a fourth order tensor. Another possibility is to use the syntax ``Reshape([1,2,3,1,2,3,1,2,3,1,2,3,1,2,3,1,2,3,1,2,3,1,2,3], 3, 2, 2, 2)`` where the components have to be given in Fortran order.
 
 
 Access to tensor components
@@ -667,7 +669,20 @@ So that::
 
   Grad_u:Grad_test_u + Diff(u.u, u)
 
-is a valid expression.  
+is a valid expression. A third argument can be added to the ``Diff`` command to specify the direction::
+
+  Diff(expression, variable, direction)
+
+in that case, it replaces the ``Test_variable`` by the expression ``direction`` which has to be of the same dimension as ``variable``. It computes the derivative of ``expression`` with respect to ``variable`` in the direction ``direction``.
+For instance::
+
+  Diff(u.u, u, v)
+
+will result in::
+
+  2*(u.v)
+
+if ``v`` is any valid expression of the same dimension than ``u``.
 
 Explicit Gradient
 -----------------

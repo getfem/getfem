@@ -30,7 +30,7 @@ Files
    :file:`getfem_generic_assembly_semantic.h` and :file:`getfem_generic_assembly_semantic.cc`, "Semantic analysis and enrichment of the syntax tree. Include some operations such as making the derivation of a tree with respect to a variable or computing the tree corresponding to the gradient of an expression."
    :file:`getfem_generic_assembly_workspace.cc`, "Methodes of the workspace object (defined in :file:`getfem_generic_assembly.h`)."
    :file:`getfem_generic_assembly_compile_and_exec.h` and :file:`getfem_generic_assembly_compile_and_exec.cc`, "Definition of the optimized instructions, compilation into a sequel of optimize instructions and execution of the instructions on Gauss point/interpolation points."   
-   :file:`getfem_generic_assembly_interpolation.cc`, "Interpolation operations and interpolate transformations"
+   :file:`getfem_generic_assembly_interpolation.cc`, "Interpolation operations and interpolate transformations."
 
 
 A few implementation details
