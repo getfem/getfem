@@ -5952,47 +5952,16 @@ namespace getfem {
 
     case GA_NODE_C_MATRIX:
       {
-        size_type nbc1 = pnode->nbc1, nbc2 = pnode->nbc2, nbc3 = pnode->nbc3;
-        size_type nbl = pnode->children.size() / (nbc1*nbc2*nbc3);
         if (pnode->test_function_type) {
           std::vector<const base_tensor *> components(pnode->children.size());
-
-          if (nbc1 == 1 && nbc2 == 1 && nbc3 == 1) {
-            for (size_type i = 0; i < pnode->children.size(); ++i)
-              components[i]  = &(pnode->children[i]->tensor());
-          } else if (nbc2 == 1 && nbc3 == 1) {
-            for (size_type i = 0; i < nbl; ++i)
-              for (size_type j = 0; j < nbc1; ++j)
-                components[i+j*nbl] = &(pnode->children[i*nbc1+j]->tensor());
-          } else {
-            size_type n = 0;
-            for (size_type i = 0; i < nbl; ++i)
-              for (size_type j = 0; j < nbc3; ++j)
-                for (size_type k = 0; k < nbc2; ++k)
-                  for (size_type l = 0; l < nbc1; ++l)
-                    components[i+j*nbl+k*nbl*nbc3+l*nbc2*nbc3*nbl]
-                      = &(pnode->children[n++]->tensor());
-          }
+	  for (size_type i = 0; i < pnode->children.size(); ++i)
+	    components[i]  = &(pnode->children[i]->tensor());
           pgai = std::make_shared<ga_instruction_c_matrix_with_tests>
             (pnode->tensor(), components);
         } else {
           std::vector<scalar_type *> components(pnode->children.size());
-          if (nbc1 == 1 && nbc2 == 1 && nbc3 == 1) {
-            for (size_type i = 0; i < pnode->children.size(); ++i)
-              components[i]  = &(pnode->children[i]->tensor()[0]);
-          } else if (nbc2 == 1 && nbc3 == 1) {
-            for (size_type i = 0; i < nbl; ++i)
-              for (size_type j = 0; j < nbc1; ++j)
-                components[i+j*nbl] = &(pnode->children[i*nbc1+j]->tensor()[0]);
-          } else {
-            size_type n = 0;
-            for (size_type i = 0; i < nbl; ++i)
-              for (size_type j = 0; j < nbc3; ++j)
-                for (size_type k = 0; k < nbc2; ++k)
-                  for (size_type l = 0; l < nbc1; ++l)
-                    components[i+j*nbl+k*nbl*nbc3+l*nbc2*nbc3*nbl]
-                      = &(pnode->children[n++]->tensor()[0]);
-          }
+	  for (size_type i = 0; i < pnode->children.size(); ++i)
+	    components[i]  = &(pnode->children[i]->tensor()[0]);
           pgai = std::make_shared<ga_instruction_simple_c_matrix>
             (pnode->tensor(), components);
         }

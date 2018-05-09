@@ -56,6 +56,7 @@ md.set_variable('v', V)
 md.add_fem_variable('w', mfw)
 md.set_variable('w', W)
 
+
 # Simple test on the integral of u
 result = gf.asm('generic', mim, 0, "u", -1, md)
 if (abs(result-1) > 1e-8) : print "Bad value"; exit(1)
@@ -140,7 +141,7 @@ if (res !=
 print 'Assembly string "Grad(Grad_w./Grad_w)" gives:'
 res = gf.asm('expression analysis', "Grad(Grad_w./Grad_w)",  mim, 0, md)
 if (res !=
-    "((Hess_w./(Grad_w@[1; 1]))-(((Grad_w./sqr(Grad_w))@[1; 1]).*Hess_w))"):
+    "((Hess_w./(Grad_w@[1;1]))-(((Grad_w./sqr(Grad_w))@[1;1]).*Hess_w))"):
   print "Bad gradient"; exit(1)
   
 print 'Assembly string "Grad(Grad_w/u)" gives:'
@@ -148,14 +149,21 @@ res = gf.asm('expression analysis', "Grad(Grad_w/u)",  mim, 0, md)
 if (res != "((Hess_w/u)-((Grad_w/sqr(u))@Grad_u))"):
   print "Bad gradient"; exit(1)
   
-# To be controlled after fixing C_MATRIX
 print 'Assembly string "Grad([u,u; 2,1; u,u])" gives:'
 res = gf.asm('expression analysis', "Grad([u,u; 2,1; u,u])",  mim, 0, md)
+if (res != "([[[Grad_u(1),0,Grad_u(1)],[Grad_u(1),0,Grad_u(1)]],[[Grad_u(2),0,Grad_u(2)],[Grad_u(2),0,Grad_u(2)]]])"):
+  print "Bad gradient"; exit(1)
 
-
-# To be controlled after fixing C_MATRIX
 print 'Assembly string "Grad([[u,2,u],[u,1,u]])" gives:'
 res = gf.asm('expression analysis', "Grad([[u,2,u],[u,1,u]])",  mim, 0, md)
+if (res != "([[[Grad_u(1),0,Grad_u(1)],[Grad_u(1),0,Grad_u(1)]],[[Grad_u(2),0,Grad_u(2)],[Grad_u(2),0,Grad_u(2)]]])"):
+  print "Bad gradient"; exit(1)
+  
+print 'Assembly string "Grad([u,u])" gives:'
+res = gf.asm('expression analysis', "Grad([u,u])",  mim, 0, md)
+
+print 'Assembly string "Grad([u;u])" gives:'
+res = gf.asm('expression analysis', "Grad([u,u])",  mim, 0, md)
 
 
 
@@ -176,3 +184,17 @@ print 'Assembly string "Grad(Contract(Grad_w, 1, 2, Grad_w, 1, 2))" gives:'
 res = gf.asm('expression analysis', "Grad(Contract(Grad_w, 1, 2, Grad_w, 1, 2))", mim, 0, md)
 if (res != "(Contract(Hess_w, 1, 2, Grad_w, 1, 2)+Contract(Grad_w, 1, 2, Hess_w, 1, 2))"):
   print "Bad gradient"; exit(1)
+
+
+str = "[1;2;3]"; print 'Assembly string "%s" gives:' % str
+res = gf.asm('expression analysis', str,  mim, 0, md)
+
+str = "[1,2,3]"; print 'Assembly string "%s" gives:' % str
+res = gf.asm('expression analysis', str,  mim, 0, md)
+
+
+str = "[u;u;u].[u;u;u]"; print 'Assembly string "%s" gives:' % str
+res = gf.asm('expression analysis', str,  mim, 2, md)
+
+
+

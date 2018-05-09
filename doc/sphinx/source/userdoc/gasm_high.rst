@@ -50,7 +50,7 @@ A specific language has been developed to describe the weak formulation of bound
 
   - Explicit matrices: For instance ``[1,3;2,4]`` and ``[[1,2],[3,4]]`` denote the same 2x2 matrix. Each component can be an expression.
 
-  - Explicit fourth order tensors: Supplementary dimensions are separated with ``,,`` and ``;;``. For instance ``[1,1;1,2,,1,1;1,2;;1,1;1,2,,1,1;1,2]`` is a 2x2x2x2 valid tensor.
+  - Explicit fourth order tensors: Supplementary dimensions are separated with ``,,`` and ``;;``. For instance ``[[[[1,2,3],[1,2,3]],[[1,2,3],[1,2,3]]],[[[1,2,3],[1,2,3]],[[1,2,3],[1,2,3]]]]`` is a 2x2x2x2 valid tensor.
 
   - ``X`` is the current coordinate on the real element, ``X(i)`` is its i-th component.
 

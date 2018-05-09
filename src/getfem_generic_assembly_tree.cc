@@ -354,28 +354,6 @@ namespace getfem {
     current_node->nbc1 = current_node->nbc2 = current_node->nbc3 = 0;
   }
   
-  void ga_tree::zip_matrix(const pga_tree_node source_node) {
-    GMM_ASSERT1(current_node->node_type == GA_NODE_C_MATRIX &&
-		source_node->node_type == GA_NODE_C_MATRIX,
-		"Internal error");
-    size_type target_size = current_node->children.size();
-    size_type source_size = source_node->children.size();
-    size_type last_dim_size = target_size/source_size;
-    GMM_ASSERT1(target_size == source_size*last_dim_size,
-		"Internal error, " << target_size << " != " <<
-		source_size << "*" << last_dim_size);
-    std::vector<pga_tree_node> new_children;
-    for (size_type i = 0; i < source_size; ++i) {
-      for (size_type j = 0; j < last_dim_size; ++j)
-	new_children.push_back(current_node->children[i*last_dim_size+j]);
-      new_children.push_back(source_node->children[i]);
-      source_node->children[i]->parent = current_node;
-    }
-    source_node->children.resize(0); // so that the destructor of source_node
-                                     // will not destruct the children
-    current_node->children = new_children;
-  }
-  
   void ga_tree::add_op(GA_TOKEN_TYPE op_type, size_type pos,
 		       pstring expr) {
     while (current_node && current_node->parent &&
@@ -546,9 +524,10 @@ namespace getfem {
           return false;
       break;
     case GA_NODE_C_MATRIX:
-      if (pnode1->nbc1 != pnode2->nbc1 || pnode1->nbc2 != pnode2->nbc2 ||
-          pnode1->nbc3 != pnode2->nbc3)
-        return false;
+      if (pnode1->t.sizes().size() != pnode2->t.sizes().size()) return false;
+      for (size_type i = 0; i < pnode1->t.sizes().size(); ++i)
+        if (pnode1->t.sizes()[i] != pnode2->t.sizes()[i]) return false;
+      if (pnode1->nbc1 != pnode2->nbc1) return false;
       break;
     case GA_NODE_INTERPOLATE_FILTER:
       if (pnode1->interpolate_name.compare(pnode2->interpolate_name) ||
@@ -666,7 +645,7 @@ namespace getfem {
     case 1:
       str << "[";
       for (size_type i = 0; i < pnode->tensor_proper_size(0); ++i) {
-        if (i != 0) str << "; ";
+        if (i != 0) str << ";";
         str << (nt ? scalar_type(0) : pnode->tensor()[i]);
       }
       str << "]";
@@ -705,10 +684,10 @@ namespace getfem {
       }
       break;
 
-    case 5: case 6:
+    case 5: case 6: case 7: case 8:
       str << "Reshape([";
       for (size_type i = 0; i < pnode->tensor_proper_size(); ++i) {
-        if (i != 0) str << "; ";
+        if (i != 0) str << ";";
         str << (nt ? scalar_type(0) : pnode->tensor()[i]);
       }
       str << "]";
@@ -1060,33 +1039,70 @@ namespace getfem {
       break;
 
     case GA_NODE_C_MATRIX:
-      {
-        GMM_ASSERT1(pnode->children.size(), "Invalid tree");
-        size_type nbc1 = pnode->nbc1, nbc2 = pnode->nbc2;
-        size_type nbc3 = pnode->nbc3;
-        size_type nbcl = pnode->children.size()/(nbc1*nbc2*nbc3);
-        if (nbc1 > 1) str << "[";
-        for (size_type i1 = 0; i1 < nbc1; ++i1) {
-          if (i1 != 0) str << ",";
-          if (nbc2 > 1) str << "[";
-          for (size_type i2 = 0; i2 < nbc2; ++i2) {
-            if (i2 != 0) str << ",";
-            if (nbc3 > 1) str << "[";
-            for (size_type i3 = 0; i3 < nbc3; ++i3) {
-              if (i3 != 0) str << ",";
-              if (nbcl > 1) str << "[";
-              for (size_type i4 = 0; i4 < nbcl; ++i4) {
-                if (i4 != 0) str << ",";
-                size_type ii = ((i4*nbc3 + i3)*nbc2 + i2)*nbc1 + i1;
-                ga_print_node(pnode->children[ii], str);
-              }
-              if (nbcl > 1) str << "]";
-            }
-            if (nbc3 > 1) str << "]";
-          }
-          if (nbc2 > 1) str << "]";
-        }
-        if (nbc1 > 1) str << "]";
+      GMM_ASSERT1(pnode->children.size(), "Invalid tree");
+      GMM_ASSERT1(pnode->nbc1 == pnode->tensor_order(), "Invalid C_MATRIX");
+      switch (pnode->tensor_order()) {
+      case 0:
+	ga_print_node(pnode->children[0], str);
+	break;
+	
+      case 1:
+	str << "[";
+	for (size_type i = 0; i < pnode->tensor_proper_size(0); ++i) {
+	  if (i != 0) str << ";";
+	  ga_print_node(pnode->children[i], str);
+	}
+	str << "]";
+	break;
+	
+      case 2: case 3: case 4:
+	{
+	  size_type ii(0);
+	  size_type n0 = pnode->tensor_proper_size(0);
+	  size_type n1 = pnode->tensor_proper_size(1);
+	  size_type n2 = ((pnode->tensor_order() > 2) ?
+			  pnode->tensor_proper_size(2) : 1);
+	  size_type n3 = ((pnode->tensor_order() > 3) ?
+			  pnode->tensor_proper_size(3) : 1);
+	  if (n3 > 1) str << "[";
+	  for (size_type l = 0; l < n3; ++l) {
+	    if (l != 0) str << ",";
+	    if (n2 > 1) str << "[";
+	    for (size_type k = 0; k < n2; ++k) {
+	      if (k != 0) str << ",";
+	      if (n1 > 1) str << "[";
+	      for (size_type j = 0; j < n1; ++j) {
+		if (j != 0) str << ",";
+		if (n0 > 1) str << "[";
+		for (size_type i = 0; i < n0; ++i) {
+		  if (i != 0) str << ",";
+		  ga_print_node(pnode->children[ii++], str);
+		}
+		if (n0 > 1) str << "]";
+	      }
+	      if (n1 > 1) str << "]";
+	    }
+	    if (n2 > 1) str << "]";
+	  }
+	  if (n3 > 1) str << "]";
+	}
+	break;
+	
+      case 5: case 6: case 7: case 8:
+	str << "Reshape([";
+	for (size_type i = 0; i < pnode->tensor_proper_size(); ++i) {
+	  if (i != 0) str << ";";
+	  ga_print_node(pnode->children[i], str);
+	}
+	str << "]";
+	for (size_type i = 0; i < pnode->tensor_order(); ++i) {
+	  if (i != 0) str << ", ";
+	  str << pnode->tensor_proper_size(i);
+	}
+	str << ")";
+	break;
+	
+      default: GMM_ASSERT1(false, "Invalid tensor dimension");
       }
       break;
 
@@ -1664,75 +1680,68 @@ namespace getfem {
             GA_TOKEN_TYPE r_type;
             size_type nbc1(0), nbc2(0), nbc3(0), n1(0), n2(0), n3(0);
             size_type tensor_order(1);
-            bool foundcomma(false), foundsemi(false), nested_format(false);
+            bool foundcomma(false), foundsemi(false);
 
-            tree.add_matrix(token_pos, expr);
-            do {
-              r_type = ga_read_term(expr, pos, sub_tree, macro_dict);
-
-              if (sub_tree.root->node_type == GA_NODE_C_MATRIX) {
-                // nested format
-                if (r_type != GA_COMMA && r_type != GA_RBRACKET)
-                  // in the nested format only "," and "]" are expected
+	    r_type = ga_read_term(expr, pos, sub_tree, macro_dict);
+	    size_type nb_comp = 0;
+	    tree.add_matrix(token_pos, expr);
+	    
+	    if (sub_tree.root->node_type == GA_NODE_C_MATRIX) { // nested format
+	      bgeot::multi_index mii;
+	      do {
+		if (nb_comp) {
+		  sub_tree.clear();
+		  r_type = ga_read_term(expr, pos, sub_tree, macro_dict);
+		}
+		// in the nested format only "," and "]" are expected
+		if (sub_tree.root->node_type != GA_NODE_C_MATRIX || 
+		    (r_type != GA_COMMA && r_type != GA_RBRACKET))
                   ga_throw_error(expr, pos-1, "Bad explicit "
-                                 "vector/matrix/tensor format.")
-                else if (sub_tree.root->nbc3 != 1)
-                  // the sub-tensor to be merged cannot be of fourth order
-                  ga_throw_error(expr, pos-1, "Definition of explicit "
-                                 "tensors is limitted to the fourth order. "
-                                 "Limit exceeded.")
-                else if (foundsemi || // Cannot mix with the non-nested format.
-                         (sub_tree.root->children.size() > 1 &&
-                          // The sub-tensor cannot be a column vector [a;b],
-                          sub_tree.root->nbc1 == 1))
-                  // the nested format only accepts row vectors [a,b]
-                  // and converts them to column vectors internally
-                  ga_throw_error(expr, pos-1, "Bad explicit "
-                                 "vector/matrix/tensor format.")  // (see below)
+                                 "vector/matrix/tensor format.");
 
-                // convert a row vector [a,b] to a column vector [a;b]
-                if (sub_tree.root->children.size() == sub_tree.root->nbc1)
-                  sub_tree.root->nbc1 = 1;
-
-                nested_format = true;
-
-                size_type sub_tensor_order = 3;
-                if (sub_tree.root->nbc1 == 1)
-                  sub_tensor_order = 1;
-                else if (sub_tree.root->nbc2 == 1)
-                  sub_tensor_order = 2;
-
-                if (tensor_order == 1) {
-                  if (nbc1 != 0 || nbc2 != 0 || nbc3 != 0)
-                    ga_throw_error(expr, pos-1, "Bad explicit "
+		// convert a row vector [a,b] to a column vector [a;b]
+                if (sub_tree.root->marked &&
+		    sub_tree.root->tensor().sizes()[0] == 1 &&
+		    sub_tree.root->tensor().size() != 1) {
+		  bgeot::multi_index mi = sub_tree.root->tensor().sizes();
+		  for (size_type i = mi.size()-1; i > 0; i--)
+		    mi[i-1] = mi[i];
+		  mi.pop_back();
+		  sub_tree.root->tensor().adjust_sizes(mi);
+		}
+		if (!nb_comp) mii = sub_tree.root->tensor().sizes();
+		else {
+		  const bgeot::multi_index &mi=sub_tree.root->tensor().sizes();
+		  bool cmp = true;
+		  if (mii.size() == mi.size()) {
+		     for (size_type i = 0; i < mi.size(); ++i)
+		       if (mi[i] != mii[i]) cmp = false;
+		  } else cmp = false;
+		  if (!cmp)
+		    ga_throw_error(expr, pos-1, "Bad explicit "
                                    "vector/matrix/tensor format.");
-                  nbc1 = 1;
-                  nbc2 = sub_tree.root->nbc1;
-                  nbc3 = sub_tree.root->nbc2;
-                  tensor_order = sub_tensor_order + 1;
-                } else {
-                  if ((tensor_order != sub_tensor_order + 1) ||
-                      (tensor_order > 2 && nbc2 != sub_tree.root->nbc1) ||
-                      (tensor_order > 3 && nbc3 != sub_tree.root->nbc2))
-                    ga_throw_error(expr, pos-1, "Bad explicit "
-                                   "vector/matrix/tensor format.");
-                  nbc1 += 1;
-                }
-
-                tree.zip_matrix(sub_tree.root);
-                sub_tree.clear();
-                if (r_type == GA_RBRACKET) {
-                  tree.current_node->nbc1 = nbc1;
-                  tree.current_node->nbc2 = nbc2;
-                  tree.current_node->nbc3 = nbc3;
-                }
-
-              } else {
-
-                // non-nested format
-
-                tree.add_sub_tree(sub_tree);
-
+		}
+		for (size_type i = 0; i < sub_tree.root->children.size(); ++i) {
+		  sub_tree.root->children[i]->parent = tree.current_node;
+		  tree.current_node->children.push_back
+		    (sub_tree.root->children[i]);
+		}
+		sub_tree.root->children.resize(0);
+		nb_comp++;
+	      } while (r_type != GA_RBRACKET);
+	      tree.current_node->marked = false;
+	      mii.push_back(nb_comp);
+	      tree.current_node->tensor().adjust_sizes(mii);
+	    } else { // non nested format
+	      do {
+		if (nb_comp) {
+		  sub_tree.clear();
+		  r_type = ga_read_term(expr, pos, sub_tree, macro_dict);
+		}
+		nb_comp++;
+		
+		tree.add_sub_tree(sub_tree);
+		
                 ++n1; ++n2; ++n3;
                 if (tensor_order < 2) ++nbc1;
                 if (tensor_order < 3) ++nbc2;
@@ -1781,12 +1790,36 @@ namespace getfem {
                                  "separated by ',', ';', ',,' and ';;' and "
                                  "be ended by ']'.");
                 }
-              }
-
-            } while (r_type != GA_RBRACKET);
-
-            state = 2;
+		
+	      } while (r_type != GA_RBRACKET);
+	      bgeot::multi_index mi;
+	      nbc1 = tree.current_node->nbc1; nbc2 = tree.current_node->nbc2;
+	      nbc3 = tree.current_node->nbc3;
+	      
+	      size_type nbl = tree.current_node->children.size()
+		/ (nbc2 * nbc1 * nbc3);
+	      switch(tensor_order) {
+	      case 1:
+		mi.push_back(1); mi.push_back(nbc1); break;
+	      case 2:
+		mi.push_back(nbl); if (nbc1 > 1) mi.push_back(nbc1); break; 
+	      case 3: mi.push_back(nbl); mi.push_back(nbc2); mi.push_back(nbc1); break;
+	      case 4: mi.push_back(nbl); mi.push_back(nbc3); mi.push_back(nbc2);  mi.push_back(nbc1); break;
+	      default: GMM_ASSERT1(false, "Internal error");
+	      }
+	      tree.current_node->tensor().adjust_sizes(mi);
+	      std::vector<pga_tree_node> children = tree.current_node->children;
+	      auto it = tree.current_node->children.begin();
+	      for (size_type i = 0; i < nbc1; ++i)
+		for (size_type j = 0; j < nbc2; ++j)
+		  for (size_type k = 0; k < nbc3; ++k)
+		    for (size_type l = 0; l < nbl; ++l, ++it)
+		      *it = children[i+nbc1*(j+nbc2*(k+nbc3*l))];
+	      tree.current_node->marked = true;
+	    }
           }
+	  tree.current_node->nbc1 = tree.current_node->tensor().sizes().size();
+	  state = 2;
           break;
 
         default:

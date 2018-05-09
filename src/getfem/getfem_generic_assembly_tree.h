@@ -300,7 +300,9 @@ namespace getfem {
     std::string interpolate_name_test1, interpolate_name_test2; // name
                                   // of interpolation transformation if any
     size_type qdim1, qdim2;       // Qdims when test_function_type > 0.
-    size_type nbc1, nbc2, nbc3;   // For explicit matrices, X and macros.
+    size_type nbc1, nbc2, nbc3;   // For X (nbc1=coordinate number),
+                                  // macros (nbc1=param number, nbc2,nbc3 type))
+                                  // and C_MATRIX (nbc1=order).
     size_type pos;                // Position of the first character in string
     pstring expr;                 // Original string, for error messages.
     std::string name;             // variable/constant/function/operator name
@@ -415,7 +417,6 @@ namespace getfem {
     void add_sub_tree(ga_tree &sub_tree);
     void add_params(size_type pos, pstring expr);
     void add_matrix(size_type pos, pstring expr);
-    void zip_matrix(const pga_tree_node source_node);
     void add_op(GA_TOKEN_TYPE op_type, size_type pos, pstring expr);
     void clear_node_rec(pga_tree_node pnode);
     void clear_node(pga_tree_node pnode);

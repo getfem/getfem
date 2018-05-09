@@ -1348,9 +1348,9 @@ namespace getfem {
                          "components should be scalar valued.");
         }
 
-        size_type nbc1 = pnode->nbc1, nbc2 = pnode->nbc2, nbc3 = pnode->nbc3;
-        size_type nbl = pnode->children.size() / (nbc1*nbc2*nbc3);
-        if (all_cte) pnode->node_type = GA_NODE_CONSTANT;
+	GMM_ASSERT1(pnode->children.size() == pnode->tensor_proper_size(),
+		    "Internal error");
+
         pnode->test_function_type = 0;
         for (size_type i = 0; i < pnode->children.size(); ++i) {
           if (pnode->children[i]->test_function_type) {
@@ -1378,42 +1378,39 @@ namespace getfem {
             }
           }
         }
-        mi.resize(0);
-        if (pnode->test_function_type) mi.push_back(2);
-        if (pnode->test_function_type >= 3) mi.push_back(2);
-        if (nbc1 == 1 && nbc2 == 1 && nbc3 == 1 && nbl == 1) {
-          pnode->t.adjust_sizes(mi);
-          if (all_cte) pnode->tensor()[0] = child0->tensor()[0];
-        } else {
-          mi.push_back(nbl);
-          if (nbc3 != 1) mi.push_back(nbc3);
-          if (nbc2 != 1) mi.push_back(nbc2);
-          if (nbc1 != 1) mi.push_back(nbc1);
-          pnode->t.adjust_sizes(mi);
-          if (all_cte) {
-            size_type n = 0;
-            if (nbc1 == 1 && nbc2 == 1 && nbc3 == 1)
-              for (size_type i = 0; i < nbl; ++i)
-                pnode->tensor()[i] = pnode->children[i]->tensor()[0];
-            else if (nbc2 == 1 && nbc3 == 1)
-              for (size_type i = 0; i < nbl; ++i)
-                for (size_type j = 0; j < nbc1; ++j)
-                  pnode->tensor()(i,j) = pnode->children[n++]->tensor()[0];
-            else if (nbc3 == 1)
-              for (size_type i = 0; i < nbl; ++i)
-                for (size_type j = 0; j < nbc2; ++j)
-                  for (size_type k = 0; k < nbc1; ++k)
-                    pnode->tensor()(i,j,k) = pnode->children[n++]->tensor()[0];
-            else
-              for (size_type i = 0; i < nbl; ++i)
-                for (size_type j = 0; j < nbc3; ++j)
-                  for (size_type k = 0; k < nbc2; ++k)
-                    for (size_type l = 0; l < nbc1; ++l)
-                      pnode->tensor()(i,j,k,l)
-                        = pnode->children[n++]->tensor()[0];
-          }
-        }
-        if (all_cte) tree.clear_children(pnode);
+	int to_add = int(pnode->nb_test_functions() + pnode->nbc1)
+	  - int(pnode->tensor().sizes().size());
+	GMM_ASSERT1(to_add >= 0 && to_add <=2, "Internal error");
+	if (to_add) {
+	  mi = pnode->tensor().sizes();
+	  mi.resize(pnode->nbc1+pnode->nb_test_functions());
+	  for (int i = int(mi.size()-1); i >= to_add; --i)
+	    mi[i] = mi[i-to_add];
+	  for (int i = 0; i < to_add; ++i) mi[i] = 2;
+
+	}
+	
+	if (pnode->nb_test_functions()) {
+	  
+	  
+	  
+	  pnode->tensor().adjust_sizes(mi);
+	  // test pour savoir si c'est bon et sinon, ajout de 1 ou deux ...
+	  // comment savoir, en fait ??
+	  
+	}
+	if (all_cte) {
+	  bool all_zero = true;
+	  for (size_type i = 0; i < pnode->children.size(); ++i) {
+	    pnode->tensor()[i] = pnode->children[i]->tensor()[0];
+	    if (pnode->tensor()[i] != scalar_type(0)) all_zero = false;
+	  }
+	  if (all_zero)
+	    pnode->node_type = GA_NODE_ZERO;
+	  else
+	    pnode->node_type = GA_NODE_CONSTANT;
+	  tree.clear_children(pnode);
+	}
       }
       break;
 
@@ -2864,8 +2861,6 @@ namespace getfem {
       for (size_type i = 0; i < N; ++i) {
         factor.clear_children(new_pnode);
         new_pnode->node_type = GA_NODE_C_MATRIX;
-        new_pnode->nbc1 = meshdim;
-        new_pnode->nbc2 = new_pnode->nbc3 = 1;
         new_pnode->t.adjust_sizes(mi);
         new_pnode->children.resize(N*meshdim);
         for (size_type j = 0; j < N; ++j) {
@@ -2873,7 +2868,7 @@ namespace getfem {
             if (j == i) {
               pga_tree_node param_node = new_pnode->children[k*N+j]
                 = new ga_tree_node(GA_NODE_PARAMS, pnode->pos, pnode->expr);
-              new_pnode->children[k*N+j]->parent = new_pnode;
+              new_pnode->children[k+j*meshdim]->parent = new_pnode;
               param_node->children.resize(2);
               param_node->children[0]
 		= new ga_tree_node(GA_NODE_NORMAL, pnode->pos, pnode->expr);
@@ -2884,10 +2879,11 @@ namespace getfem {
               param_node->children[1]->init_scalar_tensor(scalar_type(k));
 
             } else {
-              new_pnode->children[k*N+j]
+              new_pnode->children[k+j*meshdim]
 		= new ga_tree_node(GA_NODE_ZERO, pnode->pos, pnode->expr);
-              new_pnode->children[k*N+j]->init_scalar_tensor(scalar_type(0));
-              new_pnode->children[k*N+j]->parent = new_pnode;
+              new_pnode->children[k+j*meshdim]
+		->init_scalar_tensor(scalar_type(0));
+              new_pnode->children[k+j*meshdim]->parent = new_pnode;
             }
           }
         }
@@ -3313,6 +3309,10 @@ namespace getfem {
           tree.clear_children(pnode->children[i]);
         }
       }
+      // cout << "After : "; ga_print_node(pnode, cout); cout << endl;
+      // cout << "After : "; ga_print_node(pnode->parent, cout); cout << endl;
+      // ga_node_analysis(tree, workspace, pnode, m, 1, true, false, 1); 
+      // cout << "After : "; ga_print_node(pnode->parent, cout); cout << endl;
       break;
 
     case GA_NODE_PARAMS:
@@ -4209,25 +4209,16 @@ namespace getfem {
 	  }
 	}
 	if (m.dim() > 1) {
-	  size_type nbl = pnode->children.size() /
-	    (pnode->nbc1*pnode->nbc2*pnode->nbc3);
-	  if (pnode->nbc1==1 && pnode->nbc2==1 && pnode->nbc3==1)
-	    pnode->nbc1 = m.dim();
-	  else if (pnode->nbc2==1 && pnode->nbc3==1)
-	    { pnode->nbc2 = pnode->nbc1; pnode->nbc1 = m.dim(); }
-	  else if (pnode->nbc3==1)
-	    { pnode->nbc3 = pnode->nbc2; pnode->nbc2 = pnode->nbc1;
-	      pnode->nbc1 = m.dim(); }
-	  else GMM_ASSERT1(false, "Sorry this exceed the current limit of "
-			   "constant tensors (limited to order four)");
-	  pnode->children.resize(pnode->nbc1*pnode->nbc2*pnode->nbc3*nbl,
-				 nullptr);
-	  for (size_type i = pnode->children.size()-1; i > 0; --i) {
-	    if (i % m.dim())
-	      tree.copy_node(pnode->children[i/m.dim()], pnode,
-			     pnode->children[i]);
-	    else
-	      std::swap(pnode->children[i/m.dim()], pnode->children[i]);
+	  size_type orgsize = pnode->children.size();
+	  mi = pnode->tensor().sizes();
+	  mi.push_back(m.dim());
+	  pnode->nbc1 += 1;
+	  pnode->tensor().adjust_sizes(mi);
+	  
+	  pnode->children.resize(orgsize*m.dim(), nullptr);
+	  for (size_type i = orgsize; i < pnode->children.size(); ++i) {
+	    tree.copy_node(pnode->children[i % orgsize], pnode,
+			   pnode->children[i]);
 	  }
 	  for (size_type i = 0; i < pnode->children.size(); ++i) {
 	    pga_tree_node child = pnode->children[i];
@@ -4235,7 +4226,7 @@ namespace getfem {
 	      tree.insert_node(child, GA_NODE_PARAMS);
 	      tree.add_child(child->parent, GA_NODE_CONSTANT);
 	      child->parent->children[1]
-		->init_scalar_tensor(scalar_type(1+i%m.dim()));
+		->init_scalar_tensor(scalar_type(1+i/orgsize));
 	    }
 	  }
 	}
@@ -4290,8 +4281,6 @@ namespace getfem {
 	  if (mark1) {
 	    ga_node_grad(tree, workspace, m, pg2->children[ch2]);
 	  }
-	  ga_print_node(pg1, cout); cout << endl;
-	  ga_print_node(pg2, cout); cout << endl;
 	}
 #ifdef continue_here
 
