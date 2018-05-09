@@ -282,11 +282,6 @@ namespace getfem {
     size_type dim0 = child0 ? child0->tensor_order() : 0;
     size_type dim1 = child1 ? child1->tensor_order() : 0;
 
-    // cout << "child1 = " << child1 << endl;
-    // cout << "child0 = " << child0 << endl;
-    // cout << "nbch = " << nbch << endl;
-    // cout<<"begin analysis of node "; ga_print_node(pnode, cout); cout<<endl;
-
     const ga_predef_function_tab &PREDEF_FUNCTIONS
       = dal::singleton<ga_predef_function_tab>::instance(0);
     const ga_predef_operator_tab &PREDEF_OPERATORS
@@ -1342,12 +1337,9 @@ namespace getfem {
 
     case GA_NODE_C_MATRIX:
       {
-        if (!all_sc) {
-          ga_throw_error(pnode->expr, pnode->pos,
-			 "Constant vector/matrix/tensor "
-                         "components should be scalar valued.");
-        }
-
+	if (!all_sc) ga_throw_error(pnode->expr, pnode->pos,
+				    "Constant vector/matrix/tensor "
+				    "components should be scalar valued.");
 	GMM_ASSERT1(pnode->children.size() == pnode->tensor_proper_size(),
 		    "Internal error");
 
@@ -1387,18 +1379,9 @@ namespace getfem {
 	  for (int i = int(mi.size()-1); i >= to_add; --i)
 	    mi[i] = mi[i-to_add];
 	  for (int i = 0; i < to_add; ++i) mi[i] = 2;
-
+	  pnode->tensor().adjust_sizes(mi);
 	}
 	
-	if (pnode->nb_test_functions()) {
-	  
-	  
-	  
-	  pnode->tensor().adjust_sizes(mi);
-	  // test pour savoir si c'est bon et sinon, ajout de 1 ou deux ...
-	  // comment savoir, en fait ??
-	  
-	}
 	if (all_cte) {
 	  bool all_zero = true;
 	  for (size_type i = 0; i < pnode->children.size(); ++i) {
@@ -1706,12 +1689,10 @@ namespace getfem {
 	  if (pnode->children.size() != 2)
 	    ga_throw_error(pnode->expr, child0->pos,
 			   "Bad number of parameters for Grad operator");
-	  // cout << "Will compute gradient of expression "; ga_print_node(child1, cout); cout << endl;
 	  if (ga_node_mark_tree_for_grad(child1)) {
 	    ga_node_grad(tree, workspace, me, child1);
-	    ga_node_analysis(tree, workspace, pnode->children[1], me, ref_elt_dim,
-			     eval_fixed_size, ignore_X, option);
-	    // cout << "Result: "; ga_print_node(pnode->children[1], cout); cout << endl;
+	    ga_node_analysis(tree, workspace, pnode->children[1], me,
+			     ref_elt_dim, eval_fixed_size, ignore_X, option);
 	    child1 = pnode->children[1];
 	  } else {
 	    mi = child1->t.sizes(); mi.push_back(2);
@@ -2413,7 +2394,6 @@ namespace getfem {
                 predef_operators_contact_initialized, "Internal error");
     if (!(tree.root)) return;
     if (option == 1) { workspace.test1.clear(); workspace.test2.clear(); }
-    // cout << "semantic analysis of " << ga_tree_to_string(tree) << endl;
     ga_node_analysis(tree, workspace, tree.root, m, ref_elt_dim,
                      eval_fixed_size, ignore_X, option);
     if (tree.root && option == 2) {
@@ -2428,7 +2408,6 @@ namespace getfem {
             (workspace.selected_test2.transname))))
         tree.clear();
     }
-    // cout << "semantic analysis done " << endl;
     ga_valid_operand(tree.root);
   }
 
@@ -2817,10 +2796,6 @@ namespace getfem {
         quote_before_colon = true;
       } else ok = false;
     }
-
-    // cout << "analyzing factor : " <<  ga_tree_to_string(factor) << endl;
-    // cout << "ok = " << int(ok) << endl;
-    // cout << "colon_pnode = " << colon_pnode << endl;
 
     if (ok && cas == 0 && !colon_pnode) ok = false;
 
@@ -3298,7 +3273,7 @@ namespace getfem {
       }
       break;
 
-    case GA_NODE_C_MATRIX:
+    case GA_NODE_C_MATRIX:      
       for (size_type i = 0; i < pnode->children.size(); ++i) {
         if (pnode->children[i]->marked)
           ga_node_derivation(tree, workspace, m, pnode->children[i],
@@ -3309,10 +3284,6 @@ namespace getfem {
           tree.clear_children(pnode->children[i]);
         }
       }
-      // cout << "After : "; ga_print_node(pnode, cout); cout << endl;
-      // cout << "After : "; ga_print_node(pnode->parent, cout); cout << endl;
-      // ga_node_analysis(tree, workspace, pnode, m, 1, true, false, 1); 
-      // cout << "After : "; ga_print_node(pnode->parent, cout); cout << endl;
       break;
 
     case GA_NODE_PARAMS:
@@ -3561,8 +3532,6 @@ namespace getfem {
   void ga_derivative(ga_tree &tree, const ga_workspace &workspace,
 		     const mesh &m, const std::string &varname,
 		     const std::string &interpolatename, size_type order) {
-    // cout << "compute derivative of " << ga_tree_to_string(tree)
-    //  << " with respect to " << varname << " : " << interpolatename << endl;
     if (!(tree.root)) return;
     if (ga_node_mark_tree_for_variable(tree.root, workspace, m, varname,
                                        interpolatename))
@@ -3570,7 +3539,6 @@ namespace getfem {
                          interpolatename, order);
     else
       tree.clear();
-    // cout << "derived tree : " << ga_tree_to_string(tree) << endl;
   }
 
   //=========================================================================
@@ -4500,13 +4468,11 @@ namespace getfem {
   // The tree is modified. Should be copied first and passed to
   // ga_semantic_analysis after for enrichment
   void ga_grad(ga_tree &tree, const ga_workspace &workspace, const mesh &m) {
-    // cout << "compute gradient of " << ga_tree_to_string(tree) << endl;
     if (!(tree.root)) return;
     if (ga_node_mark_tree_for_grad(tree.root))
       ga_node_grad(tree, workspace, m, tree.root);
     else
       tree.clear();
-    // cout << "gradient tree : " << ga_tree_to_string(tree) << endl;
   }
 
 

@@ -645,7 +645,7 @@ namespace getfem {
     case 1:
       str << "[";
       for (size_type i = 0; i < pnode->tensor_proper_size(0); ++i) {
-        if (i != 0) str << ";";
+        if (i != 0) str << ",";
         str << (nt ? scalar_type(0) : pnode->tensor()[i]);
       }
       str << "]";
@@ -1049,7 +1049,7 @@ namespace getfem {
       case 1:
 	str << "[";
 	for (size_type i = 0; i < pnode->tensor_proper_size(0); ++i) {
-	  if (i != 0) str << ";";
+	  if (i != 0) str << ",";
 	  ga_print_node(pnode->children[i], str);
 	}
 	str << "]";
@@ -1800,7 +1800,7 @@ namespace getfem {
 		/ (nbc2 * nbc1 * nbc3);
 	      switch(tensor_order) {
 	      case 1:
-		mi.push_back(1); mi.push_back(nbc1); break;
+		/* mi.push_back(1); */ mi.push_back(nbc1); break;
 	      case 2:
 		mi.push_back(nbl); if (nbc1 > 1) mi.push_back(nbc1); break; 
 	      case 3: mi.push_back(nbl); mi.push_back(nbc2); mi.push_back(nbc1); break;

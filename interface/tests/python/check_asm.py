@@ -141,7 +141,7 @@ if (res !=
 print 'Assembly string "Grad(Grad_w./Grad_w)" gives:'
 res = gf.asm('expression analysis', "Grad(Grad_w./Grad_w)",  mim, 0, md)
 if (res !=
-    "((Hess_w./(Grad_w@[1;1]))-(((Grad_w./sqr(Grad_w))@[1;1]).*Hess_w))"):
+    "((Hess_w./(Grad_w@[1,1]))-(((Grad_w./sqr(Grad_w))@[1,1]).*Hess_w))"):
   print "Bad gradient"; exit(1)
   
 print 'Assembly string "Grad(Grad_w/u)" gives:'
