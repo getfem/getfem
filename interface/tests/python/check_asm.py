@@ -19,7 +19,7 @@
 # Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 #
 ############################################################################
-"""  test high generic assembly language.
+"""  Test of the high generic assembly language.
 
   This program is used to check that Python-GetFEM interface, and more
   generally GetFEM are working. It focuses on testing some operations
@@ -158,14 +158,11 @@ print 'Assembly string "Grad([[u,2,u],[u,1,u]])" gives:'
 res = gf.asm('expression analysis', "Grad([[u,2,u],[u,1,u]])",  mim, 0, md)
 if (res != "([[[Grad_u(1),0,Grad_u(1)],[Grad_u(1),0,Grad_u(1)]],[[Grad_u(2),0,Grad_u(2)],[Grad_u(2),0,Grad_u(2)]]])"):
   print "Bad gradient"; exit(1)
-  
-print 'Assembly string "Grad([u,u])" gives:'
-res = gf.asm('expression analysis', "Grad([u,u])",  mim, 0, md)
 
 print 'Assembly string "Grad([u;u])" gives:'
 res = gf.asm('expression analysis', "Grad([u,u])",  mim, 0, md)
-
-
+if (res != "([[Grad_u(1),Grad_u(1)],[Grad_u(2),Grad_u(2)]])"):
+  print "Bad gradient"; exit(1)
 
 print 'Assembly string "Grad(Reshape(Grad_w, 1, 4))" gives:'
 res = gf.asm('expression analysis', "Grad(Reshape(Grad_w, 1, 4))",  mim, 0, md)
@@ -186,15 +183,21 @@ if (res != "(Contract(Hess_w, 1, 2, Grad_w, 1, 2)+Contract(Grad_w, 1, 2, Hess_w,
   print "Bad gradient"; exit(1)
 
 
-str = "[1;2;3]"; print 'Assembly string "%s" gives:' % str
+str = "Grad(sin(u))"; print 'Assembly string "%s" gives:' % str
 res = gf.asm('expression analysis', str,  mim, 0, md)
+if (res != "((cos(u)@[1,1]).*Grad_u)"): print "Bad gradient"; exit(1)
 
-str = "[1,2,3]"; print 'Assembly string "%s" gives:' % str
+str = "Grad(cos(Grad_u))"; print 'Assembly string "%s" gives:' % str
 res = gf.asm('expression analysis', str,  mim, 0, md)
-
-
-str = "[u;u;u].[u;u;u]"; print 'Assembly string "%s" gives:' % str
-res = gf.asm('expression analysis', str,  mim, 2, md)
-
-
-
+if (res != "((DER_PDFUNC_COS(Grad_u)@[1,1]).*Hess_u)"):
+  print "Bad gradient"; exit(1)
+  
+str = "Grad(min(v, 2*v))"; print 'Assembly string "%s" gives:' % str
+res = gf.asm('expression analysis', str,  mim, 0, md)
+if (res != "(((DER_PDFUNC2_MAX(v, (2*v))@[1,1]).*Grad_v)+((DER_PDFUNC1_MAX(v, (2*v))@[1,1]).*(2*Grad_v)))"):
+  print "Bad gradient"; exit(1)
+  
+str = "Grad(Norm(v))"; print 'Assembly string "%s" gives:' % str
+res = gf.asm('expression analysis', str,  mim, 0, md)
+if (res != "(Derivative_1_Norm(v).Grad_v)"):
+  print "Bad gradient"; exit(1)

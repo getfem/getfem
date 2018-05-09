@@ -502,23 +502,19 @@ Parentheses can be used in a standard way to change the operation order. If no p
 Explicit vectors
 ----------------
 
-The assembly language allows to define explicit vectors (i.e. order 1 tensors) with the notation ``[a;b;c;d;e]``, i.e. an arbitrary number of components separated by a semicolon, the whole vector beginning with a right bracket and ended by a left bracket. The components can be some numeric constants, some valid expressions and may also contain test functions. In the latter case, the vector has to be homogeneous with respect to the test functions. This means that a construction of the type ``[Test_u; Test_v]`` is not allowed. A valid example, with ``u`` as a scalar field variable is ``[5*Grad_Test_u(2), 2*Grad_Test_u(1)]``. 
+The assembly language allows to define explicit vectors (i.e. order 1 tensors) with the notation ``[a,b,c,d,e]``, i.e. an arbitrary number of components separated by a comma (note the separation with a semicolon ``[a;b;c;d;e]`` is also permitted), the whole vector beginning with a right bracket and ended by a left bracket. The components can be some numeric constants, some valid expressions and may also contain test functions. In the latter case, the vector has to be homogeneous with respect to the test functions. This means that a construction of the type ``[Test_u; Test_v]`` is not allowed. A valid example, with ``u`` as a scalar field variable is ``[5*Grad_Test_u(2), 2*Grad_Test_u(1)]``. Note also that using the quite opertor (transpose), an expression ``[a,b,c,d,e]'`` stands for 'row vector`, i.e. a 1x5 matrix.
 
 
 Explicit matrices
 -----------------
 
-Similarly to explicit vectors, it is possible to define explicit matrices (i.e. order 2 tensors) with the notation ``[a,c;b,d]``,  i.e. an arbitrary number of lines separated by a semicolon, each line having the same number of components separated by a comma. Alternatively the nested format ``[[a,b],[c,d]]`` provides an equivalent result. For instance ``[11,12,13;21,22,23]`` and ``[[11,21],[12,22],[13,23]]`` both represent the same 2x3 matrix. The components can be some numeric constants, some valid expressions and may also contain test functions.
+Similarly to explicit vectors, it is possible to define explicit matrices (i.e. order 2 tensors) with the notation ``[[a,b],[c,d]]``, i.e. an arbitrary number of columns vectors separated by a comma (the syntax ``[a,c;b,d]`` of lines separated by a semicolon is also permitted). For instance ``[[11,21],[12,22],[13,23]]`` and ``[11,12,13;21,22,23]`` both represent the same 2x3 matrix. The components can be some numeric constants, some valid expressions and may also contain test functions.
 
 
 Explicit tensors
----------------------------
+----------------
 
-Explicit order four tensors are also allowed. To this aim, the two supplementary dimensions compared to matrices are separated by  ``,,`` and ``;;``. For instance ``[1,1;1,1,,1,1;1,1;;2,2;2,2,,2,2;2,2;;3,3;3,3,,3,3;3,3]`` is a valid 3x2x2x2 tensor. Note that constant fourth order tensors can also be obtained by the tensor product of two constant matrices or by the Reshape instruction. 
-
-The nested format can also be used for defining order four tensors. The previous example is equivalent to writting ``[[[[1,2,3],[1,2,3]],[[1,2,3],[1,2,3]]],[[[1,2,3],[1,2,3]],[[1,2,3],[1,2,3]]]]``. The nested format also allows the definition of order three tensors.
-
-Explicit order five or six tensors are not directly supported by the assembly language. However, they can be easily obtained via the Reshape instruction.
+Explicit tensors of any order are permitted with the nested format. A tensor of order ``n`` is written as a succession of tensor of order ``n-1`` of equal dimensions and separated by a comma. For instance ``[[[[1,2,3],[1,2,3]],[[1,2,3],[1,2,3]]],[[[1,2,3],[1,2,3]],[[1,2,3],[1,2,3]]]]`` is a fourth order tensor. Another possibility is to use the syntax ``Reshape([1,2,3,1,2,3,1,2,3,1,2,3,1,2,3,1,2,3,1,2,3,1,2,3], 2, 2, 2, 2)`` where the components have to be given in Fortran order.
 
 
 Access to tensor components
