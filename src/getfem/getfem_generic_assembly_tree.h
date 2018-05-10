@@ -431,12 +431,7 @@ namespace getfem {
     void duplicate_with_substraction(pga_tree_node pnode)
     { duplicate_with_operation(pnode, GA_MINUS); }
     void insert_node(pga_tree_node pnode, GA_NODE_TYPE node_type);
-    void add_child(pga_tree_node pnode)
-    { pga_tree_node newnode=new ga_tree_node(); pnode->adopt_child(newnode); }
-    void add_child(pga_tree_node pnode, GA_NODE_TYPE node_type) {
-      pga_tree_node newnode=new ga_tree_node();
-      newnode->node_type = node_type;pnode->adopt_child(newnode);
-    }
+    void add_child(pga_tree_node pnode, GA_NODE_TYPE node_type = GA_NODE_VOID);
     void swap(ga_tree &tree)
     { std::swap(root, tree.root); std::swap(current_node, tree.current_node); }
 

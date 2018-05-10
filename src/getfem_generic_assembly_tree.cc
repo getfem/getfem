@@ -445,6 +445,7 @@ namespace getfem {
     pga_tree_node newop = new ga_tree_node(op_type, pnode->pos, pnode->expr);
     newop->children.resize(2, nullptr);
     newop->children[0] = pnode;
+    newop->pos = pnode->pos; newop->expr = pnode->expr;
     newop->parent = pnode->parent;
     if (pnode->parent)
       pnode->parent->replace_child(pnode, newop);
@@ -454,10 +455,17 @@ namespace getfem {
     copy_node(pnode, newop, newop->children[1]);
   }
 
+  void ga_tree::add_child(pga_tree_node pnode, GA_NODE_TYPE node_type) {
+    pga_tree_node newnode=new ga_tree_node();
+    newnode->pos = pnode->pos; newnode->expr = pnode->expr;
+    newnode->node_type = node_type; pnode->adopt_child(newnode);
+  }
+
   void ga_tree::insert_node(pga_tree_node pnode, GA_NODE_TYPE node_type) {
     pga_tree_node newnode = new ga_tree_node();
     newnode->node_type = node_type;
     newnode->parent = pnode->parent;
+    newnode->pos = pnode->pos; newnode->expr = pnode->expr;
     if (pnode->parent)
       pnode->parent->replace_child(pnode, newnode);
     else
