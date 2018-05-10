@@ -1905,7 +1905,8 @@ namespace getfem {
 			   "Wrong zero size for Reshape.");
         }
 	size_type total_size = 1;
-        for (size_type i = 0; i < mi.size(); ++i) total_size *= mi[i];
+        for (size_type i = pnode->nb_test_functions(); i < mi.size(); ++i)
+	  total_size *= mi[i];
         if (total_size != pnode->tensor_proper_size())
 	  ga_throw_error(pnode->expr, pnode->pos,"Invalid sizes for reshape, "
 			 "found a total of " << total_size << " should be " <<
@@ -2251,9 +2252,9 @@ namespace getfem {
         if (child1->test_function_type || child2->test_function_type)
           ga_throw_error(pnode->expr, pnode->pos, "Test functions cannot be "
 			 "passed as argument of a predefined function.");
-        if (child1->tensor_order() > 2 || child2->tensor_order() > 2)
-          ga_throw_error(pnode->expr, pnode->pos, "Sorry, function can be "
-			 "applied to scalar, vector and matrices only.");
+        // if (child1->tensor_order() > 2 || child2->tensor_order() > 2)
+        //   ga_throw_error(pnode->expr, pnode->pos, "Sorry, function can be "
+	// 		 "applied to scalar, vector and matrices only.");
         size_type s1 = child1->tensor().size();
         size_type s2 = (nbargs == 2) ? child2->tensor().size() : s1;
         if (s1 != s2 && (s1 != 1 || s2 != 1))
@@ -3652,6 +3653,7 @@ namespace getfem {
   void ga_derivative(ga_tree &tree, const ga_workspace &workspace,
 		     const mesh &m, const std::string &varname,
 		     const std::string &interpolatename, size_type order) {
+    // cout << "Will derive : " << ga_tree_to_string(tree) << endl;
     if (!(tree.root)) return;
     if (ga_node_mark_tree_for_variable(tree.root, workspace, m, varname,
                                        interpolatename))
@@ -3659,6 +3661,7 @@ namespace getfem {
                          interpolatename, order);
     else
       tree.clear();
+    // cout << "Derivation done : " << ga_tree_to_string(tree) << endl;
   }
 
   //=========================================================================
