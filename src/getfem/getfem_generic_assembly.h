@@ -72,7 +72,9 @@ namespace getfem {
   typedef gmm::row_matrix<model_complex_sparse_vector>
   model_complex_row_sparse_matrix;
   
-
+  // 0 : ok
+  // 1 : function or operator name or "X"
+  // 2 : reserved prefix Grad, Hess, Div, Test and Test2
   int ga_check_name_validity(const std::string &name);
 
   //=========================================================================
@@ -106,6 +108,7 @@ namespace getfem {
      std::map<var_trans_pair, base_tensor> &derivatives,
      bool compute_derivatives) const = 0;
     virtual void finalize() const = 0;
+    virtual std::string expression(void) const { return std::string(); }
 
     virtual ~virtual_interpolate_transformation() {}
   };
@@ -130,8 +133,56 @@ namespace getfem {
   pelementary_transformation;
 
   //=========================================================================
+  // Structure dealing with macros.
+  //=========================================================================
+
+  class ga_macro {
+
+  protected:
+    ga_tree *ptree;
+    std::string macro_name_;
+    size_type nbp;
+
+  public:
+    ga_macro();
+    ga_macro(const std::string &name, const ga_tree &t, size_type nbp_);
+    ga_macro(const ga_macro &);
+    ~ga_macro();
+    ga_macro &operator =(const ga_macro &);
+
+    const std::string &name() const { return macro_name_; }
+    std::string &name() { return macro_name_; }
+    size_type nb_params() const { return nbp; }
+    size_type &nb_params() { return nbp; }
+    const ga_tree& tree() const { return *ptree; }
+    ga_tree& tree() { return *ptree; }
+  };
+
+
+  class ga_macro_dictionnary {
+
+  protected:
+    const ga_macro_dictionnary *parent;
+    std::map<std::string, ga_macro> macros;
+
+  public:
+    bool macro_exists(const std::string &name) const;
+    const ga_macro &get_macro(const std::string &name) const;
+    
+    void add_macro(const ga_macro &gam);
+    void add_macro(const std::string &name, const std::string &expr);
+    void del_macro(const std::string &name);
+    
+    ga_macro_dictionnary() : parent(0) {}
+    ga_macro_dictionnary(bool, const ga_macro_dictionnary& gamd)
+      : parent(&gamd) {}
+    
+  };
+
+  //=========================================================================
   // Structure dealing with predefined operators.
   //=========================================================================
+
 
   struct ga_nonlinear_operator {
 
@@ -158,6 +209,7 @@ namespace getfem {
     void add_method(const std::string &name,
                     const std::shared_ptr<ga_nonlinear_operator> &pt)
     { tab[name] = pt; }
+    ga_predef_operator_tab();
   };
 
   //=========================================================================
@@ -271,7 +323,8 @@ namespace getfem {
     std::vector<tree_description> trees;
 
     std::map<std::string, std::vector<std::string> > variable_groups;
-    std::map<std::string, std::string> macros;
+
+    ga_macro_dictionnary macro_dict;
 
     struct m_tree {
       ga_tree *ptree;
@@ -282,8 +335,6 @@ namespace getfem {
       m_tree &operator =(const m_tree& o);
       ~m_tree();
     };
-
-    mutable std::map<std::string, m_tree> macro_trees;
 
     void add_tree(ga_tree &tree, const mesh &m, const mesh_im &mim,
                   const mesh_region &rg,
@@ -296,15 +347,16 @@ namespace getfem {
     model_real_sparse_matrix unreduced_K;
     std::shared_ptr<base_vector> V;
     base_vector unreduced_V;
-    scalar_type E = scalar_type(0.);
     base_tensor assemb_t;
 
   public:
 
     const model_real_sparse_matrix &assembled_matrix() const { return *K;}
     model_real_sparse_matrix &assembled_matrix() { return *K; }
-    scalar_type &assembled_potential() { return E; }
-    const scalar_type &assembled_potential() const { return E; }
+    scalar_type &assembled_potential()
+    { GMM_ASSERT1(assemb_t.size() == 1, "Bad result size"); return assemb_t[0]; }
+    const scalar_type &assembled_potential() const
+    { GMM_ASSERT1(assemb_t.size() == 1, "Bad result size"); return assemb_t[0]; }
     const base_vector &assembled_vector() const { return *V; }
     base_vector &assembled_vector() { return *V; }
     void set_assembled_matrix(model_real_sparse_matrix &K_) {
@@ -414,15 +466,17 @@ namespace getfem {
     scalar_type get_time_step() const;
 
     // macros
-    bool macro_exists(const std::string &name) const;
+    bool macro_exists(const std::string &name) const
+    { return macro_dict.macro_exists(name); }
 
     void add_macro(const std::string &name, const std::string &expr)
-    { macros[name] = expr; }
+    { macro_dict.add_macro(name, expr); }
+
+    void del_macro(const std::string &name) { macro_dict.del_macro(name); }
 
     const std::string& get_macro(const std::string &name) const;
 
-    ga_tree& macro_tree(const std::string &name, size_type meshdim,
-                        size_type ref_elt_dim, bool ignore_X) const;
+    const ga_macro_dictionnary &macro_dictionnary() const { return macro_dict; }
 
 
     // interpolate and elementary transformations
@@ -454,17 +508,10 @@ namespace getfem {
     void assembly(size_type order);
 
 
-    ga_workspace(const getfem::model &md_, bool enable_all_variables = false)
-      : md(&md_), parent_workspace(0),
-        enable_all_md_variables(enable_all_variables)
-    { init(); }
-    ga_workspace(bool, const ga_workspace &gaw)
-      : md(0), parent_workspace(&gaw), enable_all_md_variables(false)
-    { init(); }
-    ga_workspace()
-      : md(0), parent_workspace(0), enable_all_md_variables(false)
-    { init(); }
-    ~ga_workspace() { clear_expressions(); }
+    ga_workspace(const getfem::model &md_, bool enable_all_variables = false);
+    ga_workspace(bool, const ga_workspace &gaw);
+    ga_workspace();
+    ~ga_workspace();
 
   };
 
@@ -624,12 +671,12 @@ namespace getfem {
   (ga_workspace &workspace, const std::string &transname,
    const mesh &source_mesh, const mesh &target_mesh, const std::string &expr);
 
-  /** Add a transformation to the workspace that creates an identity mapping between
-      two meshes in deformed state. Conceptually, it can be viewed as a transformation
-      from expression Xsource + Usource - Utarget, except such an expression
-      cannot be used directly in the transformation from expression (function above),
-      as Utarget needs to be interpolated though an inversion of the transformation of
-      the target domain.
+  /** Add a transformation to the workspace that creates an identity mapping
+      between two meshes in deformed state. Conceptually, it can be viewed
+      as a transformation from expression Xsource + Usource - Utarget,
+      except such an expression cannot be used directly in the transformation
+      from expression (function above), as Utarget needs to be interpolated
+      though an inversion of the transformation of the target domain.
       Thread safe if added to thread local workspace.
   */
   void add_interpolate_transformation_on_deformed_domains
@@ -638,7 +685,7 @@ namespace getfem {
    const mesh_region &source_region, const mesh &target_mesh,
    const std::string &target_displacements, const mesh_region &target_region);
 
-  /**.. the same as above, but adding transformation to the model.
+  /** The same as above, but adding transformation to the model.
   Note, this version is not thread safe.*/
   void add_interpolate_transformation_on_deformed_domains
   (model &md, const std::string &transname,

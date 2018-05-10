@@ -294,6 +294,31 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        md->add_fixed_size_data(name, mi);
        );
 
+    /*@SET ('add macro', @str name, @str expr)
+      Define a new macro for the high generic assembly language.
+      The name include the parameters. For instance name='sp(a,b)', expr='a.b'
+      is a valid definition. Macro without parameter can also be defined.
+      For instance name='x1', expr='X[1]' is valid. Teh form name='grad(u)',
+      expr='Grad_u' is also allowed but in that case, the parameter 'u' will
+      only be allowed to be a variable name when using the macro. Note that
+      macros can be directly defined inside the assembly strings with the
+      keyword 'Def'.
+      @*/
+    sub_command
+      ("add macro", 2, 2, 0, 0,
+       std::string name = in.pop().to_string();
+       std::string expr = in.pop().to_string();
+       md->add_macro(name, expr);
+       );
+
+    /*@SET ('del macro', @str name)
+      Delete a previously defined macro for the high generic assembly language.
+      @*/
+    sub_command
+      ("del macro", 1, 1, 0, 0,
+       std::string name = in.pop().to_string();
+       md->del_macro(name);
+       );
 
     /*@SET ('add initialized data', @str name, @vec V[, sizes])
       Add an initialized fixed size data to the model. `sizes` an
