@@ -249,7 +249,7 @@ namespace getfem {
   void approx_integration::add_point(const base_node &pt,
                                      scalar_type w,short_type f) {
     GMM_ASSERT1(!valid, "Impossible to modify a valid integration method.");
-    if (gmm::abs(w) > 1.0E-15) {
+    if (gmm::abs(w) > 1.0E-16) {
       ++f;
       GMM_ASSERT1(f <= cvr->structure()->nb_faces(), "Wrong argument.");
       size_type i = pt_to_store[f].search_node(pt);
