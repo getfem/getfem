@@ -829,6 +829,14 @@ namespace getfem {
     }
   }
 
+  void ga_workspace::set_include_empty_int_points(bool include) {
+    include_empty_int_pts = include;
+  }
+
+  bool ga_workspace::include_empty_int_points() const {
+    return include_empty_int_pts;
+  }
+
   void ga_workspace::clear_expressions() { trees.clear(); }
 
   void ga_workspace::print(std::ostream &str) {

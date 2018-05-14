@@ -348,6 +348,7 @@ namespace getfem {
     std::shared_ptr<base_vector> V;
     base_vector unreduced_V;
     base_tensor assemb_t;
+    bool include_empty_int_pts = false;
 
   public:
 
@@ -507,6 +508,8 @@ namespace getfem {
 
     void assembly(size_type order);
 
+    void set_include_empty_int_points(bool include);
+    bool include_empty_int_points() const;
 
     ga_workspace(const getfem::model &md_, bool enable_all_variables = false);
     ga_workspace(bool, const ga_workspace &gaw);

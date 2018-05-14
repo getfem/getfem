@@ -3953,17 +3953,20 @@ namespace getfem {
     bool interpolate;
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: vector term assembly for fem variable");
+      auto empty_weight = abs(coeff) < 1e-15;
       if (ipt == 0 || interpolate) {
+        if (empty_weight) elem.resize(0);
         elem.resize(t.size());
-        auto itt = t.begin(); auto it = elem.begin(), ite = elem.end();
-        size_type nd = ((t.size()) >> 2);
-        for (size_type i = 0; i < nd; ++i) {
-          *it++ = (*itt++) * coeff; *it++ = (*itt++) * coeff;
-          *it++ = (*itt++) * coeff; *it++ = (*itt++) * coeff;
+        if (!empty_weight) {
+          auto itt = t.begin(); auto it = elem.begin(), ite = elem.end();
+          size_type nd = ((t.size()) >> 2);
+          for (size_type i = 0; i < nd; ++i) {
+            *it++ = (*itt++) * coeff; *it++ = (*itt++) * coeff;
+            *it++ = (*itt++) * coeff; *it++ = (*itt++) * coeff;
+          }
+          for (; it != ite;) *it++ = (*itt++) * coeff;
         }
-        for (; it != ite;) *it++ = (*itt++) * coeff;
-        // gmm::copy(gmm::scaled(t.as_vector(), coeff), elem);
-      } else {
+      } else if (!empty_weight) {
         auto itt = t.begin(); auto it = elem.begin(), ite = elem.end();
         size_type nd = ((t.size()) >> 2);
         for (size_type i = 0; i < nd; ++i) {
@@ -4149,18 +4152,21 @@ namespace getfem {
     std::vector<size_type> dofs1, dofs2, dofs1_sort;
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: matrix term assembly");
+      auto empty_weight = abs(coeff < 1e-15);
       if (ipt == 0 || interpolate) {
+        if (empty_weight) elem.resize(0);
         elem.resize(t.size());
-        auto itt = t.begin(); auto it = elem.begin(), ite = elem.end();
-        scalar_type e = coeff*alpha1*alpha2;
-        size_type nd = ((t.size()) >> 2);
-        for (size_type i = 0; i < nd; ++i) {
-          *it++ = (*itt++) * e; *it++ = (*itt++) * e;
-          *it++ = (*itt++) * e; *it++ = (*itt++) * e;
+        if (!empty_weight) {
+          auto itt = t.begin(); auto it = elem.begin(), ite = elem.end();
+          scalar_type e = coeff*alpha1*alpha2;
+          size_type nd = ((t.size()) >> 2);
+          for (size_type i = 0; i < nd; ++i) {
+            *it++ = (*itt++) * e; *it++ = (*itt++) * e;
+            *it++ = (*itt++) * e; *it++ = (*itt++) * e;
+          }
+          for (; it != ite;) *it++ = (*itt++) * e;
         }
-        for (; it != ite;) *it++ = (*itt++) * e;
-        // gmm::copy(gmm::scaled(t.as_vector(), coeff*alpha1*alpha2), elem);
-      } else {
+      } else if (!empty_weight){
         // Faster than a daxpy blas call on my config
         auto itt = t.begin(); auto it = elem.begin(), ite = elem.end();
         scalar_type e = coeff*alpha1*alpha2;
@@ -6801,7 +6807,8 @@ namespace getfem {
                   gmm::clean(gis.Normal, 1e-13);
                 } else gis.Normal.resize(0);
               }
-              gis.coeff = J * pai->coeff(first_ind+gis.ipt);
+              auto ipt_coeff = pai->coeff(first_ind+gis.ipt);
+              gis.coeff = J * ipt_coeff;
               if (first_gp) {
                 for (size_type j = 0; j < gilb.size(); ++j) j+=gilb[j]->exec();
                 first_gp = false;
@@ -6809,7 +6816,12 @@ namespace getfem {
               if (gis.ipt == 0) {
                 for (size_type j = 0; j < gile.size(); ++j) j+=gile[j]->exec();
               }
-              for (size_type j = 0; j < gil.size(); ++j) j+=gil[j]->exec();
+              if (workspace.include_empty_int_points() ||
+                  ipt_coeff > 1e-15 ||
+                  gis.ipt == 0 ||
+                  gis.ipt == gis.nbpt - 1) {
+                for (size_type j = 0; j < gil.size(); ++j) j+=gil[j]->exec();
+              }
               GA_DEBUG_INFO("");
             }
           }
