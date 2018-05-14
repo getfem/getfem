@@ -1291,23 +1291,40 @@ namespace getfem {
       for (size_type i = 1; i < pnode->children.size(); ++i)
 	ga_expand_macro(tree, pnode->children[i], macro_dict);
 
-      if (macro_dict.macro_exists(pnode->children[0]->name)) {
-	// Macro with parameters
-	const ga_macro &gam = macro_dict.get_macro(pnode->children[0]->name);
-	if (gam.nb_params()+1 != pnode->children.size())
-	  ga_throw_error(pnode->expr, pnode->pos,
-			 "Bad number of parameters in the use of macro '"
-			 << gam.name() << "'. Expected " << gam.nb_params()
-			 << " found " << pnode->children.size()-1 << ".");
-
-	pga_tree_node pnode_old = pnode;
-	pnode = nullptr;
-	tree.copy_node(gam.tree().root, pnode_old->parent, pnode);
-	if (pnode_old->parent)
-	  pnode_old->parent->replace_child(pnode_old, pnode);
-	else
-	  tree.root = pnode;
-	ga_replace_macro_params(tree, pnode, pnode_old->children);
+      if (pnode->children[0]->node_type != GA_NODE_NAME) {
+	ga_expand_macro(tree, pnode->children[0], macro_dict);
+      } else {
+	
+	if (macro_dict.macro_exists(pnode->children[0]->name)) {
+	  
+	  const ga_macro &gam = macro_dict.get_macro(pnode->children[0]->name);
+	  
+	  if (gam.nb_params()==0) { // Macro without parameters
+	    pga_tree_node pnode_old = pnode->children[0];
+	    pnode->children[0] = nullptr;
+	    tree.copy_node(gam.tree().root,
+			   pnode_old->parent,pnode->children[0]);
+	    GMM_ASSERT1(pnode_old->children.empty(), "Internal error");
+	    delete pnode_old;
+	    
+	  } else { // Macro with parameters
+	    
+	    if (gam.nb_params()+1 != pnode->children.size())
+	      ga_throw_error(pnode->expr, pnode->pos,
+			     "Bad number of parameters in the use of macro '"
+			     << gam.name() << "'. Expected " << gam.nb_params()
+			     << " found " << pnode->children.size()-1 << ".");
+	    
+	    pga_tree_node pnode_old = pnode;
+	    pnode = nullptr;
+	    tree.copy_node(gam.tree().root, pnode_old->parent, pnode);
+	    if (pnode_old->parent)
+	      pnode_old->parent->replace_child(pnode_old, pnode);
+	    else
+	      tree.root = pnode;
+	    ga_replace_macro_params(tree, pnode, pnode_old->children);
+	  }
+	}
       }
 
     } else if (pnode->node_type == GA_NODE_NAME &&
@@ -1346,11 +1363,13 @@ namespace getfem {
 	pnode->node_type == GA_NODE_ELEMENTARY ||
 	pnode->node_type == GA_NODE_XFEM_PLUS ||
 	pnode->node_type == GA_NODE_XFEM_MINUS) {
-      size_type po = ga_parse_prefix_operator(pnode->name);
-      size_type pt = ga_parse_prefix_test(pnode->name);
-      
+      std::string name = pnode->name;
+      size_type po = ga_parse_prefix_operator(name);
+      size_type pt = ga_parse_prefix_test(name);
+
       for (size_type i = 0; i < params.size(); ++i)
-	if (pnode->name.compare(params[i]) == 0) {
+	if (name.compare(params[i]) == 0) {
+	  pnode->name = name;
 	  switch(pnode->node_type) {
 	  case GA_NODE_NAME : pnode->op_type = GA_NAME; break;
 	  case GA_NODE_INTERPOLATE : pnode->op_type = GA_INTERPOLATE; break;
@@ -1501,7 +1520,8 @@ namespace getfem {
 	    if (gam.tree().root)
 	      ga_expand_macro(gam.tree(), gam.tree().root, macro_dict);
 	    gam.nb_params() = params.size();
-	    ga_mark_macro_params(gam, params, macro_dict);
+	    if (params.size())
+	      ga_mark_macro_params(gam, params, macro_dict);
 	    macro_dict.add_macro(gam);
 
 	    // cout << "macro \"" << gam.name() << "\" registered with "
@@ -1811,8 +1831,14 @@ namespace getfem {
 		/* mi.push_back(1); */ mi.push_back(nbc1); break;
 	      case 2:
 		mi.push_back(nbl); if (nbc1 > 1) mi.push_back(nbc1); break; 
-	      case 3: mi.push_back(nbl); mi.push_back(nbc2); mi.push_back(nbc1); break;
-	      case 4: mi.push_back(nbl); mi.push_back(nbc3); mi.push_back(nbc2);  mi.push_back(nbc1); break;
+	      case 3:
+		mi.push_back(nbl); mi.push_back(nbc2);
+		mi.push_back(nbc1);
+		break;
+	      case 4:
+		mi.push_back(nbl); mi.push_back(nbc3);
+		mi.push_back(nbc2); mi.push_back(nbc1);
+		break;
 	      default: GMM_ASSERT1(false, "Internal error");
 	      }
 	      tree.current_node->tensor().adjust_sizes(mi);
