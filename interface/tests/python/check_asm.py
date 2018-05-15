@@ -225,3 +225,14 @@ str = "Diff((w*u).Grad_u, u, X(1))"; print '\nAssembly string "%s" gives:' % str
 res = gf.asm('expression analysis', str,  mim, 2, md)
 if (res != "((Grad_u.(w*X(1)))+((w*u).[1,0]))"):
   print "Bad gradient"; exit(1)
+  
+str = "Def GradU(u):=Grad_w+Grad_u; GradU(w)(2,2)"; print '\nAssembly string "%s" gives:' % str
+res = gf.asm('expression analysis', str,  mim, 2, md)
+if (res != "((Grad_w+Grad_w)(2, 2))"):
+  print "Bad gradient"; exit(1)
+
+str = "Def GradU:=Grad_w; GradU(2,2)"; print '\nAssembly string "%s" gives:' % str
+res = gf.asm('expression analysis', str,  mim, 2, md)
+if (res != "(Grad_w(2, 2))"):
+  print "Bad gradient"; exit(1)
+
