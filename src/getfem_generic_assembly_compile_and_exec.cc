@@ -3953,9 +3953,9 @@ namespace getfem {
     bool interpolate;
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: vector term assembly for fem variable");
-      auto empty_weight = abs(coeff) < 1e-15;
+      bool empty_weight = false; // (coeff == scalar_type(0));
       if (ipt == 0 || interpolate) {
-        if (empty_weight) elem.resize(0);
+        if (empty_weight && interpolate) elem.resize(0);
         elem.resize(t.size());
         if (!empty_weight) {
           auto itt = t.begin(); auto it = elem.begin(), ite = elem.end();
@@ -4152,9 +4152,9 @@ namespace getfem {
     std::vector<size_type> dofs1, dofs2, dofs1_sort;
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: matrix term assembly");
-      auto empty_weight = abs(coeff < 1e-15);
+      bool empty_weight = false; // (coeff == scalar_type(0));
       if (ipt == 0 || interpolate) {
-        if (empty_weight) elem.resize(0);
+        if (empty_weight && interpolate) elem.resize(0);
         elem.resize(t.size());
         if (!empty_weight) {
           auto itt = t.begin(); auto it = elem.begin(), ite = elem.end();
@@ -6807,8 +6807,11 @@ namespace getfem {
                   gmm::clean(gis.Normal, 1e-13);
                 } else gis.Normal.resize(0);
               }
-              auto ipt_coeff = pai->coeff(first_ind+gis.ipt);
+	      auto ipt_coeff = pai->coeff(first_ind+gis.ipt);
               gis.coeff = J * ipt_coeff;
+	      bool enable_ipt = (gmm::abs(ipt_coeff) > 1e-15 ||
+				 workspace.include_empty_int_points());
+	      if (!enable_ipt) gis.coeff = scalar_type(0);
               if (first_gp) {
                 for (size_type j = 0; j < gilb.size(); ++j) j+=gilb[j]->exec();
                 first_gp = false;
@@ -6816,10 +6819,7 @@ namespace getfem {
               if (gis.ipt == 0) {
                 for (size_type j = 0; j < gile.size(); ++j) j+=gile[j]->exec();
               }
-              if (workspace.include_empty_int_points() ||
-                  ipt_coeff > 1e-15 ||
-                  gis.ipt == 0 ||
-                  gis.ipt == gis.nbpt - 1) {
+              if (enable_ipt || gis.ipt == 0 || gis.ipt == gis.nbpt-1) {
                 for (size_type j = 0; j < gil.size(); ++j) j+=gil[j]->exec();
               }
               GA_DEBUG_INFO("");
