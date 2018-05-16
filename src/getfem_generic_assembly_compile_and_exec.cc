@@ -3953,9 +3953,9 @@ namespace getfem {
     bool interpolate;
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: vector term assembly for fem variable");
-      bool empty_weight = false; // (coeff == scalar_type(0));
+      bool empty_weight = (coeff == scalar_type(0));
       if (ipt == 0 || interpolate) {
-        if (empty_weight && interpolate) elem.resize(0);
+        if (empty_weight) elem.resize(0);
         elem.resize(t.size());
         if (!empty_weight) {
           auto itt = t.begin(); auto it = elem.begin(), ite = elem.end();
@@ -4152,9 +4152,9 @@ namespace getfem {
     std::vector<size_type> dofs1, dofs2, dofs1_sort;
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: matrix term assembly");
-      bool empty_weight = false; // (coeff == scalar_type(0));
+      bool empty_weight = (coeff == scalar_type(0));
       if (ipt == 0 || interpolate) {
-        if (empty_weight && interpolate) elem.resize(0);
+        if (empty_weight) elem.resize(0);
         elem.resize(t.size());
         if (!empty_weight) {
           auto itt = t.begin(); auto it = elem.begin(), ite = elem.end();
@@ -6809,7 +6809,7 @@ namespace getfem {
               }
 	      auto ipt_coeff = pai->coeff(first_ind+gis.ipt);
               gis.coeff = J * ipt_coeff;
-	      bool enable_ipt = (gmm::abs(ipt_coeff) > 1e-15 ||
+	      bool enable_ipt = (gmm::abs(ipt_coeff) > 0.0 ||
 				 workspace.include_empty_int_points());
 	      if (!enable_ipt) gis.coeff = scalar_type(0);
               if (first_gp) {

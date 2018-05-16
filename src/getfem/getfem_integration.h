@@ -213,7 +213,8 @@ namespace getfem
     { return int_coeffs[repartition[f] + i]; }
     
     void add_point(const base_node &pt, scalar_type w,
-                   short_type f=short_type(-1));
+                   short_type f = short_type(-1),
+                   bool include_empty = false);
     void add_point_norepeat(const base_node &pt, scalar_type w,
                             short_type f=short_type(-1));
     void add_point_full_symmetric(base_node pt, scalar_type w);
