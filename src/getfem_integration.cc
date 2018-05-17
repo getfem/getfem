@@ -253,7 +253,7 @@ namespace getfem {
     GMM_ASSERT1(!valid, "Impossible to modify a valid integration method.");
     if (gmm::abs(w) > 1.0E-15 || include_empty) {
       ++f;
-      if (gmm::abs(w) <= 1.0E-15) w = 0.0;
+      if (gmm::abs(w) <= 1.0E-15) w = scalar_type(0);
       GMM_ASSERT1(f <= cvr->structure()->nb_faces(), "Wrong argument.");
       size_type i = pt_to_store[f].search_node(pt);
       if (i == size_type(-1)) {
