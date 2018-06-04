@@ -120,9 +120,12 @@ namespace bgeot {
             elt[ii] = false;
             p0 = pt; p0 -= mp->orgs[ii];
             gmm::mult(gmm::transposed(mp->gtrans[ii]), p0, p1);
-            if (mp->trans_of_convex(ii)->convex_ref()->is_in(p1) < 1E-10)
-              return local_coordinate ? to_scalar(polytab[ii].eval(p1.begin()))
-              : to_scalar(polytab[ii].eval(pt.begin()));
+            auto it = polytab.find(ii);
+            if (it == polytab.end()) return 0.0;
+            if (mp->trans_of_convex(ii)->convex_ref()->is_in(p1) < 1E-10) {
+              return local_coordinate ? to_scalar(it->second.eval(p1.begin()))
+                                      : to_scalar(it->second.eval(pt.begin()));
+            }
           }
         }
         ++it1; i1 = it1.index();
@@ -141,9 +144,12 @@ namespace bgeot {
             elt[ii] = false;
             p0 = pt; p0 -= mp->orgs[ii];
             gmm::mult(gmm::transposed(mp->gtrans[ii]), p0, p1);
-            if (mp->trans_of_convex(ii)->convex_ref()->is_in(p1) < 1E-10)
-              return  local_coordinate ? to_scalar(polytab[ii].eval(p1.begin()))
-              : to_scalar(polytab[ii].eval(pt.begin()));
+            auto it = polytab.find(ii);
+            if (it == polytab.end()) return 0.0;
+            if (mp->trans_of_convex(ii)->convex_ref()->is_in(p1) < 1E-10) {
+              return  local_coordinate ? to_scalar(it->second.eval(p1.begin()))
+                                       : to_scalar(it->second.eval(pt.begin()));
+            }
           }
         }
         --it2; i2 = it2.index();
@@ -153,11 +159,8 @@ namespace bgeot {
   }
 
 
-  polynomial_composite::polynomial_composite(const mesh_precomposite &m,
-    bool lc)
-    : mp(&m), polytab(m.nb_convex()), local_coordinate(lc) {
-      std::fill(polytab.begin(), polytab.end(), base_poly(m.dim(), 0));
-  }
+  polynomial_composite::polynomial_composite(
+    const mesh_precomposite &m, bool lc) : mp(&m), local_coordinate(lc) {}
 
   void polynomial_composite::derivative(short_type k) {
     if (local_coordinate) {
@@ -178,6 +181,16 @@ namespace bgeot {
     else
       for (size_type ic = 0; ic < mp->nb_convex(); ++ic)
         polytab[ic].derivative(k);
+  }
+
+  base_poly &polynomial_composite::set_poly_of_subelt(size_type l) {
+    return polytab[l];
+  }
+
+  const base_poly *polynomial_composite::poly_of_subelt(size_type l) const {
+    auto it = polytab.find(l);
+    if (it == polytab.end()) return nullptr;
+    else return &it->second;
   }
 
 
