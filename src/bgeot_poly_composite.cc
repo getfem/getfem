@@ -70,9 +70,18 @@ namespace bgeot {
     for (size_type i = 0; i <= m.points().index().last_true(); ++i) {
       vertexes.add(m.points()[i]);
     }
+
+    bool is_uniform = true;
+    pgeometric_trans pgt_old = nullptr;
+
     for (dal::bv_visitor cv(m.convex_index()); !cv.finished(); ++cv) {
 
       pgeometric_trans pgt = m.trans_of_convex(cv);
+      if (is_uniform) {
+        if (!pgt_old) pgt_old = pgt;
+        else is_uniform = pgt_old == pgt;
+      }
+
       size_type N = pgt->structure()->dim();
       size_type P = m.dim();
       GMM_ASSERT1(pgt->is_linear() && N == P, "Bad geometric transformation");
@@ -91,6 +100,7 @@ namespace bgeot {
       gtrans[cv] = B0;
       orgs[cv] = m.points_of_convex(cv)[0];
     }
+    uniform = false;
   }
 
   scalar_type polynomial_composite::eval(const base_node &pt) const {
@@ -120,30 +130,32 @@ namespace bgeot {
             elt[ii] = false;
             p0 = pt; p0 -= mp->orgs[ii];
             gmm::mult(gmm::transposed(mp->gtrans[ii]), p0, p1);
+            auto &ref_poly = uniform ? poly : polytab[ii];
             if (mp->trans_of_convex(ii)->convex_ref()->is_in(p1) < 1E-10)
-              return local_coordinate ? to_scalar(polytab[ii].eval(p1.begin()))
-              : to_scalar(polytab[ii].eval(pt.begin()));
+              return local_coordinate ? to_scalar(ref_poly.eval(p1.begin()))
+              : to_scalar(ref_poly.eval(pt.begin()));
           }
         }
         ++it1; i1 = it1.index();
       }
 
-      if (i2 != size_type(-1)) 
+      if (i2 != size_type(-1))
       {
         const mesh_structure::ind_cv_ct &tc
           = mp->linked_mesh().convex_to_point(i2);
         itc = tc.begin(); itce = tc.end();
-        for (; itc != itce; ++itc) 
+        for (; itc != itce; ++itc)
         {
           size_type ii = *itc;
-          if (elt[ii]) 
+          if (elt[ii])
           {
             elt[ii] = false;
             p0 = pt; p0 -= mp->orgs[ii];
             gmm::mult(gmm::transposed(mp->gtrans[ii]), p0, p1);
+            auto &ref_poly = uniform ? poly : polytab[ii];
             if (mp->trans_of_convex(ii)->convex_ref()->is_in(p1) < 1E-10)
-              return  local_coordinate ? to_scalar(polytab[ii].eval(p1.begin()))
-              : to_scalar(polytab[ii].eval(pt.begin()));
+              return  local_coordinate ? to_scalar(ref_poly.eval(p1.begin()))
+              : to_scalar(ref_poly.eval(pt.begin()));
           }
         }
         --it2; i2 = it2.index();
@@ -155,8 +167,9 @@ namespace bgeot {
 
   polynomial_composite::polynomial_composite(const mesh_precomposite &m,
     bool lc)
-    : mp(&m), polytab(m.nb_convex()), local_coordinate(lc) {
-      std::fill(polytab.begin(), polytab.end(), base_poly(m.dim(), 0));
+    : mp(&m), polytab(m.uniform ? 0 : m.nb_convex()),
+      local_coordinate(lc), poly(m.dim(), 0), uniform(m.uniform) {
+      if (!uniform) std::fill(polytab.begin(), polytab.end(), base_poly(m.dim(), 0));
   }
 
   void polynomial_composite::derivative(short_type k) {
@@ -164,15 +177,31 @@ namespace bgeot {
       dim_type N = mp->dim();
       base_poly P(N, 0), Q;
       base_vector e(N), f(N);
-      for (size_type ic = 0; ic < mp->nb_convex(); ++ic) {
+      if (uniform) {
         gmm::clear(e); e[k] = 1.0;
-        gmm::mult(gmm::transposed(mp->gtrans[ic]), e, f);
+        gmm::mult(gmm::transposed(mp->gtrans[0]), e, f);
         P.clear();
         for (dim_type n = 0; n < N; ++n)
-        { Q = polytab[ic];
-        Q.derivative(n);
-        P += Q * f[n];  }
-        polytab[ic] = P;
+        {
+          Q = poly;
+          Q.derivative(n);
+          P += Q * f[n];
+        }
+        poly = P;
+      }
+      else {
+        for (size_type ic = 0; ic < mp->nb_convex(); ++ic) {
+          gmm::clear(e); e[k] = 1.0;
+          gmm::mult(gmm::transposed(mp->gtrans[ic]), e, f);
+          P.clear();
+          for (dim_type n = 0; n < N; ++n)
+          {
+            Q = polytab[ic];
+            Q.derivative(n);
+            P += Q * f[n];
+          }
+          polytab[ic] = P;
+        }
       }
     }
     else
