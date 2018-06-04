@@ -895,22 +895,21 @@ namespace getfem {
     dict["En"] = ga_substitute("Sym(Grad_Previous_u)", dict);
     dict["zetan"] = ga_substitute
       ("((Epn)+(1-(theta))*((dt)*(Previous_xi))*((2*(mu))*Deviator(En)"
-       "-(2*(mu)+(Hk))*(Epn)))", dict);
+       "-(2*(mu)+2/3*(Hk))*(Epn)))", dict);
     dict["etan"] = ga_substitute
       ("((alphan)+sqrt(2/3)*(1-(theta))*((dt)*(Previous_xi))*"
-       "Norm((2*(mu))*Deviator(En)-(2*(mu)+(Hk))*(Epn)))", dict);
-    dict["B"] = ga_substitute("((2*(mu))*Deviator(Enp1)-(2*(mu)+(Hk))*(zetan))",
-                              dict);
-    dict["beta"] =
-      ga_substitute("((theta)*(dt)*(xi)/(1+(2*(mu)+(Hk))*(theta)*(dt)*(xi)))",
-                    dict);
+       "Norm((2*(mu))*Deviator(En)-(2*(mu)+2/3*(Hk))*(Epn)))", dict);
+    dict["B"] = ga_substitute
+      ("((2*(mu))*Deviator(Enp1)-(2*(mu)+2/3*(Hk))*(zetan))", dict);
+    dict["beta"] = ga_substitute
+      ("((theta)*(dt)*(xi)/(1+(2*(mu)+2/3*(Hk))*(theta)*(dt)*(xi)))", dict);
     dict["Epnp1"] = Epnp1 = ga_substitute("((zetan)+(beta)*(B))", dict);
     alphanp1 = ga_substitute("((etan)+sqrt(2/3)*(beta)*Norm(B))", dict);
     dict["alphanp1"] = alphanp1;
     sigma_np1 = ga_substitute
       ("((lambda)*Trace(Enp1)*Id(meshdim)+2*(mu)*((Enp1)-(Epnp1)))", dict);
     dict["fbound"] = ga_substitute
-      ("(Norm((2*(mu))*Deviator(Enp1)-(2*(mu)+(Hk))*(Epnp1))"
+      ("(Norm((2*(mu))*Deviator(Enp1)-(2*(mu)+2/3*(Hk))*(Epnp1))"
        "-sqrt(2/3)*(sigma_y+(Hi)*(alphanp1)))",  dict);
     dict["sigma_after"] = sigma_after = ga_substitute
       ("((lambda)*Trace(Enp1)*Id(meshdim)+2*(mu)*((Enp1)-(Epn)))", dict);
@@ -971,15 +970,15 @@ namespace getfem {
     dict["En"] = ga_substitute("Sym(Grad_Previous_u)", dict);
     dict["zetan"] = ga_substitute
       ("((Epn)+(1-(theta))*((dt)*(Previous_xi))*((2*(mu))*Deviator(En)"
-       "-(2*(mu)+(Hk))*(Epn)))", dict);
+       "-(2*(mu)+2/3*(Hk))*(Epn)))", dict);
     dict["etan"] = ga_substitute
       ("((alphan)+sqrt(2/3)*(1-(theta))*((dt)*(Previous_xi))*"
-       "Norm((2*(mu))*Deviator(En)-(2*(mu)+(Hk))*(Epn)))", dict);
+       "Norm((2*(mu))*Deviator(En)-(2*(mu)+2/3*(Hk))*(Epn)))", dict);
 
-    dict["B"] = ga_substitute("((2*(mu))*Deviator(Enp1)-(2*(mu)+(Hk))*(zetan))",
-                                  dict);
+    dict["B"] = ga_substitute
+      ("((2*(mu))*Deviator(Enp1)-(2*(mu)+2/3*(Hk))*(zetan))", dict);
     dict["beta"] =
-      ga_substitute("(1/((Norm(B)+1e-40)*(2*(mu)+(Hk)+(2/3)*(Hi))))"
+      ga_substitute("(1/((Norm(B)+1e-40)*(2*(mu)+2/3*(Hk)+(2/3)*(Hi))))"
       "*pos_part(Norm(B)-sqrt(2/3)*((sigma_y)+(Hi)*(etan)))", dict);
     dict["Epnp1"] = Epnp1 = ga_substitute("((zetan)+(beta)*(B))", dict);
     alphanp1 = ga_substitute("((etan)+sqrt(2/3)*(beta)*Norm(B))", dict);
@@ -990,7 +989,7 @@ namespace getfem {
     dict["sigma_after"] = sigma_after = ga_substitute
       ("(lambda)*Trace(Enp1)*Id(meshdim)+2*(mu)*((Enp1)-(Epn))", dict);
     xi_np1 = ga_substitute
-      ("(((beta)/(1-(2*(mu)+(Hk))*(beta)))/((theta)*(dt)))", dict);
+      ("(((beta)/(1-(2*(mu)+2/3*(Hk))*(beta)))/((theta)*(dt)))", dict);
     von_mises = ga_substitute
       ("sqrt(3/2)*Norm(Deviator(sigma_after))", dict);
   }
@@ -1048,35 +1047,34 @@ namespace getfem {
     dict["Dev_Enp1"]= ga_substitute("(Enp1-(Trace(Enp1)/3)*Id(meshdim))", dict);
     dict["zetan"] = ga_substitute
       ("((Epn)+(1-(theta))*((dt)*(Previous_xi))*((2*(mu))*(Dev_En)"
-       "-(2*(mu)+(Hk))*(Epn)))", dict);
+       "-(2*(mu)+2/3*(Hk))*(Epn)))", dict);
     dict["etan"] = ga_substitute
       ("((alphan)+sqrt(2/3)*(1-(theta))*((dt)*(Previous_xi))*"
-       "sqrt(Norm_sqr((2*(mu))*(Dev_En)-(2*(mu)+(Hk))*(Epn))"
-       "+sqr(2*(mu)*Trace(En)/3-(2*(mu)+(Hk))*Trace(Epn))))", dict);
-    dict["B"] = ga_substitute("((2*(mu))*(Dev_Enp1)-(2*(mu)+(Hk))*(zetan))",
+       "sqrt(Norm_sqr((2*(mu))*(Dev_En)-(2*(mu)+2/3*(Hk))*(Epn))"
+       "+sqr(2*(mu)*Trace(En)/3-(2*(mu)+2/3*(Hk))*Trace(Epn))))", dict);
+    dict["B"] = ga_substitute("((2*(mu))*(Dev_Enp1)-(2*(mu)+2/3*(Hk))*(zetan))",
                               dict);
     dict["Norm_B"] = ga_substitute("sqrt(Norm_sqr(B)+sqr(2*(mu)*Trace(Enp1)/3"
-                                   "-(2*(mu)+(Hk))*Trace(zetan)))", dict);
+                                   "-(2*(mu)+2/3*(Hk))*Trace(zetan)))", dict);
 
-    dict["beta"] =
-      ga_substitute("((theta)*(dt)*(xi)/(1+(2*(mu)+(Hk))*(theta)*(dt)*(xi)))",
-                    dict);
+    dict["beta"] = ga_substitute
+      ("((theta)*(dt)*(xi)/(1+(2*(mu)+2/3*(Hk))*(theta)*(dt)*(xi)))", dict);
     dict["Epnp1"] = Epnp1 = ga_substitute("((zetan)+(beta)*(B))", dict);
     alphanp1 = ga_substitute("((etan)+sqrt(2/3)*(beta)*(Norm_B))", dict);
     dict["alphanp1"] = alphanp1;
     sigma_np1 = ga_substitute
       ("((lambda)*Trace(Enp1)*Id(meshdim)+2*(mu)*((Enp1)-(Epnp1)))", dict);
     dict["fbound"] = ga_substitute
-      ("(sqrt(Norm_sqr((2*(mu))*(Dev_Enp1)-(2*(mu)+(Hk))*(Epnp1))"
-       "+sqr(2*(mu)*Trace(Enp1)/3-(2*(mu)+(Hk))*Trace(Epnp1)))"
+      ("(sqrt(Norm_sqr((2*(mu))*(Dev_Enp1)-(2*(mu)+2/3*(Hk))*(Epnp1))"
+       "+sqr(2*(mu)*Trace(Enp1)/3-(2*(mu)+2/3*(Hk))*Trace(Epnp1)))"
        "-sqrt(2/3)*(sigma_y+(Hi)*(alphanp1)))",  dict);
     sigma_after = ga_substitute
       ("((lambda)*Trace(Enp1)*Id(meshdim)+2*(mu)*((Enp1)-(Epn)))", dict);
     compcond = ga_substitute
       ("((mu)*xi-pos_part((mu)*xi+100*(fbound)/(mu)))", dict);
     von_mises = ga_substitute
-      ("sqrt(3/2)*sqrt(Norm_sqr((2*(mu))*(Dev_En)-(2*(mu)+(Hk))*(Epn))"
-       "+sqr(2*(mu)*Trace(En)/3-(2*(mu)+(Hk))*Trace(Epn)))", dict);
+      ("sqrt(3/2)*sqrt(Norm_sqr((2*(mu))*(Dev_En)-(2*(mu)+2/3*(Hk))*(Epn))"
+       "+sqr(2*(mu)*Trace(En)/3-(2*(mu)+2/3*(Hk))*Trace(Epn)))", dict);
   }
 
   // Assembly strings for isotropic elastoplasticity with Von-Mises
@@ -1135,18 +1133,18 @@ namespace getfem {
     dict["Dev_Enp1"]= ga_substitute("(Enp1-(Trace(Enp1)/3)*Id(meshdim))", dict);
     dict["zetan"] = ga_substitute
       ("((Epn)+(1-(theta))*((dt)*(Previous_xi))*((2*(mu))*(Dev_En)"
-       "-(2*(mu)+(Hk))*(Epn)))", dict);
+       "-(2*(mu)+2/3*(Hk))*(Epn)))", dict);
     dict["etan"] = ga_substitute
       ("((alphan)+sqrt(2/3)*(1-(theta))*((dt)*(Previous_xi))*"
-       "sqrt(Norm_sqr((2*(mu))*(Dev_En)-(2*(mu)+(Hk))*(Epn))"
-       "+sqr(2*(mu)*Trace(En)/3-(2*(mu)+(Hk))*Trace(Epn))))", dict);
+       "sqrt(Norm_sqr((2*(mu))*(Dev_En)-(2*(mu)+2/3*(Hk))*(Epn))"
+       "+sqr(2*(mu)*Trace(En)/3-(2*(mu)+2/3*(Hk))*Trace(Epn))))", dict);
 
-    dict["B"] = ga_substitute("((2*(mu))*(Dev_Enp1)-(2*(mu)+(Hk))*(zetan))",
-                                  dict);
+    dict["B"] = ga_substitute
+      ("((2*(mu))*(Dev_Enp1)-(2*(mu)+2/3*(Hk))*(zetan))", dict);
     dict["Norm_B"] = ga_substitute("sqrt(Norm_sqr(B)+sqr(2*(mu)*Trace(Enp1)/3"
-                                   "-(2*(mu)+(Hk))*Trace(zetan)))", dict);
+                                   "-(2*(mu)+2/3*(Hk))*Trace(zetan)))", dict);
     dict["beta"] =
-      ga_substitute("(1/(((Norm_B)+1e-40)*(2*(mu)+(Hk)+(2/3)*(Hi))))"
+      ga_substitute("(1/(((Norm_B)+1e-40)*(2*(mu)+2/3*(Hk)+(2/3)*(Hi))))"
       "*pos_part((Norm_B)-sqrt(2/3)*((sigma_y)+(Hi)*(etan)))", dict);
     dict["Epnp1"] = Epnp1 = ga_substitute("((zetan)+(beta)*(B))", dict);
     alphanp1 = ga_substitute("((etan)+sqrt(2/3)*(beta)*(Norm_B))", dict);
@@ -1157,10 +1155,10 @@ namespace getfem {
     sigma_after = ga_substitute
       ("(lambda)*Trace(Enp1)*Id(meshdim)+2*(mu)*((Enp1)-(Epn))", dict);
     xi_np1 = ga_substitute
-      ("(((beta)/(1-(2*(mu)+(Hk))*(beta)))/((theta)*(dt)))", dict);
+      ("(((beta)/(1-(2*(mu)+2/3*(Hk))*(beta)))/((theta)*(dt)))", dict);
     von_mises = ga_substitute
-      ("sqrt(3/2)*sqrt(Norm_sqr((2*(mu))*(Dev_En)-(2*(mu)+(Hk))*(Epn))"
-       "+sqr(2*(mu)*Trace(En)/3-(2*(mu)+(Hk))*Trace(Epn)))", dict);
+      ("sqrt(3/2)*sqrt(Norm_sqr((2*(mu))*(Dev_En)-(2*(mu)+2/3*(Hk))*(Epn))"
+       "+sqr(2*(mu)*Trace(En)/3-(2*(mu)+2/3*(Hk))*Trace(Epn)))", dict);
   }
 
   void build_isotropic_perfect_elastoplasticity_expressions_generic
