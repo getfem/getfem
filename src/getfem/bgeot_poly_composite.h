@@ -78,8 +78,7 @@ namespace bgeot {
     std::vector<base_matrix> gtrans;
     std::vector<scalar_type> det;
     std::vector<base_node> orgs;
-    bool uniform = false;
-
+    
     const basic_mesh &linked_mesh(void) const { return *msh; }
     size_type nb_convex(void) const { return gtrans.size(); }
     dim_type dim(void) const { return msh->dim(); }
@@ -97,18 +96,16 @@ namespace bgeot {
   protected :
     const mesh_precomposite *mp;
     std::vector<base_poly> polytab;
-    base_poly poly;
     bool local_coordinate; // are the polynomials described on the local
     // coordinates of each sub-element or on global coordinates.
-    bool uniform = true;
 
   public :
     
     template <class ITER> scalar_type eval(const ITER &it) const;
     scalar_type eval(const base_node &pt) const;
     void derivative(short_type k);
-    base_poly &poly_of_subelt(size_type l) { return uniform ? poly : polytab[l]; }
-    const base_poly &poly_of_subelt(size_type l) const { return uniform ? poly : polytab[l]; }
+    base_poly &poly_of_subelt(size_type l) { return polytab[l]; }
+    const base_poly &poly_of_subelt(size_type l) const { return polytab[l]; }
     size_type nb_subelt() const { return polytab.size(); }
 
     polynomial_composite(bool lc = true) : local_coordinate(lc) {}
