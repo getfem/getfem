@@ -303,12 +303,12 @@ elseif (Contact_option == 0)
   end
 elseif (Contact_option == 2)
     gf_model_set(md, 'add initialized data', 'penalty_coeff', [penalty_coeff]);
-    gf_model_set(md, 'add nonlinear generic assembly brick', mim_friction, 'penalty_coeff*sqr(neg_part(obstacle + u.(Normalized(Grad_obstacle))))', GAMMAC);
+    gf_model_set(md, 'add nonlinear term', mim_friction, 'penalty_coeff*sqr(neg_part(obstacle + u.(Normalized(Grad_obstacle))))', GAMMAC);
     if (friction ~= 0)
         error('Sorry friction to be taken into account for penalty method')
     end
 elseif (Contact_option == 3)
-    gf_model_set(md, 'add nonlinear generic assembly brick', mim_friction, '0', GAMMAC); % In order to have at list a nonlinear term ...
+    gf_model_set(md, 'add nonlinear term', mim_friction, '0', GAMMAC); % In order to have at list a nonlinear term ...
     gf_model_set(md, 'add fem data', 'uel', mfu);
     if (scheme ~= 3)
         error('experimental method only implemented for explicit scheme, sorry')

@@ -269,13 +269,13 @@ if (generic_assembly_contact_brick)
    g1_t='u1';
    gf_model_set(md, 'add initialized data', 'r', r);
    gf_model_set(md, 'add initialized data', 'f', f_coeff);
-   %gf_model_set(md, 'add nonlinear generic assembly brick', mim1_contact, strcat('Interpolate_filter(contact_trans,(Test_u1).Transformed_unit_vector(Grad_u1, Normal)*pos_part(',g1_n,'-',gamma,'*(',sigma_chap_u1,'.Transformed_unit_vector(Grad_u1, Normal))),1)'),CONTACT_BOUNDARY1);
-   %gf_model_set(md, 'add nonlinear generic assembly brick', mim1_contact, strcat('Interpolate_filter(contact_trans,-(Interpolate(Test_u2,contact_trans)).Transformed_unit_vector(Grad_u1, Normal)*pos_part(',g1_n,'-',gamma,'*',sigma_chap_u1,'.Transformed_unit_vector(Grad_u1, Normal)),1)'),CONTACT_BOUNDARY1);
+   %gf_model_set(md, 'add nonlinear term', mim1_contact, strcat('Interpolate_filter(contact_trans,(Test_u1).Transformed_unit_vector(Grad_u1, Normal)*pos_part(',g1_n,'-',gamma,'*(',sigma_chap_u1,'.Transformed_unit_vector(Grad_u1, Normal))),1)'),CONTACT_BOUNDARY1);
+   %gf_model_set(md, 'add nonlinear term', mim1_contact, strcat('Interpolate_filter(contact_trans,-(Interpolate(Test_u2,contact_trans)).Transformed_unit_vector(Grad_u1, Normal)*pos_part(',g1_n,'-',gamma,'*',sigma_chap_u1,'.Transformed_unit_vector(Grad_u1, Normal)),1)'),CONTACT_BOUNDARY1);
    
    % assembly_string1 = strcat('Interpolate_filter(contact_trans,-(Test_u1).(Coulomb_friction_coupled_projection((',sigma_chap_u1,'),Transformed_unit_vector(Grad_u1, Normal),',g1_t,',',g1_n,',f,1/',gamma,')),1)')
-   gf_model_set(md, 'add nonlinear generic assembly brick', mim1_contact, strcat('Interpolate_filter(contact_trans,-(Test_u1).(Coulomb_friction_coupled_projection((',sigma_chap_u1,'),Transformed_unit_vector(Grad_u1, Normal),',g1_t,',',g1_n,',f,1/',gamma,')),1)'),CONTACT_BOUNDARY1);
+   gf_model_set(md, 'add nonlinear term', mim1_contact, strcat('Interpolate_filter(contact_trans,-(Test_u1).(Coulomb_friction_coupled_projection((',sigma_chap_u1,'),Transformed_unit_vector(Grad_u1, Normal),',g1_t,',',g1_n,',f,1/',gamma,')),1)'),CONTACT_BOUNDARY1);
    % assembly_string2 = strcat('Interpolate_filter(contact_trans,(Interpolate(Test_u2,contact_trans)).(Coulomb_friction_coupled_projection(',sigma_chap_u1,',Transformed_unit_vector(Grad_u1, Normal),',g1_t,',',g1_n,',f,','1/',gamma,')),1)')
-   gf_model_set(md, 'add nonlinear generic assembly brick', mim1_contact, strcat('Interpolate_filter(contact_trans,(Interpolate(Test_u2,contact_trans)).(Coulomb_friction_coupled_projection(',sigma_chap_u1,',Transformed_unit_vector(Grad_u1, Normal),',g1_t,',',g1_n,',f,','1/',gamma,')),1)'),CONTACT_BOUNDARY1);
+   gf_model_set(md, 'add nonlinear term', mim1_contact, strcat('Interpolate_filter(contact_trans,(Interpolate(Test_u2,contact_trans)).(Coulomb_friction_coupled_projection(',sigma_chap_u1,',Transformed_unit_vector(Grad_u1, Normal),',g1_t,',',g1_n,',f,','1/',gamma,')),1)'),CONTACT_BOUNDARY1);
   end
 end
     % errmax = gf_model_get(md, 'test tangent matrix', 1E-9, 10, 0.0001);

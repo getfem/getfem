@@ -236,8 +236,7 @@ bool laplacian_problem::solve(void) {
     std::string expr = "-("+grad_mean+").("+test_jump+") "
       "- ("+jump+").("+grad_test_mean+")"
       "+ alpha*("+jump+").("+test_jump+")";
-    getfem::add_linear_generic_assembly_brick(model, mim, expr,
-					      INNER_FACES, true);
+    getfem::add_linear_term(model, mim, expr, INNER_FACES, true);
   }
 
   model.listvar(cout);

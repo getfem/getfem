@@ -3369,7 +3369,7 @@ model_complex_plain_vector &
     return true;
   }
 
-  size_type add_source_term_generic_assembly_brick
+  size_type add_source_term
   (model &md, const mesh_im &mim, const std::string &expr, size_type region,
    std::string brickname, std::string directvarname,
    const std::string &directdataname, bool return_if_nonlin) {
@@ -3506,7 +3506,7 @@ model_complex_plain_vector &
     return true;
   }
 
-  size_type add_linear_generic_assembly_brick
+  size_type add_linear_term
   (model &md, const mesh_im &mim, const std::string &expr, size_type region,
    bool is_sym, bool is_coercive, std::string brickname,
    bool return_if_nonlin) {
@@ -3592,7 +3592,7 @@ model_complex_plain_vector &
 
   };
 
-  size_type add_nonlinear_generic_assembly_brick
+  size_type add_nonlinear_term
   (model &md, const mesh_im &mim, const std::string &expr, size_type region,
    bool is_sym, bool is_coercive, std::string brickname) {
 
@@ -3862,8 +3862,8 @@ model_complex_plain_vector &
         expr = "Grad_"+varname+".Grad_"+test_varname;
       else
         expr = "Grad_"+varname+":Grad_"+test_varname;
-      return add_linear_generic_assembly_brick(md, mim, expr, region, true,
-                                               true, "Laplacian", false);
+      return add_linear_term(md, mim, expr, region, true, true,
+			     "Laplacian", false);
     }
   }
 
@@ -3914,10 +3914,10 @@ model_complex_plain_vector &
           expr = "(("+dataname+")*Grad_"+varname+"):Grad_"+test_varname;
         }
       }
-      size_type ib = add_linear_generic_assembly_brick
+      size_type ib = add_linear_term
         (md, mim, expr, region, true, true, "Generic elliptic", true);
       if (ib == size_type(-1))
-        ib = add_nonlinear_generic_assembly_brick
+        ib = add_nonlinear_term
           (md, mim, expr, region, false, false,
            "Generic elliptic (nonlinear)");
       return ib;
@@ -4075,7 +4075,7 @@ model_complex_plain_vector &
       size_type ib = add_source_term_generic_assembly_brick
         (md, mim, expr, region, "Source term", varname, directdataname, true);
       if (ib == size_type(-1)) {
-        ib = add_nonlinear_generic_assembly_brick
+        ib = add_nonlinear_term
           (md, mim, "-("+expr+")", region, false, false,
            "Source term (nonlinear)");
         if (directdataname.size())
@@ -4989,11 +4989,11 @@ model_complex_plain_vector &
     // cout << "is_lin : " << int(is_lin) << endl;
 
     if (is_lin) {
-      return add_linear_generic_assembly_brick
+      return add_linear_term
         (md, mim, expr, region, false, false,
          "Dirichlet condition with Nitsche's method");
     } else {
-      return add_nonlinear_generic_assembly_brick
+      return add_nonlinear_term
         (md, mim, expr, region, false, false,
          "Dirichlet condition with Nitsche's method");
     }
@@ -5024,11 +5024,11 @@ model_complex_plain_vector &
           +derivative_Neumann+")";
     }
     if (is_lin) {
-      return add_linear_generic_assembly_brick
+      return add_linear_term
         (md, mim, expr, region, false, false,
          "Dirichlet condition with Nitsche's method");
     } else {
-      return add_nonlinear_generic_assembly_brick
+      return add_nonlinear_term
         (md, mim, expr, region, false, false,
          "Dirichlet condition with Nitsche's method");
     }
@@ -5059,11 +5059,11 @@ model_complex_plain_vector &
           +derivative_Neumann+"))";
     }
     if (is_lin) {
-      return add_linear_generic_assembly_brick
+      return add_linear_term
         (md, mim, expr, region, false, false,
          "Dirichlet condition with Nitsche's method");
     } else {
-      return add_nonlinear_generic_assembly_brick
+      return add_nonlinear_term
         (md, mim, expr, region, false, false,
          "Dirichlet condition with Nitsche's method");
     }
@@ -5463,10 +5463,10 @@ model_complex_plain_vector &
       std::string expr = "Grad_"+varname+".Grad_"+test_varname
         +" + sqr("+dataexpr+")*"+varname+"*"+test_varname;
 
-       size_type ib = add_linear_generic_assembly_brick
+       size_type ib = add_linear_term
          (md, mim, expr, region, true, true, "Helmholtz", true);
        if (ib == size_type(-1))
-         ib = add_nonlinear_generic_assembly_brick
+         ib = add_nonlinear_term
            (md, mim, expr, region, false, false, "Helmholtz (nonlinear)");
        return ib;
     }
@@ -5582,10 +5582,10 @@ model_complex_plain_vector &
       std::string test_varname
         = "Test_" + sup_previous_and_dot_to_varname(varname);
       std::string expr = "(("+dataexpr+")*"+varname+")."+test_varname;
-      size_type ib = add_linear_generic_assembly_brick
+      size_type ib = add_linear_term
         (md, mim, expr, region, true, true, "Fourier-Robin", true);
       if (ib == size_type(-1))
-        ib = add_nonlinear_generic_assembly_brick
+        ib = add_nonlinear_term
           (md, mim, expr, region, false, false, "Fourier-Robin (nonlinear)");
       return ib;
     }
@@ -6088,10 +6088,10 @@ model_complex_plain_vector &
     bool is_lin = workspace.used_variables(vl, vl_test1, vl_test2, dl, 2);
 
     if (is_lin) {
-      return add_linear_generic_assembly_brick
+      return add_linear_term
         (md, mim, expr, region, false, false, "Linearized isotropic elasticity");
     } else {
-      return add_nonlinear_generic_assembly_brick
+      return add_nonlinear_term
         (md, mim, expr, region, false, false,
          "Linearized isotropic elasticity (with nonlinear dependance)");
     }
@@ -6122,10 +6122,10 @@ model_complex_plain_vector &
     bool is_lin = workspace.used_variables(vl, vl_test1, vl_test2, dl, 2);
 
     if (is_lin) {
-      return add_linear_generic_assembly_brick
+      return add_linear_term
         (md, mim, expr, region, false, false, "Linearized isotropic elasticity");
     } else {
-      return add_nonlinear_generic_assembly_brick
+      return add_nonlinear_term
         (md, mim, expr, region, false, false,
          "Linearized isotropic elasticity (with nonlinear dependance)");
     }
@@ -6330,10 +6330,10 @@ model_complex_plain_vector &
     else
       expr = "-"+multname+"*Div_"+test_varname + "-"+test_multname
         +"*Div_"+varname;
-    size_type ib = add_linear_generic_assembly_brick
+    size_type ib = add_linear_term
       (md, mim, expr, region, true, true, "Linear incompressibility", true);
     if (ib == size_type(-1))
-      ib = add_nonlinear_generic_assembly_brick
+      ib = add_nonlinear_term
         (md, mim, expr, region, false, false,
          "Linear incompressibility (with nonlinear dependance)");
     return ib;
@@ -6471,10 +6471,10 @@ model_complex_plain_vector &
         expr ="(("+dataexpr_rho+")*"+varname+")."+test_varname;
       else
         expr = varname+"."+test_varname;
-      size_type ib = add_linear_generic_assembly_brick
+      size_type ib = add_linear_term
         (md, mim, expr, region, true, true, "Mass matrix", true);
       if (ib == size_type(-1))
-        ib = add_nonlinear_generic_assembly_brick
+        ib = add_nonlinear_term
           (md, mim, expr, region, false, false, "Mass matrix (nonlinear)");
       return ib;
     }

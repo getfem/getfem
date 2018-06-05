@@ -93,20 +93,20 @@ else:
     _expr_2 = "{K_over_2}*sqr(log({J}))+{mu_over_2}*(pow(Det{be},-1./3.)*Trace{be}-3)"\
               .format(K_over_2=K/2., J=_J_, mu_over_2=mu/2., be=_be_)
 
-    md.add_nonlinear_generic_assembly_brick(mim, _expr_2);
+    md.add_nonlinear_term(mim, _expr_2);
 
 
-# md.add_nonlinear_generic_assembly_brick(mim, 'sqr(Trace(Green_Lagrangian(Id(meshdim)+Grad_u)))/8 + Norm_sqr(Green_Lagrangian(Id(meshdim)+Grad_u))/4')
-# md.add_nonlinear_generic_assembly_brick(mim, '((Id(meshdim)+Grad_u)*(params(1)*Trace(Green_Lagrangian(Id(meshdim)+Grad_u))*Id(meshdim)+2*params(2)*Green_Lagrangian(Id(meshdim)+Grad_u))):Grad_Test_u')
-# md.add_nonlinear_generic_assembly_brick(mim, 'Saint_Venant_Kirchhoff_potential(Grad_u,params)')
+# md.add_nonlinear_term(mim, 'sqr(Trace(Green_Lagrangian(Id(meshdim)+Grad_u)))/8 + Norm_sqr(Green_Lagrangian(Id(meshdim)+Grad_u))/4')
+# md.add_nonlinear_term(mim, '((Id(meshdim)+Grad_u)*(params(1)*Trace(Green_Lagrangian(Id(meshdim)+Grad_u))*Id(meshdim)+2*params(2)*Green_Lagrangian(Id(meshdim)+Grad_u))):Grad_Test_u')
+# md.add_nonlinear_term(mim, 'Saint_Venant_Kirchhoff_potential(Grad_u,params)')
     
 if (incompressible):
     mfp = gf.MeshFem(m,1)
     mfp.set_classical_discontinuous_fem(1)
     md.add_fem_variable('p', mfp)
     md.add_finite_strain_incompressibility_brick(mim, 'u', 'p')
-    # md.add_nonlinear_generic_assembly brick(mim, 'p*(1-Det(Id(meshdim)+Grad_u))')
-    # md.add_nonlinear_generic_assembly_brick(mim, '-p*Det(Id(meshdim)+Grad_u)*(Inv(Id(meshdim)+Grad_u))'':Grad_Test_u + Test_p*(1-Det(Id(meshdim)+Grad_u))')
+    # md.add_nonlinear_term(mim, 'p*(1-Det(Id(meshdim)+Grad_u))')
+    # md.add_nonlinear_term(mim, '-p*Det(Id(meshdim)+Grad_u)*(Inv(Id(meshdim)+Grad_u))'':Grad_Test_u + Test_p*(1-Det(Id(meshdim)+Grad_u))')
 
 
 if (dirichlet_version == 1):

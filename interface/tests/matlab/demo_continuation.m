@@ -68,8 +68,7 @@ md = gf_model('real');
 gf_model_set(md, 'add fem variable', 'u', mf);
 gf_model_set(md, 'add Laplacian brick', mim, 'u');
 gf_model_set(md, 'add data', 'lambda', 1);
-gf_model_set(md, 'add nonlinear generic assembly brick', mim, ...
-            '(u-lambda*exp(u))*Test_u');
+gf_model_set(md, 'add nonlinear term', mim, '(u-lambda*exp(u))*Test_u');
         
 if (with_dirichlet)
   gf_model_set(md, 'add Dirichlet condition with multipliers', ...

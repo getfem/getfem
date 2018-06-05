@@ -157,13 +157,13 @@ if variant == 5 or variant == 6: # Penalisation of the jump over the first crack
    mim_bound1 = gf.MeshIm('levelset', mls, 'boundary(a)',
                           gf.Integ('IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6),3)'))
    #gf.asm_generic(mim_bound1, 0, '1', -1) # length of the crack
-   md.add_linear_generic_assembly_brick\
+   md.add_linear_term\
    (mim_bound1, '1e17*(Xfem_plus(u)-Xfem_minus(u)).(Xfem_plus(Test_u)-Xfem_minus(Test_u))')
 
 if variant == 4 or variant == 6: # Penalisation of the jump over the second crack
    mim_bound2 = gf.MeshIm('levelset', mls, 'boundary(b)',
                           gf.Integ('IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6),3)'))
-   md.add_linear_generic_assembly_brick\
+   md.add_linear_term\
    (mim_bound2, '1e17*(Xfem_plus(u)-Xfem_minus(u)).(Xfem_plus(Test_u)-Xfem_minus(Test_u))')
 
 # Assembly of the linear system and solve:

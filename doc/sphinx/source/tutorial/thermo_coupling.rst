@@ -511,7 +511,7 @@ Let us now begin by the elastic deformation problem. We will use the predefined 
 
   \int_{\Omega} (\lambda^* \mbox{div}(u) I + 2\mu \bar{\varepsilon}(u)):\bar{\varepsilon}(\delta_u)dx,
 
-to the tangent linear system. In order to use this model brick, the data corresponding to he |Lame| coefficient have to be added to the model first. Here, the |Lame| coefficients are constant over the domain. However, it it also possible to define some non-constant data. Note also that instead of using this predefined brick, one can use equivalently the generic assembly brick `add_linear_generic_assembly_brick(md mim, "lambda*(Div_u*Div_Test_u) + mu*((Grad_u + Grad_u'):Grad_Test_u)"`.
+to the tangent linear system. In order to use this model brick, the data corresponding to he |Lame| coefficient have to be added to the model first. Here, the |Lame| coefficients are constant over the domain. However, it it also possible to define some non-constant data. Note also that instead of using this predefined brick, one can use equivalently the generic assembly brick `add_linear_term(md mim, "lambda*(Div_u*Div_Test_u) + mu*((Grad_u + Grad_u'):Grad_Test_u)"`.
 
 Concerning the coupling term
 
@@ -519,7 +519,7 @@ Concerning the coupling term
 
    \int_{\Omega} (\beta\theta I) :\bar{\varepsilon}(\delta_u)dx,
 
-there is no predefined brick and we use directly a generic assembly brick `add_linear_generic_assembly_brick(md mim, "beta*theta*Div_Test_u)"`. See :ref:`ud-gasm-high` for more details on the high-level generic assembly language. Basically, the principle is that the assembly string is compiled into a list of optimized assembly instructions which are executed on each Gauss point.
+there is no predefined brick and we use directly a generic assembly brick `add_linear_term(md mim, "beta*theta*Div_Test_u)"`. See :ref:`ud-gasm-high` for more details on the high-level generic assembly language. Basically, the principle is that the assembly string is compiled into a list of optimized assembly instructions which are executed on each Gauss point.
 
 The following program allows to take into account the whole elastic deformation equation. Note the use of specific brick to prescribe the Dirichlet condition on the left boundary. There is several option to prescribe a Dirichlet condition (see :ref:`ud-model-Dirichlet`).
 
@@ -538,8 +538,7 @@ The following program allows to take into account the whole elastic deformation 
                 getfem::add_source_term_brick(md, mim, "u", "Fdata", RIGHT_BOUND);
 
                 md.add_initialized_scalar_data("beta", alpha_th*E/(1-2*nu));
-                getfem::add_linear_generic_assembly_brick
-                  (md, mim, "beta*(T0-theta)*Div_Test_u");
+                getfem::add_linear_term(md, mim, "beta*(T0-theta)*Div_Test_u");
 ---------- ----------------------------------------------------------------------------------------------------------------
 **Python** .. code-block:: python                                     
 
@@ -553,7 +552,7 @@ The following program allows to take into account the whole elastic deformation 
                 md.add_source_term_brick(mim, 'u', 'Fdata', RIGHT_BOUND)
 
                 md.add_initialized_data('beta', [alpha_th*E/(1-2*nu)])
-                md.add_linear_generic_assembly_brick(mim, 'beta*(T0-theta)*Div_Test_u')
+                md.add_linear_term(mim, 'beta*(T0-theta)*Div_Test_u')
 ---------- ----------------------------------------------------------------------------------------------------------------
 **Scilab** .. code-block:: matlab
 
@@ -567,7 +566,7 @@ The following program allows to take into account the whole elastic deformation 
                 gf_model_set(md, 'add source term brick', mim, 'u', 'Fdata', RIGHT_BOUND);
 
                 gf_model_set(md, 'add initialized data', 'beta', [alpha_th*E/(1-2*nu)]);
-                gf_model_set(md, 'add linear generic assembly brick', mim, 'beta*(T0-theta)*Div_Test_u');
+                gf_model_set(md, 'add linear term', mim, 'beta*(T0-theta)*Div_Test_u');
 ---------- ----------------------------------------------------------------------------------------------------------------
 **Matlab** .. code-block:: matlab
 
@@ -581,7 +580,7 @@ The following program allows to take into account the whole elastic deformation 
                 gf_model_set(md, 'add source term brick', mim, 'u', 'Fdata', RIGHT_BOUND);
 
                 gf_model_set(md, 'add initialized data', 'beta', [alpha_th*E/(1-2*nu)]);
-                gf_model_set(md, 'add linear generic assembly brick', mim, 'beta*(T0-theta)*Div_Test_u');
+                gf_model_set(md, 'add linear term', mim, 'beta*(T0-theta)*Div_Test_u');
 ========== ================================================================================================================
 
 Electric potential problem
@@ -596,7 +595,7 @@ Similarly, the following program take into account the electric potential equati
                 md.add_initialized_scalar_data("eps", epsilon);
                 md.add_initialized_scalar_data("rho_0", rho_0);
                 md.add_initialized_scalar_data("alpha", alpha);
-                getfem::add_nonlinear_generic_assembly_brick
+                getfem::add_nonlinear_term
                   (md, mim, sigmaeps+"*(Grad_V.Grad_Test_V)");
                 getfem::add_Dirichlet_condition_with_multipliers
                   (md, mim, "V", bgeot::dim_type(elements_degree-1), RIGHT_BOUND);
@@ -610,7 +609,7 @@ Similarly, the following program take into account the electric potential equati
                 md.add_initialized_data('eps', [epsilon])
                 md.add_initialized_data('rho_0', [rho_0])
                 md.add_initialized_data('alpha', [alpha])
-                md.add_nonlinear_generic_assembly_brick(mim, sigmaeps+'*(Grad_V.Grad_Test_V)')
+                md.add_nonlinear_term(mim, sigmaeps+'*(Grad_V.Grad_Test_V)')
                 md.add_Dirichlet_condition_with_multipliers(mim, 'V', elements_degree-1, RIGHT_BOUND)
                 md.add_initialized_data('DdataV', [0.1])
                 md.add_Dirichlet_condition_with_multipliers(mim, 'V', elements_degree-1, LEFT_BOUND, 'DdataV')
@@ -621,7 +620,7 @@ Similarly, the following program take into account the electric potential equati
                 gf_model_set(md, 'add initialized data', 'eps', [epsilon]);
                 gf_model_set(md, 'add initialized data', 'rho_0', [rho_0]);
                 gf_model_set(md, 'add initialized data', 'alpha', [alpha]);
-                gf_model_set(md, 'add nonlinear generic assembly brick', mim, sigmaeps+'*(Grad_V.Grad_Test_V)');
+                gf_model_set(md, 'add nonlinear term', mim, sigmaeps+'*(Grad_V.Grad_Test_V)');
                 gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'V', elements_degree-1, RIGHT_BOUND);
                 gf_model_set(md, 'add initialized data', 'DdataV', [0.1]);
                 gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'V', elements_degree-1, LEFT_BOUND, 'DdataV');
@@ -632,7 +631,7 @@ Similarly, the following program take into account the electric potential equati
                 gf_model_set(md, 'add initialized data', 'eps', [epsilon]);
                 gf_model_set(md, 'add initialized data', 'rho_0', [rho_0]);
                 gf_model_set(md, 'add initialized data', 'alpha', [alpha]);
-                gf_model_set(md, 'add nonlinear generic assembly brick', mim, [sigmaeps '*(Grad_V.Grad_Test_V)']);
+                gf_model_set(md, 'add nonlinear term', mim, [sigmaeps '*(Grad_V.Grad_Test_V)']);
                 gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'V', elements_degree-1, RIGHT_BOUND);
                 gf_model_set(md, 'add initialized data', 'DdataV', [0.1]);
                 gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'V', elements_degree-1, LEFT_BOUND, 'DdataV');
@@ -653,7 +652,7 @@ Now, the program to take into account the thermal problem:
                 getfem::add_mass_brick(md, mim, "theta", "D2");
                 getfem::add_source_term_brick(md, mim, "theta", "D2airt");
 
-                getfem::add_nonlinear_generic_assembly_brick
+                getfem::add_nonlinear_term
                   (md, mim, "-"+sigmaeps+"*Norm_sqr(Grad_V)*Test_theta");
 ---------- ---------------------------------------------------------------------------
 **Python** .. code-block:: python                                     
@@ -665,7 +664,7 @@ Now, the program to take into account the thermal problem:
                 md.add_mass_brick(mim, 'theta', 'D2')
                 md.add_source_term_brick(mim, 'theta', 'D2airt')
 
-                md.add_nonlinear_generic_assembly_brick(mim, '-'+sigmaeps+'*Norm_sqr(Grad_V)*Test_theta')
+                md.add_nonlinear_term(mim, '-'+sigmaeps+'*Norm_sqr(Grad_V)*Test_theta')
 ---------- ---------------------------------------------------------------------------
 **Scilab** .. code-block:: matlab
 
@@ -676,7 +675,7 @@ Now, the program to take into account the thermal problem:
                 gf_model_set(md, 'add mass brick', mim, 'theta', 'D2');
                 gf_model_set(md, 'add source term brick', mim, 'theta', 'D2airt');
 
-                gf_model_set(md, 'add nonlinear generic assembly brick', mim, '-'+sigmaeps+'*Norm_sqr(Grad_V)*Test_theta');
+                gf_model_set(md, 'add nonlinear term', mim, '-'+sigmaeps+'*Norm_sqr(Grad_V)*Test_theta');
 ---------- ---------------------------------------------------------------------------
 **Matlab** .. code-block:: matlab
 
@@ -687,7 +686,7 @@ Now, the program to take into account the thermal problem:
                 gf_model_set(md, 'add mass brick', mim, 'theta', 'D2');
                 gf_model_set(md, 'add source term brick', mim, 'theta', 'D2airt');
 
-                gf_model_set(md, 'add nonlinear generic assembly brick', mim, ['-' sigmaeps '*Norm_sqr(Grad_V)*Test_theta']);          
+                gf_model_set(md, 'add nonlinear term', mim, ['-' sigmaeps '*Norm_sqr(Grad_V)*Test_theta']);          
 ========== ===========================================================================
 
 

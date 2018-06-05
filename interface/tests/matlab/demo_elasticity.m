@@ -86,7 +86,7 @@ gf_model_set(md, 'add fem variable', 'u', mf);
 if (option == 1)
   gf_model_set(md, 'add initialized data', 'cmu', [cmu]);
   gf_model_set(md, 'add initialized data', 'clambda', [clambda]);
-  % gf_model_set(md, 'add linear generic assembly brick', mim, ...
+  % gf_model_set(md, 'add linear term', mim, ...
   %       '(clambda*Div_Test_u*Id(qdim(u)) +
   %       cmu*(Grad_Test_u''+Grad_Test_u)):Grad_Test2_u');
   gf_model_set(md, 'add isotropic linearized elasticity brick', mim, 'u', 'clambda', 'cmu');

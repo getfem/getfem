@@ -1523,11 +1523,20 @@ namespace getfem {
       are not allowed for non-coercive problems.
       `brickname` is an otpional name for the brick.
   */
-  size_type APIDECL add_linear_generic_assembly_brick
+  size_type APIDECL add_linear_term
   (model &md, const mesh_im &mim, const std::string &expr,
    size_type region = size_type(-1), bool is_sym = false,
    bool is_coercive = false, std::string brickname = "",
    bool return_if_nonlin = false);
+
+  inline size_type APIDECL add_linear_generic_assembly_brick
+  (model &md, const mesh_im &mim, const std::string &expr,
+   size_type region = size_type(-1), bool is_sym = false,
+   bool is_coercive = false, std::string brickname = "",
+   bool return_if_nonlin = false) {
+    return add_linear_term(md, mim, expr, region, is_sym,
+		    is_coercive, brickname, return_if_nonlin);
+  }
 
   /** Add a nonlinear term given by the assembly string `expr` which will
       be assembled in region `region` and with the integration method `mim`.
@@ -1540,10 +1549,18 @@ namespace getfem {
       are not allowed for non-coercive problems.
       `brickname` is an otpional name for the brick.
   */
-  size_type APIDECL add_nonlinear_generic_assembly_brick
+  size_type APIDECL add_nonlinear_term
   (model &md, const mesh_im &mim, const std::string &expr,
    size_type region = size_type(-1), bool is_sym = false,
    bool is_coercive = false, std::string brickname = "");
+
+  inline size_type APIDECL add_nonlinear_generic_assembly_brick
+  (model &md, const mesh_im &mim, const std::string &expr,
+   size_type region = size_type(-1), bool is_sym = false,
+   bool is_coercive = false, std::string brickname = "") {
+    return add_nonlinear_term(md, mim, expr, region,
+			      is_sym, is_coercive, brickname);
+  }
 
 
   /** Add a source term given by the assembly string `expr` which will
@@ -1554,12 +1571,21 @@ namespace getfem {
       derivated with respect to all variables.
       `brickname` is an otpional name for the brick.
   */
-  size_type APIDECL add_source_term_generic_assembly_brick
+  size_type APIDECL add_source_term
   (model &md, const mesh_im &mim, const std::string &expr,
    size_type region = size_type(-1),  std::string brickname = "",
    std::string directvarname = std::string(),
    const std::string &directdataname = std::string(),
    bool return_if_nonlin = false);
+  inline size_type APIDECL add_source_term_generic_assembly_brick
+  (model &md, const mesh_im &mim, const std::string &expr,
+   size_type region = size_type(-1),  std::string brickname = "",
+   std::string directvarname = std::string(),
+   const std::string &directdataname = std::string(),
+   bool return_if_nonlin = false) {
+    return add_source_term(md, mim, expr, region, brickname,
+		    directvarname, directdataname, return_if_nonlin);
+  }
 
   /** Add a Laplacian term on the variable `varname` (in fact with a minus :
       :math:`-\text{div}(\nabla u)`). If it is a vector

@@ -174,9 +174,9 @@ Using the high-level generic assembly bricks, the contact condition can be added
 
   md.add_initialized_data('gamma0', [gamma0])
   md.add_filtered_fem_variable('lambda1', mflambda_C, CONTACT_BOUND)
-  md.add_nonlinear_generic_assembly_brick(mim1, 'lambda1*(Test_u1.[0;1])'
+  md.add_nonlinear_term(mim1, 'lambda1*(Test_u1.[0;1])'
                       '-lambda1*(Interpolate(Test_u2,Proj1).[0;1])', CONTACT_BOUND)
-  md.add_nonlinear_generic_assembly_brick(mim1, '-(gamma0*element_size)'
+  md.add_nonlinear_term(mim1, '-(gamma0*element_size)'
             '*(lambda1 + neg_part(lambda1+(1/(gamma0*element_size))'
             '*((u1-Interpolate(u2,Proj1)+X-Interpolate(X,Proj1)).[0;1])))*Test_lambda1', CONTACT_BOUND);
 
@@ -209,14 +209,14 @@ This could be added to the model with the generic assembly brick:
 
   md.add_filtered_fem_variable('lambda_D', mflambda, HOLE_BOUND)
   md.add_initialized_data('F', [applied_force/(8*2*np.pi)])
-  md.add_linear_generic_assembly_brick(mim1, '-lambda_D.Test_u1 + (alpha_D*[0;1]-u1).Test_lambda_D'
+  md.add_linear_term(mim1, '-lambda_D.Test_u1 + (alpha_D*[0;1]-u1).Test_lambda_D'
         ' + (lambda_D.[0;1]+F)*Test_alpha_D', HOLE_BOUND)
 
 For more robustness, a small penalization on :math:`alpha_D` can be added
 
 .. code-block:: python
 
-  md.add_linear_generic_assembly_brick(mim1, '1E-6*alpha_D*Test_alpha_D');
+  md.add_linear_term(mim1, '1E-6*alpha_D*Test_alpha_D');
 
 
 Note that the fixed size variable `alpha_D` is linked to each points of the rim boundary. This means that the line of the tangent matrix corresponding to `alpha_D` may have a lot of nonzero components. This is why such a use of fixed size variable have to be done with care.

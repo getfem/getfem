@@ -72,7 +72,7 @@ F      = gf_mesh_fem_get(mf, 'eval', { '8*pi*pi*cos(2*pi*(x+0.1)).*sin(2*pi*y)' 
 md=gf_model('real');
 gf_model_set(md, 'add fem variable', 'u', mf);
 gf_model_set(md, 'add Laplacian brick', mim, 'u');
-% gf_model_set(md, 'add linear generic assembly brick', mim, 'Grad_Test2_u.Grad_Test_u');
+% gf_model_set(md, 'add linear term', mim, 'Grad_Test2_u.Grad_Test_u');
 gf_model_set(md, 'add initialized fem data', 'VolumicData', mf, F);
 gf_model_set(md, 'add source term brick', mim, 'u', 'VolumicData');
 gf_model_set(md, 'add initialized fem data', 'DirichletData', mf, Uexact);
@@ -90,7 +90,7 @@ end
 % periodic condition
 gf_model_set(md, 'add filtered fem variable', 'lambda', mf_lambda, GAMMAP); % multiplier for the periodic condition
 gf_model_set(md, 'add interpolate transformation from expression', 'transform', m, m, 'X-[1;0]');
-gf_model_set(md, 'add linear generic assembly brick', mim, '(Interpolate(u,transform)-u)*lambda', GAMMAP);
+gf_model_set(md, 'add linear term', mim, '(Interpolate(u,transform)-u)*lambda', GAMMAP);
 gf_model_get(md, 'solve');
 U = gf_model_get(md, 'variable', 'u');
 
