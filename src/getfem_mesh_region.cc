@@ -34,26 +34,26 @@ namespace getfem {
   }
 
 
-  mesh_region::mesh_region() : p(std::make_shared<impl>()), id_(size_type(-2)),
-			       type_(size_type(-1)),
-    partitioning_allowed(true), parent_mesh(0), index_updated(false)
+  mesh_region::mesh_region()
+    : p(std::make_shared<impl>()), id_(size_type(-2)),
+      partitioning_allowed(true), parent_mesh(0), index_updated(false)
   { 
     if (me_is_multithreaded_now()) prohibit_partitioning();
   }
 
-  mesh_region::mesh_region(size_type id__) : id_(id__), type_(size_type(-1)),
-    partitioning_allowed(true), parent_mesh(0), index_updated(false)
+  mesh_region::mesh_region(size_type id__)
+    : id_(id__), partitioning_allowed(true), parent_mesh(0), index_updated(false)
   { }
 
-  mesh_region::mesh_region(mesh& m, size_type id__, size_type type) : 
-    p(std::make_shared<impl>()), id_(id__), type_(type), partitioning_allowed(true), parent_mesh(&m),
-    index_updated(false)
+  mesh_region::mesh_region(mesh& m, size_type id__)
+    : p(std::make_shared<impl>()), id_(id__), partitioning_allowed(true),
+      parent_mesh(&m), index_updated(false)
   { 
     if (me_is_multithreaded_now()) prohibit_partitioning();  
   }
 
   mesh_region::mesh_region(const dal::bit_vector &bv) : 
-    p(std::make_shared<impl>()), id_(size_type(-2)), type_(size_type(-1)),
+    p(std::make_shared<impl>()), id_(size_type(-2)),
     partitioning_allowed(true), parent_mesh(0), index_updated(false)
   { 
     if (me_is_multithreaded_now()) prohibit_partitioning();  
@@ -89,7 +89,6 @@ namespace getfem {
     if (!this->parent_mesh && !from.parent_mesh)
     {
       this->id_ = from.id_;
-      this->type_ = from.type_;
       this->partitioning_allowed = from.partitioning_allowed;
       if (from.p.get()) {
         if (!this->p.get()) this->p = std::make_shared<impl>();
@@ -101,7 +100,6 @@ namespace getfem {
     else if (!this->parent_mesh) {
       this->p = from.p;
       this->id_ = from.id_;
-      this->type_ = from.type_;
       this->parent_mesh = from.parent_mesh;
       this->partitioning_allowed = from.partitioning_allowed;
     }
@@ -109,13 +107,11 @@ namespace getfem {
       if (from.p.get())
       {
         this->wp() = from.rp();
-        this->type_= from.get_type();
         this->partitioning_allowed = from.partitioning_allowed;
       }
       else if (from.id_ == size_type(-1)) {
         this->clear();
         this->add(this->parent_mesh->convex_index());
-        this->type_ = size_type(-1);
         this->partitioning_allowed = true;
       }
       touch_parent_mesh();
