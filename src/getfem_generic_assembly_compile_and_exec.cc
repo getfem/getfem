@@ -19,6 +19,7 @@
 
 ===========================================================================*/
 
+#include "getfem/getfem_mesh_im_level_set.h"
 #include "getfem/getfem_generic_assembly_tree.h"
 #include "getfem/getfem_generic_assembly_semantic.h"
 #include "getfem/getfem_generic_assembly_compile_and_exec.h"
@@ -271,7 +272,7 @@ namespace getfem {
   struct ga_instruction_copy_Normal : public ga_instruction_copy_small_vect {
 
     virtual int exec() {
-      GA_DEBUG_INFO("Instruction: Normal");
+      GA_DEBUG_INFO("Instruction: unit normal vector");
       GMM_ASSERT1(t.size() == vec.size(), "Invalid outward unit normal "
                   "vector. Possible reasons: not on boundary or "
                   "transformation failed.");
@@ -281,6 +282,27 @@ namespace getfem {
     ga_instruction_copy_Normal(base_tensor &t_,
                                const base_small_vector &Normal_)
       : ga_instruction_copy_small_vect(t_, Normal_)  {}
+  };
+
+  struct ga_instruction_level_set_normal_vector : public ga_instruction {
+    base_tensor &t;
+    const mesh_im_level_set *mimls;
+    const fem_interpolation_context &ctx;
+    base_small_vector vec;
+    
+    virtual int exec() {
+      GA_DEBUG_INFO("Instruction: unit normal vector to a level-set");
+      mimls->compute_normal_vector(ctx, vec);
+      GMM_ASSERT1(t.size() == vec.size(), "Invalid outward unit normal "
+                  "vector. Possible reasons: not on boundary or "
+                  "transformation failed.");
+      gmm::copy(vec, t.as_vector());
+      return 0;
+    }
+    ga_instruction_level_set_normal_vector
+    (base_tensor &t_, const mesh_im_level_set *mimls_,
+     const fem_interpolation_context &ctx_)
+      : t(t_), mimls(mimls_), ctx(ctx_), vec(t.size())  {}
   };
 
   struct ga_instruction_element_size : public ga_instruction {
@@ -4932,13 +4954,24 @@ namespace getfem {
       break;
 
     case GA_NODE_NORMAL:
-      GMM_ASSERT1(!function_case,
-                  "No use of Normal is allowed in functions");
-      if (pnode->tensor().size() != m.dim())
-        pnode->init_vector_tensor(m.dim());
-      pgai = std::make_shared<ga_instruction_copy_Normal>
-             (pnode->tensor(), gis.Normal);
-      rmi.instructions.push_back(std::move(pgai));
+      {
+	GMM_ASSERT1(!function_case,
+		    "No use of Normal is allowed in functions");
+	if (pnode->tensor().size() != m.dim())
+	  pnode->init_vector_tensor(m.dim());
+	const mesh_im_level_set *mimls
+	  = dynamic_cast<const mesh_im_level_set *>(rmi.im);
+	if (mimls && mimls->location()==mesh_im_level_set::INTEGRATE_BOUNDARY) {
+	  // Appel avec ctx (pt de Gauss)
+	  pgai = std::make_shared<ga_instruction_level_set_normal_vector>
+	    (pnode->tensor(), mimls, gis.ctx);
+	  rmi.instructions.push_back(std::move(pgai));
+	} else {
+	  pgai = std::make_shared<ga_instruction_copy_Normal>
+	    (pnode->tensor(), gis.Normal);
+	  rmi.instructions.push_back(std::move(pgai));
+	}
+      }
       break;
 
     case GA_NODE_INTERPOLATE_X:
@@ -6349,7 +6382,7 @@ namespace getfem {
           ga_instruction_set::region_mim rm(td.mim, td.rg);
           ga_instruction_set::region_mim_instructions &rmi
             = gis.whole_instructions[rm];
-          rmi.m = td.m;
+          rmi.m = td.m; rmi.im = td.mim;
           // rmi.interpolate_infos.clear();
           ga_compile_interpolate_trans(root, workspace, gis, rmi, *(td.m));
           ga_compile_node(root, workspace, gis,rmi, *(td.m), false,
@@ -6399,7 +6432,7 @@ namespace getfem {
             ga_instruction_set::region_mim rm(td.mim, td.rg);
             ga_instruction_set::region_mim_instructions &rmi
               = gis.whole_instructions[rm];
-            rmi.m = td.m;
+            rmi.m = td.m; rmi.im = td.mim;
             // rmi.interpolate_infos.clear();
             ga_compile_interpolate_trans(root, workspace, gis, rmi, *(td.m));
             ga_compile_node(root, workspace, gis, rmi, *(td.m), false,

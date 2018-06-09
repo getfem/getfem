@@ -144,6 +144,7 @@ namespace getfem {
     struct region_mim_instructions {
 
       const mesh *m;
+      const mesh_im *im;
       ga_if_hierarchy current_hierarchy;
       std::map<std::string, base_vector> local_dofs;
       std::map<const mesh_fem *, pfem_precomp> pfps;
@@ -176,7 +177,7 @@ namespace getfem {
       ga_instruction_list instructions;
       std::map<scalar_type, std::list<pga_tree_node> > node_list;
 
-      region_mim_instructions(): m(0) {}
+    region_mim_instructions(): m(0), im(0) {}
     };
 
     std::list<ga_tree> trees; // The trees are stored mainly because they

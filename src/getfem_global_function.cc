@@ -31,24 +31,24 @@ namespace getfem {
   scalar_type global_function_simple::val
   (const fem_interpolation_context &c) const {
     base_node pt = c.xreal();
-    GMM_ASSERT1(pt.size() == dim_, "Point of wrong size (" << pt.size() << ") " <<
-                                   "passed to a global function of dim = "<< dim_ <<".");
+    GMM_ASSERT1(pt.size() == dim_, "Point of wrong size (" << pt.size() << ") "
+		<< "passed to a global function of dim = "<< dim_ <<".");
     return this->val(pt);
   }
 
   void global_function_simple::grad
   (const fem_interpolation_context &c, base_small_vector &g) const {
     base_node pt = c.xreal();
-    GMM_ASSERT1(pt.size() == dim_, "Point of wrong size (" << pt.size() << ") " <<
-                                   "passed to a global function of dim = "<< dim_ <<".");
+    GMM_ASSERT1(pt.size() == dim_, "Point of wrong size (" << pt.size() << ") "
+		<< "passed to a global function of dim = "<< dim_ <<".");
     this->grad(pt, g);
   }
 
   void global_function_simple::hess
   (const fem_interpolation_context &c, base_matrix &h) const {
     base_node pt = c.xreal();
-    GMM_ASSERT1(pt.size() == dim_, "Point of wrong size (" << pt.size() << ") " <<
-                                   "passed to a global function of dim = "<< dim_ <<".");
+    GMM_ASSERT1(pt.size() == dim_, "Point of wrong size (" << pt.size() << ") "
+		<< "passed to a global function of dim = "<< dim_ <<".");
     this->hess(pt, h);
   }
 
@@ -744,6 +744,11 @@ namespace getfem {
       scalar_type y = (*mls_y)(c.xref());
       if (c.xfem_side() > 0 && y <= 0) y = 1E-13;
       if (c.xfem_side() < 0 && y >= 0) y = -1E-13;
+      // if (c.xfem_side()) {
+      // 	cout << "point : " << c.xref() << " side : " << c.xfem_side() << endl;
+      // 	cout << "side -1 : " << fn->val(x,-1E-13) << " : " << fn->val(x,-1E-16) << endl;
+      // 	cout << "side  1 : " << fn->val(x, 1E-13) << " : " << fn->val(x, 1E-16) << endl;
+      // }
 
       return fn->val(x,y);
     }

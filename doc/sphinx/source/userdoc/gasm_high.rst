@@ -54,7 +54,7 @@ A specific language has been developed to describe the weak formulation of bound
 
   - ``X`` is the current coordinate on the real element, ``X(i)`` is its i-th component.
 
-  - ``Normal`` is the outward unit normal vector to a boundary (for integration on a domain boundary).
+  - ``Normal`` is the outward unit normal vector to a boundary, when integrating on a domain boundary, or the unit normal vector to a level-set when integrating on a level-set with a ``mesh_im_level_set`` method. In the latter case, the normal vector is in the direction of the level-set function gradient.
 
   - ``Reshape(t, i, j, ...)``: Reshape a vector/matrix/tensor. Note that all tensors in |gf| are stored in the Fortran order.
 
@@ -895,7 +895,7 @@ For |gf| 5.1. When using a fem cut by a level-set (using fem_level_set or mesh_f
   Xfem_minus(Test_Div_u)
   Xfem_minus(Test_Hess_u)
   
-which are only available when the evaluation (integration) is made on the curve/surface separating two zones of continuity, i.e. on the zero level-set of a considered level-set function (using a mesh_im_level_set object). For instance, a jump in the variable ``u`` will be given by::
+which are only available when the evaluation (integration) is made on the curve/surface separating two zones of continuity, i.e. on the zero level-set of a considered level-set function (using a ``mesh_im_level_set`` object). For instance, a jump in the variable ``u`` will be given by::
 
   Xfem_plus(u)-Xfem_minus(u)
 
@@ -903,7 +903,9 @@ and the average by::
 
   (Xfem_plus(u)+Xfem_minus(u))/2
 
-The value ``Xfem_plus(u)`` is the value of ``u`` on the side where the corresponding level-set function is positive and ``Xfem_minus(u)`` the value of ``u`` on the side where the level-set function is negative.
+  The value ``Xfem_plus(u)`` is the value of ``u`` on the side where the corresponding level-set function is positive and ``Xfem_minus(u)`` the value of ``u`` on the side where the level-set function is negative.
+
+  Additionally, note that, when integrating on a level-set with a ``mesh_im_level_set`` object, ``Normal`` stands for the normal unit vector to the level-set in the direction of the gradient of the level-set function.
   
 Storage of sub-expressions in a getfem::im_data object during assembly
 ----------------------------------------------------------------------

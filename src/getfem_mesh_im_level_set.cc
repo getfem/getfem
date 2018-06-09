@@ -441,6 +441,35 @@ namespace getfem {
     // cout << "Number of built methods : " << build_methods.size() << endl;
   }
 
+  void mesh_im_level_set::compute_normal_vector
+  (const fem_interpolation_context &ctx, base_small_vector &vec) const {
+    size_type nb_ls = mls->nb_level_sets(), j = 0;
+    std::vector<pmesher_signed_distance> mesherls0(nb_ls);
+    if (vec.size() != linked_mesh().dim()) vec.resize(linked_mesh().dim());
+    base_small_vector un(ctx.pgt()->dim());
+			 
+    if (nb_ls == 0) {
+      gmm::clear(vec); return; 
+    } else if (nb_ls == 1) {
+      mesherls0[0]
+	= mls->get_level_set(0)->mls_of_convex(ctx.convex_num(), 0, false);
+    } else {
+      scalar_type d_min(0);
+      for (unsigned i = 0; i < nb_ls; ++i) {
+	mesherls0[i]
+	  = mls->get_level_set(i)->mls_of_convex(ctx.convex_num(), 0, false);
+	scalar_type d = gmm::abs((*(mesherls0[i]))(ctx.xref()));
+	if (i == 0 || d < d_min) { d_min = d; j = i; }
+      }
+    }
+    mesherls0[j]->grad(ctx.xref(), un);
+    gmm::mult(ctx.B(), un, vec);
+    scalar_type no = gmm::vect_norm2(vec);
+    if (no != scalar_type(0))
+      gmm::scale(vec, scalar_type(1) / gmm::vect_norm2(vec));
+  }
+
+
 
   void mesh_im_cross_level_set::update_from_context(void) const
   { is_adapted = false; }
@@ -712,6 +741,8 @@ namespace getfem {
 
     is_adapted = true; touch();
   }
+
+
 
   
 }  /* end of namespace getfem.                                             */
