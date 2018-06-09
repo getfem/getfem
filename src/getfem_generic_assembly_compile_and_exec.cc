@@ -5848,7 +5848,8 @@ namespace getfem {
        case GA_QUOTE:
          if (pnode->tensor_proper_size() > 1) {
 	   size_type n1 = child0->tensor_proper_size(0);
-	   size_type n2 = child0->tensor_proper_size(1);
+	   size_type n2 = (child0->tensor_order() > 1) ?
+	     child0->tensor_proper_size(1) : 1;
 	   size_type nn = 1;
 	   for (size_type i = 2; i < child0->tensor_order(); ++i)
 	     nn *= child0->tensor_proper_size(i);
