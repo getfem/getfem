@@ -347,12 +347,11 @@ namespace getfem {
     return res;
   }
 
-  /* the basic 4 singular functions for 2D cracks */
+  /* the basic singular functions for 2D cracks */
   scalar_type
   crack_singular_xy_function::val(scalar_type x, scalar_type y) const {
     scalar_type sgny = (y < 0 ? -1.0 : 1.0);
     scalar_type r = sqrt(x*x + y*y);
-
     if (r < 1e-10)  return 0;
 
     /* The absolute value is unfortunately necessary, otherwise, sqrt(-1e-16)
@@ -413,9 +412,9 @@ namespace getfem {
       GMM_WARNING0("Warning, point close to the singularity (r=" << r << ")");
     }
 
-    /* ci-dessous: la valeur absolue est malheureusement necessaire,
-     * sinon il peut arriver qu'on cherche sqrt(-1e-16) ...
-     */
+    /* The absolute value is unfortunately necessary, otherwise, sqrt(-1e-16)
+       can be required ...
+    */
     scalar_type sin2 = sqrt(gmm::abs(.5-x/(2*r))) * sgny;
     scalar_type cos2 = sqrt(gmm::abs(.5+x/(2*r)));
 
@@ -516,9 +515,9 @@ namespace getfem {
       GMM_WARNING0("Warning, point close to the singularity (r=" << r << ")");
     }
 
-    /* ci-dessous: la valeur absolue est malheureusement necessaire,
-     * sinon il peut arriver qu'on cherche sqrt(-1e-16) ...
-     */
+    /* The absolute value is unfortunately necessary, otherwise, sqrt(-1e-16)
+       can be required ...
+    */
     scalar_type sin2 = sqrt(gmm::abs(.5-x/(2*r))) * sgny;
     scalar_type cos2 = sqrt(gmm::abs(.5+x/(2*r)));
 
@@ -717,10 +716,10 @@ namespace getfem {
       if (cv_ != cv) {
         cv=cv_;
         if (lsets.size() == 0) {
-          mls_x = ls.mls_of_convex(cv, 1);
-          mls_y = ls.mls_of_convex(cv, 0);
+	  mls_x = ls.mls_of_convex(cv, 1);
+	  mls_y = ls.mls_of_convex(cv, 0);
         } else {
-          base_node pt(n);
+	  base_node pt(n);
           scalar_type d = scalar_type(-2);
           for (const auto &ls_ : lsets) {
             pmesher_signed_distance mls_xx, mls_yy;
@@ -742,14 +741,8 @@ namespace getfem {
       update_mls(c.convex_num(), c.xref().size());
       scalar_type x = (*mls_x)(c.xref());
       scalar_type y = (*mls_y)(c.xref());
-      if (c.xfem_side() > 0 && y <= 0) y = 1E-13;
-      if (c.xfem_side() < 0 && y >= 0) y = -1E-13;
-      // if (c.xfem_side()) {
-      // 	cout << "point : " << c.xref() << " side : " << c.xfem_side() << endl;
-      // 	cout << "side -1 : " << fn->val(x,-1E-13) << " : " << fn->val(x,-1E-16) << endl;
-      // 	cout << "side  1 : " << fn->val(x, 1E-13) << " : " << fn->val(x, 1E-16) << endl;
-      // }
-
+      if (c.xfem_side() > 0 && y <= 1E-13) y = 1E-13;
+      if (c.xfem_side() < 0 && y >= -1E-13) y = -1E-13;
       return fn->val(x,y);
     }
     virtual void grad(const fem_interpolation_context& c,

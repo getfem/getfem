@@ -64,7 +64,7 @@ namespace getfem {
   }
 
   pmesher_signed_distance level_set::mls_of_convex(size_type cv, unsigned lsnum,
-					     bool inverted) const {
+						   bool inverted) const {
     assert(this); assert(mf); 
     GMM_ASSERT1(mf->linked_mesh().convex_index().is_in(cv), "convex " << cv
 		<< " is not in the level set mesh!");
