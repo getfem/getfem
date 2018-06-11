@@ -120,9 +120,9 @@ namespace bgeot {
             elt[ii] = false;
             p0 = pt; p0 -= mp->orgs[ii];
             gmm::mult(gmm::transposed(mp->gtrans[ii]), p0, p1);
-            if (mp->trans_of_convex(ii)->convex_ref()->is_in(p1) < 1E-10)
-              return local_coordinate ? to_scalar(polytab[ii].eval(p1.begin()))
-              : to_scalar(polytab[ii].eval(pt.begin()));
+            if (mp->trans_of_convex(ii)->convex_ref()->is_in(p1) < 1E-10) {
+              return to_scalar(poly_of_subelt(ii).eval(local_coordinate ? p1.begin() : pt.begin()));
+            }
           }
         }
         ++it1; i1 = it1.index();
@@ -141,9 +141,9 @@ namespace bgeot {
             elt[ii] = false;
             p0 = pt; p0 -= mp->orgs[ii];
             gmm::mult(gmm::transposed(mp->gtrans[ii]), p0, p1);
-            if (mp->trans_of_convex(ii)->convex_ref()->is_in(p1) < 1E-10)
-              return  local_coordinate ? to_scalar(polytab[ii].eval(p1.begin()))
-              : to_scalar(polytab[ii].eval(pt.begin()));
+            if (mp->trans_of_convex(ii)->convex_ref()->is_in(p1) < 1E-10) {
+              return to_scalar(poly_of_subelt(ii).eval(local_coordinate ? p1.begin() : pt.begin()));
+            }
           }
         }
         --it2; i2 = it2.index();
@@ -151,13 +151,12 @@ namespace bgeot {
     }
     GMM_ASSERT1(false, "Element not found in composite polynomial: " << pt);
   }
+  
+  DAL_TRIPLE_KEY(base_poly_key, short_type, short_type, std::vector<opt_long_scalar_type>);
 
-
-  polynomial_composite::polynomial_composite(const mesh_precomposite &m,
-    bool lc)
-    : mp(&m), polytab(m.nb_convex()), local_coordinate(lc) {
-      std::fill(polytab.begin(), polytab.end(), base_poly(m.dim(), 0));
-  }
+  polynomial_composite::polynomial_composite(
+    const mesh_precomposite &m, bool lc)
+    : mp(&m), local_coordinate(lc), default_poly(mp->dim(), 0) {}
 
   void polynomial_composite::derivative(short_type k) {
     if (local_coordinate) {
@@ -168,16 +167,37 @@ namespace bgeot {
         gmm::clear(e); e[k] = 1.0;
         gmm::mult(gmm::transposed(mp->gtrans[ic]), e, f);
         P.clear();
-        for (dim_type n = 0; n < N; ++n)
-        { Q = polytab[ic];
-        Q.derivative(n);
-        P += Q * f[n];  }
-        polytab[ic] = P;
+        auto &poly = poly_of_subelt(ic);
+        for (dim_type n = 0; n < N; ++n) {
+          Q = poly;
+          Q.derivative(n);
+          P += Q * f[n];
+        }
+        if (polytab.find(ic) != polytab.end()) set_poly_of_subelt(ic, P);
       }
     }
     else
-      for (size_type ic = 0; ic < mp->nb_convex(); ++ic)
-        polytab[ic].derivative(k);
+    for (size_type ic = 0; ic < mp->nb_convex(); ++ic) {
+      auto poly = poly_of_subelt(ic);
+      poly.derivative(k);
+      if (polytab.find(ic) != polytab.end()) set_poly_of_subelt(ic, poly);
+    }
+  }
+
+  void polynomial_composite::set_poly_of_subelt(size_type l, const base_poly &poly) {
+    auto poly_key = std::make_shared<base_poly_key>(poly.degree(), poly.dim(), poly);
+    auto o = dal::search_stored_object(poly_key);
+    if (!o) {
+      o = std::make_shared<base_poly>(poly);
+      dal::add_stored_object(poly_key, o);
+    }
+    polytab[l] = poly_key;
+  }
+
+  const base_poly &polynomial_composite::poly_of_subelt(size_type l) const {
+    auto it = polytab.find(l);
+    if (it == polytab.end()) return default_poly;
+    return dynamic_cast<const base_poly &>(*dal::search_stored_object(it->second));
   }
 
 
