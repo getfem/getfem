@@ -59,7 +59,7 @@ namespace getfem {
       for (size_type k = 0; k < pf->nb_dof(cv); ++k) {
 	size_type igl = mf.ind_basic_dof_of_element(cv)[k];
 	base_poly fu = pf->base()[k];
-	base[igl].set_poly_of_subelt(cv) = fu;
+	base[igl].set_poly_of_subelt(cv, fu);
 	dofd[igl] = pf->dof_types()[k];
       }
     }
@@ -189,7 +189,7 @@ namespace getfem {
       (4, bgeot::polynomial_composite(mp, false));
     for (size_type k = 0; k < 4; ++k)
       for (size_type ic = 0; ic < 3; ++ic)
-        base()[k].set_poly_of_subelt(ic) = bgeot::read_base_poly(2, s);
+        base()[k].set_poly_of_subelt(ic, bgeot::read_base_poly(2, s));
 
     for (size_type i = 0; i < 3; ++i) {
       base_node pt(0.0, 0.0);
@@ -355,7 +355,7 @@ namespace getfem {
       (12, bgeot::polynomial_composite(mp, false));
     for (size_type k = 0; k < 12; ++k)
       for (size_type ic = 0; ic < 3; ++ic)
-        base()[k].set_poly_of_subelt(ic) = bgeot::read_base_poly(2, s);
+        base()[k].set_poly_of_subelt(ic, bgeot::read_base_poly(2, s));
 
     for (size_type i = 0; i < 3; ++i) {
       base_node pt(0.0, 0.0);
@@ -621,7 +621,7 @@ namespace getfem {
       (16, bgeot::polynomial_composite(mp, false));
     for (size_type k = 0; k < 16; ++k)
       for (size_type ic = 0; ic < 4; ++ic)
-        base()[k].set_poly_of_subelt(ic) = bgeot::read_base_poly(2, s);
+        base()[k].set_poly_of_subelt(ic, bgeot::read_base_poly(2, s));
 
     for (size_type i = 0; i < 4; ++i) {
       base_node pt(0.0, 0.0);

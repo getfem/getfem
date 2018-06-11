@@ -40,6 +40,7 @@
 */
 
 #include "bgeot_config.h"
+#include "dal_static_stored_objects.h";
 #include <vector>
 
 namespace bgeot
@@ -176,7 +177,7 @@ namespace bgeot
    *        The resulting polynomials have a smaller degree.
    *
    */
-  template<typename T> class polynomial : public std::vector<T> {
+  template<typename T> class polynomial : public std::vector<T>, public dal::static_stored_object {
   protected :
     
     short_type n, d;
