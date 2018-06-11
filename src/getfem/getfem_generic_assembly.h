@@ -659,20 +659,29 @@ namespace getfem {
   // Interpolate transformations
   //=========================================================================
 
-  /** Add a transformation to the model `md` from mesh `source_mesh` to mesh
-      `target_mesh` given by the expression `expr` which corresponds to a
-      high-level generic assembly expression which may contains some
-      variable of the model. CAUTION: For the moment, the derivative of the
-      transformation with respect to the eventual variables used is not
-      taken into account in the model solve.
+  /** Add a transformation to a workspace `workspace` or a model `md` mapping
+      point in mesh `source_mesh` to mesh `target_mesh`, optionally restricted
+      to the region `target_region`. The transformation is defined by the
+      expression `expr`, which has to be in the high-level generic assembly
+      syntax and may contain some variables of the workspace/model.
+      CAUTION: For the moment, the derivative of the transformation with
+      respect to any of these variables is not taken into account in the model
+      solve.
   */
-  void add_interpolate_transformation_from_expression
-  (model &md, const std::string &transname, const mesh &source_mesh,
-   const mesh &target_mesh, const std::string &expr);
-
   void add_interpolate_transformation_from_expression
   (ga_workspace &workspace, const std::string &transname,
    const mesh &source_mesh, const mesh &target_mesh, const std::string &expr);
+  void add_interpolate_transformation_from_expression
+  (ga_workspace &workspace, const std::string &transname,
+   const mesh &source_mesh, const mesh &target_mesh,
+   size_type target_region, const std::string &expr);
+  void add_interpolate_transformation_from_expression
+  (model &md, const std::string &transname,
+   const mesh &source_mesh, const mesh &target_mesh, const std::string &expr);
+  void add_interpolate_transformation_from_expression
+  (model &md, const std::string &transname,
+   const mesh &source_mesh, const mesh &target_mesh,
+   size_type target_region, const std::string &expr);
 
   /** Add a transformation to the workspace that creates an identity mapping
       between two meshes in deformed state. Conceptually, it can be viewed

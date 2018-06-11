@@ -489,6 +489,7 @@ namespace getfem {
 
     const mesh &source_mesh;
     const mesh &target_mesh;
+    const size_type target_region;
     std::string expr;
     mutable bgeot::rtree element_boxes;
     mutable bool recompute_elt_boxes;
@@ -579,8 +580,11 @@ namespace getfem {
 
         element_boxes.clear();
         base_node bmin(N), bmax(N);
-        for (dal::bv_visitor cv(target_mesh.convex_index());
-             !cv.finished(); ++cv) {
+        const dal::bit_vector&
+          convex_index = (target_region == mesh_region::all_convexes().id())
+                       ? target_mesh.convex_index()
+                       : target_mesh.region(target_region).index();
+        for (dal::bv_visitor cv(convex_index); !cv.finished(); ++cv) {
 
           bgeot::pgeometric_trans pgt = target_mesh.trans_of_convex(cv);
 
@@ -708,9 +712,9 @@ namespace getfem {
       return ret_type;
     }
 
-    interpolate_transformation_expression(const mesh &sm, const mesh &tm,
-                                          const std::string &expr_)
-      : source_mesh(sm), target_mesh(tm), expr(expr_),
+    interpolate_transformation_expression
+    (const mesh &sm, const mesh &tm, size_type trg, const std::string &expr_)
+      : source_mesh(sm), target_mesh(tm), target_region(trg), expr(expr_),
         recompute_elt_boxes(true), extract_variable_done(false),
         extract_data_done(false)
     { this->add_dependency(tm); }
@@ -719,19 +723,35 @@ namespace getfem {
 
 
   void add_interpolate_transformation_from_expression
-  (model &md, const std::string &name, const mesh &sm, const mesh &tm,
-   const std::string &expr) {
-    pinterpolate_transformation
-      p = std::make_shared<interpolate_transformation_expression>(sm, tm, expr);
-    md.add_interpolate_transformation(name, p);
+  (ga_workspace &workspace, const std::string &name, const mesh &sm,
+   const mesh &tm, const std::string &expr) {
+    add_interpolate_transformation_from_expression
+    (workspace, name, sm, tm, size_type(-1), expr);
   }
 
   void add_interpolate_transformation_from_expression
   (ga_workspace &workspace, const std::string &name, const mesh &sm,
-   const mesh &tm, const std::string &expr) {
+   const mesh &tm, size_type trg, const std::string &expr) {
     pinterpolate_transformation
-      p = std::make_shared<interpolate_transformation_expression>(sm, tm, expr);
+      p = std::make_shared<interpolate_transformation_expression>
+          (sm, tm, trg, expr);
     workspace.add_interpolate_transformation(name, p);
+  }
+
+  void add_interpolate_transformation_from_expression
+  (model &md, const std::string &name, const mesh &sm, const mesh &tm,
+   const std::string &expr) {
+    add_interpolate_transformation_from_expression
+    (md, name, sm, tm, size_type(-1), expr);
+  }
+
+  void add_interpolate_transformation_from_expression
+  (model &md, const std::string &name, const mesh &sm, const mesh &tm,
+   size_type trg, const std::string &expr) {
+    pinterpolate_transformation
+      p = std::make_shared<interpolate_transformation_expression>
+          (sm, tm, trg, expr);
+    md.add_interpolate_transformation(name, p);
   }
 
   //=========================================================================
