@@ -4138,7 +4138,7 @@ namespace getfem {
             auto itc = col.begin() + ind;
             if (ind != nb && itc->c == ev.c) itc->e += ev.e;
             else {
-              if (nb - ind > 1100)
+              if (nb - ind > 1300)
                 GMM_WARNING2("Inefficient addition of element in rsvector with "
                              << col.size() - ind << " non-zero entries");
               col.push_back(ev);

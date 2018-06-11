@@ -522,7 +522,8 @@ namespace getfem {
         // Group must be tested and it should be a fem variable
         if (!(workspace.variable_or_group_exists(name)))
           ga_throw_error(pnode->expr, pnode->pos,
-                         "Unknown variable or group of variables");
+                         "Unknown variable or group of variables \""
+			 + name + "\"");
 
         const mesh_fem *mf = workspace.associated_mf(name);
         if (!mf)
@@ -1641,7 +1642,7 @@ namespace getfem {
 
           if (!(workspace.variable_exists(name)))
             ga_throw_error(pnode->expr, pnode->pos, "Unknown variable, "
-			   "function, operator or data " + name);
+			   "function, operator or data \"" + name + "\"");
 
           if (pnode->der1)
             ga_throw_error(pnode->expr, pnode->pos, "Derivative is for "
