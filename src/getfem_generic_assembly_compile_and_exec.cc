@@ -6621,10 +6621,8 @@ namespace getfem {
 
   void ga_function_exec(ga_instruction_set &gis) {
 
-    ga_instruction_set::instructions_set::iterator it
-      = gis.whole_instructions.begin();
-    for (; it != gis.whole_instructions.end(); ++it) {
-      ga_instruction_list &gil = it->second.instructions;
+    for (auto &&instr : gis.whole_instructions) {
+      ga_instruction_list &gil = instr.second.instructions;
       for (size_type j = 0; j < gil.size(); ++j) j += gil[j]->exec();
     }
   }
@@ -6638,18 +6636,16 @@ namespace getfem {
     for (const std::string &t : gis.transformations)
       workspace.interpolate_transformation(t)->init(workspace);
 
-    ga_instruction_set::instructions_set::iterator it
-      = gis.whole_instructions.begin();
-    for (; it != gis.whole_instructions.end(); ++it) {
+    for (auto &&instr : gis.whole_instructions) {
 
-      const getfem::mesh_im &mim = *(it->first.mim());
-      const mesh_region &region = *(it->first.region());
-      const getfem::mesh &m = *(it->second.m);
+      const getfem::mesh_im &mim = *(instr.first.mim());
+      const mesh_region &region = *(instr.first.region());
+      const getfem::mesh &m = *(instr.second.m);
       GMM_ASSERT1(&m == &(gic.linked_mesh()),
                   "Incompatibility of meshes in interpolation");
-      ga_instruction_list &gilb = it->second.begin_instructions;
-      ga_instruction_list &gile = it->second.elt_instructions;
-      ga_instruction_list &gil = it->second.instructions;
+      ga_instruction_list &gilb = instr.second.begin_instructions;
+      ga_instruction_list &gile = instr.second.elt_instructions;
+      ga_instruction_list &gil = instr.second.instructions;
 
       // iteration on elements (or faces of elements)
       std::vector<size_type> ind;
@@ -6732,17 +6728,15 @@ namespace getfem {
     gis.ipt = 0;
     gis.pai = 0;
 
-    ga_instruction_set::instructions_set::iterator
-      it = gis.whole_instructions.begin();
-    for (; it != gis.whole_instructions.end(); ++it) {
-      const getfem::mesh &m = *(it->second.m);
+    for (auto &&instr : gis.whole_instructions) {
+      const getfem::mesh &m = *(instr.second.m);
       GMM_ASSERT1(&m == &interp_mesh,
                   "Incompatibility of meshes in interpolation");
-      ga_instruction_list &gilb = it->second.begin_instructions;
+      ga_instruction_list &gilb = instr.second.begin_instructions;
       for (size_type j = 0; j < gilb.size(); ++j) j += gilb[j]->exec();
-      ga_instruction_list &gile = it->second.elt_instructions;
+      ga_instruction_list &gile = instr.second.elt_instructions;
       for (size_type j = 0; j < gile.size(); ++j) j+=gile[j]->exec();
-      ga_instruction_list &gil = it->second.instructions;
+      ga_instruction_list &gil = instr.second.instructions;
       for (size_type j = 0; j < gil.size(); ++j) j += gil[j]->exec();
     }
   }
