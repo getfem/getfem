@@ -35,9 +35,9 @@ namespace getfem {
 
 
   mesh_region::mesh_region() : p(std::make_shared<impl>()), id_(size_type(-2)),
-			       type_(size_type(-1)),
+                               type_(size_type(-1)),
     partitioning_allowed(true), parent_mesh(0), index_updated(false)
-  { 
+  {
     if (me_is_multithreaded_now()) prohibit_partitioning();
   }
 
@@ -45,36 +45,36 @@ namespace getfem {
     partitioning_allowed(true), parent_mesh(0), index_updated(false)
   { }
 
-  mesh_region::mesh_region(mesh& m, size_type id__, size_type type) : 
+  mesh_region::mesh_region(mesh& m, size_type id__, size_type type) :
     p(std::make_shared<impl>()), id_(id__), type_(type), partitioning_allowed(true), parent_mesh(&m),
     index_updated(false)
-  { 
-    if (me_is_multithreaded_now()) prohibit_partitioning();  
+  {
+    if (me_is_multithreaded_now()) prohibit_partitioning();
   }
 
-  mesh_region::mesh_region(const dal::bit_vector &bv) : 
+  mesh_region::mesh_region(const dal::bit_vector &bv) :
     p(std::make_shared<impl>()), id_(size_type(-2)), type_(size_type(-1)),
     partitioning_allowed(true), parent_mesh(0), index_updated(false)
-  { 
-    if (me_is_multithreaded_now()) prohibit_partitioning();  
-    add(bv); 
+  {
+    if (me_is_multithreaded_now()) prohibit_partitioning();
+    add(bv);
   }
 
-  void mesh_region::touch_parent_mesh() 
+  void mesh_region::touch_parent_mesh()
   {
     if (parent_mesh) parent_mesh->touch_from_region(id_);
   }
 
-  const mesh_region& mesh_region::from_mesh(const mesh &m) const 
+  const mesh_region& mesh_region::from_mesh(const mesh &m) const
   {
-    if (!p.get()) 
+    if (!p.get())
     {
       mesh_region *r = const_cast<mesh_region*>(this);
-      if (id_ == size_type(-1)) 
+      if (id_ == size_type(-1))
       {
         r->p = std::make_shared<impl>();
         r->add(m.convex_index());
-      } 
+      }
       else if (id_ != size_type(-2))
       {
         *r = m.region(id_);
@@ -84,7 +84,7 @@ namespace getfem {
     return *this;
   }
 
-  mesh_region& mesh_region::operator=(const mesh_region &from) 
+  mesh_region& mesh_region::operator=(const mesh_region &from)
   {
     if (!this->parent_mesh && !from.parent_mesh)
     {
@@ -137,7 +137,7 @@ namespace getfem {
     return true;
   }
 
-  face_bitset mesh_region::operator[](size_t cv) const 
+  face_bitset mesh_region::operator[](size_t cv) const
   {
     map_t::const_iterator it = rp().m.find(cv);
     if (it != rp().m.end()) return (*it).second;
@@ -151,11 +151,11 @@ namespace getfem {
     itend   = partition_end  ();
     index_updated = true;
   }
-  mesh_region::const_iterator 
+  mesh_region::const_iterator
     mesh_region::partition_begin( ) const
   {
     size_type region_size = rp().m.size();
-    if (region_size < num_threads()) 
+    if (region_size < num_threads())
     { //for small regions: put the whole region into zero thread
       if (this_thread() == 0) return rp().m.begin();
       else return rp().m.end();
@@ -171,11 +171,11 @@ namespace getfem {
     return it;
   }
 
-  mesh_region::const_iterator 
+  mesh_region::const_iterator
     mesh_region::partition_end( ) const
   {
     size_type region_size = rp().m.size();
-    if (region_size < num_threads()) return rp().m.end(); 
+    if (region_size < num_threads()) return rp().m.end();
 
     size_type partition_size = static_cast<size_type>
       (std::ceil(static_cast<scalar_type>(region_size)/
@@ -188,21 +188,21 @@ namespace getfem {
     return it;
   }
 
-  mesh_region::const_iterator mesh_region::begin( ) const 
+  mesh_region::const_iterator mesh_region::begin( ) const
   {
     GMM_ASSERT1(p != 0, "Internal error");
-    if (me_is_multithreaded_now() && partitioning_allowed) 
-    { 
+    if (me_is_multithreaded_now() && partitioning_allowed)
+    {
       update_partition_iterators();
       return itbegin;
     }
     else { return rp().m.begin(); }
   }
 
-  mesh_region::const_iterator mesh_region::end  ( ) const 
-  { 
-    if (me_is_multithreaded_now() && partitioning_allowed) 
-    { 
+  mesh_region::const_iterator mesh_region::end  ( ) const
+  {
+    if (me_is_multithreaded_now() && partitioning_allowed)
+    {
       update_partition_iterators();
       return itend;
     }
@@ -239,18 +239,18 @@ namespace getfem {
   }
 
   /* may be optimized .. */
-  const dal::bit_vector&  mesh_region::index() const 
+  const dal::bit_vector&  mesh_region::index() const
   {
     dal::bit_vector& convex_index = rp().index_.thrd_cast();
     convex_index.clear();
-    for (const_iterator it = begin(); it != end(); ++it) 
+    for (const_iterator it = begin(); it != end(); ++it)
     {
       if (it->second.any()) convex_index.add(it->first);
     }
     return convex_index;
   }
 
-  void mesh_region::add(const dal::bit_vector &bv) 
+  void mesh_region::add(const dal::bit_vector &bv)
   {
     for (dal::bv_visitor i(bv); !i.finished(); ++i)
     {
@@ -260,15 +260,15 @@ namespace getfem {
     index_updated = false;
   }
 
-  void mesh_region::add(size_type cv, short_type f) 
+  void mesh_region::add(size_type cv, short_type f)
   {
-    wp().m[cv].set(short_type(f+1),1); 
+    wp().m[cv].set(short_type(f+1),1);
     touch_parent_mesh();
     index_updated = false;
   }
 
-  void mesh_region::sup_all(size_type cv) 
-  { 
+  void mesh_region::sup_all(size_type cv)
+  {
     map_t::iterator it = wp().m.find(cv);
     if (it != wp().m.end()) {
       wp().m.erase(it);
@@ -277,29 +277,29 @@ namespace getfem {
     index_updated = false;
   }
 
-  void mesh_region::sup(size_type cv, short_type f) 
-  { 
+  void mesh_region::sup(size_type cv, short_type f)
+  {
     map_t::iterator it = wp().m.find(cv);
     if (it != wp().m.end()) {
       (*it).second.set(short_type(f+1),0);
-      if ((*it).second.none()) wp().m.erase(it); 
+      if ((*it).second.none()) wp().m.erase(it);
       touch_parent_mesh();
     }
     index_updated = false;
   }
 
-  void mesh_region::clear() 
-  { 
+  void mesh_region::clear()
+  {
     wp().m.clear(); touch_parent_mesh();
     index_updated = false;
   }
 
-  void mesh_region::clean() 
+  void mesh_region::clean()
   {
-    for (map_t::iterator it = wp().m.begin(), itn; 
-      it != wp().m.end(); it = itn) 
+    for (map_t::iterator it = wp().m.begin(), itn;
+      it != wp().m.end(); it = itn)
     {
-      itn = it; 
+      itn = it;
       ++itn;
       if ( !(*it).second.any() ) wp().m.erase(it);
     }
@@ -324,7 +324,7 @@ namespace getfem {
     index_updated = false;
   }
 
-  bool mesh_region::is_in(size_type cv, short_type f) const 
+  bool mesh_region::is_in(size_type cv, short_type f) const
   {
     GMM_ASSERT1(p.get(), "Use from mesh on that region before");
     map_t::const_iterator it = rp().m.find(cv);
@@ -332,12 +332,12 @@ namespace getfem {
     return ((*it).second)[short_type(f+1)];
   }
 
-  bool mesh_region::is_in(size_type cv, short_type f, const mesh &m) const 
+  bool mesh_region::is_in(size_type cv, short_type f, const mesh &m) const
   {
     if (p.get()) {
       map_t::const_iterator it = rp().m.find(cv);
       if (it == rp().m.end() || short_type(f+1) >= MAX_FACES_PER_CV)
-	return false;
+        return false;
       return ((*it).second)[short_type(f+1)];
     }
     else
@@ -347,34 +347,34 @@ namespace getfem {
     }
   }
 
-  
 
-  bool mesh_region::is_empty() const 
+
+  bool mesh_region::is_empty() const
   {
     return rp().m.empty();
   }
 
-  bool mesh_region::is_only_convexes() const 
+  bool mesh_region::is_only_convexes() const
   {
-    return is_empty() || 
-      (or_mask()[0] == true && or_mask().count() == 1); 
+    return is_empty() ||
+      (or_mask()[0] == true && or_mask().count() == 1);
   }
 
-  bool mesh_region::is_only_faces() const 
-  { 
-    return is_empty() || (and_mask()[0] == false); 
+  bool mesh_region::is_only_faces() const
+  {
+    return is_empty() || (and_mask()[0] == false);
   }
 
-  face_bitset mesh_region::faces_of_convex(size_type cv) const 
+  face_bitset mesh_region::faces_of_convex(size_type cv) const
   {
     map_t::const_iterator it = rp().m.find(cv);
-    if (it != rp().m.end()) return ((*it).second) >> 1; 
+    if (it != rp().m.end()) return ((*it).second) >> 1;
     else return face_bitset();
   }
 
-  face_bitset mesh_region::and_mask() const 
+  face_bitset mesh_region::and_mask() const
   {
-    face_bitset bs; 
+    face_bitset bs;
     if (rp().m.empty()) return bs;
     bs.set();
     for (map_t::const_iterator it = rp().m.begin(); it != rp().m.end(); ++it)
@@ -382,16 +382,16 @@ namespace getfem {
     return bs;
   }
 
-  face_bitset mesh_region::or_mask() const 
+  face_bitset mesh_region::or_mask() const
   {
-    face_bitset bs; 
+    face_bitset bs;
     if (rp().m.empty()) return bs;
     for (map_t::const_iterator it = rp().m.begin(); it != rp().m.end(); ++it)
       if ( (*it).second.any() )  bs |= (*it).second;
     return bs;
   }
 
-  size_type mesh_region::size() const 
+  size_type mesh_region::size() const
   {
     size_type sz=0;
     for (map_t::const_iterator it = begin(); it != end(); ++it)
@@ -399,7 +399,7 @@ namespace getfem {
     return sz;
   }
 
-  size_type mesh_region::unpartitioned_size() const 
+  size_type mesh_region::unpartitioned_size() const
   {
     size_type sz=0;
     for (map_t::const_iterator it = rp().m.begin(); it != rp().m.end(); ++it)
@@ -408,8 +408,8 @@ namespace getfem {
   }
 
 
-  mesh_region mesh_region::intersection(const mesh_region &a, 
-                                        const mesh_region &b) 
+  mesh_region mesh_region::intersection(const mesh_region &a,
+                                        const mesh_region &b)
   {
     GMM_TRACE4("intersection of "<<a.id()<<" and "<<b.id());
     mesh_region r;
@@ -418,20 +418,20 @@ namespace getfem {
     (they only exist to provide a default argument to the mesh_region
     parameters of assembly procedures etc. */
     GMM_ASSERT1(a.id() !=  size_type(-1)||
-		b.id() != size_type(-1), "the 'all_convexes' regions "
-		"are not supported for set operations");
-    if (a.id() == size_type(-1)) 
+                b.id() != size_type(-1), "the 'all_convexes' regions "
+                "are not supported for set operations");
+    if (a.id() == size_type(-1))
     {
       for (const_iterator it = b.begin();it != b.end(); ++it) r.wp().m.insert(*it);
       return r;
     }
-    else if (b.id() == size_type(-1)) 
+    else if (b.id() == size_type(-1))
     {
       for (const_iterator it = a.begin();it != a.end(); ++it) r.wp().m.insert(*it);
       return r;
     }
 
-    map_t::const_iterator 
+    map_t::const_iterator
       ita = a.begin(), enda = a.end(),
       itb = b.begin(), endb = b.end();
 
@@ -450,8 +450,8 @@ namespace getfem {
     return r;
   }
 
-  mesh_region mesh_region::merge(const mesh_region &a, 
-                                 const mesh_region &b) 
+  mesh_region mesh_region::merge(const mesh_region &a,
+                                 const mesh_region &b)
   {
     GMM_TRACE4("Merger of " << a.id() << " and " << b.id());
     mesh_region r;
@@ -459,7 +459,7 @@ namespace getfem {
       b.id() != size_type(-1), "the 'all_convexes' regions "
       "are not supported for set operations");
     for (const_iterator it = a.begin();it != a.end(); ++it)
-    { 
+    {
       r.wp().m.insert(*it);
     }
     for (const_iterator it = b.begin();it != b.end(); ++it)
@@ -471,38 +471,38 @@ namespace getfem {
 
 
   mesh_region mesh_region::subtract(const mesh_region &a,
-                                    const mesh_region &b) 
+                                    const mesh_region &b)
   {
     GMM_TRACE4("subtraction of "<<a.id()<<" and "<<b.id());
     mesh_region r;
     GMM_ASSERT1(a.id() != size_type(-1) &&
       b.id() != size_type(-1), "the 'all_convexes' regions "
       "are not supported for set operations");
-    for (const_iterator ita = a.begin();ita != a.end(); ++ita) 
+    for (const_iterator ita = a.begin();ita != a.end(); ++ita)
       r.wp().m.insert(*ita);
 
-    for (const_iterator itb = b.begin();itb != b.end(); ++itb) 
+    for (const_iterator itb = b.begin();itb != b.end(); ++itb)
     {
       size_type cv = itb->first;
       map_t::iterator it = r.wp().m.find(cv);
       if (it != r.wp().m.end()){
-		it->second &= ~(itb->second);
-		if (it->second.none()) r.wp().m.erase(it);
-	  }
+                it->second &= ~(itb->second);
+                if (it->second.none()) r.wp().m.erase(it);
+          }
     }
     return r;
   }
 
   int mesh_region::region_is_faces_of(const getfem::mesh& m1,
-				      const mesh_region &rg2,
-				      const getfem::mesh& m2) const {
+                                      const mesh_region &rg2,
+                                      const getfem::mesh& m2) const {
     if (&m1 != &m2) return 0;
     int r = 1, partially = 0;
     for (mr_visitor cv(*this, m1); !cv.finished(); cv.next())
       if (cv.is_face() && rg2.is_in(cv.cv(),short_type(-1), m2))
-	partially = -1;
+        partially = -1;
       else
-	r = 0;
+        r = 0;
     if (r == 1) return 1; else return partially;
   }
 
@@ -512,17 +512,17 @@ namespace getfem {
   }
 
 
-  void mesh_region::error_if_not_faces() const 
+  void mesh_region::error_if_not_faces() const
   {
     GMM_ASSERT1(is_only_faces(), "Expecting a set of faces, not convexes");
   }
 
-  void mesh_region::error_if_not_convexes() const 
+  void mesh_region::error_if_not_convexes() const
   {
     GMM_ASSERT1(is_only_convexes(), "Expecting a set of convexes, not faces");
   }
 
-  void mesh_region::error_if_not_homogeneous() const 
+  void mesh_region::error_if_not_homogeneous() const
   {
     GMM_ASSERT1(is_only_faces() || is_only_convexes(), "Expecting a set "
                 "of convexes or a set of faces, but not a mixed set");
@@ -532,60 +532,60 @@ namespace getfem {
 
 
 #if GETFEM_PARA_LEVEL > 1
-  
+
   mesh_region::visitor::visitor(const mesh_region &s, const mesh &m,
-				bool intersect_with_mpi) :
-    cv_(size_type(-1)), f_(short_type(-1)), finished_(false) 
+                                bool intersect_with_mpi) :
+    cv_(size_type(-1)), f_(short_type(-1)), finished_(false)
   {
     if ((me_is_multithreaded_now() && s.partitioning_allowed)) {
       s.from_mesh(m);
       init(s);
     } else {
       if (s.id() == size_type(-1)) {
-	if (intersect_with_mpi)
-	  init(m.get_mpi_region());
-	else
-	  init(m.convex_index());
+        if (intersect_with_mpi)
+          init(m.get_mpi_region());
+        else
+          init(m.convex_index());
       } else if (s.p.get())  {
-	if (intersect_with_mpi) {
-	  mpi_rg = std::make_unique<mesh_region>(s);
-	  mpi_rg->from_mesh(m);
-	  m.intersect_with_mpi_region(*mpi_rg);
-	  init(*mpi_rg);
-	} else
-	  init(s);
+        if (intersect_with_mpi) {
+          mpi_rg = std::make_unique<mesh_region>(s);
+          mpi_rg->from_mesh(m);
+          m.intersect_with_mpi_region(*mpi_rg);
+          init(*mpi_rg);
+        } else
+          init(s);
       } else {
-	if (intersect_with_mpi)
-	  init(m.get_mpi_sub_region(s.id()));
-	else
-	  init(m.region(s.id()));
+        if (intersect_with_mpi)
+          init(m.get_mpi_sub_region(s.id()));
+        else
+          init(m.region(s.id()));
       }
     }
   }
 
 #else
-  
+
   mesh_region::visitor::visitor(const mesh_region &s, const mesh &m, bool)
-    :cv_(size_type(-1)), f_(short_type(-1)), finished_(false) 
+    :cv_(size_type(-1)), f_(short_type(-1)), finished_(false)
   {
     if ((me_is_multithreaded_now() && s.partitioning_allowed)) {
       s.from_mesh(m);
       init(s);
     } else {
       if (s.id() == size_type(-1)) {
-	init(m.convex_index());
+        init(m.convex_index());
       } else if (s.p.get())  {
-	init(s);
+        init(s);
       } else {
-	init(m.region(s.id()));
+        init(m.region(s.id()));
       }
     }
   }
 
 #endif
 
-  
-  bool mesh_region::visitor::next() 
+
+  bool mesh_region::visitor::next()
   {
     if (whole_mesh) {
       if (itb == iteb) { finished_ = true; return false; }
@@ -595,26 +595,26 @@ namespace getfem {
       ++itb; while (itb != iteb && !(*itb)) ++itb;
       return true;
     }
-    while (c.none()) 
+    while (c.none())
       {
-	if (it == ite) { finished_=true; return false; }
-	cv_ = it->first;
-	c   = it->second;  
-	f_ = short_type(-1);
-	++it; 
-	if (c.none()) continue;
+        if (it == ite) { finished_=true; return false; }
+        cv_ = it->first;
+        c   = it->second;
+        f_ = short_type(-1);
+        ++it;
+        if (c.none()) continue;
       }
     next_face();
     return true;
   }
 
   mesh_region::visitor::visitor(const mesh_region &s) :
-    cv_(size_type(-1)), f_(short_type(-1)), finished_(false) 
+    cv_(size_type(-1)), f_(short_type(-1)), finished_(false)
   {
     init(s);
   }
 
-  void mesh_region::visitor::init(const dal::bit_vector &bv) 
+  void mesh_region::visitor::init(const dal::bit_vector &bv)
   {
     whole_mesh = true;
     itb = bv.begin(); iteb = bv.end();
@@ -622,7 +622,7 @@ namespace getfem {
     next();
   }
 
-  void mesh_region::visitor::init(const mesh_region &s) 
+  void mesh_region::visitor::init(const mesh_region &s)
   {
     whole_mesh = false;
     it  = s.begin();
@@ -630,18 +630,18 @@ namespace getfem {
     next();
   }
 
-  std::ostream & operator <<(std::ostream &os, const mesh_region &w) 
+  std::ostream & operator <<(std::ostream &os, const mesh_region &w)
   {
     if (w.id() == size_type(-1))
       os << " ALL_CONVEXES";
     else if (w.p.get())
     {
-      for (mr_visitor cv(w); !cv.finished(); cv.next()) 
-	{
-	  os << cv.cv();
-	  if (cv.is_face()) os << "/" << cv.f();
-	  os << " ";
-	}
+      for (mr_visitor cv(w); !cv.finished(); cv.next())
+        {
+          os << cv.cv();
+          if (cv.is_face()) os << "/" << cv.f();
+          os << " ";
+        }
     }
     else
     {

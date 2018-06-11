@@ -2199,7 +2199,7 @@ namespace getfem {
 
 
   /** Linear elasticity brick ( @f$ \int \sigma(u):\varepsilon(v) @f$ ).
-      for isotropic material. Parametrized by the Lamé coefficients
+      for isotropic material. Parametrized by the LamÃ© coefficients
       lambda and mu.
   */
   size_type APIDECL add_isotropic_linearized_elasticity_brick

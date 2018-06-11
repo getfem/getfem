@@ -26,7 +26,7 @@ mim=gf_mesh_im(m, gf_integ('IM_GAUSS_PARALLELEPIPED(2, 4)'));
 % mim=gf_mesh_im(m, gf_integ('IM_EXACT_PARALLELEPIPED(2)')); % not allowed with the high level generic assembly
 
 border = gf_mesh_get(m,'outer faces');
-gf_mesh_set(m, 'region', 42, border); % create the region (:#42
+gf_mesh_set(m, 'region', 42, border); % create the region (:#42
 
 % the boundary edges appears in red
 gf_plot_mesh(m, 'regions', [42], 'vertices','on','convexes','on'); 

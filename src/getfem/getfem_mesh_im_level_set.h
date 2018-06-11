@@ -112,7 +112,7 @@ namespace getfem {
       base_singular_pim = sing;
     }
 
-    int location(void) const { return integrate_where; }
+    int location() const { return integrate_where; }
     
     size_type memsize() const {
       return mesh_im::memsize(); // + ... ;

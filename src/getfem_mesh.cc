@@ -66,7 +66,7 @@ namespace getfem {
         if (r[ic][0])
           for (size_type jc = 0; jc < icv.size(); ++jc)
             r.add(icv[jc]);
-        
+
         bgeot::geotrans_inv_convex giv;
         for (short_type f = 0; f < pgt->structure()->nb_faces(); ++f) {
           if (r[ic][f+1]) {
@@ -86,17 +86,17 @@ namespace getfem {
                 base_node pt, barycentre
                   =gmm::mean_value(pgtsub->convex_ref()->points_of_face(fsub));
                 pt = pgtsub->transform(barycentre, points_of_convex(icv[jc]));
-        
+
                 giv.init(points_of_convex(ic), pgt);
                 giv.invert(pt, barycentre);
 
-        
+
                 if (gmm::abs(pgt->convex_ref()->is_in_face(f,barycentre)) < 0.001)
                   r.add(icv[jc], fsub);
               }
             }
           }
-        }        
+        }
       }
 
       for (size_type jc = 0; jc < icv.size(); ++jc)
@@ -111,10 +111,10 @@ namespace getfem {
               base_node pt, barycentre
                 = gmm::mean_value(pgtsub->convex_ref()->points_of_face(fsub));
               pt = pgtsub->transform(barycentre, points_of_convex(icv[jc]));
-        
+
               giv.init(points_of_convex(ic), pgt);
               giv.invert(pt, barycentre);
-        
+
               for (short_type f = 0; f < pgt->structure()->nb_faces(); ++f)
                 if (gmm::abs(pgt->convex_ref()->is_in_face(f,barycentre)) < 0.001)
                   { r.add(ic, f); break; }
@@ -136,7 +136,7 @@ namespace getfem {
     : bgeot::basic_mesh(m), name_(name)  { init(); }
 
   mesh::mesh(const mesh &m) : context_dependencies(),
-			      std::enable_shared_from_this<getfem::mesh>()
+                              std::enable_shared_from_this<getfem::mesh>()
   { copy_from(m); }
 
   mesh &mesh::operator=(const mesh &m) {
@@ -148,58 +148,58 @@ namespace getfem {
 
 #if GETFEM_PARA_LEVEL > 1
 
-  void mesh::compute_mpi_region(void) const {
-      int size, rank;
-      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-      MPI_Comm_size(MPI_COMM_WORLD, &size);
+  void mesh::compute_mpi_region() const {
+    int size, rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-      if (size < 2) {
-	mpi_region = mesh_region::all_convexes();
-	mpi_region.from_mesh(*this);
-      } else {
-        int ne = int(nb_convex());
-        std::vector<int> xadj(ne+1), adjncy, numelt(ne), npart(ne);
-        std::vector<int> indelt(nb_allocated_convex());
-        
-        double t_ref = MPI_Wtime();
+    if (size < 2) {
+      mpi_region = mesh_region::all_convexes();
+      mpi_region.from_mesh(*this);
+    } else {
+      int ne = int(nb_convex());
+      std::vector<int> xadj(ne+1), adjncy, numelt(ne), npart(ne);
+      std::vector<int> indelt(nb_allocated_convex());
 
-        int j = 0, k = 0;
-        ind_set s;
-        for (dal::bv_visitor ic(convex_index()); !ic.finished(); ++ic, ++j) {
-          numelt[j] = ic;
-          indelt[ic] = j;
-        }
-        j = 0;
-        for (dal::bv_visitor ic(convex_index()); !ic.finished(); ++ic, ++j) {
-          xadj[j] = k;
-          neighbours_of_convex(ic, s);
-          for (ind_set::iterator it = s.begin();
-               it != s.end(); ++it) { adjncy.push_back(indelt[*it]); ++k; }
-        }
+      double t_ref = MPI_Wtime();
+
+      int j = 0, k = 0;
+      ind_set s;
+      for (dal::bv_visitor ic(convex_index()); !ic.finished(); ++ic, ++j) {
+        numelt[j] = ic;
+        indelt[ic] = j;
+      }
+      j = 0;
+      for (dal::bv_visitor ic(convex_index()); !ic.finished(); ++ic, ++j) {
         xadj[j] = k;
+        neighbours_of_convex(ic, s);
+        for (ind_set::iterator it = s.begin();
+             it != s.end(); ++it) { adjncy.push_back(indelt[*it]); ++k; }
+      }
+      xadj[j] = k;
 
 #ifdef GETFEM_HAVE_METIS_OLD_API
-  int wgtflag = 0, numflag = 0, edgecut;
-  int options[5] = {0,0,0,0,0};
-  METIS_PartGraphKway(&ne, &(xadj[0]), &(adjncy[0]), 0, 0, &wgtflag,
-                      &numflag, &size, options, &edgecut, &(npart[0]));
+      int wgtflag = 0, numflag = 0, edgecut;
+      int options[5] = {0,0,0,0,0};
+      METIS_PartGraphKway(&ne, &(xadj[0]), &(adjncy[0]), 0, 0, &wgtflag,
+                          &numflag, &size, options, &edgecut, &(npart[0]));
 #else
-  int ncon = 1, edgecut;
-  int options[METIS_NOPTIONS] = { 0 };
-  METIS_SetDefaultOptions(options);
-  METIS_PartGraphKway(&ne, &ncon, &(xadj[0]), &(adjncy[0]), 0, 0, 0, &size,
-                      0, 0, options, &edgecut, &(npart[0]));
+      int ncon = 1, edgecut;
+      int options[METIS_NOPTIONS] = { 0 };
+      METIS_SetDefaultOptions(options);
+      METIS_PartGraphKway(&ne, &ncon, &(xadj[0]), &(adjncy[0]), 0, 0, 0,
+                          &size, 0, 0, options, &edgecut, &(npart[0]));
 #endif
 
-        for (size_type i = 0; i < size_type(ne); ++i)
-          if (npart[i] == rank) mpi_region.add(numelt[i]);
+      for (size_type i = 0; i < size_type(ne); ++i)
+        if (npart[i] == rank) mpi_region.add(numelt[i]);
 
-        if (MPI_IS_MASTER())
-          cout << "Partition time "<< MPI_Wtime()-t_ref << endl;
-      }
-      modified = false;
-      valid_sub_regions.clear();
+      if (MPI_IS_MASTER())
+        cout << "Partition time "<< MPI_Wtime()-t_ref << endl;
     }
+    modified = false;
+    valid_sub_regions.clear();
+  }
 
   void mesh::compute_mpi_sub_region(size_type n) const {
     if (valid_cvf_sets.is_in(n)) {
@@ -236,15 +236,15 @@ namespace getfem {
     if (with_renumbering) { // Could be optimized no using only swap_convex
       std::vector<size_type> cmk, iord(nbc), iordinv(nbc);
       for (i = 0; i < nbc; ++i) iord[i] = iordinv[i] = i;
-      
+
       bgeot::cuthill_mckee_on_convexes(*this, cmk);
       for (i = 0; i < nbc; ++i) {
-	j = iordinv[cmk[i]];
-	if (i != j) {
-	  swap_convex(i, j);
-	  std::swap(iord[i], iord[j]);
-	  std::swap(iordinv[iord[i]], iordinv[iord[j]]);
-	}
+        j = iordinv[cmk[i]];
+        if (i != j) {
+          swap_convex(i, j);
+          std::swap(iord[i], iord[j]);
+          std::swap(iordinv[iord[i]], iordinv[iord[j]]);
+        }
       }
     }
   }
@@ -433,7 +433,7 @@ namespace getfem {
     }
     return r;
   }
-  
+
   scalar_type mesh::maximal_convex_radius_estimate() const {
     if (convex_index().empty()) return 1;
     scalar_type r = convex_radius_estimate(convex_index().first_true());
@@ -487,29 +487,29 @@ namespace getfem {
       { te = true; }
       else if (!bgeot::casecmp(tmp, "POINT")) {
         bgeot::get_token(ist, tmp);
-	if (!bgeot::casecmp(tmp, "COUNT")) {
-	  bgeot::get_token(ist, tmp); // Ignored. Used in some applications
-	} else {
-	  size_type ip = atoi(tmp.c_str());
-	  dim_type d = 0;
-	  GMM_ASSERT1(!npt.is_in(ip),
-		      "Two points with the same index. loading aborted.");
-	  npt.add(ip);
-	  bgeot::get_token(ist, tmp);
-	  while (isdigit(tmp[0]) || tmp[0] == '-' || tmp[0] == '+'
-		 || tmp[0] == '.')
-	    { tmpv[d++] = atof(tmp.c_str()); bgeot::get_token(ist, tmp); }
-	  please_get = false;
-	  base_node v(d);
-	  for (size_type i = 0; i < d; i++) v[i] = tmpv[i];
-	  size_type ipl = add_point(v);
-	  if (ip != ipl) {
-	    GMM_ASSERT1(!npt.is_in(ipl), "Two points [#" << ip << " and #"
-			<< ipl << "] with the same coords "<< v
-			<< ". loading aborted.");
-	    swap_points(ip, ipl);
-	  }
-	}
+        if (!bgeot::casecmp(tmp, "COUNT")) {
+          bgeot::get_token(ist, tmp); // Ignored. Used in some applications
+        } else {
+          size_type ip = atoi(tmp.c_str());
+          dim_type d = 0;
+          GMM_ASSERT1(!npt.is_in(ip),
+                      "Two points with the same index. loading aborted.");
+          npt.add(ip);
+          bgeot::get_token(ist, tmp);
+          while (isdigit(tmp[0]) || tmp[0] == '-' || tmp[0] == '+'
+                 || tmp[0] == '.')
+            { tmpv[d++] = atof(tmp.c_str()); bgeot::get_token(ist, tmp); }
+          please_get = false;
+          base_node v(d);
+          for (size_type i = 0; i < d; i++) v[i] = tmpv[i];
+          size_type ipl = add_point(v);
+          if (ip != ipl) {
+            GMM_ASSERT1(!npt.is_in(ipl), "Two points [#" << ip << " and #"
+                        << ipl << "] with the same coords "<< v
+                        << ". loading aborted.");
+            swap_points(ip, ipl);
+          }
+        }
       } else if (tmp.size()) {
         GMM_ASSERT1(false, "Syntax error in file, at token '" << tmp
                     << "', pos=" << std::streamoff(ist.tellg()));
@@ -533,30 +533,30 @@ namespace getfem {
       else if (!bgeot::casecmp(tmp, "CONVEX")) {
         size_type ic;
         bgeot::get_token(ist, tmp);
-	if (!bgeot::casecmp(tmp, "COUNT")) {
-	  bgeot::get_token(ist, tmp); // Ignored. Used in some applications
-	} else {
-	  ic = gmm::abs(atoi(tmp.c_str()));
-	  GMM_ASSERT1(!ncv.is_in(ic),
-		      "Negative or repeated index, loading aborted.");
-	  ncv.add(ic);
-	  
-	  int rgt = bgeot::get_token(ist, tmp);
-	  if (rgt != 3) { // for backward compatibility with version 1.7
-	    char c; ist.get(c);
-	    while (!isspace(c)) { tmp.push_back(c); ist.get(c); }
-	  }
-	  
-	  bgeot::pgeometric_trans pgt = bgeot::geometric_trans_descriptor(tmp);
-	  size_type nb = pgt->nb_points();
-	  
-	  cv[ic].cstruct = pgt;
-	  cv[ic].pts.resize(nb);
-	  for (size_type i = 0; i < nb; i++) {
-	    bgeot::get_token(ist, tmp);        
-	    cv[ic].pts[i] = gmm::abs(atoi(tmp.c_str()));
-	  }
-	}
+        if (!bgeot::casecmp(tmp, "COUNT")) {
+          bgeot::get_token(ist, tmp); // Ignored. Used in some applications
+        } else {
+          ic = gmm::abs(atoi(tmp.c_str()));
+          GMM_ASSERT1(!ncv.is_in(ic),
+                      "Negative or repeated index, loading aborted.");
+          ncv.add(ic);
+
+          int rgt = bgeot::get_token(ist, tmp);
+          if (rgt != 3) { // for backward compatibility with version 1.7
+            char c; ist.get(c);
+            while (!isspace(c)) { tmp.push_back(c); ist.get(c); }
+          }
+
+          bgeot::pgeometric_trans pgt = bgeot::geometric_trans_descriptor(tmp);
+          size_type nb = pgt->nb_points();
+
+          cv[ic].cstruct = pgt;
+          cv[ic].pts.resize(nb);
+          for (size_type i = 0; i < nb; i++) {
+            bgeot::get_token(ist, tmp);
+            cv[ic].pts[i] = gmm::abs(atoi(tmp.c_str()));
+          }
+        }
       }
       else if (tmp.size()) {
         GMM_ASSERT1(false, "Syntax error reading a mesh file "
@@ -748,7 +748,7 @@ namespace getfem {
          a transformation of any pgt to the equivalent equilateral pgt
          (for prisms etc) */
       if (bgeot::basic_structure(pgt->structure())
-	  == bgeot::simplex_structure(P))
+          == bgeot::simplex_structure(P))
         gmm::mult(base_matrix(K),equilateral_to_GT_PK_grad(P),K);
       q = std::max(q, gmm::condition_number(K));
     }
@@ -823,23 +823,23 @@ namespace getfem {
     mr.error_if_not_convexes();
     dal::bit_vector visited;
     bgeot::mesh_structure::ind_set neighbours;
-    
+
     for (mr_visitor i(mr); !i.finished(); ++i) {
       size_type cv1 = i.cv();
       short_type nbf = m.structure_of_convex(i.cv())->nb_faces();
       bool neighbour_visited = false;
       for (short_type f = 0; f < nbf; ++f) {
-	neighbours.resize(0); m.neighbours_of_convex(cv1, f, neighbours);
-	for (size_type j = 0; j < neighbours.size(); ++j)
-	  if (visited.is_in(neighbours[j]))
-	    { neighbour_visited = true; break; }
+        neighbours.resize(0); m.neighbours_of_convex(cv1, f, neighbours);
+        for (size_type j = 0; j < neighbours.size(); ++j)
+          if (visited.is_in(neighbours[j]))
+            { neighbour_visited = true; break; }
       }
       if (!neighbour_visited) {
         for (short_type f = 0; f < nbf; ++f) {
-	  size_type cv2 = m.neighbour_of_convex(cv1, f);
-	  if (cv2 != size_type(-1) && mr.is_in(cv2)) mrr.add(cv1,f);
-	}
-	visited.add(cv1);
+          size_type cv2 = m.neighbour_of_convex(cv1, f);
+          if (cv2 != size_type(-1) && mr.is_in(cv2)) mrr.add(cv1,f);
+        }
+        visited.add(cv1);
       }
     }
 
@@ -847,16 +847,16 @@ namespace getfem {
       size_type cv1 = i.cv();
       if (!(visited.is_in(cv1))) {
         short_type nbf = m.structure_of_convex(i.cv())->nb_faces();
-	for (short_type f = 0; f < nbf; ++f) {
-	  neighbours.resize(0); m.neighbours_of_convex(cv1, f, neighbours);
-	  bool ok = false;
-	  for (size_type j = 0; j < neighbours.size(); ++j)  {
-	    if (visited.is_in(neighbours[j])) { ok = false; break; }
-	    if (mr.is_in(neighbours[j])) { ok = true; }
-	  }
-	  if (ok) { mrr.add(cv1,f); }
-	}
-	visited.add(cv1);
+        for (short_type f = 0; f < nbf; ++f) {
+          neighbours.resize(0); m.neighbours_of_convex(cv1, f, neighbours);
+          bool ok = false;
+          for (size_type j = 0; j < neighbours.size(); ++j)  {
+            if (visited.is_in(neighbours[j])) { ok = false; break; }
+            if (mr.is_in(neighbours[j])) { ok = true; }
+          }
+          if (ok) { mrr.add(cv1,f); }
+        }
+        visited.add(cv1);
       }
     }
     return mrr;
@@ -881,7 +881,7 @@ namespace getfem {
                                   const base_node &pt1, const base_node &pt2) {
     mesh_region mrr;
     size_type N = m.dim();
-    GMM_ASSERT1(pt1.size() == N && pt2.size() == N, "Wrong dimensions"); 
+    GMM_ASSERT1(pt1.size() == N && pt2.size() == N, "Wrong dimensions");
     for (getfem::mr_visitor i(mr, m); !i.finished(); ++i)
       if (i.f() != short_type(-1)) {
         bgeot::mesh_structure::ind_pt_face_ct pt
@@ -904,7 +904,7 @@ namespace getfem {
                                      const base_node &pt1, const base_node &pt2) {
     mesh_region mrr;
     size_type N = m.dim();
-    GMM_ASSERT1(pt1.size() == N && pt2.size() == N, "Wrong dimensions"); 
+    GMM_ASSERT1(pt1.size() == N && pt2.size() == N, "Wrong dimensions");
     for (getfem::mr_visitor i(mr, m); !i.finished(); ++i)
       if (i.f() == short_type(-1)) {
         bgeot::mesh_structure::ind_cv_ct pt = m.ind_points_of_convex(i.cv());

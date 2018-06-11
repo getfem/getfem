@@ -479,7 +479,7 @@ namespace getfem {
   // Interpolate transformation with an expression
   //=========================================================================
 
-  class  interpolate_transformation_expression
+  class interpolate_transformation_expression
     : public virtual_interpolate_transformation, public context_dependencies {
 
     struct workspace_gis_pair : public std::pair<ga_workspace, ga_instruction_set> {
@@ -620,7 +620,7 @@ namespace getfem {
       local_gis = ga_instruction_set();
     }
 
-    std::string expression(void) const { return expr; }
+    std::string expression() const { return expr; }
 
     int transform(const ga_workspace &/*workspace*/, const mesh &m,
                   fem_interpolation_context &ctx_x,
@@ -637,7 +637,7 @@ namespace getfem {
                                          Normal, m);
 
       GMM_ASSERT1(local_workspace.assembled_tensor().size() == m.dim(),
-                  "Wrong dimension of the tranformation expression");
+                  "Wrong dimension of the transformation expression");
       P.resize(m.dim());
       gmm::copy(local_workspace.assembled_tensor().as_vector(), P);
 

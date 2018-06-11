@@ -742,8 +742,6 @@ namespace getfem {
     is_adapted = true; touch();
   }
 
-
-
   
 }  /* end of namespace getfem.                                             */
 
