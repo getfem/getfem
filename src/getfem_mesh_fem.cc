@@ -28,43 +28,42 @@
 namespace getfem {
 
   void mesh_fem::update_from_context() const {
-    for (dal::bv_visitor i(fe_convex); !i.finished(); ++i) {
-      if (linked_mesh_->convex_index().is_in(i)) {
-        if (v_num_update < linked_mesh_->convex_version_number(i)) {
+    for (dal::bv_visitor cv(fe_convex); !cv.finished(); ++cv) {
+      if (linked_mesh_->convex_index().is_in(cv)) {
+        if (v_num_update < linked_mesh_->convex_version_number(cv)) {
           if (auto_add_elt_pf != 0)
             const_cast<mesh_fem *>(this)
-              ->set_finite_element(i, auto_add_elt_pf);
+              ->set_finite_element(cv, auto_add_elt_pf);
           else if (auto_add_elt_K != dim_type(-1)) {
             if (auto_add_elt_disc)
               const_cast<mesh_fem *>(this)
-                ->set_classical_discontinuous_finite_element(i,auto_add_elt_K,
-                                                         auto_add_elt_alpha);
+                ->set_classical_discontinuous_finite_element
+                  (cv, auto_add_elt_K, auto_add_elt_alpha);
             else
               const_cast<mesh_fem *>(this)
-                ->set_classical_finite_element(i, auto_add_elt_K);
+                ->set_classical_finite_element(cv, auto_add_elt_K);
           }
           else
-            const_cast<mesh_fem *>(this)
-              ->set_finite_element(i, 0);
+            const_cast<mesh_fem *>(this)->set_finite_element(cv, 0);
         }
       }
-      else const_cast<mesh_fem *>(this)->set_finite_element(i, 0);
+      else const_cast<mesh_fem *>(this)->set_finite_element(cv, 0);
     }
-    for (dal::bv_visitor i(linked_mesh_->convex_index());
-         !i.finished(); ++i) {
-      if (!fe_convex.is_in(i)
-          && v_num_update < linked_mesh_->convex_version_number(i)) {
+    for (dal::bv_visitor cv(linked_mesh_->convex_index());
+         !cv.finished(); ++cv) {
+      if (!fe_convex.is_in(cv)
+          && v_num_update < linked_mesh_->convex_version_number(cv)) {
         if (auto_add_elt_pf != 0)
           const_cast<mesh_fem *>(this)
-            ->set_finite_element(i, auto_add_elt_pf);
+            ->set_finite_element(cv, auto_add_elt_pf);
         else if (auto_add_elt_K != dim_type(-1)) {
           if (auto_add_elt_disc)
             const_cast<mesh_fem *>(this)
-              ->set_classical_discontinuous_finite_element(i, auto_add_elt_K,
-                                                           auto_add_elt_alpha);
+              ->set_classical_discontinuous_finite_element
+                (cv, auto_add_elt_K, auto_add_elt_alpha);
           else
             const_cast<mesh_fem *>(this)
-              ->set_classical_finite_element(i, auto_add_elt_K);
+              ->set_classical_finite_element(cv, auto_add_elt_K);
         }
       }
     }

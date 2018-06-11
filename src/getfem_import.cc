@@ -664,7 +664,7 @@ namespace getfem {
       } break;
       case TRI: {
         if (nnode == 3) pgt = bgeot::simplex_geotrans(2,1);
-        else if (nnode == 6) { // validé
+        else if (nnode == 6) { // validÃ©
           static size_type lorder[6] = {0,3,1,5,4,2};
           pgt = bgeot::simplex_geotrans(2,2);
           std::copy(lorder,lorder+nnode,order.begin());
@@ -680,7 +680,7 @@ namespace getfem {
       } break;
       case TETR: {
         if (nnode == 4) pgt = bgeot::simplex_geotrans(3,1);
-        else if (nnode == 10) { // validé
+        else if (nnode == 10) { // validÃ©
           static size_type lorder[10] = {0,4,1, 7,8, 3, 6, 5, 9, 2};
           pgt = bgeot::simplex_geotrans(3,2);
           std::copy(lorder,lorder+nnode,order.begin());
@@ -1194,7 +1194,7 @@ namespace getfem {
     using namespace std;
     gmm::stream_standard_locale sl(f);
 
-    ofstream fichier_GiD("noboite_to_GiD.gid",    ios::out | ios::trunc );  //déclaration du flux et ouverture du fichier
+    ofstream fichier_GiD("noboite_to_GiD.gid",    ios::out | ios::trunc );  //dÃ©claration du flux et ouverture du fichier
 
     fichier_GiD << "MESH    dimension 3 ElemType Tetrahedra  Nnode 4"<<endl;
 
@@ -1257,21 +1257,21 @@ namespace getfem {
     }
     fichier_GiD << "end elements" <<endl<<endl;
 
-    if(fichier_GiD)  // si l'ouverture a réussi
+    if(fichier_GiD)  // si l'ouverture a rÃ©ussi
       {
         // instructions
         fichier_GiD.close();  // on referme le fichier
       }
     else  // sinon
-      cerr << "Erreur à l'ouverture !" << endl;
+      cerr << "Erreur Ã  l'ouverture !" << endl;
 
-    if(f)  // si l'ouverture a réussi
+    if(f)  // si l'ouverture a rÃ©ussi
       {
         // instructions
         //f.close();  // on referme le fichier
       }
     else  // sinon
-      cerr << "Erreur à l'ouverture !" << endl;
+      cerr << "Erreur Ã  l'ouverture !" << endl;
 
     // appeler sunroutine import_gid_mesh_file
     //import_mesh(const std::string& "noboite_to_GiD.gid", mesh& msh)

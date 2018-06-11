@@ -895,8 +895,8 @@ namespace getfem {
     }
   }
 
-  static pfem gen_hierarchical_fem(fem_param_list &params,
-        std::vector<dal::pstatic_stored_object> &dependencies) {
+  static pfem gen_hierarchical_fem
+  (fem_param_list &params, std::vector<dal::pstatic_stored_object> &deps) {
     GMM_ASSERT1(params.size() == 2, "Bad number of parameters : "
                 << params.size() << " should be 2.");
     GMM_ASSERT1(params[0].type() == 1 && params[1].type() == 1,
@@ -910,8 +910,8 @@ namespace getfem {
                 "Bad parameters");
     pfem p  = std::make_shared<thierach_femi_comp>(ppolycompfem(pf1.get()),
                                                    ppolycompfem(pf2.get()));
-    dependencies.push_back(p->ref_convex(0));
-    dependencies.push_back(p->node_tab(0));
+    deps.push_back(p->ref_convex(0));
+    deps.push_back(p->node_tab(0));
     return p;
   }
 
@@ -920,7 +920,7 @@ namespace getfem {
   /* ******************************************************************** */
 
   static pfem PK_hierarch_fem(fem_param_list &params,
-        std::vector<dal::pstatic_stored_object> &) {
+                              std::vector<dal::pstatic_stored_object> &) {
     GMM_ASSERT1(params.size() == 2, "Bad number of parameters : "
                 << params.size() << " should be 2.");
     GMM_ASSERT1(params[0].type() == 0 && params[1].type() == 0,
@@ -942,7 +942,7 @@ namespace getfem {
   }
 
   static pfem QK_hierarch_fem(fem_param_list &params,
-        std::vector<dal::pstatic_stored_object> &) {
+                              std::vector<dal::pstatic_stored_object> &) {
     GMM_ASSERT1(params.size() == 2, "Bad number of parameters : "
                 << params.size() << " should be 2.");
     GMM_ASSERT1(params[0].type() == 0 && params[1].type() == 0,
@@ -1014,12 +1014,14 @@ namespace getfem {
            << k << alpha << ")," << fempk << "(1," << k << alpha << "))";
     return fem_descriptor(name.str());
   }
+
   static pfem QK_fem(fem_param_list &params,
-        std::vector<dal::pstatic_stored_object> &) {
+                     std::vector<dal::pstatic_stored_object> &) {
     return QK_fem_(params, false);
   }
+
   static pfem QK_discontinuous_fem(fem_param_list &params,
-        std::vector<dal::pstatic_stored_object> &) {
+                                   std::vector<dal::pstatic_stored_object> &) {
     return QK_fem_(params, true);
   }
 
@@ -1048,8 +1050,9 @@ namespace getfem {
     return fem_descriptor(name.str());
   }
 
-  static pfem PK_prism_discontinuous_fem(fem_param_list &params,
-        std::vector<dal::pstatic_stored_object> &) {
+  static pfem
+  PK_prism_discontinuous_fem(fem_param_list &params,
+                             std::vector<dal::pstatic_stored_object> &) {
     GMM_ASSERT1(params.size() == 2 || params.size() == 3,
                 "Bad number of parameters : "
                 << params.size() << " should be 2.");
@@ -1131,8 +1134,9 @@ namespace getfem {
   // |/        |/
   // 0----1----2
 
-   static pfem Q2_incomplete_fem(fem_param_list &params,
-        std::vector<dal::pstatic_stored_object> &dependencies) {
+   static pfem
+   Q2_incomplete_fem(fem_param_list &params,
+                     std::vector<dal::pstatic_stored_object> &deps) {
     GMM_ASSERT1(params.size() <= 1, "Bad number of parameters");
     dim_type n = 2;
     if (params.size() > 0) {
@@ -1223,8 +1227,8 @@ namespace getfem {
       p->add_node(lagrange_dof(3), base_small_vector(0.5, 1.0, 1.0));
       p->add_node(lagrange_dof(3), base_small_vector(1.0, 1.0, 1.0));
     }
-    dependencies.push_back(p->ref_convex(0));
-    dependencies.push_back(p->node_tab(0));
+    deps.push_back(p->ref_convex(0));
+    deps.push_back(p->node_tab(0));
 
     return pfem(p);
   }
@@ -1578,7 +1582,7 @@ namespace getfem {
     base_[nc+1] = base_[1]; base_[nc+1] *= scalar_type(1 << nc);
     for (int i = 2; i <= nc; ++i) base_[nc+1] *= base_[i];
     // Le raccord assure la continuite
-    // des possibilités de raccord avec du P2 existent mais il faudrait
+    // des possibilitÃ©s de raccord avec du P2 existent mais il faudrait
     // modifier qlq chose (transformer les fct de base P1)
   }
 

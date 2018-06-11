@@ -577,7 +577,8 @@ namespace getfem
         /* could be a better test for discontinuity .. */
         if (!dof_linkable(pf->dof_types()[i])) { discontinuous = true; break; }
       }
-      pfem classical_pf1 = discontinuous ? classical_discontinuous_fem(pgt, 1) : classical_fem(pgt, 1);
+      pfem classical_pf1 = discontinuous ? classical_discontinuous_fem(pgt, 1)
+                                         : classical_fem(pgt, 1);
       pmf->set_finite_element(cv, classical_pf1);
     }
     pmf_dof_used.add(0, pmf->nb_basic_dof());
