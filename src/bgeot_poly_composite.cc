@@ -384,7 +384,7 @@ namespace bgeot {
       } else if (nbp == (size_type(1) << n) &&
           basic_structure(cvs) == parallelepiped_structure(n)) {
           structured_mesh_for_parallelepiped_(cvs,opt_gt,opt_gt_pts,k,pm);
-      } else if (nbp == size_type(2 * n) && 
+      } else if (nbp == size_type(2 * n) &&
           basic_structure(cvs) == prism_P1_structure(n)) {
           GMM_ASSERT1(false, "Sorry, structured_mesh not implemented for prisms.");
       } else {
@@ -486,8 +486,8 @@ namespace bgeot {
           pgeometric_trans sgt
             = simplex_geotrans(cvr->structure()->dim(), 1);
           for (size_type j=0; j < cvpts.size(); ++j) {
-            cvpts[j] = basic_convex_ref(cvr)->points()
-            [splx_mesh->ind_points_of_convex(ic)[j]];
+            size_type ip = splx_mesh->ind_points_of_convex(ic)[j];
+            cvpts[j] = basic_convex_ref(cvr)->points()[ip];
             //cerr << "cvpts[" << j << "]=" << cvpts[j] << endl;
           }
           structured_mesh_for_convex_(splx_mesh->structure_of_convex(ic),

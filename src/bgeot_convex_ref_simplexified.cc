@@ -258,8 +258,8 @@ namespace bgeot {
   static size_type simplexified_pyramid_nb = 2;
    
   
-  size_type simplexified_tab(pconvex_structure cvs,
-                             size_type **tab) {
+  size_type simplexified_tab(pconvex_structure cvs, size_type **tab) {
+
     if (cvs == parallelepiped_structure(2)) {
       *tab = simplexified_parallelepiped_2;
       return simplexified_parallelepiped_2_nb;

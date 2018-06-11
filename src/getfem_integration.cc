@@ -1256,15 +1256,16 @@ namespace getfem {
                            "for simplexes of dimension " << n);
       }
       for (size_type k = degree; k < size_type(degree+10); ++k) {
-        pintegration_method im = 0;
-        std::stringstream name2; name2 << name.str() << "(" << k << ")";
-        im = int_method_descriptor(name2.str(), false);
+        std::stringstream name2;
+        name2 << name.str() << "(" << k << ")";
+        pintegration_method im = int_method_descriptor(name2.str(), false);
         if (im) return im;
       }
       GMM_ASSERT1(false, "could not find an " << name.str()
                   << " of degree >= " << int(degree));
     } else if (cvs->is_product(&a,&b) ||
-               (bgeot::basic_structure(cvs).get() && bgeot::basic_structure(cvs)->is_product(&a,&b))) {
+               (bgeot::basic_structure(cvs).get() &&
+                bgeot::basic_structure(cvs)->is_product(&a,&b))) {
       name << "IM_PRODUCT("
            << name_of_int_method(classical_approx_im_(a,degree)) << ","
            << name_of_int_method(classical_approx_im_(b,degree)) << ")";
