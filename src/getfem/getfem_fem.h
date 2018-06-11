@@ -52,6 +52,9 @@
    - "FEM_Q2_INCOMPLETE(N)" : incomplete Q2 elements with 8 and 20 dof
    (serendipity Quad 8 and Hexa 20 elements)
 
+   - "FEM_Q2_INCOMPLETE_DISCONTINUOUS(N)" : discontinuous incomplete Q2
+   elements with 8 and 20 dof (serendipity Quad 8 and Hexa 20 elements)
+
    - "FEM_PRISM_PK(N,K)" : classical Lagrange element PK on a prism.
 
    - "FEM_PRISM_PK_DISCONTINUOUS(N,K,alpha)" : classical discontinuous
@@ -599,9 +602,13 @@ namespace getfem {
 
       @param pgt the geometric transformation (which defines the convex type).
       @param k the degree of the fem.
+      @param complete a flag which requests complete Langrange polynomial
+      elements even if the provided pgt is an incomplete one (e.g. 8-node
+      quadrilateral or 20-node hexahedral).
       @return a ppolyfem.
   */
-  pfem classical_fem(bgeot::pgeometric_trans pgt, short_type k);
+  pfem classical_fem(bgeot::pgeometric_trans pgt, short_type k,
+                     bool complete=false);
 
   /** Give a pointer on the structures describing the classical
       polynomial discontinuous fem of degree k on a given convex type.
@@ -614,9 +621,14 @@ namespace getfem {
       0, the nodes are located as usual (i.e. with node on the convex border),
       and for 0 < alpha < 1, they converge to the center of gravity of the convex.
 
+      @param complete a flag which requests complete Langrange polynomial
+      elements even if the provided pgt is an incomplete one (e.g. 8-node
+      quadrilateral or 20-node hexahedral).
+
       @return a ppolyfem.
   */
-  pfem classical_discontinuous_fem(bgeot::pgeometric_trans pg, short_type k, scalar_type alpha=0);
+  pfem classical_discontinuous_fem(bgeot::pgeometric_trans pg, short_type k,
+                                   scalar_type alpha=0, bool complete=false);
 
   /** get a fem descriptor from its string name. */
   pfem fem_descriptor(const std::string &name);

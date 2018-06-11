@@ -166,7 +166,7 @@ namespace getfem {
                        /* of element option. (0 = no automatic addition)  */
     dim_type auto_add_elt_K; /* Degree of the fem for automatic addition  */
                        /* of element option. (-1 = no automatic addition) */
-    bool auto_add_elt_disc;
+    bool auto_add_elt_disc, auto_add_elt_complete;
     scalar_type auto_add_elt_alpha;
     dim_type Qdim;         /* this is the "total" target_dim. */
     bgeot::multi_index mi; /* multi dimensions for matrix/tensor field. */
@@ -284,16 +284,25 @@ namespace getfem {
      *  of element option. K=-1 disables the automatic addition.
      */
     void set_auto_add(dim_type K, bool disc = false,
-                      scalar_type alpha = scalar_type(0)) {
-      auto_add_elt_K = K; auto_add_elt_disc = disc;
-      auto_add_elt_alpha = alpha; auto_add_elt_pf = 0;
+                      scalar_type alpha = scalar_type(0),
+                      bool complete=false) {
+      auto_add_elt_K = K;
+      auto_add_elt_disc = disc;
+      auto_add_elt_alpha = alpha;
+      auto_add_elt_complete = complete;
+      auto_add_elt_pf = 0;
     }
 
     /** Set the fem for automatic addition
      *  of element option. pf=0 disables the automatic addition.
      */
-    void set_auto_add(pfem pf)
-    { auto_add_elt_pf = pf; auto_add_elt_K = dim_type(-1);}
+    void set_auto_add(pfem pf) {
+      auto_add_elt_pf = pf;
+      auto_add_elt_K = dim_type(-1);
+      auto_add_elt_disc = false;
+      auto_add_elt_alpha = scalar_type(0);
+      auto_add_elt_complete = false;
+    }
 
     /** Return the Q dimension. A mesh_fem used for scalar fields has
         Q=1, for vector fields, Q is typically equal to
@@ -372,15 +381,19 @@ namespace getfem {
         a convex.
         @param cv is the convex number.
         @param fem_degree the polynomial degree of the finite element.
+        @param complete is a flag for excluding incomplete element
+               irrespective of the element geometric transformation.
     */
-    void set_classical_finite_element(size_type cv, dim_type fem_degree);
+    void set_classical_finite_element(size_type cv, dim_type fem_degree,
+                                      bool complete=false);
     /** Set a classical (i.e. lagrange polynomial) finite element on
         a set of convexes.
         @param cvs the set of convexes, as a dal::bit_vector.
         @param fem_degree the polynomial degree of the finite element.
     */
     void set_classical_finite_element(const dal::bit_vector &cvs,
-                                      dim_type fem_degree);
+                                      dim_type fem_degree,
+                                      bool complete=false);
     /** Similar to set_classical_finite_element, but uses
         discontinuous lagrange elements.
 
@@ -393,7 +406,8 @@ namespace getfem {
      */
     void set_classical_discontinuous_finite_element(size_type cv,
                                                     dim_type fem_degree,
-                                                    scalar_type alpha=0);
+                                                    scalar_type alpha=0,
+                                                    bool complete=false);
     /** Similar to set_classical_finite_element, but uses
         discontinuous lagrange elements.
 
@@ -406,17 +420,20 @@ namespace getfem {
      */
     void set_classical_discontinuous_finite_element(const dal::bit_vector &cvs,
                                                     dim_type fem_degree,
-                                                    scalar_type alpha=0);
+                                                    scalar_type alpha=0,
+                                                    bool complete=false);
     /** Shortcut for
      * set_classical_finite_element(linked_mesh().convex_index(),...)
      */
-    void set_classical_finite_element(dim_type fem_degree);
+    void set_classical_finite_element(dim_type fem_degree,
+                                      bool complete=false);
     /** Shortcut for
      *  set_classical_discontinuous_finite_element(linked_mesh().convex_index()
      *  ,...)
      */
     void set_classical_discontinuous_finite_element(dim_type fem_degree,
-                                                    scalar_type alpha=0);
+                                                    scalar_type alpha=0,
+                                                    bool complete=false);
     /** Return the basic fem associated with an element (if no fem is
      *        associated, the function will crash! use the convex_index() of
      *  the mesh_fem to check that a fem is associated to a given
@@ -623,7 +640,8 @@ namespace getfem {
       the same arguments will return the same mesh_fem object. A
       consequence is that you should NEVER modify this mesh_fem!
    */
-  const mesh_fem &classical_mesh_fem(const mesh &mesh, dim_type degree, dim_type qdim = 1);
+  const mesh_fem &classical_mesh_fem(const mesh &mesh, dim_type degree,
+                                     dim_type qdim=1, bool complete=false);
 
   /** Dummy mesh_fem for default parameter of functions. */
   const mesh_fem &dummy_mesh_fem();

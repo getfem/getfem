@@ -38,10 +38,12 @@ namespace getfem {
             if (auto_add_elt_disc)
               const_cast<mesh_fem *>(this)
                 ->set_classical_discontinuous_finite_element
-                  (cv, auto_add_elt_K, auto_add_elt_alpha);
+                  (cv, auto_add_elt_K, auto_add_elt_alpha,
+                   auto_add_elt_complete);
             else
               const_cast<mesh_fem *>(this)
-                ->set_classical_finite_element(cv, auto_add_elt_K);
+                ->set_classical_finite_element(cv, auto_add_elt_K,
+                                               auto_add_elt_complete);
           }
           else
             const_cast<mesh_fem *>(this)->set_finite_element(cv, 0);
@@ -60,10 +62,11 @@ namespace getfem {
           if (auto_add_elt_disc)
             const_cast<mesh_fem *>(this)
               ->set_classical_discontinuous_finite_element
-                (cv, auto_add_elt_K, auto_add_elt_alpha);
+                (cv, auto_add_elt_K, auto_add_elt_alpha, auto_add_elt_complete);
           else
             const_cast<mesh_fem *>(this)
-              ->set_classical_finite_element(cv, auto_add_elt_K);
+              ->set_classical_finite_element(cv, auto_add_elt_K,
+                                             auto_add_elt_complete);
         }
       }
     }
@@ -169,46 +172,51 @@ namespace getfem {
   { set_finite_element(linked_mesh().convex_index(), ppf); set_auto_add(ppf); }
 
   void mesh_fem::set_classical_finite_element(size_type cv,
-                                              dim_type fem_degree) {
+                                              dim_type fem_degree,
+                                              bool complete) {
     pfem pf = getfem::classical_fem(linked_mesh().trans_of_convex(cv),
-                                    fem_degree);
+                                    fem_degree, complete);
     set_finite_element(cv, pf);
   }
 
   void mesh_fem::set_classical_finite_element(const dal::bit_vector &cvs,
-                                              dim_type fem_degree) {
+                                              dim_type fem_degree,
+                                              bool complete) {
     for (dal::bv_visitor cv(cvs); !cv.finished(); ++cv) {
       pfem pf = getfem::classical_fem(linked_mesh().trans_of_convex(cv),
-                                      fem_degree);
+                                      fem_degree, complete);
       set_finite_element(cv, pf);
     }
   }
 
-  void mesh_fem::set_classical_finite_element(dim_type fem_degree) {
-    set_classical_finite_element(linked_mesh().convex_index(), fem_degree);
+  void mesh_fem::set_classical_finite_element(dim_type fem_degree,
+                                              bool complete) {
+    set_classical_finite_element(linked_mesh().convex_index(), fem_degree,
+                                 complete);
     set_auto_add(fem_degree, false);
   }
 
   void mesh_fem::set_classical_discontinuous_finite_element
-  (size_type cv, dim_type fem_degree, scalar_type alpha) {
+  (size_type cv, dim_type fem_degree, scalar_type alpha, bool complete) {
     pfem pf = getfem::classical_discontinuous_fem
-      (linked_mesh().trans_of_convex(cv), fem_degree, alpha);
+      (linked_mesh().trans_of_convex(cv), fem_degree, alpha, complete);
     set_finite_element(cv, pf);
   }
 
   void mesh_fem::set_classical_discontinuous_finite_element
-  (const dal::bit_vector &cvs, dim_type fem_degree, scalar_type alpha) {
+  (const dal::bit_vector &cvs, dim_type fem_degree, scalar_type alpha,
+   bool complete) {
     for (dal::bv_visitor cv(cvs); !cv.finished(); ++cv) {
       pfem pf = getfem::classical_discontinuous_fem
-        (linked_mesh().trans_of_convex(cv), fem_degree, alpha);
+        (linked_mesh().trans_of_convex(cv), fem_degree, alpha, complete);
       set_finite_element(cv, pf);
     }
   }
 
   void mesh_fem::set_classical_discontinuous_finite_element
-  (dim_type fem_degree, scalar_type alpha) {
-    set_classical_discontinuous_finite_element(linked_mesh().convex_index(),
-                                               fem_degree,alpha);
+  (dim_type fem_degree, scalar_type alpha, bool complete) {
+    set_classical_discontinuous_finite_element
+      (linked_mesh().convex_index(), fem_degree, alpha, complete);
     set_auto_add(fem_degree, true, alpha);
   }
 
@@ -499,6 +507,7 @@ namespace getfem {
     auto_add_elt_pf = mf.auto_add_elt_pf;
     auto_add_elt_K = mf.auto_add_elt_K;
     auto_add_elt_disc = mf.auto_add_elt_disc;
+    auto_add_elt_complete = mf.auto_add_elt_complete;
     auto_add_elt_alpha = mf.auto_add_elt_alpha;
     mi = mf.mi;
     dof_partition = mf.dof_partition;
@@ -786,8 +795,9 @@ namespace getfem {
   struct mf__key_ : public context_dependencies {
     const mesh *pmsh;
     dim_type order, qdim;
-    mf__key_(const mesh &msh, dim_type o, dim_type q)
-      : pmsh(&msh), order(o), qdim(q)
+    bool complete;
+    mf__key_(const mesh &msh, dim_type o, dim_type q, bool complete_)
+      : pmsh(&msh), order(o), qdim(q), complete(complete_)
     { add_dependency(msh); }
     bool operator <(const mf__key_ &a) const {
       if (pmsh < a.pmsh) return true;
@@ -795,11 +805,16 @@ namespace getfem {
       else if (order < a.order) return true;
       else if (order > a.order) return false;
       else if (qdim < a.qdim) return true;
+      else if (qdim > a.qdim) return false;
+      else if (complete < a.complete) return true;
       return false;
     }
     void update_from_context() const {}
     mf__key_(const mf__key_ &mfk) : context_dependencies( ) {
-      pmsh = mfk.pmsh; order = mfk.order; qdim = mfk.qdim;
+      pmsh = mfk.pmsh;
+      order = mfk.order;
+      qdim = mfk.qdim;
+      complete = mfk.complete;
       add_dependency(*pmsh);
     }
   private :
@@ -816,7 +831,8 @@ namespace getfem {
 
   public :
 
-    const mesh_fem &operator()(const mesh &msh, dim_type o, dim_type qdim) {
+    const mesh_fem &operator()(const mesh &msh, dim_type o, dim_type qdim,
+                               bool complete=false) {
       mesh_fem_tab::iterator itt = mfs.begin(), itn = mfs.begin();
       if (itn != mfs.end()) itn++;
       while (itt != mfs.end()) {
@@ -826,7 +842,7 @@ namespace getfem {
         if (itn != mfs.end()) itn++;
       }
 
-      mf__key_ key(msh, o, qdim);
+      mf__key_ key(msh, o, qdim, complete);
       mesh_fem_tab::iterator it = mfs.find(key);
       assert(it == mfs.end() || it->second->is_context_valid());
 
@@ -844,10 +860,11 @@ namespace getfem {
   };
 
   const mesh_fem &classical_mesh_fem(const mesh &msh,
-                                     dim_type order, dim_type qdim) {
+                                     dim_type order, dim_type qdim,
+                                     bool complete) {
     classical_mesh_fem_pool &pool
       = dal::singleton<classical_mesh_fem_pool>::instance();
-    return pool(msh, order, qdim);
+    return pool(msh, order, qdim, complete);
   }
 
   struct dummy_mesh_fem_ {

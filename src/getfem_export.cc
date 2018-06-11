@@ -206,17 +206,7 @@ namespace getfem
     pmf = std::make_unique<mesh_fem>(const_cast<mesh&>(m), dim_type(1));
     for (dal::bv_visitor cv(m.convex_index()); !cv.finished(); ++cv) {
       bgeot::pgeometric_trans pgt = m.trans_of_convex(cv);
-      pfem pf;
-      if (pgt == bgeot::geometric_trans_descriptor("GT_Q2_INCOMPLETE(2)"))
-        pf =  fem_descriptor("FEM_Q2_INCOMPLETE(2)");
-      else if (pgt == bgeot::geometric_trans_descriptor("GT_Q2_INCOMPLETE(3)"))
-        pf =  fem_descriptor("FEM_Q2_INCOMPLETE(3)");
-      else if (pgt == bgeot::geometric_trans_descriptor("GT_PYRAMID_Q2_INCOMPLETE"))
-        pf =  fem_descriptor("FEM_PYRAMID_Q2_INCOMPLETE");
-      else if (pgt == bgeot::geometric_trans_descriptor("GT_PRISM_INCOMPLETE_P2"))
-        pf =  fem_descriptor("FEM_PRISM_INCOMPLETE_P2");
-      else
-        pf = getfem::classical_fem(pgt, pgt->complexity() > 1 ? 2 : 1);
+      pfem pf = getfem::classical_fem(pgt, pgt->complexity() > 1 ? 2 : 1);
       pmf->set_finite_element(cv, pf);
     }
     exporting(*pmf);
@@ -257,8 +247,8 @@ namespace getfem
           degree = 2;
 
         pmf->set_finite_element(cv, discontinuous ?
-                                classical_discontinuous_fem(pgt, degree) :
-                                classical_fem(pgt, degree));
+                                classical_discontinuous_fem(pgt, degree, 0, true) :
+                                classical_fem(pgt, degree, true));
       }
     }
     /* find out which dof will be exported to VTK */

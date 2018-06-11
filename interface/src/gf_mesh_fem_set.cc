@@ -66,6 +66,15 @@ static void set_classical_fem(getfem::mesh_fem *mf, getfemint::mexargs_in& in,
                               bool discontinuous) {
   dim_type K = dim_type(in.pop().to_integer(0,255));
 
+  bool complete(false);
+  if (in.remaining() && in.front().is_string()) {
+    std::string s = in.pop().to_string();
+    if (cmd_strmatch(s, "complete"))
+      complete = true;
+    else
+      { THROW_BADARG("Invalid option" << s); }
+  }
+
   scalar_type alpha = 0.0;
   if (discontinuous && in.remaining()) alpha = in.pop().to_scalar();
 
@@ -74,15 +83,15 @@ static void set_classical_fem(getfem::mesh_fem *mf, getfemint::mexargs_in& in,
     bv = in.pop().to_bit_vector(&mf->linked_mesh().convex_index(),
                                 -config::base_index());
     if (!discontinuous) {
-      mf->set_classical_finite_element(bv, K);
+      mf->set_classical_finite_element(bv, K, complete);
     } else {
-      mf->set_classical_discontinuous_finite_element(bv, K, alpha);
+      mf->set_classical_discontinuous_finite_element(bv, K, alpha, complete);
     }
   } else {
     if (!discontinuous) {
-      mf->set_classical_finite_element(K);
+      mf->set_classical_finite_element(K, complete);
     } else {
-      mf->set_classical_discontinuous_finite_element(K, alpha);
+      mf->set_classical_discontinuous_finite_element(K, alpha, complete);
     }
   }
 }
@@ -145,26 +154,32 @@ void gf_mesh_fem_set(getfemint::mexargs_in& m_in,
        );
 
 
-    /*@SET ('classical fem', @int k[, @ivec CVids])
+    /*@SET ('classical fem', @int k[[, 'complete'], @ivec CVids])
     Assign a classical (Lagrange polynomial) fem of order `k` to the @tmf.
+    The option 'complete' requests complete Langrange polynomial elements,
+    even if the element geometric transformation is an incomplete one
+    (e.g. 8-node quadrilateral or 20-node hexahedral).
 
     Uses FEM_PK for simplexes, FEM_QK for parallelepipeds etc.@*/
     sub_command
-      ("classical fem", 1, 2, 0, 0,
+      ("classical fem", 1, 3, 0, 0,
        set_classical_fem(mf, in, false);
        );
 
 
-    /*@SET ('classical discontinuous fem', @int K[, @tscalar alpha[, @ivec CVIDX]])
-    Assigns a classical (Lagrange polynomial) discontinuous fem or order K.
+    /*@SET ('classical discontinuous fem', @int k[[, 'complete'], @tscalar alpha[, @ivec CVIDX]])
+    Assigns a classical (Lagrange polynomial) discontinuous fem of order k.
 
     Similar to MESH_FEM:SET('set classical fem') except that
     FEM_PK_DISCONTINUOUS is used. Param `alpha` the node inset,
     :math:`0 \leq alpha < 1`, where 0 implies usual dof nodes, greater values
     move the nodes toward the center of gravity, and 1 means that all
-    degrees of freedom collapse on the center of gravity.@*/
+    degrees of freedom collapse on the center of gravity.
+    The option 'complete' requests complete Langrange polynomial elements,
+    even if the element geometric transformation is an incomplete one
+    (e.g. 8-node quadrilateral or 20-node hexahedral).@*/
     sub_command
-      ("classical discontinuous fem", 1, 3, 0, 0,
+      ("classical discontinuous fem", 1, 4, 0, 0,
        set_classical_fem(mf, in, true);
        );
 
