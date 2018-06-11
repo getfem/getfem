@@ -40,7 +40,7 @@
 */
 
 #include "bgeot_config.h"
-#include "dal_static_stored_objects.h";
+#include "dal_static_stored_objects.h"
 #include <vector>
 
 namespace bgeot
