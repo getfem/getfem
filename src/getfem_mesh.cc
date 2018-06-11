@@ -304,7 +304,7 @@ namespace getfem {
   size_type mesh::add_pyramid(size_type a, size_type b,
                               size_type c, size_type d, size_type e) {
     size_type ipt[5] = {a, b, c, d, e};
-    return add_convex(bgeot::pyramid_geotrans(1), &(ipt[0]));
+    return add_convex(bgeot::pyramid_QK_geotrans(1), &(ipt[0]));
   }
 
   size_type mesh::add_tetrahedron_by_points

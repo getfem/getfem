@@ -402,7 +402,7 @@ namespace bgeot {
   /*    Pyramidal element of reference.                                   */
   /* ******************************************************************** */
 
-  class pyramid_of_ref_ : public convex_of_reference {
+  class pyramid_QK_of_ref_ : public convex_of_reference {
   public :
     scalar_type is_in_face(short_type f, const base_node& pt) const {
       // return zero if pt is in the face of the convex
@@ -420,13 +420,13 @@ namespace bgeot {
       return r;
     }
 
-    pyramid_of_ref_(dim_type k) : convex_of_reference(pyramid_structure(k), k == 1) {
+    pyramid_QK_of_ref_(dim_type k) : convex_of_reference(pyramid_QK_structure(k), k == 1) {
       GMM_ASSERT1(k == 1 || k == 2,
                   "Sorry exist only in degree 1 or 2, not " << k);
 
       convex<base_node>::points().resize(cvs->nb_points());
       normals_.resize(cvs->nb_faces());
-      if (k != 1) basic_convex_ref_ = pyramid_of_reference(1);
+      if (k != 1) basic_convex_ref_ = pyramid_QK_of_reference(1);
 
       normals_[0] = { 0., 0., -1.};
       normals_[1] = { 0.,-1.,  1.};
@@ -465,14 +465,14 @@ namespace bgeot {
   };
 
 
-  DAL_SIMPLE_KEY(pyramid_reference_key_, dim_type);
+  DAL_SIMPLE_KEY(pyramid_QK_reference_key_, dim_type);
 
-  pconvex_ref pyramid_of_reference(dim_type k) {
+  pconvex_ref pyramid_QK_of_reference(dim_type k) {
      dal::pstatic_stored_object_key
-      pk = std::make_shared<pyramid_reference_key_>(k);
+      pk = std::make_shared<pyramid_QK_reference_key_>(k);
     dal::pstatic_stored_object o = dal::search_stored_object(pk);
     if (o) return std::dynamic_pointer_cast<const convex_of_reference>(o);
-    pconvex_ref p = std::make_shared<pyramid_of_ref_>(k);
+    pconvex_ref p = std::make_shared<pyramid_QK_of_ref_>(k);
     dal::add_stored_object(pk, p, p->structure(), p->pspt(),
                            dal::PERMANENT_STATIC_OBJECT);
     pconvex_ref p1 = basic_convex_ref(p);
@@ -485,17 +485,17 @@ namespace bgeot {
   /*    Incomplete quadratic pyramidal element of reference.              */
   /* ******************************************************************** */
 
-  class pyramid2_incomplete_of_ref_ : public convex_of_reference {
+  class pyramid_Q2_incomplete_of_ref_ : public convex_of_reference {
   public :
     scalar_type is_in(const base_node& pt) const
     { return basic_convex_ref_->is_in(pt); }
     scalar_type is_in_face(short_type f, const base_node& pt) const
     { return basic_convex_ref_->is_in_face(f, pt); }
 
-    pyramid2_incomplete_of_ref_() : convex_of_reference(pyramid2_incomplete_structure(), false) {
+    pyramid_Q2_incomplete_of_ref_() : convex_of_reference(pyramid_Q2_incomplete_structure(), false) {
       convex<base_node>::points().resize(cvs->nb_points());
       normals_.resize(cvs->nb_faces());
-      basic_convex_ref_ = pyramid_of_reference(1);
+      basic_convex_ref_ = pyramid_QK_of_reference(1);
 
       normals_ = basic_convex_ref_->normals();
 
@@ -519,16 +519,16 @@ namespace bgeot {
   };
 
 
-  DAL_SIMPLE_KEY(pyramid2_incomplete_reference_key_, dim_type);
+  DAL_SIMPLE_KEY(pyramid_Q2_incomplete_reference_key_, dim_type);
 
-  pconvex_ref pyramid2_incomplete_of_reference() {
+  pconvex_ref pyramid_Q2_incomplete_of_reference() {
     dal::pstatic_stored_object_key
-      pk = std::make_shared<pyramid2_incomplete_reference_key_>(0);
+      pk = std::make_shared<pyramid_Q2_incomplete_reference_key_>(0);
     dal::pstatic_stored_object o = dal::search_stored_object(pk);
     if (o)
       return std::dynamic_pointer_cast<const convex_of_reference>(o);
     else {
-      pconvex_ref p = std::make_shared<pyramid2_incomplete_of_ref_>();
+      pconvex_ref p = std::make_shared<pyramid_Q2_incomplete_of_ref_>();
       dal::add_stored_object(pk, p, p->structure(), p->pspt(),
                              dal::PERMANENT_STATIC_OBJECT);
       pconvex_ref p1 = basic_convex_ref(p);
@@ -542,14 +542,14 @@ namespace bgeot {
   /*    Incomplete quadratic triangular prism element of reference.       */
   /* ******************************************************************** */
 
-  class prism2_incomplete_of_ref_ : public convex_of_reference {
+  class prism_incomplete_P2_of_ref_ : public convex_of_reference {
   public :
     scalar_type is_in(const base_node& pt) const
     { return basic_convex_ref_->is_in(pt); }
     scalar_type is_in_face(short_type f, const base_node& pt) const
     { return basic_convex_ref_->is_in_face(f, pt); }
 
-    prism2_incomplete_of_ref_() : convex_of_reference(prism2_incomplete_structure(), false) {
+    prism_incomplete_P2_of_ref_() : convex_of_reference(prism_incomplete_P2_structure(), false) {
       convex<base_node>::points().resize(cvs->nb_points());
       normals_.resize(cvs->nb_faces());
       basic_convex_ref_ = prism_of_reference(3);
@@ -578,16 +578,16 @@ namespace bgeot {
   };
 
 
-  DAL_SIMPLE_KEY(prism2_incomplete_reference_key_, dim_type);
+  DAL_SIMPLE_KEY(prism_incomplete_P2_reference_key_, dim_type);
 
-  pconvex_ref prism2_incomplete_of_reference() {
+  pconvex_ref prism_incomplete_P2_of_reference() {
     dal::pstatic_stored_object_key
-      pk = std::make_shared<prism2_incomplete_reference_key_>(0);
+      pk = std::make_shared<prism_incomplete_P2_reference_key_>(0);
     dal::pstatic_stored_object o = dal::search_stored_object(pk);
     if (o)
       return std::dynamic_pointer_cast<const convex_of_reference>(o);
     else {
-      pconvex_ref p = std::make_shared<prism2_incomplete_of_ref_>();
+      pconvex_ref p = std::make_shared<prism_incomplete_P2_of_ref_>();
       dal::add_stored_object(pk, p, p->structure(), p->pspt(),
                              dal::PERMANENT_STATIC_OBJECT);
       pconvex_ref p1 = basic_convex_ref(p);

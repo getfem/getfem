@@ -211,10 +211,10 @@ namespace getfem
         pf =  fem_descriptor("FEM_Q2_INCOMPLETE(2)");
       else if (pgt == bgeot::geometric_trans_descriptor("GT_Q2_INCOMPLETE(3)"))
         pf =  fem_descriptor("FEM_Q2_INCOMPLETE(3)");
-      else if (pgt == bgeot::geometric_trans_descriptor("GT_PYRAMID2_INCOMPLETE"))
-        pf =  fem_descriptor("FEM_PYRAMID2_INCOMPLETE_LAGRANGE");
-      else if (pgt == bgeot::geometric_trans_descriptor("GT_PRISM2_INCOMPLETE"))
-        pf =  fem_descriptor("FEM_PRISM2_INCOMPLETE_LAGRANGE");
+      else if (pgt == bgeot::geometric_trans_descriptor("GT_PYRAMID_Q2_INCOMPLETE"))
+        pf =  fem_descriptor("FEM_PYRAMID_Q2_INCOMPLETE");
+      else if (pgt == bgeot::geometric_trans_descriptor("GT_PRISM_INCOMPLETE_P2"))
+        pf =  fem_descriptor("FEM_PRISM_INCOMPLETE_P2");
       else
         pf = getfem::classical_fem(pgt, pgt->complexity() > 1 ? 2 : 1);
       pmf->set_finite_element(cv, pf);
@@ -236,10 +236,10 @@ namespace getfem
 
       if (pf == fem_descriptor("FEM_Q2_INCOMPLETE(2)") ||
           pf == fem_descriptor("FEM_Q2_INCOMPLETE(3)") ||
-          pf == fem_descriptor("FEM_PYRAMID2_INCOMPLETE_LAGRANGE") ||
-          pf == fem_descriptor("FEM_PYRAMID2_INCOMPLETE_DISCONTINUOUS_LAGRANGE") ||
-          pf == fem_descriptor("FEM_PRISM2_INCOMPLETE_LAGRANGE") ||
-          pf == fem_descriptor("FEM_PRISM2_INCOMPLETE_DISCONTINUOUS_LAGRANGE"))
+          pf == fem_descriptor("FEM_PYRAMID_Q2_INCOMPLETE") ||
+          pf == fem_descriptor("FEM_PYRAMID_Q2_INCOMPLETE_DISCONTINUOUS") ||
+          pf == fem_descriptor("FEM_PRISM_INCOMPLETE_P2") ||
+          pf == fem_descriptor("FEM_PRISM_INCOMPLETE_P2_DISCONTINUOUS"))
         pmf->set_finite_element(cv, pf);
       else {
         bool discontinuous = false;

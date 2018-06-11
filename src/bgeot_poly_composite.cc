@@ -384,8 +384,8 @@ namespace bgeot {
       } else if (nbp == (size_type(1) << n) &&
           basic_structure(cvs) == parallelepiped_structure(n)) {
           structured_mesh_for_parallelepiped_(cvs,opt_gt,opt_gt_pts,k,pm);
-      } else if (nbp == size_type(2 * n) &&
-          basic_structure(cvs) == prism_structure(n)) {
+      } else if (nbp == size_type(2 * n) && 
+          basic_structure(cvs) == prism_P1_structure(n)) {
           GMM_ASSERT1(false, "Sorry, structured_mesh not implemented for prisms.");
       } else {
         GMM_ASSERT1(false, "This element is not taken into account. Contact us");

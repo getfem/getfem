@@ -285,27 +285,27 @@ namespace bgeot {
       return simplexified_parallelepiped_6_nb;
     }
 
-    if (cvs == prism_structure(3)) {
+    if (cvs == prism_P1_structure(3)) {
       *tab = simplexified_prism_3;
       return simplexified_prism_3_nb;
     }
 
-    if (cvs == prism_structure(4)) {
+    if (cvs == prism_P1_structure(4)) {
       *tab = simplexified_prism_4;
       return simplexified_prism_4_nb;
     }
 
-    if (cvs == prism_structure(5)) {
+    if (cvs == prism_P1_structure(5)) {
       *tab = simplexified_prism_5;
       return simplexified_prism_5_nb;
     }
 
-    if (cvs == prism_structure(6)) {
+    if (cvs == prism_P1_structure(6)) {
       *tab = simplexified_prism_6;
       return simplexified_prism_6_nb;
     }
 
-    if (cvs == pyramid_structure(1)) {
+    if (cvs == pyramid_QK_structure(1)) {
       *tab = simplexified_pyramid;
       return simplexified_pyramid_nb;
     }

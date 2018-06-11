@@ -961,7 +961,7 @@ namespace getfem {
     return fem_descriptor(name.str());
   }
 
-  static pfem PK_prism_hierarch_fem(fem_param_list &params,
+  static pfem prism_PK_hierarch_fem(fem_param_list &params,
         std::vector<dal::pstatic_stored_object> &) {
     GMM_ASSERT1(params.size() == 2, "Bad number of parameters : "
                 << params.size() << " should be 2.");
@@ -1030,8 +1030,8 @@ namespace getfem {
   /* prims fems.                                                          */
   /* ******************************************************************** */
 
-  static pfem PK_prism_fem(fem_param_list &params,
-        std::vector<dal::pstatic_stored_object> &) {
+  static pfem prism_PK_fem(fem_param_list &params,
+                           std::vector<dal::pstatic_stored_object> &) {
     GMM_ASSERT1(params.size() == 2, "Bad number of parameters : "
                 << params.size() << " should be 2.");
     GMM_ASSERT1(params[0].type() == 0 && params[1].type() == 0,
@@ -1051,7 +1051,7 @@ namespace getfem {
   }
 
   static pfem
-  PK_prism_discontinuous_fem(fem_param_list &params,
+  prism_PK_discontinuous_fem(fem_param_list &params,
                              std::vector<dal::pstatic_stored_object> &) {
     GMM_ASSERT1(params.size() == 2 || params.size() == 3,
                 "Bad number of parameters : "
@@ -1262,9 +1262,9 @@ namespace getfem {
   // |       |
   // 0---1---2
 
-  static pfem build_pyramid_pk_fem(short_type k, bool disc) {
+  static pfem build_pyramid_QK_fem(short_type k, bool disc) {
     auto p = std::make_shared<fem<base_rational_fraction>>();
-    p->mref_convex() = bgeot::pyramid_of_reference(1);
+    p->mref_convex() = bgeot::pyramid_QK_of_reference(1);
     p->dim() = 3;
     p->is_standard() = p->is_equivalent() = true;
     p->is_polynomial() = false;
@@ -1344,7 +1344,7 @@ namespace getfem {
   }
 
 
-  static pfem pyramid_pk_fem
+  static pfem pyramid_QK_fem
   (fem_param_list &params, std::vector<dal::pstatic_stored_object> &deps) {
     GMM_ASSERT1(params.size() <= 1, "Bad number of parameters");
     short_type k = 2;
@@ -1352,13 +1352,13 @@ namespace getfem {
       GMM_ASSERT1(params[0].type() == 0, "Bad type of parameters");
       k = dim_type(::floor(params[0].num() + 0.01));
     }
-    pfem p = build_pyramid_pk_fem(k, false);
+    pfem p = build_pyramid_QK_fem(k, false);
     deps.push_back(p->ref_convex(0));
     deps.push_back(p->node_tab(0));
     return p;
   }
 
-  static pfem pyramid_disc_pk_fem
+  static pfem pyramid_QK_disc_fem
   (fem_param_list &params, std::vector<dal::pstatic_stored_object> &deps) {
     GMM_ASSERT1(params.size() <= 1, "Bad number of parameters");
     short_type k = 2;
@@ -1366,7 +1366,7 @@ namespace getfem {
       GMM_ASSERT1(params[0].type() == 0, "Bad type of parameters");
       k = dim_type(::floor(params[0].num() + 0.01));
     }
-    pfem p = build_pyramid_pk_fem(k, true);
+    pfem p = build_pyramid_QK_fem(k, true);
     deps.push_back(p->ref_convex(0));
     deps.push_back(p->node_tab(0));
     return p;
@@ -1391,9 +1391,9 @@ namespace getfem {
   // |       |
   // 0---1---2
 
-  static pfem build_pyramid2_incomplete_fem(bool disc) {
+  static pfem build_pyramid_Q2_incomplete_fem(bool disc) {
     auto p = std::make_shared<fem<base_rational_fraction>>();
-    p->mref_convex() = bgeot::pyramid_of_reference(1);
+    p->mref_convex() = bgeot::pyramid_QK_of_reference(1);
     p->dim() = 3;
     p->is_standard() = p->is_equivalent() = true;
     p->is_polynomial() = false;
@@ -1457,19 +1457,19 @@ namespace getfem {
   }
 
 
-  static pfem pyramid2_incomplete_fem
+  static pfem pyramid_Q2_incomplete_fem
   (fem_param_list &params, std::vector<dal::pstatic_stored_object> &deps) {
     GMM_ASSERT1(params.size() == 0, "Bad number of parameters");
-    pfem p = build_pyramid2_incomplete_fem(false);
+    pfem p = build_pyramid_Q2_incomplete_fem(false);
     deps.push_back(p->ref_convex(0));
     deps.push_back(p->node_tab(0));
     return p;
   }
 
-  static pfem pyramid2_incomplete_disc_fem
+  static pfem pyramid_Q2_incomplete_disc_fem
   (fem_param_list &params, std::vector<dal::pstatic_stored_object> &deps) {
     GMM_ASSERT1(params.size() <= 1, "Bad number of parameters");
-    pfem p = build_pyramid2_incomplete_fem(true);
+    pfem p = build_pyramid_Q2_incomplete_fem(true);
     deps.push_back(p->ref_convex(0));
     deps.push_back(p->node_tab(0));
     return p;
@@ -1493,7 +1493,7 @@ namespace getfem {
   // |/     `|
   // 0---1---2
 
-  static pfem build_prism2_incomplete_fem(bool disc) {
+  static pfem build_prism_incomplete_P2_fem(bool disc) {
     auto p = std::make_shared<fem<base_rational_fraction>>();
     p->mref_convex() = bgeot::prism_of_reference(3);
     p->dim() = 3;
@@ -1547,19 +1547,19 @@ namespace getfem {
   }
 
 
-  static pfem prism2_incomplete_fem
+  static pfem prism_incomplete_P2_fem
   (fem_param_list &params, std::vector<dal::pstatic_stored_object> &deps) {
     GMM_ASSERT1(params.size() == 0, "Bad number of parameters");
-    pfem p = build_prism2_incomplete_fem(false);
+    pfem p = build_prism_incomplete_P2_fem(false);
     deps.push_back(p->ref_convex(0));
     deps.push_back(p->node_tab(0));
     return p;
   }
 
-  static pfem prism2_incomplete_disc_fem
+  static pfem prism_incomplete_P2_disc_fem
   (fem_param_list &params, std::vector<dal::pstatic_stored_object> &deps) {
     GMM_ASSERT1(params.size() <= 1, "Bad number of parameters");
-    pfem p = build_prism2_incomplete_fem(true);
+    pfem p = build_prism_incomplete_P2_fem(true);
     deps.push_back(p->ref_convex(0));
     deps.push_back(p->node_tab(0));
     return p;
@@ -3766,21 +3766,21 @@ namespace getfem {
     /* Identifying Q1-parallelepiped.                                     */
     if (!found && nbp == (size_type(1) << n))
       if (pgt->basic_structure() == bgeot::parallelepiped_structure(n)) {
-        name << "FEM_QK" << suffix << "(" << n << ',' << k << arg << ')';
+        name << "FEM_QK" << suffix << "(" << n << "," << k << arg << ")";
         found = true;
       }
 
     /* Identifying Q1-prisms.                                             */
     if (!found && nbp == 2 * n)
       if (pgt->basic_structure() == bgeot::prism_structure(n)) {
-        name << "FEM_PK_PRISM" << suffix << "(" << n << ',' << k << arg << ')';
+        name << "FEM_PRISM_PK" << suffix << "(" << n << "," << k << arg << ")";
         found = true;
       }
 
     /* Identifying pyramids.                                              */
     if (!found && nbp == 5)
       if (pgt->basic_structure() == bgeot::pyramid_structure(1)) {
-        name << "FEM_PYRAMID" << suffix << "_LAGRANGE(" << k << arg << ')';
+        name << "FEM_PYRAMID_QK" << suffix << "(" << k << arg << ")";
         found = true;;
       }
 
@@ -3833,9 +3833,11 @@ namespace getfem {
       add_suffix("PK", PK_fem);
       add_suffix("QK", QK_fem);
       add_suffix("QK_DISCONTINUOUS", QK_discontinuous_fem);
-      add_suffix("PK_PRISM", PK_prism_fem);
+      add_suffix("PRISM_PK", prism_PK_fem);
+      add_suffix("PK_PRISM", prism_PK_fem); // for backwards compatibility
       add_suffix("PK_DISCONTINUOUS", PK_discontinuous_fem);
-      add_suffix("PK_PRISM_DISCONTINUOUS", PK_prism_discontinuous_fem);
+      add_suffix("PRISM_PK_DISCONTINUOUS", prism_PK_discontinuous_fem);
+      add_suffix("PK_PRISM_DISCONTINUOUS", prism_PK_discontinuous_fem); // for backwards compatibility
       add_suffix("PK_WITH_CUBIC_BUBBLE", PK_with_cubic_bubble);
       add_suffix("PRODUCT", product_fem);
       add_suffix("P1_NONCONFORMING", P1_nonconforming_fem);
@@ -3845,7 +3847,8 @@ namespace getfem {
       add_suffix("GEN_HIERARCHICAL", gen_hierarchical_fem);
       add_suffix("PK_HIERARCHICAL", PK_hierarch_fem);
       add_suffix("QK_HIERARCHICAL", QK_hierarch_fem);
-      add_suffix("PK_PRISM_HIERARCHICAL", PK_prism_hierarch_fem);
+      add_suffix("PRISM_PK_HIERARCHICAL", prism_PK_hierarch_fem);
+      add_suffix("PK_PRISM_HIERARCHICAL", prism_PK_hierarch_fem); // for backwards compatibility
       add_suffix("STRUCTURED_COMPOSITE", structured_composite_fem_method);
       add_suffix("PK_HIERARCHICAL_COMPOSITE", PK_composite_hierarch_fem);
       add_suffix("PK_FULL_HIERARCHICAL_COMPOSITE",
@@ -3859,14 +3862,16 @@ namespace getfem {
       add_suffix("RT0", P1_RT0);
       add_suffix("RT0Q", P1_RT0Q);
       add_suffix("NEDELEC", P1_nedelec);
-      add_suffix("PYRAMID_LAGRANGE", pyramid_pk_fem);
-      add_suffix("PYRAMID_DISCONTINUOUS_LAGRANGE", pyramid_disc_pk_fem);
-      add_suffix("PYRAMID2_INCOMPLETE_LAGRANGE", pyramid2_incomplete_fem);
-      add_suffix("PYRAMID2_INCOMPLETE_DISCONTINUOUS_LAGRANGE",
-                 pyramid2_incomplete_disc_fem);
-      add_suffix("PRISM2_INCOMPLETE_LAGRANGE", prism2_incomplete_fem);
-      add_suffix("PRISM2_INCOMPLETE_DISCONTINUOUS_LAGRANGE",
-                 prism2_incomplete_disc_fem);
+      add_suffix("PYRAMID_QK", pyramid_QK_fem);
+      add_suffix("PYRAMID_QK_DISCONTINUOUS", pyramid_QK_disc_fem);
+      add_suffix("PYRAMID_LAGRANGE", pyramid_QK_fem); // for backwards compatibility
+      add_suffix("PYRAMID_DISCONTINUOUS_LAGRANGE", pyramid_QK_disc_fem); // for backwards compatibility
+      add_suffix("PYRAMID_Q2_INCOMPLETE", pyramid_Q2_incomplete_fem);
+      add_suffix("PYRAMID_Q2_INCOMPLETE_DISCONTINUOUS",
+                 pyramid_Q2_incomplete_disc_fem);
+      add_suffix("PRISM_INCOMPLETE_P2", prism_incomplete_P2_fem);
+      add_suffix("PRISM_INCOMPLETE_P2_DISCONTINUOUS",
+                 prism_incomplete_P2_disc_fem);
     }
   };
 
@@ -3927,13 +3932,13 @@ namespace getfem {
     return pf;
   }
 
-  pfem PK_prism_fem(size_type n, short_type k) {
+  pfem prism_PK_fem(size_type n, short_type k) {
     DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(pfem, pf, 0);
     DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(size_type, d, size_type(-2));
     DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(short_type, r, short_type(-2));
     if (d != n || r != k) {
       std::stringstream name;
-      name << "FEM_PK_PRISM(" << n << "," << k << ")";
+      name << "FEM_PRISM_PK(" << n << "," << k << ")";
       pf = fem_descriptor(name.str());
       d = n; r = k;
     }

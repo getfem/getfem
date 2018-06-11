@@ -252,7 +252,7 @@ namespace getfem {
       ((n != 2 ||
 	base_singular_pim->structure()== bgeot::parallelepiped_structure(2))
        && (n != 3
-	   || base_singular_pim->structure() == bgeot::prism_structure(3))
+	   || base_singular_pim->structure() == bgeot::prism_P1_structure(3))
        && (n >= 2) && (n <= 3),
        "Base integration method for quasi polar integration not convenient");
 

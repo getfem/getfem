@@ -56,7 +56,7 @@ namespace getfem {
         pgt = bgeot::prism_geotrans(3,1);
       } break;
       case 7: { /* PYRAMID */
-        pgt = bgeot::pyramid_geotrans(1);
+        pgt = bgeot::pyramid_QK_geotrans(1);
       } break;
       case 8: { /* 2ND ORDER LINE */
         pgt = bgeot::simplex_geotrans(1,2);
@@ -1099,7 +1099,7 @@ namespace getfem {
             getfem_cv_nodes[10] = cdb_node_2_getfem_node[BB];
             getfem_cv_nodes[11] = cdb_node_2_getfem_node[AA];
             getfem_cv_nodes[12] = cdb_node_2_getfem_node[MM];
-            regions[imat].add(m.add_convex(bgeot::pyramid2_incomplete_geotrans(),
+            regions[imat].add(m.add_convex(bgeot::pyramid_Q2_incomplete_geotrans(),
                                            getfem_cv_nodes.begin()));
             if (itype < elt_cnt.size())
               elt_cnt[itype] += 1;
@@ -1121,8 +1121,9 @@ namespace getfem {
             getfem_cv_nodes[12] = cdb_node_2_getfem_node[XX];
             getfem_cv_nodes[13] = cdb_node_2_getfem_node[VV];
             getfem_cv_nodes[14] = cdb_node_2_getfem_node[OO];
-            regions[imat].add(m.add_convex(bgeot::prism2_incomplete_geotrans(),
-                                           getfem_cv_nodes.begin()));
+            regions[imat].add(m.add_convex
+                              (bgeot::prism_incomplete_P2_geotrans(),
+                               getfem_cv_nodes.begin()));
             if (itype < elt_cnt.size())
               elt_cnt[itype] += 1;
           } else {

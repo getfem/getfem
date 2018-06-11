@@ -286,7 +286,7 @@ struct Chrono {
     
     /* Identifying prisms.                                             */
     if (nbp == size_type(2 * n) &&
-	pgt->basic_structure() == bgeot::prism_structure(n)) {
+	pgt->basic_structure() == bgeot::prism_P1_structure(n)) {
       return new_mesher_prism_ref(n);
     }
     

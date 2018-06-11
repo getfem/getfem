@@ -847,13 +847,13 @@ namespace getfem {
                             size_type ip1, size_type ip2=size_type(-1)) :
       approx_integration
       ((base_im->structure() == bgeot::parallelepiped_structure(3)) ?
-       bgeot::pyramid_of_reference(1)
+       bgeot::pyramid_QK_of_reference(1)
        : bgeot::simplex_of_reference(base_im->dim()))  {
       size_type N = base_im->dim();
 
       enum { SQUARE, PRISM, TETRA_CYL, PRISM2, PYRAMID } what;
       if (N == 2) what = SQUARE;
-      else if (base_im->structure() == bgeot::prism_structure(3))
+      else if (base_im->structure() == bgeot::prism_P1_structure(3))
         what = (ip2 == size_type(-1) || ip1 == ip2) ? PRISM2 : PRISM;
       else if (base_im->structure() == bgeot::simplex_structure(3))
         what = TETRA_CYL;
@@ -870,7 +870,7 @@ namespace getfem {
       bgeot::pgeometric_trans pgt2 = bgeot::simplex_geotrans(N, 1);
       std::vector<base_node> nodes2(N+1);
       if (what == PYRAMID) {
-        pgt2 = bgeot::pyramid_geotrans(1);
+        pgt2 = bgeot::pyramid_QK_geotrans(1);
         nodes2.resize(5);
       }
       std::vector<size_type> other_nodes; // for the construction of node2
@@ -1215,7 +1215,7 @@ namespace getfem {
     /* Identifying Q1-prisms.                                             */
 
     if (!found && nbp == 2 * n)
-      if (cvs == bgeot::prism_structure(dim_type(n)))
+      if (cvs == bgeot::prism_P1_structure(dim_type(n)))
         { name << "IM_EXACT_PRISM("; found = true; }
 
     // To be completed
