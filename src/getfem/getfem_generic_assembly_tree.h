@@ -54,11 +54,6 @@ extern "C"{
 }
 #endif
 
-// #define GA_USES_BLAS // not so interesting, at least for debian blas
-
-// #define GA_DEBUG_INFO(a) { cout << a << endl; }
-#define GA_DEBUG_INFO(a)
-
 #define GA_DEBUG_ASSERT(a, b) GMM_ASSERT1(a, b)
 // #define GA_DEBUG_ASSERT(a, b)
 
