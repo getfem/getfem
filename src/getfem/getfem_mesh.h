@@ -359,8 +359,8 @@ namespace getfem {
                                                size_type n=0) const;
 
 
-    /* Return the mean outward unit normal vector of the given convex
-       face computed on the geometrical nodes of the face.
+    /* Return the outward unit normal vector of the given element
+       face computed on the mean of the geometrical nodes of the face.
 
        @param ic the convex number.
        @param f the face number.

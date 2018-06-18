@@ -365,16 +365,14 @@ namespace getfem {
   base_small_vector mesh::mean_normal_of_face_of_convex(size_type ic,
                                                         short_type f) const {
     bgeot::pgeometric_trans pgt = trans_of_convex(ic);
-    bgeot::pgeotrans_precomp pgp
-      = bgeot::geotrans_precomp(pgt, pgt->pgeometric_nodes(), 0);
     base_matrix G; vectors_to_base_matrix(G,points_of_convex(ic));
-    bgeot::geotrans_interpolation_context c(pgp,0, G);
-    base_small_vector n(dim());
+    base_small_vector ptmean(dim());
     size_type nbpt = pgt->structure()->nb_points_of_face(f);
-    for (size_type i = 0; i < nbpt; ++i) {
-      c.set_ii(pgt->structure()->ind_points_of_face(f)[i]);
-      n += bgeot::compute_normal(c, f);
-    }
+    for (size_type i = 0; i < nbpt; ++i)
+      gmm::add(pgt->geometric_nodes()[pgt->structure()->ind_points_of_face(f)[i]], ptmean);
+    ptmean /= scalar_type(nbpt);
+    bgeot::geotrans_interpolation_context c(pgt,ptmean, G);
+    base_small_vector n = bgeot::compute_normal(c, f);
     n /= gmm::vect_norm2(n);
     return n;
   }

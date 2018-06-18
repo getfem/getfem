@@ -227,6 +227,7 @@ namespace bgeot
     }
 
     if (res < res0) copy(storage.x_ref, x);
+    x *= 0.999888783; // For pyramid element to avoid the singularity
   }
 
 
@@ -242,12 +243,11 @@ namespace bgeot
     auto res = vect_norm2(nonlinear_storage.diff);
     auto res0 = std::numeric_limits<scalar_type>::max();
     double factor = 1.0;
-    auto cnt = 0;
 
     while (res > IN_EPS) {
       if ((abs(res - res0) < IN_EPS) || (factor < IN_EPS)) {
-        converged = false;
-        return point_in_convex(*pgt, x, res, IN_EPS);
+	converged = false;
+	return point_in_convex(*pgt, x, res, IN_EPS);
       }
 
       if (res > res0) {
@@ -258,10 +258,9 @@ namespace bgeot
         factor *= 0.5;
       }
       else {
-        if (factor < 1.0) factor *= 2.0;
+        if (factor < 1.0-IN_EPS) factor = 2.0;
         res0 = res;
       }
-
       pgt->poly_vector_grad(x, pc);
       update_B();
       mult(transposed(B), nonlinear_storage.diff, nonlinear_storage.x_ref);
@@ -271,7 +270,6 @@ namespace bgeot
       add(nonlinear_storage.x_real, scaled(xreal, -1.0),
           nonlinear_storage.diff);
       res = vect_norm2(nonlinear_storage.diff);
-      ++cnt;
     }
 
     return point_in_convex(*pgt, x, res, IN_EPS);

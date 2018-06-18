@@ -25,6 +25,13 @@
 #include "getfem/getfem_generic_assembly_compile_and_exec.h"
 #include "getfem/getfem_generic_assembly_functions_and_operators.h"
 
+// #define GA_USES_BLAS // not so interesting, at least for debian blas
+
+// #define GA_DEBUG_INFO(a) { cout << a << endl; }
+#define GA_DEBUG_INFO(a)
+
+
+
 namespace getfem {
 
 
@@ -766,6 +773,7 @@ namespace getfem {
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: value of test functions");
       if (qdim == 1) {
+	GA_DEBUG_ASSERT(t.size() == Z.size(), "Wrong size for base vector");
         std::copy(Z.begin(), Z.end(), t.begin());
       } else {
         size_type target_dim = Z.sizes()[1];
@@ -3781,7 +3789,7 @@ namespace getfem {
       if (inin.pt_type) {
         if (cv != size_type(-1)) {
           inin.m->points_of_convex(cv, inin.G);
-          inin.ctx.change((inin.m)->trans_of_convex(cv),
+	  inin.ctx.change((inin.m)->trans_of_convex(cv),
                           0, P_ref, inin.G, cv, face_num);
           inin.has_ctx = true;
           if (face_num != short_type(-1)) {
@@ -3826,7 +3834,7 @@ namespace getfem {
 
     virtual int exec() {
       bool cancel_optimization = false;
-      GA_DEBUG_INFO("Instruction: call interpolate transformation");
+      GA_DEBUG_INFO("Instruction: call interpolate neighbour transformation");
       if (ipt == 0) {
         if (!(ctx.have_pgp()) || !pai || pai->is_built_on_the_fly()
             || cancel_optimization) {
@@ -3873,7 +3881,7 @@ namespace getfem {
               gic.init(m.points_of_convex(adj_face.cv), gpc.pgt2);
               size_type first_ind = pai->ind_first_point_on_face(f);
               const bgeot::stored_point_tab
-                &spt = *(pai->pintegration_points());
+		&spt = *(pai->pintegration_points());
               base_matrix G;
               m.points_of_convex(cv, G);
               fem_interpolation_context ctx_x(gpc.pgt1, 0, spt[0], G, cv, f);
@@ -3882,7 +3890,8 @@ namespace getfem {
               for (size_type i = 0; i < nbpt; ++i) {
                 ctx_x.set_xref(spt[first_ind+i]);
                 bool converged = true;
-                bool is_in = gic.invert(ctx_x.xreal(), P_ref[i],converged,1E-4);
+                gic.invert(ctx_x.xreal(), P_ref[i], converged);
+		bool is_in = (gpc.pgt2->convex_ref()->is_in(P_ref[i]) < 1E-4);
                 GMM_ASSERT1(is_in && converged,"Geometric transformation "
                             "inversion has failed in neighbour transformation");
               }
@@ -3936,7 +3945,8 @@ namespace getfem {
           inin.has_ctx = false;
         }
       }
-      GA_DEBUG_INFO("Instruction: end of call interpolate transformation");
+      GA_DEBUG_INFO("Instruction: end of call neighbour interpolate "
+		    "transformation");
       return 0;
     }
     ga_instruction_neighbour_transformation_call
@@ -4746,6 +4756,7 @@ namespace getfem {
     const mesh_fem **mfg1 = 0, **mfg2 = 0;
     fem_interpolation_context *pctx1 = 0, *pctx2 = 0;
     bool tensor_to_clear = false;
+    bool tensor_to_adapt = false;
 
     if (pnode->test_function_type) {
       if (pnode->name_test1.size())
@@ -4754,6 +4765,7 @@ namespace getfem {
         pctx1 = &(gis.ctx);
         const std::string &intn1 = pnode->interpolate_name_test1;
         if (intn1.size()) {
+	  tensor_to_adapt = true;
           pctx1 = &(rmi.interpolate_infos[intn1].ctx);
           if (workspace.variable_group_exists(pnode->name_test1)) {
             ga_instruction_set::variable_group_info &vgi =
@@ -4769,6 +4781,7 @@ namespace getfem {
         pctx2 = &(gis.ctx);
         const std::string &intn2 = pnode->interpolate_name_test2;
         if (intn2.size()) {
+	  tensor_to_adapt = true;
           pctx2 = &(rmi.interpolate_infos[intn2].ctx);
           if (workspace.variable_group_exists(pnode->name_test2)) {
             ga_instruction_set::variable_group_info &vgi =
@@ -4781,7 +4794,7 @@ namespace getfem {
     }
 
     // Produce a resize instruction which is stored if no equivalent node is
-    // detected and is the mesh is not uniform.
+    // detected and if the mesh is not uniform.
     pnode->t.set_to_original(); pnode->t.set_sparsity(0, 0);
     bool is_uniform = false;
     if (pnode->test_function_type == 1) {
@@ -4825,9 +4838,9 @@ namespace getfem {
       std::list<pga_tree_node> &node_list = rmi.node_list[pnode->hash_value];
       for (std::list<pga_tree_node>::iterator it = node_list.begin();
            it != node_list.end(); ++it) {
-        // cout << "found potential equivalent nodes ";
-        // ga_print_node(pnode, cout);
-        // cout << " and "; ga_print_node(*it, cout); cout << endl;
+	// cout << "found potential equivalent nodes ";
+	// ga_print_node(pnode, cout);
+	// cout << " and "; ga_print_node(*it, cout); cout << endl;
         if (sub_tree_are_equal(pnode, *it, workspace, 1)) {
           pnode->t.set_to_copy((*it)->t);
           return;
@@ -4843,6 +4856,8 @@ namespace getfem {
             pgai = std::make_shared<ga_instruction_transpose_test>
               (pnode->tensor(), (*it)->tensor());
             rmi.instructions.push_back(std::move(pgai));
+	    GMM_ASSERT1(false,
+                  "No use of X is allowed in scalar functions");
           } else {
             pnode->t.set_to_copy((*it)->t);
           }
@@ -4860,7 +4875,7 @@ namespace getfem {
     if (pgai) { // resize instruction if needed and no equivalent node detected
       if (is_uniform) { pgai->exec(); }
       else {
-        if (mfg1 || mfg2)
+        if (tensor_to_adapt)
           rmi.instructions.push_back(std::move(pgai));
         else
           rmi.elt_instructions.push_back(std::move(pgai));
