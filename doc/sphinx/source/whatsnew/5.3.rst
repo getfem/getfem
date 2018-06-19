@@ -1,0 +1,21 @@
+.. include:: ../replaces.txt
+
+************************
+  What's New in |gf| 5.3
+************************
+
+The main contribution of this version is the extension of the language allowing macro definition and explicit differentiation.
+
+Released version, 2018/06/19.
+
+The main changes are:
+
+   * The weak form language now supports macro with parameters
+
+   * The weak form language has been extended with Grad(expression),
+     the spatial gradient and Diff(expression, variable, direction)
+     which performs a directional derivative. A few more tensor contraction
+     operations has been added on this occasion.
+  
+   * The support for pyramidal has been extended and stabilized.
+

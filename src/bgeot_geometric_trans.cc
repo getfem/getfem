@@ -242,7 +242,7 @@ namespace bgeot {
         scalar_type a0 = A[4]*A[8] - A[5]*A[7], a1 = A[5]*A[6] - A[3]*A[8];
         scalar_type a2 = A[3]*A[7] - A[4]*A[6];
         scalar_type det =  A[0] * a0 + A[1] * a1 + A[2] * a2;
-        GMM_ASSERT1(det != scalar_type(0), "Non invertible matrix");
+	GMM_ASSERT1(det != scalar_type(0), "Non invertible matrix");
         scalar_type a3 = (A[2]*A[7] - A[1]*A[8]), a6 = (A[1]*A[5] - A[2]*A[4]);
         scalar_type a4 = (A[0]*A[8] - A[2]*A[6]), a7 = (A[2]*A[3] - A[0]*A[5]);
         scalar_type a5 = (A[1]*A[6] - A[0]*A[7]), a8 = (A[0]*A[4] - A[1]*A[3]);
@@ -343,9 +343,9 @@ namespace bgeot {
           J__ = it[0] * a0 + it[1] * a1 + it[2] * a2;
         } break;
       default:
-              B_factors.base_resize(P, P); // store factorization for B computation
-              gmm::copy(gmm::transposed(KK), B_factors);
-              ipvt.resize(P);
+	B_factors.base_resize(P, P); // store factorization for B computation
+	gmm::copy(gmm::transposed(KK), B_factors);
+	ipvt.resize(P);
         bgeot::lu_factor(&(*(B_factors.begin())), ipvt, P);
         J__ = bgeot::lu_det(&(*(B_factors.begin())), ipvt, P);
         break;

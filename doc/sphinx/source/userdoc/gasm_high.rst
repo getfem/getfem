@@ -11,7 +11,7 @@
 Compute arbitrary terms - high-level generic assembly procedures
 ================================================================
 
-This section presents what is now the main generic assembly of |gf|. It is a high-level generic assembly in the sense that the language used to describe the assembly is quite close to the weak formulation of boundary value problems of partial differential equations. It mainly has been developed to circumvent the difficulties with the previous low-level generic assembly (see  :ref:`ud-gasm-low`) for which nonlinear terms were quite difficult to describe. Conversely, a symbolic differentiation algorithm is used with this version. It simplifies a lot the approximation of nonlinear coupled problems since only the weak form is necessary to be described, the tangent system being automatically computed. Moreover, the assembly language is compiled into optimized instructions before the evaluation on each integration point in order to obtain a an optimal computational cost.
+This section presents what is now the main generic assembly of |gf|. It is a high-level generic assembly in the sense that it is based on a weak form language to describe the weak formulation of boundary value problems of partial differential equations. It mainly has been developed to circumvent the difficulties with the previous low-level generic assembly (see  :ref:`ud-gasm-low`) for which nonlinear terms were quite difficult to describe. Conversely, a symbolic differentiation algorithm is used with this version. It simplifies a lot the approximation of nonlinear coupled problems since only the weak form is necessary to be described, the tangent system being automatically computed. Moreover, the weak form language is compiled into optimized instructions before the evaluation on each integration point in order to obtain a an optimal computational cost.
 
 The header file to be included to use the high-level generic assembly procedures in C++ is :file:`getfem/generic\_assembly.h`.
 
@@ -21,10 +21,10 @@ For basic linear assembly terms, the high level generic assembly is most of the 
 
 
 
-Overview of the assembly language syntax
-----------------------------------------
+Overview of the weak form language syntax
+-----------------------------------------
 
-A specific language has been developed to describe the weak formulation of boundary value problems. It is intended to be close to the structure of a standard weak formulation and it incorporates the following components:
+A specific weak form language has been developed to describe the weak formulation of boundary value problems. It is intended to be close to the structure of a standard weak formulation and it incorporates the following components:
 
   - Variable names: A list of variables should be given. The variables are described on a finite element method or can be a simple vector of unknowns. For instance ``u``, ``v``, ``p``, ``pressure``, ``electric_field`` are valid variable names.
 
@@ -361,7 +361,7 @@ with ``D`` the flexion modulus and ``nu`` the Poisson ratio.
 The tensors
 -----------
 
-Basically, what is manipulated in the generic assembly language are tensors. This can be order 0 tensors in scalar expressions (for instance in ``3+sin(pi/2)``), order 1 tensors in vector expressions (such as ``X.X`` or ``Grad_u`` if u is a scalar variable), order 2 tensors for matrix expressions and so on. For efficiency reasons, the language manipulates tensors up to order six. The language could be easily extended to support tensors of order greater than six but it may lead to inefficient computations. When an expression contains test functions (as in ``Trace(Grad_Test_u)`` for a vector field ``u``), the computation is done for each test functions, which means that the tensor implicitly have a supplementary component. This means that, implicitly, the maximal order of manipulated tensors are in fact six (in ``Grad_Test_u:Grad_Test2_u`` there are two components implicitly added for first and second order test functions).
+Basically, what is manipulated in the weak form language are tensors. This can be order 0 tensors in scalar expressions (for instance in ``3+sin(pi/2)``), order 1 tensors in vector expressions (such as ``X.X`` or ``Grad_u`` if u is a scalar variable), order 2 tensors for matrix expressions and so on. For efficiency reasons, the language manipulates tensors up to order six. The language could be easily extended to support tensors of order greater than six but it may lead to inefficient computations. When an expression contains test functions (as in ``Trace(Grad_Test_u)`` for a vector field ``u``), the computation is done for each test functions, which means that the tensor implicitly have a supplementary component. This means that, implicitly, the maximal order of manipulated tensors are in fact six (in ``Grad_Test_u:Grad_Test2_u`` there are two components implicitly added for first and second order test functions).
 
 Order four tensors are necessary for instance to express elasticity tensors or in general to obtain the tangent term for vector valued unknowns.
 
@@ -432,7 +432,7 @@ It is possible to add a scalar function to the already predefined ones. Note tha
 
   ga_define_function(name, getfem::pscalar_func_twoargs f2, der1="", der2="");
 
-where ``name`` is the name of the function to be defined, ``nb_args`` is equal to 1 or 2. In the first call, ``expr`` is a string describing the function in the generic assembly language and using ``t`` as the first variable and ``u`` as the second one (if ``nb_args`` is equal to 2). For instance, ``sin(2*t)+sqr(t)`` is a valid expression. Note that it is not possible to refer to constant or data defined in a ``ga_workspace`` object. ``der1`` and ``der2`` are the expression of the derivatives with respect to ``t`` and ``u``. They are optional. If they are not furnished, a symbolic differentiation is used if the derivative is needed. If ``der1`` and ``der2`` are defined to be only a function name, it will be understand that the derivative is the corresponding function. In the second call, ``f1`` should be a C pointer on a scalar C function having one scalar parameter and in the third call, ``f2``  should be a C pointer on a scalar C function having two scalar parameters.
+where ``name`` is the name of the function to be defined, ``nb_args`` is equal to 1 or 2. In the first call, ``expr`` is a string describing the function in the generic weak form language and using ``t`` as the first variable and ``u`` as the second one (if ``nb_args`` is equal to 2). For instance, ``sin(2*t)+sqr(t)`` is a valid expression. Note that it is not possible to refer to constant or data defined in a ``ga_workspace`` object. ``der1`` and ``der2`` are the expression of the derivatives with respect to ``t`` and ``u``. They are optional. If they are not furnished, a symbolic differentiation is used if the derivative is needed. If ``der1`` and ``der2`` are defined to be only a function name, it will be understand that the derivative is the corresponding function. In the second call, ``f1`` should be a C pointer on a scalar C function having one scalar parameter and in the third call, ``f2``  should be a C pointer on a scalar C function having two scalar parameters.
 
 
 Additionally,::
@@ -504,7 +504,7 @@ Parentheses can be used in a standard way to change the operation order. If no p
 Explicit vectors
 ----------------
 
-The assembly language allows to define explicit vectors (i.e. order 1 tensors) with the notation ``[a,b,c,d,e]``, i.e. an arbitrary number of components separated by a comma (note the separation with a semicolon ``[a;b;c;d;e]`` is also permitted), the whole vector beginning with a right bracket and ended by a left bracket. The components can be some numeric constants, some valid expressions and may also contain test functions. In the latter case, the vector has to be homogeneous with respect to the test functions. This means that a construction of the type ``[Test_u; Test_v]`` is not allowed. A valid example, with ``u`` as a scalar field variable is ``[5*Grad_Test_u(2), 2*Grad_Test_u(1)]``. Note also that using the quite opertor (transpose), an expression ``[a,b,c,d,e]'`` stands for 'row vector`, i.e. a 1x5 matrix.
+The weak form language allows to define explicit vectors (i.e. order 1 tensors) with the notation ``[a,b,c,d,e]``, i.e. an arbitrary number of components separated by a comma (note the separation with a semicolon ``[a;b;c;d;e]`` is also permitted), the whole vector beginning with a right bracket and ended by a left bracket. The components can be some numeric constants, some valid expressions and may also contain test functions. In the latter case, the vector has to be homogeneous with respect to the test functions. This means that a construction of the type ``[Test_u; Test_v]`` is not allowed. A valid example, with ``u`` as a scalar field variable is ``[5*Grad_Test_u(2), 2*Grad_Test_u(1)]``. Note also that using the quite opertor (transpose), an expression ``[a,b,c,d,e]'`` stands for 'row vector`, i.e. a 1x5 matrix.
 
 
 Explicit matrices
@@ -579,7 +579,7 @@ The four operators can be applied on test functions. Which means that for instan
 Nonlinear operators
 -------------------
 
-The assembly language provide some predefined nonlinear operator. Each nonlinear operator is available together with its first and second derivatives. Nonlinear operator can be applied to an expression as long as this expression do not contain some test functions.
+The weak form language provide some predefined nonlinear operator. Each nonlinear operator is available together with its first and second derivatives. Nonlinear operator can be applied to an expression as long as this expression do not contain some test functions.
 
   - ``Norm(v)`` for ``v`` a vector or a matrix gives the euclidean norm of a vector or a |Frobenius| norm of a matrix.
 
@@ -610,7 +610,7 @@ The assembly language provide some predefined nonlinear operator. Each nonlinear
 Macro definition
 ----------------
 
-The assembly language allows the use of macros that are either predefined in the model or ga_workspace object or directly defined at the begining of an assembly string. The definition into a ga_workspace or model object is done as follows::
+The weak form language allows the use of macros that are either predefined in the model or ga_workspace object or directly defined at the begining of an assembly string. The definition into a ga_workspace or model object is done as follows::
 
   workspace.add_macro(name, expr)
 
@@ -622,7 +622,7 @@ The definition of a macro into an assembly string is inserted before any regular
 
   "Def name:=expr; regular_expression"
 
-where ``name`` is he macro name which then can be used in the assembly language and contains also the macro parameters, ``expr`` is a valid expression of the assembly language (which may itself contain some macro definitions). For instance, a valid macro with no parameter is::
+where ``name`` is he macro name which then can be used in the weak form language and contains also the macro parameters, ``expr`` is a valid expression of the weak form language (which may itself contain some macro definitions). For instance, a valid macro with no parameter is::
 
   model.add_macro("my_transformation", "[cos(alpha)*X(1);sin(alpha)*X(2)]");
 
@@ -723,7 +723,7 @@ or::
   add_interpolate_transformation_from_expression
     (md, transname, source_mesh, target_mesh, expr);
 
-where ``workspace`` is a workspace object, ``md`` a model object, ``transname`` is the name given to the transformation, ``source_mesh`` the mesh on which the integration occurs, ``target_mesh`` the mesh on which the interpolation is performed and ``expr`` is a regular expression of the high-level generic assembly language which may contains reference to the variables of the workspace/model.
+where ``workspace`` is a workspace object, ``md`` a model object, ``transname`` is the name given to the transformation, ``source_mesh`` the mesh on which the integration occurs, ``target_mesh`` the mesh on which the interpolation is performed and ``expr`` is a regular expression of the high-level generic weak form language which may contains reference to the variables of the workspace/model.
 
 For instance, an expression::
 
@@ -763,7 +763,7 @@ For instance, the assembly expression to prescribe the equality of a variable ``
 
 (see :file:`demo\_periodic\_laplacian.m` in :file:`interface/tests/matlab` directory).
 
-In some situations, the interpolation of a point may fail if the transformed point is outside the target mesh. Both in order to treat this case and to allow the transformation to differentiate some other cases (see :ref:`ud-model-contact-friction_raytrace_inter_trans` for the differentiation between rigid bodies and deformable ones in the Raytracing_interpolate_transformation) the tranformation returns an integer identifiant to the assembly language. A value 0 of this identifiant means that no corresponding location on the target mesh has been found. A value of 1 means that a corresponding point has been found. This identifiant can be used thanks to the following special command of the assembly language::
+In some situations, the interpolation of a point may fail if the transformed point is outside the target mesh. Both in order to treat this case and to allow the transformation to differentiate some other cases (see :ref:`ud-model-contact-friction_raytrace_inter_trans` for the differentiation between rigid bodies and deformable ones in the Raytracing_interpolate_transformation) the tranformation returns an integer identifiant to the weak form language. A value 0 of this identifiant means that no corresponding location on the target mesh has been found. A value of 1 means that a corresponding point has been found. This identifiant can be used thanks to the following special command of the weak form language::
 
   Interpolate_filter(transname, expr, i)
 
@@ -855,7 +855,7 @@ the method::
 
   model.add_elementary_transformation(transname, pelementary_transformation)
 
-where ``pelementary_transformation`` is a pointer to an object deriving from ``virtual_elementary_transformation``. Once it is added to the model/workspace, it is possible to use the following expressions in the assembly language::
+where ``pelementary_transformation`` is a pointer to an object deriving from ``virtual_elementary_transformation``. Once it is added to the model/workspace, it is possible to use the following expressions in the weak form language::
 
   Elementary_transformation(u, transname)
   Elementary_transformation(Grad_u, transname)
@@ -875,7 +875,7 @@ where ``u`` is one of the FEM variables of the model/workspace. For the moment, 
 Xfem discontinuity evaluation (with mesh_fem_level_set)
 -------------------------------------------------------
 
-For |gf| 5.1. When using a fem cut by a level-set (using fem_level_set or mesh_fem_level_set objects), it is often interesting to integrate the discontinuity jump of a variable, or the jump in gradient or the average value. For this purpose, the generic assembly language furnishes the following expressions for ``u`` a FEM variable::
+For |gf| 5.1. When using a fem cut by a level-set (using fem_level_set or mesh_fem_level_set objects), it is often interesting to integrate the discontinuity jump of a variable, or the jump in gradient or the average value. For this purpose, the weak form language furnishes the following expressions for ``u`` a FEM variable::
 
   Xfem_plus(u)
   Xfem_plus(Grad_u)

@@ -4,7 +4,7 @@
   What's New in |gf| 5.1
 ************************
 
-This release consists mainly in continuing to improve the high-level generic assembly language and continuing the brick adaptation and development. Some small incompatibilities are due to the replacement of simple pointers by smart ones.
+This release consists mainly in continuing to improve the weak form language and continuing the brick adaptation and development. Some small incompatibilities are due to the replacement of simple pointers by smart ones.
 
 Released version, 2016/08/18.
 
@@ -23,9 +23,9 @@ The main changes are:
      
    * Addition of a local projection generic function on discontinuous fems.
 
-   * Addition of a specific transformation allowing inter-element computation in the high-level generic assembly language (in order to compute inter-element jump of any quantity, average value, error estimator, ...)
+   * Addition of a specific transformation allowing inter-element computation in the weak form language (in order to compute inter-element jump of any quantity, average value, error estimator, ...)
 
-   * Addition of a specific tool (Xfem_plus, Xfem_minus) in the high-level generic assembly language in order to have access to the jump across an interface when using fictitious domain tools.
+   * Addition of a specific tool (Xfem_plus, Xfem_minus) in the weak form language in order to have access to the jump across an interface when using fictitious domain tools.
 
    * Extension and partial re-writing of the support for global functions as fem basis functions. Now, storing precomputation of values, gradients and hessians is possible also for global basis functions.
 

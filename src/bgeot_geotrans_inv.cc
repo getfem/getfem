@@ -227,7 +227,8 @@ namespace bgeot
     }
 
     if (res < res0) copy(storage.x_ref, x);
-    x *= 0.999888783; // For pyramid element to avoid the singularity
+    if (res < IN_EPS)
+      x *= 0.999888783; // For pyramid element to avoid the singularity
   }
 
 

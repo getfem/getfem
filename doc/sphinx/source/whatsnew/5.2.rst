@@ -24,7 +24,7 @@ The main changes are:
 
    * Import of Ansys meshes.
 
-   * A new transformation has been added to the high level generic assembly
+   * A new transformation has been added to the weak form
      language for the extrapolation on a neighbour element.
 
    * Compatibility for Windows and Mac installation has been checked.

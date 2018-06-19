@@ -4856,8 +4856,6 @@ namespace getfem {
             pgai = std::make_shared<ga_instruction_transpose_test>
               (pnode->tensor(), (*it)->tensor());
             rmi.instructions.push_back(std::move(pgai));
-	    GMM_ASSERT1(false,
-                  "No use of X is allowed in scalar functions");
           } else {
             pnode->t.set_to_copy((*it)->t);
           }
@@ -4867,7 +4865,7 @@ namespace getfem {
         ss << "Detected wrong equivalent nodes: ";
         ga_print_node(pnode, ss);
         ss << " and "; ga_print_node(*it, ss);
-        ss << " (no problem, but hash code would be adapted) " << endl;
+        ss << " (no problem, but hash values could be adapted) " << endl;
         GMM_TRACE2(ss.str());
       }
     }
@@ -6836,7 +6834,6 @@ namespace getfem {
               first_ind = pai->ind_first_point_on_face(v.f());
             }
             for (gis.ipt = 0; gis.ipt < gis.nbpt; ++(gis.ipt)) {
-              // cout << "Gauss pt " << gis.ipt << endl;
               if (pgp) gis.ctx.set_ii(first_ind+gis.ipt);
               else gis.ctx.set_xref((*pspt)[first_ind+gis.ipt]);
               if (gis.ipt == 0 || !(pgt->is_linear())) {

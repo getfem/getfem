@@ -1,8 +1,8 @@
 .. include:: ../replaces.txt
 
-****************************
+************************
   What's New in |gf| 4.2
-****************************
+************************
 
 The New brick system is now mature and several coupling bricks has been developped.
 

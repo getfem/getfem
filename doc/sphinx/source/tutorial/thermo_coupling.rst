@@ -511,7 +511,7 @@ Let us now begin by the elastic deformation problem. We will use the predefined 
 
   \int_{\Omega} (\lambda^* \mbox{div}(u) I + 2\mu \bar{\varepsilon}(u)):\bar{\varepsilon}(\delta_u)dx,
 
-to the tangent linear system. In order to use this model brick, the data corresponding to he |Lame| coefficient have to be added to the model first. Here, the |Lame| coefficients are constant over the domain. However, it it also possible to define some non-constant data. Note also that instead of using this predefined brick, one can use equivalently the generic assembly brick `add_linear_term(md mim, "lambda*(Div_u*Div_Test_u) + mu*((Grad_u + Grad_u'):Grad_Test_u)"`.
+to the tangent linear system. In order to use this model brick, the data corresponding to he |Lame| coefficient have to be added to the model first. Here, the |Lame| coefficients are constant over the domain. However, it it also possible to define some non-constant data. Note also that instead of using this predefined brick, one can use equivalently the weak form language term `add_linear_term(md mim, "lambda*(Div_u*Div_Test_u) + mu*((Grad_u + Grad_u'):Grad_Test_u)"`.
 
 Concerning the coupling term
 
@@ -519,7 +519,7 @@ Concerning the coupling term
 
    \int_{\Omega} (\beta\theta I) :\bar{\varepsilon}(\delta_u)dx,
 
-there is no predefined brick and we use directly a generic assembly brick `add_linear_term(md mim, "beta*theta*Div_Test_u)"`. See :ref:`ud-gasm-high` for more details on the high-level generic assembly language. Basically, the principle is that the assembly string is compiled into a list of optimized assembly instructions which are executed on each Gauss point.
+there is no predefined brick and we use directly a weak form language term `add_linear_term(md mim, "beta*theta*Div_Test_u)"`. See :ref:`ud-gasm-high` for more details on the weak form language. Basically, the principle is that the assembly string is compiled into a list of optimized assembly instructions which are executed on each Gauss point.
 
 The following program allows to take into account the whole elastic deformation equation. Note the use of specific brick to prescribe the Dirichlet condition on the left boundary. There is several option to prescribe a Dirichlet condition (see :ref:`ud-model-Dirichlet`).
 
@@ -586,7 +586,7 @@ The following program allows to take into account the whole elastic deformation 
 Electric potential problem
 **************************
 
-Similarly, the following program take into account the electric potential equation. Note the definition of the  electrical conductivity :math:`\sigma` and again the use of generic assembly bricks.
+Similarly, the following program take into account the electric potential equation. Note the definition of the  electrical conductivity :math:`\sigma` and again the use of weak form language terms.
 
 ========== ===========================================================================
 **C++**    .. code-block:: c++                             

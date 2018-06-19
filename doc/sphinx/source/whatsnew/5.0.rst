@@ -30,19 +30,18 @@ The main changes are:
 
    * MPI and OpenMP parallelization of the high-level generic assembly.
 
-   * The use of mu_parser have been replaced by the use of the high-level
-     generic assembly language. mu_parser in no longer a dependence of |gf|.
+   * The use of mu_parser have been replaced by the use of the weak
+     form language. mu_parser in no longer a dependence of |gf|.
 
-   * Add of "elementary transformations" in the high-level generic assembly
+   * Add of "elementary transformations" in the weak form language
      to allow for instance a local projection of a finite element on a lower
      level element to perform a reduction such as the one used in MITC element.
 
-   * Macro definition in the high-level generic assembly language.
+   * Macro definition in the weak form language.
 
    * Numerical continuation/bifurcation detection/branching improved.
 
-   * Matrix exponential and logarithm operators added to the high-level
-     generic assembly.
+   * Matrix exponential and logarithm operators added to the weak form language.
 
    * Allowing the use of C++11 feature.
 
