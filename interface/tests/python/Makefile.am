@@ -1,4 +1,4 @@
-#  Copyright (C) 1999-2017 Yves Renard
+#  Copyright (C) 1999-2018 Yves Renard
 #
 #  This file is a part of GetFEM++
 #
@@ -27,6 +27,7 @@ EXTRA_DIST= 						\
 	check_global_functions.py			\
 	check_levelset.py				\
 	check_asm.py    				\
+	check_mixed_mesh.py    				\
 	demo_crack.py 					\
 	demo_fictitious_domains.py 			\
 	demo_laplacian.py 				\
@@ -57,6 +58,7 @@ TESTS = 						\
 	check_export.py					\
 	check_global_functions.py			\
 	check_asm.py	  				\
+	check_mixed_mesh.py  				\
 	demo_wave.py					\
 	demo_laplacian.py				\
 	$(optpy)
