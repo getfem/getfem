@@ -250,7 +250,6 @@ namespace bgeot
 	converged = false;
 	return point_in_convex(*pgt, x, res, IN_EPS);
       }
-
       if (res > res0) {
         add(scaled(nonlinear_storage.x_ref, factor), x);
         nonlinear_storage.x_real = pgt->transform(x, G);

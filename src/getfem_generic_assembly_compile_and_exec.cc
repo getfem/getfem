@@ -3892,7 +3892,7 @@ namespace getfem {
                 bool converged = true;
                 gic.invert(ctx_x.xreal(), P_ref[i], converged);
 		bool is_in = (gpc.pgt2->convex_ref()->is_in(P_ref[i]) < 1E-4);
-                GMM_ASSERT1(is_in && converged,"Geometric transformation "
+		GMM_ASSERT1(is_in && converged,"Geometric transformation "
                             "inversion has failed in neighbour transformation");
               }
               pspt = store_point_tab(P_ref);

@@ -795,8 +795,9 @@ namespace getfem {
         gic.init(m_x.points_of_convex(adj_face.cv),
                  m_x.trans_of_convex(adj_face.cv));
         bool converged = true;
-        bool is_in = gic.invert(ctx_x.xreal(), P_ref, converged, 1E-4);
-        GMM_ASSERT1(is_in && converged, "Geometric transformation inversion "
+        gic.invert(ctx_x.xreal(), P_ref, converged);
+	bool is_in = (ctx_x.pgt()->convex_ref()->is_in(P_ref) < 1E-4);
+	GMM_ASSERT1(is_in && converged, "Geometric transformation inversion "
                     "has failed in neighbour transformation");
         face_num = adj_face.f;
         cv = adj_face.cv;

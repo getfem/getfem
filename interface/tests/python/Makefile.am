@@ -43,6 +43,7 @@ EXTRA_DIST= 						\
 	demo_stokes_3D_tank.py          		\
 	demo_stokes_3D_tank_draw.py			\
 	demo_thermo_elasticity_electrical_coupling.py 	\
+	demo_cracked_thermo_elastic_body.py             \
 	demo_nonlinear_elasticity.py		 	\
 	demo_wheel_contact.py                           \
 	demo_tripod.py 					\

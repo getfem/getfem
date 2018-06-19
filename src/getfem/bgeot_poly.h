@@ -719,12 +719,11 @@ namespace bgeot
       typedef typename gmm::number_traits<T>::magnitude_type R;
       T a = numerator_.eval(it), b = denominator_.eval(it);
       if (b == T(0)) { // The better should be to evaluate the derivatives ...
-        std::vector<T> p(it, it+dim()), q(dim(), T(1));
-        R no = gmm::vect_norm2(p);
-        if (no == R(0)) no = R(1E-35);
-        else no*=gmm::default_tol(R())*R(100000);
-        gmm::add(gmm::scaled(q, T(no)), p);
-        a = numerator_.eval(p.begin());
+        std::vector<T> p(it, it+dim());
+	R no = gmm::vect_norm2(p);
+	if (no == R(0)) { gmm::fill_random(p); gmm::scale(p, R(1E-35)); }
+	else gmm::scale(p, R(0.9999999));
+	a = numerator_.eval(p.begin());
         b = denominator_.eval(p.begin());
       }
       if (a != T(0)) a /= b;
