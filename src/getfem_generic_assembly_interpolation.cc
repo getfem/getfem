@@ -569,7 +569,7 @@ namespace getfem {
           ga_derivative(tree, pwi.workspace(), source_mesh,
                         var.varname, var.transname, 1);
           if (tree.root)
-            ga_semantic_analysis(tree, local_workspace, *((const mesh *)(0)),
+            ga_semantic_analysis(tree, local_workspace, dummy_mesh(),
 				 1, false, true);
           ga_compile_interpolation(pwi.workspace(), pwi.gis());
         }

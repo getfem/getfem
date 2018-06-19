@@ -524,7 +524,7 @@ namespace getfem {
   void ga_workspace::add_function_expression(const std::string &expr) {
     ga_tree tree;
     ga_read_string(expr, tree, macro_dictionnary());
-    ga_semantic_analysis(tree, *this, *((const mesh *)(0)), 1, false, true);
+    ga_semantic_analysis(tree, *this, dummy_mesh(), 1, false, true);
     if (tree.root) {
       // GMM_ASSERT1(tree.root->nb_test_functions() == 0,
       //            "Invalid function expression");

@@ -365,8 +365,9 @@ namespace getfem {
                                pga_tree_node pnode, const mesh &me,
                                size_type ref_elt_dim, bool eval_fixed_size,
                                bool ignore_X, int option) {
+    // cout << "Analysis of "; ga_print_node(pnode, cout); cout << endl;
     bool all_cte = true, all_sc = true;
-    size_type meshdim = &me ? me.dim() : 1;
+    size_type meshdim = (&me == &dummy_mesh()) ? 1 : me.dim();
     pnode->symmetric_op = false;
 
     for (size_type i = 0; i < pnode->children.size(); ++i) {
@@ -1850,6 +1851,7 @@ namespace getfem {
             ga_node_analysis(tree, workspace, pnode->children[1], me,
 			     ref_elt_dim, eval_fixed_size, ignore_X, option);
 	  }
+	  child1 = pnode->children[1];
 	  tree.replace_node_by_child(pnode, 1);
 	  pnode = child1;
 	} else
@@ -3723,7 +3725,7 @@ namespace getfem {
   static void ga_node_grad(ga_tree &tree, const ga_workspace &workspace,
 			   const mesh &m, pga_tree_node pnode) {
     
-    size_type meshdim = &m ? m.dim() : 1;
+    size_type meshdim = (&m == &dummy_mesh()) ? 1 : m.dim();
     size_type nbch = pnode->children.size();
     pga_tree_node child0 = (nbch > 0) ? pnode->children[0] : 0;
     pga_tree_node child1 = (nbch > 1) ? pnode->children[1] : 0;
@@ -4651,10 +4653,10 @@ namespace getfem {
     GMM_ASSERT1(workspace.nb_trees() <= 1, "Internal error");
     if (workspace.nb_trees()) {
       ga_tree tree = *(workspace.tree_info(0).ptree);
-      ga_derivative(tree, workspace, *((const mesh *)(0)), var, "", 1);
+      ga_derivative(tree, workspace, dummy_mesh(), var, "", 1);
       if (tree.root) {
         ga_replace_test_by_cte(tree.root, true);
-        ga_semantic_analysis(tree, workspace, *((const mesh *)(0)), 1,
+        ga_semantic_analysis(tree, workspace, dummy_mesh(), 1,
 			     false, true);
       }
       return ga_tree_to_string(tree);
@@ -4750,7 +4752,7 @@ namespace getfem {
   bool ga_is_affine(const ga_tree &tree, const ga_workspace &workspace,
 		    const std::string &varname,
 		    const std::string &interpolatename) {
-    const mesh &m = *((const mesh *)(0));
+    const mesh &m = dummy_mesh();
     if (tree.root && ga_node_mark_tree_for_variable(tree.root, workspace, m,
                                                     varname, interpolatename))
       return ga_node_is_affine(tree.root);
