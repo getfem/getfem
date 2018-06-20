@@ -1383,7 +1383,7 @@ namespace getfem {
       std::string dum1, dum2, dum3, dum4, dum7;
       build_isotropic_perfect_elastoplasticity_expressions_generic
         (md, lawname, unknowns_type, varnames, params,
-         dum1, dum2, dum3, dum4, sigma_after, von_mises, dum7);      
+         dum1, dum2, dum3, dum4, sigma_after, von_mises, dum7);
     }
 
     size_type n_ep = 2; // Index of the plastic strain variable
@@ -1546,22 +1546,21 @@ namespace getfem {
       _DEVLOGBETR_3D_ =
       _DEVLOGBETR_ = "(Deviator(Logm("+_F_+"*"+_INVCP0_+"*"+_F_+"')))";
     }
-    const std::string _DEVLOGBE_("((1-2*"+_KSI_+")*"+_DEVLOGBETR_+")");
-    const std::string _DEVLOGBE_3D_("((1-2*"+_KSI_+")*"+_DEVLOGBETR_3D_+")");
-    const std::string _DEVTAU_("("+G+")*pow("+_J_+",-"+_TWOTHIRD_+")*"+_DEVLOGBE_);
+    const std::string _DEVTAUTR_("("+G+"*"+_DEVLOGBETR_+")");
+    const std::string _DEVTAUTR_3D_("("+G+"*"+_DEVLOGBETR_3D_+")");
+    const std::string _DEVTAU_("((1-2*"+_KSI_+")*"+_DEVTAUTR_+")");
+    const std::string _DEVTAU_3D_("((1-2*"+_KSI_+")*"+_DEVTAUTR_3D_+")");
     const std::string _TAU_("("+_P_+"*"+_I_+"+"+_DEVTAU_+")");
 
     const std::string _PLASTSTRAIN_("("+plaststrain0+"+"+_KSI_+"*Norm"+_DEVLOGBETR_3D_+")");
     const std::string _SIGMA_Y_(sigma_y+"("+_PLASTSTRAIN_+")");
-    const std::string _DEVSIGMA_("("+G+"*pow("+_J_+",-"+_FIVETHIRD_+")*"+_DEVLOGBE_3D_+")");
-    const std::string _DEVSIGMATR_("("+G+"*pow("+_J_+",-"+_FIVETHIRD_+")*"+_DEVLOGBETR_3D_+")");
 
     // results
     expr = _TAU_+":(Grad_Test_"+_U_+"*Inv"+_F_+")";
     if (mixed)
       expr += "+("+pressname+"/("+K+")+log("+_J_+")/"+_J_+")*Test_"+pressname;
-    expr += "+(Norm"+_DEVSIGMA_+
-            "-min("+_SIGMA_Y_+",Norm"+_DEVSIGMATR_+"+1e-12*"+_KSI_+"))*Test_"+_KSI_;
+    expr += "+(Norm"+_DEVTAU_+
+            "-min("+_SIGMA_Y_+",Norm"+_DEVTAUTR_+"+1e-12*"+_KSI_+"))*Test_"+_KSI_;
 
     plaststrain = _PLASTSTRAIN_;
 
@@ -1574,7 +1573,7 @@ namespace getfem {
     invCp += ":((Inv"+_F3d_+"*Expm(-"+_KSI_+"*"+_DEVLOGBETR_3D_+")*"+_F3d_+")*"+_INVCP0_+
               "*(Inv"+_F3d_+"*Expm(-"+_KSI_+"*"+_DEVLOGBETR_3D_+")*"+_F3d_+")')";
 
-    vm = _SQRTTHREEHALF_+"*Norm("+_DEVSIGMA_+")";
+    vm = _SQRTTHREEHALF_+"*Norm("+_DEVTAU_+")/"+_J_;
   }
 
   size_type add_finite_strain_elastoplasticity_brick
