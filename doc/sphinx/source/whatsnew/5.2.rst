@@ -24,8 +24,12 @@ The main changes are:
 
    * Import of Ansys meshes.
 
-   * A new transformation has been added to the high level generic assembly
+   * A new transformation has been added to the weak form
      language for the extrapolation on a neighbour element.
 
    * Compatibility for Windows and Mac installation has been checked.
+
+   * For std::vector<T> the overload of std::cout << V << endl; added to gmm
+     induces some conflicts. Is has been suppressed. Please use instead
+     std::cout << gmm::vref(V) << endl;
 

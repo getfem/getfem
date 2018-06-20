@@ -19,7 +19,7 @@
 
 ===========================================================================*/
 
-
+#include "getfem/bgeot_torus.h"
 #include "getfem/dal_singleton.h"
 #include "getfem/getfem_integration.h"
 #include "gmm/gmm_dense_lu.h"
@@ -247,10 +247,13 @@ namespace getfem {
   /* ********************************************************************* */
 
   void approx_integration::add_point(const base_node &pt,
-                                     scalar_type w,short_type f) {
+                                     scalar_type w,
+                                     short_type f,
+                                     bool include_empty) {
     GMM_ASSERT1(!valid, "Impossible to modify a valid integration method.");
-    if (gmm::abs(w) > 1.0E-15) {
+    if (gmm::abs(w) > 1.0E-15 || include_empty) {
       ++f;
+      if (gmm::abs(w) <= 1.0E-15) w = scalar_type(0);
       GMM_ASSERT1(f <= cvr->structure()->nb_faces(), "Wrong argument.");
       size_type i = pt_to_store[f].search_node(pt);
       if (i == size_type(-1)) {
@@ -844,13 +847,13 @@ namespace getfem {
                             size_type ip1, size_type ip2=size_type(-1)) :
       approx_integration
       ((base_im->structure() == bgeot::parallelepiped_structure(3)) ?
-       bgeot::pyramid_of_reference(1)
+       bgeot::pyramid_QK_of_reference(1)
        : bgeot::simplex_of_reference(base_im->dim()))  {
       size_type N = base_im->dim();
 
       enum { SQUARE, PRISM, TETRA_CYL, PRISM2, PYRAMID } what;
       if (N == 2) what = SQUARE;
-      else if (base_im->structure() == bgeot::prism_structure(3))
+      else if (base_im->structure() == bgeot::prism_P1_structure(3))
         what = (ip2 == size_type(-1) || ip1 == ip2) ? PRISM2 : PRISM;
       else if (base_im->structure() == bgeot::simplex_structure(3))
         what = TETRA_CYL;
@@ -867,7 +870,7 @@ namespace getfem {
       bgeot::pgeometric_trans pgt2 = bgeot::simplex_geotrans(N, 1);
       std::vector<base_node> nodes2(N+1);
       if (what == PYRAMID) {
-        pgt2 = bgeot::pyramid_geotrans(1);
+        pgt2 = bgeot::pyramid_QK_geotrans(1);
         nodes2.resize(5);
       }
       std::vector<size_type> other_nodes; // for the construction of node2
@@ -1212,7 +1215,7 @@ namespace getfem {
     /* Identifying Q1-prisms.                                             */
 
     if (!found && nbp == 2 * n)
-      if (cvs == bgeot::prism_structure(dim_type(n)))
+      if (cvs == bgeot::prism_P1_structure(dim_type(n)))
         { name << "IM_EXACT_PRISM("; found = true; }
 
     // To be completed
@@ -1253,15 +1256,19 @@ namespace getfem {
                            "for simplexes of dimension " << n);
       }
       for (size_type k = degree; k < size_type(degree+10); ++k) {
-        pintegration_method im = 0;
-        std::stringstream name2; name2 << name.str() << "(" << k << ")";
-        im = int_method_descriptor(name2.str(), false);
+        std::stringstream name2;
+        name2 << name.str() << "(" << k << ")";
+        pintegration_method im = int_method_descriptor(name2.str(), false);
         if (im) return im;
       }
       GMM_ASSERT1(false, "could not find an " << name.str()
                   << " of degree >= " << int(degree));
+    } else if (bgeot::basic_structure(cvs) == bgeot::pyramid_QK_structure(1)) {
+      GMM_ASSERT1(n == 3, "Wrong dimension");
+      name << "IM_PYRAMID(IM_GAUSS_PARALLELEPIPED(3," << degree << "))";
     } else if (cvs->is_product(&a,&b) ||
-               (bgeot::basic_structure(cvs).get() && bgeot::basic_structure(cvs)->is_product(&a,&b))) {
+               (bgeot::basic_structure(cvs).get() &&
+                bgeot::basic_structure(cvs)->is_product(&a,&b))) {
       name << "IM_PRODUCT("
            << name_of_int_method(classical_approx_im_(a,degree)) << ","
            << name_of_int_method(classical_approx_im_(b,degree)) << ")";

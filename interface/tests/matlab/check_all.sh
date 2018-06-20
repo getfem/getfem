@@ -35,13 +35,16 @@ echo "  export MATLABPATH=$MATLABPATH"
 
 
 if test x$MATLAB_ROOT = x; then
-  MLAB=matlab;
+  MLAB="matlab -nodesktop -nojvm -nosplash"
 else
-  MLAB=${MATLAB_ROOT}/bin/matlab
+  MLAB="${MATLAB_ROOT}/bin/matlab -nodesktop -nojvm -nosplash"
 fi
 
-#echo "s=getenv('MATLABPATH'); while (length(s)), [a,s]=strtok(s,':'); addpath(a); end; disp(pwd); check_all; pause(1)" | ${MLAB} -nodesktop -nojvm -nosplash;
-s=$(echo "s=getenv('MATLABPATH'); while (length(s)), [a,s]=strtok(s,':'); addpath(a); end; disp(pwd); check_all; pause(1)" | ${MLAB} -nodesktop -nojvm -nosplash 2>&1);
+if [ -f "/usr/lib/libblas.so" ]; then
+    s=$(echo "s=getenv('MATLABPATH'); while (length(s)), [a,s]=strtok(s,':'); addpath(a); end; disp(pwd); check_all; pause(1)" | LD_PRELOAD=/usr/lib/libblas.so ${MLAB} 2>&1);
+else
+    s=$(echo "s=getenv('MATLABPATH'); while (length(s)), [a,s]=strtok(s,':'); addpath(a); end; disp(pwd); check_all; pause(1)" | ${MLAB} 2>&1);
+fi
 
 k=`echo "$s" | grep "All tests succeeded"`;
 if test x"$k" = x""; then

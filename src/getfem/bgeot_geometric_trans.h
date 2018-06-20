@@ -221,9 +221,11 @@ namespace bgeot {
   pgeometric_trans APIDECL linear_product_geotrans(pgeometric_trans pg1,
                                            pgeometric_trans pg2);
   pgeometric_trans APIDECL Q2_incomplete_geotrans(dim_type nc);
-  pgeometric_trans APIDECL pyramid_geotrans(short_type k);
-  pgeometric_trans APIDECL pyramid2_incomplete_geotrans();
-  pgeometric_trans APIDECL prism2_incomplete_geotrans();
+  pgeometric_trans APIDECL prism_incomplete_P2_geotrans();
+  pgeometric_trans APIDECL pyramid_QK_geotrans(short_type k);
+  IS_DEPRECATED inline pgeometric_trans APIDECL
+  pyramid_geotrans(short_type k) { return pyramid_QK_geotrans(k); }
+  pgeometric_trans APIDECL pyramid_Q2_incomplete_geotrans();
 
   /**
      Get the geometric transformation from its string name.
@@ -236,16 +238,16 @@ namespace bgeot {
      List of possible names:
      GT_PK(N,K)   : Transformation on simplexes, dim N, degree K
 
-     GT_QK(N,K)   : Transformation on parallelepipeds, dim N, degree K
-     GT_PRISM(N,K)          : Transformation on prisms, dim N, degree K
-     GT_PYRAMID(K)          : Transformation on pyramids, dim 3, degree K=0,1,2
-     GT_Q2_INCOMPLETE(N)    : Q2 incomplete transformation in dim N=2 or 3.
-     GT_PYRAMID2_INCOMPLETE : incomplete quadratic pyramid transformation in
-                              dim 3
-     GT_PRISM2_INCOMPLETE   : incomplete quadratic prism transformation in
-                              dim 3
-     GT_PRODUCT(a,b)        : tensorial product of two transformations
-     GT_LINEAR_PRODUCT(a,b) : Linear tensorial product of two transformations
+     GT_QK(N,K)         : Transformation on parallelepipeds, dim N, degree K
+     GT_PRISM(N,K)      : Transformation on prisms, dim N, degree K
+     GT_PYRAMID_QK(K)   : Transformation on pyramids, dim 3, degree K=0,1,2
+     GT_Q2_INCOMPLETE(N)      : Q2 incomplete transformation in dim N=2 or 3.
+     GT_PYRAMID_Q2_INCOMPLETE : incomplete quadratic pyramid transformation
+                                in dim 3
+     GT_PRISM_INCOMPLETE_P2   : incomplete quadratic prism transformation in
+                                dim 3
+     GT_PRODUCT(a,b)          : tensorial product of two transformations
+     GT_LINEAR_PRODUCT(a,b)   : Linear tensorial product of two transformations
      GT_LINEAR_QK(N) : shortcut for GT_LINEAR_PRODUCT(GT_LINEAR_QK(N-1),
                                                       GT_PK(1,1))
    */
@@ -415,7 +417,7 @@ namespace bgeot {
     mutable scalar_type J_, J__; /** Jacobian */
     mutable base_matrix PC, B_factors;
     mutable base_vector aux1, aux2;
-    mutable std::vector<int> ipvt;
+    mutable std::vector<long> ipvt;
     mutable bool have_J_, have_B_, have_B3_, have_B32_, have_K_, have_cv_center_;
     void compute_J() const;
   public:

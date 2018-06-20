@@ -40,7 +40,7 @@
 #define GETFEM_INTERPOLATION_H__
 
 #include "getfem_mesh_fem.h"
-#include "bgeot_geotrans_inv.h"
+#include "bgeot_torus.h"
 #include "dal_tree_sorted.h"
 #include "getfem_im_data.h"
 #include "getfem_torus.h"
@@ -593,20 +593,21 @@ namespace getfem {
         }
         else mti.add_point(mf_target.point_of_basic_dof(i * qdim_t));
       }
-      interpolation(mf_source, mti, U, V, M, version, extrapolation);
     }
     else {
-      for (dal::bv_visitor_c dof(mf_target.basic_dof_on_region(rg_target)); !dof.finished(); ++dof)
+      for (dal::bv_visitor_c dof(mf_target.basic_dof_on_region(rg_target));
+	   !dof.finished(); ++dof)
         if (dof % qdim_t == 0){
           if (is_target_torus){
             auto p = mf_target.point_of_basic_dof(dof);
             p.resize(msh.dim());
             mti.add_point_with_id(p, dof/qdim_t);
           }
-          else mti.add_point_with_id(mf_target.point_of_basic_dof(dof), dof/qdim_t);
-        }
-      interpolation(mf_source, mti, U, V, M, version, extrapolation, 0, rg_source);
+          else
+	    mti.add_point_with_id(mf_target.point_of_basic_dof(dof),dof/qdim_t);
+        }  
     }
+    interpolation(mf_source, mti, U, V, M, version, extrapolation, 0,rg_source);
 
     if (version == 0)
       mf_target.reduce_vector(V, VV);

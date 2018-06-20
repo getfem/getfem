@@ -176,24 +176,27 @@ namespace getfem {
 
     void  set_type(size_type type)  { type_ = type; }
 
-    /** in multithreaded part of the program makes only a partition of the 
+    /** In multithreaded part of the program makes only a partition of the 
     region visible in the index() and size() operations, as well as during 
     iterations with mr_visitor. This is a default behaviour*/
     void  allow_partitioning();
 
-    /**disregard partitioning, which means being able to see the whole region
+    /** Return the bounding box [Pmin - Pmax] of the mesh_region. */
+    void bounding_box(base_node& Pmin, base_node& Pmax) const;
+
+    /** Disregard partitioning, which means being able to see the whole region
     in multirheaded code. Can be used, for instance, for contact problems
     where master region is partitioned, while the slave region is not*/
     void  prohibit_partitioning();
 
     bool is_partitioning_allowed() const;
 
-    /**extract the next region number 
+    /** Extract the next region number 
     that does not yet exists in the mesh*/
     static size_type free_region_id(const getfem::mesh& m);
 
 
-    /** for regions which have been built with just a number 'id',
+    /** For regions which have been built with just a number 'id',
     from_mesh(m) sets the current region to 'm.region(id)'.  
     (works only once) 
     */
@@ -205,8 +208,8 @@ namespace getfem {
 
     face_bitset operator[](size_t cv) const;
 
-    /**index of the region convexes, or the convexes from the partition on the 
-    current thread*/
+    /** Index of the region convexes, or the convexes from the partition on the 
+    current thread. */
     const dal::bit_vector& index() const;
     void add(const dal::bit_vector &bv);
     void add(size_type cv, short_type f = short_type(-1));
@@ -217,18 +220,18 @@ namespace getfem {
     bool is_in(size_type cv, short_type f = short_type(-1)) const;
     bool is_in(size_type cv, short_type f, const mesh &m) const;
 
-    /**region size, or the size of the region partition on the current
+    /** Region size, or the size of the region partition on the current
     thread if the region is partitioned*/
     size_type size() const;
 
-    /**number of convexes in the region, or on the partition on the current
+    /** Number of convexes in the region, or on the partition on the current
     thread*/
     size_type nb_convex() const { return  index().card();}  
     bool is_empty() const;
-    /** return true if the region do contain only convex faces */
+    /** Return true if the region do contain only convex faces */
     bool is_only_faces() const;
     bool is_boundary() const { return is_only_faces(); }
-    /** return true if the region do not contain any convex face */
+    /** Return true if the region do not contain any convex face */
     bool is_only_convexes() const;
     face_bitset faces_of_convex(size_type cv) const;
     face_bitset and_mask() const;
@@ -257,7 +260,7 @@ namespace getfem {
       short_type f_;
       bool finished_;
 #if GETFEM_PARA_LEVEL > 1
-      mesh_region mpi_rg;
+      std::unique_ptr<mesh_region> mpi_rg;
 #endif
       void init(const mesh_region &s);
       void init(const dal::bit_vector &s);

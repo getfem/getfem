@@ -43,29 +43,51 @@ void copydiags(const MAT &M, const std::vector<size_type> &v,
 
 template <typename T> static void
 gf_spmat_get_full(gsparse &gsp, getfemint::mexargs_in& in, getfemint::mexargs_out& out, T) {
-  gmm::dense_matrix<T> ww;
   size_type n,m;
   if (!in.remaining()) {
     m = gsp.nrows(); n = gsp.ncols();
-    gmm::resize(ww, m, n);
+    gmm::dense_matrix<T> ww(m,n);
     switch (gsp.storage()) {
     case gsparse::CSCMAT: gmm::copy(gsp.csc(T()), ww); break;
     case gsparse::WSCMAT: gmm::copy(gsp.wsc(T()), ww); break;
     default: THROW_INTERNAL_ERROR;
     }
+    std::copy(ww.begin(), ww.end(),
+	      out.pop().create_array(int(m),int(n),T()).begin());
   } else {
     sub_index ii = in.pop().to_sub_index().check_range(gsp.nrows());
     sub_index jj = in.remaining() ?
-      in.pop().to_sub_index().check_range(gsp.ncols()) : ii.check_range(gsp.ncols());
+      in.pop().to_sub_index().check_range(gsp.ncols())
+      : ii.check_range(gsp.ncols());
     m = ii.size(); n = jj.size();
-    gmm::resize(ww, m, n);
-    switch (gsp.storage()) {
-    case gsparse::CSCMAT: gmm::copy(gmm::sub_matrix(gsp.csc(T()),ii,jj), ww); break;
-    case gsparse::WSCMAT: gmm::copy(gmm::sub_matrix(gsp.wsc(T()),ii,jj), ww); break;
-    default: THROW_INTERNAL_ERROR;
+    if (m == 1 && n == 1) {
+      T val = T(0);
+      switch (gsp.storage()) {
+      case gsparse::CSCMAT: val = gsp.csc(T())(ii.first(), jj.first()); break;
+      case gsparse::WSCMAT: val = gsp.wsc(T()).col(jj.first()).r(ii.first()); break;
+      default: THROW_INTERNAL_ERROR;
+      }
+      if (gsp.is_complex()) {
+	if (out.remaining()) out.pop().from_scalar(gmm::real(val));
+	if (out.remaining()) out.pop().from_scalar(gmm::imag(val));
+      } else {
+	if (out.remaining()) out.pop().from_scalar(gmm::real(val));
+	// if (out.remaining()) out.pop().from_scalar(0);
+       }
+    } else {
+      gmm::dense_matrix<T> ww(m,n);
+      switch (gsp.storage()) {
+      case gsparse::CSCMAT:
+	gmm::copy(gmm::sub_matrix(gsp.csc(T()),ii,jj), ww); break;
+      case gsparse::WSCMAT:
+	gmm::copy(gmm::sub_matrix(gsp.wsc(T()),ii,jj), ww); break;
+      default: THROW_INTERNAL_ERROR;
+      }
+      std::copy(ww.begin(), ww.end(),
+		out.pop().create_array(int(m),int(n),T()).begin());
     }
   }
-  std::copy(ww.begin(), ww.end(), out.pop().create_array(int(m),int(n),T()).begin());
+  
 }
 
 template <typename T> static void
@@ -203,7 +225,7 @@ void gf_spmat_get(getfemint::mexargs_in& m_in,
     sub_command
       ("full", 0, 2, 0, 1,
        if (gsp.is_complex()) gf_spmat_get_full(gsp, in, out, complex_type());
-       else gf_spmat_get_full(gsp, in,out,scalar_type());
+       else gf_spmat_get_full(gsp, in, out, scalar_type());
        );
 
 
@@ -357,9 +379,15 @@ void gf_spmat_get(getfemint::mexargs_in& m_in,
       @*/
     sub_command
       ("char", 0, 0, 0, 1,
-       GMM_ASSERT1(false, "Sorry, function to be done");
-       // std::string s = ...;
-       // out.pop().from_string(s.c_str());
+       std::stringstream s;
+       if (gsp.storage() == getfemint::gsparse::WSCMAT) {
+	 if (!gsp.is_complex()) s << gsp.wsc(scalar_type());
+	 else                   s << gsp.wsc(complex_type());
+       } else {
+	 if (!gsp.is_complex()) s << gsp.csc(scalar_type());
+	 else           	s << gsp.csc(complex_type());
+       }
+       out.pop().from_string(s.str().c_str());
        );
 
 

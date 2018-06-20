@@ -84,7 +84,7 @@ namespace getfem {
 		"Bad type of parameters");
     pintegration_method pim = params[0].method();
     int k = int(::floor(params[1].num() + 0.01));
-    GMM_ASSERT1(pim->type() == IM_APPROX && k > 0 && k <= 150 &&
+    GMM_ASSERT1(pim->type() == IM_APPROX && k > 0 && k <= 500 &&
 		double(k) == params[1].num(), "Bad parameters");
 
     bgeot::pbasic_mesh pm;
@@ -213,7 +213,7 @@ namespace getfem {
     pintegration_method
       p = std::make_shared<integration_method>
       (composite_approx_int_method(jfs.mp, mi,
-                                   bgeot::pyramid_of_reference(1)));
+                                   bgeot::pyramid_QK_of_reference(1)));
     dependencies.push_back(p->approx_method()->ref_convex());
     dependencies.push_back(p->approx_method()->pintegration_points());
     return p;

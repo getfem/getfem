@@ -147,7 +147,10 @@ namespace getfem {
     }
     else {
       model_pb<MATRIX, VECTOR> mdpb(md, ls, state, rhs, K);
-      classical_Newton(mdpb, iter, *lsolver);
+      if (dynamic_cast<newton_search_with_step_control *>(&ls))
+	Newton_with_step_control(mdpb, iter, *lsolver);
+      else
+	classical_Newton(mdpb, iter, *lsolver);
     }
     md.to_variables(state); // copy the state vector into the model variables
   }
@@ -175,12 +178,14 @@ namespace getfem {
 
   void standard_solve(model &md, gmm::iteration &iter,
                       cmodel_plsolver_type lsolver) {
-    default_newton_line_search ls;
+    newton_search_with_step_control ls;
+    // default_newton_line_search ls;
     standard_solve(md, iter, lsolver, ls);
   }
 
   void standard_solve(model &md, gmm::iteration &iter) {
-    getfem::default_newton_line_search ls;
+    newton_search_with_step_control ls;
+    // default_newton_line_search ls;
     if (md.is_complex())
       standard_solve(md, iter, cdefault_linear_solver(md), ls);
     else

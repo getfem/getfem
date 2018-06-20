@@ -93,12 +93,10 @@ namespace bgeot {
   protected :
     std::vector<base_small_vector> normals_;
     pstored_point_tab ppoints;
-    mutable std::shared_ptr<mesh_structure> psimplexified_convex;
+    std::shared_ptr<mesh_structure> psimplexified_convex;
     pconvex_ref basic_convex_ref_;
-    bool auto_basic;
-    convex_of_reference() : convex<base_node>(),
-                            basic_convex_ref_(0), auto_basic(false)
-    { DAL_STORED_OBJECT_DEBUG_CREATED(this, "convex of refrence"); }
+    const bool auto_basic;
+    convex_of_reference(pconvex_structure cvs, bool auto_basic);
 
   public :
     /// return a negative or null number if the base_node is in the convex.
@@ -110,6 +108,7 @@ namespace bgeot {
      *  positive in the other side.
      */
     virtual scalar_type is_in_face(short_type, const base_node &) const =0;
+    bool is_basic() const;
     /// return the normal vector for each face.
     const std::vector<base_small_vector> &normals() const
     { return normals_; }
@@ -132,7 +131,11 @@ namespace bgeot {
   inline pconvex_ref basic_convex_ref(pconvex_ref cvr)
   { return cvr->auto_basic ? cvr : cvr->basic_convex_ref_; }
 
-
+  // interface with qhull
+  void qhull_delaunay(const std::vector<base_node> &pts,
+		      gmm::dense_matrix<size_type>& simplexes);
+  
+  
   //@name public functions for obtaining a convex of reference
   //@{
 
@@ -140,18 +143,19 @@ namespace bgeot {
   pconvex_ref simplex_of_reference(dim_type nc, short_type k = 1);
   /** parallelepiped of reference of dimension nc (and degree 1) */
   pconvex_ref parallelepiped_of_reference(dim_type nc, dim_type k = 1);
+  /** incomplete Q2 quadrilateral/hexahedral of reference of dimension
+      d = 2 or 3 */
+  pconvex_ref Q2_incomplete_of_reference(dim_type d);
   /** prism of reference of dimension nc (and degree 1) */
   pconvex_ref prism_of_reference(dim_type nc);
-  /** incomplete Q2 quadrilateral/hexahedral of reference of dimension
-      d = 2 or 3
-  */
-  pconvex_ref Q2_incomplete_of_reference(dim_type d);
-  /** pyramidal element of reference of degree k (k = 1 or 2 only) */
-  pconvex_ref pyramid_of_reference(dim_type k);
-  /** incomplete quadratic pyramidal element of reference (13-node) */
-  pconvex_ref pyramid2_incomplete_of_reference();
   /** incomplete quadratic prism element of reference (15-node) */
-  pconvex_ref prism2_incomplete_of_reference();
+  pconvex_ref prism_incomplete_P2_of_reference();
+  /** pyramidal element of reference of degree k (k = 1 or 2 only) */
+  pconvex_ref pyramid_QK_of_reference(dim_type k);
+  IS_DEPRECATED pconvex_ref inline
+  pyramid_of_reference(dim_type k) { return pyramid_QK_of_reference(k); }
+  /** incomplete quadratic pyramidal element of reference (13-node) */
+  pconvex_ref pyramid_Q2_incomplete_of_reference();
   /** tensorial product of two convex ref.
       in order to ensure unicity, it is required the a->dim() >= b->dim() */
   pconvex_ref convex_ref_product(pconvex_ref a, pconvex_ref b);

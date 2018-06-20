@@ -76,7 +76,7 @@ F = gf_mesh_fem_get(mf, 'eval', { '3*pi*pi*sin(pi*x/2).*sin(pi*y/2).*sin(pi*z/2)
 
 md=gf_model('real');
 gf_model_set(md, 'add fem variable', 'u', mf);
-gf_model_set(md, 'add linear generic assembly brick', mim, 'Grad_u.Grad_Test_u');
+gf_model_set(md, 'add linear term', mim, 'Grad_u.Grad_Test_u');
 % gf_model_set(md, 'add Laplacian brick', mim, 'u');
 gf_model_set(md, 'add initialized fem data', 'VolumicData', mf, F);
 gf_model_set(md, 'add source term brick', mim, 'u', 'VolumicData');

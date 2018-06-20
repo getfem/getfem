@@ -372,7 +372,8 @@ namespace getfem {
     // generic assembly
     std::map<std::string, std::vector<std::string> > variable_groups;
 
-    std::map<std::string, std::string> macros;
+    ga_macro_dictionnary macro_dict;
+    
 
 
     virtual void actualize_sizes() const;
@@ -834,17 +835,20 @@ namespace getfem {
                         const std::string &primal_name, const mesh_im &mim,
                         size_type region, size_type niter = 1);
 
+    /** Dictonnary of user defined macros. */
+    const ga_macro_dictionnary &macro_dictionnary() const { return macro_dict; }
 
     /** Add a macro definition for the high generic assembly langage.
         This macro can be used for the definition of generic assembly bricks.
         The name of a macro cannot coincide with a variable name. */
     void add_macro(const std::string &name, const std::string &expr);
 
-    /** Says if a macro of that name has been defined. */
-    bool macro_exists(const std::string &name) const;
+    /** Delete a previously defined macro definition. */
+    void del_macro(const std::string &name);
 
-    /** Gives the exression string of a macro. */
-    const std::string& get_macro(const std::string &name) const;
+    /** Says if a macro of that name has been defined. */
+    bool macro_exists(const std::string &name) const
+    { return macro_dict.macro_exists(name); }
 
     /** Delete a variable or data of the model. */
     void delete_variable(const std::string &varname);
@@ -1519,11 +1523,20 @@ namespace getfem {
       are not allowed for non-coercive problems.
       `brickname` is an otpional name for the brick.
   */
-  size_type APIDECL add_linear_generic_assembly_brick
+  size_type APIDECL add_linear_term
   (model &md, const mesh_im &mim, const std::string &expr,
    size_type region = size_type(-1), bool is_sym = false,
    bool is_coercive = false, std::string brickname = "",
    bool return_if_nonlin = false);
+
+  inline size_type APIDECL add_linear_generic_assembly_brick
+  (model &md, const mesh_im &mim, const std::string &expr,
+   size_type region = size_type(-1), bool is_sym = false,
+   bool is_coercive = false, std::string brickname = "",
+   bool return_if_nonlin = false) {
+    return add_linear_term(md, mim, expr, region, is_sym,
+		    is_coercive, brickname, return_if_nonlin);
+  }
 
   /** Add a nonlinear term given by the assembly string `expr` which will
       be assembled in region `region` and with the integration method `mim`.
@@ -1536,10 +1549,18 @@ namespace getfem {
       are not allowed for non-coercive problems.
       `brickname` is an otpional name for the brick.
   */
-  size_type APIDECL add_nonlinear_generic_assembly_brick
+  size_type APIDECL add_nonlinear_term
   (model &md, const mesh_im &mim, const std::string &expr,
    size_type region = size_type(-1), bool is_sym = false,
    bool is_coercive = false, std::string brickname = "");
+
+  inline size_type APIDECL add_nonlinear_generic_assembly_brick
+  (model &md, const mesh_im &mim, const std::string &expr,
+   size_type region = size_type(-1), bool is_sym = false,
+   bool is_coercive = false, std::string brickname = "") {
+    return add_nonlinear_term(md, mim, expr, region,
+			      is_sym, is_coercive, brickname);
+  }
 
 
   /** Add a source term given by the assembly string `expr` which will
@@ -1550,12 +1571,21 @@ namespace getfem {
       derivated with respect to all variables.
       `brickname` is an otpional name for the brick.
   */
-  size_type APIDECL add_source_term_generic_assembly_brick
+  size_type APIDECL add_source_term
   (model &md, const mesh_im &mim, const std::string &expr,
    size_type region = size_type(-1),  std::string brickname = "",
    std::string directvarname = std::string(),
    const std::string &directdataname = std::string(),
    bool return_if_nonlin = false);
+  inline size_type APIDECL add_source_term_generic_assembly_brick
+  (model &md, const mesh_im &mim, const std::string &expr,
+   size_type region = size_type(-1),  std::string brickname = "",
+   std::string directvarname = std::string(),
+   const std::string &directdataname = std::string(),
+   bool return_if_nonlin = false) {
+    return add_source_term(md, mim, expr, region, brickname,
+		    directvarname, directdataname, return_if_nonlin);
+  }
 
   /** Add a Laplacian term on the variable `varname` (in fact with a minus :
       :math:`-\text{div}(\nabla u)`). If it is a vector
@@ -2169,7 +2199,7 @@ namespace getfem {
 
 
   /** Linear elasticity brick ( @f$ \int \sigma(u):\varepsilon(v) @f$ ).
-      for isotropic material. Parametrized by the Lamé coefficients
+      for isotropic material. Parametrized by the LamÃ© coefficients
       lambda and mu.
   */
   size_type APIDECL add_isotropic_linearized_elasticity_brick

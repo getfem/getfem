@@ -26,12 +26,12 @@ colormap(r);
 dirichlet_version = 2; % 1 = simplification, 2 = penalisation
 drawing = true;
 test_tangent_matrix = false;
-incompressible = true;
+incompressible = false;
 
-% lawname = 'Ciarlet Geymonat';
-% params = [1;1;0.25];
-lawname = 'SaintVenant Kirchhoff';
-params = [1;1];
+lawname = 'Ciarlet Geymonat';
+params = [1;1;0.25];
+% lawname = 'SaintVenant Kirchhoff';
+% params = [1;1];
 if (incompressible)
     lawname = 'Incompressible Mooney Rivlin';
     params = [1;1];
@@ -41,9 +41,9 @@ N1=2; N2=4; h=20;
 m=gf_mesh('cartesian',(0:N1)/N1 - .5, (0:N2)/N2*h, ((0:N1)/N1 - .5)*3);
 mfu=gf_mesh_fem(m,3);     % mesh-fem supporting a 3D-vector field
 % the mesh_im stores the integration methods for each tetrahedron
-mim=gf_mesh_im(m,gf_Integ('IM_GAUSS_PARALLELEPIPED(3,4)'));
+mim=gf_mesh_im(m,gf_integ('IM_GAUSS_PARALLELEPIPED(3,4)'));
 % we choose a P2 fem for the main unknown
-gf_mesh_fem_set(mfu, 'fem',gf_Fem('FEM_QK(3,2)'));
+gf_mesh_fem_set(mfu, 'fem',gf_fem('FEM_QK(3,2)'));
 mfdu=gf_mesh_fem(m,1);
 % the material is homogeneous, hence we use a P0 fem for the data
 if (dirichlet_version == 1)
@@ -86,32 +86,33 @@ gf_model_set(md, 'add fem variable', 'u', mfu);
 gf_model_set(md,'add initialized data','params', params);
 % gf_model_set(md, 'add nonlinear elasticity brick', mim, 'u', lawname, 'params');
 gf_model_set(md, 'add finite strain elasticity brick', mim, lawname, 'u',  'params');
-% gf_model_set(md, 'add nonlinear generic assembly brick', mim, ...
+% gf_model_set(md, 'add nonlinear term', mim, ...
 %             'sqr(Trace(Green_Lagrangian(Id(meshdim)+Grad_u)))/8 + Norm_sqr(Green_Lagrangian(Id(meshdim)+Grad_u))/4');
-% gf_model_set(md, 'add nonlinear generic assembly brick', mim, ...
+% gf_model_set(md, 'add nonlinear term', mim, ...
 %            '((Id(meshdim)+Grad_u)*(params(1)*Trace(Green_Lagrangian(Id(meshdim)+Grad_u))*Id(meshdim)+2*params(2)*Green_Lagrangian(Id(meshdim)+Grad_u))):Grad_Test_u');
-% gf_model_set(md, 'add nonlinear generic assembly brick', mim, 'Saint_Venant_Kirchhoff_potential(Grad_u,params)'); 
-% gf_model_set(md, 'add nonlinear generic assembly brick', mim, ...
+% gf_model_set(md, 'add nonlinear term', mim, 'Saint_Venant_Kirchhoff_potential(Grad_u,params)'); 
+% gf_model_set(md, 'add nonlinear term', mim, ...
 %           '((Id(meshdim)+Grad_u)*(Ciarlet_Geymonat_sigma(Grad_u,params))):Grad_Test_u');
-% gf_model_set(md, 'add nonlinear generic assembly brick', mim, ...
+% gf_model_set(md, 'add nonlinear term', mim, ...
 %                'Ciarlet_Geymonat_potential(Grad_u,params)');
-% gf_model_set(md, 'add nonlinear generic assembly brick', mim, ...
+% gf_model_set(md, 'add nonlinear term', mim, ...
 %         '((Id(meshdim)+Grad_u)*(Incompressible_Mooney_Rivlin_sigma(Grad_u,params))):Grad_Test_u');
-% gf_model_set(md, 'add nonlinear generic assembly brick', mim, ...
+% gf_model_set(md, 'add nonlinear term', mim, ...
 %                  'Incompressible_Mooney_Rivlin_potential(Grad_u,params)');
-% gf_model_set(md, 'add nonlinear generic assembly brick', mim, ...
+% gf_model_set(md, 'add nonlinear term', mim, ...
 %      '((Id(meshdim)+Grad_u)*(Saint_Venant_Kirchhoff_sigma(Grad_u,params))):Grad_Test_u');
 
     
-if (incompressible || true)
-  mfp = gf_Mesh_Fem(m,1); 
-  gf_mesh_fem_set(mfp, 'classical discontinuous fem', 1);
+if (incompressible)
+  mfp = gf_mesh_fem(m,1); 
+  % gf_mesh_fem_set(mfp, 'classical discontinuous fem', 1);
+  gf_mesh_fem_set(mfp, 'classical fem', 1);
   gf_model_set(md, 'add fem variable', 'p', mfp);
   % gf_model_set(md, 'add nonlinear incompressibility brick',  mim, 'u', 'p');
   gf_model_set(md, 'add finite strain incompressibility brick',  mim, 'u', 'p');
-  % gf_model_set(md, 'add nonlinear generic assembly brick', mim, ...
+  % gf_model_set(md, 'add nonlinear term', mim, ...
   %                'p*(1-Det(Id(meshdim)+Grad_u))');
-  % gf_model_set(md, 'add nonlinear generic assembly brick', mim, ...
+  % gf_model_set(md, 'add nonlinear term', mim, ...
   %                 '-p*Det(Id(meshdim)+Grad_u)*(Inv(Id(meshdim)+Grad_u))'':Grad_Test_u + Test_p*(1-Det(Id(meshdim)+Grad_u))');
 end
 
@@ -197,7 +198,7 @@ for step=1:nbstep,
     end
     
     gf_model_set(md, 'variable', 'DirichletData', R);
-    gf_model_get(md, 'solve', 'very noisy', 'max_iter', 100, 'max_res', 1e-5, 'lsearch', 'simplest');
+    gf_model_get(md, 'solve', 'noisy', 'max_iter', 100, 'max_res', 1e-5); %  , 'lsearch', 'simplest');
       
     if (test_tangent_matrix)
       gf_model_get(md, 'test tangent matrix', 1E-8, 10, 0.0001);

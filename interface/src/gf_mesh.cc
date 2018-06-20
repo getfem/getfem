@@ -133,7 +133,7 @@ pyramidal_mesh(getfem::mesh *pmesh, getfemint::mexargs_in &in) {
   std::vector<int> ipt(dim);
   std::vector<getfem::base_node> pts(1 << (dim+1));
 
-  bgeot::pgeometric_trans pgt = bgeot::pyramid_geotrans(1);
+  bgeot::pgeometric_trans pgt = bgeot::pyramid_QK_geotrans(1);
 
   /* add the convexes */
   for (size_type i=0; i < grid_nconvex; i++) {
@@ -329,7 +329,7 @@ ptND_mesh(getfem::mesh *mesh, bool is2D, getfemint::mexargs_in &in)
 {
   darray P = in.pop().to_darray(-1, -1);
   iarray T = in.pop().to_iarray(-1, -1);
-  cout << "T(" << T.getm() << ", " << T.getn() << "), size=" << T.size() << "\n";
+  // cout << "T(" << T.getm() << ", " << T.getn() << "), size=" << T.size() << "\n";
   size_type mdim = P.getm();
   size_type N = is2D ? 2 : T.getm() - 1;
   if (is2D && T.getm() != 3 && T.getm() != 4) {

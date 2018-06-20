@@ -126,9 +126,9 @@ md.add_Dirichlet_condition_with_multipliers(mim2, 'u2', elements_degree-1, BOTTO
 md.add_initialized_data('gamma0', [gamma0])
 md.add_interpolate_transformation_from_expression('Proj1', mesh1, mesh2, '[X(1);0]')
 md.add_filtered_fem_variable('lambda1', mflambda_C, CONTACT_BOUND)
-md.add_nonlinear_generic_assembly_brick(mim1c, 'lambda1*(Test_u1.[0;1])'
+md.add_nonlinear_term(mim1c, 'lambda1*(Test_u1.[0;1])'
                                         '-lambda1*(Interpolate(Test_u2,Proj1).[0;1])', CONTACT_BOUND)
-md.add_nonlinear_generic_assembly_brick(mim1c, '-(gamma0*element_size)*(lambda1 + neg_part(lambda1+(1/(gamma0*element_size))*((u1-Interpolate(u2,Proj1)+X-Interpolate(X,Proj1)).[0;1])))*Test_lambda1', CONTACT_BOUND);
+md.add_nonlinear_term(mim1c, '-(gamma0*element_size)*(lambda1 + neg_part(lambda1+(1/(gamma0*element_size))*((u1-Interpolate(u2,Proj1)+X-Interpolate(X,Proj1)).[0;1])))*Test_lambda1', CONTACT_BOUND);
 
 # Prescribed force in the hole
 if (Dirichlet_version):
@@ -138,7 +138,7 @@ else:
   md.add_filtered_fem_variable('lambda_D', mflambda, HOLE_BOUND)
   md.add_initialized_data('F', [applied_force/(8*2*np.pi)])
   md.add_variable('alpha_D', 1)
-  md.add_linear_generic_assembly_brick(mim1, '-lambda_D.Test_u1 + (alpha_D*[0;1] - u1).Test_lambda_D + (lambda_D.[0;1] + F)*Test_alpha_D + 1E-6*alpha_D*Test_alpha_D', HOLE_BOUND)
+  md.add_linear_term(mim1, '-lambda_D.Test_u1 + (alpha_D*[0;1] - u1).Test_lambda_D + (lambda_D.[0;1] + F)*Test_alpha_D + 1E-6*alpha_D*Test_alpha_D', HOLE_BOUND)
   # The small penalization 1E-6*alpha_D*Test_alpha_D seems necessary to have
   # a convergence in all cases. Why ?
 

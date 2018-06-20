@@ -160,7 +160,7 @@ md.add_initialized_data('eps', [epsilon])
 md.add_initialized_data('rho_0', [rho_0])
 md.add_initialized_data('alpha', [alpha])
 md.add_initialized_data('T0', [T0])
-md.add_nonlinear_generic_assembly_brick(mim, sigmaeps+'*(Grad_V.Grad_Test_V)')
+md.add_nonlinear_term(mim, sigmaeps+'*(Grad_V.Grad_Test_V)')
 md.add_Dirichlet_condition_with_multipliers(mim, 'V', elements_degree-1, RIGHT_BOUND)
 md.add_initialized_data('DdataV', [0.1])
 md.add_Dirichlet_condition_with_multipliers(mim, 'V', elements_degree-1, LEFT_BOUND, 'DdataV')
@@ -180,11 +180,11 @@ md.add_Fourier_Robin_brick(mim, 'theta', 'Deps', BOTTOM_BOUND)
 md.add_source_term_brick(mim, 'theta', 'Depsairt', BOTTOM_BOUND)
 
 # Joule heating term
-md.add_nonlinear_generic_assembly_brick(mim, '-'+sigmaeps+'*Norm_sqr(Grad_V)*Test_theta')
+md.add_nonlinear_term(mim, '-'+sigmaeps+'*Norm_sqr(Grad_V)*Test_theta')
 
 # Thermal expansion term
 md.add_initialized_data('beta', [alpha_th*E/(1-2*nu)])
-md.add_linear_generic_assembly_brick(mim, 'beta*(T0-theta)*Trace(Grad_Test_u)')
+md.add_linear_term(mim, 'beta*(T0-theta)*Trace(Grad_Test_u)')
 
 
 #

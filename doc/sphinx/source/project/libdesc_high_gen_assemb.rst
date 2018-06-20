@@ -15,7 +15,7 @@ The high-level generic assembly module in |gf|
 Description
 ^^^^^^^^^^^
 
-The high level generic assembly language of |gf| is a key module which allows to describe weak formulation of partial differential equation problems. See the description of the language in the user documentation section :ref:`ud-gasm-high`.
+The high level generic assembly module of |gf| and its weak form language is a key module which allows to describe weak formulation of partial differential equation problems. See the description of the language in the user documentation section :ref:`ud-gasm-high`.
 
 Files
 ^^^^^
@@ -24,10 +24,14 @@ Files
    :header: "File(s)", "Description"
    :widths: 8, 15
 
-   :file:`getfem_generic_assembly.h` and :file:`getfem_generic_assembly.cc`, "In order not to export all the internal of the generic assembly, all is implemented in a single file"
+   :file:`getfem_generic_assembly.h`, "Main header for exported definitions. Only this header has to be included to use the generic assembly. Other headers of the module are for internal use only."
+   :file:`getfem_generic_assembly_tree.h` and :file:`getfem_generic_assembly_tree.cc`, "Definition of the tree structure and basic operations on it, including reading an assembly string and transform it in a syntax tree and make the invert transformation of a tree into a string."
+   :file:`getfem_generic_assembly_fonction_and_operators.h` and :file:`getfem_generic_assembly_fonction_and_operators.cc`, "Definition of redefined function and nonlinear operator of the weak form language."
+   :file:`getfem_generic_assembly_semantic.h` and :file:`getfem_generic_assembly_semantic.cc`, "Semantic analysis and enrichment of the syntax tree. Include some operations such as making the derivation of a tree with respect to a variable or computing the tree corresponding to the gradient of an expression."
+   :file:`getfem_generic_assembly_workspace.cc`, "Methodes of the workspace object (defined in :file:`getfem_generic_assembly.h`)."
+   :file:`getfem_generic_assembly_compile_and_exec.h` and :file:`getfem_generic_assembly_compile_and_exec.cc`, "Definition of the optimized instructions, compilation into a sequel of optimize instructions and execution of the instructions on Gauss point/interpolation points."   
+   :file:`getfem_generic_assembly_interpolation.cc`, "Interpolation operations and interpolate transformations."
 
-
-For the moment, having a single (giant) file simplify the maintenance.
 
 A few implementation details
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -41,6 +45,8 @@ The assembly string is transformed in an assembly tree by a set of function in :
  - Semantic analysis, simplification (pre-computation) of constant expressions and enrichment of the tree by ``ga_semantic_analysis(...)``.
 
  - Symbolic (automatic) differentiation of an assembly tree by ``ga_derivative(...)``
+
+ - Symbolic (automatic) gradient computation of an assembly tree by ``ga_gradient(...)``
 
  - Compilation in a sequence of instructions with optimizations by ``ga_compile(...)``.
 
@@ -133,7 +139,7 @@ Optimized instructions for variable evaluation, operations, vector and matrix as
 Predefined functions
 ^^^^^^^^^^^^^^^^^^^^
 
-Some predefined scalar functions are available in |gf| generic assembly langage in order to describe a weak formulation (or also to make basic algebraic computations). This is limited to scalar functions of one or two arguments. Due to the automatic differentiation used to obtain the tangent system of described problems, the derivative each function have to be available. The principle retained is the following: For each predefined function is available:
+Some predefined scalar functions are available in |gf| weak form langage in order to describe a weak formulation (or also to make basic algebraic computations). This is limited to scalar functions of one or two arguments. Due to the automatic differentiation used to obtain the tangent system of described problems, the derivative each function have to be available. The principle retained is the following: For each predefined function is available:
   - A C++ function which computes the value given the argument(s).
   - The support of the function in the first each argument in term of a
     (possibly infinite) interval (this is for simplification of expressions).

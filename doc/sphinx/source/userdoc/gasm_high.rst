@@ -11,7 +11,7 @@
 Compute arbitrary terms - high-level generic assembly procedures
 ================================================================
 
-This section presents what is now the main generic assembly of |gf|. It is a high-level generic assembly in the sense that the language used to describe the assembly is quite close to the weak formulation of boundary value problems of partial differential equations. It mainly has been developed to circumvent the difficulties with the previous low-level generic assembly (see  :ref:`ud-gasm-low`) for which nonlinear terms were quite difficult to describe. Conversely, a symbolic differentiation algorithm is used with this version. It simplifies a lot the approximation of nonlinear coupled problems since only the weak form is necessary to be described, the tangent system being automatically computed. Moreover, the assembly language is compiled into optimized instructions before the evaluation on each integration point in order to obtain a an optimal computational cost.
+This section presents what is now the main generic assembly of |gf|. It is a high-level generic assembly in the sense that it is based on a weak form language to describe the weak formulation of boundary value problems of partial differential equations. It mainly has been developed to circumvent the difficulties with the previous low-level generic assembly (see  :ref:`ud-gasm-low`) for which nonlinear terms were quite difficult to describe. Conversely, a symbolic differentiation algorithm is used with this version. It simplifies a lot the approximation of nonlinear coupled problems since only the weak form is necessary to be described, the tangent system being automatically computed. Moreover, the weak form language is compiled into optimized instructions before the evaluation on each integration point in order to obtain a an optimal computational cost.
 
 The header file to be included to use the high-level generic assembly procedures in C++ is :file:`getfem/generic\_assembly.h`.
 
@@ -21,10 +21,10 @@ For basic linear assembly terms, the high level generic assembly is most of the 
 
 
 
-Overview of the assembly language syntax
-----------------------------------------
+Overview of the weak form language syntax
+-----------------------------------------
 
-A specific language has been developed to describe the weak formulation of boundary value problems. It is intended to be close to the structure of a standard weak formulation and it incorporates the following components:
+A specific weak form language has been developed to describe the weak formulation of boundary value problems. It is intended to be close to the structure of a standard weak formulation and it incorporates the following components:
 
   - Variable names: A list of variables should be given. The variables are described on a finite element method or can be a simple vector of unknowns. For instance ``u``, ``v``, ``p``, ``pressure``, ``electric_field`` are valid variable names.
 
@@ -50,17 +50,23 @@ A specific language has been developed to describe the weak formulation of bound
 
   - Explicit matrices: For instance ``[1,3;2,4]`` and ``[[1,2],[3,4]]`` denote the same 2x2 matrix. Each component can be an expression.
 
-  - Explicit fourth order tensors: Supplementary dimensions are separated with ``,,`` and ``;;``. For instance ``[1,1;1,2,,1,1;1,2;;1,1;1,2,,1,1;1,2]`` is a 2x2x2x2 valid tensor.
+  - Explicit fourth order tensors: example of explicit 3x2x2x2 fourth order tensor in the nested format: ``[[[[1,2,3],[1,2,3]],[[1,2,3],[1,2,3]]],[[[1,2,3],[1,2,3]],[[1,2,3],[1,2,3]]]]``.
 
   - ``X`` is the current coordinate on the real element, ``X(i)`` is its i-th component.
 
-  - ``Normal`` is the outward unit normal vector to a boundary (for integration on a domain boundary).
+  - ``Normal`` is the outward unit normal vector to a boundary, when integrating on a domain boundary, or the unit normal vector to a level-set when integrating on a level-set with a ``mesh_im_level_set`` method. In the latter case, the normal vector is in the direction of the level-set function gradient.
 
   - ``Reshape(t, i, j, ...)``: Reshape a vector/matrix/tensor. Note that all tensors in |gf| are stored in the Fortran order.
 
-  - A certain number of linear and nonlinear operators (``Trace``, ``Norm``, ``Det``, ``Deviator``, ...). The nonlinear operators cannot be applied to test functions.
+  - A certain number of linear and nonlinear operators (``Trace``, ``Norm``, ``Det``, ``Deviator``, ``Contract``, ...). The nonlinear operators cannot be applied to test functions.
 
-  - Possiblility of macro definition (in the model or ga_workspace object). The macros should be some valid expressions that are expanded inline at the semantic analysis phase (if they are used several times, the computation is automatically factorized at the compilation stage).
+  - ``Diff(expression, variable)``: The possibility to explicit differentiate an expression with respect to a variable (symbolic differentiation). 
+
+  - ``Diff(expression, variable, direction)``: computes the derivative of ``expression`` with respect to ``variable`` in the direction ``direction``.
+
+  - ``Grad(expression)``: When possible, symbolically derive the gradient of the given expression.
+
+  - Possiblility of macro definition (in the model, the ga_workspace object or directly in the assembly string). The macros should be some valid expressions that are expanded inline at the lexical analysis phase (if they are used several times, the computation is automatically factorized at the compilation stage).
 
   - ``Interpolate(variable, transformation)``: Powerful operation which allows to interpolate the variables, or test functions either on the same mesh on other elements or on another mesh. ``transformation`` is an object stored by the workspace or model object which describes the map from the current point to the point where to perform the interpolation. This functionality can be used for instance to prescribe periodic conditions or to compute mortar matrices for two finite element spaces defined on different meshes or more generally for fictitious domain methods such as fluid-structure interaction.
 
@@ -355,7 +361,7 @@ with ``D`` the flexion modulus and ``nu`` the Poisson ratio.
 The tensors
 -----------
 
-Basically, what is manipulated in the generic assembly language are tensors. This can be order 0 tensors in scalar expressions (for instance in ``3+sin(pi/2)``), order 1 tensors in vector expressions (such as ``X.X`` or ``Grad_u`` if u is a scalar variable), order 2 tensors for matrix expressions and so on. For efficiency reasons, the language manipulates tensors up to order six. The language could be easily extended to support tensors of order greater than six but it may lead to inefficient computations. When an expression contains test functions (as in ``Trace(Grad_Test_u)`` for a vector field ``u``), the computation is done for each test functions, which means that the tensor implicitly have a supplementary component. This means that, implicitly, the maximal order of manipulated tensors are in fact six (in ``Grad_Test_u:Grad_Test2_u`` there are two components implicitly added for first and second order test functions).
+Basically, what is manipulated in the weak form language are tensors. This can be order 0 tensors in scalar expressions (for instance in ``3+sin(pi/2)``), order 1 tensors in vector expressions (such as ``X.X`` or ``Grad_u`` if u is a scalar variable), order 2 tensors for matrix expressions and so on. For efficiency reasons, the language manipulates tensors up to order six. The language could be easily extended to support tensors of order greater than six but it may lead to inefficient computations. When an expression contains test functions (as in ``Trace(Grad_Test_u)`` for a vector field ``u``), the computation is done for each test functions, which means that the tensor implicitly have a supplementary component. This means that, implicitly, the maximal order of manipulated tensors are in fact six (in ``Grad_Test_u:Grad_Test2_u`` there are two components implicitly added for first and second order test functions).
 
 Order four tensors are necessary for instance to express elasticity tensors or in general to obtain the tangent term for vector valued unknowns.
 
@@ -404,9 +410,12 @@ A certain number of predefined scalar functions can be used. The exhaustive list
   - ``erf(t)``, ``erfc(t)``
   - ``sinc(t)`` (the cardinal sine function sin(t)/t)
 
-  - ``Heaviside(t)`` (:math:`0 \mbox{ for } t < 0, 1 \mbox{ for } t \ge 0`),
-    ``sign(t)``, ``abs(t)``, ``pos_part(t)`` (:math:`t*H(t)`),
-    ``neg_part(t)`` (:math:`-t*H(-t)`), ``max(t, u)``, ``min(t, u)``
+  - ``Heaviside(t)`` (:math:`0 \mbox{ for } t < 0, 1 \mbox{ for } t \ge 0`)
+  - ``sign(t)``
+  - ``abs(t)``
+  - ``pos_part(t)`` (:math:`tH(t)`)
+  - ``reg_pos_part(t, eps)`` (:math:`(t-eps/2-t^2/(2eps))H(t-eps) + t^2H(t)/(2eps)`)
+  - ``neg_part(t)`` (:math:`-tH(-t)`), ``max(t, u)``, ``min(t, u)``
      
 A scalar function can be applied to a scalar expression, but also to a tensor one. If is is applied to a tensor expression, is is applied componentwise and the result is a tensor with the same dimensions. For functions having two arguments (pow(t,u), min(t,u) ...) if two non-scalar arguments are passed, the dimension have to be the same. For instance "max([1;2],[0;3])" will return "[0;3]".
 
@@ -423,7 +432,7 @@ It is possible to add a scalar function to the already predefined ones. Note tha
 
   ga_define_function(name, getfem::pscalar_func_twoargs f2, der1="", der2="");
 
-where ``name`` is the name of the function to be defined, ``nb_args`` is equal to 1 or 2. In the first call, ``expr`` is a string describing the function in the generic assembly language and using ``t`` as the first variable and ``u`` as the second one (if ``nb_args`` is equal to 2). For instance, ``sin(2*t)+sqr(t)`` is a valid expression. Note that it is not possible to refer to constant or data defined in a ``ga_workspace`` object. ``der1`` and ``der2`` are the expression of the derivatives with respect to ``t`` and ``u``. They are optional. If they are not furnished, a symbolic differentiation is used if the derivative is needed. If ``der1`` and ``der2`` are defined to be only a function name, it will be understand that the derivative is the corresponding function. In the second call, ``f1`` should be a C pointer on a scalar C function having one scalar parameter and in the third call, ``f2``  should be a C pointer on a scalar C function having two scalar parameters.
+where ``name`` is the name of the function to be defined, ``nb_args`` is equal to 1 or 2. In the first call, ``expr`` is a string describing the function in the generic weak form language and using ``t`` as the first variable and ``u`` as the second one (if ``nb_args`` is equal to 2). For instance, ``sin(2*t)+sqr(t)`` is a valid expression. Note that it is not possible to refer to constant or data defined in a ``ga_workspace`` object. ``der1`` and ``der2`` are the expression of the derivatives with respect to ``t`` and ``u``. They are optional. If they are not furnished, a symbolic differentiation is used if the derivative is needed. If ``der1`` and ``der2`` are defined to be only a function name, it will be understand that the derivative is the corresponding function. In the second call, ``f1`` should be a C pointer on a scalar C function having one scalar parameter and in the third call, ``f2``  should be a C pointer on a scalar C function having two scalar parameters.
 
 
 Additionally,::
@@ -455,9 +464,9 @@ A certain number of binary operations between tensors are available:
 
     - ``/`` stands for the division by a scalar.
 
-    - ``.`` stands for the scalar product of vectors, or more generally to the reduction of a tensor with respect to the last index with a vector. Note that ``*`` and ``.`` are equivalent for matrix-vector multiplication.
+    - ``.`` stands for the scalar product of vectors, or more generally to the contraction of a tensor with respect to its last index with a vector or with the first index of another tensor. Note that ``*`` and ``.`` are equivalent for matrix-vector or matrix-matrix multiplication.
 
-    - ``:`` stands for the the |Frobenius| product of matrices or more generally to the reduction of a tensor with respect to the two last indices with a matrix. Note that ``*`` and ``:`` are equivalent for (fourth order tensor)-matrix multiplication.
+    - ``:`` stands for the |Frobenius| product of matrices or more generally to the contraction of a tensor with respect to the two last indices with a matrix. Note that ``*`` and ``:`` are equivalent for (fourth order tensor)-matrix multiplication.
 
     - ``.*`` stands for the multiplication of two vectors/matrix/tensor componentwise.
 
@@ -465,15 +474,27 @@ A certain number of binary operations between tensors are available:
 
     - ``@`` stands for the tensor product.
 
+    - ``Contract(A, i, B, j)`` stands for the contraction of tensors A and B with respect to the ith index of A and jth index of B. The first index is numbered 1. For instance ``Contract(V,1,W,1)`` is equivalent to ``V.W`` for two vectors ``V`` and ``W``.
+      
+    - ``Contract(A, i, j, B, k, l)`` stands for the double contraction of tensors A and B with respect to indices i,j of A and indices k,l of B. The first index is numbered 1. For instance ``Contract(A,1,2,B,1,2)`` is equivalent to ``A:B`` for two matrices ``A`` and ``B``.
+      
 
 Unary operators
 ---------------
  
   - ``-`` the unary minus operator: change the sign of an expression.
   
-  - ``'`` stands for the transpose of a matrix or line view of a vector.
+  - ``'`` stands for the transpose of a matrix or line view of a vector. It a tensor ``A`` is of order greater than two,``A'`` denotes the inversion of the two first indices.
   
+  - ``Contract(A, i, j)`` stands for the contraction of tensor A with respect to its ith and jth indices. The first index is numbered 1. For instance, ``Contract(A, 1, 2)`` is equivalent to ``Trace(A)`` for a matrix ``A``.
 
+  - ``Swap_indices(A, i, j)`` exchange indices number i and j. The first index is numbered 1. For instance ``Swap_indices(A, 1, 2)`` is equivalent to ``A'`` for a matrix ``A``.
+
+  - ``Index_move_last(A, i)`` move the index number i in order to be the ast one. For instance, if ``A`` is a fourth order tensor :math:`A_{i_1i_2i_3i_4}`, then the result of ``Index_move_last(A, 2)`` will be the tensor :math:`B_{i_1i_3i_4i_2} = A_{i_1i_2i_3i_4}`. For a matrix, ``Index_move_last(A, 1)`` is equivalent to ``A'``.
+
+  exchange indices number i and j. The first index is numbered 1. For instance ``Swap_indices(A, 1, 2)`` is equivalent to ``A'`` for a matrix ``A``.
+
+    
 Parentheses
 -----------
 
@@ -483,23 +504,19 @@ Parentheses can be used in a standard way to change the operation order. If no p
 Explicit vectors
 ----------------
 
-The assembly language allows to define explicit vectors (i.e. order 1 tensors) with the notation ``[a;b;c;d;e]``, i.e. an arbitrary number of components separated by a semicolon, the whole vector beginning with a right bracket and ended by a left bracket. The components can be some numeric constants, some valid expressions and may also contain test functions. In the latter case, the vector has to be homogeneous with respect to the test functions. This means that a construction of the type ``[Test_u; Test_v]`` is not allowed. A valid example, with ``u`` as a scalar field variable is ``[5*Grad_Test_u(2), 2*Grad_Test_u(1)]``. 
+The weak form language allows to define explicit vectors (i.e. order 1 tensors) with the notation ``[a,b,c,d,e]``, i.e. an arbitrary number of components separated by a comma (note the separation with a semicolon ``[a;b;c;d;e]`` is also permitted), the whole vector beginning with a right bracket and ended by a left bracket. The components can be some numeric constants, some valid expressions and may also contain test functions. In the latter case, the vector has to be homogeneous with respect to the test functions. This means that a construction of the type ``[Test_u; Test_v]`` is not allowed. A valid example, with ``u`` as a scalar field variable is ``[5*Grad_Test_u(2), 2*Grad_Test_u(1)]``. Note also that using the quite opertor (transpose), an expression ``[a,b,c,d,e]'`` stands for 'row vector`, i.e. a 1x5 matrix.
 
 
 Explicit matrices
 -----------------
 
-Similarly to explicit vectors, it is possible to define explicit matrices (i.e. order 2 tensors) with the notation ``[a,c;b,d]``,  i.e. an arbitrary number of lines separated by a semicolon, each line having the same number of components separated by a comma. Alternatively the nested format ``[[a,b],[c,d]]`` provides an equivalent result. For instance ``[11,12,13;21,22,23]`` and ``[[11,21],[12,22],[13,23]]`` both represent the same 2x3 matrix. The components can be some numeric constants, some valid expressions and may also contain test functions.
+Similarly to explicit vectors, it is possible to define explicit matrices (i.e. order 2 tensors) with the notation ``[[a,b],[c,d]]``, i.e. an arbitrary number of columns vectors separated by a comma (the syntax ``[a,c;b,d]`` of lines separated by a semicolon is also permitted). For instance ``[[11,21],[12,22],[13,23]]`` and ``[11,12,13;21,22,23]`` both represent the same 2x3 matrix. The components can be some numeric constants, some valid expressions and may also contain test functions.
 
 
 Explicit tensors
----------------------------
+----------------
 
-Explicit order four tensors are also allowed. To this aim, the two supplementary dimensions compared to matrices are separated by  ``,,`` and ``;;``. For instance ``[1,1;1,1,,1,1;1,1;;2,2;2,2,,2,2;2,2;;3,3;3,3,,3,3;3,3]`` is a valid 3x2x2x2 tensor. Note that constant fourth order tensors can also be obtained by the tensor product of two constant matrices or by the Reshape instruction. 
-
-The nested format can also be used for defining order four tensors. The previous example is equivalent to writting ``[[[[1,2,3],[1,2,3]],[[1,2,3],[1,2,3]]],[[[1,2,3],[1,2,3]],[[1,2,3],[1,2,3]]]]``. The nested format also allows the definition of order three tensors.
-
-Explicit order five or six tensors are not directly supported by the assembly language. However, they can be easily obtained via the Reshape instruction.
+Explicit tensors of any order are permitted with the nested format. A tensor of order ``n`` is written as a succession of tensor of order ``n-1`` of equal dimensions and separated by a comma. For instance ``[[[[1,2,3],[1,2,3]],[[1,2,3],[1,2,3]]],[[[1,2,3],[1,2,3]],[[1,2,3],[1,2,3]]]]`` is a fourth order tensor. Another possibility is to use the syntax ``Reshape([1,2,3,1,2,3,1,2,3,1,2,3,1,2,3,1,2,3,1,2,3,1,2,3], 3, 2, 2, 2)`` where the components have to be given in Fortran order.
 
 
 Access to tensor components
@@ -562,7 +579,7 @@ The four operators can be applied on test functions. Which means that for instan
 Nonlinear operators
 -------------------
 
-The assembly language provide some predefined nonlinear operator. Each nonlinear operator is available together with its first and second derivatives. Nonlinear operator can be applied to an expression as long as this expression do not contain some test functions.
+The weak form language provide some predefined nonlinear operator. Each nonlinear operator is available together with its first and second derivatives. Nonlinear operator can be applied to an expression as long as this expression do not contain some test functions.
 
   - ``Norm(v)`` for ``v`` a vector or a matrix gives the euclidean norm of a vector or a |Frobenius| norm of a matrix.
 
@@ -593,7 +610,7 @@ The assembly language provide some predefined nonlinear operator. Each nonlinear
 Macro definition
 ----------------
 
-A macro definition can be added to the assembly language by declaring it to the ga_workspace or model object by::
+The weak form language allows the use of macros that are either predefined in the model or ga_workspace object or directly defined at the begining of an assembly string. The definition into a ga_workspace or model object is done as follows::
 
   workspace.add_macro(name, expr)
 
@@ -601,18 +618,95 @@ or::
 
   model.add_macro(name, expr)
 
-where ``name`` is he macro name which then can be used in the assembly language and ``expr`` is a valid expression of the assembly language (which may itself contain some macro definitions). For instance, a valid macro is::
+The definition of a macro into an assembly string is inserted before any regular expression, separated by a semicolon with the following syntax::
+
+  "Def name:=expr; regular_expression"
+
+where ``name`` is he macro name which then can be used in the weak form language and contains also the macro parameters, ``expr`` is a valid expression of the weak form language (which may itself contain some macro definitions). For instance, a valid macro with no parameter is::
 
   model.add_macro("my_transformation", "[cos(alpha)*X(1);sin(alpha)*X(2)]");
 
-where ``alpha`` should be a valid declared variable or data.
+where ``alpha`` should be a valid declared variable or data. A valid macro with two parameters is for instance::
 
-The macros are expanded inline at the semantic analysis phase. At the compilation phase, if several call of the same macro is performed, the computation is automatically factorized.
+  model.add_macro("ps(a,b)", "a.b");
 
+The following assembly string is then valid (if ``u`` is a valid variable)::
+
+  "Def ps(a,b):=a.b; ps(Grad_u, Grad_Test_u)"
+
+Parameter are allowed to be post-fixed to ``Grad_``, ``Hess_``, ``Test_`` and ``Test2_`` prefixes, so that the following assembly string is valid::
+
+  "Def psgrad(a,b):=Grad_a.Grad_b; psgrad(u, Test_u)"
+
+or with an imbrication of two macros::
+
+  "Def ps(a,b):=a.b; Def psgrad(a,b):=ps(Grad_a,Grad_b); psgrad(u, Test_u)"
+
+A macro can be deleted from a ga_workspace or model object as follows::
+
+  workspace.del_macro(name)
+  model.del_macro(name)
+
+Note that a macro defined at the begining of an assembly string is only defined in the assembly string and cannot be used later without being added in a model or ga_workspace object.
+
+The macros are expanded inline at the lexical analysis phase. Note that a the compilation phase, the repeated expressions are automatically factorized and computed only once.
+
+Explicit Differentiation
+------------------------
+The workspace object automatically differentiate terms that are of lower deriation order. However, it is also allowed to explicitely differentiate an expression with respect to a variable. One interest is that the automatic differentiation performs a derivative with respect to all the declared variables of model/workspace but this is not necessarily the expected behavior when using a potential energy, for instance. The syntax is::
+
+  Diff(expression, variable)
+
+For instance, the following expression::
+
+  Diff(u.u, u)
+
+will result in::
+
+  2*(u.Test_u)
+
+So that::
+
+  Grad_u:Grad_test_u + Diff(u.u, u)
+
+is a valid expression. A third argument can be added to the ``Diff`` command to specify the direction::
+
+  Diff(expression, variable, direction)
+
+in that case, it replaces the ``Test_variable`` by the expression ``direction`` which has to be of the same dimension as ``variable``. It computes the derivative of ``expression`` with respect to ``variable`` in the direction ``direction``.
+For instance::
+
+  Diff(u.u, u, v)
+
+will result in::
+
+  2*(u.v)
+
+if ``v`` is any valid expression of the same dimension than ``u``.
+
+Explicit Gradient
+-----------------
+It is possible to ask for symbolic computation of the gradient of an expression with::
+
+  Grad(expression)
+
+It will be computed as far as it is possible. The limitations come from the fact that |gf| is limited to second order derivative of shape function and nonlinear operators are supposed to provide only first and second order derivatives.
+
+Of course::
+
+  Grad(u)
+
+is equivalent to::
+
+  Grad_u
+
+for a varible ``u``.
+  
 .. _ud-gasm-high-transf:
 
 Interpolate transformations
 ---------------------------
+
 The ``Interpolate`` operation allows to compute integrals between quantities which are either defined on different part of a mesh or even on different meshes. It is a powerful operation which allows to compute mortar matrices or take into account periodic conditions. However, one have to remember that it is based on interpolation which may have a non-negligible computational cost.
 
 In order to use this functionality, the user have first to declare to the workspace or to the model object an interpolate transformation which described the map between the current integration point and the point lying on the same mesh or on another mesh.
@@ -629,7 +723,7 @@ or::
   add_interpolate_transformation_from_expression
     (md, transname, source_mesh, target_mesh, expr);
 
-where ``workspace`` is a workspace object, ``md`` a model object, ``transname`` is the name given to the transformation, ``source_mesh`` the mesh on which the integration occurs, ``target_mesh`` the mesh on which the interpolation is performed and ``expr`` is a regular expression of the high-level generic assembly language which may contains reference to the variables of the workspace/model.
+where ``workspace`` is a workspace object, ``md`` a model object, ``transname`` is the name given to the transformation, ``source_mesh`` the mesh on which the integration occurs, ``target_mesh`` the mesh on which the interpolation is performed and ``expr`` is a regular expression of the high-level generic weak form language which may contains reference to the variables of the workspace/model.
 
 For instance, an expression::
 
@@ -669,7 +763,7 @@ For instance, the assembly expression to prescribe the equality of a variable ``
 
 (see :file:`demo\_periodic\_laplacian.m` in :file:`interface/tests/matlab` directory).
 
-In some situations, the interpolation of a point may fail if the transformed point is outside the target mesh. Both in order to treat this case and to allow the transformation to differentiate some other cases (see :ref:`ud-model-contact-friction_raytrace_inter_trans` for the differentiation between rigid bodies and deformable ones in the Raytracing_interpolate_transformation) the tranformation returns an integer identifiant to the assembly language. A value 0 of this identifiant means that no corresponding location on the target mesh has been found. A value of 1 means that a corresponding point has been found. This identifiant can be used thanks to the following special command of the assembly language::
+In some situations, the interpolation of a point may fail if the transformed point is outside the target mesh. Both in order to treat this case and to allow the transformation to differentiate some other cases (see :ref:`ud-model-contact-friction_raytrace_inter_trans` for the differentiation between rigid bodies and deformable ones in the Raytracing_interpolate_transformation) the tranformation returns an integer identifiant to the weak form language. A value 0 of this identifiant means that no corresponding location on the target mesh has been found. A value of 1 means that a corresponding point has been found. This identifiant can be used thanks to the following special command of the weak form language::
 
   Interpolate_filter(transname, expr, i)
 
@@ -761,7 +855,7 @@ the method::
 
   model.add_elementary_transformation(transname, pelementary_transformation)
 
-where ``pelementary_transformation`` is a pointer to an object deriving from ``virtual_elementary_transformation``. Once it is added to the model/workspace, it is possible to use the following expressions in the assembly language::
+where ``pelementary_transformation`` is a pointer to an object deriving from ``virtual_elementary_transformation``. Once it is added to the model/workspace, it is possible to use the following expressions in the weak form language::
 
   Elementary_transformation(u, transname)
   Elementary_transformation(Grad_u, transname)
@@ -781,7 +875,7 @@ where ``u`` is one of the FEM variables of the model/workspace. For the moment, 
 Xfem discontinuity evaluation (with mesh_fem_level_set)
 -------------------------------------------------------
 
-For |gf| 5.1. When using a fem cut by a level-set (using fem_level_set or mesh_fem_level_set objects), it is often interesting to integrate the discontinuity jump of a variable, or the jump in gradient or the average value. For this purpose, the generic assembly language furnishes the following expressions for ``u`` a FEM variable::
+For |gf| 5.1. When using a fem cut by a level-set (using fem_level_set or mesh_fem_level_set objects), it is often interesting to integrate the discontinuity jump of a variable, or the jump in gradient or the average value. For this purpose, the weak form language furnishes the following expressions for ``u`` a FEM variable::
 
   Xfem_plus(u)
   Xfem_plus(Grad_u)
@@ -801,7 +895,7 @@ For |gf| 5.1. When using a fem cut by a level-set (using fem_level_set or mesh_f
   Xfem_minus(Test_Div_u)
   Xfem_minus(Test_Hess_u)
   
-which are only available when the evaluation (integration) is made on the curve/surface separating two zones of continuity, i.e. on the zero level-set of a considered level-set function (using a mesh_im_level_set object). For instance, a jump in the variable ``u`` will be given by::
+which are only available when the evaluation (integration) is made on the curve/surface separating two zones of continuity, i.e. on the zero level-set of a considered level-set function (using a ``mesh_im_level_set`` object). For instance, a jump in the variable ``u`` will be given by::
 
   Xfem_plus(u)-Xfem_minus(u)
 
@@ -809,7 +903,9 @@ and the average by::
 
   (Xfem_plus(u)+Xfem_minus(u))/2
 
-The value ``Xfem_plus(u)`` is the value of ``u`` on the side where the corresponding level-set function is positive and ``Xfem_minus(u)`` the value of ``u`` on the side where the level-set function is negative.
+  The value ``Xfem_plus(u)`` is the value of ``u`` on the side where the corresponding level-set function is positive and ``Xfem_minus(u)`` the value of ``u`` on the side where the level-set function is negative.
+
+  Additionally, note that, when integrating on a level-set with a ``mesh_im_level_set`` object, ``Normal`` stands for the normal unit vector to the level-set in the direction of the gradient of the level-set function.
   
 Storage of sub-expressions in a getfem::im_data object during assembly
 ----------------------------------------------------------------------

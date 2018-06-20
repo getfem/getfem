@@ -1628,7 +1628,7 @@ namespace getfem {
         gmm::add(gmm::identity_matrix(), grad);
         gmm::mult(grad, ctx_y0.K(), gradtot);
 
-        std::vector<int> ipvt(N);
+        std::vector<long> ipvt(N);
         size_type info = gmm::lu_factor(gradtot, ipvt);
         GMM_ASSERT1(!info, "Singular system, pivot = " << info); // il faudrait faire qlq chose d'autre ... perturber par exemple
         gmm::lu_solve(gradtot, ipvt, h, val);

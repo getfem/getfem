@@ -192,7 +192,7 @@ int main(int argc, char *argv[]) {
       f << "    }\n\n";
     }
     for (size_type n = 3; n < 7; ++n) {
-      f << "    if (cvs == prism_structure(" << n << ")) {\n";
+      f << "    if (cvs == prism_P1_structure(" << n << ")) {\n";
       f << "      *tab = simplexified_prism_" << n << ";\n";
       f << "      return simplexified_prism_" << n << "_nb;\n";
       f << "    }\n\n";

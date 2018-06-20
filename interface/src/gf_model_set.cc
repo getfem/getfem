@@ -294,6 +294,31 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        md->add_fixed_size_data(name, mi);
        );
 
+    /*@SET ('add macro', @str name, @str expr)
+      Define a new macro for the high generic assembly language.
+      The name include the parameters. For instance name='sp(a,b)', expr='a.b'
+      is a valid definition. Macro without parameter can also be defined.
+      For instance name='x1', expr='X[1]' is valid. Teh form name='grad(u)',
+      expr='Grad_u' is also allowed but in that case, the parameter 'u' will
+      only be allowed to be a variable name when using the macro. Note that
+      macros can be directly defined inside the assembly strings with the
+      keyword 'Def'.
+      @*/
+    sub_command
+      ("add macro", 2, 2, 0, 0,
+       std::string name = in.pop().to_string();
+       std::string expr = in.pop().to_string();
+       md->add_macro(name, expr);
+       );
+
+    /*@SET ('del macro', @str name)
+      Delete a previously defined macro for the high generic assembly language.
+      @*/
+    sub_command
+      ("del macro", 1, 1, 0, 0,
+       std::string name = in.pop().to_string();
+       md->del_macro(name);
+       );
 
     /*@SET ('add initialized data', @str name, @vec V[, sizes])
       Add an initialized fixed size data to the model. `sizes` an
@@ -572,7 +597,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        (*md, transname, expr, N);
        );
       
-    /*@SET ind = ('add linear generic assembly brick', @tmim mim, @str expression[, @int region[, @int is_symmetric[, @int is_coercive]]])
+    /*@SET ind = ('add linear term', @tmim mim, @str expression[, @int region[, @int is_symmetric[, @int is_coercive]]])
       Adds a matrix term given by the assembly string `expr` which will
       be assembled in region `region` and with the integration method `mim`.
       Only the matrix term will be taken into account, assuming that it is
@@ -590,6 +615,26 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       are not allowed for non-coercive problems.
       `brickname` is an otpional name for the brick.@*/
     sub_command
+      ("add linear term", 2, 5, 0, 1,
+       getfem::mesh_im *mim = to_meshim_object(in.pop());
+       std::string expr = in.pop().to_string();
+       size_type region = size_type(-1);
+       if (in.remaining()) region = in.pop().to_integer();
+       int is_symmetric = 0;
+       if (in.remaining()) is_symmetric = in.pop().to_integer();
+       int is_coercive = 0;
+       if (in.remaining()) is_coercive = in.pop().to_integer();
+       
+       size_type ind = getfem::add_linear_term
+       (*md, *mim, expr, region, is_symmetric,
+        is_coercive) + config::base_index();
+       workspace().set_dependence(md, mim);
+       out.pop().from_integer(int(ind));
+       );
+
+    /*@SET ind = ('add linear generic assembly brick', @tmim mim, @str expression[, @int region[, @int is_symmetric[, @int is_coercive]]])
+      Deprecated. Use MODEL:SET('add linear term') instead. @*/
+    sub_command
       ("add linear generic assembly brick", 2, 5, 0, 1,
        getfem::mesh_im *mim = to_meshim_object(in.pop());
        std::string expr = in.pop().to_string();
@@ -601,15 +646,14 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        if (in.remaining()) is_coercive = in.pop().to_integer();
        
        size_type ind
-       = getfem::add_linear_generic_assembly_brick
+       = getfem::add_linear_term
        (*md, *mim, expr, region, is_symmetric,
-        is_coercive) + config::base_index();
+	is_coercive) + config::base_index();
        workspace().set_dependence(md, mim);
        out.pop().from_integer(int(ind));
        );
 
-
-    /*@SET ind = ('add nonlinear generic assembly brick', @tmim mim, @str expression[, @int region[, @int is_symmetric[, @int is_coercive]]])
+    /*@SET ind = ('add nonlinear term', @tmim mim, @str expression[, @int region[, @int is_symmetric[, @int is_coercive]]])
       Adds a nonlinear term given by the assembly string `expr` which will
       be assembled in region `region` and with the integration method `mim`.
       The expression can describe a potential or a weak form. Second order
@@ -620,6 +664,27 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       and not coercive. But some solvers (conjugate gradient for instance)
       are not allowed for non-coercive problems.
       `brickname` is an otpional name for the brick.@*/
+    sub_command
+      ("add nonlinear term", 2, 5, 0, 1,
+       getfem::mesh_im *mim = to_meshim_object(in.pop());
+       std::string expr = in.pop().to_string();
+       size_type region = size_type(-1);
+       if (in.remaining()) region = in.pop().to_integer();
+       int is_symmetric = 0;
+       if (in.remaining()) is_symmetric = in.pop().to_integer();
+       int is_coercive = 0;
+       if (in.remaining()) is_coercive = in.pop().to_integer();
+       
+       size_type ind
+       = getfem::add_nonlinear_term
+       (*md, *mim, expr, region, is_symmetric,
+        is_coercive) + config::base_index();
+       workspace().set_dependence(md, mim);
+       out.pop().from_integer(int(ind));
+       );
+
+    /*@SET ind = ('add nonlinear generic assembly brick', @tmim mim, @str expression[, @int region[, @int is_symmetric[, @int is_coercive]]])
+      Deprecated. Use MODEL:SET('add nonlinear term') instead.@*/
     sub_command
       ("add nonlinear generic assembly brick", 2, 5, 0, 1,
        getfem::mesh_im *mim = to_meshim_object(in.pop());
@@ -632,21 +697,37 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        if (in.remaining()) is_coercive = in.pop().to_integer();
        
        size_type ind
-       = getfem::add_nonlinear_generic_assembly_brick
+       = getfem::add_nonlinear_term
        (*md, *mim, expr, region, is_symmetric,
         is_coercive) + config::base_index();
        workspace().set_dependence(md, mim);
        out.pop().from_integer(int(ind));
        );
-
-    /*@SET ind = ('add source term generic assembly brick', @tmim mim, @str expression[, @int region])
+    
+    /*@SET ind = ('add source term', @tmim mim, @str expression[, @int region])
       Adds a source term given by the assembly string `expr` which will
       be assembled in region `region` and with the integration method `mim`.
       Only the residual term will be taken into account.
       Take care that if the expression contains some variables and if the
       expression is a potential, the expression will be
       derivated with respect to all variables.
-      `brickname` is an otpional name for the brick.@*/
+      `brickname` is an optional name for the brick.@*/
+    sub_command
+      ("add source term", 2, 3, 0, 1,
+       getfem::mesh_im *mim = to_meshim_object(in.pop());
+       std::string expr = in.pop().to_string();
+       size_type region = size_type(-1);
+       if (in.remaining()) region = in.pop().to_integer();
+       
+       size_type ind
+       = getfem::add_source_term_generic_assembly_brick
+       (*md, *mim, expr, region) + config::base_index();
+       workspace().set_dependence(md, mim);
+       out.pop().from_integer(int(ind));
+       );
+
+    /*@SET ind = ('add source term generic assembly brick', @tmim mim, @str expression[, @int region])
+      Deprecated. Use MODEL:SET('add source term') instead. @*/
     sub_command
       ("add source term generic assembly brick", 2, 3, 0, 1,
        getfem::mesh_im *mim = to_meshim_object(in.pop());
@@ -1968,7 +2049,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       strain and plastic multiplier).
       @*/
     sub_command
-      ("add small strain elastoplasticity brick", 10, 15, 0, 1,
+      ("add small strain elastoplasticity brick", 3, 15, 0, 1,
        getfem::mesh_im *mim = to_meshim_object(in.pop());
        std::string lawname = in.pop().to_string();
        filter_lawname(lawname);

@@ -56,7 +56,7 @@ namespace getfem {
         pgt = bgeot::prism_geotrans(3,1);
       } break;
       case 7: { /* PYRAMID */
-        pgt = bgeot::pyramid_geotrans(1);
+        pgt = bgeot::pyramid_QK_geotrans(1);
       } break;
       case 8: { /* 2ND ORDER LINE */
         pgt = bgeot::simplex_geotrans(1,2);
@@ -664,7 +664,7 @@ namespace getfem {
       } break;
       case TRI: {
         if (nnode == 3) pgt = bgeot::simplex_geotrans(2,1);
-        else if (nnode == 6) { // validé
+        else if (nnode == 6) { // validÃ©
           static size_type lorder[6] = {0,3,1,5,4,2};
           pgt = bgeot::simplex_geotrans(2,2);
           std::copy(lorder,lorder+nnode,order.begin());
@@ -680,7 +680,7 @@ namespace getfem {
       } break;
       case TETR: {
         if (nnode == 4) pgt = bgeot::simplex_geotrans(3,1);
-        else if (nnode == 10) { // validé
+        else if (nnode == 10) { // validÃ©
           static size_type lorder[10] = {0,4,1, 7,8, 3, 6, 5, 9, 2};
           pgt = bgeot::simplex_geotrans(3,2);
           std::copy(lorder,lorder+nnode,order.begin());
@@ -1099,7 +1099,7 @@ namespace getfem {
             getfem_cv_nodes[10] = cdb_node_2_getfem_node[BB];
             getfem_cv_nodes[11] = cdb_node_2_getfem_node[AA];
             getfem_cv_nodes[12] = cdb_node_2_getfem_node[MM];
-            regions[imat].add(m.add_convex(bgeot::pyramid2_incomplete_geotrans(),
+            regions[imat].add(m.add_convex(bgeot::pyramid_Q2_incomplete_geotrans(),
                                            getfem_cv_nodes.begin()));
             if (itype < elt_cnt.size())
               elt_cnt[itype] += 1;
@@ -1121,8 +1121,9 @@ namespace getfem {
             getfem_cv_nodes[12] = cdb_node_2_getfem_node[XX];
             getfem_cv_nodes[13] = cdb_node_2_getfem_node[VV];
             getfem_cv_nodes[14] = cdb_node_2_getfem_node[OO];
-            regions[imat].add(m.add_convex(bgeot::prism2_incomplete_geotrans(),
-                                           getfem_cv_nodes.begin()));
+            regions[imat].add(m.add_convex
+                              (bgeot::prism_incomplete_P2_geotrans(),
+                               getfem_cv_nodes.begin()));
             if (itype < elt_cnt.size())
               elt_cnt[itype] += 1;
           } else {
@@ -1194,7 +1195,7 @@ namespace getfem {
     using namespace std;
     gmm::stream_standard_locale sl(f);
 
-    ofstream fichier_GiD("noboite_to_GiD.gid",    ios::out | ios::trunc );  //déclaration du flux et ouverture du fichier
+    ofstream fichier_GiD("noboite_to_GiD.gid",    ios::out | ios::trunc );  //dÃ©claration du flux et ouverture du fichier
 
     fichier_GiD << "MESH    dimension 3 ElemType Tetrahedra  Nnode 4"<<endl;
 
@@ -1257,21 +1258,21 @@ namespace getfem {
     }
     fichier_GiD << "end elements" <<endl<<endl;
 
-    if(fichier_GiD)  // si l'ouverture a réussi
+    if(fichier_GiD)  // si l'ouverture a rÃ©ussi
       {
         // instructions
         fichier_GiD.close();  // on referme le fichier
       }
     else  // sinon
-      cerr << "Erreur à l'ouverture !" << endl;
+      cerr << "Erreur Ã  l'ouverture !" << endl;
 
-    if(f)  // si l'ouverture a réussi
+    if(f)  // si l'ouverture a rÃ©ussi
       {
         // instructions
         //f.close();  // on referme le fichier
       }
     else  // sinon
-      cerr << "Erreur à l'ouverture !" << endl;
+      cerr << "Erreur Ã  l'ouverture !" << endl;
 
     // appeler sunroutine import_gid_mesh_file
     //import_mesh(const std::string& "noboite_to_GiD.gid", mesh& msh)

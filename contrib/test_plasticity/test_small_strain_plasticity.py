@@ -276,7 +276,7 @@ if (option == 2):
     expr = sigma_np1+':Grad_Test_u+(1/r)*(xi-pos_part(xi+r*'+fbound+'))*Test_xi'
     # expr = sigma_np1+':Grad_Test_u+('+fbound+'+pos_part(-xi/r-'+fbound+
     #        '))*Test_xi'
-    md.add_nonlinear_generic_assembly_brick(mim, expr)
+    md.add_nonlinear_term(mim, expr)
         
 if (option == 3):
   if (use_small_strain_pl_brick):
@@ -339,7 +339,7 @@ if (option == 3):
             +'))*Test_xi')
     # expr = (sigma_np1+':Grad_Test_u + ('+fbound+' + pos_part(-xi/r-'+fbound
     #         +'))*Test_xi')
-    md.add_nonlinear_generic_assembly_brick(mim, expr)
+    md.add_nonlinear_term(mim, expr)
     
 if (option == 4):
   if (use_small_strain_pl_brick):
@@ -378,7 +378,7 @@ if (option == 4):
                    +')*Id(meshdim) + 2*mu*('+Etheta+'-'+Eptheta+'))')
     
     expr = sigma_np1+':Grad_Test_u'
-    md.add_nonlinear_generic_assembly_brick(mim, expr)
+    md.add_nonlinear_term(mim, expr)
     
 if (option == 5):
     md.add_fem_variable('xi', mf_xi)
@@ -416,7 +416,7 @@ if (option == 5):
     expr = (sigma_np1+':Grad_Test_u + (1/r1)*(xi - pos_part(xi+r1*'+fbound
             +'))*Test_xi-(1/r2)*(delta-pos_part(delta+r2*'+fbound_delta
             +'))*Test_delta')
-    md.add_nonlinear_generic_assembly_brick(mim, expr)
+    md.add_nonlinear_term(mim, expr)
     
     if (False):
         Etheta = '(Sym(theta*Grad_u+(1-theta)*Grad_Previous_u))'
@@ -452,7 +452,7 @@ if (option == 5):
                 +'))*Test_xi')
         # expr = (sigma_np1+':Grad_Test_u + ('+fbound+' + pos_part(-xi/r-'
         #         +fbound+'))*Test_xi')
-        md.add_nonlinear_generic_assembly_brick(mim, expr)
+        md.add_nonlinear_term(mim, expr)
       
 
 

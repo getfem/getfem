@@ -286,7 +286,7 @@ struct Chrono {
     
     /* Identifying prisms.                                             */
     if (nbp == size_type(2 * n) &&
-	pgt->basic_structure() == bgeot::prism_structure(n)) {
+	pgt->basic_structure() == bgeot::prism_P1_structure(n)) {
       return new_mesher_prism_ref(n);
     }
     
@@ -306,7 +306,7 @@ struct Chrono {
     double t0=gmm::uclock_sec();
     if (noisy) cout << "running delaunay with " << fixed_points.size()
 		    << " points.." << std::flush;
-    delaunay(fixed_points, simplexes);
+    bgeot::qhull_delaunay(fixed_points, simplexes);
     if (noisy) cout << " -> " << gmm::mat_ncols(simplexes)
 		    << " simplexes [" << gmm::uclock_sec()-t0 << "sec]\n";
   }

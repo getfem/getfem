@@ -6,8 +6,9 @@
 <META NAME="Keywords" CONTENT=" finite element library, finite element package, finite element software, finite elements">
 
 <div style="text-align:center;"><img src="{{ pathto('_static/logogetfem.png', 1) }}" alt="the GetFEM++ logo"><br/> An open-source finite element library </div>
+<br/><br/>
 
-    
+<p><strong>NEW</strong> (June 2018): Version 5.3 has been released.<br/></p>
 
   <p><strong>Parts of the documentation:</strong></p>
   <table class="contentstable" align="center"><tr>
@@ -90,14 +91,14 @@
     </p>
 
     <ul>
-      <li> A generic assembly language (in terms of operators) that allows to translate quite arbitrary weak formulations.  A symbolic derivation that allows to automatically obtain the tangent system for nonlinear problems. A compilation of assembly terms into optimized basic instructions. </li>
+      <li> A weak form language (in terms of operators) that allows to translate quite arbitrary weak formulations.  A symbolic derivation that allows to automatically obtain the tangent system for nonlinear problems. A compilation of assembly terms into optimized basic instructions. </li>
       <li> A model description that gather the variables, data and terms of a problem and some predefined bricks representing classical models : elasticity in small and large deformations, Helmholtz problem, scalar elliptic problem, Dirichlet, contact and Neumann boundary conditions, incompressibility constraint, ... </li>
       <li> A complete separation between geometric transformation, finite element method, integration methods and partial differential term description, which allows to easily switch from a method to another. </li>
       <li> A large set of predefined methods : isoparametric/subparametric/overparametric elements, Pk on simplices of arbitrary degree and dimension, Qk on parallelepipeds, pyramidal elements, P1, P2 with bubble functions, Hermite elements, Argyris element, HCT and FVS, elements with hierarchical basis (for multigrid methods for instance), discontinuous Pk and Qk, vector elements (RT0, Nedelec) ...  </li>
       <li> A large set of predefined integration methods.  </li>
       <li> Structural mechanics terms (elasticity, contact with friction, plasticity ...) </li>
       <li> Level-set and finite element cut by one or several level-set (Xfem) </li>
-      <li> Computation of terms between to meshes with an arbitrary transformation: this is a very powerful tool of the generic assembly that allows to use a parameterized transformation. The derivative of the transformation with respect to the potential dependance with respect of the variables is taken into account. Possible use : contact problems, fluid-structure interaction, special boundary conditions ... </li>
+      <li> Computation of terms between two meshes with an arbitrary transformation: this is a very powerful tool of the generic assembly that allows to use a parameterized transformation. The derivative of the transformation with respect to the potential dependance in the variables is taken into account. Possible use : contact problems, fluid-structure interaction, special boundary conditions ... </li>
       <li> Post-processing directly with Scilab or Matlab interfaces or with the export of vtk or gmsh files. Many possibility to interpolate arbitrary quantities, make slices, projections ... </li>
     </ul>
 
@@ -105,12 +106,13 @@
     GetFEM++ can be used to construct very generic finite element codes,
     where finite element methods, integration methods and the dimension
     of the problem are the parameters that can be 
-    changed very easily. This allows a wide range of experiments. Many examples and demos are provided.
+    changed very easily. This allows a wide range of experiments.
+    Many examples and demos are provided.
     </p>
     
     <p>
     GetFEM++ has only an experimental meshing procedure (and produces regular meshes). It is therefore often necessary to import meshes. The formats 
-    currently supported are GID, GMSH and EMC2.
+    currently supported are GID, GMSH, EMC2 and ANSYS.
     </p>
 </div>
 

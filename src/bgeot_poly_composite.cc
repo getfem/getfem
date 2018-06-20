@@ -31,23 +31,23 @@ namespace bgeot {
 
   int imbricated_box_less::operator()(const base_node &x,
                                       const base_node &y) const {
-    size_type s = x.size(); 
+    size_type s = x.size();
     scalar_type c1 = c_max, c2 = c_max * scalar_type(base);
     GMM_ASSERT2(y.size() == s, "dimension error");
-    
+
     base_node::const_iterator itx=x.begin(), itex=x.end(), ity=y.begin();
     int ret = 0;
     for (; itx != itex; ++itx, ++ity) {
       long a = long(sfloor((*itx) * c1)), b = long(sfloor((*ity) * c1));
       if ((scalar_type(gmm::abs(a)) > scalar_type(base))
-          || (scalar_type(gmm::abs(b)) > scalar_type(base))) { 
+          || (scalar_type(gmm::abs(b)) > scalar_type(base))) {
         exp_max++; c_max /= scalar_type(base);
         return (*this)(x,y);
       }
       if (ret == 0) { if (a < b) ret = -1; else if (a > b) ret = 1; }
     }
     if (ret) return ret;
-    
+
     for (int e = exp_max; e >= exp_min; --e, c1 *= scalar_type(base),
            c2 *= scalar_type(base)) {
       itx = x.begin(), itex = x.end(), ity = y.begin();
@@ -99,51 +99,51 @@ namespace bgeot {
     mesh_structure::ind_cv_ct::const_iterator itc, itce;
 
     mesh_precomposite::PTAB::const_sorted_iterator
-      it1 = mp->vertexes.sorted_ge(pt), it2 = it1;    
+      it1 = mp->vertexes.sorted_ge(pt), it2 = it1;
     size_type i1 = it1.index(), i2;
 
     --it2; i2 = it2.index();
 
 
-    while (i1 != size_type(-1) || i2 != size_type(-1)) 
+    while (i1 != size_type(-1) || i2 != size_type(-1))
     {
-      if (i1 != size_type(-1)) 
+      if (i1 != size_type(-1))
       {
         const mesh_structure::ind_cv_ct &tc
           = mp->linked_mesh().convex_to_point(i1);
         itc = tc.begin(); itce = tc.end();
-        for (; itc != itce; ++itc) 
+        for (; itc != itce; ++itc)
         {
           size_type ii = *itc;
-          if (elt[ii]) 
+          if (elt[ii])
           {
             elt[ii] = false;
             p0 = pt; p0 -= mp->orgs[ii];
             gmm::mult(gmm::transposed(mp->gtrans[ii]), p0, p1);
-            if (mp->trans_of_convex(ii)->convex_ref()->is_in(p1) < 1E-10)
-              return local_coordinate ? to_scalar(polytab[ii].eval(p1.begin()))
-              : to_scalar(polytab[ii].eval(pt.begin()));
+            if (mp->trans_of_convex(ii)->convex_ref()->is_in(p1) < 1E-10) {
+              return to_scalar(poly_of_subelt(ii).eval(local_coordinate ? p1.begin() : pt.begin()));
+            }
           }
         }
         ++it1; i1 = it1.index();
       }
 
-      if (i2 != size_type(-1)) 
+      if (i2 != size_type(-1))
       {
         const mesh_structure::ind_cv_ct &tc
           = mp->linked_mesh().convex_to_point(i2);
         itc = tc.begin(); itce = tc.end();
-        for (; itc != itce; ++itc) 
+        for (; itc != itce; ++itc)
         {
           size_type ii = *itc;
-          if (elt[ii]) 
+          if (elt[ii])
           {
             elt[ii] = false;
             p0 = pt; p0 -= mp->orgs[ii];
             gmm::mult(gmm::transposed(mp->gtrans[ii]), p0, p1);
-            if (mp->trans_of_convex(ii)->convex_ref()->is_in(p1) < 1E-10)
-              return  local_coordinate ? to_scalar(polytab[ii].eval(p1.begin()))
-              : to_scalar(polytab[ii].eval(pt.begin()));
+            if (mp->trans_of_convex(ii)->convex_ref()->is_in(p1) < 1E-10) {
+              return to_scalar(poly_of_subelt(ii).eval(local_coordinate ? p1.begin() : pt.begin()));
+            }
           }
         }
         --it2; i2 = it2.index();
@@ -152,12 +152,11 @@ namespace bgeot {
     GMM_ASSERT1(false, "Element not found in composite polynomial: " << pt);
   }
 
+  DAL_TRIPLE_KEY(base_poly_key, short_type, short_type, std::vector<opt_long_scalar_type>);
 
-  polynomial_composite::polynomial_composite(const mesh_precomposite &m,
-    bool lc)
-    : mp(&m), polytab(m.nb_convex()), local_coordinate(lc) {
-      std::fill(polytab.begin(), polytab.end(), base_poly(m.dim(), 0));
-  }
+  polynomial_composite::polynomial_composite(
+    const mesh_precomposite &m, bool lc)
+    : mp(&m), local_coordinate(lc), default_poly(mp->dim(), 0) {}
 
   void polynomial_composite::derivative(short_type k) {
     if (local_coordinate) {
@@ -168,26 +167,48 @@ namespace bgeot {
         gmm::clear(e); e[k] = 1.0;
         gmm::mult(gmm::transposed(mp->gtrans[ic]), e, f);
         P.clear();
-        for (dim_type n = 0; n < N; ++n)
-        { Q = polytab[ic];
-        Q.derivative(n);
-        P += Q * f[n];  }
-        polytab[ic] = P;
+        auto &poly = poly_of_subelt(ic);
+        for (dim_type n = 0; n < N; ++n) {
+          Q = poly;
+          Q.derivative(n);
+          P += Q * f[n];
+        }
+        if (polytab.find(ic) != polytab.end()) set_poly_of_subelt(ic, P);
       }
     }
     else
-      for (size_type ic = 0; ic < mp->nb_convex(); ++ic)
-        polytab[ic].derivative(k);
+    for (size_type ic = 0; ic < mp->nb_convex(); ++ic) {
+      auto poly = poly_of_subelt(ic);
+      poly.derivative(k);
+      if (polytab.find(ic) != polytab.end()) set_poly_of_subelt(ic, poly);
+    }
+  }
+
+  void polynomial_composite::set_poly_of_subelt(size_type l, const base_poly &poly) {
+    auto poly_key = std::make_shared<base_poly_key>(poly.degree(), poly.dim(), poly);
+    auto o = dal::search_stored_object(poly_key);
+    if (!o) {
+      o = std::make_shared<base_poly>(poly);
+      dal::add_stored_object(poly_key, o);
+    }
+    polytab[l] = poly_key;
+  }
+
+  const base_poly &polynomial_composite::poly_of_subelt(size_type l) const {
+    auto it = polytab.find(l);
+    if (it == polytab.end()) return default_poly;
+    return dynamic_cast<const base_poly &>(*dal::search_stored_object(it->second));
   }
 
 
   /* build a regularly refined mesh for a simplex of dimension <= 3.
   All simplexes have the same orientation as the original simplex.
   */
-  static void structured_mesh_for_simplex_(pconvex_structure cvs, 
-    pgeometric_trans opt_gt,
-    const std::vector<base_node> *opt_gt_pts,
-    short_type k, pbasic_mesh pm) {
+  static void
+  structured_mesh_for_simplex_(pconvex_structure cvs,
+                               pgeometric_trans opt_gt,
+                               const std::vector<base_node> *opt_gt_pts,
+                               short_type k, pbasic_mesh pm) {
       scalar_type h = 1./k;
       switch (cvs->dim()) {
       case 1 :
@@ -214,11 +235,11 @@ namespace bgeot {
               B[0] = b; B[1] = c;
               C[0] = a; C[1] = d;
               D[0] = b; D[1] = d;
-              if (opt_gt) { 
-                A = opt_gt->transform(A, *opt_gt_pts); 
-                B = opt_gt->transform(B, *opt_gt_pts); 
-                C = opt_gt->transform(C, *opt_gt_pts); 
-                D = opt_gt->transform(D, *opt_gt_pts); 
+              if (opt_gt) {
+                A = opt_gt->transform(A, *opt_gt_pts);
+                B = opt_gt->transform(B, *opt_gt_pts);
+                C = opt_gt->transform(C, *opt_gt_pts);
+                D = opt_gt->transform(D, *opt_gt_pts);
               }
               /* add triangle with correct orientation (det [B-A;C-A] > 0) */
               size_type nA = pm->add_point(A);
@@ -232,9 +253,9 @@ namespace bgeot {
           }
         }
         break;
-      case 3 : 
+      case 3 :
         {
-          /* based on decompositions of small cubes 
+          /* based on decompositions of small cubes
           the number of tetrahedrons is k^3
           */
           base_node A,B,C,D,E,F,G,H;
@@ -253,15 +274,15 @@ namespace bgeot {
                 F = {x+h, y, z+h};
                 G = {x, y+h, z+h};
                 H = {x+h, y+h, z+h};
-                if (opt_gt) { 
-                  A = opt_gt->transform(A, *opt_gt_pts); 
-                  B = opt_gt->transform(B, *opt_gt_pts); 
-                  C = opt_gt->transform(C, *opt_gt_pts); 
-                  D = opt_gt->transform(D, *opt_gt_pts); 
-                  E = opt_gt->transform(E, *opt_gt_pts); 
-                  F = opt_gt->transform(F, *opt_gt_pts); 
-                  G = opt_gt->transform(G, *opt_gt_pts); 
-                  H = opt_gt->transform(H, *opt_gt_pts); 
+                if (opt_gt) {
+                  A = opt_gt->transform(A, *opt_gt_pts);
+                  B = opt_gt->transform(B, *opt_gt_pts);
+                  C = opt_gt->transform(C, *opt_gt_pts);
+                  D = opt_gt->transform(D, *opt_gt_pts);
+                  E = opt_gt->transform(E, *opt_gt_pts);
+                  F = opt_gt->transform(F, *opt_gt_pts);
+                  G = opt_gt->transform(G, *opt_gt_pts);
+                  H = opt_gt->transform(H, *opt_gt_pts);
                 }
                 size_type t[8];
                 t[0] = pm->add_point(A);
@@ -296,7 +317,7 @@ namespace bgeot {
           }
         }
         break;
-      default : 
+      default :
         GMM_ASSERT1(false, "Sorry, not implemented for simplices of "
           "dimension " << int(cvs->dim()));
       }
@@ -327,7 +348,7 @@ namespace bgeot {
         { kcnt[kk]++; if (kcnt[kk] == k+1) { kcnt[kk] = 0; kk++; } else break; }
       }
 
-      /* 
+      /*
       insert convexes using node ids stored in 'pids'
       */
       std::vector<size_type> ppts(pow2n);
@@ -347,23 +368,24 @@ namespace bgeot {
       }
   }
 
-  static void structured_mesh_for_convex_(pconvex_structure cvs, 
-    pgeometric_trans opt_gt,
-    const std::vector<base_node> *opt_gt_pts,
-    short_type k, pbasic_mesh pm) {
+  static void
+  structured_mesh_for_convex_(pconvex_structure cvs,
+                              pgeometric_trans opt_gt,
+                              const std::vector<base_node> *opt_gt_pts,
+                              short_type k, pbasic_mesh pm) {
       size_type nbp = basic_structure(cvs)->nb_points();
       dim_type n = cvs->dim();
-      /* Identifying simplexes.                                           */    
-      if (nbp == size_type(n+1) && 
+      /* Identifying simplexes.                                           */
+      if (nbp == size_type(n+1) &&
           basic_structure(cvs)==simplex_structure(n)) {
           // smc.pm->write_to_file(cout);
           structured_mesh_for_simplex_(cvs,opt_gt,opt_gt_pts,k,pm);
           /* Identifying parallelepipeds.                                     */
-      } else if (nbp == (size_type(1) << n) && 
+      } else if (nbp == (size_type(1) << n) &&
           basic_structure(cvs) == parallelepiped_structure(n)) {
           structured_mesh_for_parallelepiped_(cvs,opt_gt,opt_gt_pts,k,pm);
-      } else if (nbp == size_type(2 * n) && 
-          basic_structure(cvs) == prism_structure(n)) {
+      } else if (nbp == size_type(2 * n) &&
+          basic_structure(cvs) == prism_P1_structure(n)) {
           GMM_ASSERT1(false, "Sorry, structured_mesh not implemented for prisms.");
       } else {
         GMM_ASSERT1(false, "This element is not taken into account. Contact us");
@@ -414,7 +436,7 @@ namespace bgeot {
     std::vector<std::unique_ptr<mesh_structure>> pfacem; /* array of mesh_structures for faces */
     dal::bit_vector nodes_on_edges;
     std::unique_ptr<mesh_precomposite> pmp;
-    str_mesh_cv__(pconvex_structure c, short_type k, bool smesh_) : 
+    str_mesh_cv__(pconvex_structure c, short_type k, bool smesh_) :
       cvs(c), n(k), simplex_mesh(smesh_)
     { DAL_STORED_OBJECT_DEBUG_CREATED(this, "cv mesh"); }
     ~str_mesh_cv__() { DAL_STORED_OBJECT_DEBUG_DESTROYED(this,"cv mesh"); }
@@ -430,66 +452,66 @@ namespace bgeot {
   * TODO: move it into another file and separate the pmesh_precomposite part ?
   **/
   void structured_mesh_for_convex(pconvex_ref cvr, short_type k,
-    pbasic_mesh &pm, pmesh_precomposite &pmp, 
-    bool force_simplexification) {
-      size_type n = cvr->structure()->dim();
-      size_type nbp = basic_structure(cvr->structure())->nb_points();
+                                  pbasic_mesh &pm, pmesh_precomposite &pmp,
+                                  bool force_simplexification) {
+    size_type n = cvr->structure()->dim();
+    size_type nbp = basic_structure(cvr->structure())->nb_points();
 
-      force_simplexification = force_simplexification || (nbp == n+1);
-      dal::pstatic_stored_object_key
-        pk = std::make_shared<str_mesh_key>(basic_structure(cvr->structure()),
-                                            k, force_simplexification);
+    force_simplexification = force_simplexification || (nbp == n+1);
+    dal::pstatic_stored_object_key
+      pk = std::make_shared<str_mesh_key>(basic_structure(cvr->structure()),
+                                          k, force_simplexification);
 
-      dal::pstatic_stored_object o = dal::search_stored_object(pk);
-      pstr_mesh_cv__ psmc;
-      if (o)
-        psmc = std::dynamic_pointer_cast<const str_mesh_cv__>(o);
-      else {
+    dal::pstatic_stored_object o = dal::search_stored_object(pk);
+    pstr_mesh_cv__ psmc;
+    if (o)
+      psmc = std::dynamic_pointer_cast<const str_mesh_cv__>(o);
+    else {
 
-        auto ppsmc = std::make_shared<str_mesh_cv__>
-          (basic_structure(cvr->structure()), k, force_simplexification);
-        str_mesh_cv__ &smc(*ppsmc);
-        psmc = ppsmc;
+      auto ppsmc = std::make_shared<str_mesh_cv__>
+        (basic_structure(cvr->structure()), k, force_simplexification);
+      str_mesh_cv__ &smc(*ppsmc);
+      psmc = ppsmc;
 
-        smc.pm = std::make_unique<basic_mesh>();
+      smc.pm = std::make_unique<basic_mesh>();
 
-        if (force_simplexification) {
-          // cout << "cvr = " << int(cvr->structure()->dim()) << " : "
-          //      << cvr->structure()->nb_points() << endl;
-          const mesh_structure* splx_mesh
-            = basic_convex_ref(cvr)->simplexified_convex();
-          /* splx_mesh is correctly oriented */
-          for (size_type ic=0; ic < splx_mesh->nb_convex(); ++ic) {
-            std::vector<base_node> cvpts(splx_mesh->nb_points_of_convex(ic));
-            pgeometric_trans sgt
-              = simplex_geotrans(cvr->structure()->dim(), 1);
-            for (size_type j=0; j < cvpts.size(); ++j) {
-              cvpts[j] = basic_convex_ref(cvr)->points()
-                [splx_mesh->ind_points_of_convex(ic)[j]];
-              //cerr << "cvpts[" << j << "]=" << cvpts[j] << endl;
-            }
-            structured_mesh_for_convex_(splx_mesh->structure_of_convex(ic),
-                                        sgt, &cvpts, k, smc.pm.get());
+      if (force_simplexification) {
+        // cout << "cvr = " << int(cvr->structure()->dim()) << " : "
+        //      << cvr->structure()->nb_points() << endl;
+        const mesh_structure* splx_mesh
+          = basic_convex_ref(cvr)->simplexified_convex();
+        /* splx_mesh is correctly oriented */
+        for (size_type ic=0; ic < splx_mesh->nb_convex(); ++ic) {
+          std::vector<base_node> cvpts(splx_mesh->nb_points_of_convex(ic));
+          pgeometric_trans sgt
+            = simplex_geotrans(cvr->structure()->dim(), 1);
+          for (size_type j=0; j < cvpts.size(); ++j) {
+            size_type ip = splx_mesh->ind_points_of_convex(ic)[j];
+            cvpts[j] = basic_convex_ref(cvr)->points()[ip];
+            //cerr << "cvpts[" << j << "]=" << cvpts[j] << endl;
           }
-        } else {
-          structured_mesh_for_convex_(cvr->structure(), 0, 0, k, smc.pm.get());
+          structured_mesh_for_convex_(splx_mesh->structure_of_convex(ic),
+                                      sgt, &cvpts, k, smc.pm.get());
         }
-        smc.pfacem.resize(cvr->structure()->nb_faces());
-        for (dim_type f=0; f < cvr->structure()->nb_faces(); ++f) {
-          smc.pfacem[f] = std::make_unique<mesh_structure>();
-          structured_mesh_of_faces_(cvr, f, *(smc.pm), *(smc.pfacem[f]));
-        }
-
-        smc.pmp = std::make_unique<mesh_precomposite>(*(smc.pm));
-        dal::add_stored_object(pk, psmc, basic_structure(cvr->structure()));
+      } else {
+        structured_mesh_for_convex_(cvr->structure(), 0, 0, k, smc.pm.get());
       }
-      pm  = psmc->pm.get();
-      pmp = psmc->pmp.get();
+      smc.pfacem.resize(cvr->structure()->nb_faces());
+      for (dim_type f=0; f < cvr->structure()->nb_faces(); ++f) {
+        smc.pfacem[f] = std::make_unique<mesh_structure>();
+        structured_mesh_of_faces_(cvr, f, *(smc.pm), *(smc.pfacem[f]));
+      }
+
+      smc.pmp = std::make_unique<mesh_precomposite>(*(smc.pm));
+      dal::add_stored_object(pk, psmc, basic_structure(cvr->structure()));
+    }
+    pm  = psmc->pm.get();
+    pmp = psmc->pmp.get();
   }
 
   const basic_mesh *
     refined_simplex_mesh_for_convex(pconvex_ref cvr, short_type k) {
-      pbasic_mesh pm; pmesh_precomposite pmp; 
+      pbasic_mesh pm; pmesh_precomposite pmp;
       structured_mesh_for_convex(cvr, k, pm, pmp, true);
       return pm;
   }
@@ -503,7 +525,7 @@ namespace bgeot {
     if (o) {
       pstr_mesh_cv__ psmc = std::dynamic_pointer_cast<const str_mesh_cv__>(o);
       return psmc->pfacem;
-    } 
+    }
     else GMM_ASSERT1(false,
                      "call refined_simplex_mesh_for_convex first (or fix me)");
   }

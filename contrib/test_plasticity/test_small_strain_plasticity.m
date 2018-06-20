@@ -190,7 +190,7 @@ switch (option)
       % fbound = strcat('(Norm(',Eptheta,'-Epn)-theta*xi*sigma_y)');
       expr = strcat(sigma_np1, ':Grad_Test_u+(1/r)*(xi-pos_part(xi+r*',fbound,'))*Test_xi');
       % expr = strcat(sigma_np1, ':Grad_Test_u + (',fbound,' + pos_part(-xi/r-',fbound,'))*Test_xi');
-      gf_model_set(md, 'add nonlinear generic assembly brick', mim, expr);
+      gf_model_set(md, 'add nonlinear term', mim, expr);
     end  
   case 3
     if (use_small_strain_pl_brick)
@@ -237,7 +237,7 @@ switch (option)
       fbound = strcat('(Norm(2*mu*Deviator(',Etheta,')-(2*mu+Hk)*',Eptheta,') - sqrt(2/3)*(sigma_y + Hi*',alpha_theta,'))');
       expr = strcat(sigma_np1, ':Grad_Test_u + (1/r)*(xi - pos_part(xi+r*',fbound,'))*Test_xi');
       % expr = strcat(sigma_np1, ':Grad_Test_u + (',fbound,' + pos_part(-xi/r-',fbound,'))*Test_xi');
-      gf_model_set(md, 'add nonlinear generic assembly brick', mim, expr);
+      gf_model_set(md, 'add nonlinear term', mim, expr);
     end
   case 4
     if (use_small_strain_pl_brick)
@@ -267,7 +267,7 @@ switch (option)
       sigma_theta = strcat('(lambda*Trace(',Etheta,'-',Eptheta, ')*Id(meshdim) + 2*mu*(',Etheta,'-', Eptheta,'))');
     
       expr = strcat(sigma_np1, ':Grad_Test_u');
-      gf_model_set(md, 'add nonlinear generic assembly brick', mim, expr);
+      gf_model_set(md, 'add nonlinear term', mim, expr);
     end
   case 5
     set(md, 'add fem variable', 'xi', mf_xi);
@@ -298,7 +298,7 @@ switch (option)
         % fbound = strcat('(Norm(2*mu*Deviator(',Etheta,')-(2*mu+c2+delta)*',Eptheta,'-c1*Normalized_reg(',Eptheta,',1E-6)) - sqrt(2/3)*sigma_y)');
         fbound_delta = strcat('(Norm(',Eptheta,')-c3)');
         expr = strcat(sigma_np1, ':Grad_Test_u + (10/r1)*(xi - pos_part(xi+r1*',fbound,'))*Test_xi - (100/r2)*(delta - pos_part(delta+r2*',fbound_delta,'))*Test_delta');
-        gf_model_set(md, 'add nonlinear generic assembly brick', mim, expr);
+        gf_model_set(md, 'add nonlinear term', mim, expr);
     
     else
     
@@ -317,7 +317,7 @@ switch (option)
         % fbound = strcat('(Norm(2*mu*Deviator(',Etheta,')-(2*mu+c2)*',Eptheta,') - sqrt(2/3)*sigma_y)');
         expr = strcat(sigma_np1, ':Grad_Test_u + (1/r1)*(xi - pos_part(xi+r1*',fbound,'))*Test_xi');
         % expr = strcat(sigma_np1, ':Grad_Test_u + (',fbound,' + pos_part(-xi/r1-',fbound,'))*Test_xi');
-        gf_model_set(md, 'add nonlinear generic assembly brick', mim, expr);
+        gf_model_set(md, 'add nonlinear term', mim, expr);
     end
     
       

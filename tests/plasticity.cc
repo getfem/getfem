@@ -327,8 +327,9 @@ bool elastoplasticity_problem::solve(plain_vector &U) {
     // Generic solve.
     cout << "Number of variables : " 
 	 << model.nb_dof() << endl;
-
-    getfem::simplest_newton_line_search ls;
+    
+    getfem::newton_search_with_step_control ls;
+    // getfem::simplest_newton_line_search ls;
     gmm::iteration iter(residual, 2, 40000);
     getfem::standard_solve(model, iter,
 			   getfem::rselect_linear_solver(model, "superlu"), ls);

@@ -19,6 +19,7 @@ nobase_include_HEADERS =                   		\
 	getfem_boost/workaround.hpp        		\
 	getfem_boost/noncopyable.hpp       		\
 	gmm/gmm.h                          		\
+	gmm/gmm_arch_config.h                  		\
 	gmm/gmm_matrix.h                   		\
 	gmm/gmm_iter_solvers.h             		\
 	gmm/gmm_iter.h                     		\
@@ -101,6 +102,7 @@ nobase_include_HEADERS =                   		\
 	getfem/bgeot_sparse_tensors.h      		\
 	getfem/bgeot_tensor.h              		\
 	getfem/bgeot_comma_init.h	   		\
+	getfem/bgeot_torus.h              		\
 	getfem/bgeot_ftool.h               		\
 	getfem/getfem_arch_config.h        		\
 	getfem/getfem_copyable_ptr.h        		\
@@ -108,6 +110,10 @@ nobase_include_HEADERS =                   		\
 	getfem/getfem_assembling.h         		\
 	getfem/getfem_assembling_tensors.h 		\
 	getfem/getfem_generic_assembly.h 		\
+	getfem/getfem_generic_assembly_tree.h 		\
+	getfem/getfem_generic_assembly_functions_and_operators.h \
+	getfem/getfem_generic_assembly_semantic.h 	\
+	getfem/getfem_generic_assembly_compile_and_exec.h \
 	getfem/getfem_context.h 			\
 	getfem/getfem_config.h             		\
 	getfem/getfem_interpolation.h      		\
@@ -177,6 +183,7 @@ SRC =                                      		\
 	bgeot_node_tab.cc		          	\
 	bgeot_small_vector.cc              		\
 	bgeot_sparse_tensors.cc            		\
+	bgeot_torus.cc 		           		\
 	bgeot_poly.cc                      		\
 	bgeot_poly_composite.cc            		\
 	bgeot_ftool.cc                     		\
@@ -216,7 +223,12 @@ SRC =                                      		\
 	getfem_error_estimate.cc            		\
 	getfem_export.cc                   		\
 	getfem_assembling_tensors.cc       		\
-	getfem_generic_assembly.cc       		\
+	getfem_generic_assembly_tree.cc       		\
+	getfem_generic_assembly_functions_and_operators.cc \
+	getfem_generic_assembly_semantic.cc    		\
+	getfem_generic_assembly_workspace.cc   		\
+	getfem_generic_assembly_compile_and_exec.cc	\
+	getfem_generic_assembly_interpolation.cc	\
 	getfem_mesher.cc		   		\
 	getfem_fourth_order.cc                		\
 	getfem_nonlinear_elasticity.cc                  \
@@ -238,6 +250,6 @@ libgetfem_la_LDFLAGS = ${LIBTOOL_VERSION_INFO}
 libgetfem_la_LIBADD = @SUPERLU_LIBS@ @MUMPS_LIBS@ @BOOST_LIBS@
 AM_CPPFLAGS = -I$(top_srcdir)/src -I../src -I$(top_srcdir)
 
-CLEANFILES = ii_files/* *.o.d
+CLEANFILES = ii_files/* *.o.d gmm_arch_config.h
 DISTCLEANFILES = getfem/getfem_im_list.h getfem/getfem_arch_config.h
 

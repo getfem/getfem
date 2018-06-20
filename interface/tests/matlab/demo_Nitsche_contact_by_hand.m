@@ -24,7 +24,7 @@ if (asize(1)) is_automatic = true; else is_automatic = false; end
 
 gf_workspace('clear all');
 clear all;
-approximation_type = 2  % 0 : Augmentend Lagrangian
+approximation_type = 0  % 0 : Augmentend Lagrangian
                         % 1 : Nitsche (biased)
                         % 2 : Unbiased Nitsche method
 
@@ -199,8 +199,8 @@ NX = Nxy(zz)
   
     if (approximation_type == 0)
       gf_model_set(md, 'add filtered fem variable', 'lambda1', mflambda1, CONTACT_BOUNDARY1);
-      gf_model_set(md, 'add nonlinear generic assembly brick', mim1_contact, '-lambda1*(Test_u1.N1)+lambda1*(Interpolate(Test_u2,Proj1).N1)', CONTACT_BOUNDARY1);
-      gf_model_set(md, 'add nonlinear generic assembly brick', mim1_contact, '-(gamma0*element_size)*(lambda1 + neg_part(lambda1-(1/(gamma0*element_size))*((u1-Interpolate(u2,Proj1)+X-Interpolate(X,Proj1)).N1)))*Test_lambda1', CONTACT_BOUNDARY1);
+      gf_model_set(md, 'add nonlinear term', mim1_contact, '-lambda1*(Test_u1.N1)+lambda1*(Interpolate(Test_u2,Proj1).N1)', CONTACT_BOUNDARY1);
+      gf_model_set(md, 'add nonlinear term', mim1_contact, '-(gamma0*element_size)*(lambda1 + neg_part(lambda1-(1/(gamma0*element_size))*((u1-Interpolate(u2,Proj1)+X-Interpolate(X,Proj1)).N1)))*Test_lambda1', CONTACT_BOUNDARY1);
 
     else
       gamma='(gamma0*element_size)';
@@ -209,10 +209,10 @@ NX = Nxy(zz)
       Pn_gamma_u1=strcat('((u1-Interpolate(u2,Proj1)+X-Interpolate(X,Proj1)).N1) - ',gamma,'*(',sigma_uh1_n,')');
  
       if (approximation_type == 1) coeff = ''; elseif (approximation_type == 2) coeff = '0.5*'; end
-      gf_model_set(md, 'add nonlinear generic assembly brick', mim1_contact, strcat('-',coeff,'theta*',gamma,'*(',sigma_uh1_n,')*(',sigma_vh1_n,')'), CONTACT_BOUNDARY1);
-      gf_model_set(md, 'add nonlinear generic assembly brick', mim1_contact, strcat('-',coeff,'theta*',sigma_vh1_n,'*pos_part(',Pn_gamma_u1,')'), CONTACT_BOUNDARY1);
-      gf_model_set(md, 'add nonlinear generic assembly brick', mim1_contact, strcat(coeff,'(1/',gamma,')*(Test_u1.N1)*pos_part(',Pn_gamma_u1,')'), CONTACT_BOUNDARY1);
-      gf_model_set(md, 'add nonlinear generic assembly brick', mim1_contact, strcat('-',coeff,'(1/',gamma,')*(Interpolate(Test_u2,Proj1).N1)*pos_part(',Pn_gamma_u1,')'),CONTACT_BOUNDARY1);
+      gf_model_set(md, 'add nonlinear term', mim1_contact, strcat('-',coeff,'theta*',gamma,'*(',sigma_uh1_n,')*(',sigma_vh1_n,')'), CONTACT_BOUNDARY1);
+      gf_model_set(md, 'add nonlinear term', mim1_contact, strcat('-',coeff,'theta*',sigma_vh1_n,'*pos_part(',Pn_gamma_u1,')'), CONTACT_BOUNDARY1);
+      gf_model_set(md, 'add nonlinear term', mim1_contact, strcat(coeff,'(1/',gamma,')*(Test_u1.N1)*pos_part(',Pn_gamma_u1,')'), CONTACT_BOUNDARY1);
+      gf_model_set(md, 'add nonlinear term', mim1_contact, strcat('-',coeff,'(1/',gamma,')*(Interpolate(Test_u2,Proj1).N1)*pos_part(',Pn_gamma_u1,')'),CONTACT_BOUNDARY1);
      
       if (approximation_type == 2)
          if N==2 
@@ -226,10 +226,10 @@ NX = Nxy(zz)
         sigma_uh2_n ='(((clambda*Trace(Grad_u2)*Id(qdim(u2)) + cmu*(Grad_u2 + Grad_u2'')).Normal).N2)';
         Pn_gamma_u2=strcat('((u2-Interpolate(u1,Proj2)).N2) - ',gamma,'*(',sigma_uh2_n,')-(Interpolate(X,Proj2)-X).N2');
         
-        gf_model_set(md, 'add nonlinear generic assembly brick', mim2_contact, strcat('-0.5*theta*',gamma,'*(',sigma_uh2_n,')*(',sigma_vh2_n,')'), CONTACT_BOUNDARY2);
-        gf_model_set(md, 'add nonlinear generic assembly brick', mim2_contact, strcat('-0.5*theta*',sigma_vh2_n,'*pos_part(',Pn_gamma_u2,')'), CONTACT_BOUNDARY2);
-        gf_model_set(md, 'add nonlinear generic assembly brick', mim2_contact, strcat('0.5*(1/',gamma,')*(Test_u2.N2)*pos_part(',Pn_gamma_u2,')'), CONTACT_BOUNDARY2);
-        gf_model_set(md, 'add nonlinear generic assembly brick', mim2_contact, strcat('-0.5*(1/',gamma,')*(Interpolate(Test_u1,Proj2).N2)*pos_part(',Pn_gamma_u2,')'), CONTACT_BOUNDARY2);
+        gf_model_set(md, 'add nonlinear term', mim2_contact, strcat('-0.5*theta*',gamma,'*(',sigma_uh2_n,')*(',sigma_vh2_n,')'), CONTACT_BOUNDARY2);
+        gf_model_set(md, 'add nonlinear term', mim2_contact, strcat('-0.5*theta*',sigma_vh2_n,'*pos_part(',Pn_gamma_u2,')'), CONTACT_BOUNDARY2);
+        gf_model_set(md, 'add nonlinear term', mim2_contact, strcat('0.5*(1/',gamma,')*(Test_u2.N2)*pos_part(',Pn_gamma_u2,')'), CONTACT_BOUNDARY2);
+        gf_model_set(md, 'add nonlinear term', mim2_contact, strcat('-0.5*(1/',gamma,')*(Interpolate(Test_u1,Proj2).N2)*pos_part(',Pn_gamma_u2,')'), CONTACT_BOUNDARY2);
       end
     end
 
@@ -240,7 +240,8 @@ NX = Nxy(zz)
     max_res = 1E-8;
     max_iter = 100;
 
-    gf_model_get(md, 'solve', 'max_res', 1E-9, 'max_iter', niter, 'noisy', 'lsearch', 'simplest',  'alpha min', 0.8, 'lsolver', 'mumps');
+    % gf_model_get(md, 'solve', 'max_res', 1E-9, 'max_iter', niter, 'noisy', 'lsearch', 'simplest',  'alpha min', 0.8, 'lsolver', 'mumps');
+    gf_model_get(md, 'solve', 'max_res', 1E-9, 'max_iter', niter, 'noisy', 'lsolver', 'mumps');
 
     U1 = gf_model_get(md, 'variable', 'u1');
     UU1 = gf_model_get(md, 'variable', 'u1');

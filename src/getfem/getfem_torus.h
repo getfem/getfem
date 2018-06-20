@@ -42,41 +42,6 @@
 
 #include "getfem/getfem_mesh_fem.h"
 
-
-namespace bgeot{
-
-/**An adaptor that adapts a two dimensional geometric_trans to include radial dimension.*/
-struct torus_geom_trans : public geometric_trans{
-
-  virtual void poly_vector_val(const base_node &, bgeot::base_vector &) const;
-  virtual void poly_vector_val(const base_node &, const bgeot::convex_ind_ct &,
-    bgeot::base_vector &) const;
-  virtual void poly_vector_grad(const base_node &, bgeot::base_matrix &) const;
-  inline virtual void poly_vector_grad(const base_node &,
-    const bgeot::convex_ind_ct &, bgeot::base_matrix &) const;
-  inline virtual void compute_K_matrix
-    (const bgeot::base_matrix &, const bgeot::base_matrix &, bgeot::base_matrix &) const;
-
-  virtual void poly_vector_hess(const base_node &, bgeot::base_matrix &) const;
-
-  torus_geom_trans(bgeot::pgeometric_trans poriginal_trans);
-
-  pgeometric_trans get_original_transformation() const;
-
-private:
-  pgeometric_trans poriginal_trans_;
-};
-
-pconvex_structure torus_structure_descriptor(pconvex_structure ori_structure);
-
-bool is_torus_structure(pconvex_structure cvs);
-
-pgeometric_trans torus_geom_trans_descriptor(pgeometric_trans poriginal_trans);
-
-bool is_torus_geom_trans(pgeometric_trans pgt);
-
-}
-
 namespace getfem
 {
   /**Torus fem, the real grad base value is modified to compute radial grad of F/R.

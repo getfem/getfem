@@ -81,14 +81,14 @@ if (with_Mindlin_brick)
   gf_model_set(md, 'add Mindlin Reissner plate brick', mim, mim_reduced, 'u', 'theta', 'E', 'nu', 'epsilon', 'kappa', variant);
 else
   gf_model_set(md, 'add elementary rotated RT0 projection', 'RT0_projection');
-  gf_model_set(md, 'add linear generic assembly brick', mim, '(E*epsilon*epsilon*epsilon*(1-nu)/(48 * (1 - nu*nu))) * ((Grad_theta+Grad_theta''):(Grad_Test_theta+Grad_Test_theta''))');
-  gf_model_set(md, 'add linear generic assembly brick', mim, '(E*epsilon*epsilon*epsilon*nu/(12 * (1 - nu*nu))) * (Div_theta*Div_Test_theta)');
+  gf_model_set(md, 'add linear term', mim, '(E*epsilon*epsilon*epsilon*(1-nu)/(48 * (1 - nu*nu))) * ((Grad_theta+Grad_theta''):(Grad_Test_theta+Grad_Test_theta''))');
+  gf_model_set(md, 'add linear term', mim, '(E*epsilon*epsilon*epsilon*nu/(12 * (1 - nu*nu))) * (Div_theta*Div_Test_theta)');
   if (variant == 0)
-    gf_model_set(md, 'add linear generic assembly brick', mim, '(E*kappa*epsilon/(1 + nu)) * ((Grad_u + theta).Grad_Test_u) + (E*kappa*epsilon/(1 + nu)) * ((Grad_u + theta).Test_theta)');
+    gf_model_set(md, 'add linear term', mim, '(E*kappa*epsilon/(1 + nu)) * ((Grad_u + theta).Grad_Test_u) + (E*kappa*epsilon/(1 + nu)) * ((Grad_u + theta).Test_theta)');
   elseif (variant == 1)
-    gf_model_set(md, 'add linear generic assembly brick', mim_reduced, '(E*kappa*epsilon/(1 + nu)) * ((Grad_u + theta).Grad_Test_u) + (E*kappa*epsilon/(1 + nu)) * ((Grad_u + theta).Test_theta)');
+    gf_model_set(md, 'add linear term', mim_reduced, '(E*kappa*epsilon/(1 + nu)) * ((Grad_u + theta).Grad_Test_u) + (E*kappa*epsilon/(1 + nu)) * ((Grad_u + theta).Test_theta)');
   else
-    gf_model_set(md, 'add linear generic assembly brick', mim, '(E*kappa*epsilon/(1 + nu)) * ((Grad_u + Elementary_transformation(theta,RT0_projection)).Grad_Test_u) + (E*kappa*epsilon/(1 + nu)) * ((Grad_u + Elementary_transformation(theta, RT0_projection)).(Elementary_transformation(Test_theta, RT0_projection)))');  
+    gf_model_set(md, 'add linear term', mim, '(E*kappa*epsilon/(1 + nu)) * ((Grad_u + Elementary_transformation(theta,RT0_projection)).Grad_Test_u) + (E*kappa*epsilon/(1 + nu)) * ((Grad_u + Elementary_transformation(theta, RT0_projection)).(Elementary_transformation(Test_theta, RT0_projection)))');  
   end
 end
 

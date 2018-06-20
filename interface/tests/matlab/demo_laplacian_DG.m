@@ -97,7 +97,7 @@ F      = gf_mesh_fem_get(mf, 'eval', { '4*pi*(2*pi*x.*sin(2*pi*x) - cos(2*pi*x))
 
 md=gf_model('real');
 gf_model_set(md, 'add fem variable', 'u', mf);
-gf_model_set(md, 'add linear generic assembly brick', mim, 'Grad_u.Grad_Test_u');
+gf_model_set(md, 'add linear term', mim, 'Grad_u.Grad_Test_u');
 % gf_model_set(md, 'add Laplacian brick', mim, 'u');
 gf_model_set(md, 'add initialized fem data', 'VolumicData', mf, F);
 gf_model_set(md, 'add source term brick', mim, 'u', 'VolumicData');
@@ -121,10 +121,10 @@ jump = '((u-Interpolate(u,neighbour_elt))*Normal)';
 test_jump = '((Test_u-Interpolate(Test_u,neighbour_elt))*Normal)';
 grad_mean = '((Grad_u+Interpolate(Grad_u,neighbour_elt))*0.5)';
 grad_test_mean = '((Grad_Test_u+Interpolate(Grad_Test_u,neighbour_elt))*0.5)';
-% gf_model_set(md, 'add linear generic assembly brick', mim, sprintf('-((%s).(%s))', grad_mean, test_jump), INNER_FACES);
-% gf_model_set(md, 'add linear generic assembly brick', mim, sprintf('-((%s).(%s))', jump, grad_test_mean), INNER_FACES);
-% gf_model_set(md, 'add linear generic assembly brick', mim, sprintf('alpha*((%s).(%s))', jump, test_jump), INNER_FACES);
-gf_model_set(md, 'add linear generic assembly brick', mim, sprintf('-((%s).(%s))-((%s).(%s))+alpha*((%s).(%s))', grad_mean, test_jump, jump, grad_test_mean, jump, test_jump), INNER_FACES);
+% gf_model_set(md, 'add linear term', mim, sprintf('-((%s).(%s))', grad_mean, test_jump), INNER_FACES);
+% gf_model_set(md, 'add linear term', mim, sprintf('-((%s).(%s))', jump, grad_test_mean), INNER_FACES);
+% gf_model_set(md, 'add linear term', mim, sprintf('alpha*((%s).(%s))', jump, test_jump), INNER_FACES);
+gf_model_set(md, 'add linear term', mim, sprintf('-((%s).(%s))-((%s).(%s))+alpha*((%s).(%s))', grad_mean, test_jump, jump, grad_test_mean, jump, test_jump), INNER_FACES);
 
 gf_model_get(md, 'solve', 'noisy');
 U = gf_model_get(md, 'variable', 'u');

@@ -654,6 +654,7 @@ static void test_new_assembly(int N, int NX, int pK) {
                   "1", mim, 1);
       SCAL_TEST_0("Test on function integration 1",
                   "cos(pi*X(1))", mim, 0);
+      cout << "N = " << N << endl;
       SCAL_TEST_0("Test on function integration 2",
                   "cos(pi*X).exp(X*0)", mim, 0);
       SCAL_TEST_0("Test on function integration 2",
@@ -670,11 +671,11 @@ static void test_new_assembly(int N, int NX, int pK) {
 
     if (all) {
       if (N == 2) {
-        getfem::ga_define_function("dummyfunc", 1,
+	getfem::ga_define_function("dummyfunc", 1,
                                    "sin(pi*t/2)+2*sqr(t)-[t;t].[t;t]");
-        SCAL_TEST_0("Test on user defined functions",
+	SCAL_TEST_0("Test on user defined functions",
                     "dummyfunc(5)", mim, 1);
-        getfem::ga_define_function("dummyfunc2", 1, "cos(pi*t)");
+	getfem::ga_define_function("dummyfunc2", 1, "cos(pi*t)");
         SCAL_TEST_0("Test on user defined functions",
                     "dummyfunc2(X(1))", mim, 0);
       }

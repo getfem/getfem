@@ -26,6 +26,7 @@ EXTRA_DIST= 						\
 	check_export.py 				\
 	check_global_functions.py			\
 	check_levelset.py				\
+	check_asm.py    				\
 	demo_crack.py 					\
 	demo_fictitious_domains.py 			\
 	demo_laplacian.py 				\
@@ -36,11 +37,13 @@ EXTRA_DIST= 						\
 	demo_plasticity.py              		\
 	demo_plate.py 					\
 	demo_static_contact.py 				\
+	demo_dynamic_contact_1D.py			\
 	demo_Mindlin_Reissner_plate.py 			\
 	demo_step_by_step.py				\
 	demo_stokes_3D_tank.py          		\
 	demo_stokes_3D_tank_draw.py			\
 	demo_thermo_elasticity_electrical_coupling.py 	\
+	demo_cracked_thermo_elastic_body.py             \
 	demo_nonlinear_elasticity.py		 	\
 	demo_wheel_contact.py                           \
 	demo_tripod.py 					\
@@ -53,6 +56,7 @@ if BUILDPYTHON
 TESTS = 						\
 	check_export.py					\
 	check_global_functions.py			\
+	check_asm.py	  				\
 	demo_wave.py					\
 	demo_laplacian.py				\
 	$(optpy)

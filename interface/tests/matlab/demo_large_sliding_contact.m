@@ -19,7 +19,7 @@
 clear all;
 gf_workspace('clear all');
 
-test_case = 0; % 0 = 2D punch on a rigid obstacle
+test_case = 3; % 0 = 2D punch on a rigid obstacle
                % 1 = 2D punch on a deformable obstacle (one slave, one master)
                % 2 = 2D with two different meshes
                % 3 = 2D with multi-body and only one mesh
@@ -33,7 +33,7 @@ f_coeff = 0.5;              % Friction coefficient
 
 test_tangent_matrix = false;
 nonlinear_elasticity = false;
-max_iter = 50;
+max_iter = 100;
 draw_mesh = false;
 do_plot = true;
 generic_assembly_contact_brick = true;
@@ -263,18 +263,18 @@ if (direct_generic_assembly)  % Direct use of high-level generic assembly
   gf_model_set(md, 'add initialized data', 'r', r);
   gf_model_set(md, 'add initialized data', 'f', f_coeff);
   
-  gf_model_set(md, 'add nonlinear generic assembly brick', mim1_contact, '-lambda1.Test_u1', CONTACT_BOUNDARY1); 
-  gf_model_set(md, 'add nonlinear generic assembly brick', mim1_contact, 'Interpolate_filter(contact_trans, lambda1.Interpolate(Test_u,contact_trans), 1)', CONTACT_BOUNDARY1); 
-  gf_model_set(md, 'add nonlinear generic assembly brick', mim1_contact, '-(1/r)*lambda1.Test_lambda1', CONTACT_BOUNDARY1);
-  gf_model_set(md, 'add nonlinear generic assembly brick', mim1_contact, 'Interpolate_filter(contact_trans, (1/r)*Coulomb_friction_coupled_projection(lambda1, Transformed_unit_vector(Grad_u1, Normal), u1, (Interpolate(X,contact_trans)-X-u1).Transformed_unit_vector(Grad_u1, Normal), f, r).Test_lambda1, 2)', CONTACT_BOUNDARY1);
-  gf_model_set(md, 'add nonlinear generic assembly brick', mim1_contact, 'Interpolate_filter(contact_trans, (1/r)*Coulomb_friction_coupled_projection(lambda1, Transformed_unit_vector(Grad_u1, Normal), u1-Interpolate(u,contact_trans), (Interpolate(X,contact_trans)+Interpolate(u,contact_trans)-X-u1).Transformed_unit_vector(Grad_u1, Normal), f, r).Test_lambda1, 1)', CONTACT_BOUNDARY1);
+  gf_model_set(md, 'add nonlinear term', mim1_contact, '-lambda1.Test_u1', CONTACT_BOUNDARY1); 
+  gf_model_set(md, 'add nonlinear term', mim1_contact, 'Interpolate_filter(contact_trans, lambda1.Interpolate(Test_u,contact_trans), 1)', CONTACT_BOUNDARY1); 
+  gf_model_set(md, 'add nonlinear term', mim1_contact, '-(1/r)*lambda1.Test_lambda1', CONTACT_BOUNDARY1);
+  gf_model_set(md, 'add nonlinear term', mim1_contact, 'Interpolate_filter(contact_trans, (1/r)*Coulomb_friction_coupled_projection(lambda1, Transformed_unit_vector(Grad_u1, Normal), u1, (Interpolate(X,contact_trans)-X-u1).Transformed_unit_vector(Grad_u1, Normal), f, r).Test_lambda1, 2)', CONTACT_BOUNDARY1);
+  gf_model_set(md, 'add nonlinear term', mim1_contact, 'Interpolate_filter(contact_trans, (1/r)*Coulomb_friction_coupled_projection(lambda1, Transformed_unit_vector(Grad_u1, Normal), u1-Interpolate(u,contact_trans), (Interpolate(X,contact_trans)+Interpolate(u,contact_trans)-X-u1).Transformed_unit_vector(Grad_u1, Normal), f, r).Test_lambda1, 1)', CONTACT_BOUNDARY1);
   
   if (two_meshes && self_contact)
-    gf_model_set(md, 'add nonlinear generic assembly brick', mim2_contact, '-lambda2.Test_u2', CONTACT_BOUNDARY2); 
-    gf_model_set(md, 'add nonlinear generic assembly brick', mim2_contact, 'Interpolate_filter(contact_trans, lambda2.Interpolate(Test_u,contact_trans), 1)', CONTACT_BOUNDARY2); 
-    gf_model_set(md, 'add nonlinear generic assembly brick', mim2_contact, '-(1/r)*lambda2.Test_lambda2', CONTACT_BOUNDARY2);
-    gf_model_set(md, 'add nonlinear generic assembly brick', mim2_contact, 'Interpolate_filter(contact_trans, (1/r)*Coulomb_friction_coupled_projection(lambda2, Transformed_unit_vector(Grad_u2, Normal), u2, (Interpolate(X,contact_trans)-X-u2).Transformed_unit_vector(Grad_u2, Normal), f, r).Test_lambda2, 2)', CONTACT_BOUNDARY2);
-    gf_model_set(md, 'add nonlinear generic assembly brick', mim2_contact, 'Interpolate_filter(contact_trans, (1/r)*Coulomb_friction_coupled_projection(lambda2, Transformed_unit_vector(Grad_u2, Normal), u2-Interpolate(u,contact_trans), (Interpolate(X,contact_trans)+Interpolate(u,contact_trans)-X-u2).Transformed_unit_vector(Grad_u2, Normal), f, r).Test_lambda2, 1)', CONTACT_BOUNDARY2);  
+    gf_model_set(md, 'add nonlinear term', mim2_contact, '-lambda2.Test_u2', CONTACT_BOUNDARY2); 
+    gf_model_set(md, 'add nonlinear term', mim2_contact, 'Interpolate_filter(contact_trans, lambda2.Interpolate(Test_u,contact_trans), 1)', CONTACT_BOUNDARY2); 
+    gf_model_set(md, 'add nonlinear term', mim2_contact, '-(1/r)*lambda2.Test_lambda2', CONTACT_BOUNDARY2);
+    gf_model_set(md, 'add nonlinear term', mim2_contact, 'Interpolate_filter(contact_trans, (1/r)*Coulomb_friction_coupled_projection(lambda2, Transformed_unit_vector(Grad_u2, Normal), u2, (Interpolate(X,contact_trans)-X-u2).Transformed_unit_vector(Grad_u2, Normal), f, r).Test_lambda2, 2)', CONTACT_BOUNDARY2);
+    gf_model_set(md, 'add nonlinear term', mim2_contact, 'Interpolate_filter(contact_trans, (1/r)*Coulomb_friction_coupled_projection(lambda2, Transformed_unit_vector(Grad_u2, Normal), u2-Interpolate(u,contact_trans), (Interpolate(X,contact_trans)+Interpolate(u,contact_trans)-X-u2).Transformed_unit_vector(Grad_u2, Normal), f, r).Test_lambda2, 1)', CONTACT_BOUNDARY2);  
   end
 
   u_group = 'u';

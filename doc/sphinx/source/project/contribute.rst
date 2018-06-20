@@ -48,10 +48,10 @@ If you intend to make some contributions, the first step is to ask for the inclu
 How to contribute
 -----------------
 
-Before modifying any file, you have to create a *development branch* because it is *not allowed to make a modification directly in the master branch*. It is recommended that the branch name is of the type `devel-name` where name is your name or login. For instance, if you chose `devel-me` as the branch name, the creation of the branch reads ::
+Before modifying any file, you have to create a *development branch* because it is *not allowed to make a modification directly in the master branch*. It is recommended that the branch name is of the type `devel-name-subject` where name is your name or login and subject the main subject of the changes. For instance, if you chose `devel-me-rewrite-fem-kernel` as the branch name, the creation of the branch reads ::
 
-  git branch devel-me
-  git checkout devel-me
+  git branch devel-me-rewrite-fem-kernel
+  git checkout devel-me-rewrite-fem-kernel
 
 The first command create the branch and the second one position you on your branch. After that you are nearly ready to makes some modifications. You can specify your contact name and e-mail with the following commands in order to label your changes ::
 
@@ -73,22 +73,22 @@ Push you changes in the Savannah repository
 
 You can now transfer your modifications to the Savannah repository with ::
 
-  git push origin devel-me
+  git push origin devel-me-rewrite-fem-kernel
 
-where of course *devel-me* is still the name of your branch. At this stage your modifications are registered in the branch *devel-me* of Savannah repository. 
+where of course *devel-me-rewrite-fem-kernel* is still the name of your branch. At this stage your modifications are registered in the branch *devel-me-rewrite-fem-kernel* of Savannah repository. 
 Your role stops here, since you are not allowed to modify the master branch of |gf|.
 
 
 Ask for an admin to merge your modifications to the master branch of |gf|
 -------------------------------------------------------------------------
 
-Once you validated your modifications with sufficient tests, you can ask an admin of |gf| to merge your modifications. For this, contact one of them directly, or send an e-mail to *getfem-commits@nongnu.org* with the message : "please merge branch devel-me" with eventually a short description of the modifications.
+Once you validated your modifications with sufficient tests, you can ask an admin of |gf| to merge your modifications. For this, contact one of them directly, or send an e-mail to *getfem-commits@nongnu.org* with the message : "please merge branch devel-me-rewrite-fem-kernel" with eventually a short description of the modifications. IMPORTANT : by default, your branch will be deleted after the merge, unless you express the need to keep it.
 
 
 Merge modifications done by other contributors
 ----------------------------------------------
 
-Regularly, you can run a ::
+You can run a ::
 
   git pull origin master
   git merge master

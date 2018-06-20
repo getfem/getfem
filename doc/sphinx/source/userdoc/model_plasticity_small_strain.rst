@@ -374,26 +374,26 @@ i.e. :math:`A = H_i\alpha` and a uniaxial yield stress defined by
 
 for :math:`\sigma_{y0}` the initial uniaxial yield stress. The yield function (and plastic potential since this is an associated plastic model) can be defined by
 
-.. math:: \Psi(\sigma, A) = f(\sigma, A) = \|\mbox{Dev}(\sigma - H_k\varepsilon^p)\| - \sqrt{\frac{2}{3}}(\sigma_{y0} + A),
+.. math:: \Psi(\sigma, A) = f(\sigma, A) = \|\mbox{Dev}(\sigma - \frac{2}{3}H_k\varepsilon^p)\| - \sqrt{\frac{2}{3}}(\sigma_{y0} + A),
 
 where :math:`H_k` is the kinematic hardening modulus. The same computation as in the previous section leads to
 
-.. math:: \tilde{\mathscr E}^p(u_{n+1}, \theta\Delta t \xi_{n+1}, \zeta_n) = \zeta_n + \Frac{1}{2\mu+H_k}\left(1 - \Frac{1}{1+(2\mu+H_k)\theta\Delta t\xi_{n+1}}\right)(2\mu\mbox{Dev}(\varepsilon(u_{n+1}))-(2\mu+H_k)\zeta_n)
+.. math:: \tilde{\mathscr E}^p(u_{n+1}, \theta\Delta t \xi_{n+1}, \zeta_n) = \zeta_n + \Frac{1}{2(\mu+H_k/3)}\left(1 - \Frac{1}{1+2(\mu+H_k/3)\theta\Delta t\xi_{n+1}}\right)(2\mu\mbox{Dev}(\varepsilon(u_{n+1}))-2(\mu+H_k/3)\zeta_n)
 
 
-.. math:: \begin{array}{rcl} \tilde{\mathscr A}(u_{n+1}, \theta \Delta t \xi_{n+1}, \zeta_{n}, \eta_n) &=& \eta_n + \sqrt{\Frac{2}{3}} \theta \Delta t \xi_{n+1}\|\mbox{Dev}(\sigma_{n+1} - H_k\varepsilon^p_{n+1})\| \\ &=& \eta_n + \sqrt{\Frac{2}{3}} \theta \Delta t \xi_{n+1}\|2\mu\mbox{Dev}(\varepsilon(u_{n+1})) - (2\mu+H_k)\varepsilon^p_{n+1}\| \\ &=&  \eta_n + \sqrt{\Frac{2}{3}} \Frac{\theta \Delta t \xi_{n+1}}{1+(2\mu+H_k)\theta\Delta t\xi_{n+1}}\|2\mu\mbox{Dev}(\varepsilon(u_{n+1})) - (2\mu+H_k)\zeta_{n}\| \\ &=& \eta_n + \sqrt{\Frac{2}{3}}\Frac{1}{2\mu+H_k}\left(1 - \Frac{1}{1+(2\mu+H_k)\theta\Delta t\xi_{n+1}}\right) \|2\mu\mbox{Dev}(\varepsilon(u_{n+1})) - (2\mu+H_k)\zeta_{n}\|\end{array}
+.. math:: \begin{array}{rcl} \tilde{\mathscr A}(u_{n+1}, \theta \Delta t \xi_{n+1}, \zeta_{n}, \eta_n) &=& \eta_n + \sqrt{\Frac{2}{3}} \theta \Delta t \xi_{n+1}\|\mbox{Dev}(\sigma_{n+1} - \frac{2}{3}H_k\varepsilon^p_{n+1})\| \\ &=& \eta_n + \sqrt{\Frac{2}{3}} \theta \Delta t \xi_{n+1}\|2\mu\mbox{Dev}(\varepsilon(u_{n+1})) - 2(\mu+H_k/3)\varepsilon^p_{n+1}\| \\ &=&  \eta_n + \sqrt{\Frac{2}{3}} \Frac{\theta \Delta t \xi_{n+1}}{1+2(\mu+H_k/3)\theta\Delta t\xi_{n+1}}\|2\mu\mbox{Dev}(\varepsilon(u_{n+1})) - 2(\mu+H_k/3)\zeta_{n}\| \\ &=& \eta_n + \sqrt{\Frac{2}{3}}\Frac{1}{2(\mu+H_k/3)}\left(1 - \Frac{1}{1+2(\mu+H_k/3)\theta\Delta t\xi_{n+1}}\right) \|2\mu\mbox{Dev}(\varepsilon(u_{n+1})) - 2(\mu+H_k/3)\zeta_{n}\|\end{array}
 
 where :math:`\zeta_n` and :math:`\eta_n` are defined by
 
-.. math:: \zeta_n = \varepsilon^p_n+(1-\theta)\Delta t \xi_n (\mbox{Dev}(\sigma_n)-H_k\varepsilon^n_p) = \varepsilon^p_n+(1-\theta)\Delta t \xi_n \left(2\mu\mbox{Dev}(\varepsilon(u_{n}))-(2\mu+H_k)\varepsilon^n_p\right),
+.. math:: \zeta_n = \varepsilon^p_n+(1-\theta)\Delta t \xi_n (\mbox{Dev}(\sigma_n)-\frac{2}{3}H_k\varepsilon^n_p) = \varepsilon^p_n+(1-\theta)\Delta t \xi_n \left(2\mu\mbox{Dev}(\varepsilon(u_{n}))-2(\mu+H_k/3)\varepsilon^n_p\right),
 
-.. math:: \eta_n  = \alpha_n+(1-\theta)\sqrt{\Frac{2}{3}}\Delta t \xi_n \|\mbox{Dev}(\sigma_n)-H_k\varepsilon^n_p\| =  \alpha_n+(1-\theta)\sqrt{\Frac{2}{3}}\Delta t \xi_n \|2\mu\mbox{Dev}(\varepsilon(u_{n}))-(2\mu+H_k)\varepsilon^n_p\|.
+.. math:: \eta_n  = \alpha_n+(1-\theta)\sqrt{\Frac{2}{3}}\Delta t \xi_n \|\mbox{Dev}(\sigma_n)-\frac{2}{3}H_k\varepsilon^n_p\| =  \alpha_n+(1-\theta)\sqrt{\Frac{2}{3}}\Delta t \xi_n \|2\mu\mbox{Dev}(\varepsilon(u_{n}))-2(\mu+H_k/3)\varepsilon^n_p\|.
 
 Note that the isotropic hardening modulus do not intervene in :math:`\tilde{\mathscr E}^p(u_{n+1}, \theta \Delta \xi, \varepsilon^p_{n})` but only in :math:`f(\sigma, A)`.
 
 **Elimination of the multiplier (for the return mapping approach)**
 
-Denoting :math:`\delta = \Frac{1}{1+(2\mu+H_k)\theta\Delta t\xi_{n+1}}`, :math:`\beta = \Frac{1-\delta}{2\mu+H_k}` and :math:`B = 2\mu\mbox{Dev}(\varepsilon(u_{n+1}))-(2\mu+H_k)\zeta_n` the expression for :math:`\varepsilon^p_{n+1}` and :math:`\alpha_{n+1}` becomes
+Denoting :math:`\delta = \Frac{1}{1+2(\mu+H_k/3)\theta\Delta t\xi_{n+1}}`, :math:`\beta = \Frac{1-\delta}{2(\mu+H_k/3)}` and :math:`B = 2\mu\mbox{Dev}(\varepsilon(u_{n+1}))-2(\mu+H_k/3)\zeta_n` the expression for :math:`\varepsilon^p_{n+1}` and :math:`\alpha_{n+1}` becomes
 
 .. math:: \varepsilon^p_{n+1} = \zeta_n+\beta B, ~~~ \alpha_{n+1} = \eta_n + \sqrt{\Frac{2}{3}}\beta \|B\|,
   :label: hardeningepsalp
@@ -408,24 +408,24 @@ Thus, either we are in the elastic case, i.e. :math:`\xi_{n+1} = 0, \delta = 1` 
 
 or we are in the plastic case and :math:`\xi_{n+1} > 0, \delta < 1`, :math:`\delta \|B\| = \sqrt{\Frac{2}{3}}(\sigma_{y0}+H_i \alpha_{n+1})` and :math:`(1-\delta)` solves the equation
 
-.. math:: \|B\| - (1-\delta)\|B\| = \sqrt{\Frac{2}{3}}\left(\sigma_{y0}+H_i \eta_n + \sqrt{\Frac{2}{3}} \Frac{H_i}{2\mu+H_k}(1-\delta)\|B\|\right),
+.. math:: \|B\| - (1-\delta)\|B\| = \sqrt{\Frac{2}{3}}\left(\sigma_{y0}+H_i \eta_n + \sqrt{\Frac{2}{3}} \Frac{H_i}{2(\mu+H_k/3)}(1-\delta)\|B\|\right),
 
 which leads to
 
-.. math:: 1-\delta = \Frac{2\mu+H_k}{\|B\|(2\mu+H_k+\frac{2}{3}H_i)}\left(\|B\|-\sqrt{\Frac{2}{3}}(\sigma_{y0}+H_i \eta_n) \right)
+.. math:: 1-\delta = \Frac{2(\mu+H_k/3)}{\|B\|(2\mu+\frac{2}{3}(H_k+H_i))}\left(\|B\|-\sqrt{\Frac{2}{3}}(\sigma_{y0}+H_i \eta_n) \right)
 
 The two cases can be summarized by
 
-.. math:: \beta = \Frac{1}{\|B\|(2\mu+H_k+\frac{2}{3}H_i)}\left(\|B\|-\sqrt{\Frac{2}{3}}(\sigma_{y0}+H_i \eta_n) \right)_+
+.. math:: \beta = \Frac{1}{\|B\|(2\mu+\frac{2}{3}(H_k+H_i))}\left(\|B\|-\sqrt{\Frac{2}{3}}(\sigma_{y0}+H_i \eta_n) \right)_+
 
 which directly gives :math:`{\mathscr E}^p(u_{n+1}, \zeta_n, \eta_n)` and :math:`{\mathscr A}(u_{n+1}, \zeta_n, \eta_n)` thanks to :eq:`hardeningepsalp`. The multiplier :math:`\xi_{n+1}` being given by
 
-.. math:: \xi_{n+1} = \Frac{1}{(2\mu+H_k)\theta\Delta t}(\Frac{1}{\delta}-1) = \Frac{1}{\theta\Delta t}~\Frac{\beta}{1-(2\mu+H_k)\beta}.
+.. math:: \xi_{n+1} = \Frac{1}{(2(\mu+H_k/3))\theta\Delta t}(\Frac{1}{\delta}-1) = \Frac{1}{\theta\Delta t}~\Frac{\beta}{1-2(\mu+H_k/3)\beta}.
 
 
 **Plane strain approximation**
 
-Still denoting  :math:`\delta = \Frac{1}{1+(2\mu+H_k)\theta\Delta t\xi_{n+1}}`, :math:`\beta = \Frac{1-\delta}{2\mu+H_k}`, :math:`B = 2\mu\mbox{Dev}(\varepsilon(u_{n+1}))-(2\mu+H_k)\zeta_n` and :math:`\overline{B} = 2\mu\overline{Dev}(\bar{\varepsilon}(u_{n+1}))-(2\mu+H_k)\bar{\zeta}_n` its in-plane part, one has
+Still denoting  :math:`\delta = \Frac{1}{1+2(\mu+H_k/3)\theta\Delta t\xi_{n+1}}`, :math:`\beta = \Frac{1-\delta}{2(\mu+H_k/3)}`, :math:`B = 2\mu\mbox{Dev}(\varepsilon(u_{n+1}))-2(\mu+H_k/3)\zeta_n` and :math:`\overline{B} = 2\mu\overline{Dev}(\bar{\varepsilon}(u_{n+1}))-2(\mu+H_k/3)\bar{\zeta}_n` its in-plane part, one has
 
 .. math:: \bar{\tilde{\mathscr E}}^p(u_{n+1}, \theta\Delta t \xi_{n+1}, \bar{\zeta}_n) = \bar{\zeta}_n + \beta \overline{B},
 
@@ -434,7 +434,7 @@ Still denoting  :math:`\delta = \Frac{1}{1+(2\mu+H_k)\theta\Delta t\xi_{n+1}}`, 
 
 with
 
-.. math:: \|B\|^2 = \|2\mu\overline{\mbox{Dev}}(\bar{\varepsilon}(u_{n+1})) - (2\mu+H_k)\bar{\zeta}_n\|^2 + \left(2\mu\Frac{\mbox{tr}(\bar{\varepsilon}(u_{n+1}))}{3} -(2\mu+H_k)\mbox{tr}(\bar{\zeta}_n) \right)^2.
+.. math:: \|B\|^2 = \|2\mu\overline{\mbox{Dev}}(\bar{\varepsilon}(u_{n+1})) - 2(\mu+H_k/3)\bar{\zeta}_n\|^2 + \left(2\mu\Frac{\mbox{tr}(\bar{\varepsilon}(u_{n+1}))}{3} -2(\mu+H_k/3)\mbox{tr}(\bar{\zeta}_n) \right)^2.
 
 The yield condition still reads
 
@@ -502,7 +502,7 @@ displacement, the plastic multiplier and the plastic strain).
 `params` is a list of expressions for the parameters (at least elastic
 coefficients and the yield stress). These expressions can be some data
 names (or even variable names) of the model but can also be any scalar
-valid expression of the high level assembly language (such as "1/2",
+valid expression of the weak form language (such as "1/2",
 "2+sin(X[0])", "1+Norm(v)" ...). The last two parameters optionally
 provided in `params` are the `theta` parameter of the `theta`-scheme
 (generalized trapezoidal rule) used for the plastic strain integration

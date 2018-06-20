@@ -27,15 +27,16 @@ dnl thus, updating cache ./config.cache avoided.
 define([AC_CACHE_LOAD], )dnl
 define([AC_CACHE_SAVE], )dnl
 
-AC_INIT(getfem, 5.2)
+AC_INIT(getfem, 5.3)
 MAJOR_VERSION="5"
-MINOR_VERSION="2"
+MINOR_VERSION="3"
 PATCH_VERSION=""
 
 AC_CONFIG_SRCDIR([install-sh])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADER(config.h)
 AX_PREFIX_CONFIG_H(src/getfem/getfem_arch_config.h,GETFEM) 
+AX_PREFIX_CONFIG_H(src/gmm/gmm_arch_config.h,GMM) 
 AC_PREREQ(2.61)
 AC_ARG_PROGRAM
 
@@ -57,6 +58,8 @@ dnl AM_INIT_AUTOMAKE($PACKAGE,$VERSION)
 AM_INIT_AUTOMAKE([1.11 parallel-tests]) 
 WARNING_MSG=""
 
+CPPFLAGS="$CPPFLAGS -I/usr/local/include"
+
 dnl --------------------------
 dnl set the optimization level
 dnl --------------------------
@@ -65,8 +68,7 @@ AC_ARG_WITH(optimization,
 	    AC_HELP_STRING([--with-optimization=FLAG],[Set the optimization level (-O3 by default)]),
 	    [with_optimization=$withval],
 	    [with_optimization='-O3']
-	    )
-
+	    )	    
 
 dnl ---------------------------PARA LEVEL--------------------------
 paralevel=0
@@ -870,13 +872,19 @@ if test "$usematlab" != NO; then
      if $(echo "" | $MEX 2>&1 | grep 'This is .*TeX'); then
 	  AC_MSG_ERROR([the mex binary which is in the PATH appears to be part of LaTeX, not matlab !! run ./configure MEX=/path/to/matlab/mex]);
      fi;
-     MATLAB_ROOT=`$MEX -v 2>&1 | grep "MATLAB  " | awk '{print $4}'|sed -e '2,$d'`
+    
+     # MATLAB_ROOT=`$MEX -v 2>&1 | grep "MATLAB  " | awk '{print $4}'|sed -e '2,$d'`
+     MEX_EXE=`which $MEX`
+     MEX_EXE=`readlink -e $MEX_EXE`
+     MATLAB_ROOT=`echo $MEX_EXE | sed -e 's/bin.*$//'`
+     MEXEXT=$MATLAB_ROOT/bin/mexext
      Matlab_INC_DIR=$MATLAB_ROOT/extern/include
      echo "checking for matlab path... " $MATLAB_ROOT
-     MATLAB_COM_EXT=`$MEX -v 2>&1 | grep "LDEXTENSION " | awk '{print $3}'`
+     MATLAB_COM_EXT=.`$MEXEXT`
      echo "checking for mex extension... " $MATLAB_COM_EXT
 #    MATLAB_RELEASE=`grep "MATLAB R" $MATLAB_ROOT/extern/src/mexversion.c | awk '{print $4}' | sed -e 's/R//'`
-     MATLAB_RELEASE=`grep "full_ver=" $(which $MEX) | sed 's/[[^0-9]]//g'` # double brackets are for escaping reasons.
+#    MATLAB_RELEASE=`grep "full_ver="$(which $MEX) | sed 's/[[^0-9]]//g'` # double brackets are for escaping reasons.
+     MATLAB_RELEASE=`matlab -nosplash -nojvm -r "a=version;display(a);exit" | grep "(R2" | sed -n '1p' | sed 's/^.*R//g' | sed 's/).*$//'`
      echo "Matlab release is : R$MATLAB_RELEASE"
   fi
 fi

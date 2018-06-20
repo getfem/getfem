@@ -63,8 +63,17 @@ static void set_fem(getfem::mesh_fem *mf, getfemint::mexargs_in& in)
 /* set the classical fem of order on the mesh_fem, with a classical integration
    method */
 static void set_classical_fem(getfem::mesh_fem *mf, getfemint::mexargs_in& in,
-			      bool discontinuous) {
+                              bool discontinuous) {
   dim_type K = dim_type(in.pop().to_integer(0,255));
+
+  bool complete(false);
+  if (in.remaining() && in.front().is_string()) {
+    std::string s = in.pop().to_string();
+    if (cmd_strmatch(s, "complete"))
+      complete = true;
+    else
+      { THROW_BADARG("Invalid option" << s); }
+  }
 
   scalar_type alpha = 0.0;
   if (discontinuous && in.remaining()) alpha = in.pop().to_scalar();
@@ -72,17 +81,17 @@ static void set_classical_fem(getfem::mesh_fem *mf, getfemint::mexargs_in& in,
   dal::bit_vector bv;
   if (in.remaining()) {
     bv = in.pop().to_bit_vector(&mf->linked_mesh().convex_index(),
-				-config::base_index());
+                                -config::base_index());
     if (!discontinuous) {
-      mf->set_classical_finite_element(bv, K);
+      mf->set_classical_finite_element(bv, K, complete);
     } else {
-      mf->set_classical_discontinuous_finite_element(bv, K, alpha);
+      mf->set_classical_discontinuous_finite_element(bv, K, alpha, complete);
     }
   } else {
     if (!discontinuous) {
-      mf->set_classical_finite_element(K);
+      mf->set_classical_finite_element(K, complete);
     } else {
-      mf->set_classical_discontinuous_finite_element(K, alpha);
+      mf->set_classical_discontinuous_finite_element(K, alpha, complete);
     }
   }
 }
@@ -100,8 +109,8 @@ static void set_classical_fem(getfem::mesh_fem *mf, getfemint::mexargs_in& in,
 struct sub_gf_mf_set : virtual public dal::static_stored_object {
   int arg_in_min, arg_in_max, arg_out_min, arg_out_max;
   virtual void run(getfemint::mexargs_in& in,
-		   getfemint::mexargs_out& out,
-		   getfem::mesh_fem *mf) = 0;
+                   getfemint::mexargs_out& out,
+                   getfem::mesh_fem *mf) = 0;
 };
 
 typedef std::shared_ptr<sub_gf_mf_set> psub_command;
@@ -110,22 +119,22 @@ typedef std::shared_ptr<sub_gf_mf_set> psub_command;
 template <typename T> static inline void dummy_func(T &) {}
 
 #define sub_command(name, arginmin, arginmax, argoutmin, argoutmax, code) { \
-    struct subc : public sub_gf_mf_set {				\
-      virtual void run(getfemint::mexargs_in& in,			\
-		       getfemint::mexargs_out& out,			\
-		       getfem::mesh_fem *mf)				\
-      { dummy_func(in); dummy_func(out); code }				\
-    };									\
-    psub_command psubc = std::make_shared<subc>();			\
-    psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;		\
-    psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;	\
-    subc_tab[cmd_normalize(name)] = psubc;				\
+    struct subc : public sub_gf_mf_set {                                    \
+      virtual void run(getfemint::mexargs_in& in,                           \
+                       getfemint::mexargs_out& out,                         \
+                       getfem::mesh_fem *mf)                                \
+      { dummy_func(in); dummy_func(out); code }                             \
+    };                                                                      \
+    psub_command psubc = std::make_shared<subc>();                          \
+    psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;             \
+    psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;         \
+    subc_tab[cmd_normalize(name)] = psubc;                                  \
   }
 
 
 
 void gf_mesh_fem_set(getfemint::mexargs_in& m_in,
-		     getfemint::mexargs_out& m_out) {
+                     getfemint::mexargs_out& m_out) {
   typedef std::map<std::string, psub_command > SUBC_TAB;
   static SUBC_TAB subc_tab;
   
@@ -145,26 +154,32 @@ void gf_mesh_fem_set(getfemint::mexargs_in& m_in,
        );
 
 
-    /*@SET ('classical fem', @int k[, @ivec CVids])
+    /*@SET ('classical fem', @int k[[, 'complete'], @ivec CVids])
     Assign a classical (Lagrange polynomial) fem of order `k` to the @tmf.
+    The option 'complete' requests complete Langrange polynomial elements,
+    even if the element geometric transformation is an incomplete one
+    (e.g. 8-node quadrilateral or 20-node hexahedral).
 
     Uses FEM_PK for simplexes, FEM_QK for parallelepipeds etc.@*/
     sub_command
-      ("classical fem", 1, 2, 0, 0,
+      ("classical fem", 1, 3, 0, 0,
        set_classical_fem(mf, in, false);
        );
 
 
-    /*@SET ('classical discontinuous fem', @int K[, @tscalar alpha[, @ivec CVIDX]])
-    Assigns a classical (Lagrange polynomial) discontinuous fem or order K.
+    /*@SET ('classical discontinuous fem', @int k[[, 'complete'], @tscalar alpha[, @ivec CVIDX]])
+    Assigns a classical (Lagrange polynomial) discontinuous fem of order k.
 
     Similar to MESH_FEM:SET('set classical fem') except that
     FEM_PK_DISCONTINUOUS is used. Param `alpha` the node inset,
     :math:`0 \leq alpha < 1`, where 0 implies usual dof nodes, greater values
     move the nodes toward the center of gravity, and 1 means that all
-    degrees of freedom collapse on the center of gravity.@*/
+    degrees of freedom collapse on the center of gravity.
+    The option 'complete' requests complete Langrange polynomial elements,
+    even if the element geometric transformation is an incomplete one
+    (e.g. 8-node quadrilateral or 20-node hexahedral).@*/
     sub_command
-      ("classical discontinuous fem", 1, 3, 0, 0,
+      ("classical discontinuous fem", 1, 4, 0, 0,
        set_classical_fem(mf, in, true);
        );
 
@@ -188,18 +203,18 @@ void gf_mesh_fem_set(getfemint::mexargs_in& m_in,
        std::shared_ptr<gsparse> R = in.pop().to_sparse();
        std::shared_ptr<gsparse> E = in.pop().to_sparse();
        if (R->is_complex() || E->is_complex())
-	 THROW_BADARG("Reduction and extension matrices should be real matrices");
+         THROW_BADARG("Reduction and extension matrices should be real matrices");
        if (R->storage()==gsparse::CSCMAT && E->storage()==gsparse::CSCMAT)
-	 mf->set_reduction_matrices(R->real_csc(), E->real_csc());
+         mf->set_reduction_matrices(R->real_csc(), E->real_csc());
        else if (R->storage()==gsparse::CSCMAT && E->storage()==gsparse::WSCMAT)
-	 mf->set_reduction_matrices(R->real_csc(), E->real_wsc());
+         mf->set_reduction_matrices(R->real_csc(), E->real_wsc());
        else if (R->storage()==gsparse::WSCMAT && E->storage()==gsparse::CSCMAT)
-	 mf->set_reduction_matrices(R->real_wsc(), E->real_csc());
+         mf->set_reduction_matrices(R->real_wsc(), E->real_csc());
        else if (R->storage()==gsparse::WSCMAT && E->storage()==gsparse::WSCMAT)
-	 mf->set_reduction_matrices(R->real_wsc(), E->real_wsc());
+         mf->set_reduction_matrices(R->real_wsc(), E->real_wsc());
        else
-	 THROW_BADARG("Reduction and extension matrices should be "
-		      "sparse matrices");
+         THROW_BADARG("Reduction and extension matrices should be "
+                      "sparse matrices");
        );
 
 
@@ -236,7 +251,7 @@ void gf_mesh_fem_set(getfemint::mexargs_in& m_in,
        iarray v =
        in.pop().to_iarray(int(mf->linked_mesh().convex_index().last_true()+1));
        for (unsigned i=0; i < v.size(); ++i)
-	 mf->set_dof_partition(i, v[i]);
+         mf->set_dof_partition(i, v[i]);
        );
 
 
@@ -255,7 +270,7 @@ void gf_mesh_fem_set(getfemint::mexargs_in& m_in,
        getfem::partial_mesh_fem *ppmf
        = dynamic_cast<getfem::partial_mesh_fem *>(mf);
        if (!ppmf) THROW_BADARG("The command 'set partial' can only be "
-			      "applied to a partial mesh_fem object");
+                               "applied to a partial mesh_fem object");
        ppmf->adapt(doflst, rcvlst);
        );
 
@@ -297,8 +312,8 @@ void gf_mesh_fem_set(getfemint::mexargs_in& m_in,
   SUBC_TAB::iterator it = subc_tab.find(cmd);
   if (it != subc_tab.end()) {
     check_cmd(cmd, it->first.c_str(), m_in, m_out, it->second->arg_in_min,
-	      it->second->arg_in_max, it->second->arg_out_min,
-	      it->second->arg_out_max);
+              it->second->arg_in_max, it->second->arg_out_min,
+              it->second->arg_out_max);
     it->second->run(m_in, m_out, mf);
   }
   else bad_cmd(init_cmd);

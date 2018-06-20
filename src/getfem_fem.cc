@@ -25,6 +25,7 @@
     @brief implementation of some finite elements.
  */
 
+#include "getfem/bgeot_torus.h"
 #include "getfem/dal_singleton.h"
 #include "getfem/dal_tree_sorted.h"
 #include "gmm/gmm_algobase.h"
@@ -894,8 +895,8 @@ namespace getfem {
     }
   }
 
-  static pfem gen_hierarchical_fem(fem_param_list &params,
-        std::vector<dal::pstatic_stored_object> &dependencies) {
+  static pfem gen_hierarchical_fem
+  (fem_param_list &params, std::vector<dal::pstatic_stored_object> &deps) {
     GMM_ASSERT1(params.size() == 2, "Bad number of parameters : "
                 << params.size() << " should be 2.");
     GMM_ASSERT1(params[0].type() == 1 && params[1].type() == 1,
@@ -909,8 +910,8 @@ namespace getfem {
                 "Bad parameters");
     pfem p  = std::make_shared<thierach_femi_comp>(ppolycompfem(pf1.get()),
                                                    ppolycompfem(pf2.get()));
-    dependencies.push_back(p->ref_convex(0));
-    dependencies.push_back(p->node_tab(0));
+    deps.push_back(p->ref_convex(0));
+    deps.push_back(p->node_tab(0));
     return p;
   }
 
@@ -919,7 +920,7 @@ namespace getfem {
   /* ******************************************************************** */
 
   static pfem PK_hierarch_fem(fem_param_list &params,
-        std::vector<dal::pstatic_stored_object> &) {
+                              std::vector<dal::pstatic_stored_object> &) {
     GMM_ASSERT1(params.size() == 2, "Bad number of parameters : "
                 << params.size() << " should be 2.");
     GMM_ASSERT1(params[0].type() == 0 && params[1].type() == 0,
@@ -941,7 +942,7 @@ namespace getfem {
   }
 
   static pfem QK_hierarch_fem(fem_param_list &params,
-        std::vector<dal::pstatic_stored_object> &) {
+                              std::vector<dal::pstatic_stored_object> &) {
     GMM_ASSERT1(params.size() == 2, "Bad number of parameters : "
                 << params.size() << " should be 2.");
     GMM_ASSERT1(params[0].type() == 0 && params[1].type() == 0,
@@ -960,7 +961,7 @@ namespace getfem {
     return fem_descriptor(name.str());
   }
 
-  static pfem PK_prism_hierarch_fem(fem_param_list &params,
+  static pfem prism_PK_hierarch_fem(fem_param_list &params,
         std::vector<dal::pstatic_stored_object> &) {
     GMM_ASSERT1(params.size() == 2, "Bad number of parameters : "
                 << params.size() << " should be 2.");
@@ -1013,12 +1014,14 @@ namespace getfem {
            << k << alpha << ")," << fempk << "(1," << k << alpha << "))";
     return fem_descriptor(name.str());
   }
+
   static pfem QK_fem(fem_param_list &params,
-        std::vector<dal::pstatic_stored_object> &) {
+                     std::vector<dal::pstatic_stored_object> &) {
     return QK_fem_(params, false);
   }
+
   static pfem QK_discontinuous_fem(fem_param_list &params,
-        std::vector<dal::pstatic_stored_object> &) {
+                                   std::vector<dal::pstatic_stored_object> &) {
     return QK_fem_(params, true);
   }
 
@@ -1027,8 +1030,8 @@ namespace getfem {
   /* prims fems.                                                          */
   /* ******************************************************************** */
 
-  static pfem PK_prism_fem(fem_param_list &params,
-        std::vector<dal::pstatic_stored_object> &) {
+  static pfem prism_PK_fem(fem_param_list &params,
+                           std::vector<dal::pstatic_stored_object> &) {
     GMM_ASSERT1(params.size() == 2, "Bad number of parameters : "
                 << params.size() << " should be 2.");
     GMM_ASSERT1(params[0].type() == 0 && params[1].type() == 0,
@@ -1047,8 +1050,9 @@ namespace getfem {
     return fem_descriptor(name.str());
   }
 
-  static pfem PK_prism_discontinuous_fem(fem_param_list &params,
-        std::vector<dal::pstatic_stored_object> &) {
+  static pfem
+  prism_PK_discontinuous_fem(fem_param_list &params,
+                             std::vector<dal::pstatic_stored_object> &) {
     GMM_ASSERT1(params.size() == 2 || params.size() == 3,
                 "Bad number of parameters : "
                 << params.size() << " should be 2.");
@@ -1130,8 +1134,10 @@ namespace getfem {
   // |/        |/
   // 0----1----2
 
-   static pfem Q2_incomplete_fem(fem_param_list &params,
-        std::vector<dal::pstatic_stored_object> &dependencies) {
+   static pfem
+   build_Q2_incomplete_fem(fem_param_list &params,
+                           std::vector<dal::pstatic_stored_object> &deps,
+                           bool discontinuous) {
     GMM_ASSERT1(params.size() <= 1, "Bad number of parameters");
     dim_type n = 2;
     if (params.size() > 0) {
@@ -1147,6 +1153,8 @@ namespace getfem {
     p->estimated_degree() = 2;
     p->init_cvs_node();
     p->base().resize(n == 2 ? 8 : 20);
+    auto lag_dof = discontinuous ? lagrange_nonconforming_dof(n) 
+                                 : lagrange_dof(n);
 
     if (n == 2) {
       std::stringstream s
@@ -1161,14 +1169,14 @@ namespace getfem {
 
       for (int i = 0; i < 8; ++i) p->base()[i] = read_base_poly(2, s);
 
-      p->add_node(lagrange_dof(2), base_small_vector(0.0, 0.0));
-      p->add_node(lagrange_dof(2), base_small_vector(0.5, 0.0));
-      p->add_node(lagrange_dof(2), base_small_vector(1.0, 0.0));
-      p->add_node(lagrange_dof(2), base_small_vector(0.0, 0.5));
-      p->add_node(lagrange_dof(2), base_small_vector(1.0, 0.5));
-      p->add_node(lagrange_dof(2), base_small_vector(0.0, 1.0));
-      p->add_node(lagrange_dof(2), base_small_vector(0.5, 1.0));
-      p->add_node(lagrange_dof(2), base_small_vector(1.0, 1.0));
+      p->add_node(lag_dof, base_small_vector(0.0, 0.0));
+      p->add_node(lag_dof, base_small_vector(0.5, 0.0));
+      p->add_node(lag_dof, base_small_vector(1.0, 0.0));
+      p->add_node(lag_dof, base_small_vector(0.0, 0.5));
+      p->add_node(lag_dof, base_small_vector(1.0, 0.5));
+      p->add_node(lag_dof, base_small_vector(0.0, 1.0));
+      p->add_node(lag_dof, base_small_vector(0.5, 1.0));
+      p->add_node(lag_dof, base_small_vector(1.0, 1.0));
     } else {
       std::stringstream s
         ("1 + 2*x^2*y*z + 2*x*y^2*z + 2*x*y*z^2"
@@ -1199,35 +1207,42 @@ namespace getfem {
 
       for (int i = 0; i < 20; ++i) p->base()[i] = read_base_poly(3, s);
 
-      p->add_node(lagrange_dof(3), base_small_vector(0.0, 0.0, 0.0));
-      p->add_node(lagrange_dof(3), base_small_vector(0.5, 0.0, 0.0));
-      p->add_node(lagrange_dof(3), base_small_vector(1.0, 0.0, 0.0));
-      p->add_node(lagrange_dof(3), base_small_vector(0.0, 0.5, 0.0));
-      p->add_node(lagrange_dof(3), base_small_vector(1.0, 0.5, 0.0));
-      p->add_node(lagrange_dof(3), base_small_vector(0.0, 1.0, 0.0));
-      p->add_node(lagrange_dof(3), base_small_vector(0.5, 1.0, 0.0));
-      p->add_node(lagrange_dof(3), base_small_vector(1.0, 1.0, 0.0));
+      p->add_node(lag_dof, base_small_vector(0.0, 0.0, 0.0));
+      p->add_node(lag_dof, base_small_vector(0.5, 0.0, 0.0));
+      p->add_node(lag_dof, base_small_vector(1.0, 0.0, 0.0));
+      p->add_node(lag_dof, base_small_vector(0.0, 0.5, 0.0));
+      p->add_node(lag_dof, base_small_vector(1.0, 0.5, 0.0));
+      p->add_node(lag_dof, base_small_vector(0.0, 1.0, 0.0));
+      p->add_node(lag_dof, base_small_vector(0.5, 1.0, 0.0));
+      p->add_node(lag_dof, base_small_vector(1.0, 1.0, 0.0));
 
-      p->add_node(lagrange_dof(3), base_small_vector(0.0, 0.0, 0.5));
-      p->add_node(lagrange_dof(3), base_small_vector(1.0, 0.0, 0.5));
-      p->add_node(lagrange_dof(3), base_small_vector(0.0, 1.0, 0.5));
-      p->add_node(lagrange_dof(3), base_small_vector(1.0, 1.0, 0.5));
+      p->add_node(lag_dof, base_small_vector(0.0, 0.0, 0.5));
+      p->add_node(lag_dof, base_small_vector(1.0, 0.0, 0.5));
+      p->add_node(lag_dof, base_small_vector(0.0, 1.0, 0.5));
+      p->add_node(lag_dof, base_small_vector(1.0, 1.0, 0.5));
 
-      p->add_node(lagrange_dof(3), base_small_vector(0.0, 0.0, 1.0));
-      p->add_node(lagrange_dof(3), base_small_vector(0.5, 0.0, 1.0));
-      p->add_node(lagrange_dof(3), base_small_vector(1.0, 0.0, 1.0));
-      p->add_node(lagrange_dof(3), base_small_vector(0.0, 0.5, 1.0));
-      p->add_node(lagrange_dof(3), base_small_vector(1.0, 0.5, 1.0));
-      p->add_node(lagrange_dof(3), base_small_vector(0.0, 1.0, 1.0));
-      p->add_node(lagrange_dof(3), base_small_vector(0.5, 1.0, 1.0));
-      p->add_node(lagrange_dof(3), base_small_vector(1.0, 1.0, 1.0));
+      p->add_node(lag_dof, base_small_vector(0.0, 0.0, 1.0));
+      p->add_node(lag_dof, base_small_vector(0.5, 0.0, 1.0));
+      p->add_node(lag_dof, base_small_vector(1.0, 0.0, 1.0));
+      p->add_node(lag_dof, base_small_vector(0.0, 0.5, 1.0));
+      p->add_node(lag_dof, base_small_vector(1.0, 0.5, 1.0));
+      p->add_node(lag_dof, base_small_vector(0.0, 1.0, 1.0));
+      p->add_node(lag_dof, base_small_vector(0.5, 1.0, 1.0));
+      p->add_node(lag_dof, base_small_vector(1.0, 1.0, 1.0));
     }
-    dependencies.push_back(p->ref_convex(0));
-    dependencies.push_back(p->node_tab(0));
+    deps.push_back(p->ref_convex(0));
+    deps.push_back(p->node_tab(0));
 
     return pfem(p);
   }
 
+  static pfem Q2_incomplete_fem
+  (fem_param_list &params, std::vector<dal::pstatic_stored_object> &deps)
+  { return build_Q2_incomplete_fem(params, deps, false); }
+
+  static pfem Q2_incomplete_discontinuous_fem
+  (fem_param_list &params, std::vector<dal::pstatic_stored_object> &deps)
+  { return build_Q2_incomplete_fem(params, deps, true); }
 
   /* ******************************************************************** */
   /*    Lagrange Pyramidal element of degree 0, 1 and 2                   */
@@ -1257,9 +1272,10 @@ namespace getfem {
   // |       |
   // 0---1---2
 
-  static pfem build_pyramid_pk_fem(short_type k, bool disc) {
+  static pfem
+  build_pyramid_QK_fem(short_type k, bool disc, scalar_type alpha=0) {
     auto p = std::make_shared<fem<base_rational_fraction>>();
-    p->mref_convex() = bgeot::pyramid_of_reference(1);
+    p->mref_convex() = bgeot::pyramid_QK_of_reference(1);
     p->dim() = 3;
     p->is_standard() = p->is_equivalent() = true;
     p->is_polynomial() = false;
@@ -1300,6 +1316,41 @@ namespace getfem {
       base_poly z    = read_base_poly(3, "z");
       base_poly ones = read_base_poly(3, "1");
       base_poly un_z = read_base_poly(3, "1-z");
+
+      std::vector<base_node> points = { base_node(-1.0, -1.0, 0.0),
+                                        base_node( 0.0, -1.0, 0.0),
+                                        base_node( 1.0, -1.0, 0.0),
+                                        base_node(-1.0,  0.0, 0.0),
+                                        base_node( 0.0,  0.0, 0.0),
+                                        base_node( 1.0,  0.0, 0.0),
+                                        base_node(-1.0,  1.0, 0.0),
+                                        base_node( 0.0,  1.0, 0.0),
+                                        base_node( 1.0,  1.0, 0.0),
+                                        base_node(-0.5, -0.5, 0.5),
+                                        base_node( 0.5, -0.5, 0.5),
+                                        base_node(-0.5,  0.5, 0.5),
+                                        base_node( 0.5,  0.5, 0.5),
+                                        base_node( 0.0,  0.0, 1.0) };
+
+      if (disc && alpha != scalar_type(0)) {
+        base_node G =
+          gmm::mean_value(points.begin(), points.end());
+        for (auto && pt : points)
+          pt = (1-alpha)*pt + alpha*G;
+        for (size_type d = 0; d < 3; ++d) {
+          base_poly S(1,2);
+          S[0] = -alpha * G[d] / (1-alpha);
+          S[1] = 1. / (1-alpha);
+          xi0 = bgeot::poly_substitute_var(xi0, S, d);
+          xi1 = bgeot::poly_substitute_var(xi1, S, d);
+          xi2 = bgeot::poly_substitute_var(xi2, S, d);
+          xi3 = bgeot::poly_substitute_var(xi3, S, d);
+          x = bgeot::poly_substitute_var(x, S, d);
+          y = bgeot::poly_substitute_var(y, S, d);
+          z = bgeot::poly_substitute_var(z, S, d);
+          un_z = bgeot::poly_substitute_var(un_z, S, d);
+        }
+      }
       base_rational_fraction Q(read_base_poly(3, "1"), un_z);
 
       p->base()[ 0] = Q*Q*xi0*xi1*(x*y-z*un_z);
@@ -1315,22 +1366,10 @@ namespace getfem {
       p->base()[10] = Q*z*xi1*xi2*4.;
       p->base()[11] = Q*z*xi3*xi0*4.;
       p->base()[12] = Q*z*xi2*xi3*4.;
-      p->base()[13] = read_base_poly(3, "z*(2*z-1)");
+      p->base()[13] = z*(z*2-ones);
 
-      p->add_node(lag_dof, base_small_vector(-1.0, -1.0, 0.0));
-      p->add_node(lag_dof, base_small_vector( 0.0, -1.0, 0.0));
-      p->add_node(lag_dof, base_small_vector( 1.0, -1.0, 0.0));
-      p->add_node(lag_dof, base_small_vector(-1.0,  0.0, 0.0));
-      p->add_node(lag_dof, base_small_vector( 0.0,  0.0, 0.0));
-      p->add_node(lag_dof, base_small_vector( 1.0,  0.0, 0.0));
-      p->add_node(lag_dof, base_small_vector(-1.0,  1.0, 0.0));
-      p->add_node(lag_dof, base_small_vector( 0.0,  1.0, 0.0));
-      p->add_node(lag_dof, base_small_vector( 1.0,  1.0, 0.0));
-      p->add_node(lag_dof, base_small_vector(-0.5, -0.5, 0.5));
-      p->add_node(lag_dof, base_small_vector( 0.5, -0.5, 0.5));
-      p->add_node(lag_dof, base_small_vector(-0.5,  0.5, 0.5));
-      p->add_node(lag_dof, base_small_vector( 0.5,  0.5, 0.5));
-      p->add_node(lag_dof, base_small_vector( 0.0,  0.0, 1.0));
+      for (const auto &pt : points)
+        p->add_node(lag_dof, pt);
 
     } else GMM_ASSERT1(false, "Sorry, pyramidal Lagrange fem "
                        "implemented only for degree 0, 1 or 2");
@@ -1339,7 +1378,7 @@ namespace getfem {
   }
 
 
-  static pfem pyramid_pk_fem
+  static pfem pyramid_QK_fem
   (fem_param_list &params, std::vector<dal::pstatic_stored_object> &deps) {
     GMM_ASSERT1(params.size() <= 1, "Bad number of parameters");
     short_type k = 2;
@@ -1347,21 +1386,26 @@ namespace getfem {
       GMM_ASSERT1(params[0].type() == 0, "Bad type of parameters");
       k = dim_type(::floor(params[0].num() + 0.01));
     }
-    pfem p = build_pyramid_pk_fem(k, false);
+    pfem p = build_pyramid_QK_fem(k, false);
     deps.push_back(p->ref_convex(0));
     deps.push_back(p->node_tab(0));
     return p;
   }
 
-  static pfem pyramid_disc_pk_fem
+  static pfem pyramid_QK_disc_fem
   (fem_param_list &params, std::vector<dal::pstatic_stored_object> &deps) {
-    GMM_ASSERT1(params.size() <= 1, "Bad number of parameters");
+    GMM_ASSERT1(params.size() <= 2, "Bad number of parameters");
     short_type k = 2;
     if (params.size() > 0) {
       GMM_ASSERT1(params[0].type() == 0, "Bad type of parameters");
       k = dim_type(::floor(params[0].num() + 0.01));
     }
-    pfem p = build_pyramid_pk_fem(k, true);
+    scalar_type alpha(0);
+    if (params.size() > 1) {
+      GMM_ASSERT1(params[1].type() == 0, "Bad type of parameters");
+      alpha = params[1].num();
+    }
+    pfem p = build_pyramid_QK_fem(k, true, alpha);
     deps.push_back(p->ref_convex(0));
     deps.push_back(p->node_tab(0));
     return p;
@@ -1386,9 +1430,9 @@ namespace getfem {
   // |       |
   // 0---1---2
 
-  static pfem build_pyramid2_incomplete_fem(bool disc) {
+  static pfem build_pyramid_Q2_incomplete_fem(bool disc) {
     auto p = std::make_shared<fem<base_rational_fraction>>();
-    p->mref_convex() = bgeot::pyramid_of_reference(1);
+    p->mref_convex() = bgeot::pyramid_QK_of_reference(1);
     p->dim() = 3;
     p->is_standard() = p->is_equivalent() = true;
     p->is_polynomial() = false;
@@ -1452,19 +1496,19 @@ namespace getfem {
   }
 
 
-  static pfem pyramid2_incomplete_fem
+  static pfem pyramid_Q2_incomplete_fem
   (fem_param_list &params, std::vector<dal::pstatic_stored_object> &deps) {
     GMM_ASSERT1(params.size() == 0, "Bad number of parameters");
-    pfem p = build_pyramid2_incomplete_fem(false);
+    pfem p = build_pyramid_Q2_incomplete_fem(false);
     deps.push_back(p->ref_convex(0));
     deps.push_back(p->node_tab(0));
     return p;
   }
 
-  static pfem pyramid2_incomplete_disc_fem
+  static pfem pyramid_Q2_incomplete_disc_fem
   (fem_param_list &params, std::vector<dal::pstatic_stored_object> &deps) {
-    GMM_ASSERT1(params.size() <= 1, "Bad number of parameters");
-    pfem p = build_pyramid2_incomplete_fem(true);
+    GMM_ASSERT1(params.size() == 0, "Bad number of parameters");
+    pfem p = build_pyramid_Q2_incomplete_fem(true);
     deps.push_back(p->ref_convex(0));
     deps.push_back(p->node_tab(0));
     return p;
@@ -1488,7 +1532,7 @@ namespace getfem {
   // |/     `|
   // 0---1---2
 
-  static pfem build_prism2_incomplete_fem(bool disc) {
+  static pfem build_prism_incomplete_P2_fem(bool disc) {
     auto p = std::make_shared<fem<base_rational_fraction>>();
     p->mref_convex() = bgeot::prism_of_reference(3);
     p->dim() = 3;
@@ -1542,19 +1586,19 @@ namespace getfem {
   }
 
 
-  static pfem prism2_incomplete_fem
+  static pfem prism_incomplete_P2_fem
   (fem_param_list &params, std::vector<dal::pstatic_stored_object> &deps) {
     GMM_ASSERT1(params.size() == 0, "Bad number of parameters");
-    pfem p = build_prism2_incomplete_fem(false);
+    pfem p = build_prism_incomplete_P2_fem(false);
     deps.push_back(p->ref_convex(0));
     deps.push_back(p->node_tab(0));
     return p;
   }
 
-  static pfem prism2_incomplete_disc_fem
+  static pfem prism_incomplete_P2_disc_fem
   (fem_param_list &params, std::vector<dal::pstatic_stored_object> &deps) {
-    GMM_ASSERT1(params.size() <= 1, "Bad number of parameters");
-    pfem p = build_prism2_incomplete_fem(true);
+    GMM_ASSERT1(params.size() == 0, "Bad number of parameters");
+    pfem p = build_prism_incomplete_P2_fem(true);
     deps.push_back(p->ref_convex(0));
     deps.push_back(p->node_tab(0));
     return p;
@@ -1577,7 +1621,7 @@ namespace getfem {
     base_[nc+1] = base_[1]; base_[nc+1] *= scalar_type(1 << nc);
     for (int i = 2; i <= nc; ++i) base_[nc+1] *= base_[i];
     // Le raccord assure la continuite
-    // des possibilités de raccord avec du P2 existent mais il faudrait
+    // des possibilitÃ©s de raccord avec du P2 existent mais il faudrait
     // modifier qlq chose (transformer les fct de base P1)
   }
 
@@ -3730,23 +3774,31 @@ namespace getfem {
   /*        classical fem                                                     */
   /* ******************************************************************** */
 
-  static pfem classical_fem_(const char *suffix, const char *arg,
-                             bgeot::pgeometric_trans pgt,
-                             short_type k) {
+  static pfem classical_fem_(bgeot::pgeometric_trans pgt,
+                             short_type k, bool complete=false,
+                             bool discont=false, scalar_type alpha=0) {
     DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(bgeot::pgeometric_trans, pgt_last,0);
     DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(short_type, k_last, short_type(-1));
-    DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(pfem, fm_last, 0);
-    DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(char, isuffix_last, 0);
-    bool found = false, isuffix = suffix[0];
+    DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(pfem, fem_last, 0);
+    DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(char, complete_last, 0);
+    DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(char, discont_last, 0);
+    DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(scalar_type, alpha_last, 0);
 
-    if (pgt_last == pgt && k_last == k && isuffix == isuffix_last)
-      return fm_last;
-
-    isuffix_last = isuffix;
+    bool found = false;
+    if (pgt_last == pgt && k_last == k && complete_last == complete &&
+        discont_last == discont && alpha_last == alpha)
+      return fem_last;
 
     dim_type n = pgt->structure()->dim();
     dim_type nbp = dim_type(pgt->basic_structure()->nb_points());
     std::stringstream name;
+    std::string suffix(discont ? "_DISCONTINUOUS" : "");
+    GMM_ASSERT2(discont || alpha == scalar_type(0),
+                "Cannot use an alpha parameter in continuous elements.");
+    std::stringstream arg_;
+    if (discont && alpha != scalar_type(0))
+      arg_ << "," << alpha;
+    std::string arg(arg_.str());
 
     // Identifying if it is a torus structure
     if (bgeot::is_torus_geom_trans(pgt) && n == 3) n = 2;
@@ -3754,49 +3806,72 @@ namespace getfem {
     /* Identifying P1-simplexes.                                          */
     if (nbp == n+1)
       if (pgt->basic_structure() == bgeot::simplex_structure(n)) {
-        name << "FEM_PK" << suffix << "(" << n << ',' << k << arg << ')';
+        name << "FEM_PK" << suffix << "(" << n << "," << k << arg << ")";
         found = true;
       }
 
     /* Identifying Q1-parallelepiped.                                     */
     if (!found && nbp == (size_type(1) << n))
       if (pgt->basic_structure() == bgeot::parallelepiped_structure(n)) {
-        name << "FEM_QK" << suffix << "(" << n << ',' << k << arg << ')';
+        if (!complete && k == 2 && (n == 2 || n == 3) &&
+            pgt->structure() == bgeot::Q2_incomplete_structure(n)) {
+          GMM_ASSERT2(alpha == scalar_type(0),
+                      "Cannot use an alpha parameter in incomplete Q2"
+                      " elements.");
+          name << "FEM_Q2_INCOMPLETE" << suffix << "(" << n << ")";
+        } else
+          name << "FEM_QK" << suffix << "(" << n << "," << k << arg << ")";
         found = true;
       }
 
     /* Identifying Q1-prisms.                                             */
     if (!found && nbp == 2 * n)
-      if (pgt->basic_structure() == bgeot::prism_structure(n)) {
-        name << "FEM_PK_PRISM" << suffix << "(" << n << ',' << k << arg << ')';
+      if (pgt->basic_structure() == bgeot::prism_P1_structure(n)) {
+        if (!complete && k == 2 && n == 3 &&
+            pgt->structure() == bgeot::prism_incomplete_P2_structure()) {
+          GMM_ASSERT2(alpha == scalar_type(0),
+                      "Cannot use an alpha parameter in incomplete prism"
+                      " elements.");
+          name << "FEM_PRISM_INCOMPLETE_P2" << suffix;
+        } else
+          name << "FEM_PRISM_PK" << suffix << "(" << n << "," << k << arg << ")";
         found = true;
       }
 
     /* Identifying pyramids.                                              */
     if (!found && nbp == 5)
-      if (pgt->basic_structure() == bgeot::pyramid_structure(1)) {
-        name << "FEM_PYRAMID" << suffix << "_LAGRANGE(" << k << arg << ')';
+      if (pgt->basic_structure() == bgeot::pyramid_QK_structure(1)) {
+        if (!complete && k == 2 &&
+            pgt->structure() == bgeot::pyramid_Q2_incomplete_structure()) {
+          GMM_ASSERT2(alpha == scalar_type(0),
+                      "Cannot use an alpha parameter in incomplete pyramid"
+                      " elements.");
+          name << "FEM_PYRAMID_Q2_INCOMPLETE" << suffix;
+        } else
+          name << "FEM_PYRAMID_QK" << suffix << "(" << k << arg << ")";
         found = true;;
       }
 
     // To be completed
 
     GMM_ASSERT1(found, "This element is not taken into account. Contact us");
-    fm_last = fem_descriptor(name.str());
+    fem_last = fem_descriptor(name.str());
     pgt_last = pgt;
     k_last = k;
-    return fm_last;
+    complete_last = complete;
+    discont_last = discont;
+    alpha_last = alpha;
+    return fem_last;
   }
 
-  pfem classical_fem(bgeot::pgeometric_trans pgt, short_type k) {
-    return classical_fem_("", "", pgt, k);
+  pfem classical_fem(bgeot::pgeometric_trans pgt, short_type k,
+                     bool complete) {
+    return classical_fem_(pgt, k, complete);
   }
 
   pfem classical_discontinuous_fem(bgeot::pgeometric_trans pgt, short_type k,
-                                   scalar_type alpha) {
-    char arg[128]; arg[0] = 0;
-    if (alpha) sprintf(arg, ",%g", alpha);
-    return classical_fem_("_DISCONTINUOUS", arg, pgt, k);
+                                   scalar_type alpha, bool complete) {
+    return classical_fem_(pgt, k, complete, true, alpha);
   }
 
   /* ******************************************************************** */
@@ -3828,9 +3903,11 @@ namespace getfem {
       add_suffix("PK", PK_fem);
       add_suffix("QK", QK_fem);
       add_suffix("QK_DISCONTINUOUS", QK_discontinuous_fem);
-      add_suffix("PK_PRISM", PK_prism_fem);
+      add_suffix("PRISM_PK", prism_PK_fem);
+      add_suffix("PK_PRISM", prism_PK_fem); // for backwards compatibility
       add_suffix("PK_DISCONTINUOUS", PK_discontinuous_fem);
-      add_suffix("PK_PRISM_DISCONTINUOUS", PK_prism_discontinuous_fem);
+      add_suffix("PRISM_PK_DISCONTINUOUS", prism_PK_discontinuous_fem);
+      add_suffix("PK_PRISM_DISCONTINUOUS", prism_PK_discontinuous_fem); // for backwards compatibility
       add_suffix("PK_WITH_CUBIC_BUBBLE", PK_with_cubic_bubble);
       add_suffix("PRODUCT", product_fem);
       add_suffix("P1_NONCONFORMING", P1_nonconforming_fem);
@@ -3840,13 +3917,15 @@ namespace getfem {
       add_suffix("GEN_HIERARCHICAL", gen_hierarchical_fem);
       add_suffix("PK_HIERARCHICAL", PK_hierarch_fem);
       add_suffix("QK_HIERARCHICAL", QK_hierarch_fem);
-      add_suffix("PK_PRISM_HIERARCHICAL", PK_prism_hierarch_fem);
+      add_suffix("PRISM_PK_HIERARCHICAL", prism_PK_hierarch_fem);
+      add_suffix("PK_PRISM_HIERARCHICAL", prism_PK_hierarch_fem); // for backwards compatibility
       add_suffix("STRUCTURED_COMPOSITE", structured_composite_fem_method);
       add_suffix("PK_HIERARCHICAL_COMPOSITE", PK_composite_hierarch_fem);
       add_suffix("PK_FULL_HIERARCHICAL_COMPOSITE",
                  PK_composite_full_hierarch_fem);
       add_suffix("PK_GAUSSLOBATTO1D", PK_GL_fem);
       add_suffix("Q2_INCOMPLETE", Q2_incomplete_fem);
+      add_suffix("Q2_INCOMPLETE_DISCONTINUOUS", Q2_incomplete_discontinuous_fem);
       add_suffix("HCT_TRIANGLE", HCT_triangle_fem);
       add_suffix("REDUCED_HCT_TRIANGLE", reduced_HCT_triangle_fem);
       add_suffix("QUADC1_COMPOSITE", quadc1p3_fem);
@@ -3854,14 +3933,16 @@ namespace getfem {
       add_suffix("RT0", P1_RT0);
       add_suffix("RT0Q", P1_RT0Q);
       add_suffix("NEDELEC", P1_nedelec);
-      add_suffix("PYRAMID_LAGRANGE", pyramid_pk_fem);
-      add_suffix("PYRAMID_DISCONTINUOUS_LAGRANGE", pyramid_disc_pk_fem);
-      add_suffix("PYRAMID2_INCOMPLETE_LAGRANGE", pyramid2_incomplete_fem);
-      add_suffix("PYRAMID2_INCOMPLETE_DISCONTINUOUS_LAGRANGE",
-                 pyramid2_incomplete_disc_fem);
-      add_suffix("PRISM2_INCOMPLETE_LAGRANGE", prism2_incomplete_fem);
-      add_suffix("PRISM2_INCOMPLETE_DISCONTINUOUS_LAGRANGE",
-                 prism2_incomplete_disc_fem);
+      add_suffix("PYRAMID_QK", pyramid_QK_fem);
+      add_suffix("PYRAMID_QK_DISCONTINUOUS", pyramid_QK_disc_fem);
+      add_suffix("PYRAMID_LAGRANGE", pyramid_QK_fem); // for backwards compatibility
+      add_suffix("PYRAMID_DISCONTINUOUS_LAGRANGE", pyramid_QK_disc_fem); // for backwards compatibility
+      add_suffix("PYRAMID_Q2_INCOMPLETE", pyramid_Q2_incomplete_fem);
+      add_suffix("PYRAMID_Q2_INCOMPLETE_DISCONTINUOUS",
+                 pyramid_Q2_incomplete_disc_fem);
+      add_suffix("PRISM_INCOMPLETE_P2", prism_incomplete_P2_fem);
+      add_suffix("PRISM_INCOMPLETE_P2_DISCONTINUOUS",
+                 prism_incomplete_P2_disc_fem);
     }
   };
 
@@ -3922,13 +4003,13 @@ namespace getfem {
     return pf;
   }
 
-  pfem PK_prism_fem(size_type n, short_type k) {
+  pfem prism_PK_fem(size_type n, short_type k) {
     DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(pfem, pf, 0);
     DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(size_type, d, size_type(-2));
     DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(short_type, r, short_type(-2));
     if (d != n || r != k) {
       std::stringstream name;
-      name << "FEM_PK_PRISM(" << n << "," << k << ")";
+      name << "FEM_PRISM_PK(" << n << "," << k << ")";
       pf = fem_descriptor(name.str());
       d = n; r = k;
     }

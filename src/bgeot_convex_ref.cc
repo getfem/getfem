@@ -25,24 +25,121 @@
 #include "getfem/bgeot_comma_init.h"
 
 namespace bgeot {
+  
+  // ******************************************************************
+  //    Interface with qhull
+  // ******************************************************************
+  
+# ifndef GETFEM_HAVE_LIBQHULL_QHULL_A_H
+  void qhull_delaunay(const std::vector<base_node> &,
+                gmm::dense_matrix<size_type>&) {
+    GMM_ASSERT1(false, "Qhull header files not installed. "
+                "Install qhull library and reinstall GetFEM++ library.");
+  }
+# else
+
+  extern "C" {
+    // #ifdef _MSC_VER
+# include <libqhull/qhull_a.h>
+    // #else
+    // # include <qhull/qhull.h>
+    // # include <qhull/mem.h>
+    // # include <qhull/qset.h>
+    // # include <qhull/geom.h>
+    // # include <qhull/merge.h>
+    // # include <qhull/poly.h>
+    // # include <qhull/io.h>
+    // # include <qhull/stat.h>
+    // #endif
+  }
+  
+  void qhull_delaunay(const std::vector<base_node> &pts,
+		      gmm::dense_matrix<size_type>& simplexes) {
+    // cout << "running delaunay with " << pts.size() << " points\n";
+    size_type dim = pts[0].size();   /* points dimension.           */
+    if (pts.size() <= dim) { gmm::resize(simplexes, dim+1, 0); return; }
+    if (pts.size() == dim+1) {
+      gmm::resize(simplexes, dim+1, 1);
+      for (size_type i=0; i <= dim; ++i) simplexes(i, 0) = i;
+      return;
+    }
+    std::vector<coordT> Pts(dim * pts.size());
+    for (size_type i=0; i < pts.size(); ++i)
+      gmm::copy(pts[i], gmm::sub_vector(Pts, gmm::sub_interval(i*dim, dim)));
+    boolT ismalloc=0;  /* True if qhull should free points in
+                        * qh_freeqhull() or reallocation      */
+    /* Be Aware: option QJ could destabilizate all, it can break everything. */
+    /* option Qbb -> QbB (????) */
+    /* option flags for qhull, see qh_opt.htm */
+    char flags[]= "qhull QJ d Qbb Pp T0"; //QJ s i TO";//"qhull Tv";
+    FILE *outfile= 0;    /* output from qh_produce_output()
+                          *  use NULL to skip qh_produce_output() */
+    FILE *errfile= stderr;    /* error messages from qhull code */
+    int exitcode;             /* 0 if no error from qhull */
+    facetT *facet;                  /* set by FORALLfacets */
+    int curlong, totlong;          /* memory remaining after qh_memfreeshort */
+    vertexT *vertex, **vertexp;
+    exitcode = qh_new_qhull (int(dim), int(pts.size()), &Pts[0], ismalloc,
+                             flags, outfile, errfile);
+    if (!exitcode) { /* if no error */
+      size_type nbf=0;
+      FORALLfacets { if (!facet->upperdelaunay) nbf++; }
+      gmm::resize(simplexes, dim+1, nbf);
+        /* 'qh facet_list' contains the convex hull */
+      nbf=0;
+      FORALLfacets {
+        if (!facet->upperdelaunay) {
+          size_type s=0;
+          FOREACHvertex_(facet->vertices) {
+            assert(s < (unsigned)(dim+1));
+            simplexes(s++,nbf) = qh_pointid(vertex->point);
+          }
+          nbf++;
+        }
+      }
+    }
+    qh_freeqhull(!qh_ALL);
+    qh_memfreeshort (&curlong, &totlong);
+    if (curlong || totlong)
+      cerr << "qhull internal warning (main): did not free " << totlong <<
+        " bytes of long memory (" << curlong << " pieces)\n";
+
+  }
+
+#endif
+
+  
 
   size_type simplexified_tab(pconvex_structure cvs, size_type **tab);
 
-  static void simplexify_convex(pconvex_structure cvs, mesh_structure &m) {
+  static void simplexify_convex(bgeot::convex_of_reference *cvr,
+				mesh_structure &m) {
+    pconvex_structure cvs = cvr->structure();
     m.clear();
-    cvs = basic_structure(cvs);
-    dim_type n = cvs->dim();
+    auto basic_cvs = basic_structure(cvs);
+    dim_type n = basic_cvs->dim();
     std::vector<size_type> ipts(n+1);
-    if (cvs->nb_points() == n + 1) {
+    if (basic_cvs->nb_points() == n + 1) {
       for (size_type i = 0; i <= n; ++i) ipts[i] = i;
       m.add_simplex(n, ipts.begin());
     }
     else {
       size_type *tab;
-      size_type nb = simplexified_tab(cvs, &tab);
-      for (size_type nc = 0; nc < nb; ++nc) {
-        for (size_type i = 0; i <= n; ++i) ipts[i] = *tab++;
-        m.add_simplex(n, ipts.begin());
+      size_type nb = simplexified_tab(basic_cvs, &tab);
+      if (nb) {
+	for (size_type nc = 0; nc < nb; ++nc) {
+	  for (size_type i = 0; i <= n; ++i) ipts[i] = *tab++;
+	  m.add_simplex(n, ipts.begin());
+	}
+      }	else {
+#       ifdef GETFEM_HAVE_LIBQHULL_QHULL_A_H
+	gmm::dense_matrix<size_type> t;
+	qhull_delaunay(cvr->points(), t);
+	for (size_type nc = 0; nc < gmm::mat_ncols(t); ++nc) {
+	  for (size_type i = 0; i <= n; ++i) ipts[i] = t(i,nc);
+	  m.add_simplex(n, ipts.begin());
+	}
+#       endif
       }
     }
   }
@@ -89,18 +186,26 @@ namespace bgeot {
     return p;
   }
 
+  convex_of_reference::convex_of_reference
+  (pconvex_structure cvs_, bool auto_basic_) :
+    convex<base_node>(move(cvs_)), basic_convex_ref_(0),
+    auto_basic(auto_basic_) {
+    DAL_STORED_OBJECT_DEBUG_CREATED(this, "convex of refrence");
+    psimplexified_convex = std::make_shared<mesh_structure>();
+    // dal::singleton<cleanup_simplexified_convexes>::instance()
+    //        .push_back(psimplexified_convex);
+  }
+
+  bool convex_of_reference::is_basic() const {
+    return auto_basic;
+  }
+
   /* should be called on the basic_convex_ref */
   const mesh_structure* convex_of_reference::simplexified_convex() const {
-    if (psimplexified_convex.get() == 0) {
-      psimplexified_convex = std::make_shared<mesh_structure>();
-      // dal::singleton<cleanup_simplexified_convexes>::instance()
-      //        .push_back(psimplexified_convex);
-      GMM_ASSERT1(auto_basic,
-                  "always use simplexified_convex on the basic_convex_ref() "
-                  "[this=" << nb_points() << ", basic="
-                  << basic_convex_ref_->nb_points());
-      simplexify_convex(structure(), *psimplexified_convex);
-    }
+    GMM_ASSERT1(auto_basic,
+                "always use simplexified_convex on the basic_convex_ref() "
+                "[this=" << nb_points() << ", basic="
+                << basic_convex_ref_->nb_points());
     return psimplexified_convex.get();
   }
 
@@ -153,12 +258,10 @@ namespace bgeot {
       for (; it != ite; e += *it, ++it) {};
       return e / sqrt(scalar_type(pt.size()));
     }
-    K_simplex_of_ref_(dim_type NN, short_type KK) {
-      cvs = simplex_structure(NN, KK);
-      if (KK == 1)
-        auto_basic = true;
-      else
-        basic_convex_ref_ = simplex_of_reference(NN, 1);
+    K_simplex_of_ref_(dim_type NN, short_type KK) :
+      convex_of_reference(simplex_structure(NN, KK), (KK == 1) || (NN == 0))
+    {
+      if ((KK != 1) && (NN != 0)) basic_convex_ref_ = simplex_of_reference(NN, 1);
       size_type R = cvs->nb_points();
       convex<base_node>::points().resize(R);
       normals_.resize(NN+1);
@@ -192,6 +295,7 @@ namespace bgeot {
         }
       }
       ppoints = store_point_tab(convex<base_node>::points());
+      if (auto_basic) simplexify_convex(this, *psimplexified_convex);
     }
   };
 
@@ -220,9 +324,10 @@ namespace bgeot {
     scalar_type is_in_face(short_type f, const base_node& pt) const
     { return basic_convex_ref_->is_in_face(f, pt); }
 
-    Q2_incomplete_of_ref_(dim_type nc) {
+    Q2_incomplete_of_ref_(dim_type nc) :
+      convex_of_reference(Q2_incomplete_structure(nc), false)
+    {
       GMM_ASSERT1(nc == 2 || nc == 3, "Sorry exist only in dimension 2 or 3");
-      cvs = Q2_incomplete_structure(nc);
       convex<base_node>::points().resize(cvs->nb_points());
       normals_.resize(nc == 2 ? 4: 6);
       basic_convex_ref_ = parallelepiped_of_reference(nc);
@@ -297,7 +402,7 @@ namespace bgeot {
   /*    Pyramidal element of reference.                                   */
   /* ******************************************************************** */
 
-  class pyramid_of_ref_ : public convex_of_reference {
+  class pyramid_QK_of_ref_ : public convex_of_reference {
   public :
     scalar_type is_in_face(short_type f, const base_node& pt) const {
       // return zero if pt is in the face of the convex
@@ -315,17 +420,13 @@ namespace bgeot {
       return r;
     }
 
-    pyramid_of_ref_(dim_type k) {
+    pyramid_QK_of_ref_(dim_type k) : convex_of_reference(pyramid_QK_structure(k), k == 1) {
       GMM_ASSERT1(k == 1 || k == 2,
                   "Sorry exist only in degree 1 or 2, not " << k);
 
-      cvs = pyramid_structure(k);
       convex<base_node>::points().resize(cvs->nb_points());
       normals_.resize(cvs->nb_faces());
-      if (k == 1)
-        auto_basic = true;
-      else
-        basic_convex_ref_ = pyramid_of_reference(1);
+      if (k != 1) basic_convex_ref_ = pyramid_QK_of_reference(1);
 
       normals_[0] = { 0., 0., -1.};
       normals_[1] = { 0.,-1.,  1.};
@@ -359,18 +460,19 @@ namespace bgeot {
         convex<base_node>::points()[13] = base_node( 0.0,  0.0, 1.0);
       }
       ppoints = store_point_tab(convex<base_node>::points());
+      if (auto_basic) simplexify_convex(this, *psimplexified_convex);
     }
   };
 
 
-  DAL_SIMPLE_KEY(pyramid_reference_key_, dim_type);
+  DAL_SIMPLE_KEY(pyramid_QK_reference_key_, dim_type);
 
-  pconvex_ref pyramid_of_reference(dim_type k) {
+  pconvex_ref pyramid_QK_of_reference(dim_type k) {
      dal::pstatic_stored_object_key
-      pk = std::make_shared<pyramid_reference_key_>(k);
+      pk = std::make_shared<pyramid_QK_reference_key_>(k);
     dal::pstatic_stored_object o = dal::search_stored_object(pk);
     if (o) return std::dynamic_pointer_cast<const convex_of_reference>(o);
-    pconvex_ref p = std::make_shared<pyramid_of_ref_>(k);
+    pconvex_ref p = std::make_shared<pyramid_QK_of_ref_>(k);
     dal::add_stored_object(pk, p, p->structure(), p->pspt(),
                            dal::PERMANENT_STATIC_OBJECT);
     pconvex_ref p1 = basic_convex_ref(p);
@@ -383,19 +485,17 @@ namespace bgeot {
   /*    Incomplete quadratic pyramidal element of reference.              */
   /* ******************************************************************** */
 
-  class pyramid2_incomplete_of_ref_ : public convex_of_reference {
+  class pyramid_Q2_incomplete_of_ref_ : public convex_of_reference {
   public :
     scalar_type is_in(const base_node& pt) const
     { return basic_convex_ref_->is_in(pt); }
     scalar_type is_in_face(short_type f, const base_node& pt) const
     { return basic_convex_ref_->is_in_face(f, pt); }
 
-    pyramid2_incomplete_of_ref_() {
-
-      cvs = pyramid2_incomplete_structure();
+    pyramid_Q2_incomplete_of_ref_() : convex_of_reference(pyramid_Q2_incomplete_structure(), false) {
       convex<base_node>::points().resize(cvs->nb_points());
       normals_.resize(cvs->nb_faces());
-      basic_convex_ref_ = pyramid_of_reference(1);
+      basic_convex_ref_ = pyramid_QK_of_reference(1);
 
       normals_ = basic_convex_ref_->normals();
 
@@ -414,20 +514,21 @@ namespace bgeot {
       convex<base_node>::points()[12] = base_node( 0.0,  0.0, 1.0);
 
       ppoints = store_point_tab(convex<base_node>::points());
+      if (auto_basic) simplexify_convex(this, *psimplexified_convex);
     }
   };
 
 
-  DAL_SIMPLE_KEY(pyramid2_incomplete_reference_key_, dim_type);
+  DAL_SIMPLE_KEY(pyramid_Q2_incomplete_reference_key_, dim_type);
 
-  pconvex_ref pyramid2_incomplete_of_reference() {
+  pconvex_ref pyramid_Q2_incomplete_of_reference() {
     dal::pstatic_stored_object_key
-      pk = std::make_shared<pyramid2_incomplete_reference_key_>(0);
+      pk = std::make_shared<pyramid_Q2_incomplete_reference_key_>(0);
     dal::pstatic_stored_object o = dal::search_stored_object(pk);
     if (o)
       return std::dynamic_pointer_cast<const convex_of_reference>(o);
     else {
-      pconvex_ref p = std::make_shared<pyramid2_incomplete_of_ref_>();
+      pconvex_ref p = std::make_shared<pyramid_Q2_incomplete_of_ref_>();
       dal::add_stored_object(pk, p, p->structure(), p->pspt(),
                              dal::PERMANENT_STATIC_OBJECT);
       pconvex_ref p1 = basic_convex_ref(p);
@@ -441,16 +542,14 @@ namespace bgeot {
   /*    Incomplete quadratic triangular prism element of reference.       */
   /* ******************************************************************** */
 
-  class prism2_incomplete_of_ref_ : public convex_of_reference {
+  class prism_incomplete_P2_of_ref_ : public convex_of_reference {
   public :
     scalar_type is_in(const base_node& pt) const
     { return basic_convex_ref_->is_in(pt); }
     scalar_type is_in_face(short_type f, const base_node& pt) const
     { return basic_convex_ref_->is_in_face(f, pt); }
 
-    prism2_incomplete_of_ref_() {
-
-      cvs = prism2_incomplete_structure();
+    prism_incomplete_P2_of_ref_() : convex_of_reference(prism_incomplete_P2_structure(), false) {
       convex<base_node>::points().resize(cvs->nb_points());
       normals_.resize(cvs->nb_faces());
       basic_convex_ref_ = prism_of_reference(3);
@@ -474,20 +573,21 @@ namespace bgeot {
       convex<base_node>::points()[14] = base_node(0.0, 1.0, 1.0);
 
       ppoints = store_point_tab(convex<base_node>::points());
+      if (auto_basic) simplexify_convex(this, *psimplexified_convex);
     }
   };
 
 
-  DAL_SIMPLE_KEY(prism2_incomplete_reference_key_, dim_type);
+  DAL_SIMPLE_KEY(prism_incomplete_P2_reference_key_, dim_type);
 
-  pconvex_ref prism2_incomplete_of_reference() {
+  pconvex_ref prism_incomplete_P2_of_reference() {
     dal::pstatic_stored_object_key
-      pk = std::make_shared<prism2_incomplete_reference_key_>(0);
+      pk = std::make_shared<prism_incomplete_P2_reference_key_>(0);
     dal::pstatic_stored_object o = dal::search_stored_object(pk);
     if (o)
       return std::dynamic_pointer_cast<const convex_of_reference>(o);
     else {
-      pconvex_ref p = std::make_shared<prism2_incomplete_of_ref_>();
+      pconvex_ref p = std::make_shared<prism_incomplete_P2_of_ref_>();
       dal::add_stored_object(pk, p, p->structure(), p->pspt(),
                              dal::PERMANENT_STATIC_OBJECT);
       pconvex_ref p1 = basic_convex_ref(p);
@@ -528,7 +628,11 @@ namespace bgeot {
       else return cvr2->is_in_face(short_type(f - cvr1->structure()->nb_faces()), pt2);
     }
 
-    product_ref_(pconvex_ref a, pconvex_ref b) {
+    product_ref_(pconvex_ref a, pconvex_ref b) :
+      convex_of_reference(
+        convex_direct_product(*a, *b).structure(),
+        basic_convex_ref(a) == a && basic_convex_ref(b) == b)
+    {
       if (a->structure()->dim() < b->structure()->dim())
         GMM_WARNING1("Illegal convex: swap your operands: dim(cv1)=" <<
                     int(a->structure()->dim()) << " < dim(cv2)=" <<
@@ -547,11 +651,10 @@ namespace bgeot {
                   + cvr1->structure()->dim());
       ppoints = store_point_tab(convex<base_node>::points());
 
-      if (basic_convex_ref(a) == a && basic_convex_ref(b) == b)
-        auto_basic = true;
-      else
+      if (basic_convex_ref(a) != a || basic_convex_ref(b) != b)
         basic_convex_ref_ = convex_ref_product(basic_convex_ref(a),
                                                basic_convex_ref(b));
+      if (auto_basic) simplexify_convex(this, *psimplexified_convex);
     }
   };
 
@@ -604,10 +707,10 @@ namespace bgeot {
                              : convex<base_node>::points().back());
       return gmm::vect_sp(pt-x0, normals()[f]);
     }
-    equilateral_simplex_of_ref_(size_type N) {
+    equilateral_simplex_of_ref_(size_type N) :
+      convex_of_reference(simplex_structure(dim_type(N), 1), true)
+    {
       pconvex_ref prev = equilateral_simplex_of_reference(dim_type(N-1));
-      cvs = simplex_structure(dim_type(N), 1);
-      auto_basic = true;
       convex<base_node>::points().resize(N+1);
       normals_.resize(N+1);
       base_node G(N); G.fill(0.);
@@ -631,6 +734,7 @@ namespace bgeot {
         gmm::scale(normals_[f], 1/gmm::vect_norm2(normals_[f]));
       }
       ppoints = store_point_tab(convex<base_node>::points());
+      if (auto_basic) simplexify_convex(this, *psimplexified_convex);
     }
   };
 
@@ -656,9 +760,9 @@ namespace bgeot {
     scalar_type is_in_face(short_type, const base_node &) const
     { GMM_ASSERT1(false, "Information not available here"); }
 
-    generic_dummy_(dim_type d, size_type n, short_type nf) {
-      cvs = generic_dummy_structure(d, n, nf);
-      auto_basic = true;
+    generic_dummy_(dim_type d, size_type n, short_type nf) :
+      convex_of_reference(generic_dummy_structure(d, n, nf), true)
+    {
       convex<base_node>::points().resize(n);
       normals_.resize(0);
       base_node P(d);

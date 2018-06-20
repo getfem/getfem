@@ -140,12 +140,12 @@ gf_model_set(md,'add_Dirichlet_condition_with_penalization',mim,'u', 1e12, DIRIC
 if (variant == 5 || variant == 6) % Penalisation of the jump over the first crack
   mim_bound1 = gf_mesh_im('levelset', mls, 'boundary(a)', gf_integ('IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6),3)'));
   % gf_asm('generic', mim_bound, 0, '1', -1) % length of the crack
-  gf_model_set(md, 'add linear generic assembly brick', mim_bound1, '1e17*(Xfem_plus(u)-Xfem_minus(u)).(Xfem_plus(Test_u)-Xfem_minus(Test_u))');
+  gf_model_set(md, 'add linear term', mim_bound1, '1e17*(Xfem_plus(u)-Xfem_minus(u)).(Xfem_plus(Test_u)-Xfem_minus(Test_u))');
 end
 
 if (variant == 4 || variant == 6) % Penalisation of the jump over the second crack
   mim_bound2 = gf_mesh_im('levelset', mls, 'boundary(b)', gf_integ('IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6),3)'));
-  gf_model_set(md, 'add linear generic assembly brick', mim_bound2, '1e17*(Xfem_plus(u)-Xfem_minus(u)).(Xfem_plus(Test_u)-Xfem_minus(Test_u))');
+  gf_model_set(md, 'add linear term', mim_bound2, '1e17*(Xfem_plus(u)-Xfem_minus(u)).(Xfem_plus(Test_u)-Xfem_minus(Test_u))');
 end
 
 % Assembly of the linear system and solve:

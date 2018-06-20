@@ -157,7 +157,7 @@ if (with_hardening)
   expr_sigma = strcat('(', B_inv, '*(Von_Mises_projection((',B,'*((1-alpha)*sigma))+(-(H)*(((1-alpha)*',En,')+(alpha*', Enp1, ')))+(alpha*', ApH, '*(',Enp1,'-',En,')) + (alpha*', ...
     B, '*sigma), von_mises_threshold) + (H)*(((1-alpha)*',En,')+(alpha*', Enp1, '))))');
   
-  gf_model_set(md, 'add nonlinear generic assembly brick', mim, strcat(expr_sigma, ':Grad_Test_u'));
+  gf_model_set(md, 'add nonlinear term', mim, strcat(expr_sigma, ':Grad_Test_u'));
   % gf_model_set(md, 'add finite strain elasticity brick', mim, 'SaintVenant Kirchhoff', 'u', '[lambda; mu]');
 else
   gf_model_set(md, 'add fem data', 'previous_u', mf_u);
@@ -187,8 +187,8 @@ for step=1:size(t,2),
     end;
    
     % Solve the system
-    get(md, 'solve', 'noisy', 'lsearch', 'simplest',  'alpha min', 0.8, 'max_iter', 100, 'max_res', 1e-6);
-    % get(md, 'solve', 'noisy', 'max_iter', 80);
+    % get(md, 'solve', 'noisy', 'lsearch', 'simplest',  'alpha min', 0.8, 'max_iter', 100, 'max_res', 1e-6);
+    get(md, 'solve', 'noisy', 'max_iter', 80);
 
     % Retrieve the solution U
     U = get(md, 'variable', 'u');

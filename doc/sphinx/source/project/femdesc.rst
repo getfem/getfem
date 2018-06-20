@@ -46,7 +46,7 @@ elements:
 
    description of the direct product of ``p1`` and ``p2``.
 
-.. c:function:: bgeot::prism_structure(dim_type d)
+.. c:function:: bgeot::prism_P1_structure(dim_type d)
 
    description of a prism of dimension ``d``
 

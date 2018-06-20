@@ -95,17 +95,18 @@ namespace bgeot {
 
   protected :
     const mesh_precomposite *mp;
-    std::vector<base_poly> polytab;
-    bool local_coordinate; // are the polynomials described on the local
-    // coordinates of each sub-element or on global coordinates.
+    std::map<size_type, dal::pstatic_stored_object_key> polytab;
+    bool local_coordinate;  // are the polynomials described on the local
+                            // coordinates of each sub-element or on global coordinates.
+    base_poly default_poly;
 
   public :
     
     template <class ITER> scalar_type eval(const ITER &it) const;
     scalar_type eval(const base_node &pt) const;
     void derivative(short_type k);
-    base_poly &poly_of_subelt(size_type l) { return polytab[l]; }
-    const base_poly &poly_of_subelt(size_type l) const { return polytab[l]; }
+    void set_poly_of_subelt(size_type l, const base_poly &poly);
+    const base_poly &poly_of_subelt(size_type l) const;
     size_type nb_subelt() const { return polytab.size(); }
 
     polynomial_composite(bool lc = true) : local_coordinate(lc) {}
@@ -116,8 +117,9 @@ namespace bgeot {
   inline std::ostream &operator <<
   (std::ostream &o, const polynomial_composite& P) {
     o << "poly_composite [";
-    for (size_type i = 0; i < P.nb_subelt(); ++i) 
-      { if (i != 0) o << ", ";  o << P.poly_of_subelt(i); }
+    for (size_type i = 0; i < P.nb_subelt(); ++i) {
+      if (i != 0) o << ", " << P.poly_of_subelt(i);
+    }
     o << "]";
     return o;
   }
