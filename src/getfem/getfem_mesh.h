@@ -620,38 +620,41 @@ namespace getfem {
    * (i.e. faces which are not shared by two convexes)
    * + convexes whose dimension is smaller that m.dim()
    */
-  void  APIDECL outer_faces_of_mesh(const mesh &m, const dal::bit_vector& cvlst,
-                            convex_face_ct& flist);
+  void APIDECL outer_faces_of_mesh(const mesh &m, const dal::bit_vector &cvlst,
+                                   convex_face_ct &flist);
 
-  inline void APIDECL outer_faces_of_mesh(const mesh &m, convex_face_ct& flist)
-    IS_DEPRECATED;
-  inline void outer_faces_of_mesh(const mesh &m, convex_face_ct& flist)
-  { outer_faces_of_mesh(m,m.convex_index(),flist); }
+  inline void outer_faces_of_mesh(const mesh &m, convex_face_ct &flist)
+  { outer_faces_of_mesh(m, m.convex_index(), flist); }
 
-  void  APIDECL outer_faces_of_mesh(const mesh &m, const mesh_region &cvlst,
-                            mesh_region &flist);
+  void APIDECL outer_faces_of_mesh(const mesh &m, const mesh_region &cvlst,
+                                   mesh_region &flist);
 
-  inline void  APIDECL outer_faces_of_mesh(const mesh &m, mesh_region &flist)
-  { outer_faces_of_mesh(m,m.convex_index(),flist); }
+  inline void APIDECL outer_faces_of_mesh(const mesh &m, mesh_region &flist)
+  { outer_faces_of_mesh(m, m.convex_index(), flist); }
 
 
-  inline mesh_region APIDECL outer_faces_of_mesh(const mesh &m)
-  { mesh_region fl; outer_faces_of_mesh(m,m.convex_index(),fl); return fl; }
+  inline mesh_region APIDECL outer_faces_of_mesh(const mesh &m) {
+    mesh_region fl;
+    outer_faces_of_mesh(m, m.convex_index(), fl);
+    return fl;
+  }
 
   /** Select all the faces sharing at least two element of the given mesh
       region. Each face is represented only once and is arbitrarily chosen
       between the two neighbour elements.
    */
-  mesh_region APIDECL inner_faces_of_mesh
-  (const mesh &m, mesh_region mr = mesh_region::all_convexes());
+  mesh_region APIDECL
+  inner_faces_of_mesh(const mesh &m,
+                      mesh_region mr = mesh_region::all_convexes());
   
   /** Select in the region mr the faces of the mesh m with their unit
       outward vector having a maximal angle "angle" with the vector V.
    */
-  mesh_region APIDECL select_faces_of_normal(const mesh &m,
-                                             const mesh_region &mr,
-                                             const base_small_vector &V,
-                                             scalar_type angle);
+  mesh_region APIDECL
+  select_faces_of_normal(const mesh &m,
+                         const mesh_region &mr,
+                         const base_small_vector &V,
+                         scalar_type angle);
 
   /** Select in the region mr the faces of the mesh m lying entirely in the
       box delimated by pt1 and pt2.
