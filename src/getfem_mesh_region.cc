@@ -218,7 +218,7 @@ namespace getfem {
   void mesh_region::bounding_box(base_node& Pmin, base_node& Pmax) const {
     auto &mesh = *this->get_parent_mesh();
     for (auto cv : dal::bv_iterable_c(index())) {
-      for (auto &&pt : mesh.points_of_convex(cv)) {
+      for (const auto &pt : mesh.points_of_convex(cv)) {
         for (auto j = 0; j < Pmin.size(); j++){
           Pmin[j] = std::min(Pmin[j], pt[j]);
           Pmax[j] = std::max(Pmax[j], pt[j]);
@@ -241,6 +241,7 @@ namespace getfem {
   /* may be optimized .. */
   const dal::bit_vector&  mesh_region::index() const
   {
+    GMM_ASSERT1(p.get(), "Use from_mesh on that region before");
     dal::bit_vector& convex_index = rp().index_.thrd_cast();
     convex_index.clear();
     for (const_iterator it = begin(); it != end(); ++it)
@@ -546,7 +547,7 @@ namespace getfem {
           init(m.get_mpi_region());
         else
           init(m.convex_index());
-      } else if (s.p.get())  {
+      } else if (s.id() == size_type(-2) && s.p.get()) {
         if (intersect_with_mpi) {
           mpi_rg = std::make_unique<mesh_region>(s);
           mpi_rg->from_mesh(m);
@@ -555,6 +556,7 @@ namespace getfem {
         } else
           init(s);
       } else {
+        GMM_ASSERT1(s.id() != size_type(-2), "Internal error");
         if (intersect_with_mpi)
           init(m.get_mpi_sub_region(s.id()));
         else
@@ -574,9 +576,10 @@ namespace getfem {
     } else {
       if (s.id() == size_type(-1)) {
         init(m.convex_index());
-      } else if (s.p.get())  {
+      } else if (s.id() == size_type(-2) && s.p.get()) {
         init(s);
       } else {
+        GMM_ASSERT1(s.id() != size_type(-2), "Internal error");
         init(m.region(s.id()));
       }
     }
