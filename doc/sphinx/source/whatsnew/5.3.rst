@@ -6,7 +6,7 @@
 
 The main contribution of this version is the extension of the language allowing macro definition and explicit differentiation.
 
-Released version, 2018/06/19.
+Released version, 2018/06/20.
 
 The main changes are:
 
@@ -18,4 +18,9 @@ The main changes are:
      operations has been added on this occasion.
   
    * The support for pyramidal has been extended and stabilized.
+
+   * Incomplete pyramidal (13-node) and incomplete prism (15-node)
+     elements have been added.
+
+   * Importing meshes from ANSYS has been improved/extended.
 
