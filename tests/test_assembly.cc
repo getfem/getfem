@@ -274,7 +274,7 @@ namespace getfem { // old assembly procedures with low level generic assembly
   }
 
   /** 
-      Stiffness matrix for linear elasticity, with Lamé coefficients
+      Stiffness matrix for linear elasticity, with LamÃ© coefficients
       @ingroup asm
   */
   template<class MAT, class VECT>
@@ -312,7 +312,7 @@ namespace getfem { // old assembly procedures with low level generic assembly
 
 
   /** 
-      Stiffness matrix for linear elasticity, with constant Lamé coefficients
+      Stiffness matrix for linear elasticity, with constant LamÃ© coefficients
       @ingroup asm
   */
   template<class MAT, class VECT>
@@ -671,11 +671,11 @@ static void test_new_assembly(int N, int NX, int pK) {
 
     if (all) {
       if (N == 2) {
-	getfem::ga_define_function("dummyfunc", 1,
+        getfem::ga_define_function("dummyfunc", 1,
                                    "sin(pi*t/2)+2*sqr(t)-[t;t].[t;t]");
-	SCAL_TEST_0("Test on user defined functions",
+        SCAL_TEST_0("Test on user defined functions",
                     "dummyfunc(5)", mim, 1);
-	getfem::ga_define_function("dummyfunc2", 1, "cos(pi*t)");
+        getfem::ga_define_function("dummyfunc2", 1, "cos(pi*t)");
         SCAL_TEST_0("Test on user defined functions",
                     "dummyfunc2(X(1))", mim, 0);
       }

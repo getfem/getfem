@@ -32,7 +32,7 @@
 /** @file getfem_generic_assembly.h
     @author  Yves Renard <Yves.Renard@insa-lyon.fr>
     @date November 18, 2013.
-    @brief A langage for generic assembly of pde boundary value problems.
+    @brief A language for generic assembly of pde boundary value problems.
  */
 
 

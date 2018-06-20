@@ -51,7 +51,7 @@ namespace bgeot
   bool read_until(std::istream &ist, const char *st);
 
   /** Very simple lexical analysis of general interest for reading small
-   *  langages with a "MATLAB like" syntax :
+   *  languages with a "MATLAB like" syntax :
    *  spaces are ignored, '%' indicates a commentary until the end of the line,
    *  '...' indicates that the instruction continue on the next line
    *  (or separate two sub part of the same character string).
@@ -98,7 +98,7 @@ namespace bgeot
   /*       Read a parameter file.                                          */
   /* ********************************************************************* */
 
-  // The associated langage has approximatively the following grammar:
+  // The associated language has approximatively the following grammar:
   //
   // 'instruction' := 'parameter_name' '=' 'expression';
   //              or 'if' 'expression'

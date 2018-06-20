@@ -1423,7 +1423,7 @@ namespace getfem {
 
   
   //=========================================================================
-  // Syntax analysis for the generic assembly langage
+  // Syntax analysis for the generic assembly language
   //=========================================================================
 
   // Read a term with an (implicit) pushdown automaton.

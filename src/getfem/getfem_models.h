@@ -838,7 +838,7 @@ namespace getfem {
     /** Dictonnary of user defined macros. */
     const ga_macro_dictionnary &macro_dictionnary() const { return macro_dict; }
 
-    /** Add a macro definition for the high generic assembly langage.
+    /** Add a macro definition for the high generic assembly language.
         This macro can be used for the definition of generic assembly bricks.
         The name of a macro cannot coincide with a variable name. */
     void add_macro(const std::string &name, const std::string &expr);

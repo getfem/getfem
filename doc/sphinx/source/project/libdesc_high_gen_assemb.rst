@@ -139,7 +139,7 @@ Optimized instructions for variable evaluation, operations, vector and matrix as
 Predefined functions
 ^^^^^^^^^^^^^^^^^^^^
 
-Some predefined scalar functions are available in |gf| weak form langage in order to describe a weak formulation (or also to make basic algebraic computations). This is limited to scalar functions of one or two arguments. Due to the automatic differentiation used to obtain the tangent system of described problems, the derivative each function have to be available. The principle retained is the following: For each predefined function is available:
+Some predefined scalar functions are available in |gf| weak form language in order to describe a weak formulation (or also to make basic algebraic computations). This is limited to scalar functions of one or two arguments. Due to the automatic differentiation used to obtain the tangent system of described problems, the derivative each function have to be available. The principle retained is the following: For each predefined function is available:
   - A C++ function which computes the value given the argument(s).
   - The support of the function in the first each argument in term of a
     (possibly infinite) interval (this is for simplification of expressions).

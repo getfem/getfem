@@ -66,7 +66,7 @@ In the case of linearized elasticity, one has :math:`\psi^e(\varepsilon^e) = \fr
 Plastic potential, yield function and plastic flow rule
 =======================================================
 
-Plastic yielding is supposed to occur when the stress attains a critical value. This is determinated by a yield function :math:`f(\sigma, A)` and the condition
+Plastic yielding is supposed to occur when the stress attains a critical value. This limit is determined by a yield function :math:`f(\sigma, A)` and the condition
 
 .. math:: f(\sigma, A) \le 0.
 

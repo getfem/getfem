@@ -13,7 +13,7 @@ Generic assembly bricks
 -----------------------
 
 
-A mean to add a term either on one variable or on several ones is to directly use the weak form langage described in Section :ref:`ud-gasm-high`. The more general way is to use::
+A mean to add a term either on one variable or on several ones is to directly use the weak form language described in Section :ref:`ud-gasm-high`. The more general way is to use::
 
    size_type getfem::add_nonlinear_term(md, mim, expr,
                          region = -1, is_sym = false, is_coercive = false);
