@@ -92,10 +92,9 @@ namespace getfem {
     std::shared_ptr<impl> p;  /* the real region data */
     // #endif
 
-    size_type id_;            /* used temporarily when the 
-				 mesh_region(size_type) constructor is used */
+    size_type id_;     /* used temporarily when the
+                          mesh_region(size_type) constructor is used */
 
-    size_type type_; //optional type of the region
     omp_distribute<bool> partitioning_allowed; /** specifies that in
                           multithreaded code only a partition of the
                           region is visible in index() and size() methods,
@@ -145,7 +144,7 @@ namespace getfem {
     mesh_region(size_type id__);
 
     /** internal constructor. You should used m.region(id) instead. */
-    mesh_region(mesh& m, size_type id__, size_type type = size_type(-1));
+    mesh_region(mesh& m, size_type id__);
     /** build a mesh_region from a convex list stored in a bit_vector. */
     mesh_region(const dal::bit_vector &bv);
 
@@ -171,10 +170,6 @@ namespace getfem {
 			   const getfem::mesh& m2) const;
 
     size_type id() const { return id_; }
-
-    size_type get_type() const { return type_; }
-
-    void  set_type(size_type type)  { type_ = type; }
 
     /** In multithreaded part of the program makes only a partition of the 
     region visible in the index() and size() operations, as well as during 
