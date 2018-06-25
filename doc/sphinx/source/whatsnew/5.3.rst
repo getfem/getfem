@@ -6,7 +6,7 @@
 
 The main contribution of this version is the extension of the language allowing macro definition and explicit differentiation.
 
-Released version, 2018/06/20.
+Released version, 2018/06/22.
 
 The main changes are:
 

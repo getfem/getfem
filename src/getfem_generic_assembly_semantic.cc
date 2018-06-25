@@ -1805,7 +1805,7 @@ namespace getfem {
 			     ref_elt_dim, eval_fixed_size, ignore_X, option);
 	    child1 = pnode->children[1];
 	  } else {
-	    mi = child1->t.sizes(); mi.push_back(me.dim());
+	    mi = child1->t.sizes(); mi.push_back(meshdim);
 	    child1->t.adjust_sizes(mi);
 	    child1->node_type = GA_NODE_ZERO;
 	    gmm::clear(child1->tensor().as_vector());
