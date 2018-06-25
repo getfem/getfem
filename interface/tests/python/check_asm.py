@@ -236,3 +236,6 @@ res = gf.asm('expression analysis', str,  mim, 2, md)
 if (res != "(Grad_w(2, 2))"):
   print("Bad gradient"); exit(1)
 
+str = "Grad(u*Test_u)"; print('\nAssembly string "%s" gives:' % str)
+res = gf.asm('expression analysis', str,  mim, 1, md)
+

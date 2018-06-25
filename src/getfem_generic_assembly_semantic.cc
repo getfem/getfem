@@ -3737,22 +3737,31 @@ namespace getfem {
       = dal::singleton<ga_predef_function_tab>::instance(0);
 
     switch (pnode->node_type) {
-    case GA_NODE_VAL:
-      pnode->node_type = GA_NODE_GRAD;
+    case GA_NODE_VAL: case GA_NODE_VAL_TEST:
+      if (pnode->node_type == GA_NODE_VAL)
+	pnode->node_type = GA_NODE_GRAD;
+      else
+	pnode->node_type = GA_NODE_GRAD_TEST;
       mi = pnode->tensor().sizes();
       if (mi.back() != 1) mi.push_back(m.dim()); else mi.back() = m.dim();
       pnode->t.adjust_sizes(mi);
       break;
-    case GA_NODE_GRAD:
-      pnode->node_type = GA_NODE_HESS;
+    case GA_NODE_GRAD: case GA_NODE_GRAD_TEST:
+      if (pnode->node_type == GA_NODE_GRAD)
+	pnode->node_type = GA_NODE_HESS;
+      else
+	pnode->node_type = GA_NODE_HESS_TEST;
       mi = pnode->tensor().sizes();
       if (mi.back() != 1) mi.push_back(m.dim()); else mi.back() = m.dim();
       pnode->t.adjust_sizes(mi);
       break;
-    case GA_NODE_HESS:
+    case GA_NODE_HESS: case GA_NODE_HESS_TEST:
       GMM_ASSERT1(false, "Sorry, cannot derive an Hessian once more");
-    case GA_NODE_DIVERG: // Hess_u : Id(meshdim)
-      pnode->node_type = GA_NODE_HESS;
+    case GA_NODE_DIVERG: case GA_NODE_DIVERG_TEST: // Hess_u : Id(meshdim)
+      if (pnode->node_type == GA_NODE_DIVERG)
+	pnode->node_type = GA_NODE_HESS;
+      else
+	pnode->node_type = GA_NODE_HESS_TEST;
       mi = pnode->tensor().sizes();
       mi.pop_back(), mi.push_back(m.dim());
       if (m.dim() > 1) mi.push_back(m.dim());
@@ -3897,22 +3906,31 @@ namespace getfem {
       ga_node_grad(tree, workspace, m, child0);
       break;
 
-    case GA_NODE_ELEMENTARY_VAL:
-      pnode->node_type = GA_NODE_ELEMENTARY_GRAD;
+    case GA_NODE_ELEMENTARY_VAL: case GA_NODE_ELEMENTARY_VAL_TEST:
+      if (pnode->node_type == GA_NODE_ELEMENTARY_VAL)
+	pnode->node_type = GA_NODE_ELEMENTARY_GRAD;
+      else
+	pnode->node_type = GA_NODE_ELEMENTARY_GRAD_TEST;
       mi = pnode->tensor().sizes();
       if (mi.back() != 1) mi.push_back(m.dim()); else mi.back() = m.dim();
       pnode->t.adjust_sizes(mi);
       break;
-    case GA_NODE_ELEMENTARY_GRAD:
-      pnode->node_type = GA_NODE_ELEMENTARY_HESS;
+    case GA_NODE_ELEMENTARY_GRAD: case GA_NODE_ELEMENTARY_GRAD_TEST:
+      if (pnode->node_type == GA_NODE_ELEMENTARY_VAL)
+	pnode->node_type = GA_NODE_ELEMENTARY_HESS;
+      else
+	pnode->node_type = GA_NODE_ELEMENTARY_HESS_TEST;
       mi = pnode->tensor().sizes();
       if (mi.back() != 1) mi.push_back(m.dim()); else mi.back() = m.dim();
       pnode->t.adjust_sizes(mi);
       break;
-    case GA_NODE_ELEMENTARY_HESS:
+    case GA_NODE_ELEMENTARY_HESS: case GA_NODE_ELEMENTARY_HESS_TEST:
       GMM_ASSERT1(false, "Sorry, cannot derive an Hessian once more");
-    case GA_NODE_ELEMENTARY_DIVERG: // Hess_u : Id(meshdim)
-      pnode->node_type = GA_NODE_ELEMENTARY_HESS;
+    case GA_NODE_ELEMENTARY_DIVERG: case GA_NODE_ELEMENTARY_DIVERG_TEST:
+      if (pnode->node_type == GA_NODE_ELEMENTARY_DIVERG)
+	pnode->node_type = GA_NODE_ELEMENTARY_HESS;
+      else
+	pnode->node_type = GA_NODE_ELEMENTARY_HESS_TEST;
       mi = pnode->tensor().sizes();
       mi.pop_back(), mi.push_back(m.dim());
       if (m.dim() > 1) mi.push_back(m.dim());
@@ -3926,22 +3944,31 @@ namespace getfem {
       child1->node_type = GA_NODE_CONSTANT;
       break;
 
-    case GA_NODE_XFEM_PLUS_VAL:
-      pnode->node_type = GA_NODE_XFEM_PLUS_GRAD;
+    case GA_NODE_XFEM_PLUS_VAL: case GA_NODE_XFEM_PLUS_VAL_TEST:
+      if (pnode->node_type == GA_NODE_XFEM_PLUS_VAL)
+	pnode->node_type = GA_NODE_XFEM_PLUS_GRAD;
+      else
+	pnode->node_type = GA_NODE_XFEM_PLUS_GRAD_TEST;
       mi = pnode->tensor().sizes();
       if (mi.back() != 1) mi.push_back(m.dim()); else mi.back() = m.dim();
       pnode->t.adjust_sizes(mi);
       break;
-    case GA_NODE_XFEM_PLUS_GRAD:
-      pnode->node_type = GA_NODE_XFEM_PLUS_HESS;
+    case GA_NODE_XFEM_PLUS_GRAD: case GA_NODE_XFEM_PLUS_GRAD_TEST:
+      if (pnode->node_type == GA_NODE_XFEM_PLUS_GRAD)
+	pnode->node_type = GA_NODE_XFEM_PLUS_HESS;
+      else
+	pnode->node_type = GA_NODE_XFEM_PLUS_HESS_TEST;
       mi = pnode->tensor().sizes();
       if (mi.back() != 1) mi.push_back(m.dim()); else mi.back() = m.dim();
       pnode->t.adjust_sizes(mi);
       break;
-    case GA_NODE_XFEM_PLUS_HESS:
+    case GA_NODE_XFEM_PLUS_HESS: case GA_NODE_XFEM_PLUS_HESS_TEST:
       GMM_ASSERT1(false, "Sorry, cannot derive an Hessian once more");
-    case GA_NODE_XFEM_PLUS_DIVERG: // Hess_u : Id(meshdim)
-      pnode->node_type = GA_NODE_XFEM_PLUS_HESS;
+    case GA_NODE_XFEM_PLUS_DIVERG: case GA_NODE_XFEM_PLUS_DIVERG_TEST: 
+      if (pnode->node_type == GA_NODE_XFEM_PLUS_DIVERG)
+	pnode->node_type = GA_NODE_XFEM_PLUS_HESS;
+      else
+	pnode->node_type = GA_NODE_XFEM_PLUS_HESS_TEST;
       mi = pnode->tensor().sizes();
       mi.pop_back(), mi.push_back(m.dim());
       if (m.dim() > 1) mi.push_back(m.dim());
@@ -3955,22 +3982,31 @@ namespace getfem {
       child1->node_type = GA_NODE_CONSTANT;
       break;
 
-    case GA_NODE_XFEM_MINUS_VAL:
-      pnode->node_type = GA_NODE_XFEM_MINUS_GRAD;
+    case GA_NODE_XFEM_MINUS_VAL: case GA_NODE_XFEM_MINUS_VAL_TEST:
+      if (pnode->node_type == GA_NODE_XFEM_MINUS_VAL)
+	pnode->node_type = GA_NODE_XFEM_MINUS_GRAD;
+      else
+	pnode->node_type = GA_NODE_XFEM_MINUS_GRAD_TEST;
       mi = pnode->tensor().sizes();
       if (mi.back() != 1) mi.push_back(m.dim()); else mi.back() = m.dim();
       pnode->t.adjust_sizes(mi);
       break;
-    case GA_NODE_XFEM_MINUS_GRAD:
-      pnode->node_type = GA_NODE_XFEM_MINUS_HESS;
+    case GA_NODE_XFEM_MINUS_GRAD: case GA_NODE_XFEM_MINUS_GRAD_TEST:
+      if (pnode->node_type == GA_NODE_XFEM_MINUS_GRAD)
+	pnode->node_type = GA_NODE_XFEM_MINUS_HESS;
+      else
+	pnode->node_type = GA_NODE_XFEM_MINUS_HESS_TEST;
       mi = pnode->tensor().sizes();
       if (mi.back() != 1) mi.push_back(m.dim()); else mi.back() = m.dim();
       pnode->t.adjust_sizes(mi);
       break;
-    case GA_NODE_XFEM_MINUS_HESS:
+    case GA_NODE_XFEM_MINUS_HESS: case GA_NODE_XFEM_MINUS_HESS_TEST:
       GMM_ASSERT1(false, "Sorry, cannot derive an Hessian once more");
-    case GA_NODE_XFEM_MINUS_DIVERG: // Hess_u : Id(meshdim)
-      pnode->node_type = GA_NODE_XFEM_MINUS_HESS;
+    case GA_NODE_XFEM_MINUS_DIVERG: case GA_NODE_XFEM_MINUS_DIVERG_TEST:
+      if (pnode->node_type == GA_NODE_XFEM_MINUS_DIVERG)
+	pnode->node_type = GA_NODE_XFEM_MINUS_HESS;
+      else
+	pnode->node_type = GA_NODE_XFEM_MINUS_HESS_TEST;
       mi = pnode->tensor().sizes();
       mi.pop_back(), mi.push_back(m.dim());
       if (m.dim() > 1) mi.push_back(m.dim());
@@ -4190,7 +4226,10 @@ namespace getfem {
 	      if (pnode->op_type ==  GA_MULT || pnode->op_type ==  GA_COLON ||
 		  pnode->op_type ==  GA_DOT) {
 		if (pg2->children[1]->tensor_proper_size() == 1) {
-		  pg2->op_type = GA_TMULT;
+		  if (pg2->children[0]->tensor_proper_size() == 1)
+		    pg2->op_type = GA_MULT;
+		  else
+		    pg2->op_type = GA_TMULT;
 		  ga_node_grad(tree, workspace, m, pg2->children[1]);
 		} else if (pg2->children[0]->tensor_proper_size() == 1) {
 		  pg2->op_type = GA_MULT;
@@ -4614,7 +4653,7 @@ namespace getfem {
 
 
     default: GMM_ASSERT1(false, "Unexpected node type " << pnode->node_type
-                         << " in derivation. Internal error.");
+                         << " in gradient. Internal error.");
     }
   }
  
