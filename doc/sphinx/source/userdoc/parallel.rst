@@ -46,7 +46,7 @@ Note that you have to think to the fact that the matrices stored by the
 bricks are all distributed.
 
 A model of C++ parallelized program is :file:`tests/elastostatic.cc`.
-To run it in parallel you have to lauch for instance::
+To run it in parallel you have to launch for instance::
 
   mpirun -n 4 elastostatic elastostatic.param
 
