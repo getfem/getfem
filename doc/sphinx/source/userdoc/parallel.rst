@@ -99,8 +99,8 @@ Parallelization of getfem is still considered a "work in progress". A certain nu
   Some specificities:
 
   * The explicit matrix brick: the given matrix is considered to be
-    distributed. If it is not, only add it on the master process (otherwize,
-    the contribution will be multiplied by the numberof processes).
+    distributed. If it is not, only add it on the master process (otherwise,
+    the contribution will be multiplied by the number of processes).
 
   * The explicit rhs brick: the given vector is not considered to be
     distributed. Only the given vector on the master process is taken into
