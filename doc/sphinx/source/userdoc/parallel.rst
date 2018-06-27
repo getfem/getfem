@@ -106,7 +106,7 @@ Parallelization of getfem is still considered a "work in progress". A certain nu
     distributed. Only the given vector on the master process is taken into
     account.
   
-  * Constraint brick: The given mastrix and rhs are not considered to be
+  * Constraint brick: The given matrix and rhs are not considered to be
     distributed. Only the given matrix and vector on the master process are
     taken into account.
 
