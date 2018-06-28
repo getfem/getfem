@@ -35,6 +35,7 @@ EXTRA_DIST= 						\
 	demo_laplacian_DG.py 				\
 	demo_laplacian_aposteriori.py			\
 	demo_mortar.py 					\
+	demo_phase_field.py              		\
 	demo_plasticity.py              		\
 	demo_plate.py 					\
 	demo_static_contact.py 				\
