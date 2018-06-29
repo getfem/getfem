@@ -297,6 +297,9 @@ namespace getfem {
 
   void ga_workspace::add_interpolate_transformation
   (const std::string &name, pinterpolate_transformation ptrans) {
+     if (secondary_domain_exists(name))
+      GMM_ASSERT1(false, "An secondary domain with the same "
+                  "name already exists");
     if (transformations.find(name) != transformations.end())
       GMM_ASSERT1(name.compare("neighbour_elt"), "neighbour_elt is a "
                   "reserved interpolate transformation name");
@@ -313,8 +316,7 @@ namespace getfem {
 
   pinterpolate_transformation
   ga_workspace::interpolate_transformation(const std::string &name) const {
-    std::map<std::string, pinterpolate_transformation>::const_iterator
-      it = transformations.find(name);
+    auto  it = transformations.find(name);
     if (it != transformations.end()) return it->second;
     if (md && md->interpolate_transformation_exists(name))
       return md->interpolate_transformation(name);
@@ -334,8 +336,7 @@ namespace getfem {
 
   pelementary_transformation
   ga_workspace::elementary_transformation(const std::string &name) const {
-    std::map<std::string, pelementary_transformation>::const_iterator
-      it = elem_transformations.find(name);
+    auto  it = elem_transformations.find(name);
     if (it != elem_transformations.end()) return it->second;
     if (md && md->elementary_transformation_exists(name))
       return md->elementary_transformation(name);
@@ -344,6 +345,38 @@ namespace getfem {
       return parent_workspace->elementary_transformation(name);
     GMM_ASSERT1(false, "Inexistent elementary transformation " << name);
   }
+
+  void ga_workspace::add_secondary_domain(const std::string &name,
+                                          psecondary_domain psecdom) {
+    if (interpolate_transformation_exists(name))
+      GMM_ASSERT1(false, "An interpolate transformation with the same "
+                  "name already exists");
+    secondary_domains[name] = psecdom;
+  }
+
+  bool ga_workspace::secondary_domain_exists
+  (const std::string &name) const {
+    return (md && md->secondary_domain_exists(name)) ||
+      (parent_workspace &&
+       parent_workspace->secondary_domain_exists(name)) ||
+      (secondary_domains.find(name) != secondary_domains.end());
+  }
+
+  psecondary_domain
+  ga_workspace::secondary_domain(const std::string &name) const {
+    auto it = secondary_domains.find(name);
+    if (it != secondary_domains.end()) return it->second;
+    if (md && md->secondary_domain_exists(name))
+      return md->secondary_domain(name);
+    if (parent_workspace &&
+       parent_workspace->secondary_domain_exists(name))
+      return parent_workspace->secondary_domain(name);
+    GMM_ASSERT1(false, "Inexistent secondary domain " << name);
+  }
+
+
+
+  
 
   const mesh_region &
   ga_workspace::register_region(const mesh &m, const mesh_region &region) {

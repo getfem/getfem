@@ -91,6 +91,7 @@ namespace getfem {
     GA_INTERPOLATE, // 'Interpolate' operation
     GA_INTERPOLATE_FILTER, // 'Interpolate_filter' operation
     GA_ELEMENTARY,  // 'Elementary' operation (operation at the element level)
+    GA_SECONDARY_DOMAIN,  // For the integration on a product of two domains
     GA_XFEM_PLUS,   // Évaluation on the + side of a level-set for fem_level_set
     GA_XFEM_MINUS,  // Évaluation on the - side of a level-set for fem_level_set
     GA_PRINT,       // 'Print' Print the tensor
@@ -166,6 +167,17 @@ namespace getfem {
     GA_NODE_ELEMENTARY_GRAD_TEST,
     GA_NODE_ELEMENTARY_HESS_TEST,
     GA_NODE_ELEMENTARY_DIVERG_TEST,
+    GA_NODE_SECONDARY_DOMAIN,
+    GA_NODE_SECONDARY_DOMAIN_VAL,
+    GA_NODE_SECONDARY_DOMAIN_GRAD,
+    GA_NODE_SECONDARY_DOMAIN_HESS,
+    GA_NODE_SECONDARY_DOMAIN_DIVERG,
+    GA_NODE_SECONDARY_DOMAIN_VAL_TEST,
+    GA_NODE_SECONDARY_DOMAIN_GRAD_TEST,
+    GA_NODE_SECONDARY_DOMAIN_HESS_TEST,
+    GA_NODE_SECONDARY_DOMAIN_DIVERG_TEST,
+    GA_NODE_SECONDARY_DOMAIN_X,
+    GA_NODE_SECONDARY_DOMAIN_NORMAL,
     GA_NODE_XFEM_PLUS,
     GA_NODE_XFEM_PLUS_VAL,
     GA_NODE_XFEM_PLUS_GRAD,

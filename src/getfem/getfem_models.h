@@ -328,6 +328,7 @@ namespace getfem {
     dal::bit_vector valid_bricks, active_bricks;
     std::map<std::string, pinterpolate_transformation> transformations;
     std::map<std::string, pelementary_transformation> elem_transformations;
+    std::map<std::string, psecondary_domain> secondary_domains;
 
     // Structure dealing with time integration scheme
     int time_integration; // 0 : no, 1 : time step, 2 : init
@@ -1012,11 +1013,14 @@ namespace getfem {
     */
     virtual void next_iter();
 
-    /** Add a interpolate transformation to the model to be used with the
+    /** Add an interpolate transformation to the model to be used with the
         generic assembly.
     */
     void add_interpolate_transformation(const std::string &name,
                                         pinterpolate_transformation ptrans) {
+      if (secondary_domain_exists(name))
+        GMM_ASSERT1(false, "An secondary domain with the same "
+                    "name already exists");
       if (transformations.count(name) > 0)
         GMM_ASSERT1(name.compare("neighbour_elt"), "neighbour_elt is a "
                     "reserved interpolate transformation name");
@@ -1033,7 +1037,7 @@ namespace getfem {
       return it->second;
     }
 
-    /** Tests if `name` correpsonds to an interpolate transformation.
+    /** Tests if `name` corresponds to an interpolate transformation.
     */
     bool interpolate_transformation_exists(const std::string &name) const
     { return transformations.count(name) > 0; }
@@ -1057,10 +1061,36 @@ namespace getfem {
       return it->second;
     }
 
-    /** Tests if `name` correpsonds to an elementary transformation.
+    /** Tests if `name` corresponds to an elementary transformation.
     */
     bool elementary_transformation_exists(const std::string &name) const
     { return elem_transformations.count(name) > 0; }
+
+    
+    /** Add a secondary domain to the model to be used with the
+        generic assembly.
+    */
+    void add_secondary_domain(const std::string &name,
+                              psecondary_domain ptrans) {
+      if (interpolate_transformation_exists(name))
+        GMM_ASSERT1(false, "An interpolate transformation with the same "
+                    "name already exists");secondary_domains[name] = ptrans;
+    }
+
+    /** Get a pointer to the interpolate transformation `name`.
+    */
+    psecondary_domain
+    secondary_domain(const std::string &name) const {
+      auto  it = secondary_domains.find(name);
+      GMM_ASSERT1(it != secondary_domains.end(),
+                  "Inexistent transformation " << name);
+      return it->second;
+    }
+
+    /** Tests if `name` corresponds to an interpolate transformation.
+    */
+    bool secondary_domain_exists(const std::string &name) const
+    { return secondary_domains.count(name) > 0; }
 
     /** Gives the name of the variable of index `ind_var` of the brick
         of index `ind_brick`. */

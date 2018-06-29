@@ -133,6 +133,29 @@ namespace getfem {
   pelementary_transformation;
 
   //=========================================================================
+  //  Virtual secundary_domain object.
+  //=========================================================================
+
+  class APIDECL virtual_secondary_domain {
+    const mesh_im &mim;
+    size_type region;
+
+  public:
+
+    // interface to be reconsidered
+    virtual void give_secondary_elements(const mesh &m, size_type cv,
+                                       std::set<size_type> &elt_lst) const = 0;
+    virtual void init(const ga_workspace &workspace) const = 0;
+    virtual void finalize() const = 0;
+
+    virtual_secondary_domain(const mesh_im &mim_, size_type region_)
+      : mim(mim_), region(region_) {}
+    virtual ~virtual_secondary_domain() {}
+  };
+
+  typedef std::shared_ptr<const virtual_secondary_domain> psecondary_domain;
+
+  //=========================================================================
   // Structure dealing with macros.
   //=========================================================================
 
@@ -320,6 +343,8 @@ namespace getfem {
     VAR_SET variables;
     std::map<std::string, pinterpolate_transformation> transformations;
     std::map<std::string, pelementary_transformation> elem_transformations;
+    std::map<std::string, psecondary_domain> secondary_domains;
+    
     std::vector<tree_description> trees;
 
     std::map<std::string, std::vector<std::string> > variable_groups;
@@ -498,7 +523,15 @@ namespace getfem {
     pelementary_transformation
     elementary_transformation(const std::string &name) const;
 
+    void add_secondary_domain(const std::string &name,
+                              psecondary_domain psecdom);
 
+    bool secondary_domain_exists(const std::string &name) const;
+
+    psecondary_domain secondary_domain(const std::string &name) const;
+
+
+    
     // extract terms
     std::string extract_constant_term(const mesh &m);
     std::string extract_order1_term(const std::string &varname);

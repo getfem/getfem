@@ -99,11 +99,13 @@ namespace getfem {
     fem_precomp_pool fp_pool;
     std::map<gauss_pt_corresp, bgeot::pstored_point_tab> neighbour_corresp;
 
-    struct region_mim : std::pair<const mesh_im *, const mesh_region *> {
-      const mesh_im* mim() const { return this->first; }
-      const mesh_region* region() const { return this->second; }
+    struct region_mim
+      : std::tuple<const mesh_im *, const mesh_region *, char *> {
+      const mesh_im* mim() const { return std::get<0>(*this); }
+      const mesh_region* region() const { return std::get<1>(*this); }
       region_mim(const mesh_im *mim_, const mesh_region *region_) :
-        std::pair<const mesh_im *, const mesh_region *>(mim_, region_) {}
+      std::tuple<const mesh_im *, const mesh_region *,char *>(mim_, region_, 0)
+      {}
     };
 
     std::map<std::string, const base_vector *> extended_vars;
@@ -131,6 +133,13 @@ namespace getfem {
       std::map<std::string, variable_group_info> groups_info;
       std::map<var_trans_pair, base_tensor> derivatives;
       std::map<const mesh_fem *, pfem_precomp> pfps;
+    };
+
+    struct secondary_domain_info {
+      papprox_integration pai;
+      bool has_ctx;
+      fem_interpolation_context ctx;
+      base_small_vector Normal;
     };
 
     struct elementary_trans_info {
@@ -167,6 +176,7 @@ namespace getfem {
       std::set<std::string> transformations_der;
       std::map<std::string, interpolate_info> interpolate_infos;
       std::map<std::string, elementary_trans_info> elementary_trans_infos;
+      std::map<std::string, secondary_domain_info> secondary_domain_infos;
 
       // Instructions being executed at the first Gauss point after
       // a change of integration method only.
