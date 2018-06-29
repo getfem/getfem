@@ -514,7 +514,7 @@ struct Chrono {
      *          the mesh to the curved level sets.
      */
 
-      dmin = 2.*h0;
+      dmin = h0;
       if (noisy) cout << "dmin = " << dmin << " h0 = " << h0 << endl;
       if (noisy) cout << "convex " << cv << endl;
       
