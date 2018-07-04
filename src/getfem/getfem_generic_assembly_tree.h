@@ -416,6 +416,7 @@ namespace getfem {
 
   struct ga_tree {
     pga_tree_node root, current_node;
+    std::string secondary_domain;
 
     void add_scalar(scalar_type val, size_type pos, pstring expr);
     void add_allindices(size_type pos, pstring expr);
@@ -439,16 +440,22 @@ namespace getfem {
     { duplicate_with_operation(pnode, GA_MINUS); }
     void insert_node(pga_tree_node pnode, GA_NODE_TYPE node_type);
     void add_child(pga_tree_node pnode, GA_NODE_TYPE node_type = GA_NODE_VOID);
-    void swap(ga_tree &tree)
-    { std::swap(root, tree.root); std::swap(current_node, tree.current_node); }
+    void swap(ga_tree &tree) {
+      std::swap(root, tree.root);
+      std::swap(current_node, tree.current_node);
+      std::swap(secondary_domain, tree.secondary_domain);
+    }
 
-    ga_tree() : root(nullptr), current_node(nullptr) {}
+  ga_tree() : root(nullptr), current_node(nullptr), secondary_domain() {}
 
-  ga_tree(const ga_tree &tree) : root(nullptr), current_node(nullptr)
+  ga_tree(const ga_tree &tree) : root(nullptr), current_node(nullptr),
+      secondary_domain(tree.secondary_domain)
     { if (tree.root) copy_node(tree.root, nullptr, root); }
 
-    ga_tree &operator = (const ga_tree &tree)
-    { clear(); if (tree.root) copy_node(tree.root,nullptr,root); return *this; }
+    ga_tree &operator =(const ga_tree &tree) {
+      clear(); secondary_domain = tree.secondary_domain;
+      if (tree.root) copy_node(tree.root,nullptr,root); return *this;
+    }
 
     ~ga_tree() { clear(); }
   };

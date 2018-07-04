@@ -518,21 +518,33 @@ namespace getfem {
       }
       break;
 
-    case GA_NODE_INTERPOLATE: case GA_NODE_SECONDARY_DOMAIN:
+    case GA_NODE_SECONDARY_DOMAIN:
+      pnode->interpolate_name = tree.secondary_domain;
+      if (tree.secondary_domain.size() == 0)
+	ga_throw_error(pnode->expr, pnode->pos, "Secondary domain used "
+		       "in a single domain term.");
+      // continue with what follows
+    case GA_NODE_INTERPOLATE: 
       if (pnode->name.compare("X") == 0) {
-        if (pnode->node_type == GA_NODE_INTERPOLATE)
+        if (pnode->node_type == GA_NODE_INTERPOLATE) {
           pnode->node_type = GA_NODE_INTERPOLATE_X;
-        else
-          pnode->node_type = GA_NODE_SECONDARY_DOMAIN_X;
-        pnode->init_vector_tensor(meshdim);
+	  pnode->init_vector_tensor(meshdim);
+	} else {
+	  auto psd = workspace.secondary_domain(tree.secondary_domain);
+	  pnode->node_type = GA_NODE_SECONDARY_DOMAIN_X;
+	  pnode->init_vector_tensor(psd->mim().linked_mesh().dim());
+	}
         break;
       }
       if (pnode->name.compare("Normal") == 0) {
-        if (pnode->node_type == GA_NODE_INTERPOLATE)
+        if (pnode->node_type == GA_NODE_INTERPOLATE) {
           pnode->node_type = GA_NODE_INTERPOLATE_NORMAL;
-        else
+	  pnode->init_vector_tensor(meshdim);
+        } else {
+          auto psd = workspace.secondary_domain(tree.secondary_domain);
           pnode->node_type = GA_NODE_SECONDARY_DOMAIN_NORMAL;
-        pnode->init_vector_tensor(meshdim);
+	  pnode->init_vector_tensor(psd->mim().linked_mesh().dim());
+	}
         break;
       }
       // else continue with what follows
@@ -2563,6 +2575,7 @@ namespace getfem {
 			    size_type ref_elt_dim,
 			    bool eval_fixed_size,
 			    bool ignore_X, int option) {
+    // cout << "Begin semantic anaylsis" << endl;
     GMM_ASSERT1(predef_operators_nonlinear_elasticity_initialized &&
                 predef_operators_plasticity_initialized &&
                 predef_operators_contact_initialized, "Internal error");
@@ -2583,6 +2596,7 @@ namespace getfem {
         tree.clear();
     }
     ga_valid_operand(tree.root);
+    // cout << "end of semantic anaylsis" << endl;
   }
 
 

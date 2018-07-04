@@ -1165,7 +1165,7 @@ namespace getfem {
     else if (is_elementary)
       str << "," << pnode->elementary_name << ")";
     else if (is_secondary)
-      str << "," << pnode->interpolate_name << ")";    
+      str << ")";    
     else if (is_xfem_plus || is_xfem_minus)
       str << ")";
 
@@ -1666,18 +1666,7 @@ namespace getfem {
                              "variable, test function, X or Normal.");
             tree.current_node->name = std::string(&((*expr)[token_pos]),
                                                   token_length);
-            
-            t_type = ga_get_token(*expr, pos, token_pos, token_length);
-            if (t_type != GA_COMMA)
-              ga_throw_error(expr, pos, "Bad format for Secondary_domain "
-                             "arguments.");
-            t_type = ga_get_token(*expr, pos, token_pos, token_length);
-            if (t_type != GA_NAME)
-              ga_throw_error(expr, pos,
-                             "Second argument of Secondary_domain should be a "
-                             "transformation name.");
-            tree.current_node->interpolate_name
-              = std::string(&((*expr)[token_pos]), token_length);
+            tree.current_node->interpolate_name =  tree.secondary_domain;
             t_type = ga_get_token(*expr, pos, token_pos, token_length);
             if (t_type != GA_RPAR)
               ga_throw_error(expr, pos-1, "Missing a parenthesis after "

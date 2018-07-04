@@ -398,7 +398,6 @@ namespace getfem {
                               bool function_expr, size_type for_interpolation,
                               const std::string varname_interpolation) {
     if (tree.root) {
-
       // Eliminate the term if it corresponds to disabled variables
       if ((tree.root->test_function_type >= 1 &&
            is_disabled_variable(tree.root->name_test1)) ||
@@ -428,6 +427,7 @@ namespace getfem {
       bool found = false;
       for (size_type i = 0; i < trees.size(); ++i) {
         if (trees[i].mim == &mim && trees[i].m == &m &&
+	    trees[i].secondary_domain.compare(tree.secondary_domain) == 0 &&
             trees[i].order == order &&
             trees[i].name_test1.compare(tree.root->name_test1) == 0 &&
             trees[i].interpolate_name_test1.compare
@@ -455,6 +455,7 @@ namespace getfem {
         trees.push_back(tree_description());
         trees.back().mim = &mim; trees.back().m = &m;
         trees.back().rg = &rg;
+	trees.back().secondary_domain = tree.secondary_domain;
         trees.back().ptree = new ga_tree;
         trees.back().ptree->swap(tree);
         pga_tree_node root = trees.back().ptree->root;
@@ -506,13 +507,19 @@ namespace getfem {
   size_type ga_workspace::add_expression(const std::string &expr,
                                          const mesh_im &mim,
                                          const mesh_region &rg_,
-                                         size_type add_derivative_order) {
+                                         size_type add_derivative_order,
+					 const std::string &secondary_dom) {
     const mesh_region &rg = register_region(mim.linked_mesh(), rg_);
     // cout << "adding expression " << expr << endl;
     GA_TIC;
     size_type max_order = 0;
     std::vector<ga_tree> ltrees(1);
     ga_read_string(expr, ltrees[0], macro_dictionnary());
+    if (secondary_dom.size()) {
+      GMM_ASSERT1(secondary_domain_exists(secondary_dom),
+		  "Unknow secondary domain " << secondary_dom);
+      ltrees[0].secondary_domain = secondary_dom;
+    }
     // cout << "read : " << ga_tree_to_string(ltrees[0])  << endl;
     ga_semantic_analysis(ltrees[0], *this, mim.linked_mesh(),
                          ref_elt_dim_of_mesh(mim.linked_mesh()),

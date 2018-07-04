@@ -932,4 +932,39 @@ namespace getfem {
       ->set_correspondance(elt_corr);
   }
 
+
+  //=========================================================================
+  // Secondary domains
+  //=========================================================================
+
+
+  class standard_secondary_domain : public virtual_secondary_domain {
+    
+  public:
+
+    virtual const mesh_region &give_region(const mesh &,
+					   size_type, short_type) const
+    { return region; }
+    // virtual void init(const ga_workspace &workspace) const = 0;
+    // virtual void finalize() const = 0;
+
+    standard_secondary_domain(const mesh_im &mim__, const mesh_region &region_)
+      : virtual_secondary_domain(mim__, region_) {}
+  };
+
+  void add_standard_secondary_domain
+  (model &md, const std::string &name, const mesh_im &mim,
+   const mesh_region &rg) { 
+    psecondary_domain p = std::make_shared<standard_secondary_domain>(mim, rg);
+    md.add_secondary_domain(name, p);
+  }
+  
+  void add_standard_secondary_domain
+  (ga_workspace &workspace, const std::string &name, const mesh_im &mim,
+   const mesh_region &rg) { 
+    psecondary_domain p = std::make_shared<standard_secondary_domain>(mim, rg);
+    workspace.add_secondary_domain(name, p);
+  }
+  
+
 } /* end of namespace */

@@ -8,8 +8,8 @@
 
 .. _ud-gasm-high:
 
-Compute arbitrary terms - high-level generic assembly procedures
-================================================================
+Compute arbitrary terms - high-level generic assembly procedures - Weak-form language
+=====================================================================================
 
 This section presents what is now the main generic assembly of |gf|. It is a high-level generic assembly in the sense that it is based on a weak form language to describe the weak formulation of boundary value problems of partial differential equations. It mainly has been developed to circumvent the difficulties with the previous low-level generic assembly (see  :ref:`ud-gasm-low`) for which nonlinear terms were quite difficult to describe. Conversely, a symbolic differentiation algorithm is used with this version. It simplifies a lot the approximation of nonlinear coupled problems since only the weak form is necessary to be described, the tangent system being automatically computed. Moreover, the weak form language is compiled into optimized instructions before the evaluation on each integration point in order to obtain a an optimal computational cost.
 
@@ -72,6 +72,7 @@ A specific weak form language has been developed to describe the weak formulatio
 
   - ``Elementary_transformation(variable, transformation)``: Allow a linear tranformation defined at the element level (i.e. not possible to define at the gauss point level). This feature has been added mostly for defining a reduction for plate elements (projection onto low-level vector element such as rotated RT0). ``transformation`` is an object stored by the workspace or model object which describes the trasformation for a particular element.
 
+  - Possibility of integration on the direct product of two-domains for double integral computation or coupling of two variables with a Kernel / convolution / exchange integral. This allows terms like :math:`\displaystyle\int_{\Omega_1}\int_{\Omega_2}k(x,y)u(x)v(y)dydx` with :math:`\Omega_1` and :math:`\Omega_2` two domains, different or not, having their own meshes, integration methods and with :math:`u` a variable defined on :math:`\Omega_1` and :math:`v` a variable defined on :math:`\Omega_2`. The keyword ``Secondary_domain(variable)`` allows to access to the variables on the second domain of integration.
 
 Some basic examples
 -------------------
@@ -161,9 +162,9 @@ The generic assembly is driven by the object ``getfem::ga_workspace`` defined in
 
 There is two ways to define a ``getfem::ga_workspace`` object. It can depend on a model (see :ref:`ud-model`) and should be declared as::
 
-  getfem::ga_workspace workspace(md);
+  getfem::ga_workspace workspace(model);
 
-with ``md`` a previously define ``getfem::model`` object. In that case the variable and constant considered are the one of the model. The second way it to define an independent ``getfem::ga_workspace`` object by::
+with ``model`` a previously define ``getfem::model`` object. In that case the variable and constant considered are the one of the model. The second way it to define an independent ``getfem::ga_workspace`` object by::
 
   getfem::ga_workspace workspace;
 
@@ -356,6 +357,10 @@ The last example is the assembly of the stiffness matrix of an order four proble
 
 with ``D`` the flexion modulus and ``nu`` the Poisson ratio.
 
+Script languages call of the assembly
+-------------------------------------
+
+For the use with Python, Scilab or Matlab interfaces, see the respective documentation, in particular the ``gf_asm`` command and the ``model`` object.
 
 
 The tensors
@@ -529,7 +534,7 @@ Constant expressions
   - Floating points with standards notations (for instance ``3``, ``1.456``, ``1E-6``)
   - ``pi``: the constant Pi. 
   - ``meshdim``: the dimension of the current mesh (i.e. size of geometrical nodes)
-  - ``timestep``: the main time step of the model on which this assembly string is evaluated (defined by ``md.set_time_step(dt)``). Do not work on pure workspaces. 
+  - ``timestep``: the main time step of the model on which this assembly string is evaluated (defined by ``model.set_time_step(dt)``). Do not work on pure workspaces. 
   - ``Id(n)``: the identity matrix of size :math:`n\times n`. `n` should be an integer expression. For instance ``Id(meshdim)`` is allowed.
   - ``qdim(u)``: the total dimension of the variable ``u`` (i.e. the  size for fixed size variables and the total dimension of the vector/tensor field for FEM variables)
   - ``qdims(u)``: the dimensions of the variable ``u`` (i.e. the size for fixed size variables and the vector of dimensions of the vector/tensor field for FEM variables)
@@ -721,24 +726,24 @@ The transformation defined by an expression can be added to the workspace or the
 or::
 
   add_interpolate_transformation_from_expression
-    (md, transname, source_mesh, target_mesh, expr);
+    (model, transname, source_mesh, target_mesh, expr);
 
-where ``workspace`` is a workspace object, ``md`` a model object, ``transname`` is the name given to the transformation, ``source_mesh`` the mesh on which the integration occurs, ``target_mesh`` the mesh on which the interpolation is performed and ``expr`` is a regular expression of the high-level generic weak form language which may contains reference to the variables of the workspace/model.
+where ``workspace`` is a workspace object, ``model`` a model object, ``transname`` is the name given to the transformation, ``source_mesh`` the mesh on which the integration occurs, ``target_mesh`` the mesh on which the interpolation is performed and ``expr`` is a regular expression of the high-level generic weak form language which may contains reference to the variables of the workspace/model.
 
 For instance, an expression::
 
   add_interpolate_transformation_from_expression
-    (md, "my_transformation", my_mesh, my_mesh, "X-[1;0]");
+    (model, "my_transformation", my_mesh, my_mesh, "X-[1;0]");
 
 will allow to integrate some expressions at the current position with a shift of -1 with respect to the first coordinate. This simple kind of transformation can be used to prescribe a periodic condition.
 
 Of course, one may used more complex expressions such as::
 
   add_interpolate_transformation_from_expression
-    (md, "my_transformation", my_mesh, my_second_mesh, "[X[1]cos(X[2]); X[1]sin(X[2])]");
+    (model, "my_transformation", my_mesh, my_second_mesh, "[X[1]cos(X[2]); X[1]sin(X[2])]");
 
   add_interpolate_transformation_from_expression
-    (md, "my_transformation", my_mesh, my_mesh, "X+u");
+    (model, "my_transformation", my_mesh, my_mesh, "X+u");
 
 where ``u`` is a vector variable of the workspace/model.
 
@@ -783,7 +788,7 @@ Element extrapolation transformation
 A specific transformation (see previous section) is defined in order to allows the evaluation of certain quantities by extrapolation with respect to another element (in general a neighbour element). This is not strictly speaking a transformation since the point location remain unchanged, but the evaluation is made on another element extrapolating the shape functions outside it. This transformation is used for stabilization term in fictitious domain applications (with cut elements) where it is more robust to extrapolate some quantities on a neighbour element having a sufficiently large intersection with the real domain than evaluating them on the current element if it has a small intersection with the real domain. The functions allowing to add such a transformation to a model or a workspace are::
 
   add_element_extrapolation_transformation
-  (md, transname, my_mesh, std::map<size_type, size_type> &elt_corr);
+  (model, transname, my_mesh, std::map<size_type, size_type> &elt_corr);
 
   add_element_extrapolation_transformation
   (workspace, transname, my_mesh, std::map<size_type, size_type> &elt_corr);
@@ -793,7 +798,7 @@ The map elt_corr should contain the correspondances between the elements where t
 The following functions allow to change the element correspondance of a previously added element extrapolation transformation::
 
   set_element_extrapolation_correspondance
-  (md, transname, std::map<size_type, size_type> &elt_corr);
+  (model, transname, std::map<size_type, size_type> &elt_corr);
   
   set_element_extrapolation_correspondance
   (workspace, transname, std::map<size_type, size_type> &elt_corr);
@@ -836,6 +841,63 @@ where ``mr`` is an optional mesh region. If ``mr`` is specified only the face in
 See for instance :file:`interface/tests/python/demo_laplacian_DG.py` or :file:`interface/tests/matlab/demo_laplacian_DG.m` for an example of use.
 
 Compared to other interpolate transformations, this transformation is more optimized and benefits from finite element and geometric transformation pre-computations.
+
+.. _ud-gasm-high-secondary-dom:
+
+Double domain integrals or terms (convolution - Kernel - Exchange integrals)
+----------------------------------------------------------------------------
+
+In some very special cases, it can be interesting to compute an integral on the direct product of two domains, i.e. a double integral such as for instance
+
+.. math::
+
+   \int_{\Omega_1}\int_{\Omega_2}k(x,y)u(x)v(y)dydx,
+
+where :math:`k(x,y)` is a given kernel, :math:`u` a quantity defined on :math:`\Omega_1` and  :math:`v` a quantity defined on :math:`\Omega_2`, eventually with  :math:`\Omega_1` and :math:`\Omega_2` the same domain. This can be interesting either to compute such an integral or to define an interaction term between two variables defined on two different domains.
+
+CAUTION: Of course, this kind of term have to be used with great care, since it naturally leads to fully populated stiffness or tangent matrices. 
+
+
+The weak form language of |gf| furnishes a mecanism to compute such a term. First, the secondary domain has to be declared in the workspace/model with its integration methods. The addition of a standard secondary domain can be done with one of the two following functions::
+
+  add_standard_secondary_domain(model, domain_name, mim, region);
+  
+  add_standard_secondary_domain(workspace, domain_name, mim, region);
+
+where ``model`` or ``workspace`` is the model or workspace where the secondary domain has to be declared, ``domain_name`` is a string for the identification of this domain together with the mesh region and integration method, ``mim`` the integration method and ``region`` a mesh region. Note that with these standard secondary domains, the integration is done on the whole region for each element of the primary domain. It can be interesting to implement specific secondary domains restricting the integration to the necessary elements with respect to the element of the primary domain. A structure is dedicated to this in |gf|.
+
+Once a secondary domain has been declared, it can be specified that a weak form language expression has to be assembled on the direct product of a current domain and a secondary domain, adding the name of the secondary domain to the ``add_expression`` method of the workspace object or using ``add_linear_twodomain_term``, ``add_nonlinear_twodomain_term`` or ``add_twodomain_source_term`` functions:: 
+  workspace.add_expression(expr, mim, region, derivative_order, secondary_domain)
+  add_twodomain_source_term(model, mim, expr, region, secondary_domain)
+  add_linear_twodomain_term(model, mim, expr, region, secondary_domain)
+  add_nonlinear_twodomain_term(model, mim, expr, region, secondary_domain)
+  
+For the utilisation with the Python/Scilab/Matlab interface, see the documentation on ``gf_asm`` command and the ``model`` object.
+
+
+Inside an expression of the weak form language, one can refer to the unit normal vector to a boundary, to the current position or to the value of a variable thanks to the expressions::
+
+  Secondary_domain(Normal)
+  Secondary_domain(X)
+  Secondary_domain(u)
+  Secondary_domain(Grad_u)
+  Secondary_domain(Div_u)
+  Secondary_domain(Hess_u)
+  Secondary_domain(Test_u)
+  Secondary_domain(Grad_Test_u)
+  Secondary_domain(Div_Test_u)
+  Secondary_domain(Hess_Test_u)
+
+For instance, a term like
+
+.. math::
+
+   \int_{\Omega_1}\int_{\Omega_1}e^{-\|x-y\|}u(x)u(y)dydx,
+
+would correspond to the following weak for language expression::
+
+  exp(Norm(X-Secondary_domain(X)))*u*Secondary_domain(u)
+
 
 .. _ud-gasm-high-elem-trans:
 

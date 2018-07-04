@@ -133,23 +133,24 @@ namespace getfem {
   pelementary_transformation;
 
   //=========================================================================
-  //  Virtual secundary_domain object.
+  //  Virtual secondary_domain object.
   //=========================================================================
 
   class APIDECL virtual_secondary_domain {
-    const mesh_im &mim;
-    size_type region;
+  protected:
+    const mesh_im &mim_;
+    const mesh_region region;
 
   public:
 
-    // interface to be reconsidered
-    virtual void give_secondary_elements(const mesh &m, size_type cv,
-                                       std::set<size_type> &elt_lst) const = 0;
-    virtual void init(const ga_workspace &workspace) const = 0;
-    virtual void finalize() const = 0;
+    const mesh_im &mim(void) const { return mim_; }
+    virtual const mesh_region &give_region(const mesh &m,
+				     size_type cv, short_type f) const = 0;
+    // virtual void init(const ga_workspace &workspace) const = 0;
+    // virtual void finalize() const = 0;
 
-    virtual_secondary_domain(const mesh_im &mim_, size_type region_)
-      : mim(mim_), region(region_) {}
+    virtual_secondary_domain(const mesh_im &mim__, const mesh_region &region_)
+      : mim_(mim__), region(region_) {}
     virtual ~virtual_secondary_domain() {}
   };
 
@@ -310,6 +311,7 @@ namespace getfem {
       std::string varname_interpolation; // Where to interpolate
       std::string name_test1, name_test2;
       std::string interpolate_name_test1, interpolate_name_test2;
+      std::string secondary_domain;
       const mesh_im *mim;
       const mesh *m;
       const mesh_region *rg;
@@ -406,7 +408,8 @@ namespace getfem {
      */
     size_type add_expression(const std::string &expr, const mesh_im &mim,
                              const mesh_region &rg=mesh_region::all_convexes(),
-                             size_type add_derivative_order = 2);
+                             size_type add_derivative_order = 2,
+			     const std::string &secondary_dom = "");
     /* Internal use */
     void add_function_expression(const std::string &expr);
     /* Internal use */
@@ -773,7 +776,17 @@ namespace getfem {
   (ga_workspace &workspace, const std::string &name,
    std::map<size_type, size_type> &elt_corr);
     
- 
+  //=========================================================================
+  // Secondary domains
+  //=========================================================================
+
+  void add_standard_secondary_domain
+  (model &md, const std::string &name, const mesh_im &mim,
+   const mesh_region &rg=mesh_region::all_convexes());
+  
+  void add_standard_secondary_domain
+  (ga_workspace &workspace, const std::string &name, const mesh_im &mim,
+   const mesh_region &rg=mesh_region::all_convexes());
 
 
 }  /* end of namespace getfem.                                             */

@@ -525,7 +525,8 @@ namespace getfem {
                       {
                         ga_workspace workspace(*this);
                         for (const auto &ge : generic_expressions)
-                          workspace.add_expression(ge.expr, ge.mim, ge.region);
+                          workspace.add_expression(ge.expr, ge.mim, ge.region,
+						   2, ge.secondary_domain);
                         workspace.set_assembled_matrix(distro_rTM);
                         workspace.assembly(2);
                       });
@@ -2362,7 +2363,8 @@ namespace getfem {
             (*this, ib, brick.vlist, brick.dlist);
 
           ga_workspace workspace(*this);
-          size_type order = workspace.add_expression(expr, dummy_mim, region);
+          size_type order = workspace.add_expression
+	    (expr, dummy_mim, region);
           GMM_ASSERT1(order <= 1, "Wrong order for a Neumann term");
           expr = workspace.extract_Neumann_term(varname);
           if (expr.size()) {
@@ -2706,7 +2708,8 @@ namespace getfem {
                 (ad.varname, ad.expr, ad.region, ad.order, ad.before);
 
             for (const auto &ge : generic_expressions)
-              workspace.add_expression(ge.expr, ge.mim, ge.region);
+              workspace.add_expression(ge.expr, ge.mim, ge.region,
+				       2, ge.secondary_domain);
 
             if (version & BUILD_RHS) {
               if (is_complex()) {
@@ -3275,6 +3278,7 @@ model_complex_plain_vector &
 
     std::string expr, directvarname, directdataname;
     model::varnamelist vl_test1;
+    std::string secondary_domain;
 
     void asm_real_tangent_terms(const model &md, size_type /* ib */,
                                 const model::varnamelist &,
@@ -3298,7 +3302,7 @@ model_complex_plain_vector &
         size_type nbgdof = md.nb_dof();
         ga_workspace workspace(md, true);
         GMM_TRACE2(name << ": generic source term assembly");
-        workspace.add_expression(expr, *(mims[0]), region);
+        workspace.add_expression(expr, *(mims[0]), region, 1, secondary_domain);
         model::varnamelist vlmd; md.variable_list(vlmd);
         for (size_type i = 0; i < vlmd.size(); ++i)
           if (md.is_disabled_variable(vlmd[i]))
@@ -3343,8 +3347,9 @@ model_complex_plain_vector &
                                    std::string brickname,
                                    const model::varnamelist &vl_test1_,
                                    const std::string &directvarname_,
-                                   const std::string &directdataname_)
-      : vl_test1(vl_test1_) {
+                                   const std::string &directdataname_,
+				   const std::string &secdom)
+      : vl_test1(vl_test1_), secondary_domain(secdom) {
       if (brickname.size() == 0)
         brickname = "Generic source term assembly brick";
       expr = expr_;
@@ -3357,7 +3362,8 @@ model_complex_plain_vector &
 
   };
 
-  static bool check_compatibility_vl_test(model &md,const model::varnamelist vl_test) {
+  static bool check_compatibility_vl_test(model &md,
+					  const model::varnamelist vl_test) {
     model::varnamelist org;
     for (size_type i = 0; i < vl_test.size(); ++i) {
       if (md.is_affine_dependent_variable(vl_test[i]))
@@ -3369,13 +3375,15 @@ model_complex_plain_vector &
     return true;
   }
 
-  size_type add_source_term
+  size_type add_source_term_
   (model &md, const mesh_im &mim, const std::string &expr, size_type region,
    std::string brickname, std::string directvarname,
-   const std::string &directdataname, bool return_if_nonlin) {
+   const std::string &directdataname, bool return_if_nonlin,
+   const std::string &secondary_domain) {
 
     ga_workspace workspace(md);
-    size_type order = workspace.add_expression(expr, mim, region);
+    size_type order = workspace.add_expression(expr, mim, region, 1,
+					       secondary_domain);
     GMM_ASSERT1(order <= 1, "Wrong order for a source term");
     model::varnamelist vl, vl_test1, vl_test2, dl;
     bool is_lin = workspace.used_variables(vl, vl_test1, vl_test2, dl, 1);
@@ -3392,7 +3400,8 @@ model_complex_plain_vector &
     } else directvarname = "";
 
     pbrick pbr = std::make_shared<gen_source_term_assembly_brick>
-      (expr, brickname, vl_test1, directvarname, directdataname);
+      (expr, brickname, vl_test1, directvarname, directdataname,
+       secondary_domain);
     model::termlist tl;
 
     for (size_type i = 0; i < vl_test1.size(); ++i)
@@ -3402,7 +3411,24 @@ model_complex_plain_vector &
 
     return md.add_brick(pbr, vl, dl, tl, model::mimlist(1, &mim), region);
   }
+  
+  size_type add_source_term
+  (model &md, const mesh_im &mim, const std::string &expr, size_type region,
+   std::string brickname, std::string directvarname,
+   const std::string &directdataname, bool return_if_nonlin) {
+    return add_source_term_(md, mim, expr, region, brickname, directvarname,
+		     directdataname, return_if_nonlin, "");
+  }
 
+  size_type add_twodomain_source_term
+  (model &md, const mesh_im &mim, const std::string &expr, size_type region,
+   const std::string &secondary_domain,
+   std::string brickname, std::string directvarname,
+   const std::string &directdataname, bool return_if_nonlin) {
+    return add_source_term_(md, mim, expr, region, brickname, directvarname,
+		     directdataname, return_if_nonlin, secondary_domain);
+  }
+  
   // ----------------------------------------------------------------------
   //
   // Linear generic assembly brick
@@ -3414,6 +3440,7 @@ model_complex_plain_vector &
     std::string expr;
     bool is_lower_dim;
     model::varnamelist vl_test1, vl_test2;
+    std::string secondary_domain;
 
     virtual void asm_real_tangent_terms(const model &md, size_type ib,
                                         const model::varnamelist &/* vl */,
@@ -3437,7 +3464,7 @@ model_complex_plain_vector &
       if (recompute_matrix) {
         size_type nbgdof = md.nb_dof();
         ga_workspace workspace(md, true);
-        workspace.add_expression(expr, *(mims[0]), region);
+        workspace.add_expression(expr, *(mims[0]), region, 2, secondary_domain);
         model::varnamelist vlmd; md.variable_list(vlmd);
         for (size_type i = 0; i < vlmd.size(); ++i)
           if (md.is_disabled_variable(vlmd[i]))
@@ -3469,8 +3496,9 @@ model_complex_plain_vector &
                               bool is_sym,
                               bool is_coer, std::string brickname,
                               const model::varnamelist &vl_test1_,
-                              const model::varnamelist &vl_test2_)
-      : vl_test1(vl_test1_), vl_test2(vl_test2_) {
+                              const model::varnamelist &vl_test2_,
+			      const std::string &secdom)
+      : vl_test1(vl_test1_), vl_test2(vl_test2_), secondary_domain(secdom) {
       if (brickname.size() == 0) brickname = "Generic linear assembly brick";
       expr = expr_;
       is_lower_dim = mim.is_lower_dimensional();
@@ -3506,13 +3534,16 @@ model_complex_plain_vector &
     return true;
   }
 
-  size_type add_linear_term
+
+
+  size_type add_linear_term_
   (model &md, const mesh_im &mim, const std::string &expr, size_type region,
    bool is_sym, bool is_coercive, std::string brickname,
-   bool return_if_nonlin) {
+   bool return_if_nonlin, const std::string &secondary_domain) {
 
     ga_workspace workspace(md, true);
-    size_type order = workspace.add_expression(expr, mim, region);
+    size_type order = workspace.add_expression(expr, mim, region,
+					       2, secondary_domain);
     model::varnamelist vl, vl_test1, vl_test2, dl;
     bool is_lin = workspace.used_variables(vl, vl_test1, vl_test2, dl, 2);
 
@@ -3522,8 +3553,9 @@ model_complex_plain_vector &
 
     std::string const_expr= workspace.extract_constant_term(mim.linked_mesh());
     if (const_expr.size()) {
-      add_source_term_generic_assembly_brick
-        (md, mim, const_expr, region, brickname+" (source term)");
+      add_source_term_
+        (md, mim, const_expr, region, brickname+" (source term)",
+	 "", "", false, secondary_domain);
     }
 
     // GMM_ASSERT1(order <= 1,
@@ -3535,7 +3567,8 @@ model_complex_plain_vector &
 
     if (vl_test1.size()) {
       pbrick pbr = std::make_shared<gen_linear_assembly_brick>
-        (expr, mim, is_sym, is_coercive, brickname, vl_test1, vl_test2);
+        (expr, mim, is_sym, is_coercive, brickname, vl_test1, vl_test2,
+	 secondary_domain);
       model::termlist tl;
       for (size_type i = 0; i < vl_test1.size(); ++i)
         tl.push_back(model::term_description(vl_test1[i], vl_test2[i], false));
@@ -3543,6 +3576,22 @@ model_complex_plain_vector &
       return md.add_brick(pbr, vl, dl, tl, model::mimlist(1, &mim), region);
     }
     return size_type(-1);
+  }
+
+  size_type add_linear_term
+  (model &md, const mesh_im &mim, const std::string &expr, size_type region,
+   bool is_sym, bool is_coercive, std::string brickname,
+   bool return_if_nonlin) {
+    return add_linear_term_(md, mim, expr, region, is_sym, is_coercive,
+			    brickname, return_if_nonlin, "");
+  }
+
+  size_type add_linear_twodomain_term
+  (model &md, const mesh_im &mim, const std::string &expr, size_type region,
+   const std::string &secondary_domain, bool is_sym, bool is_coercive,
+   std::string brickname, bool return_if_nonlin) {
+    return add_linear_term_(md, mim, expr, region, is_sym, is_coercive,
+			    brickname, return_if_nonlin, secondary_domain);
   }
 
 
@@ -3556,6 +3605,7 @@ model_complex_plain_vector &
 
     std::string expr;
     bool is_lower_dim;
+    std::string secondary_domain;
 
     virtual void real_post_assembly_in_serial(const model &md, size_type ,
                                               const model::varnamelist &,
@@ -3569,7 +3619,7 @@ model_complex_plain_vector &
       GMM_ASSERT1(mims.size() == 1,
                   "Generic linear assembly brick needs one and only one "
                   "mesh_im");
-      md.add_generic_expression(expr, *(mims[0]), region);
+      md.add_generic_expression(expr, *(mims[0]), region, secondary_domain);
     }
 
     virtual std::string declare_volume_assembly_string
@@ -3581,9 +3631,12 @@ model_complex_plain_vector &
 
     gen_nonlinear_assembly_brick(const std::string &expr_, const mesh_im &mim,
                                  bool is_sym,
-                                 bool is_coer, std::string brickname = "") {
+                                 bool is_coer,
+				 std::string brickname,
+				 const std::string &secdom) {
       if (brickname.size() == 0) brickname = "Generic linear assembly brick";
       expr = expr_;
+      secondary_domain = secdom;
       is_lower_dim = mim.is_lower_dimensional();
       set_flags(brickname, false /* is linear*/,
                 is_sym /* is symmetric */, is_coer /* is coercive */,
@@ -3592,12 +3645,14 @@ model_complex_plain_vector &
 
   };
 
-  size_type add_nonlinear_term
+  size_type add_nonlinear_term_
   (model &md, const mesh_im &mim, const std::string &expr, size_type region,
-   bool is_sym, bool is_coercive, std::string brickname) {
+   bool is_sym, bool is_coercive, const std::string &brickname,
+   const std::string &secondary_domain) {
 
     ga_workspace workspace(md);
-    size_type order = workspace.add_expression(expr, mim, region);
+    size_type order = workspace.add_expression(expr, mim, region, 2,
+					       secondary_domain);
     GMM_ASSERT1(order < 2, "Order two test functions (Test2) are not allowed"
                 " in assembly string for nonlinear terms");
     model::varnamelist vl, vl_test1, vl_test2, ddl, dl;
@@ -3607,12 +3662,29 @@ model_complex_plain_vector &
       else vl.push_back(ddl[i]);
     if (order == 0) { is_coercive = is_sym = true; }
     pbrick pbr = std::make_shared<gen_nonlinear_assembly_brick>
-      (expr, mim, is_sym, is_coercive, brickname);
+      (expr, mim, is_sym, is_coercive, brickname, secondary_domain);
     model::termlist tl; // No term
     // tl.push_back(model::term_description(true, is_sym));
     // TODO to be changed.
     return md.add_brick(pbr, vl, dl, tl, model::mimlist(1, &mim), region);
   }
+
+
+  size_type add_nonlinear_term
+  (model &md, const mesh_im &mim, const std::string &expr, size_type region,
+   bool is_sym, bool is_coercive, const std::string &brickname) {
+    return add_nonlinear_term_(md, mim, expr, region, is_sym, is_coercive,
+			brickname, "");
+  }
+
+  size_type add_nonlinear_twodomain_term
+  (model &md, const mesh_im &mim, const std::string &expr, size_type region,
+   const std::string &secondary_domain, bool is_sym, bool is_coercive,
+   const std::string &brickname) {
+    return add_nonlinear_term_(md, mim, expr, region, is_sym, is_coercive,
+			brickname, secondary_domain);
+  }
+
 
   // ----------------------------------------------------------------------
   //
