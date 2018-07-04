@@ -56,7 +56,15 @@ Before modifying any file, you have to create a *development branch* because it 
 The first command create the branch and the second one position you on your branch. After that you are nearly ready to makes some modifications. You can specify your contact name and e-mail with the following commands in order to label your changes ::
 
   git config --global user.name "Your Name Comes Here"
-  git config --global user.email you@yourdomain.example.com
+git config --global user.email you@yourdomain.example.com
+
+Specific branch for doc improvements and typo-fixes
+---------------------------------------------------
+
+If you want to contribute to the documentation only, it is not necessary to build a specific branch. You can just checkout to the ``fixmisspell`` branch which has been created for this purpose with ::
+
+  git checkout fixmisspell
+
 
 Locally commit your changes
 ---------------------------
