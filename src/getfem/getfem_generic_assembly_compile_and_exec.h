@@ -99,11 +99,15 @@ namespace getfem {
     fem_precomp_pool fp_pool;
     std::map<gauss_pt_corresp, bgeot::pstored_point_tab> neighbour_corresp;
 
-    struct region_mim : std::pair<const mesh_im *, const mesh_region *> {
-      const mesh_im* mim() const { return this->first; }
-      const mesh_region* region() const { return this->second; }
-      region_mim(const mesh_im *mim_, const mesh_region *region_) :
-        std::pair<const mesh_im *, const mesh_region *>(mim_, region_) {}
+    struct region_mim
+      : std::tuple<const mesh_im *, const mesh_region *, psecondary_domain> {
+      const mesh_im* mim() const { return std::get<0>(*this); }
+      const mesh_region* region() const { return std::get<1>(*this); }
+      psecondary_domain psd() const { return std::get<2>(*this); }
+    region_mim(const mesh_im *mim_, const mesh_region *region_,
+	       psecondary_domain psd) :
+      std::tuple<const mesh_im *, const mesh_region *, psecondary_domain>
+	(mim_, region_, psd) {}
     };
 
     std::map<std::string, const base_vector *> extended_vars;
@@ -132,6 +136,21 @@ namespace getfem {
       std::map<var_trans_pair, base_tensor> derivatives;
       std::map<const mesh_fem *, pfem_precomp> pfps;
     };
+
+
+    struct secondary_domain_info {
+      // const mesh *m;
+      papprox_integration pai;
+      fem_interpolation_context ctx;
+      base_small_vector Normal;
+      
+      std::map<std::string, base_vector> local_dofs;
+      std::map<const mesh_fem *, pfem_precomp> pfps;
+      std::map<const mesh_fem *, base_tensor> base;
+      std::map<const mesh_fem *, base_tensor> grad;
+      std::map<const mesh_fem *, base_tensor> hess;
+    };
+
 
     struct elementary_trans_info {
       base_matrix M;
@@ -167,6 +186,7 @@ namespace getfem {
       std::set<std::string> transformations_der;
       std::map<std::string, interpolate_info> interpolate_infos;
       std::map<std::string, elementary_trans_info> elementary_trans_infos;
+      secondary_domain_info secondary_domain_infos;
 
       // Instructions being executed at the first Gauss point after
       // a change of integration method only.

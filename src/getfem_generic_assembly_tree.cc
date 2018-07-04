@@ -147,6 +147,9 @@ namespace getfem {
       if (expr.compare(token_pos, token_length,
                        "Elementary_transformation") == 0)
         return GA_ELEMENTARY;
+      if (expr.compare(token_pos, token_length, "Secondary_domain") == 0 ||
+          expr.compare(token_pos, token_length, "Secondary_Domain") == 0)
+        return GA_SECONDARY_DOMAIN;
       if (expr.compare(token_pos, token_length, "Xfem_plus") == 0)
         return GA_XFEM_PLUS;
       if (expr.compare(token_pos, token_length, "Xfem_minus") == 0)
@@ -542,7 +545,8 @@ namespace getfem {
           pnode1->nbc1 != pnode2->nbc1)
         return false;
       break;
-    case GA_NODE_INTERPOLATE_X: case GA_NODE_INTERPOLATE_NORMAL:
+    case GA_NODE_INTERPOLATE_X: case GA_NODE_SECONDARY_DOMAIN_X:
+    case GA_NODE_INTERPOLATE_NORMAL: case GA_NODE_SECONDARY_DOMAIN_NORMAL:
       if (pnode1->interpolate_name.compare(pnode2->interpolate_name))
         return false;
       break;
@@ -554,6 +558,10 @@ namespace getfem {
     case GA_NODE_INTERPOLATE_HESS_TEST: case GA_NODE_INTERPOLATE_DIVERG_TEST:
     case GA_NODE_ELEMENTARY_VAL_TEST: case GA_NODE_ELEMENTARY_GRAD_TEST:
     case GA_NODE_ELEMENTARY_HESS_TEST: case GA_NODE_ELEMENTARY_DIVERG_TEST:
+    case GA_NODE_SECONDARY_DOMAIN_VAL_TEST:
+    case GA_NODE_SECONDARY_DOMAIN_GRAD_TEST:
+    case GA_NODE_SECONDARY_DOMAIN_HESS_TEST:
+    case GA_NODE_SECONDARY_DOMAIN_DIVERG_TEST:
     case GA_NODE_XFEM_PLUS_VAL_TEST: case GA_NODE_XFEM_PLUS_GRAD_TEST:
     case GA_NODE_XFEM_PLUS_HESS_TEST: case GA_NODE_XFEM_PLUS_DIVERG_TEST:
     case GA_NODE_XFEM_MINUS_VAL_TEST: case GA_NODE_XFEM_MINUS_GRAD_TEST:
@@ -596,6 +604,8 @@ namespace getfem {
     case GA_NODE_INTERPOLATE_HESS: case GA_NODE_INTERPOLATE_DIVERG:
     case GA_NODE_ELEMENTARY_VAL: case GA_NODE_ELEMENTARY_GRAD:
     case GA_NODE_ELEMENTARY_HESS: case GA_NODE_ELEMENTARY_DIVERG:
+    case GA_NODE_SECONDARY_DOMAIN_VAL: case GA_NODE_SECONDARY_DOMAIN_GRAD:
+    case GA_NODE_SECONDARY_DOMAIN_HESS:  case GA_NODE_SECONDARY_DOMAIN_DIVERG:
     case GA_NODE_XFEM_PLUS_VAL: case GA_NODE_XFEM_PLUS_GRAD:
     case GA_NODE_XFEM_PLUS_HESS: case GA_NODE_XFEM_PLUS_DIVERG:
     case GA_NODE_XFEM_MINUS_VAL: case GA_NODE_XFEM_MINUS_GRAD:
@@ -716,7 +726,7 @@ namespace getfem {
     if (!pnode) return;
     long prec = str.precision(16);
 
-    bool is_interpolate(false), is_elementary(false);
+    bool is_interpolate(false), is_elementary(false), is_secondary(false);
     bool is_xfem_plus(false), is_xfem_minus(false);
     switch(pnode->node_type) {
     case GA_NODE_INTERPOLATE:
@@ -746,6 +756,21 @@ namespace getfem {
       is_elementary = true;
       str << "Elementary_transformation(";
       break;
+    case GA_NODE_SECONDARY_DOMAIN:
+    case GA_NODE_SECONDARY_DOMAIN_X:
+    case GA_NODE_SECONDARY_DOMAIN_NORMAL:
+    case GA_NODE_SECONDARY_DOMAIN_VAL:
+    case GA_NODE_SECONDARY_DOMAIN_GRAD:
+    case GA_NODE_SECONDARY_DOMAIN_HESS:
+    case GA_NODE_SECONDARY_DOMAIN_DIVERG:
+    case GA_NODE_SECONDARY_DOMAIN_VAL_TEST:
+    case GA_NODE_SECONDARY_DOMAIN_GRAD_TEST:
+    case GA_NODE_SECONDARY_DOMAIN_HESS_TEST:
+    case GA_NODE_SECONDARY_DOMAIN_DIVERG_TEST:
+      str << "Secondary_domain(";
+      is_secondary = true;
+      break;
+
     case GA_NODE_XFEM_PLUS:
     case GA_NODE_XFEM_PLUS_VAL:
     case GA_NODE_XFEM_PLUS_GRAD:
@@ -778,11 +803,13 @@ namespace getfem {
     case GA_NODE_GRAD:
     case GA_NODE_INTERPOLATE_GRAD:
     case GA_NODE_ELEMENTARY_GRAD:
+    case GA_NODE_SECONDARY_DOMAIN_GRAD:
     case GA_NODE_XFEM_PLUS_GRAD:
     case GA_NODE_XFEM_MINUS_GRAD:
     case GA_NODE_GRAD_TEST:
     case GA_NODE_INTERPOLATE_GRAD_TEST:
     case GA_NODE_ELEMENTARY_GRAD_TEST:
+    case GA_NODE_SECONDARY_DOMAIN_GRAD_TEST:
     case GA_NODE_XFEM_PLUS_GRAD_TEST:
     case GA_NODE_XFEM_MINUS_GRAD_TEST:
       str << "Grad_";
@@ -790,23 +817,27 @@ namespace getfem {
     case GA_NODE_HESS:
     case GA_NODE_INTERPOLATE_HESS:
     case GA_NODE_ELEMENTARY_HESS:
+    case GA_NODE_SECONDARY_DOMAIN_HESS:
     case GA_NODE_XFEM_PLUS_HESS:
     case GA_NODE_XFEM_MINUS_HESS:
     case GA_NODE_HESS_TEST:
     case GA_NODE_INTERPOLATE_HESS_TEST:
     case GA_NODE_ELEMENTARY_HESS_TEST:
+    case GA_NODE_SECONDARY_DOMAIN_HESS_TEST:
     case GA_NODE_XFEM_PLUS_HESS_TEST:
     case GA_NODE_XFEM_MINUS_HESS_TEST:
       str << "Hess_";
       break;
     case GA_NODE_DIVERG:
     case GA_NODE_INTERPOLATE_DIVERG:
+    case GA_NODE_SECONDARY_DOMAIN_DIVERG:
     case GA_NODE_ELEMENTARY_DIVERG:
     case GA_NODE_XFEM_PLUS_DIVERG:
     case GA_NODE_XFEM_MINUS_DIVERG:
     case GA_NODE_DIVERG_TEST:
     case GA_NODE_INTERPOLATE_DIVERG_TEST:
     case GA_NODE_ELEMENTARY_DIVERG_TEST:
+    case GA_NODE_SECONDARY_DOMAIN_DIVERG_TEST:
     case GA_NODE_XFEM_PLUS_DIVERG_TEST:
     case GA_NODE_XFEM_MINUS_DIVERG_TEST:
       str << "Div_";
@@ -897,10 +928,10 @@ namespace getfem {
       else if (pnode->nbc1 != size_type(-1)) str << "," << pnode->nbc1;
       str << ")";
       break;
-    case GA_NODE_INTERPOLATE_X:
+    case GA_NODE_INTERPOLATE_X: case GA_NODE_SECONDARY_DOMAIN_X:
       str << "X";
       break;
-    case GA_NODE_INTERPOLATE_NORMAL:
+    case GA_NODE_INTERPOLATE_NORMAL: case GA_NODE_SECONDARY_DOMAIN_NORMAL:
       str << "Normal";
       break;
     case GA_NODE_INTERPOLATE_DERIVATIVE:
@@ -910,26 +941,31 @@ namespace getfem {
       break;
     case GA_NODE_INTERPOLATE:
     case GA_NODE_ELEMENTARY:
+    case GA_NODE_SECONDARY_DOMAIN:
     case GA_NODE_XFEM_PLUS:
     case GA_NODE_XFEM_MINUS:
     case GA_NODE_VAL:
     case GA_NODE_INTERPOLATE_VAL:
     case GA_NODE_ELEMENTARY_VAL:
+    case GA_NODE_SECONDARY_DOMAIN_VAL:
     case GA_NODE_XFEM_PLUS_VAL:
     case GA_NODE_XFEM_MINUS_VAL:
     case GA_NODE_GRAD:
     case GA_NODE_INTERPOLATE_GRAD:
+    case GA_NODE_SECONDARY_DOMAIN_GRAD:
     case GA_NODE_ELEMENTARY_GRAD:
     case GA_NODE_XFEM_PLUS_GRAD:
     case GA_NODE_XFEM_MINUS_GRAD:
     case GA_NODE_HESS:
     case GA_NODE_INTERPOLATE_HESS:
+    case GA_NODE_SECONDARY_DOMAIN_HESS:
     case GA_NODE_ELEMENTARY_HESS:
     case GA_NODE_XFEM_PLUS_HESS:
     case GA_NODE_XFEM_MINUS_HESS:
     case GA_NODE_DIVERG:
     case GA_NODE_INTERPOLATE_DIVERG:
     case GA_NODE_ELEMENTARY_DIVERG:
+    case GA_NODE_SECONDARY_DOMAIN_DIVERG:
     case GA_NODE_XFEM_PLUS_DIVERG:
     case GA_NODE_XFEM_MINUS_DIVERG:
       str << pnode->name;
@@ -937,21 +973,25 @@ namespace getfem {
     case GA_NODE_VAL_TEST:
     case GA_NODE_INTERPOLATE_VAL_TEST:
     case GA_NODE_ELEMENTARY_VAL_TEST:
+    case GA_NODE_SECONDARY_DOMAIN_VAL_TEST:
     case GA_NODE_XFEM_PLUS_VAL_TEST:
     case GA_NODE_XFEM_MINUS_VAL_TEST:
     case GA_NODE_GRAD_TEST:
     case GA_NODE_INTERPOLATE_GRAD_TEST:
     case GA_NODE_ELEMENTARY_GRAD_TEST:
+    case GA_NODE_SECONDARY_DOMAIN_GRAD_TEST:
     case GA_NODE_XFEM_PLUS_GRAD_TEST:
     case GA_NODE_XFEM_MINUS_GRAD_TEST:
     case GA_NODE_HESS_TEST:
     case GA_NODE_INTERPOLATE_HESS_TEST:
     case GA_NODE_ELEMENTARY_HESS_TEST:
+    case GA_NODE_SECONDARY_DOMAIN_HESS_TEST:
     case GA_NODE_XFEM_PLUS_HESS_TEST:
     case GA_NODE_XFEM_MINUS_HESS_TEST:
     case GA_NODE_DIVERG_TEST:
     case GA_NODE_INTERPOLATE_DIVERG_TEST:
     case GA_NODE_ELEMENTARY_DIVERG_TEST:
+    case GA_NODE_SECONDARY_DOMAIN_DIVERG_TEST:
     case GA_NODE_XFEM_PLUS_DIVERG_TEST:
     case GA_NODE_XFEM_MINUS_DIVERG_TEST:
       str << (pnode->test_function_type == 1 ? "Test_" : "Test2_")
@@ -1124,6 +1164,8 @@ namespace getfem {
       str << "," << pnode->interpolate_name << ")";
     else if (is_elementary)
       str << "," << pnode->elementary_name << ")";
+    else if (is_secondary)
+      str << ")";    
     else if (is_xfem_plus || is_xfem_minus)
       str << ")";
 
@@ -1258,6 +1300,8 @@ namespace getfem {
 	case GA_NAME : pnode->node_type = GA_NODE_NAME; break;
 	case GA_INTERPOLATE : pnode->node_type = GA_NODE_INTERPOLATE; break;
 	case GA_ELEMENTARY : pnode->node_type = GA_NODE_ELEMENTARY; break;
+	case GA_SECONDARY_DOMAIN :
+          pnode->node_type = GA_NODE_SECONDARY_DOMAIN; break;
 	case GA_XFEM_PLUS : pnode->node_type = GA_NODE_XFEM_PLUS; break;
 	case GA_XFEM_MINUS: pnode->node_type = GA_NODE_XFEM_MINUS; break;
 	default:break;
@@ -1361,6 +1405,7 @@ namespace getfem {
     if (pnode->node_type == GA_NODE_NAME ||
 	pnode->node_type == GA_NODE_INTERPOLATE ||
 	pnode->node_type == GA_NODE_ELEMENTARY ||
+	pnode->node_type == GA_NODE_SECONDARY_DOMAIN ||
 	pnode->node_type == GA_NODE_XFEM_PLUS ||
 	pnode->node_type == GA_NODE_XFEM_MINUS) {
       std::string name = pnode->name;
@@ -1374,6 +1419,8 @@ namespace getfem {
 	  case GA_NODE_NAME : pnode->op_type = GA_NAME; break;
 	  case GA_NODE_INTERPOLATE : pnode->op_type = GA_INTERPOLATE; break;
 	  case GA_NODE_ELEMENTARY : pnode->op_type = GA_ELEMENTARY; break;
+	  case GA_NODE_SECONDARY_DOMAIN :
+            pnode->op_type = GA_SECONDARY_DOMAIN; break;
 	  case GA_NODE_XFEM_PLUS : pnode->op_type = GA_XFEM_PLUS; break;
 	  case GA_NODE_XFEM_MINUS: pnode->op_type = GA_XFEM_MINUS; break;
 	  default:break;
@@ -1601,6 +1648,29 @@ namespace getfem {
             if (t_type != GA_RPAR)
               ga_throw_error(expr, pos-1, "Missing a parenthesis after "
                              "Elementary_transformation arguments.");
+            state = 2;
+          }
+          break;
+
+        case GA_SECONDARY_DOMAIN:
+          {
+            tree.add_scalar(scalar_type(0), token_pos, expr);
+            tree.current_node->node_type = GA_NODE_SECONDARY_DOMAIN;
+            t_type = ga_get_token(*expr, pos, token_pos, token_length);
+            if (t_type != GA_LPAR)
+              ga_throw_error(expr, pos-1,"Missing Secondary_domain arguments.");
+            t_type = ga_get_token(*expr, pos, token_pos, token_length);
+            if (t_type != GA_NAME)
+              ga_throw_error(expr, pos,
+                             "First argument of Secondary_domain should be a "
+                             "variable, test function, X or Normal.");
+            tree.current_node->name = std::string(&((*expr)[token_pos]),
+                                                  token_length);
+            tree.current_node->interpolate_name =  tree.secondary_domain;
+            t_type = ga_get_token(*expr, pos, token_pos, token_length);
+            if (t_type != GA_RPAR)
+              ga_throw_error(expr, pos-1, "Missing a parenthesis after "
+                             "Secondary_domain arguments.");
             state = 2;
           }
           break;

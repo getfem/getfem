@@ -328,6 +328,7 @@ namespace getfem {
     dal::bit_vector valid_bricks, active_bricks;
     std::map<std::string, pinterpolate_transformation> transformations;
     std::map<std::string, pelementary_transformation> elem_transformations;
+    std::map<std::string, psecondary_domain> secondary_domains;
 
     // Structure dealing with time integration scheme
     int time_integration; // 0 : no, 1 : time step, 2 : init
@@ -350,8 +351,10 @@ namespace getfem {
       std::string expr;
       const mesh_im &mim;
       size_type region;
+      std::string secondary_domain;
       gen_expr(const std::string &expr_, const mesh_im &mim_,
-               size_type region_) : expr(expr_), mim(mim_), region(region_) {}
+               size_type region_, const std::string &secdom)
+	: expr(expr_), mim(mim_), region(region_), secondary_domain(secdom)  {}
     };
 
     // Structure for assignment in assembly
@@ -396,8 +399,11 @@ namespace getfem {
   public:
 
     void add_generic_expression(const std::string &expr, const mesh_im &mim,
-                                size_type region) const
-    { generic_expressions.push_back(gen_expr(expr, mim, region)); }
+                                size_type region,
+				const std::string &secondary_domain = "") const {
+      generic_expressions.push_back(gen_expr(expr, mim, region,
+					     secondary_domain));
+    }
     void add_external_load(size_type ib, scalar_type e) const
     { bricks[ib].external_load = e; }
     scalar_type approx_external_load() { return approx_external_load_; }
@@ -1012,11 +1018,14 @@ namespace getfem {
     */
     virtual void next_iter();
 
-    /** Add a interpolate transformation to the model to be used with the
+    /** Add an interpolate transformation to the model to be used with the
         generic assembly.
     */
     void add_interpolate_transformation(const std::string &name,
                                         pinterpolate_transformation ptrans) {
+      if (secondary_domain_exists(name))
+        GMM_ASSERT1(false, "An secondary domain with the same "
+                    "name already exists");
       if (transformations.count(name) > 0)
         GMM_ASSERT1(name.compare("neighbour_elt"), "neighbour_elt is a "
                     "reserved interpolate transformation name");
@@ -1033,7 +1042,7 @@ namespace getfem {
       return it->second;
     }
 
-    /** Tests if `name` correpsonds to an interpolate transformation.
+    /** Tests if `name` corresponds to an interpolate transformation.
     */
     bool interpolate_transformation_exists(const std::string &name) const
     { return transformations.count(name) > 0; }
@@ -1057,10 +1066,36 @@ namespace getfem {
       return it->second;
     }
 
-    /** Tests if `name` correpsonds to an elementary transformation.
+    /** Tests if `name` corresponds to an elementary transformation.
     */
     bool elementary_transformation_exists(const std::string &name) const
     { return elem_transformations.count(name) > 0; }
+
+    
+    /** Add a secondary domain to the model to be used with the
+        generic assembly.
+    */
+    void add_secondary_domain(const std::string &name,
+                              psecondary_domain ptrans) {
+      if (interpolate_transformation_exists(name))
+        GMM_ASSERT1(false, "An interpolate transformation with the same "
+                    "name already exists");secondary_domains[name] = ptrans;
+    }
+
+    /** Get a pointer to the interpolate transformation `name`.
+    */
+    psecondary_domain
+    secondary_domain(const std::string &name) const {
+      auto  it = secondary_domains.find(name);
+      GMM_ASSERT1(it != secondary_domains.end(),
+                  "Inexistent transformation " << name);
+      return it->second;
+    }
+
+    /** Tests if `name` corresponds to an interpolate transformation.
+    */
+    bool secondary_domain_exists(const std::string &name) const
+    { return secondary_domains.count(name) > 0; }
 
     /** Gives the name of the variable of index `ind_var` of the brick
         of index `ind_brick`. */
@@ -1506,7 +1541,7 @@ namespace getfem {
   //
   //=========================================================================
 
-  /** Add a matrix term given by the assembly string `expr` which will
+  /** Add a term given by the weak form language expression `expr` which will
       be assembled in region `region` and with the integration method `mim`.
       Only the matrix term will be taken into account, assuming that it is
       linear.
@@ -1538,8 +1573,9 @@ namespace getfem {
 		    is_coercive, brickname, return_if_nonlin);
   }
 
-  /** Add a nonlinear term given by the assembly string `expr` which will
-      be assembled in region `region` and with the integration method `mim`.
+  /** Add a nonlinear term given  by the weak form language expression `expr`
+      which will be assembled in region `region` and with the integration
+      method `mim`.
       The expression can describe a potential or a weak form. Second order
       terms (i.e. containing second order test functions, Test2) are not
       allowed.
@@ -1547,12 +1583,12 @@ namespace getfem {
       If you are not sure, the better is to declare the term not symmetric
       and not coercive. But some solvers (conjugate gradient for instance)
       are not allowed for non-coercive problems.
-      `brickname` is an otpional name for the brick.
+      `brickname` is an optional name for the brick.
   */
   size_type APIDECL add_nonlinear_term
   (model &md, const mesh_im &mim, const std::string &expr,
    size_type region = size_type(-1), bool is_sym = false,
-   bool is_coercive = false, std::string brickname = "");
+   bool is_coercive = false, const std::string &brickname = "");
 
   inline size_type APIDECL add_nonlinear_generic_assembly_brick
   (model &md, const mesh_im &mim, const std::string &expr,
@@ -1586,6 +1622,44 @@ namespace getfem {
     return add_source_term(md, mim, expr, region, brickname,
 		    directvarname, directdataname, return_if_nonlin);
   }
+
+  /** Adds a linear term given by a weak form language expression like
+      ``add_linear_term`` function but for an integration on a direct
+      product of two domains, a first specfied by ``mim`` and ``region``
+      and a second one by ``secondary_domain`` which has to be declared
+      first into the model.
+  */
+  size_type APIDECL add_linear_twodomain_term
+  (model &md, const mesh_im &mim, const std::string &expr,
+   size_type region, const std::string &secondary_domain,
+   bool is_sym = false, bool is_coercive = false, std::string brickname = "",
+   bool return_if_nonlin = false);
+
+  /** Adds a nonlinear term given by a weak form language expression like
+      ``add_nonlinear_term`` function but for an integration on a direct
+      product of two domains, a first specfied by ``mim`` and ``region``
+      and a second one by ``secondary_domain`` which has to be declared
+      first into the model.
+  */
+  size_type APIDECL add_nonlinear_twodomain_term
+  (model &md, const mesh_im &mim, const std::string &expr,
+   size_type region, const std::string &secondary_domain,
+   bool is_sym = false, bool is_coercive = false,
+   const std::string &brickname = "");
+
+  /** Adds a source term given by a weak form language expression like
+      ``add_source_term`` function but for an integration on a direct
+      product of two domains, a first specfied by ``mim`` and ``region``
+      and a second one by ``secondary_domain`` which has to be declared
+      first into the model.
+  */
+  size_type APIDECL add_twodomain_source_term
+  (model &md, const mesh_im &mim, const std::string &expr,
+   size_type region,  const std::string &secondary_domain,
+   std::string brickname = "", std::string directvarname = std::string(),
+   const std::string &directdataname = std::string(),
+   bool return_if_nonlin = false);
+  
 
   /** Add a Laplacian term on the variable `varname` (in fact with a minus :
       :math:`-\text{div}(\nabla u)`). If it is a vector

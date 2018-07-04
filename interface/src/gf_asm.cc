@@ -427,6 +427,9 @@ static void do_high_level_generic_assembly(mexargs_in& in, mexargs_out& out) {
   getfem::model dummy_md;
   bool with_model = in.remaining() && is_model_object(in.front());
   const getfem::model &md = with_model ? *to_model_object(in.pop()) : dummy_md;
+  bool with_secondary = false;
+  std::string secondary_domain;
+  
   getfem::ga_workspace workspace2(md);
   getfem::ga_workspace &workspace = with_model ? workspace2 : workspace1;
 
@@ -436,46 +439,54 @@ static void do_high_level_generic_assembly(mexargs_in& in, mexargs_out& out) {
 
   while (in.remaining()) {
     std::string varname = in.pop().to_string();
-    bool is_cte = (in.pop().to_integer() == 0);
-    const getfem::mesh_fem *mf(0);
-    const getfem::im_data *mimd(0);
-    if (is_meshfem_object(in.front()))
-      mf = to_meshfem_object(in.pop());
-    else if (is_meshimdata_object(in.front()))
-      mimd = to_meshimdata_object(in.pop());
-    darray U = in.pop().to_darray();
-    GMM_ASSERT1(vectors.find(varname) == vectors.end(),
-                "The same variable/constant name is repeated twice: "
-                 << varname)
-    GMM_ASSERT1(!with_model || !md.variable_exists(varname),
-                "The same variable/constant name is already defined in "
-                "the model: " << varname)
-    gmm::resize(vectors[varname], U.size());
-    gmm::copy(U, vectors[varname]);
-    if (is_cte) {
-      if (mf)
-        workspace.add_fem_constant(varname, *mf, vectors[varname]);
-      else if (mimd)
-        workspace.add_im_data(varname, *mimd, vectors[varname]);
-      else
-        workspace.add_fixed_size_constant(varname, vectors[varname]);
+    if (varname.compare("Secondary_domain") == 0 ||
+	varname.compare("Secondary_Domain") == 0) {
+      GMM_ASSERT1(!with_secondary,
+		  "Only one secondary domain can be specified");
+      secondary_domain = in.pop().to_string();
+      with_secondary = true;
     } else {
-      if (mf) {
-        gmm::sub_interval I(nbdof, mf->nb_dof());
-        nbdof += mf->nb_dof();
-        workspace.add_fem_variable(varname, *mf, I, vectors[varname]);
-      }  else if (mimd) {
-        THROW_BADARG("Data defined on integration points can not be a variable");
-      }  else {
-        gmm::sub_interval I(nbdof, U.size());
-        nbdof += U.size();
-        workspace.add_fixed_size_variable(varname, I, vectors[varname]);
+      bool is_cte = (in.pop().to_integer() == 0);
+      const getfem::mesh_fem *mf(0);
+      const getfem::im_data *mimd(0);
+      if (is_meshfem_object(in.front()))
+	mf = to_meshfem_object(in.pop());
+      else if (is_meshimdata_object(in.front()))
+	mimd = to_meshimdata_object(in.pop());
+      darray U = in.pop().to_darray();
+      GMM_ASSERT1(vectors.find(varname) == vectors.end(),
+		  "The same variable/constant name is repeated twice: "
+		  << varname);
+      GMM_ASSERT1(!with_model || !md.variable_exists(varname),
+		  "The same variable/constant name is already defined in "
+		  "the model: " << varname);
+      gmm::resize(vectors[varname], U.size());
+      gmm::copy(U, vectors[varname]);
+      if (is_cte) {
+	if (mf)
+	  workspace.add_fem_constant(varname, *mf, vectors[varname]);
+	else if (mimd)
+	  workspace.add_im_data(varname, *mimd, vectors[varname]);
+	else
+	  workspace.add_fixed_size_constant(varname, vectors[varname]);
+      } else {
+	if (mf) {
+	  gmm::sub_interval I(nbdof, mf->nb_dof());
+	  nbdof += mf->nb_dof();
+	  workspace.add_fem_variable(varname, *mf, I, vectors[varname]);
+	}  else if (mimd) {
+	  THROW_BADARG("Data defined on integration points can not be a variable");
+	}  else {
+	  gmm::sub_interval I(nbdof, U.size());
+	  nbdof += U.size();
+	  workspace.add_fixed_size_variable(varname, I, vectors[varname]);
+	}
       }
     }
   }
-
-  size_type add_derivative_order = (order != 0) ? 2 : 0;
-  workspace.add_expression(expr, *mim, region, add_derivative_order);
+    
+  size_type der_order = (order != 0) ? 2 : 0;
+  workspace.add_expression(expr, *mim, region, der_order, secondary_domain);
 
   switch (order) {
   case 0:
@@ -727,7 +738,7 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
 
   if (subc_tab.size() == 0) {
 
-    /*@FUNC @CELL{...} = ('generic', @tmim mim, @int order, @str expression, @int region, [@tmodel model,] [@str varname, @int is_variable[, {@tmf mf, @tmimd mimd}], value], ...)
+    /*@FUNC @CELL{...} = ('generic', @tmim mim, @int order, @str expression, @int region, [@tmodel model, ['Secondary_domain', 'name',]] [@str varname, @int is_variable[, {@tmf mf, @tmimd mimd}], value], ...)
       High-level generic assembly procedure for volumic or boundary assembly.
 
       Performs the generic assembly of `expression` with the integration
@@ -741,7 +752,9 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
       tangent (matrix) (order = 2) is to be computed.
 
       `model` is an optional parameter allowing to take into account
-      all variables and data of a model.
+      all variables and data of a model. Optionnally, for the integration
+      on the product of two domains, a secondary domain of the model can
+      be specified after a 'Secondary_domain' string.
 
       The variables and constant (data) are listed after the
       region number (or optionally the model).

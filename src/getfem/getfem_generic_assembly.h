@@ -133,6 +133,30 @@ namespace getfem {
   pelementary_transformation;
 
   //=========================================================================
+  //  Virtual secondary_domain object.
+  //=========================================================================
+
+  class APIDECL virtual_secondary_domain {
+  protected:
+    const mesh_im &mim_;
+    const mesh_region region;
+
+  public:
+
+    const mesh_im &mim(void) const { return mim_; }
+    virtual const mesh_region &give_region(const mesh &m,
+				     size_type cv, short_type f) const = 0;
+    // virtual void init(const ga_workspace &workspace) const = 0;
+    // virtual void finalize() const = 0;
+
+    virtual_secondary_domain(const mesh_im &mim__, const mesh_region &region_)
+      : mim_(mim__), region(region_) {}
+    virtual ~virtual_secondary_domain() {}
+  };
+
+  typedef std::shared_ptr<const virtual_secondary_domain> psecondary_domain;
+
+  //=========================================================================
   // Structure dealing with macros.
   //=========================================================================
 
@@ -287,6 +311,7 @@ namespace getfem {
       std::string varname_interpolation; // Where to interpolate
       std::string name_test1, name_test2;
       std::string interpolate_name_test1, interpolate_name_test2;
+      std::string secondary_domain;
       const mesh_im *mim;
       const mesh *m;
       const mesh_region *rg;
@@ -320,6 +345,8 @@ namespace getfem {
     VAR_SET variables;
     std::map<std::string, pinterpolate_transformation> transformations;
     std::map<std::string, pelementary_transformation> elem_transformations;
+    std::map<std::string, psecondary_domain> secondary_domains;
+    
     std::vector<tree_description> trees;
 
     std::map<std::string, std::vector<std::string> > variable_groups;
@@ -381,7 +408,8 @@ namespace getfem {
      */
     size_type add_expression(const std::string &expr, const mesh_im &mim,
                              const mesh_region &rg=mesh_region::all_convexes(),
-                             size_type add_derivative_order = 2);
+                             size_type add_derivative_order = 2,
+			     const std::string &secondary_dom = "");
     /* Internal use */
     void add_function_expression(const std::string &expr);
     /* Internal use */
@@ -498,7 +526,15 @@ namespace getfem {
     pelementary_transformation
     elementary_transformation(const std::string &name) const;
 
+    void add_secondary_domain(const std::string &name,
+                              psecondary_domain psecdom);
 
+    bool secondary_domain_exists(const std::string &name) const;
+
+    psecondary_domain secondary_domain(const std::string &name) const;
+
+
+    
     // extract terms
     std::string extract_constant_term(const mesh &m);
     std::string extract_order1_term(const std::string &varname);
@@ -740,7 +776,17 @@ namespace getfem {
   (ga_workspace &workspace, const std::string &name,
    std::map<size_type, size_type> &elt_corr);
     
- 
+  //=========================================================================
+  // Secondary domains
+  //=========================================================================
+
+  void add_standard_secondary_domain
+  (model &md, const std::string &name, const mesh_im &mim,
+   const mesh_region &rg=mesh_region::all_convexes());
+  
+  void add_standard_secondary_domain
+  (ga_workspace &workspace, const std::string &name, const mesh_im &mim,
+   const mesh_region &rg=mesh_region::all_convexes());
 
 
 }  /* end of namespace getfem.                                             */

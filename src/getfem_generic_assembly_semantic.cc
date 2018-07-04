@@ -66,6 +66,10 @@ namespace getfem {
         pnode->node_type == GA_NODE_ELEMENTARY_GRAD ||
         pnode->node_type == GA_NODE_ELEMENTARY_HESS ||
         pnode->node_type == GA_NODE_ELEMENTARY_DIVERG ||
+        pnode->node_type == GA_NODE_SECONDARY_DOMAIN_VAL ||
+        pnode->node_type == GA_NODE_SECONDARY_DOMAIN_GRAD ||
+        pnode->node_type == GA_NODE_SECONDARY_DOMAIN_HESS ||
+        pnode->node_type == GA_NODE_SECONDARY_DOMAIN_DIVERG ||
         pnode->node_type == GA_NODE_XFEM_PLUS_VAL ||
         pnode->node_type == GA_NODE_XFEM_PLUS_GRAD ||
         pnode->node_type == GA_NODE_XFEM_PLUS_HESS ||
@@ -129,6 +133,10 @@ namespace getfem {
                          pnode->node_type == GA_NODE_ELEMENTARY_GRAD ||
                          pnode->node_type == GA_NODE_ELEMENTARY_HESS ||
                          pnode->node_type == GA_NODE_ELEMENTARY_DIVERG);
+    bool secondary_node(pnode->node_type == GA_NODE_SECONDARY_DOMAIN_VAL ||
+                        pnode->node_type == GA_NODE_SECONDARY_DOMAIN_GRAD ||
+                        pnode->node_type == GA_NODE_SECONDARY_DOMAIN_HESS ||
+                        pnode->node_type == GA_NODE_SECONDARY_DOMAIN_DIVERG);
     bool xfem_node(pnode->node_type == GA_NODE_XFEM_PLUS_VAL ||
                    pnode->node_type == GA_NODE_XFEM_PLUS_GRAD ||
                    pnode->node_type == GA_NODE_XFEM_PLUS_HESS ||
@@ -143,7 +151,8 @@ namespace getfem {
        pnode->node_type == GA_NODE_INTERPOLATE_HESS_TEST ||
        pnode->node_type == GA_NODE_INTERPOLATE_DIVERG_TEST);
 
-    if ((plain_node || interpolate_node || elementary_node || xfem_node) &&
+    if ((plain_node || interpolate_node || secondary_node ||
+         elementary_node || xfem_node) &&
         (pnode->name.compare(varname) == 0 &&
          pnode->interpolate_name.compare(interpolatename) == 0)) marked = true;
 
@@ -253,6 +262,13 @@ namespace getfem {
 	GMM_ASSERT1(false,
 		    "Sorry, directional derivative do not work for the moment "
 		    "with elementary transformations. Future work.");
+      case GA_NODE_SECONDARY_DOMAIN_VAL_TEST:
+      case GA_NODE_SECONDARY_DOMAIN_GRAD_TEST:
+      case GA_NODE_SECONDARY_DOMAIN_HESS_TEST:
+      case GA_NODE_SECONDARY_DOMAIN_DIVERG_TEST:
+	GMM_ASSERT1(false,
+		    "Sorry, directional derivative do not work for the moment "
+		    "with secondary domains. Future work.");
       case GA_NODE_XFEM_PLUS_VAL_TEST: case GA_NODE_XFEM_PLUS_GRAD_TEST:
       case GA_NODE_XFEM_PLUS_HESS_TEST: case GA_NODE_XFEM_PLUS_DIVERG_TEST:
       case GA_NODE_XFEM_MINUS_VAL_TEST: case GA_NODE_XFEM_MINUS_GRAD_TEST:
@@ -318,6 +334,12 @@ namespace getfem {
     case GA_NODE_INTERPOLATE_HESS: case GA_NODE_INTERPOLATE_DIVERG:
     case GA_NODE_INTERPOLATE_VAL_TEST: case GA_NODE_INTERPOLATE_GRAD_TEST:
     case GA_NODE_INTERPOLATE_HESS_TEST: case GA_NODE_INTERPOLATE_DIVERG_TEST:
+    case GA_NODE_SECONDARY_DOMAIN_VAL: case GA_NODE_SECONDARY_DOMAIN_GRAD:
+    case GA_NODE_SECONDARY_DOMAIN_HESS: case GA_NODE_SECONDARY_DOMAIN_DIVERG:
+    case GA_NODE_SECONDARY_DOMAIN_VAL_TEST:
+    case GA_NODE_SECONDARY_DOMAIN_GRAD_TEST:
+    case GA_NODE_SECONDARY_DOMAIN_HESS_TEST:
+    case GA_NODE_SECONDARY_DOMAIN_DIVERG_TEST:
       c += 1.33*(1.22+ga_hash_code(pnode->name))
         + 1.66*ga_hash_code(pnode->interpolate_name);
       break;
@@ -339,6 +361,7 @@ namespace getfem {
       c += 1.33*(1.22+ga_hash_code(pnode->name));
       break;
     case GA_NODE_INTERPOLATE_X: case GA_NODE_INTERPOLATE_NORMAL:
+    case GA_NODE_SECONDARY_DOMAIN_X: case GA_NODE_SECONDARY_DOMAIN_NORMAL:
       c += M_PI*1.33*ga_hash_code(pnode->interpolate_name);
       break;
     case GA_NODE_PREDEF_FUNC: case GA_NODE_SPEC_FUNC: case GA_NODE_OPERATOR:
@@ -403,7 +426,8 @@ namespace getfem {
     case GA_NODE_ELT_K:  case GA_NODE_ELT_B: case GA_NODE_NORMAL:
     case GA_NODE_RESHAPE: case GA_NODE_IND_MOVE_LAST: case GA_NODE_SWAP_IND:
     case GA_NODE_CONTRACT: case GA_NODE_INTERPOLATE_X:
-    case GA_NODE_INTERPOLATE_NORMAL:
+    case GA_NODE_INTERPOLATE_NORMAL: case GA_NODE_SECONDARY_DOMAIN_X:
+    case GA_NODE_SECONDARY_DOMAIN_NORMAL:
       pnode->test_function_type = 0; break;
 
     case GA_NODE_ALLINDICES: pnode->test_function_type = 0; break;
@@ -421,6 +445,8 @@ namespace getfem {
     case GA_NODE_INTERPOLATE_HESS: case GA_NODE_INTERPOLATE_DIVERG:
     case GA_NODE_ELEMENTARY_VAL: case GA_NODE_ELEMENTARY_GRAD:
     case GA_NODE_ELEMENTARY_HESS: case GA_NODE_ELEMENTARY_DIVERG:
+    case GA_NODE_SECONDARY_DOMAIN_VAL:  case GA_NODE_SECONDARY_DOMAIN_GRAD:
+    case GA_NODE_SECONDARY_DOMAIN_HESS: case GA_NODE_SECONDARY_DOMAIN_DIVERG:
     case GA_NODE_XFEM_PLUS_VAL: case GA_NODE_XFEM_PLUS_GRAD:
     case GA_NODE_XFEM_PLUS_HESS: case GA_NODE_XFEM_PLUS_DIVERG:
     case GA_NODE_XFEM_MINUS_VAL: case GA_NODE_XFEM_MINUS_GRAD:
@@ -434,6 +460,10 @@ namespace getfem {
     case GA_NODE_INTERPOLATE_DERIVATIVE:
     case GA_NODE_ELEMENTARY_VAL_TEST: case GA_NODE_ELEMENTARY_GRAD_TEST:
     case GA_NODE_ELEMENTARY_HESS_TEST: case GA_NODE_ELEMENTARY_DIVERG_TEST:
+    case GA_NODE_SECONDARY_DOMAIN_VAL_TEST:
+    case GA_NODE_SECONDARY_DOMAIN_GRAD_TEST:
+    case GA_NODE_SECONDARY_DOMAIN_HESS_TEST:
+    case GA_NODE_SECONDARY_DOMAIN_DIVERG_TEST:
     case GA_NODE_XFEM_PLUS_VAL_TEST: case GA_NODE_XFEM_PLUS_GRAD_TEST:
     case GA_NODE_XFEM_PLUS_HESS_TEST: case GA_NODE_XFEM_PLUS_DIVERG_TEST:
     case GA_NODE_XFEM_MINUS_VAL_TEST: case GA_NODE_XFEM_MINUS_GRAD_TEST:
@@ -488,15 +518,33 @@ namespace getfem {
       }
       break;
 
-    case GA_NODE_INTERPOLATE:
+    case GA_NODE_SECONDARY_DOMAIN:
+      pnode->interpolate_name = tree.secondary_domain;
+      if (tree.secondary_domain.size() == 0)
+	ga_throw_error(pnode->expr, pnode->pos, "Secondary domain used "
+		       "in a single domain term.");
+      // continue with what follows
+    case GA_NODE_INTERPOLATE: 
       if (pnode->name.compare("X") == 0) {
-        pnode->node_type = GA_NODE_INTERPOLATE_X;
-        pnode->init_vector_tensor(meshdim);
+        if (pnode->node_type == GA_NODE_INTERPOLATE) {
+          pnode->node_type = GA_NODE_INTERPOLATE_X;
+	  pnode->init_vector_tensor(meshdim);
+	} else {
+	  auto psd = workspace.secondary_domain(tree.secondary_domain);
+	  pnode->node_type = GA_NODE_SECONDARY_DOMAIN_X;
+	  pnode->init_vector_tensor(psd->mim().linked_mesh().dim());
+	}
         break;
       }
       if (pnode->name.compare("Normal") == 0) {
-        pnode->node_type = GA_NODE_INTERPOLATE_NORMAL;
-        pnode->init_vector_tensor(meshdim);
+        if (pnode->node_type == GA_NODE_INTERPOLATE) {
+          pnode->node_type = GA_NODE_INTERPOLATE_NORMAL;
+	  pnode->init_vector_tensor(meshdim);
+        } else {
+          auto psd = workspace.secondary_domain(tree.secondary_domain);
+          pnode->node_type = GA_NODE_SECONDARY_DOMAIN_NORMAL;
+	  pnode->init_vector_tensor(psd->mim().linked_mesh().dim());
+	}
         break;
       }
       // else continue with what follows
@@ -506,13 +554,16 @@ namespace getfem {
       {
         int ndt = ((pnode->node_type == GA_NODE_INTERPOLATE) ? 1 : 0)
           + ((pnode->node_type == GA_NODE_ELEMENTARY) ? 2 : 0)
-          + ((pnode->node_type == GA_NODE_XFEM_PLUS) ? 3 : 0)
-          + ((pnode->node_type == GA_NODE_XFEM_MINUS) ? 4 : 0);
+          + ((pnode->node_type == GA_NODE_SECONDARY_DOMAIN) ? 3 : 0)
+          + ((pnode->node_type == GA_NODE_XFEM_PLUS) ? 4 : 0)
+          + ((pnode->node_type == GA_NODE_XFEM_MINUS) ? 5 : 0);
         std::string op__name =
           (pnode->node_type == GA_NODE_INTERPOLATE) ? "Interpolation" : ""
           + (pnode->node_type == GA_NODE_ELEMENTARY) ?
-             "Elementary transformation" : ""
-          + (pnode->node_type == GA_NODE_XFEM_PLUS) ? "Xfem_plus" : ""
+             "Elementary_transformation" : ""
+          + (pnode->node_type == GA_NODE_SECONDARY_DOMAIN) ?
+             "Secondary_domain" : ""
+           + (pnode->node_type == GA_NODE_XFEM_PLUS) ? "Xfem_plus" : ""
           + (pnode->node_type == GA_NODE_XFEM_MINUS) ? "Xfem_minus" : "";
 
         std::string name = pnode->name;
@@ -570,16 +621,18 @@ namespace getfem {
             switch (ndt) {
             case 1: pnode->node_type = GA_NODE_INTERPOLATE_VAL; break;
             case 2: pnode->node_type = GA_NODE_ELEMENTARY_VAL; break;
-            case 3: pnode->node_type = GA_NODE_XFEM_PLUS_VAL; break;
-            case 4: pnode->node_type = GA_NODE_XFEM_MINUS_VAL; break;
+            case 3: pnode->node_type = GA_NODE_SECONDARY_DOMAIN_VAL; break;
+            case 4: pnode->node_type = GA_NODE_XFEM_PLUS_VAL; break;
+            case 5: pnode->node_type = GA_NODE_XFEM_MINUS_VAL; break;
             default: GMM_ASSERT1(false, "internal error");
             }
           } else {
             switch (ndt) {
             case 1: pnode->node_type = GA_NODE_INTERPOLATE_VAL_TEST; break;
             case 2: pnode->node_type = GA_NODE_ELEMENTARY_VAL_TEST; break;
-            case 3: pnode->node_type = GA_NODE_XFEM_PLUS_VAL_TEST; break;
-            case 4: pnode->node_type = GA_NODE_XFEM_MINUS_VAL_TEST; break;
+            case 3: pnode->node_type = GA_NODE_SECONDARY_DOMAIN_VAL_TEST; break;
+            case 4: pnode->node_type = GA_NODE_XFEM_PLUS_VAL_TEST; break;
+            case 5: pnode->node_type = GA_NODE_XFEM_MINUS_VAL_TEST; break;
             default: GMM_ASSERT1(false, "internal error");
             }
             if (q == 1 && mii.size() <= 1) {
@@ -594,8 +647,9 @@ namespace getfem {
             switch (ndt) {
             case 1: pnode->node_type = GA_NODE_INTERPOLATE_GRAD; break;
             case 2: pnode->node_type = GA_NODE_ELEMENTARY_GRAD; break;
-            case 3: pnode->node_type = GA_NODE_XFEM_PLUS_GRAD; break;
-            case 4: pnode->node_type = GA_NODE_XFEM_MINUS_GRAD; break;
+            case 3: pnode->node_type = GA_NODE_SECONDARY_DOMAIN_GRAD; break;
+            case 4: pnode->node_type = GA_NODE_XFEM_PLUS_GRAD; break;
+            case 5: pnode->node_type = GA_NODE_XFEM_MINUS_GRAD; break;
             default: GMM_ASSERT1(false, "internal error");
             }
             if (n > 1) {
@@ -606,8 +660,9 @@ namespace getfem {
             switch (ndt) {
             case 1: pnode->node_type = GA_NODE_INTERPOLATE_GRAD_TEST; break;
             case 2: pnode->node_type = GA_NODE_ELEMENTARY_GRAD_TEST; break;
-            case 3: pnode->node_type = GA_NODE_XFEM_PLUS_GRAD_TEST; break;
-            case 4: pnode->node_type = GA_NODE_XFEM_MINUS_GRAD_TEST; break;
+            case 3: pnode->node_type = GA_NODE_SECONDARY_DOMAIN_GRAD_TEST;break;
+            case 4: pnode->node_type = GA_NODE_XFEM_PLUS_GRAD_TEST; break;
+            case 5: pnode->node_type = GA_NODE_XFEM_MINUS_GRAD_TEST; break;
             default: GMM_ASSERT1(false, "internal error");
             }
             if (q == 1 && mii.size() <= 1) {
@@ -623,8 +678,9 @@ namespace getfem {
             switch (ndt) {
             case 1: pnode->node_type = GA_NODE_INTERPOLATE_HESS; break;
             case 2: pnode->node_type = GA_NODE_ELEMENTARY_HESS; break;
-            case 3: pnode->node_type = GA_NODE_XFEM_PLUS_HESS; break;
-            case 4: pnode->node_type = GA_NODE_XFEM_MINUS_HESS; break;
+            case 3: pnode->node_type = GA_NODE_SECONDARY_DOMAIN_HESS; break;
+            case 4: pnode->node_type = GA_NODE_XFEM_PLUS_HESS; break;
+            case 5: pnode->node_type = GA_NODE_XFEM_MINUS_HESS; break;
             default: GMM_ASSERT1(false, "internal error");
             }
             if (n > 1) {
@@ -635,8 +691,9 @@ namespace getfem {
             switch (ndt) {
             case 1: pnode->node_type = GA_NODE_INTERPOLATE_HESS_TEST; break;
             case 2: pnode->node_type = GA_NODE_ELEMENTARY_HESS_TEST; break;
-            case 3: pnode->node_type = GA_NODE_XFEM_PLUS_HESS_TEST; break;
-            case 4: pnode->node_type = GA_NODE_XFEM_MINUS_HESS_TEST; break;
+            case 3: pnode->node_type = GA_NODE_SECONDARY_DOMAIN_HESS_TEST;break;
+            case 4: pnode->node_type = GA_NODE_XFEM_PLUS_HESS_TEST; break;
+            case 5: pnode->node_type = GA_NODE_XFEM_MINUS_HESS_TEST; break;
             default: GMM_ASSERT1(false, "internal error");
             }
             if (q == 1 && mii.size() <= 1) {
@@ -656,8 +713,9 @@ namespace getfem {
             switch (ndt) {
             case 1: pnode->node_type = GA_NODE_INTERPOLATE_DIVERG; break;
             case 2: pnode->node_type = GA_NODE_ELEMENTARY_DIVERG; break;
-            case 3: pnode->node_type = GA_NODE_XFEM_PLUS_DIVERG; break;
-            case 4: pnode->node_type = GA_NODE_XFEM_MINUS_DIVERG; break;
+            case 3: pnode->node_type = GA_NODE_SECONDARY_DOMAIN_DIVERG;break;
+            case 4: pnode->node_type = GA_NODE_XFEM_PLUS_DIVERG; break;
+            case 5: pnode->node_type = GA_NODE_XFEM_MINUS_DIVERG; break;
             default: GMM_ASSERT1(false, "internal error");
             }
             mii.resize(1);
@@ -666,8 +724,9 @@ namespace getfem {
             switch (ndt) {
             case 1: pnode->node_type = GA_NODE_INTERPOLATE_DIVERG_TEST; break;
             case 2: pnode->node_type = GA_NODE_ELEMENTARY_DIVERG_TEST; break;
-            case 3: pnode->node_type = GA_NODE_XFEM_PLUS_DIVERG_TEST; break;
-            case 4: pnode->node_type = GA_NODE_XFEM_MINUS_DIVERG_TEST; break;
+            case 3: pnode->node_type=GA_NODE_SECONDARY_DOMAIN_DIVERG_TEST;break;
+            case 4: pnode->node_type = GA_NODE_XFEM_PLUS_DIVERG_TEST; break;
+            case 5: pnode->node_type = GA_NODE_XFEM_MINUS_DIVERG_TEST; break;
             default: GMM_ASSERT1(false, "internal error");
             }
             mii.resize(1);
@@ -689,6 +748,12 @@ namespace getfem {
                 (pnode->elementary_name))) {
             ga_throw_error(pnode->expr, pnode->pos,
                            "Unknown elementary transformation");
+          }
+        } else if (ndt == 3) {
+          if (!(workspace.secondary_domain_exists
+                (pnode->interpolate_name))) {
+            ga_throw_error(pnode->expr, pnode->pos,
+                           "Unknown secondary domain");
           }
         }
       }
@@ -2510,6 +2575,7 @@ namespace getfem {
 			    size_type ref_elt_dim,
 			    bool eval_fixed_size,
 			    bool ignore_X, int option) {
+    // cout << "Begin semantic anaylsis" << endl;
     GMM_ASSERT1(predef_operators_nonlinear_elasticity_initialized &&
                 predef_operators_plasticity_initialized &&
                 predef_operators_contact_initialized, "Internal error");
@@ -2530,6 +2596,7 @@ namespace getfem {
         tree.clear();
     }
     ga_valid_operand(tree.root);
+    // cout << "end of semantic anaylsis" << endl;
   }
 
 
@@ -2711,6 +2778,10 @@ namespace getfem {
 
     case GA_NODE_ELEMENTARY_VAL_TEST: case GA_NODE_ELEMENTARY_GRAD_TEST:
     case GA_NODE_ELEMENTARY_HESS_TEST: case GA_NODE_ELEMENTARY_DIVERG_TEST:
+    case GA_NODE_SECONDARY_DOMAIN_VAL_TEST:
+    case GA_NODE_SECONDARY_DOMAIN_GRAD_TEST:
+    case GA_NODE_SECONDARY_DOMAIN_HESS_TEST:
+    case GA_NODE_SECONDARY_DOMAIN_DIVERG_TEST:
     case GA_NODE_XFEM_PLUS_VAL_TEST: case GA_NODE_XFEM_PLUS_GRAD_TEST:
     case GA_NODE_XFEM_PLUS_HESS_TEST: case GA_NODE_XFEM_PLUS_DIVERG_TEST:
     case GA_NODE_XFEM_MINUS_VAL_TEST: case GA_NODE_XFEM_MINUS_GRAD_TEST:
@@ -2720,11 +2791,14 @@ namespace getfem {
     case GA_NODE_SWAP_IND: case GA_NODE_IND_MOVE_LAST: case GA_NODE_CONTRACT:
     case GA_NODE_ELT_SIZE: case GA_NODE_ELT_K: case GA_NODE_ELT_B:
     case GA_NODE_CONSTANT: case GA_NODE_X: case GA_NODE_NORMAL:
+    case GA_NODE_SECONDARY_DOMAIN_X: case GA_NODE_SECONDARY_DOMAIN_NORMAL:
     case GA_NODE_OPERATOR:
       is_constant = true; break;
 
     case GA_NODE_ELEMENTARY_VAL: case GA_NODE_ELEMENTARY_GRAD:
     case GA_NODE_ELEMENTARY_HESS: case GA_NODE_ELEMENTARY_DIVERG:
+    case GA_NODE_SECONDARY_DOMAIN_VAL: case GA_NODE_SECONDARY_DOMAIN_GRAD:
+    case GA_NODE_SECONDARY_DOMAIN_HESS: case GA_NODE_SECONDARY_DOMAIN_DIVERG:
     case GA_NODE_XFEM_PLUS_VAL: case GA_NODE_XFEM_PLUS_GRAD:
     case GA_NODE_XFEM_PLUS_HESS: case GA_NODE_XFEM_PLUS_DIVERG:
     case GA_NODE_XFEM_MINUS_VAL: case GA_NODE_XFEM_MINUS_GRAD:
@@ -3015,6 +3089,12 @@ namespace getfem {
         GMM_ASSERT1(false, "Do not know how to extract a "
                     "Neumann term with an interpolate transformation");
       break;
+    case GA_NODE_SECONDARY_DOMAIN_GRAD_TEST:
+    case GA_NODE_SECONDARY_DOMAIN_DIVERG_TEST:
+      if (pnode->name.compare(varname) == 0)
+        GMM_ASSERT1(false, "Do not know how to extract a "
+                    "Neumann term with an two-domain term");
+      break;
     default:
       break;
     }
@@ -3240,6 +3320,10 @@ namespace getfem {
                          interpolatename, order);
       break;
 
+    case GA_NODE_SECONDARY_DOMAIN_VAL:
+    case GA_NODE_SECONDARY_DOMAIN_GRAD:
+    case GA_NODE_SECONDARY_DOMAIN_HESS:
+    case GA_NODE_SECONDARY_DOMAIN_DIVERG:
     case GA_NODE_ELEMENTARY_VAL:
     case GA_NODE_ELEMENTARY_GRAD:
     case GA_NODE_ELEMENTARY_HESS:
@@ -3257,6 +3341,14 @@ namespace getfem {
         mi.push_back(pnode->tensor_proper_size(i));
       pnode->t.adjust_sizes(mi);
       switch(pnode->node_type) {
+      case GA_NODE_SECONDARY_DOMAIN_VAL:
+        pnode->node_type = GA_NODE_SECONDARY_DOMAIN_VAL_TEST; break;
+      case GA_NODE_SECONDARY_DOMAIN_GRAD:
+        pnode->node_type = GA_NODE_SECONDARY_DOMAIN_GRAD_TEST; break;
+      case GA_NODE_SECONDARY_DOMAIN_HESS:
+        pnode->node_type = GA_NODE_SECONDARY_DOMAIN_HESS_TEST; break;
+      case GA_NODE_SECONDARY_DOMAIN_DIVERG:
+        pnode->node_type = GA_NODE_SECONDARY_DOMAIN_DIVERG_TEST; break;
       case GA_NODE_ELEMENTARY_VAL:
         pnode->node_type = GA_NODE_ELEMENTARY_VAL_TEST; break;
       case GA_NODE_ELEMENTARY_GRAD:
@@ -3777,6 +3869,8 @@ namespace getfem {
 
     case GA_NODE_INTERPOLATE_HESS_TEST:
     case GA_NODE_INTERPOLATE_HESS:
+    case GA_NODE_SECONDARY_DOMAIN_HESS_TEST:
+    case GA_NODE_SECONDARY_DOMAIN_HESS:
       GMM_ASSERT1(false, "Sorry, cannot derive a hessian once more");
       break;
       
@@ -4718,6 +4812,8 @@ namespace getfem {
     case GA_NODE_INTERPOLATE_DERIVATIVE:
     case GA_NODE_ELEMENTARY_VAL: case GA_NODE_ELEMENTARY_GRAD:
     case GA_NODE_ELEMENTARY_HESS: case GA_NODE_ELEMENTARY_DIVERG:
+    case GA_NODE_SECONDARY_DOMAIN_VAL: case GA_NODE_SECONDARY_DOMAIN_GRAD:
+    case GA_NODE_SECONDARY_DOMAIN_HESS: case GA_NODE_SECONDARY_DOMAIN_DIVERG:
     case GA_NODE_XFEM_PLUS_VAL: case GA_NODE_XFEM_PLUS_GRAD:
     case GA_NODE_XFEM_PLUS_HESS: case GA_NODE_XFEM_PLUS_DIVERG:
     case GA_NODE_XFEM_MINUS_VAL: case GA_NODE_XFEM_MINUS_GRAD:
