@@ -269,7 +269,7 @@ As described above, it is possible to provide two matrices, a reduction matrix
 transformation of the degrees of freedom. If :math:`V` is the vector of basic
 degrees of freedom, then :math:`U=RV` will be the vector of reduced degrees of
 freedom. Contrarily, given a vector :math:`U` of reduced dof, :math:`V=EU` will
-correspond to a vector of basic dof. In simle cases, :math:`E` will be simply the
+correspond to a vector of basic dof. In simple cases, :math:`E` will be simply the
 transpose of :math:`R`. NOTE that every line of the extension matrix should be
 sparse. Otherwise, each assembled matrix will be plain !
 
