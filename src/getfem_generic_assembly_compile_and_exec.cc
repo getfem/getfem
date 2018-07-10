@@ -51,6 +51,13 @@ namespace getfem {
     return false;
   }
 
+  bool operator <(const ga_instruction_set::region_mim &rm1,
+                  const ga_instruction_set::region_mim &rm2) {
+    if (rm1.mim() != rm2.mim()) return (rm1.mim() < rm2.mim());
+    if (rm1.region() != rm2.region()) return (rm1.region() < rm2.region());
+    return (rm1.psd() < rm2.psd());
+  }
+
   //=========================================================================
   // Instructions for compilation: basic optimized operations on tensors
   //=========================================================================
