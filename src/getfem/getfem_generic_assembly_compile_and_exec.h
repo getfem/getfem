@@ -99,15 +99,14 @@ namespace getfem {
     fem_precomp_pool fp_pool;
     std::map<gauss_pt_corresp, bgeot::pstored_point_tab> neighbour_corresp;
 
-    struct region_mim
-      : std::tuple<const mesh_im *, const mesh_region *, psecondary_domain> {
-      const mesh_im* mim() const { return std::get<0>(*this); }
-      const mesh_region* region() const { return std::get<1>(*this); }
-      psecondary_domain psd() const { return std::get<2>(*this); }
-    region_mim(const mesh_im *mim_, const mesh_region *region_,
-	       psecondary_domain psd) :
-      std::tuple<const mesh_im *, const mesh_region *, psecondary_domain>
-	(mim_, region_, psd) {}
+    using region_mim_tuple = std::tuple<const mesh_im *, const mesh_region *, psecondary_domain>;
+    struct region_mim : public region_mim_tuple {
+      const mesh_im* mim() const {return std::get<0>(static_cast<region_mim_tuple>(*this));}
+      const mesh_region* region() const {return std::get<1>(static_cast<region_mim_tuple>(*this));}
+      psecondary_domain psd() const {return std::get<2>(static_cast<region_mim_tuple>(*this));}
+
+      region_mim(const mesh_im *mim_, const mesh_region *region_, psecondary_domain psd)
+        : region_mim_tuple(mim_, region_, psd) {}
     };
 
     std::map<std::string, const base_vector *> extended_vars;
