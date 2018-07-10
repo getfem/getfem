@@ -645,6 +645,7 @@ namespace getfem {
 
   void ga_define_function(const std::string &name, pscalar_func_onearg f,
                           const std::string &der) {
+    auto guard = omp_guard{};
     ga_predef_function_tab &PREDEF_FUNCTIONS
       = dal::singleton<ga_predef_function_tab>::instance(0);
     PREDEF_FUNCTIONS[name] = ga_predef_function(f, 1, der);
@@ -655,6 +656,7 @@ namespace getfem {
 
   void ga_define_function(const std::string &name, pscalar_func_twoargs f,
                           const std::string &der1, const std::string &der2) {
+    auto guard = omp_guard{};
     ga_predef_function_tab &PREDEF_FUNCTIONS
       = dal::singleton<ga_predef_function_tab>::instance(0);
     PREDEF_FUNCTIONS[name] = ga_predef_function(f, 1, der1, der2);
@@ -666,6 +668,7 @@ namespace getfem {
   }
 
   void ga_undefine_function(const std::string &name) {
+    auto guard = omp_guard{};
     ga_predef_function_tab &PREDEF_FUNCTIONS
       = dal::singleton<ga_predef_function_tab>::instance(0);
     ga_predef_function_tab::iterator it = PREDEF_FUNCTIONS.find(name);
