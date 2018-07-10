@@ -3546,13 +3546,11 @@ namespace getfem {
           case 2: case 3:
             {
               child0->name = "DER_PDFUNC_" + child0->name;
-              if (!(ga_function_exists(child0->name))) {
-                if (F.dtype() == 2)
-                  ga_define_function(child0->name, 1, F.derivative1());
-                else {
-                  std::string expr=ga_derivative_scalar_function(F.expr(),"t");
-                  ga_define_function(child0->name, 1, expr);
-                }
+              if (F.dtype() == 2)
+                ga_define_function(child0->name, 1, F.derivative1());
+              else {
+                std::string expr = ga_derivative_scalar_function(F.expr(),"t");
+                ga_define_function(child0->name, 1, expr);
               }
               // Inline extension if the derivative is affine (for instance
               // for sqr)
@@ -3613,15 +3611,12 @@ namespace getfem {
               break;
             case 2:
               child0->name = "DER_PDFUNC1_" + child0->name;
-              if (!(ga_function_exists(child0->name)))
-                ga_define_function(child0->name, 2, F.derivative1());
+              ga_define_function(child0->name, 2, F.derivative1());
               break;
             case 3:
               child0->name = "DER_PDFUNC1_" + child0->name;
-              if (!(ga_function_exists(child0->name))) {
-                std::string expr = ga_derivative_scalar_function(F.expr(), "t");
-                ga_define_function(child0->name, 2, expr);
-              }
+              std::string expr = ga_derivative_scalar_function(F.expr(), "t");
+              ga_define_function(child0->name, 2, expr);
               break;
             }
             tree.insert_node(pnode, GA_NODE_OP);
@@ -3649,15 +3644,12 @@ namespace getfem {
               break;
             case 2:
               child0->name = "DER_PDFUNC2_" + child0->name;
-              if (!(ga_function_exists(child0->name)))
-                ga_define_function(child0->name, 2, F.derivative2());
+              ga_define_function(child0->name, 2, F.derivative2());
               break;
             case 3:
               child0->name = "DER_PDFUNC2_" + child0->name;
-              if (!(ga_function_exists(child0->name))) {
-                std::string expr = ga_derivative_scalar_function(F.expr(), "u");
-                ga_define_function(child0->name, 2, expr);
-              }
+              std::string expr = ga_derivative_scalar_function(F.expr(), "u");
+              ga_define_function(child0->name, 2, expr);
               break;
             }
             tree.insert_node(pnode, GA_NODE_OP);
@@ -4539,13 +4531,11 @@ namespace getfem {
           case 2: case 3:
             {
               child0->name = "DER_PDFUNC_" + child0->name;
-              if (!(ga_function_exists(child0->name))) {
-                if (F.dtype() == 2)
-                  ga_define_function(child0->name, 1, F.derivative1());
-                else {
-                  std::string expr=ga_derivative_scalar_function(F.expr(),"t");
-                  ga_define_function(child0->name, 1, expr);
-                }
+              if (F.dtype() == 2)
+                ga_define_function(child0->name, 1, F.derivative1());
+              else {
+                std::string expr=ga_derivative_scalar_function(F.expr(),"t");
+                ga_define_function(child0->name, 1, expr);
               }
               // Inline extension if the derivative is affine (for instance
               // for sqr)
@@ -4612,15 +4602,12 @@ namespace getfem {
               break;
             case 2:
               child0->name = "DER_PDFUNC1_" + child0->name;
-              if (!(ga_function_exists(child0->name)))
-                ga_define_function(child0->name, 2, F.derivative1());
+              ga_define_function(child0->name, 2, F.derivative1());
               break;
             case 3:
               child0->name = "DER_PDFUNC1_" + child0->name;
-              if (!(ga_function_exists(child0->name))) {
-                std::string expr = ga_derivative_scalar_function(F.expr(), "t");
-                ga_define_function(child0->name, 2, expr);
-              }
+              std::string expr = ga_derivative_scalar_function(F.expr(), "t");
+              ga_define_function(child0->name, 2, expr);
               break;
             }
             tree.insert_node(pnode, GA_NODE_OP);
@@ -4654,15 +4641,12 @@ namespace getfem {
               break;
             case 2:
               child0->name = "DER_PDFUNC2_" + child0->name;
-              if (!(ga_function_exists(child0->name)))
-                ga_define_function(child0->name, 2, F.derivative2());
+              ga_define_function(child0->name, 2, F.derivative2());
               break;
             case 3:
               child0->name = "DER_PDFUNC2_" + child0->name;
-              if (!(ga_function_exists(child0->name))) {
-                std::string expr = ga_derivative_scalar_function(F.expr(), "u");
-                ga_define_function(child0->name, 2, expr);
-              }
+              std::string expr = ga_derivative_scalar_function(F.expr(), "u");
+              ga_define_function(child0->name, 2, expr);
               break;
             }
             tree.insert_node(pnode, GA_NODE_OP);
