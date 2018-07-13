@@ -37,9 +37,9 @@ LY = 1.         # [mm] Height
 E = 210e3       # [N/mm^2]
 nu = 0.3
 
-Gc0 = 2.7       # [N/mm]
+Gc0 = 2.7e0     # [N/mm]
 
-ll = 0.01       # [mm] length scale
+ll = 0.015      # [mm] length scale
 
 strain_rate = 2e-4
 init_time_step = 1.
@@ -54,6 +54,9 @@ phi_fem_order = 2        # phase field finite element order
 integration_degree = 5   # 9 gauss points per quad
 
 #------------------------------------
+
+NX = 2*((NX+1)/2)
+NY = 2*((NY+1)/2)
 
 resultspath = "./demo_phase_field_results"
 if not os.path.exists(resultspath):
@@ -71,7 +74,21 @@ X_seed1 = LX/2*(0.2*NX_seed1+0.8*np.sign(NX_seed1)*np.power(np.abs(NX_seed1),1.5
 X_seed2 = LX/2*(0.6*NX_seed2+0.4*np.sign(NX_seed2)*np.power(np.abs(NX_seed2),1.5))
 X_seed = np.concatenate((X_seed1,X_seed2))
 Y_seed = LY/2*(0.2*NY_seed+0.8*np.sign(NY_seed)*np.power(np.abs(NY_seed),1.5))
-mesh = gf.Mesh("cartesian", X_seed, Y_seed)
+m1 = gf.Mesh("cartesian", X_seed, Y_seed[0:NY/2+1])
+m2 = gf.Mesh("cartesian", X_seed, Y_seed[NY/2:])
+gap = 1e-5
+pts = m1.pts()
+for i in range(pts.shape[1]):
+  if pts[0,i] < -1e-10:
+    pts[1,i] -=  gap/2*(1+pts[1,i]/(LY/2))
+m1.set_pts(pts)
+pts = m2.pts()
+for i in range(pts.shape[1]):
+  if pts[0,i] < -1e-10:
+    pts[1,i] +=  gap/2*(1-pts[1,i]/(LY/2))
+m2.set_pts(pts)
+mesh = m1
+mesh.merge(m2)
 N = mesh.dim()
 
 bottom_faces = mesh.outer_faces_in_box([-LX/2-1e-5,-LY/2-1e-5],[LX/2+1e-5,-LY/2+1e-5])
@@ -79,7 +96,6 @@ top_faces = mesh.outer_faces_in_box([-LX/2-1e-5,LY/2-1e-5],[LX/2+1e-5,LY/2+1e-5]
 
 mesh.set_region(B_BOUNDARY, bottom_faces)
 mesh.set_region(T_BOUNDARY, top_faces)
-
 mesh.region_merge(TB_BOUNDARY, T_BOUNDARY)
 mesh.region_merge(TB_BOUNDARY, B_BOUNDARY)
 
@@ -106,9 +122,9 @@ md = gf.Model("real")
 
 md.add_fem_variable("u", mfu)          # displacements
 md.add_fem_variable("phi", mfphi)      # phase field
-md.set_variable("phi", np.ones(mfphi.nbdof()))
 
 md.add_fem_data("u_stored", mfu)
+md.add_fem_data("phi_stored", mfphi)
 
 md.add_im_data("psi0_max", mimd1)
 
@@ -118,21 +134,23 @@ md.add_initialized_data("mu", E/(2*(1+nu)))
 md.add_initialized_data("Gc0", Gc0)
 md.add_initialized_data("l", ll)
 
-md.set_variable("psi0_max", md.interpolation("100000*min(1,max(0,1-(abs(X(2))+pos_part(X(1)))/(l/10)))", mimd1, -1))
-
 md.add_macro("damage", "max(1e-7,sqr(1-phi))")
-md.add_macro("psi0", "(0.5*kappa*sqr(Trace(Grad_u))+mu*Norm_sqr(Deviator(Sym(Grad_u))))")
+md.add_macro("psi0", "(0.5*kappa*sqr(Trace(Grad_u))+mu*Norm_sqr((Sym(Grad_u)-Trace(Grad_u)/3*Id(2))))")
 md.add_macro("Gc", "Gc0")
 
-md.add_nonlinear_term(mim, "damage*(kappa*Trace(Grad_u)*Id(2)+2*mu*Deviator(Sym(Grad_u))):Grad_Test_u")
+_sigma_ = "damage*(kappa*Trace(Grad_u)*Id(2)+2*mu*(Sym(Grad_u)-Trace(Grad_u)/3*Id(2)))"
+md.add_nonlinear_term(mim, _sigma_+":Grad_Test_u")
 md.add_nonlinear_term(mim, "(-2*(1-phi)*max(psi0_max,psi0)*Test_phi+Gc*(phi/l*Test_phi+l*Grad_phi.Grad_Test_phi))")
 
 md.add_initialized_data("MM", 0)
-md.add_nonlinear_generic_assembly_brick(mim, "MM*(u-u_stored).Test_u")
+md.add_nonlinear_term(mim, "MM*((u-u_stored).Test_u+1e2*(phi-phi_stored)*Test_phi)")
 
 # Load
 md.add_fem_data("dirichlet_data", mfu);
-md.add_Dirichlet_condition_with_multipliers(mim, "u", mfdir, TB_BOUNDARY, "dirichlet_data")
+ibdir = md.add_Dirichlet_condition_with_multipliers(mim, "u", mfdir, TB_BOUNDARY, "dirichlet_data")
+dirmultname = md.mult_varname_Dirichlet(ibdir)
+
+mass_mat = gf.asm_mass_matrix(mim, mfout)
 
 print("Displacement dofs: %i" % mfu.nbdof())
 print("Total model dofs: %i" % md.nbdof())
@@ -141,53 +159,75 @@ time_step = init_time_step
 eps = 0.
 pseudodynamic = False
 MM = 0.
-for step in range(steps):
-  eps_old = eps
-  while True:
-    if step > 0:
-      eps = eps_old + strain_rate*time_step
+with open("%s/demo_phase_field_forces.dat" % resultspath, "w") as f:
+  for step in range(steps):
+    eps_old = eps
+    while True:
+      if step > 0:
+        eps = eps_old + strain_rate*time_step
 
-    X = md.from_variables()
-    print("Step %i with eps=%e" % (step, eps))
-    md.set_variable("dirichlet_data", md.interpolation("{eps}*[0;X(2)]".format(eps=eps), mfu, -1))
-    if pseudodynamic:
-      print("With damping %e" % MM)
-    md.set_variable("MM",[MM])
-
-    iters = 20
-    nit = \
-    md.solve("noisy", "lsolver", "mumps", "max_iter", iters, "max_res", 1e-7, #)[0]
-             "lsearch", "simplest", "alpha max ratio", 1.5, "alpha min", 0.4, "alpha mult", 0.6,
-              "alpha threshold res", 5e3)[0]
-    if nit >= iters:
-      if step == 0:
-        break
-      md.to_variables(X)
-      eps = eps_old
-      if time_step > init_time_step/50.:
-        time_step *= 0.5
-      else:
-        if pseudodynamic:
-          MM *= 100.
-        else:
-          pseudodynamic = True
-          MM = 10000.
-    else:
-      md.set_variable("u_stored", md.variable("u"))
+      X = md.from_variables()
+      print("Step %i with eps=%e" % (step, eps))
+      md.set_variable("dirichlet_data", md.interpolation("{eps}*[0;X(2)]".format(eps=eps), mfu, -1))
       if pseudodynamic:
-        if MM < 1e-4:
-          MM = 0.
-          pseudodynamic = False
-        else:
-          MM /= 10.
-      else:
-        TMP = md.interpolation("max(psi0_max,psi0)", mimd1, -1)
-        md.set_variable("psi0_max", TMP)
-        break
+        print("With damping %e" % MM)
+      md.set_variable("MM",[MM])
 
-  mfout.export_to_vtk("%s/demo_phase_field_%i.vtk" % (resultspath, step),
-                      mfu, md.variable("u"), "Displacements",
-                      mfphi, md.variable("phi"), "phi")
+      iters = 20
+      try:
+        nit = \
+        md.solve("noisy", "lsolver", "mumps", "max_iter", iters, "max_res", 1e-7, #)[0]
+                 "lsearch", "simplest", "alpha max ratio", 1.5, "alpha min", 0.4, "alpha mult", 0.6,
+                  "alpha threshold res", 2)[0]
+      except (KeyboardInterrupt, SystemExit):
+        raise
+      except:
+        nit = iters
+
+      if nit >= iters:
+        if step == 0:
+          break
+        md.to_variables(X)
+        eps = eps_old
+        if time_step > init_time_step/50.:
+          time_step *= 0.5
+        else:
+          if pseudodynamic:
+            MM *= 100.
+          else:
+            pseudodynamic = True
+            MM = 10000.
+      else:
+        md.set_variable("u_stored", md.variable("u"))
+        md.set_variable("phi_stored", md.variable("phi"))
+        if pseudodynamic:
+          if MM < 1e-4:
+            MM = 0.
+            pseudodynamic = False
+          elif nit <= 6:
+            MM /= 2.
+        else:
+          TMP = md.interpolation("max(psi0_max,psi0)", mimd1, -1)
+          md.set_variable("psi0_max", TMP)
+          break
+
+    out = (mfu, md.variable("u"), "Displacements",
+           mfphi, md.variable("phi"), "phi")
+    for i,j in [[1,1],[2,2],[1,2]]:
+      sigma = gf.asm_generic(mim, 1, "{sigma}({i},{j})*Test_t".format(sigma=_sigma_, i=i, j=j),
+                             -1, md, "t", True, mfout, np.zeros(mfout.nbdof()))\
+              [md.nbdof():]
+      sigma = np.transpose(gf.linsolve_mumps(mass_mat, sigma))
+      out += (mfout, sigma, "Cauchy Stress {i}{j}".format(i=i, j=j))
+
+    mfout.export_to_vtk("%s/demo_phase_field_%i.vtk" % (resultspath, step), *out)
+
+    DIRMULT = -md.variable(dirmultname)
+    DIRMULT = np.reshape(DIRMULT,[1,DIRMULT.size])
+    dfT = gf.asm_boundary_source(T_BOUNDARY, mim, mfu, md.mesh_fem_of_variable(dirmultname), DIRMULT)
+    f.write(("step=%i eps=%e fR=(%e,%e)\n") %
+            (step, eps, dfT[0::N].sum(), dfT[1::N].sum()))
+    f.flush()
 
 
 
