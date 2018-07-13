@@ -2009,7 +2009,9 @@ namespace getfem {
     raytracing_interpolate_transformation(scalar_type d)
       : release_distance(d) {}
   };
-//=========================================================================
+
+
+  //=========================================================================
   //
   //  Projection interpolate transformation for generic assembly
   //

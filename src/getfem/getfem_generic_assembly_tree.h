@@ -91,6 +91,7 @@ namespace getfem {
     GA_INTERPOLATE, // 'Interpolate' operation
     GA_INTERPOLATE_FILTER, // 'Interpolate_filter' operation
     GA_ELEMENTARY,  // 'Elementary' operation (operation at the element level)
+    GA_SECONDARY_DOMAIN,  // For the integration on a product of two domains
     GA_XFEM_PLUS,   // Évaluation on the + side of a level-set for fem_level_set
     GA_XFEM_MINUS,  // Évaluation on the - side of a level-set for fem_level_set
     GA_PRINT,       // 'Print' Print the tensor
@@ -166,6 +167,17 @@ namespace getfem {
     GA_NODE_ELEMENTARY_GRAD_TEST,
     GA_NODE_ELEMENTARY_HESS_TEST,
     GA_NODE_ELEMENTARY_DIVERG_TEST,
+    GA_NODE_SECONDARY_DOMAIN,
+    GA_NODE_SECONDARY_DOMAIN_VAL,
+    GA_NODE_SECONDARY_DOMAIN_GRAD,
+    GA_NODE_SECONDARY_DOMAIN_HESS,
+    GA_NODE_SECONDARY_DOMAIN_DIVERG,
+    GA_NODE_SECONDARY_DOMAIN_VAL_TEST,
+    GA_NODE_SECONDARY_DOMAIN_GRAD_TEST,
+    GA_NODE_SECONDARY_DOMAIN_HESS_TEST,
+    GA_NODE_SECONDARY_DOMAIN_DIVERG_TEST,
+    GA_NODE_SECONDARY_DOMAIN_X,
+    GA_NODE_SECONDARY_DOMAIN_NORMAL,
     GA_NODE_XFEM_PLUS,
     GA_NODE_XFEM_PLUS_VAL,
     GA_NODE_XFEM_PLUS_GRAD,
@@ -404,6 +416,7 @@ namespace getfem {
 
   struct ga_tree {
     pga_tree_node root, current_node;
+    std::string secondary_domain;
 
     void add_scalar(scalar_type val, size_type pos, pstring expr);
     void add_allindices(size_type pos, pstring expr);
@@ -427,16 +440,22 @@ namespace getfem {
     { duplicate_with_operation(pnode, GA_MINUS); }
     void insert_node(pga_tree_node pnode, GA_NODE_TYPE node_type);
     void add_child(pga_tree_node pnode, GA_NODE_TYPE node_type = GA_NODE_VOID);
-    void swap(ga_tree &tree)
-    { std::swap(root, tree.root); std::swap(current_node, tree.current_node); }
+    void swap(ga_tree &tree) {
+      std::swap(root, tree.root);
+      std::swap(current_node, tree.current_node);
+      std::swap(secondary_domain, tree.secondary_domain);
+    }
 
-    ga_tree() : root(nullptr), current_node(nullptr) {}
+  ga_tree() : root(nullptr), current_node(nullptr), secondary_domain() {}
 
-  ga_tree(const ga_tree &tree) : root(nullptr), current_node(nullptr)
+  ga_tree(const ga_tree &tree) : root(nullptr), current_node(nullptr),
+      secondary_domain(tree.secondary_domain)
     { if (tree.root) copy_node(tree.root, nullptr, root); }
 
-    ga_tree &operator = (const ga_tree &tree)
-    { clear(); if (tree.root) copy_node(tree.root,nullptr,root); return *this; }
+    ga_tree &operator =(const ga_tree &tree) {
+      clear(); secondary_domain = tree.secondary_domain;
+      if (tree.root) copy_node(tree.root,nullptr,root); return *this;
+    }
 
     ~ga_tree() { clear(); }
   };

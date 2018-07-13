@@ -46,7 +46,7 @@ Note that you have to think to the fact that the matrices stored by the
 bricks are all distributed.
 
 A model of C++ parallelized program is :file:`tests/elastostatic.cc`.
-To run it in parallel you have to lauch for instance::
+To run it in parallel you have to launch for instance::
 
   mpirun -n 4 elastostatic elastostatic.param
 
@@ -99,14 +99,14 @@ Parallelization of getfem is still considered a "work in progress". A certain nu
   Some specificities:
 
   * The explicit matrix brick: the given matrix is considered to be
-    distributed. If it is not, only add it on the master process (otherwize,
-    the contribution will be multiplied by the numberof processes).
+    distributed. If it is not, only add it on the master process (otherwise,
+    the contribution will be multiplied by the number of processes).
 
   * The explicit rhs brick: the given vector is not considered to be
     distributed. Only the given vector on the master process is taken into
     account.
   
-  * Constraint brick: The given mastrix and rhs are not considered to be
+  * Constraint brick: The given matrix and rhs are not considered to be
     distributed. Only the given matrix and vector on the master process are
     taken into account.
 

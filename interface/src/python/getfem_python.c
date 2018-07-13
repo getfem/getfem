@@ -781,7 +781,7 @@ getfem_env(PyObject *self, PyObject *args) {
     ("2004-2018 GetFEM++ project");
   } else if (strcmp(word_in,"authors") == 0) {
     word_out = PyString_FromString
-    ("Yves Renard, Julien Pommier");
+    ("Yves Renard, Julien Pommier, Konstantinos Poulios");
   } else if (strcmp(word_in,"url") == 0) {
     word_out = PyString_FromString("http://home.gna.org/getfem/");
   } else if (strcmp(word_in,"license") == 0) {

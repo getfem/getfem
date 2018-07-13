@@ -80,7 +80,7 @@ The bricks adding a Dirichlet condition with Nitsche's method to a model are the
 This function adds a Dirichlet condition on the variable `varname` and the mesh
 region `region`. This region should be a boundary. `Neumannterm`
 is the expression of the Neumann term (obtained by the Green formula)
-described as an expression of the xeak form language. This term can be obtained with
+described as an expression of the weak form language. This term can be obtained with
 md.Neumann_term(varname, region) once all volumic bricks have
 been added to the model. The Dirichlet
 condition is prescribed with Nitsche's method. `dataname` is the optional

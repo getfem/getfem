@@ -27,7 +27,7 @@ Glossary
       problem in general. 
 
    Element
-      A element is a small piece of a domain with a special shape (a segment,
+      An element is a small piece of a domain with a special shape (a segment,
       a triangle, a quadrilateron, an tetrahedron, a hexahedron or a prism
       for dimensions less or equal to three. A mesh is the union of
       non intersecting elements.
@@ -62,7 +62,7 @@ Glossary
 
    Reference element
       A reference element or a convex of reference is a special **element**
-      on which the elmentary computations (integrals) are performed.
+      on which the elementary computations (integrals) are performed.
       For instance, the reference segment in |gf| is the segment [0,1].
       The reference triangle is the triangle (0,0), (0,1), (1,0). etc.
 

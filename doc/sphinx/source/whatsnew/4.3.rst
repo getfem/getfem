@@ -15,8 +15,7 @@ The main changes are:
      which allows to describe non-linear coupled problems in a very easy way.
 
    * The introduction of interpolate transformations in the weak form language
-     to deal with the assembly of terms on different meshes
-     or part of meshes.
+     to deal with the assembly of terms on different meshes or part of meshes.
      Example of applications : mortar methods, periodic boundary conditions,
      large sliding contact conditions 
 
