@@ -24,34 +24,9 @@
 #include "getfem/bgeot_torus.h"
 #include "gmm/gmm_solver_bfgs.h"
 
-using namespace gmm;
-using namespace std;
 
 namespace bgeot
 {
-  bool geotrans_inv_convex::invert(const base_node& n, base_node& n_ref,
-                                   scalar_type IN_EPS) {
-    assert(pgt);
-    n_ref.resize(pgt->structure()->dim());
-    bool converged = true;
-    if (pgt->is_linear()) {
-      return invert_lin(n, n_ref, IN_EPS);
-    } else {
-      return invert_nonlin(n, n_ref, IN_EPS, converged, true);
-    }
-  }
-
-  bool geotrans_inv_convex::invert(const base_node& n, base_node& n_ref,
-                                   bool &converged,
-                                   scalar_type IN_EPS) {
-    assert(pgt);
-    n_ref.resize(pgt->structure()->dim());
-    converged = true;
-    if (pgt->is_linear())
-      return invert_lin(n, n_ref, IN_EPS);
-    else
-      return invert_nonlin(n, n_ref, IN_EPS, converged, false);
-  }
 
   bool point_in_convex(const geometric_trans &geoTrans,
                        const base_node &x,
@@ -61,15 +36,70 @@ namespace bgeot
     return (geoTrans.convex_ref()->is_in(x) < IN_EPS) && (res < IN_EPS);
   }
 
+  void project_into_convex(base_node &x, const pgeometric_trans pgt) {
+
+    for (auto &coord : x) {
+      if (coord < 0.0) coord = 0.0;
+      if (coord > 1.0) coord = 1.0;
+    }
+
+
+    auto pgt_torus = std::dynamic_pointer_cast<const torus_geom_trans>(pgt);
+    const pgeometric_trans
+      orig_pgt = pgt_torus ? pgt_torus->get_original_transformation()
+                           : pgt;
+
+    auto pbasic_convex_ref = basic_convex_ref(orig_pgt->convex_ref());
+    auto nb_simplices = pbasic_convex_ref->simplexified_convex()->nb_convex();
+
+    if (nb_simplices == 1) { // simplex
+      auto sum_coordinates = 0.0;
+      for (const auto &coord : x) sum_coordinates += coord;
+
+      if (sum_coordinates > 1.0) gmm::scale(x, 1.0 / sum_coordinates);
+    }
+    else if (pgt->dim() == 3 && nb_simplices != 4) { // prism
+      auto sum_coordinates = x[0] + x[1];
+      if (sum_coordinates > 1.0) {
+        x[0] /= sum_coordinates;
+        x[1] /= sum_coordinates;
+      }
+    }
+  }
+
+  bool geotrans_inv_convex::invert(const base_node& n, base_node& n_ref,
+                                   scalar_type IN_EPS,
+                                   bool project_into_element) {
+    bool converged = true;
+    return invert(n, n_ref, converged, IN_EPS, project_into_element);
+  }
+
+  bool geotrans_inv_convex::invert(const base_node& n, base_node& n_ref,
+                                   bool &converged,
+                                   scalar_type IN_EPS,
+                                   bool project_into_element) {
+    assert(pgt);
+    n_ref.resize(pgt->structure()->dim());
+    converged = true;
+    if (pgt->is_linear())
+      return invert_lin(n, n_ref, IN_EPS, project_into_element);
+    else
+      return invert_nonlin(n, n_ref, IN_EPS, converged, false,
+                           project_into_element);
+  }
+
   /* inversion for linear geometric transformations */
   bool geotrans_inv_convex::invert_lin(const base_node& n, base_node& n_ref,
-                                       scalar_type IN_EPS) {
+                                       scalar_type IN_EPS,
+                                       bool project_into_element) {
     base_node y(n); for (size_type i=0; i < N; ++i) y[i] -= G(i,0);
     mult(transposed(B), y, n_ref);
     y = pgt->transform(n_ref, G);
-    add(scaled(n, -1.0), y);
+    add(gmm::scaled(n, -1.0), y);
 
-    return point_in_convex(*pgt, n_ref, vect_norm2(y), IN_EPS);
+    if (project_into_element) project_into_convex(n_ref, pgt);
+
+    return point_in_convex(*pgt, n_ref, gmm::vect_norm2(y), IN_EPS);
   }
 
   void geotrans_inv_convex::update_B() {
@@ -90,10 +120,6 @@ namespace bgeot
     }
   }
 
-  void geotrans_inv_convex::set_projection_into_element(bool active){
-      nonlinear_storage.project_into_element = active;
-    }
-
   class geotrans_inv_convex_bfgs {
     geotrans_inv_convex &gic;
     base_node xreal;
@@ -113,129 +139,49 @@ namespace bgeot
     }
   };
 
-  void nonlinear_storage_struct::linearization(const convex_ind_ct &dir_pt_ind,
-                                               const stored_point_tab &ref_nodes,
-                                               const stored_point_tab &real_nodes)
-  {
+  void geotrans_inv_convex::update_linearization() {
+
+    const convex_ind_ct &dir_pt_ind = pgt->structure()->ind_dir_points();
+    const stored_point_tab &ref_nodes = pgt->geometric_nodes();
+
     has_linearized_approx = true;
 
-    diff_linear.resize(real_nodes.begin()->size());
-    diff_ref_linear.resize(dir_pt_ind.size()-1);
-
     auto n_points = dir_pt_ind.size();
+    auto N_ref = ref_nodes.begin()->size();
 
     std::vector<base_node> dir_pts, dir_pts_ref;
     for (auto i : dir_pt_ind) {
-      dir_pts.push_back(real_nodes[i]);
+      dir_pts.push_back(base_node(N));
+      gmm::copy(mat_col(G, i), dir_pts.back());
       dir_pts_ref.push_back(ref_nodes[i]);
     }
 
-    auto N = dir_pts.begin()->size();
-    auto N_ref = dir_pts_ref.begin()->size();
-    base_matrix K_linear(N, n_points - 1);
+    base_matrix K_lin(N, n_points - 1),
+                B_transp_lin(n_points - 1, N),
+                K_ref_lin(N_ref, n_points - 1);
 
-    B_linear.base_resize(N, n_points - 1);
-    K_ref_linear.base_resize(N_ref, n_points - 1);
-    P_linear = dir_pts[0];
-    P_ref_linear = dir_pts_ref[0];
+    P_lin = dir_pts[0];
+    P_ref_lin = dir_pts_ref[0];
 
     for (size_type i = 1; i < n_points; ++i) {
-      add(dir_pts[i], scaled(P_linear, -1.0), mat_col(K_linear, i - 1));
-      add(dir_pts_ref[i], scaled(P_ref_linear, -1.0),
-          mat_col(K_ref_linear, i - 1));
+      add(dir_pts[i], gmm::scaled(P_lin, -1.0), mat_col(K_lin, i - 1));
+      add(dir_pts_ref[i], gmm::scaled(P_ref_lin, -1.0),
+          mat_col(K_ref_lin, i - 1));
     }
 
-    if (K_linear.nrows() == K_linear.ncols()) {
-      lu_inverse(K_linear);
-      copy(transposed(K_linear), B_linear);
+    if (K_lin.nrows() == K_lin.ncols()) {
+      lu_inverse(K_lin);
+      gmm::copy(K_lin, B_transp_lin);
     }
     else {
       base_matrix temp(n_points - 1, n_points - 1);
-      mult(transposed(K_linear), K_linear, temp);
+      mult(transposed(K_lin), K_lin, temp);
       lu_inverse(temp);
-      mult(K_linear, temp, B_linear);
-    }
-  }
-
-
-  void nonlinear_storage_struct::approx_invert(const base_node &xreal,
-                                               base_node &xref)
-  {
-      add(xreal, scaled(P_linear, -1.0), diff_linear);
-      mult(transposed(B_linear), diff_linear, diff_ref_linear);
-      mult(K_ref_linear, diff_ref_linear, xref);
-      add(P_ref_linear, xref);
-  }
-
-  void project_into_convex(base_node &x, const geometric_trans *pgeo_trans,
-                           bool project) {
-    if (project == false) return;
-
-    auto dim = pgeo_trans->dim();
-
-    for (auto d = 0; d < dim; ++d) {
-      if (x[d] < 0.0) x[d] = 0.0;
-      if (x[d] > 1.0) x[d] = 1.0;
+      mult(temp, transposed(K_lin), B_transp_lin);
     }
 
-    auto poriginal_trans = pgeo_trans;
-
-    if (auto ptorus_trans = dynamic_cast<const torus_geom_trans*>(pgeo_trans)) {
-      poriginal_trans = ptorus_trans->get_original_transformation().get();
-    }
-
-    auto pbasic_convex_ref = basic_convex_ref(poriginal_trans->convex_ref());
-    auto nb_simplices = pbasic_convex_ref->simplexified_convex()->nb_convex();
-
-    if (nb_simplices == 1) { // simplex
-      auto sum_coordinates = 0.0;
-
-      for (auto d = 0; d < dim; ++d) sum_coordinates += x[d];
-
-      if (sum_coordinates > 1.0) scale(x, 1.0 / sum_coordinates);
-    }
-    else if ((dim == 3) && (nb_simplices != 4)) { // prism
-      auto sum_coordinates = x[0] + x[1];
-
-      if (sum_coordinates > 1.0) {
-        x[0] /= sum_coordinates;
-        x[1] /= sum_coordinates;
-      }
-    }
-  }
-
-  void find_initial_guess(base_node &x,
-                          nonlinear_storage_struct &storage,
-                          const base_node &xreal,
-                          const base_matrix &G,
-                          const geometric_trans *pgt,
-                          scalar_type IN_EPS) {
-    storage.x_ref = pgt->geometric_nodes()[0];
-
-    auto res = vect_dist2(mat_col(G, 0), xreal);
-    double res0;
-
-    for (size_type j = 1; j < pgt->nb_points(); ++j) {
-      res0 = vect_dist2(mat_col(G, j), xreal);
-      if (res > res0) {
-        res = res0;
-        storage.x_ref = pgt->geometric_nodes()[j];
-      }
-    }
-
-    res0 = std::numeric_limits<scalar_type>::max();
-
-    if (storage.has_linearized_approx) {
-
-      storage.approx_invert(xreal, x);
-
-      project_into_convex(x, pgt, storage.project_into_element);
-      res0 = vect_dist2(pgt->transform(x, G), xreal);
-    }
-
-    if (res < res0) copy(storage.x_ref, x);
-    if (res < IN_EPS)
-      x *= 0.999888783; // For pyramid element to avoid the singularity
+    K_ref_B_transp_lin.base_resize(N_ref, N);
+    mult(K_ref_lin, B_transp_lin, K_ref_B_transp_lin);
   }
 
 
@@ -245,24 +191,54 @@ namespace bgeot
   bool geotrans_inv_convex::invert_nonlin(const base_node& xreal,
                                           base_node& x, scalar_type IN_EPS,
                                           bool &converged,
-                                          bool /* throw_except */) {
+                                          bool /* throw_except */,
+                                          bool project_into_element) {
     converged = true;
-    find_initial_guess(x, nonlinear_storage, xreal, G, pgt.get(), IN_EPS);
-    add(pgt->transform(x, G), scaled(xreal, -1.0), nonlinear_storage.diff);
-    auto res = vect_norm2(nonlinear_storage.diff);
+
+    base_node x0_ref(P), diff(N);
+
+    { // find initial guess
+      x0_ref = pgt->geometric_nodes()[0];
+      scalar_type res = gmm::vect_dist2(mat_col(G, 0), xreal);
+      for (size_type j = 1; j < pgt->nb_points(); ++j) {
+        scalar_type res0 = gmm::vect_dist2(mat_col(G, j), xreal);
+        if (res0 < res) {
+          res = res0;
+          x0_ref = pgt->geometric_nodes()[j];
+        }
+      }
+
+      scalar_type res0 = std::numeric_limits<scalar_type>::max();
+      if (has_linearized_approx) {
+
+        add(xreal, gmm::scaled(P_lin, -1.0), diff);
+        mult(K_ref_B_transp_lin, diff, x);
+        gmm::add(P_ref_lin, x);
+
+        if (project_into_element) project_into_convex(x, pgt);
+        res0 = gmm::vect_dist2(pgt->transform(x, G), xreal);
+      }
+
+      if (res < res0) gmm::copy(x0_ref, x);
+      if (res < IN_EPS)
+        x *= 0.999888783; // For pyramid element to avoid the singularity
+    }
+
+    add(pgt->transform(x, G), gmm::scaled(xreal, -1.0), diff);
+    auto res = gmm::vect_norm2(diff);
     auto res0 = std::numeric_limits<scalar_type>::max();
     double factor = 1.0;
 
+    base_node x0_real(N);
     while (res > IN_EPS) {
-      if ((abs(res - res0) < IN_EPS) || (factor < IN_EPS)) {
+      if ((gmm::abs(res - res0) < IN_EPS) || (factor < IN_EPS)) {
         converged = false;
         return point_in_convex(*pgt, x, res, IN_EPS);
       }
       if (res > res0) {
-        add(scaled(nonlinear_storage.x_ref, factor), x);
-        nonlinear_storage.x_real = pgt->transform(x, G);
-        add(nonlinear_storage.x_real, scaled(xreal, -1.0),
-            nonlinear_storage.diff);
+        add(gmm::scaled(x0_ref, factor), x);
+        x0_real = pgt->transform(x, G);
+        add(x0_real, gmm::scaled(xreal, -1.0), diff);
         factor *= 0.5;
       }
       else {
@@ -271,13 +247,12 @@ namespace bgeot
       }
       pgt->poly_vector_grad(x, pc);
       update_B();
-      mult(transposed(B), nonlinear_storage.diff, nonlinear_storage.x_ref);
-      add(scaled(nonlinear_storage.x_ref, -1.0 * factor), x);
-      project_into_convex(x, pgt.get(), nonlinear_storage.project_into_element);
-      nonlinear_storage.x_real = pgt->transform(x, G);
-      add(nonlinear_storage.x_real, scaled(xreal, -1.0),
-          nonlinear_storage.diff);
-      res = vect_norm2(nonlinear_storage.diff);
+      mult(transposed(B), diff, x0_ref);
+      add(gmm::scaled(x0_ref, -1.0 * factor), x);
+      if (project_into_element) project_into_convex(x, pgt);
+      x0_real = pgt->transform(x, G);
+      add(x0_real, gmm::scaled(xreal, -1.0), diff);
+      res = gmm::vect_norm2(diff);
     }
 
     return point_in_convex(*pgt, x, res, IN_EPS);
