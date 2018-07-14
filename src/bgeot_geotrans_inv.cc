@@ -113,33 +113,35 @@ namespace bgeot
     }
   };
 
-  nonlinear_storage_struct::linearised_structure::linearised_structure
-  (const convex_ind_ct &direct_points_indices,
-   const stored_point_tab &reference_nodes,
-   const std::vector<base_node> &real_nodes) :
-    diff(real_nodes.begin()->size()), diff_ref(direct_points_indices.size()-1) {
-    auto n_points = direct_points_indices.size();
-    std::vector<base_node> direct_points;
-    std::vector<base_node> direct_points_ref;
-    direct_points.reserve(n_points);
-    direct_points_ref.reserve(n_points);
+  void nonlinear_storage_struct::linearization(const convex_ind_ct &dir_pt_ind,
+                                               const stored_point_tab &ref_nodes,
+                                               const stored_point_tab &real_nodes)
+  {
+    has_linearized_approx = true;
 
-    for (auto i : direct_points_indices) {
-      direct_points.push_back(real_nodes[i]);
-      direct_points_ref.push_back(reference_nodes[i]);
+    diff_linear.resize(real_nodes.begin()->size());
+    diff_ref_linear.resize(dir_pt_ind.size()-1);
+
+    auto n_points = dir_pt_ind.size();
+
+    std::vector<base_node> dir_pts, dir_pts_ref;
+    for (auto i : dir_pt_ind) {
+      dir_pts.push_back(real_nodes[i]);
+      dir_pts_ref.push_back(ref_nodes[i]);
     }
 
-    auto N = direct_points.begin()->size();
-    auto N_ref = direct_points_ref.begin()->size();
+    auto N = dir_pts.begin()->size();
+    auto N_ref = dir_pts_ref.begin()->size();
     base_matrix K_linear(N, n_points - 1);
+
     B_linear.base_resize(N, n_points - 1);
     K_ref_linear.base_resize(N_ref, n_points - 1);
-    P_linear = direct_points[0];
-    P_ref_linear = direct_points_ref[0];
+    P_linear = dir_pts[0];
+    P_ref_linear = dir_pts_ref[0];
 
     for (size_type i = 1; i < n_points; ++i) {
-      add(direct_points[i], scaled(P_linear, -1.0), mat_col(K_linear, i - 1));
-      add(direct_points_ref[i], scaled(P_ref_linear, -1.0),
+      add(dir_pts[i], scaled(P_linear, -1.0), mat_col(K_linear, i - 1));
+      add(dir_pts_ref[i], scaled(P_ref_linear, -1.0),
           mat_col(K_ref_linear, i - 1));
     }
 
@@ -155,12 +157,14 @@ namespace bgeot
     }
   }
 
-  void nonlinear_storage_struct::linearised_structure::invert
-  (const base_node &x_real, base_node &x_ref, scalar_type /* IN_EPS */) const {
-    add(x_real, scaled(P_linear, -1.0), diff);
-    mult(transposed(B_linear), diff, diff_ref);
-    mult(K_ref_linear, diff_ref, x_ref);
-    add(P_ref_linear, x_ref);
+
+  void nonlinear_storage_struct::approx_invert(const base_node &xreal,
+                                               base_node &xref)
+  {
+      add(xreal, scaled(P_linear, -1.0), diff_linear);
+      mult(transposed(B_linear), diff_linear, diff_ref_linear);
+      mult(K_ref_linear, diff_ref_linear, xref);
+      add(P_ref_linear, xref);
   }
 
   void project_into_convex(base_node &x, const geometric_trans *pgeo_trans,
@@ -221,8 +225,10 @@ namespace bgeot
 
     res0 = std::numeric_limits<scalar_type>::max();
 
-    if (storage.plinearised_structure != nullptr) {
-      storage.plinearised_structure->invert(xreal, x, IN_EPS);
+    if (storage.has_linearized_approx) {
+
+      storage.approx_invert(xreal, x);
+
       project_into_convex(x, pgt, storage.project_into_element);
       res0 = vect_dist2(pgt->transform(x, G), xreal);
     }
@@ -238,7 +244,8 @@ namespace bgeot
   */
   bool geotrans_inv_convex::invert_nonlin(const base_node& xreal,
                                           base_node& x, scalar_type IN_EPS,
-                                          bool &converged, bool /* throw_except */) {
+                                          bool &converged,
+                                          bool /* throw_except */) {
     converged = true;
     find_initial_guess(x, nonlinear_storage, xreal, G, pgt.get(), IN_EPS);
     add(pgt->transform(x, G), scaled(xreal, -1.0), nonlinear_storage.diff);

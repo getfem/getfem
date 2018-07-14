@@ -65,23 +65,21 @@ namespace bgeot {
     base_node x_ref;
     bool project_into_element;
 
-    struct linearised_structure {
-      linearised_structure(
-        const convex_ind_ct &direct_points_indices,
-        const stored_point_tab &reference_nodes,
-        const std::vector<base_node> &real_nodes);
-      void invert(const base_node &x_real, base_node &x_ref,
-                  scalar_type IN_EPS) const;
+    bool has_linearized_approx = false;
 
-      base_matrix K_ref_linear;
-      base_matrix B_linear;
-      base_node P_linear;
-      base_node P_ref_linear;
-      mutable base_node diff;
-      mutable base_node diff_ref;
-    };
+  private:
+    base_matrix K_ref_linear;
+    base_matrix B_linear;
+    base_node P_linear;
+    base_node P_ref_linear;
+    mutable base_node diff_linear, diff_ref_linear;
 
-    std::shared_ptr<linearised_structure> plinearised_structure = nullptr;
+  public:
+    void linearization(const convex_ind_ct &dir_pt_ind,
+                       const stored_point_tab &ref_nodes,
+                       const stored_point_tab &real_nodes);
+    void approx_invert(const base_node &x_real, base_node &x_ref);
+
   };
   /** 
       does the inversion of the geometric transformation for a given convex
@@ -194,9 +192,8 @@ namespace bgeot {
       this->nonlinear_storage.x_ref.resize(P);
 
       if (pgt->complexity() > 1) {
-        std::vector<base_node> real_nodes(nodes.begin(), nodes.end());
-        this->nonlinear_storage.plinearised_structure
-          = std::make_shared<nonlinear_storage_struct::linearised_structure>
+        stored_point_tab real_nodes(nodes.begin(), nodes.end());
+        this->nonlinear_storage.linearization
           (pgt->structure()->ind_dir_points(), pgt->geometric_nodes(),
            real_nodes);
       }
