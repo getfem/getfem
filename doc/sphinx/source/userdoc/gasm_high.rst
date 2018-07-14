@@ -471,7 +471,7 @@ A certain number of binary operations between tensors are available:
 
     - ``.`` stands for the scalar product of vectors, or more generally to the contraction of a tensor with respect to its last index with a vector or with the first index of another tensor. Note that ``*`` and ``.`` are equivalent for matrix-vector or matrix-matrix multiplication.
 
-    - ``:`` stands for the |Frobenius| product of matrices or more generally to the contraction of a tensor with respect to the two last indices with a matrix. Note that ``*`` and ``:`` are equivalent for (fourth order tensor)-matrix multiplication.
+    - ``:`` stands for the |Frobenius| product of matrices or more generally to the contraction of a tensor with respect to the two last indices with a matrix or the two first indices of a higher order tensor. Note that ``*`` and ``:`` are equivalent for (fourth order tensor)-matrix multiplication.
 
     - ``.*`` stands for the multiplication of two vectors/matrix/tensor componentwise.
 
