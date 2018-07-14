@@ -35,9 +35,9 @@ namespace bgeot
     n_ref.resize(pgt->structure()->dim());
     bool converged = true;
     if (pgt->is_linear()) {
-      return invert_lin(n, n_ref,IN_EPS);
+      return invert_lin(n, n_ref, IN_EPS);
     } else {
-      return invert_nonlin(n, n_ref,IN_EPS,converged,true);
+      return invert_nonlin(n, n_ref, IN_EPS, converged, true);
     }
   }
 
@@ -47,9 +47,10 @@ namespace bgeot
     assert(pgt);
     n_ref.resize(pgt->structure()->dim());
     converged = true;
-    if (pgt->is_linear()) {
-      return invert_lin(n, n_ref,IN_EPS);
-    } else return invert_nonlin(n, n_ref,IN_EPS,converged, false);
+    if (pgt->is_linear())
+      return invert_lin(n, n_ref, IN_EPS);
+    else
+      return invert_nonlin(n, n_ref, IN_EPS, converged, false);
   }
 
   bool point_in_convex(const geometric_trans &geoTrans,
@@ -65,7 +66,7 @@ namespace bgeot
                                        scalar_type IN_EPS) {
     base_node y(n); for (size_type i=0; i < N; ++i) y[i] -= G(i,0);
     mult(transposed(B), y, n_ref);
-        y = pgt->transform(n_ref, G);
+    y = pgt->transform(n_ref, G);
     add(scaled(n, -1.0), y);
 
     return point_in_convex(*pgt, n_ref, vect_norm2(y), IN_EPS);
@@ -236,8 +237,8 @@ namespace bgeot
      (Newton on Grad(pgt)(y - pgt(x)) = 0 )
   */
   bool geotrans_inv_convex::invert_nonlin(const base_node& xreal,
-                                         base_node& x, scalar_type IN_EPS,
-                                  bool &converged, bool /* throw_except */) {
+                                          base_node& x, scalar_type IN_EPS,
+                                          bool &converged, bool /* throw_except */) {
     converged = true;
     find_initial_guess(x, nonlinear_storage, xreal, G, pgt.get(), IN_EPS);
     add(pgt->transform(x, G), scaled(xreal, -1.0), nonlinear_storage.diff);
@@ -247,8 +248,8 @@ namespace bgeot
 
     while (res > IN_EPS) {
       if ((abs(res - res0) < IN_EPS) || (factor < IN_EPS)) {
-	converged = false;
-	return point_in_convex(*pgt, x, res, IN_EPS);
+        converged = false;
+        return point_in_convex(*pgt, x, res, IN_EPS);
       }
       if (res > res0) {
         add(scaled(nonlinear_storage.x_ref, factor), x);

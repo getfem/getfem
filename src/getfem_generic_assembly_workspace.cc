@@ -298,7 +298,7 @@ namespace getfem {
   void ga_workspace::add_interpolate_transformation
   (const std::string &name, pinterpolate_transformation ptrans) {
      if (secondary_domain_exists(name))
-      GMM_ASSERT1(false, "An secondary domain with the same "
+      GMM_ASSERT1(false, "A secondary domain with the same "
                   "name already exists");
     if (transformations.find(name) != transformations.end())
       GMM_ASSERT1(name.compare("neighbour_elt"), "neighbour_elt is a "
