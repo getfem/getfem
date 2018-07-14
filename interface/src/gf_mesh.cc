@@ -133,7 +133,7 @@ pyramidal_mesh(getfem::mesh *pmesh, getfemint::mexargs_in &in) {
   std::vector<int> ipt(dim);
   std::vector<getfem::base_node> pts(1 << (dim+1));
 
-  bgeot::pgeometric_trans pgt = bgeot::pyramid_geotrans(1);
+  bgeot::pgeometric_trans pgt = bgeot::pyramid_QK_geotrans(1);
 
   /* add the convexes */
   for (size_type i=0; i < grid_nconvex; i++) {

@@ -189,16 +189,21 @@ namespace bgeot {
   /** Give a pointer on the structures of a prism of dimension d.
    *   i.e. the direct product of a simplex of dimension d-1 and a segment.
    */
-  inline pconvex_structure prism_structure(dim_type nc) {
+  inline pconvex_structure prism_P1_structure(dim_type nc) {
     return convex_product_structure(simplex_structure(dim_type(nc-1)),
                                     simplex_structure(1));
   }
-  /// Give a pointer on the 3D pyramid structure for a degree k = 1 or 2.
-  pconvex_structure pyramid_structure(short_type k);
-  /// Give a pointer on the 3D quadratic incomplete pyramid structure.
-  pconvex_structure pyramid2_incomplete_structure();
   /// Give a pointer on the 3D quadratic incomplete prism structure.
-  pconvex_structure prism2_incomplete_structure();
+  pconvex_structure prism_incomplete_P2_structure();
+  /// Give a pointer on the 3D pyramid structure for a degree k = 1 or 2.
+  pconvex_structure pyramid_QK_structure(short_type k);
+  /// Give a pointer on the 3D quadratic incomplete pyramid structure.
+  pconvex_structure pyramid_Q2_incomplete_structure();
+
+  IS_DEPRECATED inline pconvex_structure
+  prism_structure(dim_type nc) { return prism_P1_structure(nc); }
+  IS_DEPRECATED inline pconvex_structure
+  pyramid_structure(short_type k) { return pyramid_QK_structure(k); }
   
 
   /** Simplex structure with the Lagrange grid of degree k.

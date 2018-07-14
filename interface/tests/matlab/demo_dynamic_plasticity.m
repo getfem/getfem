@@ -202,7 +202,7 @@ if(general_theta_method)
 end
 
 
-gf_model_set(md, 'add nonlinear generic assembly brick', mim, strcat(expr_sigma, ':Grad_Test_u'));
+gf_model_set(md, 'add nonlinear term', mim, strcat(expr_sigma, ':Grad_Test_u'));
 % gf_model_set(md, 'add finite strain elasticity brick', mim, 'u', 'SaintVenant Kirchhoff', '[lambda; mu]');
 
 

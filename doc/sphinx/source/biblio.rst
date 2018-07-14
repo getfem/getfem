@@ -127,7 +127,7 @@ References
    *Bifurcations in Piecewise-Smooth Steady-State Problems: Abstract Study and Application to Plane Contact Problems with Friction*. Computational Mechanics, 56:1:39-62, 2015.
 
 .. [Li-Re2015hal] T. |ligursky| and Y. Renard.
-   *A Method of Piecewise-Smooth Numerical Branching*. Submitted (2015). <`hal-01113564 <https://hal.archives-ouvertes.fr/hal-01113564>`_>
+   *A Method of Piecewise-Smooth Numerical Branching*. Z. Angew. Math. Mech., 97:7:815--827, 2017.
 
 .. [Mi-Zh2002] P. Ming and Z. Shi,
    *Optimal L2 error bounds for MITC3 type element*. Numer. Math. 91, 77-91, 2002.

@@ -206,17 +206,7 @@ namespace getfem
     pmf = std::make_unique<mesh_fem>(const_cast<mesh&>(m), dim_type(1));
     for (dal::bv_visitor cv(m.convex_index()); !cv.finished(); ++cv) {
       bgeot::pgeometric_trans pgt = m.trans_of_convex(cv);
-      pfem pf;
-      if (pgt == bgeot::geometric_trans_descriptor("GT_Q2_INCOMPLETE(2)"))
-        pf =  fem_descriptor("FEM_Q2_INCOMPLETE(2)");
-      else if (pgt == bgeot::geometric_trans_descriptor("GT_Q2_INCOMPLETE(3)"))
-        pf =  fem_descriptor("FEM_Q2_INCOMPLETE(3)");
-      else if (pgt == bgeot::geometric_trans_descriptor("GT_PYRAMID2_INCOMPLETE"))
-        pf =  fem_descriptor("FEM_PYRAMID2_INCOMPLETE_LAGRANGE");
-      else if (pgt == bgeot::geometric_trans_descriptor("GT_PRISM2_INCOMPLETE"))
-        pf =  fem_descriptor("FEM_PRISM2_INCOMPLETE_LAGRANGE");
-      else
-        pf = getfem::classical_fem(pgt, pgt->complexity() > 1 ? 2 : 1);
+      pfem pf = getfem::classical_fem(pgt, pgt->complexity() > 1 ? 2 : 1);
       pmf->set_finite_element(cv, pf);
     }
     exporting(*pmf);
@@ -236,10 +226,10 @@ namespace getfem
 
       if (pf == fem_descriptor("FEM_Q2_INCOMPLETE(2)") ||
           pf == fem_descriptor("FEM_Q2_INCOMPLETE(3)") ||
-          pf == fem_descriptor("FEM_PYRAMID2_INCOMPLETE_LAGRANGE") ||
-          pf == fem_descriptor("FEM_PYRAMID2_INCOMPLETE_DISCONTINUOUS_LAGRANGE") ||
-          pf == fem_descriptor("FEM_PRISM2_INCOMPLETE_LAGRANGE") ||
-          pf == fem_descriptor("FEM_PRISM2_INCOMPLETE_DISCONTINUOUS_LAGRANGE"))
+          pf == fem_descriptor("FEM_PYRAMID_Q2_INCOMPLETE") ||
+          pf == fem_descriptor("FEM_PYRAMID_Q2_INCOMPLETE_DISCONTINUOUS") ||
+          pf == fem_descriptor("FEM_PRISM_INCOMPLETE_P2") ||
+          pf == fem_descriptor("FEM_PRISM_INCOMPLETE_P2_DISCONTINUOUS"))
         pmf->set_finite_element(cv, pf);
       else {
         bool discontinuous = false;
@@ -257,8 +247,8 @@ namespace getfem
           degree = 2;
 
         pmf->set_finite_element(cv, discontinuous ?
-                                classical_discontinuous_fem(pgt, degree) :
-                                classical_fem(pgt, degree));
+                                classical_discontinuous_fem(pgt, degree, 0, true) :
+                                classical_fem(pgt, degree, true));
       }
     }
     /* find out which dof will be exported to VTK */
@@ -577,7 +567,8 @@ namespace getfem
         /* could be a better test for discontinuity .. */
         if (!dof_linkable(pf->dof_types()[i])) { discontinuous = true; break; }
       }
-      pfem classical_pf1 = discontinuous ? classical_discontinuous_fem(pgt, 1) : classical_fem(pgt, 1);
+      pfem classical_pf1 = discontinuous ? classical_discontinuous_fem(pgt, 1)
+                                         : classical_fem(pgt, 1);
       pmf->set_finite_element(cv, classical_pf1);
     }
     pmf_dof_used.add(0, pmf->nb_basic_dof());

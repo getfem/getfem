@@ -608,6 +608,7 @@ namespace getfem {
 
     auto &PREDEF_FUNCTIONS = dal::singleton<ga_predef_function_tab>::instance(0);
     if(PREDEF_FUNCTIONS.find(name) != PREDEF_FUNCTIONS.end()) return;
+
     GMM_ASSERT1(nbargs >= 1 && nbargs <= 2, "Generic assembly only allows "
                 "the definition of scalar function with one or two arguments");
     { // Only for syntax analysis
@@ -644,6 +645,7 @@ namespace getfem {
 
   void ga_define_function(const std::string &name, pscalar_func_onearg f,
                           const std::string &der) {
+    auto guard = omp_guard{};
     ga_predef_function_tab &PREDEF_FUNCTIONS
       = dal::singleton<ga_predef_function_tab>::instance(0);
     PREDEF_FUNCTIONS[name] = ga_predef_function(f, 1, der);
@@ -654,6 +656,7 @@ namespace getfem {
 
   void ga_define_function(const std::string &name, pscalar_func_twoargs f,
                           const std::string &der1, const std::string &der2) {
+    auto guard = omp_guard{};
     ga_predef_function_tab &PREDEF_FUNCTIONS
       = dal::singleton<ga_predef_function_tab>::instance(0);
     PREDEF_FUNCTIONS[name] = ga_predef_function(f, 1, der1, der2);
@@ -665,6 +668,7 @@ namespace getfem {
   }
 
   void ga_undefine_function(const std::string &name) {
+    auto guard = omp_guard{};
     ga_predef_function_tab &PREDEF_FUNCTIONS
       = dal::singleton<ga_predef_function_tab>::instance(0);
     ga_predef_function_tab::iterator it = PREDEF_FUNCTIONS.find(name);
@@ -727,15 +731,15 @@ namespace getfem {
     GMM_ASSERT1(gis, "Uncompiled function");
     if (local_workspace.nb_trees()) {
       ga_tree tree = *(local_workspace.tree_info(0).ptree);
-      ga_derivative(tree, local_workspace, *((const mesh *)(0)), var, "", 1);
+      ga_derivative(tree, local_workspace, dummy_mesh(), var, "", 1);
       if (tree.root) {
-        ga_semantic_analysis(tree, local_workspace, *((const mesh *)(0)),
+        ga_semantic_analysis(tree, local_workspace, dummy_mesh(),
 			     1, false, true);
         // To be improved to suppress test functions in the expression ...
         // ga_replace_test_by_cte do not work in all operations like
         // vector components x(1)
         // ga_replace_test_by_cte(tree.root, false);
-        // ga_semantic_analysis(tree, local_workspace, *((const mesh *)(0)), 1,
+        // ga_semantic_analysis(tree, local_workspace, dummy_mesh(), 1,
 	//                      false, true);
       }
       expr = ga_tree_to_string(tree);

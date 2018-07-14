@@ -32,7 +32,7 @@ Of course, in that case :math:`G` also depends on some material parameters.
 If additionally a mixed incompressibility brick is added with a variable :math:`p` denoting the pressure, the Neumann term on :math:`u` will depend on :math:`p` in the following way:
 :math:`G = \sigma(u)n - pn`
 
-In order to allow a generic implementation in which the brick imposing Nitsche's method will work for every partial differential term applied to the concerned variables, each brick adding a partial differential term to a model is required to give its expression via an assembly string (high generic assembly language).
+In order to allow a generic implementation in which the brick imposing Nitsche's method will work for every partial differential term applied to the concerned variables, each brick adding a partial differential term to a model is required to give its expression via an assembly string (weak form language).
  
 These expressions are utilized in a special method of the model object::
 
@@ -80,8 +80,7 @@ The bricks adding a Dirichlet condition with Nitsche's method to a model are the
 This function adds a Dirichlet condition on the variable `varname` and the mesh
 region `region`. This region should be a boundary. `Neumannterm`
 is the expression of the Neumann term (obtained by the Green formula)
-described as an expression of the high-level
-generic assembly language. This term can be obtained with
+described as an expression of the weak form language. This term can be obtained with
 md.Neumann_term(varname, region) once all volumic bricks have
 been added to the model. The Dirichlet
 condition is prescribed with Nitsche's method. `dataname` is the optional
@@ -110,8 +109,7 @@ This function adds a Dirichlet condition to the normal component of the vector
 (or tensor) valued variable `varname` and the mesh region `region`.
 This region should be a boundary. `Neumannterm`
 is the expression of the Neumann term (obtained by the Green formula)
-described as an expression of the high-level
-generic assembly language. This term can be obtained with
+described as an expression of the weak form language. This term can be obtained with
 md.Neumann_term(varname, region) once all volumic bricks have
 been added to the model. The Dirichlet
 condition is prescribed with Nitsche's method. `dataname` is the optional
@@ -141,8 +139,7 @@ This version is for vector field. It prescribes a condition
 :math:`Hu = r` where :math:`H` is a matrix field. The region should be a
 boundary. This region should be a boundary. `Neumannterm`
 is the expression of the Neumann term (obtained by the Green formula)
-described as an expression of the high-level
-generic assembly language. This term can be obtained with
+described as an expression of the weak form language. This term can be obtained with
 md.Neumann_term(varname, region) once all volumic bricks have
 been added to the model. The Dirichlet
 condition is prescribed with Nitsche's method.
@@ -195,8 +192,7 @@ The following function adds a contact condition with or without Coulomb
 friction on the variable
 `varname_u` and the mesh boundary `region`.  `Neumannterm`
 is the expression of the Neumann term (obtained by the Green formula)
-described as an expression of the high-level
-generic assembly language. This term can be obtained with
+described as an expression of the weak form language. This term can be obtained with
 md.Neumann_term(varname, region) once all volumic bricks have
 been added to the model. The contact condition
 is prescribed with Nitsche's method. The rigid obstacle should
@@ -210,7 +206,7 @@ method which is conditionnaly coercive for  `gamma0` small.
 inconditionnaly coercive. `theta = 0` is the simplest method
 for which the second derivative of the Neumann term is not necessary.
 The optional parameter `dataexpr_friction_coeff` is the friction
-coefficient which could be any expression of the assembly language.
+coefficient which could be any expression of the weak form language.
 Returns the brick index in the model.::
 
 

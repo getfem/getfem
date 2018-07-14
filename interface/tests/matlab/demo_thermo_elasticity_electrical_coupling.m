@@ -156,7 +156,7 @@ gf_model_set(md, 'add initialized data', 'eps', [epsilon]);
 gf_model_set(md, 'add initialized data', 'rho_0', [rho_0]);
 gf_model_set(md, 'add initialized data', 'alpha', [alpha]);
 gf_model_set(md, 'add initialized data', 'T0', [T0]);
-gf_model_set(md, 'add nonlinear generic assembly brick', mim, [sigmaeps '*(Grad_V.Grad_Test_V)']);
+gf_model_set(md, 'add nonlinear term', mim, [sigmaeps '*(Grad_V.Grad_Test_V)']);
 gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'V', elements_degree-1, RIGHT_BOUND);
 gf_model_set(md, 'add initialized data', 'DdataV', [0.1]);
 gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'V', elements_degree-1, LEFT_BOUND, 'DdataV');
@@ -176,11 +176,11 @@ gf_model_set(md, 'add Fourier Robin brick', mim, 'theta', 'Deps', BOTTOM_BOUND);
 gf_model_set(md, 'add source term brick', mim, 'theta', 'Depsairt', BOTTOM_BOUND);
 
 % Joule heating term
-gf_model_set(md, 'add nonlinear generic assembly brick', mim, ['-' sigmaeps '*Norm_sqr(Grad_V)*Test_theta']);
+gf_model_set(md, 'add nonlinear term', mim, ['-' sigmaeps '*Norm_sqr(Grad_V)*Test_theta']);
 
 % Thermal expansion term
 gf_model_set(md, 'add initialized data', 'beta', [alpha_th*E/(1-2*nu)]);
-gf_model_set(md, 'add linear generic assembly brick', mim, 'beta*(T0-theta)*Div_Test_u');
+gf_model_set(md, 'add linear term', mim, 'beta*(T0-theta)*Div_Test_u');
 
 
 %

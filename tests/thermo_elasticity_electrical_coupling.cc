@@ -207,7 +207,7 @@ int main(int argc, char *argv[]) {
   md.add_initialized_scalar_data("rho_0", rho_0);
   md.add_initialized_scalar_data("alpha", alpha);
   md.add_initialized_scalar_data("T0", T0);
-  getfem::add_nonlinear_generic_assembly_brick
+  getfem::add_nonlinear_term
     (md, mim, sigmaeps+"*(Grad_V.Grad_Test_V)");
   getfem::add_Dirichlet_condition_with_multipliers
     (md, mim, "V", bgeot::dim_type(elements_degree-1), RIGHT_BOUND);
@@ -232,12 +232,12 @@ int main(int argc, char *argv[]) {
 
 
   // Joule heating term
-  getfem::add_nonlinear_generic_assembly_brick
+  getfem::add_nonlinear_term
      (md, mim, "-"+sigmaeps+"*Norm_sqr(Grad_V)*Test_theta");
 
   // Thermal expansion term
   md.add_initialized_scalar_data("beta", alpha_th*E/(1-2*nu));
-  getfem::add_linear_generic_assembly_brick
+  getfem::add_linear_term
     (md, mim, "beta*(T0-theta)*Trace(Grad_Test_u)");
 
 

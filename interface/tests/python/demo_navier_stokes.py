@@ -109,9 +109,9 @@ md.add_initialized_data("dt", [dt])
 md.add_initialized_data("nu", [nu])
 
 md.add_Dirichlet_condition_with_multipliers(mim, "p", mfp, IN_RG, "p_in")
-md.add_nonlinear_generic_assembly_brick\
+md.add_nonlinear_term\
 (mim, "1/dt*(v-v0).Test_v + (Grad_v0*v0).Test_v + nu*Grad_v:Grad_Test_v - f.Test_v")
-md.add_nonlinear_generic_assembly_brick\
+md.add_nonlinear_term\
 (mim, "Grad_p.Grad_Test_p + 1/dt*Trace(Grad_v)*Test_p")
 
 mmat_v = gf.asm_mass_matrix(mim, mfv)

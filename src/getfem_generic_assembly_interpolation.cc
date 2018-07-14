@@ -479,7 +479,7 @@ namespace getfem {
   // Interpolate transformation with an expression
   //=========================================================================
 
-  class  interpolate_transformation_expression
+  class interpolate_transformation_expression
     : public virtual_interpolate_transformation, public context_dependencies {
 
     struct workspace_gis_pair : public std::pair<ga_workspace, ga_instruction_set> {
@@ -489,6 +489,7 @@ namespace getfem {
 
     const mesh &source_mesh;
     const mesh &target_mesh;
+    const size_type target_region;
     std::string expr;
     mutable bgeot::rtree element_boxes;
     mutable bool recompute_elt_boxes;
@@ -568,7 +569,7 @@ namespace getfem {
           ga_derivative(tree, pwi.workspace(), source_mesh,
                         var.varname, var.transname, 1);
           if (tree.root)
-            ga_semantic_analysis(tree, local_workspace, *((const mesh *)(0)),
+            ga_semantic_analysis(tree, local_workspace, dummy_mesh(),
 				 1, false, true);
           ga_compile_interpolation(pwi.workspace(), pwi.gis());
         }
@@ -579,8 +580,11 @@ namespace getfem {
 
         element_boxes.clear();
         base_node bmin(N), bmax(N);
-        for (dal::bv_visitor cv(target_mesh.convex_index());
-             !cv.finished(); ++cv) {
+        const dal::bit_vector&
+          convex_index = (target_region == mesh_region::all_convexes().id())
+                       ? target_mesh.convex_index()
+                       : target_mesh.region(target_region).index();
+        for (dal::bv_visitor cv(convex_index); !cv.finished(); ++cv) {
 
           bgeot::pgeometric_trans pgt = target_mesh.trans_of_convex(cv);
 
@@ -620,7 +624,7 @@ namespace getfem {
       local_gis = ga_instruction_set();
     }
 
-    std::string expression(void) const { return expr; }
+    std::string expression() const { return expr; }
 
     int transform(const ga_workspace &/*workspace*/, const mesh &m,
                   fem_interpolation_context &ctx_x,
@@ -637,43 +641,48 @@ namespace getfem {
                                          Normal, m);
 
       GMM_ASSERT1(local_workspace.assembled_tensor().size() == m.dim(),
-                  "Wrong dimension of the tranformation expression");
+                  "Wrong dimension of the transformation expression");
       P.resize(m.dim());
       gmm::copy(local_workspace.assembled_tensor().as_vector(), P);
 
-      bgeot::rtree::pbox_set bset;
-      element_boxes.find_boxes_at_point(P, bset);
       *m_t = &target_mesh;
 
-      while (bset.size()) {
-        bgeot::rtree::pbox_set::iterator it = bset.begin(), itmax = it;
+      bgeot::rtree::pbox_cont boxes;
+      {
+        bgeot::rtree::pbox_set bset;
+        element_boxes.find_boxes_at_point(P, bset);
 
-        if (bset.size() > 1) {
-          // Searching the box for which the point is the most in the interior
-          scalar_type rate_max = scalar_type(-1);
-          for (; it != bset.end(); ++it) {
-
-            scalar_type rate_box = scalar_type(1);
-            for (size_type i = 0; i < m.dim(); ++i) {
-              scalar_type h = (*it)->max[i] - (*it)->min[i];
-              if (h > scalar_type(0)) {
-                scalar_type rate
-                  = std::min((*it)->max[i] - P[i], P[i] - (*it)->min[i]) / h;
-                rate_box = std::min(rate, rate_box);
-              }
-            }
-            if (rate_box > rate_max) {
-              itmax = it;
-              rate_max = rate_box;
+        // using a std::set as a sorter
+        std::set<std::pair<scalar_type, const bgeot::box_index*> > rated_boxes;
+        for (const auto &box : bset) {
+          scalar_type rating = scalar_type(1);
+          for (size_type i = 0; i < m.dim(); ++i) {
+            scalar_type h = box->max[i] - box->min[i];
+            if (h > scalar_type(0)) {
+              scalar_type r = std::min(box->max[i] - P[i],
+                                       P[i] - box->min[i]) / h;
+              rating = std::min(r, rating);
             }
           }
+          rated_boxes.insert(std::make_pair(rating, box));
         }
 
-        cv = (*itmax)->id;
+        // boxes should now be ordered in increasing rating order
+        for (const auto &p : rated_boxes)
+          boxes.push_back(p.second);
+      }
+
+
+      scalar_type best_dist(1e10);
+      size_type best_cv(-1);
+      base_node best_P_ref;
+      for (size_type i = boxes.size(); i > 0; --i) {
+
+        cv = boxes[i-1]->id;
         gic.init(target_mesh.points_of_convex(cv),
                  target_mesh.trans_of_convex(cv));
 
-        bool converged = true;
+        bool converged;
         bool is_in = gic.invert(P, P_ref, converged, 1E-4);
         // cout << "cv = " << cv << " P = " << P << " P_ref = " << P_ref << endl;
         // cout << " is_in = " << int(is_in) << endl;
@@ -681,14 +690,28 @@ namespace getfem {
         //     iii < target_mesh.points_of_convex(cv).size(); ++iii)
         //  cout << target_mesh.points_of_convex(cv)[iii] << endl;
 
-        if (is_in && converged) {
-          face_num = short_type(-1); // Should detect potential faces ?
-          ret_type = 1;
-          break;
+        if (converged) {
+          if (is_in) {
+            face_num = short_type(-1); // Should detect potential faces ?
+            ret_type = 1;
+            break;
+          } else {
+            scalar_type dist
+              = target_mesh.trans_of_convex(cv)->convex_ref()->is_in(P_ref);
+            if (dist < best_dist) {
+              best_dist = dist;
+              best_cv = cv;
+              best_P_ref = P_ref;
+            }
+          }
         }
+      }
 
-        if (bset.size() == 1) break;
-        bset.erase(itmax);
+      if (ret_type == 0 && best_dist < 5e-3) {
+        cv = best_cv;
+        P_ref = best_P_ref;
+        face_num = short_type(-1); // Should detect potential faces ?
+        ret_type = 1;
       }
 
       // Note on derivatives of the transformation : for efficiency and
@@ -708,9 +731,9 @@ namespace getfem {
       return ret_type;
     }
 
-    interpolate_transformation_expression(const mesh &sm, const mesh &tm,
-                                          const std::string &expr_)
-      : source_mesh(sm), target_mesh(tm), expr(expr_),
+    interpolate_transformation_expression
+    (const mesh &sm, const mesh &tm, size_type trg, const std::string &expr_)
+      : source_mesh(sm), target_mesh(tm), target_region(trg), expr(expr_),
         recompute_elt_boxes(true), extract_variable_done(false),
         extract_data_done(false)
     { this->add_dependency(tm); }
@@ -719,19 +742,35 @@ namespace getfem {
 
 
   void add_interpolate_transformation_from_expression
-  (model &md, const std::string &name, const mesh &sm, const mesh &tm,
-   const std::string &expr) {
-    pinterpolate_transformation
-      p = std::make_shared<interpolate_transformation_expression>(sm, tm, expr);
-    md.add_interpolate_transformation(name, p);
+  (ga_workspace &workspace, const std::string &name, const mesh &sm,
+   const mesh &tm, const std::string &expr) {
+    add_interpolate_transformation_from_expression
+    (workspace, name, sm, tm, size_type(-1), expr);
   }
 
   void add_interpolate_transformation_from_expression
   (ga_workspace &workspace, const std::string &name, const mesh &sm,
-   const mesh &tm, const std::string &expr) {
+   const mesh &tm, size_type trg, const std::string &expr) {
     pinterpolate_transformation
-      p = std::make_shared<interpolate_transformation_expression>(sm, tm, expr);
+      p = std::make_shared<interpolate_transformation_expression>
+          (sm, tm, trg, expr);
     workspace.add_interpolate_transformation(name, p);
+  }
+
+  void add_interpolate_transformation_from_expression
+  (model &md, const std::string &name, const mesh &sm, const mesh &tm,
+   const std::string &expr) {
+    add_interpolate_transformation_from_expression
+    (md, name, sm, tm, size_type(-1), expr);
+  }
+
+  void add_interpolate_transformation_from_expression
+  (model &md, const std::string &name, const mesh &sm, const mesh &tm,
+   size_type trg, const std::string &expr) {
+    pinterpolate_transformation
+      p = std::make_shared<interpolate_transformation_expression>
+          (sm, tm, trg, expr);
+    md.add_interpolate_transformation(name, p);
   }
 
   //=========================================================================
@@ -775,8 +814,9 @@ namespace getfem {
         gic.init(m_x.points_of_convex(adj_face.cv),
                  m_x.trans_of_convex(adj_face.cv));
         bool converged = true;
-        bool is_in = gic.invert(ctx_x.xreal(), P_ref, converged, 1E-4);
-        GMM_ASSERT1(is_in && converged, "Geometric transformation inversion "
+        gic.invert(ctx_x.xreal(), P_ref, converged);
+	bool is_in = (ctx_x.pgt()->convex_ref()->is_in(P_ref) < 1E-4);
+	GMM_ASSERT1(is_in && converged, "Geometric transformation inversion "
                     "has failed in neighbour transformation");
         face_num = adj_face.f;
         cv = adj_face.cv;
@@ -910,5 +950,40 @@ namespace getfem {
     const_cast<interpolate_transformation_element_extrapolation *>(cpext)
       ->set_correspondance(elt_corr);
   }
+
+
+  //=========================================================================
+  // Secondary domains
+  //=========================================================================
+
+
+  class standard_secondary_domain : public virtual_secondary_domain {
+    
+  public:
+
+    virtual const mesh_region &give_region(const mesh &,
+					   size_type, short_type) const
+    { return region; }
+    // virtual void init(const ga_workspace &workspace) const = 0;
+    // virtual void finalize() const = 0;
+
+    standard_secondary_domain(const mesh_im &mim__, const mesh_region &region_)
+      : virtual_secondary_domain(mim__, region_) {}
+  };
+
+  void add_standard_secondary_domain
+  (model &md, const std::string &name, const mesh_im &mim,
+   const mesh_region &rg) { 
+    psecondary_domain p = std::make_shared<standard_secondary_domain>(mim, rg);
+    md.add_secondary_domain(name, p);
+  }
+  
+  void add_standard_secondary_domain
+  (ga_workspace &workspace, const std::string &name, const mesh_im &mim,
+   const mesh_region &rg) { 
+    psecondary_domain p = std::make_shared<standard_secondary_domain>(mim, rg);
+    workspace.add_secondary_domain(name, p);
+  }
+  
 
 } /* end of namespace */

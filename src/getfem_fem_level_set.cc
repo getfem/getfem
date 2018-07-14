@@ -97,8 +97,7 @@ namespace getfem {
     size_type s = 0, cv = c.convex_num();
     for (size_type i = 0; i < dofzones.size(); ++i)
       if (dofzones[i]) s += dofzones[i]->size();
-    ids.resize(0); ids.resize(dofzones.size()+1, false);
-    // cout << "dofzones.size() = " << dofzones.size() << endl;
+    ids.resize(0); ids.resize(s, false);
     std::string z(common_ls_zones);
     base_vector coeff(32);
     
@@ -112,7 +111,6 @@ namespace getfem {
       eval.set_shift(ls->get_shift()); // Deprecated
 
       // mesher_level_set eval = mls.get_level_set(i)->mls_of_convex(cv);
-      
 
       scalar_type v = eval(c.xref());
       if (side != 0) {

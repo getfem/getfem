@@ -50,12 +50,20 @@
    element QK on a parallelepiped.
 
    - "FEM_Q2_INCOMPLETE(N)" : incomplete Q2 elements with 8 and 20 dof
-                              (serendipity Quad 8 and Hexa 20 elements)
+   (serendipity Quad 8 and Hexa 20 elements)
 
-   - "FEM_PK_PRISM(N,K)" : classical Lagrange element PK on a prism.
+   - "FEM_Q2_INCOMPLETE_DISCONTINUOUS(N)" : discontinuous incomplete Q2
+   elements with 8 and 20 dof (serendipity Quad 8 and Hexa 20 elements)
 
-   - "FEM_PK_PRISM_DISCONTINUOUS(N,K,alpha)" : classical discontinuous
+   - "FEM_PRISM_PK(N,K)" : classical Lagrange element PK on a prism.
+
+   - "FEM_PRISM_PK_DISCONTINUOUS(N,K,alpha)" : classical discontinuous
    Lagrange element PK on a prism.
+
+   - "FEM_PRISM_INCOMPLETE_P2" : Incomplete Lagrange element on a
+   quadratic 3D prism (serendipity, 15-node wedge element). Can be connected
+   toa standard P2 Lagrange on its triangular faces and a Q2_INCOMPLETE
+   Lagrange element on its quadrangular faces.
 
    - "FEM_PK_WITH_CUBIC_BUBBLE(N,K)" : classical Lagrange element PK
    on a simplex with an additional volumic bubble function.
@@ -92,7 +100,7 @@
 
    - "FEM_QK_HIERARCHICAL(N,K)" : QK element with a hierarchical basis.
 
-   - "FEM_PK_PRISM_HIERARCHICAL(N,K)" : PK element on a prism with a
+   - "FEM_PRISM_PK_HIERARCHICAL(N,K)" : PK element on a prism with a
    hierarchical basis.
 
    - "FEM_STRUCTURED_COMPOSITE(FEM, K)" : Composite fem on a grid with
@@ -105,23 +113,18 @@
    element with S subdivisions and a hierarchical basis on both degree
    and subdivision.
 
-   - "FEM_PYRAMID_LAGRANGE(K)" : Lagrange element on a 3D pyramid of degree
+   - "FEM_PYRAMID_QK(K)" : Lagrange element on a 3D pyramid of degree
    K=0, 1 or 2. Can be connected to a standard P1/P2 Lagrange element on its
    triangular faces and a standard Q1/Q2 Lagrange element on its quadrangular
    face.
 
-   - "FEM_PYRAMID_DISCONTINUOUS_LAGRANGE(K)" : Discontinuous Lagrange element
+   - "FEM_PYRAMID_QK_DISCONTINUOUS(K)" : Discontinuous Lagrange element
    on a 3D pyramid of degree K = 0, 1 or 2.
 
-   - "FEM_PYRAMID2_INCOMPLETE_LAGRANGE" : Incomplete Lagrange element on a
+   - "FEM_PYRAMID_Q2_INCOMPLETE" : Incomplete Lagrange element on a
    quadratic 3D pyramid (serendipity, 13-node element). Can be connected to
    a standard P2 Lagrange element on its triangular faces and a Q2_INCOMPLETE
    Lagrange element on its quadrangular face.
-
-   - "FEM_PRISM2_INCOMPLETE_LAGRANGE" : Incomplete Lagrange element on a
-   quadratic 3D prism (serendipity, 15-node wedge element). Can be connected
-   toa standard P2 Lagrange on its triangular faces and a Q2_INCOMPLETE
-   Lagrange element on its quadrangular faces.
 
 */
 
@@ -599,9 +602,13 @@ namespace getfem {
 
       @param pgt the geometric transformation (which defines the convex type).
       @param k the degree of the fem.
+      @param complete a flag which requests complete Langrange polynomial
+      elements even if the provided pgt is an incomplete one (e.g. 8-node
+      quadrilateral or 20-node hexahedral).
       @return a ppolyfem.
   */
-  pfem classical_fem(bgeot::pgeometric_trans pgt, short_type k);
+  pfem classical_fem(bgeot::pgeometric_trans pgt, short_type k,
+                     bool complete=false);
 
   /** Give a pointer on the structures describing the classical
       polynomial discontinuous fem of degree k on a given convex type.
@@ -614,9 +621,14 @@ namespace getfem {
       0, the nodes are located as usual (i.e. with node on the convex border),
       and for 0 < alpha < 1, they converge to the center of gravity of the convex.
 
+      @param complete a flag which requests complete Langrange polynomial
+      elements even if the provided pgt is an incomplete one (e.g. 8-node
+      quadrilateral or 20-node hexahedral).
+
       @return a ppolyfem.
   */
-  pfem classical_discontinuous_fem(bgeot::pgeometric_trans pg, short_type k, scalar_type alpha=0);
+  pfem classical_discontinuous_fem(bgeot::pgeometric_trans pg, short_type k,
+                                   scalar_type alpha=0, bool complete=false);
 
   /** get a fem descriptor from its string name. */
   pfem fem_descriptor(const std::string &name);

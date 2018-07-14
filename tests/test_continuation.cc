@@ -101,8 +101,7 @@ bool state_problem::cont(plain_vector &U) {
   getfem::add_Laplacian_brick(model, mim, "u");
   std::string f = "u-lambda*exp(u)", dfdu = "1-lambda*exp(u)";
   model.add_fixed_size_data("lambda", 1);
-  getfem::add_nonlinear_generic_assembly_brick(model, mim,
-					       "(u-lambda*exp(u))*Test_u");
+  getfem::add_nonlinear_term(model, mim, "(u-lambda*exp(u))*Test_u");
 
 
   // Initialise the continuation

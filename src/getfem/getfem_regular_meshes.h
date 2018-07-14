@@ -161,7 +161,7 @@ namespace getfem
      of the mesh are randomly "shaken" (default value NOISED=0).
      An additional integer paramater called SYMMETRIES receiving the
      values 1, 2 or 3 (in three dimensions) permits to respectively request
-     one half, one quarter or one sixteenth of the ball to be meshed
+     one half, one quarter or one eighth of the ball to be meshed
      (default value SYMMETRIES=0).
 
      @param m the output mesh.    

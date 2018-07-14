@@ -1,6 +1,6 @@
 /*===========================================================================
 
- Copyright (C) 2004-2017 Julien Pommier.
+ Copyright (C) 2004-2018 Julien Pommier.
 
  This file is a part of GetFEM++
 
@@ -778,10 +778,10 @@ getfem_env(PyObject *self, PyObject *args) {
     word_out = PyString_FromString("GetFEM++");
   } else if (strcmp(word_in,"copyright") == 0) {
     word_out = PyString_FromString
-    ("2004-2017 GetFEM++ project");
+    ("2004-2018 GetFEM++ project");
   } else if (strcmp(word_in,"authors") == 0) {
     word_out = PyString_FromString
-    ("Yves Renard, Julien Pommier");
+    ("Yves Renard, Julien Pommier, Konstantinos Poulios");
   } else if (strcmp(word_in,"url") == 0) {
     word_out = PyString_FromString("http://home.gna.org/getfem/");
   } else if (strcmp(word_in,"license") == 0) {

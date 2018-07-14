@@ -474,7 +474,21 @@ void gf_model_set(getfemint::mexargs_in& m_in,
 							elt_corr);
        );
 
-      /*@SET ('set element extrapolation correspondance', @str transname, @mat elt_corr)
+    /*@SET ('add standard secondary domain', @str name, @tmim mim, @int region = -1)
+      Add a secondary domain to the model which can be used in a weak-form language expression for integration on the product of two domains. `name` is the name
+      of the secondary domain, `mim` is an integration method on this domain
+      and `region` the region on which the integration is to be performed. @*/
+    sub_command
+      ("add standard secondary domain", 3, 3, 0, 0,
+       std::string name = in.pop().to_string();
+       getfem::mesh_im *mim = to_meshim_object(in.pop());
+       size_type region = size_type(-1);
+       if (in.remaining()) region = in.pop().to_integer();
+       add_standard_secondary_domain(*md, name, *mim, region);
+       );
+
+
+    /*@SET ('set element extrapolation correspondance', @str transname, @mat elt_corr)
       Change the correspondance map of an element extrapolation interpolate
      transformation. @*/
     sub_command
@@ -597,7 +611,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        (*md, transname, expr, N);
        );
       
-    /*@SET ind = ('add linear generic assembly brick', @tmim mim, @str expression[, @int region[, @int is_symmetric[, @int is_coercive]]])
+    /*@SET ind = ('add linear term', @tmim mim, @str expression[, @int region[, @int is_symmetric[, @int is_coercive]]])
       Adds a matrix term given by the assembly string `expr` which will
       be assembled in region `region` and with the integration method `mim`.
       Only the matrix term will be taken into account, assuming that it is
@@ -615,6 +629,50 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       are not allowed for non-coercive problems.
       `brickname` is an otpional name for the brick.@*/
     sub_command
+      ("add linear term", 2, 5, 0, 1,
+       getfem::mesh_im *mim = to_meshim_object(in.pop());
+       std::string expr = in.pop().to_string();
+       size_type region = size_type(-1);
+       if (in.remaining()) region = in.pop().to_integer();
+       int is_symmetric = 0;
+       if (in.remaining()) is_symmetric = in.pop().to_integer();
+       int is_coercive = 0;
+       if (in.remaining()) is_coercive = in.pop().to_integer();
+       
+       size_type ind = getfem::add_linear_term
+       (*md, *mim, expr, region, is_symmetric,
+        is_coercive) + config::base_index();
+       workspace().set_dependence(md, mim);
+       out.pop().from_integer(int(ind));
+       );
+
+    /*@SET ind = ('add linear twodomain term', @tmim mim, @str expression, @int region, @str secondary_domain[, @int is_symmetric[, @int is_coercive]])
+      Adds a linear term given by a weak form language expression like
+      MODEL:SET('add linear term') but for an integration on a direct
+      product of two domains, a first specfied by ``mim`` and ``region``
+      and a second one by ``secondary_domain`` which has to be declared
+      first into the model.@*/
+    sub_command
+      ("add linear twodomain term", 4, 6, 0, 1,
+       getfem::mesh_im *mim = to_meshim_object(in.pop());
+       std::string expr = in.pop().to_string();
+       size_type region = in.pop().to_integer();
+       std::string secdom = in.pop().to_string();
+       int is_symmetric = 0;
+       if (in.remaining()) is_symmetric = in.pop().to_integer();
+       int is_coercive = 0;
+       if (in.remaining()) is_coercive = in.pop().to_integer();
+       
+       size_type ind = getfem::add_linear_twodomain_term
+       (*md, *mim, expr, region, secdom, is_symmetric,
+        is_coercive) + config::base_index();
+       workspace().set_dependence(md, mim);
+       out.pop().from_integer(int(ind));
+       );
+
+    /*@SET ind = ('add linear generic assembly brick', @tmim mim, @str expression[, @int region[, @int is_symmetric[, @int is_coercive]]])
+      Deprecated. Use MODEL:SET('add linear term') instead. @*/
+    sub_command
       ("add linear generic assembly brick", 2, 5, 0, 1,
        getfem::mesh_im *mim = to_meshim_object(in.pop());
        std::string expr = in.pop().to_string();
@@ -626,15 +684,14 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        if (in.remaining()) is_coercive = in.pop().to_integer();
        
        size_type ind
-       = getfem::add_linear_generic_assembly_brick
+       = getfem::add_linear_term
        (*md, *mim, expr, region, is_symmetric,
-        is_coercive) + config::base_index();
+	is_coercive) + config::base_index();
        workspace().set_dependence(md, mim);
        out.pop().from_integer(int(ind));
        );
 
-
-    /*@SET ind = ('add nonlinear generic assembly brick', @tmim mim, @str expression[, @int region[, @int is_symmetric[, @int is_coercive]]])
+    /*@SET ind = ('add nonlinear term', @tmim mim, @str expression[, @int region[, @int is_symmetric[, @int is_coercive]]])
       Adds a nonlinear term given by the assembly string `expr` which will
       be assembled in region `region` and with the integration method `mim`.
       The expression can describe a potential or a weak form. Second order
@@ -645,6 +702,53 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       and not coercive. But some solvers (conjugate gradient for instance)
       are not allowed for non-coercive problems.
       `brickname` is an otpional name for the brick.@*/
+    sub_command
+      ("add nonlinear term", 2, 5, 0, 1,
+       getfem::mesh_im *mim = to_meshim_object(in.pop());
+       std::string expr = in.pop().to_string();
+       size_type region = size_type(-1);
+       if (in.remaining()) region = in.pop().to_integer();
+       int is_symmetric = 0;
+       if (in.remaining()) is_symmetric = in.pop().to_integer();
+       int is_coercive = 0;
+       if (in.remaining()) is_coercive = in.pop().to_integer();
+       
+       size_type ind
+       = getfem::add_nonlinear_term
+       (*md, *mim, expr, region, is_symmetric,
+        is_coercive) + config::base_index();
+       workspace().set_dependence(md, mim);
+       out.pop().from_integer(int(ind));
+       );
+
+    /*@SET ind = ('add nonlinear twodomain term', @tmim mim, @str expression, @int region, @str secondary_domain[, @int is_symmetric[, @int is_coercive]])
+      Adds a nonlinear term given by a weak form language expression like
+      MODEL:SET('add nonlinear term') but for an integration on a direct
+      product of two domains, a first specfied by ``mim`` and ``region``
+      and a second one by ``secondary_domain`` which has to be declared
+      first into the model.@*/
+    sub_command
+      ("add nonlinear twodomain term", 4, 6, 0, 1,
+       getfem::mesh_im *mim = to_meshim_object(in.pop());
+       std::string expr = in.pop().to_string();
+       size_type region = in.pop().to_integer();
+       std::string secdom = in.pop().to_string();
+       int is_symmetric = 0;
+       if (in.remaining()) is_symmetric = in.pop().to_integer();
+       int is_coercive = 0;
+       if (in.remaining()) is_coercive = in.pop().to_integer();
+       
+       size_type ind
+       = getfem::add_nonlinear_twodomain_term
+       (*md, *mim, expr, region, secdom, is_symmetric,
+        is_coercive) + config::base_index();
+       workspace().set_dependence(md, mim);
+       out.pop().from_integer(int(ind));
+       );
+    
+
+    /*@SET ind = ('add nonlinear generic assembly brick', @tmim mim, @str expression[, @int region[, @int is_symmetric[, @int is_coercive]]])
+      Deprecated. Use MODEL:SET('add nonlinear term') instead.@*/
     sub_command
       ("add nonlinear generic assembly brick", 2, 5, 0, 1,
        getfem::mesh_im *mim = to_meshim_object(in.pop());
@@ -657,21 +761,57 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        if (in.remaining()) is_coercive = in.pop().to_integer();
        
        size_type ind
-       = getfem::add_nonlinear_generic_assembly_brick
+       = getfem::add_nonlinear_term
        (*md, *mim, expr, region, is_symmetric,
         is_coercive) + config::base_index();
        workspace().set_dependence(md, mim);
        out.pop().from_integer(int(ind));
        );
-
-    /*@SET ind = ('add source term generic assembly brick', @tmim mim, @str expression[, @int region])
+    
+    /*@SET ind = ('add source term', @tmim mim, @str expression[, @int region])
       Adds a source term given by the assembly string `expr` which will
       be assembled in region `region` and with the integration method `mim`.
       Only the residual term will be taken into account.
       Take care that if the expression contains some variables and if the
       expression is a potential, the expression will be
       derivated with respect to all variables.
-      `brickname` is an otpional name for the brick.@*/
+      `brickname` is an optional name for the brick.@*/
+    sub_command
+      ("add source term", 2, 3, 0, 1,
+       getfem::mesh_im *mim = to_meshim_object(in.pop());
+       std::string expr = in.pop().to_string();
+       size_type region = size_type(-1);
+       if (in.remaining()) region = in.pop().to_integer();
+       
+       size_type ind
+       = getfem::add_source_term
+       (*md, *mim, expr, region) + config::base_index();
+       workspace().set_dependence(md, mim);
+       out.pop().from_integer(int(ind));
+       );
+
+    /*@SET ind = ('add twodomain source term', @tmim mim, @str expression, @int region, @str secondary_domain)
+      Adds a source term given by a weak form language expression like
+      MODEL:SET('add source term') but for an integration on a direct
+      product of two domains, a first specfied by ``mim`` and ``region``
+      and a second one by ``secondary_domain`` which has to be declared
+      first into the model.@*/
+    sub_command
+      ("add twodomain source term", 4, 4, 0, 1,
+       getfem::mesh_im *mim = to_meshim_object(in.pop());
+       std::string expr = in.pop().to_string();
+       size_type region = in.pop().to_integer();
+       std::string secdom = in.pop().to_string();
+       
+       size_type ind
+       = getfem::add_twodomain_source_term
+       (*md, *mim, expr, region, secdom) + config::base_index();
+       workspace().set_dependence(md, mim);
+       out.pop().from_integer(int(ind));
+       );
+
+    /*@SET ind = ('add source term generic assembly brick', @tmim mim, @str expression[, @int region])
+      Deprecated. Use MODEL:SET('add source term') instead. @*/
     sub_command
       ("add source term generic assembly brick", 2, 3, 0, 1,
        getfem::mesh_im *mim = to_meshim_object(in.pop());

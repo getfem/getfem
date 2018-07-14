@@ -258,18 +258,18 @@ if direct_generic_assembly:  # Direct use of high-level generic assembly
     md.add_master_contact_boundary_to_raytracing_transformation("contact_trans", mesh2, "u", CONTACT_BOUNDARY2)
     md.add_rigid_obstacle_to_raytracing_transformation("contact_trans", "z+5", N)
 
-  md.add_nonlinear_generic_assembly_brick(mim1_contact, "-lambda1.Test_u1", CONTACT_BOUNDARY1) 
-  md.add_nonlinear_generic_assembly_brick(mim1_contact, "Interpolate_filter(contact_trans, lambda1.Interpolate(Test_u,contact_trans), 1)", CONTACT_BOUNDARY1) 
-  md.add_nonlinear_generic_assembly_brick(mim1_contact, "-(1/r)*lambda1.Test_lambda1", CONTACT_BOUNDARY1)
-  md.add_nonlinear_generic_assembly_brick(mim1_contact, "Interpolate_filter(contact_trans, (1/r)*Coulomb_friction_coupled_projection(lambda1, Transformed_unit_vector(Grad_u1, Normal), u1, (Interpolate(X,contact_trans)-X-u1).Transformed_unit_vector(Grad_u1, Normal), f, r).Test_lambda1, 2)", CONTACT_BOUNDARY1)
-  md.add_nonlinear_generic_assembly_brick(mim1_contact, "Interpolate_filter(contact_trans, (1/r)*Coulomb_friction_coupled_projection(lambda1, Transformed_unit_vector(Grad_u1, Normal), u1-Interpolate(u,contact_trans), (Interpolate(X,contact_trans)+Interpolate(u,contact_trans)-X-u1).Transformed_unit_vector(Grad_u1, Normal), f, r).Test_lambda1, 1)", CONTACT_BOUNDARY1)
+  md.add_nonlinear_term(mim1_contact, "-lambda1.Test_u1", CONTACT_BOUNDARY1) 
+  md.add_nonlinear_term(mim1_contact, "Interpolate_filter(contact_trans, lambda1.Interpolate(Test_u,contact_trans), 1)", CONTACT_BOUNDARY1) 
+  md.add_nonlinear_term(mim1_contact, "-(1/r)*lambda1.Test_lambda1", CONTACT_BOUNDARY1)
+  md.add_nonlinear_term(mim1_contact, "Interpolate_filter(contact_trans, (1/r)*Coulomb_friction_coupled_projection(lambda1, Transformed_unit_vector(Grad_u1, Normal), u1, (Interpolate(X,contact_trans)-X-u1).Transformed_unit_vector(Grad_u1, Normal), f, r).Test_lambda1, 2)", CONTACT_BOUNDARY1)
+  md.add_nonlinear_term(mim1_contact, "Interpolate_filter(contact_trans, (1/r)*Coulomb_friction_coupled_projection(lambda1, Transformed_unit_vector(Grad_u1, Normal), u1-Interpolate(u,contact_trans), (Interpolate(X,contact_trans)+Interpolate(u,contact_trans)-X-u1).Transformed_unit_vector(Grad_u1, Normal), f, r).Test_lambda1, 1)", CONTACT_BOUNDARY1)
   
   if two_meshes and self_contact:
-    md.add_nonlinear_generic_assembly_brick(mim2_contact, "-lambda2.Test_u2", CONTACT_BOUNDARY2) 
-    md.add_nonlinear_generic_assembly_brick(mim2_contact, "Interpolate_filter(contact_trans, lambda2.Interpolate(Test_u,contact_trans), 1)", CONTACT_BOUNDARY2) 
-    md.add_nonlinear_generic_assembly_brick(mim2_contact, "-(1/r)*lambda2.Test_lambda2", CONTACT_BOUNDARY2)
-    md.add_nonlinear_generic_assembly_brick(mim2_contact, "Interpolate_filter(contact_trans, (1/r)*Coulomb_friction_coupled_projection(lambda2, Transformed_unit_vector(Grad_u2, Normal), u2, (Interpolate(X,contact_trans)-X-u2).Transformed_unit_vector(Grad_u2, Normal), f, r).Test_lambda2, 2)", CONTACT_BOUNDARY2)
-    md.add_nonlinear_generic_assembly_brick(mim2_contact, "Interpolate_filter(contact_trans, (1/r)*Coulomb_friction_coupled_projection(lambda2, Transformed_unit_vector(Grad_u2, Normal), u2-Interpolate(u,contact_trans), (Interpolate(X,contact_trans)+Interpolate(u,contact_trans)-X-u2).Transformed_unit_vector(Grad_u2, Normal), f, r).Test_lambda2, 1)", CONTACT_BOUNDARY2)  
+    md.add_nonlinear_term(mim2_contact, "-lambda2.Test_u2", CONTACT_BOUNDARY2) 
+    md.add_nonlinear_term(mim2_contact, "Interpolate_filter(contact_trans, lambda2.Interpolate(Test_u,contact_trans), 1)", CONTACT_BOUNDARY2) 
+    md.add_nonlinear_term(mim2_contact, "-(1/r)*lambda2.Test_lambda2", CONTACT_BOUNDARY2)
+    md.add_nonlinear_term(mim2_contact, "Interpolate_filter(contact_trans, (1/r)*Coulomb_friction_coupled_projection(lambda2, Transformed_unit_vector(Grad_u2, Normal), u2, (Interpolate(X,contact_trans)-X-u2).Transformed_unit_vector(Grad_u2, Normal), f, r).Test_lambda2, 2)", CONTACT_BOUNDARY2)
+    md.add_nonlinear_term(mim2_contact, "Interpolate_filter(contact_trans, (1/r)*Coulomb_friction_coupled_projection(lambda2, Transformed_unit_vector(Grad_u2, Normal), u2-Interpolate(u,contact_trans), (Interpolate(X,contact_trans)+Interpolate(u,contact_trans)-X-u2).Transformed_unit_vector(Grad_u2, Normal), f, r).Test_lambda2, 1)", CONTACT_BOUNDARY2)  
 
   u_group = "u"
   contact_trans = "contact_trans"

@@ -358,7 +358,7 @@ namespace bgeot {
             el.add(edge_list_elt(points_of_convex[k],
                                  points_of_convex[k | (1 << j)], ncv));
     }
-    else if (nbp == 2 * n && cvs == prism_structure(n)) {
+    else if (nbp == 2 * n && cvs == prism_P1_structure(n)) {
       for (dim_type k = 0; k < n - 1; ++k)
         for (dim_type l = dim_type(k+1); l < n; ++l) {
           el.add(edge_list_elt(points_of_convex[k],
@@ -387,7 +387,7 @@ namespace bgeot {
         ncs--;
         cvs = cvstab[ncs];
         std::vector< size_type > pts = indpttab[ncs];
-        if (cvs->dim() == 1) { // il faudrait étendre aux autres cas classiques.
+        if (cvs->dim() == 1) { // il faudrait Ã©tendre aux autres cas classiques.
 
           for (size_type j = 1; j < cvs->nb_points(); ++j) {
             //cerr << "ncs=" << ncs << "j=" << j << ", ajout de " << (indpttab[ncs])[j-1] << "," << (indpttab[ncs])[j] << endl;

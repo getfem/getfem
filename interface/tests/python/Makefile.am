@@ -1,4 +1,4 @@
-#  Copyright (C) 1999-2017 Yves Renard
+#  Copyright (C) 1999-2018 Yves Renard
 #
 #  This file is a part of GetFEM++
 #
@@ -27,6 +27,8 @@ EXTRA_DIST= 						\
 	check_global_functions.py			\
 	check_levelset.py				\
 	check_asm.py    				\
+	check_secondary_domain.py    			\
+	check_mixed_mesh.py    				\
 	demo_crack.py 					\
 	demo_fictitious_domains.py 			\
 	demo_laplacian.py 				\
@@ -34,6 +36,7 @@ EXTRA_DIST= 						\
 	demo_laplacian_DG.py 				\
 	demo_laplacian_aposteriori.py			\
 	demo_mortar.py 					\
+	demo_phase_field.py              		\
 	demo_plasticity.py              		\
 	demo_plate.py 					\
 	demo_static_contact.py 				\
@@ -42,7 +45,10 @@ EXTRA_DIST= 						\
 	demo_step_by_step.py				\
 	demo_stokes_3D_tank.py          		\
 	demo_stokes_3D_tank_draw.py			\
+	demo_finite_strain_plasticity.py                \
+	demo_finite_strain_plasticity_3D.py             \
 	demo_thermo_elasticity_electrical_coupling.py 	\
+	demo_cracked_thermo_elastic_body.py             \
 	demo_nonlinear_elasticity.py		 	\
 	demo_wheel_contact.py                           \
 	demo_tripod.py 					\
@@ -56,6 +62,8 @@ TESTS = 						\
 	check_export.py					\
 	check_global_functions.py			\
 	check_asm.py	  				\
+	check_secondary_domain.py 			\
+	check_mixed_mesh.py  				\
 	demo_wave.py					\
 	demo_laplacian.py				\
 	$(optpy)

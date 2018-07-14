@@ -66,7 +66,7 @@ In the case of linearized elasticity, one has :math:`\psi^e(\varepsilon^e) = \fr
 Plastic potential, yield function and plastic flow rule
 =======================================================
 
-Plastic yielding is supposed to occur when the stress attains a critical value. This is determinated by a yield function :math:`f(\sigma, A)` and the condition
+Plastic yielding is supposed to occur when the stress attains a critical value. This limit is determined by a yield function :math:`f(\sigma, A)` and the condition
 
 .. math:: f(\sigma, A) \le 0.
 
@@ -502,7 +502,7 @@ displacement, the plastic multiplier and the plastic strain).
 `params` is a list of expressions for the parameters (at least elastic
 coefficients and the yield stress). These expressions can be some data
 names (or even variable names) of the model but can also be any scalar
-valid expression of the high level assembly language (such as "1/2",
+valid expression of the weak form language (such as "1/2",
 "2+sin(X[0])", "1+Norm(v)" ...). The last two parameters optionally
 provided in `params` are the `theta` parameter of the `theta`-scheme
 (generalized trapezoidal rule) used for the plastic strain integration

@@ -99,11 +99,14 @@ namespace getfem {
     fem_precomp_pool fp_pool;
     std::map<gauss_pt_corresp, bgeot::pstored_point_tab> neighbour_corresp;
 
-    struct region_mim : std::pair<const mesh_im *, const mesh_region *> {
-      const mesh_im* mim() const { return this->first; }
-      const mesh_region* region() const { return this->second; }
-      region_mim(const mesh_im *mim_, const mesh_region *region_) :
-        std::pair<const mesh_im *, const mesh_region *>(mim_, region_) {}
+    using region_mim_tuple = std::tuple<const mesh_im *, const mesh_region *, psecondary_domain>;
+    struct region_mim : public region_mim_tuple {
+      const mesh_im* mim() const {return std::get<0>(static_cast<region_mim_tuple>(*this));}
+      const mesh_region* region() const {return std::get<1>(static_cast<region_mim_tuple>(*this));}
+      psecondary_domain psd() const {return std::get<2>(static_cast<region_mim_tuple>(*this));}
+
+      region_mim(const mesh_im *mim_, const mesh_region *region_, psecondary_domain psd)
+        : region_mim_tuple(mim_, region_, psd) {}
     };
 
     std::map<std::string, const base_vector *> extended_vars;
@@ -133,6 +136,21 @@ namespace getfem {
       std::map<const mesh_fem *, pfem_precomp> pfps;
     };
 
+
+    struct secondary_domain_info {
+      // const mesh *m;
+      papprox_integration pai;
+      fem_interpolation_context ctx;
+      base_small_vector Normal;
+      
+      std::map<std::string, base_vector> local_dofs;
+      std::map<const mesh_fem *, pfem_precomp> pfps;
+      std::map<const mesh_fem *, base_tensor> base;
+      std::map<const mesh_fem *, base_tensor> grad;
+      std::map<const mesh_fem *, base_tensor> hess;
+    };
+
+
     struct elementary_trans_info {
       base_matrix M;
       const mesh_fem *mf;
@@ -144,6 +162,7 @@ namespace getfem {
     struct region_mim_instructions {
 
       const mesh *m;
+      const mesh_im *im;
       ga_if_hierarchy current_hierarchy;
       std::map<std::string, base_vector> local_dofs;
       std::map<const mesh_fem *, pfem_precomp> pfps;
@@ -166,6 +185,7 @@ namespace getfem {
       std::set<std::string> transformations_der;
       std::map<std::string, interpolate_info> interpolate_infos;
       std::map<std::string, elementary_trans_info> elementary_trans_infos;
+      secondary_domain_info secondary_domain_infos;
 
       // Instructions being executed at the first Gauss point after
       // a change of integration method only.
@@ -176,7 +196,7 @@ namespace getfem {
       ga_instruction_list instructions;
       std::map<scalar_type, std::list<pga_tree_node> > node_list;
 
-      region_mim_instructions(): m(0) {}
+    region_mim_instructions(): m(0), im(0) {}
     };
 
     std::list<ga_tree> trees; // The trees are stored mainly because they

@@ -111,6 +111,8 @@ namespace getfem {
       regular_simplex_pim = reg;
       base_singular_pim = sing;
     }
+
+    int location() const { return integrate_where; }
     
     size_type memsize() const {
       return mesh_im::memsize(); // + ... ;
@@ -171,6 +173,8 @@ namespace getfem {
     void set_level_set_boolean_operations(const std::string description) {
       ls_csg_description = description;
     }
+    void compute_normal_vector(const fem_interpolation_context &ctx,
+			       base_small_vector &vec) const;
   };
 
 

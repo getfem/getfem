@@ -286,7 +286,7 @@ struct Chrono {
     
     /* Identifying prisms.                                             */
     if (nbp == size_type(2 * n) &&
-	pgt->basic_structure() == bgeot::prism_structure(n)) {
+	pgt->basic_structure() == bgeot::prism_P1_structure(n)) {
       return new_mesher_prism_ref(n);
     }
     
@@ -514,7 +514,7 @@ struct Chrono {
      *          the mesh to the curved level sets.
      */
 
-      dmin = 2.*h0;
+      dmin = h0;
       if (noisy) cout << "dmin = " << dmin << " h0 = " << h0 << endl;
       if (noisy) cout << "convex " << cv << endl;
       

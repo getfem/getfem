@@ -242,7 +242,7 @@ namespace bgeot {
         scalar_type a0 = A[4]*A[8] - A[5]*A[7], a1 = A[5]*A[6] - A[3]*A[8];
         scalar_type a2 = A[3]*A[7] - A[4]*A[6];
         scalar_type det =  A[0] * a0 + A[1] * a1 + A[2] * a2;
-        GMM_ASSERT1(det != scalar_type(0), "Non invertible matrix");
+	GMM_ASSERT1(det != scalar_type(0), "Non invertible matrix");
         scalar_type a3 = (A[2]*A[7] - A[1]*A[8]), a6 = (A[1]*A[5] - A[2]*A[4]);
         scalar_type a4 = (A[0]*A[8] - A[2]*A[6]), a7 = (A[2]*A[3] - A[0]*A[5]);
         scalar_type a5 = (A[1]*A[6] - A[0]*A[7]), a8 = (A[0]*A[4] - A[1]*A[3]);
@@ -343,9 +343,9 @@ namespace bgeot {
           J__ = it[0] * a0 + it[1] * a1 + it[2] * a2;
         } break;
       default:
-              B_factors.base_resize(P, P); // store factorization for B computation
-              gmm::copy(gmm::transposed(KK), B_factors);
-              ipvt.resize(P);
+	B_factors.base_resize(P, P); // store factorization for B computation
+	gmm::copy(gmm::transposed(KK), B_factors);
+	ipvt.resize(P);
         bgeot::lu_factor(&(*(B_factors.begin())), ipvt, P);
         J__ = bgeot::lu_det(&(*(B_factors.begin())), ipvt, P);
         break;
@@ -763,8 +763,9 @@ namespace bgeot {
     return geometric_trans_descriptor(name.str());
   }
 
-  static pgeometric_trans prism_gt(gt_param_list &params,
-        std::vector<dal::pstatic_stored_object> &) {
+  static pgeometric_trans
+  prism_pk_gt(gt_param_list &params,
+              std::vector<dal::pstatic_stored_object> &) {
     GMM_ASSERT1(params.size() == 2, "Bad number of parameters : "
                 << params.size() << " should be 2.");
     GMM_ASSERT1(params[0].type() == 0 && params[1].type() == 0,
@@ -780,8 +781,9 @@ namespace bgeot {
     return geometric_trans_descriptor(name.str());
   }
 
-  static pgeometric_trans linear_qk(gt_param_list &params,
-        std::vector<dal::pstatic_stored_object> &) {
+  static pgeometric_trans
+  linear_qk(gt_param_list &params,
+            std::vector<dal::pstatic_stored_object> &) {
     GMM_ASSERT1(params.size() == 1, "Bad number of parameters : "
                 << params.size() << " should be 1.");
     GMM_ASSERT1(params[0].type() == 0, "Bad type of parameters");
@@ -874,9 +876,9 @@ namespace bgeot {
   /*    Pyramidal geometric transformation of order k=1 or 2.             */
   /* ******************************************************************** */
 
-  struct pyramid_trans_: public fraction_geometric_trans  {
-    pyramid_trans_(short_type k) {
-      cvr = pyramid_of_reference(k);
+  struct pyramid_QK_trans_: public fraction_geometric_trans  {
+    pyramid_QK_trans_(short_type k) {
+      cvr = pyramid_QK_of_reference(k);
       size_type R = cvr->structure()->nb_points();
       is_lin = false;
       complexity_ = k;
@@ -921,18 +923,18 @@ namespace bgeot {
   };
 
   static pgeometric_trans
-  pyramid_gt(gt_param_list& params,
-             std::vector<dal::pstatic_stored_object> &deps) {
+  pyramid_QK_gt(gt_param_list& params,
+                std::vector<dal::pstatic_stored_object> &deps) {
     GMM_ASSERT1(params.size() == 1, "Bad number of parameters : "
                 << params.size() << " should be 1.");
     GMM_ASSERT1(params[0].type() == 0, "Bad type of parameters");
     int k = int(::floor(params[0].num() + 0.01));
 
-    deps.push_back(pyramid_of_reference(dim_type(k)));
-    return std::make_shared<pyramid_trans_>(dim_type(k));
+    deps.push_back(pyramid_QK_of_reference(dim_type(k)));
+    return std::make_shared<pyramid_QK_trans_>(dim_type(k));
   }
 
-  pgeometric_trans pyramid_geotrans(short_type k) {
+  pgeometric_trans pyramid_QK_geotrans(short_type k) {
     static short_type k_ = -1;
     static pgeometric_trans pgt = 0;
     if (k != k_) {
@@ -947,9 +949,9 @@ namespace bgeot {
   /*    Incomplete quadratic pyramidal geometric transformation.          */
   /* ******************************************************************** */
 
-  struct pyramid2_incomplete_trans_: public fraction_geometric_trans  {
-    pyramid2_incomplete_trans_() {
-      cvr = pyramid2_incomplete_of_reference();
+  struct pyramid_Q2_incomplete_trans_: public fraction_geometric_trans  {
+    pyramid_Q2_incomplete_trans_() {
+      cvr = pyramid_Q2_incomplete_of_reference();
       size_type R = cvr->structure()->nb_points();
       is_lin = false;
       complexity_ = 2;
@@ -994,19 +996,19 @@ namespace bgeot {
   };
 
   static pgeometric_trans
-  pyramid2_incomplete_gt(gt_param_list& params,
-                         std::vector<dal::pstatic_stored_object> &deps) {
+  pyramid_Q2_incomplete_gt(gt_param_list& params,
+                           std::vector<dal::pstatic_stored_object> &deps) {
     GMM_ASSERT1(params.size() == 0, "Bad number of parameters : "
                 << params.size() << " should be 0.");
 
-    deps.push_back(pyramid2_incomplete_of_reference());
-    return std::make_shared<pyramid2_incomplete_trans_>();
+    deps.push_back(pyramid_Q2_incomplete_of_reference());
+    return std::make_shared<pyramid_Q2_incomplete_trans_>();
   }
 
-  pgeometric_trans pyramid2_incomplete_geotrans() {
+  pgeometric_trans pyramid_Q2_incomplete_geotrans() {
     static pgeometric_trans pgt = 0;
     if (!pgt)
-      pgt = geometric_trans_descriptor("GT_PYRAMID2_INCOMPLETE");
+      pgt = geometric_trans_descriptor("GT_PYRAMID_Q2_INCOMPLETE");
     return pgt;
   }
 
@@ -1014,9 +1016,9 @@ namespace bgeot {
   /*    Incomplete quadratic prism geometric transformation.              */
   /* ******************************************************************** */
 
-  struct prism2_incomplete_trans_: public poly_geometric_trans  {
-    prism2_incomplete_trans_() {
-      cvr = prism2_incomplete_of_reference();
+  struct prism_incomplete_P2_trans_: public poly_geometric_trans  {
+    prism_incomplete_P2_trans_() {
+      cvr = prism_incomplete_P2_of_reference();
       size_type R = cvr->structure()->nb_points();
       is_lin = false;
       complexity_ = 2;
@@ -1048,19 +1050,19 @@ namespace bgeot {
   };
 
   static pgeometric_trans
-  prism2_incomplete_gt(gt_param_list& params,
-                       std::vector<dal::pstatic_stored_object> &deps) {
+  prism_incomplete_P2_gt(gt_param_list& params,
+                         std::vector<dal::pstatic_stored_object> &deps) {
     GMM_ASSERT1(params.size() == 0, "Bad number of parameters : "
                 << params.size() << " should be 0.");
 
-    deps.push_back(prism2_incomplete_of_reference());
-    return std::make_shared<prism2_incomplete_trans_>();
+    deps.push_back(prism_incomplete_P2_of_reference());
+    return std::make_shared<prism_incomplete_P2_trans_>();
   }
 
-  pgeometric_trans prism2_incomplete_geotrans() {
+  pgeometric_trans prism_incomplete_P2_geotrans() {
     static pgeometric_trans pgt = 0;
     if (!pgt)
-      pgt = geometric_trans_descriptor("GT_PRISM2_INCOMPLETE");
+      pgt = geometric_trans_descriptor("GT_PRISM_INCOMPLETE_P2");
     return pgt;
   }
 
@@ -1137,14 +1139,16 @@ namespace bgeot {
       dal::naming_system<geometric_trans>("GT") {
       add_suffix("PK", PK_gt);
       add_suffix("QK", QK_gt);
-      add_suffix("PRISM", prism_gt);
+      add_suffix("PRISM_PK", prism_pk_gt);
+      add_suffix("PRISM", prism_pk_gt);
       add_suffix("PRODUCT", product_gt);
       add_suffix("LINEAR_PRODUCT", linear_product_gt);
       add_suffix("LINEAR_QK", linear_qk);
       add_suffix("Q2_INCOMPLETE", Q2_incomplete_gt);
-      add_suffix("PYRAMID", pyramid_gt);
-      add_suffix("PYRAMID2_INCOMPLETE", pyramid2_incomplete_gt);
-      add_suffix("PRISM2_INCOMPLETE", prism2_incomplete_gt);
+      add_suffix("PYRAMID_QK", pyramid_QK_gt);
+      add_suffix("PYRAMID", pyramid_QK_gt);
+      add_suffix("PYRAMID_Q2_INCOMPLETE", pyramid_Q2_incomplete_gt);
+      add_suffix("PRISM_INCOMPLETE_P2", prism_incomplete_P2_gt);
     }
   };
 
