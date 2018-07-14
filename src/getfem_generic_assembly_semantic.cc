@@ -39,7 +39,8 @@ namespace getfem {
 
   static void ga_node_grad(ga_tree &tree, const ga_workspace &workspace,
 			   const mesh &m, pga_tree_node pnode);
-  static bool ga_node_mark_tree_for_grad(pga_tree_node pnode);
+  static bool ga_node_mark_tree_for_grad(pga_tree_node pnode,
+                                         const ga_workspace &workspace);
   static void ga_node_analysis(ga_tree &tree,
                                const ga_workspace &workspace,
                                pga_tree_node pnode, const mesh &me,
@@ -195,7 +196,7 @@ namespace getfem {
 
       if (need_grad && grad_expr.root == nullptr) {
 	tree.copy_node(pexpr, nullptr, grad_expr.root);
-	if (ga_node_mark_tree_for_grad(grad_expr.root)) {
+	if (ga_node_mark_tree_for_grad(grad_expr.root, workspace)) {
 	  ga_node_grad(grad_expr, workspace, me, grad_expr.root);
 	  ga_node_analysis(grad_expr, workspace, grad_expr.root, me,
 			   ref_elt_dim, eval_fixed_size, ignore_X, option);
@@ -211,7 +212,7 @@ namespace getfem {
 
       if (need_hess && hess_expr.root == nullptr) {
 	tree.copy_node(grad_expr.root, nullptr, hess_expr.root);
-	if (ga_node_mark_tree_for_grad(hess_expr.root)) {
+	if (ga_node_mark_tree_for_grad(hess_expr.root, workspace)) {
 	  ga_node_grad(hess_expr, workspace, me, hess_expr.root);
 	  ga_node_analysis(hess_expr, workspace, hess_expr.root, me,
 			   ref_elt_dim, eval_fixed_size, ignore_X, option);
@@ -1227,27 +1228,26 @@ namespace getfem {
         break;
 
       case GA_COLON:
-        if (dim1 > 2)
-          ga_throw_error(pnode->expr, pnode->pos,
-                          "Frobenius product acts only on matrices.")
-        else {
+        {
           size_type s00 = (dim0 == 0) ? 1
             : (dim0 == 1 ? size0.back() : size0[size0.size()-2]);
           size_type s01 = (dim0 >= 2) ? size0.back() : 1;
-          size_type s10 = (dim1 == 0) ? 1
-            : (dim1 == 1 ? size1.back() : size1[size1.size()-2]);
-          size_type s11 = (dim1 >= 2) ? size1.back() : 1;
+          size_type s10 = (dim1 == 0) ? 1 : child1->tensor_proper_size(0);
+          size_type s11 = (dim1 <  2) ? 1 : child1->tensor_proper_size(1);
           if (s00 != s10 || s01 != s11)
             ga_throw_error(pnode->expr, pnode->pos, "Frobenius product "
                            "of expressions of different sizes ("
                            << s00 << "," << s01 << " != " << s10 << ","
                            << s11 << ").");
-          if (child0->tensor_order() <= 2) pnode->symmetric_op = true;
+          if (child0->tensor_order() <= 2 && child1->tensor_order() <= 2)
+            pnode->symmetric_op = true;
           pnode->mult_test(child0, child1);
-          if (dim0 > 2) {
+          if (dim0 > 2 || dim1 > 2) {
             mi = pnode->t.sizes();
-            for (size_type i = 2; i < dim0; ++i)
-              mi.push_back(child0->tensor_proper_size(i-2));
+            for (size_type i = 0; i < dim0-2; ++i)
+              mi.push_back(child0->tensor_proper_size(i));
+            for (size_type i = 2; i < dim1; ++i)
+              mi.push_back(child1->tensor_proper_size(i));
             pnode->t.adjust_sizes(mi);
           }
 
@@ -1861,12 +1861,13 @@ namespace getfem {
       // Grad and Diff operators
       if (child0->node_type == GA_NODE_NAME) {
 	if (child0->name.compare("Grad") == 0) {
+          // cout<<"Compute gradient of ";ga_print_node(child1,cout);cout<<endl;
 	  if (pnode->children.size() != 2)
 	    ga_throw_error(pnode->expr, child0->pos,
 			   "Bad number of parameters for Grad operator");
-	  if (ga_node_mark_tree_for_grad(child1)) {
-	    ga_node_grad(tree, workspace, me, child1);
-	    ga_node_analysis(tree, workspace, pnode->children[1], me,
+	  if (ga_node_mark_tree_for_grad(child1, workspace)) {
+            ga_node_grad(tree, workspace, me, child1);
+            ga_node_analysis(tree, workspace, pnode->children[1], me,
 			     ref_elt_dim, eval_fixed_size, ignore_X, option);
 	    child1 = pnode->children[1];
 	  } else {
@@ -2575,7 +2576,7 @@ namespace getfem {
 			    size_type ref_elt_dim,
 			    bool eval_fixed_size,
 			    bool ignore_X, int option) {
-    // cout << "Begin semantic anaylsis" << endl;
+    // cout << "Begin semantic analysis" << endl;
     GMM_ASSERT1(predef_operators_nonlinear_elasticity_initialized &&
                 predef_operators_plasticity_initialized &&
                 predef_operators_contact_initialized, "Internal error");
@@ -2596,7 +2597,7 @@ namespace getfem {
         tree.clear();
     }
     ga_valid_operand(tree.root);
-    // cout << "end of semantic anaylsis" << endl;
+    // cout << "end of semantic analysis" << endl;
   }
 
 
@@ -3757,10 +3758,11 @@ namespace getfem {
   //   ga_semantic_analysis for enrichment.
   //=========================================================================
 
-  static bool ga_node_mark_tree_for_grad(pga_tree_node pnode) {
+  static bool ga_node_mark_tree_for_grad(pga_tree_node pnode,
+                                         const ga_workspace &workspace) {
     bool marked = false;
     for (size_type i = 0; i < pnode->children.size(); ++i)
-      if (ga_node_mark_tree_for_grad(pnode->children[i]))
+      if (ga_node_mark_tree_for_grad(pnode->children[i], workspace))
         marked = true;
 
     bool plain_node(pnode->node_type == GA_NODE_VAL ||
@@ -3793,13 +3795,17 @@ namespace getfem {
        pnode->node_type == GA_NODE_INTERPOLATE_HESS_TEST ||
        pnode->node_type == GA_NODE_INTERPOLATE_DIVERG_TEST);
 
-    if (plain_node || test_node || interpolate_node ||
-	elementary_node || xfem_node ||
-	pnode->node_type == GA_NODE_X ||
+    if ((plain_node || test_node || interpolate_node ||
+	elementary_node || xfem_node) &&
+        (workspace.associated_mf(pnode->name) != 0)) marked = true;
+
+    if (pnode->node_type == GA_NODE_X ||
 	pnode->node_type == GA_NODE_NORMAL) marked = true;
 
-    if (interpolate_node || interpolate_test_node ||
-        pnode->node_type == GA_NODE_INTERPOLATE_X ||
+    if ((interpolate_node || interpolate_test_node)  &&
+        (workspace.associated_mf(pnode->name) != 0)) marked = true;
+      
+    if (pnode->node_type == GA_NODE_INTERPOLATE_X ||
         pnode->node_type == GA_NODE_INTERPOLATE_NORMAL) marked = true;
     
     pnode->marked = marked;
@@ -3808,7 +3814,7 @@ namespace getfem {
 
   static void ga_node_grad(ga_tree &tree, const ga_workspace &workspace,
 			   const mesh &m, pga_tree_node pnode) {
-    
+    // cout << "Gradient of "; ga_print_node(pnode, cout); cout << endl;
     size_type meshdim = (&m == &dummy_mesh()) ? 1 : m.dim();
     size_type nbch = pnode->children.size();
     pga_tree_node child0 = (nbch > 0) ? pnode->children[0] : 0;
@@ -4733,6 +4739,7 @@ namespace getfem {
     default: GMM_ASSERT1(false, "Unexpected node type " << pnode->node_type
                          << " in gradient. Internal error.");
     }
+    // cout << "End of gradient of "; ga_print_node(pnode, cout); cout << endl;
   }
  
   
@@ -4740,7 +4747,7 @@ namespace getfem {
   // ga_semantic_analysis after for enrichment
   void ga_grad(ga_tree &tree, const ga_workspace &workspace, const mesh &m) {
     if (!(tree.root)) return;
-    if (ga_node_mark_tree_for_grad(tree.root))
+    if (ga_node_mark_tree_for_grad(tree.root, workspace))
       ga_node_grad(tree, workspace, m, tree.root);
     else
       tree.clear();

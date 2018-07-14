@@ -2845,7 +2845,7 @@ namespace getfem {
         return std::make_shared<ga_instruction_contraction_opt0_1>(t,tc1,tc2, n);
       }
     }
-        if (tc2_.sparsity() == 2) {
+    if (tc2_.sparsity() == 2) {
       size_type q2 = tc2.sizes()[1];
       size_type n2 = (tc2.sizes().size() > 2) ? tc2.sizes()[1] : 1;
       if (n2*q2 == n) {
@@ -5949,7 +5949,7 @@ namespace getfem {
 
            pgai = pga_instruction();
            if ((pnode->op_type == GA_DOT && dim1 <= 1) ||
-               pnode->op_type == GA_COLON ||
+               (pnode->op_type == GA_COLON && dim1 <= 2) ||
                (pnode->op_type == GA_MULT && dim0 == 4) ||
                (pnode->op_type == GA_MULT && dim1 <= 1) ||
                child0->tensor().size() == 1 || tps1 == 1) {
@@ -6042,7 +6042,7 @@ namespace getfem {
                      (pnode->tensor(), child0->tensor(), child1->tensor(), s2);
                }
              }
-           } else { // GA_MULT or GA_DOT for dim1 > 1
+           } else { // GA_MULT or GA_DOT for dim1 > 1 or GA_COLON for dim1 > 2
                     // and child1->tensor_proper_size() > 1
              if (pnode->test_function_type < 3) {
                if (tps0 == 1) {
