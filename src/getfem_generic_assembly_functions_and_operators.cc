@@ -356,7 +356,7 @@ namespace getfem {
         auto ita_k = ita;
         for (size_type k = 0; k < N; ++k, ita_k += N) {
           auto ita_lj = ita_l;
-          for (size_type j = 0; j < N; ++j, ++ita_lj) {
+          for (size_type j = 0; j < N; ++j, ita_lj += N) {
             auto ita_ik = ita_k;
             for (size_type i = 0; i < N; ++i, ++it, ++ita_ik)
               *it = -(*ita_ik) * (*ita_lj);
