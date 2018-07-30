@@ -127,9 +127,8 @@ namespace dal {
 
   class static_stored_object_key {
   protected :
-    virtual bool compare(const static_stored_object_key &) const {
-      GMM_ASSERT1(false, "This method should not be called");
-    }
+    virtual bool compare(const static_stored_object_key &) const = 0;
+    virtual bool equal(const static_stored_object_key &) const = 0;
 
   public :
     bool operator < (const static_stored_object_key &o) const {
@@ -139,18 +138,30 @@ namespace dal {
       return compare(o);
     }
 
+    bool operator == (const static_stored_object_key &o) const {
+      if (typeid(o)!=typeid(*this)) return false;
+      return equal(o);
+    }
+
+    bool operator != (const static_stored_object_key &o) const {
+      return !(*this == o);
+    }
+
     virtual ~static_stored_object_key() {}
-
   };
-
 
   template <typename var_type>
   class simple_key : virtual public static_stored_object_key {
     var_type a;
   public :
-    virtual bool compare(const static_stored_object_key &oo) const {
-      const simple_key &o = dynamic_cast<const simple_key &>(oo);
-      return (a < o.a);
+     bool compare(const static_stored_object_key &oo) const override {
+      auto &o = dynamic_cast<const simple_key &>(oo);
+      return a < o.a;
+    }
+
+    bool equal(const static_stored_object_key &oo) const override {
+      auto &o = dynamic_cast<const simple_key &>(oo);
+      return a == o.a;
     }
     simple_key(var_type aa) : a(aa) {}
   };
@@ -207,6 +218,8 @@ namespace dal {
 
   /** Gives a pointer to an object from a key pointer. */
   pstatic_stored_object search_stored_object(pstatic_stored_object_key k);
+
+  pstatic_stored_object search_stored_object_on_all_threads(pstatic_stored_object_key k);
 
   /** Test if an object is stored*/
   bool exists_stored_object(pstatic_stored_object o);
