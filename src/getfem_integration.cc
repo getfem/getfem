@@ -322,7 +322,8 @@ namespace getfem {
                                               short_type f) {
     papprox_integration pai = ppi->approx_method();
     GMM_ASSERT1(!valid, "Impossible to modify a valid integration method.");
-    GMM_ASSERT1(pai->structure() == structure()->faces_structure()[f],
+    GMM_ASSERT1(*key_of_stored_object(pai->structure())
+                == *key_of_stored_object(structure()->faces_structure()[f]),
                 "structures missmatch");
     GMM_ASSERT1(ppi->type() == IM_APPROX, "Impossible with an exact method.");
 
