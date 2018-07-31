@@ -150,7 +150,7 @@ namespace bgeot {
 
   struct stored_point_tab_key : virtual public dal::static_stored_object_key  {
     const stored_point_tab *pspt;
-    virtual bool compare(const static_stored_object_key &oo) const {
+    bool compare(const static_stored_object_key &oo) const override {
       const stored_point_tab_key &o
         = dynamic_cast<const stored_point_tab_key &>(oo);
       const stored_point_tab &x = *pspt;
@@ -168,6 +168,23 @@ namespace bgeot {
       }
       if (it2 != y.end()) return true;
       return false;
+    }
+    bool equal(const static_stored_object_key &oo) const override {
+      auto &o = dynamic_cast<const stored_point_tab_key &>(oo);
+      auto &x = *pspt;
+      auto &y = *(o.pspt);
+      if (&x == &y) return true;
+      if (x.size() != y.size()) return false;
+      auto it1 = x.begin();
+      auto it2 = y.begin();
+      base_node::const_iterator itn1, itn2, itne;
+      for ( ; it1 != x.end() && it2 != y.end() ; ++it1, ++it2) {
+        if ((*it1).size() != (*it2).size()) return false;
+        itn1 = (*it1).begin(); itne = (*it1).end(); itn2 = (*it2).begin();
+        for ( ; itn1 != itne ; ++itn1, ++itn2)
+          if (*itn1 != *itn2) return false;
+      }
+      return true;
     }
     stored_point_tab_key(const stored_point_tab *p) : pspt(p) {}
   };
@@ -216,7 +233,7 @@ namespace bgeot {
               // 2 = dummy
     dim_type N; short_type K; short_type nf;
   public :
-    virtual bool compare(const static_stored_object_key &oo) const {
+    bool compare(const static_stored_object_key &oo) const override{
       const convex_of_reference_key &o
         = dynamic_cast<const convex_of_reference_key &>(oo);
       if (type < o.type) return true;
@@ -227,6 +244,14 @@ namespace bgeot {
       if (K > o.K) return false;
       if (nf < o.nf) return true;
       return false;
+    }
+    bool equal(const static_stored_object_key &oo) const override{
+      auto &o = dynamic_cast<const convex_of_reference_key &>(oo);
+      if (type != o.type) return false;
+      if (N != o.N) return false;
+      if (K != o.K) return false;
+      if (nf != o.nf) return false;
+      return true;
     }
     convex_of_reference_key(int t, dim_type NN, short_type KK = 0,
                             short_type nnf = 0)
