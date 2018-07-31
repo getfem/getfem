@@ -39,15 +39,33 @@ namespace getfem {
     return false;
   }
 
+  bool operator == (const constituant &m, const constituant &n) {
+    if (&m == &n) return true;
+    if (m.t != n.t) return false;
+    if (m.t == GETFEM_NONLINEAR_) {
+      if (m.nlt != n.nlt) return false;
+      if (m.nl_part != n.nl_part) return false;
+     }
+    if (m.pfi == n.pfi) return true;
+    auto pmfi_key = dal::key_of_stored_object(m.pfi);
+    auto pnfi_key = dal::key_of_stored_object(n.pfi);
+    if (*pmfi_key != *pnfi_key) return false;
+
+    return true;
+  }
+
   struct mat_elem_type_key : virtual public dal::static_stored_object_key {
     const mat_elem_type *pmet;
   public :
-    virtual bool compare(const static_stored_object_key &oo) const {
-      const mat_elem_type_key &o
-        = dynamic_cast<const mat_elem_type_key &>(oo);
+    bool compare(const static_stored_object_key &oo) const override{
+      auto &o = dynamic_cast<const mat_elem_type_key &>(oo);
       if (gmm::lexicographical_less<mat_elem_type>()(*pmet, *(o.pmet)) < 0)
         return true;
       return false;
+    }
+    bool equal(const static_stored_object_key &oo) const override{
+      auto &o = dynamic_cast<const mat_elem_type_key &>(oo);
+      return *o.pmet == *pmet;
     }
     mat_elem_type_key(const mat_elem_type *p) : pmet(p) {}
   };
@@ -200,7 +218,6 @@ namespace getfem {
     }
     return mii;
   }
-
 
 }  /* end of namespace getfem.                                            */
 

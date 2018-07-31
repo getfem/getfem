@@ -83,7 +83,7 @@ namespace bgeot {
               // 2 = dummy (N = dimension, K = nbpt)
     dim_type N; short_type K; short_type nf;
   public :
-    virtual bool compare(const static_stored_object_key &oo) const {
+    bool compare(const static_stored_object_key &oo) const override{
       const convex_structure_key &o
         = dynamic_cast<const convex_structure_key &>(oo);
       if (type < o.type) return true;
@@ -94,6 +94,14 @@ namespace bgeot {
       if (K > o.K) return false;
       if (nf < o.nf) return true;
       return false;
+    }
+    bool equal(const static_stored_object_key &oo) const override{
+      auto &o = dynamic_cast<const convex_structure_key &>(oo);
+      if (type != o.type) return false;
+      if (N != o.N) return false;
+      if (K != o.K) return false;
+      if (nf != o.nf) return false;
+      return true;
     }
     convex_structure_key(int t, dim_type NN, short_type KK = 0,
                          short_type nnf = 0)
