@@ -186,8 +186,7 @@ namespace bgeot {
     pconvex_structure p;
     bool compare(const static_stored_object_key &oo) const override {
       auto &o = dynamic_cast<const special_convex_structure_key_ &>(oo);
-      if (p < o.p) return true;
-      return false;
+      return p < o.p;
     }
     bool equal(const static_stored_object_key &oo) const override {
       auto &o = dynamic_cast<const special_convex_structure_key_ &>(oo);
@@ -195,9 +194,7 @@ namespace bgeot {
 
       auto pkey = dal::key_of_stored_object(p);
       auto poo_key = dal::key_of_stored_object(o.p);
-      if (*pkey != *poo_key) return false;
-
-      return true;
+      return *pkey == *poo_key;
     }
     special_convex_structure_key_(pconvex_structure pp) : p(pp) {}
   };
