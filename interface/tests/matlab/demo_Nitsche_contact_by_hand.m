@@ -43,19 +43,19 @@ ref_sol = 0             % 0 : Reference solution (Von Mises)
                         
 N = 2                   % 2 or 3 dimensions
 
-R=0.25;                 % Radiaus of Omega_1.
+R=0.25;                 % Radius of Omega_1.
 dirichlet_val = 0;      % Dirchelet condition.
 f_coeff=0;              % friction coefficient.
 clambda = 1;            % Lame coefficient lambda.
 cmu = 1;                % Lame coefficient mu.
 vertical_force = -0.1;  % Vertical volume density of force on Omega_1.
 penalty_parameter = 1E-7;    % penalisation parmeter on Omega_1.
-elements_degree = 2          %  degre of elments (1 or 2).
+elements_degree = 2          %  degree of elements (1 or 2).
     
  if (ref_sol == 0)
     Theta = [-1];       %   theta
     Gamma0 = [1/100];   %   Nitsche's parmeter gamma0
-    Nxy =[50];         %   mesh size (=1/nxy) 2D ->250 and 3D -> 25  
+    Nxy =[50];          %   mesh size (=1/nxy) 2D ->250 and 3D -> 25  
  
 
  elseif (ref_sol == 1)  

@@ -1202,7 +1202,25 @@ namespace getfem {
       : t(t_), inin(inin_), pt_type(ind_), nb(nb_) {}
   };
 
-
+  struct ga_instruction_copy_interpolated_small_vect : public ga_instruction {
+    base_tensor &t;
+    const base_small_vector &vec;
+    ga_instruction_set::interpolate_info &inin;
+    
+    virtual int exec() {
+      GA_DEBUG_INFO("Instruction: copy small vector");
+      GMM_ASSERT1(inin.ctx.is_convex_num_valid(), "Invalid element, "
+                  "probably transformation failed");
+      GMM_ASSERT1(t.size() == vec.size(), "Invalid vector size.");
+      gmm::copy(vec, t.as_vector());
+      return 0;
+    }
+    ga_instruction_copy_interpolated_small_vect(base_tensor &t_,
+                                   const base_small_vector &vec_,
+                                   ga_instruction_set::interpolate_info &inin_)
+      : t(t_), vec(vec_), inin(inin_)  {}
+  };
+  
   struct ga_instruction_interpolate : public ga_instruction {
     base_tensor &t;
     const mesh **m;
@@ -3789,7 +3807,6 @@ namespace getfem {
       base_node P_ref;
       size_type cv;
       short_type face_num;
-      gmm::clear(inin.Normal);
       inin.pt_type = trans->transform(workspace, m, ctx, Normal, &(inin.m), cv,
                                       face_num, P_ref, inin.Normal,
                                       inin.derivatives, compute_der);
@@ -3807,6 +3824,7 @@ namespace getfem {
           inin.pt_y = inin.ctx.xreal();
         } else {
           inin.ctx.invalid_convex_num();
+          inin.Normal.resize(0);
           inin.pt_y = P_ref;
           inin.has_ctx = false;
         }
@@ -5010,9 +5028,10 @@ namespace getfem {
       if (pnode->tensor().size() != m.dim())
         pnode->init_vector_tensor(m.dim());
       if (pnode->node_type == GA_NODE_INTERPOLATE_X)
-        pgai = std::make_shared<ga_instruction_copy_small_vect>
+        pgai = std::make_shared<ga_instruction_copy_interpolated_small_vect>
                (pnode->tensor(),
-                rmi.interpolate_infos[pnode->interpolate_name].pt_y);
+                rmi.interpolate_infos[pnode->interpolate_name].pt_y,
+                rmi.interpolate_infos[pnode->interpolate_name]);
       else if (pnode->node_type == GA_NODE_INTERPOLATE_NORMAL)
         pgai = std::make_shared<ga_instruction_copy_Normal>
                (pnode->tensor(),
