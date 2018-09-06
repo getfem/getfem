@@ -780,7 +780,7 @@ namespace getfem {
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: value of test functions");
       if (qdim == 1) {
-	GA_DEBUG_ASSERT(t.size() == Z.size(), "Wrong size for base vector");
+        GA_DEBUG_ASSERT(t.size() == Z.size(), "Wrong size for base vector");
         std::copy(Z.begin(), Z.end(), t.begin());
       } else {
         size_type target_dim = Z.sizes()[1];
@@ -3796,7 +3796,7 @@ namespace getfem {
       if (inin.pt_type) {
         if (cv != size_type(-1)) {
           inin.m->points_of_convex(cv, inin.G);
-	  inin.ctx.change((inin.m)->trans_of_convex(cv),
+          inin.ctx.change((inin.m)->trans_of_convex(cv),
                           0, P_ref, inin.G, cv, face_num);
           inin.has_ctx = true;
           if (face_num != short_type(-1)) {
@@ -3888,7 +3888,7 @@ namespace getfem {
               gic.init(m.points_of_convex(adj_face.cv), gpc.pgt2);
               size_type first_ind = pai->ind_first_point_on_face(f);
               const bgeot::stored_point_tab
-		&spt = *(pai->pintegration_points());
+                &spt = *(pai->pintegration_points());
               base_matrix G;
               m.points_of_convex(cv, G);
               fem_interpolation_context ctx_x(gpc.pgt1, 0, spt[0], G, cv, f);
@@ -3898,8 +3898,8 @@ namespace getfem {
                 ctx_x.set_xref(spt[first_ind+i]);
                 bool converged = true;
                 gic.invert(ctx_x.xreal(), P_ref[i], converged);
-		bool is_in = (gpc.pgt2->convex_ref()->is_in(P_ref[i]) < 1E-4);
-		GMM_ASSERT1(is_in && converged,"Geometric transformation "
+                bool is_in = (gpc.pgt2->convex_ref()->is_in(P_ref[i]) < 1E-4);
+                GMM_ASSERT1(is_in && converged,"Geometric transformation "
                             "inversion has failed in neighbour transformation");
               }
               pspt = store_point_tab(P_ref);
@@ -3953,7 +3953,7 @@ namespace getfem {
         }
       }
       GA_DEBUG_INFO("Instruction: end of call neighbour interpolate "
-		    "transformation");
+                    "transformation");
       return 0;
     }
     ga_instruction_neighbour_transformation_call
@@ -4772,17 +4772,17 @@ namespace getfem {
         pctx1 = &(gis.ctx);
         const std::string &intn1 = pnode->interpolate_name_test1;
         if (intn1.size()) {
-	  if (workspace.secondary_domain_exists(intn1)) {
-	    pctx1 = &(rmi.secondary_domain_infos.ctx);
-	  } else {
-	    tensor_to_adapt = true;
-	    pctx1 = &(rmi.interpolate_infos[intn1].ctx);
-	    if (workspace.variable_group_exists(pnode->name_test1)) {
-	      ga_instruction_set::variable_group_info &vgi =
-		rmi.interpolate_infos[intn1].groups_info[pnode->name_test1];
-	      mfg1 = &(vgi.mf);
-	      mf1 = 0;
-	    }
+          if (workspace.secondary_domain_exists(intn1)) {
+            pctx1 = &(rmi.secondary_domain_infos.ctx);
+          } else {
+            tensor_to_adapt = true;
+            pctx1 = &(rmi.interpolate_infos[intn1].ctx);
+            if (workspace.variable_group_exists(pnode->name_test1)) {
+              ga_instruction_set::variable_group_info &vgi =
+                rmi.interpolate_infos[intn1].groups_info[pnode->name_test1];
+              mfg1 = &(vgi.mf);
+              mf1 = 0;
+            }
           }
         }
       }
@@ -4792,18 +4792,18 @@ namespace getfem {
         pctx2 = &(gis.ctx);
         const std::string &intn2 = pnode->interpolate_name_test2;
         if (intn2.size()) {
-	  if (workspace.secondary_domain_exists(intn2)) {
-	    pctx2 = &(rmi.secondary_domain_infos.ctx);
-	  } else {
-	    tensor_to_adapt = true;
-	    pctx2 = &(rmi.interpolate_infos[intn2].ctx);
-	    if (workspace.variable_group_exists(pnode->name_test2)) {
-	      ga_instruction_set::variable_group_info &vgi =
-		rmi.interpolate_infos[intn2].groups_info[pnode->name_test2];
-	      mfg2 = &(vgi.mf);
-	      mf2 = 0;
-	    }
-	  }
+          if (workspace.secondary_domain_exists(intn2)) {
+            pctx2 = &(rmi.secondary_domain_infos.ctx);
+          } else {
+            tensor_to_adapt = true;
+            pctx2 = &(rmi.interpolate_infos[intn2].ctx);
+            if (workspace.variable_group_exists(pnode->name_test2)) {
+              ga_instruction_set::variable_group_info &vgi =
+                rmi.interpolate_infos[intn2].groups_info[pnode->name_test2];
+              mfg2 = &(vgi.mf);
+              mf2 = 0;
+            }
+          }
         }
       }
     }
@@ -4850,17 +4850,15 @@ namespace getfem {
     // Optimization: detects if an equivalent node has already been compiled
     pnode->t.set_to_original();
     if (rmi.node_list.find(pnode->hash_value) != rmi.node_list.end()) {
-      std::list<pga_tree_node> &node_list = rmi.node_list[pnode->hash_value];
-      for (std::list<pga_tree_node>::iterator it = node_list.begin();
-           it != node_list.end(); ++it) {
-	// cout << "found potential equivalent nodes ";
-	// ga_print_node(pnode, cout);
-	// cout << " and "; ga_print_node(*it, cout); cout << endl;
-        if (sub_tree_are_equal(pnode, *it, workspace, 1)) {
-          pnode->t.set_to_copy((*it)->t);
+      for (pga_tree_node &pnode1 : rmi.node_list[pnode->hash_value]) {
+        // cout << "found potential equivalent nodes ";
+        // ga_print_node(pnode, cout);
+        // cout << " and "; ga_print_node(pnode1, cout); cout << endl;
+        if (sub_tree_are_equal(pnode, pnode1, workspace, 1)) {
+          pnode->t.set_to_copy(pnode1->t);
           return;
         }
-        if (sub_tree_are_equal(pnode, *it, workspace, 2)) {
+        if (sub_tree_are_equal(pnode, pnode1, workspace, 2)) {
           // cout << "confirmed with transpose" << endl;
           if (pnode->nb_test_functions() == 2) {
             if (pgai) { // resize instruction if needed
@@ -4869,17 +4867,17 @@ namespace getfem {
               else { rmi.instructions.push_back(std::move(pgai)); }
             }
             pgai = std::make_shared<ga_instruction_transpose_test>
-              (pnode->tensor(), (*it)->tensor());
+              (pnode->tensor(), pnode1->tensor());
             rmi.instructions.push_back(std::move(pgai));
           } else {
-            pnode->t.set_to_copy((*it)->t);
+            pnode->t.set_to_copy(pnode1->t);
           }
           return;
         }
         std::stringstream ss;
         ss << "Detected wrong equivalent nodes: ";
         ga_print_node(pnode, ss);
-        ss << " and "; ga_print_node(*it, ss);
+        ss << " and "; ga_print_node(pnode1, ss);
         ss << " (no problem, but hash values could be adapted) " << endl;
         GMM_TRACE2(ss.str());
       }
@@ -5023,19 +5021,19 @@ namespace getfem {
     case GA_NODE_SECONDARY_DOMAIN_X:
     case GA_NODE_SECONDARY_DOMAIN_NORMAL:
       {
-	GMM_ASSERT1(!function_case,
-		    "No use of Secondary_domain is allowed in functions");
-	auto psd = workspace.secondary_domain(pnode->interpolate_name);
-	size_type sddim = psd->mim().linked_mesh().dim();
-	if (pnode->tensor().size() != sddim)
-	  pnode->init_vector_tensor(sddim);
-	if (pnode->node_type == GA_NODE_SECONDARY_DOMAIN_X)
-	  pgai = std::make_shared<ga_instruction_X>
-	    (pnode->tensor(), rmi.secondary_domain_infos.ctx);
-	else if (pnode->node_type == GA_NODE_SECONDARY_DOMAIN_NORMAL)
-	  pgai = std::make_shared<ga_instruction_copy_Normal>
-	    (pnode->tensor(), rmi.secondary_domain_infos.Normal);
-	rmi.instructions.push_back(std::move(pgai));
+        GMM_ASSERT1(!function_case,
+                    "No use of Secondary_domain is allowed in functions");
+        auto psd = workspace.secondary_domain(pnode->interpolate_name);
+        size_type sddim = psd->mim().linked_mesh().dim();
+        if (pnode->tensor().size() != sddim)
+          pnode->init_vector_tensor(sddim);
+        if (pnode->node_type == GA_NODE_SECONDARY_DOMAIN_X)
+          pgai = std::make_shared<ga_instruction_X>
+            (pnode->tensor(), rmi.secondary_domain_infos.ctx);
+        else if (pnode->node_type == GA_NODE_SECONDARY_DOMAIN_NORMAL)
+          pgai = std::make_shared<ga_instruction_copy_Normal>
+            (pnode->tensor(), rmi.secondary_domain_infos.Normal);
+        rmi.instructions.push_back(std::move(pgai));
       }
       break;
 
@@ -5319,16 +5317,16 @@ namespace getfem {
     case GA_NODE_SECONDARY_DOMAIN_VAL: case GA_NODE_SECONDARY_DOMAIN_GRAD:
     case GA_NODE_SECONDARY_DOMAIN_HESS: case GA_NODE_SECONDARY_DOMAIN_DIVERG:
       {
-	GMM_ASSERT1(!function_case, "internal error");
+        GMM_ASSERT1(!function_case, "internal error");
         const mesh_fem *mf = workspace.associated_mf(pnode->name);
         const im_data *imd = workspace.associated_im_data(pnode->name);
-	const std::string &intn = pnode->interpolate_name;
-	auto &sdi = rmi.secondary_domain_infos;
+        const std::string &intn = pnode->interpolate_name;
+        auto &sdi = rmi.secondary_domain_infos;
 
-	fem_interpolation_context *pctx = &(sdi.ctx);
-	papprox_integration pai = sdi.pai;
-	psecondary_domain psd = workspace.secondary_domain(intn);
-	
+        fem_interpolation_context *pctx = &(sdi.ctx);
+        papprox_integration pai = sdi.pai;
+        psecondary_domain psd = workspace.secondary_domain(intn);
+
         if (imd) {
           pgai = std::make_shared<ga_instruction_extract_local_im_data>
             (pnode->tensor(), *imd, workspace.value(pnode->name),
@@ -5340,7 +5338,7 @@ namespace getfem {
                       "The finite element of variable " << pnode->name <<
                       " has to be defined on the same mesh than the "
                       "integration method or interpolation used on the "
-		      "secondary domain");
+                      "secondary domain");
 
           // An instruction for extracting local dofs of the variable.
           if (sdi.local_dofs.count(pnode->name) == 0) {
@@ -5379,7 +5377,7 @@ namespace getfem {
             }
             break;
           case GA_NODE_SECONDARY_DOMAIN_GRAD:
-	  case GA_NODE_SECONDARY_DOMAIN_DIVERG:
+          case GA_NODE_SECONDARY_DOMAIN_DIVERG:
             if (sdi.grad.count(mf) == 0 ||
                 !(if_hierarchy.is_compatible(rmi.grad_hierarchy[mf]))) {
               rmi.grad_hierarchy[mf].push_back(if_hierarchy);
@@ -5742,14 +5740,14 @@ namespace getfem {
     case GA_NODE_SECONDARY_DOMAIN_HESS_TEST:
     case GA_NODE_SECONDARY_DOMAIN_DIVERG_TEST:
       {
-	GMM_ASSERT1(!function_case, "internal error");
-	const mesh_fem *mf = workspace.associated_mf(pnode->name);
-	const std::string &intn = pnode->interpolate_name;
-	auto &sdi = rmi.secondary_domain_infos;
+        GMM_ASSERT1(!function_case, "internal error");
+        const mesh_fem *mf = workspace.associated_mf(pnode->name);
+        const std::string &intn = pnode->interpolate_name;
+        auto &sdi = rmi.secondary_domain_infos;
 
-	fem_interpolation_context *pctx = &(sdi.ctx);
-	papprox_integration pai = sdi.pai;
-	psecondary_domain psd = workspace.secondary_domain(intn);
+        fem_interpolation_context *pctx = &(sdi.ctx);
+        papprox_integration pai = sdi.pai;
+        psecondary_domain psd = workspace.secondary_domain(intn);
         if (mf) {
           GMM_ASSERT1(&(mf->linked_mesh()) == &(psd->mim().linked_mesh()),
                       "The finite element of variable " << pnode->name <<
@@ -5779,7 +5777,7 @@ namespace getfem {
              }
              break;
           case GA_NODE_SECONDARY_DOMAIN_GRAD_TEST:
-	  case GA_NODE_SECONDARY_DOMAIN_DIVERG_TEST:
+          case GA_NODE_SECONDARY_DOMAIN_DIVERG_TEST:
             if (sdi.grad.count(mf) == 0 ||
                 !(if_hierarchy.is_compatible(rmi.grad_hierarchy[mf]))) {
               rmi.grad_hierarchy[mf].push_back(if_hierarchy);
@@ -6699,9 +6697,9 @@ namespace getfem {
             // Compile tree
             // cout << "Will compile "; ga_print_node(root, cout); cout << endl;
 
-	    psecondary_domain psd(0);
-	    if (added_tree->secondary_domain.size())
-	      psd = workspace.secondary_domain(added_tree->secondary_domain);
+            psecondary_domain psd(0);
+            if (added_tree->secondary_domain.size())
+              psd = workspace.secondary_domain(added_tree->secondary_domain);
             ga_instruction_set::region_mim rm(td.mim, td.rg, psd);
             ga_instruction_set::region_mim_instructions &rmi
               = gis.whole_instructions[rm];
@@ -6745,8 +6743,8 @@ namespace getfem {
                   if (mf) {
                     const std::string &intn1 = root->interpolate_name_test1;
                     const gmm::sub_interval *Ir = 0, *In = 0;
-		    bool secondary = intn1.size() &&
-		      workspace.secondary_domain_exists(intn1);
+                    bool secondary = intn1.size() &&
+                      workspace.secondary_domain_exists(intn1);
                     if (intn1.size() && !secondary &&
                         workspace.variable_group_exists(root->name_test1)) {
                       ga_instruction_set::variable_group_info &vgi =
@@ -6762,11 +6760,11 @@ namespace getfem {
                     }
                     fem_interpolation_context &ctx
                       = intn1.size() ?
-		      (secondary ? rmi.secondary_domain_infos.ctx
-		       : rmi.interpolate_infos[intn1].ctx) : gis.ctx;
+                      (secondary ? rmi.secondary_domain_infos.ctx
+                       : rmi.interpolate_infos[intn1].ctx) : gis.ctx;
                     bool interpolate
                       = (!intn1.empty() && intn1.compare("neighbour_elt")!=0 &&
-			 !secondary);
+                         !secondary);
                     pgai = std::make_shared<ga_instruction_fem_vector_assembly>
                       (root->tensor(), workspace.unreduced_vector(),
                        workspace.assembled_vector(), ctx, *Ir, *In, mf, mfg,
@@ -6790,22 +6788,22 @@ namespace getfem {
                   const std::string &intn1 = root->interpolate_name_test1;
                   const std::string &intn2 = root->interpolate_name_test2;
                   bool secondary1 = intn1.size() &&
-		      workspace.secondary_domain_exists(intn1);
+                      workspace.secondary_domain_exists(intn1);
                   bool secondary2 = intn2.size() &&
-		      workspace.secondary_domain_exists(intn2);
-		  fem_interpolation_context &ctx1
+                      workspace.secondary_domain_exists(intn2);
+                  fem_interpolation_context &ctx1
                       = intn1.size() ?
-		      (secondary1 ? rmi.secondary_domain_infos.ctx
-		       : rmi.interpolate_infos[intn1].ctx) : gis.ctx;
-		  fem_interpolation_context &ctx2
+                      (secondary1 ? rmi.secondary_domain_infos.ctx
+                       : rmi.interpolate_infos[intn1].ctx) : gis.ctx;
+                  fem_interpolation_context &ctx2
                       = intn2.size() ?
-		      (secondary2 ? rmi.secondary_domain_infos.ctx
-		       : rmi.interpolate_infos[intn2].ctx) : gis.ctx;
-		  bool interpolate
-		    = (!intn1.empty() && intn1.compare("neighbour_elt")!=0 &&
-		       !secondary1) ||
-		    (!intn2.empty() && intn2.compare("neighbour_elt")!=0 &&
-		     !secondary2);
+                      (secondary2 ? rmi.secondary_domain_infos.ctx
+                       : rmi.interpolate_infos[intn2].ctx) : gis.ctx;
+                  bool interpolate
+                    = (!intn1.empty() && intn1.compare("neighbour_elt")!=0 &&
+                       !secondary1) ||
+                    (!intn2.empty() && intn2.compare("neighbour_elt")!=0 &&
+                     !secondary2);
 
                   add_interval_to_gis(workspace, root->name_test1, gis);
                   add_interval_to_gis(workspace, root->name_test2, gis);
@@ -7053,272 +7051,272 @@ namespace getfem {
 
       if (!psd) { // standard integration on a single domain
 
-	const mesh_region &region = *(instr.first.region());
-	
-	// iteration on elements (or faces of elements)
-	size_type old_cv = size_type(-1);
-	bgeot::pgeometric_trans pgt = 0, pgt_old = 0;
-	pintegration_method pim = 0;
-	papprox_integration pai = 0;
-	bgeot::pstored_point_tab pspt = 0, old_pspt = 0;
-	bgeot::pgeotrans_precomp pgp = 0;
-	bool first_gp = true;
-	for (getfem::mr_visitor v(region, m, true); !v.finished(); ++v) {
-	  if (mim.convex_index().is_in(v.cv())) {
-	    // cout << "proceed with elt " << v.cv() << " face " << v.f()<<endl;
-	    if (v.cv() != old_cv) {
-	      pgt = m.trans_of_convex(v.cv());
-	      pim = mim.int_method_of_element(v.cv());
-	      m.points_of_convex(v.cv(), G1);
-	      
-	      if (pim->type() == IM_NONE) continue;
-	      GMM_ASSERT1(pim->type() == IM_APPROX, "Sorry, exact methods "
-			  "cannot be used in high level generic assembly");
-	      pai = pim->approx_method();
-	      pspt = pai->pintegration_points();
-	      if (pspt->size()) {
-		if (pgp && gis.pai == pai && pgt_old == pgt) {
-		  gis.ctx.change(pgp, 0, 0, G1, v.cv(), v.f());
-		} else {
-		  if (pai->is_built_on_the_fly()) {
-		    gis.ctx.change(pgt, 0, (*pspt)[0], G1, v.cv(), v.f());
-		    pgp = 0;
-		  } else {
-		    pgp = gis.gp_pool(pgt, pspt);
-		    gis.ctx.change(pgp, 0, 0, G1, v.cv(), v.f());
-		  }
-		  pgt_old = pgt; gis.pai = pai;
-		}
-		if (gis.need_elt_size)
-		  gis.elt_size = convex_radius_estimate(pgt, G1)*scalar_type(2);
-	      }
-	      old_cv = v.cv();
-	    } else {
-	      if (pim->type() == IM_NONE) continue;
-	      gis.ctx.set_face_num(v.f());
-	    }
-	    if (pspt != old_pspt) { first_gp = true; old_pspt = pspt; }
-	    if (pspt->size()) {
-	      // iterations on Gauss points
-	      size_type first_ind = 0;
-	      if (v.f() != short_type(-1)) {
-		gis.nbpt = pai->nb_points_on_face(v.f());
-		first_ind = pai->ind_first_point_on_face(v.f());
-	      } else {
-		gis.nbpt = pai->nb_points_on_convex();
-	      }
-	      for (gis.ipt = 0; gis.ipt < gis.nbpt; ++(gis.ipt)) {
-		if (pgp) gis.ctx.set_ii(first_ind+gis.ipt);
-		else gis.ctx.set_xref((*pspt)[first_ind+gis.ipt]);
-		if (gis.ipt == 0 || !(pgt->is_linear())) {
-		  J1 = gis.ctx.J();
-		  // Computation of unit normal vector in case of a boundary
-		  if (v.f() != short_type(-1)) {
-		    gis.Normal.resize(G1.nrows());
-		    un.resize(pgt->dim());
-		    gmm::copy(pgt->normals()[v.f()], un);
-		    gmm::mult(gis.ctx.B(), un, gis.Normal);
-		    scalar_type nup = gmm::vect_norm2(gis.Normal);
-		    J1 *= nup;
-		    gmm::scale(gis.Normal, 1.0/nup);
-		    gmm::clean(gis.Normal, 1e-13);
-		  } else gis.Normal.resize(0);
-		}
-		auto ipt_coeff = pai->coeff(first_ind+gis.ipt);
-		gis.coeff = J1 * ipt_coeff;
-		bool enable_ipt = (gmm::abs(ipt_coeff) > 0.0 ||
-				   workspace.include_empty_int_points());
-		if (!enable_ipt) gis.coeff = scalar_type(0);
-		if (first_gp) {
-		  for (size_type j=0; j < gilb.size(); ++j) j+=gilb[j]->exec();
-		  first_gp = false;
-		}
-		if (gis.ipt == 0) {
-		  for (size_type j=0; j < gile.size(); ++j) j+=gile[j]->exec();
-		}
-		if (enable_ipt || gis.ipt == 0 || gis.ipt == gis.nbpt-1) {
-		  for (size_type j=0; j < gil.size(); ++j) j+=gil[j]->exec();
-		}
-		GA_DEBUG_INFO("");
-	      }
-	    }
-	  }
-	}
-	GA_DEBUG_INFO("-----------------------------");
-	
+        const mesh_region &region = *(instr.first.region());
+
+        // iteration on elements (or faces of elements)
+        size_type old_cv = size_type(-1);
+        bgeot::pgeometric_trans pgt = 0, pgt_old = 0;
+        pintegration_method pim = 0;
+        papprox_integration pai = 0;
+        bgeot::pstored_point_tab pspt = 0, old_pspt = 0;
+        bgeot::pgeotrans_precomp pgp = 0;
+        bool first_gp = true;
+        for (getfem::mr_visitor v(region, m, true); !v.finished(); ++v) {
+          if (mim.convex_index().is_in(v.cv())) {
+            // cout << "proceed with elt " << v.cv() << " face " << v.f()<<endl;
+            if (v.cv() != old_cv) {
+              pgt = m.trans_of_convex(v.cv());
+              pim = mim.int_method_of_element(v.cv());
+              m.points_of_convex(v.cv(), G1);
+
+              if (pim->type() == IM_NONE) continue;
+              GMM_ASSERT1(pim->type() == IM_APPROX, "Sorry, exact methods "
+                          "cannot be used in high level generic assembly");
+              pai = pim->approx_method();
+              pspt = pai->pintegration_points();
+              if (pspt->size()) {
+                if (pgp && gis.pai == pai && pgt_old == pgt) {
+                  gis.ctx.change(pgp, 0, 0, G1, v.cv(), v.f());
+                } else {
+                  if (pai->is_built_on_the_fly()) {
+                    gis.ctx.change(pgt, 0, (*pspt)[0], G1, v.cv(), v.f());
+                    pgp = 0;
+                  } else {
+                    pgp = gis.gp_pool(pgt, pspt);
+                    gis.ctx.change(pgp, 0, 0, G1, v.cv(), v.f());
+                  }
+                  pgt_old = pgt; gis.pai = pai;
+                }
+                if (gis.need_elt_size)
+                  gis.elt_size = convex_radius_estimate(pgt, G1)*scalar_type(2);
+              }
+              old_cv = v.cv();
+            } else {
+              if (pim->type() == IM_NONE) continue;
+              gis.ctx.set_face_num(v.f());
+            }
+            if (pspt != old_pspt) { first_gp = true; old_pspt = pspt; }
+            if (pspt->size()) {
+              // iterations on Gauss points
+              size_type first_ind = 0;
+              if (v.f() != short_type(-1)) {
+                gis.nbpt = pai->nb_points_on_face(v.f());
+                first_ind = pai->ind_first_point_on_face(v.f());
+              } else {
+                gis.nbpt = pai->nb_points_on_convex();
+              }
+              for (gis.ipt = 0; gis.ipt < gis.nbpt; ++(gis.ipt)) {
+                if (pgp) gis.ctx.set_ii(first_ind+gis.ipt);
+                else gis.ctx.set_xref((*pspt)[first_ind+gis.ipt]);
+                if (gis.ipt == 0 || !(pgt->is_linear())) {
+                  J1 = gis.ctx.J();
+                  // Computation of unit normal vector in case of a boundary
+                  if (v.f() != short_type(-1)) {
+                    gis.Normal.resize(G1.nrows());
+                    un.resize(pgt->dim());
+                    gmm::copy(pgt->normals()[v.f()], un);
+                    gmm::mult(gis.ctx.B(), un, gis.Normal);
+                    scalar_type nup = gmm::vect_norm2(gis.Normal);
+                    J1 *= nup;
+                    gmm::scale(gis.Normal, 1.0/nup);
+                    gmm::clean(gis.Normal, 1e-13);
+                  } else gis.Normal.resize(0);
+                }
+                auto ipt_coeff = pai->coeff(first_ind+gis.ipt);
+                gis.coeff = J1 * ipt_coeff;
+                bool enable_ipt = (gmm::abs(ipt_coeff) > 0.0 ||
+                                   workspace.include_empty_int_points());
+                if (!enable_ipt) gis.coeff = scalar_type(0);
+                if (first_gp) {
+                  for (size_type j=0; j < gilb.size(); ++j) j+=gilb[j]->exec();
+                  first_gp = false;
+                }
+                if (gis.ipt == 0) {
+                  for (size_type j=0; j < gile.size(); ++j) j+=gile[j]->exec();
+                }
+                if (enable_ipt || gis.ipt == 0 || gis.ipt == gis.nbpt-1) {
+                  for (size_type j=0; j < gil.size(); ++j) j+=gil[j]->exec();
+                }
+                GA_DEBUG_INFO("");
+              }
+            }
+          }
+        }
+        GA_DEBUG_INFO("-----------------------------");
+
       } else { // Integration on the product of two domains (secondary domain)
 
-	auto &sdi = instr.second.secondary_domain_infos;
-	const mesh_region &region1 = *(instr.first.region());
-	
-	// iteration on elements (or faces of elements)
-	size_type old_cv1=size_type(-1), old_cv2=size_type(-1);
-	size_type nbpt1 = 0, nbpt2 = 0;
-	bgeot::pgeometric_trans pgt1 = 0, pgt1_old = 0, pgt2 = 0, pgt2_old = 0;
-	pintegration_method pim1 = 0, pim2 = 0;
-	papprox_integration pai1 = 0, pai2 = 0;
-	bgeot::pstored_point_tab pspt1=0, old_pspt1=0, pspt2=0, old_pspt2=0;
-	bgeot::pgeotrans_precomp pgp1 = 0, pgp2 = 0;
-	bool first_gp = true;
-	for (getfem::mr_visitor v1(region1, m, true); !v1.finished(); ++v1) {
-	  if (mim.convex_index().is_in(v1.cv())) {
-	    // cout << "proceed with elt " << v1.cv()<<" face " << v1.f()<<endl;
-	    if (v1.cv() != old_cv1) {
-	      pgt1 = m.trans_of_convex(v1.cv());
-	      pim1 = mim.int_method_of_element(v1.cv());
-	      m.points_of_convex(v1.cv(), G1);
-	      
-	      if (pim1->type() == IM_NONE) continue;
-	      GMM_ASSERT1(pim1->type() == IM_APPROX, "Sorry, exact methods "
-			  "cannot be used in high level generic assembly");
-	      pai1 = pim1->approx_method();
-	      pspt1 = pai1->pintegration_points();
-	      if (pspt1->size()) {
-		if (pgp1 && gis.pai == pai1 && pgt1_old == pgt1) {
-		  gis.ctx.change(pgp1, 0, 0, G1, v1.cv(), v1.f());
-		} else {
-		  if (pai1->is_built_on_the_fly()) {
-		    gis.ctx.change(pgt1, 0, (*pspt1)[0], G1, v1.cv(), v1.f());
-		    pgp1 = 0;
-		  } else {
-		    pgp1 = gis.gp_pool(pgt1, pspt1);
-		    gis.ctx.change(pgp1, 0, 0, G1, v1.cv(), v1.f());
-		  }
-		  pgt1_old = pgt1; gis.pai = pai1;
-		}
-		if (gis.need_elt_size)
-		  gis.elt_size = convex_radius_estimate(pgt1,G1)*scalar_type(2);
-	      }
-	      old_cv1 = v1.cv();
-	    } else {
-	      if (pim1->type() == IM_NONE) continue;
-	      gis.ctx.set_face_num(v1.f());
-	    }
-	    if (pspt1 != old_pspt1) { first_gp = true; old_pspt1 = pspt1; }
-	    if (pspt1->size()) {
-	      // iterations on Gauss points
-	      size_type first_ind1 = 0;
-	      if (v1.f() != short_type(-1)) {
-		nbpt1 = pai1->nb_points_on_face(v1.f());
-		first_ind1 = pai1->ind_first_point_on_face(v1.f());
-	      } else {
-		nbpt1 = pai1->nb_points_on_convex();
-	      }
-	      
-	      const mesh &m2 = psd->mim().linked_mesh();
-	      const mesh_region &region2 = psd->give_region(m, v1.cv(), v1.f());
-	      for (getfem::mr_visitor v2(region2, m2, true);
-		   !v2.finished(); ++v2) {
-		if (v2.cv() != old_cv2) {
-		  pgt2 = m2.trans_of_convex(v2.cv());
-		  pim2 = psd->mim().int_method_of_element(v2.cv());
-		  m2.points_of_convex(v2.cv(), G2);
-		  
-		  if (pim2->type() == IM_NONE) continue;
-		  GMM_ASSERT1(pim2->type() == IM_APPROX, "Sorry, exact methods "
-			      "cannot be used in high level generic assembly");
-		  pai2 = pim2->approx_method();
-		  pspt2 = pai2->pintegration_points();
-		  if (pspt2->size()) {
-		    if (pgp2 && sdi.pai == pai2 && pgt2_old == pgt2) {
-		      sdi.ctx.change(pgp2, 0, 0, G2, v2.cv(), v2.f());
-		    } else {
-		      if (pai2->is_built_on_the_fly()) {
-			sdi.ctx.change(pgt2, 0, (*pspt2)[0], G2,v2.cv(),v2.f());
-			pgp2 = 0;
-		      } else {
-			pgp2 = gis.gp_pool(pgt2, pspt2);
-			sdi.ctx.change(pgp2, 0, 0, G2, v2.cv(), v2.f());
-		      }
-		      pgt2_old = pgt2; sdi.pai = pai2;
-		    }
-		  }
-		  old_cv2 = v2.cv();
-		} else {
-		  if (pim2->type() == IM_NONE) continue;
-		  sdi.ctx.set_face_num(v2.f());
-		}
-		if (pspt2 != old_pspt2) { first_gp = true; old_pspt2 = pspt2; }
-		if (pspt2->size()) {
-		  // iterations on Gauss points
-		  size_type first_ind2 = 0;
-		  if (v2.f() != short_type(-1)) {
-		    nbpt2 = pai2->nb_points_on_face(v2.f());
-		    first_ind2 = pai2->ind_first_point_on_face(v2.f());
-		  } else {
-		    nbpt2 = gis.nbpt = pai2->nb_points_on_convex(); 
-		  }
-		  gis.nbpt = nbpt1 * nbpt2;
-		  gis.ipt = 0;
-		  for (size_type ipt1=0; ipt1 < nbpt1; ++ipt1) {
-		    for (size_type ipt2=0; ipt2 < nbpt2; ++ipt2, ++(gis.ipt)) {
-		      
-		      if (pgp1) gis.ctx.set_ii(first_ind1+ipt1);
-		      else gis.ctx.set_xref((*pspt1)[first_ind1+ipt1]);
-		      if (pgp2) sdi.ctx.set_ii(first_ind2+ipt2);
-		      else sdi.ctx.set_xref((*pspt2)[first_ind2+ipt2]);
-		      
-		      if (gis.ipt == 0 || !(pgt1->is_linear())) {
-			J1 = gis.ctx.J();
-			if (v1.f() != short_type(-1)) {
-			  gis.Normal.resize(G1.nrows());
-			  un.resize(pgt1->dim());
-			  gmm::copy(pgt1->normals()[v1.f()], un);
-			  gmm::mult(gis.ctx.B(), un, gis.Normal);
-			  scalar_type nup = gmm::vect_norm2(gis.Normal);
-			  J1 *= nup;
-			  gmm::scale(gis.Normal, 1.0/nup);
-			  gmm::clean(gis.Normal, 1e-13);
-			} else gis.Normal.resize(0);
-		      }
-		      
-		      if (gis.ipt == 0 || !(pgt2->is_linear())) {
-			J2 = sdi.ctx.J();
-			if (v2.f() != short_type(-1)) {
-			  sdi.Normal.resize(G2.nrows());
-			  un.resize(pgt2->dim());
-			  gmm::copy(pgt2->normals()[v2.f()], un);
-			  gmm::mult(sdi.ctx.B(), un, sdi.Normal);
-			  scalar_type nup = gmm::vect_norm2(sdi.Normal);
-			  J2 *= nup;
-			  gmm::scale(sdi.Normal, 1.0/nup);
-			  gmm::clean(sdi.Normal, 1e-13);
-			} else sdi.Normal.resize(0);
-		      }
-		      
-		      auto ipt_coeff = pai1->coeff(first_ind1+ipt1)
-			* pai2->coeff(first_ind2+ipt2);
-		      gis.coeff = J1 * J2 * ipt_coeff;
-		      bool enable_ipt = (gmm::abs(ipt_coeff) > 0.0 ||
-					 workspace.include_empty_int_points());
-		      if (!enable_ipt) gis.coeff = scalar_type(0);
-		      
-		      if (first_gp) {
-			for (size_type j=0; j < gilb.size(); ++j)
-			  j+=gilb[j]->exec();
-			first_gp = false;
-		      }
-		      if (gis.ipt == 0) {
-			for (size_type j=0; j < gile.size(); ++j)
-			  j+=gile[j]->exec();
-		      }
-		      if (enable_ipt || gis.ipt == 0 || gis.ipt == gis.nbpt-1) {
-			for (size_type j=0; j < gil.size(); ++j)
-			  j+=gil[j]->exec();
-		      }
-		      GA_DEBUG_INFO("");
-		    }
-		  }
-		}
-	      }
-	    }
-	  }
-	}
-	GA_DEBUG_INFO("-----------------------------");
+        auto &sdi = instr.second.secondary_domain_infos;
+        const mesh_region &region1 = *(instr.first.region());
+
+        // iteration on elements (or faces of elements)
+        size_type old_cv1=size_type(-1), old_cv2=size_type(-1);
+        size_type nbpt1 = 0, nbpt2 = 0;
+        bgeot::pgeometric_trans pgt1 = 0, pgt1_old = 0, pgt2 = 0, pgt2_old = 0;
+        pintegration_method pim1 = 0, pim2 = 0;
+        papprox_integration pai1 = 0, pai2 = 0;
+        bgeot::pstored_point_tab pspt1=0, old_pspt1=0, pspt2=0, old_pspt2=0;
+        bgeot::pgeotrans_precomp pgp1 = 0, pgp2 = 0;
+        bool first_gp = true;
+        for (getfem::mr_visitor v1(region1, m, true); !v1.finished(); ++v1) {
+          if (mim.convex_index().is_in(v1.cv())) {
+            // cout << "proceed with elt " << v1.cv()<<" face " << v1.f()<<endl;
+            if (v1.cv() != old_cv1) {
+              pgt1 = m.trans_of_convex(v1.cv());
+              pim1 = mim.int_method_of_element(v1.cv());
+              m.points_of_convex(v1.cv(), G1);
+
+              if (pim1->type() == IM_NONE) continue;
+              GMM_ASSERT1(pim1->type() == IM_APPROX, "Sorry, exact methods "
+                          "cannot be used in high level generic assembly");
+              pai1 = pim1->approx_method();
+              pspt1 = pai1->pintegration_points();
+              if (pspt1->size()) {
+                if (pgp1 && gis.pai == pai1 && pgt1_old == pgt1) {
+                  gis.ctx.change(pgp1, 0, 0, G1, v1.cv(), v1.f());
+                } else {
+                  if (pai1->is_built_on_the_fly()) {
+                    gis.ctx.change(pgt1, 0, (*pspt1)[0], G1, v1.cv(), v1.f());
+                    pgp1 = 0;
+                  } else {
+                    pgp1 = gis.gp_pool(pgt1, pspt1);
+                    gis.ctx.change(pgp1, 0, 0, G1, v1.cv(), v1.f());
+                  }
+                  pgt1_old = pgt1; gis.pai = pai1;
+                }
+                if (gis.need_elt_size)
+                  gis.elt_size = convex_radius_estimate(pgt1,G1)*scalar_type(2);
+              }
+              old_cv1 = v1.cv();
+            } else {
+              if (pim1->type() == IM_NONE) continue;
+              gis.ctx.set_face_num(v1.f());
+            }
+            if (pspt1 != old_pspt1) { first_gp = true; old_pspt1 = pspt1; }
+            if (pspt1->size()) {
+              // iterations on Gauss points
+              size_type first_ind1 = 0;
+              if (v1.f() != short_type(-1)) {
+                nbpt1 = pai1->nb_points_on_face(v1.f());
+                first_ind1 = pai1->ind_first_point_on_face(v1.f());
+              } else {
+                nbpt1 = pai1->nb_points_on_convex();
+              }
+
+              const mesh &m2 = psd->mim().linked_mesh();
+              const mesh_region &region2 = psd->give_region(m, v1.cv(), v1.f());
+              for (getfem::mr_visitor v2(region2, m2, true);
+                   !v2.finished(); ++v2) {
+                if (v2.cv() != old_cv2) {
+                  pgt2 = m2.trans_of_convex(v2.cv());
+                  pim2 = psd->mim().int_method_of_element(v2.cv());
+                  m2.points_of_convex(v2.cv(), G2);
+
+                  if (pim2->type() == IM_NONE) continue;
+                  GMM_ASSERT1(pim2->type() == IM_APPROX, "Sorry, exact methods "
+                              "cannot be used in high level generic assembly");
+                  pai2 = pim2->approx_method();
+                  pspt2 = pai2->pintegration_points();
+                  if (pspt2->size()) {
+                    if (pgp2 && sdi.pai == pai2 && pgt2_old == pgt2) {
+                      sdi.ctx.change(pgp2, 0, 0, G2, v2.cv(), v2.f());
+                    } else {
+                      if (pai2->is_built_on_the_fly()) {
+                        sdi.ctx.change(pgt2, 0, (*pspt2)[0], G2,v2.cv(),v2.f());
+                        pgp2 = 0;
+                      } else {
+                        pgp2 = gis.gp_pool(pgt2, pspt2);
+                        sdi.ctx.change(pgp2, 0, 0, G2, v2.cv(), v2.f());
+                      }
+                      pgt2_old = pgt2; sdi.pai = pai2;
+                    }
+                  }
+                  old_cv2 = v2.cv();
+                } else {
+                  if (pim2->type() == IM_NONE) continue;
+                  sdi.ctx.set_face_num(v2.f());
+                }
+                if (pspt2 != old_pspt2) { first_gp = true; old_pspt2 = pspt2; }
+                if (pspt2->size()) {
+                  // iterations on Gauss points
+                  size_type first_ind2 = 0;
+                  if (v2.f() != short_type(-1)) {
+                    nbpt2 = pai2->nb_points_on_face(v2.f());
+                    first_ind2 = pai2->ind_first_point_on_face(v2.f());
+                  } else {
+                    nbpt2 = gis.nbpt = pai2->nb_points_on_convex();
+                  }
+                  gis.nbpt = nbpt1 * nbpt2;
+                  gis.ipt = 0;
+                  for (size_type ipt1=0; ipt1 < nbpt1; ++ipt1) {
+                    for (size_type ipt2=0; ipt2 < nbpt2; ++ipt2, ++(gis.ipt)) {
+
+                      if (pgp1) gis.ctx.set_ii(first_ind1+ipt1);
+                      else gis.ctx.set_xref((*pspt1)[first_ind1+ipt1]);
+                      if (pgp2) sdi.ctx.set_ii(first_ind2+ipt2);
+                      else sdi.ctx.set_xref((*pspt2)[first_ind2+ipt2]);
+
+                      if (gis.ipt == 0 || !(pgt1->is_linear())) {
+                        J1 = gis.ctx.J();
+                        if (v1.f() != short_type(-1)) {
+                          gis.Normal.resize(G1.nrows());
+                          un.resize(pgt1->dim());
+                          gmm::copy(pgt1->normals()[v1.f()], un);
+                          gmm::mult(gis.ctx.B(), un, gis.Normal);
+                          scalar_type nup = gmm::vect_norm2(gis.Normal);
+                          J1 *= nup;
+                          gmm::scale(gis.Normal, 1.0/nup);
+                          gmm::clean(gis.Normal, 1e-13);
+                        } else gis.Normal.resize(0);
+                      }
+
+                      if (gis.ipt == 0 || !(pgt2->is_linear())) {
+                        J2 = sdi.ctx.J();
+                        if (v2.f() != short_type(-1)) {
+                          sdi.Normal.resize(G2.nrows());
+                          un.resize(pgt2->dim());
+                          gmm::copy(pgt2->normals()[v2.f()], un);
+                          gmm::mult(sdi.ctx.B(), un, sdi.Normal);
+                          scalar_type nup = gmm::vect_norm2(sdi.Normal);
+                          J2 *= nup;
+                          gmm::scale(sdi.Normal, 1.0/nup);
+                          gmm::clean(sdi.Normal, 1e-13);
+                        } else sdi.Normal.resize(0);
+                      }
+
+                      auto ipt_coeff = pai1->coeff(first_ind1+ipt1)
+                        * pai2->coeff(first_ind2+ipt2);
+                      gis.coeff = J1 * J2 * ipt_coeff;
+                      bool enable_ipt = (gmm::abs(ipt_coeff) > 0.0 ||
+                                         workspace.include_empty_int_points());
+                      if (!enable_ipt) gis.coeff = scalar_type(0);
+
+                      if (first_gp) {
+                        for (size_type j=0; j < gilb.size(); ++j)
+                          j+=gilb[j]->exec();
+                        first_gp = false;
+                      }
+                      if (gis.ipt == 0) {
+                        for (size_type j=0; j < gile.size(); ++j)
+                          j+=gile[j]->exec();
+                      }
+                      if (enable_ipt || gis.ipt == 0 || gis.ipt == gis.nbpt-1) {
+                        for (size_type j=0; j < gil.size(); ++j)
+                          j+=gil[j]->exec();
+                      }
+                      GA_DEBUG_INFO("");
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        GA_DEBUG_INFO("-----------------------------");
       }
-      
+
     }
-    
+
     for (const std::string &t : gis.transformations)
       workspace.interpolate_transformation(t)->finalize();
   }

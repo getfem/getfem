@@ -3363,7 +3363,7 @@ model_complex_plain_vector &
   };
 
   static bool check_compatibility_vl_test(model &md,
-					  const model::varnamelist vl_test) {
+                                          const model::varnamelist vl_test) {
     model::varnamelist org;
     for (size_type i = 0; i < vl_test.size(); ++i) {
       if (md.is_affine_dependent_variable(vl_test[i]))
@@ -3377,7 +3377,7 @@ model_complex_plain_vector &
 
   size_type add_source_term_
   (model &md, const mesh_im &mim, const std::string &expr, size_type region,
-   std::string brickname, std::string directvarname,
+   const std::string &brickname, std::string directvarname,
    const std::string &directdataname, bool return_if_nonlin,
    const std::string &secondary_domain) {
 
@@ -3414,19 +3414,19 @@ model_complex_plain_vector &
   
   size_type add_source_term
   (model &md, const mesh_im &mim, const std::string &expr, size_type region,
-   std::string brickname, std::string directvarname,
+   const std::string &brickname, const std::string &directvarname,
    const std::string &directdataname, bool return_if_nonlin) {
     return add_source_term_(md, mim, expr, region, brickname, directvarname,
-		     directdataname, return_if_nonlin, "");
+                            directdataname, return_if_nonlin, "");
   }
 
   size_type add_twodomain_source_term
   (model &md, const mesh_im &mim, const std::string &expr, size_type region,
    const std::string &secondary_domain,
-   std::string brickname, std::string directvarname,
+   const std::string &brickname, const std::string &directvarname,
    const std::string &directdataname, bool return_if_nonlin) {
     return add_source_term_(md, mim, expr, region, brickname, directvarname,
-		     directdataname, return_if_nonlin, secondary_domain);
+                            directdataname, return_if_nonlin, secondary_domain);
   }
   
   // ----------------------------------------------------------------------
@@ -3538,7 +3538,7 @@ model_complex_plain_vector &
 
   size_type add_linear_term_
   (model &md, const mesh_im &mim, const std::string &expr, size_type region,
-   bool is_sym, bool is_coercive, std::string brickname,
+   bool is_sym, bool is_coercive, const std::string &brickname,
    bool return_if_nonlin, const std::string &secondary_domain) {
 
     ga_workspace workspace(md, true);
@@ -3580,7 +3580,7 @@ model_complex_plain_vector &
 
   size_type add_linear_term
   (model &md, const mesh_im &mim, const std::string &expr, size_type region,
-   bool is_sym, bool is_coercive, std::string brickname,
+   bool is_sym, bool is_coercive, const std::string &brickname,
    bool return_if_nonlin) {
     return add_linear_term_(md, mim, expr, region, is_sym, is_coercive,
 			    brickname, return_if_nonlin, "");
@@ -3589,7 +3589,7 @@ model_complex_plain_vector &
   size_type add_linear_twodomain_term
   (model &md, const mesh_im &mim, const std::string &expr, size_type region,
    const std::string &secondary_domain, bool is_sym, bool is_coercive,
-   std::string brickname, bool return_if_nonlin) {
+   const std::string &brickname, bool return_if_nonlin) {
     return add_linear_term_(md, mim, expr, region, is_sym, is_coercive,
 			    brickname, return_if_nonlin, secondary_domain);
   }
@@ -5885,6 +5885,11 @@ model_complex_plain_vector &
       GMM_ASSERT1(mims.size() == 0, "Explicit matrix need no mesh_im");
       GMM_ASSERT1(vl.size() >= 1 && vl.size() <= 2 && dl.size() == 0,
                   "Wrong number of variables for explicit matrix brick");
+      GMM_ASSERT1(gmm::mat_ncols(rB) == gmm::mat_ncols(matl[0]) &&
+                  gmm::mat_nrows(rB) == gmm::mat_nrows(matl[0]),
+                  "Explicit matrix brick dimension mismatch ("<<
+                  gmm::mat_ncols(rB)<<"x"<<gmm::mat_nrows(rB)<<") != ("<<
+                  gmm::mat_ncols(matl[0])<<"x"<<gmm::mat_nrows(matl[0])<<")");
       gmm::copy(rB, matl[0]);
     }
 

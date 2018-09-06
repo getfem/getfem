@@ -2575,7 +2575,7 @@ namespace getfem {
                             size_type ref_elt_dim,
                             bool eval_fixed_size,
                             bool ignore_X, int option) {
-    // cout << "Begin semantic anaylsis" << endl;
+    // cout << "Begin semantic analysis" << endl;
     GMM_ASSERT1(predef_operators_nonlinear_elasticity_initialized &&
                 predef_operators_plasticity_initialized &&
                 predef_operators_contact_initialized, "Internal error");
@@ -2596,7 +2596,7 @@ namespace getfem {
         tree.clear();
     }
     ga_valid_operand(tree.root);
-    // cout << "end of semantic anaylsis" << endl;
+    // cout << "end of semantic analysis" << endl;
   }
 
 

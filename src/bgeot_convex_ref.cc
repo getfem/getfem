@@ -113,7 +113,7 @@ namespace bgeot {
   size_type simplexified_tab(pconvex_structure cvs, size_type **tab);
 
   static void simplexify_convex(bgeot::convex_of_reference *cvr,
-				mesh_structure &m) {
+                                mesh_structure &m) {
     pconvex_structure cvs = cvr->structure();
     m.clear();
     auto basic_cvs = basic_structure(cvs);
@@ -196,10 +196,6 @@ namespace bgeot {
     //        .push_back(psimplexified_convex);
   }
 
-  bool convex_of_reference::is_basic() const {
-    return auto_basic;
-  }
-
   /* should be called on the basic_convex_ref */
   const mesh_structure* convex_of_reference::simplexified_convex() const {
     GMM_ASSERT1(auto_basic,
@@ -247,6 +243,7 @@ namespace bgeot {
       for (; it != ite; e += *it, ++it) r = std::max(r, -(*it));
       return std::max(r, e);
     }
+
     scalar_type is_in_face(short_type f, const base_node &pt) const {
       // return zero if pt is in the face of the convex
       // negative if the point is on the side of the face where the element is
@@ -413,10 +410,11 @@ namespace bgeot {
       else
         return gmm::vect_sp(normals_[f], pt) - sqrt(2.)/2.;
     }
+
     scalar_type is_in(const base_node& pt) const {
       // return a negative number if pt is in the convex
       scalar_type r = is_in_face(0, pt);
-      for (short_type i = 1; i < 5; ++i) r = std::max(r, is_in_face(i, pt));
+      for (short_type f = 1; f < 5; ++f) r = std::max(r, is_in_face(f, pt));
       return r;
     }
 
@@ -693,6 +691,7 @@ namespace bgeot {
   class equilateral_simplex_of_ref_ : public convex_of_reference {
   public:
     scalar_type is_in(const base_node &pt) const {
+      GMM_ASSERT1(pt.size() == cvs->dim(), "Dimension does not match");
       scalar_type d(0);
       for (size_type f = 0; f < normals().size(); ++f) {
         const base_node &x0 = (f ? convex<base_node>::points()[f-1]
@@ -702,7 +701,9 @@ namespace bgeot {
       }
       return d;
     }
+
     scalar_type is_in_face(short_type f, const base_node &pt) const {
+      GMM_ASSERT1(pt.size() == cvs->dim(), "Dimension does not match");
       const base_node &x0 = (f ? convex<base_node>::points()[f-1]
                              : convex<base_node>::points().back());
       return gmm::vect_sp(pt-x0, normals()[f]);

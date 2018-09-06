@@ -316,7 +316,7 @@ namespace getfem {
 
   pinterpolate_transformation
   ga_workspace::interpolate_transformation(const std::string &name) const {
-    auto  it = transformations.find(name);
+    auto it = transformations.find(name);
     if (it != transformations.end()) return it->second;
     if (md && md->interpolate_transformation_exists(name))
       return md->interpolate_transformation(name);
@@ -336,7 +336,7 @@ namespace getfem {
 
   pelementary_transformation
   ga_workspace::elementary_transformation(const std::string &name) const {
-    auto  it = elem_transformations.find(name);
+    auto it = elem_transformations.find(name);
     if (it != elem_transformations.end()) return it->second;
     if (md && md->elementary_transformation_exists(name))
       return md->elementary_transformation(name);
