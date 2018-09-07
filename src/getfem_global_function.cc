@@ -507,7 +507,8 @@ namespace getfem {
     return res;
   }
 
-  base_matrix crack_singular_xy_function::hess(scalar_type x, scalar_type y) const {
+  base_matrix
+  crack_singular_xy_function::hess(scalar_type x, scalar_type y) const {
     scalar_type sgny = (y < 0 ? -1.0 : 1.0);
     scalar_type r = sqrt(x*x + y*y);
 

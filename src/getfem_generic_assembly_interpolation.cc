@@ -645,39 +645,44 @@ namespace getfem {
       P.resize(m.dim());
       gmm::copy(local_workspace.assembled_tensor().as_vector(), P);
 
-      bgeot::rtree::pbox_set bset;
-      element_boxes.find_boxes_at_point(P, bset);
       *m_t = &target_mesh;
 
-      while (bset.size()) {
-        bgeot::rtree::pbox_set::iterator it = bset.begin(), itmax = it;
+      bgeot::rtree::pbox_cont boxes;
+      {
+        bgeot::rtree::pbox_set bset;
+        element_boxes.find_boxes_at_point(P, bset);
 
-        if (bset.size() > 1) {
-          // Searching the box for which the point is the most in the interior
-          scalar_type rate_max = scalar_type(-1);
-          for (; it != bset.end(); ++it) {
-
-            scalar_type rate_box = scalar_type(1);
-            for (size_type i = 0; i < m.dim(); ++i) {
-              scalar_type h = (*it)->max[i] - (*it)->min[i];
-              if (h > scalar_type(0)) {
-                scalar_type rate
-                  = std::min((*it)->max[i] - P[i], P[i] - (*it)->min[i]) / h;
-                rate_box = std::min(rate, rate_box);
-              }
-            }
-            if (rate_box > rate_max) {
-              itmax = it;
-              rate_max = rate_box;
+        // using a std::set as a sorter
+        std::set<std::pair<scalar_type, const bgeot::box_index*> > rated_boxes;
+        for (const auto &box : bset) {
+          scalar_type rating = scalar_type(1);
+          for (size_type i = 0; i < m.dim(); ++i) {
+            scalar_type h = box->max[i] - box->min[i];
+            if (h > scalar_type(0)) {
+              scalar_type r = std::min(box->max[i] - P[i],
+                                       P[i] - box->min[i]) / h;
+              rating = std::min(r, rating);
             }
           }
+          rated_boxes.insert(std::make_pair(rating, box));
         }
 
-        cv = (*itmax)->id;
+        // boxes should now be ordered in increasing rating order
+        for (const auto &p : rated_boxes)
+          boxes.push_back(p.second);
+      }
+
+
+      scalar_type best_dist(1e10);
+      size_type best_cv(-1);
+      base_node best_P_ref;
+      for (size_type i = boxes.size(); i > 0; --i) {
+
+        cv = boxes[i-1]->id;
         gic.init(target_mesh.points_of_convex(cv),
                  target_mesh.trans_of_convex(cv));
 
-        bool converged = true;
+        bool converged;
         bool is_in = gic.invert(P, P_ref, converged, 1E-4);
         // cout << "cv = " << cv << " P = " << P << " P_ref = " << P_ref << endl;
         // cout << " is_in = " << int(is_in) << endl;
@@ -685,14 +690,28 @@ namespace getfem {
         //     iii < target_mesh.points_of_convex(cv).size(); ++iii)
         //  cout << target_mesh.points_of_convex(cv)[iii] << endl;
 
-        if (is_in && converged) {
-          face_num = short_type(-1); // Should detect potential faces ?
-          ret_type = 1;
-          break;
+        if (converged) {
+          if (is_in) {
+            face_num = short_type(-1); // Should detect potential faces ?
+            ret_type = 1;
+            break;
+          } else {
+            scalar_type dist
+              = target_mesh.trans_of_convex(cv)->convex_ref()->is_in(P_ref);
+            if (dist < best_dist) {
+              best_dist = dist;
+              best_cv = cv;
+              best_P_ref = P_ref;
+            }
+          }
         }
+      }
 
-        if (bset.size() == 1) break;
-        bset.erase(itmax);
+      if (ret_type == 0 && best_dist < 5e-3) {
+        cv = best_cv;
+        P_ref = best_P_ref;
+        face_num = short_type(-1); // Should detect potential faces ?
+        ret_type = 1;
       }
 
       // Note on derivatives of the transformation : for efficiency and

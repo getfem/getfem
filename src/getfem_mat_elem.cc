@@ -39,17 +39,34 @@ namespace getfem {
        element if possible (i.e. if no exact integration is used); this allow
        using inline reduction during the integration */
     bool prefer_comp_on_real_element;
-    virtual bool compare(const static_stored_object_key &oo) const {
-      const emelem_comp_key_ &o = dynamic_cast<const emelem_comp_key_ &>(oo);
+    bool compare(const static_stored_object_key &oo) const override{
+      auto &o = dynamic_cast<const emelem_comp_key_ &>(oo);
       if (pmt < o.pmt) return true;
       if (o.pmt < pmt) return false;
       if (ppi < o.ppi) return true;
       if (o.ppi < ppi) return false;
       if (pgt < o.pgt) return true;
       if (o.pgt < pgt) return false;
-      if (prefer_comp_on_real_element < o.prefer_comp_on_real_element)
-        return true;
-      return false;
+      return prefer_comp_on_real_element < o.prefer_comp_on_real_element;
+    }
+    bool equal(const static_stored_object_key &oo) const override{
+      auto &o = dynamic_cast<const emelem_comp_key_ &>(oo);
+
+      if (pmt == o.pmt && ppi == o.ppi && pgt == o.pgt) return true;
+
+      auto pmat_key = dal::key_of_stored_object(pmt);
+      auto poo_mat_key = dal::key_of_stored_object(o.pmt);
+      if (*pmat_key != *poo_mat_key) return false;
+
+      auto pint_key = dal::key_of_stored_object(ppi);
+      auto poo_int_key = dal::key_of_stored_object(o.ppi);
+      if (*pint_key != *poo_int_key) return false;
+
+      auto pgt_key = dal::key_of_stored_object(pgt);
+      auto poo_gt_key = dal::key_of_stored_object(o.pgt);
+      if (*pgt_key != *poo_gt_key) return false;
+
+      return true;
     }
     emelem_comp_key_(pmat_elem_type pm, pintegration_method pi,
                        bgeot::pgeometric_trans pg, bool on_relt)

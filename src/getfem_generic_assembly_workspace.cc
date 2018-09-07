@@ -298,7 +298,7 @@ namespace getfem {
   void ga_workspace::add_interpolate_transformation
   (const std::string &name, pinterpolate_transformation ptrans) {
      if (secondary_domain_exists(name))
-      GMM_ASSERT1(false, "An secondary domain with the same "
+      GMM_ASSERT1(false, "A secondary domain with the same "
                   "name already exists");
     if (transformations.find(name) != transformations.end())
       GMM_ASSERT1(name.compare("neighbour_elt"), "neighbour_elt is a "
@@ -316,7 +316,7 @@ namespace getfem {
 
   pinterpolate_transformation
   ga_workspace::interpolate_transformation(const std::string &name) const {
-    auto  it = transformations.find(name);
+    auto it = transformations.find(name);
     if (it != transformations.end()) return it->second;
     if (md && md->interpolate_transformation_exists(name))
       return md->interpolate_transformation(name);
@@ -336,7 +336,7 @@ namespace getfem {
 
   pelementary_transformation
   ga_workspace::elementary_transformation(const std::string &name) const {
-    auto  it = elem_transformations.find(name);
+    auto it = elem_transformations.find(name);
     if (it != elem_transformations.end()) return it->second;
     if (md && md->elementary_transformation_exists(name))
       return md->elementary_transformation(name);

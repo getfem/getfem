@@ -197,7 +197,8 @@ namespace bgeot {
   const base_poly &polynomial_composite::poly_of_subelt(size_type l) const {
     auto it = polytab.find(l);
     if (it == polytab.end()) return default_poly;
-    return dynamic_cast<const base_poly &>(*dal::search_stored_object(it->second));
+    return dynamic_cast<const base_poly &>(
+      *dal::search_stored_object_on_all_threads(it->second));
   }
 
 
@@ -377,15 +378,18 @@ namespace bgeot {
       dim_type n = cvs->dim();
       /* Identifying simplexes.                                           */
       if (nbp == size_type(n+1) &&
-          basic_structure(cvs)==simplex_structure(n)) {
+          *key_of_stored_object(basic_structure(cvs))
+          ==*key_of_stored_object(simplex_structure(n))) {
           // smc.pm->write_to_file(cout);
           structured_mesh_for_simplex_(cvs,opt_gt,opt_gt_pts,k,pm);
           /* Identifying parallelepipeds.                                     */
       } else if (nbp == (size_type(1) << n) &&
-          basic_structure(cvs) == parallelepiped_structure(n)) {
+          *key_of_stored_object(basic_structure(cvs))
+          == *key_of_stored_object(parallelepiped_structure(n))) {
           structured_mesh_for_parallelepiped_(cvs,opt_gt,opt_gt_pts,k,pm);
       } else if (nbp == size_type(2 * n) &&
-          basic_structure(cvs) == prism_P1_structure(n)) {
+          *key_of_stored_object(basic_structure(cvs))
+          == *key_of_stored_object(prism_P1_structure(n))) {
           GMM_ASSERT1(false, "Sorry, structured_mesh not implemented for prisms.");
       } else {
         GMM_ASSERT1(false, "This element is not taken into account. Contact us");
@@ -462,7 +466,7 @@ namespace bgeot {
       pk = std::make_shared<str_mesh_key>(basic_structure(cvr->structure()),
                                           k, force_simplexification);
 
-    dal::pstatic_stored_object o = dal::search_stored_object(pk);
+    dal::pstatic_stored_object o = dal::search_stored_object_on_all_threads(pk);
     pstr_mesh_cv__ psmc;
     if (o)
       psmc = std::dynamic_pointer_cast<const str_mesh_cv__>(o);

@@ -815,7 +815,7 @@ namespace getfem {
       between the two neighbour elements. Try to minimize the number of
       elements.
   */
-  mesh_region inner_faces_of_mesh(const mesh &m, mesh_region mr) {
+  mesh_region inner_faces_of_mesh(const mesh &m, const mesh_region &mr) {
     mesh_region mrr;
     mr.from_mesh(m);
     mr.error_if_not_convexes();
@@ -926,8 +926,8 @@ namespace getfem {
     out.clear();
     size_type nbpt = in.points().index().last()+1;
     GMM_ASSERT1(nbpt == in.points().index().card(),
-                "please optimize the mesh before using "
-                "it as a base for prismatic mesh");
+                "please call the optimize_structure() method before using "
+                "the mesh as a base for prismatic mesh");
     size_type nb_layers_total = nb_layers * degree;
     for (const base_node &inpt : in.points()) {
       std::copy(inpt.begin(), inpt.end(), pt.begin());

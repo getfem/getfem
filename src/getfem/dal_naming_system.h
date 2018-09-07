@@ -89,10 +89,16 @@ namespace dal {
     struct method_key : virtual public static_stored_object_key {
       std::string name;
 
-      virtual bool compare(const static_stored_object_key &oo) const {
-	const method_key &o = dynamic_cast<const method_key &>(oo);
-	if (name < o.name) return true; else return false;
+      bool compare(const static_stored_object_key &oo) const override{
+	      auto &o = dynamic_cast<const method_key &>(oo);
+	      return name < o.name;
       }
+
+      bool equal(const static_stored_object_key &oo) const override{
+	      auto &o = dynamic_cast<const method_key &>(oo);
+	      return name == o.name;
+      }
+
       method_key(const std::string &name_) : name(name_) {}
     };
 

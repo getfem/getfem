@@ -113,7 +113,7 @@ namespace bgeot {
   size_type simplexified_tab(pconvex_structure cvs, size_type **tab);
 
   static void simplexify_convex(bgeot::convex_of_reference *cvr,
-				mesh_structure &m) {
+                                mesh_structure &m) {
     pconvex_structure cvs = cvr->structure();
     m.clear();
     auto basic_cvs = basic_structure(cvs);
@@ -150,7 +150,7 @@ namespace bgeot {
 
   struct stored_point_tab_key : virtual public dal::static_stored_object_key  {
     const stored_point_tab *pspt;
-    virtual bool compare(const static_stored_object_key &oo) const {
+    bool compare(const static_stored_object_key &oo) const override {
       const stored_point_tab_key &o
         = dynamic_cast<const stored_point_tab_key &>(oo);
       const stored_point_tab &x = *pspt;
@@ -168,6 +168,23 @@ namespace bgeot {
       }
       if (it2 != y.end()) return true;
       return false;
+    }
+    bool equal(const static_stored_object_key &oo) const override {
+      auto &o = dynamic_cast<const stored_point_tab_key &>(oo);
+      auto &x = *pspt;
+      auto &y = *(o.pspt);
+      if (&x == &y) return true;
+      if (x.size() != y.size()) return false;
+      auto it1 = x.begin();
+      auto it2 = y.begin();
+      base_node::const_iterator itn1, itn2, itne;
+      for ( ; it1 != x.end() && it2 != y.end() ; ++it1, ++it2) {
+        if ((*it1).size() != (*it2).size()) return false;
+        itn1 = (*it1).begin(); itne = (*it1).end(); itn2 = (*it2).begin();
+        for ( ; itn1 != itne ; ++itn1, ++itn2)
+          if (*itn1 != *itn2) return false;
+      }
+      return true;
     }
     stored_point_tab_key(const stored_point_tab *p) : pspt(p) {}
   };
@@ -196,10 +213,6 @@ namespace bgeot {
     //        .push_back(psimplexified_convex);
   }
 
-  bool convex_of_reference::is_basic() const {
-    return auto_basic;
-  }
-
   /* should be called on the basic_convex_ref */
   const mesh_structure* convex_of_reference::simplexified_convex() const {
     GMM_ASSERT1(auto_basic,
@@ -216,7 +229,7 @@ namespace bgeot {
               // 2 = dummy
     dim_type N; short_type K; short_type nf;
   public :
-    virtual bool compare(const static_stored_object_key &oo) const {
+    bool compare(const static_stored_object_key &oo) const override{
       const convex_of_reference_key &o
         = dynamic_cast<const convex_of_reference_key &>(oo);
       if (type < o.type) return true;
@@ -227,6 +240,14 @@ namespace bgeot {
       if (K > o.K) return false;
       if (nf < o.nf) return true;
       return false;
+    }
+    bool equal(const static_stored_object_key &oo) const override{
+      auto &o = dynamic_cast<const convex_of_reference_key &>(oo);
+      if (type != o.type) return false;
+      if (N != o.N) return false;
+      if (K != o.K) return false;
+      if (nf != o.nf) return false;
+      return true;
     }
     convex_of_reference_key(int t, dim_type NN, short_type KK = 0,
                             short_type nnf = 0)
@@ -247,6 +268,7 @@ namespace bgeot {
       for (; it != ite; e += *it, ++it) r = std::max(r, -(*it));
       return std::max(r, e);
     }
+
     scalar_type is_in_face(short_type f, const base_node &pt) const {
       // return zero if pt is in the face of the convex
       // negative if the point is on the side of the face where the element is
@@ -413,10 +435,11 @@ namespace bgeot {
       else
         return gmm::vect_sp(normals_[f], pt) - sqrt(2.)/2.;
     }
+
     scalar_type is_in(const base_node& pt) const {
       // return a negative number if pt is in the convex
       scalar_type r = is_in_face(0, pt);
-      for (short_type i = 1; i < 5; ++i) r = std::max(r, is_in_face(i, pt));
+      for (short_type f = 1; f < 5; ++f) r = std::max(r, is_in_face(f, pt));
       return r;
     }
 
@@ -693,6 +716,7 @@ namespace bgeot {
   class equilateral_simplex_of_ref_ : public convex_of_reference {
   public:
     scalar_type is_in(const base_node &pt) const {
+      GMM_ASSERT1(pt.size() == cvs->dim(), "Dimension does not match");
       scalar_type d(0);
       for (size_type f = 0; f < normals().size(); ++f) {
         const base_node &x0 = (f ? convex<base_node>::points()[f-1]
@@ -702,7 +726,9 @@ namespace bgeot {
       }
       return d;
     }
+
     scalar_type is_in_face(short_type f, const base_node &pt) const {
+      GMM_ASSERT1(pt.size() == cvs->dim(), "Dimension does not match");
       const base_node &x0 = (f ? convex<base_node>::points()[f-1]
                              : convex<base_node>::points().back());
       return gmm::vect_sp(pt-x0, normals()[f]);

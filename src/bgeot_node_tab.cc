@@ -85,7 +85,7 @@ namespace bgeot {
     GMM_ASSERT1(false, "Problem in node structure !!");
   }
 
-  void node_tab::clear(void) {
+  void node_tab::clear() {
     dal::dynamic_tas<base_node>::clear();
     sorters = std::vector<sorter>();
     max_radius = scalar_type(1e-60);

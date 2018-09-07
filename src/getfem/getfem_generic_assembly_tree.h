@@ -454,7 +454,9 @@ namespace getfem {
 
     ga_tree &operator =(const ga_tree &tree) {
       clear(); secondary_domain = tree.secondary_domain;
-      if (tree.root) copy_node(tree.root,nullptr,root); return *this;
+      if (tree.root)
+        copy_node(tree.root,nullptr,root);
+      return *this;
     }
 
     ~ga_tree() { clear(); }

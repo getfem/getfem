@@ -191,6 +191,23 @@ static bool dal_static_stored_tab_valid__ = true;
     return 0;
   }
 
+  pstatic_stored_object search_stored_object_on_all_threads(pstatic_stored_object_key k)
+  {
+    auto& stored_objects = singleton<stored_object_tab>::instance();
+    if (!dal_static_stored_tab_valid__) return nullptr;
+    auto p = stored_objects.search_stored_object(k);
+    if (p) return p;
+    if (num_threads()  == 1) return nullptr;
+    for(size_t thread = 0; thread < getfem::num_threads(); thread++)
+    {
+      if (thread == this_thread()) continue;
+      auto& other_objects = singleton<stored_object_tab>::instance(thread);
+      p = other_objects.search_stored_object(k);
+      if (p) return p;
+    }
+    return nullptr;
+   }
+
   std::pair<stored_object_tab::iterator, stored_object_tab::iterator> iterators_of_object(
     pstatic_stored_object o)
   {

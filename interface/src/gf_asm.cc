@@ -1,6 +1,6 @@
 /*===========================================================================
 
- Copyright (C) 2006-2017 Yves Renard, Julien Pommier.
+ Copyright (C) 2006-2018 Yves Renard, Julien Pommier.
 
  This file is a part of GetFEM++
 
@@ -36,12 +36,16 @@
 #if GETFEM_HAVE_METIS_OLD_API
 extern "C" void METIS_PartGraphKway(int *, int *, int *, int *, int *, int *,
                                     int *, int *, int *, int *, int *);
-extern "C" void METIS_PartGraphRecursive(int *, int *, int *, int *, int *, int *,
-                                         int *, int *, int *, int *, int *);
-extern "C" void METIS_mCPartGraphKway(int *, int *, int *, int *, int *, int *, int *,
-                                      int *, int *, float *, int *, int *, int *);
-extern "C" void METIS_mCPartGraphRecursive(int *, int *, int *, int *, int *, int *, int *,
-                                           int *, int *, int *, int *, int *);
+extern "C" void METIS_PartGraphRecursive(int *, int *, int *, int *, int *,
+                                         int *, int *, int *, int *, int *,
+                                         int *);
+extern "C" void METIS_mCPartGraphKway(int *, int *, int *, int *, int *, int *,
+                                      int *, int *, int *, float *, int *,
+                                      int *, int *);
+extern "C" void METIS_mCPartGraphRecursive(int *, int *, int *, int *, int *,
+                                           int *, int *, int *, int *, int *,
+                                           int *, int *);
+
 #elif GETFEM_HAVE_METIS
 # include <metis.h>
 #endif
@@ -103,9 +107,8 @@ void asm_lsneuman_matrix
 
 
     /**
-	generic normal grad level set matrix (on the whole mesh level set or on the specified
-	convex set level set or boundary level set)
-
+	generic normal grad level set matrix (on the whole mesh level set or
+        on the specified element set level set or boundary level set)
     */
 
 
@@ -132,7 +135,7 @@ template<typename MAT>  void asm_nlsgrad_matrix
 
 
 /**************************************************************/
-/* assembling patch vector                                     */
+/* assembling patch vector                                    */
 /**************************************************************/
 
 template<class VEC>
@@ -150,7 +153,7 @@ void asm_patch_vector
 
 }
 /**************************************************************/
-/* assembling patch matrix                                     */
+/* assembling patch matrix                                    */
 /**************************************************************/
 
 template<class MAT>
@@ -430,6 +433,9 @@ static void do_high_level_generic_assembly(mexargs_in& in, mexargs_out& out) {
   bool with_secondary = false;
   std::string secondary_domain;
   
+  bool with_select_output = false;
+  std::string select_var1, select_var2;
+  
   getfem::ga_workspace workspace2(md);
   getfem::ga_workspace &workspace = with_model ? workspace2 : workspace1;
 
@@ -439,7 +445,14 @@ static void do_high_level_generic_assembly(mexargs_in& in, mexargs_out& out) {
 
   while (in.remaining()) {
     std::string varname = in.pop().to_string();
-    if (varname.compare("Secondary_domain") == 0 ||
+    if (varname.compare("select_output") == 0 ||
+	varname.compare("select output") == 0) {
+      GMM_ASSERT1(order > 0, "select_output option is for order 1 or 2"
+                  "assemblies only");
+      with_select_output = true;
+      select_var1 = in.pop().to_string();
+      if (order == 2) select_var2 = in.pop().to_string();
+    } else if (varname.compare("Secondary_domain") == 0 ||
 	varname.compare("Secondary_Domain") == 0) {
       GMM_ASSERT1(!with_secondary,
 		  "Only one secondary domain can be specified");
@@ -502,7 +515,14 @@ static void do_high_level_generic_assembly(mexargs_in& in, mexargs_out& out) {
       getfem::model_real_plain_vector residual(nbdof);
       workspace.set_assembled_vector(residual);
       workspace.assembly(1);
-      out.pop().from_dlvector(residual);
+      if (with_select_output) {
+        gmm::sub_interval I = workspace.interval_of_variable(select_var1);
+        getfem::model_real_plain_vector rresidual(I.size());
+        gmm::copy(gmm::sub_vector(residual, I), rresidual);
+        out.pop().from_dlvector(rresidual);
+      } else {
+        out.pop().from_dlvector(residual);
+      }
     }
     break;
 
@@ -511,9 +531,18 @@ static void do_high_level_generic_assembly(mexargs_in& in, mexargs_out& out) {
       getfem::model_real_sparse_matrix K(nbdof, nbdof);
       workspace.set_assembled_matrix(K);
       workspace.assembly(2);
-      gf_real_sparse_by_col  KK(nbdof, nbdof);
-      gmm::copy(K, KK);
-      out.pop().from_sparse(KK);
+
+      if (with_select_output) {
+        gmm::sub_interval I1 = workspace.interval_of_variable(select_var1);
+        gmm::sub_interval I2 = workspace.interval_of_variable(select_var2);
+        gf_real_sparse_by_col  KK(I1.size(), I2.size());
+        gmm::copy(gmm::sub_matrix(K, I1, I2), KK);
+        out.pop().from_sparse(KK);
+      } else {
+        gf_real_sparse_by_col  KK(nbdof, nbdof);
+        gmm::copy(K, KK);
+        out.pop().from_sparse(KK);
+      }
     }
     break;
 
@@ -738,12 +767,12 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
 
   if (subc_tab.size() == 0) {
 
-    /*@FUNC @CELL{...} = ('generic', @tmim mim, @int order, @str expression, @int region, [@tmodel model, ['Secondary_domain', 'name',]] [@str varname, @int is_variable[, {@tmf mf, @tmimd mimd}], value], ...)
+    /*@FUNC @CELL{...} = ('generic', @tmim mim, @int order, @str expression, @int region, [@tmodel model, ['Secondary_domain', 'name',]] [@str varname, @int is_variable[, {@tmf mf, @tmimd mimd}], value], ['select_output', 'varname1'[, 'varname2]], ...)
       High-level generic assembly procedure for volumic or boundary assembly.
 
       Performs the generic assembly of `expression` with the integration
       method `mim` on the mesh region of index `region` (-1 means all
-      the element of the mesh). The same mesh should be shared by
+      elements of the mesh). The same mesh should be shared by
       the integration method and all the finite element methods or
       mesh_im_data corresponding to the variables.
 
@@ -752,28 +781,35 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
       tangent (matrix) (order = 2) is to be computed.
 
       `model` is an optional parameter allowing to take into account
-      all variables and data of a model. Optionnally, for the integration
-      on the product of two domains, a secondary domain of the model can
-      be specified after a 'Secondary_domain' string.
+      all variables and data of a model. Note that all enabled variables
+      of the model will occupy space in the returned vector/matrix
+      corresponding to their degrees of freedom in the global system, even
+      if they are not present in `expression`.
 
-      The variables and constant (data) are listed after the
-      region number (or optionally the model).
-      For each variable/constant, first the variable/constant
-      name should be given (as it is referred in the assembly string), then
-      1 if it is a variable or 0 for a constant, then the finite element
-      method if it is a fem variable/constant or the mesh_im_data if it is
-      data defined on integration points, and the vector representing
-      the value of the variable/constant. It is possible to give an arbitrary
-      number of variable/constant. The difference between a variable and a
-      constant is that automatic differentiation is done with respect to
-      variables only (see GetFEM++ user documentation). Test functions are
-      only available for variables, not for constants.
+      The variables and constants (data) are listed after the region number
+      (or optionally the model).
+      For each variable/constant, a name must be given first (as it is
+      referred in the assembly string), then an integer equal to 1 or 0
+      is expected respectively for declaring a variable or a constant,
+      then the finite element method if it is a fem variable/constant or
+      the mesh_im_data if it is data defined on integration points, and
+      the vector representing the value of the variable/constant.
+      It is possible to give an arbitrary number of variable/constant.
+      The difference between a variable and a constant is that test
+      functions are only available for variables, not for constants.
+
+      `select_output` is an optional parameter which allows to reduce the
+      output vecotr (for `order` equal to 1) or the matrix (for `order`
+      equal to 2) to the degrees of freedom of the specified variables.
+      One variable has to be specified for a vector ouptut and two for a
+      matrix output.
 
       Note that if several variables are given, the assembly of the
       tangent matrix/residual vector will be done considering the order
       in the call of the function (the degrees of freedom of the first
-      variable, then of the second, and so on). If a model is provided,
-      all degrees of freedom of the model will be counted first.
+      variable, then of the second one, and so on). If a model is provided,
+      all degrees of freedom of the model will be counted first, even if
+      some of the model variables do not appear in `expression`.
 
       For example, the L2 norm of a vector field "u" can be computed with::
 

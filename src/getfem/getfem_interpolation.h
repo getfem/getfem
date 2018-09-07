@@ -702,9 +702,31 @@ namespace getfem {
         rg_source.id() == mesh_region::all_convexes().id() &&
         rg_target.id() == mesh_region::all_convexes().id())
       interpolation_same_mesh(mf_source, mf_target, U, V, M, 0);
-    else
-      interpolation(mf_source, mf_target, U, V, M, 0, extrapolation, EPS,
-                    rg_source, rg_target);
+    else {
+      omp_distribute<VECTV> V_distributed;
+      thread_exception exception;
+      rg_source.prohibit_partitioning();
+
+      #pragma omp parallel default(shared)
+      {
+        exception.run(
+        [&] {
+          auto &V_thrd = V_distributed.thrd_cast();
+          gmm::resize(V_thrd, V.size());
+          interpolation(
+            mf_source, mf_target, U, V_thrd, M, 0, extrapolation, EPS,
+            rg_source, rg_target);
+
+          #pragma omp critical
+            for (size_type i = 0; i < V_thrd.size(); ++i) {
+              if (abs(V_thrd[i]) > EPS) V[i] = V_thrd[i];
+            }
+        });
+      }
+
+      rg_source.allow_partitioning();
+      exception.rethrow();
+    }
   }
 
   template<typename MAT>

@@ -551,7 +551,10 @@ namespace getfem {
                 }
               }
             }
-            if (is_node && (nodal_map != NULL)) (*nodal_map)[ci.region].insert(ci.id);
+            if (is_node && (nodal_map != NULL))
+            {
+              for (auto i : ci.nodes) (*nodal_map)[ci.region].insert(i);
+            }
             //if the convex is not part of the face of others
             if (!cvok)
             {
