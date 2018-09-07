@@ -328,6 +328,13 @@ namespace getfem {
     void add_faces_of_convex(size_type)
     { GMM_ASSERT1(false, "Sorry, to be done"); }
 
+
+    /** Merge all convexes from a another mesh, possibly restricted to a
+        mesh region.
+    */
+    void merge_convexes_from_mesh(const mesh &m, size_type rg=size_type(-1),
+                                  scalar_type tol=scalar_type(0));
+
     /// Delete the convex of index ic from the mesh.
     void sup_convex(size_type ic, bool sup_points = false);
     /** Swap the indexes of the convex of indexes i and j

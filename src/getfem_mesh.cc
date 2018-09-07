@@ -314,6 +314,47 @@ namespace getfem {
                            add_point(p3), add_point(p4));
   }
 
+  void mesh::merge_convexes_from_mesh(const mesh &msource, size_type rg,
+                                      scalar_type tol) {
+
+    size_type nbpt = points_index().last()+1;
+    GMM_ASSERT1(nbpt == nb_points(),
+                "Please call the optimize_structure() function before "
+                "merging elements from another mesh");
+    GMM_ASSERT1(rg == size_type(-1) || msource.region(rg).is_only_convexes(),
+                "The provided mesh region should only contain convexes");
+
+    const dal::bit_vector &convexes = (rg == size_type(-1))
+                                    ? msource.convex_index()
+                                    : msource.region(rg).index();
+    std::vector<size_type> old2new(msource.points_index().last()+1, size_type(-1));
+    for (dal::bv_visitor cv(convexes); !cv.finished(); ++cv) {
+
+      bgeot::pgeometric_trans pgt = msource.trans_of_convex(cv);
+      short_type nb = short_type(pgt->nb_points());
+      const ind_cv_ct &rct = msource.ind_points_of_convex(cv);
+      GMM_ASSERT1(nb == rct.size(), "Internal error");
+      std::vector<size_type> ind(nb);
+      for (short_type i = 0; i < nb; ++i) {
+        size_type old_pid = rct[i];
+        size_type new_pid = old2new[old_pid];
+        if (new_pid == size_type(-1)) {
+          size_type next_pid = points_index().last()+1;
+          base_node pt = msource.points()[old_pid];
+          new_pid = pts.add_node(pt, tol);
+          if (new_pid < next_pid && new_pid >= nbpt) {
+            // do not allow internal merging of nodes in the source mesh
+            new_pid = pts.add_node(pt, -1.);
+            GMM_ASSERT1(new_pid == next_pid, "Internal error");
+          }
+          old2new[old_pid] = new_pid;
+        }
+        ind[i] = new_pid;
+      }
+      add_convex(pgt, ind.begin());
+    }
+  }
+
   void mesh::sup_convex(size_type ic, bool sup_points) {
     static std::vector<size_type> ipt;
     if (sup_points) {
