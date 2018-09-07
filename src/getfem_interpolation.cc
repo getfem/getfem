@@ -67,7 +67,7 @@ namespace getfem {
     npt.add(0, nbpts);
     scalar_type mult = scalar_type(1);
 
-    gic.set_projection_into_element(extrapolation == 0);
+    bool projection_into_element(extrapolation == 0);
 
     do {
       for (dal::bv_visitor j(rg_source.index()); !j.finished(); ++j) {
@@ -103,7 +103,8 @@ namespace getfem {
           size_type ind = boxpts[l].i;
           if (npt[ind] || dist[ind] > 0) {
             bool converged;
-            bool gicisin = gic.invert(boxpts[l].n, pt_ref, converged, EPS);
+            bool gicisin = gic.invert(boxpts[l].n, pt_ref, converged, EPS,
+                                      projection_into_element);
             bool toadd = extrapolation || gicisin;
             double isin = pgt->convex_ref()->is_in(pt_ref);
             

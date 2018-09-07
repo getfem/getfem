@@ -2017,7 +2017,7 @@ namespace getfem {
   //
   //=========================================================================
 
- class  projection_interpolate_transformation
+  class  projection_interpolate_transformation
     : public raytracing_interpolate_transformation {
 
     scalar_type release_distance;  // Limit distance beyond which the contact

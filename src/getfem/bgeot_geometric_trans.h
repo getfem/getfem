@@ -159,8 +159,6 @@ namespace bgeot {
     template<class CONT> base_node transform(const base_node &pt,
                                              const CONT &PTAB) const;
     base_node transform(const base_node &pt, const base_matrix &G) const;
-    /** Compute the gradient at point x, pc is resized to [nb_points() x dim()]
-        if the transformation is linear, x is not used at all */
     size_type complexity() const { return complexity_; }
     virtual ~geometric_trans()
       { DAL_STORED_OBJECT_DEBUG_DESTROYED(this, "Geometric transformation"); }

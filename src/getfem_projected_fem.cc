@@ -283,7 +283,7 @@ namespace getfem {
       else { // project on convex faces
         mesh_region::face_bitset faces = rg_source.faces_of_convex(cv);
         if (faces.count() > 0) { // this should rarely be more than one face
-          bgeot::vectors_to_base_matrix(G, mf_source.linked_mesh().points_of_convex(cv));
+          mf_source.linked_mesh().points_of_convex(cv, G);
           short_type nbf = mf_source.linked_mesh().nb_faces_of_convex(cv);
           for (short_type f = 0; f < nbf; ++f) {
             if (faces.test(f)) {
@@ -337,8 +337,8 @@ namespace getfem {
         dim_ = dim__;
         if (i.is_face()) dim__ = dim_type(dim__ - 1);
         GMM_ASSERT1(dim__ < N, "The projection should take place in lower "
-                              "dimensions than the mesh dimension. Otherwise "
-                              "use the interpolated_fem object instead.");
+                               "dimensions than the mesh dimension. Otherwise "
+                               "use the interpolated_fem object instead.");
       }
       else
         GMM_ASSERT1(dim_ == dim__,
@@ -366,7 +366,7 @@ namespace getfem {
         if (gppd.iflags) {
           // calculate gppd.normal
           const bgeot::pgeometric_trans pgt_source = mf_source.linked_mesh().trans_of_convex(gppd.cv);
-          bgeot::vectors_to_base_matrix(G, mf_source.linked_mesh().points_of_convex(gppd.cv));
+          mf_source.linked_mesh().points_of_convex(gppd.cv, G);
           if (gppd.f != short_type(-1))
             normal_on_convex_face(pgt_source, G, gppd.f, gppd.ptref, gppd.normal);
           else
@@ -380,15 +380,17 @@ namespace getfem {
           if (gppd.f == short_type(-1)) { // convex
             size_type nbdof = mf_source.nb_basic_dof_of_element(gppd.cv);
             for (size_type loc_dof = 0; loc_dof < nbdof; ++loc_dof) {
-              size_type idof = mf_source.ind_basic_dof_of_element(gppd.cv)[loc_dof];
-              if (!(blocked_dofs[idof])) dofs.add(idof);
+              size_type dof = mf_source.ind_basic_dof_of_element(gppd.cv)[loc_dof];
+              if (!(blocked_dofs[dof]))
+                dofs.add(dof);
             }
           }
           else { // convex face
             size_type nbdof = mf_source.nb_basic_dof_of_face_of_element(gppd.cv, gppd.f);
             for (size_type loc_dof = 0; loc_dof < nbdof; ++loc_dof) {
-              size_type idof = mf_source.ind_basic_dof_of_face_of_element(gppd.cv, gppd.f)[loc_dof];
-              if (!(blocked_dofs[idof])) dofs.add(idof);
+              size_type dof = mf_source.ind_basic_dof_of_face_of_element(gppd.cv, gppd.f)[loc_dof];
+              if (!(blocked_dofs[dof]))
+                dofs.add(dof);
             }
           }
           last_cv = gppd.cv;
@@ -400,17 +402,17 @@ namespace getfem {
       e.inddof.resize(dofs.card());
       max_dof = std::max(max_dof, dofs.card());
       size_type cnt = 0;
-      for (dal::bv_visitor idof(dofs); !idof.finished(); ++idof)
-        { e.inddof[cnt] = idof; ind_dof[idof] = cnt++; }
+      for (dal::bv_visitor dof(dofs); !dof.finished(); ++dof)
+        { e.inddof[cnt] = dof; ind_dof[dof] = cnt++; }
       for (size_type k = 0; k < nb_pts; ++k) {
         gausspt_projection_data &gppd = e.gausspt[start_pt + k];
         if (gppd.iflags) {
           if (gppd.f == short_type(-1)) { // convex
             size_type nbdof = mf_source.nb_basic_dof_of_element(gppd.cv);
             for (size_type loc_dof = 0; loc_dof < nbdof; ++loc_dof) {
-              size_type idof = mf_source.ind_basic_dof_of_element(gppd.cv)[loc_dof];
-              gppd.local_dof[loc_dof] = dofs.is_in(idof) ? ind_dof[idof]
-                                                         : size_type(-1);
+              size_type dof = mf_source.ind_basic_dof_of_element(gppd.cv)[loc_dof];
+              gppd.local_dof[loc_dof] = dofs.is_in(dof) ? ind_dof[dof]
+                                                        : size_type(-1);
             }
           }
           else { // convex face
@@ -420,19 +422,19 @@ namespace getfem {
             unsigned rdim = target_dim() / pf->target_dim();
             if (rdim == 1)
               for (size_type loc_dof = 0; loc_dof < nbdof; ++loc_dof) { // local dof with respect to the source convex face
-                size_type idof = mf_source.ind_basic_dof_of_face_of_element(gppd.cv, gppd.f)[loc_dof];
+                size_type dof = mf_source.ind_basic_dof_of_face_of_element(gppd.cv, gppd.f)[loc_dof];
                 size_type loc_dof2 = ind_pts_fc[loc_dof]; // local dof with respect to the source convex
-                gppd.local_dof[loc_dof2] = dofs.is_in(idof) ? ind_dof[idof]
-                                                            : size_type(-1);
+                gppd.local_dof[loc_dof2] = dofs.is_in(dof) ? ind_dof[dof]
+                                                           : size_type(-1);
               }
             else
               for (size_type ii = 0; ii < nbdof/rdim; ++ii)
                 for (size_type jj = 0; jj < rdim; ++jj) {
                   size_type loc_dof = ii*rdim + jj; // local dof with respect to the source convex face
-                  size_type idof = mf_source.ind_basic_dof_of_face_of_element(gppd.cv, gppd.f)[loc_dof];
+                  size_type dof = mf_source.ind_basic_dof_of_face_of_element(gppd.cv, gppd.f)[loc_dof];
                   size_type loc_dof2 = ind_pts_fc[ii]*rdim + jj; // local dof with respect to the source convex
-                  gppd.local_dof[loc_dof2] = dofs.is_in(idof) ? ind_dof[idof]
-                                                              : size_type(-1);
+                  gppd.local_dof[loc_dof2] = dofs.is_in(dof) ? ind_dof[dof]
+                                                             : size_type(-1);
                 }
           }
         }
@@ -447,7 +449,7 @@ namespace getfem {
     std::fill(dof_types_.begin(), dof_types_.end(),
               global_dof(dim()));
 
-    /* ind_dof should be kept full of -1 ( real_base_value and
+    /* ind_dof should be kept filled with -1 ( real_base_value and
        grad_base_value expect that)
     */
     std::fill(ind_dof.begin(), ind_dof.end(), size_type(-1));
@@ -495,8 +497,7 @@ namespace getfem {
   inline void projected_fem::actualize_fictx(pfem pf, size_type cv,
                                              const base_node &ptr) const {
     if (fictx_cv != cv) {
-      bgeot::vectors_to_base_matrix
-        (G, mf_source.linked_mesh().points_of_convex(cv));
+      mf_source.linked_mesh().points_of_convex(cv, G);
       fictx = fem_interpolation_context
         (mf_source.linked_mesh().trans_of_convex(cv), pf, base_node(), G, cv);
       fictx_cv = cv;
@@ -509,7 +510,8 @@ namespace getfem {
     std::map<size_type,elt_projection_data>::iterator eit;
     eit = elements.find(c.convex_num());
     if (eit == elements.end()) {
-      mi2[1] = target_dim(); mi2[0] = short_type(0);
+      mi2[1] = target_dim();
+      mi2[0] = short_type(0);
       t.adjust_sizes(mi2);
       std::fill(t.begin(), t.end(), scalar_type(0));
       return;
@@ -517,7 +519,8 @@ namespace getfem {
 //    GMM_ASSERT1(eit != elements.end(), "Wrong convex number: " << c.convex_num());
     elt_projection_data &e = eit->second;
 
-    mi2[1] = target_dim(); mi2[0] = short_type(e.nb_dof);
+    mi2[1] = target_dim();
+    mi2[0] = short_type(e.nb_dof);
     t.adjust_sizes(mi2);
     std::fill(t.begin(), t.end(), scalar_type(0));
     if (e.nb_dof == 0) return;
@@ -601,8 +604,10 @@ namespace getfem {
     std::map<size_type,elt_projection_data>::iterator eit;
     eit = elements.find(c.convex_num());
     if (eit == elements.end()) {
-    mi3[2] = mf_source.linked_mesh().dim(); mi3[1] = target_dim(); mi3[0] = short_type(0);
-      t.adjust_sizes(mi2);
+      mi3[2] = mf_source.linked_mesh().dim();
+      mi3[1] = target_dim();
+      mi3[0] = short_type(0);
+      t.adjust_sizes(mi3);
       std::fill(t.begin(), t.end(), scalar_type(0));
       return;
     }
@@ -610,7 +615,9 @@ namespace getfem {
     elt_projection_data &e = eit->second;
 
     size_type N = mf_source.linked_mesh().dim();
-    mi3[2] = short_type(N); mi3[1] = target_dim(); mi3[0] = short_type(e.nb_dof);
+    mi3[2] = short_type(N);
+    mi3[1] = target_dim();
+    mi3[0] = short_type(e.nb_dof);
     t.adjust_sizes(mi3);
     std::fill(t.begin(), t.end(), scalar_type(0));
     if (e.nb_dof == 0) return;
@@ -735,7 +742,7 @@ namespace getfem {
     short_type f;
     if (find_a_projected_point(pt, ptref, cv, f)) {
       const bgeot::pgeometric_trans pgt = mf_source.linked_mesh().trans_of_convex(cv);
-      bgeot::vectors_to_base_matrix(G, mf_source.linked_mesh().points_of_convex(cv));
+      mf_source.linked_mesh().points_of_convex(cv, G);
       if (f != short_type(-1))
         normal_on_convex_face(pgt, G, f, ptref, normal);
       else

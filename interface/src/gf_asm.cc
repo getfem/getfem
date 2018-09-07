@@ -772,7 +772,7 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
 
       Performs the generic assembly of `expression` with the integration
       method `mim` on the mesh region of index `region` (-1 means all
-      the element of the mesh). The same mesh should be shared by
+      elements of the mesh). The same mesh should be shared by
       the integration method and all the finite element methods or
       mesh_im_data corresponding to the variables.
 
@@ -781,22 +781,22 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
       tangent (matrix) (order = 2) is to be computed.
 
       `model` is an optional parameter allowing to take into account
-      all variables and data of a model. Optionnally, for the integration
-      on the product of two domains, a secondary domain of the model can
-      be specified after a 'Secondary_domain' string.
+      all variables and data of a model. Note that all enabled variables
+      of the model will occupy space in the returned vector/matrix
+      corresponding to their degrees of freedom in the global system, even
+      if they are not present in `expression`.
 
-      The variables and constant (data) are listed after the
-      region number (or optionally the model).
-      For each variable/constant, first the variable/constant
-      name should be given (as it is referred in the assembly string), then
-      1 if it is a variable or 0 for a constant, then the finite element
-      method if it is a fem variable/constant or the mesh_im_data if it is
-      data defined on integration points, and the vector representing
-      the value of the variable/constant. It is possible to give an arbitrary
-      number of variable/constant. The difference between a variable and a
-      constant is that automatic differentiation is done with respect to
-      variables only (see GetFEM++ user documentation). Test functions are
-      only available for variables, not for constants.
+      The variables and constants (data) are listed after the region number
+      (or optionally the model).
+      For each variable/constant, a name must be given first (as it is
+      referred in the assembly string), then an integer equal to 1 or 0
+      is expected respectively for declaring a variable or a constant,
+      then the finite element method if it is a fem variable/constant or
+      the mesh_im_data if it is data defined on integration points, and
+      the vector representing the value of the variable/constant.
+      It is possible to give an arbitrary number of variable/constant.
+      The difference between a variable and a constant is that test
+      functions are only available for variables, not for constants.
 
       `select_output` is an optional parameter which allows to reduce the
       output vecotr (for `order` equal to 1) or the matrix (for `order`
@@ -807,8 +807,9 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
       Note that if several variables are given, the assembly of the
       tangent matrix/residual vector will be done considering the order
       in the call of the function (the degrees of freedom of the first
-      variable, then of the second, and so on). If a model is provided,
-      all degrees of freedom of the model will be counted first.
+      variable, then of the second one, and so on). If a model is provided,
+      all degrees of freedom of the model will be counted first, even if
+      some of the model variables do not appear in `expression`.
 
       For example, the L2 norm of a vector field "u" can be computed with::
 

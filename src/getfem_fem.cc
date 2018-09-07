@@ -1605,7 +1605,7 @@ namespace getfem {
   }
 
   /* ******************************************************************** */
-  /*        P1 element with a bubble base fonction on a face              */
+  /*        P1 element with a bubble base function on a face              */
   /* ******************************************************************** */
 
   struct P1_wabbfoaf_ : public PK_fem_ {
@@ -1640,7 +1640,7 @@ namespace getfem {
   }
 
   /* ******************************************************************** */
-  /*        Element RT0 on the simplexes.                                     */
+  /*    Element RT0 on the simplexes.                                     */
   /* ******************************************************************** */
 
   struct P1_RT0_ : public fem<base_poly> {
@@ -1680,7 +1680,7 @@ namespace getfem {
       scalar_type ps = gmm::vect_sp(n, norient);
       if (ps < 0) M(i, i) *= scalar_type(-1);
       if (gmm::abs(ps) < 1E-8)
-        GMM_WARNING2("RT0 : The normal orientation may be not correct");
+        GMM_WARNING2("RT0 : The normal orientation may be incorrect");
     }
   }
 
@@ -1737,7 +1737,7 @@ namespace getfem {
 
 
   /* ******************************************************************** */
-  /*        Element RT0 on parallelepideds.                                   */
+  /*    Element RT0 on parallelepideds.                                   */
   /* ******************************************************************** */
 
   struct P1_RT0Q_ : public fem<base_poly> {
@@ -1777,7 +1777,7 @@ namespace getfem {
       scalar_type ps = gmm::vect_sp(n, norient);
       if (ps < 0) M(i, i) *= scalar_type(-1);
       if (gmm::abs(ps) < 1E-8)
-        GMM_WARNING2("RT0Q : The normal orientation may be not correct");
+        GMM_WARNING2("RT0Q : The normal orientation may be incorrect");
     }
   }
 
@@ -1834,7 +1834,7 @@ namespace getfem {
 
 
   /* ******************************************************************** */
-  /*        Nedelec Element.                                                  */
+  /*    Nedelec Element.                                                  */
   /* ******************************************************************** */
 
   struct P1_nedelec_ : public fem<base_poly> {
@@ -1949,7 +1949,7 @@ namespace getfem {
 
 
   /* ******************************************************************** */
-  /*        P1 element with a bubble base fonction on a face : type lagrange  */
+  /*    P1 element with a bubble base function on a face : type lagrange  */
   /* ******************************************************************** */
 
   struct P1_wabbfoafla_ : public PK_fem_
@@ -1981,7 +1981,7 @@ namespace getfem {
 
 
   /* ******************************************************************** */
-  /*        PK Gauss-Lobatto element on the segment                           */
+  /*    PK Gauss-Lobatto element on the segment                           */
   /* ******************************************************************** */
 
   static const double fem_coef_gausslob_1[4] =
@@ -3227,7 +3227,7 @@ namespace getfem {
   }
 
   /* ******************************************************************** */
-  /*        Hermite element on the triangle                                   */
+  /*    Hermite element on the triangle                                   */
   /* ******************************************************************** */
 
   struct hermite_triangle__ : public fem<base_poly> {
@@ -3300,7 +3300,7 @@ namespace getfem {
  }
 
   /* ******************************************************************** */
-  /*        Hermite element on the tetrahedron                                */
+  /*    Hermite element on the tetrahedron                                */
   /* ******************************************************************** */
 
   struct hermite_tetrahedron__ : public fem<base_poly> {
@@ -3471,7 +3471,7 @@ namespace getfem {
       scalar_type ps = gmm::vect_sp(n, norient);
       if (ps < 0) n *= scalar_type(-1);
       if (gmm::abs(ps) < 1E-8)
-        GMM_WARNING2("Argyris : The normal orientation may be not correct");
+        GMM_WARNING2("Argyris : The normal orientation may be incorrect");
       gmm::mult(K, n, v);
       const bgeot::base_tensor &t = pfp->grad(i);
       for (unsigned j = 0; j < 21; ++j)
@@ -3615,7 +3615,7 @@ namespace getfem {
       scalar_type ps = gmm::vect_sp(n, norient);
       if (ps < 0) n *= scalar_type(-1);
       if (gmm::abs(ps) < 1E-8)
-        GMM_WARNING2("Morley : The normal orientation may be not correct");
+        GMM_WARNING2("Morley : The normal orientation may be incorrect");
       gmm::mult(K, n, v);
       const bgeot::base_tensor &t = pfp->grad(i);
       for (unsigned j = 0; j < 6; ++j)
@@ -3673,7 +3673,7 @@ namespace getfem {
   }
 
   /* ******************************************************************** */
-  /*        DISCONTINUOUS PK                                                  */
+  /*    DISCONTINUOUS PK                                                  */
   /* ******************************************************************** */
 
   struct PK_discont_ : public PK_fem_ {
@@ -3724,7 +3724,7 @@ namespace getfem {
 
 
   /* ******************************************************************** */
-  /*        PK element with a bubble base fonction                            */
+  /*    PK element with a bubble base function                            */
   /* ******************************************************************** */
 
   struct PK_with_cubic_bubble_ : public PK_fem_ {
@@ -3771,7 +3771,7 @@ namespace getfem {
   }
 
   /* ******************************************************************** */
-  /*        classical fem                                                     */
+  /*    classical fem                                                     */
   /* ******************************************************************** */
 
   static pfem classical_fem_(bgeot::pgeometric_trans pgt,

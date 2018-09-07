@@ -108,7 +108,7 @@ namespace bgeot {
      *  positive in the other side.
      */
     virtual scalar_type is_in_face(short_type, const base_node &) const =0;
-    bool is_basic() const;
+    bool is_basic() const { return auto_basic; }
     /// return the normal vector for each face.
     const std::vector<base_small_vector> &normals() const
     { return normals_; }
