@@ -174,6 +174,10 @@ namespace bgeot{
     GMM_ASSERT1(false, "Sorry, Hessian is not supported in axisymmetric transformation.");
   }
 
+  void torus_geom_trans::project_into_reference_convex(base_node &pt) const {
+    poriginal_trans_->project_into_reference_convex(pt);
+  }
+
   torus_geom_trans::torus_geom_trans(pgeometric_trans poriginal_trans) 
     : poriginal_trans_(poriginal_trans){
       geometric_trans::is_lin = poriginal_trans_->is_linear();
