@@ -1850,9 +1850,7 @@ namespace getfem {
           }
         }
         //erase every second item , as it was already added
-        for (auto it = begin(to_add); it < end(to_add);){
-          if (next(it) < end(to_add)) it = to_add.erase(next(it));
-        }
+        for (auto it = begin(to_add); next(it) < end(to_add); it = to_add.erase(next(it)));
       }
     }
   };
