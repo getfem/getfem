@@ -75,9 +75,12 @@ namespace getfem{
     * @param filtered_region index not in the region will be filtered
     *        out. If filtered_region can contain only convexes or only
     *        faces or both convexes and faces.
+    * @param Actual_tensor_size the actual size of the tensor the data represents.
+             Used for example, for a Voigt annotated data.
     */
     im_data(const mesh_im& mim_, bgeot::multi_index tensor_size,
-            size_type filtered_region_ = size_type(-1));
+            size_type filtered_region_ = size_type(-1),
+            bgeot::multi_index actual_tensor_size = {});
 
     /**
     * Constructor. The tensor size by default is a scalar value.
@@ -158,9 +161,13 @@ namespace getfem{
     getfem::papprox_integration approx_int_method_of_element(size_type cv) const
     { return im_.int_method_of_element(cv)->approx_method(); }
 
-    inline const bgeot::multi_index& tensor_size () const { return tensor_size_;}
+    inline const bgeot::multi_index& tensor_size() const { return tensor_size_; }
 
-    void set_tensor_size (const bgeot::multi_index& tensor_size);
+    void set_tensor_size(const bgeot::multi_index& tensor_size);
+
+    inline const bgeot::multi_index& actual_tensor_size() const { return actual_tensor_size_; }
+
+    void set_actual_tensor_size(const bgeot::multi_index &tensor_size);
 
     inline gmm::uint64_type version_number() const { context_check(); return v_num_; }
 
@@ -409,6 +416,7 @@ namespace getfem{
     mutable gmm::uint64_type v_num_;
 
     bgeot::multi_index     tensor_size_;
+    bgeot::multi_index     actual_tensor_size_;
     size_type              nb_tensor_elem_;
     lock_factory           locks_;
   };

@@ -27,13 +27,15 @@ namespace getfem
 
   im_data::im_data(const getfem::mesh_im& mim,
                    bgeot::multi_index tsize,
-                   size_type filtered_region_)
+                   size_type filtered_region_,
+                   bgeot::multi_index actual_tsize)
     : im_(mim), region_(filtered_region_),
       nb_int_pts_intern(0), nb_int_pts_onfaces(0),
       nb_filtered_int_pts_intern(0), nb_filtered_int_pts_onfaces(0),
       locks_()
   {
     set_tensor_size(tsize);
+    set_actual_tensor_size(actual_tsize);
     add_dependency(im_);
     update_from_context();
   }
@@ -46,6 +48,7 @@ namespace getfem
   {
     tensor_size_.resize(1);
     tensor_size_[0] = 1;
+    actual_tensor_size_ = tensor_size_;
     nb_tensor_elem_ = 1;
     add_dependency(im_);
     update_from_context();
@@ -228,8 +231,13 @@ namespace getfem
   }
 
   void im_data::set_tensor_size(const bgeot::multi_index& tsize) {
-    tensor_size_ = tsize;    
+    if (actual_tensor_size_ == tensor_size_) actual_tensor_size_ = tsize;
+    tensor_size_ = tsize;
     nb_tensor_elem_ = tensor_size_.total_size();
+  }
+
+  void im_data::set_actual_tensor_size(const bgeot::multi_index& tsize) {
+    actual_tensor_size_ = tsize.empty() ? tensor_size_ : tsize;
   }
 
   bool is_equivalent_with_vector(const bgeot::multi_index &sizes, size_type vector_size) {
