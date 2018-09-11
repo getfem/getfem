@@ -57,32 +57,7 @@
 #include "bgeot_kdtree.h"
 
 namespace bgeot {
-  class geotrans_inv_convex;
 
-  struct nonlinear_storage_struct {
-    base_node diff;
-    base_node x_real;
-    base_node x_ref;
-    bool project_into_element;
-
-    struct linearised_structure {
-      linearised_structure(
-        const convex_ind_ct &direct_points_indices,
-        const stored_point_tab &reference_nodes,
-        const std::vector<base_node> &real_nodes);
-      void invert(const base_node &x_real, base_node &x_ref,
-		  scalar_type IN_EPS) const;
-
-      base_matrix K_ref_linear;
-      base_matrix B_linear;
-      base_node P_linear;
-      base_node P_ref_linear;
-      mutable base_node diff;
-      mutable base_node diff_ref;
-    };
-
-    std::shared_ptr<linearised_structure> plinearised_structure = nullptr;
-  };
   /** 
       does the inversion of the geometric transformation for a given convex
   */
@@ -91,33 +66,32 @@ namespace bgeot {
     base_matrix G, pc, K, B, CS;
     pgeometric_trans pgt = nullptr;
     scalar_type EPS;
-    nonlinear_storage_struct nonlinear_storage;
+
+    bool has_linearized_approx = false;
+    base_matrix K_ref_B_transp_lin;
+    base_node P_lin, P_ref_lin;
 
   public:
     const base_matrix &get_G() const { return G; }
-    geotrans_inv_convex(scalar_type e=10e-12, bool project_into_element=false) :
-      N(0), P(0), pgt(0), EPS(e)
-    { this->nonlinear_storage.project_into_element = project_into_element; }
+
+    geotrans_inv_convex(scalar_type e=10e-12)
+      : N(0), P(0), pgt(0), EPS(e) {}
 
     template<class TAB> geotrans_inv_convex(const convex<base_node, TAB> &cv,
-					    pgeometric_trans pgt_, 
-					    scalar_type e=10e-12,
-					    bool project_into_element = false)
-      : N(0), P(0), pgt(0), EPS(e) {
-      this->nonlinear_storage.project_into_element = project_into_element;
-      init(cv.points(),pgt_);
+                                            pgeometric_trans pgt_, 
+                                            scalar_type e=10e-12)
+      : N(0), P(0), pgt(0), EPS(e)
+    {
+      init(cv.points(), pgt_);
     }
 
     geotrans_inv_convex(const std::vector<base_node> &nodes,
-			pgeometric_trans pgt_,
-			scalar_type e=10e-12,
-			bool project_into_element = false)
-      : N(0), P(0), pgt(0), EPS(e) {
-      this->nonlinear_storage.project_into_element = project_into_element;
-      init(nodes,pgt_);
+                        pgeometric_trans pgt_,
+                        scalar_type e=10e-12)
+      : N(0), P(0), pgt(0), EPS(e)
+    {
+      init(nodes, pgt_);
     }
-
-    void set_projection_into_element(bool activate);
 
     template<class TAB> void init(const TAB &nodes, pgeometric_trans pgt_);
     
@@ -137,7 +111,7 @@ namespace bgeot {
        @param IN_EPS a threshold.
     */
     bool invert(const base_node& n, base_node& n_ref,
-		scalar_type IN_EPS=1e-12);
+                scalar_type IN_EPS=1e-12, bool project_into_element=false);
 
     /**
        given the node on the real element, returns the node
@@ -158,18 +132,21 @@ namespace bgeot {
        @param IN_EPS a threshold.
     */
     bool invert(const base_node& n, base_node& n_ref, bool &converged, 
-		scalar_type IN_EPS=1e-12);
+                scalar_type IN_EPS=1e-12, bool project_into_element=false);
   private:
-    bool invert_lin(const base_node& n, base_node& n_ref, scalar_type IN_EPS);
+    bool invert_lin(const base_node& n, base_node& n_ref, scalar_type IN_EPS,
+                    bool project_into_element);
     bool invert_nonlin(const base_node& n, base_node& n_ref,
-		       scalar_type IN_EPS, bool &converged, bool throw_except);
+                       scalar_type IN_EPS, bool &converged, bool throw_except,
+                       bool project_into_element);
     void update_B();
+    void update_linearization();
 
     friend class geotrans_inv_convex_bfgs;
   };
 
   template<class TAB>
-  void geotrans_inv_convex::init(const TAB &nodes,  pgeometric_trans pgt_) {
+  void geotrans_inv_convex::init(const TAB &nodes, pgeometric_trans pgt_) {
     bool geotrans_changed = (pgt != pgt_); if (geotrans_changed) pgt = pgt_;
     GMM_ASSERT3(!nodes.empty(), "empty points!");
     if (N != nodes[0].size())
@@ -183,23 +160,14 @@ namespace bgeot {
     vectors_to_base_matrix(G, nodes);
     if (pgt->is_linear()) {
       if (geotrans_changed) {
-	base_node Dummy(P);
-	pgt->poly_vector_grad(Dummy, pc);
+        base_node Dummy(P);
+        pgt->poly_vector_grad(Dummy, pc);
       }
       // computation of the pseudo inverse
       update_B();
     } else {
-      this->nonlinear_storage.diff.resize(N);
-      this->nonlinear_storage.x_real.resize(N);
-      this->nonlinear_storage.x_ref.resize(P);
-
-      if (pgt->complexity() > 1) {
-        std::vector<base_node> real_nodes(nodes.begin(), nodes.end());
-        this->nonlinear_storage.plinearised_structure
-          = std::make_shared<nonlinear_storage_struct::linearised_structure>
-	  (pgt->structure()->ind_dir_points(), pgt->geometric_nodes(),
-	   real_nodes);
-      }
+      if (pgt->complexity() > 1)
+        update_linearization();
     }
   }
 
@@ -232,8 +200,8 @@ namespace bgeot {
       
     /// Find all the points present in the box between min and max.
     size_type points_in_box(kdtree_tab_type &ipts,
-			    const base_node &min, 
-			    const base_node &max) const {
+                            const base_node &min, 
+                            const base_node &max) const {
       tree.points_in_box(ipts, min, max);
       return ipts.size();
     }
@@ -262,9 +230,9 @@ namespace bgeot {
      */
     template<class TAB, class CONT1, class CONT2>
     size_type points_in_convex(const convex<base_node, TAB> &cv,
-			       pgeometric_trans pgt,
-			       CONT1 &pftab, CONT2 &itab,
-			       bool bruteforce=false);
+                               pgeometric_trans pgt,
+                               CONT1 &pftab, CONT2 &itab,
+                               bool bruteforce=false);
       
     geotrans_inv(scalar_type EPS_ = 10E-12) : EPS(EPS_) {}
   };
@@ -273,9 +241,9 @@ namespace bgeot {
 
   template<class TAB, class CONT1, class CONT2>
   size_type geotrans_inv::points_in_convex(const convex<base_node, TAB> &cv,
-					   pgeometric_trans pgt,
-					   CONT1 &pftab, CONT2 &itab,
-					   bool bruteforce) {
+                                           pgeometric_trans pgt,
+                                           CONT1 &pftab, CONT2 &itab,
+                                           bool bruteforce) {
     base_node min, max; /* bound of the box enclosing the convex */
     size_type nbpt = 0; /* nb of points in the convex */
     kdtree_tab_type boxpts;
@@ -290,7 +258,7 @@ namespace bgeot {
     for (size_type l = 0; l < boxpts.size(); ++l) {
       // base_node pt_ref;
       if (gic.invert(boxpts[l].n, pftab[nbpt], EPS)) {
-	itab[nbpt++] = boxpts[l].i;
+        itab[nbpt++] = boxpts[l].i;
       }
     }
     return nbpt;

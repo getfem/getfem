@@ -719,7 +719,7 @@ namespace getfem {
 
           #pragma omp critical
             for (size_type i = 0; i < V_thrd.size(); ++i) {
-              if (abs(V_thrd[i]) > EPS) V[i] = V_thrd[i];
+              if (gmm::abs(V_thrd[i]) > EPS) V[i] = V_thrd[i];
             }
         });
       }
