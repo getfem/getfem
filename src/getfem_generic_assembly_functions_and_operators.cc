@@ -308,21 +308,23 @@ namespace getfem {
         gmm::clear(result.as_vector());
       else {
         auto it = result.begin();
-        auto ita = __mat_aux1().begin(), ita_l = ita;
-        for (size_type l = 0; l < N; ++l, ++ita_l) {
-          auto ita_lk = ita_l, ita_jk = ita;
-          for (size_type k = 0; k < N; ++k, ita_lk += N, ita_jk += N) {
-            auto ita_j = ita;
-            for (size_type j = 0; j < N; ++j, ++ita_j, ++ita_jk) {
-              auto ita_ji = ita_j, ita_li = ita_l;
-              for (size_type i = 0; i < N; ++i, ++it, ita_ji += N, ita_li += N)
-                *it = ((*ita_ji) * (*ita_lk) - (*ita_jk) * (*ita_li)) * det;
+        auto ita = __mat_aux1().begin(), ita_l = ita, ita_0l = ita;
+        for (size_type l = 0; l < N; ++l, ++ita_l, ita_0l += N) {
+          auto ita_lk = ita_l;
+          for (size_type k = 0; k < N; ++k, ita_lk += N) {
+            auto ita_j = ita, ita_kj = ita + k;
+            for (size_type j = 0; j < N; ++j, ++ita_j, ita_kj += N) {
+              auto ita_ji = ita_j, ita_il = ita_0l;
+              for (size_type i = 0; i < N; ++i, ++it, ita_ji += N, ita_il++)
+                *it = ((*ita_ji) * (*ita_lk) - (*ita_kj) * (*ita_il)) * det;
             }
           }
         }
         GA_DEBUG_ASSERT(it == result.end(), "Internal error");
       }
     }
+
+    
   };
 
   // Inverse Operator (for square matrices)
