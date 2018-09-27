@@ -308,7 +308,7 @@ although it is guaranteed that the matrices in ``matl`` have good sizes they
 maybe not cleared before the call of ``asm_real_tangent_terms``.
 
 Note that this simple brick has only one term and is linear. In the case of a
-linear birck, either the matrix or the right hand side vector have to be filled
+linear brick, either the matrix or the right hand side vector have to be filled
 but not both the two. Depending on the declaration of the term. See below the
 integration of the brick to the model.
 
