@@ -154,7 +154,7 @@ References
    *Domain decomposition algorithms for the p-version finite element method for elliptic problems*. Luca F. Pavarino. PhD thesis, Courant Institute of Mathematical Sciences}. 1992.
 
 .. [PO-NI2016] K. Poulios, C.F. Niordson,
-   *Homogenization of long fiber reinforced composites including fiber bending effects*. Journal of the Mechanics and Physics od Solids, 94, pp 433-452, 2016.
+   *Homogenization of long fiber reinforced composites including fiber bending effects*. Journal of the Mechanics and Physics of Solids, 94, pp 433-452, 2016.
 
 .. [remacle2002] J-F. Remacle, M. Shephard,
    *An algorithm oriented database*.  Internat. J. Numer. Methods Engrg., 58, 349-374, 2003.
