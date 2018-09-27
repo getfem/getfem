@@ -856,7 +856,7 @@ where :math:`k(x,y)` is a given kernel, :math:`u` a quantity defined on :math:`\
 CAUTION: Of course, this kind of term have to be used with great care, since it naturally leads to fully populated stiffness or tangent matrices. 
 
 
-The weak form language of |gf| furnishes a mecanism to compute such a term. First, the secondary domain has to be declared in the workspace/model with its integration methods. The addition of a standard secondary domain can be done with one of the two following functions::
+The weak form language of |gf| furnishes a mechanism to compute such a term. First, the secondary domain has to be declared in the workspace/model with its integration methods. The addition of a standard secondary domain can be done with one of the two following functions::
 
   add_standard_secondary_domain(model, domain_name, mim, region);
   

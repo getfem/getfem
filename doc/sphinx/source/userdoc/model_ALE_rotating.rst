@@ -105,7 +105,7 @@ Note that the term :math:`\dot{\theta} A \bar{X} = \left(\hspace*{-0.5em}\begin{
 
 This should not be forgotten that a correction has to be provided for each evolving variable for which the time derivative intervene in the considered model (think for instance to platic flow for plasticity). So that certain model bricks canot be used directly (plastic bricks for instance).
 
-|gf| bricks for structural mecanics are mainly considering the displacement as the amin unknown. The expression for the displacement is the following:
+|gf| bricks for structural mechanics are mainly considering the displacement as the amin unknown. The expression for the displacement is the following:
 
 .. math::
   \Frac{\partial u}{\partial t} = \Frac{\partial \bar{u}}{\partial t} + \dot{\theta} (I_d + \nabla \bar{u}) A \bar{X} + \dot{Z}(t),
