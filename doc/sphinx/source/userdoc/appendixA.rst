@@ -248,7 +248,7 @@ the classical :math:`P_K` Lagrange element.
 
 Even though Lagrange elements are defined for arbitrary degrees, to choose a high
 degree can be problematic for a large number of applications due to the "noisy"
-caracteristic of the lagrange basis. These elements are recommended for the basic
+characteristic of the lagrange basis. These elements are recommended for the basic
 interpolation but for p.d.e. applications elements with hierarchical basis are
 preferable (see the corresponding section).
 
