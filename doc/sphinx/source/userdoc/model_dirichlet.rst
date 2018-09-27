@@ -94,7 +94,7 @@ The third version of the Dirichlet condition brick use a simplification of the l
   add_Dirichlet_condition_with_simplification(md, varname, region,
                                             dataname = std::string());
 
-If `dataname` is ommited, an homogeneous Dirichlet condition is applied. If `dataname` is given, the constraint is that it has to be constant or described on the same finite element method as the variable `varname` on which the Dirichlet condition is applied. Additionnaly, If `dataname` is constant, it can only be applied to Lagrange finite element methods.
+If `dataname` is ommited, an homogeneous Dirichlet condition is applied. If `dataname` is given, the constraint is that it has to be constant or described on the same finite element method as the variable `varname` on which the Dirichlet condition is applied. Additionaly, If `dataname` is constant, it can only be applied to Lagrange finite element methods.
 
 Generalized Dirichlet condition brick
 -------------------------------------
