@@ -37,7 +37,7 @@ Appendix A. Finite element method list
        - .. image:: images/getfemlistsymbols05.png
             :align: center
             :scale: 50
-     * - Value of the gradient along of the thrid coordinate for 3D elements.
+     * - Value of the gradient along of the third coordinate for 3D elements.
        - Value of the whole gradient at the node.
        - Value of the normal derivative to a face.
      * - .. image:: images/getfemlistsymbols06.png
@@ -52,7 +52,7 @@ Appendix A. Finite element method list
      * - Value of the second derivative along the first coordinate (twice).
        - Value of the second derivative along the second coordinate (twice).
        - Value of the second cross derivative in 2D or second derivative
-         along the thrid coordinate (twice) in 3D.
+         along the third coordinate (twice) in 3D.
      * - .. image:: images/getfemlistsymbols09.png
             :align: center
             :scale: 50
@@ -248,7 +248,7 @@ the classical :math:`P_K` Lagrange element.
 
 Even though Lagrange elements are defined for arbitrary degrees, to choose a high
 degree can be problematic for a large number of applications due to the "noisy"
-caracteristic of the lagrange basis. These elements are recommended for the basic
+characteristic of the lagrange basis. These elements are recommended for the basic
 interpolation but for p.d.e. applications elements with hierarchical basis are
 preferable (see the corresponding section).
 

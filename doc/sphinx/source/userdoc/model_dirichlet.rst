@@ -94,7 +94,7 @@ The third version of the Dirichlet condition brick use a simplification of the l
   add_Dirichlet_condition_with_simplification(md, varname, region,
                                             dataname = std::string());
 
-If `dataname` is ommited, an homogeneous Dirichlet condition is applied. If `dataname` is given, the constraint is that it has to be constant or described on the same finite element method as the variable `varname` on which the Dirichlet condition is applied. Additionnaly, If `dataname` is constant, it can only be applied to Lagrange finite element methods.
+If `dataname` is ommited, an homogeneous Dirichlet condition is applied. If `dataname` is given, the constraint is that it has to be constant or described on the same finite element method as the variable `varname` on which the Dirichlet condition is applied. Additionaly, If `dataname` is constant, it can only be applied to Lagrange finite element methods.
 
 Generalized Dirichlet condition brick
 -------------------------------------
@@ -168,6 +168,6 @@ The brick has two versions: a penalized version and a version with multipliers. 
   add_pointwise_constraints_with_multipliers(md, varname, dataname_pt,
 		dataname_unitv = std::string(), dataname_val = std::string());
 
-respectively for the penalized version, the one with a given multiplier fixed size variable and the one which automatically adds a multiplier variable of the right size to the model. The data `dataname_pt`, `dataname_unitv` and `dataname_val` should be added first to the moel. `dataname_pt` should be a vector containing the coordinates of the points where to prescribed the value of the variable `varname`. It is thus of size :math:`N N_p` where :math:`N` is the dimension of the mesh. `dataname_unitv` is ignored for a scalar field variable. For a vector field variable, it should contain the vector :math:`n_i`. In that case, it size should be :math:`Q N_p` where :math:`Q` is the dimension of the vector field. `dataname_val` is optional and represent the right hand side, it should contain the components :math:`l_i`. The default value for :math:`l_i` is 0.
+respectively for the penalized version, the one with a given multiplier fixed size variable and the one which automatically adds a multiplier variable of the right size to the model. The data `dataname_pt`, `dataname_unitv` and `dataname_val` should be added first to the model. `dataname_pt` should be a vector containing the coordinates of the points where to prescribed the value of the variable `varname`. It is thus of size :math:`N N_p` where :math:`N` is the dimension of the mesh. `dataname_unitv` is ignored for a scalar field variable. For a vector field variable, it should contain the vector :math:`n_i`. In that case, it size should be :math:`Q N_p` where :math:`Q` is the dimension of the vector field. `dataname_val` is optional and represent the right hand side, it should contain the components :math:`l_i`. The default value for :math:`l_i` is 0.
 
 This brick is mainly designed to prescribe the rigid displacements for pure Neumann problems.

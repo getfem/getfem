@@ -133,7 +133,7 @@ possible with `Cygwin <https://www.cygwin.com/>`_.
 Build with the Python interface
 *******************************
 
-Additionnaly to build the Python interface, you will have first to install a 64bits version of Python 2 or 3 on your system together with Numpy and Scipy packages. The simpler way is to install Anaconda2 or 3 (it already contains Numpy and Scipy packages which are necessary). For instance with Anaconda2  
+Additionaly to build the Python interface, you will have first to install a 64bits version of Python 2 or 3 on your system together with Numpy and Scipy packages. The simpler way is to install Anaconda2 or 3 (it already contains Numpy and Scipy packages which are necessary). For instance with Anaconda2  
 
   - Install Anaconda2 and add to windows path ``C:\install_dir\Anaconda2``
     and ``C:\install_dir\Anaconda2\Scripts`` where ``install_dir`` is the

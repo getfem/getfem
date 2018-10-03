@@ -471,7 +471,7 @@ A certain number of binary operations between tensors are available:
 
     - ``.`` stands for the scalar product of vectors, or more generally to the contraction of a tensor with respect to its last index with a vector or with the first index of another tensor. Note that ``*`` and ``.`` are equivalent for matrix-vector or matrix-matrix multiplication.
 
-    - ``:`` stands for the |Frobenius| product of matrices or more generally to the contraction of a tensor with respect to the two last indices with a matrix. Note that ``*`` and ``:`` are equivalent for (fourth order tensor)-matrix multiplication.
+    - ``:`` stands for the |Frobenius| product of matrices or more generally to the contraction of a tensor with respect to the two last indices with a matrix or the two first indices of a higher order tensor. Note that ``*`` and ``:`` are equivalent for (fourth order tensor)-matrix multiplication.
 
     - ``.*`` stands for the multiplication of two vectors/matrix/tensor componentwise.
 
@@ -495,9 +495,7 @@ Unary operators
 
   - ``Swap_indices(A, i, j)`` exchange indices number i and j. The first index is numbered 1. For instance ``Swap_indices(A, 1, 2)`` is equivalent to ``A'`` for a matrix ``A``.
 
-  - ``Index_move_last(A, i)`` move the index number i in order to be the ast one. For instance, if ``A`` is a fourth order tensor :math:`A_{i_1i_2i_3i_4}`, then the result of ``Index_move_last(A, 2)`` will be the tensor :math:`B_{i_1i_3i_4i_2} = A_{i_1i_2i_3i_4}`. For a matrix, ``Index_move_last(A, 1)`` is equivalent to ``A'``.
-
-  exchange indices number i and j. The first index is numbered 1. For instance ``Swap_indices(A, 1, 2)`` is equivalent to ``A'`` for a matrix ``A``.
+  - ``Index_move_last(A, i)`` move the index number i in order to be the last one. For instance, if ``A`` is a fourth order tensor :math:`A_{i_1i_2i_3i_4}`, then the result of ``Index_move_last(A, 2)`` will be the tensor :math:`B_{i_1i_3i_4i_2} = A_{i_1i_2i_3i_4}`. For a matrix, ``Index_move_last(A, 1)`` is equivalent to ``A'``.
 
     
 Parentheses
@@ -768,11 +766,11 @@ For instance, the assembly expression to prescribe the equality of a variable ``
 
 (see :file:`demo\_periodic\_laplacian.m` in :file:`interface/tests/matlab` directory).
 
-In some situations, the interpolation of a point may fail if the transformed point is outside the target mesh. Both in order to treat this case and to allow the transformation to differentiate some other cases (see :ref:`ud-model-contact-friction_raytrace_inter_trans` for the differentiation between rigid bodies and deformable ones in the Raytracing_interpolate_transformation) the tranformation returns an integer identifiant to the weak form language. A value 0 of this identifiant means that no corresponding location on the target mesh has been found. A value of 1 means that a corresponding point has been found. This identifiant can be used thanks to the following special command of the weak form language::
+In some situations, the interpolation of a point may fail if the transformed point is outside the target mesh. Both in order to treat this case and to allow the transformation to differentiate some other cases (see :ref:`ud-model-contact-friction_raytrace_inter_trans` for the differentiation between rigid bodies and deformable ones in the Raytracing_interpolate_transformation) the tranformation returns an integer identifier to the weak form language. A value 0 of this identifier means that no corresponding location on the target mesh has been found. A value of 1 means that a corresponding point has been found. This identifier can be used thanks to the following special command of the weak form language::
 
   Interpolate_filter(transname, expr, i)
 
-where ``transname`` is the name of the transformation, ``expr`` is the expression to be evaluated and ``i`` value of the returned integer identifiant for which the expression have to be computed. Note that ``i`` can be ommited, in that case, the expression is evaluated for a nonzero identifiant (i.e. when a corresponding point has been found). For instance, the previous assembly expression to prescribe the equality of a variable ``u`` with its interpolation could be writtne::
+where ``transname`` is the name of the transformation, ``expr`` is the expression to be evaluated and ``i`` value of the returned integer identifier for which the expression have to be computed. Note that ``i`` can be ommited, in that case, the expression is evaluated for a nonzero identifier (i.e. when a corresponding point has been found). For instance, the previous assembly expression to prescribe the equality of a variable ``u`` with its interpolation could be writtne::
 
   Interpolate_filter(transmane, Interpolate(u,my_transformation)-u)*lambda)
   + Interpolate_filter(transmane, lambda*lambda, 0)
@@ -858,7 +856,7 @@ where :math:`k(x,y)` is a given kernel, :math:`u` a quantity defined on :math:`\
 CAUTION: Of course, this kind of term have to be used with great care, since it naturally leads to fully populated stiffness or tangent matrices. 
 
 
-The weak form language of |gf| furnishes a mecanism to compute such a term. First, the secondary domain has to be declared in the workspace/model with its integration methods. The addition of a standard secondary domain can be done with one of the two following functions::
+The weak form language of |gf| furnishes a mechanism to compute such a term. First, the secondary domain has to be declared in the workspace/model with its integration methods. The addition of a standard secondary domain can be done with one of the two following functions::
 
   add_standard_secondary_domain(model, domain_name, mim, region);
   

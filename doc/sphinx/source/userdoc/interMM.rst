@@ -6,8 +6,8 @@
 
 .. _ud-intermm:
 
-Interpolation of arbitary quantities
-====================================
+Interpolation of arbitrary quantities
+=====================================
 
 Once a solution has been computed, it is quite easy to extract any quantity of interest on it with the interpolation functions for instance for post-treatment.
 

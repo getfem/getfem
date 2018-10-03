@@ -89,7 +89,7 @@ The denomination ALE of the method is justified by the fact that :math:`\bar{\Om
 
 the displacement with respect to this intermediate configuration, the advantage is that if this additional displacement with respect to the rigid body motion is small, it is possible to use a small deformation model (for instance linearized elasticity).
 
-Due to the objectivity properties of standard consistutive laws, the expression od these laws in the intermediate configuration is most of the time identical to the expression in a standard reference configuration except for the expression of the time derivative which are modified because the change of coordinate is  nonconstant in time :
+Due to the objectivity properties of standard consistutive laws, the expression of these laws in the intermediate configuration is most of the time identical to the expression in a standard reference configuration except for the expression of the time derivative which are modified because the change of coordinate is  nonconstant in time :
 
 .. math::
 
@@ -105,7 +105,7 @@ Note that the term :math:`\dot{\theta} A \bar{X} = \left(\hspace*{-0.5em}\begin{
 
 This should not be forgotten that a correction has to be provided for each evolving variable for which the time derivative intervene in the considered model (think for instance to platic flow for plasticity). So that certain model bricks canot be used directly (plastic bricks for instance).
 
-|gf| bricks for structural mecanics are mainly considering the displacement as the amin unknown. The expression for the displacement is the following:
+|gf| bricks for structural mechanics are mainly considering the displacement as the amin unknown. The expression for the displacement is the following:
 
 .. math::
   \Frac{\partial u}{\partial t} = \Frac{\partial \bar{u}}{\partial t} + \dot{\theta} (I_d + \nabla \bar{u}) A \bar{X} + \dot{Z}(t),
