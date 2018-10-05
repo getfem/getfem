@@ -383,33 +383,33 @@ The potentials::
 
 The second Piola-Kirchhoff stress tensors::
 
-  Saint_Venant_Kirchhoff_sigma(Grad_u, [lambda; mu])
-  Plane_Strain_Saint_Venant_Kirchhoff_sigma(Grad_u, [lambda; mu])
-  Generalized_Blatz_Ko_sigma(Grad_u, [a;b;c;d;n])
-  Plane_Strain_Generalized_Blatz_Ko_sigma(Grad_u, [a;b;c;d;n])
-  Ciarlet_Geymonat_sigma(Grad_u, [lambda;mu;a])
-  Plane_Strain_Ciarlet_Geymonat_sigma(Grad_u, [lambda;mu;a])
-  Incompressible_Mooney_Rivlin_sigma(Grad_u, [c1;c2])
-  Plane_Strain_Incompressible_Mooney_Rivlin_sigma(Grad_u, [c1;c2])
-  Compressible_Mooney_Rivlin_sigma(Grad_u, [c1;c2;d1])
-  Plane_Strain_Compressible_Mooney_Rivlin_sigma(Grad_u, [c1;c2;d1])
-  Incompressible_Neo_Hookean_sigma(Grad_u, [c1])
-  Plane_Strain_Incompressible_Neo_Hookean_sigma(Grad_u, [c1])
-  Compressible_Neo_Hookean_sigma(Grad_u, [c1;d1])
-  Plane_Strain_Compressible_Neo_Hookean_sigma(Grad_u, [c1;d1])
-  Compressible_Neo_Hookean_Bonet_sigma(Grad_u, [lambda;mu])
-  Plane_Strain_Compressible_Neo_Hookean_Bonet_sigma(Grad_u, [lambda;mu])
-  Compressible_Neo_Hookean_Ciarlet_sigma(Grad_u, [lambda;mu])
-  Plane_Strain_Compressible_Neo_Hookean_Ciarlet_sigma(Grad_u, [lambda;mu])
+  Saint_Venant_Kirchhoff_PK2(Grad_u, [lambda; mu])
+  Plane_Strain_Saint_Venant_Kirchhoff_PK2(Grad_u, [lambda; mu])
+  Generalized_Blatz_Ko_PK2(Grad_u, [a;b;c;d;n])
+  Plane_Strain_Generalized_Blatz_Ko_PK2(Grad_u, [a;b;c;d;n])
+  Ciarlet_Geymonat_PK2(Grad_u, [lambda;mu;a])
+  Plane_Strain_Ciarlet_Geymonat_PK2(Grad_u, [lambda;mu;a])
+  Incompressible_Mooney_Rivlin_PK2(Grad_u, [c1;c2])
+  Plane_Strain_Incompressible_Mooney_Rivlin_PK2(Grad_u, [c1;c2])
+  Compressible_Mooney_Rivlin_PK2(Grad_u, [c1;c2;d1])
+  Plane_Strain_Compressible_Mooney_Rivlin_PK2(Grad_u, [c1;c2;d1])
+  Incompressible_Neo_Hookean_PK2(Grad_u, [c1])
+  Plane_Strain_Incompressible_Neo_Hookean_PK2(Grad_u, [c1])
+  Compressible_Neo_Hookean_PK2(Grad_u, [c1;d1])
+  Plane_Strain_Compressible_Neo_Hookean_PK2(Grad_u, [c1;d1])
+  Compressible_Neo_Hookean_Bonet_PK2(Grad_u, [lambda;mu])
+  Plane_Strain_Compressible_Neo_Hookean_Bonet_PK2(Grad_u, [lambda;mu])
+  Compressible_Neo_Hookean_Ciarlet_PK2(Grad_u, [lambda;mu])
+  Plane_Strain_Compressible_Neo_Hookean_Ciarlet_PK2(Grad_u, [lambda;mu])
 
 
 Note that the derivatives with respect to the material parameters have not been implemented apart for the Saint Venant Kirchhoff hyperelastic law. Therefore, it is not possible to make the parameter depend on other variables of a model (derivatives are not necessary complicated to implement but for the moment, only a wrapper with old implementations has been written).
 
-Note that the coupling of models is to be done at the weak formulation level. In a general way, it is recommended not to use the potential to define a problem. Two reasons are first that the second order derivative of the potential (necessary to obtain the tangent system) can be very complicated and non-optimized and main couplings cannot be obtained at the potential level. Thus the use of potential should be restricted to the actual computation of the potential.
+Note that the coupling of models is to be done at the weak formulation level. In a general way, it is recommended not to use the potential to define a problem. Main couplings cannot be obtained at the potential level. Thus the use of potential should be restricted to the actual computation of the potential.
 
 An example of use to add a Saint Venant-Kirchhoff hyperelastic term to a variable ``u`` in a model or a ga_workspace is given by the addition of the following assembly string::
 
-  "((Id(meshdim)+Grad_u)*(Saint_Venant_Kirchhoff_sigma(Grad_u,[lambda;mu]))):Grad_Test_u"
+  "((Id(meshdim)+Grad_u)*(Saint_Venant_Kirchhoff_PK2(Grad_u,[lambda;mu]))):Grad_Test_u"
 
 Note that in that case, ``lambda`` and ``mu`` have to be declared data of the model/ga_workspace. It is of course possible to replace them by explicit constants or expressions depending on several data.
 

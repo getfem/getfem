@@ -211,7 +211,7 @@ for step in range(1,nbstep+1):
     VM0 = md.compute_Von_Mises_or_Tresca('u', lawname, 'params', mfdu)
 
     # Direct interpolation of the Von Mises stress
-    # VM = md.interpolation('(sqrt(3/2)/Det(Id(meshdim)+Grad_u))*Norm((Id(meshdim)+Grad_u)*Saint_Venant_Kirchhoff_sigma(Grad_u,params)*(Id(meshdim)+Grad_u'') - Id(meshdim)*Trace((Id(meshdim)+Grad_u)*Saint_Venant_Kirchhoff_sigma(Grad_u,params)*(Id(meshdim)+Grad_u''))/meshdim)', mfdu);
+    # VM = md.interpolation('(sqrt(3/2)/Det(Id(meshdim)+Grad_u))*Norm((Id(meshdim)+Grad_u)*Saint_Venant_Kirchhoff_PK2(Grad_u,params)*(Id(meshdim)+Grad_u'') - Id(meshdim)*Trace((Id(meshdim)+Grad_u)*Saint_Venant_Kirchhoff_PK2(Grad_u,params)*(Id(meshdim)+Grad_u''))/meshdim)', mfdu);
 
     VM = md.compute_finite_strain_elasticity_Von_Mises(lawname, 'u', 'params', mfdu)
     print(npla.norm(VM-VM0))
