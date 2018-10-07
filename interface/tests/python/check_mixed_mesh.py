@@ -96,12 +96,12 @@ for i in range(m.nbcvs()):
         #print 'index of HEXA: ', i
         listHexa.append(i)
     else:
-        print 'Geometric transformation: ', gt[0]
+        print('Geometric transformation: ', gt[0])
 
-print 'num Tetra: ', len(listTetra)
-print 'num Hexa: ', len(listHexa)
-print 'num Hexa: ', len(listHexa)
-print 'num Hexa: ', len(listHexa)
+print('num Tetra: ', len(listTetra))
+print('num Hexa: ', len(listHexa))
+print('num Hexa: ', len(listHexa))
+print('num Hexa: ', len(listHexa))
 
 
 mfu = gf.MeshFem(m, 3)
@@ -172,7 +172,7 @@ ETA3tmp = gf.asm_generic(mim,1,edgeresidual_Neumann,NEUMANN_BOUNDARY
 
 ETA3 = ETA3tmp [ ETA3tmp.size - mfer.nbdof() : ETA3tmp.size ]
 
-print 'sum(ETA3): ', sum(ETA3)
+print('sum(ETA3): ', sum(ETA3))
 
 # 1d) jump at NEUMANN_BOUNDARY_NO_LOAD
 g = "[0; 0; 0]"
@@ -185,7 +185,7 @@ ETA4tmp = gf.asm_generic(mim,1,edgeresidual_Neumann,NEUMANN_BOUNDARY_NO_LOAD
 
 ETA4 = ETA4tmp [ ETA4tmp.size - mfer.nbdof() : ETA4tmp.size ]
 
-print 'sum(ETA4): ', sum(ETA4)
+print('sum(ETA4): ', sum(ETA4))
 
 
 ETA_square = ETA1 + ETA2 + ETA3 + ETA4 # element wise
