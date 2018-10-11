@@ -129,7 +129,7 @@ piecewise polynomials, interpolant wavelets, etc.
 
 To be used by the finite element description, a shape function type must be able
 to be evaluated on a point (``a = F.eval(pt)``, where ``pt`` is a ``base_node``)
-and must have a method to compute the derivtive with respect to the ith variable
+and must have a method to compute the derivative with respect to the ith variable
 (``F.derivative(i)``).
 
 For the moment, only polynomials and piecewise polynomials are defined in the
