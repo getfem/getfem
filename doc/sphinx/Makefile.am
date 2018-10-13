@@ -21,8 +21,10 @@
 # You can set these variables from the command line.
 PYTHON        = python
 SPHINXROOT    = http://svn.python.org/projects
-SPHINXOPTS    =
+LANGUAGE      = en
+SPHINXOPTS    = -D language=$(LANGUAGE)
 SPHINXBUILD   = $(PYTHON) tools/sphinx-build.py
+SPHINXINTL    = sphinx-intl
 PAPER         =
 SOURCES       = $(srcdir)/source
 DISTVERSION   = @VERSION@
@@ -33,8 +35,9 @@ PAPEROPT_a4     = -D latex_paper_size=a4
 PAPEROPT_letter = -D latex_paper_size=letter
 ALLSPHINXOPTS   = -b $(BUILDER) -d build/doctrees $(PAPEROPT_$(PAPER)) \
                   $(SPHINXOPTS) $(SOURCES) build/$(BUILDER)
+I18NSPHINXOPTS  = $(SPHINXOPTS) ./source
 
-.PHONY: help checkout update images build view html htmlview htmlhelp latex pdf linkcheck clean upload
+.PHONY: help checkout update images build view html htmlview htmlhelp latex pdf linkcheck clean upload gettext
 
 
 help:
@@ -85,6 +88,7 @@ images:
 	-cd $(srcdir)/source/scilab/images/; make png
 
 build: $(srcdir)/source/matlab/cmdref.rst $(srcdir)/source/python/cmdref.rst $(srcdir)/source/scilab/cmdref.rst checkout images
+	$(SPHINXINTL) build
 	echo # rm -fr build/$(BUILDER)/_images
 	echo # rm -fr build/$(BUILDER)/*.png
 	mkdir -p build/$(BUILDER) build/doctrees
@@ -110,7 +114,7 @@ htmlhelp: build
 latex: BUILDER = latex
 latex: build
 	@echo "Build finished; the LaTeX files are in build/latex."
-	@echo "Run \`make all-pdf' or \`make all-ps' in that directory to" \
+	@echo "Run \`make all-pdf' in that directory to" \
 	      "run these through (pdf)latex."
 
 pdf: BUILDER = latex
@@ -122,6 +126,11 @@ linkcheck: BUILDER = linkcheck
 linkcheck: build
 	@echo "Link check complete; look for any errors in the above output " \
 	      "or in build/$(BUILDER)/output.txt."
+gettext:
+	$(SPHINXBUILD) -b gettext $(I18NSPHINXOPTS) locale
+	$(SPHINXINTL) update -p locale -l $(LANGUAGE)
+	@echo
+	@echo "Build finished. The message catalogs are in locale."
 
 clean:
 	-rm -rf build/

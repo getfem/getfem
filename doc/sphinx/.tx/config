@@ -1,0 +1,446 @@
+[main]
+host = https://www.transifex.com
+
+[getfem-53-1.project--libdesc_mesh]
+file_filter = source/locale/<lang>/LC_MESSAGES/project/libdesc_mesh.po
+source_file = locale/project/libdesc_mesh.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.project--libdesc_misc]
+file_filter = source/locale/<lang>/LC_MESSAGES/project/libdesc_misc.po
+source_file = locale/project/libdesc_misc.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.project--libdesc_low_gen_assemb]
+file_filter = source/locale/<lang>/LC_MESSAGES/project/libdesc_low_gen_assemb.po
+source_file = locale/project/libdesc_low_gen_assemb.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.project--libdesc_interface]
+file_filter = source/locale/<lang>/LC_MESSAGES/project/libdesc_interface.po
+source_file = locale/project/libdesc_interface.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.project--libdesc_cont]
+file_filter = source/locale/<lang>/LC_MESSAGES/project/libdesc_cont.po
+source_file = locale/project/libdesc_cont.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.project--libdesc_model]
+file_filter = source/locale/<lang>/LC_MESSAGES/project/libdesc_model.po
+source_file = locale/project/libdesc_model.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.project--index]
+file_filter = source/locale/<lang>/LC_MESSAGES/project/index.po
+source_file = locale/project/index.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.project--libdesc_event]
+file_filter = source/locale/<lang>/LC_MESSAGES/project/libdesc_event.po
+source_file = locale/project/libdesc_event.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.project--libdesc_dal]
+file_filter = source/locale/<lang>/LC_MESSAGES/project/libdesc_dal.po
+source_file = locale/project/libdesc_dal.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.project--femdesc]
+file_filter = source/locale/<lang>/LC_MESSAGES/project/femdesc.po
+source_file = locale/project/femdesc.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.project--libdesc_meshfem]
+file_filter = source/locale/<lang>/LC_MESSAGES/project/libdesc_meshfem.po
+source_file = locale/project/libdesc_meshfem.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.project--libdesc_fem]
+file_filter = source/locale/<lang>/LC_MESSAGES/project/libdesc_fem.po
+source_file = locale/project/libdesc_fem.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.project--contribute]
+file_filter = source/locale/<lang>/LC_MESSAGES/project/contribute.po
+source_file = locale/project/contribute.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.project--libdesc_levelset]
+file_filter = source/locale/<lang>/LC_MESSAGES/project/libdesc_levelset.po
+source_file = locale/project/libdesc_levelset.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.project--intro]
+file_filter = source/locale/<lang>/LC_MESSAGES/project/intro.po
+source_file = locale/project/intro.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.project--libdesc_gmm]
+file_filter = source/locale/<lang>/LC_MESSAGES/project/libdesc_gmm.po
+source_file = locale/project/libdesc_gmm.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.project--libdesc]
+file_filter = source/locale/<lang>/LC_MESSAGES/project/libdesc.po
+source_file = locale/project/libdesc.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.project--appendixA]
+file_filter = source/locale/<lang>/LC_MESSAGES/project/appendixA.po
+source_file = locale/project/appendixA.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.project--libdesc_im]
+file_filter = source/locale/<lang>/LC_MESSAGES/project/libdesc_im.po
+source_file = locale/project/libdesc_im.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.project--libdesc_high_gen_assemb]
+file_filter = source/locale/<lang>/LC_MESSAGES/project/libdesc_high_gen_assemb.po
+source_file = locale/project/libdesc_high_gen_assemb.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.project--libdesc_mim]
+file_filter = source/locale/<lang>/LC_MESSAGES/project/libdesc_mim.po
+source_file = locale/project/libdesc_mim.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--gasm_high]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/gasm_high.po
+source_file = locale/userdoc/gasm_high.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--model]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/model.po
+source_file = locale/userdoc/model.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--model_fourier_robin]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/model_fourier_robin.po
+source_file = locale/userdoc/model_fourier_robin.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--model_contact_friction_large_sliding]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/model_contact_friction_large_sliding.po
+source_file = locale/userdoc/model_contact_friction_large_sliding.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--appendixB]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/appendixB.po
+source_file = locale/userdoc/appendixB.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--model_Mindlin_plate]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/model_Mindlin_plate.po
+source_file = locale/userdoc/model_Mindlin_plate.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--model_nonlinear_elasticity]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/model_nonlinear_elasticity.po
+source_file = locale/userdoc/model_nonlinear_elasticity.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--model_bilaplacian]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/model_bilaplacian.po
+source_file = locale/userdoc/model_bilaplacian.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--model_Nitsche]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/model_Nitsche.po
+source_file = locale/userdoc/model_Nitsche.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--convect]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/convect.po
+source_file = locale/userdoc/convect.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--interMM]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/interMM.po
+source_file = locale/userdoc/interMM.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--model_ALE_rotating]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/model_ALE_rotating.po
+source_file = locale/userdoc/model_ALE_rotating.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--model_linear_elasticity]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/model_linear_elasticity.po
+source_file = locale/userdoc/model_linear_elasticity.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--model_solvers]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/model_solvers.po
+source_file = locale/userdoc/model_solvers.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--model_generic_assembly]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/model_generic_assembly.po
+source_file = locale/userdoc/model_generic_assembly.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--computeD]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/computeD.po
+source_file = locale/userdoc/computeD.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--binteg]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/binteg.po
+source_file = locale/userdoc/binteg.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--model_time_integration]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/model_time_integration.po
+source_file = locale/userdoc/model_time_integration.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--gasm_low]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/gasm_low.po
+source_file = locale/userdoc/gasm_low.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--interNMM]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/interNMM.po
+source_file = locale/userdoc/interNMM.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--model_poisson]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/model_poisson.po
+source_file = locale/userdoc/model_poisson.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--model_contact_friction]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/model_contact_friction.po
+source_file = locale/userdoc/model_contact_friction.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--model_plasticity_small_strain]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/model_plasticity_small_strain.po
+source_file = locale/userdoc/model_plasticity_small_strain.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--parallel]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/parallel.po
+source_file = locale/userdoc/parallel.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--computeL2H1]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/computeL2H1.po
+source_file = locale/userdoc/computeL2H1.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--model_helmholtz]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/model_helmholtz.po
+source_file = locale/userdoc/model_helmholtz.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--bmesh]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/bmesh.po
+source_file = locale/userdoc/bmesh.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--model_mass]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/model_mass.po
+source_file = locale/userdoc/model_mass.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--bfem]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/bfem.po
+source_file = locale/userdoc/bfem.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--model_source_term]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/model_source_term.po
+source_file = locale/userdoc/model_source_term.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--catch]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/catch.po
+source_file = locale/userdoc/catch.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--model_dirichlet]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/model_dirichlet.po
+source_file = locale/userdoc/model_dirichlet.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--iinteg]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/iinteg.po
+source_file = locale/userdoc/iinteg.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--intro]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/intro.po
+source_file = locale/userdoc/intro.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--asm]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/asm.po
+source_file = locale/userdoc/asm.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--xfem]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/xfem.po
+source_file = locale/userdoc/xfem.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--model_constraint]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/model_constraint.po
+source_file = locale/userdoc/model_constraint.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--appendixA]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/appendixA.po
+source_file = locale/userdoc/appendixA.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--model_generic_elliptic]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/model_generic_elliptic.po
+source_file = locale/userdoc/model_generic_elliptic.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--ifem]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/ifem.po
+source_file = locale/userdoc/ifem.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--linalg]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/linalg.po
+source_file = locale/userdoc/linalg.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--export]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/export.po
+source_file = locale/userdoc/export.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--rmesh]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/rmesh.po
+source_file = locale/userdoc/rmesh.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--model_object]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/model_object.po
+source_file = locale/userdoc/model_object.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--model_continuation]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/model_continuation.po
+source_file = locale/userdoc/model_continuation.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--install]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/install.po
+source_file = locale/userdoc/install.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--model_explicit]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/model_explicit.po
+source_file = locale/userdoc/model_explicit.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.tutorial--wheel]
+file_filter = source/locale/<lang>/LC_MESSAGES/tutorial/wheel.po
+source_file = locale/tutorial/wheel.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.tutorial--index]
+file_filter = source/locale/<lang>/LC_MESSAGES/tutorial/index.po
+source_file = locale/tutorial/index.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.tutorial--thermo_coupling]
+file_filter = source/locale/<lang>/LC_MESSAGES/tutorial/thermo_coupling.po
+source_file = locale/tutorial/thermo_coupling.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.tutorial--basic_usage]
+file_filter = source/locale/<lang>/LC_MESSAGES/tutorial/basic_usage.po
+source_file = locale/tutorial/basic_usage.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.tutorial--intro]
+file_filter = source/locale/<lang>/LC_MESSAGES/tutorial/intro.po
+source_file = locale/tutorial/intro.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.tutorial--install]
+file_filter = source/locale/<lang>/LC_MESSAGES/tutorial/install.po
+source_file = locale/tutorial/install.pot
+source_lang = en
+type = PO
