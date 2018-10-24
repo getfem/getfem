@@ -153,7 +153,7 @@ namespace getfem {
         tensor_ranges rn(child(n).ranges());
         const std::string &s = red[n].second;
         GMM_ASSERT1(rn.size() == s.size(), "Wrong size !");
-        for (unsigned i=0; i < rn.size(); ++i)
+        for (unsigned i=0; i < rn.size(); ++i) {
           if (s[i] != ' ') {
             size_type p = s.find(s[i]);
             if (p != size_type(-1) && p < i && rn[p] != rn[i])
@@ -171,6 +171,7 @@ namespace getfem {
           child(n).merge_required_shape(ts);
           // cerr << "------>required shape is now: "
           //      << child(n).required_shape() << endl;
+        }
       }
     }
 
