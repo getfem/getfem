@@ -24,11 +24,14 @@ How to contribute / Git repository on Savannah
 .. |tfweb| replace:: transifex
 .. _tfweb: https://www.transifex.com
 
-.. |tfwebprj| replace:: Getfem Localization Project on Transifex
-.. _tfwebprj: https://www.transifex.com/getfem-doc
+.. |tfwebteam| replace:: Getfem translation team on Transifex
+.. _tfwebteam: https://www.transifex.com/getfem-doc
 
 .. |cfvlang| replace:: Currently supported languages by Sphinx are
 .. _cfvlang: http://www.sphinx-doc.org/en/stable/usage/configuration.html#confval-language
+
+.. |sphintl| replace:: Sphinx Internationalization
+.. _sphintl: http://www.sphinx-doc.org/en/stable/intl.html
 
 |gf| is an  open source finite element library based on a collaborative development. If you intend to make some contributions, you can ask for membership of the project there. Contributions of all kinds are welcome: documentation, bug reports, constructive comments, changes suggestions, bug fix, new models, etc ...
 
@@ -125,33 +128,34 @@ Some useful git commands
   gitk --follow filename : same as previous but with a graphical interface
 
 
-Localization(L10N)
-------------------
+Contributing to document translation
+------------------------------------
 
-If you want to contribute to the localization of document. You can join |tfwebprj|_ . Please make account in |tfweb|_ and get api token. In case your native language is not on project, please contact to administorator of |tfwebprj|_ . After translate or check the translation of language in transifex, pull translated po file from site by using transifex-client. You need api token which you can get in transifex site. ::
+The recommended way for new contributors to translate document is to join |tfwebteam|_ . For contribution, please make account in |tfweb|_ and click request language and fill form . After translation, pull translated po file from site by using transifex-client. You need api token which you can get in transifex site. ::
 
   cd doc/sphinx
   tx pull -l <lang>
 
-Set your native language to <lang> (see |cfvlang|_ ). 
+Set code for your native language to <lang> (see |cfvlang|_ ). 
 
 .. warning::
 
-  **DO NOT** tx push to transifex. It will have some trouble. You can upload file one by one in project page.
+  **DO NOT** tx push to transifex. It will have some trouble. You can upload file one by one in team page.
 
-After pulling po files, set <lang> to LANGUAGE in `doc/sphinx/Makefile.am` . ::
+After pulling translated po files, set <lang> to LANGUAGE in `doc/sphinx/Makefile.am` . ::
 
   LANGUAGE      = <lang>
   SPHINXOPTS    = -D language=$(LANGUAGE)
 
-Then, you can run a ::
+Then, you can run a following commands in order to make html localization document. ::
 
   cd doc/sphinx
   make html
 
-in order to make html localization document. If you want to make pdf file in your language, you can run a ::
+If you want to make pdf file in your language, you can run a ::
 
   make latex
   cd build/latex
   make all-pdf-<lang>
 
+See details in |sphintl|_ .
