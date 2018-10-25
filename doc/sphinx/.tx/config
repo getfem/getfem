@@ -1,0 +1,1719 @@
+[main]
+host = https://www.transifex.com
+
+[getfem-53-1.bugs]
+file_filter = source/locale/<lang>/LC_MESSAGES/bugs.po
+source_file = locale/bugs.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.about]
+file_filter = source/locale/<lang>/LC_MESSAGES/about.po
+source_file = locale/about.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.lists]
+file_filter = source/locale/<lang>/LC_MESSAGES/lists.po
+source_file = locale/lists.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.license]
+file_filter = source/locale/<lang>/LC_MESSAGES/license.po
+source_file = locale/license.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.contents]
+file_filter = source/locale/<lang>/LC_MESSAGES/contents.po
+source_file = locale/contents.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.glossary_]
+file_filter = source/locale/<lang>/LC_MESSAGES/glossary.po
+source_file = locale/glossary.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.links]
+file_filter = source/locale/<lang>/LC_MESSAGES/links.po
+source_file = locale/links.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.biblio]
+file_filter = source/locale/<lang>/LC_MESSAGES/biblio.po
+source_file = locale/biblio.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.copyright]
+file_filter = source/locale/<lang>/LC_MESSAGES/copyright.po
+source_file = locale/copyright.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.scilab--cmdref_gf_poly]
+file_filter = source/locale/<lang>/LC_MESSAGES/scilab/cmdref_gf_poly.po
+source_file = locale/scilab/cmdref_gf_poly.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.scilab--cmdref_gf_model]
+file_filter = source/locale/<lang>/LC_MESSAGES/scilab/cmdref_gf_model.po
+source_file = locale/scilab/cmdref_gf_model.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.scilab--cmdref_gf_spmat_get]
+file_filter = source/locale/<lang>/LC_MESSAGES/scilab/cmdref_gf_spmat_get.po
+source_file = locale/scilab/cmdref_gf_spmat_get.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.scilab--cmdref_gf_precond]
+file_filter = source/locale/<lang>/LC_MESSAGES/scilab/cmdref_gf_precond.po
+source_file = locale/scilab/cmdref_gf_precond.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.scilab--cmdref_gf_mesh_levelset_get]
+file_filter = source/locale/<lang>/LC_MESSAGES/scilab/cmdref_gf_mesh_levelset_get.po
+source_file = locale/scilab/cmdref_gf_mesh_levelset_get.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.scilab--cmdref_gf_mesher_object_get]
+file_filter = source/locale/<lang>/LC_MESSAGES/scilab/cmdref_gf_mesher_object_get.po
+source_file = locale/scilab/cmdref_gf_mesher_object_get.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.scilab--cmdref_gf_slice_set]
+file_filter = source/locale/<lang>/LC_MESSAGES/scilab/cmdref_gf_slice_set.po
+source_file = locale/scilab/cmdref_gf_slice_set.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.scilab--cmdref_gf_mesh_im_set]
+file_filter = source/locale/<lang>/LC_MESSAGES/scilab/cmdref_gf_mesh_im_set.po
+source_file = locale/scilab/cmdref_gf_mesh_im_set.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.scilab--cmdref_gf_spmat]
+file_filter = source/locale/<lang>/LC_MESSAGES/scilab/cmdref_gf_spmat.po
+source_file = locale/scilab/cmdref_gf_spmat.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.scilab--cmdref_gf_geotrans]
+file_filter = source/locale/<lang>/LC_MESSAGES/scilab/cmdref_gf_geotrans.po
+source_file = locale/scilab/cmdref_gf_geotrans.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.scilab--index]
+file_filter = source/locale/<lang>/LC_MESSAGES/scilab/index.po
+source_file = locale/scilab/index.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.scilab--cmdref_gf_slice]
+file_filter = source/locale/<lang>/LC_MESSAGES/scilab/cmdref_gf_slice.po
+source_file = locale/scilab/cmdref_gf_slice.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.scilab--cmdref_gf_fem_get]
+file_filter = source/locale/<lang>/LC_MESSAGES/scilab/cmdref_gf_fem_get.po
+source_file = locale/scilab/cmdref_gf_fem_get.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.scilab--cmdref_gf_asm]
+file_filter = source/locale/<lang>/LC_MESSAGES/scilab/cmdref_gf_asm.po
+source_file = locale/scilab/cmdref_gf_asm.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.scilab--cmdref_gf_mesh_im_get]
+file_filter = source/locale/<lang>/LC_MESSAGES/scilab/cmdref_gf_mesh_im_get.po
+source_file = locale/scilab/cmdref_gf_mesh_im_get.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.scilab--cmdref_gf_mesh_levelset]
+file_filter = source/locale/<lang>/LC_MESSAGES/scilab/cmdref_gf_mesh_levelset.po
+source_file = locale/scilab/cmdref_gf_mesh_levelset.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.scilab--plotcmdref]
+file_filter = source/locale/<lang>/LC_MESSAGES/scilab/plotcmdref.po
+source_file = locale/scilab/plotcmdref.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.scilab--cmdref_gf_mesh_im_data]
+file_filter = source/locale/<lang>/LC_MESSAGES/scilab/cmdref_gf_mesh_im_data.po
+source_file = locale/scilab/cmdref_gf_mesh_im_data.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.scilab--cmdref_gf_mesh_fem_set]
+file_filter = source/locale/<lang>/LC_MESSAGES/scilab/cmdref_gf_mesh_fem_set.po
+source_file = locale/scilab/cmdref_gf_mesh_fem_set.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.scilab--cmdref_gf_mesh_levelset_set]
+file_filter = source/locale/<lang>/LC_MESSAGES/scilab/cmdref_gf_mesh_levelset_set.po
+source_file = locale/scilab/cmdref_gf_mesh_levelset_set.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.scilab--cmdref_gf_mesh_im]
+file_filter = source/locale/<lang>/LC_MESSAGES/scilab/cmdref_gf_mesh_im.po
+source_file = locale/scilab/cmdref_gf_mesh_im.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.scilab--cmdref_gf_mesh]
+file_filter = source/locale/<lang>/LC_MESSAGES/scilab/cmdref_gf_mesh.po
+source_file = locale/scilab/cmdref_gf_mesh.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.scilab--cmdref_gf_mesh_fem]
+file_filter = source/locale/<lang>/LC_MESSAGES/scilab/cmdref_gf_mesh_fem.po
+source_file = locale/scilab/cmdref_gf_mesh_fem.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.scilab--cmdref_gf_spmat_set]
+file_filter = source/locale/<lang>/LC_MESSAGES/scilab/cmdref_gf_spmat_set.po
+source_file = locale/scilab/cmdref_gf_spmat_set.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.scilab--cmdref_gf_compute]
+file_filter = source/locale/<lang>/LC_MESSAGES/scilab/cmdref_gf_compute.po
+source_file = locale/scilab/cmdref_gf_compute.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.scilab--cmdref_gf_global_function]
+file_filter = source/locale/<lang>/LC_MESSAGES/scilab/cmdref_gf_global_function.po
+source_file = locale/scilab/cmdref_gf_global_function.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.scilab--cmdref_gf_global_function_get]
+file_filter = source/locale/<lang>/LC_MESSAGES/scilab/cmdref_gf_global_function_get.po
+source_file = locale/scilab/cmdref_gf_global_function_get.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.scilab--cmdref_gf_cvstruct_get]
+file_filter = source/locale/<lang>/LC_MESSAGES/scilab/cmdref_gf_cvstruct_get.po
+source_file = locale/scilab/cmdref_gf_cvstruct_get.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.scilab--cmdref_gf_mesh_set]
+file_filter = source/locale/<lang>/LC_MESSAGES/scilab/cmdref_gf_mesh_set.po
+source_file = locale/scilab/cmdref_gf_mesh_set.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.scilab--cmdref_gf_workspace]
+file_filter = source/locale/<lang>/LC_MESSAGES/scilab/cmdref_gf_workspace.po
+source_file = locale/scilab/cmdref_gf_workspace.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.scilab--cmdref_gf_mesh_get]
+file_filter = source/locale/<lang>/LC_MESSAGES/scilab/cmdref_gf_mesh_get.po
+source_file = locale/scilab/cmdref_gf_mesh_get.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.scilab--intro]
+file_filter = source/locale/<lang>/LC_MESSAGES/scilab/intro.po
+source_file = locale/scilab/intro.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.scilab--cmdref_gf_eltm]
+file_filter = source/locale/<lang>/LC_MESSAGES/scilab/cmdref_gf_eltm.po
+source_file = locale/scilab/cmdref_gf_eltm.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.scilab--cmdref_gf_precond_get]
+file_filter = source/locale/<lang>/LC_MESSAGES/scilab/cmdref_gf_precond_get.po
+source_file = locale/scilab/cmdref_gf_precond_get.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.scilab--cmdref_gf_cont_struct]
+file_filter = source/locale/<lang>/LC_MESSAGES/scilab/cmdref_gf_cont_struct.po
+source_file = locale/scilab/cmdref_gf_cont_struct.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.scilab--cmdref_gf_model_get]
+file_filter = source/locale/<lang>/LC_MESSAGES/scilab/cmdref_gf_model_get.po
+source_file = locale/scilab/cmdref_gf_model_get.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.scilab--cmdref_gf_fem]
+file_filter = source/locale/<lang>/LC_MESSAGES/scilab/cmdref_gf_fem.po
+source_file = locale/scilab/cmdref_gf_fem.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.scilab--cmdref_gf_delete]
+file_filter = source/locale/<lang>/LC_MESSAGES/scilab/cmdref_gf_delete.po
+source_file = locale/scilab/cmdref_gf_delete.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.scilab--cmdref_gf_integ]
+file_filter = source/locale/<lang>/LC_MESSAGES/scilab/cmdref_gf_integ.po
+source_file = locale/scilab/cmdref_gf_integ.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.scilab--cmdref_gf_mesh_im_data_set]
+file_filter = source/locale/<lang>/LC_MESSAGES/scilab/cmdref_gf_mesh_im_data_set.po
+source_file = locale/scilab/cmdref_gf_mesh_im_data_set.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.scilab--cmdref_gf_linsolve]
+file_filter = source/locale/<lang>/LC_MESSAGES/scilab/cmdref_gf_linsolve.po
+source_file = locale/scilab/cmdref_gf_linsolve.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.scilab--cmdref_gf_util]
+file_filter = source/locale/<lang>/LC_MESSAGES/scilab/cmdref_gf_util.po
+source_file = locale/scilab/cmdref_gf_util.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.scilab--cmdref]
+file_filter = source/locale/<lang>/LC_MESSAGES/scilab/cmdref.po
+source_file = locale/scilab/cmdref.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.scilab--cmdref_gf_integ_get]
+file_filter = source/locale/<lang>/LC_MESSAGES/scilab/cmdref_gf_integ_get.po
+source_file = locale/scilab/cmdref_gf_integ_get.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.scilab--cmdref_gf_levelset_get]
+file_filter = source/locale/<lang>/LC_MESSAGES/scilab/cmdref_gf_levelset_get.po
+source_file = locale/scilab/cmdref_gf_levelset_get.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.scilab--scilabgf]
+file_filter = source/locale/<lang>/LC_MESSAGES/scilab/scilabgf.po
+source_file = locale/scilab/scilabgf.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.scilab--cmdref_gf_geotrans_get]
+file_filter = source/locale/<lang>/LC_MESSAGES/scilab/cmdref_gf_geotrans_get.po
+source_file = locale/scilab/cmdref_gf_geotrans_get.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.scilab--cmdref_gf_cont_struct_get]
+file_filter = source/locale/<lang>/LC_MESSAGES/scilab/cmdref_gf_cont_struct_get.po
+source_file = locale/scilab/cmdref_gf_cont_struct_get.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.scilab--cmdref_gf_slice_get]
+file_filter = source/locale/<lang>/LC_MESSAGES/scilab/cmdref_gf_slice_get.po
+source_file = locale/scilab/cmdref_gf_slice_get.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.scilab--cmdref_gf_levelset_set]
+file_filter = source/locale/<lang>/LC_MESSAGES/scilab/cmdref_gf_levelset_set.po
+source_file = locale/scilab/cmdref_gf_levelset_set.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.scilab--cmdref_gf_levelset]
+file_filter = source/locale/<lang>/LC_MESSAGES/scilab/cmdref_gf_levelset.po
+source_file = locale/scilab/cmdref_gf_levelset.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.scilab--cmdref_gf_model_set]
+file_filter = source/locale/<lang>/LC_MESSAGES/scilab/cmdref_gf_model_set.po
+source_file = locale/scilab/cmdref_gf_model_set.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.scilab--cmdref_gf_mesher_object]
+file_filter = source/locale/<lang>/LC_MESSAGES/scilab/cmdref_gf_mesher_object.po
+source_file = locale/scilab/cmdref_gf_mesher_object.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.scilab--cmdref_gf_mesh_im_data_get]
+file_filter = source/locale/<lang>/LC_MESSAGES/scilab/cmdref_gf_mesh_im_data_get.po
+source_file = locale/scilab/cmdref_gf_mesh_im_data_get.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.scilab--install]
+file_filter = source/locale/<lang>/LC_MESSAGES/scilab/install.po
+source_file = locale/scilab/install.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.scilab--cmdref_gf_mesh_fem_get]
+file_filter = source/locale/<lang>/LC_MESSAGES/scilab/cmdref_gf_mesh_fem_get.po
+source_file = locale/scilab/cmdref_gf_mesh_fem_get.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.project--libdesc_mesh]
+file_filter = source/locale/<lang>/LC_MESSAGES/project/libdesc_mesh.po
+source_file = locale/project/libdesc_mesh.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.project--libdesc_misc]
+file_filter = source/locale/<lang>/LC_MESSAGES/project/libdesc_misc.po
+source_file = locale/project/libdesc_misc.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.project--libdesc_low_gen_assemb]
+file_filter = source/locale/<lang>/LC_MESSAGES/project/libdesc_low_gen_assemb.po
+source_file = locale/project/libdesc_low_gen_assemb.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.project--libdesc_interface]
+file_filter = source/locale/<lang>/LC_MESSAGES/project/libdesc_interface.po
+source_file = locale/project/libdesc_interface.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.project--libdesc_cont]
+file_filter = source/locale/<lang>/LC_MESSAGES/project/libdesc_cont.po
+source_file = locale/project/libdesc_cont.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.project--libdesc_model]
+file_filter = source/locale/<lang>/LC_MESSAGES/project/libdesc_model.po
+source_file = locale/project/libdesc_model.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.project--index]
+file_filter = source/locale/<lang>/LC_MESSAGES/project/index.po
+source_file = locale/project/index.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.project--libdesc_event]
+file_filter = source/locale/<lang>/LC_MESSAGES/project/libdesc_event.po
+source_file = locale/project/libdesc_event.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.project--libdesc_dal]
+file_filter = source/locale/<lang>/LC_MESSAGES/project/libdesc_dal.po
+source_file = locale/project/libdesc_dal.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.project--femdesc]
+file_filter = source/locale/<lang>/LC_MESSAGES/project/femdesc.po
+source_file = locale/project/femdesc.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.project--libdesc_meshfem]
+file_filter = source/locale/<lang>/LC_MESSAGES/project/libdesc_meshfem.po
+source_file = locale/project/libdesc_meshfem.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.project--libdesc_fem]
+file_filter = source/locale/<lang>/LC_MESSAGES/project/libdesc_fem.po
+source_file = locale/project/libdesc_fem.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.project--contribute]
+file_filter = source/locale/<lang>/LC_MESSAGES/project/contribute.po
+source_file = locale/project/contribute.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.project--libdesc_levelset]
+file_filter = source/locale/<lang>/LC_MESSAGES/project/libdesc_levelset.po
+source_file = locale/project/libdesc_levelset.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.project--intro]
+file_filter = source/locale/<lang>/LC_MESSAGES/project/intro.po
+source_file = locale/project/intro.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.project--libdesc_gmm]
+file_filter = source/locale/<lang>/LC_MESSAGES/project/libdesc_gmm.po
+source_file = locale/project/libdesc_gmm.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.project--libdesc]
+file_filter = source/locale/<lang>/LC_MESSAGES/project/libdesc.po
+source_file = locale/project/libdesc.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.project--appendixA]
+file_filter = source/locale/<lang>/LC_MESSAGES/project/appendixA.po
+source_file = locale/project/appendixA.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.project--libdesc_im]
+file_filter = source/locale/<lang>/LC_MESSAGES/project/libdesc_im.po
+source_file = locale/project/libdesc_im.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.project--libdesc_high_gen_assemb]
+file_filter = source/locale/<lang>/LC_MESSAGES/project/libdesc_high_gen_assemb.po
+source_file = locale/project/libdesc_high_gen_assemb.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.project--libdesc_mim]
+file_filter = source/locale/<lang>/LC_MESSAGES/project/libdesc_mim.po
+source_file = locale/project/libdesc_mim.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--gasm_high]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/gasm_high.po
+source_file = locale/userdoc/gasm_high.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--model]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/model.po
+source_file = locale/userdoc/model.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--model_fourier_robin]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/model_fourier_robin.po
+source_file = locale/userdoc/model_fourier_robin.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--model_contact_friction_large_sliding]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/model_contact_friction_large_sliding.po
+source_file = locale/userdoc/model_contact_friction_large_sliding.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--appendixB]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/appendixB.po
+source_file = locale/userdoc/appendixB.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--model_Mindlin_plate]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/model_Mindlin_plate.po
+source_file = locale/userdoc/model_Mindlin_plate.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--model_nonlinear_elasticity]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/model_nonlinear_elasticity.po
+source_file = locale/userdoc/model_nonlinear_elasticity.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--model_bilaplacian]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/model_bilaplacian.po
+source_file = locale/userdoc/model_bilaplacian.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--model_Nitsche]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/model_Nitsche.po
+source_file = locale/userdoc/model_Nitsche.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--convect]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/convect.po
+source_file = locale/userdoc/convect.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--interMM]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/interMM.po
+source_file = locale/userdoc/interMM.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--model_ALE_rotating]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/model_ALE_rotating.po
+source_file = locale/userdoc/model_ALE_rotating.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--model_linear_elasticity]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/model_linear_elasticity.po
+source_file = locale/userdoc/model_linear_elasticity.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--model_solvers]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/model_solvers.po
+source_file = locale/userdoc/model_solvers.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--index]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/index.po
+source_file = locale/userdoc/index.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--model_generic_assembly]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/model_generic_assembly.po
+source_file = locale/userdoc/model_generic_assembly.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--computeD]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/computeD.po
+source_file = locale/userdoc/computeD.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--binteg]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/binteg.po
+source_file = locale/userdoc/binteg.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--model_time_integration]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/model_time_integration.po
+source_file = locale/userdoc/model_time_integration.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--gasm_low]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/gasm_low.po
+source_file = locale/userdoc/gasm_low.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--interNMM]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/interNMM.po
+source_file = locale/userdoc/interNMM.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--model_poisson]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/model_poisson.po
+source_file = locale/userdoc/model_poisson.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--model_contact_friction]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/model_contact_friction.po
+source_file = locale/userdoc/model_contact_friction.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--model_plasticity_small_strain]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/model_plasticity_small_strain.po
+source_file = locale/userdoc/model_plasticity_small_strain.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--parallel]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/parallel.po
+source_file = locale/userdoc/parallel.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--computeL2H1]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/computeL2H1.po
+source_file = locale/userdoc/computeL2H1.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--model_helmholtz]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/model_helmholtz.po
+source_file = locale/userdoc/model_helmholtz.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--bmesh]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/bmesh.po
+source_file = locale/userdoc/bmesh.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--model_mass]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/model_mass.po
+source_file = locale/userdoc/model_mass.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--bfem]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/bfem.po
+source_file = locale/userdoc/bfem.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--model_source_term]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/model_source_term.po
+source_file = locale/userdoc/model_source_term.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--catch]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/catch.po
+source_file = locale/userdoc/catch.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--model_dirichlet]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/model_dirichlet.po
+source_file = locale/userdoc/model_dirichlet.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--iinteg]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/iinteg.po
+source_file = locale/userdoc/iinteg.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--intro]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/intro.po
+source_file = locale/userdoc/intro.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--asm]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/asm.po
+source_file = locale/userdoc/asm.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--xfem]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/xfem.po
+source_file = locale/userdoc/xfem.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--model_constraint]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/model_constraint.po
+source_file = locale/userdoc/model_constraint.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--appendixA]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/appendixA.po
+source_file = locale/userdoc/appendixA.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--model_generic_elliptic]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/model_generic_elliptic.po
+source_file = locale/userdoc/model_generic_elliptic.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--ifem]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/ifem.po
+source_file = locale/userdoc/ifem.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--linalg]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/linalg.po
+source_file = locale/userdoc/linalg.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--export]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/export.po
+source_file = locale/userdoc/export.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--rmesh]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/rmesh.po
+source_file = locale/userdoc/rmesh.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--model_object]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/model_object.po
+source_file = locale/userdoc/model_object.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--model_continuation]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/model_continuation.po
+source_file = locale/userdoc/model_continuation.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--install]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/install.po
+source_file = locale/userdoc/install.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.userdoc--model_explicit]
+file_filter = source/locale/<lang>/LC_MESSAGES/userdoc/model_explicit.po
+source_file = locale/userdoc/model_explicit.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.matlab--cmdref_gf_poly]
+file_filter = source/locale/<lang>/LC_MESSAGES/matlab/cmdref_gf_poly.po
+source_file = locale/matlab/cmdref_gf_poly.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.matlab--cmdref_gf_model]
+file_filter = source/locale/<lang>/LC_MESSAGES/matlab/cmdref_gf_model.po
+source_file = locale/matlab/cmdref_gf_model.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.matlab--cmdref_gf_spmat_get]
+file_filter = source/locale/<lang>/LC_MESSAGES/matlab/cmdref_gf_spmat_get.po
+source_file = locale/matlab/cmdref_gf_spmat_get.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.matlab--cmdref_gf_precond]
+file_filter = source/locale/<lang>/LC_MESSAGES/matlab/cmdref_gf_precond.po
+source_file = locale/matlab/cmdref_gf_precond.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.matlab--cmdref_gf_mesh_levelset_get]
+file_filter = source/locale/<lang>/LC_MESSAGES/matlab/cmdref_gf_mesh_levelset_get.po
+source_file = locale/matlab/cmdref_gf_mesh_levelset_get.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.matlab--cmdref_gf_mesher_object_get]
+file_filter = source/locale/<lang>/LC_MESSAGES/matlab/cmdref_gf_mesher_object_get.po
+source_file = locale/matlab/cmdref_gf_mesher_object_get.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.matlab--cmdref_gf_slice_set]
+file_filter = source/locale/<lang>/LC_MESSAGES/matlab/cmdref_gf_slice_set.po
+source_file = locale/matlab/cmdref_gf_slice_set.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.matlab--cmdref_gf_mesh_im_set]
+file_filter = source/locale/<lang>/LC_MESSAGES/matlab/cmdref_gf_mesh_im_set.po
+source_file = locale/matlab/cmdref_gf_mesh_im_set.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.matlab--cmdref_gf_spmat]
+file_filter = source/locale/<lang>/LC_MESSAGES/matlab/cmdref_gf_spmat.po
+source_file = locale/matlab/cmdref_gf_spmat.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.matlab--cmdref_gf_geotrans]
+file_filter = source/locale/<lang>/LC_MESSAGES/matlab/cmdref_gf_geotrans.po
+source_file = locale/matlab/cmdref_gf_geotrans.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.matlab--index]
+file_filter = source/locale/<lang>/LC_MESSAGES/matlab/index.po
+source_file = locale/matlab/index.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.matlab--cmdref_gf_slice]
+file_filter = source/locale/<lang>/LC_MESSAGES/matlab/cmdref_gf_slice.po
+source_file = locale/matlab/cmdref_gf_slice.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.matlab--cmdref_gf_fem_get]
+file_filter = source/locale/<lang>/LC_MESSAGES/matlab/cmdref_gf_fem_get.po
+source_file = locale/matlab/cmdref_gf_fem_get.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.matlab--cmdref_gf_asm]
+file_filter = source/locale/<lang>/LC_MESSAGES/matlab/cmdref_gf_asm.po
+source_file = locale/matlab/cmdref_gf_asm.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.matlab--cmdref_gf_mesh_im_get]
+file_filter = source/locale/<lang>/LC_MESSAGES/matlab/cmdref_gf_mesh_im_get.po
+source_file = locale/matlab/cmdref_gf_mesh_im_get.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.matlab--cmdref_gf_mesh_levelset]
+file_filter = source/locale/<lang>/LC_MESSAGES/matlab/cmdref_gf_mesh_levelset.po
+source_file = locale/matlab/cmdref_gf_mesh_levelset.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.matlab--plotcmdref]
+file_filter = source/locale/<lang>/LC_MESSAGES/matlab/plotcmdref.po
+source_file = locale/matlab/plotcmdref.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.matlab--cmdref_gf_mesh_im_data]
+file_filter = source/locale/<lang>/LC_MESSAGES/matlab/cmdref_gf_mesh_im_data.po
+source_file = locale/matlab/cmdref_gf_mesh_im_data.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.matlab--cmdref_gf_mesh_fem_set]
+file_filter = source/locale/<lang>/LC_MESSAGES/matlab/cmdref_gf_mesh_fem_set.po
+source_file = locale/matlab/cmdref_gf_mesh_fem_set.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.matlab--cmdref_gf_mesh_levelset_set]
+file_filter = source/locale/<lang>/LC_MESSAGES/matlab/cmdref_gf_mesh_levelset_set.po
+source_file = locale/matlab/cmdref_gf_mesh_levelset_set.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.matlab--pre]
+file_filter = source/locale/<lang>/LC_MESSAGES/matlab/pre.po
+source_file = locale/matlab/pre.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.matlab--cmdref_gf_mesh_im]
+file_filter = source/locale/<lang>/LC_MESSAGES/matlab/cmdref_gf_mesh_im.po
+source_file = locale/matlab/cmdref_gf_mesh_im.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.matlab--cmdref_gf_mesh]
+file_filter = source/locale/<lang>/LC_MESSAGES/matlab/cmdref_gf_mesh.po
+source_file = locale/matlab/cmdref_gf_mesh.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.matlab--cmdref_gf_mesh_fem]
+file_filter = source/locale/<lang>/LC_MESSAGES/matlab/cmdref_gf_mesh_fem.po
+source_file = locale/matlab/cmdref_gf_mesh_fem.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.matlab--cmdref_gf_spmat_set]
+file_filter = source/locale/<lang>/LC_MESSAGES/matlab/cmdref_gf_spmat_set.po
+source_file = locale/matlab/cmdref_gf_spmat_set.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.matlab--cmdref_gf_compute]
+file_filter = source/locale/<lang>/LC_MESSAGES/matlab/cmdref_gf_compute.po
+source_file = locale/matlab/cmdref_gf_compute.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.matlab--cmdref_gf_global_function]
+file_filter = source/locale/<lang>/LC_MESSAGES/matlab/cmdref_gf_global_function.po
+source_file = locale/matlab/cmdref_gf_global_function.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.matlab--mlabgf]
+file_filter = source/locale/<lang>/LC_MESSAGES/matlab/mlabgf.po
+source_file = locale/matlab/mlabgf.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.matlab--cmdref_gf_global_function_get]
+file_filter = source/locale/<lang>/LC_MESSAGES/matlab/cmdref_gf_global_function_get.po
+source_file = locale/matlab/cmdref_gf_global_function_get.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.matlab--cmdref_gf_cvstruct_get]
+file_filter = source/locale/<lang>/LC_MESSAGES/matlab/cmdref_gf_cvstruct_get.po
+source_file = locale/matlab/cmdref_gf_cvstruct_get.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.matlab--cmdref_gf_mesh_set]
+file_filter = source/locale/<lang>/LC_MESSAGES/matlab/cmdref_gf_mesh_set.po
+source_file = locale/matlab/cmdref_gf_mesh_set.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.matlab--cmdref_gf_workspace]
+file_filter = source/locale/<lang>/LC_MESSAGES/matlab/cmdref_gf_workspace.po
+source_file = locale/matlab/cmdref_gf_workspace.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.matlab--cmdref_gf_mesh_get]
+file_filter = source/locale/<lang>/LC_MESSAGES/matlab/cmdref_gf_mesh_get.po
+source_file = locale/matlab/cmdref_gf_mesh_get.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.matlab--intro]
+file_filter = source/locale/<lang>/LC_MESSAGES/matlab/intro.po
+source_file = locale/matlab/intro.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.matlab--cmdref_gf_eltm]
+file_filter = source/locale/<lang>/LC_MESSAGES/matlab/cmdref_gf_eltm.po
+source_file = locale/matlab/cmdref_gf_eltm.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.matlab--cmdref_gf_precond_get]
+file_filter = source/locale/<lang>/LC_MESSAGES/matlab/cmdref_gf_precond_get.po
+source_file = locale/matlab/cmdref_gf_precond_get.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.matlab--cmdref_gf_cont_struct]
+file_filter = source/locale/<lang>/LC_MESSAGES/matlab/cmdref_gf_cont_struct.po
+source_file = locale/matlab/cmdref_gf_cont_struct.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.matlab--cmdref_gf_model_get]
+file_filter = source/locale/<lang>/LC_MESSAGES/matlab/cmdref_gf_model_get.po
+source_file = locale/matlab/cmdref_gf_model_get.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.matlab--cmdref_gf_fem]
+file_filter = source/locale/<lang>/LC_MESSAGES/matlab/cmdref_gf_fem.po
+source_file = locale/matlab/cmdref_gf_fem.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.matlab--cmdref_gf_delete]
+file_filter = source/locale/<lang>/LC_MESSAGES/matlab/cmdref_gf_delete.po
+source_file = locale/matlab/cmdref_gf_delete.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.matlab--cmdref_gf_integ]
+file_filter = source/locale/<lang>/LC_MESSAGES/matlab/cmdref_gf_integ.po
+source_file = locale/matlab/cmdref_gf_integ.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.matlab--cmdref_gf_mesh_im_data_set]
+file_filter = source/locale/<lang>/LC_MESSAGES/matlab/cmdref_gf_mesh_im_data_set.po
+source_file = locale/matlab/cmdref_gf_mesh_im_data_set.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.matlab--cmdref_gf_linsolve]
+file_filter = source/locale/<lang>/LC_MESSAGES/matlab/cmdref_gf_linsolve.po
+source_file = locale/matlab/cmdref_gf_linsolve.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.matlab--cmdref_gf_util]
+file_filter = source/locale/<lang>/LC_MESSAGES/matlab/cmdref_gf_util.po
+source_file = locale/matlab/cmdref_gf_util.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.matlab--oocmd]
+file_filter = source/locale/<lang>/LC_MESSAGES/matlab/oocmd.po
+source_file = locale/matlab/oocmd.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.matlab--cmdref]
+file_filter = source/locale/<lang>/LC_MESSAGES/matlab/cmdref.po
+source_file = locale/matlab/cmdref.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.matlab--cmdref_gf_integ_get]
+file_filter = source/locale/<lang>/LC_MESSAGES/matlab/cmdref_gf_integ_get.po
+source_file = locale/matlab/cmdref_gf_integ_get.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.matlab--cmdref_gf_levelset_get]
+file_filter = source/locale/<lang>/LC_MESSAGES/matlab/cmdref_gf_levelset_get.po
+source_file = locale/matlab/cmdref_gf_levelset_get.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.matlab--cmdref_gf_geotrans_get]
+file_filter = source/locale/<lang>/LC_MESSAGES/matlab/cmdref_gf_geotrans_get.po
+source_file = locale/matlab/cmdref_gf_geotrans_get.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.matlab--cmdref_gf_cont_struct_get]
+file_filter = source/locale/<lang>/LC_MESSAGES/matlab/cmdref_gf_cont_struct_get.po
+source_file = locale/matlab/cmdref_gf_cont_struct_get.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.matlab--cmdref_gf_slice_get]
+file_filter = source/locale/<lang>/LC_MESSAGES/matlab/cmdref_gf_slice_get.po
+source_file = locale/matlab/cmdref_gf_slice_get.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.matlab--cmdref_gf_levelset_set]
+file_filter = source/locale/<lang>/LC_MESSAGES/matlab/cmdref_gf_levelset_set.po
+source_file = locale/matlab/cmdref_gf_levelset_set.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.matlab--cmdref_gf_levelset]
+file_filter = source/locale/<lang>/LC_MESSAGES/matlab/cmdref_gf_levelset.po
+source_file = locale/matlab/cmdref_gf_levelset.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.matlab--cmdref_gf_model_set]
+file_filter = source/locale/<lang>/LC_MESSAGES/matlab/cmdref_gf_model_set.po
+source_file = locale/matlab/cmdref_gf_model_set.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.matlab--cmdref_gf_mesher_object]
+file_filter = source/locale/<lang>/LC_MESSAGES/matlab/cmdref_gf_mesher_object.po
+source_file = locale/matlab/cmdref_gf_mesher_object.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.matlab--examples]
+file_filter = source/locale/<lang>/LC_MESSAGES/matlab/examples.po
+source_file = locale/matlab/examples.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.matlab--cmdref_gf_mesh_im_data_get]
+file_filter = source/locale/<lang>/LC_MESSAGES/matlab/cmdref_gf_mesh_im_data_get.po
+source_file = locale/matlab/cmdref_gf_mesh_im_data_get.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.matlab--install]
+file_filter = source/locale/<lang>/LC_MESSAGES/matlab/install.po
+source_file = locale/matlab/install.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.matlab--cmdref_gf_mesh_fem_get]
+file_filter = source/locale/<lang>/LC_MESSAGES/matlab/cmdref_gf_mesh_fem_get.po
+source_file = locale/matlab/cmdref_gf_mesh_fem_get.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.documenting--index]
+file_filter = source/locale/<lang>/LC_MESSAGES/documenting/index.po
+source_file = locale/documenting/index.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.documenting--rest]
+file_filter = source/locale/<lang>/LC_MESSAGES/documenting/rest.po
+source_file = locale/documenting/rest.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.documenting--style]
+file_filter = source/locale/<lang>/LC_MESSAGES/documenting/style.po
+source_file = locale/documenting/style.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.documenting--markup]
+file_filter = source/locale/<lang>/LC_MESSAGES/documenting/markup.po
+source_file = locale/documenting/markup.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.documenting--fromlatex]
+file_filter = source/locale/<lang>/LC_MESSAGES/documenting/fromlatex.po
+source_file = locale/documenting/fromlatex.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.whatsnew--3_0_1]
+file_filter = source/locale/<lang>/LC_MESSAGES/whatsnew/3.0.1.po
+source_file = locale/whatsnew/3.0.1.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.whatsnew--2_0_1]
+file_filter = source/locale/<lang>/LC_MESSAGES/whatsnew/2.0.1.po
+source_file = locale/whatsnew/2.0.1.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.whatsnew--4_1]
+file_filter = source/locale/<lang>/LC_MESSAGES/whatsnew/4.1.po
+source_file = locale/whatsnew/4.1.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.whatsnew--1_3]
+file_filter = source/locale/<lang>/LC_MESSAGES/whatsnew/1.3.po
+source_file = locale/whatsnew/1.3.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.whatsnew--4_2]
+file_filter = source/locale/<lang>/LC_MESSAGES/whatsnew/4.2.po
+source_file = locale/whatsnew/4.2.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.whatsnew--5_1]
+file_filter = source/locale/<lang>/LC_MESSAGES/whatsnew/5.1.po
+source_file = locale/whatsnew/5.1.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.whatsnew--index]
+file_filter = source/locale/<lang>/LC_MESSAGES/whatsnew/index.po
+source_file = locale/whatsnew/index.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.whatsnew--5_2]
+file_filter = source/locale/<lang>/LC_MESSAGES/whatsnew/5.2.po
+source_file = locale/whatsnew/5.2.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.whatsnew--1_5]
+file_filter = source/locale/<lang>/LC_MESSAGES/whatsnew/1.5.po
+source_file = locale/whatsnew/1.5.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.whatsnew--1_4]
+file_filter = source/locale/<lang>/LC_MESSAGES/whatsnew/1.4.po
+source_file = locale/whatsnew/1.4.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.whatsnew--3_1]
+file_filter = source/locale/<lang>/LC_MESSAGES/whatsnew/3.1.po
+source_file = locale/whatsnew/3.1.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.whatsnew--5_3]
+file_filter = source/locale/<lang>/LC_MESSAGES/whatsnew/5.3.po
+source_file = locale/whatsnew/5.3.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.whatsnew--4_3]
+file_filter = source/locale/<lang>/LC_MESSAGES/whatsnew/4.3.po
+source_file = locale/whatsnew/4.3.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.whatsnew--1_2]
+file_filter = source/locale/<lang>/LC_MESSAGES/whatsnew/1.2.po
+source_file = locale/whatsnew/1.2.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.whatsnew--3_0]
+file_filter = source/locale/<lang>/LC_MESSAGES/whatsnew/3.0.po
+source_file = locale/whatsnew/3.0.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.whatsnew--1_6]
+file_filter = source/locale/<lang>/LC_MESSAGES/whatsnew/1.6.po
+source_file = locale/whatsnew/1.6.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.whatsnew--1_7]
+file_filter = source/locale/<lang>/LC_MESSAGES/whatsnew/1.7.po
+source_file = locale/whatsnew/1.7.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.whatsnew--5_0]
+file_filter = source/locale/<lang>/LC_MESSAGES/whatsnew/5.0.po
+source_file = locale/whatsnew/5.0.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.whatsnew--2_0_2]
+file_filter = source/locale/<lang>/LC_MESSAGES/whatsnew/2.0.2.po
+source_file = locale/whatsnew/2.0.2.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.whatsnew--4_1_1]
+file_filter = source/locale/<lang>/LC_MESSAGES/whatsnew/4.1.1.po
+source_file = locale/whatsnew/4.1.1.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.whatsnew--2_0]
+file_filter = source/locale/<lang>/LC_MESSAGES/whatsnew/2.0.po
+source_file = locale/whatsnew/2.0.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.whatsnew--4_0]
+file_filter = source/locale/<lang>/LC_MESSAGES/whatsnew/4.0.po
+source_file = locale/whatsnew/4.0.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.whatsnew--1_0]
+file_filter = source/locale/<lang>/LC_MESSAGES/whatsnew/1.0.po
+source_file = locale/whatsnew/1.0.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.whatsnew--1_1]
+file_filter = source/locale/<lang>/LC_MESSAGES/whatsnew/1.1.po
+source_file = locale/whatsnew/1.1.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.screenshots--stokes-source]
+file_filter = source/locale/<lang>/LC_MESSAGES/screenshots/stokes-source.po
+source_file = locale/screenshots/stokes-source.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.screenshots--helmholtz_source]
+file_filter = source/locale/<lang>/LC_MESSAGES/screenshots/helmholtz_source.po
+source_file = locale/screenshots/helmholtz_source.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.screenshots--tripod_source]
+file_filter = source/locale/<lang>/LC_MESSAGES/screenshots/tripod_source.po
+source_file = locale/screenshots/tripod_source.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.screenshots--shots]
+file_filter = source/locale/<lang>/LC_MESSAGES/screenshots/shots.po
+source_file = locale/screenshots/shots.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.gmm--triangular]
+file_filter = source/locale/<lang>/LC_MESSAGES/gmm/triangular.po
+source_file = locale/gmm/triangular.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.gmm--misc]
+file_filter = source/locale/<lang>/LC_MESSAGES/gmm/misc.po
+source_file = locale/gmm/misc.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.gmm--noverif]
+file_filter = source/locale/<lang>/LC_MESSAGES/gmm/noverif.po
+source_file = locale/gmm/noverif.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.gmm--qd]
+file_filter = source/locale/<lang>/LC_MESSAGES/gmm/qd.po
+source_file = locale/gmm/qd.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.gmm--index]
+file_filter = source/locale/<lang>/LC_MESSAGES/gmm/index.po
+source_file = locale/gmm/index.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.gmm--sub-matrix]
+file_filter = source/locale/<lang>/LC_MESSAGES/gmm/sub-matrix.po
+source_file = locale/gmm/sub-matrix.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.gmm--first-step]
+file_filter = source/locale/<lang>/LC_MESSAGES/gmm/first-step.po
+source_file = locale/gmm/first-step.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.gmm--blas]
+file_filter = source/locale/<lang>/LC_MESSAGES/gmm/blas.po
+source_file = locale/gmm/blas.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.gmm--catch]
+file_filter = source/locale/<lang>/LC_MESSAGES/gmm/catch.po
+source_file = locale/gmm/catch.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.gmm--intro]
+file_filter = source/locale/<lang>/LC_MESSAGES/gmm/intro.po
+source_file = locale/gmm/intro.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.gmm--denseqr]
+file_filter = source/locale/<lang>/LC_MESSAGES/gmm/denseqr.po
+source_file = locale/gmm/denseqr.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.gmm--blas_interface]
+file_filter = source/locale/<lang>/LC_MESSAGES/gmm/blas_interface.po
+source_file = locale/gmm/blas_interface.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.gmm--export]
+file_filter = source/locale/<lang>/LC_MESSAGES/gmm/export.po
+source_file = locale/gmm/export.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.gmm--inside]
+file_filter = source/locale/<lang>/LC_MESSAGES/gmm/inside.po
+source_file = locale/gmm/inside.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.gmm--matrix]
+file_filter = source/locale/<lang>/LC_MESSAGES/gmm/matrix.po
+source_file = locale/gmm/matrix.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.gmm--install]
+file_filter = source/locale/<lang>/LC_MESSAGES/gmm/install.po
+source_file = locale/gmm/install.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.gmm--denselu]
+file_filter = source/locale/<lang>/LC_MESSAGES/gmm/denselu.po
+source_file = locale/gmm/denselu.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.gmm--superlu]
+file_filter = source/locale/<lang>/LC_MESSAGES/gmm/superlu.po
+source_file = locale/gmm/superlu.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.gmm--iter]
+file_filter = source/locale/<lang>/LC_MESSAGES/gmm/iter.po
+source_file = locale/gmm/iter.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.install--install_linux]
+file_filter = source/locale/<lang>/LC_MESSAGES/install/install_linux.po
+source_file = locale/install/install_linux.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.install--install_windows]
+file_filter = source/locale/<lang>/LC_MESSAGES/install/install_windows.po
+source_file = locale/install/install_windows.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.install--install_mac]
+file_filter = source/locale/<lang>/LC_MESSAGES/install/install_mac.po
+source_file = locale/install/install_mac.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.tutorial--wheel]
+file_filter = source/locale/<lang>/LC_MESSAGES/tutorial/wheel.po
+source_file = locale/tutorial/wheel.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.tutorial--index]
+file_filter = source/locale/<lang>/LC_MESSAGES/tutorial/index.po
+source_file = locale/tutorial/index.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.tutorial--thermo_coupling]
+file_filter = source/locale/<lang>/LC_MESSAGES/tutorial/thermo_coupling.po
+source_file = locale/tutorial/thermo_coupling.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.tutorial--basic_usage]
+file_filter = source/locale/<lang>/LC_MESSAGES/tutorial/basic_usage.po
+source_file = locale/tutorial/basic_usage.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.tutorial--intro]
+file_filter = source/locale/<lang>/LC_MESSAGES/tutorial/intro.po
+source_file = locale/tutorial/intro.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.tutorial--install]
+file_filter = source/locale/<lang>/LC_MESSAGES/tutorial/install.po
+source_file = locale/tutorial/install.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.python--cmdref_Module_delete]
+file_filter = source/locale/<lang>/LC_MESSAGES/python/cmdref_Module delete.po
+source_file = locale/python/cmdref_Module delete.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.python--pygf]
+file_filter = source/locale/<lang>/LC_MESSAGES/python/pygf.po
+source_file = locale/python/pygf.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.python--cmdref_ContStruct]
+file_filter = source/locale/<lang>/LC_MESSAGES/python/cmdref_ContStruct.po
+source_file = locale/python/cmdref_ContStruct.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.python--cmdref_Module_util]
+file_filter = source/locale/<lang>/LC_MESSAGES/python/cmdref_Module util.po
+source_file = locale/python/cmdref_Module util.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.python--cmdref_MeshImData]
+file_filter = source/locale/<lang>/LC_MESSAGES/python/cmdref_MeshImData.po
+source_file = locale/python/cmdref_MeshImData.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.python--cmdref_Fem]
+file_filter = source/locale/<lang>/LC_MESSAGES/python/cmdref_Fem.po
+source_file = locale/python/cmdref_Fem.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.python--cmdref_Spmat]
+file_filter = source/locale/<lang>/LC_MESSAGES/python/cmdref_Spmat.po
+source_file = locale/python/cmdref_Spmat.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.python--cmdref_Slice]
+file_filter = source/locale/<lang>/LC_MESSAGES/python/cmdref_Slice.po
+source_file = locale/python/cmdref_Slice.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.python--index]
+file_filter = source/locale/<lang>/LC_MESSAGES/python/index.po
+source_file = locale/python/index.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.python--cmdref_Mesh]
+file_filter = source/locale/<lang>/LC_MESSAGES/python/cmdref_Mesh.po
+source_file = locale/python/cmdref_Mesh.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.python--cmdref_GlobalFunction]
+file_filter = source/locale/<lang>/LC_MESSAGES/python/cmdref_GlobalFunction.po
+source_file = locale/python/cmdref_GlobalFunction.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.python--cmdref_GeoTrans]
+file_filter = source/locale/<lang>/LC_MESSAGES/python/cmdref_GeoTrans.po
+source_file = locale/python/cmdref_GeoTrans.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.python--cmdref_Precond]
+file_filter = source/locale/<lang>/LC_MESSAGES/python/cmdref_Precond.po
+source_file = locale/python/cmdref_Precond.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.python--cmdref_Model]
+file_filter = source/locale/<lang>/LC_MESSAGES/python/cmdref_Model.po
+source_file = locale/python/cmdref_Model.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.python--howtos]
+file_filter = source/locale/<lang>/LC_MESSAGES/python/howtos.po
+source_file = locale/python/howtos.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.python--pre]
+file_filter = source/locale/<lang>/LC_MESSAGES/python/pre.po
+source_file = locale/python/pre.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.python--cmdref_Module_poly]
+file_filter = source/locale/<lang>/LC_MESSAGES/python/cmdref_Module poly.po
+source_file = locale/python/cmdref_Module poly.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.python--cmdref_Module_compute]
+file_filter = source/locale/<lang>/LC_MESSAGES/python/cmdref_Module compute.po
+source_file = locale/python/cmdref_Module compute.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.python--cmdref_MeshFem]
+file_filter = source/locale/<lang>/LC_MESSAGES/python/cmdref_MeshFem.po
+source_file = locale/python/cmdref_MeshFem.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.python--cmdref_Module_linsolve]
+file_filter = source/locale/<lang>/LC_MESSAGES/python/cmdref_Module linsolve.po
+source_file = locale/python/cmdref_Module linsolve.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.python--cmdref_Eltm]
+file_filter = source/locale/<lang>/LC_MESSAGES/python/cmdref_Eltm.po
+source_file = locale/python/cmdref_Eltm.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.python--cmdref_MesherObject]
+file_filter = source/locale/<lang>/LC_MESSAGES/python/cmdref_MesherObject.po
+source_file = locale/python/cmdref_MesherObject.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.python--cmdref_LevelSet]
+file_filter = source/locale/<lang>/LC_MESSAGES/python/cmdref_LevelSet.po
+source_file = locale/python/cmdref_LevelSet.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.python--cmdref_MeshIm]
+file_filter = source/locale/<lang>/LC_MESSAGES/python/cmdref_MeshIm.po
+source_file = locale/python/cmdref_MeshIm.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.python--intro]
+file_filter = source/locale/<lang>/LC_MESSAGES/python/intro.po
+source_file = locale/python/intro.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.python--cmdref_Integ]
+file_filter = source/locale/<lang>/LC_MESSAGES/python/cmdref_Integ.po
+source_file = locale/python/cmdref_Integ.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.python--cmdref_CvStruct]
+file_filter = source/locale/<lang>/LC_MESSAGES/python/cmdref_CvStruct.po
+source_file = locale/python/cmdref_CvStruct.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.python--cmdref]
+file_filter = source/locale/<lang>/LC_MESSAGES/python/cmdref.po
+source_file = locale/python/cmdref.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.python--cmdref_MeshLevelSet]
+file_filter = source/locale/<lang>/LC_MESSAGES/python/cmdref_MeshLevelSet.po
+source_file = locale/python/cmdref_MeshLevelSet.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.python--cmdref_Module_asm]
+file_filter = source/locale/<lang>/LC_MESSAGES/python/cmdref_Module asm.po
+source_file = locale/python/cmdref_Module asm.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.python--examples]
+file_filter = source/locale/<lang>/LC_MESSAGES/python/examples.po
+source_file = locale/python/examples.pot
+source_lang = en
+type = PO
+
+[getfem-53-1.python--install]
+file_filter = source/locale/<lang>/LC_MESSAGES/python/install.po
+source_file = locale/python/install.pot
+source_lang = en
+type = PO
+
