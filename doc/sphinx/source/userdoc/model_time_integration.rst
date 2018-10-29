@@ -275,7 +275,7 @@ Note that the call of the method::
 
   model.shift_variables_for_time_integration();
 
-is needed between two time step since it will copy the current value of the variables (`u` and `Dot_u` for instance) to the previous ones (`Pevious_u` and `Previous_Dot_u`).
+is needed between two time step since it will copy the current value of the variables (`u` and `Dot_u` for instance) to the previous ones (`Previous_u` and `Previous_Dot_u`).
 
 Boundary conditions
 *******************
