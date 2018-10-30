@@ -210,36 +210,36 @@ char* getfem_interface_main(int config_id, const char *function,
     *nb_out_args = int(out.args().size());
     std::copy(out.args().begin(), out.args().end(), *pout_args);
   }
-  catch (getfemint_bad_arg e) {
+  catch (const getfemint_bad_arg &e) {
     // cerr << "Bad argument!\n";
     return strdup(e.what());
   }
-  catch (getfemint_interrupted) {
+  catch (const getfemint_interrupted &) {
     cerr << "Ctrl-C catched!\n";
     return strdup("Interrupted (Ctrl-C)");
   }
-  catch (getfemint_error e) {
+  catch (const getfemint_error &e) {
     // cerr << "Error!\n";
     return strdup(e.what());
   }
-  catch (std::logic_error e) {
+  catch (const std::logic_error &e) {
     cerr << "logic_error exception caught\n";
     return strdup(e.what());
   }
-  catch (std::runtime_error e) {
+  catch (const std::runtime_error &e) {
     cerr << "runtime_error exception caught\n";
     return strdup(e.what());
   }
-  catch(std::bad_alloc) {
+  catch(const std::bad_alloc &) {
     return strdup("getfem caught a bad_alloc exception\n");
   }
-  catch(std::bad_cast) {
+  catch(const std::bad_cast &) {
     return strdup("getfem caught a bad_cast exception\n");
   }
-  catch(std::bad_typeid) {
+  catch(const std::bad_typeid &) {
     return strdup("getfem caught a bad_typeid exception\n");
   }
-  catch(std::bad_exception) {
+  catch(const std::bad_exception &) {
     return strdup("getfem caught a bad_exception exception\n");
   }
   catch (...) {

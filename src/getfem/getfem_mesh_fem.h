@@ -64,7 +64,7 @@ namespace getfem {
     iterator &operator ++()
     { ++ii; if (ii == N) { ii = 0; ++it; } return *this; }
     iterator &operator --()
-    { if (ii == 0) { ii = N-1; --it; } else --ii; return *this; }
+    { if (ii == 0) { ii = N; --it; } --ii; return *this; }
     iterator operator ++(int) { iterator tmp = *this; ++(*this); return tmp; }
     iterator operator --(int) { iterator tmp = *this; --(*this); return tmp; }
 

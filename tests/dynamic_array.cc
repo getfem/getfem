@@ -159,7 +159,7 @@ int main(void) {
       t[(unsigned)(-5)] = 8;
       GMM_ASSERT1(false, "negative index does not produce an error");
     }
-    catch(std::logic_error e) {
+    catch(const std::logic_error &e) {
       cout << "Out of range error successfully catched, ok\n";
     }
 #endif

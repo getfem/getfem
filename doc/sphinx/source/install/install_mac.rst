@@ -19,10 +19,6 @@ First, verify that you have installed the following components on your system:
 
 (Xquartz is not strictly necessary but more confortable).
 
-Then execute on a console (if not already done),
-
-   $ brew tap homebrew/science
-
 Then, if you download the current git version
 
    $ brew install m4
@@ -31,7 +27,12 @@ Then, if you download the current git version
 
    $ brew install libtool
 
-For the sequential mumps, 
+For the sequential mumps,
+   $ brew tap dpo/openblas
+
+   $ brew tap-pin dpo/openblas
+
+   $ brew options ipopt
 
    $ brew options mumps
 
