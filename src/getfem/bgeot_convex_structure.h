@@ -154,6 +154,21 @@ namespace bgeot {
     friend pconvex_structure basic_structure(pconvex_structure cv);
   };
 
+  /**
+  *   Stored objects must be compared by keys, because there is a possibility that
+  *   they are duplicated in storages of multiple threads and pointers to them are
+  *   never equal
+  */
+  inline bool operator==(const pconvex_structure &p1, const pconvex_structure &p2)
+  {
+    return *dal::key_of_stored_object(p1) == *dal::key_of_stored_object(p2);
+  }
+
+  inline bool operator!=(const pconvex_structure &p1, const pconvex_structure &p2)
+  {
+    return !(p1 == p2);
+  }
+
   /// Original structure (if concerned)
   inline pconvex_structure basic_structure(pconvex_structure cv)
   { if (cv->auto_basic) return cv; else return cv->basic_pcvs; }
@@ -204,7 +219,7 @@ namespace bgeot {
   prism_structure(dim_type nc) { return prism_P1_structure(nc); }
   IS_DEPRECATED inline pconvex_structure
   pyramid_structure(short_type k) { return pyramid_QK_structure(k); }
-  
+
 
   /** Simplex structure with the Lagrange grid of degree k.
       @param n the simplex dimension.
