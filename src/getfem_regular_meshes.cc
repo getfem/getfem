@@ -294,17 +294,15 @@ namespace getfem
     std::string GT = PARAM.string_value("GT");
     GMM_ASSERT1(!GT.empty(), "regular mesh : you have at least to "
                 "specify the geometric transformation");
-    bgeot::pgeometric_trans pgt =
-      bgeot::geometric_trans_descriptor(GT);
+    bgeot::pgeometric_trans pgt = bgeot::geometric_trans_descriptor(GT);
 
     size_type N = pgt->dim();
     base_small_vector org(N); gmm::clear(org);
 
-    const std::vector<bgeot::md_param::param_value> &o
-      = PARAM.array_value("ORG");
+    const auto &o = PARAM.array_value("ORG");
     if (o.size() > 0) {
-      GMM_ASSERT1(o.size() == N, "ORG parameter should be an array of size "
-                  << N);
+      GMM_ASSERT1(o.size() == N,
+                  "ORG parameter should be an array of size " << N);
       for (size_type i = 0; i < N; ++i) {
         GMM_ASSERT1(o[i].type_of_param() == bgeot::md_param::REAL_VALUE,
                     "ORG should be a real array.");
@@ -316,14 +314,13 @@ namespace getfem
 
     std::vector<size_type> nsubdiv(N);
     gmm::fill(nsubdiv, 2);
-    const std::vector<bgeot::md_param::param_value> &ns
-      = PARAM.array_value("NSUBDIV");
+    const auto &ns = PARAM.array_value("NSUBDIV");
     if (ns.size() > 0) {
       GMM_ASSERT1(ns.size() == N,
                   "NSUBDIV parameter should be an array of size " << N);
       for (size_type i = 0; i < N; ++i) {
         GMM_ASSERT1(ns[i].type_of_param() == bgeot::md_param::REAL_VALUE,
-                    "NSUBDIV should be an integer array.");
+                    "NSUBDIV should be an integer array");
         nsubdiv[i] = size_type(ns[i].real()+0.5);
       }
     }
@@ -331,14 +328,13 @@ namespace getfem
     base_small_vector sizes(N);
     gmm::fill(sizes, 1.0);
 
-    const std::vector<bgeot::md_param::param_value> &si
-      = PARAM.array_value("SIZES");
+    const auto &si = PARAM.array_value("SIZES");
     if (si.size() > 0) {
       GMM_ASSERT1(si.size() == N,
                   "SIZES parameter should be an array of size " << N);
       for (size_type i = 0; i < N; ++i) {
         GMM_ASSERT1(si[i].type_of_param() == bgeot::md_param::REAL_VALUE,
-                    "SIZES should be a real array.");
+                    "SIZES should be a real array");
         sizes[i] = si[i].real();
       }
     }
@@ -361,20 +357,18 @@ namespace getfem
     std::string GT = PARAM.string_value("GT");
     GMM_ASSERT1(!GT.empty(), "regular ball mesh : you have at least to "
                 "specify the geometric transformation");
-    bgeot::pgeometric_trans pgt =
-      bgeot::geometric_trans_descriptor(GT);
+    bgeot::pgeometric_trans pgt = bgeot::geometric_trans_descriptor(GT);
 
     size_type N = pgt->dim();
     base_small_vector org(N);
 
-    const std::vector<bgeot::md_param::param_value> &o
-      = PARAM.array_value("ORG");
+    const auto &o = PARAM.array_value("ORG");
     if (o.size() > 0) {
-      GMM_ASSERT1(o.size() == N, "ORG parameter should be an array of size "
-                  << N);
+      GMM_ASSERT1(o.size() == N,
+                  "ORG parameter should be an array of size " << N);
       for (size_type i = 0; i < N; ++i) {
         GMM_ASSERT1(o[i].type_of_param() == bgeot::md_param::REAL_VALUE,
-                    "ORG should be a real array.");
+                    "ORG should be a real array");
         org[i] = o[i].real();
       }
     }
@@ -383,29 +377,26 @@ namespace getfem
     bool noised = (PARAM.int_value("NOISED") != 0);
 
     size_type nsubdiv0(2), nsubdiv1(2);
-    const std::vector<bgeot::md_param::param_value> &ns
-      = PARAM.array_value("NSUBDIV");
+    const auto &ns = PARAM.array_value("NSUBDIV");
     if (ns.size() > 0) {
       GMM_ASSERT1(ns.size() == 2,
-                  "NSUBDIV parameter should be an array of size " << 2);
+                  "NSUBDIV parameter should be an array of size 2");
       for (size_type i = 0; i < 2; ++i)
         GMM_ASSERT1(ns[i].type_of_param() == bgeot::md_param::REAL_VALUE,
-                    "NSUBDIV should be an integer array.");
+                    "NSUBDIV should be an integer array");
       nsubdiv0 = size_type(ns[0].real()+0.5);
       nsubdiv1 = size_type(ns[1].real()+0.5);
     }
 
     scalar_type radius(1), core_ratio(M_SQRT1_2);
-    const std::vector<bgeot::md_param::param_value> &si
-      = PARAM.array_value("SIZES");
+    const auto &si = PARAM.array_value("SIZES");
     if (si.size() > 0) {
       GMM_ASSERT1(si.size() == 1,
-                  "SIZES parameter should be an array of size " << 1);
+                  "SIZES parameter should be an array of size 1");
       GMM_ASSERT1(si[0].type_of_param() == bgeot::md_param::REAL_VALUE,
-                  "SIZES should be a real array.");
+                  "SIZES should be a real array");
       radius = si[0].real();
     }
-
     
     std::vector<size_type> nsubdiv(N);
     gmm::fill(nsubdiv, nsubdiv0);
@@ -442,7 +433,8 @@ namespace getfem
       trsl[i] = core_ratio;
       mm[i].translation(trsl);
       for (dal::bv_visitor cv(mm[i].convex_index()); !cv.finished(); ++cv)
-	     m.add_convex_by_points(mm[i].trans_of_convex(cv), mm[i].points_of_convex(cv).begin());
+        m.add_convex_by_points(mm[i].trans_of_convex(cv),
+                               mm[i].points_of_convex(cv).begin());
     }
 
     std::vector<base_node> pts(m.points().card(), base_node(N));
@@ -503,7 +495,8 @@ namespace getfem
       m0.copy_from(m);
       m0.transformation(M);
       for (dal::bv_visitor cv(m0.convex_index()); !cv.finished(); ++cv)
-	     m.add_convex_by_points(m0.trans_of_convex(cv), m0.points_of_convex(cv).begin());
+        m.add_convex_by_points(m0.trans_of_convex(cv),
+                               m0.points_of_convex(cv).begin());
     }
 
     m.translation(org);

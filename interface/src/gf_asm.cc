@@ -1254,7 +1254,7 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        );
 
 
-    /*@FUNC ('expression analysis', @str expression [, {@tm mesh | @tmim mim}] [, der_order] [, @tmodel model] [, @str varname, @int is_variable[, {@tmf mf | @tmimd mimd}], ...])
+    /*@FUNC ('expression analysis', @str expression [, {@tmesh mesh | @tmim mim}] [, der_order] [, @tmodel model] [, @str varname, @int is_variable[, {@tmf mf | @tmimd mimd}], ...])
       Analyse a high-level generic assembly expression and print
       information about the provided expression.@*/
     sub_command

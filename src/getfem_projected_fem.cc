@@ -251,7 +251,7 @@ namespace getfem {
             tree.add_point_with_id(mf_source.point_of_basic_dof(dof), dof);
   }
 
-  bool projected_fem::find_a_projected_point(base_node pt, base_node &ptr_proj,
+  bool projected_fem::find_a_projected_point(const base_node &pt, base_node &ptr_proj,
                                              size_type &cv_proj, short_type &fc_proj) const {
 
     bgeot::index_node_pair ipt;
