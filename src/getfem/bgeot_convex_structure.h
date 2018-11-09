@@ -159,15 +159,14 @@ namespace bgeot {
   *   they are duplicated in storages of multiple threads and pointers to them are
   *   never equal
   */
-  inline bool operator==(const pconvex_structure &p1, const pconvex_structure &p2)
-  {
-    return *dal::key_of_stored_object(p1) == *dal::key_of_stored_object(p2);
-  }
+  bool operator==(const pconvex_structure &p1, const pconvex_structure &p2);
+  bool operator!=(const pconvex_structure &p1, const pconvex_structure &p2);
 
-  inline bool operator!=(const pconvex_structure &p1, const pconvex_structure &p2)
-  {
-    return !(p1 == p2);
-  }
+  //!these operators still use comparison by addresses against nullptr
+  bool operator==(const pconvex_structure &p1, std::nullptr_t);
+  bool operator==(std::nullptr_t, const pconvex_structure &p2);
+  bool operator!=(const pconvex_structure &p1, std::nullptr_t);
+  bool operator!=(std::nullptr_t, const pconvex_structure &p2);
 
   /// Original structure (if concerned)
   inline pconvex_structure basic_structure(pconvex_structure cv)
