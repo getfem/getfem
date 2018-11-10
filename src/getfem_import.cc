@@ -274,7 +274,8 @@ namespace getfem {
       size_type node_id;
       base_node n(3); n[0]=n[1]=n[2]=0.0;
       f >> node_id >> n[0] >> n[1] >> n[2];
-      msh_node_2_getfem_node[node_id] = m.add_point(n, 0.0, remove_duplicated_nodes);
+      msh_node_2_getfem_node[node_id]
+        = m.add_point(n, remove_duplicated_nodes ? 0. : -1.);
     }
 
     if (version == 2)
@@ -849,7 +850,7 @@ namespace getfem {
       for (size_type j=0; j < 3; ++j, pos += fieldwidth2)
         pt[j] = std::stod(line.substr(pos, fieldwidth2));
 
-      cdb_node_2_getfem_node[nodeid] = m.add_point(pt, 0., false);
+      cdb_node_2_getfem_node[nodeid] = m.add_point(pt, -1.);
     }
 
     while (bgeot::casecmp(line.substr(0,6),"EBLOCK") != 0) {
