@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # Python GetFEM++ interface
 #
-# Copyright (C) 2009-2017 Luis Saavedra, Yves Renard.
+# Copyright (C) 2018 Yves Renard, Konstantinos Poulios.
 #
 # This file is a part of GetFEM++
 #
