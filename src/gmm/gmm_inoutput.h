@@ -41,7 +41,6 @@
 #define GMM_INOUTPUT_H
 
 #include <stdio.h>
-#include <boost/format.hpp>
 #include "gmm_kernel.h"
 namespace gmm {
 
@@ -1153,13 +1152,14 @@ namespace gmm {
         f.write(reinterpret_cast<const char*>(&V[i]), sizeof(V[i]));
     }
     else {
-      std::ofstream f(fname.c_str()); f.imbue(std::locale("C"));
       if (Vformat.empty()){
+        std::ofstream f(fname.c_str()); f.imbue(std::locale("C"));
         f.precision(16);
         for (size_type i=0; i < gmm::vect_size(V); ++i) f << V[i] << "\n";
       }
       else {
-        for (size_type i=0; i < gmm::vect_size(V); ++i) f << boost::format(Vformat) % V[i];
+        FILE* f = fopen(fname.c_str(), "w");
+        for (size_type i=0; i < gmm::vect_size(V); ++i) fprintf(f, Vformat.c_str(), V[i]);
       }
     }
   } 
