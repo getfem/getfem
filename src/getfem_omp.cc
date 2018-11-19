@@ -161,4 +161,14 @@ namespace getfem{
     exceptions_[this_thread()] = std::current_exception();
   }
 
+  void parallel_execution(std::function<void(void)> lambda){
+    gmm::standard_locale locale;
+    thread_exception exception;
+    #pragma omp parallel default(shared)
+    {
+      exception.run([&]{lambda();});
+    }
+    exception.rethrow();
+  }
+
 }

@@ -516,22 +516,14 @@ namespace getfem {
                   {
                     gmm::clear(rTM);
                     distro<decltype(rTM)>  distro_rTM(rTM);
-                    gmm::standard_locale locale;
-                    open_mp_is_running_properly check;
-                    thread_exception exception;
-                    #pragma omp parallel default(shared)
-                    {
-                      exception.run([&]
-                      {
+                    GETFEM_OMP_PARALLEL(
                         ga_workspace workspace(*this);
                         for (const auto &ge : generic_expressions)
                           workspace.add_expression(ge.expr, ge.mim, ge.region,
-						   2, ge.secondary_domain);
+                                                   2, ge.secondary_domain);
                         workspace.set_assembled_matrix(distro_rTM);
                         workspace.assembly(2);
-                      });
-                    } //parallel
-                    exception.rethrow();
+                    );
                   } //distro scope
                   gmm::add
                     (gmm::sub_matrix(rTM, vdescr.I, multdescr.I), MM);
@@ -1939,13 +1931,7 @@ namespace getfem {
         list_distro<real_veclist> rveclist_sym(brick.rveclist_sym[rhs_ind]);
 
         /*running the assembly in parallel*/
-        gmm::standard_locale locale;
-        open_mp_is_running_properly check;
-        thread_exception exception;
-        #pragma omp parallel default(shared)
-        {
-          exception.run([&]
-          {
+        GETFEM_OMP_PARALLEL(
             brick.pbr->asm_real_tangent_terms(*this, ib, brick.vlist,
                                               brick.dlist, brick.mims,
                                               rmatlist,
@@ -1953,9 +1939,7 @@ namespace getfem {
                                               rveclist_sym,
                                               brick.region,
                                               version);
-          } );
-        }
-        exception.rethrow();
+           );
       }
       brick.pbr->real_post_assembly_in_serial(*this, ib, brick.vlist,
                                               brick.dlist, brick.mims,
@@ -3409,7 +3393,7 @@ model_complex_plain_vector &
 
     return md.add_brick(pbr, vl, dl, tl, model::mimlist(1, &mim), region);
   }
-  
+
   size_type add_source_term
   (model &md, const mesh_im &mim, const std::string &expr, size_type region,
    const std::string &brickname, const std::string &directvarname,
@@ -3426,7 +3410,7 @@ model_complex_plain_vector &
     return add_source_term_(md, mim, expr, region, brickname, directvarname,
                             directdataname, return_if_nonlin, secondary_domain);
   }
-  
+
   // ----------------------------------------------------------------------
   //
   // Linear generic assembly brick

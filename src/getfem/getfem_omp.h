@@ -377,15 +377,21 @@ namespace getfem
     /**vector of pointers to caught exceptions*/
     std::vector<std::exception_ptr> caughtExceptions() const;
     void rethrow();
-    
+
   private:
     void captureException();
 
     std::vector<std::exception_ptr> exceptions_;
   };
 
+  void parallel_execution(std::function<void(void)> lambda);
+
+#ifdef GETFEM_HAVE_OPENMP
+  #define GETFEM_OMP_PARALLEL(body) parallel_execution([&](){body;});
+#else
+  #define GETFEM_OMP_PARALLEL(body) body
+#endif
 
 }
 
 #endif //GETFEM_OMP
-
