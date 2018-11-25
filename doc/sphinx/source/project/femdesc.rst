@@ -231,7 +231,7 @@ where ``"name of trans"`` can be chosen among the following list.
 * ``"GT_LINEAR_PRODUCT(a,b)"``
 
   Description of the direct product of the two transformations ``a`` and ``b`` 
-  keeping a linear transformation (this is a restriction of he previous 
+  keeping a linear transformation (this is a restriction of the previous 
   function). This allows, for instance, to use exact integrations on regular 
   meshes with parallelograms.
 

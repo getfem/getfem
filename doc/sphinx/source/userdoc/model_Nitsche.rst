@@ -163,7 +163,7 @@ or described on a scalar fem. Returns the brick index in the model.
 Generic Nitsche's method for contact with friction condition 
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-We describe here the use of Nitsch's method to prescribe a contact with Coulomb friction condition in the small deformations framework. This corresponds to a weak integral contact condition which as some similarity with the ones which use Lagrange multipliers describe in the corresponding section, see :ref:`weak_integral_contact_section`
+We describe here the use of Nitsche's method to prescribe a contact with Coulomb friction condition in the small deformations framework. This corresponds to a weak integral contact condition which as some similarity with the ones which use Lagrange multipliers describe in the corresponding section, see :ref:`weak_integral_contact_section`
 
 In order to simplify notations, let use denote by :math:`P_{n,\mathscr{F}}` the following map which corresponds to a couple of projections:
 

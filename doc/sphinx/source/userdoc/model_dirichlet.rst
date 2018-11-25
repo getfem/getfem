@@ -22,7 +22,7 @@ associated weak form of the term is the following:
 
    \int_{\Gamma} u \mu d\Gamma = \int_{\Gamma} u_D \mu d\Gamma, \forall \mu \in M.
 
-where :math:`u` is the variable, :math:`M` is the space of multipliers, :math:`u`
+where :math:`u` is the variable, :math:`M` is the space of multipliers, :math:`u_D`
 is the variable and :math:`\Gamma` the Dirichlet boundary. For this version, an
 additional variable have to be added to represent the multiplier. It can be done
 directly to the model or thanks to the functions below. There are three functions
