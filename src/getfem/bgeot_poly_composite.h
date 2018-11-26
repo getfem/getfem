@@ -135,7 +135,7 @@ namespace bgeot {
   template <class ITER>
   scalar_type polynomial_composite::eval(const ITER &it) const {
     base_node p0(mp->dim());
-    copy(it, it + mp->dim(), p0.begin());
+    std::copy(it, it + mp->dim(), p0.begin());
     mesh_structure::ind_cv_ct::const_iterator itc, itce;
 
     mesh_precomposite::PTAB::const_sorted_iterator
