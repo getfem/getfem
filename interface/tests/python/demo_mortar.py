@@ -90,7 +90,7 @@ indm = mfm.basic_dof_on_region(MORTAR_BOUNDARY_OUT)
 expr = 'M(#1,#2)+=comp(vBase(#1).vBase(#2))(:,i,:,i)'
 M =   gf.asm_boundary(MORTAR_BOUNDARY_IN, expr, mim, mfm, mfu)
 M = M-gf.asm_boundary(MORTAR_BOUNDARY_OUT, expr, mim, mfm, mfu)
-M = gf.Spmat('copy', M, indm, range(M.size()[1]))
+M = gf.Spmat('copy', M, indm, list(range(M.size()[1])))
 
 md = gf.Model('real')
 md.add_fem_variable('u', mfu);

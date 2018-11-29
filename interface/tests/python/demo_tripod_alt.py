@@ -50,8 +50,8 @@ P=m.pts()
 
 ctop=(abs(P[1,:] - 13) < 1e-6);
 cbot=(abs(P[1,:] + 10) < 1e-6);
-pidtop=compress(ctop, range(0, m.nbpts()))
-pidbot=compress(cbot, range(0, m.nbpts()))
+pidtop=compress(ctop, list(range(0, m.nbpts())))
+pidbot=compress(cbot, list(range(0, m.nbpts())))
 
 ftop=m.faces_from_pid(pidtop)
 fbot=m.faces_from_pid(pidbot)
