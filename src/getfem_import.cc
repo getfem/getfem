@@ -258,251 +258,269 @@ namespace getfem {
 
     /* read the region names */
     if (region_map != NULL) {
-      if (version == 2) {
+      if (version >= 2) {
         *region_map = read_region_names_from_gmsh_mesh_file(f);
       }
     }
     /* read the node list */
-    if (version == 2)
-      bgeot::read_until(f, "$Nodes"); /* Format version 2 */
+    if (version >= 2)
+      bgeot::read_until(f, "$Nodes"); /* Format versions 2 and 4 */
 
-    size_type nb_node;
-    f >> nb_node;
-    //cerr << "reading nodes..[nb=" << nb_node << "]\n";
-    std::map<size_type, size_type> msh_node_2_getfem_node;
-    for (size_type node_cnt=0; node_cnt < nb_node; ++node_cnt) {
-      size_type node_id;
-      base_node n(3); n[0]=n[1]=n[2]=0.0;
-      f >> node_id >> n[0] >> n[1] >> n[2];
-      msh_node_2_getfem_node[node_id]
-        = m.add_point(n, remove_duplicated_nodes ? 0. : -1.);
+    size_type nb_block, nb_node, dummy;
+    if (version >= 4)
+      f >> nb_block >> nb_node;
+    else {
+      nb_block = 1;
+      f >> nb_node;
     }
 
-    if (version == 2)
-      bgeot::read_until(f, "$Endnodes"); /* Format version 2 */
+    //cerr << "reading nodes..[nb=" << nb_node << "]\n";
+    std::map<size_type, size_type> msh_node_2_getfem_node;
+    for (size_type block=0; block < nb_block; ++block) {
+      if (version >= 4)
+        f >> dummy >> dummy >> dummy >> nb_node;
+      for (size_type node_cnt=0; node_cnt < nb_node; ++node_cnt) {
+        size_type node_id;
+        base_node n{0,0,0};
+        f >> node_id >> n[0] >> n[1] >> n[2];
+        msh_node_2_getfem_node[node_id]
+          = m.add_point(n, remove_duplicated_nodes ? 0. : -1.);
+      }
+    }
+
+    if (version >= 2)
+      bgeot::read_until(f, "$Endnodes"); /* Format versions 2 and 4 */
     else
       bgeot::read_until(f, "$ENDNOD");
 
     /* read the convexes */
-    if (version == 2)
-      bgeot::read_until(f, "$Elements"); /* Format version 2 */
+    if (version >= 2)
+      bgeot::read_until(f, "$Elements"); /* Format versions 2 and 4 */
     else
       bgeot::read_until(f, "$ELM");
 
     size_type nb_cv;
-    f >> nb_cv;
+    if (version >= 4) /* Format version 4 */
+      f >> nb_block >> nb_cv;
+    else {
+      nb_block = 1;
+      f >> nb_cv;
+    }
     std::vector<gmsh_cv_info> cvlst; cvlst.reserve(nb_cv);
-    for (size_type cv=0; cv < nb_cv; ++cv) {
-      unsigned id, type, region;
-      unsigned dummy, cv_nb_nodes;
+    for (size_type block=0; block < nb_block; ++block) {
+      unsigned type, region;
+      if (version >= 4) /* Format version 4 */
+        f >> region >> dummy >> type >> nb_cv;
 
-      if (version == 2) { /* Format version 2 */
-        unsigned nbtags, mesh_part;
-        f >> id >> type >> nbtags;
-        if (nbtags == 0 || nbtags > 3)
-          GMM_ASSERT1(false, "Number of tags " << nbtags
-                      << " is not managed.");
+      for (size_type cv=0; cv < nb_cv; ++cv) {
 
-        f >> region;
-        if (nbtags > 1) f >> dummy;
-        if (nbtags > 2) f >> mesh_part;
-      }
-      else
-        f >> id >> type >> region >> dummy >> cv_nb_nodes;
+        cvlst.push_back(gmsh_cv_info());
+        gmsh_cv_info &ci = cvlst.back();
+        f >> ci.id;
+        ci.id--; /* gmsh numbering starts at 1 */
 
-      id--; /* gmsh numbering starts at 1 */
+        unsigned cv_nb_nodes;
+        if (version >= 2) { /* For versions 2 and 4 */
+          if (version == 2) { /* Format version 2 */
+            unsigned nbtags;
+            f >> type >> nbtags;
+            GMM_ASSERT1(nbtags > 0 && nbtags <= 3,
+                        "Number of tags " << nbtags << " is not managed.");
+            f >> region;
+            if (nbtags > 1) f >> dummy;
+            if (nbtags > 2) f >> dummy;
+          }
+          ci.type = type;
+          ci.set_nb_nodes();
+          cv_nb_nodes = unsigned(ci.nodes.size());
+        } else if (version == 1) {
+          f >> type >> region >> dummy >> cv_nb_nodes;
+          ci.type = type;
+          ci.nodes.resize(cv_nb_nodes);
+        }
+        ci.region = region;
 
-      cvlst.push_back(gmsh_cv_info());
-      gmsh_cv_info &ci = cvlst.back();
-      ci.id = id; ci.type = type; ci.region = region;
+        // cout << "cv_nb_nodes = " << cv_nb_nodes << endl;
 
-
-      if (version == 2) { /* For version 2 */
-        ci.set_nb_nodes();
-        cv_nb_nodes = unsigned(ci.nodes.size());
-      }
-      else
-        ci.nodes.resize(cv_nb_nodes);
-
-      // cout << "cv_nb_nodes = " << cv_nb_nodes << endl;
-
-      for (size_type i=0; i < cv_nb_nodes; ++i) {
-        size_type j;
-        f >> j;
-        std::map<size_type, size_type>::iterator
-          it = msh_node_2_getfem_node.find(j);
-        GMM_ASSERT1(it != msh_node_2_getfem_node.end(),
-                    "Invalid node ID " << j << " in gmsh element "
-                    << (ci.id + 1));
-        ci.nodes[i] = it->second;
-      }
-      if(ci.type != 15) ci.set_pgt();
-      // Reordering nodes for certain elements (should be completed ?)
-      // http://www.geuz.org/gmsh/doc/texinfo/gmsh.html#Node-ordering
-      std::vector<size_type> tmp_nodes(ci.nodes);
-      switch(ci.type) {
-      case 3 : {
-        ci.nodes[2] = tmp_nodes[3];
-        ci.nodes[3] = tmp_nodes[2];
-      } break;
-      case 5 : { /* First order hexaedron */
-        //ci.nodes[0] = tmp_nodes[0];
-        //ci.nodes[1] = tmp_nodes[1];
-        ci.nodes[2] = tmp_nodes[3];
-        ci.nodes[3] = tmp_nodes[2];
-        //ci.nodes[4] = tmp_nodes[4];
-        //ci.nodes[5] = tmp_nodes[5];
-        ci.nodes[6] = tmp_nodes[7];
-        ci.nodes[7] = tmp_nodes[6];
-      } break;
-      case 7 : { /* first order pyramid */
-        //ci.nodes[0] = tmp_nodes[0];
-        ci.nodes[1] = tmp_nodes[2];
-        ci.nodes[2] = tmp_nodes[1];
-        // ci.nodes[3] = tmp_nodes[3];
-        // ci.nodes[4] = tmp_nodes[4];
-      } break;
-      case 8 : { /* Second order line */
-        //ci.nodes[0] = tmp_nodes[0];
-        ci.nodes[1] = tmp_nodes[2];
-        ci.nodes[2] = tmp_nodes[1];
-      } break;
-      case 9 : { /* Second order triangle */
-        //ci.nodes[0] = tmp_nodes[0];
-        ci.nodes[1] = tmp_nodes[3];
-        ci.nodes[2] = tmp_nodes[1];
-        ci.nodes[3] = tmp_nodes[5];
-        //ci.nodes[4] = tmp_nodes[4];
-        ci.nodes[5] = tmp_nodes[2];
-      } break;
-      case 10 : { /* Second order quadrangle */
-        //ci.nodes[0] = tmp_nodes[0];
-        ci.nodes[1] = tmp_nodes[4];
-        ci.nodes[2] = tmp_nodes[1];
-        ci.nodes[3] = tmp_nodes[7];
-        ci.nodes[4] = tmp_nodes[8];
-        //ci.nodes[5] = tmp_nodes[5];
-        ci.nodes[6] = tmp_nodes[3];
-        ci.nodes[7] = tmp_nodes[6];
-        ci.nodes[8] = tmp_nodes[2];
-      } break;
-      case 11: { /* Second order tetrahedron */
-        //ci.nodes[0] = tmp_nodes[0];
-        ci.nodes[1] = tmp_nodes[4];
-        ci.nodes[2] = tmp_nodes[1];
-        ci.nodes[3] = tmp_nodes[6];
-        ci.nodes[4] = tmp_nodes[5];
-        ci.nodes[5] = tmp_nodes[2];
-        ci.nodes[6] = tmp_nodes[7];
-        ci.nodes[7] = tmp_nodes[9];
-        //ci.nodes[8] = tmp_nodes[8];
-        ci.nodes[9] = tmp_nodes[3];
-      } break;
-      case 12: { /* Second order hexahedron */
-        //ci.nodes[0] = tmp_nodes[0];
-        ci.nodes[1] = tmp_nodes[8];
-        ci.nodes[2] = tmp_nodes[1];
-        ci.nodes[3] = tmp_nodes[9];
-        ci.nodes[4] = tmp_nodes[20];
-        ci.nodes[5] = tmp_nodes[11];
-        ci.nodes[6] = tmp_nodes[3];
-        ci.nodes[7] = tmp_nodes[13];
-        ci.nodes[8] = tmp_nodes[2];
-        ci.nodes[9] = tmp_nodes[10];
-        ci.nodes[10] = tmp_nodes[21];
-        ci.nodes[11] = tmp_nodes[12];
-        ci.nodes[12] = tmp_nodes[22];
-        ci.nodes[13] = tmp_nodes[26];
-        ci.nodes[14] = tmp_nodes[23];
-        //ci.nodes[15] = tmp_nodes[15];
-        ci.nodes[16] = tmp_nodes[24];
-        ci.nodes[17] = tmp_nodes[14];
-        ci.nodes[18] = tmp_nodes[4];
-        ci.nodes[19] = tmp_nodes[16];
-        ci.nodes[20] = tmp_nodes[5];
-        ci.nodes[21] = tmp_nodes[17];
-        ci.nodes[22] = tmp_nodes[25];
-        ci.nodes[23] = tmp_nodes[18];
-        ci.nodes[24] = tmp_nodes[7];
-        ci.nodes[25] = tmp_nodes[19];
-        ci.nodes[26] = tmp_nodes[6];
-      } break;
-      case 16 : { /* Incomplete second order quadrangle */
-        //ci.nodes[0] = tmp_nodes[0];
-        ci.nodes[1] = tmp_nodes[4];
-        ci.nodes[2] = tmp_nodes[1];
-        ci.nodes[3] = tmp_nodes[7];
-        ci.nodes[4] = tmp_nodes[5];
-        ci.nodes[5] = tmp_nodes[3];
-        ci.nodes[6] = tmp_nodes[6];
-        ci.nodes[7] = tmp_nodes[2];
-      } break;
-      case 17: { /* Incomplete second order hexahedron */
-        //ci.nodes[0] = tmp_nodes[0];
-        ci.nodes[1] = tmp_nodes[8];
-        ci.nodes[2] = tmp_nodes[1];
-        ci.nodes[3] = tmp_nodes[9];
-        ci.nodes[4] = tmp_nodes[11];
-        ci.nodes[5] = tmp_nodes[3];
-        ci.nodes[6] = tmp_nodes[13];
-        ci.nodes[7] = tmp_nodes[2];
-        ci.nodes[8] = tmp_nodes[10];
-        ci.nodes[9] = tmp_nodes[12];
-        ci.nodes[10] = tmp_nodes[15];
-        ci.nodes[11] = tmp_nodes[14];
-        ci.nodes[12] = tmp_nodes[4];
-        ci.nodes[13] = tmp_nodes[16];
-        ci.nodes[14] = tmp_nodes[5];
-        ci.nodes[15] = tmp_nodes[17];
-        ci.nodes[16] = tmp_nodes[18];
-        ci.nodes[17] = tmp_nodes[7];
-        ci.nodes[18] = tmp_nodes[19];
-        ci.nodes[19] = tmp_nodes[6];
-      } break;
-      case 26 : { /* Third order line */
-        //ci.nodes[0] = tmp_nodes[0];
-        ci.nodes[1] = tmp_nodes[2];
-        ci.nodes[2] = tmp_nodes[3];
-        ci.nodes[3] = tmp_nodes[1];
-      } break;
-      case 21 : { /* Third order triangle */
-        //ci.nodes[0] = tmp_nodes[0];
-        ci.nodes[1] = tmp_nodes[3];
-        ci.nodes[2] = tmp_nodes[4];
-        ci.nodes[3] = tmp_nodes[1];
-        ci.nodes[4] = tmp_nodes[8];
-        ci.nodes[5] = tmp_nodes[9];
-        ci.nodes[6] = tmp_nodes[5];
-        //ci.nodes[7] = tmp_nodes[7];
-        ci.nodes[8] = tmp_nodes[6];
-        ci.nodes[9] = tmp_nodes[2];
-      } break;
-      case 23: { /* Fourth order triangle */
-      //ci.nodes[0]  = tmp_nodes[0];
-        ci.nodes[1]  = tmp_nodes[3];
-        ci.nodes[2]  = tmp_nodes[4];
-        ci.nodes[3]  = tmp_nodes[5];
-        ci.nodes[4]  = tmp_nodes[1];
-        ci.nodes[5]  = tmp_nodes[11];
-        ci.nodes[6]  = tmp_nodes[12];
-        ci.nodes[7]  = tmp_nodes[13];
-        ci.nodes[8]  = tmp_nodes[6];
-        ci.nodes[9]  = tmp_nodes[10];
-        ci.nodes[10] = tmp_nodes[14];
-        ci.nodes[11] = tmp_nodes[7];
-        ci.nodes[12] = tmp_nodes[9];
-        ci.nodes[13] = tmp_nodes[8];
-        ci.nodes[14] = tmp_nodes[2];
-      } break;
-      case 27: { /* Fourth order line */
-      //ci.nodes[0]  = tmp_nodes[0];
-        ci.nodes[1]  = tmp_nodes[2];
-        ci.nodes[2]  = tmp_nodes[3];
-        ci.nodes[3]  = tmp_nodes[4];
-        ci.nodes[4]  = tmp_nodes[1];
-      } break;
+        for (size_type i=0; i < cv_nb_nodes; ++i) {
+          size_type j;
+          f >> j;
+          const auto it = msh_node_2_getfem_node.find(j);
+          GMM_ASSERT1(it != msh_node_2_getfem_node.end(),
+                      "Invalid node ID " << j << " in gmsh element "
+                      << (ci.id + 1));
+          ci.nodes[i] = it->second;
+        }
+        if (ci.type != 15)
+          ci.set_pgt();
+        // Reordering nodes for certain elements (should be completed ?)
+        // http://www.geuz.org/gmsh/doc/texinfo/gmsh.html#Node-ordering
+        std::vector<size_type> tmp_nodes(ci.nodes);
+        switch(ci.type) {
+        case 3 : {
+          ci.nodes[2] = tmp_nodes[3];
+          ci.nodes[3] = tmp_nodes[2];
+        } break;
+        case 5 : { /* First order hexaedron */
+          //ci.nodes[0] = tmp_nodes[0];
+          //ci.nodes[1] = tmp_nodes[1];
+          ci.nodes[2] = tmp_nodes[3];
+          ci.nodes[3] = tmp_nodes[2];
+          //ci.nodes[4] = tmp_nodes[4];
+          //ci.nodes[5] = tmp_nodes[5];
+          ci.nodes[6] = tmp_nodes[7];
+          ci.nodes[7] = tmp_nodes[6];
+        } break;
+        case 7 : { /* first order pyramid */
+          //ci.nodes[0] = tmp_nodes[0];
+          ci.nodes[1] = tmp_nodes[2];
+          ci.nodes[2] = tmp_nodes[1];
+          // ci.nodes[3] = tmp_nodes[3];
+          // ci.nodes[4] = tmp_nodes[4];
+        } break;
+        case 8 : { /* Second order line */
+          //ci.nodes[0] = tmp_nodes[0];
+          ci.nodes[1] = tmp_nodes[2];
+          ci.nodes[2] = tmp_nodes[1];
+        } break;
+        case 9 : { /* Second order triangle */
+          //ci.nodes[0] = tmp_nodes[0];
+          ci.nodes[1] = tmp_nodes[3];
+          ci.nodes[2] = tmp_nodes[1];
+          ci.nodes[3] = tmp_nodes[5];
+          //ci.nodes[4] = tmp_nodes[4];
+          ci.nodes[5] = tmp_nodes[2];
+        } break;
+        case 10 : { /* Second order quadrangle */
+          //ci.nodes[0] = tmp_nodes[0];
+          ci.nodes[1] = tmp_nodes[4];
+          ci.nodes[2] = tmp_nodes[1];
+          ci.nodes[3] = tmp_nodes[7];
+          ci.nodes[4] = tmp_nodes[8];
+          //ci.nodes[5] = tmp_nodes[5];
+          ci.nodes[6] = tmp_nodes[3];
+          ci.nodes[7] = tmp_nodes[6];
+          ci.nodes[8] = tmp_nodes[2];
+        } break;
+        case 11: { /* Second order tetrahedron */
+          //ci.nodes[0] = tmp_nodes[0];
+          ci.nodes[1] = tmp_nodes[4];
+          ci.nodes[2] = tmp_nodes[1];
+          ci.nodes[3] = tmp_nodes[6];
+          ci.nodes[4] = tmp_nodes[5];
+          ci.nodes[5] = tmp_nodes[2];
+          ci.nodes[6] = tmp_nodes[7];
+          ci.nodes[7] = tmp_nodes[9];
+          //ci.nodes[8] = tmp_nodes[8];
+          ci.nodes[9] = tmp_nodes[3];
+        } break;
+        case 12: { /* Second order hexahedron */
+          //ci.nodes[0] = tmp_nodes[0];
+          ci.nodes[1] = tmp_nodes[8];
+          ci.nodes[2] = tmp_nodes[1];
+          ci.nodes[3] = tmp_nodes[9];
+          ci.nodes[4] = tmp_nodes[20];
+          ci.nodes[5] = tmp_nodes[11];
+          ci.nodes[6] = tmp_nodes[3];
+          ci.nodes[7] = tmp_nodes[13];
+          ci.nodes[8] = tmp_nodes[2];
+          ci.nodes[9] = tmp_nodes[10];
+          ci.nodes[10] = tmp_nodes[21];
+          ci.nodes[11] = tmp_nodes[12];
+          ci.nodes[12] = tmp_nodes[22];
+          ci.nodes[13] = tmp_nodes[26];
+          ci.nodes[14] = tmp_nodes[23];
+          //ci.nodes[15] = tmp_nodes[15];
+          ci.nodes[16] = tmp_nodes[24];
+          ci.nodes[17] = tmp_nodes[14];
+          ci.nodes[18] = tmp_nodes[4];
+          ci.nodes[19] = tmp_nodes[16];
+          ci.nodes[20] = tmp_nodes[5];
+          ci.nodes[21] = tmp_nodes[17];
+          ci.nodes[22] = tmp_nodes[25];
+          ci.nodes[23] = tmp_nodes[18];
+          ci.nodes[24] = tmp_nodes[7];
+          ci.nodes[25] = tmp_nodes[19];
+          ci.nodes[26] = tmp_nodes[6];
+        } break;
+        case 16 : { /* Incomplete second order quadrangle */
+          //ci.nodes[0] = tmp_nodes[0];
+          ci.nodes[1] = tmp_nodes[4];
+          ci.nodes[2] = tmp_nodes[1];
+          ci.nodes[3] = tmp_nodes[7];
+          ci.nodes[4] = tmp_nodes[5];
+          ci.nodes[5] = tmp_nodes[3];
+          ci.nodes[6] = tmp_nodes[6];
+          ci.nodes[7] = tmp_nodes[2];
+        } break;
+        case 17: { /* Incomplete second order hexahedron */
+          //ci.nodes[0] = tmp_nodes[0];
+          ci.nodes[1] = tmp_nodes[8];
+          ci.nodes[2] = tmp_nodes[1];
+          ci.nodes[3] = tmp_nodes[9];
+          ci.nodes[4] = tmp_nodes[11];
+          ci.nodes[5] = tmp_nodes[3];
+          ci.nodes[6] = tmp_nodes[13];
+          ci.nodes[7] = tmp_nodes[2];
+          ci.nodes[8] = tmp_nodes[10];
+          ci.nodes[9] = tmp_nodes[12];
+          ci.nodes[10] = tmp_nodes[15];
+          ci.nodes[11] = tmp_nodes[14];
+          ci.nodes[12] = tmp_nodes[4];
+          ci.nodes[13] = tmp_nodes[16];
+          ci.nodes[14] = tmp_nodes[5];
+          ci.nodes[15] = tmp_nodes[17];
+          ci.nodes[16] = tmp_nodes[18];
+          ci.nodes[17] = tmp_nodes[7];
+          ci.nodes[18] = tmp_nodes[19];
+          ci.nodes[19] = tmp_nodes[6];
+        } break;
+        case 26 : { /* Third order line */
+          //ci.nodes[0] = tmp_nodes[0];
+          ci.nodes[1] = tmp_nodes[2];
+          ci.nodes[2] = tmp_nodes[3];
+          ci.nodes[3] = tmp_nodes[1];
+        } break;
+        case 21 : { /* Third order triangle */
+          //ci.nodes[0] = tmp_nodes[0];
+          ci.nodes[1] = tmp_nodes[3];
+          ci.nodes[2] = tmp_nodes[4];
+          ci.nodes[3] = tmp_nodes[1];
+          ci.nodes[4] = tmp_nodes[8];
+          ci.nodes[5] = tmp_nodes[9];
+          ci.nodes[6] = tmp_nodes[5];
+          //ci.nodes[7] = tmp_nodes[7];
+          ci.nodes[8] = tmp_nodes[6];
+          ci.nodes[9] = tmp_nodes[2];
+        } break;
+        case 23: { /* Fourth order triangle */
+        //ci.nodes[0]  = tmp_nodes[0];
+          ci.nodes[1]  = tmp_nodes[3];
+          ci.nodes[2]  = tmp_nodes[4];
+          ci.nodes[3]  = tmp_nodes[5];
+          ci.nodes[4]  = tmp_nodes[1];
+          ci.nodes[5]  = tmp_nodes[11];
+          ci.nodes[6]  = tmp_nodes[12];
+          ci.nodes[7]  = tmp_nodes[13];
+          ci.nodes[8]  = tmp_nodes[6];
+          ci.nodes[9]  = tmp_nodes[10];
+          ci.nodes[10] = tmp_nodes[14];
+          ci.nodes[11] = tmp_nodes[7];
+          ci.nodes[12] = tmp_nodes[9];
+          ci.nodes[13] = tmp_nodes[8];
+          ci.nodes[14] = tmp_nodes[2];
+        } break;
+        case 27: { /* Fourth order line */
+        //ci.nodes[0]  = tmp_nodes[0];
+          ci.nodes[1]  = tmp_nodes[2];
+          ci.nodes[2]  = tmp_nodes[3];
+          ci.nodes[3]  = tmp_nodes[4];
+          ci.nodes[4]  = tmp_nodes[1];
+        } break;
+        }
       }
     }
+
     nb_cv = cvlst.size();
     if (cvlst.size()) {
       std::sort(cvlst.begin(), cvlst.end());
