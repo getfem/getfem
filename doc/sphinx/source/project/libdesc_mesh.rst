@@ -51,7 +51,7 @@ Files
    :file:`bgeot_geotrans_inv.h` and :file:`bgeot_geotrans_inv.cc`, "A tool to invert geometric transformations."
    :file:`getfem_mesh.h` and :file:`getfem_mesh.cc`, "Fully describes a mesh (with the geometric transformations, subparts of the mesh, support for parallelization). Includes the Bank algorithm to refine a mesh."
    :file:`getfem_deformable_mesh.h`, "defines an object capable to deform a mesh with respect to a displacement field and capable to restore it"
-   :file:`getfem_mesher.h` and :file:`getfem_mesher.cc`, "An experimental mesher, in arbitrary dimension. To be used with care and  quite slow (because of node optimization). it meshes geometries defined by some level sets."
+   :file:`getfem_mesher.h` and :file:`getfem_mesher.cc`, "An experimental mesher, in arbitrary dimension. To be used with care and  quite slow (because of node optimization). It meshes geometries defined by some level sets."
    :file:`getfem_import.h` and :file:`getfem_import.cc`, "Import mesh files in various formats"
    :file:`getfem_regular_meshes.h` and :file:`getfem_regular_meshes.cc`, "Produces structured meshes"
    :file:`getfem_mesh_slicers.h` and :file:`getfem_mesh_slicers.cc`, "A slice is built from a mesh, by applying some slicing operations (cut the mesh with a plane, intersect with a sphere, take the boundary faces, etc..). They are used for post-treatment (exportation of results to VTK or OpenDX,  etc.)."
@@ -74,7 +74,7 @@ namespace (``getfem``).
 
    The file :file:`bgeot_mesh.h` could be renamed :file:`getfem_basic_mesh.h`.
 
-A  bibliographical review on how to efficiently store a mesh and implement the main opertions (add a node, an element, deal with faces, find the neighbour elements, the isolated faces ...) would be interesting to make the mesh structure evolve.
+A  bibliographical review on how to efficiently store a mesh and implement the main operations (add a node, an element, deal with faces, find the neighbour elements, the isolated faces ...) would be interesting to make the mesh structure evolve.
 
 A senstive algorithm is the one (in bgeot_node_tab.cc) which identify the too much close nodes. More investigations (and documentation) are probably necessary. 
 

@@ -21,7 +21,7 @@ The main dependences of |Gf| on other libraries are
 
 * sequential MUMPS package (direct solver for sparse matrices) if you want to use it instead of the SuperLU version distributed along with |gf|.
 
-* Parallel MUMPS, METIS and MPI4PY packages if you want to ue the MPI parallelized version of |gf|.
+* Parallel MUMPS, METIS and MPI4PY packages if you want to use the MPI parallelized version of |gf|.
 
 * qhull package for mesh generation and fictitious domain applications
 

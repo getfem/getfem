@@ -29,7 +29,7 @@ Files
 State
 ^^^^^
 
-Have already generic and advanced fonctionalities. 
+Have already generic and advanced functionalities. 
 
 Perspectives
 ^^^^^^^^^^^^

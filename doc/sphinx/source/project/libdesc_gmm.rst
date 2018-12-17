@@ -53,7 +53,7 @@ procedures.
 Perspectives
 ^^^^^^^^^^^^
 
-There is potentatialy several points to be improved in |gmm| (partial
+There is potentially several points to be improved in |gmm| (partial
 introduction of expression template for some base types of matrix and vectors,
 think about the way to represent in a more coherent manner sparse sub-vectors
 and sub-matrices, introduction of C++ concepts, etc.). However, since |gmm|
