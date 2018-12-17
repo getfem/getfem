@@ -30,6 +30,7 @@ user_preamble = """\n% begin user_preamble:
 \\newcommand\\R{\\rm I\\hspace{-0.15em}R}
 \\newcommand{\\ds}{\\displaystyle}
 \\newcommand{\\Frac}[2]{{\\ds \\frac{\\ds #1}{\\ds #2}}}
+\\usepackage[draft]{minted}\\fvset{breaklines=true}
 % end user_preamble
 """
 
@@ -252,6 +253,8 @@ htmlhelp_basename = 'getfem' + release.replace('.', '')
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, document class [howto/manual]).
 latex_documents = [
+    ('tutorial/index', 'getfem_tutorial.tex',
+     'Tutorial', _stdauthor, 'manual', False),
     ('python/index', 'python_interface.tex',
      'Python Interface', 'Luis Saavedra', 'manual', False),
     ('matlab/index', 'matlab_interface.tex',
