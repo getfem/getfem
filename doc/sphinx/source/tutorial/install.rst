@@ -13,15 +13,15 @@ Since |gf| is developped on linux (Ubuntu), the installation is simpler on linux
 
 The main dependences of |Gf| on other libraries are
 
-* svn client, automake, autoconf and libtool if you  want to build binaries
-  from svn version to get the latest changes.
+* git client, automake, autoconf and libtool if you  want to build binaries
+  from git version to get the latest changes.
 
 * Python development files (Python.h etc.) and also the |np| and |sp| packages if
   you want to build the python interface. 
 
 * sequential MUMPS package (direct solver for sparse matrices) if you want to use it instead of the SuperLU version distributed along with |gf|.
 
-* Parallel MUMPS, METIS and MPI4PY packages if you want to ue the MPI parallelized version of |gf|.
+* Parallel MUMPS, METIS and MPI4PY packages if you want to use the MPI parallelized version of |gf|.
 
 * qhull package for mesh generation and fictitious domain applications
 

@@ -26,7 +26,7 @@ Files
 
    :file:`getfem_generic_assembly.h`, "Main header for exported definitions. Only this header has to be included to use the generic assembly. Other headers of the module are for internal use only."
    :file:`getfem_generic_assembly_tree.h` and :file:`getfem_generic_assembly_tree.cc`, "Definition of the tree structure and basic operations on it, including reading an assembly string and transform it in a syntax tree and make the invert transformation of a tree into a string."
-   :file:`getfem_generic_assembly_fonction_and_operators.h` and :file:`getfem_generic_assembly_fonction_and_operators.cc`, "Definition of redefined function and nonlinear operator of the weak form language."
+   :file:`getfem_generic_assembly_function_and_operators.h` and :file:`getfem_generic_assembly_function_and_operators.cc`, "Definition of redefined function and nonlinear operator of the weak form language."
    :file:`getfem_generic_assembly_semantic.h` and :file:`getfem_generic_assembly_semantic.cc`, "Semantic analysis and enrichment of the syntax tree. Include some operations such as making the derivation of a tree with respect to a variable or computing the tree corresponding to the gradient of an expression."
    :file:`getfem_generic_assembly_workspace.cc`, "Methodes of the workspace object (defined in :file:`getfem_generic_assembly.h`)."
    :file:`getfem_generic_assembly_compile_and_exec.h` and :file:`getfem_generic_assembly_compile_and_exec.cc`, "Definition of the optimized instructions, compilation into a sequel of optimize instructions and execution of the instructions on Gauss point/interpolation points."   

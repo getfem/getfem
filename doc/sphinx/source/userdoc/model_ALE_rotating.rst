@@ -89,7 +89,7 @@ The denomination ALE of the method is justified by the fact that :math:`\bar{\Om
 
 the displacement with respect to this intermediate configuration, the advantage is that if this additional displacement with respect to the rigid body motion is small, it is possible to use a small deformation model (for instance linearized elasticity).
 
-Due to the objectivity properties of standard consistutive laws, the expression of these laws in the intermediate configuration is most of the time identical to the expression in a standard reference configuration except for the expression of the time derivative which are modified because the change of coordinate is  nonconstant in time :
+Due to the objectivity properties of standard constitutive laws, the expression of these laws in the intermediate configuration is most of the time identical to the expression in a standard reference configuration except for the expression of the time derivative which are modified because the change of coordinate is  nonconstant in time :
 
 .. math::
 
@@ -167,7 +167,7 @@ where ``parameters`` are the parameters ...
 ALE terms for a uniformly translated part of an object
 ------------------------------------------------------
 
-This section present a set of bricks facilitating the use of an ALE formulation for an object being potentialy infinite in one direction and which whose part of interests (on which the computation is considered) is translated uniformly in that direction (typically a bar).
+This section present a set of bricks facilitating the use of an ALE formulation for an object being potentially infinite in one direction and which whose part of interests (on which the computation is considered) is translated uniformly in that direction (typically a bar).
 
 Theoretical background
 ++++++++++++++++++++++

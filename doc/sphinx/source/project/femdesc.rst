@@ -129,7 +129,7 @@ piecewise polynomials, interpolant wavelets, etc.
 
 To be used by the finite element description, a shape function type must be able
 to be evaluated on a point (``a = F.eval(pt)``, where ``pt`` is a ``base_node``)
-and must have a method to compute the derivtive with respect to the ith variable
+and must have a method to compute the derivative with respect to the ith variable
 (``F.derivative(i)``).
 
 For the moment, only polynomials and piecewise polynomials are defined in the
@@ -231,7 +231,7 @@ where ``"name of trans"`` can be chosen among the following list.
 * ``"GT_LINEAR_PRODUCT(a,b)"``
 
   Description of the direct product of the two transformations ``a`` and ``b`` 
-  keeping a linear transformation (this is a restriction of he previous 
+  keeping a linear transformation (this is a restriction of the previous 
   function). This allows, for instance, to use exact integrations on regular 
   meshes with parallelograms.
 

@@ -40,7 +40,7 @@ and ``mfdata``).  The instruction ``Z=data(#2);`` means that for each convex, th
 "tensor" ``Z`` will receive the values of the first data argument provided with
 ``push_data``, at indexes corresponding to the degrees of freedom attached to the
 convex of the second (``#2``) |mf| (here, ``Z =
-F[mfdata.ind_dof_of_element(cv)]``.
+F[mfdata.ind_dof_of_element(cv)]``).
 
 The part ``V(#1)+=...`` means that the result of the next expression will be
 accumulated into the output vector (provided with ``push_vec``). Here again,
@@ -208,4 +208,4 @@ The ``print`` command can be used to see the tensor: ``"print comp(Base(#1));"``
 will print the integrals of the base functions for each convex.
 
 If there is more than one data array, output array or output sparse
-matrix, one can use ``data$2``, ``data$3, ``V$2``, ``M$2``,...
+matrix, one can use ``data$2``, ``data$3``, ``V$2``, ``M$2``,...
