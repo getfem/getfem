@@ -799,9 +799,9 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
       functions are only available for variables, not for constants.
 
       `select_output` is an optional parameter which allows to reduce the
-      output vecotr (for `order` equal to 1) or the matrix (for `order`
+      output vector (for `order` equal to 1) or the matrix (for `order`
       equal to 2) to the degrees of freedom of the specified variables.
-      One variable has to be specified for a vector ouptut and two for a
+      One variable has to be specified for a vector output and two for a
       matrix output.
 
       Note that if several variables are given, the assembly of the

@@ -6702,7 +6702,7 @@ namespace getfem {
         if ((version == td.interpolation) &&
             ((version == 0 && td.order == order) || // Assembly
              ((version > 0 && (td.order == size_type(-1) || // Assignment
-                                td.order == size_type(-2) - order))))) {
+                               td.order == size_type(-2) - order))))) {
           ga_tree *added_tree = 0;
           if (td.interpolation) {
             gis.interpolation_trees.push_back(*(td.ptree));
@@ -6870,23 +6870,23 @@ namespace getfem {
                     In2 = &(workspace.interval_of_variable(root->name_test2));
                   }
 
-                  if (!interpolate && mfg1 == 0 && mfg2 == 0 && mf1 && mf2
-                      && mf1->get_qdim() == 1 && mf2->get_qdim() == 1
-                      && !(mf1->is_reduced()) && !(mf2->is_reduced())) {
+                  bool simple = !interpolate &&
+                                mfg1 == 0 && mfg2 == 0 && mf1 && mf2 &&
+                                !(mf1->is_reduced()) && !(mf2->is_reduced());
+                  if (simple && mf1->get_qdim() == 1 && mf2->get_qdim() == 1) {
                     pgai = std::make_shared
                       <ga_instruction_matrix_assembly_standard_scalar<>>
                       (root->tensor(), workspace.assembled_matrix(), ctx1, ctx2,
                        *In1, *In2, mf1, mf2,
                        gis.coeff, *alpha1, *alpha2, gis.nbpt, gis.ipt);
-                  } else if (!interpolate && mfg1 == 0 && mfg2==0 && mf1 && mf2
-                             && !(mf1->is_reduced()) && !(mf2->is_reduced())) {
-                    if (root->sparsity() == 10 && root->t.qdim()==2)
+                  } else if (simple) {
+                    if (root->sparsity() == 10 && root->t.qdim() == 2)
                       pgai = std::make_shared
                         <ga_instruction_matrix_assembly_standard_vector_opt10_2>
                         (root->tensor(), workspace.assembled_matrix(),ctx1,ctx2,
                          *In1, *In2, mf1, mf2,
                          gis.coeff, *alpha1, *alpha2, gis.nbpt, gis.ipt);
-                    else if (root->sparsity() == 10 && root->t.qdim()==3)
+                    else if (root->sparsity() == 10 && root->t.qdim() == 3)
                       pgai = std::make_shared
                         <ga_instruction_matrix_assembly_standard_vector_opt10_3>
                         (root->tensor(), workspace.assembled_matrix(),ctx1,ctx2,
