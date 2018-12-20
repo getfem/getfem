@@ -276,7 +276,8 @@ namespace getfem {
       gmm::sub_interval I;
       const model_real_plain_vector *V;
       const im_data *imd;
-      bgeot::multi_index qdims;  // For data having a qdim != of the fem
+      bgeot::multi_index qdims;  // For data having a qdim different than
+                                 // the qdim of the fem or im_data
                                  // (dim per dof for dof data)
                                  // and for constant variables.
 
@@ -286,10 +287,9 @@ namespace getfem {
         return q;
       }
 
-      var_description(bool is_var, bool is_fem,
-                      const mesh_fem *mf_, gmm::sub_interval I_,
-                      const model_real_plain_vector *v, const im_data *imd_,
-                      size_type Q)
+      var_description(bool is_var, bool is_fem, const mesh_fem *mf_,
+                      gmm::sub_interval I_, const model_real_plain_vector *v,
+                      const im_data *imd_, size_type Q)
         : is_variable(is_var), is_fem_dofs(is_fem), mf(mf_), I(I_), V(v),
           imd(imd_), qdims(1)
       {
@@ -439,6 +439,9 @@ namespace getfem {
     void add_fem_variable(const std::string &name, const mesh_fem &mf,
                           const gmm::sub_interval &I,
                           const model_real_plain_vector &VV);
+    void add_im_variable(const std::string &name, const im_data &imd,
+                         const gmm::sub_interval &I,
+                         const model_real_plain_vector &VV);
     void add_fixed_size_variable(const std::string &name,
                                  const gmm::sub_interval &I,
                                  const model_real_plain_vector &VV);

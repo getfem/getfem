@@ -770,6 +770,17 @@ namespace getfem {
     gmm::copy(t.as_vector(), this->set_complex_variable(name));
   }
 
+  void model::add_im_variable(const std::string &name,
+                              const im_data &im_data,
+                              size_type niter) {
+    check_name_validity(name);
+    variables[name] = var_description(true, is_complex(), false, niter);
+    variables[name].pim_data = &im_data;
+    variables[name].set_size();
+    add_dependency(im_data);
+    act_size_to_be_done = true;
+  }
+
   void model::add_im_data(const std::string &name, const im_data &im_data,
                           size_type niter) {
     check_name_validity(name);
