@@ -24,68 +24,13 @@
 #include "gmm/gmm_solver_cg.h"
 #include "gmm/gmm_condition_number.h"
 #include "getfem/getfem_models.h"
+#include "getfem/getfem_accumulated_distro.h"
 #include "getfem/getfem_assembling.h"
 #include "getfem/getfem_derivatives.h"
 #include "getfem/getfem_interpolation.h"
 #include "getfem/getfem_generic_assembly.h"
 
-
 namespace getfem {
-
-
-/** multi-threaded distribution of a single vector or a matrix. Uses RAII semantics
-  (constructor/destructor)  */
-  template <class CONTAINER> class distro
-  {
-    CONTAINER& original;
-    omp_distribute<CONTAINER> distributed;
-
-    void build_distro(gmm::abstract_matrix)
-    {
-      for(size_type thread = 1; thread < num_threads(); thread++)
-      {
-        gmm::resize(distributed(thread), gmm::mat_nrows(original),gmm::mat_ncols(original));
-      }
-    }
-
-    void build_distro(gmm::abstract_vector)
-    {
-      //.. skipping thread 0 ..
-      for(size_type thread = 1; thread < num_threads(); thread++)
-      {
-        gmm::resize(distributed(thread), gmm::vect_size(original));
-      }
-    }
-
-    bool not_multithreaded() const { return num_threads() == 1; }
-
-  public:
-
-    distro(CONTAINER& c) : original(c)
-    {
-      if (not_multithreaded()) return;
-      build_distro(typename gmm::linalg_traits<CONTAINER>::linalg_type());
-    }
-
-    operator CONTAINER&()
-    {
-      if (not_multithreaded() || this_thread() == 0) return original;
-      else return distributed(this_thread());
-    }
-
-    ~distro()
-    {
-      if (not_multithreaded()) return;
-
-      GMM_ASSERT1(!me_is_multithreaded_now(),
-                  "List accumulation should not run in parallel");
-
-      for(size_type thread = 1; thread < num_threads(); thread++)
-      {
-        gmm::add(distributed(thread), original);
-      }
-    }
-  };
 
   model::model(bool comp_version) {
     init(); complex_version = comp_version;
@@ -515,7 +460,7 @@ namespace getfem {
                   GMM_TRACE2("Generic assembly for actualize sizes");
                   {
                     gmm::clear(rTM);
-                    distro<decltype(rTM)>  distro_rTM(rTM);
+                    accumulated_distro<decltype(rTM)>  distro_rTM(rTM);
                     GETFEM_OMP_PARALLEL(
                         ga_workspace workspace(*this);
                         for (const auto &ge : generic_expressions)
@@ -524,7 +469,7 @@ namespace getfem {
                         workspace.set_assembled_matrix(distro_rTM);
                         workspace.assembly(2);
                     );
-                  } //distro scope
+                  } //accumulated_distro scope
                   gmm::add
                     (gmm::sub_matrix(rTM, vdescr.I, multdescr.I), MM);
                   gmm::add(gmm::transposed
@@ -1752,101 +1697,6 @@ namespace getfem {
 
   void model::post_to_variables_step(){}
 
-  /**takes a list (more often it's a std::vector) of matrices
-  or vectors, creates an empty copy on each thread. When the
-  thread computations are done (in the destructor), accumulates
-  the assembled copies into the original. Note: the matrices or
-  vectors in the list are gmm::cleared, deleting the content
-  in the constructor*/
-  template <class CONTAINER_LIST> class list_distro
-  {
-    CONTAINER_LIST& original_list;
-    omp_distribute<CONTAINER_LIST> distributed_list;
-    typedef typename CONTAINER_LIST::value_type value_type;
-
-    void build_distro(gmm::abstract_matrix)
-    {
-      //intentionally skipping thread 0, as list_distro will
-      //use original_list for it
-      for(size_type thread = 1; thread < num_threads(); thread++)
-      {
-        auto it_original = original_list.begin();
-        auto it_distributed = distributed_list(thread).begin();
-        for(;it_original != original_list.end(); ++it_original, ++it_distributed)
-        {
-          gmm::resize(*it_distributed, gmm::mat_nrows(*it_original),gmm::mat_ncols(*it_original));
-        }
-      }
-    }
-
-    void build_distro(gmm::abstract_vector)
-    {
-      //.. skipping thread 0 ..
-      for(size_type thread = 1; thread < num_threads(); thread++)
-      {
-        auto it_original = original_list.begin();
-        auto it_distributed = distributed_list(thread).begin();
-        for(;it_original != original_list.end(); ++it_original, ++it_distributed)
-        {
-          gmm::resize(*it_distributed, gmm::vect_size(*it_original));
-        }
-      }
-    }
-
-    bool not_multithreaded() const { return num_threads() == 1; }
-
-  public:
-
-    list_distro(CONTAINER_LIST& l) : original_list(l)
-    {
-      if (not_multithreaded()) return;
-
-      for(size_type thread=1; thread<num_threads(); thread++)
-          distributed_list(thread).resize(original_list.size());
-
-      build_distro(typename gmm::linalg_traits<value_type>::linalg_type());
-    }
-
-    operator CONTAINER_LIST&()
-    {
-      if (not_multithreaded() || this_thread() == 0) return original_list;
-      else return distributed_list(this_thread());
-    }
-
-    ~list_distro()
-    {
-      if (not_multithreaded()) return;
-
-      GMM_ASSERT1(!me_is_multithreaded_now(),
-                  "List accumulation should not run in parallel");
-
-      using namespace std;
-      auto to_add = vector<CONTAINER_LIST*>{};
-      to_add.push_back(&original_list);
-      for (size_type thread = 1; thread < num_threads(); ++thread)
-        to_add.push_back(&distributed_list(thread));
-
-      //List accumulation in parallel.
-      //Adding, for instance, elements 1 to 0, 2 to 3, 5 to 4 and 7 to 6
-      //on separate 4 threads in case of parallelization of the assembly
-      //on 8 threads.
-      while (to_add.size() > 1)
-      {
-        #pragma omp parallel default(shared)
-        {
-          auto i = this_thread() * 2;
-          if (i + 1 < to_add.size()){
-            auto &target = *to_add[i];
-            auto &source = *to_add[i + 1];
-            for (size_type j = 0; j < source.size(); ++j) gmm::add(source[j], target[j]);
-          }
-        }
-        //erase every second item , as it was already added
-        for (auto it = begin(to_add); next(it) < end(to_add); it = to_add.erase(next(it)));
-      }
-    }
-  };
-
   void model::brick_call(size_type ib, build_version version,
                          size_type rhs_ind) const
   {
@@ -1865,29 +1715,21 @@ namespace getfem {
                                                 brick.region, version);
 
       /*distributing the resulting vectors and matrices for individual threads.*/
-      { //brackets are needed because list_distro has constructor/destructor
+      { //brackets are needed because accumulated_distro has constructor/destructor
         //semantics (as in RAII)
-        list_distro<complex_matlist> cmatlist(brick.cmatlist);
-        list_distro<complex_veclist> cveclist(brick.cveclist[rhs_ind]);
-        list_distro<complex_veclist> cveclist_sym(brick.cveclist_sym[rhs_ind]);
+        accumulated_distro<complex_matlist> cmatlist(brick.cmatlist);
+        accumulated_distro<complex_veclist> cveclist(brick.cveclist[rhs_ind]);
+        accumulated_distro<complex_veclist> cveclist_sym(brick.cveclist_sym[rhs_ind]);
 
         /*running the assembly in parallel*/
-        gmm::standard_locale locale;
-        open_mp_is_running_properly check;
-        thread_exception exception;
-        #pragma omp parallel default(shared)
-        {
-          exception.run([&]
-          {
-            brick.pbr->asm_complex_tangent_terms(*this, ib, brick.vlist,
-                                                 brick.dlist, brick.mims,
-                                                 cmatlist,
-                                                 cveclist,
-                                                 cveclist_sym,
-                                                 brick.region, version);
-          });
-        }
-        exception.rethrow();
+        GETFEM_OMP_PARALLEL(
+          brick.pbr->asm_complex_tangent_terms(*this, ib, brick.vlist,
+                                                brick.dlist, brick.mims,
+                                                cmatlist,
+                                                cveclist,
+                                                cveclist_sym,
+                                                brick.region, version);
+        )
       }
       brick.pbr->complex_post_assembly_in_serial(*this, ib, brick.vlist,
                                                  brick.dlist, brick.mims,
@@ -1926,9 +1768,9 @@ namespace getfem {
                                              brick.region, version);
       {
         /*distributing the resulting vectors and matrices for individual threads.*/
-        list_distro<real_matlist> rmatlist(brick.rmatlist);
-        list_distro<real_veclist> rveclist(brick.rveclist[rhs_ind]);
-        list_distro<real_veclist> rveclist_sym(brick.rveclist_sym[rhs_ind]);
+        accumulated_distro<real_matlist> rmatlist(brick.rmatlist);
+        accumulated_distro<real_veclist> rveclist(brick.rveclist[rhs_ind]);
+        accumulated_distro<real_veclist> rveclist_sym(brick.rveclist_sym[rhs_ind]);
 
         /*running the assembly in parallel*/
         GETFEM_OMP_PARALLEL(
@@ -2667,17 +2509,11 @@ namespace getfem {
       if (version & BUILD_RHS) gmm::resize(residual, gmm::vect_size(rrhs));
 
       { //need parentheses for constructor/destructor semantics of distro
-        distro<decltype(rrhs)> residual_distributed(residual);
-        distro<decltype(rTM)>  tangent_matrix_distributed(rTM);
+        accumulated_distro<decltype(rrhs)> residual_distributed(residual);
+        accumulated_distro<decltype(rTM)>  tangent_matrix_distributed(rTM);
 
         /*running the assembly in parallel*/
-        gmm::standard_locale locale;
-        open_mp_is_running_properly check;
-        thread_exception exception;
-        #pragma omp parallel default(shared)
-        {
-          exception.run([&]
-          {
+        GETFEM_OMP_PARALLEL(
             if (version & BUILD_RHS)
               GMM_TRACE2("Global generic assembly RHS");
             if (version & BUILD_MATRIX)
@@ -2691,7 +2527,7 @@ namespace getfem {
 
             for (const auto &ge : generic_expressions)
               workspace.add_expression(ge.expr, ge.mim, ge.region,
-				       2, ge.secondary_domain);
+                                       2, ge.secondary_domain);
 
             if (version & BUILD_RHS) {
               if (is_complex()) {
@@ -2710,9 +2546,7 @@ namespace getfem {
                 workspace.assembly(2);
               }
             }
-          });//exception.run(
-        } //#pragma omp parallel
-        exception.rethrow();
+        )
       } //end of distro scope
 
       if (version & BUILD_RHS) gmm::add(gmm::scaled(residual, scalar_type(-1)), rrhs);

@@ -41,7 +41,7 @@
 #include "getfem_omp.h"
 #include <list>
 
-#ifdef GETFEM_HAVE_OPENMP
+#ifdef GETFEM_HAS_OPENMP
   #include <boost/atomic.hpp>
   typedef boost::atomic_bool atomic_bool;
 #else

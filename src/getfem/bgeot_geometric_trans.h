@@ -110,6 +110,7 @@ namespace bgeot {
     std::vector<size_type> vertices_;
     size_type complexity_; /* either the degree or the refinement of the
                             *  transformation */
+    std::string name_;
 
     void fill_standard_vertices();
   public :
@@ -159,6 +160,8 @@ namespace bgeot {
     template<class CONT> base_node transform(const base_node &pt,
                                              const CONT &PTAB) const;
     base_node transform(const base_node &pt, const base_matrix &G) const;
+    void set_name(const std::string &name){name_ = name;}
+    const std::string& debug_name() const {return name_;}
     virtual void project_into_reference_convex(base_node &pt) const
       { cvr->project_into(pt); }
     size_type complexity() const { return complexity_; }

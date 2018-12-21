@@ -384,7 +384,7 @@ if test x$useopenmp = xYES; then
   AC_OPENMP
   if test "x$ac_cv_prog_cxx_openmp" != "xunsupported" && test "x$ac_cv_prog_cxx_openmp" != "x"; then
     AC_SUBST(AM_CXXFLAGS,"$OPENMP_CXXFLAGS")
-    CPPFLAGS="$CPPFLAGS -DGETFEM_HAVE_OPENMP"
+    CPPFLAGS="$CPPFLAGS -DGETFEM_HAS_OPENMP"
   else
     AC_MSG_ERROR([OpenMP support not found. Use --enable-openmp=no flag to compile GetFEM++ without OpenMP]);
   fi

@@ -605,7 +605,7 @@ namespace getfem {
           }
           else
 	    mti.add_point_with_id(mf_target.point_of_basic_dof(dof),dof/qdim_t);
-        }  
+        }
     }
     interpolation(mf_source, mti, U, V, M, version, extrapolation, 0,rg_source);
 
@@ -704,13 +704,10 @@ namespace getfem {
       interpolation_same_mesh(mf_source, mf_target, U, V, M, 0);
     else {
       omp_distribute<VECTV> V_distributed;
-      thread_exception exception;
+      auto partitioning_allowed = rg_source.is_partitioning_allowed();
       rg_source.prohibit_partitioning();
 
-      #pragma omp parallel default(shared)
-      {
-        exception.run(
-        [&] {
+      GETFEM_OMP_PARALLEL(
           auto &V_thrd = V_distributed.thrd_cast();
           gmm::resize(V_thrd, V.size());
           interpolation(
@@ -721,11 +718,8 @@ namespace getfem {
             for (size_type i = 0; i < V_thrd.size(); ++i) {
               if (gmm::abs(V_thrd[i]) > EPS) V[i] = V_thrd[i];
             }
-        });
-      }
-
-      rg_source.allow_partitioning();
-      exception.rethrow();
+      )
+      if (partitioning_allowed) rg_source.allow_partitioning();
     }
   }
 
@@ -795,7 +789,7 @@ namespace getfem {
 
     base_matrix G;
     base_vector coeff;
-    bgeot::base_tensor tensor_int_point(im_target.tensor_size());    
+    bgeot::base_tensor tensor_int_point(im_target.tensor_size());
     fem_precomp_pool fppool;
     for (dal::bv_visitor cv(im_data_convex_index); !cv.finished(); ++cv) {
 
