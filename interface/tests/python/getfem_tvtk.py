@@ -173,7 +173,7 @@ class FigureItem:
             elif (len(data) == 1):
                 U = data[0]
             else:
-                raise Exception, "wrong data tuple.."
+                raise Exception("wrong data tuple..")
         else:
             U = data
         if mf is not None:
@@ -196,7 +196,7 @@ class FigureItem:
         d = self.dfield_on_slice(vdata)
         n = self.sl.nbpts()
         if d.size % n != 0:
-            raise Exception, "non consistent dimension for data"
+            raise Exception("non consistent dimension for data")
         if d.size > n:
             d = d.transpose()
             d.shape = (n,-1)
@@ -230,7 +230,7 @@ class FigureItem:
         elif isinstance(c, tvtk.LookupTable):
             lut = c
         else:
-            raise Exception, "expected a string or a tvtk.LookupTable"
+            raise Exception("expected a string or a tvtk.LookupTable")
         self.lookup_table = lut
         if (self.mapper is not None):
             self.mapper.lookup_table = self.lookup_table
@@ -276,7 +276,7 @@ class FigureItem:
                 elif self.glyph_name == 'cube':
                     glyph.source = tvtk.CubeSource().output
                 else:
-                    raise Exception, "Unknown glyph name.."
+                    raise Exception("Unknown glyph name..")
                 #glyph.scaling = 1
                 #glyph.scale_factor = self.glyph_scale_factor
                 data = glyph.output
@@ -394,16 +394,16 @@ class Figure:
     def show_mesh_fem(self, mf, **args):
         it = FigureItem(self)
         it.build_from_mesh(mf.linked_mesh(), **args)
-        if args.has_key('deformation'):
+        if 'deformation' in args:
             it.deformation_from_mf(args.get('deformation_mf',mf),
                                    args['deformation'],
                                    args.get('deformation_scale','10%'));
-        if args.has_key('data'):
+        if 'data' in args:
             it.set_scalar_data(args.get('data'),
                                args.get('scalar_label', 'data'));
         it.set_scalar_bar(args.get('scalar_bar', False))
 
-        if args.has_key('vdata'):
+        if 'vdata' in args:
             it.set_vector_data(args.get('vdata'))
 
         self.actors += it.vtk_actors()
@@ -415,13 +415,13 @@ class Figure:
         it = FigureItem(self)
         it.build_from_slice(sl, **args)
 
-        if args.has_key('data'):
+        if 'data' in args:
             it.set_scalar_data(args.get('data'),
                                args.get('scalar_label', 'data'));
 
         it.set_scalar_bar(args.get('scalar_bar', False))
 
-        if args.has_key('vdata'):
+        if 'vdata' in args:
             it.set_vector_data(args.get('vdata'))
 
         self.actors += it.vtk_actors()
@@ -437,7 +437,7 @@ class Figure:
                 for i in self.items:
                     i.scalar_range(*args)
         else:
-            raise Exception, "plot something before changing its scalar range!"
+            raise Exception("plot something before changing its scalar range!")
 
 ##    def scalar_bar(self):
 ##        if len(self.items):
@@ -454,7 +454,7 @@ class Figure:
         elif isinstance(mf, getfem.Slice):
             self.show_slice(mf, **args)
         else:
-            raise TypeError, "argument must be a drawable getfem object"
+            raise TypeError("argument must be a drawable getfem object")
     def loop(self):
         for a in self.actors:
             self.renderer.add_actor(a)

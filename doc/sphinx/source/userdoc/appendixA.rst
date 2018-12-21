@@ -159,7 +159,7 @@ The particular way used in |gf| to numerate the nodes are also shown in figures
 
   i_0, i_1, ... i_P,
 
-be somme indices such that
+be some indices such that
 
 .. math::
 

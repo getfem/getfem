@@ -865,6 +865,7 @@ The weak form language of |gf| furnishes a mechanism to compute such a term. Fir
 where ``model`` or ``workspace`` is the model or workspace where the secondary domain has to be declared, ``domain_name`` is a string for the identification of this domain together with the mesh region and integration method, ``mim`` the integration method and ``region`` a mesh region. Note that with these standard secondary domains, the integration is done on the whole region for each element of the primary domain. It can be interesting to implement specific secondary domains restricting the integration to the necessary elements with respect to the element of the primary domain. A structure is dedicated to this in |gf|.
 
 Once a secondary domain has been declared, it can be specified that a weak form language expression has to be assembled on the direct product of a current domain and a secondary domain, adding the name of the secondary domain to the ``add_expression`` method of the workspace object or using ``add_linear_twodomain_term``, ``add_nonlinear_twodomain_term`` or ``add_twodomain_source_term`` functions:: 
+
   workspace.add_expression(expr, mim, region, derivative_order, secondary_domain)
   add_twodomain_source_term(model, mim, expr, region, secondary_domain)
   add_linear_twodomain_term(model, mim, expr, region, secondary_domain)

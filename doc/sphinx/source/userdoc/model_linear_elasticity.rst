@@ -60,7 +60,7 @@ The function which adds this brick to a model and parametrized with Young modulu
               (md, mim, varname, data_E, data_nu, region = size_type(-1));
 
 
-This brick represent a plane strain approximation when it is applied to a 2D mesh (and a standard model on a 3D mesh). in order to obtain a plane stress approximation for 2D meshes, one can use::
+This brick represent a plane strain approximation when it is applied to a 2D mesh (and a standard model on a 3D mesh). In order to obtain a plane stress approximation for 2D meshes, one can use::
 
   ind_brick = getfem::add_isotropic_linearized_elasticity_brick_pstress
               (md, mim, varname, data_E, data_nu, region = size_type(-1));

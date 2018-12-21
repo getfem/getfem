@@ -88,7 +88,7 @@ The following function defined in :file:`src/getfem/getfem_linearized_plates.h` 
   (model, mim, mim_reduced, name_u3, name_theta, param_E,
    param_nu, param_epsilon, param_kappa, variant = 2, region)
 
-where `name_u3` is name of the variable which represents the transverse displacmenent, `name_theta` the variable which represents the rotation, 'param_E' the Young Modulus, `param_nu` the poisson ratio, `param_epsilon` the plate thickness, `param_kappa` the shear correction factor. Note that since this brick
+where `name_u3` is name of the variable which represents the transverse displacmenent, `name_theta` the variable which represents the rotation, `param_E` the Young Modulus, `param_nu` the poisson ratio, `param_epsilon` the plate thickness, `param_kappa` the shear correction factor. Note that since this brick
 uses the weak form language, the parameter can be regular expression of this language.
 There are three variants.
 `variant = 0` corresponds to the an

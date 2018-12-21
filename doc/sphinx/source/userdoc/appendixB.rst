@@ -497,7 +497,7 @@ Gauss Integration methods on dimension 3
          1/24
        - ``"IM_TETRAHEDRON(2)"``
 
-         4 points, order 2} \hspace{7em}
+         4 points, order 2
 
          :math:`a = \Frac{5 - \sqrt{5}}{20}`
 

@@ -113,7 +113,7 @@ else:
    mesh1.set_region(CONTACT_BOUNDARY1, contact_boundary)
    P = mesh1.pts()  # get list of mesh points coordinates
    ctop = (P[N-1,:] > 39.999)  # find those on top of the object
-   pidtop = np.compress(ctop, range(0, mesh1.nbpts()))
+   pidtop = np.compress(ctop, list(range(0, mesh1.nbpts())))
    ftop = mesh1.faces_from_pid(pidtop)
    mesh1.set_region(DIRICHLET_BOUNDARY1, ftop)
 

@@ -93,65 +93,6 @@ namespace bgeot {
     }
   }
 
-  scalar_type polynomial_composite::eval(const base_node &pt) const {
-    base_node p0(mp->dim()), p1(mp->dim());
-    std::vector<bool> elt(mp->linked_mesh().nb_convex(), true);
-    mesh_structure::ind_cv_ct::const_iterator itc, itce;
-
-    mesh_precomposite::PTAB::const_sorted_iterator
-      it1 = mp->vertexes.sorted_ge(pt), it2 = it1;
-    size_type i1 = it1.index(), i2;
-
-    --it2; i2 = it2.index();
-
-
-    while (i1 != size_type(-1) || i2 != size_type(-1))
-    {
-      if (i1 != size_type(-1))
-      {
-        const mesh_structure::ind_cv_ct &tc
-          = mp->linked_mesh().convex_to_point(i1);
-        itc = tc.begin(); itce = tc.end();
-        for (; itc != itce; ++itc)
-        {
-          size_type ii = *itc;
-          if (elt[ii])
-          {
-            elt[ii] = false;
-            p0 = pt; p0 -= mp->orgs[ii];
-            gmm::mult(gmm::transposed(mp->gtrans[ii]), p0, p1);
-            if (mp->trans_of_convex(ii)->convex_ref()->is_in(p1) < 1E-10) {
-              return to_scalar(poly_of_subelt(ii).eval(local_coordinate ? p1.begin() : pt.begin()));
-            }
-          }
-        }
-        ++it1; i1 = it1.index();
-      }
-
-      if (i2 != size_type(-1))
-      {
-        const mesh_structure::ind_cv_ct &tc
-          = mp->linked_mesh().convex_to_point(i2);
-        itc = tc.begin(); itce = tc.end();
-        for (; itc != itce; ++itc)
-        {
-          size_type ii = *itc;
-          if (elt[ii])
-          {
-            elt[ii] = false;
-            p0 = pt; p0 -= mp->orgs[ii];
-            gmm::mult(gmm::transposed(mp->gtrans[ii]), p0, p1);
-            if (mp->trans_of_convex(ii)->convex_ref()->is_in(p1) < 1E-10) {
-              return to_scalar(poly_of_subelt(ii).eval(local_coordinate ? p1.begin() : pt.begin()));
-            }
-          }
-        }
-        --it2; i2 = it2.index();
-      }
-    }
-    GMM_ASSERT1(false, "Element not found in composite polynomial: " << pt);
-  }
-
   DAL_TRIPLE_KEY(base_poly_key, short_type, short_type, std::vector<opt_long_scalar_type>);
 
   polynomial_composite::polynomial_composite(
