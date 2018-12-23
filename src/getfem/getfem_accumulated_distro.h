@@ -109,7 +109,7 @@ namespace detail {
     auto itb = begin(b);
     auto ita_end = end(a);
     using Component = typename T::value_type;
-    using AlgoC = gmm::linalg_traits<Component>::linalg_type;
+    using AlgoC = typename gmm::linalg_traits<Component>::linalg_type;
     for (;ita != ita_end; ++ita, ++itb){
       equal_resize_spec(*ita, *itb, gmm::abstract_null_type{}, AlgoC{});
     }

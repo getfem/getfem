@@ -292,8 +292,8 @@ namespace getfem
   } /* end of namespace detail.                                             */
 
   template<typename T, typename thread_policy>
-  using od_base = typename detail::omp_distribute_impl<
-                    T, thread_policy, detail::distribute_traits<T>::type>;
+  using od_base = typename detail::omp_distribute_impl
+    <T, thread_policy, typename detail::distribute_traits<T>::type>;
 
   /**
     Use this template class for any object you want to
@@ -440,7 +440,7 @@ namespace getfem
     omp_distribute<size_type, true_thread_policy> current_partition;
     std::atomic<size_type> nb_user_threads;
     thread_behaviour behaviour = thread_behaviour::partition_threads;
-    std::atomic<bool> partitions_updated = false;
+    std::atomic<bool> partitions_updated;
     size_type nb_partitions;
 
     static partition_master instance;

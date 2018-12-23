@@ -145,13 +145,13 @@ case $CXX in
 	GCCVER=`$CXX --version | head -1 | cut -d ' ' -f3`
 	echo "Using the GNU g++ compiler $GCCVER"
 	AC_CHECK_CXX_FLAG([$with_optimization],CXXFLAGS)
-	AC_CHECK_CXX_FLAG([-Wall -W],CXXFLAGS)
 	AC_CHECK_CXX_FLAG([-fmessage-length=0],CXXFLAGS)
 	AC_CHECK_CXX_FLAG([-fvisibility-inlines-hidden],CXXFLAGS)
 	AC_CHECK_CXX_FLAG([-ftemplate-depth-100],CXXFLAGS)
 	AC_CHECK_CXX_FLAG([-std=c++11], CXXFLAGS,[AC_CHECK_CXX_FLAG([-std=c++0x],CXXFLAGS,[AC_MSG_ERROR([g++ do not support option -std=c++11. Update g++ to at least release 4.8.1.])] )])
 	AC_CHECK_CXX_FLAG([-fPIC],CXXFLAGS)
-	AC_CHECK_CXX_FLAG([-pedantic],CXXFLAGS)
+	AC_CHECK_CXX_FLAG([-Wall -W -Wextra],CXXFLAGS)
+	dnl AC_CHECK_CXX_FLAG([-pedantic],CXXFLAGS)
 	AC_CHECK_CXX_FLAG([-Wshadow],CXXFLAGS)
 	AC_CHECK_CXX_FLAG([-Wno-terminate],CXXFLAGS)
 	AC_CHECK_CXX_FLAG([-Wno-implicit-fallthrough],CXXFLAGS)
@@ -1059,8 +1059,8 @@ dnl -----------------------------------------------
 
 m4_include([m4/scilab.m4])
 
-REQUIRED_SCILAB_MAJOR=5
-REQUIRED_SCILAB_MINOR=2
+REQUIRED_SCILAB_MAJOR=6
+REQUIRED_SCILAB_MINOR=0
 REQUIRED_SCILAB_MICRO=0
 
 AC_CHECK_SCILAB

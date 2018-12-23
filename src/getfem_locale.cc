@@ -45,12 +45,12 @@ namespace getfem{
   #else
 
     standard_locale::standard_locale()
-      : cloc(setlocale(LC_NUMERIC, 0)), cinloc(cin.getloc()){
-      setlocale(LC_NUMERIC,"C"); cin.imbue(std::locale("C"));
+      : cloc(setlocale(LC_NUMERIC, 0)), cinloc(std::cin.getloc()){
+      setlocale(LC_NUMERIC,"C"); std::cin.imbue(std::locale("C"));
     }
 
     standard_locale::~standard_locale(){
-      setlocale(LC_NUMERIC, cloc.c_str()); cin.imbue(cinloc);
+      setlocale(LC_NUMERIC, cloc.c_str()); std::cin.imbue(cinloc);
     }
 
   #endif

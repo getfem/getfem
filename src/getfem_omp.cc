@@ -138,7 +138,7 @@ namespace getfem{
       return non_empty_exceptions;
     }
 
-    void thread_exception::rethrow(){
+    void rethrow() {
       for (auto &&pException : exceptions){
         if (pException != nullptr) std::rethrow_exception(pException);
       }
@@ -217,16 +217,17 @@ namespace getfem{
 
   partition_master::partition_master()
     : nb_user_threads{true_thread_policy::num_threads()},
-    nb_partitions{max_concurrency()} {
-    update_partitions();
+      nb_partitions{max_concurrency()} {
+        partitions_updated = false;
+        update_partitions();
   }
 
-  size_type partition_master::get_current_partition() const{
+  size_type partition_master::get_current_partition() const {
     return behaviour == thread_behaviour::partition_threads ?
            current_partition : true_thread_policy::this_thread();
   }
 
-  size_type partition_master::get_nb_partitions() const{
+  size_type partition_master::get_nb_partitions() const {
     return behaviour == thread_behaviour::partition_threads ?
            nb_partitions : true_thread_policy::num_threads();
   }
@@ -317,14 +318,18 @@ namespace getfem{
     pexception->rethrow();
   }
 
-  void parallel_execution(std::function<void(void)> lambda, bool iterate_over_partitions){
-    auto boilerplate = parallel_boilerplate{};
+  void parallel_execution(std::function<void(void)> lambda,
+                          bool iterate_over_partitions){
+    parallel_boilerplate boilerplate;
     #pragma omp parallel default(shared)
     {
       if (iterate_over_partitions) {
-        for (auto &&partitions : partition_master::get()){
+        #pragma GCC diagnostic push
+        #pragma GCC diagnostic ignored "-Wunused-variable"
+        for (auto &&partitions : partition_master::get()) {
           boilerplate.run_lamda(lambda);
         }
+        #pragma GCC diagnostic pop
       }
       else {
         boilerplate.run_lamda(lambda);
