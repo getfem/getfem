@@ -109,6 +109,10 @@ Makefile
 /interface/src/scilab/macros/overload/names
 /interface/src/scilab/sci_gateway/c/cleaner.sce
 /interface/src/scilab/sci_gateway/c/libscigetfem_c.c
+/interface/src/scilab/sci_gateway/c/libscigetfem_c.cpp
+/interface/src/scilab/sci_gateway/c/libscigetfem_c.h
+/interface/src/scilab/sci_gateway/c/libscigetfem_c.hxx
+/interface/src/scilab/src/cleaner_src.sce
 /interface/src/scilab/sci_gateway/c/libscigetfem_c.so
 /interface/src/scilab/sci_gateway/c/loader.sce
 /interface/src/scilab/sci_gateway/cleaner_gateway.sce

@@ -10,12 +10,12 @@ try
 catch
  error(gettext('Scilab 5.3.x or more is required.'));  
 end;
-if v(2) < 3 then
+if v(1) < 6 then
  error(gettext('Scilab 5.3.x or more is required.'));  
 end
 // ====================================================================
 if ~with_module('development_tools') then
-  error(msprintf(gettext('%s module not installed."),'development_tools'));
+  error(msprintf(gettext('%s module not installed.'),'development_tools'));
 end
 // ====================================================================
 TOOLBOX_NAME = 'sci_getfem';

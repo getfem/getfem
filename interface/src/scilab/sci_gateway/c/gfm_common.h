@@ -32,8 +32,10 @@
 #ifndef GFM_COMMON_H
 #define GFM_COMMON_H
 
-#include <stack-c.h>
+#include <api_scilab.h> 
 #include "gfi_array.h"
+
+extern StrCtx* pvApiCtx; // valid for Scilab 6.0 ? 
 
 const char* sci_ClassID2string(sci_types id);
 int sci_array_to_gfi_array(int * sci_x, gfi_array *t);
