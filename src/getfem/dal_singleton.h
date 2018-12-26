@@ -80,24 +80,24 @@ namespace dal {
   template <typename T, int LEV>
   class singleton_instance : public singleton_instance_base {
 
-    static getfem::omp_distribute<T*>& omp_distro() {
-      static auto instance = getfem::omp_distribute<T*>{};
-      return instance;
+    static getfem::omp_distribute<T*>*& omp_distro_pointer() {
+      static auto pointer = new getfem::omp_distribute<T*>{};
+      return pointer;
     }
 
     static T*& instance_pointer() {
-      return omp_distro().thrd_cast();
+      return omp_distro_pointer()->thrd_cast();
     }
 
     static T*& instance_pointer(size_t ithread) {
-      return omp_distro()(ithread);
+      return (*omp_distro_pointer())(ithread);
     }
 
   public:
 
     /**Instance from thread ithread*/
     inline static T& instance(size_t ithread) {
-      omp_distro().on_thread_update();
+      omp_distro_pointer()->on_thread_update();
       T*& tinstance_ = instance_pointer(ithread);
       if (!tinstance_) {
         tinstance_ = new T();
@@ -113,11 +113,11 @@ namespace dal {
     }
 
     inline static size_type num_threads() {
-      return omp_distro().num_threads();
+      return omp_distro_pointer()->num_threads();
     }
 
     inline static size_type this_thread() {
-      return omp_distro().this_thread();
+      return omp_distro_pointer()->this_thread();
     }
 
     int level() const override {
@@ -125,12 +125,16 @@ namespace dal {
     }
 
     ~singleton_instance() {
-      for(size_t i = 0; i != omp_distro().num_threads(); ++i) {
-        if(omp_distro()(i)){
-          delete omp_distro()(i);
-          omp_distro()(i) = nullptr;
+      if (!omp_distro_pointer()) return;
+      for(size_t i = 0; i != omp_distro_pointer()->num_threads(); ++i) {
+        auto &p_singleton = (*omp_distro_pointer())(i);
+        if(p_singleton){
+          delete p_singleton;
+          p_singleton = nullptr;
         }
       }
+      delete omp_distro_pointer();
+      omp_distro_pointer() = nullptr;
     }
   };
 
