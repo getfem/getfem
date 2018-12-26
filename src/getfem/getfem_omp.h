@@ -440,7 +440,7 @@ namespace getfem
     omp_distribute<size_type, true_thread_policy> current_partition;
     std::atomic<size_type> nb_user_threads;
     thread_behaviour behaviour = thread_behaviour::partition_threads;
-    std::atomic<bool> partitions_updated;
+    std::atomic<bool> partitions_updated{false};
     size_type nb_partitions;
 
     static partition_master instance;
