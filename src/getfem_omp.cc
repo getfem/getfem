@@ -321,15 +321,11 @@ namespace getfem{
   void parallel_execution(std::function<void(void)> lambda,
                           bool iterate_over_partitions){
     parallel_boilerplate boilerplate;
-    #pragma omp parallel default(shared)
     {
       if (iterate_over_partitions) {
-        #pragma GCC diagnostic push
-        #pragma GCC diagnostic ignored "-Wunused-variable"
         for (auto &&partitions : partition_master::get()) {
           boilerplate.run_lamda(lambda);
         }
-        #pragma GCC diagnostic pop
       }
       else {
         boilerplate.run_lamda(lambda);

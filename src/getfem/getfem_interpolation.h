@@ -706,8 +706,6 @@ namespace getfem {
       omp_distribute<VECTV> V_distributed;
       auto partitioning_allowed = rg_source.is_partitioning_allowed();
       rg_source.prohibit_partitioning();
-      // #pragma GCC diagnostic push
-      // #pragma GCC diagnostic ignored "-Wembedded-directive"
       GETFEM_OMP_PARALLEL(
           auto &V_thrd = V_distributed.thrd_cast();
           gmm::resize(V_thrd, V.size());
@@ -720,7 +718,6 @@ namespace getfem {
               if (gmm::abs(V_thrd[i]) > EPS) V[i] = V_thrd[i];
             }
       )
-        // #pragma GCC diagnostic pop
       if (partitioning_allowed) rg_source.allow_partitioning();
     }
   }
