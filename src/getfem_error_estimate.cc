@@ -65,9 +65,8 @@ namespace getfem {
     //vertical force
     
     base_small_vector F(N);
-    for (unsigned ii=0; ii < N-1; ++ii)
-      F[ii]=0;
-      F[N-1]=-vertical_force; 
+    for (unsigned ii=0; ii < N-1; ++ii) F[ii]=0;
+    F[N-1]=-vertical_force; 
 
     GMM_ASSERT1(!mf_u.is_reduced(), "To be adapted");
      
@@ -94,8 +93,8 @@ namespace getfem {
           for (size_type j = 0; j < N; ++j)
             res[i] += (lambda + mu) * hess1(j, i*N+j) + mu * hess1(i, j*N+j)+F[i];
 	
-	  ERR[cv] += radius*radius*ctx1.J()*pai1->coeff(ii)*gmm::vect_norm2_sqr(res); //norme carrée
-	  eta1 += (radius*radius*ctx1.J()*pai1->coeff(ii)*gmm::vect_norm2_sqr(res));
+        ERR[cv] += radius*radius*ctx1.J()*pai1->coeff(ii)*gmm::vect_norm2_sqr(res); //norme carrée
+        eta1 += (radius*radius*ctx1.J()*pai1->coeff(ii)*gmm::vect_norm2_sqr(res));
       }    
         //if (ERR[cv] > 100)
         //cout << "Erreur en résidu sur element " << cv << " : " << ERR[cv] << endl;    

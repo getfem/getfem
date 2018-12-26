@@ -43,7 +43,7 @@ namespace bgeot{
       base_node point2D = point;
       point2D.resize(2);
       return ori_ref_convex_->is_in_face(f, point2D);
-    }  
+    }
     torus_reference(bgeot::pconvex_ref ori_ref_convex) :
       convex_of_reference(
         torus_structure_descriptor(ori_ref_convex->structure()), ori_ref_convex->is_basic())
@@ -57,7 +57,7 @@ namespace bgeot{
       for(size_type n = 0; n < ori_normals.size(); ++n){
        normals_[n] = ori_normals[n];
        normals_[n].resize(3);
-      }            
+      }
 
       std::copy(ori_points.begin(), ori_points.end(), convex<base_node>::points().begin());
       for(size_type pt = 0; pt < convex<base_node>::points().size(); ++pt){
@@ -129,7 +129,7 @@ namespace bgeot{
     bgeot::base_vector &val) const{
       base_node pt_2d(pt);
       pt_2d.resize(2);
-      poriginal_trans_->poly_vector_val(pt_2d, ind_ct, val);     
+      poriginal_trans_->poly_vector_val(pt_2d, ind_ct, val);
   }
 
   void torus_geom_trans::poly_vector_grad(const base_node &pt, bgeot::base_matrix &pc) const{
@@ -178,12 +178,13 @@ namespace bgeot{
     poriginal_trans_->project_into_reference_convex(pt);
   }
 
-  torus_geom_trans::torus_geom_trans(pgeometric_trans poriginal_trans) 
+  torus_geom_trans::torus_geom_trans(pgeometric_trans poriginal_trans)
     : poriginal_trans_(poriginal_trans){
       geometric_trans::is_lin = poriginal_trans_->is_linear();
       geometric_trans::cvr = ptorus_reference(poriginal_trans_->convex_ref());
       complexity_ = poriginal_trans_->complexity();
       fill_standard_vertices();
+      name_ = poriginal_trans->debug_name();
   }
 
   pgeometric_trans torus_geom_trans::get_original_transformation() const{

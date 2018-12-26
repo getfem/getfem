@@ -29,11 +29,9 @@
 #include <unistd.h>
 #endif
 extern "C" {
-#include <stack-c.h>
+#include <api_scilab.h> 
 #include <sciprint.h>
 #include <Scierror.h>
-#include <api_scilab.h>
-#include <MALLOC.h>
 }
 
 extern "C" {

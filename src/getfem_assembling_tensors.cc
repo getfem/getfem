@@ -22,6 +22,7 @@
 #include "gmm/gmm_blas_interface.h"
 #include "getfem/getfem_arch_config.h"
 #include "getfem/getfem_assembling_tensors.h"
+#include "getfem/getfem_locale.h"
 #include "getfem/getfem_mat_elem.h"
 
 namespace getfem {
@@ -1145,7 +1146,7 @@ namespace getfem {
   }
 
   void asm_tokenizer::get_tok() {
-    gmm::standard_locale sl;
+    standard_locale sl;
     curr_tok_ival = -1;
     while (tok_pos < str.length() && isspace(str[tok_pos])) ++tok_pos;
     if (tok_pos == str.length()) {

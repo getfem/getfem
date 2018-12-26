@@ -35,102 +35,112 @@
 @brief A simple singleton implementation
 
 Singleton was made thread safe for OpenMP
-However, now there is a singleton instance for every 
+However, now there is a singleton instance for every
 thread (singleton is thread local). This replicates
-the behaviour of singletons in distirbuted MPI-like 
+the behaviour of singletons in distributed MPI-like
 environment;
 */
-#ifndef DAL_SINGLETON
-#define DAL_SINGLETON
+
+#pragma once
 
 #include <vector>
 #include <memory>
+
 #include "getfem_omp.h"
 
 
 namespace dal {
 
+  using bgeot::size_type;
+
   class singleton_instance_base {
   public:
-    virtual ~singleton_instance_base() {}
-    virtual int level() = 0;
+    virtual ~singleton_instance_base() {};
+    virtual int level() const = 0;
   };
 
-
   class singletons_manager {
-  protected:
     getfem::omp_distribute<std::vector<singleton_instance_base *>> lst;
+    size_type nb_partitions;
     static singletons_manager& manager();
-    static singletons_manager& m;
 
   public:
     static void register_new_singleton(singleton_instance_base *p);
     static void register_new_singleton(singleton_instance_base *p,
-				       size_t ithread);
+                                       size_t ithread);
+    static void on_partitions_change();
+
+    /**destroy singletons in increasing order*/
     ~singletons_manager();
+
   private:
     singletons_manager();
   };
 
+  template <typename T, int LEV>
+  class singleton_instance : public singleton_instance_base {
 
-
-
-  template <typename T, int LEV> class singleton_instance
-    : public singleton_instance_base {
-    static getfem::omp_distribute<T*>* instance_;
-    static getfem::omp_distribute<T*>* omp_distro_pointer() {
-      static getfem::omp_distribute<T*>*
-	pointer = new getfem::omp_distribute<T*>();
+    static getfem::omp_distribute<T*>*& omp_distro_pointer() {
+      static auto pointer = new getfem::omp_distribute<T*>{};
       return pointer;
     }
-    static T*& instance_pointer() { return omp_distro_pointer()->thrd_cast(); }
-    static T*& instance_pointer(size_t ithread)
-    { return (*omp_distro_pointer())(ithread);}
-    
-  public:
-    
-    singleton_instance() {}
-    
-    /** Instance from the current thread*/
-    inline static T& instance() { 
-      T*& tinstance_ = instance_pointer();
-      if (!tinstance_) {
-        tinstance_ = new T();
-        singletons_manager::register_new_singleton
-	  (new singleton_instance<T,LEV>());
-      }
-      return *tinstance_; 
+
+    static T*& instance_pointer() {
+      return omp_distro_pointer()->thrd_cast();
     }
-    
+
+    static T*& instance_pointer(size_t ithread) {
+      return (*omp_distro_pointer())(ithread);
+    }
+
+  public:
+
     /**Instance from thread ithread*/
-    inline static T& instance(size_t ithread) { 
+    inline static T& instance(size_t ithread) {
+      omp_distro_pointer()->on_thread_update();
       T*& tinstance_ = instance_pointer(ithread);
       if (!tinstance_) {
         tinstance_ = new T();
-        singletons_manager::register_new_singleton
-	  (new singleton_instance<T,LEV>(),ithread);
+        singletons_manager::register_new_singleton(
+          new singleton_instance<T,LEV>(), ithread);
       }
-      return *tinstance_; 
+      return *instance_pointer(ithread);
     }
-    
-    int level() { return LEV; }
-    
+
+    /** Instance from the current thread*/
+    inline static T& instance() {
+      return instance(this_thread());
+    }
+
+    inline static size_type num_threads() {
+      return omp_distro_pointer()->num_threads();
+    }
+
+    inline static size_type this_thread() {
+      return omp_distro_pointer()->this_thread();
+    }
+
+    int level() const override {
+      return LEV;
+    }
+
     ~singleton_instance() {
-      if (instance_) {
-        for(size_t i = 0; i < getfem::num_threads(); i++) {
-          if((*instance_)(i))  { 
-            delete (*instance_)(i); 
-            (*instance_)(i) = 0; 
-          }
-        } 
+      if (!omp_distro_pointer()) return;
+      for(size_t i = 0; i != omp_distro_pointer()->num_threads(); ++i) {
+        auto &p_singleton = (*omp_distro_pointer())(i);
+        if(p_singleton){
+          delete p_singleton;
+          p_singleton = nullptr;
+        }
       }
-      delete instance_; instance_=0;
+      delete omp_distro_pointer();
+      omp_distro_pointer() = nullptr;
     }
   };
 
-  /** singleton class. 
-      
-      usage: 
+  /** singleton class.
+
+      usage:
       @code
       foo &f = singleton<foo>::instance();
       const foo &f = singleton<foo>::const_instance();
@@ -141,33 +151,40 @@ namespace dal {
   */
   template <typename T, int LEV=1> class singleton {
   public:
-    
+
+    singleton(const singleton&) = delete;
+    singleton& operator=(const singleton&) = delete;
+
     /** Instance from the current thread*/
-    inline static T& instance() { 
+    inline static T& instance() {
       return singleton_instance<T,LEV>::instance();
     }
-    inline static const T& const_instance() { return instance(); }
 
-    inline static T& instance(size_t ithread) { 
+    inline static const T& const_instance() {
+      return instance();
+    }
+
+    inline static T& instance(size_t ithread) {
       return singleton_instance<T,LEV>::instance(ithread);
     }
-    inline static const T& const_instance(size_t ithread)
-    { return instance(ithread); }
 
-    
+    inline static const T& const_instance(size_t ithread){
+      return instance(ithread);
+    }
+
+    /** number of threads this singleton is distributed on.*/
+    inline static size_type num_threads(){
+      return singleton_instance<T,LEV>::num_threads();
+    }
+
+    /** this thread number according to the threading policy of the singleton*/
+    inline static size_type this_thread() {
+      return singleton_instance<T, LEV>::this_thread();
+    }
+
   protected:
-    singleton() {}
-    ~singleton() {}
-  private:
-    singleton(const singleton&);            
-    singleton& operator=(const singleton&);
+    singleton() = default;
+    ~singleton() = default;
   };
-  
-  template <typename T, int LEV> 
-  getfem::omp_distribute<T*>* singleton_instance<T,LEV>::instance_
-  = singleton_instance<T,LEV>::omp_distro_pointer();
-}
 
-#endif
-
-
+}/* end of namespace dal                                                             */

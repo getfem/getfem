@@ -41,6 +41,7 @@
 #include <getfem/dal_static_stored_objects.h>
 #include <getfem/dal_bit_vector.h>
 #include <getfem/getfem_config.h>
+#include <getfem/getfem_mesh.h>
 #include <gfi_array.h>
 
 namespace getfemint {

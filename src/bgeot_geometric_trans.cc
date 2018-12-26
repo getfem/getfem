@@ -1159,8 +1159,13 @@ namespace bgeot {
   }
 
   pgeometric_trans geometric_trans_descriptor(std::string name) {
-    size_type i=0;
-    return dal::singleton<geometric_trans_naming_system>::instance().method(name, i);
+    size_type i = 0;
+    auto &name_system = dal::singleton<geometric_trans_naming_system>::instance();
+    auto ptrans = name_system.method(name, i);
+    auto &trans = const_cast<bgeot::geometric_trans&>(*ptrans);
+    auto short_name = name_system.shorter_name_of_method(ptrans);
+    trans.set_name(short_name);
+    return ptrans;
   }
 
   std::string name_of_geometric_trans(pgeometric_trans p) {

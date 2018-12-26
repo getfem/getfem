@@ -56,8 +56,8 @@
 # define SECURE_NONCHAR_FSCANF fscanf_s
 # define SECURE_STRNCPY(a, la, b, lb) strncpy_s(a, la, b, lb)
 # define SECURE_FOPEN(F, filename, mode) (*(F) = 0,  fopen_s(F, filename, mode))
-# define SECURE_SPRINTF1(S, l, st, p1) sprintf_s(S, l, st, p1) 
-# define SECURE_SPRINTF2(S, l, st, p1, p2) sprintf_s(S, l, st, p1, p2) 
+# define SECURE_SPRINTF1(S, l, st, p1) sprintf_s(S, l, st, p1)
+# define SECURE_SPRINTF2(S, l, st, p1, p2) sprintf_s(S, l, st, p1, p2)
 # define SECURE_SPRINTF4(S, l, st, p1, p2, p3, p4) sprintf_s(S, l, st, p1, p2, p3, p4)
 # define SECURE_STRDUP(s) _strdup(s)
 # ifndef _SCL_SECURE_NO_DEPRECATE
@@ -70,7 +70,7 @@
 # define SECURE_FOPEN(F, filename, mode) ((*(F)) = fopen(filename, mode))
 # define SECURE_SPRINTF1(S, l, st, p1) sprintf(S, st, p1)
 # define SECURE_SPRINTF2(S, l, st, p1, p2) sprintf(S, st, p1, p2)
-# define SECURE_SPRINTF4(S, l, st, p1, p2, p3, p4) sprintf(S, st, p1, p2, p3, p4) 
+# define SECURE_SPRINTF4(S, l, st, p1, p2, p3, p4) sprintf(S, st, p1, p2, p3, p4)
 # define SECURE_STRDUP(s) strdup(s)
 #endif
 
@@ -166,74 +166,15 @@ namespace std {
     T& operator*() const { return shared_ptr<T>::operator*(); }
     T* operator->() const { return shared_ptr<T>::operator->(); }
   };
-  
+
   template <typename T> shared_array_ptr<T> make_shared_array(size_t num)
   { return shared_array_ptr<T>(new T[num]); }
 }
 
-
-
-
-#ifdef GMM_HAVE_OPENMP
-
-#include <omp.h>
-	/**number of OpenMP threads*/
-	inline size_t num_threads(){return omp_get_max_threads();}
-	/**index of the current thread*/
-	inline size_t this_thread() {return omp_get_thread_num();}
-	/**is the program running in the parallel section*/
-	inline bool me_is_multithreaded_now(){return static_cast<bool>(omp_in_parallel());}
-#else
-	inline size_t num_threads(){return size_t(1);}
-	inline size_t this_thread() {return size_t(0);}
-	inline bool me_is_multithreaded_now(){return false;}
-#endif
-
 namespace gmm {
 
-	using std::endl; using std::cout; using std::cerr;
+  using std::endl; using std::cout; using std::cerr;
         using std::ends; using std::cin; using std::isnan;
-
-#ifdef _WIN32
-
-	class standard_locale {
-		std::string cloc;
-		std::locale cinloc;
-	public :
-		inline standard_locale(void) : cinloc(cin.getloc())
-		{
-			if (!me_is_multithreaded_now()){
-				 cloc=setlocale(LC_NUMERIC, 0);
-				 setlocale(LC_NUMERIC,"C");
-			}
-		}
-
-		inline ~standard_locale() {
-			if (!me_is_multithreaded_now())
-					setlocale(LC_NUMERIC, cloc.c_str());
-
-		}
-	};
-#else
-	/**this is the above solutions for linux, but it still needs to be tested.*/
-	//class standard_locale {
-	//	locale_t oldloc;
-	//	locale_t temploc;
-
-	//public :
-	//	inline standard_locale(void) : oldloc(uselocale((locale_t)0))
-	//	{
-	//			temploc = newlocale(LC_NUMERIC, "C", NULL);
-    //              uselocale(temploc);
-	//	}
-
-	//	inline ~standard_locale()
-	//	{
-	//		    uselocale(oldloc);
-	//			freelocale(temploc);
-	//	}
-	//};
-
 
   class standard_locale {
     std::string cloc;
@@ -247,9 +188,6 @@ namespace gmm {
     { setlocale(LC_NUMERIC, cloc.c_str()); cin.imbue(cinloc); }
   };
 
-
-#endif
-
   class stream_standard_locale {
     std::locale cloc;
     std::ios &io;
@@ -259,9 +197,6 @@ namespace gmm {
       : cloc(i.getloc()), io(i) { io.imbue(std::locale("C")); }
     inline ~stream_standard_locale() { io.imbue(cloc); }
   };
-
-
-
 
   /* ******************************************************************* */
   /*       Clock functions.                                              */
