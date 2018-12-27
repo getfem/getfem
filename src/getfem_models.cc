@@ -338,7 +338,7 @@ namespace getfem {
 
 
     // In case of change in fems or mims, linear terms have to be recomputed
-    // We couls select which brick is to be recomputed if we would be able
+    // We could select which brick is to be recomputed if we would be able
     // to know which fem or mim is changed.
     for (dal::bv_visitor ib(valid_bricks); !ib.finished(); ++ib)
       bricks[ib].terms_to_be_computed = true;
@@ -346,7 +346,7 @@ namespace getfem {
     for (auto &&v : variables) {
       const std::string &vname = v.first;
       var_description &vdescr = v.second;
-      if (vdescr.is_fem_dofs && !(vdescr.is_affine_dependent)) {
+      if (vdescr.is_fem_dofs && !vdescr.is_affine_dependent) {
         if ((vdescr.filter & VDESCRFILTER_CTERM)
             || (vdescr.filter & VDESCRFILTER_INFSUP)) {
           VAR_SET::iterator vfilt = variables.find(vdescr.filter_var);
@@ -470,16 +470,13 @@ namespace getfem {
                         workspace.assembly(2);
                     );
                   } //accumulated_distro scope
-                  gmm::add
-                    (gmm::sub_matrix(rTM, vdescr.I, multdescr.I), MM);
+                  gmm::add(gmm::sub_matrix(rTM, vdescr.I, multdescr.I), MM);
                   gmm::add(gmm::transposed
-                           (gmm::sub_matrix(rTM, multdescr.I,
-                                            vdescr.I)), MM);
+                           (gmm::sub_matrix(rTM, multdescr.I, vdescr.I)), MM);
                   bupd = false;
                 }
               }
             }
-
 
             for (size_type j = 0; j < brick.tlist.size(); ++j) {
               const term_description &term = brick.tlist[j];
@@ -516,8 +513,8 @@ namespace getfem {
                     bupd = true;
                   }
                   if (cplx)
-                    gmm::add
-                      (gmm::transposed(gmm::real_part(brick.cmatlist[j])), MM);
+                    gmm::add(gmm::transposed(gmm::real_part(brick.cmatlist[j])),
+                             MM);
                   else
                     gmm::add(gmm::transposed(brick.rmatlist[j]), MM);
                   termadded = true;
@@ -581,16 +578,13 @@ namespace getfem {
 
 //         #if GETFEM_PARA_LEVEL > 1
 //         if (!rk) cout << "Range basis for  multipliers for " << vname << " time : " << MPI_Wtime()-tt_ref << endl;
-
 //         #endif
 
       if (mults.size() > 1) {
         gmm::range_basis(MGLOB, glob_columns, 1E-12, gmm::col_major(), true);
 
-
 //         #if GETFEM_PARA_LEVEL > 1
 //         if (!rk) cout << "Producing partial mf for  multipliers for " << vname << " time : " << MPI_Wtime()-tt_ref << endl;
-
 //         #endif
 
         s = 0;
@@ -610,7 +604,6 @@ namespace getfem {
       }
 //       #if GETFEM_PARA_LEVEL > 1
 //       if (!rk) cout << "End compute size of  multipliers for " << vname << " time : " << MPI_Wtime()-tt_ref << endl;
-
 //       #endif
     }
 
@@ -653,15 +646,15 @@ namespace getfem {
         ost << endl;
       }
       for (auto it = variable_groups.begin();
-	   it != variable_groups.end(); ++it) {
-	ost << "Variable group " << std::setw(30) << std::left
-	    << it->first;
-	if (it->second.size()) {
-	  auto it2 = it->second.begin();
-	  ost << " " << *it2; ++it2;
-	  for (; it2 != it->second.end(); ++it2) ost << ", " << *it2;
-	  ost << endl;
-	} else ost << " empty" << endl;
+           it != variable_groups.end(); ++it) {
+        ost << "Variable group " << std::setw(30) << std::left
+            << it->first;
+        if (it->second.size()) {
+          auto it2 = it->second.begin();
+          ost << " " << *it2; ++it2;
+          for (; it2 != it->second.end(); ++it2) ost << ", " << *it2;
+          ost << endl;
+        } else ost << " empty" << endl;
       }
     }
   }
@@ -706,7 +699,6 @@ namespace getfem {
     variables[name].set_size();
   }
 
-
   void model::resize_fixed_size_variable(const std::string &name,
                                          size_type size) {
     GMM_ASSERT1(!(variables[name].is_fem_dofs),
@@ -728,7 +720,6 @@ namespace getfem {
     variables[name].qdims = sizes;
     variables[name].set_size();
   }
-
 
   void model::add_fixed_size_data(const std::string &name, size_type size,
                                   size_type niter) {
@@ -935,15 +926,15 @@ namespace getfem {
      valid_bricks.del(ib);
      active_bricks.del(ib);
 
-     for  (size_type i = 0; i < bricks[ib].mims.size(); ++i) {
+     for (size_type i = 0; i < bricks[ib].mims.size(); ++i) {
        const mesh_im *mim = bricks[ib].mims[i];
        bool found = false;
        for (dal::bv_visitor ibb(valid_bricks); !ibb.finished(); ++ibb) {
          for  (size_type j = 0; j < bricks[ibb].mims.size(); ++j)
            if (bricks[ibb].mims[j] == mim) found = true;
        }
-       for(VAR_SET::iterator it2 = variables.begin();
-           it2 != variables.end(); ++it2) {
+       for (VAR_SET::iterator it2 = variables.begin();
+            it2 != variables.end(); ++it2) {
          if (it2->second.is_fem_dofs &&
              (it2->second.filter & VDESCRFILTER_INFSUP) &&
              mim == it2->second.mim) found = true;
@@ -1740,22 +1731,16 @@ namespace getfem {
 
       if (brick.is_update_brick) //contributions of pure update bricks must be deleted
       {
-        for (size_type i = 0; i < brick.cmatlist.size(); ++i)
-        {
-          gmm::clear(brick.cmatlist[i]);
-        }
+        for (auto &&mat : brick.cmatlist)
+          gmm::clear(mat);
 
-        for (size_type i = 0; i < brick.cveclist.size(); ++i)
-          for (size_type j = 0; j < brick.cveclist[i].size(); ++j)
-          {
-            gmm::clear(brick.cveclist[i][j]);
-          }
+        for (auto &&vecs : brick.cveclist)
+          for (auto &&vec : vecs)
+            gmm::clear(vec);
 
-        for (size_type i = 0; i < brick.cveclist_sym.size(); ++i)
-          for (size_type j = 0; j < brick.cveclist_sym[i].size(); ++j)
-          {
-            gmm::clear(brick.cveclist_sym[i][j]);
-          }
+        for (auto &&vecs : brick.cveclist_sym)
+          for (auto &&vec : vecs)
+            gmm::clear(vec);
       }
     }
     else //not cplx
@@ -1792,22 +1777,16 @@ namespace getfem {
 
       if (brick.is_update_brick) //contributions of pure update bricks must be deleted
       {
-        for (size_type i = 0; i < brick.rmatlist.size(); ++i)
-        {
-          gmm::clear(brick.rmatlist[i]);
-        }
+        for (auto &&mat : brick.rmatlist)
+          gmm::clear(mat);
 
-        for (size_type i = 0; i < brick.rveclist.size(); ++i)
-          for (size_type j = 0; j < brick.rveclist[i].size(); ++j)
-          {
-            gmm::clear(brick.rveclist[i][j]);
-          }
+        for (auto &&vecs : brick.rveclist)
+          for (auto &&vec : vecs)
+            gmm::clear(vec);
 
-        for (size_type i = 0; i < brick.rveclist_sym.size(); ++i)
-          for (size_type j = 0; j < brick.rveclist_sym[i].size(); ++j)
-          {
-            gmm::clear(brick.rveclist_sym[i][j]);
-          }
+        for (auto &&vecs : brick.rveclist_sym)
+          for (auto &&vec : vecs)
+            gmm::clear(vec);
       }
     }
   }
@@ -2179,7 +2158,7 @@ namespace getfem {
                               .region_is_faces_of(m, brick.region,
                                                   pmim->linked_mesh()));
         GMM_ASSERT1(ifo >= 0,
-		    "The given region is only partially covered by "
+                    "The given region is only partially covered by "
                     "region of brick \"" << brick.pbr->brick_name()
                     << "\". Please subdivise the region");
         if (ifo == 1) {
@@ -2188,7 +2167,7 @@ namespace getfem {
 
           ga_workspace workspace(*this);
           size_type order = workspace.add_expression
-	    (expr, dummy_mim, region);
+            (expr, dummy_mim, region);
           GMM_ASSERT1(order <= 1, "Wrong order for a Neumann term");
           expr = workspace.extract_Neumann_term(varname);
           if (expr.size()) {
@@ -2409,7 +2388,7 @@ namespace getfem {
               if (brick.pbr->is_linear()
                   && (!is_linear() || (version & BUILD_WITH_COMPLETE_RHS))) {
                 gmm::mult_add(gmm::transposed(brick.rmatlist[j]),
-                             gmm::scaled(it1->second.complex_value[0],
+                              gmm::scaled(it1->second.complex_value[0],
                                           complex_type(-alpha2)),
                               gmm::sub_vector(crhs, I2));
               }
@@ -2499,7 +2478,6 @@ namespace getfem {
 //           brick.rveclist[0] = real_veclist(brick.tlist.size());
 //         }
 
-
       if (version & BUILD_RHS) approx_external_load_ += brick.external_load;
     }
 
@@ -2549,8 +2527,8 @@ namespace getfem {
         )
       } //end of distro scope
 
-      if (version & BUILD_RHS) gmm::add(gmm::scaled(residual, scalar_type(-1)), rrhs);
-
+      if (version & BUILD_RHS)
+        gmm::add(gmm::scaled(residual, scalar_type(-1)), rrhs);
     }
 
     // Post simplification for dof constraints
@@ -2606,7 +2584,7 @@ namespace getfem {
             }
           }
         }
-      } else {
+      } else { // !is_complex()
         std::vector<size_type> dof_indices;
         std::vector<scalar_type> dof_pr_values;
         std::vector<scalar_type> dof_go_values;
@@ -2677,7 +2655,6 @@ namespace getfem {
     if (version & BUILD_RHS) {
       approx_external_load_ = MPI_SUM_SCALAR(approx_external_load_);
     }
-
 
     #if GETFEM_PARA_LEVEL > 1
     // int rk; MPI_Comm_rank(MPI_COMM_WORLD, &rk);
@@ -3164,7 +3141,7 @@ model_complex_plain_vector &
                                    const model::varnamelist &vl_test1_,
                                    const std::string &directvarname_,
                                    const std::string &directdataname_,
-				   const std::string &secdom)
+                                   const std::string &secdom)
       : vl_test1(vl_test1_), secondary_domain(secdom) {
       if (brickname.size() == 0)
         brickname = "Generic source term assembly brick";
@@ -3199,7 +3176,7 @@ model_complex_plain_vector &
 
     ga_workspace workspace(md);
     size_type order = workspace.add_expression(expr, mim, region, 1,
-					       secondary_domain);
+                                               secondary_domain);
     GMM_ASSERT1(order <= 1, "Wrong order for a source term");
     model::varnamelist vl, vl_test1, vl_test2, dl;
     bool is_lin = workspace.used_variables(vl, vl_test1, vl_test2, dl, 1);
@@ -3313,7 +3290,7 @@ model_complex_plain_vector &
                               bool is_coer, std::string brickname,
                               const model::varnamelist &vl_test1_,
                               const model::varnamelist &vl_test2_,
-			      const std::string &secdom)
+                              const std::string &secdom)
       : vl_test1(vl_test1_), vl_test2(vl_test2_), secondary_domain(secdom) {
       if (brickname.size() == 0) brickname = "Generic linear assembly brick";
       expr = expr_;
@@ -3359,7 +3336,7 @@ model_complex_plain_vector &
 
     ga_workspace workspace(md, true);
     size_type order = workspace.add_expression(expr, mim, region,
-					       2, secondary_domain);
+                                               2, secondary_domain);
     model::varnamelist vl, vl_test1, vl_test2, dl;
     bool is_lin = workspace.used_variables(vl, vl_test1, vl_test2, dl, 2);
 
@@ -3371,7 +3348,7 @@ model_complex_plain_vector &
     if (const_expr.size()) {
       add_source_term_
         (md, mim, const_expr, region, brickname+" (source term)",
-	 "", "", false, secondary_domain);
+         "", "", false, secondary_domain);
     }
 
     // GMM_ASSERT1(order <= 1,
@@ -3384,7 +3361,7 @@ model_complex_plain_vector &
     if (vl_test1.size()) {
       pbrick pbr = std::make_shared<gen_linear_assembly_brick>
         (expr, mim, is_sym, is_coercive, brickname, vl_test1, vl_test2,
-	 secondary_domain);
+         secondary_domain);
       model::termlist tl;
       for (size_type i = 0; i < vl_test1.size(); ++i)
         tl.push_back(model::term_description(vl_test1[i], vl_test2[i], false));
@@ -3399,7 +3376,7 @@ model_complex_plain_vector &
    bool is_sym, bool is_coercive, const std::string &brickname,
    bool return_if_nonlin) {
     return add_linear_term_(md, mim, expr, region, is_sym, is_coercive,
-			    brickname, return_if_nonlin, "");
+                            brickname, return_if_nonlin, "");
   }
 
   size_type add_linear_twodomain_term
@@ -3407,7 +3384,7 @@ model_complex_plain_vector &
    const std::string &secondary_domain, bool is_sym, bool is_coercive,
    const std::string &brickname, bool return_if_nonlin) {
     return add_linear_term_(md, mim, expr, region, is_sym, is_coercive,
-			    brickname, return_if_nonlin, secondary_domain);
+                            brickname, return_if_nonlin, secondary_domain);
   }
 
 
@@ -3448,8 +3425,8 @@ model_complex_plain_vector &
     gen_nonlinear_assembly_brick(const std::string &expr_, const mesh_im &mim,
                                  bool is_sym,
                                  bool is_coer,
-				 std::string brickname,
-				 const std::string &secdom) {
+                                 std::string brickname,
+                                 const std::string &secdom) {
       if (brickname.size() == 0) brickname = "Generic linear assembly brick";
       expr = expr_;
       secondary_domain = secdom;
@@ -3468,7 +3445,7 @@ model_complex_plain_vector &
 
     ga_workspace workspace(md);
     size_type order = workspace.add_expression(expr, mim, region, 2,
-					       secondary_domain);
+                                               secondary_domain);
     GMM_ASSERT1(order < 2, "Order two test functions (Test2) are not allowed"
                 " in assembly string for nonlinear terms");
     model::varnamelist vl, vl_test1, vl_test2, ddl, dl;
@@ -3490,7 +3467,7 @@ model_complex_plain_vector &
   (model &md, const mesh_im &mim, const std::string &expr, size_type region,
    bool is_sym, bool is_coercive, const std::string &brickname) {
     return add_nonlinear_term_(md, mim, expr, region, is_sym, is_coercive,
-			brickname, "");
+                               brickname, "");
   }
 
   size_type add_nonlinear_twodomain_term
@@ -3498,7 +3475,7 @@ model_complex_plain_vector &
    const std::string &secondary_domain, bool is_sym, bool is_coercive,
    const std::string &brickname) {
     return add_nonlinear_term_(md, mim, expr, region, is_sym, is_coercive,
-			brickname, secondary_domain);
+                               brickname, secondary_domain);
   }
 
 
@@ -3751,7 +3728,7 @@ model_complex_plain_vector &
       else
         expr = "Grad_"+varname+":Grad_"+test_varname;
       return add_linear_term(md, mim, expr, region, true, true,
-			     "Laplacian", false);
+                             "Laplacian", false);
     }
   }
 

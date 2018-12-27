@@ -186,7 +186,7 @@ namespace getfem {
   //=========================================================================
 
   void ga_throw_error_msg(pstring expr, size_type pos,
-			  const std::string &msg) {
+                          const std::string &msg) {
     int length_before = 70, length_after = 70;
     if (expr && expr->size()) {
       int first = std::max(0, int(pos)-length_before);
@@ -218,12 +218,11 @@ namespace getfem {
   void ga_tree_node::mult_test(const pga_tree_node n0, const pga_tree_node n1) {
     
     size_type test0 = n0->test_function_type, test1 = n1->test_function_type;
-    if (test0 && test1 && (test0 == test1 ||
-			   test0 >= 3 || test1 >= 3))
+    if (test0 && test1 && (test0 == test1 || test0 >= 3 || test1 >= 3))
       ga_throw_error(expr, pos,
-		     "Incompatibility of test functions in product.");
+                     "Incompatibility of test functions in product.");
     GMM_ASSERT1(test0 != size_type(-1) && test1 != size_type(-1),
-		"internal error");
+                "internal error");
     
     test_function_type = test0 + test1;
     
@@ -288,7 +287,7 @@ namespace getfem {
   }
   
   void ga_tree::add_name(const char *name, size_type length, size_type pos,
-			 pstring expr) {
+                         pstring expr) {
     while (current_node && current_node->node_type != GA_NODE_OP)
       current_node = current_node->parent;
     if (current_node) {
@@ -304,23 +303,23 @@ namespace getfem {
   
   void ga_tree::add_sub_tree(ga_tree &sub_tree) {
     if (current_node &&
-	(current_node->node_type == GA_NODE_PARAMS ||
-	 current_node->node_type == GA_NODE_INTERPOLATE_FILTER ||
-	 current_node->node_type == GA_NODE_C_MATRIX)) {
+        (current_node->node_type == GA_NODE_PARAMS ||
+         current_node->node_type == GA_NODE_INTERPOLATE_FILTER ||
+         current_node->node_type == GA_NODE_C_MATRIX)) {
       GMM_ASSERT1(sub_tree.root, "Invalid tree operation");
       current_node->adopt_child(sub_tree.root);
     } else {
       GMM_ASSERT1(sub_tree.root, "Invalid tree operation");
       while (current_node && current_node->node_type != GA_NODE_OP)
-	current_node = current_node->parent;
+        current_node = current_node->parent;
       if (current_node) {
-	current_node->adopt_child(sub_tree.root);
-	current_node = sub_tree.root;
+        current_node->adopt_child(sub_tree.root);
+        current_node = sub_tree.root;
       }
       else {
-	GMM_ASSERT1(root == nullptr, "Invalid tree operation");
-	current_node = root = sub_tree.root;
-	root->parent = nullptr;
+        GMM_ASSERT1(root == nullptr, "Invalid tree operation");
+        current_node = root = sub_tree.root;
+        root->parent = nullptr;
       }
     }
     sub_tree.root = sub_tree.current_node = nullptr;
@@ -329,8 +328,8 @@ namespace getfem {
   void ga_tree::add_params(size_type pos, pstring expr) {
     GMM_ASSERT1(current_node, "internal error");
     while (current_node && current_node->parent &&
-	   current_node->parent->node_type == GA_NODE_OP &&
-	   ga_operator_priorities[current_node->parent->op_type] >= 4)
+           current_node->parent->node_type == GA_NODE_OP &&
+           ga_operator_priorities[current_node->parent->op_type] >= 4)
       current_node = current_node->parent;
     pga_tree_node new_node = new ga_tree_node(GA_NODE_PARAMS, pos, expr);
     new_node->parent = current_node->parent;
@@ -358,26 +357,26 @@ namespace getfem {
   }
   
   void ga_tree::add_op(GA_TOKEN_TYPE op_type, size_type pos,
-		       pstring expr) {
+                       pstring expr) {
     while (current_node && current_node->parent &&
-	   current_node->parent->node_type == GA_NODE_OP &&
-	   ga_operator_priorities[current_node->parent->op_type]
-	   >= ga_operator_priorities[op_type])
+           current_node->parent->node_type == GA_NODE_OP &&
+           ga_operator_priorities[current_node->parent->op_type]
+           >= ga_operator_priorities[op_type])
       current_node = current_node->parent;
     pga_tree_node new_node = new ga_tree_node(op_type, pos, expr);
     if (current_node) {
       if (op_type == GA_UNARY_MINUS
-	  || op_type == GA_SYM || op_type == GA_SKEW
-	  || op_type == GA_TRACE || op_type == GA_DEVIATOR
-	  || op_type == GA_PRINT) {
-	current_node->adopt_child(new_node);
+          || op_type == GA_SYM || op_type == GA_SKEW
+          || op_type == GA_TRACE || op_type == GA_DEVIATOR
+          || op_type == GA_PRINT) {
+        current_node->adopt_child(new_node);
       } else {
-	new_node->parent = current_node->parent;
-	if (current_node->parent)
-	  current_node->parent->replace_child(current_node, new_node);
-	else
-	  root = new_node;
-	new_node->adopt_child(current_node);
+        new_node->parent = current_node->parent;
+        if (current_node->parent)
+          current_node->parent->replace_child(current_node, new_node);
+        else
+          root = new_node;
+        new_node->adopt_child(current_node);
       }
     } else {
       if (root) new_node->adopt_child(root);
@@ -390,7 +389,7 @@ namespace getfem {
   void ga_tree::clear_node_rec(pga_tree_node pnode) {
     if (pnode) {
       for (pga_tree_node &child : pnode->children)
-	clear_node_rec(child);
+        clear_node_rec(child);
       delete pnode;
       current_node = nullptr;
     }
@@ -400,13 +399,13 @@ namespace getfem {
     if (pnode) {
       pga_tree_node parent = pnode->parent;
       if (parent) { // keep all siblings of pnode
-	size_type j = 0;
-	for (pga_tree_node &sibling : parent->children)
-	  if (sibling != pnode)
-	    parent->children[j++] = sibling;
-	parent->children.resize(j);
+        size_type j = 0;
+        for (pga_tree_node &sibling : parent->children)
+          if (sibling != pnode)
+            parent->children[j++] = sibling;
+        parent->children.resize(j);
       } else
-	root = nullptr;
+        root = nullptr;
     }
     clear_node_rec(pnode);
   }
@@ -432,7 +431,7 @@ namespace getfem {
   }
   
   void ga_tree::copy_node(pga_tree_node pnode, pga_tree_node parent,
-			  pga_tree_node &child) {
+                          pga_tree_node &child) {
     GMM_ASSERT1(child == nullptr, "Internal error");
     child = new ga_tree_node();
     *child = *pnode;
@@ -444,7 +443,7 @@ namespace getfem {
   }
   
   void ga_tree::duplicate_with_operation(pga_tree_node pnode,
-					 GA_TOKEN_TYPE op_type) {
+                                         GA_TOKEN_TYPE op_type) {
     pga_tree_node newop = new ga_tree_node(op_type, pnode->pos, pnode->expr);
     newop->children.resize(2, nullptr);
     newop->children[0] = pnode;
@@ -1091,65 +1090,65 @@ namespace getfem {
       GMM_ASSERT1(pnode->nbc1 == pnode->tensor_order(), "Invalid C_MATRIX");
       switch (pnode->tensor_order()) {
       case 0:
-	ga_print_node(pnode->children[0], str);
-	break;
-	
+        ga_print_node(pnode->children[0], str);
+        break;
+
       case 1:
-	str << "[";
-	for (size_type i = 0; i < pnode->tensor_proper_size(0); ++i) {
-	  if (i != 0) str << ",";
-	  ga_print_node(pnode->children[i], str);
-	}
-	str << "]";
-	break;
-	
+        str << "[";
+        for (size_type i = 0; i < pnode->tensor_proper_size(0); ++i) {
+          if (i != 0) str << ",";
+          ga_print_node(pnode->children[i], str);
+        }
+        str << "]";
+        break;
+
       case 2: case 3: case 4:
-	{
-	  size_type ii(0);
-	  size_type n0 = pnode->tensor_proper_size(0);
-	  size_type n1 = pnode->tensor_proper_size(1);
-	  size_type n2 = ((pnode->tensor_order() > 2) ?
-			  pnode->tensor_proper_size(2) : 1);
-	  size_type n3 = ((pnode->tensor_order() > 3) ?
-			  pnode->tensor_proper_size(3) : 1);
-	  if (n3 > 1) str << "[";
-	  for (size_type l = 0; l < n3; ++l) {
-	    if (l != 0) str << ",";
-	    if (n2 > 1) str << "[";
-	    for (size_type k = 0; k < n2; ++k) {
-	      if (k != 0) str << ",";
-	      if (n1 > 1) str << "[";
-	      for (size_type j = 0; j < n1; ++j) {
-		if (j != 0) str << ",";
-		if (n0 > 1) str << "[";
-		for (size_type i = 0; i < n0; ++i) {
-		  if (i != 0) str << ",";
-		  ga_print_node(pnode->children[ii++], str);
-		}
-		if (n0 > 1) str << "]";
-	      }
-	      if (n1 > 1) str << "]";
-	    }
-	    if (n2 > 1) str << "]";
-	  }
-	  if (n3 > 1) str << "]";
-	}
-	break;
-	
+        {
+          size_type ii(0);
+          size_type n0 = pnode->tensor_proper_size(0);
+          size_type n1 = pnode->tensor_proper_size(1);
+          size_type n2 = ((pnode->tensor_order() > 2) ?
+                          pnode->tensor_proper_size(2) : 1);
+          size_type n3 = ((pnode->tensor_order() > 3) ?
+                          pnode->tensor_proper_size(3) : 1);
+          if (n3 > 1) str << "[";
+          for (size_type l = 0; l < n3; ++l) {
+            if (l != 0) str << ",";
+            if (n2 > 1) str << "[";
+            for (size_type k = 0; k < n2; ++k) {
+              if (k != 0) str << ",";
+              if (n1 > 1) str << "[";
+              for (size_type j = 0; j < n1; ++j) {
+                if (j != 0) str << ",";
+                if (n0 > 1) str << "[";
+                for (size_type i = 0; i < n0; ++i) {
+                  if (i != 0) str << ",";
+                  ga_print_node(pnode->children[ii++], str);
+                }
+                if (n0 > 1) str << "]";
+              }
+              if (n1 > 1) str << "]";
+            }
+            if (n2 > 1) str << "]";
+          }
+          if (n3 > 1) str << "]";
+        }
+        break;
+
       case 5: case 6: case 7: case 8:
-	str << "Reshape([";
-	for (size_type i = 0; i < pnode->tensor_proper_size(); ++i) {
-	  if (i != 0) str << ";";
-	  ga_print_node(pnode->children[i], str);
-	}
-	str << "]";
-	for (size_type i = 0; i < pnode->tensor_order(); ++i) {
-	  if (i != 0) str << ", ";
-	  str << pnode->tensor_proper_size(i);
-	}
-	str << ")";
-	break;
-	
+        str << "Reshape([";
+        for (size_type i = 0; i < pnode->tensor_proper_size(); ++i) {
+          if (i != 0) str << ";";
+          ga_print_node(pnode->children[i], str);
+        }
+        str << "]";
+        for (size_type i = 0; i < pnode->tensor_order(); ++i) {
+          if (i != 0) str << ", ";
+          str << pnode->tensor_proper_size(i);
+        }
+        str << ")";
+        break;
+
       default: GMM_ASSERT1(false, "Invalid tensor dimension");
       }
       break;
@@ -1291,156 +1290,156 @@ namespace getfem {
       pga_tree_node pchild = children[pnode->nbc1+1];
 
       if (po || pt) {
-	if (!(pchild->children.empty()) || pchild->node_type != GA_NODE_NAME)
-	  ga_throw_error(pchild->expr, pchild->pos, "Error in macro "
-			 "expansion. Only variable name are allowed for macro "
-			 "parameter preceded by Grad_ Hess_ Test_ or Test2_ "
-			 "prefixes.");
-	switch(pnode->op_type) {
-	case GA_NAME : pnode->node_type = GA_NODE_NAME; break;
-	case GA_INTERPOLATE : pnode->node_type = GA_NODE_INTERPOLATE; break;
-	case GA_ELEMENTARY : pnode->node_type = GA_NODE_ELEMENTARY; break;
-	case GA_SECONDARY_DOMAIN :
+        if (!(pchild->children.empty()) || pchild->node_type != GA_NODE_NAME)
+          ga_throw_error(pchild->expr, pchild->pos, "Error in macro "
+                         "expansion. Only variable name are allowed for macro "
+                         "parameter preceded by Grad_ Hess_ Test_ or Test2_ "
+                         "prefixes.");
+        switch(pnode->op_type) {
+        case GA_NAME : pnode->node_type = GA_NODE_NAME; break;
+        case GA_INTERPOLATE : pnode->node_type = GA_NODE_INTERPOLATE; break;
+        case GA_ELEMENTARY : pnode->node_type = GA_NODE_ELEMENTARY; break;
+        case GA_SECONDARY_DOMAIN :
           pnode->node_type = GA_NODE_SECONDARY_DOMAIN; break;
-	case GA_XFEM_PLUS : pnode->node_type = GA_NODE_XFEM_PLUS; break;
-	case GA_XFEM_MINUS: pnode->node_type = GA_NODE_XFEM_MINUS; break;
-	default:break;
-	}
-	pnode->name = pchild->name;
-	if (pt == 1) pnode->name = "Test_" + pnode->name;
-	if (pt == 2) pnode->name = "Test2_" + pnode->name;
-	if (po == 1) pnode->name = "Grad_" + pnode->name;
-	if (po == 2) pnode->name = "Hess_" + pnode->name;
-	if (po == 3) pnode->name = "Div_" + pnode->name;
+        case GA_XFEM_PLUS : pnode->node_type = GA_NODE_XFEM_PLUS; break;
+        case GA_XFEM_MINUS: pnode->node_type = GA_NODE_XFEM_MINUS; break;
+        default:break;
+        }
+        pnode->name = pchild->name;
+        if (pt == 1) pnode->name = "Test_" + pnode->name;
+        if (pt == 2) pnode->name = "Test2_" + pnode->name;
+        if (po == 1) pnode->name = "Grad_" + pnode->name;
+        if (po == 2) pnode->name = "Hess_" + pnode->name;
+        if (po == 3) pnode->name = "Div_" + pnode->name;
       } else {   
-	pga_tree_node pnode_old = pnode;
-	pnode = nullptr;
-	tree.copy_node(pchild, pnode_old->parent, pnode);
-	if (pnode_old->parent)
-	  pnode_old->parent->replace_child(pnode_old, pnode);
-	else
-	  tree.root = pnode;
-	GMM_ASSERT1(pnode_old->children.empty(), "Internal error");
-	delete pnode_old;
+        pga_tree_node pnode_old = pnode;
+        pnode = nullptr;
+        tree.copy_node(pchild, pnode_old->parent, pnode);
+        if (pnode_old->parent)
+          pnode_old->parent->replace_child(pnode_old, pnode);
+        else
+          tree.root = pnode;
+        GMM_ASSERT1(pnode_old->children.empty(), "Internal error");
+        delete pnode_old;
       }
     }
   }
   
   static void ga_expand_macro(ga_tree &tree, pga_tree_node pnode,
-			      const ga_macro_dictionnary &macro_dict) {
+                              const ga_macro_dictionary &macro_dict) {
     if (!pnode) return;
     
     if (pnode->node_type == GA_NODE_PARAMS) {
       
       for (size_type i = 1; i < pnode->children.size(); ++i)
-	ga_expand_macro(tree, pnode->children[i], macro_dict);
+        ga_expand_macro(tree, pnode->children[i], macro_dict);
 
       if (pnode->children[0]->node_type != GA_NODE_NAME) {
-	ga_expand_macro(tree, pnode->children[0], macro_dict);
+        ga_expand_macro(tree, pnode->children[0], macro_dict);
       } else {
-	
-	if (macro_dict.macro_exists(pnode->children[0]->name)) {
-	  
-	  const ga_macro &gam = macro_dict.get_macro(pnode->children[0]->name);
-	  
-	  if (gam.nb_params()==0) { // Macro without parameters
-	    pga_tree_node pnode_old = pnode->children[0];
-	    pnode->children[0] = nullptr;
-	    tree.copy_node(gam.tree().root,
-			   pnode_old->parent,pnode->children[0]);
-	    GMM_ASSERT1(pnode_old->children.empty(), "Internal error");
-	    delete pnode_old;
-	    
-	  } else { // Macro with parameters
-	    
-	    if (gam.nb_params()+1 != pnode->children.size())
-	      ga_throw_error(pnode->expr, pnode->pos,
-			     "Bad number of parameters in the use of macro '"
-			     << gam.name() << "'. Expected " << gam.nb_params()
-			     << " found " << pnode->children.size()-1 << ".");
-	    
-	    pga_tree_node pnode_old = pnode;
-	    pnode = nullptr;
-	    tree.copy_node(gam.tree().root, pnode_old->parent, pnode);
-	    if (pnode_old->parent)
-	      pnode_old->parent->replace_child(pnode_old, pnode);
-	    else
-	      tree.root = pnode;
-	    ga_replace_macro_params(tree, pnode, pnode_old->children);
-	  }
-	}
+
+        if (macro_dict.macro_exists(pnode->children[0]->name)) {
+
+          const ga_macro &gam = macro_dict.get_macro(pnode->children[0]->name);
+
+          if (gam.nb_params()==0) { // Macro without parameters
+            pga_tree_node pnode_old = pnode->children[0];
+            pnode->children[0] = nullptr;
+            tree.copy_node(gam.tree().root,
+                           pnode_old->parent,pnode->children[0]);
+            GMM_ASSERT1(pnode_old->children.empty(), "Internal error");
+            delete pnode_old;
+
+          } else { // Macro with parameters
+
+            if (gam.nb_params()+1 != pnode->children.size())
+              ga_throw_error(pnode->expr, pnode->pos,
+                             "Bad number of parameters in the use of macro '"
+                             << gam.name() << "'. Expected " << gam.nb_params()
+                             << " found " << pnode->children.size()-1 << ".");
+
+            pga_tree_node pnode_old = pnode;
+            pnode = nullptr;
+            tree.copy_node(gam.tree().root, pnode_old->parent, pnode);
+            if (pnode_old->parent)
+              pnode_old->parent->replace_child(pnode_old, pnode);
+            else
+              tree.root = pnode;
+            ga_replace_macro_params(tree, pnode, pnode_old->children);
+          }
+        }
       }
 
     } else if (pnode->node_type == GA_NODE_NAME &&
-	       macro_dict.macro_exists(pnode->name)) {
+               macro_dict.macro_exists(pnode->name)) {
       // Macro without parameters
       const ga_macro &gam = macro_dict.get_macro(pnode->name);
       if (gam.nb_params() != 0)
-	ga_throw_error(pnode->expr, pnode->pos,
-			 "Bad number of parameters in the use of macro '"
-			 << gam.name() << "'. Expected " << gam.nb_params()
-			 << " none found.");
+        ga_throw_error(pnode->expr, pnode->pos,
+                       "Bad number of parameters in the use of macro '"
+                       << gam.name() << "'. Expected " << gam.nb_params()
+                       << " none found.");
 
       pga_tree_node pnode_old = pnode;
       pnode = nullptr;
       tree.copy_node(gam.tree().root, pnode_old->parent, pnode);
       if (pnode_old->parent)
-	pnode_old->parent->replace_child(pnode_old, pnode);
+        pnode_old->parent->replace_child(pnode_old, pnode);
       else
-	tree.root = pnode;
+        tree.root = pnode;
       GMM_ASSERT1(pnode_old->children.empty(), "Internal error");
       delete pnode_old;
     } else {
       for (size_type i = 0; i < pnode->children.size(); ++i)
-	ga_expand_macro(tree, pnode->children[i], macro_dict);
+        ga_expand_macro(tree, pnode->children[i], macro_dict);
     }
   }
 
   static void ga_mark_macro_params_rec(const pga_tree_node pnode,
-				       const std::vector<std::string> &params) {
+                                       const std::vector<std::string> &params) {
     if (!pnode) return;
     for (size_type i = 0; i < pnode->children.size(); ++i)
       ga_mark_macro_params_rec(pnode->children[i], params);
     
     if (pnode->node_type == GA_NODE_NAME ||
-	pnode->node_type == GA_NODE_INTERPOLATE ||
-	pnode->node_type == GA_NODE_ELEMENTARY ||
-	pnode->node_type == GA_NODE_SECONDARY_DOMAIN ||
-	pnode->node_type == GA_NODE_XFEM_PLUS ||
-	pnode->node_type == GA_NODE_XFEM_MINUS) {
+        pnode->node_type == GA_NODE_INTERPOLATE ||
+        pnode->node_type == GA_NODE_ELEMENTARY ||
+        pnode->node_type == GA_NODE_SECONDARY_DOMAIN ||
+        pnode->node_type == GA_NODE_XFEM_PLUS ||
+        pnode->node_type == GA_NODE_XFEM_MINUS) {
       std::string name = pnode->name;
       size_type po = ga_parse_prefix_operator(name);
       size_type pt = ga_parse_prefix_test(name);
 
       for (size_type i = 0; i < params.size(); ++i)
-	if (name.compare(params[i]) == 0) {
-	  pnode->name = name;
-	  switch(pnode->node_type) {
-	  case GA_NODE_NAME : pnode->op_type = GA_NAME; break;
-	  case GA_NODE_INTERPOLATE : pnode->op_type = GA_INTERPOLATE; break;
-	  case GA_NODE_ELEMENTARY : pnode->op_type = GA_ELEMENTARY; break;
-	  case GA_NODE_SECONDARY_DOMAIN :
+        if (name.compare(params[i]) == 0) {
+          pnode->name = name;
+          switch(pnode->node_type) {
+          case GA_NODE_NAME : pnode->op_type = GA_NAME; break;
+          case GA_NODE_INTERPOLATE : pnode->op_type = GA_INTERPOLATE; break;
+          case GA_NODE_ELEMENTARY : pnode->op_type = GA_ELEMENTARY; break;
+          case GA_NODE_SECONDARY_DOMAIN :
             pnode->op_type = GA_SECONDARY_DOMAIN; break;
-	  case GA_NODE_XFEM_PLUS : pnode->op_type = GA_XFEM_PLUS; break;
-	  case GA_NODE_XFEM_MINUS: pnode->op_type = GA_XFEM_MINUS; break;
-	  default:break;
-	  }
-	  pnode->node_type = GA_NODE_MACRO_PARAM;
-	  pnode->nbc1 = i; pnode->nbc2 = po; pnode->nbc3 = pt;
-	}
+          case GA_NODE_XFEM_PLUS : pnode->op_type = GA_XFEM_PLUS; break;
+          case GA_NODE_XFEM_MINUS: pnode->op_type = GA_XFEM_MINUS; break;
+          default:break;
+          }
+          pnode->node_type = GA_NODE_MACRO_PARAM;
+          pnode->nbc1 = i; pnode->nbc2 = po; pnode->nbc3 = pt;
+        }
     }
   }
   
   static void ga_mark_macro_params(ga_macro &gam,
-				   const std::vector<std::string> &params,
-				   const ga_macro_dictionnary &macro_dict) {
+                                   const std::vector<std::string> &params,
+                                   const ga_macro_dictionary &macro_dict) {
     if (gam.tree().root) {
       ga_mark_macro_params_rec(gam.tree().root, params);
       ga_expand_macro(gam.tree(), gam.tree().root, macro_dict);
     }
   }
 
-  bool ga_macro_dictionnary::macro_exists(const std::string &name) const {
+  bool ga_macro_dictionary::macro_exists(const std::string &name) const {
     if (macros.find(name) != macros.end()) return true;
     if (parent && parent->macro_exists(name)) return true;
     return false;
@@ -1448,21 +1447,21 @@ namespace getfem {
 
 
   const ga_macro &
-  ga_macro_dictionnary::get_macro(const std::string &name) const {
+  ga_macro_dictionary::get_macro(const std::string &name) const {
     auto it = macros.find(name);
     if (it != macros.end()) return it->second;
     if (parent) return parent->get_macro(name);
     GMM_ASSERT1(false, "Undefined macro");
   }
 
-  void ga_macro_dictionnary::add_macro(const ga_macro &gam)
+  void ga_macro_dictionary::add_macro(const ga_macro &gam)
   { macros[gam.name()] = gam; }
 
-  void ga_macro_dictionnary::add_macro(const std::string &name,
-				       const std::string &expr)
+  void ga_macro_dictionary::add_macro(const std::string &name,
+                                      const std::string &expr)
   { ga_tree tree; ga_read_string_reg("Def "+name+":="+expr, tree, *this); }
 
-  void ga_macro_dictionnary::del_macro(const std::string &name) {
+  void ga_macro_dictionary::del_macro(const std::string &name) {
     auto it = macros.find(name);
     GMM_ASSERT1(it != macros.end(), "Undefined macro (at this level)");
     macros.erase(it);
@@ -1476,7 +1475,7 @@ namespace getfem {
   // Read a term with an (implicit) pushdown automaton.
   static GA_TOKEN_TYPE ga_read_term(pstring expr, size_type &pos,
                                     ga_tree &tree,
-				    ga_macro_dictionnary &macro_dict) {
+                                    ga_macro_dictionary &macro_dict) {
     size_type token_pos, token_length;
     GA_TOKEN_TYPE t_type;
     int state = 1; // 1 = reading term, 2 = reading after term
@@ -1528,60 +1527,60 @@ namespace getfem {
           tree.add_op(GA_DEVIATOR, token_pos, expr);
           state = 1; break;
 
-	case GA_DEF:
-	  {
-	    ga_macro gam;
-	    t_type = ga_get_token(*expr, pos, token_pos, token_length);
-	    if (t_type != GA_NAME)
+        case GA_DEF:
+          {
+            ga_macro gam;
+            t_type = ga_get_token(*expr, pos, token_pos, token_length);
+            if (t_type != GA_NAME)
               ga_throw_error(expr, pos,
                              "Macro definition should begin with macro name");
-	    gam.name() = std::string(&((*expr)[token_pos]), token_length);
-	    if (ga_check_name_validity(gam.name()))
-	      ga_throw_error(expr, pos-1, "Invalid macro name.")
-	    t_type = ga_get_token(*expr, pos, token_pos, token_length);
-	    std::vector<std::string> params;
+            gam.name() = std::string(&((*expr)[token_pos]), token_length);
+            if (ga_check_name_validity(gam.name()))
+              ga_throw_error(expr, pos-1, "Invalid macro name.")
+            t_type = ga_get_token(*expr, pos, token_pos, token_length);
+            std::vector<std::string> params;
             if (t_type == GA_LPAR) {
-	      t_type = ga_get_token(*expr, pos, token_pos, token_length);
-	      while (t_type == GA_NAME) {
-		params.push_back(std::string(&((*expr)[token_pos]),
-					     token_length));
-		if (ga_check_name_validity(params.back()))
-		  ga_throw_error(expr, pos-1, "Invalid macro parameter name.");
-		for (size_type i = 0; i+1 < params.size(); ++i)
-		  if (params.back().compare(params[i]) == 0)
-		    ga_throw_error(expr, pos-1,
-				   "Invalid repeated macro parameter name.");
-		t_type = ga_get_token(*expr, pos, token_pos, token_length);
-		if (t_type == GA_COMMA)
-		  t_type = ga_get_token(*expr, pos, token_pos, token_length);
-	      }
-	      if (t_type != GA_RPAR)
-		ga_throw_error(expr, pos-1,
-			      "Missing right parenthesis in macro definition.");
-	      t_type = ga_get_token(*expr, pos, token_pos, token_length);
-	    }
-	    if (t_type != GA_COLON_EQ)
-	      ga_throw_error(expr, pos-1, "Missing := for macro definition.");
+              t_type = ga_get_token(*expr, pos, token_pos, token_length);
+              while (t_type == GA_NAME) {
+                params.push_back(std::string(&((*expr)[token_pos]),
+                                             token_length));
+                if (ga_check_name_validity(params.back()))
+                  ga_throw_error(expr, pos-1, "Invalid macro parameter name.");
+                for (size_type i = 0; i+1 < params.size(); ++i)
+                  if (params.back().compare(params[i]) == 0)
+                    ga_throw_error(expr, pos-1,
+                                   "Invalid repeated macro parameter name.");
+                t_type = ga_get_token(*expr, pos, token_pos, token_length);
+                if (t_type == GA_COMMA)
+                  t_type = ga_get_token(*expr, pos, token_pos, token_length);
+              }
+              if (t_type != GA_RPAR)
+                ga_throw_error(expr, pos-1,
+                              "Missing right parenthesis in macro definition.");
+              t_type = ga_get_token(*expr, pos, token_pos, token_length);
+            }
+            if (t_type != GA_COLON_EQ)
+              ga_throw_error(expr, pos-1, "Missing := for macro definition.");
 
-	    t_type = ga_read_term(expr, pos, gam.tree(), macro_dict);
-	    if (gam.tree().root)
-	      ga_expand_macro(gam.tree(), gam.tree().root, macro_dict);
-	    gam.nb_params() = params.size();
-	    if (params.size())
-	      ga_mark_macro_params(gam, params, macro_dict);
-	    macro_dict.add_macro(gam);
+            t_type = ga_read_term(expr, pos, gam.tree(), macro_dict);
+            if (gam.tree().root)
+              ga_expand_macro(gam.tree(), gam.tree().root, macro_dict);
+            gam.nb_params() = params.size();
+            if (params.size())
+              ga_mark_macro_params(gam, params, macro_dict);
+            macro_dict.add_macro(gam);
 
-	    // cout << "macro \"" << gam.name() << "\" registered with "
-	    // 	 << gam.nb_params() << " params  := "
-	    // 	 << ga_tree_to_string(gam.tree()) << endl;
-	    
-	    if (t_type == GA_END) return t_type;
+            // cout << "macro \"" << gam.name() << "\" registered with "
+            //      << gam.nb_params() << " params  := "
+            //      << ga_tree_to_string(gam.tree()) << endl;
+
+            if (t_type == GA_END) return t_type;
             else if (t_type != GA_SEMICOLON)
               ga_throw_error(expr, pos-1,
-			     "Syntax error at the end of macro definition.");
-	    state = 1;
-	  }
-	  break;
+                             "Syntax error at the end of macro definition.");
+            state = 1;
+          }
+          break;
 
         case GA_INTERPOLATE:
           {
@@ -1780,66 +1779,66 @@ namespace getfem {
             size_type tensor_order(1);
             bool foundcomma(false), foundsemi(false);
 
-	    r_type = ga_read_term(expr, pos, sub_tree, macro_dict);
-	    size_type nb_comp = 0;
-	    tree.add_matrix(token_pos, expr);
-	    
-	    if (sub_tree.root->node_type == GA_NODE_C_MATRIX) { // nested format
-	      bgeot::multi_index mii;
-	      do {
-		if (nb_comp) {
-		  sub_tree.clear();
-		  r_type = ga_read_term(expr, pos, sub_tree, macro_dict);
-		}
-		// in the nested format only "," and "]" are expected
-		if (sub_tree.root->node_type != GA_NODE_C_MATRIX || 
-		    (r_type != GA_COMMA && r_type != GA_RBRACKET))
+            r_type = ga_read_term(expr, pos, sub_tree, macro_dict);
+            size_type nb_comp = 0;
+            tree.add_matrix(token_pos, expr);
+
+            if (sub_tree.root->node_type == GA_NODE_C_MATRIX) { // nested format
+              bgeot::multi_index mii;
+              do {
+                if (nb_comp) {
+                  sub_tree.clear();
+                  r_type = ga_read_term(expr, pos, sub_tree, macro_dict);
+                }
+                // in the nested format only "," and "]" are expected
+                if (sub_tree.root->node_type != GA_NODE_C_MATRIX ||
+                    (r_type != GA_COMMA && r_type != GA_RBRACKET))
                   ga_throw_error(expr, pos-1, "Bad explicit "
                                  "vector/matrix/tensor format.");
 
-		// convert a row vector [a,b] to a column vector [a;b]
+                // convert a row vector [a,b] to a column vector [a;b]
                 if (sub_tree.root->marked &&
-		    sub_tree.root->tensor().sizes()[0] == 1 &&
-		    sub_tree.root->tensor().size() != 1) {
-		  bgeot::multi_index mi = sub_tree.root->tensor().sizes();
-		  for (size_type i = mi.size()-1; i > 0; i--)
-		    mi[i-1] = mi[i];
-		  mi.pop_back();
-		  sub_tree.root->tensor().adjust_sizes(mi);
-		}
-		if (!nb_comp) mii = sub_tree.root->tensor().sizes();
-		else {
-		  const bgeot::multi_index &mi=sub_tree.root->tensor().sizes();
-		  bool cmp = true;
-		  if (mii.size() == mi.size()) {
-		     for (size_type i = 0; i < mi.size(); ++i)
-		       if (mi[i] != mii[i]) cmp = false;
-		  } else cmp = false;
-		  if (!cmp)
-		    ga_throw_error(expr, pos-1, "Bad explicit "
+                    sub_tree.root->tensor().sizes()[0] == 1 &&
+                    sub_tree.root->tensor().size() != 1) {
+                  bgeot::multi_index mi = sub_tree.root->tensor().sizes();
+                  for (size_type i = mi.size()-1; i > 0; i--)
+                    mi[i-1] = mi[i];
+                  mi.pop_back();
+                  sub_tree.root->tensor().adjust_sizes(mi);
+                }
+                if (!nb_comp) mii = sub_tree.root->tensor().sizes();
+                else {
+                  const bgeot::multi_index &mi=sub_tree.root->tensor().sizes();
+                  bool cmp = true;
+                  if (mii.size() == mi.size()) {
+                     for (size_type i = 0; i < mi.size(); ++i)
+                       if (mi[i] != mii[i]) cmp = false;
+                  } else cmp = false;
+                  if (!cmp)
+                    ga_throw_error(expr, pos-1, "Bad explicit "
                                    "vector/matrix/tensor format.");
-		}
-		for (size_type i = 0; i < sub_tree.root->children.size(); ++i) {
-		  sub_tree.root->children[i]->parent = tree.current_node;
-		  tree.current_node->children.push_back
-		    (sub_tree.root->children[i]);
-		}
-		sub_tree.root->children.resize(0);
-		nb_comp++;
-	      } while (r_type != GA_RBRACKET);
-	      tree.current_node->marked = false;
-	      mii.push_back(nb_comp);
-	      tree.current_node->tensor().adjust_sizes(mii);
-	    } else { // non nested format
-	      do {
-		if (nb_comp) {
-		  sub_tree.clear();
-		  r_type = ga_read_term(expr, pos, sub_tree, macro_dict);
-		}
-		nb_comp++;
-		
-		tree.add_sub_tree(sub_tree);
-		
+                }
+                for (size_type i = 0; i < sub_tree.root->children.size(); ++i) {
+                  sub_tree.root->children[i]->parent = tree.current_node;
+                  tree.current_node->children.push_back
+                    (sub_tree.root->children[i]);
+                }
+                sub_tree.root->children.resize(0);
+                nb_comp++;
+              } while (r_type != GA_RBRACKET);
+              tree.current_node->marked = false;
+              mii.push_back(nb_comp);
+              tree.current_node->tensor().adjust_sizes(mii);
+            } else { // non nested format
+              do {
+                if (nb_comp) {
+                  sub_tree.clear();
+                  r_type = ga_read_term(expr, pos, sub_tree, macro_dict);
+                }
+                nb_comp++;
+
+                tree.add_sub_tree(sub_tree);
+
                 ++n1; ++n2; ++n3;
                 if (tensor_order < 2) ++nbc1;
                 if (tensor_order < 3) ++nbc2;
@@ -1888,42 +1887,42 @@ namespace getfem {
                                  "separated by ',', ';', ',,' and ';;' and "
                                  "be ended by ']'.");
                 }
-		
-	      } while (r_type != GA_RBRACKET);
-	      bgeot::multi_index mi;
-	      nbc1 = tree.current_node->nbc1; nbc2 = tree.current_node->nbc2;
-	      nbc3 = tree.current_node->nbc3;
-	      
-	      size_type nbl = tree.current_node->children.size()
-		/ (nbc2 * nbc1 * nbc3);
-	      switch(tensor_order) {
-	      case 1:
-		/* mi.push_back(1); */ mi.push_back(nbc1); break;
-	      case 2:
-		mi.push_back(nbl); if (nbc1 > 1) mi.push_back(nbc1); break; 
-	      case 3:
-		mi.push_back(nbl); mi.push_back(nbc2);
-		mi.push_back(nbc1);
-		break;
-	      case 4:
-		mi.push_back(nbl); mi.push_back(nbc3);
-		mi.push_back(nbc2); mi.push_back(nbc1);
-		break;
-	      default: GMM_ASSERT1(false, "Internal error");
-	      }
-	      tree.current_node->tensor().adjust_sizes(mi);
-	      std::vector<pga_tree_node> children = tree.current_node->children;
-	      auto it = tree.current_node->children.begin();
-	      for (size_type i = 0; i < nbc1; ++i)
-		for (size_type j = 0; j < nbc2; ++j)
-		  for (size_type k = 0; k < nbc3; ++k)
-		    for (size_type l = 0; l < nbl; ++l, ++it)
-		      *it = children[i+nbc1*(j+nbc2*(k+nbc3*l))];
-	      tree.current_node->marked = true;
-	    }
+
+              } while (r_type != GA_RBRACKET);
+              bgeot::multi_index mi;
+              nbc1 = tree.current_node->nbc1; nbc2 = tree.current_node->nbc2;
+              nbc3 = tree.current_node->nbc3;
+
+              size_type nbl = tree.current_node->children.size()
+                / (nbc2 * nbc1 * nbc3);
+              switch(tensor_order) {
+              case 1:
+                /* mi.push_back(1); */ mi.push_back(nbc1); break;
+              case 2:
+                mi.push_back(nbl); if (nbc1 > 1) mi.push_back(nbc1); break;
+              case 3:
+                mi.push_back(nbl); mi.push_back(nbc2);
+                mi.push_back(nbc1);
+                break;
+              case 4:
+                mi.push_back(nbl); mi.push_back(nbc3);
+                mi.push_back(nbc2); mi.push_back(nbc1);
+                break;
+              default: GMM_ASSERT1(false, "Internal error");
+              }
+              tree.current_node->tensor().adjust_sizes(mi);
+              std::vector<pga_tree_node> children = tree.current_node->children;
+              auto it = tree.current_node->children.begin();
+              for (size_type i = 0; i < nbc1; ++i)
+                for (size_type j = 0; j < nbc2; ++j)
+                  for (size_type k = 0; k < nbc3; ++k)
+                    for (size_type l = 0; l < nbl; ++l, ++it)
+                      *it = children[i+nbc1*(j+nbc2*(k+nbc3*l))];
+              tree.current_node->marked = true;
+            }
           }
-	  tree.current_node->nbc1 = tree.current_node->tensor().sizes().size();
-	  state = 2;
+          tree.current_node->nbc1 = tree.current_node->tensor().sizes().size();
+          state = 2;
           break;
 
         default:
@@ -1973,7 +1972,7 @@ namespace getfem {
 
   // Syntax analysis of a string. Conversion to a tree. register the macros.
   void ga_read_string_reg(const std::string &expr, ga_tree &tree,
-			  ga_macro_dictionnary &macro_dict) {
+                          ga_macro_dictionary &macro_dict) {
     size_type pos = 0, token_pos, token_length;
     tree.clear();
     GA_TOKEN_TYPE t = ga_get_token(expr, pos, token_pos, token_length);
@@ -1995,8 +1994,8 @@ namespace getfem {
   // Syntax analysis of a string. Conversion to a tree.
   // Do not register the macros (but expand them).
   void ga_read_string(const std::string &expr, ga_tree &tree,
-		      const ga_macro_dictionnary &macro_dict) {
-    ga_macro_dictionnary macro_dict_loc(true, macro_dict);
+                      const ga_macro_dictionary &macro_dict) {
+    ga_macro_dictionary macro_dict_loc(true, macro_dict);
     ga_read_string_reg(expr, tree, macro_dict_loc);
   }
 

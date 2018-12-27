@@ -220,6 +220,7 @@ namespace getfem {
       size_type s1 = pf1->nb_dof(cv_1) * Qmult1;
       size_type Qmult2 = qdim2 / pf2->target_dim();
       size_type s2 = pf2->nb_dof(cv_2) * Qmult2;
+      GMM_ASSERT1(s1 > 0 && s2 >0, "Element without degrees of freedom");
       if (t.sizes()[0] != s1 || t.sizes()[1] != s2) {
         bgeot::multi_index mi = t.sizes();
         mi[0] = s1; mi[1] = s2;
@@ -3378,15 +3379,16 @@ namespace getfem {
 
   // Performs Aij Bkl -> Cijkl, partially unrolled version
   template<int S1> struct ga_instruction_simple_tmult_unrolled
-    : public ga_instruction {
+  : public ga_instruction {
     base_tensor &t, &tc1, &tc2;
     virtual int exec() {
       size_type s2 = tc2.size();
+      GA_DEBUG_ASSERT(tc1.size() == S1,
+                      "Wrong sizes " << tc1.size() << " != " << S1);
       GA_DEBUG_INFO("Instruction: simple tensor product, unrolled with "
-                    << tc1.size() << " operations");
-      GA_DEBUG_ASSERT(t.size() == tc1.size() * s2, "Wrong sizes");
-      GA_DEBUG_ASSERT(tc1.size() == S1, "Wrong sizes");
-
+                    << S1 << " operations");
+      GA_DEBUG_ASSERT(t.size() == S1 * s2,
+                      "Wrong sizes " << t.size() << " != " << S1 << "*" << s2);
       base_tensor::iterator it = t.begin(), it2 = tc2.begin();
       for (size_type ii = 0; ii < s2; ++ii, ++it2) {
         base_tensor::iterator it1 = tc1.begin();
@@ -3987,7 +3989,7 @@ namespace getfem {
 
 
   struct ga_instruction_scalar_assembly : public ga_instruction {
-    base_tensor &t;
+    const base_tensor &t;
     scalar_type &E, &coeff;
      virtual int exec() {
       GA_DEBUG_INFO("Instruction: scalar term assembly");
@@ -4000,7 +4002,7 @@ namespace getfem {
   };
 
   struct ga_instruction_fem_vector_assembly : public ga_instruction {
-    base_tensor &t;
+    const base_tensor &t;
     base_vector &Vr, &Vn;
     const fem_interpolation_context &ctx;
     const gmm::sub_interval &Ir, &In;
@@ -4016,7 +4018,9 @@ namespace getfem {
         if (empty_weight) elem.resize(0);
         elem.resize(t.size());
         if (!empty_weight) {
-          auto itt = t.begin(); auto it = elem.begin(), ite = elem.end();
+          auto itt = t.begin();
+          auto it = elem.begin();
+          const auto ite = elem.end();
           size_type nd = ((t.size()) >> 2);
           for (size_type i = 0; i < nd; ++i) {
             *it++ = (*itt++) * coeff; *it++ = (*itt++) * coeff;
@@ -4025,7 +4029,9 @@ namespace getfem {
           for (; it != ite;) *it++ = (*itt++) * coeff;
         }
       } else if (!empty_weight) {
-        auto itt = t.begin(); auto it = elem.begin(), ite = elem.end();
+        auto itt = t.begin();
+        auto it = elem.begin();
+        const auto ite = elem.end();
         size_type nd = ((t.size()) >> 2);
         for (size_type i = 0; i < nd; ++i) {
           *it++ += (*itt++) * coeff; *it++ += (*itt++) * coeff;
@@ -4058,7 +4064,7 @@ namespace getfem {
       return 0;
     }
     ga_instruction_fem_vector_assembly
-    (base_tensor &t_, base_vector &Vr_, base_vector &Vn_,
+    (const base_tensor &t_, base_vector &Vr_, base_vector &Vn_,
      const fem_interpolation_context &ctx_,
      const gmm::sub_interval &Ir_, const gmm::sub_interval &In_,
      const mesh_fem *mfn_, const mesh_fem **mfg_,
@@ -4074,7 +4080,7 @@ namespace getfem {
     base_vector &V;
     const gmm::sub_interval &I;
     scalar_type &coeff;
-     virtual int exec() {
+    virtual int exec() {
       GA_DEBUG_INFO("Instruction: vector term assembly for "
                     "fixed size variable");
       gmm::add(gmm::scaled(t.as_vector(), coeff), gmm::sub_vector(V, I));
@@ -4268,7 +4274,7 @@ namespace getfem {
           } else {
             for (auto itt = ct1.begin(); itt != ct1.end(); ++itt)
               for (size_type q = 0; q < qmult1; ++q)
-                  *itd++ += *itt + q;
+                *itd++ += *itt + q;
           }
         } else
           for (size_type i=0; i < s1; ++i) dofs1[i] += i;
@@ -4712,9 +4718,9 @@ namespace getfem {
     } else {
       if (gis.var_intervals.find(varname) == gis.var_intervals.end()) {
         const mesh_fem *mf = workspace.associated_mf(varname);
-        size_type nd = mf ? mf->nb_basic_dof() :
-          gmm::vect_size(workspace.value(varname));
-        gis.var_intervals[varname]=gmm::sub_interval(gis.nb_dof, nd);
+        size_type nd = mf ? mf->nb_basic_dof()
+                          : gmm::vect_size(workspace.value(varname));
+        gis.var_intervals[varname] = gmm::sub_interval(gis.nb_dof, nd);
         gis.nb_dof += nd;
       }
       gis.max_dof = std::max(gis.max_dof,
@@ -6755,15 +6761,16 @@ namespace getfem {
                   GMM_ASSERT1(root->tensor_proper_size() == 1,
                               "Invalid vector or tensor quantity. An order 1 "
                               "weak form has to be a scalar quantity");
-                  const mesh_fem *mf=workspace.associated_mf(root->name_test1);
-                  const mesh_fem **mfg = 0;
+                  const mesh_fem *mf
+                    = workspace.associated_mf(root->name_test1);
                   add_interval_to_gis(workspace, root->name_test1, gis);
 
                   if (mf) {
-                    const std::string &intn1 = root->interpolate_name_test1;
+                    const mesh_fem **mfg = 0;
                     const gmm::sub_interval *Ir = 0, *In = 0;
+                    const std::string &intn1 = root->interpolate_name_test1;
                     bool secondary = intn1.size() &&
-                      workspace.secondary_domain_exists(intn1);
+                                     workspace.secondary_domain_exists(intn1);
                     if (intn1.size() && !secondary &&
                         workspace.variable_group_exists(root->name_test1)) {
                       ga_instruction_set::variable_group_info &vgi =
@@ -6778,12 +6785,13 @@ namespace getfem {
                       In = &(workspace.interval_of_variable(root->name_test1));
                     }
                     fem_interpolation_context &ctx
-                      = intn1.size() ?
-                      (secondary ? rmi.secondary_domain_infos.ctx
-                       : rmi.interpolate_infos[intn1].ctx) : gis.ctx;
-                    bool interpolate
-                      = (!intn1.empty() && intn1.compare("neighbour_elt")!=0 &&
-                         !secondary);
+                      = intn1.size()
+                      ? (secondary ? rmi.secondary_domain_infos.ctx
+                                   : rmi.interpolate_infos[intn1].ctx)
+                      : gis.ctx;
+                    bool interpolate = !(intn1.empty() ||
+                                         intn1 == "neighbour_elt" ||
+                                         secondary);
                     pgai = std::make_shared<ga_instruction_fem_vector_assembly>
                       (root->tensor(), workspace.unreduced_vector(),
                        workspace.assembled_vector(), ctx, *Ir, *In, mf, mfg,
@@ -6810,19 +6818,19 @@ namespace getfem {
                       workspace.secondary_domain_exists(intn1);
                   bool secondary2 = intn2.size() &&
                       workspace.secondary_domain_exists(intn2);
-                  fem_interpolation_context &ctx1
-                      = intn1.size() ?
-                      (secondary1 ? rmi.secondary_domain_infos.ctx
-                       : rmi.interpolate_infos[intn1].ctx) : gis.ctx;
-                  fem_interpolation_context &ctx2
-                      = intn2.size() ?
-                      (secondary2 ? rmi.secondary_domain_infos.ctx
-                       : rmi.interpolate_infos[intn2].ctx) : gis.ctx;
-                  bool interpolate
-                    = (!intn1.empty() && intn1.compare("neighbour_elt")!=0 &&
-                       !secondary1) ||
-                    (!intn2.empty() && intn2.compare("neighbour_elt")!=0 &&
-                     !secondary2);
+                  fem_interpolation_context
+                    &ctx1 = intn1.size()
+                          ? (secondary1 ? rmi.secondary_domain_infos.ctx
+                                        : rmi.interpolate_infos[intn1].ctx)
+                          : gis.ctx,
+                    &ctx2 = intn2.size()
+                          ? (secondary2 ? rmi.secondary_domain_infos.ctx
+                                        : rmi.interpolate_infos[intn2].ctx)
+                          : gis.ctx;
+                  bool interpolate = !(intn1.empty() || intn1 == "neighbour_elt"
+                                       || secondary1) ||
+                                     !(intn2.empty() || intn2 == "neighbour_elt"
+                                       || secondary2);
 
                   add_interval_to_gis(workspace, root->name_test1, gis);
                   add_interval_to_gis(workspace, root->name_test2, gis);

@@ -183,10 +183,10 @@ namespace getfem {
   };
 
 
-  class ga_macro_dictionnary {
+  class ga_macro_dictionary {
 
   protected:
-    const ga_macro_dictionnary *parent;
+    const ga_macro_dictionary *parent;
     std::map<std::string, ga_macro> macros;
 
   public:
@@ -197,8 +197,8 @@ namespace getfem {
     void add_macro(const std::string &name, const std::string &expr);
     void del_macro(const std::string &name);
     
-    ga_macro_dictionnary() : parent(0) {}
-    ga_macro_dictionnary(bool, const ga_macro_dictionnary& gamd)
+    ga_macro_dictionary() : parent(0) {}
+    ga_macro_dictionary(bool, const ga_macro_dictionary& gamd)
       : parent(&gamd) {}
     
   };
@@ -351,7 +351,7 @@ namespace getfem {
 
     std::map<std::string, std::vector<std::string> > variable_groups;
 
-    ga_macro_dictionnary macro_dict;
+    ga_macro_dictionary macro_dict;
 
     struct m_tree {
       ga_tree *ptree;
@@ -505,7 +505,7 @@ namespace getfem {
 
     const std::string& get_macro(const std::string &name) const;
 
-    const ga_macro_dictionnary &macro_dictionnary() const { return macro_dict; }
+    const ga_macro_dictionary &macro_dictionary() const { return macro_dict; }
 
 
     // interpolate and elementary transformations

@@ -1764,16 +1764,17 @@ namespace getfem {
             if (n == 1) {
               if (test) {
                 pnode->init_vector_tensor(1);
-                pnode->tensor()[0]=scalar_type(1);
+                pnode->tensor()[0] = scalar_type(1);
               }
-              else pnode->init_scalar_tensor(workspace.value(name)[0]);
+              else
+                pnode->init_scalar_tensor(workspace.value(name)[0]);
             } else {
               if (test) {
                 pnode->init_matrix_tensor(n,n);
                 for (size_type i = 0; i < n; ++i)
                   for (size_type j = 0; j < n; ++j)
-                    pnode->tensor()(i,j)
-                      = ((i == j) ? scalar_type(1) : scalar_type(0));
+                    pnode->tensor()(i,j) = (i == j) ? scalar_type(1)
+                                                    : scalar_type(0);
               } else {
                 pnode->t.adjust_sizes(workspace.qdims(name));
                 gmm::copy(workspace.value(name), pnode->tensor().as_vector());
@@ -1794,7 +1795,7 @@ namespace getfem {
                                    "Invalid null size of variable " << name);
             if (mii.size() > 6)
               ga_throw_error(pnode->expr, pnode->pos,
-                            "Tensor with too much dimensions. Limited to 6");
+                            "Tensor with too many dimensions. Limited to 6");
 
             switch (prefix_id) {
             case 0: // value
@@ -3891,7 +3892,7 @@ namespace getfem {
                       "transformations having an explicit expression");
 
         ga_tree trans_tree;
-        ga_read_string(expr_trans, trans_tree, workspace.macro_dictionnary());
+        ga_read_string(expr_trans, trans_tree, workspace.macro_dictionary());
         ga_semantic_analysis(trans_tree, workspace, m,
                              ref_elt_dim_of_mesh(m), false, false, 1);
         if (trans_tree.root) {
