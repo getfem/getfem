@@ -321,6 +321,7 @@ namespace getfem{
   void parallel_execution(std::function<void(void)> lambda,
                           bool iterate_over_partitions){
     parallel_boilerplate boilerplate;
+    #pragma omp parallel default(shared)
     {
       if (iterate_over_partitions) {
         for (auto &&partitions : partition_master::get()) {
