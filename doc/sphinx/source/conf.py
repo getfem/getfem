@@ -55,7 +55,7 @@ extensions = ['sphinx.ext.pngmath','sphinx.ext.autodoc',
 #source_suffix = '.rst'
 
 # The encoding of source files.
-#source_encoding = 'utf-8'
+source_encoding = 'utf-8'
 
 # The master toctree document.
 #master_doc = 'contents'
@@ -74,6 +74,9 @@ extensions = ['sphinx.ext.pngmath','sphinx.ext.autodoc',
 # Directories in which to search for additional Sphinx message catalogs
 # relative to the source directory
 #locale_dirs = []
+
+gettext_compact = False
+locale_dirs = ['locale/']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['.templates']

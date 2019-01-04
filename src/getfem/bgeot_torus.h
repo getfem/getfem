@@ -57,6 +57,7 @@ struct torus_geom_trans : public geometric_trans{
     (const bgeot::base_matrix &, const bgeot::base_matrix &, bgeot::base_matrix &) const;
 
   virtual void poly_vector_hess(const base_node &, bgeot::base_matrix &) const;
+  virtual void project_into_reference_convex(base_node &) const;
 
   torus_geom_trans(bgeot::pgeometric_trans poriginal_trans);
 

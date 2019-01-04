@@ -57,7 +57,7 @@ tleft = abs(fnor[1,:]+1) < 1e-14
 ttop  = abs(fnor[0,:]-1) < 1e-14
 fleft = np.compress(tleft, flst, axis=1)
 ftop  = np.compress(ttop, flst, axis=1)
-fneum = np.compress(True - ttop - tleft, flst, axis=1)
+fneum = np.compress(np.logical_not(ttop + tleft), flst, axis=1)
 
 # Mark it as boundary
 DIRICHLET_BOUNDARY_NUM1 = 1

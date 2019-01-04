@@ -106,15 +106,19 @@ namespace bgeot {
     /** Add the point pt to the mesh and return the index of the
         point.
 
-        If the point is too close to an existing point and remove_duplicated_nodes = true,
-        the function does not create a new point, and returns the index of the
-        already existing point.
-        @param pt the point coordinates.
+        If the point is within a radius tol from an existing point the
+        function does not create a new point, and returns the index of
+         the already existing point.
+        If tol is negative the check for nearby points is deactivated.
+        The same effect can be achieved by setting the deprecated
+        argument remove_duplicated_nodes to false.
+
+        @param pt holds the point coordinates.
     */
     size_type add_point(const base_node &pt,
                         const scalar_type tol=scalar_type(0),
                         bool remove_duplicated_nodes = true) {
-      return pts.add_node(pt, tol, remove_duplicated_nodes);
+      return pts.add_node(pt, remove_duplicated_nodes ? tol : -1.);
     }
 
     template<class ITER>

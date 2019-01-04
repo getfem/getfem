@@ -1145,15 +1145,22 @@ namespace gmm {
   }
 
   template<typename VEC> static void vecsave(std::string fname, const VEC& V,
-                                             bool binary=false) {
+                                             bool binary=false, std::string Vformat="") {
     if (binary) {
       std::ofstream f(fname.c_str(), std::ofstream::binary);
       for (size_type i=0; i < gmm::vect_size(V); ++i)
         f.write(reinterpret_cast<const char*>(&V[i]), sizeof(V[i]));
     }
     else {
-      std::ofstream f(fname.c_str()); f.precision(16); f.imbue(std::locale("C"));
-      for (size_type i=0; i < gmm::vect_size(V); ++i) f << V[i] << "\n";
+      if (Vformat.empty()){
+        std::ofstream f(fname.c_str()); f.imbue(std::locale("C"));
+        f.precision(16);
+        for (size_type i=0; i < gmm::vect_size(V); ++i) f << V[i] << "\n";
+      }
+      else {
+        FILE* f = fopen(fname.c_str(), "w");
+        for (size_type i=0; i < gmm::vect_size(V); ++i) fprintf(f, Vformat.c_str(), V[i]);
+      }
     }
   } 
 

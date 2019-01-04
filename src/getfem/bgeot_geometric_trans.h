@@ -159,6 +159,8 @@ namespace bgeot {
     template<class CONT> base_node transform(const base_node &pt,
                                              const CONT &PTAB) const;
     base_node transform(const base_node &pt, const base_matrix &G) const;
+    virtual void project_into_reference_convex(base_node &pt) const
+      { cvr->project_into(pt); }
     size_type complexity() const { return complexity_; }
     virtual ~geometric_trans()
       { DAL_STORED_OBJECT_DEBUG_DESTROYED(this, "Geometric transformation"); }

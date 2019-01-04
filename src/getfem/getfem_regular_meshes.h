@@ -168,6 +168,28 @@ namespace getfem
   */
   void regular_ball_mesh(mesh& m, const std::string &st);
 
+  /**
+     Build a regular mesh on a ball shell, parametrized by the string st.
+     The format of st is similar to getfem::regular_mesh.
+     @see getfem::import_mesh.
+     All parameters except the geometric transformation GT are optional.
+     Here, parameter NSUBDIV has to be a vector of size 2 that holds the
+     number of subdivisions in the circumferential and radial direction
+     of the mesh.
+     SIZES is a two element vector that provides the ball radius and shell
+     thickness (default radius is equal to 1 and default thickness is
+     ewual to 0.5).
+     If NOISED=1 the nodes in the interior of the individual sub-regions
+     of the mesh are randomly "shaken" (default value NOISED=0).
+     An additional integer paramater called SYMMETRIES receiving the
+     values 1, 2 or 3 (in three dimensions) permits to respectively request
+     one half, one quarter or one eighth of the ball to be meshed
+     (default value SYMMETRIES=0).
+
+     @param m the output mesh.
+  */
+  void regular_ball_shell_mesh(mesh& m, const std::string &st);
+
 }  /* end of namespace getfem.                                             */
 
 

@@ -280,6 +280,22 @@ namespace bgeot {
       for (; it != ite; e += *it, ++it) {};
       return e / sqrt(scalar_type(pt.size()));
     }
+
+    void project_into(base_node &pt) const {
+      if (auto_basic) {
+        GMM_ASSERT1(pt.size() == cvs->dim(),
+                    "K_simplex_of_ref_::project_into: Dimensions mismatch");
+        scalar_type sum_coordinates = 0.0;
+        for (const auto &coord : pt) sum_coordinates += coord;
+        if (sum_coordinates > 1.0) gmm::scale(pt, 1.0 / sum_coordinates);
+        for (auto &coord : pt) {
+          if (coord < 0.0) coord = 0.0;
+          if (coord > 1.0) coord = 1.0;
+        }
+      } else
+        basic_convex_ref_->project_into(pt);
+    }
+
     K_simplex_of_ref_(dim_type NN, short_type KK) :
       convex_of_reference(simplex_structure(NN, KK), (KK == 1) || (NN == 0))
     {
@@ -441,6 +457,19 @@ namespace bgeot {
       scalar_type r = is_in_face(0, pt);
       for (short_type f = 1; f < 5; ++f) r = std::max(r, is_in_face(f, pt));
       return r;
+    }
+
+    void project_into(base_node &pt) const {
+      if (auto_basic) {
+        GMM_ASSERT1(pt.size() == 3, "Dimensions mismatch");
+        if (pt[2] < .0) pt[2] = 0.;
+        for (short_type f = 1; f < 5; ++f) {
+          scalar_type reldist = gmm::vect_sp(normals_[f], pt)*sqrt(2.);
+          if (reldist > 1.)
+            gmm::scale(pt, 1./reldist);
+        }
+      } else
+        basic_convex_ref_->project_into(pt);
     }
 
     pyramid_QK_of_ref_(dim_type k) : convex_of_reference(pyramid_QK_structure(k), k == 1) {
@@ -651,6 +680,21 @@ namespace bgeot {
       else return cvr2->is_in_face(short_type(f - cvr1->structure()->nb_faces()), pt2);
     }
 
+    void project_into(base_node &pt) const {
+      if (auto_basic) {
+        GMM_ASSERT1(pt.size() == cvs->dim(), "Dimensions mismatch");
+        dim_type n1 = cvr1->structure()->dim(), n2 = cvr2->structure()->dim();
+        base_node pt1(n1), pt2(n2);
+        std::copy(pt.begin(), pt.begin()+n1, pt1.begin());
+        std::copy(pt.begin()+n1,   pt.end(), pt2.begin());
+        cvr1->project_into(pt1);
+        cvr2->project_into(pt2);
+        std::copy(pt1.begin(), pt1.end(), pt.begin());
+        std::copy(pt2.begin(), pt2.end(), pt.begin()+n1);
+      } else
+        basic_convex_ref_->project_into(pt);
+    }
+
     product_ref_(pconvex_ref a, pconvex_ref b) :
       convex_of_reference(
         convex_direct_product(*a, *b).structure(),
@@ -714,6 +758,7 @@ namespace bgeot {
 
   /* equilateral ref convexes are used for estimation of convex quality */
   class equilateral_simplex_of_ref_ : public convex_of_reference {
+    scalar_type r_inscr;
   public:
     scalar_type is_in(const base_node &pt) const {
       GMM_ASSERT1(pt.size() == cvs->dim(), "Dimension does not match");
@@ -733,9 +778,28 @@ namespace bgeot {
                              : convex<base_node>::points().back());
       return gmm::vect_sp(pt-x0, normals()[f]);
     }
+
+    void project_into(base_node &pt) const {
+      dim_type N = cvs->dim();
+      GMM_ASSERT1(pt.size() == N, "Dimension does not match");
+      base_node G(N); G.fill(0.);
+      for (const base_node &x : convex<base_node>::points())
+        G += x;
+      gmm::scale(G, scalar_type(1)/scalar_type(N+1));
+      for (size_type f = 0; f < normals().size(); ++f) {
+        scalar_type r = gmm::vect_sp(pt-G, normals()[f]);
+        if (r > r_inscr)
+          pt = G + r_inscr/r*(pt-G);
+      }
+
+    }
+
     equilateral_simplex_of_ref_(size_type N) :
       convex_of_reference(simplex_structure(dim_type(N), 1), true)
     {
+      //https://math.stackexchange.com/questions/2739915/radius-of-inscribed-sphere-of-n-simplex
+      r_inscr = scalar_type(1)/sqrt(scalar_type(2*N)*scalar_type(N+1));
+
       pconvex_ref prev = equilateral_simplex_of_reference(dim_type(N-1));
       convex<base_node>::points().resize(N+1);
       normals_.resize(N+1);
@@ -785,6 +849,8 @@ namespace bgeot {
     { GMM_ASSERT1(false, "Information not available here"); }
     scalar_type is_in_face(short_type, const base_node &) const
     { GMM_ASSERT1(false, "Information not available here"); }
+    void project_into(base_node &) const
+    { GMM_ASSERT1(false, "Operation not available here"); }
 
     generic_dummy_(dim_type d, size_type n, short_type nf) :
       convex_of_reference(generic_dummy_structure(d, n, nf), true)

@@ -108,6 +108,32 @@ namespace bgeot {
       : type(t), N(NN), K(KK), nf(nnf)  {}
   };
 
+  bool operator==(const pconvex_structure &p1, const pconvex_structure &p2){
+    if (!p1 || !p2) return p1.get() == p2.get();
+    if (p1.get() == p2.get()) return true;
+    else return *dal::key_of_stored_object(p1) == *dal::key_of_stored_object(p2);
+  }
+
+  bool operator!=(const pconvex_structure &p1, const pconvex_structure &p2){
+    return !(p1 == p2);
+  }
+
+  bool operator==(const pconvex_structure &p1, std::nullptr_t){
+    return p1.get() == nullptr;
+  }
+
+  bool operator==(std::nullptr_t, const pconvex_structure &p2){
+    return p2 == nullptr;
+  }
+
+  bool operator!=(const pconvex_structure &p1, std::nullptr_t){
+    return !(p1 == nullptr);
+  }
+
+  bool operator!=(std::nullptr_t, const pconvex_structure &p2){
+    return !(p2 == nullptr);
+  }
+
   /* ******************************************************************** */
   /* simplex structures                                                   */
   /* ******************************************************************** */

@@ -375,13 +375,13 @@ namespace getfem {
   }
 
 # define ga_valid_operand(pnode)                                \
- {                                                                \
-    if (pnode && (pnode->node_type == GA_NODE_PREDEF_FUNC ||      \
-                  pnode->node_type == GA_NODE_SPEC_FUNC ||        \
-                  pnode->node_type == GA_NODE_NAME ||             \
-                  pnode->node_type == GA_NODE_OPERATOR ||         \
-                  pnode->node_type == GA_NODE_ALLINDICES))        \
-      ga_throw_error(pnode->expr, pnode->pos, "Invalid term");    \
+  {                                                             \
+    if (pnode && (pnode->node_type == GA_NODE_PREDEF_FUNC ||    \
+                  pnode->node_type == GA_NODE_SPEC_FUNC ||      \
+                  pnode->node_type == GA_NODE_NAME ||           \
+                  pnode->node_type == GA_NODE_OPERATOR ||       \
+                  pnode->node_type == GA_NODE_ALLINDICES))      \
+      ga_throw_error(pnode->expr, pnode->pos, "Invalid term");  \
   }
 
   static void ga_node_analysis(ga_tree &tree,
@@ -3175,7 +3175,7 @@ namespace getfem {
           pnode_trans = pnode->parent->children[1];
         }
 
-        if (ivar) {
+        if (ivar) { // Derivative wrt the interpolated variable
           mi.resize(1); mi[0] = 2;
           for (size_type i = 0; i < pnode->tensor_order(); ++i)
             mi.push_back(pnode->tensor_proper_size(i));
@@ -3191,7 +3191,8 @@ namespace getfem {
           pnode->test_function_type = order;
         }
 
-        if (itrans) {
+        if (itrans) { // Derivative with respect to a variable that the
+                      // interpolate transformation depends on
           const mesh_fem *mf = workspace.associated_mf(pnode_trans->name);
           size_type q = workspace.qdim(pnode_trans->name);
           size_type n = mf->linked_mesh().dim();

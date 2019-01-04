@@ -153,7 +153,7 @@ namespace getfem {
         tensor_ranges rn(child(n).ranges());
         const std::string &s = red[n].second;
         GMM_ASSERT1(rn.size() == s.size(), "Wrong size !");
-        for (unsigned i=0; i < rn.size(); ++i)
+        for (unsigned i=0; i < rn.size(); ++i) {
           if (s[i] != ' ') {
             size_type p = s.find(s[i]);
             if (p != size_type(-1) && p < i && rn[p] != rn[i])
@@ -161,16 +161,9 @@ namespace getfem {
               "of size " << rn << " with '"
               << s << "'");
           }
-          //cerr << "ts = " << child(n).ranges() << ", red="
-          //     << red[n].second << "\n";
-          bgeot::tensor_reduction::diag_shape(ts, red[n].second);
-          // cerr << "REDUCTION '" << red[n].second
-          //        << "' -> sending required to child#" << int(n)
-          //        << " " << child(n).name() << ":" << endl;
-          // cerr << ts << endl;
-          child(n).merge_required_shape(ts);
-          // cerr << "------>required shape is now: "
-          //      << child(n).required_shape() << endl;
+        }
+        bgeot::tensor_reduction::diag_shape(ts, red[n].second);
+        child(n).merge_required_shape(ts);
       }
     }
 

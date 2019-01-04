@@ -1933,7 +1933,7 @@ namespace getfem {
           gmm::add(gmm::identity_matrix(), F_x);
           gmm::copy(F_x, F_x_inv);
           bgeot::lu_inverse(&(*(F_x_inv.begin())), N);
-        
+
 
           base_tensor base_ux;
           base_matrix vbase_ux;
@@ -1941,7 +1941,7 @@ namespace getfem {
           size_type qdim_ux = pfu_x->target_dim();
           size_type ndof_ux = pfu_x->nb_dof(cv_x) * N / qdim_ux;
           vectorize_base_tensor(base_ux, vbase_ux, ndof_ux, qdim_ux, N);
-          
+
           base_tensor base_uy;
           base_matrix vbase_uy;
           size_type ndof_uy = 0;
@@ -1951,7 +1951,7 @@ namespace getfem {
             ndof_uy = pfu_y->nb_dof(cv_y) * N / qdim_uy;
             vectorize_base_tensor(base_uy, vbase_uy, ndof_uy, qdim_uy, N);
           }
-          
+
           base_tensor grad_base_ux, vgrad_base_ux;
           ctx_x.grad_base_value(grad_base_ux);
           vectorize_grad_base_tensor(grad_base_ux, vgrad_base_ux, ndof_ux,
@@ -1965,7 +1965,7 @@ namespace getfem {
           gmm::mult(F_y_inv, I_nxny, M1);
           base_matrix der_x(ndof_ux, N);
           gmm::mult(vbase_ux, gmm::transposed(M1), der_x);
-          
+
           // -F_y^{-1}*I_nxny*Test_u(Y)
           base_matrix der_y(ndof_uy, N);
           if (ret_type == 1) {
@@ -2743,22 +2743,22 @@ namespace getfem {
       scalar_type norm(0);
       
       if (tau > scalar_type(0)) {
-        gmm::add(lambda, gmm::scaled(Vs, -r), F);
-        scalar_type mu = gmm::vect_sp(F, n)/nn;
-        gmm::add(gmm::scaled(n, -mu/nn), F);
+        gmm::add(lambda, gmm::scaled(Vs, -r), F); // F <-- lambda -r*Vs
+        scalar_type mu = gmm::vect_sp(F, n)/nn;   // mu <-- (lambda -r*Vs).n/|n|
+        gmm::add(gmm::scaled(n, -mu/nn), F);      // F <-- (lambda -r*Vs)*(I-n x n / |n|²)
         norm = gmm::vect_norm2(F);
-        gmm::copy(gmm::identity_matrix(), dn);
-        gmm::scale(dn, -mu/nn);
-        gmm::rank_one_update(dn, gmm::scaled(n, mu/(nn*nn*nn)), n);
-        gmm::rank_one_update(dn, gmm::scaled(n, scalar_type(-1)/(nn*nn)), F);
-        gmm::copy(gmm::identity_matrix(), dVs);
-        gmm::rank_one_update(dVs, n, gmm::scaled(n, scalar_type(-1)/(nn*nn)));
+        gmm::copy(gmm::identity_matrix(), dn);                          // dn <-- I
+        gmm::scale(dn, -mu/nn);                                         // dn <-- -(lambda -r*Vs).n/|n|² I
+        gmm::rank_one_update(dn, gmm::scaled(n, mu/(nn*nn*nn)), n);     // dn <-- -(lambda -r*Vs).n/|n|² (I - n x n/|n|²)
+        gmm::rank_one_update(dn, gmm::scaled(n, scalar_type(-1)/(nn*nn)), F);  // dn <-- -(lambda -r*Vs).n/|n|² (I - n x n/|n|²) + n x ((lambda -r*Vs)*(I-n x n / |n|²)) /|n|²
+        gmm::copy(gmm::identity_matrix(), dVs);                                // dVs <-- I
+        gmm::rank_one_update(dVs, n, gmm::scaled(n, scalar_type(-1)/(nn*nn))); // dVs <-- I - n x n/|n|²
         
-        if (norm > tau) {
+        if (norm > tau) { // slip
           gmm::rank_one_update(dVs, F,
                                gmm::scaled(F, scalar_type(-1)/(norm*norm)));
           gmm::scale(dVs, tau / norm);
-          gmm::copy(gmm::scaled(F, scalar_type(1)/norm), dg);
+          gmm::copy(gmm::scaled(F, scalar_type(1)/norm), dg);                  // dg <-- Normalized((lambda -r*Vs)*(I-n x n / |n|²))
           gmm::rank_one_update(dn, gmm::scaled(F, mu/(norm*norm*nn)), F);
           gmm::scale(dn, tau / norm);
           gmm::scale(F, tau / norm);

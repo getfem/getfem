@@ -103,7 +103,6 @@ namespace bgeot {
   public :
     
     template <class ITER> scalar_type eval(const ITER &it) const;
-    scalar_type eval(const base_node &pt) const;
     void derivative(short_type k);
     void set_poly_of_subelt(size_type l, const base_poly &poly);
     const base_poly &poly_of_subelt(size_type l) const;
@@ -125,10 +124,64 @@ namespace bgeot {
   }
 
   template <class ITER>
+  void mult_diff_transposed(
+    const base_matrix &M, const ITER &it, const base_node &p1, base_node &p2) {
+    for (dim_type d = 0; d < p2.size(); ++d) {
+      p2[d] = 0;
+      for (dim_type i = 0; i < p1.size(); ++i) p2[d] += M(i, d) * (*(it + i) - p1[i]);
+    }
+  }
+
+  template <class ITER>
   scalar_type polynomial_composite::eval(const ITER &it) const {
-    base_node pt(mp->dim());
-    std::copy(it, it + mp->dim(), pt.begin());
-    return eval(pt);
+    base_node p0(mp->dim());
+    std::copy(it, it + mp->dim(), p0.begin());
+    mesh_structure::ind_cv_ct::const_iterator itc, itce;
+
+    mesh_precomposite::PTAB::const_sorted_iterator
+      it1 = mp->vertexes.sorted_ge(p0), it2 = it1;
+    size_type i1 = it1.index(), i2;
+
+    --it2; i2 = it2.index();
+
+
+    while (i1 != size_type(-1) || i2 != size_type(-1))
+    {
+      if (i1 != size_type(-1))
+      {
+        const mesh_structure::ind_cv_ct &tc
+          = mp->linked_mesh().convex_to_point(i1);
+        itc = tc.begin(); itce = tc.end();
+        for (; itc != itce; ++itc)
+        {
+          size_type ii = *itc;
+          mult_diff_transposed(mp->gtrans[ii], it, mp->orgs[ii], p0);
+          if (mp->trans_of_convex(ii)->convex_ref()->is_in(p0) < 1E-10) {
+            return to_scalar(poly_of_subelt(ii).eval(local_coordinate ? p0.begin() : it));
+          }
+        }
+        ++it1; i1 = it1.index();
+      }
+
+      if (i2 != size_type(-1))
+      {
+        const mesh_structure::ind_cv_ct &tc
+          = mp->linked_mesh().convex_to_point(i2);
+        itc = tc.begin(); itce = tc.end();
+        for (; itc != itce; ++itc)
+        {
+          size_type ii = *itc;
+          mult_diff_transposed(mp->gtrans[ii], it, mp->orgs[ii], p0);
+          if (mp->trans_of_convex(ii)->convex_ref()->is_in(p0) < 1E-10) {
+            return to_scalar(poly_of_subelt(ii).eval(local_coordinate ? p0.begin() : it));
+          }
+        }
+        --it2; i2 = it2.index();
+      }
+    }
+
+    GMM_ASSERT1(
+      false, "Element not found in composite polynomial: " << base_node(*it, *it + mp->dim()));
   }
 
   void structured_mesh_for_convex(pconvex_ref cvr, short_type k,

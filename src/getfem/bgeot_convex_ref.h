@@ -108,6 +108,13 @@ namespace bgeot {
      *  positive in the other side.
      */
     virtual scalar_type is_in_face(short_type, const base_node &) const =0;
+    /** will project any given point lying outside the convex onto the convex
+        outer surface */
+    virtual void project_into(base_node &pt) const {
+     GMM_ASSERT1(!auto_basic, "This method has to be overloaded in every "
+                              "basic convex");
+     basic_convex_ref_->project_into(pt);
+    }
     bool is_basic() const { return auto_basic; }
     /// return the normal vector for each face.
     const std::vector<base_small_vector> &normals() const

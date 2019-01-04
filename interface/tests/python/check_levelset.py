@@ -82,7 +82,7 @@ if True:
   m.export_to_pos('m.pos')
 else:
   sl = gf.Slice(('none',), mls, 1);
-  for i in xrange(nbd):
+  for i in range(nbd):
     U = np.zeros(nbd)
     U[i] = 1
     sl.export_to_pos('slU'+str(i)+'.pos',mfls,U,'U'+str(i))

@@ -46,7 +46,7 @@ print('nbcvs=%d, nbpts=%d, qdim=%d, fem = %s, nbdof=%d' % \
 
 
 P=m.pts()
-r = range(0, m.nbpts());
+r = list(range(0, m.nbpts()));
 INpid=compress(abs(P[0,:]+25) < 1e-4, r)
 OUTpid=compress(abs(P[0,:]-25) < 1e-4, r)
 TOPpid=compress(abs(P[2,:]-20) < 1e-4, r)
@@ -73,7 +73,7 @@ md.add_fem_variable('p', mfp);
 md.add_linear_incompressibility_brick(mim, 'u', 'p');
 md.add_variable('mult_spec', 1);
 M = Spmat('empty', 1, mfp.nbdof());
-M.add(range(1), range(mfp.nbdof()), ones((1, mfp.nbdof())));
+M.add(list(range(1)), list(range(mfp.nbdof())), ones((1, mfp.nbdof())));
 md.add_constraint_with_multipliers('p', 'mult_spec', M, [0]);
 md.add_initialized_data('NeumannData', [0, -10, 0]);
 md.add_source_term_brick(mim, 'u', 'NeumannData', 1);

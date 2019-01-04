@@ -2045,11 +2045,17 @@ namespace getfem {
       ("Saint_Venant_Kirchhoff_sigma",
        std::make_shared<Saint_Venant_Kirchhoff_sigma>());
     PREDEF_OPERATORS.add_method
+      ("Saint_Venant_Kirchhoff_PK2",
+       std::make_shared<Saint_Venant_Kirchhoff_sigma>());
+    PREDEF_OPERATORS.add_method
       ("Saint_Venant_Kirchhoff_potential",
        std::make_shared<AHL_wrapper_potential>
        (std::make_shared<SaintVenant_Kirchhoff_hyperelastic_law>()));
     PREDEF_OPERATORS.add_method
       ("Plane_Strain_Saint_Venant_Kirchhoff_sigma",
+       std::make_shared<Saint_Venant_Kirchhoff_sigma>());
+    PREDEF_OPERATORS.add_method
+      ("Plane_Strain_Saint_Venant_Kirchhoff_PK2",
        std::make_shared<Saint_Venant_Kirchhoff_sigma>());
     PREDEF_OPERATORS.add_method
       ("Plane_Strain_Saint_Venant_Kirchhoff_potential",
@@ -2061,12 +2067,19 @@ namespace getfem {
     PREDEF_OPERATORS.add_method
       ("Generalized_Blatz_Ko_sigma",
        std::make_shared<AHL_wrapper_sigma>(gbklaw));
-    PREDEF_OPERATORS.add_method
+     PREDEF_OPERATORS.add_method
+      ("Generalized_Blatz_Ko_PK2",
+       std::make_shared<AHL_wrapper_sigma>(gbklaw));
+   PREDEF_OPERATORS.add_method
       ("Generalized_Blatz_Ko_potential",
        std::make_shared<AHL_wrapper_potential>
        (std::make_shared<generalized_Blatz_Ko_hyperelastic_law>()));
     PREDEF_OPERATORS.add_method
       ("Plane_Strain_Generalized_Blatz_Ko_sigma",
+       std::make_shared<AHL_wrapper_sigma>
+       (std::make_shared<plane_strain_hyperelastic_law>(gbklaw)));
+    PREDEF_OPERATORS.add_method
+      ("Plane_Strain_Generalized_Blatz_Ko_PK2",
        std::make_shared<AHL_wrapper_sigma>
        (std::make_shared<plane_strain_hyperelastic_law>(gbklaw)));
     PREDEF_OPERATORS.add_method
@@ -2077,6 +2090,8 @@ namespace getfem {
     phyperelastic_law cigelaw
       = std::make_shared<Ciarlet_Geymonat_hyperelastic_law>();
     PREDEF_OPERATORS.add_method
+      ("Ciarlet_Geymonat_PK2", std::make_shared<AHL_wrapper_sigma>(cigelaw));
+    PREDEF_OPERATORS.add_method
       ("Ciarlet_Geymonat_sigma", std::make_shared<AHL_wrapper_sigma>(cigelaw));
     PREDEF_OPERATORS.add_method
       ("Ciarlet_Geymonat_potential",
@@ -2084,6 +2099,10 @@ namespace getfem {
        (std::make_shared<Ciarlet_Geymonat_hyperelastic_law>()));
     PREDEF_OPERATORS.add_method
       ("Plane_Strain_Ciarlet_Geymonat_sigma",
+       std::make_shared<AHL_wrapper_sigma>
+       (std::make_shared<plane_strain_hyperelastic_law>(cigelaw)));
+    PREDEF_OPERATORS.add_method
+      ("Plane_Strain_Ciarlet_Geymonat_PK2",
        std::make_shared<AHL_wrapper_sigma>
        (std::make_shared<plane_strain_hyperelastic_law>(cigelaw)));
     PREDEF_OPERATORS.add_method
@@ -2097,9 +2116,16 @@ namespace getfem {
       ("Incompressible_Mooney_Rivlin_sigma",
        std::make_shared<AHL_wrapper_sigma>(morilaw));
     PREDEF_OPERATORS.add_method
+      ("Incompressible_Mooney_Rivlin_PK2",
+       std::make_shared<AHL_wrapper_sigma>(morilaw));
+    PREDEF_OPERATORS.add_method
       ("Incompressible_Mooney_Rivlin_potential",
        std::make_shared<AHL_wrapper_potential>
        (std::make_shared<Mooney_Rivlin_hyperelastic_law>()));
+    PREDEF_OPERATORS.add_method
+      ("Plane_Strain_Incompressible_Mooney_Rivlin_PK2",
+       std::make_shared<AHL_wrapper_sigma>
+       (std::make_shared<plane_strain_hyperelastic_law>(morilaw)));
     PREDEF_OPERATORS.add_method
       ("Plane_Strain_Incompressible_Mooney_Rivlin_sigma",
        std::make_shared<AHL_wrapper_sigma>
@@ -2115,9 +2141,16 @@ namespace getfem {
       ("Compressible_Mooney_Rivlin_sigma",
        std::make_shared<AHL_wrapper_sigma>(cmorilaw));
     PREDEF_OPERATORS.add_method
+      ("Compressible_Mooney_Rivlin_PK2",
+       std::make_shared<AHL_wrapper_sigma>(cmorilaw));
+    PREDEF_OPERATORS.add_method
       ("Compressible_Mooney_Rivlin_potential",
        std::make_shared<AHL_wrapper_potential>
        (std::make_shared<Mooney_Rivlin_hyperelastic_law>(true)));
+    PREDEF_OPERATORS.add_method
+      ("Plane_Strain_Compressible_Mooney_Rivlin_PK2",
+       std::make_shared<AHL_wrapper_sigma>
+       (std::make_shared<plane_strain_hyperelastic_law>(cmorilaw)));
     PREDEF_OPERATORS.add_method
       ("Plane_Strain_Compressible_Mooney_Rivlin_sigma",
        std::make_shared<AHL_wrapper_sigma>
@@ -2133,11 +2166,18 @@ namespace getfem {
       ("Incompressible_Neo_Hookean_sigma",
        std::make_shared<AHL_wrapper_sigma>(ineolaw));
     PREDEF_OPERATORS.add_method
+      ("Incompressible_Neo_Hookean_PK2",
+       std::make_shared<AHL_wrapper_sigma>(ineolaw));
+    PREDEF_OPERATORS.add_method
       ("Incompressible_Neo_Hookean_potential",
        std::make_shared<AHL_wrapper_potential>
        (std::make_shared<Mooney_Rivlin_hyperelastic_law>(false,true)));
     PREDEF_OPERATORS.add_method
       ("Plane_Strain_Incompressible_Neo_Hookean_sigma",
+       std::make_shared<AHL_wrapper_sigma>
+       (std::make_shared<plane_strain_hyperelastic_law>(ineolaw)));
+    PREDEF_OPERATORS.add_method
+      ("Plane_Strain_Incompressible_Neo_Hookean_PK2",
        std::make_shared<AHL_wrapper_sigma>
        (std::make_shared<plane_strain_hyperelastic_law>(ineolaw)));
     PREDEF_OPERATORS.add_method
@@ -2151,11 +2191,18 @@ namespace getfem {
       ("Compressible_Neo_Hookean_sigma",
        std::make_shared<AHL_wrapper_sigma>(cneolaw));
     PREDEF_OPERATORS.add_method
+      ("Compressible_Neo_Hookean_PK2",
+       std::make_shared<AHL_wrapper_sigma>(cneolaw));
+    PREDEF_OPERATORS.add_method
       ("Compressible_Neo_Hookean_potential",
        std::make_shared<AHL_wrapper_potential>
        (std::make_shared<Mooney_Rivlin_hyperelastic_law>(true,true)));
     PREDEF_OPERATORS.add_method
       ("Plane_Strain_Compressible_Neo_Hookean_sigma",
+       std::make_shared<AHL_wrapper_sigma>
+       (std::make_shared<plane_strain_hyperelastic_law>(cneolaw)));
+    PREDEF_OPERATORS.add_method
+      ("Plane_Strain_Compressible_Neo_Hookean_PK2",
        std::make_shared<AHL_wrapper_sigma>
        (std::make_shared<plane_strain_hyperelastic_law>(cneolaw)));
     PREDEF_OPERATORS.add_method
@@ -2169,11 +2216,18 @@ namespace getfem {
       ("Compressible_Neo_Hookean_Bonet_sigma",
        std::make_shared<AHL_wrapper_sigma>(cneobolaw));
     PREDEF_OPERATORS.add_method
+      ("Compressible_Neo_Hookean_Bonet_PK2",
+       std::make_shared<AHL_wrapper_sigma>(cneobolaw));
+    PREDEF_OPERATORS.add_method
       ("Compressible_Neo_Hookean_Bonet_potential",
        std::make_shared<AHL_wrapper_potential>
        (std::make_shared<Neo_Hookean_hyperelastic_law>(true)));
     PREDEF_OPERATORS.add_method
       ("Plane_Strain_Compressible_Neo_Hookean_Bonet_sigma",
+       std::make_shared<AHL_wrapper_sigma>
+       (std::make_shared<plane_strain_hyperelastic_law>(cneobolaw)));
+    PREDEF_OPERATORS.add_method
+      ("Plane_Strain_Compressible_Neo_Hookean_Bonet_PK2",
        std::make_shared<AHL_wrapper_sigma>
        (std::make_shared<plane_strain_hyperelastic_law>(cneobolaw)));
     PREDEF_OPERATORS.add_method
@@ -2187,11 +2241,18 @@ namespace getfem {
       ("Compressible_Neo_Hookean_Ciarlet_sigma",
        std::make_shared<AHL_wrapper_sigma>(cneocilaw));
     PREDEF_OPERATORS.add_method
+      ("Compressible_Neo_Hookean_Ciarlet_PK2",
+       std::make_shared<AHL_wrapper_sigma>(cneocilaw));
+    PREDEF_OPERATORS.add_method
       ("Compressible_Neo_Hookean_Ciarlet_potential",
        std::make_shared<AHL_wrapper_potential>
        (std::make_shared<Neo_Hookean_hyperelastic_law>(false)));
     PREDEF_OPERATORS.add_method
       ("Plane_Strain_Compressible_Neo_Hookean_Ciarlet_sigma",
+       std::make_shared<AHL_wrapper_sigma>
+       (std::make_shared<plane_strain_hyperelastic_law>(cneocilaw)));
+    PREDEF_OPERATORS.add_method
+      ("Plane_Strain_Compressible_Neo_Hookean_Ciarlet_PK2",
        std::make_shared<AHL_wrapper_sigma>
        (std::make_shared<plane_strain_hyperelastic_law>(cneocilaw)));
     PREDEF_OPERATORS.add_method
@@ -2257,7 +2318,7 @@ namespace getfem {
     std::string adapted_lawname = adapt_law_name(lawname, N);
 
     std::string expr = "((Id(meshdim)+Grad_"+varname+")*(" + adapted_lawname
-      + "_sigma(Grad_"+varname+","+params+"))):Grad_" + test_varname;
+      + "_PK2(Grad_"+varname+","+params+"))):Grad_" + test_varname;
 
     return add_nonlinear_generic_assembly_brick
       (md, mim, expr, region, true, false,
@@ -2289,7 +2350,7 @@ namespace getfem {
     std::string adapted_lawname = adapt_law_name(lawname, N);
 
     std::string expr = "sqrt(3/2)*Norm(Deviator(Cauchy_stress_from_PK2("
-      + adapted_lawname + "_sigma(Grad_" + varname + "," + params + "),Grad_"
+      + adapted_lawname + "_PK2(Grad_" + varname + "," + params + "),Grad_"
       + varname + ")))";
     ga_interpolation_Lagrange_fem(md, expr, mf_vm, VM, rg);
   }

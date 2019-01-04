@@ -1,5 +1,5 @@
 # ===========================================================================
-#      http://www.gnu.org/software/autoconf-archive/ax_prog_cxx_mpi.html
+#     https://www.gnu.org/software/autoconf-archive/ax_prog_cxx_mpi.html
 # ===========================================================================
 #
 # SYNOPSIS
@@ -57,7 +57,7 @@
 #   Public License for more details.
 #
 #   You should have received a copy of the GNU General Public License along
-#   with this program. If not, see <http://www.gnu.org/licenses/>.
+#   with this program. If not, see <https://www.gnu.org/licenses/>.
 #
 #   As a special exception, the respective Autoconf Macro's copyright owner
 #   gives unlimited permission to copy, distribute and modify the configure
@@ -72,7 +72,7 @@
 #   modified version of the Autoconf Macro, you may extend this special
 #   exception to the GPL to apply to your modified version as well.
 
-#serial 1
+#serial 3
 
 AC_DEFUN([AX_PROG_CXX_MPI], [
 AC_PREREQ(2.50)
@@ -87,24 +87,22 @@ AS_IF([test x"$_ax_prog_cxx_mpi_mpi_wanted" = xno],
   [
     AC_LANG_PUSH([C++])
 
-    # test whether MPI::Init is available
+    # test whether MPI_Init() is available
     # We do not use AC_SEARCH_LIBS here, as it caches its outcome and
     # thus disallows corresponding calls in the other AX_PROG_*_MPI
     # macros.
     for lib in NONE mpi mpich; do
       save_LIBS=$LIBS
       if test x"$lib" = xNONE; then
-        AC_MSG_CHECKING([for function MPI::Init])
+        AC_MSG_CHECKING([for function MPI_Init])
       else
-        AC_MSG_CHECKING([for function MPI::Init in -l$lib])
+        AC_MSG_CHECKING([for function MPI_Init in -l$lib])
         LIBS="-l$lib $LIBS"
       fi
       AC_LINK_IFELSE([
         AC_LANG_PROGRAM([
-namespace MPI {
-char Init();
-};
-using MPI::Init;],[MPI::Init;])],
+extern "C" { void MPI_Init(); }
+],[MPI_Init();])],
         [ _ax_prog_cxx_mpi_mpi_found=yes ],
         [ _ax_prog_cxx_mpi_mpi_found=no ])
       AC_MSG_RESULT($_ax_prog_cxx_mpi_mpi_found)
@@ -176,5 +174,5 @@ AC_DEFUN([_AX_PROG_CXX_MPI], [
       AC_CHECK_TOOLS([CXX], [mpic++ mpicxx mpiCC sxmpic++ hcp mpxlC_r mpxlC mpixlcxx_r mpixlcxx mpg++ mpc++ mpCC cmpic++ mpiFCC CCicpc pgCC pathCC sxc++ xlC_r xlC bgxlC_r bgxlC openCC sunCC crayCC g++ c++ gpp aCC CC cxx cc++ cl.exe FCC KCC RCC])
     fi
   fi
-  AC_PROG_CXX(g++ cxx KCC CC cc++ xlC aCC c++ icpc)
+  AC_PROG_CXX
 ])dnl _AX_PROG_CXX_MPI

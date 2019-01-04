@@ -95,8 +95,8 @@ namespace getfem {
     mutable bgeot::kdtree tree; // Tree containing the nodes of the
                                 // projected mf_source dofs
     mutable std::vector<size_type> ind_dof; /* all functions using this work
-                                               array should keep it full of
-                                               size_type(-1) */
+                                               array should keep it filled
+                                               with size_type(-1) */
     mutable bgeot::geotrans_inv_convex gic;
     mutable base_tensor taux;
     mutable fem_interpolation_context fictx;
@@ -106,9 +106,9 @@ namespace getfem {
     mutable bgeot::multi_index mi2, mi3;
     mutable base_node ptref;
 
-    void build_kdtree(void) const;
+    void build_kdtree() const;
 
-    bool find_a_projected_point(base_node pt, base_node &ptr_proj,
+    bool find_a_projected_point(const base_node &pt, base_node &ptr_proj,
                                 size_type &cv_proj, short_type &fc_proj) const;
 
     virtual void update_from_context(void) const;
