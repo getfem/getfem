@@ -196,7 +196,7 @@ images correspond to a 3D case.
 3D planetary gears
 ------------------
 
-This image comes from the application developped by Konstantinos Poulios 
+This image comes from the application developed by Konstantinos Poulios 
 which is freely available at |link23|_. It is based on |gf| and is intended to be a tool for easy, almost automatic, creation and calculation of gear transmissions.
 
 

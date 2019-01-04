@@ -34,5 +34,5 @@ Have already generic and advanced functionalities.
 Perspectives
 ^^^^^^^^^^^^
 
-Still in developpement.
+Still in developement.
 

@@ -13,7 +13,7 @@ Events management
 Description
 ^^^^^^^^^^^
 
-The ``mesh``, |mf|, |mim| and |mo| description are linkedtogether in the sense
+The ``mesh``, |mf|, |mim| and |mo| description are linked together in the sense
 that there is some dependencies between them. For instance, when an element is
 suppressed to a mesh, the |mf| object has to react.
 

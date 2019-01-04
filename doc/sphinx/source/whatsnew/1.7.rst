@@ -36,7 +36,7 @@
 
      * New preconditionner ILUTP.
 
-     * A BFGS algorithm has been developped.
+     * A BFGS algorithm has been developed.
 
      * Gmm++ now handles (valid) operations mixing complex and
        scalars.

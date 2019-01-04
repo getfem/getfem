@@ -115,7 +115,7 @@ Let us now make a detailed presentation of the use of |gf| to approximate the pr
 Initialization
 **************
 
-First, in C++, ones has to include a certain number of headers for the model object, the generic assembly, the linear interface (Gmm++), the experimental mesher and the export facilities. For Python, this is simpler, |gf| can be imported globally (numpy has also to be imported). For Scilab, the library has first to be loaded in the Scilab console (this is not described here) and for Matlab, nothing is necessary, except a `gf_workspace('clear all')` which allows to clear all |gf| variables. 
+First, in C++, ones has to include a certain number of headers for the model object, the generic assembly, the linear algebra interface (Gmm++), the experimental mesher and the export facilities. For Python, this is simpler, |gf| can be imported globally (numpy has also to be imported). For Scilab, the library has first to be loaded in the Scilab console (this is not described here) and for Matlab, nothing is necessary, except a `gf_workspace('clear all')` which allows to clear all |gf| variables. 
 
 
 ========== ================================================

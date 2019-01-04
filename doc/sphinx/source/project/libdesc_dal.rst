@@ -19,7 +19,7 @@ not available and the containers defined in the ``dal`` namespace was used
 everywhere. Now, in |gf|, the S.T.L. containers are mainly used. The remaining
 uses of ``dal`` containers are eather historical or due to the specificities of
 these containers. It is however clear that this is not the aim of the |gf|
-project to developp new container concept. So, the use of the ``dal`` containers
+project to develop new container concept. So, the use of the ``dal`` containers
 has to be as much as possible reduced.
 
 Furthermore, ``dal`` contains a certain number of basic algorithms to deal with static stored objects (description of finite element methods, intermediary structures for auxiliary computations ...).

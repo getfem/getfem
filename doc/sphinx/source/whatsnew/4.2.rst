@@ -4,7 +4,7 @@
   What's New in |gf| 4.2
 ************************
 
-The New brick system is now mature and several coupling bricks has been developped.
+The New brick system is now mature and several coupling bricks has been developed.
 
 Released version, 2012/08/02.
 
@@ -20,7 +20,7 @@ The main changes are:
 
    * A complete tool to perform continuation of the solution to a model with
      respect to one of its parameter and to detect bifurcation has been
-     developped by Tomas Ligursky.
+     developed by Tomas Ligursky.
 
    * Some additional model bricks : pointwise constraint brick (to prescribe
      a constraint on a point eventually inside an element), basic nonlinear

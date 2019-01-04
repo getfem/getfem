@@ -89,9 +89,9 @@ described on a fem; scalar or vector valued, depending on the variable
 on which the Dirichlet condition is prescribed. `gamma0name` is the
 Nitsche's method parameter. `theta` is a scalar value which can be
 positive or negative. `theta = 1` corresponds to the standard symmetric
-method which is conditionnaly coercive for  `gamma0` small.
+method which is conditionally coercive for  `gamma0` small.
 `theta = -1` corresponds to the skew-symmetric method which is
-inconditionnaly coercive. `theta = 0` is the simplest method
+inconditionally coercive. `theta = 0` is the simplest method
 for which the second derivative of the Neumann term is not necessary
 even for nonlinear problems. Returns the brick index in the model.
 ::
@@ -117,9 +117,9 @@ right hand side of the Dirichlet condition. It could be constant or
 described on a fem. `gamma0name` is the
 Nitsche's method parameter. `theta` is a scalar value which can be
 positive or negative. `theta = 1` corresponds to the standard symmetric
-method which is conditionnaly coercive for  `gamma0` small.
+method which is conditionally coercive for  `gamma0` small.
 `theta = -1` corresponds to the skew-symmetric method which is
-inconditionnaly coercive. `theta = 0` is the simplest method
+inconditionally coercive. `theta = 0` is the simplest method
 for which the second derivative of the Neumann term is not necessary
 even for nonlinear problems. Returns the brick index in the model.
 (This brick is not fully tested)
@@ -149,9 +149,9 @@ right hand side of the Dirichlet condition. It could be constant or
 described on a fem. `gamma0name` is the
 Nitsche's method parameter. `theta` is a scalar value which can be
 positive or negative. `theta = 1` corresponds to the standard symmetric
-method which is conditionnaly coercive for  `gamma0` small.
+method which is conditionally coercive for  `gamma0` small.
 `theta = -1` corresponds to the skew-symmetric method which is
-inconditionnaly coercive. `theta = 0` is the simplest method
+inconditionally coercive. `theta = 0` is the simplest method
 for which the second derivative of the Neumann term is not necessary
 even for nonlinear problems. `Hname` is the data
 corresponding to the matrix field `H`. It has to be a constant matrix
@@ -201,9 +201,9 @@ the obstacle (interpolated on a finite element method).
 `gamma0name` is the Nitsche's method parameter.
 `theta` is a scalar value which can be
 positive or negative. `theta = 1` corresponds to the standard symmetric
-method which is conditionnaly coercive for  `gamma0` small.
+method which is conditionally coercive for  `gamma0` small.
 `theta = -1` corresponds to the skew-symmetric method which is
-inconditionnaly coercive. `theta = 0` is the simplest method
+inconditionally coercive. `theta = 0` is the simplest method
 for which the second derivative of the Neumann term is not necessary.
 The optional parameter `dataexpr_friction_coeff` is the friction
 coefficient which could be any expression of the weak form language.

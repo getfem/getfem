@@ -9,7 +9,7 @@
 How to install
 ==============
 
-Since |gf| is developped on linux (Ubuntu), the installation is simpler on linux, especially on Debian-based distributions (Debian/Ubuntu/Mint). However, |gf| can be installed also on other linux distributions, on Mac os X and Windows. In order to compile |gf| from sources, you need a recent C++ complier (supporting C++ 11 standard) and a recent version of python 2.
+Since |gf| is developed on linux (Ubuntu), the installation is simpler on linux, especially on Debian-based distributions (Debian/Ubuntu/Mint). However, |gf| can be installed also on other linux distributions, on Mac os X and Windows. In order to compile |gf| from sources, you need a recent C++ complier (supporting C++ 11 standard) and a recent version of python 2.
 
 The main dependences of |Gf| on other libraries are
 

@@ -118,7 +118,7 @@ Objects, methods and functions of the interface
 The main concepts manipulated by the interface are a limited number of objects
 (Fem, Mesh, MeshFem, Model ...), the associated methods and some functions defined on these objects.
 
-A special effort has been done to facilitate the addition of new objects, methods and functions to the interface without doing it separetaly for each partsupported script language (Python, Scilab, Matlab).
+A special effort has been done to facilitate the addition of new objects, methods and functions to the interface without doing it separately for each part supported script language (Python, Scilab, Matlab).
 
 
 All the information needed to build the interface for the different objects, methods and functions is contained in the files `interface/src/gf*.cc`. A python script (`bin/extract_doc`) produces all the necessary files from the information it takes there. In particular, it produces the python file getfem.py, the matlab m-files for the different functions and objects (including subdirectories) and it also produces the automatic documentations.
@@ -135,7 +135,7 @@ To make all the things work automatically, a certain number of rules have to be 
   - :file:`gf_objectname_set.cc` : contains the methods which transform the object (if any).
 
 * A list of function is defined by only one file :file:`gf_commandname.cc`
-  it contains a list of sub-comands.
+  it contains a list of sub-commands.
 
 
 * For each file, the main commentary on the list of functions or methods is delimited by the tags '/*@GFDOC' and '@*/'. For a file corresponding to the constructors of an object, the commentary should correspond to the description of the object.
@@ -168,7 +168,7 @@ To make all the things work automatically, a certain number of rules have to be 
   ``INIT``, ``GET``, ``SET``, ``RDATTR`` or ``FUNC``. The keyword
   ``INIT`` means that
   this is the description of a constructor of an object. ``RDATTR`` is for
-  a short method allowing to get an attribut of an object. ``GET`` is for a
+  a short method allowing to get an attribute of an object. ``GET`` is for a
   method of an object which does not modify it. ``SET`` is for a method which
   modifies an object and ``FUNC`` is for the sub-command of a function list.
 
@@ -177,7 +177,7 @@ To make all the things work automatically, a certain number of rules have to be 
 
   The parameters of the method/function are described. For a method, the
   object itself is not mentionned. The first parameter should be the method
-  or sub-command name between single quotes (a speical case is when
+  or sub-command name between single quotes (a special case is when
   this name begins with a dot; this means that it corresponds to a
   method/function where the command name is not required).
 
@@ -202,7 +202,7 @@ To make all the things work automatically, a certain number of rules have to be 
 
   Moreover, ``@tobj`` refers to an object defined by the interface.
   For instance, ou can refer to ``@tmesh``, ``@tmesh_fem``, ``@tfem``, etc.
-  There are some authorized abreviations:
+  There are some authorized abbreviations:
 
         - ``@tcs``  for  ``@tcont_struct``
         - ``@tmf``  for  ``@tmesh_fem``
@@ -220,7 +220,7 @@ To make all the things work automatically, a certain number of rules have to be 
   Three dots at the end of the parameter list (``...``) mean that 
   additional parameters are possible. Optional parameters can be described
   with brackets. For instance ``/*@SET v = ('name'[, @int i])``. But
-  be carreful how it is interpreted by the :file:`extract_doc` script
+  be careful how it is interpreted by the :file:`extract_doc` script
   to build the python interface.
 
   The second to fifth parameters of the macro correspond respectively to
@@ -302,7 +302,7 @@ where "name" is the name of the object in the interface and ``object_class`` is 
 
 IMPORTANT: In order to be interfaced, a |gf| object has to derive from ``dal::static_stored_object``. However, if it is not the case, a wrapper class can be defined such as the one for ``bgeot::base_poly`` (see the end of :file:`getfemint.h`).
 
-The previous three functions have to be implemented at the end of :file:`getfemint.cc`.It is possible to use one of the two macros defined in :file:`getfemint.cc`. The firs macro is for a standard object and the second one for an object which is manipulated in |gf| with a shared pointer.
+The previous three functions have to be implemented at the end of :file:`getfemint.cc`.It is possible to use one of the two macros defined in :file:`getfemint.cc`. The first macro is for a standard object and the second one for an object which is manipulated in |gf| with a shared pointer.
 
 You have also to complete functions ``name_of_getfemint_class_id`` and ``class_id_of_object`` at the end of :file:`getfemint.cc`.
 
