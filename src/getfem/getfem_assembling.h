@@ -836,7 +836,7 @@ namespace getfem {
    const mesh_region &rg = mesh_region::all_convexes()) {
     asm_mass_matrix(M, mim, mf1, rg);
     size_type nbd = gmm::mat_ncols(M), nbr = gmm::mat_nrows(M);
-    MAT TEMP_M(nbd, nbr);
+    MAT TEMP_M(nbr, nbd);
     GMM_ASSERT1(nbd == nbr, "mass matrix is not square");
     gmm::clear(TEMP_M);
     for (size_type i =0; i < nbr; ++i) {
