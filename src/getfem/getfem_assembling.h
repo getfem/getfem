@@ -831,23 +831,20 @@ namespace getfem {
    * @ingroup asm
    */
   template<typename MAT>
-  inline void asm_lumped_mass_matrix
+  inline void asm_lumped_mass_matrix_for_first_order
   (const MAT &M, const mesh_im &mim, const mesh_fem &mf1,
    const mesh_region &rg = mesh_region::all_convexes()) {
     asm_mass_matrix(M, mim, mf1, rg);
     size_type nbd = gmm::mat_ncols(M), nbr = gmm::mat_nrows(M);
-    MAT TEMP_M(nbd, nbr);
     GMM_ASSERT1(nbd == nbr, "mass matrix is not square");
-    gmm::clear(TEMP_M);
-    for (size_type i =0; i < nbr; ++i) {
-      for (size_type j =0; j < nbd; ++j) {
-        gmm::add(
-          gmm::sub_matrix(M, gmm::sub_interval(i, 1), gmm::sub_interval(j, 1)),
-          gmm::sub_matrix(TEMP_M, gmm::sub_interval(i, 1), gmm::sub_interval(i, 1))
-        );
-      }
+    typedef typename gmm::linalg_traits<MAT>::value_type T;
+    std::vector<T> V(nbd), W(nbr);
+    gmm::fill(V, T(1));
+    gmm::mult(M, V, W);
+    gmm::clear(const_cast<MAT &>(M));
+    for (size_type i =0; i < nbd; ++i) {
+      (const_cast<MAT &>(M))(i, i) = W[i];
     }
-    gmm::copy(TEMP_M, const_cast<MAT &>(M));
   }
 
   /** 
