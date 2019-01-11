@@ -146,25 +146,28 @@ namespace getfem {
 
     struct var_description {
 
-      bool is_variable;  // This is a variable or a parameter.
-      bool is_disabled;  // For a variable, to be solved or not
-      bool is_complex;   // The variable is complex numbers
-      bool is_affine_dependent;   // The variable depends in an affine way 
-                                  // to another variable. 
-      bool is_fem_dofs;  // The variable is the dofs of a fem
-      var_description_filter filter; // A filter on the dofs is applied or not.
-      size_type n_iter; //  Number of versions of the variable stored.
-      size_type n_temp_iter; // Number of additional temporary versions
-      size_type default_iter; // default iteration number.
+      const bool is_variable;   // This is a variable or a parameter.
+      bool is_disabled;         // For a variable, to be solved or not
+      const bool is_complex;    // The variable is complex numbers
+      bool is_affine_dependent; // The variable depends in an affine way
+                                // to another variable.
+      const bool is_fem_dofs;   // The variable is the dofs of a fem
+      size_type n_iter;         // Number of versions of the variable stored.
+      size_type n_temp_iter;    // Number of additional temporary versions
+      size_type default_iter;   // default iteration number.
 
-      ptime_scheme ptsc; // For optional time integration scheme
+      ptime_scheme ptsc;        // For optional time integration scheme
 
-      // fem description of the variable
-      const mesh_fem *mf;        // Main fem of the variable.
-      size_type m_region;        // Optional region for the filter
-      const mesh_im *mim;        // Optional integration method for the filter
-      ppartial_mesh_fem partial_mf; // Filter with respect to mf.
-      std::string filter_var;       // Optional variable name for the filter
+      const var_description_filter filter; // Version of an (optional) filter
+                                           // on the dofs
+      const size_type filter_region; // Optional region for the filter
+      const std::string filter_var;  // Optional variable name for the filter
+      const mesh_im *filter_mim;     // Optional integration method for the filter
+
+      // fem or im_data description of the variable
+      const mesh_fem *mf;            // Main fem of the variable.
+      ppartial_mesh_fem partial_mf;  // Filter with respect to mf.
+      const im_data *imd;            // im data description
 
       bgeot::multi_index qdims;  // For data having a qdim != of the fem
                                  // (dim per dof for dof data)
@@ -185,35 +188,33 @@ namespace getfem {
       model_complex_plain_vector affine_complex_value;
       scalar_type alpha;    // Factor for the affine dependent variables
       std::string org_name; // Name of the original variable for affine
-                            //  dependent variables
+                            // dependent variables
 
-      // im data description
-      const im_data *pim_data;
-
-      size_type qdim() const { return qdims.total_size(); }
-
-      var_description(bool is_var = false, bool is_com = false,
-                      bool is_fem = false, size_type n_it = 1,
-                      var_description_filter fil = VDESCRFILTER_NO,
-                      const mesh_fem *mmf = 0,
-                      size_type m_reg = size_type(-1),
-                      bgeot::multi_index qdims_ = bgeot::multi_index(),
-                      const std::string &filter_v = std::string(""),
-                      const mesh_im *mim_ = 0, const im_data *pimd = 0)
-        : is_variable(is_var), is_disabled(false), is_complex(is_com),
-          is_affine_dependent(false), is_fem_dofs(is_fem), filter(fil),
+      var_description(bool is_var = false, bool is_compl = false,
+                      const mesh_fem *mf_ = 0, const im_data *imd_ = 0,
+                      size_type n_it = 1,
+                      var_description_filter filter_ = VDESCRFILTER_NO,
+                      size_type filter_reg = size_type(-1),
+                      const std::string &filter_var_ = std::string(""),
+                      const mesh_im *filter_mim_ = 0)
+        : is_variable(is_var), is_disabled(false), is_complex(is_compl),
+          is_affine_dependent(false),
+          is_fem_dofs(mf_ != 0),
           n_iter(std::max(size_type(1), n_it)), n_temp_iter(0),
-          default_iter(0), ptsc(0), mf(mmf), m_region(m_reg), mim(mim_),
-          filter_var(filter_v), qdims(qdims_), v_num(0),
-          v_num_data(n_iter, act_counter()), I(0,0),
-          alpha(1), pim_data(pimd) {
-        
+          default_iter(0), ptsc(0),
+          filter(filter_), filter_region(filter_reg), filter_var(filter_var_),
+          filter_mim(filter_mim_),
+          mf(mf_), imd(imd_), qdims(),
+          v_num(0), v_num_data(n_iter, act_counter()), I(0,0), alpha(1)
+      {
         if (filter != VDESCRFILTER_NO && mf != 0)
           partial_mf = std::make_shared<partial_mesh_fem>(*mf);
         // v_num_data = v_num;
         if (qdims.size() == 0) qdims.push_back(1);
         GMM_ASSERT1(qdim(), "Attempt to create a null size variable");
       }
+
+      size_type qdim() const { return qdims.total_size(); }
 
       // add a temporary version for time integration schemes. Automatically
       // set the default iter to it. id_num is an identifier. Do not add
@@ -228,10 +229,11 @@ namespace getfem {
       }
 
       const mesh_fem *passociated_mf() const {
-        if (!is_fem_dofs)
+        if (is_fem_dofs)
+          return (filter == VDESCRFILTER_NO || partial_mf.get() == 0)
+                 ? mf : partial_mf.get();
+        else
           return 0;
-        return (filter == VDESCRFILTER_NO || partial_mf.get() == 0)
-               ? mf : partial_mf.get();
       }
 
       size_type size() const // Should control that the variable is
@@ -239,7 +241,7 @@ namespace getfem {
       { return is_complex ? complex_value[0].size() : real_value[0].size(); }
 
       void set_size();
-    };
+    }; // struct var_description
 
   public:
 
