@@ -145,7 +145,7 @@ namespace getfem {
 
     const mesh_im &mim(void) const { return mim_; }
     virtual const mesh_region &give_region(const mesh &m,
-				     size_type cv, short_type f) const = 0;
+                                     size_type cv, short_type f) const = 0;
     // virtual void init(const ga_workspace &workspace) const = 0;
     // virtual void finalize() const = 0;
 
@@ -303,13 +303,16 @@ namespace getfem {
 
   public:
 
+    enum operation_type {ASSEMBLY,
+                         PRE_ASSIGNMENT,
+                         POST_ASSIGNMENT};
+
     struct tree_description { // CAUTION: Specific copy constructor
-      size_type order; // 0: potential, 1: weak form, 2: tangent operator
-      // -1 : interpolation/ assignment all order,
-      // -2 : assignment on potential, -3 : assignment on weak form
-      // -3 : assignment on tangent operator
-      size_type interpolation; // O : assembly, 1 : interpolate before assembly
-                               // 2 : interpolate after assembly. 
+      size_type order; //  0 : potential
+                       //  1 : residual
+                       //  2 : tangent operator
+                       // -1 : any
+      operation_type operation;
       std::string varname_interpolation; // Where to interpolate
       std::string name_test1, name_test2;
       std::string interpolate_name_test1, interpolate_name_test2;
@@ -319,7 +322,7 @@ namespace getfem {
       const mesh_region *rg;
       ga_tree *ptree;
       tree_description()
-        : interpolation(0), varname_interpolation(""),
+        : operation(ASSEMBLY), varname_interpolation(""),
           name_test1(""), name_test2(""),
           interpolate_name_test1(""), interpolate_name_test2(""),
           mim(0), m(0), rg(0), ptree(0) {}
@@ -368,8 +371,8 @@ namespace getfem {
     void add_tree(ga_tree &tree, const mesh &m, const mesh_im &mim,
                   const mesh_region &rg,
                   const std::string &expr, size_type add_derivative_order,
-                  bool scalar_expr, size_type for_interpolation,
-		  const std::string varname_interpolation);
+                  bool scalar_expr, operation_type op_type=ASSEMBLY,
+                  const std::string varname_interpolation="");
 
 
     std::shared_ptr<model_real_sparse_matrix> K;
@@ -411,7 +414,7 @@ namespace getfem {
     size_type add_expression(const std::string &expr, const mesh_im &mim,
                              const mesh_region &rg=mesh_region::all_convexes(),
                              size_type add_derivative_order = 2,
-			     const std::string &secondary_dom = "");
+                             const std::string &secondary_dom = "");
     /* Internal use */
     void add_function_expression(const std::string &expr);
     /* Internal use */
@@ -453,9 +456,9 @@ namespace getfem {
                      const model_real_plain_vector &VV);
 
     bool used_variables(std::vector<std::string> &vl,
-			std::vector<std::string> &vl_test1,
+                        std::vector<std::string> &vl_test1,
                         std::vector<std::string> &vl_test2,
-			std::vector<std::string> &dl,
+                        std::vector<std::string> &dl,
                         size_type order);
 
     bool variable_exists(const std::string &name) const;

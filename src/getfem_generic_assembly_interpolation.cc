@@ -570,7 +570,7 @@ namespace getfem {
                         var.varname, var.transname, 1);
           if (tree.root)
             ga_semantic_analysis(tree, local_workspace, dummy_mesh(),
-				 1, false, true);
+                                 1, false, true);
           ga_compile_interpolation(pwi.workspace(), pwi.gis());
         }
       }
@@ -637,8 +637,23 @@ namespace getfem {
                   bool compute_derivatives) const {
       int ret_type = 0;
 
-      ga_interpolation_single_point_exec(local_gis, local_workspace, ctx_x,
-                                         Normal, m);
+      local_gis.ctx = ctx_x;
+      local_gis.Normal = Normal;
+      local_gis.nbpt = 1;
+      local_gis.ipt = 0;
+      local_gis.pai = 0;
+      gmm::clear(local_workspace.assembled_tensor().as_vector());
+
+      for (auto &&instr : local_gis.all_instructions) {
+        GMM_ASSERT1(instr.second.m == &m,
+                    "Incompatibility of meshes in interpolation");
+        auto &gilb = instr.second.begin_instructions;
+        for (size_type j = 0; j < gilb.size(); ++j) j += gilb[j]->exec();
+        auto &gile = instr.second.elt_instructions;
+        for (size_type j = 0; j < gile.size(); ++j) j+=gile[j]->exec();
+        auto &gil = instr.second.instructions;
+        for (size_type j = 0; j < gil.size(); ++j) j += gil[j]->exec();
+      }
 
       GMM_ASSERT1(local_workspace.assembled_tensor().size() == m.dim(),
                   "Wrong dimension of the transformation expression");
@@ -815,8 +830,8 @@ namespace getfem {
                  m_x.trans_of_convex(adj_face.cv));
         bool converged = true;
         gic.invert(ctx_x.xreal(), P_ref, converged);
-	bool is_in = (ctx_x.pgt()->convex_ref()->is_in(P_ref) < 1E-4);
-	GMM_ASSERT1(is_in && converged, "Geometric transformation inversion "
+        bool is_in = (ctx_x.pgt()->convex_ref()->is_in(P_ref) < 1E-4);
+        GMM_ASSERT1(is_in && converged, "Geometric transformation inversion "
                     "has failed in neighbour transformation");
         face_num = adj_face.f;
         cv = adj_face.cv;
@@ -962,7 +977,7 @@ namespace getfem {
   public:
 
     virtual const mesh_region &give_region(const mesh &,
-					   size_type, short_type) const
+                                           size_type, short_type) const
     { return region; }
     // virtual void init(const ga_workspace &workspace) const = 0;
     // virtual void finalize() const = 0;

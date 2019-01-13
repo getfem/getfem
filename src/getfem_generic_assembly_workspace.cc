@@ -306,7 +306,7 @@ namespace getfem {
       GMM_ASSERT1(false, "A secondary domain with the same "
                   "name already exists");
     if (transformations.find(name) != transformations.end())
-      GMM_ASSERT1(name.compare("neighbour_elt"), "neighbour_elt is a "
+      GMM_ASSERT1(name != "neighbour_elt", "neighbour_elt is a "
                   "reserved interpolate transformation name");
     transformations[name] = ptrans;
   }
@@ -380,9 +380,6 @@ namespace getfem {
   }
 
 
-
-  
-
   const mesh_region &
   ga_workspace::register_region(const mesh &m, const mesh_region &region) {
     if (&m == &dummy_mesh())
@@ -395,12 +392,11 @@ namespace getfem {
     return lmr.back();
   }
 
-
   void ga_workspace::add_tree(ga_tree &tree, const mesh &m,
                               const mesh_im &mim, const mesh_region &rg,
                               const std::string &expr,
                               size_type add_derivative_order,
-                              bool function_expr, size_type for_interpolation,
+                              bool function_expr, operation_type op_type,
                               const std::string varname_interpolation) {
     if (tree.root) {
       // Eliminate the term if it corresponds to disabled variables
@@ -417,8 +413,8 @@ namespace getfem {
       bool remain = true;
       size_type order = 0, ind_tree = 0;
 
-      if (for_interpolation)
-        order = size_type(-1) - add_derivative_order;
+      if (op_type != ga_workspace::ASSEMBLY)
+        order = add_derivative_order;
       else {
         switch(tree.root->test_function_type) {
         case 0: order = 0; break;
@@ -431,17 +427,19 @@ namespace getfem {
 
       bool found = false;
       for (size_type i = 0; i < trees.size(); ++i) {
-        if (trees[i].mim == &mim && trees[i].m == &m &&
-	    trees[i].secondary_domain.compare(tree.secondary_domain) == 0 &&
+        if (trees[i].mim == &mim &&
+            trees[i].m == &m &&
+            trees[i].secondary_domain == tree.secondary_domain &&
             trees[i].order == order &&
-            trees[i].name_test1.compare(tree.root->name_test1) == 0 &&
-            trees[i].interpolate_name_test1.compare
-            (tree.root->interpolate_name_test1) == 0 &&
-            trees[i].name_test2.compare(tree.root->name_test2) == 0 &&
-            trees[i].interpolate_name_test2.compare
-            (tree.root->interpolate_name_test2) == 0 &&
-            trees[i].rg == &rg && trees[i].interpolation == for_interpolation &&
-            trees[i].varname_interpolation.compare(varname_interpolation)==0) {
+            trees[i].name_test1 == tree.root->name_test1 &&
+            trees[i].interpolate_name_test1
+              == tree.root->interpolate_name_test1 &&
+            trees[i].name_test2 == tree.root->name_test2 &&
+            trees[i].interpolate_name_test2
+              == tree.root->interpolate_name_test2 &&
+            trees[i].rg == &rg &&
+            trees[i].operation == op_type &&
+            trees[i].varname_interpolation == varname_interpolation) {
           ga_tree &ftree = *(trees[i].ptree);
 
           ftree.insert_node(ftree.root, GA_NODE_OP);
@@ -456,11 +454,13 @@ namespace getfem {
       }
 
       if (!found) {
-        ind_tree = trees.size(); remain = false;
+        ind_tree = trees.size();
+        remain = false;
         trees.push_back(tree_description());
-        trees.back().mim = &mim; trees.back().m = &m;
+        trees.back().mim = &mim;
+        trees.back().m = &m;
         trees.back().rg = &rg;
-	trees.back().secondary_domain = tree.secondary_domain;
+        trees.back().secondary_domain = tree.secondary_domain;
         trees.back().ptree = new ga_tree;
         trees.back().ptree->swap(tree);
         pga_tree_node root = trees.back().ptree->root;
@@ -469,11 +469,11 @@ namespace getfem {
         trees.back().interpolate_name_test1 = root->interpolate_name_test1;
         trees.back().interpolate_name_test2 = root->interpolate_name_test2;
         trees.back().order = order;
-        trees.back().interpolation = for_interpolation;
+        trees.back().operation = op_type;
         trees.back().varname_interpolation = varname_interpolation;
        }
 
-      if (for_interpolation == 0 && order < add_derivative_order) {
+      if (op_type == ga_workspace::ASSEMBLY && order < add_derivative_order) {
         std::set<var_trans_pair> expr_variables;
         ga_extract_variables((remain ? tree : *(trees[ind_tree].ptree)).root,
                              *this, m, expr_variables, true);
@@ -491,7 +491,7 @@ namespace getfem {
             GA_TOCTIC("Analysis after Derivative time");
             // cout << "after analysis "  << ga_tree_to_string(dtree) << endl;
             add_tree(dtree, m, mim, rg, expr, add_derivative_order,
-                     function_expr, for_interpolation, varname_interpolation);
+                     function_expr, op_type, varname_interpolation);
           }
         }
       }
@@ -513,7 +513,7 @@ namespace getfem {
                                          const mesh_im &mim,
                                          const mesh_region &rg_,
                                          size_type add_derivative_order,
-					 const std::string &secondary_dom) {
+                                         const std::string &secondary_dom) {
     const mesh_region &rg = register_region(mim.linked_mesh(), rg_);
     // cout << "adding expression " << expr << endl;
     GA_TIC;
@@ -522,7 +522,7 @@ namespace getfem {
     ga_read_string(expr, ltrees[0], macro_dictionary());
     if (secondary_dom.size()) {
       GMM_ASSERT1(secondary_domain_exists(secondary_dom),
-		  "Unknow secondary domain " << secondary_dom);
+                  "Unknown secondary domain " << secondary_dom);
       ltrees[0].secondary_domain = secondary_dom;
     }
     // cout << "read : " << ga_tree_to_string(ltrees[0])  << endl;
@@ -558,7 +558,7 @@ namespace getfem {
           // cout << "adding tree " << ga_tree_to_string(ltrees[i]) << endl;
           max_order = std::max(ltrees[i].root->nb_test_functions(), max_order);
           add_tree(ltrees[i], mim.linked_mesh(), mim, rg, expr,
-                   add_derivative_order, true, 0, "");
+                   add_derivative_order, true);
         }
       }
     }
@@ -574,7 +574,7 @@ namespace getfem {
       // GMM_ASSERT1(tree.root->nb_test_functions() == 0,
       //            "Invalid function expression");
       add_tree(tree, dummy_mesh(), dummy_mesh_im(), dummy_mesh_region(),
-               expr, 0, true, 0, "");
+               expr, 0, true);
     }
   }
 
@@ -589,7 +589,8 @@ namespace getfem {
     if (tree.root) {
       // GMM_ASSERT1(tree.root->nb_test_functions() == 0,
       //            "Invalid expression containing test functions");
-      add_tree(tree, m, dummy_mesh_im(), rg, expr, 0, false, 1, "");
+      add_tree(tree, m, dummy_mesh_im(), rg, expr, 0, false,
+               ga_workspace::PRE_ASSIGNMENT);
     }
   }
 
@@ -605,7 +606,8 @@ namespace getfem {
     if (tree.root) {
       GMM_ASSERT1(tree.root->nb_test_functions() == 0,
                   "Invalid expression containing test functions");
-      add_tree(tree, m, mim, rg, expr, 0, false, 1, "");
+      add_tree(tree, m, mim, rg, expr, 0, false,
+               ga_workspace::PRE_ASSIGNMENT);
     }
   }
 
@@ -623,7 +625,9 @@ namespace getfem {
     if (tree.root) {
       GMM_ASSERT1(tree.root->nb_test_functions() == 0,
                   "Invalid expression containing test functions");
-      add_tree(tree, m, mim, rg, expr, order+1, false, (before ? 1 : 2),
+      add_tree(tree, m, mim, rg, expr, order+1, false,
+               before ? ga_workspace::PRE_ASSIGNMENT
+                      : ga_workspace::POST_ASSIGNMENT,
                varname);
     }
   }
@@ -651,11 +655,10 @@ namespace getfem {
       bool fv = ga_extract_variables(td.ptree->root, *this, *(td.m),
                                      dllaux, false);
 
-      if (td.order == order) {
-        for (std::set<var_trans_pair>::iterator it = dllaux.begin();
-             it!=dllaux.end(); ++it)
-          dll.insert(*it);
-      }
+      if (td.order == order)
+        for (const auto &t : dllaux)
+          dll.insert(t);
+
       switch (td.order) {
       case 0:  break;
       case 1:
@@ -669,7 +672,7 @@ namespace getfem {
           }
           bool found = false;
           for (const std::string &t : vl_test1)
-            if (td.name_test1.compare(t) == 0)
+            if (td.name_test1 == t)
               found = true;
           if (!found)
             vl_test1.push_back(td.name_test1);
@@ -693,8 +696,8 @@ namespace getfem {
           }
           bool found = false;
           for (size_type j = 0; j < vl_test1.size(); ++j)
-            if ((td.name_test1.compare(vl_test1[j]) == 0) &&
-                (td.name_test2.compare(vl_test2[j]) == 0))
+            if ((td.name_test1 == vl_test1[j]) &&
+                (td.name_test2 == vl_test2[j]))
               found = true;
           if (!found) {
             vl_test1.push_back(td.name_test1);
@@ -707,11 +710,11 @@ namespace getfem {
     }
     vl.clear();
     for (const auto &var : vll)
-      if (vl.size() == 0 || var.varname.compare(vl.back()))
+      if (vl.size() == 0 || var.varname != vl.back())
         vl.push_back(var.varname);
     dl.clear();
     for (const auto &var : dll)
-      if (dl.size() == 0 || var.varname.compare(dl.back()))
+      if (dl.size() == 0 || var.varname != dl.back())
         dl.push_back(var.varname);
 
     return islin;
@@ -896,7 +899,7 @@ namespace getfem {
 
   void ga_workspace::tree_description::copy(const tree_description& td) {
     order = td.order;
-    interpolation = td.interpolation;
+    operation = td.operation;
     varname_interpolation = td.varname_interpolation;
     name_test1 = td.name_test1;
     name_test2 = td.name_test2;
@@ -916,7 +919,7 @@ namespace getfem {
   { if (ptree) delete ptree; ptree = 0; }
 
   ga_workspace::ga_workspace(const getfem::model &md_,
-			     bool enable_all_variables)
+                             bool enable_all_variables)
     : md(&md_), parent_workspace(0),
       enable_all_md_variables(enable_all_variables),
       macro_dict(md_.macro_dictionary())
@@ -981,8 +984,8 @@ namespace getfem {
   std::string ga_workspace::extract_order1_term(const std::string &varname) {
     std::string term;
     for (size_type i = 0; i < trees.size(); ++i) {
-      ga_workspace::tree_description &td =  trees[i];
-      if (td.order == 1 && td.name_test1.compare(varname) == 0) {
+      ga_workspace::tree_description &td = trees[i];
+      if (td.order == 1 && td.name_test1 == varname) {
         ga_tree &local_tree = *(td.ptree);
         if (term.size())
           term += "+("+ga_tree_to_string(local_tree)+")";
@@ -1001,7 +1004,7 @@ namespace getfem {
     std::string result;
     for (size_type i = 0; i < trees.size(); ++i) {
       ga_workspace::tree_description &td =  trees[i];
-      if (td.order == 1 && td.name_test1.compare(varname) == 0) {
+      if (td.order == 1 && td.name_test1 == varname) {
         ga_tree &local_tree = *(td.ptree);
         if (local_tree.root)
           ga_extract_Neumann_term(local_tree, varname, *this,
