@@ -80,24 +80,21 @@ namespace dal {
   template <typename T, int LEV>
   class singleton_instance : public singleton_instance_base {
 
-    static getfem::omp_distribute<T*>*& omp_distro_pointer() {
-      static auto pointer = new getfem::omp_distribute<T*>{};
-      return pointer;
-    }
+    static getfem::omp_distribute<T*>* pointer;
 
     static T*& instance_pointer() {
-      return omp_distro_pointer()->thrd_cast();
+      return pointer->thrd_cast();
     }
 
     static T*& instance_pointer(size_t ithread) {
-      return (*omp_distro_pointer())(ithread);
+      return (*pointer)(ithread);
     }
 
   public:
 
     /**Instance from thread ithread*/
     inline static T& instance(size_t ithread) {
-      omp_distro_pointer()->on_thread_update();
+      pointer->on_thread_update();
       T*& tinstance_ = instance_pointer(ithread);
       if (!tinstance_) {
         tinstance_ = new T();
@@ -113,11 +110,11 @@ namespace dal {
     }
 
     inline static size_type num_threads() {
-      return omp_distro_pointer()->num_threads();
+      return pointer->num_threads();
     }
 
     inline static size_type this_thread() {
-      return omp_distro_pointer()->this_thread();
+      return pointer->this_thread();
     }
 
     int level() const override {
@@ -125,18 +122,21 @@ namespace dal {
     }
 
     ~singleton_instance() {
-      if (!omp_distro_pointer()) return;
-      for(size_t i = 0; i != omp_distro_pointer()->num_threads(); ++i) {
-        auto &p_singleton = (*omp_distro_pointer())(i);
+      if (!pointer) return;
+      for(size_t i = 0; i != pointer->num_threads(); ++i) {
+        auto &p_singleton = (*pointer)(i);
         if(p_singleton){
           delete p_singleton;
           p_singleton = nullptr;
         }
       }
-      delete omp_distro_pointer();
-      omp_distro_pointer() = nullptr;
+      delete pointer;
+      pointer = nullptr;
     }
   };
+
+  template<typename T, int LEV> getfem::omp_distribute<T*>*
+  singleton_instance<T, LEV>::pointer = new getfem::omp_distribute<T*>{};
 
   /** singleton class.
 
