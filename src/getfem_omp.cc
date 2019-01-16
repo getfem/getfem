@@ -34,19 +34,23 @@ namespace getfem{
 
 #ifdef GETFEM_HAS_OPENMP
 
-  std::recursive_mutex omp_guard::mutex_;
+  std::recursive_mutex omp_guard::mutex;
 
   omp_guard::omp_guard()
-    : std::lock_guard<std::recursive_mutex>(mutex_)
+    : plock{me_is_multithreaded_now() ?
+       std::make_unique<std::lock_guard<std::recursive_mutex>>(mutex)
+      : nullptr}
   {}
 
   local_guard::local_guard(std::recursive_mutex& m) :
-    mutex_(m),
-    plock_(std::make_shared<std::lock_guard<std::recursive_mutex>>(m))
+    mutex{m},
+    plock{me_is_multithreaded_now() ?
+      std::make_shared<std::lock_guard<std::recursive_mutex>>(m)
+      : nullptr}
   {}
 
   local_guard lock_factory::get_lock() const{
-    return local_guard(mutex_);
+    return local_guard{mutex};
   }
 
   size_type global_thread_policy::this_thread() {

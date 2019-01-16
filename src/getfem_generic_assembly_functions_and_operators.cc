@@ -605,7 +605,8 @@ namespace getfem {
   void ga_define_function(const std::string &name, size_type nbargs,
                           const std::string &expr, const std::string &der1,
                           const std::string &der2) {
-    auto guard = omp_guard{};
+
+    GLOBAL_OMP_GUARD
 
     auto &PREDEF_FUNCTIONS = dal::singleton<ga_predef_function_tab>::instance(0);
     if(PREDEF_FUNCTIONS.find(name) != PREDEF_FUNCTIONS.end()) return;
@@ -646,7 +647,7 @@ namespace getfem {
 
   void ga_define_function(const std::string &name, pscalar_func_onearg f,
                           const std::string &der) {
-    auto guard = omp_guard{};
+    GLOBAL_OMP_GUARD
     ga_predef_function_tab &PREDEF_FUNCTIONS
       = dal::singleton<ga_predef_function_tab>::instance(0);
     PREDEF_FUNCTIONS[name] = ga_predef_function(f, 1, der);
@@ -657,7 +658,7 @@ namespace getfem {
 
   void ga_define_function(const std::string &name, pscalar_func_twoargs f,
                           const std::string &der1, const std::string &der2) {
-    auto guard = omp_guard{};
+    GLOBAL_OMP_GUARD
     ga_predef_function_tab &PREDEF_FUNCTIONS
       = dal::singleton<ga_predef_function_tab>::instance(0);
     PREDEF_FUNCTIONS[name] = ga_predef_function(f, 1, der1, der2);
@@ -669,7 +670,7 @@ namespace getfem {
   }
 
   void ga_undefine_function(const std::string &name) {
-    auto guard = omp_guard{};
+    GLOBAL_OMP_GUARD
     ga_predef_function_tab &PREDEF_FUNCTIONS
       = dal::singleton<ga_predef_function_tab>::instance(0);
     ga_predef_function_tab::iterator it = PREDEF_FUNCTIONS.find(name);

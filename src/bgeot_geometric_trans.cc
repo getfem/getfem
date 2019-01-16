@@ -506,7 +506,8 @@ namespace bgeot {
     mutable bool hess_computed_ = false;
 
     void compute_grad_() const {
-      auto guard = getfem::omp_guard{};
+      if (grad_computed_) return;
+      GLOBAL_OMP_GUARD
       if (grad_computed_) return;
       size_type R = trans.size();
       dim_type n = dim();
@@ -521,7 +522,8 @@ namespace bgeot {
     }
 
     void compute_hess_() const {
-      auto guard = getfem::omp_guard{};
+      if (hess_computed_) return;
+      GLOBAL_OMP_GUARD
       if (hess_computed_) return;
       size_type R = trans.size();
       dim_type n = dim();

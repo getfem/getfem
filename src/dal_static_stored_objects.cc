@@ -310,8 +310,8 @@ namespace dal {
 
   void del_stored_objects(std::list<pstatic_stored_object> &to_delete,
                           bool ignore_unstored) {
-    getfem::omp_guard lock;
-    GMM_NOPERATION(lock);
+
+    GLOBAL_OMP_GUARD
 
     ON_STORED_DEBUG(if (dal_static_stored_tab_valid__) return);
 

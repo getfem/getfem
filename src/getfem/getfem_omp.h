@@ -58,13 +58,14 @@ namespace getfem
 #ifdef GETFEM_HAS_OPENMP
   //declaring a thread lock, to protect multi-threaded accesses to
   //asserts, traces and warnings. Using a global mutex
-  class omp_guard: public std::lock_guard<std::recursive_mutex>
+  class omp_guard
   {
   public:
     omp_guard();
 
   private:
-    static std::recursive_mutex mutex_;
+    std::unique_ptr<std::lock_guard<std::recursive_mutex>> plock;
+    static std::recursive_mutex mutex;
   };
 
   //like std::lock_guard, but copyable
@@ -74,8 +75,8 @@ namespace getfem
     local_guard(std::recursive_mutex&);
 
   private:
-    std::recursive_mutex& mutex_;
-    std::shared_ptr<std::lock_guard<std::recursive_mutex>> plock_;
+    std::recursive_mutex& mutex;
+    std::shared_ptr<std::lock_guard<std::recursive_mutex>> plock;
   };
 
   //produces scoped lock on the
@@ -88,9 +89,10 @@ namespace getfem
     //on the mutex from this factory
     local_guard get_lock() const;
   private:
-    mutable std::recursive_mutex mutex_;
+    mutable std::recursive_mutex mutex;
   };
 
+  #define GLOBAL_OMP_GUARD getfem::omp_guard g; GMM_NOPERATION_(abs(&(g) != &(g)));
 
 #else
 
@@ -100,6 +102,8 @@ namespace getfem
   {
     inline local_guard get_lock() const {return local_guard();}
   };
+  #define GLOBAL_OMP_GUARD
+
 #endif
 
   /**set maximum number of OpenMP threads*/
@@ -206,8 +210,8 @@ namespace getfem
       }
 
       void on_thread_update() {
-        std::unique_ptr<omp_guard> p_guard = nullptr;
-        if (me_is_multithreaded_now()) p_guard = std::make_unique<omp_guard>();
+        if (thread_values.size() == thread_policy::num_threads()) return;
+        GLOBAL_OMP_GUARD
         if (thread_values.size() != thread_policy::num_threads()) {
           thread_values.resize(thread_policy::num_threads());
         }
