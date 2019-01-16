@@ -80,21 +80,26 @@ namespace dal {
   template <typename T, int LEV>
   class singleton_instance : public singleton_instance_base {
 
-    static getfem::omp_distribute<T*>* pointer;
+    static getfem::omp_distribute<T*>* initializing_pointer;
+
+    static getfem::omp_distribute<T*>*& pointer() {
+      static auto p = new getfem::omp_distribute<T*>{};
+      return p;
+    }
 
     static T*& instance_pointer() {
-      return pointer->thrd_cast();
+      return pointer()->thrd_cast();
     }
 
     static T*& instance_pointer(size_t ithread) {
-      return (*pointer)(ithread);
+      return (*pointer())(ithread);
     }
 
   public:
 
     /**Instance from thread ithread*/
     inline static T& instance(size_t ithread) {
-      pointer->on_thread_update();
+      pointer()->on_thread_update();
       T*& tinstance_ = instance_pointer(ithread);
       if (!tinstance_) {
         tinstance_ = new T();
@@ -110,11 +115,11 @@ namespace dal {
     }
 
     inline static size_type num_threads() {
-      return pointer->num_threads();
+      return pointer()->num_threads();
     }
 
     inline static size_type this_thread() {
-      return pointer->this_thread();
+      return pointer()->this_thread();
     }
 
     int level() const override {
@@ -122,21 +127,22 @@ namespace dal {
     }
 
     ~singleton_instance() {
-      if (!pointer) return;
-      for(size_t i = 0; i != pointer->num_threads(); ++i) {
-        auto &p_singleton = (*pointer)(i);
+      if (!pointer()) return;
+      for(size_t i = 0; i != pointer()->num_threads(); ++i) {
+        auto &p_singleton = (*pointer())(i);
         if(p_singleton){
           delete p_singleton;
           p_singleton = nullptr;
         }
       }
-      delete pointer;
-      pointer = nullptr;
+      delete pointer();
+      pointer() = nullptr;
+      if (initializing_pointer) initializing_pointer = nullptr;
     }
   };
 
   template<typename T, int LEV> getfem::omp_distribute<T*>*
-  singleton_instance<T, LEV>::pointer = new getfem::omp_distribute<T*>{};
+  singleton_instance<T, LEV>::initializing_pointer = singleton_instance<T, LEV>::pointer();
 
   /** singleton class.
 
