@@ -135,7 +135,7 @@ namespace bgeot {
   template <class ITER>
   scalar_type polynomial_composite::eval(const ITER &it, size_type l) const {
 
-    if (l != -1) {
+    if (l != size_type(-1)) {
       if (!local_coordinate) return poly_of_subelt(l).eval(it);
       base_node p(mp->dim());
       std::copy(it, it + mp->dim(), p.begin());

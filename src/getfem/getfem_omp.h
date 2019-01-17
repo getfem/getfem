@@ -461,7 +461,7 @@ namespace getfem
 
   public:
     parallel_boilerplate();
-    void run_lamda(std::function<void(void)> lambda);
+    void run_lambda(std::function<void(void)> lambda);
     ~parallel_boilerplate();
   };
 
@@ -488,7 +488,7 @@ namespace getfem
       auto boilerplate = getfem::parallel_boilerplate{};  \
       pragma_op(omp parallel for)                         \
       for (init; check; increment){                       \
-        boilerplate.run_lamda([&](){body;});              \
+        boilerplate.run_lambda([&](){body;});              \
       }                                                   \
     }
 

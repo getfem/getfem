@@ -311,7 +311,7 @@ namespace getfem{
     #endif
   }
 
-  void parallel_boilerplate::run_lamda(std::function<void(void)> lambda){
+  void parallel_boilerplate::run_lambda(std::function<void(void)> lambda){
     pexception->run(lambda);
   }
 
@@ -329,11 +329,12 @@ namespace getfem{
     {
       if (iterate_over_partitions) {
         for (auto &&partitions : partition_master::get()) {
-          boilerplate.run_lamda(lambda);
+          (void)partitions;
+          boilerplate.run_lambda(lambda);
         }
       }
       else {
-        boilerplate.run_lamda(lambda);
+        boilerplate.run_lambda(lambda);
       }
     }
     if (iterate_over_partitions) partition_master::get().rewind_partitions();
