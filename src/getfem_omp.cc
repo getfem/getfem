@@ -325,6 +325,7 @@ namespace getfem{
     {
       if (iterate_over_partitions) {
         for (auto &&partitions : partition_master::get()) {
+          (void)partitions;
           boilerplate.run_lamda(lambda);
         }
       }

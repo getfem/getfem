@@ -144,7 +144,7 @@ namespace getfem {
   }
 
   void mesh_region::update_partition_iterators() const{
-    if (partitions_updated) return;
+    if ((partitions_updated == true)) return;
     itbegin = partition_begin();
     itend = partition_end  ();
     partitions_updated = true;
@@ -237,7 +237,7 @@ namespace getfem {
   const dal::bit_vector&  mesh_region::index() const{
     GMM_ASSERT1(p, "Use from_mesh on that region before");
     if (me_is_multithreaded_now()) {
-      if (!index_updated){
+      if (!(index_updated == true)){
         update_index();
         index_updated = true;
       }
