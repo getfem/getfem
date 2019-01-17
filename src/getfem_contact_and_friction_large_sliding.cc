@@ -1802,7 +1802,7 @@ namespace getfem {
 
     if (state) {
 
-      // zeta = lamda + d0 * r * n
+      // zeta = lambda + d0 * r * n
       base_small_vector zeta(N);
       gmm::add(lambda, gmm::scaled(n, r*d0), zeta);
 
