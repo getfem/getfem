@@ -446,6 +446,7 @@ namespace getfem
     thread_behaviour behaviour = thread_behaviour::partition_threads;
     std::atomic<bool> partitions_updated{false};
     size_type nb_partitions;
+    bool partitions_set_by_user = false;
 
     static partition_master instance;
   };

@@ -183,6 +183,7 @@ namespace getfem{
       update_partitions();
       nb_user_threads = true_thread_policy::num_threads();
     }
+    if (!partitions_set_by_user) set_nb_partitions(max_concurrency());
   }
 
   void partition_master::set_nb_partitions(size_type n){
@@ -192,11 +193,12 @@ namespace getfem{
       update_partitions();
       dal::singletons_manager::on_partitions_change();
     }
-    else{
+    else if (n < nb_partitions){
       GMM_WARNING1("Not reducing number of partitions from "
                    << nb_partitions <<" to " << n <<
                    " as it might invalidate global storage");
     }
+    partitions_set_by_user = true;
   }
 
   partition_iterator partition_master::begin(){
@@ -221,7 +223,13 @@ namespace getfem{
 
   partition_master::partition_master()
     : nb_user_threads{true_thread_policy::num_threads()},
-      nb_partitions{max_concurrency()} {
+      nb_partitions{1} // keeping at 1 to allow the user setting it
+                       // to a number below max_concurrency.
+                       // If the user doesn't set it, it will be set
+                       // to max_concurrency before the fist parallel
+                       // section (reducing nb_partitions is not allowed
+                       // to preserve global storage)
+  {
         partitions_updated = false;
         update_partitions();
   }
@@ -259,8 +267,7 @@ namespace getfem{
   void partition_master::update_partitions(){
     partitions_updated = false;
 
-    auto guard = omp_guard{};
-    GMM_NOPERATION(guard);
+    GLOBAL_OMP_GUARD
 
     if (partitions_updated) return;
 
