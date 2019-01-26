@@ -6342,6 +6342,79 @@ model_complex_plain_vector &
     }
   }
 
+  // ----------------------------------------------------------------------
+  //
+  // Lumped Mass brick for first order
+  //
+  // ----------------------------------------------------------------------
+
+  struct lumped_mass_brick_for_first_order : public virtual_brick {
+
+    virtual void asm_real_tangent_terms(const model &md, size_type,
+                                        const model::varnamelist &vl,
+                                        const model::varnamelist &dl,
+                                        const model::mimlist &mims,
+                                        model::real_matlist &matl,
+                                        model::real_veclist &,
+                                        model::real_veclist &,
+                                        size_type region,
+                                        build_version) const {
+      GMM_ASSERT1(matl.size() == 1,
+                  "Lumped Mass brick has one and only one term");
+      GMM_ASSERT1(mims.size() == 1,
+                  "Lumped Mass brick needs one and only one mesh_im");
+      GMM_ASSERT1(vl.size() == 1 && dl.size() <= 1,
+                  "Wrong number of variables for lumped mass brick");
+
+      const mesh_fem &mf_u = md.mesh_fem_of_variable(vl[0]);
+      const mesh &m = mf_u.linked_mesh();
+      const mesh_im &mim = *mims[0];
+      mesh_region rg(region);
+      m.intersect_with_mpi_region(rg);
+
+      const mesh_fem *mf_rho = 0;
+      const model_real_plain_vector *rho = 0;
+
+      if (dl.size()) {
+        mf_rho = md.pmesh_fem_of_variable(dl[0]);
+        rho = &(md.real_variable(dl[0]));
+        size_type sl = gmm::vect_size(*rho);
+        if (mf_rho) sl = sl * mf_rho->get_qdim() / mf_rho->nb_dof();
+        GMM_ASSERT1(sl == 1, "Bad format of mass brick coefficient");
+      }
+
+      GMM_TRACE2("Lumped mass matrix assembly (please check that integration is 1st order.)");
+      gmm::clear(matl[0]);
+      if (dl.size() && mf_rho) {
+        GMM_ASSERT1(true, "Unsupported format of lumped mass brick coefficient");
+      } else {
+        asm_lumped_mass_matrix_for_first_order(matl[0], mim, mf_u, rg);
+        if (dl.size()) gmm::scale(matl[0], (*rho)[0]);
+      }
+
+    }
+
+    lumped_mass_brick_for_first_order() {
+      set_flags("Lumped mass brick", true /* is linear*/,
+                true /* is symmetric */, true /* is coercive */,
+                true /* is real */, false /* no complex version */,
+                false /* compute each time */);
+    }
+
+  };
+
+  size_type add_lumped_mass_matrix_for_first_order
+  (model & md, const mesh_im &mim, const std::string &varname,
+   const std::string &dataexpr_rho, size_type region) {
+    pbrick pbr = std::make_shared<lumped_mass_brick_for_first_order>();
+    model::termlist tl;
+    tl.push_back(model::term_description(varname, varname, true));
+    model::varnamelist dl;
+    if (dataexpr_rho.size())
+      dl.push_back(dataexpr_rho);
+    return md.add_brick(pbr, model::varnamelist(1, varname), dl, tl,
+                        model::mimlist(1, &mim), region);
+  }
 
   // ----------------------------------------------------------------------
   //
