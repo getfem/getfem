@@ -179,11 +179,20 @@ namespace getfem{
   }
 
   void partition_master::check_threads(){
+    GLOBAL_OMP_GUARD
+    auto must_update = false;
     if (nb_user_threads != true_thread_policy::num_threads()){
-      update_partitions();
       nb_user_threads = true_thread_policy::num_threads();
+      must_update = true;
     }
-    if (!partitions_set_by_user) set_nb_partitions(max_concurrency());
+    if (nb_partitions < nb_user_threads && !partitions_set_by_user){
+      nb_partitions = nb_user_threads;
+      must_update = true;
+    }
+    if (must_update){
+      update_partitions();
+      dal::singletons_manager::on_partitions_change();
+    }
   }
 
   void partition_master::set_nb_partitions(size_type n){
@@ -202,13 +211,14 @@ namespace getfem{
   }
 
   partition_iterator partition_master::begin(){
-    check_threads();
+    GMM_ASSERT1(nb_user_threads == true_thread_policy::num_threads(),
+                "The number of omp threads was changed outside partition_master"
+                "Please use getfem::set_num_threads for this");
     current_partition = *(std::begin(partitions.thrd_cast()));
     return partition_iterator{*this, std::begin(partitions.thrd_cast())};
   }
 
   partition_iterator partition_master::end(){
-    check_threads();
     return partition_iterator{*this, std::end(partitions.thrd_cast())};
   }
 
@@ -222,14 +232,7 @@ namespace getfem{
   }
 
   partition_master::partition_master()
-    : nb_user_threads{true_thread_policy::num_threads()},
-      nb_partitions{1} // keeping at 1 to allow the user setting it
-                       // to a number below max_concurrency.
-                       // If the user doesn't set it, it will be set
-                       // to max_concurrency before the fist parallel
-                       // section (reducing nb_partitions is not allowed
-                       // to preserve global storage)
-  {
+    : nb_user_threads{1}, nb_partitions{1} {
         partitions_updated = false;
         update_partitions();
   }

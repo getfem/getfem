@@ -159,6 +159,15 @@ namespace getfem
     template<typename T, typename thread_policy, typename tag>
     class omp_distribute_impl;
 
+    template<class V>
+    inline auto safe_component(V &v, size_type i) -> decltype(v[i]){
+      GMM_ASSERT2(i < v.size(),
+                  i << "-th partition is not available. "
+                  "Probably on_thread_update "
+                  "should have been called first");
+      return v[i];
+    }
+
     template <typename T, typename thread_policy>
     class omp_distribute_impl<T, thread_policy, general_tag> {
     private:
@@ -183,37 +192,41 @@ namespace getfem
 
       template <class... args>
        explicit omp_distribute_impl(args&&... value){
-        thread_values.reserve(thread_policy::num_threads());
-        for (size_type i = 0; i != thread_policy::num_threads(); ++i){
-          thread_values.emplace_back(value...);
+        thread_values.reserve(num_threads());
+        for (size_type i = 0; i != num_threads(); ++i){
+          thread_values.emplace_back(std::forward<args>(value)...);
         }
       }
 
       operator T& (){
-        return thread_values[thread_policy::this_thread()];
+        return operator()(this_thread());
       }
 
       operator const T& () const {
-        return thread_values[thread_policy::this_thread()];
+        return operator()(this_thread());
       }
 
       T& thrd_cast(){
-        return thread_values[thread_policy::this_thread()];
+        return operator()(this_thread());
       }
 
       const T& thrd_cast() const {
-        return thread_values[thread_policy::this_thread()];
+        return operator()(this_thread());
       }
 
       T& operator()(size_type i) {
-        return thread_values[i];
+        return safe_component(thread_values, i);
+      }
+
+      const T& operator()(size_type i) const {
+        return safe_component(thread_values, i);
       }
 
       void on_thread_update() {
-        if (thread_values.size() == thread_policy::num_threads()) return;
+        if (thread_values.size() == num_threads()) return;
         GLOBAL_OMP_GUARD
-        if (thread_values.size() != thread_policy::num_threads()) {
-          thread_values.resize(thread_policy::num_threads());
+        if (thread_values.size() != num_threads()) {
+          thread_values.resize(num_threads());
         }
       }
 
@@ -225,17 +238,13 @@ namespace getfem
         return thread_policy::this_thread();
       }
 
-      const T& operator()(size_type i) const {
-        return thread_values[i];
-      }
-
       T& operator = (const T& x){
         if (me_is_multithreaded_now()){
-          thread_values[thread_policy::this_thread()] = x;
+          thrd_cast() = x;
         }
         else all_threads() = x;
 
-        return thread_values[thread_policy::this_thread()];
+        return *this;
       }
 
       all_values_proxy all_threads(){
@@ -254,7 +263,7 @@ namespace getfem
 
       template <class... args>
       explicit omp_distribute_impl(args&&... value)
-        : base(value...)
+        : base(std::forward<args>(value)...)
       {}
 
       T& operator[](size_type i){
@@ -281,7 +290,7 @@ namespace getfem
 
       template <class... Args>
       explicit omp_distribute_impl(Args&&... value)
-        : base(value...)
+        : base(std::forward<Args>(value)...)
       {}
 
       operator bool () const {
@@ -319,7 +328,7 @@ namespace getfem
 
     template <class... args>
     explicit omp_distribute(args&&... value)
-      : base(value...)
+      : base(std::forward<args>(value)...)
     {}
 
     auto operator = (const T& x) -> decltype(std::declval<base>() = x){
