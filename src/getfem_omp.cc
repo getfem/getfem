@@ -234,6 +234,7 @@ namespace getfem{
   partition_master::partition_master()
     : nb_user_threads{1}, nb_partitions{1} {
         partitions_updated = false;
+        set_num_threads(1);
         update_partitions();
   }
 
