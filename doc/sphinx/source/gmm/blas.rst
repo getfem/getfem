@@ -10,7 +10,7 @@ Basic linear algebra operations
 ========================================
 
 
-The same choice has been made as in MTL to provide basic operations as functions not as operators. The advantages are that it is clearer to see where are the linear algebra operations in the program and the programming of optimized basic linear operations is greatly simplified.
+The same choice has been made as in MTL to provide basic operations as functions not as operators. The advantages are that it is clearer to see where are the linear algebra operations in the program and the programming of optimized basic linear algebra operations is greatly simplified.
 
 
 scale and scaled

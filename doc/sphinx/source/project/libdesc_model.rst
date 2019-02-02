@@ -37,7 +37,7 @@ Files
 State
 ^^^^^
 
-Constant evolution to includes nex models.
+Constant evolution to includes next models.
 
 Perspectives
 ^^^^^^^^^^^^

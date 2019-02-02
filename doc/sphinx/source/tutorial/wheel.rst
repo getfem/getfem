@@ -195,7 +195,7 @@ We need a multiplier to prescribe the displacement on the rim boundary:
 
   md.add_filtered_fem_variable('lambda_D', mflambda, HOLE_BOUND)
 
-This multiplier represents the boundary stress that is necessary to prescribe the vertical displacement to be :math`(0, -\alpha_D)`. The constraint we want to apply on this multiplier is that its integral over the rim boundary is the vertical force we want to apply. The corresponding weak formulation term to be added to the rest of the weak formulation reads
+This multiplier represents the boundary stress that is necessary to prescribe the vertical displacement to be :math:`(0, -\alpha_D)`. The constraint we want to apply on this multiplier is that its integral over the rim boundary is the vertical force we want to apply. The corresponding weak formulation term to be added to the rest of the weak formulation reads
 
 .. math::
 
