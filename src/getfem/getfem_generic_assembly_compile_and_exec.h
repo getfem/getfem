@@ -166,6 +166,7 @@ namespace getfem {
       ga_if_hierarchy current_hierarchy;
       std::map<std::string, base_vector> local_dofs;
       std::map<const mesh_fem *, pfem_precomp> pfps;
+      std::map<const mesh_fem *, std::list<ga_if_hierarchy>> pfp_hierarchy;
       std::map<const mesh_fem *, base_tensor> base;
       std::map<const mesh_fem *, std::list<ga_if_hierarchy>> base_hierarchy;
       std::map<const mesh_fem *, base_tensor> grad;

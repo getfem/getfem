@@ -5131,14 +5131,20 @@ namespace getfem {
           }
 
           // An instruction for pfp update
-          if (rmi.pfps.count(mf) == 0) {
+          if (mf->is_uniform()) {
+            if (rmi.pfps.count(mf) == 0) {
+              rmi.pfps[mf] = 0;
+              pgai = std::make_shared<ga_instruction_update_pfp>
+                (*mf, rmi.pfps[mf], gis.ctx, gis.fp_pool);
+              rmi.begin_instructions.push_back(std::move(pgai));
+            }
+          } else if (rmi.pfps.count(mf) == 0 ||
+                     !if_hierarchy.is_compatible(rmi.pfp_hierarchy[mf])) {
+            rmi.pfp_hierarchy[mf].push_back(if_hierarchy);
             rmi.pfps[mf] = 0;
             pgai = std::make_shared<ga_instruction_update_pfp>
               (*mf, rmi.pfps[mf], gis.ctx, gis.fp_pool);
-            if (mf->is_uniform())
-              rmi.begin_instructions.push_back(std::move(pgai));
-            else
-              rmi.instructions.push_back(std::move(pgai));
+            rmi.instructions.push_back(std::move(pgai));
           }
 
           // An instruction for the base value
@@ -5380,14 +5386,20 @@ namespace getfem {
           }
 
           // An instruction for pfp update
-          if (sdi.pfps.count(mf) == 0) {
+          if (mf->is_uniform()) {
+            if (sdi.pfps.count(mf) == 0) {
+              sdi.pfps[mf] = 0;
+              pgai = std::make_shared<ga_instruction_update_pfp>
+                (*mf, sdi.pfps[mf], *pctx, gis.fp_pool);
+              rmi.begin_instructions.push_back(std::move(pgai));
+            }
+          } else if (sdi.pfps.count(mf) == 0 ||
+                     !if_hierarchy.is_compatible(rmi.pfp_hierarchy[mf])) {
+            rmi.pfp_hierarchy[mf].push_back(if_hierarchy);
             sdi.pfps[mf] = 0;
             pgai = std::make_shared<ga_instruction_update_pfp>
               (*mf, sdi.pfps[mf], *pctx, gis.fp_pool);
-            if (mf->is_uniform())
-              rmi.begin_instructions.push_back(std::move(pgai));
-            else
-              rmi.instructions.push_back(std::move(pgai));
+            rmi.instructions.push_back(std::move(pgai));
           }
 
           // An instruction for the base value
@@ -5524,14 +5536,20 @@ namespace getfem {
                       " defined on the same mesh");
 
           // An instruction for pfp update
-          if (rmi.pfps.count(mf) == 0) {
+          if (is_uniform) {
+            if (rmi.pfps.count(mf) == 0) {
+              rmi.pfps[mf] = 0;
+              pgai = std::make_shared<ga_instruction_update_pfp>
+                (*mf, rmi.pfps[mf], gis.ctx, gis.fp_pool);
+              rmi.begin_instructions.push_back(std::move(pgai));
+            }
+          } else if (rmi.pfps.count(mf) == 0 ||
+                     !if_hierarchy.is_compatible(rmi.pfp_hierarchy[mf])) {
+            rmi.pfp_hierarchy[mf].push_back(if_hierarchy);
             rmi.pfps[mf] = 0;
             pgai = std::make_shared<ga_instruction_update_pfp>
               (*mf, rmi.pfps[mf], gis.ctx, gis.fp_pool);
-            if (is_uniform)
-              rmi.begin_instructions.push_back(std::move(pgai));
-            else
-              rmi.instructions.push_back(std::move(pgai));
+            rmi.instructions.push_back(std::move(pgai));
           }
 
           // An instruction for the base value
@@ -5780,14 +5798,20 @@ namespace getfem {
                       " defined on the same mesh for secondary domain");
 
           // An instruction for pfp update
-          if (sdi.pfps.count(mf) == 0) {
+          if (is_uniform) {
+            if (sdi.pfps.count(mf) == 0) {
+              sdi.pfps[mf] = 0;
+              pgai = std::make_shared<ga_instruction_update_pfp>
+                (*mf, sdi.pfps[mf], *pctx, gis.fp_pool);
+              rmi.begin_instructions.push_back(std::move(pgai));
+            }
+          } else if (sdi.pfps.count(mf) == 0 ||
+                     !if_hierarchy.is_compatible(rmi.pfp_hierarchy[mf])) {
+            rmi.pfp_hierarchy[mf].push_back(if_hierarchy);
             sdi.pfps[mf] = 0;
             pgai = std::make_shared<ga_instruction_update_pfp>
               (*mf, sdi.pfps[mf], *pctx, gis.fp_pool);
-            if (is_uniform)
-              rmi.begin_instructions.push_back(std::move(pgai));
-            else
-              rmi.instructions.push_back(std::move(pgai));
+            rmi.instructions.push_back(std::move(pgai));
           }
 
           // An instruction for the base value
