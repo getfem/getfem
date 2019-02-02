@@ -45,17 +45,14 @@ namespace getfem {
     
   public:
     void increment() { (back())++; }
-    void child_of(const ga_if_hierarchy &gih)
-    { *this = gih; push_back(0); }
+    void child_of(const ga_if_hierarchy &gih) { *this = gih; push_back(0); }
     bool is_compatible(const std::list<ga_if_hierarchy> &gihl) {
-
-      std::list<ga_if_hierarchy>::const_iterator it = gihl.begin();
-      for (; it != gihl.end(); ++it) {
-        if (it->size() <= size()) {
+      for (const auto &gih : gihl) {
+        if (gih.size() <= size()) {
           bool ok = true;
-          for (size_type i = 0; i+1 < it->size(); ++i)
-            if ((*it)[i] != (*this)[i]) { ok = false; break; }
-          if (it->back() > (*this)[it->size()-1]) { ok = false; break; }
+          for (size_type i = 0; i+1 < gih.size(); ++i)
+            if (gih[i] != (*this)[i]) { ok = false; break; }
+          if (gih.back() > (*this)[gih.size()-1]) { ok = false; break; }
           if (ok) return true;
         }
       }
