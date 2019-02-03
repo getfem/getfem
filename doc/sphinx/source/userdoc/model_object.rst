@@ -445,7 +445,7 @@ defined as folows::
   size_t add_my_Laplacian_brick(getfem::model &md, const getfem::mesh_im &mim,
                                 const std::string &varname,
                                 size_t region = size_t(-1)) {
-    getfem::pbrick pbr = new my_Laplacian_brick;
+    getfem::pbrick pbr = std::make_shared<my_Laplacian_brick>();
     getfem::model::termlist tl;
 
     tl.push_back(getfem::model::term_description(varname, varname, true));
@@ -494,7 +494,7 @@ defined as follows::
                                           const std::string &multname,
                                           size_t region,
                                           const std::string &dataname) {
-    pbrick pbr = new my_Dirichlet_brick;
+    pbrick pbr = std::make_shared<my_Dirichlet_brick>();
     model::termlist tl;
     tl.push_back(model::term_description(multname, varname, true));
     model::varnamelist vl(1, varname);
