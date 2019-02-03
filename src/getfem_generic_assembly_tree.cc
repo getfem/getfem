@@ -729,7 +729,6 @@ namespace getfem {
     bool is_xfem_plus(false), is_xfem_minus(false);
     switch(pnode->node_type) {
     case GA_NODE_INTERPOLATE:
-    case GA_NODE_INTERPOLATE_FILTER:
     case GA_NODE_INTERPOLATE_X:
     case GA_NODE_INTERPOLATE_NORMAL:
     case GA_NODE_INTERPOLATE_VAL:
