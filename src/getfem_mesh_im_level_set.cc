@@ -617,6 +617,7 @@ namespace getfem {
 	    
 	  }
 	}
+        break;
       case 3:
 	{
 	  for (short_type k1 = 1; k1 < n; ++k1) {

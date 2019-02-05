@@ -819,7 +819,7 @@ namespace getfem {
             std::string &name1 = tree.root->name_test1;
             std::string &name2 = tree.root->name_test2;
             const std::vector<std::string> vnames1_(1,name1),
-                                           vnames2_(2,name2);
+                                           vnames2_(1,name2);
             const std::vector<std::string> &vnames1
               = variable_group_exists(name1) ? variable_group(name1)
                                              : vnames1_;
