@@ -13,10 +13,13 @@ A special finite element method is defined in
 :file:`getfem/getfem_interpolated_fem.h` which is not a real finite element
 method, but a pseudo-fem which interpolates a finite element method defined on
 another mesh. If you need to assemble a matrix with finite element methods
-defined on different meshes, you may use the "interpolated fem" for that
-purpose::
+defined on different meshes, you may use the "interpolated fem" or "projected
+fem" for that purpose::
 
+  // interpolation within a volume
   getfem::new_interpolated_fem(getfem::mesh_fem mf, getfem::mesh_im mim);
+  // projection on a surface
+  getfem::new_projected_fem(getfem::mesh_fem mf, getfem::mesh_im mim);
 
 Because each base function of the finite element method has to be interpolated,
 such a computation can be a heavy procedure. By default, the interpolated fem
@@ -39,8 +42,7 @@ describes the finite element method and ``mim`` is the chosen integration method
   del_interpolated_fem(ifem);
 
 The object pointed by ``ifem`` contains all the information concerning the
-interpolation. It could use a lot of memory. As pfem is a smart pointer (a boost
-`intrusive_ptr <http://www.boost.org/libs/smart_ptr/intrusive_ptr.html>`_), the
+interpolation. It could use a lot of memory. As pfem is a shared_ptr, the
 interpolated fem will be automatically destroyed when the last pointer on it is
 destroyed. To obtain a better accuracy, it is better to refine the integration
 method (with ``IM_STRUCTURED_COMPOSITE`` for instance) rather than increase its
