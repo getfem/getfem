@@ -186,8 +186,11 @@ namespace detail {
     ~accumulated_distro(){
       if (distributed.num_threads() == 1) return;
 
-      GMM_ASSERT1(!me_is_multithreaded_now(),
-                  "Accumulation distribution should not run in parallel");
+      if (me_is_multithreaded_now()) {
+        // GMM_ASSERT1 not convenient here
+        cerr <<  "Accumulation distribution should not run in parallel";
+        exit(1);
+      }
 
       using namespace std;
       auto to_add = vector<T*>{};

@@ -90,14 +90,14 @@ namespace getfem {
     // Treating the different cases (Operation, name or number)
     GA_TOKEN_TYPE type = ga_char_type[unsigned(expr[pos])];
     ++pos; ++token_length;
-    switch (type) {
-    case GA_DOT:
+    if (type == GA_DOT) {
       if (pos >= expr.size()) return type;
       if (expr[pos] == '*') { ++pos; ++token_length; return GA_DOTMULT; }
       if (expr[pos] == '/') { ++pos; ++token_length; return GA_DOTDIV; }
-      if (ga_char_type[unsigned(expr[pos])] != GA_SCALAR)
-        return type;
+      if (ga_char_type[unsigned(expr[pos])] != GA_SCALAR) return type;
       fdot = true; type = GA_SCALAR;
+    }
+    switch (type) {
     case GA_SCALAR:
       while (pos < expr.size()) {
         GA_TOKEN_TYPE ctype = ga_char_type[unsigned(expr[pos])];
@@ -494,6 +494,8 @@ namespace getfem {
     case GA_NODE_OPERATOR:
       if (pnode1->der1 != pnode2->der1 || pnode1->der2 != pnode2->der2)
         return false;
+      if (pnode1->name.compare(pnode2->name)) return false;
+      break;
     case GA_NODE_PREDEF_FUNC: case GA_NODE_SPEC_FUNC:
       if (pnode1->name.compare(pnode2->name)) return false;
       break;
@@ -552,7 +554,33 @@ namespace getfem {
     case GA_NODE_INTERPOLATE_DERIVATIVE:
       if (pnode1->interpolate_name_der.compare(pnode2->interpolate_name_der))
         return false;
-      // The test continues with what follows
+      if (pnode1->interpolate_name.compare(pnode2->interpolate_name) ||
+          pnode1->elementary_name.compare(pnode2->elementary_name))
+        return false;
+      {
+        const mesh_fem *mf1 = workspace.associated_mf(pnode1->name);
+        const mesh_fem *mf2 = workspace.associated_mf(pnode2->name);
+        switch (version) {
+        case 0:
+          if (pnode1->name.compare(pnode2->name) ||
+              pnode1->test_function_type != pnode2->test_function_type)
+            return false;
+          break;
+        case 1:
+          if (mf1 != mf2 ||
+              workspace.qdim(pnode1->name) != workspace.qdim(pnode2->name) ||
+              pnode1->test_function_type != pnode2->test_function_type)
+            return false;
+          break;
+        case 2:
+          if (mf1 != mf2 ||
+              workspace.qdim(pnode1->name) != workspace.qdim(pnode2->name) ||
+              pnode1->test_function_type == pnode2->test_function_type)
+            return false;
+          break;
+        }
+      }
+      break;
     case GA_NODE_INTERPOLATE_VAL_TEST: case GA_NODE_INTERPOLATE_GRAD_TEST:
     case GA_NODE_INTERPOLATE_HESS_TEST: case GA_NODE_INTERPOLATE_DIVERG_TEST:
     case GA_NODE_ELEMENTARY_VAL_TEST: case GA_NODE_ELEMENTARY_GRAD_TEST:
@@ -568,7 +596,30 @@ namespace getfem {
       if (pnode1->interpolate_name.compare(pnode2->interpolate_name) ||
           pnode1->elementary_name.compare(pnode2->elementary_name))
         return false;
-      // The test continues with what follows
+      {
+        const mesh_fem *mf1 = workspace.associated_mf(pnode1->name);
+        const mesh_fem *mf2 = workspace.associated_mf(pnode2->name);
+        switch (version) {
+        case 0:
+          if (pnode1->name.compare(pnode2->name) ||
+              pnode1->test_function_type != pnode2->test_function_type)
+            return false;
+          break;
+        case 1:
+          if (mf1 != mf2 ||
+              workspace.qdim(pnode1->name) != workspace.qdim(pnode2->name) ||
+              pnode1->test_function_type != pnode2->test_function_type)
+            return false;
+          break;
+        case 2:
+          if (mf1 != mf2 ||
+              workspace.qdim(pnode1->name) != workspace.qdim(pnode2->name) ||
+              pnode1->test_function_type == pnode2->test_function_type)
+            return false;
+          break;
+        }
+      }
+      break;
     case GA_NODE_VAL_TEST: case GA_NODE_GRAD_TEST:
     case GA_NODE_HESS_TEST: case GA_NODE_DIVERG_TEST:
       {
@@ -729,7 +780,6 @@ namespace getfem {
     bool is_xfem_plus(false), is_xfem_minus(false);
     switch(pnode->node_type) {
     case GA_NODE_INTERPOLATE:
-    case GA_NODE_INTERPOLATE_FILTER:
     case GA_NODE_INTERPOLATE_X:
     case GA_NODE_INTERPOLATE_NORMAL:
     case GA_NODE_INTERPOLATE_VAL:
@@ -1508,6 +1558,8 @@ namespace getfem {
 
         case GA_MINUS: // unary -
           tree.add_op(GA_UNARY_MINUS, token_pos, expr);
+          state = 1; break;
+          
         case GA_PLUS:  // unary +
           state = 1; break;
 

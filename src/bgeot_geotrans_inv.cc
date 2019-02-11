@@ -82,7 +82,7 @@ namespace bgeot
     n_ref.resize(pgt->structure()->dim());
     converged = true;
     if (pgt->is_linear())
-      return invert_lin(n, n_ref, IN_EPS, project_into_element);
+      return invert_lin(n, n_ref, IN_EPS);
     else
       return invert_nonlin(n, n_ref, IN_EPS, converged, false,
                            project_into_element);
@@ -90,14 +90,11 @@ namespace bgeot
 
   /* inversion for linear geometric transformations */
   bool geotrans_inv_convex::invert_lin(const base_node& n, base_node& n_ref,
-                                       scalar_type IN_EPS,
-                                       bool project_into_element) {
+                                       scalar_type IN_EPS) {
     base_node y(n); for (size_type i=0; i < N; ++i) y[i] -= G(i,0);
     mult(transposed(B), y, n_ref);
     y = pgt->transform(n_ref, G);
     add(gmm::scaled(n, -1.0), y);
-
-    if (project_into_element) project_into_convex(n_ref, pgt);
 
     return point_in_convex(*pgt, n_ref, gmm::vect_norm2(y), IN_EPS);
   }

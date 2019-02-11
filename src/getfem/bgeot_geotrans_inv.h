@@ -134,8 +134,7 @@ namespace bgeot {
     bool invert(const base_node& n, base_node& n_ref, bool &converged, 
                 scalar_type IN_EPS=1e-12, bool project_into_element=false);
   private:
-    bool invert_lin(const base_node& n, base_node& n_ref, scalar_type IN_EPS,
-                    bool project_into_element);
+    bool invert_lin(const base_node& n, base_node& n_ref, scalar_type IN_EPS);
     bool invert_nonlin(const base_node& n, base_node& n_ref,
                        scalar_type IN_EPS, bool &converged, bool throw_except,
                        bool project_into_element);

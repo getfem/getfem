@@ -866,7 +866,10 @@ namespace getfem {
       nodeid = std::stol(line.substr(0, fieldwidth1));
       pos = fields1*fieldwidth1;
       for (size_type j=0; j < 3; ++j, pos += fieldwidth2)
-        pt[j] = std::stod(line.substr(pos, fieldwidth2));
+        if (pos < line.length())
+          pt[j] = std::stod(line.substr(pos, fieldwidth2));
+        else
+          pt[j] = 0;
 
       cdb_node_2_getfem_node[nodeid] = m.add_point(pt, -1.);
     }

@@ -5131,14 +5131,20 @@ namespace getfem {
           }
 
           // An instruction for pfp update
-          if (rmi.pfps.count(mf) == 0) {
+          if (mf->is_uniform()) {
+            if (rmi.pfps.count(mf) == 0) {
+              rmi.pfps[mf] = 0;
+              pgai = std::make_shared<ga_instruction_update_pfp>
+                (*mf, rmi.pfps[mf], gis.ctx, gis.fp_pool);
+              rmi.begin_instructions.push_back(std::move(pgai));
+            }
+          } else if (rmi.pfps.count(mf) == 0 ||
+                     !if_hierarchy.is_compatible(rmi.pfp_hierarchy[mf])) {
+            rmi.pfp_hierarchy[mf].push_back(if_hierarchy);
             rmi.pfps[mf] = 0;
             pgai = std::make_shared<ga_instruction_update_pfp>
               (*mf, rmi.pfps[mf], gis.ctx, gis.fp_pool);
-            if (mf->is_uniform())
-              rmi.begin_instructions.push_back(std::move(pgai));
-            else
-              rmi.instructions.push_back(std::move(pgai));
+            rmi.instructions.push_back(std::move(pgai));
           }
 
           // An instruction for the base value
@@ -5146,7 +5152,7 @@ namespace getfem {
           switch (pnode->node_type) {
           case GA_NODE_VAL: case GA_NODE_ELEMENTARY_VAL:
             if (rmi.base.count(mf) == 0 ||
-               !(if_hierarchy.is_compatible(rmi.base_hierarchy[mf]))) {
+                !if_hierarchy.is_compatible(rmi.base_hierarchy[mf])) {
               rmi.base_hierarchy[mf].push_back(if_hierarchy);
               pgai = std::make_shared<ga_instruction_val_base>
                 (rmi.base[mf], gis.ctx, *mf, rmi.pfps[mf]);
@@ -5154,7 +5160,8 @@ namespace getfem {
             break;
           case GA_NODE_XFEM_PLUS_VAL:
             if (rmi.xfem_plus_base.count(mf) == 0 ||
-             !(if_hierarchy.is_compatible(rmi.xfem_plus_base_hierarchy[mf]))) {
+                !if_hierarchy.is_compatible(rmi.xfem_plus_base_hierarchy[mf]))
+            {
               rmi.xfem_plus_base_hierarchy[mf].push_back(if_hierarchy);
               pgai = std::make_shared<ga_instruction_xfem_plus_val_base>
                 (rmi.xfem_plus_base[mf], gis.ctx, *mf, rmi.pfps[mf]);
@@ -5162,7 +5169,8 @@ namespace getfem {
             break;
           case GA_NODE_XFEM_MINUS_VAL:
             if (rmi.xfem_minus_base.count(mf) == 0 ||
-            !(if_hierarchy.is_compatible(rmi.xfem_minus_base_hierarchy[mf]))) {
+                !if_hierarchy.is_compatible(rmi.xfem_minus_base_hierarchy[mf]))
+            {
               rmi.xfem_minus_base_hierarchy[mf].push_back(if_hierarchy);
               pgai = std::make_shared<ga_instruction_xfem_minus_val_base>
                 (rmi.xfem_minus_base[mf], gis.ctx, *mf, rmi.pfps[mf]);
@@ -5171,7 +5179,7 @@ namespace getfem {
           case GA_NODE_GRAD: case GA_NODE_DIVERG:
           case GA_NODE_ELEMENTARY_GRAD: case GA_NODE_ELEMENTARY_DIVERG:
             if (rmi.grad.count(mf) == 0 ||
-                !(if_hierarchy.is_compatible(rmi.grad_hierarchy[mf]))) {
+                !if_hierarchy.is_compatible(rmi.grad_hierarchy[mf])) {
               rmi.grad_hierarchy[mf].push_back(if_hierarchy);
               pgai = std::make_shared<ga_instruction_grad_base>
                 (rmi.grad[mf], gis.ctx, *mf, rmi.pfps[mf]);
@@ -5179,7 +5187,8 @@ namespace getfem {
             break;
           case GA_NODE_XFEM_PLUS_GRAD: case GA_NODE_XFEM_PLUS_DIVERG:
             if (rmi.xfem_plus_grad.count(mf) == 0 ||
-             !(if_hierarchy.is_compatible(rmi.xfem_plus_grad_hierarchy[mf]))) {
+                !if_hierarchy.is_compatible(rmi.xfem_plus_grad_hierarchy[mf]))
+            {
               rmi.xfem_plus_grad_hierarchy[mf].push_back(if_hierarchy);
               pgai = std::make_shared<ga_instruction_xfem_plus_grad_base>
                 (rmi.xfem_plus_grad[mf], gis.ctx, *mf, rmi.pfps[mf]);
@@ -5187,7 +5196,8 @@ namespace getfem {
             break;
           case GA_NODE_XFEM_MINUS_GRAD: case GA_NODE_XFEM_MINUS_DIVERG:
             if (rmi.xfem_minus_grad.count(mf) == 0 ||
-            !(if_hierarchy.is_compatible(rmi.xfem_minus_grad_hierarchy[mf]))) {
+                !if_hierarchy.is_compatible(rmi.xfem_minus_grad_hierarchy[mf]))
+            {
               rmi.xfem_minus_grad_hierarchy[mf].push_back(if_hierarchy);
               pgai = std::make_shared<ga_instruction_xfem_minus_grad_base>
                 (rmi.xfem_minus_grad[mf], gis.ctx, *mf, rmi.pfps[mf]);
@@ -5195,7 +5205,7 @@ namespace getfem {
             break;
           case GA_NODE_HESS: case GA_NODE_ELEMENTARY_HESS:
             if (rmi.hess.count(mf) == 0 ||
-                !(if_hierarchy.is_compatible(rmi.hess_hierarchy[mf]))) {
+                !if_hierarchy.is_compatible(rmi.hess_hierarchy[mf])) {
               rmi.hess_hierarchy[mf].push_back(if_hierarchy);
               pgai = std::make_shared<ga_instruction_hess_base>
                 (rmi.hess[mf], gis.ctx, *mf, rmi.pfps[mf]);
@@ -5203,7 +5213,8 @@ namespace getfem {
             break;
           case GA_NODE_XFEM_PLUS_HESS:
             if (rmi.xfem_plus_hess.count(mf) == 0 ||
-             !(if_hierarchy.is_compatible(rmi.xfem_plus_hess_hierarchy[mf]))) {
+                !if_hierarchy.is_compatible(rmi.xfem_plus_hess_hierarchy[mf]))
+            {
               rmi.xfem_plus_hess_hierarchy[mf].push_back(if_hierarchy);
               pgai = std::make_shared<ga_instruction_xfem_plus_hess_base>
                 (rmi.xfem_plus_hess[mf], gis.ctx, *mf, rmi.pfps[mf]);
@@ -5211,7 +5222,8 @@ namespace getfem {
             break;
           case GA_NODE_XFEM_MINUS_HESS:
             if (rmi.xfem_minus_hess.count(mf) == 0 ||
-            !(if_hierarchy.is_compatible(rmi.xfem_minus_hess_hierarchy[mf]))) {
+                !if_hierarchy.is_compatible(rmi.xfem_minus_hess_hierarchy[mf]))
+            {
               rmi.xfem_minus_hess_hierarchy[mf].push_back(if_hierarchy);
               pgai = std::make_shared<ga_instruction_xfem_minus_hess_base>
                 (rmi.xfem_minus_hess[mf], gis.ctx, *mf, rmi.pfps[mf]);
@@ -5380,14 +5392,20 @@ namespace getfem {
           }
 
           // An instruction for pfp update
-          if (sdi.pfps.count(mf) == 0) {
+          if (mf->is_uniform()) {
+            if (sdi.pfps.count(mf) == 0) {
+              sdi.pfps[mf] = 0;
+              pgai = std::make_shared<ga_instruction_update_pfp>
+                (*mf, sdi.pfps[mf], *pctx, gis.fp_pool);
+              rmi.begin_instructions.push_back(std::move(pgai));
+            }
+          } else if (sdi.pfps.count(mf) == 0 ||
+                     !if_hierarchy.is_compatible(rmi.pfp_hierarchy[mf])) {
+            rmi.pfp_hierarchy[mf].push_back(if_hierarchy);
             sdi.pfps[mf] = 0;
             pgai = std::make_shared<ga_instruction_update_pfp>
               (*mf, sdi.pfps[mf], *pctx, gis.fp_pool);
-            if (mf->is_uniform())
-              rmi.begin_instructions.push_back(std::move(pgai));
-            else
-              rmi.instructions.push_back(std::move(pgai));
+            rmi.instructions.push_back(std::move(pgai));
           }
 
           // An instruction for the base value
@@ -5524,14 +5542,20 @@ namespace getfem {
                       " defined on the same mesh");
 
           // An instruction for pfp update
-          if (rmi.pfps.count(mf) == 0) {
+          if (is_uniform) {
+            if (rmi.pfps.count(mf) == 0) {
+              rmi.pfps[mf] = 0;
+              pgai = std::make_shared<ga_instruction_update_pfp>
+                (*mf, rmi.pfps[mf], gis.ctx, gis.fp_pool);
+              rmi.begin_instructions.push_back(std::move(pgai));
+            }
+          } else if (rmi.pfps.count(mf) == 0 ||
+                     !if_hierarchy.is_compatible(rmi.pfp_hierarchy[mf])) {
+            rmi.pfp_hierarchy[mf].push_back(if_hierarchy);
             rmi.pfps[mf] = 0;
             pgai = std::make_shared<ga_instruction_update_pfp>
               (*mf, rmi.pfps[mf], gis.ctx, gis.fp_pool);
-            if (is_uniform)
-              rmi.begin_instructions.push_back(std::move(pgai));
-            else
-              rmi.instructions.push_back(std::move(pgai));
+            rmi.instructions.push_back(std::move(pgai));
           }
 
           // An instruction for the base value
@@ -5539,7 +5563,7 @@ namespace getfem {
           switch (pnode->node_type) {
           case GA_NODE_VAL_TEST: case GA_NODE_ELEMENTARY_VAL_TEST:
              if (rmi.base.find(mf) == rmi.base.end() ||
-                !(if_hierarchy.is_compatible(rmi.base_hierarchy[mf]))) {
+                 !if_hierarchy.is_compatible(rmi.base_hierarchy[mf])) {
               rmi.base_hierarchy[mf].push_back(if_hierarchy);
               pgai = std::make_shared<ga_instruction_val_base>
                 (rmi.base[mf], gis.ctx, *mf, rmi.pfps[mf]);
@@ -5547,7 +5571,8 @@ namespace getfem {
              break;
           case GA_NODE_XFEM_PLUS_VAL_TEST:
             if (rmi.xfem_plus_base.find(mf) == rmi.xfem_plus_base.end() ||
-             !(if_hierarchy.is_compatible(rmi.xfem_plus_base_hierarchy[mf]))) {
+                !if_hierarchy.is_compatible(rmi.xfem_plus_base_hierarchy[mf]))
+            {
               rmi.xfem_plus_base_hierarchy[mf].push_back(if_hierarchy);
               pgai = std::make_shared<ga_instruction_xfem_plus_val_base>
                 (rmi.xfem_plus_base[mf], gis.ctx, *mf, rmi.pfps[mf]);
@@ -5555,7 +5580,8 @@ namespace getfem {
             break;
           case GA_NODE_XFEM_MINUS_VAL_TEST:
             if (rmi.xfem_minus_base.find(mf) == rmi.xfem_minus_base.end() ||
-            !(if_hierarchy.is_compatible(rmi.xfem_minus_base_hierarchy[mf]))) {
+                !if_hierarchy.is_compatible(rmi.xfem_minus_base_hierarchy[mf]))
+            {
               rmi.xfem_minus_base_hierarchy[mf].push_back(if_hierarchy);
               pgai = std::make_shared<ga_instruction_xfem_minus_val_base>
                 (rmi.xfem_minus_base[mf], gis.ctx, *mf, rmi.pfps[mf]);
@@ -5565,7 +5591,7 @@ namespace getfem {
           case GA_NODE_ELEMENTARY_GRAD_TEST:
           case GA_NODE_ELEMENTARY_DIVERG_TEST:
             if (rmi.grad.find(mf) == rmi.grad.end() ||
-                !(if_hierarchy.is_compatible(rmi.grad_hierarchy[mf]))) {
+                !if_hierarchy.is_compatible(rmi.grad_hierarchy[mf])) {
               rmi.grad_hierarchy[mf].push_back(if_hierarchy);
               pgai = std::make_shared<ga_instruction_grad_base>
                 (rmi.grad[mf], gis.ctx, *mf, rmi.pfps[mf]);
@@ -5573,7 +5599,8 @@ namespace getfem {
             break;
           case GA_NODE_XFEM_PLUS_GRAD_TEST: case GA_NODE_XFEM_PLUS_DIVERG_TEST:
             if (rmi.xfem_plus_grad.find(mf) == rmi.xfem_plus_grad.end() ||
-             !(if_hierarchy.is_compatible(rmi.xfem_plus_grad_hierarchy[mf]))) {
+                !if_hierarchy.is_compatible(rmi.xfem_plus_grad_hierarchy[mf]))
+            {
               rmi.xfem_plus_grad_hierarchy[mf].push_back(if_hierarchy);
               pgai = std::make_shared<ga_instruction_xfem_plus_grad_base>
                 (rmi.xfem_plus_grad[mf], gis.ctx, *mf, rmi.pfps[mf]);
@@ -5582,7 +5609,8 @@ namespace getfem {
           case GA_NODE_XFEM_MINUS_GRAD_TEST:
           case GA_NODE_XFEM_MINUS_DIVERG_TEST:
             if (rmi.xfem_minus_grad.find(mf) == rmi.xfem_minus_grad.end() ||
-            !(if_hierarchy.is_compatible(rmi.xfem_minus_grad_hierarchy[mf]))) {
+                !if_hierarchy.is_compatible(rmi.xfem_minus_grad_hierarchy[mf]))
+            {
               rmi.xfem_minus_grad_hierarchy[mf].push_back(if_hierarchy);
               pgai = std::make_shared<ga_instruction_xfem_minus_grad_base>
                 (rmi.xfem_minus_grad[mf], gis.ctx, *mf, rmi.pfps[mf]);
@@ -5590,7 +5618,7 @@ namespace getfem {
             break;
           case GA_NODE_HESS_TEST: case GA_NODE_ELEMENTARY_HESS_TEST:
             if (rmi.hess.count(mf) == 0 ||
-                !(if_hierarchy.is_compatible(rmi.hess_hierarchy[mf]))) {
+                !if_hierarchy.is_compatible(rmi.hess_hierarchy[mf])) {
               rmi.hess_hierarchy[mf].push_back(if_hierarchy);
               pgai = std::make_shared<ga_instruction_hess_base>
                 (rmi.hess[mf], gis.ctx, *mf, rmi.pfps[mf]);
@@ -5598,8 +5626,8 @@ namespace getfem {
             break;
           case GA_NODE_XFEM_PLUS_HESS_TEST:
             if (rmi.xfem_plus_hess.count(mf) == 0 ||
-                !(if_hierarchy.is_compatible(rmi.xfem_plus_hess_hierarchy[mf]))
-                ) {
+                !if_hierarchy.is_compatible(rmi.xfem_plus_hess_hierarchy[mf]))
+            {
               rmi.xfem_plus_hess_hierarchy[mf].push_back(if_hierarchy);
               pgai = std::make_shared<ga_instruction_xfem_plus_hess_base>
                 (rmi.xfem_plus_hess[mf], gis.ctx, *mf, rmi.pfps[mf]);
@@ -5607,7 +5635,8 @@ namespace getfem {
             break;
           case GA_NODE_XFEM_MINUS_HESS_TEST:
             if (rmi.xfem_minus_hess.find(mf) == rmi.xfem_minus_hess.end() ||
-            !(if_hierarchy.is_compatible(rmi.xfem_minus_hess_hierarchy[mf]))) {
+                !if_hierarchy.is_compatible(rmi.xfem_minus_hess_hierarchy[mf]))
+            {
               rmi.xfem_minus_hess_hierarchy[mf].push_back(if_hierarchy);
               pgai = std::make_shared<ga_instruction_xfem_minus_hess_base>
                 (rmi.xfem_minus_hess[mf], gis.ctx, *mf, rmi.pfps[mf]);
@@ -5780,14 +5809,20 @@ namespace getfem {
                       " defined on the same mesh for secondary domain");
 
           // An instruction for pfp update
-          if (sdi.pfps.count(mf) == 0) {
+          if (is_uniform) {
+            if (sdi.pfps.count(mf) == 0) {
+              sdi.pfps[mf] = 0;
+              pgai = std::make_shared<ga_instruction_update_pfp>
+                (*mf, sdi.pfps[mf], *pctx, gis.fp_pool);
+              rmi.begin_instructions.push_back(std::move(pgai));
+            }
+          } else if (sdi.pfps.count(mf) == 0 ||
+                     !if_hierarchy.is_compatible(rmi.pfp_hierarchy[mf])) {
+            rmi.pfp_hierarchy[mf].push_back(if_hierarchy);
             sdi.pfps[mf] = 0;
             pgai = std::make_shared<ga_instruction_update_pfp>
               (*mf, sdi.pfps[mf], *pctx, gis.fp_pool);
-            if (is_uniform)
-              rmi.begin_instructions.push_back(std::move(pgai));
-            else
-              rmi.instructions.push_back(std::move(pgai));
+            rmi.instructions.push_back(std::move(pgai));
           }
 
           // An instruction for the base value
@@ -6702,7 +6737,7 @@ namespace getfem {
         if ((version == td.interpolation) &&
             ((version == 0 && td.order == order) || // Assembly
              ((version > 0 && (td.order == size_type(-1) || // Assignment
-                                td.order == size_type(-2) - order))))) {
+                               td.order == size_type(-2) - order))))) {
           ga_tree *added_tree = 0;
           if (td.interpolation) {
             gis.interpolation_trees.push_back(*(td.ptree));
