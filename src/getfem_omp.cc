@@ -197,7 +197,7 @@ namespace getfem{
 
   void partition_master::set_nb_partitions(size_type n){
     GMM_ASSERT1 (!partitions_set_by_user,
-                 "Number of partitions can be set only once");
+                 "Number of partitions can be set only once.");
     if (n > nb_partitions){
       nb_partitions = n;
       nb_user_threads = true_thread_policy::num_threads();
@@ -207,15 +207,15 @@ namespace getfem{
     else if (n < nb_partitions){
       GMM_WARNING1("Not reducing number of partitions from "
                    << nb_partitions <<" to " << n <<
-                   " as it might invalidate global storage");
+                   " as it might invalidate global storage.");
     }
     partitions_set_by_user = true;
   }
 
   partition_iterator partition_master::begin(){
     GMM_ASSERT1(nb_user_threads == true_thread_policy::num_threads(),
-                "The number of omp threads was changed outside partition_master"
-                "Please use getfem::set_num_threads for this");
+                "The number of omp threads was changed outside partition_master."
+                "Please use getfem::set_num_threads for this.");
     current_partition = *(std::begin(partitions.thrd_cast()));
     return partition_iterator{*this, std::begin(partitions.thrd_cast())};
   }
@@ -227,7 +227,7 @@ namespace getfem{
   void partition_master::set_behaviour(thread_behaviour b){
     if (b != behaviour){
       GMM_ASSERT1(!me_is_multithreaded_now(),
-                  "Cannot change thread policy in parallel section");
+                  "Cannot change thread policy in parallel section.");
       behaviour = b;
       check_threads();
     }
@@ -245,7 +245,8 @@ namespace getfem{
                 true_thread_policy::this_thread() < nb_partitions : true,
                 "Requesting current partition for thread " <<
                 true_thread_policy::this_thread() <<
-                " while number of partitions is " << nb_partitions);
+                " while number of partitions is " << nb_partitions
+                << ".");
     return behaviour == thread_behaviour::partition_threads ?
            current_partition : true_thread_policy::this_thread();
   }
@@ -259,7 +260,8 @@ namespace getfem{
     if (behaviour == thread_behaviour::partition_threads){
       GMM_ASSERT2(partitions.thrd_cast().count(p) != 0, "Internal error: "
                   << p << " is not a valid partitions for thread "
-                  << true_thread_policy::this_thread());
+                  << true_thread_policy::this_thread()
+                  << ".");
       current_partition = p;
     }
   }
@@ -289,7 +291,8 @@ namespace getfem{
     if(n_threads > nb_partitions){
       GMM_WARNING0("Using " << n_threads <<
                    " threads which is above the maximum number of partitions :" <<
-                   nb_partitions);
+                   nb_partitions
+                   << ".");
     }
     if (behaviour == thread_behaviour::partition_threads){
       for (size_type t = 0; t != n_threads; ++t){
