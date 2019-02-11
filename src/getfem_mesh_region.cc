@@ -91,7 +91,7 @@ namespace getfem {
     if (!parent_mesh && !from.parent_mesh){
       id_ = from.id_;
       type_ = from.type_;
-      partitioning_allowed = from.partitioning_allowed;
+      partitioning_allowed.store(from.partitioning_allowed.load());
       if (from.p) {
         if (!p) p = std::make_shared<impl>();
         wp() = from.rp();
@@ -103,13 +103,13 @@ namespace getfem {
       id_ = from.id_;
       type_ = from.type_;
       parent_mesh = from.parent_mesh;
-      partitioning_allowed = from.partitioning_allowed;
+      partitioning_allowed.store(from.partitioning_allowed.load());
     }
     else {
       if (from.p){
         wp() = from.rp();
         type_= from.get_type();
-        partitioning_allowed = from.partitioning_allowed;
+        partitioning_allowed.store(from.partitioning_allowed.load());
       }
       else if (from.id_ == size_type(-1)) {
         clear();

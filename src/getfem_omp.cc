@@ -196,6 +196,8 @@ namespace getfem{
   }
 
   void partition_master::set_nb_partitions(size_type n){
+    GMM_ASSERT1 (!partitions_set_by_user,
+                 "Number of partitions can be set only once");
     if (n > nb_partitions){
       nb_partitions = n;
       nb_user_threads = true_thread_policy::num_threads();
@@ -239,6 +241,11 @@ namespace getfem{
   }
 
   size_type partition_master::get_current_partition() const {
+    GMM_ASSERT2(behaviour == thread_behaviour::partition_threads ?
+                true_thread_policy::this_thread() < nb_partitions : true,
+                "Requesting current partition for thread " <<
+                true_thread_policy::this_thread() <<
+                " while number of partitions is " << nb_partitions);
     return behaviour == thread_behaviour::partition_threads ?
            current_partition : true_thread_policy::this_thread();
   }
@@ -336,6 +343,10 @@ namespace getfem{
   void parallel_execution(std::function<void(void)> lambda,
                           bool iterate_over_partitions){
     parallel_boilerplate boilerplate;
+    auto &pm = partition_master::get();
+    if (pm.get_nb_partitions() < true_thread_policy::num_threads()){
+      pm.set_nb_partitions(true_thread_policy::num_threads());
+    }
     #pragma omp parallel default(shared)
     {
       if (iterate_over_partitions) {
