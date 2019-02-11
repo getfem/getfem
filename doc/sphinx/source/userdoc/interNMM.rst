@@ -6,8 +6,8 @@
 
 .. _ud-internmm:
 
-Interpolation of a finite element method on non-matching meshes
-===============================================================
+Interpolation/projection of a finite element method on non-matching meshes
+==========================================================================
 
 A special finite element method is defined in
 :file:`getfem/getfem_interpolated_fem.h` which is not a real finite element
@@ -26,7 +26,7 @@ such a computation can be a heavy procedure. By default, the interpolated fem
 object store the interpolation data.
 
 The interpolation is made on each Gauss point of the integration methods of
-``mim``, so that you have to use these integration methods in the assembling
+``mim``, so only this integration method can be used in assembly
 procedures.
 
 For instance if you need to compute the mass matrix between two different finite
@@ -51,9 +51,9 @@ order.
 
 mixed methods with different meshes
 -----------------------------------
-  to be described ...
+Instead of using the previous tools (interpolated and projected fems), It is possible to use a finite element variable defined on an another mesh than the one on which an assembly is computed using the "interpolate transformation" tool of the weak form language (see :ref:`ud-gasm-high-transf`), the finite element variables will be interpolated on each Gauss point. There is no restriction on the dimensions of the mesh used, which means in particular that a two-dimensional fem variable can be interpolated on a one-dimensional mesh (allowing the coupling of shell and beam elements, for instance). It is also possible to use some transformations like polar coordinates to euclidean ones.
 
 
 mortar methods
 --------------
-  to be described ...
+ Mortar methods are supported by |gf|. The coupling term between non matching meshes can in particular be computed using the interpolate transformations of the weak form language (see :ref:`ud-gasm-high-transf`).
