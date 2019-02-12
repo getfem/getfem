@@ -51,9 +51,20 @@ order.
 
 mixed methods with different meshes
 -----------------------------------
-Instead of using the previous tools (interpolated and projected fems), It is possible to use a finite element variable defined on an another mesh than the one on which an assembly is computed using the "interpolate transformation" tool of the weak form language (see :ref:`ud-gasm-high-transf`), the finite element variables will be interpolated on each Gauss point. There is no restriction on the dimensions of the mesh used, which means in particular that a two-dimensional fem variable can be interpolated on a one-dimensional mesh (allowing the coupling of shell and beam elements, for instance). It is also possible to use some transformations like polar coordinates to euclidean ones.
+Instead of using the previous tools (interpolated and projected fems), it is
+possible to use a finite element variable defined on an another mesh than the one
+on which an assembly is computed using the "interpolate transformation" tool of
+the weak form language (see :ref:`ud-gasm-high-transf` ), the finite element
+variables will be interpolated on each Gauss point. There is no restriction
+on the dimensions of the mesh used, which means in particular that a
+two-dimensional fem variable can be interpolated on a one-dimensional mesh
+(allowing the coupling of shell and beam elements, for instance).
+It is also possible to use some transformations like polar coordinates to
+euclidean ones.
 
 
 mortar methods
 --------------
- Mortar methods are supported by |gf|. The coupling term between non matching meshes can in particular be computed using the interpolate transformations of the weak form language (see :ref:`ud-gasm-high-transf`).
+Mortar methods are supported by |gf|. The coupling term between non matching
+meshes can in particular be computed using the interpolate transformations of
+the weak form language (see :ref:`ud-gasm-high-transf`).
