@@ -39,6 +39,7 @@
 
 #include "gmm_def.h"
 #include "gmm_vector.h"
+#include <functional>
 
 namespace gmm {
 
