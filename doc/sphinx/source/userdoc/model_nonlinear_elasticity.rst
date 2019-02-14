@@ -225,7 +225,7 @@ Incompressible material.
   \intertext{with the additional constraint:}
   i_3( C) = 1
 
-The incompressibility constraint :math:`i_3( C) = 1` is handled with a Lagrange multiplier :math:`p` (the pressure) 
+The incompressibility constraint :math:`i_3( C) = 1` is handled with a Lagrange multiplier :math:`p` (the pressure)
 
 constraint: :math:`\sigma = -pI \Rightarrow {\hat{\hat{\sigma}}} = -p\nabla\Phi\nabla\Phi^{-T}\det\nabla\Phi`
 
@@ -238,7 +238,7 @@ constraint: :math:`\sigma = -pI \Rightarrow {\hat{\hat{\sigma}}} = -p\nabla\Phi\
 .. math::
 
   B &= -\int_{\Omega_0} p(\nabla\Phi)^{-T} \det \nabla\Phi : \nabla v  dX \\
-  K &= \int_{\Omega_0} \left( p(\nabla\Phi)^{-T}(\nabla h)^{T}(\nabla\Phi)^{-T}\det\nabla\Phi : \nabla v  dX - 
+  K &= \int_{\Omega_0} \left( p(\nabla\Phi)^{-T}(\nabla h)^{T}(\nabla\Phi)^{-T}\det\nabla\Phi : \nabla v  dX -
   p(\nabla\Phi)^{-T}(\det \nabla\Phi(\nabla\Phi)^{-T}:\nabla h) : \nabla v \right)  dX\\
   &= \int_{\Omega_0} p(\nabla h^T\nabla\Phi^{-T}):(\nabla\Phi^{-1}\nabla v)\det\nabla\Phi dX - \int_{\Omega_0} p(\nabla\Phi^{-T}:\nabla h)(\nabla\Phi^{-T}:\nabla v)\det\nabla\Phi dX
 
@@ -279,7 +279,7 @@ Since :math:`\frac{\partial}{\partial C} {W}(C) = \displaystyle\sum_{j}\frac{\pa
 ``Plane strain hyper-elasticity``
 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-All previous models are valid in volumic domains. Corresponding plane strain 2D models can be obtained by restricting the stress tensor and the fourth order tensor :math:`\mathcal{A}` to their plane components.  
+All previous models are valid in volumic domains. Corresponding plane strain 2D models can be obtained by restricting the stress tensor and the fourth order tensor :math:`\mathcal{A}` to their plane components.
 
 
 
@@ -305,7 +305,7 @@ The Mooney-Rivlin law accepts two optional flags, the first one determines if th
 
 The plane strain hyperelastic law takes a pointer on a hyperelastic law as a parameter and performs a 2D plane strain approximation.
 
-``md`` is the model variable, ``mim`` the integration method, ``varname`` the string being the name of the variable on which the term is added, ``dataname`` the string being the name of the data in the model representing the coefficients of the law (can be constant or describe on a finite element method) and ``region`` is the region on which the term is considered (by default, all the mesh). 
+``md`` is the model variable, ``mim`` the integration method, ``varname`` the string being the name of the variable on which the term is added, ``dataname`` the string being the name of the data in the model representing the coefficients of the law (can be constant or describe on a finite element method) and ``region`` is the region on which the term is considered (by default, all the mesh).
 
 
 The program :file:`nonlinear_elastostatic.cc` in :file:`tests` directory and :file:`demo_nonlinear_elasticity.m` in :file:`interface/tests/matlab` directory are some examples of use of this brick with or without an incompressibility condition.

@@ -20,7 +20,7 @@ A program using getfem will often have the following structure ::
 
 
   ... define one or more Mesh
-  
+
   ... define one or more MeshFem
 
   ... define one or more MeshIm

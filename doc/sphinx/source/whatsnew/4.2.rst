@@ -30,7 +30,7 @@ The main changes are:
 
    * The experimental mesher of Getfem is now (partially) interfaced with
      python/scilab/matlab.
-     
+
    * Some tools to verify the consistence (tangent term) of a brick or
      the whole model has been added.
 

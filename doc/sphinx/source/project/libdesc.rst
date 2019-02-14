@@ -9,7 +9,7 @@
 Description of the different parts of the library
 =================================================
 
-Figure :ref:`dp-fig-diagram` describes the diagram of the different modules of 
+Figure :ref:`dp-fig-diagram` describes the diagram of the different modules of
 the |gf| library. The current state and perspective for each module is
 described in section :ref:`dp-libdesc`.
 

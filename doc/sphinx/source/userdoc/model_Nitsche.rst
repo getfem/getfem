@@ -33,7 +33,7 @@ If additionally a mixed incompressibility brick is added with a variable :math:`
 :math:`G = \sigma(u)n - pn`
 
 In order to allow a generic implementation in which the brick imposing Nitsche's method will work for every partial differential term applied to the concerned variables, each brick adding a partial differential term to a model is required to give its expression via an assembly string (weak form language).
- 
+
 These expressions are utilized in a special method of the model object::
 
   expr = md.Neumann_term(variable, region)
@@ -42,9 +42,9 @@ which allows to automatically derive an expression for the sum of all Neumann te
 Of course it is required that all volumic bricks were added to the model prior to the call of this method.
 The derivation of the Neumann term works only for second order partial differential equations.
 A generic implementation for higher order pde would be more complicated.
-   
 
-Generic Nitsche's method for a Dirichlet condition 
+
+Generic Nitsche's method for a Dirichlet condition
 ++++++++++++++++++++++++++++++++++++++++++++++++++
 
 Assume that the variable :math:`u` is considered and that one wants to prescribe the condition
@@ -71,7 +71,7 @@ The bricks adding a Dirichlet condition with Nitsche's method to a model are the
 
   getfem::add_Dirichlet_condition_with_Nitsche_method
      (model &md, const mesh_im &mim, const std::string &varname,
-      const std::string &Neumannterm, 
+      const std::string &Neumannterm,
       const std::string &gamma0name, size_type region,
       scalar_type theta = scalar_type(1),
       const std::string &dataname = std::string());
@@ -127,7 +127,7 @@ even for nonlinear problems. Returns the brick index in the model.
 
   getfem::add_generalized_Dirichlet_condition_with_Nitsche_method
      (model &md, const mesh_im &mim, const std::string &varname,
-      const std::string &Neumannterm, 
+      const std::string &Neumannterm,
       const std::string &gamma0name, size_type region, scalar_type theta,
       const std::string &dataname, const std::string &Hname);
 
@@ -160,7 +160,7 @@ or described on a scalar fem. Returns the brick index in the model.
 
 .. _nitsche_contact_small_def_section:
 
-Generic Nitsche's method for contact with friction condition 
+Generic Nitsche's method for contact with friction condition
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 We describe here the use of Nitsche's method to prescribe a contact with Coulomb friction condition in the small deformations framework. This corresponds to a weak integral contact condition which as some similarity with the ones which use Lagrange multipliers describe in the corresponding section, see :ref:`weak_integral_contact_section`

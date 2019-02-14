@@ -35,7 +35,7 @@ Let us begin by loading Getfem and fixing the parameters of the problem
 
   h = 1                      # Approximate mesh size
   elements_degree = 2        # Degree of the finite element methods
-  gamma0 = 1./E;             # Augmentation parameter for the augmented Lagrangian 
+  gamma0 = 1./E;             # Augmentation parameter for the augmented Lagrangian
 
 
 
@@ -51,7 +51,7 @@ We consider that the radius of the wheel is 15cm and the one of the rim 8cm and 
   mo3 = gf.MesherObject('set minus', mo1, mo2)
   gf.util('trace level', 2)   # No trace for mesh generation
   mesh1 = gf.Mesh('generate', mo3, h, 2)
-  
+
   mesh2 = gf.Mesh('import','structured','GT="GT_PK(2,1)";SIZES=[30,10];NOISED=0;NSUBDIV=[%d,%d];' % (int(30/h)+1, int(10/h)+1));
   mesh2.translate([-15.,-10.])
 
@@ -143,7 +143,7 @@ Contact condition (use of interpolate transformations)
 
 Now, let us see how to prescribed the contact condition between the two structures. It is possible to use predefined bricks (see  :ref:`ud-model-contact-friction` for small deformation/small sliding contact and :ref:`ud-model-contact-friction-large` for large deformation/large sliding contact). However, we will see here how to directly prescribe a contact condition using an augmented Lagrangian formulation and the interpolate transformations.
 
-For small deformation contact, the correspondence between points of one contact surface to the other have to be described on the reference configuration and is not evolving, which is of course simpler but is an approximation. 
+For small deformation contact, the correspondence between points of one contact surface to the other have to be described on the reference configuration and is not evolving, which is of course simpler but is an approximation.
 
 We consider that the contact boundary of the wheel is the slave one and we have to describe the transformation from the contact boundary of the wheel to the contact boundary of the foundation. This is quite simple here, since the contact boundary of the foundation corresponds to a vanishing vertical coordinate. So we define the transformation
 
@@ -158,7 +158,7 @@ where :math:`X` is the vector of coordinates of the point. We add this transform
   md.add_interpolate_transformation_from_expression('Proj1', mesh1, mesh2, '[X(1);0]')
 
 As a consequence, it will be possible to use this transformation, from the mesh of the wheel to the mesh of the foundation, into weak form language expressions. Notes that this is here a very simple constant expression. More complex expressions depending on the data or even the variables of the model can be used. If the expression of a transformation depends on the variable of the model, the tangent linear system will automatically takes into account this dependence (see :ref:`ud-gasm-high-transf` for more details. Note also that transformation corresponding to a large sliding contact and automatically searching for the correspondence between contact boundaries exist in |gf| (see :ref:`ud-model-contact-friction-large-hlgav`).
- 
+
 Using the defined transformation, we can write an integral contact condition using an augmented Lagrangian formulation (see :ref:`ud-model-contact-friction` for more details). The corresponding term (to be added to the rest of the weak formulation) reads:
 
 .. math::

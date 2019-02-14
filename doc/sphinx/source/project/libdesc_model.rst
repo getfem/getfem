@@ -22,7 +22,7 @@ Files
    :header: "File(s)", "Description"
    :widths: 8, 15
 
-   :file:`getfem_models.h` and :file:`getfem_models.cc`, "Defines the object models, its internal and the standard bricks (linear elasticity, generic elliptic brick, Dirichlet boundary conditions ...)." 
+   :file:`getfem_models.h` and :file:`getfem_models.cc`, "Defines the object models, its internal and the standard bricks (linear elasticity, generic elliptic brick, Dirichlet boundary conditions ...)."
    :file:`getfem_model_solvers.h` and :file:`getfem_model_solvers.cc`, "Defines the the standard solvers for the model object."
    :file:`getfem_contact_and_friction_common.h` and :file:`getfem_contact_and_friction_common.cc`, "Common algorithms for contact/friction conditions on deformable bodies"
    :file:`getfem_contact_and_friction_integral.h` and :file:`getfem_contact_and_friction_integral.cc`, "Small sliding Contact/friction bricks of integral type."

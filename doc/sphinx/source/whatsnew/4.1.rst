@@ -32,7 +32,7 @@ The main changes are:
      to Luis Saavedra for is important work to re-write the main part of the
      documentations into the sphinx/rst format.
      Documentation for the interfaces are now fully automatic.
-     
+
    * A convection scheme based on Characteristic Galerkin method has been
      added. Useful to update the level-sets.
 

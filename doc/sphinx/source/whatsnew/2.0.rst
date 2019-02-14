@@ -26,7 +26,7 @@
 
    * Some news features have been introduced in this release:
 
-     * Introduction of level-set objects. Integration methods can be 
+     * Introduction of level-set objects. Integration methods can be
        cut with respect to these level-set and discontinuous
        elements across the level-set are provided.
 

@@ -21,8 +21,8 @@ It is not possible in |gmm| to invert all kind of matrices. For the moment, the 
   gmm::scale(M, 2.0);                    // M = 2 * Id.
   M(1,2) = 1.0;
 
-  gmm::copy(M, M2);  
- 
+  gmm::copy(M, M2);
+
   gmm::lu_inverse(M);
 
   gmm::mult(M, M2, M3);
@@ -43,7 +43,7 @@ You have more than one possibility to solve a linear system. If you have a dense
 
   std::vector<double> X(3), B(3), Bagain(3);
   B[0] = 1.0; B[1] = 2.0; B[2] = 3.0;  // B = [1 2 3]
- 
+
   gmm::lu_solve(M, X, B);
 
   gmm::mult(M, X, Bagain);
@@ -52,7 +52,7 @@ You have more than one possibility to solve a linear system. If you have a dense
 
 
 If, now, you have a sparse system coming for example from a pde discretization, you have various iterative solvers, with or without preconditioners. This is an example with a precontionned GMRES::
- 
+
   int nbdof = 1000; // number of degrees of freedom.
   gmm::row_matrix< gmm::rsvector<double> > M(nbdof, nbdof); // a sparse matrix
   std::vector<double> X(nbdof), B(nbdof); // Unknown and left hand side.

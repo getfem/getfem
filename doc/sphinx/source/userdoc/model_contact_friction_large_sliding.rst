@@ -28,7 +28,7 @@ In order to incorporate the contact detection in the high-level generic assembly
    :align: center
    :scale: 45
 
-The slave surface is the "contactor" and the master one the "target". Rigid obstacle are also considered. They are always master surfaces.  The basic rule is that the contact is considered between a slave surface and a master one. However, the multi-contact frame object and the |gf| bricks allow multi-contact situations, including contact between two master surfaces, self-contact of a master surface and an arbitrary number of slave and master surfaces. 
+The slave surface is the "contactor" and the master one the "target". Rigid obstacle are also considered. They are always master surfaces.  The basic rule is that the contact is considered between a slave surface and a master one. However, the multi-contact frame object and the |gf| bricks allow multi-contact situations, including contact between two master surfaces, self-contact of a master surface and an arbitrary number of slave and master surfaces.
 
 Basically, in order to detect the contact pairs, Gauss points or f.e.m. nodes of slave surfaces are projected on master surfaces (see  :ref:`figure<ud-fig-masterslave>`). If self-contact is considered, Gauss points or f.e.m. nodes of master surface are also projected on master surfaces.
 
@@ -53,13 +53,13 @@ The raytracing transformation is added without any slave or master contact bound
 where ``dispname`` is the variable name which represent the displacement on that contact
 boundary. The difference between master and slave contact boundary is that the contact detection is to be performed starting from a slave or master boundary toward a master boundary. The contact detection is not performed toward a slave boundary. Consequently, only the influence boxes of the elements of the master surfaces are computed and stored.
 
-It is also possible to add a rigid obstacle (considered as a master surface) thanks to the function:: 
+It is also possible to add a rigid obstacle (considered as a master surface) thanks to the function::
 
   add_rigid_obstacle_to_raytracing_transformation(model &md,
              const std::string &transname,
              const std::string &expr, size_type N)
 
-where ``expr`` is the expression of a signed distance to the obstacle using the syntax of the weak form language (``X`` being the current position, ``X(0)``, ``X(1)`` ... the corresponding components). For instance an expression ``X(0) + 5`` will correspond to a flat obstacle lying on the right of the position ``-5`` of the first coordinate. Be aware that the expression have to be close to a signed distance, which in particular means that the gradient norm have to be close to 1. 
+where ``expr`` is the expression of a signed distance to the obstacle using the syntax of the weak form language (``X`` being the current position, ``X(0)``, ``X(1)`` ... the corresponding components). For instance an expression ``X(0) + 5`` will correspond to a flat obstacle lying on the right of the position ``-5`` of the first coordinate. Be aware that the expression have to be close to a signed distance, which in particular means that the gradient norm have to be close to 1.
 
 In order to distinguish between non-contact situations and the occurence of a contact with another deformable body or with a rigid obstacle, the transformation returns an integer identifier which can be used by the `Interpolate_filter` command of the weak form language (see :ref:`ud-gasm-high-transf`). The different values:
 
@@ -116,12 +116,12 @@ Some details on the algorithm:
     of contact pairs. The influence boxes are stored in a region tree object
     in order to find the boxes containing a point with an algorithm having
     a mean complexity in :math:`O(log(N))`.
-  
+
   - **What is a potential contact pair.** A potential contact pair is a pair
     slave point - master element face which will be investigated.
     The projection of the slave point on the master surface will be done
     and criteria will be applied.
- 
+
   - **Projection algorithm.** The projection of the slave point onto a
     master element face is done by a parametrization of the surface on the
     reference element via the geometric transformation and the displacement
@@ -153,7 +153,7 @@ The list of criteria:
     When Newton's algorithms (and BFGS one for projection) used to compute the
     projection/raytrace of the slave point on the master element surface
     fails to converge, the pair is not considered. A warning is generated.
-    
+
   - **Criterion 3 : the projected point should be inside the element.**
     The slave point is projected on the surface of the master element
     without the constraint to remain inside the face
@@ -207,7 +207,7 @@ We denote by :math:`x_i = \varphi^h(X_i)` the corresponding node on the deformed
 
   g_i = n_y . (\varphi^h(X_i) - \varphi^h(Y_i)) = \|\varphi^h(X_i) - \varphi^h(Y_i)\| \text{Sign}(n_y . (\varphi^h(X_i) - \varphi^h(Y_i))),
 
-where :math:`n_y` is the outward unit normal vector of the master surface at :math:`y`. 
+where :math:`n_y` is the outward unit normal vector of the master surface at :math:`y`.
 
 Considering only stationnary rigid obstacles and applying the principle of Alart-Curnier augmented Lagrangian [AL-CU1991]_, the problem with nodal contact with friction condition can be expressed as follows in an unsymmetric version (see [renard2013]_ for the linear elasticity case)
 
@@ -246,7 +246,7 @@ The following nonlinear operators are defined in the weak form language (see :re
     .. math::
 
       \partial_{u} n_{trans}[\delta u] = -(I - n_{trans}\otimes n_{trans})(I+ \nabla u)^{-T}(\nabla \delta u)^T n_{trans}
-  
+
       \partial_{n} n_{trans}[\delta n] = \Frac{(I+ \nabla u)^{-T}\delta n - n_{trans}(n_{trans}\cdot \delta n)}{\|(I+\nabla u)^{-T} n\|}
 
   - ``Coulomb_friction_coupled_projection(lambda, n, Vs, g, f, r)``
@@ -271,7 +271,7 @@ The following nonlinear operators are defined in the weak form language (see :re
       \partial_q P_{B(n,\tau)}(q) =
       \left\{\begin{array}{cl}
       0 & \mbox{for } \tau \le 0 \\
-      \mathbf{T}_n & \mbox{for } \|q_{_T}\| \le \tau \\ 
+      \mathbf{T}_n & \mbox{for } \|q_{_T}\| \le \tau \\
       \Frac{\tau}{\|q_{_T}\|}
       \left(\mathbf{T}_n - \Frac{q_{_T}}{\|q_{_T}\|}\otimes \Frac{q_{_T}}{\|q_{_T}\|}
       \right) & \mbox{otherwise }
@@ -305,7 +305,7 @@ The following nonlinear operators are defined in the weak form language (see :re
       \left|\begin{array}{l} \partial_n P_{B(n,\tau)}
       +\partial_{\tau} P_{B(n,\tau)} \otimes \partial_n \tau \\
       \hspace*{3em}+H(-\lambda\cdot n - r\,g) ~
-      \left(n \otimes \lambda - 
+      \left(n \otimes \lambda -
       (2~\lambda\cdot n + r\,g)~n \otimes n +
       (\lambda\cdot n + r\,g)~\mathbf{I}\right),
       \end{array}\right.
@@ -334,7 +334,7 @@ Add of the brick::
 
   indbrick = add_integral_large_sliding_contact_brick_raytracing
     (model &md, const std::string &dataname_r,
-     scalar_type release_distance, 
+     scalar_type release_distance,
      const std::string &dataname_friction_coeff = "0",
      const std::string &dataname_alpha = "1");
 
