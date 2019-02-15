@@ -141,9 +141,6 @@ References
    and finite element approach*.
    Comput. Methods Appl. Mech. Engrg., 193:4299-4322, 2004.
 
-.. [nedelec1991] J.-C. Nedelec.
-   *Notions sur les techniques d'elements finis*. Ellipses, SMAI, Mathematiques & Applications no 7, 1991.
-
 .. [NI-RE-CH2011] S. Nicaise, Y. Renard, E. Chahine,
    *Optimal convergence analysis for the eXtended Finite Element Method*. Int. J. Numer. Meth. Engng., 86:528-548, 2011.
 
@@ -156,17 +153,11 @@ References
 .. [PO-NI2016] K. Poulios, C.F. Niordson,
    *Homogenization of long fiber reinforced composites including fiber bending effects*. Journal of the Mechanics and Physics of Solids, 94, pp 433-452, 2016.
 
-.. [remacle2002] J-F. Remacle, M. Shephard,
-   *An algorithm oriented database*.  Internat. J. Numer. Methods Engrg., 58, 349-374, 2003.
-
 .. [SE-PO-WO2015] A. Seitz, A. Popp, W.A. Wall,
    *A semi-smooth Newton method for orthotropic plasticity and frictional contact at finite strains*. Comput. Methods Appl. Mech. Engrg. 285:228-254, 2015.
 
 .. [SI-HU1998] J.C. Simo, T.J.R. Hughes.
    *Computational Inelasticity*. Interdisciplinary Applied Mathematics, vol 7, Springer, New York 1998.
-
-.. [so-se-do2004] P. |solin|, K. Segeth, I. |dolezel| ,
-   *Higher-Order Finite Element Methods*. Chapman and Hall/CRC, Studies in advanced mathematics, 2004.
 
 .. [SO-PE-OW2008] E.A. de Souza Neto, D |peric|, D.R.J. Owen.
    *Computational methods for plasticity*. J. Wiley & Sons, New York, 2008.
