@@ -19,9 +19,7 @@
 
 ===========================================================================*/
 
-#include <api_scilab.h>
-#include <MALLOC.h>
-#include <stack-c.h>
+#include <gfm_common.h>
 #include <sciprint.h>
 #include <Scierror.h>
 

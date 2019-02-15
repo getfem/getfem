@@ -30,12 +30,12 @@ References
 .. [BE-CO-DU2010] M. Bergot, G. Cohen, M. |durufle|.
    *Higher-order finite elements for hybrid meshes using new nodal pyramidal elements*
    J. Sci. Comput., 42, 345-381, 2010.
-   
+
 .. [br-ba-fo1989] F. Brezzi, K.J. Bathe, M. Fortin.
    *Mixed-interpolated element for Reissner-Mindlin plates*. Internat. J. Numer. Methods Engrg., 28, 1787-1801, 1989.
 
 .. [bu-ha2010] E. Burman, P. Hansbo.
-   *Fictitious domain finite element methods using cut elements: I. A stabilized Lagrange multiplier method*. Computer Methods in Applied Mechanics, 199:41-44, 2680-2686, 2010. 
+   *Fictitious domain finite element methods using cut elements: I. A stabilized Lagrange multiplier method*. Computer Methods in Applied Mechanics, 199:41-44, 2680-2686, 2010.
 
 .. [ca-re-so1994] D. Calvetti, L. Reichel and D.C. Sorensen.
    *An implicitely restarted Lanczos method for large symmetric eigenvalue problems*. Electronic Transaction on Numerical Analysis}. 2:1-21, 1994.
@@ -44,7 +44,7 @@ References
    *Crack-tip enrichment in the Xfem method using a cut-off function*. Int. J. Numer. Meth. Engng., 75(6):629-646, 2008.
 
 .. [CH-LA-RE2011] E. Chahine, P. Laborde, Y. Renard.
-   *A non-conformal eXtended Finite Element approach: Integral matching Xfem*. Applied Numerical Mathematics, 61:322-343, 2011. 
+   *A non-conformal eXtended Finite Element approach: Integral matching Xfem*. Applied Numerical Mathematics, 61:322-343, 2011.
 
 .. [ciarlet1978] P.G. Ciarlet.
    *The finite element method for elliptic problems*. Studies in Mathematics and its Applications vol. 4, North-Holland, 1978.
@@ -85,7 +85,7 @@ References
 .. [GR-GH1999] R.D. Graglia, I.-L. Gheorma.
    *Higher order interpolatory vector bases on pyramidal elements*
    IEEE transactions on antennas and propagation, 47:5, 775-782, 1999.
-   
+
 .. [GR-ST2015] D. Grandi, U. Stefanelli.
    *The Souza-Auricchio model for shape-memory alloys*
    Discrete and Continuous Dynamical Systems, Series S, 8(4):723-747, 2015.
@@ -118,10 +118,10 @@ References
    *An unconstrained integral approximation of large sliding frictional contact between deformable solids*. Computers and Structures, 153:75-90, 2015.
 
 .. [LA-RE2006] P. Laborde, Y. Renard.
-   *Fixed point strategies for elastostatic frictional contact problems*. Math. Meth. Appl. Sci., 31:415-441, 2008. 
+   *Fixed point strategies for elastostatic frictional contact problems*. Math. Meth. Appl. Sci., 31:415-441, 2008.
 
 .. [Li-Re2014] T. |ligursky| and Y. Renard.
-   *A Continuation Problem for Computing Solutions of Discretised Evolution Problems with Application to Plane Quasi-Static Contact Problems with Friction*. Comput. Methods Appl. Mech. Engrg. 280, 222-262, 2014. 
+   *A Continuation Problem for Computing Solutions of Discretised Evolution Problems with Application to Plane Quasi-Static Contact Problems with Friction*. Comput. Methods Appl. Mech. Engrg. 280, 222-262, 2014.
 
 .. [Li-Re2014hal] T. |ligursky| and Y. Renard.
    *Bifurcations in Piecewise-Smooth Steady-State Problems: Abstract Study and Application to Plane Contact Problems with Friction*. Computational Mechanics, 56:1:39-62, 2015.
@@ -174,11 +174,11 @@ References
 
 .. |moes| unicode:: Mo U+00EB s
 .. |peric| unicode:: Peri U+0107
-.. |dolezel| unicode:: Dole U+017E el 
+.. |dolezel| unicode:: Dole U+017E el
    :rtrim:
 .. |ligursky| unicode:: Ligursk U+00FD
 .. |durufle| unicode:: Durufl U+00E9
-.. |solin| unicode:: U+0160 ol U+00ED n 
+.. |solin| unicode:: U+0160 ol U+00ED n
    :rtrim:
 
 

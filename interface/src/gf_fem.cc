@@ -22,6 +22,7 @@
 #include <getfem/getfem_mesh_im.h>
 #include <getfem/getfem_mesh_fem.h>
 #include <getfem/getfem_interpolated_fem.h>
+#include <getfem/getfem_projected_fem.h>
 #include <getfem/getfem_fem.h>
 #include <getfemint_misc.h>
 #include <getfemint_workspace.h>
@@ -39,30 +40,69 @@ void gf_fem(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
   }
   std::string cmd = in.pop().to_string();
   id_type id = id_type(-1);
-  if (check_cmd(cmd, "interpolated fem", in, out, 2, 3, 0, 1)) {
-    /*@INIT F = ('interpolated_fem', @tmf mf, @tmim mim, [@ivec blocked_dof])
+  if (check_cmd(cmd, "interpolated fem", in, out, 2, 4, 0, 1)) {
+    /*@INIT F = ('interpolated_fem', @tmf mf_source, @tmim mim_target, [@ivec blocked_dofs[, @bool caching]])
     Build a special @tfem which is interpolated from another @tmf.
 
     Using this special finite element, it is possible to interpolate a given
-    @tmf `mf` on another mesh, given the integration method `mim` that will
-    be used on this mesh.
+    @tmf `mf_source` on another mesh, given the integration method `mim_target`
+    that will be used on this mesh.
 
-    Note that this finite element may be quite slow, and eats much
-    memory.@*/
-    getfem::mesh_fem *mf  = to_meshfem_object(in.pop());
-    getfem::mesh_im  *mim = to_meshim_object(in.pop());
-    dal::bit_vector blocked_dof;
-    if (in.remaining())
-      blocked_dof = in.pop().to_bit_vector();
+    Note that this finite element may be quite slow or consume much
+    memory depending if caching is used or not. By default `caching` is
+    True@*/
+    getfem::mesh_fem *mf_source  = to_meshfem_object(in.pop());
+    getfem::mesh_im  *mim_target = to_meshim_object(in.pop());
+    dal::bit_vector blocked_dofs;
+    bool caching(true);
+    if (in.remaining()) {
+      blocked_dofs = in.pop().to_bit_vector();
+      if (in.remaining())
+        caching = in.pop().to_bool();
+    }
     getfem::pfem pf =
-      getfem::new_interpolated_fem(*mf, *mim, 0, blocked_dof);
+      getfem::new_interpolated_fem(*mf_source, *mim_target, 0, blocked_dofs,
+                                   caching);
     // gfi_pf = getfemint_pfem::get_from(pf);
     // gfi_pf->nbdof_need_convex_number() = true;
     
     id = store_fem_object(pf);
 
-    workspace().set_dependence(id, mim);
-    workspace().set_dependence(id, mf);
+    workspace().set_dependence(id, mim_target);
+    workspace().set_dependence(id, mf_source);
+  } else if (check_cmd(cmd, "projected fem", in, out, 4, 6, 0, 1)) {
+    /*@INIT F = ('projected_fem', @tmf mf_source, @tmim mim_target, @int rg_source, @int rg_target[, @ivec blocked_dofs[, @bool caching]])
+    Build a special @tfem which is interpolated from another @tmf.
+
+    Using this special finite element, it is possible to interpolate a given
+    @tmf `mf_source` on another mesh, given the integration method `mim_target`
+    that will be used on this mesh.
+
+    Note that this finite element may be quite slow or consume much
+    memory depending if caching is used or not. By default `caching` is
+    True@*/
+    getfem::mesh_fem *mf_source  = to_meshfem_object(in.pop());
+    getfem::mesh_im  *mim_target = to_meshim_object(in.pop());
+    size_type rg_source = in.pop().to_integer();
+    size_type rg_target = in.pop().to_integer();
+
+    dal::bit_vector blocked_dofs;
+    bool caching(true);
+    if (in.remaining()) {
+      blocked_dofs = in.pop().to_bit_vector();
+      if (in.remaining())
+        caching = in.pop().to_bool();
+    }
+    getfem::pfem pf =
+      getfem::new_projected_fem(*mf_source, *mim_target, rg_source, rg_target,
+                                blocked_dofs, caching);
+    // gfi_pf = getfemint_pfem::get_from(pf);
+    // gfi_pf->nbdof_need_convex_number() = true;
+
+    id = store_fem_object(pf);
+
+    workspace().set_dependence(id, mim_target);
+    workspace().set_dependence(id, mf_source);
   } else {
     /*@INIT F = ('.list', @str fem_name)
       The `fem_name` should contain a description of the finite element

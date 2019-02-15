@@ -24,7 +24,7 @@ Glossary
       The degrees of freedom for a finite element method is the coefficients
       which multiply the shape functions in order to describe a
       (scalar or vector) field. Generally, they are the unknowns of the
-      problem in general. 
+      problem in general.
 
    Element
       An element is a small piece of a domain with a special shape (a segment,
@@ -66,4 +66,4 @@ Glossary
       For instance, the reference segment in |gf| is the segment [0,1].
       The reference triangle is the triangle (0,0), (0,1), (1,0). etc.
 
- 
+

@@ -16,7 +16,7 @@ The main changes are:
      the spatial gradient and Diff(expression, variable, direction)
      which performs a directional derivative. A few more tensor contraction
      operations has been added on this occasion.
-  
+
    * The support for pyramidal has been extended and stabilized.
 
    * Incomplete pyramidal (13-node) and incomplete prism (15-node)

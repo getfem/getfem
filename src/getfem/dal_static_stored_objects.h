@@ -77,7 +77,7 @@ std::shared_ptr are used.
 
 #include "getfem/getfem_arch_config.h"
 
-#ifdef GETFEM_HAVE_OPENMP
+#ifdef GETFEM_HAS_OPENMP
   #include <boost/atomic.hpp>
   typedef boost::atomic_bool atomic_bool;
   typedef boost::atomic<int> atomic_int;
@@ -371,38 +371,25 @@ namespace dal {
 
   /** delete all the specific type of stored objects*/
   template<typename OBJECT_TYPE>
-  void delete_specific_type_stored_objects(bool all_thread = false)
-  {
-    typedef typename stored_object_tab::iterator iterator;
+  void delete_specific_type_stored_objects(bool all_threads = false){
     std::list<pstatic_stored_object> delete_object_list;
 
-    if(!all_thread){
-      stored_object_tab& stored_objects
-        = dal::singleton<stored_object_tab>::instance();
-
-      iterator itb = stored_objects.begin();
-      iterator ite = stored_objects.end();
-
-      for(iterator it = itb; it != ite; ++it){
-        const OBJECT_TYPE *p_object
-          = std::dynamic_pointer_cast<const OBJECT_TYPE>(it->second.p).get();
-        if(p_object != 0) delete_object_list.push_back(it->second.p);
+    auto filter_objects = [&](stored_object_tab &stored_objects){
+      for(auto &&pair : stored_objects){
+        auto p_object = std::dynamic_pointer_cast<const OBJECT_TYPE>(pair.second.p);
+        if(p_object != nullptr) delete_object_list.push_back(pair.second.p);
       }
+    };
+
+    if (!all_threads){
+      auto& stored_objects = singleton<stored_object_tab>::instance();
+      filter_objects(stored_objects);
     }
     else{
-      for(size_t thread = 0; thread<getfem::num_threads();thread++)
+      for(size_t thread = 0; thread < singleton<stored_object_tab>::num_threads(); ++thread)
       {
-        stored_object_tab& stored_objects
-          = dal::singleton<stored_object_tab>::instance(thread);
-
-        iterator itb = stored_objects.begin();
-        iterator ite = stored_objects.end();
-
-        for(iterator it = itb; it != ite; ++it){
-          const OBJECT_TYPE *p_object
-            = std::dynamic_pointer_cast<const OBJECT_TYPE>(it->second.p).get();
-          if(p_object != 0) delete_object_list.push_back(it->second.p);
-        }
+        auto& stored_objects = singleton<stored_object_tab>::instance(thread);
+        filter_objects(stored_objects);
       }
     }
     del_stored_objects(delete_object_list, false);

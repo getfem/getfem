@@ -928,6 +928,32 @@ void gf_mesh_get(getfemint::mexargs_in& m_in,
        );
 
 
+    /*@GET CVIDs = ('convexes in box', @vec pmin, @vec pmax)
+    Return the set of convexes lying entirely within the box defined by the corner points `pmin` and `pmax`.
+
+    The output `CVIDs` is a two-rows matrix, the first row lists convex
+    #ids, and the second one lists face numbers (local number in the
+    convex). If `CVIDs` is given, it returns portion of the boundary of
+    the convex set defined by the #ids listed in `CVIDs`.@*/
+    sub_command
+      ("convexes in box", 2, 2, 0, 1,
+       check_empty_mesh(pmesh);
+       int dim = pmesh->dim();
+       darray p1 = in.pop().to_darray(dim);
+       darray p2 = in.pop().to_darray(dim);
+       bgeot::base_node pmin(dim);
+       bgeot::base_node pmax(dim);
+       for (int k=0; k < dim; ++k) {
+         pmin[k] = std::min(p1[k],p2[k]);
+         pmax[k] = std::max(p1[k],p2[k]);
+       }
+       getfem::mesh_region mr = select_convexes_in_box(*pmesh, pmin, pmax);
+       iarray w = out.pop().create_iarray_h(unsigned(mr.size()));
+       size_type j(0);
+       for (getfem::mr_visitor i(mr); !i.finished(); ++i, ++j)
+         w[j] = int(i.cv()+config::base_index());
+       );
+
     /*@GET Q = ('quality'[, @ivec CVIDs])
     Return an estimation of the quality of each convex (:math:`0 \leq Q \leq 1`).@*/
     sub_command

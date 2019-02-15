@@ -17,7 +17,7 @@ Let :math:`\Omega \subset \R^2` be the reference configuration of a 2D plate (se
 Thermal problem
 ***************
 
-The lateral faces of the plates are supposed to be in thermal insulation since the front and back faces of the plate are supposed to be in thermal exchange with the air (supposed at 20 |degreC|) with a heat transfer coefficient :math:`D`. 
+The lateral faces of the plates are supposed to be in thermal insulation since the front and back faces of the plate are supposed to be in thermal exchange with the air (supposed at 20 |degreC|) with a heat transfer coefficient :math:`D`.
 
 The equation on the temperature :math:`\theta` and boundary condition can be written as follows:
 
@@ -26,7 +26,7 @@ The equation on the temperature :math:`\theta` and boundary condition can be wri
   \left\{\begin{array}{l}
   -\mbox{div}(\varepsilon\kappa(\nabla \theta)) + 2D(\theta - T_0) - \varepsilon\sigma|\nabla V|^2 = 0 ~~ \mbox{ in } \Omega, \\
   \kappa\nabla \theta \cdot n = 0 ~~ \mbox{ on } \partial \Omega,
-  \end{array} \right. 
+  \end{array} \right.
 
 
 where the thermal conductivity is designed by :math:`\kappa`, :math:`T_0` is the temperature of the air, :math:`\partial \Omega` the boundary of the domain :math:`\Omega` and :math:`n` the outward unit normal vector to :math:`\Omega` on :math:`\partial \Omega`.
@@ -44,7 +44,7 @@ We consider a potential difference of :math:`0.1V` between the right and left la
   -\mbox{div}(\varepsilon\sigma(\nabla V)) = 0 ~~ \mbox{ in } \Omega, \\
   \sigma\nabla V \cdot n = 0 ~~ \mbox{ on the top an bottom lateral faces}, \\
   V = 0 ~~ \mbox{ on the right lateral face}, \\
-  V = 0.1 ~~ \mbox{ on the left lateral face}, \\  
+  V = 0.1 ~~ \mbox{ on the left lateral face}, \\
   \end{array} \right.
 
 where :math:`\sigma` is still the electrical conductivity. Moreover, we consider that :math:`\sigma` depends on the temperature as follows:
@@ -68,13 +68,13 @@ We consider the membrane small deformation of the plate under a force applied on
   -\mbox{div}(\bar{\sigma}(u)) = 0 ~~ \mbox{ in } \Omega, \\
   \bar{\sigma}\ n = 0 ~~ \mbox{ on the top an bottom lateral faces}, \\
   \bar{\sigma}\ n = F ~~ \mbox{ on the right lateral face}, \\
-  u = 0 ~~ \mbox{ on the left lateral face}, 
+  u = 0 ~~ \mbox{ on the left lateral face},
   \end{array} \right.
 
 where :math:`F` is the force density applied on the right lateral boundary and :math:`\bar{\sigma}(u)` is the Cauchy stress tensor defined by
 
 .. math::
- 
+
   \bar{\sigma}(u) = \lambda^* \mbox{div}(u) I + 2\mu \bar{\varepsilon}(u) + \beta(T_0-\theta) I,
 
 :math:`\bar{\varepsilon}(u) = (\nabla u + (\nabla u)^T)/2` being the linearized strain tensor, :math:`I` the identity second order tensor and :math:`\lambda^*, \mu` being the |Lame| coefficients defined  by
@@ -115,18 +115,19 @@ Let us now make a detailed presentation of the use of |gf| to approximate the pr
 Initialization
 **************
 
-First, in C++, ones has to include a certain number of headers for the model object, the generic assembly, the linear algebra interface (Gmm++), the experimental mesher and the export facilities. For Python, this is simpler, |gf| can be imported globally (numpy has also to be imported). For Scilab, the library has first to be loaded in the Scilab console (this is not described here) and for Matlab, nothing is necessary, except a `gf_workspace('clear all')` which allows to clear all |gf| variables. 
+First, in C++, ones has to include a certain number of headers for the model object, the generic assembly, the linear algebra interface (Gmm++), the experimental mesher and the export facilities. For Python, this is simpler, |gf| can be imported globally (numpy has also to be imported). For Scilab, the library has first to be loaded in the Scilab console (this is not described here) and for Matlab, nothing is necessary, except a `gf_workspace('clear all')` which allows to clear all |gf| variables.
 
+.. tabularcolumns:: |p{0.080\linewidth}|p{0.900\linewidth}|
 
 ========== ================================================
-**C++**    .. code-block:: c++                             
+**C++**    .. code-block:: c++
 
-             #include "getfem/getfem_model_solvers.h" 
+             #include "getfem/getfem_model_solvers.h"
              #include "getfem/getfem_export.h"
              #include "gmm/gmm.h"
              #include "getfem/getfem_mesher.h"
              #include "getfem/getfem_generic_assembly.h"
-           
+
              using bgeot::size_type;
              using bgeot::base_node;
              using bgeot::base_small_vector;
@@ -134,16 +135,16 @@ First, in C++, ones has to include a certain number of headers for the model obj
 
              int main(void) {
 ---------- ------------------------------------------------
-**Python** .. code-block:: python                                     
+**Python** .. code-block:: python
 
              import getfem as gf
              import numpy as np
 ---------- ------------------------------------------------
-**Scilab** .. code-block:: matlab                             
+**Scilab** .. code-block:: matlab
 
              gf_workspace('clear all'); // In case of multiple runs
 ---------- ------------------------------------------------
-**Matlab** .. code-block:: matlab                                    
+**Matlab** .. code-block:: matlab
 
              gf_workspace('clear all'); % In case of multiple runs
 ========== ================================================
@@ -154,9 +155,10 @@ Parameters of the model
 
 Let us now define the different physical and numerical parameters of the problem. For script languages (Python, Scilab and Matlab) there is no differences.
 
+.. tabularcolumns:: |p{0.080\linewidth}|p{0.900\linewidth}|
 
 =========== ================================================
-**C++**     .. code-block:: c++                             
+**C++**     .. code-block:: c++
 
                 double epsilon = 1.; // Thickness of the plate (cm)
                 double E = 21E6;     // Young Modulus (N/cm^2)
@@ -176,7 +178,7 @@ Let us now define the different physical and numerical parameters of the problem
                 double h = 2.        // Approximate mesh size
                 bgeot::dim_type elements_degree = 2; // Degree of the finite element methods
 ----------- ------------------------------------------------
-**Scripts** .. code-block:: python                                     
+**Scripts** .. code-block:: python
 
                 epsilon = 1.; E = 21E6; nu = 0.3;
                 clambda = E*nu/((1+nu)*(1-2*nu));
@@ -187,7 +189,7 @@ Let us now define the different physical and numerical parameters of the problem
                 T0 = 20; rho_0 = 1.754E-8;
                 alpha = 0.0039;
 
-                h = 2; elements_degree = 2;     
+                h = 2; elements_degree = 2;
 
 =========== ================================================
 
@@ -201,9 +203,10 @@ Mesh generation
 
 The geometry of the domain is supposed to be a rectangle with three circular holes (see :ref:`tut-fig-meshthermo`). The geometry is described thanks to some geometrical primitives and union/setminus operations (see :file:`src/getfem/getfem_mesher.h` file). In the following, `h` stands for the mesh size and `2` is the degree of the mesh (this means that the transformation is of degree two, we used curved edges).
 
+.. tabularcolumns:: |p{0.080\linewidth}|p{0.900\linewidth}|
 
 ========== ===========================================================================
-**C++**    .. code-block:: c++                             
+**C++**    .. code-block:: c++
 
                 getfem::mesh mesh;
 		getfem::pmesher_signed_distance
@@ -217,7 +220,7 @@ The geometry of the domain is supposed to be a rectangle with three circular hol
                 std::vector<getfem::base_node> fixed;
                 getfem::build_mesh(mesh, mo, h, fixed, 2, -2);
 ---------- ---------------------------------------------------------------------------
-**Python** .. code-block:: python                                     
+**Python** .. code-block:: python
 
                 mo1 = gf.MesherObject('rectangle', [0., 0.], [100., 25.])
                 mo2 = gf.MesherObject('ball', [25., 12.5], 8.)
@@ -228,7 +231,7 @@ The geometry of the domain is supposed to be a rectangle with three circular hol
 
                 mesh = gf.Mesh('generate', mo, h, 2)
 ---------- ---------------------------------------------------------------------------
-**Scilab** .. code-block:: matlab                             
+**Scilab** .. code-block:: matlab
 
                 mo1 = gf_mesher_object('rectangle', [0 0], [100 25]);
                 mo2 = gf_mesher_object('ball', [25 12.5], 8);
@@ -258,14 +261,19 @@ The geometry of the domain is supposed to be a rectangle with three circular hol
 
    The obtained mesh.
 
+.. raw:: latex
+
+   \clearpage
+
 Boundary selection
 ******************
 
 Since we have different boundary conditions on the different parts of the boundary, we have to number the different parts of the boundary (in the hole, thermal and electrical insulation together with a stress free boundary conditions are assumed). Thus, we have to select the element faces on the mesh and define mesh regions (see :ref:`ud-mesh_regions`) 1, 2, 3, 4 to be the right boundary, the left one, the top one and the bottom one respectively. These boundary numbers will be used in the model bricks.
 
+.. tabularcolumns:: |p{0.080\linewidth}|p{0.900\linewidth}|
 
 ========== ===========================================================================
-**C++**    .. code-block:: c++                             
+**C++**    .. code-block:: c++
 
                 getfem::mesh_region border_faces;
                 getfem::outer_faces_of_mesh(mesh, border_faces);
@@ -291,7 +299,7 @@ Since we have different boundary conditions on the different parts of the bounda
                 mesh.region(   TOP_BOUND) = getfem::mesh_region::subtract(fb4, fb1);
                 mesh.region(BOTTOM_BOUND) = getfem::mesh_region::subtract(fb5, fb1);
 ---------- ---------------------------------------------------------------------------
-**Python** .. code-block:: python                                     
+**Python** .. code-block:: python
 
                 fb1 = mesh.outer_faces_in_box([1., 1.], [99., 24.])
                 fb2 = mesh.outer_faces_with_direction([ 1., 0.], 0.01)
@@ -310,8 +318,12 @@ Since we have different boundary conditions on the different parts of the bounda
                 mesh.region_subtract(  LEFT_BOUND, HOLE_BOUND)
                 mesh.region_subtract(   TOP_BOUND, HOLE_BOUND)
                 mesh.region_subtract(BOTTOM_BOUND, HOLE_BOUND)
----------- ---------------------------------------------------------------------------
-**Scilab** .. code-block:: matlab                             
+========== ===========================================================================
+
+.. tabularcolumns:: |p{0.080\linewidth}|p{0.900\linewidth}|
+
+========== ===========================================================================
+**Scilab** .. code-block:: matlab
 
                 fb1 = gf_mesh_get(mesh, 'outer faces in box', [1 1], [99 24]);
                 fb2 = gf_mesh_get(mesh, 'outer faces with direction', [ 1 0], 0.01);
@@ -356,8 +368,10 @@ Mesh draw
 
 In order to preview the mesh and to control its validity, the following instructions can be used:
 
+.. tabularcolumns:: |p{0.080\linewidth}|p{0.900\linewidth}|
+
 ========== ===========================================================================
-**C++**    .. code-block:: c++                             
+**C++**    .. code-block:: c++
 
                 getfem::vtk_export exp("mesh.vtk", false);
                 exp.exporting(mesh);
@@ -365,7 +379,7 @@ In order to preview the mesh and to control its validity, the following instruct
                 // You can view the mesh for instance with
                 // mayavi2 -d mesh.vtk -f ExtractEdges -m Surface
 ---------- ---------------------------------------------------------------------------
-**Python** .. code-block:: python                                     
+**Python** .. code-block:: python
 
                 mesh.export_to_vtk('mesh.vtk');
                 # You can view the mesh for instance with
@@ -396,7 +410,7 @@ Definition of finite element methods and integration method
 
 We will define three finite element methods. The first one, `mfu` is to approximate the displacement field. This is a vector field. This is defined in C++ by
 
-.. code-block:: c++   
+.. code-block:: c++
 
         getfem::mesh_fem mfu(mesh, 2);
         mfu.set_classical_finite_element(elements_degree);
@@ -411,9 +425,10 @@ The third finite element method is a discontinuous scalar Lagrange one which wil
 
 The last thing to define is an integration method `mim`. There is no default integration method in |gf| so this is mandatory to define an integration method. Of course, the order of the integration method have to be chosen sufficient to make a convenient integration of the selected finite element method. Here, the square of `elements_degree` is sufficient.
 
+.. tabularcolumns:: |p{0.080\linewidth}|p{0.900\linewidth}|
 
 ========== ===========================================================================
-**C++**    .. code-block:: c++                             
+**C++**    .. code-block:: c++
 
                 getfem::mesh_fem mfu(mesh, 2);
                 mfu.set_classical_finite_element(elements_degree);
@@ -425,7 +440,7 @@ The last thing to define is an integration method `mim`. There is no default int
                 getfem::mesh_im  mim(mesh);
                 mim.set_integration_method(bgeot::dim_type(gmm::sqr(elements_degree)));
 ---------- ---------------------------------------------------------------------------
-**Python** .. code-block:: python                                     
+**Python** .. code-block:: python
 
                 mfu = gf.MeshFem(mesh, 2)
                 mfu.set_classical_fem(elements_degree)
@@ -466,20 +481,21 @@ The model object in |gf| gather the variables of the models (the unknowns), the 
 
 This is not strictly mandatory to use the model object since one may use directly the assembly procedures and build by it own the (tangent) linear system. The model object allows a rapid build of the model since most classical parts of a model are pre-programmed: standard boundary conditions, standard partial differential equations, use of multipliers to prescribe a constraint ... Moreover, some bricks are designed to extend the possibilities of the standard bricks (generic assembly bricks, explicit matrix brick ...). Thus, it is recommended to use the framework of the model object.
 
-There are two versions of the model: the real one and the complex one. Complex models have to be reserved for special applications (some electromagnetism problems for instance) where it is advantageous to solve a complex linear system. 
+There are two versions of the model: the real one and the complex one. Complex models have to be reserved for special applications (some electromagnetism problems for instance) where it is advantageous to solve a complex linear system.
 
 Let us declare a real model with the three variables corresponding to the three fields to be computed:
 
+.. tabularcolumns:: |p{0.080\linewidth}|p{0.900\linewidth}|
 
 ========== ===========================================================================
-**C++**    .. code-block:: c++                             
+**C++**    .. code-block:: c++
 
                 getfem::model md;
                 md.add_fem_variable("u", mfu);
                 md.add_fem_variable("theta", mft);
                 md.add_fem_variable("V", mft);
 ---------- ---------------------------------------------------------------------------
-**Python** .. code-block:: python                                     
+**Python** .. code-block:: python
 
                 md=gf.Model('real');
                 md.add_fem_variable('u', mfu)
@@ -491,7 +507,7 @@ Let us declare a real model with the three variables corresponding to the three 
                 md=gf_model('real');
                 gf_model_set(md, 'add fem variable', 'u', mfu);
                 gf_model_set(md, 'add fem variable', 'theta', mft);
-                gf_model_set(md, 'add fem variable', 'V', mft);               
+                gf_model_set(md, 'add fem variable', 'V', mft);
 ---------- ---------------------------------------------------------------------------
 **Matlab** .. code-block:: matlab
 
@@ -523,9 +539,10 @@ there is no predefined brick and we use directly a weak form language term `add_
 
 The following program allows to take into account the whole elastic deformation equation. Note the use of specific brick to prescribe the Dirichlet condition on the left boundary. There is several option to prescribe a Dirichlet condition (see :ref:`ud-model-Dirichlet`).
 
+.. tabularcolumns:: |p{0.080\linewidth}|p{0.900\linewidth}|
 
 ========== ================================================================================================================
-**C++**    .. code-block:: c++                             
+**C++**    .. code-block:: c++
 
                 md.add_initialized_scalar_data("cmu", cmu);
                 md.add_initialized_scalar_data("clambdastar", clambdastar);
@@ -540,7 +557,7 @@ The following program allows to take into account the whole elastic deformation 
                 md.add_initialized_scalar_data("beta", alpha_th*E/(1-2*nu));
                 getfem::add_linear_term(md, mim, "beta*(T0-theta)*Div_Test_u");
 ---------- ----------------------------------------------------------------------------------------------------------------
-**Python** .. code-block:: python                                     
+**Python** .. code-block:: python
 
                 md.add_initialized_data('cmu', [cmu])
                 md.add_initialized_data('clambdastar', [clambdastar])
@@ -567,7 +584,11 @@ The following program allows to take into account the whole elastic deformation 
 
                 gf_model_set(md, 'add initialized data', 'beta', [alpha_th*E/(1-2*nu)]);
                 gf_model_set(md, 'add linear term', mim, 'beta*(T0-theta)*Div_Test_u');
----------- ----------------------------------------------------------------------------------------------------------------
+========== ================================================================================================================
+
+.. tabularcolumns:: |p{0.080\linewidth}|p{0.900\linewidth}|
+
+========== ================================================================================================================
 **Matlab** .. code-block:: matlab
 
                 gf_model_set(md, 'add initialized data', 'cmu', [cmu]);
@@ -583,13 +604,19 @@ The following program allows to take into account the whole elastic deformation 
                 gf_model_set(md, 'add linear term', mim, 'beta*(T0-theta)*Div_Test_u');
 ========== ================================================================================================================
 
+.. raw:: latex
+
+   \clearpage
+
 Electric potential problem
 **************************
 
 Similarly, the following program take into account the electric potential equation. Note the definition of the  electrical conductivity :math:`\sigma` and again the use of weak form language terms.
 
+.. tabularcolumns:: |p{0.080\linewidth}|p{0.900\linewidth}|
+
 ========== ===========================================================================
-**C++**    .. code-block:: c++                             
+**C++**    .. code-block:: c++
 
                 std::string sigmaeps = "(eps/(rho_0*(1+alpha*(theta-T0))))";
                 md.add_initialized_scalar_data("eps", epsilon);
@@ -603,7 +630,7 @@ Similarly, the following program take into account the electric potential equati
                 getfem::add_Dirichlet_condition_with_multipliers
                   (md, mim, "V", bgeot::dim_type(elements_degree-1), LEFT_BOUND, "DdataV");
 ---------- ---------------------------------------------------------------------------
-**Python** .. code-block:: python                                     
+**Python** .. code-block:: python
 
                 sigmaeps = '(eps/(rho_0*(1+alpha*(theta-T0))))'
                 md.add_initialized_data('eps', [epsilon])
@@ -642,8 +669,10 @@ Thermal problem
 
 Now, the program to take into account the thermal problem:
 
+.. tabularcolumns:: |p{0.080\linewidth}|p{0.900\linewidth}|
+
 ========== ===========================================================================
-**C++**    .. code-block:: c++                             
+**C++**    .. code-block:: c++
 
                 md.add_initialized_scalar_data("kaeps", kappa*epsilon);
                 getfem::add_generic_elliptic_brick(md, mim, "theta", "kaeps");
@@ -655,7 +684,7 @@ Now, the program to take into account the thermal problem:
                 getfem::add_nonlinear_term
                   (md, mim, "-"+sigmaeps+"*Norm_sqr(Grad_V)*Test_theta");
 ---------- ---------------------------------------------------------------------------
-**Python** .. code-block:: python                                     
+**Python** .. code-block:: python
 
                 md.add_initialized_data('kaeps', [kappa*epsilon])
                 md.add_generic_elliptic_brick(mim, 'theta', 'kaeps')
@@ -686,7 +715,7 @@ Now, the program to take into account the thermal problem:
                 gf_model_set(md, 'add mass brick', mim, 'theta', 'D2');
                 gf_model_set(md, 'add source term brick', mim, 'theta', 'D2airt');
 
-                gf_model_set(md, 'add nonlinear term', mim, ['-' sigmaeps '*Norm_sqr(Grad_V)*Test_theta']);          
+                gf_model_set(md, 'add nonlinear term', mim, ['-' sigmaeps '*Norm_sqr(Grad_V)*Test_theta']);
 ========== ===========================================================================
 
 
@@ -695,23 +724,25 @@ Model solve
 
 Once the model is correctly defined, we can simply solve it by:
 
+.. tabularcolumns:: |p{0.080\linewidth}|p{0.900\linewidth}|
+
 ========== ===========================================================================
-**C++**    .. code-block:: c++                             
+**C++**    .. code-block:: c++
 
                 gmm::iteration iter(1E-9, 1, 100);
                 getfem::standard_solve(md, iter);
 ---------- ---------------------------------------------------------------------------
-**Python** .. code-block:: python                                     
+**Python** .. code-block:: python
 
                 md.solve('max_res', 1E-9, 'max_iter', 100, 'noisy')
 ---------- ---------------------------------------------------------------------------
 **Scilab** .. code-block:: matlab
 
-                gf_model_get(md, 'solve', 'max_res', 1E-9, 'max_iter', 100, 'noisy'); 
+                gf_model_get(md, 'solve', 'max_res', 1E-9, 'max_iter', 100, 'noisy');
 ---------- ---------------------------------------------------------------------------
 **Matlab** .. code-block:: matlab
 
-                gf_model_get(md, 'solve', 'max_res', 1E-9, 'max_iter', 100, 'noisy');  
+                gf_model_get(md, 'solve', 'max_res', 1E-9, 'max_iter', 100, 'noisy');
 ========== ===========================================================================
 
 Since the problem is globally nonlinear, a Newton method is used to iteratively solve the problem. It needs a few iterations (about 4 in that case).
@@ -722,8 +753,10 @@ Model solve with two steps
 
 Another option to solve the problem is to solve first the thermal and electric potential problems. Indeed, in our model, the thermal and  electric potential do not depend on the deformation. Once the  thermal and electric potential problem, we then solve the deformation problem. This can be done as follows:
 
+.. tabularcolumns:: |p{0.080\linewidth}|p{0.900\linewidth}|
+
 ========== ===========================================================================
-**C++**    .. code-block:: c++                             
+**C++**    .. code-block:: c++
 
                 gmm::iteration iter(1E-9, 1, 100);
                 md.disable_variable("u");
@@ -732,9 +765,9 @@ Another option to solve the problem is to solve first the thermal and electric p
                 md.disable_variable("theta");
                 md.disable_variable("V");
                 iter.init();
-                getfem::standard_solve(md, iter);      
+                getfem::standard_solve(md, iter);
 ---------- ---------------------------------------------------------------------------
-**Python** .. code-block:: python                                     
+**Python** .. code-block:: python
 
                 md.disable_variable('u')
                 md.solve('max_res', 1E-9, 'max_iter', 100, 'noisy')
@@ -769,8 +802,10 @@ Export/visualization of the solution
 
 The finite element problem is now solved. We can plot the solution as follows. Note that for the C++ and Python programs, it is necessary to use an external graphical post-processor. Note also that arbitrary quantities can be post-processed using the generic interpolation (see `ga_interpolation_Lagrange_fem` below). It is also possible to make complex exports and slices (see :ref:`ud-export`).
 
+.. tabularcolumns:: |p{0.080\linewidth}|p{0.900\linewidth}|
+
 ========== =====================================================================================================================================================
-**C++**    .. code-block:: c++                             
+**C++**    .. code-block:: c++
 
                 plain_vector U(mfu.nb_dof()); gmm::copy(md.real_variable("u"), U);
                 plain_vector V(mft.nb_dof()); gmm::copy(md.real_variable("V"), V);
@@ -780,14 +815,14 @@ The finite element problem is now solved. We can plot the solution as follows. N
                   (md, "u", "clambdastar", "cmu", mfvm, VM, false);
                 plain_vector CO(mfvm.nb_dof() * 2);
                 getfem::ga_interpolation_Lagrange_fem(md, "-"+sigmaeps+"*Grad_V",  mfvm, CO);
-  
+
                 getfem::vtk_export exp("displacement_with_von_mises.vtk", false);
                 exp.exporting(mfu);
                 exp.write_point_data(mfu, U, "elastostatic displacement");
                 exp.write_point_data(mfvm, VM, "Von Mises stress");
                 cout << "\nYou can view solutions with for instance:\n\nmayavi2 "
                   "-d displacement_with_von_mises.vtk -f WarpVector -m Surface\n" << endl;
-  
+
                 getfem::vtk_export exp2("temperature.vtk", false);
                 exp2.exporting(mft);
                 exp2.write_point_data(mft, THETA, "Temperature");
@@ -798,9 +833,9 @@ The finite element problem is now solved. We can plot the solution as follows. N
                 exp3.write_point_data(mft, V, "Electric potential");
                 cout << "mayavi2 -d electric_potential.vtk -f WarpScalar -m Surface\n"
                      << endl;
-                }      
+                }
 ---------- -----------------------------------------------------------------------------------------------------------------------------------------------------
-**Python** .. code-block:: python                                     
+**Python** .. code-block:: python
 
                 U = md.variable('u')
                 V = md.variable('V')
@@ -815,8 +850,12 @@ The finite element problem is now solved. We can plot the solution as follows. N
                 mft.export_to_vtk('temperature.vtk', mft, THETA, 'Temperature')
                 print ('mayavi2 -d temperature.vtk -f WarpScalar -m Surface')
                 mft.export_to_vtk('electric_potential.vtk', mft, V, 'Electric potential')
-                print ('mayavi2 -d electric_potential.vtk -f WarpScalar -m Surface')    
----------- -----------------------------------------------------------------------------------------------------------------------------------------------------
+                print ('mayavi2 -d electric_potential.vtk -f WarpScalar -m Surface')
+========== =====================================================================================================================================================
+
+.. tabularcolumns:: |p{0.080\linewidth}|p{0.900\linewidth}|
+
+========== =====================================================================================================================================================
 **Scilab** .. code-block:: matlab
 
                 U = gf_model_get(md, 'variable', 'u');
@@ -824,7 +863,7 @@ The finite element problem is now solved. We can plot the solution as follows. N
                 THETA = gf_model_get(md, 'variable', 'theta');
                 VM = gf_model_get(md, 'compute_isotropic_linearized_Von_Mises_or_Tresca', 'u', 'clambdastar', 'cmu', mfvm);
                 CO = matrix(gf_model_get(md, 'interpolation', '-'+sigmaeps+'*Grad_V', mfvm), [2 gf_mesh_fem_get(mfvm, 'nbdof')]);
-    
+
                 hh = scf(2);
                 hh.color_map = jetcolormap(255);
                 subplot(3,1,1);
@@ -844,7 +883,11 @@ The finite element problem is now solved. We can plot the solution as follows. N
                 colorbar(min(THETA),max(THETA));
                 title('Temperature in °C (on the deformed configuration, scale factor x100)');
 
----------- -----------------------------------------------------------------------------------------------------------------------------------------------------
+========== =====================================================================================================================================================
+
+.. tabularcolumns:: |p{0.080\linewidth}|p{0.900\linewidth}|
+
+========== =====================================================================================================================================================
 **Matlab** .. code-block:: matlab
 
                 U = gf_model_get(md, 'variable', 'u');
@@ -852,7 +895,7 @@ The finite element problem is now solved. We can plot the solution as follows. N
                 THETA = gf_model_get(md, 'variable', 'theta');
                 VM = gf_model_get(md, 'compute_isotropic_linearized_Von_Mises_or_Tresca', 'u', 'clambdastar', 'cmu', mfvm);
                 CO = reshape(gf_model_get(md, 'interpolation', ['-' sigmaeps '*Grad_V'], mfvm), [2 gf_mesh_fem_get(mfvm, 'nbdof')]);
-    
+
                 figure(2);
                 subplot(3,1,1);
                 gf_plot(mfvm, VM, 'mesh', 'off', 'deformed_mesh','off', 'deformation', U, 'deformation_mf', mfu, 'deformation_scale', 100, 'refine', 8);
@@ -871,7 +914,7 @@ The finite element problem is now solved. We can plot the solution as follows. N
                 gf_plot(mft, THETA, 'mesh', 'off', 'deformed_mesh','off', 'deformation', U, 'deformation_mf', mfu, 'deformation_scale', 100, 'refine', 8);
                 colorbar;
                 title('Temperature in ?C (on the deformed configuration, scale factor x100)');
-     
+
 ========== =====================================================================================================================================================
 
 

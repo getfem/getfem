@@ -86,8 +86,8 @@ namespace getfem {
     }
     return false;
   }
-  
-  
+
+
   static scalar_type ga_Heaviside(scalar_type t) { return (t >= 0.) ? 1.: 0.; }
   static scalar_type ga_pos_part(scalar_type t) { return (t >= 0.) ? t : 0.; }
   static scalar_type ga_reg_pos_part(scalar_type t, scalar_type eps)
@@ -411,9 +411,9 @@ namespace getfem {
     : ftype_(1), dtype_(3), nbargs_(1), expr_(expr__),
       derivative1_(""), derivative2_(""), t(1, 0.), u(1, 0.), gis(nullptr) {}
 
-  
+
   ga_predef_function_tab::ga_predef_function_tab() {
-    
+
     ga_predef_function_tab &PREDEF_FUNCTIONS = *this;
 
     // Power functions and their derivatives
@@ -421,7 +421,7 @@ namespace getfem {
     PREDEF_FUNCTIONS["sqr"] = ga_predef_function(ga_sqr, 2, "2*t");
     PREDEF_FUNCTIONS["pow"] = ga_predef_function(pow, 1, "DER_PDFUNC1_POW",
                                                  "DER_PDFUNC2_POW");
-    
+
     PREDEF_FUNCTIONS["DER_PDFUNC_SQRT"] =
       ga_predef_function(ga_der_sqrt, 2, "-0.25/(t*sqrt(t))");
     PREDEF_FUNCTIONS["DER_PDFUNC1_POW"] =
@@ -529,7 +529,7 @@ namespace getfem {
       = ga_predef_function(ga_der_reg_pos_part, 1, "DER2_REG_POS_PART", "");
     PREDEF_FUNCTIONS["DER_REG_POS_PART"]
       = ga_predef_function(ga_der2_reg_pos_part);
-    
+
     PREDEF_FUNCTIONS["max"]
       = ga_predef_function(ga_max, 1, "DER_PDFUNC1_MAX", "DER_PDFUNC2_MAX");
     PREDEF_FUNCTIONS["min"]
@@ -545,7 +545,7 @@ namespace getfem {
   ga_spec_function_tab::ga_spec_function_tab() {
     // Predefined special functions
     ga_spec_function_tab &SPEC_FUNCTIONS = *this;
-    
+
     SPEC_FUNCTIONS.insert("pi");
     SPEC_FUNCTIONS.insert("meshdim");
     SPEC_FUNCTIONS.insert("timestep");
@@ -605,7 +605,8 @@ namespace getfem {
   void ga_define_function(const std::string &name, size_type nbargs,
                           const std::string &expr, const std::string &der1,
                           const std::string &der2) {
-    auto guard = omp_guard{};
+
+    GLOBAL_OMP_GUARD
 
     auto &PREDEF_FUNCTIONS = dal::singleton<ga_predef_function_tab>::instance(0);
     if(PREDEF_FUNCTIONS.find(name) != PREDEF_FUNCTIONS.end()) return;
@@ -624,7 +625,7 @@ namespace getfem {
     PREDEF_FUNCTIONS[name] = ga_predef_function(expr);
     ga_predef_function &F = PREDEF_FUNCTIONS[name];
     F.gis = std::make_unique<instruction_set>();
-    for (size_type thread = 0; thread < num_threads(); ++thread)
+    for (size_type thread = 0; thread < F.workspace.num_threads(); ++thread)
     {
       F.workspace(thread).add_fixed_size_variable("t", gmm::sub_interval(0,1),
                                                   F.t(thread));
@@ -646,7 +647,7 @@ namespace getfem {
 
   void ga_define_function(const std::string &name, pscalar_func_onearg f,
                           const std::string &der) {
-    auto guard = omp_guard{};
+    GLOBAL_OMP_GUARD
     ga_predef_function_tab &PREDEF_FUNCTIONS
       = dal::singleton<ga_predef_function_tab>::instance(0);
     PREDEF_FUNCTIONS[name] = ga_predef_function(f, 1, der);
@@ -657,7 +658,7 @@ namespace getfem {
 
   void ga_define_function(const std::string &name, pscalar_func_twoargs f,
                           const std::string &der1, const std::string &der2) {
-    auto guard = omp_guard{};
+    GLOBAL_OMP_GUARD
     ga_predef_function_tab &PREDEF_FUNCTIONS
       = dal::singleton<ga_predef_function_tab>::instance(0);
     PREDEF_FUNCTIONS[name] = ga_predef_function(f, 1, der1, der2);
@@ -669,7 +670,7 @@ namespace getfem {
   }
 
   void ga_undefine_function(const std::string &name) {
-    auto guard = omp_guard{};
+    GLOBAL_OMP_GUARD
     ga_predef_function_tab &PREDEF_FUNCTIONS
       = dal::singleton<ga_predef_function_tab>::instance(0);
     ga_predef_function_tab::iterator it = PREDEF_FUNCTIONS.find(name);

@@ -24,12 +24,12 @@ Files
    :widths: 8, 15
 
    :file:`getfem_continuation.h` and :file:`getfem_continuation.cc`, "The generic continuation and branching method"
-   
+
 
 State
 ^^^^^
 
-Have already generic and advanced functionalities. 
+Have already generic and advanced functionalities.
 
 Perspectives
 ^^^^^^^^^^^^

@@ -101,8 +101,8 @@ namespace bgeot {
     base_poly default_poly;
 
   public :
-    
-    template <class ITER> scalar_type eval(const ITER &it) const;
+
+    template <class ITER> scalar_type eval(const ITER &it, size_type l = -1) const;
     void derivative(short_type k);
     void set_poly_of_subelt(size_type l, const base_poly &poly);
     const base_poly &poly_of_subelt(size_type l) const;
@@ -133,7 +133,16 @@ namespace bgeot {
   }
 
   template <class ITER>
-  scalar_type polynomial_composite::eval(const ITER &it) const {
+  scalar_type polynomial_composite::eval(const ITER &it, size_type l) const {
+
+    if (l != size_type(-1)) {
+      if (!local_coordinate) return poly_of_subelt(l).eval(it);
+      base_node p(mp->dim());
+      std::copy(it, it + mp->dim(), p.begin());
+      mult_diff_transposed(mp->gtrans[l], it, mp->orgs[l], p);
+      return poly_of_subelt(l).eval(p.begin());
+    }
+
     base_node p0(mp->dim());
     std::copy(it, it + mp->dim(), p0.begin());
     mesh_structure::ind_cv_ct::const_iterator itc, itce;

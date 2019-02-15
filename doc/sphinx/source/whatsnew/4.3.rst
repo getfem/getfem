@@ -4,7 +4,7 @@
   What's New in |gf| 4.3
 ****************************
 
-This release is a transitional one until next version 5.0. The new high-level generic assembly based on a weak form language is working and usable. However, the basic model bricks still use the old generic assembly and the new assembly is for the moment incompatible with a few things (Nitsche bricks and time dispatcher bricks). 
+This release is a transitional one until next version 5.0. The new high-level generic assembly based on a weak form language is working and usable. However, the basic model bricks still use the old generic assembly and the new assembly is for the moment incompatible with a few things (Nitsche bricks and time dispatcher bricks).
 
 Released version, 2014/07/14.
 
@@ -17,7 +17,7 @@ The main changes are:
    * The introduction of interpolate transformations in the weak form language
      to deal with the assembly of terms on different meshes or part of meshes.
      Example of applications : mortar methods, periodic boundary conditions,
-     large sliding contact conditions 
+     large sliding contact conditions
 
    * A large sliding contact with friction brick is now working
      (work of Konstantinos Poulios and Yves Renard) and will be extended soon.

@@ -1,7 +1,7 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
 
- Copyright (C) 2009-2017 Yann Collette
+ Copyright (C) 2002-2017 Yves Renard
 
  This file is a part of GetFEM++
 
@@ -29,21 +29,30 @@
 
 ===========================================================================*/
 
-#ifndef GFM_COMMON_H
-#define GFM_COMMON_H
+/**@file getfem_locale.h
+  @author  Andriy Andreykiv andriy.andreykiv@gmail.com
+  @date November 29, 2018
+  @brief thread safe standard locale with RAII semantics
+*/
 
-#include <api_scilab.h> 
-#include "gfi_array.h"
+#pragma once
 
-extern StrCtx* pvApiCtx; // valid for Scilab 6.0 ? 
+#include <locale.h>
+#include <string>
 
-const char* sci_ClassID2string(sci_types id);
-int sci_array_to_gfi_array(int * sci_x, gfi_array *t);
-int gfi_array_to_sci_array(gfi_array *t, int i);
-gfi_array_list *build_gfi_array_list(int nrhs, int ** prhs);
+#include "getfem_omp.h"
 
-typedef void (*getfem_sigint_handler_t)(int);
-void install_custom_sigint(getfem_sigint_handler_t h);
-void remove_custom_sigint(int allow_rethrow);
+namespace getfem {
 
-#endif
+  /**Identical to gmm::standard_locale, but does not
+     change std::locale in multi-threaded sections
+     of the code, which is not thread-safe*/
+  class standard_locale {
+    std::string cloc;
+    std::locale cinloc;
+  public :
+    standard_locale();
+    ~standard_locale();
+  };
+
+}  /* end of namespace getfem.                                             */

@@ -17,7 +17,7 @@ The main dependences of |Gf| on other libraries are
   from git version to get the latest changes.
 
 * Python development files (Python.h etc.) and also the |np| and |sp| packages if
-  you want to build the python interface. 
+  you want to build the python interface.
 
 * sequential MUMPS package (direct solver for sparse matrices) if you want to use it instead of the SuperLU version distributed along with |gf|.
 
@@ -29,7 +29,7 @@ The main dependences of |Gf| on other libraries are
 
 |gf| C++ library can be build on its own or together with the Python, Scilab and/or Matlab interface.
 
-You can also install the stable release of Getfem on linux distributions using the corresponding package management system. 
+You can also install the stable release of Getfem on linux distributions using the corresponding package management system.
 
 
 More specific information on how to build Getfem C++ library can be found on the `download and install <../download.html>`_ page.

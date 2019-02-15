@@ -40,11 +40,9 @@ else
   MLAB="${MATLAB_ROOT}/bin/matlab -nodesktop -nojvm -nosplash"
 fi
 
-if [ -f "/usr/lib/libblas.so" ]; then
-    s=$(echo "s=getenv('MATLABPATH'); while (length(s)), [a,s]=strtok(s,':'); addpath(a); end; disp(pwd); check_all; pause(1)" | LD_PRELOAD=/usr/lib/libblas.so ${MLAB} 2>&1);
-else
-    s=$(echo "s=getenv('MATLABPATH'); while (length(s)), [a,s]=strtok(s,':'); addpath(a); end; disp(pwd); check_all; pause(1)" | ${MLAB} 2>&1);
-fi
+# s=$(echo "s=getenv('MATLABPATH'); while (length(s)), [a,s]=strtok(s,':'); addpath(a); end; disp(pwd); check_all; pause(1)" | ${MLAB} 2>&1);
+
+s=$(echo "s=getenv('MATLABPATH'); while (length(s)), [a,s]=strtok(s,':'); addpath(a); end; disp(pwd); check_all; pause(1)" | LD_PRELOAD=libblas.so ${MLAB} 2>&1);
 
 k=`echo "$s" | grep "All tests succeeded"`;
 if test x"$k" = x""; then

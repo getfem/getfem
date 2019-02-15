@@ -78,7 +78,7 @@ Those two type of matrices store an array of ``VECT`` so the memory is not conti
   gmm::row_matrix< std::vector<double> > M1(10, 10);  // dense row matrix
   gmm::col_matrix< gmm::wsvector<double> > M2(5, 20); // sparse column matrix
 
-Of course ``gmm::row_matrix<VECT>`` is a row matrix and it is impossible to access to a particular column of this matrix. 
+Of course ``gmm::row_matrix<VECT>`` is a row matrix and it is impossible to access to a particular column of this matrix.
 
 
 ``gmm::mat_nrows(M)`` gives the number of rows of a matrix and ``gmm::mat_ncols(M)`` the number of columns.
@@ -98,7 +98,7 @@ sparse matrices
 ---------------
 
 Similarly, ``gmm::row_matrix< gmm::wsvector<double> >`` or ``gmm::col_matrix< gmm::rsvector<double> >`` represents some sparse matrices, but |gmm| provides also two types of classical sparse matrix types::
- 
+
   gmm::csr_matrix<T>
   gmm::csc_matrix<T>
 

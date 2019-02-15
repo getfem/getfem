@@ -27,7 +27,7 @@ the degree of each integration method.
 Exact Integration methods
 -------------------------
 
-|gf| furnishes a set of exact integration methods. This means that polynomials are integrated exactly. However, their use is (very) limited and not recommended. The use of exact integration methods is limited to the low-level generic assembly for polynomial :math:`\tau`-equivalent elements with linear transformations and for linear terms. It is not possible to use them in the high-level generic assembly. 
+|gf| furnishes a set of exact integration methods. This means that polynomials are integrated exactly. However, their use is (very) limited and not recommended. The use of exact integration methods is limited to the low-level generic assembly for polynomial :math:`\tau`-equivalent elements with linear transformations and for linear terms. It is not possible to use them in the high-level generic assembly.
 
 The list of available exact integration methods is the following
 

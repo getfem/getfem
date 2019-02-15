@@ -16,7 +16,7 @@ using the mesh regions to parallelize assembly procedures.
 
 Nevertheless, the brick system offers a generic parallelization based on MPI
 (communication between processes),
-`METIS <http://glaros.dtc.umn.edu/gkhome/metis/metis/overview>`_ 
+`METIS <http://glaros.dtc.umn.edu/gkhome/metis/metis/overview>`_
 (partition of the mesh)
 and `MUMPS <http://graal.ens-lyon.fr/MUMPS>`_ (parallel sparse direct solver).
 It is available with the compiler option ``-D GETFEM_PARA_LEVEL=2``
@@ -90,7 +90,7 @@ Parallelization of getfem is still considered a "work in progress". A certain nu
   assembly procedures of standard bricks use a METIS partition of the
   meshes to distribute the assembly. The tangent/stiffness matrices
   remain distibuted and the standard solve call the parallel version
-  of MUMPS (which accept distributed matrices). 
+  of MUMPS (which accept distributed matrices).
 
   For the moment, the procedure ``actualize_sizes()`` of the model
   object remains sequential and is executed on each process.
@@ -105,7 +105,7 @@ Parallelization of getfem is still considered a "work in progress". A certain nu
   * The explicit rhs brick: the given vector is not considered to be
     distributed. Only the given vector on the master process is taken into
     account.
-  
+
   * Constraint brick: The given matrix and rhs are not considered to be
     distributed. Only the given matrix and vector on the master process are
     taken into account.

@@ -145,16 +145,16 @@ case $CXX in
 	GCCVER=`$CXX --version | head -1 | cut -d ' ' -f3`
 	echo "Using the GNU g++ compiler $GCCVER"
 	AC_CHECK_CXX_FLAG([$with_optimization],CXXFLAGS)
-	AC_CHECK_CXX_FLAG([-Wall -W],CXXFLAGS)
 	AC_CHECK_CXX_FLAG([-fmessage-length=0],CXXFLAGS)
 	AC_CHECK_CXX_FLAG([-fvisibility-inlines-hidden],CXXFLAGS)
 	AC_CHECK_CXX_FLAG([-ftemplate-depth-100],CXXFLAGS)
 	AC_CHECK_CXX_FLAG([-std=c++11], CXXFLAGS,[AC_CHECK_CXX_FLAG([-std=c++0x],CXXFLAGS,[AC_MSG_ERROR([g++ do not support option -std=c++11. Update g++ to at least release 4.8.1.])] )])
 	AC_CHECK_CXX_FLAG([-fPIC],CXXFLAGS)
-	AC_CHECK_CXX_FLAG([-pedantic],CXXFLAGS)
+	AC_CHECK_CXX_FLAG([-Wall -W -Wextra],CXXFLAGS)
+	dnl AC_CHECK_CXX_FLAG([-pedantic],CXXFLAGS)
 	AC_CHECK_CXX_FLAG([-Wshadow],CXXFLAGS)
-	AC_CHECK_CXX_FLAG([-Wno-terminate],CXXFLAGS)
-	AC_CHECK_CXX_FLAG([-Wno-implicit-fallthrough],CXXFLAGS)
+	dnl AC_CHECK_CXX_FLAG([-Wno-terminate],CXXFLAGS)
+	dnl AC_CHECK_CXX_FLAG([-Wno-implicit-fallthrough],CXXFLAGS)
 	AC_CHECK_CXX_FLAG([-Wno-unknown-pragmas],CXXFLAGS)
 	AC_CHECK_CXX_FLAG([-Wno-variadic-macros],CXXFLAGS)
 	AC_CHECK_CXX_FLAG([-Wno-unused-but-set-variable],CXXFLAGS)
@@ -384,7 +384,7 @@ if test x$useopenmp = xYES; then
   AC_OPENMP
   if test "x$ac_cv_prog_cxx_openmp" != "xunsupported" && test "x$ac_cv_prog_cxx_openmp" != "x"; then
     AC_SUBST(AM_CXXFLAGS,"$OPENMP_CXXFLAGS")
-    CPPFLAGS="$CPPFLAGS -DGETFEM_HAVE_OPENMP"
+    CPPFLAGS="$CPPFLAGS -DGETFEM_HAS_OPENMP"
   else
     AC_MSG_ERROR([OpenMP support not found. Use --enable-openmp=no flag to compile GetFEM++ without OpenMP]);
   fi
@@ -1059,8 +1059,8 @@ dnl -----------------------------------------------
 
 m4_include([m4/scilab.m4])
 
-REQUIRED_SCILAB_MAJOR=5
-REQUIRED_SCILAB_MINOR=2
+REQUIRED_SCILAB_MAJOR=6
+REQUIRED_SCILAB_MINOR=0
 REQUIRED_SCILAB_MICRO=0
 
 AC_CHECK_SCILAB

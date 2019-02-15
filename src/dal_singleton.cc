@@ -27,48 +27,41 @@
 
 namespace dal {
 
- 
-  singletons_manager::singletons_manager() : lst() {}
-  
-  singletons_manager& singletons_manager::m = manager();
+  singletons_manager::singletons_manager()
+    : lst{}, nb_partitions{lst.num_threads()}
+  {}
 
-  singletons_manager& singletons_manager::manager()
-  {
+  singletons_manager& singletons_manager::manager(){
     static singletons_manager x;
     return x;
   }
 
+  void singletons_manager::register_new_singleton(singleton_instance_base *p){
+    register_new_singleton(p, manager().lst.this_thread());
+  }
 
-	void singletons_manager::register_new_singleton(singleton_instance_base *p) 
-  {  	
-    manager().lst.thrd_cast().push_back(p);
-	}
+  void singletons_manager::register_new_singleton(singleton_instance_base *p, size_t ithread){
+    if (p) manager().lst(ithread).push_back(p);
+  }
 
-	void singletons_manager::register_new_singleton(singleton_instance_base *p, size_t ithread) 
-  {  	
-    manager().lst(ithread).push_back(p);
-	}
-
-
-	static int level_compare(singleton_instance_base *a,
-		singleton_instance_base *b) 
-	{
-		return a->level() < b->level();
-	}
-
-  singletons_manager::~singletons_manager() { 
-    GMM_ASSERT1(!getfem::me_is_multithreaded_now(), 
-                "singletons_manager destructor should" 
-                "not be running in parallel !!");
-    //arrange distruction per thread
-    for(size_t i=0;i<getfem::num_threads();i++)
-    {
-      /* sort singletons in increasing levels,
-      lowest levels will be destroyed first */
-      std::sort(lst(i).begin(),lst(i).end(), level_compare);
-      std::vector<singleton_instance_base *>::const_iterator it  = lst(i).begin();
-      std::vector<singleton_instance_base *>::const_iterator ite = lst(i).end();			
-      for ( ; it != ite; ++it) { delete *it; }
+  void singletons_manager::on_partitions_change(){
+    auto new_nb_partitions = manager().lst.num_threads();
+    auto &nb_partitions = manager().nb_partitions;
+    if (new_nb_partitions > nb_partitions){ //not allowing reducing nb. of partitions,
+      manager().lst.on_thread_update();     //as it will invalidate global storage
+      nb_partitions = new_nb_partitions;
     }
   }
-}
+
+  static int level_compare(singleton_instance_base *a, singleton_instance_base *b) {
+    return a->level() < b->level();
+  }
+
+  singletons_manager::~singletons_manager() {
+    for(size_type i = 0; i != nb_partitions; ++i){
+      std::sort(lst(i).begin(), lst(i).end(), level_compare);
+      for (auto &&p : lst(i)) delete p;
+    }
+  }
+
+}/* end of namespace dal                                                             */

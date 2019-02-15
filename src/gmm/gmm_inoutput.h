@@ -1160,6 +1160,7 @@ namespace gmm {
       else {
         FILE* f = fopen(fname.c_str(), "w");
         for (size_type i=0; i < gmm::vect_size(V); ++i) fprintf(f, Vformat.c_str(), V[i]);
+        fclose(f);
       }
     }
   } 

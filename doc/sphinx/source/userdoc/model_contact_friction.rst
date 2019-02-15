@@ -68,13 +68,13 @@ Suppose now that you approximate a linearized elasticity problem submitted to co
 .. math::
 
   u_N(a_i) = (B_N U)_i,
- 
+
   (\dot{u}_T(a_i))_k = (B_T \dot{U})_{(d-1)(i-1)+k},
 
 where :math:`d` is the dimension of the domain and :math:`k = 1..d-1`. The expression of the elasticity problem with contact with friction can be written as
 
 .. math::
- 
+
   K U = L + B_N^T \lambda_N + B_T^T \lambda_T,
 
   -\frac{1}{r\alpha_i}(\lambda_N^i - P_{]-\infty, 0]}(\lambda_N^i - \alpha_i r ((B_N U)_i - \text{gap}_i))) = 0, ~~ i = 1..N_c,
@@ -102,7 +102,7 @@ where :math:`a_i`, :math:`~~i=1..N_c` are the finite element nodes corresponding
 
 .. math::
 
-  \int_{\Gamma_c} (\mu_N^h - \lambda_N^h) (u_N - \text{gap}) d\Gamma \ge 0 ~~ \forall \mu_N^h \in \Lambda_N^h. 
+  \int_{\Gamma_c} (\mu_N^h - \lambda_N^h) (u_N - \text{gap}) d\Gamma \ge 0 ~~ \forall \mu_N^h \in \Lambda_N^h.
 
 In that case, the component :math:`\lambda_N^i` is a contact stress (:math:`N/m^2`) and the matrix :math:`B_N` can be written
 
@@ -118,10 +118,10 @@ The matrix :math:`B_T` can also be written in a similar way. The friction condit
 
 where :math:`\Lambda_T^h({\mathscr F}\lambda_N^h)` is the discrete set of admissible friction stress.
 
-Finally, the expression of the direct nodal contact condition are recovered 
+Finally, the expression of the direct nodal contact condition are recovered
 
 .. math::
- 
+
   K U = L + B_N^T \lambda_N + B_T^T \lambda_T,
 
   -\frac{1}{r\alpha_i}(\lambda_N^i - P_{]-\infty, 0]}(\lambda_N^i - \alpha_i r ((B_N U)_i - \text{gap}_i))) = 0, ~~ i = 1..N_c,
@@ -196,7 +196,7 @@ where :math:`a(\cdot, \cdot)` and :math:`\ell(v)` represent the remaining parts 
   ~~~~~~ \displaystyle +\int_{\Gamma_c}({\mathscr F} D_{\rho}P_{B(\rho)}(\lambda^h_T - r\alpha(u^h_T-w^h_T))\delta_{u_N})\cdot\mu^h_T d\Gamma \\
   ~~~~~~ \displaystyle -\int_{\Gamma_c}(\frac{\mathscr F}{r} D_{\rho}P_{B(\rho)}(\lambda^h_T - r\alpha(u^h_T-w^h_T))\delta_{\lambda_N})\cdot\mu^h_T d\Gamma = \cdots ~~~ \forall \mu^h \in W^h,
   \end{array}\right.
-  
+
 where :math:`H(\cdot)` is the Heaviside function (0 for a negative argument and 1 for a non-negative argument), :math:`D_xP_{B(\rho)}(x)` and :math:`D_{\rho}P_{B(\rho)}(x)` are the derivatives of the projection on :math:`B(\rho)` (assumed to vanish for :math:`\rho \le 0`) and :math:`\delta_{\lambda}` and :math:`\delta_{u}` are the unknown corresponding to the tangent problem.
 
 
@@ -336,7 +336,7 @@ The contact condition is prescribed thank to a multiplier
 size should be the number of rows of ``B_T``.
 The parameter ``dataname_friction_coeff`` describes the friction
 coefficient. It could be a scalar or a vector describing the
-coefficient on each contact condition. 
+coefficient on each contact condition.
 The augmentation parameter ``r`` should be chosen in a range of acceptable values
 (see Getfem user documentation). ``dataname_gap`` is an
 optional parameter representing the initial gap. It can be a single value
@@ -369,7 +369,7 @@ are 'x', 'y' in 2D and 'x', 'y', 'z' in 3D. For instance, if the rigid
 obstacle correspond to :math:`z \le 0`, the corresponding signed distance will
 be simply 'z'. ``multname_n`` should be a fixed size variable whose size is
 the number of degrees of freedom on boundary ``region``. It represents the
-contact equivalent nodal forces. 
+contact equivalent nodal forces.
 The augmentation parameter ``r`` should be chosen in a
 range of acceptable values (close to the Young modulus of the elastic
 body, see Getfem user documentation). 1 for the non-symmetric Alart-Curnier augmented Lagrangian, 2 for the symmetric one, 3 for the unsymmetric method based on augmented multipliers.
@@ -392,7 +392,7 @@ are 'x', 'y' in 2D and 'x', 'y', 'z' in 3D. For instance, if the rigid
 obstacle correspond to :math:`z \le 0`, the corresponding signed distance will
 be simply 'z'. ``multname_n`` should be a fixed size variable whose size is
 the number of degrees of freedom on boundary ``region``. It represents the
-contact equivalent nodal forces. 
+contact equivalent nodal forces.
 ``multname_t`` should be a fixed size variable whose size is
 the number of degrees of freedom on boundary ``region`` multiplied by
 :math:`d-1` where :math:`d` is the domain dimension. It represents the

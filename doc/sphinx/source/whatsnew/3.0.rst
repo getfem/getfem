@@ -13,7 +13,7 @@ Not so many changes, but some of them are incompatible with |gf| 2.0:
      directives have to be updated:
 
      * ``#include "gmm_xxx.h"`` should be replaced with
-       ``#include "gmm/gmm_xxx.h"`` 
+       ``#include "gmm/gmm_xxx.h"``
 
      * ``#include "getfem_xxx.h"`` should be replaced with
        ``#include "getfem/getfem_xxx.h"``

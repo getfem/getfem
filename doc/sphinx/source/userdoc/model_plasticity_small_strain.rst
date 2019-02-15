@@ -131,7 +131,7 @@ A solution would be to solve the whole problem with all the unknows, that is :ma
 
    {\mathscr A} : (u_{n+1}, \zeta_{n}, \eta_n) \mapsto \alpha_{n+1}
 
-   
+
 
 with :math:`\eta_n, \zeta_{n}` the right hand side of equations :eq:`thetascheme1`, :eq:`thetascheme2`, i.e.
 
@@ -205,7 +205,7 @@ In the decomposition of plastic and elastic part of the strain tensor, we assume
 
 and
 
-.. math:: \varepsilon^e_{3,3} + \varepsilon^p_{3,3} = \varepsilon_{3,3} = 0. 
+.. math:: \varepsilon^e_{3,3} + \varepsilon^p_{3,3} = \varepsilon_{3,3} = 0.
 
 The adaptation to the plane strain approximation to plastic model is most of the time an  easy task. An isotropic linearized elastic response reads
 
@@ -232,7 +232,7 @@ The plane stress approximation describe generally the 2D membrane deformation of
 
 .. math:: \sigma = \left(\hspace{-0.5em}\begin{array}{ccc} \sigma_{1,1} & \sigma_{1,2} & 0 \\ \sigma_{1,2} & \sigma_{2,2} & 0 \\ 0 & 0 & 0 \end{array}\hspace{-0.5em}\right).
 
-We will still denote 
+We will still denote
 
 .. math:: \bar{\sigma} =  \left(\hspace{-0.5em}\begin{array}{cc} \sigma_{1,1} & \sigma_{1,2} \\ \sigma_{1,2} & \sigma_{2,2} \end{array}\hspace{-0.5em}\right)
 
@@ -305,13 +305,13 @@ One has
 
 .. math:: \|\mbox{Dev}(\sigma_{n+1})\| = 2\mu\|\mbox{Dev}(\varepsilon(u_{n+1})) -\varepsilon^p_{n+1}\| = \Frac{2\mu}{1+2\mu\theta\Delta t \xi_{n+1}}\|\mbox{Dev}(\varepsilon(u_{n+1})) - \zeta_n\|,
 
-Thus, denoting :math:`B = \mbox{Dev}(\varepsilon(u_{n+1})) - \zeta_n`, either 
+Thus, denoting :math:`B = \mbox{Dev}(\varepsilon(u_{n+1})) - \zeta_n`, either
 
 .. math:: 2\mu\|B\| \le \sqrt{\frac{2}{3}}\sigma_y,
 
 and :math:`\xi_{n+1} = 0`, i.e. we are in the elastic case, or  :math:`\|\mbox{Dev}(\sigma_{n+1})\| =  \sqrt{\frac{2}{3}}` and one obtains
 
-.. math:: 1+2\mu\theta\Delta t \xi_{n+1} = \Frac{2\mu\|B\|}{\sqrt{\frac{2}{3}}\sigma_y}, 
+.. math:: 1+2\mu\theta\Delta t \xi_{n+1} = \Frac{2\mu\|B\|}{\sqrt{\frac{2}{3}}\sigma_y},
 
 and thus
 
@@ -334,7 +334,7 @@ The plane strain approximation has the same expression replacing the 3D strain t
 
 where :math:`\overline{\mbox{Dev}}(\bar{\varepsilon}) = \bar{\varepsilon} - \Frac{\mbox{tr}(\bar{\varepsilon})}{3} \bar{I}` is the 2D restriction of the 3D deviator.
 
-Moreover, for the yield condition, 
+Moreover, for the yield condition,
 
 .. math:: \|\mbox{Dev}(\sigma)\|^2 = 4\mu^2\left(\|\overline{\mbox{Dev}}\bar{\varepsilon}(u) - \bar{\varepsilon}^p\|^2 + \left(\Frac{\mbox{tr}(\bar{\varepsilon}(u))}{3} -\mbox{tr}(\bar{\varepsilon}^p) \right)^2\right).
 
@@ -468,7 +468,7 @@ to be done ...
 
 
 
-Elasto-plasticity bricks 
+Elasto-plasticity bricks
 +++++++++++++++++++++++++
 
 See the test programs :file:`tests/plasticity.cc`, :file:`interface/tests/matlab/demo_plasticity.m`, :file:`interface/tests/matlab/demo_plasticity.py` and in :file:`contrib/test_plasticity`.
@@ -623,7 +623,7 @@ Additionaly, The function: ::
 computes the new stress constraint values supported by the material after a load or an unload (once a solve has been done earlier) and upload the variables ``varname`` and ``datasigma`` as follows:
 
 .. math::
-   
+
    u^{n+1} \Rightarrow u^n \ \ \ \ \ \textrm{ and } \ \ \ \ \ \sigma^{n+1} \Rightarrow \sigma^n
 
 Then, :math:`u^n` and :math:`\sigma^n` contains the new values computed and one can restart the process.
@@ -642,7 +642,7 @@ The function: ::
       getfem::compute_plastic_part
           (md, mim, mf_pl, varname, previous_varname, ACP, datalambda, datamu, datathreshold, datasigma, Plast);
 
-computes on ``mf_pl`` the plastic part of the material, that could appear after a load and an unload, into the vector ``Plast``. 
+computes on ``mf_pl`` the plastic part of the material, that could appear after a load and an unload, into the vector ``Plast``.
 
 Note that ``datasigma`` should be the vector containing the new stress constraint values, i.e. after a load or an unload of the material.
 

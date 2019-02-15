@@ -80,7 +80,6 @@ namespace getfem {
        gmm::vect_size(VV)/(imd.nb_filtered_index() * imd.nb_tensor_elem()));
   }
 
-
   bool ga_workspace::variable_exists(const std::string &name) const {
     return (md && md->variable_exists(name)) ||
       (parent_workspace && parent_workspace->variable_exists(name)) ||
@@ -216,7 +215,7 @@ namespace getfem {
   size_type ga_workspace::qdim(const std::string &name) const {
     VAR_SET::const_iterator it = variables.find(name);
     if (it != variables.end()) {
-      const mesh_fem *mf =  it->second.is_fem_dofs ? it->second.mf : 0;
+      const mesh_fem *mf = it->second.is_fem_dofs ? it->second.mf : 0;
       const im_data *imd = it->second.imd;
       size_type n = it->second.qdim();
       if (mf) {
@@ -475,8 +474,8 @@ namespace getfem {
         for (const var_trans_pair &var : expr_variables) {
           if (!(is_constant(var.varname))) {
             ga_tree dtree = (remain ? tree : *(trees[ind_tree].ptree));
-            // cout << "Derivation with respect to " << var.first << " : "
-            //     << var.second << " of " << ga_tree_to_string(dtree) << endl;
+            // cout << "Derivation with respect to " << var.varname << " : "
+            //     << var.transname << " of " << ga_tree_to_string(dtree) << endl;
             GA_TIC;
             ga_derivative(dtree, *this, m, var.varname, var.transname, 1+order);
             // cout << "Result : " << ga_tree_to_string(dtree) << endl;
@@ -514,7 +513,7 @@ namespace getfem {
     GA_TIC;
     size_type max_order = 0;
     std::vector<ga_tree> ltrees(1);
-    ga_read_string(expr, ltrees[0], macro_dictionnary());
+    ga_read_string(expr, ltrees[0], macro_dictionary());
     if (secondary_dom.size()) {
       GMM_ASSERT1(secondary_domain_exists(secondary_dom),
 		  "Unknow secondary domain " << secondary_dom);
@@ -563,7 +562,7 @@ namespace getfem {
 
   void ga_workspace::add_function_expression(const std::string &expr) {
     ga_tree tree;
-    ga_read_string(expr, tree, macro_dictionnary());
+    ga_read_string(expr, tree, macro_dictionary());
     ga_semantic_analysis(tree, *this, dummy_mesh(), 1, false, true);
     if (tree.root) {
       // GMM_ASSERT1(tree.root->nb_test_functions() == 0,
@@ -578,7 +577,7 @@ namespace getfem {
                                                   const mesh_region &rg_) {
     const mesh_region &rg = register_region(m, rg_);
     ga_tree tree;
-    ga_read_string(expr, tree, macro_dictionnary());
+    ga_read_string(expr, tree, macro_dictionary());
     ga_semantic_analysis(tree, *this, m, ref_elt_dim_of_mesh(m),
                          false, false);
     if (tree.root) {
@@ -594,7 +593,7 @@ namespace getfem {
     const mesh &m = mim.linked_mesh();
     const mesh_region &rg = register_region(m, rg_);
     ga_tree tree;
-    ga_read_string(expr, tree, macro_dictionnary());
+    ga_read_string(expr, tree, macro_dictionary());
     ga_semantic_analysis(tree, *this, m, ref_elt_dim_of_mesh(m),
                          false, false);
     if (tree.root) {
@@ -613,7 +612,7 @@ namespace getfem {
     const mesh &m = mim.linked_mesh();
     const mesh_region &rg = register_region(m, rg_);
     ga_tree tree;
-    ga_read_string(expr, tree, macro_dictionnary());
+    ga_read_string(expr, tree, macro_dictionary());
     ga_semantic_analysis(tree, *this, m, ref_elt_dim_of_mesh(m), false, false);
     if (tree.root) {
       GMM_ASSERT1(tree.root->nb_test_functions() == 0,
@@ -820,7 +819,7 @@ namespace getfem {
             std::string &name1 = tree.root->name_test1;
             std::string &name2 = tree.root->name_test2;
             const std::vector<std::string> vnames1_(1,name1),
-                                           vnames2_(2,name2);
+                                           vnames2_(1,name2);
             const std::vector<std::string> &vnames1
               = variable_group_exists(name1) ? variable_group(name1)
                                              : vnames1_;
@@ -914,11 +913,11 @@ namespace getfem {
 			     bool enable_all_variables)
     : md(&md_), parent_workspace(0),
       enable_all_md_variables(enable_all_variables),
-      macro_dict(md_.macro_dictionnary())
+      macro_dict(md_.macro_dictionary())
   { init(); }
   ga_workspace::ga_workspace(bool, const ga_workspace &gaw)
     : md(0), parent_workspace(&gaw), enable_all_md_variables(false),
-      macro_dict(gaw.macro_dictionnary())
+      macro_dict(gaw.macro_dictionary())
   { init(); }
   ga_workspace::ga_workspace()
     : md(0), parent_workspace(0), enable_all_md_variables(false)

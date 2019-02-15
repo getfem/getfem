@@ -244,13 +244,10 @@ namespace getfem {
     obstacles_gw.push_back(ga_workspace());
     pt.resize(N); ptx.resize(1); pty.resize(1); ptz.resize(1); ptw.resize(1);
     obstacles_gw.back().add_fixed_size_constant("X", pt);
-    switch(N) {
-    default:
-    case 4: obstacles_gw.back().add_fixed_size_constant("w", ptw);
-    case 3: obstacles_gw.back().add_fixed_size_constant("z", ptz);
-    case 2: obstacles_gw.back().add_fixed_size_constant("y", pty);
-    case 1: obstacles_gw.back().add_fixed_size_constant("x", ptx);
-    }
+    if (N >= 4) obstacles_gw.back().add_fixed_size_constant("w", ptw);
+    if (N >= 3) obstacles_gw.back().add_fixed_size_constant("z", ptw);
+    if (N >= 2) obstacles_gw.back().add_fixed_size_constant("y", ptw);
+    if (N >= 1) obstacles_gw.back().add_fixed_size_constant("x", ptw);
     obstacles_f.push_back(ga_function(obstacles_gw.back(), obs));
     obstacles_f.back().compile();
     return ind;
@@ -894,36 +891,27 @@ namespace getfem {
         // the release distance)
         size_type irigid_obstacle(-1);
         gmm::copy(x, pt);
-        switch(N) {
-        default:
-        case 4: ptw[0] = pt[3]; 
-        case 3: ptz[0] = pt[2]; 
-        case 2: pty[0] = pt[1]; 
-        case 1: ptx[0] = pt[0];
-        }
+        if (N >= 4) ptw[0] = pt[3];
+        if (N >= 3) ptz[0] = pt[2];
+        if (N >= 2) pty[0] = pt[1];
+        if (N >= 1) ptx[0] = pt[0];
         for (size_type i = 0; i < obstacles.size(); ++i) {
           d1 = (obstacles_f[i].eval())[0];
           if (gmm::abs(d1) < release_distance && d1 < d0) {
 
             for (size_type j=0; j < bpinfo.normals.size(); ++j) {
               gmm::add(gmm::scaled(bpinfo.normals[j], EPS), pt);
-              switch(N) {
-              default:
-              case 4: ptw[0] = pt[3]; 
-              case 3: ptz[0] = pt[2]; 
-              case 2: pty[0] = pt[1]; 
-              case 1: ptx[0] = pt[0];
-              }
+              if (N >= 4) ptw[0] = pt[3];
+              if (N >= 3) ptz[0] = pt[2];
+              if (N >= 2) pty[0] = pt[1];
+              if (N >= 1) ptx[0] = pt[0];
               d2 =  (obstacles_f[i].eval())[0];
               if (d2 < d1) { d0 = d1; irigid_obstacle = i; break; }
               gmm::copy(x, pt);
-              switch(N) {
-              default:
-              case 4: ptw[0] = pt[3]; 
-              case 3: ptz[0] = pt[2]; 
-              case 2: pty[0] = pt[1]; 
-              case 1: ptx[0] = pt[0];
-              }
+              if (N >= 4) ptw[0] = pt[3];
+              if (N >= 3) ptz[0] = pt[2];
+              if (N >= 2) pty[0] = pt[1];
+              if (N >= 1) ptx[0] = pt[0];
             }
           }
         }
@@ -931,13 +919,10 @@ namespace getfem {
         if (irigid_obstacle != size_type(-1)) {
 
           gmm::copy(x, pt);
-          switch(N) {
-          default:
-          case 4: ptw[0] = pt[3]; 
-          case 3: ptz[0] = pt[2]; 
-          case 2: pty[0] = pt[1]; 
-          case 1: ptx[0] = pt[0];
-          }
+          if (N >= 4) ptw[0] = pt[3];
+          if (N >= 3) ptz[0] = pt[2];
+          if (N >= 2) pty[0] = pt[1];
+          if (N >= 1) ptx[0] = pt[0];
           gmm::copy(x, y);
           size_type nit = 0, nb_fail = 0;
           scalar_type alpha(0), beta(0);
@@ -974,13 +959,10 @@ namespace getfem {
               } else {
                 gmm::add(gmm::scaled(ny, -d1/gmm::vect_norm2_sqr(ny)), y, pt);
               }
-              switch(N) {
-              default:
-              case 4: ptw[0] = pt[3]; 
-              case 3: ptz[0] = pt[2]; 
-              case 2: pty[0] = pt[1]; 
-              case 1: ptx[0] = pt[0];
-              }
+              if (N >= 4) ptw[0] = pt[3];
+              if (N >= 3) ptz[0] = pt[2];
+              if (N >= 2) pty[0] = pt[1];
+              if (N >= 1) ptx[0] = pt[0];
               d2 = (obstacles_f[irigid_obstacle].eval())[0];
 //               if (nit > 10)
 //                 cout << "nit = " << nit << " lambda = " << lambda

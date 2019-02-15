@@ -157,7 +157,7 @@ If you want to use a different compiler than the one chosen automatically by the
 Once getfem is compiled:
 
   - Go to the scilab getfem++ interface install directory (interface/src/scilab if the installation is not done)
- 
+
   - launch scilab
 
   - load the getfem++ toolbox with:
