@@ -24,68 +24,13 @@
 #include "gmm/gmm_solver_cg.h"
 #include "gmm/gmm_condition_number.h"
 #include "getfem/getfem_models.h"
+#include "getfem/getfem_accumulated_distro.h"
 #include "getfem/getfem_assembling.h"
 #include "getfem/getfem_derivatives.h"
 #include "getfem/getfem_interpolation.h"
 #include "getfem/getfem_generic_assembly.h"
 
-
 namespace getfem {
-
-
-/** multi-threaded distribution of a single vector or a matrix. Uses RAII semantics
-  (constructor/destructor)  */
-  template <class CONTAINER> class distro
-  {
-    CONTAINER& original;
-    omp_distribute<CONTAINER> distributed;
-
-    void build_distro(gmm::abstract_matrix)
-    {
-      for(size_type thread = 1; thread < num_threads(); thread++)
-      {
-        gmm::resize(distributed(thread), gmm::mat_nrows(original),gmm::mat_ncols(original));
-      }
-    }
-
-    void build_distro(gmm::abstract_vector)
-    {
-      //.. skipping thread 0 ..
-      for(size_type thread = 1; thread < num_threads(); thread++)
-      {
-        gmm::resize(distributed(thread), gmm::vect_size(original));
-      }
-    }
-
-    bool not_multithreaded() const { return num_threads() == 1; }
-
-  public:
-
-    distro(CONTAINER& c) : original(c)
-    {
-      if (not_multithreaded()) return;
-      build_distro(typename gmm::linalg_traits<CONTAINER>::linalg_type());
-    }
-
-    operator CONTAINER&()
-    {
-      if (not_multithreaded() || this_thread() == 0) return original;
-      else return distributed(this_thread());
-    }
-
-    ~distro()
-    {
-      if (not_multithreaded()) return;
-
-      GMM_ASSERT1(!me_is_multithreaded_now(),
-                  "List accumulation should not run in parallel");
-
-      for(size_type thread = 1; thread < num_threads(); thread++)
-      {
-        gmm::add(distributed(thread), original);
-      }
-    }
-  };
 
   model::model(bool comp_version) {
     init(); complex_version = comp_version;
@@ -393,7 +338,7 @@ namespace getfem {
 
 
     // In case of change in fems or mims, linear terms have to be recomputed
-    // We couls select which brick is to be recomputed if we would be able
+    // We could select which brick is to be recomputed if we would be able
     // to know which fem or mim is changed.
     for (dal::bv_visitor ib(valid_bricks); !ib.finished(); ++ib)
       bricks[ib].terms_to_be_computed = true;
@@ -401,7 +346,7 @@ namespace getfem {
     for (auto &&v : variables) {
       const std::string &vname = v.first;
       var_description &vdescr = v.second;
-      if (vdescr.is_fem_dofs && !(vdescr.is_affine_dependent)) {
+      if (vdescr.is_fem_dofs && !vdescr.is_affine_dependent) {
         if ((vdescr.filter & VDESCRFILTER_CTERM)
             || (vdescr.filter & VDESCRFILTER_INFSUP)) {
           VAR_SET::iterator vfilt = variables.find(vdescr.filter_var);
@@ -515,34 +460,23 @@ namespace getfem {
                   GMM_TRACE2("Generic assembly for actualize sizes");
                   {
                     gmm::clear(rTM);
-                    distro<decltype(rTM)>  distro_rTM(rTM);
-                    gmm::standard_locale locale;
-                    open_mp_is_running_properly check;
-                    thread_exception exception;
-                    #pragma omp parallel default(shared)
-                    {
-                      exception.run([&]
-                      {
+                    accumulated_distro<decltype(rTM)>  distro_rTM(rTM);
+                    GETFEM_OMP_PARALLEL(
                         ga_workspace workspace(*this);
                         for (const auto &ge : generic_expressions)
                           workspace.add_expression(ge.expr, ge.mim, ge.region,
-						   2, ge.secondary_domain);
+                                                   2, ge.secondary_domain);
                         workspace.set_assembled_matrix(distro_rTM);
                         workspace.assembly(2);
-                      });
-                    } //parallel
-                    exception.rethrow();
-                  } //distro scope
-                  gmm::add
-                    (gmm::sub_matrix(rTM, vdescr.I, multdescr.I), MM);
+                    );
+                  } //accumulated_distro scope
+                  gmm::add(gmm::sub_matrix(rTM, vdescr.I, multdescr.I), MM);
                   gmm::add(gmm::transposed
-                           (gmm::sub_matrix(rTM, multdescr.I,
-                                            vdescr.I)), MM);
+                           (gmm::sub_matrix(rTM, multdescr.I, vdescr.I)), MM);
                   bupd = false;
                 }
               }
             }
-
 
             for (size_type j = 0; j < brick.tlist.size(); ++j) {
               const term_description &term = brick.tlist[j];
@@ -579,8 +513,8 @@ namespace getfem {
                     bupd = true;
                   }
                   if (cplx)
-                    gmm::add
-                      (gmm::transposed(gmm::real_part(brick.cmatlist[j])), MM);
+                    gmm::add(gmm::transposed(gmm::real_part(brick.cmatlist[j])),
+                             MM);
                   else
                     gmm::add(gmm::transposed(brick.rmatlist[j]), MM);
                   termadded = true;
@@ -644,16 +578,13 @@ namespace getfem {
 
 //         #if GETFEM_PARA_LEVEL > 1
 //         if (!rk) cout << "Range basis for  multipliers for " << vname << " time : " << MPI_Wtime()-tt_ref << endl;
-
 //         #endif
 
       if (mults.size() > 1) {
         gmm::range_basis(MGLOB, glob_columns, 1E-12, gmm::col_major(), true);
 
-
 //         #if GETFEM_PARA_LEVEL > 1
 //         if (!rk) cout << "Producing partial mf for  multipliers for " << vname << " time : " << MPI_Wtime()-tt_ref << endl;
-
 //         #endif
 
         s = 0;
@@ -673,7 +604,6 @@ namespace getfem {
       }
 //       #if GETFEM_PARA_LEVEL > 1
 //       if (!rk) cout << "End compute size of  multipliers for " << vname << " time : " << MPI_Wtime()-tt_ref << endl;
-
 //       #endif
     }
 
@@ -716,15 +646,15 @@ namespace getfem {
         ost << endl;
       }
       for (auto it = variable_groups.begin();
-	   it != variable_groups.end(); ++it) {
-	ost << "Variable group " << std::setw(30) << std::left
-	    << it->first;
-	if (it->second.size()) {
-	  auto it2 = it->second.begin();
-	  ost << " " << *it2; ++it2;
-	  for (; it2 != it->second.end(); ++it2) ost << ", " << *it2;
-	  ost << endl;
-	} else ost << " empty" << endl;
+           it != variable_groups.end(); ++it) {
+        ost << "Variable group " << std::setw(30) << std::left
+            << it->first;
+        if (it->second.size()) {
+          auto it2 = it->second.begin();
+          ost << " " << *it2; ++it2;
+          for (; it2 != it->second.end(); ++it2) ost << ", " << *it2;
+          ost << endl;
+        } else ost << " empty" << endl;
       }
     }
   }
@@ -769,7 +699,6 @@ namespace getfem {
     variables[name].set_size();
   }
 
-
   void model::resize_fixed_size_variable(const std::string &name,
                                          size_type size) {
     GMM_ASSERT1(!(variables[name].is_fem_dofs),
@@ -791,7 +720,6 @@ namespace getfem {
     variables[name].qdims = sizes;
     variables[name].set_size();
   }
-
 
   void model::add_fixed_size_data(const std::string &name, size_type size,
                                   size_type niter) {
@@ -998,15 +926,15 @@ namespace getfem {
      valid_bricks.del(ib);
      active_bricks.del(ib);
 
-     for  (size_type i = 0; i < bricks[ib].mims.size(); ++i) {
+     for (size_type i = 0; i < bricks[ib].mims.size(); ++i) {
        const mesh_im *mim = bricks[ib].mims[i];
        bool found = false;
        for (dal::bv_visitor ibb(valid_bricks); !ibb.finished(); ++ibb) {
          for  (size_type j = 0; j < bricks[ibb].mims.size(); ++j)
            if (bricks[ibb].mims[j] == mim) found = true;
        }
-       for(VAR_SET::iterator it2 = variables.begin();
-           it2 != variables.end(); ++it2) {
+       for (VAR_SET::iterator it2 = variables.begin();
+            it2 != variables.end(); ++it2) {
          if (it2->second.is_fem_dofs &&
              (it2->second.filter & VDESCRFILTER_INFSUP) &&
              mim == it2->second.mim) found = true;
@@ -1760,101 +1688,6 @@ namespace getfem {
 
   void model::post_to_variables_step(){}
 
-  /**takes a list (more often it's a std::vector) of matrices
-  or vectors, creates an empty copy on each thread. When the
-  thread computations are done (in the destructor), accumulates
-  the assembled copies into the original. Note: the matrices or
-  vectors in the list are gmm::cleared, deleting the content
-  in the constructor*/
-  template <class CONTAINER_LIST> class list_distro
-  {
-    CONTAINER_LIST& original_list;
-    omp_distribute<CONTAINER_LIST> distributed_list;
-    typedef typename CONTAINER_LIST::value_type value_type;
-
-    void build_distro(gmm::abstract_matrix)
-    {
-      //intentionally skipping thread 0, as list_distro will
-      //use original_list for it
-      for(size_type thread = 1; thread < num_threads(); thread++)
-      {
-        auto it_original = original_list.begin();
-        auto it_distributed = distributed_list(thread).begin();
-        for(;it_original != original_list.end(); ++it_original, ++it_distributed)
-        {
-          gmm::resize(*it_distributed, gmm::mat_nrows(*it_original),gmm::mat_ncols(*it_original));
-        }
-      }
-    }
-
-    void build_distro(gmm::abstract_vector)
-    {
-      //.. skipping thread 0 ..
-      for(size_type thread = 1; thread < num_threads(); thread++)
-      {
-        auto it_original = original_list.begin();
-        auto it_distributed = distributed_list(thread).begin();
-        for(;it_original != original_list.end(); ++it_original, ++it_distributed)
-        {
-          gmm::resize(*it_distributed, gmm::vect_size(*it_original));
-        }
-      }
-    }
-
-    bool not_multithreaded() const { return num_threads() == 1; }
-
-  public:
-
-    list_distro(CONTAINER_LIST& l) : original_list(l)
-    {
-      if (not_multithreaded()) return;
-
-      for(size_type thread=1; thread<num_threads(); thread++)
-          distributed_list(thread).resize(original_list.size());
-
-      build_distro(typename gmm::linalg_traits<value_type>::linalg_type());
-    }
-
-    operator CONTAINER_LIST&()
-    {
-      if (not_multithreaded() || this_thread() == 0) return original_list;
-      else return distributed_list(this_thread());
-    }
-
-    ~list_distro()
-    {
-      if (not_multithreaded()) return;
-
-      GMM_ASSERT1(!me_is_multithreaded_now(),
-                  "List accumulation should not run in parallel");
-
-      using namespace std;
-      auto to_add = vector<CONTAINER_LIST*>{};
-      to_add.push_back(&original_list);
-      for (size_type thread = 1; thread < num_threads(); ++thread)
-        to_add.push_back(&distributed_list(thread));
-
-      //List accumulation in parallel.
-      //Adding, for instance, elements 1 to 0, 2 to 3, 5 to 4 and 7 to 6
-      //on separate 4 threads in case of parallelization of the assembly
-      //on 8 threads.
-      while (to_add.size() > 1)
-      {
-        #pragma omp parallel default(shared)
-        {
-          auto i = this_thread() * 2;
-          if (i + 1 < to_add.size()){
-            auto &target = *to_add[i];
-            auto &source = *to_add[i + 1];
-            for (size_type j = 0; j < source.size(); ++j) gmm::add(source[j], target[j]);
-          }
-        }
-        //erase every second item , as it was already added
-        for (auto it = begin(to_add); next(it) < end(to_add); it = to_add.erase(next(it)));
-      }
-    }
-  };
-
   void model::brick_call(size_type ib, build_version version,
                          size_type rhs_ind) const
   {
@@ -1873,29 +1706,21 @@ namespace getfem {
                                                 brick.region, version);
 
       /*distributing the resulting vectors and matrices for individual threads.*/
-      { //brackets are needed because list_distro has constructor/destructor
+      { //brackets are needed because accumulated_distro has constructor/destructor
         //semantics (as in RAII)
-        list_distro<complex_matlist> cmatlist(brick.cmatlist);
-        list_distro<complex_veclist> cveclist(brick.cveclist[rhs_ind]);
-        list_distro<complex_veclist> cveclist_sym(brick.cveclist_sym[rhs_ind]);
+        accumulated_distro<complex_matlist> cmatlist(brick.cmatlist);
+        accumulated_distro<complex_veclist> cveclist(brick.cveclist[rhs_ind]);
+        accumulated_distro<complex_veclist> cveclist_sym(brick.cveclist_sym[rhs_ind]);
 
         /*running the assembly in parallel*/
-        gmm::standard_locale locale;
-        open_mp_is_running_properly check;
-        thread_exception exception;
-        #pragma omp parallel default(shared)
-        {
-          exception.run([&]
-          {
-            brick.pbr->asm_complex_tangent_terms(*this, ib, brick.vlist,
-                                                 brick.dlist, brick.mims,
-                                                 cmatlist,
-                                                 cveclist,
-                                                 cveclist_sym,
-                                                 brick.region, version);
-          });
-        }
-        exception.rethrow();
+        GETFEM_OMP_PARALLEL(
+          brick.pbr->asm_complex_tangent_terms(*this, ib, brick.vlist,
+                                                brick.dlist, brick.mims,
+                                                cmatlist,
+                                                cveclist,
+                                                cveclist_sym,
+                                                brick.region, version);
+        )
       }
       brick.pbr->complex_post_assembly_in_serial(*this, ib, brick.vlist,
                                                  brick.dlist, brick.mims,
@@ -1906,22 +1731,16 @@ namespace getfem {
 
       if (brick.is_update_brick) //contributions of pure update bricks must be deleted
       {
-        for (size_type i = 0; i < brick.cmatlist.size(); ++i)
-        {
-          gmm::clear(brick.cmatlist[i]);
-        }
+        for (auto &&mat : brick.cmatlist)
+          gmm::clear(mat);
 
-        for (size_type i = 0; i < brick.cveclist.size(); ++i)
-          for (size_type j = 0; j < brick.cveclist[i].size(); ++j)
-          {
-            gmm::clear(brick.cveclist[i][j]);
-          }
+        for (auto &&vecs : brick.cveclist)
+          for (auto &&vec : vecs)
+            gmm::clear(vec);
 
-        for (size_type i = 0; i < brick.cveclist_sym.size(); ++i)
-          for (size_type j = 0; j < brick.cveclist_sym[i].size(); ++j)
-          {
-            gmm::clear(brick.cveclist_sym[i][j]);
-          }
+        for (auto &&vecs : brick.cveclist_sym)
+          for (auto &&vec : vecs)
+            gmm::clear(vec);
       }
     }
     else //not cplx
@@ -1934,18 +1753,12 @@ namespace getfem {
                                              brick.region, version);
       {
         /*distributing the resulting vectors and matrices for individual threads.*/
-        list_distro<real_matlist> rmatlist(brick.rmatlist);
-        list_distro<real_veclist> rveclist(brick.rveclist[rhs_ind]);
-        list_distro<real_veclist> rveclist_sym(brick.rveclist_sym[rhs_ind]);
+        accumulated_distro<real_matlist> rmatlist(brick.rmatlist);
+        accumulated_distro<real_veclist> rveclist(brick.rveclist[rhs_ind]);
+        accumulated_distro<real_veclist> rveclist_sym(brick.rveclist_sym[rhs_ind]);
 
         /*running the assembly in parallel*/
-        gmm::standard_locale locale;
-        open_mp_is_running_properly check;
-        thread_exception exception;
-        #pragma omp parallel default(shared)
-        {
-          exception.run([&]
-          {
+        GETFEM_OMP_PARALLEL(
             brick.pbr->asm_real_tangent_terms(*this, ib, brick.vlist,
                                               brick.dlist, brick.mims,
                                               rmatlist,
@@ -1953,9 +1766,7 @@ namespace getfem {
                                               rveclist_sym,
                                               brick.region,
                                               version);
-          } );
-        }
-        exception.rethrow();
+           );
       }
       brick.pbr->real_post_assembly_in_serial(*this, ib, brick.vlist,
                                               brick.dlist, brick.mims,
@@ -1966,22 +1777,16 @@ namespace getfem {
 
       if (brick.is_update_brick) //contributions of pure update bricks must be deleted
       {
-        for (size_type i = 0; i < brick.rmatlist.size(); ++i)
-        {
-          gmm::clear(brick.rmatlist[i]);
-        }
+        for (auto &&mat : brick.rmatlist)
+          gmm::clear(mat);
 
-        for (size_type i = 0; i < brick.rveclist.size(); ++i)
-          for (size_type j = 0; j < brick.rveclist[i].size(); ++j)
-          {
-            gmm::clear(brick.rveclist[i][j]);
-          }
+        for (auto &&vecs : brick.rveclist)
+          for (auto &&vec : vecs)
+            gmm::clear(vec);
 
-        for (size_type i = 0; i < brick.rveclist_sym.size(); ++i)
-          for (size_type j = 0; j < brick.rveclist_sym[i].size(); ++j)
-          {
-            gmm::clear(brick.rveclist_sym[i][j]);
-          }
+        for (auto &&vecs : brick.rveclist_sym)
+          for (auto &&vec : vecs)
+            gmm::clear(vec);
       }
     }
   }
@@ -2353,7 +2158,7 @@ namespace getfem {
                               .region_is_faces_of(m, brick.region,
                                                   pmim->linked_mesh()));
         GMM_ASSERT1(ifo >= 0,
-		    "The given region is only partially covered by "
+                    "The given region is only partially covered by "
                     "region of brick \"" << brick.pbr->brick_name()
                     << "\". Please subdivise the region");
         if (ifo == 1) {
@@ -2362,7 +2167,7 @@ namespace getfem {
 
           ga_workspace workspace(*this);
           size_type order = workspace.add_expression
-	    (expr, dummy_mim, region);
+            (expr, dummy_mim, region);
           GMM_ASSERT1(order <= 1, "Wrong order for a Neumann term");
           expr = workspace.extract_Neumann_term(varname);
           if (expr.size()) {
@@ -2583,7 +2388,7 @@ namespace getfem {
               if (brick.pbr->is_linear()
                   && (!is_linear() || (version & BUILD_WITH_COMPLETE_RHS))) {
                 gmm::mult_add(gmm::transposed(brick.rmatlist[j]),
-                             gmm::scaled(it1->second.complex_value[0],
+                              gmm::scaled(it1->second.complex_value[0],
                                           complex_type(-alpha2)),
                               gmm::sub_vector(crhs, I2));
               }
@@ -2673,7 +2478,6 @@ namespace getfem {
 //           brick.rveclist[0] = real_veclist(brick.tlist.size());
 //         }
 
-
       if (version & BUILD_RHS) approx_external_load_ += brick.external_load;
     }
 
@@ -2683,17 +2487,11 @@ namespace getfem {
       if (version & BUILD_RHS) gmm::resize(residual, gmm::vect_size(rrhs));
 
       { //need parentheses for constructor/destructor semantics of distro
-        distro<decltype(rrhs)> residual_distributed(residual);
-        distro<decltype(rTM)>  tangent_matrix_distributed(rTM);
+        accumulated_distro<decltype(rrhs)> residual_distributed(residual);
+        accumulated_distro<decltype(rTM)>  tangent_matrix_distributed(rTM);
 
         /*running the assembly in parallel*/
-        gmm::standard_locale locale;
-        open_mp_is_running_properly check;
-        thread_exception exception;
-        #pragma omp parallel default(shared)
-        {
-          exception.run([&]
-          {
+        GETFEM_OMP_PARALLEL(
             if (version & BUILD_RHS)
               GMM_TRACE2("Global generic assembly RHS");
             if (version & BUILD_MATRIX)
@@ -2707,7 +2505,7 @@ namespace getfem {
 
             for (const auto &ge : generic_expressions)
               workspace.add_expression(ge.expr, ge.mim, ge.region,
-				       2, ge.secondary_domain);
+                                       2, ge.secondary_domain);
 
             if (version & BUILD_RHS) {
               if (is_complex()) {
@@ -2726,13 +2524,11 @@ namespace getfem {
                 workspace.assembly(2);
               }
             }
-          });//exception.run(
-        } //#pragma omp parallel
-        exception.rethrow();
+        )
       } //end of distro scope
 
-      if (version & BUILD_RHS) gmm::add(gmm::scaled(residual, scalar_type(-1)), rrhs);
-
+      if (version & BUILD_RHS)
+        gmm::add(gmm::scaled(residual, scalar_type(-1)), rrhs);
     }
 
     // Post simplification for dof constraints
@@ -2788,7 +2584,7 @@ namespace getfem {
             }
           }
         }
-      } else {
+      } else { // !is_complex()
         std::vector<size_type> dof_indices;
         std::vector<scalar_type> dof_pr_values;
         std::vector<scalar_type> dof_go_values;
@@ -2859,7 +2655,6 @@ namespace getfem {
     if (version & BUILD_RHS) {
       approx_external_load_ = MPI_SUM_SCALAR(approx_external_load_);
     }
-
 
     #if GETFEM_PARA_LEVEL > 1
     // int rk; MPI_Comm_rank(MPI_COMM_WORLD, &rk);
@@ -3346,7 +3141,7 @@ model_complex_plain_vector &
                                    const model::varnamelist &vl_test1_,
                                    const std::string &directvarname_,
                                    const std::string &directdataname_,
-				   const std::string &secdom)
+                                   const std::string &secdom)
       : vl_test1(vl_test1_), secondary_domain(secdom) {
       if (brickname.size() == 0)
         brickname = "Generic source term assembly brick";
@@ -3381,7 +3176,7 @@ model_complex_plain_vector &
 
     ga_workspace workspace(md);
     size_type order = workspace.add_expression(expr, mim, region, 1,
-					       secondary_domain);
+                                               secondary_domain);
     GMM_ASSERT1(order <= 1, "Wrong order for a source term");
     model::varnamelist vl, vl_test1, vl_test2, dl;
     bool is_lin = workspace.used_variables(vl, vl_test1, vl_test2, dl, 1);
@@ -3409,7 +3204,7 @@ model_complex_plain_vector &
 
     return md.add_brick(pbr, vl, dl, tl, model::mimlist(1, &mim), region);
   }
-  
+
   size_type add_source_term
   (model &md, const mesh_im &mim, const std::string &expr, size_type region,
    const std::string &brickname, const std::string &directvarname,
@@ -3426,7 +3221,7 @@ model_complex_plain_vector &
     return add_source_term_(md, mim, expr, region, brickname, directvarname,
                             directdataname, return_if_nonlin, secondary_domain);
   }
-  
+
   // ----------------------------------------------------------------------
   //
   // Linear generic assembly brick
@@ -3495,7 +3290,7 @@ model_complex_plain_vector &
                               bool is_coer, std::string brickname,
                               const model::varnamelist &vl_test1_,
                               const model::varnamelist &vl_test2_,
-			      const std::string &secdom)
+                              const std::string &secdom)
       : vl_test1(vl_test1_), vl_test2(vl_test2_), secondary_domain(secdom) {
       if (brickname.size() == 0) brickname = "Generic linear assembly brick";
       expr = expr_;
@@ -3541,7 +3336,7 @@ model_complex_plain_vector &
 
     ga_workspace workspace(md, true);
     size_type order = workspace.add_expression(expr, mim, region,
-					       2, secondary_domain);
+                                               2, secondary_domain);
     model::varnamelist vl, vl_test1, vl_test2, dl;
     bool is_lin = workspace.used_variables(vl, vl_test1, vl_test2, dl, 2);
 
@@ -3553,7 +3348,7 @@ model_complex_plain_vector &
     if (const_expr.size()) {
       add_source_term_
         (md, mim, const_expr, region, brickname+" (source term)",
-	 "", "", false, secondary_domain);
+         "", "", false, secondary_domain);
     }
 
     // GMM_ASSERT1(order <= 1,
@@ -3566,7 +3361,7 @@ model_complex_plain_vector &
     if (vl_test1.size()) {
       pbrick pbr = std::make_shared<gen_linear_assembly_brick>
         (expr, mim, is_sym, is_coercive, brickname, vl_test1, vl_test2,
-	 secondary_domain);
+         secondary_domain);
       model::termlist tl;
       for (size_type i = 0; i < vl_test1.size(); ++i)
         tl.push_back(model::term_description(vl_test1[i], vl_test2[i], false));
@@ -3581,7 +3376,7 @@ model_complex_plain_vector &
    bool is_sym, bool is_coercive, const std::string &brickname,
    bool return_if_nonlin) {
     return add_linear_term_(md, mim, expr, region, is_sym, is_coercive,
-			    brickname, return_if_nonlin, "");
+                            brickname, return_if_nonlin, "");
   }
 
   size_type add_linear_twodomain_term
@@ -3589,7 +3384,7 @@ model_complex_plain_vector &
    const std::string &secondary_domain, bool is_sym, bool is_coercive,
    const std::string &brickname, bool return_if_nonlin) {
     return add_linear_term_(md, mim, expr, region, is_sym, is_coercive,
-			    brickname, return_if_nonlin, secondary_domain);
+                            brickname, return_if_nonlin, secondary_domain);
   }
 
 
@@ -3630,8 +3425,8 @@ model_complex_plain_vector &
     gen_nonlinear_assembly_brick(const std::string &expr_, const mesh_im &mim,
                                  bool is_sym,
                                  bool is_coer,
-				 std::string brickname,
-				 const std::string &secdom) {
+                                 std::string brickname,
+                                 const std::string &secdom) {
       if (brickname.size() == 0) brickname = "Generic linear assembly brick";
       expr = expr_;
       secondary_domain = secdom;
@@ -3650,7 +3445,7 @@ model_complex_plain_vector &
 
     ga_workspace workspace(md);
     size_type order = workspace.add_expression(expr, mim, region, 2,
-					       secondary_domain);
+                                               secondary_domain);
     GMM_ASSERT1(order < 2, "Order two test functions (Test2) are not allowed"
                 " in assembly string for nonlinear terms");
     model::varnamelist vl, vl_test1, vl_test2, ddl, dl;
@@ -3672,7 +3467,7 @@ model_complex_plain_vector &
   (model &md, const mesh_im &mim, const std::string &expr, size_type region,
    bool is_sym, bool is_coercive, const std::string &brickname) {
     return add_nonlinear_term_(md, mim, expr, region, is_sym, is_coercive,
-			brickname, "");
+                               brickname, "");
   }
 
   size_type add_nonlinear_twodomain_term
@@ -3680,7 +3475,7 @@ model_complex_plain_vector &
    const std::string &secondary_domain, bool is_sym, bool is_coercive,
    const std::string &brickname) {
     return add_nonlinear_term_(md, mim, expr, region, is_sym, is_coercive,
-			brickname, secondary_domain);
+                               brickname, secondary_domain);
   }
 
 
@@ -3933,7 +3728,7 @@ model_complex_plain_vector &
       else
         expr = "Grad_"+varname+":Grad_"+test_varname;
       return add_linear_term(md, mim, expr, region, true, true,
-			     "Laplacian", false);
+                             "Laplacian", false);
     }
   }
 

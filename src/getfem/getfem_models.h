@@ -173,8 +173,8 @@ namespace getfem {
       std::vector<gmm::uint64_type> v_num_data;
 
       gmm::sub_interval I; // For a variable : indices on the whole system.
-      // For an affine dependent variable, should be the same than the
-      // orgininal variable
+      // For an affine dependent variable, should be the same as the
+      // original variable
       std::vector<model_real_plain_vector> real_value;
       std::vector<model_complex_plain_vector> complex_value;
       std::vector<gmm::uint64_type> v_num_var_iter;
@@ -235,7 +235,7 @@ namespace getfem {
       }
 
       size_type size() const // Should control that the variable is
-      // indeed initialized by actualize_sizes() ...
+                             // indeed initialized by actualize_sizes() ...
       { return is_complex ? complex_value[0].size() : real_value[0].size(); }
 
       void set_size();
@@ -278,8 +278,8 @@ namespace getfem {
 
   protected:
 
-    // rmatlist and cmatlist could be csc_matrix vectors to reduced the
-    // amount of memory (but this should add a supplementary copy).
+    // rmatlist and cmatlist could had been csc_matrix vectors to reduce the
+    // amount of memory (but this would require an additional copy).
     struct brick_description {
       mutable bool terms_to_be_computed;
       mutable gmm::uint64_type v_num;
@@ -292,23 +292,23 @@ namespace getfem {
       mimlist mims;              // List of integration methods.
       size_type region;          // Optional region size_type(-1) for all.
       bool is_update_brick;      // Flag for declaring special type of brick
-      // with no contributions.
+                                 // with no contributions.
       mutable scalar_type external_load; // External load computed in assembly
 
       mutable model_real_plain_vector coeffs;
       mutable scalar_type matrix_coeff = scalar_type(0);
-      mutable real_matlist rmatlist;    // Matrices the brick have to fill in
-      // (real version).
-      mutable std::vector<real_veclist> rveclist; // Rhs the brick have to
-      // fill in (real version).
-      mutable std::vector<real_veclist> rveclist_sym; // additional rhs for
-      //  symmetric terms (real version).
-      mutable complex_matlist cmatlist; // Matrices the brick have to fill in
-      // (complex version).
-      mutable std::vector<complex_veclist> cveclist; // Rhs the brick have to
-      // fill in (complex version).
-      mutable std::vector<complex_veclist> cveclist_sym;  // additional rhs
-      // for symmetric terms (real version).
+      // Matrices the brick has to fill in (real version)
+      mutable real_matlist rmatlist;
+      // Rhs the brick has to fill in (real version)
+      mutable std::vector<real_veclist> rveclist;
+      // additional rhs for symmetric terms (real version)
+      mutable std::vector<real_veclist> rveclist_sym;
+      // Matrices the brick has to fill in (complex version)
+      mutable complex_matlist cmatlist;
+      // Rhs the brick has to fill in (complex version)
+      mutable std::vector<complex_veclist> cveclist;
+      // additional rhs for symmetric terms (complex version)
+      mutable std::vector<complex_veclist> cveclist_sym;
 
       brick_description() : v_num(0) {}
 
@@ -368,16 +368,14 @@ namespace getfem {
 
     std::list<assignement_desc> assignments;
 
-    
     mutable std::list<gen_expr> generic_expressions;
 
     // Groups of variables for interpolation on different meshes
     // generic assembly
     std::map<std::string, std::vector<std::string> > variable_groups;
 
-    ga_macro_dictionnary macro_dict;
+    ga_macro_dictionary macro_dict;
     
-
 
     virtual void actualize_sizes() const;
     bool check_name_validity(const std::string &name, bool assert=true) const;
@@ -842,7 +840,7 @@ namespace getfem {
                         size_type region, size_type niter = 1);
 
     /** Dictonnary of user defined macros. */
-    const ga_macro_dictionnary &macro_dictionnary() const { return macro_dict; }
+    const ga_macro_dictionary &macro_dictionary() const { return macro_dict; }
 
     /** Add a macro definition for the high generic assembly language.
         This macro can be used for the definition of generic assembly bricks.

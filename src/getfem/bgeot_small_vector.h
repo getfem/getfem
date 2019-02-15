@@ -154,7 +154,7 @@ namespace bgeot {
     static_block_allocator() { if (!palloc) palloc=&dal::singleton<block_allocator,1000>::instance(); } //new block_allocator(); }
   };
   
-#if !defined GETFEM_HAVE_OPENMP
+#if !defined GETFEM_HAS_OPENMP
   /** container for small vectors of POD (Plain Old Data) types. Should be as fast as 
       std::vector<T> while beeing smaller and uses copy-on-write. The gain is especially
       valuable on 64 bits architectures.
@@ -379,7 +379,7 @@ namespace bgeot {
     }
 
 
-#endif // #if !defined GETFEM_HAVE_OPENMP
+#endif // #if !defined GETFEM_HAS_OPENMP
 
 
   template<class T> std::ostream& operator<<(std::ostream& os, const small_vector<T>& v) {

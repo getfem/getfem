@@ -22,6 +22,7 @@
 
 #include "getfem/bgeot_config.h"
 #include "getfem/bgeot_ftool.h"
+#include "getfem/getfem_locale.h"
 #include <ctype.h>
 #include <limits.h>
 #ifndef _WIN32
@@ -404,14 +405,14 @@ namespace bgeot {
   }
 
   void md_param::read_param_file(std::istream &f) {
-    gmm::standard_locale sl;
+    getfem::standard_locale sl;
     token_is_valid = false; current_line = 1;
     if (read_instruction_list(f) > 1)
       syntax_error("Parameter file terminated by an else");
   }
 
   void md_param::read_command_line(int argc, char *argv[]) {
-    gmm::standard_locale sl;
+    getfem::standard_locale sl;
     for (int aa = 1; aa < argc; aa++) {
       if (argv[aa][0] != '-') {
         current_file = std::string(argv[aa]);
@@ -442,7 +443,7 @@ namespace bgeot {
         return default_val;
       else {
         double f;
-        gmm::standard_locale sl;
+        getfem::standard_locale sl;
         cout << "No parameter " << name << " found, please enter its value\n";
         cout << comment << " : "; cin >> f;
         parameters[name] = param_value(f);
@@ -461,7 +462,7 @@ namespace bgeot {
         return default_val;
       else {
         long f;
-        gmm::standard_locale sl;
+        getfem::standard_locale sl;
         cout << "No parameter " << name << " found, please enter its value\n";
         cout << comment << " : "; cin >> f;
         parameters[name] = param_value(double(f));
@@ -481,7 +482,7 @@ namespace bgeot {
         return default_val;
       else {
         std::string s;
-        gmm::standard_locale sl;
+        getfem::standard_locale sl;
         cout << "No parameter " << name << " found, please enter its value\n";
         cout << comment << " : "; cin >> s;
         parameters[name] = param_value(s);
@@ -501,7 +502,7 @@ namespace bgeot {
       if (comment == 0) return empty_array;
       else {
         std::string s;
-        gmm::standard_locale sl;
+        getfem::standard_locale sl;
         cout << "No parameter " << name << " found, please enter its value\n";
         cout << comment << " : "; cin >> s;
         parameters[name] = param_value(s);

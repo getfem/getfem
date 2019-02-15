@@ -825,6 +825,28 @@ namespace getfem {
       (M, mim, mf_u, 0, F, rg, "(A*Test_u):Test2_u");
   }
 
+  /**
+   * lumped mass matrix assembly (on the whole mesh or on the specified
+   * boundary)
+   * @ingroup asm
+   */
+  template<typename MAT>
+  inline void asm_lumped_mass_matrix_for_first_order
+  (const MAT &M, const mesh_im &mim, const mesh_fem &mf1,
+   const mesh_region &rg = mesh_region::all_convexes()) {
+    asm_mass_matrix(M, mim, mf1, rg);
+    size_type nbd = gmm::mat_ncols(M), nbr = gmm::mat_nrows(M);
+    GMM_ASSERT1(nbd == nbr, "mass matrix is not square");
+    typedef typename gmm::linalg_traits<MAT>::value_type T;
+    std::vector<T> V(nbd), W(nbr);
+    gmm::fill(V, T(1));
+    gmm::mult(M, V, W);
+    gmm::clear(const_cast<MAT &>(M));
+    for (size_type i =0; i < nbd; ++i) {
+      (const_cast<MAT &>(M))(i, i) = W[i];
+    }
+  }
+
   /** 
       source term (for both volumic sources and boundary (Neumann) sources).
       @ingroup asm

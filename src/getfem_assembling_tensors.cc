@@ -22,6 +22,7 @@
 #include "gmm/gmm_blas_interface.h"
 #include "getfem/getfem_arch_config.h"
 #include "getfem/getfem_assembling_tensors.h"
+#include "getfem/getfem_locale.h"
 #include "getfem/getfem_mat_elem.h"
 
 namespace getfem {
@@ -581,7 +582,12 @@ namespace getfem {
         tensor_mask m(trng,ti);
         v.resize(r*target_dim);
         tensor_ranges cnt(2);
-        for (cnt[1]=0; cnt[1] < r; cnt[1]++) {
+        for (index_type i=0; i < r; ++i) {
+          // the value in cnt[1] is not directly used as the loop variable
+          // as this makes the INTEL 2019 compiler wrongly optimize the loop check,
+          // making the outer loop go one more than it needs to;
+          // creating SEH exceptions
+          cnt[1] = i;
           for (index_type k=0; k < target_dim; ++k) {
             cnt[0] = k*qmult + (cnt[1]%qmult); //(cnt[1] % qmult)*target_dim + k;
             m.set_mask_val(m.lpos(cnt), true);
@@ -1140,7 +1146,7 @@ namespace getfem {
   }
 
   void asm_tokenizer::get_tok() {
-    gmm::standard_locale sl;
+    standard_locale sl;
     curr_tok_ival = -1;
     while (tok_pos < str.length() && isspace(str[tok_pos])) ++tok_pos;
     if (tok_pos == str.length()) {

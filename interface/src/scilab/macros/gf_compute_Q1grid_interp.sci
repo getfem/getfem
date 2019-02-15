@@ -82,7 +82,7 @@ try
   if (nargout == 3) then
     gf_workspace('keep', MF2);
   end;
-catch,
+catch
   gf_workspace('pop');
   error(lasterror());
 end

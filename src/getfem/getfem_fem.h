@@ -501,42 +501,44 @@ namespace getfem {
   protected :
     std::vector<FUNC> base_;
     mutable std::vector<std::vector<FUNC>> grad_, hess_;
-    mutable bool grad_computed_;
-    mutable bool hess_computed_;
+    mutable bool grad_computed_ = false;
+    mutable bool hess_computed_ = false;
 
     void compute_grad_() const {
-      auto guard = getfem::omp_guard{};
+      if (grad_computed_) return;
+      GLOBAL_OMP_GUARD
       if (grad_computed_) return;
       size_type R = nb_base_components(0);
       dim_type n = dim();
       grad_.resize(R);
       for (size_type i = 0; i < R; ++i) {
-	grad_[i].resize(n);
-	for (dim_type j = 0; j < n; ++j) {
-	  grad_[i][j] = base_[i]; grad_[i][j].derivative(j);
-	}
+        grad_[i].resize(n);
+        for (dim_type j = 0; j < n; ++j) {
+          grad_[i][j] = base_[i]; grad_[i][j].derivative(j);
+        }
       }
       grad_computed_ = true;
     }
 
     void compute_hess_() const {
-      auto guard = getfem::omp_guard{};
+      if (hess_computed_) return;
+      GLOBAL_OMP_GUARD
       if (hess_computed_) return;
       size_type R = nb_base_components(0);
       dim_type n = dim();
       hess_.resize(R);
       for (size_type i = 0; i < R; ++i) {
-	hess_[i].resize(n*n);
-	for (dim_type j = 0; j < n; ++j) {
-	  for (dim_type k = 0; k < n; ++k) {
-	    hess_[i][j+k*n] = base_[i];
-	    hess_[i][j+k*n].derivative(j); hess_[i][j+k*n].derivative(k);
-	  }
-	}
+        hess_[i].resize(n*n);
+        for (dim_type j = 0; j < n; ++j) {
+          for (dim_type k = 0; k < n; ++k) {
+            hess_[i][j+k*n] = base_[i];
+            hess_[i][j+k*n].derivative(j); hess_[i][j+k*n].derivative(k);
+          }
+        }
       }
       hess_computed_ = true;
     }
-    
+
   public :
 
     /// Gives the array of basic functions (components).
@@ -585,8 +587,6 @@ namespace getfem {
           for (size_type i = 0; i < R; ++i, ++it)
 	    *it = bgeot::to_scalar(hess_[i][j+k*n].eval(x.begin()));
     }
-
-    fem() : grad_computed_(false), hess_computed_(false){}
 
   };
 
@@ -858,7 +858,7 @@ namespace getfem {
 
     gmm::clear(val);
     base_tensor Z; real_base_value(c, Z);
-    
+
     for (size_type j = 0; j < nbdof; ++j) {
       for (size_type q = 0; q < Qmult; ++q) {
         typename gmm::linalg_traits<CVEC>::value_type co = coeff[j*Qmult+q];

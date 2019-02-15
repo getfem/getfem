@@ -330,7 +330,7 @@ namespace getfem {
       break;
     case GA_NODE_INTERPOLATE_DERIVATIVE:
       c += 2.321*ga_hash_code(pnode->interpolate_name_der);
-      // No break. The hash code is completed with the next item
+      [[fallthrough]]; // The hash code is completed with the next item
     case GA_NODE_INTERPOLATE_VAL: case GA_NODE_INTERPOLATE_GRAD:
     case GA_NODE_INTERPOLATE_HESS: case GA_NODE_INTERPOLATE_DIVERG:
     case GA_NODE_INTERPOLATE_VAL_TEST: case GA_NODE_INTERPOLATE_GRAD_TEST:
@@ -524,7 +524,7 @@ namespace getfem {
       if (tree.secondary_domain.size() == 0)
         ga_throw_error(pnode->expr, pnode->pos, "Secondary domain used "
                        "in a single domain term.");
-      // continue with what follows
+      [[fallthrough]];
     case GA_NODE_INTERPOLATE:
       if (pnode->name.compare("X") == 0) {
         if (pnode->node_type == GA_NODE_INTERPOLATE) {
@@ -548,7 +548,7 @@ namespace getfem {
         }
         break;
       }
-      // else continue with what follows
+      [[fallthrough]];
     case GA_NODE_ELEMENTARY: // and ... case GA_NODE_INTERPOLATE:
     case GA_NODE_XFEM_PLUS:
     case GA_NODE_XFEM_MINUS:
@@ -1764,16 +1764,17 @@ namespace getfem {
             if (n == 1) {
               if (test) {
                 pnode->init_vector_tensor(1);
-                pnode->tensor()[0]=scalar_type(1);
+                pnode->tensor()[0] = scalar_type(1);
               }
-              else pnode->init_scalar_tensor(workspace.value(name)[0]);
+              else
+                pnode->init_scalar_tensor(workspace.value(name)[0]);
             } else {
               if (test) {
                 pnode->init_matrix_tensor(n,n);
                 for (size_type i = 0; i < n; ++i)
                   for (size_type j = 0; j < n; ++j)
-                    pnode->tensor()(i,j)
-                      = ((i == j) ? scalar_type(1) : scalar_type(0));
+                    pnode->tensor()(i,j) = (i == j) ? scalar_type(1)
+                                                    : scalar_type(0);
               } else {
                 pnode->t.adjust_sizes(workspace.qdims(name));
                 gmm::copy(workspace.value(name), pnode->tensor().as_vector());
@@ -1794,7 +1795,7 @@ namespace getfem {
                                    "Invalid null size of variable " << name);
             if (mii.size() > 6)
               ga_throw_error(pnode->expr, pnode->pos,
-                            "Tensor with too much dimensions. Limited to 6");
+                            "Tensor with too many dimensions. Limited to 6");
 
             switch (prefix_id) {
             case 0: // value
@@ -2830,7 +2831,7 @@ namespace getfem {
 
     case GA_NODE_INTERPOLATE_FILTER:
       if (!child_0_is_constant) { is_constant = false; break; }
-      // No break intentionally
+      [[fallthrough]];
     case GA_NODE_INTERPOLATE_VAL_TEST:
     case GA_NODE_INTERPOLATE_GRAD_TEST:
     case GA_NODE_INTERPOLATE_DIVERG_TEST:
@@ -3891,7 +3892,7 @@ namespace getfem {
                       "transformations having an explicit expression");
 
         ga_tree trans_tree;
-        ga_read_string(expr_trans, trans_tree, workspace.macro_dictionnary());
+        ga_read_string(expr_trans, trans_tree, workspace.macro_dictionary());
         ga_semantic_analysis(trans_tree, workspace, m,
                              ref_elt_dim_of_mesh(m), false, false, 1);
         if (trans_tree.root) {
@@ -4835,6 +4836,7 @@ namespace getfem {
       case GA_DIV: case GA_DOTDIV:
         if (mark1) return false;
         if (mark0) return ga_node_is_affine(child0);
+        return true;
 
       default: GMM_ASSERT1(false, "Unexpected operation. Internal error.");
       }

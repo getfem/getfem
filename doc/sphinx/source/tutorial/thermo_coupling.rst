@@ -117,6 +117,7 @@ Initialization
 
 First, in C++, ones has to include a certain number of headers for the model object, the generic assembly, the linear algebra interface (Gmm++), the experimental mesher and the export facilities. For Python, this is simpler, |gf| can be imported globally (numpy has also to be imported). For Scilab, the library has first to be loaded in the Scilab console (this is not described here) and for Matlab, nothing is necessary, except a `gf_workspace('clear all')` which allows to clear all |gf| variables.
 
+.. tabularcolumns:: |p{0.080\linewidth}|p{0.900\linewidth}|
 
 ========== ================================================
 **C++**    .. code-block:: c++
@@ -154,6 +155,7 @@ Parameters of the model
 
 Let us now define the different physical and numerical parameters of the problem. For script languages (Python, Scilab and Matlab) there is no differences.
 
+.. tabularcolumns:: |p{0.080\linewidth}|p{0.900\linewidth}|
 
 =========== ================================================
 **C++**     .. code-block:: c++
@@ -201,6 +203,7 @@ Mesh generation
 
 The geometry of the domain is supposed to be a rectangle with three circular holes (see :ref:`tut-fig-meshthermo`). The geometry is described thanks to some geometrical primitives and union/setminus operations (see :file:`src/getfem/getfem_mesher.h` file). In the following, `h` stands for the mesh size and `2` is the degree of the mesh (this means that the transformation is of degree two, we used curved edges).
 
+.. tabularcolumns:: |p{0.080\linewidth}|p{0.900\linewidth}|
 
 ========== ===========================================================================
 **C++**    .. code-block:: c++
@@ -258,11 +261,16 @@ The geometry of the domain is supposed to be a rectangle with three circular hol
 
    The obtained mesh.
 
+.. raw:: latex
+
+   \clearpage
+
 Boundary selection
 ******************
 
 Since we have different boundary conditions on the different parts of the boundary, we have to number the different parts of the boundary (in the hole, thermal and electrical insulation together with a stress free boundary conditions are assumed). Thus, we have to select the element faces on the mesh and define mesh regions (see :ref:`ud-mesh_regions`) 1, 2, 3, 4 to be the right boundary, the left one, the top one and the bottom one respectively. These boundary numbers will be used in the model bricks.
 
+.. tabularcolumns:: |p{0.080\linewidth}|p{0.900\linewidth}|
 
 ========== ===========================================================================
 **C++**    .. code-block:: c++
@@ -310,7 +318,11 @@ Since we have different boundary conditions on the different parts of the bounda
                 mesh.region_subtract(  LEFT_BOUND, HOLE_BOUND)
                 mesh.region_subtract(   TOP_BOUND, HOLE_BOUND)
                 mesh.region_subtract(BOTTOM_BOUND, HOLE_BOUND)
----------- ---------------------------------------------------------------------------
+========== ===========================================================================
+
+.. tabularcolumns:: |p{0.080\linewidth}|p{0.900\linewidth}|
+
+========== ===========================================================================
 **Scilab** .. code-block:: matlab
 
                 fb1 = gf_mesh_get(mesh, 'outer faces in box', [1 1], [99 24]);
@@ -355,6 +367,8 @@ Mesh draw
 *********
 
 In order to preview the mesh and to control its validity, the following instructions can be used:
+
+.. tabularcolumns:: |p{0.080\linewidth}|p{0.900\linewidth}|
 
 ========== ===========================================================================
 **C++**    .. code-block:: c++
@@ -411,6 +425,7 @@ The third finite element method is a discontinuous scalar Lagrange one which wil
 
 The last thing to define is an integration method `mim`. There is no default integration method in |gf| so this is mandatory to define an integration method. Of course, the order of the integration method have to be chosen sufficient to make a convenient integration of the selected finite element method. Here, the square of `elements_degree` is sufficient.
 
+.. tabularcolumns:: |p{0.080\linewidth}|p{0.900\linewidth}|
 
 ========== ===========================================================================
 **C++**    .. code-block:: c++
@@ -470,6 +485,7 @@ There are two versions of the model: the real one and the complex one. Complex m
 
 Let us declare a real model with the three variables corresponding to the three fields to be computed:
 
+.. tabularcolumns:: |p{0.080\linewidth}|p{0.900\linewidth}|
 
 ========== ===========================================================================
 **C++**    .. code-block:: c++
@@ -523,6 +539,7 @@ there is no predefined brick and we use directly a weak form language term `add_
 
 The following program allows to take into account the whole elastic deformation equation. Note the use of specific brick to prescribe the Dirichlet condition on the left boundary. There is several option to prescribe a Dirichlet condition (see :ref:`ud-model-Dirichlet`).
 
+.. tabularcolumns:: |p{0.080\linewidth}|p{0.900\linewidth}|
 
 ========== ================================================================================================================
 **C++**    .. code-block:: c++
@@ -567,7 +584,11 @@ The following program allows to take into account the whole elastic deformation 
 
                 gf_model_set(md, 'add initialized data', 'beta', [alpha_th*E/(1-2*nu)]);
                 gf_model_set(md, 'add linear term', mim, 'beta*(T0-theta)*Div_Test_u');
----------- ----------------------------------------------------------------------------------------------------------------
+========== ================================================================================================================
+
+.. tabularcolumns:: |p{0.080\linewidth}|p{0.900\linewidth}|
+
+========== ================================================================================================================
 **Matlab** .. code-block:: matlab
 
                 gf_model_set(md, 'add initialized data', 'cmu', [cmu]);
@@ -583,10 +604,16 @@ The following program allows to take into account the whole elastic deformation 
                 gf_model_set(md, 'add linear term', mim, 'beta*(T0-theta)*Div_Test_u');
 ========== ================================================================================================================
 
+.. raw:: latex
+
+   \clearpage
+
 Electric potential problem
 **************************
 
 Similarly, the following program take into account the electric potential equation. Note the definition of the  electrical conductivity :math:`\sigma` and again the use of weak form language terms.
+
+.. tabularcolumns:: |p{0.080\linewidth}|p{0.900\linewidth}|
 
 ========== ===========================================================================
 **C++**    .. code-block:: c++
@@ -642,6 +669,8 @@ Thermal problem
 
 Now, the program to take into account the thermal problem:
 
+.. tabularcolumns:: |p{0.080\linewidth}|p{0.900\linewidth}|
+
 ========== ===========================================================================
 **C++**    .. code-block:: c++
 
@@ -695,6 +724,8 @@ Model solve
 
 Once the model is correctly defined, we can simply solve it by:
 
+.. tabularcolumns:: |p{0.080\linewidth}|p{0.900\linewidth}|
+
 ========== ===========================================================================
 **C++**    .. code-block:: c++
 
@@ -721,6 +752,8 @@ Model solve with two steps
 **************************
 
 Another option to solve the problem is to solve first the thermal and electric potential problems. Indeed, in our model, the thermal and  electric potential do not depend on the deformation. Once the  thermal and electric potential problem, we then solve the deformation problem. This can be done as follows:
+
+.. tabularcolumns:: |p{0.080\linewidth}|p{0.900\linewidth}|
 
 ========== ===========================================================================
 **C++**    .. code-block:: c++
@@ -769,6 +802,8 @@ Export/visualization of the solution
 
 The finite element problem is now solved. We can plot the solution as follows. Note that for the C++ and Python programs, it is necessary to use an external graphical post-processor. Note also that arbitrary quantities can be post-processed using the generic interpolation (see `ga_interpolation_Lagrange_fem` below). It is also possible to make complex exports and slices (see :ref:`ud-export`).
 
+.. tabularcolumns:: |p{0.080\linewidth}|p{0.900\linewidth}|
+
 ========== =====================================================================================================================================================
 **C++**    .. code-block:: c++
 
@@ -816,7 +851,11 @@ The finite element problem is now solved. We can plot the solution as follows. N
                 print ('mayavi2 -d temperature.vtk -f WarpScalar -m Surface')
                 mft.export_to_vtk('electric_potential.vtk', mft, V, 'Electric potential')
                 print ('mayavi2 -d electric_potential.vtk -f WarpScalar -m Surface')
----------- -----------------------------------------------------------------------------------------------------------------------------------------------------
+========== =====================================================================================================================================================
+
+.. tabularcolumns:: |p{0.080\linewidth}|p{0.900\linewidth}|
+
+========== =====================================================================================================================================================
 **Scilab** .. code-block:: matlab
 
                 U = gf_model_get(md, 'variable', 'u');
@@ -844,7 +883,11 @@ The finite element problem is now solved. We can plot the solution as follows. N
                 colorbar(min(THETA),max(THETA));
                 title('Temperature in °C (on the deformed configuration, scale factor x100)');
 
----------- -----------------------------------------------------------------------------------------------------------------------------------------------------
+========== =====================================================================================================================================================
+
+.. tabularcolumns:: |p{0.080\linewidth}|p{0.900\linewidth}|
+
+========== =====================================================================================================================================================
 **Matlab** .. code-block:: matlab
 
                 U = gf_model_get(md, 'variable', 'u');

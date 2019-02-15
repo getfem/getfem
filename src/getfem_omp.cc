@@ -19,146 +19,325 @@
 
 ===========================================================================*/
 
+#include "getfem/dal_singleton.h"
+#include "getfem/getfem_locale.h"
 #include "getfem/getfem_omp.h"
-#include "getfem/getfem_mesh.h"
+
+#ifdef GETFEM_HAS_OPENMP
+  #include <thread>
+  #include <omp.h>
+#endif
+
+using bgeot::scalar_type;
 
 namespace getfem{
 
-#ifdef GETFEM_HAVE_OPENMP
+#ifdef GETFEM_HAS_OPENMP
 
-  boost::recursive_mutex omp_guard::boost_mutex;
+  std::recursive_mutex omp_guard::mutex;
 
   omp_guard::omp_guard()
-    : boost::lock_guard<boost::recursive_mutex>(boost_mutex)
+    : plock{me_is_multithreaded_now() ?
+       std::make_unique<std::lock_guard<std::recursive_mutex>>(mutex)
+      : nullptr}
   {}
 
-  local_guard::local_guard(boost::recursive_mutex& m) :
-    mutex_(m),
-    plock_(new boost::lock_guard<boost::recursive_mutex>(m))
-  { }
+  local_guard::local_guard(std::recursive_mutex& m) :
+    mutex{m},
+    plock{me_is_multithreaded_now() ?
+      std::make_shared<std::lock_guard<std::recursive_mutex>>(m)
+      : nullptr}
+  {}
 
-  local_guard::local_guard(const local_guard& guard)
-    : mutex_(guard.mutex_), plock_(guard.plock_)
-  { }
-
-  lock_factory::lock_factory() : mutex_() {}
-  local_guard lock_factory::get_lock() const
-  {
-    return local_guard(mutex_);
+  local_guard lock_factory::get_lock() const{
+    return local_guard{mutex};
   }
+
+  size_type global_thread_policy::this_thread() {
+    return partition_master::get().get_current_partition();
+  }
+
+  size_type global_thread_policy::num_threads(){
+    return partition_master::get().get_nb_partitions();
+  }
+
+  size_type true_thread_policy::this_thread() {
+    return omp_get_thread_num();
+  }
+
+  size_type true_thread_policy::num_threads(){
+    return omp_get_max_threads();
+  }
+
+  void set_num_threads(int n){
+    omp_set_num_threads(n);
+    partition_master::get().check_threads();
+  }
+
+  bool me_is_multithreaded_now(){
+    // serial region
+    if(omp_get_num_threads() == 1 && omp_get_level() == 0) return false;
+    // parallel region with one thread
+    if(omp_get_num_threads() == 1 && omp_get_level() == 1) return true;
+    // parallel region with more than one thread
+    if(omp_in_parallel() == 1) return true;
+
+    return false;
+  }
+
+  bool not_multithreaded(){
+    return omp_get_max_threads() == 1;
+  }
+
+  size_type max_concurrency() {
+    return std::thread::hardware_concurrency();
+  }
+
+#else
+
+  size_type global_thread_policy::this_thread() {return 0;}
+
+  size_type global_thread_policy::num_threads(){return 1;}
+
+  size_type true_thread_policy::this_thread() {return 0;}
+
+  size_type true_thread_policy::num_threads(){return 1;}
+
+  bool me_is_multithreaded_now(){return false;}
+
+  void set_num_threads(int /*n*/){}
+
+  bool not_multithreaded(){return true;}
+
+  size_type max_concurrency() {return 1;}
+
 #endif
 
-  omp_distribute<bool> open_mp_is_running_properly::answer = false;
-  open_mp_is_running_properly::open_mp_is_running_properly()
-  {answer.all_threads()=true;}
-  open_mp_is_running_properly::~open_mp_is_running_properly()
-  {answer.all_threads()=false;}
-  bool open_mp_is_running_properly::is_it(){return answer;}
-
-  region_partition::region_partition(const region_partition& rp) :
-    pparent_mesh(rp.pparent_mesh),
-    original_region(rp.original_region),
-    partitions(rp.partitions)  {   }
-
-  void region_partition::operator=(const region_partition& rp)
-  {
-    partitions.clear();
-
-    if (!rp.pparent_mesh) return;
-    pparent_mesh->copy_from(*rp.pparent_mesh);
-    original_region = rp.original_region;
-    partitions.resize(rp.partitions.size());
-    gmm::copy(rp.partitions,partitions);
-  }
-
-
-  region_partition::region_partition(mesh* pm, size_type id) :
-    pparent_mesh(pm),original_region(0),
-    partitions(num_threads())
-  {
-    scalar_type time = gmm::uclock_sec();
-    // in case of serial Getfem nothing to partition
-    if (num_threads()==1) {partitions[0]=id; return;}
-
-    //in case mesh is not provided, also don't do anything
-    if (!pm) return;
-
-    if (id == size_type(-1)) {
-      original_region.reset(new mesh_region(pm->convex_index()));
-      original_region->set_parent_mesh(pm);
-    } else{
-      GMM_ASSERT1(pm->has_region(id),"Improper region number");
-      original_region.reset(new mesh_region(pm->region(id)));
-    }
-    if (me_is_multithreaded_now())
-      GMM_WARNING0("building partitions inside parallel region");
-
-    omp_guard scoped_lock;
-    GMM_NOPERATION(scoped_lock);
-    size_type Nelems = original_region->size();
-    size_type psize = static_cast<size_type>
-      (std::ceil(static_cast<scalar_type >(Nelems)/
-       static_cast<scalar_type >(num_threads())));
-    mr_visitor mr(*original_region);
-    for(size_type thread = 0; thread<num_threads();thread++)
-    {
-      partitions[thread] =
-        getfem::mesh_region::free_region_id(*(original_region->get_parent_mesh()));
-      mesh_region partition;
-      for(size_type i=thread*psize;i<(thread+1)*psize && !mr.finished();i++,++mr)
-      {
-        if (mr.is_face()) partition.add(mr.cv(),mr.f());
-        else partition.add(mr.cv());
-      }
-      pparent_mesh->region(partitions[thread]) = partition;
-    }
-    GMM_TRACE2("Partitioning time: "<<gmm::uclock_sec()-time<<" s.");
-  }
-
-  size_type region_partition::
-    thread_local_partition() const {
-      if (pparent_mesh==0 && num_threads() >1 ){
-        GMM_WARNING1("partition is empty and cannot be used \
-                     this means that the brick that created it should partition \
-                     its domain by himself");
-        return -10;
-      }
-      return partitions[this_thread()];
-  }
-
-  void omp_distribute<bool>::all_values_proxy::operator=(const bool& x)
-  {
-    for(std::vector<BOOL>::iterator it=distro.thread_values.begin();
-      it!=distro.thread_values.end();it++) *it=x;
-
-  }
-
-  thread_exception::thread_exception(): exceptions_(num_threads(), nullptr)
-  { }
-
-  thread_exception::~thread_exception() { }
-
-  std::vector<std::exception_ptr> thread_exception::caughtExceptions() const
-  {
+  /** Allows to re-throw exceptions, generated in OpemMP parallel section.
+      Collects exceptions from all threads and on destruction re-throws
+      the first one, so that
+      it can be again caught in the master thread. */
+  class thread_exception {
     std::vector<std::exception_ptr> exceptions;
-    for (auto &&pException : exceptions_)
-    {
-      if (pException != nullptr) exceptions.push_back(pException);
+
+    void captureException(){
+      exceptions[true_thread_policy::this_thread()] = std::current_exception();
     }
-    return exceptions;
+
+  public:
+    thread_exception()
+      : exceptions(true_thread_policy::num_threads(), nullptr)
+    {}
+
+    template <typename function, typename... parameters>
+    void run(function f, parameters... params){
+        try {f(params...);} catch (...) {captureException();}
+    }
+
+    std::vector<std::exception_ptr> caughtExceptions() const{
+      std::vector<std::exception_ptr> non_empty_exceptions;
+      for (auto &&pException : exceptions){
+        if (pException != nullptr) non_empty_exceptions.push_back(pException);
+      }
+      return non_empty_exceptions;
+    }
+
+    void rethrow() {
+      for (auto &&pException : exceptions){
+        if (pException != nullptr) std::rethrow_exception(pException);
+      }
+    }
+  };
+
+  partition_iterator::partition_iterator(
+    partition_master &m, std::set<size_type>::const_iterator it_from_set)
+    : master{m}, it{it_from_set}
+  {}
+
+  partition_iterator partition_iterator::operator++(){
+    ++it;
+    if (*this != master.end()) master.set_current_partition(*it);
+    return *this;
   }
 
-  void thread_exception::rethrow()
-  {
-    for (auto &&pException : exceptions_)
-    {
-      if (pException != nullptr) std::rethrow_exception(pException);
+  bool partition_iterator::operator==(const partition_iterator &it1) const {
+    return it == it1.it;
+  }
+
+  bool partition_iterator::operator!=(const partition_iterator &it1) const {
+    return !(*this == it1);
+  }
+
+  size_type partition_iterator::operator*() const{
+    return *it;
+  }
+
+  partition_master partition_master::instance;
+
+  partition_master& partition_master::get(){
+    return instance;
+  }
+
+  void partition_master::check_threads(){
+    if (nb_user_threads != true_thread_policy::num_threads()){
+      update_partitions();
+      nb_user_threads = true_thread_policy::num_threads();
     }
   }
 
-  void thread_exception::captureException()
-  {
-    exceptions_[this_thread()] = std::current_exception();
+  void partition_master::set_nb_partitions(size_type n){
+    if (n > nb_partitions){
+      nb_partitions = n;
+      nb_user_threads = true_thread_policy::num_threads();
+      update_partitions();
+      dal::singletons_manager::on_partitions_change();
+    }
+    else{
+      GMM_WARNING1("Not reducing number of partitions from "
+                   << nb_partitions <<" to " << n <<
+                   " as it might invalidate global storage");
+    }
   }
 
-}
+  partition_iterator partition_master::begin(){
+    check_threads();
+    current_partition = *(std::begin(partitions.thrd_cast()));
+    return partition_iterator{*this, std::begin(partitions.thrd_cast())};
+  }
+
+  partition_iterator partition_master::end(){
+    check_threads();
+    return partition_iterator{*this, std::end(partitions.thrd_cast())};
+  }
+
+  void partition_master::set_behaviour(thread_behaviour b){
+    if (b != behaviour){
+      GMM_ASSERT1(!me_is_multithreaded_now(),
+                  "Cannot change thread policy in parallel section");
+      behaviour = b;
+      check_threads();
+    }
+  }
+
+  partition_master::partition_master()
+    : nb_user_threads{true_thread_policy::num_threads()},
+      nb_partitions{max_concurrency()} {
+        partitions_updated = false;
+        update_partitions();
+  }
+
+  size_type partition_master::get_current_partition() const {
+    return behaviour == thread_behaviour::partition_threads ?
+           current_partition : true_thread_policy::this_thread();
+  }
+
+  size_type partition_master::get_nb_partitions() const {
+    return behaviour == thread_behaviour::partition_threads ?
+           nb_partitions : true_thread_policy::num_threads();
+  }
+
+  void partition_master::set_current_partition(size_type p){
+    if (behaviour == thread_behaviour::partition_threads){
+      GMM_ASSERT2(partitions.thrd_cast().count(p) != 0, "Internal error: "
+                  << p << " is not a valid partitions for thread "
+                  << true_thread_policy::this_thread());
+      current_partition = p;
+    }
+  }
+
+  void partition_master::rewind_partitions(){
+    if (me_is_multithreaded_now()){
+      current_partition = *(std::begin(partitions.thrd_cast()));
+    }
+    else{
+      for (size_type t = 0; t != partitions.num_threads(); ++t){
+        current_partition(t) = *(std::begin(partitions(t)));
+      }
+    }
+  }
+
+  void partition_master::update_partitions(){
+    partitions_updated = false;
+
+    auto guard = omp_guard{};
+    GMM_NOPERATION(guard);
+
+    if (partitions_updated) return;
+
+    partitions = decltype(partitions){};
+    current_partition = decltype(current_partition){};
+
+    auto n_threads = true_thread_policy::num_threads();
+    if(n_threads > nb_partitions){
+      GMM_WARNING0("Using " << n_threads <<
+                   " threads which is above the maximum number of partitions :" <<
+                   nb_partitions);
+    }
+    if (behaviour == thread_behaviour::partition_threads){
+      for (size_type t = 0; t != n_threads; ++t){
+        auto partition_size = static_cast<size_type>
+                                (std::ceil(static_cast<scalar_type>(nb_partitions) /
+                                           static_cast<scalar_type >(n_threads)));
+        auto partition_begin = partition_size * t;
+        if (partition_begin >= nb_partitions) break;
+        auto partition_end = std::min(partition_size * (t + 1), nb_partitions);
+        auto hint_it = std::begin(partitions(t));
+        for (size_type i = partition_begin; i != partition_end; ++i){
+          hint_it = partitions(t).insert(hint_it, i);
+        }
+        current_partition(t) = partition_begin;
+      }
+    }
+    else{
+      for (size_type t = 0; t != n_threads; ++t){
+        partitions(t).insert(t);
+        current_partition(t) = t;
+      }
+    }
+
+    partitions_updated = true;
+  }
+
+  #if defined _WIN32 && !defined (__GNUC__)
+    #define GETFEM_ON_WIN
+  #endif
+
+  parallel_boilerplate::
+  parallel_boilerplate()
+  : plocale{std::make_unique<standard_locale>()},
+    pexception{std::make_unique<thread_exception>()} {
+    #ifdef GETFEM_ON_WIN
+      _configthreadlocale(_ENABLE_PER_THREAD_LOCALE);
+    #endif
+  }
+
+  void parallel_boilerplate::run_lambda(std::function<void(void)> lambda){
+    pexception->run(lambda);
+  }
+
+  parallel_boilerplate::~parallel_boilerplate(){
+    #ifdef GETFEM_ON_WIN
+    _configthreadlocale(_DISABLE_PER_THREAD_LOCALE);
+    #endif
+    pexception->rethrow();
+  }
+
+  void parallel_execution(std::function<void(void)> lambda,
+                          bool iterate_over_partitions){
+    parallel_boilerplate boilerplate;
+    #pragma omp parallel default(shared)
+    {
+      if (iterate_over_partitions) {
+        for (auto &&partitions : partition_master::get()) {
+          (void)partitions;
+          boilerplate.run_lambda(lambda);
+        }
+      }
+      else {
+        boilerplate.run_lambda(lambda);
+      }
+    }
+    if (iterate_over_partitions) partition_master::get().rewind_partitions();
+  }
+
+}  /* end of namespace getfem.                                             */

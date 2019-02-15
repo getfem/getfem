@@ -100,6 +100,17 @@ The main useful methods on a |mo| object are
    string which designate the variable. ``niter`` is the number of copy of the
    variable.
 
+.. c:function:: add_filtered_fem_variable(name, mf, region)
+
+   Add a variable being the dofs of a finite element method ``mf`` only
+   specific to a given region.
+   (The standard way to define ``mf`` in |gf| is to define in the whole domain.)
+   ``name`` is a string which designate the variable. ``region`` is the region
+   number. This function will select the degree of freedom whose shape
+   function is non-zero on the given region. Internally, a ``partial_mesh_fem``
+   object will be used. The method ``mesh_fem_of_variable('name')`` allows to
+   access to the ``partial_mesh_fem`` built. 
+
 .. c:function:: add_fem_data(name, mf, niter=1)
 
    Add a data being the dofs of a finite element method ``mf``. ``name`` is a

@@ -18,10 +18,8 @@
  Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 
 ===========================================================================*/
-#include <api_scilab.h>
-#include <api_scilab.h>
-#include <MALLOC.h>
-#include <stack-c.h>
+
+#include <gfm_common.h>
 #include <Scierror.h>
 #include <sciprint.h>
 
