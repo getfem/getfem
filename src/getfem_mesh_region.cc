@@ -34,26 +34,26 @@ namespace getfem {
 
   mesh_region::mesh_region()
     : p(std::make_shared<impl>()), id_(size_type(-2)), type_(size_type(-1)),
-    partitioning_allowed(true), parent_mesh(nullptr){
+    partitioning_allowed{true}, parent_mesh(nullptr){
     if (me_is_multithreaded_now()) prohibit_partitioning();
     mark_region_changed();
   }
 
   mesh_region::mesh_region(size_type id__) : id_(id__), type_(size_type(-1)),
-    partitioning_allowed(true), parent_mesh(nullptr){
+    partitioning_allowed{true}, parent_mesh(nullptr){
     mark_region_changed();
   }
 
   mesh_region::mesh_region(mesh& m, size_type id__, size_type type) :
     p(std::make_shared<impl>()), id_(id__), type_(type),
-    partitioning_allowed(true), parent_mesh(&m){
+    partitioning_allowed{true}, parent_mesh(&m){
     if (me_is_multithreaded_now()) prohibit_partitioning();
     mark_region_changed();
   }
 
   mesh_region::mesh_region(const dal::bit_vector &bv)
     : p(std::make_shared<impl>()), id_(size_type(-2)), type_(size_type(-1)),
-    partitioning_allowed(true), parent_mesh(nullptr){
+    partitioning_allowed{true}, parent_mesh(nullptr){
     if (me_is_multithreaded_now()) prohibit_partitioning();
     add(bv);
     mark_region_changed();
@@ -91,7 +91,7 @@ namespace getfem {
     if (!parent_mesh && !from.parent_mesh){
       id_ = from.id_;
       type_ = from.type_;
-      partitioning_allowed = from.partitioning_allowed;
+      partitioning_allowed.store(from.partitioning_allowed.load());
       if (from.p) {
         if (!p) p = std::make_shared<impl>();
         wp() = from.rp();
@@ -103,13 +103,13 @@ namespace getfem {
       id_ = from.id_;
       type_ = from.type_;
       parent_mesh = from.parent_mesh;
-      partitioning_allowed = from.partitioning_allowed;
+      partitioning_allowed.store(from.partitioning_allowed.load());
     }
     else {
       if (from.p){
         wp() = from.rp();
         type_= from.get_type();
-        partitioning_allowed = from.partitioning_allowed;
+        partitioning_allowed.store(from.partitioning_allowed.load());
       }
       else if (from.id_ == size_type(-1)) {
         clear();

@@ -37,6 +37,7 @@
 
 #pragma once
 
+#include <atomic>
 #include <bitset>
 #include <iostream>
 #include <map>
@@ -72,10 +73,12 @@ namespace getfem {
                                  constructor is used */
 
     size_type type_; //optional type of the region
-    omp_distribute<bool> partitioning_allowed; /** specifies that in
-                          multithreaded code only a partition of the
-                          region is visible in index() and size() methods,
-                          as well as during iteration with mr_visitor */
+
+    std::atomic_bool partitioning_allowed; /* specifies that in multithreaded code only a
+                                           partition of the region is visible in index()
+                                           and size() methods, as well as during iteration
+                                           with mr_visitor */
+
     mesh *parent_mesh; /* used for mesh_region "extracted" from
                           a mesh (to provide feedback) */
 
