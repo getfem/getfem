@@ -2383,6 +2383,15 @@ namespace getfem {
    const std::string &dataexpr_rho = std::string(),
    size_type region = size_type(-1));
 
+  /** Lumped mass brick for first order.
+      Add a lumped mass matix for first order on a variable (eventually with a specified region).
+      If the parameter $\rho$ is omitted it is assumed to be equal to 1.
+  */
+  size_type APIDECL add_lumped_mass_brick_for_first_order
+  (model &md, const mesh_im &mim, const std::string &varname,
+   const std::string &dataexpr_rho = std::string(),
+   size_type region = size_type(-1));
+
   /** Basic d/dt brick ( @f$ \int \rho ((u^{n+1}-u^n)/dt).v @f$ ).
       Add the standard discretization of a first order time derivative. The
       parameter $rho$ is the density which could be omitted (the defaul value

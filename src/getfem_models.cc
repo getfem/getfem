@@ -6403,7 +6403,7 @@ model_complex_plain_vector &
 
   };
 
-  size_type add_lumped_mass_matrix_for_first_order
+  size_type add_lumped_mass_brick_for_first_order
   (model & md, const mesh_im &mim, const std::string &varname,
    const std::string &dataexpr_rho, size_type region) {
     pbrick pbr = std::make_shared<lumped_mass_brick_for_first_order>();
