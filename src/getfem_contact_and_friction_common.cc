@@ -245,9 +245,9 @@ namespace getfem {
     pt.resize(N); ptx.resize(1); pty.resize(1); ptz.resize(1); ptw.resize(1);
     obstacles_gw.back().add_fixed_size_constant("X", pt);
     if (N >= 4) obstacles_gw.back().add_fixed_size_constant("w", ptw);
-    if (N >= 3) obstacles_gw.back().add_fixed_size_constant("z", ptw);
-    if (N >= 2) obstacles_gw.back().add_fixed_size_constant("y", ptw);
-    if (N >= 1) obstacles_gw.back().add_fixed_size_constant("x", ptw);
+    if (N >= 3) obstacles_gw.back().add_fixed_size_constant("z", ptz);
+    if (N >= 2) obstacles_gw.back().add_fixed_size_constant("y", pty);
+    if (N >= 1) obstacles_gw.back().add_fixed_size_constant("x", ptx);
     obstacles_f.push_back(ga_function(obstacles_gw.back(), obs));
     obstacles_f.back().compile();
     return ind;
