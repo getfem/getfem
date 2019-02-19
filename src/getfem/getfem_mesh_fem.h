@@ -453,7 +453,7 @@ namespace getfem {
     }
     ind_dof_ct ind_dof_of_element(size_type cv) const IS_DEPRECATED
     { return ind_basic_dof_of_element(cv); }
-    virtual const bgeot::mesh_structure::ind_cv_ct &
+    virtual const std::vector<size_type> &
     ind_scalar_basic_dof_of_element(size_type cv) const
     { return dof_structure.ind_points_of_convex(cv); }
     /** Give an array of the dof numbers lying of a convex face (all

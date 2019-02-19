@@ -104,8 +104,8 @@ namespace bgeot {
     bool is_point_valid(size_type i) const { return !(points_tab[i].empty()); }
     /** Return a container to the list of points attached to convex ic.
         They are ordered according to structure_of_convex(ic) */
-    const ind_cv_ct &ind_points_of_convex(size_type ic)
-      const { return convex_tab[ic].pts; }
+    const ind_set &ind_points_of_convex(size_type ic) const
+    { return convex_tab[ic].pts; }
     /// Return the "local" index for point ip of the mesh
     size_type local_ind_of_convex_point(size_type ic, size_type ip) const;
     /// Return the pconvex_structure of the convex ic.
@@ -258,7 +258,7 @@ namespace bgeot {
   template<class ITER>
     bool mesh_structure::is_convex_having_points(size_type ic,
                                               short_type nb, ITER pit) const {
-    const ind_cv_ct &pt = ind_points_of_convex(ic);
+    const ind_set &pt = ind_points_of_convex(ic);
     for (short_type i = 0; i < nb; ++i, ++pit)
       if (std::find(pt.begin(), pt.end(), *pit) == pt.end())
         return false;
