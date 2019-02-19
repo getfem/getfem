@@ -59,7 +59,7 @@ namespace getfem {
   (const std::string &name, const mesh_fem &mf,
    const model_real_plain_vector &VV) {
     GMM_ASSERT1(mf.nb_dof(), "The provided mesh_fem of variable" << name
-                             << "has zero degrees of freedom.");
+                             << "has zero degrees of freedom");
     size_type Q = gmm::vect_size(VV)/mf.nb_dof();
     if (Q == 0) Q = size_type(1);
     variables[name] = var_description(false, true, &mf,
@@ -374,9 +374,6 @@ namespace getfem {
   }
 
 
-
-  
-
   const mesh_region &
   ga_workspace::register_region(const mesh &m, const mesh_region &region) {
     if (&m == &dummy_mesh())
@@ -388,7 +385,6 @@ namespace getfem {
     lmr.push_back(region);
     return lmr.back();
   }
-
 
   void ga_workspace::add_tree(ga_tree &tree, const mesh &m,
                               const mesh_im &mim, const mesh_region &rg,
@@ -454,7 +450,7 @@ namespace getfem {
         trees.push_back(tree_description());
         trees.back().mim = &mim; trees.back().m = &m;
         trees.back().rg = &rg;
-	trees.back().secondary_domain = tree.secondary_domain;
+        trees.back().secondary_domain = tree.secondary_domain;
         trees.back().ptree = new ga_tree;
         trees.back().ptree->swap(tree);
         pga_tree_node root = trees.back().ptree->root;
@@ -507,7 +503,7 @@ namespace getfem {
                                          const mesh_im &mim,
                                          const mesh_region &rg_,
                                          size_type add_derivative_order,
-					 const std::string &secondary_dom) {
+                                         const std::string &secondary_dom) {
     const mesh_region &rg = register_region(mim.linked_mesh(), rg_);
     // cout << "adding expression " << expr << endl;
     GA_TIC;
@@ -516,7 +512,7 @@ namespace getfem {
     ga_read_string(expr, ltrees[0], macro_dictionary());
     if (secondary_dom.size()) {
       GMM_ASSERT1(secondary_domain_exists(secondary_dom),
-		  "Unknow secondary domain " << secondary_dom);
+                  "Unknown secondary domain " << secondary_dom);
       ltrees[0].secondary_domain = secondary_dom;
     }
     // cout << "read : " << ga_tree_to_string(ltrees[0])  << endl;
@@ -910,7 +906,7 @@ namespace getfem {
   { if (ptree) delete ptree; ptree = 0; }
 
   ga_workspace::ga_workspace(const getfem::model &md_,
-			     bool enable_all_variables)
+                             bool enable_all_variables)
     : md(&md_), parent_workspace(0),
       enable_all_md_variables(enable_all_variables),
       macro_dict(md_.macro_dictionary())

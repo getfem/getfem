@@ -70,7 +70,7 @@ public:
   }
   const bgeot::multi_index &sizes(getfem::size_type) const {  return sizes_; }
   virtual void compute(getfem::fem_interpolation_context& ctx,
-		       bgeot::base_tensor &t) {
+                       bgeot::base_tensor &t) {
     bgeot::size_type cv = ctx.convex_num();
     coeff.resize(mf.nb_basic_dof_of_element(cv));
     gmm::copy
@@ -95,7 +95,7 @@ void asm_lsneuman_matrix
     nterm(ls.get_mesh_fem(), ls.values());
 
   getfem::generic_assembly assem("t=comp(Base(#2).Grad(#1).NonLin(#3));"
-				 "M(#2, #1)+= t(:,:,i,i)");
+                                 "M(#2, #1)+= t(:,:,i,i)");
   assem.push_mi(mim);
   assem.push_mf(mf);
   assem.push_mf(mf_mult);
@@ -107,7 +107,7 @@ void asm_lsneuman_matrix
 
 
     /**
-	generic normal grad level set matrix (on the whole mesh level set or
+        generic normal grad level set matrix (on the whole mesh level set or
         on the specified element set level set or boundary level set)
     */
 
@@ -123,7 +123,7 @@ template<typename MAT>  void asm_nlsgrad_matrix
 
   getfem::generic_assembly
     assem("t=comp(Grad(#1).NonLin(#3).Grad(#2).NonLin(#3));"
-	  "M(#1, #2)+= sym(t(:,i,i,:,j,j))");
+          "M(#1, #2)+= sym(t(:,i,i,:,j,j))");
   assem.push_mi(mim);
   assem.push_mf(mf1);
     assem.push_mf(mf2);
@@ -228,11 +228,11 @@ void asm_stabilization_patch_matrix
   int options[5] = {0,0,0,0,0};
   // float ubvec[1] = {1.03f};
   //METIS_mCPartGraphKway(&ne, &ncon, &(xadj[0]), &(adjncy[0]), &(vwgt[0]), &(adjwgt[0]), &wgtflag,
-  //		    &numflag, &nparts, &(ubvec[0]),  options, &edgecut, &(part[0]));
+  //                      &numflag, &nparts, &(ubvec[0]),  options, &edgecut, &(part[0]));
   //METIS_mCPartGraphRecursive(&ne, &ncon, &(xadj[0]), &(adjncy[0]), &(vwgt[0]), &(adjwgt[0]), &wgtflag,
-  //			 &numflag, &nparts,  options, &edgecut, &(part[0]));
+  //                           &numflag, &nparts,  options, &edgecut, &(part[0]));
   //METIS_PartGraphKway(&ne, &(xadj[0]), &(adjncy[0]), &(vwgt[0]), &(adjwgt[0]), &wgtflag,
-  //	  &numflag, &nparts, options, &edgecut, &(part[0]));
+  //                    &numflag, &nparts, options, &edgecut, &(part[0]));
   METIS_PartGraphRecursive(&ne, &(xadj[0]), &(adjncy[0]), &(vwgt[0]), &(adjwgt[0]), &wgtflag,
                            &numflag, &nparts, options, &edgecut, &(part[0]));
 # else
@@ -280,7 +280,7 @@ void asm_stabilization_patch_matrix
     bgeot::size_type cv = mf_P0.first_convex_of_basic_dof(r);
     int p=part[indelt[cv]];
     gmm::copy(gmm::scaled(gmm::mat_row(MAT_aux, p), 1./size_patch[p]),
-	      gmm::mat_row(MAT_proj, r));
+              gmm::mat_row(MAT_proj, r));
   }
 
   gmm::mult(M0, MAT_proj, M1);
@@ -446,16 +446,16 @@ static void do_high_level_generic_assembly(mexargs_in& in, mexargs_out& out) {
   while (in.remaining()) {
     std::string varname = in.pop().to_string();
     if (varname.compare("select_output") == 0 ||
-	varname.compare("select output") == 0) {
+        varname.compare("select output") == 0) {
       GMM_ASSERT1(order > 0, "select_output option is for order 1 or 2"
                   "assemblies only");
       with_select_output = true;
       select_var1 = in.pop().to_string();
       if (order == 2) select_var2 = in.pop().to_string();
     } else if (varname.compare("Secondary_domain") == 0 ||
-	varname.compare("Secondary_Domain") == 0) {
+        varname.compare("Secondary_Domain") == 0) {
       GMM_ASSERT1(!with_secondary,
-		  "Only one secondary domain can be specified");
+                  "Only one secondary domain can be specified");
       secondary_domain = in.pop().to_string();
       with_secondary = true;
     } else {
@@ -463,37 +463,37 @@ static void do_high_level_generic_assembly(mexargs_in& in, mexargs_out& out) {
       const getfem::mesh_fem *mf(0);
       const getfem::im_data *mimd(0);
       if (is_meshfem_object(in.front()))
-	mf = to_meshfem_object(in.pop());
+        mf = to_meshfem_object(in.pop());
       else if (is_meshimdata_object(in.front()))
-	mimd = to_meshimdata_object(in.pop());
+        mimd = to_meshimdata_object(in.pop());
       darray U = in.pop().to_darray();
-      GMM_ASSERT1(vectors.find(varname) == vectors.end(),
-		  "The same variable/constant name is repeated twice: "
-		  << varname);
+      GMM_ASSERT1(vectors.count(varname) == 0,
+                  "The same variable/constant name is repeated twice: "
+                  << varname);
       GMM_ASSERT1(!with_model || !md.variable_exists(varname),
-		  "The same variable/constant name is already defined in "
-		  "the model: " << varname);
+                  "The same variable/constant name is already defined in "
+                  "the model: " << varname);
       gmm::resize(vectors[varname], U.size());
       gmm::copy(U, vectors[varname]);
       if (is_cte) {
-	if (mf)
-	  workspace.add_fem_constant(varname, *mf, vectors[varname]);
-	else if (mimd)
-	  workspace.add_im_data(varname, *mimd, vectors[varname]);
-	else
-	  workspace.add_fixed_size_constant(varname, vectors[varname]);
+        if (mf)
+          workspace.add_fem_constant(varname, *mf, vectors[varname]);
+        else if (mimd)
+          workspace.add_im_data(varname, *mimd, vectors[varname]);
+        else
+          workspace.add_fixed_size_constant(varname, vectors[varname]);
       } else {
-	if (mf) {
-	  gmm::sub_interval I(nbdof, mf->nb_dof());
-	  nbdof += mf->nb_dof();
-	  workspace.add_fem_variable(varname, *mf, I, vectors[varname]);
-	}  else if (mimd) {
-	  THROW_BADARG("Data defined on integration points can not be a variable");
-	}  else {
-	  gmm::sub_interval I(nbdof, U.size());
-	  nbdof += U.size();
-	  workspace.add_fixed_size_variable(varname, I, vectors[varname]);
-	}
+        if (mf) {
+          gmm::sub_interval I(nbdof, mf->nb_dof());
+          nbdof += mf->nb_dof();
+          workspace.add_fem_variable(varname, *mf, I, vectors[varname]);
+        }  else if (mimd) {
+          THROW_BADARG("Data defined on integration points can not be a variable");
+        }  else {
+          gmm::sub_interval I(nbdof, U.size());
+          nbdof += U.size();
+          workspace.add_fixed_size_variable(varname, I, vectors[varname]);
+        }
       }
     }
   }
@@ -748,7 +748,7 @@ template <typename T> static inline void dummy_func(T &) {}
                        getfemint::mexargs_out& out)                     \
       { dummy_func(in); dummy_func(out); code }                         \
     };                                                                  \
-    psub_command psubc = std::make_shared<subc>();			\
+    psub_command psubc = std::make_shared<subc>();                      \
     psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;         \
     psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;     \
     subc_tab[cmd_normalize(name)] = psubc;                              \
@@ -799,9 +799,9 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
       functions are only available for variables, not for constants.
 
       `select_output` is an optional parameter which allows to reduce the
-      output vecotr (for `order` equal to 1) or the matrix (for `order`
+      output vector (for `order` equal to 1) or the matrix (for `order`
       equal to 2) to the degrees of freedom of the specified variables.
-      One variable has to be specified for a vector ouptut and two for a
+      One variable has to be specified for a vector output and two for a
       matrix output.
 
       Note that if several variables are given, the assembly of the
@@ -963,7 +963,7 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
            getfem::asm_nonlinear_elasticity_rhs(B, *mim, *mf_u, U, mf_d,
                                                 param,*law, rg);
          } else if (cmd_strmatch(what, "incompressible tangent matrix")) {
-	   const getfem::mesh_fem *mf_p = to_meshfem_object(in.pop());
+           const getfem::mesh_fem *mf_p = to_meshfem_object(in.pop());
            darray P = in.pop().to_darray(int(mf_p->nb_dof()));
            gf_real_sparse_by_col  K(mf_u->nb_dof(), mf_u->nb_dof());
            gf_real_sparse_by_col  B(mf_u->nb_dof(), mf_p->nb_dof());
@@ -972,7 +972,7 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
            out.pop().from_sparse(K);
            out.pop().from_sparse(B);
          } else if (cmd_strmatch(what, "incompressible rhs")) {
-	   const getfem::mesh_fem *mf_p = to_meshfem_object(in.pop());
+           const getfem::mesh_fem *mf_p = to_meshfem_object(in.pop());
            darray P = in.pop().to_darray(int(mf_p->nb_dof()));
            darray RU = out.pop().create_darray_v(unsigned(mf_u->nb_dof()));
            darray RB = out.pop().create_darray_v(unsigned(mf_p->nb_dof()));

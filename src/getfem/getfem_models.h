@@ -185,7 +185,7 @@ namespace getfem {
       model_complex_plain_vector affine_complex_value;
       scalar_type alpha;    // Factor for the affine dependent variables
       std::string org_name; // Name of the original variable for affine
-                            //  dependent variables
+                            // dependent variables
 
       // im data description
       const im_data *pim_data;
@@ -239,7 +239,7 @@ namespace getfem {
       { return is_complex ? complex_value[0].size() : real_value[0].size(); }
 
       void set_size();
-    };
+    }; // struct var_description
 
   public:
 
@@ -506,21 +506,21 @@ namespace getfem {
       active_bricks.add(ib);
     }
 
-    /** Disable a variable (and its attached mutlipliers).  */
+    /** Disable a variable (and its attached mutlipliers). */
     void disable_variable(const std::string &name);
 
-    /** Enable a variable (and its attached mutlipliers).  */
+    /** Enable a variable (and its attached mutlipliers). */
     void enable_variable(const std::string &name);
 
-    /** Says if a name corresponds to a declared variable.  */
+    /** States if a name corresponds to a declared variable. */
     bool variable_exists(const std::string &name) const;
 
     bool is_disabled_variable(const std::string &name) const;
 
-    /** Says if a name corresponds to a declared data or disabled variable.  */
+    /** States if a name corresponds to a declared data or disabled variable. */
     bool is_data(const std::string &name) const;
 
-    /** Says if a name corresponds to a declared data.  */
+    /** States if a name corresponds to a declared data. */
     bool is_true_data(const std::string &name) const;
 
     bool is_affine_dependent_variable(const std::string &name) const;
@@ -882,7 +882,7 @@ namespace getfem {
       return cTM;
     }
 
-    /** Gives the access to the right hand side of the tangent linear system.
+    /** Gives access to the right hand side of the tangent linear system.
         For the real version. An assembly of the rhs has to be done first. */
     const model_real_plain_vector &real_rhs() const {
       GMM_ASSERT1(!complex_version, "This model is a complex one");

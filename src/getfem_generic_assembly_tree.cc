@@ -1559,7 +1559,7 @@ namespace getfem {
         case GA_MINUS: // unary -
           tree.add_op(GA_UNARY_MINUS, token_pos, expr);
           state = 1; break;
-          
+
         case GA_PLUS:  // unary +
           state = 1; break;
 
