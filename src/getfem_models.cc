@@ -873,40 +873,30 @@ namespace getfem {
     add_dependency(mf);
   }
 
-  void model::disable_variable(const std::string &name) {
+  inline void model::set_is_disabled_of_variable(const std::string &name, bool flag) {
     VAR_SET::iterator it = variables.find(name);
     GMM_ASSERT1(it != variables.end(), "Undefined variable " << name);
-    it->second.is_disabled = true;
+    it->second.is_disabled = flag;
     for (VAR_SET::iterator itv = variables.begin();
          itv != variables.end(); ++itv) {
       if (((itv->second.filter & VDESCRFILTER_INFSUP) ||
            (itv->second.filter & VDESCRFILTER_CTERM))
           && (name.compare(itv->second.filter_var) == 0)) {
-        itv->second.is_disabled = true;
+        itv->second.is_disabled = flag;
       }
       if (itv->second.is_variable && itv->second.is_affine_dependent
           && name.compare(itv->second.org_name) == 0)
-        itv->second.is_disabled = true;
+        itv->second.is_disabled = flag;
     }
     if (!act_size_to_be_done) resize_global_system();
   }
 
+  void model::disable_variable(const std::string &name) {
+    set_is_disabled_of_variable(name, true);
+  }
+
   void model::enable_variable(const std::string &name) {
-    VAR_SET::iterator it = variables.find(name);
-    GMM_ASSERT1(it != variables.end(), "Undefined variable " << name);
-    it->second.is_disabled = false;
-    for (VAR_SET::iterator itv = variables.begin();
-         itv != variables.end(); ++itv) {
-      if (((itv->second.filter & VDESCRFILTER_INFSUP) ||
-           (itv->second.filter & VDESCRFILTER_CTERM))
-          && (name.compare(itv->second.filter_var) == 0)) {
-        itv->second.is_disabled = false;
-      }
-      if (itv->second.is_variable && itv->second.is_affine_dependent
-          && name.compare(itv->second.org_name) == 0)
-        itv->second.is_disabled = false;
-    }
-    if (!act_size_to_be_done) resize_global_system();
+    set_is_disabled_of_variable(name, false);
   }
 
   bool model::variable_exists(const std::string &name) const {
