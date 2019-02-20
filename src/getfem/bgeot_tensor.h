@@ -323,6 +323,10 @@ namespace bgeot {
     }
 
     tensor(const multi_index &c) { init(c); }
+    tensor(size_type i, size_type j)
+    { init(multi_index(i, j)); }
+    tensor(size_type i, size_type j, size_type k)
+    { init(multi_index(i, j, k)); }
     tensor(size_type i, size_type j, size_type k, size_type l)
     { init(multi_index(i, j, k, l)); }
     tensor() {}
