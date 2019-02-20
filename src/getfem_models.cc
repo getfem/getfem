@@ -705,7 +705,7 @@ namespace getfem {
                 "Cannot explicitly resize a fem variable or data");
     GMM_ASSERT1(variables[name].pim_data == 0,
                 "Cannot explicitly resize an im data");
-    GMM_ASSERT1(size, "Variable of null size are not allowed");
+    GMM_ASSERT1(size, "Variables of null size are not allowed");
     variables[name].qdims.resize(1);
     variables[name].qdims[0] = size;
     variables[name].set_size();
@@ -742,32 +742,32 @@ namespace getfem {
 
   void model::add_initialized_matrix_data(const std::string &name,
                                           const base_matrix &M) {
-    this->add_fixed_size_data(name, bgeot::multi_index(gmm::mat_nrows(M),
-                                                       gmm::mat_ncols(M)));
-    GMM_ASSERT1(!(this->is_complex()), "Sorry, complex version to be done");
-    gmm::copy(M.as_vector(), this->set_real_variable(name));
+    add_fixed_size_data(name, bgeot::multi_index(gmm::mat_nrows(M),
+                                                 gmm::mat_ncols(M)));
+    GMM_ASSERT1(!(is_complex()), "Sorry, complex version to be done");
+    gmm::copy(M.as_vector(), set_real_variable(name));
   }
 
   void model::add_initialized_matrix_data(const std::string &name,
                                           const base_complex_matrix &M) {
-    this->add_fixed_size_data(name, bgeot::multi_index(gmm::mat_nrows(M),
-                                                       gmm::mat_ncols(M)));
-    GMM_ASSERT1(!(this->is_complex()), "Sorry, complex version to be done");
-    gmm::copy(M.as_vector(), this->set_complex_variable(name));
+    add_fixed_size_data(name, bgeot::multi_index(gmm::mat_nrows(M),
+                                                 gmm::mat_ncols(M)));
+    GMM_ASSERT1(!(is_complex()), "Sorry, complex version to be done");
+    gmm::copy(M.as_vector(), set_complex_variable(name));
   }
 
   void model::add_initialized_tensor_data(const std::string &name,
                                          const base_tensor &t) {
-    this->add_fixed_size_data(name, t.sizes(), 1);
-    GMM_ASSERT1(!(this->is_complex()), "Sorry, complex version to be done");
-    gmm::copy(t.as_vector(), this->set_real_variable(name));
+    add_fixed_size_data(name, t.sizes(), 1);
+    GMM_ASSERT1(!(is_complex()), "Sorry, complex version to be done");
+    gmm::copy(t.as_vector(), set_real_variable(name));
   }
 
   void model::add_initialized_tensor_data(const std::string &name,
                                           const base_complex_tensor &t) {
-    this->add_fixed_size_data(name, t.sizes(), 1);
-    GMM_ASSERT1(!(this->is_complex()), "Sorry, complex version to be done");
-    gmm::copy(t.as_vector(), this->set_complex_variable(name));
+    add_fixed_size_data(name, t.sizes(), 1);
+    GMM_ASSERT1(!(is_complex()), "Sorry, complex version to be done");
+    gmm::copy(t.as_vector(), set_complex_variable(name));
   }
 
   void model::add_im_data(const std::string &name, const im_data &im_data,
@@ -1035,13 +1035,13 @@ namespace getfem {
     is_symmetric_ = is_symmetric_ && pbr->is_symmetric();
     is_coercive_ = is_coercive_ && pbr->is_coercive();
 
-    for (size_type i=0; i < varnames.size(); ++i)
-      GMM_ASSERT1(variables.find(varnames[i]) != variables.end(),
-                  "Undefined model variable " << varnames[i]);
+    for (const auto &vname : varnames)
+      GMM_ASSERT1(variables.count(vname),
+                  "Undefined model variable " << vname);
     // cout << "dl == " << datanames << endl;
-    for (size_type i=0; i < datanames.size(); ++i)
-      GMM_ASSERT1(variables.find(datanames[i]) != variables.end(),
-                  "Undefined model data or variable " << datanames[i]);
+    for (const auto &dname : datanames)
+      GMM_ASSERT1(variables.count(dname),
+                  "Undefined model data or variable " << dname);
 
     return ib;
   }
@@ -1072,25 +1072,23 @@ namespace getfem {
     GMM_ASSERT1(valid_bricks[ib], "Inexistent brick");
     touch_brick(ib);
     bricks[ib].vlist = vl;
-    for (size_type i=0; i < vl.size(); ++i)
-      GMM_ASSERT1(variables.find(vl[i]) != variables.end(),
-                  "Undefined model variable " << vl[i]);
+    for (const auto &v : vl)
+      GMM_ASSERT1(variables.count(v), "Undefined model variable " << v);
   }
 
   void model::change_data_of_brick(size_type ib, const varnamelist &dl) {
     GMM_ASSERT1(valid_bricks[ib], "Inexistent brick");
     touch_brick(ib);
     bricks[ib].dlist = dl;
-    for (size_type i=0; i < dl.size(); ++i)
-      GMM_ASSERT1(variables.find(dl[i]) != variables.end(),
-                  "Undefined model variable " << dl[i]);
+    for (const auto &v : dl)
+      GMM_ASSERT1(variables.count(v), "Undefined model variable " << v);
   }
 
   void model::change_mims_of_brick(size_type ib, const mimlist &ml) {
     GMM_ASSERT1(valid_bricks[ib], "Inexistent brick");
     touch_brick(ib);
     bricks[ib].mims = ml;
-    for (size_type i = 0; i < ml.size(); ++i) add_dependency(*(ml[i]));
+    for (const auto &mim : ml) add_dependency(*mim);
   }
 
   void model::change_update_flag_of_brick(size_type ib, bool flag) {
@@ -1170,11 +1168,11 @@ namespace getfem {
 
         if (name_v.size()) {
           if (is_complex()) {
-            model_complex_plain_vector v0 = this->complex_variable(name_v);
-            gmm::copy(v0, this->set_complex_variable(name_previous_v));
+            model_complex_plain_vector v0 = complex_variable(name_v);
+            gmm::copy(v0, set_complex_variable(name_previous_v));
           } else {
-            const model_real_plain_vector &v0 = this->real_variable(name_v);
-            gmm::copy(v0, this->set_real_variable(name_previous_v));
+            const model_real_plain_vector &v0 = real_variable(name_v);
+            gmm::copy(v0, set_real_variable(name_previous_v));
           }
         }
       }
@@ -1803,16 +1801,14 @@ namespace getfem {
 
   void model::first_iter() {
     context_check(); if (act_size_to_be_done) actualize_sizes();
-    for (VAR_SET::iterator it = variables.begin(); it != variables.end(); ++it)
-      it->second.clear_temporaries();
+    for (auto && v : variables) v.second.clear_temporaries();
 
     set_dispatch_coeff();
 
     for (dal::bv_visitor ib(active_bricks); !ib.finished(); ++ib) {
       brick_description &brick = bricks[ib];
-      bool cplx = is_complex() && brick.pbr->is_complex();
       if (brick.pdispatch) {
-        if (cplx)
+        if (is_complex() && brick.pbr->is_complex())
           brick.pdispatch->next_complex_iter(*this, ib, brick.vlist,
                                              brick.dlist,
                                              brick.cmatlist, brick.cveclist,
@@ -1831,9 +1827,8 @@ namespace getfem {
 
     for (dal::bv_visitor ib(active_bricks); !ib.finished(); ++ib) {
       brick_description &brick = bricks[ib];
-      bool cplx = is_complex() && brick.pbr->is_complex();
       if (brick.pdispatch) {
-        if (cplx)
+        if (is_complex() && brick.pbr->is_complex())
           brick.pdispatch->next_complex_iter(*this, ib, brick.vlist,
                                              brick.dlist,
                                              brick.cmatlist, brick.cveclist,
@@ -1845,18 +1840,14 @@ namespace getfem {
       }
     }
 
-    for (VAR_SET::iterator it = variables.begin(); it != variables.end();
-         ++it) {
-      for (size_type i = 1; i < it->second.n_iter; ++i) {
+    for (auto &&v : variables)
+      for (size_type i = 1; i < v.second.n_iter; ++i) {
         if (is_complex())
-          gmm::copy(it->second.complex_value[i-1],
-                    it->second.complex_value[i]);
+          gmm::copy(v.second.complex_value[i-1], v.second.complex_value[i]);
         else
-          gmm::copy(it->second.real_value[i-1],
-                    it->second.real_value[i]);
-        it->second.v_num_data[i] = act_counter();
+          gmm::copy(v.second.real_value[i-1], v.second.real_value[i]);
+        v.second.v_num_data[i] = act_counter();
       }
-    }
   }
 
   bool model::is_var_newer_than_brick(const std::string &varname,
@@ -2731,18 +2722,18 @@ namespace getfem {
 
   const model_real_plain_vector &
   model::real_variable(const std::string &name) const {
-    if (is_old(name)) return real_variable(no_old_prefix_name(name), 1);
-    else return real_variable(name, size_type(-1));
+    return is_old(name) ? real_variable(no_old_prefix_name(name), 1)
+                        : real_variable(name, size_type(-1));
   }
 
   const model_real_plain_vector &
   model::real_variable(const std::string &name, size_type niter) const {
     GMM_ASSERT1(!complex_version, "This model is a complex one");
-    GMM_ASSERT1(!is_old(name), "Please don't use Old_ prefix in combination with"
-                               " variable version");
+    GMM_ASSERT1(!is_old(name), "Please don't use Old_ prefix in combination "
+                               "with variable version");
     context_check();
     auto it = variables.find(name);
-    GMM_ASSERT1(it!=variables.end(), "Undefined variable " << name);
+    GMM_ASSERT1(it != variables.end(), "Undefined variable " << name);
     if (act_size_to_be_done && it->second.is_fem_dofs) {
       if (it->second.filter != VDESCRFILTER_NO)
         actualize_sizes();
@@ -2757,8 +2748,8 @@ namespace getfem {
 
   const model_complex_plain_vector &
   model::complex_variable(const std::string &name) const {
-    if (is_old(name)) return complex_variable(no_old_prefix_name(name), 1);
-    else return complex_variable(name, size_type(-1));
+    return is_old(name) ? complex_variable(no_old_prefix_name(name), 1)
+                        : complex_variable(name, size_type(-1));
   }
 
   const model_complex_plain_vector &
@@ -2784,8 +2775,8 @@ namespace getfem {
 
   model_real_plain_vector &
   model::set_real_variable(const std::string &name) const {
-    if (is_old(name)) return set_real_variable(no_old_prefix_name(name), 1);
-    else return set_real_variable(name, size_type(-1));
+    return is_old(name) ? set_real_variable(no_old_prefix_name(name), 1)
+                        : set_real_variable(name, size_type(-1));
   }
 
 
@@ -2811,10 +2802,10 @@ namespace getfem {
     return it->second.real_value[niter];
   }
 
-model_complex_plain_vector &
+  model_complex_plain_vector &
   model::set_complex_variable(const std::string &name) const {
-    if (is_old(name)) return set_complex_variable(no_old_prefix_name(name), 1);
-    else return set_complex_variable(name, size_type(-1));
+    return is_old(name) ? set_complex_variable(no_old_prefix_name(name), 1)
+                        : set_complex_variable(name, size_type(-1));
   }
 
   model_complex_plain_vector &
