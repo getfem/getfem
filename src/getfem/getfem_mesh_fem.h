@@ -553,12 +553,14 @@ namespace getfem {
     /** Return the total number of basic degrees of freedom (before the
      * optional reduction). */
     virtual size_type nb_basic_dof() const {
-      context_check(); if (!dof_enumeration_made) enumerate_dof();
+      context_check();
+      if (!dof_enumeration_made) enumerate_dof();
       return nb_total_dof;
     }
     /// Return the total number of degrees of freedom.
     virtual size_type nb_dof() const {
-      context_check(); if (!dof_enumeration_made) enumerate_dof();
+      context_check();
+      if (!dof_enumeration_made) enumerate_dof();
       return use_reduction ? gmm::mat_nrows(R_) : nb_total_dof;
     }
     /** Get a list of basic dof lying on a given mesh_region.
