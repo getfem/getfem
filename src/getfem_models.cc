@@ -100,26 +100,20 @@ namespace getfem {
   }
 
   bool model::check_name_validity(const std::string &name, bool assert) const {
-    VAR_SET::const_iterator it = variables.find(name);
-    if (it != variables.end()) {
+
+    if (variables.count(name) != 0) {
       GMM_ASSERT1(!assert, "Variable " << name << " already exists");
       return false;
-    }
-
-    if (variable_groups.find(name) != variable_groups.end()) {
+    } else if (variable_groups.count(name) != 0) {
       GMM_ASSERT1(!assert,
                   name << " corresponds to an already existing group of "
                   "variables name");
       return false;
-    }
-
-    if (macro_exists(name)) {
+    } else if (macro_exists(name)) {
       GMM_ASSERT1(!assert,
                   name << " corresponds to an already existing macro");
       return false;
-    }
-
-    if (name.compare("X") == 0) {
+    } else if (name.compare("X") == 0) {
       GMM_ASSERT1(!assert, "X is a reserved keyword of the generic "
                   "assembly language");
       return false;
@@ -130,15 +124,11 @@ namespace getfem {
       GMM_ASSERT1(!assert, "Invalid variable name, corresponds to an "
                 "operator or function name of the generic assembly language");
       return false;
-    }
-
-    if (ga_valid == 2) {
+    } else if (ga_valid == 2) {
       GMM_ASSERT1(!assert, "Invalid variable name having a reserved "
                   "prefix used by the generic assembly language");
       return false;
-    }
-
-    if (ga_valid == 3) {
+    } else if (ga_valid == 3) {
       std::string org_name = sup_previous_and_dot_to_varname(name);
       if (org_name.size() < name.size() &&
           variables.find(org_name) != variables.end()) {
@@ -149,13 +139,10 @@ namespace getfem {
       }
     }
 
-    bool valid = true;
-    if (name.size() == 0) valid = false;
-    else {
-      if (!isalpha(name[0])) valid = false;
+    bool valid = !name.empty() && isalpha(name[0]);
+    if (valid)
       for (size_type i = 1; i < name.size(); ++i)
         if (!(isalnum(name[i]) || name[i] == '_')) valid = false;
-    }
     GMM_ASSERT1(!assert || valid,
                 "Illegal variable name : \"" << name << "\"");
     return valid;
@@ -186,6 +173,11 @@ namespace getfem {
     VAR_SET::const_iterator it = variables.find(name);
     GMM_ASSERT1(it != variables.end(), "Undefined variable " << name);
     return it;
+  }
+
+  const model::var_description &
+  model::variable_description(const std::string &name) const {
+    return find_variable(name)->second;
   }
 
   std::string sup_previous_and_dot_to_varname(std::string v) {
@@ -221,36 +213,31 @@ namespace getfem {
     VAR_SET::const_iterator it = find_variable(name);
     if (it->second.is_affine_dependent)
       it = variables.find(it->second.org_name);
-    return (!(it->second.is_variable) || it->second.is_disabled);
+    return !(it->second.is_variable) || it->second.is_disabled;
   }
 
   bool model::is_true_data(const std::string &name) const {
-    if (is_old(name)) return true;
-    VAR_SET::const_iterator it = find_variable(name);
-    return (!(it->second.is_variable));
+    return is_old(name) ? true : !variable_description(name).is_variable;
   }
 
   bool model::is_affine_dependent_variable(const std::string &name) const {
-    if (is_old(name)) return false;
-    VAR_SET::const_iterator it = find_variable(name);
-    return (it->second.is_affine_dependent);
+    return is_old(name) ? false
+                        : variable_description(name).is_affine_dependent;
   }
 
-  const std::string &model::org_variable(const std::string &name) const {
-    VAR_SET::const_iterator it = variables.find(name);
+  const std::string &
+  model::org_variable(const std::string &name) const {
     GMM_ASSERT1(is_affine_dependent_variable(name),
                 "For affine dependent variables only");
-    return (it->second.org_name);
+    return variable_description(name).org_name;
   }
 
   const scalar_type &
   model::factor_of_variable(const std::string &name) const {
-    VAR_SET::const_iterator it = find_variable(name);
-    return (it->second.alpha);
+    return variable_description(name).alpha;
   }
 
-  void model::set_factor_of_variable(const std::string &name,
-                                     scalar_type a) {
+  void model::set_factor_of_variable(const std::string &name, scalar_type a) {
     VAR_SET::iterator it = variables.find(name);
     GMM_ASSERT1(it != variables.end(), "Undefined variable " << name);
     if (it->second.alpha != a) {
@@ -260,8 +247,7 @@ namespace getfem {
   }
 
   bool model::is_im_data(const std::string &name) const {
-    auto it = find_variable(no_old_prefix_name(name));
-    return (it->second.pim_data != 0);
+    return variable_description(no_old_prefix_name(name)).pim_data != 0;
   }
 
   const im_data *
@@ -271,7 +257,8 @@ namespace getfem {
   }
 
   const gmm::uint64_type &
-  model::version_number_of_data_variable(const std::string &name, size_type niter) const {
+  model::version_number_of_data_variable(const std::string &name,
+                                         size_type niter) const {
     VAR_SET::const_iterator it = find_variable(name);
     if (niter == size_type(-1)) niter = it->second.default_iter;
     return it->second.v_num_data[niter];
@@ -280,13 +267,13 @@ namespace getfem {
   size_type model::nb_dof() const {
     context_check();
     if (act_size_to_be_done) actualize_sizes();
-    return (complex_version) ? gmm::vect_size(crhs) : gmm::vect_size(rrhs);
+    return complex_version ? gmm::vect_size(crhs) : gmm::vect_size(rrhs);
   }
 
   void model::resize_global_system() const {
     size_type tot_size = 0;
 
-    for (auto && v : variables) {
+    for (auto &&v : variables) {
       if (v.second.is_variable && v.second.is_disabled)
         v.second.I  = gmm::sub_interval(0,0);
       if (v.second.is_variable && !(v.second.is_affine_dependent)
@@ -369,8 +356,8 @@ namespace getfem {
           break;
         case VDESCRFILTER_REGION:
           if (vdescr.v_num < vdescr.mf->version_number()) {
-            dal::bit_vector dor
-              = vdescr.mf->dof_on_region(vdescr.m_region);
+            dal::bit_vector
+              dor = vdescr.mf->dof_on_region(vdescr.m_region);
             vdescr.partial_mf->adapt(dor);
             vdescr.set_size();
             vdescr.v_num = act_counter();
@@ -416,13 +403,13 @@ namespace getfem {
 //       #endif
 
       const std::vector<std::string> &mults = multipliers[vname];
-      const var_description &vdescr = variables.find(vname)->second;
+      const var_description &vdescr = variable_description(vname);
 
       gmm::col_matrix< gmm::rsvector<scalar_type> > MGLOB;
       if (mults.size() > 1) {
         size_type s = 0;
         for (const std::string &mult : mults)
-          s += variables.find(mult)->second.mf->nb_dof();
+          s += variable_description(mult).mf->nb_dof();
         gmm::resize(MGLOB, vdescr.mf->nb_dof(), s);
       }
       size_type s = 0;
@@ -623,36 +610,37 @@ namespace getfem {
       ost << "Model with no variable nor data" << endl;
     else {
       ost << "List of model variables and data:" << endl;
-      for (auto it = variables.begin(); it != variables.end(); ++it) {
-        if (it->second.is_variable) ost << "Variable       ";
+      for (const auto &v : variables) {
+        const var_description &vdescr = v.second;
+        if (vdescr.is_variable) ost << "Variable       ";
         else ost << "Data           ";
-        ost << std::setw(30) << std::left << it->first;
-        if (it->second.n_iter == 1)
+        ost << std::setw(30) << std::left << v.first;
+        if (vdescr.n_iter == 1)
           ost << " 1 copy   ";
         else
-          ost << std::setw(2) << std::right << it->second.n_iter
-              << " copies ";
-        if (it->second.is_fem_dofs) ost << "fem dependant ";
+          ost << std::setw(2) << std::right << vdescr.n_iter << " copies ";
+        if (vdescr.is_fem_dofs) ost << "fem dependant ";
         else ost << "constant size ";
-        size_type si = it->second.size();
+        size_type si = vdescr.size();
         ost << std::setw(8) << std::right << si;
         if (is_complex()) ost << " complex";
         ost << " double" << ((si > 1) ? "s." : ".");
-        if (it->second.is_variable &&
-            is_disabled_variable(it->first)) ost << "\t (disabled)";
-        else                                 ost << "\t           ";
-        if (it->second.pim_data != 0) ost << "\t (is im_data)";
-        if (it->second.is_affine_dependent) ost << "\t (is affine dependent)";
+        if (vdescr.is_variable &&
+            is_disabled_variable(v.first)) ost << "\t (disabled)";
+        else                               ost << "\t           ";
+        if (vdescr.pim_data != 0) ost << "\t (is im_data)";
+        if (vdescr.is_affine_dependent) ost << "\t (is affine dependent)";
         ost << endl;
       }
-      for (auto it = variable_groups.begin();
-           it != variable_groups.end(); ++it) {
+      for (const auto &vargroup : variable_groups) {
         ost << "Variable group " << std::setw(30) << std::left
-            << it->first;
-        if (it->second.size()) {
-          auto it2 = it->second.begin();
-          ost << " " << *it2; ++it2;
-          for (; it2 != it->second.end(); ++it2) ost << ", " << *it2;
+            << vargroup.first;
+        if (vargroup.second.size()) {
+          bool first(true);
+          for (const std::string vname : vargroup.second) {
+            if (!first) ost << ","; else first = false;
+            ost << " " << vname;
+          }
           ost << endl;
         } else ost << " empty" << endl;
       }
@@ -664,13 +652,12 @@ namespace getfem {
       ost << "Model with no variable nor data" << endl;
     else {
       bool firstvar(true);
-      for (VAR_SET::const_iterator it = variables.begin();
-           it != variables.end(); ++it) {
-        if (it->second.is_variable) {
-          const gmm::sub_interval &II = interval_of_variable(it->first);
+      for (const auto &v : variables) {
+        if (v.second.is_variable) {
+          const gmm::sub_interval &II = interval_of_variable(v.first);
           scalar_type res = gmm::vect_norm2(gmm::sub_vector(rrhs, II));
           if (!firstvar) cout << ", ";
-          ost << "res_" << it->first << "= " << std::setw(11) << res;
+          ost << "res_" << v.first << "= " << std::setw(11) << res;
           firstvar = false;
         }
       }
@@ -877,16 +864,15 @@ namespace getfem {
     VAR_SET::iterator it = variables.find(name);
     GMM_ASSERT1(it != variables.end(), "Undefined variable " << name);
     it->second.is_disabled = true;
-    for (VAR_SET::iterator itv = variables.begin();
-         itv != variables.end(); ++itv) {
-      if (((itv->second.filter & VDESCRFILTER_INFSUP) ||
-           (itv->second.filter & VDESCRFILTER_CTERM))
-          && (name.compare(itv->second.filter_var) == 0)) {
-        itv->second.is_disabled = true;
+    for (auto &&v : variables) {
+      if (((v.second.filter & VDESCRFILTER_INFSUP) ||
+           (v.second.filter & VDESCRFILTER_CTERM))
+          && name.compare(v.second.filter_var) == 0) {
+        v.second.is_disabled = true;
       }
-      if (itv->second.is_variable && itv->second.is_affine_dependent
-          && name.compare(itv->second.org_name) == 0)
-        itv->second.is_disabled = true;
+      if (v.second.is_variable && v.second.is_affine_dependent
+          && name.compare(v.second.org_name) == 0)
+        v.second.is_disabled = true;
     }
     if (!act_size_to_be_done) resize_global_system();
   }
@@ -895,16 +881,15 @@ namespace getfem {
     VAR_SET::iterator it = variables.find(name);
     GMM_ASSERT1(it != variables.end(), "Undefined variable " << name);
     it->second.is_disabled = false;
-    for (VAR_SET::iterator itv = variables.begin();
-         itv != variables.end(); ++itv) {
-      if (((itv->second.filter & VDESCRFILTER_INFSUP) ||
-           (itv->second.filter & VDESCRFILTER_CTERM))
-          && (name.compare(itv->second.filter_var) == 0)) {
-        itv->second.is_disabled = false;
+    for (auto &&v : variables) {
+      if (((v.second.filter & VDESCRFILTER_INFSUP) ||
+           (v.second.filter & VDESCRFILTER_CTERM))
+          && name.compare(v.second.filter_var) == 0) {
+        v.second.is_disabled = false;
       }
-      if (itv->second.is_variable && itv->second.is_affine_dependent
-          && name.compare(itv->second.org_name) == 0)
-        itv->second.is_disabled = false;
+      if (v.second.is_variable && v.second.is_affine_dependent
+          && name.compare(v.second.org_name) == 0)
+        v.second.is_disabled = false;
     }
     if (!act_size_to_be_done) resize_global_system();
   }
@@ -933,11 +918,10 @@ namespace getfem {
          for  (size_type j = 0; j < bricks[ibb].mims.size(); ++j)
            if (bricks[ibb].mims[j] == mim) found = true;
        }
-       for (VAR_SET::iterator it2 = variables.begin();
-            it2 != variables.end(); ++it2) {
-         if (it2->second.is_fem_dofs &&
-             (it2->second.filter & VDESCRFILTER_INFSUP) &&
-             mim == it2->second.mim) found = true;
+       for (const auto &v : variables) {
+         if (v.second.is_fem_dofs &&
+             (v.second.filter & VDESCRFILTER_INFSUP) &&
+             mim == v.second.mim) found = true;
         }
        if (!found) sup_dependency(*mim);
      }
@@ -948,18 +932,17 @@ namespace getfem {
        is_symmetric_ = is_symmetric_ &&  bricks[ibb].pbr->is_symmetric();
        is_coercive_ = is_coercive_ &&  bricks[ibb].pbr->is_coercive();
      }
-
      bricks[ib] = brick_description();
   }
 
   void model::delete_variable(const std::string &varname) {
     for (dal::bv_visitor ibb(valid_bricks); !ibb.finished(); ++ibb) {
-      for (size_type i = 0; i < bricks[ibb].vlist.size(); ++i)
-        GMM_ASSERT1(varname.compare(bricks[ibb].vlist[i]),
-                    "Cannot delete a variable which is still use by a brick");
-      for (size_type i = 0; i < bricks[ibb].dlist.size(); ++i)
-        GMM_ASSERT1(varname.compare(bricks[ibb].dlist[i]),
-                    "Cannot delete a data which is still use by a brick");
+      for (const auto &vname : bricks[ibb].vlist)
+        GMM_ASSERT1(varname.compare(vname),
+                    "Cannot delete a variable which is still used by a brick");
+      for (const auto &dname : bricks[ibb].dlist)
+        GMM_ASSERT1(varname.compare(dname),
+                    "Cannot delete a data which is still used by a brick");
     }
 
     VAR_SET::const_iterator it = find_variable(varname);
@@ -1124,13 +1107,15 @@ namespace getfem {
 
   void model::call_init_affine_dependent_variables(int version) {
     for (VAR_SET::iterator it = variables.begin();
-         it != variables.end(); ++it)
-      if (it->second.is_variable && it->second.ptsc) {
+         it != variables.end(); ++it) {
+      var_description &vdescr = it->second;
+      if (vdescr.is_variable && vdescr.ptsc) {
         if (version == 2)
-          it->second.ptsc->init_affine_dependent_variables_precomputation(*this);
+          vdescr.ptsc->init_affine_dependent_variables_precomputation(*this);
         else
-          it->second.ptsc->init_affine_dependent_variables(*this);
+          vdescr.ptsc->init_affine_dependent_variables(*this);
       }
+    }
   }
 
   void model::shift_variables_for_time_integration() {

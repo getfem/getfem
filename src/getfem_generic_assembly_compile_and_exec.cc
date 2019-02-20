@@ -4051,14 +4051,13 @@ namespace getfem {
         //   ? ctx.convex_num() : mf.convex_index().first_true();
         GA_DEBUG_ASSERT(V.size() >= I.first() + mf.nb_basic_dof(),
                         "Bad assembly vector size");
-        auto &ct = mf.ind_scalar_basic_dof_of_element(cv_1);
         size_type qmult = mf.get_qdim();
         if (qmult > 1) qmult /= mf.fem_of_element(cv_1)->target_dim();
         size_type ifirst = I.first();
         auto ite = elem.begin();
-        for (auto itc = ct.begin(); itc != ct.end(); ++itc)
+        for (const auto &dof : mf.ind_scalar_basic_dof_of_element(cv_1))
           for (size_type q = 0; q < qmult; ++q)
-            V[ifirst+(*itc)+q] += *ite++;
+            V[ifirst+dof+q] += *ite++;
         GMM_ASSERT1(ite == elem.end(), "Internal error");
       }
       return 0;
@@ -4076,7 +4075,7 @@ namespace getfem {
   };
 
   struct ga_instruction_vector_assembly : public ga_instruction {
-    base_tensor &t;
+    const base_tensor &t;
     base_vector &V;
     const gmm::sub_interval &I;
     scalar_type &coeff;
@@ -4085,15 +4084,15 @@ namespace getfem {
                     "fixed size variable");
       gmm::add(gmm::scaled(t.as_vector(), coeff), gmm::sub_vector(V, I));
       return 0;
-     }
-    ga_instruction_vector_assembly(base_tensor &t_, base_vector &V_,
+    }
+    ga_instruction_vector_assembly(const base_tensor &t_, base_vector &V_,
                                    const gmm::sub_interval &I_,
                                    scalar_type &coeff_)
       : t(t_), V(V_), I(I_), coeff(coeff_) {}
   };
 
   struct ga_instruction_assignment : public ga_instruction {
-    base_tensor &t;
+    const base_tensor &t;
     base_vector &V;
     const fem_interpolation_context &ctx;
     const im_data *imd;
@@ -4101,8 +4100,8 @@ namespace getfem {
       GA_DEBUG_INFO("Instruction: Assignement to im_data");
       imd->set_tensor(V, ctx.convex_num(), ctx.ii(), t);
       return 0;
-     }
-    ga_instruction_assignment(base_tensor &t_, base_vector &V_,
+    }
+    ga_instruction_assignment(const base_tensor &t_, base_vector &V_,
                               const fem_interpolation_context &ctx_,
                               const im_data *imd_)
       : t(t_), V(V_), ctx(ctx_), imd(imd_) {}
@@ -4160,25 +4159,36 @@ namespace getfem {
       if (nb == 0) {
         col.reserve(maxest);
         for (size_type i = 0; i < s1; ++i) {
-          size_type k = dofs1_sort[i]; ev.e = *(it+k);
-          if (gmm::abs(ev.e) > threshold) { ev.c=dofs1[k]; col.push_back(ev); }
+          size_type k = dofs1_sort[i];
+          ev.e = *(it+k);
+          if (gmm::abs(ev.e) > threshold) {
+            ev.c=dofs1[k];
+            col.push_back(ev);
+          }
         }
       } else { // column merge
         size_type ind = 0;
         for (size_type i = 0; i < s1; ++i) {
-          size_type k = dofs1_sort[i]; ev.e = *(it+k);
+          size_type k = dofs1_sort[i];
+          ev.e = *(it+k);
           if (gmm::abs(ev.e) > threshold) {
             ev.c = dofs1[k];
 
             size_type count = nb - ind, step, l;
             while (count > 0) {
-              step = count / 2; l = ind + step;
-              if (col[l].c < ev.c) { ind = ++l; count -= step + 1; }
-              else count = step;
+              step = count / 2;
+              l = ind + step;
+              if (col[l].c < ev.c) {
+                ind = ++l;
+                count -= step + 1;
+              }
+              else
+                count = step;
             }
 
             auto itc = col.begin() + ind;
-            if (ind != nb && itc->c == ev.c) itc->e += ev.e;
+            if (ind != nb && itc->c == ev.c)
+              itc->e += ev.e;
             else {
               if (nb - ind > 1300)
                 GMM_WARNING2("Inefficient addition of element in rsvector with "
@@ -4186,7 +4196,9 @@ namespace getfem {
               col.push_back(ev);
               if (ind != nb) {
                 itc = col.begin() + ind;
-                auto ite = col.end(); --ite; auto itee = ite;
+                auto ite = col.end();
+                --ite;
+                auto itee = ite;
                 for (; ite != itc; --ite) { --itee; *ite = *itee; }
                 *itc = ev;
               }
@@ -4205,10 +4217,8 @@ namespace getfem {
     const base_tensor &t;
     MAT &Kr, &Kn;
     const fem_interpolation_context &ctx1, &ctx2;
-    const gmm::sub_interval &Ir1, &Ir2;
-    const gmm::sub_interval &In1, &In2;
-    const mesh_fem *mfn1, *mfn2;
-    const mesh_fem **mfg1, **mfg2;
+    const gmm::sub_interval &Ir1, &Ir2, &In1, &In2;
+    const mesh_fem *mfn1, *mfn2, **mfg1, **mfg2;
     const scalar_type &coeff, &alpha1, &alpha2;
     const size_type &nbpt, &ipt;
     base_vector elem;
@@ -4321,13 +4331,12 @@ namespace getfem {
      const gmm::sub_interval &Ir2_, const gmm::sub_interval &In2_,
      const mesh_fem *mfn1_, const mesh_fem **mfg1_,
      const mesh_fem *mfn2_, const mesh_fem **mfg2_,
-     const scalar_type &coeff_,
-     const scalar_type &alpha2_, const scalar_type &alpha1_,
+     const scalar_type &coeff_, const scalar_type &a1, const scalar_type &a2,
      const size_type &nbpt_, const size_type &ipt_, bool interpolate_)
       : t(t_), Kr(Kr_), Kn(Kn_), ctx1(ctx1_), ctx2(ctx2_),
         Ir1(Ir1_), Ir2(Ir2_), In1(In1_), In2(In2_),
         mfn1(mfn1_), mfn2(mfn2_), mfg1(mfg1_), mfg2(mfg2_),
-        coeff(coeff_), alpha1(alpha1_), alpha2(alpha2_),
+        coeff(coeff_), alpha1(a1), alpha2(a2),
         nbpt(nbpt_), ipt(ipt_), interpolate(interpolate_),
         dofs1(0), dofs2(0) {}
   };
@@ -4410,13 +4419,11 @@ namespace getfem {
      const fem_interpolation_context &ctx2_,
      const gmm::sub_interval &In1_, const gmm::sub_interval &In2_,
      const mesh_fem *mfn1_, const mesh_fem *mfn2_,
-     const scalar_type &coeff_, const scalar_type &alpha2_,
-     const scalar_type &alpha1_,
+     const scalar_type &coeff_, const scalar_type &a1, const scalar_type &a2,
      const size_type &nbpt_, const size_type &ipt_)
       : t(t_), K(Kn_), ctx1(ctx1_), ctx2(ctx2_),
         I1(In1_), I2(In2_),  pmf1(mfn1_), pmf2(mfn2_),
-        coeff(coeff_), alpha1(alpha1_), alpha2(alpha2_),
-        nbpt(nbpt_), ipt(ipt_) {}
+        coeff(coeff_), alpha1(a1), alpha2(a2), nbpt(nbpt_), ipt(ipt_) {}
   };
 
   template <class MAT = model_real_sparse_matrix>
@@ -4509,12 +4516,11 @@ namespace getfem {
      const fem_interpolation_context &ctx2_,
      const gmm::sub_interval &In1_, const gmm::sub_interval &In2_,
      const mesh_fem *mfn1_, const mesh_fem *mfn2_,
-     const scalar_type &coeff_, const scalar_type &alpha2_,
-     const scalar_type &alpha1_, const size_type &nbpt_,
-     const size_type &ipt_)
+     const scalar_type &coeff_, const scalar_type &a1, const scalar_type &a2,
+     const size_type &nbpt_, const size_type &ipt_)
       : t(t_), K(Kn_), ctx1(ctx1_), ctx2(ctx2_),
         I1(In1_), I2(In2_),  pmf1(mfn1_), pmf2(mfn2_),
-        coeff(coeff_), alpha1(alpha1_), alpha2(alpha2_),
+        coeff(coeff_), alpha1(a1), alpha2(a2),
         nbpt(nbpt_), ipt(ipt_), dofs1(0), dofs2(0) {}
   };
 
@@ -4596,12 +4602,11 @@ namespace getfem {
      const fem_interpolation_context &ctx2_,
      const gmm::sub_interval &In1_, const gmm::sub_interval &In2_,
      const mesh_fem *mfn1_, const mesh_fem *mfn2_,
-     const scalar_type &coeff_, const scalar_type &alpha2_,
-     const scalar_type &alpha1_, const size_type &nbpt_,
-     const size_type &ipt_)
+     const scalar_type &coeff_, const scalar_type &a1, const scalar_type &a2,
+     const size_type &nbpt_, const size_type &ipt_)
       : t(t_), K(Kn_), ctx1(ctx1_), ctx2(ctx2_),
         I1(In1_), I2(In2_),  pmf1(mfn1_), pmf2(mfn2_),
-        coeff(coeff_), alpha1(alpha1_), alpha2(alpha2_),
+        coeff(coeff_), alpha1(a1), alpha2(a2),
         nbpt(nbpt_), ipt(ipt_), dofs1(0), dofs2(0) {}
   };
 
@@ -4691,12 +4696,11 @@ namespace getfem {
      const fem_interpolation_context &ctx2_,
      const gmm::sub_interval &In1_, const gmm::sub_interval &In2_,
      const mesh_fem *mfn1_, const mesh_fem *mfn2_,
-     const scalar_type &coeff_, const scalar_type &alpha2_,
-     const scalar_type &alpha1_, const size_type &nbpt_,
-     const size_type &ipt_)
+     const scalar_type &coeff_, const scalar_type &a1, const scalar_type &a2,
+     const size_type &nbpt_, const size_type &ipt_)
       : t(t_), K(Kn_), ctx1(ctx1_), ctx2(ctx2_),
         I1(In1_), I2(In2_),  pmf1(mfn1_), pmf2(mfn2_),
-        coeff(coeff_), alpha1(alpha1_), alpha2(alpha2_),
+        coeff(coeff_), alpha1(a1), alpha2(a2),
         nbpt(nbpt_), ipt(ipt_), dofs1(0), dofs2(0) {}
   };
 
@@ -4716,7 +4720,7 @@ namespace getfem {
       for (const std::string &v : workspace.variable_group(varname))
         add_interval_to_gis(workspace, v, gis);
     } else {
-      if (gis.var_intervals.find(varname) == gis.var_intervals.end()) {
+      if (gis.var_intervals.count(varname) == 0) {
         const mesh_fem *mf = workspace.associated_mf(varname);
         size_type nd = mf ? mf->nb_basic_dof()
                           : gmm::vect_size(workspace.value(varname));
@@ -4734,7 +4738,7 @@ namespace getfem {
     if (workspace.variable_group_exists(varname)) {
       for (const std::string &v : workspace.variable_group(varname))
         extend_variable_in_gis(workspace, v, gis);
-    } else if (gis.extended_vars.find(varname)==gis.extended_vars.end()) {
+    } else if (gis.extended_vars.count(varname) == 0) {
       const mesh_fem *mf = workspace.associated_mf(varname);
       if (mf->is_reduced()) {
         auto n = (mf->get_qdim() == 1) ? workspace.qdim(varname) : 1;
@@ -6808,9 +6812,9 @@ namespace getfem {
                                      workspace.secondary_domain_exists(intn1);
                     if (intn1.size() && !secondary &&
                         workspace.variable_group_exists(root->name_test1)) {
-                      ga_instruction_set::variable_group_info &vgi =
-                        rmi.interpolate_infos[intn1]
-                        .groups_info[root->name_test1];
+                      ga_instruction_set::variable_group_info
+                        &vgi = rmi.interpolate_infos[intn1]
+                                  .groups_info[root->name_test1];
                       Ir = &(vgi.Ir);
                       In = &(vgi.In);
                       mfg = &(vgi.mf);
@@ -6819,14 +6823,12 @@ namespace getfem {
                       Ir = &(gis.var_intervals[root->name_test1]);
                       In = &(workspace.interval_of_variable(root->name_test1));
                     }
-                    fem_interpolation_context &ctx
-                      = intn1.size()
-                      ? (secondary ? rmi.secondary_domain_infos.ctx
-                                   : rmi.interpolate_infos[intn1].ctx)
-                      : gis.ctx;
-                    bool interpolate = !(intn1.empty() ||
-                                         intn1 == "neighbour_elt" ||
-                                         secondary);
+                    fem_interpolation_context
+                      &ctx = intn1.empty() ? gis.ctx
+                           : (secondary ? rmi.secondary_domain_infos.ctx
+                                        : rmi.interpolate_infos[intn1].ctx);
+                    bool interpolate =
+                      !(intn1.empty() || intn1 == "neighbour_elt" || secondary);
                     pgai = std::make_shared<ga_instruction_fem_vector_assembly>
                       (root->tensor(), workspace.unreduced_vector(),
                        workspace.assembled_vector(), ctx, *Ir, *In, mf, mfg,
@@ -6844,10 +6846,9 @@ namespace getfem {
                   GMM_ASSERT1(root->tensor_proper_size() == 1,
                               "Invalid vector or tensor quantity. An order 2 "
                               "weak form has to be a scalar quantity");
-                  const mesh_fem
-                    *mf1=workspace.associated_mf(root->name_test1),
-                    *mf2=workspace.associated_mf(root->name_test2),
-                    **mfg1 = 0, **mfg2 = 0;
+                  const mesh_fem *mf1=workspace.associated_mf(root->name_test1),
+                                 *mf2=workspace.associated_mf(root->name_test2),
+                                 **mfg1 = 0, **mfg2 = 0;
                   const std::string &intn1 = root->interpolate_name_test1,
                                     &intn2 = root->interpolate_name_test2;
                   bool secondary1 = intn1.size() &&
@@ -6855,14 +6856,12 @@ namespace getfem {
                   bool secondary2 = intn2.size() &&
                                     workspace.secondary_domain_exists(intn2);
                   fem_interpolation_context
-                    &ctx1 = intn1.size()
-                          ? (secondary1 ? rmi.secondary_domain_infos.ctx
-                                        : rmi.interpolate_infos[intn1].ctx)
-                          : gis.ctx,
-                    &ctx2 = intn2.size()
-                          ? (secondary2 ? rmi.secondary_domain_infos.ctx
-                                        : rmi.interpolate_infos[intn2].ctx)
-                          : gis.ctx;
+                    &ctx1 = intn1.empty() ? gis.ctx
+                          : (secondary1 ? rmi.secondary_domain_infos.ctx
+                                        : rmi.interpolate_infos[intn1].ctx),
+                    &ctx2 = intn2.empty() ? gis.ctx
+                          : (secondary2 ? rmi.secondary_domain_infos.ctx
+                                        : rmi.interpolate_infos[intn2].ctx);
                   bool interpolate = !(intn1.empty() || intn1 == "neighbour_elt"
                                        || secondary1) ||
                                      !(intn2.empty() || intn2 == "neighbour_elt"
@@ -6876,9 +6875,9 @@ namespace getfem {
 
                   if (!intn1.empty() && !secondary1 &&
                       workspace.variable_group_exists(root->name_test1)) {
-                    ga_instruction_set::variable_group_info &vgi =
-                      rmi.interpolate_infos[intn1]
-                      .groups_info[root->name_test1];
+                    ga_instruction_set::variable_group_info
+                      &vgi = rmi.interpolate_infos[intn1]
+                                .groups_info[root->name_test1];
                     Ir1 = &(vgi.Ir);
                     In1 = &(vgi.In);
                     mfg1 = &(vgi.mf);
@@ -6892,9 +6891,9 @@ namespace getfem {
 
                   if (!intn2.empty() && !secondary2 &&
                       workspace.variable_group_exists(root->name_test2)) {
-                    ga_instruction_set::variable_group_info &vgi =
-                      rmi.interpolate_infos[intn2]
-                      .groups_info[root->name_test2];
+                    ga_instruction_set::variable_group_info
+                      &vgi = rmi.interpolate_infos[intn2]
+                                .groups_info[root->name_test2];
                     Ir2 = &(vgi.Ir);
                     In2 = &(vgi.In);
                     mfg2 = &(vgi.mf);
@@ -7347,7 +7346,7 @@ namespace getfem {
                       }
 
                       auto ipt_coeff = pai1->coeff(first_ind1+ipt1)
-                        * pai2->coeff(first_ind2+ipt2);
+                                     * pai2->coeff(first_ind2+ipt2);
                       gis.coeff = J1 * J2 * ipt_coeff;
                       bool enable_ipt = (gmm::abs(ipt_coeff) > 0.0 ||
                                          workspace.include_empty_int_points());

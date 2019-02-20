@@ -393,6 +393,7 @@ namespace getfem {
                                        // with BUILD_RHS option.
 
     VAR_SET::const_iterator find_variable(const std::string &name) const;
+    const var_description &variable_description(const std::string &name) const;
 
   public:
 
@@ -515,6 +516,7 @@ namespace getfem {
     /** States if a name corresponds to a declared variable. */
     bool variable_exists(const std::string &name) const;
 
+    /** States if a variable is disabled (treated as data). */
     bool is_disabled_variable(const std::string &name) const;
 
     /** States if a name corresponds to a declared data or disabled variable. */
@@ -749,7 +751,8 @@ namespace getfem {
 
 
     /** Add data, defined at integration points.*/
-    void add_im_data(const std::string &name, const im_data &im_data, size_type niter = 1);
+    void add_im_data(const std::string &name, const im_data &im_data,
+                     size_type niter = 1);
 
     /** Add a variable being the dofs of a finite element method to the model.
         niter is the number of version of the variable stored, for time
@@ -890,8 +893,14 @@ namespace getfem {
       return rrhs;
     }
 
-    /** Gives the access to the part of the right hand side of a term of a particular nonlinear brick. Does not account of the eventual time dispatcher. An assembly of the rhs has to be done first. For the real version. */
-    const model_real_plain_vector &real_brick_term_rhs(size_type ib, size_type ind_term = 0, bool sym = false, size_type ind_iter = 0) const {
+    /** Gives access to the part of the right hand side of a term of
+        a particular nonlinear brick. Does not account of the eventual time
+        dispatcher. An assembly of the rhs has to be done first.
+        For the real version. */
+    const model_real_plain_vector &real_brick_term_rhs
+      (size_type ib, size_type ind_term = 0, bool sym = false,
+       size_type ind_iter = 0) const
+    {
       GMM_ASSERT1(!complex_version, "This model is a complex one");
       context_check(); if (act_size_to_be_done) actualize_sizes();
       GMM_ASSERT1(valid_bricks[ib], "Inexistent brick");
@@ -899,7 +908,6 @@ namespace getfem {
       GMM_ASSERT1(ind_iter < bricks[ib].nbrhs, "Inexistent iter");
       GMM_ASSERT1(!sym || bricks[ib].tlist[ind_term].is_symmetric,
                   "Term is not symmetric");
-
       if (sym)
         return bricks[ib].rveclist_sym[ind_iter][ind_term];
       else
@@ -914,8 +922,14 @@ namespace getfem {
       return crhs;
     }
 
-    /** Gives access to the part of the right hand side of a term of a particular nonlinear brick. Does not account of the eventual time dispatcher. An assembly of the rhs has to be done first. For the real version. */
-    const model_complex_plain_vector &complex_brick_term_rhs(size_type ib, size_type ind_term = 0, bool sym = false, size_type ind_iter = 0) const {
+    /** Gives access to the part of the right hand side of a term of a
+        particular nonlinear brick. Does not account of the eventual time
+        dispatcher. An assembly of the rhs has to be done first.
+        For the complex version. */
+    const model_complex_plain_vector &complex_brick_term_rhs
+      (size_type ib, size_type ind_term = 0, bool sym = false,
+       size_type ind_iter = 0) const
+    {
       GMM_ASSERT1(!complex_version, "This model is a complex one");
       context_check(); if (act_size_to_be_done) actualize_sizes();
       GMM_ASSERT1(valid_bricks[ib], "Inexistent brick");
@@ -923,7 +937,6 @@ namespace getfem {
       GMM_ASSERT1(ind_iter < bricks[ib].nbrhs, "Inexistent iter");
       GMM_ASSERT1(!sym || bricks[ib].tlist[ind_term].is_symmetric,
                   "Term is not symmetric");
-
       if (sym)
         return bricks[ib].cveclist_sym[ind_iter][ind_term];
       else
