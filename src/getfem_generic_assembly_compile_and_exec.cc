@@ -4109,7 +4109,7 @@ namespace getfem {
   };
 
   template <class MAT>
-  inline void add_elem_matrix_
+  inline void add_elem_matrix
   (MAT &K, const std::vector<size_type> &dofs1,
    const std::vector<size_type> &dofs2, std::vector<size_type> &/*dofs1_sort*/,
    base_vector &elem, scalar_type threshold, size_type /* N */) {
@@ -4129,7 +4129,7 @@ namespace getfem {
   //   return  int((*the_indto_sort)[aa]) - int((*the_indto_sort)[bb]);
   // }
 
-  inline void add_elem_matrix_
+  inline void add_elem_matrix
   (gmm::col_matrix<gmm::rsvector<scalar_type>> &K,
    const std::vector<size_type> &dofs1, const std::vector<size_type> &dofs2,
    std::vector<size_type> &dofs1_sort,
@@ -4281,12 +4281,12 @@ namespace getfem {
 
         if (pmf1 == pmf2 && cv1 == cv2) {
           if (I1.first() == I2.first()) {
-            add_elem_matrix_(K, dofs1, dofs1, dofs1_sort, elem, ninf*1E-14, N);
+            add_elem_matrix(K, dofs1, dofs1, dofs1_sort, elem, ninf*1E-14, N);
           } else {
             dofs2.resize(dofs1.size());
             for (size_type i = 0; i < dofs1.size(); ++i)
               dofs2[i] =  dofs1[i] + I2.first() - I1.first();
-            add_elem_matrix_(K, dofs1, dofs2, dofs1_sort, elem, ninf*1E-14, N);
+            add_elem_matrix(K, dofs1, dofs2, dofs1_sort, elem, ninf*1E-14, N);
           }
         } else {
           dofs2.assign(s2, I2.first());
@@ -4308,7 +4308,7 @@ namespace getfem {
           } else
             for (size_type i=0; i < s2; ++i) dofs2[i] += i;
 
-          add_elem_matrix_(K, dofs1, dofs2, dofs1_sort, elem, ninf*1E-14, N);
+          add_elem_matrix(K, dofs1, dofs2, dofs1_sort, elem, ninf*1E-14, N);
         }
       }
       return 0;
@@ -4385,12 +4385,12 @@ namespace getfem {
 
         if (pmf2 == pmf1 && cv1 == cv2) {
           if (I1.first() == I2.first()) {
-            add_elem_matrix_(K, dofs1, dofs1, dofs1_sort, elem, ninf*1E-14, N);
+            add_elem_matrix(K, dofs1, dofs1, dofs1_sort, elem, ninf*1E-14, N);
           } else {
             dofs2.resize(dofs1.size());
             for (size_type i = 0; i < dofs1.size(); ++i)
               dofs2[i] =  dofs1[i] + I2.first() - I1.first();
-            add_elem_matrix_(K, dofs1, dofs2, dofs1_sort, elem, ninf*1E-14, N);
+            add_elem_matrix(K, dofs1, dofs2, dofs1_sort, elem, ninf*1E-14, N);
           }
         } else {
           if (cv2 == size_type(-1)) return 0;
@@ -4399,7 +4399,7 @@ namespace getfem {
           dofs2.resize(ct2.size());
           for (size_type i = 0; i < ct2.size(); ++i)
             dofs2[i] = ct2[i] + I2.first();
-          add_elem_matrix_(K, dofs1, dofs2, dofs1_sort, elem, ninf*1E-14, N);
+          add_elem_matrix(K, dofs1, dofs2, dofs1_sort, elem, ninf*1E-14, N);
         }
       }
       return 0;
@@ -4480,12 +4480,12 @@ namespace getfem {
 
         if (pmf2 == pmf1 && cv1 == cv2) {
           if (I1.first() == I2.first()) {
-            add_elem_matrix_(K, dofs1, dofs1, dofs1_sort, elem, ninf*1E-14, N);
+            add_elem_matrix(K, dofs1, dofs1, dofs1_sort, elem, ninf*1E-14, N);
           } else {
             dofs2.resize(dofs1.size());
             for (size_type i = 0; i < dofs1.size(); ++i)
               dofs2[i] =  dofs1[i] + I2.first() - I1.first();
-            add_elem_matrix_(K, dofs1, dofs2, dofs1_sort, elem, ninf*1E-14, N);
+            add_elem_matrix(K, dofs1, dofs2, dofs1_sort, elem, ninf*1E-14, N);
           }
         } else {
           if (cv2 == size_type(-1)) return 0;
@@ -4498,7 +4498,7 @@ namespace getfem {
             for (size_type q = 0; q < qmult2; ++q)
               *itd++ += *itt + q;
 
-          add_elem_matrix_(K, dofs1, dofs2, dofs1_sort, elem, ninf*1E-14, N);
+          add_elem_matrix(K, dofs1, dofs2, dofs1_sort, elem, ninf*1E-14, N);
         }
       }
       return 0;
@@ -4566,26 +4566,26 @@ namespace getfem {
 
         if (pmf2 == pmf1 && cv1 == cv2) {
           if (i1 == i2) {
-            add_elem_matrix_(K, dofs1, dofs1, dofs1_sort, elem, ninf, N);
+            add_elem_matrix(K, dofs1, dofs1, dofs1_sort, elem, ninf, N);
             for (size_type i = 0; i < ss1; ++i) (dofs1[i])++;
-            add_elem_matrix_(K, dofs1, dofs1, dofs1_sort, elem, ninf, N);
+            add_elem_matrix(K, dofs1, dofs1, dofs1_sort, elem, ninf, N);
           } else {
             dofs2.resize(ss2);
             for (size_type i = 0; i < ss2; ++i) dofs2[i] = i2 + ct1[i];
-            add_elem_matrix_(K, dofs1, dofs2, dofs1_sort, elem, ninf, N);
+            add_elem_matrix(K, dofs1, dofs2, dofs1_sort, elem, ninf, N);
             for (size_type i = 0; i < ss1; ++i) (dofs1[i])++;
             for (size_type i = 0; i < ss2; ++i) (dofs2[i])++;
-            add_elem_matrix_(K, dofs1, dofs2, dofs1_sort, elem, ninf, N);
+            add_elem_matrix(K, dofs1, dofs2, dofs1_sort, elem, ninf, N);
           }
         } else {
           if (cv2 == size_type(-1)) return 0;
           auto &ct2 = pmf2->ind_scalar_basic_dof_of_element(cv2);
           dofs2.resize(ss2);
           for (size_type i = 0; i < ss2; ++i) dofs2[i] = i2 + ct2[i];
-          add_elem_matrix_(K, dofs1, dofs2, dofs1_sort, elem, ninf, N);
+          add_elem_matrix(K, dofs1, dofs2, dofs1_sort, elem, ninf, N);
           for (size_type i = 0; i < ss1; ++i) (dofs1[i])++;
           for (size_type i = 0; i < ss2; ++i) (dofs2[i])++;
-          add_elem_matrix_(K, dofs1, dofs2, dofs1_sort, elem, ninf, N);
+          add_elem_matrix(K, dofs1, dofs2, dofs1_sort, elem, ninf, N);
         }
       }
       return 0;
@@ -4653,34 +4653,34 @@ namespace getfem {
 
         if (pmf2 == pmf1 && cv1 == cv2) {
           if (i1 == i2) {
-            add_elem_matrix_(K, dofs1, dofs1, dofs1_sort, elem, ninf, N);
+            add_elem_matrix(K, dofs1, dofs1, dofs1_sort, elem, ninf, N);
             for (size_type i = 0; i < ss1; ++i) (dofs1[i])++;
-            add_elem_matrix_(K, dofs1, dofs1, dofs1_sort, elem, ninf, N);
+            add_elem_matrix(K, dofs1, dofs1, dofs1_sort, elem, ninf, N);
             for (size_type i = 0; i < ss1; ++i) (dofs1[i])++;
-            add_elem_matrix_(K, dofs1, dofs1, dofs1_sort, elem, ninf, N);
+            add_elem_matrix(K, dofs1, dofs1, dofs1_sort, elem, ninf, N);
           } else {
             dofs2.resize(ss2);
             for (size_type i = 0; i < ss2; ++i) dofs2[i] = i2 + ct1[i];
-            add_elem_matrix_(K, dofs1, dofs2, dofs1_sort, elem, ninf, N);
+            add_elem_matrix(K, dofs1, dofs2, dofs1_sort, elem, ninf, N);
             for (size_type i = 0; i < ss1; ++i) (dofs1[i])++;
             for (size_type i = 0; i < ss2; ++i) (dofs2[i])++;
-            add_elem_matrix_(K, dofs1, dofs2, dofs1_sort, elem, ninf, N);
+            add_elem_matrix(K, dofs1, dofs2, dofs1_sort, elem, ninf, N);
             for (size_type i = 0; i < ss1; ++i) (dofs1[i])++;
             for (size_type i = 0; i < ss2; ++i) (dofs2[i])++;
-            add_elem_matrix_(K, dofs1, dofs2, dofs1_sort, elem, ninf, N);
+            add_elem_matrix(K, dofs1, dofs2, dofs1_sort, elem, ninf, N);
           }
         } else {
           if (cv2 == size_type(-1)) return 0;
           auto &ct2 = pmf2->ind_scalar_basic_dof_of_element(cv2);
           dofs2.resize(ss2);
           for (size_type i = 0; i < ss2; ++i) dofs2[i] = i2 + ct2[i];
-          add_elem_matrix_(K, dofs1, dofs2, dofs1_sort, elem, ninf, N);
+          add_elem_matrix(K, dofs1, dofs2, dofs1_sort, elem, ninf, N);
           for (size_type i = 0; i < ss1; ++i) (dofs1[i])++;
           for (size_type i = 0; i < ss2; ++i) (dofs2[i])++;
-          add_elem_matrix_(K, dofs1, dofs2, dofs1_sort, elem, ninf, N);
+          add_elem_matrix(K, dofs1, dofs2, dofs1_sort, elem, ninf, N);
           for (size_type i = 0; i < ss1; ++i) (dofs1[i])++;
           for (size_type i = 0; i < ss2; ++i) (dofs2[i])++;
-          add_elem_matrix_(K, dofs1, dofs2, dofs1_sort, elem, ninf, N);
+          add_elem_matrix(K, dofs1, dofs2, dofs1_sort, elem, ninf, N);
         }
       }
       return 0;
@@ -6575,7 +6575,7 @@ namespace getfem {
       }
     }
     rmi.node_list[pnode->hash_value].push_back(pnode);
-  }
+  } // ga_compile_node
 
   void ga_compile_function(ga_workspace &workspace,
                            ga_instruction_set &gis, bool scalar) {
@@ -6773,7 +6773,7 @@ namespace getfem {
             // cout << endl;
 
             if (version > 0) { // Assignment OR interpolation
-              if(td.varname_interpolation.size() != 0) {// assignment
+              if (!td.varname_interpolation.empty()) { // assignment
                 auto *imd
                   = workspace.associated_im_data(td.varname_interpolation);
                 auto &V = const_cast<model_real_plain_vector &>
@@ -6844,15 +6844,16 @@ namespace getfem {
                   GMM_ASSERT1(root->tensor_proper_size() == 1,
                               "Invalid vector or tensor quantity. An order 2 "
                               "weak form has to be a scalar quantity");
-                  const mesh_fem *mf1=workspace.associated_mf(root->name_test1);
-                  const mesh_fem *mf2=workspace.associated_mf(root->name_test2);
-                  const mesh_fem **mfg1 = 0, **mfg2 = 0;
-                  const std::string &intn1 = root->interpolate_name_test1;
-                  const std::string &intn2 = root->interpolate_name_test2;
+                  const mesh_fem
+                    *mf1=workspace.associated_mf(root->name_test1),
+                    *mf2=workspace.associated_mf(root->name_test2),
+                    **mfg1 = 0, **mfg2 = 0;
+                  const std::string &intn1 = root->interpolate_name_test1,
+                                    &intn2 = root->interpolate_name_test2;
                   bool secondary1 = intn1.size() &&
-                      workspace.secondary_domain_exists(intn1);
+                                    workspace.secondary_domain_exists(intn1);
                   bool secondary2 = intn2.size() &&
-                      workspace.secondary_domain_exists(intn2);
+                                    workspace.secondary_domain_exists(intn2);
                   fem_interpolation_context
                     &ctx1 = intn1.size()
                           ? (secondary1 ? rmi.secondary_domain_infos.ctx
@@ -6905,23 +6906,23 @@ namespace getfem {
                     In2 = &(workspace.interval_of_variable(root->name_test2));
                   }
 
-                  if (!interpolate && mfg1 == 0 && mfg2 == 0 && mf1 && mf2
-                      && mf1->get_qdim() == 1 && mf2->get_qdim() == 1
-                      && !(mf1->is_reduced()) && !(mf2->is_reduced())) {
+                  bool simple = !interpolate &&
+                                mfg1 == 0 && mfg2 == 0 && mf1 && mf2 &&
+                                !(mf1->is_reduced()) && !(mf2->is_reduced());
+                  if (simple && mf1->get_qdim() == 1 && mf2->get_qdim() == 1) {
                     pgai = std::make_shared
                       <ga_instruction_matrix_assembly_standard_scalar<>>
                       (root->tensor(), workspace.assembled_matrix(), ctx1, ctx2,
                        *In1, *In2, mf1, mf2,
                        gis.coeff, *alpha1, *alpha2, gis.nbpt, gis.ipt);
-                  } else if (!interpolate && mfg1 == 0 && mfg2==0 && mf1 && mf2
-                             && !(mf1->is_reduced()) && !(mf2->is_reduced())) {
-                    if (root->sparsity() == 10 && root->t.qdim()==2)
+                  } else if (simple) {
+                    if (root->sparsity() == 10 && root->t.qdim() == 2)
                       pgai = std::make_shared
                         <ga_instruction_matrix_assembly_standard_vector_opt10_2>
                         (root->tensor(), workspace.assembled_matrix(),ctx1,ctx2,
                          *In1, *In2, mf1, mf2,
                          gis.coeff, *alpha1, *alpha2, gis.nbpt, gis.ipt);
-                    else if (root->sparsity() == 10 && root->t.qdim()==3)
+                    else if (root->sparsity() == 10 && root->t.qdim() == 3)
                       pgai = std::make_shared
                         <ga_instruction_matrix_assembly_standard_vector_opt10_3>
                         (root->tensor(), workspace.assembled_matrix(),ctx1,ctx2,
@@ -6946,8 +6947,7 @@ namespace getfem {
                 }
               }
               if (pgai)
-                gis.whole_instructions[rm].instructions.push_back
-                  (std::move(pgai));
+                rmi.instructions.push_back(std::move(pgai));
             }
           }
         }
@@ -7097,9 +7097,9 @@ namespace getfem {
       psecondary_domain psd = instr.first.psd();
       const getfem::mesh &m = *(instr.second.m);
       GMM_ASSERT1(&m == &(mim.linked_mesh()), "Incompatibility of meshes");
-      const ga_instruction_list &gilb = instr.second.begin_instructions;
-      const ga_instruction_list &gile = instr.second.elt_instructions;
-      const ga_instruction_list &gil = instr.second.instructions;
+      const auto &gilb = instr.second.begin_instructions;
+      const auto &gile = instr.second.elt_instructions;
+      const auto &gil = instr.second.instructions;
 
       // if (gilb.size()) cout << "Begin instructions\n";
       // for (size_type j = 0; j < gilb.size(); ++j)

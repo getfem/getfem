@@ -420,19 +420,19 @@ namespace getfem {
       }
 
       bool found = false;
-      for (size_type i = 0; i < trees.size(); ++i) {
-        if (trees[i].mim == &mim && trees[i].m == &m &&
-	    trees[i].secondary_domain.compare(tree.secondary_domain) == 0 &&
-            trees[i].order == order &&
-            trees[i].name_test1.compare(tree.root->name_test1) == 0 &&
-            trees[i].interpolate_name_test1.compare
-            (tree.root->interpolate_name_test1) == 0 &&
-            trees[i].name_test2.compare(tree.root->name_test2) == 0 &&
-            trees[i].interpolate_name_test2.compare
-            (tree.root->interpolate_name_test2) == 0 &&
-            trees[i].rg == &rg && trees[i].interpolation == for_interpolation &&
-            trees[i].varname_interpolation.compare(varname_interpolation)==0) {
-          ga_tree &ftree = *(trees[i].ptree);
+      for (const ga_workspace::tree_description &td : trees) {
+        if (td.mim == &mim &&
+            td.m == &m &&
+            td.secondary_domain == tree.secondary_domain &&
+            td.order == order &&
+            td.name_test1 == tree.root->name_test1 &&
+            td.interpolate_name_test1 == tree.root->interpolate_name_test1 &&
+            td.name_test2 == tree.root->name_test2 &&
+            td.interpolate_name_test2 == tree.root->interpolate_name_test2 &&
+            td.rg == &rg &&
+            td.interpolation == for_interpolation &&
+            td.varname_interpolation == varname_interpolation) {
+          ga_tree &ftree = *(td.ptree);
 
           ftree.insert_node(ftree.root, GA_NODE_OP);
           ftree.root->op_type = GA_PLUS;
