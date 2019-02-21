@@ -507,6 +507,9 @@ namespace getfem {
       active_bricks.add(ib);
     }
 
+    /** Set is_disable of a variable (and its attached mutlipliers). */
+    inline void set_is_disabled_of_variable(const std::string &name, bool flag);
+
     /** Disable a variable (and its attached mutlipliers). */
     void disable_variable(const std::string &name);
 
