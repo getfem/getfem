@@ -860,30 +860,25 @@ namespace getfem {
     add_dependency(mf);
   }
 
-  inline void model::set_is_disabled_of_variable(const std::string &name,
-                                                 bool flag) {
+  void model::disable_variable(const std::string &name) {
+    enable_variable(name, false);
+  }
+
+  void model::enable_variable(const std::string &name, bool enabled) {
     VAR_SET::iterator it = variables.find(name);
     GMM_ASSERT1(it != variables.end(), "Undefined variable " << name);
-    it->second.is_disabled = flag;
+    it->second.is_disabled = !enabled;
     for (auto &&v : variables) {
       if (((v.second.filter & VDESCRFILTER_INFSUP) ||
            (v.second.filter & VDESCRFILTER_CTERM))
           && name.compare(v.second.filter_var) == 0) {
-        v.second.is_disabled = flag;
+        v.second.is_disabled = !enabled;
       }
       if (v.second.is_variable && v.second.is_affine_dependent
           && name.compare(v.second.org_name) == 0)
-        v.second.is_disabled = flag;
+        v.second.is_disabled = !enabled;
     }
     if (!act_size_to_be_done) resize_global_system();
-  }
-
-  void model::disable_variable(const std::string &name) {
-    set_is_disabled_of_variable(name, true);
-  }
-
-  void model::enable_variable(const std::string &name) {
-    set_is_disabled_of_variable(name, false);
   }
 
   bool model::variable_exists(const std::string &name) const {

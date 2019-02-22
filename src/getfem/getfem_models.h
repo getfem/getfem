@@ -507,14 +507,11 @@ namespace getfem {
       active_bricks.add(ib);
     }
 
-    /** Set is_disable of a variable (and its attached mutlipliers). */
-    inline void set_is_disabled_of_variable(const std::string &name, bool flag);
-
     /** Disable a variable (and its attached mutlipliers). */
     void disable_variable(const std::string &name);
 
     /** Enable a variable (and its attached mutlipliers). */
-    void enable_variable(const std::string &name);
+    void enable_variable(const std::string &name, bool enabled=true);
 
     /** States if a name corresponds to a declared variable. */
     bool variable_exists(const std::string &name) const;
