@@ -201,11 +201,11 @@ namespace getfem {
   typedef std::shared_ptr<std::string> pstring;
   // Print error message indicating the position in the assembly string
   void ga_throw_error_msg(pstring expr, size_type pos,
-			  const std::string &msg);
+                          const std::string &msg);
 
 # define ga_throw_error(expr, pos, msg)               \
-  { std::stringstream ss; ss << msg;		      \
-    ga_throw_error_msg(expr, pos, ss.str());	      \
+  { std::stringstream ss; ss << msg;                  \
+    ga_throw_error_msg(expr, pos, ss.str());          \
     GMM_ASSERT1(false, "Error in assembly string" );  \
   }
   
@@ -391,7 +391,7 @@ namespace getfem {
       : node_type(GA_NODE_VOID), test_function_type(-1), qdim1(0), qdim2(0),
       nbc1(0), nbc2(0), nbc3(0), pos(0), expr(0), der1(0), der2(0),
         symmetric_op(false), hash_value(0) {}
-  ga_tree_node(GA_NODE_TYPE ty, size_type p, pstring expr_)
+    ga_tree_node(GA_NODE_TYPE ty, size_type p, pstring expr_)
       : node_type(ty), test_function_type(-1),
         qdim1(0), qdim2(0), nbc1(0), nbc2(0), nbc3(0),
       pos(p), expr(expr_), der1(0), der2(0), symmetric_op(false),
@@ -421,7 +421,7 @@ namespace getfem {
     void add_scalar(scalar_type val, size_type pos, pstring expr);
     void add_allindices(size_type pos, pstring expr);
     void add_name(const char *name, size_type length, size_type pos,
-		  pstring expr);
+                  pstring expr);
     void add_sub_tree(ga_tree &sub_tree);
     void add_params(size_type pos, pstring expr);
     void add_matrix(size_type pos, pstring expr);
@@ -446,9 +446,9 @@ namespace getfem {
       std::swap(secondary_domain, tree.secondary_domain);
     }
 
-  ga_tree() : root(nullptr), current_node(nullptr), secondary_domain() {}
+    ga_tree() : root(nullptr), current_node(nullptr), secondary_domain() {}
 
-  ga_tree(const ga_tree &tree) : root(nullptr), current_node(nullptr),
+    ga_tree(const ga_tree &tree) : root(nullptr), current_node(nullptr),
       secondary_domain(tree.secondary_domain)
     { if (tree.root) copy_node(tree.root, nullptr, root); }
 
@@ -473,7 +473,7 @@ namespace getfem {
   // Transform the expression of a node and its sub-nodes in the equivalent
   // assembly string sent to ostream str
   void ga_print_node(const pga_tree_node pnode,
-		     std::ostream &str);
+                     std::ostream &str);
   // The same for the whole tree, the result is a std::string
   std::string ga_tree_to_string(const ga_tree &tree);
 

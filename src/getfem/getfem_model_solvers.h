@@ -233,10 +233,10 @@ namespace getfem {
 
   // Dummy linesearch for the newton with step control
   struct newton_search_with_step_control : public abstract_newton_line_search {
-   
+
     virtual void init_search(double /*r*/, size_t /*git*/, double /*R0*/ = 0.0)
     { GMM_ASSERT1(false, "Not to be used"); }
-    
+
     virtual double next_try(void)
     { GMM_ASSERT1(false, "Not to be used"); }
 
@@ -245,7 +245,7 @@ namespace getfem {
 
     newton_search_with_step_control() {}
   };
-    
+
 
   struct quadratic_newton_line_search : public abstract_newton_line_search {
     double R0_, R1_;
@@ -408,9 +408,11 @@ namespace getfem {
   /*********************************************************************/
 
   template <typename PB>
-  void Newton_with_step_control(PB &pb, gmm::iteration &iter,
-			     const abstract_linear_solver<typename PB::MATRIX,
-			     typename PB::VECTOR> &linear_solver) {
+  void Newton_with_step_control
+  (PB &pb, gmm::iteration &iter,
+   const abstract_linear_solver<typename PB::MATRIX,
+                                typename PB::VECTOR> &linear_solver)
+  {
     typedef typename gmm::linalg_traits<typename PB::VECTOR>::value_type T;
     typedef typename gmm::number_traits<T>::magnitude_type R;
     gmm::iteration iter_linsolv0 = iter;
@@ -436,103 +438,103 @@ namespace getfem {
     // GMM_ASSERT1(ls, "Internal error");
     size_type nit = 0, stagn = 0;
     R coeff = R(2);
-    
+
     scalar_type crit = pb.residual_norm() / approx_eln;
     if (iter.finished(crit)) return;
     for(;;) {
-      
+
       crit = gmm::vect_dist1(pb.residual(), gmm::scaled(b0, R(1)-alpha))
-	/ approx_eln;
-      if (!iter.converged(crit)) { 
-	gmm::iteration iter_linsolv = iter_linsolv0;
-	if (iter.get_noisy() > 1)
-	  cout << "starting tangent matrix computation" << endl;
-	
-	int is_singular = 1;
-	while (is_singular) { // Linear system solve
-	  pb.compute_tangent_matrix();
-	  gmm::clear(dr);
-	  gmm::copy(gmm::scaled(pb.residual(), pb.scale_residual()), b);
-	  gmm::add(gmm::scaled(b0,alpha-R(1)), b);
-	  if (iter.get_noisy() > 1) cout << "starting linear solver" << endl;
-	  iter_linsolv.init();
-	  linear_solver(pb.tangent_matrix(), dr, b, iter_linsolv);
-	  if (!iter_linsolv.converged()) {
-	    is_singular++;
-	    if (is_singular <= 4) {
-	      if (iter.get_noisy())
-		cout << "Singular tangent matrix:"
-		  " perturbation of the state vector." << endl;
-	      pb.perturbation();
-	      pb.compute_residual();
-	    } else {
-	      if (iter.get_noisy())
-		cout << "Singular tangent matrix: perturbation failed, "
-		     << "aborting." << endl;
-	      return;
-	    }
-	  }
-	  else is_singular = 0;
-	}
-	if (iter.get_noisy() > 1) cout << "linear solver done" << endl;
+        / approx_eln;
+      if (!iter.converged(crit)) {
+        gmm::iteration iter_linsolv = iter_linsolv0;
+        if (iter.get_noisy() > 1)
+          cout << "starting tangent matrix computation" << endl;
+
+        int is_singular = 1;
+        while (is_singular) { // Linear system solve
+          pb.compute_tangent_matrix();
+          gmm::clear(dr);
+          gmm::copy(pb.residual(), b);
+          gmm::add(gmm::scaled(b0,alpha-R(1)), b);
+          if (iter.get_noisy() > 1) cout << "starting linear solver" << endl;
+          iter_linsolv.init();
+          linear_solver(pb.tangent_matrix(), dr, b, iter_linsolv);
+          if (!iter_linsolv.converged()) {
+            is_singular++;
+            if (is_singular <= 4) {
+              if (iter.get_noisy())
+                cout << "Singular tangent matrix:"
+                  " perturbation of the state vector." << endl;
+              pb.perturbation();
+              pb.compute_residual();
+            } else {
+              if (iter.get_noisy())
+                cout << "Singular tangent matrix: perturbation failed, "
+                     << "aborting." << endl;
+              return;
+            }
+          }
+          else is_singular = 0;
+        }
+        if (iter.get_noisy() > 1) cout << "linear solver done" << endl;
 
 
-	gmm::add(dr, pb.state_vector());
-	pb.compute_residual();
-	R res = gmm::vect_dist1(pb.residual(), gmm::scaled(b0, R(1)-alpha));
-	R dec = R(1)/R(2), coeff2 = coeff * R(1.5);
-	
-	while (dec > R(1E-5) && res >= res0 * coeff) {
-	  gmm::add(gmm::scaled(dr, -dec), pb.state_vector());
-	  pb.compute_residual();
-	  R res2 = gmm::vect_dist1(pb.residual(), gmm::scaled(b0, R(1)-alpha));
-	  if (res2 < res*R(0.95) || res2 >= res0 * coeff2) {
-	    dec /= R(2); res = res2; coeff2 *= R(1.5);
-	  } else {
-	    gmm::add(gmm::scaled(dr, dec), pb.state_vector());
-	    break;
-	  }
-	}
-	dec *= R(2);
+        gmm::add(dr, pb.state_vector());
+        pb.compute_residual();
+        R res = gmm::vect_dist1(pb.residual(), gmm::scaled(b0, R(1)-alpha));
+        R dec = R(1)/R(2), coeff2 = coeff * R(1.5);
 
-	nit++;
-	coeff = std::max(R(1.05), coeff*R(0.93));
-	bool near_end = (iter.get_iteration() > iter.get_maxiter()/2);
-	bool cut = (alpha < R(1)) && near_end;
-	if ((res > minres && nit > 4) || cut) {
-	  stagn++;
+        while (dec > R(1E-5) && res >= res0 * coeff) {
+          gmm::add(gmm::scaled(dr, -dec), pb.state_vector());
+          pb.compute_residual();
+          R res2 = gmm::vect_dist1(pb.residual(), gmm::scaled(b0, R(1)-alpha));
+          if (res2 < res*R(0.95) || res2 >= res0 * coeff2) {
+            dec /= R(2); res = res2; coeff2 *= R(1.5);
+          } else {
+            gmm::add(gmm::scaled(dr, dec), pb.state_vector());
+            break;
+          }
+        }
+        dec *= R(2);
 
-	  if ((stagn > 10 && alpha > alpha0 + R(5E-2)) || cut) {
-	    alpha = (alpha + alpha0) / R(2);
-	    if (near_end) alpha = R(1);
-	    gmm::copy(Xi, pb.state_vector());
-	    pb.compute_residual();
-	    res = gmm::vect_dist1(pb.residual(), gmm::scaled(b0, R(1)-alpha));
-	    nit = 0;
-	    stagn = 0; coeff = R(2);
-	  }
-	}
-	if (res < minres || (alpha == R(1) &&  nit < 10)) stagn = 0;
-	res0 = res;
-	if (nit < 5) minres = res0; else minres = std::min(minres, res0);
-	
-	if (iter.get_noisy())
-	  cout << "step control [" << std::setw(8) << alpha0 << ","
-	       << std::setw(8) << alpha << "," << std::setw(10) << dec <<  "]";
-	++iter;
-	// crit = std::min(res / approx_eln, 
-	//		gmm::vect_norm1(dr) / std::max(1E-25,pb.state_norm()));
-	crit = res / approx_eln;
+        nit++;
+        coeff = std::max(R(1.05), coeff*R(0.93));
+        bool near_end = (iter.get_iteration() > iter.get_maxiter()/2);
+        bool cut = (alpha < R(1)) && near_end;
+        if ((res > minres && nit > 4) || cut) {
+          stagn++;
+
+          if ((stagn > 10 && alpha > alpha0 + R(5E-2)) || cut) {
+            alpha = (alpha + alpha0) / R(2);
+            if (near_end) alpha = R(1);
+            gmm::copy(Xi, pb.state_vector());
+            pb.compute_residual();
+            res = gmm::vect_dist1(pb.residual(), gmm::scaled(b0, R(1)-alpha));
+            nit = 0;
+            stagn = 0; coeff = R(2);
+          }
+        }
+        if (res < minres || (alpha == R(1) &&  nit < 10)) stagn = 0;
+        res0 = res;
+        if (nit < 5) minres = res0; else minres = std::min(minres, res0);
+
+        if (iter.get_noisy())
+          cout << "step control [" << std::setw(8) << alpha0 << ","
+               << std::setw(8) << alpha << "," << std::setw(10) << dec <<  "]";
+        ++iter;
+        // crit = std::min(res / approx_eln,
+        //                gmm::vect_norm1(dr) / std::max(1E-25,pb.state_norm()));
+        crit = res / approx_eln;
       }
-      
+
       if (iter.finished(crit)) {
-	if (iter.converged() && alpha < R(1)) {
-	  R a = alpha;
-	  alpha = std::min(R(1), alpha*R(3) - alpha0*R(2));
-	  alpha0 = a;
-	  gmm::copy(pb.state_vector(), Xi);
-	  nit = 0; stagn = 0; coeff = R(2);
-	} else return;
+        if (iter.converged() && alpha < R(1)) {
+          R a = alpha;
+          alpha = std::min(R(1), alpha*R(3) - alpha0*R(2));
+          alpha0 = a;
+          gmm::copy(pb.state_vector(), Xi);
+          nit = 0; stagn = 0; coeff = R(2);
+        } else return;
       }
     }
   }
@@ -544,9 +546,11 @@ namespace getfem {
   /* ***************************************************************** */
 
   template <typename PB>
-  void classical_Newton(PB &pb, gmm::iteration &iter,
-                        const abstract_linear_solver<typename PB::MATRIX,
-                        typename PB::VECTOR> &linear_solver) {
+  void classical_Newton
+  (PB &pb, gmm::iteration &iter,
+   const abstract_linear_solver<typename PB::MATRIX,
+                                typename PB::VECTOR> &linear_solver)
+  {
     typedef typename gmm::linalg_traits<typename PB::VECTOR>::value_type T;
     typedef typename gmm::number_traits<T>::magnitude_type R;
     gmm::iteration iter_linsolv0 = iter;
@@ -571,7 +575,7 @@ namespace getfem {
       while (is_singular) {
         pb.compute_tangent_matrix();
         gmm::clear(dr);
-        gmm::copy(gmm::scaled(pb.residual(), pb.scale_residual()), b);
+        gmm::copy(pb.residual(), b);
         if (iter.get_noisy() > 1) cout << "starting linear solver" << endl;
         iter_linsolv.init();
         linear_solver(pb.tangent_matrix(), dr, b, iter_linsolv);
@@ -604,127 +608,6 @@ namespace getfem {
   }
 
 
-  /* ***************************************************************** */
-  /*  Intermediary structure for Newton algorithms with getfem::model. */
-  /* ***************************************************************** */
-
-  #define TRACE_SOL 0
-
-  template <typename MAT, typename VEC>
-  struct model_pb {
-
-    typedef MAT MATRIX;
-    typedef VEC VECTOR;
-    typedef typename gmm::linalg_traits<VECTOR>::value_type T;
-    typedef typename gmm::number_traits<T>::magnitude_type R;
-
-    model &md;
-    abstract_newton_line_search &ls;
-    VECTOR stateinit, &state;
-    const VECTOR &rhs;
-    const MATRIX &K;
-
-    void compute_tangent_matrix(void) {
-      md.to_variables(state);
-      md.assembly(model::BUILD_MATRIX);
-    }
-
-    const MATRIX &tangent_matrix(void) { return K; }
-
-    inline T scale_residual(void) const { return T(1); }
-
-    void compute_residual(void) {
-      md.to_variables(state);
-      md.assembly(model::BUILD_RHS);
-    }
-
-    void perturbation(void) {
-      R res = gmm::vect_norm2(state), ampl = std::max(res*R(1E-20), R(1E-50));
-      std::vector<R> V(gmm::vect_size(state));
-      gmm::fill_random(V);
-      gmm::add(gmm::scaled(V, ampl), state);
-    }
-
-    const VECTOR &residual(void) const { return rhs; }
-    const VECTOR &state_vector(void) const { return state; }
-    VECTOR &state_vector(void) { return state; }
-
-    R state_norm(void) const
-    { return gmm::vect_norm1(state); }
-
-    R approx_external_load_norm(void)
-    { return md.approx_external_load(); }
-
-    R residual_norm(void) { // A norm1 seems to be better than a norm2
-                            // at least for contact problems.
-      return gmm::vect_norm1(rhs);
-    }
-
-    R compute_res(bool comp = true) {
-      if (comp) compute_residual();
-      return residual_norm();
-    }
-
-
-    R line_search(VECTOR &dr, const gmm::iteration &iter) {
-      size_type nit = 0;
-      gmm::resize(stateinit, md.nb_dof());
-      gmm::copy(state, stateinit);
-      R alpha(1), res, /* res_init, */ R0;
-
-      /* res_init = */ res = compute_res(false);
-      // cout << "first residual = " << residual() << endl << endl;
-      R0 = gmm::real(gmm::vect_sp(dr, rhs));
-
-#if TRACE_SOL
-      static int trace_number = 0;
-      int trace_iter = 0;
-      {
-        std::stringstream trace_name;
-        trace_name << "line_search_state" << std::setfill('0')
-                   << std::setw(3) << trace_number << "_000_init";
-        gmm::vecsave(trace_name.str(),stateinit);
-      }
-      trace_number++;
-#endif
-
-      ls.init_search(res, iter.get_iteration(), R0);
-      do {
-        alpha = ls.next_try();
-        gmm::add(stateinit, gmm::scaled(dr, alpha), state);
-#if TRACE_SOL
-        {
-          trace_iter++;
-          std::stringstream trace_name;
-          trace_name  << "line_search_state" << std::setfill('0')
-                      << std::setw(3) << trace_number << "_"
-                      << std::setfill('0') << std::setw(3) << trace_iter;
-          gmm::vecsave(trace_name.str(), state);
-        }
-#endif
-        res = compute_res();
-        // cout << "residual = " << residual() << endl << endl;
-        R0 = gmm::real(gmm::vect_sp(dr, rhs));
-
-        ++ nit;
-      } while (!ls.is_converged(res, R0));
-
-      if (alpha != ls.converged_value()) {
-        alpha = ls.converged_value();
-        gmm::add(stateinit, gmm::scaled(dr, alpha), state);
-        res = ls.converged_residual();
-        compute_residual();
-      }
-
-      return alpha;
-    }
-
-    model_pb(model &m, abstract_newton_line_search &ls_, VECTOR &st,
-             const VECTOR &rhs_, const MATRIX &K_)
-      : md(m), ls(ls_), state(st), rhs(rhs_), K(K_) {}
-
-  };
-
   //---------------------------------------------------------------------
   // Default linear solver.
   //---------------------------------------------------------------------
@@ -750,10 +633,10 @@ namespace getfem {
 #elif GETFEM_PARA_LEVEL > 1 && GETFEM_PARA_SOLVER == MUMPS_PARA_SOLVER
     if (md.is_symmetric())
       return std::make_shared
-	<linear_solver_distributed_mumps_sym<MATRIX, VECTOR>>();
+        <linear_solver_distributed_mumps_sym<MATRIX, VECTOR>>();
       else
-	return std::make_shared
-	  <linear_solver_distributed_mumps<MATRIX, VECTOR>>();
+        return std::make_shared
+          <linear_solver_distributed_mumps<MATRIX, VECTOR>>();
 #else
     size_type ndof = md.nb_dof(), max3d = 15000, dim = md.leading_dimension();
 # ifdef GMM_USES_MUMPS
@@ -762,24 +645,24 @@ namespace getfem {
     if ((ndof<300000 && dim<=2) || (ndof<max3d && dim<=3) || (ndof<1000)) {
 # ifdef GMM_USES_MUMPS
       if (md.is_symmetric())
-	return std::make_shared<linear_solver_mumps_sym<MATRIX, VECTOR>>();
+        return std::make_shared<linear_solver_mumps_sym<MATRIX, VECTOR>>();
       else
-	return std::make_shared<linear_solver_mumps<MATRIX, VECTOR>>();
+        return std::make_shared<linear_solver_mumps<MATRIX, VECTOR>>();
 # else
       return std::make_shared<linear_solver_superlu<MATRIX, VECTOR>>();
 # endif
     }
     else {
       if (md.is_coercive())
-	return std::make_shared
-	  <linear_solver_cg_preconditioned_ildlt<MATRIX, VECTOR>>();
+        return std::make_shared
+          <linear_solver_cg_preconditioned_ildlt<MATRIX, VECTOR>>();
       else {
         if (dim <= 2)
-	  return std::make_shared
-	    <linear_solver_gmres_preconditioned_ilut<MATRIX,VECTOR>>();
-	  else
-	    return std::make_shared
-	      <linear_solver_gmres_preconditioned_ilu<MATRIX,VECTOR>>();
+          return std::make_shared
+            <linear_solver_gmres_preconditioned_ilut<MATRIX,VECTOR>>();
+          else
+            return std::make_shared
+              <linear_solver_gmres_preconditioned_ilu<MATRIX,VECTOR>>();
       }
     }
 #endif
@@ -800,7 +683,7 @@ namespace getfem {
       return std::make_shared<linear_solver_mumps<MATRIX, VECTOR>>();
 # else
       return std::make_shared
-	<linear_solver_distributed_mumps<MATRIX, VECTOR>>();
+        <linear_solver_distributed_mumps<MATRIX, VECTOR>>();
 # endif
 #else
       GMM_ASSERT1(false, "Mumps is not interfaced");
@@ -808,16 +691,16 @@ namespace getfem {
     }
     else if (bgeot::casecmp(name, "cg/ildlt") == 0)
       return std::make_shared
-	<linear_solver_cg_preconditioned_ildlt<MATRIX, VECTOR>>();
+        <linear_solver_cg_preconditioned_ildlt<MATRIX, VECTOR>>();
     else if (bgeot::casecmp(name, "gmres/ilu") == 0)
       return std::make_shared
-	<linear_solver_gmres_preconditioned_ilu<MATRIX, VECTOR>>();
+        <linear_solver_gmres_preconditioned_ilu<MATRIX, VECTOR>>();
     else if (bgeot::casecmp(name, "gmres/ilut") == 0)
       return std::make_shared
-	<linear_solver_gmres_preconditioned_ilut<MATRIX, VECTOR>>();
+        <linear_solver_gmres_preconditioned_ilut<MATRIX, VECTOR>>();
     else if (bgeot::casecmp(name, "gmres/ilutp") == 0)
       return std::make_shared
-	<linear_solver_gmres_preconditioned_ilutp<MATRIX, VECTOR>>();
+        <linear_solver_gmres_preconditioned_ilutp<MATRIX, VECTOR>>();
     else if (bgeot::casecmp(name, "auto") == 0)
       return default_linear_solver<MATRIX, VECTOR>(md);
     else

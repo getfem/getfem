@@ -62,7 +62,7 @@ namespace bgeot {
       } else resize(1);
     }
 
-    void reset(void) { std::fill(begin(), end(), 0); }
+    void reset() { std::fill(begin(), end(), 0); }
 
     inline bool finished(const multi_index &m) {
       if (m.size() == 0)
@@ -83,7 +83,7 @@ namespace bgeot {
       : std::vector<size_type>(4)
     { (*this)[0] = i; (*this)[1] = j; (*this)[2] = k; (*this)[3] = l; }
 
-    multi_index(void) {}
+    multi_index() {}
 
     bool is_equal(const multi_index &m) const {
       if (this->size() != m.size()) return false;
@@ -92,7 +92,7 @@ namespace bgeot {
       return true;
     }
 
-    size_type total_size(void) const {
+    size_type total_size() const {
       size_type s = 1;
       for (size_type k = 0; k < this->size(); ++k) s *= (*this)[k];
       return s;
@@ -194,10 +194,10 @@ namespace bgeot {
       return *(this->begin() + d);
     }
 
-    inline size_type size(void) const { return std::vector<T>::size(); }
+    inline size_type size() const { return std::vector<T>::size(); }
     inline size_type size(size_type i) const { return sizes_[i]; }
-    inline const multi_index &sizes(void) const { return sizes_; }
-    inline size_type order(void) const { return sizes_.size(); }
+    inline const multi_index &sizes() const { return sizes_; }
+    inline size_type order() const { return sizes_.size(); }
 
     void init(const multi_index &c) {
       auto it = c.begin();
@@ -236,7 +236,7 @@ namespace bgeot {
     }
 
     inline void adjust_sizes(const multi_index &mi) { init(mi); }
-    inline void adjust_sizes(void) { init(); }
+    inline void adjust_sizes() { init(); }
     inline void adjust_sizes(size_type i) { init(i); }
     inline void adjust_sizes(size_type i, size_type j) { init(i, j); }
     inline void adjust_sizes(size_type i, size_type j, size_type k)
@@ -294,8 +294,8 @@ namespace bgeot {
         + sizeof(*this) + sizes_.memsize() + coeff.memsize();
     }
 
-    std::vector<T> &as_vector(void) { return *this; }
-    const std::vector<T> &as_vector(void) const { return *this; }
+    std::vector<T> &as_vector() { return *this; }
+    const std::vector<T> &as_vector() const { return *this; }
 
 
     tensor<T>& operator +=(const tensor<T>& w)
@@ -323,9 +323,13 @@ namespace bgeot {
     }
 
     tensor(const multi_index &c) { init(c); }
+    tensor(size_type i, size_type j)
+    { init(multi_index(i, j)); }
+    tensor(size_type i, size_type j, size_type k)
+    { init(multi_index(i, j, k)); }
     tensor(size_type i, size_type j, size_type k, size_type l)
     { init(multi_index(i, j, k, l)); }
-    tensor(void) {}
+    tensor() {}
   };
 
   template<class T> void tensor<T>::mat_transp_reduction

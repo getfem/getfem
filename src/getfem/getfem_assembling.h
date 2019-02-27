@@ -944,7 +944,7 @@ namespace getfem {
   }
   
   /** 
-      Stiffness matrix for linear elasticity, with Lamé coefficients
+      Stiffness matrix for linear elasticity, with LamÃ© coefficients
       @ingroup asm
   */
   template<class MAT, class VECT>
@@ -986,7 +986,7 @@ namespace getfem {
 
 
   /** 
-      Stiffness matrix for linear elasticity, with constant Lamé coefficients
+      Stiffness matrix for linear elasticity, with constant LamÃ© coefficients
       @ingroup asm
   */
   template<class MAT, class VECT>
@@ -1589,7 +1589,7 @@ namespace getfem {
 	      -> the constraint is simplified:
 	      we replace \int{(H_j.psi_j)*phi_i}=\int{R_j.psi_j} (sum over j)
 	      with             H_j*phi_i = R_j     
-	      --> Le principe peut être faux : non identique à la projection
+	      --> Le principe peut Ãªtre faux : non identique Ã  la projection
 	      L^2 et peut entrer en conccurence avec les autres ddl -> a revoir
 	    */
 	    if (tdof_u == tdof_rh &&
@@ -1684,7 +1684,7 @@ namespace getfem {
 	gmm::mult(H, e, aux);
 	for (size_type j = 0; j < nb_bimg; ++j) { 
 	  T c = gmm::vect_sp(aux, base_img[j]);
-	  // if (gmm::abs(c > 1.0E-6) { // à scaler sur l'ensemble de H ...
+	  // if (gmm::abs(c > 1.0E-6) { // Ã  scaler sur l'ensemble de H ...
 	  if (c != T(0)) {
 	    gmm::add(gmm::scaled(base_img[j], -c), aux);
 	    gmm::add(gmm::scaled(base_img_inv[j], -c), f);

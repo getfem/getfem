@@ -108,7 +108,7 @@ namespace getfem {
      std::map<var_trans_pair, base_tensor> &derivatives,
      bool compute_derivatives) const = 0;
     virtual void finalize() const = 0;
-    virtual std::string expression(void) const { return std::string(); }
+    virtual std::string expression() const { return std::string(); }
 
     virtual ~virtual_interpolate_transformation() {}
   };
@@ -143,9 +143,9 @@ namespace getfem {
 
   public:
 
-    const mesh_im &mim(void) const { return mim_; }
+    const mesh_im &mim() const { return mim_; }
     virtual const mesh_region &give_region(const mesh &m,
-				     size_type cv, short_type f) const = 0;
+                                     size_type cv, short_type f) const = 0;
     // virtual void init(const ga_workspace &workspace) const = 0;
     // virtual void finalize() const = 0;
 
@@ -367,7 +367,7 @@ namespace getfem {
                   const mesh_region &rg,
                   const std::string &expr, size_type add_derivative_order,
                   bool scalar_expr, size_type for_interpolation,
-		  const std::string varname_interpolation);
+                  const std::string varname_interpolation);
 
 
     std::shared_ptr<model_real_sparse_matrix> K;
@@ -409,7 +409,7 @@ namespace getfem {
     size_type add_expression(const std::string &expr, const mesh_im &mim,
                              const mesh_region &rg=mesh_region::all_convexes(),
                              size_type add_derivative_order = 2,
-			     const std::string &secondary_dom = "");
+                             const std::string &secondary_dom = "");
     /* Internal use */
     void add_function_expression(const std::string &expr);
     /* Internal use */
@@ -448,9 +448,9 @@ namespace getfem {
                      const model_real_plain_vector &VV);
 
     bool used_variables(std::vector<std::string> &vl,
-			std::vector<std::string> &vl_test1,
+                        std::vector<std::string> &vl_test1,
                         std::vector<std::string> &vl_test2,
-			std::vector<std::string> &dl,
+                        std::vector<std::string> &dl,
                         size_type order);
 
     bool variable_exists(const std::string &name) const;

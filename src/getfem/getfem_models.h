@@ -185,7 +185,7 @@ namespace getfem {
       model_complex_plain_vector affine_complex_value;
       scalar_type alpha;    // Factor for the affine dependent variables
       std::string org_name; // Name of the original variable for affine
-                            //  dependent variables
+                            // dependent variables
 
       // im data description
       const im_data *pim_data;
@@ -239,7 +239,7 @@ namespace getfem {
       { return is_complex ? complex_value[0].size() : real_value[0].size(); }
 
       void set_size();
-    };
+    }; // struct var_description
 
   public:
 
@@ -393,6 +393,7 @@ namespace getfem {
                                        // with BUILD_RHS option.
 
     VAR_SET::const_iterator find_variable(const std::string &name) const;
+    const var_description &variable_description(const std::string &name) const;
 
   public:
 
@@ -506,21 +507,22 @@ namespace getfem {
       active_bricks.add(ib);
     }
 
-    /** Disable a variable (and its attached mutlipliers).  */
+    /** Disable a variable (and its attached mutlipliers). */
     void disable_variable(const std::string &name);
 
-    /** Enable a variable (and its attached mutlipliers).  */
-    void enable_variable(const std::string &name);
+    /** Enable a variable (and its attached mutlipliers). */
+    void enable_variable(const std::string &name, bool enabled=true);
 
-    /** Says if a name corresponds to a declared variable.  */
+    /** States if a name corresponds to a declared variable. */
     bool variable_exists(const std::string &name) const;
 
+    /** States if a variable is disabled (treated as data). */
     bool is_disabled_variable(const std::string &name) const;
 
-    /** Says if a name corresponds to a declared data or disabled variable.  */
+    /** States if a name corresponds to a declared data or disabled variable. */
     bool is_data(const std::string &name) const;
 
-    /** Says if a name corresponds to a declared data.  */
+    /** States if a name corresponds to a declared data. */
     bool is_true_data(const std::string &name) const;
 
     bool is_affine_dependent_variable(const std::string &name) const;
@@ -749,7 +751,8 @@ namespace getfem {
 
 
     /** Add data, defined at integration points.*/
-    void add_im_data(const std::string &name, const im_data &im_data, size_type niter = 1);
+    void add_im_data(const std::string &name, const im_data &im_data,
+                     size_type niter = 1);
 
     /** Add a variable being the dofs of a finite element method to the model.
         niter is the number of version of the variable stored, for time
@@ -882,7 +885,7 @@ namespace getfem {
       return cTM;
     }
 
-    /** Gives the access to the right hand side of the tangent linear system.
+    /** Gives access to the right hand side of the tangent linear system.
         For the real version. An assembly of the rhs has to be done first. */
     const model_real_plain_vector &real_rhs() const {
       GMM_ASSERT1(!complex_version, "This model is a complex one");
@@ -890,8 +893,14 @@ namespace getfem {
       return rrhs;
     }
 
-    /** Gives the access to the part of the right hand side of a term of a particular nonlinear brick. Does not account of the eventual time dispatcher. An assembly of the rhs has to be done first. For the real version. */
-    const model_real_plain_vector &real_brick_term_rhs(size_type ib, size_type ind_term = 0, bool sym = false, size_type ind_iter = 0) const {
+    /** Gives access to the part of the right hand side of a term of
+        a particular nonlinear brick. Does not account of the eventual time
+        dispatcher. An assembly of the rhs has to be done first.
+        For the real version. */
+    const model_real_plain_vector &real_brick_term_rhs
+      (size_type ib, size_type ind_term = 0, bool sym = false,
+       size_type ind_iter = 0) const
+    {
       GMM_ASSERT1(!complex_version, "This model is a complex one");
       context_check(); if (act_size_to_be_done) actualize_sizes();
       GMM_ASSERT1(valid_bricks[ib], "Inexistent brick");
@@ -899,7 +908,6 @@ namespace getfem {
       GMM_ASSERT1(ind_iter < bricks[ib].nbrhs, "Inexistent iter");
       GMM_ASSERT1(!sym || bricks[ib].tlist[ind_term].is_symmetric,
                   "Term is not symmetric");
-
       if (sym)
         return bricks[ib].rveclist_sym[ind_iter][ind_term];
       else
@@ -914,8 +922,14 @@ namespace getfem {
       return crhs;
     }
 
-    /** Gives access to the part of the right hand side of a term of a particular nonlinear brick. Does not account of the eventual time dispatcher. An assembly of the rhs has to be done first. For the real version. */
-    const model_complex_plain_vector &complex_brick_term_rhs(size_type ib, size_type ind_term = 0, bool sym = false, size_type ind_iter = 0) const {
+    /** Gives access to the part of the right hand side of a term of a
+        particular nonlinear brick. Does not account of the eventual time
+        dispatcher. An assembly of the rhs has to be done first.
+        For the complex version. */
+    const model_complex_plain_vector &complex_brick_term_rhs
+      (size_type ib, size_type ind_term = 0, bool sym = false,
+       size_type ind_iter = 0) const
+    {
       GMM_ASSERT1(!complex_version, "This model is a complex one");
       context_check(); if (act_size_to_be_done) actualize_sizes();
       GMM_ASSERT1(valid_bricks[ib], "Inexistent brick");
@@ -923,7 +937,6 @@ namespace getfem {
       GMM_ASSERT1(ind_iter < bricks[ib].nbrhs, "Inexistent iter");
       GMM_ASSERT1(!sym || bricks[ib].tlist[ind_term].is_symmetric,
                   "Term is not symmetric");
-
       if (sym)
         return bricks[ib].cveclist_sym[ind_iter][ind_term];
       else
@@ -2379,6 +2392,15 @@ namespace getfem {
       If the parameter $\rho$ is omitted it is assumed to be equal to 1.
   */
   size_type APIDECL add_mass_brick
+  (model &md, const mesh_im &mim, const std::string &varname,
+   const std::string &dataexpr_rho = std::string(),
+   size_type region = size_type(-1));
+
+  /** Lumped mass brick for first order.
+      Add a lumped mass matix for first order on a variable (eventually with a specified region).
+      If the parameter $\rho$ is omitted it is assumed to be equal to 1.
+  */
+  size_type APIDECL add_lumped_mass_brick_for_first_order
   (model &md, const mesh_im &mim, const std::string &varname,
    const std::string &dataexpr_rho = std::string(),
    size_type region = size_type(-1));

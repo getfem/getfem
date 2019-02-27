@@ -29,7 +29,7 @@ namespace getfem {
   static rmodel_plsolver_type rdefault_linear_solver(const model &md) {
     return default_linear_solver<model_real_sparse_matrix,
                                  model_real_plain_vector>(md);
-  } 
+  }
 
   static cmodel_plsolver_type cdefault_linear_solver(const model &md) {
     return default_linear_solver<model_complex_sparse_matrix,
@@ -49,7 +49,7 @@ namespace getfem {
     max_ratio_reached = false;
   }
 
-  double default_newton_line_search::next_try(void) {
+  double default_newton_line_search::next_try() {
     alpha_old = alpha; ++it;
     // alpha *= 0.5;
     if (alpha >= 0.4) alpha *= 0.5; else alpha *= alpha_mult;
@@ -60,7 +60,7 @@ namespace getfem {
     // cout << "r = " << r << " alpha = " << alpha_old << " count_pat = " << count_pat << endl;
     if (!max_ratio_reached && r < first_res * alpha_max_ratio) {
       alpha_max_ratio_reached = alpha_old; r_max_ratio_reached = r;
-      it_max_ratio_reached = it; max_ratio_reached = true; 
+      it_max_ratio_reached = it; max_ratio_reached = true;
     }
     if (max_ratio_reached &&
         r < r_max_ratio_reached * 0.5 &&
@@ -71,9 +71,9 @@ namespace getfem {
     if (count == 0 || r < conv_r)
       { conv_r = r; conv_alpha = alpha_old; count = 1; }
     if (conv_r < first_res) ++count;
-    
+
     if (r < first_res *  alpha_min_ratio)
-      { count_pat = 0; return true; }      
+      { count_pat = 0; return true; }
     if (count>=5 || (alpha < alpha_min && max_ratio_reached) || alpha<1e-15) {
       if (conv_r < first_res * 0.99) count_pat = 0;
       if (/*gmm::random() * 50. < -log(conv_alpha)-4.0 ||*/ count_pat >= 3)
@@ -91,10 +91,10 @@ namespace getfem {
   /* ***************************************************************** */
 
   template <typename MATRIX, typename VECTOR, typename PLSOLVER>
-    void compute_init_values(model &md, gmm::iteration &iter,
-                             PLSOLVER lsolver,
-                             abstract_newton_line_search &ls, const MATRIX &K,
-                             const VECTOR &rhs) {
+  void compute_init_values(model &md, gmm::iteration &iter,
+                           PLSOLVER lsolver,
+                           abstract_newton_line_search &ls, const MATRIX &K,
+                           const VECTOR &rhs) {
 
     VECTOR state(md.nb_dof());
     md.from_variables(state);
@@ -103,7 +103,7 @@ namespace getfem {
     scalar_type dt = md.get_time_step();
     scalar_type ddt = md.get_init_time_step();
     scalar_type t = md.get_time();
-    
+
     // Solve for ddt
     md.set_time_step(ddt);
     gmm::iteration iter1 = iter;
@@ -117,6 +117,121 @@ namespace getfem {
     md.set_time_integration(1);
   }
 
+
+  /* ***************************************************************** */
+  /*  Intermediary structure for Newton algorithms with getfem::model. */
+  /* ***************************************************************** */
+
+  #define TRACE_SOL 0
+
+  template <typename MAT, typename VEC>
+  struct model_pb {
+
+    typedef MAT MATRIX;
+    typedef VEC VECTOR;
+    typedef typename gmm::linalg_traits<VECTOR>::value_type T;
+    typedef typename gmm::number_traits<T>::magnitude_type R;
+
+    model &md;
+    abstract_newton_line_search &ls;
+    VECTOR stateinit, &state;
+    const VECTOR &rhs;
+    const MATRIX &K;
+
+    void compute_tangent_matrix() {
+      md.to_variables(state);
+      md.assembly(model::BUILD_MATRIX);
+    }
+
+    const MATRIX &tangent_matrix() { return K; }
+
+    void compute_residual() {
+      md.to_variables(state);
+      md.assembly(model::BUILD_RHS);
+    }
+
+    void perturbation() {
+      R res = gmm::vect_norm2(state), ampl = std::max(res*R(1E-20), R(1E-50));
+      std::vector<R> V(gmm::vect_size(state));
+      gmm::fill_random(V);
+      gmm::add(gmm::scaled(V, ampl), state);
+    }
+
+    const VECTOR &residual() const { return rhs; }
+    const VECTOR &state_vector() const { return state; }
+    VECTOR &state_vector() { return state; }
+
+    R state_norm() const { return gmm::vect_norm1(state); }
+
+    R approx_external_load_norm() { return md.approx_external_load(); }
+
+    R residual_norm() {
+      return gmm::vect_norm1(rhs); // A norm1 seems to be better than a norm2
+    }                              // at least for contact problems.
+
+    R compute_res(bool comp = true) {
+      if (comp) compute_residual();
+      return residual_norm();
+    }
+
+    R line_search(VECTOR &dr, const gmm::iteration &iter) {
+      size_type nit = 0;
+      gmm::resize(stateinit, md.nb_dof());
+      gmm::copy(state, stateinit);
+      R alpha(1), res, /* res_init, */ R0;
+
+      /* res_init = */ res = compute_res(false);
+      // cout << "first residual = " << residual() << endl << endl;
+      R0 = gmm::real(gmm::vect_sp(dr, rhs));
+
+#if TRACE_SOL
+      static int trace_number = 0;
+      int trace_iter = 0;
+      {
+        std::stringstream trace_name;
+        trace_name << "line_search_state" << std::setfill('0')
+                   << std::setw(3) << trace_number << "_000_init";
+        gmm::vecsave(trace_name.str(),stateinit);
+      }
+      trace_number++;
+#endif
+
+      ls.init_search(res, iter.get_iteration(), R0);
+      do {
+        alpha = ls.next_try();
+        gmm::add(stateinit, gmm::scaled(dr, alpha), state);
+#if TRACE_SOL
+        {
+          trace_iter++;
+          std::stringstream trace_name;
+          trace_name  << "line_search_state" << std::setfill('0')
+                      << std::setw(3) << trace_number << "_"
+                      << std::setfill('0') << std::setw(3) << trace_iter;
+          gmm::vecsave(trace_name.str(), state);
+        }
+#endif
+        res = compute_res();
+        // cout << "residual = " << residual() << endl << endl;
+        R0 = gmm::real(gmm::vect_sp(dr, rhs));
+
+        ++ nit;
+      } while (!ls.is_converged(res, R0));
+
+      if (alpha != ls.converged_value()) {
+        alpha = ls.converged_value();
+        gmm::add(stateinit, gmm::scaled(dr, alpha), state);
+        res = ls.converged_residual();
+        compute_residual();
+      }
+
+      return alpha;
+    }
+
+    model_pb(model &m, abstract_newton_line_search &ls_, VECTOR &st,
+             const VECTOR &rhs_, const MATRIX &K_)
+      : md(m), ls(ls_), state(st), rhs(rhs_), K(K_) {}
+
+  };
 
   /* ***************************************************************** */
   /*     Standard solve.                                               */
@@ -148,9 +263,9 @@ namespace getfem {
     else {
       model_pb<MATRIX, VECTOR> mdpb(md, ls, state, rhs, K);
       if (dynamic_cast<newton_search_with_step_control *>(&ls))
-	Newton_with_step_control(mdpb, iter, *lsolver);
+        Newton_with_step_control(mdpb, iter, *lsolver);
       else
-	classical_Newton(mdpb, iter, *lsolver);
+        classical_Newton(mdpb, iter, *lsolver);
     }
     md.to_variables(state); // copy the state vector into the model variables
   }

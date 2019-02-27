@@ -212,14 +212,14 @@ namespace getfem {
   void ga_exec(ga_instruction_set &gis, ga_workspace &workspace);
   void ga_function_exec(ga_instruction_set &gis);
   void ga_compile(ga_workspace &workspace, ga_instruction_set &gis,
-                         size_type order);
+                  size_type order);
   void ga_compile_function(ga_workspace &workspace,
-                                  ga_instruction_set &gis, bool scalar);
+                           ga_instruction_set &gis, bool scalar);
   void ga_compile_interpolation(ga_workspace &workspace,
-				ga_instruction_set &gis);
+                                ga_instruction_set &gis);
   void ga_interpolation_exec(ga_instruction_set &gis,
-			     ga_workspace &workspace,
-			     ga_interpolation_context &gic);
+                             ga_workspace &workspace,
+                             ga_interpolation_context &gic);
   void ga_interpolation_single_point_exec
     (ga_instruction_set &gis, ga_workspace &workspace,
      const fem_interpolation_context &ctx_x, const base_small_vector &Normal,

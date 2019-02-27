@@ -363,7 +363,7 @@ namespace getfem {
     }
     bgeot::mesh_structure::sup_convex(ic);
     if (sup_points)
-      for (size_type ip = 0; ip < ipt.size(); ++ip) sup_point(ipt[ip]);
+      for (const size_type &ip : ipt) sup_point(ip);
     trans_exists.sup(ic);
     sup_convex_from_regions(ic);
     if (Bank_info.get()) Bank_sup_convex_from_green(ic);

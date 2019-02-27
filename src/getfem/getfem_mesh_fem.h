@@ -453,7 +453,7 @@ namespace getfem {
     }
     ind_dof_ct ind_dof_of_element(size_type cv) const IS_DEPRECATED
     { return ind_basic_dof_of_element(cv); }
-    virtual const bgeot::mesh_structure::ind_cv_ct &
+    virtual const std::vector<size_type> &
     ind_scalar_basic_dof_of_element(size_type cv) const
     { return dof_structure.ind_points_of_convex(cv); }
     /** Give an array of the dof numbers lying of a convex face (all
@@ -553,12 +553,14 @@ namespace getfem {
     /** Return the total number of basic degrees of freedom (before the
      * optional reduction). */
     virtual size_type nb_basic_dof() const {
-      context_check(); if (!dof_enumeration_made) enumerate_dof();
+      context_check();
+      if (!dof_enumeration_made) enumerate_dof();
       return nb_total_dof;
     }
     /// Return the total number of degrees of freedom.
     virtual size_type nb_dof() const {
-      context_check(); if (!dof_enumeration_made) enumerate_dof();
+      context_check();
+      if (!dof_enumeration_made) enumerate_dof();
       return use_reduction ? gmm::mat_nrows(R_) : nb_total_dof;
     }
     /** Get a list of basic dof lying on a given mesh_region.

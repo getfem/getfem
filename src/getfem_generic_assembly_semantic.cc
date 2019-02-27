@@ -513,7 +513,8 @@ namespace getfem {
             pnode->test_function_type = t_type;
             for (size_type i = 0; i < n; ++i)
               for (size_type j = 0; j < n; ++j)
-                pnode->tensor()(i,j) = (i==j) ? scalar_type(1) : scalar_type(0);
+                pnode->tensor()(i,j) = (i==j) ? scalar_type(1)
+                                              : scalar_type(0);
           }
         }
       }

@@ -88,12 +88,12 @@ namespace bgeot {
 
     /// Return a (pseudo)container of the points of a given convex
     ref_mesh_pt_ct points_of_convex(size_type ic) const {
-      const ind_cv_ct &rct = ind_points_of_convex(ic);
+      const ind_set &rct = ind_points_of_convex(ic);
       return ref_mesh_pt_ct(pts.begin(), rct.begin(), rct.end());
     }
 
     inline void points_of_convex(size_type ic, base_matrix &G) const {
-      const ind_cv_ct &rct = ind_points_of_convex(ic);
+      const ind_set &rct = ind_points_of_convex(ic);
       size_type N = dim(), Np = rct.size();
       G.base_resize(N, Np);
       auto it = G.begin();

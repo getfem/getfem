@@ -519,8 +519,7 @@ namespace getfem {
           used_vars.clear();
         else
           used_data.clear();
-        ga_workspace aux_workspace;
-        aux_workspace = ga_workspace(true, workspace);
+        ga_workspace aux_workspace(true, workspace);
         aux_workspace.clear_expressions();
         aux_workspace.add_interpolation_expression(expr, source_mesh);
         for (size_type i = 0; i < aux_workspace.nb_trees(); ++i)
@@ -570,7 +569,7 @@ namespace getfem {
                         var.varname, var.transname, 1);
           if (tree.root)
             ga_semantic_analysis(tree, local_workspace, dummy_mesh(),
-				 1, false, true);
+                                 1, false, true);
           ga_compile_interpolation(pwi.workspace(), pwi.gis());
         }
       }
@@ -815,8 +814,8 @@ namespace getfem {
                  m_x.trans_of_convex(adj_face.cv));
         bool converged = true;
         gic.invert(ctx_x.xreal(), P_ref, converged);
-	bool is_in = (ctx_x.pgt()->convex_ref()->is_in(P_ref) < 1E-4);
-	GMM_ASSERT1(is_in && converged, "Geometric transformation inversion "
+        bool is_in = (ctx_x.pgt()->convex_ref()->is_in(P_ref) < 1E-4);
+        GMM_ASSERT1(is_in && converged, "Geometric transformation inversion "
                     "has failed in neighbour transformation");
         face_num = adj_face.f;
         cv = adj_face.cv;
@@ -962,7 +961,7 @@ namespace getfem {
   public:
 
     virtual const mesh_region &give_region(const mesh &,
-					   size_type, short_type) const
+                                           size_type, short_type) const
     { return region; }
     // virtual void init(const ga_workspace &workspace) const = 0;
     // virtual void finalize() const = 0;

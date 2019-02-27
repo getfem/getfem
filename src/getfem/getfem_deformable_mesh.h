@@ -100,7 +100,7 @@ namespace getfem {
       size_type cv;
       for (cv << conv_indices; cv != bgeot::size_type(-1); cv << conv_indices)
       {
-        getfem::mesh::ind_cv_ct pt_index = m_.ind_points_of_convex(cv);
+        getfem::mesh::ind_set pt_index = m_.ind_points_of_convex(cv);
         getfem::mesh_fem::ind_dof_ct dof = mf_.ind_basic_dof_of_element(cv);
         bgeot::size_type num_points = m_.structure_of_convex(cv)->nb_points();
 
