@@ -331,8 +331,11 @@ namespace getfem {
   struct Ball_projection_operator : public ga_nonlinear_operator {
     bool result_size(const arg_list &args, bgeot::multi_index &sizes) const {
       if (args.size() != 2 || args[0]->sizes().size() > 2
-          || args[0]->sizes().size() < 1 || args[1]->size() != 1) return false;
-      if (args[0]->sizes().size() == 1)
+          || (args[0]->sizes().size() < 1 && args[0]->size() != 1)
+          || args[1]->size() != 1) return false;
+      if (args[0]->sizes().size() < 1)
+        ga_init_scalar(sizes);
+      else if (args[0]->sizes().size() == 1)
         ga_init_vector(sizes, args[0]->sizes()[0]);
       else
         ga_init_matrix(sizes, args[0]->sizes()[0], args[0]->sizes()[1]);

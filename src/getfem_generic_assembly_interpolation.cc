@@ -640,9 +640,9 @@ namespace getfem {
       ga_interpolation_single_point_exec(local_gis, local_workspace, ctx_x,
                                          Normal, m);
 
-      GMM_ASSERT1(local_workspace.assembled_tensor().size() == m.dim(),
+      GMM_ASSERT1(local_workspace.assembled_tensor().size()==target_mesh.dim(),
                   "Wrong dimension of the transformation expression");
-      P.resize(m.dim());
+      P.resize(target_mesh.dim());
       gmm::copy(local_workspace.assembled_tensor().as_vector(), P);
 
       *m_t = &target_mesh;
