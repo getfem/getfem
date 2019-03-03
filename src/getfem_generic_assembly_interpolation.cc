@@ -636,8 +636,23 @@ namespace getfem {
                   bool compute_derivatives) const {
       int ret_type = 0;
 
-      ga_interpolation_single_point_exec(local_gis, local_workspace, ctx_x,
-                                         Normal, m);
+      local_gis.ctx = ctx_x;
+      local_gis.Normal = Normal;
+      local_gis.nbpt = 1;
+      local_gis.ipt = 0;
+      local_gis.pai = 0;
+      gmm::clear(local_workspace.assembled_tensor().as_vector());
+
+      for (auto &&instr : local_gis.all_instructions) {
+        GMM_ASSERT1(instr.second.m == &m,
+                    "Incompatibility of meshes in interpolation");
+        auto &gilb = instr.second.begin_instructions;
+        for (size_type j = 0; j < gilb.size(); ++j) j += gilb[j]->exec();
+        auto &gile = instr.second.elt_instructions;
+        for (size_type j = 0; j < gile.size(); ++j) j+=gile[j]->exec();
+        auto &gil = instr.second.instructions;
+        for (size_type j = 0; j < gil.size(); ++j) j += gil[j]->exec();
+      }
 
       GMM_ASSERT1(local_workspace.assembled_tensor().size()==target_mesh.dim(),
                   "Wrong dimension of the transformation expression");

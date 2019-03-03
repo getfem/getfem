@@ -270,13 +270,14 @@ namespace getfem {
 
     struct var_description {
 
-      bool is_variable;
-      bool is_fem_dofs;
+      const bool is_variable;
+      const bool is_fem_dofs;
       const mesh_fem *mf;
+      const im_data *imd;
       gmm::sub_interval I;
       const model_real_plain_vector *V;
-      const im_data *imd;
-      bgeot::multi_index qdims;  // For data having a qdim != of the fem
+      bgeot::multi_index qdims;  // For data having a qdim different than
+                                 // the qdim of the fem or im_data
                                  // (dim per dof for dof data)
                                  // and for constant variables.
 
@@ -286,28 +287,29 @@ namespace getfem {
         return q;
       }
 
-      var_description(bool is_var, bool is_fem,
-                      const mesh_fem *mmf, gmm::sub_interval I_,
-                      const model_real_plain_vector *v, const im_data *imd_,
+      var_description(bool is_var, const mesh_fem *mf_, const im_data *imd_,
+                      gmm::sub_interval I_, const model_real_plain_vector *v,
                       size_type Q)
-        : is_variable(is_var), is_fem_dofs(is_fem), mf(mmf), I(I_), V(v),
-          imd(imd_), qdims(1) {
+        : is_variable(is_var), is_fem_dofs(mf_ != 0), mf(mf_), imd(imd_),
+          I(I_), V(v), qdims(1)
+      {
         GMM_ASSERT1(Q > 0, "Bad dimension");
         qdims[0] = Q;
       }
-      var_description() : is_variable(false), is_fem_dofs(false),
-                          mf(0), V(0), imd(0), qdims(1) { qdims[0] = 1; }
     };
 
   public:
 
+    enum operation_type {ASSEMBLY,
+                         PRE_ASSIGNMENT,
+                         POST_ASSIGNMENT};
+
     struct tree_description { // CAUTION: Specific copy constructor
-      size_type order; // 0: potential, 1: weak form, 2: tangent operator
-      // -1 : interpolation/ assignment all order,
-      // -2 : assignment on potential, -3 : assignment on weak form
-      // -3 : assignment on tangent operator
-      size_type interpolation; // O : assembly, 1 : interpolate before assembly
-                               // 2 : interpolate after assembly. 
+      size_type order; //  0 : potential
+                       //  1 : residual
+                       //  2 : tangent operator
+                       // -1 : any
+      operation_type operation;
       std::string varname_interpolation; // Where to interpolate
       std::string name_test1, name_test2;
       std::string interpolate_name_test1, interpolate_name_test2;
@@ -317,7 +319,7 @@ namespace getfem {
       const mesh_region *rg;
       ga_tree *ptree;
       tree_description()
-        : interpolation(0), varname_interpolation(""),
+        : operation(ASSEMBLY), varname_interpolation(""),
           name_test1(""), name_test2(""),
           interpolate_name_test1(""), interpolate_name_test2(""),
           mim(0), m(0), rg(0), ptree(0) {}
@@ -366,8 +368,8 @@ namespace getfem {
     void add_tree(ga_tree &tree, const mesh &m, const mesh_im &mim,
                   const mesh_region &rg,
                   const std::string &expr, size_type add_derivative_order,
-                  bool scalar_expr, size_type for_interpolation,
-                  const std::string varname_interpolation);
+                  bool scalar_expr, operation_type op_type=ASSEMBLY,
+                  const std::string varname_interpolation="");
 
 
     std::shared_ptr<model_real_sparse_matrix> K;

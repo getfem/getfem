@@ -69,9 +69,7 @@ namespace getfem {
   };
 
   typedef std::shared_ptr<ga_instruction> pga_instruction;
-  typedef std::vector<pga_instruction> ga_instruction_list;
 
-  
   struct gauss_pt_corresp { // For neighbour interpolation transformation
     bgeot::pgeometric_trans pgt1, pgt2;
     papprox_integration pai;
@@ -185,25 +183,22 @@ namespace getfem {
       std::map<std::string, elementary_trans_info> elementary_trans_infos;
       secondary_domain_info secondary_domain_infos;
 
-      // Instructions being executed at the first Gauss point after
-      // a change of integration method only.
-      ga_instruction_list begin_instructions;
-      // Instructions executed once per element
-      ga_instruction_list elt_instructions;
-      // Instructions executed on each integration/interpolation point
-      ga_instruction_list instructions;
+      std::vector<pga_instruction>
+        begin_instructions,  // Instructions being executed at the first Gauss
+                             // point after a change of integration method only.
+        elt_instructions,    // Instructions executed once per element
+        instructions;        // Instructions executed on each
+                             // integration/interpolation point
       std::map<scalar_type, std::list<pga_tree_node> > node_list;
 
-    region_mim_instructions(): m(0), im(0) {}
+      region_mim_instructions(): m(0), im(0) {}
     };
 
     std::list<ga_tree> trees; // The trees are stored mainly because they
                               // contain the intermediary tensors.
     std::list<ga_tree> interpolation_trees;
 
-    typedef std::map<region_mim, region_mim_instructions> instructions_set;
-
-    instructions_set  whole_instructions;
+    std::map<region_mim, region_mim_instructions> all_instructions;
 
     ga_instruction_set() { max_dof = nb_dof = 0; need_elt_size = false; ipt=0; }
   };
@@ -220,10 +215,6 @@ namespace getfem {
   void ga_interpolation_exec(ga_instruction_set &gis,
                              ga_workspace &workspace,
                              ga_interpolation_context &gic);
-  void ga_interpolation_single_point_exec
-    (ga_instruction_set &gis, ga_workspace &workspace,
-     const fem_interpolation_context &ctx_x, const base_small_vector &Normal,
-     const mesh &interp_mesh);
   
 } /* end of namespace */
 
