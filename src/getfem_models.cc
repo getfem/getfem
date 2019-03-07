@@ -51,8 +51,9 @@ namespace getfem {
     v_num_var_iter.resize(n_iter);
     v_num_iter.resize(n_iter);
     size_type s = is_fem_dofs ? passociated_mf()->nb_dof()
-      : (pim_data ?
-         (pim_data->nb_filtered_index() * pim_data->nb_tensor_elem()) : 1);
+                              : (imd ? imd->nb_filtered_index()
+                                       * imd->nb_tensor_elem()
+                                     : 1);
     s *= qdim();
     for (size_type i = 0; i < n_iter; ++i)
       if (is_complex)
@@ -247,13 +248,12 @@ namespace getfem {
   }
 
   bool model::is_im_data(const std::string &name) const {
-    return variable_description(no_old_prefix_name(name)).pim_data != 0;
+    return variable_description(no_old_prefix_name(name)).imd != 0;
   }
 
   const im_data *
   model::pim_data_of_variable(const std::string &name) const {
-    auto it = find_variable(no_old_prefix_name(name));
-    return it->second.pim_data;
+    return variable_description(no_old_prefix_name(name)).imd;
   }
 
   const gmm::uint64_type &
@@ -357,7 +357,7 @@ namespace getfem {
         case VDESCRFILTER_REGION:
           if (vdescr.v_num < vdescr.mf->version_number()) {
             dal::bit_vector
-              dor = vdescr.mf->dof_on_region(vdescr.m_region);
+              dor = vdescr.mf->dof_on_region(vdescr.filter_region);
             vdescr.partial_mf->adapt(dor);
             vdescr.set_size();
             vdescr.v_num = act_counter();
@@ -367,9 +367,8 @@ namespace getfem {
         }
       }
 
-      if (vdescr.pim_data != 0
-          && vdescr.v_num < vdescr.pim_data->version_number()) {
-        // const im_data *pimd = vdescr.pim_data;
+      if (vdescr.imd != 0
+          && vdescr.v_num < vdescr.imd->version_number()) {
         vdescr.set_size();
         vdescr.v_num = act_counter();
       }
@@ -527,9 +526,9 @@ namespace getfem {
             GMM_WARNING1("No term found to filter multiplier " << multname
                          << ". Variable is cancelled");
         } else if (multdescr.filter & VDESCRFILTER_INFSUP) {
-          mesh_region rg(multdescr.m_region);
-          multdescr.mim->linked_mesh().intersect_with_mpi_region(rg);
-          asm_mass_matrix(MM, *(multdescr.mim), vdescr.associated_mf(),
+          mesh_region rg(multdescr.filter_region);
+          multdescr.filter_mim->linked_mesh().intersect_with_mpi_region(rg);
+          asm_mass_matrix(MM, *(multdescr.filter_mim), vdescr.associated_mf(),
                           *(multdescr.mf), rg);
         }
 
@@ -556,7 +555,7 @@ namespace getfem {
           for (const size_type &icol : columns)
             kept.add(icol);
           if (multdescr.filter & VDESCRFILTER_REGION)
-            kept &= multdescr.mf->dof_on_region(multdescr.m_region);
+            kept &= multdescr.mf->dof_on_region(multdescr.filter_region);
           multdescr.partial_mf->adapt(kept);
           multdescr.set_size();
           multdescr.v_num = act_counter();
@@ -582,7 +581,7 @@ namespace getfem {
           for (const size_type &icol : glob_columns)
             if (icol >= s && icol < s + nbdof) kept.add(icol-s);
           if (multdescr.filter & VDESCRFILTER_REGION)
-            kept &= multdescr.mf->dof_on_region(multdescr.m_region);
+            kept &= multdescr.mf->dof_on_region(multdescr.filter_region);
           multdescr.partial_mf->adapt(kept);
           multdescr.set_size();
           multdescr.v_num = act_counter();
@@ -628,7 +627,7 @@ namespace getfem {
         if (vdescr.is_variable &&
             is_disabled_variable(v.first)) ost << "\t (disabled)";
         else                               ost << "\t           ";
-        if (vdescr.pim_data != 0) ost << "\t (is im_data)";
+        if (vdescr.imd != 0) ost << "\t (is im_data)";
         if (vdescr.is_affine_dependent) ost << "\t (is affine dependent)";
         ost << endl;
       }
@@ -648,6 +647,7 @@ namespace getfem {
   }
 
   void model::listresiduals(std::ostream &ost) const {
+    context_check(); if (act_size_to_be_done) actualize_sizes();
     if (variables.size() == 0)
       ost << "Model with no variable nor data" << endl;
     else {
@@ -690,7 +690,7 @@ namespace getfem {
                                          size_type size) {
     GMM_ASSERT1(!(variables[name].is_fem_dofs),
                 "Cannot explicitly resize a fem variable or data");
-    GMM_ASSERT1(variables[name].pim_data == 0,
+    GMM_ASSERT1(variables[name].imd == 0,
                 "Cannot explicitly resize an im data");
     GMM_ASSERT1(size, "Variables of null size are not allowed");
     variables[name].qdims.resize(1);
@@ -702,7 +702,7 @@ namespace getfem {
                                          const bgeot::multi_index &sizes) {
     GMM_ASSERT1(!(variables[name].is_fem_dofs),
                 "Cannot explicitly resize a fem variable or data");
-    GMM_ASSERT1(variables[name].pim_data == 0,
+    GMM_ASSERT1(variables[name].imd == 0,
                 "Cannot explicitly resize an im data");
     variables[name].qdims = sizes;
     variables[name].set_size();
@@ -710,11 +710,9 @@ namespace getfem {
 
   void model::add_fixed_size_data(const std::string &name, size_type size,
                                   size_type niter) {
-    check_name_validity(name);
-    variables[name] = var_description(false, is_complex(), false, niter);
-    GMM_ASSERT1(size, "Data of null size are not allowed");
-    variables[name].qdims[0] = size;
-    variables[name].set_size();
+    bgeot::multi_index sizes(1);
+    sizes[0] = size;
+    add_fixed_size_data(name, sizes, niter);
   }
 
   void model::add_fixed_size_data(const std::string &name,
@@ -761,7 +759,7 @@ namespace getfem {
                           size_type niter) {
     check_name_validity(name);
     variables[name] = var_description(false, is_complex(), false, niter);
-    variables[name].pim_data = &im_data;
+    variables[name].imd = &im_data;
     variables[name].set_size();
     add_dependency(im_data);
   }
@@ -908,7 +906,7 @@ namespace getfem {
        for (const auto &v : variables) {
          if (v.second.is_fem_dofs &&
              (v.second.filter & VDESCRFILTER_INFSUP) &&
-             mim == v.second.mim) found = true;
+             mim == v.second.filter_mim) found = true;
         }
        if (!found) sup_dependency(*mim);
      }
@@ -945,7 +943,7 @@ namespace getfem {
       if (!found) sup_dependency(*mf);
 
       if (it->second.filter & VDESCRFILTER_INFSUP) {
-        const mesh_im *mim = it->second.mim;
+        const mesh_im *mim = it->second.filter_mim;
         found = false;
         for (dal::bv_visitor ibb(valid_bricks); !ibb.finished(); ++ibb) {
           for  (size_type j = 0; j < bricks[ibb].mims.size(); ++j)
@@ -955,13 +953,13 @@ namespace getfem {
             it2 != variables.end(); ++it2) {
           if (it != it2 && it2->second.is_fem_dofs &&
               (it2->second.filter & VDESCRFILTER_INFSUP) &&
-              mim == it2->second.mim) found = true;
+              mim == it2->second.filter_mim) found = true;
         }
         if (!found) sup_dependency(*mim);
       }
     }
 
-    if (it->second.pim_data != 0) sup_dependency(*(it->second.pim_data));
+    if (it->second.imd != 0) sup_dependency(*(it->second.imd));
 
     variables.erase(varname);
     act_size_to_be_done = true;
@@ -2643,7 +2641,7 @@ namespace getfem {
   model::qdims_of_variable(const std::string &name) const {
     auto it = find_variable(no_old_prefix_name(name));
     const mesh_fem *mf = it->second.passociated_mf();
-    const im_data *imd = it->second.pim_data;
+    const im_data *imd = it->second.imd;
     size_type n = it->second.qdim();
     if (mf) {
       bgeot::multi_index mi = mf->get_qdims();
@@ -2673,7 +2671,7 @@ namespace getfem {
   size_type model::qdim_of_variable(const std::string &name) const {
     auto it = find_variable(no_old_prefix_name(name));
     const mesh_fem *mf = it->second.passociated_mf();
-    const im_data *imd = it->second.pim_data;
+    const im_data *imd = it->second.imd;
     size_type n = it->second.qdim();
     if (mf) {
       return mf->get_qdim() * n;

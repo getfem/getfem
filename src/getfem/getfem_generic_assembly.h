@@ -276,10 +276,9 @@ namespace getfem {
       const im_data *imd;
       gmm::sub_interval I;
       const model_real_plain_vector *V;
-      bgeot::multi_index qdims;  // For data having a qdim different than
-                                 // the qdim of the fem or im_data
-                                 // (dim per dof for dof data)
-                                 // and for constant variables.
+      bgeot::multi_index qdims;  // For data having a qdim different than the
+                                 // qdim of the fem or im_data (dim per dof for
+                                 // dof data) and for constant variables.
 
       size_type qdim() const {
         size_type q = 1;
@@ -337,8 +336,7 @@ namespace getfem {
     // mesh regions
     std::map<const mesh *, std::list<mesh_region> > registred_mesh_regions;
 
-    const mesh_region &
-    register_region(const mesh &m, const mesh_region &region);
+    const mesh_region &register_region(const mesh &m, const mesh_region &rg);
 
     // variables and variable groups
     mutable std::map<std::string, gmm::sub_interval> int_disabled_variables;
@@ -355,16 +353,8 @@ namespace getfem {
 
     ga_macro_dictionary macro_dict;
 
-    struct m_tree {
-      ga_tree *ptree;
-      size_type meshdim;
-      bool ignore_X;
-      m_tree() : ptree(0), meshdim(-1), ignore_X(false) {}
-      m_tree(const m_tree& o);
-      m_tree &operator =(const m_tree& o);
-      ~m_tree();
-    };
-
+    // Adds a tree to the workspace. The argument tree is consumed by the
+    // function and cannot be reused afterwards.
     void add_tree(ga_tree &tree, const mesh &m, const mesh_im &mim,
                   const mesh_region &rg,
                   const std::string &expr, size_type add_derivative_order,
@@ -389,14 +379,16 @@ namespace getfem {
     { GMM_ASSERT1(assemb_t.size() == 1, "Bad result size"); return assemb_t[0]; }
     const base_vector &assembled_vector() const { return *V; }
     base_vector &assembled_vector() { return *V; }
+    // setter functions
     void set_assembled_matrix(model_real_sparse_matrix &K_) {
       K = std::shared_ptr<model_real_sparse_matrix>
-          (std::shared_ptr<model_real_sparse_matrix>(), &K_);
+          (std::shared_ptr<model_real_sparse_matrix>(), &K_); // alias
     }
     void set_assembled_vector(base_vector &V_) {
       V = std::shared_ptr<base_vector>
-          (std::shared_ptr<base_vector>(), &V_);
+          (std::shared_ptr<base_vector>(), &V_); // alias
     }
+    // getter functions
     base_tensor &assembled_tensor() { return assemb_t; }
     const base_tensor &assembled_tensor() const { return assemb_t; }
 

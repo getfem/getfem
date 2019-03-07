@@ -514,24 +514,24 @@ namespace getfem {
     GA_TOC("First analysis time");
     if (ltrees[0].root) {
       if (test1.size() > 1 || test2.size() > 1) {
-        size_type ntest2 = std::max(size_type(1), test2.size());
-        size_type nb_ltrees = test1.size()*ntest2;
-        ltrees.resize(nb_ltrees);
-        for (size_type i = 1; i < nb_ltrees; ++i) ltrees[i] = ltrees[0];
-        std::set<var_trans_pair>::iterator it1 = test1.begin();
-        for (size_type i = 0; i < test1.size(); ++i, ++it1) {
-          std::set<var_trans_pair>::iterator it2 = test2.begin();
-          for (size_type j = 0; j < ntest2; ++j) {
-            selected_test1 = *it1;
-            if (test2.size()) selected_test2 = *it2++;
+        size_type ntest2 = test2.size();
+        if (ntest2 == 0)                  // temporarily add an element to
+          test2.insert(var_trans_pair()); // allow entering the inner loop
+        ltrees.resize(test1.size()*test2.size(), ltrees[0]);
+        auto ltree = ltrees.begin();
+        for (const auto &t1 : test1) {
+          for (const auto &t2 : test2) {
+            selected_test1 = t1;
+            if (ntest2 > 0) selected_test2 = t2;
             // cout << "analysis with " << selected_test1.first << endl;
-            ga_semantic_analysis(ltrees[i*ntest2+j], *this,
-                                 mim.linked_mesh(),
+            ga_semantic_analysis(*ltree, *this, mim.linked_mesh(),
                                  ref_elt_dim_of_mesh(mim.linked_mesh()),
                                  false, false, 2);
-            // cout <<"split: "<< ga_tree_to_string(ltrees[i*ntest2+j]) << endl;
+            // cout <<"split: "<< ga_tree_to_string(*ltree) << endl;
+            if (ltree != ltrees.end()) ++ltree;
           }
         }
+        if (ntest2 == 0) test2.clear(); // remove temporarily added element
       }
 
       for (ga_tree &ltree : ltrees) {
