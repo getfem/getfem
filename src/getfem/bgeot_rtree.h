@@ -47,13 +47,51 @@ namespace bgeot {
     size_type id;
     base_node min, max;
   };
- 
+
+  /** Wraps "const box_index *" but overloads
+   *  comparison operators based on id and not
+   *  addresses. This ensures deterministic ordering in sets.
+   */
+  struct box_index_ptr {
+    box_index_ptr(const box_index *p)
+      : p_{p}
+    {}
+
+    box_index_ptr(const box_index_ptr&) = default;
+
+    bool operator < (const box_index_ptr &bptr) const {
+      return p_->id < bptr.p_->id;
+    }
+
+    bool operator == (const box_index_ptr &bptr) const {
+      return p_->id == bptr.p_->id;
+    }
+
+    bool operator != (const box_index_ptr &bptr) const {
+      return !(*this == bptr);
+    }
+
+    operator const box_index *() const {
+      return p_;
+    }
+
+    const box_index * operator->() const {
+      return p_;
+    }
+
+    const box_index& operator*() const {
+      return *p_;
+    }
+
+    const box_index *p_;
+  };
+
   struct rtree_elt_base {
     enum { RECTS_PER_LEAF=8 };
     bool isleaf_;
     bool isleaf() const { return isleaf_; }
     base_node rmin, rmax;
-    rtree_elt_base(bool leaf, const base_node& rmin_, const base_node& rmax_) 
+    rtree_elt_base(bool leaf, const base_node& rmin_, const base_node& rmax_)
       : isleaf_(leaf), rmin(rmin_), rmax(rmax_) {}
     virtual ~rtree_elt_base() {}
   };
@@ -67,7 +105,7 @@ namespace bgeot {
   public:
     typedef std::deque<box_index> box_cont;
     typedef std::vector<const box_index*> pbox_cont;
-    typedef std::set<const box_index*> pbox_set;
+    typedef std::set<box_index_ptr> pbox_set;
 
     void add_box(base_node min, base_node max, size_type id=size_type(-1)) {
       box_index bi; bi.min = min; bi.max = max;
