@@ -606,7 +606,7 @@ namespace getfem {
     if (tree.root) {
       GMM_ASSERT1(tree.root->nb_test_functions() == 0,
                   "Invalid expression containing test functions");
-      add_tree(tree, m, mim, rg, expr, order+1, false,
+      add_tree(tree, m, mim, rg, expr, order, false,
                before ? ga_workspace::PRE_ASSIGNMENT
                       : ga_workspace::POST_ASSIGNMENT,
                varname);
