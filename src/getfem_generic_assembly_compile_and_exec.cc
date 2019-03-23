@@ -4267,6 +4267,38 @@ namespace getfem {
   }
 
 
+  inline void populate_dofs_vector
+  (std::vector<size_type> &dofs,
+   const size_type &size, const size_type &ifirst, const size_type &qmult,
+   const getfem::mesh::ind_set &mfdofs)
+  {
+    dofs.assign(size, ifirst);
+    auto itd = dofs.begin();
+    if (qmult == 1)
+      for (const auto &dof : mfdofs) *itd++ += dof;
+    else
+      for (const auto &dof : mfdofs)
+        for (size_type q = 0; q < qmult; ++q) *itd++ += dof + q;
+  }
+
+  inline void populate_dofs_vector // special case for qmult == 1
+  (std::vector<size_type> &dofs, const size_type &size, const size_type &ifirst,
+   const getfem::mesh::ind_set &mfdofs)
+  {
+    dofs.assign(size, ifirst);
+    auto itd = dofs.begin();
+    for (const auto &dof : mfdofs) *itd++ += dof;
+  }
+
+
+  inline void populate_contiguous_dofs_vector
+  (std::vector<size_type> &dofs, const size_type &size, const size_type &ifirst)
+  {
+    dofs.assign(size, ifirst);
+    for (size_type i=0; i < size; ++i) dofs[i] += i;
+  }
+
+
   struct ga_instruction_matrix_assembly : public ga_instruction {
     const base_tensor &t;
     model_real_sparse_matrix &Kr, &Kn;
@@ -4309,54 +4341,35 @@ namespace getfem {
         size_type cv2 = pmf2 ? ctx2.convex_num() : s2;
         size_type N = 1;
 
-        dofs1.assign(s1, I1.first());
+        size_type ifirst1 = I1.first(), ifirst2 = I2.first();
+
         if (pmf1) {
           if (!ctx1.is_convex_num_valid()) return 0;
           N = ctx1.N();
-          auto &ct1 = pmf1->ind_scalar_basic_dof_of_element(cv1);
           size_type qmult1 = pmf1->get_qdim();
           if (qmult1 > 1) qmult1 /= pmf1->fem_of_element(cv1)->target_dim();
-          auto itd = dofs1.begin();
-          if (qmult1 == 1) {
-            for (auto itt = ct1.begin(); itt != ct1.end(); ++itt)
-              *itd++ += *itt;
-          } else {
-            for (auto itt = ct1.begin(); itt != ct1.end(); ++itt)
-              for (size_type q = 0; q < qmult1; ++q)
-                *itd++ += *itt + q;
-          }
+          populate_dofs_vector(dofs1, s1, ifirst1, qmult1,        // --> dofs1
+                               pmf1->ind_scalar_basic_dof_of_element(cv1));
         } else
-          for (size_type i=0; i < s1; ++i) dofs1[i] += i;
+          populate_contiguous_dofs_vector(dofs1, s1, ifirst1); // --> dofs1
 
         if (pmf1 == pmf2 && cv1 == cv2) {
-          if (I1.first() == I2.first()) {
+          if (ifirst1 == ifirst2) {
             add_elem_matrix(K, dofs1, dofs1, dofs1_sort, elem, ninf*1E-14, N);
           } else {
-            dofs2.resize(dofs1.size());
-            for (size_type i = 0; i < dofs1.size(); ++i)
-              dofs2[i] =  dofs1[i] + I2.first() - I1.first();
+            populate_dofs_vector(dofs2, dofs1.size(), ifirst2 - ifirst1, dofs1);
             add_elem_matrix(K, dofs1, dofs2, dofs1_sort, elem, ninf*1E-14, N);
           }
         } else {
-          dofs2.assign(s2, I2.first());
           if (pmf2) {
             if (!ctx2.is_convex_num_valid()) return 0;
             N = std::max(N, ctx2.N());
-            auto &ct2 = pmf2->ind_scalar_basic_dof_of_element(cv2);
             size_type qmult2 = pmf2->get_qdim();
             if (qmult2 > 1) qmult2 /= pmf2->fem_of_element(cv2)->target_dim();
-            auto itd = dofs2.begin();
-            if (qmult2 == 1) {
-              for (auto itt = ct2.begin(); itt != ct2.end(); ++itt)
-                *itd++ += *itt;
-            } else {
-              for (auto itt = ct2.begin(); itt != ct2.end(); ++itt)
-                for (size_type q = 0; q < qmult2; ++q)
-                  *itd++ += *itt + q;
-            }
+            populate_dofs_vector(dofs2, s2, ifirst2, qmult2,        // --> dofs2
+                                 pmf2->ind_scalar_basic_dof_of_element(cv2));
           } else
-            for (size_type i=0; i < s2; ++i) dofs2[i] += i;
-
+            populate_contiguous_dofs_vector(dofs2, s2, ifirst2); // --> dofs2
           add_elem_matrix(K, dofs1, dofs2, dofs1_sort, elem, ninf*1E-14, N);
         }
       }
@@ -4413,26 +4426,21 @@ namespace getfem {
         if (cv1 == size_type(-1)) return 0;
         auto &ct1 = pmf1->ind_scalar_basic_dof_of_element(cv1);
         GA_DEBUG_ASSERT(ct1.size() == t.sizes()[0], "Internal error");
-        dofs1.resize(ct1.size());
-        for (size_type i = 0; i < ct1.size(); ++i)
-          dofs1[i] = ct1[i] + I1.first();
+        populate_dofs_vector(dofs1, ct1.size(), I1.first(), ct1);
 
         if (pmf2 == pmf1 && cv1 == cv2) {
           if (I1.first() == I2.first()) {
             add_elem_matrix(K, dofs1, dofs1, dofs1_sort, elem, ninf*1E-14, N);
           } else {
-            dofs2.resize(dofs1.size());
-            for (size_type i = 0; i < dofs1.size(); ++i)
-              dofs2[i] =  dofs1[i] + I2.first() - I1.first();
+            populate_dofs_vector(dofs2, dofs1.size(), I2.first() - I1.first(),
+                                 dofs1);
             add_elem_matrix(K, dofs1, dofs2, dofs1_sort, elem, ninf*1E-14, N);
           }
         } else {
           if (cv2 == size_type(-1)) return 0;
           auto &ct2 = pmf2->ind_scalar_basic_dof_of_element(cv2);
           GA_DEBUG_ASSERT(ct2.size() == t.sizes()[1], "Internal error");
-          dofs2.resize(ct2.size());
-          for (size_type i = 0; i < ct2.size(); ++i)
-            dofs2[i] = ct2[i] + I2.first();
+          populate_dofs_vector(dofs2, ct2.size(), I2.first(), ct2);
           add_elem_matrix(K, dofs1, dofs2, dofs1_sort, elem, ninf*1E-14, N);
         }
       }
@@ -4482,35 +4490,24 @@ namespace getfem {
 
         size_type cv1 = ctx1.convex_num(), cv2 = ctx2.convex_num();
         if (cv1 == size_type(-1)) return 0;
-        auto &ct1 = pmf1->ind_scalar_basic_dof_of_element(cv1);
         size_type qmult1 = pmf1->get_qdim();
         if (qmult1 > 1) qmult1 /= pmf1->fem_of_element(cv1)->target_dim();
-        dofs1.assign(s1, I1.first());
-        auto itd = dofs1.begin();
-        for (auto itt = ct1.begin(); itt != ct1.end(); ++itt)
-          for (size_type q = 0; q < qmult1; ++q)
-            *itd++ += *itt + q;
+        populate_dofs_vector(dofs1, s1, I1.first(), qmult1,         // --> dofs1
+                             pmf1->ind_scalar_basic_dof_of_element(cv1));
 
-        if (pmf2 == pmf1 && cv1 == cv2) {
-          if (I1.first() == I2.first()) {
-            add_elem_matrix(K, dofs1, dofs1, dofs1_sort, elem, ninf*1E-14, N);
-          } else {
-            dofs2.resize(dofs1.size());
-            for (size_type i = 0; i < dofs1.size(); ++i)
-              dofs2[i] =  dofs1[i] + I2.first() - I1.first();
-            add_elem_matrix(K, dofs1, dofs2, dofs1_sort, elem, ninf*1E-14, N);
-          }
+        if (pmf2 == pmf1 && cv1 == cv2 && I1.first() == I2.first()) {
+          add_elem_matrix(K, dofs1, dofs1, dofs1_sort, elem, ninf*1E-14, N);
         } else {
-          if (cv2 == size_type(-1)) return 0;
-          auto &ct2 = pmf2->ind_scalar_basic_dof_of_element(cv2);
-          size_type qmult2 = pmf2->get_qdim();
-          if (qmult2 > 1) qmult2 /= pmf2->fem_of_element(cv2)->target_dim();
-          dofs2.assign(s2, I2.first());
-          itd = dofs2.begin();
-          for (auto itt = ct2.begin(); itt != ct2.end(); ++itt)
-            for (size_type q = 0; q < qmult2; ++q)
-              *itd++ += *itt + q;
-
+          if (pmf2 == pmf1 && cv1 == cv2) {
+            populate_dofs_vector(dofs2, dofs1.size(), I2.first() - I1.first(),
+                                 dofs1);
+          } else {
+            if (cv2 == size_type(-1)) return 0;
+            size_type qmult2 = pmf2->get_qdim();
+            if (qmult2 > 1) qmult2 /= pmf2->fem_of_element(cv2)->target_dim();
+            populate_dofs_vector(dofs2, s2, I2.first(), qmult2,      // --> dofs2
+                                 pmf2->ind_scalar_basic_dof_of_element(cv2));
+          }
           add_elem_matrix(K, dofs1, dofs2, dofs1_sort, elem, ninf*1E-14, N);
         }
       }
@@ -4572,33 +4569,20 @@ namespace getfem {
         size_type cv1 = ctx1.convex_num(), cv2 = ctx2.convex_num();
         size_type i1 = I1.first(), i2 = I2.first();
         if (cv1 == size_type(-1)) return 0;
-        auto &ct1 = pmf1->ind_scalar_basic_dof_of_element(cv1);
-        dofs1.resize(ss1);
-        for (size_type i = 0; i < ss1; ++i) dofs1[i] = i1 + ct1[i];
+        populate_dofs_vector(dofs1, ss1, i1,
+                             pmf1->ind_scalar_basic_dof_of_element(cv1));
+        bool same_dofs(pmf2 == pmf1 && cv1 == cv2 && i1 == i2);
 
-        if (pmf2 == pmf1 && cv1 == cv2) {
-          if (i1 == i2) {
-            add_elem_matrix(K, dofs1, dofs1, dofs1_sort, elem, ninf, N);
-            for (size_type i = 0; i < ss1; ++i) (dofs1[i])++;
-            add_elem_matrix(K, dofs1, dofs1, dofs1_sort, elem, ninf, N);
-          } else {
-            dofs2.resize(ss2);
-            for (size_type i = 0; i < ss2; ++i) dofs2[i] = i2 + ct1[i];
-            add_elem_matrix(K, dofs1, dofs2, dofs1_sort, elem, ninf, N);
-            for (size_type i = 0; i < ss1; ++i) (dofs1[i])++;
-            for (size_type i = 0; i < ss2; ++i) (dofs2[i])++;
-            add_elem_matrix(K, dofs1, dofs2, dofs1_sort, elem, ninf, N);
-          }
-        } else {
+        if (!same_dofs) {
           if (cv2 == size_type(-1)) return 0;
-          auto &ct2 = pmf2->ind_scalar_basic_dof_of_element(cv2);
-          dofs2.resize(ss2);
-          for (size_type i = 0; i < ss2; ++i) dofs2[i] = i2 + ct2[i];
-          add_elem_matrix(K, dofs1, dofs2, dofs1_sort, elem, ninf, N);
-          for (size_type i = 0; i < ss1; ++i) (dofs1[i])++;
-          for (size_type i = 0; i < ss2; ++i) (dofs2[i])++;
-          add_elem_matrix(K, dofs1, dofs2, dofs1_sort, elem, ninf, N);
+          populate_dofs_vector(dofs2, ss2, i2,
+                               pmf2->ind_scalar_basic_dof_of_element(cv2));
         }
+        std::vector<size_type> &dofs2_ = same_dofs ? dofs1 : dofs2;
+        add_elem_matrix(K, dofs1, dofs2_, dofs1_sort, elem, ninf, N);
+        for (size_type i = 0; i < ss1; ++i) (dofs1[i])++;
+        if (!same_dofs) for (size_type i = 0; i < ss2; ++i) (dofs2[i])++;
+        add_elem_matrix(K, dofs1, dofs2_, dofs1_sort, elem, ninf, N);
       }
       return 0;
     }
@@ -4659,41 +4643,23 @@ namespace getfem {
         size_type cv1 = ctx1.convex_num(), cv2 = ctx2.convex_num();
         size_type i1 = I1.first(), i2 = I2.first();
         if (cv1 == size_type(-1)) return 0;
-        auto &ct1 = pmf1->ind_scalar_basic_dof_of_element(cv1);
-        dofs1.resize(ss1);
-        for (size_type i = 0; i < ss1; ++i) dofs1[i] = i1 + ct1[i];
+        populate_dofs_vector(dofs1, ss1, i1,
+                             pmf1->ind_scalar_basic_dof_of_element(cv1));
+        bool same_dofs(pmf2 == pmf1 && cv1 == cv2 && i1 == i2);
 
-        if (pmf2 == pmf1 && cv1 == cv2) {
-          if (i1 == i2) {
-            add_elem_matrix(K, dofs1, dofs1, dofs1_sort, elem, ninf, N);
-            for (size_type i = 0; i < ss1; ++i) (dofs1[i])++;
-            add_elem_matrix(K, dofs1, dofs1, dofs1_sort, elem, ninf, N);
-            for (size_type i = 0; i < ss1; ++i) (dofs1[i])++;
-            add_elem_matrix(K, dofs1, dofs1, dofs1_sort, elem, ninf, N);
-          } else {
-            dofs2.resize(ss2);
-            for (size_type i = 0; i < ss2; ++i) dofs2[i] = i2 + ct1[i];
-            add_elem_matrix(K, dofs1, dofs2, dofs1_sort, elem, ninf, N);
-            for (size_type i = 0; i < ss1; ++i) (dofs1[i])++;
-            for (size_type i = 0; i < ss2; ++i) (dofs2[i])++;
-            add_elem_matrix(K, dofs1, dofs2, dofs1_sort, elem, ninf, N);
-            for (size_type i = 0; i < ss1; ++i) (dofs1[i])++;
-            for (size_type i = 0; i < ss2; ++i) (dofs2[i])++;
-            add_elem_matrix(K, dofs1, dofs2, dofs1_sort, elem, ninf, N);
-          }
-        } else {
+        if (!same_dofs) {
           if (cv2 == size_type(-1)) return 0;
-          auto &ct2 = pmf2->ind_scalar_basic_dof_of_element(cv2);
-          dofs2.resize(ss2);
-          for (size_type i = 0; i < ss2; ++i) dofs2[i] = i2 + ct2[i];
-          add_elem_matrix(K, dofs1, dofs2, dofs1_sort, elem, ninf, N);
-          for (size_type i = 0; i < ss1; ++i) (dofs1[i])++;
-          for (size_type i = 0; i < ss2; ++i) (dofs2[i])++;
-          add_elem_matrix(K, dofs1, dofs2, dofs1_sort, elem, ninf, N);
-          for (size_type i = 0; i < ss1; ++i) (dofs1[i])++;
-          for (size_type i = 0; i < ss2; ++i) (dofs2[i])++;
-          add_elem_matrix(K, dofs1, dofs2, dofs1_sort, elem, ninf, N);
+          populate_dofs_vector(dofs2, ss2, i2,
+                               pmf2->ind_scalar_basic_dof_of_element(cv2));
         }
+        std::vector<size_type> &dofs2_ = same_dofs ? dofs1 : dofs2;
+        add_elem_matrix(K, dofs1, dofs2_, dofs1_sort, elem, ninf, N);
+        for (size_type i = 0; i < ss1; ++i) (dofs1[i])++;
+        if (!same_dofs) for (size_type i = 0; i < ss2; ++i) (dofs2[i])++;
+        add_elem_matrix(K, dofs1, dofs2_, dofs1_sort, elem, ninf, N);
+        for (size_type i = 0; i < ss1; ++i) (dofs1[i])++;
+        if (!same_dofs) for (size_type i = 0; i < ss2; ++i) (dofs2[i])++;
+        add_elem_matrix(K, dofs1, dofs2_, dofs1_sort, elem, ninf, N);
       }
       return 0;
     }
