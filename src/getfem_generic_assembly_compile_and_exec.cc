@@ -35,6 +35,74 @@
 namespace getfem {
 
 
+  template <class VEC1, class VEC2>
+  inline void copy_scaled_4(const VEC1 &v1, const scalar_type a, VEC2 &v2) {
+    auto it1 = v1.begin();
+    auto it2 = v2.begin(), it2e = v2.end();
+    size_type nd = v1.size() >> 2;
+    for (size_type i = 0; i < nd; ++i) {
+      *it2++ = (*it1++) * a;
+      *it2++ = (*it1++) * a;
+      *it2++ = (*it1++) * a;
+      *it2++ = (*it1++) * a;
+    }
+    for (; it2 != it2e;)
+      *it2++ = (*it1++) * a;
+  }
+
+  template <class VEC1, class VEC2>
+  inline void add_scaled_4(const VEC1 &v1, const scalar_type a, VEC2 &v2) {
+    auto it1 = v1.begin();
+    auto it2 = v2.begin(), it2e = v2.end();
+    size_type nd = v1.size() >> 2;
+    for (size_type i = 0; i < nd; ++i) {
+      *it2++ += (*it1++) * a;
+      *it2++ += (*it1++) * a;
+      *it2++ += (*it1++) * a;
+      *it2++ += (*it1++) * a;
+    }
+    for (; it2 != it2e;)
+      *it2++ += (*it1++) * a;
+  }
+
+  template <class VEC1, class VEC2>
+  inline void copy_scaled_8(const VEC1 &v1, const scalar_type a, VEC2 &v2) {
+    auto it1 = v1.begin();
+    auto it2 = v2.begin(), it2e = v2.end();
+    size_type nd = v1.size() >> 3;
+    for (size_type i = 0; i < nd; ++i) {
+      *it2++ = (*it1++) * a;
+      *it2++ = (*it1++) * a;
+      *it2++ = (*it1++) * a;
+      *it2++ = (*it1++) * a;
+      *it2++ = (*it1++) * a;
+      *it2++ = (*it1++) * a;
+      *it2++ = (*it1++) * a;
+      *it2++ = (*it1++) * a;
+    }
+    for (; it2 != it2e;)
+      *it2++ = (*it1++) * a;
+  }
+
+  template <class VEC1, class VEC2>
+  inline void add_scaled_8(const VEC1 &v1, const scalar_type a, VEC2 &v2) {
+    auto it1 = v1.begin();
+    auto it2 = v2.begin(), it2e = v2.end();
+    size_type nd = v1.size() >> 3;
+    for (size_type i = 0; i < nd; ++i) {
+      *it2++ += (*it1++) * a;
+      *it2++ += (*it1++) * a;
+      *it2++ += (*it1++) * a;
+      *it2++ += (*it1++) * a;
+      *it2++ += (*it1++) * a;
+      *it2++ += (*it1++) * a;
+      *it2++ += (*it1++) * a;
+      *it2++ += (*it1++) * a;
+    }
+    for (; it2 != it2e;)
+      *it2++ += (*it1++) * a;
+  }
+
   bool operator <(const gauss_pt_corresp &gpc1,
                   const gauss_pt_corresp &gpc2) {
     if (gpc1.pai != gpc2.pai)
@@ -4017,32 +4085,15 @@ namespace getfem {
       if (ipt == 0 || interpolate) {
         if (empty_weight) elem.resize(0);
         elem.resize(t.size());
-        if (!empty_weight) {
-          auto itt = t.begin();
-          auto it = elem.begin();
-          const auto ite = elem.end();
-          size_type nd = ((t.size()) >> 2);
-          for (size_type i = 0; i < nd; ++i) {
-            *it++ = (*itt++) * coeff; *it++ = (*itt++) * coeff;
-            *it++ = (*itt++) * coeff; *it++ = (*itt++) * coeff;
-          }
-          for (; it != ite;) *it++ = (*itt++) * coeff;
-        }
-      } else if (!empty_weight) {
-        auto itt = t.begin();
-        auto it = elem.begin();
-        const auto ite = elem.end();
-        size_type nd = ((t.size()) >> 2);
-        for (size_type i = 0; i < nd; ++i) {
-          *it++ += (*itt++) * coeff; *it++ += (*itt++) * coeff;
-          *it++ += (*itt++) * coeff; *it++ += (*itt++) * coeff;
-        }
-        for (; it != ite;) *it++ += (*itt++) * coeff;
+        if (!empty_weight)
+          copy_scaled_4(t, coeff, elem);
+      } else if (!empty_weight)
         // gmm::add(gmm::scaled(t.as_vector(), coeff), elem);
-      }
+        add_scaled_4(t, coeff, elem);
+
       if (ipt == nbpt-1 || interpolate) { // finalize
-        const mesh_fem &mf = *(mfg ? *mfg : mfn);
         GMM_ASSERT1(mfg ? *mfg : mfn, "Internal error");
+        const mesh_fem &mf = *(mfg ? *mfg : mfn);
         const gmm::sub_interval &I = mf.is_reduced() ? Ir : In;
         base_vector &V = mf.is_reduced() ? Vr : Vn;
         if (!(ctx.is_convex_num_valid())) return 0;
@@ -4133,9 +4184,8 @@ namespace getfem {
    const std::vector<size_type> &dofs1, const std::vector<size_type> &dofs2,
    std::vector<size_type> &dofs1_sort,
    base_vector &elem, scalar_type threshold, size_type N) {
-    size_type maxest = (N+1) * std::max(dofs1.size(), dofs2.size());
-    size_type s1 = dofs1.size(), s2 = dofs2.size();
-    gmm::elt_rsvector_<scalar_type> ev;
+
+    size_type s1 = dofs1.size();
 
     dofs1_sort.resize(s1);
     for (size_type i = 0; i < s1; ++i) { // insertion sort
@@ -4150,10 +4200,15 @@ namespace getfem {
     // the_indto_sort = &dofs1;
     // qsort(&(dofs1_sort[0]), s1, sizeof(size_type), compare_my_indices);
 
+    gmm::elt_rsvector_<scalar_type> ev;
+
+    size_type maxest = (N+1) * s1;
     base_vector::const_iterator it = elem.cbegin();
-    for (size_type j = 0; j < s2; ++j) { // Iteration on columns
-      if (j) it += s1;
-      std::vector<gmm::elt_rsvector_<scalar_type>> &col = K[dofs2[j]];
+    bool first(true);
+    for (const size_type &dof2 : dofs2) { // Iteration on columns
+      if (first) first = false;
+      else it += s1;
+      std::vector<gmm::elt_rsvector_<scalar_type>> &col = K[dof2];
       size_type nb = col.size();
 
       if (nb == 0) {
@@ -4229,28 +4284,13 @@ namespace getfem {
       if (ipt == 0 || interpolate) {
         if (empty_weight) elem.resize(0);
         elem.resize(t.size());
-        if (!empty_weight) {
-          auto itt = t.begin(); auto it = elem.begin(), ite = elem.end();
-          scalar_type e = coeff*alpha1*alpha2;
-          size_type nd = ((t.size()) >> 2);
-          for (size_type i = 0; i < nd; ++i) {
-            *it++ = (*itt++) * e; *it++ = (*itt++) * e;
-            *it++ = (*itt++) * e; *it++ = (*itt++) * e;
-          }
-          for (; it != ite;) *it++ = (*itt++) * e;
-        }
-      } else if (!empty_weight){
-        // Faster than a daxpy blas call on my config
-        auto itt = t.begin(); auto it = elem.begin(), ite = elem.end();
-        scalar_type e = coeff*alpha1*alpha2;
-        size_type nd = ((t.size()) >> 2);
-        for (size_type i = 0; i < nd; ++i) {
-          *it++ += (*itt++) * e; *it++ += (*itt++) * e;
-          *it++ += (*itt++) * e; *it++ += (*itt++) * e;
-        }
-        for (; it != ite;) *it++ += (*itt++) * e;
+        if (!empty_weight)
+          copy_scaled_4(t, coeff*alpha1*alpha2, elem);
+      } else if (!empty_weight)
         // gmm::add(gmm::scaled(t.as_vector(), coeff*alpha1*alpha2), elem);
-      }
+        // Faster than a daxpy blas call on my config
+        add_scaled_4(t, coeff*alpha1*alpha2, elem);
+
       if (ipt == nbpt-1 || interpolate) { // finalize
         const mesh_fem *pmf1 = mfg1 ? *mfg1 : mfn1;
         const mesh_fem *pmf2 = mfg2 ? *mfg2 : mfn2;
@@ -4356,27 +4396,13 @@ namespace getfem {
                     "scalar fems");
       if (ipt == 0) {
         elem.resize(t.size());
-        auto itt = t.begin(); auto it = elem.begin(), ite = elem.end();
-        scalar_type e = coeff*alpha1*alpha2;
-        size_type nd = ((t.size()) >> 2);
-        for (size_type i = 0; i < nd; ++i) {
-          *it++ = (*itt++) * e; *it++ = (*itt++) * e;
-          *it++ = (*itt++) * e; *it++ = (*itt++) * e;
-        }
-        for (; it != ite;) *it++ = (*itt++) * e;
         // gmm::copy(gmm::scaled(t.as_vector(), coeff*alpha1*alpha2), elem);
-      } else {
-        // Faster than a daxpy blas call on my config
-        auto itt = t.begin(); auto it = elem.begin(), ite = elem.end();
-        scalar_type e = coeff*alpha1*alpha2;
-        size_type nd = ((t.size()) >> 2);
-        for (size_type i = 0; i < nd; ++i) {
-          *it++ += (*itt++) * e; *it++ += (*itt++) * e;
-          *it++ += (*itt++) * e; *it++ += (*itt++) * e;
-        }
-        for (; it != ite;) *it++ += (*itt++) * e;
+        copy_scaled_4(t, coeff*alpha1*alpha2, elem);
+      } else
         // gmm::add(gmm::scaled(t.as_vector(), coeff*alpha1*alpha2), elem);
-      }
+        // Faster than a daxpy blas call on my config
+        add_scaled_4(t, coeff*alpha1*alpha2, elem);
+
       if (ipt == nbpt-1) { // finalize
         GA_DEBUG_ASSERT(I1.size() && I2.size(), "Internal error");
 
@@ -4440,31 +4466,13 @@ namespace getfem {
                         "vector fems");
       if (ipt == 0) {
         elem.resize(t.size());
-        auto itt = t.begin(); auto it = elem.begin(), ite = elem.end();
-        scalar_type e = coeff*alpha1*alpha2;
-        size_type nd = ((t.size()) >> 3);
-        for (size_type i = 0; i < nd; ++i) {
-          *it++ = (*itt++) * e; *it++ = (*itt++) * e;
-          *it++ = (*itt++) * e; *it++ = (*itt++) * e;
-          *it++ = (*itt++) * e; *it++ = (*itt++) * e;
-          *it++ = (*itt++) * e; *it++ = (*itt++) * e;
-        }
-        for (; it != ite;) *it++ = (*itt++) * e;
+        copy_scaled_8(t, coeff*alpha1*alpha2, elem);
         // gmm::copy(gmm::scaled(t.as_vector(), coeff*alpha1*alpha2), elem);
-      } else {
-        // (Far) faster than a daxpy blas call on my config.
-        auto itt = t.begin(); auto it = elem.begin(), ite = elem.end();
-        scalar_type e = coeff*alpha1*alpha2;
-        size_type nd = ((t.size()) >> 3);
-        for (size_type i = 0; i < nd; ++i) {
-          *it++ += (*itt++) * e; *it++ += (*itt++) * e;
-          *it++ += (*itt++) * e; *it++ += (*itt++) * e;
-          *it++ += (*itt++) * e; *it++ += (*itt++) * e;
-          *it++ += (*itt++) * e; *it++ += (*itt++) * e;
-        }
-        for (; it != ite;) *it++ += (*itt++) * e;
+      } else
         // gmm::add(gmm::scaled(t.as_vector(), coeff*alpha1*alpha2), elem);
-      }
+        // (Far) faster than a daxpy blas call on my config.
+        add_scaled_8(t, coeff*alpha1*alpha2, elem);
+
       if (ipt == nbpt-1) { // finalize
         GA_DEBUG_ASSERT(I1.size() && I2.size(), "Internal error");
 
@@ -4594,6 +4602,7 @@ namespace getfem {
       }
       return 0;
     }
+
     ga_instruction_matrix_assembly_standard_vector_opt10_2
     (const base_tensor &t_, model_real_sparse_matrix &Kn_,
      const fem_interpolation_context &ctx1_,
