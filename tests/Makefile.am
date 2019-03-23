@@ -42,6 +42,7 @@ check_PROGRAMS =                   \
 	test_mat_elem              \
 	test_interpolation         \
 	test_assembly              \
+	test_assembly_assignment   \
 	test_interpolated_fem      \
 	test_range_basis           \
 	laplacian                  \
@@ -81,6 +82,7 @@ test_small_vector_SOURCES = test_small_vector.cc
 test_kdtree_SOURCES = test_kdtree.cc
 test_rtree_SOURCES = test_rtree.cc
 test_assembly_SOURCES = test_assembly.cc
+test_assembly_assignment_SOURCES = test_assembly_assignment.cc
 laplacian_SOURCES = laplacian.cc
 laplacian_with_bricks_SOURCES = laplacian_with_bricks.cc
 plate_SOURCES = plate.cc
@@ -134,6 +136,7 @@ TESTS = \
 	test_slice.pl                 \
 	integration.pl                \
 	test_assembly.pl              \
+	test_assembly_assignment.pl   \
 	test_interpolated_fem.pl      \
 	test_range_basis.pl           \
 	laplacian.pl                  \
@@ -163,6 +166,7 @@ EXTRA_DIST =                               			\
 	test_rtree.pl                      			\
 	test_interpolation.pl              			\
 	test_assembly.pl                   			\
+	test_assembly_assignment.pl        			\
 	laplacian.pl                       			\
 	laplacian_with_bricks.pl 	   			\
 	elastostatic.pl                    			\
