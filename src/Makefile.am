@@ -208,8 +208,8 @@ SRC =                                      		\
 	getfem_fem_composite.cc            		\
 	getfem_mat_elem.cc                 		\
 	getfem_mat_elem_type.cc            		\
-	getfem_level_set.cc	           		    \
-    getfem_locale.cc                        \
+	getfem_level_set.cc	           		\
+	getfem_locale.cc                                \
 	getfem_mesh_level_set.cc           		\
 	getfem_mesh_im_level_set.cc        		\
 	getfem_mesh_fem_level_set.cc       		\

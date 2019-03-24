@@ -158,7 +158,7 @@ namespace getfem {
 
       ptime_scheme ptsc;        // For optional time integration scheme
 
-      const var_description_filter filter; // Version of an (optional) filter
+      const var_description_filter filter; // Version of an optional filter
                                            // on the dofs
       const size_type filter_region; // Optional region for the filter
       const std::string filter_var;  // Optional variable name for the filter

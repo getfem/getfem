@@ -222,7 +222,7 @@ namespace getfem {
       const mesh_fem &mf = *(mfg ? *mfg : mfn);
       GA_DEBUG_ASSERT(mfg ? *mfg : mfn, "Internal error");
       size_type cv_1 = ctx.is_convex_num_valid()
-        ? ctx.convex_num() : mf.convex_index().first_true();
+                     ? ctx.convex_num() : mf.convex_index().first_true();
       pfem pf = mf.fem_of_element(cv_1);
       GMM_ASSERT1(pf, "An element without finite element method defined");
       size_type Qmult = qdim / pf->target_dim();
@@ -246,7 +246,7 @@ namespace getfem {
       GA_DEBUG_INFO("Instruction: adapt second index of tensor");
       const mesh_fem &mf = *(mfg ? *mfg : mfn);
       size_type cv_1 = ctx.is_convex_num_valid()
-        ? ctx.convex_num() : mf.convex_index().first_true();
+                     ? ctx.convex_num() : mf.convex_index().first_true();
       pfem pf = mf.fem_of_element(cv_1);
       GMM_ASSERT1(pf, "An element without finite element methode defined");
       size_type Qmult = qdim / pf->target_dim();
@@ -277,9 +277,9 @@ namespace getfem {
       const mesh_fem &mf1 = *(mfg1 ? *mfg1 : mfn1);
       const mesh_fem &mf2 = *(mfg2 ? *mfg2 : mfn2);
       size_type cv_1 = ctx1.is_convex_num_valid()
-        ? ctx1.convex_num() : mf1.convex_index().first_true();
+                     ? ctx1.convex_num() : mf1.convex_index().first_true();
       size_type cv_2 = ctx2.is_convex_num_valid()
-        ? ctx2.convex_num() : mf2.convex_index().first_true();
+                     ? ctx2.convex_num() : mf2.convex_index().first_true();
       pfem pf1 = mf1.fem_of_element(cv_1);
       GMM_ASSERT1(pf1, "An element without finite element method defined");
       pfem pf2 = mf2.fem_of_element(cv_2);
@@ -1214,8 +1214,8 @@ namespace getfem {
 
   struct ga_instruction_update_group_info : public ga_instruction {
     const ga_workspace &workspace;
-    ga_instruction_set &gis;
-    ga_instruction_set::interpolate_info &inin;
+    const ga_instruction_set &gis;
+    const ga_instruction_set::interpolate_info &inin;
     const std::string gname;
     ga_instruction_set::variable_group_info &vgi;
 
@@ -1228,20 +1228,26 @@ namespace getfem {
         = inin.m ? workspace.variable_in_group(gname, *(inin.m))
                  : workspace.first_variable_of_group(gname);
       vgi.mf = workspace.associated_mf(varname);
-      vgi.Ir = gis.var_intervals[varname];
+      const auto it1 = gis.var_intervals.find(varname);
+      GA_DEBUG_ASSERT(it1 != gis.var_intervals.end(),
+                      "Variable " << varname << " not in gis variables");
+      vgi.Ir = it1->second;
       vgi.In = workspace.interval_of_variable(varname);
       vgi.alpha = workspace.factor_of_variable(varname);
-      vgi.U = gis.extended_vars[varname];
+      const auto it2 = gis.extended_vars.find(varname);
+      GA_DEBUG_ASSERT(it2 != gis.extended_vars.end(),
+                      "Variable " << varname << " not in extended variables");
+      vgi.U = it2->second;
       vgi.varname = &varname;
       return 0;
     }
 
     ga_instruction_update_group_info
-    (const ga_workspace &workspace_, ga_instruction_set &gis_,
-     ga_instruction_set::interpolate_info &inin_, const std::string &gname_,
-     ga_instruction_set::variable_group_info &vgi_) :
-      workspace(workspace_), gis(gis_), inin(inin_), gname(gname_),
-      vgi(vgi_) {}
+    (const ga_workspace &workspace_, const ga_instruction_set &gis_,
+     const ga_instruction_set::interpolate_info &inin_,
+     const std::string &gname_, ga_instruction_set::variable_group_info &vgi_)
+      : workspace(workspace_), gis(gis_), inin(inin_), gname(gname_), vgi(vgi_)
+    {}
   };
 
   struct ga_instruction_interpolate_filter : public ga_instruction {

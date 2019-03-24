@@ -389,8 +389,8 @@ namespace getfem {
           (std::shared_ptr<base_vector>(), &V_); // alias
     }
     // getter functions
-    base_tensor &assembled_tensor() { return assemb_t; }
     const base_tensor &assembled_tensor() const { return assemb_t; }
+    base_tensor &assembled_tensor() { return assemb_t; }
 
     model_real_sparse_matrix &unreduced_matrix()
     { return unreduced_K; }
