@@ -44,6 +44,7 @@ check_PROGRAMS =                   \
 	test_assembly              \
 	test_assembly_assignment   \
 	test_interpolated_fem      \
+	test_internal_variables    \
 	test_range_basis           \
 	laplacian                  \
 	laplacian_with_bricks      \
@@ -98,6 +99,7 @@ test_mesh_SOURCES = test_mesh.cc
 geo_trans_inv_SOURCES = geo_trans_inv.cc
 test_int_set_SOURCES = test_int_set.cc
 test_interpolated_fem_SOURCES = test_interpolated_fem.cc
+test_internal_variables_SOURCES = test_internal_variables.cc
 test_tree_sorted_SOURCES = test_tree_sorted.cc
 test_mat_elem_SOURCES = test_mat_elem.cc
 test_slice_SOURCES = test_slice.cc
@@ -138,6 +140,7 @@ TESTS = \
 	test_assembly.pl              \
 	test_assembly_assignment.pl   \
 	test_interpolated_fem.pl      \
+	test_internal_variables.pl    \
 	test_range_basis.pl           \
 	laplacian.pl                  \
 	laplacian_with_bricks.pl      \
@@ -178,6 +181,7 @@ EXTRA_DIST =                               			\
 	geo_trans_inv.pl                   			\
 	test_int_set.pl                    			\
 	test_interpolated_fem.pl           			\
+	test_internal_variables.pl         			\
 	test_slice.pl			   			\
 	test_mesh_im_level_set.pl          			\
 	thermo_elasticity_electrical_coupling.pl		\

@@ -471,13 +471,15 @@ namespace getfem {
     case GA_NODE_XFEM_MINUS_HESS_TEST: case GA_NODE_XFEM_MINUS_DIVERG_TEST:
       {
         const mesh_fem *mf = workspace.associated_mf(pnode->name);
+        const im_data *imd = workspace.associated_im_data(pnode->name);
         size_type t_type = pnode->test_function_type;
         if (t_type == 1) {
           pnode->name_test1 = pnode->name;
           pnode->interpolate_name_test1 = pnode->interpolate_name;
           pnode->interpolate_name_test2 = pnode->name_test2 = "";
-          pnode->qdim1 = (mf ? workspace.qdim(pnode->name)
-                          : gmm::vect_size(workspace.value(pnode->name)));
+          pnode->qdim1 = (mf || imd)
+                       ? workspace.qdim(pnode->name)
+                       : gmm::vect_size(workspace.value(pnode->name));
           if (option == 1)
             workspace.test1.insert
               (var_trans_pair(pnode->name_test1,
@@ -489,8 +491,9 @@ namespace getfem {
           pnode->interpolate_name_test1 = pnode->name_test1 = "";
           pnode->name_test2 = pnode->name;
           pnode->interpolate_name_test2 = pnode->interpolate_name;
-          pnode->qdim2 = (mf ? workspace.qdim(pnode->name)
-                          : gmm::vect_size(workspace.value(pnode->name)));
+          pnode->qdim2 = (mf || imd)
+                       ? workspace.qdim(pnode->name)
+                       : gmm::vect_size(workspace.value(pnode->name));
           if (option == 1)
             workspace.test2.insert
               (var_trans_pair(pnode->name_test2,
@@ -499,23 +502,32 @@ namespace getfem {
             ga_throw_error(pnode->expr, pnode->pos,
                            "Invalid null size of variable");
         }
-        if (!mf) {
-          size_type n = workspace.qdim(pnode->name);
-          if (!n)
-            ga_throw_error(pnode->expr, pnode->pos,
-                           "Invalid null size of variable");
-          if (n == 1) {
+        size_type q = workspace.qdim(pnode->name);
+        if (!q)
+          ga_throw_error(pnode->expr, pnode->pos,
+                         "Invalid null size of variable");
+        if (!mf & !imd) { // global variable
+          if (q == 1) {
             pnode->init_vector_tensor(1);
             pnode->tensor()[0] = scalar_type(1);
-            pnode->test_function_type = t_type;
+          } else
+            pnode->init_identity_matrix_tensor(q);
+          pnode->test_function_type = t_type;
+        } else if (imd) {
+          bgeot::multi_index mii = workspace.qdims(pnode->name);
+          if (q == 1 && mii.size() <= 1) {
+            pnode->init_vector_tensor(1);
+            pnode->tensor()[0] = scalar_type(1);
           } else {
-            pnode->init_matrix_tensor(n,n);
-            pnode->test_function_type = t_type;
-            for (size_type i = 0; i < n; ++i)
-              for (size_type j = 0; j < n; ++j)
-                pnode->tensor()(i,j) = (i==j) ? scalar_type(1)
-                                              : scalar_type(0);
+            mii.insert(mii.begin(), q);
+            pnode->t.set_to_original();
+            pnode->t.adjust_sizes(mii);
+            auto itw = pnode->tensor().begin();
+            for (size_type i = 0; i < q; ++i) // set identity matrix
+              for (size_type j = 0; j < q; ++j)
+                *itw++ = (i == j) ? scalar_type(1) : scalar_type(0);
           }
+          pnode->test_function_type = t_type;
         }
       }
       break;
@@ -1731,8 +1743,8 @@ namespace getfem {
               workspace.test1.insert
                 (var_trans_pair(pnode->name_test1,
                                 pnode->interpolate_name_test1));
-            pnode->qdim1 = mf ? workspace.qdim(name)
-                              : gmm::vect_size(workspace.value(name));
+            pnode->qdim1 = (mf || imd) ? workspace.qdim(name)
+                                       : gmm::vect_size(workspace.value(name));
             if (!(pnode->qdim1))
               ga_throw_error(pnode->expr, pnode->pos,
                              "Invalid null size of variable");
@@ -1743,14 +1755,14 @@ namespace getfem {
               workspace.test2.insert
                 (var_trans_pair(pnode->name_test2,
                                 pnode->interpolate_name_test2));
-            pnode->qdim2 = mf ? workspace.qdim(name)
-                              : gmm::vect_size(workspace.value(name));
+            pnode->qdim2 = (mf || imd) ? workspace.qdim(name)
+                                       : gmm::vect_size(workspace.value(name));
             if (!(pnode->qdim2))
               ga_throw_error(pnode->expr, pnode->pos,
                              "Invalid null size of variable");
           }
 
-          if (!mf && (test || !imd)) {
+          if (!mf && !imd) { // global variable
             if (prefix_id)
               ga_throw_error(pnode->expr, pnode->pos, "Gradient, Hessian or "
                         "Divergence cannot be evaluated for fixed size data.");
@@ -1761,8 +1773,8 @@ namespace getfem {
             else
               pnode->node_type = GA_NODE_VAL;
 
-            size_type n = gmm::vect_size(workspace.value(name));
-            if (n == 1) {
+            size_type q = gmm::vect_size(workspace.value(name));
+            if (q == 1) {
               if (test) {
                 pnode->init_vector_tensor(1);
                 pnode->tensor()[0] = scalar_type(1);
@@ -1771,23 +1783,43 @@ namespace getfem {
                 pnode->init_scalar_tensor(workspace.value(name)[0]);
             } else {
               if (test) {
-                pnode->init_matrix_tensor(n,n);
-                for (size_type i = 0; i < n; ++i)
-                  for (size_type j = 0; j < n; ++j)
-                    pnode->tensor()(i,j) = (i == j) ? scalar_type(1)
-                                                    : scalar_type(0);
+                pnode->init_identity_matrix_tensor(q);
               } else {
                 pnode->t.adjust_sizes(workspace.qdims(name));
                 gmm::copy(workspace.value(name), pnode->tensor().as_vector());
               }
             }
-          } else if (!test && imd) {
+          } else if (imd) { // im_data variable
+            size_type q = workspace.qdim(name);
+            bgeot::multi_index mii = workspace.qdims(name);
+
+            if (!q) ga_throw_error(pnode->expr, pnode->pos,
+                                   "Invalid null size of variable " << name);
+            if (mii.size() > 6)
+              ga_throw_error(pnode->expr, pnode->pos,
+                            "Tensor with too many dimensions. Limited to 6");
             if (prefix_id)
               ga_throw_error(pnode->expr, pnode->pos, "Gradient, Hessian or "
                              "Divergence cannot be evaluated for im data.");
-            pnode->node_type = GA_NODE_VAL;
-            pnode->t.adjust_sizes(workspace.qdims(name));
-          } else {
+
+            pnode->node_type = test ? GA_NODE_VAL_TEST : GA_NODE_VAL;
+
+            if (test) {
+              if (q == 1 && mii.size() <= 1) {
+                pnode->init_vector_tensor(1);
+                pnode->tensor()[0] = scalar_type(1);
+              } else {
+                mii.insert(mii.begin(), q);
+                pnode->t.set_to_original();
+                pnode->t.adjust_sizes(mii);
+                auto itw = pnode->tensor().begin();
+                for (size_type i = 0; i < q; ++i) // set identity matrix
+                  for (size_type j = 0; j < q; ++j)
+                    *itw++ = (i == j) ? scalar_type(1) : scalar_type(0);
+              }
+            } else
+              pnode->t.adjust_sizes(mii);
+          } else { // mesh_fem variable
             size_type q = workspace.qdim(name);
             size_type n = mf->linked_mesh().dim();
             bgeot::multi_index mii = workspace.qdims(name);
@@ -1806,10 +1838,8 @@ namespace getfem {
               if (test && q == 1 && mii.size() <= 1) {
                 mii.resize(1);
                 mii[0] = 2;
-              } else if (test) {
+              } else if (test)
                 mii.insert(mii.begin(), 2);
-                pnode->t.adjust_sizes(mii);
-              }
               break;
             case 1: // grad
               pnode->node_type = test ? GA_NODE_GRAD_TEST : GA_NODE_GRAD;

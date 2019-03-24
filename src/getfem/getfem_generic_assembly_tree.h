@@ -277,6 +277,14 @@ namespace getfem {
     void init_matrix_tensor(size_type n, size_type m)
     { set_to_original(); t.adjust_sizes(n, m); }
 
+    void init_identity_matrix_tensor(size_type n) {
+      init_matrix_tensor(n, n);
+      auto itw = t.begin();
+      for (size_type i = 0; i < n; ++i)
+        for (size_type j = 0; j < n; ++j)
+          *itw++ = (i == j) ? scalar_type(1) : scalar_type(0);
+    }
+
     void init_third_order_tensor(size_type n, size_type m,  size_type l)
     { set_to_original(); t.adjust_sizes(n, m, l); }
 
@@ -368,6 +376,9 @@ namespace getfem {
 
     inline void init_matrix_tensor(size_type n, size_type m)
     { t.init_matrix_tensor(n, m); test_function_type = 0; }
+
+    inline void init_identity_matrix_tensor(size_type n)
+    { t.init_identity_matrix_tensor(n); test_function_type = 0; }
 
     inline void init_third_order_tensor(size_type n, size_type m,  size_type l)
     { t.init_third_order_tensor(n, m, l); test_function_type = 0; }

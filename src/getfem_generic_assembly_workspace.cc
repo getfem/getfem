@@ -48,6 +48,12 @@ namespace getfem {
     variables.emplace(name, var_description(true, &mf, 0, I, &VV, 1));
   }
 
+  void ga_workspace::add_im_variable
+  (const std::string &name, const im_data &imd,
+   const gmm::sub_interval &I, const model_real_plain_vector &VV) {
+    variables.emplace(name, var_description(true, 0, &imd, I, &VV, 1));
+  }
+
   void ga_workspace::add_fixed_size_variable
   (const std::string &name,
    const gmm::sub_interval &I, const model_real_plain_vector &VV) {

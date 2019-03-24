@@ -4125,6 +4125,32 @@ namespace getfem {
       interpolate(interpolate_) {}
   };
 
+  struct ga_instruction_imd_vector_assembly : public ga_instruction {
+    const base_tensor &t;
+    base_vector &V;
+    const fem_interpolation_context &ctx;
+    const gmm::sub_interval &I;
+    const im_data *imd;
+    scalar_type &coeff;
+    const size_type &ipt;
+    virtual int exec() {
+      GA_DEBUG_INFO("Instruction: vector term assembly for im_data variable");
+      size_type ifirst = I.first();
+      size_type i = t.size()
+                    * imd->filtered_index_of_point(ctx.convex_num(), ipt);
+      GMM_ASSERT1(i+t.size() <= I.size(), "Internal error "<<i<<"+"<<t.size()<<" <= "<<I.size());
+      for (const auto &val : t.as_vector())
+        V[ifirst+(i++)] += coeff*val;
+      return 0;
+    }
+    ga_instruction_imd_vector_assembly
+    (const base_tensor &t_, base_vector &V_,
+     const fem_interpolation_context &ctx_, const gmm::sub_interval &I_,
+     const im_data *imd_, scalar_type &coeff_, const size_type &ipt_)
+    : t(t_), V(V_), ctx(ctx_), I(I_), imd(imd_), coeff(coeff_), ipt(ipt_)
+    {}
+  };
+
   struct ga_instruction_vector_assembly : public ga_instruction {
     const base_tensor &t;
     base_vector &V;
@@ -4305,6 +4331,7 @@ namespace getfem {
     const fem_interpolation_context &ctx1, &ctx2;
     const gmm::sub_interval &Ir1, &Ir2, &In1, &In2;
     const mesh_fem *mfn1, *mfn2, **mfg1, **mfg2;
+    const im_data *imd1, *imd2;
     const scalar_type &coeff, &alpha1, &alpha2;
     const size_type &nbpt, &ipt;
     base_vector elem;
@@ -4313,7 +4340,7 @@ namespace getfem {
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: matrix term assembly");
       bool empty_weight = (coeff == scalar_type(0));
-      if (ipt == 0 || interpolate) {
+      if (ipt == 0 || interpolate || imd1 || imd2) { // initialize
         if (empty_weight) elem.resize(0);
         elem.resize(t.size());
         if (!empty_weight)
@@ -4323,7 +4350,7 @@ namespace getfem {
         // Faster than a daxpy blas call on my config
         add_scaled_4(t, coeff*alpha1*alpha2, elem);
 
-      if (ipt == nbpt-1 || interpolate) { // finalize
+      if (ipt == nbpt-1 || interpolate || imd1 || imd2) { // finalize
         const mesh_fem *pmf1 = mfg1 ? *mfg1 : mfn1;
         const mesh_fem *pmf2 = mfg2 ? *mfg2 : mfn2;
         bool reduced = (pmf1 && pmf1->is_reduced())
@@ -4337,11 +4364,12 @@ namespace getfem {
         if (ninf == scalar_type(0)) return 0;
 
         size_type s1 = t.sizes()[0], s2 = t.sizes()[1];
-        size_type cv1 = pmf1 ? ctx1.convex_num() : s1;
-        size_type cv2 = pmf2 ? ctx2.convex_num() : s2;
+        size_type cv1 = ctx1.convex_num(), cv2 = ctx2.convex_num();
         size_type N = 1;
 
         size_type ifirst1 = I1.first(), ifirst2 = I2.first();
+        if (imd1) ifirst1 +=  s1*imd1->filtered_index_of_point(cv1, ipt);
+        if (imd2) ifirst2 +=  s2*imd2->filtered_index_of_point(cv2, ipt);
 
         if (pmf1) {
           if (!ctx1.is_convex_num_valid()) return 0;
@@ -4353,7 +4381,7 @@ namespace getfem {
         } else
           populate_contiguous_dofs_vector(dofs1, s1, ifirst1); // --> dofs1
 
-        if (pmf1 == pmf2 && cv1 == cv2) {
+        if (pmf1 == pmf2 && (pmf1 ? (cv1 == cv2) : (s1 == s2))) {
           if (ifirst1 == ifirst2) {
             add_elem_matrix(K, dofs1, dofs1, dofs1_sort, elem, ninf*1E-14, N);
           } else {
@@ -4382,14 +4410,14 @@ namespace getfem {
      const fem_interpolation_context &ctx2_,
      const gmm::sub_interval &Ir1_, const gmm::sub_interval &In1_,
      const gmm::sub_interval &Ir2_, const gmm::sub_interval &In2_,
-     const mesh_fem *mfn1_, const mesh_fem **mfg1_,
-     const mesh_fem *mfn2_, const mesh_fem **mfg2_,
+     const mesh_fem *mfn1_, const mesh_fem **mfg1_, const im_data *imd1_,
+     const mesh_fem *mfn2_, const mesh_fem **mfg2_, const im_data *imd2_,
      const scalar_type &coeff_, const scalar_type &a1, const scalar_type &a2,
      const size_type &nbpt_, const size_type &ipt_, bool interpolate_)
       : t(t_), Kr(Kr_), Kn(Kn_), ctx1(ctx1_), ctx2(ctx2_),
         Ir1(Ir1_), Ir2(Ir2_), In1(In1_), In2(In2_),
         mfn1(mfn1_), mfn2(mfn2_), mfg1(mfg1_), mfg2(mfg2_),
-        coeff(coeff_), alpha1(a1), alpha2(a2),
+        imd1(imd1_), imd2(imd2_), coeff(coeff_), alpha1(a1), alpha2(a2),
         nbpt(nbpt_), ipt(ipt_), interpolate(interpolate_),
         dofs1(0), dofs2(0) {}
   };
@@ -6771,6 +6799,8 @@ namespace getfem {
                               "weak form has to be a scalar quantity");
                   const mesh_fem *mf
                     = workspace.associated_mf(root->name_test1);
+                  const im_data *imd
+                    = workspace.associated_im_data(root->name_test1);
                   add_interval_to_gis(workspace, root->name_test1, gis);
 
                   if (mf) {
@@ -6802,6 +6832,14 @@ namespace getfem {
                       (root->tensor(), workspace.unreduced_vector(),
                        workspace.assembled_vector(), ctx, *Ir, *In, mf, mfg,
                        gis.coeff, gis.nbpt, gis.ipt, interpolate);
+                  } else if (imd) {
+                    GMM_ASSERT1(root->interpolate_name_test1.size() == 0,
+                                "Interpolate transformation on integration "
+                                "point variable");
+                    pgai = std::make_shared<ga_instruction_imd_vector_assembly>
+                      (root->tensor(), workspace.assembled_vector(), gis.ctx,
+                       workspace.interval_of_variable(root->name_test1),
+                       imd, gis.coeff, gis.ipt);
                   } else {
                     pgai = std::make_shared<ga_instruction_vector_assembly>
                       (root->tensor(), workspace.assembled_vector(),
@@ -6818,6 +6856,9 @@ namespace getfem {
                   const mesh_fem *mf1=workspace.associated_mf(root->name_test1),
                                  *mf2=workspace.associated_mf(root->name_test2),
                                  **mfg1 = 0, **mfg2 = 0;
+                  const im_data
+                    *imd1 = workspace.associated_im_data(root->name_test1),
+                    *imd2 = workspace.associated_im_data(root->name_test2);
                   const std::string &intn1 = root->interpolate_name_test1,
                                     &intn2 = root->interpolate_name_test2;
                   bool secondary1 = intn1.size() &&
@@ -6907,7 +6948,7 @@ namespace getfem {
                     pgai = std::make_shared<ga_instruction_matrix_assembly>
                       (root->tensor(), workspace.unreduced_matrix(),
                        workspace.assembled_matrix(), ctx1, ctx2,
-                       *Ir1, *In1, *Ir2, *In2, mf1, mfg1, mf2, mfg2,
+                       *Ir1, *In1, *Ir2, *In2, mf1, mfg1, imd1, mf2, mfg2, imd2,
                        gis.coeff, *alpha1, *alpha2, gis.nbpt, gis.ipt,
                        interpolate);
                   }
