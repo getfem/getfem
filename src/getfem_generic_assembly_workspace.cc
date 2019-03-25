@@ -45,18 +45,21 @@ namespace getfem {
   void ga_workspace::add_fem_variable
   (const std::string &name, const mesh_fem &mf,
    const gmm::sub_interval &I, const model_real_plain_vector &VV) {
+    nb_prim_dof = std::max(nb_prim_dof, I.last());
     variables.emplace(name, var_description(true, &mf, 0, I, &VV, 1));
   }
 
   void ga_workspace::add_im_variable
   (const std::string &name, const im_data &imd,
    const gmm::sub_interval &I, const model_real_plain_vector &VV) {
+    nb_prim_dof = std::max(nb_prim_dof, I.last());
     variables.emplace(name, var_description(true, 0, &imd, I, &VV, 1));
   }
 
   void ga_workspace::add_fixed_size_variable
   (const std::string &name,
    const gmm::sub_interval &I, const model_real_plain_vector &VV) {
+    nb_prim_dof = std::max(nb_prim_dof, I.last());
     variables.emplace(name, var_description(true, 0, 0, I, &VV,
                                             dim_type(gmm::vect_size(VV))));
   }
@@ -743,33 +746,30 @@ namespace getfem {
 
 
   void ga_workspace::assembly(size_type order) {
-    size_type ndof;
     const ga_workspace *w = this;
     while (w->parent_workspace) w = w->parent_workspace;
-    if (w->md) ndof = w->md->nb_dof(); // To eventually call actualize_sizes()
+    if (w->md) w->md->nb_dof(); // To eventually call actualize_sizes()
 
     GA_TIC;
     ga_instruction_set gis;
     ga_compile(*this, gis, order);
-    ndof = gis.nb_dof;
-    size_type max_dof =  gis.max_dof;
     GA_TOCTIC("Compile time");
 
     if (order == 2) {
       if (K.use_count()) {
         gmm::clear(*K);
-        gmm::resize(*K, max_dof, max_dof);
+        gmm::resize(*K, nb_prim_dof, nb_prim_dof);
       }
       gmm::clear(unreduced_K);
-      gmm::resize(unreduced_K, ndof, ndof);
+      gmm::resize(unreduced_K, nb_tmp_dof, nb_tmp_dof);
     }
     if (order == 1) {
       if (V.use_count()) {
         gmm::clear(*V);
-        gmm::resize(*V, max_dof);
+        gmm::resize(*V, nb_prim_dof);
       }
       gmm::clear(unreduced_V);
-      gmm::resize(unreduced_V, ndof);
+      gmm::resize(unreduced_V, nb_tmp_dof);
     }
     gmm::clear(assembled_tensor().as_vector());
     GA_TOCTIC("Init time");
@@ -790,68 +790,60 @@ namespace getfem {
       std::set<std::pair<std::string, std::string> > vars_mat_done;
       for (ga_tree &tree : gis.trees) {
         if (tree.root) {
+          std::string &name1 = tree.root->name_test1;
+          std::string &name2 = tree.root->name_test2;
+          const std::vector<std::string> vnames1_(1,name1),
+                                         vnames2_(1,name2);
+          const std::vector<std::string>
+            &vnames1 = variable_group_exists(name1) ? variable_group(name1)
+                                                    : vnames1_,
+            &vnames2 = variable_group_exists(name2) ? variable_group(name2)
+                                                    : vnames2_;
           if (order == 1) {
-            const std::string &name = tree.root->name_test1;
-            const std::vector<std::string> vnames_(1,name);
-            const std::vector<std::string> &vnames
-              = variable_group_exists(name) ? variable_group(name)
-                                            : vnames_;
-            for (const std::string &vname : vnames) {
-              const mesh_fem *mf = associated_mf(vname);
-              if (mf && mf->is_reduced() &&
-                  vars_vec_done.find(vname) == vars_vec_done.end()) {
-                gmm::mult_add(gmm::transposed(mf->extension_matrix()),
-                              gmm::sub_vector(unreduced_V,
-                                              gis.var_intervals[vname]),
-                              gmm::sub_vector(*V,
-                                              interval_of_variable(vname)));
-                vars_vec_done.insert(vname);
+            for (const std::string &vname1 : vnames1) {
+              const mesh_fem *mf1 = associated_mf(vname1);
+              if (mf1 && mf1->is_reduced() && vars_vec_done.count(vname1) == 0)
+              {
+                gmm::sub_interval uI1 = temporary_interval_of_variable(vname1),
+                                  I1 = interval_of_variable(vname1);
+                gmm::mult_add(gmm::transposed(mf1->extension_matrix()),
+                              gmm::sub_vector(unreduced_V, uI1),
+                              gmm::sub_vector(*V, I1));
+                vars_vec_done.insert(vname1);
               }
             }
           } else {
-            std::string &name1 = tree.root->name_test1;
-            std::string &name2 = tree.root->name_test2;
-            const std::vector<std::string> vnames1_(1,name1),
-                                           vnames2_(1,name2);
-            const std::vector<std::string> &vnames1
-              = variable_group_exists(name1) ? variable_group(name1)
-                                             : vnames1_;
-            const std::vector<std::string> &vnames2
-              = variable_group_exists(name2) ? variable_group(name2)
-                                             : vnames2_;
             for (const std::string &vname1 : vnames1) {
               for (const std::string &vname2 : vnames2) {
-                const mesh_fem *mf1 = associated_mf(vname1);
-                const mesh_fem *mf2 = associated_mf(vname2);
-                if (((mf1 && mf1->is_reduced())
-                     || (mf2 && mf2->is_reduced()))) {
-                  std::pair<std::string, std::string> p(vname1, vname2);
-                  if (vars_mat_done.find(p) == vars_mat_done.end()) {
-                    gmm::sub_interval uI1 = gis.var_intervals[vname1];
-                    gmm::sub_interval uI2 = gis.var_intervals[vname2];
-                    gmm::sub_interval I1 = interval_of_variable(vname1);
-                    gmm::sub_interval I2 = interval_of_variable(vname2);
-                    if ((mf1 && mf1->is_reduced()) &&
-                        (mf2 && mf2->is_reduced())) {
-                      model_real_sparse_matrix aux(I1.size(), uI2.size());
-                      model_real_row_sparse_matrix M(I1.size(), I2.size());
-                      gmm::mult(gmm::transposed(mf1->extension_matrix()),
-                                gmm::sub_matrix(unreduced_K, uI1, uI2), aux);
-                      gmm::mult(aux, mf2->extension_matrix(), M);
-                      gmm::add(M, gmm::sub_matrix(*K, I1, I2));
-                    } else if (mf1 && mf1->is_reduced()) {
-                      model_real_sparse_matrix M(I1.size(), I2.size());
-                      gmm::mult(gmm::transposed(mf1->extension_matrix()),
-                                gmm::sub_matrix(unreduced_K, uI1, uI2), M);
-                      gmm::add(M, gmm::sub_matrix(*K, I1, I2));
-                    } else {
-                      model_real_row_sparse_matrix M(I1.size(), I2.size());
-                      gmm::mult(gmm::sub_matrix(unreduced_K, uI1, uI2),
-                                mf2->extension_matrix(), M);
-                      gmm::add(M, gmm::sub_matrix(*K, I1, I2));
-                    }
-                    vars_mat_done.insert(p);
+                const mesh_fem *mf1 = associated_mf(vname1),
+                               *mf2 = associated_mf(vname2);
+                if (((mf1 && mf1->is_reduced()) || (mf2 && mf2->is_reduced()))
+                    && vars_mat_done.count(std::make_pair(vname1,vname2)) == 0)
+                {
+                  gmm::sub_interval
+                    uI1 = temporary_interval_of_variable(vname1),
+                    uI2 = temporary_interval_of_variable(vname2),
+                    I1 = interval_of_variable(vname1),
+                    I2 = interval_of_variable(vname2);
+                  if (mf1 && mf1->is_reduced() && mf2 && mf2->is_reduced()) {
+                    model_real_sparse_matrix aux(I1.size(), uI2.size());
+                    model_real_row_sparse_matrix M(I1.size(), I2.size());
+                    gmm::mult(gmm::transposed(mf1->extension_matrix()),
+                              gmm::sub_matrix(unreduced_K, uI1, uI2), aux);
+                    gmm::mult(aux, mf2->extension_matrix(), M);
+                    gmm::add(M, gmm::sub_matrix(*K, I1, I2));
+                  } else if (mf1 && mf1->is_reduced()) {
+                    model_real_sparse_matrix M(I1.size(), I2.size());
+                    gmm::mult(gmm::transposed(mf1->extension_matrix()),
+                              gmm::sub_matrix(unreduced_K, uI1, uI2), M);
+                    gmm::add(M, gmm::sub_matrix(*K, I1, I2));
+                  } else {
+                    model_real_row_sparse_matrix M(I1.size(), I2.size());
+                    gmm::mult(gmm::sub_matrix(unreduced_K, uI1, uI2),
+                              mf2->extension_matrix(), M);
+                    gmm::add(M, gmm::sub_matrix(*K, I1, I2));
                   }
+                  vars_mat_done.insert(std::make_pair(vname1,vname2));
                 }
               }
             }
@@ -867,6 +859,21 @@ namespace getfem {
 
   bool ga_workspace::include_empty_int_points() const {
     return include_empty_int_pts;
+  }
+
+  void ga_workspace::add_temporary_interval_for_unreduced_variable
+    (const std::string &name)
+  {
+    if (variable_group_exists(name)) {
+      for (const std::string &v : variable_group(name))
+        add_temporary_interval_for_unreduced_variable(v);
+    } else if (tmp_var_intervals.count(name) == 0) {
+      const mesh_fem *mf = associated_mf(name);
+      size_type nd = mf ? mf->nb_basic_dof()
+                        : gmm::vect_size(value(name));
+      tmp_var_intervals[name] = gmm::sub_interval(nb_tmp_dof, nd);
+      nb_tmp_dof += nd;
+    }
   }
 
   void ga_workspace::clear_expressions() { trees.clear(); }
@@ -906,14 +913,20 @@ namespace getfem {
                              bool enable_all_variables)
     : md(&md_), parent_workspace(0),
       enable_all_md_variables(enable_all_variables),
+      nb_prim_dof(0), nb_tmp_dof(0),
       macro_dict(md_.macro_dictionary())
-  { init(); }
+  {
+    init();
+    nb_prim_dof = md->nb_dof();
+  }
   ga_workspace::ga_workspace(bool, const ga_workspace &gaw)
     : md(0), parent_workspace(&gaw), enable_all_md_variables(false),
+      nb_prim_dof(gaw.nb_primary_dof()), nb_tmp_dof(0),
       macro_dict(gaw.macro_dictionary())
   { init(); }
   ga_workspace::ga_workspace()
-    : md(0), parent_workspace(0), enable_all_md_variables(false)
+    : md(0), parent_workspace(0), enable_all_md_variables(false),
+      nb_prim_dof(0), nb_tmp_dof(0)
   { init(); }
   ga_workspace::~ga_workspace() { clear_expressions(); }
 

@@ -1228,16 +1228,13 @@ namespace getfem {
         = inin.m ? workspace.variable_in_group(gname, *(inin.m))
                  : workspace.first_variable_of_group(gname);
       vgi.mf = workspace.associated_mf(varname);
-      const auto it1 = gis.var_intervals.find(varname);
-      GA_DEBUG_ASSERT(it1 != gis.var_intervals.end(),
-                      "Variable " << varname << " not in gis variables");
-      vgi.Ir = it1->second;
+      vgi.Ir = workspace.temporary_interval_of_variable(varname);
       vgi.In = workspace.interval_of_variable(varname);
       vgi.alpha = workspace.factor_of_variable(varname);
-      const auto it2 = gis.extended_vars.find(varname);
-      GA_DEBUG_ASSERT(it2 != gis.extended_vars.end(),
+      const auto it = gis.extended_vars.find(varname);
+      GA_DEBUG_ASSERT(it != gis.extended_vars.end(),
                       "Variable " << varname << " not in extended variables");
-      vgi.U = it2->second;
+      vgi.U = it->second;
       vgi.varname = &varname;
       return 0;
     }
@@ -4720,25 +4717,6 @@ namespace getfem {
   // Compilation of assembly trees into a list of basic instructions
   //=========================================================================
 
-  static void add_interval_to_gis(const ga_workspace &workspace,
-                                  const std::string &varname,
-                                  ga_instruction_set &gis) {
-    if (workspace.variable_group_exists(varname)) {
-      for (const std::string &v : workspace.variable_group(varname))
-        add_interval_to_gis(workspace, v, gis);
-    } else {
-      if (gis.var_intervals.count(varname) == 0) {
-        const mesh_fem *mf = workspace.associated_mf(varname);
-        size_type nd = mf ? mf->nb_basic_dof()
-                          : gmm::vect_size(workspace.value(varname));
-        gis.var_intervals[varname] = gmm::sub_interval(gis.nb_dof, nd);
-        gis.nb_dof += nd;
-      }
-      gis.max_dof = std::max(gis.max_dof,
-                             workspace.interval_of_variable(varname).last());
-    }
-  }
-
   static void extend_variable_in_gis(const ga_workspace &workspace,
                                      const std::string &varname,
                                      ga_instruction_set &gis) {
@@ -4771,8 +4749,10 @@ namespace getfem {
       ga_clear_node_list(pnode->children[i], node_list);
   }
 
+  // workspace argument  is not const because of declaration of temporary
+  // unreduced variables
   static void ga_compile_node(const pga_tree_node pnode,
-                              const ga_workspace &workspace,
+                              ga_workspace &workspace,
                               ga_instruction_set &gis,
                               ga_instruction_set::region_mim_instructions &rmi,
                               const mesh &m, bool function_case,
@@ -5796,7 +5776,7 @@ namespace getfem {
           }
           if (pgai) rmi.instructions.push_back(std::move(pgai));
         }
-        add_interval_to_gis(workspace, pnode->name, gis);
+        workspace.add_temporary_interval_for_unreduced_variable(pnode->name);
       }
       break;
 
@@ -5910,7 +5890,7 @@ namespace getfem {
           }
           if (pgai) rmi.instructions.push_back(std::move(pgai));
         }
-        add_interval_to_gis(workspace, pnode->name, gis);
+        workspace.add_temporary_interval_for_unreduced_variable(pnode->name);
       }
       break;
 
@@ -5952,7 +5932,7 @@ namespace getfem {
              rmi.interpolate_infos[intn], gis.fp_pool);
         }
         rmi.instructions.push_back(std::move(pgai));
-        add_interval_to_gis(workspace, pnode->name, gis);
+        workspace.add_temporary_interval_for_unreduced_variable(pnode->name);
       }
       break;
 
@@ -6807,7 +6787,8 @@ namespace getfem {
                     = workspace.associated_mf(root->name_test1);
                   const im_data *imd
                     = workspace.associated_im_data(root->name_test1);
-                  add_interval_to_gis(workspace, root->name_test1, gis);
+                  workspace.add_temporary_interval_for_unreduced_variable
+                    (root->name_test1);
 
                   if (mf) {
                     const mesh_fem **mfg = 0;
@@ -6825,7 +6806,8 @@ namespace getfem {
                       mfg = &(vgi.mf);
                       mf = 0;
                     } else {
-                      Ir = &(gis.var_intervals[root->name_test1]);
+                      Ir = &(workspace.temporary_interval_of_variable
+                                       (root->name_test1));
                       In = &(workspace.interval_of_variable(root->name_test1));
                     }
                     fem_interpolation_context
@@ -6883,8 +6865,10 @@ namespace getfem {
                                      !(intn2.empty() || intn2 == "neighbour_elt"
                                        || secondary2);
 
-                  add_interval_to_gis(workspace, root->name_test1, gis);
-                  add_interval_to_gis(workspace, root->name_test2, gis);
+                  workspace.add_temporary_interval_for_unreduced_variable
+                    (root->name_test1);
+                  workspace.add_temporary_interval_for_unreduced_variable
+                    (root->name_test2);
 
                   const gmm::sub_interval *Ir1 = 0, *In1 = 0, *Ir2 = 0, *In2=0;
                   const scalar_type *alpha1 = 0, *alpha2 = 0;
@@ -6901,7 +6885,8 @@ namespace getfem {
                     alpha1 = &(vgi.alpha);
                   } else {
                     alpha1 = &(workspace.factor_of_variable(root->name_test1));
-                    Ir1 = &(gis.var_intervals[root->name_test1]);
+                    Ir1 = &(workspace.temporary_interval_of_variable
+                                      (root->name_test1));
                     In1 = &(workspace.interval_of_variable(root->name_test1));
                   }
 
@@ -6917,7 +6902,8 @@ namespace getfem {
                     alpha2 = &(vgi.alpha);
                   } else {
                     alpha2 = &(workspace.factor_of_variable(root->name_test2));
-                    Ir2 = &(gis.var_intervals[root->name_test2]);
+                    Ir2 = &(workspace.temporary_interval_of_variable
+                                      (root->name_test2));
                     In2 = &(workspace.interval_of_variable(root->name_test2));
                   }
 
@@ -6946,8 +6932,8 @@ namespace getfem {
                     else
                       pgai = std::make_shared
                         <ga_instruction_matrix_assembly_standard_vector>
-                        (root->tensor(), workspace.assembled_matrix(),ctx1,ctx2,
-                         *In1, *In2, mf1, mf2,
+                        (root->tensor(), workspace.assembled_matrix(),
+                         ctx1, ctx2, *In1, *In2, mf1, mf2,
                          gis.coeff, *alpha1, *alpha2, gis.nbpt, gis.ipt);
 
                   } else {

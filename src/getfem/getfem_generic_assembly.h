@@ -265,6 +265,7 @@ namespace getfem {
     const model *md;
     const ga_workspace *parent_workspace;
     bool enable_all_md_variables;
+    size_type nb_prim_dof, nb_tmp_dof;
 
     void init();
 
@@ -369,16 +370,9 @@ namespace getfem {
     base_tensor assemb_t;
     bool include_empty_int_pts = false;
 
-  public:
+    std::map<std::string, gmm::sub_interval> tmp_var_intervals;
 
-    const model_real_sparse_matrix &assembled_matrix() const { return *K;}
-    model_real_sparse_matrix &assembled_matrix() { return *K; }
-    scalar_type &assembled_potential()
-    { GMM_ASSERT1(assemb_t.size() == 1, "Bad result size"); return assemb_t[0]; }
-    const scalar_type &assembled_potential() const
-    { GMM_ASSERT1(assemb_t.size() == 1, "Bad result size"); return assemb_t[0]; }
-    const base_vector &assembled_vector() const { return *V; }
-    base_vector &assembled_vector() { return *V; }
+  public:
     // setter functions
     void set_assembled_matrix(model_real_sparse_matrix &K_) {
       K = std::shared_ptr<model_real_sparse_matrix>
@@ -389,9 +383,20 @@ namespace getfem {
           (std::shared_ptr<base_vector>(), &V_); // alias
     }
     // getter functions
+    const model_real_sparse_matrix &assembled_matrix() const { return *K; }
+    model_real_sparse_matrix &assembled_matrix() { return *K; }
+    const base_vector &assembled_vector() const { return *V; }
+    base_vector &assembled_vector() { return *V; }
     const base_tensor &assembled_tensor() const { return assemb_t; }
     base_tensor &assembled_tensor() { return assemb_t; }
-
+    const scalar_type &assembled_potential() const {
+      GMM_ASSERT1(assemb_t.size() == 1, "Bad result size");
+      return assemb_t[0];
+    }
+    scalar_type &assembled_potential() {
+      GMM_ASSERT1(assemb_t.size() == 1, "Bad result size");
+      return assemb_t[0];
+    }
     model_real_sparse_matrix &unreduced_matrix()
     { return unreduced_K; }
     base_vector &unreduced_vector() { return unreduced_V; }
@@ -530,8 +535,6 @@ namespace getfem {
 
     psecondary_domain secondary_domain(const std::string &name) const;
 
-
-    
     // extract terms
     std::string extract_constant_term(const mesh &m);
     std::string extract_order1_term(const std::string &varname);
@@ -543,6 +546,23 @@ namespace getfem {
 
     void set_include_empty_int_points(bool include);
     bool include_empty_int_points() const;
+
+    size_type nb_primary_dof() const { return nb_prim_dof; }
+    size_type nb_temporary_dof() const { return nb_tmp_dof; }
+
+    void add_temporary_interval_for_unreduced_variable(const std::string &name);
+
+    void clear_temporary_variable_intervals() {
+      tmp_var_intervals.clear();
+      nb_tmp_dof = 0;
+    }
+
+    const gmm::sub_interval &
+    temporary_interval_of_variable(const std::string &name) const {
+      static const gmm::sub_interval empty_interval;
+      const auto it = tmp_var_intervals.find(name);
+      return (it != tmp_var_intervals.end()) ? it->second : empty_interval;
+    }
 
     ga_workspace(const getfem::model &md_, bool enable_all_variables = false);
     ga_workspace(bool, const ga_workspace &gaw);

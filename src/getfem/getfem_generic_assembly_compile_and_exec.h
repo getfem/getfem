@@ -106,8 +106,6 @@ namespace getfem {
 
     std::map<std::string, const base_vector *> extended_vars;
     std::map<std::string, base_vector> really_extended_vars;
-    std::map<std::string, gmm::sub_interval> var_intervals;
-    size_type nb_dof, max_dof;
 
     struct variable_group_info {
       const mesh_fem *mf;
@@ -200,7 +198,7 @@ namespace getfem {
 
     std::map<region_mim, region_mim_instructions> all_instructions;
 
-    ga_instruction_set() { max_dof = nb_dof = 0; need_elt_size = false; ipt=0; }
+    ga_instruction_set() : need_elt_size(false), nbpt(0), ipt(0) {}
   };
 
   
