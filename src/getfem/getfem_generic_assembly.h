@@ -364,8 +364,10 @@ namespace getfem {
 
 
     std::shared_ptr<model_real_sparse_matrix> K;
-    model_real_sparse_matrix unreduced_K;
     std::shared_ptr<base_vector> V;
+    model_real_sparse_matrix col_unreduced_K,
+                             row_unreduced_K,
+                             row_col_unreduced_K;
     base_vector unreduced_V;
     base_tensor assemb_t;
     bool include_empty_int_pts = false;
@@ -397,8 +399,12 @@ namespace getfem {
       GMM_ASSERT1(assemb_t.size() == 1, "Bad result size");
       return assemb_t[0];
     }
-    model_real_sparse_matrix &unreduced_matrix()
-    { return unreduced_K; }
+    model_real_sparse_matrix &row_unreduced_matrix()
+    { return row_unreduced_K; }
+    model_real_sparse_matrix &col_unreduced_matrix()
+    { return col_unreduced_K; }
+    model_real_sparse_matrix &row_col_unreduced_matrix()
+    { return row_col_unreduced_K; }
     base_vector &unreduced_vector() { return unreduced_V; }
 
     /** Add an expression, perform the semantic analysis, split into

@@ -760,8 +760,12 @@ namespace getfem {
         gmm::clear(*K);
         gmm::resize(*K, nb_prim_dof, nb_prim_dof);
       }
-      gmm::clear(unreduced_K);
-      gmm::resize(unreduced_K, nb_tmp_dof, nb_tmp_dof);
+      gmm::clear(col_unreduced_K);
+      gmm::clear(row_unreduced_K);
+      gmm::clear(row_col_unreduced_K);
+      gmm::resize(col_unreduced_K, nb_prim_dof, nb_tmp_dof);
+      gmm::resize(row_unreduced_K, nb_tmp_dof, nb_prim_dof);
+      gmm::resize(row_col_unreduced_K, nb_tmp_dof, nb_tmp_dof);
     }
     if (order == 1) {
       if (V.use_count()) {
@@ -829,17 +833,18 @@ namespace getfem {
                     model_real_sparse_matrix aux(I1.size(), uI2.size());
                     model_real_row_sparse_matrix M(I1.size(), I2.size());
                     gmm::mult(gmm::transposed(mf1->extension_matrix()),
-                              gmm::sub_matrix(unreduced_K, uI1, uI2), aux);
+                              gmm::sub_matrix(row_col_unreduced_K, uI1, uI2),
+                              aux);
                     gmm::mult(aux, mf2->extension_matrix(), M);
                     gmm::add(M, gmm::sub_matrix(*K, I1, I2));
                   } else if (mf1 && mf1->is_reduced()) {
                     model_real_sparse_matrix M(I1.size(), I2.size());
                     gmm::mult(gmm::transposed(mf1->extension_matrix()),
-                              gmm::sub_matrix(unreduced_K, uI1, uI2), M);
+                              gmm::sub_matrix(row_unreduced_K, uI1, I2), M);
                     gmm::add(M, gmm::sub_matrix(*K, I1, I2));
                   } else {
                     model_real_row_sparse_matrix M(I1.size(), I2.size());
-                    gmm::mult(gmm::sub_matrix(unreduced_K, uI1, uI2),
+                    gmm::mult(gmm::sub_matrix(col_unreduced_K, I1, uI2),
                               mf2->extension_matrix(), M);
                     gmm::add(M, gmm::sub_matrix(*K, I1, I2));
                   }
@@ -869,10 +874,11 @@ namespace getfem {
         add_temporary_interval_for_unreduced_variable(v);
     } else if (tmp_var_intervals.count(name) == 0) {
       const mesh_fem *mf = associated_mf(name);
-      size_type nd = mf ? mf->nb_basic_dof()
-                        : gmm::vect_size(value(name));
-      tmp_var_intervals[name] = gmm::sub_interval(nb_tmp_dof, nd);
-      nb_tmp_dof += nd;
+      if (mf && mf->is_reduced()) {
+        size_type nd = mf->nb_basic_dof();
+        tmp_var_intervals[name] = gmm::sub_interval(nb_tmp_dof, nd);
+        nb_tmp_dof += nd;
+      }
     }
   }
 

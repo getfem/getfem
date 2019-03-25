@@ -109,7 +109,7 @@ namespace getfem {
 
     struct variable_group_info {
       const mesh_fem *mf;
-      gmm::sub_interval Ir, In;
+      gmm::sub_interval Iu, Ir;
       scalar_type alpha;
       const base_vector *U;
       const std::string *varname;
