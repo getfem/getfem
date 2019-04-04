@@ -48,42 +48,10 @@ namespace bgeot {
     base_node min, max;
   };
 
-  /** Wraps "const box_index *" but overloads
-   *  comparison operators based on id and not
-   *  addresses. This ensures deterministic ordering in sets.
-   */
-  struct box_index_ptr {
-    box_index_ptr(const box_index *p)
-      : p_{p}
-    {}
-
-    box_index_ptr(const box_index_ptr&) = default;
-
-    bool operator < (const box_index_ptr &bptr) const {
-      return p_->id < bptr.p_->id;
+  struct box_index_compare {
+    bool operator()(const box_index *plhs, const box_index *prhs) const {
+      return plhs->id < prhs->id;
     }
-
-    bool operator == (const box_index_ptr &bptr) const {
-      return p_->id == bptr.p_->id;
-    }
-
-    bool operator != (const box_index_ptr &bptr) const {
-      return !(*this == bptr);
-    }
-
-    operator const box_index *() const {
-      return p_;
-    }
-
-    const box_index * operator->() const {
-      return p_;
-    }
-
-    const box_index& operator*() const {
-      return *p_;
-    }
-
-    const box_index *p_;
   };
 
   struct rtree_elt_base {
@@ -101,11 +69,15 @@ namespace bgeot {
    * This is not a dynamic structure. Once a query has been made on the
    * tree, new boxes should not be added.
    */
-  class rtree : public boost::noncopyable {
+  class rtree {
   public:
-    typedef std::deque<box_index> box_cont;
-    typedef std::vector<const box_index*> pbox_cont;
-    typedef std::set<box_index_ptr> pbox_set;
+    using box_cont = std::deque<box_index> ;
+    using pbox_cont = std::vector<const box_index*>;
+    using pbox_set = std::set<const box_index *, box_index_compare>;
+
+    rtree() = default;
+    rtree(const rtree&) = delete;
+    rtree& operator = (const rtree&) = delete;
 
     void add_box(base_node min, base_node max, size_type id=size_type(-1)) {
       box_index bi; bi.min = min; bi.max = max;
