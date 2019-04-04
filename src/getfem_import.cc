@@ -788,8 +788,7 @@ namespace getfem {
         type_name = line.substr(pos, pos2-pos);
         bool only_digits
           = (type_name.find_first_not_of("0123456789") == std::string::npos);
-        const std::locale loc;
-        for (auto&& c : type_name) c = std::toupper(c, loc);
+        for (auto&& c : type_name) c = std::toupper(c);
 
         if (elt_types.size() < itype+1)
           elt_types.resize(itype+1);
