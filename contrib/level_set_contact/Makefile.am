@@ -28,7 +28,7 @@ CLEANFILES = \
 test_contact_SOURCES = contact_problem.cpp test_contact.cpp contact_problem.h
 
 AM_CPPFLAGS = -I$(top_srcdir)/src -I../../src
-LDADD    = ../../src/libgetfem.la -lm @SUPLDFLAGS@ @BOOST_LIBS@
+LDADD    = ../../src/libgetfem.la -lm @SUPLDFLAGS@
 
 TESTS = contact_problem.pl
 

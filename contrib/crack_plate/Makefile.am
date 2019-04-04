@@ -31,7 +31,7 @@ crack_bilaplacian_SOURCES = crack_bilaplacian.cc crack_bilaplacian_singularities
 endif
 
 AM_CPPFLAGS = -I$(top_srcdir)/src -I../../src
-LDADD    = ../../src/libgetfem.la -lm @SUPLDFLAGS@ @BOOST_LIBS@
+LDADD    = ../../src/libgetfem.la -lm @SUPLDFLAGS@
 
 if QHULL
 TESTS = crack_mindlin.pl

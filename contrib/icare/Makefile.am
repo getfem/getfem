@@ -27,7 +27,7 @@ icare_SOURCES = icare.cc icare.h
 MUMPS_LIBS = @MUMPS_LIBS@
 # MUMPS_CFLAGS = @MUMPS_CFLAGS@
 AM_CPPFLAGS = -I$(top_srcdir)/src -I../../src # $(MUMPS_CFLAGS)
-LDADD    = ../../src/libgetfem.la -lm $(MUMPS_LIBS) @SUPLDFLAGS@ @BOOST_LIBS@
+LDADD    = ../../src/libgetfem.la -lm $(MUMPS_LIBS) @SUPLDFLAGS@
 
 TESTS = icare.pl
 

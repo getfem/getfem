@@ -120,7 +120,7 @@ test_continuation_SOURCES = test_continuation.cc
 test_gmm_matrix_functions_SOURCES = test_gmm_matrix_functions.cc
 
 AM_CPPFLAGS = -I$(top_srcdir)/src -I../src
-LDADD    = ../src/libgetfem.la -lm @SUPLDFLAGS@ @BOOST_LIBS@
+LDADD    = ../src/libgetfem.la -lm @SUPLDFLAGS@
 
 TESTS = \
 	dynamic_array.pl              \

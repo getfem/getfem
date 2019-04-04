@@ -25,7 +25,7 @@ aposteriori_SOURCES = aposteriori.cc
 aposteriori_laplacian_SOURCES = aposteriori_laplacian.cc
 
 AM_CPPFLAGS = -I$(top_srcdir)/src -I../../src
-LDADD    = ../../src/libgetfem.la -lm @SUPLDFLAGS@ @BOOST_LIBS@
+LDADD    = ../../src/libgetfem.la -lm @SUPLDFLAGS@
 
 TESTS = aposteriori.pl \
         aposteriori_laplacian.pl 

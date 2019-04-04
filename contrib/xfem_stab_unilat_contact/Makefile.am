@@ -24,7 +24,7 @@ CLEANFILES =
 xfem_stab_unilat_contact_SOURCES = xfem_stab_unilat_contact.cc
 
 AM_CPPFLAGS = -I$(top_srcdir)/src -I../../src
-LDADD    = ../../src/libgetfem.la -lm @SUPLDFLAGS@ @BOOST_LIBS@
+LDADD    = ../../src/libgetfem.la -lm @SUPLDFLAGS@
 
 TESTS = xfem_stab_unilat_contact.pl
 

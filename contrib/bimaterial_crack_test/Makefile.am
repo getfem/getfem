@@ -28,7 +28,7 @@ crack_SOURCES = crack.cc crack_exact_solution.cc crack_exact_solution.h getfem_X
 
 
 AM_CPPFLAGS = -I$(top_srcdir)/src -I../../src 
-LDADD    = ../../src/libgetfem.la -lm @SUPLDFLAGS@ @BOOST_LIBS@
+LDADD    = ../../src/libgetfem.la -lm @SUPLDFLAGS@
 
 TESTS = bimaterial_crack_test.pl \
         crack.pl

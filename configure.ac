@@ -779,39 +779,6 @@ AC_SUBST(DISTCLEANMESH)
 
 
 dnl -----------------------------------------------
-dnl switch for using the getfem_boost supplied files, or the real boost
-dnl -----------------------------------------------
-
-AC_ARG_ENABLE(boost,
- [AS_HELP_STRING([--enable-boost],[check if boost is installed and use it])],
- [case "${enableval}" in
-  yes) useboost=YES ;;
-  no)  useboost=NO ;;
-  *) AC_MSG_ERROR([bad value ${enableval} for --enable-boost]) ;;
- esac],[useboost=NO])
-
-if test "x$useboost" = "xNO" -a "x$useopenmp" = "xYES"; then
-  echo "OpenMP version of GetFEM++ requires the boost library, --enable-boost=no will be ignored";
-  useboost=YES
-fi;
-
-if test "x$useboost" = "xYES"; then
-  if test "x$useopenmp" = "xYES"; then
-    AX_BOOST_BASE([1.53.0], [], [AC_MSG_ERROR(
-    [Please install boost >= 1.53.0 in order to build GetFEM++ with OpenMP support])])
-    AX_BOOST_SYSTEM
-    AX_BOOST_THREAD
-  else
-    AX_BOOST_BASE([1.20.0], [], [AC_MSG_ERROR(
-    [Please install boost >= 1.20.0 (system) or use --enable-boost=no to disable it])])
-    AX_BOOST_SYSTEM
-  fi;
-  BOOST_LIBS="$BOOST_SYSTEM_LIB $BOOST_THREAD_LIB"
-  AC_SUBST(BOOST_LIBS)
-fi;
-
-
-dnl -----------------------------------------------
 dnl MATLAB Interface
 dnl -----------------------------------------------
 

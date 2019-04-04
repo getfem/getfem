@@ -22,7 +22,7 @@ CLEANFILES =
 opt_assembly_SOURCES = opt_assembly.cc
 
 AM_CPPFLAGS = -I$(top_srcdir)/src -I../../src
-LDADD    = ../../src/libgetfem.la -lm @SUPLDFLAGS@ @BOOST_LIBS@
+LDADD    = ../../src/libgetfem.la -lm @SUPLDFLAGS@
 
 TESTS =  opt_assembly.pl
 

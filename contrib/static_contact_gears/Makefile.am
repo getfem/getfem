@@ -30,7 +30,7 @@ static_contact_gears_SOURCES = static_contact_gears.cc
 static_contact_gears_u1_u2_SOURCES = static_contact_gears_u1_u2.cc
 
 AM_CPPFLAGS = -I$(top_srcdir)/src -I../../src
-LDADD    = ../../src/libgetfem.la -lm @SUPLDFLAGS@ @BOOST_LIBS@
+LDADD    = ../../src/libgetfem.la -lm @SUPLDFLAGS@
 
 TESTS = static_contact_gears.pl
 
