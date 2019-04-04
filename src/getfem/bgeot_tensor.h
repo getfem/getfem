@@ -336,8 +336,8 @@ namespace bgeot {
     /* reduction du tenseur t par son indice ni et la matrice          */
     /* transposee de m.                                                */
 
-    DEFINE_STATIC_THREAD_LOCAL(std::vector<T>, tmp);
-    DEFINE_STATIC_THREAD_LOCAL(multi_index, mi);
+    THREAD_SAFE_STATIC std::vector<T> tmp;
+    THREAD_SAFE_STATIC multi_index mi;
 
     mi = t.sizes();
     size_type dimt = mi[ni], dim = m.nrows();
@@ -403,8 +403,8 @@ namespace bgeot {
   template<class T> void tensor<T>::mat_reduction
   (const tensor &t, const gmm::dense_matrix<T> &m, int ni) {
     /* reduction du tenseur t par son indice ni et la matrice m.       */
-    DEFINE_STATIC_THREAD_LOCAL(std::vector<T>, tmp);
-    DEFINE_STATIC_THREAD_LOCAL(multi_index, mi);
+    THREAD_SAFE_STATIC std::vector<T> tmp;
+    THREAD_SAFE_STATIC multi_index mi;
     
     mi = t.sizes();
     size_type dimt = mi[ni], dim = m.ncols();

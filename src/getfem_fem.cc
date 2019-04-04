@@ -383,8 +383,8 @@ namespace getfem {
   typedef dal::dynamic_tree_sorted<dof_description, dof_description_comp__> dof_d_tab;
 
   pdof_description lagrange_dof(dim_type n) {
-    DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(dim_type, n_old, dim_type(-2));
-    DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(pdof_description, p_old, 0);
+    THREAD_SAFE_STATIC dim_type n_old = dim_type(-2);
+    THREAD_SAFE_STATIC pdof_description p_old = nullptr;
     if (n != n_old) {
       dof_d_tab& tab = dal::singleton<dof_d_tab>::instance();
       dof_description l;
@@ -397,8 +397,8 @@ namespace getfem {
   }
 
   pdof_description lagrange_0_dof(dim_type n) {
-    DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(dim_type, n_old, dim_type(-2));
-    DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(pdof_description, p_old, 0);
+    THREAD_SAFE_STATIC dim_type n_old = dim_type(-2);
+    THREAD_SAFE_STATIC pdof_description p_old = nullptr;
     if (n != n_old) {
       dof_d_tab& tab = dal::singleton<dof_d_tab>::instance();
       dof_description l;
@@ -3174,10 +3174,10 @@ namespace getfem {
   void hermite_segment__::mat_trans(base_matrix &M,
                                     const base_matrix &G,
                                     bgeot::pgeometric_trans pgt) const {
-    DEFINE_STATIC_THREAD_LOCAL(bgeot::pgeotrans_precomp, pgp);
-    DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(bgeot::pgeometric_trans, pgt_stored, 0);
-    DEFINE_STATIC_THREAD_LOCAL_CONSTRUCTED(base_matrix, K, 1, 1);
-    DEFINE_STATIC_THREAD_LOCAL_CONSTRUCTED(base_vector,r, 1);
+    THREAD_SAFE_STATIC bgeot::pgeotrans_precomp pgp;
+    THREAD_SAFE_STATIC bgeot::pgeometric_trans pgt_stored = nullptr;
+    THREAD_SAFE_STATIC base_matrix K(1, 1);
+    THREAD_SAFE_STATIC base_vector r(1);
     dim_type N = dim_type(G.nrows());
 
     if (pgt != pgt_stored) {
@@ -3240,9 +3240,9 @@ namespace getfem {
                                     const base_matrix &G,
                                     bgeot::pgeometric_trans pgt) const {
 
-    DEFINE_STATIC_THREAD_LOCAL(bgeot::pgeotrans_precomp, pgp);
-    DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(bgeot::pgeometric_trans, pgt_stored, 0);
-    DEFINE_STATIC_THREAD_LOCAL_CONSTRUCTED(base_matrix, K, 2, 2);
+    THREAD_SAFE_STATIC bgeot::pgeotrans_precomp pgp;
+    THREAD_SAFE_STATIC bgeot::pgeometric_trans pgt_stored = nullptr;
+    THREAD_SAFE_STATIC base_matrix K(2, 2);
     dim_type N = dim_type(G.nrows());
 
     GMM_ASSERT1(N == 2, "Sorry, this version of hermite "
@@ -3312,9 +3312,9 @@ namespace getfem {
   void hermite_tetrahedron__::mat_trans(base_matrix &M,
                                     const base_matrix &G,
                                     bgeot::pgeometric_trans pgt) const {
-    DEFINE_STATIC_THREAD_LOCAL(bgeot::pgeotrans_precomp, pgp);
-    DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(bgeot::pgeometric_trans, pgt_stored, 0);
-    DEFINE_STATIC_THREAD_LOCAL_CONSTRUCTED(base_matrix, K, 3, 3);
+    THREAD_SAFE_STATIC bgeot::pgeotrans_precomp pgp;
+    THREAD_SAFE_STATIC bgeot::pgeometric_trans pgt_stored = nullptr;
+    THREAD_SAFE_STATIC base_matrix K(3, 3);
     dim_type N = dim_type(G.nrows());
     GMM_ASSERT1(N == 3, "Sorry, this version of hermite "
                 "element works only on dimension three.")
@@ -3416,10 +3416,10 @@ namespace getfem {
                                     const base_matrix &G,
                                     bgeot::pgeometric_trans pgt) const {
 
-    DEFINE_STATIC_THREAD_LOCAL(bgeot::pgeotrans_precomp, pgp);
-    DEFINE_STATIC_THREAD_LOCAL(pfem_precomp, pfp);
-    DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(bgeot::pgeometric_trans, pgt_stored, 0);
-    DEFINE_STATIC_THREAD_LOCAL_CONSTRUCTED(base_matrix, K, 2, 2);
+    THREAD_SAFE_STATIC bgeot::pgeotrans_precomp pgp;
+    THREAD_SAFE_STATIC pfem_precomp pfp;
+    THREAD_SAFE_STATIC bgeot::pgeometric_trans pgt_stored = nullptr;
+    THREAD_SAFE_STATIC base_matrix K(2, 2);
     dim_type N = dim_type(G.nrows());
     GMM_ASSERT1(N == 2, "Sorry, this version of argyris "
                 "element works only on dimension two.")
@@ -3458,7 +3458,7 @@ namespace getfem {
       M(5+6*k, 3+6*k) = c*c;     M(5+6*k, 4+6*k) = c*d;       M(5+6*k, 5+6*k) = d*d;
     }
 
-    DEFINE_STATIC_THREAD_LOCAL_CONSTRUCTED(base_matrix, W, 3, 21);
+    THREAD_SAFE_STATIC base_matrix W(3, 21);
     base_small_vector norient(M_PI, M_PI * M_PI);
     if (pgt->is_linear()) gmm::lu_inverse(K);
     for (unsigned i = 18; i < 21; ++i) {
@@ -3477,11 +3477,11 @@ namespace getfem {
       for (unsigned j = 0; j < 21; ++j)
         W(i-18, j) = t(j, 0, 0) * v[0] + t(j, 0, 1) * v[1];
     }
-    DEFINE_STATIC_THREAD_LOCAL_CONSTRUCTED(base_matrix,A,3,3);
-    DEFINE_STATIC_THREAD_LOCAL_CONSTRUCTED(bgeot::base_vector, w, 3);
-    DEFINE_STATIC_THREAD_LOCAL_CONSTRUCTED(bgeot::base_vector, coeff, 3);
-    DEFINE_STATIC_THREAD_LOCAL_CONSTRUCTED(gmm::sub_interval, SUBI, 18,3);
-    DEFINE_STATIC_THREAD_LOCAL_CONSTRUCTED(gmm::sub_interval, SUBJ, 0,3);
+    THREAD_SAFE_STATIC base_matrix A(3,3);
+    THREAD_SAFE_STATIC bgeot::base_vector w(3);
+    THREAD_SAFE_STATIC bgeot::base_vector coeff(3);
+    THREAD_SAFE_STATIC gmm::sub_interval SUBI(18, 3);
+    THREAD_SAFE_STATIC gmm::sub_interval SUBJ(0, 3);
     gmm::copy(gmm::sub_matrix(W, SUBJ, SUBI), A);
     gmm::lu_inverse(A);
     gmm::copy(gmm::transposed(A), gmm::sub_matrix(M, SUBI));
@@ -3587,10 +3587,10 @@ namespace getfem {
                                     const base_matrix &G,
                                     bgeot::pgeometric_trans pgt) const {
 
-    DEFINE_STATIC_THREAD_LOCAL(bgeot::pgeotrans_precomp, pgp);
-    DEFINE_STATIC_THREAD_LOCAL(pfem_precomp, pfp);
-    DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(bgeot::pgeometric_trans, pgt_stored, 0);
-    DEFINE_STATIC_THREAD_LOCAL_CONSTRUCTED(base_matrix, K, 2, 2);
+    THREAD_SAFE_STATIC bgeot::pgeotrans_precomp pgp;
+    THREAD_SAFE_STATIC pfem_precomp pfp;
+    THREAD_SAFE_STATIC bgeot::pgeometric_trans pgt_stored = nullptr;
+    THREAD_SAFE_STATIC base_matrix K(2, 2);
     dim_type N = dim_type(G.nrows());
     GMM_ASSERT1(N == 2, "Sorry, this version of morley "
                 "element works only on dimension two.")
@@ -3601,7 +3601,7 @@ namespace getfem {
       pfp = fem_precomp(std::make_shared<morley_triangle__>(), node_tab(0), 0);
     }
     gmm::copy(gmm::identity_matrix(), M);
-    DEFINE_STATIC_THREAD_LOCAL_CONSTRUCTED(base_matrix, W, 3, 6);
+    THREAD_SAFE_STATIC base_matrix W(3, 6);
     base_small_vector norient(M_PI, M_PI * M_PI);
     if (pgt->is_linear())
       { gmm::mult(G, pgp->grad(0), K); gmm::lu_inverse(K); }
@@ -3623,11 +3623,11 @@ namespace getfem {
     }
     //    cout << "W = " << W << endl; getchar();
 
-    DEFINE_STATIC_THREAD_LOCAL_CONSTRUCTED(base_matrix, A, 3, 3);
-    DEFINE_STATIC_THREAD_LOCAL_CONSTRUCTED(base_vector, w, 3);
-    DEFINE_STATIC_THREAD_LOCAL_CONSTRUCTED(base_vector, coeff, 3);
-    DEFINE_STATIC_THREAD_LOCAL_CONSTRUCTED(gmm::sub_interval, SUBI, 3, 3);
-    DEFINE_STATIC_THREAD_LOCAL_CONSTRUCTED(gmm::sub_interval, SUBJ, 0, 3);
+    THREAD_SAFE_STATIC base_matrix A(3, 3);
+    THREAD_SAFE_STATIC base_vector w(3);
+    THREAD_SAFE_STATIC base_vector coeff(3);
+    THREAD_SAFE_STATIC gmm::sub_interval SUBI(3, 3);
+    THREAD_SAFE_STATIC gmm::sub_interval SUBJ(0, 3);
     gmm::copy(gmm::sub_matrix(W, SUBJ, SUBI), A);
     gmm::lu_inverse(A);
     gmm::copy(gmm::transposed(A), gmm::sub_matrix(M, SUBI));
@@ -3777,12 +3777,12 @@ namespace getfem {
   static pfem classical_fem_(bgeot::pgeometric_trans pgt,
                              short_type k, bool complete=false,
                              bool discont=false, scalar_type alpha=0) {
-    DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(bgeot::pgeometric_trans, pgt_last,0);
-    DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(short_type, k_last, short_type(-1));
-    DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(pfem, fem_last, 0);
-    DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(char, complete_last, 0);
-    DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(char, discont_last, 0);
-    DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(scalar_type, alpha_last, 0);
+    THREAD_SAFE_STATIC bgeot::pgeometric_trans pgt_last = nullptr;
+    THREAD_SAFE_STATIC short_type k_last = short_type(-1);
+    THREAD_SAFE_STATIC pfem fem_last = nullptr;
+    THREAD_SAFE_STATIC char complete_last = 0;
+    THREAD_SAFE_STATIC char discont_last = 0;
+    THREAD_SAFE_STATIC scalar_type alpha_last = 0;
 
     bool found = false;
     if (pgt_last == pgt && k_last == k && complete_last == complete &&
@@ -3978,9 +3978,9 @@ namespace getfem {
   /* ******************************************************************** */
 
   pfem PK_fem(size_type n, short_type k) {
-    DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(pfem, pf, 0);
-    DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(size_type, d, size_type(-2));
-    DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(short_type, r, short_type(-2));
+    THREAD_SAFE_STATIC pfem pf = nullptr;
+    THREAD_SAFE_STATIC size_type d = size_type(-2);
+    THREAD_SAFE_STATIC short_type r = short_type(-2);
     if (d != n || r != k) {
       std::stringstream name;
       name << "FEM_PK(" << n << "," << k << ")";
@@ -3991,9 +3991,9 @@ namespace getfem {
   }
 
   pfem QK_fem(size_type n, short_type k) {
-    DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(pfem, pf, 0);
-    DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(size_type, d, size_type(-2));
-    DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(short_type, r, short_type(-2));
+    THREAD_SAFE_STATIC pfem pf = nullptr;
+    THREAD_SAFE_STATIC size_type d = size_type(-2);
+    THREAD_SAFE_STATIC short_type r = short_type(-2);
     if (d != n || r != k) {
       std::stringstream name;
       name << "FEM_QK(" << n << "," << k << ")";
@@ -4004,9 +4004,9 @@ namespace getfem {
   }
 
   pfem prism_PK_fem(size_type n, short_type k) {
-    DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(pfem, pf, 0);
-    DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(size_type, d, size_type(-2));
-    DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(short_type, r, short_type(-2));
+    THREAD_SAFE_STATIC pfem pf = nullptr;
+    THREAD_SAFE_STATIC size_type d = size_type(-2);
+    THREAD_SAFE_STATIC short_type r = short_type(-2);
     if (d != n || r != k) {
       std::stringstream name;
       name << "FEM_PRISM_PK(" << n << "," << k << ")";

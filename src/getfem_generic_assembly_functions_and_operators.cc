@@ -28,24 +28,11 @@
    compilers
 */
 
-#if defined(_MSC_VER) && _MSC_VER < 1800
-#include <boost/math/special_functions/acosh.hpp>
-#include <boost/math/special_functions/asinh.hpp>
-#include <boost/math/special_functions/atanh.hpp>
-#include <boost/math/special_functions/erf.hpp>
-typedef double (*BoostMathFunction)(double);
-BoostMathFunction const acosh = boost::math::acosh<double>;
-BoostMathFunction const asinh = boost::math::asinh<double>;
-BoostMathFunction const atanh = boost::math::atanh<double>;
-BoostMathFunction const erf = boost::math::erf<double>;
-BoostMathFunction const erfc = boost::math::erfc<double>;
-#endif
-
 namespace getfem {
 
   base_matrix& __mat_aux1()
   {
-    DEFINE_STATIC_THREAD_LOCAL(base_matrix, m);
+    THREAD_SAFE_STATIC base_matrix m;
     return m;
   }
 

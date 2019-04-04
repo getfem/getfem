@@ -29,22 +29,22 @@
 namespace bgeot {
 
   std::vector<scalar_type>& __aux1(){
-    DEFINE_STATIC_THREAD_LOCAL(std::vector<scalar_type>, v);
+    THREAD_SAFE_STATIC std::vector<scalar_type> v;
     return v;
   }
 
   std::vector<scalar_type>& __aux2(){
-    DEFINE_STATIC_THREAD_LOCAL(std::vector<scalar_type>, v);
+    THREAD_SAFE_STATIC std::vector<scalar_type> v;
     return v;
   }
 
   std::vector<scalar_type>& __aux3(){
-    DEFINE_STATIC_THREAD_LOCAL(std::vector<scalar_type>, v);
+    THREAD_SAFE_STATIC std::vector<scalar_type> v;
     return v;
   }
 
   std::vector<long>& __ipvt_aux(){
-    DEFINE_STATIC_THREAD_LOCAL(std::vector<long>, vi);
+    THREAD_SAFE_STATIC std::vector<long> vi;
     return vi;
   }
 
@@ -279,7 +279,7 @@ namespace bgeot {
         auto itpc_j = pc.begin() + j*P, itG_b = G.begin();
         for (size_type i = 0; i < N; ++i, ++itG_b) {
           auto itG = itG_b, itpc = itpc_j;
-          register scalar_type a = *(itG) * (*itpc);
+          scalar_type a = *(itG) * (*itpc);
           for (size_type k = 1; k < P; ++k)
             { itG += N; a += *(itG) * (*++itpc); }
           *itK++ = a;

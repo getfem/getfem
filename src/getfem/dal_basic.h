@@ -282,7 +282,7 @@ namespace dal
 
   
   /* ********************************************************************* */
-  /* Menbers functions							   */
+  /* Member functions                                                      */
   /* ********************************************************************* */
 
 
@@ -313,9 +313,9 @@ namespace dal
     typename pointer_array::iterator ite = it+ ((last_ind + DNAMPKS__) >> pks);
     while (it != ite) {
       *it = std::unique_ptr<T[]>(new T[DNAMPKS__+1]);// std::make_unique<T[]>(DNAMPKS__+1);
-      register pointer p = it->get(); ++it;
-      register pointer pe = p + (DNAMPKS__+1);
-      register const_pointer pa = (ita++)->get();
+      pointer p = it->get(); ++it;
+      pointer pe = p + (DNAMPKS__+1);
+      const_pointer pa = (ita++)->get();
       while (p != pe) *p++ = *pa++;
     }
     return *this;
@@ -324,9 +324,8 @@ namespace dal
   template<class T, unsigned char pks> 
     typename dynamic_array<T,pks>::const_reference
       dynamic_array<T,pks>::operator [](size_type ii) const { 
-        DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(std::shared_ptr<T>,pf,NULL);
-        if (pf.get() == NULL) { pf = std::make_shared<T>(); }
-        return (ii<last_ind) ? (array[ii>>pks])[ii&DNAMPKS__] : *pf;
+        THREAD_SAFE_STATIC T f;
+        return (ii<last_ind) ? (array[ii>>pks])[ii&DNAMPKS__] : f;
   }
 
   template<class T, unsigned char pks> typename dynamic_array<T,pks>::reference
@@ -336,13 +335,14 @@ namespace dal
       
       last_accessed = ii + 1;
       if (ii >= last_ind) {
-	if ((ii >> (pks+ppks)) > 0) {
-	  while ((ii >> (pks+ppks)) > 0) ppks++; 
-	  array.resize(m_ppks = (size_type(1) << ppks)); m_ppks--;
-	}
-	for (size_type jj = (last_ind >> pks); ii >= last_ind;
-	     jj++, last_ind += (DNAMPKS__ + 1))
-	  { array[jj] = std::unique_ptr<T[]>(new T[DNAMPKS__+1]); } // std::make_unique<T[]>(DNAMPKS__ + 1); }
+       if ((ii >> (pks+ppks)) > 0) {
+        while ((ii >> (pks+ppks)) > 0) ppks++; 
+        array.resize(m_ppks = (size_type(1) << ppks)); m_ppks--;
+       }
+       for (size_type jj = (last_ind >> pks); ii >= last_ind;
+            jj++, last_ind += (DNAMPKS__ + 1)){
+        array[jj] = std::unique_ptr<T[]>(new T[DNAMPKS__+1]);
+       } // std::make_unique<T[]>(DNAMPKS__ + 1); }
       }
     }
     return (array[ii >> pks])[ii & DNAMPKS__];

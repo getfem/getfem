@@ -47,8 +47,6 @@ This is the kernel of getfem.
 
 #ifdef GETFEM_HAS_OPENMP
   #include <mutex>
-  #include <boost/thread.hpp> /**TODO: get rid of this dependency as soon
-                                       as thread_local is widely supported*/
 #endif
 
 namespace getfem
@@ -341,33 +339,9 @@ namespace getfem
   and their initialization (it's more general and portable
   then using __declspec(thread))*/
   #ifdef GETFEM_HAS_OPENMP
-
-    #define DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(Type,Var,initial) \
-      static boost::thread_specific_ptr<Type> ptr_##Var; \
-      if(!ptr_##Var.get()) {ptr_##Var.reset(new Type(initial));} \
-      Type& Var=*ptr_##Var;
-
-    #define DEFINE_STATIC_THREAD_LOCAL(Type,Var) \
-      static boost::thread_specific_ptr<Type> ptr_##Var; \
-      if(!ptr_##Var.get()) {ptr_##Var.reset(new Type());} \
-      Type& Var=*ptr_##Var;
-
-    #define DEFINE_STATIC_THREAD_LOCAL_CONSTRUCTED(Type, Var, ...) \
-      static boost::thread_specific_ptr<Type> ptr_##Var; \
-      if(!ptr_##Var.get()) {ptr_##Var.reset(new Type(__VA_ARGS__));} \
-      Type& Var=*ptr_##Var;
-
+    #define THREAD_SAFE_STATIC thread_local
   #else
-
-    #define DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(Type,Var,initial) \
-      static Type Var(initial);
-
-    #define DEFINE_STATIC_THREAD_LOCAL(Type,Var) \
-      static Type Var;
-
-    #define DEFINE_STATIC_THREAD_LOCAL_CONSTRUCTED(Type, Var, ...) \
-      static Type Var(__VA_ARGS__);
-
+    #define THREAD_SAFE_STATIC static
   #endif
 
   class partition_master;

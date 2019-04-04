@@ -376,10 +376,10 @@ namespace getfem {
     void expand_product_daxpy(base_tensor &t, scalar_type J, bool first)const {
       size_type k;
       base_tensor::iterator pt = t.begin();
-      DEFINE_STATIC_THREAD_LOCAL(std::vector<base_tensor::const_iterator>, pts);
-      DEFINE_STATIC_THREAD_LOCAL(std::vector<base_tensor::const_iterator>,es_beg);
-      DEFINE_STATIC_THREAD_LOCAL(std::vector<base_tensor::const_iterator>,es_end);
-      DEFINE_STATIC_THREAD_LOCAL(std::vector<scalar_type>,Vtab);
+      THREAD_SAFE_STATIC std::vector<base_tensor::const_iterator> pts;
+      THREAD_SAFE_STATIC std::vector<base_tensor::const_iterator> es_beg;
+      THREAD_SAFE_STATIC std::vector<base_tensor::const_iterator> es_end;
+      THREAD_SAFE_STATIC std::vector<scalar_type> Vtab;
 
       pts.resize(0); pts.resize(pme->size()); // resize(0) necessary, do not remove
       es_beg.resize(0); es_beg.resize(pme->size());
