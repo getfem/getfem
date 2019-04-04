@@ -148,7 +148,7 @@ case $CXX in
 	AC_CHECK_CXX_FLAG([-fmessage-length=0],CXXFLAGS)
 	AC_CHECK_CXX_FLAG([-fvisibility-inlines-hidden],CXXFLAGS)
 	AC_CHECK_CXX_FLAG([-ftemplate-depth-100],CXXFLAGS)
-	AC_CHECK_CXX_FLAG([-std=c++11], CXXFLAGS,[AC_CHECK_CXX_FLAG([-std=c++0x],CXXFLAGS,[AC_MSG_ERROR([g++ do not support option -std=c++11. Update g++ to at least release 4.8.1.])] )])
+	AC_CHECK_CXX_FLAG([-std=c++14], CXXFLAGS,[AC_CHECK_CXX_FLAG([-std=c++0x],CXXFLAGS,[AC_MSG_ERROR([g++ do not support option -std=c++14. Update g++ to at least release 4.9])] )])
 	AC_CHECK_CXX_FLAG([-fPIC],CXXFLAGS)
 	AC_CHECK_CXX_FLAG([-Wall -W -Wextra],CXXFLAGS)
 	dnl AC_CHECK_CXX_FLAG([-pedantic],CXXFLAGS)
@@ -174,13 +174,13 @@ dnl	SUPLDFLAGS="-rdynamic" # -rdynamic for backtraces
 	;;
  icc | icpc)
 	echo "Using INTEL icc"
-	CXXFLAGS="$CXXFLAGS $with_optimization -Xc -ansi -std=c++11"
+	CXXFLAGS="$CXXFLAGS $with_optimization -Xc -ansi -std=c++14"
         dnl CXXFLAGS="$CXXFLAGS $with_optimization -Xc -ansi"
         CFLAGS="$CFLAGS $with_optimization -Xc -ansi"
 	;;
  *)
 	echo "Using a unknown compiler"
- 	CXXFLAGS="$CXXFLAGS $with_optimization -std=c++11"
+ 	CXXFLAGS="$CXXFLAGS $with_optimization -std=c++14"
         dnl CXXFLAGS="$CXXFLAGS $with_optimization"
         CFLAGS="$CFLAGS $with_optimization"
 	;;
