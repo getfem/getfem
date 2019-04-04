@@ -100,12 +100,16 @@ namespace bgeot {
   }
   @endcode
   */
-  class kdtree : public boost::noncopyable {
+  class kdtree {
     dim_type N; /* dimension of points */
     std::unique_ptr<kdtree_elt_base> tree;
     kdtree_tab_type pts;
   public:
     kdtree() : N(0) {}
+
+    kdtree(const kdtree&) = delete;
+    kdtree &operator = (const kdtree&) = delete;
+
     /// reset the tree, remove all points
     void clear() { clear_tree(); pts = kdtree_tab_type(); N = 0; }
     void reserve(size_type n) { pts.reserve(n); }

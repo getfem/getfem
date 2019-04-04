@@ -52,7 +52,7 @@ namespace getfem {
      a subclass of mesh_fem which allows to eliminate a number of dof
      of the original mesh_fem.
   */
-  class partial_mesh_fem : public mesh_fem, public boost::noncopyable {
+  class partial_mesh_fem : public mesh_fem {
   protected :
     const mesh_fem &mf;
     mutable bool is_adapted;
@@ -151,6 +151,9 @@ namespace getfem {
 
     partial_mesh_fem(const mesh_fem &mef);
     partial_mesh_fem(const mesh_fem *mef);
+
+    partial_mesh_fem(const partial_mesh_fem&) = delete;
+    partial_mesh_fem& operator = (const partial_mesh_fem&) = delete;
 
   };
 

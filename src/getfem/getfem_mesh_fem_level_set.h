@@ -45,7 +45,7 @@
 
 namespace getfem {
 
-  class mesh_fem_level_set : public mesh_fem, public boost::noncopyable {
+  class mesh_fem_level_set : public mesh_fem {
   protected :
     const mesh_level_set &mls;
     const mesh_fem &mf;
@@ -71,6 +71,9 @@ namespace getfem {
     }
     
     mesh_fem_level_set(const mesh_level_set &me, const mesh_fem &mef);
+
+    mesh_fem_level_set(const mesh_fem_level_set&) = delete;
+    mesh_fem_level_set& operator = (const mesh_fem_level_set&) = delete;
 
     ~mesh_fem_level_set() { clear_build_methods(); }
   };

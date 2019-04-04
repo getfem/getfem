@@ -77,14 +77,7 @@ std::shared_ptr are used.
 
 #include "getfem/getfem_arch_config.h"
 
-#ifdef GETFEM_HAS_OPENMP
-  #include <boost/atomic.hpp>
-  typedef boost::atomic_bool atomic_bool;
-  typedef boost::atomic<int> atomic_int;
-#else
-  typedef int   atomic_int;
-  typedef bool  atomic_bool;
-#endif
+#include <atomic>
 
 #define DAL_STORED_OBJECT_DEBUG 0
 
@@ -298,7 +291,7 @@ namespace dal {
   /** Pointer to an object with the dependencies */
   struct enr_static_stored_object {
     pstatic_stored_object p;
-    atomic_bool valid;
+    std::atomic_bool valid;
     const permanence perm;
     std::set<pstatic_stored_object> dependent_object;
     std::set<pstatic_stored_object> dependencies;

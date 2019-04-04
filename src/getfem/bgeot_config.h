@@ -50,13 +50,6 @@
 #include "gmm/gmm_kernel.h"
 #include "gmm/gmm_dense_lu.h"
 
-#ifdef GETFEM_HAVE_BOOST
-# include <boost/version.hpp>
-# include <boost/noncopyable.hpp>
-#else
-# include <getfem_boost/noncopyable.hpp> 
-#endif
-
 #ifdef GETFEM_HAVE_QDLIB
 // #  define NO_INLINE
 #  ifdef GETFEM_QDLIB_USE_QUAD
