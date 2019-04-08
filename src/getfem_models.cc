@@ -6356,7 +6356,7 @@ namespace getfem {
       GMM_TRACE2("Lumped mass matrix assembly (please check that integration is 1st order.)");
       gmm::clear(matl[0]);
       if (dl.size() && mf_rho) {
-        GMM_ASSERT1(true, "Unsupported format of lumped mass brick coefficient");
+        asm_lumped_mass_matrix_for_first_order_param(matl[0], mim, mf_u, *mf_rho, *rho, rg);
       } else {
         asm_lumped_mass_matrix_for_first_order(matl[0], mim, mf_u, rg);
         if (dl.size()) gmm::scale(matl[0], (*rho)[0]);
