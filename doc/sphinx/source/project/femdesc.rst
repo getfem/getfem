@@ -48,7 +48,7 @@ elements:
 
 .. c:function:: bgeot::prism_P1_structure(dim_type d)
 
-   description of a prism of dimension ``d``
+   description of a prism of dimension ``d``.
 
 For instance if one needs the description of a square, one can call
 equivalently::

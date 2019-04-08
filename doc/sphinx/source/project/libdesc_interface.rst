@@ -134,8 +134,8 @@ To make all the things work automatically, a certain number of rules have to be 
 
   - :file:`gf_objectname_set.cc` : contains the methods which transform the object (if any).
 
-* A list of function is defined by only one file :file:`gf_commandname.cc`
-  it contains a list of sub-commands.
+* A list of function is defined by only one file :file:`gf_commandname.cc`.
+  It contains a list of sub-commands.
 
 
 * For each file, the main commentary on the list of functions or methods is delimited by the tags '/*@GFDOC' and '@*/'. For a file corresponding to the constructors of an object, the commentary should correspond to the description of the object.

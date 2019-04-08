@@ -86,7 +86,7 @@ Assembly tensors
 
 Assembly tensors are represented on each node by a ``bgeot::tensor<double>`` object. However, there is a specific structure in :file:`src/getfem\_generic\_assembly.cc` for assembly tensors because there is several format of assembly tensors :
 
-- Normal tensor. The first and second indices may represent the test function local indices if the node represent a first or second order term. Remember that in |gf| all tensors are stored with a Fortran order. This means that for instance a for a :math:`N\times P\times Q` tensor one has ``t(i, j, k) = t[i + j*N + k*N*P]``.
+- Normal tensor. The first and second indices may represent the test function local indices if the node represent a first or second order term. Remember that in |gf| all tensors are stored with a Fortran order. This means that for instance t for a :math:`N\times P\times Q` tensor one has ``t(i, j, k) = t[i + j*N + k*N*P]``.
 
 - Copied tensor. When a node is detected to have exactly the same expression compared to an already compiled one, the assembly tensor will contain a pointer to the assembly tensor of the already compiled node. The consequence is that no unnecessary copy is made.
 

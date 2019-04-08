@@ -80,7 +80,7 @@ We have to select the different parts of the boundary where we will set some bou
   mesh1.region_subtract(CONTACT_BOUND, HOLE_BOUND)
   mesh2.set_region(BOTTOM_BOUND, fb3)
 
-Note that the command `mesh1.outer_faces_with_direction([0., -1.], n.pi/4)` allows to select all the faces having a unit outward normal having an angle less or equal to `n.pi/4` with the vector `[0., -1.]`. The command `mesh1.region_subtract(CONTACT_BOUND, HOLE_BOUND)` allow to delete the faces corresponding to the rim in the contact boundary.
+Note that the command `mesh1.outer_faces_with_direction([0., -1.], np.pi/4)` allows to select all the faces having a unit outward normal having an angle less or equal to `np.pi/4` with the vector `[0., -1.]`. The command `mesh1.region_subtract(CONTACT_BOUND, HOLE_BOUND)` allow to delete the faces corresponding to the rim in the contact boundary.
 
 Definition of finite elements methods and integration method
 ************************************************************
@@ -240,7 +240,7 @@ Note that in some configuration, it is preferable to use a more basic line searc
 Export the solution
 *******************
 
-Now the code to export the solution with the VonMiss stress:
+Now the code to export the solution with the VonMises stress:
 
 .. code-block:: python
 

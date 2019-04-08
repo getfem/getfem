@@ -315,7 +315,7 @@ Assuming that `mf_u` and `mim` are valid finite element and integration methods 
   // Null initial value for the temperature.
   gmm::clear(model.set_real_variable("Previous_u"));
 
-  // Automatic computatio of Previous_Dot_u
+  // Automatic computation of Previous_Dot_u
   model.perform_init_time_derivative(dt/20.);
   iter.init();
   standard_solve(model, iter);
