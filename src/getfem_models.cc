@@ -326,9 +326,10 @@ namespace getfem {
 
     // In case of change in fems or mims, linear terms have to be recomputed
     // We could select which brick is to be recomputed if we would be able
-    // to know which fem or mim is changed.
-    for (dal::bv_visitor ib(valid_bricks); !ib.finished(); ++ib)
-      bricks[ib].terms_to_be_computed = true;
+    // to know which fem or mim is changed
+    // -> already taken into account in update_brick()
+    // for (dal::bv_visitor ib(valid_bricks); !ib.finished(); ++ib)
+    //  bricks[ib].terms_to_be_computed = true;
 
     for (auto &&v : variables) {
       const std::string &vname = v.first;
@@ -865,6 +866,7 @@ namespace getfem {
     variables[name].set_size();
     act_size_to_be_done = true;
     add_dependency(mf);
+    add_dependency(mim);
   }
 
   void model::disable_variable(const std::string &name) {
@@ -993,9 +995,9 @@ namespace getfem {
     active_bricks.add(ib);
     valid_bricks.add(ib);
 
-
-    for (size_type i = 0; i < bricks[ib].mims.size(); ++i)
-      add_dependency(*(bricks[ib].mims[i]));
+    // The brick itself already react to a mesh_im change in update_brick() 
+    // for (size_type i = 0; i < bricks[ib].mims.size(); ++i)
+    //   add_dependency(*(bricks[ib].mims[i]));
 
     GMM_ASSERT1(pbr->is_real() || is_complex(),
                 "Impossible to add a complex brick to a real model");
@@ -1955,7 +1957,7 @@ namespace getfem {
       || brick.pbr->is_to_be_computed_each_time()
       || !(brick.pbr->is_linear());
 
-    // check variable list to test if a mesh_fem as changed.
+    // check variable list to test if a mesh_fem has changed.
     if (!tobecomputed ) {
       for (size_type i = 0; i < brick.vlist.size() && !tobecomputed; ++i) {
         var_description &vd = variables[brick.vlist[i]];
@@ -1969,6 +1971,13 @@ namespace getfem {
       if (vd.v_num > brick.v_num || vd.v_num_data[vd.default_iter] > brick.v_num) {
         tobecomputed = true;
         version = build_version(version | BUILD_ON_DATA_CHANGE);
+      }
+    }
+
+    // Check if a mesh_im has changed
+    if (!tobecomputed ) {
+      for (size_type i = 0; i < brick.mims.size() && !tobecomputed; ++i) {
+        if (brick.mims[i]->version_number() > brick.v_num) tobecomputed = true;
       }
     }
 
