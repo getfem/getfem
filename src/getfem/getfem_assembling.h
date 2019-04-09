@@ -826,15 +826,11 @@ namespace getfem {
   }
 
   /**
-   * lumped mass matrix assembly (on the whole mesh or on the specified
-   * boundary)
-   * @ingroup asm
+     lumped mass matrix assembly from consistent mass matrix
    */
   template<typename MAT>
-  inline void asm_lumped_mass_matrix_for_first_order
-  (const MAT &M, const mesh_im &mim, const mesh_fem &mf1,
-   const mesh_region &rg = mesh_region::all_convexes()) {
-    asm_mass_matrix(M, mim, mf1, rg);
+  inline void asm_lumped_mass_matrix_for_first_order_from_consistent
+  (const MAT &M) {
     size_type nbd = gmm::mat_ncols(M), nbr = gmm::mat_nrows(M);
     GMM_ASSERT1(nbd == nbr, "mass matrix is not square");
     typedef typename gmm::linalg_traits<MAT>::value_type T;
@@ -845,6 +841,32 @@ namespace getfem {
     for (size_type i =0; i < nbd; ++i) {
       (const_cast<MAT &>(M))(i, i) = W[i];
     }
+  }
+
+  /**
+     lumped mass matrix assembly (on the whole mesh or on the specified
+     boundary)
+     @ingroup asm
+   */
+  template<typename MAT>
+  inline void asm_lumped_mass_matrix_for_first_order
+  (const MAT &M, const mesh_im &mim, const mesh_fem &mf1,
+   const mesh_region &rg = mesh_region::all_convexes()) {
+    asm_mass_matrix(M, mim, mf1, rg);
+    asm_lumped_mass_matrix_for_first_order_from_consistent(M);
+  }
+
+  /**
+     lumped mass matrix assembly with an additional parameter
+     (on the whole mesh or on the specified boundary)
+     @ingroup asm
+   */
+  template<typename MAT, typename VECT>
+  inline void asm_lumped_mass_matrix_for_first_order_param
+  (MAT &M, const mesh_im &mim, const mesh_fem &mf_u, const mesh_fem &mf_data,
+   const VECT &F, const mesh_region &rg = mesh_region::all_convexes()) {
+    asm_mass_matrix_param(M, mim, mf_u, mf_data, F, rg);
+    asm_lumped_mass_matrix_for_first_order_from_consistent(M);
   }
 
   /** 
