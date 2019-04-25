@@ -6868,6 +6868,11 @@ namespace getfem {
                                      !(intn2.empty() || intn2 == "neighbour_elt"
                                        || secondary2);
 
+                  workspace.add_temporary_interval_for_unreduced_variable
+                    (root->name_test1);
+                  workspace.add_temporary_interval_for_unreduced_variable
+                    (root->name_test2);
+
                   bool has_var_group1 = (!intn1.empty() && !secondary1 &&
                                          workspace.variable_group_exists
                                                    (root->name_test1));
