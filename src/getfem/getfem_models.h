@@ -146,28 +146,28 @@ namespace getfem {
 
     struct var_description {
 
-      const bool is_variable;   // This is a variable or a parameter.
+      bool is_variable;         // This is a variable or a parameter.
       bool is_disabled;         // For a variable, to be solved or not
-      const bool is_complex;    // The variable is complex numbers
+      bool is_complex;          // The variable is complex numbers
       bool is_affine_dependent; // The variable depends in an affine way
                                 // to another variable.
-      const bool is_fem_dofs;   // The variable is the dofs of a fem
+      bool is_fem_dofs;         // The variable is the dofs of a fem
       size_type n_iter;         // Number of versions of the variable stored.
       size_type n_temp_iter;    // Number of additional temporary versions
       size_type default_iter;   // default iteration number.
 
       ptime_scheme ptsc;        // For optional time integration scheme
 
-      const var_description_filter filter; // Version of an optional filter
-                                           // on the dofs
-      const size_type filter_region; // Optional region for the filter
-      const std::string filter_var;  // Optional variable name for the filter
-      const mesh_im *filter_mim;     // Optional integration method for the filter
+      var_description_filter filter; // Version of an optional filter
+                                     // on the dofs
+      size_type filter_region;       // Optional region for the filter
+      std::string filter_var;        // Optional variable name for the filter
+      mesh_im const *filter_mim;     // Optional integration method for the filter
 
       // fem or im_data description of the variable
-      const mesh_fem *mf;            // Main fem of the variable.
+      mesh_fem const *mf;            // Main fem of the variable.
       ppartial_mesh_fem partial_mf;  // Filter with respect to mf.
-      const im_data *imd;            // im data description
+      im_data const *imd;            // im data description
 
       bgeot::multi_index qdims;  // For data having a qdim != of the fem
                                  // (dim per dof for dof data)
@@ -191,12 +191,12 @@ namespace getfem {
                             // dependent variables
 
       var_description(bool is_var = false, bool is_compl = false,
-                      const mesh_fem *mf_ = 0, const im_data *imd_ = 0,
+                      mesh_fem const *mf_ = 0, im_data const *imd_ = 0,
                       size_type n_it = 1,
                       var_description_filter filter_ = VDESCRFILTER_NO,
                       size_type filter_reg = size_type(-1),
                       const std::string &filter_var_ = std::string(""),
-                      const mesh_im *filter_mim_ = 0)
+                      mesh_im const *filter_mim_ = 0)
         : is_variable(is_var), is_disabled(false), is_complex(is_compl),
           is_affine_dependent(false),
           is_fem_dofs(mf_ != 0),
