@@ -256,6 +256,8 @@ Makefile
 /tests/*.dx
 /tests/*.mesh
 /tests/Q2_incomplete.msh
+/tests/test_assembly_assignment
+/tests/test_internal_variables
 /tests/auto_gmm_torture01_lusolve
 /tests/auto_gmm_torture01_lusolve.cc
 /tests/auto_gmm_torture02_baseop
