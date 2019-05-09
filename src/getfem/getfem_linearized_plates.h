@@ -48,6 +48,12 @@ namespace getfem {
   */
   void add_2D_rotated_RT0_projection(model &md, std::string name);
 
+  /** Add the elementary transformation corresponding to the projection
+      on P0 element.
+      The name is the name given to the elementary transformation.
+  */
+  void add_P0_projection(model &md, std::string name);
+
 
   /** Add a term corresponding to the classical Reissner-Mindlin plate
       model for which `u3` is the transverse displacement,

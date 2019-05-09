@@ -424,11 +424,23 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        );
 
     /*@SET ('add elementary rotated RT0 projection', @str transname)
-      Experimental method ... @*/
+      Add the elementary transformation corresponding to the projection
+      on rotated RT0 element for two-dimensional elements to the model.
+      The name is the name given to the elementary transformation. @*/
     sub_command
       ("add elementary rotated RT0 projection", 1, 1, 0, 0,
        std::string transname = in.pop().to_string();
        add_2D_rotated_RT0_projection(*md, transname);
+       );
+
+    /*@SET ('add elementary P0 projection', @str transname)
+      Add the elementary transformation corresponding to the projection
+      P0 element.
+      The name is the name given to the elementary transformation. @*/
+    sub_command
+      ("add P0 projection", 1, 1, 0, 0,
+       std::string transname = in.pop().to_string();
+       add_P0_projection(*md, transname);
        );
 
     /*@SET ('add interpolate transformation from expression', @str transname, @tmesh source_mesh, @tmesh target_mesh, @str expr)
