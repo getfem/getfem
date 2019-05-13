@@ -348,7 +348,7 @@ namespace getfem {
   }
 
   bool mesh_region::is_only_faces() const{
-    return is_empty() || (and_mask()[0] == false);
+    return (id() != -1) && (is_empty() || (and_mask()[0] == false));
   }
 
   face_bitset mesh_region::faces_of_convex(size_type cv) const{
