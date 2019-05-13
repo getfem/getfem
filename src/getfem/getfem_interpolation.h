@@ -713,7 +713,7 @@ namespace getfem {
             mf_source, mf_target, U, V_thrd, M, 0, extrapolation, EPS,
             rg_source, rg_target);
 
-          #pragma omp critical
+          GLOBAL_OMP_GUARD
             for (size_type i = 0; i < V_thrd.size(); ++i) {
               if (gmm::abs(V_thrd[i]) > EPS) V[i] = V_thrd[i];
             }
