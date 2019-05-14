@@ -136,7 +136,7 @@ non_conformal_dof(getfem::mesh_fem &mf, mexargs_in &in, mexargs_out &out) {
   iarray w = out.pop().create_iarray_h(
     unsigned(std::count_if(dcnt.begin(),
                            dcnt.end(),
-                           std::bind2nd(std::equal_to<bgeot::short_type>(),1))));
+                           [](const auto &x) {return x == 1;})));
   size_type i,j=0;
   /*
   std::copy_if(dcnt.begin(), dcnt.end(),
