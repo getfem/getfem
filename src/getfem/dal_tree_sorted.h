@@ -736,8 +736,7 @@ namespace dal {
   /* ********************************************************************* */
   /* pas completement satisfaisant. A utiliser avec precautions.           */
 
-  template<typename T, typename TAB, typename COMP> struct less_index
-    : public std::binary_function<size_t, size_t, int> {
+  template<typename T, typename TAB, typename COMP> struct less_index{
     const TAB *tab;
     COMP compare;
     mutable const T *search_elt;
