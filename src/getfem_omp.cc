@@ -345,6 +345,10 @@ namespace getfem{
 
   void parallel_execution(std::function<void(void)> lambda,
                           bool iterate_over_partitions){
+    if (me_is_multithreaded_now()) {
+      lambda();
+      return;
+    }
     parallel_boilerplate boilerplate;
     auto &pm = partition_master::get();
     if (pm.get_nb_partitions() < true_thread_policy::num_threads()){
