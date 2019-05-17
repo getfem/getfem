@@ -236,7 +236,7 @@ namespace bgeot {
     small_vector<T> operator-() const 
     { return -1.*(*this); }
     small_vector<T> operator*(T v) const 
-    { return small_vector<T>(*this, std::bind2nd(std::multiplies<T>(),v)); }
+    {return small_vector<T>(*this, [&v](const auto &x) {return v * x;});}
     small_vector<T> operator/(T v) const { return (*this)*(T(1)/v); }
     small_vector<T>& operator+=(const small_vector<T>& other) {
       const_iterator b = other.begin(); iterator it = begin(); 
@@ -333,7 +333,7 @@ namespace bgeot {
     { return -1.*(*this); }
 
     small_vector<T> operator*(T v) const 
-    { return small_vector<T>(*this, std::bind2nd(std::multiplies<T>(),v)); }
+    {return small_vector<T>(*this, [&v](const auto &x) {return v * x;});}
 
     small_vector<T> operator/(T v) const { return (*this)*(T(1)/v); }
 

@@ -174,8 +174,8 @@ namespace bgeot {
     void unset_card() const { card_uptodate = false; }
     index_type card(bool just_look=false) const {       
       if (!card_uptodate || just_look) {
-	index_type c = index_type(std::count_if(m.begin(), m.end(), 
-			          std::bind2nd(std::equal_to<bool>(),true)));
+        index_type c = index_type(std::count_if(m.begin(), m.end(),
+                                  [](const auto &x) {return x == true;}));
 	if (just_look) return c;
 	card_ = c;
       }

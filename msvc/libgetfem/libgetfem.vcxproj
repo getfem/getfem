@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|x64">
       <Configuration>Debug</Configuration>
@@ -14,21 +14,21 @@
     <ProjectGuid>{6EEE3C43-27B3-4B9B-A9DF-B5D7F4278D47}</ProjectGuid>
     <RootNamespace>libgetfem</RootNamespace>
     <Keyword>Win32Proj</Keyword>
-    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <CharacterSet>Unicode</CharacterSet>
     <WholeProgramOptimization>true</WholeProgramOptimization>
-    <PlatformToolset>v120</PlatformToolset>
-    <UseIntelMKL>Sequential</UseIntelMKL>
+    <PlatformToolset>v141</PlatformToolset>
+    <UseIntelMKL>No</UseIntelMKL>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <CharacterSet>Unicode</CharacterSet>
-    <PlatformToolset>v120</PlatformToolset>
-    <UseIntelMKL>Sequential</UseIntelMKL>
+    <PlatformToolset>v141</PlatformToolset>
+    <UseIntelMKL>No</UseIntelMKL>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -51,7 +51,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <PreprocessorDefinitions>GETFEM_HAVE_MUPARSER_H;GETFEM_HAVE_QHULL_QHULL_H;_DEBUG;_LIB;WIN32;_SCL_SECURE_NO_DEPRECATE</PreprocessorDefinitions>
+      <PreprocessorDefinitions>GETFEM_HAS_OPENMP;_DEBUG;_LIB;WIN32;_SCL_SECURE_NO_DEPRECATE</PreprocessorDefinitions>
       <PrecompiledHeader>
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
@@ -67,8 +67,7 @@
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>GETFEM_HAVE_MUPARSER_H;GETFEM_HAVE_QHULL_QHULL_H;_LIB;WIN32;_CRT_SECURE_NO_WARNINGS;_SCL_SECURE_NO_DEPRECATE;_CRT_SECURE_NO_DEPRECATE</PreprocessorDefinitions>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <PreprocessorDefinitions>_LIB;WIN32;_CRT_SECURE_NO_WARNINGS;_SCL_SECURE_NO_DEPRECATE;_CRT_SECURE_NO_DEPRECATE</PreprocessorDefinitions>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <PrecompiledHeader>
       </PrecompiledHeader>
@@ -105,6 +104,7 @@
     <ClInclude Include="..\..\src\getfem\bgeot_small_vector.h" />
     <ClInclude Include="..\..\src\getfem\bgeot_sparse_tensors.h" />
     <ClInclude Include="..\..\src\getfem\bgeot_tensor.h" />
+    <ClInclude Include="..\..\src\getfem\bgeot_torus.h" />
     <ClInclude Include="..\..\src\getfem\dal_backtrace.h" />
     <ClInclude Include="..\..\src\getfem\dal_basic.h" />
     <ClInclude Include="..\..\src\getfem\dal_bit_vector.h" />
@@ -114,6 +114,7 @@
     <ClInclude Include="..\..\src\getfem\dal_static_stored_objects.h" />
     <ClInclude Include="..\..\src\getfem\dal_tas.h" />
     <ClInclude Include="..\..\src\getfem\dal_tree_sorted.h" />
+    <ClInclude Include="..\..\src\getfem\getfem_accumulated_distro.h" />
     <ClInclude Include="..\..\src\getfem\getfem_assembling.h" />
     <ClInclude Include="..\..\src\getfem\getfem_assembling_tensors.h" />
     <ClInclude Include="..\..\src\getfem\getfem_config.h" />
@@ -135,6 +136,10 @@
     <ClInclude Include="..\..\src\getfem\getfem_fem_level_set.h" />
     <ClInclude Include="..\..\src\getfem\getfem_fourth_order.h" />
     <ClInclude Include="..\..\src\getfem\getfem_generic_assembly.h" />
+    <ClInclude Include="..\..\src\getfem\getfem_generic_assembly_compile_and_exec.h" />
+    <ClInclude Include="..\..\src\getfem\getfem_generic_assembly_functions_and_operators.h" />
+    <ClInclude Include="..\..\src\getfem\getfem_generic_assembly_semantic.h" />
+    <ClInclude Include="..\..\src\getfem\getfem_generic_assembly_tree.h" />
     <ClInclude Include="..\..\src\getfem\getfem_global_function.h" />
     <ClInclude Include="..\..\src\getfem\getfem_import.h" />
     <ClInclude Include="..\..\src\getfem\getfem_im_data.h" />
@@ -145,6 +150,7 @@
     <ClInclude Include="..\..\src\getfem\getfem_level_set.h" />
     <ClInclude Include="..\..\src\getfem\getfem_level_set_contact.h" />
     <ClInclude Include="..\..\src\getfem\getfem_linearized_plates.h" />
+    <ClInclude Include="..\..\src\getfem\getfem_locale.h" />
     <ClInclude Include="..\..\src\getfem\getfem_mat_elem.h" />
     <ClInclude Include="..\..\src\getfem\getfem_mat_elem_type.h" />
     <ClInclude Include="..\..\src\getfem\getfem_mesh.h" />
@@ -171,8 +177,6 @@
     <ClInclude Include="..\..\src\getfem\getfem_regular_meshes.h" />
     <ClInclude Include="..\..\src\getfem\getfem_superlu.h" />
     <ClInclude Include="..\..\src\getfem\getfem_torus.h" />
-    <ClInclude Include="..\..\src\getfem_boost\noncopyable.hpp" />
-    <ClInclude Include="..\..\src\getfem_boost\workaround.hpp" />
     <ClInclude Include="..\..\src\gmm\gmm.h" />
     <ClInclude Include="..\..\src\gmm\gmm_algobase.h" />
     <ClInclude Include="..\..\src\gmm\gmm_blas.h" />
@@ -187,6 +191,7 @@
     <ClInclude Include="..\..\src\gmm\gmm_dense_sylvester.h" />
     <ClInclude Include="..\..\src\gmm\gmm_domain_decomp.h" />
     <ClInclude Include="..\..\src\gmm\gmm_except.h" />
+    <ClInclude Include="..\..\src\gmm\gmm_feedback_management.h" />
     <ClInclude Include="..\..\src\gmm\gmm_inoutput.h" />
     <ClInclude Include="..\..\src\gmm\gmm_interface.h" />
     <ClInclude Include="..\..\src\gmm\gmm_interface_bgeot.h" />
@@ -244,6 +249,7 @@
     <ClCompile Include="..\..\src\bgeot_rtree.cc" />
     <ClCompile Include="..\..\src\bgeot_small_vector.cc" />
     <ClCompile Include="..\..\src\bgeot_sparse_tensors.cc" />
+    <ClCompile Include="..\..\src\bgeot_torus.cc" />
     <ClCompile Include="..\..\src\dal_backtrace.cc" />
     <ClCompile Include="..\..\src\dal_bit_vector.cc" />
     <ClCompile Include="..\..\src\dal_singleton.cc" />
@@ -263,7 +269,12 @@
     <ClCompile Include="..\..\src\getfem_fem_global_function.cc" />
     <ClCompile Include="..\..\src\getfem_fem_level_set.cc" />
     <ClCompile Include="..\..\src\getfem_fourth_order.cc" />
-    <ClCompile Include="..\..\src\getfem_generic_assembly.cc" />
+    <ClCompile Include="..\..\src\getfem_generic_assembly_compile_and_exec.cc" />
+    <ClCompile Include="..\..\src\getfem_generic_assembly_functions_and_operators.cc" />
+    <ClCompile Include="..\..\src\getfem_generic_assembly_interpolation.cc" />
+    <ClCompile Include="..\..\src\getfem_generic_assembly_semantic.cc" />
+    <ClCompile Include="..\..\src\getfem_generic_assembly_tree.cc" />
+    <ClCompile Include="..\..\src\getfem_generic_assembly_workspace.cc" />
     <ClCompile Include="..\..\src\getfem_global_function.cc" />
     <ClCompile Include="..\..\src\getfem_import.cc" />
     <ClCompile Include="..\..\src\getfem_im_data.cc" />
@@ -271,10 +282,11 @@
     <ClCompile Include="..\..\src\getfem_integration_composite.cc" />
     <ClCompile Include="..\..\src\getfem_interpolated_fem.cc" />
     <ClCompile Include="..\..\src\getfem_interpolation.cc" />
-    <ClCompile Include="..\..\src\getfem_interpolation_on_deformed_domains.cpp" />
+    <ClCompile Include="..\..\src\getfem_interpolation_on_deformed_domains.cc" />
     <ClCompile Include="..\..\src\getfem_level_set.cc" />
     <ClCompile Include="..\..\src\getfem_level_set_contact.cc" />
     <ClCompile Include="..\..\src\getfem_linearized_plates.cc" />
+    <ClCompile Include="..\..\src\getfem_locale.cc" />
     <ClCompile Include="..\..\src\getfem_mat_elem.cc" />
     <ClCompile Include="..\..\src\getfem_mat_elem_type.cc" />
     <ClCompile Include="..\..\src\getfem_mesh.cc" />
