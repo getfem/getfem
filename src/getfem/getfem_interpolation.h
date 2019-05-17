@@ -713,10 +713,10 @@ namespace getfem {
             mf_source, mf_target, U, V_thrd, M, 0, extrapolation, EPS,
             rg_source, rg_target);
       )
-      for (size_type thread = 0; thread != V_distributed.num_threads(); ++thread){
-        auto &V_thrd = V_distributed(thread);
-        for (size_type i = 0; i < V_thrd.size(); ++i) {
-          if (gmm::abs(V_thrd[i]) > EPS) V[i] = V_thrd[i];
+      for (size_type thread=0; thread != V_distributed.num_threads(); ++thread){
+        auto &V_thrd2 = V_distributed(thread);
+        for (size_type i = 0; i < V_thrd2.size(); ++i) {
+          if (gmm::abs(V_thrd2[i]) > EPS) V[i] = V_thrd2[i];
         }
       }
       if (partitioning_allowed) rg_source.allow_partitioning();
