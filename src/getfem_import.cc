@@ -816,13 +816,13 @@ namespace getfem {
         itype = std::stol(line.substr(pos, pos2-pos));
         pos = pos2+1;
         pos2 = line.find_first_of(",", pos);
-        knum = std::stol(line.substr(pos+1, pos2-pos));
+        knum = std::stol(line.substr(pos, pos2-pos));
         keyval = std::stol(line.substr(pos2+1));
         if (knum == 1 && itype < elt_types.size() &&
             elt_types[itype].size() == 7 &&
             bgeot::casecmp(elt_types[itype].substr(0,7),"MESH200") == 0) {
-          std::stringstream ss("MESH200");
-          ss << "_" << keyval;
+          std::stringstream ss;
+          ss << "MESH200_" << keyval;
           elt_types[itype] = ss.str();
         }
       }
@@ -859,7 +859,7 @@ namespace getfem {
     for (size_type i=0; i < size_type(-1); ++i) {
       size_type nodeid;
       std::getline(f,line);
-      if (line.compare(0,1,"N") == 0)
+      if (line.compare(0,1,"N") == 0 || line.compare(0,1,"!") == 0)
         break;
       //       1       0       0-3.0000000000000E+00 2.0000000000000E+00 1.0000000000000E+00
       nodeid = std::stol(line.substr(0, fieldwidth1));
@@ -946,7 +946,25 @@ namespace getfem {
         regions.resize(imat+1);
 
       if (nodesno == 3) {
-        // TODO MESH200_2, MESH200_3, MESH200_4
+        // assume MESH200_4 (3-node triangular)
+        std::string eltname("MESH200_4");
+        if (elt_types.size() > itype && elt_types[itype].size() > 0)
+          eltname = elt_types[itype];
+
+        if (eltname.compare("MESH200_4") == 0) {
+          getfem_cv_nodes.resize(3);
+          getfem_cv_nodes[0] = cdb_node_2_getfem_node[II];
+          getfem_cv_nodes[1] = cdb_node_2_getfem_node[JJ];
+          getfem_cv_nodes[2] = cdb_node_2_getfem_node[KK];
+          regions[imat].add(m.add_convex(bgeot::simplex_geotrans(2,1),
+                                         getfem_cv_nodes.begin()));
+          if (itype < elt_cnt.size())
+            elt_cnt[itype] += 1;
+        } else {
+          // TODO MESH200_2, MESH200_3, MESH200_4
+          GMM_WARNING2("Ignoring ANSYS element " << eltname
+                       << ". Import not supported yet.");
+        }
       }
       else if (nodesno == 4) {
 
@@ -982,7 +1000,24 @@ namespace getfem {
         }
       }
       else if (nodesno == 6) {
-        // TODO MESH200_5
+        // assume MESH200_5 (6-node triangular)
+        std::string eltname("MESH200_5");
+        if (elt_types.size() > itype && elt_types[itype].size() > 0)
+          eltname = elt_types[itype];
+        if (eltname.compare("MESH200_5") == 0 ||
+            eltname.compare("PLANE183") == 0) {
+          getfem_cv_nodes.resize(6);
+          getfem_cv_nodes[0] = cdb_node_2_getfem_node[II];
+          getfem_cv_nodes[1] = cdb_node_2_getfem_node[LL];
+          getfem_cv_nodes[2] = cdb_node_2_getfem_node[JJ];
+          getfem_cv_nodes[3] = cdb_node_2_getfem_node[NN];
+          getfem_cv_nodes[4] = cdb_node_2_getfem_node[MM];
+          getfem_cv_nodes[5] = cdb_node_2_getfem_node[KK];
+          regions[imat].add(m.add_convex(bgeot::simplex_geotrans(2,2),
+                                         getfem_cv_nodes.begin()));
+          if (itype < elt_cnt.size())
+            elt_cnt[itype] += 1;
+        }
       }
       else if (nodesno == 8) {
 
@@ -994,17 +1029,29 @@ namespace getfem {
         if (eltname.compare("MESH200_7") == 0 ||
             eltname.compare("PLANE82") == 0 ||
             eltname.compare("PLANE183") == 0) {
-          getfem_cv_nodes.resize(8);
-          getfem_cv_nodes[0] = cdb_node_2_getfem_node[II];
-          getfem_cv_nodes[1] = cdb_node_2_getfem_node[MM];
-          getfem_cv_nodes[2] = cdb_node_2_getfem_node[JJ];
-          getfem_cv_nodes[3] = cdb_node_2_getfem_node[PP];
-          getfem_cv_nodes[4] = cdb_node_2_getfem_node[NN];
-          getfem_cv_nodes[5] = cdb_node_2_getfem_node[LL];
-          getfem_cv_nodes[6] = cdb_node_2_getfem_node[OO];
-          getfem_cv_nodes[7] = cdb_node_2_getfem_node[KK];
-          regions[imat].add(m.add_convex(bgeot::Q2_incomplete_geotrans(2),
-                                         getfem_cv_nodes.begin()));
+          if (KK == LL && KK == OO) { // 6-node triangular
+            getfem_cv_nodes.resize(6);
+            getfem_cv_nodes[0] = cdb_node_2_getfem_node[II];
+            getfem_cv_nodes[1] = cdb_node_2_getfem_node[MM];
+            getfem_cv_nodes[2] = cdb_node_2_getfem_node[JJ];
+            getfem_cv_nodes[3] = cdb_node_2_getfem_node[PP];
+            getfem_cv_nodes[4] = cdb_node_2_getfem_node[NN];
+            getfem_cv_nodes[5] = cdb_node_2_getfem_node[KK];
+            regions[imat].add(m.add_convex(bgeot::simplex_geotrans(2,2),
+                                           getfem_cv_nodes.begin()));
+          } else {
+            getfem_cv_nodes.resize(8);
+            getfem_cv_nodes[0] = cdb_node_2_getfem_node[II];
+            getfem_cv_nodes[1] = cdb_node_2_getfem_node[MM];
+            getfem_cv_nodes[2] = cdb_node_2_getfem_node[JJ];
+            getfem_cv_nodes[3] = cdb_node_2_getfem_node[PP];
+            getfem_cv_nodes[4] = cdb_node_2_getfem_node[NN];
+            getfem_cv_nodes[5] = cdb_node_2_getfem_node[LL];
+            getfem_cv_nodes[6] = cdb_node_2_getfem_node[OO];
+            getfem_cv_nodes[7] = cdb_node_2_getfem_node[KK];
+            regions[imat].add(m.add_convex(bgeot::Q2_incomplete_geotrans(2),
+                                           getfem_cv_nodes.begin()));
+          }
           if (itype < elt_cnt.size())
             elt_cnt[itype] += 1;
         }
