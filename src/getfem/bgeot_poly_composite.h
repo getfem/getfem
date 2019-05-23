@@ -131,7 +131,8 @@ namespace bgeot {
     const base_matrix &M, const ITER &it, const base_node &p1, base_node &p2) {
     for (dim_type d = 0; d < p2.size(); ++d) {
       p2[d] = 0;
-      for (dim_type i = 0; i < p1.size(); ++i) p2[d] += M(i, d) * (*(it + i) - p1[i]);
+      auto &col = mat_col(M, d);
+      for (dim_type i = 0; i < p1.size(); ++i) p2[d] += col[i] * (*(it + i) - p1[i]);
     }
   }
 
