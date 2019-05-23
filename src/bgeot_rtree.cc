@@ -68,9 +68,9 @@ namespace bgeot {
     const base_node min,max;
     intersection_p(const base_node& min_, const base_node& max_)
       : min(min_), max(max_) {}
-    bool operator()(const base_node& min2, const base_node& max2)
+    bool operator()(const base_node& min2, const base_node& max2) const
     { return r1_inter_r2(min,max,min2,max2); }
-    bool accept(const base_node& min2, const base_node& max2)
+    bool accept(const base_node& min2, const base_node& max2) const
     { return operator()(min2,max2); }
   };
 
@@ -79,9 +79,9 @@ namespace bgeot {
     const base_node min,max;
     contains_p(const base_node& min_, const base_node& max_)
       : min(min_), max(max_) {}
-    bool operator()(const base_node& min2, const base_node& max2)
+    bool operator()(const base_node& min2, const base_node& max2) const
     { return r1_ge_r2(min2,max2,min,max); }
-    bool accept(const base_node& min2, const base_node& max2)
+    bool accept(const base_node& min2, const base_node& max2) const
     { return r1_inter_r2(min,max,min2,max2); }
   };
 
@@ -90,9 +90,9 @@ namespace bgeot {
     const base_node min,max;
     contained_p(const base_node& min_, const base_node& max_)
       : min(min_), max(max_) {}
-    bool accept(const base_node& min2, const base_node& max2)
+    bool accept(const base_node& min2, const base_node& max2) const
     { return r1_inter_r2(min,max,min2,max2); }
-    bool operator()(const base_node& min2, const base_node& max2)
+    bool operator()(const base_node& min2, const base_node& max2) const
     { return r1_ge_r2(min,max,min2,max2); }
   };
 
@@ -105,7 +105,7 @@ namespace bgeot {
         if (P[i] < min2[i] || P[i] > max2[i]) return false;
       return true;
     }
-    bool accept(const base_node& min2, const base_node& max2)
+    bool accept(const base_node& min2, const base_node& max2) const
     { return operator()(min2,max2); }
   };
 
@@ -116,7 +116,7 @@ namespace bgeot {
     const base_small_vector dirv;
     intersect_line(const base_node& org_, const base_small_vector &dirv_)
       : org(org_), dirv(dirv_) {}
-    bool operator()(const base_node& min2, const base_node& max2) {
+    bool operator()(const base_node& min2, const base_node& max2) const {
       size_type N = org.size();
       GMM_ASSERT1(N == min2.size(), "Dimensions mismatch");
       for (size_type i = 0; i < N; ++i)
@@ -133,7 +133,7 @@ namespace bgeot {
         }
       return false;
     }
-    bool accept(const base_node& min2, const base_node& max2)
+    bool accept(const base_node& min2, const base_node& max2) const
     { return operator()(min2,max2); }
   };
 
@@ -147,7 +147,7 @@ namespace bgeot {
                            const base_small_vector &dirv_,
                            const base_node& min_, const base_node& max_)
       : org(org_), dirv(dirv_), min(min_), max(max_) {}
-    bool operator()(const base_node& min2, const base_node& max2) {
+    bool operator()(const base_node& min2, const base_node& max2) const {
       size_type N = org.size();
       GMM_ASSERT1(N == min2.size(), "Dimensions mismatch");
       if (!(r1_inter_r2(min,max,min2,max2))) return false;
@@ -165,14 +165,14 @@ namespace bgeot {
         }
       return false;
     }
-    bool accept(const base_node& min2, const base_node& max2)
+    bool accept(const base_node& min2, const base_node& max2) const
     { return operator()(min2,max2); }
   };
 
 
   template <typename Predicate>
   static void find_matching_boxes_(rtree_elt_base *n, rtree::pbox_set& boxlst,
-                                   Predicate p) {
+                                   const Predicate &p) {
     if (n->isleaf()) {
       const rtree_leaf *rl = static_cast<rtree_leaf*>(n);
       for (rtree::pbox_cont::const_iterator it = rl->lst.begin();
