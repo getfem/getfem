@@ -43,6 +43,7 @@
 
 #include "bgeot_poly.h"
 #include "bgeot_mesh.h"
+#include "bgeot_rtree.h"
 
 // TODO : Use of rtree instead of dal::dynamic_tree_sorted<base_node,
 //        imbricated_box_less>
@@ -74,6 +75,8 @@ namespace bgeot {
 
     const basic_mesh *msh;
     PTAB vertexes;
+    rtree box_tree;
+    std::map<size_type, std::vector<size_type>> box_to_convexes_map;
     std::vector<base_matrix> gtrans;
     std::vector<scalar_type> det;
     std::vector<base_node> orgs;
@@ -83,6 +86,7 @@ namespace bgeot {
     dim_type dim(void) const { return msh->dim(); }
     pgeometric_trans trans_of_convex(size_type ic) const
     { return msh->trans_of_convex(ic); }
+    void initialise(const basic_mesh &m);
     
     mesh_precomposite(const basic_mesh &m);
     mesh_precomposite(void) : msh(0) {}
@@ -142,52 +146,49 @@ namespace bgeot {
       return poly_of_subelt(l).eval(p.begin());
     }
 
-    base_node p0(mp->dim());
+    auto dim = mp->dim();
+    base_node p0(dim);
     std::copy(it, it + mp->dim(), p0.begin());
-    mesh_structure::ind_cv_ct::const_iterator itc, itce;
 
-    mesh_precomposite::PTAB::const_sorted_iterator
-      it1 = mp->vertexes.sorted_ge(p0), it2 = it1;
-    size_type i1 = it1.index(), i2;
-
-    --it2; i2 = it2.index();
-
-
-    while (i1 != size_type(-1) || i2 != size_type(-1))
+    auto &box_tree = mp->box_tree;
+    rtree::pbox_set box_list;
+    box_tree.find_boxes_at_point(p0, box_list);
+    while (box_list.size())
     {
-      if (i1 != size_type(-1))
+      auto pmax_box = *box_list.begin();
+
+      if (box_list.size() > 1)
       {
-        const mesh_structure::ind_cv_ct &tc
-          = mp->linked_mesh().convex_to_point(i1);
-        itc = tc.begin(); itce = tc.end();
-        for (; itc != itce; ++itc)
+        auto max_rate = -1.0;
+        for (auto &&pbox : box_list)
         {
-          size_type ii = *itc;
-          mult_diff_transposed(mp->gtrans[ii], it, mp->orgs[ii], p0);
-          if (mp->trans_of_convex(ii)->convex_ref()->is_in(p0) < 1E-10) {
-            return to_scalar(poly_of_subelt(ii).eval(local_coordinate ? p0.begin() : it));
+          auto box_rate = 1.0;
+          for (size_type i = 0; i < dim; ++i)
+          {
+            auto h = pbox->max->at(i) - pbox->min->at(i);
+            if (h > 0)
+            {
+              auto rate = std::min(pbox->max->at(i) - p0[i], p0[i] - pbox->min->at(i)) / h;
+              box_rate = std::min(rate, box_rate);
+            }
+          }
+          if (box_rate > max_rate)
+          {
+            pmax_box = pbox;
+            max_rate = box_rate;
           }
         }
-        ++it1; i1 = it1.index();
       }
 
-      if (i2 != size_type(-1))
-      {
-        const mesh_structure::ind_cv_ct &tc
-          = mp->linked_mesh().convex_to_point(i2);
-        itc = tc.begin(); itce = tc.end();
-        for (; itc != itce; ++itc)
-        {
-          size_type ii = *itc;
-          mult_diff_transposed(mp->gtrans[ii], it, mp->orgs[ii], p0);
-          if (mp->trans_of_convex(ii)->convex_ref()->is_in(p0) < 1E-10) {
-            return to_scalar(poly_of_subelt(ii).eval(local_coordinate ? p0.begin() : it));
-          }
+      for (auto cv : mp->box_to_convexes_map.at(pmax_box->id)) {
+        mult_diff_transposed(mp->gtrans[cv], it, mp->orgs[cv], p0);
+        if (mp->trans_of_convex(cv)->convex_ref()->is_in(p0) < 1E-10) {
+          return to_scalar(poly_of_subelt(cv).eval(local_coordinate ? p0.begin() : it));
         }
-        --it2; i2 = it2.index();
       }
+      if (box_list.size() == 1) break;
+      box_list.erase(pmax_box);
     }
-
     GMM_ASSERT1(
       false, "Element not found in composite polynomial: " << base_node(*it, *it + mp->dim()));
   }

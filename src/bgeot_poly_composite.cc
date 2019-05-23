@@ -63,6 +63,10 @@ namespace bgeot {
   }
 
   mesh_precomposite::mesh_precomposite(const basic_mesh &m) {
+    initialise(m);
+  }
+
+  void mesh_precomposite::initialise(const basic_mesh &m) {
     msh = &m;
     det.resize(m.nb_convex());
     orgs.resize(m.nb_convex());
@@ -70,6 +74,8 @@ namespace bgeot {
     for (size_type i = 0; i <= m.points().index().last_true(); ++i) {
       vertexes.add(m.points()[i]);
     }
+
+    base_node min, max;
     for (dal::bv_visitor cv(m.convex_index()); !cv.finished(); ++cv) {
 
       pgeometric_trans pgt = m.trans_of_convex(cv);
@@ -89,8 +95,14 @@ namespace bgeot {
       gmm::mult(gmm::transposed(pc), gmm::transposed(G), B0);
       det[cv] = gmm::lu_inverse(B0);
       gtrans[cv] = B0;
-      orgs[cv] = m.points_of_convex(cv)[0];
+
+      auto points_of_convex = m.points_of_convex(cv);
+      orgs[cv] = points_of_convex[0];
+      bounding_box(min, max, points_of_convex);
+      box_to_convexes_map[box_tree.add_box(min, max)].push_back(cv);
     }
+
+    box_tree.build_tree();
   }
 
   DAL_TRIPLE_KEY(base_poly_key, short_type, short_type, std::vector<opt_long_scalar_type>);
