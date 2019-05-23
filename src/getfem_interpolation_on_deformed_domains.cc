@@ -60,9 +60,9 @@ auto most_central_box(const bgeot::rtree::pbox_set &bset,
     for (; it != end(bset); ++it) {
       auto rate_box = scalar_type{1};
       for (size_type i = 0; i < pt.size(); ++i) {
-        auto h = (*it)->max[i] - (*it)->min[i];
+        auto h = (*it)->max->at(i) - (*it)->min->at(i);
         if (h > 0.) {
-          auto rate = min((*it)->max[i] - pt[i], pt[i] - (*it)->min[i]) / h;
+          auto rate = min((*it)->max->at(i) - pt[i], pt[i] - (*it)->min->at(i)) / h;
           rate_box = min(rate, rate_box);
         }
       }

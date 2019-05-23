@@ -671,10 +671,10 @@ namespace getfem {
         for (const auto &box : bset) {
           scalar_type rating = scalar_type(1);
           for (size_type i = 0; i < m.dim(); ++i) {
-            scalar_type h = box->max[i] - box->min[i];
+            scalar_type h = box->max->at(i) - box->min->at(i);
             if (h > scalar_type(0)) {
-              scalar_type r = std::min(box->max[i] - P[i],
-                                       P[i] - box->min[i]) / h;
+              scalar_type r = std::min(box->max->at(i) - P[i],
+                                       P[i] - box->min->at(i)) / h;
               rating = std::min(r, rating);
             }
           }

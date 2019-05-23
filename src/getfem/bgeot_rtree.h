@@ -45,7 +45,7 @@ namespace bgeot {
 
   struct box_index {
     size_type id;
-    base_node min, max;
+    const base_node *min, *max;
   };
 
   struct box_index_compare {

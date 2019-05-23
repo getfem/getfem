@@ -183,7 +183,7 @@ namespace bgeot {
       const rtree_leaf *rl = static_cast<rtree_leaf*>(n);
       for (rtree::pbox_cont::const_iterator it = rl->lst.begin();
            it != rl->lst.end(); ++it) {
-        if (p((*it)->min, (*it)->max)) { boxlst.insert(*it); }
+        if (p(*(*it)->min, *(*it)->max)) { boxlst.insert(*it); }
       }
     } else {
       const rtree_node *rn = static_cast<rtree_node*>(n);
@@ -247,9 +247,9 @@ namespace bgeot {
     scalar_type v = bmin[dir] + (bmax[dir] - bmin[dir])/2; split_v = v;
     size_type cnt = 0;
     for (rtree::pbox_cont::const_iterator it = b.begin(); it!=b.end(); ++it) {
-      if ((*it)->max[dir] < v) {
-        if (cnt == 0) split_v = (*it)->max[dir];
-        else split_v = std::max((*it)->max[dir],split_v);
+      if ((*it)->max->at(dir) < v) {
+        if (cnt == 0) split_v = (*it)->max->at(dir);
+        else split_v = std::max((*it)->max->at(dir),split_v);
         cnt++;
       }
     }
@@ -281,8 +281,8 @@ namespace bgeot {
       size_type cnt1=0,cnt2=0;
       for (rtree::pbox_cont::const_iterator it = b.begin();
            it != b.end(); ++it) {
-        if ((*it)->min[split_dir] < split_v) cnt1++;
-        if ((*it)->max[split_dir] > split_v) cnt2++;
+        if ((*it)->min->at(split_dir) < split_v) cnt1++;
+        if ((*it)->max->at(split_dir) > split_v) cnt2++;
       }
       assert(cnt1); assert(cnt2);
       GMM_ASSERT1(cnt1+cnt2 >= b.size(), "internal error");
@@ -292,13 +292,13 @@ namespace bgeot {
       cnt1 = cnt2 = 0;
       for (rtree::pbox_cont::const_iterator it = b.begin();
            it != b.end(); ++it) {
-        if ((*it)->min[split_dir] < split_v) {
+        if ((*it)->min->at(split_dir) < split_v) {
           v1[cnt1++] = *it;
-          update_box(bmin1,bmax1,(*it)->min,(*it)->max);
+          update_box(bmin1,bmax1,*(*it)->min,*(*it)->max);
         }
-        if ((*it)->max[split_dir] > split_v) {
+        if ((*it)->max->at(split_dir) > split_v) {
           v2[cnt2++] = *it;
-          update_box(bmin2,bmax2,(*it)->min,(*it)->max);
+          update_box(bmin2,bmax2,*(*it)->min,*(*it)->max);
         }
       }
       for (size_type k=0; k < N; ++k) {
@@ -325,9 +325,9 @@ namespace bgeot {
     assert(root == 0);
     pbox_cont b(boxes.size());
     pbox_cont::iterator b_it = b.begin();
-    base_node bmin(boxes.front().min), bmax(boxes.front().max);
+    base_node bmin(*boxes.begin()->min), bmax(*boxes.begin()->max);
     for (box_cont::const_iterator it=boxes.begin(); it != boxes.end(); ++it) {
-      update_box(bmin,bmax,(*it).min,(*it).max);
+      update_box(bmin,bmax,*(*it).min,*(*it).max);
       *b_it++ = &(*it);
     }
     root = build_tree_(b, bmin, bmax, 0);
