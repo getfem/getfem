@@ -514,6 +514,9 @@ namespace getfem {
     mutable bool extract_variable_done;
     mutable bool extract_data_done;
 
+  private:
+    mutable std::map<size_type, std::vector<size_type>> box_to_convexes;
+
   public:
     void update_from_context() const {
       recompute_elt_boxes = true;
@@ -587,6 +590,7 @@ namespace getfem {
       // Element_boxes update (if necessary)
       if (recompute_elt_boxes) {
 
+        box_to_convexes.clear();
         element_boxes.clear();
         base_node bmin(N), bmax(N);
         const dal::bit_vector&
@@ -621,7 +625,7 @@ namespace getfem {
           for (auto &&val : bmin) val -= h*0.2;
           for (auto &&val : bmax) val += h*0.2;
 
-          element_boxes.add_box(bmin, bmax, cv);
+          box_to_convexes[element_boxes.add_box(bmin, bmax)].push_back(cv);
         }
         element_boxes.build_tree();
         recompute_elt_boxes = false;
@@ -703,32 +707,34 @@ namespace getfem {
       size_type best_cv(-1);
       base_node best_P_ref;
       for (size_type i = boxes.size(); i > 0; --i) {
+        for (auto convex : box_to_convexes.at(boxes[i-1]->id)) {
+          gic.init(target_mesh.points_of_convex(convex),
+                   target_mesh.trans_of_convex(convex));
 
-        cv = boxes[i-1]->id;
-        gic.init(target_mesh.points_of_convex(cv),
-                 target_mesh.trans_of_convex(cv));
+          bool converged;
+          bool is_in = gic.invert(P, P_ref, converged, 1E-4);
+          // cout << "cv = " << cv << " P = " << P << " P_ref = " << P_ref << endl;
+          // cout << " is_in = " << int(is_in) << endl;
+          // for (size_type iii = 0;
+          //     iii < target_mesh.points_of_convex(cv).size(); ++iii)
+          //  cout << target_mesh.points_of_convex(cv)[iii] << endl;
 
-        bool converged;
-        bool is_in = gic.invert(P, P_ref, converged, 1E-4);
-        // cout << "cv = " << cv << " P = " << P << " P_ref = " << P_ref << endl;
-        // cout << " is_in = " << int(is_in) << endl;
-        // for (size_type iii = 0;
-        //     iii < target_mesh.points_of_convex(cv).size(); ++iii)
-        //  cout << target_mesh.points_of_convex(cv)[iii] << endl;
-
-        if (converged) {
-          if (is_in) {
-            face_num = short_type(-1); // Should detect potential faces ?
-            ret_type = 1;
-            break;
-          } else {
-            scalar_type dist
-              = target_mesh.trans_of_convex(cv)->convex_ref()->is_in(P_ref);
-            if (dist < best_dist) {
-              best_dist = dist;
-              best_cv = cv;
-              best_P_ref = P_ref;
+          if (converged) {
+            cv = convex;
+            if (is_in) {
+              face_num = short_type(-1); // Should detect potential faces ?
+              ret_type = 1;
+              break;
+            } else {
+              scalar_type dist
+                = target_mesh.trans_of_convex(cv)->convex_ref()->is_in(P_ref);
+              if (dist < best_dist) {
+                best_dist = dist;
+                best_cv = cv;
+                best_P_ref = P_ref;
+              }
             }
+            break;
           }
         }
       }

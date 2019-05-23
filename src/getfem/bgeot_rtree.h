@@ -40,6 +40,7 @@
 
 #include <set>
 #include "bgeot_small_vector.h"
+#include "bgeot_node_tab.h"
 
 namespace bgeot {
 
@@ -48,9 +49,26 @@ namespace bgeot {
     const base_node *min, *max;
   };
 
-  struct box_index_compare {
+  struct box_index_id_compare {
     bool operator()(const box_index *plhs, const box_index *prhs) const {
       return plhs->id < prhs->id;
+    }
+  };
+
+  struct box_index_topology_compare {
+    bool is_less(const base_node &lhs, const base_node &rhs) const {
+      GMM_ASSERT2(lhs.size() == rhs.size(), "size mismatch");
+      const scalar_type EPS = 1e-13;
+      for (size_type i = 0; i < lhs.size(); ++i)
+        if (abs(lhs[i] - rhs[i]) > EPS) {
+          return lhs[i] < rhs[i];
+        }
+      return false;
+    }
+
+    bool operator()(const box_index &lhs, const box_index &rhs) const {
+      return is_less(*lhs.min, *rhs.min) ||
+             (!is_less(*rhs.min, *lhs.min) && is_less(*lhs.max, *rhs.max));
     }
   };
 
@@ -71,18 +89,20 @@ namespace bgeot {
    */
   class rtree {
   public:
-    using box_cont = std::deque<box_index> ;
+    using box_cont = std::set<box_index,box_index_topology_compare> ;
     using pbox_cont = std::vector<const box_index*>;
-    using pbox_set = std::set<const box_index *, box_index_compare>;
+    using pbox_set = std::set<const box_index *, box_index_id_compare>;
 
     rtree(scalar_type EPS = 1e-13);
     rtree(const rtree&) = delete;
     rtree& operator = (const rtree&) = delete;
 
-    void add_box(base_node min, base_node max, size_type id=size_type(-1)) {
-      box_index bi; bi.min = min; bi.max = max;
+    size_type add_box(const base_node &min, const base_node &max, size_type id=size_type(-1)) {
+      box_index bi;
+      bi.min = &nodes[nodes.add_node(min, EPS)];
+      bi.max = &nodes[nodes.add_node(max, EPS)];
       bi.id = (id + 1) ? id : boxes.size();
-      boxes.push_back(bi);
+      return boxes.emplace(std::move(bi)).first->id;
     }
     size_type nb_boxes() const { return boxes.size(); }
     void clear() { root = std::unique_ptr<rtree_elt_base>(); boxes.clear(); }
@@ -151,6 +171,7 @@ namespace bgeot {
     }
 
     const scalar_type EPS;
+    node_tab nodes;
     box_cont boxes;
     std::unique_ptr<rtree_elt_base> root;
     getfem::lock_factory locks_;

@@ -85,8 +85,8 @@ class  interpolate_transformation_on_deformed_domains
   contact_boundary slave; //also marked with a source or X prefix/suffix
 
   mutable bgeot::rtree element_boxes;
-  mutable std::vector<size_type> box_to_convex; //index to obtain
-                                                //a convex number from a box number
+  mutable std::map<size_type, std::vector<size_type>> box_to_convex; //index to obtain a convex
+                                                                     //number from a box number
   mutable bgeot::geotrans_inv_convex gic;
   mutable fem_precomp_pool fppool;
 
@@ -115,7 +115,6 @@ class  interpolate_transformation_on_deformed_domains
     dal::bit_vector points_already_interpolated;
     std::vector<base_node> transformed_points(m.nb_max_points());
     box_to_convex.clear();
-    box_to_convex.reserve(region.size());
 
     for (getfem::mr_visitor v(region, m); !v.finished(); ++v) {
       auto cv   = v.cv();
@@ -154,8 +153,7 @@ class  interpolate_transformation_on_deformed_domains
       }
 
       // Store the bounding box and additional information.
-      element_boxes.add_box(bmin, bmax, box_to_convex.size());
-      box_to_convex.push_back(cv);
+      box_to_convex[element_boxes.add_box(bmin, bmax)].push_back(cv);
     }
     element_boxes.build_tree();
   }
@@ -294,17 +292,21 @@ public:
     while (!bset.empty())
     {
       auto itmax = most_central_box(bset, pt_x);
-      cv = box_to_convex[(*itmax)->id];
-      auto deformed_nodes_y = deformed_master_nodes(cv);
-      gic.init(deformed_nodes_y, target_mesh.trans_of_convex(cv));
-      auto converged = true;
-      auto is_in = gic.invert(pt_x, P_ref, converged);
-      if (is_in && converged) {
-        face_num = static_cast<short_type>(-1);
-        transformation_success = true;
-        break;
+
+      for (auto i : box_to_convex.at((*itmax)->id))
+      {
+        auto deformed_nodes_y = deformed_master_nodes(i);
+        gic.init(deformed_nodes_y, target_mesh.trans_of_convex(i));
+        auto converged = true;
+        auto is_in = gic.invert(pt_x, P_ref, converged);
+        if (is_in && converged) {
+          cv = i;
+          face_num = static_cast<short_type>(-1);
+          transformation_success = true;
+          break;
+        }
       }
-      if (bset.size() == 1) break;
+      if (transformation_success || (bset.size() == 1)) break;
       bset.erase(itmax);
     }
 
