@@ -479,6 +479,16 @@ namespace getfem {
   // Interpolate transformation with an expression
   //=========================================================================
 
+  struct rated_box_index_compare {
+    bool operator()(
+      const std::pair<scalar_type, const bgeot::box_index*> &x,
+      const std::pair<scalar_type, const bgeot::box_index*> &y) const {
+      GMM_ASSERT2(x.second != nullptr, "x contains nullptr");
+      GMM_ASSERT2(y.second != nullptr, "y contains nullptr");
+      return (x.first < y.first) || (!(y.first < x.first) && (x.second->id < y.second->id));
+    }
+  };
+
   class interpolate_transformation_expression
     : public virtual_interpolate_transformation, public context_dependencies {
 
@@ -668,7 +678,8 @@ namespace getfem {
         element_boxes.find_boxes_at_point(P, bset);
 
         // using a std::set as a sorter
-        std::set<std::pair<scalar_type, const bgeot::box_index*> > rated_boxes;
+        std::set<std::pair<scalar_type, const bgeot::box_index*>, rated_box_index_compare>
+          rated_boxes;
         for (const auto &box : bset) {
           scalar_type rating = scalar_type(1);
           for (size_type i = 0; i < m.dim(); ++i) {
