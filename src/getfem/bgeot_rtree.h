@@ -88,20 +88,20 @@ namespace bgeot {
     void clear() { root = std::unique_ptr<rtree_elt_base>(); boxes.clear(); }
 
     void find_intersecting_boxes(const base_node& bmin, const base_node& bmax,
-                                 pbox_set& boxlst);
+                                 pbox_set& boxlst) const;
     void find_containing_boxes(const base_node& bmin, const base_node& bmax,
-                               pbox_set& boxlst);
+                               pbox_set& boxlst) const;
     void find_contained_boxes(const base_node& bmin, const base_node& bmax,
-                              pbox_set& boxlst);
-    void find_boxes_at_point(const base_node& P, pbox_set& boxlst);
+                              pbox_set& boxlst) const;
+    void find_boxes_at_point(const base_node& P, pbox_set& boxlst) const;
     void find_line_intersecting_boxes(const base_node& org,
                                       const base_small_vector& dirv,
-                                      pbox_set& boxlst);
+                                      pbox_set& boxlst) const;
     void find_line_intersecting_boxes(const base_node& org,
                                       const base_small_vector& dirv,
                                       const base_node& bmin,
                                       const base_node& bmax,
-                                      pbox_set& boxlst);
+                                      pbox_set& boxlst) const;
 
     void find_intersecting_boxes(const base_node& bmin, const base_node& bmax,
                                  std::vector<size_type>& idvec) {
@@ -122,7 +122,7 @@ namespace bgeot {
       find_contained_boxes(bmin, bmax, bs);
       pbox_set_to_idvec(bs, idvec);
     }
-    void find_boxes_at_point(const base_node& P, std::vector<size_type>& idvec)
+    void find_boxes_at_point(const base_node& P, std::vector<size_type>& idvec) const
     { pbox_set bs; find_boxes_at_point(P, bs);  pbox_set_to_idvec(bs, idvec); }
     void find_line_intersecting_boxes(const base_node& org,
                                       const base_small_vector& dirv,
@@ -144,7 +144,7 @@ namespace bgeot {
     void dump();
     void build_tree();
   private:
-    static void pbox_set_to_idvec(pbox_set bs, std::vector<size_type>& idvec) {
+    void pbox_set_to_idvec(pbox_set bs, std::vector<size_type>& idvec) const {
       idvec.reserve(bs.size()); idvec.resize(0);
       for (pbox_set::const_iterator it=bs.begin(); it != bs.end(); ++it)
         idvec.push_back((*it)->id);

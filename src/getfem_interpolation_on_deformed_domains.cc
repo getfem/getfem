@@ -157,6 +157,7 @@ class  interpolate_transformation_on_deformed_domains
       element_boxes.add_box(bmin, bmax, box_to_convex.size());
       box_to_convex.push_back(cv);
     }
+    element_boxes.build_tree();
   }
 
   fem_interpolation_context deformed_master_context(size_type cv) const

@@ -613,6 +613,7 @@ namespace getfem {
 
           element_boxes.add_box(bmin, bmax, cv);
         }
+        element_boxes.build_tree();
         recompute_elt_boxes = false;
       }
     }
