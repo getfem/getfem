@@ -98,7 +98,7 @@ namespace bgeot {
 
   /* match boxes containing P */
   struct has_point_p {
-    const base_node P;
+    const base_node &P;
     const scalar_type EPS;
     has_point_p(const base_node& P_, scalar_type EPS) : P(P_), EPS{EPS} {}
     bool operator()(const base_node& min2, const base_node& max2) const {
