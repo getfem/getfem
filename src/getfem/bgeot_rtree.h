@@ -75,7 +75,7 @@ namespace bgeot {
     using pbox_cont = std::vector<const box_index*>;
     using pbox_set = std::set<const box_index *, box_index_compare>;
 
-    rtree() = default;
+    rtree(scalar_type EPS = 1e-13);
     rtree(const rtree&) = delete;
     rtree& operator = (const rtree&) = delete;
 
@@ -150,6 +150,7 @@ namespace bgeot {
         idvec.push_back((*it)->id);
     }
 
+    const scalar_type EPS;
     box_cont boxes;
     std::unique_ptr<rtree_elt_base> root;
     getfem::lock_factory locks_;

@@ -99,10 +99,13 @@ namespace bgeot {
   /* match boxes containing P */
   struct has_point_p {
     const base_node P;
-    has_point_p(const base_node& P_) : P(P_) {}
-    bool operator()(const base_node& min2, const base_node& max2) {
-      for (size_type i=0; i < P.size(); ++i)
-        if (P[i] < min2[i] || P[i] > max2[i]) return false;
+    const scalar_type EPS;
+    has_point_p(const base_node& P_, scalar_type EPS) : P(P_), EPS{EPS} {}
+    bool operator()(const base_node& min2, const base_node& max2) const {
+      for (size_type i = 0; i < P.size(); ++i) {
+        if ((abs(P[i] - min2[i]) > EPS) && (P[i] < min2[i])) return false;
+        if ((abs(max2[i] - P[i]) > EPS) && (P[i] > max2[i])) return false;
+      }
       return true;
     }
     bool accept(const base_node& min2, const base_node& max2) const
@@ -170,6 +173,9 @@ namespace bgeot {
   };
 
 
+  rtree::rtree(scalar_type EPS) : EPS{EPS}
+  {}
+
   template <typename Predicate>
   static void find_matching_boxes_(rtree_elt_base *n, rtree::pbox_set& boxlst,
                                    const Predicate &p) {
@@ -209,7 +215,8 @@ namespace bgeot {
 
   void rtree::find_boxes_at_point(const base_node& P, pbox_set& boxlst) {
     boxlst.clear(); if (!root) build_tree();
-    if (root) find_matching_boxes_(root.get(), boxlst, has_point_p(P));
+    GMM_ASSERT1(root, "Boxtree not initialised.");
+    find_matching_boxes_(root.get(), boxlst, has_point_p(P, EPS));
   }
 
   void rtree::find_line_intersecting_boxes(const base_node& org,
