@@ -50,50 +50,57 @@ namespace bgeot {
   }
 
   inline static bool r1_ge_r2(const base_node& min1, const base_node& max1,
-                       const base_node& min2, const base_node& max2) {
+                       const base_node& min2, const base_node& max2,
+                       scalar_type EPS) {
     for (size_type i=0; i < min1.size(); ++i)
-      if (!(min1[i] <= min2[i] && max1[i] >= max2[i])) return false;
+      if ((abs(min1[i] - min2[i]) > EPS && min1[i] > min2[i]) ||
+          (abs(max1[i] - max2[i]) > EPS && max1[i] < max2[i])) return false;
     return true;
   }
 
   inline static bool r1_inter_r2(const base_node& min1, const base_node& max1,
-                          const base_node& min2, const base_node& max2) {
+                          const base_node& min2, const base_node& max2,
+                          scalar_type EPS) {
     for (size_type i=0; i < min1.size(); ++i)
-      if (max1[i] < min2[i] || min1[i] > max2[i]) return false;
+      if ((abs(max1[i] - min2[i]) > EPS && max1[i] < min2[i]) ||
+          (abs(min1[i] - max2[i]) > EPS && min1[i] > max2[i])) return false;
     return true;
   }
 
   /* some predicates for searches */
   struct intersection_p {
-    const base_node min,max;
-    intersection_p(const base_node& min_, const base_node& max_)
-      : min(min_), max(max_) {}
+    const base_node &min, &max;
+    const scalar_type EPS;
+    intersection_p(const base_node& min_, const base_node& max_, scalar_type EPS)
+      : min(min_), max(max_), EPS{EPS} {}
     bool operator()(const base_node& min2, const base_node& max2) const
-    { return r1_inter_r2(min,max,min2,max2); }
+    { return r1_inter_r2(min,max,min2,max2,EPS); }
     bool accept(const base_node& min2, const base_node& max2) const
     { return operator()(min2,max2); }
   };
 
   /* match boxes containing [min..max] */
   struct contains_p {
-    const base_node min,max;
-    contains_p(const base_node& min_, const base_node& max_)
-      : min(min_), max(max_) {}
+    const base_node &min, &max;
+    const scalar_type EPS;
+    contains_p(const base_node& min_, const base_node& max_, scalar_type EPS)
+      : min(min_), max(max_), EPS{EPS} {}
     bool operator()(const base_node& min2, const base_node& max2) const
-    { return r1_ge_r2(min2,max2,min,max); }
+    { return r1_ge_r2(min2,max2,min,max,EPS); }
     bool accept(const base_node& min2, const base_node& max2) const
-    { return r1_inter_r2(min,max,min2,max2); }
+    { return r1_inter_r2(min,max,min2,max2,EPS); }
   };
 
   /* match boxes contained in [min..max] */
   struct contained_p {
-    const base_node min,max;
-    contained_p(const base_node& min_, const base_node& max_)
-      : min(min_), max(max_) {}
+    const base_node &min, &max;
+    const scalar_type EPS;
+    contained_p(const base_node& min_, const base_node& max_, scalar_type EPS)
+      : min(min_), max(max_), EPS{EPS} {}
     bool accept(const base_node& min2, const base_node& max2) const
-    { return r1_inter_r2(min,max,min2,max2); }
+    { return r1_inter_r2(min,max,min2,max2,EPS); }
     bool operator()(const base_node& min2, const base_node& max2) const
-    { return r1_ge_r2(min,max,min2,max2); }
+    { return r1_ge_r2(min,max,min2,max2,EPS); }
   };
 
   /* match boxes containing P */
@@ -146,14 +153,16 @@ namespace bgeot {
     const base_node org;
     const base_small_vector dirv;
     const base_node min,max;
+    const scalar_type EPS;
     intersect_line_and_box(const base_node& org_,
                            const base_small_vector &dirv_,
-                           const base_node& min_, const base_node& max_)
-      : org(org_), dirv(dirv_), min(min_), max(max_) {}
+                           const base_node& min_, const base_node& max_,
+                           scalar_type EPS)
+      : org(org_), dirv(dirv_), min(min_), max(max_), EPS{EPS} {}
     bool operator()(const base_node& min2, const base_node& max2) const {
       size_type N = org.size();
       GMM_ASSERT1(N == min2.size(), "Dimensions mismatch");
-      if (!(r1_inter_r2(min,max,min2,max2))) return false;
+      if (!(r1_inter_r2(min,max,min2,max2,EPS))) return false;
       for (size_type i = 0; i < N; ++i)
         if (dirv[i] != scalar_type(0)) {
           scalar_type a1=(min2[i]-org[i])/dirv[i], a2=(max2[i]-org[i])/dirv[i];
@@ -199,21 +208,21 @@ namespace bgeot {
                                       pbox_set& boxlst) const {
     boxlst.clear();
     GMM_ASSERT2(root, "Boxtree not initialised.");
-    find_matching_boxes_(root.get(),boxlst,intersection_p(bmin,bmax));
+    find_matching_boxes_(root.get(),boxlst,intersection_p(bmin,bmax, EPS));
   }
 
   void rtree::find_containing_boxes(const base_node& bmin,
                                     const base_node& bmax, pbox_set& boxlst) const {
     boxlst.clear();
     GMM_ASSERT2(root, "Boxtree not initialised.");
-    find_matching_boxes_(root.get(), boxlst, contains_p(bmin,bmax));
+    find_matching_boxes_(root.get(), boxlst, contains_p(bmin,bmax, EPS));
   }
 
   void rtree::find_contained_boxes(const base_node& bmin,
                                    const base_node& bmax, pbox_set& boxlst) const {
     boxlst.clear();
     GMM_ASSERT2(root, "Boxtree not initialised.");
-    find_matching_boxes_(root.get(), boxlst, contained_p(bmin,bmax));
+    find_matching_boxes_(root.get(), boxlst, contained_p(bmin,bmax, EPS));
   }
 
   void rtree::find_boxes_at_point(const base_node& P, pbox_set& boxlst) const {
@@ -238,7 +247,7 @@ namespace bgeot {
     boxlst.clear();
     GMM_ASSERT2(root, "Boxtree not initialised.");
     find_matching_boxes_(root.get(), boxlst,
-                         intersect_line_and_box(org, dirv, bmin, bmax));
+                         intersect_line_and_box(org, dirv, bmin, bmax, EPS));
   }
 
   /*
