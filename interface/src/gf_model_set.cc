@@ -2646,8 +2646,66 @@ void gf_model_set(getfemint::mexargs_in& m_in,
          workspace().set_dependence(md, mim);
          out.pop().from_integer(int(ind));
          );
-        
-
+  
+  
+    /*@SET ind = ('add enriched Mindlin Reissner plate brick', @tmim mim, @tmim mim_reduced1, @tmim mim_reduced2, @str varname_ua, @str varname_theta,@str varname_u3, @str varname_theta3 , @str param_E, @str param_nu, @str param_epsilon [,@int variant [, @int region]])
+    Add a term corresponding to the enriched Reissner-Mindlin plate
+    model for which `varname_ua` is the membrane displacements,
+    `varname_u3` is the transverse displacement,
+    `varname_theta` the rotation of
+    fibers normal to the midplane, 
+    `varname_theta3` the pinching,     
+    'param_E' the Young Modulus,
+    `param_nu` the poisson ratio,
+    `param_epsilon` the plate thickness. Note that since this brick
+    uses the high level generic assembly language, the parameter can
+    be regular expression of this language.
+    There are four variants.
+    `variant = 0` corresponds to the an
+    unreduced formulation and in that case only the integration
+    method `mim` is used. Practically this variant is not usable since
+    it is subject to a strong locking phenomenon.
+    `variant = 1` corresponds to a reduced integration where `mim` is
+    used for the rotation term and `mim_reduced1` for the transverse
+    shear term and `mim_reduced2` for the pinching term.
+    `variant = 2` (default) corresponds to the projection onto
+    a rotated RT0 element of the transverse shear term and a reduced integration for the pinching term.
+    For the moment, this is adapted to quadrilateral only (because it is not sufficient to
+    remove the locking phenomenon on triangle elements). Note also that if
+    you use high order elements, the projection on RT0 will reduce the order
+    of the approximation.
+    `variant = 3` corresponds to the projection onto
+    a rotated RT0 element of the transverse shear term and the projection onto P0 element of the pinching term.
+    For the moment, this is adapted to quadrilateral only (because it is not sufficient to
+    remove the locking phenomenon on triangle elements). Note also that if
+    you use high order elements, the projection on RT0 will reduce the order
+    of the approximation.   
+    Returns the brick index in the model.
+      @*/
+     sub_command
+        ("add enriched Mindlin Reissner plate brick", 10, 12, 0, 1,
+         getfem::mesh_im *mim = to_meshim_object(in.pop());
+         getfem::mesh_im *mim_reduced1 = to_meshim_object(in.pop());
+         getfem::mesh_im *mim_reduced2 = to_meshim_object(in.pop());
+         std::string varname_Ua = in.pop().to_string();
+         std::string varname_theta = in.pop().to_string();
+         std::string varname_U3 = in.pop().to_string();
+         std::string varname_theta3 = in.pop().to_string();
+         std::string param_E = in.pop().to_string();
+         std::string param_nu = in.pop().to_string();
+         std::string param_epsilon = in.pop().to_string();
+         size_type variant = size_type(3);//2
+         if (in.remaining()) variant = in.pop().to_integer();
+         size_type region = size_type(-1);
+         if (in.remaining()) region = in.pop().to_integer();
+         size_type ind = add_enriched_Mindlin_Reissner_plate_brick
+         (*md, *mim, *mim_reduced1,*mim_reduced2,
+          varname_Ua, varname_theta, varname_U3, varname_theta3,
+          param_E, param_nu, param_epsilon, variant, region);
+         workspace().set_dependence(md, mim);
+         out.pop().from_integer(int(ind));
+         );
+      
 
     /*@SET ind = ('add mass brick', @tmim mim, @str varname[, @str dataexpr_rho[, @int region]])
       Add mass term to the model relatively to the variable `varname`.
