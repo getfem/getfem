@@ -105,7 +105,7 @@ namespace bgeot {
       return boxes.emplace(std::move(bi)).first->id;
     }
     size_type nb_boxes() const { return boxes.size(); }
-    void clear() { root = std::unique_ptr<rtree_elt_base>(); boxes.clear(); }
+    void clear();
 
     void find_intersecting_boxes(const base_node& bmin, const base_node& bmax,
                                  pbox_set& boxlst) const;

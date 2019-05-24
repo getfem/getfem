@@ -185,6 +185,12 @@ namespace bgeot {
   rtree::rtree(scalar_type EPS) : EPS{EPS}
   {}
 
+  void rtree::clear() {
+    root = std::unique_ptr<rtree_elt_base>();
+    boxes.clear();
+    nodes.clear();
+  }
+
   template <typename Predicate>
   static void find_matching_boxes_(rtree_elt_base *n, rtree::pbox_set& boxlst,
                                    const Predicate &p) {
