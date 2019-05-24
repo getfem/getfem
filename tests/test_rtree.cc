@@ -199,7 +199,7 @@ static void check_tree() {
     for (size_type d=0; d < sizeof(dec)/sizeof(dec[0]); ++d) {
       //cout << "C=" << C << ",  DEC=" << dec[d] << "\n";
       for (int i=-C; i < C-1; ++i) {
-	base_node a(1),b(1); a[0] = i/double(C); b[0]=(i+dec[d])/double(C);
+	base_node a(2),b(2); a[0] = i/double(C); b[0]=(i+dec[d])/double(C);
 	rmin.push_back(a); rmax.push_back(b);
 	tree.add_box(rmin.back(),rmax.back());
       }
