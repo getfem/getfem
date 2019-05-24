@@ -198,27 +198,27 @@ namespace bgeot {
                                       const base_node& bmax,
                                       pbox_set& boxlst) const {
     boxlst.clear();
-    GMM_ASSERT1(root, "Boxtree not initialised.");
+    GMM_ASSERT2(root, "Boxtree not initialised.");
     find_matching_boxes_(root.get(),boxlst,intersection_p(bmin,bmax));
   }
 
   void rtree::find_containing_boxes(const base_node& bmin,
                                     const base_node& bmax, pbox_set& boxlst) const {
     boxlst.clear();
-    GMM_ASSERT1(root, "Boxtree not initialised.");
+    GMM_ASSERT2(root, "Boxtree not initialised.");
     find_matching_boxes_(root.get(), boxlst, contains_p(bmin,bmax));
   }
 
   void rtree::find_contained_boxes(const base_node& bmin,
                                    const base_node& bmax, pbox_set& boxlst) const {
     boxlst.clear();
-    GMM_ASSERT1(root, "Boxtree not initialised.");
+    GMM_ASSERT2(root, "Boxtree not initialised.");
     find_matching_boxes_(root.get(), boxlst, contained_p(bmin,bmax));
   }
 
   void rtree::find_boxes_at_point(const base_node& P, pbox_set& boxlst) const {
     boxlst.clear();
-    GMM_ASSERT1(root, "Boxtree not initialised.");
+    GMM_ASSERT2(root, "Boxtree not initialised.");
     find_matching_boxes_(root.get(), boxlst, has_point_p(P, EPS));
   }
 
@@ -226,7 +226,7 @@ namespace bgeot {
                                            const base_small_vector& dirv,
                                            pbox_set& boxlst) const {
     boxlst.clear();
-    GMM_ASSERT1(root, "Boxtree not initialised.");
+    GMM_ASSERT2(root, "Boxtree not initialised.");
     find_matching_boxes_(root.get(),boxlst,intersect_line(org, dirv));
   }
 
@@ -236,7 +236,7 @@ namespace bgeot {
                                            const base_node& bmax,
                                            pbox_set& boxlst) const {
     boxlst.clear();
-    GMM_ASSERT1(root, "Boxtree not initialised.");
+    GMM_ASSERT2(root, "Boxtree not initialised.");
     find_matching_boxes_(root.get(), boxlst,
                          intersect_line_and_box(org, dirv, bmin, bmax));
   }
