@@ -36,6 +36,9 @@ T = 1/(C*FT*FT*N*2);                 % Final time
 DT = T/50;                           % Time step
 THETA = 0.5;                         % Theta method parameter
 
+SCHEME = 2;                          % Time integration scheme
+                                     % 1 = Theta-method
+                                     % 2 = Houbolt
 
 if (N == 1)
   MESH_TYPE = 'GT_PK(1,1)';          % segments
