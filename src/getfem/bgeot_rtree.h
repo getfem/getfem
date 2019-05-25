@@ -60,7 +60,7 @@ namespace bgeot {
       GMM_ASSERT2(lhs.size() == rhs.size(), "size mismatch");
       const scalar_type EPS = 1e-13;
       for (size_type i = 0; i < lhs.size(); ++i)
-        if (abs(lhs[i] - rhs[i]) > EPS) {
+        if (gmm::abs(lhs[i] - rhs[i]) > EPS) {
           return lhs[i] < rhs[i];
         }
       return false;
@@ -93,17 +93,12 @@ namespace bgeot {
     using pbox_cont = std::vector<const box_index*>;
     using pbox_set = std::set<const box_index *, box_index_id_compare>;
 
-    rtree(scalar_type EPS = 1e-13);
+    rtree(scalar_type EPS = 0);
     rtree(const rtree&) = delete;
     rtree& operator = (const rtree&) = delete;
 
-    size_type add_box(const base_node &min, const base_node &max, size_type id=size_type(-1)) {
-      box_index bi;
-      bi.min = &nodes[nodes.add_node(min, EPS)];
-      bi.max = &nodes[nodes.add_node(max, EPS)];
-      bi.id = (id + 1) ? id : boxes.size();
-      return boxes.emplace(std::move(bi)).first->id;
-    }
+    size_type add_box(const base_node &min, const base_node &max,
+                      size_type id=size_type(-1));
     size_type nb_boxes() const { return boxes.size(); }
     void clear();
 
@@ -174,6 +169,7 @@ namespace bgeot {
     node_tab nodes;
     box_cont boxes;
     std::unique_ptr<rtree_elt_base> root;
+    bool tree_built;
     getfem::lock_factory locks_;
   };
 

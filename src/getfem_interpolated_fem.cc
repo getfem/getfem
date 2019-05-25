@@ -33,6 +33,7 @@ namespace getfem {
       for (unsigned k=0; k < min.size(); ++k) { min[k]-=EPS; max[k]+=EPS; }
       boxtree.add_box(min, max, cv);
     }
+    boxtree.build_tree();
   }
 
   bool interpolated_fem::find_a_point(base_node pt, base_node &ptr,

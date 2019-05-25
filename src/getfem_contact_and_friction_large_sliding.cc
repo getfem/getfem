@@ -1479,6 +1479,7 @@ namespace getfem {
         face_of_elements.push_back(v.f());
       }
     }
+    element_boxes.build_tree();
   }
 
 

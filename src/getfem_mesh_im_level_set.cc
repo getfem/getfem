@@ -667,6 +667,7 @@ namespace getfem {
 		    size_type is = global_intersection.add_segment(i1, i2);
 
 		    rtree_seg.add_box(min, max, is);
+                    rtree_seg.build_tree(); // Not efficient !
 
 		    
 		    const base_node &PE1

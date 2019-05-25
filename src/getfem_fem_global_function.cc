@@ -87,6 +87,7 @@ namespace getfem {
       functions[i]->bounding_box(bmin, bmax);
       boxtree.add_box(bmin, bmax, i);
     }
+    boxtree.build_tree();
 
     scalar_type EPS=1E-13;
     size_type max_dof(0);
