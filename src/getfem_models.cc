@@ -1144,7 +1144,7 @@ namespace getfem {
       if (it->second.is_variable && it->second.ptsc) {
 
         std::string name_v, name_previous_v;
-        it->second.ptsc->time_derivative_to_be_intialized(name_v,
+        it->second.ptsc->time_derivative_to_be_initialized(name_v,
                                                           name_previous_v);
 
         if (name_v.size()) {
@@ -1205,7 +1205,7 @@ namespace getfem {
         }
       }
 
-      virtual void time_derivative_to_be_intialized
+      virtual void time_derivative_to_be_initialized
       (std::string &name_v, std::string &name_previous_v) const
       { if (theta != scalar_type(1)) { name_v = V; name_previous_v = V0; } }
 
@@ -1336,7 +1336,7 @@ namespace getfem {
       }
     }
 
-    virtual void time_derivative_to_be_intialized
+    virtual void time_derivative_to_be_initialized
     (std::string &name_v, std::string &name_previous_v) const
     { if (theta != scalar_type(1)) { name_v = A; name_previous_v = A0; } }
 
@@ -1475,7 +1475,7 @@ namespace getfem {
         }
       }
 
-      virtual void time_derivative_to_be_intialized
+      virtual void time_derivative_to_be_initialized
       (std::string &name_v, std::string &name_previous_v) const {
         if (beta != scalar_type(0.5) || gamma != scalar_type(1))
           { name_v = A; name_previous_v = A0; }

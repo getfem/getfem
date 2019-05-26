@@ -1165,7 +1165,7 @@ namespace getfem {
     virtual void init_affine_dependent_variables(model &md) const = 0;
     virtual void init_affine_dependent_variables_precomputation(model &md)
       const = 0;
-    virtual void time_derivative_to_be_intialized
+    virtual void time_derivative_to_be_initialized
       (std::string &name_v, std::string &name_previous_v) const = 0;
     virtual void shift_variables(model &md) const = 0;
     virtual ~virtual_time_scheme() {}
