@@ -82,14 +82,14 @@ namespace getfem {
 
     size_type nb_total_dof(functions.size());
     base_node bmin(dim()), bmax(dim());
-    bgeot::rtree boxtree;
+    bgeot::rtree boxtree{1E-13};
+    std::map<size_type, std::vector<size_type>> box_to_convexes_map;
     for (size_type i=0; i < nb_total_dof; ++i) {
       functions[i]->bounding_box(bmin, bmax);
-      boxtree.add_box(bmin, bmax, i);
+      box_to_convexes_map[boxtree.add_box(bmin, bmax, i)].push_back(i);
     }
     boxtree.build_tree();
 
-    scalar_type EPS=1E-13;
     size_type max_dof(0);
     index_of_global_dof_.clear();
     index_of_global_dof_.resize(m.nb_allocated_convex());
@@ -99,8 +99,6 @@ namespace getfem {
       bgeot::pgeometric_trans pgt = m.trans_of_convex(cv);
 
       bounding_box(bmin, bmax, m.points_of_convex(cv), pgt);
-      for (auto&& xx : bmin) xx -= EPS;
-      for (auto&& xx : bmax) xx += EPS;
 
       bgeot::rtree::pbox_set boxlst;
       boxtree.find_intersecting_boxes(bmin, bmax, boxlst);
@@ -113,18 +111,22 @@ namespace getfem {
         papprox_integration pai = pim->approx_method();
 
         for (const auto &box : boxlst) {
-          for (size_type k = 0; k < pai->nb_points(); ++k) {
-            base_node gpt = pgt->transform(pai->point(k),
-                                           m.points_of_convex(cv));
-            if (functions[box->id]->is_in_support(gpt)) {
-              index_of_global_dof_[cv].push_back(box->id);
-              break;
+          for (auto candidate : box_to_convexes_map.at(box->id)) {
+            for (size_type k = 0; k < pai->nb_points(); ++k) {
+              base_node gpt = pgt->transform(pai->point(k),
+                                             m.points_of_convex(cv));
+              if (functions[candidate]->is_in_support(gpt)) {
+                index_of_global_dof_[cv].push_back(candidate);
+                break;
+              }
             }
           }
         }
       } else { // !has_mesh_im
-        for (const auto &box : boxlst)
-          index_of_global_dof_[cv].push_back(box->id);
+        for (const auto &box : boxlst) {
+          for (auto candidate : box_to_convexes_map.at(box->id))
+            index_of_global_dof_[cv].push_back(candidate);
+        }
       }
       max_dof = std::max(max_dof, index_of_global_dof_[cv].size());
     }
