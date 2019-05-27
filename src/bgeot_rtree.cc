@@ -227,7 +227,7 @@ namespace bgeot {
                                       pbox_set& boxlst) const {
     
     boxlst.clear();
-    GMM_ASSERT1(tree_built, "Boxtree not initialised.");
+    GMM_ASSERT2(tree_built, "Boxtree not initialised.");
     if (root)
       find_matching_boxes_(root.get(),boxlst,intersection_p(bmin,bmax, EPS));
   }
@@ -236,7 +236,7 @@ namespace bgeot {
                                     const base_node& bmax,
                                     pbox_set& boxlst) const {
     boxlst.clear();
-    GMM_ASSERT1( tree_built, "Boxtree not initialised.");
+    GMM_ASSERT2( tree_built, "Boxtree not initialised.");
     if (root)
       find_matching_boxes_(root.get(), boxlst, contains_p(bmin,bmax, EPS));
   }
@@ -245,14 +245,14 @@ namespace bgeot {
                                    const base_node& bmax,
                                    pbox_set& boxlst) const {
     boxlst.clear();
-    GMM_ASSERT1(tree_built, "Boxtree not initialised.");
+    GMM_ASSERT2(tree_built, "Boxtree not initialised.");
     if (root)
       find_matching_boxes_(root.get(), boxlst, contained_p(bmin,bmax, EPS));
   }
 
   void rtree::find_boxes_at_point(const base_node& P, pbox_set& boxlst) const {
     boxlst.clear();
-    GMM_ASSERT1(tree_built, "Boxtree not initialised.");
+    GMM_ASSERT2(tree_built, "Boxtree not initialised.");
     if (root)
       find_matching_boxes_(root.get(), boxlst, has_point_p(P, EPS));
   }
@@ -261,7 +261,7 @@ namespace bgeot {
                                            const base_small_vector& dirv,
                                            pbox_set& boxlst) const {
     boxlst.clear();
-    GMM_ASSERT1(tree_built, "Boxtree not initialised.");
+    GMM_ASSERT2(tree_built, "Boxtree not initialised.");
     if (root)
       find_matching_boxes_(root.get(),boxlst,intersect_line(org, dirv));
   }
@@ -272,7 +272,7 @@ namespace bgeot {
                                            const base_node& bmax,
                                            pbox_set& boxlst) const {
     boxlst.clear();
-    GMM_ASSERT1(tree_built, "Boxtree not initialised.");
+    GMM_ASSERT2(tree_built, "Boxtree not initialised.");
     if (root)
       find_matching_boxes_(root.get(), boxlst,
                            intersect_line_and_box(org, dirv, bmin, bmax, EPS));
