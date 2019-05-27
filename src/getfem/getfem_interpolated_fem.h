@@ -107,6 +107,7 @@ namespace getfem {
     mutable std::vector<elt_interpolation_data> elements;
     mutable bgeot::rtree boxtree; // Tree containing the bounding box
                                   // of mf1 elements
+    mutable std::map<size_type, std::vector<size_type>> box_to_convexes_map;
     mutable std::vector<size_type> ind_dof; /* all functions using this work
                                                array should keep it full of
                                                size_type(-1) */
