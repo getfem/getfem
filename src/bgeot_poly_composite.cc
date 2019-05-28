@@ -62,7 +62,7 @@ namespace bgeot {
     return 0;
   }
 
-  mesh_precomposite::mesh_precomposite(const basic_mesh &m) {
+  mesh_precomposite::mesh_precomposite(const basic_mesh &m) : box_tree{1e-13} {
     initialise(m);
   }
 
