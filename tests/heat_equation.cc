@@ -103,7 +103,6 @@ struct heat_equation_problem {
   plain_vector U, V;
 
   scalar_type dt, T, theta;
-  size_type scheme;
 
   std::string datafilename;
   bgeot::md_param PARAM;
@@ -151,7 +150,6 @@ void heat_equation_problem::init(void) {
   scalar_type FT = PARAM.real_value("FT", "parameter for exact solution");
   dt = PARAM.real_value("DT", "Time step");
   T = PARAM.real_value("T", "final time");
-  scheme = PARAM.int_value("SCHEME", "Time integration scheme");
   theta = PARAM.real_value("THETA", "Theta method parameter");
   sol_c = PARAM.real_value("C", "Diffusion coefficient");
   residual = PARAM.real_value("RESIDUAL");
@@ -245,16 +243,7 @@ bool heat_equation_problem::solve(void) {
        DIRICHLET_BOUNDARY_NUM, "DirichletData");
 
   // transient part.
-  switch (scheme) {
-  case 1 : // Theta-method
-    getfem::add_theta_method_for_first_order(model, "u", theta);
-    break;
-  case 2 : // Houbolt-method
-    getfem::add_Houbolt_scheme(model, "u");
-    break;
-  default : GMM_ASSERT1(false, "Unvalid time integration scheme");
-  }
-
+  getfem::add_theta_method_for_first_order(model, "u", theta);
   getfem::add_mass_brick(model, mim, "Dot_u");
   
   gmm::iteration iter(residual, 0, 40000);
@@ -272,19 +261,9 @@ bool heat_equation_problem::solve(void) {
     getfem::interpolation_function(mf_u, V, sol_dot);
   }
 
-  switch (scheme) {
-  case 1 : // Theta-method
-    gmm::copy(U, model.set_real_variable("Previous_u"));
-    if (!with_automatic_init)
-      gmm::copy(V, model.set_real_variable("Previous_Dot_u"));
-    break;
-  case 2 : // Houbolt-method
-    gmm::copy(U, model.set_real_variable("Previous_u"));
-    gmm::copy(U, model.set_real_variable("Previous2_u"));
-    gmm::copy(U, model.set_real_variable("Previous3_u"));
-    break;
-  default : GMM_ASSERT1(false, "Unvalid time integration scheme");
-  }
+  gmm::copy(U, model.set_real_variable("Previous_u"));
+  if (!with_automatic_init)
+    gmm::copy(V, model.set_real_variable("Previous_Dot_u"));
   
 
   if (with_automatic_init) {
