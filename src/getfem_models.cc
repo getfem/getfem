@@ -1537,6 +1537,118 @@ namespace getfem {
     md.add_time_integration_scheme(varname, ptsc);
   }
 
+  // ----------------------------------------------------------------------
+  //
+  // Houbolt method
+  //
+  // ----------------------------------------------------------------------
+
+    class APIDECL Houbolt_scheme
+      : public virtual_time_scheme {
+
+      std::string U, U01, U02, U03, V, A;
+
+    public:
+      // V = 1/(6*dt)*(11*U-18*U01+9*U02-2*U03)
+      // A = 1/(dt**2)*(2*U-5*U01+4*U02-U03)
+      virtual void init_affine_dependent_variables(model &md) const {
+        scalar_type dt = md.get_time_step();
+        scalar_type a0 = scalar_type(2)/(dt*dt);
+        scalar_type a1 = scalar_type(5)/(dt*dt);
+        scalar_type a2 = scalar_type(4)/(dt*dt);
+        scalar_type a3 = scalar_type(1)/(dt*dt);
+        scalar_type b0 = scalar_type(11)/(scalar_type(6)*dt);
+        scalar_type b1 = scalar_type(18)/(scalar_type(6)*dt);
+        scalar_type b2 = scalar_type(9)/(scalar_type(6)*dt);
+        scalar_type b3 = scalar_type(2)/(scalar_type(6)*dt);
+
+        md.set_factor_of_variable(V, b0);
+        md.set_factor_of_variable(A, a0);
+        if (md.is_complex()) {
+          gmm::add(gmm::scaled(md.complex_variable(U01), -complex_type(b1)),
+                   gmm::scaled(md.complex_variable(U02), complex_type(b2)),
+                   md.set_complex_constant_part(V));
+          gmm::add(gmm::scaled(md.complex_variable(U03), -complex_type(b3)),
+                   md.set_complex_constant_part(V));
+          gmm::add(gmm::scaled(md.complex_variable(U01), -complex_type(a1)),
+                   gmm::scaled(md.complex_variable(U02), complex_type(a2)),
+                   md.set_complex_constant_part(A));
+          gmm::add(gmm::scaled(md.complex_variable(U03), -complex_type(a3)),
+                   md.set_complex_constant_part(A));
+        } else {
+          gmm::add(gmm::scaled(md.real_variable(U01), -b1),
+                   gmm::scaled(md.real_variable(U02), b2),
+                   md.set_real_constant_part(V));
+          gmm::add(gmm::scaled(md.real_variable(U03), -b3),
+                   md.set_real_constant_part(V));
+          gmm::add(gmm::scaled(md.real_variable(U01), -a1),
+                   gmm::scaled(md.real_variable(U02), a2),
+                   md.set_real_constant_part(A));
+          gmm::add(gmm::scaled(md.real_variable(U03), -a3),
+                   md.set_real_constant_part(A));
+        }
+      }
+
+      virtual void init_affine_dependent_variables_precomputation(model &md)
+        const {
+        (void) md;
+      }
+
+      virtual void time_derivative_to_be_initialized
+      (std::string &name_v, std::string &name_previous_v) const {
+        (void) name_v;
+        (void) name_previous_v;
+      }
+
+      virtual void shift_variables(model &md) const {
+        if (md.is_complex()) {
+          gmm::copy(md.complex_variable(U02), md.set_complex_variable(U03));
+          gmm::copy(md.complex_variable(U01), md.set_complex_variable(U02));
+          gmm::copy(md.complex_variable(U), md.set_complex_variable(U01));
+        } else {
+          gmm::copy(md.real_variable(U02), md.set_complex_variable(U03));
+          gmm::copy(md.real_variable(U01), md.set_complex_variable(U02));
+          gmm::copy(md.real_variable(U), md.set_complex_variable(U01));
+        }
+      }
+
+
+      Houbolt_scheme(model &md, std::string varname) {
+        U = varname;
+        U01 = "Previous_" + U;
+        U02 = "Previous2_" + U;
+        U03 = "Previous3_" + U;
+        V = "Dot_" + U;
+        A = "Dot2_" + U;
+
+        if (!(md.variable_exists(V)))
+          md.add_affine_dependent_variable(V, U);
+        if (!(md.variable_exists(A)))
+          md.add_affine_dependent_variable(A, U);
+
+        const mesh_fem *mf = md.pmesh_fem_of_variable(U);
+        size_type s = md.is_complex() ? gmm::vect_size(md.complex_variable(U))
+          : gmm::vect_size(md.real_variable(U));
+
+        if (mf) {
+          if (!(md.variable_exists(U01))) md.add_fem_data(U01, *mf);
+          if (!(md.variable_exists(U02))) md.add_fem_data(U02, *mf);
+          if (!(md.variable_exists(U03))) md.add_fem_data(U03, *mf);
+        } else {
+          if (!(md.variable_exists(U01))) md.add_fixed_size_data(U01, s);
+          if (!(md.variable_exists(U02))) md.add_fixed_size_data(U02, s);
+          if (!(md.variable_exists(U03))) md.add_fixed_size_data(U03, s);
+        }
+
+      }
+
+    };
+
+  void add_Houbolt_scheme(model &md, const std::string &varname) {
+    ptime_scheme ptsc = std::make_shared<Houbolt_scheme>
+      (md, varname);
+    md.add_time_integration_scheme(varname, ptsc);
+  }
 
 
 

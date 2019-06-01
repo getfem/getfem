@@ -1180,6 +1180,8 @@ namespace getfem {
   void add_Newmark_scheme(model &md, const std::string &varname,
                           scalar_type beta, scalar_type gamma);
 
+  void add_Houbolt_scheme(model &md, const std::string &varname);
+
 
 
   //=========================================================================
