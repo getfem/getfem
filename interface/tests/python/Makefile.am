@@ -66,6 +66,7 @@ TESTS = 						\
 	check_secondary_domain.py 			\
 	check_mixed_mesh.py  				\
 	demo_wave.py					\
+	demo_wave_equation.py				\
 	demo_laplacian.py				\
 	$(optpy)
 
