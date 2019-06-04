@@ -56,16 +56,18 @@ namespace bgeot {
   };
 
   struct box_index_topology_compare {
+    const scalar_type EPS;
     bool is_less(const base_node &lhs, const base_node &rhs) const {
       GMM_ASSERT2(lhs.size() == rhs.size(), "size mismatch");
-      const scalar_type EPS = 1e-13;
       for (size_type i = 0; i < lhs.size(); ++i)
         if (gmm::abs(lhs[i] - rhs[i]) > EPS) {
           return lhs[i] < rhs[i];
         }
       return false;
     }
-
+    
+    box_index_topology_compare(scalar_type EPS_) : EPS{EPS_} {}
+ 
     bool operator()(const box_index &lhs, const box_index &rhs) const {
       return is_less(*lhs.min, *rhs.min) ||
              (!is_less(*rhs.min, *lhs.min) && is_less(*lhs.max, *rhs.max));
@@ -137,7 +139,8 @@ namespace bgeot {
       find_contained_boxes(bmin, bmax, bs);
       pbox_set_to_idvec(bs, idvec);
     }
-    void find_boxes_at_point(const base_node& P, std::vector<size_type>& idvec) const
+    void find_boxes_at_point(const base_node& P,
+                             std::vector<size_type>& idvec) const
     { pbox_set bs; find_boxes_at_point(P, bs);  pbox_set_to_idvec(bs, idvec); }
     void find_line_intersecting_boxes(const base_node& org,
                                       const base_small_vector& dirv,

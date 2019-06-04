@@ -193,8 +193,8 @@ namespace bgeot {
     return boxes.emplace(std::move(bi)).first->id;
   }
   
-  
-  rtree::rtree(scalar_type EPS_) : EPS(EPS_), tree_built(false)
+  rtree::rtree(scalar_type EPS_)
+    : EPS(EPS_), boxes(box_index_topology_compare(EPS_)), tree_built(false)
   {}
 
   void rtree::clear() {
