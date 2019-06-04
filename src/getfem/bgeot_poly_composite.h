@@ -89,7 +89,7 @@ namespace bgeot {
     void initialise(const basic_mesh &m);
     
     mesh_precomposite(const basic_mesh &m);
-    mesh_precomposite(void) : msh(0) {}
+    mesh_precomposite(void) : msh(0), box_tree(1e-13) {}
   };
 
   typedef const mesh_precomposite *pmesh_precomposite;
