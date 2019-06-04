@@ -69,8 +69,11 @@ namespace bgeot {
     box_index_topology_compare(scalar_type EPS_) : EPS{EPS_} {}
  
     bool operator()(const box_index &lhs, const box_index &rhs) const {
-      return is_less(*lhs.min, *rhs.min) ||
-             (!is_less(*rhs.min, *lhs.min) && is_less(*lhs.max, *rhs.max));
+      if (EPS == scalar_type(0))
+        return lhs.id < rhs.id;
+      else
+        return is_less(*lhs.min, *rhs.min) ||
+          (!is_less(*rhs.min, *lhs.min) && is_less(*lhs.max, *rhs.max));
     }
   };
 
@@ -88,6 +91,9 @@ namespace bgeot {
    *
    * This is not a dynamic structure. Once a query has been made on the
    * tree, new boxes should not be added.
+   *
+   * CAUTION : For EPS > 0, nearly identically boxes are eliminated
+   *           For EPS = 0 all boxes are stored.
    */
   class rtree {
   public:
