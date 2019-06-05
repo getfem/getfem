@@ -649,6 +649,7 @@ namespace getfem {
           element_boxes_info.push_back(influence_box(i, cv, v.f(), n_mean));
         }
       }
+    element_boxes.build_tree();
   }
 
   void multi_contact_frame::compute_potential_contact_pairs_influence_boxes() {
@@ -1458,7 +1459,7 @@ namespace getfem {
           }
         }
       }
-      
+      face_boxes.build_tree();
     }
 
   public:

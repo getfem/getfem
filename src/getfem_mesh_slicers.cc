@@ -306,6 +306,7 @@ namespace getfem {
       bgeot::bounding_box(min,max,slm.points_of_convex(cv),slm.trans_of_convex(cv));
       tree.add_box(min, max, cv);
     }
+    tree.build_tree();
   }
 
   void slicer_mesh_with_mesh::exec(mesh_slicer &ms) {

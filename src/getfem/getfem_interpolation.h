@@ -421,8 +421,8 @@ namespace getfem {
     dim_type qqdim = dim_type(gmm::vect_size(UU)/mf_source.nb_dof());
 
     std::vector<T> U(mf_source.nb_basic_dof()*qqdim);
-    gmm::row_matrix<gmm::rsvector<scalar_type> >
-      M(gmm::mat_nrows(MM), mf_source.nb_basic_dof());
+    gmm::row_matrix<gmm::rsvector<scalar_type> > M;
+    if (version != 0) M.resize(gmm::mat_nrows(MM), mf_source.nb_basic_dof());
 
     if (version == 0) mf_source.extend_vector(UU, U);
 
@@ -565,8 +565,8 @@ namespace getfem {
     size_type qqdimt = qqdim * mf_source.get_qdim()/mf_target.get_qdim();
     std::vector<T> V(mf_target.nb_basic_dof()*qqdimt);
     mf_target.extend_vector(VV,V);
-    gmm::row_matrix<gmm::rsvector<scalar_type> >
-      M(mf_target.nb_basic_dof(), mf_source.nb_dof());
+    gmm::row_matrix<gmm::rsvector<scalar_type> > M;
+    if (version != 0) M.resize(mf_target.nb_basic_dof(), mf_source.nb_dof());
 
     const mesh &msh(mf_source.linked_mesh());
     getfem::mesh_trans_inv mti(msh, EPS);

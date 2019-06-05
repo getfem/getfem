@@ -40,17 +40,40 @@
 
 #include <set>
 #include "bgeot_small_vector.h"
+#include "bgeot_node_tab.h"
 
 namespace bgeot {
 
   struct box_index {
     size_type id;
-    base_node min, max;
+    const base_node *min, *max;
   };
 
-  struct box_index_compare {
+  struct box_index_id_compare {
     bool operator()(const box_index *plhs, const box_index *prhs) const {
       return plhs->id < prhs->id;
+    }
+  };
+
+  struct box_index_topology_compare {
+    const scalar_type EPS;
+    bool is_less(const base_node &lhs, const base_node &rhs) const {
+      GMM_ASSERT2(lhs.size() == rhs.size(), "size mismatch");
+      for (size_type i = 0; i < lhs.size(); ++i)
+        if (gmm::abs(lhs[i] - rhs[i]) > EPS) {
+          return lhs[i] < rhs[i];
+        }
+      return false;
+    }
+    
+    box_index_topology_compare(scalar_type EPS_) : EPS{EPS_} {}
+ 
+    bool operator()(const box_index &lhs, const box_index &rhs) const {
+      if (EPS == scalar_type(0))
+        return lhs.id < rhs.id;
+      else
+        return is_less(*lhs.min, *rhs.min) ||
+          (!is_less(*rhs.min, *lhs.min) && is_less(*lhs.max, *rhs.max));
     }
   };
 
@@ -68,40 +91,40 @@ namespace bgeot {
    *
    * This is not a dynamic structure. Once a query has been made on the
    * tree, new boxes should not be added.
+   *
+   * CAUTION : For EPS > 0, nearly identically boxes are eliminated
+   *           For EPS = 0 all boxes are stored.
    */
   class rtree {
   public:
-    using box_cont = std::deque<box_index> ;
+    using box_cont = std::set<box_index,box_index_topology_compare> ;
     using pbox_cont = std::vector<const box_index*>;
-    using pbox_set = std::set<const box_index *, box_index_compare>;
+    using pbox_set = std::set<const box_index *, box_index_id_compare>;
 
-    rtree() = default;
+    rtree(scalar_type EPS = 0);
     rtree(const rtree&) = delete;
     rtree& operator = (const rtree&) = delete;
 
-    void add_box(base_node min, base_node max, size_type id=size_type(-1)) {
-      box_index bi; bi.min = min; bi.max = max;
-      bi.id = (id + 1) ? id : boxes.size();
-      boxes.push_back(bi);
-    }
+    size_type add_box(const base_node &min, const base_node &max,
+                      size_type id=size_type(-1));
     size_type nb_boxes() const { return boxes.size(); }
-    void clear() { root = std::unique_ptr<rtree_elt_base>(); boxes.clear(); }
+    void clear();
 
     void find_intersecting_boxes(const base_node& bmin, const base_node& bmax,
-                                 pbox_set& boxlst);
+                                 pbox_set& boxlst) const;
     void find_containing_boxes(const base_node& bmin, const base_node& bmax,
-                               pbox_set& boxlst);
+                               pbox_set& boxlst) const;
     void find_contained_boxes(const base_node& bmin, const base_node& bmax,
-                              pbox_set& boxlst);
-    void find_boxes_at_point(const base_node& P, pbox_set& boxlst);
+                              pbox_set& boxlst) const;
+    void find_boxes_at_point(const base_node& P, pbox_set& boxlst) const;
     void find_line_intersecting_boxes(const base_node& org,
                                       const base_small_vector& dirv,
-                                      pbox_set& boxlst);
+                                      pbox_set& boxlst) const;
     void find_line_intersecting_boxes(const base_node& org,
                                       const base_small_vector& dirv,
                                       const base_node& bmin,
                                       const base_node& bmax,
-                                      pbox_set& boxlst);
+                                      pbox_set& boxlst) const;
 
     void find_intersecting_boxes(const base_node& bmin, const base_node& bmax,
                                  std::vector<size_type>& idvec) {
@@ -122,7 +145,8 @@ namespace bgeot {
       find_contained_boxes(bmin, bmax, bs);
       pbox_set_to_idvec(bs, idvec);
     }
-    void find_boxes_at_point(const base_node& P, std::vector<size_type>& idvec)
+    void find_boxes_at_point(const base_node& P,
+                             std::vector<size_type>& idvec) const
     { pbox_set bs; find_boxes_at_point(P, bs);  pbox_set_to_idvec(bs, idvec); }
     void find_line_intersecting_boxes(const base_node& org,
                                       const base_small_vector& dirv,
@@ -144,14 +168,17 @@ namespace bgeot {
     void dump();
     void build_tree();
   private:
-    static void pbox_set_to_idvec(pbox_set bs, std::vector<size_type>& idvec) {
+    void pbox_set_to_idvec(pbox_set bs, std::vector<size_type>& idvec) const {
       idvec.reserve(bs.size()); idvec.resize(0);
       for (pbox_set::const_iterator it=bs.begin(); it != bs.end(); ++it)
         idvec.push_back((*it)->id);
     }
 
+    const scalar_type EPS;
+    node_tab nodes;
     box_cont boxes;
     std::unique_ptr<rtree_elt_base> root;
+    bool tree_built;
     getfem::lock_factory locks_;
   };
 

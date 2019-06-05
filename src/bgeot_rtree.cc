@@ -50,62 +50,70 @@ namespace bgeot {
   }
 
   inline static bool r1_ge_r2(const base_node& min1, const base_node& max1,
-                       const base_node& min2, const base_node& max2) {
+                       const base_node& min2, const base_node& max2,
+                       scalar_type EPS) {
     for (size_type i=0; i < min1.size(); ++i)
-      if (!(min1[i] <= min2[i] && max1[i] >= max2[i])) return false;
+      if ((min1[i] > min2[i]+EPS) || (max1[i] < max2[i]-EPS)) return false;
     return true;
   }
 
   inline static bool r1_inter_r2(const base_node& min1, const base_node& max1,
-                          const base_node& min2, const base_node& max2) {
+                          const base_node& min2, const base_node& max2,
+                          scalar_type EPS) {
     for (size_type i=0; i < min1.size(); ++i)
-      if (max1[i] < min2[i] || min1[i] > max2[i]) return false;
+      if ((max1[i] < min2[i]-EPS) || (min1[i] > max2[i]+EPS)) return false;
     return true;
   }
 
   /* some predicates for searches */
   struct intersection_p {
-    const base_node min,max;
-    intersection_p(const base_node& min_, const base_node& max_)
-      : min(min_), max(max_) {}
-    bool operator()(const base_node& min2, const base_node& max2)
-    { return r1_inter_r2(min,max,min2,max2); }
-    bool accept(const base_node& min2, const base_node& max2)
+    const base_node &min, &max;
+    const scalar_type EPS;
+    intersection_p(const base_node& min_, const base_node& max_, scalar_type EPS_)
+      : min(min_), max(max_), EPS(EPS_) {}
+    bool operator()(const base_node& min2, const base_node& max2) const
+    { return r1_inter_r2(min,max,min2,max2,EPS); }
+    bool accept(const base_node& min2, const base_node& max2) const
     { return operator()(min2,max2); }
   };
 
   /* match boxes containing [min..max] */
   struct contains_p {
-    const base_node min,max;
-    contains_p(const base_node& min_, const base_node& max_)
-      : min(min_), max(max_) {}
-    bool operator()(const base_node& min2, const base_node& max2)
-    { return r1_ge_r2(min2,max2,min,max); }
-    bool accept(const base_node& min2, const base_node& max2)
-    { return r1_inter_r2(min,max,min2,max2); }
+    const base_node &min, &max;
+    const scalar_type EPS;
+    contains_p(const base_node& min_, const base_node& max_, scalar_type EPS_)
+      : min(min_), max(max_), EPS(EPS_) {}
+    bool operator()(const base_node& min2, const base_node& max2) const
+    { return r1_ge_r2(min2,max2,min,max,EPS); }
+    bool accept(const base_node& min2, const base_node& max2) const
+    { return r1_inter_r2(min,max,min2,max2,EPS); }
   };
 
   /* match boxes contained in [min..max] */
   struct contained_p {
-    const base_node min,max;
-    contained_p(const base_node& min_, const base_node& max_)
-      : min(min_), max(max_) {}
-    bool accept(const base_node& min2, const base_node& max2)
-    { return r1_inter_r2(min,max,min2,max2); }
-    bool operator()(const base_node& min2, const base_node& max2)
-    { return r1_ge_r2(min,max,min2,max2); }
+    const base_node &min, &max;
+    const scalar_type EPS;
+    contained_p(const base_node& min_, const base_node& max_, scalar_type EPS_)
+      : min(min_), max(max_), EPS(EPS_) {}
+    bool accept(const base_node& min2, const base_node& max2) const
+    { return r1_inter_r2(min,max,min2,max2,EPS); }
+    bool operator()(const base_node& min2, const base_node& max2) const
+    { return r1_ge_r2(min,max,min2,max2,EPS); }
   };
 
   /* match boxes containing P */
   struct has_point_p {
-    const base_node P;
-    has_point_p(const base_node& P_) : P(P_) {}
-    bool operator()(const base_node& min2, const base_node& max2) {
-      for (size_type i=0; i < P.size(); ++i)
-        if (P[i] < min2[i] || P[i] > max2[i]) return false;
+    const base_node &P;
+    const scalar_type EPS;
+    has_point_p(const base_node& P_, scalar_type EPS_) : P(P_), EPS(EPS_) {}
+    bool operator()(const base_node& min2, const base_node& max2) const {
+      for (size_type i = 0; i < P.size(); ++i) {
+        if (P[i] < min2[i]-EPS) return false;
+        if (P[i] > max2[i]+EPS) return false;
+      }
       return true;
     }
-    bool accept(const base_node& min2, const base_node& max2)
+    bool accept(const base_node& min2, const base_node& max2) const
     { return operator()(min2,max2); }
   };
 
@@ -116,7 +124,7 @@ namespace bgeot {
     const base_small_vector dirv;
     intersect_line(const base_node& org_, const base_small_vector &dirv_)
       : org(org_), dirv(dirv_) {}
-    bool operator()(const base_node& min2, const base_node& max2) {
+    bool operator()(const base_node& min2, const base_node& max2) const {
       size_type N = org.size();
       GMM_ASSERT1(N == min2.size(), "Dimensions mismatch");
       for (size_type i = 0; i < N; ++i)
@@ -133,7 +141,7 @@ namespace bgeot {
         }
       return false;
     }
-    bool accept(const base_node& min2, const base_node& max2)
+    bool accept(const base_node& min2, const base_node& max2) const
     { return operator()(min2,max2); }
   };
 
@@ -143,14 +151,16 @@ namespace bgeot {
     const base_node org;
     const base_small_vector dirv;
     const base_node min,max;
+    const scalar_type EPS;
     intersect_line_and_box(const base_node& org_,
                            const base_small_vector &dirv_,
-                           const base_node& min_, const base_node& max_)
-      : org(org_), dirv(dirv_), min(min_), max(max_) {}
-    bool operator()(const base_node& min2, const base_node& max2) {
+                           const base_node& min_, const base_node& max_,
+                           scalar_type EPS_)
+      : org(org_), dirv(dirv_), min(min_), max(max_), EPS(EPS_) {}
+    bool operator()(const base_node& min2, const base_node& max2) const {
       size_type N = org.size();
       GMM_ASSERT1(N == min2.size(), "Dimensions mismatch");
-      if (!(r1_inter_r2(min,max,min2,max2))) return false;
+      if (!(r1_inter_r2(min,max,min2,max2,EPS))) return false;
       for (size_type i = 0; i < N; ++i)
         if (dirv[i] != scalar_type(0)) {
           scalar_type a1=(min2[i]-org[i])/dirv[i], a2=(max2[i]-org[i])/dirv[i];
@@ -165,19 +175,43 @@ namespace bgeot {
         }
       return false;
     }
-    bool accept(const base_node& min2, const base_node& max2)
+    bool accept(const base_node& min2, const base_node& max2) const
     { return operator()(min2,max2); }
   };
 
+  size_type rtree::add_box(const base_node &min, const base_node &max,
+                           size_type id) {
+    box_index bi;
+    if (tree_built) {
+      GMM_WARNING3("Add a box when the tree is already built cancel the tree. "
+                   "Unefficient operation.");
+      tree_built = false; root = std::unique_ptr<rtree_elt_base>();
+    }
+    bi.min = &nodes[nodes.add_node(min, EPS)];
+    bi.max = &nodes[nodes.add_node(max, EPS)];
+    bi.id = (id + 1) ? id : boxes.size();
+    return boxes.emplace(std::move(bi)).first->id;
+  }
+  
+  rtree::rtree(scalar_type EPS_)
+    : EPS(EPS_), boxes(box_index_topology_compare(EPS_)), tree_built(false)
+  {}
+
+  void rtree::clear() {
+    root = std::unique_ptr<rtree_elt_base>();
+    boxes.clear();
+    nodes.clear();
+    tree_built = false;
+  }
 
   template <typename Predicate>
   static void find_matching_boxes_(rtree_elt_base *n, rtree::pbox_set& boxlst,
-                                   Predicate p) {
+                                   const Predicate &p) {
     if (n->isleaf()) {
       const rtree_leaf *rl = static_cast<rtree_leaf*>(n);
       for (rtree::pbox_cont::const_iterator it = rl->lst.begin();
            it != rl->lst.end(); ++it) {
-        if (p((*it)->min, (*it)->max)) { boxlst.insert(*it); }
+        if (p(*(*it)->min, *(*it)->max)) { boxlst.insert(*it); }
       }
     } else {
       const rtree_node *rn = static_cast<rtree_node*>(n);
@@ -190,44 +224,58 @@ namespace bgeot {
 
   void rtree::find_intersecting_boxes(const base_node& bmin,
                                       const base_node& bmax,
-                                      pbox_set& boxlst) {
-    boxlst.clear(); if (!root) build_tree();
-    if (root) find_matching_boxes_(root.get(),boxlst,intersection_p(bmin,bmax));
+                                      pbox_set& boxlst) const {
+    
+    boxlst.clear();
+    GMM_ASSERT2(tree_built, "Boxtree not initialised.");
+    if (root)
+      find_matching_boxes_(root.get(),boxlst,intersection_p(bmin,bmax, EPS));
   }
 
   void rtree::find_containing_boxes(const base_node& bmin,
-                                    const base_node& bmax, pbox_set& boxlst) {
-    boxlst.clear(); if (!root) build_tree();
-    if (root) find_matching_boxes_(root.get(), boxlst, contains_p(bmin,bmax));
+                                    const base_node& bmax,
+                                    pbox_set& boxlst) const {
+    boxlst.clear();
+    GMM_ASSERT2( tree_built, "Boxtree not initialised.");
+    if (root)
+      find_matching_boxes_(root.get(), boxlst, contains_p(bmin,bmax, EPS));
   }
 
   void rtree::find_contained_boxes(const base_node& bmin,
-                                   const base_node& bmax, pbox_set& boxlst) {
-    boxlst.clear(); if (!root) build_tree();
-    if (root) find_matching_boxes_(root.get(), boxlst, contained_p(bmin,bmax));
+                                   const base_node& bmax,
+                                   pbox_set& boxlst) const {
+    boxlst.clear();
+    GMM_ASSERT2(tree_built, "Boxtree not initialised.");
+    if (root)
+      find_matching_boxes_(root.get(), boxlst, contained_p(bmin,bmax, EPS));
   }
 
-  void rtree::find_boxes_at_point(const base_node& P, pbox_set& boxlst) {
-    boxlst.clear(); if (!root) build_tree();
-    if (root) find_matching_boxes_(root.get(), boxlst, has_point_p(P));
+  void rtree::find_boxes_at_point(const base_node& P, pbox_set& boxlst) const {
+    boxlst.clear();
+    GMM_ASSERT2(tree_built, "Boxtree not initialised.");
+    if (root)
+      find_matching_boxes_(root.get(), boxlst, has_point_p(P, EPS));
   }
 
   void rtree::find_line_intersecting_boxes(const base_node& org,
                                            const base_small_vector& dirv,
-                                           pbox_set& boxlst) {
-    boxlst.clear(); if (!root) build_tree();
-    if (root) find_matching_boxes_(root.get(),boxlst,intersect_line(org, dirv));
+                                           pbox_set& boxlst) const {
+    boxlst.clear();
+    GMM_ASSERT2(tree_built, "Boxtree not initialised.");
+    if (root)
+      find_matching_boxes_(root.get(),boxlst,intersect_line(org, dirv));
   }
 
   void rtree::find_line_intersecting_boxes(const base_node& org,
                                            const base_small_vector& dirv,
                                            const base_node& bmin,
                                            const base_node& bmax,
-                                           pbox_set& boxlst) {
-    boxlst.clear(); if (!root) build_tree();
+                                           pbox_set& boxlst) const {
+    boxlst.clear();
+    GMM_ASSERT2(tree_built, "Boxtree not initialised.");
     if (root)
       find_matching_boxes_(root.get(), boxlst,
-                           intersect_line_and_box(org, dirv, bmin, bmax));
+                           intersect_line_and_box(org, dirv, bmin, bmax, EPS));
   }
 
   /*
@@ -240,9 +288,9 @@ namespace bgeot {
     scalar_type v = bmin[dir] + (bmax[dir] - bmin[dir])/2; split_v = v;
     size_type cnt = 0;
     for (rtree::pbox_cont::const_iterator it = b.begin(); it!=b.end(); ++it) {
-      if ((*it)->max[dir] < v) {
-        if (cnt == 0) split_v = (*it)->max[dir];
-        else split_v = std::max((*it)->max[dir],split_v);
+      if ((*it)->max->at(dir) < v) {
+        if (cnt == 0) split_v = (*it)->max->at(dir);
+        else split_v = std::max((*it)->max->at(dir),split_v);
         cnt++;
       }
     }
@@ -274,8 +322,8 @@ namespace bgeot {
       size_type cnt1=0,cnt2=0;
       for (rtree::pbox_cont::const_iterator it = b.begin();
            it != b.end(); ++it) {
-        if ((*it)->min[split_dir] < split_v) cnt1++;
-        if ((*it)->max[split_dir] > split_v) cnt2++;
+        if ((*it)->min->at(split_dir) < split_v) cnt1++;
+        if ((*it)->max->at(split_dir) > split_v) cnt2++;
       }
       assert(cnt1); assert(cnt2);
       GMM_ASSERT1(cnt1+cnt2 >= b.size(), "internal error");
@@ -285,13 +333,13 @@ namespace bgeot {
       cnt1 = cnt2 = 0;
       for (rtree::pbox_cont::const_iterator it = b.begin();
            it != b.end(); ++it) {
-        if ((*it)->min[split_dir] < split_v) {
+        if ((*it)->min->at(split_dir) < split_v) {
           v1[cnt1++] = *it;
-          update_box(bmin1,bmax1,(*it)->min,(*it)->max);
+          update_box(bmin1,bmax1,*(*it)->min,*(*it)->max);
         }
-        if ((*it)->max[split_dir] > split_v) {
+        if ((*it)->max->at(split_dir) > split_v) {
           v2[cnt2++] = *it;
-          update_box(bmin2,bmax2,(*it)->min,(*it)->max);
+          update_box(bmin2,bmax2,*(*it)->min,*(*it)->max);
         }
       }
       for (size_type k=0; k < N; ++k) {
@@ -313,17 +361,20 @@ namespace bgeot {
   }
 
   void rtree::build_tree() {
-    if (boxes.size() == 0) return;
-    getfem::local_guard lock = locks_.get_lock();
-    assert(root == 0);
-    pbox_cont b(boxes.size());
-    pbox_cont::iterator b_it = b.begin();
-    base_node bmin(boxes.front().min), bmax(boxes.front().max);
-    for (box_cont::const_iterator it=boxes.begin(); it != boxes.end(); ++it) {
-      update_box(bmin,bmax,(*it).min,(*it).max);
-      *b_it++ = &(*it);
+    if (!tree_built) {
+      if (boxes.size() == 0) { tree_built = true; return; }
+      getfem::local_guard lock = locks_.get_lock();
+      assert(root == 0);
+      pbox_cont b(boxes.size());
+      pbox_cont::iterator b_it = b.begin();
+      base_node bmin(*boxes.begin()->min), bmax(*boxes.begin()->max);
+      for (box_cont::const_iterator it=boxes.begin(); it != boxes.end(); ++it) {
+        update_box(bmin,bmax,*(*it).min,*(*it).max);
+        *b_it++ = &(*it);
+      }
+      root = build_tree_(b, bmin, bmax, 0);
+      tree_built = true;
     }
-    root = build_tree_(b, bmin, bmax, 0);
   }
 
   static void dump_tree_(rtree_elt_base *p, int level, size_type& count) {
