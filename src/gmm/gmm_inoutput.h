@@ -124,12 +124,12 @@ namespace gmm {
     /** open filename and reads header */
     void open(const char *filename);
     /** read the opened file */
-    template <typename T, int shift> void read(csc_matrix<T, shift>& A);
+    template <typename T, typename IND_TYPE, int shift> void read(csc_matrix<T, IND_TYPE, shift>& A);
     template <typename MAT> void read(MAT &M) IS_DEPRECATED;
-    template <typename T, int shift>
-    static void write(const char *filename, const csc_matrix<T, shift>& A);
-    template <typename T, int shift>
-    static void write(const char *filename, const csc_matrix<T, shift>& A,
+    template <typename T, typename IND_TYPE, int shift>
+    static void write(const char *filename, const csc_matrix<T, IND_TYPE, shift>& A);
+    template <typename T, typename IND_TYPE, int shift>
+    static void write(const char *filename, const csc_matrix<T, IND_TYPE, shift>& A,
 		      const std::vector<T> &rhs);
     template <typename T, typename INDI, typename INDJ, int shift> 
     static void write(const char *filename,
@@ -324,8 +324,8 @@ namespace gmm {
   }
 
   /* only valid for double and complex<double> csc matrices */
-  template <typename T, int shift> void
-  HarwellBoeing_IO::read(csc_matrix<T, shift>& A) {
+  template <typename T, typename IND_TYPE, int shift> void
+  HarwellBoeing_IO::read(csc_matrix<T, IND_TYPE, shift>& A) {
 
     // typedef typename csc_matrix<T, shift>::IND_TYPE IND_TYPE;
 
@@ -531,17 +531,17 @@ namespace gmm {
     return 1;
   }
   
-  template <typename T, int shift> void
+  template <typename T, typename IND_TYPE, int shift> void
   HarwellBoeing_IO::write(const char *filename,
-			  const csc_matrix<T, shift>& A) {
+			  const csc_matrix<T, IND_TYPE, shift>& A) {
     write(filename, csc_matrix_ref<const T*, const unsigned*,
 	  const unsigned *, shift>
 	  (&A.pr[0], &A.ir[0], &A.jc[0], A.nr, A.nc));
   }
 
-  template <typename T, int shift> void
+  template <typename T, typename IND_TYPE, int shift> void
   HarwellBoeing_IO::write(const char *filename,
-			  const csc_matrix<T, shift>& A,
+			  const csc_matrix<T, IND_TYPE, shift>& A,
 			  const std::vector<T> &rhs) {
     write(filename, csc_matrix_ref<const T*, const unsigned*,
 	  const unsigned *, shift>
@@ -593,9 +593,9 @@ namespace gmm {
   /** save a "double" or "std::complex<double>" csc matrix into a
       HarwellBoeing file
   */
-  template <typename T, int shift> inline void
+  template <typename T, typename IND_TYPE, int shift> inline void
   Harwell_Boeing_save(const std::string &filename,
-		      const csc_matrix<T, shift>& A)
+		      const csc_matrix<T, IND_TYPE, shift>& A)
   { HarwellBoeing_IO::write(filename.c_str(), A); }
 
   /** save a reference on "double" or "std::complex<double>" csc matrix
@@ -631,8 +631,8 @@ namespace gmm {
   /** load a "double" or "std::complex<double>" csc matrix from a
       HarwellBoeing file
   */
-  template <typename T, int shift> void
-  Harwell_Boeing_load(const std::string &filename, csc_matrix<T, shift>& A) {
+  template <typename T, typename IND_TYPE, int shift> void
+  Harwell_Boeing_load(const std::string &filename, csc_matrix<T, IND_TYPE, shift>& A) {
     HarwellBoeing_IO h(filename.c_str()); h.read(A);
   }
 
@@ -1022,8 +1022,8 @@ namespace gmm {
     /* read opened file */
     template <typename Matrix> void read(Matrix &A);
     /* write a matrix */
-    template <typename T, int shift> static void 
-    write(const char *filename, const csc_matrix<T, shift>& A);  
+    template <typename T, typename IND_TYPE, int shift> static void 
+    write(const char *filename, const csc_matrix<T, IND_TYPE, shift>& A);  
     template <typename T, typename INDI, typename INDJ, int shift> static void 
     write(const char *filename,
 	  const csc_matrix_ref<T*, INDI*, INDJ*, shift>& A);  
@@ -1038,8 +1038,8 @@ namespace gmm {
     mm.read(A);
   }
   /** write a matrix-market file */
-  template <typename T, int shift> void
-  MatrixMarket_save(const char *filename, const csc_matrix<T, shift>& A) {
+  template <typename T, typename IND_TYPE, int shift> void
+  MatrixMarket_save(const char *filename, const csc_matrix<T, IND_TYPE, shift>& A) {
     MatrixMarket_IO mm; mm.write(filename, A);
   }
 
@@ -1106,8 +1106,8 @@ namespace gmm {
     }
   }
 
-  template <typename T, int shift> void 
-  MatrixMarket_IO::write(const char *filename, const csc_matrix<T, shift>& A) {
+  template <typename T, typename IND_TYPE, int shift> void 
+  MatrixMarket_IO::write(const char *filename, const csc_matrix<T, IND_TYPE, shift>& A) {
     write(filename, csc_matrix_ref<const T*, const unsigned*,
 	  const unsigned*,shift>
 	  (&A.pr[0], &A.ir[0], &A.jc[0], A.nr, A.nc));

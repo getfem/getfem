@@ -497,9 +497,8 @@ namespace gmm
   /*                                                                      */
   /* ******************************************************************** */
 
-  template <typename T, int shift = 0>
+  template <typename T, typename IND_TYPE = unsigned int, int shift = 0>
   struct csc_matrix {
-    typedef unsigned int IND_TYPE;
 
     std::vector<T> pr;
     std::vector<IND_TYPE> ir;
@@ -519,7 +518,7 @@ namespace gmm
     void init_with(const csc_matrix_ref<PT1,PT2,PT3,cshift>& B)
     { init_with_good_format(B); }
     template <typename U, int cshift>
-    void init_with(const csc_matrix<U, cshift>& B)
+    void init_with(const csc_matrix<U, IND_TYPE, cshift>& B)
     { init_with_good_format(B); }
 
     void init_with_identity(size_type n);
@@ -529,7 +528,7 @@ namespace gmm
 
     size_type nrows(void) const { return nr; }
     size_type ncols(void) const { return nc; }
-    void swap(csc_matrix<T, shift> &m) {
+    void swap(csc_matrix<T, IND_TYPE, shift> &m) {
       std::swap(pr, m.pr);
       std::swap(ir, m.ir); std::swap(jc, m.jc);
       std::swap(nc, m.nc); std::swap(nr, m.nr);
@@ -538,8 +537,8 @@ namespace gmm
     { return mat_col(*this, j)[i]; }
   };
 
-  template <typename T, int shift> template<typename Matrix>
-  void csc_matrix<T, shift>::init_with_good_format(const Matrix &B) {
+  template <typename T, typename IND_TYPE, int shift> template<typename Matrix>
+  void csc_matrix<T, IND_TYPE, shift>::init_with_good_format(const Matrix &B) {
     typedef typename linalg_traits<Matrix>::const_sub_col_type col_type;
     nc = mat_ncols(B); nr = mat_nrows(B);
     jc.resize(nc+1);
@@ -560,15 +559,16 @@ namespace gmm
     }
   }
 
-  template <typename T, int shift> template <typename Matrix>
-  void csc_matrix<T, shift>::init_with(const Matrix &A) {
+  template <typename T, typename IND_TYPE, int shift>
+  template <typename Matrix>
+  void csc_matrix<T, IND_TYPE, shift>::init_with(const Matrix &A) {
     col_matrix<wsvector<T> > B(mat_nrows(A), mat_ncols(A));
     copy(A, B);
     init_with_good_format(B);
   }
 
-  template <typename T, int shift>
-  void csc_matrix<T, shift>::init_with_identity(size_type n) {
+  template <typename T, typename IND_TYPE, int shift>
+  void csc_matrix<T, IND_TYPE, shift>::init_with_identity(size_type n) {
     nc = nr = n;
     pr.resize(nc); ir.resize(nc); jc.resize(nc+1);
     for (size_type j = 0; j < nc; ++j)
@@ -576,17 +576,16 @@ namespace gmm
     jc[nc] = shift + nc;
   }
 
-  template <typename T, int shift>
-  csc_matrix<T, shift>::csc_matrix(size_type nnr, size_type nnc)
+  template <typename T, typename IND_TYPE, int shift>
+  csc_matrix<T, IND_TYPE, shift>::csc_matrix(size_type nnr, size_type nnc)
     : nc(nnc), nr(nnr) {
     pr.resize(1);  ir.resize(1); jc.resize(nc+1);
     for (size_type j = 0; j <= nc; ++j) jc[j] = shift;
   }
 
-  template <typename T, int shift>
-  struct linalg_traits<csc_matrix<T, shift> > {
-    typedef csc_matrix<T, shift> this_type;
-    typedef typename this_type::IND_TYPE IND_TYPE;
+  template <typename T, typename IND_TYPE, int shift>
+  struct linalg_traits<csc_matrix<T, IND_TYPE, shift> > {
+    typedef csc_matrix<T, IND_TYPE, shift> this_type;
     typedef linalg_const is_reference;
     typedef abstract_matrix linalg_type;
     typedef T value_type;
@@ -625,17 +624,17 @@ namespace gmm
     { return col(itcol)[j]; }
   };
 
-  template <typename T, int shift>
+  template <typename T, typename IND_TYPE, int shift>
   std::ostream &operator <<
-    (std::ostream &o, const csc_matrix<T, shift>& m)
+    (std::ostream &o, const csc_matrix<T, IND_TYPE, shift>& m)
   { gmm::write(o,m); return o; }
 
-  template <typename T, int shift>
-  inline void copy(const identity_matrix &, csc_matrix<T, shift>& M)
+  template <typename T, typename IND_TYPE, int shift>
+  inline void copy(const identity_matrix &, csc_matrix<T, IND_TYPE, shift>& M)
   { M.init_with_identity(mat_nrows(M)); }
 
-  template <typename Matrix, typename T, int shift>
-  inline void copy(const Matrix &A, csc_matrix<T, shift>& M)
+  template <typename Matrix, typename T, typename IND_TYPE, int shift>
+  inline void copy(const Matrix &A, csc_matrix<T, IND_TYPE, shift>& M)
   { M.init_with(A); }
 
   /* ******************************************************************** */
@@ -644,10 +643,8 @@ namespace gmm
   /*                                                                      */
   /* ******************************************************************** */
 
-  template <typename T, int shift = 0>
+  template <typename T, typename IND_TYPE = unsigned int, int shift = 0>
   struct csr_matrix {
-
-    typedef unsigned int IND_TYPE;
 
     std::vector<T> pr;        // values.
     std::vector<IND_TYPE> ir; // col indices.
@@ -667,7 +664,7 @@ namespace gmm
     void init_with(const csr_matrix_ref<PT1,PT2,PT3,cshift>& B)
     { init_with_good_format(B); }
     template <typename U, int cshift>
-    void init_with(const csr_matrix<U, cshift>& B)
+    void init_with(const csr_matrix<U, IND_TYPE, cshift>& B)
     { init_with_good_format(B); }
 
     template <typename Matrix> void init_with(const Matrix &A);
@@ -678,7 +675,7 @@ namespace gmm
 
     size_type nrows(void) const { return nr; }
     size_type ncols(void) const { return nc; }
-    void swap(csr_matrix<T, shift> &m) {
+    void swap(csr_matrix<T, IND_TYPE, shift> &m) {
       std::swap(pr, m.pr);
       std::swap(ir,m.ir); std::swap(jc, m.jc);
       std::swap(nc, m.nc); std::swap(nr,m.nr);
@@ -688,8 +685,8 @@ namespace gmm
     { return mat_row(*this, i)[j]; }
   };
 
-  template <typename T, int shift> template <typename Matrix>
-  void csr_matrix<T, shift>::init_with_good_format(const Matrix &B) {
+  template <typename T, typename IND_TYPE, int shift> template <typename Matrix>
+  void csr_matrix<T, IND_TYPE, shift>::init_with_good_format(const Matrix &B) {
     typedef typename linalg_traits<Matrix>::const_sub_row_type row_type;
     nc = mat_ncols(B); nr = mat_nrows(B);
     jc.resize(nr+1);
@@ -710,15 +707,15 @@ namespace gmm
     }
   }
 
-  template <typename T, int shift> template <typename Matrix>
-  void csr_matrix<T, shift>::init_with(const Matrix &A) {
+  template <typename T, typename IND_TYPE, int shift> template <typename Matrix>
+  void csr_matrix<T, IND_TYPE, shift>::init_with(const Matrix &A) {
     row_matrix<wsvector<T> > B(mat_nrows(A), mat_ncols(A));
     copy(A, B);
     init_with_good_format(B);
   }
 
-  template <typename T, int shift>
-  void csr_matrix<T, shift>::init_with_identity(size_type n) {
+  template <typename T, typename IND_TYPE, int shift>
+  void csr_matrix<T, IND_TYPE, shift>::init_with_identity(size_type n) {
     nc = nr = n;
     pr.resize(nr); ir.resize(nr); jc.resize(nr+1);
     for (size_type j = 0; j < nr; ++j)
@@ -726,8 +723,8 @@ namespace gmm
     jc[nr] = shift + nr;
   }
 
-  template <typename T, int shift>
-  csr_matrix<T, shift>::csr_matrix(size_type nnr, size_type nnc)
+  template <typename T, typename IND_TYPE, int shift>
+  csr_matrix<T, IND_TYPE, shift>::csr_matrix(size_type nnr, size_type nnc)
     : nc(nnc), nr(nnr) {
     pr.resize(1);  ir.resize(1); jc.resize(nr+1);
     for (size_type j = 0; j < nr; ++j) jc[j] = shift;
@@ -735,10 +732,9 @@ namespace gmm
   }
 
 
-  template <typename T, int shift>
-  struct linalg_traits<csr_matrix<T, shift> > {
-    typedef csr_matrix<T, shift> this_type;
-    typedef typename this_type::IND_TYPE IND_TYPE;
+  template <typename T, typename IND_TYPE, int shift>
+  struct linalg_traits<csr_matrix<T, IND_TYPE, shift> > {
+    typedef csr_matrix<T, IND_TYPE, shift> this_type;
     typedef linalg_const is_reference;
     typedef abstract_matrix linalg_type;
     typedef T value_type;
@@ -775,17 +771,17 @@ namespace gmm
     { return row(itrow)[j]; }
   };
 
-  template <typename T, int shift>
+  template <typename T, typename IND_TYPE, int shift>
   std::ostream &operator <<
-    (std::ostream &o, const csr_matrix<T, shift>& m)
+    (std::ostream &o, const csr_matrix<T, IND_TYPE, shift>& m)
   { gmm::write(o,m); return o; }
 
-  template <typename T, int shift>
-  inline void copy(const identity_matrix &, csr_matrix<T, shift>& M)
+  template <typename T, typename IND_TYPE, int shift>
+  inline void copy(const identity_matrix &, csr_matrix<T, IND_TYPE, shift>& M)
   { M.init_with_identity(mat_nrows(M)); }
 
-  template <typename Matrix, typename T, int shift>
-  inline void copy(const Matrix &A, csr_matrix<T, shift>& M)
+  template <typename Matrix, typename T, typename IND_TYPE, int shift>
+  inline void copy(const Matrix &A, csr_matrix<T, IND_TYPE, shift>& M)
   { M.init_with(A); }
 
   /* ******************************************************************** */
@@ -1185,11 +1181,11 @@ namespace std {
   template <typename T>
   void swap(gmm::dense_matrix<T> &m1, gmm::dense_matrix<T> &m2)
   { m1.swap(m2); }
-  template <typename T, int shift> void
-  swap(gmm::csc_matrix<T,shift> &m1, gmm::csc_matrix<T,shift> &m2)
+  template <typename T, typename IND_TYPE, int shift> void
+  swap(gmm::csc_matrix<T, IND_TYPE, shift> &m1, gmm::csc_matrix<T, IND_TYPE, shift> &m2)
   { m1.swap(m2); }
-  template <typename T, int shift> void
-  swap(gmm::csr_matrix<T,shift> &m1, gmm::csr_matrix<T,shift> &m2)
+  template <typename T, typename IND_TYPE, int shift> void
+  swap(gmm::csr_matrix<T, IND_TYPE, shift> &m1, gmm::csr_matrix<T, IND_TYPE, shift> &m2)
   { m1.swap(m2); }
 }
 
