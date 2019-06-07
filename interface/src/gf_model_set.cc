@@ -2750,6 +2750,15 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        getfem::add_Newmark_scheme(*md, varname, beta, gamma);
        );
 
+    /*@SET ('add_Houbolt_scheme', @str varname)
+      Attach a Houbolt method for the time discretization of the variable
+      `varname`. Valid only if there is at most second order time derivative
+      of the variable  @*/
+    sub_command
+      ("add Houbolt scheme", 1, 1, 0, 0,
+       std::string varname = in.pop().to_string();
+       getfem::add_Houbolt_scheme(*md, varname);
+       );
 
      /*@SET ('disable bricks', @ivec bricks_indices)
        Disable a brick (the brick will no longer participate to the

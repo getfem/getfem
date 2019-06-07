@@ -1606,9 +1606,9 @@ namespace getfem {
           gmm::copy(md.complex_variable(U01), md.set_complex_variable(U02));
           gmm::copy(md.complex_variable(U), md.set_complex_variable(U01));
         } else {
-          gmm::copy(md.real_variable(U02), md.set_complex_variable(U03));
-          gmm::copy(md.real_variable(U01), md.set_complex_variable(U02));
-          gmm::copy(md.real_variable(U), md.set_complex_variable(U01));
+          gmm::copy(md.real_variable(U02), md.set_real_variable(U03));
+          gmm::copy(md.real_variable(U01), md.set_real_variable(U02));
+          gmm::copy(md.real_variable(U), md.set_real_variable(U01));
         }
       }
 

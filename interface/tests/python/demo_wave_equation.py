@@ -97,7 +97,7 @@ A0 = 0.*U0
 
 os.system('mkdir results1');
 mf.export_to_vtk('results1/displacement_0.vtk', U0)
-mf.export_to_vkt('results1/velocity_0.vtk', V0)
+mf.export_to_vtk('results1/velocity_0.vtk', V0)
 mf.export_to_vtk('results1/acceleration_0.vtk', A0)
 
 ## Iterations
