@@ -1212,15 +1212,33 @@ namespace gmm {
 
     v2.base_resize(nbc);
     it3 = v2.begin() + old_nbc;
-    it2 = v2.end(); ite2 = v2.begin();
-    it1 = vect_end(v1); ite1 = vect_const_begin(v1);
-    while (it1 != ite1 && it3 != ite2) {
-      --it3; --it1; --it2;
-      if (it3->c > it1.index()) { *it2 = *it3; ++it1; }
-      else if (it3->c == it1.index()) { *it2=*it3; it2->e+=*it1; }
-      else { it2->c = it1.index(); it2->e = *it1; ++it3; }
+    it2 = v2.end();
+    ite2 = v2.begin();
+    it1 = vect_end(v1);
+    ite1 = vect_const_begin(v1);
+    while (it1 != ite1 && it2 != ite2 && it3 != ite2){
+      --it3;
+      --it1;
+      --it2;
+      if (it3->c > it1.index()) {
+        *it2 = *it3;
+        ++it1;
+      }
+      else if (it3->c == it1.index()) {
+        *it2=*it3;
+        it2->e+=*it1;
+      }
+      else {
+        it2->c = it1.index();
+        it2->e = *it1; ++it3;
+      }
     }
-    while (it1 != ite1) { --it1; --it2; it2->c = it1.index(); it2->e = *it1; }
+    while (it1 != ite1 && it2 != ite2) {
+      --it1;
+      --it2;
+      it2->c = it1.index();
+      it2->e = *it1;
+    }
   }
 
   template <typename V, typename T> void copy(const V &v1, rsvector<T> &v2) {
