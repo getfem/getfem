@@ -257,8 +257,9 @@ namespace getfem {
 
     template<typename VECT1, typename VECT2>
     void extend_vector(const VECT1 &V1, const VECT2 &V2) const {
-      if (is_reduced()) {
-        size_type qqdim = gmm::vect_size(V1) / nb_dof();
+      size_type nbd = nb_dof();
+      if (is_reduced() && nbd) {
+        size_type qqdim = gmm::vect_size(V1) / nbd;
         if (qqdim == 1)
           gmm::mult(extension_matrix(), V1, const_cast<VECT2 &>(V2));
         else

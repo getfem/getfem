@@ -170,7 +170,7 @@ namespace getfem {
     m.add_triangle(i0, i2, i3);
     m.add_triangle(i0, i3, i1);
     m.add_triangle(i0, i1, i2);
-    mp = bgeot::mesh_precomposite(m);
+    mp.initialise(m);
 
     std::stringstream s("1-x-y;1-x-y;1-x-y;x;x;x;y;y;y;3-3*x-3*y;3*x;3*y;");
 
@@ -299,7 +299,7 @@ namespace getfem {
     m.add_triangle(i0, i2, i3);
     m.add_triangle(i0, i3, i1);
     m.add_triangle(i0, i1, i2);
-    mp = bgeot::mesh_precomposite(m);
+    mp.initialise(m);
 
 
  std::stringstream s
@@ -538,7 +538,7 @@ namespace getfem {
     m.add_triangle(i2, i0, i4);
     m.add_triangle(i3, i2, i4);
     m.add_triangle(i0, i1, i4);
-    mp = bgeot::mesh_precomposite(m);
+    mp.initialise(m);
 
  std::stringstream s
    ("2 - 3*x - 3*y + 6*x*y + x^3 - 3*x^2*y;"

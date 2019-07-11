@@ -479,6 +479,16 @@ namespace getfem {
   // Interpolate transformation with an expression
   //=========================================================================
 
+  struct rated_box_index_compare {
+    bool operator()(
+      const std::pair<scalar_type, const bgeot::box_index*> &x,
+      const std::pair<scalar_type, const bgeot::box_index*> &y) const {
+      GMM_ASSERT2(x.second != nullptr, "x contains nullptr");
+      GMM_ASSERT2(y.second != nullptr, "y contains nullptr");
+      return (x.first < y.first) || (!(y.first < x.first) && (x.second->id < y.second->id));
+    }
+  };
+
   class interpolate_transformation_expression
     : public virtual_interpolate_transformation, public context_dependencies {
 
@@ -503,6 +513,9 @@ namespace getfem {
                      workspace_gis_pair> compiled_derivatives;
     mutable bool extract_variable_done;
     mutable bool extract_data_done;
+
+  private:
+    mutable std::map<size_type, std::vector<size_type>> box_to_convexes;
 
   public:
     void update_from_context() const {
@@ -577,6 +590,7 @@ namespace getfem {
       // Element_boxes update (if necessary)
       if (recompute_elt_boxes) {
 
+        box_to_convexes.clear();
         element_boxes.clear();
         base_node bmin(N), bmax(N);
         const dal::bit_vector&
@@ -611,8 +625,9 @@ namespace getfem {
           for (auto &&val : bmin) val -= h*0.2;
           for (auto &&val : bmax) val += h*0.2;
 
-          element_boxes.add_box(bmin, bmax, cv);
+          box_to_convexes[element_boxes.add_box(bmin, bmax)].push_back(cv);
         }
+        element_boxes.build_tree();
         recompute_elt_boxes = false;
       }
     }
@@ -667,14 +682,15 @@ namespace getfem {
         element_boxes.find_boxes_at_point(P, bset);
 
         // using a std::set as a sorter
-        std::set<std::pair<scalar_type, const bgeot::box_index*> > rated_boxes;
+        std::set<std::pair<scalar_type, const bgeot::box_index*>, rated_box_index_compare>
+          rated_boxes;
         for (const auto &box : bset) {
           scalar_type rating = scalar_type(1);
           for (size_type i = 0; i < m.dim(); ++i) {
-            scalar_type h = box->max[i] - box->min[i];
+            scalar_type h = box->max->at(i) - box->min->at(i);
             if (h > scalar_type(0)) {
-              scalar_type r = std::min(box->max[i] - P[i],
-                                       P[i] - box->min[i]) / h;
+              scalar_type r = std::min(box->max->at(i) - P[i],
+                                       P[i] - box->min->at(i)) / h;
               rating = std::min(r, rating);
             }
           }
@@ -691,32 +707,34 @@ namespace getfem {
       size_type best_cv(-1);
       base_node best_P_ref;
       for (size_type i = boxes.size(); i > 0; --i) {
+        for (auto convex : box_to_convexes.at(boxes[i-1]->id)) {
+          gic.init(target_mesh.points_of_convex(convex),
+                   target_mesh.trans_of_convex(convex));
 
-        cv = boxes[i-1]->id;
-        gic.init(target_mesh.points_of_convex(cv),
-                 target_mesh.trans_of_convex(cv));
+          bool converged;
+          bool is_in = gic.invert(P, P_ref, converged, 1E-4);
+          // cout << "cv = " << cv << " P = " << P << " P_ref = " << P_ref << endl;
+          // cout << " is_in = " << int(is_in) << endl;
+          // for (size_type iii = 0;
+          //     iii < target_mesh.points_of_convex(cv).size(); ++iii)
+          //  cout << target_mesh.points_of_convex(cv)[iii] << endl;
 
-        bool converged;
-        bool is_in = gic.invert(P, P_ref, converged, 1E-4);
-        // cout << "cv = " << cv << " P = " << P << " P_ref = " << P_ref << endl;
-        // cout << " is_in = " << int(is_in) << endl;
-        // for (size_type iii = 0;
-        //     iii < target_mesh.points_of_convex(cv).size(); ++iii)
-        //  cout << target_mesh.points_of_convex(cv)[iii] << endl;
-
-        if (converged) {
-          if (is_in) {
-            face_num = short_type(-1); // Should detect potential faces ?
-            ret_type = 1;
-            break;
-          } else {
-            scalar_type dist
-              = target_mesh.trans_of_convex(cv)->convex_ref()->is_in(P_ref);
-            if (dist < best_dist) {
-              best_dist = dist;
-              best_cv = cv;
-              best_P_ref = P_ref;
+          if (converged) {
+            cv = convex;
+            if (is_in) {
+              face_num = short_type(-1); // Should detect potential faces ?
+              ret_type = 1;
+              break;
+            } else {
+              scalar_type dist
+                = target_mesh.trans_of_convex(cv)->convex_ref()->is_in(P_ref);
+              if (dist < best_dist) {
+                best_dist = dist;
+                best_cv = cv;
+                best_P_ref = P_ref;
+              }
             }
+            break;
           }
         }
       }

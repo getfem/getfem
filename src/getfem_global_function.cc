@@ -852,6 +852,7 @@ namespace getfem {
       for (auto&& val : bmax) val += EPS;
       boxtree.add_box(bmin, bmax, cv);
     }
+    boxtree.build_tree();
   }
 
   bool interpolator_on_mesh_fem::find_a_point(const base_node &pt,

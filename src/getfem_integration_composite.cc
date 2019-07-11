@@ -130,7 +130,7 @@ namespace getfem {
     jfs.m.add_triangle(i0, i2, i3);
     jfs.m.add_triangle(i0, i3, i1);
     jfs.m.add_triangle(i0, i1, i2);
-    jfs.mp = bgeot::mesh_precomposite(jfs.m);
+    jfs.mp.initialise(jfs.m);
 
     mesh_im mi(jfs.m);
     mi.set_integration_method(jfs.m.convex_index(), pim);
@@ -169,7 +169,7 @@ namespace getfem {
     jfs.m.add_triangle(i2, i0, i4);
     jfs.m.add_triangle(i3, i2, i4);
     jfs.m.add_triangle(i0, i1, i4);
-    jfs.mp = bgeot::mesh_precomposite(jfs.m);
+    jfs.mp.initialise(jfs.m);
 
     mesh_im mi(jfs.m);
     mi.set_integration_method(jfs.m.convex_index(), pim);
@@ -205,7 +205,7 @@ namespace getfem {
     size_type i4 = jfs.m.add_point(base_node( 0.0,  0.0, 1.0));
     jfs.m.add_tetrahedron(i0, i1, i2, i4);
     jfs.m.add_tetrahedron(i1, i3, i2, i4);
-    jfs.mp = bgeot::mesh_precomposite(jfs.m);
+    jfs.mp.initialise(jfs.m);
 
     mesh_im mi(jfs.m);
     mi.set_integration_method(jfs.m.convex_index(), pim);
