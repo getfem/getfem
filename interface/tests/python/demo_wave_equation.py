@@ -64,6 +64,8 @@ md.add_Dirichlet_condition_with_multipliers(mim, 'u1', mf, 1);
 
 ## Transient part.
 T = 5.0;
+# Set dt smaller to fix Newmark and Houbolt method.
+# dt = 0.001;
 dt = 0.025;
 beta = 0.25;
 gamma = 0.5;

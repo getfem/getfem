@@ -334,7 +334,7 @@ namespace getfem {
     int time_integration; // 0 : no, 1 : time step, 2 : init
     bool init_step;
     scalar_type time_step; // Time step (dt) for time integration schemes
-    scalar_type init_time_step; // Time step for initiaisation of derivatives
+    scalar_type init_time_step; // Time step for initialization of derivatives
     
     // Structure dealing with simple dof constraints
     typedef std::map<size_type, scalar_type> real_dof_constraints_var;
