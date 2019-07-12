@@ -788,14 +788,14 @@ namespace getfem {
   (ga_workspace &workspace, const std::string &name, const mesh &sm,
    std::map<size_type, size_type> &elt_corr);
   
-  /* Change the correspondance map of an element extrapolation interpolate
+  /* Change the correspondence map of an element extrapolation interpolate
      transformation.
   */
-  void set_element_extrapolation_correspondance
+  void set_element_extrapolation_correspondence
   (model &md, const std::string &name,
    std::map<size_type, size_type> &elt_corr);
   
-  void set_element_extrapolation_correspondance
+  void set_element_extrapolation_correspondence
   (ga_workspace &workspace, const std::string &name,
    std::map<size_type, size_type> &elt_corr);
     

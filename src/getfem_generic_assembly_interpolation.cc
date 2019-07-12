@@ -925,7 +925,7 @@ namespace getfem {
       return ret_type;
     }
 
-    void set_correspondance(const std::map<size_type, size_type> &ec) {
+    void set_correspondence(const std::map<size_type, size_type> &ec) {
       elt_corr = ec;
     }
 
@@ -953,7 +953,7 @@ namespace getfem {
     workspace.add_interpolate_transformation(name, p);
   }
 
-  void set_element_extrapolation_correspondance
+  void set_element_extrapolation_correspondence
   (ga_workspace &workspace, const std::string &name,
    std::map<size_type, size_type> &elt_corr) {
     GMM_ASSERT1(workspace.interpolate_transformation_exists(name),
@@ -965,10 +965,10 @@ namespace getfem {
     GMM_ASSERT1(cpext,
                 "The transformation is not of element extrapolation type");
     const_cast<interpolate_transformation_element_extrapolation *>(cpext)
-      ->set_correspondance(elt_corr);
+      ->set_correspondence(elt_corr);
   }
 
-  void set_element_extrapolation_correspondance
+  void set_element_extrapolation_correspondence
   (model &md, const std::string &name,
    std::map<size_type, size_type> &elt_corr) {
     GMM_ASSERT1(md.interpolate_transformation_exists(name),
@@ -980,7 +980,7 @@ namespace getfem {
     GMM_ASSERT1(cpext,
                 "The transformation is not of element extrapolation type");
     const_cast<interpolate_transformation_element_extrapolation *>(cpext)
-      ->set_correspondance(elt_corr);
+      ->set_correspondence(elt_corr);
   }
 
 

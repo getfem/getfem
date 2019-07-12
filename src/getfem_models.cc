@@ -1599,7 +1599,7 @@ namespace getfem {
         ost << "Brick " << std::setw(3) << std::right << i + base_id
             << " " << std::setw(20) << std::right
             << bricks[i].pbr->brick_name();
-        if (!(active_bricks[i])) ost << " (desactivated)";
+        if (!(active_bricks[i])) ost << " (deactivated)";
         if (bricks[i].pdispatch) ost << " (dispatched)";
         ost << endl << "  concerned variables: " << bricks[i].vlist[0];
         for (size_type j = 1; j < bricks[i].vlist.size(); ++j)

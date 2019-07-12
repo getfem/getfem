@@ -795,10 +795,10 @@ The map elt_corr should contain the correspondances between the elements where t
   
 The following functions allow to change the element correspondance of a previously added element extrapolation transformation::
 
-  set_element_extrapolation_correspondance
+  set_element_extrapolation_correspondence
   (model, transname, std::map<size_type, size_type> &elt_corr);
   
-  set_element_extrapolation_correspondance
+  set_element_extrapolation_correspondence
   (workspace, transname, std::map<size_type, size_type> &elt_corr);
 
 

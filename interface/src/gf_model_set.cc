@@ -478,7 +478,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        getfem::mesh *sm = extract_mesh_object(in.pop());
        iarray v = in.pop().to_iarray();
        if (v.getm() != 2 || v.getp() != 1 || v.getq() != 1)
-       	 THROW_BADARG("Invalid format for the convex correspondance list");
+       	 THROW_BADARG("Invalid format for the convex correspondence list");
        elt_corr_cont elt_corr;
        for (size_type j=0; j < v.getn(); j++)
 	 elt_corr[v(0,j)-config::base_index()] = v(1,j)-config::base_index();
@@ -500,19 +500,19 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        );
 
 
-    /*@SET ('set element extrapolation correspondance', @str transname, @mat elt_corr)
-      Change the correspondance map of an element extrapolation interpolate
+    /*@SET ('set element extrapolation correspondence', @str transname, @mat elt_corr)
+      Change the correspondence map of an element extrapolation interpolate
      transformation. @*/
     sub_command
-      ("set element extrapolation correspondance", 2, 2, 0, 0,
+      ("set element extrapolation correspondence", 2, 2, 0, 0,
        std::string transname = in.pop().to_string();
        iarray v = in.pop().to_iarray();
        if (v.getm() != 2 || v.getp() != 1 || v.getq() != 1)
-       	 THROW_BADARG("Invalid format for the convex correspondance list");
+       	 THROW_BADARG("Invalid format for the convex correspondence list");
        elt_corr_cont elt_corr;
        for (size_type j=0; j < v.getn(); j++)
 	 elt_corr[v(0,j)-config::base_index()] = v(1,j)-config::base_index();
-       getfem::set_element_extrapolation_correspondance(*md, transname,
+       getfem::set_element_extrapolation_correspondence(*md, transname,
 							elt_corr);
        );
     
