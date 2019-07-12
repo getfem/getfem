@@ -334,7 +334,7 @@ namespace getfem {
     int time_integration; // 0 : no, 1 : time step, 2 : init
     bool init_step;
     scalar_type time_step; // Time step (dt) for time integration schemes
-    scalar_type init_time_step; // Time step for initiaisation of derivatives
+    scalar_type init_time_step; // Time step for initialization of derivatives
     
     // Structure dealing with simple dof constraints
     typedef std::map<size_type, scalar_type> real_dof_constraints_var;
@@ -1165,7 +1165,7 @@ namespace getfem {
     virtual void init_affine_dependent_variables(model &md) const = 0;
     virtual void init_affine_dependent_variables_precomputation(model &md)
       const = 0;
-    virtual void time_derivative_to_be_intialized
+    virtual void time_derivative_to_be_initialized
       (std::string &name_v, std::string &name_previous_v) const = 0;
     virtual void shift_variables(model &md) const = 0;
     virtual ~virtual_time_scheme() {}
@@ -1179,6 +1179,8 @@ namespace getfem {
   
   void add_Newmark_scheme(model &md, const std::string &varname,
                           scalar_type beta, scalar_type gamma);
+
+  void add_Houbolt_scheme(model &md, const std::string &varname);
 
 
 

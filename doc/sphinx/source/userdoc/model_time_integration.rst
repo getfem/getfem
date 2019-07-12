@@ -17,7 +17,7 @@ Although time integration scheme can be written directly using the model object 
 
 * The original variables of the model represent the state of the system to be solved at the current time step (say step n). This is the case even for a middle point scheme, mainly because if one needs to apply different schemes to different variables of the system, all variable should describe the system at a unique time step.
 
-* Some data are added to the model to represent the state of the system at previous time steps. For classical one-step schemes (for the moment, only one-step schemes are provided), only the previous time step is stored. For instance if `u` is a variable (thus represented at step n), `Previous_u` will be the data representing the state of the variable at the previous time step (step n-1). Eventually, for future extension to multi-step methods, `Previous2_u` may represent the variable at time step n-2.
+* Some data are added to the model to represent the state of the system at previous time steps. For classical one-step schemes (for the moment, only one-step schemes are provided), only the previous time step is stored. For instance if `u` is a variable (thus represented at step n), `Previous_u`, `Previous2_u`, `Previous3_u` will be the data representing the state of the variable at the previous time step (step n-1, n-2 and n-3).
 
 * Some intermediate variables are added to the model to represent the time derivative (and the second order time derivative for second order problem). For instance, if `u` is a variable, `Dot_u` will represent the first order time derivative of `u` and `Dot2_u` the second order one. One can refer to these variables in the model to add a brick on it or to use it in the weak form language. However, these are not considered to be independent variables, they will be linked to their corresponding original variable (in an affine way) by the time integration scheme. Most of the schemes need also the time derivative at the previous time step and add the data `Previous_Dot_u` and possibly `Previous_Dot2_u` to the model.
 
@@ -223,6 +223,40 @@ The addition of this scheme to a variable is to be done thanks to::
   add_Newmark_scheme(model &md, const std::string &varname,
                      scalar_type beta, scalar_type gamma);
 
+The implicit Houbolt scheme
+***************************
+
+For a problem which reads
+
+.. math::
+
+   (K+\frac{11}{6 dt}C+\frac{2}{dt^2}M) u_{n} = F_{n} + (\frac{5}{dt^2} M + \frac{3}{  dt} C) u_{n-1}
+                                                      - (\frac{4}{dt^2} M + \frac{3}{2 dt} C) u_{n-2}
+                                                      + (\frac{1}{dt^2} M + \frac{1}{3 dt} C) u_{n-3}
+
+where :math:`dt` means a time step, :math:`M` the matrix in term of "Dot2_u", :math:`C` the matrix in term of "Dot_u" and :math:`K` the matrix in term of "u".
+The affine dependences are thus given by::
+
+   Dot_u  = 1/(6*dt)*(11*u-18*Previous_u+9*Previous2_u-2*Previous3_u)
+   Dot2_u = 1/(dt**2)*(2*u-5*Previous_u+4*Previous2_u-Previous3_u)
+
+When aplying this scheme to a variable "u" of the model, the following affine dependent variables are added to the model::
+
+  "Dot_u", "Dot2_u"
+
+which represent the first and second order time derivative of the variable and can be used in some brick definition. 
+
+The following data are also added::
+ 
+  "Previous_u", "Previous2_u", "Previous3_u"
+
+which correspond to the values of "u" at the time step n-1, n-2 n-3.
+
+Before the solve, the data "Previous_u", "Previous2_u" and "Previous3_u" (corresponding to :math:`U^0` in the example) have to be initialized.
+
+The addition of this scheme to a variable is to be done thanks to::
+ 
+  add_Houbolt_scheme(model &md, const std::string &varname);
 
 Transient terms
 ***************
