@@ -145,7 +145,7 @@ A 3D crack, made via level-set
 ------------------------------
 
 In this example, the mesh was a simple cartesian mesh 20x20x1, and the crack geometry was
-defined implicitely via a levelset.
+defined implicitly via a levelset.
 
 .. |im-crack3d| image:: images/fissure_3d_de_traviole.*
 

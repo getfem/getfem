@@ -138,7 +138,7 @@ The array ``border`` has two rows, on the first row is a convex number, on the
 second row is a face number (which is local to the convex, there is no global
 numbering of faces). Then this set of faces is assigned to the region number 42.
 
-At this point, we just have to desribe the model and run the solver to get the
+At this point, we just have to describe the model and run the solver to get the
 solution! The ":envvar:`model`" is created with the ``gf_model`` (or ``gfModel``)
 constructor. A model is basically an object which build a global linear system
 (tangent matrix for non-linear problems) and its associated right hand side.

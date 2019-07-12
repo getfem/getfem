@@ -169,7 +169,7 @@ piece.
 Having this approximation at our disposal, we restart the predictor-corrector
 with :math:`(Y_{j}, r \tilde{T})`.
 
-In |gf|, the continuation is implemented for two ways of parametrisation of the
+In |gf|, the continuation is implemented for two ways of parameterization of the
 model:
 
 1. The parameter :math:`\lambda` is directly a scalar datum, which the model
@@ -222,7 +222,7 @@ A point :math:`\bar{Y}` is called a *bifurcation point* of the system
 curves pass through it. The following result gives a test for *smooth*
 bifurcation points (see, e.g., [Georg2001]_):
 
-Let :math:`s \mapsto Y(s)` be a parametrisation of a solution curve and
+Let :math:`s \mapsto Y(s)` be a parameterization of a solution curve and
 :math:`\bar{Y} := Y(\bar{s})` be a bifurcation point. Moreover, let
 :math:`T^{\top} \dot{Y}(\bar{s}) > 0`,
 :math:`B \notin \mathrm{Im}(J(\bar{Y}))`,
@@ -423,7 +423,7 @@ or even tools for non-smooth ones do. The real numbers ``delta_max``,
 ``ndir`` and ``nspan`` stand for :math:`n_{\mathrm{dir}}` and
 :math:`n_{\mathrm{span}}`, respectively.
 
-Optionally, parametrisation by a vector datum is then declared by::
+Optionally, parameterization by a vector datum is then declared by::
 
   S.set_parametrised_data_names(initdata_name, finaldata_name, currentdata_name);
 

@@ -33,7 +33,7 @@ be used to drive the parallel version of getfem (the other interfaces has
 not been parallelized for the moment). See demo_parallel_laplacian.py in
 the interface/test/python directory.
 
-With the option ``-D GETFEM_PARA_LEVEL=2``, each mesh used is implicitely
+With the option ``-D GETFEM_PARA_LEVEL=2``, each mesh used is implicitly
 partitionned (using METIS) into a
 number of regions corresponding to the number of processors and the assembly
 procedures are parallelized. This means that the tangent matrix and the
@@ -68,7 +68,7 @@ Parallelization of getfem is still considered a "work in progress". A certain nu
 
   Most of assembly procedures (in :file:`getfem/getfem_assembling.h`) have a parameter corresponding to the region in which the assembly is to be computed. They are not parallelized themselves but aimed to be called with a different region in each process to distribute the job. Note that the file :file:`getfem/getfem_config.h` contains a procedures called MPI_SUM_SPARSE_MATRIX allowing to gather the contributions of a distributed sparse matrix.
 
-  The following assembly procedures are implicitely parallelized using the option ``-D GETFEM_PARA_LEVEL=2``:
+  The following assembly procedures are implicitly parallelized using the option ``-D GETFEM_PARA_LEVEL=2``:
 
   * computation of norms (``asm_L2_norm``, ``asm_H1_norm``, ``asm_H2_norm`` ..., in :file:`getfem/getfem_assembling.h`),
 

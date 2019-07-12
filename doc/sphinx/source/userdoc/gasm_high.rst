@@ -789,9 +789,9 @@ A specific transformation (see previous section) is defined in order to allows t
   add_element_extrapolation_transformation
   (workspace, transname, my_mesh, std::map<size_type, size_type> &elt_corr);
 
-The map elt_corr should contain the correspondances between the elements where the transformation is to be applied and the respective elements where the extrapolation has to be made. On the element not listed in the map, no transformation is applied and the evaluation is performed normally on the current element.
+The map elt_corr should contain the correspondences between the elements where the transformation is to be applied and the respective elements where the extrapolation has to be made. On the element not listed in the map, no transformation is applied and the evaluation is performed normally on the current element.
 
-The following functions allow to change the element correspondance of a previously added element extrapolation transformation::
+The following functions allow to change the element correspondence of a previously added element extrapolation transformation::
 
   set_element_extrapolation_correspondance
   (model, transname, std::map<size_type, size_type> &elt_corr);

@@ -38,7 +38,7 @@ References
    *Fictitious domain finite element methods using cut elements: I. A stabilized Lagrange multiplier method*. Computer Methods in Applied Mechanics, 199:41-44, 2680-2686, 2010.
 
 .. [ca-re-so1994] D. Calvetti, L. Reichel and D.C. Sorensen.
-   *An implicitely restarted Lanczos method for large symmetric eigenvalue problems*. Electronic Transaction on Numerical Analysis}. 2:1-21, 1994.
+   *An implicitly restarted Lanczos method for large symmetric eigenvalue problems*. Electronic Transaction on Numerical Analysis}. 2:1-21, 1994.
 
 .. [CH-LA-RE2008] E. Chahine, P. Laborde, Y. Renard.
    *Crack-tip enrichment in the Xfem method using a cut-off function*. Int. J. Numer. Meth. Engng., 75(6):629-646, 2008.

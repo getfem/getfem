@@ -651,11 +651,11 @@ Others methods are:
        - 90
 
      * - ``"IM_CUBE4D(5)"``
-       - 4D parallelepipeded
+       - 4D parallelepiped
        - 24
 
      * - ``"IM_CUBE4D(9)"``
-       - 4D parallelepipeded
+       - 4D parallelepiped
        - 145
 
 

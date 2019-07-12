@@ -54,7 +54,7 @@ Glossary
       The mesh_fem object is a mesh with a **finite element method** defined
       on each **element**. This
       represent a finite element space on which a unknown or a data on the
-      considered domain will be discribed.
+      considered domain will be described.
 
    Mesh_Im
       The mesh_im object is a mesh with a **cubature method** defined on
