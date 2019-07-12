@@ -145,7 +145,7 @@ namespace gmm {
       add(z, scaled(p, gamma), p); // ...
       
       ++iter;
-      // one dimensionnal optimization
+      // one dimensional optimization
       mult(A, p, q);
       lambda = rho / vect_sp(PS, q, p);
       for (size_type i = 0; i < mat_nrows(C); ++i)

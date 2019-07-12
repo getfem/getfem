@@ -1372,7 +1372,7 @@ namespace getfem {
   protected:
     bool islinear;    // The brick add a linear term or not.
     bool issymmetric; // The brick add a symmetric term or not.
-    bool iscoercive;  // The brick add a potentialy coercive terms or not.
+    bool iscoercive;  // The brick add a potentially coercive terms or not.
     //   (in particular, not a term involving a multiplier)
     bool isreal;      // The brick admits a real version or not.
     bool iscomplex;   // The brick admits a complex version or not.

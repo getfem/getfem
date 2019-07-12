@@ -820,7 +820,7 @@ void gf_mesh_get(getfemint::mexargs_in& m_in,
     /*@GET CVFIDs = ('adjacent face', @int cvid, @int fid)
     Return convex face of the neighbour element if it exists.
     If the convex have more than one neighbour
-    relativley to the face ``f`` (think to bar elements in 3D for instance),
+    relatively to the face ``f`` (think to bar elements in 3D for instance),
     return the first face found. @*/
     sub_command
       ("adjacent face", 2, 2, 0, 1,

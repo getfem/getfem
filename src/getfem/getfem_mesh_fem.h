@@ -572,7 +572,7 @@ namespace getfem {
     /** Get a list of dof lying on a given mesh_region. For a reduced mesh_fem
         a dof is lying on a region if its potential corresponding shape
         function is nonzero on this region. The extension matrix is used
-        to make the correspondance between basic and reduced dofs.
+        to make the correspondence between basic and reduced dofs.
         @param b the mesh_region.
         @return the list in a dal::bit_vector.
     */

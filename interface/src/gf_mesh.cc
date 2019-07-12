@@ -460,7 +460,7 @@ void gf_mesh(getfemint::mexargs_in& m_in,
 
 
     /*@INIT M = ('regular simplices', @dvec X[, @dvec Y[, @dvec Z,...]]['degree', @int k]['noised'])
-      Mesh a n-dimensionnal parallelepipeded with simplices (triangles,
+      Mesh a n-dimensional parallelepiped with simplices (triangles,
       tetrahedrons etc) .
 
       The optional degree may be used to build meshes with non linear
@@ -587,9 +587,9 @@ void gf_mesh(getfemint::mexargs_in& m_in,
       procedure used, it can be run again since it will not give necessarily
       the same result due to random procedures used.
       The messages send to the console by the mesh generation can be
-      desactivated using `gf_util('trace level', 2)`. More information
+      deactivated using `gf_util('trace level', 2)`. More information
       can be obtained by `gf_util('trace level', 4)`. See ``MESHER_OBJECT:INIT``
-      to manipulate geometric primitives in order to desribe the geometry.
+      to manipulate geometric primitives in order to describe the geometry.
       @*/
     sub_command
       ("generate", 2, 4, 0, 1,

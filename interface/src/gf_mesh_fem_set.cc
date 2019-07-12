@@ -231,7 +231,7 @@ void gf_mesh_fem_set(getfemint::mexargs_in& m_in,
       This function selects the degrees of freedom of the finite element
       method by selecting a set of independent vectors of the matrix RM.
       The numer of columns of RM should corresponds to the number of degrees
-      of fredoom of the finite element method.  @*/
+      of freedom of the finite element method.  @*/
     sub_command
       ("reduce meshfem", 1, 1, 0, 0,
        std::shared_ptr<gsparse>  RM = in.pop().to_sparse();

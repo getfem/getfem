@@ -73,7 +73,7 @@ namespace getfem {
     base_node ptref;      // coords on reference element of mf1 element
     base_tensor base_val; // optional storage of the base values
     base_tensor grad_val; // optional storage of the grad base values
-    std::vector<size_type> local_dof; // correspondance between dof of the
+    std::vector<size_type> local_dof; // correspondence between dof of the
     // mf1 element and dof of the interpolated element.
     gausspt_interpolation_data() : elt(size_type(-1)), iflags(size_type(-1)) {}
   };

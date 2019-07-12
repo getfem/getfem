@@ -1005,7 +1005,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       The symmetry of the linear system is kept if all other bricks are
       symmetric.
       This brick is to be reserved for simple Dirichlet conditions (only dof
-      declared on the correspodning boundary are prescribed). The application
+      declared on the corresponding boundary are prescribed). The application
       of this brick on reduced dof may be problematic. Intrinsic vectorial
       finite element method are not supported. 
       `dataname` is the optional right hand side of  the Dirichlet condition.
@@ -1096,9 +1096,9 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       right hand side of the Dirichlet condition. `datagamma0` is the
       Nitsche's method parameter. `theta` is a scalar value which can be
       positive or negative. `theta = 1` corresponds to the standard symmetric
-      method which is conditionnaly coercive for  `gamma0` small.
+      method which is conditionally coercive for  `gamma0` small.
       `theta = -1` corresponds to the skew-symmetric method which is
-      inconditionnaly coercive. `theta = 0` (default) is the simplest method
+      inconditionally coercive. `theta = 0` (default) is the simplest method
       for which the second derivative of the Neumann term is not necessary
       even for nonlinear problems. Return the brick index in the model.
     @*/
@@ -1265,9 +1265,9 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       described on a fem. `gamma0name` is the
       Nitsche's method parameter. `theta` is a scalar value which can be
       positive or negative. `theta = 1` corresponds to the standard symmetric
-      method which is conditionnaly coercive for  `gamma0` small.
+      method which is conditionally coercive for  `gamma0` small.
       `theta = -1` corresponds to the skew-symmetric method which is
-      inconditionnaly coercive. `theta = 0` is the simplest method
+      inconditionally coercive. `theta = 0` is the simplest method
       for which the second derivative of the Neumann term is not necessary
       even for nonlinear problems. 
       Returns the brick index in the model.
@@ -1414,9 +1414,9 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       described on a fem. `gamma0name` is the
       Nitsche's method parameter. `theta` is a scalar value which can be
       positive or negative. `theta = 1` corresponds to the standard symmetric
-      method which is conditionnaly coercive for  `gamma0` small.
+      method which is conditionally coercive for  `gamma0` small.
       `theta = -1` corresponds to the skew-symmetric method which is
-      inconditionnaly coercive. `theta = 0` is the simplest method
+      inconditionally coercive. `theta = 0` is the simplest method
       for which the second derivative of the Neumann term is not necessary
       even for nonlinear problems. `Hname` is the data
       corresponding to the matrix field `H`. It has to be a constant matrix
@@ -3319,9 +3319,9 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       `gamma0name` is the Nitsche's method parameter.
       `theta` is a scalar value which can be
       positive or negative. `theta = 1` corresponds to the standard symmetric
-      method which is conditionnaly coercive for  `gamma0` small.
+      method which is conditionally coercive for  `gamma0` small.
       `theta = -1` corresponds to the skew-symmetric method which is
-      inconditionnaly coercive. `theta = 0` is the simplest method
+      inconditionally coercive. `theta = 0` is the simplest method
       for which the second derivative of the Neumann term is not necessary.
       The optional parameter `dataname_friction_coeff` is the friction
       coefficient which could be constant or defined on a finite element
@@ -3376,9 +3376,9 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       `gamma0name` is the Nitsche's method parameter.
       `theta` is a scalar value which can be
       positive or negative. `theta = 1` corresponds to the standard symmetric
-      method which is conditionnaly coercive for  `gamma0` small.
+      method which is conditionally coercive for  `gamma0` small.
       `theta = -1` corresponds to the skew-symmetric method which is
-      inconditionnaly coercive. `theta = 0` is the simplest method
+      inconditionally coercive. `theta = 0` is the simplest method
       for which the second derivative of the Neumann term is not necessary.
       The optional parameter `dataname_friction_coeff` is the friction
       coefficient which could be constant or defined on a finite element
@@ -3433,8 +3433,8 @@ void gf_model_set(getfemint::mexargs_in& m_in,
      `gamma0name` is the Nitsche's method parameter. 
      `theta` is a scalar value which can be positive or negative. 
      `theta = 1` corresponds to the standard symmetric method which is
-     conditionnaly coercive for  `gamma0` small.
-     `theta = -1` corresponds to the skew-symmetric method which is inconditionnaly coercive.
+     conditionally coercive for  `gamma0` small.
+     `theta = -1` corresponds to the skew-symmetric method which is inconditionally coercive.
      `theta = 0` is the simplest method for which the second derivative of
      the Neumann term is not necessary. The optional parameter `dataname_friction_coeff`
      is the friction coefficient which could be constant or defined on a finite element method. 

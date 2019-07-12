@@ -123,7 +123,7 @@ namespace getfem
      @param pgt the geometric transformation to use. For example, use 
      @code
      pgt = geometric_trans_descriptor("GT_PK(2,1"); // to build a mesh of triangles
-     pgt = geometric_trans_descriptor("QK(3,2)"); // to build a mesh of order 2 parallelepipeded
+     pgt = geometric_trans_descriptor("QK(3,2)"); // to build a mesh of order 2 parallelepiped
      @endcode
 
      @param nsubdiv is the number of cells in each direction.  

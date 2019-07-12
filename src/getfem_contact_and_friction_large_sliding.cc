@@ -2271,7 +2271,7 @@ namespace getfem {
   }
 
   void add_rigid_obstacle_to_large_sliding_contact_brick
-  (model &md, size_type indbrick, const std::string &obs) { // The velocity field should be added to an (optional) parameter ... (and optionaly represented by a rigid motion only ... the velocity should be modifiable ...
+  (model &md, size_type indbrick, const std::string &obs) { // The velocity field should be added to an (optional) parameter ... (and optionally represented by a rigid motion only ... the velocity should be modifiable ...
     pbrick pbr = md.brick_pointer(indbrick);
     md.touch_brick(indbrick);
     integral_large_sliding_contact_brick_field_extension *p

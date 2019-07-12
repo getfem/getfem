@@ -221,7 +221,7 @@ void gf_mesh_im_get(getfemint::mexargs_in& m_in,
 
 
     /*@GET ('save',@str filename[, 'with mesh'])
-      Saves a @tmim in a text file (and optionaly its linked mesh object).@*/
+      Saves a @tmim in a text file (and optionally its linked mesh object).@*/
     sub_command
       ("save", 1, 2, 0, 0,
        std::string s = in.pop().to_string();

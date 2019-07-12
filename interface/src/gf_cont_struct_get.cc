@@ -209,7 +209,7 @@ void gf_cont_struct_get(getfemint::mexargs_in& m_in,
 
 
     /*@GET t = ('bifurcation test function')
-      Return the last value of the bifurcation test function and eventaully
+      Return the last value of the bifurcation test function and eventually
       the whole calculated graph when passing between different sub-domains
       of differentiability.@*/
     sub_command

@@ -576,7 +576,7 @@ void gf_mesh_fem_get(getfemint::mexargs_in& m_in,
     For a reduced mesh_fem
     a dof is lying on a region if its potential corresponding shape
     function is nonzero on this region. The extension matrix is used
-    to make the correspondance between basic and reduced dofs.@*/
+    to make the correspondence between basic and reduced dofs.@*/
     sub_command
       ("dof on region", 1, 1, 0, 1,
        iarray bnums = in.pop().to_iarray(-1);
@@ -654,7 +654,7 @@ void gf_mesh_fem_get(getfemint::mexargs_in& m_in,
 
 
     /*@GET ('save',@str filename[, @str opt])
-    Save a @tmf in a text file (and optionaly its linked mesh object
+    Save a @tmf in a text file (and optionally its linked mesh object
     if `opt` is the string 'with_mesh').@*/
     sub_command
       ("save", 1, 2, 0, 0,

@@ -57,7 +57,7 @@ namespace getfem {
     scalar_type gap;      // gap distance from the gauss point to the projected point
     base_tensor base_val; // optional storage of the base values
     base_tensor grad_val; // optional storage of the grad base values
-    std::map<size_type,size_type> local_dof; // correspondance between dof of the
+    std::map<size_type,size_type> local_dof; // correspondence between dof of the
                                              // mf_source element and dof of the projected element.
     gausspt_projection_data() :
       cv(size_type(-1)), f(short_type(-1)), iflags(size_type(-1)) {}

@@ -37,9 +37,9 @@ void gf_cont_struct(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
 
     /*@INIT S = ('.init', @tmodel md, @str dataname_parameter[,@str dataname_init, @str dataname_final, @str dataname_current], @scalar sc_fac[, ...])
     The variable `dataname_parameter` should parametrise the model given by
-    `md`. If the parametrisation is done via a vector datum, `dataname_init`
+    `md`. If the parameterization is done via a vector datum, `dataname_init`
     and `dataname_final` should store two given values of this datum
-    determining the parametrisation, and `dataname_current` serves for actual
+    determining the parameterization, and `dataname_current` serves for actual
     values of this datum. `sc_fac` is a scale factor involved in the weighted
     norm used in the continuation.
 
