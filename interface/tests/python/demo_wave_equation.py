@@ -55,10 +55,13 @@ V0 = 0.*U0
 md=gf.Model('real');
 md.add_fem_variable('u', mf);
 md.add_fem_variable('u1', mf);
+md.add_fem_variable('u2', mf);
 md.add_Laplacian_brick(mim, 'u');
 md.add_Laplacian_brick(mim, 'u1');
+md.add_Laplacian_brick(mim, 'u2');
 md.add_Dirichlet_condition_with_multipliers(mim, 'u', mf, 1);
 md.add_Dirichlet_condition_with_multipliers(mim, 'u1', mf, 1);
+md.add_Dirichlet_condition_with_multipliers(mim, 'u2', mf, 1);
 # md.add_Dirichlet_condition_with_penalization(mim, 'u', 1E9, 1);
 # md.add_Dirichlet_condition_with_simplification('u', 1);
 
@@ -72,6 +75,7 @@ gamma = 0.5;
 
 md.add_Newmark_scheme('u', beta, gamma)
 md.add_Houbolt_scheme('u1')
+md.add_Hilber_Hughes_Taylor_scheme('u2', 'F', alpha, beta, gamma)
 md.add_mass_brick(mim, 'Dot2_u')
 md.add_mass_brick(mim, 'Dot2_u1')
 md.set_time_step(dt)
