@@ -90,6 +90,7 @@ namespace getfem {
     GA_DEVIATOR,    // 'Deviator' operator
     GA_INTERPOLATE, // 'Interpolate' operation
     GA_INTERPOLATE_FILTER, // 'Interpolate_filter' operation
+    GA_INTERPOLATE_DERIVATIVE, // 'Interpolate_derivative' operation
     GA_ELEMENTARY,  // 'Elementary' operation (operation at the element level)
     GA_SECONDARY_DOMAIN,  // For the integration on a product of two domains
     GA_XFEM_PLUS,   // Évaluation on the + side of a level-set for fem_level_set

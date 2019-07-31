@@ -142,6 +142,8 @@ namespace getfem {
         return GA_DEVIATOR;
       if (expr.compare(token_pos, token_length, "Interpolate") == 0)
         return GA_INTERPOLATE;
+      if (expr.compare(token_pos, token_length, "Interpolate_derivative") == 0)
+        return GA_INTERPOLATE_DERIVATIVE;
       if (expr.compare(token_pos, token_length, "Interpolate_filter") == 0)
         return GA_INTERPOLATE_FILTER;
       if (expr.compare(token_pos, token_length,
@@ -986,7 +988,10 @@ namespace getfem {
     case GA_NODE_INTERPOLATE_DERIVATIVE:
       str << (pnode->test_function_type == 1 ? "Test_" : "Test2_")
           << "Interpolate_derivative(" << pnode->interpolate_name_der << ","
-          << pnode->interpolate_name << "," << pnode->name << ")";
+          << pnode->name;
+      if (pnode->interpolate_name.size())
+        str << "," << pnode->interpolate_name;
+      str <<  ")";
       break;
     case GA_NODE_INTERPOLATE:
     case GA_NODE_ELEMENTARY:
@@ -1348,6 +1353,8 @@ namespace getfem {
         switch(pnode->op_type) {
         case GA_NAME : pnode->node_type = GA_NODE_NAME; break;
         case GA_INTERPOLATE : pnode->node_type = GA_NODE_INTERPOLATE; break;
+        case GA_INTERPOLATE_DERIVATIVE :
+          pnode->node_type = GA_NODE_INTERPOLATE_DERIVATIVE; break;
         case GA_ELEMENTARY : pnode->node_type = GA_NODE_ELEMENTARY; break;
         case GA_SECONDARY_DOMAIN :
           pnode->node_type = GA_NODE_SECONDARY_DOMAIN; break;
@@ -1467,6 +1474,8 @@ namespace getfem {
           switch(pnode->node_type) {
           case GA_NODE_NAME : pnode->op_type = GA_NAME; break;
           case GA_NODE_INTERPOLATE : pnode->op_type = GA_INTERPOLATE; break;
+          case GA_NODE_INTERPOLATE_DERIVATIVE :
+            pnode->op_type = GA_INTERPOLATE_DERIVATIVE; break;
           case GA_NODE_ELEMENTARY : pnode->op_type = GA_ELEMENTARY; break;
           case GA_NODE_SECONDARY_DOMAIN :
             pnode->op_type = GA_SECONDARY_DOMAIN; break;
@@ -1664,6 +1673,52 @@ namespace getfem {
             if (t_type != GA_RPAR)
               ga_throw_error(expr, pos-1, "Missing a parenthesis after "
                              "interpolate arguments.");
+            state = 2;
+          }
+          break;
+
+        case GA_INTERPOLATE_DERIVATIVE:
+          {
+            tree.add_scalar(scalar_type(0), token_pos, expr);
+            tree.current_node->node_type = GA_NODE_INTERPOLATE_DERIVATIVE;
+            t_type = ga_get_token(*expr, pos, token_pos, token_length);
+            if (t_type != GA_LPAR)
+              ga_throw_error(expr, pos-1,
+                             "Missing Interpolate_derivative arguments.");
+            t_type = ga_get_token(*expr, pos, token_pos, token_length);
+            if (t_type != GA_NAME)
+              ga_throw_error(expr, pos,
+                             "First argument of Interpolate should the "
+                             "interpolate transformtion name ");
+            tree.current_node->interpolate_name_der
+              = std::string(&((*expr)[token_pos]), token_length);
+            t_type = ga_get_token(*expr, pos, token_pos, token_length);
+            if (t_type != GA_COMMA)
+              ga_throw_error(expr, pos, "Bad format for Interpolate_derivative "
+                             "arguments.");
+            t_type = ga_get_token(*expr, pos, token_pos, token_length);
+            if (t_type != GA_NAME)
+              ga_throw_error(expr, pos,
+                             "Second argument of Interpolate should be a "
+                             "variable name.");
+            tree.current_node->name
+              = std::string(&((*expr)[token_pos]), token_length);
+            
+            t_type = ga_get_token(*expr, pos, token_pos, token_length);
+            tree.current_node->interpolate_name = "";
+            if (t_type == GA_COMMA) {
+              t_type = ga_get_token(*expr, pos, token_pos, token_length);
+              if (t_type != GA_NAME)
+                ga_throw_error(expr, pos,
+                               "Third argument of Interpolate should be a "
+                               "interpolate transformation name.");
+              tree.current_node->interpolate_name
+                = std::string(&((*expr)[token_pos]), token_length);
+              t_type = ga_get_token(*expr, pos, token_pos, token_length);
+            }
+            if (t_type != GA_RPAR)
+              ga_throw_error(expr, pos-1, "Missing a parenthesis after "
+                             "Interpolate_derivative arguments.");
             state = 2;
           }
           break;
