@@ -1,6 +1,6 @@
 /*===========================================================================
 
- Copyright (C) 2000-2017 Yves Renard
+ Copyright (C) 2000-2019 Yves Renard
 
  This file is a part of GetFEM++
 
@@ -1272,6 +1272,61 @@ namespace bgeot {
     }
     return pgt;
   }
+
+
+  // To be completed
+  pgeometric_trans default_trans_of_cvs(pconvex_structure cvs) {
+
+    dim_type n = cvs->dim();
+    short_type nbf  = cvs->nb_faces();
+    short_type nbpt  = cvs->nb_points();
+
+    // Basic cases
+    if (cvs == simplex_structure(n)) return simplex_geotrans(n, 1);
+    if (cvs == parallelepiped_structure(n))
+      return parallelepiped_geotrans(n, 1);
+    if (cvs == prism_P1_structure(n)) return prism_geotrans(n, 1);
+    
+    // more elaborated ones
+    switch (n) {
+    case 1 : return simplex_geotrans(1, short_type(nbpt-1));
+    case 2 :
+      if (nbf == 3) {
+        short_type k = short_type(round((sqrt(1.+8.*nbpt) - 3. ) / 2.));
+        if (cvs == simplex_structure(2,k)) return simplex_geotrans(2, k);
+      } else if (nbf == 4) {
+        short_type k = short_type(round(sqrt(1.*nbpt)) - 1.);
+        if (cvs == parallelepiped_structure(2, k))
+          return parallelepiped_geotrans(2, k);
+      }
+      break;
+    case 3 :
+      if (nbf == 4) {
+        if (cvs == simplex_structure(3, 2)) return simplex_geotrans(3, 2);
+        if (cvs == simplex_structure(3, 3)) return simplex_geotrans(3, 3);
+        if (cvs == simplex_structure(3, 4)) return simplex_geotrans(3, 4);
+        if (cvs == simplex_structure(3, 5)) return simplex_geotrans(3, 5);
+        if (cvs == simplex_structure(3, 6)) return simplex_geotrans(3, 6);
+      } else if (nbf == 6) {
+        short_type k = short_type(round(pow(1.*nbpt, 1./3.)) - 1.);
+        if (cvs == parallelepiped_structure(3, k))
+          return parallelepiped_geotrans(3, k);
+      } else if (nbf == 5) {
+        if (cvs == pyramid_QK_structure(1)) return pyramid_QK_geotrans(1);
+        if (cvs == pyramid_QK_structure(2)) return pyramid_QK_geotrans(2);
+        if (cvs == pyramid_QK_structure(3)) return pyramid_QK_geotrans(3);
+        if (cvs == pyramid_QK_structure(4)) return pyramid_QK_geotrans(4);
+        if (cvs == pyramid_QK_structure(5)) return pyramid_QK_geotrans(5);
+        if (cvs == pyramid_QK_structure(6)) return pyramid_QK_geotrans(6);
+        if (cvs == pyramid_Q2_incomplete_structure())
+          return pyramid_Q2_incomplete_geotrans();
+      }
+      break;
+    }
+    GMM_ASSERT1(false, "Unrecognized structure");
+  }
+
+  
 
   /* ********************************************************************* */
   /*       Precomputation on geometric transformations.                    */

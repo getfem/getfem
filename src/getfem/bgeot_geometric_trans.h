@@ -230,6 +230,8 @@ namespace bgeot {
   pyramid_geotrans(short_type k) { return pyramid_QK_geotrans(k); }
   pgeometric_trans APIDECL pyramid_Q2_incomplete_geotrans();
 
+  pgeometric_trans APIDECL default_trans_of_cvs(pconvex_structure);
+
   /**
      Get the geometric transformation from its string name.
      @see name_of_geometric_trans

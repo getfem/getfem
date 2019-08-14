@@ -1,6 +1,6 @@
 /*===========================================================================
 
- Copyright (C) 2002-2017 Yves Renard
+ Copyright (C) 2002-2019 Yves Renard
 
  This file is a part of GetFEM++
 
@@ -72,7 +72,7 @@ namespace bgeot {
     orgs.resize(m.nb_convex());
     gtrans.resize(m.nb_convex());
     for (size_type i = 0; i <= m.points().index().last_true(); ++i) {
-      vertexes.add(m.points()[i]);
+      vertices.add(m.points()[i]);
     }
 
     base_node min, max;
@@ -107,9 +107,10 @@ namespace bgeot {
 
   DAL_TRIPLE_KEY(base_poly_key, short_type, short_type, std::vector<opt_long_scalar_type>);
 
-  polynomial_composite::polynomial_composite(
-    const mesh_precomposite &m, bool lc)
-    : mp(&m), local_coordinate(lc), default_poly(mp->dim(), 0) {}
+  polynomial_composite::polynomial_composite(const mesh_precomposite &m,
+                                             bool lc, bool ff)
+    : mp(&m), local_coordinate(lc), faces_first(ff),
+      default_poly(mp->dim(), 0) {}
 
   void polynomial_composite::derivative(short_type k) {
     if (local_coordinate) {

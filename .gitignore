@@ -23,6 +23,8 @@ Makefile
 /depcomp
 /install-sh
 /interface/tests/matlab/check_all.sh.trs
+interface/tests/python/results/
+interface/tests/python/results1/
 /ltmain.sh
 /m4/libtool.m4
 /m4/ltoptions.m4

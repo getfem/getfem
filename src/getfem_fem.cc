@@ -1,6 +1,6 @@
 /*===========================================================================
 
- Copyright (C) 1999-2017 Yves Renard
+ Copyright (C) 1999-2019 Yves Renard
 
  This file is a part of GetFEM++
 
@@ -324,22 +324,27 @@ namespace getfem {
 
   enum ddl_type { LAGRANGE, NORMAL_DERIVATIVE, DERIVATIVE, MEAN_VALUE,
                   BUBBLE1, LAGRANGE_NONCONFORMING, GLOBAL_DOF,
-                  SECOND_DERIVATIVE, NORMAL_COMPONENT, EDGE_COMPONENT};
+                  SECOND_DERIVATIVE, NORMAL_COMPONENT, EDGE_COMPONENT,
+                  IPK_CENTER};
 
   struct ddl_elem {
     ddl_type t;
     gmm::int16_type hier_degree;
     short_type hier_raff;
+    size_type spec;
     bool operator < (const ddl_elem &l) const {
       if (t < l.t) return true;
       if (t > l.t) return false;
       if (hier_degree < l.hier_degree) return true;
       if (hier_degree > l.hier_degree) return false;
       if (hier_raff < l.hier_raff) return true;
+      if (hier_raff > l.hier_raff) return false;
+      if (spec < l.spec) return true;
       return false;
     }
-    ddl_elem(ddl_type s = LAGRANGE, gmm::int16_type k = -1, short_type l = 0)
-      : t(s), hier_degree(k), hier_raff(l) {}
+    ddl_elem(ddl_type s = LAGRANGE, gmm::int16_type k = -1, short_type l = 0,
+             size_type spec_ = 0)
+      : t(s), hier_degree(k), hier_raff(l), spec(spec_) {}
   };
 
   struct dof_description {
@@ -430,6 +435,22 @@ namespace getfem {
     dof_description l = *p; l.xfem_index = ind;
     return &(tab[tab.add_norepeat(l)]);
   }
+
+  pdof_description ipk_center_dof(dim_type n, size_type k_ind) {
+    THREAD_SAFE_STATIC dim_type n_old = dim_type(-2);
+    THREAD_SAFE_STATIC pdof_description p_old = nullptr;
+    if (n != n_old) {
+      dof_d_tab& tab = dal::singleton<dof_d_tab>::instance();
+      dof_description l;
+      l.ddl_desc.resize(n);
+      std::fill(l.ddl_desc.begin(), l.ddl_desc.end(),
+                ddl_elem(IPK_CENTER, -1, 0, k_ind));
+      p_old = &(tab[tab.add_norepeat(l)]);
+      n_old = n;
+    }
+    return p_old;
+  }
+  
 
 
   pdof_description to_coord_dof(pdof_description p, dim_type ct) {
@@ -1055,7 +1076,7 @@ namespace getfem {
                              std::vector<dal::pstatic_stored_object> &) {
     GMM_ASSERT1(params.size() == 2 || params.size() == 3,
                 "Bad number of parameters : "
-                << params.size() << " should be 2.");
+                << params.size() << " should be 2 or 3.");
     GMM_ASSERT1(params[0].type() == 0 && params[1].type() == 0 &&
                 (params.size() != 3 || params[2].type() == 0),
                 "Bad type of parameters");
@@ -1638,6 +1659,126 @@ namespace getfem {
     dependencies.push_back(p->node_tab(0));
     return p;
   }
+
+  /* ******************************************************************** */
+  /*    Element Pk on a square with internal nodes (with possible node    */
+  /*  correspondance for surface in 3D (build for HHO elements).          */
+  /* ******************************************************************** */
+  // Not tested. To be tested
+
+  struct IPK_SQUARE_ : public fem<base_poly> {
+    dim_type k;   // 
+    mutable base_matrix K;
+    base_small_vector norient;
+    mutable bgeot::pgeotrans_precomp pgp;
+    mutable bgeot::pgeometric_trans pgt_stored;
+    // mutable pfem_precomp pfp;
+
+    bgeot::pstored_point_tab pC;
+
+    virtual void mat_trans(base_matrix &M, const base_matrix &G,
+                           bgeot::pgeometric_trans pgt) const;
+    IPK_SQUARE_(dim_type nc_);
+  };
+
+  void IPK_SQUARE_::mat_trans(base_matrix &M,
+                              const base_matrix &G,
+                              bgeot::pgeometric_trans pgt) const {
+    // All the dof of this element are concentrated at the center of the element
+    // This is a PK element on a square. The base functions are the monomials
+    // The trans_mat is here to eliminate a potential rotation of angle k PI/2
+    // The idea is to compute the gradient at the center and to sort and
+    // orientate the derivative in the two directions, and exchange the base
+    // functions accordingly.
+    dim_type N = dim_type(G.nrows());
+    gmm::copy(gmm::identity_matrix(), M);
+    if (pgt != pgt_stored) {
+      pgt_stored = pgt;
+      pgp = bgeot::geotrans_precomp(pgt, pC, 0);
+    }
+    gmm::resize(K, N, 2);
+    gmm::mult(G, pgp->grad(0), K);
+    scalar_type s0(0), m0(M_PI);
+    for (size_type i = 0; i < N; ++i, m0*=M_PI) s0 += m0 * K(i, 0);
+    scalar_type s1(0), m1(M_PI);
+    for (size_type i = 0; i < N; ++i, m1*=M_PI) s1 += m1 * K(i, 1);
+    scalar_type a0 = gmm::sgn(s0), a1 = gmm::sgn(s1);
+
+    bool inv = false;
+    for (size_type i = 0; i < N; ++i) {
+      if (K(i, 0) * a0 < K(i, 1) * a1 - 1e-6) break;
+      if (K(i, 0) * a0 > K(i, 1) * a1 + 1e-6) { inv = true; break; }
+    }
+
+    if (a0 < 0.) {
+      for (size_type i = 1, l = 1; i < k; ++i)
+        for (size_type j = 0; j <= i; ++j, ++l)
+          { if (((i-j) % 2) == 1) M(l, l) = -1.0; } // X^(i-j) Y^j
+    }
+
+    if (a1 < 0.) {
+      for (size_type i = 1, l = 1; i < k; ++i)
+        for (size_type j = 0; j <= i; ++j, ++l)
+          { if ((j % 2) == 1) M(l, l) = -1.0; } // X^(i-j) Y^j
+    }
+
+    if (inv) {
+      // std::swap(a0, a1);
+      for (size_type i = 1, l = 1; i < k; ++i)
+        for (size_type j = 0; j <= i; ++j, ++l)
+          { M(l, l) = 0.0; M(l, l+i-2*j) = 1.0; }
+    }
+  }
+
+  IPK_SQUARE_::IPK_SQUARE_(dim_type k_) {
+    k = k_;
+    pgt_stored = 0;
+
+    cvr = bgeot::parallelepiped_of_reference(2);
+    dim_ = cvr->structure()->dim();
+    init_cvs_node();
+    es_degree = k;
+    is_pol = true;
+    is_standard_fem = is_lag = is_equiv = false;
+    base_.resize((k+1)*(k+2)/2);
+
+    std::vector<base_node> C(1);
+    C[0] = base_node(0.5, 0.5);
+    pC = bgeot::store_point_tab(C);
+
+    base_poly X, Y;
+    read_poly(X, 2, "x-0.5"); read_poly(Y, 2, "y-0.5");
+
+    base_[0] = bgeot::one_poly(2);
+    add_node(ipk_center_dof(2,0), C[0]);
+
+    for (size_type i = 1, l = 1; i < k; ++i)
+      for (size_type j = 0; j <= i; ++j, ++l) { // X^(i-j) Y^j
+        base_[l] = base_[0];
+        for (size_type n = 0; n < i-j; ++n) base_[l] *= X;
+        for (size_type n = 0; n < j; ++n) base_[l] *= Y;
+        
+        add_node(ipk_center_dof(2,l), C[0]);
+      }
+  }
+
+  static pfem IPK_SQUARE(fem_param_list &params,
+        std::vector<dal::pstatic_stored_object> &dependencies) {
+    GMM_ASSERT1(params.size() == 1, "Bad number of parameters : "
+                << params.size() << " should be 1.");
+    GMM_ASSERT1(params[0].type() == 0, "Bad type of parameters");
+    int k = int(::floor(params[0].num() + 0.01));
+    GMM_ASSERT1(k >= 0 && k < 50 && double(k) == params[0].num(),
+                "Bad parameter");
+    pfem p = std::make_shared<IPK_SQUARE_>(dim_type(k));
+    dependencies.push_back(p->ref_convex(0));
+    dependencies.push_back(p->node_tab(0));
+    return p;
+  }
+
+
+
+  
 
   /* ******************************************************************** */
   /*    Element RT0 on the simplexes.                                     */
@@ -3681,8 +3822,10 @@ namespace getfem {
 
     PK_discont_(dim_type nc, short_type k, scalar_type alpha=scalar_type(0))
       : PK_fem_(nc, k) {
-      std::fill(dof_types_.begin(), dof_types_.end(),
-                lagrange_nonconforming_dof(nc));
+
+      if (alpha < 1e-4) // In order to glue dof of two faces in 3D,
+        std::fill(dof_types_.begin(), // for alpha > 1e-4. Important.
+                  dof_types_.end(), lagrange_nonconforming_dof(nc));
 
       if (alpha != scalar_type(0)) {
         base_node G =
@@ -3894,7 +4037,9 @@ namespace getfem {
         std::vector<dal::pstatic_stored_object> &dependencies);
   pfem P1bubbletriangle_fem(fem_param_list &params,
         std::vector<dal::pstatic_stored_object> &dependencies);
-
+  pfem hho_method(fem_param_list &params,
+        std::vector<dal::pstatic_stored_object> &dependencies);
+  
   struct fem_naming_system : public dal::naming_system<virtual_fem> {
     fem_naming_system() : dal::naming_system<virtual_fem>("FEM") {
       add_suffix("HERMITE", Hermite_fem);
@@ -3924,12 +4069,14 @@ namespace getfem {
       add_suffix("PK_FULL_HIERARCHICAL_COMPOSITE",
                  PK_composite_full_hierarch_fem);
       add_suffix("PK_GAUSSLOBATTO1D", PK_GL_fem);
+      add_suffix("IPK_QUAD", IPK_SQUARE);
       add_suffix("Q2_INCOMPLETE", Q2_incomplete_fem);
       add_suffix("Q2_INCOMPLETE_DISCONTINUOUS", Q2_incomplete_discontinuous_fem);
       add_suffix("HCT_TRIANGLE", HCT_triangle_fem);
       add_suffix("REDUCED_HCT_TRIANGLE", reduced_HCT_triangle_fem);
       add_suffix("QUADC1_COMPOSITE", quadc1p3_fem);
       add_suffix("REDUCED_QUADC1_COMPOSITE", reduced_quadc1p3_fem);
+      add_suffix("HHO", hho_method);
       add_suffix("RT0", P1_RT0);
       add_suffix("RT0Q", P1_RT0Q);
       add_suffix("NEDELEC", P1_nedelec);
