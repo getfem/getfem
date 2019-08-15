@@ -37,6 +37,7 @@ EXTRA_DIST=						\
 	check_plot.m 					\
 	check_slices.m 					\
 	check_spmat.m 					\
+	check_mitc.m 					\
 	check_workspace.m 				\
 	check_plasticity.m 				\
 	demo_elasticity.m 				\

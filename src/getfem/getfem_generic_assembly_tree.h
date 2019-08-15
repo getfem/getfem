@@ -1,6 +1,6 @@
 /*===========================================================================
 
- Copyright (C) 2013-2018 Yves Renard
+ Copyright (C) 2013-2019 Yves Renard
 
  This file is a part of GetFEM++
 
@@ -327,6 +327,8 @@ namespace getfem {
                                       // name of transformation
     std::string elementary_name;  // For Elementary_transformation :
                                   // name of transformation
+    std::string elementary_target;// For Elementary_transformation :
+                                  // target variable (for its mesh_fem) 
     size_type der1, der2;         // For functions and nonlinear operators,
                                   // optional derivative or second derivative.
     bool symmetric_op;

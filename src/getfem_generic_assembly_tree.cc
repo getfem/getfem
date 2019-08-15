@@ -1,6 +1,6 @@
 /*===========================================================================
 
- Copyright (C) 2013-2018 Yves Renard
+ Copyright (C) 2013-2019 Yves Renard
 
  This file is a part of GetFEM++
 
@@ -1216,9 +1216,12 @@ namespace getfem {
 
     if (is_interpolate)
       str << "," << pnode->interpolate_name << ")";
-    else if (is_elementary)
-      str << "," << pnode->elementary_name << ")";
-    else if (is_secondary)
+    else if (is_elementary) {
+      str << "," << pnode->elementary_name;
+      if (pnode->name.compare(pnode->elementary_target) != 0)
+        str << "," << pnode->elementary_target;
+      str << ")";
+    } else if (is_secondary)
       str << ")";    
     else if (is_xfem_plus || is_xfem_minus)
       str << ")";
@@ -1738,6 +1741,7 @@ namespace getfem {
                              "should be a variable or a test function.");
             tree.current_node->name = std::string(&((*expr)[token_pos]),
                                                   token_length);
+            tree.current_node->elementary_target = tree.current_node->name;
 
             t_type = ga_get_token(*expr, pos, token_pos, token_length);
             if (t_type != GA_COMMA)
@@ -1751,6 +1755,19 @@ namespace getfem {
             tree.current_node->elementary_name
               = std::string(&((*expr)[token_pos]), token_length);
             t_type = ga_get_token(*expr, pos, token_pos, token_length);
+
+            if (t_type == GA_COMMA) {
+              t_type = ga_get_token(*expr, pos, token_pos, token_length);
+              if (t_type != GA_NAME)
+              ga_throw_error(expr, pos,
+                             "Third argument of Elementary_transformation "
+                             "should be a variable or data name.");
+              
+              tree.current_node->elementary_target =
+                std::string(&((*expr)[token_pos]), token_length);
+              t_type = ga_get_token(*expr, pos, token_pos, token_length);
+            }
+            
             if (t_type != GA_RPAR)
               ga_throw_error(expr, pos-1, "Missing a parenthesis after "
                              "Elementary_transformation arguments.");

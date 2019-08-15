@@ -124,8 +124,8 @@ namespace getfem {
 
   public:
     
-    virtual void give_transformation(const mesh_fem &mf, size_type cv,
-                                     base_matrix &M) const = 0;
+    virtual void give_transformation(const mesh_fem &mf1, const mesh_fem &mf2,
+                                     size_type cv, base_matrix &M) const = 0;
     virtual ~virtual_elementary_transformation() {}
   };
 

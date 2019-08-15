@@ -1,6 +1,6 @@
 /*===========================================================================
 
- Copyright (C) 2013-2018 Yves Renard
+ Copyright (C) 2013-2019 Yves Renard
 
  This file is a part of GetFEM++
 
@@ -1105,111 +1105,110 @@ namespace getfem {
       : ga_instruction_copy_val_base(tt, Z_, q) {}
   };
 
-  struct ga_instruction_elementary_transformation {
+  struct ga_instruction_elementary_trans {
     const base_vector &coeff_in;
     base_vector coeff_out;
     pelementary_transformation elemtrans;
-    const mesh_fem &mf;
+    const mesh_fem &mf1, &mf2;
     const fem_interpolation_context &ctx;
     base_matrix &M;
-    const mesh_fem **mf_M;
     size_type &icv;
 
-    void do_transformation() {
-      size_type nn = gmm::vect_size(coeff_in);
-      if (M.size() == 0 || icv != ctx.convex_num() || &mf != *mf_M) {
-        M.base_resize(nn, nn);
-        *mf_M = &mf; icv = ctx.convex_num();
-        elemtrans->give_transformation(mf, icv, M);
+    void do_transformation(size_type n, size_type m) {
+      if (icv != ctx.convex_num() || M.size() == 0) {
+        M.base_resize(m, n);
+        icv = ctx.convex_num();
+        elemtrans->give_transformation(mf1, mf2, icv, M);
       }
-      coeff_out.resize(nn);
+      coeff_out.resize(gmm::mat_nrows(M));
       gmm::mult(M, coeff_in, coeff_out); // remember: coeff == coeff_out
     }
 
-    ga_instruction_elementary_transformation
+    ga_instruction_elementary_trans
     (const base_vector &co, pelementary_transformation e,
-     const mesh_fem &mf_, const fem_interpolation_context &ctx_,
-     base_matrix &M_, const mesh_fem **mf_M_, size_type &icv_)
-      : coeff_in(co), elemtrans(e), mf(mf_), ctx(ctx_),
-        M(M_), mf_M(mf_M_), icv(icv_) {}
-    ~ga_instruction_elementary_transformation() {};
+     const mesh_fem &mf1_, const mesh_fem &mf2_,
+     const fem_interpolation_context &ctx_, base_matrix &M_,
+     size_type &icv_)
+      : coeff_in(co), elemtrans(e), mf1(mf1_), mf2(mf2_), ctx(ctx_),
+        M(M_), icv(icv_) {}
+    ~ga_instruction_elementary_trans() {};
   };
 
-  struct ga_instruction_elementary_transformation_val
-    : public ga_instruction_val, ga_instruction_elementary_transformation {
+  struct ga_instruction_elementary_trans_val
+    : public ga_instruction_val, ga_instruction_elementary_trans {
     // Z(ndof,target_dim), coeff_in(Qmult,ndof) --> t(target_dim*Qmult)
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: variable value with elementary "
                     "transformation");
-      do_transformation();
+      size_type ndof = Z.sizes()[0];
+      size_type Qmult = qdim / Z.sizes()[1];
+      do_transformation(ndof*Qmult, t.sizes()[0]);
       return ga_instruction_val::exec();
     }
 
-    ga_instruction_elementary_transformation_val
+    ga_instruction_elementary_trans_val
     (base_tensor &tt, const base_tensor &Z_, const base_vector &co, size_type q,
-     pelementary_transformation e, const mesh_fem &mf_,
-     fem_interpolation_context &ctx_, base_matrix &M_,
-     const mesh_fem **mf_M_, size_type &icv_)
+     pelementary_transformation e, const mesh_fem &mf1_, const mesh_fem &mf2_,
+     fem_interpolation_context &ctx_, base_matrix &M_, size_type &icv_)
       : ga_instruction_val(tt, Z_, coeff_out, q),
-        ga_instruction_elementary_transformation(co, e, mf_, ctx_, M_,
-                                                 mf_M_, icv_) {}
+        ga_instruction_elementary_trans(co, e, mf1_, mf2_, ctx_, M_, icv_) {}
   };
 
-  struct ga_instruction_elementary_transformation_grad
-    : public ga_instruction_grad, ga_instruction_elementary_transformation {
+  struct ga_instruction_elementary_trans_grad
+    : public ga_instruction_grad, ga_instruction_elementary_trans {
     // Z(ndof,target_dim,N), coeff_in(Qmult,ndof) --> t(target_dim*Qmult,N)
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: gradient with elementary transformation");
-      do_transformation();
+      size_type ndof = Z.sizes()[0];
+      size_type Qmult = qdim / Z.sizes()[1];
+      do_transformation(ndof*Qmult, t.sizes()[0]);
       return ga_instruction_grad::exec();
     }
 
-    ga_instruction_elementary_transformation_grad
+    ga_instruction_elementary_trans_grad
     (base_tensor &tt, const base_tensor &Z_, const base_vector &co, size_type q,
-     pelementary_transformation e, const mesh_fem &mf_,
-     fem_interpolation_context &ctx_, base_matrix &M_,
-     const mesh_fem **mf_M_, size_type &icv_)
+     pelementary_transformation e, const mesh_fem &mf1_, const mesh_fem &mf2_,
+     fem_interpolation_context &ctx_, base_matrix &M_, size_type &icv_)
       : ga_instruction_grad(tt, Z_, coeff_out, q),
-        ga_instruction_elementary_transformation(co, e, mf_, ctx_, M_,
-                                                 mf_M_, icv_) {}
+        ga_instruction_elementary_trans(co, e, mf1_, mf2_, ctx_, M_, icv_) {}
   };
 
-  struct ga_instruction_elementary_transformation_hess
-    : public ga_instruction_hess, ga_instruction_elementary_transformation {
+  struct ga_instruction_elementary_trans_hess
+    : public ga_instruction_hess, ga_instruction_elementary_trans {
     // Z(ndof,target_dim,N,N), coeff_in(Qmult,ndof) --> t(target_dim*Qmult,N,N)
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: Hessian with elementary transformation");
-      do_transformation();
+      size_type ndof = Z.sizes()[0];
+      size_type Qmult = qdim / Z.sizes()[1];
+      do_transformation(ndof*Qmult, t.sizes()[0]);
       return ga_instruction_hess::exec();
     }
 
-    ga_instruction_elementary_transformation_hess
+    ga_instruction_elementary_trans_hess
     (base_tensor &tt, const base_tensor &Z_, const base_vector &co, size_type q,
-     pelementary_transformation e, const mesh_fem &mf_,
-     fem_interpolation_context &ctx_, base_matrix &M_,
-     const mesh_fem **mf_M_, size_type &icv_)
+     pelementary_transformation e, const mesh_fem &mf1_, const mesh_fem &mf2_,
+     fem_interpolation_context &ctx_, base_matrix &M_, size_type &icv_)
       : ga_instruction_hess(tt, Z_, coeff_out, q),
-        ga_instruction_elementary_transformation(co, e, mf_, ctx_, M_,
-                                                 mf_M_, icv_) {}
+        ga_instruction_elementary_trans(co, e, mf1_, mf2_, ctx_, M_, icv_) {}
   };
 
-  struct ga_instruction_elementary_transformation_diverg
-    : public ga_instruction_diverg, ga_instruction_elementary_transformation {
+  struct ga_instruction_elementary_trans_diverg
+    : public ga_instruction_diverg, ga_instruction_elementary_trans {
     // Z(ndof,target_dim,N), coeff_in(Qmult,ndof) --> t(1)
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: divergence with elementary transformation");
-      do_transformation();
+      size_type ndof = Z.sizes()[0];
+      size_type Qmult = qdim / Z.sizes()[1];
+      do_transformation(ndof*Qmult, t.sizes()[0]);
       return ga_instruction_diverg::exec();
     }
 
-    ga_instruction_elementary_transformation_diverg
+    ga_instruction_elementary_trans_diverg
     (base_tensor &tt, const base_tensor &Z_, const base_vector &co, size_type q,
-     pelementary_transformation e, const mesh_fem &mf_,
-     fem_interpolation_context &ctx_, base_matrix &M_,
-     const mesh_fem **mf_M_, size_type &icv_)
+     pelementary_transformation e, const mesh_fem &mf1_, const mesh_fem &mf2_,
+     fem_interpolation_context &ctx_, base_matrix &M_, size_type &icv_)
       : ga_instruction_diverg(tt, Z_, coeff_out, q),
-        ga_instruction_elementary_transformation(co, e, mf_, ctx_, M_,
-                                                 mf_M_, icv_) {}
+        ga_instruction_elementary_trans(co, e, mf1_, mf2_, ctx_, M_, icv_) {}
   };
 
   struct ga_instruction_update_group_info : public ga_instruction {
@@ -1528,131 +1527,126 @@ namespace getfem {
   };
 
 
-  struct ga_instruction_elementary_transformation_base {
+  struct ga_instruction_elementary_trans_base {
     base_tensor t_in;
     base_tensor &t_out;
     pelementary_transformation elemtrans;
-    const mesh_fem &mf;
+    const mesh_fem &mf1, &mf2;
     const fem_interpolation_context &ctx;
     base_matrix &M;
-    const mesh_fem **mf_M;
     size_type &icv;
 
-    void do_transformation(size_type n) {
-      if (M.size() == 0 || icv != ctx.convex_num() || &mf != *mf_M) {
-        M.base_resize(n, n);
-        *mf_M = &mf; icv = ctx.convex_num();
-        elemtrans->give_transformation(mf, icv, M);
+    void do_transformation(size_type n, size_type m) {
+      if (icv != ctx.convex_num() || M.size() == 0) {
+        M.base_resize(m, n);
+        icv = ctx.convex_num();
+        elemtrans->give_transformation(mf1, mf2, icv, M);
       }
       t_out.mat_reduction(t_in, M, 0);
     }
 
-    ga_instruction_elementary_transformation_base
-    (base_tensor &t_, pelementary_transformation e, const mesh_fem &mf_,
-     const fem_interpolation_context &ctx_, base_matrix &M_,
-     const mesh_fem **mf_M_, size_type &icv_)
-      : t_out(t_), elemtrans(e), mf(mf_), ctx(ctx_),
-        M(M_), mf_M(mf_M_), icv(icv_) {}
+    ga_instruction_elementary_trans_base
+    (base_tensor &t_, pelementary_transformation e, const mesh_fem &mf1_,
+     const mesh_fem &mf2_,
+     const fem_interpolation_context &ctx_, base_matrix &M_, size_type &icv_)
+      : t_out(t_), elemtrans(e), mf1(mf1_), mf2(mf2_), ctx(ctx_),
+        M(M_), icv(icv_) {}
   };
 
-  struct ga_instruction_elementary_transformation_val_base
+  struct ga_instruction_elementary_trans_val_base
     : public ga_instruction_copy_val_base,
-             ga_instruction_elementary_transformation_base {
+             ga_instruction_elementary_trans_base {
     // Z(ndof,target_dim) --> t_in --> t_out(Qmult*ndof,Qmult*target_dim)
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: value of test functions with elementary "
                     "transformation");
       size_type ndof = Z.sizes()[0];
       size_type Qmult = qdim / Z.sizes()[1];
-      t_in.adjust_sizes(t_out.sizes());
+      t_in.adjust_sizes(Qmult*ndof, Qmult*Z.sizes()[1]);
       ga_instruction_copy_val_base::exec();
-      do_transformation(ndof*Qmult);
+      do_transformation(ndof*Qmult, t_out.sizes()[0]);
       return 0;
     }
 
-    ga_instruction_elementary_transformation_val_base
+    ga_instruction_elementary_trans_val_base
     (base_tensor &t_, const base_tensor &Z_, size_type q,
-     pelementary_transformation e, const mesh_fem &mf_,
-     fem_interpolation_context &ctx_, base_matrix &M_,
-     const mesh_fem **mf_M_, size_type &icv_)
+     pelementary_transformation e, const mesh_fem &mf1_, const mesh_fem &mf2_,
+     fem_interpolation_context &ctx_, base_matrix &M_, size_type &icv_)
       : ga_instruction_copy_val_base(t_in, Z_, q),
-        ga_instruction_elementary_transformation_base(t_, e, mf_, ctx_, M_,
-                                                      mf_M_, icv_) {}
+        ga_instruction_elementary_trans_base(t_, e, mf1_, mf2_, ctx_,
+                                             M_, icv_) {}
   };
 
-  struct ga_instruction_elementary_transformation_grad_base
+  struct ga_instruction_elementary_trans_grad_base
     : public ga_instruction_copy_grad_base,
-             ga_instruction_elementary_transformation_base {
+             ga_instruction_elementary_trans_base {
     // Z(ndof,target_dim,N) --> t_in --> t_out(Qmult*ndof,Qmult*target_dim,N)
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: gradient of test functions with elementary "
                     "transformation");
       size_type ndof = Z.sizes()[0];
       size_type Qmult = qdim / Z.sizes()[1];
-      t_in.adjust_sizes(t_out.sizes());
+      t_in.adjust_sizes(Qmult*ndof, Qmult*Z.sizes()[1], Z.sizes()[2]);
       ga_instruction_copy_grad_base::exec();
-      do_transformation(ndof*Qmult);
+      do_transformation(ndof*Qmult, t_out.sizes()[0]);
       return 0;
     }
 
-    ga_instruction_elementary_transformation_grad_base
+    ga_instruction_elementary_trans_grad_base
     (base_tensor &t_, const base_tensor &Z_, size_type q,
-     pelementary_transformation e, const mesh_fem &mf_,
-     fem_interpolation_context &ctx_, base_matrix &M_,
-     const mesh_fem **mf_M_, size_type &icv_)
+     pelementary_transformation e, const mesh_fem &mf1_, const mesh_fem &mf2_,
+     fem_interpolation_context &ctx_, base_matrix &M_, size_type &icv_)
       : ga_instruction_copy_grad_base(t_in, Z_, q),
-        ga_instruction_elementary_transformation_base(t_, e, mf_, ctx_, M_,
-                                                      mf_M_, icv_) {}
+        ga_instruction_elementary_trans_base(t_, e, mf1_, mf2_, ctx_,
+                                             M_,  icv_) {}
   };
 
-  struct ga_instruction_elementary_transformation_hess_base
+  struct ga_instruction_elementary_trans_hess_base
     : public ga_instruction_copy_hess_base,
-             ga_instruction_elementary_transformation_base {
+             ga_instruction_elementary_trans_base {
     // Z(ndof,target_dim,N*N) --> t_out(Qmult*ndof,Qmult*target_dim,N,N)
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: Hessian of test functions with elementary "
                     "transformation");
       size_type ndof = Z.sizes()[0];
       size_type Qmult = qdim / Z.sizes()[1];
-      t_in.adjust_sizes(t_out.sizes());
+      t_in.adjust_sizes(Qmult*ndof, Qmult*Z.sizes()[1], Z.sizes()[2]);
       ga_instruction_copy_hess_base::exec();
-      do_transformation(ndof*Qmult);
+      do_transformation(ndof*Qmult, t_out.sizes()[0]);
       return 0;
     }
 
-    ga_instruction_elementary_transformation_hess_base
+    ga_instruction_elementary_trans_hess_base
     (base_tensor &t_, const base_tensor &Z_, size_type q,
-     pelementary_transformation e, const mesh_fem &mf_,
-     fem_interpolation_context &ctx_, base_matrix &M_,
-     const mesh_fem **mf_M_, size_type &icv_)
+     pelementary_transformation e, const mesh_fem &mf1_, const mesh_fem &mf2_,
+     fem_interpolation_context &ctx_, base_matrix &M_, size_type &icv_)
       : ga_instruction_copy_hess_base(t_in, Z_, q),
-        ga_instruction_elementary_transformation_base(t_, e, mf_, ctx_, M_,
-                                                      mf_M_, icv_) {}
+        ga_instruction_elementary_trans_base(t_, e, mf1_, mf2_, ctx_,
+                                             M_, icv_) {}
   };
 
-  struct ga_instruction_elementary_transformation_diverg_base
+  struct ga_instruction_elementary_trans_diverg_base
     : public ga_instruction_copy_diverg_base,
-             ga_instruction_elementary_transformation_base {
+             ga_instruction_elementary_trans_base {
     // Z(ndof,target_dim,N) --> t_out(Qmult*ndof)
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: divergence of test functions with elementary "
                     "transformation");
       size_type ndof = Z.sizes()[0];
       size_type Qmult = qdim / Z.sizes()[1];
-      t_in.adjust_sizes(t_out.sizes());
+      t_in.adjust_sizes(Qmult*ndof);
       ga_instruction_copy_diverg_base::exec();
-      do_transformation(ndof*Qmult);
+      do_transformation(ndof*Qmult, t_out.sizes()[0]);
       return 0;
     }
 
-    ga_instruction_elementary_transformation_diverg_base
+    ga_instruction_elementary_trans_diverg_base
     (base_tensor &t_, const base_tensor &Z_, size_type q,
-     pelementary_transformation e, const mesh_fem &mf_,
-     fem_interpolation_context &ctx_, base_matrix &M_,
-     const mesh_fem **mf_M_, size_type &icv_)
+     pelementary_transformation e, const mesh_fem &mf1_, const mesh_fem &mf2_,
+     fem_interpolation_context &ctx_, base_matrix &M_, size_type &icv_)
       : ga_instruction_copy_diverg_base(t_in, Z_, q),
-        ga_instruction_elementary_transformation_base(t_, e, mf_, ctx_, M_,
-                                                      mf_M_, icv_) {}
+        ga_instruction_elementary_trans_base(t_, e, mf1_, mf2_, ctx_,
+                                             M_, icv_) {}
   };
 
 
@@ -5063,287 +5057,310 @@ namespace getfem {
     case GA_NODE_XFEM_PLUS_HESS: case GA_NODE_XFEM_PLUS_DIVERG:
     case GA_NODE_XFEM_MINUS_VAL: case GA_NODE_XFEM_MINUS_GRAD:
     case GA_NODE_XFEM_MINUS_HESS: case GA_NODE_XFEM_MINUS_DIVERG:
-      if (function_case) {
-        GMM_ASSERT1(pnode->node_type != GA_NODE_ELEMENTARY_VAL &&
-                    pnode->node_type != GA_NODE_ELEMENTARY_GRAD &&
-                    pnode->node_type != GA_NODE_ELEMENTARY_HESS &&
-                    pnode->node_type != GA_NODE_ELEMENTARY_DIVERG,
-                    "No elementary transformation is allowed in functions");
-        GMM_ASSERT1(pnode->node_type != GA_NODE_XFEM_PLUS_VAL &&
-                    pnode->node_type != GA_NODE_XFEM_PLUS_GRAD &&
-                    pnode->node_type != GA_NODE_XFEM_PLUS_HESS &&
-                    pnode->node_type != GA_NODE_XFEM_PLUS_DIVERG,
-                    "Xfem_plus not allowed in functions");
-        GMM_ASSERT1(pnode->node_type != GA_NODE_XFEM_MINUS_VAL &&
-                    pnode->node_type != GA_NODE_XFEM_MINUS_GRAD &&
-                    pnode->node_type != GA_NODE_XFEM_MINUS_HESS &&
-                    pnode->node_type != GA_NODE_XFEM_MINUS_DIVERG,
-                    "Xfem_plus not allowed in functions");
-        const mesh_fem *mf = workspace.associated_mf(pnode->name);
-        const im_data *imd = workspace.associated_im_data(pnode->name);
-        GMM_ASSERT1(!mf,"No fem expression is allowed in function expression");
-        GMM_ASSERT1(!imd, "No integration method data is allowed in "
-                    "function expression");
-        if (gmm::vect_size(workspace.value(pnode->name)) == 1)
-          pgai = std::make_shared<ga_instruction_copy_scalar>
-            (pnode->tensor()[0], (workspace.value(pnode->name))[0]);
-        else
-          pgai = std::make_shared<ga_instruction_copy_vect>
-            (pnode->tensor().as_vector(), workspace.value(pnode->name));
-        rmi.instructions.push_back(std::move(pgai));
-      } else {
-        const mesh_fem *mf = workspace.associated_mf(pnode->name);
-        const im_data *imd = workspace.associated_im_data(pnode->name);
-
-        if (imd) {
-          pgai = std::make_shared<ga_instruction_extract_local_im_data>
-            (pnode->tensor(), *imd, workspace.value(pnode->name),
-             gis.pai, gis.ctx, workspace.qdim(pnode->name));
+      {
+        bool is_elementary = (pnode->node_type == GA_NODE_ELEMENTARY_VAL ||
+                              pnode->node_type == GA_NODE_ELEMENTARY_GRAD ||
+                              pnode->node_type == GA_NODE_ELEMENTARY_HESS ||
+                              pnode->node_type == GA_NODE_ELEMENTARY_DIVERG);
+        if (function_case) {
+          GMM_ASSERT1(!is_elementary,
+                      "No elementary transformation is allowed in functions");
+          GMM_ASSERT1(pnode->node_type != GA_NODE_XFEM_PLUS_VAL &&
+                      pnode->node_type != GA_NODE_XFEM_PLUS_GRAD &&
+                      pnode->node_type != GA_NODE_XFEM_PLUS_HESS &&
+                      pnode->node_type != GA_NODE_XFEM_PLUS_DIVERG,
+                      "Xfem_plus not allowed in functions");
+          GMM_ASSERT1(pnode->node_type != GA_NODE_XFEM_MINUS_VAL &&
+                      pnode->node_type != GA_NODE_XFEM_MINUS_GRAD &&
+                      pnode->node_type != GA_NODE_XFEM_MINUS_HESS &&
+                      pnode->node_type != GA_NODE_XFEM_MINUS_DIVERG,
+                      "Xfem_plus not allowed in functions");
+          const mesh_fem *mf = workspace.associated_mf(pnode->name);
+          const im_data *imd = workspace.associated_im_data(pnode->name);
+          GMM_ASSERT1(!mf, "No fem expression is allowed in "
+                      "function expression");
+          GMM_ASSERT1(!imd, "No integration method data is allowed in "
+                      "function expression");
+          if (gmm::vect_size(workspace.value(pnode->name)) == 1)
+            pgai = std::make_shared<ga_instruction_copy_scalar>
+              (pnode->tensor()[0], (workspace.value(pnode->name))[0]);
+          else
+            pgai = std::make_shared<ga_instruction_copy_vect>
+              (pnode->tensor().as_vector(), workspace.value(pnode->name));
           rmi.instructions.push_back(std::move(pgai));
         } else {
-          GMM_ASSERT1(mf, "Internal error");
-
-          GMM_ASSERT1(&(mf->linked_mesh()) == &(m),
-                      "The finite element of variable " << pnode->name <<
-                      " has to be defined on the same mesh than the "
-                      "integration method or interpolation used");
-
-          // An instruction for extracting local dofs of the variable.
-          if (rmi.local_dofs.count(pnode->name) == 0) {
-            rmi.local_dofs[pnode->name] = base_vector(1);
-            extend_variable_in_gis(workspace, pnode->name, gis);
-            // cout << "local dof of " << pnode->name << endl;
-            size_type qmult2 = mf->get_qdim();
-            if (qmult2 > 1 && !(mf->is_uniformly_vectorized()))
-              qmult2 = size_type(-1);
-            pgai = std::make_shared<ga_instruction_slice_local_dofs>
-              (*mf, *(gis.extended_vars[pnode->name]), gis.ctx,
-               rmi.local_dofs[pnode->name],
-               workspace.qdim(pnode->name) / mf->get_qdim(), qmult2);
-            rmi.elt_instructions.push_back(std::move(pgai));
+          const mesh_fem *mf = workspace.associated_mf(pnode->name), *mfo=mf;
+          const im_data *imd = workspace.associated_im_data(pnode->name);
+          
+          if (is_elementary) {
+            mf = workspace.associated_mf(pnode->elementary_target);
+            GMM_ASSERT1(mf && mfo,
+                        "Wrong context for elementary transformation");
+            GMM_ASSERT1(&(mfo->linked_mesh()) == &(m),
+                        "The finite element of variable " << pnode->name
+                        << " has to be defined on the same mesh than the "
+                        << "integration method or interpolation used");
           }
-
-          // An instruction for pfp update
-          if (mf->is_uniform()) {
-            if (rmi.pfps.count(mf) == 0) {
+          
+          if (imd) {
+            pgai = std::make_shared<ga_instruction_extract_local_im_data>
+              (pnode->tensor(), *imd, workspace.value(pnode->name),
+               gis.pai, gis.ctx, workspace.qdim(pnode->name));
+            rmi.instructions.push_back(std::move(pgai));
+          } else {
+            GMM_ASSERT1(mf, "Internal error");
+            
+            GMM_ASSERT1(&(mf->linked_mesh()) == &(m),
+                        "The finite element of variable " <<
+                        (is_elementary ? pnode->elementary_target : pnode->name)
+                        << " has to be defined on the same mesh than the "
+                        << "integration method or interpolation used");
+            
+            // An instruction for extracting local dofs of the variable.
+            if (rmi.local_dofs.count(pnode->name) == 0) {
+              rmi.local_dofs[pnode->name] = base_vector(1);
+              extend_variable_in_gis(workspace, pnode->name, gis);
+              // cout << "local dof of " << pnode->name << endl;
+              size_type qmult2 = mfo->get_qdim();
+              if (qmult2 > 1 && !(mfo->is_uniformly_vectorized()))
+                qmult2 = size_type(-1);
+              pgai = std::make_shared<ga_instruction_slice_local_dofs>
+                (*mfo, *(gis.extended_vars[pnode->name]), gis.ctx,
+                 rmi.local_dofs[pnode->name],
+                 workspace.qdim(pnode->name) / mfo->get_qdim(), qmult2);
+              rmi.elt_instructions.push_back(std::move(pgai));
+            }
+            
+            // An instruction for pfp update
+            if (mf->is_uniform()) {
+              if (rmi.pfps.count(mf) == 0) {
+                rmi.pfps[mf] = 0;
+                pgai = std::make_shared<ga_instruction_update_pfp>
+                  (*mf, rmi.pfps[mf], gis.ctx, gis.fp_pool);
+                rmi.begin_instructions.push_back(std::move(pgai));
+              }
+            } else if (rmi.pfps.count(mf) == 0 ||
+                       !if_hierarchy.is_compatible(rmi.pfp_hierarchy[mf])) {
+              rmi.pfp_hierarchy[mf].push_back(if_hierarchy);
               rmi.pfps[mf] = 0;
               pgai = std::make_shared<ga_instruction_update_pfp>
                 (*mf, rmi.pfps[mf], gis.ctx, gis.fp_pool);
-              rmi.begin_instructions.push_back(std::move(pgai));
+              rmi.instructions.push_back(std::move(pgai));
             }
-          } else if (rmi.pfps.count(mf) == 0 ||
-                     !if_hierarchy.is_compatible(rmi.pfp_hierarchy[mf])) {
-            rmi.pfp_hierarchy[mf].push_back(if_hierarchy);
-            rmi.pfps[mf] = 0;
-            pgai = std::make_shared<ga_instruction_update_pfp>
-              (*mf, rmi.pfps[mf], gis.ctx, gis.fp_pool);
+            
+            // An instruction for the base value
+            pgai = pga_instruction();
+            switch (pnode->node_type) {
+            case GA_NODE_VAL: case GA_NODE_ELEMENTARY_VAL:
+              if (rmi.base.count(mf) == 0 ||
+                  !if_hierarchy.is_compatible(rmi.base_hierarchy[mf])) {
+                rmi.base_hierarchy[mf].push_back(if_hierarchy);
+                pgai = std::make_shared<ga_instruction_val_base>
+                  (rmi.base[mf], gis.ctx, *mf, rmi.pfps[mf]);
+              }
+              break;
+            case GA_NODE_XFEM_PLUS_VAL:
+              if (rmi.xfem_plus_base.count(mf) == 0 ||
+                  !if_hierarchy.is_compatible(rmi.xfem_plus_base_hierarchy[mf]))
+                {
+                  rmi.xfem_plus_base_hierarchy[mf].push_back(if_hierarchy);
+                  pgai = std::make_shared<ga_instruction_xfem_plus_val_base>
+                    (rmi.xfem_plus_base[mf], gis.ctx, *mf, rmi.pfps[mf]);
+                }
+              break;
+            case GA_NODE_XFEM_MINUS_VAL:
+              if (rmi.xfem_minus_base.count(mf) == 0 ||
+                  !if_hierarchy.is_compatible(rmi.xfem_minus_base_hierarchy[mf]))
+                {
+                  rmi.xfem_minus_base_hierarchy[mf].push_back(if_hierarchy);
+                  pgai = std::make_shared<ga_instruction_xfem_minus_val_base>
+                    (rmi.xfem_minus_base[mf], gis.ctx, *mf, rmi.pfps[mf]);
+                }
+              break;
+            case GA_NODE_GRAD: case GA_NODE_DIVERG:
+            case GA_NODE_ELEMENTARY_GRAD: case GA_NODE_ELEMENTARY_DIVERG:
+              if (rmi.grad.count(mf) == 0 ||
+                  !if_hierarchy.is_compatible(rmi.grad_hierarchy[mf])) {
+                rmi.grad_hierarchy[mf].push_back(if_hierarchy);
+                pgai = std::make_shared<ga_instruction_grad_base>
+                  (rmi.grad[mf], gis.ctx, *mf, rmi.pfps[mf]);
+              }
+              break;
+            case GA_NODE_XFEM_PLUS_GRAD: case GA_NODE_XFEM_PLUS_DIVERG:
+              if (rmi.xfem_plus_grad.count(mf) == 0 ||
+                  !if_hierarchy.is_compatible(rmi.xfem_plus_grad_hierarchy[mf]))
+                {
+                  rmi.xfem_plus_grad_hierarchy[mf].push_back(if_hierarchy);
+                  pgai = std::make_shared<ga_instruction_xfem_plus_grad_base>
+                    (rmi.xfem_plus_grad[mf], gis.ctx, *mf, rmi.pfps[mf]);
+                }
+              break;
+            case GA_NODE_XFEM_MINUS_GRAD: case GA_NODE_XFEM_MINUS_DIVERG:
+              if (rmi.xfem_minus_grad.count(mf) == 0 ||
+                  !if_hierarchy.is_compatible(rmi.xfem_minus_grad_hierarchy[mf]))
+                {
+                  rmi.xfem_minus_grad_hierarchy[mf].push_back(if_hierarchy);
+                  pgai = std::make_shared<ga_instruction_xfem_minus_grad_base>
+                    (rmi.xfem_minus_grad[mf], gis.ctx, *mf, rmi.pfps[mf]);
+                }
+              break;
+            case GA_NODE_HESS: case GA_NODE_ELEMENTARY_HESS:
+              if (rmi.hess.count(mf) == 0 ||
+                  !if_hierarchy.is_compatible(rmi.hess_hierarchy[mf])) {
+                rmi.hess_hierarchy[mf].push_back(if_hierarchy);
+                pgai = std::make_shared<ga_instruction_hess_base>
+                  (rmi.hess[mf], gis.ctx, *mf, rmi.pfps[mf]);
+              }
+              break;
+            case GA_NODE_XFEM_PLUS_HESS:
+              if (rmi.xfem_plus_hess.count(mf) == 0 ||
+                  !if_hierarchy.is_compatible(rmi.xfem_plus_hess_hierarchy[mf]))
+                {
+                  rmi.xfem_plus_hess_hierarchy[mf].push_back(if_hierarchy);
+                  pgai = std::make_shared<ga_instruction_xfem_plus_hess_base>
+                    (rmi.xfem_plus_hess[mf], gis.ctx, *mf, rmi.pfps[mf]);
+                }
+              break;
+            case GA_NODE_XFEM_MINUS_HESS:
+              if (rmi.xfem_minus_hess.count(mf) == 0 ||
+                  !if_hierarchy.is_compatible(rmi.xfem_minus_hess_hierarchy[mf]))
+                {
+                  rmi.xfem_minus_hess_hierarchy[mf].push_back(if_hierarchy);
+                  pgai = std::make_shared<ga_instruction_xfem_minus_hess_base>
+                    (rmi.xfem_minus_hess[mf], gis.ctx, *mf, rmi.pfps[mf]);
+                }
+              break;
+              
+            default : GMM_ASSERT1(false, "Internal error");
+            }
+            if (pgai) rmi.instructions.push_back(std::move(pgai));
+            
+            // The eval instruction
+            switch (pnode->node_type) {
+            case GA_NODE_VAL: // --> t(target_dim*Qmult)
+              pgai = std::make_shared<ga_instruction_val>
+                (pnode->tensor(), rmi.base[mf], rmi.local_dofs[pnode->name],
+                 workspace.qdim(pnode->name));
+              break;
+            case GA_NODE_GRAD: // --> t(target_dim*Qmult,N)
+              pgai = std::make_shared<ga_instruction_grad>
+                (pnode->tensor(), rmi.grad[mf],
+                 rmi.local_dofs[pnode->name], workspace.qdim(pnode->name));
+              break;
+            case GA_NODE_HESS: // --> t(target_dim*Qmult,N,N)
+              pgai = std::make_shared<ga_instruction_hess>
+                (pnode->tensor(), rmi.hess[mf],
+                 rmi.local_dofs[pnode->name], workspace.qdim(pnode->name));
+              break;
+            case GA_NODE_DIVERG: // --> t(1)
+              pgai = std::make_shared<ga_instruction_diverg>
+                (pnode->tensor(), rmi.grad[mf],
+                 rmi.local_dofs[pnode->name], workspace.qdim(pnode->name));
+              break;
+            case GA_NODE_XFEM_PLUS_VAL: // --> t(target_dim*Qmult)
+              pgai = std::make_shared<ga_instruction_val>
+                (pnode->tensor(), rmi.xfem_plus_base[mf],
+                 rmi.local_dofs[pnode->name], workspace.qdim(pnode->name));
+              break;
+            case GA_NODE_XFEM_PLUS_GRAD: // --> t(target_dim*Qmult,N)
+              pgai = std::make_shared<ga_instruction_grad>
+                (pnode->tensor(), rmi.xfem_plus_grad[mf],
+                 rmi.local_dofs[pnode->name], workspace.qdim(pnode->name));
+              break;
+            case GA_NODE_XFEM_PLUS_HESS: // --> t(target_dim*Qmult,N,N)
+              pgai = std::make_shared<ga_instruction_hess>
+                (pnode->tensor(), rmi.xfem_plus_hess[mf],
+                 rmi.local_dofs[pnode->name], workspace.qdim(pnode->name));
+              break;
+            case GA_NODE_XFEM_PLUS_DIVERG: // --> t(1)
+              pgai = std::make_shared<ga_instruction_diverg>
+                (pnode->tensor(), rmi.xfem_plus_grad[mf],
+                 rmi.local_dofs[pnode->name], workspace.qdim(pnode->name));
+              break;
+            case GA_NODE_XFEM_MINUS_VAL: // --> t(target_dim*Qmult)
+              pgai = std::make_shared<ga_instruction_val>
+                (pnode->tensor(), rmi.xfem_minus_base[mf],
+                 rmi.local_dofs[pnode->name], workspace.qdim(pnode->name));
+              break;
+            case GA_NODE_XFEM_MINUS_GRAD: // --> t(target_dim*Qmult,N)
+              pgai = std::make_shared<ga_instruction_grad>
+                (pnode->tensor(), rmi.xfem_minus_grad[mf],
+                 rmi.local_dofs[pnode->name], workspace.qdim(pnode->name));
+              break;
+            case GA_NODE_XFEM_MINUS_HESS: // --> t(target_dim*Qmult,N,N)
+              pgai = std::make_shared<ga_instruction_hess>
+                (pnode->tensor(), rmi.xfem_minus_hess[mf],
+                 rmi.local_dofs[pnode->name], workspace.qdim(pnode->name));
+              break;
+            case GA_NODE_XFEM_MINUS_DIVERG: // --> t(1)
+              pgai = std::make_shared<ga_instruction_diverg>
+                (pnode->tensor(), rmi.xfem_minus_grad[mf],
+                 rmi.local_dofs[pnode->name], workspace.qdim(pnode->name));
+              break;
+            case GA_NODE_ELEMENTARY_VAL:
+              { // --> t(target_dim*Qmult)
+                ga_instruction_set::elementary_trans_info &eti
+                  = rmi.elementary_trans_infos
+                  [std::make_tuple(pnode->elementary_name, mfo, mf)];
+                pgai =
+                  std::make_shared<ga_instruction_elementary_trans_val>
+                  (pnode->tensor(), rmi.base[mf],
+                   rmi.local_dofs[pnode->name],
+                   workspace.qdim(pnode->elementary_target),
+                   workspace.elementary_transformation(pnode->elementary_name),
+                   *mfo, *mf, gis.ctx, eti.M, eti.icv);
+              }
+              break;
+            case GA_NODE_ELEMENTARY_GRAD:
+              { // --> t(target_dim*Qmult,N)
+                ga_instruction_set::elementary_trans_info &eti
+                  = rmi.elementary_trans_infos
+                  [std::make_tuple(pnode->elementary_name, mfo, mf)];
+                pgai =
+                  std::make_shared<ga_instruction_elementary_trans_grad>
+                  (pnode->tensor(), rmi.grad[mf],
+                   rmi.local_dofs[pnode->name],
+                   workspace.qdim(pnode->elementary_target),
+                   workspace.elementary_transformation(pnode->elementary_name),
+                   *mfo, *mf, gis.ctx, eti.M, eti.icv);
+              }
+              break;
+            case GA_NODE_ELEMENTARY_HESS:
+              { // --> t(target_dim*Qmult,N,N)
+                ga_instruction_set::elementary_trans_info &eti
+                  = rmi.elementary_trans_infos
+                  [std::make_tuple(pnode->elementary_name, mfo, mf)];
+                pgai =
+                  std::make_shared<ga_instruction_elementary_trans_hess>
+                  (pnode->tensor(), rmi.hess[mf],
+                   rmi.local_dofs[pnode->name],
+                   workspace.qdim(pnode->elementary_target),
+                   workspace.elementary_transformation(pnode->elementary_name),
+                   *mfo, *mf, gis.ctx, eti.M, eti.icv);
+              }
+              break;
+            case GA_NODE_ELEMENTARY_DIVERG:
+              { // --> t(1)
+                ga_instruction_set::elementary_trans_info &eti
+                  = rmi.elementary_trans_infos
+                  [std::make_tuple(pnode->elementary_name, mfo, mf)];
+                pgai =
+                  std::make_shared<ga_instruction_elementary_trans_diverg>
+                  (pnode->tensor(), rmi.grad[mf],
+                   rmi.local_dofs[pnode->name],
+                   workspace.qdim(pnode->elementary_target),
+                   workspace.elementary_transformation(pnode->elementary_name),
+                   *mfo, *mf, gis.ctx, eti.M, eti.icv);
+              }
+              break;
+            default: break;
+            }
             rmi.instructions.push_back(std::move(pgai));
           }
-
-          // An instruction for the base value
-          pgai = pga_instruction();
-          switch (pnode->node_type) {
-          case GA_NODE_VAL: case GA_NODE_ELEMENTARY_VAL:
-            if (rmi.base.count(mf) == 0 ||
-                !if_hierarchy.is_compatible(rmi.base_hierarchy[mf])) {
-              rmi.base_hierarchy[mf].push_back(if_hierarchy);
-              pgai = std::make_shared<ga_instruction_val_base>
-                (rmi.base[mf], gis.ctx, *mf, rmi.pfps[mf]);
-            }
-            break;
-          case GA_NODE_XFEM_PLUS_VAL:
-            if (rmi.xfem_plus_base.count(mf) == 0 ||
-                !if_hierarchy.is_compatible(rmi.xfem_plus_base_hierarchy[mf]))
-            {
-              rmi.xfem_plus_base_hierarchy[mf].push_back(if_hierarchy);
-              pgai = std::make_shared<ga_instruction_xfem_plus_val_base>
-                (rmi.xfem_plus_base[mf], gis.ctx, *mf, rmi.pfps[mf]);
-            }
-            break;
-          case GA_NODE_XFEM_MINUS_VAL:
-            if (rmi.xfem_minus_base.count(mf) == 0 ||
-                !if_hierarchy.is_compatible(rmi.xfem_minus_base_hierarchy[mf]))
-            {
-              rmi.xfem_minus_base_hierarchy[mf].push_back(if_hierarchy);
-              pgai = std::make_shared<ga_instruction_xfem_minus_val_base>
-                (rmi.xfem_minus_base[mf], gis.ctx, *mf, rmi.pfps[mf]);
-            }
-            break;
-          case GA_NODE_GRAD: case GA_NODE_DIVERG:
-          case GA_NODE_ELEMENTARY_GRAD: case GA_NODE_ELEMENTARY_DIVERG:
-            if (rmi.grad.count(mf) == 0 ||
-                !if_hierarchy.is_compatible(rmi.grad_hierarchy[mf])) {
-              rmi.grad_hierarchy[mf].push_back(if_hierarchy);
-              pgai = std::make_shared<ga_instruction_grad_base>
-                (rmi.grad[mf], gis.ctx, *mf, rmi.pfps[mf]);
-            }
-            break;
-          case GA_NODE_XFEM_PLUS_GRAD: case GA_NODE_XFEM_PLUS_DIVERG:
-            if (rmi.xfem_plus_grad.count(mf) == 0 ||
-                !if_hierarchy.is_compatible(rmi.xfem_plus_grad_hierarchy[mf]))
-            {
-              rmi.xfem_plus_grad_hierarchy[mf].push_back(if_hierarchy);
-              pgai = std::make_shared<ga_instruction_xfem_plus_grad_base>
-                (rmi.xfem_plus_grad[mf], gis.ctx, *mf, rmi.pfps[mf]);
-            }
-            break;
-          case GA_NODE_XFEM_MINUS_GRAD: case GA_NODE_XFEM_MINUS_DIVERG:
-            if (rmi.xfem_minus_grad.count(mf) == 0 ||
-                !if_hierarchy.is_compatible(rmi.xfem_minus_grad_hierarchy[mf]))
-            {
-              rmi.xfem_minus_grad_hierarchy[mf].push_back(if_hierarchy);
-              pgai = std::make_shared<ga_instruction_xfem_minus_grad_base>
-                (rmi.xfem_minus_grad[mf], gis.ctx, *mf, rmi.pfps[mf]);
-            }
-            break;
-          case GA_NODE_HESS: case GA_NODE_ELEMENTARY_HESS:
-            if (rmi.hess.count(mf) == 0 ||
-                !if_hierarchy.is_compatible(rmi.hess_hierarchy[mf])) {
-              rmi.hess_hierarchy[mf].push_back(if_hierarchy);
-              pgai = std::make_shared<ga_instruction_hess_base>
-                (rmi.hess[mf], gis.ctx, *mf, rmi.pfps[mf]);
-            }
-            break;
-          case GA_NODE_XFEM_PLUS_HESS:
-            if (rmi.xfem_plus_hess.count(mf) == 0 ||
-                !if_hierarchy.is_compatible(rmi.xfem_plus_hess_hierarchy[mf]))
-            {
-              rmi.xfem_plus_hess_hierarchy[mf].push_back(if_hierarchy);
-              pgai = std::make_shared<ga_instruction_xfem_plus_hess_base>
-                (rmi.xfem_plus_hess[mf], gis.ctx, *mf, rmi.pfps[mf]);
-            }
-            break;
-          case GA_NODE_XFEM_MINUS_HESS:
-            if (rmi.xfem_minus_hess.count(mf) == 0 ||
-                !if_hierarchy.is_compatible(rmi.xfem_minus_hess_hierarchy[mf]))
-            {
-              rmi.xfem_minus_hess_hierarchy[mf].push_back(if_hierarchy);
-              pgai = std::make_shared<ga_instruction_xfem_minus_hess_base>
-                (rmi.xfem_minus_hess[mf], gis.ctx, *mf, rmi.pfps[mf]);
-            }
-            break;
-
-          default : GMM_ASSERT1(false, "Internal error");
-          }
-          if (pgai) rmi.instructions.push_back(std::move(pgai));
-
-          // The eval instruction
-          switch (pnode->node_type) {
-          case GA_NODE_VAL: // --> t(target_dim*Qmult)
-            pgai = std::make_shared<ga_instruction_val>
-              (pnode->tensor(), rmi.base[mf], rmi.local_dofs[pnode->name],
-               workspace.qdim(pnode->name));
-            break;
-          case GA_NODE_GRAD: // --> t(target_dim*Qmult,N)
-            pgai = std::make_shared<ga_instruction_grad>
-              (pnode->tensor(), rmi.grad[mf],
-               rmi.local_dofs[pnode->name], workspace.qdim(pnode->name));
-            break;
-          case GA_NODE_HESS: // --> t(target_dim*Qmult,N,N)
-            pgai = std::make_shared<ga_instruction_hess>
-              (pnode->tensor(), rmi.hess[mf],
-               rmi.local_dofs[pnode->name], workspace.qdim(pnode->name));
-            break;
-          case GA_NODE_DIVERG: // --> t(1)
-            pgai = std::make_shared<ga_instruction_diverg>
-              (pnode->tensor(), rmi.grad[mf],
-               rmi.local_dofs[pnode->name], workspace.qdim(pnode->name));
-            break;
-          case GA_NODE_XFEM_PLUS_VAL: // --> t(target_dim*Qmult)
-            pgai = std::make_shared<ga_instruction_val>
-              (pnode->tensor(), rmi.xfem_plus_base[mf],
-               rmi.local_dofs[pnode->name], workspace.qdim(pnode->name));
-            break;
-          case GA_NODE_XFEM_PLUS_GRAD: // --> t(target_dim*Qmult,N)
-            pgai = std::make_shared<ga_instruction_grad>
-              (pnode->tensor(), rmi.xfem_plus_grad[mf],
-               rmi.local_dofs[pnode->name], workspace.qdim(pnode->name));
-            break;
-          case GA_NODE_XFEM_PLUS_HESS: // --> t(target_dim*Qmult,N,N)
-            pgai = std::make_shared<ga_instruction_hess>
-              (pnode->tensor(), rmi.xfem_plus_hess[mf],
-               rmi.local_dofs[pnode->name], workspace.qdim(pnode->name));
-            break;
-          case GA_NODE_XFEM_PLUS_DIVERG: // --> t(1)
-            pgai = std::make_shared<ga_instruction_diverg>
-              (pnode->tensor(), rmi.xfem_plus_grad[mf],
-               rmi.local_dofs[pnode->name], workspace.qdim(pnode->name));
-            break;
-          case GA_NODE_XFEM_MINUS_VAL: // --> t(target_dim*Qmult)
-            pgai = std::make_shared<ga_instruction_val>
-              (pnode->tensor(), rmi.xfem_minus_base[mf],
-               rmi.local_dofs[pnode->name], workspace.qdim(pnode->name));
-            break;
-          case GA_NODE_XFEM_MINUS_GRAD: // --> t(target_dim*Qmult,N)
-            pgai = std::make_shared<ga_instruction_grad>
-              (pnode->tensor(), rmi.xfem_minus_grad[mf],
-               rmi.local_dofs[pnode->name], workspace.qdim(pnode->name));
-            break;
-          case GA_NODE_XFEM_MINUS_HESS: // --> t(target_dim*Qmult,N,N)
-            pgai = std::make_shared<ga_instruction_hess>
-              (pnode->tensor(), rmi.xfem_minus_hess[mf],
-               rmi.local_dofs[pnode->name], workspace.qdim(pnode->name));
-            break;
-          case GA_NODE_XFEM_MINUS_DIVERG: // --> t(1)
-            pgai = std::make_shared<ga_instruction_diverg>
-              (pnode->tensor(), rmi.xfem_minus_grad[mf],
-               rmi.local_dofs[pnode->name], workspace.qdim(pnode->name));
-            break;
-          case GA_NODE_ELEMENTARY_VAL:
-            { // --> t(target_dim*Qmult)
-              ga_instruction_set::elementary_trans_info &eti
-                = rmi.elementary_trans_infos[pnode->elementary_name];
-              pgai =
-                std::make_shared<ga_instruction_elementary_transformation_val>
-                (pnode->tensor(), rmi.base[mf],
-                 rmi.local_dofs[pnode->name], workspace.qdim(pnode->name),
-                 workspace.elementary_transformation(pnode->elementary_name),
-                 *mf, gis.ctx, eti.M, &(eti.mf), eti.icv);
-            }
-            break;
-          case GA_NODE_ELEMENTARY_GRAD:
-            { // --> t(target_dim*Qmult,N)
-              ga_instruction_set::elementary_trans_info &eti
-                = rmi.elementary_trans_infos[pnode->elementary_name];
-              pgai =
-                std::make_shared<ga_instruction_elementary_transformation_grad>
-                (pnode->tensor(), rmi.grad[mf],
-                 rmi.local_dofs[pnode->name], workspace.qdim(pnode->name),
-                 workspace.elementary_transformation(pnode->elementary_name),
-                 *mf, gis.ctx, eti.M, &(eti.mf), eti.icv);
-            }
-            break;
-          case GA_NODE_ELEMENTARY_HESS:
-            { // --> t(target_dim*Qmult,N,N)
-              ga_instruction_set::elementary_trans_info &eti
-                = rmi.elementary_trans_infos[pnode->elementary_name];
-              pgai =
-                std::make_shared<ga_instruction_elementary_transformation_hess>
-                (pnode->tensor(), rmi.hess[mf],
-                 rmi.local_dofs[pnode->name], workspace.qdim(pnode->name),
-                 workspace.elementary_transformation(pnode->elementary_name),
-                 *mf, gis.ctx, eti.M, &(eti.mf), eti.icv);
-            }
-            break;
-          case GA_NODE_ELEMENTARY_DIVERG:
-            { // --> t(1)
-              ga_instruction_set::elementary_trans_info &eti
-                = rmi.elementary_trans_infos[pnode->elementary_name];
-              pgai =
-               std::make_shared<ga_instruction_elementary_transformation_diverg>
-                (pnode->tensor(), rmi.grad[mf],
-                 rmi.local_dofs[pnode->name], workspace.qdim(pnode->name),
-                 workspace.elementary_transformation(pnode->elementary_name),
-                 *mf, gis.ctx, eti.M, &(eti.mf), eti.icv);
-            }
-            break;
-          default: break;
-          }
-          rmi.instructions.push_back(std::move(pgai));
         }
       }
       break;
-
+      
     case GA_NODE_SECONDARY_DOMAIN_VAL: case GA_NODE_SECONDARY_DOMAIN_GRAD:
     case GA_NODE_SECONDARY_DOMAIN_HESS: case GA_NODE_SECONDARY_DOMAIN_DIVERG:
       {
@@ -5527,12 +5544,27 @@ namespace getfem {
       // GMM_ASSERT1(!function_case,
       //            "Test functions not allowed in functions");
       {
-        const mesh_fem *mf = workspace.associated_mf(pnode->name);
+        bool is_elementary = (pnode->node_type==GA_NODE_ELEMENTARY_VAL_TEST ||
+                              pnode->node_type==GA_NODE_ELEMENTARY_GRAD_TEST ||
+                              pnode->node_type==GA_NODE_ELEMENTARY_HESS_TEST ||
+                              pnode->node_type==GA_NODE_ELEMENTARY_DIVERG_TEST);
+        const mesh_fem *mf = workspace.associated_mf(pnode->name), *mfo=mf;
+        if (is_elementary) {
+          mf = workspace.associated_mf(pnode->elementary_target);
+          GMM_ASSERT1(mf && mfo,
+                      "Wrong context for elementary transformation");
+          GMM_ASSERT1(&(mfo->linked_mesh()) == &(m),
+                      "The finite element of variable " << pnode->name
+                      << " has to be defined on the same mesh than the "
+                      << "integration method or interpolation used");
+        }
+        
         if (mf) {
           GMM_ASSERT1(&(mf->linked_mesh()) == &(m),
                       "The finite element of variable " << pnode->name <<
-                      " and the applied integration method have to be"
-                      " defined on the same mesh");
+                      (is_elementary ? pnode->elementary_target : pnode->name)
+                      << " and the applied integration method have to be"
+                      << " defined on the same mesh");
 
           // An instruction for pfp update
           if (is_uniform) {
@@ -5733,45 +5765,49 @@ namespace getfem {
           case GA_NODE_ELEMENTARY_VAL_TEST:
             { // --> t(Qmult*ndof,Qmult*target_dim)
               ga_instruction_set::elementary_trans_info &eti
-                = rmi.elementary_trans_infos[pnode->elementary_name];
+                = rmi.elementary_trans_infos
+                [std::make_tuple(pnode->elementary_name, mfo, mf)];
               pgai =
-             std::make_shared<ga_instruction_elementary_transformation_val_base>
+             std::make_shared<ga_instruction_elementary_trans_val_base>
                 (pnode->tensor(), rmi.base[mf], mf->get_qdim(),
                  workspace.elementary_transformation(pnode->elementary_name),
-                 *mf, gis.ctx, eti.M, &(eti.mf), eti.icv);
+                 *mfo, *mf, gis.ctx, eti.M, eti.icv);
             }
             break;
           case GA_NODE_ELEMENTARY_GRAD_TEST:
             { // --> t(Qmult*ndof,Qmult*target_dim,N)
               ga_instruction_set::elementary_trans_info &eti
-                = rmi.elementary_trans_infos[pnode->elementary_name];
+                = rmi.elementary_trans_infos
+                [std::make_tuple(pnode->elementary_name, mfo, mf)];
               pgai =
-            std::make_shared<ga_instruction_elementary_transformation_grad_base>
+            std::make_shared<ga_instruction_elementary_trans_grad_base>
                 (pnode->tensor(), rmi.grad[mf], mf->get_qdim(),
                  workspace.elementary_transformation(pnode->elementary_name),
-                 *mf, gis.ctx, eti.M, &(eti.mf), eti.icv);
+                 *mfo, *mf, gis.ctx, eti.M, eti.icv);
             }
             break;
           case GA_NODE_ELEMENTARY_HESS_TEST:
             { // --> t(Qmult*ndof,Qmult*target_dim,N,N)
               ga_instruction_set::elementary_trans_info &eti
-                = rmi.elementary_trans_infos[pnode->elementary_name];
+                = rmi.elementary_trans_infos
+                [std::make_tuple(pnode->elementary_name, mfo, mf)];
               pgai =
-            std::make_shared<ga_instruction_elementary_transformation_hess_base>
+            std::make_shared<ga_instruction_elementary_trans_hess_base>
                 (pnode->tensor(), rmi.hess[mf], mf->get_qdim(),
                  workspace.elementary_transformation(pnode->elementary_name),
-                 *mf, gis.ctx, eti.M, &(eti.mf), eti.icv);
+                 *mfo, *mf, gis.ctx, eti.M, eti.icv);
             }
             break;
           case GA_NODE_ELEMENTARY_DIVERG_TEST:
             { // --> t(Qmult*ndof)
               ga_instruction_set::elementary_trans_info &eti
-                = rmi.elementary_trans_infos[pnode->elementary_name];
+                = rmi.elementary_trans_infos
+                [std::make_tuple(pnode->elementary_name, mfo, mf)];
               pgai =
-          std::make_shared<ga_instruction_elementary_transformation_diverg_base>
+          std::make_shared<ga_instruction_elementary_trans_diverg_base>
                 (pnode->tensor(), rmi.grad[mf], mf->get_qdim(),
                  workspace.elementary_transformation(pnode->elementary_name),
-                 *mf, gis.ctx, eti.M, &(eti.mf), eti.icv);
+                 *mfo, *mf, gis.ctx, eti.M, eti.icv);
             }
             break;
           default: break;

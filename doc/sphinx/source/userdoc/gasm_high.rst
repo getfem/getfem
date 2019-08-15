@@ -70,7 +70,7 @@ A specific weak form language has been developed to describe the weak formulatio
 
   - ``Interpolate(variable, transformation)``: Powerful operation which allows to interpolate the variables, or test functions either on the same mesh on other elements or on another mesh. ``transformation`` is an object stored by the workspace or model object which describes the map from the current point to the point where to perform the interpolation. This functionality can be used for instance to prescribe periodic conditions or to compute mortar matrices for two finite element spaces defined on different meshes or more generally for fictitious domain methods such as fluid-structure interaction.
 
-  - ``Elementary_transformation(variable, transformation)``: Allow a linear tranformation defined at the element level (i.e. not possible to define at the gauss point level). This feature has been added mostly for defining a reduction for plate elements (projection onto low-level vector element such as rotated RT0). ``transformation`` is an object stored by the workspace or model object which describes the trasformation for a particular element.
+  - ``Elementary_transformation(variable, transformation, dest)``: Allow a linear tranformation defined at the element level (i.e. not possible to define at the gauss point level). This feature has been added mostly for defining a reduction for plate elements (projection onto low-level vector element such as rotated RT0). ``transformation`` is an object stored by the workspace or model object which describes the trasformation for a particular element. ``dest`` is an optional argument refering to a model variable or data whose fem will be the target fem of the transformation. If omitted, the target fem of the transformation is the one of the first variable. 
 
   - Possibility of integration on the direct product of two-domains for double integral computation or coupling of two variables with a Kernel / convolution / exchange integral. This allows terms like :math:`\displaystyle\int_{\Omega_1}\int_{\Omega_2}k(x,y)u(x)v(y)dydx` with :math:`\Omega_1` and :math:`\Omega_2` two domains, different or not, having their own meshes, integration methods and with :math:`u` a variable defined on :math:`\Omega_1` and :math:`v` a variable defined on :math:`\Omega_2`. The keyword ``Secondary_domain(variable)`` allows to access to the variables on the second domain of integration.
 
@@ -918,16 +918,19 @@ the method::
 
 where ``pelementary_transformation`` is a pointer to an object deriving from ``virtual_elementary_transformation``. Once it is added to the model/workspace, it is possible to use the following expressions in the weak form language::
 
-  Elementary_transformation(u, transname)
-  Elementary_transformation(Grad_u, transname)
-  Elementary_transformation(Div_u, transname)
-  Elementary_transformation(Hess_u, transname)
-  Elementary_transformation(Test_u, transname)
-  Elementary_transformation(Grad_Test_u, transname)
-  Elementary_transformation(Div_Test_u, transname)
-  Elementary_transformation(Hess_Test_u, transname)
+  Elementary_transformation(u, transname[, dest])
+  Elementary_transformation(Grad_u, transname[, dest])
+  Elementary_transformation(Div_u, transname[, dest])
+  Elementary_transformation(Hess_u, transname[, dest])
+  Elementary_transformation(Test_u, transname[, dest])
+  Elementary_transformation(Grad_Test_u, transname[, dest])
+  Elementary_transformation(Div_Test_u, transname[, dest])
+  Elementary_transformation(Hess_Test_u, transname[, dest])
 
-where ``u`` is one of the FEM variables of the model/workspace. For the moment, the only available elementary transformation is the the one for the projection on rotated RT0 element for two-dimensional elements which can be added thanks to the function (defined in :file:`src/getfem/getfem_linearized_plates.h`)::
+where ``u`` is one of the FEM variables of the model/workspace, and ``dest`` is an optional parameter which should be a variable or data name of the model and will correspond to the target fem of the transformation. If omitted, by default, the transformation is from the fem of the first variable to itself. 
+
+
+For the moment, the only available elementary transformation is the the one for the projection on rotated RT0 element for two-dimensional elements which can be added thanks to the function (defined in :file:`src/getfem/getfem_linearized_plates.h`)::
 
   add_2D_rotated_RT0_projection(model, transname)
 

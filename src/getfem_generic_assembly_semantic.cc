@@ -1,6 +1,6 @@
 /*===========================================================================
 
- Copyright (C) 2013-2018 Yves Renard
+ Copyright (C) 2013-2019 Yves Renard
 
  This file is a part of GetFEM++
 
@@ -349,7 +349,8 @@ namespace getfem {
     case GA_NODE_ELEMENTARY_VAL_TEST: case GA_NODE_ELEMENTARY_GRAD_TEST:
     case GA_NODE_ELEMENTARY_HESS_TEST: case GA_NODE_ELEMENTARY_DIVERG_TEST:
       c += 1.33*(1.22+ga_hash_code(pnode->name))
-        + 2.63*ga_hash_code(pnode->elementary_name);
+        + 2.63*ga_hash_code(pnode->elementary_name)
+        + 3.47*ga_hash_code(pnode->elementary_target);
       break;
     case GA_NODE_XFEM_PLUS_VAL: case GA_NODE_XFEM_PLUS_GRAD:
     case GA_NODE_XFEM_PLUS_HESS: case GA_NODE_XFEM_PLUS_DIVERG:
@@ -585,6 +586,13 @@ namespace getfem {
         size_type test = ga_parse_prefix_test(name);
         pnode->name = name;
 
+        if (ndt == 2) {
+          std::string target_name = pnode->elementary_target;
+          ga_parse_prefix_operator(target_name);
+          ga_parse_prefix_test(target_name);
+          pnode->elementary_target = target_name;
+        }
+
         // Group must be tested and it should be a fem variable
         if (!(workspace.variable_or_group_exists(name)))
           ga_throw_error(pnode->expr, pnode->pos,
@@ -763,6 +771,15 @@ namespace getfem {
             ga_throw_error(pnode->expr, pnode->pos,
                            "Unknown elementary transformation");
           }
+          if (!(workspace.variable_or_group_exists(pnode->elementary_target))) {
+            ga_throw_error(pnode->expr, pnode->pos, "Unknown data or variable "
+                           << pnode->elementary_target);
+          }
+          const mesh_fem *mft = workspace.associated_mf(name);
+          if (!mft)
+            ga_throw_error(pnode->expr, pnode->pos,
+                           "Thir argument of the elementary transformation "
+                           "should be a finite element variables/data");
         } else if (ndt == 3) {
           if (!(workspace.secondary_domain_exists
                 (pnode->interpolate_name))) {

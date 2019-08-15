@@ -1,4 +1,4 @@
-.. $Id: model_generic_assembly.rst 3655 2010-07-17 20:42:08Z renard $
+.. $Id: model_generic_assembly.rst 3655 2010-07-19 20:42:08Z renard $
 
 .. include:: ../replaces.txt
 
