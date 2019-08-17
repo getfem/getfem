@@ -1,7 +1,7 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
 
- Copyright (C) 1999-2017 Yves Renard
+ Copyright (C) 1999-2019 Yves Renard
 
  This file is a part of GetFEM++
 
@@ -125,6 +125,11 @@
    quadratic 3D pyramid (serendipity, 13-node element). Can be connected to
    a standard P2 Lagrange element on its triangular faces and a Q2_INCOMPLETE
    Lagrange element on its quadrangular face.
+
+   - "HHO(fem_interior, fem_face_1, ..., fem_face_n)" : Build a hybrid method
+     with "fem_interior" on the element itself and "fem_face_1", ...,
+     "fem_face_n" on each face. If only one method is given for the faces, it
+     is duplicated on each face.
 
 */
 
@@ -619,7 +624,8 @@ namespace getfem {
 
       @param alpha the "inset" factor for the dof nodes: with alpha =
       0, the nodes are located as usual (i.e. with node on the convex border),
-      and for 0 < alpha < 1, they converge to the center of gravity of the convex.
+      and for 0 < alpha < 1, they converge to the center of gravity of the
+      convex.
 
       @param complete a flag which requests complete Langrange polynomial
       elements even if the provided pgt is an incomplete one (e.g. 8-node
@@ -717,7 +723,9 @@ namespace getfem {
         pfem_precomp is computed, and added to the pool.
 
         @param pf a pointer to the fem object.
-        @param pspt a pointer to a list of points in the reference convex.CAUTION:
+        @param pspt a pointer to a list of points in the reference convex.
+        
+        CAUTION:
         this array must not be destroyed as long as the fem_precomp is used!!
 
         Moreover pspt is supposed to identify uniquely the set of
@@ -980,6 +988,8 @@ namespace getfem {
       }
   }
 
+  /* Specific function for a HHO method to obtain the method in the interior */
+  pfem interior_fem_of_hho_method(pfem hho_method);
 
 
   /* Functions allowing the add of a finite element method outside
@@ -993,7 +1003,7 @@ namespace getfem {
   void add_fem_name(std::string name,
                     dal::naming_system<virtual_fem>::pfunction f);
 
-
+  
   /* @} */
 
 }  /* end of namespace getfem.                                            */

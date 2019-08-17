@@ -1,4 +1,4 @@
-#  Copyright (C) 1999-2017 Yves Renard
+#  Copyright (C) 1999-2019 Yves Renard
 #
 #  This file is a part of GetFEM++
 #
@@ -15,7 +15,7 @@
 #  along  with  this program;  if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 
-nobase_include_HEADERS =                \
+nobase_include_HEADERS =                		\
 	gmm/gmm.h                          		\
 	gmm/gmm_arch_config.h              		\
 	gmm/gmm_matrix.h                   		\
@@ -40,7 +40,7 @@ nobase_include_HEADERS =                \
 	gmm/gmm_modified_gram_schmidt.h    		\
 	gmm/gmm_dense_Householder.h        		\
 	gmm/gmm_dense_lu.h                 		\
-	gmm/gmm_dense_matrix_functions.h      \
+	gmm/gmm_dense_matrix_functions.h      		\
 	gmm/gmm_dense_qr.h                 		\
 	gmm/gmm_dense_sylvester.h         		\
 	gmm/gmm_tri_solve.h                		\
@@ -73,8 +73,8 @@ nobase_include_HEADERS =                \
 	gmm/gmm_except.h                   		\
 	gmm/gmm_feedback_management.h      		\
 	gmm/gmm_MUMPS_interface.h          		\
-	getfem/dal_config.h		   	          	\
-	getfem/dal_singleton.h		   		      \
+	getfem/dal_config.h		   	        \
+	getfem/dal_singleton.h		   		\
 	getfem/dal_basic.h                 		\
 	getfem/dal_bit_vector.h            		\
 	getfem/dal_static_stored_objects.h 		\
@@ -90,19 +90,19 @@ nobase_include_HEADERS =                \
 	getfem/bgeot_poly.h                		\
 	getfem/bgeot_geometric_trans.h     		\
 	getfem/bgeot_geotrans_inv.h        		\
-	getfem/bgeot_kdtree.h		   	        	\
+	getfem/bgeot_kdtree.h		   	        \
 	getfem/bgeot_mesh_structure.h      		\
 	getfem/bgeot_mesh.h                		\
 	getfem/bgeot_poly_composite.h      		\
-	getfem/bgeot_rtree.h		          		\
-	getfem/bgeot_node_tab.h		        		\
+	getfem/bgeot_rtree.h		          	\
+	getfem/bgeot_node_tab.h		        	\
 	getfem/bgeot_small_vector.h        		\
 	getfem/bgeot_sparse_tensors.h      		\
 	getfem/bgeot_tensor.h              		\
-	getfem/bgeot_comma_init.h	        		\
+	getfem/bgeot_comma_init.h	        	\
 	getfem/bgeot_torus.h              		\
 	getfem/bgeot_ftool.h               		\
-    getfem/getfem_accumulated_distro.h      \
+	getfem/getfem_accumulated_distro.h      	\
 	getfem/getfem_arch_config.h        		\
 	getfem/getfem_copyable_ptr.h      		\
 	getfem/getfem_integration.h        		\
@@ -149,7 +149,8 @@ nobase_include_HEADERS =                \
 	getfem/getfem_models.h                  	\
 	getfem/getfem_model_solvers.h             	\
 	getfem/getfem_linearized_plates.h         	\
-    getfem/getfem_locale.h                      \
+	getfem/getfem_HHO.h				\
+	getfem/getfem_locale.h                      	\
 	getfem/getfem_contact_and_friction_common.h	\
 	getfem/getfem_contact_and_friction_large_sliding.h \
 	getfem/getfem_contact_and_friction_nodal.h	\
@@ -234,6 +235,7 @@ SRC =                                      		\
 	getfem_fourth_order.cc                		\
 	getfem_nonlinear_elasticity.cc                  \
 	getfem_linearized_plates.cc               	\
+	getfem_HHO.cc					\
 	getfem_contact_and_friction_common.cc		\
 	getfem_contact_and_friction_nodal.cc		\
 	getfem_contact_and_friction_integral.cc	        \

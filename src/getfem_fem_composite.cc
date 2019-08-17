@@ -802,7 +802,12 @@ namespace getfem {
   /*    HHO methods: First method for the interior of the elements and    */
   /*            a method for each face (or a single method for all faces) */
   /* ******************************************************************** */
-
+  /* It is guaranted (and used) that the sub-element of index 0 is the    */
+  /* element itself and the faces follows in their usual order.           */
+  /* It has also to be guaranted that the internal degrees of freedom are */
+  /* first. This is ensred by the dof enumeration of mesh_fem object      */
+  /* since the interior element has the index 0.                          */
+  
   pfem hho_method(fem_param_list &params,
 	std::vector<dal::pstatic_stored_object> &dependencies) {
     GMM_ASSERT1(params.size() >= 2, "Bad number of parameters : "
@@ -858,7 +863,21 @@ namespace getfem {
     return p;
   }
 
+  pfem interior_fem_of_hho_method(pfem hho_method) {
 
+    const polynomial_composite_fem *phho
+      = dynamic_cast<const polynomial_composite_fem*>(hho_method.get());
+
+    if (phho) {
+      pfem pf0 = phho->mf.fem_of_element(0);
+      pfem pf1 = phho->mf.fem_of_element(1);
+      if (pf1 && (pf1->dim()+1 == pf0->dim()))
+        return phho->mf.fem_of_element(0);
+    }
+    
+    GMM_WARNING2("probably not a HHO method");
+    return hho_method;
+  }
 
 
 
