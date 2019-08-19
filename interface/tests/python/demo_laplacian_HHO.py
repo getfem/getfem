@@ -31,7 +31,7 @@ import getfem as gf
 import numpy as np
 
 ## Parameters
-NX = 100                           # Mesh parameter.
+NX = 10                            # Mesh parameter.
 Dirichlet_with_multipliers = True  # Dirichlet condition with multipliers
                                    # or penalization
 dirichlet_coefficient = 1e10       # Penalization coefficient
@@ -49,14 +49,16 @@ mfur  = gf.MeshFem(m, 1)
 mfrhs = gf.MeshFem(m, 1)
 
 if (using_HHO):
-  mfu.set_fem(gf.Fem('FEM_HHO(FEM_PK(2,2),FEM_PK(1,2))'))
-  mfgu.set_fem(gf.Fem('FEM_HHO(FEM_PK(2,2),FEM_PK(1,2))'))
+  mfu.set_fem(gf.Fem('FEM_HHO(FEM_PK_DISCONTINUOUS(2,2,0.1),FEM_PK_DISCONTINUOUS(1,2,0.1))'))
+  mfur.set_fem(gf.Fem('FEM_PK(2,3)'))
 else:
   mfu.set_fem(gf.Fem('FEM_PK(2,2)'))
-  mfgu.set_fem(gf.Fem('FEM_PK(2,2)'))
+  mfur.set_fem(gf.Fem('FEM_PK(2,2)'))
 
-mfur.set_fem(gf.Fem('FEM_PK(2,3)'))
+mfgu.set_fem(gf.Fem('FEM_PK(2,2)'))
 mfrhs.set_fem(gf.Fem('FEM_PK(2,2)'))
+
+print('nbdof : %d' % mfu.nbdof());
 
 #  Integration method used
 mim = gf.MeshIm(m, gf.Integ('IM_TRIANGLE(4)'))
@@ -84,7 +86,7 @@ ALL_FACES = 4
 m.set_region(ALL_FACES, all_faces)
 
 # Interpolate the exact solution (Assuming mfu is a Lagrange fem)
-Ue = mfu.eval('y*(y-1)*x*(x-1)+x*x*x*x*x')
+Ue = mfur.eval('y*(y-1)*x*(x-1)+x*x*x*x*x')
 
 # Interpolate the source term
 F1 = mfrhs.eval('-(2*(x*x+y*y)-2*x-2*y+20*x*x*x)')
@@ -105,13 +107,13 @@ if (using_HHO):
   md.add_HHO_reconstructed_gradient('HHO_Grad');
   md.add_HHO_reconstructed_value('HHO_Val');
   md.add_HHO_stabilization('HHO_Stab');
-  md.add_macro('HHO_Val_u', 'Elementary_transformation(u, HHO_Val)')
+  md.add_macro('HHO_Val_u', 'Elementary_transformation(u, HHO_Val, ur)')
   md.add_macro('HHO_Grad_u', 'Elementary_transformation(u, HHO_Grad, Gu)')
   md.add_macro('HHO_Grad_Test_u',
                'Elementary_transformation(Test_u, HHO_Grad, Gu)')
   md.add_macro('HHO_Stab_u', 'Elementary_transformation(u, HHO_Stab)')
   md.add_macro('HHO_Stab_Test_u',
-               'Elementary_transformation(Test_u, HHO_Stab, ur)')
+               'Elementary_transformation(Test_u, HHO_Stab)')
 
 
 # Laplacian term on u
@@ -133,7 +135,7 @@ md.add_normal_source_term_brick(mim, 'u', 'NeumannData',
                                 NEUMANN_BOUNDARY_NUM)
 
 # Dirichlet condition on the left.
-md.add_initialized_fem_data("DirichletData", mfu, Ue)
+md.add_initialized_fem_data("DirichletData", mfur, Ue)
 
 if (Dirichlet_with_multipliers):
   md.add_Dirichlet_condition_with_multipliers(mim, 'u', mfu,
@@ -155,7 +157,7 @@ else:
   md.add_Dirichlet_condition_with_penalization(mim, 'u', dirichlet_coefficient,
                                                DIRICHLET_BOUNDARY_NUM2,
                                                'DirichletData')
-gf.memstats()
+# gf.memstats()
 # md.listvar()
 # md.listbricks()
 
@@ -165,25 +167,32 @@ md.solve()
 # Main unknown
 U = md.variable('u')
 if (using_HHO):
-  L2error = gf.asm('generic', mim, 0, 'sqr(HHO_Val_u-Ue)',
-                   -1, md, 'Ue', 0, mfu, Ue)
+  L2error = gf.asm('generic', mim, 0, 'sqr(u-Ue)',
+                   -1, md, 'Ue', 0, mfur, Ue)
   H1error = gf.asm('generic', mim, 0, 'Norm_sqr(Grad_u-Grad_Ue)',
-                   -1, md, 'Ue', 0, mfu, Ue)
+                   -1, md, 'Ue', 0, mfur, Ue)
   H1error = np.sqrt(L2error + H1error)
   L2error = np.sqrt(L2error)
+  print('Error in L2 norm (without reconstruction): %g' % L2error)
+  print('Error in H1 norm (without reconstruction): %g' % H1error)
+  L2error = gf.asm('generic', mim, 0, 'sqr(HHO_Val_u-Ue)',
+                   -1, md, 'Ue', 0, mfur, Ue)
+  H1error = gf.asm('generic', mim, 0, 'Norm_sqr(HHO_Grad_u-Grad_Ue)',
+                   -1, md, 'Ue', 0, mfur, Ue)
+  H1error = np.sqrt(L2error + H1error)
+  L2error = np.sqrt(L2error)
+  print('Error in L2 norm (with reconstruction): %g' % L2error)
+  print('Error in H1 norm (with reconstruction): %g' % H1error)
 else :
   L2error = gf.compute(mfu, U-Ue, 'L2 norm', mim)
   H1error = gf.compute(mfu, U-Ue, 'H1 norm', mim)
-print('Error in L2 norm : ', L2error)
-print('Error in H1 norm : ', H1error)
+  print('Error in L2 norm : %g' % L2error)
+  print('Error in H1 norm : %g' % H1error)
 
-
-
-# Calculer l'erreur sur la reconstruction, aussi.
 
 # Export data
-mfu.export_to_pos('laplacian.pos', Ue,'Exact solution',
-                                    U,'Computed solution')
+# mfur.export_to_pos('laplacian_e.pos', Ue, 'Exact solution')
+mfu.export_to_pos('laplacian.pos', U, 'Computed solution')
 print('You can view the solution with (for example):')
 print('gmsh laplacian.pos')
 

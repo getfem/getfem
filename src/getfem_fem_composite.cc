@@ -122,7 +122,6 @@ namespace getfem {
     std::vector<pdof_description> dofd(mf.nb_basic_dof());
     
     for (dal::bv_visitor cv(mf.convex_index()); !cv.finished(); ++cv) {
-      cout << "set poly of cv " << cv << endl;
       pfem pf1 = mf.fem_of_element(cv);
       if (!pf1->is_lagrange()) p->is_lagrange() = false;
       if (!(pf1->is_equivalent())) p->is_equivalent() = false;
@@ -134,7 +133,6 @@ namespace getfem {
       for (size_type k = 0; k < pf->nb_dof(cv); ++k) {
 	size_type igl = mf.ind_basic_dof_of_element(cv)[k];
 	base_poly fu = pf->base()[k];
-        cout << "adding " << fu << " : " << fu.dim() << endl;
 	base[igl].set_poly_of_subelt(cv, fu);
 	dofd[igl] = pf->dof_types()[k];
       }

@@ -3836,9 +3836,8 @@ namespace getfem {
           base_poly S(1,2);
           S[0] = -alpha * G[d] / (1-alpha);
           S[1] = 1. / (1-alpha);
-          for (size_type j=0; j < nb_base(0); ++j) {
+          for (size_type j=0; j < nb_base(0); ++j)
             base_[j] = bgeot::poly_substitute_var(base_[j],S,d);
-          }
         }
       }
     }

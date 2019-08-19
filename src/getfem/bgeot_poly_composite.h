@@ -77,7 +77,7 @@ namespace bgeot {
     PTAB vertices;
     rtree box_tree;
     std::map<size_type, std::vector<size_type>> box_to_convexes_map;
-    std::vector<base_matrix> gtrans;
+    std::vector<base_matrix> gtrans, gtransinv;
     std::vector<scalar_type> det;
     std::vector<base_node> orgs;
     
@@ -112,6 +112,7 @@ namespace bgeot {
     std::vector<base_poly> default_polys;
 
   public :
+    scalar_type eval(const base_node &p, size_type l) const;
 
     template <class ITER> scalar_type eval(const ITER &it,
                                            size_type l = -1) const;
@@ -138,76 +139,10 @@ namespace bgeot {
   }
 
   template <class ITER>
-  void mult_diff_transposed(
-    const base_matrix &M, const ITER &it, const base_node &p1, base_node &p2) {
-    for (dim_type d = 0; d < p2.size(); ++d) {
-      p2[d] = 0;
-      auto col = mat_col(M, d);
-      for (dim_type i = 0; i < p1.size(); ++i)
-        p2[d] += col[i] * (*(it + i) - p1[i]);
-    }
-  }
-
-  template <class ITER>
   scalar_type polynomial_composite::eval(const ITER &it, size_type l) const {
-
-    if (l != size_type(-1)) {
-      if (!local_coordinate) return poly_of_subelt(l).eval(it);
-      base_node p(gmm::mat_ncols(mp->gtrans[l]));
-      // std::copy(it, it + mp->dim(), p.begin());
-      mult_diff_transposed(mp->gtrans[l], it, mp->orgs[l], p);
-      return poly_of_subelt(l).eval(p.begin());
-    }
-
-    auto dim = mp->dim();
-    base_node p0(dim), p1_stored, p1;
-    size_type cv_stored(-1);
-    std::copy(it, it + mp->dim(), p0.begin());
-
-    auto &box_tree = mp->box_tree;
-    rtree::pbox_set box_list;
-    box_tree.find_boxes_at_point(p0, box_list);
-    
-    while (box_list.size()) {
-      auto pmax_box = *box_list.begin();
-      
-      if (box_list.size() > 1) {
-        auto max_rate = -1.0;
-        for (auto &&pbox : box_list) {
-          auto box_rate = 1.0;
-          for (size_type i = 0; i < dim; ++i) {
-            auto h = pbox->max->at(i) - pbox->min->at(i);
-            if (h > 0) {
-              auto rate = std::min(pbox->max->at(i) - p0[i],
-                                   p0[i] - pbox->min->at(i)) / h;
-              box_rate = std::min(rate, box_rate);
-            }
-          }
-          if (box_rate > max_rate) { pmax_box = pbox; max_rate = box_rate; }
-        }
-      }
-      
-      for (auto cv : mp->box_to_convexes_map.at(pmax_box->id)) {
-        cout << "cv = " << cv << endl;
-        p1.resize(gmm::mat_ncols(mp->gtrans[cv]));
-        mult_diff_transposed(mp->gtrans[cv], it, mp->orgs[cv], p1);
-        cout << "p1 = " << p1 << endl;
-        if (mp->trans_of_convex(cv)->convex_ref()->is_in(p1) < 1E-10) {
-          if (!faces_first || mp->trans_of_convex(cv)->structure()->dim() < dim)
-            return to_scalar(poly_of_subelt(cv).eval(local_coordinate
-                                                     ? p1.begin() : it));
-          p1_stored = p1; cv_stored = cv;
-        }
-      }
-        
-      if (box_list.size() == 1) break;
-      box_list.erase(pmax_box);
-    }
-    if (cv_stored != size_type(-1))
-      return to_scalar(poly_of_subelt(cv_stored).eval(local_coordinate
-                                                      ? p1_stored.begin(): it));
-    GMM_ASSERT1(false, "Element not found in composite polynomial: "
-                << base_node(*it, *it + mp->dim()));
+    base_node p(mp->dim());
+    std::copy(it, it+mp->dim(), p.begin());
+    return eval(p,l);
   }
 
   void structured_mesh_for_convex(pconvex_ref cvr, short_type k,

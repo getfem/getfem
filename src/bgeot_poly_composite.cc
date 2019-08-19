@@ -68,12 +68,10 @@ namespace bgeot {
 
   void mesh_precomposite::initialise(const basic_mesh &m) {
     msh = &m;
-    det.resize(m.nb_convex());
-    orgs.resize(m.nb_convex());
-    gtrans.resize(m.nb_convex());
-    for (size_type i = 0; i <= m.points().index().last_true(); ++i) {
+    det.resize(m.nb_convex()); orgs.resize(m.nb_convex());
+    gtrans.resize(m.nb_convex()); gtransinv.resize(m.nb_convex());
+    for (size_type i = 0; i <= m.points().index().last_true(); ++i)
       vertices.add(m.points()[i]);
-    }
 
     base_node min, max;
     for (dal::bv_visitor cv(m.convex_index()); !cv.finished(); ++cv) {
@@ -88,11 +86,12 @@ namespace bgeot {
       
       m.points_of_convex(cv, G);
       bgeot::geotrans_interpolation_context ctx(pgt, X, G);
-      gtrans[cv] = ctx.B();
+      gtrans[cv] = ctx.K();
+      gtransinv[cv] = ctx.B();
       det[cv] = ctx.J();
       
       auto points_of_convex = m.points_of_convex(cv);
-      orgs[cv] = points_of_convex[0];
+      orgs[cv] = pgt->transform(X, G);
       bounding_box(min, max, points_of_convex);
       box_to_convexes_map[box_tree.add_box(min, max)].push_back(cv);
     }
@@ -111,14 +110,94 @@ namespace bgeot {
       default_polys[i] = base_poly(i, 0.);
   }
 
+  static void mult_diff_transposed(const base_matrix &M, const base_node &p,
+                                   const base_node &p1, base_node &p2) {
+    for (dim_type d = 0; d < p2.size(); ++d) {
+      p2[d] = 0;
+      auto col = mat_col(M, d);
+      for (dim_type i = 0; i < p1.size(); ++i)
+        p2[d] += col[i] * (p[i] - p1[i]);
+    }
+  }
+
+  scalar_type polynomial_composite::eval(const base_node &p,
+                                         size_type l) const {
+    if (l != size_type(-1)) {
+      if (!local_coordinate) return poly_of_subelt(l).eval(p.begin());
+      base_node p1(gmm::mat_ncols(mp->gtransinv[l]));
+      mult_diff_transposed(mp->gtransinv[l], p, mp->orgs[l], p1);
+      return poly_of_subelt(l).eval(p1.begin());
+    }
+
+    auto dim = mp->dim();
+    base_node p1_stored, p1, p2(dim);
+    size_type cv_stored(-1);
+
+    auto &box_tree = mp->box_tree;
+    rtree::pbox_set box_list;
+    box_tree.find_boxes_at_point(p, box_list);
+    
+    while (box_list.size()) {
+      auto pmax_box = *box_list.begin();
+      
+      if (box_list.size() > 1) {
+        auto max_rate = -1.0;
+        for (auto &&pbox : box_list) {
+          auto box_rate = 1.0;
+          for (size_type i = 0; i < dim; ++i) {
+            auto h = pbox->max->at(i) - pbox->min->at(i);
+            if (h > 0) {
+              auto rate = std::min(pbox->max->at(i) - p[i],
+                                   p[i] - pbox->min->at(i)) / h;
+              box_rate = std::min(rate, box_rate);
+            }
+          }
+          if (box_rate > max_rate) { pmax_box = pbox; max_rate = box_rate; }
+        }
+      }
+      
+      for (auto cv : mp->box_to_convexes_map.at(pmax_box->id)) {
+        dim_type elt_dim = dim_type(gmm::mat_ncols(mp->gtransinv[cv]));
+        p1.resize(elt_dim);
+        mult_diff_transposed(mp->gtransinv[cv], p, mp->orgs[cv], p1);
+        scalar_type ddist(0);
+
+        if (elt_dim < dim) {
+          p2 = mp->orgs[cv]; gmm::mult_add(mp->gtrans[cv], p1, p2);
+          ddist = gmm::vect_dist2(p2, p);
+        }
+        if (mp->trans_of_convex(cv)->convex_ref()->is_in(p1) < 1E-9
+            && ddist < 1E-9) {
+          if (!faces_first || elt_dim < dim) {
+            scalar_type res = to_scalar(poly_of_subelt(cv).eval(local_coordinate
+                                                     ? p1.begin() : p.begin()));
+            return res;
+          }
+          p1_stored = p1; cv_stored = cv;
+        }
+      }
+        
+      if (box_list.size() == 1) break;
+      box_list.erase(pmax_box);
+    }
+    if (cv_stored != size_type(-1)) {
+      scalar_type res =
+        to_scalar(poly_of_subelt(cv_stored).eval(local_coordinate
+                                              ? p1_stored.begin(): p.begin()));
+      return res;
+    }
+    GMM_ASSERT1(false, "Element not found in composite polynomial: " << p);
+  }
+  
+
   void polynomial_composite::derivative(short_type k) {
     if (local_coordinate) {
       dim_type P = mp->dim();
       base_vector e(P), f(P); e[k] = 1.0;
       for (size_type ic = 0; ic < mp->nb_convex(); ++ic) {
-        dim_type N = dim_type(gmm::mat_ncols(mp->gtrans[ic]));
+        dim_type N = dim_type(gmm::mat_ncols(mp->gtransinv[ic]));
         f.resize(N);
-        gmm::mult(gmm::transposed(mp->gtrans[ic]), e, f);
+        gmm::mult(gmm::transposed(mp->gtransinv[ic]), e, f);
         base_poly Der(N, 0), Q;
         if (polytab.find(ic) != polytab.end()) {
           auto &poly = poly_of_subelt(ic);
@@ -156,7 +235,7 @@ namespace bgeot {
     auto it = polytab.find(l);
     if (it == polytab.end()) {
       if (local_coordinate)
-        return default_polys[gmm::mat_ncols(mp->gtrans[l])];
+        return default_polys[gmm::mat_ncols(mp->gtransinv[l])];
       else
         return default_polys[mp->dim()];
     }

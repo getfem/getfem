@@ -50,7 +50,7 @@ namespace getfem {
       // inside the element whose gradient is to be reconstructed,
       // "v_{dT}" is the field on the boundary of T and "n" is the outward
       // unit normal.
-      
+
       // Obtaining the fem descriptors
       pfem pf1 = mf1.fem_of_element(cv);
       pfem pf2 = mf2.fem_of_element(cv);
@@ -142,7 +142,7 @@ namespace getfem {
               }
         }
       }
-      
+
       if (pf2->target_dim() == 1) {
         gmm::sub_slice I(0, ndof2/(N*Q), N*Q);
         gmm::lu_inverse(gmm::sub_matrix(M2, I, I));
@@ -152,10 +152,8 @@ namespace getfem {
         }
       } else { gmm::copy(M2, M2inv); gmm::lu_inverse(M2inv); }
       
-      
       gmm::mult(M2inv, M1, M);
       gmm::clean(M, gmm::vect_norminf(M.as_vector()) * 1E-13);
-      // cout << "M = " << M << endl;
     }
   };
 
@@ -321,7 +319,7 @@ namespace getfem {
       // inside the element whose gradient is to be reconstructed,
       // "v_{dT}" is the field on the boundary of T and "n" is the outward
       // unit normal.
-      
+
       // Obtaining the fem descriptors
       pfem pf1 = mf1.fem_of_element(cv);
       pfem pf2 = mf2.fem_of_element(cv);
