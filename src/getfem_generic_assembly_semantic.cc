@@ -587,10 +587,10 @@ namespace getfem {
         pnode->name = name;
 
         if (ndt == 2) {
-          std::string target_name = pnode->elementary_target;
-          ga_parse_prefix_operator(target_name);
-          ga_parse_prefix_test(target_name);
-          pnode->elementary_target = target_name;
+          name = pnode->elementary_target;
+          ga_parse_prefix_operator(name);
+          ga_parse_prefix_test(name);
+          pnode->elementary_target = name;
         }
 
         // Group must be tested and it should be a fem variable
@@ -614,7 +614,7 @@ namespace getfem {
                          "Tensor with too many dimensions. Limited to 6");
 
         if (test == 1) {
-          pnode->name_test1 = name;
+          pnode->name_test1 = pnode->name;
           pnode->interpolate_name_test1 = pnode->interpolate_name;
           if (option == 1)
             workspace.test1.insert
@@ -625,7 +625,7 @@ namespace getfem {
             ga_throw_error(pnode->expr, pnode->pos,
                            "Invalid null size of variable");
         } else if (test == 2) {
-          pnode->name_test2 = name;
+          pnode->name_test2 = pnode->name;
           pnode->interpolate_name_test2 = pnode->interpolate_name;
           if (option == 1)
             workspace.test2.insert

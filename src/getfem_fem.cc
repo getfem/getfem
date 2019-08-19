@@ -4209,7 +4209,7 @@ namespace getfem {
 
   void fem_precomp_pool::clear() {
     for (const pfem_precomp &p : precomps)
-      del_stored_object(p, true);
+      dal::del_stored_object(p, true);
     precomps.clear();
   }
 

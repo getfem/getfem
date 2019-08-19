@@ -42,38 +42,38 @@
 
 namespace getfem {
 
-  /** Add the elementary transformation corresponding to the reconstruction
-      of a gradient for HHO methods to the model.
+  /** Add to the model the elementary transformation corresponding to the
+      reconstruction of a gradient for HHO methods.
       The name is the name given to the elementary transformation.
   */
   void add_HHO_reconstructed_gradient(model &md, std::string name);
 
   
-  /** Add the elementary transformation corresponding to the reconstruction
-      of a symmetrized gradient for HHO methods to the model.
+  /** Add  to the model the elementary transformation corresponding to
+      the reconstruction of a symmetrized gradient for HHO methods.
       The name is the name given to the elementary transformation.
   */
   void add_HHO_reconstructed_symmetrized_gradient(model &md, std::string name);
 
-  /** Add the elementary transformation to the model corresponding to the
+  /** Add to the model the elementary transformation corresponding to the
       reconstruction of the variable.
       The name is the name given to the elementary transformation.
   */
   void add_HHO_reconstructed_value(model &md, std::string name);
 
-  /** Add the elementary transformation to the model corresponding to the
+  /** Add to the model the elementary transformation corresponding to the
       reconstruction of the variable using a symmetrized gradient.
       The name is the name given to the elementary transformation.
   */
   void add_HHO_reconstructed_symmetrized_value(model &md, std::string name);
 
-  /** Add the elementary transformation to the model corresponding to the
+  /** Add to the model the elementary transformation corresponding to the
       HHO stabilization operator.
       The name is the name given to the elementary transformation.
   */
   void add_HHO_stabilization(model &md, std::string name);
 
-  /** Add the elementary transformation to the model corresponding to the
+  /** Add to the model the elementary transformation corresponding to the
       HHO stabilization operator using a symmetrized gradient.
       The name is the name given to the elementary transformation.
   */

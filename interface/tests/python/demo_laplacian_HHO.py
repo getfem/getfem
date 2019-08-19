@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # Python GetFEM++ interface
 #
-# Copyright (C) 2004-2019 Yves Renard, Julien Pommier.
+# Copyright (C) 2019-2019 Yves Renard.
 #
 # This file is a part of GetFEM++
 #
@@ -19,7 +19,7 @@
 # Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 #
 ############################################################################
-"""  2D Poisson problem test.
+"""  2D Poisson problem using HHO methods.
 
   This program is used to check that python-getfem is working. This is
   also a good example of use of GetFEM++.
@@ -35,16 +35,27 @@ NX = 100                           # Mesh parameter.
 Dirichlet_with_multipliers = True  # Dirichlet condition with multipliers
                                    # or penalization
 dirichlet_coefficient = 1e10       # Penalization coefficient
+using_HHO = False                  # Use HHO method or standard Lagrange FEM
 
 # Create a simple cartesian mesh
 m = gf.Mesh('regular_simplices', np.arange(0,1+1./NX,1./NX),
             np.arange(0,1+1./NX,1./NX))
+N = m.dim();
 
-# Create a MeshFem for u and rhs fields of dimension 1 (i.e. a scalar field)
+# Meshfems
 mfu   = gf.MeshFem(m, 1)
+mfgu  = gf.MeshFem(m, N)
+mfur  = gf.MeshFem(m, 1)
 mfrhs = gf.MeshFem(m, 1)
-# assign the P2 fem to all elements of the both MeshFem
-mfu.set_fem(gf.Fem('FEM_PK(2,2)'))
+
+if (using_HHO):
+  mfu.set_fem(gf.Fem('FEM_HHO(FEM_PK(2,2),FEM_PK(1,2))'))
+  mfgu.set_fem(gf.Fem('FEM_HHO(FEM_PK(2,2),FEM_PK(1,2))'))
+else:
+  mfu.set_fem(gf.Fem('FEM_PK(2,2)'))
+  mfgu.set_fem(gf.Fem('FEM_PK(2,2)'))
+
+mfur.set_fem(gf.Fem('FEM_PK(2,3)'))
 mfrhs.set_fem(gf.Fem('FEM_PK(2,2)'))
 
 #  Integration method used
@@ -67,6 +78,11 @@ m.set_region(DIRICHLET_BOUNDARY_NUM1, fleft)
 m.set_region(DIRICHLET_BOUNDARY_NUM2, ftop)
 m.set_region(NEUMANN_BOUNDARY_NUM, fneum)
 
+# Faces for stabilization term
+all_faces = m.all_faces()
+ALL_FACES = 4
+m.set_region(ALL_FACES, all_faces)
+
 # Interpolate the exact solution (Assuming mfu is a Lagrange fem)
 Ue = mfu.eval('y*(y-1)*x*(x-1)+x*x*x*x*x')
 
@@ -77,11 +93,35 @@ F2 = mfrhs.eval('[y*(y-1)*(2*x-1) + 5*x*x*x*x, x*(x-1)*(2*y-1)]')
 # Model
 md = gf.Model('real')
 
+
+
 # Main unknown
 md.add_fem_variable('u', mfu)
+md.add_fem_data('Gu', mfgu)
+md.add_fem_data('ur', mfur)
+
+# Needed reconstuction and stabilization operators
+if (using_HHO):
+  md.add_HHO_reconstructed_gradient('HHO_Grad');
+  md.add_HHO_reconstructed_value('HHO_Val');
+  md.add_HHO_stabilization('HHO_Stab');
+  md.add_macro('HHO_Val_u', 'Elementary_transformation(u, HHO_Val)')
+  md.add_macro('HHO_Grad_u', 'Elementary_transformation(u, HHO_Grad, Gu)')
+  md.add_macro('HHO_Grad_Test_u',
+               'Elementary_transformation(Test_u, HHO_Grad, Gu)')
+  md.add_macro('HHO_Stab_u', 'Elementary_transformation(u, HHO_Stab)')
+  md.add_macro('HHO_Stab_Test_u',
+               'Elementary_transformation(Test_u, HHO_Stab, ur)')
+
 
 # Laplacian term on u
-md.add_Laplacian_brick(mim, 'u')
+if (using_HHO):
+  # Laplacian term
+  md.add_linear_term(mim, 'HHO_Grad_u.HHO_Grad_Test_u')
+  # Stabilization term
+  md.add_linear_term(mim, 'HHO_Stab_u.HHO_Stab_Test_u', ALL_FACES)
+else:
+  md.add_Laplacian_brick(mim, 'u')
 
 # Volumic source term
 md.add_initialized_fem_data('VolumicData', mfrhs, F1)
@@ -124,10 +164,22 @@ md.solve()
 
 # Main unknown
 U = md.variable('u')
-L2error = gf.compute(mfu, U-Ue, 'L2 norm', mim)
-H1error = gf.compute(mfu, U-Ue, 'H1 norm', mim)
+if (using_HHO):
+  L2error = gf.asm('generic', mim, 0, 'sqr(HHO_Val_u-Ue)',
+                   -1, md, 'Ue', 0, mfu, Ue)
+  H1error = gf.asm('generic', mim, 0, 'Norm_sqr(Grad_u-Grad_Ue)',
+                   -1, md, 'Ue', 0, mfu, Ue)
+  H1error = np.sqrt(L2error + H1error)
+  L2error = np.sqrt(L2error)
+else :
+  L2error = gf.compute(mfu, U-Ue, 'L2 norm', mim)
+  H1error = gf.compute(mfu, U-Ue, 'H1 norm', mim)
 print('Error in L2 norm : ', L2error)
 print('Error in H1 norm : ', H1error)
+
+
+
+# Calculer l'erreur sur la reconstruction, aussi.
 
 # Export data
 mfu.export_to_pos('laplacian.pos', Ue,'Exact solution',

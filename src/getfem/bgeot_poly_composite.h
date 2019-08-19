@@ -94,16 +94,22 @@ namespace bgeot {
 
   typedef const mesh_precomposite *pmesh_precomposite;
 
+  struct stored_base_poly : base_poly, public dal::static_stored_object {
+    stored_base_poly(const base_poly &p) : base_poly(p) {}
+  };
+  typedef std::shared_ptr<const stored_base_poly> pstored_base_poly;
+
+  
   class polynomial_composite {
 
   protected :
     const mesh_precomposite *mp;
-    std::map<size_type, dal::pstatic_stored_object_key> polytab;
+    std::map<size_type, pstored_base_poly> polytab;
     bool local_coordinate;  // Local coordinates on each sub-element for
                             // polynomials or global coordinates ?
     bool faces_first; // If true try to evaluate on faces before on the
                       // interior, usefull for HHO elements.
-    base_poly default_poly;
+    std::vector<base_poly> default_polys;
 
   public :
 
@@ -147,14 +153,14 @@ namespace bgeot {
 
     if (l != size_type(-1)) {
       if (!local_coordinate) return poly_of_subelt(l).eval(it);
-      base_node p(mp->dim());
-      std::copy(it, it + mp->dim(), p.begin());
+      base_node p(gmm::mat_ncols(mp->gtrans[l]));
+      // std::copy(it, it + mp->dim(), p.begin());
       mult_diff_transposed(mp->gtrans[l], it, mp->orgs[l], p);
       return poly_of_subelt(l).eval(p.begin());
     }
 
     auto dim = mp->dim();
-    base_node p0(dim), p0_stored;
+    base_node p0(dim), p1_stored, p1;
     size_type cv_stored(-1);
     std::copy(it, it + mp->dim(), p0.begin());
 
@@ -182,12 +188,15 @@ namespace bgeot {
       }
       
       for (auto cv : mp->box_to_convexes_map.at(pmax_box->id)) {
-        mult_diff_transposed(mp->gtrans[cv], it, mp->orgs[cv], p0);
-        if (mp->trans_of_convex(cv)->convex_ref()->is_in(p0) < 1E-10) {
+        cout << "cv = " << cv << endl;
+        p1.resize(gmm::mat_ncols(mp->gtrans[cv]));
+        mult_diff_transposed(mp->gtrans[cv], it, mp->orgs[cv], p1);
+        cout << "p1 = " << p1 << endl;
+        if (mp->trans_of_convex(cv)->convex_ref()->is_in(p1) < 1E-10) {
           if (!faces_first || mp->trans_of_convex(cv)->structure()->dim() < dim)
             return to_scalar(poly_of_subelt(cv).eval(local_coordinate
-                                                     ? p0.begin() : it));
-          p0_stored = p0; cv_stored = cv;
+                                                     ? p1.begin() : it));
+          p1_stored = p1; cv_stored = cv;
         }
       }
         
@@ -196,7 +205,7 @@ namespace bgeot {
     }
     if (cv_stored != size_type(-1))
       return to_scalar(poly_of_subelt(cv_stored).eval(local_coordinate
-                                                      ? p0_stored.begin(): it));
+                                                      ? p1_stored.begin(): it));
     GMM_ASSERT1(false, "Element not found in composite polynomial: "
                 << base_node(*it, *it + mp->dim()));
   }

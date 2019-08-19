@@ -1390,7 +1390,7 @@ namespace bgeot {
   }
 
   void delete_geotrans_precomp(pgeotrans_precomp pgp)
-  { dal::del_stored_object(pgp); }
+  { dal::del_stored_object(pgp, true); }
 
 }  /* end of namespace bgeot.                                            */
 

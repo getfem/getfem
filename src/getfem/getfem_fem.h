@@ -988,7 +988,10 @@ namespace getfem {
       }
   }
 
-  /* Specific function for a HHO method to obtain the method in the interior */
+  /**
+     Specific function for a HHO method to obtain the method in the interior.
+     If the method is not of composite type, return the argument.
+  */
   pfem interior_fem_of_hho_method(pfem hho_method);
 
 

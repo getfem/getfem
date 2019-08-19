@@ -851,6 +851,23 @@ namespace getfem {
     }
   }
 
+  /* Select all the faces of the given mesh region (counted twice if they
+     are shared by two neighbour elements)
+  */
+  mesh_region all_faces_of_mesh(const mesh &m, const mesh_region &mr) {
+    mesh_region mrr;
+    mr.from_mesh(m);
+    mr.error_if_not_convexes();
+
+    for (mr_visitor i(mr); !i.finished(); ++i) {
+      size_type cv1 = i.cv();
+      short_type nbf = m.structure_of_convex(i.cv())->nb_faces();
+      for (short_type f = 0; f < nbf; ++f)
+        mrr.add(cv1, f);
+    }
+    return mrr;
+  }
+  
   /* Select all the faces sharing at least two element of the given mesh
       region. Each face is represented only once and is arbitrarily chosen
       between the two neighbour elements. Try to minimize the number of

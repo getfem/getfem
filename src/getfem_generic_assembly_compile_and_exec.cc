@@ -1142,7 +1142,7 @@ namespace getfem {
                     "transformation");
       size_type ndof = Z.sizes()[0];
       size_type Qmult = qdim / Z.sizes()[1];
-      do_transformation(ndof*Qmult, t.sizes()[0]);
+      do_transformation(coeff_in.size(), ndof*Qmult);
       return ga_instruction_val::exec();
     }
 
@@ -1161,7 +1161,7 @@ namespace getfem {
       GA_DEBUG_INFO("Instruction: gradient with elementary transformation");
       size_type ndof = Z.sizes()[0];
       size_type Qmult = qdim / Z.sizes()[1];
-      do_transformation(ndof*Qmult, t.sizes()[0]);
+      do_transformation(coeff_in.size(), ndof*Qmult);
       return ga_instruction_grad::exec();
     }
 
@@ -1180,7 +1180,7 @@ namespace getfem {
       GA_DEBUG_INFO("Instruction: Hessian with elementary transformation");
       size_type ndof = Z.sizes()[0];
       size_type Qmult = qdim / Z.sizes()[1];
-      do_transformation(ndof*Qmult, t.sizes()[0]);
+      do_transformation(coeff_in.size(), ndof*Qmult);
       return ga_instruction_hess::exec();
     }
 
@@ -1199,7 +1199,7 @@ namespace getfem {
       GA_DEBUG_INFO("Instruction: divergence with elementary transformation");
       size_type ndof = Z.sizes()[0];
       size_type Qmult = qdim / Z.sizes()[1];
-      do_transformation(ndof*Qmult, t.sizes()[0]);
+      do_transformation(coeff_in.size(), ndof*Qmult);
       return ga_instruction_diverg::exec();
     }
 
@@ -1564,7 +1564,7 @@ namespace getfem {
       size_type Qmult = qdim / Z.sizes()[1];
       t_in.adjust_sizes(Qmult*ndof, Qmult*Z.sizes()[1]);
       ga_instruction_copy_val_base::exec();
-      do_transformation(ndof*Qmult, t_out.sizes()[0]);
+      do_transformation(t_out.sizes()[0], ndof*Qmult);
       return 0;
     }
 
@@ -1588,7 +1588,7 @@ namespace getfem {
       size_type Qmult = qdim / Z.sizes()[1];
       t_in.adjust_sizes(Qmult*ndof, Qmult*Z.sizes()[1], Z.sizes()[2]);
       ga_instruction_copy_grad_base::exec();
-      do_transformation(ndof*Qmult, t_out.sizes()[0]);
+      do_transformation(t_out.sizes()[0], ndof*Qmult);
       return 0;
     }
 
@@ -1612,7 +1612,7 @@ namespace getfem {
       size_type Qmult = qdim / Z.sizes()[1];
       t_in.adjust_sizes(Qmult*ndof, Qmult*Z.sizes()[1], Z.sizes()[2]);
       ga_instruction_copy_hess_base::exec();
-      do_transformation(ndof*Qmult, t_out.sizes()[0]);
+      do_transformation(t_out.sizes()[0], ndof*Qmult);
       return 0;
     }
 
@@ -1636,7 +1636,7 @@ namespace getfem {
       size_type Qmult = qdim / Z.sizes()[1];
       t_in.adjust_sizes(Qmult*ndof);
       ga_instruction_copy_diverg_base::exec();
-      do_transformation(ndof*Qmult, t_out.sizes()[0]);
+      do_transformation(t_out.sizes()[0], ndof*Qmult);
       return 0;
     }
 
