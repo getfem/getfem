@@ -31,11 +31,11 @@ import getfem as gf
 import numpy as np
 
 ## Parameters
-NX = 10                            # Mesh parameter.
+NX = 40                            # Mesh parameter.
 Dirichlet_with_multipliers = True  # Dirichlet condition with multipliers
                                    # or penalization
 dirichlet_coefficient = 1e10       # Penalization coefficient
-using_HHO = False                  # Use HHO method or standard Lagrange FEM
+using_HHO = True                   # Use HHO method or standard Lagrange FEM
 
 # Create a simple cartesian mesh
 m = gf.Mesh('regular_simplices', np.arange(0,1+1./NX,1./NX),
@@ -104,9 +104,9 @@ md.add_fem_data('ur', mfur)
 
 # Needed reconstuction and stabilization operators
 if (using_HHO):
-  md.add_HHO_reconstructed_gradient('HHO_Grad');
-  md.add_HHO_reconstructed_value('HHO_Val');
-  md.add_HHO_stabilization('HHO_Stab');
+  md.add_HHO_reconstructed_gradient('HHO_Grad')
+  md.add_HHO_reconstructed_value('HHO_Val')
+  md.add_HHO_stabilization('HHO_Stab')
   md.add_macro('HHO_Val_u', 'Elementary_transformation(u, HHO_Val, ur)')
   md.add_macro('HHO_Grad_u', 'Elementary_transformation(u, HHO_Grad, Gu)')
   md.add_macro('HHO_Grad_Test_u',

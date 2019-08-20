@@ -27,6 +27,7 @@ User Documentation
    ifem
    iinteg
    xfem
+   hho
    interNMM
    computeL2H1
    computeD

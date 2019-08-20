@@ -2,7 +2,7 @@
 
 .. include:: ../replaces.txt
 
-.. highlightlang:: c++
+.. highlightlang:: none
 
 .. index:: asm, generic assembly
 
@@ -929,17 +929,28 @@ where ``pelementary_transformation`` is a pointer to an object deriving from ``v
 
 where ``u`` is one of the FEM variables of the model/workspace, and ``dest`` is an optional parameter which should be a variable or data name of the model and will correspond to the target fem of the transformation. If omitted, by default, the transformation is from the fem of the first variable to itself. 
 
-
-For the moment, the only available elementary transformation is the the one for the projection on rotated RT0 element for two-dimensional elements which can be added thanks to the function (defined in :file:`src/getfem/getfem_linearized_plates.h`)::
+A typical transformation is the the one for the projection on rotated RT0 element for two-dimensional elements which is an ingredient of the MITC plate element. It can be added thanks to the function (defined in :file:`src/getfem/getfem_linearized_plates.h`)::
 
   add_2D_rotated_RT0_projection(model, transname)
+
+Some other transformations are available for the use into Hybrid High-Order methods (HHO methods, see :ref:`ud-hho` for more information). These transformations correspond to the reconstruction of the gradient of a variable or the variable itself, the HHO methods having separated discretizations on the interior of the element and on its faces. The different transformations can be added with the functions (defined in :file:`src/getfem/getfem_HHO.h`)::
+
+  add_HHO_reconstructed_gradient(model, transname);
+  add_HHO_reconstructed_symmetrized_gradient(model, transname);
+
+  void add_HHO_reconstructed_value(model, transname);
+  void add_HHO_reconstructed_symmetrized_value(model, transname);
+
+  void add_HHO_stabilization(model, transname);
+  void add_HHO_symmetrized_stabilization(model, transname);
+
 
 .. _ud-gasm-high_xfem:
 
 Xfem discontinuity evaluation (with mesh_fem_level_set)
 -------------------------------------------------------
 
-For |gf| 5.1. When using a fem cut by a level-set (using fem_level_set or mesh_fem_level_set objects), it is often interesting to integrate the discontinuity jump of a variable, or the jump in gradient or the average value. For this purpose, the weak form language furnishes the following expressions for ``u`` a FEM variable::
+When using a fem cut by a level-set (using fem_level_set or mesh_fem_level_set objects), it is often interesting to integrate the discontinuity jump of a variable, or the jump in gradient or the average value. For this purpose, the weak form language furnishes the following expressions for ``u`` a FEM variable::
 
   Xfem_plus(u)
   Xfem_plus(Grad_u)

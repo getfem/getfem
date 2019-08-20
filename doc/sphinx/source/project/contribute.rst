@@ -2,7 +2,7 @@
 
 .. include:: ../replaces.txt
 
-.. highlightlang:: c++
+.. highlightlang:: none
 
 .. _dp-contribute:
 

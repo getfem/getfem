@@ -5,6 +5,14 @@
 References
 ----------
 
+.. [AB-ER-PI2018] M. Abbas, A. Ern, N. Pignet.
+   *Hybrid High-Order methods for finite deformations of hyperelastic materials*.
+   Computational Mechanics, 62(4), 909-928, 2018.
+
+.. [AB-ER-PI2019] M. Abbas, A. Ern, N. Pignet.
+   *A Hybrid High-Order method for incremental associative plasticity with small deformations*.
+   Computer Methods in Applied Mechanics and Engineering, 346, 891-912, 2019.
+
 .. [AL-CU1991] P. Alart, A. Curnier.
    *A mixed formulation for frictional contact problems prone to newton like solution methods*. Comput. Methods Appl. Mech. Engrg. 92, 353--375, 1991.
 
@@ -40,6 +48,10 @@ References
 .. [ca-re-so1994] D. Calvetti, L. Reichel and D.C. Sorensen.
    *An implicitely restarted Lanczos method for large symmetric eigenvalue problems*. Electronic Transaction on Numerical Analysis}. 2:1-21, 1994.
 
+.. [ca-ch-er2019] K. Cascavita, F. Chouly and A. Ern
+   *Hybrid High-Order discretizations combined with Nitsche's method for Dirichlet and Signorini boundary conditions*.
+   hal-02016378v2, 2019
+   
 .. [CH-LA-RE2008] E. Chahine, P. Laborde, Y. Renard.
    *Crack-tip enrichment in the Xfem method using a cut-off function*. Int. J. Numer. Meth. Engng., 75(6):629-646, 2008.
 
@@ -56,12 +68,18 @@ References
    R. Cools, `An Encyclopedia of Cubature Formulas
    <http://www.cs.kuleuven.ac.be/~ines/research/ecf/ecf.html>`_, J. Complexity.
 
-.. [dh-to1984] G. Dhatt, G. Touzot.
-   *The Finite Element Method Displayed*. J. Wiley & Sons, New York, 1984.
-
 .. [Dh-Go-Ku2003] A. Dhooge, W. Govaerts and Y. A. Kuznetsov.
    *MATCONT: A MATLAB Package for Numerical Bifurcation Analysis of ODEs*.
    ACM Trans. Math. Software 31, 141-164, 2003.
+
+
+.. [Di-Er2015] D.A. Di Pietro, A. Ern.
+   *A hybrid high-order locking free method for linear elasticity on general meshes*.
+   Comput. Methods Appl. Mech. Engrg., 283:1-21, 2015
+
+.. [Di-Er2017] D.A. Di Pietro, A. Ern.
+   *Arbitrary-order mixed methods for heterogeneous anisotropic diffusion on general meshes*.
+   IMA Journal of Numerical Analysis, 37(1), 40-63. 2017
 
 .. [Duan2014] H. Duan.
    *A finite element method for Reissner-Mindlin plates*.
@@ -140,9 +158,6 @@ References
    *The ALE formulation of bodies in rolling contact. Theoretical foundation
    and finite element approach*.
    Comput. Methods Appl. Mech. Engrg., 193:4299-4322, 2004.
-
-.. [nedelec1991] J.-C. Nedelec.
-   *Notions sur les techniques d'elements finis*. Ellipses, SMAI, Mathematiques & Applications no 7, 1991.
 
 .. [NI-RE-CH2011] S. Nicaise, Y. Renard, E. Chahine,
    *Optimal convergence analysis for the eXtended Finite Element Method*. Int. J. Numer. Meth. Engng., 86:528-548, 2011.
