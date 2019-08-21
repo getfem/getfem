@@ -52,6 +52,8 @@ EXTRA_DIST= 						\
 	demo_thermo_elasticity_electrical_coupling.py 	\
 	demo_cracked_thermo_elastic_body.py             \
 	demo_nonlinear_elasticity.py		 	\
+	demo_elasticity_HHO.py                          \
+	demo_elastic_ring_contact.py                    \
 	demo_wheel_contact.py                           \
 	demo_tripod.py 					\
 	demo_tripod_alt.py 				\
@@ -70,6 +72,7 @@ TESTS = 						\
 	demo_wave_equation.py				\
 	demo_laplacian.py				\
 	demo_laplacian_HHO.py				\
+	demo_elasticity_HHO.py                          \
 	$(optpy)
 
 AM_TESTS_ENVIRONMENT = \

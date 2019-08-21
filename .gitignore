@@ -129,6 +129,7 @@ interface/tests/python/results1/
 /doc/sphinx/source/python/cmdref*
 /doc/sphinx/source/matlab/cmdref*
 /doc/sphinx/build/
+/doc/sphinx/homepage/
 /doc/sphinx/*.pdf
 /doc/sphinx/source/matlab/images/hierarchy.png
 /doc/sphinx/source/project/images/diagram.png

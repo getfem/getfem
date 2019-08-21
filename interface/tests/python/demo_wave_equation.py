@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: UTF8 -*-
+# -*- coding: utf-8 -*-
 # Python GetFEM++ interface
 #
 # Copyright (C) 2015-2019 FABRE Mathieu, SECK Mamadou, DALLERIT Valentin,
@@ -31,7 +31,7 @@ import numpy as np
 import getfem as gf
 import os
 
-NX = 20
+NX = 10
 m = gf.Mesh('cartesian', np.arange(0., 1.+1./NX,1./NX),
             np.arange(0., 1.+1./NX,1./NX));
 

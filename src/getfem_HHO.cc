@@ -428,7 +428,7 @@ namespace getfem {
                 scalar_type b(0), a = coeff *
                   (tv1p(i, k1) - (i < ndofi ? tvi(i, k1) : 0.));
                 for (size_type k2 = 0; k2 < N; ++k2)
-                  b += a * tv2.as_vector()[j+(k1 + k2*Q)*ndof2] * un[k2];
+                  b += a * tv2.as_vector()[j+(k1+k2*Q)*ndof2] * un[k2];
                 M1(j, i) += b;
               }
         }
@@ -578,7 +578,7 @@ namespace getfem {
       }
 
       // Integrals on the faces : \int_{dT}(v_{dT} - v_T).(Sym(Grad(w)).n) (M1)
-      //                          \int_{dT} Skew(n x v_{dT} - v_{dT} x n) (M5)
+      //                          \int_{dT} n x v_{dT} - v_{dT} x n (M5)
       for (short_type ifc = 0; ifc < pgt->structure()->nb_faces(); ++ifc) {
         ctx1.set_face_num(ifc); ctx2.set_face_num(ifc); ctxi.set_face_num(ifc);
         size_type first_ind = pim->ind_first_point_on_face(ifc);
@@ -605,16 +605,16 @@ namespace getfem {
                 scalar_type b(0), a = coeff *
                   (tv1p(i, k1) - (i < ndofi ? tvi(i, k1) : 0.));
                 for (size_type k2 = 0; k2 < N; ++k2)
-                  b += a * 0.5 * (tv2.as_vector()[j+(k1 + k2*N)*ndof2] +
-                                  tv2.as_vector()[j+(k2 + k1*N)*ndof2])* un[k2];
+                  b += a * 0.5 * (tv2.as_vector()[j+(k1+k2*N)*ndof2] +
+                                  tv2.as_vector()[j+(k2+k1*N)*ndof2]) * un[k2];
                 M1(j, i) += b;
               }
 
           for (size_type i = 0; i < ndof1; ++i)
             for (size_type k1 = 0; k1 < N; ++k1)
               for (size_type k2 = 0; k2 < N; ++k2)
-                M5(k1+k2*N, i) += 0.5 * coeff * (tv1p(i, k2) * un[k1] -
-                                                 tv1p(i, k1) * un[k2]);
+                M5(k1+k2*N, i) += 0.5 * coeff * (tv1p(i, k1) * un[k2] -
+                                                 tv1p(i, k2) * un[k1]);
         }
       }
 
@@ -622,21 +622,13 @@ namespace getfem {
       gmm::mult(gmm::transposed(M4), M4, aux2);
       gmm::add (gmm::scaled(aux2, 1.E7), M2);
       gmm::mult(gmm::transposed(M6), M6, aux2);
-      gmm::add (gmm::scaled(aux2, 1.E7), M2);
+      gmm::add (gmm::scaled(aux2, 1.E5), M2);
       gmm::mult(gmm::transposed(M4), M3, aux1);
       gmm::add (gmm::scaled(aux1, 1.E7), M1);
       gmm::mult(gmm::transposed(M6), M5, aux1);
-      gmm::add (gmm::scaled(aux1, 1.E7), M1);
+      gmm::add (gmm::scaled(aux1, 1.E5), M1);
       
-      if (pf2->target_dim() == 1 && Q > 1) {
-        gmm::sub_slice I(0, ndof2/Q, Q);
-        gmm::lu_inverse(gmm::sub_matrix(M2, I, I));
-        for (size_type i = 0; i < Q; ++i) {
-          gmm::sub_slice I2(i, ndof2/Q, Q);
-          gmm::copy(gmm::sub_matrix(M2, I, I), gmm::sub_matrix(M2inv, I2, I2));
-        }
-      } else 
-        { gmm::copy(M2, M2inv); gmm::lu_inverse(M2inv); }
+      gmm::copy(M2, M2inv); gmm::lu_inverse(M2inv);
 
       gmm::mult(M2inv, M1, M);
       gmm::clean(M, gmm::vect_norminf(M.as_vector()) * 1E-13);
@@ -971,7 +963,7 @@ namespace getfem {
         vectorize_grad_base_tensor(t2, tv2, ndof2, pf2->target_dim(), N);
 
         ctx2.base_value(t2p);
-        vectorize_base_tensor(t2p, tv2p, ndof1, pf1->target_dim(), N);
+        vectorize_base_tensor(t2p, tv2p, ndof2, pf2->target_dim(), N);
 
         for (size_type i = 0; i < ndof2; ++i) // To be optimized
           for (size_type j = 0; j < ndof2; ++j)
@@ -1054,8 +1046,8 @@ namespace getfem {
           for (size_type i = 0; i < ndof1; ++i)
             for (size_type k1 = 0; k1 < N; ++k1)
               for (size_type k2 = 0; k2 < N; ++k2)
-                M5(k1+k2*N, i) += 0.5 * coeff * (tv1p(i, k2) * un[k1] -
-                                                 tv1p(i, k1) * un[k2]);
+                M5(k1+k2*N, i) += 0.5 * coeff * (tv1p(i, k1) * un[k2] -
+                                                 tv1p(i, k2) * un[k1]);
 
           for (size_type i = 0; i < ndof1; ++i) // To be optimized
             for (size_type j = 0; j < ndof1; ++j)
@@ -1078,21 +1070,13 @@ namespace getfem {
       gmm::mult(gmm::transposed(M4), M4, aux2);
       gmm::add (gmm::scaled(aux2, 1E7), M2);
       gmm::mult(gmm::transposed(M6), M6, aux2);
-      gmm::add (gmm::scaled(aux2, 1E7), M2);
+      gmm::add (gmm::scaled(aux2, 1E5), M2);
       gmm::mult(gmm::transposed(M4), M3, aux1);
       gmm::add (gmm::scaled(aux1, 1E7), M1);
       gmm::mult(gmm::transposed(M6), M5, aux1);
-      gmm::add (gmm::scaled(aux1, 1E7), M1);
+      gmm::add (gmm::scaled(aux1, 1E5), M1);
 
-      if (pf2->target_dim() == 1 && Q > 1) {
-        gmm::sub_slice I(0, ndof2/Q, Q);
-        gmm::lu_inverse(gmm::sub_matrix(M2, I, I));
-        for (size_type i = 0; i < Q; ++i) {
-          gmm::sub_slice I2(i, ndof2/Q, Q);
-          gmm::copy(gmm::sub_matrix(M2, I, I), gmm::sub_matrix(M2inv, I2, I2));
-        }
-      } else 
-        { gmm::copy(M2, M2inv); gmm::lu_inverse(M2inv); }
+      gmm::copy(M2, M2inv); gmm::lu_inverse(M2inv);
       
       if (pf1->target_dim() == 1 && Q > 1) {
         gmm::sub_slice I(0, ndof1/Q, Q);

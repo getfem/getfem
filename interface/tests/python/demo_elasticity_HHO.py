@@ -19,7 +19,7 @@
 # Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 #
 ############################################################################
-"""  2D Poisson problem using HHO methods.
+"""  2D elasticity problem using HHO methods.
 
   This program is used to check that python-getfem is working. This is
   also a good example of use of GetFEM++.
@@ -31,21 +31,31 @@ import getfem as gf
 import numpy as np
 
 ## Parameters
-NX = 10                            # Mesh parameter.
-Dirichlet_with_multipliers = True  # Dirichlet condition with multipliers
-                                   # or penalization
-dirichlet_coefficient = 1e10       # Penalization coefficient
-using_HHO = True                   # Use HHO method or standard Lagrange FEM
+NX = 20                           # Mesh parameter.
+Dirichlet_with_multipliers = True # Dirichlet condition with multipliers
+                                  # or penalization
+dirichlet_coefficient = 1e10      # Penalization coefficient
+using_HHO = True                  # Use HHO method or standard Lagrange FEM
+using_symmetric_gradient = True   # Use symmetric gradient reconstruction or not
+
+E = 1                             # Young's modulus
+nu = 0.499                        # Poisson ratio
+
+cmu = E/(2*(1+nu))                # Lame coefficient
+clambda = 2*cmu*nu/(1-2*nu)       # Lame coefficient
 
 # Create a simple cartesian mesh
-m = gf.Mesh('regular_simplices', np.arange(0,1+1./NX,1./NX),
-            np.arange(0,1+1./NX,1./NX))
+m = gf.Mesh('regular_simplices', np.arange(0,1+1./NX,1./NX), np.arange(0,1+1./NX,1./NX))
+# m = gf.Mesh('cartesian',[0:1/NX:1],[0:1/NX:1]);
+# m=gf.Mesh('import','structured','GT="GT_PK(2,1)";SIZES=[1,1];NOISED=1;NSUBDIV=[%d,%d];' % (NX, NX))
+# m=gf.Mesh('import','structured','GT="GT_QK(2,1)";SIZES=[1,1];NOISED=1;NSUBDIV=[1,1];')
+
 N = m.dim();
 
 # Meshfems
-mfu   = gf.MeshFem(m, 1)
-mfgu  = gf.MeshFem(m, N)
-mfur  = gf.MeshFem(m, 1)
+mfu   = gf.MeshFem(m, N)
+mfgu  = gf.MeshFem(m, N, N)
+mfur  = gf.MeshFem(m, N)
 mfrhs = gf.MeshFem(m, 1)
 
 if (using_HHO):
@@ -65,20 +75,8 @@ mim = gf.MeshIm(m, gf.Integ('IM_TRIANGLE(4)'))
 
 # Boundary selection
 flst  = m.outer_faces()
-fnor  = m.normal_of_faces(flst)
-tleft = abs(fnor[1,:]+1) < 1e-14
-ttop  = abs(fnor[0,:]-1) < 1e-14
-fleft = np.compress(tleft, flst, axis=1)
-ftop  = np.compress(ttop, flst, axis=1)
-fneum = np.compress(np.logical_not(ttop + tleft), flst, axis=1)
-
-# Mark it as boundary
-DIRICHLET_BOUNDARY_NUM1 = 1
-DIRICHLET_BOUNDARY_NUM2 = 2
-NEUMANN_BOUNDARY_NUM = 3
-m.set_region(DIRICHLET_BOUNDARY_NUM1, fleft)
-m.set_region(DIRICHLET_BOUNDARY_NUM2, ftop)
-m.set_region(NEUMANN_BOUNDARY_NUM, fneum)
+GAMMAD = 1
+m.set_region(GAMMAD, flst)
 
 # Faces for stabilization term
 all_faces = m.all_faces()
@@ -86,11 +84,13 @@ ALL_FACES = 4
 m.set_region(ALL_FACES, all_faces)
 
 # Interpolate the exact solution (Assuming mfu is a Lagrange fem)
-Ue = mfur.eval('y*(y-1)*x*(x-1)+x*x*x*x*x')
+a = 8.
+Ue = mfur.eval('[np.sin((%g)*x), -(%g)*y*np.cos((%g)*x)]' % (a,a,a), globals(), locals())
 
 # Interpolate the source term
-F1 = mfrhs.eval('-(2*(x*x+y*y)-2*x-2*y+20*x*x*x)')
-F2 = mfrhs.eval('[y*(y-1)*(2*x-1) + 5*x*x*x*x, x*(x-1)*(2*y-1)]')
+F1 = mfrhs.eval('(%g)*(pow(%g,2.))*np.sin((%g)*x), -(%g)*(pow(%g,3.))*y*np.cos((%g)*x)' % (cmu, a, a, cmu, a, a), globals(), locals())
+
+
 
 # Model
 md = gf.Model('real')
@@ -104,9 +104,19 @@ md.add_fem_data('ur', mfur)
 
 # Needed reconstuction and stabilization operators
 if (using_HHO):
-  md.add_HHO_reconstructed_gradient('HHO_Grad')
-  md.add_HHO_reconstructed_value('HHO_Val')
-  md.add_HHO_stabilization('HHO_Stab')
+  if (using_symmetric_gradient):
+    md.add_HHO_reconstructed_symmetrized_gradient('HHO_Grad')
+    md.add_HHO_reconstructed_gradient('HHO_vGrad')
+    md.add_HHO_reconstructed_symmetrized_value('HHO_Val')
+    md.add_HHO_symmetrized_stabilization('HHO_Stab')
+    md.add_macro('HHO_vGrad_u', 'Elementary_transformation(u, HHO_vGrad, Gu)')
+  else :
+    md.add_HHO_reconstructed_gradient('HHO_Grad')
+    md.add_HHO_reconstructed_value('HHO_Val')
+    md.add_HHO_stabilization('HHO_Stab')
+    md.add_macro('HHO_vGrad_u', 'Elementary_transformation(u, HHO_Grad, Gu)')
+
+    
   md.add_macro('HHO_Val_u', 'Elementary_transformation(u, HHO_Val, ur)')
   md.add_macro('HHO_Grad_u', 'Elementary_transformation(u, HHO_Grad, Gu)')
   md.add_macro('HHO_Grad_Test_u',
@@ -116,69 +126,57 @@ if (using_HHO):
                'Elementary_transformation(Test_u, HHO_Stab)')
 
 
-# Laplacian term on u
+# Elasticity term on u
+md.add_initialized_data('cmu', [cmu])
+md.add_initialized_data('clambda', [clambda])
 if (using_HHO):
-  # Laplacian term
-  md.add_linear_term(mim, 'HHO_Grad_u.HHO_Grad_Test_u')
+  # Elasticity term
+  md.add_linear_term(mim, 'clambda*Trace(HHO_Grad_u)*Trace(HHO_Grad_Test_u)'
+                     +    '+ 2*cmu*Sym(HHO_Grad_u):Sym(HHO_Grad_Test_u)')
   # Stabilization term
-  md.add_linear_term(mim, 'HHO_Stab_u.HHO_Stab_Test_u', ALL_FACES)
+  md.add_linear_term(mim, 'cmu*HHO_Stab_u.HHO_Stab_Test_u', ALL_FACES)
 else:
-  md.add_Laplacian_brick(mim, 'u')
+  md.add_isotropic_linearized_elasticity_brick(mim, 'u', 'clambda', 'cmu')
 
 # Volumic source term
 md.add_initialized_fem_data('VolumicData', mfrhs, F1)
 md.add_source_term_brick(mim, 'u', 'VolumicData')
 
-# Neumann condition.
-md.add_initialized_fem_data('NeumannData', mfrhs, F2)
-md.add_normal_source_term_brick(mim, 'u', 'NeumannData',
-                                NEUMANN_BOUNDARY_NUM)
-
-# Dirichlet condition on the left.
+# Dirichlet condition
 md.add_initialized_fem_data("Ue", mfur, Ue)
 
 if (Dirichlet_with_multipliers):
-  md.add_Dirichlet_condition_with_multipliers(mim, 'u', mfu,
-                                              DIRICHLET_BOUNDARY_NUM1, 'Ue')
+  md.add_Dirichlet_condition_with_multipliers(mim, 'u', mfu, GAMMAD, 'Ue')
 else:
   md.add_Dirichlet_condition_with_penalization(mim, 'u', dirichlet_coefficient,
-                                               DIRICHLET_BOUNDARY_NUM1, 'Ue')
-
-# Dirichlet condition on the top.
-# Two Dirichlet brick in order to test the multiplier
-# selection in the intersection.
-if (Dirichlet_with_multipliers):
-  md.add_Dirichlet_condition_with_multipliers(mim, 'u', mfu,
-                                              DIRICHLET_BOUNDARY_NUM2, 'Ue')
-else:
-  md.add_Dirichlet_condition_with_penalization(mim, 'u', dirichlet_coefficient,
-                                               DIRICHLET_BOUNDARY_NUM2, 'Ue')
+                                               GAMMAD, 'Ue')
 
 # Assembly of the linear system and solve.
 md.solve()
 
 # Error computation
 U = md.variable('u')
-L2error = gf.asm('generic', mim, 0, 'sqr(u-Ue)', -1, md)
+L2error = gf.asm('generic', mim, 0, 'Norm_sqr(u-Ue)', -1, md)
 H1error = gf.asm('generic', mim, 0, 'Norm_sqr(Grad_u-Grad_Ue)', -1, md)
 H1error = np.sqrt(L2error + H1error); L2error = np.sqrt(L2error)
 print('Error in L2 norm (without reconstruction): %g' % L2error)
 print('Error in H1 norm (without reconstruction): %g' % H1error)
+
 if (using_HHO):
-  L2error = gf.asm('generic', mim, 0, 'sqr(HHO_Val_u-Ue)', -1, md)
-  H1error = gf.asm('generic', mim, 0, 'Norm_sqr(HHO_Grad_u-Grad_Ue)', -1, md)
+  L2error = gf.asm('generic', mim, 0, 'Norm_sqr(HHO_Val_u-Ue)', -1, md)
+  H1error = gf.asm('generic', mim, 0, 'Norm_sqr(HHO_vGrad_u-Grad_Ue)', -1, md)
   H1error = np.sqrt(L2error + H1error); L2error = np.sqrt(L2error)
   print('Error in L2 norm (with reconstruction): %g' % L2error)
   print('Error in H1 norm (with reconstruction): %g' % H1error)
 
 
 # Export data
-# mfur.export_to_pos('laplacian_e.pos', Ue, 'Exact solution')
-mfu.export_to_pos('laplacian.pos', U, 'Computed solution')
+# mfur.export_to_pos('elasticity_e.pos', Ue, 'Exact solution')
+mfu.export_to_pos('elasticity.pos', U, 'Computed solution')
 print('You can view the solution with (for example):')
-print('gmsh laplacian.pos')
+print('gmsh elasticity.pos')
 
 
-if (H1error > 1e-3):
+if (H1error > 0.013):
     print('Error too large !')
     exit(1)
