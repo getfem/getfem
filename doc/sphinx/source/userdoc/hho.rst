@@ -20,11 +20,16 @@ HHO elements
 
 HHO elements are composite ones having a polynomial approximation space for the interior of the element and a polynomial approximation for each face of the element. Moreover, this is a discontinous approximation, in the sens that no continuity is prescribed between the approximation inside the element and the approximation on the faces, neither than between the approximations on two different faces of the element. However, when two neighbour elements share a face, the approximation on this face is shared by the two elements. |gf| provide a specific method simply called ``FEM_HHO(fem_int, fem_face1, fem_face2, ...)`` which allows to build an hybrid method from standard finite element spaces. For instance, on a triangle, a possible HHO method can be obtained with::
 
-  getfem::pfem pf = getfem::fem_descriptor("HHO(FEM_DISCONTINOUS_PK(2,2,0.1), FEM_DISCONTINOUS_PK(1,2,0.1))");
+  getfem::pfem pf = getfem::fem_descriptor("HHO(FEM_SIMPLEX_IPK(2,2), FEM_SIMPLEX_CIPK(1,2))");
 
-The first argument to ``FEM_HHO(...)`` is the fem for the interior of the element. It has to be a discontinuous FEM. The method ``FEM_DISCONTINOUS_PK(2,2,0.1)`` is a discontinous method having its degrees of freedom in the strict interior of the element, which ensure that no dof identification will be done. The second argument is the fem for the faces (if only one method is given, it will be applied to all faces, but it is also possible to give a different method for each face). Their is no verification on the fact that the given method are of discontinuous type (In fact, a method like ``FEM_HHO(FEM_PK(2,2), FEM_PK(1,2))`` will have no difference with ``FEM_PK(2,2)`` since the degree of freedom on the faces will be identified with the interior ones).
+The first argument to ``FEM_HHO(...)`` is the fem for the interior of the element. It has to be a discontinuous FEM. The method ``FEM_SIMPLEX_IPK(2,2)`` is a discontinous method having its degrees of freedom in the strict interior of the element, which ensure that no dof identification will be done. The second argument is the fem for the faces (if only one method is given, it will be applied to all faces, but it is also possible to give a different method for each face). Their is no verification on the fact that the given method are of discontinuous type (In fact, a method like ``FEM_HHO(FEM_PK(2,2), FEM_PK(1,2))`` will have no difference with ``FEM_PK(2,2)`` since the degree of freedom on the faces will be identified with the interior ones).
 
-+ ``FEM_IPK`` and PK on quadrilateral ...
+For the moment, the fursnished element for interior and faces are
+- ``FEM_SIMPLEX_IPK(n,k)`` : interior PK element of degree k for the simplices in dimension n (equivalent to ``FEM_PK_DISCONTINUOUS(n,k,0.1)``).
+- ``FEM_QUAD_IPK(n,k)`` : interior PK element of degree k for the quadrilaterals in dimension n.
+- ``FEM_PRISM_IPK(n,k)`` : interior PK element of degree k for the prisms in dimension n.
+- ``FEM_SIMPLEX_CIPK(n,k)`` : interior PK element on simplices which is additionnaly connectable. Designed to be use on HHO element face. 
+- ``FEM_QUAD_CIPK(k)`` : interior PK element on a quadrilateral which is additionnaly connectable. Designed to be use on HHO element face. 
 
 Reconstruction operators
 ------------------------
@@ -51,7 +56,7 @@ This is an example of use with the Python interface for a two-dimensional triang
 
   mfu   = gf.MeshFem(m, 1)
   mfgu  = gf.MeshFem(m, N)
-  mfu.set_fem(gf.Fem('FEM_HHO(FEM_PK_DISCONTINUOUS(2,2,0.1),FEM_PK_DISCONTINUOUS(1,2,0.1))'))
+  mfu.set_fem(gf.Fem('FEM_HHO(FEM_SIMPLEX_IPK(2,2),FEM_SIMPLEX_CIPK(1,2))'))
   mfgu.set_fem(gf.Fem('FEM_PK(2,2)'))
 
   md = gf.Model('real')
@@ -149,4 +154,4 @@ The corresponding elementary transformations can be added to the model by the tw
   add_HHO_stabilization(model, transname);
   add_HHO_symmetrized_stabilization(model, transname);
 
-and used into the weak form language as ``Elementary_transformation(u, HHO_stab)``, if ``transname="HHO_stab"``. There is no third argument for these transformations since the arrival space is the one of the variable. An example of use is also given in the test programs :file:`interface/tests/demo_laplacian_HHO.py` and :file:`interface/tests/demo_elasticity_HHO.py`.
+and used into the weak form language as ``Elementary_transformation(u, HHO_stab)``, if ``transname="HHO_stab"``. A third argument is optional to specify the target (HHO) space (the default is one of the variable itself). An example of use is also given in the test programs :file:`interface/tests/demo_laplacian_HHO.py` and :file:`interface/tests/demo_elasticity_HHO.py`.

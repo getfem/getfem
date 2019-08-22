@@ -35,7 +35,7 @@ NX = 20                           # Mesh parameter.
 Dirichlet_with_multipliers = True # Dirichlet condition with multipliers
                                   # or penalization
 dirichlet_coefficient = 1e10      # Penalization coefficient
-using_HHO = True                  # Use HHO method or standard Lagrange FEM
+using_HHO = False                 # Use HHO method or standard Lagrange FEM
 using_symmetric_gradient = True   # Use symmetric gradient reconstruction or not
 
 E = 1                             # Young's modulus
@@ -43,12 +43,18 @@ nu = 0.499                        # Poisson ratio
 
 cmu = E/(2*(1+nu))                # Lame coefficient
 clambda = 2*cmu*nu/(1-2*nu)       # Lame coefficient
+use_quad = False                  # Quadrilaterals or triangles
 
 # Create a simple cartesian mesh
-m = gf.Mesh('regular_simplices', np.arange(0,1+1./NX,1./NX), np.arange(0,1+1./NX,1./NX))
-# m = gf.Mesh('cartesian',[0:1/NX:1],[0:1/NX:1]);
-# m=gf.Mesh('import','structured','GT="GT_PK(2,1)";SIZES=[1,1];NOISED=1;NSUBDIV=[%d,%d];' % (NX, NX))
-# m=gf.Mesh('import','structured','GT="GT_QK(2,1)";SIZES=[1,1];NOISED=1;NSUBDIV=[1,1];')
+if (use_quad):
+  m = gf.Mesh('cartesian', np.arange(0,1+1./NX,1./NX),
+              np.arange(0,1+1./NX,1./NX));
+  # m=gf.Mesh('import','structured','GT="GT_QK(2,1)";SIZES=[1,1];NOISED=1;NSUBDIV=[1,1];')
+else:
+  m = gf.Mesh('regular_simplices', np.arange(0,1+1./NX,1./NX),
+              np.arange(0,1+1./NX,1./NX))
+  # m=gf.Mesh('import','structured','GT="GT_PK(2,1)";SIZES=[1,1];NOISED=1;NSUBDIV=[%d,%d];' % (NX, NX))
+  
 
 N = m.dim();
 
@@ -59,19 +65,35 @@ mfur  = gf.MeshFem(m, N)
 mfrhs = gf.MeshFem(m, 1)
 
 if (using_HHO):
-  mfu.set_fem(gf.Fem('FEM_HHO(FEM_PK_DISCONTINUOUS(2,2,0.1),FEM_PK_DISCONTINUOUS(1,2,0.1))'))
-  mfur.set_fem(gf.Fem('FEM_PK(2,3)'))
+  if (use_quad):
+    mfu.set_fem(gf.Fem('FEM_HHO(FEM_QUAD_IPK(2,2),FEM_SIMPLEX_CIPK(1,2))'))
+    # mfu.set_fem(gf.Fem('FEM_HHO(FEM_QK_DISCONTINUOUS(2,2,0.1),FEM_SIMPLEX_CIPK(1,2))'))
+    mfur.set_fem(gf.Fem('FEM_QK(2,3)'))
+  else:
+    mfu.set_fem(gf.Fem('FEM_HHO(FEM_SIMPLEX_IPK(2,2),FEM_SIMPLEX_CIPK(1,2))'))
+    mfur.set_fem(gf.Fem('FEM_PK(2,3)'))
 else:
-  mfu.set_fem(gf.Fem('FEM_PK(2,2)'))
-  mfur.set_fem(gf.Fem('FEM_PK(2,2)'))
-
-mfgu.set_fem(gf.Fem('FEM_PK(2,2)'))
-mfrhs.set_fem(gf.Fem('FEM_PK(2,2)'))
+  if (use_quad):
+    mfu.set_fem(gf.Fem('FEM_QK(2,2)'))
+    mfur.set_fem(gf.Fem('FEM_QK(2,2)'))
+  else:
+    mfu.set_fem(gf.Fem('FEM_PK(2,2)'))
+    mfur.set_fem(gf.Fem('FEM_PK(2,2)'))
+    
+if (use_quad):
+  mfgu.set_fem(gf.Fem('FEM_QK(2,2)'))
+  mfrhs.set_fem(gf.Fem('FEM_QK(2,2)'))
+else:
+  mfgu.set_fem(gf.Fem('FEM_PK(2,2)'))
+  mfrhs.set_fem(gf.Fem('FEM_PK(2,2)'))
 
 print('nbdof : %d' % mfu.nbdof());
 
 #  Integration method used
-mim = gf.MeshIm(m, gf.Integ('IM_TRIANGLE(4)'))
+if (use_quad):
+  mim = gf.MeshIm(m, gf.Integ('IM_GAUSS_PARALLELEPIPED(2,4)'))
+else:
+  mim = gf.MeshIm(m, gf.Integ('IM_TRIANGLE(4)'))
 
 # Boundary selection
 flst  = m.outer_faces()

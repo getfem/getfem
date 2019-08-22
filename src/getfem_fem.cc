@@ -1666,7 +1666,7 @@ namespace getfem {
   /* ******************************************************************** */
   // Not tested. To be tested
 
-  struct IPK_SQUARE_ : public fem<base_poly> {
+  struct CIPK_SQUARE_ : public fem<base_poly> {
     dim_type k;   // 
     mutable base_matrix K;
     base_small_vector norient;
@@ -1678,10 +1678,10 @@ namespace getfem {
 
     virtual void mat_trans(base_matrix &M, const base_matrix &G,
                            bgeot::pgeometric_trans pgt) const;
-    IPK_SQUARE_(dim_type nc_);
+    CIPK_SQUARE_(dim_type nc_);
   };
 
-  void IPK_SQUARE_::mat_trans(base_matrix &M,
+  void CIPK_SQUARE_::mat_trans(base_matrix &M,
                               const base_matrix &G,
                               bgeot::pgeometric_trans pgt) const {
     // All the dof of this element are concentrated at the center of the element
@@ -1730,7 +1730,7 @@ namespace getfem {
     }
   }
 
-  IPK_SQUARE_::IPK_SQUARE_(dim_type k_) {
+  CIPK_SQUARE_::CIPK_SQUARE_(dim_type k_) {
     k = k_;
     pgt_stored = 0;
 
@@ -1762,7 +1762,7 @@ namespace getfem {
       }
   }
 
-  static pfem IPK_SQUARE(fem_param_list &params,
+  static pfem CIPK_SQUARE(fem_param_list &params,
         std::vector<dal::pstatic_stored_object> &dependencies) {
     GMM_ASSERT1(params.size() == 1, "Bad number of parameters : "
                 << params.size() << " should be 1.");
@@ -1770,7 +1770,7 @@ namespace getfem {
     int k = int(::floor(params[0].num() + 0.01));
     GMM_ASSERT1(k >= 0 && k < 50 && double(k) == params[0].num(),
                 "Bad parameter");
-    pfem p = std::make_shared<IPK_SQUARE_>(dim_type(k));
+    pfem p = std::make_shared<CIPK_SQUARE_>(dim_type(k));
     dependencies.push_back(p->ref_convex(0));
     dependencies.push_back(p->node_tab(0));
     return p;
@@ -3823,10 +3823,9 @@ namespace getfem {
     PK_discont_(dim_type nc, short_type k, scalar_type alpha=scalar_type(0))
       : PK_fem_(nc, k) {
 
-      if (alpha < 1e-4) // In order to glue dof of two faces in 3D,
-        std::fill(dof_types_.begin(), // for alpha > 1e-4. Important.
-                  dof_types_.end(), lagrange_nonconforming_dof(nc));
-
+      std::fill(dof_types_.begin(),
+                dof_types_.end(), lagrange_nonconforming_dof(nc));
+     
       if (alpha != scalar_type(0)) {
         base_node G =
           gmm::mean_value(cv_node.points().begin(), cv_node.points().end());
@@ -3859,6 +3858,139 @@ namespace getfem {
                 alpha < 1 && double(n) == params[0].num()
                 && double(k) == params[1].num(), "Bad parameters");
     pfem p = std::make_shared<PK_discont_>(dim_type(n), short_type(k), alpha);
+    dependencies.push_back(p->ref_convex(0));
+    dependencies.push_back(p->node_tab(0));
+    return p;
+  }
+
+  /* ******************************************************************** */
+  /*    Connectable interior PK                                           */
+  /* ******************************************************************** */
+
+  struct PK_conn_int_ : public PK_fem_ {
+  public :
+
+    PK_conn_int_(dim_type nc, short_type k)
+      : PK_fem_(nc, k) {
+      scalar_type alpha = 0.1;
+
+      std::fill(dof_types_.begin(), dof_types_.end(), lagrange_dof(nc));
+      if (alpha != scalar_type(0)) {
+        base_node G =
+          gmm::mean_value(cv_node.points().begin(), cv_node.points().end());
+        for (size_type i=0; i < cv_node.nb_points(); ++i)
+          cv_node.points()[i] = (1-alpha)*cv_node.points()[i] + alpha*G;
+        for (size_type d = 0; d < nc; ++d) {
+          base_poly S(1,2);
+          S[0] = -alpha * G[d] / (1-alpha);
+          S[1] = 1. / (1-alpha);
+          for (size_type j=0; j < nb_base(0); ++j)
+            base_[j] = bgeot::poly_substitute_var(base_[j],S,d);
+        }
+      }
+    }
+  };
+
+  static pfem conn_int_PK_fem(fem_param_list &params,
+        std::vector<dal::pstatic_stored_object> &dependencies) {
+    GMM_ASSERT1(params.size() == 2, "Bad number of parameters : "
+                << params.size() << " should be 2.");
+    GMM_ASSERT1(params[0].type() == 0 && params[1].type() == 0,
+                "Bad type of parameters");
+    int n = int(::floor(params[0].num() + 0.01));
+    int k = int(::floor(params[1].num() + 0.01));
+    GMM_ASSERT1(n > 0 && n < 100 && k >= 0 && k <= 150
+                && double(n) == params[0].num()
+                && double(k) == params[1].num(), "Bad parameters");
+    pfem p = std::make_shared<PK_conn_int_>(dim_type(n), short_type(k));
+    dependencies.push_back(p->ref_convex(0));
+    dependencies.push_back(p->node_tab(0));
+    return p;
+  }
+
+  /* ******************************************************************** */
+  /*    Interior PK                                                       */
+  /* ******************************************************************** */
+  /* Interior PK element for arbitrary shape                              */
+  /* (equivalent to DISCONTINUOUS_PK(n,k,0.1) for simplicies              */
+
+  
+  struct PK_int_ : public PK_fem_ {
+  public :
+
+    PK_int_(dim_type nc, short_type k, bgeot::pconvex_ref cvr_)
+      : PK_fem_(nc, k) {
+      cvr = cvr_;
+      
+      scalar_type alpha = 0.1;
+      std::fill(dof_types_.begin(),
+                  dof_types_.end(), lagrange_nonconforming_dof(nc));
+
+      if (alpha != scalar_type(0)) {
+        base_node G =
+          gmm::mean_value(cv_node.points().begin(), cv_node.points().end());
+        for (size_type i=0; i < cv_node.nb_points(); ++i)
+          cv_node.points()[i] = (1-alpha)*cv_node.points()[i] + alpha*G;
+        for (size_type d = 0; d < nc; ++d) {
+          base_poly S(1,2);
+          S[0] = -alpha * G[d] / (1-alpha);
+          S[1] = 1. / (1-alpha);
+          for (size_type j=0; j < nb_base(0); ++j)
+            base_[j] = bgeot::poly_substitute_var(base_[j],S,d);
+        }
+      }
+    }
+  };
+
+  static pfem simplex_IPK_fem(fem_param_list &params,
+        std::vector<dal::pstatic_stored_object> &dependencies) {
+    GMM_ASSERT1(params.size() == 2, "Bad number of parameters : "
+                << params.size() << " should be 2.");
+    GMM_ASSERT1(params[0].type() == 0 && params[1].type() == 0,
+                "Bad type of parameters");
+    int n = int(::floor(params[0].num() + 0.01));
+    int k = int(::floor(params[1].num() + 0.01));
+    GMM_ASSERT1(n > 0 && n < 100 && k >= 0 && k <= 150
+                && double(n) == params[0].num()
+                && double(k) == params[1].num(), "Bad parameters");
+    pfem p = std::make_shared<PK_int_>(dim_type(n), short_type(k),
+                                     bgeot::simplex_of_reference(dim_type(n)));
+    dependencies.push_back(p->ref_convex(0));
+    dependencies.push_back(p->node_tab(0));
+    return p;
+  }
+
+  static pfem parallelepiped_IPK_fem(fem_param_list &params,
+        std::vector<dal::pstatic_stored_object> &dependencies) {
+    GMM_ASSERT1(params.size() == 2, "Bad number of parameters : "
+                << params.size() << " should be 2.");
+    GMM_ASSERT1(params[0].type() == 0 && params[1].type() == 0,
+                "Bad type of parameters");
+    int n = int(::floor(params[0].num() + 0.01));
+    int k = int(::floor(params[1].num() + 0.01));
+    GMM_ASSERT1(n > 0 && n < 100 && k >= 0 && k <= 150
+                && double(n) == params[0].num()
+                && double(k) == params[1].num(), "Bad parameters");
+    pfem p = std::make_shared<PK_int_>(dim_type(n), short_type(k),
+                              bgeot::parallelepiped_of_reference(dim_type(n)));
+    dependencies.push_back(p->ref_convex(0));
+    dependencies.push_back(p->node_tab(0));
+    return p;
+  }
+
+  static pfem prism_IPK_fem(fem_param_list &params,
+        std::vector<dal::pstatic_stored_object> &dependencies) {
+    GMM_ASSERT1(params.size() == 2, "Bad number of parameters : "
+                << params.size() << " should be 2.");
+    GMM_ASSERT1(params[0].type() == 0 && params[1].type() == 0,
+                "Bad type of parameters");
+    int n = int(::floor(params[0].num() + 0.01));
+    int k = int(::floor(params[1].num() + 0.01));
+    GMM_ASSERT1(n > 0 && n < 100 && k >= 0 && k <= 150
+                && double(n) == params[0].num()
+                && double(k) == params[1].num(), "Bad parameters");
+    pfem p = std::make_shared<PK_int_>(dim_type(n), short_type(k),
+                                       bgeot::prism_of_reference(dim_type(n)));
     dependencies.push_back(p->ref_convex(0));
     dependencies.push_back(p->node_tab(0));
     return p;
@@ -4052,6 +4184,10 @@ namespace getfem {
       add_suffix("PK_DISCONTINUOUS", PK_discontinuous_fem);
       add_suffix("PRISM_PK_DISCONTINUOUS", prism_PK_discontinuous_fem);
       add_suffix("PK_PRISM_DISCONTINUOUS", prism_PK_discontinuous_fem); // for backwards compatibility
+      add_suffix("SIMPLEX_IPK", simplex_IPK_fem);
+      add_suffix("PRISM_IPK", prism_IPK_fem);
+      add_suffix("QUAD_IPK", parallelepiped_IPK_fem);
+      add_suffix("SIMPLEX_CIPK", conn_int_PK_fem);
       add_suffix("PK_WITH_CUBIC_BUBBLE", PK_with_cubic_bubble);
       add_suffix("PRODUCT", product_fem);
       add_suffix("P1_NONCONFORMING", P1_nonconforming_fem);
@@ -4068,7 +4204,7 @@ namespace getfem {
       add_suffix("PK_FULL_HIERARCHICAL_COMPOSITE",
                  PK_composite_full_hierarch_fem);
       add_suffix("PK_GAUSSLOBATTO1D", PK_GL_fem);
-      add_suffix("IPK_QUAD", IPK_SQUARE);
+      add_suffix("QUAD_CIPK", CIPK_SQUARE);
       add_suffix("Q2_INCOMPLETE", Q2_incomplete_fem);
       add_suffix("Q2_INCOMPLETE_DISCONTINUOUS", Q2_incomplete_discontinuous_fem);
       add_suffix("HCT_TRIANGLE", HCT_triangle_fem);

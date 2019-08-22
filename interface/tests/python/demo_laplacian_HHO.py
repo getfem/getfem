@@ -19,7 +19,7 @@
 # Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 #
 ############################################################################
-"""  2D Poisson problem using HHO methods.
+"""  Discretization of a Poisson problem using HHO methods.
 
   This program is used to check that python-getfem is working. This is
   also a good example of use of GetFEM++.
@@ -31,16 +31,22 @@ import getfem as gf
 import numpy as np
 
 ## Parameters
-NX = 10                            # Mesh parameter.
+NX = 20                            # Mesh parameter.
+N = 2
 Dirichlet_with_multipliers = True  # Dirichlet condition with multipliers
                                    # or penalization
 dirichlet_coefficient = 1e10       # Penalization coefficient
 using_HHO = True                   # Use HHO method or standard Lagrange FEM
 
 # Create a simple cartesian mesh
-m = gf.Mesh('regular_simplices', np.arange(0,1+1./NX,1./NX),
-            np.arange(0,1+1./NX,1./NX))
-N = m.dim();
+if (N == 2):
+  m = gf.Mesh('regular_simplices', np.arange(0,1+1./NX,1./NX),
+              np.arange(0,1+1./NX,1./NX))
+elif (N == 3):
+  m = gf.Mesh('regular_simplices', np.arange(0,1+1./NX,1./NX),
+              np.arange(0,1+1./NX,1./NX), np.arange(0,1+1./NX,1./NX))
+  
+  
 
 # Meshfems
 mfu   = gf.MeshFem(m, 1)
@@ -49,19 +55,22 @@ mfur  = gf.MeshFem(m, 1)
 mfrhs = gf.MeshFem(m, 1)
 
 if (using_HHO):
-  mfu.set_fem(gf.Fem('FEM_HHO(FEM_PK_DISCONTINUOUS(2,2,0.1),FEM_PK_DISCONTINUOUS(1,2,0.1))'))
-  mfur.set_fem(gf.Fem('FEM_PK(2,3)'))
+  mfu.set_fem(gf.Fem('FEM_HHO(FEM_SIMPLEX_IPK(%d,2),FEM_SIMPLEX_CIPK(%d,2))' % (N,N-1)))
+  mfur.set_fem(gf.Fem('FEM_PK(%d,3)' % N))
 else:
-  mfu.set_fem(gf.Fem('FEM_PK(2,2)'))
-  mfur.set_fem(gf.Fem('FEM_PK(2,2)'))
+  mfu.set_fem(gf.Fem('FEM_PK(%d,2)' % N))
+  mfur.set_fem(gf.Fem('FEM_PK(%d,2)' % N))
 
-mfgu.set_fem(gf.Fem('FEM_PK(2,2)'))
-mfrhs.set_fem(gf.Fem('FEM_PK(2,2)'))
+mfgu.set_fem(gf.Fem('FEM_PK(%d,2)' % N))
+mfrhs.set_fem(gf.Fem('FEM_PK(%d,2)' % N))
 
 print('nbdof : %d' % mfu.nbdof());
 
 #  Integration method used
-mim = gf.MeshIm(m, gf.Integ('IM_TRIANGLE(4)'))
+if (N == 2):
+  mim = gf.MeshIm(m, gf.Integ('IM_TRIANGLE(4)'))
+else:
+  mim = gf.MeshIm(m, gf.Integ('IM_TETRAHEDRON(5)'))
 
 # Boundary selection
 flst  = m.outer_faces()
@@ -90,7 +99,10 @@ Ue = mfur.eval('y*(y-1)*x*(x-1)+x*x*x*x*x')
 
 # Interpolate the source term
 F1 = mfrhs.eval('-(2*(x*x+y*y)-2*x-2*y+20*x*x*x)')
-F2 = mfrhs.eval('[y*(y-1)*(2*x-1) + 5*x*x*x*x, x*(x-1)*(2*y-1)]')
+if (N == 2):
+  F2 = mfrhs.eval('[y*(y-1)*(2*x-1) + 5*x*x*x*x, x*(x-1)*(2*y-1)]')
+else:
+  F2 = mfrhs.eval('[y*(y-1)*(2*x-1) + 5*x*x*x*x, x*(x-1)*(2*y-1), 0]')
 
 # Model
 md = gf.Model('real')
@@ -131,8 +143,7 @@ md.add_source_term_brick(mim, 'u', 'VolumicData')
 
 # Neumann condition.
 md.add_initialized_fem_data('NeumannData', mfrhs, F2)
-md.add_normal_source_term_brick(mim, 'u', 'NeumannData',
-                                NEUMANN_BOUNDARY_NUM)
+md.add_normal_source_term_brick(mim, 'u', 'NeumannData', NEUMANN_BOUNDARY_NUM)
 
 # Dirichlet condition on the left.
 md.add_initialized_fem_data("Ue", mfur, Ue)
@@ -179,6 +190,6 @@ print('You can view the solution with (for example):')
 print('gmsh laplacian.pos')
 
 
-if (H1error > 1e-3):
+if (H1error > 3e-5):
     print('Error too large !')
     exit(1)
