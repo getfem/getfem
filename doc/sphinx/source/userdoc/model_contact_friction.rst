@@ -430,7 +430,7 @@ to `varname_u2`. `multname_n` should be a fixed size variable whose size
 is the number of degrees of freedom on those regions among the ones
 defined in `rg1` and `rg2` which are characterized as "slaves". It
 represents the contact equivalent nodal forces. The augmentation
-parameter `r` should be chosen in a range of acceptabe values (close to
+parameter `r` should be chosen in a range of acceptable values (close to
 the Young modulus of the elastic body, see Getfem user documentation).
 The optional parameters `slave1` and `slave2` declare if the regions
 defined in `rg1` and `rg2` are correspondingly considered as "slaves".
@@ -471,7 +471,7 @@ represents the contact equivalent nodal normal forces. `multname_t`
 should be a fixed size variable whose size corresponds to the size of
 `multname_n` multiplied by qdim - 1 . It represents the contact
 equivalent nodal tangent (frictional) forces. The augmentation parameter
-`r` should be chosen in a range of acceptabe values (close to the Young
+`r` should be chosen in a range of acceptable values (close to the Young
 modulus of the elastic body, see Getfem user documentation). The friction
 coefficient stored in the parameter `friction_coeff` is either a single
 value or a vector of the same size as `multname_n`. The optional

@@ -25,7 +25,7 @@ The main changes are:
    * A support for Nitsche type method for Dirichlet and contact conditions.        the corresponding model bricks will certainly evolve to incorporate the
      use of the high-level generic assembly.
 
-   * A torus_mesh_fem object allowing to easily tranform 3D problems into
+   * A torus_mesh_fem object allowing to easily transform 3D problems into
      axi-symmetric ones (work of Lim Liang Jin).
 
    * New im_data objects to store and interpolate data on Gauss points

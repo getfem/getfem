@@ -34,7 +34,7 @@
 
    * Major changes in Gmm++ 1.7:
 
-     * New preconditionner ILUTP.
+     * New preconditioner ILUTP.
 
      * A BFGS algorithm has been developed.
 

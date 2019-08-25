@@ -13,7 +13,7 @@ The main changes are:
    * The license of |gf| has moved to LGPL 3 with GCC Runtime Exception
      allowing commercial codes to use Getfem.
 
-   * Contact/friction bricks has been extented to non-matching meshes and
+   * Contact/friction bricks has been extended to non-matching meshes and
      to integral contact condition with different augmentations (Alart Curnier,
      De Saxce projection, augmented multipliers) (work of Konstantinos Poulios
      and Yves Renard). A large sliding contact brick is in progress.
@@ -31,7 +31,7 @@ The main changes are:
    * The experimental mesher of Getfem is now (partially) interfaced with
      python/scilab/matlab.
 
-   * Some tools to verify the consistence (tangent term) of a brick or
+   * Some tools to verify the consistency (tangent term) of a brick or
      the whole model has been added.
 
    * Many bug fixes.

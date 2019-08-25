@@ -67,7 +67,7 @@ And a Dirichlet condition on the normal derivative can be prescribed thanks to t
   	R_must_be_derivated = false);
 
 These bricks add a Dirichlet condition on the normal derivative of the variable
-`varname` and on the mesh region `region` (which should be a boundary.
+`varname` and on the mesh region `region` (which should be a boundary).
 The general form is :math:`\int \partial_n u(x)v(x) = \int r(x)v(x) \forall v`
 where :math:`r(x)` is the right hand side for the Dirichlet condition (0 for
 homogeneous conditions) and :math:`v` is in a space of multipliers

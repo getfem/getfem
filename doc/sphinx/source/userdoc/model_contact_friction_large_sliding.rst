@@ -20,7 +20,7 @@ Of course, the computational cost of large sliding/large deformation contact alg
 Raytracing interpolate transformation
 *************************************
 
-In order to incorporate the contact detection in the high-level generic assembly, a specific interpolate transformation has been defined (see :ref:`ud-gasm-high-transf` for more explanations on interpolate tranformations). It is based on a raytracing contact detection has described in [KO-RE2014]_ and uses the criteria described below. The interpolate transformation stores the different potential contact surfaces. On most of methods, potential contact surface are classified into two categories: master and slave surface (see  :ref:`figure<ud-fig-masterslave>`).
+In order to incorporate the contact detection in the high-level generic assembly, a specific interpolate transformation has been defined (see :ref:`ud-gasm-high-transf` for more explanations on interpolate transformations). It is based on a raytracing contact detection has described in [KO-RE2014]_ and uses the criteria described below. The interpolate transformation stores the different potential contact surfaces. On most of methods, potential contact surface are classified into two categories: master and slave surface (see  :ref:`figure<ud-fig-masterslave>`).
 
 .. _ud-fig-masterslave:
 

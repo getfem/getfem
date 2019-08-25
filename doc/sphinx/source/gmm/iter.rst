@@ -104,7 +104,7 @@ The following preconditioners, to be used with linear solvers, are available::
   gmm::ilutp_precond<matrix_type> P(SM, k, threshold);
 
 
-Except ``ildltt\_precond``, all these precontionners come from ITL. ``ilut_precond`` has been optimized and simplified and ``cholesky_precond`` has been corrected and transformed in an incomplete LDLT preconditionner for stability reasons (similarly, we add ``choleskyt_precond`` which is in fact an incomplete LDLT with threshold preconditionner). Of course, ``ildlt\_precond`` and ``ildltt_precond`` are designed for symmetric real or hermitian complex matrices to be use principaly with cg.
+Except ``ildltt\_precond``, all these precontionners come from ITL. ``ilut_precond`` has been optimized and simplified and ``cholesky_precond`` has been corrected and transformed in an incomplete LDLT preconditioner for stability reasons (similarly, we add ``choleskyt_precond`` which is in fact an incomplete LDLT with threshold preconditioner). Of course, ``ildlt\_precond`` and ``ildltt_precond`` are designed for symmetric real or hermitian complex matrices to be use principaly with cg.
 
 Additive Schwarz method
 -----------------------
