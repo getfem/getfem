@@ -80,8 +80,8 @@ Functions
 Objects
 -------
 
-Various "objects" can be manipulated by the |gfm| toolbox, see fig. 
-:ref:`scilab-fig-hierarchy`. The MESH and MESHFEM objects are the two most 
+Various "objects" can be manipulated by the |gfm| toolbox, see fig.
+:ref:`scilab-fig-hierarchy`. The MESH and MESHFEM objects are the two most
 important objects.
 
 .. _scilab-fig-hierarchy:

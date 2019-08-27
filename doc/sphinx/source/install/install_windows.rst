@@ -70,7 +70,7 @@ possible with `Cygwin <https://www.cygwin.com/>`_.
       $ cd ..
 
     Do the same for LAPACK with::
-   
+
       $ cd lapack-?.?.?
       $ cp make.inc.example make.inc
       $ cp ../BLAS-?.?.?/blas_LINUX.a librefblas.a
@@ -81,14 +81,14 @@ possible with `Cygwin <https://www.cygwin.com/>`_.
   - You now need an installation of QHULL library in order to have access to
     the meshing and Xfem tools of |gf|
     (see `Qhull <http://www.qhull.org>`_ and
-    `Qhull install instructions <http://www.qhull.org/README.txt>`_). 
+    `Qhull install instructions <http://www.qhull.org/README.txt>`_).
     Download the sources of Qhull in you Msys home (similarly as what you have
     done for BLAS and LAPACK), untar them and enter into the Qhull source
     directory with Msys. You can compile and install Qhull simply with::
 
       $ make SO=dll
       $ make install
-  
+
   - Similarly, we will compile and install now a sequential version of
     the sparse linear solver `MUMPS <http://mumps.enseeiht.fr/>`_.
     Again, it is not strictly necessary since a version of
@@ -133,7 +133,7 @@ possible with `Cygwin <https://www.cygwin.com/>`_.
 Build with the Python interface
 *******************************
 
-Additionaly to build the Python interface, you will have first to install a 64bits version of Python 2 or 3 on your system together with Numpy and Scipy packages. The simpler way is to install Anaconda2 or 3 (it already contains Numpy and Scipy packages which are necessary). For instance with Anaconda2  
+Additionaly to build the Python interface, you will have first to install a 64bits version of Python 2 or 3 on your system together with Numpy and Scipy packages. The simpler way is to install Anaconda2 or 3 (it already contains Numpy and Scipy packages which are necessary). For instance with Anaconda2
 
   - Install Anaconda2 and add to windows path ``C:\install_dir\Anaconda2``
     and ``C:\install_dir\Anaconda2\Scripts`` where ``install_dir`` is the
@@ -198,13 +198,13 @@ Here follows the additional step to build the Matlab interface. You have first, 
     path of the compiled interface (on the matlab command line) with::
 
       add_path('c:\msys\home\login\getfem-5.?\interface/tests/matlab')
-    
+
     and try the demo matlab programs of the interface in
     ``interface\tests\matlab``. In order not to have to call the ``addpath``
     command each time you open Matlab, you can add a Windows system variable
     ``MATLABPATH`` set to
     ``c:\msys\home\login\getfem-5.?\interface/tests/matlab``.
-    You can also move the ``interface\tests\matlab`` directory into your 
+    You can also move the ``interface\tests\matlab`` directory into your
     Matlab installation directory.
 
 

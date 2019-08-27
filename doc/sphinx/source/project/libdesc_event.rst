@@ -13,7 +13,7 @@ Events management
 Description
 ^^^^^^^^^^^
 
-The ``mesh``, |mf|, |mim| and |mo| description are linkedtogether in the sense
+The ``mesh``, |mf|, |mim| and |mo| description are linked together in the sense
 that there is some dependencies between them. For instance, when an element is
 suppressed to a mesh, the |mf| object has to react.
 
@@ -70,7 +70,7 @@ has changed between two calls.
 Perspectives
 ^^^^^^^^^^^^
 
-The event management of some objects should be analysed with care  This is the case for instance of|mls|, |mfls|, |pmf|, etc.
+The event management of some objects should be analysed with care. This is the case for instance of |mls|, |mfls|, |pmf|, etc.
 
 The event management still have to be improved to be a fully reactive system.
 

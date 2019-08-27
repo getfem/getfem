@@ -48,7 +48,7 @@ Now ``gmm::sub_vector(V, subi)`` gives a reference to a sub-vector::
 
   gmm::vsvector<double> V(10);
   V[5] = 3.0;
-  std::cout << gmm::sub_vector(V, gmm::sub_interval(2, 3)) << std::endl;  
+  std::cout << gmm::sub_vector(V, gmm::sub_interval(2, 3)) << std::endl;
 
 prints to the standard output ``V[2], V[3]`` and ``V[4]``.
 
@@ -57,13 +57,13 @@ prints to the standard output ``V[2], V[3]`` and ``V[4]``.
   gmm::col_matrix< gmm::wsvector<double> > M(5, 20);
   M(3, 2) = 5.0;
   std::cout << gmm::sub_matrix(M, gmm::sub_interval(2, 3), gmm::sub_interval(2, 3))
-            << std::endl;  
+            << std::endl;
 
 prints to the output a sub-matrix. If the two sub-indices are equal, it is possible to omit the second. For instance::
 
   gmm::col_matrix< gmm::wsvector<double> > M(5, 20);
   M(3, 2) = 5.0;
-  std::cout << gmm::sub_matrix(V, gmm::sub_interval(2, 3)) << std::endl;  
+  std::cout << gmm::sub_matrix(V, gmm::sub_interval(2, 3)) << std::endl;
 
 The reference on sub_matrix is writable if the corresponding matrix is writable (so you can copy on a sub_matrix, add sub-matrices ...).
 

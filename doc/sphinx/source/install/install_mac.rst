@@ -38,7 +38,7 @@ For the sequential mumps,
 
    $ brew install mumps --without-mpi
 
-For the parallel one, just forget --without-mpi and install also mpi and metis. 
+For the parallel one, just forget --without-mpi and install also mpi and metis.
 
 For Qhull
 
@@ -245,7 +245,7 @@ If you want to use a different compiler than the one chosen automatically by the
 Once getfem is compiled:
 
   - Go to the scilab getfem++ interface install directory (interface/src/scilab if the installation is not done)
- 
+
   - launch scilab
 
   - load the getfem++ toolbox with:

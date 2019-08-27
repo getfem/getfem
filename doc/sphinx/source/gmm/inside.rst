@@ -31,7 +31,7 @@ For a vector type, the following informations are available::
   typename gmm::linalg_traits<V>::linalg_type    --> should be abstract_vector
   typename gmm::linalg_traits<V>::index_sorted    --> linalg_true or linalg_false
   typename gmm::linalg_traits<V>::const_iterator --> const iterator to iterate on the
-                                                     components of the vector in 
+                                                     components of the vector in
                                                      order to read them.
   typename gmm::linalg_traits<V>::iterator       --> iterator to iterate on the
                                                      components of the vector in
@@ -43,7 +43,7 @@ For a vector type, the following informations are available::
   typename gmm::linalg_traits<V>::origin_type    --> the type of vector itself
                                                      or the type of referenced
                                                      vector for a reference.
- 
+
   gmm::linalg_traits<V>::size(v)     --> a method which gives the size of the vector.
   gmm::linalg_traits<V>::begin(v)    --> a method which gives an iterator on the
                                          beginning of the vector
@@ -54,11 +54,11 @@ For a vector type, the following informations are available::
 
   gmm::linalg_traits<V>::access(o, it, ite, i) --> return the ith component or a
                                           reference on the ith component. o is a
-                                          pointer o type ``origin_type *'' or 
+                                          pointer o type ``origin_type *'' or
                                           ``const origin_type *''.
 
   gmm::linalg_traits<V>::clear(o, it, ite) --> clear the vector. o is a
-                                          pointer o type ``origin_type *'' or 
+                                          pointer o type ``origin_type *'' or
                                           ``const origin_type *''.
 
 and for a matrix type::
@@ -77,13 +77,13 @@ and for a matrix type::
                                                       row_and_col or col_and_row.
   typename gmm::linalg_traits<M>::sub_col_type      --> type of reference on a column
                                                       (if the matrix is not row_major)
-  typename gmm::linalg_traits<M>::const_sub_col_type --> type of const reference on a 
+  typename gmm::linalg_traits<M>::const_sub_col_type --> type of const reference on a
                                                        column
   typename gmm::linalg_traits<M>::col_iterator      --> iterator on the columns
   typename gmm::linalg_traits<M>::const_col_iterator --> const iterator on the columns
   typename gmm::linalg_traits<M>::sub_row_type      --> type of reference on a row
                                                       (if the matrix is not col_major)
-  typename gmm::linalg_traits<M>::const_sub_row_type --> type of const reference on a 
+  typename gmm::linalg_traits<M>::const_sub_row_type --> type of const reference on a
                                                        row
   typename gmm::linalg_traits<M>::const_row_iterator --> const iterator on the rows
   typename gmm::linalg_traits<M>::row_iterator       --> iterator on the rows
@@ -106,7 +106,7 @@ and for a matrix type::
                                           iterator  (if not row_major)
   gmm::linalg_traits<M>::origin(m)    --> gives a void pointer allowing to identify
                                           the matrix
-  gmm::linalg_traits<M>::access(it,i) --> return the ith component or a reference 
+  gmm::linalg_traits<M>::access(it,i) --> return the ith component or a reference
                                           on the ith component of the row or
                                           column pointed by it.
   gmm::linalg_traits<M>::do_clear(m)  --> make a clear on the matrix
@@ -120,16 +120,12 @@ How to iterate on the components of a vector
 
 Here is an example which accumulate the components of a vector. It is assumed that ``V`` is a vector type and ``v`` an instantiated vector::
 
-  
   typename gmm::linalg_traits<V>::value_type r(0); // scalar in which we accumulate
-  typename gmm::linalg_traits<V>::const_iterator it = vect_const_begin(v); // beginning 
-                                                                           // of v
+  typename gmm::linalg_traits<V>::const_iterator it = vect_const_begin(v); // beginning of v
   typename gmm::linalg_traits<V>::const_iterator ite = vect_const_end(v); // end of v
 
   for (; it != ite; ++it)  // loop on the components
     r += *it;              // accumulate the components
-
-
 
 This piece of code will work with every kind of interfaced vector.
 
@@ -142,17 +138,17 @@ For sparse or skyline vectors, it is possible to obtain the index of the compone
    typename gmm::linalg_traits<V1>::value_type r(0); // it is assumed that V2 have a
                                                 // compatible value_type
 
-   while (it1 != ite1 && it2 != ite2) \{  // loops on the components
-     if (it1.index() == it2.index()) \{
+   while (it1 != ite1 && it2 != ite2) {  // loops on the components
+     if (it1.index() == it2.index()) {
        res += (*it1) * (*it2));          // if the indices are equals accumulate
        ++it1;
        ++it2;
-     \}
+     }
      else if (it1.index() < it2.index())
        ++it1;
      else
        ++it2;
-   \}
+   }
 
 This algorithm use the fact that indices are increasing in a sparse vector. This code will not work for dense vectors because dense vector iterators do not have the method ``it.index()``.
 
@@ -163,27 +159,27 @@ You can iterate on the rows of a matrix if it is not a column major matrix and o
 
 If you need not to be optimal, you can use a basic loop like that::
 
-  for (size_t i = 0; i < gmm::mat_nrows(m); ++i) \{
+  for (size_t i = 0; i < gmm::mat_nrows(m); ++i) {
     typename gmm::linalg_traits<M>::const_sub_row_type row = mat_const_row(M, i);
 
     ...
 
     std::cout << "norm of row " << i << " : " << vect_norm2(row) << std::endl;
-  \}
+  }
 
 But you can also use iterators, like that::
 
   typename gmm::linalg_traits<M>::const_row_iterator it = mat_row_const_begin(m);
   typename gmm::linalg_traits<M>::const_row_iterator ite = mat_row_const_end(m);
 
-  for (; it != ite; ++it) \{
+  for (; it != ite; ++it) {
     typename gmm::linalg_traits<M>::const_sub_row_type
       row = gmm::linalg_traits<M>::row(it);
 
     ...
 
     std::cout << "norm of row " << i << " : " << vect_norm2(row) << std::endl;
-  \}
+  }
 
 
 How to make your algorithm working on all type of matrices
@@ -191,36 +187,36 @@ How to make your algorithm working on all type of matrices
 
 For this, you will generally have to specialize it. For instance, let us take a look at the code for ``gmm::nnz`` which count the number of stored components (in fact, the real ``gmm::nnz`` algorithm is specialized in most of the cases so that it does not count the components one by one)::
 
-  template <class L> inline size_type nnz(const L& l) \{
+  template <class L> inline size_type nnz(const L& l) {
     return nnz(l, typename linalg_traits<L>::linalg_type());
-  \}
+  }
 
-  template <class L> inline size_type nnz(const L& l, abstract_vector) \{ 
+  template <class L> inline size_type nnz(const L& l, abstract_vector) {
     typename linalg_traits<L>::const_iterator it = vect_const_begin(l);
     typename linalg_traits<L>::const_iterator ite = vect_const_end(l);
     size_type res(0);
     for (; it != ite; ++it) ++res;
     return res;
-  \}
+  }
 
-  template <class L> inline size_type nnz(const L& l, abstract_matrix) \{
+  template <class L> inline size_type nnz(const L& l, abstract_matrix) {
     return nnz(l,  typename principal_orientation_type<typename
                    linalg_traits<L>::sub_orientation>::potype());
-  \}
+  }
 
-  template <class L> inline size_type nnz(const L& l, row_major) \{
+  template <class L> inline size_type nnz(const L& l, row_major) {
     size_type res(0);
     for (size_type i = 0; i < mat_nrows(l); ++i)
       res += nnz(mat_const_row(l, i));
     return res;
-  \} 
+  }
 
-  template <class L> inline size_type nnz(const L& l, col_major) \{
+  template <class L> inline size_type nnz(const L& l, col_major) {
     size_type res(0);
     for (size_type i = 0; i < mat_ncols(l); ++i)
       res += nnz(mat_const_col(l, i));
     return res;
-  \}
+  }
 
 
 The first function dispatch on the second or the third function respectively if the parameter is a vector or a matrix. The third function dispatch again on the fourth and the fifth function respectively if the matrix is row_major or column major. Of course, as the function are declared ``inline``, at least the two dispatcher functions will not be implemented. Which means that this construction is not costly.

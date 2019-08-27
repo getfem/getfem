@@ -6,7 +6,7 @@
 
 .. _mlab-install:
 
-Installation 
+Installation
 ============
 
 The installation of the |gfi| toolbox can be somewhat tricky, since it combines a

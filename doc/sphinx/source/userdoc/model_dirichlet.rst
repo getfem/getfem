@@ -99,17 +99,17 @@ If `dataname` is ommited, an homogeneous Dirichlet condition is applied. If `dat
 Generalized Dirichlet condition brick
 -------------------------------------
 
-The generalized Dirichlet condition is a boundary condition of a vector field u of 
+The generalized Dirichlet condition is a boundary condition of a vector field u of
 the type
 
 .. math::
 
    H u  = r
 
-where :math:`H` is a matrix field. The functions adding the corresponding bricks 
-are similar to the ones of the standard Dirichlet condition except that they need 
-the supplementary parameter `Hname` which gives the name of the data corresponding 
-to :math:`H`. This data can be a matrix field described on a scalar fem or a 
+where :math:`H` is a matrix field. The functions adding the corresponding bricks
+are similar to the ones of the standard Dirichlet condition except that they need
+the supplementary parameter `Hname` which gives the name of the data corresponding
+to :math:`H`. This data can be a matrix field described on a scalar fem or a
 constant matrix. ::
 
 

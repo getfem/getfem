@@ -25,7 +25,7 @@ Although time integration scheme can be written directly using the model object 
 
 * The data `t` represent the time parameter and can be used (either in the weak form language or as parameter of some bricks). Before the assembly of the system, the data `t` is automatically updated to the time step `n`.
 
-* The problem to be solved at each iteration correspond to the formulation of the transient problem in its natural (weak) formulation in which the velocity and the acceleration are expressed by the intermediate variables introduced. For instance, the translation into the weak form language of the problem 
+* The problem to be solved at each iteration correspond to the formulation of the transient problem in its natural (weak) formulation in which the velocity and the acceleration are expressed by the intermediate variables introduced. For instance, the translation into the weak form language of the problem
 
   .. math::
 
@@ -39,8 +39,8 @@ Although time integration scheme can be written directly using the model object 
 
 * For all implemented one-step schemes, the time step can be changed from an iteration to another for both order one and order two in time problems (or even quasi-static problems).
 
-* A scheme for second order in time problem (resp. first order in time) can be applied to a second or first order in time or even to a quasi-static problem (resp. to a first order or quasi-static problem) without any problem except that the initial data corresponding to the velocity/displacement have to be initialized with respect ot the order of the scheme. Conversely, of course, a scheme for first order problem cannot be applied to a second order in time problem. 
- 
+* A scheme for second order in time problem (resp. first order in time) can be applied to a second or first order in time or even to a quasi-static problem (resp. to a first order or quasi-static problem) without any problem except that the initial data corresponding to the velocity/displacement have to be initialized with respect ot the order of the scheme. Conversely, of course, a scheme for first order problem cannot be applied to a second order in time problem.
+
 
 The implicit theta-method for first-order problems
 **************************************************
@@ -75,7 +75,7 @@ When applying this scheme to a variable "u" of the model, the following affine d
 
   "Dot_u"
 
-which represent the time derivative of the variable and can be used in some brick definition. 
+which represent the time derivative of the variable and can be used in some brick definition.
 
 The following data are also added::
 
@@ -153,7 +153,7 @@ When aplying this scheme to a variable "u" of the model, the following affine de
 
   "Dot_u", "Dot2_u"
 
-which represent the first and second order time derivative of the variable and can be used in some brick definition. 
+which represent the first and second order time derivative of the variable and can be used in some brick definition.
 
 The following data are also added::
 
@@ -207,7 +207,7 @@ When aplying this scheme to a variable "u" of the model, the following affine de
 
   "Dot_u", "Dot2_u"
 
-which represent the first and second order time derivative of the variable and can be used in some brick definition. 
+which represent the first and second order time derivative of the variable and can be used in some brick definition.
 
 The following data are also added::
 
@@ -277,7 +277,7 @@ Similarly, every existing model brick of |gf| can be applied to "Dot_u". This is
 
    getfem::add_mass_brick(model, mim, "Dot_u");
 
-which adds the same transient term. 
+which adds the same transient term.
 
 VERY IMPORTANT: When adding an existing model brick applied to an affine dependent variable such as "Dot_u", it is always assumed that the corresponding test function is the one of the corresponding original variable (i.e. "Test_u" here). In other words, "Test_Dot_u", the test variable corresponding to the velocity, is not used. This corresponds to the choice made to solve the problem in term of the original variable, so that the test function corresponds to the original variable.
 
@@ -285,7 +285,7 @@ Another example of model brick which can be used to account for a Kelvin-Voigt l
 
    getfem::add_isotropic_linearized_elasticity_brick(model, mim, "Dot_u", "lambda_viscosity", "mu_viscosity");
 
-when applied to an order two transient elasticity problem. 
+when applied to an order two transient elasticity problem.
 
 Computation on the sequence of time steps
 *****************************************
@@ -294,12 +294,12 @@ Typically, the solve on the different time steps will take the following form::
 
 
   for (scalar_type t = 0.; t < T; t += dt) { // time loop
-    
+
     // Eventually compute here some time dependent terms
 
     iter.init();
     getfem::standard_solve(model, iter);
-    
+
     // + Do something with the solution (plot or store it)
 
     model.shift_variables_for_time_integration();
@@ -340,16 +340,16 @@ Assuming that `mf_u` and `mim` are valid finite element and integration methods 
   // transient part.
   getfem::add_theta_method_for_first_order(model, "u", theta);
   getfem::add_mass_brick(model, mim, "Dot_u");
-  
+
   gmm::iteration iter(residual, 0, 40000);
-  
+
   model.set_time(0.);        // Init time is 0 (not mandatory)
   model.set_time_step(dt);   // Init of the time step.
-  
+
   // Null initial value for the temperature.
   gmm::clear(model.set_real_variable("Previous_u"));
 
-  // Automatic computatio of Previous_Dot_u
+  // Automatic computation of Previous_Dot_u
   model.perform_init_time_derivative(dt/20.);
   iter.init();
   standard_solve(model, iter);
@@ -357,10 +357,10 @@ Assuming that `mf_u` and `mim` are valid finite element and integration methods 
 
   // Iterations in time
   for (scalar_type t = 0.; t < T; t += dt) {
-    
+
     iter.init();
     getfem::standard_solve(model, iter);
-    
+
     // + Do something with the solution (plot or store it)
 
     // Copy the current variables "u" and "Dot_u" into "Previous_u"

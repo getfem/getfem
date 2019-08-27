@@ -20,7 +20,7 @@ The main changes are:
    * Large strain plasticity bricks (Simo-Miehe model).
 
    * Redesign of the dof enumeration algorithm: a local sort instead of a global one (but it still remains to be parallelized !)
-     
+
    * Addition of a local projection generic function on discontinuous fems.
 
    * Addition of a specific transformation allowing inter-element computation in the weak form language (in order to compute inter-element jump of any quantity, average value, error estimator, ...)

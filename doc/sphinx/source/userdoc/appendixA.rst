@@ -1413,7 +1413,7 @@ the shape functions read:
      - No :math:`(Q = 1)`
      - Yes
      - No
-       
+
    * - :math:`1`
      - :math:`3`
      - :math:`5`
@@ -1431,7 +1431,7 @@ the shape functions read:
      - No
 
 
-   
+
 .. list-table:: Discontinuous Lagrange element of order 0, 1 or 2 ``"FEM_PYRAMID_DISCONTINUOUS_LAGRANGE(K)"``
    :widths: 10 10 10 10 10 10 10
    :header-rows: 1
@@ -1451,7 +1451,7 @@ the shape functions read:
      - No :math:`(Q = 1)`
      - Yes
      - No
-       
+
    * - :math:`1`
      - :math:`3`
      - :math:`5`
@@ -1468,8 +1468,8 @@ the shape functions read:
      - Yes
      - No
 
-       
-	 
+
+	
 
 Elements with additional bubble functions
 +++++++++++++++++++++++++++++++++++++++++

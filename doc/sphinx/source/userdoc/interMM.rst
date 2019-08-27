@@ -14,21 +14,21 @@ Once a solution has been computed, it is quite easy to extract any quantity of i
 Basic interpolation
 *******************
 
-The file :file:`getfem/getfem_interpolation.h` defines the function 
-``getfem::interpolation(...)`` to interpolate a solution from a given mesh/finite 
+The file :file:`getfem/getfem_interpolation.h` defines the function
+``getfem::interpolation(...)`` to interpolate a solution from a given mesh/finite
 element method on another mesh and/or another Lagrange finite element method::
 
   getfem::interpolation(mf1, mf2, U, V, extrapolation = 0);
 
-where ``mf1`` is a variable of type |gf_mf| and describes the finite element 
-method on which the source field ``U`` is defined, ``mf2`` is the finite element 
-method on which ``U`` will be interpolated. ``extrapolation`` is an optional 
-parameter. The values are ``0`` not to allow the extrapolation, ``1`` for an 
-extrapolation of the exterior points near the boundary and ``2`` for the 
+where ``mf1`` is a variable of type |gf_mf| and describes the finite element
+method on which the source field ``U`` is defined, ``mf2`` is the finite element
+method on which ``U`` will be interpolated. ``extrapolation`` is an optional
+parameter. The values are ``0`` not to allow the extrapolation, ``1`` for an
+extrapolation of the exterior points near the boundary and ``2`` for the
 extrapolation of all exterior points (could be expensive).
 
 
-The dimension of ``U`` should be a multiple of ``mf1.nb_dof()``, and the 
+The dimension of ``U`` should be a multiple of ``mf1.nb_dof()``, and the
 interpolated data ``V`` should be correctly sized (multiple of ``mf2.nb_dof()``).
 
 ... important::

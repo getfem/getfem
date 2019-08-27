@@ -61,7 +61,7 @@ We have then
 .. math::
  \dot{r}(t,X) = \dot{\theta}AR(t)X
 
-If :math:`\varphi(t, X)` is the deformation of the body which maps the reference configuration :math:`\Omega^0` to the deformed configuration :math:`\Omega_t` at time :math:`t`, the ALE description consists in the decomposition of the deformation of the cylinder in 
+If :math:`\varphi(t, X)` is the deformation of the body which maps the reference configuration :math:`\Omega^0` to the deformed configuration :math:`\Omega_t` at time :math:`t`, the ALE description consists in the decomposition of the deformation of the cylinder in
 
 .. math::
    \varphi(t, X) = (\tau(t) \circ \bar{\varphi}(t) \circ r(t))(X) = \bar{\varphi}(t, r(t, X)) + Z(t)
@@ -72,7 +72,7 @@ With :math:`\bar{X} = R(t)X` the new considered deformation is
   \bar{\varphi}(t,\bar{X}) = \varphi(X) - Z(t)
 
 
-Thanks to the rotation symmetry of the reference configuration :math:`\Omega^0:`, we note that :math:`\bar{\Omega}^0 = r(t, \Omega^0)` is independant of :math:`t` and will serve as the new reference configuration. This is illustrated in the following figure: 
+Thanks to the rotation symmetry of the reference configuration :math:`\Omega^0:`, we note that :math:`\bar{\Omega}^0 = r(t, \Omega^0)` is independant of :math:`t` and will serve as the new reference configuration. This is illustrated in the following figure:
 
 .. _ud-fig-rotating_cylinder_conf:
 
@@ -111,8 +111,8 @@ This should not be forgotten that a correction has to be provided for each evolv
   \Frac{\partial u}{\partial t} = \Frac{\partial \bar{u}}{\partial t} + \dot{\theta} (I_d + \nabla \bar{u}) A \bar{X} + \dot{Z}(t),
 
   \Frac{\partial^2 u}{\partial t^2} = \Frac{\partial^2 \bar{u}}{\partial t^2} + 2\dot{\theta} \nabla\Frac{\partial \bar{u}}{\partial t}A \bar{X} +  \dot{\theta}^2\mbox{div}(((I_d + \nabla\bar{u})A \bar{X}) \otimes (A \bar{X}) )  + \ddot{\theta} (I_d + \nabla\bar{u}) A \bar{X}  + \ddot{Z}(t).
-  
-  
+
+
 
 
 
@@ -125,7 +125,7 @@ Assuming :math:`\rho^0` the density in the reference configuration having a rota
    \int_{\Omega^0} \rho^0 \Frac{\partial^2 u}{\partial t^2}\cdot vdX =
 
    \int_{\bar{\Omega}^0} \rho^0 \left[\Frac{\partial^2 \bar{u}}{\partial t^2} + 2\dot{\theta} \nabla\Frac{\partial \bar{u}}{\partial t}A \bar{X} +  \dot{\theta}^2\mbox{div}(((I_d + \nabla\bar{u})A \bar{X}) \otimes (A \bar{X}) )  + \ddot{\theta} (I_d + \nabla\bar{u}) A \bar{X}  + \ddot{Z}(t) \right] \cdot \bar{v} d\bar{X}.
-   
+
 The third term in the right hand side can be integrated by part as follows:
 
 .. math::
@@ -158,7 +158,7 @@ To be adapted  ::
 
   ind = getfem::brick_name(parmeters);
 
-where ``parameters`` are the parameters ... 
+where ``parameters`` are the parameters ...
 
 
 
@@ -209,7 +209,7 @@ the displacement on the intermediary configuration, then it is easy to check tha
 
 .. math::
    \Frac{\partial \varphi}{\partial t} = \Frac{\partial \bar{u}}{\partial t} - \nabla \bar{u} \dot{Z}
- 
+
    \Frac{\partial^2 \varphi}{\partial t^2} = \Frac{\partial^2 \bar{u}}{\partial t^2} - \nabla\Frac{\partial \bar{u}}{\partial t}\dot{Z} + \Frac{\partial^2 \bar{u}}{\partial \dot{Z}^2} - \nabla\bar{u}\ddot{Z}.
 
 
@@ -226,7 +226,7 @@ Assuming :math:`\rho^0` the density in the reference being invariant with the co
    \int_{\bar{\Omega}^{0}} \rho^0 \left[\Frac{\partial^2 \bar{u}}{\partial t^2} - 2\nabla\Frac{\partial \bar{u}}{\partial t}\dot{Z} - \nabla\bar{u}\ddot{Z}\right]\cdot \bar{v}  - \rho^0 (\nabla\bar{u}\dot{Z}).(\nabla\bar{v}\dot{Z}) d\bar{X} + \int_{\partial \bar{\Omega}^0} \rho^0 (\nabla\bar{u}\dot{Z}).\bar{v}(\dot{Z}.\bar{N}) d\bar{\Gamma},
 
 where :math:`\bar{N}` is the outward unit normal vector on :math:`\partial \bar{\Omega}^0`. Note that the last term vanishes on :math:`(\alpha, \beta) \times \partial \omega^0` but not necessarily on :math:`\{\alpha\} \times \omega^0` and :math:`\{\beta\} \times \omega^0`.
-   
+
 
 
 

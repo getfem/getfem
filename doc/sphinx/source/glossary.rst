@@ -24,7 +24,7 @@ Glossary
       The degrees of freedom for a finite element method is the coefficients
       which multiply the shape functions in order to describe a
       (scalar or vector) field. Generally, they are the unknowns of the
-      problem in general. 
+      problem in general.
 
    Element
       An element is a small piece of a domain with a special shape (a segment,
@@ -54,7 +54,7 @@ Glossary
       The mesh_fem object is a mesh with a **finite element method** defined
       on each **element**. This
       represent a finite element space on which a unknown or a data on the
-      considered domain will be discribed.
+      considered domain will be described.
 
    Mesh_Im
       The mesh_im object is a mesh with a **cubature method** defined on
@@ -66,4 +66,4 @@ Glossary
       For instance, the reference segment in |gf| is the segment [0,1].
       The reference triangle is the triangle (0,0), (0,1), (1,0). etc.
 
- 
+

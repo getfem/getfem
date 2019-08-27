@@ -35,15 +35,15 @@ NX = 20                           # Mesh parameter.
 Dirichlet_with_multipliers = True # Dirichlet condition with multipliers
                                   # or penalization
 dirichlet_coefficient = 1e10      # Penalization coefficient
-using_HHO = False                 # Use HHO method or standard Lagrange FEM
+using_HHO = True                  # Use HHO method or standard Lagrange FEM
 using_symmetric_gradient = True   # Use symmetric gradient reconstruction or not
 
 E = 1                             # Young's modulus
-nu = 0.499                        # Poisson ratio
+nu = 0.3                          # Poisson ratio
 
 cmu = E/(2*(1+nu))                # Lame coefficient
 clambda = 2*cmu*nu/(1-2*nu)       # Lame coefficient
-use_quad = False                  # Quadrilaterals or triangles
+use_quad = True                   # Quadrilaterals or triangles
 
 # Create a simple cartesian mesh
 if (use_quad):
@@ -68,7 +68,9 @@ if (using_HHO):
   if (use_quad):
     mfu.set_fem(gf.Fem('FEM_HHO(FEM_QUAD_IPK(2,2),FEM_SIMPLEX_CIPK(1,2))'))
     # mfu.set_fem(gf.Fem('FEM_HHO(FEM_QK_DISCONTINUOUS(2,2,0.1),FEM_SIMPLEX_CIPK(1,2))'))
-    mfur.set_fem(gf.Fem('FEM_QK(2,3)'))
+    # mfu.set_fem(gf.Fem('FEM_HHO(FEM_QK(2,2),FEM_PK(1,2))'))
+    mfur.set_fem(gf.Fem('FEM_QUAD_IPK(2,3)'))
+    # mfur.set_fem(gf.Fem('FEM_QK(2,3)'))
   else:
     mfu.set_fem(gf.Fem('FEM_HHO(FEM_SIMPLEX_IPK(2,2),FEM_SIMPLEX_CIPK(1,2))'))
     mfur.set_fem(gf.Fem('FEM_PK(2,3)'))
@@ -81,6 +83,7 @@ else:
     mfur.set_fem(gf.Fem('FEM_PK(2,2)'))
     
 if (use_quad):
+  # mfgu.set_fem(gf.Fem('FEM_QUAD_IPK(2,2)'))
   mfgu.set_fem(gf.Fem('FEM_QK(2,2)'))
   mfrhs.set_fem(gf.Fem('FEM_QK(2,2)'))
 else:
@@ -91,7 +94,7 @@ print('nbdof : %d' % mfu.nbdof());
 
 #  Integration method used
 if (use_quad):
-  mim = gf.MeshIm(m, gf.Integ('IM_GAUSS_PARALLELEPIPED(2,4)'))
+  mim = gf.MeshIm(m, gf.Integ('IM_GAUSS_PARALLELEPIPED(2,6)'))
 else:
   mim = gf.MeshIm(m, gf.Integ('IM_TRIANGLE(4)'))
 
@@ -107,7 +110,7 @@ m.set_region(ALL_FACES, all_faces)
 
 # Interpolate the exact solution (Assuming mfu is a Lagrange fem)
 a = 8.
-Ue = mfur.eval('[np.sin((%g)*x), -(%g)*y*np.cos((%g)*x)]' % (a,a,a), globals(), locals())
+Ue = mfrhs.eval('[np.sin((%g)*x), -(%g)*y*np.cos((%g)*x)]' % (a,a,a), globals(), locals())
 
 # Interpolate the source term
 F1 = mfrhs.eval('(%g)*(pow(%g,2.))*np.sin((%g)*x), -(%g)*(pow(%g,3.))*y*np.cos((%g)*x)' % (cmu, a, a, cmu, a, a), globals(), locals())
@@ -165,7 +168,7 @@ md.add_initialized_fem_data('VolumicData', mfrhs, F1)
 md.add_source_term_brick(mim, 'u', 'VolumicData')
 
 # Dirichlet condition
-md.add_initialized_fem_data("Ue", mfur, Ue)
+md.add_initialized_fem_data("Ue", mfrhs, Ue)
 
 if (Dirichlet_with_multipliers):
   md.add_Dirichlet_condition_with_multipliers(mim, 'u', mfu, GAMMAD, 'Ue')
