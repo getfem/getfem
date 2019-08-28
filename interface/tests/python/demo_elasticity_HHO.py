@@ -31,7 +31,7 @@ import getfem as gf
 import numpy as np
 
 ## Parameters
-NX = 20                           # Mesh parameter.
+NX = 40                           # Mesh parameter.
 Dirichlet_with_multipliers = True # Dirichlet condition with multipliers
                                   # or penalization
 dirichlet_coefficient = 1e10      # Penalization coefficient
@@ -43,16 +43,15 @@ nu = 0.3                          # Poisson ratio
 
 cmu = E/(2*(1+nu))                # Lame coefficient
 clambda = 2*cmu*nu/(1-2*nu)       # Lame coefficient
-use_quad = True                   # Quadrilaterals or triangles
+use_quad = False                  # Quadrilaterals or triangles
 
 # Create a simple cartesian mesh
+I = np.arange(0,1+1./NX,1./NX)
 if (use_quad):
-  m = gf.Mesh('cartesian', np.arange(0,1+1./NX,1./NX),
-              np.arange(0,1+1./NX,1./NX));
+  m = gf.Mesh('cartesian', I, I)
   # m=gf.Mesh('import','structured','GT="GT_QK(2,1)";SIZES=[1,1];NOISED=1;NSUBDIV=[1,1];')
 else:
-  m = gf.Mesh('regular_simplices', np.arange(0,1+1./NX,1./NX),
-              np.arange(0,1+1./NX,1./NX))
+  m = gf.Mesh('regular_simplices', I, I)
   # m=gf.Mesh('import','structured','GT="GT_PK(2,1)";SIZES=[1,1];NOISED=1;NSUBDIV=[%d,%d];' % (NX, NX))
   
 
@@ -85,10 +84,10 @@ else:
 if (use_quad):
   # mfgu.set_fem(gf.Fem('FEM_QUAD_IPK(2,2)'))
   mfgu.set_fem(gf.Fem('FEM_QK(2,2)'))
-  mfrhs.set_fem(gf.Fem('FEM_QK(2,2)'))
+  mfrhs.set_fem(gf.Fem('FEM_QK(2,3)'))
 else:
   mfgu.set_fem(gf.Fem('FEM_PK(2,2)'))
-  mfrhs.set_fem(gf.Fem('FEM_PK(2,2)'))
+  mfrhs.set_fem(gf.Fem('FEM_PK(2,3)'))
 
 print('nbdof : %d' % mfu.nbdof());
 
@@ -96,7 +95,7 @@ print('nbdof : %d' % mfu.nbdof());
 if (use_quad):
   mim = gf.MeshIm(m, gf.Integ('IM_GAUSS_PARALLELEPIPED(2,6)'))
 else:
-  mim = gf.MeshIm(m, gf.Integ('IM_TRIANGLE(4)'))
+  mim = gf.MeshIm(m, gf.Integ('IM_TRIANGLE(6)'))
 
 # Boundary selection
 flst  = m.outer_faces()
