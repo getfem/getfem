@@ -84,7 +84,6 @@ namespace getfem {
       size_type ndof2 = pf2->nb_dof(cv) * qmult2;
       size_type qmulti =  Q / pfi->target_dim();
       size_type ndofi = pfi->nb_dof(cv) * qmulti;
-
       
       base_tensor t1, t2, ti, tv1;
       base_matrix tv2, tv1p, tvi;
@@ -120,6 +119,7 @@ namespace getfem {
           ctx2.set_ii(first_ind+ipt);
           ctxi.set_ii(first_ind+ipt);
           scalar_type coeff = pim->coeff(first_ind+ipt) * ctx1.J();
+          gmm::mult(ctx1.B(), pgt->normals()[ifc], un);
           
           ctx2.base_value(t2);
           vectorize_base_tensor(t2, tv2, ndof2, pf2->target_dim(), Q*N);
@@ -129,9 +129,7 @@ namespace getfem {
           
           ctxi.base_value(ti);
           vectorize_base_tensor(ti, tvi, ndofi, pfi->target_dim(), Q);
-
-          gmm::mult(ctx1.B(), pgt->normals()[ifc], un);
-
+          
           for (size_type i = 0; i < ndof1; ++i) // To be optimized
             for (size_type j = 0; j < ndof2; ++j)
               for (size_type k1 = 0; k1 < Q; ++k1) {
@@ -245,7 +243,7 @@ namespace getfem {
                 M1(j, i) += coeff * tv1.as_vector()[i+(k1+k2*N)*ndof1]
                   * 0.5 * (tv2(j, k1+k2*N) + tv2(j, k2+k1*N));
       }
-
+      
       // Integrals on the faces : (1/2)*\int_{dT}(v_{dT} - v_T).((w+w^T).n) (M1)
       for (short_type ifc = 0; ifc < pgt->structure()->nb_faces(); ++ifc) {
         ctx1.set_face_num(ifc); ctx2.set_face_num(ifc); ctxi.set_face_num(ifc);
@@ -255,7 +253,8 @@ namespace getfem {
           ctx2.set_ii(first_ind+ipt);
           ctxi.set_ii(first_ind+ipt);
           scalar_type coeff = pim->coeff(first_ind+ipt) * ctx1.J();
-          
+          gmm::mult(ctx1.B(), pgt->normals()[ifc], un);
+         
           ctx2.base_value(t2);
           vectorize_base_tensor(t2, tv2, ndof2, pf2->target_dim(), N*N);
 
@@ -264,8 +263,6 @@ namespace getfem {
           
           ctxi.base_value(ti);
           vectorize_base_tensor(ti, tvi, ndofi, pfi->target_dim(), N);
-
-          gmm::mult(ctx1.B(), pgt->normals()[ifc], un);
 
           for (size_type i = 0; i < ndof1; ++i) // To be optimized
             for (size_type j = 0; j < ndof2; ++j)
@@ -279,7 +276,7 @@ namespace getfem {
         }
 
       }
-      
+            
       if (pf2->target_dim() == 1) {
         gmm::sub_slice I(0, ndof2/(N*Q), N*Q);
         gmm::lu_inverse(gmm::sub_matrix(M2, I, I));
@@ -360,6 +357,7 @@ namespace getfem {
       base_matrix M1(ndof2, ndof1), M2(ndof2, ndof2), M2inv(ndof2, ndof2);
       base_matrix M3(Q, ndof1), M4(Q, ndof2);
       base_matrix aux1(ndof2, ndof1), aux2(ndof2, ndof2);
+      scalar_type area(0);
 
       // Integrals on the element : \int_T Grad(D).Grad(w) (M2)
       //                            \int_T Grad(v_T).Grad(w) (M1)
@@ -367,6 +365,7 @@ namespace getfem {
       for (size_type ipt = 0; ipt < pim->nb_points_on_convex(); ++ipt) {
         ctx1.set_ii(ipt); ctx2.set_ii(ipt);
         scalar_type coeff = pim->coeff(ipt) * ctx1.J();
+        area += coeff;
         
         ctx1.grad_base_value(t1);
         vectorize_grad_base_tensor(t1, tv1, ndof1, pf1->target_dim(), Q);
@@ -411,6 +410,7 @@ namespace getfem {
           ctx2.set_ii(first_ind+ipt);
           ctxi.set_ii(first_ind+ipt);
           scalar_type coeff = pim->coeff(first_ind+ipt) * ctx1.J();
+          gmm::mult(ctx1.B(), pgt->normals()[ifc], un);
           
           ctx2.grad_base_value(t2);
           vectorize_grad_base_tensor(t2, tv2, ndof2, pf2->target_dim(), Q);
@@ -420,8 +420,6 @@ namespace getfem {
           
           ctxi.base_value(ti);
           vectorize_base_tensor(ti, tvi, ndofi, pfi->target_dim(), Q);
-
-          gmm::mult(ctx1.B(), pgt->normals()[ifc], un);
 
           for (size_type i = 0; i < ndof1; ++i) // To be optimized
             for (size_type j = 0; j < ndof2; ++j)
@@ -437,10 +435,11 @@ namespace getfem {
       }
 
       // Add the constraint with penalization
+      scalar_type coeff_p = pow(area, -1. - 2./scalar_type(N));
       gmm::mult(gmm::transposed(M4), M4, aux2);
-      gmm::add (gmm::scaled(aux2, 1.E7), M2);
+      gmm::add (gmm::scaled(aux2, coeff_p), M2);
       gmm::mult(gmm::transposed(M4), M3, aux1);
-      gmm::add (gmm::scaled(aux1, 1.E7), M1);
+      gmm::add (gmm::scaled(aux1, coeff_p), M1);
       
       if (pf2->target_dim() == 1 && Q > 1) {
         gmm::sub_slice I(0, ndof2/Q, Q);
@@ -525,7 +524,8 @@ namespace getfem {
       base_matrix M3(N, ndof1), M4(N, ndof2);
       base_matrix M5(N*N, ndof1), M6(N*N, ndof2);
       base_matrix aux1(ndof2, ndof1), aux2(ndof2, ndof2);
-
+      scalar_type area(0);
+      
       // Integrals on the element : \int_T Sym(Grad(D)).Grad(w) (M2)
       //                            \int_T Sym(Grad(v_T)).Grad(w) (M1)
       //                            \int_T D (M4)  and \int_T v_T (M3)
@@ -533,6 +533,7 @@ namespace getfem {
       for (size_type ipt = 0; ipt < pim->nb_points_on_convex(); ++ipt) {
         ctx1.set_ii(ipt); ctx2.set_ii(ipt);
         scalar_type coeff = pim->coeff(ipt) * ctx1.J();
+        area += coeff;
         
         ctx1.grad_base_value(t1);
         vectorize_grad_base_tensor(t1, tv1, ndof1, pf1->target_dim(), N);
@@ -588,6 +589,7 @@ namespace getfem {
           ctx2.set_ii(first_ind+ipt);
           ctxi.set_ii(first_ind+ipt);
           scalar_type coeff = pim->coeff(first_ind+ipt) * ctx1.J();
+          gmm::mult(ctx1.B(), pgt->normals()[ifc], un);
           
           ctx2.grad_base_value(t2);
           vectorize_grad_base_tensor(t2, tv2, ndof2, pf2->target_dim(), N);
@@ -597,8 +599,6 @@ namespace getfem {
           
           ctxi.base_value(ti);
           vectorize_base_tensor(ti, tvi, ndofi, pfi->target_dim(), N);
-
-          gmm::mult(ctx1.B(), pgt->normals()[ifc], un);
 
           for (size_type i = 0; i < ndof1; ++i) // To be optimized
             for (size_type j = 0; j < ndof2; ++j)
@@ -620,14 +620,16 @@ namespace getfem {
       }
 
       // Add the constraint with penalization
+      scalar_type coeff_p1 = pow(area, -1. - 2./scalar_type(N));
+      scalar_type coeff_p2 = pow(area, -1. - 1./scalar_type(N));
       gmm::mult(gmm::transposed(M4), M4, aux2);
-      gmm::add (gmm::scaled(aux2, 1.E7), M2);
+      gmm::add (gmm::scaled(aux2, coeff_p1), M2);
       gmm::mult(gmm::transposed(M6), M6, aux2);
-      gmm::add (gmm::scaled(aux2, 1.E5), M2);
+      gmm::add (gmm::scaled(aux2, coeff_p2), M2);
       gmm::mult(gmm::transposed(M4), M3, aux1);
-      gmm::add (gmm::scaled(aux1, 1.E7), M1);
+      gmm::add (gmm::scaled(aux1, coeff_p1), M1);
       gmm::mult(gmm::transposed(M6), M5, aux1);
-      gmm::add (gmm::scaled(aux1, 1.E5), M1);
+      gmm::add (gmm::scaled(aux1, coeff_p2), M1);
       
       gmm::copy(M2, M2inv); gmm::lu_inverse(M2inv);
 
@@ -721,6 +723,7 @@ namespace getfem {
       base_matrix aux1(ndof2, ndof1), aux2(ndof2, ndof2);
       base_matrix M7(ndof3, ndof3), M7inv(ndof3, ndof3), M8(ndof3, ndof2);
       base_matrix M9(ndof3, ndof1), M10(ndof3, ndof3), MD(ndof2, ndof1);
+      scalar_type area(0);
 
       // Integrals on the element : \int_T Grad(D).Grad(w) (M2)
       //                            \int_T Grad(v_T).Grad(w) (M1)
@@ -728,6 +731,7 @@ namespace getfem {
       for (size_type ipt = 0; ipt < pim->nb_points_on_convex(); ++ipt) {
         ctx1.set_ii(ipt); ctx2.set_ii(ipt); ctx3.set_ii(ipt);
         scalar_type coeff = pim->coeff(ipt) * ctx1.J();
+        area += coeff;
         
         ctx1.grad_base_value(t1);
         vectorize_grad_base_tensor(t1, tv1, ndof1, pf1->target_dim(), Q);
@@ -790,6 +794,8 @@ namespace getfem {
           ctx3.set_ii(first_ind+ipt); ctx1i.set_ii(first_ind+ipt);
           ctx3i.set_ii(first_ind+ipt);
           scalar_type coeff = pim->coeff(first_ind+ipt) * ctx1.J();
+          gmm::mult(ctx1.B(), pgt->normals()[ifc], un);
+          scalar_type normun = gmm::vect_norm2(un);
           
           ctx2.grad_base_value(t2);
           vectorize_grad_base_tensor(t2, tv2, ndof2, pf2->target_dim(), Q);
@@ -809,8 +815,7 @@ namespace getfem {
           ctx3.base_value(t3);
           vectorize_base_tensor(t3, tv3p, ndof3, pf3->target_dim(), Q);
 
-          gmm::mult(ctx1.B(), pgt->normals()[ifc], un);
-
+          
           for (size_type i = 0; i < ndof1; ++i) // To be optimized
             for (size_type j = 0; j < ndof2; ++j)
               for (size_type k1 = 0; k1 < Q; ++k1) {
@@ -824,30 +829,31 @@ namespace getfem {
           for (size_type i = 0; i < ndof3; ++i) // To be optimized
             for (size_type j = 0; j < ndof3; ++j)
               for (size_type k = 0; k < Q; ++k)
-                M7(i, j) += coeff * tv3p(i,k) * tv3p(j, k);
+                M7(i, j) += coeff * normun * tv3p(i,k) * tv3p(j, k);
 
           for (size_type i = 0; i < ndof3; ++i) // To be optimized
             for (size_type j = 0; j < ndof2; ++j)
               for (size_type k = 0; k < Q; ++k)
-                M8(i, j) += coeff * tv3p(i,k) * tv2p(j, k);
+                M8(i, j) += coeff * normun * tv3p(i,k) * tv2p(j, k);
 
           for (size_type i = 0; i < ndof3; ++i) // To be optimized
             for (size_type j = 0; j < ndof1; ++j)
               for (size_type k = 0; k < Q; ++k)
-                M9(i, j) += coeff * tv3p(i, k) * tv1p(j, k);
+                M9(i, j) += coeff * normun * tv3p(i, k) * tv1p(j, k);
 
           for (size_type i = 0; i < ndof3; ++i) // To be optimized
             for (size_type j = 0; j < ndof3i; ++j)
               for (size_type k = 0; k < Q; ++k)
-                M10(i, j) += coeff * tv3p(i,k) * tv3i(j, k); 
+                M10(i, j) += coeff * normun * tv3p(i,k) * tv3i(j, k); 
         }
       }
       
       // Add the constraint with penalization
+      scalar_type coeff_p = pow(area, -1. - 2./scalar_type(N));
       gmm::mult(gmm::transposed(M4), M4, aux2);
-      gmm::add (gmm::scaled(aux2, 1.E7), M2);
+      gmm::add (gmm::scaled(aux2, coeff_p), M2);
       gmm::mult(gmm::transposed(M4), M3, aux1);
-      gmm::add (gmm::scaled(aux1, 1.E7), M1);
+      gmm::add (gmm::scaled(aux1, coeff_p), M1);
 
       if (pf2->target_dim() == 1 && Q > 1) {
         gmm::sub_slice I(0, ndof2/Q, Q);
@@ -976,7 +982,8 @@ namespace getfem {
       base_matrix M5(N*N, ndof1), M6(N*N, ndof2);
       base_matrix M7(ndof3, ndof3), M7inv(ndof3, ndof3), M8(ndof3, ndof2);
       base_matrix M9(ndof3, ndof1), M10(ndof3, ndof3), MD(ndof2, ndof1);
-
+      scalar_type area(0);
+      
       // Integrals on the element : \int_T Sym(Grad(D)).Grad(w) (M2)
       //                            \int_T Sym(Grad(v_T)).Grad(w) (M1)
       //                            \int_T D (M4)  and \int_T v_T (M3)
@@ -984,6 +991,7 @@ namespace getfem {
       for (size_type ipt = 0; ipt < pim->nb_points_on_convex(); ++ipt) {
         ctx1.set_ii(ipt); ctx2.set_ii(ipt); ctx3.set_ii(ipt);
         scalar_type coeff = pim->coeff(ipt) * ctx1.J();
+        area += coeff;
         
         ctx1.grad_base_value(t1);
         vectorize_grad_base_tensor(t1, tv1, ndof1, pf1->target_dim(), Q);
@@ -1057,6 +1065,8 @@ namespace getfem {
           ctx3.set_ii(first_ind+ipt); ctx1i.set_ii(first_ind+ipt);
           ctx3i.set_ii(first_ind+ipt);
           scalar_type coeff = pim->coeff(first_ind+ipt) * ctx1.J();
+          gmm::mult(ctx1.B(), pgt->normals()[ifc], un);
+          scalar_type normun = gmm::vect_norm2(un);
           
           ctx2.grad_base_value(t2);
           vectorize_grad_base_tensor(t2, tv2, ndof2, pf2->target_dim(), Q);
@@ -1075,8 +1085,6 @@ namespace getfem {
           
           ctx3.base_value(t3);
           vectorize_base_tensor(t3, tv3p, ndof3, pf3->target_dim(), Q);
-
-          gmm::mult(ctx1.B(), pgt->normals()[ifc], un);
 
           for (size_type i = 0; i < ndof1; ++i) // To be optimized
             for (size_type j = 0; j < ndof2; ++j)
@@ -1098,34 +1106,36 @@ namespace getfem {
           for (size_type i = 0; i < ndof3; ++i) // To be optimized
             for (size_type j = 0; j < ndof3; ++j)
               for (size_type k = 0; k < N; ++k)
-                M7(i, j) += coeff * tv3p(i,k) * tv3p(j, k);
+                M7(i, j) += coeff * normun * tv3p(i,k) * tv3p(j, k);
 
           for (size_type i = 0; i < ndof3; ++i) // To be optimized
             for (size_type j = 0; j < ndof2; ++j)
               for (size_type k = 0; k < N; ++k)
-                M8(i, j) += coeff * tv3p(i,k) * tv2p(j, k);
+                M8(i, j) += coeff * normun * tv3p(i,k) * tv2p(j, k);
 
           for (size_type i = 0; i < ndof3; ++i) // To be optimized
             for (size_type j = 0; j < ndof1; ++j)
               for (size_type k = 0; k < Q; ++k)
-                M9(i, j) += coeff * tv3p(i, k) * tv1p(j, k);
+                M9(i, j) += coeff * normun * tv3p(i, k) * tv1p(j, k);
 
           for (size_type i = 0; i < ndof3; ++i) // To be optimized
             for (size_type j = 0; j < ndof3i; ++j)
               for (size_type k = 0; k < N; ++k)
-                M10(i, j) += coeff * tv3p(i,k) * tv3i(j, k);
+                M10(i, j) += coeff * normun * tv3p(i,k) * tv3i(j, k);
         }
       }
 
       // Add the constraint with penalization
+      scalar_type coeff_p1 = pow(area, -1. - 2./scalar_type(N));
+      scalar_type coeff_p2 = pow(area, -1. - 1./scalar_type(N));
       gmm::mult(gmm::transposed(M4), M4, aux2);
-      gmm::add (gmm::scaled(aux2, 1E7), M2);
+      gmm::add (gmm::scaled(aux2, coeff_p1), M2);
       gmm::mult(gmm::transposed(M6), M6, aux2);
-      gmm::add (gmm::scaled(aux2, 1E5), M2);
+      gmm::add (gmm::scaled(aux2, coeff_p2), M2);
       gmm::mult(gmm::transposed(M4), M3, aux1);
-      gmm::add (gmm::scaled(aux1, 1E7), M1);
+      gmm::add (gmm::scaled(aux1, coeff_p1), M1);
       gmm::mult(gmm::transposed(M6), M5, aux1);
-      gmm::add (gmm::scaled(aux1, 1E5), M1);
+      gmm::add (gmm::scaled(aux1, coeff_p2), M1);
 
       gmm::copy(M2, M2inv); gmm::lu_inverse(M2inv);
       

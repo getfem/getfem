@@ -65,10 +65,10 @@ mfrhs = gf.MeshFem(m, 1)
 
 if (using_HHO):
   if (use_quad):
-    mfu.set_fem(gf.Fem('FEM_HHO(FEM_QUAD_IPK(2,2),FEM_SIMPLEX_CIPK(1,2))'))
+    mfu.set_fem(gf.Fem('FEM_HHO(FEM_QUAD_IPK(2,1),FEM_SIMPLEX_CIPK(1,1))'))
     # mfu.set_fem(gf.Fem('FEM_HHO(FEM_QK_DISCONTINUOUS(2,2,0.1),FEM_SIMPLEX_CIPK(1,2))'))
     # mfu.set_fem(gf.Fem('FEM_HHO(FEM_QK(2,2),FEM_PK(1,2))'))
-    mfur.set_fem(gf.Fem('FEM_QUAD_IPK(2,3)'))
+    mfur.set_fem(gf.Fem('FEM_QUAD_IPK(2,2)'))
     # mfur.set_fem(gf.Fem('FEM_QK(2,3)'))
   else:
     mfu.set_fem(gf.Fem('FEM_HHO(FEM_SIMPLEX_IPK(2,2),FEM_SIMPLEX_CIPK(1,2))'))
@@ -82,9 +82,9 @@ else:
     mfur.set_fem(gf.Fem('FEM_PK(2,2)'))
     
 if (use_quad):
-  # mfgu.set_fem(gf.Fem('FEM_QUAD_IPK(2,2)'))
-  mfgu.set_fem(gf.Fem('FEM_QK(2,2)'))
-  mfrhs.set_fem(gf.Fem('FEM_QK(2,3)'))
+  mfgu.set_fem(gf.Fem('FEM_QUAD_IPK(2,1)'))
+  # mfgu.set_fem(gf.Fem('FEM_QK(2,1)'))
+  mfrhs.set_fem(gf.Fem('FEM_QK(2,2)'))
 else:
   mfgu.set_fem(gf.Fem('FEM_PK(2,2)'))
   mfrhs.set_fem(gf.Fem('FEM_PK(2,3)'))
