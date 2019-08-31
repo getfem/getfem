@@ -644,7 +644,7 @@ namespace getfem {
     md.add_elementary_transformation(name, p);
   }
 
-#if 1 //  Old single mef version
+#if 0 //  Old single mef version
 
 class _HHO_stabilization
     : public virtual_elementary_transformation {
