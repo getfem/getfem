@@ -65,10 +65,10 @@ mfrhs = gf.MeshFem(m, 1)
 
 if (using_HHO):
   if (use_quad):
-    mfu.set_fem(gf.Fem('FEM_HHO(FEM_QUAD_IPK(2,1),FEM_SIMPLEX_CIPK(1,1))'))
+    mfu.set_fem(gf.Fem('FEM_HHO(FEM_QUAD_IPK(2,2),FEM_SIMPLEX_CIPK(1,2))'))
     # mfu.set_fem(gf.Fem('FEM_HHO(FEM_QK_DISCONTINUOUS(2,2,0.1),FEM_SIMPLEX_CIPK(1,2))'))
     # mfu.set_fem(gf.Fem('FEM_HHO(FEM_QK(2,2),FEM_PK(1,2))'))
-    mfur.set_fem(gf.Fem('FEM_QUAD_IPK(2,2)'))
+    mfur.set_fem(gf.Fem('FEM_QUAD_IPK(2,3)'))
     # mfur.set_fem(gf.Fem('FEM_QK(2,3)'))
   else:
     mfu.set_fem(gf.Fem('FEM_HHO(FEM_SIMPLEX_IPK(2,2),FEM_SIMPLEX_CIPK(1,2))'))
@@ -82,9 +82,9 @@ else:
     mfur.set_fem(gf.Fem('FEM_PK(2,2)'))
     
 if (use_quad):
-  mfgu.set_fem(gf.Fem('FEM_QUAD_IPK(2,1)'))
-  # mfgu.set_fem(gf.Fem('FEM_QK(2,1)'))
-  mfrhs.set_fem(gf.Fem('FEM_QK(2,2)'))
+  mfgu.set_fem(gf.Fem('FEM_QUAD_IPK(2,2)'))
+  # mfgu.set_fem(gf.Fem('FEM_QK(2,2)'))
+  mfrhs.set_fem(gf.Fem('FEM_QK(2,3)'))
 else:
   mfgu.set_fem(gf.Fem('FEM_PK(2,2)'))
   mfrhs.set_fem(gf.Fem('FEM_PK(2,3)'))
@@ -158,7 +158,7 @@ if (using_HHO):
   md.add_linear_term(mim, 'clambda*Trace(HHO_Grad_u)*Trace(HHO_Grad_Test_u)'
                      +    '+ 2*cmu*Sym(HHO_Grad_u):Sym(HHO_Grad_Test_u)')
   # Stabilization term
-  md.add_linear_term(mim, 'cmu*HHO_Stab_u.HHO_Stab_Test_u', ALL_FACES)
+  md.add_linear_term(mim, '20*cmu*HHO_Stab_u.HHO_Stab_Test_u', ALL_FACES)
 else:
   md.add_isotropic_linearized_elasticity_brick(mim, 'u', 'clambda', 'cmu')
 
@@ -201,6 +201,6 @@ print('You can view the solution with (for example):')
 print('gmsh elasticity.pos')
 
 
-if (H1error > 0.013):
+if (H1error > 0.011):
     print('Error too large !')
     exit(1)

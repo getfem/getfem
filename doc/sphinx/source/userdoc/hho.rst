@@ -13,7 +13,7 @@ Tools for HHO (Hybrid High-Order) methods
 
 HHO method are hybrid methods in the sense that they have both degrees of freedom located on the element of a mesh and on the faces of the elements which represent separated approximations. HHO method are primal methods in the sense that both the degree of freedom in the element and on the faces represent the main unknown of the problem (no lagrange multipliers is introduced). The interest of these methods, first developped in  [Di-Er2015]_, [Di-Er2017]_ is their accuracy and their great robustness, in particular with respect to the element shapes and their locking-free properties. Moreover, they can be extended without difficulty to the approximation of nonlinear problems (see [AB-ER-PI2018]_ for hyper-elasticity, [AB-ER-PI2019]_ for plasticity and [ca-ch-er2019]_ for contact problems).
 
-HHO methods can be applied to arbitrary shape elements. However, the implementation in |gf| is for the moment limited to standard elements : simplices, quadrilaterals, hexahedrons, ... Moreover this implementation is still experimental and not pretending to optimality. For the moment, no tool to make an auyomatic condensation of internal node is proposed and te method wotk only for simplices.
+HHO methods can be applied to arbitrary shape elements. However, the implementation in |gf| is for the moment limited to standard elements : simplices, quadrilaterals, hexahedrons, ... Moreover this implementation is still experimental and not pretending to optimality. For the moment, there is no tool to make an automatic condensation of internal dofs.
 
 HHO elements
 ------------
