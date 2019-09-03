@@ -59,8 +59,8 @@ namespace getfem {
   void convect(const mesh_fem &mf, VECT1 &U, const mesh_fem &mf_v,
 	       const VECT2 &V, scalar_type dt, size_type nt,
 	       convect_boundary_option option = CONVECT_EXTRAPOLATION,
-               base_node &per_min = base_node(),
-               base_node &per_max = base_node()) {
+               const base_node &per_min = base_node(),
+               const base_node &per_max = base_node()) {
     // Should be robustified on the boundaries -> control of the nodes going
     //   out the mesh.
     // Should control that the point do not move to fast ( < h/2 for instance).
