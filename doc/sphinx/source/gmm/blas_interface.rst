@@ -10,7 +10,7 @@
 Interface with BLAS, LAPACK or ATLAS
 ======================================
 
-For better performance on dense matrices, it is possible to interface some operations of the type ``gmm::dense_matrix<T>`` with ``LAPACK`` (http://www.netlib.org/lapack/) or ``ATLAS`` (http://math-atlas.sourceforge.net/), for ``T = float, double, std::complex<float> or std::complex<double>``. In fact, concerning ``ATLAS`` no specific interface has been made untill now, so the fortran interface of ``ATLAS`` should be used.
+For better performance on dense matrices, it is possible to interface some operations of the type ``gmm::dense_matrix<T>`` with ``LAPACK`` (http://www.netlib.org/lapack/) or ``ATLAS`` (http://math-atlas.sourceforge.net/), for ``T = float, double, std::complex<float> or std::complex<double>``. In fact, concerning ``ATLAS`` no specific interface has been made until now, so the fortran interface of ``ATLAS`` should be used.
 
 to use this interface you have first to define ``GMM_USES_LAPACK`` before including |gmm| \ files::
 

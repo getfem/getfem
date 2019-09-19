@@ -29,13 +29,13 @@ print to the standard output the vector ``V`` multiplied by ``10.0`` without cha
 transposition
 -------------
 
-``gmm::transposed(M)`` gives a possibily modifiable reference on the transposed matrix of ``M``.
+``gmm::transposed(M)`` gives a possibility modifiable reference on the transposed matrix of ``M``.
 
 imaginary and real part
 -----------------------
 
 For a complex matrix ``M`` or a complex vector ``V``,
-``gmm::real_part(M)``, ``gmm::real_part(V)``, ``gmm::imag_part(M)`` or ``gmm::imag_part(V)`` give a possibily modifiable reference on the real or imaginary part of the matrix or vector (for instance ``gmm::clear(gmm::imag_part(M))`` will set to zero the imaginary part of a matrix ``M``). These functions cannot be applied to real matrices or vectors.
+``gmm::real_part(M)``, ``gmm::real_part(V)``, ``gmm::imag_part(M)`` or ``gmm::imag_part(V)`` give a possibility modifiable reference on the real or imaginary part of the matrix or vector (for instance ``gmm::clear(gmm::imag_part(M))`` will set to zero the imaginary part of a matrix ``M``). These functions cannot be applied to real matrices or vectors.
 
 conjugate
 ---------
