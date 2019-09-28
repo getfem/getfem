@@ -1,0 +1,26 @@
+language: python
+sudo: false
+dist: bionic
+cache:
+  directories:
+  - $HOME/.cache/pip
+before_install:
+- sudo apt-get install -y --no-install-recommends automake
+- sudo apt-get install -y --no-install-recommends libtool
+- sudo apt-get install -y --no-install-recommends make
+- sudo apt-get install -y --no-install-recommends g++
+- sudo apt-get install -y --no-install-recommends libqd-dev
+- sudo apt-get install -y --no-install-recommends libqhull-dev
+- sudo apt-get install -y --no-install-recommends libmumps-seq-dev
+- sudo apt-get install -y --no-install-recommends liblapack-dev
+- sudo apt-get install -y --no-install-recommends libopenblas-dev
+- sudo apt-get install -y --no-install-recommends libpython3-dev
+- pip install -r requirements.txt
+addons:
+  apt:
+    update: true
+script:
+- bash autogen.sh
+- ./configure --with-pic --enable-python3=yes
+- make -j8
+- make -j8 check
