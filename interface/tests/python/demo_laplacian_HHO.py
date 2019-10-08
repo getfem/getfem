@@ -132,7 +132,7 @@ if (using_HHO):
   # Laplacian term
   md.add_linear_term(mim, 'HHO_Grad_u.HHO_Grad_Test_u')
   # Stabilization term
-  md.add_linear_term(mim, 'HHO_Stab_u.HHO_Stab_Test_u', ALL_FACES)
+  md.add_linear_term(mim, '10*HHO_Stab_u.HHO_Stab_Test_u', ALL_FACES)
 else:
   md.add_Laplacian_brick(mim, 'u')
 
