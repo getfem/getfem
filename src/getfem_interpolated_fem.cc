@@ -314,8 +314,8 @@ namespace getfem {
                   t(ind_dof[mf.ind_basic_dof_of_element(cv)[i*rdim+j*mdim]],j,k)
                     = taux(i,j*(1-mdim),k);
         }
-          for (size_type i = 0; i < nbdof; ++i)
-            ind_dof[e.inddof[i]] = size_type(-1);
+        for (size_type i = 0; i < nbdof; ++i)
+          ind_dof[e.inddof[i]] = size_type(-1);
       }
     }
   }
