@@ -42,12 +42,7 @@ namespace getfem {
   }
 
   void model::var_description::set_size() {
-    n_temp_iter = 0;
-    default_iter = 0;
-    if (is_complex)
-      complex_value.resize(n_iter);
-    else
-      real_value.resize(n_iter);
+    clear_temporaries();
     v_num_var_iter.resize(n_iter);
     v_num_iter.resize(n_iter);
     size_type s = is_fem_dofs ? passociated_mf()->nb_dof()
