@@ -24,3 +24,6 @@ script:
 - ./configure --with-pic --enable-python3=yes
 - make -j8
 - make -j8 check
+after_success:
+- pip install codecov
+- codecov
