@@ -351,13 +351,18 @@ fi
 dnl ------------------------------LAPACK TEST--------------------------------
 
 if test x"$acx_blas_ok" = xyes; then
-  if test x"$FC" = "x"; then
-    dgetrf=dgetrf_
-  else
-    AC_FC_FUNC(dgetrf)
-  fi;
+#This name mangling detection is currently not in use
+#  if test x"$FC" = "x"; then
+#    dgetrf=dgetrf_
+#  else
+#    AC_FC_FUNC(dgetrf)
+#  fi;
 
-  AC_CHECK_LIB(lapack, dgetrf_, [acx_lapack_ok=yes; LAPACK_LIBS="-llapack "])
+  # LAPACK linked to by default?  (is sometimes included in BLAS lib)
+  AC_CHECK_FUNC(dgetrf_, [acx_lapack_ok=yes; LAPACK_LIBS=""])
+  if test "x$acx_lapack_ok" != xyes; then
+    AC_CHECK_LIB(lapack, dgetrf_, [acx_lapack_ok=yes; LAPACK_LIBS="-llapack"])
+  fi
 
   if test x"$acx_lapack_ok" = xyes; then
      CPPFLAGS="$CPPFLAGS -DGMM_USES_LAPACK"
