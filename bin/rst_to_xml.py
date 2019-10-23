@@ -24,10 +24,8 @@
 
   $Id: extract_doc 3304 2009-11-03 13:17:46Z renard $
 """
-import re
 import string
 import os
-import textwrap
 import sys
 
 class ParseError(Exception):

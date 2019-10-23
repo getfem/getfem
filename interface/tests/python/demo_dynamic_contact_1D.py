@@ -30,7 +30,7 @@
 import getfem as gf
 import numpy as np
 import matplotlib.pyplot as plt
-import time, os, sys
+import os, sys
 
 # Numerical parameters
 NX = 20               # Number of elements

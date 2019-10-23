@@ -27,10 +27,8 @@
 
 import getfem as gf
 import numpy as np
-import time
 import matplotlib.pyplot as plt
 import os
-import sys
 
 NT = 128; NX = 256; option = 3; Hi = 0; Hk = 0; load_type = 1; theta = 0.5;
 LX=100.; order = 2; do_export = 1;

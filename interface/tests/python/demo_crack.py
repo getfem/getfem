@@ -36,7 +36,6 @@ else:
   print("module getfem not found!")
 
 import numpy as np
-import math
 
 variant = 4
 # variant : 1 : a single crack with cutoff enrichement

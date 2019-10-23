@@ -28,7 +28,6 @@
 """
 import numpy as np
 import getfem as gf
-import os
 
 ## Parameters
 Emodulus = 1.          # Young Modulus
