@@ -488,11 +488,12 @@ namespace getfem {
     clear();
     set_name(m.name_);
     bgeot::basic_mesh::operator=(m);
-    cvf_sets = m.cvf_sets;
+    for (const auto &kv : m.cvf_sets) {
+      if (kv.second.get_parent_mesh() != 0)
+        cvf_sets[kv.first].set_parent_mesh(this);
+      cvf_sets[kv.first] = kv.second;
+    }
     valid_cvf_sets = m.valid_cvf_sets;
-    for (std::map<size_type, mesh_region>::iterator it = cvf_sets.begin();
-         it != cvf_sets.end(); ++it)
-      if (it->second.get_parent_mesh() != 0) it->second.set_parent_mesh(this);
     cvs_v_num.clear();
     gmm::uint64_type d = act_counter();
     for (dal::bv_visitor i(convex_index()); !i.finished(); ++i)
