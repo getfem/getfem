@@ -33,6 +33,9 @@ How to contribute / Git repository on Savannah
 .. |sphintl| replace:: Sphinx Internationalization
 .. _sphintl: http://www.sphinx-doc.org/en/stable/intl.html
 
+.. |readthedocs| replace:: Read the Docs
+.. _readthedocs: https://getfem.readthedocs.io
+
 |gf| is an  open source finite element library based on a collaborative development. If you intend to make some contributions, you can ask for membership of the project there. Contributions of all kinds are welcome: documentation, bug reports, constructive comments, changes suggestions, bug fix, new models, etc ...
 
 Contributors are of course required to be careful that their changes do not affect the proper functioning of the library and that these changes follow a principle of backward compatibility.
@@ -159,3 +162,5 @@ If you want to make pdf file in your language, you can run a ::
   make all-pdf-<lang>
 
 See details in |sphintl|_ .
+
+You can see translated document at |readthedocs|_ by switch language.
