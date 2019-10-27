@@ -1,4 +1,5 @@
 language: python
+python:
   - "3.6"
 sudo: false
 dist: bionic
@@ -16,7 +17,7 @@ before_install:
 - sudo apt-get install -y --no-install-recommends liblapack-dev
 - sudo apt-get install -y --no-install-recommends libopenblas-dev
 - sudo apt-get install -y --no-install-recommends libpython3-dev
-- pip3 install -r requirements.txt
+- pip install -r requirements.txt
 addons:
   apt:
     update: true
