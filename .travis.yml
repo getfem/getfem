@@ -16,7 +16,7 @@ before_install:
 - sudo apt-get install -y --no-install-recommends liblapack-dev
 - sudo apt-get install -y --no-install-recommends libopenblas-dev
 - sudo apt-get install -y --no-install-recommends libpython3-dev
-- pip install -r requirements.txt
+- pip3 install -r requirements.txt
 addons:
   apt:
     update: true
