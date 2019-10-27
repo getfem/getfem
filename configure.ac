@@ -964,19 +964,7 @@ AC_ARG_ENABLE(python,
    *) AC_MSG_ERROR([bad value ${enableval} for --enable-python]) ;;
  esac],[usepython=YES])
 
-AC_ARG_ENABLE(python3,
- [AS_HELP_STRING([--enable-python3],[turn on/off python3 (instead of python2) support])],
- [case "${enableval}" in
-   yes) usepython3=YES ;;
-   no)  usepython3=NO ;;
-   *) AC_MSG_ERROR([bad value ${enableval} for --enable-python3]) ;;
- esac],[usepython3=NO])
-
-if test x$usepython3 = xYES; then
-  AM_PATH_PYTHON(3.4, usepython=YES, usepython=NO)
-elif test x$usepython = xYES; then
-  AM_PATH_PYTHON(2.7, usepython=YES, usepython=NO)
-fi
+AM_PATH_PYTHON(3.7, usepython=YES, usepython=NO)
 
 case $host in
     *mingw*)
