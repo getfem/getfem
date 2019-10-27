@@ -1,5 +1,5 @@
 language: python
-  - "3.8"
+  - "3.7"
 sudo: false
 dist: bionic
 cache:
