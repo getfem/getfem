@@ -119,13 +119,7 @@ Configure Options
     $ ./configure ``--enable-matlab``
 
   depending on the interface you want to build. Note that the python interface
-  is build by default and for python 2 version. If you want to build the
-  python 3 interface use::
-
-    $ ./configure ``--enable-python3``
-
-  In that case, you have of course to install a python 3 version on your system
-  together with at least ``numpy`` and ``scipy`` packages.
+  is build by default and for python 3 version.
 
 * If you want to use a specific **BLAS** library, you may have to
   supply the necessary link flags and libs to the configure script

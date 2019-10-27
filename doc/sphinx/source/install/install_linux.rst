@@ -101,14 +101,9 @@ Configure Options
 
     $ ./configure --prefix=my_dest_dir
 
-* By default, the python interface is built and for python 2 version. You can disable the built of the python interface with::
+* By default, the python interface is built and for python 3 version. You can disable the built of the python interface with::
 
     $ ./configure --disable-python
-
-  or either build the interface for python 3 version with
-
-    $ ./configure --enable-python3
-
 
 Note that there are other options to the configure script. A
 ``./configure --help`` will list them.
