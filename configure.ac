@@ -964,7 +964,12 @@ AC_ARG_ENABLE(python,
    *) AC_MSG_ERROR([bad value ${enableval} for --enable-python]) ;;
  esac],[usepython=YES])
 
-AM_PATH_PYTHON(3.6, usepython=YES, usepython=NO)
+if test x$usepython = xYES; then
+  AM_PATH_PYTHON(3.6, usepython=YES, usepython=NO)
+  if test x$usepython = xNO; then
+    AM_PATH_PYTHON(2.7, usepython=YES, usepython=NO)
+  fi
+fi
 
 case $host in
     *mingw*)
