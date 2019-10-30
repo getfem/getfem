@@ -199,7 +199,7 @@ the one of the |mf| object have to match. To sum it up,
 Additionally, if the field to be represented is a tensor field instead of a vector field (for instance the stress or strain tensor field in elasticity), it is possible to specify the tensor dimensions with the methods::
 
   mf.set_qdim(dim_type M, dim_type N)
-  mf.set_qdim(dim_type M, dim_type N, dim_type O, dim_type P)  
+  mf.set_qdim(dim_type M, dim_type N, dim_type O, dim_type P)
   mf.set_qdim(const bgeot::multi_index &mii)
 
 respectively for a tensor field of order two, four and arbitrary (but limited to 6). For most of the operations, this is equivalent to declare a vector field of the size the product of the dimensions. However, the declared tensor dimensions are taken into account into the high level generic assembly. Remember that the components inside a tensor are stored in Fortran order.

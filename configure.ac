@@ -351,13 +351,18 @@ fi
 dnl ------------------------------LAPACK TEST--------------------------------
 
 if test x"$acx_blas_ok" = xyes; then
-  if test x"$FC" = "x"; then
-    dgetrf=dgetrf_
-  else
-    AC_FC_FUNC(dgetrf)
-  fi;
+#This name mangling detection is currently not in use
+#  if test x"$FC" = "x"; then
+#    dgetrf=dgetrf_
+#  else
+#    AC_FC_FUNC(dgetrf)
+#  fi;
 
-  AC_CHECK_LIB(lapack, dgetrf_, [acx_lapack_ok=yes; LAPACK_LIBS="-llapack "])
+  # LAPACK linked to by default?  (is sometimes included in BLAS lib)
+  AC_CHECK_FUNC(dgetrf_, [acx_lapack_ok=yes; LAPACK_LIBS=""])
+  if test "x$acx_lapack_ok" != xyes; then
+    AC_CHECK_LIB(lapack, dgetrf_, [acx_lapack_ok=yes; LAPACK_LIBS="-llapack"])
+  fi
 
   if test x"$acx_lapack_ok" = xyes; then
      CPPFLAGS="$CPPFLAGS -DGMM_USES_LAPACK"
@@ -959,18 +964,11 @@ AC_ARG_ENABLE(python,
    *) AC_MSG_ERROR([bad value ${enableval} for --enable-python]) ;;
  esac],[usepython=YES])
 
-AC_ARG_ENABLE(python3,
- [AS_HELP_STRING([--enable-python3],[turn on/off python3 (instead of python2) support])],
- [case "${enableval}" in
-   yes) usepython3=YES ;;
-   no)  usepython3=NO ;;
-   *) AC_MSG_ERROR([bad value ${enableval} for --enable-python3]) ;;
- esac],[usepython3=NO])
-
-if test x$usepython3 = xYES; then
-  AM_PATH_PYTHON(3.4, usepython=YES, usepython=NO)
-elif test x$usepython = xYES; then
-  AM_PATH_PYTHON(2.7, usepython=YES, usepython=NO)
+if test x$usepython = xYES; then
+  AM_PATH_PYTHON(3.6, usepython=YES, usepython=NO)
+  if test x$usepython = xNO; then
+    AM_PATH_PYTHON(2.7, usepython=YES, usepython=NO)
+  fi
 fi
 
 case $host in

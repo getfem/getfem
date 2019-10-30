@@ -2,7 +2,7 @@
 
 .. include:: ../replaces.txt
 
-.. highlightlang:: c++
+.. highlightlang:: none
 
 .. _ud-install-mac:
 
@@ -38,7 +38,7 @@ For the sequential mumps,
 
    $ brew install mumps --without-mpi
 
-For the parallel one, just forget --without-mpi and install also mpi and metis. 
+For the parallel one, just forget --without-mpi and install also mpi and metis.
 
 For Qhull
 
@@ -119,13 +119,7 @@ Configure Options
     $ ./configure ``--enable-matlab``
 
   depending on the interface you want to build. Note that the python interface
-  is build by default and for python 2 version. If you want to build the
-  python 3 interface use::
-
-    $ ./configure ``--enable-python3``
-
-  In that case, you have of course to install a python 3 version on your system
-  together with at least ``numpy`` and ``scipy`` packages.
+  is build by default and for python 3 version.
 
 * If you want to use a specific **BLAS** library, you may have to
   supply the necessary link flags and libs to the configure script
@@ -245,7 +239,7 @@ If you want to use a different compiler than the one chosen automatically by the
 Once getfem is compiled:
 
   - Go to the scilab getfem++ interface install directory (interface/src/scilab if the installation is not done)
- 
+
   - launch scilab
 
   - load the getfem++ toolbox with:

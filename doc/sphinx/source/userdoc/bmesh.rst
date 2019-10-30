@@ -25,7 +25,7 @@ domain mesh generators).
 
 The structure |gf_m| may also contain a description about a region of the mesh,
 such as a boundary or a set of elements. This is handled via a container of
-convexes and convex faces, |gf_mr|.
+convexes and convex faces, |gf_mr|. We refer to [remacle2002]_ for a discussion on mesh representation.
 
 
 Add an element to a mesh
@@ -52,9 +52,9 @@ The most basic function to add a new element to a mesh is::
 
   j = mymesh.add_convex(pgt, it);
 
-This is a template function, with ``pgt`` of type |bg_pgt| (basically a pointer 
-to an instance of type |bg_gt|) and ``it`` is an iterator on a list of indexes of 
-already existing points. For instance, if one needs to add a new triangle in a 3D 
+This is a template function, with ``pgt`` of type |bg_pgt| (basically a pointer
+to an instance of type |bg_gt|) and ``it`` is an iterator on a list of indexes of
+already existing points. For instance, if one needs to add a new triangle in a 3D
 mesh, one needs to define first an array with the indexes of the three points::
 
   std::vector<bgeot::size_type> ind(3);
@@ -108,7 +108,7 @@ Specialized functions exist also::
   mymesh.add_prism(N, it);
   mymesh.add_prism_by_points(N, itp);
 
-The order of the points in the array of points is not important for simplices 
+The order of the points in the array of points is not important for simplices
 (except if you care about the orientation of your simplices). For other elements, it is important to respect the vertex order shown in :ref:`ud-fig-elem` (first order elements).
 
 .. _ud-fig-elem:

@@ -410,7 +410,8 @@ namespace getfem {
 
     virtual const mesh &linked_mesh() { return sl.linked_mesh(); }
 
-    ga_interpolation_context_mesh_slice(const stored_mesh_slice &sl_, base_vector &r)
+    ga_interpolation_context_mesh_slice(const stored_mesh_slice &sl_,
+                                        base_vector &r)
       : result(r), sl(sl_), initialized(false) { }
   };
 

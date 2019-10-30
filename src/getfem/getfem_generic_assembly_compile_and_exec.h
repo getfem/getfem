@@ -1,6 +1,6 @@
 /*===========================================================================
 
- Copyright (C) 2013-2018 Yves Renard
+ Copyright (C) 2013-2019 Yves Renard
 
  This file is a part of GetFEM++
 
@@ -146,7 +146,6 @@ namespace getfem {
 
     struct elementary_trans_info {
       base_matrix M;
-      const mesh_fem *mf;
       size_type icv;
     };
 
@@ -178,7 +177,8 @@ namespace getfem {
       std::map<std::string, std::set<std::string>> transformations;
       std::set<std::string> transformations_der;
       std::map<std::string, interpolate_info> interpolate_infos;
-      std::map<std::string, elementary_trans_info> elementary_trans_infos;
+      std::map<std::tuple<std::string, const mesh_fem *, const mesh_fem *>,
+        elementary_trans_info> elementary_trans_infos;
       secondary_domain_info secondary_domain_infos;
 
       std::vector<pga_instruction>

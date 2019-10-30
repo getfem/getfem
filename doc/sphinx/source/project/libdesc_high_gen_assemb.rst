@@ -29,7 +29,7 @@ Files
    :file:`getfem_generic_assembly_function_and_operators.h` and :file:`getfem_generic_assembly_function_and_operators.cc`, "Definition of redefined function and nonlinear operator of the weak form language."
    :file:`getfem_generic_assembly_semantic.h` and :file:`getfem_generic_assembly_semantic.cc`, "Semantic analysis and enrichment of the syntax tree. Include some operations such as making the derivation of a tree with respect to a variable or computing the tree corresponding to the gradient of an expression."
    :file:`getfem_generic_assembly_workspace.cc`, "Methodes of the workspace object (defined in :file:`getfem_generic_assembly.h`)."
-   :file:`getfem_generic_assembly_compile_and_exec.h` and :file:`getfem_generic_assembly_compile_and_exec.cc`, "Definition of the optimized instructions, compilation into a sequel of optimize instructions and execution of the instructions on Gauss point/interpolation points."   
+   :file:`getfem_generic_assembly_compile_and_exec.h` and :file:`getfem_generic_assembly_compile_and_exec.cc`, "Definition of the optimized instructions, compilation into a sequel of optimize instructions and execution of the instructions on Gauss point/interpolation points."
    :file:`getfem_generic_assembly_interpolation.cc`, "Interpolation operations and interpolate transformations."
 
 
@@ -86,12 +86,12 @@ Assembly tensors
 
 Assembly tensors are represented on each node by a ``bgeot::tensor<double>`` object. However, there is a specific structure in :file:`src/getfem\_generic\_assembly.cc` for assembly tensors because there is several format of assembly tensors :
 
-- Normal tensor. The first and second indices may represent the test function local indices if the node represent a first or second order term. Remember that in |gf| all tensors are stored with a Fortran order. This means that for instance a for a :math:`N\times P\times Q` tensor one has ``t(i, j, k) = t[i + j*N + k*N*P]``. 
+- Normal tensor. The first and second indices may represent the test function local indices if the node represent a first or second order term. Remember that in |gf| all tensors are stored with a Fortran order. This means that for instance t for a :math:`N\times P\times Q` tensor one has ``t(i, j, k) = t[i + j*N + k*N*P]``.
 
 - Copied tensor. When a node is detected to have exactly the same expression compared to an already compiled one, the assembly tensor will contain a pointer to the assembly tensor of the already compiled node. The consequence is that no unnecessary copy is made.
 
 - Sparse tensor with a listed sparsity. When working with a vector field, the finite element method is applied on each component. This results on vector base functions having only one nonzero component and some components are duplicated. The tensor are fully represented because it would be difficul to gain in efficiency with that kind of small sparse tensor format. However, some operation can be optimized with the knoledge of a certain sparsity (and duplication). This can change the order of complexity of a reduction. In order to allows this gain in efficiency, the tensor are labellised with some known sparsity format (vectorisation and format coming from operation applied on vectorized tensors). This results in a certain number of sparsity formats that are listed below:
-  
+
   - 1: Vectorized base sparsity format: The tensor represent a vectorized
     value. Each value of the condensed tensor is repeated on :math:`Q`
     components of the vectorized tensor. The mesh dimensions is denoted
@@ -110,7 +110,7 @@ Assembly tensors are represented on each node by a ``bgeot::tensor<double>`` obj
 
        ":math:`\bar{t}(i) = \varphi_i(x)`", ":math:`t(j,k) = \varphi_{j/Q}(x) \delta_{k, (j \mbox{ mod } Q)}`"
        ":math:`[\varphi_0(x), \varphi_1(x)]`", ":math:`[\varphi_0(x), 0, \varphi_1(x), 0, 0, \varphi_0(x), 0, \varphi_1(x)]`"
-  
+
   - 2: Grad condensed format
 
     .. csv-table::
@@ -119,22 +119,22 @@ Assembly tensors are represented on each node by a ``bgeot::tensor<double>`` obj
 
        ":math:`\bar{t}(i,j) = \partial_j\varphi_i(x)`", ":math:`t(k,l,m) = \partial_m\varphi_{k/Q}(x) \delta_{l, (m \mbox{ mod } Q)}`"
        ":math:`[\partial_0\varphi_0(x), \partial_0\varphi_1(x),` :math:`\partial_1\varphi_0(x), \partial_1\varphi_1(x),` :math:`\partial_2\varphi_0(x), \partial_2\varphi_1(x)]`",""
-  
+
   - 3: Hessian condensed format
 
 
   - 10: Vectorized mass: the tensor represent a scalar product of two
     vectorised base functions. This means a tensor :math:`t(\cdot,\cdot)`
     where :math:`t(i*Q+k, j*Q+l) = 0` for :math:`k \ne l` and
-    :math:`t(i*Q+k, j*Q+k)` are equals for :math:`0 \le k < Q`. 
-   
+    :math:`t(i*Q+k, j*Q+k)` are equals for :math:`0 \le k < Q`.
 
-    
+
+
 
 Optimized instructions
 ^^^^^^^^^^^^^^^^^^^^^^
 
-Optimized instructions for variable evaluation, operations, vector and matrix assembly ... to be described. 
+Optimized instructions for variable evaluation, operations, vector and matrix assembly ... to be described.
 
 Predefined functions
 ^^^^^^^^^^^^^^^^^^^^

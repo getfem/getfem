@@ -22,7 +22,8 @@ sys.path.append('../../../interface/src/python/')      # getfem
 
 ###########################################################################
 from getfem import getfem_env
-user_preamble = """\n% begin user_preamble:
+user_preamble = '''
+\n% begin user_preamble:
 \\usepackage{mathrsfs}
 \\usepackage{amsmath}
 \\usepackage{amssymb}
@@ -32,11 +33,11 @@ user_preamble = """\n% begin user_preamble:
 \\newcommand{\\Frac}[2]{{\\ds \\frac{\\ds #1}{\\ds #2}}}
 \\usepackage[draft]{minted}\\fvset{breaklines=true}
 % end user_preamble
-"""
+'''
 
-pngmath_use_preview = True
-pngmath_dvipng_args = ['-gamma', '1.5', '-D', '110', '-bg', 'Transparent']
-pngmath_latex_preamble = user_preamble
+imgmath_use_preview = True
+imgmath_dvipng_args = ['-gamma', '1.5', '-D', '110', '-bg', 'Transparent']
+imgmath_latex_preamble = user_preamble
 
 autoclass_content = "both"
 
@@ -48,7 +49,7 @@ _stdauthor = getfem_env('authors')
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.pngmath','sphinx.ext.autodoc',
+extensions = ['sphinx.ext.imgmath','sphinx.ext.autodoc',
               'sphinx.ext.coverage',
               'sphinx.ext.doctest']
 
@@ -180,7 +181,7 @@ html_logo = '.static/logo_getfem_small.png'
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
 # pixels large.
-html_favicon = 'favicon.ico'
+html_favicon = '.static/favicon.ico'
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -295,9 +296,16 @@ latex_logo = '.static/logogetfem.png'
 #  'fncychap'  : Inclusion of the "fncychap" package, default '\\usepackage[Bjarne]{fncychap}' 
 #  'preamble'  : Additional preamble content, default empty.
 #  'footer'    : Additional footer content (before the indices), default empty.
-latex_elements = [
-    ('preamble',user_preamble),
-]
+latex_elements = {
+# The paper size ('letterpaper' or 'a4paper').
+'papersize': 'a4paper',
+
+# The font size ('10pt', '11pt' or '12pt').
+'pointsize': '11pt',
+
+# Additional stuff for the LaTeX preamble.
+    'preamble': user_preamble
+}
 
 # A list of file names, relative to the configuration directory, to copy to
 # the build directory when building LaTeX output.

@@ -1,4 +1,4 @@
-#  Copyright (C) 1999-2018 Yves Renard
+#  Copyright (C) 1999-2019 Yves Renard
 #
 #  This file is a part of GetFEM++
 #
@@ -32,6 +32,7 @@ EXTRA_DIST= 						\
 	demo_crack.py 					\
 	demo_fictitious_domains.py 			\
 	demo_laplacian.py 				\
+	demo_laplacian_HHO.py 				\
 	demo_laplacian_pyramid.py			\
 	demo_laplacian_DG.py 				\
 	demo_laplacian_aposteriori.py			\
@@ -39,7 +40,7 @@ EXTRA_DIST= 						\
 	demo_phase_field.py              		\
 	demo_plasticity.py              		\
 	demo_plate.py 					\
-	demo_unit_disk.py 					\
+	demo_unit_disk.py 				\
 	demo_static_contact.py 				\
 	demo_dynamic_contact_1D.py			\
 	demo_Mindlin_Reissner_plate.py 			\
@@ -51,6 +52,8 @@ EXTRA_DIST= 						\
 	demo_thermo_elasticity_electrical_coupling.py 	\
 	demo_cracked_thermo_elastic_body.py             \
 	demo_nonlinear_elasticity.py		 	\
+	demo_elasticity_HHO.py                          \
+	demo_elastic_ring_contact.py                    \
 	demo_wheel_contact.py                           \
 	demo_tripod.py 					\
 	demo_tripod_alt.py 				\
@@ -68,6 +71,8 @@ TESTS = 						\
 	demo_wave.py					\
 	demo_wave_equation.py				\
 	demo_laplacian.py				\
+	demo_laplacian_HHO.py				\
+	demo_elasticity_HHO.py                          \
 	$(optpy)
 
 AM_TESTS_ENVIRONMENT = \

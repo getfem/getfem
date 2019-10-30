@@ -246,11 +246,33 @@ the classical :math:`P_K` Lagrange element.
        - Yes :math:`(M = Id)`
        - Yes
 
-Even though Lagrange elements are defined for arbitrary degrees, to choose a high
-degree can be problematic for a large number of applications due to the "noisy"
-characteristic of the lagrange basis. These elements are recommended for the basic
-interpolation but for p.d.e. applications elements with hierarchical basis are
-preferable (see the corresponding section).
+:math:`.\\`         
+
+  .. list-table:: Discontinuous :math:`P_K` Lagrange element with internal dofs ``"FEM_PK_DISCONTINUOUS(P, K, alpha)"``. The method ``"FEM_PK_DISCONTINUOUS(P, K, 0)"`` is identical to ``"FEM_PK_DISCONTINUOUS(P, K)"``. For alpha > 0, ``"FEM_PK_DISCONTINUOUS(P, K, alpha)"`` corresponds to a Lagrange method with all finite element nodes in the interior of the domain located at the position :math:`(\mbox{alpha})g + (1-\mbox{alpha})a_i` for :math:`g` the centroid of the element and :math:`a_i` the node of the standard :math:`P_K` method.
+     :widths: 10 10 10 10 10 10 10
+     :header-rows: 1
+
+     * - degree
+       - dimension
+       - d.o.f. number
+       - class
+       - vector
+       - :math:`\tau`-equivalent
+       - Polynomial
+
+     * - :math:`K`, :math:`0 \leq K \leq 255`
+       - :math:`P`, :math:`~ 1 \leq P \leq 255`
+       - :math:`\Frac{(K+P)!}{K! P!}`
+       - discontinuous
+       - No :math:`(Q = 1)`
+       - Yes :math:`(M = Id)`
+       - Yes         
+
+Even though Lagrange elements are defined for arbitrary degrees, choosing a
+high degree can be problematic for a large number of applications due to
+the "noisy" characteristic of the lagrange basis. These elements are
+recommended for the basic interpolation but for p.d.e. applications elements
+with hierarchical basis are preferable (see the corresponding section).
 
 Classical Lagrange elements on other geometries
 -----------------------------------------------
@@ -1391,7 +1413,7 @@ the shape functions read:
      - No :math:`(Q = 1)`
      - Yes
      - No
-       
+
    * - :math:`1`
      - :math:`3`
      - :math:`5`
@@ -1409,7 +1431,7 @@ the shape functions read:
      - No
 
 
-   
+
 .. list-table:: Discontinuous Lagrange element of order 0, 1 or 2 ``"FEM_PYRAMID_DISCONTINUOUS_LAGRANGE(K)"``
    :widths: 10 10 10 10 10 10 10
    :header-rows: 1
@@ -1429,7 +1451,7 @@ the shape functions read:
      - No :math:`(Q = 1)`
      - Yes
      - No
-       
+
    * - :math:`1`
      - :math:`3`
      - :math:`5`
@@ -1446,8 +1468,8 @@ the shape functions read:
      - Yes
      - No
 
-       
-	 
+
+	
 
 Elements with additional bubble functions
 +++++++++++++++++++++++++++++++++++++++++

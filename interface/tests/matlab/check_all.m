@@ -96,6 +96,14 @@ catch
   errcnt=errcnt+1; disp(['== ' t ' : FAILURE']);
 end;
 
+t = 'check_mitc [check mitc4 element and elementary transformations] ';
+try
+  check_mitc;
+  disp(['== ' t ': SUCCESS']);
+catch
+  errcnt=errcnt+1; disp(['== ' t ' : FAILURE']);
+end;
+
 t = 'demo_laplacian [model use for solving a Poisson problem] ';
 try
   automatic_var654 = 1;

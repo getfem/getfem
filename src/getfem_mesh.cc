@@ -488,11 +488,12 @@ namespace getfem {
     clear();
     set_name(m.name_);
     bgeot::basic_mesh::operator=(m);
-    cvf_sets = m.cvf_sets;
+    for (const auto &kv : m.cvf_sets) {
+      if (kv.second.get_parent_mesh() != 0)
+        cvf_sets[kv.first].set_parent_mesh(this);
+      cvf_sets[kv.first] = kv.second;
+    }
     valid_cvf_sets = m.valid_cvf_sets;
-    for (std::map<size_type, mesh_region>::iterator it = cvf_sets.begin();
-         it != cvf_sets.end(); ++it)
-      if (it->second.get_parent_mesh() != 0) it->second.set_parent_mesh(this);
     cvs_v_num.clear();
     gmm::uint64_type d = act_counter();
     for (dal::bv_visitor i(convex_index()); !i.finished(); ++i)
@@ -851,6 +852,23 @@ namespace getfem {
     }
   }
 
+  /* Select all the faces of the given mesh region (counted twice if they
+     are shared by two neighbour elements)
+  */
+  mesh_region all_faces_of_mesh(const mesh &m, const mesh_region &mr) {
+    mesh_region mrr;
+    mr.from_mesh(m);
+    mr.error_if_not_convexes();
+
+    for (mr_visitor i(mr); !i.finished(); ++i) {
+      size_type cv1 = i.cv();
+      short_type nbf = m.structure_of_convex(i.cv())->nb_faces();
+      for (short_type f = 0; f < nbf; ++f)
+        mrr.add(cv1, f);
+    }
+    return mrr;
+  }
+  
   /* Select all the faces sharing at least two element of the given mesh
       region. Each face is represented only once and is arbitrarily chosen
       between the two neighbour elements. Try to minimize the number of

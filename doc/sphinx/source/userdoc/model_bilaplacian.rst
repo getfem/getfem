@@ -18,7 +18,7 @@ The following function ::
 	                      region = size_type(-1));
 
 adds a bilaplacian brick on the variable `varname` and on the mesh region `region`. This represent a term :math:`\Delta(D \Delta u)`. where :math:`D(x)` is a coefficient determined by `dataname` which could be constant or described on a f.e.m. The corresponding weak form is :math:`\int D(x)\Delta u(x) \Delta v(x) dx`.
- 
+
 
 For the Kirchhoff-Love plate model, the weak form is a bit different (and more stable than the previous one). the function to add that term is ::
 
@@ -67,7 +67,7 @@ And a Dirichlet condition on the normal derivative can be prescribed thanks to t
   	R_must_be_derivated = false);
 
 These bricks add a Dirichlet condition on the normal derivative of the variable
-`varname` and on the mesh region `region` (which should be a boundary. 
+`varname` and on the mesh region `region` (which should be a boundary).
 The general form is :math:`\int \partial_n u(x)v(x) = \int r(x)v(x) \forall v`
 where :math:`r(x)` is the right hand side for the Dirichlet condition (0 for
 homogeneous conditions) and :math:`v` is in a space of multipliers
@@ -91,6 +91,6 @@ The test program :file:`bilaplacian.cc` is a good example of the use of the prev
 
 
 
-   
+
 
 

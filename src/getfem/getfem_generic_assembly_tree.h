@@ -1,6 +1,6 @@
 /*===========================================================================
 
- Copyright (C) 2013-2018 Yves Renard
+ Copyright (C) 2013-2019 Yves Renard
 
  This file is a part of GetFEM++
 
@@ -90,6 +90,7 @@ namespace getfem {
     GA_DEVIATOR,    // 'Deviator' operator
     GA_INTERPOLATE, // 'Interpolate' operation
     GA_INTERPOLATE_FILTER, // 'Interpolate_filter' operation
+    GA_INTERPOLATE_DERIVATIVE, // 'Interpolate_derivative' operation
     GA_ELEMENTARY,  // 'Elementary' operation (operation at the element level)
     GA_SECONDARY_DOMAIN,  // For the integration on a product of two domains
     GA_XFEM_PLUS,   // Évaluation on the + side of a level-set for fem_level_set
@@ -326,6 +327,8 @@ namespace getfem {
                                       // name of transformation
     std::string elementary_name;  // For Elementary_transformation :
                                   // name of transformation
+    std::string elementary_target;// For Elementary_transformation :
+                                  // target variable (for its mesh_fem) 
     size_type der1, der2;         // For functions and nonlinear operators,
                                   // optional derivative or second derivative.
     bool symmetric_op;

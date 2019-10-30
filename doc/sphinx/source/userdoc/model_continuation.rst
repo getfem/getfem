@@ -21,7 +21,7 @@ written in the form
    F(U) = 0.
 
 In what follows, we shall suppose that the model depends on an additional scalar
-parameter :math:`\lambda` so that :math:`F(U) = F(U, \lambda)`. 
+parameter :math:`\lambda` so that :math:`F(U) = F(U, \lambda)`.
 
 Numerical continuation
 ++++++++++++++++++++++
@@ -169,7 +169,7 @@ piece.
 Having this approximation at our disposal, we restart the predictor-corrector
 with :math:`(Y_{j}, r \tilde{T})`.
 
-In |gf|, the continuation is implemented for two ways of parametrisation of the
+In |gf|, the continuation is implemented for two ways of parameterization of the
 model:
 
 1. The parameter :math:`\lambda` is directly a scalar datum, which the model
@@ -222,7 +222,7 @@ A point :math:`\bar{Y}` is called a *bifurcation point* of the system
 curves pass through it. The following result gives a test for *smooth*
 bifurcation points (see, e.g., [Georg2001]_):
 
-Let :math:`s \mapsto Y(s)` be a parametrisation of a solution curve and
+Let :math:`s \mapsto Y(s)` be a parameterization of a solution curve and
 :math:`\bar{Y} := Y(\bar{s})` be a bifurcation point. Moreover, let
 :math:`T^{\top} \dot{Y}(\bar{s}) > 0`,
 :math:`B \notin \mathrm{Im}(J(\bar{Y}))`,
@@ -243,14 +243,14 @@ Then :math:`\tau_{\mathrm{BP}}(Y(s))` changes its sign at :math:`s = \bar{s}`.
 Obviously, if one takes :math:`B`, :math:`C` and :math:`d` randomly, it is
 highly possible that they satisfy the requirements above. Consequently, the
 numerical continuation method is able to detect bifurcation points by
-taking the vectors :math:`Y` and :math:`T` supplied by the correction at each 
+taking the vectors :math:`Y` and :math:`T` supplied by the correction at each
 continuation step and monitoring the signs of :math:`\tau_{\mathrm{BP}}`.
 
 Once a bifurcation point :math:`\bar{Y}` is detected by a sign change
 :math:`\tau_{\mathrm{BP}}(Y_{j}) \tau_{\mathrm{BP}}(Y_{j+1}) < 0`, it can be
 approximated more precisely by the predictor-corrector steps described above
 with a special step-length adaptation (see Section 8.1 in [Al-Ge1997]_). Namely,
-one can take the subsequent step lengths as 
+one can take the subsequent step lengths as
 
    .. math::
 
@@ -423,12 +423,12 @@ or even tools for non-smooth ones do. The real numbers ``delta_max``,
 ``ndir`` and ``nspan`` stand for :math:`n_{\mathrm{dir}}` and
 :math:`n_{\mathrm{span}}`, respectively.
 
-Optionally, parametrisation by a vector datum is then declared by::
+Optionally, parameterization by a vector datum is then declared by::
 
   S.set_parametrised_data_names(initdata_name, finaldata_name, currentdata_name);
 
-Here, the data names ``initdata_name`` and ``finaldata_name`` should represent 
-:math:`P^{0}` and :math:`P^{1}`, respectively. Under ``currentdata_name``, the 
+Here, the data names ``initdata_name`` and ``finaldata_name`` should represent
+:math:`P^{0}` and :math:`P^{1}`, respectively. Under ``currentdata_name``, the
 values of :math:`P(\lambda)` have to be stored, that is, actual values of the
 datum the model depends on.
 
@@ -439,7 +439,7 @@ Next, the continuation is initialised by::
 where ``U`` should be a solution for the value of the parameter :math:`\lambda`
 equal to ``lambda`` so that :math:`Y_{0}=` (\ ``U``\ ,\ ``lambda``\ ). During
 this initialisation, an initial unit tangent :math:`T_{0}` corresponding to
-:math:`Y_{0}` is computed in accordance with the sign of the initial value 
+:math:`Y_{0}` is computed in accordance with the sign of the initial value
 ``T_lambda``, and it is returned in ``T_U``, ``T_lambda``. Moreover, ``h`` is
 set to the initial step size ``h_init``.
 

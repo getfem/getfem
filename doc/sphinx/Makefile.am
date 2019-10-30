@@ -23,7 +23,8 @@ PYTHON        = python
 SPHINXROOT    = http://svn.python.org/projects
 LANGUAGE      = en
 SPHINXOPTS    = -D language=$(LANGUAGE)
-SPHINXBUILD   = $(PYTHON) tools/sphinx-build.py
+# SPHINXBUILD   = $(PYTHON) tools/sphinx-build.py
+SPHINXBUILD   = sphinx-build
 SPHINXINTL    = sphinx-intl
 PAPER         =
 SOURCES       = $(srcdir)/source
@@ -51,34 +52,34 @@ help:
 	@echo "  linkcheck to check all external links for integrity"
 	@echo "  upload    to make HTML and LATEX docs and upload it to Savannah.org"
 
-checkout:
-	@if [ ! -d tools ]; then \
-	  echo "Checking out tools..."; \
-	  svn checkout $(SPHINXROOT)/python/trunk/Doc/tools tools; \
-	fi
-	@if [ ! -d tools/sphinx ]; then \
-	  echo "Checking out Sphinx..."; \
-	  svn checkout $(SPHINXROOT)/external/Sphinx-1.2/sphinx tools/sphinx; \
-	fi
-	@if [ ! -d tools/docutils ]; then \
-	  echo "Checking out Docutils..."; \
-	  svn checkout $(SPHINXROOT)/external/docutils-0.11/docutils tools/docutils; \
-	fi
-	@if [ ! -d tools/jinja2 ]; then \
-	  echo "Checking out Jinja..."; \
-	  svn checkout $(SPHINXROOT)/external/Jinja-2.3.1/jinja2 tools/jinja2; \
-	fi
-	@if [ ! -d tools/pygments ]; then \
-	  echo "Checking out Pygments..."; \
-	  svn checkout $(SPHINXROOT)/external/Pygments-1.6/pygments tools/pygments; \
-	fi
-
-update: checkout
-	svn update tools
-	svn update tools/sphinx
-	svn update tools/docutils
-	svn update tools/jinja2
-	svn update tools/pygments
+# checkout:
+#	@if [ ! -d tools ]; then \
+#	  echo "Checking out tools..."; \
+#	  svn checkout $(SPHINXROOT)/python/trunk/Doc/tools tools; \
+#	fi
+#	@if [ ! -d tools/sphinx ]; then \
+#	  echo "Checking out Sphinx..."; \
+#	  svn checkout $(SPHINXROOT)/external/Sphinx-1.2/sphinx tools/sphinx; \
+#	fi
+#	@if [ ! -d tools/docutils ]; then \
+#	  echo "Checking out Docutils..."; \
+#	  svn checkout $(SPHINXROOT)/external/docutils-0.6/docutils tools/docutils; \
+#	fi
+#	@if [ ! -d tools/jinja2 ]; then \
+#	  echo "Checking out Jinja..."; \
+#	  svn checkout $(SPHINXROOT)/external/Jinja-2.3.1/jinja2 tools/jinja2; \
+#	fi
+#	@if [ ! -d tools/pygments ]; then \
+#	  echo "Checking out Pygments..."; \
+#	  svn checkout $(SPHINXROOT)/external/Pygments-1.6/pygments tools/pygments; \
+#	fi
+#
+#update: checkout
+#	svn update tools
+#	svn update tools/sphinx
+#	svn update tools/docutils
+#	svn update tools/jinja2
+#	svn update tools/pygments
 
 images:
 	-cd $(srcdir)/source/userdoc/images/; make png
@@ -88,7 +89,7 @@ images:
 	-cd $(srcdir)/source/scilab/images/; make png
 
 build: $(srcdir)/source/matlab/cmdref.rst $(srcdir)/source/python/cmdref.rst $(srcdir)/source/scilab/cmdref.rst checkout images
-	$(SPHINXINTL) build
+	echo # $(SPHINXINTL) build # sphinx-intl produces a segmentation fault ...
 	echo # rm -fr build/$(BUILDER)/_images
 	echo # rm -fr build/$(BUILDER)/*.png
 	mkdir -p build/$(BUILDER) build/doctrees

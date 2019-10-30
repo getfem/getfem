@@ -1,6 +1,6 @@
 /*===========================================================================
 
- Copyright (C) 2013-2018 Yves Renard
+ Copyright (C) 2013-2019 Yves Renard
 
  This file is a part of GetFEM++
 
@@ -349,7 +349,8 @@ namespace getfem {
     case GA_NODE_ELEMENTARY_VAL_TEST: case GA_NODE_ELEMENTARY_GRAD_TEST:
     case GA_NODE_ELEMENTARY_HESS_TEST: case GA_NODE_ELEMENTARY_DIVERG_TEST:
       c += 1.33*(1.22+ga_hash_code(pnode->name))
-        + 2.63*ga_hash_code(pnode->elementary_name);
+        + 2.63*ga_hash_code(pnode->elementary_name)
+        + 3.47*ga_hash_code(pnode->elementary_target);
       break;
     case GA_NODE_XFEM_PLUS_VAL: case GA_NODE_XFEM_PLUS_GRAD:
     case GA_NODE_XFEM_PLUS_HESS: case GA_NODE_XFEM_PLUS_DIVERG:
@@ -585,6 +586,13 @@ namespace getfem {
         size_type test = ga_parse_prefix_test(name);
         pnode->name = name;
 
+        if (ndt == 2) {
+          name = pnode->elementary_target;
+          ga_parse_prefix_operator(name);
+          ga_parse_prefix_test(name);
+          pnode->elementary_target = name;
+        }
+
         // Group must be tested and it should be a fem variable
         if (!(workspace.variable_or_group_exists(name)))
           ga_throw_error(pnode->expr, pnode->pos,
@@ -606,7 +614,7 @@ namespace getfem {
                          "Tensor with too many dimensions. Limited to 6");
 
         if (test == 1) {
-          pnode->name_test1 = name;
+          pnode->name_test1 = pnode->name;
           pnode->interpolate_name_test1 = pnode->interpolate_name;
           if (option == 1)
             workspace.test1.insert
@@ -617,7 +625,7 @@ namespace getfem {
             ga_throw_error(pnode->expr, pnode->pos,
                            "Invalid null size of variable");
         } else if (test == 2) {
-          pnode->name_test2 = name;
+          pnode->name_test2 = pnode->name;
           pnode->interpolate_name_test2 = pnode->interpolate_name;
           if (option == 1)
             workspace.test2.insert
@@ -763,6 +771,15 @@ namespace getfem {
             ga_throw_error(pnode->expr, pnode->pos,
                            "Unknown elementary transformation");
           }
+          if (!(workspace.variable_or_group_exists(pnode->elementary_target))) {
+            ga_throw_error(pnode->expr, pnode->pos, "Unknown data or variable "
+                           << pnode->elementary_target);
+          }
+          const mesh_fem *mft = workspace.associated_mf(name);
+          if (!mft)
+            ga_throw_error(pnode->expr, pnode->pos,
+                           "Thir argument of the elementary transformation "
+                           "should be a finite element variables/data");
         } else if (ndt == 3) {
           if (!(workspace.secondary_domain_exists
                 (pnode->interpolate_name))) {

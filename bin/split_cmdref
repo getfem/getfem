@@ -40,7 +40,7 @@ class ParseError(Exception):
 
 
 if (len(sys.argv) != 2):
-    raise SystemExit, 'Format : split_cmdref directory'
+    raise SystemExit('Format : split_cmdref directory')
 
 directory = sys.argv[1]
 

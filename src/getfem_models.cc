@@ -42,12 +42,7 @@ namespace getfem {
   }
 
   void model::var_description::set_size() {
-    n_temp_iter = 0;
-    default_iter = 0;
-    if (is_complex)
-      complex_value.resize(n_iter);
-    else
-      real_value.resize(n_iter);
+    clear_temporaries();
     v_num_var_iter.resize(n_iter);
     v_num_iter.resize(n_iter);
     size_type s = is_fem_dofs ? passociated_mf()->nb_dof()
@@ -687,14 +682,9 @@ namespace getfem {
 
   void model::resize_fixed_size_variable(const std::string &name,
                                          size_type size) {
-    GMM_ASSERT1(!(variables[name].is_fem_dofs),
-                "Cannot explicitly resize a fem variable or data");
-    GMM_ASSERT1(variables[name].imd == 0,
-                "Cannot explicitly resize an im data");
-    GMM_ASSERT1(size, "Variables of null size are not allowed");
-    variables[name].qdims.resize(1);
-    variables[name].qdims[0] = size;
-    variables[name].set_size();
+    bgeot::multi_index sizes(1);
+    sizes[0] = size;
+    resize_fixed_size_variable(name, sizes);
   }
 
   void model::resize_fixed_size_variable(const std::string &name,
@@ -811,13 +801,9 @@ namespace getfem {
 
   void model::add_fem_data(const std::string &name, const mesh_fem &mf,
                            dim_type qdim, size_type niter) {
-    check_name_validity(name);
-    variables.emplace(name, var_description(false, is_complex(), &mf, 0, niter,
-                                            VDESCRFILTER_NO));
-    variables[name].qdims[0] = qdim;
-    GMM_ASSERT1(qdim, "Data of null size are not allowed");
-    variables[name].set_size();
-    add_dependency(mf);
+    bgeot::multi_index sizes(1);
+    sizes[0] = qdim;
+    add_fem_data(name, mf, sizes, niter);
   }
 
   void model::add_fem_data(const std::string &name, const mesh_fem &mf,

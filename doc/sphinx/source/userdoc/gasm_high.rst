@@ -2,7 +2,7 @@
 
 .. include:: ../replaces.txt
 
-.. highlightlang:: c++
+.. highlightlang:: none
 
 .. index:: asm, generic assembly
 
@@ -42,7 +42,7 @@ A specific weak form language has been developed to describe the weak formulatio
 
   - Some constants: ``pi``, ``meshdim`` (the dimension of the current mesh), ``qdim(u)`` and ``qdims(u)`` the dimensions of the variable ``u`` (the size for fixed size variables and the dimension of the vector field for FEM variables), ``Id(n)`` the identity :math:`n\times n` matrix.
 
-  - Parentheses can be used to change the operations order in a standard way. For instance ``(1+2)*4`` or ``(u+v)*Test_u`` are valid expressions. 
+  - Parentheses can be used to change the operations order in a standard way. For instance ``(1+2)*4`` or ``(u+v)*Test_u`` are valid expressions.
 
   - The access to a component of a vector/matrix/tensor can be done by following a term by a left parenthesis, the list of components and a right parenthesis. For instance ``[1,1,2](3)`` is correct and will return ``2``. Note that indices are assumed to begin by 1 (even in C++ and with the python interface). A colon can replace the value of an index in a Matlab like syntax.
 
@@ -60,7 +60,7 @@ A specific weak form language has been developed to describe the weak formulatio
 
   - A certain number of linear and nonlinear operators (``Trace``, ``Norm``, ``Det``, ``Deviator``, ``Contract``, ...). The nonlinear operators cannot be applied to test functions.
 
-  - ``Diff(expression, variable)``: The possibility to explicit differentiate an expression with respect to a variable (symbolic differentiation). 
+  - ``Diff(expression, variable)``: The possibility to explicit differentiate an expression with respect to a variable (symbolic differentiation).
 
   - ``Diff(expression, variable, direction)``: computes the derivative of ``expression`` with respect to ``variable`` in the direction ``direction``.
 
@@ -70,7 +70,7 @@ A specific weak form language has been developed to describe the weak formulatio
 
   - ``Interpolate(variable, transformation)``: Powerful operation which allows to interpolate the variables, or test functions either on the same mesh on other elements or on another mesh. ``transformation`` is an object stored by the workspace or model object which describes the map from the current point to the point where to perform the interpolation. This functionality can be used for instance to prescribe periodic conditions or to compute mortar matrices for two finite element spaces defined on different meshes or more generally for fictitious domain methods such as fluid-structure interaction.
 
-  - ``Elementary_transformation(variable, transformation)``: Allow a linear tranformation defined at the element level (i.e. not possible to define at the gauss point level). This feature has been added mostly for defining a reduction for plate elements (projection onto low-level vector element such as rotated RT0). ``transformation`` is an object stored by the workspace or model object which describes the trasformation for a particular element.
+  - ``Elementary_transformation(variable, transformation, dest)``: Allow a linear transformation defined at the element level (i.e. not possible to define at the gauss point level). This feature has been added mostly for defining a reduction for plate elements (projection onto low-level vector element such as rotated RT0). ``transformation`` is an object stored by the workspace or model object which describes the trasformation for a particular element. ``dest`` is an optional argument refering to a model variable or data whose fem will be the target fem of the transformation. If omitted, the target fem of the transformation is the one of the first variable. 
 
   - Possibility of integration on the direct product of two-domains for double integral computation or coupling of two variables with a Kernel / convolution / exchange integral. This allows terms like :math:`\displaystyle\int_{\Omega_1}\int_{\Omega_2}k(x,y)u(x)v(y)dydx` with :math:`\Omega_1` and :math:`\Omega_2` two domains, different or not, having their own meshes, integration methods and with :math:`u` a variable defined on :math:`\Omega_1` and :math:`v` a variable defined on :math:`\Omega_2`. The keyword ``Secondary_domain(variable)`` allows to access to the variables on the second domain of integration.
 
@@ -83,7 +83,7 @@ The weak formulation for the Poisson problem on a domain :math:`\Omega`
 
   -\mbox{div } \nabla u = f, \mbox{ in } \Omega,
 
-with Dirichlet boundary conditions :math:`u = 0` on :math:`\partial\Omega` is classically 
+with Dirichlet boundary conditions :math:`u = 0` on :math:`\partial\Omega` is classically
 
 
 .. math::
@@ -123,20 +123,19 @@ Another classical equation is linear elasticity:
 
 for :math:`u` a vector field and :math:`\sigma(u) = \lambda \mbox{div } u + \mu (\nabla u + (\nabla u)^T)` when isotropic linear elasticity is considered. The corresponding assembly string to describe the weak formulation can be written::
 
-  (lambda*Trace(Grad_u)*Id(qdim(u)) + mu*(Grad_u+Grad_u')):Grad_Test_u - my_f.Test_u
+  "(lambda*Trace(Grad_u)*Id(qdim(u)) + mu*(Grad_u+Grad_u')):Grad_Test_u - my_f.Test_u"
 
-or:: 
+or::
 
-  lambda*Div_u*Div_Test_u + mu*(Grad_u + Grad_u'):Grad_Test_u - my_f.Test_u
+  "lambda*Div_u*Div_Test_u + mu*(Grad_u + Grad_u'):Grad_Test_u - my_f.Test_u"
 
 Here again, the coefficients ``lambda`` and ``mu`` can be given constants, or scalar field or explicit expression or even expression coming from some other variables in order to couples some problems. For instance, if the coefficients depends on a temperature field one can write::
 
-  my_f1(theta)*Div_u*Div_Test_u
-  + my_f2(theta)*(Grad_u + Grad_u'):Grad_Test_u - my_f.Grad_Test_u
+  "my_f1(theta)*Div_u*Div_Test_u + my_f2(theta)*(Grad_u + Grad_u'):Grad_Test_u - my_f.Grad_Test_u"
 
 where ``theta`` is the temperature which can be the solution to a Poisson equation::
 
-  Grad_theta.Grad_Test_theta - my_f*Grad_Test_theta
+  "Grad_theta.Grad_Test_theta - my_f*Grad_Test_theta"
 
 and ``my_f1`` and ``my_f2`` are some given functions. Note that in that case, the problem is nonlinear due to the coupling, even if the two functions  ``my_f1`` and ``my_f2`` are linear.
 
@@ -171,15 +170,15 @@ with ``model`` a previously define ``getfem::model`` object. In that case the va
 In that case, the variable and constant have to be added to the workspace. This can be done thanks to the following methods::
 
   workspace.add_fem_variable(name, mf, I, V);
-  
+
   workspace.add_fixed_size_variable(name, I, V);
 
   workspace.add_fem_constant(name, mf, V);
-  
+
   workspace.add_fixed_size_constant(name, V);
 
   workspace.add_im_data(name, imd, V);
-  
+
 where ``name`` is the variable/constant name (see in the next sections the restriction on possible names), ``mf`` is the ``getfem::mesh_fem`` object describing the finite element method, ``I`` is an object of class ``gmm::sub_interval`` indicating the interval of the variable on the assembled vector/matrix and ``V`` is a ``getfem::base_vector`` being the value of the variable/constant. The last method add a constant defined on an ``im_data`` object ``imd`` which allows to store scalar/vector/tensor field informations on the integration points of an ``mesh_im`` object.
 
 
@@ -230,14 +229,13 @@ As a first example, if one needs to perform the assembly of a Poisson problem
 
   -\mbox{div } \nabla u = f, \mbox{ in } \Omega,
 
-the stiffness matrix is given 
+the stiffness matrix is given
 
 .. math::
 
   K_{i,j} = \int_{\Omega} \nabla \varphi_i \cdot \nabla \varphi_j dx,
 
 and will be assembled by the following code::
-
 
   getfem::ga_workspace workspace;
   getfem::size_type nbdof = mf.nb_dof();
@@ -421,7 +419,7 @@ A certain number of predefined scalar functions can be used. The exhaustive list
   - ``pos_part(t)`` (:math:`tH(t)`)
   - ``reg_pos_part(t, eps)`` (:math:`(t-eps/2-t^2/(2eps))H(t-eps) + t^2H(t)/(2eps)`)
   - ``neg_part(t)`` (:math:`-tH(-t)`), ``max(t, u)``, ``min(t, u)``
-     
+
 A scalar function can be applied to a scalar expression, but also to a tensor one. If is is applied to a tensor expression, is is applied componentwise and the result is a tensor with the same dimensions. For functions having two arguments (pow(t,u), min(t,u) ...) if two non-scalar arguments are passed, the dimension have to be the same. For instance "max([1;2],[0;3])" will return "[0;3]".
 
 
@@ -462,7 +460,7 @@ Binary operations
 
 A certain number of binary operations between tensors are available:
 
-  
+
     - ``+`` and ``-`` are the standard addition and subtraction of scalar, vector, matrix or tensors.
 
     - ``*`` stands for the scalar, matrix-vector, matrix-matrix or (fourth order tensor)-matrix multiplication.
@@ -480,24 +478,24 @@ A certain number of binary operations between tensors are available:
     - ``@`` stands for the tensor product.
 
     - ``Contract(A, i, B, j)`` stands for the contraction of tensors A and B with respect to the ith index of A and jth index of B. The first index is numbered 1. For instance ``Contract(V,1,W,1)`` is equivalent to ``V.W`` for two vectors ``V`` and ``W``.
-      
+
     - ``Contract(A, i, j, B, k, l)`` stands for the double contraction of tensors A and B with respect to indices i,j of A and indices k,l of B. The first index is numbered 1. For instance ``Contract(A,1,2,B,1,2)`` is equivalent to ``A:B`` for two matrices ``A`` and ``B``.
-      
+
 
 Unary operators
 ---------------
- 
+
   - ``-`` the unary minus operator: change the sign of an expression.
-  
+
   - ``'`` stands for the transpose of a matrix or line view of a vector. It a tensor ``A`` is of order greater than two,``A'`` denotes the inversion of the two first indices.
-  
+
   - ``Contract(A, i, j)`` stands for the contraction of tensor A with respect to its ith and jth indices. The first index is numbered 1. For instance, ``Contract(A, 1, 2)`` is equivalent to ``Trace(A)`` for a matrix ``A``.
 
   - ``Swap_indices(A, i, j)`` exchange indices number i and j. The first index is numbered 1. For instance ``Swap_indices(A, 1, 2)`` is equivalent to ``A'`` for a matrix ``A``.
 
   - ``Index_move_last(A, i)`` move the index number i in order to be the last one. For instance, if ``A`` is a fourth order tensor :math:`A_{i_1i_2i_3i_4}`, then the result of ``Index_move_last(A, 2)`` will be the tensor :math:`B_{i_1i_3i_4i_2} = A_{i_1i_2i_3i_4}`. For a matrix, ``Index_move_last(A, 1)`` is equivalent to ``A'``.
 
-    
+
 Parentheses
 -----------
 
@@ -530,17 +528,17 @@ Constant expressions
 --------------------
 
   - Floating points with standards notations (for instance ``3``, ``1.456``, ``1E-6``)
-  - ``pi``: the constant Pi. 
+  - ``pi``: the constant Pi.
   - ``meshdim``: the dimension of the current mesh (i.e. size of geometrical nodes)
-  - ``timestep``: the main time step of the model on which this assembly string is evaluated (defined by ``model.set_time_step(dt)``). Do not work on pure workspaces. 
+  - ``timestep``: the main time step of the model on which this assembly string is evaluated (defined by ``model.set_time_step(dt)``). Do not work on pure workspaces.
   - ``Id(n)``: the identity matrix of size :math:`n\times n`. `n` should be an integer expression. For instance ``Id(meshdim)`` is allowed.
   - ``qdim(u)``: the total dimension of the variable ``u`` (i.e. the  size for fixed size variables and the total dimension of the vector/tensor field for FEM variables)
   - ``qdims(u)``: the dimensions of the variable ``u`` (i.e. the size for fixed size variables and the vector of dimensions of the vector/tensor field for FEM variables)
 
-Special expressions linked to the current position 
+Special expressions linked to the current position
 --------------------------------------------------
 
-  - ``X`` is the current coordinate on the real element (i.e. the position on the mesh of the current Gauss point on which the expression is evaluated), ``X(i)`` is its i-th component. For instance ``sin(X(1)+X(2))`` is a valid expression on a mesh of dimension greater or equal to two. 
+  - ``X`` is the current coordinate on the real element (i.e. the position on the mesh of the current Gauss point on which the expression is evaluated), ``X(i)`` is its i-th component. For instance ``sin(X(1)+X(2))`` is a valid expression on a mesh of dimension greater or equal to two.
 
   - ``Normal`` the outward unit normal vector to a boundary when integration on a boundary is performed.
 
@@ -656,7 +654,7 @@ The macros are expanded inline at the lexical analysis phase. Note that a the co
 
 Explicit Differentiation
 ------------------------
-The workspace object automatically differentiate terms that are of lower deriation order. However, it is also allowed to explicitely differentiate an expression with respect to a variable. One interest is that the automatic differentiation performs a derivative with respect to all the declared variables of model/workspace but this is not necessarily the expected behavior when using a potential energy, for instance. The syntax is::
+The workspace object automatically differentiate terms that are of lower deriation order. However, it is also allowed to explicitly differentiate an expression with respect to a variable. One interest is that the automatic differentiation performs a derivative with respect to all the declared variables of model/workspace but this is not necessarily the expected behavior when using a potential energy, for instance. The syntax is::
 
   Diff(expression, variable)
 
@@ -704,7 +702,7 @@ is equivalent to::
   Grad_u
 
 for a varible ``u``.
-  
+
 .. _ud-gasm-high-transf:
 
 Interpolate transformations
@@ -714,10 +712,10 @@ The ``Interpolate`` operation allows to compute integrals between quantities whi
 
 In order to use this functionality, the user have first to declare to the workspace or to the model object an interpolate transformation which described the map between the current integration point and the point lying on the same mesh or on another mesh.
 
-Different kind of transformations can be described. Several kinds of transformations has been implemented. The first one, described hereafter is a transformation described by an expression. A second one corresponds to the raytracing contact detection (see :ref:`ud-model-contact-friction_raytrace_inter_trans`). Some other transformations (neighbour element and element extrapolation) are describe in the next sections. 
+Different kind of transformations can be described. Several kinds of transformations has been implemented. The first one, described hereafter is a transformation described by an expression. A second one corresponds to the raytracing contact detection (see :ref:`ud-model-contact-friction_raytrace_inter_trans`). Some other transformations (neighbour element and element extrapolation) are describe in the next sections.
 
 The transformation defined by an expression can be added to the workspace or the model thanks to the command::
- 
+
   add_interpolate_transformation_from_expression
     (workspace, transname, source_mesh, target_mesh, expr);
 
@@ -766,7 +764,7 @@ For instance, the assembly expression to prescribe the equality of a variable ``
 
 (see :file:`demo\_periodic\_laplacian.m` in :file:`interface/tests/matlab` directory).
 
-In some situations, the interpolation of a point may fail if the transformed point is outside the target mesh. Both in order to treat this case and to allow the transformation to differentiate some other cases (see :ref:`ud-model-contact-friction_raytrace_inter_trans` for the differentiation between rigid bodies and deformable ones in the Raytracing_interpolate_transformation) the tranformation returns an integer identifier to the weak form language. A value 0 of this identifier means that no corresponding location on the target mesh has been found. A value of 1 means that a corresponding point has been found. This identifier can be used thanks to the following special command of the weak form language::
+In some situations, the interpolation of a point may fail if the transformed point is outside the target mesh. Both in order to treat this case and to allow the transformation to differentiate some other cases (see :ref:`ud-model-contact-friction_raytrace_inter_trans` for the differentiation between rigid bodies and deformable ones in the Raytracing_interpolate_transformation) the transformation returns an integer identifier to the weak form language. A value 0 of this identifier means that no corresponding location on the target mesh has been found. A value of 1 means that a corresponding point has been found. This identifier can be used thanks to the following special command of the weak form language::
 
   Interpolate_filter(transname, expr, i)
 
@@ -791,9 +789,9 @@ A specific transformation (see previous section) is defined in order to allows t
   add_element_extrapolation_transformation
   (workspace, transname, my_mesh, std::map<size_type, size_type> &elt_corr);
 
-The map elt_corr should contain the correspondances between the elements where the transformation is to be applied and the respective elements where the extrapolation has to be made. On the element not listed in the map, no transformation is applied and the evaluation is performed normally on the current element.
-  
-The following functions allow to change the element correspondance of a previously added element extrapolation transformation::
+The map elt_corr should contain the correspondences between the elements where the transformation is to be applied and the respective elements where the extrapolation has to be made. On the element not listed in the map, no transformation is applied and the evaluation is performed normally on the current element.
+
+The following functions allow to change the element correspondence of a previously added element extrapolation transformation::
 
   set_element_extrapolation_correspondence
   (model, transname, std::map<size_type, size_type> &elt_corr);
@@ -853,24 +851,24 @@ In some very special cases, it can be interesting to compute an integral on the 
 
 where :math:`k(x,y)` is a given kernel, :math:`u` a quantity defined on :math:`\Omega_1` and  :math:`v` a quantity defined on :math:`\Omega_2`, eventually with  :math:`\Omega_1` and :math:`\Omega_2` the same domain. This can be interesting either to compute such an integral or to define an interaction term between two variables defined on two different domains.
 
-CAUTION: Of course, this kind of term have to be used with great care, since it naturally leads to fully populated stiffness or tangent matrices. 
+CAUTION: Of course, this kind of term have to be used with great care, since it naturally leads to fully populated stiffness or tangent matrices.
 
 
 The weak form language of |gf| furnishes a mechanism to compute such a term. First, the secondary domain has to be declared in the workspace/model with its integration methods. The addition of a standard secondary domain can be done with one of the two following functions::
 
   add_standard_secondary_domain(model, domain_name, mim, region);
-  
+
   add_standard_secondary_domain(workspace, domain_name, mim, region);
 
 where ``model`` or ``workspace`` is the model or workspace where the secondary domain has to be declared, ``domain_name`` is a string for the identification of this domain together with the mesh region and integration method, ``mim`` the integration method and ``region`` a mesh region. Note that with these standard secondary domains, the integration is done on the whole region for each element of the primary domain. It can be interesting to implement specific secondary domains restricting the integration to the necessary elements with respect to the element of the primary domain. A structure is dedicated to this in |gf|.
 
-Once a secondary domain has been declared, it can be specified that a weak form language expression has to be assembled on the direct product of a current domain and a secondary domain, adding the name of the secondary domain to the ``add_expression`` method of the workspace object or using ``add_linear_twodomain_term``, ``add_nonlinear_twodomain_term`` or ``add_twodomain_source_term`` functions:: 
+Once a secondary domain has been declared, it can be specified that a weak form language expression has to be assembled on the direct product of a current domain and a secondary domain, adding the name of the secondary domain to the ``add_expression`` method of the workspace object or using ``add_linear_twodomain_term``, ``add_nonlinear_twodomain_term`` or ``add_twodomain_source_term`` functions::
 
   workspace.add_expression(expr, mim, region, derivative_order, secondary_domain)
   add_twodomain_source_term(model, mim, expr, region, secondary_domain)
   add_linear_twodomain_term(model, mim, expr, region, secondary_domain)
   add_nonlinear_twodomain_term(model, mim, expr, region, secondary_domain)
-  
+
 For the utilisation with the Python/Scilab/Matlab interface, see the documentation on ``gf_asm`` command and the ``model`` object.
 
 
@@ -918,25 +916,39 @@ the method::
 
 where ``pelementary_transformation`` is a pointer to an object deriving from ``virtual_elementary_transformation``. Once it is added to the model/workspace, it is possible to use the following expressions in the weak form language::
 
-  Elementary_transformation(u, transname)
-  Elementary_transformation(Grad_u, transname)
-  Elementary_transformation(Div_u, transname)
-  Elementary_transformation(Hess_u, transname)
-  Elementary_transformation(Test_u, transname)
-  Elementary_transformation(Grad_Test_u, transname)
-  Elementary_transformation(Div_Test_u, transname)
-  Elementary_transformation(Hess_Test_u, transname)
+  Elementary_transformation(u, transname[, dest])
+  Elementary_transformation(Grad_u, transname[, dest])
+  Elementary_transformation(Div_u, transname[, dest])
+  Elementary_transformation(Hess_u, transname[, dest])
+  Elementary_transformation(Test_u, transname[, dest])
+  Elementary_transformation(Grad_Test_u, transname[, dest])
+  Elementary_transformation(Div_Test_u, transname[, dest])
+  Elementary_transformation(Hess_Test_u, transname[, dest])
 
-where ``u`` is one of the FEM variables of the model/workspace. For the moment, the only available elementary transformation is the the one for the projection on rotated RT0 element for two-dimensional elements which can be added thanks to the function (defined in :file:`src/getfem/getfem_linearized_plates.h`)::
+where ``u`` is one of the FEM variables of the model/workspace, and ``dest`` is an optional parameter which should be a variable or data name of the model and will correspond to the target fem of the transformation. If omitted, by default, the transformation is from the fem of the first variable to itself. 
+
+A typical transformation is the the one for the projection on rotated RT0 element for two-dimensional elements which is an ingredient of the MITC plate element. It can be added thanks to the function (defined in :file:`src/getfem/getfem_linearized_plates.h`)::
 
   add_2D_rotated_RT0_projection(model, transname)
+
+Some other transformations are available for the use into Hybrid High-Order methods (HHO methods, see :ref:`ud-hho` for more information). These transformations correspond to the reconstruction of the gradient of a variable or the variable itself, the HHO methods having separated discretizations on the interior of the element and on its faces. The different transformations can be added with the functions (defined in :file:`src/getfem/getfem_HHO.h`)::
+
+  add_HHO_reconstructed_gradient(model, transname);
+  add_HHO_reconstructed_symmetrized_gradient(model, transname);
+
+  void add_HHO_reconstructed_value(model, transname);
+  void add_HHO_reconstructed_symmetrized_value(model, transname);
+
+  void add_HHO_stabilization(model, transname);
+  void add_HHO_symmetrized_stabilization(model, transname);
+
 
 .. _ud-gasm-high_xfem:
 
 Xfem discontinuity evaluation (with mesh_fem_level_set)
 -------------------------------------------------------
 
-For |gf| 5.1. When using a fem cut by a level-set (using fem_level_set or mesh_fem_level_set objects), it is often interesting to integrate the discontinuity jump of a variable, or the jump in gradient or the average value. For this purpose, the weak form language furnishes the following expressions for ``u`` a FEM variable::
+When using a fem cut by a level-set (using fem_level_set or mesh_fem_level_set objects), it is often interesting to integrate the discontinuity jump of a variable, or the jump in gradient or the average value. For this purpose, the weak form language furnishes the following expressions for ``u`` a FEM variable::
 
   Xfem_plus(u)
   Xfem_plus(Grad_u)
@@ -946,7 +958,7 @@ For |gf| 5.1. When using a fem cut by a level-set (using fem_level_set or mesh_f
   Xfem_plus(Test_Grad_u)
   Xfem_plus(Test_Div_u)
   Xfem_plus(Test_Hess_u)
-  
+
   Xfem_minus(u)
   Xfem_minus(Grad_u)
   Xfem_minus(Div_u)
@@ -955,7 +967,7 @@ For |gf| 5.1. When using a fem cut by a level-set (using fem_level_set or mesh_f
   Xfem_minus(Test_Grad_u)
   Xfem_minus(Test_Div_u)
   Xfem_minus(Test_Hess_u)
-  
+
 which are only available when the evaluation (integration) is made on the curve/surface separating two zones of continuity, i.e. on the zero level-set of a considered level-set function (using a ``mesh_im_level_set`` object). For instance, a jump in the variable ``u`` will be given by::
 
   Xfem_plus(u)-Xfem_minus(u)
@@ -964,10 +976,10 @@ and the average by::
 
   (Xfem_plus(u)+Xfem_minus(u))/2
 
-  The value ``Xfem_plus(u)`` is the value of ``u`` on the side where the corresponding level-set function is positive and ``Xfem_minus(u)`` the value of ``u`` on the side where the level-set function is negative.
+The value ``Xfem_plus(u)`` is the value of ``u`` on the side where the corresponding level-set function is positive and ``Xfem_minus(u)`` the value of ``u`` on the side where the level-set function is negative.
 
-  Additionally, note that, when integrating on a level-set with a ``mesh_im_level_set`` object, ``Normal`` stands for the normal unit vector to the level-set in the direction of the gradient of the level-set function.
-  
+Additionally, note that, when integrating on a level-set with a ``mesh_im_level_set`` object, ``Normal`` stands for the normal unit vector to the level-set in the direction of the gradient of the level-set function.
+
 Storage of sub-expressions in a getfem::im_data object during assembly
 ----------------------------------------------------------------------
 
@@ -994,7 +1006,7 @@ the tangent system).
 If before = 0 (default), the assignement is done after the assembly terms.
 
 Additionally, In a model, the method::
-  
+
   model.clear_assembly_assignments()
 
 allows to cancel all the assembly assignments previously added.

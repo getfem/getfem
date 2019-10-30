@@ -161,7 +161,7 @@ where "desc" is a string containing the description of the boolean operation whi
 
   "c-(a+b)" is the domain of the third level-set minus the union of
   the domains of the two others.
-      
+
   "!a" is the complementary of the domain of a (i.e. it is the
   domain where a(x)>0)
 

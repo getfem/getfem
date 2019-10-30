@@ -29,6 +29,7 @@
 #include <getfem/getfem_contact_and_friction_large_sliding.h>
 #include <getfem/getfem_nonlinear_elasticity.h>
 #include <getfem/getfem_plasticity.h>
+#include <getfem/getfem_HHO.h>
 #include <getfem/getfem_fourth_order.h>
 #include <getfem/getfem_linearized_plates.h>
 #include <getfemint_misc.h>
@@ -442,6 +443,68 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        std::string transname = in.pop().to_string();
        add_P0_projection(*md, transname);
        );
+
+    /*@SET ('add HHO reconstructed gradient', @str transname)
+      Add to the model the elementary transformation corresponding to the
+      reconstruction of a gradient for HHO methods.
+      The name is the name given to the elementary transformation. @*/
+    sub_command
+      ("add HHO reconstructed gradient", 1, 1, 0, 0,
+       std::string transname = in.pop().to_string();
+       add_HHO_reconstructed_gradient(*md, transname);
+       );
+
+    /*@SET ('add HHO reconstructed symmetrized gradient', @str transname)
+      Add to the model the elementary transformation corresponding to the
+      reconstruction of a symmetrized gradient for HHO methods.
+      The name is the name given to the elementary transformation. @*/
+    sub_command
+      ("add HHO reconstructed symmetrized gradient", 1, 1, 0, 0,
+       std::string transname = in.pop().to_string();
+       add_HHO_reconstructed_symmetrized_gradient(*md, transname);
+       );
+
+    /*@SET ('add HHO reconstructed value', @str transname)
+      Add to the model the elementary transformation corresponding to the
+      reconstruction of the variable for HHO methods.
+      The name is the name given to the elementary transformation. @*/
+    sub_command
+      ("add HHO reconstructed value", 1, 1, 0, 0,
+       std::string transname = in.pop().to_string();
+       add_HHO_reconstructed_value(*md, transname);
+       );
+
+    /*@SET ('add HHO reconstructed symmetrized value', @str transname)
+      Add to the model the elementary transformation corresponding to the
+      reconstruction of the variable for HHO methods using a symmetrized
+      gradient.
+      The name is the name given to the elementary transformation. @*/
+    sub_command
+      ("add HHO reconstructed symmetrized value", 1, 1, 0, 0,
+       std::string transname = in.pop().to_string();
+       add_HHO_reconstructed_symmetrized_value(*md, transname);
+       );
+
+    /*@SET ('add HHO stabilization', @str transname)
+      Add to the model the elementary transformation corresponding to the
+      HHO stabilization operator.
+      The name is the name given to the elementary transformation. @*/
+    sub_command
+      ("add HHO stabilization", 1, 1, 0, 0,
+       std::string transname = in.pop().to_string();
+       add_HHO_stabilization(*md, transname);
+       );
+
+    /*@SET ('add HHO symmetrized stabilization', @str transname)
+      Add to the model the elementary transformation corresponding to the
+      HHO stabilization operator using a symmetrized gradient.
+      The name is the name given to the elementary transformation. @*/
+    sub_command
+      ("add HHO symmetrized stabilization", 1, 1, 0, 0,
+       std::string transname = in.pop().to_string();
+       add_HHO_symmetrized_stabilization(*md, transname);
+       );
+
 
     /*@SET ('add interpolate transformation from expression', @str transname, @tmesh source_mesh, @tmesh target_mesh, @str expr)
       Add a transformation to the model from mesh `source_mesh` to mesh

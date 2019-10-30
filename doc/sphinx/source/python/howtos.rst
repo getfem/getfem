@@ -29,7 +29,7 @@ regions. We can import that file (*quad.msh*) to getfem::
 with the second command we can see the *regions ids*. When we import the mesh,
 we might be warned with the following::
 
-  Level 3 Warning in getfem_import.cc, line 137: 
+  Level 3 Warning in getfem_import.cc, line 137:
     All regions must have different number!
 
 this means that the parametrization of the mesh in |gmsh| *.geo file* must

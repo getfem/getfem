@@ -48,7 +48,7 @@ elements:
 
 .. c:function:: bgeot::prism_P1_structure(dim_type d)
 
-   description of a prism of dimension ``d``
+   description of a prism of dimension ``d``.
 
 For instance if one needs the description of a square, one can call
 equivalently::
@@ -103,9 +103,9 @@ The following functions build the descriptions:
 
    description of the parallelepiped of reference of dimension ``d``.
 
-The vertices correspond to the classical vertices for such reference element. For 
-instance the vertices for the triangle are :math:`(0, 0)`, :math:`(1, 0)` and 
-:math:`(0, 1)`. It corresponds to the configuration shown in Figure 
+The vertices correspond to the classical vertices for such reference element. For
+instance the vertices for the triangle are :math:`(0, 0)`, :math:`(1, 0)` and
+:math:`(0, 1)`. It corresponds to the configuration shown in Figure
 :ref:`dp-fig-elem`
 
 If ``p`` is of type |bg_pcr| then ``p->structure()`` is the corresponding convex
@@ -160,8 +160,8 @@ geometric nodes are denoted:
 
    g^i, i = 0, \ldots, n_g - 1.
 
-The geometric transformation is described thanks to a :math:`n_g` components 
-polynomial vector (In fact, as an extention, non polynomial geometric 
+The geometric transformation is described thanks to a :math:`n_g` components
+polynomial vector (In fact, as an extention, non polynomial geometric
 transformation can also be supported by |gf|, but this is very rarely used)
 
 .. math::
@@ -192,9 +192,9 @@ The derivative of :math:`\tau` is then
 
    \fbox{$K(\widehat{x}) := \nabla\tau(\widehat{x}) = G\cdot\nabla {\cal N}(\widehat{x})$,}
 
-where :math:`K(\widehat{x}) = \nabla\tau(\widehat{x})` is a :math:`N\times P` matrix and 
-:math:`\nabla {\cal N}(\widehat{x})` a :math:`n_g\times P` matrix. The (transposed) 
-pseudo-inverse of :math:`\nabla\tau(\widehat{x})` is a :math:`N\times P` matrix denoted 
+where :math:`K(\widehat{x}) = \nabla\tau(\widehat{x})` is a :math:`N\times P` matrix and
+:math:`\nabla {\cal N}(\widehat{x})` a :math:`n_g\times P` matrix. The (transposed)
+pseudo-inverse of :math:`\nabla\tau(\widehat{x})` is a :math:`N\times P` matrix denoted
 :math:`B(\widehat{x})`:
 
 .. math::
@@ -212,12 +212,12 @@ where ``"name of trans"`` can be chosen among the following list.
 
 * ``"GT_PK(n,k)"``
 
-  Description of the simplex transformation of dimension ``n`` and degree ``k`` 
+  Description of the simplex transformation of dimension ``n`` and degree ``k``
   (Most of the time, the degree 1 is used).
 
 * ``"GT_QK(n,k)"``
 
-  Description of the parallelepiped transformation of dimension ``n`` and degree 
+  Description of the parallelepiped transformation of dimension ``n`` and degree
   ``k``.
 
 * ``"GT_PRISM(n,k)"``
@@ -230,9 +230,9 @@ where ``"name of trans"`` can be chosen among the following list.
 
 * ``"GT_LINEAR_PRODUCT(a,b)"``
 
-  Description of the direct product of the two transformations ``a`` and ``b`` 
-  keeping a linear transformation (this is a restriction of the previous 
-  function). This allows, for instance, to use exact integrations on regular 
+  Description of the direct product of the two transformations ``a`` and ``b``
+  keeping a linear transformation (this is a restriction of the previous
+  function). This allows, for instance, to use exact integrations on regular
   meshes with parallelograms.
 
 
@@ -282,8 +282,8 @@ one has
 
 where :math:`\alpha` is the vector whose ith component is :math:`\alpha_i`.
 
-A certain number of description of classical finite element method are defined in 
-the file :file:`getfem_fem.h`. See :ref:`ud-appendixa` for an exhaustive list of 
+A certain number of description of classical finite element method are defined in
+the file :file:`getfem_fem.h`. See :ref:`ud-appendixa` for an exhaustive list of
 available finite element methods.
 
 A pointer to the finite element descriptor of a method is obtained using the
@@ -291,5 +291,5 @@ function::
 
   getfem::pfem pfe = getfem::fem_descriptor("name of method");
 
-We refer to the file :file:`getfem_fem.cc` for how to define a new finite element 
+We refer to the file :file:`getfem_fem.cc` for how to define a new finite element
 method.

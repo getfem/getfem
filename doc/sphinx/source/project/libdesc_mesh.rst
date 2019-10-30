@@ -76,7 +76,7 @@ namespace (``getfem``).
 
 A  bibliographical review on how to efficiently store a mesh and implement the main operations (add a node, an element, deal with faces, find the neighbour elements, the isolated faces ...) would be interesting to make the mesh structure evolve.
 
-A senstive algorithm is the one (in bgeot_node_tab.cc) which identify the too much close nodes. More investigations (and documentation) are probably necessary. 
+A senstive algorithm is the one (in bgeot_node_tab.cc) which identify the too much close nodes. More investigations (and documentation) are probably necessary.
 
 
 

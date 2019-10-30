@@ -27,7 +27,6 @@
   $Id$
 """
 import numpy as np
-import math
 import getfem as gf
 
 np.set_printoptions(threshold=np.nan)

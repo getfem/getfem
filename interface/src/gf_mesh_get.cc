@@ -244,6 +244,28 @@ outer_faces(const getfem::mesh &m, mexargs_in &in, mexargs_out &out, const std::
 
 }
 
+static void 
+all_faces(const getfem::mesh &m, mexargs_in &in, mexargs_out &out) {
+  dal::bit_vector cvlst;
+
+  if (in.remaining()) cvlst = in.pop().to_bit_vector(&m.convex_index());
+  else cvlst = m.convex_index();
+  getfem::mesh_region mr;
+  for (dal::bv_visitor ic(cvlst); !ic.finished(); ++ic) mr.add(ic);
+  getfem::mesh_region mrr =  all_faces_of_mesh(m, mr);
+
+  unsigned fcnt = 0;
+  for (getfem::mr_visitor i(mrr); !i.finished(); ++i) ++fcnt;
+  iarray w = out.pop().create_iarray(2, fcnt);
+  fcnt = 0;
+  for (getfem::mr_visitor i(mrr); !i.finished(); ++i) {
+    w(0,fcnt) = int(i.cv()+config::base_index());
+    w(1,fcnt) = int(short_type(i.f()+config::base_index()));
+    fcnt++;
+  }
+}
+
+
 
 static void 
 inner_faces(const getfem::mesh &m, mexargs_in &in, mexargs_out &out) {
@@ -788,6 +810,16 @@ void gf_mesh_get(getfemint::mexargs_in& m_in,
       ("inner faces", 0, 1, 0, 1,
        check_empty_mesh(pmesh);
        inner_faces(*pmesh, in, out);
+       );
+    
+    /*@GET CVFIDs = ('all faces'[, CVIDs])
+    Return the set of faces of the in CVIDs (in all the mesh if CVIDs is
+    omitted). Note that the face shared by two neighbour elements will be
+    represented twice. @*/
+    sub_command
+      ("all faces", 0, 1, 0, 1,
+       check_empty_mesh(pmesh);
+       all_faces(*pmesh, in, out);
        );
 
     /*@GET CVFIDs = ('outer faces with direction', @vec v, @scalar angle [, CVIDs])

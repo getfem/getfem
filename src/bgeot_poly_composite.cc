@@ -1,6 +1,6 @@
 /*===========================================================================
 
- Copyright (C) 2002-2017 Yves Renard
+ Copyright (C) 2002-2019 Yves Renard
 
  This file is a part of GetFEM++
 
@@ -68,12 +68,10 @@ namespace bgeot {
 
   void mesh_precomposite::initialise(const basic_mesh &m) {
     msh = &m;
-    det.resize(m.nb_convex());
-    orgs.resize(m.nb_convex());
-    gtrans.resize(m.nb_convex());
-    for (size_type i = 0; i <= m.points().index().last_true(); ++i) {
-      vertexes.add(m.points()[i]);
-    }
+    det.resize(m.nb_convex()); orgs.resize(m.nb_convex());
+    gtrans.resize(m.nb_convex()); gtransinv.resize(m.nb_convex());
+    for (size_type i = 0; i <= m.points().index().last_true(); ++i)
+      vertices.add(m.points()[i]);
 
     base_node min, max;
     for (dal::bv_visitor cv(m.convex_index()); !cv.finished(); ++cv) {
@@ -81,23 +79,19 @@ namespace bgeot {
       pgeometric_trans pgt = m.trans_of_convex(cv);
       size_type N = pgt->structure()->dim();
       size_type P = m.dim();
-      GMM_ASSERT1(pgt->is_linear() && N == P, "Bad geometric transformation");
+      GMM_ASSERT1(pgt->is_linear(), "Bad geometric transformation");
 
       base_matrix G(P, pgt->nb_points());
-      base_matrix pc(pgt->nb_points() , N);
-      base_matrix B0(N, P);
-
+      base_node X(N);
+      
       m.points_of_convex(cv, G);
-
-      base_node x(N); gmm::clear(x);
-      pgt->poly_vector_grad(x, pc);
-
-      gmm::mult(gmm::transposed(pc), gmm::transposed(G), B0);
-      det[cv] = gmm::lu_inverse(B0);
-      gtrans[cv] = B0;
-
+      bgeot::geotrans_interpolation_context ctx(pgt, X, G);
+      gtrans[cv] = ctx.K();
+      gtransinv[cv] = ctx.B();
+      det[cv] = ctx.J();
+      
       auto points_of_convex = m.points_of_convex(cv);
-      orgs[cv] = points_of_convex[0];
+      orgs[cv] = pgt->transform(X, G);
       bounding_box(min, max, points_of_convex);
       box_to_convexes_map[box_tree.add_box(min, max)].push_back(cv);
     }
@@ -105,28 +99,115 @@ namespace bgeot {
     box_tree.build_tree();
   }
 
-  DAL_TRIPLE_KEY(base_poly_key, short_type, short_type, std::vector<opt_long_scalar_type>);
+  DAL_TRIPLE_KEY(base_poly_key, short_type, short_type,
+                 std::vector<opt_long_scalar_type>);
 
-  polynomial_composite::polynomial_composite(
-    const mesh_precomposite &m, bool lc)
-    : mp(&m), local_coordinate(lc), default_poly(mp->dim(), 0) {}
+  polynomial_composite::polynomial_composite(const mesh_precomposite &m,
+                                             bool lc, bool ff)
+    : mp(&m), local_coordinate(lc), faces_first(ff),
+      default_polys(mp->dim()+1) {
+    for (dim_type i = 0; i <= mp->dim(); ++i)
+      default_polys[i] = base_poly(i, 0.);
+  }
+
+  static void mult_diff_transposed(const base_matrix &M, const base_node &p,
+                                   const base_node &p1, base_node &p2) {
+    for (dim_type d = 0; d < p2.size(); ++d) {
+      p2[d] = 0;
+      auto col = mat_col(M, d);
+      for (dim_type i = 0; i < p1.size(); ++i)
+        p2[d] += col[i] * (p[i] - p1[i]);
+    }
+  }
+
+  scalar_type polynomial_composite::eval(const base_node &p,
+                                         size_type l) const {
+    if (l != size_type(-1)) {
+      if (!local_coordinate) return poly_of_subelt(l).eval(p.begin());
+      base_node p1(gmm::mat_ncols(mp->gtransinv[l]));
+      mult_diff_transposed(mp->gtransinv[l], p, mp->orgs[l], p1);
+      return poly_of_subelt(l).eval(p1.begin());
+    }
+
+    auto dim = mp->dim();
+    base_node p1_stored, p1, p2(dim);
+    size_type cv_stored(-1);
+
+    auto &box_tree = mp->box_tree;
+    rtree::pbox_set box_list;
+    box_tree.find_boxes_at_point(p, box_list);
+    
+    while (box_list.size()) {
+      auto pmax_box = *box_list.begin();
+      
+      if (box_list.size() > 1) {
+        auto max_rate = -1.0;
+        for (auto &&pbox : box_list) {
+          auto box_rate = 1.0;
+          for (size_type i = 0; i < dim; ++i) {
+            auto h = pbox->max->at(i) - pbox->min->at(i);
+            if (h > 0) {
+              auto rate = std::min(pbox->max->at(i) - p[i],
+                                   p[i] - pbox->min->at(i)) / h;
+              box_rate = std::min(rate, box_rate);
+            }
+          }
+          if (box_rate > max_rate) { pmax_box = pbox; max_rate = box_rate; }
+        }
+      }
+      
+      for (auto cv : mp->box_to_convexes_map.at(pmax_box->id)) {
+        dim_type elt_dim = dim_type(gmm::mat_ncols(mp->gtransinv[cv]));
+        p1.resize(elt_dim);
+        mult_diff_transposed(mp->gtransinv[cv], p, mp->orgs[cv], p1);
+        scalar_type ddist(0);
+
+        if (elt_dim < dim) {
+          p2 = mp->orgs[cv]; gmm::mult_add(mp->gtrans[cv], p1, p2);
+          ddist = gmm::vect_dist2(p2, p);
+        }
+        if (mp->trans_of_convex(cv)->convex_ref()->is_in(p1) < 1E-9
+            && ddist < 1E-9) {
+          if (!faces_first || elt_dim < dim) {
+            scalar_type res = to_scalar(poly_of_subelt(cv).eval(local_coordinate
+                                                     ? p1.begin() : p.begin()));
+            return res;
+          }
+          p1_stored = p1; cv_stored = cv;
+        }
+      }
+        
+      if (box_list.size() == 1) break;
+      box_list.erase(pmax_box);
+    }
+    if (cv_stored != size_type(-1)) {
+      scalar_type res =
+        to_scalar(poly_of_subelt(cv_stored).eval(local_coordinate
+                                              ? p1_stored.begin(): p.begin()));
+      return res;
+    }
+    GMM_ASSERT1(false, "Element not found in composite polynomial: " << p);
+  }
+  
 
   void polynomial_composite::derivative(short_type k) {
     if (local_coordinate) {
-      dim_type N = mp->dim();
-      base_poly P(N, 0), Q;
-      base_vector e(N), f(N);
+      dim_type P = mp->dim();
+      base_vector e(P), f(P); e[k] = 1.0;
       for (size_type ic = 0; ic < mp->nb_convex(); ++ic) {
-        gmm::clear(e); e[k] = 1.0;
-        gmm::mult(gmm::transposed(mp->gtrans[ic]), e, f);
-        P.clear();
-        auto &poly = poly_of_subelt(ic);
-        for (dim_type n = 0; n < N; ++n) {
-          Q = poly;
-          Q.derivative(n);
-          P += Q * f[n];
+        dim_type N = dim_type(gmm::mat_ncols(mp->gtransinv[ic]));
+        f.resize(N);
+        gmm::mult(gmm::transposed(mp->gtransinv[ic]), e, f);
+        base_poly Der(N, 0), Q;
+        if (polytab.find(ic) != polytab.end()) {
+          auto &poly = poly_of_subelt(ic);
+          for (dim_type n = 0; n < N; ++n) {
+            Q = poly;
+            Q.derivative(n);
+            Der += Q * f[n];
+          }
+          if (Der.is_zero()) polytab.erase(ic); else set_poly_of_subelt(ic,Der);
         }
-        if (polytab.find(ic) != polytab.end()) set_poly_of_subelt(ic, P);
       }
     }
     else
@@ -136,22 +217,29 @@ namespace bgeot {
       if (polytab.find(ic) != polytab.end()) set_poly_of_subelt(ic, poly);
     }
   }
-
-  void polynomial_composite::set_poly_of_subelt(size_type l, const base_poly &poly) {
-    auto poly_key = std::make_shared<base_poly_key>(poly.degree(), poly.dim(), poly);
-    auto o = dal::search_stored_object(poly_key);
+  
+  void polynomial_composite::set_poly_of_subelt(size_type l,
+                                                const base_poly &poly) {
+    auto poly_key =
+      std::make_shared<base_poly_key>(poly.degree(), poly.dim(), poly);
+    pstored_base_poly o(std::dynamic_pointer_cast<const stored_base_poly>
+                        (dal::search_stored_object(poly_key)));
     if (!o) {
-      o = std::make_shared<base_poly>(poly);
+      o = std::make_shared<stored_base_poly>(poly);
       dal::add_stored_object(poly_key, o);
     }
-    polytab[l] = poly_key;
+    polytab[l] = o;
   }
 
   const base_poly &polynomial_composite::poly_of_subelt(size_type l) const {
     auto it = polytab.find(l);
-    if (it == polytab.end()) return default_poly;
-    return dynamic_cast<const base_poly &>(
-      *dal::search_stored_object_on_all_threads(it->second));
+    if (it == polytab.end()) {
+      if (local_coordinate)
+        return default_polys[gmm::mat_ncols(mp->gtransinv[l])];
+      else
+        return default_polys[mp->dim()];
+    }
+    return *(it->second);
   }
 
 

@@ -36,11 +36,9 @@ except:
     print("   ( https://svn.enthought.com/enthought/wiki/TVTK ) **\n\n")
     raise
 
-import os
 import sys
 import getfem
 import numpy
-import scipy
 
 def gf_colormap(name):
     if name == 'tripod':

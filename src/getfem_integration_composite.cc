@@ -57,8 +57,8 @@ namespace getfem {
 	    { f2 = f3; break;}
 	}
 	if (f2 != short_type(-1)) {
-	  w.resize(gmm::mat_nrows(mp.gtrans[cv]));
-	  gmm::mult(mp.gtrans[cv], pgt->normals()[f], w);
+	  w.resize(gmm::mat_nrows(mp.gtransinv[cv]));
+	  gmm::mult(mp.gtransinv[cv], pgt->normals()[f], w);
 	  scalar_type coeff_mul = gmm::abs(gmm::vect_norm2(w) * mp.det[cv]);
 	  for (size_type j = 0; j < pai->nb_points_on_face(f); ++j) {
 	    base_node pt = pgt->transform

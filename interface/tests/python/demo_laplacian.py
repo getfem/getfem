@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # Python GetFEM++ interface
 #
-# Copyright (C) 2004-2017 Yves Renard, Julien Pommier.
+# Copyright (C) 2004-2019 Yves Renard, Julien Pommier.
 #
 # This file is a part of GetFEM++
 #
@@ -43,7 +43,7 @@ m = gf.Mesh('regular_simplices', np.arange(0,1+1./NX,1./NX),
 # Create a MeshFem for u and rhs fields of dimension 1 (i.e. a scalar field)
 mfu   = gf.MeshFem(m, 1)
 mfrhs = gf.MeshFem(m, 1)
-# assign the P2 fem to all convexes of the both MeshFem
+# assign the P2 fem to all elements of the both MeshFem
 mfu.set_fem(gf.Fem('FEM_PK(2,2)'))
 mfrhs.set_fem(gf.Fem('FEM_PK(2,2)'))
 

@@ -1,6 +1,6 @@
 /*===========================================================================
 
- Copyright (C) 2002-2017 Yves Renard
+ Copyright (C) 2002-2019 Yves Renard
 
  This file is a part of GetFEM++
 
@@ -29,12 +29,85 @@ namespace getfem {
  
   typedef const fem<bgeot::polynomial_composite> * ppolycompfem;
 
-  static pfem composite_fe_method(const bgeot::mesh_precomposite &mp, 
-				  const mesh_fem &mf, bgeot::pconvex_ref cr) {
+  struct polynomial_composite_fem : public fem<bgeot::polynomial_composite> {
+    mesh m;
+    mutable bgeot::mesh_precomposite mp;
+    mesh_fem mf;
+    mutable bgeot::pgeotrans_precomp pgp;
+    mutable bgeot::pgeometric_trans pgt_stored;
+    bgeot::pstored_point_tab pspt;
+
+    
+    virtual void mat_trans(base_matrix &M, const base_matrix &G,
+                           bgeot::pgeometric_trans pgt) const;
+
+    
+    polynomial_composite_fem(const mesh &m_, const mesh_fem &mf_)
+      : m(m_), mp(m), mf(m), pgp(0), pgt_stored(0) {
+      for (dal::bv_visitor cv(m.convex_index()); !cv.finished(); ++cv)
+        mf.set_finite_element(cv, mf_.fem_of_element(cv));
+      mf.nb_dof();
+      pspt = store_point_tab(m.points());
+      // verification for the non-equivalent fems
+      for (dal::bv_visitor cv(mf.convex_index()); !cv.finished(); ++cv) {
+        pfem pf1 = mf.fem_of_element(cv);
+        if (!(pf1->is_equivalent())) {
+          dal::bit_vector unshareable;
+          for (const auto &i : mf.ind_basic_dof_of_element(cv))
+            unshareable.add(i);
+       
+          for (dal::bv_visitor cv2(mf.convex_index()); !cv2.finished(); ++cv2) {
+            if (cv2 != cv)
+              for (const auto &i : mf.ind_basic_dof_of_element(cv2))
+                GMM_ASSERT1(!(unshareable.is_in(i)), "Non equivalent elements "
+                            "are allowed only if they do not share their dofs");
+          }
+        }
+      }
+    }
+  };
+
+  void polynomial_composite_fem::mat_trans(base_matrix &M, const base_matrix &G,
+                                           bgeot::pgeometric_trans pgt) const {
+    dim_type N = dim_type(G.nrows());
+    gmm::copy(gmm::identity_matrix(), M);
+    base_matrix G1, M1;
+
+    if (pgt != pgt_stored) {
+      pgt_stored = pgt;
+      pgp = bgeot::geotrans_precomp(pgt, pspt, 0);
+    }
+    
+    for (dal::bv_visitor cv(mf.convex_index()); !cv.finished(); ++cv) {
+      pfem pf1 = mf.fem_of_element(cv);
+      if (!(pf1->is_equivalent())) {
+        size_type npt=m.nb_points_of_convex(cv);
+        size_type ndof=mf.nb_basic_dof_of_element(cv);
+        GMM_ASSERT1(ndof == pf1->nb_base(0) && ndof == pf1->nb_dof(0),
+                    "Sorry, limited implementation for the moment");
+        // Compute the local G
+        G1.resize(npt, N);
+        M1.resize(ndof, ndof); 
+        for (size_type i = 0; i < npt; ++i)
+          gmm::copy(pgp->transform(m.ind_points_of_convex(cv)[i], G),
+                    gmm::mat_col(G1, i));
+        // Call for the local M
+        pf1->mat_trans(M1, G1, m.trans_of_convex(cv));
+        gmm::sub_index I(mf.ind_basic_dof_of_element(cv));
+        // I is in fact an interval ...
+        gmm::copy(M1, gmm::sub_matrix(M, I, I));
+      }
+    }
+  }
+
+  static pfem composite_fe_method(const getfem::mesh &m, 
+				  const mesh_fem &mf, bgeot::pconvex_ref cr,
+                                  bool ff = false) {
     
     GMM_ASSERT1(!mf.is_reduced(),
 		"Sorry, does not work for reduced mesh_fems");
-    auto p = std::make_shared<fem<bgeot::polynomial_composite>>();
+    auto p = std::make_shared<polynomial_composite_fem>(m, mf);
+    
     p->mref_convex() = cr;
     p->dim() = cr->structure()->dim();
     p->is_polynomialcomp() = p->is_equivalent() = p->is_standard() = true;
@@ -44,15 +117,16 @@ namespace getfem {
     p->init_cvs_node();
 
     std::vector<bgeot::polynomial_composite> base(mf.nb_basic_dof());
-    std::fill(base.begin(), base.end(), bgeot::polynomial_composite(mp));
+    std::fill(base.begin(), base.end(),
+              bgeot::polynomial_composite(p->mp, true, ff));
     std::vector<pdof_description> dofd(mf.nb_basic_dof());
     
     for (dal::bv_visitor cv(mf.convex_index()); !cv.finished(); ++cv) {
       pfem pf1 = mf.fem_of_element(cv);
       if (!pf1->is_lagrange()) p->is_lagrange() = false;
-      if (!(pf1->is_equivalent() && pf1->is_polynomial())) {
-	GMM_ASSERT1(false, "Only for polynomial and equivalent fem.");
-      }
+      if (!(pf1->is_equivalent())) p->is_equivalent() = false;
+      
+      GMM_ASSERT1(pf1->is_polynomial(), "Only for polynomial fems.");
       ppolyfem pf = ppolyfem(pf1.get());
       p->estimated_degree() = std::max(p->estimated_degree(),
 				       pf->estimated_degree());
@@ -91,7 +165,7 @@ namespace getfem {
     mesh m(*pm);
     mesh_fem mf(m);
     mf.set_finite_element(pm->convex_index(), pf);
-    pfem p = composite_fe_method(*pmp, mf, pf->ref_convex(0));
+    pfem p = composite_fe_method(m, mf, pf->ref_convex(0));
     dependencies.push_back(p->ref_convex(0));
     dependencies.push_back(p->node_tab(0));
     return p;
@@ -722,6 +796,97 @@ namespace getfem {
     dependencies.push_back(p->node_tab(0));
     return p;
   }
+
+
+  /* ******************************************************************** */
+  /*    HHO methods: First method for the interior of the elements and    */
+  /*            a method for each face (or a single method for all faces) */
+  /* ******************************************************************** */
+  /* It is guaranted (and used) that the sub-element of index 0 is the    */
+  /* element itself and the faces follows in their usual order.           */
+  /* It has also to be guaranted that the internal degrees of freedom are */
+  /* first. This is ensred by the dof enumeration of mesh_fem object      */
+  /* since the interior element has the index 0.                          */
+  
+  pfem hho_method(fem_param_list &params,
+	std::vector<dal::pstatic_stored_object> &dependencies) {
+    GMM_ASSERT1(params.size() >= 2, "Bad number of parameters : "
+		<< params.size() << " should be at least 2.");
+    GMM_ASSERT1(params[0].type() == 1 && params[1].type() == 1,
+		"Bad type of parameters");
+    pfem pf = params[0].method();
+
+    size_type nbf = pf->ref_convex(0)->structure()->nb_faces();
+    GMM_ASSERT1(pf->is_polynomial(), "Only for polynomial elements");
+
+    std::vector<pfem> pff(nbf);
+    if (params.size() == 2)
+      std::fill(pff.begin(), pff.end(), params[1].method());
+    else {
+      GMM_ASSERT1(params.size() == nbf+1, "Bad number of parameters : "
+                  << params.size() << " a single method for all the faces or "
+                  " a method for each face.");
+      for (size_type i = 0; i < nbf; ++i) {
+        GMM_ASSERT1(params[i+1].type() == 1, "Bad type of parameters");
+        GMM_ASSERT1(params[i+1].method()->is_polynomial(),
+                    "Only for polynomial elements");
+        pff[i] = params[i+1].method();
+      }
+    }
+
+    // Obtain the reference element
+    bgeot::pbasic_mesh pm;
+    bgeot::pmesh_precomposite pmp;
+    structured_mesh_for_convex(pf->ref_convex(0), 1, pm, pmp);
+
+    // Addition of faces
+    bgeot::basic_mesh m0(*pm);
+    for  (short_type i = 0; i < nbf; ++i) {
+      bgeot::mesh_structure::ind_pt_face_ct
+        ipts=m0.ind_points_of_face_of_convex(0,i);
+      bgeot::pconvex_structure cvs
+        = m0.structure_of_convex(0)->faces_structure()[i];
+      m0.add_convex(bgeot::default_trans_of_cvs(cvs), ipts.begin());
+    }
+
+    // Build the mesh_fem
+    mesh m1(m0);
+    bgeot::mesh_precomposite mp; mp.initialise(m1);
+    mesh_fem mf(m1);
+    mf.set_finite_element(0, pf);
+    for  (size_type i = 0; i < nbf; ++i)
+      mf.set_finite_element(i+1, pff[i]);
+    
+    pfem p = composite_fe_method(m1, mf, pf->ref_convex(0), true);
+    dependencies.push_back(p->ref_convex(0));
+    dependencies.push_back(p->node_tab(0));
+    return p;
+  }
+
+  pfem interior_fem_of_hho_method(pfem hho_method) {
+
+    const polynomial_composite_fem *phho
+      = dynamic_cast<const polynomial_composite_fem*>(hho_method.get());
+
+    if (phho) {
+      pfem pf0 = phho->mf.fem_of_element(0);
+      pfem pf1 = phho->mf.fem_of_element(1);
+      if (pf1 && (pf1->dim()+1 == pf0->dim()))
+        return phho->mf.fem_of_element(0);
+    }
+
+    // GMM_WARNING2("probably not a HHO method");
+    return hho_method;
+  }
+
+
+
+
+
+
+
+
+  
 
 
 }  /* end of namespace getfem.                                            */

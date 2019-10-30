@@ -2,7 +2,7 @@
 
 .. include:: ../replaces.txt
 
-.. highlightlang:: c++
+.. highlightlang:: none
 
 .. _dp-contribute:
 
@@ -96,7 +96,7 @@ You can now transfer your modifications to the Savannah repository with ::
 
   git push origin devel-me-rewrite-fem-kernel
 
-where of course *devel-me-rewrite-fem-kernel* is still the name of your branch. At this stage your modifications are registered in the branch *devel-me-rewrite-fem-kernel* of Savannah repository. 
+where of course *devel-me-rewrite-fem-kernel* is still the name of your branch. At this stage your modifications are registered in the branch *devel-me-rewrite-fem-kernel* of Savannah repository.
 Your role stops here, since you are not allowed to modify the master branch of |gf|.
 
 
@@ -136,7 +136,7 @@ The recommended way for new contributors to translate document is to join |tfweb
   cd doc/sphinx
   tx pull -l <lang>
 
-Set code for your native language to <lang> (see |cfvlang|_ ). 
+Set code for your native language to <lang> (see |cfvlang|_ ).
 
 .. warning::
 

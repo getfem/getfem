@@ -2,7 +2,7 @@
 
 .. include:: ../replaces.txt
 
-.. highlightlang:: c++
+.. highlightlang:: none
 
 .. _gmm-lapack:
 
@@ -14,8 +14,8 @@ For better performance on dense matrices, it is possible to interface some opera
 
 to use this interface you have first to define ``GMM_USES_LAPACK`` before including |gmm| \ files::
 
-  \#define GMM_USES_LAPACK
-  \#include <gmm/gmm.h>
+  #define GMM_USES_LAPACK
+  #include <gmm/gmm.h>
 
   ... your code
 
@@ -35,98 +35,97 @@ Ask your system administrator if this configuration does not work.
 
 The following operations are interfaced::
 
-  vect_norm2(std::vector<T>)                                           
-                                                                        
-  vect_sp(std::vector<T>, std::vector<T>)                               
-  vect_sp(scaled(std::vector<T>), std::vector<T>)                       
-  vect_sp(std::vector<T>, scaled(std::vector<T>))                       
-  vect_sp(scaled(std::vector<T>), scaled(std::vector<T>))               
-                                                                        
-  vect_hp(std::vector<T>, std::vector<T>)                               
-  vect_hp(scaled(std::vector<T>), std::vector<T>)                       
-  vect_hp(std::vector<T>, scaled(std::vector<T>))                       
-  vect_hp(scaled(std::vector<T>), scaled(std::vector<T>))               
-                                                                        
-  add(std::vector<T>, std::vector<T>)                                   
-  add(scaled(std::vector<T>, a), std::vector<T>)                         
+  vect_norm2(std::vector<T>)
 
-  mult(dense_matrix<T>, dense_matrix<T>, dense_matrix<T>)               
-  mult(transposed(dense_matrix<T>), dense_matrix<T>, dense_matrix<T>)   
-  mult(dense_matrix<T>, transposed(dense_matrix<T>), dense_matrix<T>)   
-  mult(transposed(dense_matrix<T>), transposed(dense_matrix<T>),        
-       dense_matrix<T>)                                                 
-  mult(conjugated(dense_matrix<T>), dense_matrix<T>, dense_matrix<T>)   
-  mult(dense_matrix<T>, conjugated(dense_matrix<T>), dense_matrix<T>)   
-  mult(conjugated(dense_matrix<T>), conjugated(dense_matrix<T>),        
-       dense_matrix<T>)                                                 
-                                                                        
-  mult(dense_matrix<T>, std::vector<T>, std::vector<T>)                 
-  mult(transposed(dense_matrix<T>), std::vector<T>, std::vector<T>)     
-  mult(conjugated(dense_matrix<T>), std::vector<T>, std::vector<T>)     
-  mult(dense_matrix<T>, scaled(std::vector<T>), std::vector<T>)         
-  mult(transposed(dense_matrix<T>), scaled(std::vector<T>),             
-       std::vector<T>)                                                  
-  mult(conjugated(dense_matrix<T>), scaled(std::vector<T>),             
+  vect_sp(std::vector<T>, std::vector<T>)
+  vect_sp(scaled(std::vector<T>), std::vector<T>)
+  vect_sp(std::vector<T>, scaled(std::vector<T>))
+  vect_sp(scaled(std::vector<T>), scaled(std::vector<T>))
+
+  vect_hp(std::vector<T>, std::vector<T>)
+  vect_hp(scaled(std::vector<T>), std::vector<T>)
+  vect_hp(std::vector<T>, scaled(std::vector<T>))
+  vect_hp(scaled(std::vector<T>), scaled(std::vector<T>))
+
+  add(std::vector<T>, std::vector<T>)
+  add(scaled(std::vector<T>, a), std::vector<T>)
+
+  mult(dense_matrix<T>, dense_matrix<T>, dense_matrix<T>)
+  mult(transposed(dense_matrix<T>), dense_matrix<T>, dense_matrix<T>)
+  mult(dense_matrix<T>, transposed(dense_matrix<T>), dense_matrix<T>)
+  mult(transposed(dense_matrix<T>), transposed(dense_matrix<T>),
+       dense_matrix<T>)
+  mult(conjugated(dense_matrix<T>), dense_matrix<T>, dense_matrix<T>)
+  mult(dense_matrix<T>, conjugated(dense_matrix<T>), dense_matrix<T>)
+  mult(conjugated(dense_matrix<T>), conjugated(dense_matrix<T>),
+       dense_matrix<T>)
+
+  mult(dense_matrix<T>, std::vector<T>, std::vector<T>)
+  mult(transposed(dense_matrix<T>), std::vector<T>, std::vector<T>)
+  mult(conjugated(dense_matrix<T>), std::vector<T>, std::vector<T>)
+  mult(dense_matrix<T>, scaled(std::vector<T>), std::vector<T>)
+  mult(transposed(dense_matrix<T>), scaled(std::vector<T>),
+       std::vector<T>)
+  mult(conjugated(dense_matrix<T>), scaled(std::vector<T>),
        std::vector<T>)
 
-  mult_add(dense_matrix<T>, std::vector<T>, std::vector<T>)             
-  mult_add(transposed(dense_matrix<T>), std::vector<T>, std::vector<T>) 
-  mult_add(conjugated(dense_matrix<T>), std::vector<T>, std::vector<T>) 
-  mult_add(dense_matrix<T>, scaled(std::vector<T>), std::vector<T>)     
-  mult_add(transposed(dense_matrix<T>), scaled(std::vector<T>),         
-           std::vector<T>)                                              
-  mult_add(conjugated(dense_matrix<T>), scaled(std::vector<T>),         
-           std::vector<T>)                                              
-                                                                        
-  mult(dense_matrix<T>, std::vector<T>, std::vector<T>, std::vector<T>) 
-  mult(transposed(dense_matrix<T>), std::vector<T>, std::vector<T>,     
-       std::vector<T>)                                                  
-  mult(conjugated(dense_matrix<T>), std::vector<T>, std::vector<T>,     
-       std::vector<T>)                                                  
-  mult(dense_matrix<T>, scaled(std::vector<T>), std::vector<T>,         
-       std::vector<T>)                                                  
-  mult(transposed(dense_matrix<T>), scaled(std::vector<T>),             
-       std::vector<T>, std::vector<T>)                                  
-  mult(conjugated(dense_matrix<T>), scaled(std::vector<T>),             
-       std::vector<T>, std::vector<T>)                                  
-  mult(dense_matrix<T>, std::vector<T>, scaled(std::vector<T>),         
-       std::vector<T>)                                                  
-  mult(transposed(dense_matrix<T>), std::vector<T>,                     
-       scaled(std::vector<T>), std::vector<T>)                          
-  mult(conjugated(dense_matrix<T>), std::vector<T>,                     
-       scaled(std::vector<T>), std::vector<T>)                          
-  mult(dense_matrix<T>, scaled(std::vector<T>), scaled(std::vector<T>), 
-    std::vector<T>)                                                     
-  mult(transposed(dense_matrix<T>), scaled(std::vector<T>),             
-       scaled(std::vector<T>), std::vector<T>)                          
-  mult(conjugated(dense_matrix<T>), scaled(std::vector<T>),             
-       scaled(std::vector<T>), std::vector<T>)                          
-                                                                        
-  lower_tri_solve(dense_matrix<T>, std::vector<T>, k, b)                
-  upper_tri_solve(dense_matrix<T>, std::vector<T>, k, b)                
-  lower_tri_solve(transposed(dense_matrix<T>), std::vector<T>, k, b)    
-  upper_tri_solve(transposed(dense_matrix<T>), std::vector<T>, k, b)    
-  lower_tri_solve(conjugated(dense_matrix<T>), std::vector<T>, k, b)    
-  upper_tri_solve(conjugated(dense_matrix<T>), std::vector<T>, k, b)    
-                                                                        
-  lu_factor(dense_matrix<T>, std::vector<int>)                          
-  lu_solve(dense_matrix<T>, std::vector<T>, std::vector<T>)             
-  lu_solve(dense_matrix<T>, std::vector<int>, std::vector<T>,           
-           std::vector<T>)                                              
+  mult_add(dense_matrix<T>, std::vector<T>, std::vector<T>)
+  mult_add(transposed(dense_matrix<T>), std::vector<T>, std::vector<T>)
+  mult_add(conjugated(dense_matrix<T>), std::vector<T>, std::vector<T>)
+  mult_add(dense_matrix<T>, scaled(std::vector<T>), std::vector<T>)
+  mult_add(transposed(dense_matrix<T>), scaled(std::vector<T>),
+           std::vector<T>)
+  mult_add(conjugated(dense_matrix<T>), scaled(std::vector<T>),
+           std::vector<T>)
+
+  mult(dense_matrix<T>, std::vector<T>, std::vector<T>, std::vector<T>)
+  mult(transposed(dense_matrix<T>), std::vector<T>, std::vector<T>,
+       std::vector<T>)
+  mult(conjugated(dense_matrix<T>), std::vector<T>, std::vector<T>,
+       std::vector<T>)
+  mult(dense_matrix<T>, scaled(std::vector<T>), std::vector<T>,
+       std::vector<T>)
+  mult(transposed(dense_matrix<T>), scaled(std::vector<T>),
+       std::vector<T>, std::vector<T>)
+  mult(conjugated(dense_matrix<T>), scaled(std::vector<T>),
+       std::vector<T>, std::vector<T>)
+  mult(dense_matrix<T>, std::vector<T>, scaled(std::vector<T>),
+       std::vector<T>)
+  mult(transposed(dense_matrix<T>), std::vector<T>,
+       scaled(std::vector<T>), std::vector<T>)
+  mult(conjugated(dense_matrix<T>), std::vector<T>,
+       scaled(std::vector<T>), std::vector<T>)
+  mult(dense_matrix<T>, scaled(std::vector<T>), scaled(std::vector<T>),
+    std::vector<T>)
+  mult(transposed(dense_matrix<T>), scaled(std::vector<T>),
+       scaled(std::vector<T>), std::vector<T>)
+  mult(conjugated(dense_matrix<T>), scaled(std::vector<T>),
+       scaled(std::vector<T>), std::vector<T>)
+
+  lower_tri_solve(dense_matrix<T>, std::vector<T>, k, b)
+  upper_tri_solve(dense_matrix<T>, std::vector<T>, k, b)
+  lower_tri_solve(transposed(dense_matrix<T>), std::vector<T>, k, b)
+  upper_tri_solve(transposed(dense_matrix<T>), std::vector<T>, k, b)
+  lower_tri_solve(conjugated(dense_matrix<T>), std::vector<T>, k, b)
+  upper_tri_solve(conjugated(dense_matrix<T>), std::vector<T>, k, b)
+
+  lu_factor(dense_matrix<T>, std::vector<int>)
+  lu_solve(dense_matrix<T>, std::vector<T>, std::vector<T>)
+  lu_solve(dense_matrix<T>, std::vector<int>, std::vector<T>,
+           std::vector<T>)
   lu_solve_transposed(dense_matrix<T>, std::vector<int>, std::vector<T>,
-           std::vector<T>)                                              
-  lu_inverse(dense_matrix<T>)                                           
-  lu_inverse(dense_matrix<T>, std::vector<int>, dense_matrix<T>)        
-                                                                        
-  qr_factor(dense_matrix<T>, dense_matrix<T>, dense_matrix<T>) 
+           std::vector<T>)
+  lu_inverse(dense_matrix<T>)
+  lu_inverse(dense_matrix<T>, std::vector<int>, dense_matrix<T>)
+
+  qr_factor(dense_matrix<T>, dense_matrix<T>, dense_matrix<T>)
 
   implicit_qr_algorithm(dense_matrix<T>, std::vector<T>)
   implicit_qr_algorithm(dense_matrix<T>, std::vector<T>,
-                        dense_matrix<T>)                               
+                        dense_matrix<T>)
   implicit_qr_algorithm(dense_matrix<T>, std::vector<std::complex<T> >)
   implicit_qr_algorithm(dense_matrix<T>, std::vector<std::complex<T> >,
-                        dense_matrix<T>)                               
-
+                        dense_matrix<T>)
 
 Of course, it is not difficult to interface another operation if needed.
 

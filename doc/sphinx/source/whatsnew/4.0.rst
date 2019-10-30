@@ -15,7 +15,7 @@ deprecated. The main changes are:
      possible to perform linear combination of degrees of freedom in
      order to describe some special finite element spaces. The main
      application is to obtain a finite element space reduced on a
-     boundary or a curve. But it can be used also to prescibe directly
+     boundary or a curve. But it can be used also to prescribe directly
      some matching condition. The main change in the use of the mesh_fem
      object is the introduction of "basic" and "reduced" dofs. See the
      documentation.

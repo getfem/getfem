@@ -1,3 +1,4 @@
+
 .. $Id$
 
 .. include:: ../replaces.txt
@@ -9,7 +10,7 @@
 Appendix B. Cubature method list
 ================================
 
-The integration methods are of two kinds. Exact integrations of polynomials and
+For more information on cubature formulas, the reader is referred to [EncyclopCubature]_ and [so-se-do2004]_ for instance. The integration methods are of two kinds. Exact integrations of polynomials and
 approximated integrations (cubature formulas) of any function. The exact
 integration can only be used if all the elements are polynomial and if the
 geometric transformation is linear.
@@ -27,7 +28,7 @@ the degree of each integration method.
 Exact Integration methods
 -------------------------
 
-|gf| furnishes a set of exact integration methods. This means that polynomials are integrated exactly. However, their use is (very) limited and not recommended. The use of exact integration methods is limited to the low-level generic assembly for polynomial :math:`\tau`-equivalent elements with linear transformations and for linear terms. It is not possible to use them in the high-level generic assembly. 
+|gf| furnishes a set of exact integration methods. This means that polynomials are integrated exactly. However, their use is (very) limited and not recommended. The use of exact integration methods is limited to the low-level generic assembly for polynomial :math:`\tau`-equivalent elements with linear transformations and for linear terms. It is not possible to use them in the high-level generic assembly.
 
 The list of available exact integration methods is the following
 
@@ -651,11 +652,11 @@ Others methods are:
        - 90
 
      * - ``"IM_CUBE4D(5)"``
-       - 4D parallelepipeded
+       - 4D parallelepiped
        - 24
 
      * - ``"IM_CUBE4D(9)"``
-       - 4D parallelepipeded
+       - 4D parallelepiped
        - 145
 
 

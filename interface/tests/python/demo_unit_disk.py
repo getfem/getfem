@@ -29,7 +29,6 @@
 """
 # Import basic modules
 import getfem as gf
-import numpy as np
 
 ## Parameters
 h = 0.1 # approximate diameter of the elements.

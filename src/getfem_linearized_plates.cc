@@ -195,12 +195,15 @@ namespace getfem {
 
   public:
 
-    virtual void give_transformation(const mesh_fem &mf, size_type cv,
-                                     base_matrix &M) const{
+    virtual void give_transformation(const mesh_fem &mf, const mesh_fem &mf2,
+                                     size_type cv, base_matrix &M) const{
 
       THREAD_SAFE_STATIC base_matrix M_old;
       THREAD_SAFE_STATIC pfem pf_old = nullptr;
-        
+
+      GMM_ASSERT1(&mf == &mf2,
+                  "This transformation works on identical fems only");
+      
       // Obtaining the fem descriptors
       pfem pf1 = mf.fem_of_element(cv);
       size_type N = 2;
@@ -296,11 +299,14 @@ namespace getfem {
 
   public:
 
-    virtual void give_transformation(const mesh_fem &mf, size_type cv,
-                                     base_matrix &M) const{
+    virtual void give_transformation(const mesh_fem &mf, const mesh_fem &mf2,
+                                     size_type cv, base_matrix &M) const{
 
       THREAD_SAFE_STATIC base_matrix M_old;
       THREAD_SAFE_STATIC pfem pf_old = nullptr;
+
+      GMM_ASSERT1(&mf == &mf2,
+                  "This transformation works on identical fems only");
         
       // Obtaining the fem descriptors
       pfem pf1 = mf.fem_of_element(cv);
