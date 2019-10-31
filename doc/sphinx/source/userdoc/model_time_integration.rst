@@ -258,6 +258,42 @@ The addition of this scheme to a variable is to be done thanks to::
  
   add_Houbolt_scheme(model &md, const std::string &varname);
 
+The implicit Hilber Hughes Taylor (HHT) scheme
+**********************************************
+
+For a problem which reads
+
+.. math::
+
+  \left(\left(1+\alpha\right)K+\left(1+\alpha\right)\dfrac{\gamma}{\beta\Delta t}C+\dfrac{1}{\beta\Delta t^{2}}M\right)U^{n}=F^{n}+M\left(\left(\dfrac{1}{2\beta}-1\right)A^{n-1}+\dfrac{1}{\beta\Delta t}V^{n-1}+\dfrac{1}{\beta\Delta t^{2}}U^{n-1}\right)+\left(1+\alpha\right)C\left[\left(\dfrac{\gamma}{2\beta}-1\right)\Delta tA^{n-1}+\left(\dfrac{\gamma}{\beta}-1\right)V^{n-1}+\dfrac{\gamma}{\beta\Delta t}U^{n-1}\right]+\alpha KU^{n-1}+\alpha CV^{n-1}
+
+where :math:`dt` means a time step, :math:`M` the matrix in term of "Dot2_u", :math:`C` the matrix in term of "Dot_u" and :math:`K` the matrix in term of "u".
+
+The affine dependences are thus given by::
+
+  Dot_u  = (1-gamma/beta)*Previous_Dot_u+(1-gamma/(2*beta))*dt*Previous_Dot2_u+gamma/(beta*dt)*(u-Previous_u)
+  Dot2_u = (1-1/(2*beta))*Previous_Dot2_u-1/(beta*dt)*Previous_Dot_u+1/(beta*dt**2)*(u-Previous_u)
+
+When aplying this scheme to a variable "u" of the model, the following affine dependent variables are added to the model::
+
+  "Dot_u", "Dot2_u"
+
+which represent the first and second order time derivative of the variable and can be used in some brick definition.
+
+The following data are also added::
+
+  "Previous_u", "Previous_Dot_u", "Previous_Dot2_u"
+
+which correspond to the values of "u", "Dot_u"  and "Dot2_u" at the previous time step.
+
+Before the first solve, the data  "Previous_u" and "Previous_Dot_u" (corresponding to :math:`U^0` in the example) have to be initialized. The data "Previous_Dot2_u" is to be given or precomputed (see :ref:`precomp_time_der_section` and except for :math:`\alpha = 0, \beta = 1/2, \gamma = 1`).
+
+
+The addition of this scheme to a variable is to be done thanks to::
+
+  add_Hilber_Hughes_Taylor_scheme(model &md, const std::string &varname,
+                                  scalar_type alpha, scalar_type beta, scalar_type gamma);
+
 Transient terms
 ***************
 

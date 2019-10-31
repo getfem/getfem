@@ -75,7 +75,7 @@ gamma = 0.5;
 
 md.add_Newmark_scheme('u', beta, gamma)
 md.add_Houbolt_scheme('u1')
-md.add_Hilber_Hughes_Taylor_scheme('u2', 'F', alpha, beta, gamma)
+md.add_Hilber_Hughes_Taylor_scheme('u2', alpha, beta, gamma)
 md.add_mass_brick(mim, 'Dot2_u')
 md.add_mass_brick(mim, 'Dot2_u1')
 md.set_time_step(dt)
