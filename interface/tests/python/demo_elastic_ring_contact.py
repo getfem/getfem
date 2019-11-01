@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: UTF8 -*-
+# -*- coding: utf-8 -*-
 # Python GetFEM++ interface
 #
 # Copyright (C) 2013-2015 Konstantinos Poulios.
@@ -270,10 +270,10 @@ for nit in range(steps+1):
       md.set_variable('wR', md.variable('uR'))
       md.set_variable('wB', md.variable('uB'))
 
-   starttime = time.clock()
+   starttime = time.process_time()
    md.solve('noisy', 'max_iter', 40, 'max_res', 1e-8, #)[0]
             'lsearch', 'simplest', 'alpha max ratio', 1.5, 'alpha min', 0.2, 'alpha mult', 0.6)[0]
-   print('solution time for iteration %i is %f sec' % (nit, time.clock()-starttime))
+   print('solution time for iteration %i is %f sec' % (nit, time.process_time()-starttime))
 
    U_R = md.variable('uR')
    VM_R = md.compute_Von_Mises_or_Tresca('uR', lawname, 'params_ring1', mfvm_R)

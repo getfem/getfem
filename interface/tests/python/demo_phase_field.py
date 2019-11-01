@@ -24,7 +24,7 @@ import getfem as gf
 import numpy as np
 import os
 
-np.set_printoptions(threshold=np.nan)
+np.set_printoptions(threshold=100000)
 gf.util_trace_level(1)
 
 # Input data
@@ -55,8 +55,8 @@ integration_degree = 5   # 9 gauss points per quad
 
 #------------------------------------
 
-NX = 2*((NX+1)/2)
-NY = 2*((NY+1)/2)
+NX = int(2*((NX+1)/2))
+NY = int(2*((NY+1)/2))
 
 resultspath = "./demo_phase_field_results"
 if not os.path.exists(resultspath):
@@ -67,15 +67,15 @@ B_BOUNDARY = 4
 T_BOUNDARY = 6
 TB_BOUNDARY = 7
 
-NX_seed1 = np.linspace(-1, 0, NX/3+1)
-NX_seed2 = np.linspace(0, 1, (NX-NX/3)+1)[1:]
-NY_seed = np.linspace(-1, 1, NY+1)
+NX_seed1 = np.linspace(-1., 0., int(NX/3+1))
+NX_seed2 = np.linspace(0., 1., int((NX-NX/3)+1))[1:]
+NY_seed = np.linspace(-1., 1., NY+1)
 X_seed1 = LX/2*(0.2*NX_seed1+0.8*np.sign(NX_seed1)*np.power(np.abs(NX_seed1),1.5))
 X_seed2 = LX/2*(0.6*NX_seed2+0.4*np.sign(NX_seed2)*np.power(np.abs(NX_seed2),1.5))
 X_seed = np.concatenate((X_seed1,X_seed2))
 Y_seed = LY/2*(0.2*NY_seed+0.8*np.sign(NY_seed)*np.power(np.abs(NY_seed),1.5))
-m1 = gf.Mesh("cartesian", X_seed, Y_seed[0:NY/2+1])
-m2 = gf.Mesh("cartesian", X_seed, Y_seed[NY/2:])
+m1 = gf.Mesh("cartesian", X_seed, Y_seed[0:int(NY/2+1)])
+m2 = gf.Mesh("cartesian", X_seed, Y_seed[int(NY/2):])
 gap = 1e-5
 pts = m1.pts()
 for i in range(pts.shape[1]):

@@ -26,7 +26,7 @@ import numpy as np
 
 gf.util_trace_level(1)
 
-test_case = 3 # 0 = 2D punch on a rigid obstacle
+test_case = 1 # 0 = 2D punch on a rigid obstacle
               # 1 = 2D punch on a deformable obstacle (one slave, one master)
               # 2 = 2D with two different meshes
               # 3 = 2D with multi-body and only one mesh

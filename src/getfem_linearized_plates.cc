@@ -227,7 +227,7 @@ namespace getfem {
       }
 
       std::stringstream fem_desc;
-      fem_desc << "FEM_RT0" << (simplex ? "P":"Q") << "(" << N << ")";
+      fem_desc << "FEM_RT0" << (simplex ? "":"Q") << "(" << N << ")";
       pfem pf2 = fem_descriptor(fem_desc.str());
 
       // Obtaining a convenient integration method

@@ -29,7 +29,7 @@
 import numpy as np
 import getfem as gf
 
-np.set_printoptions(threshold=np.nan)
+np.set_printoptions(threshold=100000)
 gf.util_trace_level(1)
 
 # Parameters:  #########################################################
