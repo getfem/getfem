@@ -97,21 +97,30 @@ md.solve()
 
 A0 = md.variable('Previous_Dot2_u')
 
-os.system('mkdir results');
+try:
+    os.makedirs('results')
+except FileExistsError:
+    pass
 mf.export_to_vtk('results/displacement_0.vtk', U0)
 mf.export_to_vtk('results/velocity_0.vtk', V0)
 mf.export_to_vtk('results/acceleration_0.vtk', A0)
 
 A0 = 0.*U0
 
-os.system('mkdir results1');
+try:
+    os.makedirs('results1')
+except FileExistsError:
+    pass
 mf.export_to_vtk('results1/displacement_0.vtk', U0)
 mf.export_to_vtk('results1/velocity_0.vtk', V0)
 mf.export_to_vtk('results1/acceleration_0.vtk', A0)
 
 A0 = md.variable('Previous_Dot2_u2')
 
-os.system('mkdir results2');
+try:
+    os.makedirs('results2')
+except FileExistsError:
+    pass
 mf.export_to_vtk('results2/displacement_0.vtk', U0)
 mf.export_to_vtk('results2/velocity_0.vtk', V0)
 mf.export_to_vtk('results2/acceleration_0.vtk', A0)
