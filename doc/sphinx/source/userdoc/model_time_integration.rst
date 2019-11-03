@@ -265,7 +265,7 @@ For a problem which reads
 
 .. math::
 
-  \left(\left(1+\alpha\right)K+\left(1+\alpha\right)\dfrac{\gamma}{\beta\Delta t}C+\dfrac{1}{\beta\Delta t^{2}}M\right)U^{n}=F^{n}+M\left(\left(\dfrac{1}{2\beta}-1\right)A^{n-1}+\dfrac{1}{\beta\Delta t}V^{n-1}+\dfrac{1}{\beta\Delta t^{2}}U^{n-1}\right)+\left(1+\alpha\right)C\left[\left(\dfrac{\gamma}{2\beta}-1\right)\Delta tA^{n-1}+\left(\dfrac{\gamma}{\beta}-1\right)V^{n-1}+\dfrac{\gamma}{\beta\Delta t}U^{n-1}\right]+\alpha KU^{n-1}+\alpha CV^{n-1}
+  \left(\left(1+\alpha\right)K+\left(1+\alpha\right)\dfrac{\gamma}{\beta\Delta t}C+\dfrac{1}{\beta\Delta t^{2}}M\right)U^{t}=F^{t+\alpha*dt}+M\left(\left(\dfrac{1}{2\beta}-1\right)A^{t-dt}+\dfrac{1}{\beta\Delta t}V^{t-dt}+\dfrac{1}{\beta\Delta t^{2}}U^{t-dt}\right)+\left(1+\alpha\right)C\left[\left(\dfrac{\gamma}{2\beta}-1\right)\Delta tA^{t-dt}+\left(\dfrac{\gamma}{\beta}-1\right)V^{t-dt}+\dfrac{\gamma}{\beta\Delta t}U^{t-dt}\right]+\alpha KU^{t-dt}+\alpha CV^{t-dt}
 
 where :math:`dt` means a time step, :math:`M` the matrix in term of "Dot2_u", :math:`C` the matrix in term of "Dot_u" and :math:`K` the matrix in term of "u".
 
@@ -286,13 +286,22 @@ The following data are also added::
 
 which correspond to the values of "u", "Dot_u"  and "Dot2_u" at the previous time step.
 
-Before the first solve, the data  "Previous_u" and "Previous_Dot_u" (corresponding to :math:`U^0` in the example) have to be initialized. The data "Previous_Dot2_u" is to be given or precomputed (see :ref:`precomp_time_der_section` and except for :math:`\alpha = 0, \beta = 1/2, \gamma = 1`).
+Before the first solve, the data  "Previous_u" and "Previous_Dot_u" (corresponding to :math:`U^0` in the example) have to be initialized. The data "Previous_Dot2_u" is to be given or precomputed (see :ref:`precomp_time_der_section` and except for :math:`\beta = 1/2, \gamma = 1`).
 
 
 The addition of this scheme to a variable is to be done thanks to::
 
   add_Hilber_Hughes_Taylor_scheme(model &md, const std::string &varname,
                                   scalar_type alpha, scalar_type beta, scalar_type gamma);
+
+.. warning::
+  You have to set exact time of external force :math:`F^{t+\alpha*dt}` when you use this scheme.
+
+such as::
+
+  // Volumic source term.
+  getfem::add_source_term_generic_assembly_brick(model, mim, "sin(t+alpha*dt)*Test_u");
+
 
 Transient terms
 ***************

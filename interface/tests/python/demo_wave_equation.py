@@ -27,9 +27,9 @@
   also a good example of use of GetFEM++.
 
 """
+import os
 import numpy as np
 import getfem as gf
-import os
 
 NX = 10
 m = gf.Mesh('cartesian', np.arange(0., 1.+1./NX,1./NX),
@@ -70,6 +70,7 @@ T = 5.0;
 # Set dt smaller to fix Newmark and Houbolt method.
 # dt = 0.001;
 dt = 0.025;
+alpha = 0.00;
 beta = 0.25;
 gamma = 0.5;
 
@@ -78,6 +79,7 @@ md.add_Houbolt_scheme('u1')
 md.add_Hilber_Hughes_Taylor_scheme('u2', alpha, beta, gamma)
 md.add_mass_brick(mim, 'Dot2_u')
 md.add_mass_brick(mim, 'Dot2_u1')
+md.add_mass_brick(mim, 'Dot2_u2')
 md.set_time_step(dt)
 
 ## Initial data.
@@ -86,13 +88,14 @@ md.set_variable('Previous_Dot_u',  V0)
 md.set_variable('Previous_u1', U0)
 md.set_variable('Previous2_u1', U0)
 md.set_variable('Previous3_u1', U0)
+md.set_variable('Previous_u2', U0)
+md.set_variable('Previous_Dot_u', V0)
 
 ## Initialisation of the acceleration 'Previous_Dot2_u'
 md.perform_init_time_derivative(dt/2.)
 md.solve()
 
 A0 = md.variable('Previous_Dot2_u')
-
 
 os.system('mkdir results');
 mf.export_to_vtk('results/displacement_0.vtk', U0)
@@ -105,6 +108,13 @@ os.system('mkdir results1');
 mf.export_to_vtk('results1/displacement_0.vtk', U0)
 mf.export_to_vtk('results1/velocity_0.vtk', V0)
 mf.export_to_vtk('results1/acceleration_0.vtk', A0)
+
+A0 = md.variable('Previous_Dot2_u2')
+
+os.system('mkdir results2');
+mf.export_to_vtk('results2/displacement_0.vtk', U0)
+mf.export_to_vtk('results2/velocity_0.vtk', V0)
+mf.export_to_vtk('results2/acceleration_0.vtk', A0)
 
 ## Iterations
 n = 1;
@@ -126,6 +136,13 @@ for t in np.arange(0.,T,dt):
   mf.export_to_vtk('results1/displacement_%d.vtk' % n, U)
   mf.export_to_vtk('results1/velocity_%d.vtk' % n, V)
   mf.export_to_vtk('results1/acceleration_%d.vtk' % n, A)
+
+  U = md.variable('u2')
+  V = md.variable('Dot_u2')
+  A = md.variable('Dot2_u2')
+  mf.export_to_vtk('results2/displacement_%d.vtk' % n, U)
+  mf.export_to_vtk('results2/velocity_%d.vtk' % n, V)
+  mf.export_to_vtk('results2/acceleration_%d.vtk' % n, A)
 
   n += 1
   md.shift_variables_for_time_integration()
