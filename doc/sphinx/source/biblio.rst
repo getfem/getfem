@@ -189,6 +189,9 @@ References
 .. [ZT1989] Zienkiewicz and Taylor. *The finite element method*. 5th edition,
     volume 3 : Fluids Dynamics.
 
+.. [HILBER1977] HILBER, H. M., HUGHES, T. J. R., AND TAYLOR, R. L.
+   *Improved numerical dissipation for time integration algorithms in structural dynamics.*
+   Earthquake Engineering and Structural Dynamics 5 (1977), 283-292.
 
 .. |moes| unicode:: Mo U+00EB s
 .. |peric| unicode:: Peri U+0107
