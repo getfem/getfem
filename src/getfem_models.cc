@@ -1677,6 +1677,8 @@ namespace getfem {
           gmm::add(gmm::scaled(md.complex_variable(A0), -complex_type(a2)),
                    md.set_complex_constant_part(A));
         } else {
+          gmm::copy(gmm::scaled(md.real_variable(U0), c1),
+                   md.set_real_constant_part(U));
           gmm::add(gmm::scaled(md.real_variable(U0), -b0),
                    gmm::scaled(md.real_variable(V0), b1),
                    md.set_real_constant_part(V));
