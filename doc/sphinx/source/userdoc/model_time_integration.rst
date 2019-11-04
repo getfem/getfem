@@ -276,15 +276,17 @@ The affine dependences are thus given by::
 
 When aplying this scheme to a variable "u" of the model, the following affine dependent variables are added to the model::
 
-  "Dot_u", "Dot2_u"
+  "Dot_u", "Dot2_u", "Rhs_u"
 
-which represent the first and second order time derivative of the variable and can be used in some brick definition.
+"Dot_u", "Dot2_u" represent the first and second order time derivative of the variable and can be used in some brick definition.
+
+"Rhs_u" represent the RHS of the variable and have to define the same brick with "u".
 
 The following data are also added::
 
-  "Previous_u", "Previous_Dot_u", "Previous_Dot2_u"
+  "Previous_u", "Previous_Dot_u", "Previous_Dot2_u", "Previous_Rhs_u"
 
-which correspond to the values of "u", "Dot_u"  and "Dot2_u" at the previous time step.
+which correspond to the values of "u", "Dot_u", "Dot2_u" and "Rhs_u" at the previous time step.
 
 Before the first solve, the data  "Previous_u" and "Previous_Dot_u" (corresponding to :math:`U^0` in the example) have to be initialized. The data "Previous_Dot2_u" is to be given or precomputed (see :ref:`precomp_time_der_section` and except for :math:`\beta = 1/2, \gamma = 1`).
 
@@ -295,12 +297,13 @@ The addition of this scheme to a variable is to be done thanks to::
                                   scalar_type alpha, scalar_type beta, scalar_type gamma);
 
 .. warning::
-  You have to set exact time of external force :math:`F^{t+\alpha*dt}` when you use this scheme.
+  You have to set exact time of external force :math:`F^{t+\alpha*dt}` and set the same brick
+  at "Rhs_u" with "u" when you use this scheme. "Rhs_u" is dummpy variable used only for 
+  calculate RHS stiffness matrix and not used for calculation.
 
 such as::
 
-  // Volumic source term.
-  getfem::add_source_term_generic_assembly_brick(model, mim, "sin(t+alpha*dt)*Test_u");
+  Dot_u*Test_u + Grad_u.Grad_Test_u + Grad_Rhs_u.Grad_Test_u - sin(t+alpha*dt)*Test_u
 
 More details can be found for instance in [HILBER1977]_.
 
