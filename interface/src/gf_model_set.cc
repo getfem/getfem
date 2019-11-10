@@ -1955,10 +1955,10 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        out.pop().from_integer(int(ind));
        );
 
-    /*@SET ind = ('add isotropic linearized elasticity brick pstrain', @tmim mim, @str varname, @str data_E, @str data_nu[, @int region])
+    /*@SET ind = ('add isotropic linearized elasticity brick pstrain', @tmim mim, @str varname, @str data_E, @str data_nu[, @str data_epsilon[, @int region]])
       Add an isotropic linearized elasticity term to the model relatively to
-      the variable `varname`. `data_E` and `data_nu` should
-      contain the Young modulus and Poisson ratio, respectively.
+      the variable `varname`. `data_E` and `data_nu` `data_epsilon` should
+      contain the Young modulus, Poisson ratio and thickness size, respectively.
       `region` is an optional mesh region on which the term is added.
       If it is not specified, it is added
       on the whole mesh.
@@ -1967,16 +1967,18 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       standard model. 
       Return the brick index in the model.@*/
     sub_command
-      ("add isotropic linearized elasticity brick pstrain", 4, 5, 0, 1,
+      ("add isotropic linearized elasticity brick pstrain", 4, 6, 0, 1,
        getfem::mesh_im *mim = to_meshim_object(in.pop());
        std::string varname = in.pop().to_string();
        std::string data_E = in.pop().to_string();
        std::string data_nu = in.pop().to_string();
+       std::string data_epsilon = "1.0";
+       if (in.remaining()) data_epsilon = in.pop().to_string();
        size_type region = size_type(-1);
        if (in.remaining()) region = in.pop().to_integer();
        size_type ind
        = getfem::add_isotropic_linearized_elasticity_brick_pstrain
-       (*md, *mim, varname, data_E, data_nu, region)
+       (*md, *mim, varname, data_E, data_nu, data_epsilon, region)
        + config::base_index();
        workspace().set_dependence(md, mim);
        out.pop().from_integer(int(ind));
