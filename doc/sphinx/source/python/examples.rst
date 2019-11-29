@@ -236,7 +236,7 @@ of the |gf| distribution.
 
 .. literalinclude:: code_samples/demo_tripod.py
    :linenos:
-   :lines: 3-89
+   :lines: 31-129
 
 Here is the final figure, displaying the :envvar:`Von Mises` stress and
 displacements norms:
