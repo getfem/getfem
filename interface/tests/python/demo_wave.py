@@ -26,8 +26,8 @@
 
   $Id$
 """
-from numpy import *
-from getfem import *
+import numpy as np
+import getfem as gf
 import os
 
 make_check = "srcdir" in os.environ
@@ -40,13 +40,13 @@ if make_check:
 PK = 3
 k = 1.0
 
-## Mesh and MeshFems
-m = Mesh("import", "gid", filename)
-mfu = MeshFem(m, 1)
-mfu.set_fem(Fem("FEM_PK(2,%d)" % (PK,)))
-mfd = MeshFem(m, 1)
-mfd.set_fem(Fem("FEM_PK(2,%d)" % (PK,)))
-mim = MeshIm(m, Integ("IM_TRIANGLE(13)"))
+# Mesh and MeshFems
+m = gf.Mesh("import", "gid", filename)
+mfu = gf.MeshFem(m, 1)
+mfu.set_fem(gf.Fem("FEM_PK(2,%d)" % (PK,)))
+mfd = gf.MeshFem(m, 1)
+mfd.set_fem(gf.Fem("FEM_PK(2,%d)" % (PK,)))
+mim = gf.MeshIm(m, gf.Integ("IM_TRIANGLE(13)"))
 
 # Boundary selection
 P = m.pts()
@@ -54,8 +54,8 @@ P = m.pts()
 Psqr = sum(P * P, 0)
 cobj = Psqr < 1 * 1 + 1e-6
 cout = Psqr > 10 * 10 - 1e-2
-pidobj = compress(cobj, list(range(0, m.nbpts())))
-pidout = compress(cout, list(range(0, m.nbpts())))
+pidobj = np.compress(cobj, list(range(0, m.nbpts())))
+pidout = np.compress(cout, list(range(0, m.nbpts())))
 fobj = m.faces_from_pid(pidobj)
 fout = m.faces_from_pid(pidout)
 ROBIN_BOUNDARY = 1
@@ -68,7 +68,7 @@ wave_expr = "cos(%f*y+.2)+complex(0.,1.)*sin(%f*y+.2)" % (k, k)
 Uinc = mfd.eval(wave_expr, globals(), locals())
 
 # Model Bricks
-md = Model("complex")
+md = gf.Model("complex")
 md.add_fem_variable("u", mfu)
 md.add_initialized_data("k", [k])
 md.add_Helmholtz_brick(mim, "u", "k")
@@ -86,8 +86,8 @@ U = md.variable("u")
 
 if not (make_check):
 
-    sl = Slice(("none",), mfu, 8)
-    sl.export_to_vtk("wave.vtk", mfu, real(U), "rWave", mfu, imag(U), "iWave")
+    sl = gf.Slice(("none",), mfu, 8)
+    sl.export_to_vtk("wave.vtk", mfu, np.real(U), "rWave", mfu, np.imag(U), "iWave")
 
     print("You can view the solution with (for instance):")
     print("mayavi2 -d wave.vtk -f WarpScalar -m Surface")

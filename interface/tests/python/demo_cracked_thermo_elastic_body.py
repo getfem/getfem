@@ -47,17 +47,17 @@ jump_temp = 100.0  # [C] temperature jump between the two sides
 
 # Mesh definition:
 L = 40.0  # [mm]
-l = 10.0  # [mm]
+M = 10.0  # [mm]
 ny = 10  # Number of elements in each direction
 quad = True  # quad mesh or triangle one
 
-h = l / ny
+h = M / ny
 nx = np.floor(L / h)
 
 if quad:
-    m = gf.Mesh("cartesian", -L / 2.0 + np.arange(nx + 1) * h, -l / 2 + np.arange(ny + 1) * h)
+    m = gf.Mesh("cartesian", -L / 2.0 + np.arange(nx + 1) * h, -M / 2 + np.arange(ny + 1) * h)
 else:
-    m = gf.Mesh("regular_simplices", -L / 2 + np.arange(nx + 1) * h, -l / 2 + np.arange(ny + 1) * h)
+    m = gf.Mesh("regular_simplices", -L / 2 + np.arange(nx + 1) * h, -M / 2 + np.arange(ny + 1) * h)
 
 LEFT_RG = 101
 RIGHT_RG = 102

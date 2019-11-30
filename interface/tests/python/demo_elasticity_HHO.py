@@ -46,12 +46,12 @@ clambda = 2 * cmu * nu / (1 - 2 * nu)  # Lame coefficient
 use_quad = False  # Quadrilaterals or triangles
 
 # Create a simple cartesian mesh
-I = np.arange(0, 1 + 1.0 / NX, 1.0 / NX)
+L = np.arange(0, 1 + 1.0 / NX, 1.0 / NX)
 if use_quad:
-    m = gf.Mesh("cartesian", I, I)
+    m = gf.Mesh("cartesian", L, L)
     # m=gf.Mesh('import','structured','GT="GT_QK(2,1)";SIZES=[1,1];NOISED=1;NSUBDIV=[1,1];')
 else:
-    m = gf.Mesh("regular_simplices", I, I)
+    m = gf.Mesh("regular_simplices", L, L)
     # m=gf.Mesh('import','structured','GT="GT_PK(2,1)";SIZES=[1,1];NOISED=1;NSUBDIV=[%d,%d];' % (NX, NX))
 
 

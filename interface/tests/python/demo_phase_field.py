@@ -178,7 +178,7 @@ with open("%s/demo_phase_field_forces.dat" % resultspath, "w") as f:
                 nit = md.solve("noisy", "lsolver", "mumps", "max_iter", iters, "max_res", 1e-7, "lsearch", "simplest", "alpha max ratio", 1.5, "alpha min", 0.4, "alpha mult", 0.6, "alpha threshold res", 2)[0]  # )[0]
             except (KeyboardInterrupt, SystemExit):
                 raise
-            except:
+            except Exception:
                 nit = iters
 
             if nit >= iters:

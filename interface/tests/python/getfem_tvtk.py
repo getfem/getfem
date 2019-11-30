@@ -31,7 +31,7 @@
 """
 try:
     from tvtk.api import tvtk
-except:
+except ImportError:
     print("\n\n** Could not load tvtk. Did you install it ?\n")
     print("   ( https://svn.enthought.com/enthought/wiki/TVTK ) **\n\n")
     raise
@@ -254,17 +254,6 @@ class FigureItem:
                 data = glyph.output
 
             if self.show_faces:
-                # if self.deform is not None:
-                ##                    data.point_data.vectors = array(numarray.transpose(self.deform))
-                ##                    warper = tvtk.WarpVector(input=data)
-                ##                    data = warper.output
-                ##                lut = tvtk.LookupTable()
-                ##                lut.hue_range = 0.667,0
-                # c=gf_colormap('tripod')
-                # lut.number_of_table_values=c.shape[0]
-                # for i in range(0,c.shape[0]):
-                # lut.set_table_value(i,c[i,0],c[i,1],c[i,2],1)
-
                 self.mapper = tvtk.PolyDataMapper(input=data)
                 self.mapper.scalar_range = self.scalar_data_range
                 self.mapper.scalar_visibility = True
@@ -431,124 +420,3 @@ class Figure:
         ex.file_name = filename
         ex.input = w2if.output
         ex.write()
-
-
-# mf=getfem.MeshFem('load','tripod.mf');
-# m=mf.linked_mesh()
-# mfvm=getfem.MeshFem('load','tripod.mfe',m);
-##U = numarray.fromfile('tripod.U','d')
-##VM = numarray.fromfile('tripod.VM','d')
-##fig = Figure()
-# fig.show(mfvm, data=VM, deformation_mf=mf, deformation=U,
-# scalar_bar=True, scalar_label='Von Mises Stress')
-# fig.set_colormap('chouette')
-# fig.loop()
-# sys.exit(1)
-
-# plot_mesh(m);
-# def plot_mesh(m):
-# if m:
-##    p = tvtk.Property(representation='wireframe')
-##    p.representation = 's'
-# p.representation
-# -> 'surface'
-# p.configure_traits()
-
-# sl=getfem.Slice(('boundary',),m,2);
-##    (Pe, E1, E2)=sl.edges();
-
-
-##    points=sl.pts(); points.transpose();
-# points=array(points);
-# (triangles,cv2tr)=sl.splxs(2);
-# triangles.transpose();
-# triangles=array(triangles);
-##    mesh = tvtk.PolyData(points=points, polys=triangles)
-
-# Pe.transpose();
-# E1.transpose()
-# edges=tvtk.PolyData(points=array(Pe),polys=array(E1))
-
-# print(mesh.get())
-
-
-# data = array([[0,0,0,10], [1,0,0,20],
-# [0,1,0,20], [0,0,1,30]], 'f')
-# triangles = array([[0,1,3], [0,3,2],
-# [1,2,3], [0,2,1]])
-# points, temperature = data[:,:3], data[:,-1]
-# mesh = tvtk.PolyData(points=points, polys=triangles)
-# mesh.point_data.scalars = temperature
-
-
-# TVTK PIPELINE
-# if 0:
-# create a renderer
-##        renderer = tvtk.Renderer()
-# create a render window and hand it the renderer
-##        render_window = tvtk.RenderWindow(size=(400,400))
-# render_window.add_renderer(renderer)
-
-# create interactor and hand it the render window
-# This handles mouse interaction with window.
-##        interactor = tvtk.RenderWindowInteractor(render_window=render_window)
-# else:
-# Create a GUI instance.
-##        gui = GUI()
-
-# Create and open an IVTK application window that has an embedded TVTK
-# pipeline browser and an interactive Python interpreter shell via
-# PyCrust.  If you don't want all these you can choose between the
-# following classes in ivtk -- IVTK, IVTKWithCrust, IVTKWithBrowser
-# and IVTKWithCrustAndBrowser.
-# window = ivtk.IVTKWithCrustAndBrowser(size=(800,600))  # Size is optional.
-
-# Open the window.
-# window.open()
-
-##        viewer = window
-##        renderer = viewer.scene
-
-
-# Set the mapper to scale temperature range
-# across the entire range of colors
-##    mapper = tvtk.PolyDataMapper(input=mesh);
-##    mapper_edges = tvtk.PolyDataMapper(input=edges);
-# print(mapper)
-
-# mapper = tvtk.PolyDataMapper(input=mesh)
-# mapper.scalar_range = min(temperature), max(temperature)
-
-# Create mesh actor for display
-##    actor = tvtk.Actor(mapper=mapper)
-##    actor_edges = tvtk.Actor(mapper=mapper_edges)
-##    actor_edges.property.representation = 'wireframe'
-
-# Create a scalar bar
-# scalar_bar = tvtk.ScalarBarActor(title="Temperature",
-# orientation='horizontal',
-# width=0.8, height=0.17,
-# lookup_table = mapper.lookup_table)
-##    scalar_bar.position_coordinate.coordinate_system = 'normalized_viewport'
-##    scalar_bar.position_coordinate.value = 0.1, 0.01, 0.0
-
-# Use the ScalarBarWidget so we can drag the scalar bar around.
-# sc_bar_widget = tvtk.ScalarBarWidget(interactor=interactor,
-# scalar_bar_actor=scalar_bar)
-
-# Now add the actors to the renderer and start the interaction.
-# renderer.add_actor(actor)
-# renderer.add_actor(actor_edges)
-# interactor.initialize()
-# Enable the widget so the scalar bar can be seen.  Press 'i' to
-# disable the widget.
-# sc_bar_widget.enabled = True
-# interactor.start()
-# gui.start_event_loop()
-
-
-# print("finished!")
-
-
-# f=mlab.figure()
-# f.add(mlab.TriMesh(points,triangles))

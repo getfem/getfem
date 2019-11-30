@@ -35,7 +35,7 @@ import numpy as np
 with_graphics = False
 try:
     import getfem_tvtk
-except:
+except Exception:
     print("\n** Could NOT import getfem_tvtk -- graphical output disabled **\n")
     import time
 

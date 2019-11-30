@@ -134,7 +134,7 @@ jump = "((u-Interpolate(u,neighbour_elt))*Normal)"
 test_jump = "((Test_u-Interpolate(Test_u,neighbour_elt))*Normal)"
 grad_mean = "((Grad_u+Interpolate(Grad_u,neighbour_elt))*0.5)"
 grad_test_mean = "((Grad_Test_u+Interpolate(Grad_Test_u,neighbour_elt))*0.5)"
-md.add_linear_term(mim, "-(({F}).({G}))-(({H}).({I}))+alpha*(({J}).({K}))".format(F=grad_mean, G=test_jump, H=jump, I=grad_test_mean, J=jump, K=test_jump), INNER_FACES)
+md.add_linear_term(mim, "-(({F}).({G}))-(({H}).({J}))+alpha*(({K}).({L}))".format(F=grad_mean, G=test_jump, H=jump, J=grad_test_mean, K=jump, L=test_jump), INNER_FACES)
 
 gf.memstats()
 # md.listvar()

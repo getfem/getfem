@@ -300,7 +300,7 @@ elif version == 3:  # Nitsche contact
     K_N_C = gf.Spmat("add", K_N, K_N2)
     asstr_Nitsche = "(t_N/g_N)*Grad_u*Grad_Test_u " + "+(1/g_N)*neg_part(g_N*u+Grad_u)*(g_N*Test_u+t_N*Grad_Test_u)"
 else:
-    assert false, "Unvalid version"
+    assert False, "Unvalid version"
 
 # Misc initializations
 Ndof = U0.size
@@ -345,7 +345,7 @@ for nit in range(0, NT):
                     s1 = -max(0.0, a)
                     Fc[0] = -s1
                 else:
-                    assert false, "No explicit scheme for " + "pure Signorini contact and standard mass matrix"
+                    assert False, "No explicit scheme for " + "pure Signorini contact and standard mass matrix"
             elif version == 1:  # Pure Signorini contact with P.-S. scheme
                 if mass_matrix_type >= 1:
                     U1[0] = max(-e_PS * Um1[0], -a) / K[0, 0]
@@ -532,7 +532,7 @@ for nit in range(0, NT):
             plt.axis([0.0, 1.0, -0.6, 0.6])
             plt.plot(Xdraw, UUex, "red")
             plt.plot(Xdraw, UU, "blue")
-            plt.ylabel("$\partial_x u$")
+            plt.ylabel(r"$\partial_x u$")
             plt.xlabel("x")
             plt.pause(0.01)
             plt.show(0)
@@ -540,11 +540,11 @@ for nit in range(0, NT):
 
 # print the main relative errors
 LinfL2u = np.amax(store_UL2) / np.amax(store_UL2_ex)
-print("L^\intfy(0,T,L^2)-norm of the error on u: ", LinfL2u)
+print(r"L^\intfy(0,T,L^2)-norm of the error on u: ", LinfL2u)
 LinfH1u = np.amax(store_UH1) / np.amax(store_UH1_ex)
-print("L^\intfy(0,T,H^1)-norm of the error on u: ", LinfH1u)
+print(r"L^\intfy(0,T,H^1)-norm of the error on u: ", LinfH1u)
 LinfL2v = np.amax(store_VL2) / np.amax(store_VL2_ex)
-print("L^\intfy(0,T,L^2)-norm of the error on v: ", LinfL2v)
+print(r"L^\intfy(0,T,L^2)-norm of the error on v: ", LinfL2v)
 Nor = np.sqrt(np.sum(np.square(store_UL2_ex)) * dt)
 L2L2u = np.sqrt(np.sum(np.square(store_UL2)) * dt) / Nor
 print("L^2(0,T,L^2)-norm of the error on u: ", L2L2u)

@@ -39,11 +39,11 @@ dirichlet_coefficient = 1e10  # Penalization coefficient
 using_HHO = True  # Use HHO method or standard Lagrange FEM
 
 # Create a simple cartesian mesh
-I = np.arange(0, 1 + 1.0 / NX, 1.0 / NX)
+L = np.arange(0, 1 + 1.0 / NX, 1.0 / NX)
 if N == 2:
-    m = gf.Mesh("regular_simplices", I, I)
+    m = gf.Mesh("regular_simplices", L, L)
 elif N == 3:
-    m = gf.Mesh("regular_simplices", I, I, I)
+    m = gf.Mesh("regular_simplices", L, L, L)
 
 
 # Meshfems

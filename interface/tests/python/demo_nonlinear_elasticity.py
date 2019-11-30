@@ -188,10 +188,10 @@ for step in range(1, nbstep + 1):
     if dirichlet_version == 1:
         for i in i_top:
             ro = np.dot(RT1, np.dot(RT2, np.append(P[:, i], [1])))
-            R[i] = ro[mod(i, 3)] - P[mod(i, 3), i]
+            R[i] = ro[np.mod(i, 3)] - P[np.mod(i, 3), i]
         for i in i_bot:
             ro = np.dot(RB1, np.dot(RB2, np.append(P[:, i], [1])))
-            R[i] = ro[mod(i, 3)] - P[mod(i, 3), i]
+            R[i] = ro[np.mod(i, 3)] - P[np.mod(i, 3), i]
     else:
         for i in i_top:
             ro = np.dot(RT1, np.dot(RT2, np.append(P[:, i], [1])))

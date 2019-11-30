@@ -19,7 +19,7 @@
 # Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 #
 ############################################################################
-"""  2D Poisson problem test in unit disk \Omega.
+r"""  2D Poisson problem test in unit disk \Omega.
   -\Delta u=1 in \Omega, u=0 on \delta\Omega
 
   This program is used to check that python-getfem is working. This is
