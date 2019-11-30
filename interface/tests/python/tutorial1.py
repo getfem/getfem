@@ -24,28 +24,28 @@ import getfem as gf
 import numpy as np
 
 NX = 10
-m = gf.Mesh('cartesian', np.arange(0,1+1./NX,1./NX), np.arange(0,1+1./NX,1./NX))
-mf = gf.MeshFem(m,1) # create a meshfem of for a field of dimension 1
-mf.set('fem',gf.Fem('FEM_QK(2,2)'))
+m = gf.Mesh("cartesian", np.arange(0, 1 + 1.0 / NX, 1.0 / NX), np.arange(0, 1 + 1.0 / NX, 1.0 / NX))
+mf = gf.MeshFem(m, 1)  # create a meshfem of for a field of dimension 1
+mf.set("fem", gf.Fem("FEM_QK(2,2)"))
 
-print (gf.Fem('FEM_QK(2,2)').poly_str())
+print(gf.Fem("FEM_QK(2,2)").poly_str())
 
 # mim=gf.MeshIm(m, gf.Integ('IM_EXACT_PARALLELEPIPED(2)')); // not allowed
-mim=gf.MeshIm(m, gf.Integ('IM_GAUSS_PARALLELEPIPED(2, 4)'));
+mim = gf.MeshIm(m, gf.Integ("IM_GAUSS_PARALLELEPIPED(2, 4)"))
 
 
 border = m.outer_faces()
 m.set_region(42, border)  # create the region B42 (:-
 
 
-md=gf.Model('real')
-md.add_fem_variable('u', mf)
-md.add_Laplacian_brick(mim, 'u')
-R = mf.eval('(x-.5)*(x-.5) + (y-.5)*(y-.5) + x/5 - y/3')
-md.add_initialized_fem_data('DirichletData', mf, R)
-md.add_Dirichlet_condition_with_multipliers(mim, 'u', mf, 42, 'DirichletData')
+md = gf.Model("real")
+md.add_fem_variable("u", mf)
+md.add_Laplacian_brick(mim, "u")
+R = mf.eval("(x-.5)*(x-.5) + (y-.5)*(y-.5) + x/5 - y/3")
+md.add_initialized_fem_data("DirichletData", mf, R)
+md.add_Dirichlet_condition_with_multipliers(mim, "u", mf, 42, "DirichletData")
 
 md.variable_list()
 
 md.solve()
-U = md.variable('u')
+U = md.variable("u")

@@ -30,33 +30,32 @@
 import getfem as gf
 import numpy as np
 
-## Parameters
-NX = 100                           # Mesh parameter.
+# Parameters
+NX = 100  # Mesh parameter.
 Dirichlet_with_multipliers = True  # Dirichlet condition with multipliers
-                                   # or penalization
-dirichlet_coefficient = 1e10       # Penalization coefficient
+# or penalization
+dirichlet_coefficient = 1e10  # Penalization coefficient
 
 # Create a simple cartesian mesh
-m = gf.Mesh('regular_simplices', np.arange(0,1+1./NX,1./NX),
-            np.arange(0,1+1./NX,1./NX))
+m = gf.Mesh("regular_simplices", np.arange(0, 1 + 1.0 / NX, 1.0 / NX), np.arange(0, 1 + 1.0 / NX, 1.0 / NX))
 
 # Create a MeshFem for u and rhs fields of dimension 1 (i.e. a scalar field)
-mfu   = gf.MeshFem(m, 1)
+mfu = gf.MeshFem(m, 1)
 mfrhs = gf.MeshFem(m, 1)
 # assign the P2 fem to all elements of the both MeshFem
-mfu.set_fem(gf.Fem('FEM_PK(2,2)'))
-mfrhs.set_fem(gf.Fem('FEM_PK(2,2)'))
+mfu.set_fem(gf.Fem("FEM_PK(2,2)"))
+mfrhs.set_fem(gf.Fem("FEM_PK(2,2)"))
 
 #  Integration method used
-mim = gf.MeshIm(m, gf.Integ('IM_TRIANGLE(4)'))
+mim = gf.MeshIm(m, gf.Integ("IM_TRIANGLE(4)"))
 
 # Boundary selection
-flst  = m.outer_faces()
-fnor  = m.normal_of_faces(flst)
-tleft = abs(fnor[1,:]+1) < 1e-14
-ttop  = abs(fnor[0,:]-1) < 1e-14
+flst = m.outer_faces()
+fnor = m.normal_of_faces(flst)
+tleft = abs(fnor[1, :] + 1) < 1e-14
+ttop = abs(fnor[0, :] - 1) < 1e-14
 fleft = np.compress(tleft, flst, axis=1)
-ftop  = np.compress(ttop, flst, axis=1)
+ftop = np.compress(ttop, flst, axis=1)
 fneum = np.compress(np.logical_not(ttop + tleft), flst, axis=1)
 
 # Mark it as boundary
@@ -68,53 +67,44 @@ m.set_region(DIRICHLET_BOUNDARY_NUM2, ftop)
 m.set_region(NEUMANN_BOUNDARY_NUM, fneum)
 
 # Interpolate the exact solution (Assuming mfu is a Lagrange fem)
-Ue = mfu.eval('y*(y-1)*x*(x-1)+x*x*x*x*x')
+Ue = mfu.eval("y*(y-1)*x*(x-1)+x*x*x*x*x")
 
 # Interpolate the source term
-F1 = mfrhs.eval('-(2*(x*x+y*y)-2*x-2*y+20*x*x*x)')
-F2 = mfrhs.eval('[y*(y-1)*(2*x-1) + 5*x*x*x*x, x*(x-1)*(2*y-1)]')
+F1 = mfrhs.eval("-(2*(x*x+y*y)-2*x-2*y+20*x*x*x)")
+F2 = mfrhs.eval("[y*(y-1)*(2*x-1) + 5*x*x*x*x, x*(x-1)*(2*y-1)]")
 
 # Model
-md = gf.Model('real')
+md = gf.Model("real")
 
 # Main unknown
-md.add_fem_variable('u', mfu)
+md.add_fem_variable("u", mfu)
 
 # Laplacian term on u
-md.add_Laplacian_brick(mim, 'u')
+md.add_Laplacian_brick(mim, "u")
 
 # Volumic source term
-md.add_initialized_fem_data('VolumicData', mfrhs, F1)
-md.add_source_term_brick(mim, 'u', 'VolumicData')
+md.add_initialized_fem_data("VolumicData", mfrhs, F1)
+md.add_source_term_brick(mim, "u", "VolumicData")
 
 # Neumann condition.
-md.add_initialized_fem_data('NeumannData', mfrhs, F2)
-md.add_normal_source_term_brick(mim, 'u', 'NeumannData',
-                                NEUMANN_BOUNDARY_NUM)
+md.add_initialized_fem_data("NeumannData", mfrhs, F2)
+md.add_normal_source_term_brick(mim, "u", "NeumannData", NEUMANN_BOUNDARY_NUM)
 
 # Dirichlet condition on the left.
 md.add_initialized_fem_data("DirichletData", mfu, Ue)
 
-if (Dirichlet_with_multipliers):
-  md.add_Dirichlet_condition_with_multipliers(mim, 'u', mfu,
-                                              DIRICHLET_BOUNDARY_NUM1,
-                                              'DirichletData')
+if Dirichlet_with_multipliers:
+    md.add_Dirichlet_condition_with_multipliers(mim, "u", mfu, DIRICHLET_BOUNDARY_NUM1, "DirichletData")
 else:
-  md.add_Dirichlet_condition_with_penalization(mim, 'u', dirichlet_coefficient,
-                                               DIRICHLET_BOUNDARY_NUM1,
-                                               'DirichletData')
+    md.add_Dirichlet_condition_with_penalization(mim, "u", dirichlet_coefficient, DIRICHLET_BOUNDARY_NUM1, "DirichletData")
 
 # Dirichlet condition on the top.
 # Two Dirichlet brick in order to test the multiplier
 # selection in the intersection.
-if (Dirichlet_with_multipliers):
-  md.add_Dirichlet_condition_with_multipliers(mim, 'u', mfu,
-                                              DIRICHLET_BOUNDARY_NUM2,
-                                              'DirichletData')
+if Dirichlet_with_multipliers:
+    md.add_Dirichlet_condition_with_multipliers(mim, "u", mfu, DIRICHLET_BOUNDARY_NUM2, "DirichletData")
 else:
-  md.add_Dirichlet_condition_with_penalization(mim, 'u', dirichlet_coefficient,
-                                               DIRICHLET_BOUNDARY_NUM2,
-                                               'DirichletData')
+    md.add_Dirichlet_condition_with_penalization(mim, "u", dirichlet_coefficient, DIRICHLET_BOUNDARY_NUM2, "DirichletData")
 gf.memstats()
 # md.listvar()
 # md.listbricks()
@@ -123,19 +113,18 @@ gf.memstats()
 md.solve()
 
 # Main unknown
-U = md.variable('u')
-L2error = gf.compute(mfu, U-Ue, 'L2 norm', mim)
-H1error = gf.compute(mfu, U-Ue, 'H1 norm', mim)
-print('Error in L2 norm : ', L2error)
-print('Error in H1 norm : ', H1error)
+U = md.variable("u")
+L2error = gf.compute(mfu, U - Ue, "L2 norm", mim)
+H1error = gf.compute(mfu, U - Ue, "H1 norm", mim)
+print("Error in L2 norm : ", L2error)
+print("Error in H1 norm : ", H1error)
 
 # Export data
-mfu.export_to_pos('laplacian.pos', Ue,'Exact solution',
-                                    U,'Computed solution')
-print('You can view the solution with (for example):')
-print('gmsh laplacian.pos')
+mfu.export_to_pos("laplacian.pos", Ue, "Exact solution", U, "Computed solution")
+print("You can view the solution with (for example):")
+print("gmsh laplacian.pos")
 
 
-if (H1error > 1e-3):
-    print('Error too large !')
+if H1error > 1e-3:
+    print("Error too large !")
     exit(1)

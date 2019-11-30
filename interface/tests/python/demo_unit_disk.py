@@ -30,12 +30,12 @@
 # Import basic modules
 import getfem as gf
 
-## Parameters
-h = 0.1 # approximate diameter of the elements.
+# Parameters
+h = 0.1  # approximate diameter of the elements.
 
 # Create a unit disk mesh
-mo = gf.MesherObject('ball', [1.0, 1.0], 1.0)
-mesh = gf.Mesh('generate', mo, h, 2)
+mo = gf.MesherObject("ball", [1.0, 1.0], 1.0)
+mesh = gf.Mesh("generate", mo, h, 2)
 mesh.translate([-1.0, -1.0])
 
 # Create a MeshFem for u and rhs fields of dimension 1 (i.e. a scalar field)
@@ -47,7 +47,7 @@ mfu.set_classical_fem(elements_degree)
 mfrhs.set_classical_fem(elements_degree)
 
 #  Integration method used
-mim = gf.MeshIm(mesh, pow(elements_degree,2))
+mim = gf.MeshIm(mesh, pow(elements_degree, 2))
 
 # Boundary selection
 flst = mesh.outer_faces()
@@ -57,44 +57,43 @@ DIRICHLET_BOUNDARY = 1
 mesh.set_region(DIRICHLET_BOUNDARY, flst)
 
 # Interpolate the exact solution (Assuming mfu is a Lagrange fem)
-Ue = mfu.eval('(1-x*x-y*y)/4')
+Ue = mfu.eval("(1-x*x-y*y)/4")
 
 # Interpolate the source term
-F = mfrhs.eval('1')
+F = mfrhs.eval("1")
 
 # Model
-md = gf.Model('real')
+md = gf.Model("real")
 
 # Main unknown
-md.add_fem_variable('u', mfu)
+md.add_fem_variable("u", mfu)
 
 # Laplacian term on u
-md.add_Laplacian_brick(mim, 'u')
+md.add_Laplacian_brick(mim, "u")
 
 # Volumic source term
-md.add_initialized_fem_data('VolumicData', mfrhs, F)
-md.add_source_term_brick(mim, 'u', 'VolumicData')
+md.add_initialized_fem_data("VolumicData", mfrhs, F)
+md.add_source_term_brick(mim, "u", "VolumicData")
 
 # Dirichlet condition on the boundary.
-md.add_Dirichlet_condition_with_multipliers(mim, 'u', elements_degree - 1, DIRICHLET_BOUNDARY)
+md.add_Dirichlet_condition_with_multipliers(mim, "u", elements_degree - 1, DIRICHLET_BOUNDARY)
 
 # Assembly of the linear system and solve.
 md.solve()
 
 # Main unknown
-U = md.variable('u')
-L2error = gf.compute(mfu, U-Ue, 'L2 norm', mim)
-H1error = gf.compute(mfu, U-Ue, 'H1 norm', mim)
-print('Error in L2 norm : ', L2error)
-print('Error in H1 norm : ', H1error)
+U = md.variable("u")
+L2error = gf.compute(mfu, U - Ue, "L2 norm", mim)
+H1error = gf.compute(mfu, U - Ue, "H1 norm", mim)
+print("Error in L2 norm : ", L2error)
+print("Error in H1 norm : ", H1error)
 
 # Export data
-mfu.export_to_pos('unit_disk.pos', Ue,'Exact solution',
-                                    U,'Computed solution')
-print('You can view the solution with (for example):')
-print('gmsh unit_disk.pos')
+mfu.export_to_pos("unit_disk.pos", Ue, "Exact solution", U, "Computed solution")
+print("You can view the solution with (for example):")
+print("gmsh unit_disk.pos")
 
 
-if (H1error > 1e-3):
-    print('Error too large !')
+if H1error > 1e-3:
+    print("Error too large !")
     exit(1)

@@ -30,33 +30,33 @@ import getfem as gf
 import numpy as np
 from scipy import rand
 
-eps = 1.0/10
+eps = 1.0 / 10
 
-m = gf.Mesh('regular_simplices', np.arange(-1,1+eps,eps), np.arange(-1,1+eps,eps), 'degree', 2, 'noised')
-#m = gf.Mesh('cartesian', np.arange(-1,1+eps,eps), np.arange(-1,1+eps,eps))
+m = gf.Mesh("regular_simplices", np.arange(-1, 1 + eps, eps), np.arange(-1, 1 + eps, eps), "degree", 2, "noised")
+# m = gf.Mesh('cartesian', np.arange(-1,1+eps,eps), np.arange(-1,1+eps,eps))
 
-ls1 = gf.LevelSet(m, 2, 'y', 'x')
-#ls1 = gf.LevelSet(m, 2, 'sqr(x) + sqr(y) - sqr(0.7)', 'x-.4')
-#ls1 = gf.LevelSet(m, 2, 'x + y - 0.2') #, 'x-5')
-#ls1 = gf.LevelSet(m, 2, 'x + y - 0.2', 'x-5')
-#ls2 = gf.LevelSet(m, 2, '0.6*sqr(x) + sqr(y-0.1) - sqr(0.6)');
-#ls3 = gf.LevelSet(m, 4, 'sqr(x) + sqr(y+.08) - sqr(0.05)');
-ls2 = gf.LevelSet(m, 2, 'y+0.1', 'x')
-ls3 = gf.LevelSet(m, 2, 'y-0.1', 'x')
+ls1 = gf.LevelSet(m, 2, "y", "x")
+# ls1 = gf.LevelSet(m, 2, 'sqr(x) + sqr(y) - sqr(0.7)', 'x-.4')
+# ls1 = gf.LevelSet(m, 2, 'x + y - 0.2') #, 'x-5')
+# ls1 = gf.LevelSet(m, 2, 'x + y - 0.2', 'x-5')
+# ls2 = gf.LevelSet(m, 2, '0.6*sqr(x) + sqr(y-0.1) - sqr(0.6)');
+# ls3 = gf.LevelSet(m, 4, 'sqr(x) + sqr(y+.08) - sqr(0.05)');
+ls2 = gf.LevelSet(m, 2, "y+0.1", "x")
+ls3 = gf.LevelSet(m, 2, "y-0.1", "x")
 
 mls = gf.MeshLevelSet(m)
 
 mls.add(ls1)
 if True:
-  mls.sup(ls1)
-  mls.add(ls1)
-  mls.add(ls2)
-  mls.add(ls2)
-  mls.add(ls2)
-  mls.add(ls3)
+    mls.sup(ls1)
+    mls.add(ls1)
+    mls.add(ls2)
+    mls.add(ls2)
+    mls.add(ls2)
+    mls.add(ls3)
 mls.adapt()
 
-#print(mls.linked_mesh())
+# print(mls.linked_mesh())
 
 lls = mls.levelsets()
 
@@ -67,25 +67,25 @@ ctip = mls.crack_tip_convexes()
 mf = gf.MeshFem(m)
 mf.set_classical_fem(1)
 
-mfls = gf.MeshFem('levelset',mls,mf)
+mfls = gf.MeshFem("levelset", mls, mf)
 
 gf.memstats()
 
 nbd = mfls.nbdof()
 
 if True:
-  sl = gf.Slice(('none',), mls, 2);
-  U = rand(1,nbd);
-  sl.export_to_pos('slU.pos',mfls,U,'U')
-  mfls.export_to_pos('U.pos',U,'U')
-  cm.export_to_pos('cm.pos')
-  m.export_to_pos('m.pos')
+    sl = gf.Slice(("none",), mls, 2)
+    U = rand(1, nbd)
+    sl.export_to_pos("slU.pos", mfls, U, "U")
+    mfls.export_to_pos("U.pos", U, "U")
+    cm.export_to_pos("cm.pos")
+    m.export_to_pos("m.pos")
 else:
-  sl = gf.Slice(('none',), mls, 1);
-  for i in range(nbd):
-    U = np.zeros(nbd)
-    U[i] = 1
-    sl.export_to_pos('slU'+str(i)+'.pos',mfls,U,'U'+str(i))
-    mfls.export_to_pos('U'+str(i)+'.pos',U,'U'+str(i))
-  cm.export_to_pos('cm.pos')
-  m.export_to_pos('m.pos')
+    sl = gf.Slice(("none",), mls, 1)
+    for i in range(nbd):
+        U = np.zeros(nbd)
+        U[i] = 1
+        sl.export_to_pos("slU" + str(i) + ".pos", mfls, U, "U" + str(i))
+        mfls.export_to_pos("U" + str(i) + ".pos", U, "U" + str(i))
+    cm.export_to_pos("cm.pos")
+    m.export_to_pos("m.pos")
