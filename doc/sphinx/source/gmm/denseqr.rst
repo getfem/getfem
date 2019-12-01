@@ -33,7 +33,7 @@ The following procedures are available in the file ``gmm/gmm\_dense\_qr.h`` for 
 
 
 
-`Remark`: The computation of eigenvectors for non hermitian matrices is not yet implemented. You can use for the moment the functions ``geev_interface_left`` and ``geev_interface_right`` from the LAPACK interface (see ``gmm/gmm_lapack_interface.h``. These LAPACK functions compute right and left eigen vectors.
+`Remark`: The computation of eigenvectors for non hermitian matrices is not yet implemented. You can use for the moment the functions ``geev_interface_left`` and ``geev_interface_right`` from the LAPACK interface (see ``gmm/gmm_lapack_interface.h``. These LAPACK functions compute right and left eigenvectors.
 
 
 The following function defined in the file ``gmm/gmm\_condition\_number.h``::

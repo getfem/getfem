@@ -11,7 +11,7 @@ Iterative solvers
 
 
 
-Most of the solvers provided in |gmm| come form ITL with slight modifications (gmres has been optimized and adapted for complex matrices). Include the file ``gmm/gmm_iter_solvers.h`` to use them.
+Most of the solvers provided in |gmm| come frorm ITL with slight modifications (gmres has been optimized and adapted for complex matrices). Include the file ``gmm/gmm_iter_solvers.h`` to use them.
 
 iterations
 ----------
@@ -63,7 +63,7 @@ Here is the list of available linear solvers::
   gmm::least_squares_cg(A, X, B, iter) // unpreconditionned least square CG.
 
 
-The solver ``gmm::constrained_cg(A, C, X, B, PS, PR, iter);`` solve a system with linear constaints, ``C`` is a matrix which represents the constraints. But it is still experimental.
+The solver ``gmm::constrained_cg(A, C, X, B, PS, PR, iter);`` solve a system with linear constraints, ``C`` is a matrix which represents the constraints. But it is still experimental.
 
 (Version 1.7) The solver ``gmm::bfgs(F, GRAD, X, restart, iter)`` is a BFGS quasi-Newton algorithm with a Wolfe line search for large scale problems. It minimizes the function ``F`` without constraints, be given its gradient ``GRAD``. ``restart`` is the max number of stored update vectors.
 
@@ -104,7 +104,7 @@ The following preconditioners, to be used with linear solvers, are available::
   gmm::ilutp_precond<matrix_type> P(SM, k, threshold);
 
 
-Except ``ildltt\_precond``, all these precontionners come from ITL. ``ilut_precond`` has been optimized and simplified and ``cholesky_precond`` has been corrected and transformed in an incomplete LDLT preconditioner for stability reasons (similarly, we add ``choleskyt_precond`` which is in fact an incomplete LDLT with threshold preconditioner). Of course, ``ildlt\_precond`` and ``ildltt_precond`` are designed for symmetric real or hermitian complex matrices to be use principaly with cg.
+Except ``ildltt\_precond``, all these precontionners come from ITL. ``ilut_precond`` has been optimized and simplified and ``cholesky_precond`` has been corrected and transformed in an incomplete LDLT preconditioner for stability reasons (similarly, we add ``choleskyt_precond`` which is in fact an incomplete LDLT with threshold preconditioner). Of course, ``ildlt\_precond`` and ``ildltt_precond`` are designed for symmetric real or hermitian complex matrices to be use principally with cg.
 
 Additive Schwarz method
 -----------------------
@@ -119,7 +119,7 @@ For the moment, the method is not parallelized (this should be done ...). The ca
 
 The test program ``schwarz_additive.C`` is the directory ``tests`` of GetFEM++ is an example of the resolution with the additive Schwarz method of an elastostatic problem with the use of coarse mesh to make a better preconditioning (i.e. one of the sub-domains represents in fact a coarser mesh).
 
-In the case of multiple solves with the same linear system, it is possible to store the preconditioners or the LU factorisations to save computation time.
+In the case of multiple solves with the same linear system, it is possible to store the preconditioners or the LU factorizations to save computation time.
 
 A (too) simple program in ``gmm/gmm_domain_decomp.h`` allows to build a regular domain decomposition with a certain ratio of overlap. It directly produces the vector of matrices ``vB`` for the additive Schwarz method.
 

@@ -1,96 +1,148 @@
-#This is the "modern" tripod demo, which uses the getfem model bricks
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# Python GetFEM++ interface
+#
+# Copyright (C) 2004-2017 Yves Renard, Julien Pommier.
+#
+# This file is a part of GetFEM++
+#
+# GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+# under  the  terms  of the  GNU  Lesser General Public License as published
+# by  the  Free Software Foundation;  either version 2.1 of the License,  or
+# (at your option) any later version.
+# This program  is  distributed  in  the  hope  that it will be useful,  but
+# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+# or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
+# License for more details.
+# You  should  have received a copy of the GNU Lesser General Public License
+# along  with  this program;  if not, write to the Free Software Foundation,
+# Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
+#
+############################################################################
+"""  This is the "modern" tripod demo, which uses the getfem model bricks
+  importing the mesh.
+
+  This program is used to check that python-getfem is working. This is
+  also a good example of use of GetFEM++.
+
+  $Id$
+"""
 
 import getfem as gf
 import numpy as np
 
-# parameters
-file_msh = 'tripod.GiD.msh'
+with_graphics=True
+try:
+    import getfem_tvtk
+except:
+    print("\n** Could NOT import getfem_tvtk -- graphical output disabled **\n")
+    import time
+    time.sleep(2)
+    with_graphics=False
+
+
+m=gf.Mesh('import','gid','../meshes/tripod.GiD.msh')
+print('done!')
+mfu=gf.MeshFem(m,3) # displacement
+mfp=gf.MeshFem(m,1) # pressure
+mfd=gf.MeshFem(m,1) # data
+mim=gf.MeshIm(m, gf.Integ('IM_TETRAHEDRON(5)'))
 degree = 2
 linear = False
 incompressible = False # ensure that degree > 1 when incompressible is on..
-E = 1e3
-Nu = 0.3
-Lambda = E*Nu/((1+Nu)*(1-2*Nu))
-Mu = E/(2*(1+Nu))
 
-# create a Mesh object (importing)
-m = gf.Mesh('import','gid',file_msh)
-m.set('optimize_structure')
-
-# create a MeshFem object
-mfu = gf.MeshFem(m,3) # displacement
-mfp = gf.MeshFem(m,1) # pressure
-mfe = gf.MeshFem(m,3) # for plot displacement
-mff = gf.MeshFem(m,1) # for plot von-mises
-# assign the FEM
 mfu.set_fem(gf.Fem('FEM_PK(3,%d)' % (degree,)))
+mfd.set_fem(gf.Fem('FEM_PK(3,0)'))
 mfp.set_fem(gf.Fem('FEM_PK_DISCONTINUOUS(3,0)'))
-mfe.set_fem(gf.Fem('FEM_PK_DISCONTINUOUS(3,1,0.01)'))
-mff.set_fem(gf.Fem('FEM_PK_DISCONTINUOUS(3,1,0.01)'))
 
-# build a MeshIm object
-mim = gf.MeshIm(m,gf.Integ('IM_TETRAHEDRON(5)'))
+print('nbcvs=%d, nbpts=%d, qdim=%d, fem = %s, nbdof=%d' % \
+      (m.nbcvs(), m.nbpts(), mfu.qdim(), mfu.fem()[0].char(), mfu.nbdof()))
 
-print 'nbcvs=%d, nbpts=%d, qdim=%d, fem = %s, nbdof=%d' % \
-      (m.nbcvs(),m.nbpts(),mfu.qdim(),mfu.fem()[0].char(),mfu.nbdof())
+P=m.pts()
+print('test', P[1,:])
+ctop=(abs(P[1,:] - 13) < 1e-6)
+cbot=(abs(P[1,:] + 10) < 1e-6)
+pidtop=np.compress(ctop, list(range(0, m.nbpts())))
+pidbot=np.compress(cbot, list(range(0, m.nbpts())))
 
-# detect some boundary of the mesh
-P = m.pts()
-ctop = (abs(P[1,:] - 13) < 1e-6)
-cbot = (abs(P[1,:] + 10) < 1e-6)
-pidtop = np.compress(ctop,range(0,m.nbpts()))
-pidbot = np.compress(cbot,range(0,m.nbpts()))
-ftop = m.faces_from_pid(pidtop)
-fbot = m.faces_from_pid(pidbot)
-# create boundary region
+ftop=m.faces_from_pid(pidtop)
+fbot=m.faces_from_pid(pidbot)
 NEUMANN_BOUNDARY = 1
 DIRICHLET_BOUNDARY = 2
+
 m.set_region(NEUMANN_BOUNDARY,ftop)
 m.set_region(DIRICHLET_BOUNDARY,fbot)
 
-# the model bricks
+E=1e3
+Nu=0.3
+Lambda = E*Nu/((1+Nu)*(1-2*Nu))
+Mu =E/(2*(1+Nu))
+
+
+md = gf.Model('real')
+md.add_fem_variable('u', mfu)
 if linear:
-  b0 = gf.MdBrick('isotropic_linearized_elasticity',mim,mfu)
-  b0.set_param('lambda',Lambda)
-  b0.set_param('mu',Mu)
-  if (incompressible):
-    b1 = gf.MdBrick('linear_incompressibility term',b0,mfp)
-  else:
-    b1 = b0
+    md.add_initialized_data('cmu', Mu)
+    md.add_initialized_data('clambda', Lambda)
+    md.add_isotropic_linearized_elasticity_brick(mim, 'u', 'clambda', 'cmu')
+    if incompressible:
+        md.add_fem_variable('p', mfp)
+        md.add_linear_incompressibility_brick(mim, 'u', 'p')
 else:
-  # large deformation with a linearized material law.. not a very good choice!
-  if (incompressible):
-    b0 = gf.MdBrick('nonlinear_elasticity',mim,mfu,'Mooney_Rivlin')
-    b0.set_param('params',[Lambda,Mu])
-    b1 = gf.MdBrick('nonlinear_elasticity_incompressibility_term',b0,mfp)
-  else:
-    b0 = gf.MdBrick('nonlinear_elasticity',mim,mfu,'SaintVenant_Kirchhoff')
-    #b0 = gf.MdBrick('nonlinear_elasticity',mim,mfu,'Ciarlet_Geymonat')
-    b0.set_param('params',[Lambda,Mu])
-    b1 = b0
+    md.add_initialized_data('params', [Lambda, Mu]);
+    if incompressible:
+        lawname = 'Incompressible Mooney Rivlin';
+        md.add_finite_strain_elasticity_brick(mim, lawname, 'u', 'params')
+        md.add_fem_variable('p', mfp);
+        md.add_finite_strain_incompressibility_brick(mim, 'u', 'p');
+    else:
+        lawname = 'SaintVenant Kirchhoff';
+        md.add_finite_strain_elasticity_brick(mim, lawname, 'u', 'params');
+  
 
-b2 = gf.MdBrick('source_term',b1,NEUMANN_BOUNDARY)
-b2.set_param('source_term',[0,-10,0])
-b3 = gf.MdBrick('dirichlet',b2,DIRICHLET_BOUNDARY,mfu,'penalized')
+md.add_initialized_data('VolumicData', [0,-1,0]);
+md.add_source_term_brick(mim, 'u', 'VolumicData');
 
-# create model state
-mds = gf.MdState(b3)
-# running solve...
-b3.solve(mds,'noisy','lsolver','superlu')
+# Attach the tripod to the ground
+md.add_Dirichlet_condition_with_multipliers(mim, 'u', mfu, 2);
 
-# extracted solution
-U = mds.state()
+print('running solve...')
+md.solve('noisy', 'max iter', 1);
+U = md.variable('u');
+print('solve done!')
+
+
+mfdu=gf.MeshFem(m,1)
+mfdu.set_fem(gf.Fem('FEM_PK_DISCONTINUOUS(3,1)'))
+if linear:
+  VM = md.compute_isotropic_linearized_Von_Mises_or_Tresca('u','clambda','cmu', mfdu);
+else:
+  VM = md.compute_finite_strain_elasticity_Von_Mises(lawname, 'u', 'params', mfdu);
 
 # post-processing
-VM = b0.von_mises(mds,mff)
+sl=gf.Slice(('boundary',), mfu, degree)
 
-# export U and VM in a pos file
-sl = gf.Slice(('boundary',),mfu,1)
-sl.export_to_pos('sol.pos', mfu, U, 'Displacement', mff, VM, 'Von Mises Stress')
+print('Von Mises range: ', VM.min(), VM.max())
 
-# save solution
-#mfu.save('tripod.mf','with_mesh')
-#U.tofile('tripod.U')
-#mff.save('tripod.mff')
-#VM.tofile('tripod.VM')
-#gf.memstats()
+# export results to VTK
+sl.export_to_vtk('tripod.vtk', 'ascii', mfdu,  VM, 'Von Mises Stress', mfu, U, 'Displacement')
+sl.export_to_pos('tripod.pos', mfdu, VM, 'Von Mises Stress', mfu, U, 'Displacement')
+
+gf.memstats()
+
+print('You can view the tripod with (for example) mayavi:')
+print('mayavi2 -d tripod.vtk -f WarpVector -m Surface')
+print('or')
+print('gmsh tripod.pos')
+
+# mfu.save('tripod.mf', 'with_mesh')
+# U.tofile('tripod.U')
+# mfdu.save('tripod.mfe')
+# VM.tofile('tripod.VM')
+
+if with_graphics:
+  fig = getfem_tvtk.Figure()
+  fig.show(mfu, deformation=U, data=(mfdu,VM), deformation_scale='20%')
+  print("Press Q to continue..")
+  fig.set_colormap('tripod')
+  fig.loop()

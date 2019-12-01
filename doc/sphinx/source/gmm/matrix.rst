@@ -114,7 +114,7 @@ The type ``gmm::csr_matrix<T>`` represents a compressed sparse row matrix and ``
   gmm::clean(M1, 1E-12);
   gmm::copy(M1, M2);
 
-Matrices ``gmm::csr_matrix<T>`` and ``gmm::csc_matrix<T>`` have the advantage to have a standard format (interfacable with Fortran code) and to have a compact format (contiguous in memory). To be able to be compatible with Fortran programs a second template parameter exists on these type, you can declare::
+Matrices ``gmm::csr_matrix<T>`` and ``gmm::csc_matrix<T>`` have the advantage to have a standard format (interfaceable with Fortran code) and to have a compact format (contiguous in memory). To be able to be compatible with Fortran programs a second template parameter exists on these type, you can declare::
 
   gmm::csc_matrix<double, 1> M1;
   gmm::csr_matrix<double, 1> M2;

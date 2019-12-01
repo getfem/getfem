@@ -16,7 +16,7 @@ If we have in the file `quad.geo` a parameterized mesh, as this:
 
 then, when we run::
 
-  $ gmsh -2 quad.geo
+  $ gmsh -2 quad.geo -format msh1
 
 the file `quad.msh` is created and contains the encoding of the mesh and its
 regions. We can import that file (*quad.msh*) to getfem::

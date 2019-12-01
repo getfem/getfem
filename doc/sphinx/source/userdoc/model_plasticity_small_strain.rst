@@ -440,7 +440,7 @@ The yield condition still reads
 
 .. math:: \delta \|B\| \le \sqrt{\Frac{2}{3}}(\sigma_{y0}+H_i \alpha_{n+1}).
 
-and for the elimination of the multiplier, :math:`\beta` has the same expression as in the previous section adapting the value of :math:`\|B\|`. The expressions of :math:`\bar{\zeta}_n` and :math:`\eta_n` have to be adpated accoringly.
+and for the elimination of the multiplier, :math:`\beta` has the same expression as in the previous section adapting the value of :math:`\|B\|`. The expressions of :math:`\bar{\zeta}_n` and :math:`\eta_n` have to be adapted accoringly.
 
 
 
