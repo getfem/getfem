@@ -296,7 +296,7 @@ namespace getfem {
   static scalar_type ga_hash_code(const base_tensor &t) {
     scalar_type c(0);
     for (size_type i = 0; i < t.size(); ++i)
-      c += sin(M_E+t[i]+M_E*M_E*scalar_type(i+1))+scalar_type(i+1)*M_PI;
+      c += sin((1.+M_E)*t[i]+M_E*M_E*scalar_type(i+1))+scalar_type(i+1)*M_PI;
     return c;
   }
 
@@ -2607,15 +2607,12 @@ namespace getfem {
     default:GMM_ASSERT1(false, "Unexpected node type " << pnode->node_type
                         << " in semantic analysis. Internal error.");
     }
-    // cout << " begin hash code = " << pnode->hash_value << endl;
     pnode->hash_value = ga_hash_code(pnode);
-    // cout << "node_type = " << pnode->node_type << " op_type = "
-    //      << pnode->op_type << " proper hash code = " << pnode->hash_value;
     for (size_type i = 0; i < pnode->children.size(); ++i) {
       pnode->hash_value += (pnode->children[i]->hash_value)
-        * 1.0101 * (pnode->symmetric_op ? scalar_type(1) : scalar_type(i+1));
+        * 1.0101*(pnode->symmetric_op ? scalar_type(1) : scalar_type(1+i));
     }
-    // cout << " final hash code = " << pnode->hash_value << endl;
+    pnode->hash_value = sin(1.2003*pnode->hash_value);
   }
 
 

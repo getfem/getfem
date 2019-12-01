@@ -4885,11 +4885,11 @@ namespace getfem {
           }
           return;
         }
+        cout << "sub_tree_are_equal = " << int(sub_tree_are_equal(pnode, pnode1, workspace, 1)) << endl;
         std::stringstream ss;
-        ss << "Detected wrong equivalent nodes: ";
-        ga_print_node(pnode, ss);
-        ss << " and "; ga_print_node(pnode1, ss);
-        ss << " (no problem, but hash values could be adapted) " << endl;
+        ss << "Detected wrong equivalent nodes: \n";
+        ga_print_node(pnode, ss); ss << "\n and \n"; ga_print_node(pnode1, ss);
+        ss << "\nNo problem, but hash values could be adapted." << endl;
         GMM_TRACE2(ss.str());
       }
     }

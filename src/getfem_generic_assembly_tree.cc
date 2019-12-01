@@ -480,11 +480,11 @@ namespace getfem {
   bool sub_tree_are_equal
   (const pga_tree_node pnode1, const pga_tree_node pnode2,
    const ga_workspace &workspace, int version) {
+
     size_type ntype1 = pnode1->node_type;
     if (ntype1 == GA_NODE_ZERO) ntype1 = GA_NODE_CONSTANT;
     size_type ntype2 = pnode2->node_type;
     if (ntype2 == GA_NODE_ZERO) ntype2 = GA_NODE_CONSTANT;
-
     if (ntype1 != ntype2) return false;
     if (pnode1->children.size() != pnode2->children.size()) return false;
 
@@ -538,9 +538,12 @@ namespace getfem {
           return false;
       break;
     case GA_NODE_C_MATRIX:
-      if (pnode1->t.sizes().size() != pnode2->t.sizes().size()) return false;
-      for (size_type i = 0; i < pnode1->t.sizes().size(); ++i)
-        if (pnode1->t.sizes()[i] != pnode2->t.sizes()[i]) return false;
+      if (pnode1->children.size() != pnode2->children.size()) return false;
+      if (pnode1->nb_test_functions() != pnode2->nb_test_functions())
+        return false;
+      // if (pnode1->t.sizes().size() != pnode2->t.sizes().size()) return false;
+      // for (size_type i=nb_test_functions(); i<pnode1->t.sizes().size(); ++i)
+      //   if (pnode1->t.sizes()[i] != pnode2->t.sizes()[i]) return false;
       if (pnode1->nbc1 != pnode2->nbc1) return false;
       break;
     case GA_NODE_INTERPOLATE_FILTER:
