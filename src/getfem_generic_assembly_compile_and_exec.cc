@@ -2112,6 +2112,64 @@ namespace getfem {
       : t(t_), tc1(tc1_), c(c_) {}
   };
 
+  // Performs Cross product in the presence of test functions
+  struct ga_instruction_cross_product_tf : public ga_instruction {
+    base_tensor &t, &tc1, &tc2;
+    bool inv;
+    virtual int exec() {
+      GA_DEBUG_INFO("Instruction: Cross product with test functions");
+
+      size_type n1 = tc1.size() / 3, n2 =  tc2.size() / 3, nn=n1*n2;
+      GA_DEBUG_ASSERT(t.size() == nn*3, "Bad tensor size for cross product");
+      size_type mm=2*nn, n1_2 = 2*n1, n2_2 = 2*n2;
+      base_tensor::iterator it = t.begin(), it2 = tc2.begin();
+
+      if (inv) {
+        for (size_type i = 0; i < n2; ++i, ++it2) {
+          base_tensor::iterator it1 = tc1.begin();
+          for (size_type j = 0; j < n1; ++j, ++it, ++it1) {
+            *it    = - it1[n1]  *it2[n2_2] + it1[n1_2]*it2[n2];
+            it[nn] = - it1[n1_2]*it2[0]    + it1[0]   *it2[n2_2];
+            it[mm] = - it1[0]   *it2[n2]   + it1[n1]  *it2[0];
+          }
+        }
+      } else {
+        for (size_type i = 0; i < n2; ++i, ++it2) {
+          base_tensor::iterator it1 = tc1.begin();
+          for (size_type j = 0; j < n1; ++j, ++it, ++it1) {
+            *it    = it1[n1]  *it2[n2_2] - it1[n1_2]*it2[n2];
+            it[nn] = it1[n1_2]*it2[0]    - it1[0]   *it2[n2_2];
+            it[mm] = it1[0]   *it2[n2]   - it1[n1]  *it2[0];
+          }
+        }
+      } 
+      return 0;
+    }
+    ga_instruction_cross_product_tf(base_tensor &t_, base_tensor &tc1_,
+                                    base_tensor &tc2_, bool inv_)
+      : t(t_), tc1(tc1_), tc2(tc2_), inv(inv_) {}
+  };
+
+  // Performs Cross product in the absence of test functions
+  struct ga_instruction_cross_product : public ga_instruction {
+    base_tensor &t, &tc1, &tc2;
+    virtual int exec() {
+      GA_DEBUG_INFO("Instruction: Cross product with test functions");
+      GA_DEBUG_ASSERT(t.size() == 3 && tc1.size() == 3 && tc2.size() == 3,
+                       "Bad tensor size for cross product");
+      t[0] = tc1[1]*tc2[2] - tc1[2]*tc2[1];
+      t[1] = tc1[2]*tc2[0] - tc1[0]*tc2[2];
+      t[2] = tc1[0]*tc2[1] - tc1[1]*tc2[0];
+      return 0;
+    }
+    ga_instruction_cross_product(base_tensor &t_, base_tensor &tc1_,
+                                 base_tensor &tc2_)
+      : t(t_), tc1(tc1_), tc2(tc2_) {}
+  };
+
+
+
+  
   struct ga_instruction_dotmult : public ga_instruction {
     base_tensor &t, &tc1, &tc2;
     virtual int exec() {
@@ -4944,7 +5002,8 @@ namespace getfem {
 
     case GA_NODE_PREDEF_FUNC: case GA_NODE_OPERATOR: case GA_NODE_SPEC_FUNC:
     case GA_NODE_CONSTANT: case GA_NODE_ALLINDICES: case GA_NODE_ZERO:
-    case GA_NODE_RESHAPE:  case GA_NODE_SWAP_IND: case GA_NODE_IND_MOVE_LAST:
+    case GA_NODE_RESHAPE:  case GA_NODE_CROSS_PRODUCT:
+    case GA_NODE_SWAP_IND: case GA_NODE_IND_MOVE_LAST:
     case GA_NODE_CONTRACT: case GA_NODE_INTERPOLATE_FILTER:
       break;
 
@@ -6368,6 +6427,18 @@ namespace getfem {
       if (child0->node_type == GA_NODE_RESHAPE) {
         pgai = std::make_shared<ga_instruction_copy_tensor>(pnode->tensor(),
                                                             child1->tensor());
+        rmi.instructions.push_back(std::move(pgai));
+      } else if (child0->node_type == GA_NODE_CROSS_PRODUCT) {
+        pga_tree_node child2 = pnode->children[2];
+        if (child1->test_function_type==2 && child2->test_function_type==1)
+          pgai = std::make_shared<ga_instruction_cross_product_tf>
+            (pnode->tensor(), child2->tensor(), child1->tensor(), true);
+        else if (child1->test_function_type || child2->test_function_type)
+          pgai = std::make_shared<ga_instruction_cross_product_tf>
+            (pnode->tensor(), child1->tensor(), child2->tensor(), false);
+        else
+          pgai = std::make_shared<ga_instruction_cross_product>
+            (pnode->tensor(), child1->tensor(), child2->tensor());
         rmi.instructions.push_back(std::move(pgai));
       } else if (child0->node_type == GA_NODE_IND_MOVE_LAST) {
         size_type ind;

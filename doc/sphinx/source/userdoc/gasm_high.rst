@@ -38,8 +38,12 @@ A specific weak form language has been developed to describe the weak formulatio
 
   - A certain number of predefined scalar functions (``sin(t)``, ``cos(t)``, ``pow(t,u)``, ``sqrt(t)``, ``sqr(t)``, ``Heaviside(t)``, ...). A scalar function can be applied to scalar or vector/matrix/tensor expressions. It applies componentwise. For functions having two arguments (``pow(t,u)``, ``min(t,u)`` ...) if two non-scalar arguments are passed, the dimension have to be the same. For instance "max([1;2],[0;3])" will return "[1;3]".
 
-  - A certain number of operators: ``+``, ``-``, ``*``, ``/``, ``:``, ``.``, ``.*``, ``./``, ``@``, ``'``.
+  - A certain number of operations: ``+``, ``-``, ``*``, ``/``, ``:``, ``.``, ``.*``, ``./``, ``@``, ``'``, ``Cross_product(v1,v2)``.
 
+  - A certain number of linear operator: ``Trace(M)``, ``Sym(M)``, ``Skew(M)``, ...
+
+  - A certain number of nonlinear operator: ``Norm(V)``, ``Det(M)``, ``Sym(M)``, ``Skew(M)``, ...
+    
   - Some constants: ``pi``, ``meshdim`` (the dimension of the current mesh), ``qdim(u)`` and ``qdims(u)`` the dimensions of the variable ``u`` (the size for fixed size variables and the dimension of the vector field for FEM variables), ``Id(n)`` the identity :math:`n\times n` matrix.
 
   - Parentheses can be used to change the operations order in a standard way. For instance ``(1+2)*4`` or ``(u+v)*Test_u`` are valid expressions.
@@ -476,6 +480,8 @@ A certain number of binary operations between tensors are available:
     - ``./`` stands for the division of two vectors/matrix/tensor componentwise.
 
     - ``@`` stands for the tensor product.
+
+    - ``Cross_product(V, W)`` stands for the cross product (vector product) of ``V`` and ``W``. Defined only for three-dimensional vectors.
 
     - ``Contract(A, i, B, j)`` stands for the contraction of tensors A and B with respect to the ith index of A and jth index of B. The first index is numbered 1. For instance ``Contract(V,1,W,1)`` is equivalent to ``V.W`` for two vectors ``V`` and ``W``.
 

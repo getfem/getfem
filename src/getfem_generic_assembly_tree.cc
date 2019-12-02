@@ -1128,6 +1128,11 @@ namespace getfem {
       GMM_ASSERT1(pnode->children.size() == 0, "Invalid tree");
       break;
       
+    case GA_NODE_CROSS_PRODUCT:
+      str << "Cross_product";
+      GMM_ASSERT1(pnode->children.size() == 0, "Invalid tree");
+      break;
+      
     case GA_NODE_SWAP_IND:
       str << "Swap_indices";
       GMM_ASSERT1(pnode->children.size() == 0, "Invalid tree");

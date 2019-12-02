@@ -84,17 +84,17 @@ namespace getfem {
     GA_QUOTE,       // ''' transpose
     GA_COLON_EQ,    // ':=' macro def
     GA_DEF,         // 'Def' macro def
-    GA_SYM,         // 'Sym' operator
-    GA_SKEW,        // 'Skew' operator
-    GA_TRACE,       // 'Trace' operator
+    GA_SYM,         // 'Sym(M)' operator
+    GA_SKEW,        // 'Skew(M)' operator
+    GA_TRACE,       // 'Trace(M)' operator
     GA_DEVIATOR,    // 'Deviator' operator
     GA_INTERPOLATE, // 'Interpolate' operation
     GA_INTERPOLATE_FILTER, // 'Interpolate_filter' operation
     GA_INTERPOLATE_DERIVATIVE, // 'Interpolate_derivative' operation
     GA_ELEMENTARY,  // 'Elementary' operation (operation at the element level)
     GA_SECONDARY_DOMAIN,  // For the integration on a product of two domains
-    GA_XFEM_PLUS,   // Évaluation on the + side of a level-set for fem_level_set
-    GA_XFEM_MINUS,  // Évaluation on the - side of a level-set for fem_level_set
+    GA_XFEM_PLUS,   // Evaluation on the + side of a level-set for fem_level_set
+    GA_XFEM_MINUS,  // Evaluation on the - side of a level-set for fem_level_set
     GA_PRINT,       // 'Print' Print the tensor
     GA_DOT,         // '.'
     GA_DOTMULT,     // '.*' componentwise multiplication
@@ -128,6 +128,7 @@ namespace getfem {
     GA_NODE_MACRO_PARAM,
     GA_NODE_PARAMS,
     GA_NODE_RESHAPE,
+    GA_NODE_CROSS_PRODUCT,
     GA_NODE_SWAP_IND,
     GA_NODE_IND_MOVE_LAST,
     GA_NODE_CONTRACT,
@@ -371,6 +372,9 @@ namespace getfem {
       return true;
     }
 
+    inline bool is_constant()
+    { return (node_type == GA_NODE_CONSTANT || node_type == GA_NODE_ZERO); }
+    
     inline void init_scalar_tensor(scalar_type v)
     { t.init_scalar_tensor(v); test_function_type = 0; }
 
