@@ -541,9 +541,10 @@ namespace getfem {
       if (pnode1->children.size() != pnode2->children.size()) return false;
       if (pnode1->nb_test_functions() != pnode2->nb_test_functions())
         return false;
-      // if (pnode1->t.sizes().size() != pnode2->t.sizes().size()) return false;
-      // for (size_type i=nb_test_functions(); i<pnode1->t.sizes().size(); ++i)
-      //   if (pnode1->t.sizes()[i] != pnode2->t.sizes()[i]) return false;
+      if (pnode1->t.sizes().size() != pnode2->t.sizes().size()) return false;
+      for (size_type i=pnode1->nb_test_functions();
+           i<pnode1->t.sizes().size(); ++i)
+        if (pnode1->t.sizes()[i] != pnode2->t.sizes()[i]) return false;
       if (pnode1->nbc1 != pnode2->nbc1) return false;
       break;
     case GA_NODE_INTERPOLATE_FILTER:
