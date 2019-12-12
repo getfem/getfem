@@ -286,6 +286,69 @@ namespace getfem {
     write_separ();
   }
 
+  /** @brief VTU export.
+
+      export class to VTU ( http://www.kitware.com/vtk.html ) file format
+
+      A vtu_export can store only Unstructured Grid.
+  */
+  class vtu_export {
+  protected:
+    std::ostream &os;
+    bool ascii;
+    std::unique_ptr<mesh_fem> pmf;
+    dal::bit_vector pmf_dof_used;
+    std::vector<unsigned> pmf_mapping_type;
+    std::ofstream real_os;
+    dim_type dim_;
+    bool reverse_endian;
+    enum { EMPTY, HEADER_WRITTEN, STRUCTURE_WRITTEN } state;
+
+    template<class T> void write_val(T v);
+    template<class V> void write_vec(V p, size_type qdim);
+
+  public:
+    typedef enum { VTU_VERTEX = 1,
+                   VTU_LINE = 3,
+                   VTU_TRIANGLE = 5,
+                   VTU_PIXEL = 8,
+                   VTU_QUAD = 9,
+                   VTU_TETRA = 10,
+                   VTU_VOXEL = 11,
+                   VTU_HEXAHEDRON = 12,
+                   VTU_WEDGE = 13,
+                   VTU_PYRAMID = 14,
+                   VTU_QUADRATIC_EDGE = 21,
+                   VTU_QUADRATIC_TRIANGLE = 22,
+                   VTU_QUADRATIC_QUAD = 23,
+                   VTU_QUADRATIC_TETRA = 24,
+                   VTU_QUADRATIC_HEXAHEDRON = 25,
+                   VTU_QUADRATIC_WEDGE = 26,
+                   VTU_QUADRATIC_PYRAMID = 27,
+                   VTU_BIQUADRATIC_QUAD = 28,
+                   VTU_TRIQUADRATIC_HEXAHEDRON = 29,
+                   VTU_BIQUADRATIC_QUADRATIC_WEDGE = 32 } vtk_cell_type;
+    vtu_export(const std::string& fname, bool ascii_ = false);
+    vtu_export(std::ostream &os_, bool ascii_ = false);;
+
+    /** should be called before write_*_data */
+    void exporting(const mesh& m);
+    void exporting(const mesh_fem& mf);
+
+    /** the header is the second line of text in the exported file,
+       you can put whatever you want -- call this before any write_dataset
+       or write_mesh */
+    void set_header(const std::string& s);
+    void write_mesh();
+
+  private:
+    void init();
+    void check_header();
+    void write_mesh_structure_from_mesh_fem();
+    void switch_to_cell_data();
+    void switch_to_point_data();
+  };
+
 
   /** @brief A (quite large) class for exportation of data to IBM OpenDX.
 

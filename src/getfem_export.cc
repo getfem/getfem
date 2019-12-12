@@ -448,7 +448,141 @@ namespace getfem
       write_cell_data(q, "convex_quality");
     }
   }
+  /* -------------------------------------------------------------
+   * VTU export
+   * ------------------------------------------------------------- */
 
+  struct gf2vtu_dof_mapping : public std::vector<std::vector<unsigned> > {};
+  struct gf2vtu_vtu_type : public std::vector<int> {};
+
+  typedef enum { NO_VTU_MAPPING,
+                 N1_TO_VTU_VERTEX,
+                 N2_TO_VTU_LINE,
+                 N3_TO_VTU_TRIANGLE,
+                 N4_TO_VTU_PIXEL,
+                 N4_TO_VTU_QUAD,
+                 N4_TO_VTU_TETRA,
+                 N8_TO_VTU_VOXEL,
+                 N8_TO_VTU_HEXAHEDRON,
+                 N6_TO_VTU_WEDGE,
+                 N5_TO_VTU_PYRAMID,
+                 N3_TO_VTU_QUADRATIC_EDGE,
+                 N6_TO_VTU_QUADRATIC_TRIANGLE,
+                 N8_TO_VTU_QUADRATIC_QUAD,
+                 N10_TO_VTU_QUADRATIC_TETRA,
+                 N20_TO_VTU_QUADRATIC_HEXAHEDRON,
+                 N15_TO_VTU_QUADRATIC_WEDGE,
+                 N13_TO_VTU_QUADRATIC_PYRAMID,
+                 N14_TO_VTU_QUADRATIC_PYRAMID,
+                 N9_TO_VTU_BIQUADRATIC_QUAD,
+                 N27_TO_VTU_TRIQUADRATIC_HEXAHEDRON,
+                 N18_TO_VTU_BIQUADRATIC_QUADRATIC_WEDGE } vtu_mapping_type;
+
+
+  void init_gf2vtu() {
+    gf2vtu_dof_mapping &vtumaps = dal::singleton<gf2vtu_dof_mapping>::instance();
+    gf2vtu_vtu_type &vtutypes = dal::singleton<gf2vtu_vtu_type>::instance();
+    vtumaps.resize(25);
+    vtutypes.resize(25);
+
+    vtutypes[N1_TO_VTU_VERTEX] = vtu_export::VTU_VERTEX;
+    vtumaps [N1_TO_VTU_VERTEX] = {0};
+    vtutypes[N2_TO_VTU_LINE] = vtu_export::VTU_LINE;
+    vtumaps [N2_TO_VTU_LINE] = {0, 1};
+    vtutypes[N3_TO_VTU_TRIANGLE] = vtu_export::VTU_TRIANGLE;
+    vtumaps [N3_TO_VTU_TRIANGLE] = {0, 1, 2};
+    vtutypes[N4_TO_VTU_PIXEL] = vtu_export::VTU_PIXEL;
+    vtumaps [N4_TO_VTU_PIXEL] = {0, 1, 2, 3};
+    vtutypes[N4_TO_VTU_QUAD] = vtu_export::VTU_QUAD;
+    vtumaps [N4_TO_VTU_QUAD] = {0, 1, 3, 2};
+    vtutypes[N4_TO_VTU_TETRA] = vtu_export::VTU_TETRA;
+    vtumaps [N4_TO_VTU_TETRA] = {0, 1, 2, 3};
+    vtutypes[N8_TO_VTU_VOXEL] = vtu_export::VTU_VOXEL;
+    vtumaps [N8_TO_VTU_VOXEL] = {0, 1, 2, 3, 4, 5, 6, 7};
+    vtutypes[N8_TO_VTU_HEXAHEDRON] = vtu_export::VTU_HEXAHEDRON;
+    vtumaps [N8_TO_VTU_HEXAHEDRON] = {0, 1, 3, 2, 4, 5, 7, 6};
+    vtutypes[N6_TO_VTU_WEDGE] = vtu_export::VTU_WEDGE;
+    vtumaps [N6_TO_VTU_WEDGE] = {0, 1, 2, 3, 4, 5};
+    vtutypes[N5_TO_VTU_PYRAMID] = vtu_export::VTU_PYRAMID;
+    vtumaps [N5_TO_VTU_PYRAMID] = {0, 1, 3, 2, 4};
+    vtutypes[N3_TO_VTU_QUADRATIC_EDGE] = vtu_export::VTU_QUADRATIC_EDGE;
+    vtumaps [N3_TO_VTU_QUADRATIC_EDGE] = {0, 2, 1};
+    vtutypes[N6_TO_VTU_QUADRATIC_TRIANGLE] = vtu_export::VTU_QUADRATIC_TRIANGLE;
+    vtumaps [N6_TO_VTU_QUADRATIC_TRIANGLE] = {0, 2, 5, 1, 4, 3};
+    vtutypes[N8_TO_VTU_QUADRATIC_QUAD] = vtu_export::VTU_QUADRATIC_QUAD;
+    vtumaps [N8_TO_VTU_QUADRATIC_QUAD] = {0, 2, 7, 5, 1, 4, 6, 3};
+    vtutypes[N10_TO_VTU_QUADRATIC_TETRA] = vtu_export::VTU_QUADRATIC_TETRA;
+    vtumaps [N10_TO_VTU_QUADRATIC_TETRA] = {0, 2, 5, 9, 1, 4, 3, 6, 7, 8};
+    vtutypes[N20_TO_VTU_QUADRATIC_HEXAHEDRON] = vtu_export::VTU_QUADRATIC_HEXAHEDRON;
+    vtumaps [N20_TO_VTU_QUADRATIC_HEXAHEDRON] = {0, 2, 7, 5, 12, 14, 19, 17, 1, 4, 6, 3, 13, 16, 18, 15, 8, 9, 11, 10};
+    vtutypes[N15_TO_VTU_QUADRATIC_WEDGE] = vtu_export::VTU_QUADRATIC_WEDGE;
+    vtumaps [N15_TO_VTU_QUADRATIC_WEDGE] = {0, 2, 5, 9, 11, 14, 1, 4, 3, 10, 13, 12, 6, 7, 8};
+                                      // = {0, 5, 2, 9, 14, 11, 3, 4, 1, 12, 13, 10, 6, 8, 7};
+    vtutypes[N13_TO_VTU_QUADRATIC_PYRAMID] = vtu_export::VTU_QUADRATIC_PYRAMID;
+    vtumaps [N13_TO_VTU_QUADRATIC_PYRAMID] = {0, 2, 7, 5, 12, 1, 4, 6, 3, 8, 9, 11, 10};
+    vtutypes[N14_TO_VTU_QUADRATIC_PYRAMID] = vtu_export::VTU_QUADRATIC_PYRAMID;
+    vtumaps [N14_TO_VTU_QUADRATIC_PYRAMID] = {0, 2, 8, 6, 13, 1, 5, 7, 3, 9, 10, 12, 11};
+    vtutypes[N9_TO_VTU_BIQUADRATIC_QUAD] = vtu_export::VTU_BIQUADRATIC_QUAD;
+    vtumaps [N9_TO_VTU_BIQUADRATIC_QUAD] = {0, 2, 8, 6, 1, 5, 7, 3, 4};
+    vtutypes[N27_TO_VTU_TRIQUADRATIC_HEXAHEDRON] = vtu_export::VTU_TRIQUADRATIC_HEXAHEDRON;
+    vtumaps [N27_TO_VTU_TRIQUADRATIC_HEXAHEDRON] = {0, 2, 8, 6, 18, 20, 26, 24, 1, 5, 7, 3, 19, 23, 25, 21, 9, 11, 17, 15, 12, 14, 10, 16, 4, 22};
+    vtutypes[N18_TO_VTU_BIQUADRATIC_QUADRATIC_WEDGE] = vtu_export::VTU_BIQUADRATIC_QUADRATIC_WEDGE;
+    vtumaps [N18_TO_VTU_BIQUADRATIC_QUADRATIC_WEDGE]  = {0, 2, 5, 12, 14, 17, 1, 4, 3, 13, 16, 15, 6, 8, 11, 7, 10, 9};
+  }
+
+  static const std::vector<unsigned> &
+  select_vtu_dof_mapping(unsigned t) {
+    gf2vtu_dof_mapping &vtumaps = dal::singleton<gf2vtu_dof_mapping>::instance();
+    if (vtumaps.size() == 0) init_gf2vtu();
+    return vtumaps[t];
+  }
+
+  int select_vtu_type(unsigned t) {
+    gf2vtu_vtu_type &vtutypes = dal::singleton<gf2vtu_vtu_type>::instance();
+    if (vtutypes.size() == 0) init_gf2vtu();
+    return vtutypes[t];
+  }
+
+  vtu_export::vtu_export(std::ostream &os_, bool ascii_)
+    : os(os_), ascii(ascii_) { init(); }
+
+  vtu_export::vtu_export(const std::string& fname, bool ascii_)
+    : os(real_os), ascii(ascii_),
+    real_os(fname.c_str(), !ascii ? std::ios_base::binary | std::ios_base::out :
+                                    std::ios_base::out) {
+    GMM_ASSERT1(real_os, "impossible to write to vtu file '" << fname << "'");
+    init();
+  }
+
+  void vtu_export::init() {
+    static int test_endian = 0x01234567;
+    dim_ = dim_type(-1);
+    if (*((char*)&test_endian) == 0x67)
+      reverse_endian = true;
+    else reverse_endian = false;
+    state = EMPTY;
+  }
+
+  void vtu_export::exporting(const mesh& m) {
+  }
+
+  void vtu_export::exporting(const mesh_fem& mf) {
+  }
+
+  void vtu_export::check_header() {
+  }
+
+  void vtu_export::switch_to_cell_data() {
+  }
+
+  void vtu_export::switch_to_point_data() {
+  }
+
+  void vtu_export::write_mesh() {
+  }
+
+  void vtu_export::write_mesh_structure_from_mesh_fem() {
+  }
 
   /* -------------------------------------------------------------
    * OPENDX export
