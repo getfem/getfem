@@ -75,6 +75,8 @@ m1.export_to_vtk('check_export1.vtk','quality')
 mf0.export_to_vtk('check_export2.vtk','ascii')
 mf1.export_to_vtk('check_export3.vtk','ascii')
 
+# VTU:
+m0.export_to_vtu('check_export0.vtu','ascii')
 
 
 # DX:
