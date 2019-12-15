@@ -317,7 +317,7 @@ where ``region`` is the mesh region number.
 As another example, let us describe a simple nonlinear elasticity problem. Assume that we consider a Saint-Venant Kirchhoff constitutive law which means that we consider the following elastic energy on a body of reference configuration :math:`\Omega`:
 
 .. math::
-  \int_{\Omega} \Frac{\lambda}{2} (\mbox{tr}(E))^2 + \mu \mbox{tr}(E^2) dx
+  \int_{\Omega} \dfrac{\lambda}{2} (\mbox{tr}(E))^2 + \mu \mbox{tr}(E^2) dx
 
 where :math:`\lambda, \mu` are the |Lame| coefficients and  :math:`E` is the strain tensor given by :math:`E = (\nabla u + (\nabla u)^T + (\nabla u)^T\nabla u)/2`.
 

@@ -59,8 +59,8 @@ The first instruction builds a new |mlab_mf| object, the second argument specifi
 that this object will be used to interpolate scalar fields (since the unknown
 :math:`u` is a scalar field). The second instruction assigns the :math:`Q^2` FEM
 to every convex (each basis function is a polynomial of degree 4, remember that
-:math:`P^k\Rightarrow` polynomials of degree :math:`k`, while
-:math:`Q^k\Rightarrow` polynomials of degree :math:`2k`). As :math:`Q^2` is a
+:math:`P^k\rm I\hspace{-0.15em}Rightarrow` polynomials of degree :math:`k`, while
+:math:`Q^k\rm I\hspace{-0.15em}Rightarrow` polynomials of degree :math:`2k`). As :math:`Q^2` is a
 polynomial FEM, you can view the expression of its basis functions on the
 reference convex::
 

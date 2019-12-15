@@ -27,17 +27,8 @@ user_preamble = '''
 \\usepackage{mathrsfs}
 \\usepackage{amsmath}
 \\usepackage{amssymb}
-\\newcommand\\Reel{\\rm I\\hspace{-0.15em}R}
-\\newcommand\\R{\\rm I\\hspace{-0.15em}R}
-\\newcommand{\\ds}{\\displaystyle}
-\\newcommand{\\Frac}[2]{{\\ds \\frac{\\ds #1}{\\ds #2}}}
-\\usepackage[draft]{minted}\\fvset{breaklines=true}
 % end user_preamble
 '''
-
-imgmath_use_preview = True
-imgmath_dvipng_args = ['-gamma', '1.5', '-D', '110', '-bg', 'Transparent']
-imgmath_latex_preamble = user_preamble
 
 autoclass_content = "both"
 
@@ -49,7 +40,7 @@ _stdauthor = getfem_env('authors')
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.imgmath','sphinx.ext.autodoc',
+extensions = ['sphinx.ext.mathjax','sphinx.ext.autodoc',
               'sphinx.ext.coverage',
               'sphinx.ext.doctest']
 

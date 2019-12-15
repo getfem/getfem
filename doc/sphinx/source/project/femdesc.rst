@@ -151,7 +151,7 @@ A geometric transformation is a polynomial application:
 
 .. math::
 
-   \tau : \widehat{T} \subset \Reel^P \longrightarrow T \subset \Reel^N,
+   \tau : \widehat{T} \subset \rm I\hspace{-0.15em}R^P \longrightarrow T \subset \rm I\hspace{-0.15em}R^N,
 
 which maps the reference element :math:`\widehat{T}` to the real element :math:`T`. The
 geometric nodes are denoted:
@@ -240,12 +240,12 @@ Finite element methods description
 ----------------------------------
 
 A finite element method is defined on a reference element
-:math:`\widehat{T}\subset\Reel^P` by a set of :math:`n_d` nodes :math:`a^i` and
+:math:`\widehat{T}\subset\rm I\hspace{-0.15em}R^P` by a set of :math:`n_d` nodes :math:`a^i` and
 corresponding base functions
 
 .. math::
 
-   (\widehat{\varphi})^i : \widehat{T}\subset\Reel^P \longrightarrow \Reel^Q
+   (\widehat{\varphi})^i : \widehat{T}\subset\rm I\hspace{-0.15em}R^P \longrightarrow \rm I\hspace{-0.15em}R^Q
 
 Denoting
 
