@@ -21,9 +21,11 @@
 #
 ############################################################################
 
-import getfem as gf
-import numpy as np
 import time
+
+import numpy as np
+
+import getfem as gf
 
 gf.util_trace_level(1)
 

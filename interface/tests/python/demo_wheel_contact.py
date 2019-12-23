@@ -25,8 +25,10 @@
 #
 ############################################################################
 
-import getfem as gf
 import numpy as np
+
+import getfem as gf
+
 gf.util('trace level', 1)    # No trace for mesh generation nor for assembly
 
 export_mesh = True;
@@ -165,4 +167,3 @@ mfvm1.export_to_vtk('displacement_with_von_mises1.vtk', mfvm1,  VM1, 'Von Mises 
 
 mfvm2.export_to_vtk('displacement_with_von_mises2.vtk', mfvm2,  VM2, 'Von Mises Stresses', mfu2, U2, 'Displacements')
 print('You can view solutions with for instance:\nmayavi2 -d displacement_with_von_mises1.vtk -f WarpVector -m Surface -d displacement_with_von_mises2.vtk -f WarpVector -m Surface')
-

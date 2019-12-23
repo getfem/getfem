@@ -26,9 +26,10 @@
 
   $Id: demo_laplacian_aposteriori.py 4429 2013-10-01 13:15:15Z renard $
 """
+import numpy as np
+
 # Import basic modules
 import getfem as gf
-import numpy as np
 
 ## Parameters
 h = 4.                             # Mesh parameter.
@@ -157,10 +158,3 @@ for refiter in range(5):
     
     mesh.refine(np.where( ETAElt > 0.6*np.max(ETA) ))
     mesh.optimize_structure()
-
-
-
-
-
-
-

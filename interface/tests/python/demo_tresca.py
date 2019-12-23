@@ -26,9 +26,10 @@
 
   $Id$
 """
+import numpy as np
+
 # Import basic modules
 import getfem as gf
-import numpy as np
 
 ## Parameters
 NX = 100                           # Mesh parameter.
@@ -109,5 +110,3 @@ mfu.export_to_vtk('tresca.vtk', U,'Computed solution')
 print('You can view the solution with (for example):')
 print('gmsh tresca.pos')
 print("mayavi2 -d tresca.vtk -f WarpScalar -m Surface")
-
-

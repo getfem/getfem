@@ -21,8 +21,9 @@
 #
 ############################################################################
 
-import getfem as gf
 import numpy as np
+
+import getfem as gf
 
 # Deformation of a plate under the coupling of thermal, elasticity, and
 # electric effects.
@@ -219,13 +220,3 @@ mft.export_to_vtk('temperature.vtk', mft, THETA, 'Temperature')
 print('mayavi2 -d temperature.vtk -f WarpScalar -m Surface')
 mft.export_to_vtk('electric_potential.vtk', mft, V, 'Electric potential')
 print('mayavi2 -d electric_potential.vtk -f WarpScalar -m Surface')
-
-
-
-
-
-
-
-
-
-

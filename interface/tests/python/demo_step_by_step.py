@@ -20,9 +20,10 @@
 #
 ############################################################################
 
+import numpy as np
+
 # import basic modules
 import getfem as gf
-import numpy as np
 
 # creation of a simple cartesian mesh
 m = gf.Mesh('cartesian', np.arange(0,1.1,0.1), np.arange(0,1.1,0.1))

@@ -27,6 +27,7 @@
 
 """
 import numpy as np
+
 import getfem as gf
 
 ## Parameters

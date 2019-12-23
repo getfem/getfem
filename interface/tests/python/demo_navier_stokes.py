@@ -30,9 +30,9 @@
 # This example is ported from:
 # http://fenicsproject.org/documentation/dolfin/1.0.1/python/demo/pde/navier-stokes/python/documentation.html
 
-import getfem as gf
 import numpy as np
 
+import getfem as gf
 
 W1 = 0.5         #       _____
 H1 = 0.5         #      |  W1 |
@@ -134,4 +134,3 @@ while t < T+1e-8:
                      mfp, md.variable("p"), "Pressure")
    t += dt
    step += 1
-

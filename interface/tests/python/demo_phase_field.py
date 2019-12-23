@@ -20,9 +20,11 @@
 #
 ############################################################################
 
-import getfem as gf
-import numpy as np
 import os
+
+import numpy as np
+
+import getfem as gf
 
 np.set_printoptions(threshold=100000)
 gf.util_trace_level(1)
@@ -228,7 +230,3 @@ with open("%s/demo_phase_field_forces.dat" % resultspath, "w") as f:
     f.write(("step=%i eps=%e fR=(%e,%e)\n") %
             (step, eps, dfT[0::N].sum(), dfT[1::N].sum()))
     f.flush()
-
-
-
-

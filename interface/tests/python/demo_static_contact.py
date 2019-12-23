@@ -26,8 +26,9 @@
   a good example of use of GetFEM++.
 """
 
-import getfem as gf
 import numpy as np
+
+import getfem as gf
 
 # Import the mesh : disc
 # m = gf.Mesh('load', '../../../tests/meshes/disc_P2_h4.mesh')
@@ -324,4 +325,3 @@ U = md.get('variable', 'u')
 VM = md.compute_isotropic_linearized_Von_Mises_or_Tresca('u', 'clambda', 'cmu', mfvm)
 
 mfd.export_to_vtk('static_contact.vtk', 'ascii', mfvm,  VM, 'Von Mises Stress', mfu, U, 'Displacement')
-

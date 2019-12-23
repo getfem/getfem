@@ -28,9 +28,9 @@
   $Id: demo_plasticity.py 5189 2015-12-15 10:24:07Z renard $
 """
 
-import getfem as gf
 import numpy as np
 
+import getfem as gf
 
 with_graphics=True
 try:

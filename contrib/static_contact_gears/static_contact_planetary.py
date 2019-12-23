@@ -26,8 +26,9 @@
      This program is used to check that python-getfem is working. This is
      also a good example of use of GetFEM++.
 """
+from math import cos, pi, sin
+
 from getfem import *
-from math import sin,cos,pi
 
 # mesh import
 m_1 = Mesh('import', 'gmsh', './static_contact_planetary_1.msh')

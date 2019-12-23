@@ -33,15 +33,17 @@ D.N. Arnold, F. Brezzi, B. Cockburn, L.D. Marini, SIAM J. Numer. Anal. vol. 39:5
 @mail: vtorushin@gmail.com
 """
 
-import numpy as np
+import datetime
 import sys
+import time
+from enum import Enum
+
+import numpy as np
+
 try: gf
 except NameError: gf = None
 if gf is None:
     import getfem as gf
-import time
-import datetime
-from enum import Enum
 Exact = Enum('Exact', 'BdmExample DotNormalZero CrossNormalZero')
 
 ######################################################################

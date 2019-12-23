@@ -30,9 +30,10 @@
   $Id$
 """
 
+import numpy as np
+
 # Import basic modules
 import getfem as gf
-import numpy as np
 
 export_mesh = True;
 

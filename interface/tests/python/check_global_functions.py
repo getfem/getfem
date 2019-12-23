@@ -26,8 +26,9 @@
 
   $Id$
 """
-import getfem as gf
 import os
+
+import getfem as gf
 
 # mesh fem to export
 m = gf.Mesh('triangles grid', [-1, -0.5, 0, 0.5, 1], [-1, -0.5, 0, 0.5, 1])

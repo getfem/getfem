@@ -26,9 +26,9 @@
 
   $Id$
 """
-import getfem as gf
 import numpy as np
 
+import getfem as gf
 
 NX=10.0
 thickness = 0.01;

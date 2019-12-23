@@ -28,8 +28,9 @@
 
   $Id$
 """
-from getfem import *
 from numpy import *
+
+from getfem import *
 
 print('importing the mesh..',)
 m=Mesh('import','gid','../meshes/tripod.GiD.msh')

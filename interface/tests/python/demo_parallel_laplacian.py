@@ -29,11 +29,13 @@
 
   $Id: demo_parallel_laplacian.py 3809 2011-09-26 20:38:56Z logari81 $
 """
+import time
+
+import numpy as np
+
+import getfem as gf
 # import basic modules
 import mpi4py.MPI as mpi
-import numpy as np
-import getfem as gf
-import time
 
 rank = mpi.COMM_WORLD.rank
 if (rank == 0):
@@ -188,4 +190,3 @@ t = time.process_time()
 #                     U,'Computed solution')
 #   print('You can view the solution with (for example):')
 #   print('gmsh laplacian.pos')
-

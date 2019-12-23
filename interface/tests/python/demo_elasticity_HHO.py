@@ -26,9 +26,10 @@
 
   $Id$
 """
+import numpy as np
+
 # Import basic modules
 import getfem as gf
-import numpy as np
 
 ## Parameters
 NX = 40                           # Mesh parameter.

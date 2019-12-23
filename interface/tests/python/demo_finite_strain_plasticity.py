@@ -20,12 +20,14 @@
 #
 ############################################################################
 
-import getfem as gf
-import numpy as np
-import sys
 import os
-import time
 import shutil
+import sys
+import time
+
+import numpy as np
+
+import getfem as gf
 
 np.set_printoptions(threshold=100000)
 gf.util_trace_level(1)

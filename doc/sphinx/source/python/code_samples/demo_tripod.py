@@ -28,8 +28,9 @@
   $Id$
 """
 
-import getfem as gf
 import numpy as np
+
+import getfem as gf
 
 with_graphics=True
 try:

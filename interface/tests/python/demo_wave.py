@@ -26,9 +26,11 @@
 
   $Id$
 """
-from numpy import *
-from getfem import *
 import os
+
+from numpy import *
+
+from getfem import *
 
 make_check=('srcdir' in os.environ);
 

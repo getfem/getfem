@@ -1,8 +1,9 @@
 # This is the "old" tripod demo, which uses the low level approach:
 # building the linear system by hand, handling Dirichlet, calling the solver etc...
 
-import getfem as gf
 import numpy as np
+
+import getfem as gf
 
 # parameters
 file_msh = 'tripod.GiD.msh'

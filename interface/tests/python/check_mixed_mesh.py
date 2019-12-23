@@ -28,9 +28,11 @@
   $Id$
 """
 
-import getfem as gf
-import numpy as np
 import os
+
+import numpy as np
+
+import getfem as gf
 
 # parameters
 E = 1.0e3

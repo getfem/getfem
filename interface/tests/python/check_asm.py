@@ -28,8 +28,8 @@
   $Id$
 """
 import numpy as np
-import getfem as gf
 
+import getfem as gf
 
 NX = 4
 m = gf.Mesh('triangles grid', np.arange(0,1+1./NX,1./NX),
@@ -237,4 +237,3 @@ if (res != "(Grad_w(2, 2))"):
 
 str = "Grad(u*Test_u)"; print('\nAssembly string "%s" gives:' % str)
 res = gf.asm('expression analysis', str,  mim, 1, md)
-

@@ -21,9 +21,10 @@
 #
 ############################################################################
 
-import getfem as gf
 import numpy as np
 from numpy import linalg as npla
+
+import getfem as gf
 
 gf.util_trace_level(1)
 
@@ -224,19 +225,3 @@ for step in range(1,nbstep+1):
 
 print('You can vizualize the loading steps by launching for instance')
 print('mayavi2 -d demo_nonlinear_elasticity_iter_1.vtk -f WarpVector -m Surface')
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -24,9 +24,10 @@
 
   $Id: extract_doc 3304 2009-11-03 13:17:46Z renard $
 """
-import string
 import os
+import string
 import sys
+
 
 class ParseError(Exception):
     def __init__(self, value):
@@ -164,10 +165,3 @@ rfl.close()
 
 
 print("there were ", count_math_f, " formulaes")
-
-
-
-
-
-
-

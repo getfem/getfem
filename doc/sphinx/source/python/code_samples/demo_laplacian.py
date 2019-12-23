@@ -21,9 +21,10 @@
 
 ## 2D Poisson problem test.
 
+import numpy as np
+
 # import basic modules
 import getfem as gf
-import numpy as np
 
 # boundary names
 top   = 101 # Dirichlet boundary

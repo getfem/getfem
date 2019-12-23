@@ -25,11 +25,13 @@
   $Id: test_small_strain_plasticity.py 5189 2015-12-15 10:24:07Z renard $
 """
 
-import getfem as gf
-import numpy as np
-import matplotlib.pyplot as plt
 import os
 import sys
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+import getfem as gf
 
 option = 3     # 1 : without hardening, im_data and plastic multiplier
                # 2 : without hardening, with im_data and plastic multiplier

@@ -30,9 +30,10 @@
   interface between the two areas
 """
 
+import numpy as np
+
 # import basic modules
 import getfem as gf
-import numpy as np
 
 # Parameters
 NX = 9
@@ -114,4 +115,3 @@ U = md.get('variable', 'u')
 VM = md.compute_isotropic_linearized_Von_Mises_or_Tresca('u', 'lambda', 'mu', mfdu)
 
 mfd.export_to_vtk('mortar.vtk', 'ascii', mfdu,  VM, 'Von Mises Stress', mfu, U, 'Displacement')
-

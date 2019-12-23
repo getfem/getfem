@@ -21,8 +21,9 @@
 #
 ############################################################################
 
-import getfem as gf
 import numpy as np
+
+import getfem as gf
 
 gf.util_trace_level(1)
 
@@ -353,4 +354,3 @@ for nit in range(load_steps):
    if test_case <= 1:
       Ddata[N-1] -= 1.
       md.set_variable("Ddata1", Ddata)
-

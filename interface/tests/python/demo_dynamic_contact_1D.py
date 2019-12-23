@@ -27,10 +27,13 @@
     This is also a good example of use of GetFEM++.
 """
 
-import getfem as gf
-import numpy as np
+import os
+import sys
+
 import matplotlib.pyplot as plt
-import os, sys
+import numpy as np
+
+import getfem as gf
 
 # Numerical parameters
 NX = 20               # Number of elements

@@ -31,9 +31,10 @@
 
   $Id: demo_laplacian_DG.py 4429 2013-10-01 13:15:15Z renard $
 """
+import numpy as np
+
 # Import basic modules
 import getfem as gf
-import numpy as np
 
 ## Parameters
 NX = 20                            # Mesh parameter.
@@ -179,4 +180,3 @@ if (verify_neighbour_computation):
 if (H1error > 1e-3):
     print('Error too large !')
     exit(1)
-

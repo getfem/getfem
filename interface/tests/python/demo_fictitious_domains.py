@@ -27,9 +27,10 @@
 
   $Id$
 """
-import getfem as gf
 import numpy as np
-from scipy import rand,setdiff1d
+from scipy import rand, setdiff1d
+
+import getfem as gf
 
 eps = 1.0/40
 ls_degree = 2

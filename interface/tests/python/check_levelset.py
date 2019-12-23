@@ -26,9 +26,10 @@
 
   $Id$
 """
-import getfem as gf
 import numpy as np
 from scipy import rand
+
+import getfem as gf
 
 eps = 1.0/10
 

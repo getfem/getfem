@@ -28,8 +28,8 @@
   $Id$
 """
 import numpy as np
-import getfem as gf
 
+import getfem as gf
 
 NX = 4
 
@@ -87,4 +87,3 @@ for i in range(0, V1.size):
   for j in range(0, V2.size):
     if (abs(M[i,j] - V1[i]*V2[j]) > 1E-8):
       print("Bad value for matrix assembly"); exit(1)
-    

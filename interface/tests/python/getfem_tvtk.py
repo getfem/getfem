@@ -37,8 +37,11 @@ except:
     raise
 
 import sys
-import getfem
+
 import numpy
+
+import getfem
+
 
 def gf_colormap(name):
     if name == 'tripod':

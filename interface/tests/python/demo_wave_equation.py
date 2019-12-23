@@ -27,9 +27,11 @@
   also a good example of use of GetFEM++.
 
 """
-import numpy as np
-import getfem as gf
 import os
+
+import numpy as np
+
+import getfem as gf
 
 NX = 10
 m = gf.Mesh('cartesian', np.arange(0., 1.+1./NX,1./NX),

@@ -12,7 +12,12 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import sys, os, time
+import os
+import sys
+import time
+
+###########################################################################
+from getfem import getfem_env
 
 # If your extensions are in another directory, add it here. If the directory
 # is relative to the documentation root, use os.path.abspath to make it
@@ -20,8 +25,6 @@ import sys, os, time
 sys.path.append(os.path.abspath('../tools/sphinxext')) # sphinx
 sys.path.append('../../../interface/src/python/')      # getfem
 
-###########################################################################
-from getfem import getfem_env
 user_preamble = '''
 \n% begin user_preamble:
 \\usepackage{mathrsfs}

@@ -20,8 +20,9 @@
 #
 ############################################################################
 
-import getfem as gf
 import numpy as np
+
+import getfem as gf
 
 NX = 10
 m = gf.Mesh('cartesian', np.arange(0,1+1./NX,1./NX), np.arange(0,1+1./NX,1./NX))
