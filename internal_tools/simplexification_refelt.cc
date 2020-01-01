@@ -1,6 +1,6 @@
 /*===========================================================================
 
- Copyright (C) 2002-2017 Yves Renard, Julien Pommier.
+ Copyright (C) 2002-2020 Yves Renard, Julien Pommier.
 
  This file is a part of GetFEM++
 
@@ -104,7 +104,7 @@ int main(int argc, char *argv[]) {
       "//\n"
       "//========================================================================\n"
       "//\n"
-      "// Copyright (C) 2006-2006 Yves Renard\n"
+      "// Copyright (C) 2006-2020 Yves Renard\n"
       "//\n"
       "// This file is a part of GetFEM++\n"
       "//\n"

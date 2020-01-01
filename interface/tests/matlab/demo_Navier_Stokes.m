@@ -1,4 +1,4 @@
-% Copyright (C) 2011-2017 Mariama Ndiaye, Yves Renard.
+% Copyright (C) 2011-2020 Mariama Ndiaye, Yves Renard.
 %
 % This file is a part of GetFEM++
 %

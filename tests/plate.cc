@@ -1,6 +1,6 @@
 /*===========================================================================
 
- Copyright (C) 2002-2017 Yves Renard, Michel Salaün.
+ Copyright (C) 2002-2020 Yves Renard, Michel Salaün.
 
  This file is a part of GetFEM++
 

@@ -1,4 +1,4 @@
-dnl Copyright (C) 2004-2017 Julien Pommier
+dnl Copyright (C) 2004-2020 Julien Pommier
 dnl 
 dnl This file is  free software;  you  can  redistribute  it  and/or modify it
 dnl under  the  terms  of the  GNU  Lesser General Public License as published

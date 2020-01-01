@@ -1,5 +1,5 @@
 // Scilab GetFEM++ interface
-// Copyright (C) 2011-2017 Tomas Ligursky, Yves Renard.
+// Copyright (C) 2011-2020 Tomas Ligursky, Yves Renard.
 //
 // This file is a part of GetFEM++
 //

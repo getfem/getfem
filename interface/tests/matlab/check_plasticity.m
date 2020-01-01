@@ -1,4 +1,4 @@
-% Copyright (C) 2010-2017 Amandine Cottaz, Yves Renard, Farshid Dabaghi.
+% Copyright (C) 2010-2020 Amandine Cottaz, Yves Renard, Farshid Dabaghi.
 %
 % This file is a part of GetFEM++
 %

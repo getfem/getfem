@@ -1,4 +1,4 @@
-# Copyright (C) 2015-2017 Tomas Ligursky
+# Copyright (C) 2015-2020 Tomas Ligursky
 #
 # This file is a part of GetFEM++
 #

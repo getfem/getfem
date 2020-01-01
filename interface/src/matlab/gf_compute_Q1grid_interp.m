@@ -1,7 +1,7 @@
 function [U2,Iq,MF2]=gf_compute_Q1grid_interp(MF1,U1,varargin)
 % See help on gf_compute
 %  $Id$
-%  Copyright (C) 1999-2017 Yves Renard
+%  Copyright (C) 1999-2020 Yves Renard
 %
 %  This file is a part of GetFEM++
 %

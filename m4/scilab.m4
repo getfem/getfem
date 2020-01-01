@@ -1,4 +1,4 @@
-dnl Copyright (C) 2009-2017 Yann Colette
+dnl Copyright (C) 2009-2020 Yann Colette
 dnl 
 dnl This file is  free software;  you  can  redistribute  it  and/or modify it
 dnl under  the  terms  of the  GNU  Lesser General Public License as published

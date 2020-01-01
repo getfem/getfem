@@ -1,6 +1,6 @@
 /*===========================================================================
 
- Copyright (C) 2019-2019 Konstantinos Poulios.
+ Copyright (C) 2019-2020 Konstantinos Poulios.
 
  This file is a part of GetFEM++
 
