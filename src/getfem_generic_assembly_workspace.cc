@@ -707,6 +707,11 @@ namespace getfem {
     return islin;
   }
 
+  bool ga_workspace::is_linear(size_type order) {
+    std::vector<std::string> vl, vl_test1, vl_test2, dl;
+    return used_variables(vl, vl_test1, vl_test2, dl, order);
+  }
+
   void ga_workspace::define_variable_group(const std::string &group_name,
                                            const std::vector<std::string> &nl) {
     GMM_ASSERT1(!(variable_exists(group_name)), "The name of a group of "

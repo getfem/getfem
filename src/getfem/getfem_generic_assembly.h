@@ -288,10 +288,10 @@ namespace getfem {
       }
 
       var_description(bool is_var, const mesh_fem *mf_, const im_data *imd_,
-                      gmm::sub_interval I_, const model_real_plain_vector *v,
+                      gmm::sub_interval I_, const model_real_plain_vector *V_,
                       size_type Q)
         : is_variable(is_var), is_fem_dofs(mf_ != 0), mf(mf_), imd(imd_),
-          I(I_), V(v), qdims(1)
+          I(I_), V(V_), qdims(1)
       {
         GMM_ASSERT1(Q > 0, "Bad dimension");
         qdims[0] = Q;
@@ -340,10 +340,12 @@ namespace getfem {
     const mesh_region &register_region(const mesh &m, const mesh_region &rg);
 
     // variables and variable groups
-    mutable std::map<std::string, gmm::sub_interval> int_disabled_variables;
-
     typedef std::map<std::string, var_description> VAR_SET;
     VAR_SET variables;
+
+    mutable std::map<std::string, gmm::sub_interval> int_disabled_variables;
+    std::map<std::string, gmm::sub_interval> tmp_var_intervals;
+
     std::map<std::string, pinterpolate_transformation> transformations;
     std::map<std::string, pelementary_transformation> elem_transformations;
     std::map<std::string, psecondary_domain> secondary_domains;
@@ -362,7 +364,6 @@ namespace getfem {
                   bool scalar_expr, operation_type op_type=ASSEMBLY,
                   const std::string varname_interpolation="");
 
-
     std::shared_ptr<model_real_sparse_matrix> K;
     std::shared_ptr<base_vector> V;
     model_real_sparse_matrix col_unreduced_K,
@@ -371,8 +372,6 @@ namespace getfem {
     base_vector unreduced_V;
     base_tensor assemb_t;
     bool include_empty_int_pts = false;
-
-    std::map<std::string, gmm::sub_interval> tmp_var_intervals;
 
   public:
     // setter functions
@@ -460,6 +459,7 @@ namespace getfem {
                         std::vector<std::string> &vl_test2,
                         std::vector<std::string> &dl,
                         size_type order);
+    bool is_linear(size_type order);
 
     bool variable_exists(const std::string &name) const;
 

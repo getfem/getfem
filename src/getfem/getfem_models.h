@@ -2304,7 +2304,7 @@ namespace getfem {
 
   /**  Linear elasticity brick ( @f$ \int \sigma(u):\varepsilon(v) @f$ ).
       for isotropic material. Parametrized by Young modulus and Poisson ratio
-      For two-dimensional problems, corresponds to the plain strain
+      For two-dimensional problems, corresponds to the plane strain
       approximation
       ( @f$ \lambda = E\nu/((1+\nu)(1-2\nu)), \mu = E/(2(1+\nu)) @f$ ).
       Corresponds to the standard model for three-dimensional problems.
@@ -2317,7 +2317,7 @@ namespace getfem {
   /** 
       Linear elasticity brick ( @f$ \int \sigma(u):\varepsilon(v) @f$ ).
       for isotropic material. Parametrized by Young modulus and Poisson ratio.
-      For two-dimensional problems, corresponds to the plain stress
+      For two-dimensional problems, corresponds to the plane stress
       approximation
       ( @f$ \lambda^* = E\nu/(1-\nu^2), \mu = E/(2(1+\nu)) @f$ ).
       Corresponds to the standard model for three-dimensional problems.

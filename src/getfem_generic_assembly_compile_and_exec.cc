@@ -5174,7 +5174,7 @@ namespace getfem {
                         (is_elementary ? pnode->elementary_target : pnode->name)
                         << " has to be defined on the same mesh than the "
                         << "integration method or interpolation used");
-            
+
             // An instruction for extracting local dofs of the variable.
             if (rmi.local_dofs.count(pnode->name) == 0) {
               rmi.local_dofs[pnode->name] = base_vector(1);
@@ -5206,7 +5206,7 @@ namespace getfem {
                 (*mf, rmi.pfps[mf], gis.ctx, gis.fp_pool);
               rmi.instructions.push_back(std::move(pgai));
             }
-            
+
             // An instruction for the base value
             pgai = pga_instruction();
             switch (pnode->node_type) {
@@ -5289,7 +5289,7 @@ namespace getfem {
                     (rmi.xfem_minus_hess[mf], gis.ctx, *mf, rmi.pfps[mf]);
                 }
               break;
-              
+
             default : GMM_ASSERT1(false, "Internal error");
             }
             if (pgai) rmi.instructions.push_back(std::move(pgai));
@@ -5419,7 +5419,7 @@ namespace getfem {
         }
       }
       break;
-      
+
     case GA_NODE_SECONDARY_DOMAIN_VAL: case GA_NODE_SECONDARY_DOMAIN_GRAD:
     case GA_NODE_SECONDARY_DOMAIN_HESS: case GA_NODE_SECONDARY_DOMAIN_DIVERG:
       {

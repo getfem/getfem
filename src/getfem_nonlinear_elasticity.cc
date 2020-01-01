@@ -2313,7 +2313,7 @@ namespace getfem {
                 "fem variables");
     size_type Q = mf->get_qdim();
     GMM_ASSERT1(Q == N, "Finite strain elasticity brick can only be applied "
-                "on a fem variable having the same dimension than the mesh");
+                "on a fem variable having the same dimension as the mesh");
 
     std::string adapted_lawname = adapt_law_name(lawname, N);
 
