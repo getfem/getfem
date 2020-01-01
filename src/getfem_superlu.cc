@@ -1,6 +1,6 @@
 /*===========================================================================
 
- Copyright (C) 2004-2017 Julien Pommier
+ Copyright (C) 2004-2020 Julien Pommier
 
  This file is a part of GetFEM++
 

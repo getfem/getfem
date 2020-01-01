@@ -30,7 +30,7 @@ function [hsurf, hcontour, hquiver, hmesh, hdefmesh]=gf_plot(mf,U,varargin)
 %  'disp_options', {'off'|'on'} : shows the option or not.
 %
 %
-%  Copyright (C) 1999-2017 Yves Renard
+%  Copyright (C) 1999-2020 Yves Renard
 %
 %  This file is a part of GetFEM++
 %

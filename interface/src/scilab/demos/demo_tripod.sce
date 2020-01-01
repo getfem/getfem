@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2017 Yann COLLETTE.
+// Copyright (C) 2010-2020 Yann COLLETTE.
 //
 // This file is a part of GetFEM++
 //

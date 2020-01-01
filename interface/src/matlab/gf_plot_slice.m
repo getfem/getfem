@@ -30,7 +30,7 @@ function [hfaces, htube, hquiver, hmesh]=gf_plot_slice(sl,varargin)
 % the 'data' and 'convex_data' are mutually exclusive.
 %  
 % RETURNS: handles to the various graphical objects created.  
-%  Copyright (C) 1999-2017 Yves Renard
+%  Copyright (C) 1999-2020 Yves Renard
 %
 %  This file is a part of GetFEM++
 %

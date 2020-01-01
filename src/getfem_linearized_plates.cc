@@ -1,6 +1,6 @@
 /*===========================================================================
 
- Copyright (C) 2004-2017 Yves Renard, Jeremie Lasry, Mathieu Fabre
+ Copyright (C) 2004-2020 Yves Renard, Jeremie Lasry, Mathieu Fabre
 
  This file is a part of GetFEM++
 

@@ -1,6 +1,6 @@
 // Matlab GetFEM++ interface
 //
-// Copyright (C) 2009-2011 Yves Renard.
+// Copyright (C) 2009-2020 Yves Renard.
 //
 // This file is a part of GetFEM++
 //
