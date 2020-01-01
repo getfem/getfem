@@ -1,4 +1,4 @@
-% Copyright (C) 2015-2017 Rabii Mlika, Yves Renard.
+% Copyright (C) 2015-2020 Rabii Mlika, Yves Renard.
 %
 % This file is a part of GetFEM++
 %

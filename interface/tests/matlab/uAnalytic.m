@@ -1,4 +1,4 @@
-% Copyright (C) 2013-2017 Franz Chouly.
+% Copyright (C) 2013-2020 Franz Chouly.
 %
 % This file is a part of GetFEM++
 %

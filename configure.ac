@@ -1,4 +1,4 @@
-dnl  Copyright (C) 1999-2017 Yves Renard
+dnl  Copyright (C) 1999-2020 Yves Renard
 dnl
 dnl  This file is a part of GetFEM++
 dnl

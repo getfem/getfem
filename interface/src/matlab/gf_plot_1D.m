@@ -8,7 +8,7 @@ function [hline, hdof] = gf_plot_1D(mf,U, varargin)
 %  'color', []          : override the line color.
 %  'dof_color', [1,0,0] : color of the markers for the degrees of freedom.
 %  'width', 2           : line width.
-%  Copyright (C) 1999-2017 Yves Renard
+%  Copyright (C) 1999-2020 Yves Renard
 %
 %  This file is a part of GetFEM++
 %

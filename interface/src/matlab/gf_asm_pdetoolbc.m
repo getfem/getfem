@@ -2,7 +2,7 @@ function [Q,G,H,R,F]=gf_asm_pdetoolbc(mf_u, mf_d, b, e, f_expr)
 %  FUNCTION [Q,G,H,R,F]=gf_asm_pdetoolbc(mf_u, mf_d, b, e, f_expr)
 %  'pdetool style' assembling of boundary conditions
 %  See gf_asm
-%  Copyright (C) 1999-2017 Yves Renard
+%  Copyright (C) 1999-2020 Yves Renard
 %
 %  This file is a part of GetFEM++
 %

@@ -1,6 +1,6 @@
 /*===========================================================================
 
- Copyright (C) 2012-2017 Tomas Ligursky, Yves Renard, Konstantinos Poulios.
+ Copyright (C) 2012-2020 Tomas Ligursky, Yves Renard, Konstantinos Poulios.
 
  This file is a part of GetFEM++
 

@@ -1,7 +1,7 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
 
- Copyright (C) 2002-2017 Yves Renard
+ Copyright (C) 2002-2020 Yves Renard
 
  This file is a part of GetFEM++
 
@@ -31,7 +31,7 @@
 
 //===========================================================================
 //
-// Copyright (c) 1998-2001, University of Notre Dame. All rights reserved.
+// Copyright (c) 1998-2020, University of Notre Dame. All rights reserved.
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
 //

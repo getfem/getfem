@@ -1,6 +1,6 @@
 function X=gf_mesh_fem_get_eval(mf, what, dof)
 % gf_mesh_fem_get_eval : see the help in gf_mesh_fem_get(mf,'eval')
-%  Copyright (C) 1999-2017 Yves Renard
+%  Copyright (C) 1999-2020 Yves Renard
 %
 %  This file is a part of GetFEM++
 %

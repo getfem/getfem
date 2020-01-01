@@ -2,7 +2,7 @@
 # coding: utf-8
 # Python GetFEM++ interface
 #
-# Copyright (C) 2019-2019 Tetsuo Koyama.
+# Copyright (C) 2019-2020 Tetsuo Koyama.
 #
 # This file is a part of GetFEM++
 #

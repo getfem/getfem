@@ -1,6 +1,6 @@
 /*===========================================================================
 
- Copyright (C) 2006-2017 Yves Renard, Julien Pommier, Jeremie Lasry.
+ Copyright (C) 2006-2020 Yves Renard, Julien Pommier, Jeremie Lasry.
 
  This file is a part of GetFEM++
 

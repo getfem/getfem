@@ -1,6 +1,6 @@
 /*===========================================================================
 
- Copyright (C) 2012-2017 Liang Jin Lim.
+ Copyright (C) 2012-2020 Liang Jin Lim.
 
  This file is a part of GetFEM++
 

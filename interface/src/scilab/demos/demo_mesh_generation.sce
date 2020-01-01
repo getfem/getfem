@@ -1,6 +1,6 @@
 // Scilab GetFEM++ interface
 //
-// Copyright (C) 2011-2011 Yves Renard, Yann Collette.
+// Copyright (C) 2011-2020 Yves Renard, Yann Collette.
 //
 // This file is a part of GetFEM++
 //

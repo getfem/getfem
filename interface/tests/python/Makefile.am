@@ -1,4 +1,4 @@
-#  Copyright (C) 1999-2019 Yves Renard
+#  Copyright (C) 1999-2020 Yves Renard
 #
 #  This file is a part of GetFEM++
 #

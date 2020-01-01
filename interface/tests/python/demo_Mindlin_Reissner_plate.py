@@ -2,7 +2,7 @@
 # -*- coding: UTF8 -*-
 # Python GetFEM++ interface
 #
-# Copyright (C) 2015-2017 FABRE Mathieu, SECK Mamadou, DALLERIT Valentin,
+# Copyright (C) 2015-2020 FABRE Mathieu, SECK Mamadou, DALLERIT Valentin,
 #                         Yves Renard.
 #
 # This file is a part of GetFEM++

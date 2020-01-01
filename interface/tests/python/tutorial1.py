@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # Python GetFEM++ interface
 #
-# Copyright (C)  2015-2015 Julien Pommier.
+# Copyright (C)  2015-2020 Julien Pommier.
 #
 # This file is a part of GetFEM++
 #

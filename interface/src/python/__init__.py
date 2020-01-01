@@ -1,4 +1,4 @@
-"""getfem-python Copyright (C) 2004-2015 Julien Pommier
+"""getfem-python Copyright (C) 2004-2020 Julien Pommier
 
 The main package for getfem++ support for Python.  Normally used by importing
 the package, and perhaps a particular module inside it.

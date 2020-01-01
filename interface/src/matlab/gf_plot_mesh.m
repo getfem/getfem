@@ -27,7 +27,7 @@ function [hmesh,hbound,hfill,hvert,hconv,hdof]=gf_plot_mesh(M, varargin)
 %   not a simple mesh object.
 %  
 %   $Id$
-%  Copyright (C) 1999-2017 A. Huard, Y. Renard, J. Pommier
+%  Copyright (C) 1999-2020 A. Huard, Y. Renard, J. Pommier
 %
 %  This file is a part of GetFEM++
 %

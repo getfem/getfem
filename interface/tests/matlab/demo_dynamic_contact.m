@@ -1,4 +1,4 @@
-% Copyright (C) 2009-2017 Yves Renard, Franz Chouly.
+% Copyright (C) 2009-2020 Yves Renard, Franz Chouly.
 %
 % This file is a part of GetFEM++
 %

@@ -24,7 +24,7 @@
   see https://www.openhub.net/licenses/blas
 */
 
-/* Copyright (C) 2004-2006 Julien Pommier
+/* Copyright (C) 2004-2020 Julien Pommier
 
   This file is a part of GetFEM++
 

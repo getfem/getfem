@@ -3,7 +3,7 @@ function varargout=gf_colormap(name),
 %   return a colormap, or change the current colormap.
 %   name can be: 'tripod', 'chouette', 'froid', 'tank'
 %   or 'earth'.
-%  Copyright (C) 1999-2017 Yves Renard
+%  Copyright (C) 1999-2020 Yves Renard
 %
 %  This file is a part of GetFEM++
 %
