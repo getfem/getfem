@@ -246,7 +246,7 @@ namespace getfem {
     }
 
     /* read the version */
-    int version;
+    double version;
     std::string header;
     f >> header;
     if (bgeot::casecmp(header,"$MeshFormat")==0)
@@ -267,22 +267,37 @@ namespace getfem {
       bgeot::read_until(f, "$Nodes"); /* Format versions 2 and 4 */
 
     size_type nb_block, nb_node, dummy;
-    if (version >= 4)
+    std::string dummy2;
+    // cout << "version = " << version << endl;
+    if (version >= 4.05) {
+      f >> nb_block >> nb_node; bgeot::read_until(f, "\n");
+    } else if (version >= 4) {
       f >> nb_block >> nb_node;
-    else {
+    } else {
       nb_block = 1;
       f >> nb_node;
     }
 
-    //cerr << "reading nodes..[nb=" << nb_node << "]\n";
+    // cerr << "reading nodes..[nb=" << nb_node << "]\n";
     std::map<size_type, size_type> msh_node_2_getfem_node;
+     std::vector<size_type> inds(nb_node);
     for (size_type block=0; block < nb_block; ++block) {
       if (version >= 4)
         f >> dummy >> dummy >> dummy >> nb_node;
+      // cout << "nb_nodes = " << nb_node << endl;
+
+      inds.resize(nb_node);
+      if (version >= 4.05) {
+	for (size_type node_cnt=0; node_cnt < nb_node; ++node_cnt)
+	  f >> inds[node_cnt];
+      }
+      
       for (size_type node_cnt=0; node_cnt < nb_node; ++node_cnt) {
         size_type node_id;
         base_node n{0,0,0};
-        f >> node_id >> n[0] >> n[1] >> n[2];
+	if (version < 4.05) f >> node_id; else node_id = inds[node_cnt];
+
+	f >> n[0] >> n[1] >> n[2];
         msh_node_2_getfem_node[node_id]
           = m.add_point(n, remove_duplicated_nodes ? 0. : -1.);
       }
@@ -293,24 +308,30 @@ namespace getfem {
     else
       bgeot::read_until(f, "$ENDNOD");
 
-    /* read the convexes */
+    /* read the elements */
     if (version >= 2)
       bgeot::read_until(f, "$Elements"); /* Format versions 2 and 4 */
     else
       bgeot::read_until(f, "$ELM");
 
     size_type nb_cv;
-    if (version >= 4) /* Format version 4 */
+    if (version >= 4.05) {
+      f >> nb_block >> nb_cv; bgeot::read_until(f, "\n");
+    } else if (version >= 4) { /* Format version 4 */
       f >> nb_block >> nb_cv;
-    else {
+    } else {
       nb_block = 1;
       f >> nb_cv;
     }
+    // cout << "nb_bloc = " << nb_block << " nb_cv = " << nb_cv << endl;
+     
     std::vector<gmsh_cv_info> cvlst; cvlst.reserve(nb_cv);
     for (size_type block=0; block < nb_block; ++block) {
       unsigned type, region;
       if (version >= 4) /* Format version 4 */
         f >> region >> dummy >> type >> nb_cv;
+
+      
 
       for (size_type cv=0; cv < nb_cv; ++cv) {
 
