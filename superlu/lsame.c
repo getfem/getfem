@@ -3,12 +3,12 @@
 int lsame_(char *ca, char *cb)
 {
 /*  -- LAPACK auxiliary routine (version 2.0) --   
-       Copyright (c) 1992-2020 The University of Tennessee and The University
+       Copyright (c) 1992-2013 The University of Tennessee and The University
                         of Tennessee Research Foundation.  All rights
                         reserved.
-       Copyright (c) 2000-2020 The University of California Berkeley. All
+       Copyright (c) 2000-2013 The University of California Berkeley. All
                         rights reserved.
-       Copyright (c) 2006-2020 The University of Colorado Denver.  All rights
+       Copyright (c) 2006-2013 The University of Colorado Denver.  All rights
                         reserved.
 
        Redistribution and use in source and binary forms, with or without

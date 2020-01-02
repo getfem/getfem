@@ -1,5 +1,5 @@
 /*
-  Copyright: 1992-2020 The University of Tennessee.  All rights reserved.
+  Copyright: 1992-2007 The University of Tennessee.  All rights reserved.
   License:
     LAPACK is a freely-available software package. It is available from
     netlib via anonymous ftp and the World Wide Web. Thus, it can be

@@ -49,7 +49,7 @@
 
     Copyright and License:
 
-	Copyright (c) 1998-2020 by the University of Florida.
+	Copyright (c) 1998-2003 by the University of Florida.
 	All Rights Reserved.
 
 	THIS MATERIAL IS PROVIDED AS IS, WITH ABSOLUTELY NO WARRANTY
