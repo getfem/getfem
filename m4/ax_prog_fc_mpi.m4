@@ -44,7 +44,7 @@
 #
 # LICENSE
 #
-#   Copyright (c) 2010,2011 Olaf Lenz <olenz@icp.uni-2020tgart.de>
+#   Copyright (c) 2010,2011 Olaf Lenz <olenz@icp.uni-stuttgart.de>
 #
 #   This program is free software: you can redistribute it and/or modify it
 #   under the terms of the GNU General Public License as published by the

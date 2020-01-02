@@ -1,6 +1,6 @@
 dnl matlab.m4 --- check for Matlab.
 dnl
-dnl Copyright (C) 2000--2020 Ralph Schleicher
+dnl Copyright (C) 2000--2002 Ralph Schleicher
 dnl
 dnl This program is free software; you can redistribute it and/or
 dnl modify it under the terms of the GNU General Public License as
