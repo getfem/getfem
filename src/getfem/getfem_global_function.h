@@ -2,7 +2,7 @@
 /*===========================================================================
 
  Copyright (C) 2004-2020 Yves Renard
- Copyright (C) 2016      Konstantinos Poulios
+ Copyright (C) 2016-2020 Konstantinos Poulios
 
  This file is a part of GetFEM++
 

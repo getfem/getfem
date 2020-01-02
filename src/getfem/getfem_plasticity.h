@@ -1,7 +1,8 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
 
- Copyright (C) 2002-2020 Konstantinos Poulios, Amandine Cottaz, Yves Renard
+ Copyright (C) 2002-2020 Amandine Cottaz, Yves Renard
+ Copyright (C) 2014-2020 Konstantinos Poulios
 
  This file is a part of GetFEM++
 
@@ -475,13 +476,13 @@ namespace getfem {
       Note that the constitutive lawtype of projection
       to be used is described by `ACP` which should not be
       freed while the model is used.
-      `datalambda` and `datamu` describe the Lamé coeffcients
+      `datalambda` and `datamu` describe the LamÃ© coeffcients
       of the studied material. Could be scalar or vector fields
       described on a finite element method.
       `datathreshold` represents the elasticity threshold
       of the material. It could be a scalar or a vector field
       described on the same finite element method as
-      the Lamé coefficients.
+      the LamÃ© coefficients.
       `datasigma` represents the stress constraints values
       supported by the material. It should be a vector field
       described on a finite element method.
@@ -508,7 +509,7 @@ namespace getfem {
       `previous_dep_name` represents the displacement at the previous time step,
       `ACP` is the type of projection to be used that could only be
       `Von Mises` for the moment,
-      `datalambda` and `datamu` are the Lamé coefficients
+      `datalambda` and `datamu` are the LamÃ© coefficients
       of the material,
       `datathreshold` is the elasticity threshold of the material,
       `datasigma` is the vector which will contains the new

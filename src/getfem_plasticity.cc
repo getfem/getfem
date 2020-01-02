@@ -1,6 +1,7 @@
 /*===========================================================================
 
- Copyright (C) 2002-2020 Konstantinos Poulios, Amandine Cottaz, Yves Renard
+ Copyright (C) 2002-2020 Amandine Cottaz, Yves Renard
+ Copyright (C) 2014-2020 Konstantinos Poulios
 
  This file is a part of GetFEM++
 
