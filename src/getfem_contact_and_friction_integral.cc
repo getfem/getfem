@@ -2551,7 +2551,7 @@ namespace getfem {
    size_type region) {
     
     std::string theta = std::to_string(theta_);
-    ga_workspace workspace(md, true);
+    ga_workspace workspace(md, ga_workspace::inherit::ALL); // reenables vars
     size_type order = workspace.add_expression(Neumannterm, mim, region, 1);
     GMM_ASSERT1(order == 0, "Wrong expression of the Neumann term");
     // model::varnamelist vl, vl_test1, vl_test2, dl;

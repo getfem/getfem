@@ -198,9 +198,10 @@ namespace getfem {
     if (it != variables.end()) return it->second.I;
     const auto it2 = reenabled_var_intervals.find(name);
     if (it2 != reenabled_var_intervals.end()) return it2->second;
-    if (md && md->variable_exists(name))
+    if (with_parent_variables && md && md->variable_exists(name))
       return md->interval_of_variable(name);
-    else if (parent_workspace && parent_workspace->variable_exists(name))
+    else if (with_parent_variables &&
+             parent_workspace && parent_workspace->variable_exists(name))
       return parent_workspace->interval_of_variable(name);
     GMM_ASSERT1(false, "Undefined variable " << name);
   }
@@ -933,14 +934,15 @@ namespace getfem {
   { if (ptree) delete ptree; ptree = 0; }
 
   ga_workspace::ga_workspace(const getfem::model &md_,
-                             bool enable_disabled_variables)
+                             const inherit var_inherit)
     : md(&md_), parent_workspace(0),
-      nb_prim_dof(0), nb_tmp_dof(0),
-      macro_dict(md_.macro_dictionary())
+      with_parent_variables(var_inherit == inherit::ENABLED ||
+                            var_inherit == inherit::ALL),
+      nb_tmp_dof(0), macro_dict(md_.macro_dictionary())
   {
     init();
-    nb_prim_dof = md->nb_dof();
-    if (enable_disabled_variables) {
+    nb_prim_dof = with_parent_variables ? md->nb_dof() : 0;
+    if (var_inherit == inherit::ALL) { // enable model's disabled variables
       model::varnamelist vlmd;
       md->variable_list(vlmd);
       for (const auto &varname : vlmd)
@@ -964,13 +966,19 @@ namespace getfem {
         }
     }
   }
-  ga_workspace::ga_workspace(bool, const ga_workspace &gaw)
+  ga_workspace::ga_workspace(const ga_workspace &gaw,
+                             const inherit var_inherit)
     : md(0), parent_workspace(&gaw),
-      nb_prim_dof(gaw.nb_primary_dof()), nb_tmp_dof(0),
-      macro_dict(gaw.macro_dictionary())
-  { init(); }
+      with_parent_variables(var_inherit == inherit::ENABLED ||
+                            var_inherit == inherit::ALL),
+      nb_tmp_dof(0), macro_dict(gaw.macro_dictionary())
+  {
+    init();
+    nb_prim_dof = with_parent_variables ? gaw.nb_primary_dof() : 0;
+  }
   ga_workspace::ga_workspace()
-    : md(0), parent_workspace(0), nb_prim_dof(0), nb_tmp_dof(0)
+    : md(0), parent_workspace(0), with_parent_variables(false),
+      nb_prim_dof(0), nb_tmp_dof(0)
   { init(); }
   ga_workspace::~ga_workspace() { clear_expressions(); }
 

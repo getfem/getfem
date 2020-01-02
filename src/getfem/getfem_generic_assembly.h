@@ -264,6 +264,7 @@ namespace getfem {
 
     const model *md;
     const ga_workspace *parent_workspace;
+    bool with_parent_variables;
     size_type nb_prim_dof, nb_tmp_dof;
 
     void init();
@@ -566,8 +567,12 @@ namespace getfem {
       return (it != tmp_var_intervals.end()) ? it->second : empty_interval;
     }
 
-    ga_workspace(const getfem::model &md_, bool enable_disabled_variables=false);
-    ga_workspace(bool, const ga_workspace &gaw);
+    enum class inherit { NONE, ENABLED, ALL };
+
+    ga_workspace(const getfem::model &md_,
+                 const inherit var_inherit=inherit::ENABLED);
+    ga_workspace(const ga_workspace &gaw,    // compulsory 2nd arg to avoid
+                 const inherit var_inherit); // conflict with copy constructor
     ga_workspace();
     ~ga_workspace();
 

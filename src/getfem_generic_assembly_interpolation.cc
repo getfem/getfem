@@ -533,7 +533,7 @@ namespace getfem {
           used_vars.clear();
         else
           used_data.clear();
-        ga_workspace aux_workspace(true, workspace);
+        ga_workspace aux_workspace(workspace, ga_workspace::inherit::ALL);
         aux_workspace.clear_expressions();
         aux_workspace.add_interpolation_expression(expr, source_mesh);
         for (size_type i = 0; i < aux_workspace.nb_trees(); ++i)
@@ -556,7 +556,7 @@ namespace getfem {
       size_type N = target_mesh.dim();
 
       // Expression compilation
-      local_workspace = ga_workspace(true, workspace);
+      local_workspace = ga_workspace(workspace, ga_workspace::inherit::ALL);
       local_workspace.clear_expressions();
 
       local_workspace.add_interpolation_expression(expr, source_mesh);
