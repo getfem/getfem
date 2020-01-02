@@ -264,7 +264,6 @@ namespace getfem {
 
     const model *md;
     const ga_workspace *parent_workspace;
-    bool enable_all_md_variables;
     size_type nb_prim_dof, nb_tmp_dof;
 
     void init();
@@ -343,8 +342,8 @@ namespace getfem {
     typedef std::map<std::string, var_description> VAR_SET;
     VAR_SET variables;
 
-    mutable std::map<std::string, gmm::sub_interval> int_disabled_variables;
-    std::map<std::string, gmm::sub_interval> tmp_var_intervals;
+    std::map<std::string, gmm::sub_interval> reenabled_var_intervals,
+                                             tmp_var_intervals;
 
     std::map<std::string, pinterpolate_transformation> transformations;
     std::map<std::string, pelementary_transformation> elem_transformations;
@@ -486,9 +485,6 @@ namespace getfem {
     const scalar_type &factor_of_variable(const std::string &name) const;
 
     const gmm::sub_interval &
-    interval_of_disabled_variable(const std::string &name) const;
-
-    const gmm::sub_interval &
     interval_of_variable(const std::string &name) const;
 
     const mesh_fem *associated_mf(const std::string &name) const;
@@ -570,7 +566,7 @@ namespace getfem {
       return (it != tmp_var_intervals.end()) ? it->second : empty_interval;
     }
 
-    ga_workspace(const getfem::model &md_, bool enable_all_variables = false);
+    ga_workspace(const getfem::model &md_, bool enable_disabled_variables=false);
     ga_workspace(bool, const ga_workspace &gaw);
     ga_workspace();
     ~ga_workspace();

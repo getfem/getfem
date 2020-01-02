@@ -151,28 +151,30 @@ namespace getfem {
 
   bool ga_workspace::is_constant(const std::string &name) const {
     VAR_SET::const_iterator it = variables.find(name);
-    if (it != variables.end()) return !(it->second.is_variable);
-    if (variable_group_exists(name))
+    if (it != variables.end())
+      return !(it->second.is_variable);
+    else if (variable_group_exists(name))
       return is_constant(first_variable_of_group(name));
-    if (md && md->variable_exists(name)) {
-      if (enable_all_md_variables) return md->is_true_data(name);
+    else if (reenabled_var_intervals.count(name))
+      return false;
+    else if (md && md->variable_exists(name))
       return md->is_data(name);
-    }
-    if (parent_workspace && parent_workspace->variable_exists(name))
+    else if (parent_workspace && parent_workspace->variable_exists(name))
       return parent_workspace->is_constant(name);
     GMM_ASSERT1(false, "Undefined variable " << name);
   }
 
   bool ga_workspace::is_disabled_variable(const std::string &name) const {
     VAR_SET::const_iterator it = variables.find(name);
-    if (it != variables.end()) return false;
-    if (variable_group_exists(name))
+    if (it != variables.end())
+      return false;
+    else if (variable_group_exists(name))
       return is_disabled_variable(first_variable_of_group(name));
-    if (md && md->variable_exists(name)) {
-      if (enable_all_md_variables) return false;
+    else if (reenabled_var_intervals.count(name))
+      return false;
+    else if (md && md->variable_exists(name))
       return md->is_disabled_variable(name);
-    }
-    if (parent_workspace && parent_workspace->variable_exists(name))
+    else if (parent_workspace && parent_workspace->variable_exists(name))
       return parent_workspace->is_disabled_variable(name);
     GMM_ASSERT1(false, "Undefined variable " << name);
   }
@@ -191,33 +193,14 @@ namespace getfem {
   }
 
   const gmm::sub_interval &
-  ga_workspace::interval_of_disabled_variable(const std::string &name) const {
-    std::map<std::string, gmm::sub_interval>::const_iterator
-      it1 = int_disabled_variables.find(name);
-    if (it1 != int_disabled_variables.end()) return it1->second;
-    if (md->is_affine_dependent_variable(name))
-      return interval_of_disabled_variable(md->org_variable(name));
-
-    size_type first = md->nb_dof();
-    for (const std::pair<std::string, gmm::sub_interval> &p
-         : int_disabled_variables)
-      first = std::max(first, p.second.last());
-
-    int_disabled_variables[name]
-      = gmm::sub_interval(first, gmm::vect_size(value(name)));
-    return int_disabled_variables[name];
-  }
-
-  const gmm::sub_interval &
   ga_workspace::interval_of_variable(const std::string &name) const {
     VAR_SET::const_iterator it = variables.find(name);
     if (it != variables.end()) return it->second.I;
-    if (md && md->variable_exists(name)) {
-      if (enable_all_md_variables && md->is_disabled_variable(name))
-        return interval_of_disabled_variable(name);
+    const auto it2 = reenabled_var_intervals.find(name);
+    if (it2 != reenabled_var_intervals.end()) return it2->second;
+    if (md && md->variable_exists(name))
       return md->interval_of_variable(name);
-    }
-    if (parent_workspace && parent_workspace->variable_exists(name))
+    else if (parent_workspace && parent_workspace->variable_exists(name))
       return parent_workspace->interval_of_variable(name);
     GMM_ASSERT1(false, "Undefined variable " << name);
   }
@@ -950,23 +933,44 @@ namespace getfem {
   { if (ptree) delete ptree; ptree = 0; }
 
   ga_workspace::ga_workspace(const getfem::model &md_,
-                             bool enable_all_variables)
+                             bool enable_disabled_variables)
     : md(&md_), parent_workspace(0),
-      enable_all_md_variables(enable_all_variables),
       nb_prim_dof(0), nb_tmp_dof(0),
       macro_dict(md_.macro_dictionary())
   {
     init();
     nb_prim_dof = md->nb_dof();
+    if (enable_disabled_variables) {
+      model::varnamelist vlmd;
+      md->variable_list(vlmd);
+      for (const auto &varname : vlmd)
+        if (md->is_disabled_variable(varname)) {
+          if (md->is_affine_dependent_variable(varname)) {
+            std::string orgvarname = md->org_variable(varname);
+            if (reenabled_var_intervals.count(orgvarname) == 0) {
+              size_type varsize = gmm::vect_size(md->real_variable(orgvarname));
+              reenabled_var_intervals[orgvarname]
+                = gmm::sub_interval (nb_prim_dof, varsize);
+              nb_prim_dof += varsize;
+            }
+            reenabled_var_intervals[varname]
+              = reenabled_var_intervals[orgvarname];
+          } else  if (reenabled_var_intervals.count(varname) == 0) {
+            size_type varsize = gmm::vect_size(md->real_variable(varname));
+            reenabled_var_intervals[varname]
+              = gmm::sub_interval(nb_prim_dof, varsize);
+            nb_prim_dof += varsize;
+          }
+        }
+    }
   }
   ga_workspace::ga_workspace(bool, const ga_workspace &gaw)
-    : md(0), parent_workspace(&gaw), enable_all_md_variables(false),
+    : md(0), parent_workspace(&gaw),
       nb_prim_dof(gaw.nb_primary_dof()), nb_tmp_dof(0),
       macro_dict(gaw.macro_dictionary())
   { init(); }
   ga_workspace::ga_workspace()
-    : md(0), parent_workspace(0), enable_all_md_variables(false),
-      nb_prim_dof(0), nb_tmp_dof(0)
+    : md(0), parent_workspace(0), nb_prim_dof(0), nb_tmp_dof(0)
   { init(); }
   ga_workspace::~ga_workspace() { clear_expressions(); }
 

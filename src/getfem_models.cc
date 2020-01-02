@@ -241,12 +241,11 @@ namespace getfem {
   }
 
   bool model::is_true_data(const std::string &name) const {
-    return is_old(name) ? true : !variable_description(name).is_variable;
+    return is_old(name) || !(variable_description(name).is_variable);
   }
 
   bool model::is_affine_dependent_variable(const std::string &name) const {
-    return is_old(name) ? false
-                        : variable_description(name).is_affine_dependent;
+    return !(is_old(name)) && variable_description(name).is_affine_dependent;
   }
 
   const std::string &
@@ -3200,21 +3199,11 @@ namespace getfem {
         ga_workspace workspace(md, true);
         GMM_TRACE2(name << ": generic source term assembly");
         workspace.add_expression(expr, *(mims[0]), region, 1, secondary_domain);
-        size_type nbgdof = md.nb_dof();
-        {
-          model::varnamelist vlmd;
-          md.variable_list(vlmd);
-          for (const auto &varname : vlmd)
-            if (md.is_disabled_variable(varname))
-              nbgdof = std::max(nbgdof,
-                                workspace.interval_of_variable(varname).last());
-        }
-        model_real_plain_vector V(nbgdof);
-        workspace.set_assembled_vector(V);
         workspace.assembly(1);
+        const auto &V=workspace.assembled_vector();
         for (size_type i = 0; i < vl_test1.size(); ++i) {
-          gmm::copy(gmm::sub_vector
-                    (V, workspace.interval_of_variable(vl_test1[i])), vecl[i]);
+          const auto &I=workspace.interval_of_variable(vl_test1[i]);
+          gmm::copy(gmm::sub_vector(V, I), vecl[i]);
         }
       }
 
@@ -3362,25 +3351,18 @@ namespace getfem {
           md.is_var_newer_than_brick(dl[i], ib);
 
       if (recompute_matrix) {
-        size_type nbgdof = md.nb_dof();
         ga_workspace workspace(md, true);
         workspace.add_expression(expr, *(mims[0]), region, 2, secondary_domain);
-        model::varnamelist vlmd; md.variable_list(vlmd);
-        for (size_type i = 0; i < vlmd.size(); ++i)
-          if (md.is_disabled_variable(vlmd[i]))
-            nbgdof = std::max(nbgdof,
-                              workspace.interval_of_variable(vlmd[i]).last());
         GMM_TRACE2(name << ": generic matrix assembly");
-        model_real_sparse_matrix R(nbgdof, nbgdof);
-        workspace.set_assembled_matrix(R);
         workspace.assembly(2);
+        const auto &R=workspace.assembled_matrix();
         for (size_type i = 0; i < vl_test1.size(); ++i) {
           scalar_type alpha = scalar_type(1)
             / ( workspace.factor_of_variable(vl_test1[i]) *
                 workspace.factor_of_variable(vl_test2[i]));
-          gmm::copy(gmm::scaled(gmm::sub_matrix
-                    (R, workspace.interval_of_variable(vl_test1[i]),
-                     workspace.interval_of_variable(vl_test2[i])), alpha),
+          const auto &I1=workspace.interval_of_variable(vl_test1[i]),
+                     &I2=workspace.interval_of_variable(vl_test2[i]);
+          gmm::copy(gmm::scaled(gmm::sub_matrix(R, I1, I2), alpha),
                     matl[i]);
         }
       }
@@ -5943,20 +5925,13 @@ namespace getfem {
       }
 
       if (recompute_matrix) {
-        size_type nbgdof = md.nb_dof();
         ga_workspace workspace(md, true);
         workspace.add_expression(expr, *(mims[0]), region);
         GMM_TRACE2(name << ": generic matrix assembly");
-        model::varnamelist vlmd; md.variable_list(vlmd);
-        for (size_type i = 0; i < vlmd.size(); ++i)
-          if (md.is_disabled_variable(vlmd[i]))
-            nbgdof = std::max(nbgdof,
-                              workspace.interval_of_variable(vlmd[i]).last());
-        model_real_sparse_matrix R(nbgdof, nbgdof);
-        workspace.set_assembled_matrix(R);
         workspace.assembly(2);
         scalar_type alpha = scalar_type(1)
           / (workspace.factor_of_variable(vl[0]));
+        const auto &R=workspace.assembled_matrix();
         gmm::sub_interval I = workspace.interval_of_variable(vl[0]);
         gmm::copy(gmm::scaled(gmm::sub_matrix(R, I, I), alpha),
                   matl[0]);
