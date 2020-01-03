@@ -108,12 +108,16 @@ namespace getfem {
     std::map<std::string, base_vector> really_extended_vars;
 
     struct variable_group_info {
-      const mesh_fem *mf;
-      gmm::sub_interval Iu, Ir;
-      scalar_type alpha;
-      const base_vector *U;
+      const mesh *cached_mesh;
       const std::string *varname;
-      variable_group_info() : mf(0), U(0), varname(0) {}
+      const mesh_fem *mf;
+      bool reduced_mf;
+      const gmm::sub_interval *I; // sub_interval in the assembled vector/matrix
+                                  // or in the unreduced vars indexing
+      scalar_type alpha;
+      const base_vector *U;       // Vector to read values from
+      variable_group_info()
+        : cached_mesh(0), varname(0), mf(0), reduced_mf(false), I(0) {}
     };
 
     struct interpolate_info {
