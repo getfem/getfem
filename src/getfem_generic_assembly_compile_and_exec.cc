@@ -7251,10 +7251,11 @@ namespace getfem {
                   GMM_ASSERT1(root->interpolate_name_test1.size() == 0,
                               "Interpolate transformation on integration "
                               "point variable");
-                  pgai = std::make_shared<ga_instruction_vector_assembly_imd>
-                         (root->tensor(), Vr, gis.ctx,
-                          workspace.interval_of_variable(root->name_test1),
-                          *imd, gis.coeff, gis.ipt);
+                  if (!workspace.is_internal_variable(root->name_test1))
+                    pgai = std::make_shared<ga_instruction_vector_assembly_imd>
+                           (root->tensor(), Vr, gis.ctx,
+                            workspace.interval_of_variable(root->name_test1),
+                            *imd, gis.coeff, gis.ipt);
                 } else {
                   pgai = std::make_shared<ga_instruction_vector_assembly>
                          (root->tensor(), Vr,
@@ -7341,7 +7342,8 @@ namespace getfem {
                       <ga_instruction_matrix_assembly_standard_vector>
                       (root->tensor(), Krr, ctx1, ctx2, I1, I2, mf1, mf2,
                        alpha1, alpha2, gis.coeff, gis.nbpt, gis.ipt);
-                } else {
+                } else if (!workspace.is_internal_variable(root->name_test1) &&
+                           !workspace.is_internal_variable(root->name_test2)) {
                   auto &Kxu = (mf1 && mf1->is_reduced()) ? Kuu : Kru;
                   auto &Kxr = (mf1 && mf1->is_reduced()) ? Kur : Krr;
                   auto &Kux = (mf2 && mf2->is_reduced()) ? Kuu : Kur;

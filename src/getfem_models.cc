@@ -244,6 +244,12 @@ namespace getfem {
     return is_old(name) || !(variable_description(name).is_variable);
   }
 
+  bool model::is_internal_variable(const std::string &name) const {
+    if (is_old(name)) return false;
+    const auto &var_descr = variable_description(name);
+    return var_descr.is_internal && !var_descr.is_disabled;
+  }
+
   bool model::is_affine_dependent_variable(const std::string &name) const {
     return !(is_old(name)) && variable_description(name).is_affine_dependent;
   }
@@ -293,17 +299,24 @@ namespace getfem {
   }
 
   void model::resize_global_system() const {
-    size_type tot_size = 0;
 
-    for (auto &&v : variables) {
-      if (v.second.is_variable && v.second.is_disabled)
-        v.second.I  = gmm::sub_interval(0,0);
-      if (v.second.is_variable && !(v.second.is_affine_dependent)
-          && !(v.second.is_disabled)) {
-        v.second.I = gmm::sub_interval(tot_size, v.second.size());
-        tot_size += v.second.size();
+    size_type full_size = 0;
+    for (auto &&v : variables)
+      if (v.second.is_variable) {
+        if (v.second.is_disabled)
+          v.second.I  = gmm::sub_interval(0,0);
+        else if (!v.second.is_affine_dependent && !v.second.is_internal) {
+          v.second.I = gmm::sub_interval(full_size, v.second.size());
+          full_size += v.second.size();
+        }
       }
-    }
+    size_type primary_size = full_size;
+
+    for (auto &&v : variables)
+      if (v.second.is_internal && !v.second.is_disabled) { // is_internal_variable()
+        v.second.I = gmm::sub_interval(full_size, v.second.size());
+        full_size += v.second.size();
+      }
 
     for (auto &&v : variables)
       if (v.second.is_affine_dependent) {
@@ -312,12 +325,12 @@ namespace getfem {
       }
 
     if (complex_version) {
-      gmm::resize(cTM, tot_size, tot_size);
-      gmm::resize(crhs, tot_size);
+      gmm::resize(cTM, primary_size, primary_size);
+      gmm::resize(crhs, primary_size);
     }
     else {
-      gmm::resize(rTM, tot_size, tot_size);
-      gmm::resize(rrhs, tot_size);
+      gmm::resize(rTM, primary_size, primary_size);
+      gmm::resize(rrhs, primary_size);
     }
 
     for (dal::bv_visitor ib(valid_bricks); !ib.finished(); ++ib)

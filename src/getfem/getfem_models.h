@@ -151,6 +151,8 @@ namespace getfem {
       bool is_complex;          // The variable is complex numbers
       bool is_affine_dependent; // The variable depends in an affine way
                                 // to another variable.
+      bool is_internal;         // An internal variable defined on integration
+                                // points, condensed out of the global system.
       bool is_fem_dofs;         // The variable is the dofs of a fem
       size_type n_iter;         // Number of versions of the variable stored.
       size_type n_temp_iter;    // Number of additional temporary versions
@@ -198,7 +200,7 @@ namespace getfem {
                       const std::string &filter_var_ = std::string(""),
                       mesh_im const *filter_mim_ = 0)
         : is_variable(is_var), is_disabled(false), is_complex(is_compl),
-          is_affine_dependent(false),
+          is_affine_dependent(false), is_internal(false),
           is_fem_dofs(mf_ != 0),
           n_iter(std::max(size_type(1), n_it)), n_temp_iter(0),
           default_iter(0), ptsc(0),
@@ -525,6 +527,9 @@ namespace getfem {
     /** States if a name corresponds to a declared data. */
     bool is_true_data(const std::string &name) const;
 
+    /** States if a variable is condensed out of the global system. */
+    bool is_internal_variable(const std::string &name) const;
+
     bool is_affine_dependent_variable(const std::string &name) const;
 
     const std::string &org_variable(const std::string &name) const;
@@ -548,6 +553,13 @@ namespace getfem {
     /** Return true if all the model terms do not affect the coercivity of
         the whole tangent system. */
     bool is_coercive() const { return is_coercive_; }
+
+    /** Return true if the model has at least one internal variable. */
+    bool has_internal_variables() const {
+      for (const auto &v : variables)
+        if (v.second.is_internal && !v.second.is_disabled) return true;
+      return false;
+    }
 
     /** Return true if all the model terms do not affect the coercivity of
         the whole tangent system. */
@@ -614,37 +626,41 @@ namespace getfem {
     model_complex_plain_vector &
     set_complex_constant_part(const std::string &name) const;
 
+  private:
     template<typename VECTOR, typename T>
-    void from_variables(VECTOR &V, T) const {
+    void from_variables(VECTOR &V, bool with_internal, T) const {
       for (const auto &v : variables)
-        if (v.second.is_variable && !(v.second.is_affine_dependent)
-            && !(v.second.is_disabled))
-          gmm::copy(v.second.real_value[0],
-                    gmm::sub_vector(V, v.second.I));
+        if (v.second.is_variable && !v.second.is_affine_dependent
+            && !v.second.is_disabled
+            && (with_internal || !v.second.is_internal))
+          gmm::copy(v.second.real_value[0], gmm::sub_vector(V, v.second.I));
     }
 
     template<typename VECTOR, typename T>
-    void from_variables(VECTOR &V, std::complex<T>) const {
+    void from_variables(VECTOR &V, bool with_internal, std::complex<T>) const {
       for (const auto &v : variables)
-        if (v.second.is_variable && !(v.second.is_affine_dependent)
-            && !(v.second.is_disabled))
-          gmm::copy(v.second.complex_value[0],
-                    gmm::sub_vector(V, v.second.I));
+        if (v.second.is_variable && !v.second.is_affine_dependent
+            && !v.second.is_disabled
+            && (with_internal || !v.second.is_internal))
+          gmm::copy(v.second.complex_value[0], gmm::sub_vector(V, v.second.I));
     }
 
-    template<typename VECTOR> void from_variables(VECTOR &V) const {
+  public:
+    template<typename VECTOR>
+    void from_variables(VECTOR &V, bool with_internal=false) const {
       typedef typename gmm::linalg_traits<VECTOR>::value_type T;
       context_check(); if (act_size_to_be_done) actualize_sizes();
-      from_variables(V, T());
+      from_variables(V, with_internal, T());
     }
 
+  private:
     template<typename VECTOR, typename T>
-    void to_variables(const VECTOR &V, T) {
+    void to_variables(const VECTOR &V, bool with_internal, T) {
       for (auto &&v : variables)
-        if (v.second.is_variable && !(v.second.is_affine_dependent)
-            && !(v.second.is_disabled)) {
-          gmm::copy(gmm::sub_vector(V, v.second.I),
-                    v.second.real_value[0]);
+        if (v.second.is_variable && !v.second.is_affine_dependent
+            && !v.second.is_disabled
+            && (with_internal || !v.second.is_internal)) {
+          gmm::copy(gmm::sub_vector(V, v.second.I), v.second.real_value[0]);
           v.second.v_num_data[0] = act_counter();
         }
       update_affine_dependent_variables();
@@ -652,22 +668,24 @@ namespace getfem {
     }
 
     template<typename VECTOR, typename T>
-    void to_variables(const VECTOR &V, std::complex<T>) {
+    void to_variables(const VECTOR &V, bool with_internal, std::complex<T>) {
       for (auto &&v : variables)
-        if (v.second.is_variable && !(v.second.is_affine_dependent)
-            && !(v.second.is_disabled)) {
-          gmm::copy(gmm::sub_vector(V, v.second.I),
-                    v.second.complex_value[0]);
+        if (v.second.is_variable && !v.second.is_affine_dependent
+            && !v.second.is_disabled
+            && (with_internal || !v.second.is_internal)) {
+          gmm::copy(gmm::sub_vector(V, v.second.I), v.second.complex_value[0]);
           v.second.v_num_data[0] = act_counter();
         }
       update_affine_dependent_variables();
       this->post_to_variables_step();
     }
 
-    template<typename VECTOR> void to_variables(const VECTOR &V) {
+  public:
+    template<typename VECTOR>
+    void to_variables(const VECTOR &V, bool with_internal=false) {
       typedef typename gmm::linalg_traits<VECTOR>::value_type T;
       context_check(); if (act_size_to_be_done) actualize_sizes();
-      to_variables(V, T());
+      to_variables(V, with_internal, T());
     }
 
     /** Add a fixed size variable to the model assumed to be a vector.
@@ -753,7 +771,9 @@ namespace getfem {
     /** Add variable defined at integration points. */
     void add_im_variable(const std::string &name, const im_data &im_data,
                          size_type niter = 1);
-
+    /** Add internal variable, defined at integration points and condensated. */
+    void add_internal_im_variable(const std::string &name,
+                                  const im_data &im_data);
     /** Add data defined at integration points. */
     void add_im_data(const std::string &name, const im_data &im_data,
                      size_type niter = 1);

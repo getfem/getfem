@@ -265,7 +265,7 @@ namespace getfem {
     const model *md;
     const ga_workspace *parent_workspace;
     bool with_parent_variables;
-    size_type nb_prim_dof, nb_tmp_dof;
+    size_type nb_prim_dof, nb_intern_dof, first_intern_dof, nb_tmp_dof;
 
     void init();
 
@@ -280,6 +280,7 @@ namespace getfem {
       bgeot::multi_index qdims;  // For data having a qdim different than the
                                  // qdim of the fem or im_data (dim per dof for
                                  // dof data) and for constant variables.
+      const bool is_internal;
 
       size_type qdim() const {
         size_type q = 1;
@@ -289,9 +290,9 @@ namespace getfem {
 
       var_description(bool is_var, const mesh_fem *mf_, const im_data *imd_,
                       gmm::sub_interval I_, const model_real_plain_vector *V_,
-                      size_type Q)
+                      size_type Q, bool is_intern_=false)
         : is_variable(is_var), is_fem_dofs(mf_ != 0), mf(mf_), imd(imd_),
-          I(I_), V(V_), qdims(1)
+          I(I_), V(V_), qdims(1), is_internal(is_intern_)
       {
         GMM_ASSERT1(Q > 0, "Bad dimension");
         qdims[0] = Q;
@@ -444,6 +445,9 @@ namespace getfem {
     void add_im_variable(const std::string &name, const im_data &imd,
                          const gmm::sub_interval &I,
                          const model_real_plain_vector &VV);
+    void add_internal_im_variable(const std::string &name, const im_data &imd,
+                                  const gmm::sub_interval &I,
+                                  const model_real_plain_vector &VV);
     void add_fixed_size_variable(const std::string &name,
                                  const gmm::sub_interval &I,
                                  const model_real_plain_vector &VV);
@@ -462,6 +466,8 @@ namespace getfem {
     bool is_linear(size_type order);
 
     bool variable_exists(const std::string &name) const;
+
+    bool is_internal_variable(const std::string &name) const;
 
     const std::string &variable_in_group(const std::string &group_name,
                                          const mesh &m) const;
@@ -551,6 +557,8 @@ namespace getfem {
     bool include_empty_int_points() const;
 
     size_type nb_primary_dof() const { return nb_prim_dof; }
+    size_type nb_internal_dof() const { return nb_intern_dof; }
+    size_type first_internal_dof() const { return first_intern_dof; }
     size_type nb_temporary_dof() const { return nb_tmp_dof; }
 
     void add_temporary_interval_for_unreduced_variable(const std::string &name);
