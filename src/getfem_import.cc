@@ -258,12 +258,12 @@ namespace getfem {
 
     /* read the region names */
     if (region_map != NULL) {
-      if (version >= 2) {
+      if (version >= 2.) {
         *region_map = read_region_names_from_gmsh_mesh_file(f);
       }
     }
     /* read the node list */
-    if (version >= 2)
+    if (version >= 2.)
       bgeot::read_until(f, "$Nodes"); /* Format versions 2 and 4 */
 
     size_type nb_block, nb_node, dummy;
@@ -271,7 +271,7 @@ namespace getfem {
     // cout << "version = " << version << endl;
     if (version >= 4.05) {
       f >> nb_block >> nb_node; bgeot::read_until(f, "\n");
-    } else if (version >= 4) {
+    } else if (version >= 4.) {
       f >> nb_block >> nb_node;
     } else {
       nb_block = 1;
@@ -282,7 +282,7 @@ namespace getfem {
     std::map<size_type, size_type> msh_node_2_getfem_node;
      std::vector<size_type> inds(nb_node);
     for (size_type block=0; block < nb_block; ++block) {
-      if (version >= 4)
+      if (version >= 4.)
         f >> dummy >> dummy >> dummy >> nb_node;
       // cout << "nb_nodes = " << nb_node << endl;
 
@@ -303,13 +303,13 @@ namespace getfem {
       }
     }
 
-    if (version >= 2)
+    if (version >= 2.)
       bgeot::read_until(f, "$Endnodes"); /* Format versions 2 and 4 */
     else
       bgeot::read_until(f, "$ENDNOD");
 
     /* read the elements */
-    if (version >= 2)
+    if (version >= 2.)
       bgeot::read_until(f, "$Elements"); /* Format versions 2 and 4 */
     else
       bgeot::read_until(f, "$ELM");
@@ -317,7 +317,7 @@ namespace getfem {
     size_type nb_cv;
     if (version >= 4.05) {
       f >> nb_block >> nb_cv; bgeot::read_until(f, "\n");
-    } else if (version >= 4) { /* Format version 4 */
+    } else if (version >= 4.) { /* Format version 4 */
       f >> nb_block >> nb_cv;
     } else {
       nb_block = 1;
@@ -328,7 +328,7 @@ namespace getfem {
     std::vector<gmsh_cv_info> cvlst; cvlst.reserve(nb_cv);
     for (size_type block=0; block < nb_block; ++block) {
       unsigned type, region;
-      if (version >= 4) /* Format version 4 */
+      if (version >= 4.) /* Format version 4 */
         f >> region >> dummy >> type >> nb_cv;
 
       
@@ -341,7 +341,7 @@ namespace getfem {
         ci.id--; /* gmsh numbering starts at 1 */
 
         unsigned cv_nb_nodes;
-        if (version >= 2) { /* For versions 2 and 4 */
+        if (version >= 2.) { /* For versions 2 and 4 */
           if (int(version) == 2) { /* Format version 2 */
             unsigned nbtags;
             f >> type >> nbtags;
@@ -354,7 +354,7 @@ namespace getfem {
           ci.type = type;
           ci.set_nb_nodes();
           cv_nb_nodes = unsigned(ci.nodes.size());
-        } else if (version == 1) {
+        } else if (int(version) == 1) {
           f >> type >> region >> dummy >> cv_nb_nodes;
           ci.type = type;
           ci.nodes.resize(cv_nb_nodes);
