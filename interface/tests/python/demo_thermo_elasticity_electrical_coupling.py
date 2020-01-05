@@ -79,10 +79,11 @@ alpha = 0.0039     # Second resistance temperature coefficient.
 #
 # Numerical parameters
 #
-h = 2.                     # Approximate mesh size
-elements_degree = 2        # Degree of the finite element methods
-export_mesh = True         # Draw the mesh after mesh generation or not
-solve_in_two_steps = True  # Solve the elasticity problem separately or not
+h = 2.                    # Approximate mesh size
+elements_degree = 2       # Degree of the finite element methods
+export_mesh = True        # Draw the mesh after mesh generation or not
+solve_in_two_steps = 2    # Solve the elasticity problem separately (1)
+                          # or in a coupled way (0) or both and compare (2)
 
 #
 # Mesh generation. Meshes can also been imported from several formats.
@@ -203,7 +204,8 @@ md.add_linear_term(mim, 'beta*(T0-theta)*Trace(Grad_Test_u)')
 #
 # Model solve
 #
-if (solve_in_two_steps):
+
+if (solve_in_two_steps >= 1):
   md.disable_variable('u')
   print('First problem with', md.nbdof(), ' dofs')
   md.solve('max_res', 1E-9, 'max_iter', 100, 'noisy')
@@ -212,10 +214,22 @@ if (solve_in_two_steps):
   md.disable_variable('V')
   print('Second problem with ', md.nbdof(), ' dofs')
   md.solve('max_res', 1E-9, 'max_iter', 100, 'noisy')
-else:
+  md.enable_variable('theta')
+  md.enable_variable('V')
+  U1 = md.variable('u')
+  
+if (solve_in_two_steps == 0):
   print('Global problem with ', md.nbdof(), ' dofs')
   md.solve('max_res', 1E-9, 'max_iter', 100, 'noisy')
 
+if (solve_in_two_steps == 2):
+  print('Global problem with ', md.nbdof(), ' dofs')
+  md.set_variable('u', md.variable('u')*0.);
+  md.solve('max_res', 1E-9, 'max_iter', 100, 'noisy')
+  U2 = md.variable('u')
+  print (np.linalg.norm(U2-U1));
+  if (np.linalg.norm(U2-U1) > 1E-10):
+      print("Too big difference between solve in one and two steps"); exit(1)
 
 #
 # Solution export
