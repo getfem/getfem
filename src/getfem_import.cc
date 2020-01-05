@@ -342,7 +342,7 @@ namespace getfem {
 
         unsigned cv_nb_nodes;
         if (version >= 2) { /* For versions 2 and 4 */
-          if (version == 2) { /* Format version 2 */
+          if (int(version) == 2) { /* Format version 2 */
             unsigned nbtags;
             f >> type >> nbtags;
             GMM_ASSERT1(nbtags > 0 && nbtags <= 3,
