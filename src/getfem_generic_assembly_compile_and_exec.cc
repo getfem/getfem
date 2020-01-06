@@ -4509,90 +4509,6 @@ namespace getfem {
     const size_type zero_=0;
   };
 
-  struct ga_instruction_matrix_assembly
-    : public ga_instruction_matrix_assembly_base
-  {
-    model_real_sparse_matrix &Kr, &Kn;
-    const gmm::sub_interval &Ir1, &Ir2, &In1, &In2;
-    const mesh_fem *mfn1, *mfn2, **mfg1, **mfg2;
-    const im_data *imd1, *imd2;
-    virtual int exec() {
-      GA_DEBUG_INFO("Instruction: matrix term assembly");
-
-      bool initialize = (ipt == 0) || interpolate || imd1 || imd2;
-      bool empty_weight = (coeff == scalar_type(0));
-      add_tensor_to_element_matrix(initialize, empty_weight); // t --> elem
-
-      if (ipt == nbpt-1 || interpolate || imd1 || imd2) { // finalize
-        const mesh_fem *pmf1 = mfg1 ? *mfg1 : mfn1;
-        const mesh_fem *pmf2 = mfg2 ? *mfg2 : mfn2;
-        bool reduced = (pmf1 && pmf1->is_reduced())
-          || (pmf2 && pmf2->is_reduced());
-        model_real_sparse_matrix &K = reduced ? Kr : Kn;
-        const gmm::sub_interval &I1 = reduced ? Ir1 : In1;
-        const gmm::sub_interval &I2 = reduced ? Ir2 : In2;
-        GA_DEBUG_ASSERT(I1.size() && I2.size(), "Internal error");
-
-        scalar_type ninf = gmm::vect_norminf(elem);
-        if (ninf == scalar_type(0)) return 0;
-
-        size_type s1 = t.sizes()[0], s2 = t.sizes()[1];
-        size_type cv1 = ctx1.convex_num(), cv2 = ctx2.convex_num();
-        size_type N = 1;
-
-        size_type ifirst1 = I1.first(), ifirst2 = I2.first();
-        if (imd1) ifirst1 +=  s1*imd1->filtered_index_of_point(cv1, ipt);
-        if (imd2) ifirst2 +=  s2*imd2->filtered_index_of_point(cv2, ipt);
-
-        if (pmf1) {
-          if (!ctx1.is_convex_num_valid()) return 0;
-          N = ctx1.N();
-          size_type qmult1 = pmf1->get_qdim();
-          if (qmult1 > 1) qmult1 /= pmf1->fem_of_element(cv1)->target_dim();
-          populate_dofs_vector(dofs1, s1, ifirst1, qmult1,        // --> dofs1
-                               pmf1->ind_scalar_basic_dof_of_element(cv1));
-        } else
-          populate_contiguous_dofs_vector(dofs1, s1, ifirst1); // --> dofs1
-
-        if (pmf1 == pmf2 && (pmf1 ? (cv1 == cv2) : (s1 == s2))) {
-          if (ifirst1 == ifirst2) {
-            add_elem_matrix(K, dofs1, dofs1, dofs1_sort, elem, ninf*1E-14, N);
-          } else {
-            populate_dofs_vector(dofs2, dofs1.size(), ifirst2 - ifirst1, dofs1);
-            add_elem_matrix(K, dofs1, dofs2, dofs1_sort, elem, ninf*1E-14, N);
-          }
-        } else {
-          if (pmf2) {
-            if (!ctx2.is_convex_num_valid()) return 0;
-            N = std::max(N, ctx2.N());
-            size_type qmult2 = pmf2->get_qdim();
-            if (qmult2 > 1) qmult2 /= pmf2->fem_of_element(cv2)->target_dim();
-            populate_dofs_vector(dofs2, s2, ifirst2, qmult2,        // --> dofs2
-                                 pmf2->ind_scalar_basic_dof_of_element(cv2));
-          } else
-            populate_contiguous_dofs_vector(dofs2, s2, ifirst2); // --> dofs2
-          add_elem_matrix(K, dofs1, dofs2, dofs1_sort, elem, ninf*1E-14, N);
-        }
-      }
-      return 0;
-    }
-    ga_instruction_matrix_assembly
-    (const base_tensor &t_,
-     model_real_sparse_matrix &Kr_, model_real_sparse_matrix &Kn_,
-     const fem_interpolation_context &ctx1_,
-     const fem_interpolation_context &ctx2_,
-     const gmm::sub_interval &Ir1_, const gmm::sub_interval &In1_,
-     const gmm::sub_interval &Ir2_, const gmm::sub_interval &In2_,
-     const mesh_fem *mfn1_, const mesh_fem **mfg1_, const im_data *imd1_,
-     const mesh_fem *mfn2_, const mesh_fem **mfg2_, const im_data *imd2_,
-     const scalar_type &a1, const scalar_type &a2, const scalar_type &coeff_,
-     const size_type &nbpt_, const size_type &ipt_, bool interpolate_)
-      : ga_instruction_matrix_assembly_base
-        (t_, ctx1_, ctx2_, a1, a2, coeff_, nbpt_, ipt_, interpolate_),
-        Kr(Kr_), Kn(Kn_), Ir1(Ir1_), Ir2(Ir2_), In1(In1_), In2(In2_),
-        mfn1(mfn1_), mfn2(mfn2_), mfg1(mfg1_), mfg2(mfg2_),
-        imd1(imd1_), imd2(imd2_) {}
-  };
 
   struct ga_instruction_matrix_assembly_mf_mf
     : public ga_instruction_matrix_assembly_base
@@ -7224,7 +7140,7 @@ namespace getfem {
                          : (secondary ? rmi.secondary_domain_infos.ctx
                                       : rmi.interpolate_infos[intn1].ctx);
                   bool interpolate =
-                    !(intn1.empty() || intn1 == "neighbor_elt"
+                    !(intn1.empty() || intn1 == "neighbor_element"
                                     || intn1 == "neighbour_elt" || secondary);
 
                   if (intn1.size() && !secondary &&
@@ -7286,10 +7202,10 @@ namespace getfem {
                   &ctx2 = intn2.empty() ? gis.ctx
                         : (secondary2 ? rmi.secondary_domain_infos.ctx
                                       : rmi.interpolate_infos[intn2].ctx);
-                bool interpolate = !(intn1.empty() || intn1 == "neighbor_elt"
+                bool interpolate = !(intn1.empty() || intn1 == "neighbor_element"
                                      || intn1 == "neighbour_elt"
                                      || secondary1) ||
-                                   !(intn2.empty() || intn2 == "neighbor_elt"
+                                   !(intn2.empty() || intn2 == "neighbor_element"
                                      || intn2 == "neighbour_elt"
                                      || secondary2);
 
