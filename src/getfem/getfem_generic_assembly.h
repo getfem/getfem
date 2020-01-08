@@ -365,8 +365,10 @@ namespace getfem {
                   bool scalar_expr, operation_type op_type=ASSEMBLY,
                   const std::string varname_interpolation="");
 
-    std::shared_ptr<model_real_sparse_matrix> K;
-    std::shared_ptr<base_vector> V;
+    std::shared_ptr<model_real_sparse_matrix> K, KQJpr;
+    std::shared_ptr<base_vector> V; // reduced residual vector (primary vars + internal vars)
+                                    // after condensation it partially holds the condensed residual
+                                    // and the internal solution
     model_real_sparse_matrix col_unreduced_K,
                              row_unreduced_K,
                              row_col_unreduced_K;
@@ -406,6 +408,15 @@ namespace getfem {
     model_real_sparse_matrix &row_col_unreduced_matrix()
     { return row_col_unreduced_K; }
     base_vector &unreduced_vector() { return unreduced_V; }
+    // setter function for condensation matrix
+    void set_internal_coupling_matrix(model_real_sparse_matrix &KQJpr_) {
+      KQJpr = std::shared_ptr<model_real_sparse_matrix>
+              (std::shared_ptr<model_real_sparse_matrix>(), &KQJpr_); // alias
+    }
+    // getter functions for condensation matrix/vectors
+    const model_real_sparse_matrix &internal_coupling_matrix() const
+    { return *KQJpr; }
+    model_real_sparse_matrix &internal_coupling_matrix() { return *KQJpr; }
 
     /** Add an expression, perform the semantic analysis, split into
      *  terms in separated test functions, derive if necessary to obtain
@@ -550,8 +561,7 @@ namespace getfem {
     std::string extract_order0_term();
     std::string extract_Neumann_term(const std::string &varname);
 
-
-    void assembly(size_type order);
+    void assembly(size_type order, bool condensation=false);
 
     void set_include_empty_int_points(bool include);
     bool include_empty_int_points() const;

@@ -202,6 +202,9 @@ namespace getfem {
 
     std::map<region_mim, region_mim_instructions> all_instructions;
 
+    // storage of intermediary tensors for condensation of variables
+    std::list<std::shared_ptr<base_tensor>> condensation_tensors;
+
     ga_instruction_set() : need_elt_size(false), nbpt(0), ipt(0) {}
   };
 
@@ -209,7 +212,7 @@ namespace getfem {
   void ga_exec(ga_instruction_set &gis, ga_workspace &workspace);
   void ga_function_exec(ga_instruction_set &gis);
   void ga_compile(ga_workspace &workspace, ga_instruction_set &gis,
-                  size_type order);
+                  size_type order, bool condensation=false);
   void ga_compile_function(ga_workspace &workspace,
                            ga_instruction_set &gis, bool scalar);
   void ga_compile_interpolation(ga_workspace &workspace,
