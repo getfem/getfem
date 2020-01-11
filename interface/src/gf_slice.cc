@@ -467,7 +467,7 @@ void gf_slice(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     /*@INIT sl = ('points', @tmesh m, @dmat Pts)
       Return the "slice" composed of points given by the columns of `Pts`
       (useful for interpolation on a given set of sparse points, see
-      ``::COMPUTE('interpolate on',sl)``.@*/
+      ``::COMPUTE('interpolate on',sl)``).@*/
       mm = extract_mesh_object(in.pop());
       pstored = std::make_shared<getfem::stored_mesh_slice>();
       getfem::mesh_slicer slicer(*mm);

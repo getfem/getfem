@@ -434,7 +434,7 @@ void gf_mesh_fem_get(getfemint::mexargs_in& m_in,
 
 
     /*@GET CVs = ('convex_index')
-    Return the list of convexes who have a FEM.@*/
+    Return the list of convexes who have an FEM.@*/
     sub_command
       ("convex_index", 0, 0, 0, 1,
        out.pop().from_bit_vector(mf->convex_index());
@@ -868,7 +868,7 @@ void gf_mesh_fem_get(getfemint::mexargs_in& m_in,
 
     Interpolate data given on each convex of the mesh to the @tmf dof.
     The @tmf has to be lagrangian, and should be discontinuous (typically
-    a FEM_PK(N,0) or FEM_QK(N,0) should be used).
+    an FEM_PK(N,0) or FEM_QK(N,0) should be used).
 
     The last dimension of the input vector Ucv should have
     MESH:GET('max cvid') elements.

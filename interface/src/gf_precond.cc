@@ -226,7 +226,7 @@ void gf_precond(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        );
 
     /*@INIT PC = ('spmat', @tsp m)
-      Preconditionner given explicitely by a sparse matrix.@*/
+      Preconditioner given explicitely by a sparse matrix.@*/
     sub_command
       ("spmat", 1, 1, 0, 1,
        gsparse *ggsp = 0;

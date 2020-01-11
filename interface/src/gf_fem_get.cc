@@ -196,7 +196,7 @@ void gf_fem_get(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
     /*@GET EH = ('hess_base_value',@mat p)
     Evaluate the Hessian of all base functions of the @tfem at point `p`.
 
-    `p` is supposed to be in the reference convex!.@*/
+    `p` is supposed to be in the reference convex!@*/
     sub_command
       ("hess_base_value", 1, 1, 0, 1,
        getfem::base_tensor t;

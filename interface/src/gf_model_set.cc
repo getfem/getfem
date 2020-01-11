@@ -702,7 +702,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       If you are not sure, the better is to declare the term not symmetric
       and not coercive. But some solvers (conjugate gradient for instance)
       are not allowed for non-coercive problems.
-      `brickname` is an otpional name for the brick.@*/
+      `brickname` is an optional name for the brick.@*/
     sub_command
       ("add linear term", 2, 5, 0, 1,
        getfem::mesh_im *mim = to_meshim_object(in.pop());
@@ -776,7 +776,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       If you are not sure, the better is to declare the term not symmetric
       and not coercive. But some solvers (conjugate gradient for instance)
       are not allowed for non-coercive problems.
-      `brickname` is an otpional name for the brick.@*/
+      `brickname` is an optional name for the brick.@*/
     sub_command
       ("add nonlinear term", 2, 5, 0, 1,
        getfem::mesh_im *mim = to_meshim_object(in.pop());
@@ -1744,7 +1744,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     /*@SET ind = ('add constraint with penalization', @str varname, @scalar coeff, @tspmat B, {@vec L | @str dataname})
     Add an additional explicit penalized constraint on the variable `varname`.
     The constraint is :math`BU=L` with `B` being a rectangular sparse matrix.
-    Be aware that `B` should not contain a palin row, otherwise the whole
+    Be aware that `B` should not contain a plain row, otherwise the whole
     tangent matrix will be plain. It is possible to change the constraint
     at any time with the methods MODEL:SET('set private matrix')
     and MODEL:SET('set private rhs'). The method
@@ -2561,7 +2561,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
 
     /*@SET ind = ('add normal derivative Dirichlet condition with multipliers', @tmim mim, @str varname, mult_description, @int region [, @str dataname, @int R_must_be_derivated])
        Add a Dirichlet condition on the normal derivative of the variable
-      `varname` and on the mesh region `region` (which should be a boundary.
+      `varname` and on the mesh region `region` (which should be a boundary).
       The general form is
       :math:`\int \partial_n u(x)v(x) = \int r(x)v(x) \forall v`
       where :math:`r(x)` is
@@ -2629,7 +2629,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
 
     /*@SET ind = ('add normal derivative Dirichlet condition with penalization', @tmim mim, @str varname, @scalar coeff, @int region [, @str dataname, @int R_must_be_derivated])
        Add a Dirichlet condition on the normal derivative of the variable
-      `varname` and on the mesh region `region` (which should be a boundary.
+      `varname` and on the mesh region `region` (which should be a boundary).
       The general form is
       :math:`\int \partial_n u(x)v(x) = \int r(x)v(x) \forall v`
       where :math:`r(x)` is
@@ -2819,7 +2819,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
 
     /*@SET ('set time step', @scalar dt)
       Set the value of the time step to `dt`. This value can be change
-      from a step to another for all one-step schemes (i.e for the moment
+      from a step to another for all one-step schemes (i.e. for the moment
       to all proposed time integration schemes). @*/
     sub_command
       ("set time step", 1, 1, 0, 0,

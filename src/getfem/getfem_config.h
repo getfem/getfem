@@ -112,7 +112,7 @@
   important one will be of course the one on which is defined the
   solution of the PDE. But most PDEs involve various coefficients, for
   example: @f[ \nabla.(\lambda(x)\nabla u) = f(x).  @f] Hence one has
-  to define a FEM for the main unknown @f$u@f$, but also for the data
+  to define an FEM for the main unknown @f$u@f$, but also for the data
   @f$\lambda(x)@f$ and @f$f(x)@f$ if they are not constant. In order
   to interpolate easily these coefficients in their finite element
   space, one often choose a Lagrangian FEM.

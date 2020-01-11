@@ -42,7 +42,7 @@
 	<para>CVSTRUCT: stores formal information convex structures (nb. of points, nb. of faces which are themselves convex structures).</para>
       </listitem>
       <listitem>
-	<para>MESHFEM: object linked to a mesh, where each convex has been assigned a FEM. Created with gf_mesh_fem.</para>
+	<para>MESHFEM: object linked to a mesh, where each convex has been assigned an FEM. Created with gf_mesh_fem.</para>
       </listitem>
       <listitem>
 	<para>MESHIM: object linked to a mesh, where each convex has been assigned an integration method. Created with gf_mesh_im.</para>

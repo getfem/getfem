@@ -19,7 +19,7 @@
 
 ===========================================================================*/
 /** \file getfem_fem_level_set.cc
-    \brief a FEM which should be used with getfem::mesh_fem_level_set.
+    \brief an FEM which should be used with getfem::mesh_fem_level_set.
 */
 #include "getfem/getfem_fem_level_set.h"
 

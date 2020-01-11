@@ -429,7 +429,7 @@ When solving a PDE, one often has to use more than one FEM. The most important o
 \begin{equation*}
 \nabla.(\lambda(x)\nabla u) = f(x).
 \end{equation*}
-Hence one has to define a FEM for the main unknown $u$, but also for the data $\lambda(x)$ and $f(x)$ if they are not constant. In order to interpolate easily these coefficients in their finite element space, one often choose a Lagrangian FEM.
+Hence one has to define an FEM for the main unknown $u$, but also for the data $\lambda(x)$ and $f(x)$ if they are not constant. In order to interpolate easily these coefficients in their finite element space, one often choose a Lagrangian FEM.
 
 The convexes, mesh nodes, and dof are all numbered. We sometimes refer to the
 number associated to a convex as its \textit{convex id}\index{convex id} (contracted to
@@ -547,7 +547,7 @@ a quick way to obtain the list of getfem functions).
   \textit{CVSTRUCT}\index{convex structure}: stores formal information convex structures (nb. of
   points, nb. of faces which are themselves convex structures).\\
   \textit{MESHFEM}\index{mesh_fem}: object linked to a mesh, where each convex has been
-  assigned a FEM. Created with  ##gf\_mesh\_fem.\\
+  assigned an FEM. Created with  ##gf\_mesh\_fem.\\
   \textit{MESHIM}\index{mesh_im}: object linked to a mesh, where each convex has been
   assigned an integration method. Created with  ##gf\_mesh\_im.\\
   \textit{MESHSLICE}\index{slice}: object linked to a mesh, very similar to a P1-discontinuous \mf. Used for fast interpolation and plotting.\\
@@ -1736,7 +1736,7 @@ fem = gf\_fem(sprintf('FEM\_PK(\%d,\%d)', k, n));
 \subsection{gf\_fem_get}
 \begin{purpose}
 \hypertarget{gffemget}
-  Obtain informations about a FEM handle @@F@@\index{FEM}.
+  Obtain informations about an FEM handle @@F@@\index{FEM}.
 \end{purpose}
 \begin{synopsis}
 @@\tint I = gf_fem_get(\tfem F,'nbdof')
@@ -1771,7 +1771,7 @@ fem = gf\_fem(sprintf('FEM\_PK(\%d,\%d)', k, n));
   \hil{@@gf_fem_get(F,'pts')@@}.
   
   \sep{@@gf_fem_get(F,'is equivalent')@@}, \hil{@@gf_fem_get(F,'is lagrange')@@}, or
-  \hil{@@gf_fem_get(F,'is polynomial')@@} gives some important properties of a FEM (a
+  \hil{@@gf_fem_get(F,'is polynomial')@@} gives some important properties of an FEM (a
   polynomial fem is a necessary condition for an exact integration method, and
   a interpolation a function of a Lagrangian fem is easy).
 
@@ -2021,7 +2021,7 @@ M=gf_mesh_fem_get(MF, 'memsize')
   have any FEM have their correspounding entry in CV2F set to -1.
 
   \sep{@@gf\_mesh\_fem\_get(MF, 'convex\_index')@@} : 
-  return the list of convexes who have a FEM.
+  return the list of convexes who have an FEM.
 
   \sep{@@gf\_mesh\_fem\_get(MF, \{'is\_lagrangian' | 'is\_equivalent' |
     'is\_polynomial'\},[, CVLST])@@} :

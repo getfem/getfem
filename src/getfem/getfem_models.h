@@ -1573,7 +1573,7 @@ namespace getfem {
       If you are not sure, the better is to declare the term not symmetric
       and not coercive. But some solvers (conjugate gradient for instance)
       are not allowed for non-coercive problems.
-      `brickname` is an otpional name for the brick.
+      `brickname` is an optional name for the brick.
   */
   size_type APIDECL add_linear_term
   (model &md, const mesh_im &mim, const std::string &expr,
@@ -1622,7 +1622,7 @@ namespace getfem {
       Take care that if the expression contains some variables and if the
       expression is a potential, the expression will be
       derivated with respect to all variables.
-      `brickname` is an otpional name for the brick.
+      `brickname` is an optional name for the brick.
   */
   size_type APIDECL add_source_term
   (model &md, const mesh_im &mim, const std::string &expr,

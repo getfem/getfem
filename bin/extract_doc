@@ -1704,7 +1704,7 @@ def generic_destructor(self, destructible=True):
 
     print('\n#\n# GetFEM class ' + oname + ' definition.\n#\n')
     print('class ' + oname + ':')
-    print('  """GeFEM ' + oname + ' object\n')
+    print('  """GetFEM ' + oname + ' object\n')
     gdoc = FilterDoc(gdoc, langage, objects, commands, set_replace)
     print(gdoc)
     print('  """')

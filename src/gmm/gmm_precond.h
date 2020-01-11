@@ -42,7 +42,7 @@
 /* Preconditioner concept :                                                */
 /*                                                                         */
 /* A the matrix, P the preconditioner PA well conditioned.                 */
-/* PRECOND precontioner type.                                              */
+/* PRECOND preconditioner type.                                            */
 /* mult(P, v, w) :  w <- P v                                               */
 /* transposed_mult(P, v, w)       : w <- transposed(P) v                   */
 /* left_mult(P, v, w)             : see qmr solver                         */

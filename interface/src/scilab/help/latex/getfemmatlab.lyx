@@ -2233,7 +2233,7 @@ When solving a PDE, one often has to use more than one FEM.
 
 \end_inset
 
- Hence one has to define a FEM for the main unknown 
+ Hence one has to define an FEM for the main unknown 
 \begin_inset Formula $u$
 \end_inset
 
@@ -4562,7 +4562,7 @@ mesh_fem
 
 \end_inset
 
-: object linked to a mesh, where each convex has been assigned a FEM.
+: object linked to a mesh, where each convex has been assigned an FEM.
  Created with ##gf_mesh_fem.
 \begin_inset Newline newline
 \end_inset
@@ -17945,7 +17945,7 @@ status collapsed
 
 \end_inset
 
- Obtain informations about a FEM handle @@F@@
+ Obtain informations about an FEM handle @@F@@
 \begin_inset Index
 status collapsed
 
@@ -18616,7 +18616,7 @@ status collapsed
 
 \end_inset
 
- gives some important properties of a FEM (a polynomial fem is a necessary
+ gives some important properties of an FEM (a polynomial fem is a necessary
  condition for an exact integration method, and a interpolation a function
  of a Lagrangian fem is easy).
 \end_layout
@@ -21922,7 +21922,7 @@ status collapsed
 
 \end_inset
 
- : return the list of convexes who have a FEM.
+ : return the list of convexes who have an FEM.
 \end_layout
 
 \begin_layout Standard
