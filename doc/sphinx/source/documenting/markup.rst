@@ -460,7 +460,7 @@ in a different style:
 
    The name of an RFC 822-style mail header.  This markup does not imply that
    the header is being used in an email message, but can be used to refer to any
-   header of the same "style."  This is also used for headers defined by the
+   header of the same "style".  This is also used for headers defined by the
    various MIME specifications.  The header name should be entered in the same
    way it would normally be found in practice, with the camel-casing conventions
    being preferred where there is more than one common usage. For example:

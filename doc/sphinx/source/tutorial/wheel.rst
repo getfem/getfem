@@ -207,7 +207,6 @@ This could be added to the model with the weak form language:
 
 .. code-block:: python
 
-  md.add_filtered_fem_variable('lambda_D', mflambda, HOLE_BOUND)
   md.add_initialized_data('F', [applied_force/(8*2*np.pi)])
   md.add_linear_term(mim1, '-lambda_D.Test_u1 + (alpha_D*[0;1]-u1).Test_lambda_D'
         ' + (lambda_D.[0;1]+F)*Test_alpha_D', HOLE_BOUND)

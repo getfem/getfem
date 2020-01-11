@@ -13,7 +13,7 @@
 Numerical continuation and bifurcation
 --------------------------------------
 
-Let an algebraic problem coming from discretisation of a FEM-model can be
+Let an algebraic problem coming from discretisation of an FEM-model can be
 written in the form
 
 .. math::

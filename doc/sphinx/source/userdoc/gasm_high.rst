@@ -954,7 +954,7 @@ Some other transformations are available for the use into Hybrid High-Order meth
 Xfem discontinuity evaluation (with mesh_fem_level_set)
 -------------------------------------------------------
 
-When using a fem cut by a level-set (using fem_level_set or mesh_fem_level_set objects), it is often interesting to integrate the discontinuity jump of a variable, or the jump in gradient or the average value. For this purpose, the weak form language furnishes the following expressions for ``u`` a FEM variable::
+When using a fem cut by a level-set (using fem_level_set or mesh_fem_level_set objects), it is often interesting to integrate the discontinuity jump of a variable, or the jump in gradient or the average value. For this purpose, the weak form language furnishes the following expressions for ``u`` an FEM variable::
 
   Xfem_plus(u)
   Xfem_plus(Grad_u)

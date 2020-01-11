@@ -78,7 +78,7 @@ PDEs involve various coefficients, for example:
 
    \nabla\cdot(\lambda(x)\nabla u) = f(x).
 
-Hence one has to define a FEM for the main unknown :math:`u`, but also for the
+Hence one has to define an FEM for the main unknown :math:`u`, but also for the
 data :math:`\lambda(x)` and :math:`f(x)` if they are not constant. In order to
 interpolate easily these coefficients in their finite element space, one often
 choose a Lagrangian FEM.
