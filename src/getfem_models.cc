@@ -1403,7 +1403,7 @@ namespace getfem {
         scalar_type a2 = (scalar_type(1) - scalar_type(2)*beta)
           / (scalar_type(2)*beta);
         scalar_type b0 = gamma/(beta*dt), b1 = (beta-gamma)/beta;
-        scalar_type b2 = dt*(1-gamma/(scalar_type(2)*beta));
+        scalar_type b2 = dt*(scalar_type(1)-gamma/(scalar_type(2)*beta));
 
         md.set_factor_of_variable(V, b0);
         md.set_factor_of_variable(A, a0);
