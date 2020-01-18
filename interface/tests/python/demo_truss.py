@@ -36,8 +36,6 @@
   $Id$
 """
 # Import basic modules
-import sys
-sys.path.append("../../src/python")
 import getfem as gf
 import numpy as np
 

@@ -41,6 +41,7 @@ EXTRA_DIST= 						\
 	demo_plasticity.py              		\
 	demo_plate.py 					\
 	demo_unit_disk.py 				\
+        demo_truss.py                                   \
 	demo_static_contact.py 				\
 	demo_dynamic_contact_1D.py			\
 	demo_Mindlin_Reissner_plate.py 			\
