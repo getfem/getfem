@@ -82,9 +82,7 @@ md = gf.Model("real")
 md.add_fem_variable("u", mfu)
 
 # Truss term on u
-md.add_initialized_data("E", E)
-md.add_initialized_data("A", A)
-md.add_linear_term(mim, "(E*A)*Grad_u.Grad_Test_u")
+md.add_Truss_brick(mim, "u", "E", "A")
 
 # Force term
 md.add_initialized_fem_data("ForceData", mfrhs, F)
