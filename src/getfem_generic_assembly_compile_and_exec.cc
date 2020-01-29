@@ -5055,17 +5055,16 @@ namespace getfem {
     std::vector<base_tensor const *> RQloc;
     base_tensor invKqqqq, Kqqjj;
     base_vector Rqq;
-    std::vector<size_type> partQ, partJ;
-    size_type Qsize, Jsize;
+    std::vector<std::array<size_type,3>> partQ, partJ;
     virtual int exec() { // implementation can be optimized
       GA_DEBUG_INFO("Instruction: variable cluster subdiagonal condensation");
       // copy from KQQ to invKqqqq
-      for (size_type q1=0; q1 < Qsize; ++q1) {
-        size_type qq1start = partQ[q1], qq1end = partQ[q1+1];
-        for (size_type q2=0; q2 < Qsize; ++q2) {
+      for (const auto &qqq1 : partQ) {
+        size_type q1 = qqq1[0], qq1start = qqq1[1], qq1end = qqq1[2];
+        for (const auto &qqq2 : partQ) {
+          size_type q2 = qqq2[0], qq2start = qqq2[1], qq2end = qqq2[2];
           if (KQQloc(q1,q2)) {
             auto itr = KQQloc(q1,q2)->cbegin();
-            size_type qq2start = partQ[q2], qq2end = partQ[q2+1];
             GMM_ASSERT1(KQQloc(q1,q2)->size()
                         == (qq1end-qq1start)*(qq2end-qq2start),
                         "Internal error");
@@ -5079,40 +5078,44 @@ namespace getfem {
       bgeot::lu_inverse(&(invKqqqq[0]), invKqqqq.size(0));
 
       // Resize Kqqjj as primary variable sizes may change dynamically
-      partJ.clear();
-      partJ.resize(Jsize,0);
-      for (size_type j=0; j < Jsize; ++j)
-        for (size_type q=0; q < Qsize; ++q)
+      size_type prev_j(0);
+      for (auto &&jjj : partJ) {
+        size_type j=jjj[0];
+        size_type new_j(0);
+        for (const auto &qqq : partQ) {
+          size_type q=qqq[0];
           if (KQJloc(q,j)) {
-            if (partJ[j] == 0)
-              partJ[j] = KQJloc(q,j)->size(1);
-            else
-              GMM_ASSERT1(partJ[j] == KQJloc(q,j)->size(1), "Internal error");
+            if (new_j) {
+              GMM_ASSERT1(new_j == KQJloc(q,j)->size(1), "Internal error");
+            } else
+              new_j = KQJloc(q,j)->size(1);
           }
-      for (size_type jj=1; jj < partJ.size(); ++jj)
-        partJ[jj] += partJ[jj-1];
-      partJ.insert(partJ.begin(), 0);
+        }
+        // Resize KQJprime submatrices to match KQJloc sizes
+        for (const auto &qqq : partQ) {
+          size_type q=qqq[0];
+          KQJprime(q,j)->adjust_sizes(qqq[2]-qqq[1], new_j);
+        }
+        jjj[1] = prev_j;
+        prev_j += new_j;
+        jjj[2] = prev_j;
+      }
 
-      Kqqjj.adjust_sizes(partQ.back(), partJ.back());
+      Kqqjj.adjust_sizes(partQ.back()[2], partJ.back()[2]);
       gmm::clear(Kqqjj.as_vector());
       gmm::clear(Rqq);
 
-      // Resize KQJprime submatrices to match KQJloc sizes
-      for (size_type j=0; j < Jsize; ++j)
-        for (size_type q=0; q < Qsize; ++q)
-          KQJprime(q,j)->adjust_sizes(partQ[q+1]-partQ[q], partJ[j+1]-partJ[j]);
-
       // multiply invKqqqq with all submatrices in KQJloc and RQloc and store
       // the results in Kqqjj and Rqq
-      for (size_type j=0; j < Jsize; ++j) {
-        size_type jjstart = partJ[j], jjend = partJ[j+1];
-        for (size_type q2=0; q2 < Qsize; ++q2) {
+      for (const auto &jjj : partJ) {
+        size_type j = jjj[0], jjstart = jjj[1], jjend = jjj[2];
+        for (const auto &qqq2 : partQ) {
+          size_type q2 = qqq2[0], qq2start = qqq2[1], qq2end = qqq2[2];
           if (KQJloc(q2,j)) {
             auto itr = KQJloc(q2,j)->begin(); // auto &mat = KQJloc(q2,j);
-            size_type qqstart = partQ[q2], qqend = partQ[q2+1];
             for (size_type jj=jjstart; jj < jjend; ++jj) {
-              for (size_type qq2=qqstart; qq2 < qqend; ++qq2, ++itr) {
-                for (size_type qq1=0; qq1 < partQ.back(); ++qq1) {
+              for (size_type qq2=qq2start; qq2 < qq2end; ++qq2, ++itr) {
+                for (size_type qq1=0; qq1 < partQ.back()[2]; ++qq1) {
                   Kqqjj(qq1,jj) += invKqqqq(qq1,qq2)*(*itr);
                   // Kqqjj(qq1,jj) += invKqq(qq1,qq2)*mat(qq2-qqstart,jj-jjstart);
                 } // for qq1
@@ -5120,30 +5123,31 @@ namespace getfem {
             } // for jj
             GMM_ASSERT1(itr == KQJloc(q2,j)->cend(), "Internal error");
           }
-        } // for q2
-      } // for j
-      for (size_type q2=0; q2 < RQloc.size(); ++q2)
+        } // in partQ
+      } // in partJ
+      for (const auto &qqq2 : partQ) {
+        size_type q2 = qqq2[0], qq2start = qqq2[1], qq2end = qqq2[2];
         if (RQloc[q2]) {
           auto itr = RQloc[q2]->cbegin();
-          size_type qqstart = partQ[q2], qqend = partQ[q2+1];
-          for (size_type qq2=qqstart; qq2 < qqend; ++qq2, ++itr) {
+          for (size_type qq2=qq2start; qq2 < qq2end; ++qq2, ++itr) {
             for (size_type qq1=0; qq1 < invKqqqq.size(0); ++qq1)
               Rqq[qq1] += invKqqqq(qq1,qq2)*(*itr);
           } // for qq2
           GMM_ASSERT1(itr == RQloc[q2]->cend(), "Internal error");
         }
+      } // in partQ
 
       // distribute the results from Kqqjj/Rqq to KQJprime/RQprime
       // submatrices/subvectors
-      for (size_type q1=0; q1 < Qsize; ++q1) {
-        size_type qq1start = partQ[q1], qq1end = partQ[q1+1];
+      for (const auto &qqq1 : partQ) {
+        size_type q1 = qqq1[0], qq1start = qqq1[1], qq1end = qqq1[2];
         { // writing into RQprime
           auto itw = RQprime[q1]->begin();
           for (size_type qq1=qq1start; qq1 < qq1end; ++qq1)
             *itw++ = Rqq[qq1];
         }
-        for (size_type j2=0; j2 < Jsize; ++j2) {
-          size_type jj2start = partJ[j2], jj2end = partJ[j2+1];
+        for (const auto &jjj2 : partJ) {
+          size_type j2 = jjj2[0], jj2start = jjj2[1], jj2end = jjj2[2];
           auto itw = KQJprime(q1,j2)->begin();
           for (size_type jj2=jj2start; jj2 < jj2end; ++jj2)
             for (size_type qq1=qq1start; qq1 < qq1end; ++qq1)
@@ -5158,14 +5162,9 @@ namespace getfem {
                                     const gmm::dense_matrix<base_tensor *> &KQQ,
                                     const gmm::dense_matrix<base_tensor *> &KQJ,
                                     const std::vector<base_tensor *> &RQ,
-                                    const std::set<size_type> &Q)
-      : KQJprime(KQJpr), RQprime(RQpr), Qsize(Q.size()), Jsize(KQJ.ncols())
+                                    const std::set<size_type> &Qset)
+      : KQJprime(KQJpr), RQprime(RQpr)
     {
-      GMM_ASSERT1(KQQ.nrows() == Qsize && KQQ.ncols() == Qsize &&
-                  KQJ.nrows() == Qsize, "Internal error");
-      GMM_ASSERT1(KQJprime.nrows() == Qsize && RQprime.size() == Qsize,
-                  "Internal error");
-
       // * to const *
       KQQloc.resize(KQQ.nrows(), KQQ.ncols());
       KQJloc.resize(KQJ.nrows(), KQJ.ncols());
@@ -5174,24 +5173,32 @@ namespace getfem {
       for (size_type i=0; i < KQJ.as_vector().size(); ++i) KQJloc[i] = KQJ[i];
       for (size_type i=0; i < RQ.size(); ++i) RQloc[i] = RQ[i];
 
-      partQ.resize(Qsize,0);
-      for (size_type i=0; i < Qsize; ++i) {
-        for (size_type j=0; j < Qsize; ++j) {
-          if (partQ[i]) {
-            GMM_ASSERT1(partQ[i] == KQQ(i,j)->size(0), "Internal error");
+      for (size_type j=0; j < KQJ.ncols(); ++j)
+        for (const size_type &q : Qset)
+          if (KQJ(q,j)) {
+            partJ.push_back(std::array<size_type,3>{j,0,0});
+            break;
+          }
+
+      partQ.resize(0);
+      for (const size_type &q : Qset)
+        partQ.push_back(std::array<size_type,3>{q,0,0});
+      size_type prev_q(0);
+      for (auto &qqq1 : partQ) {
+        size_type q1 = qqq1[0];
+        size_type new_q(0);
+        for (const size_type &q2 : Qset)
+          if (new_q) {
+            GMM_ASSERT1(new_q == KQQ(q1,q2)->size(0) &&
+                        new_q == KQQ(q2,q1)->size(1), "Internal error");
           } else
-            partQ[i] = KQQ(i,j)->size(0);
-          if (partQ[j]) {
-            GMM_ASSERT1(partQ[j] == KQQ(i,j)->size(1), "Internal error");
-          } else
-            partQ[j] = KQQ(i,j)->size(1);
-        }
+            new_q = KQQ(q1,q2)->size(0);
+        qqq1[1] = prev_q;
+        prev_q += new_q;
+        qqq1[2] = prev_q;
       }
-      for (size_type i=1; i < partQ.size(); ++i)
-        partQ[i] += partQ[i-1];
-      partQ.insert(partQ.begin(), 0);
-      invKqqqq.adjust_sizes(partQ.back(), partQ.back());
-      Rqq.resize(partQ.back());
+      invKqqqq.adjust_sizes(partQ.back()[2], partQ.back()[2]);
+      Rqq.resize(partQ.back()[2]);
       // Kqqjj will be resized dynamically due to possible changes in j interval
     }
   };
@@ -7446,6 +7453,11 @@ namespace getfem {
 
       for (auto &key_value : condensations) {
         condensation_description &CC = key_value.second;
+        //for (const auto &cluster : CC.Qclusters) {
+        //  cout << "Clusters of coupled variables:" << endl;
+        //  for (const auto &varid : cluster) cout << "/" << CC.Qvars[varid];
+        //  cout << "/" << endl;
+        //}
         size_type Qsize = CC.Qvars.size();
 
         // Jclusters will hold all J variables each cluster is coupled to
