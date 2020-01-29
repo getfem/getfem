@@ -173,10 +173,14 @@ namespace detail {
       }
     }
 
-    operator T&(){
+    T& get(){
       if (distributed.num_threads() == 1 ||
           distributed.this_thread() == 0) return original;
       else return distributed;
+    }
+
+    operator T&(){ // implicit conversion
+      return get();
     }
 
     T& operator = (const T &x){

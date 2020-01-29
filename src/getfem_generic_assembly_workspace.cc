@@ -1001,8 +1001,8 @@ namespace getfem {
       nb_tmp_dof(0), macro_dict(md_.macro_dictionary())
   {
     init();
-    nb_prim_dof = with_parent_variables ? md->nb_dof() : 0;
-    nb_intern_dof = 0;
+    nb_prim_dof = with_parent_variables ? md->nb_primary_dof() : 0;
+    nb_intern_dof = with_parent_variables ? md->nb_internal_dof() : 0;
     if (var_inherit == inherit::ALL) { // enable model's disabled variables
       model::varnamelist vlmd;
       md->variable_list(vlmd);

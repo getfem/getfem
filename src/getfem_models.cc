@@ -292,10 +292,15 @@ namespace getfem {
     return it->second.v_num_data[niter];
   }
 
-  size_type model::nb_dof() const {
+  size_type model::nb_dof(bool with_internal) const {
     context_check();
     if (act_size_to_be_done) actualize_sizes();
-    return complex_version ? gmm::vect_size(crhs) : gmm::vect_size(rrhs);
+    if (complex_version)
+      return gmm::vect_size(crhs);
+    else if (with_internal && gmm::vect_size(full_rrhs))
+      return gmm::vect_size(full_rrhs);
+    else
+      return gmm::vect_size(rrhs);
   }
 
   void model::resize_global_system() const {
@@ -331,6 +336,17 @@ namespace getfem {
     else {
       gmm::resize(rTM, primary_size, primary_size);
       gmm::resize(rrhs, primary_size);
+    }
+
+    if (full_size > primary_size) {
+      GMM_ASSERT1(has_internal_variables(), "Internal error");
+      gmm::resize(internal_rTM, full_size-primary_size, primary_size);
+      gmm::resize(full_rrhs, full_size);
+      gmm::resize(internal_sol, full_size-primary_size);
+    } else {
+      GMM_ASSERT1(!(has_internal_variables()), "Internal error");
+      gmm::resize(internal_rTM, 0, 0);
+      full_rrhs.clear();
     }
 
     for (dal::bv_visitor ib(valid_bricks); !ib.finished(); ++ib)
@@ -690,8 +706,10 @@ namespace getfem {
       bool firstvar(true);
       for (const auto &v : variables) {
         if (v.second.is_variable) {
+          const model_real_plain_vector &rhs = v.second.is_internal
+                                             ? full_rrhs : rrhs;
           const gmm::sub_interval &II = interval_of_variable(v.first);
-          scalar_type res = gmm::vect_norm2(gmm::sub_vector(rrhs, II));
+          scalar_type res = gmm::vect_norm2(gmm::sub_vector(rhs, II));
           if (!firstvar) cout << ", ";
           ost << "res_" << v.first << "= " << std::setw(11) << res;
           firstvar = false;
@@ -792,6 +810,12 @@ namespace getfem {
     variables[name].set_size();
     add_dependency(imd);
     act_size_to_be_done = true;
+  }
+
+  void model::add_internal_im_variable(const std::string &name,
+                                       const im_data &imd) {
+    add_im_variable(name, imd);
+    variables[name].is_internal = true;
   }
 
   void model::add_im_data(const std::string &name, const im_data &imd,
@@ -2301,11 +2325,14 @@ namespace getfem {
 
 
 
-
-
-
   void model::assembly(build_version version) {
 
+    GMM_ASSERT1(version != BUILD_ON_DATA_CHANGE,
+                "Invalid assembly version BUILD_ON_DATA_CHANGE");
+    GMM_ASSERT1(version != BUILD_WITH_LIN,
+                "Invalid assembly version BUILD_WITH_LIN");
+    GMM_ASSERT1(version != BUILD_WITH_INTERNAL,
+                "Invalid assembly version BUILD_WITH_INTERNAL");
 #if GETFEM_PARA_LEVEL > 1
     double t_ref = MPI_Wtime();
 #endif
@@ -2598,54 +2625,115 @@ namespace getfem {
       if (version & BUILD_RHS) approx_external_load_ += brick.external_load;
     }
 
+    if (gmm::vect_size(full_rrhs)) { // i.e. if has_internal_variables()
+      gmm::sub_interval IP(0,gmm::vect_size(rrhs));
+      gmm::copy(rrhs, gmm::sub_vector(full_rrhs, IP));
+    }
+
     // Generic expressions
     if (generic_expressions.size()) {
-      model_real_plain_vector residual;
-      if (version & BUILD_RHS) gmm::resize(residual, gmm::vect_size(rrhs));
-
-      { //need parentheses for constructor/destructor semantics of distro
-        accumulated_distro<decltype(rrhs)> residual_distributed(residual);
-        accumulated_distro<decltype(rTM)>  tangent_matrix_distributed(rTM);
-
-        /*running the assembly in parallel*/
-        GETFEM_OMP_PARALLEL(
-            if (version & BUILD_RHS)
-              GMM_TRACE2("Global generic assembly RHS");
-            if (version & BUILD_MATRIX)
-              GMM_TRACE2("Global generic assembly tangent term");
-
-            ga_workspace workspace(*this);
-
-            for (const auto &ad : assignments)
-              workspace.add_assignment_expression
-                (ad.varname, ad.expr, ad.region, ad.order, ad.before);
-
-            for (const auto &ge : generic_expressions)
-              workspace.add_expression(ge.expr, ge.mim, ge.region,
-                                       2, ge.secondary_domain);
-
-            if (version & BUILD_RHS) {
-              if (is_complex()) {
-                GMM_ASSERT1(false, "to be done");
-              } else {
-                workspace.set_assembled_vector(residual_distributed);
-                workspace.assembly(1);
-              }
-            }
-
-            if (version & BUILD_MATRIX) {
-              if (is_complex()) {
-                GMM_ASSERT1(false, "to be done");
-              } else {
-                workspace.set_assembled_matrix(tangent_matrix_distributed);
-                workspace.assembly(2);
-              }
-            }
-        )
-      } //end of distro scope
+      GMM_ASSERT1(!is_complex(), "to be done");
 
       if (version & BUILD_RHS)
-        gmm::add(gmm::scaled(residual, scalar_type(-1)), rrhs);
+        GMM_TRACE2("Global generic assembly RHS");
+      if (version & BUILD_MATRIX)
+        GMM_TRACE2("Global generic assembly tangent term");
+
+      // auxilliary lambda function
+      auto add_assignments_and_expressions_to_workspace =
+      [&](ga_workspace &workspace)
+      {
+        for (const auto &ad : assignments)
+          workspace.add_assignment_expression
+            (ad.varname, ad.expr, ad.region, ad.order, ad.before);
+        for (const auto &ge : generic_expressions)
+          workspace.add_expression(ge.expr, ge.mim, ge.region,
+                                   2, ge.secondary_domain);
+      };
+
+      const bool with_internal = version & BUILD_WITH_INTERNAL
+                                 && has_internal_variables();
+      model_real_sparse_matrix intern_mat; // temp for extracting condensation info
+      model_real_plain_vector res0, // holds the original RHS
+                              res1; // holds the condensed RHS
+
+      size_type full_size = gmm::vect_size(full_rrhs),
+                primary_size = gmm::vect_size(rrhs);
+
+      if ((version & BUILD_RHS) || (version & BUILD_MATRIX && with_internal))
+        gmm::resize(res0, with_internal ? full_size : primary_size);
+      if (version & BUILD_MATRIX && with_internal)
+        gmm::resize(res1, full_size);
+
+      if (version & BUILD_MATRIX) {
+        if (with_internal) {
+          gmm::resize(intern_mat, full_size, primary_size);
+          gmm::resize(res1, full_size);
+        }
+        accumulated_distro<decltype(rTM)> tangent_matrix_distro(rTM);
+        accumulated_distro<decltype(intern_mat)> intern_mat_distro(intern_mat);
+        accumulated_distro<model_real_plain_vector> res1_distro(res1);
+
+        if (version & BUILD_RHS) { // both BUILD_RHS & BUILD_MATRIX
+          gmm::resize(res0, with_internal ? full_size : primary_size);
+          accumulated_distro<model_real_plain_vector> res0_distro(res0);
+          GETFEM_OMP_PARALLEL( // running the assembly in parallel
+            ga_workspace workspace(*this);
+            add_assignments_and_expressions_to_workspace(workspace);
+            workspace.set_assembled_vector(res0_distro);
+            workspace.assembly(1, with_internal);
+            if (with_internal) { // Condensation reads from/writes to rhs
+              gmm::copy(res0_distro.get(), res1_distro.get());
+              gmm::add(gmm::scaled(full_rrhs, scalar_type(-1)),
+                       res1_distro.get()); // TIC: initial value residual=-rhs
+              workspace.set_assembled_vector(res1_distro);
+              workspace.set_internal_coupling_matrix(intern_mat_distro);
+            }
+            workspace.set_assembled_matrix(tangent_matrix_distro);
+            workspace.assembly(2, with_internal);
+            if (with_internal) // TOC: diff from initial value, hack to make OMP work
+              gmm::add(full_rrhs, res1_distro.get());
+          ) // end GETFEM_OMP_PARALLEL
+        } // end of res0_distro scope
+        else { // only BUILD_MATRIX
+          GETFEM_OMP_PARALLEL( // running the assembly in parallel
+            ga_workspace workspace(*this);
+            add_assignments_and_expressions_to_workspace(workspace);
+            if (with_internal) { // Condensation reads from/writes to rhs
+              gmm::copy(gmm::scaled(full_rrhs, scalar_type(-1)),
+                        res1_distro.get()); // TIC: initial value residual=-rhs
+              workspace.set_assembled_vector(res1_distro);
+              workspace.set_internal_coupling_matrix(intern_mat_distro);
+            }
+            workspace.set_assembled_matrix(tangent_matrix_distro);
+            workspace.assembly(2, with_internal);
+            if (with_internal) // TOC: diff from initial value, hack to make OMP work
+              gmm::add(full_rrhs, res1_distro.get());
+          ) // end GETFEM_OMP_PARALLEL
+        }
+      } // end of tangent_matrix_distro, intern_mat_distro, res1_distro scope
+      else if (version & BUILD_RHS) {
+        gmm::resize(res0, with_internal ? full_size : primary_size);
+        accumulated_distro<model_real_plain_vector> res0_distro(res0);
+        GETFEM_OMP_PARALLEL( // running the assembly in parallel
+          ga_workspace workspace(*this);
+          add_assignments_and_expressions_to_workspace(workspace);
+          workspace.set_assembled_vector(res0_distro);
+          workspace.assembly(1, with_internal);
+        ) // end GETFEM_OMP_PARALLEL
+      } // end of res0_distro scope
+
+      if (version & BUILD_RHS)
+        gmm::add(gmm::scaled(res0, scalar_type(-1)), rrhs);
+
+      if (version & BUILD_MATRIX && with_internal) {
+        gmm::scale(res1, scalar_type(-1)); // from residual to rhs
+        gmm::sub_interval IP(0, primary_size),
+                          II(primary_size, full_size-primary_size);
+        gmm::copy(gmm::sub_matrix(intern_mat, II, IP), internal_rTM); // --> internal_rTM
+        gmm::add(gmm::sub_vector(res1, IP), rrhs);                    // --> rrhs
+        gmm::copy(gmm::sub_vector(res1, II), internal_sol);           // --> internal_sol
+      }
     }
 
     // Post simplification for dof constraints

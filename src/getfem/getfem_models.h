@@ -121,9 +121,14 @@ namespace getfem {
     bool is_linear_;
     bool is_symmetric_;
     bool is_coercive_;
-    mutable model_real_sparse_matrix rTM;    // tangent matrix, real version
+    mutable model_real_sparse_matrix
+      rTM,          // tangent matrix (only primary variables), real version
+      internal_rTM; // coupling matrix between internal and primary vars (no empty rows)
     mutable model_complex_sparse_matrix cTM; // tangent matrix, complex version
-    mutable model_real_plain_vector rrhs;
+    mutable model_real_plain_vector
+      rrhs,         // residual vector of primary variables (after condensation)
+      full_rrhs,    // residual vector of primary and internal variables (pre-condensation)
+      internal_sol; // partial solution for internal variables (after condensation)
     mutable model_complex_plain_vector crhs;
     mutable bool act_size_to_be_done;
     dim_type leading_dim;
@@ -278,6 +283,10 @@ namespace getfem {
       BUILD_ON_DATA_CHANGE = 4,
       BUILD_WITH_LIN = 8,           // forced calculation of linear terms
       BUILD_RHS_WITH_LIN = 9,       // = BUILD_RHS | BUILD_WITH_LIN_RHS
+      BUILD_WITH_INTERNAL = 16,
+      BUILD_RHS_WITH_INTERNAL = 17, // = BUILD_RHS | BUILD_WITH_INTERNAL
+      BUILD_MATRIX_CONDENSED = 18,  // = BUILD_MATRIX | BUILD_WITH_INTERNAL
+      BUILD_ALL_CONDENSED = 19,     // = BUILD_ALL | BUILD_WITH_INTERNAL
     };
 
   protected:
@@ -571,7 +580,13 @@ namespace getfem {
     bool is_linear() const { return is_linear_; }
 
     /** Total number of degrees of freedom in the model. */
-    size_type nb_dof() const;
+    size_type nb_dof(bool with_internal=false) const;
+
+    /** Number of internal degrees of freedom in the model. */
+    size_type nb_internal_dof() const { return nb_dof(true)-nb_dof(); }
+
+    /** Number of primary degrees of freedom in the model. */
+    size_type nb_primary_dof() const { return nb_dof(); }
 
     /** Leading dimension of the meshes used in the model. */
     dim_type leading_dimension() const { return leading_dim; }
@@ -898,10 +913,11 @@ namespace getfem {
     size_type qdim_of_variable(const std::string &name) const;
 
     /** Gives the access to the tangent matrix. For the real version. */
-    const model_real_sparse_matrix &real_tangent_matrix() const {
+    const model_real_sparse_matrix &
+    real_tangent_matrix(bool internal=false) const {
       GMM_ASSERT1(!complex_version, "This model is a complex one");
       context_check(); if (act_size_to_be_done) actualize_sizes();
-      return rTM;
+      return internal ? internal_rTM : rTM;
     }
 
     /** Gives the access to the tangent matrix. For the complex version. */
@@ -913,19 +929,27 @@ namespace getfem {
 
     /** Gives access to the right hand side of the tangent linear system.
         For the real version. An assembly of the rhs has to be done first. */
-    const model_real_plain_vector &real_rhs() const {
+    const model_real_plain_vector &real_rhs(bool with_internal=false) const {
       GMM_ASSERT1(!complex_version, "This model is a complex one");
       context_check(); if (act_size_to_be_done) actualize_sizes();
-      return rrhs;
+      return (with_internal && gmm::vect_size(full_rrhs)) ? full_rrhs : rrhs;
     }
 
     /** Gives write access to the right hand side of the tangent linear system.
         Some solvers need to manipulate the model rhs directly so that for
         example internal condensed variables can be treated properly. */
-    model_real_plain_vector &set_real_rhs() const {
+    model_real_plain_vector &set_real_rhs(bool with_internal=false) const {
       GMM_ASSERT1(!complex_version, "This model is a complex one");
       context_check(); if (act_size_to_be_done) actualize_sizes();
-      return rrhs;
+      return (with_internal && gmm::vect_size(full_rrhs)) ? full_rrhs : rrhs;
+    }
+
+    /** Gives access to the partial solution for condensed internal variables.
+        A matrix assembly with condensation has to be done first. */
+    const model_real_plain_vector &internal_solution() const {
+      GMM_ASSERT1(!complex_version, "This model is a complex one");
+      context_check(); if (act_size_to_be_done) actualize_sizes();
+      return internal_sol;
     }
 
     /** Gives access to the part of the right hand side of a term of
