@@ -4534,6 +4534,7 @@ namespace getfem {
   protected:
     const bool false_=false;
     const size_type zero_=0;
+    const scalar_type one_=1;
   };
 
 
@@ -4714,6 +4715,18 @@ namespace getfem {
         (t_, ctx1_, ctx2_, a1, a2, coeff_, zero_, ipt_, false),
         Kxr(K_), Kxu(K_), I1(&I1_), I2__(&I2_), I2(I2__),
         imd1(imd1_), mf2__(&mf2_), mf2(mf2__), reduced_mf2(false_) {}
+
+    ga_instruction_matrix_assembly_imd_mf // constructor without coeff (== 1)
+    (const base_tensor &t_, model_real_sparse_matrix &K_,
+     const fem_interpolation_context &ctx1_,
+     const fem_interpolation_context &ctx2_,
+     const gmm::sub_interval &I1_, const im_data *imd1_, const scalar_type &a1,
+     const gmm::sub_interval &I2_, const mesh_fem &mf2_, const scalar_type &a2,
+     const size_type &ipt_)
+      : ga_instruction_matrix_assembly_base
+        (t_, ctx1_, ctx2_, a1, a2, one_, zero_, ipt_, false),
+        Kxr(K_), Kxu(K_), I1(&I1_), I2__(&I2_), I2(I2__),
+        imd1(imd1_), mf2__(&mf2_), mf2(mf2__), reduced_mf2(false_) {}
   };
 
   struct ga_instruction_matrix_assembly_mf_imd
@@ -4815,6 +4828,17 @@ namespace getfem {
      const scalar_type &coeff_, const size_type &ipt_)
       : ga_instruction_matrix_assembly_base
         (t_, ctx1_, ctx2_, a1, a2, coeff_, zero_, ipt_, false),
+        K(K_), I1(I1_), I2(I2_), imd1(imd1_), imd2(imd2_) {}
+
+    ga_instruction_matrix_assembly_imd_imd // constructor without coeff (== 1)
+    (const base_tensor &t_, model_real_sparse_matrix &K_,
+     const fem_interpolation_context &ctx1_,
+     const fem_interpolation_context &ctx2_,
+     const gmm::sub_interval &I1_, const im_data *imd1_, const scalar_type &a1,
+     const gmm::sub_interval &I2_, const im_data *imd2_, const scalar_type &a2,
+     const size_type &ipt_)
+      : ga_instruction_matrix_assembly_base
+        (t_, ctx1_, ctx2_, a1, a2, one_, zero_, ipt_, false),
         K(K_), I1(I1_), I2(I2_), imd1(imd1_), imd2(imd2_) {}
   };
 
@@ -7984,12 +8008,13 @@ namespace getfem {
                   pgai =
                     std::make_shared<ga_instruction_matrix_assembly_imd_mf>
                     (Kq1j2pr, KQJpr, gis.ctx, gis.ctx,
-                     I1, imd1, alpha1, I2, *mf2, alpha2, gis.coeff, gis.ipt); // TODO: name_test2 variable group
+                     I1, imd1, alpha1, I2, *mf2, alpha2, gis.ipt); // constructor without gis.coeff
+                    // TODO: name_test2 variable group
                 else // for global variable imd2 == 0
                   pgai =
                     std::make_shared<ga_instruction_matrix_assembly_imd_imd>
                     (Kq1j2pr, KQJpr, gis.ctx, gis.ctx,
-                     I1, imd1, alpha1, I2, imd2, alpha2, gis.coeff, gis.ipt);
+                     I1, imd1, alpha1, I2, imd2, alpha2, gis.ipt); // constructor without gis.coeff
                 rmi.instructions.push_back(std::move(pgai));
               }
               const bool initialize = true;
