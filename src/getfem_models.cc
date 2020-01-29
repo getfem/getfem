@@ -2627,7 +2627,7 @@ namespace getfem {
 
     if (gmm::vect_size(full_rrhs)) { // i.e. if has_internal_variables()
       gmm::sub_interval IP(0,gmm::vect_size(rrhs));
-      gmm::copy(rrhs, gmm::sub_vector(full_rrhs, IP));
+      gmm::copy(rrhs, gmm::sub_vector(full_rrhs, IP)); // TICTIC
     }
 
     // Generic expressions
@@ -2675,7 +2675,6 @@ namespace getfem {
         accumulated_distro<model_real_plain_vector> res1_distro(res1);
 
         if (version & BUILD_RHS) { // both BUILD_RHS & BUILD_MATRIX
-          gmm::resize(res0, with_internal ? full_size : primary_size);
           accumulated_distro<model_real_plain_vector> res0_distro(res0);
           GETFEM_OMP_PARALLEL( // running the assembly in parallel
             ga_workspace workspace(*this);
@@ -2713,7 +2712,6 @@ namespace getfem {
         }
       } // end of tangent_matrix_distro, intern_mat_distro, res1_distro scope
       else if (version & BUILD_RHS) {
-        gmm::resize(res0, with_internal ? full_size : primary_size);
         accumulated_distro<model_real_plain_vector> res0_distro(res0);
         GETFEM_OMP_PARALLEL( // running the assembly in parallel
           ga_workspace workspace(*this);
@@ -2723,8 +2721,15 @@ namespace getfem {
         ) // end GETFEM_OMP_PARALLEL
       } // end of res0_distro scope
 
-      if (version & BUILD_RHS)
-        gmm::add(gmm::scaled(res0, scalar_type(-1)), rrhs);
+      if (version & BUILD_RHS) {
+        gmm::scale(res0, scalar_type(-1)); // from residual to rhs
+        if (with_internal) {
+          gmm::sub_interval IP(0,gmm::vect_size(rrhs));
+          gmm::add(gmm::sub_vector(res0, IP), rrhs); // TOCTOC
+          gmm::add(res0, full_rrhs);
+        } else
+          gmm::add(res0, rrhs);
+      }
 
       if (version & BUILD_MATRIX && with_internal) {
         gmm::scale(res1, scalar_type(-1)); // from residual to rhs
