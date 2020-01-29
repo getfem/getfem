@@ -25,7 +25,177 @@
 
 namespace getfem {
 
+  #define TRACE_SOL 0
 
+  /* ***************************************************************** */
+  /*  Intermediary structure for Newton algorithms with getfem::model. */
+  /* ***************************************************************** */
+
+  template <typename PLSOLVER>
+  class pb_base {
+  public:
+    typedef typename PLSOLVER::element_type::MATRIX MATRIX;
+    typedef typename PLSOLVER::element_type::VECTOR VECTOR;
+    typedef typename gmm::linalg_traits<VECTOR>::value_type T;
+    typedef typename gmm::number_traits<T>::magnitude_type R;
+
+  protected:
+    PLSOLVER linear_solver;
+    const MATRIX &K;
+    VECTOR &rhs;
+    VECTOR state;
+
+  public:
+    virtual const VECTOR &residual() const { return rhs; }
+    // A norm1 seems to be better than a norm2 (at least for contact problems).
+    virtual R residual_norm() { return gmm::vect_norm1(residual()); }
+    virtual const VECTOR &state_vector() const { return state; }
+    virtual VECTOR &state_vector() { return state; }
+    virtual R state_norm() const { return gmm::vect_norm1(state_vector()); }
+
+    virtual void perturbation() {
+      R res = gmm::vect_norm2(state), ampl = std::max(res*R(1E-20), R(1E-50));
+      std::vector<R> V(gmm::vect_size(state));
+      gmm::fill_random(V);
+      gmm::add(gmm::scaled(V, ampl), state);
+    }
+
+    virtual void add_to_residual(VECTOR &extra_rhs, R mult=1.) {
+      if (mult == R(1))       gmm::add(extra_rhs, rhs);
+      else if (mult != R(0))  gmm::add(gmm::scaled(extra_rhs, mult), rhs);
+    }
+
+    virtual void linear_solve(VECTOR &dr, gmm::iteration &iter) {
+      (*linear_solver)(K, dr, rhs, iter);
+    }
+
+    pb_base(PLSOLVER linsolv, const MATRIX &K_, VECTOR &rhs_)
+      : linear_solver(linsolv), K(K_), rhs(rhs_), state(gmm::vect_size(rhs_))
+    {}
+  };
+
+  /* ***************************************************************** */
+  /*     Linear model problem.                                         */
+  /* ***************************************************************** */
+  template <typename PLSOLVER>
+  class lin_model_pb : pb_base<PLSOLVER> {
+    model &md;
+  public:
+    using typename pb_base<PLSOLVER>::VECTOR;
+    using typename pb_base<PLSOLVER>::R;
+    using pb_base<PLSOLVER>::state_vector;
+    using pb_base<PLSOLVER>::linear_solve;
+    void compute_all() { md.assembly(model::BUILD_ALL); }
+    lin_model_pb(model &, PLSOLVER) = delete;
+  };
+
+  template <>
+  lin_model_pb<rmodel_plsolver_type>::lin_model_pb
+    (model &md_, rmodel_plsolver_type linsolv)
+    : pb_base<rmodel_plsolver_type>
+      (linsolv, md_.real_tangent_matrix(), md_.set_real_rhs()),
+      md(md_)
+  { md.from_variables(state_vector()); }
+  template <>
+  lin_model_pb<cmodel_plsolver_type>::lin_model_pb
+    (model &md_, cmodel_plsolver_type linsolv)
+    : pb_base<cmodel_plsolver_type>
+      (linsolv, md_.complex_tangent_matrix(), md_.set_complex_rhs()),
+      md(md_)
+  { md.from_variables(state_vector()); }
+
+
+  /* ***************************************************************** */
+  /*     Non-linear model problem.                                     */
+  /* ***************************************************************** */
+  template <typename PLSOLVER>
+  class nonlin_model_pb : protected pb_base<PLSOLVER> {
+  public:
+    using typename pb_base<PLSOLVER>::VECTOR;
+    using typename pb_base<PLSOLVER>::R;
+  protected:
+    model &md;
+    abstract_newton_line_search &ls;
+  private:
+    VECTOR stateinit; // just a temp used in line_search, could also be mutable
+  public:
+    using pb_base<PLSOLVER>::residual;
+    using pb_base<PLSOLVER>::residual_norm;
+    using pb_base<PLSOLVER>::state_vector;
+    using pb_base<PLSOLVER>::state_norm;
+    using pb_base<PLSOLVER>::add_to_residual;
+    using pb_base<PLSOLVER>::perturbation;
+    using pb_base<PLSOLVER>::linear_solve;
+
+    virtual R approx_external_load_norm() { return md.approx_external_load(); }
+
+    virtual void compute_tangent_matrix() {
+      md.to_variables(state_vector());
+      md.assembly(model::BUILD_MATRIX);
+    }
+
+    virtual void compute_residual() {
+      md.to_variables(state_vector());
+      md.assembly(model::BUILD_RHS);
+    }
+
+    virtual R line_search(VECTOR &dr, const gmm::iteration &iter) {
+      size_type nit = 0;
+      gmm::resize(stateinit, gmm::vect_size(state_vector()));
+      gmm::copy(state_vector(), stateinit);
+      R alpha(1), res, /* res_init, */ R0;
+
+      /* res_init = */ res = residual_norm();
+      // cout << "first residual = " << residual() << endl << endl;
+      R0 = gmm::real(gmm::vect_sp(dr, residual()));
+      ls.init_search(res, iter.get_iteration(), R0);
+      do {
+        alpha = ls.next_try();
+        gmm::add(stateinit, gmm::scaled(dr, alpha), state_vector());
+
+        compute_residual();
+        res = residual_norm();
+        // cout << "residual = " << residual() << endl << endl;
+        R0 = gmm::real(gmm::vect_sp(dr, residual()));
+        ++ nit;
+      } while (!ls.is_converged(res, R0));
+
+      if (alpha != ls.converged_value()) {
+        alpha = ls.converged_value();
+        gmm::add(stateinit, gmm::scaled(dr, alpha), state_vector());
+        res = ls.converged_residual();
+        compute_residual();
+      }
+
+      return alpha;
+    }
+
+    nonlin_model_pb(model &md_, abstract_newton_line_search &ls_,
+                    PLSOLVER linear_solver_) = delete;
+  };
+
+  template <>
+  nonlin_model_pb<rmodel_plsolver_type>::nonlin_model_pb
+    (model &md_, abstract_newton_line_search &ls_, rmodel_plsolver_type linsolv)
+    : pb_base<rmodel_plsolver_type>
+      (linsolv, md_.real_tangent_matrix(), md_.set_real_rhs()),
+      md(md_), ls(ls_)
+  { md.from_variables(state_vector()); }
+  template <>
+  nonlin_model_pb<cmodel_plsolver_type>::nonlin_model_pb
+    (model &md_, abstract_newton_line_search &ls_, cmodel_plsolver_type linsolv)
+    : pb_base<cmodel_plsolver_type>
+      (linsolv, md_.complex_tangent_matrix(), md_.set_complex_rhs()),
+      md(md_), ls(ls_)
+  { md.from_variables(state_vector()); }
+
+
+
+
+
+  /* ***************************************************************** */
+  /*   Linear solvers.                                                 */
+  /* ***************************************************************** */
   static rmodel_plsolver_type rdefault_linear_solver(const model &md) {
     return default_linear_solver<model_real_sparse_matrix,
                                  model_real_plain_vector>(md);
@@ -90,13 +260,12 @@ namespace getfem {
   /*     time integration schemes.                                     */
   /* ***************************************************************** */
 
-  template <typename MATRIX, typename VECTOR, typename PLSOLVER>
+  template <typename PLSOLVER>
   void compute_init_values(model &md, gmm::iteration &iter,
                            PLSOLVER lsolver,
-                           abstract_newton_line_search &ls, const MATRIX &K,
-                           const VECTOR &rhs) {
+                           abstract_newton_line_search &ls) {
 
-    VECTOR state(md.nb_dof());
+    typename PLSOLVER::element_type::VECTOR state(md.nb_dof());
     md.from_variables(state);
     md.cancel_init_step();
     md.set_time_integration(2);
@@ -107,7 +276,7 @@ namespace getfem {
     // Solve for ddt
     md.set_time_step(ddt);
     gmm::iteration iter1 = iter;
-    standard_solve(md, iter1, lsolver, ls, K, rhs);
+    standard_solve(md, iter1, lsolver, ls);
     md.copy_init_time_derivative();
 
     // Restore the model state
@@ -121,19 +290,15 @@ namespace getfem {
   /*     Standard solve.                                               */
   /* ***************************************************************** */
 
-  template <typename MATRIX, typename VECTOR, typename PLSOLVER>
+  template <typename PLSOLVER>
   void standard_solve(model &md, gmm::iteration &iter,
                       PLSOLVER lsolver,
-                      abstract_newton_line_search &ls, const MATRIX &K,
-                      const VECTOR &rhs) {
-
-    VECTOR state(md.nb_dof());
-    md.from_variables(state); // copy the model variables in the state vector
+                      abstract_newton_line_search &ls) {
 
     int time_integration = md.is_time_integration();
     if (time_integration) {
       if (time_integration == 1 && md.is_init_step()) {
-        compute_init_values(md, iter, lsolver, ls, K, rhs);
+        compute_init_values(md, iter, lsolver, ls);
         return;
       }
       md.set_time(md.get_time() + md.get_time_step());
@@ -141,31 +306,31 @@ namespace getfem {
     }
 
     if (md.is_linear()) {
-      md.assembly(model::BUILD_ALL);
-      (*lsolver)(K, state, rhs, iter);
-    }
-    else {
-      model_pb<MATRIX, VECTOR> mdpb(md, ls, state, rhs, K);
+      lin_model_pb<PLSOLVER> mdpb(md, lsolver);
+      mdpb.compute_all();
+      mdpb.linear_solve(mdpb.state_vector(), iter);
+      md.to_variables(mdpb.state_vector()); // copy the state vector into the model variables
+    } else {
+      std::unique_ptr<nonlin_model_pb<PLSOLVER>> mdpb
+        = std::make_unique<nonlin_model_pb<PLSOLVER>>(md, ls, lsolver);
       if (dynamic_cast<newton_search_with_step_control *>(&ls))
-        Newton_with_step_control(mdpb, iter, *lsolver);
+        Newton_with_step_control(*mdpb, iter);
       else
-        classical_Newton(mdpb, iter, *lsolver);
+        classical_Newton(*mdpb, iter);
+      md.to_variables(mdpb->state_vector()); // copy the state vector into the model variables
     }
-    md.to_variables(state); // copy the state vector into the model variables
   }
 
   void standard_solve(model &md, gmm::iteration &iter,
                       rmodel_plsolver_type lsolver,
                       abstract_newton_line_search &ls) {
-    standard_solve(md, iter, lsolver, ls, md.real_tangent_matrix(),
-                   md.real_rhs());
+    standard_solve<rmodel_plsolver_type>(md, iter, lsolver, ls);
   }
 
   void standard_solve(model &md, gmm::iteration &iter,
                       cmodel_plsolver_type lsolver,
                       abstract_newton_line_search &ls) {
-    standard_solve(md, iter, lsolver, ls, md.complex_tangent_matrix(),
-                   md.complex_rhs());
+    standard_solve<cmodel_plsolver_type>(md, iter, lsolver, ls);
   }
 
 

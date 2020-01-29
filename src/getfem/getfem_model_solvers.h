@@ -79,8 +79,10 @@ namespace getfem {
 
   template <typename MAT, typename VECT>
   struct abstract_linear_solver {
+    typedef MAT MATRIX;
+    typedef VECT VECTOR;
     virtual void operator ()(const MAT &, VECT &, const VECT &,
-                             gmm::iteration &) const  = 0;
+                             gmm::iteration &) const = 0;
     virtual ~abstract_linear_solver() {}
   };
 
@@ -386,7 +388,7 @@ namespace getfem {
   /* ***************************************************************** */
   /*     Newton(-Raphson) algorithm with step control.                 */
   /* ***************************************************************** */
-  /* Still solves a problem F(X) = 0 sarting at X0 but setting         */
+  /* Still solves a problem F(X) = 0 starting at X0 but setting        */
   /* B0 = F(X0) and solving                                            */
   /* F(X) = (1-alpha)B0       (1)                                      */
   /* with alpha growing from 0 to 1.                                   */
@@ -403,15 +405,12 @@ namespace getfem {
   /*          else alpha0 <- alpha,                                    */
   /*              alpha <- min(1,alpha0+2*(alpha-alpha0)),             */
   /*              Go to step 1 with Xi+1                               */
-  /*              being the result of Newton iteraitons of step1.      */
+  /*              being the result of Newton iterations of step1.      */
   /*                                                                   */
   /*********************************************************************/
 
   template <typename PB>
-  void Newton_with_step_control
-  (PB &pb, gmm::iteration &iter,
-   const abstract_linear_solver<typename PB::MATRIX,
-                                typename PB::VECTOR> &linear_solver)
+  void Newton_with_step_control(PB &pb, gmm::iteration &iter)
   {
     typedef typename gmm::linalg_traits<typename PB::VECTOR>::value_type T;
     typedef typename gmm::number_traits<T>::magnitude_type R;
@@ -430,7 +429,6 @@ namespace getfem {
     gmm::copy(pb.state_vector(), Xi);
 
     typename PB::VECTOR dr(gmm::vect_size(pb.residual()));
-    typename PB::VECTOR b(gmm::vect_size(pb.residual()));
 
     R alpha0(0), alpha(1), res0(gmm::vect_norm1(b0)), minres(res0);
     // const newton_search_with_step_control *ls
@@ -447,18 +445,18 @@ namespace getfem {
         / approx_eln;
       if (!iter.converged(crit)) {
         gmm::iteration iter_linsolv = iter_linsolv0;
-        if (iter.get_noisy() > 1)
-          cout << "starting tangent matrix computation" << endl;
 
         int is_singular = 1;
         while (is_singular) { // Linear system solve
-          pb.compute_tangent_matrix();
           gmm::clear(dr);
-          gmm::copy(pb.residual(), b);
-          gmm::add(gmm::scaled(b0,alpha-R(1)), b);
-          if (iter.get_noisy() > 1) cout << "starting linear solver" << endl;
+          pb.add_to_residual(b0, alpha-R(1)); // canceled at next compute_residual
           iter_linsolv.init();
-          linear_solver(pb.tangent_matrix(), dr, b, iter_linsolv);
+          if (iter.get_noisy() > 1)
+            cout << "starting tangent matrix computation" << endl;
+          pb.compute_tangent_matrix();
+          if (iter.get_noisy() > 1)
+            cout << "starting linear solver" << endl;
+          pb.linear_solve(dr, iter_linsolv);
           if (!iter_linsolv.converged()) {
             is_singular++;
             if (is_singular <= 4) {
@@ -466,7 +464,7 @@ namespace getfem {
                 cout << "Singular tangent matrix:"
                   " perturbation of the state vector." << endl;
               pb.perturbation();
-              pb.compute_residual();
+              pb.compute_residual(); // cancels add_to_residual
             } else {
               if (iter.get_noisy())
                 cout << "Singular tangent matrix: perturbation failed, "
@@ -478,9 +476,8 @@ namespace getfem {
         }
         if (iter.get_noisy() > 1) cout << "linear solver done" << endl;
 
-
         gmm::add(dr, pb.state_vector());
-        pb.compute_residual();
+        pb.compute_residual(); // cancels add_to_residual
         R res = gmm::vect_dist1(pb.residual(), gmm::scaled(b0, R(1)-alpha));
         R dec = R(1)/R(2), coeff2 = coeff * R(1.5);
 
@@ -542,14 +539,11 @@ namespace getfem {
 
 
   /* ***************************************************************** */
-  /*     Classicel Newton(-Raphson) algorithm.                         */
+  /*     Classical Newton(-Raphson) algorithm.                         */
   /* ***************************************************************** */
 
   template <typename PB>
-  void classical_Newton
-  (PB &pb, gmm::iteration &iter,
-   const abstract_linear_solver<typename PB::MATRIX,
-                                typename PB::VECTOR> &linear_solver)
+  void classical_Newton(PB &pb, gmm::iteration &iter)
   {
     typedef typename gmm::linalg_traits<typename PB::VECTOR>::value_type T;
     typedef typename gmm::number_traits<T>::magnitude_type R;
@@ -563,22 +557,21 @@ namespace getfem {
     if (approx_eln == R(0)) approx_eln = R(1);
 
     typename PB::VECTOR dr(gmm::vect_size(pb.residual()));
-    typename PB::VECTOR b(gmm::vect_size(pb.residual()));
 
     scalar_type crit = pb.residual_norm() / approx_eln;
     while (!iter.finished(crit)) {
       gmm::iteration iter_linsolv = iter_linsolv0;
-      if (iter.get_noisy() > 1)
-        cout << "starting computing tangent matrix" << endl;
 
       int is_singular = 1;
       while (is_singular) {
-        pb.compute_tangent_matrix();
         gmm::clear(dr);
-        gmm::copy(pb.residual(), b);
-        if (iter.get_noisy() > 1) cout << "starting linear solver" << endl;
         iter_linsolv.init();
-        linear_solver(pb.tangent_matrix(), dr, b, iter_linsolv);
+        if (iter.get_noisy() > 1)
+          cout << "starting computing tangent matrix" << endl;
+        pb.compute_tangent_matrix();
+        if (iter.get_noisy() > 1)
+          cout << "starting linear solver" << endl;
+        pb.linear_solve(dr, iter_linsolv);
         if (!iter_linsolv.converged()) {
           is_singular++;
           if (is_singular <= 4) {
@@ -608,133 +601,17 @@ namespace getfem {
   }
 
 
-  /* ***************************************************************** */
-  /*  Intermediary structure for Newton algorithms with getfem::model. */
-  /* ***************************************************************** */
-
-  #define TRACE_SOL 0
-
-  template <typename MAT, typename VEC>
-  struct model_pb {
-
-    typedef MAT MATRIX;
-    typedef VEC VECTOR;
-    typedef typename gmm::linalg_traits<VECTOR>::value_type T;
-    typedef typename gmm::number_traits<T>::magnitude_type R;
-
-    model &md;
-    abstract_newton_line_search &ls;
-    VECTOR stateinit, &state;
-    const VECTOR &rhs;
-    const MATRIX &K;
-
-    void compute_tangent_matrix() {
-      md.to_variables(state);
-      md.assembly(model::BUILD_MATRIX);
-    }
-
-    const MATRIX &tangent_matrix() { return K; }
-
-    void compute_residual() {
-      md.to_variables(state);
-      md.assembly(model::BUILD_RHS);
-    }
-
-    void perturbation() {
-      R res = gmm::vect_norm2(state), ampl = std::max(res*R(1E-20), R(1E-50));
-      std::vector<R> V(gmm::vect_size(state));
-      gmm::fill_random(V);
-      gmm::add(gmm::scaled(V, ampl), state);
-    }
-
-    const VECTOR &residual() const { return rhs; }
-    const VECTOR &state_vector() const { return state; }
-    VECTOR &state_vector() { return state; }
-
-    R state_norm() const { return gmm::vect_norm1(state); }
-
-    R approx_external_load_norm() { return md.approx_external_load(); }
-
-    R residual_norm() {
-      return gmm::vect_norm1(rhs); // A norm1 seems to be better than a norm2
-    }                              // at least for contact problems.
-
-    R compute_res(bool comp = true) {
-      if (comp) compute_residual();
-      return residual_norm();
-    }
-
-    R line_search(VECTOR &dr, const gmm::iteration &iter) {
-      size_type nit = 0;
-      gmm::resize(stateinit, md.nb_dof());
-      gmm::copy(state, stateinit);
-      R alpha(1), res, /* res_init, */ R0;
-
-      /* res_init = */ res = compute_res(false);
-      // cout << "first residual = " << residual() << endl << endl;
-      R0 = gmm::real(gmm::vect_sp(dr, rhs));
-
-#if TRACE_SOL
-      static int trace_number = 0;
-      int trace_iter = 0;
-      {
-        std::stringstream trace_name;
-        trace_name << "line_search_state" << std::setfill('0')
-                   << std::setw(3) << trace_number << "_000_init";
-        gmm::vecsave(trace_name.str(),stateinit);
-      }
-      trace_number++;
-#endif
-
-      ls.init_search(res, iter.get_iteration(), R0);
-      do {
-        alpha = ls.next_try();
-        gmm::add(stateinit, gmm::scaled(dr, alpha), state);
-#if TRACE_SOL
-        {
-          trace_iter++;
-          std::stringstream trace_name;
-          trace_name  << "line_search_state" << std::setfill('0')
-                      << std::setw(3) << trace_number << "_"
-                      << std::setfill('0') << std::setw(3) << trace_iter;
-          gmm::vecsave(trace_name.str(), state);
-        }
-#endif
-        res = compute_res();
-        // cout << "residual = " << residual() << endl << endl;
-        R0 = gmm::real(gmm::vect_sp(dr, rhs));
-
-        ++ nit;
-      } while (!ls.is_converged(res, R0));
-
-      if (alpha != ls.converged_value()) {
-        alpha = ls.converged_value();
-        gmm::add(stateinit, gmm::scaled(dr, alpha), state);
-        res = ls.converged_residual();
-        compute_residual();
-      }
-
-      return alpha;
-    }
-
-    model_pb(model &m, abstract_newton_line_search &ls_, VECTOR &st,
-             const VECTOR &rhs_, const MATRIX &K_)
-      : md(m), ls(ls_), state(st), rhs(rhs_), K(K_) {}
-
-  };
 
   //---------------------------------------------------------------------
   // Default linear solver.
   //---------------------------------------------------------------------
 
-  typedef abstract_linear_solver<model_real_sparse_matrix,
-                                 model_real_plain_vector> rmodel_linear_solver;
-  typedef std::shared_ptr<rmodel_linear_solver> rmodel_plsolver_type;
-  typedef abstract_linear_solver<model_complex_sparse_matrix,
-                                 model_complex_plain_vector>
-          cmodel_linear_solver;
-  typedef std::shared_ptr<cmodel_linear_solver> cmodel_plsolver_type;
-
+  typedef std::shared_ptr<abstract_linear_solver<model_real_sparse_matrix,
+                                                 model_real_plain_vector> >
+    rmodel_plsolver_type;
+  typedef std::shared_ptr<abstract_linear_solver<model_complex_sparse_matrix,
+                                                 model_complex_plain_vector> >
+    cmodel_plsolver_type;
 
   template<typename MATRIX, typename VECTOR>
   std::shared_ptr<abstract_linear_solver<MATRIX, VECTOR>>

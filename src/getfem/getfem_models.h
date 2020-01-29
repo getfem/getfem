@@ -917,6 +917,15 @@ namespace getfem {
       return rrhs;
     }
 
+    /** Gives write access to the right hand side of the tangent linear system.
+        Some solvers need to manipulate the model rhs directly so that for
+        example internal condensed variables can be treated properly. */
+    model_real_plain_vector &set_real_rhs() const {
+      GMM_ASSERT1(!complex_version, "This model is a complex one");
+      context_check(); if (act_size_to_be_done) actualize_sizes();
+      return rrhs;
+    }
+
     /** Gives access to the part of the right hand side of a term of
         a particular nonlinear brick. Does not account of the eventual time
         dispatcher. An assembly of the rhs has to be done first.
@@ -941,6 +950,15 @@ namespace getfem {
     /** Gives access to the right hand side of the tangent linear system.
         For the complex version. */
     const model_complex_plain_vector &complex_rhs() const {
+      GMM_ASSERT1(complex_version, "This model is a real one");
+      context_check(); if (act_size_to_be_done) actualize_sizes();
+      return crhs;
+    }
+
+    /** Gives write access to the right hand side of the tangent linear system.
+        Some solvers need to manipulate the model rhs directly so that for
+        example internal condensed variables can be treated properly. */
+    model_complex_plain_vector &set_complex_rhs() const {
       GMM_ASSERT1(complex_version, "This model is a real one");
       context_check(); if (act_size_to_be_done) actualize_sizes();
       return crhs;
