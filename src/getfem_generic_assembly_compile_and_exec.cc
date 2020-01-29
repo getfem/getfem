@@ -5445,9 +5445,11 @@ namespace getfem {
         }
         // cout << "sub_tree_are_equal = " << int(sub_tree_are_equal(pnode, pnode1, workspace, 1)) << endl;
         std::stringstream ss;
-        ss << "Detected wrong equivalent nodes: \n";
-        ga_print_node(pnode, ss); ss << "\n and \n"; ga_print_node(pnode1, ss);
-        ss << "\nNo problem, but hash values could be adapted." << endl;
+        ss << "Detected wrong equivalent nodes:" << endl;
+        ga_print_node(pnode, ss);
+        ss << endl << " and " << endl;
+        ga_print_node(pnode1, ss);
+        ss << endl << "No problem, but hash values could be adapted." << endl;
         GMM_TRACE2(ss.str());
       }
     }
@@ -8023,13 +8025,13 @@ namespace getfem {
                     (Kq1j2pr, KQJpr, gis.ctx, gis.ctx,
                      I1, imd1, alpha1, I2, imd2, alpha2, gis.ipt); // constructor without gis.coeff
                 rmi.instructions.push_back(std::move(pgai));
-              }
+              } // for j2
               const bool initialize = true;
               pgai = std::make_shared<ga_instruction_vector_assembly_imd>
                 (*(CC.RQpr[q1]), workspace.assembled_vector(), // <- overwriting internal variables residual with internal solution
                  gis.ctx, I1, *imd1, gis.coeff, gis.ipt, initialize);
               rmi.instructions.push_back(std::move(pgai));
-            }
+            } // for q1
           }
 
           // Add superdiagonal condensation instructions

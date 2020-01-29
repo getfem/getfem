@@ -271,12 +271,14 @@ namespace getfem {
 
     typedef std::vector<term_description> termlist;
 
-    enum build_version { BUILD_RHS = 1,
-                         BUILD_MATRIX = 2,
-                         BUILD_ALL = 3,
-                         BUILD_ON_DATA_CHANGE = 4,
-                         BUILD_WITH_COMPLETE_RHS = 8,
-                         BUILD_COMPLETE_RHS = 9, };
+    enum build_version {
+      BUILD_RHS = 1,
+      BUILD_MATRIX = 2,
+      BUILD_ALL = 3,
+      BUILD_ON_DATA_CHANGE = 4,
+      BUILD_WITH_LIN = 8,           // forced calculation of linear terms
+      BUILD_RHS_WITH_LIN = 9,       // = BUILD_RHS | BUILD_WITH_LIN_RHS
+    };
 
   protected:
 
@@ -356,7 +358,7 @@ namespace getfem {
       std::string secondary_domain;
       gen_expr(const std::string &expr_, const mesh_im &mim_,
                size_type region_, const std::string &secdom)
-	: expr(expr_), mim(mim_), region(region_), secondary_domain(secdom)  {}
+        : expr(expr_), mim(mim_), region(region_), secondary_domain(secdom) {}
     };
 
     // Structure for assignment in assembly

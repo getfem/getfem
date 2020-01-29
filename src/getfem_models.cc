@@ -2419,7 +2419,7 @@ namespace getfem {
               }
             }
             if (term.is_matrix_term && brick.pbr->is_linear()
-                && (!is_linear() || (version & BUILD_WITH_COMPLETE_RHS))) {
+                && (!is_linear() || (version & BUILD_WITH_LIN))) {
               if (!(var1->is_disabled))
                 gmm::mult_add(brick.cmatlist[j],
                               gmm::scaled(var2->complex_value[0],
@@ -2439,7 +2439,7 @@ namespace getfem {
                          gmm::sub_vector(crhs, I2));
               }
                if (brick.pbr->is_linear()
-                   && (!is_linear() || (version & BUILD_WITH_COMPLETE_RHS))) {
+                   && (!is_linear() || (version & BUILD_WITH_LIN))) {
                  gmm::mult_add(gmm::conjugated(brick.cmatlist[j]),
                             gmm::scaled(var1->complex_value[0],
                                         complex_type(-alpha2)),
@@ -2487,7 +2487,7 @@ namespace getfem {
               }
             }
             if (term.is_matrix_term && brick.pbr->is_linear()
-                && (!is_linear() || (version & BUILD_WITH_COMPLETE_RHS))) {
+                && (!is_linear() || (version & BUILD_WITH_LIN))) {
               if (!(var1->is_disabled))
                 gmm::mult_add(brick.rmatlist[j],
                               gmm::scaled(var2->complex_value[0],
@@ -2507,7 +2507,7 @@ namespace getfem {
                          gmm::sub_vector(crhs, I2));
               }
               if (brick.pbr->is_linear()
-                  && (!is_linear() || (version & BUILD_WITH_COMPLETE_RHS))) {
+                  && (!is_linear() || (version & BUILD_WITH_LIN))) {
                 gmm::mult_add(gmm::transposed(brick.rmatlist[j]),
                               gmm::scaled(var1->complex_value[0],
                                           complex_type(-alpha2)),
@@ -2548,7 +2548,7 @@ namespace getfem {
                               gmm::sub_vector(rrhs, I1));
               // Contributions from linear terms
               if (term.is_matrix_term && brick.pbr->is_linear()
-                  && (!is_linear() || (version & BUILD_WITH_COMPLETE_RHS)))
+                  && (!is_linear() || (version & BUILD_WITH_LIN)))
                 gmm::mult_add(brick.rmatlist[j],
                               gmm::scaled(var2->real_value[0], -alpha1),
                               gmm::sub_vector(rrhs, I1));
@@ -2573,7 +2573,7 @@ namespace getfem {
                                 gmm::sub_vector(rrhs, I2));
               // Contributions from linear terms
               if (brick.pbr->is_linear()
-                  && (!is_linear() || (version & BUILD_WITH_COMPLETE_RHS)))
+                  && (!is_linear() || (version & BUILD_WITH_LIN)))
                 gmm::mult_add(gmm::transposed(brick.rmatlist[j]),
                               gmm::scaled(var1->real_value[0], -alpha2),
                               gmm::sub_vector(rrhs, I2));
@@ -7004,7 +7004,7 @@ namespace getfem {
       }
 
       // Computation of the residual (including the linear parts).
-      md.assembly(model::BUILD_COMPLETE_RHS);
+      md.assembly(model::BUILD_RHS_WITH_LIN);
 
       size_type nbdof = gmm::vect_size(md.complex_variable(U));
       model_complex_plain_vector W(nbdof), RHS(nbdof);
@@ -7042,7 +7042,7 @@ namespace getfem {
       }
 
       // Computation of the residual (including the linear parts).
-      md.assembly(model::BUILD_COMPLETE_RHS);
+      md.assembly(model::BUILD_RHS_WITH_LIN);
 
       size_type nbdof = gmm::vect_size(md.real_variable(U));
       model_real_plain_vector W(nbdof), RHS(nbdof);
