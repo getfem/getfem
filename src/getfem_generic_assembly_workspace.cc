@@ -818,9 +818,9 @@ namespace getfem {
       //              gmm::mat_ncols(*K) == nb_prim_dof, "Wrong sizes");
       if (KQJpr.use_count()) {
         gmm::clear(*KQJpr);
-        gmm::resize(*KQJpr, nb_intern_dof, nb_prim_dof); // redundant if condensation == false
+        gmm::resize(*KQJpr, nb_prim_dof+nb_intern_dof, nb_prim_dof); // redundant if condensation == false
       } else if (condensation)
-        GMM_ASSERT1(gmm::mat_nrows(*KQJpr) == nb_intern_dof &&
+        GMM_ASSERT1(gmm::mat_nrows(*KQJpr) == nb_prim_dof+nb_intern_dof &&
                     gmm::mat_ncols(*KQJpr) == nb_prim_dof, "Wrong sizes");
       gmm::clear(col_unreduced_K);
       gmm::clear(row_unreduced_K);
@@ -923,8 +923,6 @@ namespace getfem {
                       GMM_ASSERT1(I1.last() <= nb_prim_dof, "Internal error");
                       gmm::add(M, gmm::sub_matrix(*K, I1, I2)); // -> *K
                     } else { // vname1 is an internal variable
-                      I1.min -= first_internal_dof();
-                      I1.max -= first_internal_dof();
                       gmm::add(M, gmm::sub_matrix(*KQJpr, I1, I2)); // -> *KQJpr
                     }
                   }

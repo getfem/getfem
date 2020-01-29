@@ -413,7 +413,9 @@ namespace getfem {
       KQJpr = std::shared_ptr<model_real_sparse_matrix>
               (std::shared_ptr<model_real_sparse_matrix>(), &KQJpr_); // alias
     }
-    // getter functions for condensation matrix/vectors
+    /** getter function for condensation matrix
+        Its size is (nb_primary_dof()+nb_internal_dof()) x nb_primary_dof()
+        but its first nb_primary_dof() rows are empty */
     const model_real_sparse_matrix &internal_coupling_matrix() const
     { return *KQJpr; }
     model_real_sparse_matrix &internal_coupling_matrix() { return *KQJpr; }

@@ -8004,6 +8004,13 @@ namespace getfem {
                 const base_tensor &Kq1j2pr = *(CC.KQJpr(q1,j2)); // <- input
                 model_real_sparse_matrix
                   &KQJpr = workspace.internal_coupling_matrix(); // <- output
+                GMM_ASSERT1(
+                  gmm::mat_nrows(KQJpr) == workspace.nb_primary_dof()
+                                          +workspace.nb_internal_dof() &&
+                  gmm::mat_ncols(KQJpr) == workspace.nb_primary_dof(),
+                  "The internal coupling matrix needs to be allocated with "
+                  "nb_primary_dof()+nb_internal_dof() number of rows, even if "
+                  "only the last nb_internal_dof() rows are filled in.");
                 if (mf2)
                   pgai =
                     std::make_shared<ga_instruction_matrix_assembly_imd_mf>
