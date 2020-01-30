@@ -402,6 +402,10 @@ namespace getfem {
                               bool function_expr, operation_type op_type,
                               const std::string varname_interpolation) {
     if (tree.root) {
+      // cout << "add tree with tests functions of " <<  tree.root->name_test1
+      //     << " and " << tree.root->name_test2 << endl;
+      //     ga_print_node(tree.root, cout); cout << endl;
+
       // Eliminate the term if it corresponds to disabled variables
       if ((tree.root->test_function_type >= 1 &&
            is_disabled_variable(tree.root->name_test1)) ||
@@ -410,9 +414,7 @@ namespace getfem {
         // cout<<"disabling term ";  ga_print_node(tree.root, cout); cout<<endl;
         return;
       }
-      // cout << "add tree with tests functions of " <<  tree.root->name_test1
-      //      << " and " << tree.root->name_test2 << endl;
-      //      ga_print_node(tree.root, cout); cout << endl;
+
       bool remain = true;
       size_type order = 0, ind_tree = 0;
 
@@ -482,14 +484,14 @@ namespace getfem {
           if (!(is_constant(var.varname))) {
             ga_tree dtree = (remain ? tree : *(trees[ind_tree].ptree));
             // cout << "Derivation with respect to " << var.varname << " : "
-            //     << var.transname << " of " << ga_tree_to_string(dtree) << endl;
-            GA_TIC;
+            //   << var.transname << " of " << ga_tree_to_string(dtree) << endl;
+            // GA_TIC;
             ga_derivative(dtree, *this, m, var.varname, var.transname, 1+order);
             // cout << "Result : " << ga_tree_to_string(dtree) << endl;
-            GA_TOCTIC("Derivative time");
+            // GA_TOCTIC("Derivative time");
             ga_semantic_analysis(dtree, *this, m,
                                  ref_elt_dim_of_mesh(m), false, function_expr);
-            GA_TOCTIC("Analysis after Derivative time");
+            // GA_TOCTIC("Analysis after Derivative time");
             // cout << "after analysis "  << ga_tree_to_string(dtree) << endl;
             add_tree(dtree, m, mim, rg, expr, add_derivative_order,
                      function_expr, op_type, varname_interpolation);

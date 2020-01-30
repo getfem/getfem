@@ -372,8 +372,10 @@ namespace getfem {
       return true;
     }
 
-    inline bool is_constant()
-    { return (node_type == GA_NODE_CONSTANT || node_type == GA_NODE_ZERO); }
+    inline bool is_constant() {
+      return (node_type == GA_NODE_CONSTANT ||
+              (node_type == GA_NODE_ZERO && test_function_type == 0));
+    }
     
     inline void init_scalar_tensor(scalar_type v)
     { t.init_scalar_tensor(v); test_function_type = 0; }

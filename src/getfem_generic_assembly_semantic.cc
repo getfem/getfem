@@ -2661,11 +2661,13 @@ namespace getfem {
                             size_type ref_elt_dim,
                             bool eval_fixed_size,
                             bool ignore_X, int option) {
-    // cout << "Begin semantic analysis" << endl;
     GMM_ASSERT1(predef_operators_nonlinear_elasticity_initialized &&
                 predef_operators_plasticity_initialized &&
                 predef_operators_contact_initialized, "Internal error");
     if (!(tree.root)) return;
+    // cout << "Begin semantic analysis with ";
+    // ga_print_node(tree.root, cout); cout << endl;
+    
     if (option == 1) { workspace.test1.clear(); workspace.test2.clear(); }
     ga_node_analysis(tree, workspace, tree.root, m, ref_elt_dim,
                      eval_fixed_size, ignore_X, option);
@@ -2682,7 +2684,8 @@ namespace getfem {
         tree.clear();
     }
     ga_valid_operand(tree.root);
-    // cout << "end of semantic analysis" << endl;
+    // cout << "End of semantic analysis";
+    // if (tree.root) ga_print_node(tree.root, cout); cout << endl;
   }
 
 
