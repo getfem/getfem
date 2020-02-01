@@ -2625,8 +2625,11 @@ namespace getfem {
       if (version & BUILD_RHS) approx_external_load_ += brick.external_load;
     }
 
-    if (gmm::vect_size(full_rrhs)) { // i.e. if has_internal_variables()
+    if (version & BUILD_RHS && version & BUILD_WITH_INTERNAL) {
+      GMM_ASSERT1(gmm::vect_size(full_rrhs) > 0 && has_internal_variables(),
+                  "Internal error");
       gmm::sub_interval IP(0,gmm::vect_size(rrhs));
+      gmm::fill(full_rrhs, 0.);
       gmm::copy(rrhs, gmm::sub_vector(full_rrhs, IP)); // TICTIC
     }
 
@@ -2684,14 +2687,12 @@ namespace getfem {
             if (with_internal) { // Condensation reads from/writes to rhs
               gmm::copy(res0_distro.get(), res1_distro.get());
               gmm::add(gmm::scaled(full_rrhs, scalar_type(-1)),
-                       res1_distro.get()); // TIC: initial value residual=-rhs
+                       res1_distro.get()); // initial value residual=-rhs (actually only the internal variables residual is needed)
               workspace.set_assembled_vector(res1_distro);
               workspace.set_internal_coupling_matrix(intern_mat_distro);
             }
             workspace.set_assembled_matrix(tangent_matrix_distro);
             workspace.assembly(2, with_internal);
-            if (with_internal) // TOC: diff from initial value, hack to make OMP work
-              gmm::add(full_rrhs, res1_distro.get());
           ) // end GETFEM_OMP_PARALLEL
         } // end of res0_distro scope
         else { // only BUILD_MATRIX
@@ -2700,14 +2701,12 @@ namespace getfem {
             add_assignments_and_expressions_to_workspace(workspace);
             if (with_internal) { // Condensation reads from/writes to rhs
               gmm::copy(gmm::scaled(full_rrhs, scalar_type(-1)),
-                        res1_distro.get()); // TIC: initial value residual=-rhs
+                        res1_distro.get()); // initial value residual=-rhs (actually only the internal variables residual is needed)
               workspace.set_assembled_vector(res1_distro);
               workspace.set_internal_coupling_matrix(intern_mat_distro);
             }
             workspace.set_assembled_matrix(tangent_matrix_distro);
             workspace.assembly(2, with_internal);
-            if (with_internal) // TOC: diff from initial value, hack to make OMP work
-              gmm::add(full_rrhs, res1_distro.get());
           ) // end GETFEM_OMP_PARALLEL
         }
       } // end of tangent_matrix_distro, intern_mat_distro, res1_distro scope
