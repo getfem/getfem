@@ -136,6 +136,29 @@ The main useful methods on a |mo| object are
    variable. Note that for complex terms, only
    the real part is considered to filter the multiplier.
 
+.. c:function:: add_im_variable(name, imd)
+
+   Add a variable defined on the integration points of the ``im_data`` object imd.
+   The variable can be scalar-valued, vector-valued or tensor-valued depending on
+   the dimension of imd.
+   It increases the model degrees of freedom by the number of integration points
+   time the size of the variable at one integration point.
+
+.. c:function:: add_internal_im_variable(name, imd)
+
+   Add a variable defined on the integration points of the ``im_data`` object
+   ``imd`` that will be statically condensed out during the linearization of the
+   problem. The variable can be scalar-valued, vector-valued or tensor-valued
+   depending on the dimension of imd.
+   It does not add degrees of freedom to the model.
+
+.. c:function:: add_im_data(name, imd)
+
+   Add a data object deignated with the string ``name``, defined at all
+   integration points of the ``im_data`` object ``imd``.
+   The data can be scalar-valued, vector-valued or tensor-valued depending on
+   the dimension of imd.
+
 .. c:function:: real_variable(name, niter=1)
 
    Gives the access to the vector value of a variable or data. Real version.

@@ -786,13 +786,13 @@ namespace getfem {
 
 
     /** Add variable defined at integration points. */
-    void add_im_variable(const std::string &name, const im_data &im_data,
+    void add_im_variable(const std::string &name, const im_data &imd,
                          size_type niter = 1);
-    /** Add internal variable, defined at integration points and condensated. */
+    /** Add internal variable, defined at integration points and condensed. */
     void add_internal_im_variable(const std::string &name,
-                                  const im_data &im_data);
+                                  const im_data &imd);
     /** Add data defined at integration points. */
-    void add_im_data(const std::string &name, const im_data &im_data,
+    void add_im_data(const std::string &name, const im_data &imd,
                      size_type niter = 1);
 
     /** Add a variable being the dofs of a finite element method to the model.
