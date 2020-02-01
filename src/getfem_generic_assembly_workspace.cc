@@ -818,22 +818,30 @@ namespace getfem {
       //              gmm::mat_ncols(*K) == nb_prim_dof, "Wrong sizes");
       if (KQJpr.use_count()) {
         gmm::clear(*KQJpr);
-        gmm::resize(*KQJpr, nb_prim_dof+nb_intern_dof, nb_prim_dof); // redundant if condensation == false
+        if (condensation)
+          gmm::resize(*KQJpr, nb_tot_dof, nb_prim_dof);
       } else if (condensation)
-        GMM_ASSERT1(gmm::mat_nrows(*KQJpr) == nb_prim_dof+nb_intern_dof &&
+        GMM_ASSERT1(gmm::mat_nrows(*KQJpr) == nb_tot_dof &&
                     gmm::mat_ncols(*KQJpr) == nb_prim_dof, "Wrong sizes");
       gmm::clear(col_unreduced_K);
       gmm::clear(row_unreduced_K);
       gmm::clear(row_col_unreduced_K);
       gmm::resize(col_unreduced_K, nb_tot_dof, nb_tmp_dof);
-      gmm::resize(row_unreduced_K, nb_tmp_dof, nb_tot_dof);
+      gmm::resize(row_unreduced_K, nb_tmp_dof, nb_prim_dof);
       gmm::resize(row_col_unreduced_K, nb_tmp_dof, nb_tmp_dof);
       if (condensation) {
         gmm::clear(unreduced_V);
         gmm::resize(unreduced_V, nb_tmp_dof);
       }
-    } else if (order == 1) {
-      if (V.use_count()) {
+    }
+
+    if (order == 1 || (order == 2 && condensation)) {
+      if (order == 2 && condensation) {
+        GMM_ASSERT1(V->size() == nb_tot_dof, "Wrong size");
+        gmm::resize(cached_V, nb_tot_dof);
+        gmm::copy(*V, cached_V); // current residual is used in condensation
+        gmm::fill(*V, scalar_type(0));
+      } else if (V.use_count()) {
         gmm::clear(*V);
         gmm::resize(*V, nb_tot_dof);
       } else
@@ -905,10 +913,12 @@ namespace getfem {
                                   gmm::sub_vector(*V, I1));
                     vars_vec_done.insert(vname1);
                   }
-                  model_real_sparse_matrix M(I1.size(), I2.size());
-                  gmm::mult(gmm::transposed(mf1->extension_matrix()),
-                            gmm::sub_matrix(row_unreduced_K, uI1, I2), M);
-                  gmm::add(M, gmm::sub_matrix(*K, I1, I2));
+                  if (I2.first() < nb_prim_dof) { // !is_internal_variable(vname2)
+                    model_real_sparse_matrix M(I1.size(), I2.size());
+                    gmm::mult(gmm::transposed(mf1->extension_matrix()),
+                              gmm::sub_matrix(row_unreduced_K, uI1, I2), M);
+                    gmm::add(M, gmm::sub_matrix(*K, I1, I2));
+                  }
                 } else {
                   model_real_row_sparse_matrix M(I1.size(), I2.size());
                   gmm::mult(gmm::sub_matrix(col_unreduced_K, I1, uI2),

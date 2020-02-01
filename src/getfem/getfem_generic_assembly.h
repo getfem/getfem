@@ -372,7 +372,7 @@ namespace getfem {
     model_real_sparse_matrix col_unreduced_K,
                              row_unreduced_K,
                              row_col_unreduced_K;
-    base_vector unreduced_V;
+    base_vector unreduced_V, cached_V;
     base_tensor assemb_t;
     bool include_empty_int_pts = false;
 
@@ -391,6 +391,7 @@ namespace getfem {
     model_real_sparse_matrix &assembled_matrix() { return *K; }
     const base_vector &assembled_vector() const { return *V; }
     base_vector &assembled_vector() { return *V; }
+    const base_vector &cached_vector() const { return cached_V; }
     const base_tensor &assembled_tensor() const { return assemb_t; }
     base_tensor &assembled_tensor() { return assemb_t; }
     const scalar_type &assembled_potential() const {

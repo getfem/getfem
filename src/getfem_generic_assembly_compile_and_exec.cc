@@ -5028,10 +5028,10 @@ namespace getfem {
     gmm::dense_matrix<base_tensor *> KQJprime;
     std::vector<base_tensor *> RQprime;
     gmm::dense_matrix<base_tensor const *> KQQloc, KQJloc;
-    std::vector<base_tensor const *> RQloc;
     base_tensor invKqqqq, Kqqjj;
     base_vector Rqq;
     std::vector<std::array<size_type,3>> partQ, partJ;
+    const scalar_type &coeff; // &alpha1, &alpha2 ?
     virtual int exec() { // implementation can be optimized
       GA_DEBUG_INFO("Instruction: variable cluster subdiagonal condensation");
       // copy from KQQ to invKqqqq
@@ -5081,7 +5081,7 @@ namespace getfem {
       gmm::clear(Kqqjj.as_vector());
       gmm::clear(Rqq);
 
-      // multiply invKqqqq with all submatrices in KQJloc and RQloc and store
+      // multiply invKqqqq with all submatrices in KQJloc and RQprime and store
       // the results in Kqqjj and Rqq
       for (const auto &jjj : partJ) {
         size_type j = jjj[0], jjstart = jjj[1], jjend = jjj[2];
@@ -5103,13 +5103,13 @@ namespace getfem {
       } // in partJ
       for (const auto &qqq2 : partQ) {
         size_type q2 = qqq2[0], qq2start = qqq2[1], qq2end = qqq2[2];
-        if (RQloc[q2]) {
-          auto itr = RQloc[q2]->cbegin();
+        if (RQprime[q2]) {
+          auto itr = RQprime[q2]->cbegin();
           for (size_type qq2=qq2start; qq2 < qq2end; ++qq2, ++itr) {
             for (size_type qq1=0; qq1 < invKqqqq.size(0); ++qq1)
               Rqq[qq1] += invKqqqq(qq1,qq2)*(*itr);
           } // for qq2
-          GMM_ASSERT1(itr == RQloc[q2]->cend(), "Internal error");
+          GMM_ASSERT1(itr == RQprime[q2]->cend(), "Internal error");
         }
       } // in partQ
 
@@ -5120,7 +5120,7 @@ namespace getfem {
         { // writing into RQprime
           auto itw = RQprime[q1]->begin();
           for (size_type qq1=qq1start; qq1 < qq1end; ++qq1)
-            *itw++ = Rqq[qq1];
+            *itw++ = Rqq[qq1]/coeff;
         }
         for (const auto &jjj2 : partJ) {
           size_type j2 = jjj2[0], jj2start = jjj2[1], jj2end = jjj2[2];
@@ -5134,20 +5134,18 @@ namespace getfem {
     }
 
     ga_instruction_condensation_sub(gmm::dense_matrix<base_tensor *> &KQJpr,
-                                    std::vector<base_tensor *> &RQpr,
+                                    std::vector<base_tensor *> &RQpr, // input/output
                                     const gmm::dense_matrix<base_tensor *> &KQQ,
                                     const gmm::dense_matrix<base_tensor *> &KQJ,
-                                    const std::vector<base_tensor *> &RQ,
-                                    const std::set<size_type> &Qset)
-      : KQJprime(KQJpr), RQprime(RQpr)
+                                    const std::set<size_type> &Qset,
+                                    const scalar_type &coeff_)
+      : KQJprime(KQJpr), RQprime(RQpr), coeff(coeff_)
     {
       // * to const *
       KQQloc.resize(KQQ.nrows(), KQQ.ncols());
       KQJloc.resize(KQJ.nrows(), KQJ.ncols());
-      RQloc.resize(RQ.size());
       for (size_type i=0; i < KQQ.as_vector().size(); ++i) KQQloc[i] = KQQ[i];
       for (size_type i=0; i < KQJ.as_vector().size(); ++i) KQJloc[i] = KQJ[i];
-      for (size_type i=0; i < RQ.size(); ++i) RQloc[i] = RQ[i];
 
       for (size_type j=0; j < KQJ.ncols(); ++j)
         for (const size_type &q : Qset)
@@ -5219,7 +5217,7 @@ namespace getfem {
 
   struct ga_instruction_condensation_super_R : public ga_instruction {
     base_tensor &Ri;
-    std::vector<base_tensor *> KiQ, RQ; // indexed wrt q in Q
+    std::vector<base_tensor *> KiQ, RQpr; // indexed wrt q in Q
     size_type Qsize;
 
     virtual int exec() {
@@ -5229,7 +5227,7 @@ namespace getfem {
       Ri.adjust_sizes(m);
       gmm::clear(Ri.as_vector());
       for (size_type k=0; k < Qsize; ++k) {
-        const base_tensor &K1 = *KiQ[k], &R2 = *RQ[k];
+        const base_tensor &K1 = *KiQ[k], &R2 = *RQpr[k];
         size_type qqsize = K1.size(1);
         GMM_ASSERT1(K1.size(0) == m && R2.size(0) == qqsize, "Internal error");
         base_tensor::iterator it = Ri.begin();
@@ -5242,11 +5240,11 @@ namespace getfem {
     }
     ga_instruction_condensation_super_R(base_tensor &Ri_,
                                         const std::vector<base_tensor *> KiQ_,
-                                        const std::vector<base_tensor *> RQ_)
-      : Ri(Ri_), KiQ(KiQ_), RQ(RQ_)
+                                        const std::vector<base_tensor *> RQpr_)
+      : Ri(Ri_), KiQ(KiQ_), RQpr(RQpr_)
     {
       Qsize = KiQ.size();
-      GMM_ASSERT1(KiQ.size() == RQ.size(), "Internal error");
+      GMM_ASSERT1(KiQ.size() == RQpr.size(), "Internal error");
     }
   };
 
@@ -7349,12 +7347,8 @@ namespace getfem {
                                      KQJ, KQJpr, // subdiagonal
                                      KIQ,        // superdiagonal
                                      KIJ;        // outcome
-    gmm::dense_matrix<size_type> KQQ_sparsity, // diagonal
-                                 KQJ_sparsity, // subdiagonal
-                                 KIQ_sparsity; // superdiagonal
-    std::vector<base_tensor *> RQ,   // res. vector of condensed variables
-                               RI,   // res. vector of coupled primary variables
-                               RQpr; // partial solution for condensed variables
+    std::vector<base_tensor *> RI,   // res. vector of coupled primary variables
+                               RQpr; // partial solution for condensed variables (initially stores residuals)
   };
 
   void ga_compile(ga_workspace &workspace,
@@ -7449,15 +7443,10 @@ namespace getfem {
         // Qclusters: definition of clusters of intercoupled variables of Qvars
         // cluster_of_Qvar: dictionary for which cluster each variable belongs to
         CC.KQQ.resize(Qsize, Qsize);
-        CC.KQQ_sparsity.resize(Qsize, Qsize);
-        CC.RQ.resize(Qsize);
         CC.RQpr.resize(Qsize);
         for (size_type q=0; q < Qsize; ++q) {
           bgeot::multi_index mi(1);
           mi[0] = workspace.associated_im_data(CC.Qvars[q]) ->nb_tensor_elem();
-          gis.condensation_tensors.push_back // memory allocation
-                                   (std::make_shared<base_tensor>(mi));
-          CC.RQ[q] = gis.condensation_tensors.back().get();
           gis.condensation_tensors.push_back // memory allocation
                                    (std::make_shared<base_tensor>(mi));
           CC.RQpr[q] = gis.condensation_tensors.back().get();
@@ -7688,37 +7677,19 @@ namespace getfem {
                               "Internal error");
                   size_type q1 = CC.Qvars[root->name_test1],
                             q2 = CC.Qvars[root->name_test2];
-                  auto &Kqq = CC.KQQ(q1,q2);
-                  auto &Kqq_sparsity = CC.KQQ_sparsity(q1,q2);
-                  if (Kqq_sparsity == 0) {
-                    // Just point to the current term result root->tensor()
-                    GMM_ASSERT1(!Kqq, "Internal error");
-                    Kqq_sparsity = 1;
-                    Kqq = &(root->tensor());
-                  } else if (Kqq_sparsity == 1) {
-                    // Kqq already points to the result tensor of another
-                    // term. To avoid altering that tensor a new matrix is
-                    // allocated to gather contributions from multiple terms
-                    GMM_ASSERT1(Kqq, "Internal error");
+                  if (!CC.KQQ(q1,q2)) {
                     // allocate a new matrix
                     gis.condensation_tensors.push_back
                       (std::make_shared<base_tensor>(s1,s2));
-                    // addition instruction to the newly allocated matrix
-                    pgai = std::make_shared<ga_instruction_add>
-                           (*gis.condensation_tensors.back(),
-                            *Kqq, root->tensor());
-                    rmi.instructions.push_back(std::move(pgai));
-                    Kqq = gis.condensation_tensors.back().get();
-                    Kqq_sparsity = 2;
-                  } else if (Kqq_sparsity > 1) {
-                    // an extra matrix for this entry has already been
-                    // allocated, so just add the current tensor to it
-                    GMM_ASSERT1(Kqq, "Internal error");
+                    CC.KQQ(q1,q2) = gis.condensation_tensors.back().get();
+                    pgai = std::make_shared<ga_instruction_copy_vect>
+                      (CC.KQQ(q1,q2)->as_vector(), root->tensor().as_vector());
+                  } else {
+                    // addition instruction to the previously allocated matrix
                     pgai = std::make_shared<ga_instruction_add_to>
-                           (*Kqq, root->tensor());
-                    rmi.instructions.push_back(std::move(pgai));
-                    Kqq_sparsity += 1;
+                      (*CC.KQQ(q1,q2), root->tensor());
                   }
+                  rmi.instructions.push_back(std::move(pgai));
                 } else if (condensation &&
                            workspace.is_internal_variable(root->name_test1)) {
                   // subdiagonal condensation matrix KQJ
@@ -7734,45 +7705,26 @@ namespace getfem {
                   size_type q1 = CC.Qvars[root->name_test1],
                             j2 = CC.Jvars[root->name_test2];
                   CC.Jclusters[CC.cluster_of_Qvar[q1]].insert(j2);
-                  if (q1 >= CC.KQJ.nrows() || j2 >= CC.KQJ.ncols()) {
+                  if (q1 >= CC.KQJ.nrows() || j2 >= CC.KQJ.ncols())
                     CC.KQJ.resize(std::max(CC.KQJ.nrows(), q1+1),
                                   std::max(CC.KQJ.ncols(), j2+1));
-                    CC.KQJ_sparsity.resize(CC.KQJ.nrows(), CC.KQJ.ncols());
-                  }
-                  auto &Kqj = CC.KQJ(q1,j2);
-                  auto &Kqj_sparsity = CC.KQJ_sparsity(q1,j2);
-                  if (Kqj_sparsity == 0) {
-                    // Just point to the current term result root->tensor()
-                    GMM_ASSERT1(!Kqj, "Internal error");
-                    Kqj_sparsity = 1;
-                    Kqj = &(root->tensor());
-                  } else if (Kqj_sparsity == 1) {
-                    // Kqj already points to the result tensor of another
-                    // term. To avoid altering that tensor a new matrix is
-                    // allocated to gather contributions from multiple terms
-                    GMM_ASSERT1(Kqj, "Internal error");
+                  if (!CC.KQJ(q1,j2)) {
                     // allocate a new matrix. Here we do not know the size as
                     // it may change dynamically, but for now, just use the
                     // size of root->tensor()
                     gis.condensation_tensors.push_back
                       (std::make_shared<base_tensor>(root->tensor()));
                     GMM_ASSERT1(root->tensor().size(0) == s1, "Internal error");
-                    // addition instruction to the newly allocated matrix
-                    pgai = std::make_shared<ga_instruction_add>
-                           (*gis.condensation_tensors.back(),
-                            *Kqj, root->tensor());
-                    rmi.instructions.push_back(std::move(pgai));
-                    Kqj = gis.condensation_tensors.back().get();
-                    Kqj_sparsity = 2;
-                  } else if (Kqj_sparsity > 1) {
+                    CC.KQJ(q1,j2) = gis.condensation_tensors.back().get();
+                    pgai = std::make_shared<ga_instruction_copy_vect>
+                      (CC.KQJ(q1,j2)->as_vector(), root->tensor().as_vector());
+                  } else {
                     // an extra matrix for this entry has already been
                     // allocated, so just add the current tensor to it
-                    GMM_ASSERT1(Kqj, "Internal error");
                     pgai = std::make_shared<ga_instruction_add_to>
-                           (*Kqj, root->tensor());
-                    rmi.instructions.push_back(std::move(pgai));
-                    Kqj_sparsity += 1;
+                      (*CC.KQJ(q1,j2), root->tensor());
                   }
+                  rmi.instructions.push_back(std::move(pgai));
                 } else if (condensation &&
                            workspace.is_internal_variable(root->name_test2)) {
                   // superdiagonal condensation matrix KIQ
@@ -7787,23 +7739,10 @@ namespace getfem {
                               "Internal error");
                   size_type i1 = CC.Ivars[root->name_test1],
                             q2 = CC.Qvars[root->name_test2];
-                  if (i1 >= CC.KIQ.nrows() || q2 >= CC.KIQ.ncols()) {
+                  if (i1 >= CC.KIQ.nrows() || q2 >= CC.KIQ.ncols())
                     CC.KIQ.resize(std::max(CC.KIQ.nrows(), i1+1),
                                   std::max(CC.KIQ.ncols(), q2+1));
-                    CC.KIQ_sparsity.resize(CC.KIQ.nrows(), CC.KIQ.ncols());
-                  }
-                  auto &Kiq = CC.KIQ(i1,q2);
-                  auto &Kiq_sparsity = CC.KIQ_sparsity(i1,q2);
-                  if (Kiq_sparsity == 0) {
-                    // Just point to the current term result root->tensor()
-                    GMM_ASSERT1(!Kiq, "Internal error");
-                    Kiq_sparsity = 1;
-                    Kiq = &(root->tensor());
-                  } else if (Kiq_sparsity == 1) {
-                    // Kiq already points to the result tensor of another
-                    // term. To avoid altering that tensor a new matrix is
-                    // allocated to gather contributions from multiple terms
-                    GMM_ASSERT1(Kiq, "Internal error");
+                  if (!CC.KIQ(i1,q2)) {
                     // allocate a new matrix. Here we do not know the size as
                     // it may change dynamically, but for now, just use the
                     // size of root->tensor()
@@ -7811,22 +7750,16 @@ namespace getfem {
                       (std::make_shared<base_tensor>(root->tensor()));
                     GMM_ASSERT1(root->tensor().size(1) == s2,
                                 "Internal error");
-                    // addition instruction to the newly allocated matrix
-                    pgai = std::make_shared<ga_instruction_add>
-                           (*gis.condensation_tensors.back(),
-                            *Kiq, root->tensor());
-                    rmi.instructions.push_back(std::move(pgai));
-                    Kiq = gis.condensation_tensors.back().get();
-                    Kiq_sparsity = 2;
-                  } else if (Kiq_sparsity > 1) {
+                    CC.KIQ(i1,q2) = gis.condensation_tensors.back().get();
+                    pgai = std::make_shared<ga_instruction_copy_vect>
+                      (CC.KIQ(i1,q2)->as_vector(), root->tensor().as_vector());
+                  } else {
                     // an extra matrix for this entry has already been
                     // allocated, so just add the current tensor to it
-                    GMM_ASSERT1(Kiq, "Internal error");
                     pgai = std::make_shared<ga_instruction_add_to>
-                           (*Kiq, root->tensor());
-                    rmi.instructions.push_back(std::move(pgai));
-                    Kiq_sparsity += 1;
+                      (*CC.KIQ(i1,q2), root->tensor());
                   }
+                  rmi.instructions.push_back(std::move(pgai));
                 } else if (!workspace.is_internal_variable(root->name_test1) &&
                            !workspace.is_internal_variable(root->name_test2)) {
 
@@ -7961,7 +7894,7 @@ namespace getfem {
           // Add one diagonal/subdiagonal condensation instruction per cluster
           for (size_type k=0; k < CC.Qclusters.size(); ++k) {
             // extract condensed variables residuals from
-            // workspace.assembled_vector() into RQ
+            // workspace.assembled_vector() into RQpr
             for (size_type q1 : CC.Qclusters[k]) {
               std::string name_test1 = CC.Qvars[q1];
               const im_data *imd1 = workspace.associated_im_data(name_test1);
@@ -7969,7 +7902,7 @@ namespace getfem {
                 &I1 = workspace.interval_of_variable(name_test1);
               pgai =
                 std::make_shared<ga_instruction_extract_residual_on_imd_dofs>
-                (*(CC.RQ[q1]), workspace.assembled_vector(), // --> CC.RQ[q1]
+                (*(CC.RQpr[q1]), workspace.cached_vector(), // cached_V --> CC.RQpr[q1]
                  gis.ctx, I1, *imd1, gis.ipt);
               rmi.instructions.push_back(std::move(pgai));
             }
@@ -7978,7 +7911,7 @@ namespace getfem {
             // necessary size update to match the sizes of KQJ, upon size change
             // of primary variables J
             pgai = std::make_shared<ga_instruction_condensation_sub>
-              (CC.KQJpr, CC.RQpr, CC.KQQ, CC.KQJ, CC.RQ, CC.Qclusters[k]);
+              (CC.KQJpr, CC.RQpr, CC.KQQ, CC.KQJ, CC.Qclusters[k], gis.coeff); // factor_of_variable()?
             rmi.instructions.push_back(std::move(pgai));
 
             // assemble/store KQJpr/RQpr matrices/vectors into the
@@ -7986,8 +7919,8 @@ namespace getfem {
             for (size_type q1 : CC.Qclusters[k]) {
               std::string name_test1 = CC.Qvars[q1];
               const im_data *imd1 = workspace.associated_im_data(name_test1);
-              const scalar_type
-                &alpha1 = workspace.factor_of_variable(name_test1);
+//              const scalar_type
+//                &alpha1 = workspace.factor_of_variable(name_test1); // TODO
               const gmm::sub_interval
                 &I1 = workspace.interval_of_variable(name_test1);
               GMM_ASSERT1(imd1, "Internal error");
@@ -7999,20 +7932,17 @@ namespace getfem {
 //                GMM_ASSERT1(intn2.empty(), "Coupling of internal variables "
 //                                           "with interpolated variables not "
 //                                           "implemented yet");
-                const scalar_type
-                  &alpha2 = workspace.factor_of_variable(name_test2);
+//                const scalar_type
+//                  &alpha2 = workspace.factor_of_variable(name_test2); // TODO
                 const gmm::sub_interval
-                  &I2 = workspace.interval_of_variable(name_test2);
+                  &I2 = mf2 && mf2->is_reduced()
+                      ? workspace.temporary_interval_of_variable(name_test2)
+                      : workspace.interval_of_variable(name_test2);
                 const base_tensor &Kq1j2pr = *(CC.KQJpr(q1,j2)); // <- input
                 model_real_sparse_matrix
-                  &KQJpr = workspace.internal_coupling_matrix(); // <- output
-                GMM_ASSERT1(
-                  gmm::mat_nrows(KQJpr) == workspace.nb_primary_dof()
-                                          +workspace.nb_internal_dof() &&
-                  gmm::mat_ncols(KQJpr) == workspace.nb_primary_dof(),
-                  "The internal coupling matrix needs to be allocated with "
-                  "nb_primary_dof()+nb_internal_dof() number of rows, even if "
-                  "only the last nb_internal_dof() rows are filled in.");
+                  &KQJpr = mf2 && mf2->is_reduced()
+                         ? workspace.col_unreduced_matrix()
+                         : workspace.internal_coupling_matrix(); // <- output
                 if (mf2) {
                   pgai =
                     std::make_shared<ga_instruction_matrix_assembly_imd_mf>
@@ -8031,7 +7961,7 @@ namespace getfem {
               const bool initialize = true;
               pgai = std::make_shared<ga_instruction_vector_assembly_imd>
                 (*(CC.RQpr[q1]), workspace.assembled_vector(), // <- overwriting internal variables residual with internal solution
-                 gis.ctx, I1, *imd1, gis.coeff, gis.ipt, initialize);
+                 gis.ctx, I1, *imd1, gis.ONE, gis.ipt, initialize); // without gis.coeff
               rmi.instructions.push_back(std::move(pgai));
             } // for q1
           }
@@ -8124,17 +8054,17 @@ namespace getfem {
             } // for j2
 
             // RHS condensation instructions
-            std::vector<base_tensor *> Ki1Q, RQ;
+            std::vector<base_tensor *> Ki1Q, RQpr;
             for (size_type q=0; q < CC.Qvars.size(); ++q)
               if (CC.KIQ(i1,q)) {
                 Ki1Q.push_back(CC.KIQ(i1,q));
-                RQ.push_back(CC.RQ[q]);
+                RQpr.push_back(CC.RQpr[q]);
               }
             gis.condensation_tensors.push_back
                                      (std::make_shared<base_tensor>());
             base_tensor &Ri = *gis.condensation_tensors.back();
             pgai = std::make_shared<ga_instruction_condensation_super_R>
-                   (Ri, Ki1Q, RQ);
+              (Ri, Ki1Q, RQpr);
             rmi.instructions.push_back(std::move(pgai));
 
             base_vector &R = mf1->is_reduced() ? workspace.unreduced_vector()
