@@ -129,7 +129,7 @@ mesh.region_subtract(BOTTOM_BOUND, HOLE_BOUND)
 mesh.region_merge(HOLE1_BOUND, HOLE2_BOUND)
 mesh.region_merge(HOLE1_BOUND, HOLE3_BOUND)
 
-assert mesh.region(HOLE_BOUND) == mesh.region(HOLE_BOUND1)
+np.testing.assert_array_equal(mesh.region(HOLE_BOUND), mesh.region(HOLE1_BOUND))
 
 if (export_mesh):
     mesh.export_to_vtk('mesh.vtk');
