@@ -171,10 +171,20 @@ int main(int argc, char *argv[]) {
   mesh.region( HOLE2_BOUND) = fb7;
   mesh.region( HOLE3_BOUND) = fb8;
 
-  mesh.region_merge(HOLE1_BOUND, HOLE2_BOUND);
-  mesh.region_merge(HOLE1_BOUND, HOLE3_BOUND);
-
-  GMM_ASSERT1(mesh.region(HOLE_BOUND) == mesh.region(HOLE1_BOUND), "Region is not equal.");
+  dal::bit_vector nn = mesh.convex_index();
+  bgeot::size_type i;
+  for (i << nn; i != bgeot::size_type(-1); i << nn) {
+    bgeot::pconvex_structure cvs = mesh.structure_of_convex(i);
+    for (bgeot::short_type f = 0; f < cvs->nb_faces(); ++f) {
+      if(mesh.region(HOLE_BOUND).is_in(i, f))
+        GMM_ASSERT1(
+          mesh.region(HOLE1_BOUND).is_in(i, f) ||
+          mesh.region(HOLE2_BOUND).is_in(i, f) ||
+          mesh.region(HOLE3_BOUND).is_in(i, f),
+          "Error in select region"
+        );
+    }
+  }
 
   if (export_mesh) {
     getfem::vtk_export exp("mesh.vtk", false);
