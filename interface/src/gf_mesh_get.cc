@@ -456,7 +456,7 @@ void gf_mesh_get(getfemint::mexargs_in& m_in,
 
 
     /*@GET PIDs = ('pid in faces', @imat CVFIDs)
-    Search point #id listed in `CVFIDs`.
+    Return point #id listed in `CVFIDs`.
 
     `CVFIDs` is a two-rows matrix, the first row lists convex #ids,
     and the second lists face numbers. On return, `PIDs` is a
@@ -488,7 +488,7 @@ void gf_mesh_get(getfemint::mexargs_in& m_in,
 
 
     /*@GET PIDs = ('pid in cvids', @imat CVIDs)
-      Search point #id listed in `CVIDs`.
+      Return point #id listed in `CVIDs`.
       
       `PIDs` is a @MATLAB{row }vector containing points #id.@*/
     sub_command
@@ -508,7 +508,7 @@ void gf_mesh_get(getfemint::mexargs_in& m_in,
 
 
     /*@GET PIDs = ('pid in regions', @imat RIDs)
-    Search point #id listed in `RIDs`.
+    Return point #id listed in `RIDs`.
 
     `PIDs` is a @MATLAB{row }vector containing points #id.@*/
     sub_command
@@ -537,7 +537,7 @@ void gf_mesh_get(getfemint::mexargs_in& m_in,
 
 
     /*@GET PIDs = ('pid from coords', @mat PTS[, @scalar radius=0])
-    Search point #id whose coordinates are listed in `PTS`.
+    Return point #id whose coordinates are listed in `PTS`.
 
     `PTS` is an array containing a list of point coordinates. On
     return, `PIDs` is a @MATLAB{row }vector containing points
@@ -603,6 +603,7 @@ void gf_mesh_get(getfemint::mexargs_in& m_in,
     /*@GET @CELL{Pts, IDx} = ('pts from cvid'[, @imat CVIDs])
     Search point listed in `CVID`.
 
+    Return `Pts` and `IDx`.
     If `CVIDs` is omitted, all the convexes will be considered
     (equivalent to `CVIDs = MESH:GET('max cvid')`). `IDx` is a
     @MATLAB{row }vector, length(IDx) = length(CVIDs)+1. `Pts` is a
@@ -710,6 +711,7 @@ void gf_mesh_get(getfemint::mexargs_in& m_in,
     /*@GET [E,C] = ('curved edges', @int N [, CVLST])
     [OBSOLETE FUNCTION! will be removed in a future release]
 
+    Return E and C.
     More sophisticated version of MESH:GET('edges') designed for
     curved elements. This one will return N (N>=2) points of the
     (curved) edges. With N==2, this is equivalent to
@@ -736,7 +738,7 @@ void gf_mesh_get(getfemint::mexargs_in& m_in,
 
 
     /*@GET PIDs = ('orphaned pid')
-      Search point #id which are not linked to a convex.@*/
+      Return point #id which are not linked to a convex.@*/
     sub_command
       ("orphaned pid", 0, 0, 0, 1,
        dal::bit_vector bv = pmesh->points().index();
@@ -749,7 +751,7 @@ void gf_mesh_get(getfemint::mexargs_in& m_in,
 
 
     /*@GET CVIDs = ('cvid from pid', @ivec PIDs[, @bool share=False])
-    Search convex #ids related with the point #ids given in `PIDs`.
+    Return convex #ids related with the point #ids given in `PIDs`.
     
     If `share=False`, search convex whose vertex #ids are in `PIDs`.
     If `share=True`, search convex #ids that share the point #ids
@@ -969,7 +971,7 @@ void gf_mesh_get(getfemint::mexargs_in& m_in,
 
 
     /*@GET N = ('normal of face', @int cv, @int f[, @int nfpt])
-    Evaluates the normal of convex `cv`, face `f` at the `nfpt` point of the face.
+    Return the normal vector of convex `cv`, face `f` at the `nfpt` point of the face.
 
     If `nfpt` is not specified, then the normal is evaluated at each
     geometrical node of the face.@*/
@@ -985,7 +987,7 @@ void gf_mesh_get(getfemint::mexargs_in& m_in,
 
 
     /*@GET N = ('normal of faces', @imat CVFIDs)
-    Evaluates (at face centers) the normals of convexes.
+    Return matrix of (at face centers) the normal vectors of convexes.
 
     `CVFIDs` is supposed a two-rows matrix, the first row lists convex
     #ids, and the second lists face numbers (local number in the convex).@*/
