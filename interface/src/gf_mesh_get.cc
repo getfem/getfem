@@ -161,10 +161,11 @@ outer_faces(const getfem::mesh &m, mexargs_in &in, mexargs_out &out, const std::
 
   bool with_normal(condition == "direction");
   bool with_box(condition == "box");
+  bool with_ball(condition == "ball");
 
   darray normal_vector;
-  bgeot::base_node un, pmin, pmax;
-  scalar_type threshold(0);
+  bgeot::base_node un, pmin, pmax, center;
+  scalar_type threshold(0), radius(0);
   if (with_normal) {
     normal_vector = in.pop().to_darray();
     scalar_type angle = in.pop().to_scalar();
@@ -178,6 +179,13 @@ outer_faces(const getfem::mesh &m, mexargs_in &in, mexargs_out &out, const std::
       pmin[k] = std::min(p1[k],p2[k]);
       pmax[k] = std::max(p1[k],p2[k]);
     }
+  } else if (with_ball) {
+    darray p1 = in.pop().to_darray(m.dim());
+    center.resize(m.dim());
+    for (size_type k=0; k < m.dim(); ++k) {
+      center[k] = p1[k];
+    }
+    radius = in.pop().to_scalar();
   }
 
   if (in.remaining()) cvlst = in.pop().to_bit_vector(&m.convex_index());
@@ -217,6 +225,27 @@ outer_faces(const getfem::mesh &m, mexargs_in &in, mexargs_out &out, const std::
             for (size_type k=0; k < m.dim(); ++k)
               if (m.points()[*pid][k] < pmin[k] ||
                   m.points()[*pid][k] > pmax[k]) {
+                rejected_pids.add(*pid);
+                break;
+              }
+          }
+          if (rejected_pids.is_in(*pid)) {
+            lst[i].cnt = -1;
+            break;
+          }
+        }
+      } else if (with_ball) {
+        for (std::vector<size_type>::const_iterator pid=lst[i].ptid.begin();
+             pid != lst[i].ptid.end(); ++pid) {
+          if (!checked_pids.is_in(*pid)) {
+            checked_pids.add(*pid);
+            scalar_type checked_radius = scalar_type(0.0);
+            for (size_type k=0; k < m.dim(); ++k) {
+              checked_radius += pow(m.points()[*pid][k] - center[k], 2);
+            }
+            checked_radius = std::sqrt(checked_radius);
+            for (size_type k=0; k < m.dim(); ++k)
+              if (checked_radius > radius) {
                 rejected_pids.add(*pid);
                 break;
               }
@@ -847,6 +876,19 @@ void gf_mesh_get(getfemint::mexargs_in& m_in,
       ("outer faces in box", 2, 3, 0, 1,
        check_empty_mesh(pmesh);
        outer_faces(*pmesh, in, out, "box");
+       );
+
+    /*@GET CVFIDs = ('outer faces in ball', @vec center, @scalar radius [, CVIDs])
+    Return the set of faces not shared by two convexes and lying within the ball of corresponding `center` and `radius`.
+
+    The output `CVFIDs` is a two-rows matrix, the first row lists convex
+    #ids, and the second one lists face numbers (local number in the
+    convex). If `CVIDs` is given, it returns portion of the boundary of
+    the convex set defined by the #ids listed in `CVIDs`.@*/
+    sub_command
+      ("outer faces in ball", 2, 3, 0, 1,
+       check_empty_mesh(pmesh);
+       outer_faces(*pmesh, in, out, "ball");
        );
 
     /*@GET CVFIDs = ('adjacent face', @int cvid, @int fid)
