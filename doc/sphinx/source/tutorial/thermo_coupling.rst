@@ -438,7 +438,7 @@ The last thing to define is an integration method `mim`. There is no default int
                 mfvm.set_classical_discontinuous_finite_element(elements_degree);
 
                 getfem::mesh_im  mim(mesh);
-                mim.set_integration_method(bgeot::dim_type(gmm::sqr(elements_degree)));
+                mim.set_integration_method(2*elements_degree);
 ---------- ---------------------------------------------------------------------------
 **Python** .. code-block:: python
 
@@ -448,7 +448,7 @@ The last thing to define is an integration method `mim`. There is no default int
                 mft.set_classical_fem(elements_degree)
                 mfvm = gf.MeshFem(mesh, 1)
                 mfvm.set_classical_discontinuous_fem(elements_degree)
-                mim = gf.MeshIm(mesh, pow(elements_degree,2))
+                mim = gf.MeshIm(mesh, elements_degree*2)
 ---------- ---------------------------------------------------------------------------
 **Scilab** .. code-block:: matlab
 
@@ -458,7 +458,7 @@ The last thing to define is an integration method `mim`. There is no default int
                 gf_mesh_fem_set(mft, 'classical fem', elements_degree);
                 mfvm = gf_mesh_fem(mesh, 1);
                 gf_mesh_fem_set(mfvm, 'classical discontinuous fem', elements_degree-1);
-                mim = gf_mesh_im(mesh, elements_degree^2);
+                mim = gf_mesh_im(mesh, elements_degree*2);
 ---------- ---------------------------------------------------------------------------
 **Matlab** .. code-block:: matlab
 
@@ -468,7 +468,7 @@ The last thing to define is an integration method `mim`. There is no default int
                 gf_mesh_fem_set(mft, 'classical fem', elements_degree);
                 mfvm = gf_mesh_fem(mesh, 1);
                 gf_mesh_fem_set(mfvm, 'classical discontinuous fem', elements_degree-1);
-                mim = gf_mesh_im(mesh, elements_degree^2);
+                mim = gf_mesh_im(mesh, elements_degree*2);
 ========== ===========================================================================
 
 

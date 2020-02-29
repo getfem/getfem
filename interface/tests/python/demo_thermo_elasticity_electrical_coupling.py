@@ -146,7 +146,7 @@ mft = gf.MeshFem(mesh, 1)  # Finite element for temperature and electrical field
 mft.set_classical_fem(elements_degree)
 mfvm = gf.MeshFem(mesh, 1) # Finite element for Von Mises stress interpolation
 mfvm.set_classical_discontinuous_fem(elements_degree)
-mim = gf.MeshIm(mesh, pow(elements_degree,2))   # Integration method
+mim = gf.MeshIm(mesh, elements_degree*2)   # Integration method
 
 
 #

@@ -208,7 +208,7 @@ int main(int argc, char *argv[]) {
   mfvm.set_classical_discontinuous_finite_element(elements_degree);
 
   getfem::mesh_im  mim(mesh);     // Integration method
-  mim.set_integration_method(bgeot::dim_type(gmm::sqr(elements_degree)));
+  mim.set_integration_method(bgeot::dim_type(2*elements_degree));
 
 
   //
