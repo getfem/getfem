@@ -1356,7 +1356,7 @@ namespace getfem {
       GMM_ASSERT1(pnode->nbc1+1 < children.size(), "Internal error");
       pga_tree_node pchild = children[pnode->nbc1+1];
 
-      if (po || pt) {
+      if (po || pt || pnode->op_type != GA_NAME) {
         if (!(pchild->children.empty()) || pchild->node_type != GA_NODE_NAME)
           ga_throw_error(pchild->expr, pchild->pos, "Error in macro "
                          "expansion. Only variable name are allowed for macro "
@@ -1380,7 +1380,7 @@ namespace getfem {
         if (po == 1) pnode->name = "Grad_" + pnode->name;
         if (po == 2) pnode->name = "Hess_" + pnode->name;
         if (po == 3) pnode->name = "Div_" + pnode->name;
-      } else {   
+      } else {
         pga_tree_node pnode_old = pnode;
         pnode = nullptr;
         tree.copy_node(pchild, pnode_old->parent, pnode);
