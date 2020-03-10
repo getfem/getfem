@@ -28,15 +28,9 @@ Then, if you download the current git version
    $ brew install libtool
 
 For the sequential mumps,
-   $ brew tap dpo/openblas
+   $ brew tap brewsci/num
 
-   $ brew tap-pin dpo/openblas
-
-   $ brew options ipopt
-
-   $ brew options mumps
-
-   $ brew install mumps --without-mpi
+   $ brew install rewsci-mumps --without-mpi
 
 For the parallel one, just forget --without-mpi and install also mpi and metis.
 
