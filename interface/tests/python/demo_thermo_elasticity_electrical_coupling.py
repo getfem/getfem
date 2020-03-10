@@ -106,18 +106,30 @@ fb2 = mesh.outer_faces_with_direction([ 1., 0.], 0.01) # Right boundary
 fb3 = mesh.outer_faces_with_direction([-1., 0.], 0.01) # Left boundary
 fb4 = mesh.outer_faces_with_direction([0.,  1.], 0.01) # Top boundary
 fb5 = mesh.outer_faces_with_direction([0., -1.], 0.01) # Bottom boundary
+fb6 = mesh.outer_faces_in_ball([25., 12.5], 8.+0.01*h) # Left hole boundary
+fb7 = mesh.outer_faces_in_ball([50., 12.5], 8.+0.01*h) # Center hole boundary
+fb8 = mesh.outer_faces_in_ball([75., 12.5], 8.+0.01*h) # Right hole boundary
 
 RIGHT_BOUND=1; LEFT_BOUND=2; TOP_BOUND=3; BOTTOM_BOUND=4; HOLE_BOUND=5;
+HOLE1_BOUND = 6; HOLE2_BOUND = 7; HOLE3_BOUND = 8;
 
 mesh.set_region( RIGHT_BOUND, fb2)
 mesh.set_region(  LEFT_BOUND, fb3)
 mesh.set_region(   TOP_BOUND, fb4)
 mesh.set_region(BOTTOM_BOUND, fb5)
 mesh.set_region(  HOLE_BOUND, fb1)
+mesh.set_region( HOLE1_BOUND, fb6)
+mesh.set_region( HOLE2_BOUND, fb7)
+mesh.set_region( HOLE3_BOUND, fb8)
 mesh.region_subtract( RIGHT_BOUND, HOLE_BOUND)
 mesh.region_subtract(  LEFT_BOUND, HOLE_BOUND)
 mesh.region_subtract(   TOP_BOUND, HOLE_BOUND)
 mesh.region_subtract(BOTTOM_BOUND, HOLE_BOUND)
+
+mesh.region_merge(HOLE1_BOUND, HOLE2_BOUND)
+mesh.region_merge(HOLE1_BOUND, HOLE3_BOUND)
+
+np.testing.assert_array_equal(mesh.region(HOLE_BOUND), mesh.region(HOLE1_BOUND))
 
 if (export_mesh):
     mesh.export_to_vtk('mesh.vtk');
@@ -134,7 +146,7 @@ mft = gf.MeshFem(mesh, 1)  # Finite element for temperature and electrical field
 mft.set_classical_fem(elements_degree)
 mfvm = gf.MeshFem(mesh, 1) # Finite element for Von Mises stress interpolation
 mfvm.set_classical_discontinuous_fem(elements_degree)
-mim = gf.MeshIm(mesh, pow(elements_degree,2))   # Integration method
+mim = gf.MeshIm(mesh, elements_degree*2)   # Integration method
 
 
 #

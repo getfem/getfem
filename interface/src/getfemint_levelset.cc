@@ -42,9 +42,7 @@ namespace getfemint {
     f.compile();
     pls->values(idx).resize(mf.nb_dof());
     
-    bool is_set = 0;
     for (unsigned i=0; i < mf.nb_dof(); ++i) {
-      is_set = 0;
       gmm::copy(mf.point_of_basic_dof(i), pt);
       const bgeot::base_tensor &t = f.eval();
       GMM_ASSERT1(t.size() == 1, "Wrong size of expression result " << s);

@@ -678,6 +678,14 @@ namespace getfem {
                       const base_node &pt1,
                       const base_node &pt2);
 
+  /** Select in the region mr the faces of the mesh m lying entirely in the
+      ball delimated by pt1 and radius.
+   */
+  mesh_region APIDECL
+  select_faces_in_ball(const mesh &m, const mesh_region &mr,
+                       const base_node &center,
+                       scalar_type radius);
+
   mesh_region APIDECL
   select_convexes_in_box(const mesh &m, const mesh_region &mr,
                          const base_node &pt1,

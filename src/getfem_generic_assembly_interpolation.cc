@@ -683,8 +683,8 @@ namespace getfem {
         element_boxes.find_boxes_at_point(P, bset);
 
         // using a std::set as a sorter
-        std::set<std::pair<scalar_type, const bgeot::box_index*>, rated_box_index_compare>
-          rated_boxes;
+        std::set<std::pair<scalar_type, const bgeot::box_index*>,
+                 rated_box_index_compare> rated_boxes;
         for (const auto &box : bset) {
           scalar_type rating = scalar_type(1);
           for (size_type i = 0; i < m.dim(); ++i) {
@@ -707,14 +707,14 @@ namespace getfem {
       scalar_type best_dist(1e10);
       size_type best_cv(-1);
       base_node best_P_ref;
-      for (size_type i = boxes.size(); i > 0; --i) {
+      for (size_type i = boxes.size(); i > 0 && !ret_type; --i) {
         for (auto convex : box_to_convexes.at(boxes[i-1]->id)) {
           gic.init(target_mesh.points_of_convex(convex),
                    target_mesh.trans_of_convex(convex));
 
           bool converged;
           bool is_in = gic.invert(P, P_ref, converged, 1E-4);
-          // cout << "cv = " << cv << " P = " << P << " P_ref = " << P_ref << endl;
+          // cout << "cv = " << convex << " P = " << P << " P_ref = " << P_ref;
           // cout << " is_in = " << int(is_in) << endl;
           // for (size_type iii = 0;
           //     iii < target_mesh.points_of_convex(cv).size(); ++iii)
@@ -735,7 +735,6 @@ namespace getfem {
                 best_P_ref = P_ref;
               }
             }
-            break;
           }
         }
       }

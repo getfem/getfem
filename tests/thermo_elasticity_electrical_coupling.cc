@@ -150,13 +150,42 @@ int main(int argc, char *argv[]) {
   getfem::mesh_region fb5
     = getfem::select_faces_of_normal(mesh, border_faces,
                                      base_small_vector(0., -1.), 0.01);
+  getfem::mesh_region fb6
+    = getfem::select_faces_in_ball(mesh, border_faces, base_node(25., 12.5),
+                                   8.+0.01*h);
+  getfem::mesh_region fb7
+    = getfem::select_faces_in_ball(mesh, border_faces, base_node(50., 12.5),
+                                   8.+0.01*h);
+  getfem::mesh_region fb8
+    = getfem::select_faces_in_ball(mesh, border_faces, base_node(75., 12.5),
+                                   8.+0.01*h);
 
   size_type RIGHT_BOUND = 1, LEFT_BOUND = 2, TOP_BOUND = 3, BOTTOM_BOUND = 4;
+  size_type HOLE_BOUND = 5, HOLE1_BOUND = 6, HOLE2_BOUND = 7, HOLE3_BOUND = 8;
   mesh.region( RIGHT_BOUND) = getfem::mesh_region::subtract(fb2, fb1);
   mesh.region(  LEFT_BOUND) = getfem::mesh_region::subtract(fb3, fb1);
   mesh.region(   TOP_BOUND) = getfem::mesh_region::subtract(fb4, fb1);
   mesh.region(BOTTOM_BOUND) = getfem::mesh_region::subtract(fb5, fb1);
- 
+  mesh.region(  HOLE_BOUND) = fb1;
+  mesh.region( HOLE1_BOUND) = fb6;
+  mesh.region( HOLE2_BOUND) = fb7;
+  mesh.region( HOLE3_BOUND) = fb8;
+
+  dal::bit_vector nn = mesh.convex_index();
+  bgeot::size_type i;
+  for (i << nn; i != bgeot::size_type(-1); i << nn) {
+    bgeot::pconvex_structure cvs = mesh.structure_of_convex(i);
+    for (bgeot::short_type f = 0; f < cvs->nb_faces(); ++f) {
+      if(mesh.region(HOLE_BOUND).is_in(i, f))
+        GMM_ASSERT1(
+          mesh.region(HOLE1_BOUND).is_in(i, f) ||
+          mesh.region(HOLE2_BOUND).is_in(i, f) ||
+          mesh.region(HOLE3_BOUND).is_in(i, f),
+          "Error in select region"
+        );
+    }
+  }
+
   if (export_mesh) {
     getfem::vtk_export exp("mesh.vtk", false);
     exp.exporting(mesh);
@@ -179,7 +208,7 @@ int main(int argc, char *argv[]) {
   mfvm.set_classical_discontinuous_finite_element(elements_degree);
 
   getfem::mesh_im  mim(mesh);     // Integration method
-  mim.set_integration_method(bgeot::dim_type(gmm::sqr(elements_degree)));
+  mim.set_integration_method(bgeot::dim_type(2*elements_degree));
 
 
   //

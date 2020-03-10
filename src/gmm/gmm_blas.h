@@ -1437,8 +1437,10 @@ namespace gmm {
 
   template <typename L1, typename L2, typename L3> inline
     void add_spec(const L1& l1, const L2& l2, L3& l3, abstract_vector) {
-    GMM_ASSERT2(vect_size(l1) == vect_size(l2) &&
-                vect_size(l1) == vect_size(l3), "dimensions mismatch");
+    GMM_ASSERT2(vect_size(l1) == vect_size(l2), "dimensions mismatch, "
+                << vect_size(l1) << " !=" << vect_size(l2));
+    GMM_ASSERT2(vect_size(l1) == vect_size(l3), "dimensions mismatch, "
+                << vect_size(l1) << " !=" << vect_size(l3));
     if ((const void *)(&l1) == (const void *)(&l3))
       add(l2, l3);
     else if ((const void *)(&l2) == (const void *)(&l3))

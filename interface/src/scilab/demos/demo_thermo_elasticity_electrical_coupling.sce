@@ -142,7 +142,7 @@ mft = gf_mesh_fem(mesh, 1); // Finite element for the temperature and the electr
 gf_mesh_fem_set(mft, 'classical fem', elements_degree);
 mfvm = gf_mesh_fem(mesh, 1); // Finite element for Von Mises stress interpolation
 gf_mesh_fem_set(mfvm, 'classical discontinuous fem', elements_degree-1);
-mim = gf_mesh_im(mesh, elements_degree^2);   // Integration method
+mim = gf_mesh_im(mesh, elements_degree*2);   // Integration method
 
 
 //
