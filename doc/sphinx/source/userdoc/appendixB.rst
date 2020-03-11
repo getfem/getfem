@@ -10,7 +10,7 @@
 Appendix B. Cubature method list
 ================================
 
-For more information on cubature formulas, the reader is referred to [EncyclopCubature]_ and [so-se-do2004]_ for instance. The integration methods are of two kinds. Exact integrations of polynomials and
+For more information on cubature formulas, the reader is referred to [EncyclopCubature]_ for instance. The integration methods are of two kinds. Exact integrations of polynomials and
 approximated integrations (cubature formulas) of any function. The exact
 integration can only be used if all the elements are polynomial and if the
 geometric transformation is linear.

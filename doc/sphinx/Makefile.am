@@ -19,12 +19,13 @@
 #
 
 # You can set these variables from the command line.
-PYTHON        = python
+PYTHON        = python3
 SPHINXROOT    = http://svn.python.org/projects
 LANGUAGE      = en
 SPHINXOPTS    = -D language=$(LANGUAGE)
 # SPHINXBUILD   = $(PYTHON) tools/sphinx-build.py
-SPHINXBUILD   = sphinx-build
+# SPHINXBUILD   = sphinx-build
+SPHINXBUILD   = python3 -msphinx
 SPHINXINTL    = sphinx-intl
 PAPER         =
 SOURCES       = $(srcdir)/source

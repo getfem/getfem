@@ -25,7 +25,7 @@ domain mesh generators).
 
 The structure |gf_m| may also contain a description about a region of the mesh,
 such as a boundary or a set of elements. This is handled via a container of
-convexes and convex faces, |gf_mr|. We refer to [remacle2002]_ for a discussion on mesh representation.
+convexes and convex faces, |gf_mr|. We refer to [remacle2003]_ for a discussion on mesh representation.
 
 
 Add an element to a mesh

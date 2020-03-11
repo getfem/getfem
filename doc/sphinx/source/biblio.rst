@@ -171,6 +171,9 @@ References
 .. [PO-NI2016] K. Poulios, C.F. Niordson,
    *Homogenization of long fiber reinforced composites including fiber bending effects*. Journal of the Mechanics and Physics of Solids, 94, pp 433-452, 2016.
 
+.. [remacle2003] J.-F. Remacle, M.S. Shephard;
+   *An algorithm oriented mesh database*. International Journal for Numerical Methods in Engineering, 58:2, pp 349-374, 2003.
+   
 .. [SE-PO-WO2015] A. Seitz, A. Popp, W.A. Wall,
    *A semi-smooth Newton method for orthotropic plasticity and frictional contact at finite strains*. Comput. Methods Appl. Mech. Engrg. 285:228-254, 2015.
 
