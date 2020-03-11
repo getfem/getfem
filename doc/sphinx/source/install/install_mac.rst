@@ -28,9 +28,10 @@ Then, if you download the current git version
    $ brew install libtool
 
 For the sequential mumps,
+
    $ brew tap brewsci/num
 
-   $ brew install rewsci-mumps --without-mpi
+   $ brew install brewsci-mumps --without-mpi
 
 For the parallel one, just forget --without-mpi and install also mpi and metis.
 
