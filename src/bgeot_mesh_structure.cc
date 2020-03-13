@@ -214,7 +214,7 @@ namespace bgeot {
   }
 
 
-  void mesh_structure::neighbours_of_convex(size_type ic, short_type iff,
+  void mesh_structure::neighbors_of_convex(size_type ic, short_type iff,
                                             ind_set &s) const {
     s.resize(0);
     ind_pt_face_ct pt = ind_points_of_face_of_convex(ic, iff);
@@ -229,7 +229,7 @@ namespace bgeot {
   }
 
 
-  void mesh_structure::neighbours_of_convex(size_type ic,
+  void mesh_structure::neighbors_of_convex(size_type ic,
                                             const std::vector<short_type> &ftab,
                                             ind_set &s) const {
     s.resize(0);
@@ -256,7 +256,7 @@ namespace bgeot {
       {
 	const mesh_convex_structure &q = convex_tab[ic];
 	const convex_ind_ct &ind = q.cstruct->ind_common_points_of_faces(ftab);
-	if (ind.size() == 0) return neighbours_of_convex(ic, s);
+	if (ind.size() == 0) return neighbors_of_convex(ic, s);
 	ipts.resize(ind.size());
 	auto it = ind.cbegin();
 	for (size_type &ipt : ipts) ipt = q.pts[*it++];
@@ -265,7 +265,7 @@ namespace bgeot {
     }
 
     if (ipts.size() == 0) {
-      return; // Should we return the all the neighbours ?
+      return; // Should we return the all the neighbors ?
     }
 
     auto ipt0 = ipts.cbegin();
@@ -277,7 +277,7 @@ namespace bgeot {
     }
   }
 
-  void mesh_structure::neighbours_of_convex(size_type ic, ind_set &s) const {
+  void mesh_structure::neighbors_of_convex(size_type ic, ind_set &s) const {
     s.resize(0);
     unsigned nbf = nb_faces_of_convex(ic);
     for (short_type iff = 0; iff < nbf; ++iff) {
@@ -294,7 +294,7 @@ namespace bgeot {
     }
   }
 
-  size_type mesh_structure::neighbour_of_convex(size_type ic,
+  size_type mesh_structure::neighbor_of_convex(size_type ic,
                                                 short_type iff) const {
     ind_pt_face_ct pt = ind_points_of_face_of_convex(ic, iff);
 
@@ -309,18 +309,18 @@ namespace bgeot {
   }
 
   convex_face mesh_structure::adjacent_face(size_type cv, short_type f) const {
-    size_type neighbour_element = neighbour_of_convex(cv, f);
-    if (neighbour_element == size_type(-1)) return convex_face::invalid_face();
-    auto pcs = structure_of_convex(neighbour_element);
+    size_type neighbor_element = neighbor_of_convex(cv, f);
+    if (neighbor_element == size_type(-1)) return convex_face::invalid_face();
+    auto pcs = structure_of_convex(neighbor_element);
     auto face_points = ind_points_of_face_of_convex(cv, f);
-    auto nNeighbourElementFaces = pcs->nb_faces();
-    for (short_type iff = 0; iff < nNeighbourElementFaces; ++iff) {
+    auto nNeighborElementFaces = pcs->nb_faces();
+    for (short_type iff = 0; iff < nNeighborElementFaces; ++iff) {
       auto nPointsOnFace = pcs->nb_points_of_face(iff);
-      if (is_convex_face_having_points(neighbour_element, iff,
+      if (is_convex_face_having_points(neighbor_element, iff,
                                        nPointsOnFace, face_points.begin()))
-        return {neighbour_element, iff};
+        return {neighbor_element, iff};
     }
-    GMM_ASSERT2(false, "failed to determine neighbouring face");
+    GMM_ASSERT2(false, "failed to determine neighboring face");
     return convex_face::invalid_face();
   }
 
@@ -449,7 +449,7 @@ namespace bgeot {
     std::fill(connectivity.begin(), connectivity.end(), size_type(-1));
     // double t = dal::uclock_sec();
 
-    /* count neighbours for each convex */
+    /* count neighbors for each convex */
     for (dal::bv_visitor j(cvlst); !j.finished(); ++j) {
       const mesh_structure::ind_cv_ct &ct = ms.ind_points_of_convex(j);
       mesh_structure::ind_cv_ct::const_iterator itp = ct.begin(),

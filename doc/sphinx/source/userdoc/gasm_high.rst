@@ -718,7 +718,7 @@ The ``Interpolate`` operation allows to compute integrals between quantities whi
 
 In order to use this functionality, the user have first to declare to the workspace or to the model object an interpolate transformation which described the map between the current integration point and the point lying on the same mesh or on another mesh.
 
-Different kind of transformations can be described. Several kinds of transformations has been implemented. The first one, described hereafter is a transformation described by an expression. A second one corresponds to the raytracing contact detection (see :ref:`ud-model-contact-friction_raytrace_inter_trans`). Some other transformations (neighbour element and element extrapolation) are describe in the next sections.
+Different kind of transformations can be described. Several kinds of transformations has been implemented. The first one, described hereafter is a transformation described by an expression. A second one corresponds to the raytracing contact detection (see :ref:`ud-model-contact-friction_raytrace_inter_trans`). Some other transformations (neighbor element and element extrapolation) are describe in the next sections.
 
 The transformation defined by an expression can be added to the workspace or the model thanks to the command::
 
@@ -787,7 +787,7 @@ In that case, the equality will only be prescribed in the part of the domain whe
 Element extrapolation transformation
 ------------------------------------
 
-A specific transformation (see previous section) is defined in order to allows the evaluation of certain quantities by extrapolation with respect to another element (in general a neighbour element). This is not strictly speaking a transformation since the point location remain unchanged, but the evaluation is made on another element extrapolating the shape functions outside it. This transformation is used for stabilization term in fictitious domain applications (with cut elements) where it is more robust to extrapolate some quantities on a neighbour element having a sufficiently large intersection with the real domain than evaluating them on the current element if it has a small intersection with the real domain. The functions allowing to add such a transformation to a model or a workspace are::
+A specific transformation (see previous section) is defined in order to allows the evaluation of certain quantities by extrapolation with respect to another element (in general a neighbor element). This is not strictly speaking a transformation since the point location remain unchanged, but the evaluation is made on another element extrapolating the shape functions outside it. This transformation is used for stabilization term in fictitious domain applications (with cut elements) where it is more robust to extrapolate some quantities on a neighbor element having a sufficiently large intersection with the real domain than evaluating them on the current element if it has a small intersection with the real domain. The functions allowing to add such a transformation to a model or a workspace are::
 
   add_element_extrapolation_transformation
   (model, transname, my_mesh, std::map<size_type, size_type> &elt_corr);
@@ -811,34 +811,34 @@ The following functions allow to change the element correspondence of a previous
 Evaluating discontinuities across inter-element edges/faces
 -----------------------------------------------------------
 
-A specific interpolate transformation (see previous sections), called ``neighbour_elt`` is defined by default in all models. This transformation can only be used when a computation is made on an internal edge/face of a mesh, i.e. an element face shared at least by two elements. It aims to compute discontinuity jumps of a variable across inter-element faces. It is particularly suitable to implement Discontinuous Galerkin and interior penalty methods, Ghost penalty terms or a posteriori estimators. The expressions::
+A specific interpolate transformation (see previous sections), called ``neighbor_element`` is defined by default in all models. This transformation can only be used when a computation is made on an internal edge/face of a mesh, i.e. an element face shared at least by two elements. It aims to compute discontinuity jumps of a variable across inter-element faces. It is particularly suitable to implement Discontinuous Galerkin and interior penalty methods, Ghost penalty terms or a posteriori estimators. The expressions::
 
-  Interpolate(Normal, neighbour_elt)
-  Interpolate(X, neighbour_elt)
-  Interpolate(u, neighbour_elt)
-  Interpolate(Grad_u, neighbour_elt)
-  Interpolate(Div_u, neighbour_elt)
-  Interpolate(Hess_u, neighbour_elt)
-  Interpolate(Test_u, neighbour_elt)
-  Interpolate(Grad_Test_u, neighbour_elt)
-  Interpolate(Div_Test_u, neighbour_elt)
-  Interpolate(Hess_Test_u, neighbour_elt)
+  Interpolate(Normal, neighbor_element)
+  Interpolate(X, neighbor_element)
+  Interpolate(u, neighbor_element)
+  Interpolate(Grad_u, neighbor_element)
+  Interpolate(Div_u, neighbor_element)
+  Interpolate(Hess_u, neighbor_element)
+  Interpolate(Test_u, neighbor_element)
+  Interpolate(Grad_Test_u, neighbor_element)
+  Interpolate(Div_Test_u, neighbor_element)
+  Interpolate(Hess_Test_u, neighbor_element)
 
-are available (as with any other interpolate transformation) and compute a field on the current point but on the neighbour element. Of course, ``Interpolate(X, neighbour_elt)`` as no specific interest since it returns the same result as ``X``. Similarly, in most cases, ``Interpolate(Normal, neighbour_elt)`` will return the opposite of ``Normal`` except for instance for 2D shell element in a 3D mesh where it has an interest.
+are available (as with any other interpolate transformation) and compute a field on the current point but on the neighbor element. Of course, ``Interpolate(X, neighbor_element)`` as no specific interest since it returns the same result as ``X``. Similarly, in most cases, ``Interpolate(Normal, neighbor_element)`` will return the opposite of ``Normal`` except for instance for 2D shell element in a 3D mesh where it has an interest.
 
 The jump on a variable ``u`` can be computed with::
 
-  u-Interpolate(u, neighbour_elt)
+  u-Interpolate(u, neighbor_element)
 
 and a penalisation term of the jump can be written::
 
-  (u-Interpolate(u, neighbour_elt))*(Test_u-Interpolate(Test_u, neighbour_elt))
+  (u-Interpolate(u, neighbor_element))*(Test_u-Interpolate(Test_u, neighbor_element))
 
 Note that the region representing the set of all internal faces of a mesh can be obtained thanks to the function::
 
   mr_internal_face = inner_faces_of_mesh(my_mesh, mr)
 
-where ``mr`` is an optional mesh region. If ``mr`` is specified only the face internal with respect to this region are returned. An important aspect is that  each face is represented only once and is arbitrarily chosen between the two neighbour elements.
+where ``mr`` is an optional mesh region. If ``mr`` is specified only the face internal with respect to this region are returned. An important aspect is that  each face is represented only once and is arbitrarily chosen between the two neighbor elements.
 
 See for instance :file:`interface/tests/python/demo_laplacian_DG.py` or :file:`interface/tests/matlab/demo_laplacian_DG.m` for an example of use.
 

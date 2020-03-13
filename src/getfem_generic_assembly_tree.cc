@@ -1509,35 +1509,6 @@ namespace getfem {
       ga_expand_macro(gam.tree(), gam.tree().root, macro_dict);
     }
   }
-
-  bool ga_macro_dictionary::macro_exists(const std::string &name) const {
-    if (macros.find(name) != macros.end()) return true;
-    if (parent && parent->macro_exists(name)) return true;
-    return false;
-  }
-
-
-  const ga_macro &
-  ga_macro_dictionary::get_macro(const std::string &name) const {
-    auto it = macros.find(name);
-    if (it != macros.end()) return it->second;
-    if (parent) return parent->get_macro(name);
-    GMM_ASSERT1(false, "Undefined macro");
-  }
-
-  void ga_macro_dictionary::add_macro(const ga_macro &gam)
-  { macros[gam.name()] = gam; }
-
-  void ga_macro_dictionary::add_macro(const std::string &name,
-                                      const std::string &expr)
-  { ga_tree tree; ga_read_string_reg("Def "+name+":="+expr, tree, *this); }
-
-  void ga_macro_dictionary::del_macro(const std::string &name) {
-    auto it = macros.find(name);
-    GMM_ASSERT1(it != macros.end(), "Undefined macro (at this level)");
-    macros.erase(it);
-  }
-
   
   //=========================================================================
   // Syntax analysis for the generic assembly language

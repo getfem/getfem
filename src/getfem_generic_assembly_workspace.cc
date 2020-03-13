@@ -31,14 +31,46 @@ namespace getfem {
   // functions, operators.
   //=========================================================================
 
+  bool ga_macro_dictionary::macro_exists(const std::string &name) const {
+    if (macros.find(name) != macros.end()) return true;
+    if (parent && parent->macro_exists(name)) return true;
+    return false;
+  }
+
+  const ga_macro &
+  ga_macro_dictionary::get_macro(const std::string &name) const {
+    auto it = macros.find(name);
+    if (it != macros.end()) return it->second;
+    if (parent) return parent->get_macro(name);
+    GMM_ASSERT1(false, "Undefined macro");
+  }
+
+  void ga_macro_dictionary::add_macro(const ga_macro &gam)
+  {
+    macros[gam.name()] = gam; }
+
+  void ga_macro_dictionary::add_macro(const std::string &name,
+                                      const std::string &expr)
+  { ga_tree tree; ga_read_string_reg("Def "+name+":="+expr, tree, *this); }
+
+  void ga_macro_dictionary::del_macro(const std::string &name) {
+    auto it = macros.find(name);
+    GMM_ASSERT1(it != macros.end(), "Undefined macro (at this level)");
+    macros.erase(it);
+  }
+  
   void ga_workspace::init() {
     // allocate own storage for K an V to be used unless/until external
     // storage is provided with set_assembled_matrix/vector
     K = std::make_shared<model_real_sparse_matrix>(2,2);
     V = std::make_shared<base_vector>(2);
     // add default transformations
+    add_interpolate_transformation // deprecated version
+      ("neighbour_elt", interpolate_transformation_neighbor_instance());
     add_interpolate_transformation
-      ("neighbour_elt", interpolate_transformation_neighbour_instance());
+      ("neighbor_element", interpolate_transformation_neighbor_instance());
+    // if (!(macro_exists("Hess"))) add_macro("Hess(u)", "Hess_u");
+    // if (!(macro_exists("Div"))) add_macro("Div(u)", "Hess_u");
   }
 
   // variables and variable groups
@@ -309,7 +341,7 @@ namespace getfem {
       GMM_ASSERT1(false, "A secondary domain with the same "
                   "name already exists");
     if (transformations.find(name) != transformations.end())
-      GMM_ASSERT1(name != "neighbour_elt", "neighbour_elt is a "
+      GMM_ASSERT1(name != "neighbor_element", "neighbor_element is a "
                   "reserved interpolate transformation name");
     transformations[name] = ptrans;
   }

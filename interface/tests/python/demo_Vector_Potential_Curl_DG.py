@@ -53,7 +53,7 @@ MESHSIZE=0.25
 ALPHAF=1.e3/MESHSIZE #Interior penalty(alpha) factor
 INNER_FACES= 42
 ALL_SIDES=1
-VERIFY_NEIGHBOUR_COMPUTATION=True
+VERIFY_NEIGHBOR_COMPUTATION=True
 DS_GA = True if INNER_FACES>0 else False
 
 EXACT_TYPE=Exact.BdmExample
@@ -112,14 +112,14 @@ if(DS_GA):
 ###########################################################################
     
 VPRODUCT_VAR_N_='Cross_product(Normal,{var})'
-JUMP_VPRODUCT_VAR_='Cross_product(Normal,{var})-Cross_product(Normal,Interpolate({var},neighbour_elt))'
+JUMP_VPRODUCT_VAR_='Cross_product(Normal,{var})-Cross_product(Normal,Interpolate({var},neighbor_element))'
 MEAN_VAR_='(0.5*{M}+0.5*{N})'
-JUMP_VVAR_N_ = '({v}-Interpolate({v},neighbour_elt)).Normal'
-JUMP_SVAR_N_ = '({V}-Interpolate({V},neighbour_elt))*Normal'
+JUMP_VVAR_N_ = '({v}-Interpolate({v},neighbor_element)).Normal'
+JUMP_SVAR_N_ = '({V}-Interpolate({V},neighbor_element))*Normal'
 CURL_VAR_='[Grad_{var}(3,2)-Grad_{var}(2,3); Grad_{var}(1,3)-Grad_{var}(3,1); Grad_{var}(2,1)-Grad_{var}(1,2)]'
-CURL_INT_VAR_='[Interpolate(Grad_{var}, neighbour_elt)(3,2)-Interpolate(Grad_{var}, neighbour_elt)(2,3); Interpolate(Grad_{var}, neighbour_elt)(1,3)-Interpolate(Grad_{var}, neighbour_elt)(3,1); Interpolate(Grad_{var}, neighbour_elt)(2,1)-Interpolate(Grad_{var}, neighbour_elt)(1,2)]'
+CURL_INT_VAR_='[Interpolate(Grad_{var}, neighbor_element)(3,2)-Interpolate(Grad_{var}, neighbor_element)(2,3); Interpolate(Grad_{var}, neighbor_element)(1,3)-Interpolate(Grad_{var}, neighbor_element)(3,1); Interpolate(Grad_{var}, neighbor_element)(2,1)-Interpolate(Grad_{var}, neighbor_element)(1,2)]'
 
-mean_test_p = '((Test_p+Interpolate(Test_p,neighbour_elt))*0.5)'
+mean_test_p = '((Test_p+Interpolate(Test_p,neighbor_element))*0.5)'
 jump_p = JUMP_SVAR_N_.format(V='p')
 jump_test_p = JUMP_SVAR_N_.format(V='Test_p')
 jump_b = JUMP_VVAR_N_.format(v='b')
@@ -248,7 +248,7 @@ mfb.export_to_vtk('vector_potential3d.vtk', 'ascii', mdmag.variable('b')) # espo
 # done vector potential part
 ####################################################################
 
-if(VERIFY_NEIGHBOUR_COMPUTATION):    
+if(VERIFY_NEIGHBOR_COMPUTATION):    
     m.set_region(42,m.inner_faces())
     print ("jump A x N conv", np.linalg.norm(gf.asm('generic', mim, 1, '({A}).({B})'.format(A=cross_jump_b, B=cross_jump_test_b), 42, mdmag)))
     print ("jump A . N conv", np.linalg.norm(gf.asm('generic', mim, 1, '({A}).({B})'.format(A=jump_b,B=jump_test_b), 42, mdmag)))
@@ -326,7 +326,7 @@ mfb.export_to_vtk('restored3d.vtk', 'ascii', mdpot.variable('a'))
 
 print("B L2_norm", gf.compute_L2_norm(mfb, mdpot.variable('a'), mim))
 print("B L2_norm ratio", gf.compute_L2_norm(mfb, mdpot.variable('a')-Bexact, mim)/gf.compute_L2_norm(mfb, Bexact, mim))
-if(VERIFY_NEIGHBOUR_COMPUTATION):
+if(VERIFY_NEIGHBOR_COMPUTATION):
     m.set_region(42,m.inner_faces())
     cross_n_conv=gf.asm('generic', mim, 1, '({P}).({Q})'.format(P=cross_jump_a, Q=cross_jump_test_a), 42, mdpot)
     print('(B+ x N+)-(B- x N-)',np.linalg.norm(cross_n_conv))

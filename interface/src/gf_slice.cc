@@ -106,7 +106,7 @@ namespace getfem {
 
       /* look for the other convex sharing this face */
       bgeot::mesh_structure::ind_set clst;
-      ml.neighbours_of_convex(cv, f, clst);
+      ml.neighbors_of_convex(cv, f, clst);
       size_type best = size_type(-1); scalar_type best_v = 1e10;
       cnt = 0;
       for (bgeot::mesh_structure::ind_set::const_iterator it = clst.begin();

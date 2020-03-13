@@ -69,8 +69,8 @@ namespace getfem {
     workspace.add_fem_variable("z", mf0, gmm::sub_interval(0, nbdof), Z);
     workspace.add_expression
       ("element_size"
-       "*Norm_sqr(Grad_u.Normal-Interpolate(Grad_u,neighbour_elt).Normal)"
-       "*(Test_z+Interpolate(Test_z,neighbour_elt))", mim, inner_faces);
+       "*Norm_sqr(Grad_u.Normal-Interpolate(Grad_u,neighbor_element).Normal)"
+       "*(Test_z+Interpolate(Test_z,neighbor_element))", mim, inner_faces);
     workspace.set_assembled_vector(Z);
     workspace.assembly(1);
     gmm::clear(err);

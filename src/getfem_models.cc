@@ -38,7 +38,11 @@ namespace getfem {
     leading_dim = 0;
     time_integration = 0; init_step = false; time_step = scalar_type(1);
     add_interpolate_transformation
-      ("neighbour_elt", interpolate_transformation_neighbour_instance());
+      ("neighbour_elt", interpolate_transformation_neighbor_instance());
+    add_interpolate_transformation
+      ("neighbor_element", interpolate_transformation_neighbor_instance());
+    add_macro("Hess(u)", "Hess_u");
+    add_macro("Div(u)", "Div_u");
   }
 
   void model::var_description::set_size() {

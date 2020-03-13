@@ -419,8 +419,8 @@ namespace getfem {
           if (idof == nbdof) {
             nbdof += Qdim / pf->target_dim();
 
-            linked_mesh().neighbours_of_convex(cv, pf->faces_of_dof(cv, i), s);
-            for (size_type ncv : s) { // For each unscanned neighbour
+            linked_mesh().neighbors_of_convex(cv, pf->faces_of_dof(cv, i), s);
+            for (size_type ncv : s) { // For each unscanned neighbor
               if (!cv_done[ncv] && fe_convex.is_in(ncv)) { // add the dof
 
                 fd.ind_node = size_type(-1);

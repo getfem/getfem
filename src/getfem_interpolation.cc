@@ -78,10 +78,10 @@ namespace getfem {
         if (extrapolation == 2) {
           if (mult == scalar_type(1))
             for (short_type f = 0; f < msh.nb_faces_of_convex(j); ++f) {
-              size_type neighbour_cv = msh.neighbour_of_convex(j, f);
-              if (!all_convexes && neighbour_cv != size_type(-1)) {
-                // check if the neighbour is also contained in rg_source ...
-                if (!rg_source.is_in(neighbour_cv)) 
+              size_type neighbor_cv = msh.neighbor_of_convex(j, f);
+              if (!all_convexes && neighbor_cv != size_type(-1)) {
+                // check if the neighbor is also contained in rg_source ...
+                if (!rg_source.is_in(neighbor_cv)) 
                   cv_on_bound.add(j); // ... if not, treat the element as a boundary one
               }
               else // boundary element of the overall mesh

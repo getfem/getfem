@@ -18,7 +18,7 @@ HHO methods can be applied to arbitrary shape elements. However, the implementat
 HHO elements
 ------------
 
-HHO elements are composite ones having a polynomial approximation space for the interior of the element and a polynomial approximation for each face of the element. Moreover, this is a discontinous approximation, in the sens that no continuity is prescribed between the approximation inside the element and the approximation on the faces, neither than between the approximations on two different faces of the element. However, when two neighbour elements share a face, the approximation on this face is shared by the two elements. |gf| provide a specific method simply called ``FEM_HHO(fem_int, fem_face1, fem_face2, ...)`` which allows to build an hybrid method from standard finite element spaces. For instance, on a triangle, a possible HHO method can be obtained with::
+HHO elements are composite ones having a polynomial approximation space for the interior of the element and a polynomial approximation for each face of the element. Moreover, this is a discontinous approximation, in the sens that no continuity is prescribed between the approximation inside the element and the approximation on the faces, neither than between the approximations on two different faces of the element. However, when two neighbor elements share a face, the approximation on this face is shared by the two elements. |gf| provide a specific method simply called ``FEM_HHO(fem_int, fem_face1, fem_face2, ...)`` which allows to build an hybrid method from standard finite element spaces. For instance, on a triangle, a possible HHO method can be obtained with::
 
   getfem::pfem pf = getfem::fem_descriptor("HHO(FEM_SIMPLEX_IPK(2,2), FEM_SIMPLEX_CIPK(1,2))");
 

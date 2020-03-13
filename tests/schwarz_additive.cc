@@ -181,7 +181,7 @@ void pb_data::init(bgeot::md_param &params) {
   for (int j = nn.take_first(); j >= 0; j << nn) {
     int k = mesh.structure_of_convex(j)->nb_faces();
     for (short_type i = 0; i < k; i++) {
-      if (mesh.is_convex_having_neighbour(j, i)) {
+      if (mesh.is_convex_having_neighbor(j, i)) {
 	gmm::copy(mesh.normal_of_face_of_convex(j, i, 0), un);
 	gmm::scale(un, 1/gmm::vect_norm2(un));
 	if (gmm::abs(un[N-1] - 1.0) < 1.0E-3) mesh.region(0).add(j, i);

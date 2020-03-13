@@ -765,11 +765,11 @@ namespace getfem {
    const std::string &target_displacements, const mesh_region &target_region);
 
   /** Create a new instance of a transformation corresponding to the
-      interpolation on the neighbour element. Can only be applied to the
+      interpolation on the neighbor element. Can only be applied to the
       computation on some internal faces of a mesh.
       (mainly for internal use in the constructor of getfem::model)
   */
-  pinterpolate_transformation interpolate_transformation_neighbour_instance();
+  pinterpolate_transformation interpolate_transformation_neighbor_instance();
 
   /* Add a special interpolation transformation which represents the identity
      transformation but allows to evaluate the expression on another element

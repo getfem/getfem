@@ -1042,7 +1042,7 @@ namespace getfem {
         GMM_ASSERT1(false, "An secondary domain with the same "
                     "name already exists");
       if (transformations.count(name) > 0)
-        GMM_ASSERT1(name.compare("neighbour_elt"), "neighbour_elt is a "
+        GMM_ASSERT1(name.compare("neighbor_element"), "neighbor_element is a "
                     "reserved interpolate transformation name");
        transformations[name] = ptrans;
     }

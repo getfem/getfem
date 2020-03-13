@@ -149,11 +149,11 @@ ETA1 = ETA1tmp [ ETA1tmp.size - mfer.nbdof() : ETA1tmp.size ]
 
 # 1b) jump at inner faces    
 sig_u = "(lambda_para*Trace(Grad_u)*Id(qdim(u)) + mu_para*(Grad_u + Grad_u'))"
-grad_u_neighbor = "Interpolate(Grad_u,neighbour_elt)"
+grad_u_neighbor = "Interpolate(Grad_u,neighbor_element)"
 sig_u_neighbor = "(lambda_para*Trace({Grad_u})*Id(qdim(u)) + mu_para*(({Grad_u}) + ({Grad_u})'))".format(Grad_u=grad_u_neighbor)
 
 stress_jump_inner = "((({sig_u}) - ({sig_u_neighbor}))*Normal )".format(sig_u=sig_u,sig_u_neighbor=sig_u_neighbor)
-edgeresidual = "0.5*(element_size*Norm_sqr({stress_jump_inner})*2*0.5*(Test_psi + Interpolate(Test_psi,neighbour_elt)))".format(stress_jump_inner=stress_jump_inner)
+edgeresidual = "0.5*(element_size*Norm_sqr({stress_jump_inner})*2*0.5*(Test_psi + Interpolate(Test_psi,neighbor_element)))".format(stress_jump_inner=stress_jump_inner)
 
 ETA2tmp = gf.asm_generic(mim,1,edgeresidual,INNER_FACES
                         ,md

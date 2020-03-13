@@ -70,7 +70,7 @@ namespace getfem {
 
   typedef std::shared_ptr<ga_instruction> pga_instruction;
 
-  struct gauss_pt_corresp { // For neighbour interpolation transformation
+  struct gauss_pt_corresp { // For neighbor interpolation transformation
     bgeot::pgeometric_trans pgt1, pgt2;
     papprox_integration pai;
     std::vector<size_type> nodes;
@@ -92,7 +92,7 @@ namespace getfem {
     size_type nbpt, ipt;           // Number and index of Gauss point
     bgeot::geotrans_precomp_pool gp_pool;
     fem_precomp_pool fp_pool;
-    std::map<gauss_pt_corresp, bgeot::pstored_point_tab> neighbour_corresp;
+    std::map<gauss_pt_corresp, bgeot::pstored_point_tab> neighbor_corresp;
 
     using region_mim_tuple = std::tuple<const mesh_im *, const mesh_region *, psecondary_domain>;
     struct region_mim : public region_mim_tuple {

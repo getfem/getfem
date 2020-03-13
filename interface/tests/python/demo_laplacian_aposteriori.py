@@ -122,10 +122,10 @@ for refiter in range(5):
     
     # Residual a posteriori estimator
     
-    grad_jump = '( (Grad_u-Interpolate(Grad_u,neighbour_elt)).Normal )'
+    grad_jump = '( (Grad_u-Interpolate(Grad_u,neighbor_element)).Normal )'
 
     bulkresidual = 'sqr(element_size*Trace(Hess_u))*Test_psi'
-    edgeresidual = '0.25*element_size*sqr(%s)*(Test_psi + Interpolate(Test_psi,neighbour_elt))'%grad_jump
+    edgeresidual = '0.25*element_size*sqr(%s)*(Test_psi + Interpolate(Test_psi,neighbor_element))'%grad_jump
 
     ETA1tmp = gf.asm('generic',mim,1,bulkresidual,-1,md,'psi',1,mfP0,np.zeros(mfP0.nbdof()))
     ETA1 = ETA1tmp [ ETA1tmp.size - mfP0.nbdof() : ETA1tmp.size ]

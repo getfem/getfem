@@ -648,14 +648,14 @@ namespace getfem {
 
   /** Select all the faces sharing at least two element of the given mesh
       region. Each face is represented only once and is arbitrarily chosen
-      between the two neighbour elements.
+      between the two neighbor elements.
    */
   mesh_region APIDECL
   inner_faces_of_mesh(const mesh &m,
                       const mesh_region &mr = mesh_region::all_convexes());
   
   /** Select all the faces of the given mesh region. The faces are represented*
-      twice if they are shared by two neighbour elements.
+      twice if they are shared by two neighbor elements.
    */
   mesh_region APIDECL
   all_faces_of_mesh(const mesh &m,

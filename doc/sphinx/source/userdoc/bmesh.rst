@@ -278,21 +278,21 @@ The list is not exhaustive.
    gives a container with the indexes of all elements attached to the
    point of global index ``ipt``.
 
-.. function:: mymesh.neighbours_of_convex(ic, f)
+.. function:: mymesh.neighbors_of_convex(ic, f)
 
    gives a container with the indexes of all elements in ``mesh`` having
    the common face of local index ``f`` of element ``ic`` except element
    ``ic``.
 
-.. function:: mymesh.neighbour_of_convex(ic, f)
+.. function:: mymesh.neighbor_of_convex(ic, f)
 
    gives the index of the first elements in ``mesh`` having the common
    face of local index ``f`` of element ``ic`` except element ``ic``.
    return size_type(-1) if none is found.
 
-.. function:: mymesh.is_convex_having_neighbour(ic, f)
+.. function:: mymesh.is_convex_having_neighbor(ic, f)
 
-   return whether or not the element ``ic`` has a neighbour with respect
+   return whether or not the element ``ic`` has a neighbor with respect
    to its face of local index ``f``.
 
 .. function:: mymesh.clear()

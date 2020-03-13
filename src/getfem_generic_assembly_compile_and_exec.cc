@@ -3970,7 +3970,7 @@ namespace getfem {
         compute_der(compute_der_) {}
   };
 
-  struct ga_instruction_neighbour_transformation_call : public ga_instruction {
+  struct ga_instruction_neighbor_transformation_call : public ga_instruction {
     const ga_workspace &workspace;
     ga_instruction_set::interpolate_info &inin;
     pinterpolate_transformation trans;
@@ -3980,11 +3980,11 @@ namespace getfem {
     size_type &ipt;
     papprox_integration &pai;
     bgeot::geotrans_precomp_pool &gp_pool;
-    std::map<gauss_pt_corresp, bgeot::pstored_point_tab> &neighbour_corresp;
+    std::map<gauss_pt_corresp, bgeot::pstored_point_tab> &neighbor_corresp;
 
     virtual int exec() {
       bool cancel_optimization = false;
-      GA_DEBUG_INFO("Instruction: call interpolate neighbour transformation");
+      GA_DEBUG_INFO("Instruction: call interpolate neighbor transformation");
       if (ipt == 0) {
         if (!(ctx.have_pgp()) || !pai || pai->is_built_on_the_fly()
             || cancel_optimization) {
@@ -4022,8 +4022,8 @@ namespace getfem {
               GMM_ASSERT1(found, "Internal error");
             }
             bgeot::pstored_point_tab pspt = 0;
-            auto itm = neighbour_corresp.find(gpc);
-            if (itm != neighbour_corresp.end()) {
+            auto itm = neighbor_corresp.find(gpc);
+            if (itm != neighbor_corresp.end()) {
               pspt = itm->second;
             } else {
               size_type nbpt = pai->nb_points_on_face(f);
@@ -4043,10 +4043,10 @@ namespace getfem {
                 gic.invert(ctx_x.xreal(), P_ref[i], converged);
                 bool is_in = (gpc.pgt2->convex_ref()->is_in(P_ref[i]) < 1E-4);
                 GMM_ASSERT1(is_in && converged,"Geometric transformation "
-                            "inversion has failed in neighbour transformation");
+                            "inversion has failed in neighbor transformation");
               }
               pspt = store_point_tab(P_ref);
-              neighbour_corresp[gpc] = pspt;
+              neighbor_corresp[gpc] = pspt;
             }
             m.points_of_convex(adj_face.cv, inin.G);
             bgeot::pgeotrans_precomp pgp = gp_pool(gpc.pgt2, pspt);
@@ -4095,19 +4095,19 @@ namespace getfem {
           inin.has_ctx = false;
         }
       }
-      GA_DEBUG_INFO("Instruction: end of call neighbour interpolate "
+      GA_DEBUG_INFO("Instruction: end of call neighbor interpolate "
                     "transformation");
       return 0;
     }
-    ga_instruction_neighbour_transformation_call
+    ga_instruction_neighbor_transformation_call
     (const ga_workspace &w, ga_instruction_set::interpolate_info &i,
      pinterpolate_transformation t, fem_interpolation_context &ctxx,
      base_small_vector &No, const mesh &mm, size_type &ipt_,
      papprox_integration &pai_, bgeot::geotrans_precomp_pool &gp_pool_,
-     std::map<gauss_pt_corresp, bgeot::pstored_point_tab> &neighbour_corresp_)
+     std::map<gauss_pt_corresp, bgeot::pstored_point_tab> &neighbor_corresp_)
       : workspace(w), inin(i), trans(t), ctx(ctxx), Normal(No), m(mm),
         ipt(ipt_), pai(pai_), gp_pool(gp_pool_),
-        neighbour_corresp(neighbour_corresp_) {}
+        neighbor_corresp(neighbor_corresp_) {}
   };
 
 
@@ -6761,12 +6761,13 @@ namespace getfem {
         gis.transformations.insert(transname);
         if (compute_der) rmi.transformations_der.insert(transname);
         pga_instruction pgai;
-        if (transname.compare("neighbour_elt") == 0) {
-          pgai = std::make_shared<ga_instruction_neighbour_transformation_call>
+        if (transname.compare("neighbor_element") == 0 ||
+            transname.compare("neighbour_elt") == 0) {
+          pgai = std::make_shared<ga_instruction_neighbor_transformation_call>
             (workspace, rmi.interpolate_infos[transname],
              workspace.interpolate_transformation(transname), gis.ctx,
              gis.Normal, m, gis.ipt, gis.pai, gis.gp_pool,
-             gis.neighbour_corresp);
+             gis.neighbor_corresp);
         } else {
           pgai = std::make_shared<ga_instruction_transformation_call>
             (workspace, rmi.interpolate_infos[transname],
@@ -6926,7 +6927,8 @@ namespace getfem {
                            : (secondary ? rmi.secondary_domain_infos.ctx
                                         : rmi.interpolate_infos[intn1].ctx);
                     bool interpolate =
-                      !(intn1.empty() || intn1 == "neighbour_elt" || secondary);
+                      !(intn1.empty() || intn1 == "neighbour_elt"
+                        || intn1 == "neighbor_element" || secondary);
                     pgai = std::make_shared<ga_instruction_fem_vector_assembly>
                       (root->tensor(), Vu, Vr, ctx, *Iu, *Ir, mf, mfg,
                        gis.coeff, gis.nbpt, gis.ipt, interpolate);
@@ -6971,8 +6973,10 @@ namespace getfem {
                           : (secondary2 ? rmi.secondary_domain_infos.ctx
                                         : rmi.interpolate_infos[intn2].ctx);
                   bool interpolate = !(intn1.empty() || intn1 == "neighbour_elt"
+                                       || intn1 == "neighbor_elementt"
                                        || secondary1) ||
                                      !(intn2.empty() || intn2 == "neighbour_elt"
+                                       || intn2 == "neighbor_element"
                                        || secondary2);
 
                   workspace.add_temporary_interval_for_unreduced_variable

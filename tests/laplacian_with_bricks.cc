@@ -228,11 +228,11 @@ bool laplacian_problem::solve(void) {
   
   if (DG_TERMS) {
     model.add_initialized_scalar_data("alpha", interior_penalty_factor);
-    std::string jump="((u-Interpolate(u,neighbour_elt))*Normal)";
-    std::string test_jump="((Test_u-Interpolate(Test_u,neighbour_elt))*Normal)";
-    std::string grad_mean="((Grad_u+Interpolate(Grad_u,neighbour_elt))*0.5)";
+    std::string jump="((u-Interpolate(u,neighbor_element))*Normal)";
+    std::string test_jump="((Test_u-Interpolate(Test_u,neighbor_element))*Normal)";
+    std::string grad_mean="((Grad_u+Interpolate(Grad_u,neighbor_element))*0.5)";
     std::string grad_test_mean
-      ="((Grad_Test_u+Interpolate(Grad_Test_u,neighbour_elt))*0.5)";
+      ="((Grad_Test_u+Interpolate(Grad_Test_u,neighbor_element))*0.5)";
     std::string expr = "-("+grad_mean+").("+test_jump+") "
       "- ("+jump+").("+grad_test_mean+")"
       "+ alpha*("+jump+").("+test_jump+")";

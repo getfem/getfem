@@ -193,47 +193,60 @@ namespace bgeot {
     void clear();
     void stat();
 
-    /** Return in s a list of neighbours of a given convex face.
+    /** Return in s a list of neighbors of a given convex face.
         @param ic the convex id.
         @param f the face number of the convex.
         @param s the resulting ind_set.
      */
-    void neighbours_of_convex(size_type ic, short_type f, ind_set &s) const;
+    void neighbors_of_convex(size_type ic, short_type f, ind_set &s) const;
+    void neighbours_of_convex(size_type ic, short_type f, ind_set &s) const
+      IS_DEPRECATED { neighbors_of_convex(ic, f, s); }
 
-    /** Return in s a list of neighbours of a given convex sharing the
+    /** Return in s a list of neighbors of a given convex sharing the
         intersection of a given list of faces
         @param ic the convex id.
         @param f the face number of the convex.
         @param s the resulting ind_set.
      */
-    void neighbours_of_convex(size_type ic,
+    void neighbors_of_convex(size_type ic,
                               const std::vector<short_type> &ftab,
                               ind_set &s) const;
+    void neighbours_of_convex(size_type ic,
+                              const std::vector<short_type> &ftab,
+                              ind_set &s) const IS_DEPRECATED
+    { neighbors_of_convex(ic, ftab, s); }
 
-    /** Return a list of neighbours of a given convex.
+    /** Return a list of neighbors of a given convex.
         @param ic the convex id.
         @param  s the resulting ind_set.
     */
-    void neighbours_of_convex(size_type ic, ind_set &s) const;
+    void neighbors_of_convex(size_type ic, ind_set &s) const;
+    void neighbours_of_convex(size_type ic, ind_set &s) const
+      IS_DEPRECATED { neighbors_of_convex(ic, s); }
 
-    /** Return a neighbour convex of a given convex face.
+    /** Return a neighbor convex of a given convex face.
         @param ic the convex id.
         @param f the face number of the convex.
-        @return size_type(-1) if there is no neighbour to this convex and
-        the index of the first neighbour found otherwise.
+        @return size_type(-1) if there is no neighbor to this convex and
+        the index of the first neighbor found otherwise.
     */
-    size_type neighbour_of_convex(size_type ic, short_type f) const;
+    size_type neighbor_of_convex(size_type ic, short_type f) const;
+    size_type neighbour_of_convex(size_type ic, short_type f) const
+      IS_DEPRECATED { return neighbor_of_convex(ic, f); }
 
-    /**Return a face of the neighbouring element that is adjacent to the given face
+    /**Return a face of the neighbouring element that is adjacent to the
+       given face
        @param ic the convex id.
        @param f the face number of the convex.
-       @return convex_face that contains the neighbours convex id and the adjacent
-       face number, or convex_face::invalid_face() otherwise.
+       @return convex_face that contains the neighbors convex id and the
+       adjacent face number, or convex_face::invalid_face() otherwise.
     */
     convex_face adjacent_face(size_type ic, short_type f) const;
 
+    bool is_convex_having_neighbor(size_type ic, short_type f) const
+    { return (neighbor_of_convex(ic, f) != size_type(-1)); }
     bool is_convex_having_neighbour(size_type ic, short_type f) const
-    { return (neighbour_of_convex(ic, f) != size_type(-1)); }
+    IS_DEPRECATED { return (neighbor_of_convex(ic, f) != size_type(-1)); }
 
     /** Convex ID of the first convex attached to the point ip. */
     size_type first_convex_of_point(size_type ip) const

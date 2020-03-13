@@ -806,10 +806,10 @@ namespace getfem {
   }
 
   //=========================================================================
-  // Interpolate transformation on neighbour element (for internal faces)
+  // Interpolate transformation on neighbor element (for internal faces)
   //=========================================================================
 
-  class interpolate_transformation_neighbour
+  class interpolate_transformation_neighbor
     : public virtual_interpolate_transformation, public context_dependencies {
 
   public:
@@ -836,7 +836,7 @@ namespace getfem {
       *m_t = &m_x;
       size_type cv_x = ctx_x.convex_num();
       short_type face_x = ctx_x.face_num();
-      GMM_ASSERT1(face_x != short_type(-1), "Neighbour transformation can "
+      GMM_ASSERT1(face_x != short_type(-1), "Neighbor transformation can "
                   "only be applied to internal faces");
 
       auto adj_face = m_x.adjacent_face(cv_x, face_x);
@@ -849,7 +849,7 @@ namespace getfem {
         gic.invert(ctx_x.xreal(), P_ref, converged);
         bool is_in = (ctx_x.pgt()->convex_ref()->is_in(P_ref) < 1E-4);
         GMM_ASSERT1(is_in && converged, "Geometric transformation inversion "
-                    "has failed in neighbour transformation");
+                    "has failed in neighbor transformation");
         face_num = adj_face.f;
         cv = adj_face.cv;
         ret_type = 1;
@@ -859,17 +859,17 @@ namespace getfem {
       return ret_type;
     }
 
-    interpolate_transformation_neighbour() { }
+    interpolate_transformation_neighbor() { }
 
   };
 
 
-  pinterpolate_transformation interpolate_transformation_neighbour_instance() {
-    return (std::make_shared<interpolate_transformation_neighbour>());
+  pinterpolate_transformation interpolate_transformation_neighbor_instance() {
+    return (std::make_shared<interpolate_transformation_neighbor>());
   }
 
   //=========================================================================
-  // Interpolate transformation on neighbour element (for extrapolation)
+  // Interpolate transformation on neighbor element (for extrapolation)
   //=========================================================================
 
   class interpolate_transformation_element_extrapolation

@@ -836,7 +836,7 @@ void gf_mesh_get(getfemint::mexargs_in& m_in,
     /*@GET CVFIDs = ('inner faces'[, CVIDs])
     Return the set of faces shared at least by two elements in CVIDs.
     Each face is represented only once and is arbitrarily chosen
-    between the two neighbour elements. @*/
+    between the two neighbor elements. @*/
     sub_command
       ("inner faces", 0, 1, 0, 1,
        check_empty_mesh(pmesh);
@@ -845,7 +845,7 @@ void gf_mesh_get(getfemint::mexargs_in& m_in,
     
     /*@GET CVFIDs = ('all faces'[, CVIDs])
     Return the set of faces of the in CVIDs (in all the mesh if CVIDs is
-    omitted). Note that the face shared by two neighbour elements will be
+    omitted). Note that the face shared by two neighbor elements will be
     represented twice. @*/
     sub_command
       ("all faces", 0, 1, 0, 1,
@@ -894,8 +894,8 @@ void gf_mesh_get(getfemint::mexargs_in& m_in,
        );
 
     /*@GET CVFIDs = ('adjacent face', @int cvid, @int fid)
-    Return convex face of the neighbour element if it exists.
-    If the convex have more than one neighbour
+    Return convex face of the neighbor element if it exists.
+    If the convex have more than one neighbor
     relatively to the face ``f`` (think to bar elements in 3D for instance),
     return the first face found. @*/
     sub_command
@@ -937,10 +937,10 @@ void gf_mesh_get(getfemint::mexargs_in& m_in,
          for (short_type f=0; f < pmesh->structure_of_convex(cv)->nb_faces(); ++f) {
            bool add = true;
            if (merge) {
-             bgeot::mesh_structure::ind_set neighbours;
-             pmesh->neighbours_of_convex(cv, f, neighbours);
-             for (bgeot::mesh_structure::ind_set::const_iterator it = neighbours.begin();
-                  it != neighbours.end(); ++it) {
+             bgeot::mesh_structure::ind_set neighbors;
+             pmesh->neighbors_of_convex(cv, f, neighbors);
+             for (bgeot::mesh_structure::ind_set::const_iterator it = neighbors.begin();
+                  it != neighbors.end(); ++it) {
                if (*it < cv) { add = false; break; }
              }
            }

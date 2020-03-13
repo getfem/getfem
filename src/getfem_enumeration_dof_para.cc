@@ -118,7 +118,7 @@ void mesh_fem::enumerate_dof_para(void) const {
     cout<<"nb_cv = "<<linked_mesh().convex_index().card()<<endl;
 
     size_type nb_cv = 0;
-    std::vector<size_type> neighbours;
+    std::vector<size_type> neighbors;
     bgeot::pgeotrans_precomp pgp = 0;
     base_node P;
     bgeot::pgeotrans_precomp pgpj = 0;
@@ -257,8 +257,8 @@ void mesh_fem::enumerate_dof_para(void) const {
 		     pgp->transform(linked_mesh().points_of_convex(icv), i, P);
 					
 //		     Récupération des voisins qui possèdent ce même ddl :
-		     neighbours = linked_mesh().convex_to_point(i);
-		     for (size_type jcv = neighbours[0]; jcv < neighbours.size(); ++jcv)
+		     neighbors = linked_mesh().convex_to_point(i);
+		     for (size_type jcv = neighbors[0]; jcv < neighbors.size(); ++jcv)
 		     {
 //			 Si le voisin appartient à la même région (ie pas ddl interface)
 			 if (list_of_cv_num_rg_Recv[icv_in_list_Recv[jcv]] == num_rg)
@@ -272,10 +272,10 @@ void mesh_fem::enumerate_dof_para(void) const {
 			 }
 		     }
 //		     Test si pas ddl interface
-		     if (bool_rg == neighbours.size() || bool_inter+bool_rg == neighbours.size()) 
+		     if (bool_rg == neighbors.size() || bool_inter+bool_rg == neighbors.size()) 
 		       // ie tout les voisins raccordable sont dans cette même region
 		     {
-		       /*   for(size_type jcv = neighbours[0]; jcv < neighbours.size(); ++jcv)
+		       /*   for(size_type jcv = neighbors[0]; jcv < neighbors.size(); ++jcv)
 			 {
 			   list_of_dof_linkable_index[nb_dof_linkable] = list_of_cv_first_index_Recv[jcv]+j;
 			   list_of_dof_linkable_to[nb_dof_linkable] = i;
@@ -283,11 +283,11 @@ void mesh_fem::enumerate_dof_para(void) const {
 			 }
 			 list_of_dof_num_rg[i] = num_rg;
 		     }
-		     else if ((bool_inter + bool_rg)==neighbours.size()) 
+		     else if ((bool_inter + bool_rg)==neighbors.size()) 
 		       // ie tout les voisins raccordable doivent être associé à cette region
 		       {*/
 		         list_of_dof_num_rg[i] = num_rg;
-			 for (size_type jcv = neighbours[0]; jcv < neighbours.size(); ++jcv)
+			 for (size_type jcv = neighbors[0]; jcv < neighbors.size(); ++jcv)
 			 {
 ///			     on associe le ddl correspondant au proc
 			     pfem pfj = fem_of_element(jcv);

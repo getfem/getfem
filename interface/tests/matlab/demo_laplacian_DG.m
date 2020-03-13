@@ -32,7 +32,7 @@ quadrangles = true;
 NX = 20;
 K = 2;           % Degree of the discontinuous finite element method
 interior_penalty_factor = 300*NX; % Parameter of the interior penalty term
-verify_neighbour_computation = true;
+verify_neighbor_computation = true;
 
 asize =  size(who('automatic_var654'));
 if (asize(1)) draw = false; end;
@@ -67,7 +67,7 @@ in_faces = gf_mesh_get(m,'inner faces');
 INNER_FACES=2;
 gf_mesh_set(m, 'region', INNER_FACES, in_faces);
 
-if (verify_neighbour_computation)
+if (verify_neighbor_computation)
   TEST_FACES=3;
   adjf = gf_mesh_get(m, 'adjacent face', 43, 1);
   if (size(adjf,2) == 0)
@@ -117,10 +117,10 @@ end
 
 % Interior penalty terms
 gf_model_set(md, 'add initialized data', 'alpha', [interior_penalty_factor]);
-jump = '((u-Interpolate(u,neighbour_elt))*Normal)';
-test_jump = '((Test_u-Interpolate(Test_u,neighbour_elt))*Normal)';
-grad_mean = '((Grad_u+Interpolate(Grad_u,neighbour_elt))*0.5)';
-grad_test_mean = '((Grad_Test_u+Interpolate(Grad_Test_u,neighbour_elt))*0.5)';
+jump = '((u-Interpolate(u,neighbor_element))*Normal)';
+test_jump = '((Test_u-Interpolate(Test_u,neighbor_element))*Normal)';
+grad_mean = '((Grad_u+Interpolate(Grad_u,neighbor_element))*0.5)';
+grad_test_mean = '((Grad_Test_u+Interpolate(Grad_Test_u,neighbor_element))*0.5)';
 % gf_model_set(md, 'add linear term', mim, sprintf('-((%s).(%s))', grad_mean, test_jump), INNER_FACES);
 % gf_model_set(md, 'add linear term', mim, sprintf('-((%s).(%s))', jump, grad_test_mean), INNER_FACES);
 % gf_model_set(md, 'add linear term', mim, sprintf('alpha*((%s).(%s))', jump, test_jump), INNER_FACES);
@@ -141,15 +141,15 @@ err = gf_compute(mf, Uexact-U, 'H1 norm', mim);
 
 disp(sprintf('H1 norm of error: %g', err));
 
-if (verify_neighbour_computation)
+if (verify_neighbor_computation)
   A=gf_asm('generic', mim, 1, 'u*Test_u*(Normal.Normal)', TEST_FACES, md);
-  B=gf_asm('generic', mim, 1, '-Interpolate(u,neighbour_elt)*Interpolate(Test_u,neighbour_elt)*(Interpolate(Normal,neighbour_elt).Normal)', TEST_FACES, md);
+  B=gf_asm('generic', mim, 1, '-Interpolate(u,neighbor_element)*Interpolate(Test_u,neighbor_element)*(Interpolate(Normal,neighbor_element).Normal)', TEST_FACES, md);
   err_v = norm(A-B);
   A=gf_asm('generic', mim, 1, '(Grad_u.Normal)*(Grad_Test_u.Normal)', TEST_FACES, md);
-  B=gf_asm('generic', mim, 1, '(Interpolate(Grad_u,neighbour_elt).Normal)*(Interpolate(Grad_Test_u,neighbour_elt).Normal)', TEST_FACES, md);
+  B=gf_asm('generic', mim, 1, '(Interpolate(Grad_u,neighbor_element).Normal)*(Interpolate(Grad_Test_u,neighbor_element).Normal)', TEST_FACES, md);
   err_v = err_v + norm(A-B);
   if (err_v > 1E-13)
-    error('Test on neighbour element computation: error to big');
+    error('Test on neighbor element computation: error to big');
   end
 end
 

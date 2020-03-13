@@ -100,11 +100,11 @@ namespace getfem {
         //cout << "Erreur en résidu sur element " << cv << " : " << ERR[cv] << endl;    
         
         
-       // jump of the stress between the element ant its neighbours.
+       // jump of the stress between the element ant its neighbors.
 	
 	for (short_type f1=0; f1 < m.structure_of_convex(cv)->nb_faces(); ++f1) {
             
-        size_type cvn = m.neighbour_of_convex(cv, f1);
+        size_type cvn = m.neighbor_of_convex(cv, f1);
         if (cvn == size_type(-1)) continue;
 	
         bgeot::pgeometric_trans pgt2 = m.trans_of_convex(cvn);

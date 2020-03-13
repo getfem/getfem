@@ -121,7 +121,7 @@ non_conformal_dof(getfem::mesh_fem &mf, mexargs_in &in, mexargs_out &out) {
 
     for (short_type f = 0; f < m.structure_of_convex(ic)->nb_faces(); f++) {
       bgeot::short_type q;
-      if (!m.is_convex_having_neighbour(ic, f)) {
+      if (!m.is_convex_having_neighbor(ic, f)) {
         q = 2;
       } else {
         q = 1;
@@ -641,7 +641,7 @@ void gf_mesh_fem_get(getfemint::mexargs_in& m_in,
     Return the array which associates an integer (the partition number)
     to each convex of the @tmf. By default, it is an all-zero array.
     The degrees of freedom of each convex of the @tmf are connected
-    only to the dof of neighbouring convexes which have the same
+    only to the dof of neighboring convexes which have the same
     partition number, hence it is possible to create partially
     discontinuous @tmf very easily.@*/
     sub_command
