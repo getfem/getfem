@@ -299,7 +299,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       Define a new macro for the high generic assembly language.
       The name include the parameters. For instance name='sp(a,b)', expr='a.b'
       is a valid definition. Macro without parameter can also be defined.
-      For instance name='x1', expr='X[1]' is valid. Teh form name='grad(u)',
+      For instance name='x1', expr='X[1]' is valid. The form name='grad(u)',
       expr='Grad_u' is also allowed but in that case, the parameter 'u' will
       only be allowed to be a variable name when using the macro. Note that
       macros can be directly defined inside the assembly strings with the
