@@ -490,7 +490,7 @@ h
     vwgtt[indelt[ic]] = Patch_Vector[ind_dof_patch];
     xadj[j] = k;
     bgeot::mesh_structure::ind_set s;
-    mesh.neighbours_of_convex(ic, s);
+    mesh.neighbors_of_convex(ic, s);
     for (bgeot::mesh_structure::ind_set::iterator it = s.begin(); it != s.end(); ++it) {
       if (Patch_element_list.is_in(*it)) { adjncy.push_back(indelt[*it]); ++k; }
     }

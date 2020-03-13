@@ -31,34 +31,7 @@ namespace getfem {
   // functions, operators.
   //=========================================================================
 
-  bool ga_macro_dictionary::macro_exists(const std::string &name) const {
-    if (macros.find(name) != macros.end()) return true;
-    if (parent && parent->macro_exists(name)) return true;
-    return false;
-  }
 
-  const ga_macro &
-  ga_macro_dictionary::get_macro(const std::string &name) const {
-    auto it = macros.find(name);
-    if (it != macros.end()) return it->second;
-    if (parent) return parent->get_macro(name);
-    GMM_ASSERT1(false, "Undefined macro");
-  }
-
-  void ga_macro_dictionary::add_macro(const ga_macro &gam)
-  {
-    macros[gam.name()] = gam; }
-
-  void ga_macro_dictionary::add_macro(const std::string &name,
-                                      const std::string &expr)
-  { ga_tree tree; ga_read_string_reg("Def "+name+":="+expr, tree, *this); }
-
-  void ga_macro_dictionary::del_macro(const std::string &name) {
-    auto it = macros.find(name);
-    GMM_ASSERT1(it != macros.end(), "Undefined macro (at this level)");
-    macros.erase(it);
-  }
-  
   void ga_workspace::init() {
     // allocate own storage for K an V to be used unless/until external
     // storage is provided with set_assembled_matrix/vector
@@ -69,8 +42,30 @@ namespace getfem {
       ("neighbour_elt", interpolate_transformation_neighbor_instance());
     add_interpolate_transformation
       ("neighbor_element", interpolate_transformation_neighbor_instance());
-    // if (!(macro_exists("Hess"))) add_macro("Hess(u)", "Hess_u");
-    // if (!(macro_exists("Div"))) add_macro("Div(u)", "Hess_u");
+
+    ga_tree tree1;
+    pstring s1 = std::make_shared<std::string>("Hess_u");
+    tree1.add_name(s1->c_str(), 6, 0, s1);
+    tree1.root->name = "u";
+    tree1.root->op_type = GA_NAME;
+    tree1.root->node_type = GA_NODE_MACRO_PARAM;
+    tree1.root->nbc1 = 0;
+    tree1.root->nbc2 = ga_parse_prefix_operator(*s1);
+    tree1.root->nbc3 = ga_parse_prefix_test(*s1);
+    ga_macro gam1("Hess", tree1, 1);
+    macro_dict.add_macro(gam1);
+
+    ga_tree tree2;
+    pstring s2 = std::make_shared<std::string>("Div_u");
+    tree2.add_name(s2->c_str(), 5, 0, s2);
+    tree2.root->name = "u";
+    tree2.root->op_type = GA_NAME;
+    tree2.root->node_type = GA_NODE_MACRO_PARAM;
+    tree2.root->nbc1 = 0;
+    tree2.root->nbc2 = ga_parse_prefix_operator(*s2);
+    tree2.root->nbc3 = ga_parse_prefix_test(*s2);
+    ga_macro gam2("Div", tree2, 1);
+    macro_dict.add_macro(gam2);
   }
 
   // variables and variable groups

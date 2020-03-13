@@ -457,7 +457,7 @@ h
     vwgtt[indelt[ic]] = Patch_Vector[ind_dof_patch];
     xadj[j] = k;
     bgeot::mesh_structure::ind_set s;
-    mesh.neighbours_of_convex(ic, s);
+    mesh.neighbors_of_convex(ic, s);
     for (bgeot::mesh_structure::ind_set::iterator it = s.begin(); it != s.end(); ++it) {
       if (Patch_element_list.is_in(*it)) { adjncy.push_back(indelt[*it]); ++k; }
     }
@@ -870,7 +870,7 @@ int main(int argc, char *argv[]) {
 	vwgtt[indelt[ic]] = Patch_Vector[ind_dof_patch];
 	xadj[j] = k;
 	bgeot::mesh_structure::ind_set s;
-	mesh.neighbours_of_convex(ic, s);
+	mesh.neighbors_of_convex(ic, s);
 	for (bgeot::mesh_structure::ind_set::iterator it = s.begin(); it != s.end(); ++it) {
 	  if (Patch_element_list.is_in(*it)) { adjncy.push_back(indelt[*it]); ++k; }
 	}
@@ -1035,7 +1035,7 @@ int main(int argc, char *argv[]) {
       bgeot::mesh_structure::ind_set is;
       base_matrix Mloc;
       for (dal::bv_visitor i(elt_black_list); !i.finished(); ++i) {
-	mesh.neighbours_of_convex(i, is);
+	mesh.neighbors_of_convex(i, is);
 	size_type cv2 = size_type(-1);
 	scalar_type ratio = scalar_type(0);
 	for (size_type j = 0; j < is.size(); ++j) {

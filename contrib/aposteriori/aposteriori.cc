@@ -444,12 +444,12 @@ void crack_problem::error_estimate(const plain_vector &U, plain_vector &ERR) {
     // }
     //  ee = ERR[cv];
  
-    // jump of the stress between the element ant its neighbours.
+    // jump of the stress between the element ant its neighbors.
     for (short_type f1=0; f1 < mesh.structure_of_convex(cv)->nb_faces(); ++f1) {
 
       if (gmm::abs((*mmls)(mesh.trans_of_convex(cv)->convex_ref()->points_of_face(f1)[0])) < 1E-7 * radius) continue;
 
-      size_type cvn = mesh.neighbour_of_convex(cv, f1);
+      size_type cvn = mesh.neighbor_of_convex(cv, f1);
       if (cvn == size_type(-1)) continue;
 	
       bgeot::pgeometric_trans pgt2 = mesh.trans_of_convex(cvn);

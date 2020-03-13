@@ -1269,19 +1269,18 @@ namespace getfem {
   // 2 : reserved prefix Grad, Hess, Div, Derivative_ Test and Test2
   // 3 : reserved prefix Dot and Previous
   int ga_check_name_validity(const std::string &name) {
-
     if (name.compare(0, 11, "Derivative_") == 0)
       return 2;
-
-    const ga_predef_function_tab &PREDEF_FUNCTIONS
-      = dal::singleton<ga_predef_function_tab>::instance(0);
+    
     const ga_predef_operator_tab &PREDEF_OPERATORS
       = dal::singleton<ga_predef_operator_tab>::instance(0);
     const ga_spec_function_tab &SPEC_FUNCTIONS
       = dal::singleton<ga_spec_function_tab>::instance(0);
     const ga_spec_op_tab &SPEC_OP
       = dal::singleton<ga_spec_op_tab>::instance(0);
-    
+    const ga_predef_function_tab &PREDEF_FUNCTIONS
+      = dal::singleton<ga_predef_function_tab>::instance(0);
+
     if (SPEC_OP.find(name) != SPEC_OP.end())
       return 1;
 
@@ -1320,7 +1319,6 @@ namespace getfem {
 //       return 3;
 //     if (name.size() >= 12 && name.compare(0, 12, "Previous1_2_") == 0)
 //       return 3;
-
 
     return 0;
   }
@@ -1509,6 +1507,34 @@ namespace getfem {
       ga_expand_macro(gam.tree(), gam.tree().root, macro_dict);
     }
   }
+
+  bool ga_macro_dictionary::macro_exists(const std::string &name) const {
+    if (macros.find(name) != macros.end()) return true;
+    if (parent && parent->macro_exists(name)) return true;
+    return false;
+  }
+
+  const ga_macro &
+  ga_macro_dictionary::get_macro(const std::string &name) const {
+    auto it = macros.find(name);
+    if (it != macros.end()) return it->second;
+    if (parent) return parent->get_macro(name);
+    GMM_ASSERT1(false, "Undefined macro");
+  }
+
+  void ga_macro_dictionary::add_macro(const ga_macro &gam)
+  { macros[gam.name()] = gam; }
+
+  void ga_macro_dictionary::add_macro(const std::string &name,
+                                      const std::string &expr)
+  { ga_tree tree; ga_read_string_reg("Def "+name+":="+expr, tree, *this); }
+
+  void ga_macro_dictionary::del_macro(const std::string &name) {
+    auto it = macros.find(name);
+    GMM_ASSERT1(it != macros.end(), "Undefined macro (at this level)");
+    macros.erase(it);
+  }
+  
   
   //=========================================================================
   // Syntax analysis for the generic assembly language
@@ -1613,7 +1639,7 @@ namespace getfem {
             if (params.size())
               ga_mark_macro_params(gam, params, macro_dict);
             macro_dict.add_macro(gam);
-
+            
             // cout << "macro \"" << gam.name() << "\" registered with "
             //      << gam.nb_params() << " params  := "
             //      << ga_tree_to_string(gam.tree()) << endl;
