@@ -29,6 +29,8 @@
 #include "getfem/getfem_derivatives.h"
 #include "getfem/getfem_interpolation.h"
 #include "getfem/getfem_generic_assembly.h"
+#include "getfem/getfem_generic_assembly_tree.h"
+
 
 namespace getfem {
 
@@ -41,8 +43,30 @@ namespace getfem {
       ("neighbour_elt", interpolate_transformation_neighbor_instance());
     add_interpolate_transformation
       ("neighbor_element", interpolate_transformation_neighbor_instance());
-    add_macro("Hess(u)", "Hess_u");
-    add_macro("Div(u)", "Div_u");
+
+    ga_tree tree1;
+    pstring s1 = std::make_shared<std::string>("Hess_u");
+    tree1.add_name(s1->c_str(), 6, 0, s1);
+    tree1.root->name = "u";
+    tree1.root->op_type = GA_NAME;
+    tree1.root->node_type = GA_NODE_MACRO_PARAM;
+    tree1.root->nbc1 = 0;
+    tree1.root->nbc2 = ga_parse_prefix_operator(*s1);
+    tree1.root->nbc3 = ga_parse_prefix_test(*s1);
+    ga_macro gam1("Hess", tree1, 1);
+    macro_dict.add_macro(gam1);
+
+    ga_tree tree2;
+    pstring s2 = std::make_shared<std::string>("Div_u");
+    tree2.add_name(s2->c_str(), 5, 0, s2);
+    tree2.root->name = "u";
+    tree2.root->op_type = GA_NAME;
+    tree2.root->node_type = GA_NODE_MACRO_PARAM;
+    tree2.root->nbc1 = 0;
+    tree2.root->nbc2 = ga_parse_prefix_operator(*s2);
+    tree2.root->nbc3 = ga_parse_prefix_test(*s2);
+    ga_macro gam2("Div", tree2, 1);
+    macro_dict.add_macro(gam2);
   }
 
   void model::var_description::set_size() {

@@ -237,3 +237,8 @@ if (res != "(Grad_w(2, 2))"):
 
 str = "Grad(u*Test_u)"; print('\nAssembly string "%s" gives:' % str)
 res = gf.asm('expression analysis', str,  mim, 1, md)
+
+str = "Hess(u)"; print('\nAssembly string "%s" gives:' % str)
+res = gf.asm('expression analysis', str,  mim, 1, md)
+if (res != "(Hess_u)"):
+  print("Should be Hess_u"); exit(1)
