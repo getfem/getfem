@@ -1643,7 +1643,7 @@ namespace getfem {
     class APIDECL Hilber_Hughes_Taylor_scheme
       : public virtual_time_scheme {
 
-      std::string U, U0, V, V0, A, A0, R, R0;
+      std::string U, U0, V, V0, A, A0;
       scalar_type alpha, beta, gamma;
 
     public:
@@ -1658,16 +1658,14 @@ namespace getfem {
         scalar_type b1 = (scalar_type(1)+alpha)*(beta-gamma)/beta - alpha;
         scalar_type b2 = (scalar_type(1)+alpha)*dt*(1-gamma/(scalar_type(2)*beta));
         scalar_type c0 = (scalar_type(1)+alpha);
-        scalar_type d0 = alpha;
-        scalar_type e0 = scalar_type(0);
+        scalar_type c1 = alpha;
 
-        md.set_factor_of_variable(R, e0);
         md.set_factor_of_variable(U, c0);
         md.set_factor_of_variable(V, b0);
         md.set_factor_of_variable(A, a0);
         if (md.is_complex()) {
-          gmm::copy(gmm::scaled(md.complex_variable(U0), complex_type(d0)),
-                   md.set_complex_constant_part(R));
+          gmm::copy(gmm::scaled(md.complex_variable(U0), complex_type(c1)),
+                   md.set_complex_constant_part(U));
           gmm::add(gmm::scaled(md.complex_variable(U0), -complex_type(b0)),
                    gmm::scaled(md.complex_variable(V0), complex_type(b1)),
                    md.set_complex_constant_part(V));
@@ -1679,8 +1677,8 @@ namespace getfem {
           gmm::add(gmm::scaled(md.complex_variable(A0), -complex_type(a2)),
                    md.set_complex_constant_part(A));
         } else {
-          gmm::copy(gmm::scaled(md.real_variable(U0), d0),
-                   md.set_real_constant_part(R));
+          gmm::copy(gmm::scaled(md.real_variable(U0), c1),
+                   md.set_real_constant_part(U));
           gmm::add(gmm::scaled(md.real_variable(U0), -b0),
                    gmm::scaled(md.real_variable(V0), b1),
                    md.set_real_constant_part(V));
@@ -1749,8 +1747,6 @@ namespace getfem {
         V0 = "Previous_Dot_" + U;
         A = "Dot2_" + U;
         A0 = "Previous_Dot2_" + U;
-        R = "Rhs_" + U;
-        R0 = "Previous_Rhs_" + U;
         alpha = al; beta = be; gamma = ga;
         GMM_ASSERT1(alpha >= -scalar_type(1) && alpha <= scalar_type(0)
                     && beta > scalar_type(0) && beta <= scalar_type(1)
@@ -1761,8 +1757,6 @@ namespace getfem {
           md.add_affine_dependent_variable(V, U);
         if (!(md.variable_exists(A)))
           md.add_affine_dependent_variable(A, U);
-        if (!(md.variable_exists(R)))
-          md.add_affine_dependent_variable(R, U);
 
         const mesh_fem *mf = md.pmesh_fem_of_variable(U);
         size_type s = md.is_complex() ? gmm::vect_size(md.complex_variable(U))
@@ -1772,12 +1766,10 @@ namespace getfem {
           if (!(md.variable_exists(U0))) md.add_fem_data(U0, *mf);
           if (!(md.variable_exists(V0))) md.add_fem_data(V0, *mf);
           if (!(md.variable_exists(A0))) md.add_fem_data(A0, *mf);
-          if (!(md.variable_exists(R0))) md.add_fem_data(R0, *mf);
         } else {
           if (!(md.variable_exists(U0))) md.add_fixed_size_data(U0, s);
           if (!(md.variable_exists(V0))) md.add_fixed_size_data(V0, s);
           if (!(md.variable_exists(A0))) md.add_fixed_size_data(A0, s);
-          if (!(md.variable_exists(R0))) md.add_fixed_size_data(R0, s);
         }
       }
 

@@ -80,7 +80,6 @@ md.add_Hilber_Hughes_Taylor_scheme('u2', alpha, beta, gamma)
 md.add_mass_brick(mim, 'Dot2_u')
 md.add_mass_brick(mim, 'Dot2_u1')
 md.add_mass_brick(mim, 'Dot2_u2')
-md.add_Laplacian_brick(mim, 'Rhs_u2');
 md.set_time_step(dt)
 
 ## Initial data.
