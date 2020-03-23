@@ -193,6 +193,10 @@ References
    *Improved numerical dissipation for time integration algorithms in structural dynamics.*
    Earthquake Engineering and Structural Dynamics 5 (1977), 283-292.
 
+.. [DIANA2010] TNO DIANA BV.
+   *Hilber-Hughes-Taylor* https://dianafea.com/manuals/d94/Analys/node425.html
+   DIANA-9.4 User's Manual - Analysis Procedures First ed.
+
 .. |moes| unicode:: Mo U+00EB s
 .. |peric| unicode:: Peri U+0107
 .. |dolezel| unicode:: Dole U+017E el

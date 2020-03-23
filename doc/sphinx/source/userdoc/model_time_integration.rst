@@ -302,7 +302,7 @@ such as::
   // Volumic source term.
   getfem::add_source_term_generic_assembly_brick(model, mim, "sin(t+alpha*dt)*Test_u");
 
-More details can be found for instance in [HILBER1977]_.
+More details can be found for instance in [HILBER1977]_ and [DIANA2010].
 
 Transient terms
 ***************
