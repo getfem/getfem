@@ -107,6 +107,12 @@ index entries more informative.
 
 The directives are:
 
+.. describe:: cpp:function
+
+   Describes a C++ function. The signature should be given as in C++, e.g.::
+
+      .. cpp:function:: bgeot::simplex_structure(dim_type d)
+
 .. describe:: c:function
 
    Describes a C function. The signature should be given as in C, e.g.::
