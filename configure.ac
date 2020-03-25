@@ -1013,6 +1013,8 @@ dnl  AM_PATH_PYTHON(2.2)
       WARNING_MSG="$WARNING_MSG\n$MSG"
     fi
   fi
+  PYTHON_SO=`$PYTHON -c "import distutils.sysconfig, sys; get = distutils.sysconfig.get_config_var; sys.stdout.write(get('EXT_SUFFIX') or get('SO') or '.so');"`
+  AC_SUBST(PYTHON_SO)
 fi
 
 AM_CONDITIONAL(BUILDPYTHON, test x$usepython = xYES)
