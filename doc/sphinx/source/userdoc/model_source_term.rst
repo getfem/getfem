@@ -33,7 +33,7 @@ The function to add a source term to a model is::
                         directdataname = std::string());
 
 where ``md``is the model object, ``mim`` is the integration method, ``varname`` is
-the variable of the model for which the source term is added, ``dataexpr`` has to be  a regular expression of the weak form language (except for the complex version where it has to be a declared data of the model). It has to be
+the variable of the model for which the source term is added, ``dataexpr`` has to be  a regular expression of GWFL, the generic weak form language (except for the complex version where it has to be a declared data of the model). It has to be
 scalar or vector valued depending on the fact that the variable is scalar or
 vector valued itself. ``region`` is a mesh region on which the term is added. If
 the region corresponds to a boundary, the source term will represent a Neumann

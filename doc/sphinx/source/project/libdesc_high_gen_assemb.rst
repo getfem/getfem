@@ -15,7 +15,7 @@ The high-level generic assembly module in |gf|
 Description
 ^^^^^^^^^^^
 
-The high level generic assembly module of |gf| and its weak form language is a key module which allows to describe weak formulation of partial differential equation problems. See the description of the language in the user documentation section :ref:`ud-gasm-high`.
+The high level generic assembly module of |gf| and its generic weak form language (GWFL) is a key module which allows to describe weak formulation of partial differential equation problems. See the description of the language in the user documentation section :ref:`ud-gasm-high`.
 
 Files
 ^^^^^
@@ -26,7 +26,7 @@ Files
 
    :file:`getfem_generic_assembly.h`, "Main header for exported definitions. Only this header has to be included to use the generic assembly. Other headers of the module are for internal use only."
    :file:`getfem_generic_assembly_tree.h` and :file:`getfem_generic_assembly_tree.cc`, "Definition of the tree structure and basic operations on it, including reading an assembly string and transform it in a syntax tree and make the invert transformation of a tree into a string."
-   :file:`getfem_generic_assembly_function_and_operators.h` and :file:`getfem_generic_assembly_function_and_operators.cc`, "Definition of redefined function and nonlinear operator of the weak form language."
+   :file:`getfem_generic_assembly_function_and_operators.h` and :file:`getfem_generic_assembly_function_and_operators.cc`, "Definition of redefined function and nonlinear operator of GWFL."
    :file:`getfem_generic_assembly_semantic.h` and :file:`getfem_generic_assembly_semantic.cc`, "Semantic analysis and enrichment of the syntax tree. Include some operations such as making the derivation of a tree with respect to a variable or computing the tree corresponding to the gradient of an expression."
    :file:`getfem_generic_assembly_workspace.cc`, "Methodes of the workspace object (defined in :file:`getfem_generic_assembly.h`)."
    :file:`getfem_generic_assembly_compile_and_exec.h` and :file:`getfem_generic_assembly_compile_and_exec.cc`, "Definition of the optimized instructions, compilation into a sequel of optimize instructions and execution of the instructions on Gauss point/interpolation points."
@@ -139,7 +139,7 @@ Optimized instructions for variable evaluation, operations, vector and matrix as
 Predefined functions
 ^^^^^^^^^^^^^^^^^^^^
 
-Some predefined scalar functions are available in |gf| weak form language in order to describe a weak formulation (or also to make basic algebraic computations). This is limited to scalar functions of one or two arguments. Due to the automatic differentiation used to obtain the tangent system of described problems, the derivative each function have to be available. The principle retained is the following: For each predefined function is available:
+Some predefined scalar functions are available in GWFL in order to describe a weak formulation (or also to make basic algebraic computations). This is limited to scalar functions of one or two arguments. Due to the automatic differentiation used to obtain the tangent system of described problems, the derivative each function have to be available. The principle retained is the following: For each predefined function is available:
   - A C++ function which computes the value given the argument(s).
   - The support of the function in the first each argument in term of a
     (possibly infinite) interval (this is for simplification of expressions).

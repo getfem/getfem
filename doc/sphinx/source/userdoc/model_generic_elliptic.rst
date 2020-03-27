@@ -49,7 +49,7 @@ The second function is::
 
   size_type getfem::add_generic_elliptic_brick(md, mim, varname, dataexpr, region = -1);
 
-It adds a term with an arbitrary coefficient given by the expression ``dataexpr`` which has to be a regular expression of the weak form language (like "1", "sin(X[0])" or "Norm(u)" for instance) even depending on model variables (except for the complex version where it has to be a declared data of the model)
+It adds a term with an arbitrary coefficient given by the expression ``dataexpr`` which has to be a regular expression of GWFL, the generic weak form language (like "1", "sin(X[0])" or "Norm(u)" for instance) even depending on model variables (except for the complex version where it has to be a declared data of the model)
 
 Note that very general equations can be obtained with this brick. For instance,
 linear anisotropic elasticity can be obtained with a tensor data. When an order

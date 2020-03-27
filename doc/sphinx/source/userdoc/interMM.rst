@@ -51,10 +51,10 @@ the interpolation is done with a simple matrix multiplication::
   gmm::mult(M, U, V);
 
 
-Interpolation based on the high-level weak form language
-********************************************************
+Interpolation based on the generic weak form language (GWFL)
+************************************************************
 
-It is possible to extract some arbitrary expressions on possibly several fields thanks to the weak form language and the interpolation functions.
+It is possible to extract some arbitrary expressions on possibly several fields thanks to GWFL and the interpolation functions.
 
 This is specially dedicated to the model object (but it can also be used with a ga_workspace object). For instance if ``md`` is a valid object containing some defined variables ``u`` (vectorial) and ``p`` (scalar), one can interpolate on a Lagrange finite element method an expression such as ``p*Trace(Grad_u)``. The resulting expression can be scalar, vectorial or tensorial. The size of the resulting vector is automatically adapted.
 

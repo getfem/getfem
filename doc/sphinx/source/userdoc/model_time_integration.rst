@@ -19,13 +19,13 @@ Although time integration scheme can be written directly using the model object 
 
 * Some data are added to the model to represent the state of the system at previous time steps. For classical one-step schemes (for the moment, only one-step schemes are provided), only the previous time step is stored. For instance if `u` is a variable (thus represented at step n), `Previous_u`, `Previous2_u`, `Previous3_u` will be the data representing the state of the variable at the previous time step (step n-1, n-2 and n-3).
 
-* Some intermediate variables are added to the model to represent the time derivative (and the second order time derivative for second order problem). For instance, if `u` is a variable, `Dot_u` will represent the first order time derivative of `u` and `Dot2_u` the second order one. One can refer to these variables in the model to add a brick on it or to use it in the weak form language. However, these are not considered to be independent variables, they will be linked to their corresponding original variable (in an affine way) by the time integration scheme. Most of the schemes need also the time derivative at the previous time step and add the data `Previous_Dot_u` and possibly `Previous_Dot2_u` to the model.
+* Some intermediate variables are added to the model to represent the time derivative (and the second order time derivative for second order problem). For instance, if `u` is a variable, `Dot_u` will represent the first order time derivative of `u` and `Dot2_u` the second order one. One can refer to these variables in the model to add a brick on it or to use it in GWFL, the generic weak form language. However, these are not considered to be independent variables, they will be linked to their corresponding original variable (in an affine way) by the time integration scheme. Most of the schemes need also the time derivative at the previous time step and add the data `Previous_Dot_u` and possibly `Previous_Dot2_u` to the model.
 
 * A different time integration scheme can be applied on each variable of the model. Note that most of the time, multiplier variable and more generally variables for which no time derivative is used do not need a time integration scheme.
 
-* The data `t` represent the time parameter and can be used (either in the weak form language or as parameter of some bricks). Before the assembly of the system, the data `t` is automatically updated to the time step `n`.
+* The data `t` represent the time parameter and can be used (either in GWFL or as parameter of some bricks). Before the assembly of the system, the data `t` is automatically updated to the time step `n`.
 
-* The problem to be solved at each iteration correspond to the formulation of the transient problem in its natural (weak) formulation in which the velocity and the acceleration are expressed by the intermediate variables introduced. For instance, the translation into the weak form language of the problem
+* The problem to be solved at each iteration correspond to the formulation of the transient problem in its natural (weak) formulation in which the velocity and the acceleration are expressed by the intermediate variables introduced. For instance, the translation into GWFL of the problem
 
   .. math::
 
@@ -263,7 +263,7 @@ Transient terms
 
 As it has been explained in previous sections, some intermediate variables are added to the model in order to represent the time derivative of the variables on which the scheme is applied. Once again, if "u" is such a variable, "Dot_u" will represent the time derivative of "u" approximated by the used scheme.
 
-This also mean that "Dot_u" (and "Dot2_u" in order two in time problems) can be used to express the transient terms. In the weak form language, the term:
+This also mean that "Dot_u" (and "Dot2_u" in order two in time problems) can be used to express the transient terms. In GWFL, the term:
 
 .. math::
 

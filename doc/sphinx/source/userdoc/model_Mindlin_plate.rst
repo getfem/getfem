@@ -75,7 +75,7 @@ where :math:`P^h(T)` is the elementwize :math:`L^2`-projection onto the rotated 
 
   \int_{\Omega}G\epsilon (\nabla u_3 - P^h(\theta))\cdot(\nabla v_3 - P^h(\psi))dx
 
-The principle of the definition of an elementary projection is explained if the description of the weak form language (see :ref:`ud-gasm-high-elem-trans`) and an example can be found in the file :file:`src/getfem_linearized_plates.cc`.
+The principle of the definition of an elementary projection is explained if the description of GWFL, the generic weak form language (see :ref:`ud-gasm-high-elem-trans`) and an example can be found in the file :file:`src/getfem_linearized_plates.cc`.
 
 
 
@@ -89,7 +89,7 @@ The following function defined in :file:`src/getfem/getfem_linearized_plates.h` 
    param_nu, param_epsilon, param_kappa, variant = 2, region)
 
 where `name_u3` is name of the variable which represents the transverse displacmenent, `name_theta` the variable which represents the rotation, `param_E` the Young Modulus, `param_nu` the poisson ratio, `param_epsilon` the plate thickness, `param_kappa` the shear correction factor. Note that since this brick
-uses the weak form language, the parameter can be regular expression of this language.
+uses GWFL, the parameter can be regular expression of this language.
 There are three variants.
 `variant = 0` corresponds to the an
 unreduced formulation and in that case only the integration

@@ -502,7 +502,7 @@ displacement, the plastic multiplier and the plastic strain).
 `params` is a list of expressions for the parameters (at least elastic
 coefficients and the yield stress). These expressions can be some data
 names (or even variable names) of the model but can also be any scalar
-valid expression of the weak form language (such as "1/2",
+valid expression of GWFL, the generic weak form language (such as "1/2",
 "2+sin(X[0])", "1+Norm(v)" ...). The last two parameters optionally
 provided in `params` are the `theta` parameter of the `theta`-scheme
 (generalized trapezoidal rule) used for the plastic strain integration

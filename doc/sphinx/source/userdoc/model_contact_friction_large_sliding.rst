@@ -11,7 +11,7 @@
 Large sliding/large deformation contact with friction bricks
 ------------------------------------------------------------
 
-The basic tools to deal with large sliding/large deformation contact of deformable structures are accessible in the weak form language. Some interpolate transformations (see :ref:`ud-gasm-high-transf`) are defined to perform the contact detection and allow to integrate from a contacct bondary to the opposite contact boundary. Some other useful tools such as the unit normal vector in the real configuration and projections to take into account contact with Coulomb friction are also defined as operators in the weak form language.
+The basic tools to deal with large sliding/large deformation contact of deformable structures are accessible in GWFL (the generic weak form language). Some interpolate transformations (see :ref:`ud-gasm-high-transf`) are defined to perform the contact detection and allow to integrate from a contacct bondary to the opposite contact boundary. Some other useful tools such as the unit normal vector in the real configuration and projections to take into account contact with Coulomb friction are also defined as operators in GWFL.
 
 Of course, the computational cost of large sliding/large deformation contact algorithms is greatly higher than small sliding-small deformation ones.
 
@@ -38,7 +38,7 @@ The addition of a raytracing transformation to a model::
   void add_raytracing_transformation(model &md, const std::string &transname,
                                       scalar_type d)
 
-where ``transname`` is a name given to the transformation which allows to refer to it in the weak form language and ``d`` is the release distance (see above).
+where ``transname`` is a name given to the transformation which allows to refer to it in GWFL and ``d`` is the release distance (see above).
 
 The raytracing transformation is added without any slave or master contact boundary. The following functions allows to add some boundaries to the transformation::
 
@@ -59,9 +59,9 @@ It is also possible to add a rigid obstacle (considered as a master surface) tha
              const std::string &transname,
              const std::string &expr, size_type N)
 
-where ``expr`` is the expression of a signed distance to the obstacle using the syntax of the weak form language (``X`` being the current position, ``X(0)``, ``X(1)`` ... the corresponding components). For instance an expression ``X(0) + 5`` will correspond to a flat obstacle lying on the right of the position ``-5`` of the first coordinate. Be aware that the expression have to be close to a signed distance, which in particular means that the gradient norm have to be close to 1.
+where ``expr`` is the expression of a signed distance to the obstacle using the syntax of GWFL (``X`` being the current position, ``X(0)``, ``X(1)`` ... the corresponding components). For instance an expression ``X(0) + 5`` will correspond to a flat obstacle lying on the right of the position ``-5`` of the first coordinate. Be aware that the expression have to be close to a signed distance, which in particular means that the gradient norm have to be close to 1.
 
-In order to distinguish between non-contact situations and the occurence of a contact with another deformable body or with a rigid obstacle, the transformation returns an integer identifier which can be used by the `Interpolate_filter` command of the weak form language (see :ref:`ud-gasm-high-transf`). The different values:
+In order to distinguish between non-contact situations and the occurence of a contact with another deformable body or with a rigid obstacle, the transformation returns an integer identifier which can be used by the `Interpolate_filter` command of GWFL (see :ref:`ud-gasm-high-transf`). The different values:
 
 * 0 : no contact found on this Gauss point
 
@@ -75,7 +75,7 @@ such that it is possible to differentiate the treatment of these three cases usi
   Interpolate_filter(transname, expr2, 1)
   Interpolate_filter(transname, expr3, 2)
 
-in the weak form language, where ``expr1``, ``expr2`` and ``expr3`` correspond to the different terms to be computed. The matlab interface demo program :file:`/interface/tests/matlab/demo_large_sliding_contact.m` presents an example of use.
+in GWFL, where ``expr1``, ``expr2`` and ``expr3`` correspond to the different terms to be computed. The matlab interface demo program :file:`/interface/tests/matlab/demo_large_sliding_contact.m` presents an example of use.
 
 Note that the transformation could also be directly used with a `ga_workspace` object if model object are not used. See :file:`getfem/getfem_contact_and_friction_common.h` for more details. Note also that in the framework of the model object, a interfaced use of this transformation is allowed by the model bricks described below.
 
@@ -231,7 +231,7 @@ Sorry, for the moment the brick is not working.
 Tools of the high-level generic assembly for contact with friction
 ******************************************************************
 
-The following nonlinear operators are defined in the weak form language (see :ref:`ud-gasm-high`):
+The following nonlinear operators are defined in GWFL (see :ref:`ud-gasm-high`):
 
   - ``Transformed_unit_vector(Grad_u, n)`` where ``Grad_u`` is the gradient of a
     displacement field and ``n`` a unit vector in the reference configuration.
@@ -358,4 +358,4 @@ A rigid obstacle can be added to the brick with::
   add_rigid_obstacle_to_large_sliding_contact_brick(model &md,
       size_type indbrick, std::string expr, size_type N)
 
-where `expr` is an expression using the weak form language (with `X` is the current position) which should be a signed distance to the obstacle. `N` is the mesh dimension.
+where `expr` is an expression using GWFL (with `X` is the current position) which should be a signed distance to the obstacle. `N` is the mesh dimension.

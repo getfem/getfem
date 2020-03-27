@@ -50,7 +50,7 @@ In order to be used, the elementary transformation corresponding to this operato
 
   add_HHO_reconstructed_gradient(model, transname);
 
-where ``transname`` is an arbitrary name which will designate the transformation in the weak form language. Then, it will be possible to refer to the reconstructed gradient of a variable ``u`` into the weak form language as ``Elementary_transformation(u, HHO_grad, Gu)``, if ``transname="HHO_grad"``. The third parameter of the transformation ``Gu`` should be a fem variable or a data of the model. This variable will not be used on itself but will determine the finite element space of the reconstruction (the space :math:`V_G`).
+where ``transname`` is an arbitrary name which will designate the transformation in GWFL (the generic weak form language). Then, it will be possible to refer to the reconstructed gradient of a variable ``u`` into GWFL as ``Elementary_transformation(u, HHO_grad, Gu)``, if ``transname="HHO_grad"``. The third parameter of the transformation ``Gu`` should be a fem variable or a data of the model. This variable will not be used on itself but will determine the finite element space of the reconstruction (the space :math:`V_G`).
 
 This is an example of use with the Python interface for a two-dimensional triangule mesh ``m`` ::
 
@@ -87,7 +87,7 @@ The elementary transformation corresponding to this operator can be added to the
 
   add_HHO_reconstructed_symmetrized_gradient(model, transname);
 
-and then be used into the weak form language as ``Elementary_transformation(u, HHO_sym_grad, Gu)``, if ``transname="HHO_sym_grad"``, with ``Gu`` still determining the reconstruction space.
+and then be used into GWFL as ``Elementary_transformation(u, HHO_sym_grad, Gu)``, if ``transname="HHO_sym_grad"``, with ``Gu`` still determining the reconstruction space.
 
 Reconstructed variable
 ++++++++++++++++++++++
@@ -107,7 +107,7 @@ The corresponding elementary transformation can be added to the model by the com
 
   add_HHO_reconstructed_value(model, transname);
 
-and used into the weak form language as ``Elementary_transformation(u, HHO_val, ud)``, if ``transname="HHO_val"``, with ``ud`` determining the reconstruction space.
+and used into GWFL as ``Elementary_transformation(u, HHO_val, ud)``, if ``transname="HHO_val"``, with ``ud`` determining the reconstruction space.
 
 Reconstructed variable with symmetrized gradient
 ++++++++++++++++++++++++++++++++++++++++++++++++
@@ -131,7 +131,7 @@ The corresponding elementary transformation can be added to the model by the com
 
   add_HHO_reconstructed_value(model, transname);
 
-and used into the weak form language as ``Elementary_transformation(u, HHO_val, ud)``, if ``transname="HHO_val"``, with ``ud`` determining the reconstruction space.
+and used into GWFL as ``Elementary_transformation(u, HHO_val, ud)``, if ``transname="HHO_val"``, with ``ud`` determining the reconstruction space.
 
 
 Stabilization operators
@@ -154,4 +154,4 @@ The corresponding elementary transformations can be added to the model by the tw
   add_HHO_stabilization(model, transname);
   add_HHO_symmetrized_stabilization(model, transname);
 
-and used into the weak form language as ``Elementary_transformation(u, HHO_stab)``, if ``transname="HHO_stab"``. A third argument is optional to specify the target (HHO) space (the default is one of the variable itself). An example of use is also given in the test programs :file:`interface/tests/demo_laplacian_HHO.py` and :file:`interface/tests/demo_elasticity_HHO.py`.
+and used into GWFL as ``Elementary_transformation(u, HHO_stab)``, if ``transname="HHO_stab"``. A third argument is optional to specify the target (HHO) space (the default is one of the variable itself). An example of use is also given in the test programs :file:`interface/tests/demo_laplacian_HHO.py` and :file:`interface/tests/demo_elasticity_HHO.py`.

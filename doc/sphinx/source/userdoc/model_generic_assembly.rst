@@ -13,7 +13,7 @@ Generic assembly bricks
 -----------------------
 
 
-A mean to add a term either on one variable or on several ones is to directly use the weak form language described in Section :ref:`ud-gasm-high`. The more general way is to use::
+A mean to add a term either on one variable or on several ones is to directly use GWFL, the generic weak form language described in Section :ref:`ud-gasm-high`. The more general way is to use::
 
    size_type getfem::add_nonlinear_term(md, mim, expr,
                          region = -1, is_sym = false, is_coercive = false);
@@ -46,4 +46,4 @@ where ``F`` is a pre-defined constant of the model representing the right hand s
 
 
 
-Note that for the moment, the use of the weak form language is not possible for complex valued problems.
+Note that for the moment, the use of GWFL is not possible for complex valued problems.

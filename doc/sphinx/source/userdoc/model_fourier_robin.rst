@@ -35,7 +35,7 @@ The function adding this brick to a model is::
   add_Fourier_Robin_brick(md, mim, varname, dataexpr, region);
 
 where ``dataexpr`` is the data of the model which represents the coefficient
-:math:`Q`.  It can be an arbitrary valid expression of the weak form language (except for the complex version for which it should be a data of the model)
+:math:`Q`.  It can be an arbitrary valid expression of GWFL, the generic weak form language (except for the complex version for which it should be a data of the model)
 
 Note that an additional right hand side can be added with a source term brick.
 

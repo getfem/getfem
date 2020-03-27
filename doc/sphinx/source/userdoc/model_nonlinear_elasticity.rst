@@ -345,7 +345,7 @@ where ``md`` is the model, ``mim`` the integration method, ``varname`` the varia
 High-level generic assembly versions
 ++++++++++++++++++++++++++++++++++++
 
-The weak form language gives access to the hyperelastic potential and constitutive laws implemented in |gf|. This allows to directly use them in the language, for instance using a generic assembly brick in a model or for interpolation of certain quantities (the stress for instance).
+The generic weak form language (GWFL) gives access to the hyperelastic potential and constitutive laws implemented in |gf|. This allows to directly use them in the language, for instance using a generic assembly brick in a model or for interpolation of certain quantities (the stress for instance).
 
 Here is the list of nonlinear operators in the language which can be useful for nonlinear elasticity::
 

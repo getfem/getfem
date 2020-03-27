@@ -217,7 +217,7 @@ Once the asymptotic enrichment is defined, the object ``getfem::mesh_fem_sum`` a
 
 See :file:`interface/tests/matlab/demo_crack.m`, :file:`interface/tests/python/demo_crack.py` or :file:`tests/crack.cc` for some examples of use of these tools.
 
-Additionally, the weak form language defines the two commands ``Xfem_plus`` and ``Xfem_minus`` allowing to take into account the jump of any field or derivative of any field across a level-set (see :ref:`ud-gasm-high_xfem`). This a priori allows to write any interface law easily.
+Additionally, GWFL, the generic weak form language, defines the two commands ``Xfem_plus`` and ``Xfem_minus`` allowing to take into account the jump of any field or derivative of any field across a level-set (see :ref:`ud-gasm-high_xfem`). This a priori allows to write any interface law easily.
 
 
 Note also that some procedures are available in the file :file:`src/getfem/getfem_crack_sif.h` to compute the stress intensity factors in 2D (restricted to homogeneous isotropic linearized elasticity).
