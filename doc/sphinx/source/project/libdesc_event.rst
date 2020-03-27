@@ -36,23 +36,23 @@ order to deal with the dependencies of an object, the object
 ``context_dependencies`` needs to be a parent class of this object. It adds the
 following methods to the object:
 
-.. cpp:function:: add_dependency(ct)
+.. cpp:function:: getfem::context_dependencies::add_dependency(ct)
 
    Add an object (which has to have ``context_dependencies`` as a parent class)
    to the list of objects from which the current object depend.
 
-.. cpp:function:: touch()
+.. cpp:function:: getfem::context_dependencies::touch()
 
    Indicates to the dependent objects that something has change in the object.
 
-.. cpp:function:: context_check()
+.. cpp:function:: getfem::context_dependencies::context_check()
 
    Check if the object has to be updated. if it is the case it makes first a
    check to the dependency list and call the update function of the object. (the
    update function of the dependencies are called before the update function of
    the current object).
 
-.. cpp:function:: context_valid()
+.. cpp:function:: getfem::context_dependencies::context_valid()
 
    Says if the object has still a valid context, i.e. if the object in the
    dependency list still exist.

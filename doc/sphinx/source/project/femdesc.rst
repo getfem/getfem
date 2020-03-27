@@ -42,7 +42,7 @@ elements:
 
    description of a parallelepiped of dimension ``d``.
 
-.. cpp:function:: bgeot::convex_product_structure(bgeot::pconvex_structure p1, bgeot::pconv$
+.. cpp:function:: bgeot::convex_product_structure(bgeot::pconvex_structure p1, pconvex_structure p2)
 
    description of the direct product of ``p1`` and ``p2``.
 

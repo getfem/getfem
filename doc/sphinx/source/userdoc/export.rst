@@ -74,7 +74,7 @@ reference to a |mf| ``mf`` and a field ``U`` on this |mf|).
 
    empty slicer.
 
-.. cpp:function:: getfem::slicer_boundary(const mesh &m, \ldots)
+.. cpp:function:: getfem::slicer_boundary(const mesh &m, ldots)
 
    extract the boundary of a mesh.
 
