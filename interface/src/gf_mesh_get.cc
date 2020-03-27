@@ -154,7 +154,8 @@ typedef dal::dynamic_tree_sorted<mesh_faces_by_pts_list_elt> mesh_faces_by_pts_l
 
 
 static void
-outer_faces(const getfem::mesh &m, mexargs_in &in, mexargs_out &out, const std::string &condition="")
+outer_faces(const getfem::mesh &m, mexargs_in &in, mexargs_out &out,
+            const std::string &condition="")
 {
   mesh_faces_by_pts_list lst;
   dal::bit_vector cvlst, checked_pids, rejected_pids;
@@ -188,11 +189,15 @@ outer_faces(const getfem::mesh &m, mexargs_in &in, mexargs_out &out, const std::
     radius = in.pop().to_scalar();
   }
 
+  dim_type elm_dim = m.dim();
+  if (in.remaining() && in.front().is_integer())
+   elm_dim = dim_type(in.pop().to_integer());
+
   if (in.remaining()) cvlst = in.pop().to_bit_vector(&m.convex_index());
   else cvlst = m.convex_index();
 
   for (dal::bv_visitor ic(cvlst); !ic.finished(); ++ic) {
-    if (m.structure_of_convex(ic)->dim() == m.dim()) {
+    if (m.structure_of_convex(ic)->dim() == elm_dim) {
       for (short_type f = 0; f < m.structure_of_convex(ic)->nb_faces(); f++) {
         bgeot::mesh_structure::ind_pt_face_ct pt
           = m.ind_points_of_face_of_convex(ic, f);
@@ -200,7 +205,7 @@ outer_faces(const getfem::mesh &m, mexargs_in &in, mexargs_out &out, const std::
         size_type idx = lst.add_norepeat(mesh_faces_by_pts_list_elt(ic,f,p));
         lst[idx].cnt++;
       }
-    } 
+    }
 //     else { // DEPRECATED
 //       bgeot::mesh_structure::ind_cv_ct pt = m.ind_points_of_convex(ic);
 //       std::vector<size_type> p(pt.begin(), pt.end());
@@ -818,17 +823,20 @@ void gf_mesh_get(getfemint::mexargs_in& m_in,
        );
 
 
-    /*@GET CVFIDs = ('outer faces'[, CVIDs])
+    /*@GET CVFIDs = ('outer faces'[, dim][, CVIDs])
     Return the set of faces not shared by two elements.
 
     The output `CVFIDs` is a two-rows matrix, the first row lists
     convex #ids, and the second one lists face numbers (local number
-    in the convex). If `CVIDs` is not given, all convexes are
-    considered, and it basically returns the mesh boundary. If `CVIDs`
+    in the convex). If `dim` is provided, the function is forced to
+    detect faces of elements that have dimension `dim`, e.g. `dim`=2 will
+    detect edges of surface elements, even if these belong to a 3D mesh.
+    If `CVIDs` is not given, all convexes are considered, and the
+    function basically returns the mesh boundary. If `CVIDs`
     is given, it returns the boundary of the convex set whose #ids are
     listed in `CVIDs`.@*/
     sub_command
-      ("outer faces", 0, 1, 0, 1,
+      ("outer faces", 0, 2, 0, 1,
        check_empty_mesh(pmesh);
        outer_faces(*pmesh, in, out);
        );
@@ -853,42 +861,45 @@ void gf_mesh_get(getfemint::mexargs_in& m_in,
        all_faces(*pmesh, in, out);
        );
 
-    /*@GET CVFIDs = ('outer faces with direction', @vec v, @scalar angle [, CVIDs])
+    /*@GET CVFIDs = ('outer faces with direction', @vec v, @scalar angle[, dim][, CVIDs])
     Return the set of faces not shared by two convexes and with a mean outward vector lying within an angle `angle` (in radians) from vector `v`.
 
     The output `CVFIDs` is a two-rows matrix, the first row lists convex
     #ids, and the second one lists face numbers (local number in the
-    convex). If `CVIDs` is given, it returns portion of the boundary of
+    convex). The argument `dim` works as in outer_faces().
+    If `CVIDs` is given, it returns portion of the boundary of
     the convex set defined by the #ids listed in `CVIDs`.@*/
     sub_command
-      ("outer faces with direction", 2, 3, 0, 1,
+      ("outer faces with direction", 2, 4, 0, 1,
        check_empty_mesh(pmesh);
        outer_faces(*pmesh, in, out, "direction");
        );
 
     
-    /*@GET CVFIDs = ('outer faces in box', @vec pmin, @vec pmax [, CVIDs])
+    /*@GET CVFIDs = ('outer faces in box', @vec pmin, @vec pmax[, dim][, CVIDs])
     Return the set of faces not shared by two convexes and lying within the box defined by the corner points `pmin` and `pmax`.
 
     The output `CVFIDs` is a two-rows matrix, the first row lists convex
     #ids, and the second one lists face numbers (local number in the
-    convex). If `CVIDs` is given, it returns portion of the boundary of
+    convex). The argument `dim` works as in outer_faces().
+    If `CVIDs` is given, it returns portion of the boundary of
     the convex set defined by the #ids listed in `CVIDs`.@*/
     sub_command
-      ("outer faces in box", 2, 3, 0, 1,
+      ("outer faces in box", 2, 4, 0, 1,
        check_empty_mesh(pmesh);
        outer_faces(*pmesh, in, out, "box");
        );
 
-    /*@GET CVFIDs = ('outer faces in ball', @vec center, @scalar radius [, CVIDs])
+    /*@GET CVFIDs = ('outer faces in ball', @vec center, @scalar radius[, dim][, CVIDs])
     Return the set of faces not shared by two convexes and lying within the ball of corresponding `center` and `radius`.
 
     The output `CVFIDs` is a two-rows matrix, the first row lists convex
     #ids, and the second one lists face numbers (local number in the
-    convex). If `CVIDs` is given, it returns portion of the boundary of
+    convex). The argument `dim` works as in outer_faces().
+    If `CVIDs` is given, it returns portion of the boundary of
     the convex set defined by the #ids listed in `CVIDs`.@*/
     sub_command
-      ("outer faces in ball", 2, 3, 0, 1,
+      ("outer faces in ball", 2, 4, 0, 1,
        check_empty_mesh(pmesh);
        outer_faces(*pmesh, in, out, "ball");
        );
