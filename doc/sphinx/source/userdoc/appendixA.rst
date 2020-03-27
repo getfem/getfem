@@ -2,7 +2,7 @@
 
 .. include:: ../replaces.txt
 
-.. highlightlang:: c++
+.. highlight:: c++
 
 .. |nbsp| unicode:: U+00A0 .. non-breaking space
 

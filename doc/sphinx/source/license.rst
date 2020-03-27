@@ -1,6 +1,6 @@
 .. include:: replaces.txt
 
-.. highlightlang:: none
+.. highlight:: none
 
 .. _history-and-license:
 

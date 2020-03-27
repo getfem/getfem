@@ -1,6 +1,6 @@
 .. include:: ../replaces.txt
 
-.. highlightlang:: matlab
+.. highlight:: matlab
 
 .. _scilab-plotcmdref:
 

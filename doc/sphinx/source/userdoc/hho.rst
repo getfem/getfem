@@ -2,7 +2,7 @@
 
 .. include:: ../replaces.txt
 
-.. highlightlang:: python
+.. highlight:: python
 
 .. _ud-hho:
 

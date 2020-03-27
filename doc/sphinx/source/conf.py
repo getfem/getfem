@@ -51,7 +51,7 @@ extensions = ['sphinx.ext.mathjax','sphinx.ext.autodoc',
 source_encoding = 'utf-8'
 
 # The master toctree document.
-#master_doc = 'contents'
+master_doc = 'contents'
 
 # List of documents that shouldn't be included in the build.
 #unused_docs = []

@@ -1,4 +1,4 @@
-.. highlightlang:: rest
+.. highlight:: rest
 
 Additional Markup Constructs
 ============================
@@ -256,12 +256,12 @@ Syntax highlighting is handled in a smart way:
 * Within Python highlighting mode, interactive sessions are recognized
   automatically and highlighted appropriately.
 
-* The highlighting language can be changed using the ``highlightlang``
+* The highlighting language can be changed using the ``highlight``
   directive, used as follows::
 
-     .. highlightlang:: c
+     .. highlight:: c
 
-  This language is used until the next ``highlightlang`` directive is
+  This language is used until the next ``highlight`` directive is
   encountered.
 
 * The values normally used for the highlighting language are:
