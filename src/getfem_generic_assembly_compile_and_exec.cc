@@ -4943,7 +4943,7 @@ namespace getfem {
           }
           return;
         }
-        cout << "sub_tree_are_equal = " << int(sub_tree_are_equal(pnode, pnode1, workspace, 1)) << endl;
+        // cout << "sub_tree_are_equal = " << int(sub_tree_are_equal(pnode, pnode1, workspace, 1)) << endl;
         std::stringstream ss;
         ss << "Detected wrong equivalent nodes: \n";
         ga_print_node(pnode, ss); ss << "\n and \n"; ga_print_node(pnode1, ss);
