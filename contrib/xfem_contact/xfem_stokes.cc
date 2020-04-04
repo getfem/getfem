@@ -680,7 +680,7 @@ int main(int argc, char *argv[]) {
       bgeot::mesh_structure::ind_set is;
       base_matrix Mloc;
       for (dal::bv_visitor i(elt_black_list); !i.finished(); ++i) {
-	mesh.neighbours_of_convex(i, is);
+	mesh.neighbors_of_convex(i, is);
 	size_type cv2 = size_type(-1);
 	scalar_type ratio = scalar_type(0);
 	for (size_type j = 0; j < is.size(); ++j) {

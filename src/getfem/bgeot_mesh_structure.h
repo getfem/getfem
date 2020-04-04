@@ -209,8 +209,8 @@ namespace bgeot {
         @param s the resulting ind_set.
      */
     void neighbors_of_convex(size_type ic,
-                              const std::vector<short_type> &ftab,
-                              ind_set &s) const;
+                             const std::vector<short_type> &ftab,
+                             ind_set &s) const;
     void neighbours_of_convex(size_type ic,
                               const std::vector<short_type> &ftab,
                               ind_set &s) const IS_DEPRECATED
