@@ -859,75 +859,68 @@ namespace getfem {
     if (order > 0) {
       std::set<std::string> vars_vec_done;
       std::set<std::pair<std::string, std::string> > vars_mat_done;
-      for (ga_tree &tree : gis.trees) {
-        if (tree.root) {
-          std::string &name1 = tree.root->name_test1;
-          std::string &name2 = tree.root->name_test2;
-          const std::vector<std::string> vnames1_(1,name1),
-                                         vnames2_(1,name2);
-          const std::vector<std::string>
-            &vnames1 = variable_group_exists(name1) ? variable_group(name1)
-                                                    : vnames1_,
-            &vnames2 = variable_group_exists(name2) ? variable_group(name2)
-                                                    : vnames2_;
-          if (order == 1) {
-            for (const std::string &vname1 : vnames1) {
-              const mesh_fem *mf1 = associated_mf(vname1);
-              if (mf1 && mf1->is_reduced() && vars_vec_done.count(vname1) == 0)
-              {
-                gmm::sub_interval uI1 = temporary_interval_of_variable(vname1),
-                                  I1 = interval_of_variable(vname1);
-                gmm::mult_add(gmm::transposed(mf1->extension_matrix()),
-                              gmm::sub_vector(unreduced_V, uI1),
-                              gmm::sub_vector(*V, I1));
-                vars_vec_done.insert(vname1);
-              }
+      for (const auto &term : gis.unreduced_terms) {
+        const std::string &name1 = term.first;
+        const std::string &name2 = term.second;
+        const std::vector<std::string>
+          vg1_(1,name1), vg2_(1,name2),
+          &vg1 = variable_group_exists(name1) ? variable_group(name1) : vg1_,
+          &vg2 = variable_group_exists(name2) ? variable_group(name2) : vg2_;
+        if (order == 1) {
+          for (const std::string &vname1 : vg1) {
+            const mesh_fem *mf1 = associated_mf(vname1);
+            if (mf1 && mf1->is_reduced() && vars_vec_done.count(vname1) == 0) {
+              gmm::sub_interval uI1 = temporary_interval_of_variable(vname1),
+                                I1 = interval_of_variable(vname1);
+              gmm::mult_add(gmm::transposed(mf1->extension_matrix()),
+                            gmm::sub_vector(unreduced_V, uI1),
+                            gmm::sub_vector(*V, I1));
+              vars_vec_done.insert(vname1);
             }
-          } else {
-            for (const std::string &vname1 : vnames1) {
-              for (const std::string &vname2 : vnames2) {
-                const mesh_fem *mf1 = associated_mf(vname1),
-                               *mf2 = associated_mf(vname2);
-                if (((mf1 && mf1->is_reduced()) || (mf2 && mf2->is_reduced()))
-                    && vars_mat_done.count(std::make_pair(vname1,vname2)) == 0)
-                {
-                  gmm::sub_interval
-                    uI1 = temporary_interval_of_variable(vname1),
-                    uI2 = temporary_interval_of_variable(vname2),
-                    I1 = interval_of_variable(vname1),
-                    I2 = interval_of_variable(vname2);
-                  if (mf1 && mf1->is_reduced() && mf2 && mf2->is_reduced()) {
-                    model_real_sparse_matrix aux(I1.size(), uI2.size());
-                    model_real_row_sparse_matrix M(I1.size(), I2.size());
-                    gmm::mult(gmm::transposed(mf1->extension_matrix()),
-                              gmm::sub_matrix(row_col_unreduced_K, uI1, uI2),
-                              aux);
-                    gmm::mult(aux, mf2->extension_matrix(), M);
-                    gmm::add(M, gmm::sub_matrix(*K, I1, I2));
-                  } else if (mf1 && mf1->is_reduced()) {
-                    if (condensation && vars_vec_done.count(vname1) == 0) {
-                      gmm::mult_add(gmm::transposed(mf1->extension_matrix()),
-                                    gmm::sub_vector(unreduced_V, uI1),
-                                    gmm::sub_vector(*V, I1));
-                      vars_vec_done.insert(vname1);
-                    }
-                    model_real_sparse_matrix M(I1.size(), I2.size());
-                    gmm::mult(gmm::transposed(mf1->extension_matrix()),
-                              gmm::sub_matrix(row_unreduced_K, uI1, I2), M);
-                    gmm::add(M, gmm::sub_matrix(*K, I1, I2));
-                  } else {
-                    model_real_row_sparse_matrix M(I1.size(), I2.size());
-                    gmm::mult(gmm::sub_matrix(col_unreduced_K, I1, uI2),
-                              mf2->extension_matrix(), M);
-                    if (I1.first() < nb_prim_dof) {
-                      GMM_ASSERT1(I1.last() <= nb_prim_dof, "Internal error");
-                      gmm::add(M, gmm::sub_matrix(*K, I1, I2)); // -> *K
-                    } else { // vname1 is an internal variable
-                      gmm::add(M, gmm::sub_matrix(*KQJpr, I1, I2)); // -> *KQJpr
-                    }
+          }
+        } else {
+          for (const std::string &vname1 : vg1) {
+            for (const std::string &vname2 : vg2) {
+              const mesh_fem *mf1 = associated_mf(vname1),
+                             *mf2 = associated_mf(vname2);
+              if (((mf1 && mf1->is_reduced()) || (mf2 && mf2->is_reduced()))
+                  && vars_mat_done.count(std::make_pair(vname1,vname2)) == 0) {
+                gmm::sub_interval
+                  uI1 = temporary_interval_of_variable(vname1),
+                  uI2 = temporary_interval_of_variable(vname2),
+                  I1 = interval_of_variable(vname1),
+                  I2 = interval_of_variable(vname2);
+                if (mf1 && mf1->is_reduced() && mf2 && mf2->is_reduced()) {
+                  model_real_sparse_matrix aux(I1.size(), uI2.size());
+                  model_real_row_sparse_matrix M(I1.size(), I2.size());
+                  gmm::mult(gmm::transposed(mf1->extension_matrix()),
+                            gmm::sub_matrix(row_col_unreduced_K, uI1, uI2),
+                            aux);
+                  gmm::mult(aux, mf2->extension_matrix(), M);
+                  gmm::add(M, gmm::sub_matrix(*K, I1, I2));
+                } else if (mf1 && mf1->is_reduced()) {
+                  if (condensation && vars_vec_done.count(vname1) == 0) {
+                    gmm::mult_add(gmm::transposed(mf1->extension_matrix()),
+                                  gmm::sub_vector(unreduced_V, uI1),
+                                  gmm::sub_vector(*V, I1));
+                    vars_vec_done.insert(vname1);
                   }
-                  vars_mat_done.insert(std::make_pair(vname1,vname2));
+                  model_real_sparse_matrix M(I1.size(), I2.size());
+                  gmm::mult(gmm::transposed(mf1->extension_matrix()),
+                            gmm::sub_matrix(row_unreduced_K, uI1, I2), M);
+                  gmm::add(M, gmm::sub_matrix(*K, I1, I2));
+                } else {
+                  model_real_row_sparse_matrix M(I1.size(), I2.size());
+                  gmm::mult(gmm::sub_matrix(col_unreduced_K, I1, uI2),
+                            mf2->extension_matrix(), M);
+                  if (I1.first() < nb_prim_dof) {
+                    GMM_ASSERT1(I1.last() <= nb_prim_dof, "Internal error");
+                    gmm::add(M, gmm::sub_matrix(*K, I1, I2)); // -> *K
+                  } else { // vname1 is an internal variable
+                    gmm::add(M, gmm::sub_matrix(*KQJpr, I1, I2)); // -> *KQJpr
+                  }
                 }
+                vars_mat_done.insert(std::make_pair(vname1,vname2));
               }
             }
           }

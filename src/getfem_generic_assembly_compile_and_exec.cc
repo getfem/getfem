@@ -7385,6 +7385,7 @@ namespace getfem {
                   ga_instruction_set &gis, size_type order, bool condensation) {
     gis.transformations.clear();
     gis.all_instructions.clear();
+    gis.unreduced_terms.clear();
     workspace.clear_temporary_variable_intervals();
 
     std::map<const ga_instruction_set::region_mim, condensation_description>
@@ -7581,6 +7582,9 @@ namespace getfem {
                            (root->tensor(), Vr, Vu, ctx,
                             vgi.I, vgi.mf, vgi.reduced_mf,
                             gis.coeff, gis.nbpt, gis.ipt, interpolate);
+                    for (const std::string &name
+                         : workspace.variable_group(root->name_test1))
+                      gis.unreduced_terms.emplace(name, "");
                   } else {
                     base_vector &V = mf->is_reduced() ? Vu : Vr;
                     const gmm::sub_interval
@@ -7591,6 +7595,8 @@ namespace getfem {
                     pgai = std::make_shared<ga_instruction_vector_assembly_mf>
                            (root->tensor(), V, ctx, I, *mf,
                             gis.coeff, gis.nbpt, gis.ipt, interpolate);
+                    if (mf->is_reduced())
+                      gis.unreduced_terms.emplace(root->name_test1, "");
                   }
                 } else if (imd) {
                   GMM_ASSERT1(root->interpolate_name_test1.size() == 0,
@@ -7847,6 +7853,12 @@ namespace getfem {
                   }
                 } else if (!workspace.is_internal_variable(root->name_test1) &&
                            !workspace.is_internal_variable(root->name_test2)) {
+
+                  if ((mf1 && mf1->is_reduced()) || (mf2 && mf2->is_reduced())
+                      || has_var_group1 || has_var_group2)
+                    gis.unreduced_terms.emplace(root->name_test1,
+                                                root->name_test2);
+
                   auto &Kxu = (mf1 && mf1->is_reduced()) ? Kuu : Kru;
                   auto &Kxr = (mf1 && mf1->is_reduced()) ? Kur : Krr;
                   auto &Kux = (mf2 && mf2->is_reduced()) ? Kuu : Kur;
@@ -8025,13 +8037,15 @@ namespace getfem {
                   "The internal coupling matrix needs to be allocated with "
                   "nb_primary_dof()+nb_internal_dof() number of rows, even if "
                   "only the last nb_internal_dof() rows are filled in.");
-                if (mf2)
+                if (mf2) {
                   pgai =
                     std::make_shared<ga_instruction_matrix_assembly_imd_mf>
                     (Kq1j2pr, KQJpr, gis.ctx, gis.ctx,
                      I1, imd1, alpha1, I2, *mf2, alpha2, gis.ipt); // constructor without gis.coeff
                     // TODO: name_test2 variable group
-                else // for global variable imd2 == 0
+                    if (mf2->is_reduced())
+                      gis.unreduced_terms.emplace(name_test1, name_test2);
+                } else // for global variable imd2 == 0
                   pgai =
                     std::make_shared<ga_instruction_matrix_assembly_imd_imd>
                     (Kq1j2pr, KQJpr, gis.ctx, gis.ctx,
@@ -8101,6 +8115,9 @@ namespace getfem {
                 auto &Kxr = (mf1 && mf1->is_reduced()) ? Kur : Krr;
                 auto &Krx = (mf2 && mf2->is_reduced()) ? Kru : Krr;
                 auto &Kxx = (mf2 && mf2->is_reduced()) ? Kxu : Kxr;
+
+                if ((mf1 && mf1->is_reduced()) || (mf2 && mf2->is_reduced()))
+                  gis.unreduced_terms.emplace(name_test1, name_test2);
 
                 if (mf1 && mf2) // TODO: name_test1 or name_test2 variable group
                   pgai = std::make_shared

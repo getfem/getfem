@@ -93,6 +93,7 @@ namespace getfem {
     bgeot::geotrans_precomp_pool gp_pool;
     fem_precomp_pool fp_pool;
     std::map<gauss_pt_corresp, bgeot::pstored_point_tab> neighbor_corresp;
+    std::set<std::pair<std::string,std::string>> unreduced_terms;
 
     using region_mim_tuple = std::tuple<const mesh_im *, const mesh_region *, psecondary_domain>;
     struct region_mim : public region_mim_tuple {
