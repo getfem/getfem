@@ -132,12 +132,13 @@ function check_mesh_fem(iverbose,idebug)
   a=gf_mesh_get(m, 'outer faces');
   b = [5 2 5 3 5 4 5 5 9 1 9 2 9 3 9 5 9 6];
   gfassert('a(:)==b(:)');
-  a=gf_mesh_get(m, 'outer faces',[4 5]);
+  a=gf_mesh_get(m, 'outer faces',3, [4 5]);
   gfassert('a(:)==[5 1 5 2 5 3 5 4 5 5]''');
+  % gf_mesh_get(m, 'outer faces',[4 6 7 8])
   asserterr('gf_mesh_get(m, ''outer faces'',[4 6 7 8])');
-  asserterr('gf_mesh_get(m, ''outer faces'',[0])');
+  asserterr('gf_mesh_get(m, ''outer faces'',3, [0])');
   E=gf_mesh_get(m, 'edges');
-  asserterr('gf_mesh_get(m, ''edges'',[0])');
+  asserterr('gf_mesh_get(m, ''edges'', [0])');
   E=gf_mesh_get(m, 'curved edges',10);
   E=gf_mesh_get(m, 'curved edges',8);
   asserterr('gf_mesh_get(m, ''curved edges'',-1)');
