@@ -171,6 +171,9 @@ References
 .. [PO-NI2016] K. Poulios, C.F. Niordson,
    *Homogenization of long fiber reinforced composites including fiber bending effects*. Journal of the Mechanics and Physics of Solids, 94, pp 433-452, 2016.
 
+.. [GetFEM2020] Y. Renard, K. Poulios
+                *GetFEM: Automated FE modeling of multiphysics problems based on a generic weak form language*. Preprint, https://hal.archives-ouvertes.fr/hal-02532422/document
+   
 .. [remacle2003] J.-F. Remacle, M.S. Shephard;
    *An algorithm oriented mesh database*. International Journal for Numerical Methods in Engineering, 58:2, pp 349-374, 2003.
    

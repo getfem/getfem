@@ -2,9 +2,9 @@
 
  Copyright (C) 2012-2020 Tomas Ligursky, Yves Renard, Konstantinos Poulios.
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -29,7 +29,7 @@ using namespace getfemint;
 /*@GFDOC
   This object serves for storing parameters and data used in numerical
   continuation of solution branches of models (for more details about
-  continuation see the GetFEM++ user documentation).
+  continuation see the GetFEM user documentation).
 @*/
 
 void gf_cont_struct(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {

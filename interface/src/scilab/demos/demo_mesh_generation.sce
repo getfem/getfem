@@ -1,10 +1,10 @@
-// Scilab GetFEM++ interface
+// Scilab GetFEM interface
 //
 // Copyright (C) 2011-2020 Yves Renard, Yann Collette.
 //
-// This file is a part of GetFEM++
+// This file is a part of GetFEM
 //
-// GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+// GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
 // under  the  terms  of the  GNU  Lesser General Public License as published
 // by  the  Free Software Foundation;  either version 2.1 of the License,  or
 // (at your option) any later version.
@@ -20,7 +20,7 @@
 // uses simple primitives to describe the mesh geometry. 
 //
 // This program is used to check that matlab-getfem is working. This is also
-// a good example of use of GetFEM++.
+// a good example of use of GetFEM.
 //
 
 if getos()=='Windows' then

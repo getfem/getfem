@@ -1,11 +1,11 @@
 #!/usr/bin/env python
-# Python GetFEM++ interface
+# Python GetFEM interface
 #
 # Copyright (C) 2015-2020 Yves Renard
 #
-# This file is a part of GetFEM++
+# This file is a part of GetFEM
 #
-# GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+# GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
 # under  the  terms  of the  GNU  Lesser General Public License as published
 # by  the  Free Software Foundation;  either version 2.1 of the License,  or
 # (at your option) any later version.
@@ -21,7 +21,7 @@
 """  2D Poisson problem test.
 
   This program is used to check that python-getfem is working. This is
-  also a good example of use of GetFEM++.
+  also a good example of use of GetFEM.
 
   Poisson problem solved with a Discontinuous Galerkin method (or
   interior penalty method). See for instance

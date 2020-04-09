@@ -151,11 +151,11 @@ If you want to use a different compiler than the one chosen automatically by the
 
 Once getfem is compiled:
 
-  - Go to the scilab getfem++ interface install directory (interface/src/scilab if the installation is not done)
+  - Go to the Scilab GetFEM interface install directory (interface/src/scilab if the installation is not done)
 
-  - launch scilab
+  - launch Scilab
 
-  - load the getfem++ toolbox with:
+  - load the GetFEM toolbox with:
     ``exec loader.sce;``
 
   - You can try to launch a demo with:

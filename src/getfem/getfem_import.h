@@ -3,9 +3,9 @@
 
  Copyright (C) 2000-2020 Julien Pommier
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -61,7 +61,7 @@ namespace getfem {
        boundary (2D elements) and the boundary of the boundary (line
        elements!).
 
-       GetFEM++ makes use of the physical "region" number stored with
+       GetFEM makes use of the physical "region" number stored with
        each element in the gmsh file to fill the corresponding region
        of the mesh object.
 
@@ -77,7 +77,7 @@ namespace getfem {
        different number to each region, the problem exists because in
        Gmsh can coexist, for example, "Physical Surface (200)" and
        "Physical Line (200)", as they are different "types of regions"
-       in Gmsh, that which does not occur in GetFEM++ since there is
+       in Gmsh, that which does not occur in GetFEM since there is
        only one "type of region".
 
 
@@ -88,7 +88,7 @@ namespace getfem {
        This however does not include any finite element techology linked
        to these elements but only their geometry.
 
-       By default GetFEM++ will define mesh regions corresponding to
+       By default GetFEM will define mesh regions corresponding to
        material ids found in the imported cdb file, if there are more
        than one material ids available.
 

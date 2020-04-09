@@ -11,18 +11,15 @@
 Compute arbitrary terms - high-level generic assembly procedures - Generic Weak-Form Language (GWFL)
 ====================================================================================================
 
-This section presents what is now the main generic assembly of |gf|. It is a high-level generic assembly in the sense that it is based on Generic Weak Form Language (GWFL) to describe the weak formulation of boundary value problems of partial differential equations. It mainly has been developed to circumvent the difficulties with the previous low-level generic assembly (see  :ref:`ud-gasm-low`) for which nonlinear terms were quite difficult to describe. Conversely, a symbolic differentiation algorithm is used with this version. It simplifies a lot the approximation of nonlinear coupled problems since only the weak form is necessary to be described, the tangent system being automatically computed. Moreover, GWFL is compiled into optimized instructions before the evaluation on each integration point in order to obtain a an optimal computational cost.
+This section presents what is now the main generic assembly of |gf|. It is a high-level generic assembly in the sense that it is based on Generic Weak Form Language (GWFL, [GetFEM2020]_) to describe the weak formulation of boundary value problems of partial differential equations. A symbolic differentiation algorithm is used. It simplifies a lot the approximation of nonlinear coupled problems since only the weak form is necessary to be described, the tangent system being automatically computed. Moreover, GWFL is compiled into optimized instructions before the evaluation on each integration point in order to obtain a an optimal computational cost.
 
 The header file to be included to use the high-level generic assembly procedures in C++ is :file:`getfem/generic\_assembly.h`.
-
-Differences in execution time between high and low level generic assembly
--------------------------------------------------------------------------
-For basic linear assembly terms, the high level generic assembly is most of the time faster than the low-level one. This is due to the fact that the high-level generic assembly incorporates a compilation in basic optimized instructions and operates simplifications. On complexe terms it can be really faster due to the simplifications on repeated terms. On the other hand, the fact that the low-level generic assembly incorporates a mechanism to pre-compute on the reference element the linear term for elements with a linear transformation makes that it can be faster on a few simple linear terms. Of course, a possibility would be to incorporate the ability to pre-compute on the reference element the linear term for linear transformations in the high level generic assembly. However, it would be rather complicated due to the high genericity of the language. A consequence also is that exact integration is not allowed in the high level generic assembly.
-
 
 
 Overview of GWFL
 ----------------
+
+Another description of the main principles can be found in [GetFEM2020]_.
 
 A specific weak form language has been developed to describe the weak formulation of boundary value problems. It is intended to be close to the structure of a standard weak formulation and it incorporates the following components:
 

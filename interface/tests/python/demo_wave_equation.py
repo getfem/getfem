@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# Python GetFEM++ interface
+# Python GetFEM interface
 #
 # Copyright (C) 2015-2020 FABRE Mathieu, SECK Mamadou, DALLERIT Valentin,
 #                         Yves Renard, Tetsuo Koyama.
 #
-# This file is a part of GetFEM++
+# This file is a part of GetFEM
 #
-# GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+# GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
 # under  the  terms  of the  GNU  Lesser General Public License as published
 # by  the  Free Software Foundation;  either version 2.1 of the License,  or
 # (at your option) any later version.
@@ -24,7 +24,7 @@
      Getfem tool for time integration schemes
 
   This program is used to check that python-getfem is working. This is
-  also a good example of use of GetFEM++.
+  also a good example of use of GetFEM.
 
 """
 import os

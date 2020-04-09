@@ -3,9 +3,9 @@
 
  Copyright (C) 2000-2020 Yves Renard
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -406,7 +406,7 @@ namespace bgeot {
      the xreal will be computed if needed as long as pgp+ii is known).
      See also fem_interpolation_context in getfem_fem.h.
      The name of member data, and the computations done by this structure
-     are heavily described in the GetFEM++ Kernel Documentation.
+     are heavily described in the GetFEM Kernel Documentation.
   */
   class APIDECL geotrans_interpolation_context {
   protected:

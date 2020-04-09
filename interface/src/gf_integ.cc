@@ -2,9 +2,9 @@
 
  Copyright (C) 2006-2020 Yves Renard, Julien Pommier.
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -37,7 +37,7 @@ void gf_integ(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     THROW_BADARG( "Wrong number of input arguments");
   }
   /*@INIT I = ('.init', @str method)
-    Here is a list of some integration methods defined in getfem++ (see the
+    Here is a list of some integration methods defined in GetFEM (see the
     description of finite element and integration methods for a complete
     reference):
 

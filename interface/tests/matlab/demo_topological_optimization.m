@@ -1,8 +1,8 @@
 % Copyright (C) 2009-2020 Alassane SY, Yves Renard.
 %
-% This file is a part of GetFEM++
+% This file is a part of GetFEM
 %
-% GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+% GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
 % under  the  terms  of the  GNU  Lesser General Public License as published
 % by  the  Free Software Foundation;  either version 3 of the License,  or
 % (at your option) any later version along with the GCC Runtime Library
@@ -19,7 +19,7 @@
 %   (with a fictitious domain approach).
 %
 %  This program is used to check that matlab-getfem is working. This is
-%  also a good example of use of GetFEM++.
+%  also a good example of use of GetFEM.
 %
 
 gf_workspace('clear all');

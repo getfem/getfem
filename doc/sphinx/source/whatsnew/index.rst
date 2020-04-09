@@ -1,11 +1,11 @@
 .. _whatsnew-index:
 
 #######################
- What's New in GetFEM++
+ What's New in GetFEM
 #######################
 
-The "What's New in GetFEM++" series of essays takes tours through the most
-important changes between major GetFEM++ versions.  They are a "must read"
+The "What's New in GetFEM" series of essays takes tours through the most
+important changes between major GetFEM versions.  They are a "must read"
 for anyone wishing to stay up-to-date after a new release.
 
 .. toctree::

@@ -3,9 +3,9 @@
 #
 # Copyright (C) 2004-2020 Yves Renard, Julien Pommier.
 #                                                       
-# This file is a part of GetFEM++                                         
+# This file is a part of GetFEM                                         
 #                                                                         
-# GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+# GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
 # under  the  terms  of the  GNU  Lesser General Public License as published
 # by  the  Free Software Foundation;  either version 3 of the License,  or
 # (at your option) any later version.
@@ -898,7 +898,7 @@ elif (option == 'matlab-doc'):
   print('')
   print('=====================  ==================================================')
   print('`int`                  integer value')
-  print('`hobj`                 a handle for any GetFEM++ object')
+  print('`hobj`                 a handle for any GetFEM object')
   print('`scalar`               scalar value')
   print('`string`               string')
   print('`ivec`                 vector of integer values')
@@ -1087,7 +1087,7 @@ elif (option == 'scilab-com'):
   mfile.write('      <varlistentry>\n')
   mfile.write('        <term>hobj</term>\n')
   mfile.write('        <listitem>\n')
-  mfile.write('          <para>a handle for any GetFEM++ object</para>\n')
+  mfile.write('          <para>a handle for any GetFEM object</para>\n')
   mfile.write('        </listitem>\n')
   mfile.write('      </varlistentry>\n\n')
 
@@ -1420,7 +1420,7 @@ elif (option == 'scilab-doc-rst'):
   print('')
   print('=====================  ==================================================')
   print('`int`                  integer value')
-  print('`hobj`                 a handle for any GetFEM++ object')
+  print('`hobj`                 a handle for any GetFEM object')
   print('`scalar`               scalar value')
   print('`string`               string')
   print('`ivec`                 vector of integer values')
@@ -1577,13 +1577,13 @@ elif (option == 'python-com' or option == 'python-com-par'):
   print("""#!/usr/bin/env python
 # -*- coding: iso-8859-1 -*-
 #
-# Python GetFEM++ interface
+# Python GetFEM interface
 #
 # Copyright (C) 2004-2020 Yves Renard, Julien Pommier.
 #
-# This file is a part of GetFEM++
+# This file is a part of GetFEM
 #
-# GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+# GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
 # under  the  terms  of the  GNU  Lesser General Public License as published
 # by  the  Free Software Foundation;  either version 3 of the License,  or
 # (at your option) any later version along with the GCC Runtime Library

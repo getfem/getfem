@@ -1,8 +1,8 @@
 dnl  Copyright (C) 1999-2020 Yves Renard
 dnl
-dnl  This file is a part of GetFEM++
+dnl  This file is a part of GetFEM
 dnl
-dnl  GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+dnl  GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
 dnl  under  the  terms  of the  GNU  Lesser General Public License as published
 dnl  by  the  Free Software Foundation;  either version 3 of the License,  or
 dnl  (at your option) any later version along with the GCC Runtime Library
@@ -73,7 +73,7 @@ AC_ARG_WITH(optimization,
 dnl ---------------------------PARA LEVEL--------------------------
 paralevel=0
 AC_ARG_ENABLE(paralevel,
-   [AS_HELP_STRING([--enable-paralevel[=level]],[enable the parallel version of GetFEM++ (use MPI and METIS)])],
+   [AS_HELP_STRING([--enable-paralevel[=level]],[enable the parallel version of GetFEM (use MPI and METIS)])],
    [ case $enableval in
         yes | "") paralevel=2;;
         no) ;;
@@ -137,7 +137,7 @@ fi
 
 AC_CANONICAL_HOST
 
-echo "you are compiling GetFEM++ on a $host"
+echo "you are compiling GetFEM on a $host"
 
 case $CXX in
 	
@@ -376,7 +376,7 @@ dnl -----------------------------END OF LAPACK TEST--------------------------
 dnl ---------------------------OPENMP------------------------------
 useopenmp=0
 AC_ARG_ENABLE(openmp,
-   [AS_HELP_STRING([--enable-openmp],[enable the multihreaded version of GetFEM++])],
+   [AS_HELP_STRING([--enable-openmp],[enable the multihreaded version of GetFEM])],
    [ case $enableval in
         yes | "") useopenmp=YES ;;
         no) useopenmp=NO ;;
@@ -391,7 +391,7 @@ if test x$useopenmp = xYES; then
     AC_SUBST(AM_CXXFLAGS,"$OPENMP_CXXFLAGS")
     CPPFLAGS="$CPPFLAGS -DGETFEM_HAS_OPENMP"
   else
-    AC_MSG_ERROR([OpenMP support not found. Use --enable-openmp=no flag to compile GetFEM++ without OpenMP]);
+    AC_MSG_ERROR([OpenMP support not found. Use --enable-openmp=no flag to compile GetFEM without OpenMP]);
   fi
 fi;
 dnl ---------------------------END OF OPENMP-----------------------
@@ -1181,7 +1181,7 @@ echo "Ready to build getfem"
 echo "  building MATLAB interface: $usematlab"
 echo "  building PYTHON interface: $usepython (requires numpy, scipy and also mpi4py for the parallel version)"
 echo "  building SCILAB interface: $usescilab"
-echo "  If you want to build the shared library of getfem++, use --enable-shared"
+echo "  If you want to build the shared library of GetFEM, use --enable-shared"
 echo "  (by default, only the static one will be built)"
 echo "-----------------------------------------------------------------------"
 

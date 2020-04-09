@@ -2,9 +2,9 @@
 
  Copyright (C) 2005-2020 Julien Pommier.
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -528,7 +528,7 @@ void gf_mesh(getfemint::mexargs_in& m_in,
 
 
     /*@INIT M = ('load', @str filename)
-      Load a mesh from a getfem++ ascii mesh file.
+      Load a mesh from a GetFEM ascii mesh file.
 
       See also ``MESH:GET('save', @str filename)``.@*/
     sub_command

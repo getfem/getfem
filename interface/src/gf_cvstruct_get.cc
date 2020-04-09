@@ -2,9 +2,9 @@
 
  Copyright (C) 2006-2020 Yves Renard, Julien Pommier.
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -27,7 +27,7 @@ using namespace getfemint;
 /*@GFDOC
   General function for querying information about convex_structure objects.
 
-  The convex structures are internal structures of getfem++. They do not
+  The convex structures are internal structures of GetFEM. They do not
   contain points positions. These structures are recursive, since the faces
   of a convex structures are convex structures.
 @*/

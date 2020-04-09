@@ -23,11 +23,11 @@ Many thanks go to:
   <http://effbot.org/zone/pyref.htm>`_ project from which Sphinx got many
   good ideas.
 
-See :ref:`reporting-bugs` for information how to report bugs in GetFEM++
+See :ref:`reporting-bugs` for information how to report bugs in GetFEM
 itself.
 
 .. including the ACKS file here so that it can be maintained separately
 .. include:: ACKS.txt
 
-It is only with the input and contributions of the GetFEM++ community
-that GetFEM++ has such wonderful documentation -- Thank You!
+It is only with the input and contributions of the GetFEM community
+that GetFEM has such wonderful documentation -- Thank You!

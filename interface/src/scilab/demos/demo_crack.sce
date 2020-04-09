@@ -1,9 +1,9 @@
 // Copyright (C) 2009 Luis Saavedra, Yves Renard.
 // Copyright (C) 2009-2020, Yann Collette
 //
-// This file is a part of GetFEM++
+// This file is a part of GetFEM
 //
-// GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+// GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
 // under  the  terms  of the  GNU  Lesser General Public License as published
 // by  the  Free Software Foundation;  either version 2.1 of the License,  or
 // (at your option) any later version.
@@ -16,7 +16,7 @@
 // Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 //
 // Linear Elastostatic problem with a crack.
-// A good example of use of GetFEM++.
+// A good example of use of GetFEM.
 
 lines(0);
 
