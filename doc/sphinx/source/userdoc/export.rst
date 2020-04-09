@@ -2,7 +2,7 @@
 
 .. include:: ../replaces.txt
 
-.. highlightlang:: c++
+.. highlight:: c++
 
 .. _ud-export:
 
@@ -70,74 +70,74 @@ All slicer operation inherit from |gf_sl_a|, it is very easy to create a new
 slicer. Example of slicers are (some of them use a |gf_sl_ddb| which is just a
 reference to a |mf| ``mf`` and a field ``U`` on this |mf|).
 
-.. c:function:: getfem::slicer_none()
+.. cpp:function:: getfem::slicer_none()
 
    empty slicer.
 
-.. c:function:: getfem::slicer_boundary(const mesh &m, \ldots)
+.. cpp:function:: getfem::slicer_boundary(const mesh &m, ldots)
 
    extract the boundary of a mesh.
 
-.. c:function:: getfem::slicer_apply_deformation(mesh_slice_cv_dof_data_base &)
+.. cpp:function:: getfem::slicer_apply_deformation(mesh_slice_cv_dof_data_base &)
 
    apply a deformation to the mesh , the deformation field is defined on a |mf|.
 
-.. c:function:: getfem::slicer_half_space(base_node x0, base_node n, int orient)
+.. cpp:function:: getfem::slicer_half_space(base_node x0, base_node n, int orient)
 
    cut the mesh with a half space (if ``orient`` = -1 or +1), or a plane (if
    ``orient`` = 0), ``x0`` being a node of the plane, and ``n`` being a normal
    of the plane.
 
-.. c:function::  getfem::slicer_sphere(base_node x0, scalar_type R, int orient)
+.. cpp:function::  getfem::slicer_sphere(base_node x0, scalar_type R, int orient)
 
    cut with the interior (``orient``=-1), boundary (``orient``=0) or exterior
    (``orient``=+1) or a sphere of center ``x0`` and radius ``R``.
 
-.. c:function:: getfem::slicer_cylinder(base_node x0, base_node x1, scalar_type R, int orient)
+.. cpp:function:: getfem::slicer_cylinder(base_node x0, base_node x1, scalar_type R, int orient)
 
    slice with the interior/boundary/exterior of a cylinder of axis ``(x0,x1)``
    and radius ``R``.
 
-.. c:function:: getfem::slicer_isovalues(const mesh_slice_cv_dof_data_base& mfU, scalar_type val, int orient)
+.. cpp:function:: getfem::slicer_isovalues(const mesh_slice_cv_dof_data_base& mfU, scalar_type val, int orient)
 
    cut with the isosurface defined by the scalar field ``mfU`` and ``val``.
    Keep only simplices where ::math:`u(x)<val` (``orient``=-1), :math:`u(x)=val`
    (``orient=0`` or :math:`u(x)>val`.
 
-.. c:function:: getfem::slicer_mesh_with_mesh(const mesh& m2)
+.. cpp:function:: getfem::slicer_mesh_with_mesh(const mesh& m2)
 
    cut the convexes with the convexes of the mesh ``m2``.
 
-.. c:function:: getfem::slicer_union(const slicer_action &sA, const slicer_action &sB)
+.. cpp:function:: getfem::slicer_union(const slicer_action &sA, const slicer_action &sB)
 
    merges the output of two slicer operations.
 
-.. c:function:: getfem::slicer_intersect(slicer_action &sA, slicer_action &sB)
+.. cpp:function:: getfem::slicer_intersect(slicer_action &sA, slicer_action &sB)
 
    intersect the output of two slicer operations.
 
-.. c:function:: getfem::slicer_complementary(slicer_action &s)
+.. cpp:function:: getfem::slicer_complementary(slicer_action &s)
 
    return the complementary of a slicer operation.
 
-.. c:function:: getfem::slicer_build_edges_mesh(mesh& edges_m)
+.. cpp:function:: getfem::slicer_build_edges_mesh(mesh& edges_m)
 
    slicer whose side-effect is to build the mesh ``edges_m`` with the edges of
    the sliced mesh.
 
-.. c:function:: getfem::slicer_build_mesh(mesh &m)
+.. cpp:function:: getfem::slicer_build_mesh(mesh &m)
 
    in some (rare) occasions , it might be useful to build a mesh from a slice.
    Note however that there is absolutely no guaranty that the mesh will be
    conformal (although it is often the case).
 
-.. c:function:: getfem::slicer_build_stored_mesh_slice(stored_mesh_slice& sl)
+.. cpp:function:: getfem::slicer_build_stored_mesh_slice(stored_mesh_slice& sl)
 
    record the output of the slicing operation into a |smsl| object. Note that it
    is often more convenient to use the ``stored_mesh_slice::build(...)`` method to
    achieve the same result.
 
-.. c:function:: getfem::slicer_explode(c)
+.. cpp:function:: getfem::slicer_explode(c)
 
    shrink or expand each convex with respect to its gravity center.
 

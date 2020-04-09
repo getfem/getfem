@@ -2,7 +2,7 @@
 
 .. include:: ../replaces.txt
 
-.. highlightlang:: c++
+.. highlight:: c++
 
 .. _ud-bmesh:
 
@@ -210,107 +210,105 @@ Methods of the |gf_m| object
 
 The list is not exhaustive.
 
-.. function:: mymesh.dim()
+.. cpp:function:: getfem::mesh::dim()
 
    main dimension of the mesh.
 
-.. function:: mymesh.points_index()
+.. cpp:function:: getfem::mesh::points_index()
 
    gives a ``dal::bit_vector`` object which represents all the indexes
    of valid points of a mesh (see below).
 
-.. function:: mymesh.points()[i]
+.. cpp:function:: getfem::mesh::points()
 
-   gives the point of index ``i`` (a ``bgeot::base_node``).
+   gives the point of each index (a ``bgeot::base_node``).
 
-.. function:: mymesh.convex_index()
+.. cpp:function:: getfem::mesh::convex_index()
 
    gives a ``dal::bit_vector`` object which represents all the indexes
    of valid elements of a mesh (see below).
 
-.. function:: mymesh.structure_of_convex(i)
+.. cpp:function:: bgeot::mesh_structure::structure_of_convex(i)
 
    gives the description of the structure of element of index ``i``. The function
    return a |bg_pcs|.
 
-.. function:: mymesh.structure_of_convex(i)->nb_faces()
+.. cpp:function:: bgeot::convex_structure::nb_faces()
 
-   number of faces of element of index ``i``.
+   number of faces of |bg_pcs|.
 
-.. function:: mymesh.structure_of_convex(i)->nb_points()
+.. cpp:function:: bgeot::convex_structure::nb_points()
 
-   number of vertices of element of index ``i``.
+   number of vertices of |bg_pcs|.
 
-.. function:: mymesh.structure_of_convex(i)->dim()
+.. cpp:function:: bgeot::convex_structure::dim()
 
-   intrinsic dimension of element of index ``i``.
+   intrinsic dimension of |bg_pcs|.
 
 
-.. function:: mymesh.structure_of_convex(i)->nb_points_of_face(f)
+.. cpp:function:: bgeot::convex_structure::nb_points_of_face(f)
 
-   number of vertices of the face of local index ``f`` of element
-   of index ``i``.
+   number of vertices of the face of local index ``f`` of |bg_pcs|.
 
-.. function:: mymesh.structure_of_convex(i)->ind_points_of_face(f)
+.. cpp:function:: bgeot::convex_structure::ind_points_of_face(f)
 
    return a container with the local indexes of all vertices of the
-   face of local index ``f`` of element of index ``i``. For instance
+   face of local index ``f`` of |bg_pcs|. For instance
    ``mesh.structure_of_convex(i)->ind_points_of_face(f)[0]`` is the
    local index of the first vertex.
 
-.. function:: mymesh.structure_of_convex(i)->face_structure(f)
+.. cpp:function:: bgeot::convex_structure::face_structure(f)
 
    gives the structure (a |bg_pcs|) of local index ``f``
-   of element of index ``i``.
+   of |bg_pcs|.
 
-.. function:: mymesh.ind_points_of_convex(i)
+.. cpp:function:: getfem::mesh::ind_points_of_convex(i)
 
-   gives a container with the global indexes of vertices of element of
-   index ``i``.
+   gives a container with the global indexes of vertices of |bg_pcs|.
 
-.. function:: mymesh.points_of_convex(i)
+.. cpp:function:: getfem::mesh::points_of_convex(i)
 
-   gives a container with the vertices of element of index ``i``. This
+   gives a container with the vertices of |bg_pcs|. This
    is an array of ``bgeot::base_node``.
 
-.. function:: mymesh.convex_to_point(ipt)
+.. cpp:function:: getfem::mesh::convex_to_point(ipt)
 
    gives a container with the indexes of all elements attached to the
    point of global index ``ipt``.
 
-.. function:: mymesh.neighbors_of_convex(ic, f)
+.. cpp:function:: getfem::mesh::neighbors_of_convex(ic, f)
 
    gives a container with the indexes of all elements in ``mesh`` having
    the common face of local index ``f`` of element ``ic`` except element
    ``ic``.
 
-.. function:: mymesh.neighbor_of_convex(ic, f)
+.. cpp:function:: getfem::mesh::neighbor_of_convex(ic, f)
 
    gives the index of the first elements in ``mesh`` having the common
    face of local index ``f`` of element ``ic`` except element ``ic``.
    return size_type(-1) if none is found.
 
-.. function:: mymesh.is_convex_having_neighbor(ic, f)
+.. cpp:function:: getfem::mesh::is_convex_having_neighbor(ic, f)
 
    return whether or not the element ``ic`` has a neighbor with respect
    to its face of local index ``f``.
 
-.. function:: mymesh.clear()
+.. cpp:function:: getfem::mesh::clear()
 
    delete all elements and points from the mesh.
 
 
-.. function:: mymesh.optimize_structure()
+.. cpp:function:: getfem::mesh::optimize_structure()
 
    compact the structure (renumbers points and convexes such that there
    is no hole in their numbering).
 
-.. function:: mymesh.trans_of_convex(i)
+.. cpp:function:: getfem::mesh::trans_of_convex(i)
 
    return the geometric transformation of the element of index ``i`` (in
    a |bg_pgt|). See :ref:`dp` for more details about geometric transformations.
 
-.. function:: mymesh.normal_of_face_of_convex(ic, f, pt)
+.. cpp:function:: getfem::mesh::normal_of_face_of_convex(ic, f, pt)
 
    gives a ``bgeot::base_small_vector`` representing an outward normal
    to the element at the face of local index ``f`` at the point of local
@@ -320,56 +318,56 @@ The list is not exhaustive.
    is the ratio between the surface of the face of the reference
    element and the surface of the face of the real element.
 
-.. function:: mymesh.convex_area_estimate(ic)
+.. cpp:function:: getfem::mesh::convex_area_estimate(ic)
 
    gives an estimate of the area of convex ``ic``.
 
-.. function:: mymesh.convex_quality_estimate(ic)
+.. cpp:function:: getfem::mesh::convex_quality_estimate(ic)
 
    gives a rough estimate of the quality of element ``ic``.
 
-.. function:: mymesh.convex_radius_estimate(ic)
+.. cpp:function:: getfem::mesh::convex_radius_estimate(ic)
 
    gives an estimate of the radius of element ``ic``.
 
-.. function:: mymesh.region(irg)
+.. cpp:function:: getfem::mesh::region(irg)
 
    return a |gf_mr|. The region is stored in the mesh, and can
    contain a set of convex numbers and or convex faces.
 
-.. function:: mymesh.has_region(irg)
+.. cpp:function:: getfem::mesh::has_region(irg)
 
    returns true if the region of index ``irg`` has been created.
 
 The methods of the convexes/convex faces container ``getfem::mesh_region`` are:
 
-.. function:: add(ic)
+.. cpp:function:: getfem::mesh_region::add(ic)
 
    add the convex of index ``ic`` to the region.
 
-.. function:: add(ic,f)
+.. cpp:function:: getfem::mesh_region::add(ic,f)
 
    add the face number ``f`` of the convex ``ic``.
 
-.. function:: sup(ic)
-              sup(ic,f)
+.. cpp:function:: getfem::mesh_region::sup(ic)
+                  getfem::mesh_region::sup(ic,f)
 
    remove the convex or the convex face from the region.
 
-.. function:: is_in(ic)
-              is_in(ic,f)
+.. cpp:function:: getfem::mesh_region::is_in(ic)
+                  getfem::mesh_region::is_in(ic,f)
 
    return true if the convex (or convex face) is in the region.
 
-.. function:: is_only_faces()
+.. cpp:function:: getfem::mesh_region::is_only_faces()
 
    return true if the region does not contain any convex.
 
-.. function:: is_only_convexes()
+.. cpp:function:: getfem::mesh_region::is_only_convexes()
 
    return true if the region does not contain any convex face.
 
-.. function:: index()
+.. cpp:function:: getfem::mesh_region::index()
 
    return a ``dal::bit_vector`` containing the list of convexes
    which are stored (or whose faces are stored) in the region.
@@ -438,11 +436,11 @@ From |gf| file format
 In :file:`getfem/getfem_mesh.h`, two methods are defined to load meshes from file
 and write meshes to a file.
 
-.. function:: mymesh.write_to_file(const std::string &name)
+.. cpp:function:: getfem::mesh::write_to_file(const std::string &name)
 
    save the mesh into a file.
 
-.. function:: mymesh.read_from_file(const std::string &name)
+.. cpp:function:: getfem::mesh::read_from_file(const std::string &name)
 
    load the mesh from a file.
 

@@ -2,7 +2,7 @@
 
 .. include:: ../replaces.txt
 
-.. highlightlang:: bash
+.. highlight:: bash
 
 .. _gmm-install:
 

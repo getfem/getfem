@@ -2,7 +2,7 @@
 
 .. include:: ../replaces.txt
 
-.. highlightlang:: c++
+.. highlight:: c++
 
 .. index:: models, model bricks
 
@@ -195,7 +195,7 @@ The list of criteria:
 Nodal contact brick with projection
 +++++++++++++++++++++++++++++++++++
 
-Notations: :math:`\Omega \subset \Reel^d` denotes the reference configuration of a deformable body, possibly constituted by several unconnected parts (see  :ref:`figure<ud-fig-masterslave>`). :math:`\Omega_t` is the deformed configuration and :math:`\varphi^h: \Omega \rightarrow \Omega_t` is the approximated deformation on a finite element space :math:`V^h`. The displacement  :math:`u^h: \Omega \rightarrow \Reel^d` is defined by :math:`\varphi^h(X) = X + u^h(X)`. A generic point of the reference configuration :math:`\Omega` is denoted by :math:`X` while the corresponding point of the deformed configuration is denoted by :math:`x = \varphi^h(X)`. :math:`\Gamma^S` denotes a slave boundary of :math:`\Omega` and :math:`\Gamma^M` a master one. The corresponding boundaries on the deformed configuration are :math:`\Gamma_t^S` and :math:`\Gamma_t^M`, respectively. The outward unit normal vector to the boundary (in the deformed configuration) at a point :math:`x = \varphi^h(X)` of that boundary is denoted by :math:`n_x`. Finally, the notation :math:`\delta A[B]` denotes the directional derivative of the quantity :math:`A` with respect to the deformation and in the direction :math:`B`. Similarly, The notation :math:`\delta^2 A[B,C]` is the second derivative in the directions  :math:`B` and :math:`C`.
+Notations: :math:`\Omega \subset \rm I\hspace{-0.15em}R^d` denotes the reference configuration of a deformable body, possibly constituted by several unconnected parts (see  :ref:`figure<ud-fig-masterslave>`). :math:`\Omega_t` is the deformed configuration and :math:`\varphi^h: \Omega \rightarrow \Omega_t` is the approximated deformation on a finite element space :math:`V^h`. The displacement  :math:`u^h: \Omega \rightarrow \rm I\hspace{-0.15em}R^d` is defined by :math:`\varphi^h(X) = X + u^h(X)`. A generic point of the reference configuration :math:`\Omega` is denoted by :math:`X` while the corresponding point of the deformed configuration is denoted by :math:`x = \varphi^h(X)`. :math:`\Gamma^S` denotes a slave boundary of :math:`\Omega` and :math:`\Gamma^M` a master one. The corresponding boundaries on the deformed configuration are :math:`\Gamma_t^S` and :math:`\Gamma_t^M`, respectively. The outward unit normal vector to the boundary (in the deformed configuration) at a point :math:`x = \varphi^h(X)` of that boundary is denoted by :math:`n_x`. Finally, the notation :math:`\delta A[B]` denotes the directional derivative of the quantity :math:`A` with respect to the deformation and in the direction :math:`B`. Similarly, The notation :math:`\delta^2 A[B,C]` is the second derivative in the directions  :math:`B` and :math:`C`.
 
 
 
@@ -216,8 +216,8 @@ Considering only stationnary rigid obstacles and applying the principle of Alart
   \left\{\begin{array}{l}
   \mbox{Find } \varphi^h \in V^h \mbox{ such that } \\
   \displaystyle \delta J(\varphi^h)[\delta u^h] - \sum_{i \in I_{\text{def}}} \lambda_i \cdot (\delta u^h(X_i) - \delta u^h(Y_i)) - \sum_{i \in I_{\text{rig}}} \lambda_i \delta u^h(X_i) = 0 ~~~ \forall \delta u^h \in V^h, \\
-  \displaystyle \Frac{1}{r} \left[\lambda_i + P_{n_y, {\mathscr F}}(\lambda_i + r\left(g_i n_y - \alpha(\varphi^h(X_i) - \varphi^h(Y_i) - W_T(X_i)+W_T(Y_i)))\right)\right]= 0  ~~\forall i \in I_{\text{def}}, \\[1em]
-  \displaystyle \Frac{1}{r} \left[\lambda_i + P_{n_y, {\mathscr F}}(\lambda_i + r\left(g_i n_y - \alpha(\varphi^h(X_i) - W_T(X_i)))\right)\right]= 0  ~~\forall i \in I_{\text{rig}},
+  \displaystyle \dfrac{1}{r} \left[\lambda_i + P_{n_y, {\mathscr F}}(\lambda_i + r\left(g_i n_y - \alpha(\varphi^h(X_i) - \varphi^h(Y_i) - W_T(X_i)+W_T(Y_i)))\right)\right]= 0  ~~\forall i \in I_{\text{def}}, \\[1em]
+  \displaystyle \dfrac{1}{r} \left[\lambda_i + P_{n_y, {\mathscr F}}(\lambda_i + r\left(g_i n_y - \alpha(\varphi^h(X_i) - W_T(X_i)))\right)\right]= 0  ~~\forall i \in I_{\text{rig}},
   \end{array}\right.
 
 where :math:`W_T, \alpha, P_{n_y, {\mathscr F}}` ... + tangent system
@@ -239,7 +239,7 @@ The following nonlinear operators are defined in GWFL (see :ref:`ud-gasm-high`):
 
     .. math::
 
-      n_{trans} = \Frac{(I+ \nabla u)^{-T} n}{\|(I+\nabla u)^{-T} n\|}
+      n_{trans} = \dfrac{(I+ \nabla u)^{-T} n}{\|(I+\nabla u)^{-T} n\|}
 
     with the following partial derivatives
 
@@ -247,7 +247,7 @@ The following nonlinear operators are defined in GWFL (see :ref:`ud-gasm-high`):
 
       \partial_{u} n_{trans}[\delta u] = -(I - n_{trans}\otimes n_{trans})(I+ \nabla u)^{-T}(\nabla \delta u)^T n_{trans}
 
-      \partial_{n} n_{trans}[\delta n] = \Frac{(I+ \nabla u)^{-T}\delta n - n_{trans}(n_{trans}\cdot \delta n)}{\|(I+\nabla u)^{-T} n\|}
+      \partial_{n} n_{trans}[\delta n] = \dfrac{(I+ \nabla u)^{-T}\delta n - n_{trans}(n_{trans}\cdot \delta n)}{\|(I+\nabla u)^{-T} n\|}
 
   - ``Coulomb_friction_coupled_projection(lambda, n, Vs, g, f, r)``
     where ``lambda`` is the contact force, ``n`` is a unit normal vector, ``Vs``
@@ -272,15 +272,15 @@ The following nonlinear operators are defined in GWFL (see :ref:`ud-gasm-high`):
       \left\{\begin{array}{cl}
       0 & \mbox{for } \tau \le 0 \\
       \mathbf{T}_n & \mbox{for } \|q_{_T}\| \le \tau \\
-      \Frac{\tau}{\|q_{_T}\|}
-      \left(\mathbf{T}_n - \Frac{q_{_T}}{\|q_{_T}\|}\otimes \Frac{q_{_T}}{\|q_{_T}\|}
+      \dfrac{\tau}{\|q_{_T}\|}
+      \left(\mathbf{T}_n - \dfrac{q_{_T}}{\|q_{_T}\|}\otimes \dfrac{q_{_T}}{\|q_{_T}\|}
       \right) & \mbox{otherwise }
       \end{array} \right.
 
       \partial_{\tau} P_{B(n,\tau)}(q) =
       \left\{\begin{array}{cl}
       0 & \mbox{for } \tau \le 0 \mbox{ or } \|q_{_T}\| \le \tau \\
-      \Frac{q_{_T}}{\|q_{_T}\|} & \mbox{otherwise}
+      \dfrac{q_{_T}}{\|q_{_T}\|} & \mbox{otherwise}
       \end{array} \right.
 
       \partial_n P_{B(n,\tau)}(q) =
@@ -289,9 +289,9 @@ The following nonlinear operators are defined in GWFL (see :ref:`ud-gasm-high`):
       0 & \mbox{for } \tau \le 0 \\
       -q \cdot n~\mathbf{T}_n - n \otimes q_{_T}
       & \mbox{for } \|q_{_T}\| \le \tau \\
-      -\Frac{\tau}{\|q_{_T}\|}
+      -\dfrac{\tau}{\|q_{_T}\|}
       \left( q \cdot n
-      \left(\mathbf{T}_n - \Frac{q_{_T}}{\|q_{_T}\|}\otimes \Frac{q_{_T}}{\|q_{_T}\|}
+      \left(\mathbf{T}_n - \dfrac{q_{_T}}{\|q_{_T}\|}\otimes \dfrac{q_{_T}}{\|q_{_T}\|}
       \right)
       + n \otimes q_{_T}
       \right) & \mbox{otherwise.}

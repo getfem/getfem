@@ -12,7 +12,7 @@ This example aims to present a simple example of a multiphysics problem with a n
 The problem setting
 -------------------
 
-Let :math:`\Omega \subset \R^2` be the reference configuration of a 2D plate (see the geometry :ref:`here <tut-fig-meshthermo>`) of thickness :math:`\varepsilon` submitted to external forces, electric potential and heating. We will denote by  :math:`\theta : \Omega \rightarrow \R` the temperature field (in |degreC|),  :math:`V : \Omega \rightarrow \R` the electric potential field and :math:`u : \Omega \rightarrow \R^2` the membrane displacement field.
+Let :math:`\Omega \subset \rm I\hspace{-0.15em}R^2` be the reference configuration of a 2D plate (see the geometry :ref:`here <tut-fig-meshthermo>`) of thickness :math:`\varepsilon` submitted to external forces, electric potential and heating. We will denote by  :math:`\theta : \Omega \rightarrow \rm I\hspace{-0.15em}R` the temperature field (in |degreC|),  :math:`V : \Omega \rightarrow \rm I\hspace{-0.15em}R` the electric potential field and :math:`u : \Omega \rightarrow \rm I\hspace{-0.15em}R^2` the membrane displacement field.
 
 Thermal problem
 ***************
@@ -51,7 +51,7 @@ where :math:`\sigma` is still the electrical conductivity. Moreover, we consider
 
 .. math::
 
-  \sigma = \Frac{1}{\rho_0(1+\alpha(\theta - T_0))},
+  \sigma = \dfrac{1}{\rho_0(1+\alpha(\theta - T_0))},
 
 where :math:`T_0` is a reference temperature (air temperature here), :math:`\rho_0` the resistance temperature coefficient at :math:`T_0` and :math:`\alpha` a second resistance temperature coefficient.
 
@@ -81,9 +81,9 @@ where :math:`F` is the force density applied on the right lateral boundary and :
 
 .. math::
 
-  &\lambda = \Frac{E\nu}{(1+\nu)(1-2\nu)}, \\
-  &\mu = \Frac{E}{2(1+\nu)}, \\
-  &\lambda^* = \Frac{2\lambda\mu}{\lambda+2*\mu},
+  &\lambda = \dfrac{E\nu}{(1+\nu)(1-2\nu)}, \\
+  &\mu = \dfrac{E}{2(1+\nu)}, \\
+  &\lambda^* = \dfrac{2\lambda\mu}{\lambda+2*\mu},
 
 from :math:`E` the Young modulus and :math:`\nu` the Poisson ratio of the material.
 
@@ -100,9 +100,9 @@ Weak formulation of each partial differential equation is obtained by multiplyin
 .. math::
 
   &\mbox{Find } \theta, V, u \mbox{ with } V = 0.1, u = 0 \mbox{ on the left face}, V = 0 \mbox{ on the right face}, \\
-  &\ds \int_{\Omega} \varepsilon\kappa\nabla\theta\cdot\nabla\delta_{\theta} + 2D\theta\delta_{\theta}d\Omega = \int_{\Omega} (2DT_0 + \varepsilon\sigma|\nabla V|^2)\delta_{\theta} d\Omega ~~~\mbox{ for all } \delta_{\theta}, \\
-  &\ds \int_{\Omega} \varepsilon\sigma\nabla V\cdot\nabla\delta_V = 0 d\Omega ~~~ \mbox{ for all } \delta_V \mbox{ satisfying } \delta_V = 0 \mbox{ on the left and right faces}, \\
-  &\ds \int_{\Omega} \bar{\sigma}(u):\bar{\varepsilon}(\delta_u)d\Omega = \int_{\Gamma_N} F\cdot \delta_u d\Gamma ~~~ \mbox{ for all } \delta_{u} \mbox{ satisfying } \delta_u = 0 \mbox{ on the left face},
+  & \int_{\Omega} \varepsilon\kappa\nabla\theta\cdot\nabla\delta_{\theta} + 2D\theta\delta_{\theta}d\Omega = \int_{\Omega} (2DT_0 + \varepsilon\sigma|\nabla V|^2)\delta_{\theta} d\Omega ~~~\mbox{ for all } \delta_{\theta}, \\
+  & \int_{\Omega} \varepsilon\sigma\nabla V\cdot\nabla\delta_V = 0 d\Omega ~~~ \mbox{ for all } \delta_V \mbox{ satisfying } \delta_V = 0 \mbox{ on the left and right faces}, \\
+  & \int_{\Omega} \bar{\sigma}(u):\bar{\varepsilon}(\delta_u)d\Omega = \int_{\Gamma_N} F\cdot \delta_u d\Gamma ~~~ \mbox{ for all } \delta_{u} \mbox{ satisfying } \delta_u = 0 \mbox{ on the left face},
 
 
 where :math:`\delta_{\theta}, \delta_V, \delta_u` are the test functions corresponding to :math:`\theta, V, u`, respectively, :math:`\Gamma_N` denotes the right boundary where the density of force :math:`F` is applied and :math:`\bar{\sigma}:\bar{\varepsilon}` is the Frobenius scalar product between second order tensors.

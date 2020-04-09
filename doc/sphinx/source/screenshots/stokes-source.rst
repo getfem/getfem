@@ -2,7 +2,7 @@
 
 .. include:: ../replaces.txt
 
-.. highlightlang:: matlab
+.. highlight:: matlab
 
 .. _stokes-source:
 

@@ -2,7 +2,7 @@
 
 .. include:: ../replaces.txt
 
-.. highlightlang:: c++
+.. highlight:: c++
 
 .. index:: models, model bricks
 
@@ -16,7 +16,7 @@ This brick implements the classical Mindlin-Reissner bending model for isotropic
 The Mindlin-Reissner plate model
 ++++++++++++++++++++++++++++++++
 
-Let :math:`\Omega \subset \R^2` be the reference configuration of the mid-plane of a plate of thickness :math:`\epsilon`.
+Let :math:`\Omega \subset \rm I\hspace{-0.15em}R^2` be the reference configuration of the mid-plane of a plate of thickness :math:`\epsilon`.
 
 The weak formulation of the Mindlin-Reissner model for isotropic material can be written as follows for :math:`u_3` the transverse displacement and :math:`\theta` the rotation of fibers normal to the mid-plane:
 
@@ -25,10 +25,10 @@ The weak formulation of the Mindlin-Reissner model for isotropic material can be
   & \int_{\Omega} D \epsilon^3\left((1-v)\gamma(\theta):\gamma(\psi) + \nu \mbox{div}(\theta)\mbox{div}(\psi)\right) dx \\
   & ~~~~~~~~~~~~~~ + \int_{\Omega}G\epsilon (\nabla u_3 - \theta)\cdot(\nabla v_3 - \psi)dx = \int_{\Omega} F_3v_3 + M.\psi dx,
 
-for all admissible test functions :math:`v_3 : \Omega \rightarrow \R,$ $\psi : \Omega \rightarrow \R^2` and where:
+for all admissible test functions :math:`v_3 : \Omega \rightarrow \rm I\hspace{-0.15em}R,$ $\psi : \Omega \rightarrow \rm I\hspace{-0.15em}R^2` and where:
 
 .. math::
-  & D = \Frac{E}{12(1-\nu^2)}, ~~ G = \Frac{E\kappa}{2(1+\nu)}, \\
+  & D = \dfrac{E}{12(1-\nu^2)}, ~~ G = \dfrac{E\kappa}{2(1+\nu)}, \\
   & \gamma(\theta) = (\nabla \theta + \nabla \theta^T)/2, \\
   & F_3 = \int_{-\epsilon/2}^{\epsilon/2} f_3dx_3 + g_3^+ + g_3^-, \\
   & M_{\alpha} = \epsilon(g^+_{\alpha} - g^-_{\alpha})/2 +  \int_{-\epsilon/2}^{\epsilon/2} x_3 f_{\alpha}dx_3, \alpha \in \{1, 2\},

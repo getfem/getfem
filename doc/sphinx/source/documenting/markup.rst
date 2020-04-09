@@ -1,4 +1,4 @@
-.. highlightlang:: rest
+.. highlight:: rest
 
 Additional Markup Constructs
 ============================
@@ -106,6 +106,12 @@ such as "context managers", include a (pseudo-)type name too to make the
 index entries more informative.
 
 The directives are:
+
+.. describe:: cpp:function
+
+   Describes a C++ function. The signature should be given as in C++, e.g.::
+
+      .. cpp:function:: bgeot::simplex_structure(dim_type d)
 
 .. describe:: c:function
 
@@ -250,12 +256,12 @@ Syntax highlighting is handled in a smart way:
 * Within Python highlighting mode, interactive sessions are recognized
   automatically and highlighted appropriately.
 
-* The highlighting language can be changed using the ``highlightlang``
+* The highlighting language can be changed using the ``highlight``
   directive, used as follows::
 
-     .. highlightlang:: c
+     .. highlight:: c
 
-  This language is used until the next ``highlightlang`` directive is
+  This language is used until the next ``highlight`` directive is
   encountered.
 
 * The values normally used for the highlighting language are:
@@ -460,7 +466,7 @@ in a different style:
 
    The name of an RFC 822-style mail header.  This markup does not imply that
    the header is being used in an email message, but can be used to refer to any
-   header of the same "style."  This is also used for headers defined by the
+   header of the same "style".  This is also used for headers defined by the
    various MIME specifications.  The header name should be entered in the same
    way it would normally be found in practice, with the camel-casing conventions
    being preferred where there is more than one common usage. For example:

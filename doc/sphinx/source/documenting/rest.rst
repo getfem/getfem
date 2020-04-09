@@ -1,4 +1,4 @@
-.. highlightlang:: rest
+.. highlight:: rest
 
 reStructuredText Primer
 =======================

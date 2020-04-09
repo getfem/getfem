@@ -1,4 +1,4 @@
-.. highlightlang:: rest
+.. highlight:: rest
 
 Differences to the LaTeX markup
 ===============================

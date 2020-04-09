@@ -2,7 +2,7 @@
 
 .. include:: ../replaces.txt
 
-.. highlightlang:: c++
+.. highlight:: c++
 
 .. index:: models, model bricks
 
@@ -38,7 +38,7 @@ adding a Dirichlet condition on ``varname`` thanks to a multiplier variable
 of the variable on that boundary is described by the data ``dataname`` which
 should be previously defined in the model. If the data is omitted, the Dirichlet
 condition is assumed to be an homogeneous one (vanishing variable on the
-boundary). The data can be constant or described on a FEM. It can also be scalar
+boundary). The data can be constant or described on an FEM. It can also be scalar
 or vector valued, depending on the variable. The variable ``multname`` should be
 added to the model by the method ``add_multiplier``. The function returns the
 brick index in the model. The second function is::

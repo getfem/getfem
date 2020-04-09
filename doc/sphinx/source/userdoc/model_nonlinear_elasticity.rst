@@ -2,7 +2,7 @@
 
 .. include:: ../replaces.txt
 
-.. highlightlang:: none
+.. highlight:: none
 
 .. index:: models, model bricks
 
@@ -227,7 +227,7 @@ Incompressible material.
 
 The incompressibility constraint :math:`i_3( C) = 1` is handled with a Lagrange multiplier :math:`p` (the pressure)
 
-constraint: :math:`\sigma = -pI \Rightarrow {\hat{\hat{\sigma}}} = -p\nabla\Phi\nabla\Phi^{-T}\det\nabla\Phi`
+constraint: :math:`\sigma = -pI \rm I\hspace{-0.15em}Rightarrow {\hat{\hat{\sigma}}} = -p\nabla\Phi\nabla\Phi^{-T}\det\nabla\Phi`
 
 .. math::
 

@@ -2,7 +2,7 @@
 
 .. include:: ../replaces.txt
 
-.. highlightlang:: matlab
+.. highlight:: matlab
 
 .. _mlab-examples:
 
@@ -20,7 +20,7 @@ with the Dirichlet condition :math:`u = g(x)` on the domain boundary. You can fi
 the **m-file** of this example under the name **demo_step_by_step.m** in the
 directory ``interface/tests/matlab/`` of the |gf| distribution.
 
-The first step is to **create a mesh**. It is possible to create simple structured meshes or unstructured meshes for simple geometries (see ``gf_mesh('generate', mesher_object mo, scalar h))``) or to rely on an external mesher (see ``gf_mesh('import', string
+The first step is to **create a mesh**. It is possible to create simple structured meshes or unstructured meshes for simple geometries (see ``gf_mesh('generate', mesher_object mo, scalar h)``) or to rely on an external mesher (see ``gf_mesh('import', string
 FORMAT, string FILENAME))``).  For this example, we
 just consider a regular **cartesian mesh** whose nodes are
 :math:`\{x_{i=0\ldots10,j=0..10}=(i/10,j/10)\}`::
@@ -59,8 +59,8 @@ The first instruction builds a new |mlab_mf| object, the second argument specifi
 that this object will be used to interpolate scalar fields (since the unknown
 :math:`u` is a scalar field). The second instruction assigns the :math:`Q^2` FEM
 to every convex (each basis function is a polynomial of degree 4, remember that
-:math:`P^k\Rightarrow` polynomials of degree :math:`k`, while
-:math:`Q^k\Rightarrow` polynomials of degree :math:`2k`). As :math:`Q^2` is a
+:math:`P^k\rm I\hspace{-0.15em}Rightarrow` polynomials of degree :math:`k`, while
+:math:`Q^k\rm I\hspace{-0.15em}Rightarrow` polynomials of degree :math:`2k`). As :math:`Q^2` is a
 polynomial FEM, you can view the expression of its basis functions on the
 reference convex::
 

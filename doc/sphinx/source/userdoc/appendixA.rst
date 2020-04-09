@@ -2,7 +2,7 @@
 
 .. include:: ../replaces.txt
 
-.. highlightlang:: c++
+.. highlight:: c++
 
 .. |nbsp| unicode:: U+00A0 .. non-breaking space
 
@@ -125,9 +125,9 @@ node is the so-called Lagrange grid. Figures :ref:`ud-fig-segmentpk`.
        - :math:`P_6` element, 28 d.o.f., :math:`C^0`
 
 The number of degrees of freedom for a classical :math:`P_K` Lagrange element of
-dimension :math:`P` and degree :math:`K` is :math:`\Frac{(P+K)!}{P!K!}`. For
-instance, in dimension 2 :math:`(P = 2)`, this value is :math:`\Frac{(K+1)
-(K+2)}{2}` and in dimension 3 :math:`(P = 3)`, it is :math:`\Frac{(K+1) (K+2)
+dimension :math:`P` and degree :math:`K` is :math:`\dfrac{(P+K)!}{P!K!}`. For
+instance, in dimension 2 :math:`(P = 2)`, this value is :math:`\dfrac{(K+1)
+(K+2)}{2}` and in dimension 3 :math:`(P = 3)`, it is :math:`\dfrac{(K+1) (K+2)
 (K+3)}{6}`.
 
   .. _ud-fig-tetrahedronpk:
@@ -169,16 +169,16 @@ Then, the coordinate of a node can be computed as
 
 .. math::
 
-   a_{i_0, i_1, ... i_P} = \sum_{n = 0}^{P} \Frac{i_n}{K}S_n, \ \ \mbox{ for } K \neq 0,
+   a_{i_0, i_1, ... i_P} = \sum_{n = 0}^{P} \dfrac{i_n}{K}S_n, \ \ \mbox{ for } K \neq 0,
 
 where :math:`S_0, S_1, ... S_N` are the vertices of the simplex (for :math:`K = 0`
-the particular choice :math:`a_{0, 0, ... 0} = \ds \sum_{n = 0}^{P}
-\Frac{1}{P+1}S_n` has been chosen). Then each base function, corresponding of each
+the particular choice :math:`a_{0, 0, ... 0} =  \sum_{n = 0}^{P}
+\dfrac{1}{P+1}S_n` has been chosen). Then each base function, corresponding of each
 node :math:`a_{i_0, i_1, ... i_P}` is defined by
 
 .. math::
 
-  \phi_{i_0, i_1, ... i_P} = \prod_{n = 0}^{P} \prod_{j=0}^{i_n-1} \left(\Frac{K \lambda_n - j}{j+1}\right).
+  \phi_{i_0, i_1, ... i_P} = \prod_{n = 0}^{P} \prod_{j=0}^{i_n-1} \left(\dfrac{K \lambda_n - j}{j+1}\right).
 
 where :math:`\lambda_n` are the barycentric coordinates, i.e. the polynomials of
 degree 1 whose value is :math:`1` on the vertex :math:`S_n` and whose value is
@@ -218,7 +218,7 @@ the classical :math:`P_K` Lagrange element.
 
      * - :math:`K`, :math:`0 \leq K \leq 255`
        - :math:`P`, :math:`~ 1 \leq P \leq 255`
-       - :math:`\Frac{(K+P)!}{K! P!}`
+       - :math:`\dfrac{(K+P)!}{K! P!}`
        - :math:`C^0`
        - No :math:`(Q = 1)`
        - Yes :math:`(M = Id)`
@@ -240,7 +240,7 @@ the classical :math:`P_K` Lagrange element.
 
      * - :math:`K`, :math:`0 \leq K \leq 255`
        - :math:`P`, :math:`~ 1 \leq P \leq 255`
-       - :math:`\Frac{(K+P)!}{K! P!}`
+       - :math:`\dfrac{(K+P)!}{K! P!}`
        - discontinuous
        - No :math:`(Q = 1)`
        - Yes :math:`(M = Id)`
@@ -262,7 +262,7 @@ the classical :math:`P_K` Lagrange element.
 
      * - :math:`K`, :math:`0 \leq K \leq 255`
        - :math:`P`, :math:`~ 1 \leq P \leq 255`
-       - :math:`\Frac{(K+P)!}{K! P!}`
+       - :math:`\dfrac{(K+P)!}{K! P!}`
        - discontinuous
        - No :math:`(Q = 1)`
        - Yes :math:`(M = Id)`
@@ -284,7 +284,7 @@ functions of the tensorial product (on the reference element) as
 
 .. math::
 
-  \widehat{\varphi}_{ij}(x,y) = \widehat{\varphi}^1_i(x) \widehat{\varphi}^2_j(y), ~~ x \in \Reel^{P^1}, y \in  \Reel^{P^2},
+  \widehat{\varphi}_{ij}(x,y) = \widehat{\varphi}^1_i(x) \widehat{\varphi}^2_j(y), ~~ x \in \rm I\hspace{-0.15em}R^{P^1}, y \in  \rm I\hspace{-0.15em}R^{P^2},
 
 where :math:`\widehat{\varphi}^1_i` and :math:`\widehat{\varphi}^2_i` are respectively the base functions
 of the first and second element.
@@ -388,7 +388,7 @@ not to have the same degree on each dimension. An example is shown on figure
 
      * - :math:`2K`, :math:`0 \leq K \leq 255`
        - :math:`P`, :math:`~ 2 \leq P \leq 255`
-       - :math:`(K+1)` :math:`\times~\Frac{(K+P-1)!}{K! (P-1)!}`
+       - :math:`(K+1)` :math:`\times~\dfrac{(K+P-1)!}{K! (P-1)!}`
        - :math:`C^0`
        - No :math:`(Q = 1)`
        - Yes :math:`(M = Id)`
@@ -410,7 +410,7 @@ not to have the same degree on each dimension. An example is shown on figure
 
      * - :math:`K_1+K_2`, :math:`0 \leq K_1,K_2 \leq 255`
        - :math:`P`, :math:`~ 2 \leq P \leq 255`
-       - :math:`(K_2+1)` :math:`\times~\Frac{(K_1+P-1)!}{K_1! (P-1)!}`
+       - :math:`(K_2+1)` :math:`\times~\dfrac{(K_1+P-1)!}{K_1! (P-1)!}`
        - :math:`C^0`
        - No :math:`(Q = 1)`
        - Yes :math:`(M = Id)`
@@ -486,7 +486,7 @@ Hierarchical elements with respect to the degree
 
      * - :math:`K`, :math:`0 \leq K\leq 255`
        - :math:`P`, :math:`~ 1 \leq P \leq 255`
-       - :math:`\Frac{(K+P)!}{K! P!}`
+       - :math:`\dfrac{(K+P)!}{K! P!}`
        - :math:`C^0`
        - No :math:`(Q = 1)`
        - Yes :math:`(M = Id)`
@@ -530,7 +530,7 @@ Hierarchical elements with respect to the degree
 
      * - :math:`K`, :math:`0 \leq K\leq 255`
        - :math:`P`, :math:`~ 2 \leq P \leq 255`
-       - :math:`(K+1)` :math:`\times~\Frac{(K+P-1)!}{K! (P-1)!}`
+       - :math:`(K+1)` :math:`\times~\dfrac{(K+P-1)!}{K! (P-1)!}`
        - :math:`C^0`
        - No :math:`(Q = 1)`
        - Yes :math:`(M = Id)`
@@ -609,7 +609,7 @@ Hierarchical composite elements
 
      * - :math:`K`
        - :math:`P`
-       - :math:`\Frac{(SK+P)!}{(SK)! P!}`
+       - :math:`\dfrac{(SK+P)!}{(SK)! P!}`
        - variable
        - No :math:`(Q = 1)`
        - Yes :math:`(M = Id)`
@@ -631,7 +631,7 @@ Hierarchical composite elements
 
      * - :math:`K`
        - :math:`P`
-       - :math:`\Frac{(SK+P)!}{(SK)! P!}`
+       - :math:`\dfrac{(SK+P)!}{(SK)! P!}`
        - variable
        - No :math:`(Q = 1)`
        - Yes :math:`(M = Id)`
@@ -1360,10 +1360,10 @@ The shape functions are not polynomial ones but rational fractions. For the firs
 .. math::
 
    \begin{array}{l}
-   \widehat{\varphi}_{0}(x,y,z) =  \frac{1}{4}\left(1-x-y-z+\Frac{xy}{1-z}\right), \\
-   \widehat{\varphi}_{1}(x,y,z) =  \frac{1}{4}\left(1+x-y-z-\Frac{xy}{1-z}\right), \\
-   \widehat{\varphi}_{2}(x,y,z) =  \frac{1}{4}\left(1-x+y-z-\Frac{xy}{1-z}\right), \\
-   \widehat{\varphi}_{3}(x,y,z) =  \frac{1}{4}\left(1+x+y-z+\Frac{xy}{1-z}\right), \\
+   \widehat{\varphi}_{0}(x,y,z) =  \frac{1}{4}\left(1-x-y-z+\dfrac{xy}{1-z}\right), \\
+   \widehat{\varphi}_{1}(x,y,z) =  \frac{1}{4}\left(1+x-y-z-\dfrac{xy}{1-z}\right), \\
+   \widehat{\varphi}_{2}(x,y,z) =  \frac{1}{4}\left(1-x+y-z-\dfrac{xy}{1-z}\right), \\
+   \widehat{\varphi}_{3}(x,y,z) =  \frac{1}{4}\left(1+x+y-z+\dfrac{xy}{1-z}\right), \\
    \widehat{\varphi}_{4}(x,y,z) =  z.\\
    \end{array}
 
@@ -1371,26 +1371,26 @@ For the second degree, setting
 
 .. math::
 
-   \xi_0 = \Frac{1-z-x}{2}, ~~~\xi_1 = \Frac{1-z-y}{2}, ~~~\xi_2 = \Frac{1-z+x}{2}, ~~~\xi_3 = \Frac{1-z+y}{2}, ~~~\xi_4 = z,
+   \xi_0 = \dfrac{1-z-x}{2}, ~~~\xi_1 = \dfrac{1-z-y}{2}, ~~~\xi_2 = \dfrac{1-z+x}{2}, ~~~\xi_3 = \dfrac{1-z+y}{2}, ~~~\xi_4 = z,
 
 the shape functions read:
 
 .. math::
 
    \begin{array}{l}
-   \widehat{\varphi}_{0}(x,y,z) = \Frac{\xi_0 \xi_1}{(1-\xi_4)^2}((1-\xi_4-2\xi_0)(1-\xi_4-2\xi_1) -\xi_4(1-\xi_4)), \\
-   \widehat{\varphi}_{1}(x,y,z) = 4\Frac{\xi_0\xi_1\xi_2}{(1-\xi_4)^2}(2\xi_1-(1-\xi_4)), \\
-   \widehat{\varphi}_{2}(x,y,\xi_4) = \Frac{\xi_1 \xi_2}{(1-\xi_4)^2}((1-\xi_4-2\xi_1)(1-\xi_4-2\xi_2) -\xi_4(1-\xi_4)), \\
-   \widehat{\varphi}_{3}(x,y,z) = 4\Frac{\xi_3\xi_0\xi_1}{(1-\xi_4)^2}(2\xi_0-(1-\xi_4)), \\
-   \widehat{\varphi}_{4}(x,y,z) = 16\Frac{\xi_0\xi_1\xi_2\xi_3}{(1-\xi_4)^2}, \\
-   \widehat{\varphi}_{5}(x,y,z) = 4\Frac{\xi_1\xi_2\xi_3}{(1-\xi_4)^2}(2\xi_2-(1-\xi_4)), \\
-   \widehat{\varphi}_{6}(x,y,z) = \Frac{\xi_3 \xi_0}{(1-\xi_4)^2}((1-\xi_4-2\xi_3)(1-\xi_4-2\xi_0) -\xi_4(1-\xi_4)), \\
-   \widehat{\varphi}_{7}(x,y,z) = 4\Frac{\xi_2\xi_3\xi_0}{(1-\xi_4)^2}(2\xi_3-(1-\xi_4)), \\
-   \widehat{\varphi}_{8}(x,y,z) = \Frac{\xi_2 \xi_3}{(1-\xi_4)^2}((1-\xi_4-2\xi_2)(1-\xi_4-2\xi_3) -\xi_4(1-\xi_4)), \\
-   \widehat{\varphi}_{9}(x,y,z) = 4\Frac{\xi_4}{1-\xi_4}\xi_0\xi_1, \\
-   \widehat{\varphi}_{10}(x,y,z) = 4\Frac{\xi_4}{1-\xi_4}\xi_1\xi_2,  \\
-   \widehat{\varphi}_{11}(x,y,z) = 4\Frac{\xi_4}{1-\xi_4}\xi_3\xi_0,  \\
-   \widehat{\varphi}_{12}(x,y,z) = 4\Frac{\xi_4}{1-\xi_4}\xi_2\xi_3,  \\
+   \widehat{\varphi}_{0}(x,y,z) = \dfrac{\xi_0 \xi_1}{(1-\xi_4)^2}((1-\xi_4-2\xi_0)(1-\xi_4-2\xi_1) -\xi_4(1-\xi_4)), \\
+   \widehat{\varphi}_{1}(x,y,z) = 4\dfrac{\xi_0\xi_1\xi_2}{(1-\xi_4)^2}(2\xi_1-(1-\xi_4)), \\
+   \widehat{\varphi}_{2}(x,y,\xi_4) = \dfrac{\xi_1 \xi_2}{(1-\xi_4)^2}((1-\xi_4-2\xi_1)(1-\xi_4-2\xi_2) -\xi_4(1-\xi_4)), \\
+   \widehat{\varphi}_{3}(x,y,z) = 4\dfrac{\xi_3\xi_0\xi_1}{(1-\xi_4)^2}(2\xi_0-(1-\xi_4)), \\
+   \widehat{\varphi}_{4}(x,y,z) = 16\dfrac{\xi_0\xi_1\xi_2\xi_3}{(1-\xi_4)^2}, \\
+   \widehat{\varphi}_{5}(x,y,z) = 4\dfrac{\xi_1\xi_2\xi_3}{(1-\xi_4)^2}(2\xi_2-(1-\xi_4)), \\
+   \widehat{\varphi}_{6}(x,y,z) = \dfrac{\xi_3 \xi_0}{(1-\xi_4)^2}((1-\xi_4-2\xi_3)(1-\xi_4-2\xi_0) -\xi_4(1-\xi_4)), \\
+   \widehat{\varphi}_{7}(x,y,z) = 4\dfrac{\xi_2\xi_3\xi_0}{(1-\xi_4)^2}(2\xi_3-(1-\xi_4)), \\
+   \widehat{\varphi}_{8}(x,y,z) = \dfrac{\xi_2 \xi_3}{(1-\xi_4)^2}((1-\xi_4-2\xi_2)(1-\xi_4-2\xi_3) -\xi_4(1-\xi_4)), \\
+   \widehat{\varphi}_{9}(x,y,z) = 4\dfrac{\xi_4}{1-\xi_4}\xi_0\xi_1, \\
+   \widehat{\varphi}_{10}(x,y,z) = 4\dfrac{\xi_4}{1-\xi_4}\xi_1\xi_2,  \\
+   \widehat{\varphi}_{11}(x,y,z) = 4\dfrac{\xi_4}{1-\xi_4}\xi_3\xi_0,  \\
+   \widehat{\varphi}_{12}(x,y,z) = 4\dfrac{\xi_4}{1-\xi_4}\xi_2\xi_3,  \\
    \widehat{\varphi}_{13}(x,y,z) = \xi_4(2\xi_4-1). \\
    \end{array}
 

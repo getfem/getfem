@@ -3,7 +3,7 @@
 
 .. include:: ../replaces.txt
 
-.. highlightlang:: c++
+.. highlight:: c++
 
 .. _ud-appendixb:
 
@@ -209,9 +209,9 @@ Gauss Integration methods on dimension 2
 
          7 points, order 5
 
-         :math:`a = \Frac{6+\sqrt{15}}{21}`
+         :math:`a = \dfrac{6+\sqrt{15}}{21}`
          :math:`b = 4/7 - a`
-         :math:`c = \Frac{155+\sqrt{15}}{2400}`
+         :math:`c = \dfrac{155+\sqrt{15}}{2400}`
          :math:`d = 31/240 - c`
 
      * - .. image:: images/getfemlistintmethodtriangle6.png
@@ -500,9 +500,9 @@ Gauss Integration methods on dimension 3
 
          4 points, order 2
 
-         :math:`a = \Frac{5 - \sqrt{5}}{20}`
+         :math:`a = \dfrac{5 - \sqrt{5}}{20}`
 
-         :math:`b = \Frac{5 + 3\sqrt{5}}{20}`
+         :math:`b = \dfrac{5 + 3\sqrt{5}}{20}`
 
   .. list-table:: Integration methods on dimension 3
      :widths: 40 20 10 20
@@ -601,21 +601,21 @@ Gauss Integration methods on dimension 3
 
          15 points, order 5
 
-         :math:`a = \Frac{7 + \sqrt{15}}{34}`
+         :math:`a = \dfrac{7 + \sqrt{15}}{34}`
 
-         :math:`b = \Frac{7 - \sqrt{15}}{34}`
+         :math:`b = \dfrac{7 - \sqrt{15}}{34}`
 
-         :math:`c = \Frac{13 + 3\sqrt{15}}{34}`
+         :math:`c = \dfrac{13 + 3\sqrt{15}}{34}`
 
-         :math:`d = \Frac{13 - 3\sqrt{15}}{34}`
+         :math:`d = \dfrac{13 - 3\sqrt{15}}{34}`
 
-         :math:`e = \Frac{5 - \sqrt{15}}{20}`
+         :math:`e = \dfrac{5 - \sqrt{15}}{20}`
 
-         :math:`f = \Frac{5 + \sqrt{15}}{20}`
+         :math:`f = \dfrac{5 + \sqrt{15}}{20}`
 
-         :math:`h = \Frac{2665 - 14\sqrt{15}}{226800}`
+         :math:`h = \dfrac{2665 - 14\sqrt{15}}{226800}`
 
-         :math:`i = \Frac{2665 + 14\sqrt{15}}{226800}`
+         :math:`i = \dfrac{2665 + 14\sqrt{15}}{226800}`
 
 Others methods are:
 

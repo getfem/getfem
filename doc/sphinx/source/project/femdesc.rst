@@ -2,7 +2,7 @@
 
 .. include:: ../replaces.txt
 
-.. highlightlang:: c++
+.. highlight:: c++
 
 .. _dp-femdesc:
 
@@ -34,19 +34,19 @@ be declared with the type |bg_pcs|
 The following functions give a pointer onto the descriptor of the usual type of
 elements:
 
-.. c:function:: bgeot::simplex_structure(dim_type d)
+.. cpp:function:: bgeot::simplex_structure(dim_type d)
 
    description of a simplex of dimension ``d``.
 
-.. c:function:: bgeot::parallelepiped_structure(dim_type d)
+.. cpp:function:: bgeot::parallelepiped_structure(dim_type d)
 
    description of a parallelepiped of dimension ``d``.
 
-.. c:function:: bgeot::convex_product_structure(bgeot::pconvex_structure p1, bgeot::pconv$
+.. cpp:function:: bgeot::convex_product_structure(bgeot::pconvex_structure p1, pconvex_structure p2)
 
    description of the direct product of ``p1`` and ``p2``.
 
-.. c:function:: bgeot::prism_P1_structure(dim_type d)
+.. cpp:function:: bgeot::prism_P1_structure(dim_type d)
 
    description of a prism of dimension ``d``.
 
@@ -86,20 +86,20 @@ descriptor.
 
 The following functions build the descriptions:
 
-.. c:function:: bgeot::simplex_of_reference(dim_type d)
+.. cpp:function:: bgeot::simplex_of_reference(dim_type d)
 
    description of the simplex of reference of dimension ``d``.
 
-.. c:function:: bgeot::simplex_of_reference(dim_type d, short_type k)
+.. cpp:function:: bgeot::simplex_of_reference(dim_type d, short_type k)
 
    description of the simplex of reference of dimension ``d`` with degree ``k``
    Lagrange grid.
 
-.. c:function:: bgeot::convex_ref_product(pconvex_ref a, pconvex_ref b)
+.. cpp:function:: bgeot::convex_ref_product(pconvex_ref a, pconvex_ref b)
 
    description of the direct product of two convexes of reference.
 
-.. c:function:: bgeot::parallelepiped_of_reference(dim_type d)
+.. cpp:function:: bgeot::parallelepiped_of_reference(dim_type d)
 
    description of the parallelepiped of reference of dimension ``d``.
 
@@ -151,7 +151,7 @@ A geometric transformation is a polynomial application:
 
 .. math::
 
-   \tau : \widehat{T} \subset \Reel^P \longrightarrow T \subset \Reel^N,
+   \tau : \widehat{T} \subset \rm I\hspace{-0.15em}R^P \longrightarrow T \subset \rm I\hspace{-0.15em}R^N,
 
 which maps the reference element :math:`\widehat{T}` to the real element :math:`T`. The
 geometric nodes are denoted:
@@ -240,12 +240,12 @@ Finite element methods description
 ----------------------------------
 
 A finite element method is defined on a reference element
-:math:`\widehat{T}\subset\Reel^P` by a set of :math:`n_d` nodes :math:`a^i` and
+:math:`\widehat{T}\subset\rm I\hspace{-0.15em}R^P` by a set of :math:`n_d` nodes :math:`a^i` and
 corresponding base functions
 
 .. math::
 
-   (\widehat{\varphi})^i : \widehat{T}\subset\Reel^P \longrightarrow \Reel^Q
+   (\widehat{\varphi})^i : \widehat{T}\subset\rm I\hspace{-0.15em}R^P \longrightarrow \rm I\hspace{-0.15em}R^Q
 
 Denoting
 

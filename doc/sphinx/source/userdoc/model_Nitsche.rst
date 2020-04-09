@@ -2,7 +2,7 @@
 
 .. include:: ../replaces.txt
 
-.. highlightlang:: c++
+.. highlight:: c++
 
 .. index:: models, model bricks, Nitsche's method
 
@@ -26,7 +26,7 @@ Note that the Neumann term :math:`G` will often depend on the variable :math:`u`
 This is the case for instance for mixed formulations of incompressible elasticity.
 The Neumann terms depend also frequently on some parameters of the model (elasticity coefficients ...) but this is assumed to be contained in its expression.
 
-For instance, if there is a Laplace term (:math:`\Delta u`), applied on the variable :math:`u`, the Neumann term will be :math:`G = \Frac{\partial u}{\partial n}` where :math:`n` is the outward unit normal on the considered boundary.
+For instance, if there is a Laplace term (:math:`\Delta u`), applied on the variable :math:`u`, the Neumann term will be :math:`G = \dfrac{\partial u}{\partial n}` where :math:`n` is the outward unit normal on the considered boundary.
 If :math:`u` represents the displacements of a deformable body, the Neumann term will be :math:`G = \sigma(u)n`, where :math:`\sigma(u)` is the stress tensor depending on the consitutive law.
 Of course, in that case :math:`G` also depends on some material parameters.
 If additionally a mixed incompressibility brick is added with a variable :math:`p` denoting the pressure, the Neumann term on :math:`u` will depend on :math:`p` in the following way:
@@ -60,7 +60,7 @@ For instance if one wants to prescribe only the normal component, :math:`H` will
 Nitsche's method for prescribing this Dirichlet condition consists in adding the following term to the weak formulation of the problem
 
 .. math::
-  \int_{\Gamma_D} \Frac{1}{\gamma}(Hu-g-\gamma HG).(Hv) - \theta(Hu-g).(HD_uG[v])d\Gamma,
+  \int_{\Gamma_D} \dfrac{1}{\gamma}(Hu-g-\gamma HG).(Hv) - \theta(Hu-g).(HD_uG[v])d\Gamma,
 
 where :math:`\gamma` and :math:`\theta` are two parameters of Nitsche's method and :math:`v` is the test function corresponding to :math:`u`.
 The parameter :math:`\theta` can be chosen positive or negative. :math:`\theta = 1` corresponds to the more standard method which leads to a symmetric tangent term in standard situations, :math:`\theta = 0` corresponds to a non-symmetric method which has the advantage of a reduced number of terms and not requiring the second derivatives of :math:`G` in the nonlinear case, and :math:`\theta = -1` is a kind of skew-symmetric method which ensures an inconditonal coercivity (which means independent of :math:`\gamma`) at least in standard situations.
@@ -170,13 +170,13 @@ In order to simplify notations, let use denote by :math:`P_{n,\mathscr{F}}` the 
 .. math::
 	P_{n,\mathscr{F}}(x) = -(x.n)_- n + P_{B(0,\mathscr{F}(x.n)_-)}(x - (x.n)n)
 
-This application make the projection of the normal part of :math:`x` on :math:`\Reel_-` and the tangential part on the ball of center :math:`0` and radius :math:`\mathscr{F}(x.n)_-`, where :math:`\mathscr{F}` is the friction coefficient.
+This application make the projection of the normal part of :math:`x` on :math:`\rm I\hspace{-0.15em}R_-` and the tangential part on the ball of center :math:`0` and radius :math:`\mathscr{F}(x.n)_-`, where :math:`\mathscr{F}` is the friction coefficient.
 
 Using this, and considering that the sliding velocity is approximated by :math:`\alpha(u_{_T} - w_{_T})` where the expression of :math:`\alpha` and :math:`w_{_T}` depend on the time integration scheme used (see :ref:`weak_integral_contact_section`), Nitsche's term for contact with friction reads as:
 
 .. math::
 	&-\int_{\Gamma_C} \theta \gamma G\cdot D_u G[v] d\Gamma \\
-	&+\int_{\Gamma_C} \gamma P_{n,\mathscr{F}}(G - \Frac{Au}{\gamma} + \Frac{gap}{\gamma}n + \Frac{\alpha w_{_T}}{\gamma})\cdot(\theta D_u G[v] - \Frac{v}{\gamma}) d\Gamma.
+	&+\int_{\Gamma_C} \gamma P_{n,\mathscr{F}}(G - \dfrac{Au}{\gamma} + \dfrac{gap}{\gamma}n + \dfrac{\alpha w_{_T}}{\gamma})\cdot(\theta D_u G[v] - \dfrac{v}{\gamma}) d\Gamma.
 
 where :math:`\Gamma_C` is the contact boundary, :math:`G` is the Neumann term which represents here :math:`\sigma n` the stress at the contact boundary and :math:`A` is the :math:`d\times d` matrix
 

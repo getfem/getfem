@@ -62,10 +62,10 @@ print "np.repeat([Lambda], nbd).shape:",np.repeat([Lambda], nbd).shape
 print "np.repeat([Mu], nbd).shape:",np.repeat([Mu], nbd).shape
 
 # handle Dirichlet condition
-(H,R) = gf.asm_dirichlet(DIRICHLET_BOUNDARY, mim, mfu, mfd, mfd.eval('numpy.identity(3)'), mfd.eval('[0,0,0]'))
+(H,R) = gf.asm_dirichlet(DIRICHLET_BOUNDARY, mim, mfu, mfd, mfd.eval('identity(3)'), mfd.eval('[0,0,0]'))
 print "H.info: ",H.info # Spmat instance
 print "R.shape: ",R.shape
-print "mfd.eval('numpy.identity(3)').shape: ",mfd.eval('numpy.identity(3)').shape
+print "mfd.eval('identity(3)').shape: ",mfd.eval('identity(3)').shape
 print "mfd.eval('[0,0,0]').shape: ",mfd.eval('[0,0,0]').shape
 
 (N,U0) = H.dirichlet_nullspace(R)
