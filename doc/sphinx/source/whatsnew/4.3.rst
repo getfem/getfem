@@ -22,7 +22,8 @@ The main changes are:
    * A large sliding contact with friction brick is now working
      (work of Konstantinos Poulios and Yves Renard) and will be extended soon.
 
-   * A support for Nitsche type method for Dirichlet and contact conditions.        the corresponding model bricks will certainly evolve to incorporate the
+   * A support for Nitsche type method for Dirichlet and contact conditions.
+     The corresponding model bricks will certainly evolve to incorporate the
      use of the high-level generic assembly.
 
    * A torus_mesh_fem object allowing to easily transform 3D problems into
