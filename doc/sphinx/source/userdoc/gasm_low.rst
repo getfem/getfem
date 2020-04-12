@@ -11,7 +11,7 @@
 Compute arbitrary terms - low-level generic assembly procedures (deprecated)
 ============================================================================
 
-This section present the first version of generic assembly procedure which has been implemented in |gf| and is now considered as deprecated. It allows to make the assembly of arbitrary matrices in the linear case. In the nonlinear case, some special "non_linear_term" object have to be implemented, which could be a bit tricky and obliges to use very low-level internal tools of |gf|. The generic weak for language (GWFL) has been developed to circumvent these difficulties (see :ref:`ud-gasm-high`).
+This section present the first version of generic assembly procedure which has been implemented in |gf| and is now considered as deprecated. It allows to make the assembly of arbitrary matrices in the linear case. In the nonlinear case, some special "non_linear_term" object have to be implemented, which could be a bit tricky and obliges to use very low-level internal tools of |gf|. The generic weak form language (GWFL) has been developed to circumvent these difficulties (see :ref:`ud-gasm-high`).
 
 As it can be seen in the file :file:`getfem/getfem_assembling.h`, all the
 previous assembly procedures use a |gf_gasm| object and provide it an adequate

@@ -894,7 +894,7 @@ For instance, a term like
 
    \int_{\Omega_1}\int_{\Omega_1}e^{-\|x-y\|}u(x)u(y)dydx,
 
-would correspond to the following weak for language expression::
+would correspond to the following weak form language expression::
 
   exp(Norm(X-Secondary_domain(X)))*u*Secondary_domain(u)
 
