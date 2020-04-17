@@ -1,10 +1,10 @@
 /*===========================================================================
 
- Copyright (C) 2013-2018 Yves Renard
+ Copyright (C) 2013-2020 Yves Renard
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -533,7 +533,7 @@ namespace getfem {
           used_vars.clear();
         else
           used_data.clear();
-        ga_workspace aux_workspace(true, workspace);
+        ga_workspace aux_workspace(workspace, ga_workspace::inherit::ALL);
         aux_workspace.clear_expressions();
         aux_workspace.add_interpolation_expression(expr, source_mesh);
         for (size_type i = 0; i < aux_workspace.nb_trees(); ++i)
@@ -556,7 +556,7 @@ namespace getfem {
       size_type N = target_mesh.dim();
 
       // Expression compilation
-      local_workspace = ga_workspace(true, workspace);
+      local_workspace = ga_workspace(workspace, ga_workspace::inherit::ALL);
       local_workspace.clear_expressions();
 
       local_workspace.add_interpolation_expression(expr, source_mesh);
@@ -683,8 +683,8 @@ namespace getfem {
         element_boxes.find_boxes_at_point(P, bset);
 
         // using a std::set as a sorter
-        std::set<std::pair<scalar_type, const bgeot::box_index*>, rated_box_index_compare>
-          rated_boxes;
+        std::set<std::pair<scalar_type, const bgeot::box_index*>,
+                 rated_box_index_compare> rated_boxes;
         for (const auto &box : bset) {
           scalar_type rating = scalar_type(1);
           for (size_type i = 0; i < m.dim(); ++i) {
@@ -707,14 +707,14 @@ namespace getfem {
       scalar_type best_dist(1e10);
       size_type best_cv(-1);
       base_node best_P_ref;
-      for (size_type i = boxes.size(); i > 0; --i) {
+      for (size_type i = boxes.size(); i > 0 && !ret_type; --i) {
         for (auto convex : box_to_convexes.at(boxes[i-1]->id)) {
           gic.init(target_mesh.points_of_convex(convex),
                    target_mesh.trans_of_convex(convex));
 
           bool converged;
           bool is_in = gic.invert(P, P_ref, converged, 1E-4);
-          // cout << "cv = " << cv << " P = " << P << " P_ref = " << P_ref << endl;
+          // cout << "cv = " << convex << " P = " << P << " P_ref = " << P_ref;
           // cout << " is_in = " << int(is_in) << endl;
           // for (size_type iii = 0;
           //     iii < target_mesh.points_of_convex(cv).size(); ++iii)
@@ -735,7 +735,6 @@ namespace getfem {
                 best_P_ref = P_ref;
               }
             }
-            break;
           }
         }
       }
@@ -807,10 +806,10 @@ namespace getfem {
   }
 
   //=========================================================================
-  // Interpolate transformation on neighbour element (for internal faces)
+  // Interpolate transformation on neighbor element (for internal faces)
   //=========================================================================
 
-  class interpolate_transformation_neighbour
+  class interpolate_transformation_neighbor
     : public virtual_interpolate_transformation, public context_dependencies {
 
   public:
@@ -837,7 +836,7 @@ namespace getfem {
       *m_t = &m_x;
       size_type cv_x = ctx_x.convex_num();
       short_type face_x = ctx_x.face_num();
-      GMM_ASSERT1(face_x != short_type(-1), "Neighbour transformation can "
+      GMM_ASSERT1(face_x != short_type(-1), "Neighbor transformation can "
                   "only be applied to internal faces");
 
       auto adj_face = m_x.adjacent_face(cv_x, face_x);
@@ -850,7 +849,7 @@ namespace getfem {
         gic.invert(ctx_x.xreal(), P_ref, converged);
         bool is_in = (ctx_x.pgt()->convex_ref()->is_in(P_ref) < 1E-4);
         GMM_ASSERT1(is_in && converged, "Geometric transformation inversion "
-                    "has failed in neighbour transformation");
+                    "has failed in neighbor transformation");
         face_num = adj_face.f;
         cv = adj_face.cv;
         ret_type = 1;
@@ -860,17 +859,17 @@ namespace getfem {
       return ret_type;
     }
 
-    interpolate_transformation_neighbour() { }
+    interpolate_transformation_neighbor() { }
 
   };
 
 
-  pinterpolate_transformation interpolate_transformation_neighbour_instance() {
-    return (std::make_shared<interpolate_transformation_neighbour>());
+  pinterpolate_transformation interpolate_transformation_neighbor_instance() {
+    return (std::make_shared<interpolate_transformation_neighbor>());
   }
 
   //=========================================================================
-  // Interpolate transformation on neighbour element (for extrapolation)
+  // Interpolate transformation on neighbor element (for extrapolation)
   //=========================================================================
 
   class interpolate_transformation_element_extrapolation

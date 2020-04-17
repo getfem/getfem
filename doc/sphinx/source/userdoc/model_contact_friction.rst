@@ -2,7 +2,7 @@
 
 .. include:: ../replaces.txt
 
-.. highlightlang:: c++
+.. highlight:: c++
 
 .. index:: models, model bricks
 
@@ -137,7 +137,7 @@ Note that without additional stabilization technique (see [HI-RE2010]_) an inf-s
 .. _weak_integral_contact_section:
 
 Weak integral contact condition
-+++++++++++++++++++++++++++++++++
++++++++++++++++++++++++++++++++
 
 The weak integral contact formulation allows not to explicitly describe the discrete set of admissible stress. See also :ref:`nitsche_contact_small_def_section`. The contact stress (including the friction one) is described on a finite element space :math:`W^h` on the contact boundary :math:`\Gamma_c`:
 
@@ -173,7 +173,7 @@ where :math:`B(\rho)` is the closed ball of center  :math:`0` and radius :math:`
 is chosen, then one has to take :math:`\alpha = 1/dt` and :math:`w^h_T = (u^h_T)^{n}`. Note that due to the symmetry of the ball, the parameter :math:`\alpha` do not play an important role in the formulation. It can simply be viewed as a scaling between the augmentation parameter for the contact condition and the one for the friction condition. Note also that contrarily to the previous formulations of contact, here there is not a strict independance of the conditions with respect to the augmentation parameter (the independance only occurs at the continuous level).
 
 
-GetFEM++ bricks implement four versions of the contact condition derived from the Alart-Curnier augmented Lagrangian formulation [AL-CU1991]_. The first one corresponds to the non-symmetric version. It consists in solving:
+GetFEM bricks implement four versions of the contact condition derived from the Alart-Curnier augmented Lagrangian formulation [AL-CU1991]_. The first one corresponds to the non-symmetric version. It consists in solving:
 
 .. math::
 
@@ -252,7 +252,7 @@ and the tangent system:
 
 
 Numerical continuation
-++++++++++++++++++++++++
+++++++++++++++++++++++
 
 In addition, |gf| develops a method of numerical continuation for finding numerical solutions of discretized evolutionary contact problems based on the weak integral contact condition (see :ref:`ud-model-continuation` for a general introduction). For this purpose, a parameter-dependent sliding velocity may be added to the friction condition so that it becomes:
 
@@ -271,7 +271,7 @@ then he recovers the standard friction condition at time :math:`t_{n}` and :math
 
 
 Friction law
-+++++++++++++++
+++++++++++++
 
 Apart from pure Coulomb friction :math:`\rho = {\mathscr F} \left| \sigma_n \right|`,
 the weak integral contact framework in |gf| also supports a more generic friction

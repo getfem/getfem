@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # Python GetFEM++ interface
 #
-# Copyright (C) 2004-2015 Yves Renard, Julien Pommier.
+# Copyright (C) 2004-2020 Yves Renard, Julien Pommier.
 #
 # This file is a part of GetFEM++
 #
@@ -28,9 +28,9 @@
   $Id: demo_plasticity.py 5189 2015-12-15 10:24:07Z renard $
 """
 
-import getfem as gf
 import numpy as np
 
+import getfem as gf
 
 with_graphics=True
 try:

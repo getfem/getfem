@@ -1,6 +1,6 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
- GetFEM++ Documentation contents
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ GetFEM Documentation contents
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 .. toctree::
    :maxdepth: 3

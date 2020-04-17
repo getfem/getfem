@@ -1,8 +1,8 @@
-#  Copyright (C) 1999-2019 Yves Renard
+#  Copyright (C) 1999-2020 Yves Renard
 #
-#  This file is a part of GetFEM++
+#  This file is a part of GetFEM
 #
-#  GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+#  GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
 #  under  the  terms  of the  GNU  Lesser General Public License as published
 #  by  the  Free Software Foundation;  either version 3 of the License,  or
 #  (at your option) any later version along with the GCC Runtime Library
@@ -73,6 +73,7 @@ TESTS = 						\
 	demo_laplacian.py				\
 	demo_laplacian_HHO.py				\
 	demo_elasticity_HHO.py                          \
+	demo_thermo_elasticity_electrical_coupling.py 	\
 	$(optpy)
 
 AM_TESTS_ENVIRONMENT = \

@@ -2,7 +2,7 @@
 
 .. include:: ../replaces.txt
 
-.. highlightlang:: none
+.. highlight:: none
 
 .. _ud-install-mac:
 
@@ -28,15 +28,10 @@ Then, if you download the current git version
    $ brew install libtool
 
 For the sequential mumps,
-   $ brew tap dpo/openblas
 
-   $ brew tap-pin dpo/openblas
+   $ brew tap brewsci/num
 
-   $ brew options ipopt
-
-   $ brew options mumps
-
-   $ brew install mumps --without-mpi
+   $ brew install brewsci-mumps --without-mpi
 
 For the parallel one, just forget --without-mpi and install also mpi and metis.
 
@@ -119,13 +114,7 @@ Configure Options
     $ ./configure ``--enable-matlab``
 
   depending on the interface you want to build. Note that the python interface
-  is build by default and for python 2 version. If you want to build the
-  python 3 interface use::
-
-    $ ./configure ``--enable-python3``
-
-  In that case, you have of course to install a python 3 version on your system
-  together with at least ``numpy`` and ``scipy`` packages.
+  is build by default and for python 3 version.
 
 * If you want to use a specific **BLAS** library, you may have to
   supply the necessary link flags and libs to the configure script
@@ -159,7 +148,7 @@ Then, you will probably have to run
 
     $ mex -setup
 
-To produce the correct ``mexopts.sh`` file in the ``.matlab/`` directory of your home directory. If it still does not work, then you can try to modify the ``.matlab/mexopts.sh`` or replace it. Some ``mexopts.sh`` specially adpated to macOS X/Xcode are available on the internet (See for instance here for `MATLAB_R2015 <https://gist.github.com/varunagrawal/811e05ee4ca0f6a9952d>`_).
+To produce the correct ``mexopts.sh`` file in the ``.matlab/`` directory of your home directory. If it still does not work, then you can try to modify the ``.matlab/mexopts.sh`` or replace it. Some ``mexopts.sh`` specially adapted to macOS X/Xcode are available on the internet (See for instance here for `MATLAB_R2015 <https://gist.github.com/varunagrawal/811e05ee4ca0f6a9952d>`_).
 
 
 
@@ -244,11 +233,11 @@ If you want to use a different compiler than the one chosen automatically by the
 
 Once getfem is compiled:
 
-  - Go to the scilab getfem++ interface install directory (interface/src/scilab if the installation is not done)
+  - Go to the Scilab GetFEM interface install directory (interface/src/scilab if the installation is not done)
 
-  - launch scilab
+  - launch Scilab
 
-  - load the getfem++ toolbox with:
+  - load the GetFEM toolbox with:
     ``exec loader.sce;``
 
   - You can try to launch a demo with:

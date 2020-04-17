@@ -1,4 +1,4 @@
-# Copyright (C) 1999-2017 Yves Renard
+# Copyright (C) 1999-2020 Yves Renard
 #
 # This file is a part of GetFEM++
 # 
@@ -677,7 +677,7 @@ For the recent Change log, please see use git log
 	    script.
 	  - Hierarchical and composte methods in 3D.
 	  - First support for Xfem methods
-	  - Preconditionners in Gmm++ and separated version of Gmm++.
+	  - Preconditioner in Gmm++ and separated version of Gmm++.
 	  - Support for Harwell-Boeing and Matrix-Market format in Gmm++.
 	  - New version of the Matlab interface : only one mex file.
 	  - Huge improvement of graphical possibilities with the Matlab 

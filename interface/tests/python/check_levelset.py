@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# Python GetFEM++ interface
+# Python GetFEM interface
 #
-# Copyright (C) 2009-2017 Yves Renard, Luis Saavedra.
+# Copyright (C) 2009-2020 Yves Renard, Luis Saavedra.
 #
-# This file is a part of GetFEM++
+# This file is a part of GetFEM
 #
-# GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+# GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
 # under  the  terms  of the  GNU  Lesser General Public License as published
 # by  the  Free Software Foundation;  either version 2.1 of the License,  or
 # (at your option) any later version.
@@ -26,9 +26,10 @@
 
   $Id$
 """
-import getfem as gf
 import numpy as np
 from scipy import rand
+
+import getfem as gf
 
 eps = 1.0/10
 

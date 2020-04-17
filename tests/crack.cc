@@ -1,10 +1,10 @@
 /*===========================================================================
 
- Copyright (C) 2002-2017 Yves Renard, Julien Pommier.
+ Copyright (C) 2002-2020 Yves Renard, Julien Pommier.
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -23,7 +23,7 @@
  * Linear Elastostatic problem with a crack.
  *
  * This program is used to check that getfem++ is working. This is also 
- * a good example of use of GetFEM++.
+ * a good example of use of GetFEM.
  */
 
 #include "getfem/getfem_assembling.h" /* import assembly methods (and norms comp.) */
@@ -45,7 +45,7 @@ using std::ends; using std::cin;
 template <typename T> std::ostream &operator <<
   (std::ostream &o, const std::vector<T>& m) { gmm::write(o,m); return o; }
 
-/* some GetFEM++ types that we will be using */
+/* some GetFEM types that we will be using */
 using bgeot::base_small_vector; /* special class for small (dim<16) vectors */
 using bgeot::base_node;  /* geometrical nodes(derived from base_small_vector)*/
 using bgeot::scalar_type; /* = double */

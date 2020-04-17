@@ -3,9 +3,9 @@
 
  Copyright (C) 2018 Andriy Andreykiv
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -173,10 +173,14 @@ namespace detail {
       }
     }
 
-    operator T&(){
+    T& get(){
       if (distributed.num_threads() == 1 ||
           distributed.this_thread() == 0) return original;
       else return distributed;
+    }
+
+    operator T&(){ // implicit conversion
+      return get();
     }
 
     T& operator = (const T &x){

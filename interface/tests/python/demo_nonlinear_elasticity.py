@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# Python GetFEM++ interface
+# Python GetFEM interface
 #
-# Copyright (C) 2012-2017 Yves Renard.
+# Copyright (C) 2012-2020 Yves Renard.
 #
-# This file is a part of GetFEM++
+# This file is a part of GetFEM
 #
-# GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+# GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
 # under  the  terms  of the  GNU  Lesser General Public License as published
 # by  the  Free Software Foundation;  either version 3 of the License,  or
 # (at your option) any later version along with the GCC Runtime Library
@@ -21,9 +21,10 @@
 #
 ############################################################################
 
-import getfem as gf
 import numpy as np
 from numpy import linalg as npla
+
+import getfem as gf
 
 gf.util_trace_level(1)
 
@@ -224,19 +225,3 @@ for step in range(1,nbstep+1):
 
 print('You can vizualize the loading steps by launching for instance')
 print('mayavi2 -d demo_nonlinear_elasticity_iter_1.vtk -f WarpVector -m Surface')
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -16,7 +16,7 @@
        conditions", "assembly of the Stokes Problem", "solve a
        linear system", etc.). These bricks are then connected to
        each other. Examples of use can be found in the "tests/"
-       directory of getfem++.
+       directory of GetFEM.
 
      * New models : Small strain plasticity, large strain
        elasticity, contact and friction conditions, linearized

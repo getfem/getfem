@@ -1,29 +1,32 @@
 {% extends "layout.html" %}
-{% set title = 'GetFEM++ Homepage' %}
+{% set title = 'GetFEM Homepage' %}
 {% set dlbase = 'dist' %}
 {% block body %}
 
 <META NAME="Keywords" CONTENT=" finite element library, finite element package, finite element software, finite elements">
 
-<div style="text-align:center;"><img src="{{ pathto('_static/logogetfem.png', 1) }}" alt="the GetFEM++ logo"><br/> An open-source finite element library </div>
+<div style="text-align:center;"><img src="{{ pathto('_static/logogetfem.png', 1) }}" alt="the GetFEM logo"><br/> An open-source finite element library </div>
 <br/><br/>
 
 <p><strong>NEW</strong> (June 2018): Version 5.3 has been released.<br/></p>
+
+<p>Thank you for citing <a class="biglink" href="https://hal.archives-ouvertes.fr/hal-02532422/document"> [GetFEM2020]</a> in scientific work using GetFEM.<br/></p>
+
 
   <p><strong>Parts of the documentation:</strong></p>
   <table class="contentstable" align="center"><tr>
     <td width="50%">
       <p class="biglink">
-         <a class="biglink" href="index.html#what-is-getfem">What is GetFEM++?</a><br/>
-         <span class="linkdescr">what is GetFEM++?</span></p>
+         <a class="biglink" href="index.html#what-is-getfem">What is GetFEM?</a><br/>
+         <span class="linkdescr">what is GetFEM?</span></p>
       <p class="biglink">
          <a class="biglink" href="{{ pathto("tutorial/index") }}">Tutorial</a><br/>
-         <span class="linkdescr">Begin with GetFEM++</span></p>
+         <span class="linkdescr">Begin with GetFEM</span></p>
       <p class="biglink">
          <a class="biglink" href="{{ pathto("screenshots/shots") }}">Screenshots</a><br/>
-         <span class="linkdescr">GetFEM++ in action</span></p>
+         <span class="linkdescr">GetFEM in action</span></p>
       <p class="biglink">
-         <a class="biglink" href="{{ pathto("whatsnew/" + version) }}">What's new in GetFEM++ {{ version }}?</a><br/>
+         <a class="biglink" href="{{ pathto("whatsnew/" + version) }}">What's new in GetFEM {{ version }}?</a><br/>
          <span class="linkdescr">or <a href="{{ pathto("whatsnew/index") }}">all "What's new" documents</a> since 1.0</span></span></p>
       <p class="biglink">
          <a class="biglink" href="{{ pathto("userdoc/index") }}">Using the Library</a><br/>
@@ -78,16 +81,16 @@
       <p class="biglink"><a class="biglink" href="{{ pathto("about") }}">About the documentation</a></p>
      <p class="biglink"><a class="biglink" href="{{ pathto("lists") }}">Mailing lists</a></p>
     </td><td width="50%">
-      <p class="biglink"><a class="biglink" href="{{ pathto("license") }}">History and License of GetFEM++</a></p>
+      <p class="biglink"><a class="biglink" href="{{ pathto("license") }}">History and License of GetFEM</a></p>
       <p class="biglink"><a class="biglink" href="{{ pathto("copyright") }}">Legal information</a></p>
     </td></tr>
   </table>
 
 <div class="section" id="what-is-getfem">
-<p><h1>What is GetFEM++<a class="headerlink" href="#what-is-getfem" title="Permalink to this headline">¶</a></h1></p>
+<p><h1>What is GetFEM<a class="headerlink" href="#what-is-getfem" title="Permalink to this headline">¶</a></h1></p>
 
     <p>
-    GetFEM++ is an open source library based on collaborative development. It aims to offer the most flexible framework for solving potentially coupled systems of linear and nonlinear partial differential equations with the finite element method. GetFEM++ is interfaced with some script languages (Python, Scilab and Matlab) so that almost all of the functionalities can be used just writing scripts. It works in arbitrary dimension and allow to couple 1D, 2D and 3D problems. The strong points of GetFEM++ can be summarized as follows:
+    GetFEM is an open source library based on collaborative development. It aims to offer the most flexible framework for solving potentially coupled systems of linear and nonlinear partial differential equations with the finite element method (see the basic principle in <a class="biglink" href="https://hal.archives-ouvertes.fr/hal-02532422/document"> [GetFEM2020]</a>). GetFEM is interfaced with some script languages (Python, Scilab and Matlab) so that almost all of the functionalities can be used just writing scripts. It works in arbitrary dimension and allow to couple 1D, 2D and 3D problems. The strong points of GetFEM can be summarized as follows:
     </p>
 
     <ul>
@@ -103,7 +106,7 @@
     </ul>
 
     <p>  
-    GetFEM++ can be used to construct very generic finite element codes,
+    GetFEM can be used to construct very generic finite element codes,
     where finite element methods, integration methods and the dimension
     of the problem are the parameters that can be 
     changed very easily. This allows a wide range of experiments.
@@ -111,7 +114,7 @@
     </p>
     
     <p>
-    GetFEM++ has only an experimental meshing procedure (and produces regular meshes). It is therefore often necessary to import meshes. The formats 
+    GetFEM has only an experimental meshing procedure (and produces regular meshes). It is therefore often necessary to import meshes. The formats 
     currently supported are GID, GMSH, EMC2 and ANSYS.
     </p>
 </div>
@@ -119,7 +122,7 @@
 <div class="section" id="gmm">
 <p><h1>Gmm++<a class="headerlink" href="#gmm" title="Permalink to this headline">¶</a></h1></p>
     <p>
-      GetFEM++ includes a <a href="gmm/index.html" title="Generic Matrix Methods">generic matrix template</a> library inspired by <a
+      GetFEM includes a <a href="gmm/index.html" title="Generic Matrix Methods">generic matrix template</a> library inspired by <a
       href="http://www.osl.iu.edu/research/mtl/" title="Matrix Template Library">MTL</a> and <a
       href="http://www.osl.iu.edu/research/itl/" title="Iterative Template Library">ITL</a>.  
     </p>
@@ -128,7 +131,7 @@
 <div class="section" id="awards">
 <p><h1>Awards<a class="headerlink" href="#awards" title="Permalink to this headline">¶</a></h1></p>
     <p>
-      GetFEM++ has been awarded by the second price at the
+      GetFEM has been awarded by the second price at the
       <a href="http://fr.wikipedia.org/wiki/Les_Troph%C3%A9es_du_libre"> "Trophees du Libre 2007"</a> in the category of scientific softwares.
     </p>
 </div>

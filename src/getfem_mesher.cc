@@ -1,10 +1,10 @@
 /*===========================================================================
 
- Copyright (C) 2004-2017 Julien Pommier, Yves Renard
+ Copyright (C) 2004-2020 Julien Pommier, Yves Renard
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -513,7 +513,7 @@ namespace getfem {
         size_type ic, ipt;        
         for (ic << ii; ic != size_type(-1); ic << ii) {
           for (short_type f = 0; f <= N; ++f) {
-            if (!m.is_convex_having_neighbour(ic,f)) {
+            if (!m.is_convex_having_neighbor(ic,f)) {
               for (unsigned i = 0; i < N; ++i) {
                 ipt = m.ind_points_of_face_of_convex(ic, f)[i];
                 if (pts_attr[ipt]->constraints.card() == 0)
@@ -549,7 +549,7 @@ namespace getfem {
           scalar_type max_flatness = -2.0;
           normals.resize(0);
           for (short_type f = 0; f <= N; ++f) {
-            if (!m.is_convex_having_neighbour(ic,f)) {
+            if (!m.is_convex_having_neighbor(ic,f)) {
               if (quality_of_element(ic) < 1E-8) max_flatness = 1E-8;
               else {
                 base_small_vector n = m.normal_of_face_of_convex(ic, f);
@@ -893,7 +893,7 @@ namespace getfem {
    
       std::sort(idx.begin(), idx.end(), cleanup_points_compare(pts,pts_attr));
       bgeot::kdtree tree;
-      bgeot::kdtree_tab_type neighbours;
+      bgeot::kdtree_tab_type neighbors;
       dal::bit_vector keep_pts; keep_pts.add(0,idx.size());
       for (size_type i=0, i0=0; i < idx.size(); ++i) {
         const base_node &P = pts[idx[i]];
@@ -906,14 +906,14 @@ namespace getfem {
             for (size_type k = 0; k < N; ++k)
               { bmin[k] -= h/20.; bmax[k] += h/20.; }
             
-            tree.points_in_box(neighbours, bmin, bmax);
-            for (size_type k=0; k < neighbours.size(); ++k) {
-              if (neighbours[k].i != i && keep_pts.is_in(neighbours[k].i)
+            tree.points_in_box(neighbors, bmin, bmax);
+            for (size_type k=0; k < neighbors.size(); ++k) {
+              if (neighbors[k].i != i && keep_pts.is_in(neighbors[k].i)
                   && keep_pts.is_in(i)) {
                 if (noisy > 0)
                   cout << "point #" << i << " " << P
-                       << " is too near from point #"  << neighbours[k].i
-                       << pts[idx[neighbours[k].i]] << " : will be removed\n";
+                       << " is too near from point #"  << neighbors[k].i
+                       << pts[idx[neighbors[k].i]] << " : will be removed\n";
                 keep_pts.sup(i);
               }
             }
@@ -1079,9 +1079,9 @@ namespace getfem {
     void special_constraints_management(void) {
 
       bgeot::kdtree tree;
-      bgeot::kdtree_tab_type neighbours;
+      bgeot::kdtree_tab_type neighbors;
       bool tree_empty = true;
-      mesh::ind_set iAneighbours, iBneighbours, common_pts;
+      mesh::ind_set iAneighbors, iBneighbors, common_pts;
           
       attractor_points.resize(0); attracted_points.resize(0);
       
@@ -1101,13 +1101,13 @@ namespace getfem {
         bv2.setminus(pts_attr[iA]->constraints);
         if (bv1.card() && bv2.card()) {
           bv1 |= bv2;
-          edges_mesh.ind_points_to_point(iA, iAneighbours);
-          edges_mesh.ind_points_to_point(iB, iBneighbours);
+          edges_mesh.ind_points_to_point(iA, iAneighbors);
+          edges_mesh.ind_points_to_point(iB, iBneighbors);
           common_pts.resize(0);
-          for (size_type i = 0; i < iAneighbours.size(); ++i)
-            if (std::find(iBneighbours.begin(), iBneighbours.end(),
-                          iAneighbours[i]) != iBneighbours.end())
-              common_pts.push_back(iAneighbours[i]);
+          for (size_type i = 0; i < iAneighbors.size(); ++i)
+            if (std::find(iBneighbors.begin(), iBneighbors.end(),
+                          iAneighbors[i]) != iBneighbors.end())
+              common_pts.push_back(iAneighbors[i]);
           bool do_projection = true;
           if ((*dist)(.5*(pts[iA]+pts[iB])) < 0) {
             for (mesh::ind_set::iterator it = common_pts.begin();
@@ -1149,9 +1149,9 @@ namespace getfem {
               base_node bmin = PA, bmax = PA;
               for (size_type k = 0; k < N; ++k)
                 { bmin[k] -= h0/1.8; bmax[k] += h0/1.8; }
-              tree.points_in_box(neighbours, bmin, bmax);
-              for (size_type k=0; k < neighbours.size(); ++k) {
-                if (neighbours[k].i != iA && neighbours[k].i != iB)
+              tree.points_in_box(neighbors, bmin, bmax);
+              for (size_type k=0; k < neighbors.size(); ++k) {
+                if (neighbors[k].i != iA && neighbors[k].i != iB)
                   do_projection = false;
               }
               

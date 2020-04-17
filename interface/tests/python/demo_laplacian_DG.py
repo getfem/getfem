@@ -1,11 +1,11 @@
 #!/usr/bin/env python
-# Python GetFEM++ interface
+# Python GetFEM interface
 #
-# Copyright (C) 2015-2017 Yves Renard
+# Copyright (C) 2015-2020 Yves Renard
 #
-# This file is a part of GetFEM++
+# This file is a part of GetFEM
 #
-# GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+# GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
 # under  the  terms  of the  GNU  Lesser General Public License as published
 # by  the  Free Software Foundation;  either version 2.1 of the License,  or
 # (at your option) any later version.
@@ -21,7 +21,7 @@
 """  2D Poisson problem test.
 
   This program is used to check that python-getfem is working. This is
-  also a good example of use of GetFEM++.
+  also a good example of use of GetFEM.
 
   Poisson problem solved with a Discontinuous Galerkin method (or
   interior penalty method). See for instance
@@ -31,9 +31,10 @@
 
   $Id: demo_laplacian_DG.py 4429 2013-10-01 13:15:15Z renard $
 """
+import numpy as np
+
 # Import basic modules
 import getfem as gf
-import numpy as np
 
 ## Parameters
 NX = 20                            # Mesh parameter.
@@ -41,7 +42,7 @@ Dirichlet_with_multipliers = True  # Dirichlet condition with multipliers
                                    # or penalization
 dirichlet_coefficient = 1e10       # Penalization coefficient
 interior_penalty_factor = 1e2*NX   # Parameter of the interior penalty term
-verify_neighbour_computation = True;
+verify_neighbor_computation = True;
 
 
 # Create a simple cartesian mesh
@@ -64,7 +65,7 @@ tleft = abs(fnor[1,:]+1) < 1e-14
 ttop  = abs(fnor[0,:]-1) < 1e-14
 fleft = np.compress(tleft, flst, axis=1)
 ftop  = np.compress(ttop, flst, axis=1)
-fneum = np.compress(True - ttop - tleft, flst, axis=1)
+fneum = np.compress(np.logical_not(ttop + tleft), flst, axis=1)
 
 # Mark it as boundary
 DIRICHLET_BOUNDARY_NUM1 = 1
@@ -79,7 +80,7 @@ in_faces = m.inner_faces()
 INNER_FACES=4
 m.set_region(INNER_FACES, in_faces)
 
-if (verify_neighbour_computation):
+if (verify_neighbor_computation):
   TEST_FACES=5
   adjf = m.adjacent_face(42, 0);
   if (len(adjf) != 2):
@@ -139,10 +140,10 @@ else:
 
 # Interior penalty terms
 md.add_initialized_data('alpha', [interior_penalty_factor])
-jump = "((u-Interpolate(u,neighbour_elt))*Normal)"
-test_jump = "((Test_u-Interpolate(Test_u,neighbour_elt))*Normal)"
-grad_mean = "((Grad_u+Interpolate(Grad_u,neighbour_elt))*0.5)"
-grad_test_mean = "((Grad_Test_u+Interpolate(Grad_Test_u,neighbour_elt))*0.5)"
+jump = "((u-Interpolate(u,neighbor_element))*Normal)"
+test_jump = "((Test_u-Interpolate(Test_u,neighbor_element))*Normal)"
+grad_mean = "((Grad_u+Interpolate(Grad_u,neighbor_element))*0.5)"
+grad_test_mean = "((Grad_Test_u+Interpolate(Grad_Test_u,neighbor_element))*0.5)"
 md.add_linear_term(mim, "-(({F}).({G}))-(({H}).({I}))+alpha*(({J}).({K}))".format(F=grad_mean, G=test_jump, H=jump, I=grad_test_mean, J=jump, K=test_jump), INNER_FACES);
 
 gf.memstats()
@@ -165,18 +166,17 @@ mfu.export_to_pos('laplacian.pos', Ue,'Exact solution',
 print('You can view the solution with (for example):')
 print('gmsh laplacian.pos')
 
-if (verify_neighbour_computation):
+if (verify_neighbor_computation):
   A=gf.asm('generic', mim, 1, 'u*Test_u*(Normal.Normal)', TEST_FACES, md)
-  B=gf.asm('generic', mim, 1, '-Interpolate(u,neighbour_elt)*Interpolate(Test_u,neighbour_elt)*(Interpolate(Normal,neighbour_elt).Normal)', TEST_FACES, md)
+  B=gf.asm('generic', mim, 1, '-Interpolate(u,neighbor_element)*Interpolate(Test_u,neighbor_element)*(Interpolate(Normal,neighbor_element).Normal)', TEST_FACES, md)
   err_v = np.linalg.norm(A-B)
   A=gf.asm('generic', mim, 1, '(Grad_u.Normal)*(Grad_Test_u.Normal)', TEST_FACES, md)
-  B=gf.asm('generic', mim, 1, '(Interpolate(Grad_u,neighbour_elt).Normal)*(Interpolate(Grad_Test_u,neighbour_elt).Normal)', TEST_FACES, md)
+  B=gf.asm('generic', mim, 1, '(Interpolate(Grad_u,neighbor_element).Normal)*(Interpolate(Grad_Test_u,neighbor_element).Normal)', TEST_FACES, md)
   err_v = err_v + np.linalg.norm(A-B)
   if (err_v > 1E-13):
-    print('Test on neighbour element computation: error to big: ', err_v)
+    print('Test on neighbor element computation: error to big: ', err_v)
     exit(1)
   
 if (H1error > 1e-3):
     print('Error too large !')
     exit(1)
-

@@ -318,6 +318,7 @@ interface/tests/python/results1/
 /tests/test_range_basis.mesh
 /tests/test_rtree
 /tests/test_slice
+/tests/test_condensation
 /tests/test_slice.sl
 /tests/test_slice2.sl
 /tests/test_small_vector

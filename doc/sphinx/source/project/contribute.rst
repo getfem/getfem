@@ -2,7 +2,7 @@
 
 .. include:: ../replaces.txt
 
-.. highlightlang:: none
+.. highlight:: none
 
 .. _dp-contribute:
 
@@ -28,10 +28,13 @@ How to contribute / Git repository on Savannah
 .. _tfwebteam: https://www.transifex.com/getfem-doc
 
 .. |cfvlang| replace:: Currently supported languages by Sphinx are
-.. _cfvlang: http://www.sphinx-doc.org/en/stable/usage/configuration.html#confval-language
+.. _cfvlang: https://www.sphinx-doc.org/en/latest/usage/configuration.html#confval-language
 
 .. |sphintl| replace:: Sphinx Internationalization
 .. _sphintl: http://www.sphinx-doc.org/en/stable/intl.html
+
+.. |readthedocs| replace:: Read the Docs
+.. _readthedocs: https://getfem.readthedocs.io
 
 |gf| is an  open source finite element library based on a collaborative development. If you intend to make some contributions, you can ask for membership of the project there. Contributions of all kinds are welcome: documentation, bug reports, constructive comments, changes suggestions, bug fix, new models, etc ...
 
@@ -159,3 +162,5 @@ If you want to make pdf file in your language, you can run a ::
   make all-pdf-<lang>
 
 See details in |sphintl|_ .
+
+You can see translated document at |readthedocs|_ by switch language.

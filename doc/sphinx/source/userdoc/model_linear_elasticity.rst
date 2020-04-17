@@ -2,7 +2,7 @@
 
 .. include:: ../replaces.txt
 
-.. highlightlang:: c++
+.. highlight:: c++
 
 .. index:: models, model bricks
 
@@ -36,13 +36,13 @@ Let us recall that the relation between the |Lame| coefficients an Young modulus
 
 .. math::
 
-   \lambda = \Frac{E\nu}{(1+\nu)(1-2\nu)}, ~~~ \mu = \Frac{E}{2(1+\nu)},
+   \lambda = \dfrac{E\nu}{(1+\nu)(1-2\nu)}, ~~~ \mu = \dfrac{E}{2(1+\nu)},
 
 except for the plane stress approximation (2D model) where
 
 .. math::
 
-   \lambda^* = \Frac{E\nu}{(1-\nu^2)}, ~~~ \mu = \Frac{E}{2(1+\nu)},
+   \lambda^* = \dfrac{E\nu}{(1-\nu^2)}, ~~~ \mu = \dfrac{E}{2(1+\nu)},
 
 
 The function which adds this brick to a model and parametrized with the |Lame| coefficients is::

@@ -113,7 +113,7 @@
     <listitem>
     <para><literal>PC = gf_precond('spmat', spmat m)</literal></para>
 
-    <para>         Preconditionner given explicitely by a sparse matrix.
+    <para>         Preconditioner given explicitely by a sparse matrix.
     </para>
     </listitem>
 

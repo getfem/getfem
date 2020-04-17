@@ -1,8 +1,8 @@
-% Copyright (C) 2015-2017 Yves Renard.
+% Copyright (C) 2015-2020 Yves Renard.
 %
-% This file is a part of GetFEM++
+% This file is a part of GetFEM
 %
-% GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+% GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
 % under  the  terms  of the  GNU  Lesser General Public License as published
 % by  the  Free Software Foundation;  either version 3 of the License,  or
 % (at your option) any later version along with the GCC Runtime Library
@@ -129,7 +129,7 @@ mft = gf_mesh_fem(mesh, 1); % Finite element for the temperature and the electri
 gf_mesh_fem_set(mft, 'classical fem', elements_degree);
 mfvm = gf_mesh_fem(mesh, 1); % Finite element for Von Mises stress interpolation
 gf_mesh_fem_set(mfvm, 'classical discontinuous fem', elements_degree-1);
-mim = gf_mesh_im(mesh, elements_degree^2);   % Integration method
+mim = gf_mesh_im(mesh, elements_degree*2);   % Integration method
 
 
 %

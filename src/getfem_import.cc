@@ -1,10 +1,10 @@
 /*===========================================================================
 
- Copyright (C) 2000-2017 Julien Pommier
+ Copyright (C) 2000-2020 Julien Pommier
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -246,7 +246,7 @@ namespace getfem {
     }
 
     /* read the version */
-    int version;
+    double version;
     std::string header;
     f >> header;
     if (bgeot::casecmp(header,"$MeshFormat")==0)
@@ -258,59 +258,80 @@ namespace getfem {
 
     /* read the region names */
     if (region_map != NULL) {
-      if (version >= 2) {
+      if (version >= 2.) {
         *region_map = read_region_names_from_gmsh_mesh_file(f);
       }
     }
     /* read the node list */
-    if (version >= 2)
+    if (version >= 2.)
       bgeot::read_until(f, "$Nodes"); /* Format versions 2 and 4 */
 
     size_type nb_block, nb_node, dummy;
-    if (version >= 4)
+    std::string dummy2;
+    // cout << "version = " << version << endl;
+    if (version >= 4.05) {
+      f >> nb_block >> nb_node; bgeot::read_until(f, "\n");
+    } else if (version >= 4.) {
       f >> nb_block >> nb_node;
-    else {
+    } else {
       nb_block = 1;
       f >> nb_node;
     }
 
-    //cerr << "reading nodes..[nb=" << nb_node << "]\n";
+    // cerr << "reading nodes..[nb=" << nb_node << "]\n";
     std::map<size_type, size_type> msh_node_2_getfem_node;
+     std::vector<size_type> inds(nb_node);
     for (size_type block=0; block < nb_block; ++block) {
-      if (version >= 4)
+      if (version >= 4.)
         f >> dummy >> dummy >> dummy >> nb_node;
+      // cout << "nb_nodes = " << nb_node << endl;
+
+      inds.resize(nb_node);
+      if (version >= 4.05) {
+	for (size_type node_cnt=0; node_cnt < nb_node; ++node_cnt)
+	  f >> inds[node_cnt];
+      }
+      
       for (size_type node_cnt=0; node_cnt < nb_node; ++node_cnt) {
         size_type node_id;
         base_node n{0,0,0};
-        f >> node_id >> n[0] >> n[1] >> n[2];
+	if (version < 4.05) f >> node_id; else node_id = inds[node_cnt];
+
+	f >> n[0] >> n[1] >> n[2];
         msh_node_2_getfem_node[node_id]
           = m.add_point(n, remove_duplicated_nodes ? 0. : -1.);
       }
     }
 
-    if (version >= 2)
+    if (version >= 2.)
       bgeot::read_until(f, "$Endnodes"); /* Format versions 2 and 4 */
     else
       bgeot::read_until(f, "$ENDNOD");
 
-    /* read the convexes */
-    if (version >= 2)
+    /* read the elements */
+    if (version >= 2.)
       bgeot::read_until(f, "$Elements"); /* Format versions 2 and 4 */
     else
       bgeot::read_until(f, "$ELM");
 
     size_type nb_cv;
-    if (version >= 4) /* Format version 4 */
+    if (version >= 4.05) {
+      f >> nb_block >> nb_cv; bgeot::read_until(f, "\n");
+    } else if (version >= 4.) { /* Format version 4 */
       f >> nb_block >> nb_cv;
-    else {
+    } else {
       nb_block = 1;
       f >> nb_cv;
     }
+    // cout << "nb_bloc = " << nb_block << " nb_cv = " << nb_cv << endl;
+     
     std::vector<gmsh_cv_info> cvlst; cvlst.reserve(nb_cv);
     for (size_type block=0; block < nb_block; ++block) {
       unsigned type, region;
-      if (version >= 4) /* Format version 4 */
+      if (version >= 4.) /* Format version 4 */
         f >> region >> dummy >> type >> nb_cv;
+
+      
 
       for (size_type cv=0; cv < nb_cv; ++cv) {
 
@@ -320,8 +341,8 @@ namespace getfem {
         ci.id--; /* gmsh numbering starts at 1 */
 
         unsigned cv_nb_nodes;
-        if (version >= 2) { /* For versions 2 and 4 */
-          if (version == 2) { /* Format version 2 */
+        if (version >= 2.) { /* For versions 2 and 4 */
+          if (int(version) == 2) { /* Format version 2 */
             unsigned nbtags;
             f >> type >> nbtags;
             GMM_ASSERT1(nbtags > 0 && nbtags <= 3,
@@ -333,7 +354,7 @@ namespace getfem {
           ci.type = type;
           ci.set_nb_nodes();
           cv_nb_nodes = unsigned(ci.nodes.size());
-        } else if (version == 1) {
+        } else if (int(version) == 1) {
           f >> type >> region >> dummy >> cv_nb_nodes;
           ci.type = type;
           ci.nodes.resize(cv_nb_nodes);

@@ -1,10 +1,10 @@
 /*===========================================================================
 
- Copyright (C) 2007-2017 Julien Pommier.
+ Copyright (C) 2007-2020 Julien Pommier.
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -42,9 +42,7 @@ namespace getfemint {
     f.compile();
     pls->values(idx).resize(mf.nb_dof());
     
-    bool is_set = 0;
     for (unsigned i=0; i < mf.nb_dof(); ++i) {
-      is_set = 0;
       gmm::copy(mf.point_of_basic_dof(i), pt);
       const bgeot::base_tensor &t = f.eval();
       GMM_ASSERT1(t.size() == 1, "Wrong size of expression result " << s);

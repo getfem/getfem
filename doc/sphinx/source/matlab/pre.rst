@@ -2,7 +2,7 @@
 
 .. include:: ../replaces.txt
 
-.. highlightlang:: matlab
+.. highlight:: matlab
 
 .. _mlab-pre:
 
@@ -67,8 +67,8 @@ numerical integrations on these fields. Most of the finite elements implemented 
 |gf| are scalar (however, :math:`TR_0` and edges elements are also available). Of
 course, these scalar FEMs can be used to approximate each component of a vector
 field. This is done by setting the :math:`Qdim` of the |mf| to the dimension of
-the vector field (i.e. :math:`Qdim=1` :math:`\Rightarrow` scalar field,
-:math:`Qdim=2` :math:`\Rightarrow` 2D vector field etc.).
+the vector field (i.e. :math:`Qdim=1` :math:`\rm I\hspace{-0.15em}Rightarrow` scalar field,
+:math:`Qdim=2` :math:`\rm I\hspace{-0.15em}Rightarrow` 2D vector field etc.).
 
 When solving a PDE, one often has to use more than one FEM. The most important one
 will be of course the one on which is defined the solution of the PDE. But most
@@ -78,7 +78,7 @@ PDEs involve various coefficients, for example:
 
    \nabla\cdot(\lambda(x)\nabla u) = f(x).
 
-Hence one has to define a FEM for the main unknown :math:`u`, but also for the
+Hence one has to define an FEM for the main unknown :math:`u`, but also for the
 data :math:`\lambda(x)` and :math:`f(x)` if they are not constant. In order to
 interpolate easily these coefficients in their finite element space, one often
 choose a Lagrangian FEM.

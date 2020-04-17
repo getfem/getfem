@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# Python GetFEM++ interface
+# Python GetFEM interface
 #
-# Copyright (C)  2015-2017 Yves Renard.
+# Copyright (C)  2015-2020 Yves Renard.
 #
-# This file is a part of GetFEM++
+# This file is a part of GetFEM
 #
-# GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+# GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
 # under  the  terms  of the  GNU  Lesser General Public License as published
 # by  the  Free Software Foundation;  either version 3 of the License,  or
 # (at your option) any later version along with the GCC Runtime Library
@@ -21,8 +21,9 @@
 #
 ############################################################################
 
-import getfem as gf
 import numpy as np
+
+import getfem as gf
 
 # Deformation of a plate under the coupling of thermal, elasticity, and
 # electric effects.
@@ -78,10 +79,11 @@ alpha = 0.0039     # Second resistance temperature coefficient.
 #
 # Numerical parameters
 #
-h = 2.                     # Approximate mesh size
-elements_degree = 2        # Degree of the finite element methods
-export_mesh = True         # Draw the mesh after mesh generation or not
-solve_in_two_steps = True  # Solve the elasticity problem separately or not
+h = 2.                    # Approximate mesh size
+elements_degree = 2       # Degree of the finite element methods
+export_mesh = True        # Draw the mesh after mesh generation or not
+solve_in_two_steps = 2    # Solve the elasticity problem separately (1)
+                          # or in a coupled way (0) or both and compare (2)
 
 #
 # Mesh generation. Meshes can also been imported from several formats.
@@ -105,18 +107,30 @@ fb2 = mesh.outer_faces_with_direction([ 1., 0.], 0.01) # Right boundary
 fb3 = mesh.outer_faces_with_direction([-1., 0.], 0.01) # Left boundary
 fb4 = mesh.outer_faces_with_direction([0.,  1.], 0.01) # Top boundary
 fb5 = mesh.outer_faces_with_direction([0., -1.], 0.01) # Bottom boundary
+fb6 = mesh.outer_faces_in_ball([25., 12.5], 8.+0.01*h) # Left hole boundary
+fb7 = mesh.outer_faces_in_ball([50., 12.5], 8.+0.01*h) # Center hole boundary
+fb8 = mesh.outer_faces_in_ball([75., 12.5], 8.+0.01*h) # Right hole boundary
 
 RIGHT_BOUND=1; LEFT_BOUND=2; TOP_BOUND=3; BOTTOM_BOUND=4; HOLE_BOUND=5;
+HOLE1_BOUND = 6; HOLE2_BOUND = 7; HOLE3_BOUND = 8;
 
 mesh.set_region( RIGHT_BOUND, fb2)
 mesh.set_region(  LEFT_BOUND, fb3)
 mesh.set_region(   TOP_BOUND, fb4)
 mesh.set_region(BOTTOM_BOUND, fb5)
 mesh.set_region(  HOLE_BOUND, fb1)
+mesh.set_region( HOLE1_BOUND, fb6)
+mesh.set_region( HOLE2_BOUND, fb7)
+mesh.set_region( HOLE3_BOUND, fb8)
 mesh.region_subtract( RIGHT_BOUND, HOLE_BOUND)
 mesh.region_subtract(  LEFT_BOUND, HOLE_BOUND)
 mesh.region_subtract(   TOP_BOUND, HOLE_BOUND)
 mesh.region_subtract(BOTTOM_BOUND, HOLE_BOUND)
+
+mesh.region_merge(HOLE1_BOUND, HOLE2_BOUND)
+mesh.region_merge(HOLE1_BOUND, HOLE3_BOUND)
+
+np.testing.assert_array_equal(mesh.region(HOLE_BOUND), mesh.region(HOLE1_BOUND))
 
 if (export_mesh):
     mesh.export_to_vtk('mesh.vtk');
@@ -133,7 +147,7 @@ mft = gf.MeshFem(mesh, 1)  # Finite element for temperature and electrical field
 mft.set_classical_fem(elements_degree)
 mfvm = gf.MeshFem(mesh, 1) # Finite element for Von Mises stress interpolation
 mfvm.set_classical_discontinuous_fem(elements_degree)
-mim = gf.MeshIm(mesh, pow(elements_degree,2))   # Integration method
+mim = gf.MeshIm(mesh, elements_degree*2)   # Integration method
 
 
 #
@@ -190,7 +204,8 @@ md.add_linear_term(mim, 'beta*(T0-theta)*Trace(Grad_Test_u)')
 #
 # Model solve
 #
-if (solve_in_two_steps):
+
+if (solve_in_two_steps >= 1):
   md.disable_variable('u')
   print('First problem with', md.nbdof(), ' dofs')
   md.solve('max_res', 1E-9, 'max_iter', 100, 'noisy')
@@ -199,10 +214,22 @@ if (solve_in_two_steps):
   md.disable_variable('V')
   print('Second problem with ', md.nbdof(), ' dofs')
   md.solve('max_res', 1E-9, 'max_iter', 100, 'noisy')
-else:
+  md.enable_variable('theta')
+  md.enable_variable('V')
+  U1 = md.variable('u')
+  
+if (solve_in_two_steps == 0):
   print('Global problem with ', md.nbdof(), ' dofs')
   md.solve('max_res', 1E-9, 'max_iter', 100, 'noisy')
 
+if (solve_in_two_steps == 2):
+  print('Global problem with ', md.nbdof(), ' dofs')
+  md.set_variable('u', md.variable('u')*0.);
+  md.solve('max_res', 1E-9, 'max_iter', 100, 'noisy')
+  U2 = md.variable('u')
+  print (np.linalg.norm(U2-U1));
+  if (np.linalg.norm(U2-U1) > 1E-10):
+      print("Too big difference between solve in one and two steps"); exit(1)
 
 #
 # Solution export
@@ -219,13 +246,3 @@ mft.export_to_vtk('temperature.vtk', mft, THETA, 'Temperature')
 print('mayavi2 -d temperature.vtk -f WarpScalar -m Surface')
 mft.export_to_vtk('electric_potential.vtk', mft, V, 'Electric potential')
 print('mayavi2 -d electric_potential.vtk -f WarpScalar -m Surface')
-
-
-
-
-
-
-
-
-
-

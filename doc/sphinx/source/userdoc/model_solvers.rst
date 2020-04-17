@@ -2,7 +2,7 @@
 
 .. include:: ../replaces.txt
 
-.. highlightlang:: c++
+.. highlight:: c++
 
 .. index:: models, model bricks
 
@@ -39,7 +39,7 @@ where ``1E-7`` is the relative tolerance for the stopping criterion, `1` is the 
 
   \min\left( \|F(u)\|_1 / \max(L, 10^{-25}) ~, ~~ \|h\|_1 / \max(\|u\|_1, 10^{-25})\right) < \varepsilon
 
-where :math:`F(u)` is the residual vector, :math:`\|\cdot\|_1` is the classical 1-norm in :math:`\R^n`, :math:`h` is the search direction given by Newton's algorithm, :math:`L` is the norm of an estimated external loads (coming from source term and Dirichlet bricks) and :math:`u` is the current state of the searched variable. The maximum taken with :math:`10^{-25}` is to avoid pathological cases when :math:`L` and/or :math:`u` are vanishing.
+where :math:`F(u)` is the residual vector, :math:`\|\cdot\|_1` is the classical 1-norm in :math:`\rm I\hspace{-0.15em}R^n`, :math:`h` is the search direction given by Newton's algorithm, :math:`L` is the norm of an estimated external loads (coming from source term and Dirichlet bricks) and :math:`u` is the current state of the searched variable. The maximum taken with :math:`10^{-25}` is to avoid pathological cases when :math:`L` and/or :math:`u` are vanishing.
 
 
 

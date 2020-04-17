@@ -1,11 +1,11 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
 
- Copyright (C) 2009-2017 Yves Renard
+ Copyright (C) 2009-2020 Yves Renard
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -121,9 +121,14 @@ namespace getfem {
     bool is_linear_;
     bool is_symmetric_;
     bool is_coercive_;
-    mutable model_real_sparse_matrix rTM;    // tangent matrix, real version
+    mutable model_real_sparse_matrix
+      rTM,          // tangent matrix (only primary variables), real version
+      internal_rTM; // coupling matrix between internal and primary vars (no empty rows)
     mutable model_complex_sparse_matrix cTM; // tangent matrix, complex version
-    mutable model_real_plain_vector rrhs;
+    mutable model_real_plain_vector
+      rrhs,         // residual vector of primary variables (after condensation)
+      full_rrhs,    // residual vector of primary and internal variables (pre-condensation)
+      internal_sol; // partial solution for internal variables (after condensation)
     mutable model_complex_plain_vector crhs;
     mutable bool act_size_to_be_done;
     dim_type leading_dim;
@@ -151,6 +156,8 @@ namespace getfem {
       bool is_complex;          // The variable is complex numbers
       bool is_affine_dependent; // The variable depends in an affine way
                                 // to another variable.
+      bool is_internal;         // An internal variable defined on integration
+                                // points, condensed out of the global system.
       bool is_fem_dofs;         // The variable is the dofs of a fem
       size_type n_iter;         // Number of versions of the variable stored.
       size_type n_temp_iter;    // Number of additional temporary versions
@@ -198,7 +205,7 @@ namespace getfem {
                       const std::string &filter_var_ = std::string(""),
                       mesh_im const *filter_mim_ = 0)
         : is_variable(is_var), is_disabled(false), is_complex(is_compl),
-          is_affine_dependent(false),
+          is_affine_dependent(false), is_internal(false),
           is_fem_dofs(mf_ != 0),
           n_iter(std::max(size_type(1), n_it)), n_temp_iter(0),
           default_iter(0), ptsc(0),
@@ -269,12 +276,18 @@ namespace getfem {
 
     typedef std::vector<term_description> termlist;
 
-    enum build_version { BUILD_RHS = 1,
-                         BUILD_MATRIX = 2,
-                         BUILD_ALL = 3,
-                         BUILD_ON_DATA_CHANGE = 4,
-                         BUILD_WITH_COMPLETE_RHS = 8,
-                         BUILD_COMPLETE_RHS = 9, };
+    enum build_version {
+      BUILD_RHS = 1,
+      BUILD_MATRIX = 2,
+      BUILD_ALL = 3,
+      BUILD_ON_DATA_CHANGE = 4,
+      BUILD_WITH_LIN = 8,           // forced calculation of linear terms
+      BUILD_RHS_WITH_LIN = 9,       // = BUILD_RHS | BUILD_WITH_LIN_RHS
+      BUILD_WITH_INTERNAL = 16,
+      BUILD_RHS_WITH_INTERNAL = 17, // = BUILD_RHS | BUILD_WITH_INTERNAL
+      BUILD_MATRIX_CONDENSED = 18,  // = BUILD_MATRIX | BUILD_WITH_INTERNAL
+      BUILD_ALL_CONDENSED = 19,     // = BUILD_ALL | BUILD_WITH_INTERNAL
+    };
 
   protected:
 
@@ -354,7 +367,7 @@ namespace getfem {
       std::string secondary_domain;
       gen_expr(const std::string &expr_, const mesh_im &mim_,
                size_type region_, const std::string &secdom)
-	: expr(expr_), mim(mim_), region(region_), secondary_domain(secdom)  {}
+        : expr(expr_), mim(mim_), region(region_), secondary_domain(secdom) {}
     };
 
     // Structure for assignment in assembly
@@ -525,6 +538,9 @@ namespace getfem {
     /** States if a name corresponds to a declared data. */
     bool is_true_data(const std::string &name) const;
 
+    /** States if a variable is condensed out of the global system. */
+    bool is_internal_variable(const std::string &name) const;
+
     bool is_affine_dependent_variable(const std::string &name) const;
 
     const std::string &org_variable(const std::string &name) const;
@@ -549,6 +565,13 @@ namespace getfem {
         the whole tangent system. */
     bool is_coercive() const { return is_coercive_; }
 
+    /** Return true if the model has at least one internal variable. */
+    bool has_internal_variables() const {
+      for (const auto &v : variables)
+        if (v.second.is_internal && !v.second.is_disabled) return true;
+      return false;
+    }
+
     /** Return true if all the model terms do not affect the coercivity of
         the whole tangent system. */
     bool is_symmetric() const { return is_symmetric_; }
@@ -557,7 +580,13 @@ namespace getfem {
     bool is_linear() const { return is_linear_; }
 
     /** Total number of degrees of freedom in the model. */
-    size_type nb_dof() const;
+    size_type nb_dof(bool with_internal=false) const;
+
+    /** Number of internal degrees of freedom in the model. */
+    size_type nb_internal_dof() const { return nb_dof(true)-nb_dof(); }
+
+    /** Number of primary degrees of freedom in the model. */
+    size_type nb_primary_dof() const { return nb_dof(); }
 
     /** Leading dimension of the meshes used in the model. */
     dim_type leading_dimension() const { return leading_dim; }
@@ -614,37 +643,41 @@ namespace getfem {
     model_complex_plain_vector &
     set_complex_constant_part(const std::string &name) const;
 
+  private:
     template<typename VECTOR, typename T>
-    void from_variables(VECTOR &V, T) const {
+    void from_variables(VECTOR &V, bool with_internal, T) const {
       for (const auto &v : variables)
-        if (v.second.is_variable && !(v.second.is_affine_dependent)
-            && !(v.second.is_disabled))
-          gmm::copy(v.second.real_value[0],
-                    gmm::sub_vector(V, v.second.I));
+        if (v.second.is_variable && !v.second.is_affine_dependent
+            && !v.second.is_disabled
+            && (with_internal || !v.second.is_internal))
+          gmm::copy(v.second.real_value[0], gmm::sub_vector(V, v.second.I));
     }
 
     template<typename VECTOR, typename T>
-    void from_variables(VECTOR &V, std::complex<T>) const {
+    void from_variables(VECTOR &V, bool with_internal, std::complex<T>) const {
       for (const auto &v : variables)
-        if (v.second.is_variable && !(v.second.is_affine_dependent)
-            && !(v.second.is_disabled))
-          gmm::copy(v.second.complex_value[0],
-                    gmm::sub_vector(V, v.second.I));
+        if (v.second.is_variable && !v.second.is_affine_dependent
+            && !v.second.is_disabled
+            && (with_internal || !v.second.is_internal))
+          gmm::copy(v.second.complex_value[0], gmm::sub_vector(V, v.second.I));
     }
 
-    template<typename VECTOR> void from_variables(VECTOR &V) const {
+  public:
+    template<typename VECTOR>
+    void from_variables(VECTOR &V, bool with_internal=false) const {
       typedef typename gmm::linalg_traits<VECTOR>::value_type T;
       context_check(); if (act_size_to_be_done) actualize_sizes();
-      from_variables(V, T());
+      from_variables(V, with_internal, T());
     }
 
+  private:
     template<typename VECTOR, typename T>
-    void to_variables(const VECTOR &V, T) {
+    void to_variables(const VECTOR &V, bool with_internal, T) {
       for (auto &&v : variables)
-        if (v.second.is_variable && !(v.second.is_affine_dependent)
-            && !(v.second.is_disabled)) {
-          gmm::copy(gmm::sub_vector(V, v.second.I),
-                    v.second.real_value[0]);
+        if (v.second.is_variable && !v.second.is_affine_dependent
+            && !v.second.is_disabled
+            && (with_internal || !v.second.is_internal)) {
+          gmm::copy(gmm::sub_vector(V, v.second.I), v.second.real_value[0]);
           v.second.v_num_data[0] = act_counter();
         }
       update_affine_dependent_variables();
@@ -652,22 +685,24 @@ namespace getfem {
     }
 
     template<typename VECTOR, typename T>
-    void to_variables(const VECTOR &V, std::complex<T>) {
+    void to_variables(const VECTOR &V, bool with_internal, std::complex<T>) {
       for (auto &&v : variables)
-        if (v.second.is_variable && !(v.second.is_affine_dependent)
-            && !(v.second.is_disabled)) {
-          gmm::copy(gmm::sub_vector(V, v.second.I),
-                    v.second.complex_value[0]);
+        if (v.second.is_variable && !v.second.is_affine_dependent
+            && !v.second.is_disabled
+            && (with_internal || !v.second.is_internal)) {
+          gmm::copy(gmm::sub_vector(V, v.second.I), v.second.complex_value[0]);
           v.second.v_num_data[0] = act_counter();
         }
       update_affine_dependent_variables();
       this->post_to_variables_step();
     }
 
-    template<typename VECTOR> void to_variables(const VECTOR &V) {
+  public:
+    template<typename VECTOR>
+    void to_variables(const VECTOR &V, bool with_internal=false) {
       typedef typename gmm::linalg_traits<VECTOR>::value_type T;
       context_check(); if (act_size_to_be_done) actualize_sizes();
-      to_variables(V, T());
+      to_variables(V, with_internal, T());
     }
 
     /** Add a fixed size variable to the model assumed to be a vector.
@@ -751,11 +786,13 @@ namespace getfem {
 
 
     /** Add variable defined at integration points. */
-    void add_im_variable(const std::string &name, const im_data &im_data,
+    void add_im_variable(const std::string &name, const im_data &imd,
                          size_type niter = 1);
-
+    /** Add internal variable, defined at integration points and condensed. */
+    void add_internal_im_variable(const std::string &name,
+                                  const im_data &imd);
     /** Add data defined at integration points. */
-    void add_im_data(const std::string &name, const im_data &im_data,
+    void add_im_data(const std::string &name, const im_data &imd,
                      size_type niter = 1);
 
     /** Add a variable being the dofs of a finite element method to the model.
@@ -876,10 +913,11 @@ namespace getfem {
     size_type qdim_of_variable(const std::string &name) const;
 
     /** Gives the access to the tangent matrix. For the real version. */
-    const model_real_sparse_matrix &real_tangent_matrix() const {
+    const model_real_sparse_matrix &
+    real_tangent_matrix(bool internal=false) const {
       GMM_ASSERT1(!complex_version, "This model is a complex one");
       context_check(); if (act_size_to_be_done) actualize_sizes();
-      return rTM;
+      return internal ? internal_rTM : rTM;
     }
 
     /** Gives the access to the tangent matrix. For the complex version. */
@@ -891,10 +929,27 @@ namespace getfem {
 
     /** Gives access to the right hand side of the tangent linear system.
         For the real version. An assembly of the rhs has to be done first. */
-    const model_real_plain_vector &real_rhs() const {
+    const model_real_plain_vector &real_rhs(bool with_internal=false) const {
       GMM_ASSERT1(!complex_version, "This model is a complex one");
       context_check(); if (act_size_to_be_done) actualize_sizes();
-      return rrhs;
+      return (with_internal && gmm::vect_size(full_rrhs)) ? full_rrhs : rrhs;
+    }
+
+    /** Gives write access to the right hand side of the tangent linear system.
+        Some solvers need to manipulate the model rhs directly so that for
+        example internal condensed variables can be treated properly. */
+    model_real_plain_vector &set_real_rhs(bool with_internal=false) const {
+      GMM_ASSERT1(!complex_version, "This model is a complex one");
+      context_check(); if (act_size_to_be_done) actualize_sizes();
+      return (with_internal && gmm::vect_size(full_rrhs)) ? full_rrhs : rrhs;
+    }
+
+    /** Gives access to the partial solution for condensed internal variables.
+        A matrix assembly with condensation has to be done first. */
+    const model_real_plain_vector &internal_solution() const {
+      GMM_ASSERT1(!complex_version, "This model is a complex one");
+      context_check(); if (act_size_to_be_done) actualize_sizes();
+      return internal_sol;
     }
 
     /** Gives access to the part of the right hand side of a term of
@@ -921,6 +976,15 @@ namespace getfem {
     /** Gives access to the right hand side of the tangent linear system.
         For the complex version. */
     const model_complex_plain_vector &complex_rhs() const {
+      GMM_ASSERT1(complex_version, "This model is a real one");
+      context_check(); if (act_size_to_be_done) actualize_sizes();
+      return crhs;
+    }
+
+    /** Gives write access to the right hand side of the tangent linear system.
+        Some solvers need to manipulate the model rhs directly so that for
+        example internal condensed variables can be treated properly. */
+    model_complex_plain_vector &set_complex_rhs() const {
       GMM_ASSERT1(complex_version, "This model is a real one");
       context_check(); if (act_size_to_be_done) actualize_sizes();
       return crhs;
@@ -1042,7 +1106,7 @@ namespace getfem {
         GMM_ASSERT1(false, "An secondary domain with the same "
                     "name already exists");
       if (transformations.count(name) > 0)
-        GMM_ASSERT1(name.compare("neighbour_elt"), "neighbour_elt is a "
+        GMM_ASSERT1(name.compare("neighbor_element"), "neighbor_element is a "
                     "reserved interpolate transformation name");
        transformations[name] = ptrans;
     }
@@ -1573,7 +1637,7 @@ namespace getfem {
       If you are not sure, the better is to declare the term not symmetric
       and not coercive. But some solvers (conjugate gradient for instance)
       are not allowed for non-coercive problems.
-      `brickname` is an otpional name for the brick.
+      `brickname` is an optional name for the brick.
   */
   size_type APIDECL add_linear_term
   (model &md, const mesh_im &mim, const std::string &expr,
@@ -1622,7 +1686,7 @@ namespace getfem {
       Take care that if the expression contains some variables and if the
       expression is a potential, the expression will be
       derivated with respect to all variables.
-      `brickname` is an otpional name for the brick.
+      `brickname` is an optional name for the brick.
   */
   size_type APIDECL add_source_term
   (model &md, const mesh_im &mim, const std::string &expr,
@@ -2304,7 +2368,7 @@ namespace getfem {
 
   /**  Linear elasticity brick ( @f$ \int \sigma(u):\varepsilon(v) @f$ ).
       for isotropic material. Parametrized by Young modulus and Poisson ratio
-      For two-dimensional problems, corresponds to the plain strain
+      For two-dimensional problems, corresponds to the plane strain
       approximation
       ( @f$ \lambda = E\nu/((1+\nu)(1-2\nu)), \mu = E/(2(1+\nu)) @f$ ).
       Corresponds to the standard model for three-dimensional problems.
@@ -2317,7 +2381,7 @@ namespace getfem {
   /** 
       Linear elasticity brick ( @f$ \int \sigma(u):\varepsilon(v) @f$ ).
       for isotropic material. Parametrized by Young modulus and Poisson ratio.
-      For two-dimensional problems, corresponds to the plain stress
+      For two-dimensional problems, corresponds to the plane stress
       approximation
       ( @f$ \lambda^* = E\nu/(1-\nu^2), \mu = E/(2(1+\nu)) @f$ ).
       Corresponds to the standard model for three-dimensional problems.

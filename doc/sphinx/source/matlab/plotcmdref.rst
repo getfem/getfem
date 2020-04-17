@@ -5,7 +5,7 @@
 
 .. include:: ../replaces.txt
 
-.. highlightlang:: matlab
+.. highlight:: matlab
 
 .. _mlab-plotcmdref:
 

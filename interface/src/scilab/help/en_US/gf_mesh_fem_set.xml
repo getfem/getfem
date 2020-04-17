@@ -44,7 +44,7 @@
 
     <para>         Set the Finite Element Method.
       
-      Assign a FEM <literal>f</literal> to all convexes whose #ids are listed in <literal>CVids</literal>.
+      Assign an FEM <literal>f</literal> to all convexes whose #ids are listed in <literal>CVids</literal>.
       If <literal>CVids</literal> is not given, the integration is assigned to all convexes.
       
       See the help of gf_fem to obtain a list of available FEM methods.

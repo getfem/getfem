@@ -1,8 +1,8 @@
-#  Copyright (C) 1999-2017 Yves Renard
+#  Copyright (C) 1999-2020 Yves Renard
 #
-#  This file is a part of GetFEM++
+#  This file is a part of GetFEM
 #
-#  GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+#  GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
 #  under  the  terms  of the  GNU  Lesser General Public License as published
 #  by  the  Free Software Foundation;  either version 3 of the License,  or
 #  (at your option) any later version along with the GCC Runtime Library
@@ -19,12 +19,13 @@
 #
 
 # You can set these variables from the command line.
-PYTHON        = python
+PYTHON        = python3
 SPHINXROOT    = http://svn.python.org/projects
 LANGUAGE      = en
 SPHINXOPTS    = -D language=$(LANGUAGE)
 # SPHINXBUILD   = $(PYTHON) tools/sphinx-build.py
-SPHINXBUILD   = sphinx-build
+# SPHINXBUILD   = sphinx-build
+SPHINXBUILD   = python3 -msphinx
 SPHINXINTL    = sphinx-intl
 PAPER         =
 SOURCES       = $(srcdir)/source

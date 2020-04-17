@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# Python GetFEM++ interface
+# Python GetFEM interface
 #
-# Copyright (C) 2017-2018 Yves Renard, Franz Chouly.
+# Copyright (C) 2017-2020 Yves Renard, Franz Chouly.
 #
-# This file is a part of GetFEM++
+# This file is a part of GetFEM
 #
-# GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+# GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
 # under  the  terms  of the  GNU  Lesser General Public License as published
 # by  the  Free Software Foundation;  either version 2.1 of the License,  or
 # (at your option) any later version.
@@ -24,13 +24,16 @@
     Comparison to the closed-form solution.
 
     This program is used to check that python-getfem is working.
-    This is also a good example of use of GetFEM++.
+    This is also a good example of use of GetFEM.
 """
 
-import getfem as gf
-import numpy as np
+import os
+import sys
+
 import matplotlib.pyplot as plt
-import time, os, sys
+import numpy as np
+
+import getfem as gf
 
 # Numerical parameters
 NX = 20               # Number of elements

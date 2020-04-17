@@ -1,10 +1,10 @@
 /*===========================================================================
 
- Copyright (C) 2006-2017 Yves Renard, Julien Pommier.
+ Copyright (C) 2006-2020 Yves Renard, Julien Pommier.
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -127,7 +127,9 @@ gf_interpolate(getfemint::mexargs_in& in, getfemint::mexargs_out& out,
     dims.push_back(unsigned(mf_dest.nb_dof()));
     dims.opt_transform_col_vect_into_row_vect();
     garray<T> V = out.pop().create_array(dims,T());
-    getfem::interpolation(mf, mf_dest, U, V);
+    std::vector<T> VV(V.size());
+    getfem::interpolation(mf, mf_dest, U, VV);
+    gmm::copy(VV, V);
   }
   else if (is_slice_object(in.front())) {
     getfem::stored_mesh_slice *sl = to_slice_object(in.pop());
@@ -141,7 +143,9 @@ gf_interpolate(getfemint::mexargs_in& in, getfemint::mexargs_out& out,
     dims.push_back(unsigned(sl->nb_points()));
     dims.opt_transform_col_vect_into_row_vect();
     garray<T> V = out.pop().create_array(dims, T());
-    sl->interpolate(mf, U, V);
+    std::vector<T> VV(V.size());
+    sl->interpolate(mf, U, VV);
+    gmm::copy(VV, V);
   }
   else {
     size_type N = mf.linked_mesh().dim();
@@ -161,12 +165,12 @@ gf_interpolate(getfemint::mexargs_in& in, getfemint::mexargs_out& out,
     dims.push_back(unsigned(nbpoints));
     dims.opt_transform_col_vect_into_row_vect();
     garray<T> V = out.pop().create_array(dims,T());
-
+    std::vector<T> VV(V.size());
     getfem::base_matrix Maux;
     // cout << "begin interpolation, qmult = " << qmult << endl;
-    getfem::interpolation(mf, mti, U, V, Maux, 0);
+    getfem::interpolation(mf, mti, U, VV, Maux, 0);
     // cout << "end interpolation" << endl;
-
+    gmm::copy(VV, V);
   }
   // else THROW_BADARG("expecting a mesh_fem or a mesh_slice for interpolation");
 }

@@ -1,11 +1,11 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
 
- Copyright (C) 2000-2017 Yves Renard
+ Copyright (C) 2000-2020 Yves Renard
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -29,13 +29,13 @@
 
 ===========================================================================*/
 
-/*! @mainpage GetFEM++ reference documentation.
+/*! @mainpage GetFEM reference documentation.
 
   <center><img src="http://download.gna.org/getfem/html/homepage/_static/logo_getfem_small.png"></center>
  
   @section intro Introduction
  
-  This documentation has been generated from the GetFEM++ sources, this is not a tutorial.
+  This documentation has been generated from the GetFEM sources, this is not a tutorial.
  
   @section Terminology
  
@@ -92,15 +92,15 @@
   of basis functions on each convex is the @link asm assembly@endlink.
 
   A mesh, with a set of FEM attached to its convexes is called a @link getfem_mesh_fem.h
-  mesh_fem@endlink object in GetFEM++.
+  mesh_fem@endlink object in GetFEM.
 
   A mesh, with a set of integration methods attached to its convexes
-  is called a @link getfem_mesh_im.h mesh_im@endlink object in GetFEM++.
+  is called a @link getfem_mesh_im.h mesh_im@endlink object in GetFEM.
 
   A @c mesh_fem can be used to approximate scalar fields (heat, pression,
   ..), or vector fields (displacement, electric field, ..). A @c mesh_im
   will be used to perform numerical integrations on these fields.
-  Although GetFEM++ supports vector FEMs, intrinsic vector FEMs are
+  Although GetFEM supports vector FEMs, intrinsic vector FEMs are
   essentially used in mixed methods (for instance Raviart-Thomas element).
   Most of the FEM currently available are scalar. Of course,
   these scalar FEMs can be used to approximate each component of a
@@ -112,7 +112,7 @@
   important one will be of course the one on which is defined the
   solution of the PDE. But most PDEs involve various coefficients, for
   example: @f[ \nabla.(\lambda(x)\nabla u) = f(x).  @f] Hence one has
-  to define a FEM for the main unknown @f$u@f$, but also for the data
+  to define an FEM for the main unknown @f$u@f$, but also for the data
   @f$\lambda(x)@f$ and @f$f(x)@f$ if they are not constant. In order
   to interpolate easily these coefficients in their finite element
   space, one often choose a Lagrangian FEM.

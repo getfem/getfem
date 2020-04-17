@@ -1,10 +1,10 @@
 /*===========================================================================
 
- Copyright (C) 2006-2017 Julien Pommier.
+ Copyright (C) 2006-2020 Julien Pommier.
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -144,7 +144,7 @@ void gf_mesh_fem_set(getfemint::mexargs_in& m_in,
     /*@SET ('fem', @tfem f[, @ivec CVids])
       Set the Finite Element Method.
       
-      Assign a FEM `f` to all convexes whose #ids are listed in `CVids`.
+      Assign an FEM `f` to all convexes whose #ids are listed in `CVids`.
       If `CVids` is not given, the integration is assigned to all convexes.
       
       See the help of FEM:INIT to obtain a list of available FEM methods.@*/

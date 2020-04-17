@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# Python GetFEM++ interface
+# Python GetFEM interface
 #
-# Copyright (C) 2018-2018 Konstantinos Poulios.
+# Copyright (C) 2018-2020 Konstantinos Poulios.
 #
-# This file is a part of GetFEM++
+# This file is a part of GetFEM
 #
-# GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+# GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
 # under  the  terms  of the  GNU  Lesser General Public License as published
 # by  the  Free Software Foundation;  either version 2.1 of the License,  or
 # (at your option) any later version.
@@ -20,11 +20,13 @@
 #
 ############################################################################
 
-import getfem as gf
-import numpy as np
-import os, sys
+import os
 
-np.set_printoptions(threshold=np.nan)
+import numpy as np
+
+import getfem as gf
+
+np.set_printoptions(threshold=100000)
 gf.util_trace_level(1)
 
 # Input data
@@ -55,8 +57,8 @@ integration_degree = 5   # 9 gauss points per quad
 
 #------------------------------------
 
-NX = 2*((NX+1)/2)
-NY = 2*((NY+1)/2)
+NX = int(2*((NX+1)/2))
+NY = int(2*((NY+1)/2))
 
 resultspath = "./demo_phase_field_results"
 if not os.path.exists(resultspath):
@@ -67,15 +69,15 @@ B_BOUNDARY = 4
 T_BOUNDARY = 6
 TB_BOUNDARY = 7
 
-NX_seed1 = np.linspace(-1, 0, NX/3+1)
-NX_seed2 = np.linspace(0, 1, (NX-NX/3)+1)[1:]
-NY_seed = np.linspace(-1, 1, NY+1)
+NX_seed1 = np.linspace(-1., 0., int(NX/3+1))
+NX_seed2 = np.linspace(0., 1., int((NX-NX/3)+1))[1:]
+NY_seed = np.linspace(-1., 1., NY+1)
 X_seed1 = LX/2*(0.2*NX_seed1+0.8*np.sign(NX_seed1)*np.power(np.abs(NX_seed1),1.5))
 X_seed2 = LX/2*(0.6*NX_seed2+0.4*np.sign(NX_seed2)*np.power(np.abs(NX_seed2),1.5))
 X_seed = np.concatenate((X_seed1,X_seed2))
 Y_seed = LY/2*(0.2*NY_seed+0.8*np.sign(NY_seed)*np.power(np.abs(NY_seed),1.5))
-m1 = gf.Mesh("cartesian", X_seed, Y_seed[0:NY/2+1])
-m2 = gf.Mesh("cartesian", X_seed, Y_seed[NY/2:])
+m1 = gf.Mesh("cartesian", X_seed, Y_seed[0:int(NY/2+1)])
+m2 = gf.Mesh("cartesian", X_seed, Y_seed[int(NY/2):])
 gap = 1e-5
 pts = m1.pts()
 for i in range(pts.shape[1]):
@@ -228,7 +230,3 @@ with open("%s/demo_phase_field_forces.dat" % resultspath, "w") as f:
     f.write(("step=%i eps=%e fR=(%e,%e)\n") %
             (step, eps, dfT[0::N].sum(), dfT[1::N].sum()))
     f.flush()
-
-
-
-

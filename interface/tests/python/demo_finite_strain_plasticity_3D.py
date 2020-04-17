@@ -1,11 +1,11 @@
 #!/usr/bin/env python
-# -*- coding: UTF8 -*-
+# -*- coding: utf-8 -*-
 #
-# Copyright (C) 2014-2018 Konstantinos Poulios.
+# Copyright (C) 2014-2020 Konstantinos Poulios.
 #
-# This file is a part of GetFEM++
+# This file is a part of GetFEM
 #
-# GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+# GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
 # under  the  terms  of the  GNU  Lesser General Public License as published
 # by  the  Free Software Foundation;  either version 3 of the License,  or
 # (at your option) any later version along with the GCC Runtime Library
@@ -20,14 +20,16 @@
 #
 ############################################################################
 
-import getfem as gf
-import numpy as np
-import sys
 import os
-import time
 import shutil
+import sys
+import time
 
-np.set_printoptions(threshold=np.nan)
+import numpy as np
+
+import getfem as gf
+
+np.set_printoptions(threshold=100000)
 gf.util_trace_level(1)
 
 # Input data
@@ -246,7 +248,7 @@ mf_dirichlet_mult = md.mesh_fem_of_variable(dirichlet_multname)
 mass_mat = gf.asm_mass_matrix(mim, mfout)
 
 shutil.copyfile(os.path.abspath(sys.argv[0]),resultspath+'/'+sys.argv[0])
-starttime_overall = time.clock()
+starttime_overall = time.process_time()
 with open('%s/finite_strain_plasticity_forces.dat' % resultspath, 'w') as f:
    for step in range(0,steps+1):
       print('Solving step: %i' % step)
@@ -255,7 +257,7 @@ with open('%s/finite_strain_plasticity_forces.dat' % resultspath, 'w') as f:
       dirichlet_data = mf_dirichlet_mult.eval(dirichlet_str.format(step),globals(),locals())
       md.set_variable('dirichlet_data', dirichlet_data)
 
-      starttime = time.clock()
+      starttime = time.process_time()
       iters = 41
       nit = \
       md.solve('noisy', 'lsolver', 'mumps', 'max_iter', iters, 'max_res', 1e-10, #)[0]
@@ -268,7 +270,7 @@ with open('%s/finite_strain_plasticity_forces.dat' % resultspath, 'w') as f:
           md.set_variable('dirichlet_data', dirichlet_data)
           md.solve('noisy', 'lsolver', 'mumps', 'max_iter', iters, 'max_res', 1e-10, #)[0]
                    'lsearch', 'simplest', 'alpha max ratio', 1.5, 'alpha min', 0.05, 'alpha mult', 0.6)[0]
-      print('STEP %i COMPLETED IN %f SEC' % (step, time.clock()-starttime))
+      print('STEP %i COMPLETED IN %f SEC' % (step, time.process_time()-starttime))
 
       VM = md.compute_finite_strain_elastoplasticity_Von_Mises\
          (mim, mfout, "Simo_Miehe", "displacement_and_plastic_multiplier_and_pressure",
@@ -313,4 +315,4 @@ with open('%s/finite_strain_plasticity_forces.dat' % resultspath, 'w') as f:
                         dfR[0::N].sum()/H, dfR[1::N].sum()/H))
       f.flush()
 
-print('OVERALL SOLUTION TIME IS %f SEC' % (time.clock()-starttime_overall))
+print('OVERALL SOLUTION TIME IS %f SEC' % (time.process_time()-starttime_overall))

@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# Python GetFEM++ interface
+# Python GetFEM interface
 #
-# Copyright (C) 2012-2012 Yves Renard.
+# Copyright (C) 2012-2020 Yves Renard.
 #
-# This file is a part of GetFEM++
+# This file is a part of GetFEM
 #
-# GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+# GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
 # under  the  terms  of the  GNU  Lesser General Public License as published
 # by  the  Free Software Foundation;  either version 3 of the License,  or
 # (at your option) any later version along with the GCC Runtime Library
@@ -21,12 +21,13 @@
 #
 ############################################################################
 
-import getfem as gf
 import numpy as np
+
+import getfem as gf
 
 gf.util_trace_level(1)
 
-test_case = 3 # 0 = 2D punch on a rigid obstacle
+test_case = 1 # 0 = 2D punch on a rigid obstacle
               # 1 = 2D punch on a deformable obstacle (one slave, one master)
               # 2 = 2D with two different meshes
               # 3 = 2D with multi-body and only one mesh
@@ -353,4 +354,3 @@ for nit in range(load_steps):
    if test_case <= 1:
       Ddata[N-1] -= 1.
       md.set_variable("Ddata1", Ddata)
-

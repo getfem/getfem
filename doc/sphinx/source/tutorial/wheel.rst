@@ -12,7 +12,7 @@ In this example of a deformable ''wheel'' enters in contact with a deformable fo
 The problem setting
 -------------------
 
-Let :math:`\Omega^1 \subset \R^2` be the reference configuration of a 2D wheel and :math:`\Omega^2 \subset \R^2` the reference configuration of a deformable foundation. We consider small deformation of these two bodies (linearized elasticity) and the contact between them. We also consider that the rim of the wheel is rigid and apply a vertical force on the wheel.
+Let :math:`\Omega^1 \subset \rm I\hspace{-0.15em}R^2` be the reference configuration of a 2D wheel and :math:`\Omega^2 \subset \rm I\hspace{-0.15em}R^2` the reference configuration of a deformable foundation. We consider small deformation of these two bodies (linearized elasticity) and the contact between them. We also consider that the rim of the wheel is rigid and apply a vertical force on the wheel.
 
 
 Building the program
@@ -157,18 +157,18 @@ where :math:`X` is the vector of coordinates of the point. We add this transform
 
   md.add_interpolate_transformation_from_expression('Proj1', mesh1, mesh2, '[X(1);0]')
 
-As a consequence, it will be possible to use this transformation, from the mesh of the wheel to the mesh of the foundation, into weak form language expressions. Notes that this is here a very simple constant expression. More complex expressions depending on the data or even the variables of the model can be used. If the expression of a transformation depends on the variable of the model, the tangent linear system will automatically takes into account this dependence (see :ref:`ud-gasm-high-transf` for more details. Note also that transformation corresponding to a large sliding contact and automatically searching for the correspondence between contact boundaries exist in |gf| (see :ref:`ud-model-contact-friction-large-hlgav`).
+As a consequence, it will be possible to use this transformation, from the mesh of the wheel to the mesh of the foundation, into GWFL expressions. Notes that this is here a very simple constant expression. More complex expressions depending on the data or even the variables of the model can be used. If the expression of a transformation depends on the variable of the model, the tangent linear system will automatically takes into account this dependence (see :ref:`ud-gasm-high-transf` for more details). Note also that transformation corresponding to a large sliding contact and automatically searching for the correspondence between contact boundaries exist in |gf| (see :ref:`ud-model-contact-friction-large-hlgav`).
 
 Using the defined transformation, we can write an integral contact condition using an augmented Lagrangian formulation (see :ref:`ud-model-contact-friction` for more details). The corresponding term (to be added to the rest of the weak formulation) reads:
 
 .. math::
 
-  & \cdots + \ds \int_{\Gamma_c} \lambda_N(X) (\delta_{u^1}(X)-\delta_{u^2}(\Pi(X)))\cdot n d\Gamma \\
-  & -  \ds \int_{\Gamma_c} \left(\lambda_N(X) + \left(\lambda_N(X) + \Frac{1}{h_T\gamma_0}((X + u^1(X))\cdot n - (\Pi(X) - u^2(\Pi(X)))\cdot n\right)_-\right)\delta_{\lambda_N}(X) d\Gamma = 0 ~~~~ \forall \delta_{\lambda_N}, \forall \delta_{u^1}, \forall \delta_{u^2},
+  & \cdots +  \int_{\Gamma_c} \lambda_N(X) (\delta_{u^1}(X)-\delta_{u^2}(\Pi(X)))\cdot n d\Gamma \\
+  & -   \int_{\Gamma_c} \left(\lambda_N(X) + \left(\lambda_N(X) + \dfrac{1}{h_T\gamma_0}((X + u^1(X))\cdot n - (\Pi(X) - u^2(\Pi(X)))\cdot n\right)_-\right)\delta_{\lambda_N}(X) d\Gamma = 0 ~~~~ \forall \delta_{\lambda_N}, \forall \delta_{u^1}, \forall \delta_{u^2},
 
 where :math:`\Gamma_c` is the slave contact boundary, :math:`\lambda_N` is the contact multiplier (contact pressure), :math:`h_T` is the radius of the element, :math:`\Pi` is the transformation, `n` is the outward normal vector to the master contact boundary (here :math:`n = (0,1)`), :math:`\gamma_0` is an augmentation parameter, :math:`(\cdot)_-:I\hspace{-0.2em}R\rightarrow I\hspace{-0.2em}R_+` is the negative part and :math:`\delta_{\lambda_N}, \delta_{u^1}, \delta_{u^2}` are the test  functions corresponding to :math:`\lambda_N, u^1, u^2`, respectively.
 
-Using the weak form language, the contact condition can be added by:
+Using GWFL, the contact condition can be added by:
 
 .. code-block:: python
 
@@ -203,11 +203,10 @@ This multiplier represents the boundary stress that is necessary to prescribe th
 
 where :math:`\Gamma_D` is the rim boundary, :math:`F` is the applied density of force.
 
-This could be added to the model with the weak form language:
+This could be added to the model with GWFL:
 
 .. code-block:: python
 
-  md.add_filtered_fem_variable('lambda_D', mflambda, HOLE_BOUND)
   md.add_initialized_data('F', [applied_force/(8*2*np.pi)])
   md.add_linear_term(mim1, '-lambda_D.Test_u1 + (alpha_D*[0;1]-u1).Test_lambda_D'
         ' + (lambda_D.[0;1]+F)*Test_alpha_D', HOLE_BOUND)

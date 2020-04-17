@@ -1,10 +1,10 @@
 /*===========================================================================
 
- Copyright (C) 2013-2019 Yves Renard
+ Copyright (C) 2013-2020 Yves Renard
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -480,11 +480,11 @@ namespace getfem {
   bool sub_tree_are_equal
   (const pga_tree_node pnode1, const pga_tree_node pnode2,
    const ga_workspace &workspace, int version) {
+
     size_type ntype1 = pnode1->node_type;
     if (ntype1 == GA_NODE_ZERO) ntype1 = GA_NODE_CONSTANT;
     size_type ntype2 = pnode2->node_type;
     if (ntype2 == GA_NODE_ZERO) ntype2 = GA_NODE_CONSTANT;
-
     if (ntype1 != ntype2) return false;
     if (pnode1->children.size() != pnode2->children.size()) return false;
 
@@ -538,8 +538,12 @@ namespace getfem {
           return false;
       break;
     case GA_NODE_C_MATRIX:
+      if (pnode1->children.size() != pnode2->children.size()) return false;
+      if (pnode1->nb_test_functions() != pnode2->nb_test_functions())
+        return false;
       if (pnode1->t.sizes().size() != pnode2->t.sizes().size()) return false;
-      for (size_type i = 0; i < pnode1->t.sizes().size(); ++i)
+      for (size_type i=pnode1->nb_test_functions();
+           i<pnode1->t.sizes().size(); ++i)
         if (pnode1->t.sizes()[i] != pnode2->t.sizes()[i]) return false;
       if (pnode1->nbc1 != pnode2->nbc1) return false;
       break;
@@ -1125,6 +1129,11 @@ namespace getfem {
       GMM_ASSERT1(pnode->children.size() == 0, "Invalid tree");
       break;
       
+    case GA_NODE_CROSS_PRODUCT:
+      str << "Cross_product";
+      GMM_ASSERT1(pnode->children.size() == 0, "Invalid tree");
+      break;
+      
     case GA_NODE_SWAP_IND:
       str << "Swap_indices";
       GMM_ASSERT1(pnode->children.size() == 0, "Invalid tree");
@@ -1260,19 +1269,18 @@ namespace getfem {
   // 2 : reserved prefix Grad, Hess, Div, Derivative_ Test and Test2
   // 3 : reserved prefix Dot and Previous
   int ga_check_name_validity(const std::string &name) {
-
     if (name.compare(0, 11, "Derivative_") == 0)
       return 2;
-
-    const ga_predef_function_tab &PREDEF_FUNCTIONS
-      = dal::singleton<ga_predef_function_tab>::instance(0);
+    
     const ga_predef_operator_tab &PREDEF_OPERATORS
       = dal::singleton<ga_predef_operator_tab>::instance(0);
     const ga_spec_function_tab &SPEC_FUNCTIONS
       = dal::singleton<ga_spec_function_tab>::instance(0);
     const ga_spec_op_tab &SPEC_OP
       = dal::singleton<ga_spec_op_tab>::instance(0);
-    
+    const ga_predef_function_tab &PREDEF_FUNCTIONS
+      = dal::singleton<ga_predef_function_tab>::instance(0);
+
     if (SPEC_OP.find(name) != SPEC_OP.end())
       return 1;
 
@@ -1312,7 +1320,6 @@ namespace getfem {
 //     if (name.size() >= 12 && name.compare(0, 12, "Previous1_2_") == 0)
 //       return 3;
 
-
     return 0;
   }
 
@@ -1347,7 +1354,7 @@ namespace getfem {
       GMM_ASSERT1(pnode->nbc1+1 < children.size(), "Internal error");
       pga_tree_node pchild = children[pnode->nbc1+1];
 
-      if (po || pt) {
+      if (po || pt || pnode->op_type != GA_NAME) {
         if (!(pchild->children.empty()) || pchild->node_type != GA_NODE_NAME)
           ga_throw_error(pchild->expr, pchild->pos, "Error in macro "
                          "expansion. Only variable name are allowed for macro "
@@ -1371,7 +1378,7 @@ namespace getfem {
         if (po == 1) pnode->name = "Grad_" + pnode->name;
         if (po == 2) pnode->name = "Hess_" + pnode->name;
         if (po == 3) pnode->name = "Div_" + pnode->name;
-      } else {   
+      } else {
         pga_tree_node pnode_old = pnode;
         pnode = nullptr;
         tree.copy_node(pchild, pnode_old->parent, pnode);
@@ -1507,7 +1514,6 @@ namespace getfem {
     return false;
   }
 
-
   const ga_macro &
   ga_macro_dictionary::get_macro(const std::string &name) const {
     auto it = macros.find(name);
@@ -1528,7 +1534,7 @@ namespace getfem {
     GMM_ASSERT1(it != macros.end(), "Undefined macro (at this level)");
     macros.erase(it);
   }
-
+  
   
   //=========================================================================
   // Syntax analysis for the generic assembly language
@@ -1633,7 +1639,7 @@ namespace getfem {
             if (params.size())
               ga_mark_macro_params(gam, params, macro_dict);
             macro_dict.add_macro(gam);
-
+            
             // cout << "macro \"" << gam.name() << "\" registered with "
             //      << gam.nb_params() << " params  := "
             //      << ga_tree_to_string(gam.tree()) << endl;
