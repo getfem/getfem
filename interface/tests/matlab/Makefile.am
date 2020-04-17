@@ -18,16 +18,25 @@
 SUBDIRS = private
 
 if BUILDMEX
-TESTS = $(abs_srcdir)/check_all.sh
+TESTSM = $(abs_srcdir)/check_all_matlab.sh
 else
-TESTS = 
+TESTSM = 
 endif
+
+if BUILDOCTAVE
+TESTSO = $(abs_srcdir)/check_all_octave.sh
+else
+TESTSO =
+endif
+
+TESTS = $(TESTSM) $(TESTSO)
 
 
 EXTRA_DIST=						\
 	axrot_matrix.m 					\
 	check_all.m 					\
-	check_all.sh 					\
+	check_all_matlab.sh				\
+	check_all_octave.sh				\
 	check_asm.m 					\
 	check_fem.m 					\
 	check_geotrans.m 				\
