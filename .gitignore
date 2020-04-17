@@ -48,6 +48,7 @@ interface/tests/python/results1/
 /src/getfem/getfem_arch_config.h
 /src/gmm/gmm_arch_config.h
 /stamp-h1
+/interface/src/octave/gf_octave.*
 /interface/src/matlab/@gf*
 /interface/src/matlab/gf_asm.m
 /interface/src/matlab/gf_compute.m

@@ -24,7 +24,7 @@
 #include <errno.h>
 #include <stdio.h>
 /* #include <unistd.h> */
-#include "mex.h"
+#include "octave/mex.h"
 #include "gfm_common.h"
 #include "getfem_interface.h"
 
@@ -84,10 +84,10 @@ char *current_matlab_function = NULL;
 
 void sigint_callback(int sig) {
   char *s = current_matlab_function; if (!s) s = "doh!!";
-  fprintf(stderr, "*** CTRL-C hit during execution of the getfem_matlab function: gf_%s...\n" \
+  fprintf(stderr, "*** CTRL-C hit during execution of the getfem_octave function: gf_%s...\n" \
 	  "You will gain control as soon as the current operation is finished ***\n" \
 	  "If you want to abort immediatly the current operation, hit CTRL-C again\n" \
-	  "In that case, you will have to restart getfem_matlab, using 'clear functions' for example:\n", s);
+	  "In that case, you will have to restart getfem_octave, using 'clear functions' for example:\n", s);
   set_cancel_flag(1);
   assert(handle_getfem_callback() == 1);
 }
@@ -114,7 +114,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
   remove_custom_sigint(out->status == GFI_STATUS_OK);
 
   if (out == NULL) {
-    mexPrintf("could not connect to getfem_matlab server...");
+    mexPrintf("could not connect to getfem_octave server...");
   } else {
     if (out->infomsg) {
       mexPrintf("message from [gf_%s]:\n%s\n", current_matlab_function, out->infomsg);
@@ -133,7 +133,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
       }
       FREE(outl->arg.arg_val);
     } else {
-      /* duplicate the string into a matlab-allocated buffer.. */
+      /* duplicate the string into a octave-allocated buffer.. */
       char *s = mxCalloc(strlen(out->gfi_output_u.errmsg)+1,1);
       strcpy(s, out->gfi_output_u.errmsg);
       FREE(out->gfi_output_u.errmsg);

@@ -19,40 +19,39 @@
  
 ===========================================================================*/
 
+#include <stdio.h>
 #include <assert.h>
 #include <signal.h>
 #include <string.h>
 #include "gfm_common.h"
-#include "mex.h"
+#include "octave/mex.h"
 
 const char*
 mxClassID2string(mxClassID id) {
   switch (id) {
-    case mxUNKNOWN_CLASS: return "UNKNOWN";
-    case mxCELL_CLASS:    return "CELL";
-    case mxSTRUCT_CLASS:  return "STRUCT";
+  case mxUNKNOWN_CLASS: return "UNKNOWN";
+  case mxCELL_CLASS:    return "CELL";
+  case mxSTRUCT_CLASS:  return "STRUCT";
     /* case mxOBJECT_CLASS:  return "OBJECT"; ## oct-modif## */
-    case mxCHAR_CLASS:    return "CHAR";
-    case mxDOUBLE_CLASS:  return "DOUBLE";
-    case mxSINGLE_CLASS:  return "SINGLE";
-    case mxINT8_CLASS:    return "INT8";
-    case mxUINT8_CLASS:   return "UINT8";
-    case mxINT16_CLASS:   return "INT16";
-    case mxUINT16_CLASS:  return "UINT16";
-    case mxINT32_CLASS:   return "INT32";
-    case mxUINT32_CLASS:  return "UINT32";
-    case mxINT64_CLASS:   return "INT64";
-    case mxUINT64_CLASS:  return "UINT64";
-    /* case mxSPARSE_CLASS:  return "SPARSE"; ## oct-modif## */
-#ifdef LOGICAL_IS_A_TYPE
-    case mxLOGICAL_CLASS: return "LOGICAL";
-#endif
+  case mxCHAR_CLASS:    return "CHAR";
+  case mxDOUBLE_CLASS:  return "DOUBLE";
+  case mxSINGLE_CLASS:  return "SINGLE";
+  case mxINT8_CLASS:    return "INT8";
+  case mxUINT8_CLASS:   return "UINT8";
+  case mxINT16_CLASS:   return "INT16";
+  case mxUINT16_CLASS:  return "UINT16";
+  case mxINT32_CLASS:   return "INT32";
+  case mxUINT32_CLASS:  return "UINT32";
+  case mxINT64_CLASS:   return "INT64";
+  case mxUINT64_CLASS:  return "UINT64";
+  /* case mxSPARSE_CLASS:  return "SPARSE"; ## oct-modif## */
+  case mxLOGICAL_CLASS: return "LOGICAL";
     /* case mxOPAQUE_CLASS: return "OPAQUE_CLASS"; ## oct-modif## */
-    default:
-      if (id != (mxClassID)(-1))
-	return "OBJECT";
-      else
-	return "unknown class...did you use the correct mex version ?";
+  default:
+    if (id != (mxClassID)(-1))
+      return "OBJECT";
+    else
+      return "unknown class...did you use the correct mex version ?";
   }
 }
 

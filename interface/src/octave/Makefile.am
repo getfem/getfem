@@ -34,10 +34,7 @@ EXTRA_DIST = gfm_rpc_mexint.c gfm_mex.c gfm_common.c gfm_common.h $(M_FILES)
 
 all: gf_mesh.m gf_octave@OCTAVE_COM_EXT@
 
-MEX=@MEX@
 RPC_LIB = @RPC_LIB@
-GNUMEX=@top_srcdir@/gnumex
-GNUMEXOPTS=@top_srcdir@/gnumex.opts
 
 GETFEM_LIB_LA = ../../../src/libgetfem.la
 GETFEM_STATIC_LIB = ../../../src/.libs/libgetfem.a @LIBS@
@@ -45,7 +42,8 @@ GETFEM_STATIC_LIB = ../../../src/.libs/libgetfem.a @LIBS@
 if BUILDOCTAVE
 if USE_MINGW_OCTAVE
 
-#command extremely sensitive to any modification! fragile! keep the order of the files
+# Command extremely sensitive to any modification! fragile!
+# keep the order of the files
 # (gfm_mex.c must be first, libstdc++.a must be last)
 
 gf_octave@OCTAVE_COM_EXT@: gfm_mex.c gfm_common.c ../libgetfemint.la ../gfi_array.c $(GETFEM_LIB_LA)
@@ -65,14 +63,12 @@ else !USE_MINGW_OCTAVE
 # compiled with ifc (i.e. mumps)) of the command line, as it 
 # break the linking with g++-3.3 and matlab R14/R13 on debian (at least) ..
 gf_octave@OCTAVE_COM_EXT@: gfm_mex.c gfm_common.c ../libgetfemint.la ../gfi_array.c $(GETFEM_LIB_LA)
-	mkoctfile -largeArrayDims -output gf_octave -g CDEBUGFLAGS="$(CFLAGS)" LD="$(CXX)" \
+	mkoctfile --mex -output gf_octave -g \
 	-I@srcdir@ -I@srcdir@/.. -DOCTAVE_RELEASE=@OCTAVE_RELEASE@ \
 	@srcdir@/gfm_mex.c @srcdir@/gfm_common.c @srcdir@/../gfi_array.c \
 	../.libs/libgetfemint.a $(GETFEM_STATIC_LIB) @STDCPP_STATICLIBS@ || (rm $@; false)
 endif !USE_MINGW_OCTAVE
-endif 
-
-# -largeArrayDims
+endif
 
 M_FILES = \
 	gf_asm_pdetoolbc.m \

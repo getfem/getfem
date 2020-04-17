@@ -19,6 +19,10 @@ if BUILDMEX
 subdirMATLAB=matlab
 endif
 
+if BUILDOCTAVE
+subdirOCTAVE=octave
+endif
+
 if BUILDPYTHON
 subdirPYTHON=python
 endif
@@ -27,7 +31,7 @@ if BUILDSCILAB
 subdirSCILAB=scilab
 endif
 
-SUBDIRS = . $(subdirMATLAB) $(subdirPYTHON) $(subdirSCILAB)
+SUBDIRS = . $(subdirMATLAB) $(subdirOCTAVE) $(subdirPYTHON) $(subdirSCILAB)
 
 RPC_INC_DIR=@RPC_INC_DIR@
 

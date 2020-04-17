@@ -31,7 +31,7 @@
 #ifndef GFM_COMMON_H
 #define GFM_COMMON_H
 
-#include "mex.h"
+#include "octave/mex.h"
 #include <gfi_array.h>
 
 const char* mxClassID2string(mxClassID id);

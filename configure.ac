@@ -993,7 +993,7 @@ if test "$useoctave" != NO; then
      MKOCTFILE_EXE=`which $MKOCTFILE`
      MKOCTFILE_EXE=`readlink -e $MKOCTFILE_EXE`
      OCTAVE_ROOT=`echo $MKOCTFILE_EXE | sed -e 's/bin.*$//'`
-     OCTAVE_COM_EXT=".oct"
+     OCTAVE_COM_EXT=".mex"
      OCTAVE_RELEASE=`octave --version | grep "GNU Octave" | sed -n '1p' | sed 's/^.*version //g'`
      echo "Octave release is $OCTAVE_RELEASE"
   fi
@@ -1149,6 +1149,8 @@ interface/Makefile                                                      \
 interface/src/Makefile                                                  \
 interface/src/matlab/Makefile                                           \
 interface/src/matlab/private/Makefile                                   \
+interface/src/octave/Makefile                                           \
+interface/src/octave/private/Makefile                                   \
 interface/src/python/Makefile                                           \
 interface/src/python/setup.py                                           \
 interface/src/scilab/Makefile                                           \
