@@ -14,7 +14,7 @@ parallelization adapted to its specificities in order to
 obtain a good load balancing. You may build your own parallelization
 using the mesh regions to parallelize assembly procedures.
 
-Nevertheless, the brick system offers a generic parallelization based on MPI
+Nevertheless, the brick system offers a generic parallelization based on `Open MPI <https://www.open-mpi.org>`_
 (communication between processes),
 `METIS <http://glaros.dtc.umn.edu/gkhome/metis/metis/overview>`_
 (partition of the mesh)

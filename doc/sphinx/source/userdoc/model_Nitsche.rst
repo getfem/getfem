@@ -27,7 +27,7 @@ This is the case for instance for mixed formulations of incompressible elasticit
 The Neumann terms depend also frequently on some parameters of the model (elasticity coefficients ...) but this is assumed to be contained in its expression.
 
 For instance, if there is a Laplace term (:math:`\Delta u`), applied on the variable :math:`u`, the Neumann term will be :math:`G = \dfrac{\partial u}{\partial n}` where :math:`n` is the outward unit normal on the considered boundary.
-If :math:`u` represents the displacements of a deformable body, the Neumann term will be :math:`G = \sigma(u)n`, where :math:`\sigma(u)` is the stress tensor depending on the consitutive law.
+If :math:`u` represents the displacements of a deformable body, the Neumann term will be :math:`G = \sigma(u)n`, where :math:`\sigma(u)` is the stress tensor depending on the constitutive law.
 Of course, in that case :math:`G` also depends on some material parameters.
 If additionally a mixed incompressibility brick is added with a variable :math:`p` denoting the pressure, the Neumann term on :math:`u` will depend on :math:`p` in the following way:
 :math:`G = \sigma(u)n - pn`

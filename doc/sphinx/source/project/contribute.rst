@@ -28,7 +28,7 @@ How to contribute / Git repository on Savannah
 .. _tfwebteam: https://www.transifex.com/getfem-doc
 
 .. |cfvlang| replace:: Currently supported languages by Sphinx are
-.. _cfvlang: http://www.sphinx-doc.org/en/stable/usage/configuration.html#confval-language
+.. _cfvlang: https://www.sphinx-doc.org/en/latest/usage/configuration.html#confval-language
 
 .. |sphintl| replace:: Sphinx Internationalization
 .. _sphintl: http://www.sphinx-doc.org/en/stable/intl.html
