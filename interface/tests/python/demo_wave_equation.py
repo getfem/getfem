@@ -32,12 +32,13 @@ import numpy as np
 import getfem as gf
 
 NX = 10
-m = gf.Mesh('cartesian', np.arange(0., 1.+1./NX,1./NX),
-            np.arange(0., 1.+1./NX,1./NX));
+X = np.arange(0.0, 1.0 + 1.0 / NX, 1.0 / NX)
+Y = np.arange(0.0, 1.0 + 1.0 / NX, 1.0 / NX)
+m = gf.Mesh("cartesian", X, Y)
 
 
 ## create a mesh_fem of for a field of dimension 1 (i.e. a scalar field)
-mf = gf.MeshFem(m,1)
+mf = gf.MeshFem(m, 1)
 mf.set_classical_fem(2)
 
 ## Integration which will be used
@@ -49,112 +50,117 @@ border = m.outer_faces()
 m.set_region(1, border)
 
 ## Interpolate the initial data
-U0 = mf.eval('y*(y-1.)*x*(x-1.)*x*x')
-V0 = 0.*U0
+U0 = mf.eval("y*(y-1.)*x*(x-1.)*x*x")
+V0 = 0.0 * U0
 
-md=gf.Model('real');
-md.add_fem_variable('u', mf);
-md.add_fem_variable('u1', mf);
-md.add_fem_variable('u2', mf);
-md.add_Laplacian_brick(mim, 'u');
-md.add_Laplacian_brick(mim, 'u1');
-md.add_Laplacian_brick(mim, 'u2');
-md.add_Dirichlet_condition_with_multipliers(mim, 'u', mf, 1);
-md.add_Dirichlet_condition_with_multipliers(mim, 'u1', mf, 1);
-md.add_Dirichlet_condition_with_multipliers(mim, 'u2', mf, 1);
-# md.add_Dirichlet_condition_with_penalization(mim, 'u', 1E9, 1);
-# md.add_Dirichlet_condition_with_simplification('u', 1);
+md = gf.Model("real")
+md.add_fem_variable("u", mf)
+md.add_fem_variable("u1", mf)
+md.add_fem_variable("Dot2_u2", mf)
 
 ## Transient part.
-T = 5.0;
+T = 5.0
 # Set dt smaller to fix Newmark and Houbolt method.
 # dt = 0.001;
-dt = 0.025;
-alpha = 0.00;
-beta = 0.25;
-gamma = 0.5;
+dt = 0.025
+alpha = 0.00
+beta = 0.25
+gamma = 0.5
 
-md.add_Newmark_scheme('u', beta, gamma)
-md.add_Houbolt_scheme('u1')
-md.add_Hilber_Hughes_Taylor_scheme('u2', alpha, beta, gamma)
-md.add_mass_brick(mim, 'Dot2_u')
-md.add_mass_brick(mim, 'Dot2_u1')
-md.add_mass_brick(mim, 'Dot2_u2')
+md.add_Newmark_scheme("u", beta, gamma)
+md.add_Houbolt_scheme("u1")
+md.add_Hilber_Hughes_Taylor_scheme("Dot2_u2", alpha, beta, gamma)
+
+md.add_mass_brick(mim, "Dot2_u")
+md.add_mass_brick(mim, "Dot2_u1")
+md.add_mass_brick(mim, "Dot2_u2")
+
+md.add_Laplacian_brick(mim, "u")
+md.add_Laplacian_brick(mim, "u1")
+md.add_Laplacian_brick(mim, "u2")
+
+# md.add_Dirichlet_condition_with_penalization(mim, 'u', 1E9, 1);
+# md.add_Dirichlet_condition_with_simplification('u', 1);
+md.add_Dirichlet_condition_with_multipliers(mim, "u", mf, 1)
+md.add_Dirichlet_condition_with_multipliers(mim, "u1", mf, 1)
+md.add_Dirichlet_condition_with_multipliers(mim, "u2", mf, 1)
+
 md.set_time_step(dt)
 
 ## Initial data.
-md.set_variable('Previous_u',  U0)
-md.set_variable('Previous_Dot_u',  V0)
-md.set_variable('Previous_u1', U0)
-md.set_variable('Previous2_u1', U0)
-md.set_variable('Previous3_u1', U0)
-md.set_variable('Previous_u2', U0)
-md.set_variable('Previous_Dot_u', V0)
+md.set_variable("Previous_u", U0)
+md.set_variable("Previous_Dot_u", V0)
+md.set_variable("Previous_u1", U0)
+md.set_variable("Previous2_u1", U0)
+md.set_variable("Previous3_u1", U0)
+md.set_variable("Previous_u2", U0)
+md.set_variable("Previous_Dot_u2", V0)
 
 ## Initialisation of the acceleration 'Previous_Dot2_u'
-md.perform_init_time_derivative(dt/2.)
+md.perform_init_time_derivative(dt / 2.0)
 md.solve()
 
-A0 = md.variable('Previous_Dot2_u')
+A0 = md.variable("Previous_Dot2_u")
 
 try:
-    os.makedirs('results')
+    os.makedirs("results")
 except FileExistsError:
     pass
-mf.export_to_vtk('results/displacement_0.vtk', U0)
-mf.export_to_vtk('results/velocity_0.vtk', V0)
-mf.export_to_vtk('results/acceleration_0.vtk', A0)
+mf.export_to_vtk("results/displacement_0.vtk", U0)
+mf.export_to_vtk("results/velocity_0.vtk", V0)
+mf.export_to_vtk("results/acceleration_0.vtk", A0)
 
-A0 = 0.*U0
+A0 = 0.0 * U0
 
 try:
-    os.makedirs('results1')
+    os.makedirs("results1")
 except FileExistsError:
     pass
-mf.export_to_vtk('results1/displacement_0.vtk', U0)
-mf.export_to_vtk('results1/velocity_0.vtk', V0)
-mf.export_to_vtk('results1/acceleration_0.vtk', A0)
+mf.export_to_vtk("results1/displacement_0.vtk", U0)
+mf.export_to_vtk("results1/velocity_0.vtk", V0)
+mf.export_to_vtk("results1/acceleration_0.vtk", A0)
 
-A0 = md.variable('Previous_Dot2_u2')
+A0 = md.variable("Previous_Dot2_u2")
 
 try:
-    os.makedirs('results2')
+    os.makedirs("results2")
 except FileExistsError:
     pass
-mf.export_to_vtk('results2/displacement_0.vtk', U0)
-mf.export_to_vtk('results2/velocity_0.vtk', V0)
-mf.export_to_vtk('results2/acceleration_0.vtk', A0)
+mf.export_to_vtk("results2/displacement_0.vtk", U0)
+mf.export_to_vtk("results2/velocity_0.vtk", V0)
+mf.export_to_vtk("results2/acceleration_0.vtk", A0)
 
 ## Iterations
-n = 1;
-for t in np.arange(0.,T,dt):
-  print ('Time step %g' % t)
-  md.solve();
-  U = md.variable('u')
-  V = md.variable('Dot_u')
-  A = md.variable('Dot2_u')
-  
-  mf.export_to_vtk('results/displacement_%d.vtk' % n, U)
-  mf.export_to_vtk('results/velocity_%d.vtk' % n, V)
-  mf.export_to_vtk('results/acceleration_%d.vtk' % n, A)
+n = 1
+for t in np.arange(0.0, T, dt):
+    print("Time step %g" % t)
+    md.solve()
+    U = md.variable("u")
+    V = md.variable("Dot_u")
+    A = md.variable("Dot2_u")
 
-  U = md.variable('u1')
-  V = md.variable('Dot_u1')
-  A = md.variable('Dot2_u1')
+    mf.export_to_vtk("results/displacement_%d.vtk" % n, U)
+    mf.export_to_vtk("results/velocity_%d.vtk" % n, V)
+    mf.export_to_vtk("results/acceleration_%d.vtk" % n, A)
 
-  mf.export_to_vtk('results1/displacement_%d.vtk' % n, U)
-  mf.export_to_vtk('results1/velocity_%d.vtk' % n, V)
-  mf.export_to_vtk('results1/acceleration_%d.vtk' % n, A)
+    U = md.variable("u1")
+    V = md.variable("Dot_u1")
+    A = md.variable("Dot2_u1")
 
-  U = md.variable('u2')
-  V = md.variable('Dot_u2')
-  A = md.variable('Dot2_u2')
-  mf.export_to_vtk('results2/displacement_%d.vtk' % n, U)
-  mf.export_to_vtk('results2/velocity_%d.vtk' % n, V)
-  mf.export_to_vtk('results2/acceleration_%d.vtk' % n, A)
+    mf.export_to_vtk("results1/displacement_%d.vtk" % n, U)
+    mf.export_to_vtk("results1/velocity_%d.vtk" % n, V)
+    mf.export_to_vtk("results1/acceleration_%d.vtk" % n, A)
 
-  n += 1
-  md.shift_variables_for_time_integration()
-  
+    U = md.variable("u2")
+    V = md.variable("Dot_u2")
+    A = md.variable("Dot2_u2")
+    mf.export_to_vtk("results2/displacement_%d.vtk" % n, U)
+    mf.export_to_vtk("results2/velocity_%d.vtk" % n, V)
+    mf.export_to_vtk("results2/acceleration_%d.vtk" % n, A)
 
-print ('You can view solutions with for instance:\nmayavi2 -d results/displacement_0.vtk -f WarpScalar -m Surface')
+    n += 1
+    md.shift_variables_for_time_integration()
+
+
+print("You can view solutions with for instance:")
+print("mayavi2 -d results/displacement_0.vtk -f WarpScalar -m Surface")
