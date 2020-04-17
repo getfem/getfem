@@ -11,6 +11,7 @@
 .. |py| replace:: *Python*
 .. |sci| replace:: *SciLab*
 .. |mlab| replace:: *MatLab*
+.. |octv| replace:: *Octave*
 .. |gf| replace:: *GetFEM*
 .. |gfm| replace:: *GetFEM*
 .. |gmm| replace:: *Gmm++*

@@ -815,7 +815,7 @@ if test "$usematlab" != NO; then
     AC_CHECK_PROGS(MEX, mex.bat)
     if test x"$MEX" = x""; then
       if test x$usematlab = xYES; then
-        AC_MSG_ERROR([Impossible to build the matlab interface without mex -- specify its full path with the MEX=/path/to/mex option, or use --enable-matlab-interface=no])
+        AC_MSG_ERROR([Impossible to build the matlab interface without mex -- specify its full path with the MEX=/path/to/mex option, or use --enable-matlab=no])
         exit 1
       fi
     else
@@ -951,6 +951,60 @@ AC_SUBST(GFSERVERFLAGS)
 AC_SUBST(STDCPP_STATICLIBS)
 
 
+
+
+
+
+dnl -----------------------------------------------
+dnl Octave Interface
+dnl -----------------------------------------------
+
+# list of pseudo functions
+# PSEUDO_FUNCTIONS_LOC=`$srcdir/bin/extract_doc $srcdir/interface/src pseudo_loc`
+# echo $PSEUDO_FUNCTIONS_LOC
+# PSEUDO_FUNCTIONS=`$srcdir/bin/extract_doc $srcdir/interface/src pseudo_gen`
+# MATLAB_OBJ_DIRS=`$srcdir/bin/extract_doc $srcdir/interface/src mobj_dirs`
+# AC_SUBST(PSEUDO_FUNCTIONS)
+# AC_SUBST(PSEUDO_FUNCTIONS_LOC)
+# AC_SUBST(MATLAB_OBJ_DIRS)
+
+AC_ARG_ENABLE(octave,
+ [AS_HELP_STRING([--enable-octave],[turn on/off octave support])],
+ [case "${enableval}" in
+   yes) useoctave=YES ;;
+   no)  useoctave=NO ;;
+   *) AC_MSG_ERROR([bad value ${enableval} for --enable-octave]) ;;
+ esac],[useoctave=NO])
+
+AC_ARG_WITH(octave-toolbox-dir,
+            [AS_HELP_STRING([--with-octave-toolbox-dir],[directory in which the octave interface will be installed])],
+            OCTAVETOOLBOXDIR="$withval",OCTAVETOOLBOXDIR="$GFPREFIX/getfem_octavetoolbox")
+AC_SUBST(OCTAVETOOLBOXDIR)
+
+if test "$useoctave" != NO; then
+  AC_CHECK_PROGS(MKOCTFILE, mkoctfile)
+  if test x"$MKOCTFILE" = x""; then
+    if test x$useoctave = xYES; then
+      AC_MSG_ERROR([Impossible to build the octave interface without mkoctfile -- specify its full path with the MKOCTFILE=/path/to/mkoctfile option, or use --enable-octave=no])
+        exit 1
+    fi
+  else
+     # MATLAB_ROOT=`$MEX -v 2>&1 | grep "MATLAB  " | awk '{print $4}'|sed -e '2,$d'`
+     MKOCTFILE_EXE=`which $MKOCTFILE`
+     MKOCTFILE_EXE=`readlink -e $MKOCTFILE_EXE`
+     OCTAVE_ROOT=`echo $MKOCTFILE_EXE | sed -e 's/bin.*$//'`
+     OCTAVE_COM_EXT=".oct"
+     OCTAVE_RELEASE=`octave --version | grep "GNU Octave" | sed -n '1p' | sed 's/^.*version //g'`
+     echo "Octave release is $OCTAVE_RELEASE"
+  fi
+fi
+AM_CONDITIONAL(BUILDOCTAVE, test x$useoctave = xYES)
+
+AC_SUBST(OCTAVE_RELEASE)
+AC_SUBST(OCTAVE_COM_EXT)
+AC_SUBST(MKOCTFILE)
+
+AM_CONDITIONAL(USE_MINGW_OCTAVE, test x"$OCTAVE_COM_EXT" = x".dll")
 
 dnl ----------------------------------------------
 dnl python 
@@ -1179,6 +1233,7 @@ echo -e "\n\n"
 echo "-----------------------------------------------------------------------"
 echo "Ready to build getfem"
 echo "  building MATLAB interface: $usematlab"
+echo "  building OCTAVE interface: $useoctave"
 echo "  building PYTHON interface: $usepython (requires numpy, scipy and also mpi4py for the parallel version)"
 echo "  building SCILAB interface: $usescilab"
 echo "  If you want to build the shared library of GetFEM, use --enable-shared"
