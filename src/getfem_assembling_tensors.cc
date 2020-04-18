@@ -348,7 +348,8 @@ namespace getfem {
           tensor_bases[k] = const_cast<TDIter>(&(*eltm[k]->begin()));
         }
         red.do_reduction();
-        long one = 1, n = int(red.out_data.size()); assert(n);
+        BLAS_INT one = BLAS_INT(1), n = BLAS_INT(red.out_data.size());
+        assert(n);
 	gmm::daxpy_(&n, &c, const_cast<double*>(&(red.out_data[0])),
 		    &one, (double*)&(t[0]), &one);
       }

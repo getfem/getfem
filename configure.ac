@@ -348,6 +348,33 @@ if test x$useblasinterface = xYES; then
   CPPFLAGS="$CPPFLAGS -DGMM_USES_BLAS_INTERFACE"
 fi
 
+
+
+
+# 32 or 64 bits blas interface
+AC_RUN_IFELSE([AC_LANG_SOURCE([[
+#include <stdlib.h>
+int main() {
+  int a; long b;
+  int *pa; long *pb; void *pc;
+
+  if (sizeof(long) > sizeof(int)) {
+    a = 0x3E0024; b = 0;
+    pb = &b; pc = (void *)(pb); pa = (int *)(pc); *pa = a;
+    if (int(b) != a) exit(1);
+    *pa = 0x3E0024;
+    if (int(b) != a) exit(1);
+    if (b != long(a)) exit(1);
+  } 
+} ]])],[ac_int_long_exchangeable=yes; echo "checking if int and long pointers are exchangeable...yes"],[ac_int_long_exchangeable=yes; echo "Int and long pointers are not exchangeable"],[])
+
+if test "$ac_int_long_exchangeable" != yes; then
+  echo "Checking if int and long pointers are exchangeable...no"
+else
+  echo "Checking if int and long pointers are exchangeable...yes"
+  AC_DEFINE_UNQUOTED(INT_LONG_POINTER_ECHANGEABLE, 1, [int and long pointers are exchangeable])
+fi
+
 dnl ------------------------------LAPACK TEST--------------------------------
 
 if test x"$acx_blas_ok" = xyes; then
