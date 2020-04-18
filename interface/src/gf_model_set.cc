@@ -118,6 +118,29 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        );
 
 
+    /*@SET ('add im variable', @str name, @tmimd mimd)
+      Add a variable to the model linked to a @tmimd. `name` is the variable
+      name. @*/
+    sub_command
+      ("add im variable", 2, 2, 0, 0,
+       std::string name = in.pop().to_string();
+       getfem::im_data *mimd = to_meshimdata_object(in.pop());
+       md->add_im_variable(name, *mimd);
+       workspace().set_dependence(md, mimd);
+       );
+
+    /*@SET ('add internal im variable', @str name, @tmimd mimd)
+      Add a variable to the model, which is linked to a @tmimd and will be
+      condensed out during the assemblage of the tangent matrix. `name` is
+      the variable name. @*/
+    sub_command
+      ("add internal im variable", 2, 2, 0, 0,
+       std::string name = in.pop().to_string();
+       getfem::im_data *mimd = to_meshimdata_object(in.pop());
+       md->add_internal_im_variable(name, *mimd);
+       workspace().set_dependence(md, mimd);
+       );
+
     /*@SET ('add variable', @str name, sizes)
       Add a variable to the model of constant sizes. `sizes` is either a
       integer (for a scalar or vector variable) or a vector of dimensions
