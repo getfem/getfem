@@ -366,7 +366,7 @@ int main() {
     if (int(b) != a) exit(1);
     if (b != long(a)) exit(1);
   } 
-} ]])],[ac_int_long_exchangeable=yes; echo "checking if int and long pointers are exchangeable...yes"],[ac_int_long_exchangeable=no; echo "Int and long pointers are not exchangeable"],[])
+} ]])],[ac_int_long_exchangeable=yes],[ac_int_long_exchangeable=no],[])
 
 if test "$ac_int_long_exchangeable" != yes; then
   echo "Checking if int and long pointers are exchangeable...no"

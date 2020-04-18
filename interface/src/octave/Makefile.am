@@ -27,7 +27,7 @@ AUTO_M_FILES = $(PSEUDO_FUNCTIONS_LOC:.cc=.m)
 
 
 gf_mesh.m : ../libgetfemint.la $(top_srcdir)/bin/extract_doc
-	$(top_srcdir)/bin/extract_doc @srcdir@/.. matlab-com || (rm -f gf_mesh.m; /bin/false )
+	$(top_srcdir)/bin/extract_doc @srcdir@/.. octave-com || (rm -f gf_mesh.m; /bin/false )
 
 
 EXTRA_DIST = gfm_rpc_mexint.c gfm_mex.c gfm_common.c gfm_common.h $(M_FILES)
