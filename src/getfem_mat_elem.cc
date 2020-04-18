@@ -398,12 +398,12 @@ namespace getfem {
       if (nm == 0) {
         t[0] += J;
       } else {
-        long n0 = int(es_end[0] - es_beg[0]);
+        BLAS_INT n0 = BLAS_INT(es_end[0] - es_beg[0]);
         base_tensor::const_iterator pts0 = pts[0];
 
         /* very heavy reduction .. takes much time */
         k = nm-1; Vtab[k] = J;
-        long one = 1;
+        BLAS_INT one = BLAS_INT(1);
         scalar_type V;
         do {
           for (V = Vtab[k]; k; --k)
