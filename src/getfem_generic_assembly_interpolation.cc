@@ -443,23 +443,22 @@ namespace getfem {
 
     // Could be improved by not performing the assembly of the global mass matrix
     // working locally. This means a specific assembly.
-    model_real_sparse_matrix M(mf.nb_dof(), mf.nb_dof());
+    size_type nbdof = mf.nb_dof();
+    model_real_sparse_matrix M(nbdof, nbdof);
     asm_mass_matrix(M, mim, mf, region);
+    // FIXME: M should be cached for performance
 
-    ga_workspace workspace(md);
-    size_type nbdof = md.nb_dof();
-    gmm::sub_interval I(nbdof, mf.nb_dof());
+    ga_workspace workspace(md, ga_workspace::inherit::NONE);
+    gmm::sub_interval I(0,nbdof);
     workspace.add_fem_variable("c__dummy_var_95_", mf, I, base_vector(nbdof));
     if (mf.get_qdims().size() > 1)
       workspace.add_expression("("+expr+"):Test_c__dummy_var_95_",mim,region,2);
     else
       workspace.add_expression("("+expr+").Test_c__dummy_var_95_",mim,region,2);
-    base_vector residual(nbdof+mf.nb_dof());
-    workspace.set_assembled_vector(residual);
+    getfem::base_vector F(nbdof);
+    workspace.set_assembled_vector(F);
     workspace.assembly(1);
-    getfem::base_vector F(mf.nb_dof());
-    gmm::resize(result, mf.nb_dof());
-    gmm::copy(gmm::sub_vector(residual, I), F);
+    gmm::resize(result, nbdof);
 
     getfem::base_matrix loc_M;
     getfem::base_vector loc_U;
