@@ -859,7 +859,7 @@ elif (option == 'matlab-com'):
 #
 #
 # Option octave-com
-#      Extract the matlab commands, produces m-files and Matlab object
+#      Extract the octave commands, produces m-files and Octave object
 #      sub directories.
 #
 #
@@ -933,6 +933,9 @@ elif (option == 'octave-com'):
         mfile.write('  for i = 1:nargin \n');
         mfile.write('    if (isobject(varargin{i})) \n');
         mfile.write('      varargin{i} = struct(varargin{i}); \n');
+        mfile.write('    endif \n');
+        mfile.write('    if (islogical(varargin{i})) \n');
+        mfile.write('      varargin{i} = round(varargin{i}); \n');
         mfile.write('    endif \n');
         mfile.write('  endfor \n');
         mfile.write('  if (nargout),\n')

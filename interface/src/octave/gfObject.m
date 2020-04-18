@@ -20,7 +20,7 @@ function b=gfObject(a)
     b=[];
   elseif (isobject(a))
     b=a;
-  elseif (isstruct(a) & numel(a))
+  elseif (isstruct(a) && numel(a))
     sclass = gf_workspace('class name',a(1));
     b=feval(sclass,a);
   else error('neither an object nor a struct');

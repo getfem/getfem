@@ -650,7 +650,7 @@ void gf_compute(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
   >> pcolor(squeeze(Uq(1,:,:)));
  @*/
 /*@MATLABEXT
-  if (nargin>=3 & strcmpi(varargin{3}, 'interpolate on Q1 grid')),
+  if (nargin>=3 && strcmpi(varargin{3}, 'interpolate on Q1 grid')),
     [varargout{1:nargout}]=gf_compute_Q1grid_interp(varargin{[1 2 4:nargin]});
     return;
   end;

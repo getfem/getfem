@@ -63,6 +63,7 @@ mxarray_to_gfi_array(const mxArray *mx, gfi_array *t)
   n2=n;
   
   assert(t);
+
   switch (mxGetClassID(mx)) {    
     case mxCELL_CLASS: {
       mwSize i;
@@ -88,7 +89,6 @@ mxarray_to_gfi_array(const mxArray *mx, gfi_array *t)
       t->storage.gfi_storage_u.data_int32.data_int32_len = n;
       t->storage.gfi_storage_u.data_int32.data_int32_val = mxGetData(mx);
     } break;
-#ifdef LOGICAL_IS_A_TYPE
     case mxLOGICAL_CLASS: {
       int i;
       mxLogical *p = (mxLogical*)mxGetData(mx);
@@ -98,7 +98,6 @@ mxarray_to_gfi_array(const mxArray *mx, gfi_array *t)
       for (i = 0; i < n; ++i)
 	t->storage.gfi_storage_u.data_int32.data_int32_val[i] = (p[i] ? 1 : 0);
     } break;
-#endif
     case mxUINT32_CLASS: {
       t->storage.type = GFI_UINT32;
       t->storage.gfi_storage_u.data_uint32.data_uint32_len = n;
@@ -194,7 +193,7 @@ mxarray_to_gfi_array(const mxArray *mx, gfi_array *t)
           mexPrintf("empty arrays of getfem object ids not handled"); return 1;
         }
       } else { 
-        mexPrintf("matlab structures (except getfem object ids) not handled"); return 1; 
+        mexPrintf("Octave structures (except getfem object ids) not handled"); return 1; 
       }
     } break;
   }

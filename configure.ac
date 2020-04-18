@@ -1184,8 +1184,8 @@ interface/src/scilab/Makefile                                           \
 interface/src/scilab/sci_gateway/c/builder_gateway_c.sce                \
 interface/tests/Makefile                                                \
 interface/tests/meshes/Makefile                                         \
-interface/tests/matlab/Makefile                                         \
-interface/tests/matlab/private/Makefile                                 \
+interface/tests/matlab-octave/Makefile                                  \
+interface/tests/matlab-octave/private/Makefile                          \
 interface/tests/python/Makefile                                         \
 getfem-config                                                           \
 getfem-config-notinstalled                                              \

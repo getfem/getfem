@@ -80,7 +80,7 @@ function [hsurf, hcontour, hquiver, hmesh, hdefmesh]=gf_plot_aux(mf,U,varargin)
     return;
   end;
   
-  if (mdim ~= 2 & mdim ~= 3),
+  if (mdim ~= 2 && mdim ~= 3),
     error('only 2D and 3D mesh are handled by this function');
   end;
   
@@ -135,14 +135,14 @@ function [hsurf, hcontour, hquiver, hmesh, hdefmesh]=gf_plot_aux(mf,U,varargin)
   end;
   scalarplot_dir=opt.dir(:);
   if (qdim == 1) is_scalarplot = 1; scalarplot_dir=1; end;
-  if (~isempty(opt.contour) & ~is_scalarplot),
+  if (~isempty(opt.contour) && ~is_scalarplot),
     error('contour plot has no meaning for a vector field');
   end;
   mfdef = mf;
   if (~isempty(opt.deformation_mf)) mfdef = struct(opt.deformation_mf); end;
   dqdim = gf_mesh_fem_get(mfdef,'qdim');
-  if (~isempty(opt.deformation) | ison(opt.deformed_mesh)),
-    if (mdim ~= dqdim & ~ison(opt.zplot)),
+  if (~isempty(opt.deformation) || ison(opt.deformed_mesh)),
+    if (mdim ~= dqdim && ~ison(opt.zplot)),
       error(sprintf('can''t plot the deformation of an %dD-object by a %dD-field',mdim,dqdim));
     end;
   end;
@@ -164,7 +164,7 @@ function [hsurf, hcontour, hquiver, hmesh, hdefmesh]=gf_plot_aux(mf,U,varargin)
   ax_nextplot = lower(get(cax,'NextPlot'));
   fig_nextplot = lower(get(cfig,'NextPlot'));
 
-  if (ison(opt.zplot) | mdim == 3), view(3); else view(2); end;
+  if (ison(opt.zplot) || mdim == 3), view(3); else view(2); end;
   
   % build the slice object
   try
@@ -192,7 +192,7 @@ function [hsurf, hcontour, hquiver, hmesh, hdefmesh]=gf_plot_aux(mf,U,varargin)
   end;
 
   % apply the optional deformation
-  if (~isempty(opt.deformation) | mfdef.id ~= mf.id),
+  if (~isempty(opt.deformation) || mfdef.id ~= mf.id),
     ida = gf_mesh_fem_get(mfdef,'linked mesh'); idb = gf_mesh_fem_get(mf,'linked mesh');
     if (ida.id ~= idb.id),
       error('the deformation mesh_fem and the data mesh_fem do not seem to share the same mesh');
@@ -202,8 +202,8 @@ function [hsurf, hcontour, hquiver, hmesh, hdefmesh]=gf_plot_aux(mf,U,varargin)
     end;
     Pdef  = gf_compute(mfdef, Udef, 'interpolate on', sl);
     if (isnumeric(opt.deformation_scale)), dscale = opt.deformation_scale;
-    elseif (ischar(opt.deformation_scale) & ...
-	    numel(opt.deformation_scale) & opt.deformation_scale(end)=='%'),
+    elseif (ischar(opt.deformation_scale) && ...
+	    numel(opt.deformation_scale) && opt.deformation_scale(end)=='%'),
       dscale = str2num(opt.deformation_scale(1:end-1));
       mwidth = max([max(Psl,[],2) - min(Psl,[],2)]);
       defmax = max(abs(Pdef(:)));
@@ -225,7 +225,7 @@ function [hsurf, hcontour, hquiver, hmesh, hdefmesh]=gf_plot_aux(mf,U,varargin)
       sV = scalarplot_dir(:)'*Usl;
     end;
     % and optionally apply the zplot deformation
-    if (ison(opt.pcolor) & ison(opt.zplot) & is_scalarplot),
+    if (ison(opt.pcolor) && ison(opt.zplot) && is_scalarplot),
       Psl = [Psl;sV]; gf_slice_set(sl,'pts',Psl);
     end;
   end;

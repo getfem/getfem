@@ -62,7 +62,7 @@ function [hfaces, htube, hquiver, hmesh]=gf_plot_slice(sl,varargin)
     warning('won''t plot 3D slices, extract the slice boundary first');
   end;
   
-  if (mdim ~= 2 & mdim ~= 3),
+  if (mdim ~= 2 && mdim ~= 3),
     error('only 2D and 3D mesh are handled by this function');
   end;
   
@@ -109,7 +109,7 @@ function [hfaces, htube, hquiver, hmesh]=gf_plot_slice(sl,varargin)
   
   Pm = gf_slice_get(sl,'pts'); 
   if (numel(Pm) == 0) return; end;
-  if (~isempty(opt.data) & size(opt.data,2) ~= size(Pm,2)),
+  if (~isempty(opt.data) && size(opt.data,2) ~= size(Pm,2)),
     error(sprintf('wrong dimensions for the data (has %d columns, should have %d columns)',...
 		  size(opt.data,2),size(Pm,2)));
   end;
@@ -121,7 +121,7 @@ function [hfaces, htube, hquiver, hmesh]=gf_plot_slice(sl,varargin)
     box(i,:) = [min(P{i}) max(P{i})];
   end;
   
-  if (ischar(opt.tube_radius) & numel(opt.tube_radius) & opt.tube_radius(end)=='%')
+  if (ischar(opt.tube_radius) && numel(opt.tube_radius) && opt.tube_radius(end)=='%')
     opt.tube_radius = max(abs(box(:,2)-box(:,1))) * 0.01 * str2num(opt.tube_radius(1:end-1));
   end;
   
@@ -140,10 +140,10 @@ function [hfaces, htube, hquiver, hmesh]=gf_plot_slice(sl,varargin)
   [hfaces,h,hquiver]=do_plot_2D(sl,P,T{2},opt); hmesh=[hmesh(:)' h(:)'];
   
   if (mdim == 3), view(3); else view(2); end;
-  if (strcmpi(get(gcf,'renderer'),'opengl')),
-    warning('OpenGL renderer does not work well with getfem, changing to zbuffer');
-  end;
-  set(gcf,'renderer','zbuffer');
+  % if (strcmpi(get(gcf,'renderer'),'opengl')),
+  %  warning('OpenGL renderer does not work well with getfem, changing to zbuffer');
+  % end;
+  % set(gcf,'renderer','zbuffer');
  
   if (~hold_state),
     set(cax,'DataAspectRatio', [1 1 1]);
@@ -168,7 +168,7 @@ function [htube,hmesh]=do_plot_1D(P,T,opt)
     if (numel(P)==1) C{2}=zeros(size(C{1})); end;
     hmesh=line(C{:},'Color',opt.mesh_edges_color,'LineWidth',opt.mesh_edges_width);
   else
-    if (~isempty(opt.data) & ison(opt.pcolor)),
+    if (~isempty(opt.data) && ison(opt.pcolor)),
       qdim = size(opt.data,1);
       if (qdim == 1),
 	if (iscell(opt.data))
@@ -216,7 +216,7 @@ function h=plot_tube(P, T, D, radius, tubecolor)
   while (1),
     % search for consecutive edge points
     it1 = it0;
-    while (it1 < nT & T(1,it1+1) == T(2,it1)) it1 = it1+1; end;
+    while (it1 < nT && T(1,it1+1) == T(2,it1)) it1 = it1+1; end;
     %disp(sprintf('sequence: %d - %d -- [%d-%d] - [%d-%d]',it0,it1,T(1,it0),T(2,it0),T(1,it1),T(2,it1)))
     % extract the sequence of points
     ip = [T(1,it0) T(2,it0:it1)];
@@ -266,9 +266,9 @@ function [hfaces,hmesh,hquiver]=do_plot_2D(sl,P,T,opt)
   mdim=numel(P);
   if (numel(T)),
     d={};  
-    if (ison(opt.pcolor) & size(opt.data,1)==1 & ~isempty(opt.data)),
+    if (ison(opt.pcolor) && size(opt.data,1)==1 && ~isempty(opt.data)),
       d={'FaceVertexCData',opt.data(:),'FaceColor','interp'};
-    elseif (isempty(opt.data) & ison(opt.mesh_faces))
+    elseif (isempty(opt.data) && ison(opt.mesh_faces))
       d={'FaceVertexCData',opt.mesh_faces_color, 'FaceColor','flat'};
     end;    
     if (~isempty(d)),
@@ -281,7 +281,7 @@ function [hfaces,hmesh,hquiver]=do_plot_2D(sl,P,T,opt)
       end;
     end;  
   end;
-  if (ison(opt.mesh) & (ison(opt.mesh_edges) | ison(opt.mesh_slice_edges))),
+  if (ison(opt.mesh) && (ison(opt.mesh_edges) || ison(opt.mesh_slice_edges))),
     [p,t1,t2] = gf_slice_get(sl,'edges');
     if (ison(opt.mesh_edges))
       hmesh=patch('Vertices',p','Faces',t1','EdgeColor',opt.mesh_edges_color,'LineWidth',opt.mesh_edges_width);

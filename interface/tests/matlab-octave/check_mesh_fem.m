@@ -98,7 +98,7 @@ function check_mesh_fem(iverbose,idebug)
   
   N=gf_mesh_get(m,'dim');
   npt=gf_mesh_get(m,'nbpts');
-  gfassert('N==3 & npt==40');
+  gfassert('N==3 && npt==40');
   ncv=gf_mesh_get(m,'nbcvs');
   gfassert('ncv==7');
   lastcv=gf_mesh_get(m, 'max cvid');
@@ -150,7 +150,7 @@ function check_mesh_fem(iverbose,idebug)
   Z=gf_mesh_get(m, 'curved edges', 4, gf_mesh_get(m, 'outer faces',[4 5]));
   ZZ=gf_mesh_get(m, 'curved edges', 4, [4 5]);
   for i=0:7
-    if (i > 0 & i < 7),
+    if (i > 0 && i < 7),
       n=gf_mesh_get(m, 'normal of face', 5, 3, i);
       gfassert('norm(n-[0    0.7071    0.7071]) < 1e-3');
       nn(i,:)=gf_mesh_get(m, 'normal of face', 5, 1, i);
@@ -254,7 +254,7 @@ function check_mesh_fem(iverbose,idebug)
   gf_mesh_set(m,'boundary',51,oo);
 
   o=gf_mesh_get(m,'boundary',51);
-  gfassert('size(o)==size(oo) & sum(sum(o))==sum(sum(oo))');
+  gfassert('size(o)==size(oo) && sum(sum(o))==sum(sum(oo))');
 
   o=gf_mesh_get(mf2,'boundary',1);
   gfassert('isempty(o)');
@@ -319,8 +319,9 @@ function check_mesh_fem(iverbose,idebug)
   gfassert('np < maxpid');
   gfassert('ncv < maxcvid');
 
-  
-  gf_mesh_set(m,'optimize structure', false);
+  gf_mesh_set(m, 'optimize structure', 0);
+
+  gf_mesh_set(m, 'optimize structure', false);
 
   maxpid=gf_mesh_get(m,'max pid');
   maxcvid=gf_mesh_get(m,'max cvid');

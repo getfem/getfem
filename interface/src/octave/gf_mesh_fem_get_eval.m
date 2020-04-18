@@ -34,7 +34,7 @@ function X=gf_mesh_fem_get_eval(mf, what, dof)
   end;
   dxy = gf_mesh_fem_get(mf, 'basic dof nodes',dof);
   
-  if (size(what, 2) == nbdof & isnumeric(what)),
+  if (size(what, 2) == nbdof && isnumeric(what)),
     X = what;
     return;
   elseif (ischar(what))

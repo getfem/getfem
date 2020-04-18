@@ -1008,7 +1008,7 @@ void gf_mesh_fem_get(getfemint::mexargs_in& m_in,
 
   @*/
 /*@MATLABEXT
-  if (nargin>=2 & strcmpi(varargin{2},'eval')),
+  if (nargin>=2 && strcmpi(varargin{2},'eval')),
     [varargout{1:nargout}]=gf_mesh_fem_get_eval(varargin{[1 3:nargin]}); return;
   end;
   @*/

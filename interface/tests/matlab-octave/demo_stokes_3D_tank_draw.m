@@ -15,7 +15,7 @@
 % along  with  this program;  if not, write to the Free Software Foundation,
 % Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 
-if (exist('U')~=1 | exist('P') ~= 1),
+if (exist('U')~=1 || exist('P') ~= 1),
   error('run demo_stokes_3D_tank2 first');
 end;
 clf;

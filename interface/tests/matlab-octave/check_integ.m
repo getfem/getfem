@@ -52,7 +52,7 @@ function check_integ(iverbose,idebug)
 %      0.3261    0.3261    0.1739    0.1739    0.3261    0.3261    0.1739];
   gfassert('norm(c(:)-C(:))<1e-3');
   for i=-1:4,
-    if (i >= 1 & i <= 3)
+    if (i >= 1 && i <= 3)
       gf_integ_get(im,'face_pts',i);
       gf_integ_get(im,'face_coeffs',i);
     else

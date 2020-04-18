@@ -31,7 +31,7 @@ function [Q,G,H,R,F]=gf_asm_pdetoolbc(mf_u, mf_d, b, e, f_expr)
     error(sprintf(['the boundary condition b was generated for a %d-D problem, '...
 		   'while the Qdim of the mesh_fem is %d'], N, qdim));
   end;
-  if (nargin >= 5 & qdim ~= size(f_expr,1)),
+  if (nargin >= 5 && qdim ~= size(f_expr,1)),
     error('the qdim of the mesh fem and the size of f (the volumic source term) do not match');
   end;
   if (gf_mesh_fem_get(mf_d, 'qdim') ~= 1),
@@ -137,7 +137,7 @@ function [Q,G,H,R,F]=gf_asm_pdetoolbc(mf_u, mf_d, b, e, f_expr)
   end;
 
   % check for volumic source term
-  if (nargin == 5 & nargout == 5),
+  if (nargin == 5 && nargout == 5),
     if (isstr(f_expr)),
       Fd = zeros(N,nbdof);
       for i=1:N

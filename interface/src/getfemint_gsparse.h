@@ -83,12 +83,26 @@ namespace getfemint
     t_cscmat_r& real_csc_w(t_cscmat_r *p=0)
     { if (p) { v = REAL; pcscmat_r = p; } return *pcscmat_r; }
     t_cscmat_ref_c cplx_csc() { 
-      if (gfimat && gfi_array_is_complex(gfimat)) 
+      if (gfimat && gfi_array_is_complex(gfimat)) {
+        // unsigned nc = gfi_array_get_dim(gfimat)[1];
+        // cout << "jc = [";
+        // for (unsigned i = 0; i <= nc; ++i)
+        //   cout << (gfi_sparse_get_jc(gfimat))[i] << ", ";
+        // cout << "]" << endl;
+        // cout << "ir = [";
+        // for (unsigned i = 0; i < (gfi_sparse_get_jc(gfimat))[nc]; ++i)
+        //   cout << (gfi_sparse_get_ir(gfimat))[i] << ", ";
+        // cout << "]" << endl;
+        // cout << "pr = [";
+        // for (unsigned i = 0; i < 2*(gfi_sparse_get_jc(gfimat))[nc]; ++i)
+        //   cout << (gfi_sparse_get_pr(gfimat))[i] << ", ";
+        // cout << "]" << endl;
         return t_cscmat_ref_c((complex_type*)gfi_sparse_get_pr(gfimat), 
                               gfi_sparse_get_ir(gfimat), 
                               gfi_sparse_get_jc(gfimat),
                               gfi_array_get_dim(gfimat)[0],
                               gfi_array_get_dim(gfimat)[1]);
+      }
       else if (pcscmat_c)
         return t_cscmat_ref_c(&pcscmat_c->pr[0], &pcscmat_c->ir[0],
                               &pcscmat_c->jc[0], 

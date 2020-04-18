@@ -1488,7 +1488,7 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
 }
 
 /*@MATLABEXT
-  if (nargin>=1 & strcmpi(varargin{1},'pdetool boundary conditions')),
+  if (nargin>=1 && strcmpi(varargin{1},'pdetool boundary conditions')),
     [varargout{1:nargout}]=gf_asm_pdetoolbc(varargin{[1 3:nargin]}); return;
   end;
   @*/

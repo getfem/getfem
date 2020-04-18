@@ -103,7 +103,7 @@ end;
 PXY = gf_mesh_get(M, 'pts');
 
 E = gf_mesh_get(M, 'edges', cvflst);
-if (~ison(opt.curved) & isempty(opt.deformation)),
+if (~ison(opt.curved) && isempty(opt.deformation)),
   X = [PXY(1,E(1,:)); PXY(1,E(2,:))];
   if (mdim == 1),
     Y = zeros(size(X));
