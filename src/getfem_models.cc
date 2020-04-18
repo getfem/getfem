@@ -1647,53 +1647,45 @@ namespace getfem {
       scalar_type alpha, beta, gamma;
 
     public:
-      // V = (1-gamma/beta)*V0+(1-gamma/(2*beta))*dt*A0+gamma/(beta*dt)*(U-U0)
-      // A = (1-1/(2.0*beta))*A0-1/(beta*dt)*V0+1/(beta*dt*dt)*(U-U0)
+      // V = V0 + (1+alpha)*dt*gamma*C - (1+alpha)*dt*dt*beta*K
+      // U = U0 + dt*V0 + (1+alpha)*dt*dt*(0.5-beta)*A0
       virtual void init_affine_dependent_variables(model &md) const {
         scalar_type dt = md.get_time_step();
-        scalar_type a0 = scalar_type(1)/(beta*dt*dt), a1 =  dt*a0;
-        scalar_type a2 = (scalar_type(1) - scalar_type(2)*beta)
-          / (scalar_type(2)*beta);
-        scalar_type b0 = (scalar_type(1)+alpha)*gamma/(beta*dt);
-        scalar_type b1 = (scalar_type(1)+alpha)*(beta-gamma)/beta - alpha;
-        scalar_type b2 = (scalar_type(1)+alpha)*dt*(1-gamma/(scalar_type(2)*beta));
-        scalar_type c0 = (scalar_type(1)+alpha);
-        scalar_type c1 = alpha;
 
-        md.set_factor_of_variable(U, c0);
-        md.set_factor_of_variable(V, b0);
-        md.set_factor_of_variable(A, a0);
+        md.set_factor_of_variable(U, -(scalar_type(1)+alpha)*dt*dt*beta);
+        md.set_factor_of_variable(V, -(scalar_type(1)+alpha)*dt*gamma);
+        md.set_factor_of_variable(A, scalar_type(1));
         if (md.is_complex()) {
-          gmm::copy(gmm::scaled(md.complex_variable(U0), complex_type(c1)),
+          gmm::add(gmm::scaled(md.complex_variable(V0), complex_type(scalar_type(1))),
+                   gmm::scaled(md.complex_variable(A0), complex_type(dt*(scalar_type(1)-gamma))),
+                   md.set_complex_constant_part(V));
+          gmm::add(gmm::scaled(md.complex_variable(A), complex_type(dt*gamma)),
+                   md.set_complex_constant_part(V));
+          gmm::add(gmm::scaled(md.complex_variable(U0), complex_type(scalar_type(1))),
+                   gmm::scaled(md.complex_variable(V0), complex_type(dt)),
                    md.set_complex_constant_part(U));
-          gmm::add(gmm::scaled(md.complex_variable(U0), -complex_type(b0)),
-                   gmm::scaled(md.complex_variable(V0), complex_type(b1)),
-                   md.set_complex_constant_part(V));
-          gmm::add(gmm::scaled(md.complex_variable(A0), complex_type(b2)),
-                   md.set_complex_constant_part(V));
-          gmm::add(gmm::scaled(md.complex_variable(U0), -complex_type(a0)),
-                   gmm::scaled(md.complex_variable(V0), -complex_type(a1)),
-                   md.set_complex_constant_part(A));
-          gmm::add(gmm::scaled(md.complex_variable(A0), -complex_type(a2)),
-                   md.set_complex_constant_part(A));
+          gmm::add(gmm::scaled(md.complex_variable(A0), complex_type(dt*dt*(scalar_type(0.5)-beta))),
+                   md.set_complex_constant_part(U));
+          gmm::add(gmm::scaled(md.complex_variable(A), complex_type(dt*dt*beta)),
+                   md.set_complex_constant_part(U));
         } else {
-          gmm::copy(gmm::scaled(md.real_variable(U0), c1),
+          gmm::add(gmm::scaled(md.real_variable(V0), scalar_type(1)),
+                   gmm::scaled(md.real_variable(A0), scalar_type(1)-gamma),
+                   md.set_real_constant_part(V));
+          gmm::add(gmm::scaled(md.real_variable(A), dt*gamma),
+                   md.set_real_constant_part(V));
+          gmm::add(gmm::scaled(md.real_variable(U0), scalar_type(1)),
+                   gmm::scaled(md.real_variable(V0), dt),
                    md.set_real_constant_part(U));
-          gmm::add(gmm::scaled(md.real_variable(U0), -b0),
-                   gmm::scaled(md.real_variable(V0), b1),
-                   md.set_real_constant_part(V));
-          gmm::add(gmm::scaled(md.real_variable(A0), b2),
-                   md.set_real_constant_part(V));
-          gmm::add(gmm::scaled(md.real_variable(U0), -a0),
-                   gmm::scaled(md.real_variable(V0), -a1),
-                   md.set_real_constant_part(A));
-          gmm::add(gmm::scaled(md.real_variable(A0), -a2),
-                   md.set_real_constant_part(A));
+          gmm::add(gmm::scaled(md.real_variable(A0), dt*dt*(scalar_type(0.5)-beta)),
+                   md.set_real_constant_part(U));
+          gmm::add(gmm::scaled(md.real_variable(A), dt*dt*beta),
+                   md.set_real_constant_part(U));
         }
       }
 
       // V = (U-U0)/dt (backward Euler for precomputation)
-      // A = (U-U0)/(dt^2) - V0/dt
+      // U = U0
       virtual void init_affine_dependent_variables_precomputation(model &md)
         const {
         scalar_type dt = md.get_time_step();
@@ -1703,20 +1695,14 @@ namespace getfem {
           gmm::copy(gmm::scaled(md.complex_variable(U0),
                                 -complex_type(1)/dt),
                     md.set_complex_constant_part(V));
-          gmm::add(gmm::scaled(md.complex_variable(U0),
-                               -complex_type(1)/(dt*dt)),
-                   gmm::scaled(md.complex_variable(V0),
-                               -complex_type(1)/dt),
-                   md.set_complex_constant_part(A));
+          gmm::copy(md.complex_variable(U0),
+                    md.set_complex_constant_part(U));
         } else {
           gmm::copy(gmm::scaled(md.real_variable(U0),
                                 -scalar_type(1)/dt),
                     md.set_real_constant_part(V));
-          gmm::add(gmm::scaled(md.real_variable(U0),
-                               -scalar_type(1)/(dt*dt)),
-                   gmm::scaled(md.real_variable(V0),
-                               -scalar_type(1)/dt),
-                   md.set_real_constant_part(A));
+          gmm::copy(md.real_variable(U0),
+                    md.set_real_constant_part(U));
         }
       }
 
@@ -1741,7 +1727,9 @@ namespace getfem {
       Hilber_Hughes_Taylor_scheme(model &md, std::string varname,
                                   scalar_type al, scalar_type be,
                                   scalar_type ga) {
-        U = varname;
+        GMM_ASSERT1(varname.compare(0, 5, "Dot2_") == 0,
+                    "Prefix Dot2_ is need for the Hilber Hughes Taylor scheme varname");
+        U = varname.substr(5);
         U0 = "Previous_" + U;
         V = "Dot_" + U;
         V0 = "Previous_Dot_" + U;
@@ -1753,10 +1741,10 @@ namespace getfem {
                     && gamma >= scalar_type(0.5) && gamma <= scalar_type(1),
                     "Invalid parameter values for the Hilber Hughes Taylor scheme");
 
+        if (!(md.variable_exists(U)))
+          md.add_affine_dependent_variable(U, A);
         if (!(md.variable_exists(V)))
-          md.add_affine_dependent_variable(V, U);
-        if (!(md.variable_exists(A)))
-          md.add_affine_dependent_variable(A, U);
+          md.add_affine_dependent_variable(V, A);
 
         const mesh_fem *mf = md.pmesh_fem_of_variable(U);
         size_type s = md.is_complex() ? gmm::vect_size(md.complex_variable(U))
