@@ -138,8 +138,6 @@ namespace gmm {
     
     part_vector_iterator(void) {}
     explicit part_vector_iterator(const IT &i) : it(i) {}
-    part_vector_iterator(const part_vector_iterator<MIT, MIT, PART> &i) : it(i.it) {}
-    
 
     size_type index(void) const { return it.index(); }
     part_vector_iterator operator ++(int)

@@ -335,6 +335,7 @@ namespace getfem {
     void derivative(const arg_list &args, size_type,
                     base_tensor &result) const { // to be verified
       size_type N = args[0]->sizes()[0];
+      if (!N) return;
       __mat_aux1().base_resize(N, N);
       gmm::copy(args[0]->as_vector(), __mat_aux1().as_vector());
       bgeot::lu_inverse(__mat_aux1());
@@ -343,9 +344,11 @@ namespace getfem {
       for (size_type l = 0; l < N; ++l, ++ita_l) {
         auto ita_k = ita;
         for (size_type k = 0; k < N; ++k, ita_k += N) {
-          auto ita_lj = ita_l;
-          for (size_type j = 0; j < N; ++j, ita_lj += N) {
-            auto ita_ik = ita_k;
+          auto ita_lj = ita_l, ita_ik = ita_k;
+          for (size_type i = 0; i < N; ++i, ++it, ++ita_ik)
+              *it = -(*ita_ik) * (*ita_lj);
+          for (size_type j = 1; j < N; ++j) {
+            ita_lj += N; ita_ik = ita_k;
             for (size_type i = 0; i < N; ++i, ++it, ++ita_ik)
               *it = -(*ita_ik) * (*ita_lj);
           }
