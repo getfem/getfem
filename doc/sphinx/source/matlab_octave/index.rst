@@ -4,8 +4,8 @@
 
 .. _mlab:
 
-|mlab| Interface
-################
+|octv| and |mlab| Interfaces
+############################
 
 .. toctree::
    :maxdepth: 3

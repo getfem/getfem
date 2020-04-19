@@ -9,16 +9,16 @@
 |gfm| OO-commands
 =================
 
-The toolbox comes with a set of |Mlab| objects `mathworks-oo`_, (look at the
+The toolbox comes with a set of |octv| / |mlab| objects `mathworks-oo`_, (look at the
 :file:`@gf*` sub-directories in the toolbox directory). These object are no more
-than the getfem object handles, which are flagged by |mlab| as objects.
+than the getfem object handles, which are flagged by |octv| / |mlab| as objects.
 
 In order to use these objects, you have to call their constructors: ``gfMesh``,
 ``gfMeshFem``, ``gfGeoTrans``, ``gfFem``, ``gfInteg``.  These constructor just
 call the corresponding |gfm| function (i.e.  ``gf_mesh``, ``gf_mesh_fem``, ...),
-and convert the structure returned by these function into a |mlab| object. There
+and convert the structure returned by these function into a |octv| / |mlab| object. There
 is also a ``gfObject`` function which converts any getfem handle into the
-corresponding |mlab| object.
+corresponding |octv| / |mlab| object.
 
 With such object, the most interesting feature is that you do not have to call
 the "long" functions names ``gf_mesh_fem_get(obj,...)``,
@@ -76,7 +76,7 @@ As an example::
   gfGeoTrans object ID= 0 dim=2, nbpts= 6 : GT_PK(2,2)
 
 Although this interface seems more convenient, you must be aware that this always
-induce a call to a mex-file, and additional |mlab| code::
+induce a call to a mex-file, and additional |octv| / |mlab| code::
 
   >> tic; j=0; for i=1:1000, j=j+mf.nbdof; end; toc
   elapsed_time =
@@ -88,7 +88,7 @@ induce a call to a mex-file, and additional |mlab| code::
   elapsed_time =
       0.0088
 
-Hence you should always try to store data in |mlab| arrays instead of
+Hence you should always try to store data in |octv| / |mlab| arrays instead of
 repetitively calling the getfem functions.
 
 Avalaible object types are :envvar:`gfCvStruct`, :envvar:`gfGeoTrans`,

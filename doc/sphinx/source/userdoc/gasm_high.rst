@@ -219,7 +219,7 @@ Note also that the method::
 allows to cancel all furnished expressions and allows to re-use the same workspace for another assembly.
 
 
-It is also possible to call the generic assembly from the Python/Scilab/Matlab interface. See ``gf_asm`` command of the interface for more details.
+It is also possible to call the generic assembly from the Python/Scilab/Octave/Matlab interface. See ``gf_asm`` command of the interface for more details.
 
 C++ assembly examples
 ---------------------
@@ -359,7 +359,7 @@ with ``D`` the flexion modulus and ``nu`` the Poisson ratio.
 Script languages call of the assembly
 -------------------------------------
 
-For the use with Python, Scilab or Matlab interfaces, see the respective documentation, in particular the ``gf_asm`` command and the ``model`` object.
+For the use with Python, Scilab, Octave or Matlab interfaces, see the respective documentation, in particular the ``gf_asm`` command and the ``model`` object.
 
 
 The tensors
@@ -765,7 +765,7 @@ For instance, the assembly expression to prescribe the equality of a variable ``
 
   (Interpolate(u,my_transformation)-u)*lambda
 
-(see :file:`demo\_periodic\_laplacian.m` in :file:`interface/tests/matlab` directory).
+(see :file:`demo\_periodic\_laplacian.m` in :file:`interface/tests/matlab-octave` directory).
 
 In some situations, the interpolation of a point may fail if the transformed point is outside the target mesh. Both in order to treat this case and to allow the transformation to differentiate some other cases (see :ref:`ud-model-contact-friction_raytrace_inter_trans` for the differentiation between rigid bodies and deformable ones in the Raytracing_interpolate_transformation) the transformation returns an integer identifier to the weak form language. A value 0 of this identifier means that no corresponding location on the target mesh has been found. A value of 1 means that a corresponding point has been found. This identifier can be used thanks to the following special command of GWFL::
 
@@ -837,7 +837,7 @@ Note that the region representing the set of all internal faces of a mesh can be
 
 where ``mr`` is an optional mesh region. If ``mr`` is specified only the face internal with respect to this region are returned. An important aspect is that  each face is represented only once and is arbitrarily chosen between the two neighbor elements.
 
-See for instance :file:`interface/tests/python/demo_laplacian_DG.py` or :file:`interface/tests/matlab/demo_laplacian_DG.m` for an example of use.
+See for instance :file:`interface/tests/python/demo_laplacian_DG.py` or :file:`interface/tests/matlab-octave/demo_laplacian_DG.m` for an example of use.
 
 Compared to other interpolate transformations, this transformation is more optimized and benefits from finite element and geometric transformation pre-computations.
 
@@ -872,7 +872,7 @@ Once a secondary domain has been declared, it can be specified that a GWFL expre
   add_linear_twodomain_term(model, mim, expr, region, secondary_domain)
   add_nonlinear_twodomain_term(model, mim, expr, region, secondary_domain)
 
-For the utilisation with the Python/Scilab/Matlab interface, see the documentation on ``gf_asm`` command and the ``model`` object.
+For the utilisation with the Python/Scilab/Octave/Matlab interface, see the documentation on ``gf_asm`` command and the ``model`` object.
 
 
 Inside an expression of GWFL, one can refer to the unit normal vector to a boundary, to the current position or to the value of a variable thanks to the expressions::

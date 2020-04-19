@@ -11,8 +11,8 @@ Export and view a solution
 
 There are essentially four ways to view the result of getfem computations:
 
-* Matlab, with the matlab-interface.
-* The open-source Mayavi or any other VTK files viewer.
+* Scilab, Octave or Matlab, with the interface.
+* The open-source Paraview or Mayavi or any other VTK files viewer.
 * The open-source OpenDX program.
 * The open-source Gmsh program.
 
@@ -21,9 +21,9 @@ The objects that can be exported are, |m|, |mf| objects, and |smsl|.
 Saving mesh and mesh_fem objects for the Matlab interface
 ---------------------------------------------------------
 
-If you have installed the Matlab interface, you can simply use
+If you have installed the Scilab, Octave or Matlab interface, you can simply use
 ``mesh_fem::write_to_file`` and save the solution as a plain text file, and then,
-load them into Matlab. For example, supposing you have a solution ``U`` on a |mf|
+load them with the interface. For example, supposing you have a solution ``U`` on a |mf|
 ``mf``,::
 
   std::fstream f("solution.U",std::ios::out);
@@ -33,7 +33,7 @@ load them into Matlab. For example, supposing you have a solution ``U`` on a |mf
   // when the 2nd arg is true, the mesh is saved with the |mf|
   mf.write_to_file("solution.mf", true);
 
-and then, under matlab:
+and then, under Scilab, Octave or Matlab:
 
 .. code-block:: matlab
 
@@ -156,7 +156,7 @@ right choice, but for P2, P3, non linear transformation etc, it is better to ref
 each convex of the original mesh during the slicing operation. This allows an
 accurate representation of any finite element field onto a very simple structure
 (linear segment/triangles/tetrahedrons with P1 discontinuous data on them) which is
-what most visualization programs (gmsh, mayavi, opendx, matlab, etc.) expect.
+what most visualization programs (gmsh, mayavi, opendx, scilab, octave, matlab, etc.) expect.
 
 Example of use (cut the boundary of a mesh ``m`` with a half-space, and save the
 result into a |smsl|)::

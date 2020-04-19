@@ -11,7 +11,7 @@
    project/index.rst
    gmm/index.rst
 
-   matlab/index.rst
+   matlab_octave/index.rst
    python/index.rst
    scilab/index.rst
 

@@ -135,12 +135,24 @@ Configure Options
 Note that there are other options to the configure script. A
 ``./configure --help`` will list them.
 
+Octave interface
+^^^^^^^^^^^^^^^^
+
+The compilation of the Octave interface is performed with the ``--enable-octave`` option of the ``configure`` script.
+
+First, you need ``octave`` and ``mkoct-file`` commands accessible from your shell prompt, so that the correspoding packages have to be intalled.
+
+
+The last step is to add the path to the toolbox in the octave path:
+
+* you can put ``addpath('toolbox_dir', '-begin')`` to your ``$HOME/.octaverc`` file
+* you can simply use the ``addpath`` command in the octave command line. 
 
 
 Matlab interface
 ^^^^^^^^^^^^^^^^
 
-The compilation of the matlab interface (with the ``--enable-matlab`` option of the ``configure`` script) may fail due to a bad configuration of the Matlab compiler `mex`.
+The compilation of the Matlab interface (with the ``--enable-matlab`` option of the ``configure`` script) may fail due to a bad configuration of the Matlab compiler `mex`.
 
 First, you need ``matlab`` and ``mex`` commands accessible from your shell prompt. If not, add ``Applications/MATLAB_RXXXX.app/bin`` on your path (for instance with ``export PATH=$PATH:Applications/MATLAB_RXXXX.app/bin`` if your shell is ``bash`` and for ``XXXX`` your Matlab installed version. Alternatively, you can make symbolic links to ``matlab`` and ``mex`` executable in ``/usr/local/bin`` thanks to the command ``sudo ln -s Applications/MATLAB_RXXXX.app/bin/matlab matlab`` and ``sudo ln -s Applications/MATLAB_RXXXX.app/bin/mex mex``.
 

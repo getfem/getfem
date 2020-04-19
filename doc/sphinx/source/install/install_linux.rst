@@ -181,7 +181,7 @@ You have first to install |octv| with the developpement package
 
 
 
-The last step is to add the path to the toolbox in the matlab path:
+The last step is to add the path to the toolbox in the octave path:
 
 * you can put ``addpath('toolbox_dir', '-begin')`` to your ``$HOME/.octaverc`` file
 * you can simply use the ``addpath`` command in the octave command line. 

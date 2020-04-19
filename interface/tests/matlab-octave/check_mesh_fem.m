@@ -254,7 +254,7 @@ function check_mesh_fem(iverbose,idebug)
   gf_mesh_set(m,'boundary',51,oo);
 
   o=gf_mesh_get(m,'boundary',51);
-  gfassert('size(o)==size(oo) && sum(sum(o))==sum(sum(oo))');
+  gfassert('size(o)==size(oo) & sum(sum(o))==sum(sum(oo))');
 
   o=gf_mesh_get(mf2,'boundary',1);
   gfassert('isempty(o)');

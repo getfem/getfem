@@ -18,7 +18,7 @@ This example shows the basic usage of getfem, on the über-canonical problem abo
 all others: solving the :envvar:`Laplacian`, :math:`-\Delta u = f` on a square,
 with the Dirichlet condition :math:`u = g(x)` on the domain boundary. You can find
 the **m-file** of this example under the name **demo_step_by_step.m** in the
-directory ``interface/tests/matlab/`` of the |gf| distribution.
+directory ``interface/tests/matlab-octave/`` of the |gf| distribution.
 
 The first step is to **create a mesh**. It is possible to create simple structured meshes or unstructured meshes for simple geometries (see ``gf_mesh('generate', mesher_object mo, scalar h)``) or to rely on an external mesher (see ``gf_mesh('import', string
 FORMAT, string FILENAME))``).  For this example, we
@@ -35,8 +35,7 @@ If you try to look at the value of ``m``, you'll notice that it appears to be a
 structure containing two integers. The first one is its identifier, the second one
 is its class-id, i.e. an identifier of its type. This small structure is just an
 "handle" or "descriptor" to the real object, which is stored in the |gf| memory
-and cannot be represented via |Mlab| data structures. Anyway, you can still
-inspect the |gf| objects via the command ``gf_workspace('stats')``.
+and cannot be represented via |octv| and |mlab| data structures. Anyway, you can still inspect the |gf| objects via the command ``gf_workspace('stats')``.
 
 Now we can try to have a **look at the mesh**, with its vertices numbering and the
 convexes numbering::
@@ -57,12 +56,12 @@ of FEM::
 
 The first instruction builds a new |mlab_mf| object, the second argument specifies
 that this object will be used to interpolate scalar fields (since the unknown
-:math:`u` is a scalar field). The second instruction assigns the :math:`Q^2` FEM
+:math:`u` is a scalar field). The second instruction assigns the :math:`Q_2` FEM
 to every convex (each basis function is a polynomial of degree 4, remember that
-:math:`P^k\rm I\hspace{-0.15em}Rightarrow` polynomials of degree :math:`k`, while
-:math:`Q^k\rm I\hspace{-0.15em}Rightarrow` polynomials of degree :math:`2k`). As :math:`Q^2` is a
+:math:`P_k` are polynomials of degree :math:`k`, while
+:math:`Q_k` are polynomials of degree :math:`2k`). As :math:`Q_2` is a
 polynomial FEM, you can view the expression of its basis functions on the
-reference convex::
+reference element::
 
   >> gf_fem_get(gf_fem('FEM_QK(2,2)'), 'poly_str');
   ans =
@@ -76,10 +75,10 @@ reference convex::
       '-4*x*y + 4*x^2*y + 8*x*y^2 - 8*x^2*y^2'
       'x*y - 2*x^2*y - 2*x*y^2 + 4*x^2*y^2'
 
-It is also possible to make use of the "object oriented" features of |mlab|. As
+It is also possible to make use of the "object oriented" features of |octv| and |mlab|. As
 you may have noticed, when a class "foo" is provided by the |gfi|, it is build
 with the function ``gf_foo``, and manipulated with the functions ``gf_foo_get``
-and ``gf_foo_set``. But (with matlab 6.x and better) you may also create the
+and ``gf_foo_set``. But you may also create the
 object with the ``gfFoo`` constructor , and manipulated with the ``get(..)`` and
 ``set(..)`` methods. For example, the previous steps could have been::
 
@@ -212,7 +211,7 @@ with the instruction::
   >> gf_model_get(md, 'solve');
 
 The model now contains the solution (as well as other things, such as the linear
-system which was solved). It is extracted, a display into a |mlab| figure::
+system which was solved). It is extracted, a display into a |octv| or |mlab| figure::
 
   >> % extracted solution
   >> u = gf_model_get(md, 'variable', 'u');
@@ -223,7 +222,7 @@ system which was solved). It is extracted, a display into a |mlab| figure::
 Another Laplacian with exact solution
 -------------------------------------
 
-This is the :file:`tests/matlab/demo_laplacian.m` example.
+This is the :file:`tests/matlab-octave/demo_laplacian.m` example.
 
 .. literalinclude:: code_samples/demo_laplacian.m
 
@@ -233,7 +232,7 @@ Linear and non-linear elasticity
 
 This example uses a mesh that was generated with `GiD`_. The object is meshed
 with quadratic tetrahedrons. You can find the ``m-file`` of this example under
-the name :file:`demo_tripod.m` in the directory :file:`tests/matlab` of the
+the name :file:`demo_tripod.m` in the directory :file:`tests/matlab-octave` of the
 toolbox distribution.
 
 .. literalinclude:: code_samples/demo_tripod.m
@@ -254,7 +253,7 @@ Avoiding the bricks framework
 The model bricks are very convenient, as they hide most of the details of the
 assembly of the final linear systems. However it is also possible to stay at a
 lower level, and handle the assembly of linear systems, and their resolution,
-directly in |mlab|. For example, the demonstration :file:`demo_tripod_alt.m` is
+directly in |octv| or |mlab|. For example, the demonstration :file:`demo_tripod_alt.m` is
 very similar to the :file:`demo_tripod.m` except that the assembly is explicit::
 
   nbd=get(mfd, 'nbdof');
@@ -324,15 +323,13 @@ Other examples
   order FEMs.
 
 
-Using Matlab Object-Oriented features
--------------------------------------
+Using Octave/Matlab Object-Oriented features
+--------------------------------------------
 
-The basic functions of the |gf| toolbox do not use any advanced |mlab| features
-(except that the handles to getfem objects are stored in a small |mlab|
-structure). But the toolbox comes with a set of |Mlab| objects, which encapsulate
-the handles and make them look as real |mlab| objects. The aim is not to provide
-extra-functionalities, but to have a better integration of the toolbox with
-|mlab|.
+The basic functions of the |gf| toolbox do not use any advanced |octv| or |mlab| features
+(except that the handles to getfem objects are stored in a small structure). But the toolbox comes with a set of objects, which encapsulate
+the handles and make them look as real |octv| / |mlab| objects. The aim is not to provide
+extra-functionalities, but to have a better integration of the toolbox.
 
 Here is an example of its use::
 
@@ -343,7 +340,7 @@ Here is an example of its use::
 
   >> m2=gfMesh('cartesian',0:.1:1,0:.1:1)
   gfMesh object ID=1 [17512 bytes], dim=2, nbpts=121, nbcvs=100
-  % while \kw{m} is a simple structure, \kw{m2} has been flagged by |mlab|
+  % while \kw{m} is a simple structure, \kw{m2} has been flagged
   % as  an object of class gfMesh.  Since the \texttt{display} method for
   % these  objects  have  been  overloaded,  the  toolbox  displays  some
   % information about the mesh instead of the content of the structure.

@@ -7,13 +7,13 @@
 .. _mlab-mlabgf:
 
 |gfm| organization
-=====================
+==================
 
 The |gfm| toolbox is just a convenient interface to the |gf| library: you must
 have a working |gf| installed on your computer. This toolbox provides a big
-:envvar:`mex-file` (c++ binary callable from |mlab|) and some additional
+:envvar:`mex-file` (c++ binary callable from |octv| or |mlab|) and some additional
 ``m-files`` (documentation and extra-functionalities). All the functions of |gfm|
-are prefixed by ``gf_`` (hence typing ``gf_`` at the |mlab| prompt and then
+are prefixed by ``gf_`` (hence typing ``gf_`` at the |octv| or |mlab| prompt and then
 pressing the ``<tab>`` key is a quick way to obtain the list of getfem
 functions).
 
@@ -120,13 +120,13 @@ are not cleared when a::
 
   >> clear all
 
-is issued at the |mlab| prompt, but instead the function::
+is issued at the |octv| or |mlab| prompt, but instead the function::
 
   >> gf_workspace('clear all')
 
 should be used. The various |gfm| object can be accessed via *handles* (or
-*descriptors*), which are just |mlab| structures containing 32-bits integer
-identifiers to the real objects. Hence the |mlab| command::
+*descriptors*), which are just |octv| / |mlab| structures containing 32-bits integer
+identifiers to the real objects. Hence the |octv| or |mlab| command::
 
   >> whos
 

@@ -40,7 +40,7 @@ function check_spmat(iverbose,idebug)
   B = gf_spmat('empty', 11111);
   C = gf_spmat('copy', A);
   
-  if (!is_octave) % The import of complex sparse matrices is not working in Octave for the moment
+  if (~is_octave) % The import of complex sparse matrices is not working in Octave for the moment
     C = sprand(50,50,.1); C(2,2)=1+2i; I = 1:40; J = [6 7 8 3 10];
     D = gf_spmat('copy', C, I, J);
     DD = gf_spmat_get(D,'full');
