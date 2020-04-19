@@ -52,7 +52,7 @@ namespace gmm {
 #define GMMLAPACK_TRACE(f) 
   // #define GMMLAPACK_TRACE(f) cout << "function " << f << " called" << endl;
 
-#if defined(WeirdNEC) || defined(GMM_INT_LONG_POINTER_ECHANGEABLE)
+#if defined(WeirdNEC) || defined(GMM_USE_BLAS64_INTERFACE)
   #define BLAS_INT long
 #else // By default BLAS_INT will just be int in C
   #define BLAS_INT int
