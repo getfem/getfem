@@ -92,6 +92,8 @@ template <class T> void test_logm(T) {
 
 int main(void)
 {
+
+#if defined(GMM_USES_LAPACK)
   srand(1459);
 
   test_sqrtm(float());
@@ -103,6 +105,8 @@ int main(void)
   test_logm(double());
   test_logm(std::complex<float>());
   test_logm(std::complex<double>());
+
+#endif
  
   return 0;
 }

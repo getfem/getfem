@@ -26,7 +26,7 @@ ls=gfLevelSet(m, 2, 'x*x + y*y - 0.7*0.7', 'x-.4')
 ls2=gf_levelset(m, 2, '0.6*x*x + (y-0.1)*(y-0.1) - 0.6*0.6');
 ls3=gf_levelset(m, 4, 'x*x + (y+.08)*(y+.08) - 0.05*0.05');
 
-mls=gfMeshLevelset(m)
+mls=gfMeshLevelSet(m)
 set(mls, 'add', ls);
 if 1,
   set(mls, 'sup', ls);

@@ -31,6 +31,9 @@ static bool debug=false;
 
 int main(int argc, char *argv[]) {
   GETFEM_MPI_INIT(argc, argv);
+  int ret=0;
+
+#if defined(GMM_USES_MUMPS)
   
   gmm::set_traces_level(1);
 
@@ -174,7 +177,6 @@ int main(int argc, char *argv[]) {
     exp.write_point_data(mf, gmm::sub_vector(md2.real_rhs(true), md2.interval_of_variable("u")), "u residual");
   }
 
-  int ret=0;
   ret += gmm::vect_dist1(md1.real_variable("u"), md2.real_variable("u")) < 1e-9 ? 0 : 1;
   if (DIFFICULTY % 100 > 9)
     ret += gmm::vect_dist1(md1.real_variable("eps"), md2.real_variable("eps")) < 1e-9 ? 0 : 2;
@@ -182,6 +184,8 @@ int main(int argc, char *argv[]) {
 
   std::cout<<"Test with difficulty "<<DIFFICULTY<<" returned "<<ret<<std::endl;
 
+#endif
+  
   GETFEM_MPI_FINALIZE;
   return ret;
 }
