@@ -30,7 +30,8 @@ using bgeot::base_node;
 static bool debug=false;
 
 int main(int argc, char *argv[]) {
-
+  GETFEM_MPI_INIT(argc, argv);
+  
   gmm::set_traces_level(1);
 
   bgeot::md_param PARAM;
@@ -180,5 +181,7 @@ int main(int argc, char *argv[]) {
   ret += gmm::vect_dist1(md1.real_variable("p"), md2.real_variable("p")) < 1e-9 ? 0 : 4;
 
   std::cout<<"Test with difficulty "<<DIFFICULTY<<" returned "<<ret<<std::endl;
+
+  GETFEM_MPI_FINALIZE;
   return ret;
 }

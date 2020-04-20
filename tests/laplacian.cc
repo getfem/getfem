@@ -319,6 +319,7 @@ void laplacian_problem::compute_error() {
 
 int main(int argc, char *argv[]) {
 
+  GETFEM_MPI_INIT(argc, argv);
   GMM_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
 
@@ -332,6 +333,8 @@ int main(int argc, char *argv[]) {
     p.compute_error();
   }
   GMM_STANDARD_CATCH_ERROR;
+  
+  GETFEM_MPI_FINALIZE;
 
   return 0; 
 }

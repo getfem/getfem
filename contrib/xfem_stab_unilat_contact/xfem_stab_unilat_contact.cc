@@ -529,7 +529,7 @@ h
   //cout<<"size_of_mesh="<<h<<endl;
   cout<<"size_of_crack="<< size_of_crack <<endl;
   cout<<"nb_partition="<<nparts<<endl;
-  cout<<"partition="<<part<<endl;
+  cout<<"partition="<<gmm::vref(part)<<endl;
   cout<<"edgecut="<<edgecut<<endl;
 #else
   GMM_ASSERT1(false, "METIS not linked");
@@ -1582,7 +1582,7 @@ bool  unilateral_contact_problem::solve(plain_vector &U, plain_vector &LAMBDA, p
 
 int main(int argc, char *argv[]) {
   
-  
+  GETFEM_MPI_INIT(argc, argv);
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
   
   //getfem::getfem_mesh_level_set_noisy();
@@ -2027,9 +2027,8 @@ int main(int argc, char *argv[]) {
     }
   }
   
+  GETFEM_MPI_FINALIZE;
   return 0; 
-  
-  
 }
 
 

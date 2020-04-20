@@ -220,6 +220,7 @@ bool Helmholtz_problem::solve(plain_vector &U) {
 
 int main(int argc, char *argv[]) {
 
+  GETFEM_MPI_INIT(argc, argv);
   GMM_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
 
@@ -241,6 +242,8 @@ int main(int argc, char *argv[]) {
       "mayavi2 -d helmholtz.vtk -f WarpScalar -m Surface -m Outline"
       "\n";
   }
+
+  GETFEM_MPI_FINALIZE;
 
   return 0; 
 }

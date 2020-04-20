@@ -329,6 +329,7 @@ void heat_equation_problem::compute_error() {
 
 int main(int argc, char *argv[]) {
 
+  GETFEM_MPI_INIT(argc, argv);
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
 
   heat_equation_problem p;
@@ -338,6 +339,8 @@ int main(int argc, char *argv[]) {
   if (p.PARAM.int_value("EXPORT_SOLUTION") != 0)
     p.mf_u.write_to_file(p.datafilename + ".mf", true);
   p.compute_error();
+
+  GETFEM_MPI_FINALIZE;
 
   return 0; 
 }

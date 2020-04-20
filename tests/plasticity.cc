@@ -374,6 +374,7 @@ bool elastoplasticity_problem::solve(plain_vector &U) {
 
 int main(int argc, char *argv[]) {
 
+  GETFEM_MPI_INIT(argc, argv);
   GMM_SET_EXCEPTION_DEBUG; 
   // Exceptions make a memory fault, to debug.
 
@@ -393,6 +394,8 @@ int main(int argc, char *argv[]) {
   scalar_type t[2]={p.mu,p.lambda};
   vecsave(p.datafilename+".coef", 
 	  std::vector<scalar_type>(t, t+2));    
+
+  GETFEM_MPI_FINALIZE;
   
   return 0; 
 }

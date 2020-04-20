@@ -22,17 +22,19 @@
 echo "running checks..."
 echo "  srcdir='$srcdir'"
 
-export MATLABPATH=$(pwd)/../../src/matlab:$(pwd)/../../tests/matlab:${srcdir}:${srcdir}/../../src/matlab
+#export MATLABPATH=$(pwd)/../../src/matlab:$(pwd)/../../tests/matlab:${srcdir}:${srcdir}/../../src/matlab
 
-echo "  export MATLAB_ROOT=$MATLAB_ROOT"
-echo "  export MATLABPATH=$MATLABPATH"
+#echo "  export MATLAB_ROOT=$MATLAB_ROOT"
+#echo "  export MATLABPATH=$MATLABPATH"
 #echo "  setenv LD_LIBRARY_PATH $LD_LIBRARY_PATH"
 #echo "  setenv PATH $PATH"
 #export PATH;
 
 # s=$(echo "s=getenv('MATLABPATH'); while (length(s)), [a,s]=strtok(s,':'); addpath(a); end; disp(pwd); check_all; pause(1)" | ${MLAB} 2>&1);
 
-s=$(echo "addpath('../../src/octave'); addpath('${srcdir}/../../src/octave'); disp(pwd); check_all; pause(1)" | octave 2>&1);
+s=$(echo "addpath('../../src/octave'); addpath('${srcdir}/../../src/octave'); disp(pwd); pause(1);" | octave check_all.m 2>&1);
+
+# echo $s
 
 k=`echo "$s" | grep "All tests succeeded"`;
 if test x"$k" = x""; then
