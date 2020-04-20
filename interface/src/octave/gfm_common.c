@@ -103,7 +103,7 @@ mxarray_to_gfi_array(const mxArray *mx, gfi_array *t)
       t->storage.gfi_storage_u.data_uint32.data_uint32_len = n;
       t->storage.gfi_storage_u.data_uint32.data_uint32_val = mxGetData(mx);
     } break;
-    /* case mxSPARSE_CLASS: ## oct-modif## /* for older (i.e. 6.1) matlab versions... */
+    /* case mxSPARSE_CLASS: ## oct-modif## */
     case mxDOUBLE_CLASS: {
       int is_complex = mxIsComplex(mx);
       
