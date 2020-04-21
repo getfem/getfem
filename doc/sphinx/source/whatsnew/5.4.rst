@@ -4,22 +4,26 @@
   What's New in |gf| 5.4
 ************************
 
-The main contribution of this version is the extension of the language allowing macro definition and explicit differentiation.
+The main contribution of this version is a fully functional scripting language interface to Octave and support for definition and condensation of internal variables.
 
-Released version, 2020/06/01.
+Released version, 2020/04/21.
 
 The main changes are:
 
-   * A support for variables defined at integration points 
+   * A fully working Octave interface. Many thanks to Abderrahmane Bendali
+     for the initial adaptation of this interface from Matlab's one.
 
-   * A full support for the automatic condensation of variables determined by local equations (for instance for plasticity) (Konstantinos Poulios contribution)
+   * Support for (internal) variables defined at integration points
 
-   * A fully working Octave interface. Many thanks to Abderrahmane Bendali for the first adaptation of this interface from Matlab's one.
+   * Full support for the automatic condensation of internal variables by
+     local equations expressed in the generice weal form language. Useful
+     for instance in the implementation of plasticity models.
 
    * The use of Python 3 instead of Python 2.7 by default
 
-   * A support for HHO methods
+   * Support for Hybrid High-Order methods
    
-   * A support for the the assembly of product of terms defined on two different domains (integration on the product of two domains with a kernel, for instance).
-   
+   * Support for the the assembly of product of terms defined on two
+     different domains (integration on the product of two domains with a
+     kernel, for instance).
 
