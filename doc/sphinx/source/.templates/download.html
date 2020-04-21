@@ -20,11 +20,11 @@ Public License, either version 3 of the license or any later version along with 
   <tr><th>Format</th><th>Packed as .tar.gz</th></tr>
   <tr>
     <td>{{ project }} stable </td>
-    <td><a href="http://download-mirror.savannah.gnu.org/releases/getfem/stable/getfem-5.3.tar.gz">getfem-5.3.tar.gz</a></td>
+    <td><a href="http://download-mirror.savannah.gnu.org/releases/getfem/stable/getfem-5.4.tar.gz">getfem-5.4.tar.gz</a></td>
   </tr>
   <tr>
     <td>Gmm++ standalone</td>
-    <td><a href="http://download-mirror.savannah.gnu.org/releases/getfem/stable/gmm-5.3.tar.gz">gmm-5.3.tar.gz</a></td>
+    <td><a href="http://download-mirror.savannah.gnu.org/releases/getfem/stable/gmm-5.4.tar.gz">gmm-5.4.tar.gz</a></td>
   </tr>
 </table>
 
@@ -33,11 +33,11 @@ Public License, either version 3 of the license or any later version along with 
 <p>Building a portable C++ library is not an easy task. We try to build it with many combinations of OS and compilers. The last stable version has been tested on the following configurations:<p>
 
 <ul>
-  <li>Linux with g++ (versions 4.8 to 7.1) </li>
-  <li>MacOS X (with the python and Matlab interfaces)</li>
+  <li>Linux with g++ (versions 7.1 to 9.0) </li>
+  <li>MacOS X (with the Python, Octave and Matlab interfaces)</li>
   <li>Windows with <a href="http://www.mingw.org">MinGW</a> and
   <a href="http://www.mingw.org/wiki/msys">MSys</a>
-  ({{ project }} only -- see specific notes for the matlab interface)</li>
+  ({{ project }} only -- see specific notes for the Matlab interface)</li>
 </ul>
 
 <h1>Install {{ project }} {{ release }} on different plateforms </h1>
@@ -47,8 +47,8 @@ Public License, either version 3 of the license or any later version along with 
 Since standard GNU tools are used, the installation of the {{ project }} library is somewhat standard. From a general viewpoint, the installation from sources will require the following ingredients for any platform:
 
 <ul>
-  <li> A decently recent C/C++ compiler accepting C++ 11 standard
-       (gcc/g++ >= 4.8 for instance).  </li>
+  <li> A decently recent C/C++ compiler accepting C++ 14 standard
+       (gcc/g++ >= 7.1 for instance).  </li>
   <li> If you want to build binaries from git to get the latest changes,
     improvements, bugfixes, new bugs, etc. It requires a git client,
     automake, and libtool (otherwise, use the lastest stable package). </li>
@@ -57,9 +57,11 @@ Since standard GNU tools are used, the installation of the {{ project }} library
     ``python-all-dev`` in debian distribution), and also the Numpy and Scipy
     packages to be installed (package ``python-numpy`` and ``python-scipy``
     in debian distribution). In case of troubles with a non-gnu compiler,
-    gcc/g++ (>= 4.8) should be a safe solution (package ``build-essential``
+    gcc/g++ (>= 7.1) should be a safe solution (package ``build-essential``
     in debian distribution). If you do not want to build the python interface,
     use the configure option `./configure --disable-python` </li>
+  <li> If you want to build the Octave interface, it requires a recent Octave
+    version installed on your system and the associated mkoctfile command. </li>
   <li> If you want to build the Matlab interface, it requires a recent Matlab
     version installed on your system and the associated mex compiler
     correctly configured. </li>
