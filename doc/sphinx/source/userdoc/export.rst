@@ -108,6 +108,10 @@ reference to a |mf| ``mf`` and a field ``U`` on this |mf|).
 
    cut the convexes with the convexes of the mesh ``m2``.
 
+.. cpp:function:: getfem::slicer_faces(irg)
+
+   cut the convexes with the faces in the region of index ``irg``.
+
 .. cpp:function:: getfem::slicer_union(const slicer_action &sA, const slicer_action &sB)
 
    merges the output of two slicer operations.
