@@ -27,3 +27,7 @@ The main changes are:
      different domains (integration on the product of two domains with a
      kernel, for instance).
 
+   * Support for Lumped Mass Matrix
+  
+   * Support for Houbolt method
+
