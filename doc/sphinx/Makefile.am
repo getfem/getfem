@@ -147,7 +147,7 @@ clean:
 	-rm -f $(srcdir)/source/python/cmdref.rst
 
 $(srcdir)/source/matlab_octave/cmdref.rst : $(top_srcdir)/interface/src/*.cc $(top_srcdir)/bin/extract_doc $(top_srcdir)/bin/split_cmdref
-	($(top_srcdir)/bin/extract_doc $(top_srcdir)/interface/src matlab_octave-doc > $(srcdir)/source/matlab_octave/cmdref.rst &&  $(top_srcdir)/bin/split_cmdref $(srcdir)/source/matlab_octave) || (rm -f $(srcdir)/source/matlab_octave/cmdref.rst; /bin/false )
+	($(top_srcdir)/bin/extract_doc $(top_srcdir)/interface/src matlab-doc > $(srcdir)/source/matlab_octave/cmdref.rst &&  $(top_srcdir)/bin/split_cmdref $(srcdir)/source/matlab_octave) || (rm -f $(srcdir)/source/matlab_octave/cmdref.rst; /bin/false )
 
 $(srcdir)/source/scilab/cmdref.rst : $(top_srcdir)/interface/src/*.cc $(top_srcdir)/bin/extract_doc $(top_srcdir)/bin/split_cmdref
 	($(top_srcdir)/bin/extract_doc $(top_srcdir)/interface/src scilab-doc-rst > $(srcdir)/source/scilab/cmdref.rst  &&  $(top_srcdir)/bin/split_cmdref $(srcdir)/source/scilab) || (rm -f $(srcdir)/source/scilab/cmdref.rst; /bin/false )
@@ -181,6 +181,6 @@ upload:
 EXTRA_DIST = \
 	source/userdoc/images/Makefile                  \
 	source/project/images/Makefile                  \
-	source/matlab_octave/images/Makefile                  \
-	source/python/images/Makefile                  \
+	source/matlab_octave/images/Makefile            \
+	source/python/images/Makefile                   \
 	source/scilab/images/Makefile

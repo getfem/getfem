@@ -24,5 +24,6 @@ EXTRA_DIST = GNU_LGPL_V3 GNU_GPL_V3 GNU_GCC_RUNTIME_EXCEPTION GNU_FDL_V3
 
 CLEANFILES = so_locations _configs.sed
 
+# DISTCHECK_CONFIGURE_FLAGS = --enable-matlab --enable-octave
 
 bin_SCRIPTS=getfem-config

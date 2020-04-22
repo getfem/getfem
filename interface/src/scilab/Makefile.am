@@ -264,10 +264,11 @@ EXTRA_DIST=builddoc.sce \
         sci_gateway/loader_gateway.sce \
         sci_gateway/c/builder_gateway_c.sce \
         sci_gateway/c/cleaner.sce \
+        sci_gateway/c/stream_redirect.h \
         sci_gateway/c/gfm_common.c \
         sci_gateway/c/gfm_common.h \
         sci_gateway/c/gfm_scilab.cpp \
-        sci_gateway/c/libscigetfem_c.c \
+        sci_gateway/c/libscigetfem_c.cpp \
         sci_gateway/c/libscigetfem_c.so \
         sci_gateway/c/loader.sce \
         sci_gateway/c/sci_cgne.c \

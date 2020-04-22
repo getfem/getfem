@@ -6,7 +6,7 @@
 
 The main contribution of this version is a fully functional scripting language interface to Octave and support for definition and condensation of internal variables.
 
-Released version, 2020/04/21.
+Released version, 2020/04/22.
 
 The main changes are:
 
@@ -16,7 +16,7 @@ The main changes are:
    * Support for (internal) variables defined at integration points
 
    * Full support for the automatic condensation of internal variables by
-     local equations expressed in the generice weal form language. Useful
+     local equations expressed in the generic weak form language. Useful
      for instance in the implementation of plasticity models.
 
    * The use of Python 3 instead of Python 2.7 by default

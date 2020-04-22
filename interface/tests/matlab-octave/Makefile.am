@@ -18,13 +18,13 @@
 SUBDIRS = private
 
 if BUILDMEX
-TESTSM = $(abs_srcdir)/check_all_matlab.sh
+TESTSM = check_all_matlab.sh
 else
 TESTSM = 
 endif
 
 if BUILDOCTAVE
-TESTSO = $(abs_srcdir)/check_all_octave.sh
+TESTSO = check_all_octave.sh
 else
 TESTSO =
 endif

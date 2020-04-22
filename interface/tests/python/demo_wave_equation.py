@@ -99,11 +99,6 @@ mf.export_to_vtk('results/acceleration_0.vtk', A0)
 
 A0 = 0.*U0
 
-os.system('mkdir results1');
-mf.export_to_vtk('results1/displacement_0.vtk', U0)
-mf.export_to_vtk('results1/velocity_0.vtk', V0)
-mf.export_to_vtk('results1/acceleration_0.vtk', A0)
-
 ## Iterations
 n = 1;
 for t in np.arange(0.,T,dt):
@@ -120,10 +115,6 @@ for t in np.arange(0.,T,dt):
   U = md.variable('u1')
   V = md.variable('Dot_u1')
   A = md.variable('Dot2_u1')
-
-  mf.export_to_vtk('results1/displacement_%d.vtk' % n, U)
-  mf.export_to_vtk('results1/velocity_%d.vtk' % n, V)
-  mf.export_to_vtk('results1/acceleration_%d.vtk' % n, A)
 
   n += 1
   md.shift_variables_for_time_integration()
