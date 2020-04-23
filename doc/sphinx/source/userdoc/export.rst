@@ -108,7 +108,7 @@ reference to a |mf| ``mf`` and a field ``U`` on this |mf|).
 
    cut the convexes with the convexes of the mesh ``m2``.
 
-.. cpp:function:: getfem::slicer_faces(irg)
+.. cpp:function:: getfem::slicer_faces_with_mesh(const mesh &m2, irg)
 
    cut the convexes with the faces in the region of index ``irg``.
 
