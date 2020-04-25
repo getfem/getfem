@@ -449,6 +449,22 @@ namespace getfem
     }
   }
 
+  vtu_export::vtu_export(std::ostream &os_, bool ascii_)
+    : os(os_), ascii(ascii_) {  }
+
+  vtu_export::vtu_export(const std::string& fname, bool ascii_)
+    : os(real_os), ascii(ascii_),
+    real_os(fname.c_str(), !ascii ? std::ios_base::binary | std::ios_base::out :
+                                    std::ios_base::out) {
+    GMM_ASSERT1(real_os, "impossible to write to vtu file '" << fname << "'");
+  }
+
+  void vtu_export::exporting(const mesh& m) {
+     (void) m;
+  }
+
+  void vtu_export::write_mesh() {
+  }
 
   /* -------------------------------------------------------------
    * OPENDX export

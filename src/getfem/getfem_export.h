@@ -286,6 +286,22 @@ namespace getfem {
     write_separ();
   }
 
+  /** @brief VTU export.
+
+      export class to VTU file format
+      (Serial vtkUnstructuredGrid (unstructured))
+  */
+  class vtu_export {
+  protected:
+    std::ostream &os;
+    bool ascii;
+    std::ofstream real_os;
+  public:
+    vtu_export(const std::string& fname, bool ascii_= false);
+    vtu_export(std::ostream &os_, bool ascii_ = false);
+    void exporting(const mesh& m);
+    void write_mesh();
+  };
 
   /** @brief A (quite large) class for exportation of data to IBM OpenDX.
 
