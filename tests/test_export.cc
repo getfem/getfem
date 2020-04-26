@@ -18,10 +18,17 @@
  Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 
 ===========================================================================*/
+#include <iostream>
+#include <string>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/xml_parser.hpp>
+#include <boost/foreach.hpp>
+#include <boost/lexical_cast.hpp>
 #include "getfem/getfem_regular_meshes.h"
 #include "getfem/getfem_export.h"
 
 using bgeot::base_node;
+using namespace boost::property_tree;
 
 int main(void) {
 
@@ -47,6 +54,15 @@ int main(void) {
   getfem::vtu_export vtu_exp("m0.vtu", true);
   vtu_exp.exporting(m0);
   vtu_exp.write_mesh();
+
+  ptree pt;
+  read_xml("m0.vtu", pt);
+
+  if (boost::optional<std::string> str = pt.get_optional<std::string>("VTKFile.<xmlattr>.type")) {
+    GMM_ASSERT1(str.get() == "UnstructuredGrid", "UnstructuredGrid attribute is not incorrect.");
+  } else {
+    GMM_ASSERT1(false, "UnstructuredGrid attribute is not exist.");
+  }
 
   return 0;
 }
