@@ -127,7 +127,7 @@ md.add_source_term_brick(mim, 'u', 'Fdata', NEUMANN_BOUNDARY)
 md.add_initialized_data('DirichletData', [0, 0, 0])
 md.add_Dirichlet_condition_with_simplification('u', DIRICHLET_BOUNDARY,'DirichletData')
 
-md.solve('max_res', 1E-9, 'max_iter', 100, 'noisy', 'lsolver', 'mumps', 'lsearch', 'simplest',  'alpha min', 0.8)
+md.solve('max_res', 1E-9, 'max_iter', 100, 'noisy', 'lsearch', 'simplest',  'alpha min', 0.8)
 U = md.variable('u');
 
 
