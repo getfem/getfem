@@ -294,53 +294,20 @@ namespace getfem
     pmf_mapping_type.resize(pmf->convex_index().last_true() + 1, unsigned(-1));
     pmf_dof_used.sup(0, pmf->nb_basic_dof());
     for (dal::bv_visitor cv(pmf->convex_index()); !cv.finished(); ++cv) {
-      vtk_mapping_type t = NO_VTK_MAPPING;
+      size_type dim = pmf->fem_of_element(cv)->dim();
       size_type nbd = pmf->fem_of_element(cv)->nb_dof(cv);
-      switch (pmf->fem_of_element(cv)->dim()) {
-      case 0: t = N1_TO_VTK_VERTEX; break;
-      case 1:
-        if (nbd == 2) t = N2_TO_VTK_LINE;
-        else if (nbd == 3) t = N3_TO_VTK_QUADRATIC_EDGE;
-        break;
-      case 2:
-        if (nbd == 3) t = N3_TO_VTK_TRIANGLE;
-        else if (nbd == 4)
-          t = check_voxel(m.points_of_convex(cv)) ? N4_TO_VTK_PIXEL
-                                                  : N4_TO_VTK_QUAD;
-        else if (nbd == 6) t = N6_TO_VTK_QUADRATIC_TRIANGLE;
-        else if (nbd == 8) t = N8_TO_VTK_QUADRATIC_QUAD;
-        else if (nbd == 9) t = N9_TO_VTK_BIQUADRATIC_QUAD;
-        break;
-      case 3:
-        if (nbd == 4) t = N4_TO_VTK_TETRA;
-        else if (nbd == 10) t = N10_TO_VTK_QUADRATIC_TETRA;
-        else if (nbd == 8)
-          t = check_voxel(m.points_of_convex(cv)) ? N8_TO_VTK_VOXEL
-                                                  : N8_TO_VTK_HEXAHEDRON;
-        else if (nbd == 20) t = N20_TO_VTK_QUADRATIC_HEXAHEDRON;
-        else if (nbd == 27) t = N27_TO_VTK_TRIQUADRATIC_HEXAHEDRON;
-        else if (nbd == 5) t = N5_TO_VTK_PYRAMID;
-        else if (nbd == 13) t = N13_TO_VTK_QUADRATIC_PYRAMID;
-        else if (nbd == 14) t = N14_TO_VTK_QUADRATIC_PYRAMID;
-        else if (nbd == 6) t = N6_TO_VTK_WEDGE;
-        else if (nbd == 15) t = N15_TO_VTK_QUADRATIC_WEDGE;
-        else if (nbd == 18) t = N18_TO_VTK_BIQUADRATIC_QUADRATIC_WEDGE;
-        break;
-      }
+      vtk_mapping_type t = select_vtk_mapping_type(m, cv, dim, nbd);
       GMM_ASSERT1(t != -1, "semi internal error. Could not map " <<
                   name_of_fem(pmf->fem_of_element(cv))
                 << " to a VTK cell type");
       pmf_mapping_type[cv] = t;
 
       const std::vector<unsigned> &dmap = select_vtk_dof_mapping(t);
-      //cout << "nbd = " << nbd << ", t = " << t << ", dmap = "<<dmap << "\n";
       GMM_ASSERT1(dmap.size() <= pmf->nb_basic_dof_of_element(cv),
                 "inconsistency in vtk_dof_mapping");
       for (unsigned i=0; i < dmap.size(); ++i)
         pmf_dof_used.add(pmf->ind_basic_dof_of_element(cv)[dmap[i]]);
     }
-    // cout << "mf.nb_dof = " << mf.nb_dof() << ", pmf->nb_dof="
-    //      << pmf->nb_dof() << ", dof_used = " << pmf_dof_used.card() << "\n";
   }
 
 
