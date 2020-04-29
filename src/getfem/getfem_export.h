@@ -294,14 +294,43 @@ namespace getfem {
   class vtu_export {
   protected:
     std::ostream &os;
+    char header[256]; // hard limit in vtu
     bool ascii;
+    std::unique_ptr<mesh_fem> pmf;
+    dal::bit_vector pmf_dof_used;
+    std::vector<unsigned> pmf_mapping_type;
     std::ofstream real_os;
+    dim_type dim_;
+    enum { EMPTY, HEADER_WRITTEN, STRUCTURE_WRITTEN, FOOTER_WRITTEN } state;
+
+    template<class T> void write_val(T v);
+    template<class V> void write_vec(V p, size_type qdim);
+    void write_separ();
   public:
     vtu_export(const std::string& fname, bool ascii_= false);
     vtu_export(std::ostream &os_, bool ascii_ = false);
     void exporting(const mesh& m);
+    void exporting(const mesh_fem& mf);
     void write_mesh();
+  private:
+    void init();
+    void check_header();
+    void check_footer();
+    void write_mesh_structure_from_mesh_fem();
   };
+
+  template<class T> void vtu_export::write_val(T v) {
+    os << " " << v;
+  }
+
+  template<class IT> void vtu_export::write_vec(IT p, size_type qdim) {
+    float v[3];
+    for (size_type i=0; i < qdim; ++i) {
+      v[i] = float(p[i]);
+    }
+    for (size_type i=qdim; i < 3; ++i) v[i] = 0.0f;
+    write_val(v[0]);write_val(v[1]);write_val(v[2]);
+  }
 
   /** @brief A (quite large) class for exportation of data to IBM OpenDX.
 

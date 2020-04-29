@@ -188,9 +188,14 @@ int main(int argc, char *argv[]) {
   }
 
   if (export_mesh) {
-    getfem::vtk_export exp("mesh.vtk", false);
-    exp.exporting(mesh);
-    exp.write_mesh();
+    getfem::vtk_export vtk_exp("mesh.vtk", true);
+    vtk_exp.exporting(mesh);
+    vtk_exp.write_mesh();
+
+    getfem::vtu_export vtu_exp("mesh.vtu", true);
+    vtu_exp.exporting(mesh);
+    vtu_exp.write_mesh();
+
     cout << "\nYou can view the mesh for instance with\n";
     cout << "mayavi2 -d mesh.vtk -f ExtractEdges -m Surface\n" << endl;
   }
