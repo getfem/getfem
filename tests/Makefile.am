@@ -37,7 +37,6 @@ check_PROGRAMS =                   \
 	test_rtree	           \
 	test_mesh                  \
 	test_slice                 \
-	test_export                \
 	integration                \
 	geo_trans_inv              \
 	test_mat_elem              \
@@ -106,7 +105,6 @@ test_condensation_SOURCES = test_condensation.cc
 test_tree_sorted_SOURCES = test_tree_sorted.cc
 test_mat_elem_SOURCES = test_mat_elem.cc
 test_slice_SOURCES = test_slice.cc
-test_export_SOURCES = test_export.cc
 test_range_basis_SOURCES = test_range_basis.cc
 schwarz_additive_SOURCES = schwarz_additive.cc
 plasticity_SOURCES = plasticity.cc
@@ -140,7 +138,6 @@ TESTS = \
 	test_interpolation.pl         \
 	test_mat_elem.pl              \
 	test_slice.pl                 \
-	test_export.pl                \
 	integration.pl                \
 	test_assembly.pl              \
 	test_assembly_assignment.pl   \
@@ -224,7 +221,6 @@ EXTRA_DIST =                               			\
 	wave_equation.pl                   			\
 	wave_equation.param                			\
 	cyl_slicer.pl                           		\
-	test_export.pl                           		\
 	test_continuation.param                                 \
 	test_continuation.pl                                    \
 	make_gmm_test.pl                   			\

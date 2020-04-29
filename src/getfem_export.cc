@@ -595,9 +595,9 @@ namespace getfem
     if (state >= STRUCTURE_WRITTEN) return;
     check_header();
     os << "<UnstructuredGrid>\n";
-    os << "<Piece \"NumberOfPoints=\"" << pmf_dof_used.card() << "\"NumberOfCells=\"" << pmf->convex_index().card() << "\n";
+    os << "<Piece NumberOfPoints=\"" << pmf_dof_used.card() << "\" NumberOfCells=\"" << pmf->convex_index().card() << "\">\n";
     os << "<Points>\n";
-    os << "<DataArray type=\"Float32\" NumberOfComponents=\"" << dim_<< "\" Format=\"ascii\">\n"; 
+    os << "<DataArray type=\"Float32\" NumberOfComponents=\"3\" Format=\"ascii\">\n";
     std::vector<int> dofmap(pmf->nb_dof());
     int cnt = 0;
     for (dal::bv_visitor d(pmf_dof_used); !d.finished(); ++d) {
@@ -617,6 +617,15 @@ namespace getfem
       const std::vector<unsigned> &dmap = select_vtk_dof_mapping(pmf_mapping_type[cv]);
       for (size_type i=0; i < dmap.size(); ++i)
         write_val(int(dofmap[pmf->ind_basic_dof_of_element(cv)[dmap[i]]]));
+      write_separ();
+    }
+    os << "</DataArray>\n";
+    os << "<DataArray type=\"Int32\" Name=\"offsets\" Format=\"ascii\">\n";
+    cnt = 0;
+    for (dal::bv_visitor cv(pmf->convex_index()); !cv.finished(); ++cv) {
+      const std::vector<unsigned> &dmap = select_vtk_dof_mapping(pmf_mapping_type[cv]);
+      cnt += int(dmap.size());
+      write_val(cnt);
       write_separ();
     }
     os << "</DataArray>\n";
