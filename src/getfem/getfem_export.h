@@ -57,6 +57,18 @@ namespace getfem {
     return s2;
   }
 
+  template<class VECT> VECT remove_dof_unused(VECT V, dal::bit_vector dof_used, size_type Q) {
+    size_type cnt = 0;
+    for (dal::bv_visitor d(dof_used); !d.finished(); ++d, ++cnt ) {
+      if (cnt !=d)
+        for (size_type q=0; q < Q; ++q) {
+          V[cnt*Q + q] = V[d*Q + q];
+        }
+    }
+    V.resize(Q*dof_used.card());
+    return V;
+  }
+
   /** @brief VTK export.
 
       export class to VTK ( http://www.kitware.com/vtk.html ) file format
@@ -296,27 +308,49 @@ namespace getfem {
     std::ostream &os;
     char header[256]; // hard limit in vtu
     bool ascii;
+    const stored_mesh_slice *psl;
     std::unique_ptr<mesh_fem> pmf;
     dal::bit_vector pmf_dof_used;
     std::vector<unsigned> pmf_mapping_type;
     std::ofstream real_os;
     dim_type dim_;
-    enum { EMPTY, HEADER_WRITTEN, STRUCTURE_WRITTEN, FOOTER_WRITTEN } state;
+    enum { EMPTY, HEADER_WRITTEN, STRUCTURE_WRITTEN, IN_CELL_DATA,
+           IN_POINT_DATA, FOOTER_WRITTEN } state;
 
     template<class T> void write_val(T v);
     template<class V> void write_vec(V p, size_type qdim);
+    template<class IT> void write_3x3tensor(IT p);
     void write_separ();
   public:
     vtu_export(const std::string& fname, bool ascii_= false);
     vtu_export(std::ostream &os_, bool ascii_ = false);
     void exporting(const mesh& m);
     void exporting(const mesh_fem& mf);
-    void write_mesh();
+    void write_mesh(bool only_mesh = true);
+
+    /** append a new scalar or vector field defined on mf to the .vtu file.  If
+        you are exporting a slice, or if mf != get_exported_mesh_fem(), U will
+        be interpolated on the slice, or on get_exported_mesh_fem().
+
+        Note that vectors should be written AFTER scalars, and tensors
+        after vectors
+
+        NO SPACE ALLOWED in 'name' */
+    template<class VECT> void write_point_data(const getfem::mesh_fem &mf,
+                                               const VECT& U0,
+                                               const std::string& name);
+
   private:
     void init();
     void check_header();
     void check_footer();
     void write_mesh_structure_from_mesh_fem();
+    void switch_to_cell_data();
+    void switch_to_point_data();
+    template<class VECT> void write_dataset_(const VECT& U,
+                                             const std::string& name,
+                                             size_type qdim,
+                                             bool cell_data=false);
   };
 
   template<class T> void vtu_export::write_val(T v) {
@@ -330,6 +364,91 @@ namespace getfem {
     }
     for (size_type i=qdim; i < 3; ++i) v[i] = 0.0f;
     write_val(v[0]);write_val(v[1]);write_val(v[2]);
+  }
+
+  template<class IT> void vtu_export::write_3x3tensor(IT p) {
+    float v[3][3];
+    memset(v, 0, sizeof v);
+    for (size_type i=0; i < dim_; ++i) {
+      for (size_type j=0; j < dim_; ++j)
+        v[i][j] = float(p[i + j*dim_]);
+    }
+    for (size_type i=0; i < 3; ++i) {
+      for (size_type j=0; j < 3; ++j) {
+        write_val(v[i][j]);
+      }
+      if (ascii) os << "\n";
+    }
+  }
+
+  template<class VECT>
+  void vtu_export::write_point_data(const getfem::mesh_fem &mf, const VECT& U,
+                                    const std::string& name) {
+    size_type Q = (gmm::vect_size(U) / mf.nb_dof()) * mf.get_qdim();
+    size_type qdim = mf.get_qdim();
+    if (psl) {
+      std::vector<scalar_type> Uslice(Q*psl->nb_points());
+      psl->interpolate(mf, U, Uslice);
+      write_dataset_(Uslice, name, qdim);
+    } else {
+      std::vector<scalar_type> V(pmf->nb_dof() * Q);
+      if (&mf != &(*pmf)) {
+        interpolation(mf, *pmf, U, V);
+      } else gmm::copy(U,V);
+      std::vector<scalar_type> W(Q*pmf_dof_used.card());
+      gmm::copy(remove_dof_unused(V, pmf_dof_used, Q), W);
+      write_dataset_(W, name, qdim);
+    }
+  }
+
+  template<class VECT>
+  void vtu_export::write_dataset_(const VECT& U, const std::string& name,
+                                  size_type qdim, bool cell_data) {
+    write_mesh(false);
+    size_type nb_val = 0;
+    if (cell_data) {
+      switch_to_cell_data();
+      nb_val = psl ? psl->linked_mesh().convex_index().card()
+                   : pmf->linked_mesh().convex_index().card();
+    } else {
+      switch_to_point_data();
+      nb_val = psl ? psl->nb_points() : pmf_dof_used.card();
+    }
+    size_type Q = qdim;
+    if (Q == 1) Q = gmm::vect_size(U) / nb_val;
+    GMM_ASSERT1(gmm::vect_size(U) == nb_val*Q,
+                "inconsistency in the size of the dataset: "
+                << gmm::vect_size(U) << " != " << nb_val << "*" << Q);
+    os << "<Piece NumberOfPoints=\"" << pmf_dof_used.card() << "\" NumberOfCells=\"" << pmf->convex_index().card() << "\">\n";
+    if (Q == 1) {
+      os << "<PointData Scalars=\"" << remove_spaces(name) << "\">\n";
+      os << "<DataArray Name=\"" << remove_spaces(name) << "\" type=\"Float32\" format=\"ascii\">\n";
+      for (size_type i=0; i < nb_val; ++i) {
+        write_val(float(U[i]));
+      }
+    } else if (Q <= 3) {
+      os << "<PointData Vectors=\"" << remove_spaces(name) << "\">\n";
+      os << "<DataArray type=\"Float32\" Name=\"" << remove_spaces(name);
+      os << "\" NumberOfComponents=\"" << Q << "\" format=\"ascii\">";
+      for (size_type i=0; i < nb_val; ++i) {
+        write_vec(U.begin() + i*Q, Q);
+      }
+    } else if (Q == gmm::sqr(dim_)) {
+      /* tensors : coef are supposed to be stored in FORTRAN order
+         in the VTU file, they are written with C (row major) order
+       */
+      os << "<PointData Tensors=\"" << remove_spaces(name) << "\">\n";
+      os << "<DataArray type=\"Float32\" Name=\"" << remove_spaces(name);
+      os << "\" NumberOfComponents=\"" << Q*Q << "\" format=\"ascii\">";
+      for (size_type i=0; i < nb_val; ++i) {
+        write_3x3tensor(U.begin() + i*Q);
+      }
+    } else GMM_ASSERT1(false, "vtu does not accept vectors of dimension > 3");
+    write_separ();
+    os << "</DataArray>\n";
+    os << "</PointData>\n";
+    os << "</Piece>\n";
+    check_footer();
   }
 
   /** @brief A (quite large) class for exportation of data to IBM OpenDX.

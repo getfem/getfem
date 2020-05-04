@@ -467,6 +467,19 @@ namespace getfem
   void vtu_export::init() {
     strcpy(header, "Exported by getfem++");
     state = EMPTY;
+    psl = 0; dim_ = dim_type(-1);
+  }
+
+  void vtu_export::switch_to_point_data() {
+    if (state != IN_POINT_DATA) {
+      state = IN_POINT_DATA;
+    }
+  }
+
+  void vtu_export::switch_to_cell_data() {
+    if (state != IN_CELL_DATA) {
+      state = IN_CELL_DATA;
+    }
   }
 
   void vtu_export::exporting(const mesh& m) {
@@ -551,6 +564,7 @@ namespace getfem
 
   void vtu_export::check_footer() {
     if (state >= FOOTER_WRITTEN) return;
+    os << "</UnstructuredGrid>\n";
     os << "</VTKFile>\n";
     state = FOOTER_WRITTEN;
   }
@@ -558,8 +572,9 @@ namespace getfem
   void vtu_export::write_separ()
   { if (ascii) os << "\n"; }
 
-  void vtu_export::write_mesh() {
+  void vtu_export::write_mesh(bool only_mesh) {
     write_mesh_structure_from_mesh_fem();
+    if (only_mesh == true) check_footer();
   }
 
   void vtu_export::write_mesh_structure_from_mesh_fem() {
@@ -608,8 +623,6 @@ namespace getfem
     os << "</DataArray>\n";
     os << "</Cells>\n";
     os << "</Piece>\n";
-    os << "</UnstructuredGrid>\n";
-    check_footer();
 
     state = STRUCTURE_WRITTEN;
   }
