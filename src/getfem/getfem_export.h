@@ -324,6 +324,8 @@ namespace getfem {
   public:
     vtu_export(const std::string& fname, bool ascii_= false);
     vtu_export(std::ostream &os_, bool ascii_ = false);
+    ~vtu_export(); /* the file is not complete until the destructor
+                      has been executed */
     void exporting(const mesh& m);
     void exporting(const mesh_fem& mf);
     void write_mesh(bool only_mesh = true);
@@ -419,17 +421,14 @@ namespace getfem {
     GMM_ASSERT1(gmm::vect_size(U) == nb_val*Q,
                 "inconsistency in the size of the dataset: "
                 << gmm::vect_size(U) << " != " << nb_val << "*" << Q);
-    os << "<Piece NumberOfPoints=\"" << pmf_dof_used.card() << "\" NumberOfCells=\"" << pmf->convex_index().card() << "\">\n";
     if (Q == 1) {
-      os << "<PointData Scalars=\"" << remove_spaces(name) << "\">\n";
-      os << "<DataArray Name=\"" << remove_spaces(name) << "\" type=\"Float32\" format=\"ascii\">\n";
+      os << "<DataArray type=\"Float32\" Name=\"" << remove_spaces(name) << "\" format=\"ascii\">\n";
       for (size_type i=0; i < nb_val; ++i) {
         write_val(float(U[i]));
       }
     } else if (Q <= 3) {
-      os << "<PointData Vectors=\"" << remove_spaces(name) << "\">\n";
       os << "<DataArray type=\"Float32\" Name=\"" << remove_spaces(name);
-      os << "\" NumberOfComponents=\"" << Q << "\" format=\"ascii\">";
+      os << "\" NumberOfComponents=\"3\" format=\"ascii\">\n";
       for (size_type i=0; i < nb_val; ++i) {
         write_vec(U.begin() + i*Q, Q);
       }
@@ -437,7 +436,6 @@ namespace getfem {
       /* tensors : coef are supposed to be stored in FORTRAN order
          in the VTU file, they are written with C (row major) order
        */
-      os << "<PointData Tensors=\"" << remove_spaces(name) << "\">\n";
       os << "<DataArray type=\"Float32\" Name=\"" << remove_spaces(name);
       os << "\" NumberOfComponents=\"" << Q*Q << "\" format=\"ascii\">";
       for (size_type i=0; i < nb_val; ++i) {
@@ -446,9 +444,6 @@ namespace getfem {
     } else GMM_ASSERT1(false, "vtu does not accept vectors of dimension > 3");
     write_separ();
     os << "</DataArray>\n";
-    os << "</PointData>\n";
-    os << "</Piece>\n";
-    check_footer();
   }
 
   /** @brief A (quite large) class for exportation of data to IBM OpenDX.

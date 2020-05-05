@@ -464,6 +464,10 @@ namespace getfem
     init();
   }
 
+  vtu_export::~vtu_export(){
+    check_footer();
+  }
+
   void vtu_export::init() {
     strcpy(header, "Exported by getfem++");
     state = EMPTY;
@@ -472,8 +476,9 @@ namespace getfem
 
   void vtu_export::switch_to_point_data() {
     if (state != IN_POINT_DATA) {
+      os << "<PointData>\n";
       state = IN_POINT_DATA;
-    }
+    };
   }
 
   void vtu_export::switch_to_cell_data() {
@@ -558,12 +563,16 @@ namespace getfem
 
   void vtu_export::check_header() {
     if (state >= HEADER_WRITTEN) return;
+    os << "<?xml version=\"1.0\"?>\n";
     os << "<VTKFile type=\"UnstructuredGrid\" version=\"0.1\" byte_order=\"BigEndian\">\n";
+    os << "<!--" << header << "-->\n";
     state = HEADER_WRITTEN;
   }
 
   void vtu_export::check_footer() {
     if (state >= FOOTER_WRITTEN) return;
+    if (state == IN_POINT_DATA) os << "</PointData>\n";
+    os << "</Piece>\n";
     os << "</UnstructuredGrid>\n";
     os << "</VTKFile>\n";
     state = FOOTER_WRITTEN;
@@ -583,7 +592,7 @@ namespace getfem
     os << "<UnstructuredGrid>\n";
     os << "<Piece NumberOfPoints=\"" << pmf_dof_used.card() << "\" NumberOfCells=\"" << pmf->convex_index().card() << "\">\n";
     os << "<Points>\n";
-    os << "<DataArray type=\"Float32\" NumberOfComponents=\"3\" Format=\"ascii\">\n";
+    os << "<DataArray type=\"Float32\" Name=\"Points\" NumberOfComponents=\"3\" format=\"ascii\">\n";
     std::vector<int> dofmap(pmf->nb_dof());
     int cnt = 0;
     for (dal::bv_visitor d(pmf_dof_used); !d.finished(); ++d) {
@@ -598,7 +607,7 @@ namespace getfem
     os << "</DataArray>\n";
     os << "</Points>\n";
     os << "<Cells>\n";
-    os << "<DataArray type=\"Int32\" Name=\"connectivity\" Format=\"ascii\">\n";
+    os << "<DataArray type=\"Int64\" Name=\"connectivity\" format=\"ascii\">\n";
     for (dal::bv_visitor cv(pmf->convex_index()); !cv.finished(); ++cv) {
       const std::vector<unsigned> &dmap = select_vtk_dof_mapping(pmf_mapping_type[cv]);
       for (size_type i=0; i < dmap.size(); ++i)
@@ -606,7 +615,7 @@ namespace getfem
       write_separ();
     }
     os << "</DataArray>\n";
-    os << "<DataArray type=\"Int32\" Name=\"offsets\" Format=\"ascii\">\n";
+    os << "<DataArray type=\"Int64\" Name=\"offsets\" format=\"ascii\">\n";
     cnt = 0;
     for (dal::bv_visitor cv(pmf->convex_index()); !cv.finished(); ++cv) {
       const std::vector<unsigned> &dmap = select_vtk_dof_mapping(pmf_mapping_type[cv]);
@@ -615,14 +624,13 @@ namespace getfem
       write_separ();
     }
     os << "</DataArray>\n";
-    os << "<DataArray type=\"Int32\" Name=\"types\" Format=\"ascii\">\n";
+    os << "<DataArray type=\"Int64\" Name=\"types\" format=\"ascii\">\n";
     for (dal::bv_visitor cv(pmf->convex_index()); !cv.finished(); ++cv) {
       write_val(select_vtk_type(pmf_mapping_type[cv]));
       write_separ();
     }
     os << "</DataArray>\n";
     os << "</Cells>\n";
-    os << "</Piece>\n";
 
     state = STRUCTURE_WRITTEN;
   }
