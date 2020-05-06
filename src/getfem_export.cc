@@ -124,6 +124,36 @@ namespace getfem
     return vtktypes[t];
   }
 
+  pfem select_finite_element_for_vtk(const mesh_fem& mf, size_type cv) {
+    bgeot::pgeometric_trans pgt = mf.linked_mesh().trans_of_convex(cv);
+    pfem pf = mf.fem_of_element(cv);
+
+    if (pf != fem_descriptor("FEM_Q2_INCOMPLETE(2)") &&
+        pf != fem_descriptor("FEM_Q2_INCOMPLETE(3)") &&
+        pf != fem_descriptor("FEM_PYRAMID_Q2_INCOMPLETE") &&
+        pf != fem_descriptor("FEM_PYRAMID_Q2_INCOMPLETE_DISCONTINUOUS") &&
+        pf != fem_descriptor("FEM_PRISM_INCOMPLETE_P2") &&
+        pf != fem_descriptor("FEM_PRISM_INCOMPLETE_P2_DISCONTINUOUS")) {
+      bool discontinuous = false;
+      for (unsigned i=0; i < pf->nb_dof(cv); ++i) {
+        /* could be a better test for discontinuity .. */
+        if (!dof_linkable(pf->dof_types()[i])) { discontinuous = true; break; }
+      }
+
+      pfem classical_pf1 = discontinuous ? classical_discontinuous_fem(pgt, 1)
+                                         : classical_fem(pgt, 1);
+
+      short_type degree = 1;
+      if ((pf != classical_pf1 && pf->estimated_degree() > 1) ||
+          pgt->structure() != pgt->basic_structure())
+        degree = 2;
+
+      pf = discontinuous ? classical_discontinuous_fem(pgt, degree, 0, true) :
+                           classical_fem(pgt, degree, true);
+    }
+
+    return pf;
+  }
 
   /* try to check if a quad or hexahedric cell is "rectangular" and oriented
      along the axes */
@@ -258,35 +288,8 @@ namespace getfem
     /* initialize pmf with finite elements suitable for VTK (which only knows
        isoparametric FEMs of order 1 and 2) */
     for (dal::bv_visitor cv(mf.convex_index()); !cv.finished(); ++cv) {
-      bgeot::pgeometric_trans pgt = mf.linked_mesh().trans_of_convex(cv);
-      pfem pf = mf.fem_of_element(cv);
-
-      if (pf == fem_descriptor("FEM_Q2_INCOMPLETE(2)") ||
-          pf == fem_descriptor("FEM_Q2_INCOMPLETE(3)") ||
-          pf == fem_descriptor("FEM_PYRAMID_Q2_INCOMPLETE") ||
-          pf == fem_descriptor("FEM_PYRAMID_Q2_INCOMPLETE_DISCONTINUOUS") ||
-          pf == fem_descriptor("FEM_PRISM_INCOMPLETE_P2") ||
-          pf == fem_descriptor("FEM_PRISM_INCOMPLETE_P2_DISCONTINUOUS"))
-        pmf->set_finite_element(cv, pf);
-      else {
-        bool discontinuous = false;
-        for (unsigned i=0; i < pf->nb_dof(cv); ++i) {
-          /* could be a better test for discontinuity .. */
-          if (!dof_linkable(pf->dof_types()[i])) { discontinuous = true; break; }
-        }
-
-        pfem classical_pf1 = discontinuous ? classical_discontinuous_fem(pgt, 1)
-                                           : classical_fem(pgt, 1);
-
-        short_type degree = 1;
-        if ((pf != classical_pf1 && pf->estimated_degree() > 1) ||
-            pgt->structure() != pgt->basic_structure())
-          degree = 2;
-
-        pmf->set_finite_element(cv, discontinuous ?
-                                classical_discontinuous_fem(pgt, degree, 0, true) :
-                                classical_fem(pgt, degree, true));
-      }
+      pfem pf = select_finite_element_for_vtk(mf, cv);
+      pmf->set_finite_element(cv, pf);
     }
     /* find out which dof will be exported to VTK */
 
@@ -509,35 +512,8 @@ namespace getfem
     /* initialize pmf with finite elements suitable for VTK (which only knows
        isoparametric FEMs of order 1 and 2) */
     for (dal::bv_visitor cv(mf.convex_index()); !cv.finished(); ++cv) {
-      bgeot::pgeometric_trans pgt = mf.linked_mesh().trans_of_convex(cv);
-      pfem pf = mf.fem_of_element(cv);
-
-      if (pf == fem_descriptor("FEM_Q2_INCOMPLETE(2)") ||
-          pf == fem_descriptor("FEM_Q2_INCOMPLETE(3)") ||
-          pf == fem_descriptor("FEM_PYRAMID_Q2_INCOMPLETE") ||
-          pf == fem_descriptor("FEM_PYRAMID_Q2_INCOMPLETE_DISCONTINUOUS") ||
-          pf == fem_descriptor("FEM_PRISM_INCOMPLETE_P2") ||
-          pf == fem_descriptor("FEM_PRISM_INCOMPLETE_P2_DISCONTINUOUS"))
-        pmf->set_finite_element(cv, pf);
-      else {
-        bool discontinuous = false;
-        for (unsigned i=0; i < pf->nb_dof(cv); ++i) {
-          /* could be a better test for discontinuity .. */
-          if (!dof_linkable(pf->dof_types()[i])) { discontinuous = true; break; }
-        }
-
-        pfem classical_pf1 = discontinuous ? classical_discontinuous_fem(pgt, 1)
-                                           : classical_fem(pgt, 1);
-
-        short_type degree = 1;
-        if ((pf != classical_pf1 && pf->estimated_degree() > 1) ||
-            pgt->structure() != pgt->basic_structure())
-          degree = 2;
-
-        pmf->set_finite_element(cv, discontinuous ?
-                                classical_discontinuous_fem(pgt, degree, 0, true) :
-                                classical_fem(pgt, degree, true));
-      }
+      pfem pf = select_finite_element_for_vtk(mf, cv);
+      pmf->set_finite_element(cv, pf);
     }
     /* find out which dof will be exported to VTU */
 
