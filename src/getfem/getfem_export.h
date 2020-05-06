@@ -422,7 +422,8 @@ namespace getfem {
                 "inconsistency in the size of the dataset: "
                 << gmm::vect_size(U) << " != " << nb_val << "*" << Q);
     if (Q == 1) {
-      os << "<DataArray type=\"Float32\" Name=\"" << remove_spaces(name) << "\" format=\"ascii\">\n";
+      os << "<DataArray type=\"Float32\" Name=\"" << remove_spaces(name);
+      os << "\" format=\"ascii\">\n";
       for (size_type i=0; i < nb_val; ++i) {
         write_val(float(U[i]));
       }
@@ -437,7 +438,7 @@ namespace getfem {
          in the VTU file, they are written with C (row major) order
        */
       os << "<DataArray type=\"Float32\" Name=\"" << remove_spaces(name);
-      os << "\" NumberOfComponents=\"" << Q*Q << "\" format=\"ascii\">";
+      os << "\" NumberOfComponents=\"9\" format=\"ascii\">";
       for (size_type i=0; i < nb_val; ++i) {
         write_3x3tensor(U.begin() + i*Q);
       }
