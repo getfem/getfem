@@ -16,11 +16,16 @@
 #  Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 
 if QHULL
-optpy = check_levelset.py
+optpyqhull = check_levelset.py
 else
-optpy =
+optpyqhull =
 endif
 
+if MUMPS
+optpymumps = check_mixed_mesh.py
+else
+optpymumps =
+endif
 
 EXTRA_DIST= 						\
 	check_export.py 				\
@@ -67,14 +72,14 @@ TESTS = 						\
 	check_global_functions.py			\
 	check_asm.py	  				\
 	check_secondary_domain.py 			\
-	check_mixed_mesh.py  				\
 	demo_wave.py					\
 	demo_wave_equation.py				\
 	demo_laplacian.py				\
 	demo_laplacian_HHO.py				\
 	demo_elasticity_HHO.py                          \
 	demo_thermo_elasticity_electrical_coupling.py 	\
-	$(optpy)
+	$(optpyqhull)                                   \
+	$(optpymumps)
 
 AM_TESTS_ENVIRONMENT = \
 	export PYTHONPATH=$(top_builddir)/interface/src/python; \
