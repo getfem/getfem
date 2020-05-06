@@ -469,9 +469,12 @@ namespace getfem
   }
 
   void vtu_export::init() {
+    /* TODO: add ascii format */
+    GMM_ASSERT1(ascii, "vtu support only ascii format.");
     strcpy(header, "Exported by getfem++");
     state = EMPTY;
     psl = 0; dim_ = dim_type(-1);
+    check_header();
   }
 
   void vtu_export::switch_to_point_data() {
@@ -482,9 +485,6 @@ namespace getfem
   }
 
   void vtu_export::switch_to_cell_data() {
-    if (state != IN_CELL_DATA) {
-      state = IN_CELL_DATA;
-    }
   }
 
   void vtu_export::exporting(const mesh& m) {
@@ -559,13 +559,16 @@ namespace getfem
       for (unsigned i=0; i < dmap.size(); ++i)
         pmf_dof_used.add(pmf->ind_basic_dof_of_element(cv)[dmap[i]]);
     }
+    os << "<Piece NumberOfPoints=\"" << pmf_dof_used.card();
+    os << "\" NumberOfCells=\"" << pmf->convex_index().card() << "\">\n";
   }
 
   void vtu_export::check_header() {
     if (state >= HEADER_WRITTEN) return;
     os << "<?xml version=\"1.0\"?>\n";
-    os << "<VTKFile type=\"UnstructuredGrid\" version=\"0.1\" byte_order=\"BigEndian\">\n";
+    os << "<VTKFile type=\"UnstructuredGrid\" version=\"0.1\">\n";
     os << "<!--" << header << "-->\n";
+    os << "<UnstructuredGrid>\n";
     state = HEADER_WRITTEN;
   }
 
@@ -588,11 +591,9 @@ namespace getfem
 
   void vtu_export::write_mesh_structure_from_mesh_fem() {
     if (state >= STRUCTURE_WRITTEN) return;
-    check_header();
-    os << "<UnstructuredGrid>\n";
-    os << "<Piece NumberOfPoints=\"" << pmf_dof_used.card() << "\" NumberOfCells=\"" << pmf->convex_index().card() << "\">\n";
     os << "<Points>\n";
-    os << "<DataArray type=\"Float32\" Name=\"Points\" NumberOfComponents=\"3\" format=\"ascii\">\n";
+    os << "<DataArray type=\"Float32\" Name=\"Points\" ";
+    os << "NumberOfComponents=\"3\" format=\"ascii\">\n";
     std::vector<int> dofmap(pmf->nb_dof());
     int cnt = 0;
     for (dal::bv_visitor d(pmf_dof_used); !d.finished(); ++d) {

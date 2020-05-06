@@ -314,7 +314,7 @@ namespace getfem {
     std::vector<unsigned> pmf_mapping_type;
     std::ofstream real_os;
     dim_type dim_;
-    enum { EMPTY, HEADER_WRITTEN, STRUCTURE_WRITTEN, IN_CELL_DATA,
+    enum { EMPTY, HEADER_WRITTEN, STRUCTURE_WRITTEN,
            IN_POINT_DATA, FOOTER_WRITTEN } state;
 
     template<class T> void write_val(T v);
