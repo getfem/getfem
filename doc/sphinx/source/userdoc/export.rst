@@ -12,7 +12,7 @@ Export and view a solution
 There are essentially four ways to view the result of getfem computations:
 
 * Scilab, Octave or Matlab, with the interface.
-* The open-source Paraview or Mayavi or any other VTK files viewer.
+* The open-source Paraview or Mayavi or any other VTK (or VTU) files viewer.
 * The open-source OpenDX program.
 * The open-source Gmsh program.
 
@@ -43,7 +43,7 @@ and then, under Scilab, Octave or Matlab:
 
 See the getfem-matlab interface documentation for more details.
 
-Two other file formats are supported for export: the `VTK`_ file format, the
+Two other file formats are supported for export: the `VTK`_ (and `VTU`_ )file format, the
 `OpenDX`_ file format and the `Gmsh`_ post-processing file format. Both can export
 either a |gf_m| or |gf_mf| , but also the more versatile |gf_smsl|.
 
@@ -178,20 +178,20 @@ In order to build a |gf_smsl| object during the slicing operation, the ``stored_
            getfem::slicer_half_space(base_node(0,0), base_node(1, 0), -1),
            nrefine);
 
-The simplest way to use these slices is to export them to |vtk|, |opendx|, or
-|gmsh|. The file :file:`getfem/getfem_export.h` contains three classes:
-|gf_vtk_export|, |gf_dx_export| and |gf_pos_export|.
+The simplest way to use these slices is to export them to |vtk|, |vtu|, |opendx|, or
+|gmsh|. The file :file:`getfem/getfem_export.h` contains four classes:
+|gf_vtk_export|, |gf_vtu_export|, |gf_dx_export| and |gf_pos_export|.
 
 
-Exporting |m|, |mf| or slices to VTK
-------------------------------------
+Exporting |m|, |mf| or slices to VTK (or VTU)
+----------------------------------------------
 
-First, it is important to know the limitation of VTK data files: each file can
+First, it is important to know the limitation of VTK (or VTU) data files: each file can
 contain only one mesh, with at most one scalar field and one vector field and one
-tensor field on this mesh (in that order). VTK files can handle data on segment,
+tensor field on this mesh (in that order). VTK (or VTU) files can handle data on segment,
 triangles, quadrangles, tetrahedrons and hexahedrons. Although quadratic
 triangles, segments etc are said to be supported, it is just equivalent to using
-``nrefine=2`` when building a slice. VTK data file do support meshes with more
+``nrefine=2`` when building a slice. VTK (or VTU) data file do support meshes with more
 than one type of element (i.e. meshes with triangles and quadrangles, for
 example).
 
@@ -199,26 +199,38 @@ For example, supposing that a |smsl| ``sl`` has already been built::
 
   // an optional the 2nd argument can be set to true to produce
   // a text file instead of a binary file
-  vtk_export exp("output.vtk");
-  exp.exporting(sl); // will save the geometrical structure of the slice
-  exp.write_point_data(mfp, P, "pressure"); // write a scalar field
-  exp.write_point_data(mfu, U, "displacement"); // write a vector field
+
+  vtk_export vtk_exp("output.vtk");
+  vtk_exp.exporting(sl); // will save the geometrical structure of the slice
+  vtk_exp.write_point_data(mfp, P, "pressure"); // write a scalar field
+  vtk_exp.write_point_data(mfu, U, "displacement"); // write a vector field
+
+  vtu_export vtu_exp("output.vtu", true);
+  vtu_exp.exporting(sl); // will save the geometrical structure of the slice
+  vtu_exp.write_point_data(mfp, P, "pressure"); // write a scalar field
+  vtu_exp.write_point_data(mfu, U, "displacement"); // write a vector field
 
 In this example, the fields ``P`` and ``U`` are interpolated on the slice nodes,
-and then written into the VTK field. The vector fields should always be written
+and then written into the VTK (or VTU) field. The vector fields should always be written
 after the scalar fields (and the tensor fields should be written last).
 
 It is also possible to export a |mf| without having to build a slice::
 
   // an optional the 2nd argument can be set to true to produce
   // a text file instead of a binary file
-  vtk_export exp("output.vtk");
-  exp.exporting(mfu);
-  exp.write_point_data(mfp, P, "pressure"); // write a scalar field
-  exp.write_point_data(mfu, U, "displacement"); // write a vector field
 
-Note however that with this approach, the ``vtk_export`` will map each convex/fem
-of ``mfu`` to a VTK element type. As VTK does not handle elements of degree
+  vtk_export vtk_exp("output.vtk");
+  vtk_exp.exporting(mfu);
+  vtk_exp.write_point_data(mfp, P, "pressure"); // write a scalar field
+  vtk_exp.write_point_data(mfu, U, "displacement"); // write a vector field
+
+  vtu_export vtu_exp("output.vtu", true);
+  vtu_exp.exporting(mfu);
+  vtu_exp.write_point_data(mfp, P, "pressure"); // write a scalar field
+  vtu_exp.write_point_data(mfu, U, "displacement"); // write a vector field
+
+Note however that with this approach, the ``vtk_export`` (or ``vtu_export``) will map each convex/fem
+of ``mfu`` to a VTK (or VTU) element type. As VTK (or VTU) does not handle elements of degree
 greater than 2, there will be a loss of precision for higher degree FEMs.
 
 Exporting |m|, |mf| or slices to OpenDX
