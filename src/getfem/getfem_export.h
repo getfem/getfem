@@ -233,7 +233,7 @@ namespace getfem {
       } else gmm::copy(U,V);
       std::vector<scalar_type> W(Q*pmf_dof_used.card());
       gmm::copy(remove_dof_unused(V, pmf_dof_used, Q), W);
-      write_dataset_(V, name, qdim);
+      write_dataset_(W, name, qdim);
     }
   }
 
