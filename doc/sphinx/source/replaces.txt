@@ -2,6 +2,7 @@
 .. |gnu| replace:: *GNU*
 .. |c++| replace:: *C++*
 .. |vtk| replace:: *VTK*
+.. |vtu| replace:: *VTU*
 .. |opendx| replace:: *OpenDX*
 .. |gmsh| replace:: *Gmsh*
 .. |emc2| replace:: *emc2*
@@ -48,6 +49,7 @@
 .. |gf_sl_a| replace:: ``getfem::slicer_action``
 .. |gf_sl_ddb| replace:: ``getfem::mesh_slice_cv_dof_data_base``
 .. |gf_vtk_export| replace:: ``getfem::vtk_export``
+.. |gf_vtu_export| replace:: ``getfem::vtu_export``
 .. |gf_dx_export| replace:: ``getfem::dx_export``
 .. |gf_pos_export| replace:: ``getfem::pos_export``
 .. |gf_gasm| replace:: ``getfem::generic_assembly``
@@ -85,6 +87,7 @@
 .. _user documentation: http://getfem.org/userdoc/index.html
 .. _vocabulary: http://getfem.org/getfem_reference/index.html
 .. _VTK: http://www.vtk.org
+.. _VTU: https://vtk.org/Wiki/VTK_XML_Formats
 .. _MayaVi: http://mayavi.sourceforge.net
 .. _OpenDX: http://www.opendx.org
 .. _Gmsh: http://www.geuz.org/gmsh
