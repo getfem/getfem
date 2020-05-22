@@ -114,7 +114,7 @@ switch (dirichlet_version)
   case 2,
     gf_model_set(md, 'add Dirichlet condition with penalization', mim, 'u', r, 1, 'DirichletData');
 end
-gf_model_get(md, 'solve');
+gf_model_get(md, 'solve', 'noisy');
 U = gf_model_get(md, 'variable', 'u');
 
 gfassert('abs(min(U) + 0.1828) < 0.001');
