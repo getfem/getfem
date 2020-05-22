@@ -54,6 +54,9 @@ namespace getfem
   using bgeot::size_type;
 
 #ifdef GETFEM_HAS_OPENMP
+  void parallel_execution(std::function<void(void)> lambda,
+                          bool iterate_over_partitions);
+
   //declaring a thread lock, to protect multi-threaded accesses to
   //asserts, traces and warnings. Using a global mutex
   class omp_guard
