@@ -38,6 +38,7 @@ Makefile
 /config.h
 /config.status
 /cubature/getfem_im_list.h
+/src/getfem/getfem_im_list.h
 /getfem-config
 /getfem-config-notinstalled
 /gmm-config
