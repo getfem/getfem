@@ -548,7 +548,7 @@ namespace getfem {
 
     size_type view;
     dim_type dim;
-    enum { EMPTY, HEADER_WRITTEN, STRUCTURE_WRITTEN, IN_CELL_DATA} state;
+    enum { EMPTY, HEADER_WRITTEN, STRUCTURE_WRITTEN, IN_CELL_DATA } state;
     std::ofstream real_os;
 
   public:

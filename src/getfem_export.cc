@@ -26,6 +26,27 @@
 
 namespace getfem
 {
+
+  /* try to check if a quad or hexahedric cell is "rectangular" and oriented
+     along the axes */
+  template<typename C> static bool check_voxel(const C& c) {
+    scalar_type h[3];
+    unsigned N = c[0].size();
+    if (c.size() != (1U << N)) return false;
+    const base_node P0 = c[0];
+    h[0] = c[1][0] - P0[0];
+    h[1] = c[2][0] - P0[0];
+    if (c.size() != 4) h[2] = c[4][0] - P0[0];
+    for (unsigned i=1; i < c.size(); ++i) {
+      const base_node d = c[i] - P0;
+      for (unsigned j=0; j < N; ++j)
+        if (gmm::abs(d[j]) > 1e-7*h[j] && gmm::abs(d[j] - h[j]) > 1e-7*h[j])
+          return false;
+    }
+    return true;
+  }
+
+
   /* -------------------------------------------------------------
    * VTK export
    * ------------------------------------------------------------- */
@@ -145,24 +166,23 @@ namespace getfem
     return vtktypes[t];
   }
 
+
   vtk_export::vtk_export(std::ostream &os_, bool ascii_)
     : os(os_), ascii(ascii_) { init(); }
 
   vtk_export::vtk_export(const std::string& fname, bool ascii_)
     : os(real_os), ascii(ascii_),
-    real_os(fname.c_str(), !ascii ? std::ios_base::binary | std::ios_base::out :
-                                    std::ios_base::out) {
-    GMM_ASSERT1(real_os, "impossible to write to vtk file '" << fname << "'");
+    real_os(fname.c_str(), !ascii ? std::ios_base::binary | std::ios_base::out
+                                  : std::ios_base::out) {
+    GMM_ASSERT1(real_os, "impossible to write to file '" << fname << "'");
     init();
   }
 
   void vtk_export::init() {
-    static int test_endian = 0x01234567;
-    strcpy(header, "Exported by getfem++");
+    strcpy(header, "Exported by GetFEM");
     psl = 0; dim_ = dim_type(-1);
-    if (*((char*)&test_endian) == 0x67)
-      reverse_endian = true;
-    else reverse_endian = false;
+    static int test_endian = 0x01234567;
+    reverse_endian = (*((char*)&test_endian) == 0x67);
     state = EMPTY;
   }
 
@@ -194,26 +214,6 @@ namespace getfem
   }
 
 
-  /* try to check if a quad or hexahedric cell is "rectangular" and oriented
-     along the axes */
-  template<typename C> static bool check_voxel(const C& c) {
-    scalar_type h[3];
-    unsigned N = c[0].size();
-    if (c.size() != (1U << N)) return false;
-    const base_node P0 = c[0];
-    h[0] = c[1][0] - P0[0];
-    h[1] = c[2][0] - P0[0];
-    if (c.size() != 4) h[2] = c[4][0] - P0[0];
-    for (unsigned i=1; i < c.size(); ++i) {
-      const base_node d = c[i] - P0;
-      for (unsigned j=0; j < N; ++j)
-        if (gmm::abs(d[j]) > 1e-7*h[j] && gmm::abs(d[j] - h[j]) > 1e-7*h[j])
-          return false;
-    }
-    return true;
-  }
-
-
   void vtk_export::exporting(const stored_mesh_slice& sl) {
     psl = &sl; dim_ = dim_type(sl.dim());
     GMM_ASSERT1(psl->dim() <= 3, "attempt to export a " << int(dim_)
@@ -223,7 +223,7 @@ namespace getfem
   void vtk_export::exporting(const mesh& m) {
     dim_ = m.dim();
     GMM_ASSERT1(dim_ <= 3, "attempt to export a " << int(dim_)
-              << "D slice (not supported)");
+                << "D mesh (not supported)");
     pmf = std::make_unique<mesh_fem>(const_cast<mesh&>(m), dim_type(1));
     for (dal::bv_visitor cv(m.convex_index()); !cv.finished(); ++cv) {
       bgeot::pgeometric_trans pgt = m.trans_of_convex(cv);
@@ -236,7 +236,7 @@ namespace getfem
   void vtk_export::exporting(const mesh_fem& mf) {
     dim_ = mf.linked_mesh().dim();
     GMM_ASSERT1(dim_ <= 3, "attempt to export a " << int(dim_)
-              << "D slice (not supported)");
+                << "D mesh_fem (not supported)");
     if (&mf != pmf.get())
       pmf = std::make_unique<mesh_fem>(mf.linked_mesh());
     /* initialize pmf with finite elements suitable for VTK (which only knows
@@ -498,7 +498,7 @@ namespace getfem
   }
 
   void dx_export::init() {
-    strcpy(header, "Exported by getfem++");
+    strcpy(header, "Exported by GetFEM");
     psl = 0; dim_ = dim_type(-1); connections_dim = dim_type(-1);
     psl_use_merged = false;
     header_written = false;
