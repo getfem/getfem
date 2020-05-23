@@ -733,6 +733,32 @@ fi
 dnl -----------------------------END OF LAPACK TEST--------------------------
 
 
+dnl ---------------------------single-thread-blas--------------------------
+
+single_thread_blas=YES
+AC_ARG_ENABLE(single-thread-blas,
+   [AS_HELP_STRING([--enable-single-thread-blas],[forces openblas to be single threaded])],
+   [ case $enableval in
+        yes | "") single_thread_blas=YES;;
+        no) single_thread_blas=NO;;
+        *) AC_MSG_ERROR([bad value ${enableval} for --enable-single-thread-blas], [single_thread_blas=NO]) ;;
+     esac
+])
+
+if test x$single_thread_blas = xYES; then
+  AC_CHECK_LIB(dl, dlsym, [acx_dl_ok=yes; DL_LIBS="-ldl"])
+  if test x"$acx_dl_ok" = xyes; then
+     AC_DEFINE_UNQUOTED([FORCE_SINGLE_THREAD_BLAS],1,[forces openblas to be single threaded])
+     LIBS="$DL_LIBS $LIBS"
+  fi
+fi;
+dnl --------------------------end of single-thread-blas--------------------
+
+
+
+
+
+
 dnl ---------------------------OPENMP------------------------------
 useopenmp=0
 AC_ARG_ENABLE(openmp,
