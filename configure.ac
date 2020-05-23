@@ -40,16 +40,6 @@ AX_PREFIX_CONFIG_H(src/gmm/gmm_arch_config.h,GMM)
 AC_PREREQ(2.61)
 AC_ARG_PROGRAM
 
-dnl PACKAGE="getfem"
-dnl dnl VERSION=$MAJOR_VERSION.$MINOR_VERSION-`date +%Y%m%d`
-dnl VERSION=$MAJOR_VERSION.$MINOR_VERSION.$PATCH_VERSION
-dnl dnl VERSION=$MAJOR_VERSION.$MINOR_VERSION
-dnl AC_DEFINE_UNQUOTED([MAJOR_VERSION],$MAJOR_VERSION,[getfem major version number])
-dnl AC_DEFINE_UNQUOTED([MINOR_VERSION],$MINOR_VERSION,[getfem minor version number])
-dnl AC_DEFINE_UNQUOTED([PATCH_VERSION],$PATCH_VERSION,[getfem patch number (sub minor version)])
-dnl echo "configuring $PACKAGE $VERSION (patch level $PATCH_VERSION)..."
-
-
 dnl ------------------------------------------------------------------------
 dnl   init automake
 dnl ------------------------------------------------------------------------
@@ -733,26 +723,26 @@ fi
 dnl -----------------------------END OF LAPACK TEST--------------------------
 
 
-dnl ---------------------------single-thread-blas--------------------------
+dnl ---------------------------multithread-blas--------------------------
 
-single_thread_blas=YES
-AC_ARG_ENABLE(single-thread-blas,
-   [AS_HELP_STRING([--enable-single-thread-blas],[forces openblas to be single threaded])],
+multithread_blas=NO
+AC_ARG_ENABLE(multithread-blas,
+   [AS_HELP_STRING([--enable-multithread-blas],[enable openblas to be multithreaded])],
    [ case $enableval in
-        yes | "") single_thread_blas=YES;;
-        no) single_thread_blas=NO;;
-        *) AC_MSG_ERROR([bad value ${enableval} for --enable-single-thread-blas], [single_thread_blas=NO]) ;;
+        yes | "") multithread_blas=YES;;
+        no) multithread_blas=NO;;
+        *) AC_MSG_ERROR([bad value ${enableval} for --enable-multithread-blas], [multithread_blas=NO]) ;;
      esac
 ])
 
-if test x$single_thread_blas = xYES; then
+if test x$multithread_blas = xNO; then
   AC_CHECK_LIB(dl, dlsym, [acx_dl_ok=yes; DL_LIBS="-ldl"])
   if test x"$acx_dl_ok" = xyes; then
-     AC_DEFINE_UNQUOTED([FORCE_SINGLE_THREAD_BLAS],1,[forces openblas to be single threaded])
+     AC_DEFINE_UNQUOTED([FORCE_SINGLE_THREAD_BLAS],1,[enable openblas to be multithreaded])
      LIBS="$DL_LIBS $LIBS"
   fi
 fi;
-dnl --------------------------end of single-thread-blas--------------------
+dnl --------------------------end of multithread-blas--------------------
 
 
 
