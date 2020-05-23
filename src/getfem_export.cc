@@ -33,6 +33,27 @@ namespace getfem
   struct gf2vtk_dof_mapping : public std::vector<std::vector<unsigned> > {};
   struct gf2vtk_vtk_type : public std::vector<int> {};
 
+  typedef enum { VTK_VERTEX = 1,
+                 VTK_LINE = 3,
+                 VTK_TRIANGLE = 5,
+                 VTK_PIXEL = 8,
+                 VTK_QUAD = 9,
+                 VTK_TETRA = 10,
+                 VTK_VOXEL = 11,
+                 VTK_HEXAHEDRON = 12,
+                 VTK_WEDGE = 13,
+                 VTK_PYRAMID = 14,
+                 VTK_QUADRATIC_EDGE = 21,
+                 VTK_QUADRATIC_TRIANGLE = 22,
+                 VTK_QUADRATIC_QUAD = 23,
+                 VTK_QUADRATIC_TETRA = 24,
+                 VTK_QUADRATIC_HEXAHEDRON = 25,
+                 VTK_QUADRATIC_WEDGE = 26,
+                 VTK_QUADRATIC_PYRAMID = 27,
+                 VTK_BIQUADRATIC_QUAD = 28,
+                 VTK_TRIQUADRATIC_HEXAHEDRON = 29,
+                 VTK_BIQUADRATIC_QUADRATIC_WEDGE = 32 } vtk_cell_type;
+
   typedef enum { NO_VTK_MAPPING,
                  N1_TO_VTK_VERTEX,
                  N2_TO_VTK_LINE,
@@ -66,48 +87,48 @@ namespace getfem
     vtkmaps.resize(25);
     vtktypes.resize(25);
 
-    vtktypes[N1_TO_VTK_VERTEX] = vtk_export::VTK_VERTEX;
+    vtktypes[N1_TO_VTK_VERTEX] = VTK_VERTEX;
     vtkmaps [N1_TO_VTK_VERTEX] = {0};
-    vtktypes[N2_TO_VTK_LINE] = vtk_export::VTK_LINE;
+    vtktypes[N2_TO_VTK_LINE] = VTK_LINE;
     vtkmaps [N2_TO_VTK_LINE] = {0, 1};
-    vtktypes[N3_TO_VTK_TRIANGLE] = vtk_export::VTK_TRIANGLE;
+    vtktypes[N3_TO_VTK_TRIANGLE] = VTK_TRIANGLE;
     vtkmaps [N3_TO_VTK_TRIANGLE] = {0, 1, 2};
-    vtktypes[N4_TO_VTK_PIXEL] = vtk_export::VTK_PIXEL;
+    vtktypes[N4_TO_VTK_PIXEL] = VTK_PIXEL;
     vtkmaps [N4_TO_VTK_PIXEL] = {0, 1, 2, 3};
-    vtktypes[N4_TO_VTK_QUAD] = vtk_export::VTK_QUAD;
+    vtktypes[N4_TO_VTK_QUAD] = VTK_QUAD;
     vtkmaps [N4_TO_VTK_QUAD] = {0, 1, 3, 2};
-    vtktypes[N4_TO_VTK_TETRA] = vtk_export::VTK_TETRA;
+    vtktypes[N4_TO_VTK_TETRA] = VTK_TETRA;
     vtkmaps [N4_TO_VTK_TETRA] = {0, 1, 2, 3};
-    vtktypes[N8_TO_VTK_VOXEL] = vtk_export::VTK_VOXEL;
+    vtktypes[N8_TO_VTK_VOXEL] = VTK_VOXEL;
     vtkmaps [N8_TO_VTK_VOXEL] = {0, 1, 2, 3, 4, 5, 6, 7};
-    vtktypes[N8_TO_VTK_HEXAHEDRON] = vtk_export::VTK_HEXAHEDRON;
+    vtktypes[N8_TO_VTK_HEXAHEDRON] = VTK_HEXAHEDRON;
     vtkmaps [N8_TO_VTK_HEXAHEDRON] = {0, 1, 3, 2, 4, 5, 7, 6};
-    vtktypes[N6_TO_VTK_WEDGE] = vtk_export::VTK_WEDGE;
+    vtktypes[N6_TO_VTK_WEDGE] = VTK_WEDGE;
     vtkmaps [N6_TO_VTK_WEDGE] = {0, 1, 2, 3, 4, 5};
-    vtktypes[N5_TO_VTK_PYRAMID] = vtk_export::VTK_PYRAMID;
+    vtktypes[N5_TO_VTK_PYRAMID] = VTK_PYRAMID;
     vtkmaps [N5_TO_VTK_PYRAMID] = {0, 1, 3, 2, 4};
-    vtktypes[N3_TO_VTK_QUADRATIC_EDGE] = vtk_export::VTK_QUADRATIC_EDGE;
+    vtktypes[N3_TO_VTK_QUADRATIC_EDGE] = VTK_QUADRATIC_EDGE;
     vtkmaps [N3_TO_VTK_QUADRATIC_EDGE] = {0, 2, 1};
-    vtktypes[N6_TO_VTK_QUADRATIC_TRIANGLE] = vtk_export::VTK_QUADRATIC_TRIANGLE;
+    vtktypes[N6_TO_VTK_QUADRATIC_TRIANGLE] = VTK_QUADRATIC_TRIANGLE;
     vtkmaps [N6_TO_VTK_QUADRATIC_TRIANGLE] = {0, 2, 5, 1, 4, 3};
-    vtktypes[N8_TO_VTK_QUADRATIC_QUAD] = vtk_export::VTK_QUADRATIC_QUAD;
+    vtktypes[N8_TO_VTK_QUADRATIC_QUAD] = VTK_QUADRATIC_QUAD;
     vtkmaps [N8_TO_VTK_QUADRATIC_QUAD] = {0, 2, 7, 5, 1, 4, 6, 3};
-    vtktypes[N10_TO_VTK_QUADRATIC_TETRA] = vtk_export::VTK_QUADRATIC_TETRA;
+    vtktypes[N10_TO_VTK_QUADRATIC_TETRA] = VTK_QUADRATIC_TETRA;
     vtkmaps [N10_TO_VTK_QUADRATIC_TETRA] = {0, 2, 5, 9, 1, 4, 3, 6, 7, 8};
-    vtktypes[N20_TO_VTK_QUADRATIC_HEXAHEDRON] = vtk_export::VTK_QUADRATIC_HEXAHEDRON;
+    vtktypes[N20_TO_VTK_QUADRATIC_HEXAHEDRON] = VTK_QUADRATIC_HEXAHEDRON;
     vtkmaps [N20_TO_VTK_QUADRATIC_HEXAHEDRON] = {0, 2, 7, 5, 12, 14, 19, 17, 1, 4, 6, 3, 13, 16, 18, 15, 8, 9, 11, 10};
-    vtktypes[N15_TO_VTK_QUADRATIC_WEDGE] = vtk_export::VTK_QUADRATIC_WEDGE;
+    vtktypes[N15_TO_VTK_QUADRATIC_WEDGE] = VTK_QUADRATIC_WEDGE;
     vtkmaps [N15_TO_VTK_QUADRATIC_WEDGE] = {0, 2, 5, 9, 11, 14, 1, 4, 3, 10, 13, 12, 6, 7, 8};
                                       // = {0, 5, 2, 9, 14, 11, 3, 4, 1, 12, 13, 10, 6, 8, 7};
-    vtktypes[N13_TO_VTK_QUADRATIC_PYRAMID] = vtk_export::VTK_QUADRATIC_PYRAMID;
+    vtktypes[N13_TO_VTK_QUADRATIC_PYRAMID] = VTK_QUADRATIC_PYRAMID;
     vtkmaps [N13_TO_VTK_QUADRATIC_PYRAMID] = {0, 2, 7, 5, 12, 1, 4, 6, 3, 8, 9, 11, 10};
-    vtktypes[N14_TO_VTK_QUADRATIC_PYRAMID] = vtk_export::VTK_QUADRATIC_PYRAMID;
+    vtktypes[N14_TO_VTK_QUADRATIC_PYRAMID] = VTK_QUADRATIC_PYRAMID;
     vtkmaps [N14_TO_VTK_QUADRATIC_PYRAMID] = {0, 2, 8, 6, 13, 1, 5, 7, 3, 9, 10, 12, 11};
-    vtktypes[N9_TO_VTK_BIQUADRATIC_QUAD] = vtk_export::VTK_BIQUADRATIC_QUAD;
+    vtktypes[N9_TO_VTK_BIQUADRATIC_QUAD] = VTK_BIQUADRATIC_QUAD;
     vtkmaps [N9_TO_VTK_BIQUADRATIC_QUAD] = {0, 2, 8, 6, 1, 5, 7, 3, 4};
-    vtktypes[N27_TO_VTK_TRIQUADRATIC_HEXAHEDRON] = vtk_export::VTK_TRIQUADRATIC_HEXAHEDRON;
+    vtktypes[N27_TO_VTK_TRIQUADRATIC_HEXAHEDRON] = VTK_TRIQUADRATIC_HEXAHEDRON;
     vtkmaps [N27_TO_VTK_TRIQUADRATIC_HEXAHEDRON] = {0, 2, 8, 6, 18, 20, 26, 24, 1, 5, 7, 3, 19, 23, 25, 21, 9, 11, 17, 15, 12, 14, 10, 16, 4, 22};
-    vtktypes[N18_TO_VTK_BIQUADRATIC_QUADRATIC_WEDGE] = vtk_export::VTK_BIQUADRATIC_QUADRATIC_WEDGE;
+    vtktypes[N18_TO_VTK_BIQUADRATIC_QUADRATIC_WEDGE] = VTK_BIQUADRATIC_QUADRATIC_WEDGE;
     vtkmaps [N18_TO_VTK_BIQUADRATIC_QUADRATIC_WEDGE]  = {0, 2, 5, 12, 14, 17, 1, 4, 3, 13, 16, 15, 6, 8, 11, 7, 10, 9};
   }
 
