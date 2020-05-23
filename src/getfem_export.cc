@@ -167,18 +167,29 @@ namespace getfem
   }
 
 
-  vtk_export::vtk_export(std::ostream &os_, bool ascii_)
-    : os(os_), ascii(ascii_) { init(); }
+  vtk_export::vtk_export(std::ostream &os_, bool ascii_, bool vtk_)
+    : os(os_), ascii(ascii_), vtk(vtk_) { init(); }
 
-  vtk_export::vtk_export(const std::string& fname, bool ascii_)
-    : os(real_os), ascii(ascii_),
+  vtk_export::vtk_export(const std::string& fname, bool ascii_, bool vtk_)
+    : os(real_os), ascii(ascii_), vtk(vtk_),
     real_os(fname.c_str(), !ascii ? std::ios_base::binary | std::ios_base::out
                                   : std::ios_base::out) {
     GMM_ASSERT1(real_os, "impossible to write to file '" << fname << "'");
     init();
   }
 
+  vtk_export::~vtk_export(){
+    if (!vtk) {
+      if (state == IN_CELL_DATA) os << "</CellData>\n";
+      if (state == IN_POINT_DATA) os << "</PointData>\n";
+      os << "</Piece>\n";
+      os << "</UnstructuredGrid>\n";
+      os << "</VTKFile>\n";
+    }
+  }
+
   void vtk_export::init() {
+    GMM_ASSERT1(vtk || ascii, "vtu support only ascii format.");
     strcpy(header, "Exported by GetFEM");
     psl = 0; dim_ = dim_type(-1);
     static int test_endian = 0x01234567;
@@ -187,34 +198,41 @@ namespace getfem
   }
 
   void vtk_export::switch_to_cell_data() {
+    GMM_ASSERT1(vtk, "Export of cell data to vtu not supported yet.");
     if (state != IN_CELL_DATA) {
-      state = IN_CELL_DATA;
-      write_separ();
-      if (psl) {
-        os << "CELL_DATA " << psl->nb_simplexes(0) + psl->nb_simplexes(1)
-         + psl->nb_simplexes(2) + psl->nb_simplexes(3) << "\n";
+      if (vtk) {
+        size_type nb_cells=0;
+        if (psl) for (auto i : {0,1,2,3}) nb_cells += psl->nb_simplexes(i);
+        else nb_cells = pmf->convex_index().card();
+        write_separ();
+        os << "CELL_DATA " << nb_cells << "\n";
+        write_separ();
       } else {
-        os << "CELL_DATA " << pmf->convex_index().card() << "\n";
+        if (state == IN_POINT_DATA) os << "</PointData>\n";
+        os << "<CellData>\n";
       }
-      write_separ();
+      state = IN_CELL_DATA;
     }
   }
 
   void vtk_export::switch_to_point_data() {
     if (state != IN_POINT_DATA) {
-      state = IN_POINT_DATA;
-      write_separ();
-      if (psl) {
-        write_separ(); os << "POINT_DATA " << psl->nb_points() << "\n";
+      if (vtk) {
+        write_separ();
+        os << "POINT_DATA " << (psl ? psl->nb_points()
+                                    : pmf_dof_used.card()) << "\n";
+        write_separ();
       } else {
-        os << "POINT_DATA " << pmf_dof_used.card() << "\n";
+        if (state == IN_CELL_DATA) os << "</CellData>\n";
+        os << "<PointData>\n";
       }
-      write_separ();
+      state = IN_POINT_DATA;
     }
   }
 
 
   void vtk_export::exporting(const stored_mesh_slice& sl) {
+    GMM_ASSERT1(vtk, "Export of mesh slice to vtu not supported yet.");
     psl = &sl; dim_ = dim_type(sl.dim());
     GMM_ASSERT1(psl->dim() <= 3, "attempt to export a " << int(dim_)
               << "D slice (not supported)");
@@ -272,7 +290,7 @@ namespace getfem
                                 classical_fem(pgt, degree, true));
       }
     }
-    /* find out which dof will be exported to VTK */
+    /* find out which dof will be exported to VTK/VTU */
 
     const mesh &m = pmf->linked_mesh();
     pmf_mapping_type.resize(pmf->convex_index().last_true() + 1, unsigned(-1));
@@ -346,9 +364,16 @@ namespace getfem
 
   void vtk_export::check_header() {
     if (state >= HEADER_WRITTEN) return;
-    os << "# vtk DataFile Version 2.0\n";
-    os << header << "\n";
-    if (ascii) os << "ASCII\n"; else os << "BINARY\n";
+    if (vtk) {
+      os << "# vtk DataFile Version 2.0\n";
+      os << header << "\n";
+      os << (ascii ? "ASCII\n" : "BINARY\n");
+    } else {
+      os << "<?xml version=\"1.0\"?>\n";
+      os << "<VTKFile type=\"UnstructuredGrid\" version=\"0.1\">\n";
+      os << "<!--" << header << "-->\n";
+      os << "<UnstructuredGrid>\n";
+    }
     state = HEADER_WRITTEN;
   }
 
@@ -417,9 +442,17 @@ namespace getfem
   void vtk_export::write_mesh_structure_from_mesh_fem() {
     if (state >= STRUCTURE_WRITTEN) return;
     check_header();
-    /* possible improvement: detect structured grids */
-    os << "DATASET UNSTRUCTURED_GRID\n";
-    os << "POINTS " << pmf_dof_used.card() << " float\n";
+    if (vtk) {
+      /* possible improvement: detect structured grids */
+      os << "DATASET UNSTRUCTURED_GRID\n";
+      os << "POINTS " << pmf_dof_used.card() << " float\n";
+    } else {
+      os << "<Piece NumberOfPoints=\"" << pmf_dof_used.card()
+         << "\" NumberOfCells=\"" << pmf->convex_index().card() << "\">\n";
+      os << "<Points>\n";
+      os << "<DataArray type=\"Float32\" Name=\"Points\" ";
+      os << "NumberOfComponents=\"3\" format=\"ascii\">\n";
+    }
     std::vector<int> dofmap(pmf->nb_dof());
     int cnt = 0;
     for (dal::bv_visitor d(pmf_dof_used); !d.finished(); ++d) {
@@ -433,21 +466,47 @@ namespace getfem
     for (dal::bv_visitor cv(pmf->convex_index()); !cv.finished(); ++cv)
       nb_cell_values += (1 + select_vtk_dof_mapping(pmf_mapping_type[cv]).size());
 
-    write_separ(); os << "CELLS " << pmf->convex_index().card() << " " << nb_cell_values << "\n";
+    if (vtk) {
+      write_separ();
+      os << "CELLS " << pmf->convex_index().card() << " " << nb_cell_values << "\n";
+    } else {
+      os << "</DataArray>\n";
+      os << "</Points>\n";
+      os << "<Cells>\n";
+      os << "<DataArray type=\"Int64\" Name=\"connectivity\" format=\"ascii\">\n";
+    }
 
     for (dal::bv_visitor cv(pmf->convex_index()); !cv.finished(); ++cv) {
       const std::vector<unsigned> &dmap = select_vtk_dof_mapping(pmf_mapping_type[cv]);
-      write_val(int(dmap.size()));
+      if (vtk) write_val(int(dmap.size()));
       for (size_type i=0; i < dmap.size(); ++i)
         write_val(int(dofmap[pmf->ind_basic_dof_of_element(cv)[dmap[i]]]));
       write_separ();
     }
 
-    write_separ(); os << "CELL_TYPES " << pmf->convex_index().card() << "\n";
+    if (vtk) {
+      write_separ();
+      os << "CELL_TYPES " << pmf->convex_index().card() << "\n";
+    } else {
+      os << "</DataArray>\n";
+      os << "<DataArray type=\"Int64\" Name=\"offsets\" format=\"ascii\">\n";
+      cnt = 0;
+      for (dal::bv_visitor cv(pmf->convex_index()); !cv.finished(); ++cv) {
+        const std::vector<unsigned> &dmap = select_vtk_dof_mapping(pmf_mapping_type[cv]);
+        cnt += int(dmap.size());
+        write_val(cnt);
+        write_separ();
+      }
+      os << "</DataArray>\n";
+      os << "<DataArray type=\"Int64\" Name=\"types\" format=\"ascii\">\n";
+    }
     for (dal::bv_visitor cv(pmf->convex_index()); !cv.finished(); ++cv) {
       write_val(select_vtk_type(pmf_mapping_type[cv]));
       write_separ();
     }
+    if (!vtk)
+      os << "</DataArray>\n"
+         << "</Cells>\n";
 
     state = STRUCTURE_WRITTEN;
   }

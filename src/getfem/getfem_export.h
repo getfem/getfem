@@ -57,18 +57,20 @@ namespace getfem {
     return s2;
   }
 
-  /** @brief VTK export.
+  /** @brief VTK/VTU export.
 
-      export class to VTK ( http://www.kitware.com/vtk.html ) file format
-      (not the XML format, but the old format)
+      export class to VTK/VTU file format
+      ( http://www.kitware.com/vtk.html,
+      legacy and serial vtkUnstructuredGrid)
 
       A vtk_export can store multiple scalar/vector fields.
   */
   class vtk_export {
   protected:
     std::ostream &os;
-    char header[256]; // hard limit in vtk
+    char header[256]; // hard limit in vtk/vtu
     bool ascii;
+    bool vtk;         // true for vtk, false for vtu
     const stored_mesh_slice *psl;
     std::unique_ptr<mesh_fem> pmf;
     dal::bit_vector pmf_dof_used;
@@ -85,9 +87,9 @@ namespace getfem {
     void write_separ();
 
   public:
-    vtk_export(const std::string& fname, bool ascii_ = false);
-    vtk_export(std::ostream &os_, bool ascii_ = false);
-
+    vtk_export(const std::string& fname, bool ascii_= false, bool vtk_=true);
+    vtk_export(std::ostream &os_, bool ascii_ = false, bool vtk_=true);
+    ~vtk_export(); // a vtu file is completed upon calling the destructor
     /** should be called before write_*_data */
     void exporting(const mesh& m);
     void exporting(const mesh_fem& mf);
@@ -99,9 +101,9 @@ namespace getfem {
     void set_header(const std::string& s);
     void write_mesh();
 
-    /** append a new scalar or vector field defined on mf to the .vtk file.  If
-        you are exporting a slice, or if mf != get_exported_mesh_fem(), U will
-        be interpolated on the slice, or on get_exported_mesh_fem().
+    /** append a new scalar or vector field defined on mf to the .vtk/.vtu file.
+        If you are exporting a slice, or if mf != get_exported_mesh_fem(), U
+        will be interpolated on the slice, or on get_exported_mesh_fem().
 
         Note that vectors should be written AFTER scalars, and tensors
         after vectors
@@ -242,30 +244,51 @@ namespace getfem {
     GMM_ASSERT1(gmm::vect_size(U) == nb_val*Q,
                 "inconsistency in the size of the dataset: "
                 << gmm::vect_size(U) << " != " << nb_val << "*" << Q);
-    write_separ();
+    if (vtk) write_separ();
     if (Q == 1) {
-      os << "SCALARS " << remove_spaces(name) << " float 1\n";
-      os << "LOOKUP_TABLE default\n";
+      if (vtk)
+        os << "SCALARS " << remove_spaces(name) << " float 1\n"
+           << "LOOKUP_TABLE default\n";
+      else
+        os << "<DataArray type=\"Float32\" Name=\"" << remove_spaces(name)
+           << "\" format=\"ascii\">\n";
       for (size_type i=0; i < nb_val; ++i) {
         write_val(float(U[i]));
       }
     } else if (Q <= 3) {
-      os << "VECTORS " << remove_spaces(name) << " float\n";
+      if (vtk)
+        os << "VECTORS " << remove_spaces(name) << " float\n";
+      else
+        os << "<DataArray type=\"Float32\" Name=\"" << remove_spaces(name)
+           << "\" NumberOfComponents=\"3\" format=\"ascii\">\n";
       for (size_type i=0; i < nb_val; ++i) {
         write_vec(U.begin() + i*Q, Q);
       }
     } else if (Q == gmm::sqr(dim_)) {
       /* tensors : coef are supposed to be stored in FORTRAN order
-         in the VTK file, they are written with C (row major) order
+         in the VTK/VTU file, they are written with C (row major) order
        */
-      os << "TENSORS " << remove_spaces(name) << " float\n";
+      if (vtk)
+        os << "TENSORS " << remove_spaces(name) << " float\n";
+      else
+        os << "<DataArray type=\"Float32\" Name=\"" << remove_spaces(name)
+           << "\" NumberOfComponents=\"9\" format=\"ascii\">";
       for (size_type i=0; i < nb_val; ++i) {
         write_3x3tensor(U.begin() + i*Q);
       }
-    } else GMM_ASSERT1(false, "vtk does not accept vectors of dimension > 3");
+    } else
+      GMM_ASSERT1(false, std::string(vtk ? "vtk" : "vtu")
+                         + " does not accept vectors of dimension > 3");
     write_separ();
+    if (!vtk) os << "</DataArray>\n";
   }
 
+
+  class vtu_export : public vtk_export {
+  public:
+    vtu_export(const std::string& fname) : vtk_export(fname, true, false) {}
+    vtu_export(std::ostream &os_) : vtk_export(os_, true, false) {}
+  };
 
   /** @brief A (quite large) class for exportation of data to IBM OpenDX.
 
