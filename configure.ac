@@ -576,6 +576,11 @@ if test $acx_blas_ok = no; then
         LIBS="$save_LIBS"
 fi
 
+# Generic BLAS library?
+if test $acx_blas_ok = no; then
+        AC_CHECK_LIB(blas, $sgemm, [acx_blas_ok=yes; BLAS_LIBS="-lblas"])
+fi
+
 # BLAS in ATLAS library? (http://math-atlas.sourceforge.net/)
 if test $acx_blas_ok = no; then
         AC_CHECK_LIB(atlas, ATL_xerbla,
@@ -636,11 +641,7 @@ if test $acx_blas_ok = no; then
                         [], [-lblas $FLIBS])])
 fi
 
-# Generic BLAS library?
-if test $acx_blas_ok = no; then
-        AC_CHECK_LIB(blas, $sgemm, [acx_blas_ok=yes; BLAS_LIBS="-lblas"])
-fi
-
+# Generic BLAS library with fortran dependency?
 if test $acx_blas_ok = no; then
         AC_CHECK_LIB(blas, $sgemm, [acx_blas_ok=yes; BLAS_LIBS="-lblas $FCLIBS"])
 fi
