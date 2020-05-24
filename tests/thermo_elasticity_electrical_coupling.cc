@@ -188,9 +188,14 @@ int main(int argc, char *argv[]) {
   }
 
   if (export_mesh) {
-    getfem::vtk_export exp("mesh.vtk", false);
-    exp.exporting(mesh);
-    exp.write_mesh();
+    getfem::vtk_export vtk_exp("mesh.vtk", true);
+    vtk_exp.exporting(mesh);
+    vtk_exp.write_mesh();
+
+    getfem::vtu_export vtu_exp("mesh.vtu", true);
+    vtu_exp.exporting(mesh);
+    vtu_exp.write_mesh();
+
     cout << "\nYou can view the mesh for instance with\n";
     cout << "mayavi2 -d mesh.vtk -f ExtractEdges -m Surface\n" << endl;
   }
@@ -304,21 +309,37 @@ int main(int argc, char *argv[]) {
   plain_vector CO(mfvm.nb_dof() * 2);
   getfem::ga_interpolation_Lagrange_fem(md, "-"+sigmaeps+"*Grad_V",  mfvm, CO);
   
-  getfem::vtk_export exp("displacement_with_von_mises.vtk", false);
-  exp.exporting(mfu);
-  exp.write_point_data(mfu, U, "elastostatic displacement");
-  exp.write_point_data(mfvm, VM, "Von Mises stress");
+  getfem::vtk_export vtk_exp("displacement_with_von_mises.vtk", false);
+  vtk_exp.exporting(mfu);
+  vtk_exp.write_point_data(mfu, U, "elastostatic displacement");
+  vtk_exp.write_point_data(mfvm, VM, "Von Mises stress");
+
+  getfem::vtu_export vtu_exp("displacement_with_von_mises.vtu", true);
+  vtu_exp.exporting(mfu);
+  vtu_exp.write_point_data(mfu, U, "elastostatic displacement");
+  vtu_exp.write_point_data(mfvm, VM, "Von Mises stress");
+
   cout << "\nYou can view solutions with for instance:\n\nmayavi2 "
     "-d displacement_with_von_mises.vtk -f WarpVector -m Surface\n" << endl;
   
-  getfem::vtk_export exp2("temperature.vtk", false);
-  exp2.exporting(mft);
-  exp2.write_point_data(mft, THETA, "Temperature");
+  getfem::vtk_export vtk_exp2("temperature.vtk", false);
+  vtk_exp2.exporting(mft);
+  vtk_exp2.write_point_data(mft, THETA, "Temperature");
+
+  getfem::vtu_export vtu_exp2("temperature.vtu", true);
+  vtu_exp2.exporting(mft);
+  vtu_exp2.write_point_data(mft, THETA, "Temperature");
+
   cout << "mayavi2 -d temperature.vtk -f WarpScalar -m Surface\n" << endl;
 
-  getfem::vtk_export exp3("electric_potential.vtk", false);
-  exp3.exporting(mft);
-  exp3.write_point_data(mft, V, "Electric potential");
+  getfem::vtk_export vtk_exp3("electric_potential.vtk", false);
+  vtk_exp3.exporting(mft);
+  vtk_exp3.write_point_data(mft, V, "Electric potential");
+
+  getfem::vtu_export vtu_exp3("electric_potential.vtu", true);
+  vtu_exp3.exporting(mft);
+  vtu_exp3.write_point_data(mft, V, "Electric potential");
+
   cout << "mayavi2 -d electric_potential.vtk -f WarpScalar -m Surface\n"
        << endl;
 

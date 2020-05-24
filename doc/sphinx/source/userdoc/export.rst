@@ -196,10 +196,16 @@ For example, supposing that a |smsl| ``sl`` has already been built::
 
   // an optional the 2nd argument can be set to true to produce
   // a text file instead of a binary file
-  vtk_export exp("output.vtk");
-  exp.exporting(sl); // will save the geometrical structure of the slice
-  exp.write_point_data(mfp, P, "pressure"); // write a scalar field
-  exp.write_point_data(mfu, U, "displacement"); // write a vector field
+
+  vtk_export vtk_exp("output.vtk");
+  vtk_exp.exporting(sl); // will save the geometrical structure of the slice
+  vtk_exp.write_point_data(mfp, P, "pressure"); // write a scalar field
+  vtk_exp.write_point_data(mfu, U, "displacement"); // write a vector field
+
+  vtu_export vtu_exp("output.vtu", true);
+  vtu_exp.exporting(sl); // will save the geometrical structure of the slice
+  vtu_exp.write_point_data(mfp, P, "pressure"); // write a scalar field
+  vtu_exp.write_point_data(mfu, U, "displacement"); // write a vector field
 
 In this example, the fields ``P`` and ``U`` are interpolated on the slice
 nodes and then written into the VTK field.
@@ -208,10 +214,6 @@ It is also possible to export a |mf| ``mfu`` without having to build a slice::
 
   // an optional the 2nd argument can be set to true to produce
   // a text file instead of a binary file
-  vtk_export exp("output.vtk");
-  exp.exporting(mfu);
-  exp.write_point_data(mfp, P, "pressure"); // write a scalar field
-  exp.write_point_data(mfu, U, "displacement"); // write a vector field
 
 An |mf| ``mfu`` can also be exported in the VTU format with::
 
