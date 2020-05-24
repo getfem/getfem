@@ -369,4 +369,40 @@ namespace getfem{
     if (iterate_over_partitions) partition_master::get().rewind_partitions();
   }
 
+
+#ifdef GETFEM_FORCE_SINGLE_THREAD_BLAS
+# include <dlfcn.h>
+# define BLAS_FORCE_SINGLE_THREAD                                       \
+  int openblas_get_num_threads_res = 1;                                 \
+  {                                                                     \
+    typedef int (* ptrfunc1)();                                         \
+    ptrfunc1 func1 = ptrfunc1(dlsym(NULL, "openblas_get_num_threads")); \
+    if (func1) openblas_get_num_threads_res = (*func1)();               \
+    std::cout << "numthread = " << openblas_get_num_threads_res << std::endl; \
+    typedef void (* ptrfunc2)(int);                                     \
+    ptrfunc2 func2 = ptrfunc2(dlsym(NULL, "openblas_set_num_threads")); \
+    if (func2) (*func2)(1);                                             \
+  }
+# define BLAS_RESTORE_NUM_THREAD                                        \
+  {                                                                     \
+    typedef void (* ptrfunc2)(int);                                     \
+    ptrfunc func2 = ptrfunc2(dlsym(NULL, "openblas_set_num_threads"));  \
+    if (func2) (*func)(openblas_get_num_threads_res);                   \
+  }
+#else
+# define BLAS_FORCE_SINGLE_THREAD
+# define BLAS_RESTORE_NUM_THREAD
+#endif
+
+
+  struct dummy_class_for_blas_nbthread_init {
+    dummy_class_for_blas_nbthread_init(void) {
+      std::cout << "initializing ..." << std::endl;
+      BLAS_FORCE_SINGLE_THREAD;
+    }
+  };
+
+  static dummy_class_for_blas_nbthread_init dcfbnti;
+  
+
 }  /* end of namespace getfem.                                             */

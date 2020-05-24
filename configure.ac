@@ -40,16 +40,6 @@ AX_PREFIX_CONFIG_H(src/gmm/gmm_arch_config.h,GMM)
 AC_PREREQ(2.61)
 AC_ARG_PROGRAM
 
-dnl PACKAGE="getfem"
-dnl dnl VERSION=$MAJOR_VERSION.$MINOR_VERSION-`date +%Y%m%d`
-dnl VERSION=$MAJOR_VERSION.$MINOR_VERSION.$PATCH_VERSION
-dnl dnl VERSION=$MAJOR_VERSION.$MINOR_VERSION
-dnl AC_DEFINE_UNQUOTED([MAJOR_VERSION],$MAJOR_VERSION,[getfem major version number])
-dnl AC_DEFINE_UNQUOTED([MINOR_VERSION],$MINOR_VERSION,[getfem minor version number])
-dnl AC_DEFINE_UNQUOTED([PATCH_VERSION],$PATCH_VERSION,[getfem patch number (sub minor version)])
-dnl echo "configuring $PACKAGE $VERSION (patch level $PATCH_VERSION)..."
-
-
 dnl ------------------------------------------------------------------------
 dnl   init automake
 dnl ------------------------------------------------------------------------
@@ -576,6 +566,11 @@ if test $acx_blas_ok = no; then
         LIBS="$save_LIBS"
 fi
 
+# Generic BLAS library?
+if test $acx_blas_ok = no; then
+        AC_CHECK_LIB(blas, $sgemm, [acx_blas_ok=yes; BLAS_LIBS="-lblas"])
+fi
+
 # BLAS in ATLAS library? (http://math-atlas.sourceforge.net/)
 if test $acx_blas_ok = no; then
         AC_CHECK_LIB(atlas, ATL_xerbla,
@@ -636,11 +631,7 @@ if test $acx_blas_ok = no; then
                         [], [-lblas $FLIBS])])
 fi
 
-# Generic BLAS library?
-if test $acx_blas_ok = no; then
-        AC_CHECK_LIB(blas, $sgemm, [acx_blas_ok=yes; BLAS_LIBS="-lblas"])
-fi
-
+# Generic BLAS library with fortran dependency?
 if test $acx_blas_ok = no; then
         AC_CHECK_LIB(blas, $sgemm, [acx_blas_ok=yes; BLAS_LIBS="-lblas $FCLIBS"])
 fi
@@ -730,6 +721,32 @@ if test x"$acx_blas_ok" = xyes; then
 fi
 
 dnl -----------------------------END OF LAPACK TEST--------------------------
+
+
+dnl ---------------------------multithread-blas--------------------------
+
+multithread_blas=NO
+AC_ARG_ENABLE(multithread-blas,
+   [AS_HELP_STRING([--enable-multithread-blas],[enable openblas to be multithreaded])],
+   [ case $enableval in
+        yes | "") multithread_blas=YES;;
+        no) multithread_blas=NO;;
+        *) AC_MSG_ERROR([bad value ${enableval} for --enable-multithread-blas], [multithread_blas=NO]) ;;
+     esac
+])
+
+if test x$multithread_blas = xNO; then
+  AC_CHECK_LIB(dl, dlsym, [acx_dl_ok=yes; DL_LIBS="-ldl"])
+  if test x"$acx_dl_ok" = xyes; then
+     AC_DEFINE_UNQUOTED([FORCE_SINGLE_THREAD_BLAS],1,[enable openblas to be multithreaded])
+     LIBS="$DL_LIBS $LIBS"
+  fi
+fi;
+dnl --------------------------end of multithread-blas--------------------
+
+
+
+
 
 
 dnl ---------------------------OPENMP------------------------------

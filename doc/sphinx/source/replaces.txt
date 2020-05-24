@@ -86,7 +86,7 @@
 .. _specific guides: http://getfem.org/index.html
 .. _user documentation: http://getfem.org/userdoc/index.html
 .. _vocabulary: http://getfem.org/getfem_reference/index.html
-.. _VTK: http://www.vtk.org
+.. _VTK: https://vtk.org/Wiki/VTK_XML_Formats
 .. _VTU: https://vtk.org/Wiki/VTK_XML_Formats
 .. _MayaVi: http://mayavi.sourceforge.net
 .. _OpenDX: http://www.opendx.org
