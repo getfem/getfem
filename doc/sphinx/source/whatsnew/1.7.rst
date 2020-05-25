@@ -29,7 +29,7 @@
        <http://crd.lbl.gov/~xiaoye/SuperLU/>`_) is available "out of
        the box".
 
-     * Ability to export results to `VTK <http://www.vtk.org>`_ and
+     * Ability to export results to `VTK`_ and
        `OpenDX <http://www.opendx.org>`_.
 
    * Major changes in Gmm++ 1.7:
