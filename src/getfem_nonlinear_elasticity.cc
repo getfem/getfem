@@ -1,10 +1,10 @@
 /*===========================================================================
 
- Copyright (C) 2000-2017 Yves Renard
+ Copyright (C) 2000-2020 Yves Renard
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -2313,7 +2313,7 @@ namespace getfem {
                 "fem variables");
     size_type Q = mf->get_qdim();
     GMM_ASSERT1(Q == N, "Finite strain elasticity brick can only be applied "
-                "on a fem variable having the same dimension than the mesh");
+                "on a fem variable having the same dimension as the mesh");
 
     std::string adapted_lawname = adapt_law_name(lawname, N);
 

@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# Python GetFEM++ interface
+# Python GetFEM interface
 #
-# Copyright (C) 2018-2018 Huu Phuc Bui
+# Copyright (C) 2018-2020 Huu Phuc Bui
 #
-# This file is a part of GetFEM++
+# This file is a part of GetFEM
 #
-# GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+# GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
 # under  the  terms  of the  GNU  Lesser General Public License as published
 # by  the  Free Software Foundation;  either version 2.1 of the License,  or
 # (at your option) any later version.
@@ -28,9 +28,11 @@
   $Id$
 """
 
-import getfem as gf
-import numpy as np
 import os
+
+import numpy as np
+
+import getfem as gf
 
 # parameters
 E = 1.0e3
@@ -125,7 +127,7 @@ md.add_source_term_brick(mim, 'u', 'Fdata', NEUMANN_BOUNDARY)
 md.add_initialized_data('DirichletData', [0, 0, 0])
 md.add_Dirichlet_condition_with_simplification('u', DIRICHLET_BOUNDARY,'DirichletData')
 
-md.solve('max_res', 1E-9, 'max_iter', 100, 'noisy', 'lsolver', 'mumps', 'lsearch', 'simplest',  'alpha min', 0.8)
+md.solve('max_res', 1E-9, 'max_iter', 100, 'noisy', 'lsearch', 'simplest',  'alpha min', 0.8)
 U = md.variable('u');
 
 
@@ -147,11 +149,11 @@ ETA1 = ETA1tmp [ ETA1tmp.size - mfer.nbdof() : ETA1tmp.size ]
 
 # 1b) jump at inner faces    
 sig_u = "(lambda_para*Trace(Grad_u)*Id(qdim(u)) + mu_para*(Grad_u + Grad_u'))"
-grad_u_neighbor = "Interpolate(Grad_u,neighbour_elt)"
+grad_u_neighbor = "Interpolate(Grad_u,neighbor_element)"
 sig_u_neighbor = "(lambda_para*Trace({Grad_u})*Id(qdim(u)) + mu_para*(({Grad_u}) + ({Grad_u})'))".format(Grad_u=grad_u_neighbor)
 
 stress_jump_inner = "((({sig_u}) - ({sig_u_neighbor}))*Normal )".format(sig_u=sig_u,sig_u_neighbor=sig_u_neighbor)
-edgeresidual = "0.5*(element_size*Norm_sqr({stress_jump_inner})*2*0.5*(Test_psi + Interpolate(Test_psi,neighbour_elt)))".format(stress_jump_inner=stress_jump_inner)
+edgeresidual = "0.5*(element_size*Norm_sqr({stress_jump_inner})*2*0.5*(Test_psi + Interpolate(Test_psi,neighbor_element)))".format(stress_jump_inner=stress_jump_inner)
 
 ETA2tmp = gf.asm_generic(mim,1,edgeresidual,INNER_FACES
                         ,md

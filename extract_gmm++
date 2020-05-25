@@ -1,5 +1,5 @@
 # -*- perl -*-
-#  Copyright (C) 1999-2017 Yves Renard
+#  Copyright (C) 1999-2020 Yves Renard
 #
 #  This file is a part of GetFEM++
 #
@@ -21,7 +21,7 @@ eval 'exec perl -S $0 "$@"'
 
 $getfem_root = ".";
 $MAJOR_VERSION = "5";
-$MINOR_VERSION = "3";
+$MINOR_VERSION = "4";
 # $DATE_VERSION = -`date +%Y%m%d`;
 # $DATE_VERSION = ".0";
 

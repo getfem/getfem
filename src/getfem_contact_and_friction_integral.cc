@@ -1,10 +1,10 @@
 /*===========================================================================
 
- Copyright (C) 2011-2017 Yves Renard, Konstantinos Poulios.
+ Copyright (C) 2011-2020 Yves Renard, Konstantinos Poulios.
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -2551,7 +2551,7 @@ namespace getfem {
    size_type region) {
     
     std::string theta = std::to_string(theta_);
-    ga_workspace workspace(md, true);
+    ga_workspace workspace(md, ga_workspace::inherit::ALL); // reenables vars
     size_type order = workspace.add_expression(Neumannterm, mim, region, 1);
     GMM_ASSERT1(order == 0, "Wrong expression of the Neumann term");
     // model::varnamelist vl, vl_test1, vl_test2, dl;
@@ -2605,7 +2605,7 @@ namespace getfem {
    size_type region) {
     
     std::string theta = std::to_string(theta_);
-    ga_workspace workspace(md, true);
+    ga_workspace workspace(md, ga_workspace::inherit::ALL);
     size_type order = workspace.add_expression(Neumannterm, mim, region, 1);
     GMM_ASSERT1(order == 0, "Wrong expression of the Neumann term");
 

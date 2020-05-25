@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# Python GetFEM++ interface
+# Python GetFEM interface
 #
-# Copyright (C) 2004-2017 Yves Renard, Julien Pommier.
+# Copyright (C) 2004-2020 Yves Renard, Julien Pommier.
 #
-# This file is a part of GetFEM++
+# This file is a part of GetFEM
 #
-# GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+# GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
 # under  the  terms  of the  GNU  Lesser General Public License as published
 # by  the  Free Software Foundation;  either version 2.1 of the License,  or
 # (at your option) any later version.
@@ -22,7 +22,7 @@
 """  3D Poisson problem test with pyramidal elements.
 
   This program is used to check that python-getfem is working. This is
-  also a good example of use of GetFEM++.
+  also a good example of use of GetFEM.
 
   This programs aims at verifying the convergence on a Poisson problem
   with 3D pyramidal finite element.
@@ -30,9 +30,10 @@
   $Id$
 """
 
+import numpy as np
+
 # Import basic modules
 import getfem as gf
-import numpy as np
 
 export_mesh = True;
 
@@ -75,7 +76,7 @@ tleft = abs(fnor[1,:]+1) < 1e-14
 ttop  = abs(fnor[0,:]-1) < 1e-14
 fleft = np.compress(tleft, flst, axis=1)
 ftop  = np.compress(ttop, flst, axis=1)
-fneum = np.compress(True - ttop - tleft, flst, axis=1)
+fneum = np.compress(np.logical_not(ttop + tleft), flst, axis=1)
 
 # Mark it as boundary
 DIRICHLET_BOUNDARY_NUM1 = 1

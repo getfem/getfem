@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# Python GetFEM++ interface
+# Python GetFEM interface
 #
-# Copyright (C) 2012-2017 Yves Renard.
+# Copyright (C) 2012-2020 Yves Renard.
 #
-# This file is a part of GetFEM++
+# This file is a part of GetFEM
 #
-# GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+# GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
 # under  the  terms  of the  GNU  Lesser General Public License as published
 # by  the  Free Software Foundation;  either version 3 of the License,  or
 # (at your option) any later version along with the GCC Runtime Library
@@ -21,9 +21,10 @@
 #
 ############################################################################
 
-import getfem as gf
 import numpy as np
 from numpy import linalg as npla
+
+import getfem as gf
 
 gf.util_trace_level(1)
 
@@ -83,16 +84,13 @@ if (not(explicit_potential)):
 else:
     print("Explicit elastic potential")
     K = 1.2; mu = 3.0;
-    _F_ = "(Id(3)+Grad_u)"
-    _J_= "Det{F}".format(F=_F_)
-    _be_ = "(Left_Cauchy_Green{F})".format(F=_F_)
-
-    _expr_1 = "{K_over_2}*sqr(log({J}))+{mu_over_2}*(Matrix_j1{be}-3)"\
-              .format(K_over_2=K/2., J=_J_, mu_over_2=mu/2., be=_be_)
-
-    _expr_2 = "{K_over_2}*sqr(log({J}))+{mu_over_2}*(pow(Det{be},-1./3.)*Trace{be}-3)"\
-              .format(K_over_2=K/2., J=_J_, mu_over_2=mu/2., be=_be_)
-
+    md.add_macro('F_',  '(Id(meshdim)+Grad_u)')
+    md.add_macro('J_',  'Det(F_)')
+    md.add_macro('be_', 'Left_Cauchy_Green(F_)')
+    md.add_initialized_data('K',  [K])
+    md.add_initialized_data('mu', [mu])
+    _expr_1 = "(K/2)*sqr(log(J_))+(mu/2)*(Matrix_j1(be_)-3)";
+    _expr_2 = "(K/2)*sqr(log(J_))+(mu/2)*(pow(Det(be_),-1./3.)*Trace(be_)-3)"
     md.add_nonlinear_term(mim, _expr_2);
 
 
@@ -224,19 +222,3 @@ for step in range(1,nbstep+1):
 
 print('You can vizualize the loading steps by launching for instance')
 print('mayavi2 -d demo_nonlinear_elasticity_iter_1.vtk -f WarpVector -m Surface')
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

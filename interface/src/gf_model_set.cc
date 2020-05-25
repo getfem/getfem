@@ -1,10 +1,10 @@
 /*===========================================================================
 
- Copyright (C) 2009-2017 Yves Renard.
+ Copyright (C) 2009-2020 Yves Renard.
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -117,6 +117,29 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        workspace().set_dependence(md, mf);
        );
 
+
+    /*@SET ('add im variable', @str name, @tmimd mimd)
+      Add a variable to the model linked to a @tmimd. `name` is the variable
+      name. @*/
+    sub_command
+      ("add im variable", 2, 2, 0, 0,
+       std::string name = in.pop().to_string();
+       getfem::im_data *mimd = to_meshimdata_object(in.pop());
+       md->add_im_variable(name, *mimd);
+       workspace().set_dependence(md, mimd);
+       );
+
+    /*@SET ('add internal im variable', @str name, @tmimd mimd)
+      Add a variable to the model, which is linked to a @tmimd and will be
+      condensed out during the assemblage of the tangent matrix. `name` is
+      the variable name. @*/
+    sub_command
+      ("add internal im variable", 2, 2, 0, 0,
+       std::string name = in.pop().to_string();
+       getfem::im_data *mimd = to_meshimdata_object(in.pop());
+       md->add_internal_im_variable(name, *mimd);
+       workspace().set_dependence(md, mimd);
+       );
 
     /*@SET ('add variable', @str name, sizes)
       Add a variable to the model of constant sizes. `sizes` is either a
@@ -299,7 +322,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       Define a new macro for the high generic assembly language.
       The name include the parameters. For instance name='sp(a,b)', expr='a.b'
       is a valid definition. Macro without parameter can also be defined.
-      For instance name='x1', expr='X[1]' is valid. Teh form name='grad(u)',
+      For instance name='x1', expr='X[1]' is valid. The form name='grad(u)',
       expr='Grad_u' is also allowed but in that case, the parameter 'u' will
       only be allowed to be a variable name when using the macro. Note that
       macros can be directly defined inside the assembly strings with the
@@ -702,7 +725,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       If you are not sure, the better is to declare the term not symmetric
       and not coercive. But some solvers (conjugate gradient for instance)
       are not allowed for non-coercive problems.
-      `brickname` is an otpional name for the brick.@*/
+      `brickname` is an optional name for the brick.@*/
     sub_command
       ("add linear term", 2, 5, 0, 1,
        getfem::mesh_im *mim = to_meshim_object(in.pop());
@@ -776,7 +799,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       If you are not sure, the better is to declare the term not symmetric
       and not coercive. But some solvers (conjugate gradient for instance)
       are not allowed for non-coercive problems.
-      `brickname` is an otpional name for the brick.@*/
+      `brickname` is an optional name for the brick.@*/
     sub_command
       ("add nonlinear term", 2, 5, 0, 1,
        getfem::mesh_im *mim = to_meshim_object(in.pop());
@@ -1744,7 +1767,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     /*@SET ind = ('add constraint with penalization', @str varname, @scalar coeff, @tspmat B, {@vec L | @str dataname})
     Add an additional explicit penalized constraint on the variable `varname`.
     The constraint is :math`BU=L` with `B` being a rectangular sparse matrix.
-    Be aware that `B` should not contain a palin row, otherwise the whole
+    Be aware that `B` should not contain a plain row, otherwise the whole
     tangent matrix will be plain. It is possible to change the constraint
     at any time with the methods MODEL:SET('set private matrix')
     and MODEL:SET('set private rhs'). The method
@@ -2132,7 +2155,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
 
     /*@SET ind = ('add small strain elastoplasticity brick', @tmim mim,  @str lawname, @str unknowns_type [, @str varnames, ...] [, @str params, ...] [, @str theta = '1' [, @str dt = 'timestep']] [, @int region = -1])
       Adds a small strain plasticity term to the model `M`. This is the
-      main GetFEM++ brick for small strain plasticity. `lawname` is the name
+      main GetFEM brick for small strain plasticity. `lawname` is the name
       of an implemented plastic law, `unknowns_type` indicates the choice
       between a discretization where the plastic multiplier is an unknown of
       the problem or (return mapping approach) just a data of the model
@@ -2197,9 +2220,9 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         The same law as the previous one but adapted to the plane strain
         approximation. Can only be used in 2D.
 
-      See GetFEM++ user documentation for further explanations on the
+      See GetFEM user documentation for further explanations on the
       discretization of the plastic flow and on the implemented plastic laws.
-      See also GetFEM++ user documentation on time integration strategy
+      See also GetFEM user documentation on time integration strategy
       (integration of transient problems).
 
       IMPORTANT : remember that `small_strain_elastoplasticity_next_iter` has
@@ -2561,7 +2584,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
 
     /*@SET ind = ('add normal derivative Dirichlet condition with multipliers', @tmim mim, @str varname, mult_description, @int region [, @str dataname, @int R_must_be_derivated])
        Add a Dirichlet condition on the normal derivative of the variable
-      `varname` and on the mesh region `region` (which should be a boundary.
+      `varname` and on the mesh region `region` (which should be a boundary).
       The general form is
       :math:`\int \partial_n u(x)v(x) = \int r(x)v(x) \forall v`
       where :math:`r(x)` is
@@ -2629,7 +2652,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
 
     /*@SET ind = ('add normal derivative Dirichlet condition with penalization', @tmim mim, @str varname, @scalar coeff, @int region [, @str dataname, @int R_must_be_derivated])
        Add a Dirichlet condition on the normal derivative of the variable
-      `varname` and on the mesh region `region` (which should be a boundary.
+      `varname` and on the mesh region `region` (which should be a boundary).
       The general form is
       :math:`\int \partial_n u(x)v(x) = \int r(x)v(x) \forall v`
       where :math:`r(x)` is
@@ -2819,7 +2842,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
 
     /*@SET ('set time step', @scalar dt)
       Set the value of the time step to `dt`. This value can be change
-      from a step to another for all one-step schemes (i.e for the moment
+      from a step to another for all one-step schemes (i.e. for the moment
       to all proposed time integration schemes). @*/
     sub_command
       ("set time step", 1, 1, 0, 0,

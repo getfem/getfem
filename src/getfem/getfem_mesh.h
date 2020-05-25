@@ -1,11 +1,11 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
 
- Copyright (C) 1999-2017 Yves Renard
+ Copyright (C) 1999-2020 Yves Renard
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -648,14 +648,14 @@ namespace getfem {
 
   /** Select all the faces sharing at least two element of the given mesh
       region. Each face is represented only once and is arbitrarily chosen
-      between the two neighbour elements.
+      between the two neighbor elements.
    */
   mesh_region APIDECL
   inner_faces_of_mesh(const mesh &m,
                       const mesh_region &mr = mesh_region::all_convexes());
   
   /** Select all the faces of the given mesh region. The faces are represented*
-      twice if they are shared by two neighbour elements.
+      twice if they are shared by two neighbor elements.
    */
   mesh_region APIDECL
   all_faces_of_mesh(const mesh &m,
@@ -677,6 +677,14 @@ namespace getfem {
   select_faces_in_box(const mesh &m, const mesh_region &mr,
                       const base_node &pt1,
                       const base_node &pt2);
+
+  /** Select in the region mr the faces of the mesh m lying entirely in the
+      ball delimated by pt1 and radius.
+   */
+  mesh_region APIDECL
+  select_faces_in_ball(const mesh &m, const mesh_region &mr,
+                       const base_node &center,
+                       scalar_type radius);
 
   mesh_region APIDECL
   select_convexes_in_box(const mesh &m, const mesh_region &mr,

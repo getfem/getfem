@@ -1,10 +1,10 @@
 /*===========================================================================
 
- Copyright (C) 2009-2017 Yves Renard.
+ Copyright (C) 2009-2020 Yves Renard.
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -26,7 +26,7 @@
    square, and is compared to an analytical solution.
 
    This program is used to check that getfem++ is working. This is
-   also a good example of use of GetFEM++. This program  does not use the
+   also a good example of use of GetFEM. This program  does not use the
    model bricks intentionally in order to serve as an example of solving
    a pde directly with the assembly procedures.
 */
@@ -40,7 +40,7 @@
 using std::endl; using std::cout; using std::cerr;
 using std::ends; using std::cin;
 
-/* some GetFEM++ types that we will be using */
+/* some GetFEM types that we will be using */
 using bgeot::base_small_vector; /* special class for small (dim<16) vectors */
 using bgeot::base_node; /* geometrical nodes (derived from base_small_vector)*/
 using bgeot::scalar_type; /* = double */
@@ -329,6 +329,7 @@ void heat_equation_problem::compute_error() {
 
 int main(int argc, char *argv[]) {
 
+  GETFEM_MPI_INIT(argc, argv);
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
 
   heat_equation_problem p;
@@ -338,6 +339,8 @@ int main(int argc, char *argv[]) {
   if (p.PARAM.int_value("EXPORT_SOLUTION") != 0)
     p.mf_u.write_to_file(p.datafilename + ".mf", true);
   p.compute_error();
+
+  GETFEM_MPI_FINALIZE;
 
   return 0; 
 }

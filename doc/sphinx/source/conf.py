@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# GetFEM++ documentation build configuration file.
+# GetFEM documentation build configuration file.
 #
 # This file is execfile()d with the current directory set to its containing
 # dir.
@@ -12,7 +12,12 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import sys, os, time
+import os
+import sys
+import time
+
+###########################################################################
+from getfem import getfem_env
 
 # If your extensions are in another directory, add it here. If the directory
 # is relative to the documentation root, use os.path.abspath to make it
@@ -20,24 +25,13 @@ import sys, os, time
 sys.path.append(os.path.abspath('../tools/sphinxext')) # sphinx
 sys.path.append('../../../interface/src/python/')      # getfem
 
-###########################################################################
-from getfem import getfem_env
 user_preamble = '''
 \n% begin user_preamble:
 \\usepackage{mathrsfs}
 \\usepackage{amsmath}
 \\usepackage{amssymb}
-\\newcommand\\Reel{\\rm I\\hspace{-0.15em}R}
-\\newcommand\\R{\\rm I\\hspace{-0.15em}R}
-\\newcommand{\\ds}{\\displaystyle}
-\\newcommand{\\Frac}[2]{{\\ds \\frac{\\ds #1}{\\ds #2}}}
-\\usepackage[draft]{minted}\\fvset{breaklines=true}
 % end user_preamble
 '''
-
-imgmath_use_preview = True
-imgmath_dvipng_args = ['-gamma', '1.5', '-D', '110', '-bg', 'Transparent']
-imgmath_latex_preamble = user_preamble
 
 autoclass_content = "both"
 
@@ -49,7 +43,7 @@ _stdauthor = getfem_env('authors')
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.imgmath','sphinx.ext.autodoc',
+extensions = ['sphinx.ext.mathjax','sphinx.ext.autodoc',
               'sphinx.ext.coverage',
               'sphinx.ext.doctest']
 
@@ -60,7 +54,7 @@ extensions = ['sphinx.ext.imgmath','sphinx.ext.autodoc',
 source_encoding = 'utf-8'
 
 # The master toctree document.
-#master_doc = 'contents'
+master_doc = 'contents'
 
 # List of documents that shouldn't be included in the build.
 #unused_docs = []
@@ -258,8 +252,8 @@ latex_documents = [
      'Tutorial', _stdauthor, 'manual', False),
     ('python/index', 'python_interface.tex',
      'Python Interface', 'Luis Saavedra', 'manual', False),
-    ('matlab/index', 'matlab_interface.tex',
-     'Matlab Interface', _stdauthor, 'manual', False),
+    ('matlab_octave/index', 'matlab_octave_interface.tex',
+     'Matlab-Octave Interface', _stdauthor, 'manual', False),
     ('scilab/index', 'scilab_interface.tex',
      'Scilab Interface', 'Yann Colette, ' + _stdauthor, 'manual', False),
     ('userdoc/index', 'getfem_userdoc.tex',

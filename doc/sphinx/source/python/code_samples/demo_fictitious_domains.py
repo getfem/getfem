@@ -2,9 +2,10 @@
 This demo use levelset to impose (weakly) a Dirichlet condition on an
 implicit boundary defined by the zero of the levelset
 """
-import getfem as gf
 import numpy as np
-from scipy import rand,setdiff1d
+from scipy import rand, setdiff1d
+
+import getfem as gf
 
 NX=40
 ls_degree = 2

@@ -12,7 +12,7 @@ This example aims to present a simple example of a multiphysics problem with a n
 The problem setting
 -------------------
 
-Let :math:`\Omega \subset \R^2` be the reference configuration of a 2D plate (see the geometry :ref:`here <tut-fig-meshthermo>`) of thickness :math:`\varepsilon` submitted to external forces, electric potential and heating. We will denote by  :math:`\theta : \Omega \rightarrow \R` the temperature field (in |degreC|),  :math:`V : \Omega \rightarrow \R` the electric potential field and :math:`u : \Omega \rightarrow \R^2` the membrane displacement field.
+Let :math:`\Omega \subset \rm I\hspace{-0.15em}R^2` be the reference configuration of a 2D plate (see the geometry :ref:`here <tut-fig-meshthermo>`) of thickness :math:`\varepsilon` submitted to external forces, electric potential and heating. We will denote by  :math:`\theta : \Omega \rightarrow \rm I\hspace{-0.15em}R` the temperature field (in |degreC|),  :math:`V : \Omega \rightarrow \rm I\hspace{-0.15em}R` the electric potential field and :math:`u : \Omega \rightarrow \rm I\hspace{-0.15em}R^2` the membrane displacement field.
 
 Thermal problem
 ***************
@@ -51,7 +51,7 @@ where :math:`\sigma` is still the electrical conductivity. Moreover, we consider
 
 .. math::
 
-  \sigma = \Frac{1}{\rho_0(1+\alpha(\theta - T_0))},
+  \sigma = \dfrac{1}{\rho_0(1+\alpha(\theta - T_0))},
 
 where :math:`T_0` is a reference temperature (air temperature here), :math:`\rho_0` the resistance temperature coefficient at :math:`T_0` and :math:`\alpha` a second resistance temperature coefficient.
 
@@ -81,9 +81,9 @@ where :math:`F` is the force density applied on the right lateral boundary and :
 
 .. math::
 
-  &\lambda = \Frac{E\nu}{(1+\nu)(1-2\nu)}, \\
-  &\mu = \Frac{E}{2(1+\nu)}, \\
-  &\lambda^* = \Frac{2\lambda\mu}{\lambda+2*\mu},
+  &\lambda = \dfrac{E\nu}{(1+\nu)(1-2\nu)}, \\
+  &\mu = \dfrac{E}{2(1+\nu)}, \\
+  &\lambda^* = \dfrac{2\lambda\mu}{\lambda+2*\mu},
 
 from :math:`E` the Young modulus and :math:`\nu` the Poisson ratio of the material.
 
@@ -100,9 +100,9 @@ Weak formulation of each partial differential equation is obtained by multiplyin
 .. math::
 
   &\mbox{Find } \theta, V, u \mbox{ with } V = 0.1, u = 0 \mbox{ on the left face}, V = 0 \mbox{ on the right face}, \\
-  &\ds \int_{\Omega} \varepsilon\kappa\nabla\theta\cdot\nabla\delta_{\theta} + 2D\theta\delta_{\theta}dx = \int_{\Omega} (2DT_0 + \varepsilon\sigma|\nabla V|^2)\delta_{\theta} dx ~~~\mbox{ for all } \delta_{\theta}, \\
-  &\ds \int_{\Omega} \varepsilon\sigma\nabla V\cdot\nabla\delta_V = 0 dx ~~~ \mbox{ for all } \delta_V \mbox{ satisfying } \delta_V = 0 \mbox{ on the left and right faces}, \\
-  &\ds \int_{\Omega} \bar{\sigma}(u):\bar{\varepsilon}(\delta_u)dx = \int_{\Gamma_N} F\cdot \delta_u d\Gamma ~~~ \mbox{ for all } \delta_{u} \mbox{ satisfying } \delta_u = 0 \mbox{ on the left face},
+  & \int_{\Omega} \varepsilon\kappa\nabla\theta\cdot\nabla\delta_{\theta} + 2D\theta\delta_{\theta}d\Omega = \int_{\Omega} (2DT_0 + \varepsilon\sigma|\nabla V|^2)\delta_{\theta} d\Omega ~~~\mbox{ for all } \delta_{\theta}, \\
+  & \int_{\Omega} \varepsilon\sigma\nabla V\cdot\nabla\delta_V = 0 d\Omega ~~~ \mbox{ for all } \delta_V \mbox{ satisfying } \delta_V = 0 \mbox{ on the left and right faces}, \\
+  & \int_{\Omega} \bar{\sigma}(u):\bar{\varepsilon}(\delta_u)d\Omega = \int_{\Gamma_N} F\cdot \delta_u d\Gamma ~~~ \mbox{ for all } \delta_{u} \mbox{ satisfying } \delta_u = 0 \mbox{ on the left face},
 
 
 where :math:`\delta_{\theta}, \delta_V, \delta_u` are the test functions corresponding to :math:`\theta, V, u`, respectively, :math:`\Gamma_N` denotes the right boundary where the density of force :math:`F` is applied and :math:`\bar{\sigma}:\bar{\varepsilon}` is the Frobenius scalar product between second order tensors.
@@ -438,7 +438,7 @@ The last thing to define is an integration method `mim`. There is no default int
                 mfvm.set_classical_discontinuous_finite_element(elements_degree);
 
                 getfem::mesh_im  mim(mesh);
-                mim.set_integration_method(bgeot::dim_type(gmm::sqr(elements_degree)));
+                mim.set_integration_method(2*elements_degree);
 ---------- ---------------------------------------------------------------------------
 **Python** .. code-block:: python
 
@@ -448,7 +448,7 @@ The last thing to define is an integration method `mim`. There is no default int
                 mft.set_classical_fem(elements_degree)
                 mfvm = gf.MeshFem(mesh, 1)
                 mfvm.set_classical_discontinuous_fem(elements_degree)
-                mim = gf.MeshIm(mesh, pow(elements_degree,2))
+                mim = gf.MeshIm(mesh, elements_degree*2)
 ---------- ---------------------------------------------------------------------------
 **Scilab** .. code-block:: matlab
 
@@ -458,7 +458,7 @@ The last thing to define is an integration method `mim`. There is no default int
                 gf_mesh_fem_set(mft, 'classical fem', elements_degree);
                 mfvm = gf_mesh_fem(mesh, 1);
                 gf_mesh_fem_set(mfvm, 'classical discontinuous fem', elements_degree-1);
-                mim = gf_mesh_im(mesh, elements_degree^2);
+                mim = gf_mesh_im(mesh, elements_degree*2);
 ---------- ---------------------------------------------------------------------------
 **Matlab** .. code-block:: matlab
 
@@ -468,7 +468,7 @@ The last thing to define is an integration method `mim`. There is no default int
                 gf_mesh_fem_set(mft, 'classical fem', elements_degree);
                 mfvm = gf_mesh_fem(mesh, 1);
                 gf_mesh_fem_set(mfvm, 'classical discontinuous fem', elements_degree-1);
-                mim = gf_mesh_im(mesh, elements_degree^2);
+                mim = gf_mesh_im(mesh, elements_degree*2);
 ========== ===========================================================================
 
 
@@ -527,7 +527,7 @@ Let us now begin by the elastic deformation problem. We will use the predefined 
 
   \int_{\Omega} (\lambda^* \mbox{div}(u) I + 2\mu \bar{\varepsilon}(u)):\bar{\varepsilon}(\delta_u)dx,
 
-to the tangent linear system. In order to use this model brick, the data corresponding to the |Lame| coefficient have to be added to the model first. Here, the |Lame| coefficients are constant over the domain. However, it it also possible to define some non-constant data. Note also that instead of using this predefined brick, one can use equivalently the weak form language term `add_linear_term(md mim, "lambda*(Div_u*Div_Test_u) + mu*((Grad_u + Grad_u'):Grad_Test_u)"`.
+to the tangent linear system. In order to use this model brick, the data corresponding to the |Lame| coefficient have to be added to the model first. Here, the |Lame| coefficients are constant over the domain. However, it it also possible to define some non-constant data. Note also that instead of using this predefined brick, one can use equivalently GWFL, the generic weak form language term `add_linear_term(md mim, "lambda*(Div_u*Div_Test_u) + mu*((Grad_u + Grad_u'):Grad_Test_u)"`.
 
 Concerning the coupling term
 
@@ -535,7 +535,7 @@ Concerning the coupling term
 
    \int_{\Omega} (\beta\theta I) :\bar{\varepsilon}(\delta_u)dx,
 
-there is no predefined brick and we use directly a weak form language term `add_linear_term(md mim, "beta*theta*Div_Test_u)"`. See :ref:`ud-gasm-high` for more details on the weak form language. Basically, the principle is that the assembly string is compiled into a list of optimized assembly instructions which are executed on each Gauss point.
+there is no predefined brick and we use directly a GWFL term `add_linear_term(md mim, "beta*theta*Div_Test_u)"`. See :ref:`ud-gasm-high` for more details on GWFL. Basically, the principle is that the assembly string is compiled into a list of optimized assembly instructions which are executed on each Gauss point.
 
 The following program allows to take into account the whole elastic deformation equation. Note the use of specific brick to prescribe the Dirichlet condition on the left boundary. There is several option to prescribe a Dirichlet condition (see :ref:`ud-model-Dirichlet`).
 
@@ -611,7 +611,7 @@ The following program allows to take into account the whole elastic deformation 
 Electric potential problem
 **************************
 
-Similarly, the following program take into account the electric potential equation. Note the definition of the  electrical conductivity :math:`\sigma` and again the use of weak form language terms.
+Similarly, the following program take into account the electric potential equation. Note the definition of the  electrical conductivity :math:`\sigma` and again the use of GWFL terms.
 
 .. tabularcolumns:: |p{0.080\linewidth}|p{0.900\linewidth}|
 

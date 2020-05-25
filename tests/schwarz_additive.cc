@@ -1,10 +1,10 @@
 /*===========================================================================
 
- Copyright (C) 2007-2017 Yves Renard, Julien Pommier.
+ Copyright (C) 2007-2020 Yves Renard, Julien Pommier.
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -181,7 +181,7 @@ void pb_data::init(bgeot::md_param &params) {
   for (int j = nn.take_first(); j >= 0; j << nn) {
     int k = mesh.structure_of_convex(j)->nb_faces();
     for (short_type i = 0; i < k; i++) {
-      if (mesh.is_convex_having_neighbour(j, i)) {
+      if (mesh.is_convex_having_neighbor(j, i)) {
 	gmm::copy(mesh.normal_of_face_of_convex(j, i, 0), un);
 	gmm::scale(un, 1/gmm::vect_norm2(un));
 	if (gmm::abs(un[N-1] - 1.0) < 1.0E-3) mesh.region(0).add(j, i);

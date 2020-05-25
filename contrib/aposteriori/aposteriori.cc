@@ -1,10 +1,10 @@
 /*===========================================================================
 
- Copyright (C) 2002-2017 Vanessa Lleras, Yves Renard.
+ Copyright (C) 2002-2020 Vanessa Lleras, Yves Renard.
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -43,7 +43,7 @@ using std::ends; using std::cin;
 template <typename T> std::ostream &operator <<
   (std::ostream &o, const std::vector<T>& m) { gmm::write(o,m); return o; }
 
-/* some GetFEM++ types that we will be using */
+/* some GetFEM types that we will be using */
 using bgeot::base_small_vector; /* special class for small (dim<16) vectors */
 using bgeot::base_node;  /* geometrical nodes(derived from base_small_vector)*/
 using bgeot::scalar_type; /* = double */
@@ -444,12 +444,12 @@ void crack_problem::error_estimate(const plain_vector &U, plain_vector &ERR) {
     // }
     //  ee = ERR[cv];
  
-    // jump of the stress between the element ant its neighbours.
+    // jump of the stress between the element ant its neighbors.
     for (short_type f1=0; f1 < mesh.structure_of_convex(cv)->nb_faces(); ++f1) {
 
       if (gmm::abs((*mmls)(mesh.trans_of_convex(cv)->convex_ref()->points_of_face(f1)[0])) < 1E-7 * radius) continue;
 
-      size_type cvn = mesh.neighbour_of_convex(cv, f1);
+      size_type cvn = mesh.neighbor_of_convex(cv, f1);
       if (cvn == size_type(-1)) continue;
 	
       bgeot::pgeometric_trans pgt2 = mesh.trans_of_convex(cvn);

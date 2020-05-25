@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # Python GetFEM++ interface
 #
-# Copyright (C) 2016-2016 Yves Renard, Farshid Dabaghi.
+# Copyright (C) 2016-2020 Yves Renard, Farshid Dabaghi.
 #
 # This file is a part of GetFEM++
 #
@@ -25,10 +25,12 @@
   $Id: conv_test_small_strain_plasticity 5189 2015-12-15 10:24:07Z renard $
 """
 
-import getfem as gf
-import numpy as np
-import matplotlib.pyplot as plt
 import os
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+import getfem as gf
 
 NT = 128; NX = 256; option = 3; Hi = 0; Hk = 0; load_type = 1; theta = 0.5;
 LX=100.; order = 2; do_export = 1;

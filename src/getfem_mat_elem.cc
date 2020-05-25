@@ -1,10 +1,10 @@
 /*===========================================================================
 
- Copyright (C) 2000-2017 Yves Renard
+ Copyright (C) 2000-2020 Yves Renard
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -398,12 +398,12 @@ namespace getfem {
       if (nm == 0) {
         t[0] += J;
       } else {
-        long n0 = int(es_end[0] - es_beg[0]);
+        BLAS_INT n0 = BLAS_INT(es_end[0] - es_beg[0]);
         base_tensor::const_iterator pts0 = pts[0];
 
         /* very heavy reduction .. takes much time */
         k = nm-1; Vtab[k] = J;
-        long one = 1;
+        BLAS_INT one = BLAS_INT(1);
         scalar_type V;
         do {
           for (V = Vtab[k]; k; --k)

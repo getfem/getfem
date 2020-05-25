@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # -*- python -*-
 #
-# Copyright (C) 2010-2017 Yves Renard.
+# Copyright (C) 2010-2020 Yves Renard.
 #                                                       
-# This file is a part of GetFEM++                                         
+# This file is a part of GetFEM                                         
 #                                                                         
-# GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+# GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
 # under  the  terms  of the  GNU  Lesser General Public License as published
 # by  the  Free Software Foundation;  either version 3 of the License,  or
 # (at your option) any later version.
@@ -24,9 +24,10 @@
 
   $Id: extract_doc 3304 2009-11-03 13:17:46Z renard $
 """
-import string
 import os
+import string
 import sys
+
 
 class ParseError(Exception):
     def __init__(self, value):
@@ -164,10 +165,3 @@ rfl.close()
 
 
 print("there were ", count_math_f, " formulaes")
-
-
-
-
-
-
-

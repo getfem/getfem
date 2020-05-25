@@ -1,11 +1,11 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
 
- Copyright (C) 2002-2017 Yves Renard
+ Copyright (C) 2002-2020 Yves Renard
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -97,6 +97,7 @@ namespace gmm {
 
     operator std::complex<T>() const { return pm->r(l); }
     ref_elt_vector(V *p, size_type ll) : pm(p), l(ll) {}
+    ref_elt_vector(const ref_elt_vector &re) : pm(re.pm), l(re.l) {}
     inline bool operator ==(std::complex<T> v) const
     { return ((*pm).r(l) == v); }
     inline bool operator !=(std::complex<T> v) const
@@ -112,7 +113,7 @@ namespace gmm {
     inline ref_elt_vector &operator *=(std::complex<T> v)
     { (*pm).w(l,(*pm).r(l) * v); return *this; }
     inline ref_elt_vector &operator =(const ref_elt_vector &re)
-    { *this = T(re); return *this; }
+    { *this = std::complex<T>(re); return *this; }
     inline ref_elt_vector &operator =(std::complex<T> v)
     { (*pm).w(l,v); return *this; }
     inline ref_elt_vector &operator =(T v)
@@ -714,7 +715,7 @@ namespace gmm {
 
     wsvector_const_iterator() {}
     wsvector_const_iterator(const wsvector_iterator<T> &it)
-      : base_it_type(it) {}
+      : base_it_type(typename std::map<size_type, T>::iterator(it)) {}
     wsvector_const_iterator(const base_it_type &it) : base_it_type(it) {}
   };
 

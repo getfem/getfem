@@ -1,10 +1,10 @@
 /*===========================================================================
 
- Copyright (C) 2013-2018 Yves Renard
+ Copyright (C) 2013-2020 Yves Renard
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -335,6 +335,7 @@ namespace getfem {
     void derivative(const arg_list &args, size_type,
                     base_tensor &result) const { // to be verified
       size_type N = args[0]->sizes()[0];
+      if (!N) return;
       __mat_aux1().base_resize(N, N);
       gmm::copy(args[0]->as_vector(), __mat_aux1().as_vector());
       bgeot::lu_inverse(__mat_aux1());
@@ -343,9 +344,11 @@ namespace getfem {
       for (size_type l = 0; l < N; ++l, ++ita_l) {
         auto ita_k = ita;
         for (size_type k = 0; k < N; ++k, ita_k += N) {
-          auto ita_lj = ita_l;
-          for (size_type j = 0; j < N; ++j, ita_lj += N) {
-            auto ita_ik = ita_k;
+          auto ita_lj = ita_l, ita_ik = ita_k;
+          for (size_type i = 0; i < N; ++i, ++it, ++ita_ik)
+              *it = -(*ita_ik) * (*ita_lj);
+          for (size_type j = 1; j < N; ++j) {
+            ita_lj += N; ita_ik = ita_k;
             for (size_type i = 0; i < N; ++i, ++it, ++ita_ik)
               *it = -(*ita_ik) * (*ita_lj);
           }
@@ -678,7 +681,8 @@ namespace getfem {
 
   ga_function::ga_function(const ga_workspace &workspace_,
                            const std::string &e)
-    : local_workspace(true, workspace_), expr(e), gis(0) {}
+    : local_workspace(workspace_, ga_workspace::inherit::ALL),
+      expr(e), gis(0) {}
 
   ga_function::ga_function(const model &md, const std::string &e)
     : local_workspace(md), expr(e), gis(0) {}

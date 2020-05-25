@@ -1,11 +1,11 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
 
- Copyright (C) 2013-2017 Yves Renard
+ Copyright (C) 2013-2020 Yves Renard
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -264,8 +264,8 @@ namespace getfem {
 
     const model *md;
     const ga_workspace *parent_workspace;
-    bool enable_all_md_variables;
-    size_type nb_prim_dof, nb_tmp_dof;
+    bool with_parent_variables;
+    size_type nb_prim_dof, nb_intern_dof, first_intern_dof, nb_tmp_dof;
 
     void init();
 
@@ -280,6 +280,7 @@ namespace getfem {
       bgeot::multi_index qdims;  // For data having a qdim different than the
                                  // qdim of the fem or im_data (dim per dof for
                                  // dof data) and for constant variables.
+      const bool is_internal;
 
       size_type qdim() const {
         size_type q = 1;
@@ -288,10 +289,10 @@ namespace getfem {
       }
 
       var_description(bool is_var, const mesh_fem *mf_, const im_data *imd_,
-                      gmm::sub_interval I_, const model_real_plain_vector *v,
-                      size_type Q)
+                      gmm::sub_interval I_, const model_real_plain_vector *V_,
+                      size_type Q, bool is_intern_=false)
         : is_variable(is_var), is_fem_dofs(mf_ != 0), mf(mf_), imd(imd_),
-          I(I_), V(v), qdims(1)
+          I(I_), V(V_), qdims(1), is_internal(is_intern_)
       {
         GMM_ASSERT1(Q > 0, "Bad dimension");
         qdims[0] = Q;
@@ -340,10 +341,12 @@ namespace getfem {
     const mesh_region &register_region(const mesh &m, const mesh_region &rg);
 
     // variables and variable groups
-    mutable std::map<std::string, gmm::sub_interval> int_disabled_variables;
-
     typedef std::map<std::string, var_description> VAR_SET;
     VAR_SET variables;
+
+    std::map<std::string, gmm::sub_interval> reenabled_var_intervals,
+                                             tmp_var_intervals;
+
     std::map<std::string, pinterpolate_transformation> transformations;
     std::map<std::string, pelementary_transformation> elem_transformations;
     std::map<std::string, psecondary_domain> secondary_domains;
@@ -362,17 +365,16 @@ namespace getfem {
                   bool scalar_expr, operation_type op_type=ASSEMBLY,
                   const std::string varname_interpolation="");
 
-
-    std::shared_ptr<model_real_sparse_matrix> K;
-    std::shared_ptr<base_vector> V;
+    std::shared_ptr<model_real_sparse_matrix> K, KQJpr;
+    std::shared_ptr<base_vector> V; // reduced residual vector (primary vars + internal vars)
+                                    // after condensation it partially holds the condensed residual
+                                    // and the internal solution
     model_real_sparse_matrix col_unreduced_K,
                              row_unreduced_K,
                              row_col_unreduced_K;
-    base_vector unreduced_V;
+    base_vector unreduced_V, cached_V;
     base_tensor assemb_t;
     bool include_empty_int_pts = false;
-
-    std::map<std::string, gmm::sub_interval> tmp_var_intervals;
 
   public:
     // setter functions
@@ -389,6 +391,7 @@ namespace getfem {
     model_real_sparse_matrix &assembled_matrix() { return *K; }
     const base_vector &assembled_vector() const { return *V; }
     base_vector &assembled_vector() { return *V; }
+    const base_vector &cached_vector() const { return cached_V; }
     const base_tensor &assembled_tensor() const { return assemb_t; }
     base_tensor &assembled_tensor() { return assemb_t; }
     const scalar_type &assembled_potential() const {
@@ -406,6 +409,17 @@ namespace getfem {
     model_real_sparse_matrix &row_col_unreduced_matrix()
     { return row_col_unreduced_K; }
     base_vector &unreduced_vector() { return unreduced_V; }
+    // setter function for condensation matrix
+    void set_internal_coupling_matrix(model_real_sparse_matrix &KQJpr_) {
+      KQJpr = std::shared_ptr<model_real_sparse_matrix>
+              (std::shared_ptr<model_real_sparse_matrix>(), &KQJpr_); // alias
+    }
+    /** getter function for condensation matrix
+        Its size is (nb_primary_dof()+nb_internal_dof()) x nb_primary_dof()
+        but its first nb_primary_dof() rows are empty */
+    const model_real_sparse_matrix &internal_coupling_matrix() const
+    { return *KQJpr; }
+    model_real_sparse_matrix &internal_coupling_matrix() { return *KQJpr; }
 
     /** Add an expression, perform the semantic analysis, split into
      *  terms in separated test functions, derive if necessary to obtain
@@ -445,6 +459,9 @@ namespace getfem {
     void add_im_variable(const std::string &name, const im_data &imd,
                          const gmm::sub_interval &I,
                          const model_real_plain_vector &VV);
+    void add_internal_im_variable(const std::string &name, const im_data &imd,
+                                  const gmm::sub_interval &I,
+                                  const model_real_plain_vector &VV);
     void add_fixed_size_variable(const std::string &name,
                                  const gmm::sub_interval &I,
                                  const model_real_plain_vector &VV);
@@ -460,8 +477,11 @@ namespace getfem {
                         std::vector<std::string> &vl_test2,
                         std::vector<std::string> &dl,
                         size_type order);
+    bool is_linear(size_type order);
 
     bool variable_exists(const std::string &name) const;
+
+    bool is_internal_variable(const std::string &name) const;
 
     const std::string &variable_in_group(const std::string &group_name,
                                          const mesh &m) const;
@@ -484,9 +504,6 @@ namespace getfem {
     bool is_disabled_variable(const std::string &name) const;
 
     const scalar_type &factor_of_variable(const std::string &name) const;
-
-    const gmm::sub_interval &
-    interval_of_disabled_variable(const std::string &name) const;
 
     const gmm::sub_interval &
     interval_of_variable(const std::string &name) const;
@@ -547,13 +564,14 @@ namespace getfem {
     std::string extract_order0_term();
     std::string extract_Neumann_term(const std::string &varname);
 
-
-    void assembly(size_type order);
+    void assembly(size_type order, bool condensation=false);
 
     void set_include_empty_int_points(bool include);
     bool include_empty_int_points() const;
 
     size_type nb_primary_dof() const { return nb_prim_dof; }
+    size_type nb_internal_dof() const { return nb_intern_dof; }
+    size_type first_internal_dof() const { return first_intern_dof; }
     size_type nb_temporary_dof() const { return nb_tmp_dof; }
 
     void add_temporary_interval_for_unreduced_variable(const std::string &name);
@@ -570,8 +588,12 @@ namespace getfem {
       return (it != tmp_var_intervals.end()) ? it->second : empty_interval;
     }
 
-    ga_workspace(const getfem::model &md_, bool enable_all_variables = false);
-    ga_workspace(bool, const ga_workspace &gaw);
+    enum class inherit { NONE, ENABLED, ALL };
+
+    ga_workspace(const getfem::model &md_,
+                 const inherit var_inherit=inherit::ENABLED);
+    ga_workspace(const ga_workspace &gaw,    // compulsory 2nd arg to avoid
+                 const inherit var_inherit); // conflict with copy constructor
     ga_workspace();
     ~ga_workspace();
 
@@ -765,11 +787,11 @@ namespace getfem {
    const std::string &target_displacements, const mesh_region &target_region);
 
   /** Create a new instance of a transformation corresponding to the
-      interpolation on the neighbour element. Can only be applied to the
+      interpolation on the neighbor element. Can only be applied to the
       computation on some internal faces of a mesh.
       (mainly for internal use in the constructor of getfem::model)
   */
-  pinterpolate_transformation interpolate_transformation_neighbour_instance();
+  pinterpolate_transformation interpolate_transformation_neighbor_instance();
 
   /* Add a special interpolation transformation which represents the identity
      transformation but allows to evaluate the expression on another element

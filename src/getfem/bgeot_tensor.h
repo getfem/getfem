@@ -1,11 +1,11 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
 
- Copyright (C) 2000-2017 Yves Renard
+ Copyright (C) 2000-2020 Yves Renard
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -118,7 +118,8 @@ namespace bgeot {
   template<class T> class tensor : public std::vector<T> {
     protected:
 
-    multi_index sizes_, coeff;
+    multi_index sizes_;
+    multi_index coeff_;
 
     public:
 
@@ -128,7 +129,7 @@ namespace bgeot {
 
     template<class CONT> inline const T& operator ()(const CONT &c) const {
       typename CONT::const_iterator it = c.begin();
-      multi_index::const_iterator q = coeff.begin(), e = coeff.end();
+      multi_index::const_iterator q = coeff_.begin(), e = coeff_.end();
 #ifndef NDEBUG
       multi_index::const_iterator qv = sizes_.begin();
 #endif
@@ -143,21 +144,21 @@ namespace bgeot {
     inline T& operator ()(size_type i, size_type j, size_type k,
                           size_type l) {
       GMM_ASSERT2(order() == 4, "Bad tensor order.");
-      size_type d = coeff[0]*i + coeff[1]*j + coeff[2]*k + coeff[3]*l;
+      size_type d = coeff_[0]*i + coeff_[1]*j + coeff_[2]*k + coeff_[3]*l;
       GMM_ASSERT2(d < size(), "Index out of range.");
       return *(this->begin() + d);
     }
 
     inline T& operator ()(size_type i, size_type j, size_type k) {
       GMM_ASSERT2(order() == 3, "Bad tensor order.");
-      size_type d = coeff[0]*i + coeff[1]*j + coeff[2]*k;
+      size_type d = coeff_[0]*i + coeff_[1]*j + coeff_[2]*k;
       GMM_ASSERT2(d < size(), "Index out of range.");
       return *(this->begin() + d);
     }
 
     inline T& operator ()(size_type i, size_type j) {
       GMM_ASSERT2(order() == 2, "Bad tensor order");
-        size_type d = coeff[0]*i + coeff[1]*j;
+        size_type d = coeff_[0]*i + coeff_[1]*j;
         GMM_ASSERT2(d < size(), "Index out of range.");
         return *(this->begin() + d);
     }
@@ -165,7 +166,7 @@ namespace bgeot {
     inline const T& operator ()(size_type i, size_type j, size_type k,
                                 size_type l) const {
       GMM_ASSERT2(order() == 4, "Bad tensor order.");
-      size_type d = coeff[0]*i + coeff[1]*j + coeff[2]*k + coeff[3]*l;
+      size_type d = coeff_[0]*i + coeff_[1]*j + coeff_[2]*k + coeff_[3]*l;
       GMM_ASSERT2(d < size(), "Index out of range.");
       return *(this->begin() + d);
     }
@@ -173,21 +174,21 @@ namespace bgeot {
     inline const T& operator ()(size_type i, size_type j,
                                 size_type k) const {
       GMM_ASSERT2(order() == 3, "Bad tensor order.");
-      size_type d = coeff[0]*i + coeff[1]*j + coeff[2]*k;
+      size_type d = coeff_[0]*i + coeff_[1]*j + coeff_[2]*k;
       GMM_ASSERT2(d < size(), "Index out of range.");
       return *(this->begin() + d);
     }
 
     inline const T& operator ()(size_type i, size_type j) const {
       GMM_ASSERT2(order() == 2, "Bad tensor order.");
-      size_type d = coeff[0]*i + coeff[1]*j;
+      size_type d = coeff_[0]*i + coeff_[1]*j;
       GMM_ASSERT2(d < size(), "Index out of range.");
       return *(this->begin() + d);
     }
 
     template<class CONT> inline T& operator ()(const CONT &c) {
       typename CONT::const_iterator it = c.begin();
-      multi_index::iterator q = coeff.begin(), e = coeff.end();
+      multi_index::iterator q = coeff_.begin(), e = coeff_.end();
       size_type d = 0;
       for ( ; q != e; ++q, ++it) d += (*q) * (*it);
       GMM_ASSERT2(d < size(), "Index out of range.");
@@ -202,36 +203,36 @@ namespace bgeot {
     void init(const multi_index &c) {
       auto it = c.begin();
       size_type d = 1;
-      sizes_ = c; coeff.resize(c.size());
-      auto p = coeff.begin(), pe = coeff.end();
+      sizes_ = c; coeff_.resize(c.size());
+      auto p = coeff_.begin(), pe = coeff_.end();
       for ( ; p != pe; ++p, ++it) { *p = d; d *= *it; }
       this->resize(d);
     }
 
-    inline void init() { sizes_.resize(0);  coeff.resize(0); this->resize(1); }
+    inline void init() { sizes_.resize(0); coeff_.resize(0); this->resize(1); }
 
     inline void init(size_type i) {
-      sizes_.resize(1); sizes_[0] = i; coeff.resize(1); coeff[0] = 1;
+      sizes_.resize(1); sizes_[0] = i; coeff_.resize(1); coeff_[0] = 1;
       this->resize(i);
     }
 
     inline void init(size_type i, size_type j) {
       sizes_.resize(2); sizes_[0] = i; sizes_[1] = j;
-      coeff.resize(2); coeff[0] = 1; coeff[1] = i;
+      coeff_.resize(2); coeff_[0] = 1; coeff_[1] = i;
       this->resize(i*j);
     }
 
     inline void init(size_type i, size_type j, size_type k) {
       sizes_.resize(3); sizes_[0] = i; sizes_[1] = j; sizes_[2] = k; 
-      coeff.resize(3); coeff[0] = 1; coeff[1] = i; coeff[2] = i*j;
+      coeff_.resize(3); coeff_[0] = 1; coeff_[1] = i; coeff_[2] = i*j;
       this->resize(i*j*k);
     }
 
     inline void init(size_type i, size_type j, size_type k, size_type l) {
       sizes_.resize(4);
       sizes_[0] = i; sizes_[1] = j; sizes_[2] = k; sizes_[3] = k; 
-      coeff.resize(4);
-      coeff[0] = 1; coeff[1] = i; coeff[2] = i*j; coeff[3] = i*j*k;
+      coeff_.resize(4);
+      coeff_[0] = 1; coeff_[1] = i; coeff_[2] = i*j; coeff_[3] = i*j*k;
       this->resize(i*j*k*l);
     }
 
@@ -246,11 +247,11 @@ namespace bgeot {
     
     inline size_type adjust_sizes_changing_last(const tensor &t, size_type P) {
       const multi_index &mi = t.sizes_; size_type d = mi.size();
-      sizes_.resize(d); coeff.resize(d);
+      sizes_.resize(d); coeff_.resize(d);
       if (d) {
 	std::copy(mi.begin(), mi.end(), sizes_.begin());
-	std::copy(t.coeff.begin(), t.coeff.end(), coeff.begin());
-	size_type e = coeff.back();
+	std::copy(t.coeff_.begin(), t.coeff_.end(), coeff_.begin());
+	size_type e = coeff_.back();
 	sizes_.back() = P;
 	this->resize(e*P);
 	return e;
@@ -264,10 +265,10 @@ namespace bgeot {
       if (sizes_.size()) {
 	size_type i = 0, j = 0;
 	for (; i < sizes_.size(); ++i)
-	  if (sizes_[i] != 1) { sizes_[j]=sizes_[i]; coeff[j]=coeff[i]; ++j; }
+	  if (sizes_[i] != 1) { sizes_[j]=sizes_[i]; coeff_[j]=coeff_[i]; ++j; }
 	if (!j) ++j;
 	sizes_.resize(j);
-	coeff.resize(j);
+	coeff_.resize(j);
       }
     }
 
@@ -291,7 +292,7 @@ namespace bgeot {
 
     size_type memsize() const {
       return sizeof(T) * this->size()
-        + sizeof(*this) + sizes_.memsize() + coeff.memsize();
+        + sizeof(*this) + sizes_.memsize() + coeff_.memsize();
     }
 
     std::vector<T> &as_vector() { return *this; }
@@ -317,11 +318,13 @@ namespace bgeot {
       std::copy(t.begin(), t.end(), this->begin());
       if (sizes_.size() != t.sizes_.size()) sizes_.resize(t.sizes_.size());
       std::copy(t.sizes_.begin(), t.sizes_.end(), sizes_.begin());
-      if (coeff.size() != t.coeff.size()) coeff.resize(t.coeff.size());
-      std::copy(t.coeff.begin(), t.coeff.end(), coeff.begin());
+      if (coeff_.size() != t.coeff_.size()) coeff_.resize(t.coeff_.size());
+      std::copy(t.coeff_.begin(), t.coeff_.end(), coeff_.begin());
       return *this;
     }
 
+    tensor(const tensor &t)
+      : std::vector<T>(t), sizes_(t.sizes_), coeff_(t.coeff_) { }
     tensor(const multi_index &c) { init(c); }
     tensor(size_type i) = delete; // { init(i); }
     tensor(size_type i, size_type j)  { init(i, j); }
@@ -333,8 +336,7 @@ namespace bgeot {
 
   template<class T> void tensor<T>::mat_transp_reduction
   (const tensor &t, const gmm::dense_matrix<T> &m, int ni) {
-    /* reduction du tenseur t par son indice ni et la matrice          */
-    /* transposee de m.                                                */
+    /* contraction of tensor t by its index ni and the transpose of matrix m. */
 
     THREAD_SAFE_STATIC std::vector<T> tmp;
     THREAD_SAFE_STATIC multi_index mi;
@@ -352,8 +354,8 @@ namespace bgeot {
 
     const_iterator pft = t.begin();
     iterator pf = this->begin();
-    size_type dd  =   coeff[ni]*(  sizes()[ni]-1)-1, co  =   coeff[ni];
-    size_type ddt = t.coeff[ni]*(t.sizes()[ni]-1)-1, cot = t.coeff[ni];
+    size_type dd  =   coeff_[ni]*(  sizes()[ni]-1)-1, co  =   coeff_[ni];
+    size_type ddt = t.coeff_[ni]*(t.sizes()[ni]-1)-1, cot = t.coeff_[ni];
     std::fill(mi.begin(), mi.end(), 0);
     for (;!mi.finished(sizes()); mi.incrementation(sizes()), ++pf, ++pft) {
       if (mi[ni] != 0) {
@@ -402,7 +404,7 @@ namespace bgeot {
 
   template<class T> void tensor<T>::mat_reduction
   (const tensor &t, const gmm::dense_matrix<T> &m, int ni) {
-    /* reduction du tenseur t par son indice ni et la matrice m.       */
+    /* contraction of tensor t by its index ni and the matrix m. */
     THREAD_SAFE_STATIC std::vector<T> tmp;
     THREAD_SAFE_STATIC multi_index mi;
     
@@ -417,8 +419,8 @@ namespace bgeot {
     adjust_sizes(mi);
     const_iterator pft = t.begin();
     iterator pf = this->begin();
-    size_type dd  =   coeff[ni]*(  sizes()[ni]-1)-1, co  =   coeff[ni];
-    size_type ddt = t.coeff[ni]*(t.sizes()[ni]-1)-1, cot = t.coeff[ni];
+    size_type dd  =   coeff_[ni]*(  sizes()[ni]-1)-1, co  =   coeff_[ni];
+    size_type ddt = t.coeff_[ni]*(t.sizes()[ni]-1)-1, cot = t.coeff_[ni];
     std::fill(mi.begin(), mi.end(), 0);
     for (;!mi.finished(sizes()); mi.incrementation(sizes()), ++pf, ++pft) {
       if (mi[ni] != 0) {

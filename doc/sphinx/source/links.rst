@@ -1,6 +1,6 @@
 .. include:: replaces.txt
 
-.. highlightlang:: none
+.. highlight:: none
 
 .. _links:
 
@@ -53,8 +53,8 @@ SuperLu: Sparse Gaussian Elimination on High Performance Computers
 |link5|_ or |link6|_
 
 
-Some project using GetFEM++ and/or Gmm++
-----------------------------------------
+Some project using GetFEM and/or Gmm++
+--------------------------------------
 
 .. |link7| replace:: an open source model for glaciers
 .. _link7: http://icetools.sourceforge.net
@@ -74,8 +74,8 @@ Some project using GetFEM++ and/or Gmm++
 * SimNIBS: |link7c|_.
 
 
-Examples of publications based on GetFEM++
-------------------------------------------
+Examples of publications based on GetFEM
+----------------------------------------
 
 .. |link8| replace:: www3.interscience.wiley.com
 .. _link8: http://www3.interscience.wiley.com/journal/122440964/abstract

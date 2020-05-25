@@ -28,7 +28,7 @@ Glossary
 
    Element
       An element is a small piece of a domain with a special shape (a segment,
-      a triangle, a quadrilateron, an tetrahedron, a hexahedron or a prism
+      a triangle, a quadrilateron, an tetrahedron, a hexahedron or a prism)
       for dimensions less or equal to three. A mesh is the union of
       non intersecting elements.
 

@@ -1,9 +1,9 @@
-// Scilab GetFEM++ interface
-// Copyright (C) 2013-2017 Tomas Ligursky, Yves Renard.
+// Scilab GetFEM interface
+// Copyright (C) 2013-2020 Tomas Ligursky, Yves Renard.
 //
-// This file is a part of GetFEM++
+// This file is a part of GetFEM
 //
-// GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+// GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
 // under  the  terms  of the  GNU  Lesser General Public License as published
 // by  the  Free Software Foundation;  either version 2.1 of the License,  or
 // (at your option) any later version.
@@ -18,7 +18,7 @@
 // Continuation of contact between a vee-shaped body and a rigid foundation.
 //
 // This program is used to check that scilab-getfem is working. This is also
-// a good example of use of GetFEM++.
+// a good example of use of GetFEM.
 //
 
 gf_workspace('clear all');

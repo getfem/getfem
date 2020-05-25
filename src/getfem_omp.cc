@@ -1,10 +1,10 @@
 /*===========================================================================
 
- Copyright (C) 2012-2017 Andriy Andreykiv.
+ Copyright (C) 2012-2020 Andriy Andreykiv.
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -368,5 +368,41 @@ namespace getfem{
     }
     if (iterate_over_partitions) partition_master::get().rewind_partitions();
   }
+
+
+#ifdef GETFEM_FORCE_SINGLE_THREAD_BLAS
+# include <dlfcn.h>
+# define BLAS_FORCE_SINGLE_THREAD                                       \
+  int openblas_get_num_threads_res = 1;                                 \
+  {                                                                     \
+    typedef int (* ptrfunc1)();                                         \
+    ptrfunc1 func1 = ptrfunc1(dlsym(NULL, "openblas_get_num_threads")); \
+    if (func1) openblas_get_num_threads_res = (*func1)();               \
+    std::cout << "numthread = " << openblas_get_num_threads_res << std::endl; \
+    typedef void (* ptrfunc2)(int);                                     \
+    ptrfunc2 func2 = ptrfunc2(dlsym(NULL, "openblas_set_num_threads")); \
+    if (func2) (*func2)(1);                                             \
+  }
+# define BLAS_RESTORE_NUM_THREAD                                        \
+  {                                                                     \
+    typedef void (* ptrfunc2)(int);                                     \
+    ptrfunc func2 = ptrfunc2(dlsym(NULL, "openblas_set_num_threads"));  \
+    if (func2) (*func)(openblas_get_num_threads_res);                   \
+  }
+#else
+# define BLAS_FORCE_SINGLE_THREAD
+# define BLAS_RESTORE_NUM_THREAD
+#endif
+
+
+  struct dummy_class_for_blas_nbthread_init {
+    dummy_class_for_blas_nbthread_init(void) {
+      std::cout << "initializing ..." << std::endl;
+      BLAS_FORCE_SINGLE_THREAD;
+    }
+  };
+
+  static dummy_class_for_blas_nbthread_init dcfbnti;
+  
 
 }  /* end of namespace getfem.                                             */

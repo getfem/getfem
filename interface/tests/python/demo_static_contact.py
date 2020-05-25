@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# Python GetFEM++ interface
+# Python GetFEM interface
 #
-# Copyright (C) 2011-2017 Yves Renard.
+# Copyright (C) 2011-2020 Yves Renard.
 #
-# This file is a part of GetFEM++
+# This file is a part of GetFEM
 #
-# GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+# GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
 # under  the  terms  of the  GNU  Lesser General Public License as published
 # by  the  Free Software Foundation;  either version 2.1 of the License,  or
 # (at your option) any later version.
@@ -23,11 +23,12 @@
 """ Static equilibrium of an elastic solid in contact with a rigid foundation
 
   This program is used to check that python-getfem is working. This is also
-  a good example of use of GetFEM++.
+  a good example of use of GetFEM.
 """
 
-import getfem as gf
 import numpy as np
+
+import getfem as gf
 
 # Import the mesh : disc
 # m = gf.Mesh('load', '../../../tests/meshes/disc_P2_h4.mesh')
@@ -324,4 +325,3 @@ U = md.get('variable', 'u')
 VM = md.compute_isotropic_linearized_Von_Mises_or_Tresca('u', 'clambda', 'cmu', mfvm)
 
 mfd.export_to_vtk('static_contact.vtk', 'ascii', mfvm,  VM, 'Von Mises Stress', mfu, U, 'Displacement')
-

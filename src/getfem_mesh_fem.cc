@@ -1,10 +1,10 @@
 /*===========================================================================
 
- Copyright (C) 1999-2017 Yves Renard
+ Copyright (C) 1999-2020 Yves Renard
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -419,8 +419,8 @@ namespace getfem {
           if (idof == nbdof) {
             nbdof += Qdim / pf->target_dim();
 
-            linked_mesh().neighbours_of_convex(cv, pf->faces_of_dof(cv, i), s);
-            for (size_type ncv : s) { // For each unscanned neighbour
+            linked_mesh().neighbors_of_convex(cv, pf->faces_of_dof(cv, i), s);
+            for (size_type ncv : s) { // For each unscanned neighbor
               if (!cv_done[ncv] && fe_convex.is_in(ncv)) { // add the dof
 
                 fd.ind_node = size_type(-1);

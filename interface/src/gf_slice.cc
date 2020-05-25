@@ -1,10 +1,10 @@
 /*===========================================================================
 
- Copyright (C) 2006-2017 Yves Renard, Julien Pommier.
+ Copyright (C) 2006-2020 Yves Renard, Julien Pommier.
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -106,7 +106,7 @@ namespace getfem {
 
       /* look for the other convex sharing this face */
       bgeot::mesh_structure::ind_set clst;
-      ml.neighbours_of_convex(cv, f, clst);
+      ml.neighbors_of_convex(cv, f, clst);
       size_type best = size_type(-1); scalar_type best_v = 1e10;
       cnt = 0;
       for (bgeot::mesh_structure::ind_set::const_iterator it = clst.begin();
@@ -467,7 +467,7 @@ void gf_slice(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     /*@INIT sl = ('points', @tmesh m, @dmat Pts)
       Return the "slice" composed of points given by the columns of `Pts`
       (useful for interpolation on a given set of sparse points, see
-      ``::COMPUTE('interpolate on',sl)``.@*/
+      ``::COMPUTE('interpolate on',sl)``).@*/
       mm = extract_mesh_object(in.pop());
       pstored = std::make_shared<getfem::stored_mesh_slice>();
       getfem::mesh_slicer slicer(*mm);

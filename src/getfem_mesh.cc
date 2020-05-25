@@ -1,10 +1,10 @@
 /*===========================================================================
 
- Copyright (C) 1999-2017 Yves Renard
+ Copyright (C) 1999-2020 Yves Renard
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -75,7 +75,7 @@ namespace getfem {
               bgeot::pgeometric_trans pgtsub = trans_of_convex(icv[jc]);
               for (short_type fsub = 0; fsub < pgtsub->structure()->nb_faces();
                    ++fsub) {
-                neighbours_of_convex(icv[jc], fsub, s);
+                neighbors_of_convex(icv[jc], fsub, s);
                 ind_set::const_iterator it = s.begin(), ite = s.end();
                 bool found = false;
                 for (; it != ite; ++it)
@@ -172,7 +172,7 @@ namespace getfem {
       j = 0;
       for (dal::bv_visitor ic(convex_index()); !ic.finished(); ++ic, ++j) {
         xadj[j] = k;
-        neighbours_of_convex(ic, s);
+        neighbors_of_convex(ic, s);
         for (ind_set::iterator it = s.begin();
              it != s.end(); ++it) { adjncy.push_back(indelt[*it]); ++k; }
       }
@@ -824,7 +824,7 @@ namespace getfem {
     for (dal::bv_visitor ic(cvlst); !ic.finished(); ++ic) {
       if (m.structure_of_convex(ic)->dim() == m.dim()) {
         for (short_type f = 0; f < m.structure_of_convex(ic)->nb_faces(); f++) {
-          if (m.neighbour_of_convex(ic,f) == size_type(-1)) {
+          if (m.neighbor_of_convex(ic,f) == size_type(-1)) {
             flist.push_back(convex_face(ic,f));
           }
         }
@@ -842,7 +842,7 @@ namespace getfem {
       if (m.structure_of_convex(i.cv())->dim() == m.dim()) {
         for (short_type f = 0; f < m.structure_of_convex(i.cv())->nb_faces();
              f++) {
-          size_type cv2 = m.neighbour_of_convex(i.cv(), f);
+          size_type cv2 = m.neighbor_of_convex(i.cv(), f);
           if (cv2 == size_type(-1) || !cvlst.is_in(cv2)) {
             flist.add(i.cv(),f);
           }
@@ -853,7 +853,7 @@ namespace getfem {
   }
 
   /* Select all the faces of the given mesh region (counted twice if they
-     are shared by two neighbour elements)
+     are shared by two neighbor elements)
   */
   mesh_region all_faces_of_mesh(const mesh &m, const mesh_region &mr) {
     mesh_region mrr;
@@ -871,7 +871,7 @@ namespace getfem {
   
   /* Select all the faces sharing at least two element of the given mesh
       region. Each face is represented only once and is arbitrarily chosen
-      between the two neighbour elements. Try to minimize the number of
+      between the two neighbor elements. Try to minimize the number of
       elements.
   */
   mesh_region inner_faces_of_mesh(const mesh &m, const mesh_region &mr) {
@@ -879,21 +879,21 @@ namespace getfem {
     mr.from_mesh(m);
     mr.error_if_not_convexes();
     dal::bit_vector visited;
-    bgeot::mesh_structure::ind_set neighbours;
+    bgeot::mesh_structure::ind_set neighbors;
 
     for (mr_visitor i(mr); !i.finished(); ++i) {
       size_type cv1 = i.cv();
       short_type nbf = m.structure_of_convex(i.cv())->nb_faces();
-      bool neighbour_visited = false;
+      bool neighbor_visited = false;
       for (short_type f = 0; f < nbf; ++f) {
-        neighbours.resize(0); m.neighbours_of_convex(cv1, f, neighbours);
-        for (size_type j = 0; j < neighbours.size(); ++j)
-          if (visited.is_in(neighbours[j]))
-            { neighbour_visited = true; break; }
+        neighbors.resize(0); m.neighbors_of_convex(cv1, f, neighbors);
+        for (size_type j = 0; j < neighbors.size(); ++j)
+          if (visited.is_in(neighbors[j]))
+            { neighbor_visited = true; break; }
       }
-      if (!neighbour_visited) {
+      if (!neighbor_visited) {
         for (short_type f = 0; f < nbf; ++f) {
-          size_type cv2 = m.neighbour_of_convex(cv1, f);
+          size_type cv2 = m.neighbor_of_convex(cv1, f);
           if (cv2 != size_type(-1) && mr.is_in(cv2)) mrr.add(cv1,f);
         }
         visited.add(cv1);
@@ -905,11 +905,11 @@ namespace getfem {
       if (!(visited.is_in(cv1))) {
         short_type nbf = m.structure_of_convex(i.cv())->nb_faces();
         for (short_type f = 0; f < nbf; ++f) {
-          neighbours.resize(0); m.neighbours_of_convex(cv1, f, neighbours);
+          neighbors.resize(0); m.neighbors_of_convex(cv1, f, neighbors);
           bool ok = false;
-          for (size_type j = 0; j < neighbours.size(); ++j)  {
-            if (visited.is_in(neighbours[j])) { ok = false; break; }
-            if (mr.is_in(neighbours[j])) { ok = true; }
+          for (size_type j = 0; j < neighbors.size(); ++j)  {
+            if (visited.is_in(neighbors[j])) { ok = false; break; }
+            if (mr.is_in(neighbors[j])) { ok = true; }
           }
           if (ok) { mrr.add(cv1,f); }
         }
@@ -951,6 +951,30 @@ namespace getfem {
             if (m.points()[*it][j] < pt1[j] || m.points()[*it][j] > pt2[j])
               { is_in = false; break; }
           if (!is_in) break;
+        }
+        if (is_in) mrr.add(i.cv(), i.f());
+      }
+    return mrr;
+  }
+
+  mesh_region select_faces_in_ball(const mesh &m, const mesh_region &mr,
+                                   const base_node &center, scalar_type radius) {
+    mesh_region mrr;
+    size_type N = m.dim();
+    GMM_ASSERT1(center.size() == N, "Wrong dimensions");
+    for (getfem::mr_visitor i(mr, m); !i.finished(); ++i)
+      if (i.f() != short_type(-1)) {
+        bgeot::mesh_structure::ind_pt_face_ct pt
+          = m.ind_points_of_face_of_convex(i.cv(), i.f());
+
+        bool is_in = true;
+        for (bgeot::mesh_structure::ind_pt_face_ct::iterator it = pt.begin();
+             it != pt.end(); ++it) {
+          scalar_type checked_radius = scalar_type(0.0);
+          for (size_type j = 0; j < N; ++j)
+            checked_radius += pow(m.points()[*it][j] - center[j], 2);
+          checked_radius = std::sqrt(checked_radius);
+          if (checked_radius > radius) { is_in = false; break; }
         }
         if (is_in) mrr.add(i.cv(), i.f());
       }

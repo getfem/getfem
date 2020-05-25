@@ -1,10 +1,10 @@
 /*===========================================================================
 
- Copyright (C) 2013-2019 Yves Renard
+ Copyright (C) 2013-2020 Yves Renard
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -70,7 +70,7 @@ namespace getfem {
 
   typedef std::shared_ptr<ga_instruction> pga_instruction;
 
-  struct gauss_pt_corresp { // For neighbour interpolation transformation
+  struct gauss_pt_corresp { // For neighbor interpolation transformation
     bgeot::pgeometric_trans pgt1, pgt2;
     papprox_integration pai;
     std::vector<size_type> nodes;
@@ -92,7 +92,10 @@ namespace getfem {
     size_type nbpt, ipt;           // Number and index of Gauss point
     bgeot::geotrans_precomp_pool gp_pool;
     fem_precomp_pool fp_pool;
-    std::map<gauss_pt_corresp, bgeot::pstored_point_tab> neighbour_corresp;
+    std::map<gauss_pt_corresp, bgeot::pstored_point_tab> neighbor_corresp;
+    std::set<std::pair<std::string,std::string>> unreduced_terms;
+
+    scalar_type ONE=1;
 
     using region_mim_tuple = std::tuple<const mesh_im *, const mesh_region *, psecondary_domain>;
     struct region_mim : public region_mim_tuple {
@@ -108,12 +111,16 @@ namespace getfem {
     std::map<std::string, base_vector> really_extended_vars;
 
     struct variable_group_info {
-      const mesh_fem *mf;
-      gmm::sub_interval Iu, Ir;
-      scalar_type alpha;
-      const base_vector *U;
+      const mesh *cached_mesh;
       const std::string *varname;
-      variable_group_info() : mf(0), U(0), varname(0) {}
+      const mesh_fem *mf;
+      bool reduced_mf;
+      const gmm::sub_interval *I; // sub_interval in the assembled vector/matrix
+                                  // or in the unreduced vars indexing
+      scalar_type alpha;
+      const base_vector *U;       // Vector to read values from
+      variable_group_info()
+        : cached_mesh(0), varname(0), mf(0), reduced_mf(false), I(0) {}
     };
 
     struct interpolate_info {
@@ -198,6 +205,9 @@ namespace getfem {
 
     std::map<region_mim, region_mim_instructions> all_instructions;
 
+    // storage of intermediary tensors for condensation of variables
+    std::list<std::shared_ptr<base_tensor>> condensation_tensors;
+
     ga_instruction_set() : need_elt_size(false), nbpt(0), ipt(0) {}
   };
 
@@ -205,7 +215,7 @@ namespace getfem {
   void ga_exec(ga_instruction_set &gis, ga_workspace &workspace);
   void ga_function_exec(ga_instruction_set &gis);
   void ga_compile(ga_workspace &workspace, ga_instruction_set &gis,
-                  size_type order);
+                  size_type order, bool condensation=false);
   void ga_compile_function(ga_workspace &workspace,
                            ga_instruction_set &gis, bool scalar);
   void ga_compile_interpolation(ga_workspace &workspace,

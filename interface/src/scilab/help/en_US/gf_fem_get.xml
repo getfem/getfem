@@ -145,7 +145,7 @@
 
     <para>       Evaluate the Hessian of all base functions of the fem at point <literal>p</literal>.
 
-    <literal>p</literal> is supposed to be in the reference convex!.
+    <literal>p</literal> is supposed to be in the reference convex!
     </para>
     </listitem>
 

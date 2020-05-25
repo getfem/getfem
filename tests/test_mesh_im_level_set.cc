@@ -1,10 +1,10 @@
 /*===========================================================================
 
- Copyright (C) 2007-2017 Yves Renard, Julien Pommier.
+ Copyright (C) 2007-2020 Yves Renard, Julien Pommier.
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -24,7 +24,7 @@ using std::endl; using std::cout; using std::cerr;
 using std::ends; using std::cin;
 
 
-/* some GetFEM++ types that we will be using */
+/* some GetFEM types that we will be using */
 using bgeot::base_small_vector; /* special class for small (dim<16) vectors */
 using bgeot::base_node;  /* geometrical nodes(derived from base_small_vector)*/
 using bgeot::scalar_type; /* = double */

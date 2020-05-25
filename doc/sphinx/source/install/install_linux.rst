@@ -2,7 +2,7 @@
 
 .. include:: ../replaces.txt
 
-.. highlightlang:: none
+.. highlight:: none
 
 .. _ud-install-linux:
 
@@ -121,7 +121,7 @@ Scilab interface
 ^^^^^^^^^^^^^^^^
 
 The installation of the |sci| |gf| toolbox can be somewhat tricky, since it combines a C++ compiler, libraries and |sci| interaction. In case of troubles with a
-non-GNU compiler, gcc/g++ (>= 4.8) should be a safe solution.
+non-GNU compiler, gcc/g++ (>= 8.0) should be a safe solution.
 
 
 .. caution::
@@ -151,24 +151,47 @@ If you want to use a different compiler than the one chosen automatically by the
 
 Once getfem is compiled:
 
-  - Go to the scilab getfem++ interface install directory (interface/src/scilab if the installation is not done)
+  - Go to the Scilab GetFEM interface install directory (interface/src/scilab if the installation is not done)
 
-  - launch scilab
+  - launch Scilab
 
-  - load the getfem++ toolbox with:
+  - load the GetFEM toolbox with:
     ``exec loader.sce;``
 
   - You can try to launch a demo with:
     ``cd demos;``
     ``exec demo_static_contact.sce;``
 
+Octave interface
+^^^^^^^^^^^^^^^^
+
+You have first to install |octv| with the developpement package
+
+.. caution::
+
+   * You have first to install |octv|, minimal release 4.1.1 with the developpement package such
+     that the command ``mkoctfile`` is available (liboctave-dev package on Debian, for instance)
+
+   * you should have built the |gf| static library (i.e. do not use ``./configure
+     --disable-static`` when building |gf|). On linux/x86_64 platforms, a
+     mandatory option when building |gf| and |gfi| toolbox (and any static library linked
+     to them) is the ``--with-pic`` option of their ``./configure`` script.
+
+   * you should have use the ``--enable-octave`` option to configure the |gf| sources (i.e. ``./configure --enable-octave`` ...)
+
+
+
+The last step is to add the path to the toolbox in the octave path:
+
+* you can put ``addpath('toolbox_dir', '-begin')`` to your ``$HOME/.octaverc`` file
+* you can simply use the ``addpath`` command in the octave command line. 
 
 Matlab interface
 ^^^^^^^^^^^^^^^^
 
 The installation of the |gfi| toolbox can be somewhat tricky, since it combines a
 C++ compiler, libraries and |Mlab| interaction... In case of troubles with a
-non-GNU compiler, gcc/g++ (>= 4.8) should be a safe solution.
+non-GNU compiler, gcc/g++ (>= 8.0) should be a safe solution.
 
 
 .. caution::

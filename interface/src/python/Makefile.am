@@ -1,8 +1,8 @@
-#  Copyright (C) 1999-2017 Yves Renard
+#  Copyright (C) 1999-2020 Yves Renard
 #
-#  This file is a part of GetFEM++
+#  This file is a part of GetFEM
 #
-#  GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+#  GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
 #  under  the  terms  of the  GNU  Lesser General Public License as published
 #  by  the  Free Software Foundation;  either version 3 of the License,  or
 #  (at your option) any later version along with the GCC Runtime Library
@@ -23,13 +23,13 @@ gfpythondir=$(pythondir)/getfem
 gfpyexecdir=$(pyexecdir)/getfem
 
 gfpython_PYTHON = getfem.py __init__.py
-nodist_gfpyexec_PYTHON = _getfem.so
+nodist_gfpyexec_PYTHON = _getfem$(PYTHON_SO)
 
 EXTRA_DIST = getfem_python.c
 
 # $(warning PSEUDO_FUNCTIONS= $(PSEUDO_FUNCTIONS))
 
-CLEANFILES = getfem.py _getfem.so *.o getfem_python_c.o getfem_python_c.c getfem.pyc
+CLEANFILES = getfem.py _getfem*.so *.o getfem_python_c.o getfem_python_c.c getfem.pyc
 
 if BUILDPYTHONPAR
 
@@ -53,13 +53,13 @@ getfem_python_c.c : getfem_python.c
 	cp $(srcdir)/getfem_python.c getfem_python_c.c
 
 # ARCHFLAGS is set to empty to disable universal binaries with python 2.5 on macos 10.5
-_getfem.so: getfem_python_c.c ../libgetfemint.la $(GETFEM_LIB_LA)
-	touch _getfem.so && rm _getfem.so
+_getfem$(PYTHON_SO): getfem_python_c.c ../libgetfemint.la $(GETFEM_LIB_LA)
+	touch _getfem$(PYTHON_SO) && rm _getfem$(PYTHON_SO)
 	ARCHFLAGS="" CC="$(CC)" CFLAGS="$(CFLAGS)" $(PYTHON) setup.py -v build @PYTHON_CC_ARG@ --build-temp . --build-base . --build-lib . --force
 #LDSHARED="$(CXX) -shared" ARCHFLAGS="" python setup.py -v build --build-temp . --build-base . --build-lib . --force
 
 
-all: _getfem.so getfem.py
+all: _getfem$(PYTHON_SO) getfem.py
 #pyexec_LTLIBRARIES = libgfpython.la
 #libgfpython_la_LIBADD = ../.libs/libgetfemint.a @GETFEM_STATICLIBS@
 #libgfpython_la_SOURCES = \

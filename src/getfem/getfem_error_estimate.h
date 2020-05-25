@@ -1,11 +1,11 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
 
- Copyright (C) 1999-2017 Yves Renard, Julien Pommier
+ Copyright (C) 1999-2020 Yves Renard, Julien Pommier
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -69,8 +69,8 @@ namespace getfem {
     workspace.add_fem_variable("z", mf0, gmm::sub_interval(0, nbdof), Z);
     workspace.add_expression
       ("element_size"
-       "*Norm_sqr(Grad_u.Normal-Interpolate(Grad_u,neighbour_elt).Normal)"
-       "*(Test_z+Interpolate(Test_z,neighbour_elt))", mim, inner_faces);
+       "*Norm_sqr(Grad_u.Normal-Interpolate(Grad_u,neighbor_element).Normal)"
+       "*(Test_z+Interpolate(Test_z,neighbor_element))", mim, inner_faces);
     workspace.set_assembled_vector(Z);
     workspace.assembly(1);
     gmm::clear(err);

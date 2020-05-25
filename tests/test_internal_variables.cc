@@ -1,10 +1,10 @@
 /*===========================================================================
 
- Copyright (C) 2019-2019 Konstantinos Poulios.
+ Copyright (C) 2019-2020 Konstantinos Poulios.
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -29,6 +29,7 @@ using bgeot::base_node;
 
 int main(int argc, char *argv[]) {
 
+  GETFEM_MPI_INIT(argc, argv);
 //  gmm::set_traces_level(1);
 
   bgeot::md_param PARAM;
@@ -110,5 +111,7 @@ int main(int argc, char *argv[]) {
   std::cout << "Total dofs of model 1: " << md1.nb_dof() << std::endl;
   std::cout << "Total dofs of model 2: " << md2.nb_dof() << std::endl;
 
+  GETFEM_MPI_FINALIZE;
+  
   return gmm::vect_dist2(md1.real_variable("u"), md2.real_variable("u")) < 1e-9 ? 0 : 1;
 }

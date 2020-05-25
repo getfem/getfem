@@ -1,10 +1,10 @@
 /*===========================================================================
 
- Copyright (C) 2019-2019 Andriy Andreykiv, Konstantinos Poulios.
+ Copyright (C) 2019-2020 Andriy Andreykiv, Konstantinos Poulios.
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -22,7 +22,8 @@
 #include "getfem/getfem_regular_meshes.h"
 
 int main(int argc, char *argv[]) {
-
+  
+  GETFEM_MPI_INIT(argc, argv);
   GMM_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
 
@@ -51,5 +52,8 @@ int main(int argc, char *argv[]) {
   w.add_assignment_expression("d", "Norm(X)", -1, 1, true);
   w.add_expression("d * Test_u", mim, -1);
   w.assembly(1);
+
+  GETFEM_MPI_FINALIZE;
+  
   return (gmm::abs(gmm::vect_norm2(v) - RESULT) < 1e-10) ? 0 : 1;
 }

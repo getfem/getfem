@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# Python GetFEM++ interface
+# Python GetFEM interface
 #
-# Copyright (C) 2004-2017 Yves Renard, Julien Pommier.
+# Copyright (C) 2004-2020 Yves Renard, Julien Pommier.
 #
-# This file is a part of GetFEM++
+# This file is a part of GetFEM
 #
-# GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+# GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
 # under  the  terms  of the  GNU  Lesser General Public License as published
 # by  the  Free Software Foundation;  either version 2.1 of the License,  or
 # (at your option) any later version.
@@ -19,8 +19,10 @@
 # Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 #
 ############################################################################
-import getfem
 from numpy import *
+
+import getfem
+import getfem_tvtk
 
 mfu=getfem.MeshFem('load','tank_3D.mfu')
 m=mfu.linked_mesh()
@@ -31,7 +33,6 @@ P = fromfile('tank_3D.P', 'd')
 sl=getfem.Slice(('boundary',('intersection',('planar',+1,[0,0,0],[0,1,0]),('planar',+1,[0,0,0],[1,0,0]))),m,3);
 
 print("importing tvtk..")
-import getfem_tvtk
 print("import done")
 
 fig = getfem_tvtk.Figure(gui='tvtk')
@@ -65,4 +66,3 @@ tsl=getfem.Slice('streamlines', mfu, U, H);
 fig.show(tsl, tube_color=(1,1,1));
 
 fig.loop()
-

@@ -1,10 +1,10 @@
 /*===========================================================================
 
- Copyright (C) 2003-2017 Julien Pommier
+ Copyright (C) 2003-2020 Julien Pommier
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -348,7 +348,8 @@ namespace getfem {
           tensor_bases[k] = const_cast<TDIter>(&(*eltm[k]->begin()));
         }
         red.do_reduction();
-        long one = 1, n = int(red.out_data.size()); assert(n);
+        BLAS_INT one = BLAS_INT(1), n = BLAS_INT(red.out_data.size());
+        assert(n);
 	gmm::daxpy_(&n, &c, const_cast<double*>(&(red.out_data[0])),
 		    &one, (double*)&(t[0]), &one);
       }

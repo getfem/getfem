@@ -1,10 +1,10 @@
 /*===========================================================================
 
- Copyright (C) 2010-2017 Roman Putanowicz.
+ Copyright (C) 2010-2020 Roman Putanowicz.
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -47,7 +47,8 @@ bgeot::scalar_type func(const bgeot::base_node& x) {
   return x[0];
 }
 
-int main(int /* argc */, char * /* argv */ []) {
+int main(int argc, char *argv[]) {
+  GETFEM_MPI_INIT(argc, argv);
   try {
     getfem::mesh mymesh;
 
@@ -89,4 +90,8 @@ int main(int /* argc */, char * /* argv */ []) {
     expsl.write_point_data(mf, U, "temperature");
 
   } GMM_STANDARD_CATCH_ERROR;
+
+  GETFEM_MPI_FINALIZE;
+
+  return 0;
 }

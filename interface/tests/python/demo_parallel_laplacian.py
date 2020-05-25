@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# Python GetFEM++ interface
+# Python GetFEM interface
 #
-# Copyright (C) 2004-2009 Yves Renard, Julien Pommier.
+# Copyright (C) 2004-2020 Yves Renard, Julien Pommier.
 #
-# This file is a part of GetFEM++
+# This file is a part of GetFEM
 #
-# GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+# GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
 # under  the  terms  of the  GNU  Lesser General Public License as published
 # by  the  Free Software Foundation;  either version 2.1 of the License,  or
 # (at your option) any later version.
@@ -22,18 +22,20 @@
 """  2D Poisson problem test.
 
   This program is used to check that python-getfem is working in parallel.
-  This is also a good example of use of GetFEM++.
+  This is also a good example of use of GetFEM.
 
   Run this script by invoking
   mpiexec -n 4 python demo_parallel_laplacian.py
 
   $Id: demo_parallel_laplacian.py 3809 2011-09-26 20:38:56Z logari81 $
 """
+import time
+
+import numpy as np
+
+import getfem as gf
 # import basic modules
 import mpi4py.MPI as mpi
-import numpy as np
-import getfem as gf
-import time
 
 rank = mpi.COMM_WORLD.rank
 if (rank == 0):
@@ -47,13 +49,13 @@ Dirichlet_with_multipliers = True  # Dirichlet condition with multipliers
                                    # or penalization
 dirichlet_coefficient = 1e10       # Penalization coefficient
 
-t = time.clock()
+t = time.process_time()
 
 # creation of a simple cartesian mesh
 m = gf.Mesh('regular_simplices', np.arange(0,1+1./NX,1./NX), np.arange(0,1+1./NX,1./NX))
 if (rank == 0):
-  print('Time for building mesh', time.clock()-t)
-t = time.clock()
+  print('Time for building mesh', time.process_time()-t)
+t = time.process_time()
 
 # create a MeshFem for u and rhs fields of dimension 1 (i.e. a scalar field)
 mfu   = gf.MeshFem(m, 1)
@@ -72,7 +74,7 @@ tleft = abs(fnor[1,:]+1) < 1e-14
 ttop  = abs(fnor[0,:]-1) < 1e-14
 fleft = np.compress(tleft, flst, axis=1)
 ftop  = np.compress(ttop, flst, axis=1)
-fneum = np.compress(True - ttop - tleft, flst, axis=1)
+fneum = np.compress(np.logical_not(ttop + tleft), flst, axis=1)
 
 # mark it as boundary
 DIRICHLET_BOUNDARY_NUM1 = 1
@@ -83,16 +85,16 @@ m.set_region(DIRICHLET_BOUNDARY_NUM2, ftop)
 m.set_region(NEUMANN_BOUNDARY_NUM, fneum)
 
 if (rank == 0):
-  print('Time for building fem and im', time.clock()-t)
-t = time.clock()
+  print('Time for building fem and im', time.process_time()-t)
+t = time.process_time()
 
 nb_dof = mfu.nbdof()
 if (rank == 0):
   print('Nb dof for the main unknown: ', nb_dof)
 
 if (rank == 0):
-  print('Time for dof numbering', time.clock()-t)
-t = time.clock()
+  print('Time for dof numbering', time.process_time()-t)
+t = time.process_time()
   
 
 # interpolate the exact solution (Assuming mfu is a Lagrange fem)
@@ -103,8 +105,8 @@ F1 = mfrhs.eval('-(2*(x*x+y*y)-2*x-2*y+20*x*x*x)')
 F2 = mfrhs.eval('[y*(y-1)*(2*x-1) + 5*x*x*x*x, x*(x-1)*(2*y-1)]')
 
 if (rank == 0):
-  print('Time for python interpolation', time.clock()-t)
-t = time.clock()
+  print('Time for python interpolation', time.process_time()-t)
+t = time.process_time()
 
 # model
 md = gf.Model('real')
@@ -149,8 +151,8 @@ else:
                                                'DirichletData')
 
 if (rank == 0):
-  print('Time for model building', time.clock()-t)
-t = time.clock()
+  print('Time for model building', time.process_time()-t)
+t = time.process_time()
 
 md.nbdof
 nb_dof = md.nbdof()
@@ -158,15 +160,15 @@ if (rank == 0):
   print('Nb dof for the model: ', nb_dof)
 
 if (rank == 0):
-  print('Time for model actualize sizes', time.clock()-t)
-t = time.clock()
+  print('Time for model actualize sizes', time.process_time()-t)
+t = time.process_time()
 
 # assembly of the linear system and solve.
 md.solve()
 
 if (rank == 0):
-  print('Time for model solve', time.clock()-t)
-t = time.clock()
+  print('Time for model solve', time.process_time()-t)
+t = time.process_time()
 
 # main unknown
 U = md.variable('u')
@@ -178,8 +180,8 @@ if (rank == 0):
   print('Error in H1 norm : ', H1error)
 
 if (rank == 0):
-  print('Time for error computation', time.clock()-t)
-t = time.clock()
+  print('Time for error computation', time.process_time()-t)
+t = time.process_time()
 
 
 # export data
@@ -188,4 +190,3 @@ t = time.clock()
 #                     U,'Computed solution')
 #   print('You can view the solution with (for example):')
 #   print('gmsh laplacian.pos')
-

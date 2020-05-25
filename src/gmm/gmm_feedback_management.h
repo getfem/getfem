@@ -1,11 +1,11 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
 
- Copyright (C) 2002-2017 Yves Renard
+ Copyright (C) 2002-2020 Yves Renard
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -44,7 +44,7 @@
 namespace gmm {
 
 /* *********************************************************************** */
-/*	GetFEM++ warnings.                         			   */
+/*	GetFEM warnings.                         			   */
 /* *********************************************************************** */
 
 // This allows to dynamically hide warnings
@@ -57,7 +57,7 @@ inline void set_warning_level(int l) { warning_level::level(l>0 ? l : 0); }
 inline int  get_warning_level(void)  { return warning_level::level(-2); }
 
 /* *********************************************************************** */
-/*	GetFEM++ traces.                         			   */
+/*	GetFEM traces.                         			   */
 /* *********************************************************************** */
 
 // This allows to dynamically hide traces
@@ -71,7 +71,7 @@ inline int  get_traces_level(void)  { return traces_level::level(); }
 
 
 /* *********************************************************************** */
-/*	GetFEM++ feedback management                  			   */
+/*	GetFEM feedback management                  			   */
 /* *********************************************************************** */
 
 enum class FeedbackType {

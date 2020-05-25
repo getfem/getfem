@@ -1,12 +1,12 @@
 #!/usr/bin/env python
-# -*- coding: UTF8 -*-
-# Python GetFEM++ interface
+# -*- coding: utf-8 -*-
+# Python GetFEM interface
 #
-# Copyright (C) 2013-2015 Konstantinos Poulios.
+# Copyright (C) 2013-2020 Konstantinos Poulios.
 #
-# This file is a part of GetFEM++
+# This file is a part of GetFEM
 #
-# GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+# GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
 # under  the  terms  of the  GNU  Lesser General Public License as published
 # by  the  Free Software Foundation;  either version 3 of the License,  or
 # (at your option) any later version along with the GCC Runtime Library
@@ -21,9 +21,11 @@
 #
 ############################################################################
 
-import getfem as gf
-import numpy as np
 import time
+
+import numpy as np
+
+import getfem as gf
 
 gf.util_trace_level(1)
 
@@ -270,10 +272,10 @@ for nit in range(steps+1):
       md.set_variable('wR', md.variable('uR'))
       md.set_variable('wB', md.variable('uB'))
 
-   starttime = time.clock()
+   starttime = time.process_time()
    md.solve('noisy', 'max_iter', 40, 'max_res', 1e-8, #)[0]
             'lsearch', 'simplest', 'alpha max ratio', 1.5, 'alpha min', 0.2, 'alpha mult', 0.6)[0]
-   print('solution time for iteration %i is %f sec' % (nit, time.clock()-starttime))
+   print('solution time for iteration %i is %f sec' % (nit, time.process_time()-starttime))
 
    U_R = md.variable('uR')
    VM_R = md.compute_Von_Mises_or_Tresca('uR', lawname, 'params_ring1', mfvm_R)

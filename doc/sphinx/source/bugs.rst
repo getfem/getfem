@@ -1,8 +1,8 @@
 .. _reporting-bugs:
 
-**************************
-Reporting Bugs in GetFEM++
-**************************
+************************
+Reporting Bugs in GetFEM
+************************
 
 Bug reports should be submitted via the Savannah Bug Tracker (in
 https://savannah.nongnu.org/projects/getfem).  The bug tracker offers a Web form

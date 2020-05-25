@@ -88,7 +88,7 @@
 
     <para><latex align="center"><![CDATA[\nabla\cdot\left(\lambda\left(x\right)\nabla u\right)=f\left(x\right)]]></latex></para>
 
-    <para>Hence one has to define a FEM for the main unknown u, but also for
+    <para>Hence one has to define an FEM for the main unknown u, but also for
     the data λ(x) and f(x) if they are not constant. In order to interpolate
     easily these coefficients in their finite element space, one often choose
     a Lagrangian FEM.</para>

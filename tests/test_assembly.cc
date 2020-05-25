@@ -1,10 +1,10 @@
 /*===========================================================================
 
- Copyright (C) 2007-2017 Yves Renard, Julien Pommier.
+ Copyright (C) 2007-2020 Yves Renard, Julien Pommier.
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -888,7 +888,8 @@ static void test_new_assembly(int N, int NX, int pK) {
 
 
 int main(int argc, char *argv[]) {
-
+  
+  GETFEM_MPI_INIT(argc, argv);
   GMM_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
   
@@ -910,5 +911,8 @@ int main(int argc, char *argv[]) {
        << "---------\n\n";   
   
   cout << "failures: " << fail_cnt << endl;
+
+  GETFEM_MPI_FINALIZE;
+
   return fail_cnt; 
 }

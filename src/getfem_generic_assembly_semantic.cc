@@ -1,10 +1,10 @@
 /*===========================================================================
 
- Copyright (C) 2013-2019 Yves Renard
+ Copyright (C) 2013-2020 Yves Renard
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -296,7 +296,7 @@ namespace getfem {
   static scalar_type ga_hash_code(const base_tensor &t) {
     scalar_type c(0);
     for (size_type i = 0; i < t.size(); ++i)
-      c += sin(M_E+t[i]+M_E*M_E*scalar_type(i+1))+scalar_type(i+1)*M_PI;
+      c += sin((1.+M_E)*t[i]+M_E*M_E*scalar_type(i+1))+scalar_type(i+1)*M_PI;
     return c;
   }
 
@@ -398,10 +398,12 @@ namespace getfem {
     for (size_type i = 0; i < pnode->children.size(); ++i) {
       ga_node_analysis(tree, workspace, pnode->children[i], me,
                        ref_elt_dim, eval_fixed_size, ignore_X, option);
-      all_cte = all_cte && (pnode->children[i]->node_type == GA_NODE_CONSTANT);
+      all_cte = all_cte && (pnode->children[i]->is_constant());
       all_sc = all_sc && (pnode->children[i]->tensor_proper_size() == 1);
-      GMM_ASSERT1(pnode->children[i]->test_function_type != size_type(-1),
-                  "internal error on child " << i);
+      if (pnode->children[i]->test_function_type == size_type(-1)) {
+        cerr << "node : "; ga_print_node(pnode, cerr); cerr << endl;
+        GMM_ASSERT1(false, "internal error on child " << i);
+      }
       if (pnode->node_type != GA_NODE_PARAMS)
         ga_valid_operand(pnode->children[i]);
     }
@@ -426,7 +428,8 @@ namespace getfem {
     case GA_NODE_PREDEF_FUNC: case GA_NODE_OPERATOR: case GA_NODE_SPEC_FUNC :
     case GA_NODE_CONSTANT: case GA_NODE_X: case GA_NODE_ELT_SIZE:
     case GA_NODE_ELT_K:  case GA_NODE_ELT_B: case GA_NODE_NORMAL:
-    case GA_NODE_RESHAPE: case GA_NODE_IND_MOVE_LAST: case GA_NODE_SWAP_IND:
+    case GA_NODE_RESHAPE: case GA_NODE_CROSS_PRODUCT:
+    case GA_NODE_IND_MOVE_LAST: case GA_NODE_SWAP_IND:
     case GA_NODE_CONTRACT: case GA_NODE_INTERPOLATE_X:
     case GA_NODE_INTERPOLATE_NORMAL: case GA_NODE_SECONDARY_DOMAIN_X:
     case GA_NODE_SECONDARY_DOMAIN_NORMAL:
@@ -1626,6 +1629,11 @@ namespace getfem {
           pnode->init_scalar_tensor(0);
           break;
         }
+        if (!(name.compare("Cross_product"))) {
+          pnode->node_type = GA_NODE_CROSS_PRODUCT;
+          pnode->test_function_type = 0;
+          break;
+        }
         if (!(name.compare("element_K"))) {
           pnode->node_type = GA_NODE_ELT_K;
           if (ref_elt_dim == 1)
@@ -2037,6 +2045,37 @@ namespace getfem {
         } else if (child1->node_type == GA_NODE_ZERO) {
           pnode->node_type = GA_NODE_ZERO;
           tree.clear_children(pnode);
+        }
+      }
+
+      // Cross product of two vectors
+      else if (child0->node_type == GA_NODE_CROSS_PRODUCT) {
+        if (pnode->children.size() != 3)
+          ga_throw_error(pnode->expr, child1->pos,
+                         "Wrong number of parameters for Cross_product");
+        pga_tree_node child2 = pnode->children[2];
+        
+        if (false && child1->is_constant() && child2->is_constant()) {
+          pnode->node_type = GA_NODE_CONSTANT;
+          pnode->test_function_type = 0;
+          if (child1->tensor_proper_size() != 3 ||
+              child2->tensor_proper_size() != 3)
+            ga_throw_error(pnode->expr, child1->pos, "Cross_product is only "
+                           "defined on three-dimensional vectors");
+          pnode->t = child1->t;
+          base_tensor &t0 = pnode->tensor();
+          base_tensor &t1 = child1->tensor(), &t2 = child2->tensor();
+          t0[0] = t1[1]*t2[2] - t1[2]*t2[1];
+          t0[1] = t1[2]*t2[0] - t1[0]*t2[2];
+          t0[2] = t1[0]*t2[1] - t1[1]*t2[0];
+          if (pnode->tensor_is_zero())
+            pnode->node_type = GA_NODE_ZERO;
+          tree.clear_children(pnode);
+        } else {
+          pnode->mult_test(child1, child2);
+          mi = pnode->t.sizes();
+          mi.push_back(3);
+          pnode->t.adjust_sizes(mi);
         }
       }
 
@@ -2607,15 +2646,12 @@ namespace getfem {
     default:GMM_ASSERT1(false, "Unexpected node type " << pnode->node_type
                         << " in semantic analysis. Internal error.");
     }
-    // cout << " begin hash code = " << pnode->hash_value << endl;
     pnode->hash_value = ga_hash_code(pnode);
-    // cout << "node_type = " << pnode->node_type << " op_type = "
-    //      << pnode->op_type << " proper hash code = " << pnode->hash_value;
     for (size_type i = 0; i < pnode->children.size(); ++i) {
       pnode->hash_value += (pnode->children[i]->hash_value)
-        * 1.0101 * (pnode->symmetric_op ? scalar_type(1) : scalar_type(i+1));
+        * 1.0101*(pnode->symmetric_op ? scalar_type(1) : scalar_type(1+i));
     }
-    // cout << " final hash code = " << pnode->hash_value << endl;
+    pnode->hash_value = sin(1.2003*pnode->hash_value);
   }
 
 
@@ -2625,11 +2661,13 @@ namespace getfem {
                             size_type ref_elt_dim,
                             bool eval_fixed_size,
                             bool ignore_X, int option) {
-    // cout << "Begin semantic analysis" << endl;
     GMM_ASSERT1(predef_operators_nonlinear_elasticity_initialized &&
                 predef_operators_plasticity_initialized &&
                 predef_operators_contact_initialized, "Internal error");
     if (!(tree.root)) return;
+    // cout << "Begin semantic analysis with ";
+    // ga_print_node(tree.root, cout); cout << endl;
+    
     if (option == 1) { workspace.test1.clear(); workspace.test2.clear(); }
     ga_node_analysis(tree, workspace, tree.root, m, ref_elt_dim,
                      eval_fixed_size, ignore_X, option);
@@ -2646,7 +2684,8 @@ namespace getfem {
         tree.clear();
     }
     ga_valid_operand(tree.root);
-    // cout << "end of semantic analysis" << endl;
+    // cout << "End of semantic analysis";
+    // if (tree.root) ga_print_node(tree.root, cout); cout << endl;
   }
 
 
@@ -2723,6 +2762,27 @@ namespace getfem {
             if (i != 1)
               result_tree.copy_node(pnode->children[i], result_tree.root,
                                     result_tree.root->children[i]);
+        } else if (child0->node_type == GA_NODE_CROSS_PRODUCT) {
+          pga_tree_node child2 = pnode->children[2];
+          result_tree.insert_node(result_tree.root, pnode->node_type);
+          result_tree.root->pos = pnode->pos;
+          result_tree.root->expr = pnode->expr;
+          result_tree.root->children.resize(3, nullptr);
+          if (child1 == pnode_child) {
+            std::swap(result_tree.root->children[1],
+                      result_tree.root->children[0]);
+            result_tree.copy_node(pnode->children[0], result_tree.root,
+                                result_tree.root->children[0]);
+            result_tree.copy_node(pnode->children[2], result_tree.root,
+                                  result_tree.root->children[2]);
+          } else if (child2 == pnode_child) {
+            std::swap(result_tree.root->children[2],
+                      result_tree.root->children[0]);
+            result_tree.copy_node(pnode->children[0], result_tree.root,
+                                result_tree.root->children[0]);
+            result_tree.copy_node(pnode->children[1], result_tree.root,
+                                  result_tree.root->children[1]);
+          } else GMM_ASSERT1(false, "Corrupted tree");
         } else if (child0->node_type == GA_NODE_SWAP_IND) {
           GMM_ASSERT1(child1 == pnode_child, "Cannot extract a factor of a "
                       "Swap_indices size parameter");
@@ -2838,6 +2898,7 @@ namespace getfem {
     case GA_NODE_XFEM_MINUS_HESS_TEST: case GA_NODE_XFEM_MINUS_DIVERG_TEST:
     case GA_NODE_VAL_TEST: case GA_NODE_GRAD_TEST: case GA_NODE_PREDEF_FUNC:
     case GA_NODE_HESS_TEST: case GA_NODE_DIVERG_TEST: case GA_NODE_RESHAPE:
+    case GA_NODE_CROSS_PRODUCT:
     case GA_NODE_SWAP_IND: case GA_NODE_IND_MOVE_LAST: case GA_NODE_CONTRACT:
     case GA_NODE_ELT_SIZE: case GA_NODE_ELT_K: case GA_NODE_ELT_B:
     case GA_NODE_CONSTANT: case GA_NODE_X: case GA_NODE_NORMAL:
@@ -2933,6 +2994,10 @@ namespace getfem {
           child0->node_type == GA_NODE_SWAP_IND ||
           child0->node_type == GA_NODE_IND_MOVE_LAST) {
         is_constant = child_1_is_constant;
+      } else if (child0->node_type == GA_NODE_CROSS_PRODUCT) {
+        bool child_2_is_constant
+          = ga_node_extract_constant_term(tree,pnode->children[2],workspace,m);
+        is_constant = (child_1_is_constant && child_2_is_constant);
       } else if (child0->node_type == GA_NODE_CONTRACT) {
         for (size_type i = 1; i < pnode->children.size(); ++i) {
           if (!(ga_node_extract_constant_term(tree, pnode->children[i],
@@ -3557,6 +3622,22 @@ namespace getfem {
           child0->node_type == GA_NODE_IND_MOVE_LAST) {
         ga_node_derivation(tree, workspace, m, pnode->children[1],
                            varname, interpolatename, order);
+      } else if (child0->node_type == GA_NODE_CROSS_PRODUCT) {
+        pga_tree_node child2 = pnode->children[2];
+        bool mark2 = child2->marked;
+        if (mark1 && mark2) {
+          tree.duplicate_with_addition(pnode);
+          ga_node_derivation(tree, workspace, m, child1, varname,
+                             interpolatename, order);
+          ga_node_derivation(tree, workspace, m,
+                             pnode->parent->children[1]->children[2],
+                             varname, interpolatename, order);
+        } else if (mark1) {
+          ga_node_derivation(tree, workspace, m, child1, varname,
+                             interpolatename, order);
+        } else
+          ga_node_derivation(tree, workspace, m, child2, varname,
+                             interpolatename, order);
       } else if (child0->node_type == GA_NODE_CONTRACT) {
 
         if (pnode->children.size() == 4) {
@@ -4526,6 +4607,9 @@ namespace getfem {
         ga_node_grad(tree, workspace, m, pnode->children[1]);
         tree.add_child(pnode, GA_NODE_CONSTANT);
         pnode->children.back()->init_scalar_tensor(scalar_type(m.dim()));
+      } else if (child0->node_type == GA_NODE_CROSS_PRODUCT) {
+        GMM_ASSERT1(false, "Sorry, the gradient of a cross product"
+                    "has not been implemented. To be done.");
       } else if (child0->node_type == GA_NODE_IND_MOVE_LAST) {
         size_type order = pnode->tensor_order();
         ga_node_grad(tree, workspace, m, pnode->children[1]);
@@ -4902,6 +4986,13 @@ namespace getfem {
           child0->node_type == GA_NODE_SWAP_IND ||
           child0->node_type == GA_NODE_IND_MOVE_LAST)
         return ga_node_is_affine(child1);
+      if (child0->node_type == GA_NODE_CROSS_PRODUCT) {
+        pga_tree_node child2 = pnode->children[2];
+        bool mark2 = child2->marked;
+        if (mark1 && mark2) return false;
+        if (mark1) return ga_node_is_affine(child1);
+        return ga_node_is_affine(child2);
+      }
       if (child0->node_type == GA_NODE_CONTRACT) {
         if (pnode->children.size() == 4) {
           return ga_node_is_affine(child1);

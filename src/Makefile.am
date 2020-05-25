@@ -1,8 +1,8 @@
-#  Copyright (C) 1999-2019 Yves Renard
+#  Copyright (C) 1999-2020 Yves Renard
 #
-#  This file is a part of GetFEM++
+#  This file is a part of GetFEM
 #
-#  GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+#  GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
 #  under  the  terms  of the  GNU  Lesser General Public License as published
 #  by  the  Free Software Foundation;  either version 3 of the License,  or
 #  (at your option) any later version along with the GCC Runtime Library
@@ -247,12 +247,15 @@ SRC =                                      		\
 	getfem_continuation.cc
 #	getfem_enumeration_dof_para.cc
 
+getfem/getfem_im_list.h : ../cubature/getfem_im_list.h 
+	cp ../cubature/getfem_im_list.h getfem/getfem_im_list.h
+
 lib_LTLIBRARIES = libgetfem.la
 libgetfem_la_SOURCES = $(SRC)
 libgetfem_la_LDFLAGS = ${LIBTOOL_VERSION_INFO}
 libgetfem_la_LIBADD = @SUPERLU_LIBS@ @MUMPS_LIBS@
 AM_CPPFLAGS = -I$(top_srcdir)/src -I../src -I$(top_srcdir)
 
-CLEANFILES = ii_files/* *.o.d gmm_arch_config.h
-DISTCLEANFILES = getfem/getfem_im_list.h getfem/getfem_arch_config.h
+CLEANFILES = ii_files/* *.o.d getfem/getfem_im_list.h 
+DISTCLEANFILES = getfem/getfem_arch_config.h gmm/gmm_arch_config.h
 

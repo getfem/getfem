@@ -1,10 +1,10 @@
 /*===========================================================================
 
- Copyright (C) 2006-2017 Julien Pommier.
+ Copyright (C) 2006-2020 Julien Pommier.
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -121,7 +121,7 @@ non_conformal_dof(getfem::mesh_fem &mf, mexargs_in &in, mexargs_out &out) {
 
     for (short_type f = 0; f < m.structure_of_convex(ic)->nb_faces(); f++) {
       bgeot::short_type q;
-      if (!m.is_convex_having_neighbour(ic, f)) {
+      if (!m.is_convex_having_neighbor(ic, f)) {
         q = 2;
       } else {
         q = 1;
@@ -434,7 +434,7 @@ void gf_mesh_fem_get(getfemint::mexargs_in& m_in,
 
 
     /*@GET CVs = ('convex_index')
-    Return the list of convexes who have a FEM.@*/
+    Return the list of convexes who have an FEM.@*/
     sub_command
       ("convex_index", 0, 0, 0, 1,
        out.pop().from_bit_vector(mf->convex_index());
@@ -641,7 +641,7 @@ void gf_mesh_fem_get(getfemint::mexargs_in& m_in,
     Return the array which associates an integer (the partition number)
     to each convex of the @tmf. By default, it is an all-zero array.
     The degrees of freedom of each convex of the @tmf are connected
-    only to the dof of neighbouring convexes which have the same
+    only to the dof of neighboring convexes which have the same
     partition number, hence it is possible to create partially
     discontinuous @tmf very easily.@*/
     sub_command
@@ -868,7 +868,7 @@ void gf_mesh_fem_get(getfemint::mexargs_in& m_in,
 
     Interpolate data given on each convex of the mesh to the @tmf dof.
     The @tmf has to be lagrangian, and should be discontinuous (typically
-    a FEM_PK(N,0) or FEM_QK(N,0) should be used).
+    an FEM_PK(N,0) or FEM_QK(N,0) should be used).
 
     The last dimension of the input vector Ucv should have
     MESH:GET('max cvid') elements.
@@ -1008,7 +1008,7 @@ void gf_mesh_fem_get(getfemint::mexargs_in& m_in,
 
   @*/
 /*@MATLABEXT
-  if (nargin>=2 & strcmpi(varargin{2},'eval')),
+  if (nargin>=2 && strcmpi(varargin{2},'eval')),
     [varargout{1:nargout}]=gf_mesh_fem_get_eval(varargin{[1 3:nargin]}); return;
   end;
   @*/

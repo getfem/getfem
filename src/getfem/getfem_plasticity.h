@@ -1,11 +1,12 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
 
- Copyright (C) 2002-2017 Konstantinos Poulios, Amandine Cottaz, Yves Renard
+ Copyright (C) 2002-2020 Amandine Cottaz, Yves Renard
+ Copyright (C) 2014-2020 Konstantinos Poulios
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -60,7 +61,7 @@ namespace getfem {
 
   /**
      Adds a small strain plasticity term to the model `md`. This is the
-     main GetFEM++ brick for small strain plasticity. `lawname` is the name
+     main GetFEM brick for small strain plasticity. `lawname` is the name
      of an implemented plastic law, `unknowns_type` indicates the choice
      between a discretization where the plastic multiplier is an unknown of
      the problem or (return mapping approach) just a data of the model
@@ -121,9 +122,9 @@ namespace getfem {
        The same law as the previous one but adapted to the plane strain
        approximation. Can only be used in 2D.
 
-     See GetFEM++ user documentation for further explanations on the
+     See GetFEM user documentation for further explanations on the
      discretization of the plastic flow and on the implemented plastic laws.
-     See also GetFEM++ user documentation on time integration strategy
+     See also GetFEM user documentation on time integration strategy
      (integration of transient problems).
 
      IMPORTANT : remember that `small_strain_elastoplasticity_next_iter` has
@@ -475,13 +476,13 @@ namespace getfem {
       Note that the constitutive lawtype of projection
       to be used is described by `ACP` which should not be
       freed while the model is used.
-      `datalambda` and `datamu` describe the Lamé coeffcients
+      `datalambda` and `datamu` describe the LamÃ© coeffcients
       of the studied material. Could be scalar or vector fields
       described on a finite element method.
       `datathreshold` represents the elasticity threshold
       of the material. It could be a scalar or a vector field
       described on the same finite element method as
-      the Lamé coefficients.
+      the LamÃ© coefficients.
       `datasigma` represents the stress constraints values
       supported by the material. It should be a vector field
       described on a finite element method.
@@ -508,7 +509,7 @@ namespace getfem {
       `previous_dep_name` represents the displacement at the previous time step,
       `ACP` is the type of projection to be used that could only be
       `Von Mises` for the moment,
-      `datalambda` and `datamu` are the Lamé coefficients
+      `datalambda` and `datamu` are the LamÃ© coefficients
       of the material,
       `datathreshold` is the elasticity threshold of the material,
       `datasigma` is the vector which will contains the new

@@ -1,10 +1,10 @@
 /*===========================================================================
 
- Copyright (C) 2002-2017 Vanessa Lleras, Yves Renard.
+ Copyright (C) 2002-2020 Vanessa Lleras, Yves Renard.
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -23,7 +23,7 @@
  * Linear Elastostatic problem with a crack.
  *
  * This program is used to check that getfem++ is working. This is also 
- * a good example of use of GetFEM++.
+ * a good example of use of GetFEM.
 */
 
 #include "getfem/getfem_assembling.h" /* import assembly methods (and norms comp.) */
@@ -44,7 +44,7 @@ using std::endl; using std::cout; using std::cerr;
 using std::ends; using std::cin;
 
 
-/* some GetFEM++ types that we will be using */
+/* some GetFEM types that we will be using */
 using bgeot::base_small_vector; /* special class for small (dim<16) vectors */
 using bgeot::base_node;  /* geometrical nodes(derived from base_small_vector)*/
 using bgeot::scalar_type; /* = double */
@@ -352,12 +352,12 @@ void crack_problem::error_estimate(const plain_vector &U, plain_vector &ERR) {
     
     scalar_type ee2 = ERR[cv] - ee1;
  
-    // jump of the stress between the element ant its neighbours.
+    // jump of the stress between the element ant its neighbors.
     for (short_type f1=0; f1 < mesh.structure_of_convex(cv)->nb_faces(); ++f1) {
 
       if (gmm::abs((*mmls)(mesh.trans_of_convex(cv)->convex_ref()->points_of_face(f1)[0])) < 1E-7 * radius) continue;
 
-      size_type cvn = mesh.neighbour_of_convex(cv, f1);
+      size_type cvn = mesh.neighbor_of_convex(cv, f1);
       if (cvn == size_type(-1)) continue;
 	
       bgeot::pgeometric_trans pgt2 = mesh.trans_of_convex(cvn);

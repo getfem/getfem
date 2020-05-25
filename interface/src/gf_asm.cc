@@ -1,10 +1,10 @@
 /*===========================================================================
 
- Copyright (C) 2006-2018 Yves Renard, Julien Pommier.
+ Copyright (C) 2006-2020 Yves Renard, Julien Pommier.
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -205,7 +205,7 @@ void asm_stabilization_patch_matrix
     vwgtt[indelt[ic]] = Patch_Vector[ind_dof_patch];
     xadj[j] = k;
     bgeot::mesh_structure::ind_set s;
-    mesh.neighbours_of_convex(ic, s);
+    mesh.neighbors_of_convex(ic, s);
     for (bgeot::mesh_structure::ind_set::iterator it = s.begin(); it != s.end(); ++it) {
       if (Patch_element_list.is_in(*it)) { adjncy.push_back(indelt[*it]); ++k; }
     }
@@ -905,7 +905,7 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
       may be choosen among:
 
       - 'SaintVenant Kirchhoff':
-        Linearized law, should be avoided). This law has the two usual
+        Linearized law, should be avoided. This law has the two usual
         Lame coefficients as parameters, called lambda and mu.
       - 'Mooney Rivlin':
         This law has three parameters, called C1, C2 and D1.
@@ -1270,7 +1270,7 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
       arguments (with optional data) and assigned to the output arguments.
       For details about the syntax of assembly expressions, please refer
       to the getfem user manual (or look at the file getfem_assembling.h
-      in the getfem++ sources).
+      in the GetFEM sources).
 
       For example, the L2 norm of a field can be computed with::
 
@@ -1488,7 +1488,7 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
 }
 
 /*@MATLABEXT
-  if (nargin>=1 & strcmpi(varargin{1},'pdetool boundary conditions')),
+  if (nargin>=1 && strcmpi(varargin{1},'pdetool boundary conditions')),
     [varargout{1:nargout}]=gf_asm_pdetoolbc(varargin{[1 3:nargin]}); return;
   end;
   @*/

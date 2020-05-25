@@ -2,7 +2,7 @@
 
 .. include:: ../replaces.txt
 
-.. highlightlang:: none
+.. highlight:: none
 
 .. _ud-install-mac:
 
@@ -28,15 +28,10 @@ Then, if you download the current git version
    $ brew install libtool
 
 For the sequential mumps,
-   $ brew tap dpo/openblas
 
-   $ brew tap-pin dpo/openblas
+   $ brew tap brewsci/num
 
-   $ brew options ipopt
-
-   $ brew options mumps
-
-   $ brew install mumps --without-mpi
+   $ brew install brewsci-mumps --without-mpi
 
 For the parallel one, just forget --without-mpi and install also mpi and metis.
 
@@ -140,12 +135,24 @@ Configure Options
 Note that there are other options to the configure script. A
 ``./configure --help`` will list them.
 
+Octave interface
+^^^^^^^^^^^^^^^^
+
+The compilation of the Octave interface is performed with the ``--enable-octave`` option of the ``configure`` script.
+
+First, you need ``octave`` and ``mkoctfile`` commands accessible from your shell prompt (for instance invoking ``brew install octave``).
+
+
+The last step is to add the path to the toolbox in the octave path:
+
+* you can put ``addpath('toolbox_dir', '-begin')`` to your ``$HOME/.octaverc`` file
+* you can simply use the ``addpath`` command in the octave command line. 
 
 
 Matlab interface
 ^^^^^^^^^^^^^^^^
 
-The compilation of the matlab interface (with the ``--enable-matlab`` option of the ``configure`` script) may fail due to a bad configuration of the Matlab compiler `mex`.
+The compilation of the Matlab interface (with the ``--enable-matlab`` option of the ``configure`` script) may fail due to a bad configuration of the Matlab compiler `mex`.
 
 First, you need ``matlab`` and ``mex`` commands accessible from your shell prompt. If not, add ``Applications/MATLAB_RXXXX.app/bin`` on your path (for instance with ``export PATH=$PATH:Applications/MATLAB_RXXXX.app/bin`` if your shell is ``bash`` and for ``XXXX`` your Matlab installed version. Alternatively, you can make symbolic links to ``matlab`` and ``mex`` executable in ``/usr/local/bin`` thanks to the command ``sudo ln -s Applications/MATLAB_RXXXX.app/bin/matlab matlab`` and ``sudo ln -s Applications/MATLAB_RXXXX.app/bin/mex mex``.
 
@@ -153,7 +160,7 @@ Then, you will probably have to run
 
     $ mex -setup
 
-To produce the correct ``mexopts.sh`` file in the ``.matlab/`` directory of your home directory. If it still does not work, then you can try to modify the ``.matlab/mexopts.sh`` or replace it. Some ``mexopts.sh`` specially adpated to macOS X/Xcode are available on the internet (See for instance here for `MATLAB_R2015 <https://gist.github.com/varunagrawal/811e05ee4ca0f6a9952d>`_).
+To produce the correct ``mexopts.sh`` file in the ``.matlab/`` directory of your home directory. If it still does not work, then you can try to modify the ``.matlab/mexopts.sh`` or replace it. Some ``mexopts.sh`` specially adapted to macOS X/Xcode are available on the internet (See for instance here for `MATLAB_R2015 <https://gist.github.com/varunagrawal/811e05ee4ca0f6a9952d>`_).
 
 
 
@@ -238,11 +245,11 @@ If you want to use a different compiler than the one chosen automatically by the
 
 Once getfem is compiled:
 
-  - Go to the scilab getfem++ interface install directory (interface/src/scilab if the installation is not done)
+  - Go to the Scilab GetFEM interface install directory (interface/src/scilab if the installation is not done)
 
-  - launch scilab
+  - launch Scilab
 
-  - load the getfem++ toolbox with:
+  - load the GetFEM toolbox with:
     ``exec loader.sce;``
 
   - You can try to launch a demo with:

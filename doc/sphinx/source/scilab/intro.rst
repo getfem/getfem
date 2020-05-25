@@ -13,6 +13,6 @@ particular refer to the `user documentation`_ to have a more extensive
 description of the structures algorithms and concepts used.
 
 
-This documentation is still under construction. It is still a to close copy of the Matlab interface documentation.
+This documentation is still under construction. It is still close to copy of the Matlab interface documentation.
 
 .. include:: ../license.txt
