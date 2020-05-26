@@ -257,3 +257,28 @@ A second problem arising with recent distribution of Matlab (2016a), is the inco
   LD_PRELOAD=/usr/lib/libblas.so:/usr/lib/liblapack.so matlab
 
 
+How to use docker images of python interface
+============================================
+
+Docker images for GetFEM are published on the `Docker Hub <https://hub.docker.com/>`_. There is a images:
+
+- `getfemdoc/getfem <https://hub.docker.com/repository/docker/getfemdoc/getfem>`_
+
+.. hint::
+
+   When running python script in developing version::
+
+      $ docker run --rm -v `pwd`:/work getfemdoc/getfem:latest /venv/bin/python3 script.py
+
+   When running python interpreter in developing version::
+
+      $ docker run --rm -v `pwd`:/work -t -i getfemdoc/getfem:latest /venv/bin/python3
+
+   When running python script in v5.4 version::
+
+      $ docker run --rm -v `pwd`:/work getfemdoc/getfem:v5.4 /venv/bin/python3 script.py
+
+   When running python interpreter in v5.4 version::
+
+      $ docker run --rm -v `pwd`:/work -t -i getfemdoc/getfem:v5.4 /venv/bin/python3
+
