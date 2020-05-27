@@ -198,7 +198,6 @@ namespace getfem
   }
 
   void vtk_export::switch_to_cell_data() {
-    GMM_ASSERT1(vtk, "Export of cell data to vtu not supported yet.");
     if (state != IN_CELL_DATA) {
       if (vtk) {
         size_type nb_cells=0;
@@ -232,7 +231,6 @@ namespace getfem
 
 
   void vtk_export::exporting(const stored_mesh_slice& sl) {
-    GMM_ASSERT1(vtk, "Export of mesh slice to vtu not supported yet.");
     psl = &sl; dim_ = dim_type(sl.dim());
     GMM_ASSERT1(psl->dim() <= 3, "attempt to export a " << int(dim_)
               << "D slice (not supported)");
@@ -391,9 +389,24 @@ namespace getfem
     static int vtk_simplex_code[4] = { VTK_VERTEX, VTK_LINE, VTK_TRIANGLE, VTK_TETRA };
     if (state >= STRUCTURE_WRITTEN) return;
     check_header();
-    /* possible improvement: detect structured grids */
-    os << "DATASET UNSTRUCTURED_GRID\n";
-    os << "POINTS " << psl->nb_points() << " float\n";
+    /* count total number of simplexes, and total number of entries */
+    size_type cells_cnt = 0, splx_cnt = 0;
+    for (size_type ic=0; ic < psl->nb_convex(); ++ic) {
+      for (size_type i=0; i < psl->simplexes(ic).size(); ++i)
+       cells_cnt += psl->simplexes(ic)[i].dim() + 2;
+      splx_cnt += psl->simplexes(ic).size();
+    }
+    if (vtk) {
+      /* possible improvement: detect structured grids */
+      os << "DATASET UNSTRUCTURED_GRID\n";
+      os << "POINTS " << psl->nb_points() << " float\n";
+    } else {
+      os << "<Piece NumberOfPoints=\"" << psl->nb_points();
+      os << "\" NumberOfCells=\"" << splx_cnt << "\">\n";
+      os << "<Points>\n";
+      os << "<DataArray type=\"Float32\" Name=\"Points\" ";
+      os << "NumberOfComponents=\"3\" format=\"ascii\">\n";
+    }
     /*
        points are not merge, vtk is mostly fine with that (except for
        transparency and normals at vertices of 3D elements: all simplex faces
@@ -404,37 +417,65 @@ namespace getfem
        write_vec(psl->nodes(ic)[i].pt.begin(),psl->nodes(ic)[i].pt.size());
       write_separ();
     }
-    /* count total number of simplexes, and total number of entries
-     * in the CELLS section */
-    size_type cells_cnt = 0, splx_cnt = 0;
-    for (size_type ic=0; ic < psl->nb_convex(); ++ic) {
-      for (size_type i=0; i < psl->simplexes(ic).size(); ++i)
-       cells_cnt += psl->simplexes(ic)[i].dim() + 2;
-      splx_cnt += psl->simplexes(ic).size();
+    if (!vtk) {
+      os << "</DataArray>\n";
+      os << "</Points>\n";
     }
+
+    /* CELLS section */
     size_type nodes_cnt = 0;
-    write_separ(); os << "CELLS " << splx_cnt << " " << cells_cnt << "\n";
+    if (vtk) {
+      write_separ(); os << "CELLS " << splx_cnt << " " << cells_cnt << "\n";
+    } else {
+      os << "<Cells>\n";
+      os << "<DataArray type=\"Int64\" Name=\"connectivity\" format=\"ascii\">\n";
+    }
     for (size_type ic=0; ic < psl->nb_convex(); ++ic) {
       const getfem::mesh_slicer::cs_simplexes_ct& s = psl->simplexes(ic);
       for (size_type i=0; i < s.size(); ++i) {
-       write_val(int(s[i].dim()+1));
-       for (size_type j=0; j < s[i].dim()+1; ++j)
-         write_val(int(s[i].inodes[j] + nodes_cnt));
-       write_separ();
+        if (vtk) {
+          write_val(int(s[i].dim()+1));
+        }
+        for (size_type j=0; j < s[i].dim()+1; ++j)
+          write_val(int(s[i].inodes[j] + nodes_cnt));
+        write_separ();
       }
       nodes_cnt += psl->nodes(ic).size();
     }
     assert(nodes_cnt == psl->nb_points()); // sanity check
-    write_separ(); os << "CELL_TYPES " << splx_cnt << "\n";
+    if (vtk) {
+      write_separ(); os << "CELL_TYPES " << splx_cnt << "\n";
+    } else {
+      os << "</DataArray>\n";
+      os << "<DataArray type=\"Int64\" Name=\"offsets\" format=\"ascii\">\n";
+    }
+    int cnt = 0;
     for (size_type ic=0; ic < psl->nb_convex(); ++ic) {
       const getfem::mesh_slicer::cs_simplexes_ct& s = psl->simplexes(ic);
       for (size_type i=0; i < s.size(); ++i) {
-       write_val(int(vtk_simplex_code[s[i].dim()]));
+        if (vtk) {
+          write_val(int(vtk_simplex_code[s[i].dim()]));
+        } else {
+          cnt += int(s[i].dim()+1);
+          write_val(cnt);
+        }
       }
       write_separ();
       splx_cnt -= s.size();
     }
     assert(splx_cnt == 0); // sanity check
+    if (!vtk) {
+      os << "</DataArray>\n";
+      os << "<DataArray type=\"Int64\" Name=\"types\" format=\"ascii\">\n";
+      for (size_type ic=0; ic < psl->nb_convex(); ++ic) {
+        const getfem::mesh_slicer::cs_simplexes_ct& s = psl->simplexes(ic);
+        for (size_type i=0; i < s.size(); ++i) {
+          write_val(int(vtk_simplex_code[s[i].dim()]));
+        }
+      }
+      os << "</DataArray>\n"
+         << "</Cells>\n";
+    }
     state = STRUCTURE_WRITTEN;
   }
 
