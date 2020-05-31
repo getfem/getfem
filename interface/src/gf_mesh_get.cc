@@ -1247,6 +1247,31 @@ void gf_mesh_get(getfemint::mexargs_in& m_in,
        );
 
 
+    /*@GET ('export to vtu', @str filename, ... [,'ascii'][,'quality'])
+    Exports a mesh to a VTK(XML) file .
+
+    If 'quality' is specified, an estimation of the quality of each
+    convex will be written to the file.
+
+    See also MESH_FEM:GET('export to vtu'), SLICE:GET('export to vtu').@*/
+    sub_command
+      ("export to vtu", 1, 3, 0, 1,
+       bool write_q = false; bool ascii = false;
+       std::string fname = in.pop().to_string();
+       while (in.remaining() && in.front().is_string()) {
+         std::string cmd2 = in.pop().to_string();
+         if (cmd_strmatch(cmd2, "ascii"))
+           ascii = true;
+         else if (cmd_strmatch(cmd2, "quality"))
+           write_q = true;
+         else THROW_BADARG("expecting 'ascii' or 'quality', got " << cmd2);
+       }
+       getfem::vtu_export exp(fname, ascii);
+       exp.exporting(*pmesh);
+       exp.write_mesh(); if (write_q) exp.write_mesh_quality(*pmesh);
+       );
+
+
     /*@GET ('export to dx', @str filename, ... [,'ascii'][,'append'][,'as',@str name,[,'serie',@str serie_name]][,'edges'])
     Exports a mesh to an OpenDX file.
 

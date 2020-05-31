@@ -286,8 +286,8 @@ namespace getfem {
 
   class vtu_export : public vtk_export {
   public:
-    vtu_export(const std::string& fname) : vtk_export(fname, true, false) {}
-    vtu_export(std::ostream &os_) : vtk_export(os_, true, false) {}
+    vtu_export(const std::string& fname, bool ascii_) : vtk_export(fname, ascii_, false) {}
+    vtu_export(std::ostream &os_, bool ascii_) : vtk_export(os_, ascii_, false) {}
   };
 
   /** @brief A (quite large) class for exportation of data to IBM OpenDX.

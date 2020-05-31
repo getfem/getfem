@@ -189,7 +189,6 @@ namespace getfem
   }
 
   void vtk_export::init() {
-    GMM_ASSERT1(vtk || ascii, "vtu support only ascii format.");
     strcpy(header, "Exported by GetFEM");
     psl = 0; dim_ = dim_type(-1);
     static int test_endian = 0x01234567;
@@ -432,12 +431,12 @@ namespace getfem
     }
     for (size_type ic=0; ic < psl->nb_convex(); ++ic) {
       const getfem::mesh_slicer::cs_simplexes_ct& s = psl->simplexes(ic);
-      for (size_type i=0; i < s.size(); ++i) {
+      for (const auto &val : s) {
         if (vtk) {
-          write_val(int(s[i].dim()+1));
+          write_val(int(val.dim()+1));
         }
-        for (size_type j=0; j < s[i].dim()+1; ++j)
-          write_val(int(s[i].inodes[j] + nodes_cnt));
+        for (size_type j=0; j < val.dim()+1; ++j)
+          write_val(int(val.inodes[j] + nodes_cnt));
         write_separ();
       }
       nodes_cnt += psl->nodes(ic).size();
@@ -452,14 +451,13 @@ namespace getfem
     int cnt = 0;
     for (size_type ic=0; ic < psl->nb_convex(); ++ic) {
       const getfem::mesh_slicer::cs_simplexes_ct& s = psl->simplexes(ic);
-      for (size_type i=0; i < s.size(); ++i) {
+      for (const auto &val : s)
         if (vtk) {
-          write_val(int(vtk_simplex_code[s[i].dim()]));
+          write_val(int(vtk_simplex_code[val.dim()]));
         } else {
-          cnt += int(s[i].dim()+1);
+          cnt += int(val.dim()+1);
           write_val(cnt);
         }
-      }
       write_separ();
       splx_cnt -= s.size();
     }
