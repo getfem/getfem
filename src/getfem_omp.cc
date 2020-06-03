@@ -378,7 +378,6 @@ namespace getfem{
     typedef int (* ptrfunc1)();                                         \
     ptrfunc1 func1 = ptrfunc1(dlsym(NULL, "openblas_get_num_threads")); \
     if (func1) openblas_get_num_threads_res = (*func1)();               \
-    std::cout << "numthread = " << openblas_get_num_threads_res << std::endl; \
     typedef void (* ptrfunc2)(int);                                     \
     ptrfunc2 func2 = ptrfunc2(dlsym(NULL, "openblas_set_num_threads")); \
     if (func2) (*func2)(1);                                             \
@@ -396,10 +395,8 @@ namespace getfem{
 
 
   struct dummy_class_for_blas_nbthread_init {
-    dummy_class_for_blas_nbthread_init(void) {
-      std::cout << "initializing ..." << std::endl;
-      BLAS_FORCE_SINGLE_THREAD;
-    }
+    dummy_class_for_blas_nbthread_init(void)
+    { BLAS_FORCE_SINGLE_THREAD; }
   };
 
   static dummy_class_for_blas_nbthread_init dcfbnti;
