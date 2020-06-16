@@ -46,6 +46,36 @@ namespace getfem
     return true;
   }
 
+  /* Base64 encoding (https://en.wikipedia.org/wiki/Base64) */
+  std::string base64_encode(const std::vector<unsigned char>& src)
+  {
+    const std::string table("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/");
+    std::string dst;
+    for (std::size_t i = 0; i < src.size(); ++i) {
+      switch (i % 3) {
+      case 0:
+        dst.push_back(table[(src[i] & 0xFC) >> 2]);
+        if (i + 1 == src.size()) {
+          dst.push_back(table[(src[i] & 0x03) << 4]);
+          dst.push_back('=');
+          dst.push_back('=');
+        }
+        break;
+      case 1:
+        dst.push_back(table[((src[i - 1] & 0x03) << 4) | ((src[i + 0] & 0xF0) >> 4)]);
+        if (i + 1 == src.size()) {
+          dst.push_back(table[(src[i] & 0x0F) << 2]);
+          dst.push_back('=');
+        }
+        break;
+      case 2:
+        dst.push_back(table[((src[i - 1] & 0x0F) << 2) | ((src[i + 0] & 0xC0) >> 6)]);
+        dst.push_back(table[src[i] & 0x3F]);
+        break;
+      }
+    }
+    return dst;
+  }
 
   /* -------------------------------------------------------------
    * VTK export
