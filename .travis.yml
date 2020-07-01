@@ -24,6 +24,7 @@ before_install:
 - sudo apt-get install -y --no-install-recommends xzdec
 - sudo apt-get install -y --no-install-recommends fig2ps
 - sudo apt-get install -y --no-install-recommends gv
+- sudo apt-get install -y --no-install-recommends python3-vtk7
 - pip install -r requirements.txt
 addons:
   apt:
