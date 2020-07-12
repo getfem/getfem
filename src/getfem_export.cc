@@ -414,6 +414,7 @@ namespace getfem
 
   void vtk_export::write_vals() {
     if (!vtk && !ascii) {
+/*
       int v = sizeof(vals)*sizeof(unsigned char);
       char *p = (char*)&v;
       if (reverse_endian)
@@ -425,6 +426,43 @@ namespace getfem
       vals.insert(vals.begin(), h.begin(), h.end());
       os << base64_encode(vals) << "\n";
       clear_vals();
+*/
+      union {
+        float value;
+        unsigned char bytes[sizeof(float)];
+      } ufloat;
+      union {
+        int64_t value;
+        unsigned char bytes[sizeof(int64_t)];
+      } uint64_t;
+      union {
+        int value;
+        unsigned char bytes[sizeof(int)];
+      } uint;
+      /* Points */
+      std::vector<unsigned char> v;
+      uint.value = sizeof(float)*6;
+      for (int i=0; i < sizeof(int); i++)
+        v.push_back(uint.bytes[i]);
+      ufloat.value = 0.0;
+      for (int i=0; i < sizeof(float); i++)
+        v.push_back(ufloat.bytes[i]);
+      ufloat.value = 0.0;
+      for (int i=0; i < sizeof(float); i++)
+        v.push_back(ufloat.bytes[i]);
+      ufloat.value = 0.0;
+      for (int i=0; i < sizeof(float); i++)
+        v.push_back(ufloat.bytes[i]);
+      ufloat.value = 1.0;
+      for (int i=0; i < sizeof(float); i++)
+        v.push_back(ufloat.bytes[i]);
+      ufloat.value = 0.0;
+      for (int i=0; i < sizeof(float); i++)
+        v.push_back(ufloat.bytes[i]);
+      ufloat.value = 0.0;
+      for (int i=0; i < sizeof(float); i++)
+        v.push_back(ufloat.bytes[i]);
+      os << base64_encode(v);
     }
   }
 

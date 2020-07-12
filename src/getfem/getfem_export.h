@@ -287,7 +287,7 @@ namespace getfem {
     } else
       GMM_ASSERT1(false, std::string(vtk ? "vtk" : "vtu")
                          + " does not accept vectors of dimension > 3");
-    write_separ();
+    if (vtk) write_separ();
     if (!vtk) os << (ascii ? "" : "\n") << "</DataArray>\n";
   }
 
