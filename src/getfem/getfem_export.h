@@ -279,9 +279,8 @@ namespace getfem {
         os << "<DataArray type=\"Float32\" Name=\"" << remove_spaces(name)
            << "\" NumberOfComponents=\"9\" "
            << (ascii ? "format=\"ascii\">\n" : "format=\"binary\">\n");
-      for (size_type i=0; i < nb_val; ++i) {
+      for (size_type i=0; i < nb_val; ++i)
         write_3x3tensor(U.begin() + i*Q);
-      }
     } else
       GMM_ASSERT1(false, std::string(vtk ? "vtk" : "vtu")
                          + " does not accept vectors of dimension > 3");
