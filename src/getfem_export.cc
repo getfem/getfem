@@ -51,7 +51,7 @@ namespace getfem
   {
     const std::string table("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/");
     std::string dst;
-    for (std::size_t i = 0; i < src.size(); ++i) {
+    for (size_type i = 0; i < src.size(); ++i) {
       switch (i % 3) {
       case 0:
         dst.push_back(table[(src[i] & 0xFC) >> 2]);
