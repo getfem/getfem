@@ -77,45 +77,6 @@ mf0.export_to_vtk('check_export2.vtk','ascii')
 mf1.export_to_vtk('check_export3.vtk','ascii')
 
 
-reader = vtk.vtkUnstructuredGridReader()
-reader.SetFileName('check_export1.vtk')
-reader.Update()
-output = reader.GetOutput()
-cell_data = output.GetCellData()
-assert output.GetNumberOfPoints() == m1.nbpts(), 'Number of points is not correct.'
-assert output.GetNumberOfCells() == m1.nbcvs(), 'Number of cells is not correct.'
-array_name = cell_data.GetArrayName(0)
-assert cell_data.GetArrayName(0) == "convex_quality", 'Cell data name is not correct.'
-
-reader = vtk.vtkUnstructuredGridReader()
-reader.SetFileName('check_export3.vtk')
-reader.Update()
-output = reader.GetOutput()
-assert output.GetNumberOfPoints() == m1.nbpts(), 'Number of points is not correct.'
-assert output.GetNumberOfCells() == m1.nbcvs(), 'Number of cells is not correct.'
-
-# VTK(XML):
-m0.export_to_vtu('check_export0.vtu','quality')
-m1.export_to_vtu('check_export1.vtu','quality')
-mf0.export_to_vtu('check_export2.vtu','ascii')
-mf1.export_to_vtu('check_export3.vtu','ascii')
-
-reader = vtk.vtkXMLUnstructuredGridReader()
-reader.SetFileName('check_export1.vtu')
-reader.Update()
-output = reader.GetOutput()
-cell_data = output.GetCellData()
-assert output.GetNumberOfPoints() == m1.nbpts(), 'Number of points is not correct.'
-assert output.GetNumberOfCells() == m1.nbcvs(), 'Number of cells is not correct.'
-array_name = cell_data.GetArrayName(0)
-assert cell_data.GetArrayName(0) == "convex_quality", 'Cell data name is not correct.'
-
-reader = vtk.vtkXMLUnstructuredGridReader()
-reader.SetFileName('check_export3.vtu')
-reader.Update()
-output = reader.GetOutput()
-assert output.GetNumberOfPoints() == m1.nbpts(), 'Number of points is not correct.'
-assert output.GetNumberOfCells() == m1.nbcvs(), 'Number of cells is not correct.'
 
 # DX:
 try:
