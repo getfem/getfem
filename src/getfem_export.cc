@@ -460,7 +460,7 @@ namespace getfem
       for (size_type i=0; i < sizeof(float); i++)
         v.push_back(ufloat.bytes[i]);
       ufloat.value = 0.0;
-      for (int i=0; i < sizeof(float); i++)
+      for (size_type i=0; i < sizeof(float); i++)
         v.push_back(ufloat.bytes[i]);
       os << base64_encode(v);
     }
