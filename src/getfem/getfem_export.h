@@ -267,9 +267,8 @@ namespace getfem {
         os << "<DataArray type=\"Float32\" Name=\"" << remove_spaces(name) << "\" "
            << "NumberOfComponents=\"3\" "
            << (ascii ? "format=\"ascii\">\n" : "format=\"binary\">\n");
-      for (size_type i=0; i < nb_val; ++i) {
+      for (size_type i=0; i < nb_val; ++i)
         write_vec(U.begin() + i*Q, Q);
-      }
     } else if (Q == gmm::sqr(dim_)) {
       /* tensors : coef are supposed to be stored in FORTRAN order
          in the VTK/VTU file, they are written with C (row major) order
