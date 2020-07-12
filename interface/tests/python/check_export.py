@@ -28,8 +28,6 @@
 """
 import numpy as np
 
-import vtk
-
 import getfem as gf
 
 m0 = gf.Mesh('cartesian',[0,1,2,3],[0,1,2],[-3,-2])
