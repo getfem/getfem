@@ -442,7 +442,7 @@ namespace getfem
       /* Points */
       std::vector<unsigned char> v;
       uint.value = sizeof(float)*6;
-      for (int i=0; i < sizeof(int); i++)
+      for (size_type i=0; i < sizeof(int); i++)
         v.push_back(uint.bytes[i]);
       ufloat.value = 0.0;
       for (int i=0; i < sizeof(float); i++)
