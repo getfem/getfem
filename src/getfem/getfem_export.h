@@ -258,9 +258,8 @@ namespace getfem {
       else
         os << "<DataArray type=\"Float32\" Name=\"" << remove_spaces(name) << "\" "
            << (ascii ? "format=\"ascii\">\n" : "format=\"binary\">\n");
-      for (size_type i=0; i < nb_val; ++i) {
+      for (size_type i=0; i < nb_val; ++i)
         write_val(float(U[i]));
-      }
     } else if (Q <= 3) {
       if (vtk)
         os << "VECTORS " << remove_spaces(name) << " float\n";
