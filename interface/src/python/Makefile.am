@@ -44,7 +44,7 @@ endif
 if BUILDPYTHON
 
 getfem.py: ../libgetfemint.la $(top_srcdir)/bin/extract_doc
-	$(top_srcdir)/bin/extract_doc $(srcdir)/.. $(pythoncom) > getfem.py || ( rm getfem.py ; /bin/false )
+	$(PYTHON) $(top_srcdir)/bin/extract_doc $(srcdir)/.. $(pythoncom) > getfem.py || ( rm getfem.py ; /bin/false )
 
 
 PYTHON_CC=$(CC)
