@@ -26,28 +26,29 @@
 
   $Id$
 """
-import vtk
 import getfem as gf
+import numpy as np
+import pyvista as pv
 
-m0 = gf.Mesh("cartesian", [0, 1])
+convex_connectivity = np.array([0, 1])
+mesh = gf.Mesh("cartesian", convex_connectivity * 2)
+pts = mesh.pts()[0]
 
-filenames = ["check_m0_ascii.vtu", "check_m0_binary.vtu"]
 
-m0.export_to_vtu(filenames[0], "ascii")
-filenames.append(filenames[0])
+filenames = ["check_mesh_ascii.vtu", "check_mesh_binary.vtu"]
 
-m0.export_to_vtu(filenames[1])
-filenames.append(filenames[1])
+mesh.export_to_vtu(filenames[0], "ascii")
+
+mesh.export_to_vtu(filenames[1])
 
 for filename in filenames:
     print(filename)
-    reader = vtk.vtkXMLUnstructuredGridReader()
-    reader.SetFileName(filename)
-    reader.Update()
-    output = reader.GetOutput()
-    cell_data = output.GetCellData()
-    nbpts = output.GetNumberOfPoints()
-    nbcvs = output.GetNumberOfCells()
-    array_name = cell_data.GetArrayName(0)
-    assert nbpts == m0.nbpts(), "Number of points is not correct."
-    assert nbcvs == m0.nbcvs(), "Number of cells is not correct."
+    unstructured_grid = pv.read(filename)
+
+    expected = pts
+    actual = unstructured_grid.points[:, 0]
+    np.testing.assert_equal(expected, actual, "export of mesh pts is not correct.")
+
+    expected = convex_connectivity
+    actual = unstructured_grid.cell_connectivity
+    np.testing.assert_equal(expected, actual, "export of mesh convex is not correct.")
