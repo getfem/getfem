@@ -545,14 +545,51 @@ namespace getfem
     }
     std::vector<int> dofmap(pmf->nb_dof());
     int cnt = 0;
-    if (!vtk && !ascii) write_val(sizeof(float)*6);
-    for (dal::bv_visitor d(pmf_dof_used); !d.finished(); ++d) {
-      dofmap[d] = cnt++;
-      base_node P = pmf->point_of_basic_dof(d);
-      write_vec(P.const_begin(),P.size());
-      write_separ();
-    }
-    write_vals();
+//  clear_vals();
+//  if (!vtk && !ascii) write_val(int64_t(sizeof(float)*6));
+//  for (dal::bv_visitor d(pmf_dof_used); !d.finished(); ++d) {
+//    dofmap[d] = cnt++;
+//    base_node P = pmf->point_of_basic_dof(d);
+//    write_vec(P.const_begin(),P.size());
+//    write_separ();
+//  }
+//  write_vals();
+    union {
+      float value;
+      unsigned char bytes[sizeof(float)];
+    } ufloat;
+    union {
+      int64_t value;
+      unsigned char bytes[sizeof(int64_t)];
+    } uint64_t;
+    union {
+      int value;
+      unsigned char bytes[sizeof(int)];
+    } uint;
+    /* Points */
+    std::vector<unsigned char> v;
+    uint.value = sizeof(float)*6;
+    for (size_type i=0; i < sizeof(int); i++)
+      v.push_back(uint.bytes[i]);
+    ufloat.value = 0.0;
+    for (size_type i=0; i < sizeof(float); i++)
+      v.push_back(ufloat.bytes[i]);
+    ufloat.value = 0.0;
+    for (size_type i=0; i < sizeof(float); i++)
+      v.push_back(ufloat.bytes[i]);
+    ufloat.value = 0.0;
+    for (size_type i=0; i < sizeof(float); i++)
+      v.push_back(ufloat.bytes[i]);
+    ufloat.value = 1.0;
+    for (size_type i=0; i < sizeof(float); i++)
+      v.push_back(ufloat.bytes[i]);
+    ufloat.value = 0.0;
+    for (size_type i=0; i < sizeof(float); i++)
+      v.push_back(ufloat.bytes[i]);
+    ufloat.value = 0.0;
+    for (size_type i=0; i < sizeof(float); i++)
+      v.push_back(ufloat.bytes[i]);
+    os << base64_encode(v);
 
     size_type nb_cell_values = 0;
     for (dal::bv_visitor cv(pmf->convex_index()); !cv.finished(); ++cv)
@@ -564,6 +601,7 @@ namespace getfem
     } else {
       os << (ascii ? "" : "\n") << "</DataArray>\n";
       os << "</Points>\n";
+      ascii = true;
       os << "<Cells>\n";
       os << "<DataArray type=\"Int64\" Name=\"connectivity\" ";
       os << (ascii ? "format=\"ascii\">\n" : "format=\"binary\">\n");
