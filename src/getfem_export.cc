@@ -414,55 +414,8 @@ namespace getfem
 
   void vtk_export::write_vals() {
     if (!vtk && !ascii) {
-/*
-      int v = sizeof(vals)*sizeof(unsigned char);
-      char *p = (char*)&v;
-      if (reverse_endian)
-        for (size_type i=0; i < sizeof(v)/2; ++i)
-          std::swap(p[i], p[sizeof(v)-i-1]);
-      std::vector<unsigned char> h;
-      for (size_type i=0; i < sizeof(int); i++)
-        h.push_back(p[i]);
-      vals.insert(vals.begin(), h.begin(), h.end());
-      os << base64_encode(vals) << "\n";
+      os << base64_encode(vals);
       clear_vals();
-*/
-      union {
-        float value;
-        unsigned char bytes[sizeof(float)];
-      } ufloat;
-      union {
-        int64_t value;
-        unsigned char bytes[sizeof(int64_t)];
-      } uint64_t;
-      union {
-        int value;
-        unsigned char bytes[sizeof(int)];
-      } uint;
-      /* Points */
-      std::vector<unsigned char> v;
-      uint.value = sizeof(float)*6;
-      for (size_type i=0; i < sizeof(int); i++)
-        v.push_back(uint.bytes[i]);
-      ufloat.value = 0.0;
-      for (size_type i=0; i < sizeof(float); i++)
-        v.push_back(ufloat.bytes[i]);
-      ufloat.value = 0.0;
-      for (size_type i=0; i < sizeof(float); i++)
-        v.push_back(ufloat.bytes[i]);
-      ufloat.value = 0.0;
-      for (size_type i=0; i < sizeof(float); i++)
-        v.push_back(ufloat.bytes[i]);
-      ufloat.value = 1.0;
-      for (size_type i=0; i < sizeof(float); i++)
-        v.push_back(ufloat.bytes[i]);
-      ufloat.value = 0.0;
-      for (size_type i=0; i < sizeof(float); i++)
-        v.push_back(ufloat.bytes[i]);
-      ufloat.value = 0.0;
-      for (size_type i=0; i < sizeof(float); i++)
-        v.push_back(ufloat.bytes[i]);
-      os << base64_encode(v);
     }
   }
 
@@ -592,6 +545,7 @@ namespace getfem
     }
     std::vector<int> dofmap(pmf->nb_dof());
     int cnt = 0;
+    if (!vtk && !ascii) write_val(sizeof(float)*6);
     for (dal::bv_visitor d(pmf_dof_used); !d.finished(); ++d) {
       dofmap[d] = cnt++;
       base_node P = pmf->point_of_basic_dof(d);

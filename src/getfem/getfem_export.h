@@ -163,9 +163,12 @@ namespace getfem {
         for (size_type i=0; i < sizeof(v)/2; ++i)
           std::swap(p[i], p[sizeof(v)-i-1]);
       if (vtk) os.write(p, sizeof(T));
-      else
+      else {
+        union { T value; unsigned char bytes[sizeof(T)]; } UNION;
+        UNION.value = v;
         for (size_type i=0; i < sizeof(T); i++)
-          vals.push_back(p[i]);
+          vals.push_back(UNION.bytes[i]);
+      }
     }
   }
 
