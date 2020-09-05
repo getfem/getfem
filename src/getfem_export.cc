@@ -545,35 +545,15 @@ namespace getfem
     }
     std::vector<int> dofmap(pmf->nb_dof());
     int cnt = 0;
-//  clear_vals();
-//  if (!vtk && !ascii) write_val(int64_t(sizeof(float)*6));
-//  for (dal::bv_visitor d(pmf_dof_used); !d.finished(); ++d) {
-//    dofmap[d] = cnt++;
-//    base_node P = pmf->point_of_basic_dof(d);
-//    write_vec(P.const_begin(),P.size());
-//    write_separ();
-//  }
-//  write_vals();
-    union {
-      float value;
-      unsigned char bytes[sizeof(float)];
-    } ufloat;
-    union {
-      int value;
-      unsigned char bytes[sizeof(int)];
-    } uint;
-    clear_vals();
-    int size = sizeof(float)*6;
-    write_val(size);
-    float value;
-    value = 0.0; write_val(value);
-    value = 0.0; write_val(value);
-    value = 0.0; write_val(value);
-    value = 1.0; write_val(value);
-    value = 0.0; write_val(value);
-    value = 0.0; write_val(value);
-    os << base64_encode(vals);
-    clear_vals();
+    int size = sizeof(float)*pmf_dof_used.card()*3;
+    if (!vtk && !ascii) write_val(size);
+    for (dal::bv_visitor d(pmf_dof_used); !d.finished(); ++d) {
+      dofmap[d] = cnt++;
+      base_node P = pmf->point_of_basic_dof(d);
+      write_vec(P.const_begin(),P.size());
+      write_separ();
+    }
+    write_vals();
 
     size_type nb_cell_values = 0;
     for (dal::bv_visitor cv(pmf->convex_index()); !cv.finished(); ++cv)
