@@ -567,29 +567,30 @@ namespace getfem
       unsigned char bytes[sizeof(int)];
     } uint;
     /* Points */
-    std::vector<unsigned char> v;
+    clear_vals();
     uint.value = sizeof(float)*6;
     for (size_type i=0; i < sizeof(int); i++)
-      v.push_back(uint.bytes[i]);
+      vals.push_back(uint.bytes[i]);
     ufloat.value = 0.0;
     for (size_type i=0; i < sizeof(float); i++)
-      v.push_back(ufloat.bytes[i]);
+      vals.push_back(ufloat.bytes[i]);
     ufloat.value = 0.0;
     for (size_type i=0; i < sizeof(float); i++)
-      v.push_back(ufloat.bytes[i]);
+      vals.push_back(ufloat.bytes[i]);
     ufloat.value = 0.0;
     for (size_type i=0; i < sizeof(float); i++)
-      v.push_back(ufloat.bytes[i]);
+      vals.push_back(ufloat.bytes[i]);
     ufloat.value = 1.0;
     for (size_type i=0; i < sizeof(float); i++)
-      v.push_back(ufloat.bytes[i]);
+      vals.push_back(ufloat.bytes[i]);
     ufloat.value = 0.0;
     for (size_type i=0; i < sizeof(float); i++)
-      v.push_back(ufloat.bytes[i]);
+      vals.push_back(ufloat.bytes[i]);
     ufloat.value = 0.0;
     for (size_type i=0; i < sizeof(float); i++)
-      v.push_back(ufloat.bytes[i]);
-    os << base64_encode(v);
+      vals.push_back(ufloat.bytes[i]);
+    os << base64_encode(vals);
+    clear_vals();
 
     size_type nb_cell_values = 0;
     for (dal::bv_visitor cv(pmf->convex_index()); !cv.finished(); ++cv)
