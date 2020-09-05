@@ -31,7 +31,7 @@ import numpy as np
 import pyvista as pv
 
 convex_connectivity = np.array([0, 1])
-mesh = gf.Mesh("cartesian", convex_connectivity * 2)
+mesh = gf.Mesh("cartesian", convex_connectivity)
 pts = mesh.pts()[0]
 
 
