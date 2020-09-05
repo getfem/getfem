@@ -2902,7 +2902,7 @@ namespace getfem {
       return mi;
     } else if (imd) {
       bgeot::multi_index mi = imd->tensor_size();
-      size_type q = n / imd->nb_filtered_index();
+      size_type q = n * imd->nb_filtered_index();
       GMM_ASSERT1(q % imd->nb_tensor_elem() == 0,
                   "Invalid mesh im data vector");
       if (n > 1 || it->second.qdims.size() > 1) {

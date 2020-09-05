@@ -82,4 +82,4 @@ AM_TESTS_ENVIRONMENT = \
 LOG_COMPILER = $(PYTHON)
 endif
 
-CLEANFILES = *.vtk *.dx *.pyc tank_3D* tripod* plate* *.pos *.dx
+CLEANFILES = *.vtk *.dx *.pyc tank_3D* tripod* plate* *.pos *.dx results/* __pycache__/*

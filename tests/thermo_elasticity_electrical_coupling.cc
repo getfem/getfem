@@ -71,6 +71,7 @@ typedef getfem::model_real_plain_vector plain_vector;
 
 
 int main(int argc, char *argv[]) {
+  GETFEM_MPI_INIT(argc, argv);
   bgeot::md_param PARAM; // Small tool which reads a parameter file
   PARAM.read_command_line(argc, argv);
 
@@ -322,7 +323,9 @@ int main(int argc, char *argv[]) {
        << endl;
 
   cout << "L2 norm of temperature = " << getfem::asm_L2_norm(mim, mft, THETA) << endl;
-
+  
+  GETFEM_MPI_FINALIZE;
+  
   return 0; 
 }
 

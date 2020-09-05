@@ -333,7 +333,8 @@ void test3() {
 
 int main(int argc, char *argv[]) {
   
-  // try {
+  GETFEM_MPI_INIT(argc, argv);
+
   test3(); // test for vectorial fems
   test2(); // test for scalar fems
   lap_pb p;
@@ -345,6 +346,7 @@ int main(int argc, char *argv[]) {
   cout << "Assembling \n";
   p.assemble();
   
-  // } GMM_STANDARD_CATCH_ERROR;
+  GETFEM_MPI_FINALIZE;
+  
   return 0; 
 }

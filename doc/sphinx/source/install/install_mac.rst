@@ -140,7 +140,7 @@ Octave interface
 
 The compilation of the Octave interface is performed with the ``--enable-octave`` option of the ``configure`` script.
 
-First, you need ``octave`` and ``mkoct-file`` commands accessible from your shell prompt, so that the correspoding packages have to be intalled.
+First, you need ``octave`` and ``mkoctfile`` commands accessible from your shell prompt (for instance invoking ``brew install octave``).
 
 
 The last step is to add the path to the toolbox in the octave path:

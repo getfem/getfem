@@ -34,7 +34,7 @@ function check_spmat(iverbose,idebug)
     asserterr('gf_spmat(''empty'',2:3)');
     asserterr('gf_spmat(''empty'',0)');
   end;
-  is_octave = exist('octave_config_info');
+  is_octave = exist('OCTAVE_VERSION', 'builtin');
   % TEST EMPTY COPY FULL
   A = gf_spmat('empty', 5,6);
   B = gf_spmat('empty', 11111);

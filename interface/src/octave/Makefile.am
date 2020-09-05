@@ -63,7 +63,7 @@ else !USE_MINGW_OCTAVE
 # compiled with ifc (i.e. mumps)) of the command line, as it 
 # break the linking with g++-3.3 and matlab R14/R13 on debian (at least) ..
 gf_octave@OCTAVE_COM_EXT@: gfm_mex.c gfm_common.c ../libgetfemint.la ../gfi_array.c $(GETFEM_LIB_LA)
-	mkoctfile --mex -output gf_octave -g \
+	DL_LD=$(CXX) mkoctfile -v --mex -output gf_octave -g \
 	-I@srcdir@ -I@srcdir@/.. -DOCTAVE_RELEASE=@OCTAVE_RELEASE@ \
 	@srcdir@/gfm_mex.c @srcdir@/gfm_common.c @srcdir@/../gfi_array.c \
 	../.libs/libgetfemint.a $(GETFEM_STATIC_LIB) @STDCPP_STATICLIBS@ || (rm $@; false)

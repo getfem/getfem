@@ -271,6 +271,7 @@ void laplacian_problem::compute_error() {
 
 int main(int argc, char *argv[]) {
 
+  GETFEM_MPI_INIT(argc, argv);
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
 
   laplacian_problem p;
@@ -279,6 +280,8 @@ int main(int argc, char *argv[]) {
   p.mesh.write_to_file(p.datafilename + ".mesh");
   if (!p.solve()) GMM_ASSERT1(false, "Solve procedure has failed");
   p.compute_error();
+  
+  GETFEM_MPI_FINALIZE;
 
   return 0; 
 }

@@ -779,7 +779,8 @@ namespace getfem {
     //rrun(mv);
     rrun(Sv);
     //rrun(av);
-    bgeot::static_block_allocator::palloc->memstats();
+    if (bgeot::static_block_allocator::palloc)
+      bgeot::static_block_allocator::palloc->memstats();
     cout << "sizeof(size_type)=" << sizeof(size_type) 
 	 << ", sizeof(base_node)=" << sizeof(base_node) 
 	 << ", sizeof(base_small_vector)=" << sizeof(base_small_vector) << "\n";

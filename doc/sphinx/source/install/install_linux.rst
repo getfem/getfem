@@ -170,7 +170,7 @@ You have first to install |octv| with the developpement package
 .. caution::
 
    * You have first to install |octv|, minimal release 4.1.1 with the developpement package such
-     that the command ``mkoct-file`` is available (liboctave-dev package on Debian, for instance)
+     that the command ``mkoctfile`` is available (liboctave-dev package on Debian, for instance)
 
    * you should have built the |gf| static library (i.e. do not use ``./configure
      --disable-static`` when building |gf|). On linux/x86_64 platforms, a

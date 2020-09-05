@@ -1287,8 +1287,8 @@ namespace getfem {
     
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: copy small vector");
-      GMM_ASSERT1(inin.ctx.is_convex_num_valid(), "Invalid element, "
-                  "probably transformation failed");
+      GMM_ASSERT1(!(inin.has_ctx) || inin.ctx.is_convex_num_valid(),
+                  "Invalid element, probably transformation failed");
       GMM_ASSERT1(t.size() == vec.size(), "Invalid vector size.");
       gmm::copy(vec, t.as_vector());
       return 0;

@@ -1528,10 +1528,7 @@ namespace getfem {
         for (dal::bv_visitor id(dofs); !id.finished(); ++id, ++i)
           if ((i % (d+1)) == 0) alpha[j++] = MM(id, id) / l;
 
-
         getfem::ga_workspace gw;
-        getfem::ga_function f(gw, obstacle);
-
         size_type N = d+1;
         getfem::model_real_plain_vector pt(N);
         gw.add_fixed_size_constant("X", pt);
@@ -1540,6 +1537,7 @@ namespace getfem {
         if (N >= 3) gw.add_macro("z", "X(3)");
         if (N >= 4) gw.add_macro("w", "X(4)");
 
+        getfem::ga_function f(gw, obstacle);
         f.compile();
 
         gmm::resize(gap, nbc);

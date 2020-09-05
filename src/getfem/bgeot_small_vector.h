@@ -44,7 +44,7 @@
 # define SVEC_ASSERT(x) assert(x)
 #else
 # define SVEC_ASSERT(x)
-#endif 
+#endif
 
 namespace bgeot {
 
@@ -54,7 +54,7 @@ namespace bgeot {
     typedef gmm::uint32_type node_id;
     typedef gmm::uint32_type size_type;
     /* number of objects stored in a same block, power of 2 */
-    enum { p2_BLOCKSZ = 8, BLOCKSZ = 1<<p2_BLOCKSZ }; 
+    enum { p2_BLOCKSZ = 8, BLOCKSZ = 1<<p2_BLOCKSZ };
     enum { OBJ_SIZE_LIMIT = 129 }; /* object size limit */
     enum { MAXREF = 256 }; /* reference count limit before copying is used */
   protected:
@@ -65,35 +65,35 @@ namespace bgeot {
       /* keep track of unused chunks */
       uint16_type first_unused_chunk, count_unused_chunk;
       /* "pointers" for the list of free (or partially filled) blocks */
-      size_type prev_unfilled, next_unfilled; 
+      size_type prev_unfilled, next_unfilled;
       size_type objsz; /* size (in bytes) of the chunks stored in this block */
       block() : data(0) {}
-      block(size_type objsz_) : data(0), 
-				prev_unfilled(size_type(-1)), 
-				next_unfilled(size_type(-1)), 
+      block(size_type objsz_) : data(0),
+				prev_unfilled(size_type(-1)),
+				next_unfilled(size_type(-1)),
 				objsz(objsz_) {}
       ~block() {} /* no cleanup of data, no copy constructor : it's on purpose
 		     since the block will be moved a lot when the vector container
 		     will be resized (cleanup done by ~block_allocator) */
       void init() {
-	clear(); 
-	data = static_cast<unsigned char*>(::operator new(BLOCKSZ*objsz + BLOCKSZ)); 
+	clear();
+	data = static_cast<unsigned char*>(::operator new(BLOCKSZ*objsz + BLOCKSZ));
 	/* first BLOCKSZ bytes are used for reference counting */
 	memset(data, 0, BLOCKSZ);
 	//cout << "init block&" << this << " allocated data: " << (void*)data << "\n";
       }
-      void clear() { 
+      void clear() {
 	//cout << "clear block&" << this << " frees data: " << (void*)data << "\n";
-	if (data) { ::operator delete(data); }; 
+	if (data) { ::operator delete(data); };
 	data = 0; first_unused_chunk = 0; count_unused_chunk = BLOCKSZ;
       }
       unsigned char& refcnt(size_type pos) { return data[pos]; }
       bool empty() const { return data == 0; }
       /* could be smarter .. */
     };
-    /* container of all blocks .. a vector ensures fast access to 
+    /* container of all blocks .. a vector ensures fast access to
        any element (better than deque) */
-    std::vector<block> blocks; 
+    std::vector<block> blocks;
     /* pointers to free (or partially free) blocks for each object size */
     size_type first_unfilled[OBJ_SIZE_LIMIT];
   public:
@@ -145,17 +145,60 @@ namespace bgeot {
     void insert_block_into_unfilled(block_allocator::size_type bid);
     void remove_block_from_unfilled(block_allocator::size_type bid);
   };
-  
+
   /* common class for all mini_vec, provides access to the common static allocator */
   struct APIDECL static_block_allocator {
-    /* must be a pointer ... sgi CC is not able to order correctly the 
+    /* must be a pointer ... sgi CC is not able to order correctly the
        destructors of static variables */
     static block_allocator *palloc;
     static_block_allocator() { if (!palloc) palloc=&dal::singleton<block_allocator,1000>::instance(); } //new block_allocator(); }
   };
-  
-#if !defined GETFEM_HAS_OPENMP
-  /** container for small vectors of POD (Plain Old Data) types. Should be as fast as 
+
+#ifdef GETFEM_HAS_OPENMP
+  /**In case of multi-threaded assembly with OpenMP using std::vector derived
+  class for it's thread safety*/
+  template<typename T> class small_vector : public std::vector<T>
+  {
+  public:
+    using typename std::vector<T>::const_iterator;
+    using typename std::vector<T>::iterator;
+    const_iterator begin() const { return std::vector<T>::begin(); }
+    iterator begin() { return std::vector<T>::begin(); }
+    const_iterator end() const { return std::vector<T>::end(); }
+    iterator end() { return std::vector<T>::end(); }
+
+    const_iterator const_begin() const { return std::vector<T>::cbegin(); }
+    const_iterator const_end() const { return std::vector<T>::cend(); }
+    dim_type size() const { return dim_type(std::vector<T>::size()); }
+
+    const small_vector<T>& operator=(const small_vector<T>& other) {
+      std::vector<T>::operator=(other);
+      return *this;
+    }
+
+    small_vector() : std::vector<T>()  {}
+
+    explicit small_vector(size_type n) : std::vector<T>(n) {}
+
+    small_vector(const small_vector<T>& v) : std::vector<T>(v) {}
+
+    small_vector(const std::vector<T>&  v) : std::vector<T>(v) {}
+
+    small_vector(T v1, T v2) : std::vector<T>(2)
+    { (*this)[0] = v1; (*this)[1] = v2; }
+
+    small_vector(T v1, T v2, T v3) : std::vector<T>(3)
+    { (*this)[0] = v1; (*this)[1] = v2; (*this)[2] = v3; }
+
+    template<class UNOP> small_vector(const small_vector<T>& a, UNOP op)
+      : std::vector<T>(a.size())
+    { std::transform(a.begin(), a.end(), begin(), op); }
+
+    template<class BINOP> small_vector(const small_vector<T>& a, const small_vector<T>& b, BINOP op)
+      : std::vector<T>(a.size())
+    { std::transform(a.begin(), a.end(), b.begin(), begin(), op); }
+#else
+  /** container for small vectors of POD (Plain Old Data) types. Should be as fast as
       std::vector<T> while beeing smaller and uses copy-on-write. The gain is especially
       valuable on 64 bits architectures.
   */
@@ -184,19 +227,19 @@ namespace bgeot {
     iterator end() { return base()+size(); }
     const_iterator end() const { return const_base()+size(); }
     const_iterator const_end() const { return const_base()+size(); }
-    void resize(size_type n) { 
+    void resize(size_type n) {
       if (n == size()) return;
       if (n) {
 	small_vector<T> other(n); SVEC_ASSERT(other.refcnt() == 1);
 	memcpy(other.base(), const_base(), std::min(size(),other.size())*sizeof(value_type));
-	SVEC_ASSERT(id==0 || refcnt()); 
+	SVEC_ASSERT(id==0 || refcnt());
 	swap(other);
 	SVEC_ASSERT(refcnt()); SVEC_ASSERT(other.id == 0 || other.refcnt());
       } else { allocator().dec_ref(id); id=0; }
     }
-    const small_vector<T>& operator=(const small_vector<T>& other) { 
+    const small_vector<T>& operator=(const small_vector<T>& other) {
       /* order very important when &other == this */
-      node_id id2 = allocator().inc_ref(other.id); 
+      node_id id2 = allocator().inc_ref(other.id);
       allocator().dec_ref(id); id = id2;
       SVEC_ASSERT(id == 0 || refcnt()); SVEC_ASSERT(other.id == 0 || other.refcnt());
       return *this;
@@ -205,181 +248,101 @@ namespace bgeot {
     small_vector() : id(0) {}
     explicit small_vector(size_type n) : id(allocate(n)) {}
     small_vector(const small_vector<T>& v) : static_block_allocator(), id(allocator().inc_ref(v.id)) {}
-    explicit small_vector(const std::vector<T>& v) : id(allocate(v.size())) { 
+    explicit small_vector(const std::vector<T>& v) : id(allocate(v.size())) {
       std::copy(v.begin(),v.end(),begin());
     }
-    ~small_vector() { 
-      // in the wonderful world of static objects, the order of destruction 
+    ~small_vector() {
+      // in the wonderful world of static objects, the order of destruction
       // can be really important when the memory allocator is destroyed
       // before , for ex. a global variable of type small_vector...
       // that's why there is a check on the state of the allocator..
-      if (!allocator_destroyed()) 
-	allocator().dec_ref(id); 
+      if (!allocator_destroyed())
+	allocator().dec_ref(id);
     }
 
-    small_vector(T v1, T v2) : id(allocate(2)) 
+    small_vector(T v1, T v2) : id(allocate(2))
     { begin()[0] = v1; begin()[1] = v2; }
-    small_vector(T v1, T v2, T v3) : id(allocate(3)) 
+    small_vector(T v1, T v2, T v3) : id(allocate(3))
     { begin()[0] = v1; begin()[1] = v2; begin()[2] = v3; }
-    template<class UNOP> small_vector(const small_vector<T>& a, UNOP op) 
+    template<class UNOP> small_vector(const small_vector<T>& a, UNOP op)
       : id(allocate(a.size())) { std::transform(a.begin(), a.end(), begin(), op); }
-    template<class BINOP> small_vector(const small_vector<T>& a, const small_vector<T>& b, BINOP op) 
+    template<class BINOP> small_vector(const small_vector<T>& a, const small_vector<T>& b, BINOP op)
       : id(allocate(a.size())) { std::transform(a.begin(), a.end(), b.begin(), begin(), op); }
     bool empty() const { return id==0; }
     unsigned char refcnt() const { return allocator().refcnt(id); }
     dim_type size() const
     { return dim_type(allocator().obj_sz(id)/sizeof(value_type)); }
-    small_vector<T> operator+(const small_vector<T>& other) const 
+#endif
+
+    small_vector<T> operator+(const small_vector<T>& other) const
     { return small_vector<T>(*this,other,std::plus<T>()); }
-    small_vector<T> operator-(const small_vector<T>& other) const 
+
+    small_vector<T> operator-(const small_vector<T>& other) const
     { return small_vector<T>(*this,other,std::minus<T>()); }
-    small_vector<T> operator-() const 
+
+    small_vector<T> operator-() const
     { return -1.*(*this); }
-    small_vector<T> operator*(T v) const 
+
+    small_vector<T> operator*(T v) const
     {return small_vector<T>(*this, [&v](const auto &x) {return v * x;});}
+
     small_vector<T> operator/(T v) const { return (*this)*(T(1)/v); }
     small_vector<T>& operator+=(const small_vector<T>& other) {
-      const_iterator b = other.begin(); iterator it = begin(); 
-      for (size_type i=0; i < size(); ++i) *it++ += *b++; 
+      const_iterator b = other.begin(); iterator it = begin();
+      for (size_type i=0; i < size(); ++i) *it++ += *b++;
       return *this;
     }
+
     small_vector<T>& addmul(T v, const small_vector<T>& other) IS_DEPRECATED;
     //{ std::transform(begin(), end(), other.begin(), begin(), std::plus<T>()); return *this; }
-    small_vector<T>& operator-=(const small_vector<T>& other) { 
+    small_vector<T>& operator-=(const small_vector<T>& other) {
       const_iterator b = other.begin(); iterator it = begin();
-      for (size_type i=0; i < size(); ++i) *it++ -= *b++; 
+      for (size_type i=0; i < size(); ++i) *it++ -= *b++;
       return *this;
     }
-    small_vector<T> operator*=(T v) { iterator it = begin(), ite=end(); while(it < ite) *it++ *= v; return *this; }
+
+    small_vector<T> operator*=(T v) {
+      iterator it = begin(), ite=end();
+      while(it < ite) *it++ *= v;
+      return *this;
+    }
     small_vector<T> operator/=(T v) { return operator*=(T(1)/v); }
-    bool operator<(const small_vector<T>& other) const;
+    inline bool operator<(const small_vector<T>& other) const
+    {
+      return std::lexicographical_compare(begin(), end(), other.begin(), other.end());
+    }
     void fill(T v) { for (iterator it=begin(); it != end(); ++it) *it = v; }
     small_vector<T>& operator<<(T x) { push_back(x); return *this; }
+#ifdef GETFEM_HAS_OPENMP
+    size_type memsize() const { return (size()*sizeof(T)) + sizeof(*this); }
+#else
+    size_type memsize() const { return (size()*sizeof(T) / refcnt()) + sizeof(*this); }
     small_vector<T>& clear() { resize(0); return *this; }
     void push_back(T x) { resize(size()+1); begin()[size()-1] = x; }
-    size_type memsize() const { return (size()*sizeof(T) / refcnt()) + sizeof(*this); }
   protected:
     /* read-write access (ensures the refcount is 1) */
     pointer base() {
       allocator().duplicate_if_aliased(id);
-      return static_cast<pointer>(allocator().obj_data(id)); 
+      return static_cast<pointer>(allocator().obj_data(id));
     }
     /* read-only access */
-    const_pointer const_base() const { 
-      SVEC_ASSERT(id == 0 || refcnt()); return static_cast<pointer>(allocator().obj_data(id)); 
+    const_pointer const_base() const {
+      SVEC_ASSERT(id == 0 || refcnt()); return static_cast<pointer>(allocator().obj_data(id));
     }
     block_allocator& allocator() const { return *palloc; }
     bool allocator_destroyed() const { return palloc == 0; }
     node_id allocate(size_type n) {
       return node_id(allocator().allocate(gmm::uint32_type(n*sizeof(value_type)))); SVEC_ASSERT(refcnt() == 1);
     }
+#endif
   };
 
-  template<class T> inline bool small_vector<T>::operator<(const small_vector<T>& other) const 
-  {
-    return std::lexicographical_compare(begin(), end(), other.begin(), other.end());
-  }
-
-  template<class T> inline small_vector<T>& small_vector<T>::addmul(T v, const small_vector<T>& other) 
+  template<class T> inline small_vector<T>& small_vector<T>::addmul(T v, const small_vector<T>& other)
   {
     const_iterator b = other.begin(); iterator it = begin();
-    for (size_type i=0; i < size(); ++i) *it++ += v * *b++; 
+    for (size_type i=0; i < size(); ++i) *it++ += v * *b++;
     return *this;
   }
-
-
-#else
-
-  /**In case of multi-threaded assembly with OpenMP using std::vector derived
-  class for it's thread safety*/
-  template<typename T> class small_vector : public std::vector<T> 
-  {
-  public:
-    typedef typename std::vector<T>::const_iterator const_iterator;
-    typedef typename std::vector<T>::iterator iterator;
-
-    const_iterator const_begin() const { return std::vector<T>::begin();}
-    const_iterator const_end() const   { return std::vector<T>::end();  }
-
-    small_vector() : std::vector<T>()  {}
-
-    explicit small_vector(size_type n) : std::vector<T>(n) {}
-
-    small_vector(const small_vector<T>& v) : std::vector<T>(v) {}
-
-    small_vector(const std::vector<T>&  v) : std::vector<T>(v) {}
-
-    small_vector(T v1, T v2) : std::vector<T>(2) 
-    { (*this)[0] = v1; (*this)[1] = v2; }
-
-    small_vector(T v1, T v2, T v3) : std::vector<T>(3) 
-    { (*this)[0] = v1; (*this)[1] = v2; (*this)[2] = v3; }
-
-    template<class UNOP> small_vector(const small_vector<T>& a, UNOP op) 
-      : std::vector<T>(a.size()) 
-    { std::transform(a.begin(), a.end(), std::vector<T>::begin(), op); }
-
-    template<class BINOP> small_vector(const small_vector<T>& a, const small_vector<T>& b, BINOP op) 
-      : std::vector<T>(a.size()) 
-    { std::transform(a.begin(), a.end(), b.begin(), std::vector<T>::begin(), op); }
-
-    small_vector<T> operator+(const small_vector<T>& other) const 
-    { return small_vector<T>(*this,other,std::plus<T>()); }
-
-    small_vector<T> operator-(const small_vector<T>& other) const 
-    { return small_vector<T>(*this,other,std::minus<T>()); }
-
-    small_vector<T> operator-() const 
-    { return -1.*(*this); }
-
-    small_vector<T> operator*(T v) const 
-    {return small_vector<T>(*this, [&v](const auto &x) {return v * x;});}
-
-    small_vector<T> operator/(T v) const { return (*this)*(T(1)/v); }
-
-    small_vector<T>& operator+=(const small_vector<T>& other) 
-    {
-      const_iterator b = other.begin(); iterator it = std::vector<T>::begin(); 
-      for (size_type i=0; i < std::vector<T>::size(); ++i) *it++ += *b++; 
-      return *this;
-    }
-
-    small_vector<T>& addmul(T v, const small_vector<T>& other) IS_DEPRECATED;
-
-    small_vector<T>& operator-=(const small_vector<T>& other) 
-    { 
-      const_iterator b = other.begin(); iterator it = std::vector<T>::begin();
-      for (size_type i=0; i < std::vector<T>::size(); ++i) *it++ -= *b++; 
-      return *this;
-    }
-
-    small_vector<T> operator*=(T v) 
-    { 
-      iterator it = std::vector<T>::begin(), ite=std::vector<T>::end(); 
-      while(it < ite) *it++ *= v; 
-      return *this; 
-    }
-
-    small_vector<T> operator/=(T v) { return operator*=(T(1)/v); }
-
-    void fill(T v) { for (iterator it=std::vector<T>::begin(); it != std::vector<T>::end(); ++it) *it = v; }
-    small_vector<T>& operator<<(T x) { push_back(x); return *this; }
-    size_type memsize() const { return (std::vector<T>::size()*sizeof(T)) + sizeof(*this); }
-    inline bool operator<(const small_vector<T>& other) const 
-    {
-      return std::lexicographical_compare(std::vector<T>::begin(), std::vector<T>::end(), other.begin(), other.end());
-    }
-  };
-
-    template<class T> inline small_vector<T>& small_vector<T>::addmul(T v, const small_vector<T>& other) 
-    {
-      const_iterator b = other.begin(); iterator it = std::vector<T>::begin();
-      for (size_type i=0; i < std::vector<T>::size(); ++i) *it++ += v * *b++; 
-      return *this;
-    }
-
-
-#endif // #if !defined GETFEM_HAS_OPENMP
 
 
   template<class T> std::ostream& operator<<(std::ostream& os, const small_vector<T>& v) {

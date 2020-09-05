@@ -79,8 +79,13 @@ namespace gmm {
     sparse_sub_vector_iterator(void) {}
     sparse_sub_vector_iterator(const IT &it, const IT &ite, const SUBI &s)
       : itb(it), itbe(ite), si(s) { forward(); }
-    sparse_sub_vector_iterator(const sparse_sub_vector_iterator<MIT, MIT,
-	 SUBI> &it) : itb(it.itb), itbe(it.itbe), si(it.si) {}
+    sparse_sub_vector_iterator
+    (const sparse_sub_vector_iterator<MIT, MIT, SUBI> &it)
+      : itb(it.itb), itbe(it.itbe), si(it.si) {}
+    sparse_sub_vector_iterator &operator =
+    (const sparse_sub_vector_iterator<MIT, MIT, SUBI> &it)
+    { itb = it.itb; itbe = it.itbe;  si = it.si; return *this; }
+
   };
 
   template <typename IT, typename MIT, typename SUBI>

@@ -115,7 +115,9 @@ void speed_test(unsigned N, unsigned NPT, unsigned nrepeat) {
     for (dim_type k = 0; k < N; ++k) 
       pt[k] = gmm::random(double())*2.;
     tree.add_point(pt);
+#ifndef GETFEM_HAS_OPENMP
     assert(pt.refcnt()>1);
+#endif
   }
   t = gmm::uclock_sec();
   cout << "point list built in " << gmm::uclock_sec() - t << " seconds.\n";

@@ -1,0 +1,17 @@
+.. include:: ../replaces.txt
+
+**************************
+  What's New in |gf| 5.4.1
+**************************
+
+|gf| 5.4.1 is a patch version that fixes a problem with multithread openblas 0.3.8, used in particular in the LTS Ubuntu 20.04.
+
+Released version, 2020/05/25.
+
+The main changes are:
+
+   * Adding a --disable-multithread-blas option to the configure to fix the problem with openblas 0.3.8
+
+   * Support for export in VTU format. 
+
+

@@ -29,6 +29,7 @@ using bgeot::base_node;
 
 int main(int argc, char *argv[]) {
 
+  GETFEM_MPI_INIT(argc, argv);
 //  gmm::set_traces_level(1);
 
   bgeot::md_param PARAM;
@@ -110,5 +111,7 @@ int main(int argc, char *argv[]) {
   std::cout << "Total dofs of model 1: " << md1.nb_dof() << std::endl;
   std::cout << "Total dofs of model 2: " << md2.nb_dof() << std::endl;
 
+  GETFEM_MPI_FINALIZE;
+  
   return gmm::vect_dist2(md1.real_variable("u"), md2.real_variable("u")) < 1e-9 ? 0 : 1;
 }

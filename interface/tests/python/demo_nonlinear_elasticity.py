@@ -84,16 +84,13 @@ if (not(explicit_potential)):
 else:
     print("Explicit elastic potential")
     K = 1.2; mu = 3.0;
-    _F_ = "(Id(3)+Grad_u)"
-    _J_= "Det{F}".format(F=_F_)
-    _be_ = "(Left_Cauchy_Green{F})".format(F=_F_)
-
-    _expr_1 = "{K_over_2}*sqr(log({J}))+{mu_over_2}*(Matrix_j1{be}-3)"\
-              .format(K_over_2=K/2., J=_J_, mu_over_2=mu/2., be=_be_)
-
-    _expr_2 = "{K_over_2}*sqr(log({J}))+{mu_over_2}*(pow(Det{be},-1./3.)*Trace{be}-3)"\
-              .format(K_over_2=K/2., J=_J_, mu_over_2=mu/2., be=_be_)
-
+    md.add_macro('F_',  '(Id(meshdim)+Grad_u)')
+    md.add_macro('J_',  'Det(F_)')
+    md.add_macro('be_', 'Left_Cauchy_Green(F_)')
+    md.add_initialized_data('K',  [K])
+    md.add_initialized_data('mu', [mu])
+    _expr_1 = "(K/2)*sqr(log(J_))+(mu/2)*(Matrix_j1(be_)-3)";
+    _expr_2 = "(K/2)*sqr(log(J_))+(mu/2)*(pow(Det(be_),-1./3.)*Trace(be_)-3)"
     md.add_nonlinear_term(mim, _expr_2);
 
 
