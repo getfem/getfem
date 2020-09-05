@@ -159,11 +159,12 @@ namespace getfem {
     if (ascii) os << " " << v;
     else {
       char *p = (char*)&v;
-      if (reverse_endian)
-        for (size_type i=0; i < sizeof(v)/2; ++i)
-          std::swap(p[i], p[sizeof(v)-i-1]);
-      if (vtk) os.write(p, sizeof(T));
-      else {
+      if (vtk) {
+        if (reverse_endian)
+          for (size_type i=0; i < sizeof(v)/2; ++i)
+            std::swap(p[i], p[sizeof(v)-i-1]);
+        os.write(p, sizeof(T));
+      } else {
         union { T value; unsigned char bytes[sizeof(T)]; } UNION;
         UNION.value = v;
         for (size_type i=0; i < sizeof(T); i++)

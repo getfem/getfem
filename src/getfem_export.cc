@@ -559,36 +559,19 @@ namespace getfem
       unsigned char bytes[sizeof(float)];
     } ufloat;
     union {
-      int64_t value;
-      unsigned char bytes[sizeof(int64_t)];
-    } uint64_t;
-    union {
       int value;
       unsigned char bytes[sizeof(int)];
     } uint;
-    /* Points */
     clear_vals();
-    uint.value = sizeof(float)*6;
-    for (size_type i=0; i < sizeof(int); i++)
-      vals.push_back(uint.bytes[i]);
-    ufloat.value = 0.0;
-    for (size_type i=0; i < sizeof(float); i++)
-      vals.push_back(ufloat.bytes[i]);
-    ufloat.value = 0.0;
-    for (size_type i=0; i < sizeof(float); i++)
-      vals.push_back(ufloat.bytes[i]);
-    ufloat.value = 0.0;
-    for (size_type i=0; i < sizeof(float); i++)
-      vals.push_back(ufloat.bytes[i]);
-    ufloat.value = 1.0;
-    for (size_type i=0; i < sizeof(float); i++)
-      vals.push_back(ufloat.bytes[i]);
-    ufloat.value = 0.0;
-    for (size_type i=0; i < sizeof(float); i++)
-      vals.push_back(ufloat.bytes[i]);
-    ufloat.value = 0.0;
-    for (size_type i=0; i < sizeof(float); i++)
-      vals.push_back(ufloat.bytes[i]);
+    int size = sizeof(float)*6;
+    write_val(size);
+    float value;
+    value = 0.0; write_val(value);
+    value = 0.0; write_val(value);
+    value = 0.0; write_val(value);
+    value = 1.0; write_val(value);
+    value = 0.0; write_val(value);
+    value = 0.0; write_val(value);
     os << base64_encode(vals);
     clear_vals();
 
