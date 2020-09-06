@@ -39,7 +39,7 @@ filenames = ["check_mesh_ascii.vtu", "check_mesh_binary.vtu"]
 
 # mesh.export_to_vtu(filenames[0], "ascii")
 
-mesh.export_to_vtu(filenames[1])
+# mesh.export_to_vtu(filenames[1])
 
 for filename in filenames:
     print(filename)
@@ -49,6 +49,6 @@ for filename in filenames:
     actual = unstructured_grid.points[:, 0]
     np.testing.assert_equal(expected, actual, "export of mesh pts is not correct.")
 
-#   expected = convex_connectivity
-#   actual = unstructured_grid.cell_connectivity
-#   np.testing.assert_equal(expected, actual, "export of mesh convex is not correct.")
+    expected = convex_connectivity
+    actual = unstructured_grid.cell_connectivity
+    np.testing.assert_equal(expected, actual, "export of mesh convex is not correct.")
