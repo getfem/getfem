@@ -570,10 +570,14 @@ namespace getfem
       os << (ascii ? "format=\"ascii\">\n" : "format=\"binary\">\n");
     }
 
-    size = sizeof(int64_t)*2;
-    if (!vtk && !ascii) write_val(size);
-    write_val(int64_t(0));
-    write_val(int64_t(1));
+    for (dal::bv_visitor cv(pmf->convex_index()); !cv.finished(); ++cv) {
+      const std::vector<unsigned> &dmap = select_vtk_dof_mapping(pmf_mapping_type[cv]);
+      if (vtk) write_val(int(dmap.size()));
+      if (!vtk && !ascii) write_val(int(sizeof(int64_t)*dmap.size()));
+      for (size_type i=0; i < dmap.size(); ++i)
+        write_val(int64_t(dofmap[pmf->ind_basic_dof_of_element(cv)[dmap[i]]]));
+      write_separ();
+    }
     write_vals();
 
     if (vtk) {
