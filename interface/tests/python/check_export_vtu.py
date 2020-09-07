@@ -39,7 +39,7 @@ filenames = ["check_mesh_ascii.vtu", "check_mesh_binary.vtu"]
 
 # mesh.export_to_vtu(filenames[0], "ascii")
 
-# mesh.export_to_vtu(filenames[1])
+mesh.export_to_vtu(filenames[1])
 
 for filename in filenames:
     print(filename)
