@@ -2,21 +2,21 @@
 <VTKFile type="UnstructuredGrid" version="0.1" byte_order="LittleEndian">
 <!--Exported by GetFEM-->
 <UnstructuredGrid>
-<Piece NumberOfPoints="2" NumberOfCells="1">
+<Piece NumberOfPoints="3" NumberOfCells="2">
 <Points>
 <DataArray type="Float32" Name="Points" NumberOfComponents="3" format="binary">
-GAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAAAAAA==
+JAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAAAAAAAAAEAAAAAAAAAAAA==
 </DataArray>
 </Points>
 <Cells>
 <DataArray type="Int64" Name="connectivity" format="binary">
-EAAAAAAAAAAAAAAAAQAAAAAAAAA=
+IAAAAAAAAAAAAAAAAQAAAAAAAAABAAAAAAAAAAIAAAAAAAAA
 </DataArray>
 <DataArray type="Int64" Name="offsets" format="binary">
-CAAAAAIAAAAAAAAA
+EAAAAAIAAAAAAAAABAAAAAAAAAA=
 </DataArray>
 <DataArray type="Int64" Name="types" format="binary">
-CAAAAAMAAAAAAAAA
+EAAAAAMAAAAAAAAAAwAAAAAAAAA=
 </DataArray>
 </Cells>
 </Piece>

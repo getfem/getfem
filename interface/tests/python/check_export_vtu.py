@@ -30,8 +30,8 @@ import getfem as gf
 import numpy as np
 import pyvista as pv
 
-convex_connectivity = np.array([0, 1])
-mesh = gf.Mesh("cartesian", convex_connectivity)
+convex_connectivity = np.array([0, 1, 1, 2])
+mesh = gf.Mesh("cartesian", [0.0, 1.0, 2.0])
 pts = mesh.pts()[0]
 
 
@@ -39,7 +39,7 @@ filenames = ["check_mesh_ascii.vtu", "check_mesh_binary.vtu"]
 
 # mesh.export_to_vtu(filenames[0], "ascii")
 
-mesh.export_to_vtu(filenames[1])
+# mesh.export_to_vtu(filenames[1])
 
 for filename in filenames:
     print(filename)
