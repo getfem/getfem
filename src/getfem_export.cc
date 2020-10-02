@@ -569,8 +569,10 @@ namespace getfem
       os << "<DataArray type=\"Int64\" Name=\"connectivity\" ";
       os << (ascii ? "format=\"ascii\">\n" : "format=\"binary\">\n");
       // TODO: genelize to multi cell
-      //if (!ascii) write_val(sizeof(int64_t)*4);
-      if (!ascii) write_val(32);
+      if (!vtk && !ascii) {
+        int size = sizeof(int64_t)*4;
+        write_val(size);
+      }
       write_val(int64_t(0));
       write_val(int64_t(1));
       write_separ();
@@ -599,8 +601,10 @@ namespace getfem
       os << (ascii ? "format=\"ascii\">\n" : "format=\"binary\">\n");
       cnt = 0;
       // TODO: genelize to multi cell
-      //if (!ascii) write_val(sizeof(int64_t)*2);
-      if (!ascii) write_val(16);
+      if (!vtk && !ascii) {
+        int size = sizeof(int64_t)*2;
+        write_val(size);
+      }
       write_val(int64_t(2));
       write_val(int64_t(4));
       write_vals();
@@ -611,7 +615,10 @@ namespace getfem
     size = sizeof(int64_t);
     // TODO: genelize to multi cell
     //if (!ascii) write_val(sizeof(int64_t)*2);
-    if (!ascii) write_val(16);
+    if (!vtk && !ascii) {
+      int size = sizeof(int64_t)*2;
+      write_val(size);
+    }
     write_val(int64_t(3));
     write_val(int64_t(3));
     write_vals();
