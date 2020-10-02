@@ -568,16 +568,26 @@ namespace getfem
       os << "<Cells>\n";
       os << "<DataArray type=\"Int64\" Name=\"connectivity\" ";
       os << (ascii ? "format=\"ascii\">\n" : "format=\"binary\">\n");
-    }
-
-    for (dal::bv_visitor cv(pmf->convex_index()); !cv.finished(); ++cv) {
-      const std::vector<unsigned> &dmap = select_vtk_dof_mapping(pmf_mapping_type[cv]);
-      if (vtk) write_val(int(dmap.size()));
-      if (!vtk && !ascii) write_val(int(sizeof(int64_t)*dmap.size()));
-      for (size_type i=0; i < dmap.size(); ++i)
-        write_val(int64_t(dofmap[pmf->ind_basic_dof_of_element(cv)[dmap[i]]]));
+      // TODO: genelize to multi cell
+      //if (!ascii) write_val(sizeof(int64_t)*4);
+      if (!ascii) write_val(32);
+      write_val(int64_t(0));
+      write_val(int64_t(1));
+      write_separ();
+      write_val(int64_t(1));
+      write_val(int64_t(2));
       write_separ();
     }
+
+// TODO: genelize to multi cell
+//  for (dal::bv_visitor cv(pmf->convex_index()); !cv.finished(); ++cv) {
+//    const std::vector<unsigned> &dmap = select_vtk_dof_mapping(pmf_mapping_type[cv]);
+//    if (vtk) write_val(int(dmap.size()));
+//    if (!vtk && !ascii) write_val(int(sizeof(int64_t)*dmap.size()));
+//    for (size_type i=0; i < dmap.size(); ++i)
+//      write_val(int64_t(dofmap[pmf->ind_basic_dof_of_element(cv)[dmap[i]]]));
+//    write_separ();
+//  }
     write_vals();
 
     if (vtk) {
@@ -588,21 +598,24 @@ namespace getfem
       os << "<DataArray type=\"Int64\" Name=\"offsets\" ";
       os << (ascii ? "format=\"ascii\">\n" : "format=\"binary\">\n");
       cnt = 0;
-      size = sizeof(int64_t);
-      write_val(size);
+      // TODO: genelize to multi cell
+      //if (!ascii) write_val(sizeof(int64_t)*2);
+      if (!ascii) write_val(16);
       write_val(int64_t(2));
+      write_val(int64_t(4));
       write_vals();
-      os << (ascii ? "" : "\n") << "</DataArray>\n";
+      os << "\n" << "</DataArray>\n";
       os << "<DataArray type=\"Int64\" Name=\"types\" ";
       os << (ascii ? "format=\"ascii\">\n" : "format=\"binary\">\n");
     }
     size = sizeof(int64_t);
-    write_val(size);
+    // TODO: genelize to multi cell
+    //if (!ascii) write_val(sizeof(int64_t)*2);
+    if (!ascii) write_val(16);
+    write_val(int64_t(3));
     write_val(int64_t(3));
     write_vals();
-    if (!vtk)
-      os << (ascii ? "" : "\n") << "</DataArray>\n"
-         << "</Cells>\n";
+    if (!vtk) os << "\n" << "</DataArray>\n" << "</Cells>\n";
 
     state = STRUCTURE_WRITTEN;
   }
