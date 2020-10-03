@@ -605,18 +605,17 @@ namespace getfem
         const std::vector<unsigned> &dmap = select_vtk_dof_mapping(pmf_mapping_type[cv]);
         cnt += int(dmap.size());
         write_val(cnt);
-        if (vtk) write_separ();
       }
       write_vals();
       os << "\n" << "</DataArray>\n";
       os << "<DataArray type=\"Int32\" Name=\"types\" ";
       os << (ascii ? "format=\"ascii\">\n" : "format=\"binary\">\n");
-    }
-    if (!vtk && !ascii) {
-      int size = 0;
-      for (dal::bv_visitor cv(pmf->convex_index()); !cv.finished(); ++cv)
-        size += sizeof(int);
-      write_val(size);
+      if (!ascii) {
+        int size = 0;
+        for (dal::bv_visitor cv(pmf->convex_index()); !cv.finished(); ++cv)
+          size += sizeof(int);
+        write_val(size);
+      }
     }
     for (dal::bv_visitor cv(pmf->convex_index()); !cv.finished(); ++cv) {
       write_val(int(select_vtk_type(pmf_mapping_type[cv])));
