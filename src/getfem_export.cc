@@ -471,7 +471,7 @@ namespace getfem
       write_separ(); os << "CELLS " << splx_cnt << " " << cells_cnt << "\n";
     } else {
       os << "<Cells>\n";
-      os << "<DataArray type=\"Int64\" Name=\"connectivity\" ";
+      os << "<DataArray type=\"Int32\" Name=\"connectivity\" ";
       os << (ascii ? "format=\"ascii\">\n" : "format=\"binary\">\n");
     }
     for (size_type ic=0; ic < psl->nb_convex(); ++ic) {
@@ -492,7 +492,7 @@ namespace getfem
       write_separ(); os << "CELL_TYPES " << splx_cnt << "\n";
     } else {
       os << (ascii ? "" : "\n") << "</DataArray>\n";
-      os << "<DataArray type=\"Int64\" Name=\"offsets\" ";
+      os << "<DataArray type=\"Int32\" Name=\"offsets\" ";
       os << (ascii ? "format=\"ascii\">\n" : "format=\"binary\">\n");
     }
     int cnt = 0;
@@ -512,7 +512,7 @@ namespace getfem
     assert(splx_cnt == 0); // sanity check
     if (!vtk) {
       os << (ascii ? "" : "\n") << "</DataArray>\n";
-      os << "<DataArray type=\"Int64\" Name=\"types\" ";
+      os << "<DataArray type=\"Int32\" Name=\"types\" ";
       os << (ascii ? "format=\"ascii\">\n" : "format=\"binary\">\n");
       for (size_type ic=0; ic < psl->nb_convex(); ++ic) {
         const getfem::mesh_slicer::cs_simplexes_ct& s = psl->simplexes(ic);
@@ -566,13 +566,13 @@ namespace getfem
       os << (ascii ? "" : "\n") << "</DataArray>\n";
       os << "</Points>\n";
       os << "<Cells>\n";
-      os << "<DataArray type=\"Int64\" Name=\"connectivity\" ";
+      os << "<DataArray type=\"Int32\" Name=\"connectivity\" ";
       os << (ascii ? "format=\"ascii\">\n" : "format=\"binary\">\n");
       if (!vtk && !ascii) {
         int size = 0;
         for (dal::bv_visitor cv(pmf->convex_index()); !cv.finished(); ++cv) {
           const std::vector<unsigned> &dmap = select_vtk_dof_mapping(pmf_mapping_type[cv]);
-          size += sizeof(int64_t)*dmap.size();
+          size += sizeof(int)*dmap.size();
         }
         write_val(size);
       }
@@ -582,7 +582,7 @@ namespace getfem
       const std::vector<unsigned> &dmap = select_vtk_dof_mapping(pmf_mapping_type[cv]);
       if (vtk) write_val(int(dmap.size()));
       for (size_type i=0; i < dmap.size(); ++i)
-        write_val(int64_t(dofmap[pmf->ind_basic_dof_of_element(cv)[dmap[i]]]));
+        write_val(int(dofmap[pmf->ind_basic_dof_of_element(cv)[dmap[i]]]));
       write_separ();
     }
     write_vals();
@@ -592,30 +592,32 @@ namespace getfem
       os << "CELL_TYPES " << pmf->convex_index().card() << "\n";
     } else {
       os << (ascii ? "" : "\n") << "</DataArray>\n";
-      os << "<DataArray type=\"Int64\" Name=\"offsets\" ";
+      os << "<DataArray type=\"Int32\" Name=\"offsets\" ";
       os << (ascii ? "format=\"ascii\">\n" : "format=\"binary\">\n");
-      int64_t cnt = 0;
+      int cnt = 0;
       if (!vtk && !ascii) {
-        int size = sizeof(int64_t)*2;
+        int size = sizeof(int)*2;
         write_val(size);
       }
       for (dal::bv_visitor cv(pmf->convex_index()); !cv.finished(); ++cv) {
         const std::vector<unsigned> &dmap = select_vtk_dof_mapping(pmf_mapping_type[cv]);
-        cnt += int64_t(dmap.size());
+        cnt += int(dmap.size());
         write_val(cnt);
         if (vtk) write_separ();
       }
       write_vals();
       os << "\n" << "</DataArray>\n";
-      os << "<DataArray type=\"Int64\" Name=\"types\" ";
+      os << "<DataArray type=\"Int32\" Name=\"types\" ";
       os << (ascii ? "format=\"ascii\">\n" : "format=\"binary\">\n");
     }
     if (!vtk && !ascii) {
-      int size = sizeof(int64_t)*2;
+      int size = 0;
+      for (dal::bv_visitor cv(pmf->convex_index()); !cv.finished(); ++cv)
+        size += sizeof(int);
       write_val(size);
     }
     for (dal::bv_visitor cv(pmf->convex_index()); !cv.finished(); ++cv) {
-      write_val(int64_t(select_vtk_type(pmf_mapping_type[cv])));
+      write_val(int(select_vtk_type(pmf_mapping_type[cv])));
       if (vtk) write_separ();
     }
     write_vals();

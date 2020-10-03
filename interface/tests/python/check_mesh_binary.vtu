@@ -9,14 +9,14 @@ JAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAAAAAAAAAEAAAAAAAAAAAA==
 </DataArray>
 </Points>
 <Cells>
-<DataArray type="Int64" Name="connectivity" format="binary">
-IAAAAAAAAAAAAAAAAQAAAAAAAAABAAAAAAAAAAIAAAAAAAAA
+<DataArray type="Int32" Name="connectivity" format="binary">
+EAAAAAAAAAABAAAAAQAAAAIAAAA=
 </DataArray>
-<DataArray type="Int64" Name="offsets" format="binary">
-EAAAAAIAAAAAAAAABAAAAAAAAAA=
+<DataArray type="Int32" Name="offsets" format="binary">
+CAAAAAIAAAAEAAAA
 </DataArray>
-<DataArray type="Int64" Name="types" format="binary">
-EAAAAAMAAAAAAAAAAwAAAAAAAAA=
+<DataArray type="Int32" Name="types" format="binary">
+CAAAAAMAAAADAAAA
 </DataArray>
 </Cells>
 </Piece>
