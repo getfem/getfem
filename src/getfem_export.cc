@@ -545,7 +545,7 @@ namespace getfem
     }
     std::vector<int> dofmap(pmf->nb_dof());
     int cnt = 0;
-    int size = sizeof(float)*pmf_dof_used.card()*3;
+    int size = int(sizeof(float)*pmf_dof_used.card()*3);
     if (!vtk && !ascii) write_val(size);
     for (dal::bv_visitor d(pmf_dof_used); !d.finished(); ++d) {
       dofmap[d] = cnt++;
@@ -569,10 +569,10 @@ namespace getfem
       os << "<DataArray type=\"Int32\" Name=\"connectivity\" ";
       os << (ascii ? "format=\"ascii\">\n" : "format=\"binary\">\n");
       if (!vtk && !ascii) {
-        int size = 0;
+        size = 0;
         for (dal::bv_visitor cv(pmf->convex_index()); !cv.finished(); ++cv) {
           const std::vector<unsigned> &dmap = select_vtk_dof_mapping(pmf_mapping_type[cv]);
-          size += sizeof(int)*dmap.size();
+          size += int(sizeof(int)*dmap.size());
         }
         write_val(size);
       }
@@ -594,13 +594,13 @@ namespace getfem
       os << (ascii ? "" : "\n") << "</DataArray>\n";
       os << "<DataArray type=\"Int32\" Name=\"offsets\" ";
       os << (ascii ? "format=\"ascii\">\n" : "format=\"binary\">\n");
-      int cnt = 0;
       if (!vtk && !ascii) {
-        int size = 0;
+        size = 0;
         for (dal::bv_visitor cv(pmf->convex_index()); !cv.finished(); ++cv)
-          size += sizeof(int);
+          size += int(sizeof(int));
         write_val(size);
       }
+      cnt = 0;
       for (dal::bv_visitor cv(pmf->convex_index()); !cv.finished(); ++cv) {
         const std::vector<unsigned> &dmap = select_vtk_dof_mapping(pmf_mapping_type[cv]);
         cnt += int(dmap.size());
@@ -611,9 +611,9 @@ namespace getfem
       os << "<DataArray type=\"Int32\" Name=\"types\" ";
       os << (ascii ? "format=\"ascii\">\n" : "format=\"binary\">\n");
       if (!ascii) {
-        int size = 0;
+        size = 0;
         for (dal::bv_visitor cv(pmf->convex_index()); !cv.finished(); ++cv)
-          size += sizeof(int);
+          size += int(sizeof(int));
         write_val(size);
       }
     }
