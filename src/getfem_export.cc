@@ -576,13 +576,13 @@ namespace getfem
         }
         write_val(size);
       }
-      for (dal::bv_visitor cv(pmf->convex_index()); !cv.finished(); ++cv) {
-        const std::vector<unsigned> &dmap = select_vtk_dof_mapping(pmf_mapping_type[cv]);
-        if (vtk) write_val(int(dmap.size()));
-        for (size_type i=0; i < dmap.size(); ++i)
-          write_val(int64_t(dofmap[pmf->ind_basic_dof_of_element(cv)[dmap[i]]]));
-        write_separ();
-      }
+    }
+    for (dal::bv_visitor cv(pmf->convex_index()); !cv.finished(); ++cv) {
+      const std::vector<unsigned> &dmap = select_vtk_dof_mapping(pmf_mapping_type[cv]);
+      if (vtk) write_val(int(dmap.size()));
+      for (size_type i=0; i < dmap.size(); ++i)
+        write_val(int64_t(dofmap[pmf->ind_basic_dof_of_element(cv)[dmap[i]]]));
+      write_separ();
     }
     write_vals();
 
