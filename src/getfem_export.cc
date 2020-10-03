@@ -610,15 +610,14 @@ namespace getfem
       os << "<DataArray type=\"Int64\" Name=\"types\" ";
       os << (ascii ? "format=\"ascii\">\n" : "format=\"binary\">\n");
     }
-    size = sizeof(int64_t);
-    // TODO: genelize to multi cell
-    //if (!ascii) write_val(sizeof(int64_t)*2);
     if (!vtk && !ascii) {
       int size = sizeof(int64_t)*2;
       write_val(size);
     }
-    write_val(int64_t(3));
-    write_val(int64_t(3));
+    for (dal::bv_visitor cv(pmf->convex_index()); !cv.finished(); ++cv) {
+      write_val(int64_t(select_vtk_type(pmf_mapping_type[cv])));
+      if (vtk) write_separ();
+    }
     write_vals();
     if (!vtk) os << "\n" << "</DataArray>\n" << "</Cells>\n";
 
