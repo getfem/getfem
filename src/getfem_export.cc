@@ -577,6 +577,7 @@ namespace getfem
         write_val(size);
       }
     }
+
     for (dal::bv_visitor cv(pmf->convex_index()); !cv.finished(); ++cv) {
       const std::vector<unsigned> &dmap = select_vtk_dof_mapping(pmf_mapping_type[cv]);
       if (vtk) write_val(int(dmap.size()));
@@ -593,14 +594,17 @@ namespace getfem
       os << (ascii ? "" : "\n") << "</DataArray>\n";
       os << "<DataArray type=\"Int64\" Name=\"offsets\" ";
       os << (ascii ? "format=\"ascii\">\n" : "format=\"binary\">\n");
-      cnt = 0;
-      // TODO: genelize to multi cell
+      int64_t cnt = 0;
       if (!vtk && !ascii) {
         int size = sizeof(int64_t)*2;
         write_val(size);
       }
-      write_val(int64_t(2));
-      write_val(int64_t(4));
+      for (dal::bv_visitor cv(pmf->convex_index()); !cv.finished(); ++cv) {
+        const std::vector<unsigned> &dmap = select_vtk_dof_mapping(pmf_mapping_type[cv]);
+        cnt += int64_t(dmap.size());
+        write_val(cnt);
+        if (vtk) write_separ();
+      }
       write_vals();
       os << "\n" << "</DataArray>\n";
       os << "<DataArray type=\"Int64\" Name=\"types\" ";
