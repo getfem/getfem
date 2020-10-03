@@ -35,11 +35,17 @@ mesh = gf.Mesh("cartesian", [0.0, 1.0, 2.0])
 pts = mesh.pts()[0]
 
 
-filenames = ["check_mesh_ascii.vtu", "check_mesh_binary.vtu"]
+filenames = [
+    "check_mesh_ascii.vtk",
+    "check_mesh_binary.vtk",
+    "check_mesh_ascii.vtu",
+    "check_mesh_binary.vtu",
+]
 
-mesh.export_to_vtu(filenames[0], "ascii")
-
-mesh.export_to_vtu(filenames[1])
+mesh.export_to_vtk(filenames[0], "ascii")
+mesh.export_to_vtk(filenames[1])
+mesh.export_to_vtu(filenames[2], "ascii")
+mesh.export_to_vtu(filenames[3])
 
 for filename in filenames:
     print(filename)
