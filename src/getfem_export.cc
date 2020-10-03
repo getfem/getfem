@@ -596,7 +596,9 @@ namespace getfem
       os << (ascii ? "format=\"ascii\">\n" : "format=\"binary\">\n");
       int cnt = 0;
       if (!vtk && !ascii) {
-        int size = sizeof(int)*2;
+        int size = 0;
+        for (dal::bv_visitor cv(pmf->convex_index()); !cv.finished(); ++cv)
+          size += sizeof(int);
         write_val(size);
       }
       for (dal::bv_visitor cv(pmf->convex_index()); !cv.finished(); ++cv) {
