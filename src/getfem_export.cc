@@ -570,7 +570,11 @@ namespace getfem
       os << (ascii ? "format=\"ascii\">\n" : "format=\"binary\">\n");
       // TODO: genelize to multi cell
       if (!vtk && !ascii) {
-        int size = sizeof(int64_t)*4;
+        int size = 0;
+        for (dal::bv_visitor cv(pmf->convex_index()); !cv.finished(); ++cv) {
+          const std::vector<unsigned> &dmap = select_vtk_dof_mapping(pmf_mapping_type[cv]);
+          size += sizeof(int64_t)*dmap.size();
+        }
         write_val(size);
       }
       write_val(int64_t(0));
