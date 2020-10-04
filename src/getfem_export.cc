@@ -46,6 +46,36 @@ namespace getfem
     return true;
   }
 
+  /* Base64 encoding (https://en.wikipedia.org/wiki/Base64) */
+  std::string base64_encode(const std::vector<unsigned char>& src)
+  {
+    const std::string table("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/");
+    std::string dst;
+    for (size_type i = 0; i < src.size(); ++i) {
+      switch (i % 3) {
+      case 0:
+        dst.push_back(table[(src[i] & 0xFC) >> 2]);
+        if (i + 1 == src.size()) {
+          dst.push_back(table[(src[i] & 0x03) << 4]);
+          dst.push_back('=');
+          dst.push_back('=');
+        }
+        break;
+      case 1:
+        dst.push_back(table[((src[i - 1] & 0x03) << 4) | ((src[i + 0] & 0xF0) >> 4)]);
+        if (i + 1 == src.size()) {
+          dst.push_back(table[(src[i] & 0x0F) << 2]);
+          dst.push_back('=');
+        }
+        break;
+      case 2:
+        dst.push_back(table[((src[i - 1] & 0x0F) << 2) | ((src[i + 0] & 0xC0) >> 6)]);
+        dst.push_back(table[src[i] & 0x3F]);
+        break;
+      }
+    }
+    return dst;
+  }
 
   /* -------------------------------------------------------------
    * VTK export
@@ -189,12 +219,12 @@ namespace getfem
   }
 
   void vtk_export::init() {
-    GMM_ASSERT1(vtk || ascii, "vtu support only ascii format.");
     strcpy(header, "Exported by GetFEM");
     psl = 0; dim_ = dim_type(-1);
     static int test_endian = 0x01234567;
     reverse_endian = (*((char*)&test_endian) == 0x67);
     state = EMPTY;
+    clear_vals();
   }
 
   void vtk_export::switch_to_cell_data() {
@@ -368,7 +398,8 @@ namespace getfem
       os << (ascii ? "ASCII\n" : "BINARY\n");
     } else {
       os << "<?xml version=\"1.0\"?>\n";
-      os << "<VTKFile type=\"UnstructuredGrid\" version=\"0.1\">\n";
+      os << "<VTKFile type=\"UnstructuredGrid\" version=\"0.1\" ";
+      os << "byte_order=\"" << (reverse_endian ? "LittleEndian" : "BigEndian") << "\">\n";
       os << "<!--" << header << "-->\n";
       os << "<UnstructuredGrid>\n";
     }
@@ -377,6 +408,16 @@ namespace getfem
 
   void vtk_export::write_separ()
   { if (ascii) os << "\n"; }
+
+  void vtk_export::clear_vals()
+  { if (!vtk && !ascii) vals.clear(); }
+
+  void vtk_export::write_vals() {
+    if (!vtk && !ascii) {
+      os << base64_encode(vals);
+      clear_vals();
+    }
+  }
 
   void vtk_export::write_mesh() {
     if (psl) write_mesh_structure_from_slice();
@@ -405,7 +446,8 @@ namespace getfem
       os << "\" NumberOfCells=\"" << splx_cnt << "\">\n";
       os << "<Points>\n";
       os << "<DataArray type=\"Float32\" Name=\"Points\" ";
-      os << "NumberOfComponents=\"3\" format=\"ascii\">\n";
+      os << "NumberOfComponents=\"3\" ";
+      os << (ascii ? "format=\"ascii\">\n" : "format=\"binary\">\n");
     }
     /*
        points are not merge, vtk is mostly fine with that (except for
@@ -417,8 +459,9 @@ namespace getfem
        write_vec(psl->nodes(ic)[i].pt.begin(),psl->nodes(ic)[i].pt.size());
       write_separ();
     }
+    write_vals();
     if (!vtk) {
-      os << "</DataArray>\n";
+      os << (ascii ? "" : "\n") << "</DataArray>\n";
       os << "</Points>\n";
     }
 
@@ -428,53 +471,58 @@ namespace getfem
       write_separ(); os << "CELLS " << splx_cnt << " " << cells_cnt << "\n";
     } else {
       os << "<Cells>\n";
-      os << "<DataArray type=\"Int64\" Name=\"connectivity\" format=\"ascii\">\n";
+      os << "<DataArray type=\"Int32\" Name=\"connectivity\" ";
+      os << (ascii ? "format=\"ascii\">\n" : "format=\"binary\">\n");
     }
     for (size_type ic=0; ic < psl->nb_convex(); ++ic) {
       const getfem::mesh_slicer::cs_simplexes_ct& s = psl->simplexes(ic);
-      for (size_type i=0; i < s.size(); ++i) {
+      for (const auto &val : s) {
         if (vtk) {
-          write_val(int(s[i].dim()+1));
+          write_val(int(val.dim()+1));
         }
-        for (size_type j=0; j < s[i].dim()+1; ++j)
-          write_val(int(s[i].inodes[j] + nodes_cnt));
+        for (size_type j=0; j < val.dim()+1; ++j)
+          write_val(int(val.inodes[j] + nodes_cnt));
         write_separ();
       }
       nodes_cnt += psl->nodes(ic).size();
     }
     assert(nodes_cnt == psl->nb_points()); // sanity check
+    write_vals();
     if (vtk) {
       write_separ(); os << "CELL_TYPES " << splx_cnt << "\n";
     } else {
-      os << "</DataArray>\n";
-      os << "<DataArray type=\"Int64\" Name=\"offsets\" format=\"ascii\">\n";
+      os << (ascii ? "" : "\n") << "</DataArray>\n";
+      os << "<DataArray type=\"Int32\" Name=\"offsets\" ";
+      os << (ascii ? "format=\"ascii\">\n" : "format=\"binary\">\n");
     }
     int cnt = 0;
     for (size_type ic=0; ic < psl->nb_convex(); ++ic) {
       const getfem::mesh_slicer::cs_simplexes_ct& s = psl->simplexes(ic);
-      for (size_type i=0; i < s.size(); ++i) {
+      for (const auto &val : s)
         if (vtk) {
-          write_val(int(vtk_simplex_code[s[i].dim()]));
+          write_val(int(vtk_simplex_code[val.dim()]));
         } else {
-          cnt += int(s[i].dim()+1);
+          cnt += int(val.dim()+1);
           write_val(cnt);
         }
-      }
       write_separ();
       splx_cnt -= s.size();
     }
+    write_vals();
     assert(splx_cnt == 0); // sanity check
     if (!vtk) {
-      os << "</DataArray>\n";
-      os << "<DataArray type=\"Int64\" Name=\"types\" format=\"ascii\">\n";
+      os << (ascii ? "" : "\n") << "</DataArray>\n";
+      os << "<DataArray type=\"Int32\" Name=\"types\" ";
+      os << (ascii ? "format=\"ascii\">\n" : "format=\"binary\">\n");
       for (size_type ic=0; ic < psl->nb_convex(); ++ic) {
         const getfem::mesh_slicer::cs_simplexes_ct& s = psl->simplexes(ic);
         for (size_type i=0; i < s.size(); ++i) {
           write_val(int(vtk_simplex_code[s[i].dim()]));
         }
       }
-      os << "</DataArray>\n"
-         << "</Cells>\n";
+      write_vals();
+      os << (ascii ? "" : "\n") << "</DataArray>\n";
+      os << "</Cells>\n";
     }
     state = STRUCTURE_WRITTEN;
   }
@@ -492,16 +540,20 @@ namespace getfem
          << "\" NumberOfCells=\"" << pmf->convex_index().card() << "\">\n";
       os << "<Points>\n";
       os << "<DataArray type=\"Float32\" Name=\"Points\" ";
-      os << "NumberOfComponents=\"3\" format=\"ascii\">\n";
+      os << "NumberOfComponents=\"3\" ";
+      os << (ascii ? "format=\"ascii\">\n" : "format=\"binary\">\n");
     }
     std::vector<int> dofmap(pmf->nb_dof());
     int cnt = 0;
+    int size = int(sizeof(float)*pmf_dof_used.card()*3);
+    if (!vtk && !ascii) write_val(size);
     for (dal::bv_visitor d(pmf_dof_used); !d.finished(); ++d) {
       dofmap[d] = cnt++;
       base_node P = pmf->point_of_basic_dof(d);
       write_vec(P.const_begin(),P.size());
       write_separ();
     }
+    write_vals();
 
     size_type nb_cell_values = 0;
     for (dal::bv_visitor cv(pmf->convex_index()); !cv.finished(); ++cv)
@@ -511,10 +563,19 @@ namespace getfem
       write_separ();
       os << "CELLS " << pmf->convex_index().card() << " " << nb_cell_values << "\n";
     } else {
-      os << "</DataArray>\n";
+      os << (ascii ? "" : "\n") << "</DataArray>\n";
       os << "</Points>\n";
       os << "<Cells>\n";
-      os << "<DataArray type=\"Int64\" Name=\"connectivity\" format=\"ascii\">\n";
+      os << "<DataArray type=\"Int32\" Name=\"connectivity\" ";
+      os << (ascii ? "format=\"ascii\">\n" : "format=\"binary\">\n");
+      if (!vtk && !ascii) {
+        size = 0;
+        for (dal::bv_visitor cv(pmf->convex_index()); !cv.finished(); ++cv) {
+          const std::vector<unsigned> &dmap = select_vtk_dof_mapping(pmf_mapping_type[cv]);
+          size += int(sizeof(int)*dmap.size());
+        }
+        write_val(size);
+      }
     }
 
     for (dal::bv_visitor cv(pmf->convex_index()); !cv.finished(); ++cv) {
@@ -524,30 +585,44 @@ namespace getfem
         write_val(int(dofmap[pmf->ind_basic_dof_of_element(cv)[dmap[i]]]));
       write_separ();
     }
+    write_vals();
 
     if (vtk) {
       write_separ();
       os << "CELL_TYPES " << pmf->convex_index().card() << "\n";
     } else {
-      os << "</DataArray>\n";
-      os << "<DataArray type=\"Int64\" Name=\"offsets\" format=\"ascii\">\n";
+      os << (ascii ? "" : "\n") << "</DataArray>\n";
+      os << "<DataArray type=\"Int32\" Name=\"offsets\" ";
+      os << (ascii ? "format=\"ascii\">\n" : "format=\"binary\">\n");
+      if (!vtk && !ascii) {
+        size = 0;
+        for (dal::bv_visitor cv(pmf->convex_index()); !cv.finished(); ++cv)
+          size += int(sizeof(int));
+        write_val(size);
+      }
       cnt = 0;
       for (dal::bv_visitor cv(pmf->convex_index()); !cv.finished(); ++cv) {
         const std::vector<unsigned> &dmap = select_vtk_dof_mapping(pmf_mapping_type[cv]);
         cnt += int(dmap.size());
         write_val(cnt);
-        write_separ();
       }
-      os << "</DataArray>\n";
-      os << "<DataArray type=\"Int64\" Name=\"types\" format=\"ascii\">\n";
+      write_vals();
+      os << "\n" << "</DataArray>\n";
+      os << "<DataArray type=\"Int32\" Name=\"types\" ";
+      os << (ascii ? "format=\"ascii\">\n" : "format=\"binary\">\n");
+      if (!ascii) {
+        size = 0;
+        for (dal::bv_visitor cv(pmf->convex_index()); !cv.finished(); ++cv)
+          size += int(sizeof(int));
+        write_val(size);
+      }
     }
     for (dal::bv_visitor cv(pmf->convex_index()); !cv.finished(); ++cv) {
-      write_val(select_vtk_type(pmf_mapping_type[cv]));
-      write_separ();
+      write_val(int(select_vtk_type(pmf_mapping_type[cv])));
+      if (vtk) write_separ();
     }
-    if (!vtk)
-      os << "</DataArray>\n"
-         << "</Cells>\n";
+    write_vals();
+    if (!vtk) os << "\n" << "</DataArray>\n" << "</Cells>\n";
 
     state = STRUCTURE_WRITTEN;
   }
