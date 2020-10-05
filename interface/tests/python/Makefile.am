@@ -24,6 +24,7 @@ endif
 
 EXTRA_DIST= 						\
 	check_export.py 				\
+	check_export_vtu.py 				\
 	check_global_functions.py			\
 	check_levelset.py				\
 	check_asm.py    				\
@@ -64,6 +65,7 @@ EXTRA_DIST= 						\
 if BUILDPYTHON
 TESTS = 						\
 	check_export.py					\
+	check_export_vtu.py				\
 	check_global_functions.py			\
 	check_asm.py	  				\
 	check_secondary_domain.py 			\

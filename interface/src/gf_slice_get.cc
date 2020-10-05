@@ -438,6 +438,78 @@ void gf_slice_get(getfemint::mexargs_in& m_in,
        );
 
 
+    /*@GET ('export to vtu', @str filename, ...)
+    Export a slice to VTK(XML).
+
+    Following the `filename`, you may use any of the following options:
+
+    - if 'ascii' is not used, the file will contain binary data
+      (non portable, but fast).
+    - if 'edges' is used, the edges of the original mesh will be
+      written instead of the slice content.
+
+    More than one dataset may be written, just list them. Each dataset
+    consists of either:
+
+    - a field interpolated on the slice (scalar, vector or tensor),
+      followed by an optional name.
+    - a mesh_fem and a field, followed by an optional name.
+
+    Examples:
+
+    - SLICE:GET('export to vtu', 'test.vtu', Usl, 'first_dataset', mf,
+      U2, 'second_dataset')
+    - SLICE:GET('export to vtu', 'test.vtu', 'ascii', mf,U2)
+    - SLICE:GET('export to vtu', 'test.vtu', 'edges', 'ascii', Uslice)@*/
+    sub_command
+      ("export to vtu",1, -1, 0, 0,
+       std::string fname = in.pop().to_string();
+       bool ascii = false;
+       bool edges = false;
+       while (in.remaining() && in.front().is_string()) {
+         std::string cmd2 = in.pop().to_string();
+         if (cmd_strmatch(cmd2, "ascii"))
+           ascii = true;
+         else if (cmd_strmatch(cmd2, "edges"))
+           edges = true;
+         else THROW_BADARG("expecting 'ascii' or 'edges', got " << cmd2);
+       }
+       getfem::vtu_export exp(fname, ascii);
+       getfem::stored_mesh_slice sl_edges;
+       const getfem::stored_mesh_slice *vtu_slice = sl;
+       getfem::mesh m_edges;
+       if (edges) {
+         vtu_slice = &sl_edges;
+         dal::bit_vector slice_edges;
+         getfem::mesh_slicer slicer(sl->linked_mesh());
+         getfem::slicer_build_edges_mesh action(m_edges,slice_edges);
+         slicer.push_back_action(action); slicer.exec(*sl);
+         sl_edges.build(m_edges, getfem::slicer_none());
+       }
+       exp.exporting(*vtu_slice);
+       exp.write_mesh();
+       int count = 1;
+       if (in.remaining()) {
+         do {
+           if (in.remaining() >= 2 && is_meshfem_object(in.front())) {
+             const getfem::mesh_fem &mf = *to_meshfem_object(in.pop());
+
+             darray U = in.pop().to_darray();
+             in.last_popped().check_trailing_dimension(int(mf.nb_dof()));
+
+             exp.write_point_data(mf,U,get_vtk_dataset_name(in, count));
+           } else if (in.remaining()) {
+             darray slU = in.pop().to_darray();
+             in.last_popped().check_trailing_dimension(int(vtu_slice->nb_points()));
+
+             exp.write_sliced_point_data(slU,get_vtk_dataset_name(in, count));
+           } else THROW_BADARG("don't know what to do with this argument")
+               count+=1;
+         } while (in.remaining());
+       }
+       );
+
+
     /*@GET ('export to pov', @str filename)
       Export a the triangles of the slice to POV-RAY.@*/
     sub_command
