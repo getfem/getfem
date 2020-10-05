@@ -28,7 +28,13 @@
 """
 import getfem as gf
 import numpy as np
-import pyvista as pv
+import sys
+try:
+    import pyvista as pv
+except:
+    print("\n\n** Could not load pyvista. Did you install it ?\n")
+    print("   ( https://docs.pyvista.org/getting-started/installation.html ) **\n\n")
+    sys.exit()
 
 convex_connectivity = np.array([0, 1, 1, 2])
 mesh = gf.Mesh("cartesian", [0.0, 1.0, 2.0])
