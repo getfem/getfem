@@ -33,6 +33,7 @@ EXTRA_DIST= 						\
 	demo_crack.py 					\
 	demo_fictitious_domains.py 			\
 	demo_laplacian.py 				\
+	demo_parallel_laplacian.py 			\
 	demo_laplacian_HHO.py 				\
 	demo_laplacian_pyramid.py			\
 	demo_laplacian_DG.py 				\
