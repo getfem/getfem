@@ -12,7 +12,7 @@ Export and view a solution
 There are essentially four ways to view the result of getfem computations:
 
 * Scilab, Octave or Matlab, with the interface.
-* The open-source Paraview or Mayavi or any other VTK/VTU file viewer.
+* The open-source Paraview, Mayavi2, PyVista or any other VTK/VTU file viewer.
 * The open-source OpenDX program.
 * The open-source Gmsh program.
 
@@ -215,7 +215,6 @@ It is also possible to export a |mf| ``mfu`` without having to build a slice::
 
 An |mf| ``mfu`` can also be exported in the VTU format with::
 
-  // VTU export is limitted to ascii output and cannot be used for slices
   vtu_export exp("output.vtu);
   exp.exporting(mfu); // will save the geometrical structure of the mesh_fem
   exp.write_point_data(mfp, P, "pressure"); // write a scalar field

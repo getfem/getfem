@@ -402,7 +402,7 @@ In order to preview the mesh and to control its validity, the following instruct
 ========== ===========================================================================
 
 
-In C++ and with the Python interface, an external graphical post-processor has to be used (for instance, gmsh, Mayavi2 or Paraview). With Scilab and Matlab interfaces, the internal plot facilities can be used (see the result :ref:`tut-fig-meshthermo`).
+In C++ and with the Python interface, an external graphical post-processor has to be used (for instance, gmsh, Mayavi2, PyVista or Paraview). With Scilab and Matlab interfaces, the internal plot facilities can be used (see the result :ref:`tut-fig-meshthermo`).
 
 
 Definition of finite element methods and integration method
