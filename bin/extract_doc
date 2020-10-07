@@ -1927,9 +1927,9 @@ except ImportError:
   numbers.Number = (int,float,complex)
 
 try:
-  from ._getfem import getfem, register_python_factory
+  from ._getfem import getfem, getfem_from_constructor, register_python_factory, GetfemObject
 except ImportError:
-  from _getfem import getfem, register_python_factory
+  from _getfem import getfem, getfem_from_constructor, register_python_factory, GetfemObject
 
 obj_count = {}
 getfem('workspace', 'clear all')
