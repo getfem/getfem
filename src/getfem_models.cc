@@ -6126,6 +6126,7 @@ namespace getfem {
   size_type add_isotropic_linearized_elasticity_brick_pstrain
   (model &md, const mesh_im &mim, const std::string &varname,
    const std::string &data_E, const std::string &data_nu,
+   const std::string &data_epsilon,
    size_type region) {
     std::string test_varname
       = "Test_" + sup_previous_and_dot_to_varname(varname);
@@ -6133,8 +6134,8 @@ namespace getfem {
     std::string mu = "(("+data_E+")/(2*(1+("+data_nu+"))))";
     std::string lambda = "(("+data_E+")*("+data_nu+")/((1+("+data_nu+"))*(1-2*("
       +data_nu+"))))";
-    std::string expr = lambda+"*Div_"+varname+"*Div_"+test_varname
-      + "+"+mu+"*(Grad_"+varname+"+Grad_"+varname+"'):Grad_"+test_varname;
+    std::string expr = data_epsilon+"*("+lambda+"*Div_"+varname+"*Div_"+test_varname
+      + "+"+mu+"*(Grad_"+varname+"+Grad_"+varname+"'):Grad_"+test_varname+")";
 
     bool is_lin;
     { // reenables disabled variables

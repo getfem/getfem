@@ -2376,7 +2376,8 @@ namespace getfem {
   size_type APIDECL add_isotropic_linearized_elasticity_brick_pstrain
   (model &md, const mesh_im &mim, const std::string &varname,
    const std::string &data_E, const std::string &data_nu,
-   size_type region);
+   const std::string &data_epsilon = "1.0",
+   size_type region = size_type(-1));
 
   /** 
       Linear elasticity brick ( @f$ \int \sigma(u):\varepsilon(v) @f$ ).
