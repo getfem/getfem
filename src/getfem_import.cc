@@ -213,9 +213,9 @@ namespace getfem {
      Lower dimensions elements in the regions of lower_dim_convex_rg will
      be imported as independant convexes.
 
-     If add_all_element_type is set to true, convexes with less dimension
-     than highest dimension pgt and are not part of other element's face will
-     be imported as independent convexes.
+     If add_all_element_type is set to true, elements with lower dimension
+     than highest dimension and that are not part of other element's face will
+     be imported as independent elements.
 
      for gmsh and gid meshes, the mesh nodes are always 3D, so for a 2D mesh
      if remove_last_dimension == true the z-component of nodes will be removed
@@ -1538,7 +1538,7 @@ namespace getfem {
     if (bgeot::casecmp(format,"gmsh")==0)
       import_gmsh_mesh_file(f,m);
     else if (bgeot::casecmp(format,"gmsh_with_lower_dim_elt")==0)
-      import_gmsh_mesh_file(f,m,0,NULL,true);
+      import_gmsh_mesh_file(f,m,0,NULL,NULL,true);
     else if (bgeot::casecmp(format,"gmshv2")==0)/* deprecate */
       import_gmsh_mesh_file(f,m,2);
     else if (bgeot::casecmp(format,"gid")==0)
