@@ -555,6 +555,7 @@ void gf_mesh(getfemint::mexargs_in& m_in,
       `format` may be:
 
       - 'gmsh' for a mesh created with `Gmsh`
+      - 'gmsh_with_lower_dim_elt' for a mesh created with `Gmsh` and including elements of lower dimension than the mesh
       - 'gid' for a mesh created with `GiD`
       - 'cdb' for a mesh created with `ANSYS`
       - 'am_fmt' for a mesh created with `EMC2`@*/

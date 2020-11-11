@@ -229,8 +229,8 @@ namespace getfem {
                                     bool remove_duplicated_nodes = true)
   {
     gmm::stream_standard_locale sl(f);
-    /* print general warning */
-    GMM_WARNING3("  All regions must have different number!");
+    // /* print general warning */
+    // GMM_WARNING3("  All regions must have different number!");
 
     /* print deprecate warning */
     if (deprecate!=0){
@@ -610,8 +610,7 @@ namespace getfem {
                 size_type ic = m.add_convex(ci.pgt, ci.nodes.begin());
                 m.region(ci.region).add(ic);
                 cvok = true;
-              }
-              else{
+              } else{
                 GMM_WARNING2("gmsh import ignored an element of type "
                   << bgeot::name_of_geometric_trans(ci.pgt) <<
                   " as it does not belong to the face of another element");
@@ -1452,7 +1451,7 @@ namespace getfem {
       GMM_ASSERT1(f.good(), "can't open file " << filename);
       /* throw exceptions when an error occurs */
       f.exceptions(std::ifstream::badbit | std::ifstream::failbit);
-      import_mesh(f, format,m);
+      import_mesh(f, format, m);
       f.close();
     }
     catch (std::logic_error& exc) {
@@ -1538,6 +1537,8 @@ namespace getfem {
                    mesh& m) {
     if (bgeot::casecmp(format,"gmsh")==0)
       import_gmsh_mesh_file(f,m);
+    else if (bgeot::casecmp(format,"gmsh_with_lower_dim_elt")==0)
+      import_gmsh_mesh_file(f,m,0,NULL,true);
     else if (bgeot::casecmp(format,"gmshv2")==0)/* deprecate */
       import_gmsh_mesh_file(f,m,2);
     else if (bgeot::casecmp(format,"gid")==0)
