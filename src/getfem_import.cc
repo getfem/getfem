@@ -326,13 +326,20 @@ namespace getfem {
     // cout << "nb_bloc = " << nb_block << " nb_cv = " << nb_cv << endl;
      
     std::vector<gmsh_cv_info> cvlst; cvlst.reserve(nb_cv);
+    dal::bit_vector reg;
     for (size_type block=0; block < nb_block; ++block) {
       unsigned type, region;
-      if (version >= 4.) /* Format version 4 */
+      if (version >= 4.) { /* Format version 4 */
         f >> region >> dummy >> type >> nb_cv;
-
       
-
+        if (reg.is_in(region)) {
+          GMM_WARNING2("Two regions have the same number, "
+                       "modifying the region number");
+          reg.add(0); reg.add(1); 
+          region = unsigned(reg.first_false());
+        }
+        reg.add(region);
+      }
       for (size_type cv=0; cv < nb_cv; ++cv) {
 
         cvlst.push_back(gmsh_cv_info());
