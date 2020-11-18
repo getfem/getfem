@@ -328,15 +328,13 @@ namespace getfem {
     std::vector<gmsh_cv_info> cvlst; cvlst.reserve(nb_cv);
     dal::bit_vector reg;
     for (size_type block=0; block < nb_block; ++block) {
-      unsigned type, region;
+      unsigned dimr, type, region;
       if (version >= 4.) { /* Format version 4 */
-        f >> region >> dummy >> type >> nb_cv;
-      
+        f >> dimr >> region >> type >> nb_cv;
         if (reg.is_in(region)) {
-          GMM_WARNING2("Two regions have the same number, "
-                       "modifying the region number");
-          reg.add(0); reg.add(1); 
-          region = unsigned(reg.first_false());
+          GMM_WARNING2("Two regions share the same number, "
+                       "the region numbering is modified");
+          while (reg.is_in(region)) region += 5;
         }
         reg.add(region);
       }
