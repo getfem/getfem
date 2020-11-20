@@ -113,7 +113,7 @@ The stress in the reference configuration can be describe by the second Piola-Ki
 
 .. math::
 
-  {\hat{\hat{\sigma}}} &= \frac{\partial}{\partial E} {W}(E) = 2\frac{\partial}{\partial C} {W}(C)
+  {\hat{\hat{\sigma}}} = \frac{\partial}{\partial E} {W}(E) = 2\frac{\partial}{\partial C} {W}(C)
 
 where :math:`{W}` is the density of strain energy of the material. The total strain energy is given by
 
@@ -222,12 +222,12 @@ Incompressible material.
 .. math::
 
   {d_1} = 0
-  \intertext{with the additional constraint:}
+  \mbox{ with the additional constraint: }
   i_3( C) = 1
 
 The incompressibility constraint :math:`i_3( C) = 1` is handled with a Lagrange multiplier :math:`p` (the pressure)
 
-constraint: :math:`\sigma = -pI \rm I\hspace{-0.15em}Rightarrow {\hat{\hat{\sigma}}} = -p\nabla\Phi\nabla\Phi^{-T}\det\nabla\Phi`
+constraint: :math:`\sigma = -pI \Rightarrow {\hat{\hat{\sigma}}} = -p\nabla\Phi\nabla\Phi^{-T}\det\nabla\Phi`
 
 .. math::
 
@@ -248,7 +248,7 @@ constraint: :math:`\sigma = -pI \rm I\hspace{-0.15em}Rightarrow {\hat{\hat{\sigm
 
 .. math::
 
-  {W} &= a\; i_1(C) + (\frac{\mu}{2} - a)i_2(C) + (\frac{\lambda}{4} - \frac{\mu}{2} + a)i_3(C) - (\frac{\mu}{2}+\frac{\lambda}{4})\log \det(C)
+  {W} = a\; i_1(C) + (\frac{\mu}{2} - a)i_2(C) + (\frac{\lambda}{4} - \frac{\mu}{2} + a)i_3(C) - (\frac{\mu}{2}+\frac{\lambda}{4})\log \det(C)
 
 with  :math:`\lambda, \mu` the Lame coefficients and :math:`\max(0,\frac{\mu}{2}-\frac{\lambda}{4})<a<\frac{\mu}{2}` (see [ciarlet1988]_).
 
@@ -258,14 +258,14 @@ with  :math:`\lambda, \mu` the Lame coefficients and :math:`\max(0,\frac{\mu}{2}
 
 .. math::
 
- {W} &= (ai_1(C) + bi_3(C)^{1/2} + c\frac{\i_2(C)}{\i_3(C)} + d)^n
+ {W} = (a i_1(C) + b i_3(C)^{1/2} + c\frac{i_2(C)}{i_3(C)} + d)^n
 
 Since :math:`\frac{\partial}{\partial C} {W}(C) = \displaystyle\sum_{j}\frac{\partial W}{\partial i_j(C)} \frac{\partial i_j(C)}{\partial C}`, and :math:`\frac{\partial^2}{\partial C^2} {W}(C) = \displaystyle\sum_{j} \displaystyle\sum_{k} \frac{\partial^2 W}{\partial i_j(C) \partial i_k(C)} \frac{\partial i_k(C)}{\partial C} \otimes \frac{\partial i_j(C)}{\partial C} + \displaystyle\sum_{j} \frac{\partial W}{\partial i_j(C)} \frac{\partial^2 i_j(C)}{\partial C^2}` we must compute the derivatives of the strain energy function with respect to the Cauchy-Green tensor invariants (we don't need to compute the invariants derivatives with respect to :math:`E` since :math:`\frac{\partial i_j}{\partial E}(C;H) = 2 \frac{\partial i_j}{\partial C}(C;H)`) :
 
 .. math::
   \begin{array}{l}
   \frac{\partial W}{\partial i_1(C)} = naZ^{n-1}
-  ~~~~\mbox{with } Z = (ai_1(C) + bi_3(C)^{1/2} + c\frac{\i_2(C)}{\i_3(C)} + d)\\
+  ~~~~\mbox{with } Z = (a i_1(C) + b i_3(C)^{1/2} + c\frac{i_2(C)}{i_3(C)} + d)\\
   \frac{\partial W}{\partial i_2(C)} = n\frac{c}{i_3(C)}Z^{n-1}\\
   \frac{\partial W}{\partial i_3(C)} = n(\frac{b}{2i_3(C)^{1/2}}-\frac{ci_2(C)}{i_3(C)^2})Z^{n-1}\\
   \frac{\partial W^2}{\partial^2 i_1(C)} = n(n-1)A^2Z^{n-2}\\
