@@ -78,6 +78,7 @@ namespace getfem {
     std::ofstream real_os;
     dim_type dim_;
     bool reverse_endian;
+    std::vector<unsigned char> vals;
     enum { EMPTY, HEADER_WRITTEN, STRUCTURE_WRITTEN, IN_CELL_DATA,
            IN_POINT_DATA } state;
 
@@ -85,10 +86,12 @@ namespace getfem {
     template<class V> void write_vec(V p, size_type qdim);
     template<class IT> void write_3x3tensor(IT p);
     void write_separ();
+    void clear_vals();
+    void write_vals();
 
   public:
-    vtk_export(const std::string& fname, bool ascii_= false, bool vtk_=true);
-    vtk_export(std::ostream &os_, bool ascii_ = false, bool vtk_=true);
+    vtk_export(const std::string& fname, bool ascii_ = false, bool vtk_= true);
+    vtk_export(std::ostream &os_, bool ascii_ = false, bool vtk_ = true);
     ~vtk_export(); // a vtu file is completed upon calling the destructor
     /** should be called before write_*_data */
     void exporting(const mesh& m);
@@ -156,10 +159,17 @@ namespace getfem {
     if (ascii) os << " " << v;
     else {
       char *p = (char*)&v;
-      if (reverse_endian)
-        for (size_type i=0; i < sizeof(v)/2; ++i)
-          std::swap(p[i], p[sizeof(v)-i-1]);
-      os.write(p, sizeof(T));
+      if (vtk) {
+        if (reverse_endian)
+          for (size_type i=0; i < sizeof(v)/2; ++i)
+            std::swap(p[i], p[sizeof(v)-i-1]);
+        os.write(p, sizeof(T));
+      } else {
+        union { T value; unsigned char bytes[sizeof(T)]; } UNION;
+        UNION.value = v;
+        for (size_type i=0; i < sizeof(T); i++)
+          vals.push_back(UNION.bytes[i]);
+      }
     }
   }
 
@@ -250,20 +260,19 @@ namespace getfem {
         os << "SCALARS " << remove_spaces(name) << " float 1\n"
            << "LOOKUP_TABLE default\n";
       else
-        os << "<DataArray type=\"Float32\" Name=\"" << remove_spaces(name)
-           << "\" format=\"ascii\">\n";
-      for (size_type i=0; i < nb_val; ++i) {
+        os << "<DataArray type=\"Float32\" Name=\"" << remove_spaces(name) << "\" "
+           << (ascii ? "format=\"ascii\">\n" : "format=\"binary\">\n");
+      for (size_type i=0; i < nb_val; ++i)
         write_val(float(U[i]));
-      }
     } else if (Q <= 3) {
       if (vtk)
         os << "VECTORS " << remove_spaces(name) << " float\n";
       else
-        os << "<DataArray type=\"Float32\" Name=\"" << remove_spaces(name)
-           << "\" NumberOfComponents=\"3\" format=\"ascii\">\n";
-      for (size_type i=0; i < nb_val; ++i) {
+        os << "<DataArray type=\"Float32\" Name=\"" << remove_spaces(name) << "\" "
+           << "NumberOfComponents=\"3\" "
+           << (ascii ? "format=\"ascii\">\n" : "format=\"binary\">\n");
+      for (size_type i=0; i < nb_val; ++i)
         write_vec(U.begin() + i*Q, Q);
-      }
     } else if (Q == gmm::sqr(dim_)) {
       /* tensors : coef are supposed to be stored in FORTRAN order
          in the VTK/VTU file, they are written with C (row major) order
@@ -272,22 +281,22 @@ namespace getfem {
         os << "TENSORS " << remove_spaces(name) << " float\n";
       else
         os << "<DataArray type=\"Float32\" Name=\"" << remove_spaces(name)
-           << "\" NumberOfComponents=\"9\" format=\"ascii\">";
-      for (size_type i=0; i < nb_val; ++i) {
+           << "\" NumberOfComponents=\"9\" "
+           << (ascii ? "format=\"ascii\">\n" : "format=\"binary\">\n");
+      for (size_type i=0; i < nb_val; ++i)
         write_3x3tensor(U.begin() + i*Q);
-      }
     } else
       GMM_ASSERT1(false, std::string(vtk ? "vtk" : "vtu")
                          + " does not accept vectors of dimension > 3");
-    write_separ();
-    if (!vtk) os << "</DataArray>\n";
+    if (vtk) write_separ();
+    if (!vtk) os << (ascii ? "" : "\n") << "</DataArray>\n";
   }
 
 
   class vtu_export : public vtk_export {
   public:
-    vtu_export(const std::string& fname) : vtk_export(fname, true, false) {}
-    vtu_export(std::ostream &os_) : vtk_export(os_, true, false) {}
+    vtu_export(const std::string& fname, bool ascii_ = false) : vtk_export(fname, ascii_, false) {}
+    vtu_export(std::ostream &os_, bool ascii_ = false) : vtk_export(os_, ascii_, false) {}
   };
 
   /** @brief A (quite large) class for exportation of data to IBM OpenDX.

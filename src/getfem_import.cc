@@ -213,24 +213,24 @@ namespace getfem {
      Lower dimensions elements in the regions of lower_dim_convex_rg will
      be imported as independant convexes.
 
-     If add_all_element_type is set to true, convexes with less dimension
-     than highest dimension pgt and are not part of other element's face will
-     be imported as independent convexes.
+     If add_all_element_type is set to true, elements with lower dimension
+     than highest dimension and that are not part of other element's face will
+     be imported as independent elements.
 
      for gmsh and gid meshes, the mesh nodes are always 3D, so for a 2D mesh
      if remove_last_dimension == true the z-component of nodes will be removed
   */
-  static void import_gmsh_mesh_file(std::istream& f, mesh& m, int deprecate=0,
-                                    std::map<std::string, size_type> *region_map=NULL,
-                                    std::set<size_type> *lower_dim_convex_rg=NULL,
-                                    bool add_all_element_type = false,
-                                    bool remove_last_dimension = true,
-                                    std::map<size_type, std::set<size_type>> *nodal_map = NULL,
-                                    bool remove_duplicated_nodes = true)
-  {
+  static void import_gmsh_mesh_file
+  (std::istream& f, mesh& m, int deprecate=0,
+   std::map<std::string, size_type> *region_map=NULL,
+   std::set<size_type> *lower_dim_convex_rg=NULL,
+   bool add_all_element_type = false,
+   bool remove_last_dimension = true,
+   std::map<size_type, std::set<size_type>> *nodal_map = NULL,
+   bool remove_duplicated_nodes = true) {
     gmm::stream_standard_locale sl(f);
-    /* print general warning */
-    GMM_WARNING3("  All regions must have different number!");
+    // /* print general warning */
+    // GMM_WARNING3("  All regions must have different number!");
 
     /* print deprecate warning */
     if (deprecate!=0){
@@ -326,13 +326,18 @@ namespace getfem {
     // cout << "nb_bloc = " << nb_block << " nb_cv = " << nb_cv << endl;
      
     std::vector<gmsh_cv_info> cvlst; cvlst.reserve(nb_cv);
+    dal::bit_vector reg;
     for (size_type block=0; block < nb_block; ++block) {
-      unsigned type, region;
-      if (version >= 4.) /* Format version 4 */
-        f >> region >> dummy >> type >> nb_cv;
-
-      
-
+      unsigned dimr, type, region;
+      if (version >= 4.) { /* Format version 4 */
+        f >> dimr >> region >> type >> nb_cv;
+        if (reg.is_in(region)) {
+          GMM_WARNING2("Two regions share the same number, "
+                       "the region numbering is modified");
+          while (reg.is_in(region)) region += 5;
+        }
+        reg.add(region);
+      }
       for (size_type cv=0; cv < nb_cv; ++cv) {
 
         cvlst.push_back(gmsh_cv_info());
@@ -545,7 +550,7 @@ namespace getfem {
     nb_cv = cvlst.size();
     if (cvlst.size()) {
       std::sort(cvlst.begin(), cvlst.end());
-      if (cvlst.front().type == 15){
+      if (cvlst.front().type == 15) {
         GMM_WARNING2("Only nodes defined in the mesh! No elements are added.");
         return;
       }
@@ -556,8 +561,8 @@ namespace getfem {
         gmsh_cv_info &ci = cvlst[cv];
         bool is_node = (ci.type == 15);
         unsigned ci_dim = (is_node) ? 0 : ci.pgt->dim();
-        //cout << "importing cv dim=" << int(ci.pgt->dim()) << " N=" << N
-        //     << " region: " << ci.region << "\n";
+        //  cout << "importing cv dim=" << ci_dim << " N=" << N
+        //       << " region: " << ci.region << " type: " << ci.type << "\n";
 
         //main convex import
         if (ci_dim == N) {
@@ -571,50 +576,48 @@ namespace getfem {
           //convex that lies within the regions of lower_dim_convex_rg
           //is imported explicitly as a convex.
           if (lower_dim_convex_rg != NULL &&
-              lower_dim_convex_rg->find(ci.region) != lower_dim_convex_rg->end() &&
-              !is_node){
-              size_type ic = m.add_convex(ci.pgt, ci.nodes.begin()); cvok = true;
-              m.region(ci.region).add(ic);
+              lower_dim_convex_rg->find(ci.region) != lower_dim_convex_rg->end()
+              && !is_node) {
+              size_type ic = m.add_convex(ci.pgt, ci.nodes.begin());
+              cvok = true; m.region(ci.region).add(ic);
           }
           //find if the convex is part of a face of higher dimension convex
           else{
-            bgeot::mesh_structure::ind_cv_ct ct = m.convex_to_point(ci.nodes[0]);
+            bgeot::mesh_structure::ind_cv_ct ct=m.convex_to_point(ci.nodes[0]);
             for (bgeot::mesh_structure::ind_cv_ct::const_iterator
                    it = ct.begin(); it != ct.end(); ++it) {
-              for (short_type face=0;
-                   face < m.structure_of_convex(*it)->nb_faces(); ++face) {
-                if (m.is_convex_face_having_points(*it,face,
-                                                   short_type(ci.nodes.size()),
-                                                   ci.nodes.begin())) {
-                  m.region(ci.region).add(*it,face);
-                  cvok = true;
+              if (m.structure_of_convex(*it)->dim() == ci_dim + 1) {
+                for (short_type face=0;
+                     face < m.structure_of_convex(*it)->nb_faces(); ++face) {
+                  if (m.is_convex_face_having_points(*it, face,
+                                                    short_type(ci.nodes.size()),
+                                                    ci.nodes.begin())) {
+                    m.region(ci.region).add(*it,face);
+                    cvok = true;
+                  }
                 }
               }
             }
-            if (is_node && (nodal_map != NULL))
-            {
+            if (is_node && (nodal_map != NULL)) {
               for (auto i : ci.nodes) (*nodal_map)[ci.region].insert(i);
             }
-            //if the convex is not part of the face of others
-            if (!cvok)
-            {
-              if (is_node)
-              {
+            // if the convex is not part of the face of others
+            if (!cvok) {
+              if (is_node) {
                 if (nodal_map == NULL){
                   GMM_WARNING2("gmsh import ignored a node id: "
                                << ci.id << " region :" << ci.region <<
                                " point is not added explicitly as an element.");
                 }
               }
-              else if (add_all_element_type){
+              else if (add_all_element_type) {
                 size_type ic = m.add_convex(ci.pgt, ci.nodes.begin());
                 m.region(ci.region).add(ic);
                 cvok = true;
-              }
-              else{
+              } else {
                 GMM_WARNING2("gmsh import ignored an element of type "
-                  << bgeot::name_of_geometric_trans(ci.pgt) <<
-                  " as it does not belong to the face of another element");
+                             << bgeot::name_of_geometric_trans(ci.pgt) <<
+                    " as it does not belong to the face of another element");
               }
             }
           }
@@ -1452,7 +1455,7 @@ namespace getfem {
       GMM_ASSERT1(f.good(), "can't open file " << filename);
       /* throw exceptions when an error occurs */
       f.exceptions(std::ifstream::badbit | std::ifstream::failbit);
-      import_mesh(f, format,m);
+      import_mesh(f, format, m);
       f.close();
     }
     catch (std::logic_error& exc) {
@@ -1538,6 +1541,8 @@ namespace getfem {
                    mesh& m) {
     if (bgeot::casecmp(format,"gmsh")==0)
       import_gmsh_mesh_file(f,m);
+    else if (bgeot::casecmp(format,"gmsh_with_lower_dim_elt")==0)
+      import_gmsh_mesh_file(f,m,0,NULL,NULL,true);
     else if (bgeot::casecmp(format,"gmshv2")==0)/* deprecate */
       import_gmsh_mesh_file(f,m,2);
     else if (bgeot::casecmp(format,"gid")==0)

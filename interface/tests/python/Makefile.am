@@ -24,6 +24,7 @@ endif
 
 EXTRA_DIST= 						\
 	check_export.py 				\
+	check_export_vtu.py 				\
 	check_global_functions.py			\
 	check_levelset.py				\
 	check_asm.py    				\
@@ -32,6 +33,7 @@ EXTRA_DIST= 						\
 	demo_crack.py 					\
 	demo_fictitious_domains.py 			\
 	demo_laplacian.py 				\
+	demo_parallel_laplacian.py 			\
 	demo_laplacian_HHO.py 				\
 	demo_laplacian_pyramid.py			\
 	demo_laplacian_DG.py 				\
@@ -64,6 +66,7 @@ EXTRA_DIST= 						\
 if BUILDPYTHON
 TESTS = 						\
 	check_export.py					\
+	check_export_vtu.py				\
 	check_global_functions.py			\
 	check_asm.py	  				\
 	check_secondary_domain.py 			\

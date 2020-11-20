@@ -763,6 +763,39 @@ void gf_mesh_fem_get(getfemint::mexargs_in& m_in,
        }
        );
 
+    /*@GET ('export to vtu',@str filename, ... ['ascii'], U, 'name'...)
+    Export a @tmf and some fields to a vtu file.
+
+    The FEM and geometric transformations will be mapped to order 1
+    or 2 isoparametric Pk (or Qk) FEMs (as VTK(XML) does not handle higher
+    order elements). If you need to represent high-order FEMs or
+    high-order geometric transformations, you should consider
+    SLICE:GET('export to vtu').@*/
+    sub_command
+      ("export to vtu", 0, -1, 0, 0,
+       std::string fname = in.pop().to_string();
+       bool ascii = false;
+       while (in.remaining() && in.front().is_string()) {
+	 std::string cmd2 = in.pop().to_string();
+	 if (cmd_strmatch(cmd2, "ascii"))
+	   ascii = true;
+	 else THROW_BADARG("expecting 'ascii', got " << cmd2);
+       }
+       getfem::vtu_export exp(fname, ascii);
+       exp.exporting(*mf);
+       exp.write_mesh();
+       int count = 1;
+       while (in.remaining()) {
+	 const getfem::mesh_fem *mf2 = mf;
+	 if (in.remaining() >= 2 && is_meshfem_object(in.front()))
+	   mf2 = to_meshfem_object(in.pop());
+	 darray U = in.pop().to_darray();
+	 in.last_popped().check_trailing_dimension(int(mf2->nb_dof()));
+	 exp.write_point_data(*mf2, U, get_vtk_dataset_name(in, count));
+	 count+=1;
+       }
+       );
+
 
     /*@GET ('export to dx',@str filename, ...['as', @str mesh_name][,'edges']['serie',@str serie_name][,'ascii'][,'append'], U, 'name'...)
     Export a @tmf and some fields to an OpenDX file.

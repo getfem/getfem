@@ -4002,6 +4002,8 @@ namespace getfem {
           short_type f = ctx.face_num();
           auto adj_face = m.adjacent_face(cv, f);
           if (adj_face.cv == size_type(-1)) {
+            GMM_WARNING2("Adjacent face not found, "
+                         "probably an non-interior face");
             inin.ctx.invalid_convex_num();
           } else {
             gauss_pt_corresp gpc;
@@ -4062,7 +4064,7 @@ namespace getfem {
         }
       }
 
-      if (inin.ctx.have_pgp()) {
+      if (inin.ctx.have_pgp() && inin.ctx.is_convex_num_valid()) {
         inin.ctx.set_ii(ipt);
         inin.pt_type = 1;
         inin.has_ctx = true;
@@ -8266,7 +8268,7 @@ namespace getfem {
             }
             if (pspt != old_pspt) { first_gp = true; old_pspt = pspt; }
             if (pspt->size()) {
-              // iterations on Gauss points
+              // Iterations on Gauss points
               size_type first_ind = 0;
               if (v.f() != short_type(-1)) {
                 gis.nbpt = pai->nb_points_on_face(v.f());

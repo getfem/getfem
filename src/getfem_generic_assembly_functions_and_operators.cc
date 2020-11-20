@@ -331,7 +331,7 @@ namespace getfem {
       gmm::copy(__mat_aux1().as_vector(), result.as_vector());
     }
 
-    // Derivative : -M^{-1}{ik}M^{-1}{lj}  (comes from H -> M^{-1}HM^{-1})
+    // Derivative : -M^{-1}{ik}M^{-1}{lj}  (comes from H -> -M^{-1}HM^{-1})
     void derivative(const arg_list &args, size_type,
                     base_tensor &result) const { // to be verified
       size_type N = args[0]->sizes()[0];
@@ -374,7 +374,7 @@ namespace getfem {
               for (size_type j = 0; j < N; ++j)
                 for (size_type i = 0; i < N; ++i, ++it)
                   *it = __mat_aux1()(i,k)*__mat_aux1()(l,m)*__mat_aux1()(n,j)
-                    + __mat_aux1()(i,m)*__mat_aux1()(m,k)*__mat_aux1()(l,j);
+                    + __mat_aux1()(i,m)*__mat_aux1()(n,k)*__mat_aux1()(l,j);
       GA_DEBUG_ASSERT(it == result.end(), "Internal error");
     }
   };

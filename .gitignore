@@ -330,6 +330,7 @@ Makefile
 /tests/dynamic_tas
 /tests/elastostatic
 /tests/geo_trans_inv
+/tests/helmholtz.vtu
 /tests/heat_equation
 /tests/helmholtz
 /tests/integration
