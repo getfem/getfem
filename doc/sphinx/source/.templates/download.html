@@ -6,85 +6,88 @@
 <h1>Download {{ project }} {{ release }}</h1>
 
 {% if 'a' in release or 'b' in release or 'c' in release %}
-<p>We don't package the {{ project }} for development releases for download.
-  Downloads will be available for the final release or svn.</p>
+<p>{%trans%}We don't package the {{ project }} for development releases for download.
+  Downloads will be available for the final release or svn.{%endtrans%}</p>
 
 {% else %}
-{% if last_updated %}<p><b>Last updated on: {{ last_updated }}.</b></p>{% endif %}
+{% if last_updated %}<p><b>{%trans%}Last updated on: {{ last_updated }}.{%endtrans%}</b></p>{% endif %}
 
-<p>{{ project }} is freely distributed under the terms of the
+<p>{%trans%}{{ project }} is freely distributed under the terms of the
 <a href="http://www.gnu.org/copyleft/lgpl.html">Gnu Lesser General
-Public License, either version 3 of the license or any later version along with the GCC Runtime Library Exception</a>.</p>
+Public License, either version 3 of the license or any later version along with the GCC Runtime Library Exception</a>.{%endtrans%}</p>
 
 <table class="docutils">
-  <tr><th>Format</th><th>Packed as .tar.gz</th></tr>
+  <tr><th>{%trans%}Format{%endtrans%}</th><th>{%trans%}Packed as .tar.gz{%endtrans%}</th></tr>
   <tr>
-    <td>{{ project }} stable </td>
+    <td>{%trans%}{{ project }} stable {%endtrans%}</td>
     <td><a href="http://download-mirror.savannah.gnu.org/releases/getfem/stable/getfem-5.4.1.tar.gz">getfem-5.4.1.tar.gz</a></td>
   </tr>
   <tr>
-    <td>Gmm++ standalone</td>
+    <td>{%trans%}Gmm++ standalone{%endtrans%}</td>
     <td><a href="http://download-mirror.savannah.gnu.org/releases/getfem/stable/gmm-5.4.tar.gz">gmm-5.4.tar.gz</a></td>
   </tr>
 </table>
 
-<p>For older releases, look <a href="http://download-mirror.savannah.gnu.org/releases/getfem/stable">here</a>.</p>
+<p>{%trans%}For older releases, look <a href="http://download-mirror.savannah.gnu.org/releases/getfem/stable">here</a>.{%endtrans%}</p>
 
-<p>Building a portable C++ library is not an easy task. We try to build it with many combinations of OS and compilers. The last stable version has been tested on the following configurations:<p>
+<p>{%trans%}Building a portable C++ library is not an easy task. We try to build it with many combinations of OS and compilers. The last stable version has been tested on the following configurations:{%endtrans%}<p>
 
 <ul>
-  <li>Linux with g++ (versions 7.1 to 9.0) </li>
-  <li>MacOS X (with the Python, Octave and Matlab interfaces)</li>
-  <li>Windows with <a href="http://www.mingw.org">MinGW</a> and
+  <li>{%trans%}Linux with g++ (versions 7.1 to 9.0) {%endtrans%}</li>
+  <li>{%trans%}MacOS X (with the Python, Octave and Matlab interfaces){%endtrans%}</li>
+  <li>{%trans%}Windows with <a href="http://www.mingw.org">MinGW</a> and
   <a href="http://www.mingw.org/wiki/msys">MSys</a>
-  ({{ project }} only -- see specific notes for the Matlab interface)</li>
+  ({{ project }} only -- see specific notes for the Matlab interface){%endtrans%}</li>
 </ul>
 
-<h1>Install {{ project }} {{ release }} on different plateforms </h1>
+<h1>{%trans%}Install {{ project }} {{ release }} on different plateforms {%endtrans%}</h1>
 
-<h2>Installation from sources</h2>
+<h2>{%trans%}Installation from sources{%endtrans%}</h2>
 
+{%trans%}
 Since standard GNU tools are used, the installation of the {{ project }} library is somewhat standard. From a general viewpoint, the installation from sources will require the following ingredients for any platform:
+{%endtrans%}
 
 <ul>
-  <li> A decently recent C/C++ compiler accepting C++ 14 standard
-       (gcc/g++ >= 7.1 for instance).  </li>
-  <li> If you want to build binaries from git to get the latest changes,
+  <li>{%trans%} A decently recent C/C++ compiler accepting C++ 14 standard
+       (gcc/g++ >= 7.1 for instance).  {%endtrans%}</li>
+  <li>{%trans%} If you want to build binaries from git to get the latest changes,
     improvements, bugfixes, new bugs, etc. It requires a git client,
-    automake, and libtool (otherwise, use the lastest stable package). </li>
-  <li> By default, the Python Getfem interface is built. It requires the python
+    automake, and libtool (otherwise, use the lastest stable package). {%endtrans%}</li>
+  <li>{%trans%} By default, the Python Getfem interface is built. It requires the python
     development files (Python.h etc.) to be available (package
     ``python-all-dev`` in debian distribution), and also the Numpy and Scipy
     packages to be installed (package ``python-numpy`` and ``python-scipy``
     in debian distribution). In case of troubles with a non-gnu compiler,
     gcc/g++ (>= 7.1) should be a safe solution (package ``build-essential``
     in debian distribution). If you do not want to build the python interface,
-    use the configure option `./configure --disable-python` </li>
-  <li> If you want to build the Octave interface, it requires a recent Octave
-    version installed on your system and the associated mkoctfile command. </li>
-  <li> If you want to build the Matlab interface, it requires a recent Matlab
+    use the configure option `./configure --disable-python` {%endtrans%}</li>
+  <li>{%trans%} If you want to build the Octave interface, it requires a recent Octave
+    version installed on your system and the associated mkoctfile command. {%endtrans%}</li>
+  <li>{%trans%} If you want to build the Matlab interface, it requires a recent Matlab
     version installed on your system and the associated mex compiler
-    correctly configured. </li>
-  <li> If you want to build the Scilab interface, it requires a recent Scilab
-    version installed on your system.  </li>
-  <li> If you want mesh generation and fictitious domain facilities
+    correctly configured. {%endtrans%}</li>
+  <li>{%trans%} If you want to build the Scilab interface, it requires a recent Scilab
+    version installed on your system.  {%endtrans%}</li>
+  <li>{%trans%} If you want mesh generation and fictitious domain facilities
     (such as Xfem),
     it requires the package qhull installed on your system
-    (package ``libqhull-dev`` in debian distribution). </li>
-  <li> If you want to use MUMPS linear sparse solver instead of SUPERLU, you
+    (package ``libqhull-dev`` in debian distribution). {%endtrans%}</li>
+  <li>{%trans%} If you want to use MUMPS linear sparse solver instead of SUPERLU, you
   need to  install the sequential version of MUMPS on your system
-  (or the parallel one if you intend to use the parallel version of {{ project }}).  </li>
+  (or the parallel one if you intend to use the parallel version of {{ project }}).  {%endtrans%}</li>
 </ul>
 
-Depending on the plateform, find some specific help here for the installation on <a class="biglink" href="{{ pathto("install/install_linux") }}">Linux</a>, <a class="biglink" href="{{ pathto("install/install_mac") }}">MacOS X</a>, or <a class="biglink" href="{{ pathto("install/install_windows") }}">Windows</a>.
+{%trans%}Depending on the plateform, find some specific help here for the installation on{%endtrans%} <a class="biglink" href="{{ pathto("install/install_linux") }}">Linux</a>, <a class="biglink" href="{{ pathto("install/install_mac") }}">MacOS X</a>, {%trans%}or{%endtrans%} <a class="biglink" href="{{ pathto("install/install_windows") }}">Windows</a>{%trans%}.{%endtrans%}
 
 
-<h2>Installation from pre-compiled packages</h2>
+<h2>{%trans%}Installation from pre-compiled packages{%endtrans%}</h2>
 
 
 
-<h3> On a Debian/Ubuntu system </h3>
+<h3>{%trans%} On a Debian/Ubuntu system {%endtrans%}</h3>
 
+{%trans%}
 GetFEM packages are available in the official repositories of Debian
 and Ubuntu distributions.
 
@@ -99,110 +102,111 @@ and with respect to different Ubuntu releases at
 
 GetFEM including its python interface can be installed from a terminal
 by executing <b>aptitude update</b> and <b>aptitude install python-getfem++</b>.
+{%endtrans%}
 
-<h3> On Windows (last release)</h3>
+<h3>{%trans%} On Windows (last release){%endtrans%}</h3>
 
-<p>Installer of the GetFEM 5.4 interface for 64bits Windows and Python 3.7 of Anaconda 3 (furnished by J.-F. Barthelemy):
-  <a href="http://download-mirror.savannah.gnu.org/releases/getfem/misc/getfem5.4win-amd64-py3.7.exe">getfem5.4win-amd64-py3.7.exe</a>.</p>
-<p>Note that you have to install first Anaconda 3.</p>
+<p>{%trans%}Installer of the GetFEM 5.4 interface for 64bits Windows and Python 3.7 of Anaconda 3 (furnished by J.-F. Barthelemy):
+  <a href="http://download-mirror.savannah.gnu.org/releases/getfem/misc/getfem5.4win-amd64-py3.7.exe">getfem5.4win-amd64-py3.7.exe</a>.{%endtrans%}</p>
+<p>{%trans%}Note that you have to install first Anaconda 3.{%endtrans%}</p>
 
-<h3> On Windows (old releases)</h3>
+<h3>{%trans%} On Windows (old releases){%endtrans%}</h3>
 
-<p>Installer of the GetFEM 5.3 interface for 64bits Windows and Python 2.7 of Anaconda 2 (furnished by J.-F. Barthelemy):
-  <a href="http://download-mirror.savannah.gnu.org/releases/getfem/misc/getfem5.3win-amd64-py2.7.exe">getfem5.3win-amd64-py2.7.exe</a>.</p>
-<p>Note that you have to install first Anaconda 2.</p>
+<p>{%trans%}Installer of the GetFEM 5.3 interface for 64bits Windows and Python 2.7 of Anaconda 2 (furnished by J.-F. Barthelemy):
+  <a href="http://download-mirror.savannah.gnu.org/releases/getfem/misc/getfem5.3win-amd64-py2.7.exe">getfem5.3win-amd64-py2.7.exe</a>.{%endtrans%}</p>
+<p>{%trans%}Note that you have to install first Anaconda 2.{%endtrans%}</p>
 
-<p>Installer of the GetFEM 5.3 interface for 64bits Windows and Python 3.6 of Anaconda 3 (furnished by J.-F. Barthelemy):
-  <a href="http://download-mirror.savannah.gnu.org/releases/getfem/misc/getfem5.3win-amd64-py3.6.exe">getfem5.3win-amd64-py3.6.exe</a>.</p>
-<p>Note that you have to install first Anaconda 3.</p>
+<p>{%trans%}Installer of the GetFEM 5.3 interface for 64bits Windows and Python 3.6 of Anaconda 3 (furnished by J.-F. Barthelemy):
+  <a href="http://download-mirror.savannah.gnu.org/releases/getfem/misc/getfem5.3win-amd64-py3.6.exe">getfem5.3win-amd64-py3.6.exe</a>.{%endtrans%}</p>
+<p>{%trans%}Note that you have to install first Anaconda 3.{%endtrans%}</p>
 
-<p>Installer of the GetFEM 5.3 interface for 64bits Windows and Python 3.7 of Anaconda 3 (furnished by J.-F. Barthelemy):
-  <a href="http://download-mirror.savannah.gnu.org/releases/getfem/misc/getfem5.3win-amd64-py3.7.exe">getfem5.3win-amd64-py3.7.exe</a>.</p>
-<p>Note that you have to install first Anaconda 3.</p>
+<p>{%trans%}Installer of the GetFEM 5.3 interface for 64bits Windows and Python 3.7 of Anaconda 3 (furnished by J.-F. Barthelemy):
+  <a href="http://download-mirror.savannah.gnu.org/releases/getfem/misc/getfem5.3win-amd64-py3.7.exe">getfem5.3win-amd64-py3.7.exe</a>.{%endtrans%}</p>
+<p>{%trans%}Note that you have to install first Anaconda 3.{%endtrans%}</p>
 
-<p>Once installed, you can test under for instance command shell the Python tests programs (see <a href="http://git.savannah.nongnu.org/cgit/getfem.git/tree/interface/tests/python">interface/tests/python</a> directory).</p>
-
-
-
-<p>Installer of the GetFEM 5.2 interface for 64bits Windows and Matlab 2016:
-  <a href="http://download-mirror.savannah.gnu.org/releases/getfem/misc/getfem5.2-matlab2016-interface-setup.exe">getfem5.2-matlab2016-interface-setup.exe</a>.</p>
-
-<p>IMPORTANT : Unfortunately, it seems that recent Matlab versions on Windows do not take properly into account the MATLABPATH environment variable (Matlab is unable to run correctly with a defined MATLABPATH variable). So, the installer do not set it and you have to add the install path specified on the installer yourself using Matlab (Click on "home" and "add path" in Matlab).</p>
-
-<p>Once installed, you can test under Matlab the tests programs (see <a href="http://git.savannah.nongnu.org/cgit/getfem.git/tree/interface/tests/matlab">interface/tests/matlab</a> directory).</p>
+<p>{%trans%}Once installed, you can test under for instance command shell the Python tests programs (see <a href="http://git.savannah.nongnu.org/cgit/getfem.git/tree/interface/tests/python">interface/tests/python</a> directory).{%endtrans%}</p>
 
 
 
+<p>{%trans%}Installer of the GetFEM 5.2 interface for 64bits Windows and Matlab 2016:
+  <a href="http://download-mirror.savannah.gnu.org/releases/getfem/misc/getfem5.2-matlab2016-interface-setup.exe">getfem5.2-matlab2016-interface-setup.exe</a>.{%endtrans%}</p>
+
+<p>{%trans%}IMPORTANT : Unfortunately, it seems that recent Matlab versions on Windows do not take properly into account the MATLABPATH environment variable (Matlab is unable to run correctly with a defined MATLABPATH variable). So, the installer do not set it and you have to add the install path specified on the installer yourself using Matlab (Click on "home" and "add path" in Matlab).{%endtrans%}</p>
+
+<p>{%trans%}Once installed, you can test under Matlab the tests programs (see <a href="http://git.savannah.nongnu.org/cgit/getfem.git/tree/interface/tests/matlab">interface/tests/matlab</a> directory).{%endtrans%}</p>
 
 
 
 
 
-<p>Installer of the GetFEM 4.1 Scilab interface for 32bits Windows and Scilab 5.3 provided by Yann Colette (2011/11/18):
-      <a href="http://download-mirror.savannah.gnu.org/releases/getfem/misc/sci_getfem-rev2914-scilab-5.3-setup.exe">sci_getfem-rev2914-scilab-5.3-setup.exe</a>.</p>
-
-<p>Binaries for the python-interface (python 2.4, 2.5 and 2.6) on Windows XP (2010/08/28) kindly provided by Yao Koutsawa:
-      <a href="http://download-mirror.savannah.gnu.org/releases/getfem/misc/getfem_python-4.1.win32-py2.5.exe">getfem_python-4.1.win32-py2.5.exe</a>, <a href="http://download-mirror.savannah.gnu.org/releases/getfem/misc/getfem_python-4.1.win32-py2.6.exe">getfem_python-4.1.win32-py2.6.exe</a>, <a href="http://download-mirror.savannah.gnu.org/releases/getfem/misc/getfem_python-4.1.win32-py2.7.exe">getfem_python-4.1.win32-py2.7.exe</a>.</p>
-
-
-<p>A binary for the matlab-interface for matlab 2010b on Windows for both 32 and 64 bits(2010/04/12) with some explanations <a href="http://lists.nongnu.org/archive/html/getfem-users/2010-12/msg00006.html">here</a>:
-      <a href="http://download-mirror.savannah.gnu.org/releases/getfem/misc/getfem_matlab_toolbox_2010b.zip">getfem_matlab_toolbox_2010b_32-bit.zip</a>.</p>
-
-<p>A binary for the matlab-interface for matlab 2009 on Windows XP(2010/04/08):
-      <a href="http://download-mirror.savannah.gnu.org/releases/getfem/misc/getfem-matlab-4.0_R2009_win32.tar.gz">getfem-matlab-4.0_R2009_win32.tar.gz</a>.</p>
 
 
 
-<p>A binary for the matlab-interface for matlab-R14 on Windows XP(2006/04/18):
-      <a href="http://download-mirror.savannah.gnu.org/releases/getfem/misc/getfem-matlab-2.0_R14_win32.zip">getfem-matlab-2.0_R14_win32.zip</a> (and some <a href="http://download-mirror.savannah.gnu.org/releases/getfem/misc/getfem-matlab-2.0_R14_win32.README.txt">notes</a>).</p>
+<p>{%trans%}Installer of the GetFEM 4.1 Scilab interface for 32bits Windows and Scilab 5.3 provided by Yann Colette (2011/11/18):
+      <a href="http://download-mirror.savannah.gnu.org/releases/getfem/misc/sci_getfem-rev2914-scilab-5.3-setup.exe">sci_getfem-rev2914-scilab-5.3-setup.exe{%endtrans%}</a>.</p>
 
-<h3> On MacOS X </h3>
+<p>{%trans%}Binaries for the python-interface (python 2.4, 2.5 and 2.6) on Windows XP (2010/08/28) kindly provided by Yao Koutsawa:
+      <a href="http://download-mirror.savannah.gnu.org/releases/getfem/misc/getfem_python-4.1.win32-py2.5.exe">getfem_python-4.1.win32-py2.5.exe</a>, <a href="http://download-mirror.savannah.gnu.org/releases/getfem/misc/getfem_python-4.1.win32-py2.6.exe">getfem_python-4.1.win32-py2.6.exe</a>, <a href="http://download-mirror.savannah.gnu.org/releases/getfem/misc/getfem_python-4.1.win32-py2.7.exe">getfem_python-4.1.win32-py2.7.exe</a>.{%endtrans%}</p>
 
-<p>A binary for the matlab-interface for matlab-2009b on MacOS X (2010/03/10):
-      <a href="http://download-mirror.savannah.gnu.org/releases/getfem/misc/getfem-4.0.0-matlab-toolbox-MACOSX-i386.tar.gz">getfem-4.0.0-matlab-toolbox-MACOSX-i386.tar.gz</a>.</p>
+
+<p>{%trans%}A binary for the matlab-interface for matlab 2010b on Windows for both 32 and 64 bits(2010/04/12) with some explanations <a href="http://lists.nongnu.org/archive/html/getfem-users/2010-12/msg00006.html">here</a>:
+      <a href="http://download-mirror.savannah.gnu.org/releases/getfem/misc/getfem_matlab_toolbox_2010b.zip">getfem_matlab_toolbox_2010b_32-bit.zip</a>.{%endtrans%}</p>
+
+<p>{%trans%}A binary for the matlab-interface for matlab 2009 on Windows XP(2010/04/08):
+      <a href="http://download-mirror.savannah.gnu.org/releases/getfem/misc/getfem-matlab-4.0_R2009_win32.tar.gz">getfem-matlab-4.0_R2009_win32.tar.gz</a>.{%endtrans%}</p>
+
+
+
+<p>{%trans%}A binary for the matlab-interface for matlab-R14 on Windows XP(2006/04/18):
+      <a href="http://download-mirror.savannah.gnu.org/releases/getfem/misc/getfem-matlab-2.0_R14_win32.zip">getfem-matlab-2.0_R14_win32.zip</a> (and some <a href="http://download-mirror.savannah.gnu.org/releases/getfem/misc/getfem-matlab-2.0_R14_win32.README.txt">notes</a>).{%endtrans%}</p>
+
+<h3>{%trans%} On MacOS X {%endtrans%}</h3>
+
+<p>{%trans%}A binary for the matlab-interface for matlab-2009b on MacOS X (2010/03/10):
+      <a href="http://download-mirror.savannah.gnu.org/releases/getfem/misc/getfem-4.0.0-matlab-toolbox-MACOSX-i386.tar.gz">getfem-4.0.0-matlab-toolbox-MACOSX-i386.tar.gz</a>.{%endtrans%}</p>
 {% endif %}
 
-<h1>Download {{ project }} {{ release }} Documentation</h1>
+<h1>{%trans%}Download {{ project }} {{ release }} Documentation{%endtrans%}</h1>
 
 {% if 'a' in release or 'b' in release or 'c' in release %}
-<p>We don't package the documentation for development releases for download.
-  Downloads will be available for the final release.</p>
+<p>{%trans%}We don't package the documentation for development releases for download.
+  Downloads will be available for the final release.{%endtrans%}</p>
 
 {% else %}
-{% if last_updated %}<p><b>Last updated on: {{ last_updated }}.</b></p>{% endif %}
+{% if last_updated %}<p><b>{%trans%}Last updated on: {{ last_updated }}.{%endtrans%}</b></p>{% endif %}
 
-<p>To download a documentation in pdf or html format, follow one of links in this table.</p>
+<p>{%trans%}To download a documentation in pdf or html format, follow one of links in this table.{%endtrans%}</p>
 
 <table class="docutils">
-  <tr><th>Document</th><th>Link</th></tr>
-  <tr><td>{{ project }} user documentation in pdf format</td>
+  <tr><th>{%trans%}Document{%endtrans%}</th><th>Link</th></tr>
+  <tr><td>{%trans%}{{ project }} user documentation in pdf format{%endtrans%}</td>
     <td><a href="http://download-mirror.savannah.gnu.org/releases/getfem/doc/getfem_userdoc.pdf">getfem_userdoc.pdf</a></td>
   </tr>
-  <tr><td>Gmm++ user documentation in pdf format</td>
+  <tr><td>{%trans%}Gmm++ user documentation in pdf format{%endtrans%}</td>
     <td><a href="http://download-mirror.savannah.gnu.org/releases/getfem/doc/gmm_userdoc.pdf">gmm_userdoc.pdf</a></td>
   </tr>
-  <tr><td>Python interface documentation in pdf format</td>
+  <tr><td>{%trans%}Python interface documentation in pdf format{%endtrans%}</td>
     <td><a href="http://download-mirror.savannah.gnu.org/releases/getfem/doc/python_interface.pdf">python_interface.pdf</a></td>
   </tr>
-  <tr><td>Scilab interface documentation in pdf format</td>
+  <tr><td>{%trans%}Scilab interface documentation in pdf format{%endtrans%}</td>
     <td><a href="http://download-mirror.savannah.gnu.org/releases/getfem/doc/scilab_interface.pdf">scilab_interface.pdf</a></td>
   </tr>
-  <tr><td>Matlab interface documentation in pdf format</td>
+  <tr><td>{%trans%}Matlab interface documentation in pdf format{%endtrans%}</td>
     <td><a href="http://download-mirror.savannah.gnu.org/releases/getfem/doc/matlab_interface.pdf">matlab_interface.pdf</a></td>
   </tr>
-  <tr><td>{{ project }} Developper's guide in pdf format</td>
+  <tr><td>{%trans%}{{ project }} Developper's guide in pdf format{%endtrans%}</td>
     <td><a href="http://download-mirror.savannah.gnu.org/releases/getfem/doc/getfem_project.pdf">getfem_project.pdf</a></td>
   </tr>
-  <tr><td>Whole html documentation</td>
+  <tr><td>{%trans%}Whole html documentation{%endtrans%}</td>
     <td><a href="http://download-mirror.savannah.gnu.org/releases/getfem/doc/getfem-{{ release }}-docs-html.tar.gz">getfem-{{ release }}-docs-html.tar.gz</a></td>
   </tr>
 </table>
 
 
-<h2>Problems</h2>
+<h2>{%trans%}Problems{%endtrans%}</h2>
 
-<p>If you have comments or suggestions for the {{ project }} documentation, please send
-email to <a href="mailto:getfem-users@nongnu.org">getfem-users@nongnu.org</a>.</p>
+<p>{%trans%}If you have comments or suggestions for the {{ project }} documentation, please send
+email to <a href="mailto:getfem-users@nongnu.org">getfem-users@nongnu.org</a>.{%endtrans%}</p>
 {% endif %}
 
 {% endblock %}

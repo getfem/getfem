@@ -5,17 +5,17 @@
 
 <div id="biglogo"><img src="{{ pathto("_static/gmmlogo.png", 1) }}" alt="Gmm++ logo"></div>
 
-    <h1>Gmm++ Documentation</h1>
+    <h1>{%trans%}Gmm++ Documentation{%endtrans%}</h1>
     <p>
       <p class="biglink">
-       	<a class="biglink" href="{{ pathto("gmm/index") }}">Gmm++ Documentation is here (html version)</a><br/></p>
+       	<a class="biglink" href="{{ pathto("gmm/index") }}">{%trans%}Gmm++ Documentation is here (html version){%endtrans%}</a><br/></p>
     </p>
 
-    <h1>Download Gmm++</h1>
+    <h1>{%trans%}Download Gmm++{%endtrans%}</h1>
     <p>
-      The last stable release of the standalone Gmm++ library can be found in the
+      {%trans%}The last stable release of the standalone Gmm++ library can be found in the{%endtrans%}
          <a class="biglink" href="{{ pathto("download") }}">download</a>
-      page of {{ project }}.
+      {%trans%}page of {{ project }}.{%endtrans%}
     </p>
 
 
@@ -23,6 +23,7 @@
 
 
     <p>
+      {%trans%}
       <abbr title="Generic Matrix Methods">Gmm++</abbr> is a
       generic C++ template library for sparse, dense and skyline
       matrices. It is a set of generic algorithms (mult, add,
@@ -32,12 +33,16 @@
       types. However, basic sparse, dense and skyline matrix/vector types are built
       in Gmm++, hence it can be used as a standalone linear algebra
       library.
+      {%endtrans%}
 
+      {%trans%}
       Interfacing a vector or matrix type means writing "traits" objects called
       "<code>linalg_traits</code>", which describe their properties. The library
       offers predefined dense, sparse and skyline matrix types.
+      {%endtrans%}
     </p>
     <p>
+      {%trans%}
       The goal is to create a general, adaptable and easy to use
       framework of pre-defined methods for matrix computation. When a
       vector or a matrix type has been interfaced (i.e. its
@@ -45,45 +50,49 @@
       it. However, it is always possible (and easy) to specialize some
       generic algorithms for efficiency reason. Major generic
       algorithms are
+      {%endtrans%}
     </p>
       <ul>
-	<li> A set of miscellaneous generic commands (clear, clean,
-	scalar product, scale, norms, ...)</li> 
+	<li>{%trans%} A set of miscellaneous generic commands (clear, clean,
+	scalar product, scale, norms, ...){%endtrans%}</li> 
 	
-	<li> Vector-Vector addition with the possibility to mix
-	formats (sparse, dense, skyline)</li>
+	<li>{%trans%} Vector-Vector addition with the possibility to mix
+	formats (sparse, dense, skyline){%endtrans%}</li>
 	
-	<li> Matrix-Vector mult for any format.</li>
+	<li>{%trans%} Matrix-Vector mult for any format.{%endtrans%}</li>
 
-	<li> Matrix-Matrix mult with the possibility to mix formats
-	(sparse, dense, skyline, row major, column major, ...)</li>
+	<li>{%trans%} Matrix-Matrix mult with the possibility to mix formats
+	(sparse, dense, skyline, row major, column major, ...){%endtrans%}</li>
 
-	<li> Generic linear solvers (<abbr
+	<li>{%trans%} Generic linear solvers (<abbr
 	title="Conjugate Gradient">cg</abbr>, <abbr
 	title="bi-Conjugated Gradient">bicgstag</abbr>, <abbr
 	title="Quasi-Minimal Residual Method">qmr</abbr>, <abbr title="Generalized Minimum Residual Method">gmres</abbr> ...) with preconditioners for sparse matrices
-	(<abbr title="Incomplete LU factorization with fill-in and threshold">ILUT</abbr>, <abbr title="Incomplete LU factorization with fill-in, threshold and column pivoting">ILUTP</abbr>, <abbr title="Incomplete LDLT factorization">ILDLT</abbr>, ...). Some of them are imported form <a href="http://www.osl.iu.edu/research/itl/" title="Iterative Template Library">ITL</a> (eventually corrected and optimized), some of them are new. </li>
+	(<abbr title="Incomplete LU factorization with fill-in and threshold">ILUT</abbr>, <abbr title="Incomplete LU factorization with fill-in, threshold and column pivoting">ILUTP</abbr>, <abbr title="Incomplete LDLT factorization">ILDLT</abbr>, ...). Some of them are imported form <a href="http://www.osl.iu.edu/research/itl/" title="Iterative Template Library">ITL</a> (eventually corrected and optimized), some of them are new. {%endtrans%}</li>
 
 
 
-	<li> Reference to sub-matrices (with sub-interval, sub-slice
+	<li> {%trans%}Reference to sub-matrices (with sub-interval, sub-slice
 	or sub-index) for any sparse dense or skyline matrix for read
-	or write operations.</li>
+	or write operations.{%endtrans%}</li>
 	
-	<li> LU and QR factorizations for dense matrices.</li>
+	<li> {%trans%}LU and QR factorizations for dense matrices.{%endtrans%}</li>
 	
-	<li> Eigenvalues computation for dense matrices.</li>
+	<li> {%trans%}Eigenvalues computation for dense matrices.{%endtrans%}</li>
       </ul>
     <p>
+      {%trans%}
       The structure of Gmm++ is largely inspired from <a
       href="http://www.osl.iu.edu/research/mtl/" title="Matrix Template Library">MTL</a>. The major
       differences are : simpler use, built as an interface for existing
       matrix types, sub-matrices for any matrix types. The efficiency
       is comparable (see <a href="http://grh.mur.at/misc/sparselib_benchmark/">
       http://grh.mur.at/misc/sparselib_benchmark/</a> for instance).
+      {%endtrans%}
     </p>
 
     <p>
+      {%trans%}
       NOTE : For performance reason, an interface with <a
       href="http://www.netlib.org/lapack/">LAPACK</a> or <a
       href="http://math-atlas.sourceforge.net/" title="Automatically Tuned Linear Algebra Software">ATLAS</a> is provided
@@ -91,16 +100,20 @@
       benchmarks, do not forget to use optimization compiler options,
       at least -O3 and you should disable checks with
       -dNDEBUG).
+      {%endtrans%}
     </p>
     
     <p>
+      {%trans%}
       A small interface to <a
       href="http://crd.lbl.gov/~xiaoye/SuperLU/">SuperLU 3.0</a>
       (sparse matrix direct solver) is also proposed for sparse
       matrices.
+      {%endtrans%}
     </p>
 
     <p>
+      {%trans%}
       Gmm++ has been tested with
       <a href="http://www.cs.berkeley.edu/~yozo">QD</a>
       an
@@ -108,34 +121,44 @@
       precision. See on the documentation how to link QD. This means
       that Gmm++ should work with any reasonable arbitrary precision
       floating point library.
+      {%endtrans%}
     </p>
 
-    <h1>Licence</h1> 
+    <h1>{%trans%}Licence{%endtrans%}</h1> 
+    {%trans%}
     Gmm++ is freely distributed under the terms of the
     <a href="http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html">
       Gnu Lesser General Public License, either version 2.1 of the license or any later version</a>.
+    {%endtrans%}
 
-    <h1>Contribute to Gmm++</h1>
+    <h1>{%trans%}Contribute to Gmm++{%endtrans%}</h1>
     <p>
+      {%trans%}
       Gmm++ offers a framework to develop efficient methods for linear algebra. This library is and will remain open-source. Here are some examples of possible extensions:
+      {%endtrans%}
     </p>
       <ul>
-	<li>Specialize some algorithms to optimize them for particular matrix implementation.</li>
-	<li>New solvers and preconditioners.</li>
-	<li>Eigenvalues computation for sparse matrices. </li>
-	<li> ...</li>
+	<li>{%trans%}Specialize some algorithms to optimize them for particular matrix implementation.{%endtrans%}</li>
+	<li>{%trans%}New solvers and preconditioners.{%endtrans%}</li>
+	<li>{%trans%}Eigenvalues computation for sparse matrices. {%endtrans%}</li>
+	<li>{%trans%} ...{%endtrans%}</li>
       </ul>
 
-    <h1>Gmm++ contributors</h1>
+    <h1>{%trans%}Gmm++ contributors{%endtrans%}</h1>
     <p>
+       {%trans%}
        Yves Renard, Julien Pommier, Michel Fournie (Additive Schwarz), Benjamin Schleimer (least square CG).
+       {%endtrans%}
     </p>
     <p>
+       {%trans%}
        Many thanks to Jeremy G. Siek and Lie-Quan Lee for their nice work developing MTL-ITL on which Gmm++ is greatly inspired.
+       {%endtrans%}
     </p>
 
-    <h1>Random test procedures</h1>
+    <h1>{%trans%}Random test procedures{%endtrans%}</h1>
     <p>
+      {%trans%}
       A problem with generic programming is to be sure that every
       configuration has been fully tested. This is why there is now
       a random generator of
@@ -146,13 +169,16 @@
       std::complex&lt;double&gt;, dd_real ...) and random size and filling, testing all
       the possibilities of mixing formats in operations such as mult,
       add ...
+      {%endtrans%}
     </p>
     
     <p> 
+      {%trans%}
       You are encouraged to test them, runing a "make
       check" on the distribution of Gmm++ and sending us a bug report
       if it fails. We will also appreciate if you send us new test
       procedures.
+      {%endtrans%}
     </p>
 
 
