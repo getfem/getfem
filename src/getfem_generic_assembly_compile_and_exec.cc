@@ -7126,13 +7126,13 @@ namespace getfem {
 
       } else { // Access to a component of the tensor
         bgeot::multi_index mi1(size0.size()), indices;
+        size_type nb_test = pnode->nb_test_functions();
         if (pnode->tensor().size() == 1) {
           for (size_type i = 0; i < child0->tensor_order(); ++i)
-            mi1[i] = size_type(round(pnode->children[i+1]->tensor()[0])-1);
+            mi1[i+nb_test] = size_type(round(pnode->children[i+1]->tensor()[0])-1);
           pgai = std::make_shared<ga_instruction_copy_scalar>
             (pnode->tensor()[0], child0->tensor()(mi1));
         } else {
-          size_type nb_test = pnode->nb_test_functions();
           for (size_type i = 0; i < nb_test; ++i) indices.push_back(i);
           for (size_type i = 0; i < child0->tensor_order(); ++i) {
             if (pnode->children[i+1]->node_type != GA_NODE_ALLINDICES)
