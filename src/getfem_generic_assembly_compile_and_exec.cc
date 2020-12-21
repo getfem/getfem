@@ -5401,7 +5401,7 @@ namespace getfem {
 
     // Optimization: detects if an equivalent node has already been compiled
     pnode->t.set_to_original();
-    if (rmi.node_list.find(pnode->hash_value) != rmi.node_list.end()) {
+    if (rmi.node_list.count(pnode->hash_value) != 0) {
       for (pga_tree_node &pnode1 : rmi.node_list[pnode->hash_value]) {
         // cout << "found potential equivalent nodes ";
         // ga_print_node(pnode, cout);
@@ -5647,6 +5647,10 @@ namespace getfem {
           }
           
           if (imd) {
+            GMM_ASSERT1(pnode->node_type == GA_NODE_VAL,
+                        "Only values can be extracted on im_data (no " <<
+                        "gradient, Hessian, xfem or elementary tranformation" <<
+                        " allowed)");
             pgai = std::make_shared<ga_instruction_extract_local_im_data>
               (pnode->tensor(), *imd, workspace.value(pnode->name),
                gis.pai, gis.ctx, workspace.qdim(pnode->name));
@@ -6131,7 +6135,7 @@ namespace getfem {
           pgai = pga_instruction();
           switch (pnode->node_type) {
           case GA_NODE_VAL_TEST: case GA_NODE_ELEMENTARY_VAL_TEST:
-             if (rmi.base.find(mf) == rmi.base.end() ||
+             if (rmi.base.count(mf) == 0 ||
                  !if_hierarchy.is_compatible(rmi.base_hierarchy[mf])) {
               rmi.base_hierarchy[mf].push_back(if_hierarchy);
               pgai = std::make_shared<ga_instruction_val_base>
@@ -6139,7 +6143,7 @@ namespace getfem {
              }
              break;
           case GA_NODE_XFEM_PLUS_VAL_TEST:
-            if (rmi.xfem_plus_base.find(mf) == rmi.xfem_plus_base.end() ||
+            if (rmi.xfem_plus_base.count(mf) == 0 ||
                 !if_hierarchy.is_compatible(rmi.xfem_plus_base_hierarchy[mf]))
             {
               rmi.xfem_plus_base_hierarchy[mf].push_back(if_hierarchy);
@@ -6148,7 +6152,7 @@ namespace getfem {
             }
             break;
           case GA_NODE_XFEM_MINUS_VAL_TEST:
-            if (rmi.xfem_minus_base.find(mf) == rmi.xfem_minus_base.end() ||
+            if (rmi.xfem_minus_base.count(mf) == 0 ||
                 !if_hierarchy.is_compatible(rmi.xfem_minus_base_hierarchy[mf]))
             {
               rmi.xfem_minus_base_hierarchy[mf].push_back(if_hierarchy);
@@ -6159,7 +6163,7 @@ namespace getfem {
           case GA_NODE_GRAD_TEST: case GA_NODE_DIVERG_TEST:
           case GA_NODE_ELEMENTARY_GRAD_TEST:
           case GA_NODE_ELEMENTARY_DIVERG_TEST:
-            if (rmi.grad.find(mf) == rmi.grad.end() ||
+            if (rmi.grad.count(mf) == 0 ||
                 !if_hierarchy.is_compatible(rmi.grad_hierarchy[mf])) {
               rmi.grad_hierarchy[mf].push_back(if_hierarchy);
               pgai = std::make_shared<ga_instruction_grad_base>
@@ -6167,7 +6171,7 @@ namespace getfem {
             }
             break;
           case GA_NODE_XFEM_PLUS_GRAD_TEST: case GA_NODE_XFEM_PLUS_DIVERG_TEST:
-            if (rmi.xfem_plus_grad.find(mf) == rmi.xfem_plus_grad.end() ||
+            if (rmi.xfem_plus_grad.count(mf) == 0 ||
                 !if_hierarchy.is_compatible(rmi.xfem_plus_grad_hierarchy[mf]))
             {
               rmi.xfem_plus_grad_hierarchy[mf].push_back(if_hierarchy);
@@ -6177,7 +6181,7 @@ namespace getfem {
             break;
           case GA_NODE_XFEM_MINUS_GRAD_TEST:
           case GA_NODE_XFEM_MINUS_DIVERG_TEST:
-            if (rmi.xfem_minus_grad.find(mf) == rmi.xfem_minus_grad.end() ||
+            if (rmi.xfem_minus_grad.count(mf) == 0 ||
                 !if_hierarchy.is_compatible(rmi.xfem_minus_grad_hierarchy[mf]))
             {
               rmi.xfem_minus_grad_hierarchy[mf].push_back(if_hierarchy);
@@ -6203,7 +6207,7 @@ namespace getfem {
             }
             break;
           case GA_NODE_XFEM_MINUS_HESS_TEST:
-            if (rmi.xfem_minus_hess.find(mf) == rmi.xfem_minus_hess.end() ||
+            if (rmi.xfem_minus_hess.count(mf) == 0 ||
                 !if_hierarchy.is_compatible(rmi.xfem_minus_hess_hierarchy[mf]))
             {
               rmi.xfem_minus_hess_hierarchy[mf].push_back(if_hierarchy);
