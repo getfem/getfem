@@ -898,22 +898,22 @@ namespace getfem {
                   uI2 = temporary_interval_of_variable(vname2),
                   I1 = interval_of_variable(vname1),
                   I2 = interval_of_variable(vname2);
-                if (mf1 && mf1->is_reduced() && mf2 && mf2->is_reduced()) {
-                  model_real_sparse_matrix aux(I1.size(), uI2.size());
-                  model_real_row_sparse_matrix M(I1.size(), I2.size());
-                  gmm::mult(gmm::transposed(mf1->extension_matrix()),
-                            gmm::sub_matrix(row_col_unreduced_K, uI1, uI2),
-                            aux);
-                  gmm::mult(aux, mf2->extension_matrix(), M);
-                  gmm::add(M, gmm::sub_matrix(*K, I1, I2));
-                } else if (mf1 && mf1->is_reduced()) {
+                if (mf1 && mf1->is_reduced()) {
                   if (condensation && vars_vec_done.count(vname1) == 0) {
                     gmm::mult_add(gmm::transposed(mf1->extension_matrix()),
                                   gmm::sub_vector(unreduced_V, uI1),
                                   gmm::sub_vector(*V, I1));
                     vars_vec_done.insert(vname1);
                   }
-                  if (I2.first() < nb_prim_dof) { // !is_internal_variable(vname2)
+                  if (mf2 && mf2->is_reduced()) {
+                    model_real_sparse_matrix aux(I1.size(), uI2.size());
+                    model_real_row_sparse_matrix M(I1.size(), I2.size());
+                    gmm::mult(gmm::transposed(mf1->extension_matrix()),
+                              gmm::sub_matrix(row_col_unreduced_K, uI1, uI2),
+                              aux);
+                    gmm::mult(aux, mf2->extension_matrix(), M);
+                    gmm::add(M, gmm::sub_matrix(*K, I1, I2));
+                  } else if (I2.first() < nb_prim_dof) { // !is_internal_variable(vname2)
                     model_real_sparse_matrix M(I1.size(), I2.size());
                     gmm::mult(gmm::transposed(mf1->extension_matrix()),
                               gmm::sub_matrix(row_unreduced_K, uI1, I2), M);

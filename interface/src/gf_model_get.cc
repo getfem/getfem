@@ -363,10 +363,10 @@ void gf_model_get(getfemint::mexargs_in& m_in,
     /*@GET ('assembly'[, @str option])
       Assembly of the tangent system taking into account the terms
       from all bricks. `option`, if specified, should be 'build_all',
-      'build_rhs', 'build_matrix'.
-      The default is to build the whole
-      tangent linear system (matrix and rhs). This function is useful
-      to solve your problem with you own solver. @*/
+      'build_rhs', 'build_matrix', 'build_rhs_with_internal',
+      'build_matrix_condensed', 'build_all_condensed'.
+      The default is to build the whole tangent linear system (matrix and rhs).
+      This function is useful to solve your problem with you own solver. @*/
     sub_command
       ("assembly", 0, 1, 0, 0,
        std::string option = "build_all";
@@ -381,6 +381,15 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        else if (cmd_strmatch(option, "build matrix") ||
                 cmd_strmatch(option, "build_matrix"))
          version = getfem::model::BUILD_MATRIX;
+       else if (cmd_strmatch(option, "build rhs with internal") ||
+                cmd_strmatch(option, "build_rhs_with_internal"))
+         version = getfem::model::BUILD_RHS_WITH_INTERNAL;
+       else if (cmd_strmatch(option, "build matrix condensed") ||
+                cmd_strmatch(option, "build_matrix_condensed"))
+         version = getfem::model::BUILD_MATRIX_CONDENSED;
+       else if (cmd_strmatch(option, "build all condensed") ||
+                cmd_strmatch(option, "build_all_condensed"))
+         version = getfem::model::BUILD_ALL_CONDENSED;
        else THROW_BADARG("bad option: " << option);
        md->assembly(version);
        );
