@@ -255,6 +255,7 @@ namespace getfem {
                 "inconsistency in the size of the dataset: "
                 << gmm::vect_size(U) << " != " << nb_val << "*" << Q);
     if (vtk) write_separ();
+    if (!vtk && !ascii) write_val(float(gmm::vect_size(U)));
     if (Q == 1) {
       if (vtk)
         os << "SCALARS " << remove_spaces(name) << " float 1\n"
@@ -288,8 +289,9 @@ namespace getfem {
     } else
       GMM_ASSERT1(false, std::string(vtk ? "vtk" : "vtu")
                          + " does not accept vectors of dimension > 3");
+    write_vals();
     if (vtk) write_separ();
-    if (!vtk) os << (ascii ? "" : "\n") << "</DataArray>\n";
+    if (!vtk) os << "\n" << "</DataArray>\n";
   }
 
 

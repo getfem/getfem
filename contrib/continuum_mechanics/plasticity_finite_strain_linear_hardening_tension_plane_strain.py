@@ -118,7 +118,7 @@ if dH > 0:
       pts[1,i] -= (y*dH)/(2*H) * (1 + np.cos(2.*np.pi*x/L))
    mesh.set_pts(pts)
 
-mesh.export_to_vtk("%s/mesh.vtk" % resultspath)
+mesh.export_to_vtu("%s/mesh.vtu" % resultspath)
 
 # FEM
 mfN = gf.MeshFem(mesh, N)
@@ -225,7 +225,7 @@ with open("%s/tension_plane_strain.dat" % resultspath, "w") as f1:
                 mfu, md.variable("u"), "Displacements",
                 mfout2, md.interpolation("dirmult", mfout2, XP_RG), "Nominal reaction traction",
                 mfout2, md.local_projection(mim, "gamma", mfout2), "plastic strain")
-      mfout2.export_to_vtk("%s/tension_plane_strain_%i.vtk" % (resultspath, step), *output)
+      mfout2.export_to_vtu("%s/tension_plane_strain_%i.vtu" % (resultspath, step), *output)
 
       md.set_variable("gamma0", md.interpolation("gamma", mimd1, -1))
       md.set_variable("invCp0vec",

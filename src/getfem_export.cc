@@ -448,6 +448,7 @@ namespace getfem
       os << "<DataArray type=\"Float32\" Name=\"Points\" ";
       os << "NumberOfComponents=\"3\" ";
       os << (ascii ? "format=\"ascii\">\n" : "format=\"binary\">\n");
+      if (!ascii) write_val(int(sizeof(float)*psl->nb_points()*3));
     }
     /*
        points are not merge, vtk is mostly fine with that (except for
@@ -473,6 +474,16 @@ namespace getfem
       os << "<Cells>\n";
       os << "<DataArray type=\"Int32\" Name=\"connectivity\" ";
       os << (ascii ? "format=\"ascii\">\n" : "format=\"binary\">\n");
+      if (!ascii) {
+        int size = 0;
+        for (size_type ic=0; ic < psl->nb_convex(); ++ic) {
+          const getfem::mesh_slicer::cs_simplexes_ct& s = psl->simplexes(ic);
+          for (const auto &val : s)
+            for (size_type j=0; j < val.dim()+1; ++j)
+              size += int(sizeof(int));
+        }
+        write_val(size);
+      }
     }
     for (size_type ic=0; ic < psl->nb_convex(); ++ic) {
       const getfem::mesh_slicer::cs_simplexes_ct& s = psl->simplexes(ic);
@@ -494,6 +505,15 @@ namespace getfem
       os << (ascii ? "" : "\n") << "</DataArray>\n";
       os << "<DataArray type=\"Int32\" Name=\"offsets\" ";
       os << (ascii ? "format=\"ascii\">\n" : "format=\"binary\">\n");
+      if (!ascii) {
+        int size = 0;
+        for (size_type ic=0; ic < psl->nb_convex(); ++ic) {
+          const getfem::mesh_slicer::cs_simplexes_ct& s = psl->simplexes(ic);
+          for (const auto &val : s)
+            size += int(sizeof(int));
+        }
+        write_val(size);
+      }
     }
     int cnt = 0;
     for (size_type ic=0; ic < psl->nb_convex(); ++ic) {
@@ -514,6 +534,15 @@ namespace getfem
       os << (ascii ? "" : "\n") << "</DataArray>\n";
       os << "<DataArray type=\"Int32\" Name=\"types\" ";
       os << (ascii ? "format=\"ascii\">\n" : "format=\"binary\">\n");
+      if (!ascii) {
+        int size = 0;
+        for (size_type ic=0; ic < psl->nb_convex(); ++ic) {
+          const getfem::mesh_slicer::cs_simplexes_ct& s = psl->simplexes(ic);
+          for (size_type i=0; i < s.size(); ++i)
+            size += int(sizeof(int));
+        }
+        write_val(size);
+      }
       for (size_type ic=0; ic < psl->nb_convex(); ++ic) {
         const getfem::mesh_slicer::cs_simplexes_ct& s = psl->simplexes(ic);
         for (size_type i=0; i < s.size(); ++i) {
@@ -521,7 +550,7 @@ namespace getfem
         }
       }
       write_vals();
-      os << (ascii ? "" : "\n") << "</DataArray>\n";
+      os << "\n" << "</DataArray>\n";
       os << "</Cells>\n";
     }
     state = STRUCTURE_WRITTEN;
@@ -542,11 +571,10 @@ namespace getfem
       os << "<DataArray type=\"Float32\" Name=\"Points\" ";
       os << "NumberOfComponents=\"3\" ";
       os << (ascii ? "format=\"ascii\">\n" : "format=\"binary\">\n");
+      if (!ascii) write_val(int(sizeof(float)*pmf_dof_used.card()*3));
     }
     std::vector<int> dofmap(pmf->nb_dof());
     int cnt = 0;
-    int size = int(sizeof(float)*pmf_dof_used.card()*3);
-    if (!vtk && !ascii) write_val(size);
     for (dal::bv_visitor d(pmf_dof_used); !d.finished(); ++d) {
       dofmap[d] = cnt++;
       base_node P = pmf->point_of_basic_dof(d);
@@ -568,8 +596,8 @@ namespace getfem
       os << "<Cells>\n";
       os << "<DataArray type=\"Int32\" Name=\"connectivity\" ";
       os << (ascii ? "format=\"ascii\">\n" : "format=\"binary\">\n");
-      if (!vtk && !ascii) {
-        size = 0;
+      if (!ascii) {
+        int size = 0;
         for (dal::bv_visitor cv(pmf->convex_index()); !cv.finished(); ++cv) {
           const std::vector<unsigned> &dmap = select_vtk_dof_mapping(pmf_mapping_type[cv]);
           size += int(sizeof(int)*dmap.size());
@@ -594,8 +622,8 @@ namespace getfem
       os << (ascii ? "" : "\n") << "</DataArray>\n";
       os << "<DataArray type=\"Int32\" Name=\"offsets\" ";
       os << (ascii ? "format=\"ascii\">\n" : "format=\"binary\">\n");
-      if (!vtk && !ascii) {
-        size = 0;
+      if (!ascii) {
+        int size = 0;
         for (dal::bv_visitor cv(pmf->convex_index()); !cv.finished(); ++cv)
           size += int(sizeof(int));
         write_val(size);
@@ -611,7 +639,7 @@ namespace getfem
       os << "<DataArray type=\"Int32\" Name=\"types\" ";
       os << (ascii ? "format=\"ascii\">\n" : "format=\"binary\">\n");
       if (!ascii) {
-        size = 0;
+        int size = 0;
         for (dal::bv_visitor cv(pmf->convex_index()); !cv.finished(); ++cv)
           size += int(sizeof(int));
         write_val(size);
