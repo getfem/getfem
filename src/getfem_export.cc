@@ -479,8 +479,7 @@ namespace getfem
         for (size_type ic=0; ic < psl->nb_convex(); ++ic) {
           const getfem::mesh_slicer::cs_simplexes_ct& s = psl->simplexes(ic);
           for (const auto &val : s)
-            for (size_type j=0; j < val.dim()+1; ++j)
-              size += int(sizeof(int));
+            size += int((val.dim()+1)*sizeof(int));
         }
         write_val(size);
       }
@@ -509,8 +508,7 @@ namespace getfem
         int size = 0;
         for (size_type ic=0; ic < psl->nb_convex(); ++ic) {
           const getfem::mesh_slicer::cs_simplexes_ct& s = psl->simplexes(ic);
-          for (const auto &val : s)
-            size += int(sizeof(int));
+          size += int(s.size()*sizeof(int));
         }
         write_val(size);
       }
