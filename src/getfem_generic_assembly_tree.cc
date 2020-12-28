@@ -1416,9 +1416,7 @@ namespace getfem {
                            pnode_old->parent,pnode->children[0]);
             GMM_ASSERT1(pnode_old->children.empty(), "Internal error");
             delete pnode_old;
-
           } else { // Macro with parameters
-
             if (gam.nb_params()+1 != pnode->children.size())
               ga_throw_error(pnode->expr, pnode->pos,
                              "Bad number of parameters in the use of macro '"
@@ -1433,6 +1431,7 @@ namespace getfem {
             else
               tree.root = pnode;
             ga_replace_macro_params(tree, pnode, pnode_old->children);
+            tree.clear_node_rec(pnode_old);
           }
         }
       }
