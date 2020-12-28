@@ -15,7 +15,20 @@
 #  along  with  this program;  if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 
-SUBDIRS = icare delaminated_crack aposteriori xfem_stab_unilat_contact      \
-	  bimaterial_crack_test mixed_elastostatic xfem_contact crack_plate \
-	  static_contact_gears level_set_contact test_plasticity opt_assembly \
-	  continuum_mechanics
+check_PROGRAMS = 
+
+CLEANFILES = 
+
+if BUILDPYTHON
+TESTS = plasticity_finite_strain_linear_hardening_tension_plane_strain.py
+
+AM_TESTS_ENVIRONMENT = \
+	export PYTHONPATH=$(top_builddir)/interface/src/python; \
+	export LD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(top_builddir)/src/.libs;
+LOG_COMPILER = $(PYTHON)
+endif
+
+EXTRA_DIST = \
+	plasticity_finite_strain_linear_hardening_tension_3D.py \
+	plasticity_finite_strain_linear_hardening_tension_axisymmetric.py \
+	plasticity_finite_strain_linear_hardening_tension_plane_strain.py
