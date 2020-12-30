@@ -506,10 +506,8 @@ namespace getfem
       os << (ascii ? "format=\"ascii\">\n" : "format=\"binary\">\n");
       if (!ascii) {
         int size = 0;
-        for (size_type ic=0; ic < psl->nb_convex(); ++ic) {
-          const getfem::mesh_slicer::cs_simplexes_ct& s = psl->simplexes(ic);
-          size += int(s.size()*sizeof(int));
-        }
+        for (size_type ic=0; ic < psl->nb_convex(); ++ic)
+          size += int(psl->simplexes(ic).size()*sizeof(int));
         write_val(size);
       }
     }
@@ -534,11 +532,8 @@ namespace getfem
       os << (ascii ? "format=\"ascii\">\n" : "format=\"binary\">\n");
       if (!ascii) {
         int size = 0;
-        for (size_type ic=0; ic < psl->nb_convex(); ++ic) {
-          const getfem::mesh_slicer::cs_simplexes_ct& s = psl->simplexes(ic);
-          for (size_type i=0; i < s.size(); ++i)
-            size += int(sizeof(int));
-        }
+        for (size_type ic=0; ic < psl->nb_convex(); ++ic)
+          size += int(psl->simplexes(ic).size()*sizeof(int));
         write_val(size);
       }
       for (size_type ic=0; ic < psl->nb_convex(); ++ic) {
