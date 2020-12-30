@@ -433,8 +433,8 @@ namespace getfem
     /* count total number of simplexes, and total number of entries */
     size_type cells_cnt = 0, splx_cnt = 0;
     for (size_type ic=0; ic < psl->nb_convex(); ++ic) {
-      for (size_type i=0; i < psl->simplexes(ic).size(); ++i)
-       cells_cnt += psl->simplexes(ic)[i].dim() + 2;
+      for (const slice_simplex &s : psl->simplexes(ic))
+       cells_cnt += s.dim() + 2;
       splx_cnt += psl->simplexes(ic).size();
     }
     if (vtk) {
@@ -477,21 +477,18 @@ namespace getfem
       if (!ascii) {
         int size = 0;
         for (size_type ic=0; ic < psl->nb_convex(); ++ic) {
-          const getfem::mesh_slicer::cs_simplexes_ct& s = psl->simplexes(ic);
-          for (const auto &val : s)
-            size += int((val.dim()+1)*sizeof(int));
+          for (const slice_simplex &s : psl->simplexes(ic))
+            size += int((s.dim()+1)*sizeof(int));
         }
         write_val(size);
       }
     }
     for (size_type ic=0; ic < psl->nb_convex(); ++ic) {
-      const getfem::mesh_slicer::cs_simplexes_ct& s = psl->simplexes(ic);
-      for (const auto &val : s) {
-        if (vtk) {
-          write_val(int(val.dim()+1));
-        }
-        for (size_type j=0; j < val.dim()+1; ++j)
-          write_val(int(val.inodes[j] + nodes_cnt));
+      for (const slice_simplex &s : psl->simplexes(ic)) {
+        if (vtk)
+          write_val(int(s.dim()+1));
+        for (size_type j=0; j < s.dim()+1; ++j)
+          write_val(int(s.inodes[j] + nodes_cnt));
         write_separ();
       }
       nodes_cnt += psl->nodes(ic).size();
@@ -513,15 +510,15 @@ namespace getfem
     }
     int cnt = 0;
     for (size_type ic=0; ic < psl->nb_convex(); ++ic) {
-      const getfem::mesh_slicer::cs_simplexes_ct& s = psl->simplexes(ic);
-      for (const auto &val : s)
+      for (const slice_simplex &s : psl->simplexes(ic))
         if (vtk) {
-          write_val(int(vtk_simplex_code[val.dim()]));
+          write_val(int(vtk_simplex_code[s.dim()]));
         } else {
-          cnt += int(val.dim()+1);
+          cnt += int(s.dim()+1);
           write_val(cnt);
         }
       write_separ();
+      const getfem::mesh_slicer::cs_simplexes_ct& s = psl->simplexes(ic);
       splx_cnt -= s.size();
     }
     write_vals();
@@ -536,12 +533,9 @@ namespace getfem
           size += int(psl->simplexes(ic).size()*sizeof(int));
         write_val(size);
       }
-      for (size_type ic=0; ic < psl->nb_convex(); ++ic) {
-        const getfem::mesh_slicer::cs_simplexes_ct& s = psl->simplexes(ic);
-        for (size_type i=0; i < s.size(); ++i) {
-          write_val(int(vtk_simplex_code[s[i].dim()]));
-        }
-      }
+      for (size_type ic=0; ic < psl->nb_convex(); ++ic)
+        for (const slice_simplex &s : psl->simplexes(ic))
+          write_val(int(vtk_simplex_code[s.dim()]));
       write_vals();
       os << "\n" << "</DataArray>\n";
       os << "</Cells>\n";
@@ -615,12 +609,8 @@ namespace getfem
       os << (ascii ? "" : "\n") << "</DataArray>\n";
       os << "<DataArray type=\"Int32\" Name=\"offsets\" ";
       os << (ascii ? "format=\"ascii\">\n" : "format=\"binary\">\n");
-      if (!ascii) {
-        int size = 0;
-        for (dal::bv_visitor cv(pmf->convex_index()); !cv.finished(); ++cv)
-          size += int(sizeof(int));
-        write_val(size);
-      }
+      if (!ascii)
+        write_val(int(pmf->convex_index().card()*sizeof(int)));
       cnt = 0;
       for (dal::bv_visitor cv(pmf->convex_index()); !cv.finished(); ++cv) {
         const std::vector<unsigned> &dmap = select_vtk_dof_mapping(pmf_mapping_type[cv]);
@@ -631,12 +621,8 @@ namespace getfem
       os << "\n" << "</DataArray>\n";
       os << "<DataArray type=\"Int32\" Name=\"types\" ";
       os << (ascii ? "format=\"ascii\">\n" : "format=\"binary\">\n");
-      if (!ascii) {
-        int size = 0;
-        for (dal::bv_visitor cv(pmf->convex_index()); !cv.finished(); ++cv)
-          size += int(sizeof(int));
-        write_val(size);
-      }
+      if (!ascii)
+        write_val(int(pmf->convex_index().card()*sizeof(int)));
     }
     for (dal::bv_visitor cv(pmf->convex_index()); !cv.finished(); ++cv) {
       write_val(int(select_vtk_type(pmf_mapping_type[cv])));
@@ -985,16 +971,15 @@ namespace getfem
 
     size_type nodes_cnt = 0; /* <- a virer , global_index le remplace */
     for (size_type ic=0; ic < psl->nb_convex(); ++ic) {
-      const getfem::mesh_slicer::cs_simplexes_ct& s = psl->simplexes(ic);
-      for (size_type i=0; i < s.size(); ++i) {
-        if (s[i].dim() == connections_dim) {
-          for (size_type j=0; j < s[i].dim()+1; ++j) {
-           size_type k;
-           if (psl_use_merged)
-             k = psl->merged_index(ic, s[i].inodes[j]);
-           else k = psl->global_index(ic, s[i].inodes[j]);
-            write_val(int(k));
-         }
+      for (const slice_simplex &s : psl->simplexes(ic)) {
+        if (s.dim() == connections_dim) {
+          for (size_type j=0; j < s.dim()+1; ++j) {
+            size_type k;
+            if (psl_use_merged)
+              k = psl->merged_index(ic, s.inodes[j]);
+            else k = psl->global_index(ic, s.inodes[j]);
+              write_val(int(k));
+          }
           write_separ();
         }
       }
@@ -1223,10 +1208,9 @@ namespace getfem
                 << int(dim) << "D slice (not supported)");
 
     for (size_type ic=0, pcnt=0; ic < psl->nb_convex(); ++ic) {
-      for (getfem::mesh_slicer::cs_simplexes_ct::const_iterator it=psl->simplexes(ic).begin();
-           it != psl->simplexes(ic).end(); ++it) {
+      for (const slice_simplex &s : psl->simplexes(ic)) {
         int t = -1;
-        switch ((*it).dim()){
+        switch (s.dim()){
           case 0: t = POS_PT; break;
           case 1: t = POS_LN; break;
           case 2: t = POS_TR; break;
@@ -1241,15 +1225,14 @@ namespace getfem
         std::vector<unsigned> cell_dof;
         cell_dof.resize(dmap.size(),unsigned(-1));
         for (size_type i=0; i < dmap.size(); ++i)
-          cell_dof[i] = unsigned(it->inodes[dmap[i]] + pcnt);
+          cell_dof[i] = unsigned(s.inodes[dmap[i]] + pcnt);
         pos_cell_dof.push_back(cell_dof);
       }
-      for(getfem::mesh_slicer::cs_nodes_ct::const_iterator it=psl->nodes(ic).begin();
-          it != psl->nodes(ic).end(); ++it) {
+      for (const slice_node &n : psl->nodes(ic)) {
         std::vector<float> pt;
         pt.resize(dim,float(0));
         for (size_type i=0; i<dim; ++i)
-          pt[i] = float(it->pt[i]);
+          pt[i] = float(n.pt[i]);
         pos_pts.push_back(pt);
       }
       pcnt += psl->nodes(ic).size();
