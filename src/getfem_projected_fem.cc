@@ -364,7 +364,8 @@ namespace getfem {
         bgeot::geotrans_precomp(pgt, pai->pintegration_points(), 0);
       size_type last_cv = size_type(-1); // refers to the source mesh
       short_type last_f = short_type(-1); // refers to the source mesh
-      size_type nb_pts = i.is_face() ? pai->nb_points_on_face(f) : pai->nb_points();
+      size_type nb_pts = i.is_face() ? pai->nb_points_on_face(f)
+                                     : pai->nb_points_on_convex();
       size_type start_pt = i.is_face() ? pai->ind_first_point_on_face(f) : 0;
       elt_projection_data &e = elements[cv];
       base_node gpt(N);
