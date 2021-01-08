@@ -661,39 +661,43 @@ namespace getfem {
       ost << "Model with no variable nor data" << endl;
     else {
       ost << "List of model variables and data:" << endl;
-      for (const auto &v : variables) {
-        const var_description &vdescr = v.second;
-        if (vdescr.is_variable) ost << "Variable       ";
-        else ost << "Data           ";
-        ost << std::setw(30) << std::left << v.first;
-        if (vdescr.n_iter == 1)
-          ost << " 1 copy   ";
-        else
-          ost << std::setw(2) << std::right << vdescr.n_iter << " copies ";
-        if (vdescr.is_fem_dofs) ost << "fem dependant ";
-        else ost << "constant size ";
-        size_type si = vdescr.size();
-        ost << std::setw(8) << std::right << si;
-        if (is_complex()) ost << " complex";
-        ost << " double" << ((si > 1) ? "s." : ".");
-        if (vdescr.is_variable &&
-            is_disabled_variable(v.first)) ost << "\t (disabled)";
-        else                               ost << "\t           ";
-        if (vdescr.imd != 0) ost << "\t (is im_data)";
-        if (vdescr.is_affine_dependent) ost << "\t (is affine dependent)";
-        ost << endl;
-      }
+      for (int vartype=0; vartype < 3; ++vartype)
+        for (const auto &v : variables) {
+          const var_description &vdescr = v.second;
+          bool is_variable = vdescr.is_variable;
+          bool is_disabled = is_variable && is_disabled_variable(v.first);
+          if (vartype == 0) {      // Only enabled variables
+            if (!is_variable || is_disabled) continue;
+          } else if (vartype == 1) { // Only disabled variables
+            if (!is_disabled) continue;
+          } else if (vartype == 2) { // Only data
+            if (is_variable) continue;
+          }
+          ost << (is_variable ? "Variable       " : "Data           ");
+          ost << std::setw(30) << std::left << v.first;
+          ost << std::setw(2) << std::right << vdescr.n_iter;
+          ost << ((vdescr.n_iter == 1) ? " copy   " : " copies ");
+          ost << (vdescr.is_fem_dofs ? "fem dependant " : "constant size ");
+          ost << std::setw(8) << std::right << vdescr.size();
+          if (is_complex()) ost << " complex";
+          ost << ((vdescr.size() > 1) ? " doubles." : " double.");
+          ost << (is_disabled ? "\t (disabled)" : "\t           ");
+          if (vdescr.imd != 0) ost << "\t (is im_data)";
+          if (vdescr.is_affine_dependent) ost << "\t (is affine dependent)";
+          ost << endl;
+        }
       for (const auto &vargroup : variable_groups) {
         ost << "Variable group " << std::setw(30) << std::left
             << vargroup.first;
         if (vargroup.second.size()) {
           bool first(true);
           for (const std::string vname : vargroup.second) {
-            if (!first) ost << ","; else first = false;
-            ost << " " << vname;
+            ost << (first ? " " : ", ") << vname;
+            first = false;
           }
           ost << endl;
-        } else ost << " empty" << endl;
+        } else
+          ost << " empty" << endl;
       }
     }
   }
