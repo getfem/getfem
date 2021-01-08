@@ -119,7 +119,7 @@ if dH > 0:
       pts[1,i] -= (y*dH)/(2*H) * (1 + np.cos(2.*np.pi*x/L))
    mesh.set_pts(pts)
 
-mesh.export_to_vtk("%s/mesh.vtk" % resultspath)
+mesh.export_to_vtu("%s/mesh.vtu" % resultspath)
 
 # FEM
 mfN = gf.MeshFem(mesh, N)
@@ -156,7 +156,6 @@ md.add_initialized_data("disp", [0.])
 
 md.add_initialized_data("K", E/(3.*(1.-2.*nu))) # Bulk modulus
 md.add_initialized_data("mu", E/(2*(1+nu)))     # Shear modulus
-md.add_initialized_data("Y", np.sqrt(2./3.)*pl_sigma_0) # Initial yield limit
 md.add_macro("F", "Id(2)+Grad_u")
 md.add_macro("F3d", "Id(3)+[0,0,0;0,0,0;0,0,1/X(2)]*u(2)+[1,0;0,1;0,0]*Grad_u*[1,0,0;0,1,0]")
 md.add_macro("J", "Det(F)*(1+u(2)/X(2))")
@@ -227,7 +226,7 @@ with open("%s/tension_axisymmetric.dat" % resultspath, "w") as f1:
                 mfu, md.variable("u"), "Displacements",
                 mfout2, md.interpolation("dirmult", mfout2, XP_RG), "Nominal reaction traction",
                 mfout2, md.local_projection(mim, "gamma", mfout2), "plastic strain")
-      mfout2.export_to_vtk("%s/tension_axisymmetric_%i.vtk" % (resultspath, step), *output)
+      mfout2.export_to_vtu("%s/tension_axisymmetric_%i.vtu" % (resultspath, step), *output)
 
       md.set_variable("gamma0", md.interpolation("gamma", mimd1, -1))
       md.set_variable("invCp0vec",

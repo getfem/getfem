@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # Python GetFEM interface
 #
-# Copyright (C) 2004-2020 Yves Renard, Julien Pommier.
+# Copyright (C) 2020-2020 Tetsuo Koyama.
 #
 # This file is a part of GetFEM
 #
@@ -29,6 +29,7 @@
 import getfem as gf
 import numpy as np
 import sys
+
 try:
     import pyvista as pv
 except:
@@ -41,26 +42,105 @@ mesh = gf.Mesh("cartesian", [0.0, 1.0, 2.0])
 pts = mesh.pts()[0]
 
 
-filenames = [
-    "check_mesh_ascii.vtk",
-    "check_mesh_binary.vtk",
-    "check_mesh_ascii.vtu",
-    "check_mesh_binary.vtu",
-]
+file_name = "check_mesh_ascii.vtk"
+mesh.export_to_vtk(file_name, "ascii")
+unstructured_grid = pv.read(file_name)
+expected = pts
+actual = unstructured_grid.points[:, 0]
+np.testing.assert_equal(expected, actual, "export of mesh pts is not correct.")
+expected = convex_connectivity
+actual = unstructured_grid.cell_connectivity
+np.testing.assert_equal(expected, actual, "export of mesh convex is not correct.")
 
-mesh.export_to_vtk(filenames[0], "ascii")
-mesh.export_to_vtk(filenames[1])
-mesh.export_to_vtu(filenames[2], "ascii")
-mesh.export_to_vtu(filenames[3])
+file_name = "check_mesh_binary.vtk"
+mesh.export_to_vtk(file_name)
+unstructured_grid = pv.read(file_name)
+expected = pts
+actual = unstructured_grid.points[:, 0]
+np.testing.assert_equal(expected, actual, "export of mesh pts is not correct.")
+expected = convex_connectivity
+actual = unstructured_grid.cell_connectivity
+np.testing.assert_equal(expected, actual, "export of mesh convex is not correct.")
 
-for filename in filenames:
-    print(filename)
-    unstructured_grid = pv.read(filename)
+file_name = "check_mesh_ascii.vtu"
+mesh.export_to_vtu(file_name, "ascii")
+unstructured_grid = pv.read(file_name)
+expected = pts
+actual = unstructured_grid.points[:, 0]
+np.testing.assert_equal(expected, actual, "export of mesh pts is not correct.")
+expected = convex_connectivity
+actual = unstructured_grid.cell_connectivity
+np.testing.assert_equal(expected, actual, "export of mesh convex is not correct.")
 
-    expected = pts
-    actual = unstructured_grid.points[:, 0]
-    np.testing.assert_equal(expected, actual, "export of mesh pts is not correct.")
+file_name = "check_mesh_binary.vtu"
+mesh.export_to_vtu(file_name)
+unstructured_grid = pv.read(file_name)
+expected = pts
+actual = unstructured_grid.points[:, 0]
+np.testing.assert_equal(expected, actual, "export of mesh pts is not correct.")
+expected = convex_connectivity
+actual = unstructured_grid.cell_connectivity
+np.testing.assert_equal(expected, actual, "export of mesh convex is not correct.")
 
-    expected = convex_connectivity
-    actual = unstructured_grid.cell_connectivity
-    np.testing.assert_equal(expected, actual, "export of mesh convex is not correct.")
+mfu = gf.MeshFem(mesh, 1)
+mfu.set_classical_fem(1)
+U1 = np.array([2.0, 1.0, 0.0])
+
+file_name = "check_meshfem_ascii.vtk"
+mfu.export_to_vtk(file_name, "ascii", U1, "U1")
+unstructured_grid = pv.read(file_name)
+expected = U1
+actual = unstructured_grid.point_arrays["U1"]
+np.testing.assert_equal(expected, actual, "export of U1 is not correct.")
+
+file_name = "check_meshfem_binary.vtk"
+mfu.export_to_vtk(file_name, U1, "U1")
+unstructured_grid = pv.read(file_name)
+expected = U1
+actual = unstructured_grid.point_arrays["U1"]
+np.testing.assert_equal(expected, actual, "export of U1 is not correct.")
+
+file_name = "check_meshfem_ascii.vtu"
+mfu.export_to_vtu(file_name, "ascii", U1, "U1")
+unstructured_grid = pv.read(file_name)
+expected = U1
+actual = unstructured_grid.point_arrays["U1"]
+np.testing.assert_equal(expected, actual, "export of U1 is not correct.")
+
+file_name = "check_meshfem_binary.vtu"
+mfu.export_to_vtu(file_name, U1, "U1")
+unstructured_grid = pv.read(file_name)
+expected = U1
+actual = unstructured_grid.point_arrays["U1"]
+np.testing.assert_equal(expected, actual, "export of U1 is not correct.")
+
+sl = gf.Slice(("boundary",), mesh, 1)
+U2 = np.array([3.0, 2.0, 1.0, 0.0])
+
+file_name = "check_slice_ascii.vtk"
+sl.export_to_vtk(file_name, "ascii", U2, "U2")
+unstructured_grid = pv.read(file_name)
+expected = U2
+actual = unstructured_grid.point_arrays["U2"]
+np.testing.assert_equal(expected, actual, "export of U2 is not correct.")
+
+file_name = "check_slice_binary.vtk"
+sl.export_to_vtk(file_name, U2, "U2")
+unstructured_grid = pv.read(file_name)
+expected = U2
+actual = unstructured_grid.point_arrays["U2"]
+np.testing.assert_equal(expected, actual, "export of U2 is not correct.")
+
+file_name = "check_slice_ascii.vtu"
+sl.export_to_vtu(file_name, "ascii", U2, "U2")
+unstructured_grid = pv.read(file_name)
+expected = U2
+actual = unstructured_grid.point_arrays["U2"]
+np.testing.assert_equal(expected, actual, "export of U2 is not correct.")
+
+file_name = "check_slice_binary.vtu"
+sl.export_to_vtu(file_name, U2, "U2")
+unstructured_grid = pv.read(file_name)
+expected = U2
+actual = unstructured_grid.point_arrays["U2"]
+np.testing.assert_equal(expected, actual, "export of U2 is not correct.")
