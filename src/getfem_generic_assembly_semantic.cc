@@ -257,28 +257,45 @@ namespace getfem {
         break;
       case GA_NODE_INTERPOLATE_VAL_TEST: case GA_NODE_INTERPOLATE_GRAD_TEST:
       case GA_NODE_INTERPOLATE_HESS_TEST: case GA_NODE_INTERPOLATE_DIVERG_TEST:
-        GMM_ASSERT1(false,
-                    "Sorry, directional derivative do not work for the moment "
-                    "with interpolate transformations. Future work.");
+        if (pexpr->node_type == GA_NODE_VAL_TEST) {
+          pnode->name = pexpr->name;
+        } else {
+          GMM_ASSERT1(false,
+                      "Sorry, directional derivative do not work for the "
+                      "moment with interpolate transformations. Future work.");
+        }
       case GA_NODE_ELEMENTARY_VAL_TEST: case GA_NODE_ELEMENTARY_GRAD_TEST:
       case GA_NODE_ELEMENTARY_HESS_TEST: case GA_NODE_ELEMENTARY_DIVERG_TEST:
-        GMM_ASSERT1(false,
-                    "Sorry, directional derivative do not work for the moment "
-                    "with elementary transformations. Future work.");
+        if (pexpr->node_type == GA_NODE_VAL_TEST) {
+          pnode->name = pexpr->name;
+        } else {
+          GMM_ASSERT1(false,
+                      "Sorry, directional derivative do not work for the "
+                      "moment with elementary transformations. Future work.");
+        }
       case GA_NODE_SECONDARY_DOMAIN_VAL_TEST:
       case GA_NODE_SECONDARY_DOMAIN_GRAD_TEST:
       case GA_NODE_SECONDARY_DOMAIN_HESS_TEST:
       case GA_NODE_SECONDARY_DOMAIN_DIVERG_TEST:
-        GMM_ASSERT1(false,
-                    "Sorry, directional derivative do not work for the moment "
-                    "with secondary domains. Future work.");
+        if (pexpr->node_type == GA_NODE_VAL_TEST) {
+          pnode->name = pexpr->name;
+        } else {
+          GMM_ASSERT1(false,
+                      "Sorry, directional derivative do not work for the "
+                      "moment with secondary domains. Future work.");
+        }
       case GA_NODE_XFEM_PLUS_VAL_TEST: case GA_NODE_XFEM_PLUS_GRAD_TEST:
       case GA_NODE_XFEM_PLUS_HESS_TEST: case GA_NODE_XFEM_PLUS_DIVERG_TEST:
       case GA_NODE_XFEM_MINUS_VAL_TEST: case GA_NODE_XFEM_MINUS_GRAD_TEST:
       case GA_NODE_XFEM_MINUS_HESS_TEST: case GA_NODE_XFEM_MINUS_DIVERG_TEST:
-        GMM_ASSERT1(false,
-                    "Sorry, directional derivative do not work for the moment "
-                    "with Xfem_plus and Xfem_minus operations. Future work.");
+        if (pexpr->node_type == GA_NODE_VAL_TEST) {
+          pnode->name = pexpr->name;
+        } else {
+          GMM_ASSERT1(false,
+                      "Sorry, directional derivative do not work for the "
+                      "moment with Xfem_plus and Xfem_minus operations. "
+                      "Future work.");
+        }
       default: break;
       }
     }
