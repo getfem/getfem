@@ -171,6 +171,7 @@ Makefile
 /interface/src/scilab/src/c/loader.sce
 /interface/src/scilab/unloader.sce
 /interface/tests/python/*.pyc
+/interface/tests/python/*.vtu
 /doc/sphinx/tools/
 /doc/sphinx/source/scilab/cmdref*
 /doc/sphinx/source/python/cmdref*

@@ -226,8 +226,8 @@ namespace bgeot
     double factor = 1.0;
 
     base_node x0_real(N);
-    while (res > IN_EPS/1000.) {
-      if ((gmm::abs(res - res0) < IN_EPS/1000.) || (factor < IN_EPS)) {
+    while (res > IN_EPS/100.) {
+      if ((gmm::abs(res - res0) < IN_EPS/100.) || (factor < IN_EPS)) {
         converged = false;
         return point_in_convex(*pgt, x, res, IN_EPS);
       }
