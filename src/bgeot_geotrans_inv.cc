@@ -191,9 +191,8 @@ namespace bgeot
                                           bool /* throw_except */,
                                           bool project_into_element) {
     converged = true;
-
     base_node x0_ref(P), diff(N);
-
+    
     { // find initial guess
       x0_ref = pgt->geometric_nodes()[0];
       scalar_type res = gmm::vect_dist2(mat_col(G, 0), xreal);
@@ -220,15 +219,15 @@ namespace bgeot
       if (res < IN_EPS)
         x *= 0.999888783; // For pyramid element to avoid the singularity
     }
-
+    
     add(pgt->transform(x, G), gmm::scaled(xreal, -1.0), diff);
     auto res = gmm::vect_norm2(diff);
     auto res0 = std::numeric_limits<scalar_type>::max();
     double factor = 1.0;
 
     base_node x0_real(N);
-    while (res > IN_EPS) {
-      if ((gmm::abs(res - res0) < IN_EPS) || (factor < IN_EPS)) {
+    while (res > IN_EPS/1000.) {
+      if ((gmm::abs(res - res0) < IN_EPS/1000.) || (factor < IN_EPS)) {
         converged = false;
         return point_in_convex(*pgt, x, res, IN_EPS);
       }
@@ -251,7 +250,6 @@ namespace bgeot
       add(x0_real, gmm::scaled(xreal, -1.0), diff);
       res = gmm::vect_norm2(diff);
     }
-
     return point_in_convex(*pgt, x, res, IN_EPS);
   }
 
