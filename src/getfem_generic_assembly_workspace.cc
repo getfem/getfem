@@ -492,7 +492,7 @@ namespace getfem {
           ftree.root->children.resize(2, nullptr);
           ftree.copy_node(tree.root, ftree.root, ftree.root->children[1]);
           ga_semantic_analysis(ftree, *this, m,
-                               ref_elt_dim_of_mesh(m), false, function_expr);
+                               ref_elt_dim_of_mesh(m,rg), false, function_expr);
           found = true;
           break;
         }
@@ -532,7 +532,7 @@ namespace getfem {
             // cout << "Result : " << ga_tree_to_string(dtree) << endl;
             // GA_TOCTIC("Derivative time");
             ga_semantic_analysis(dtree, *this, m,
-                                 ref_elt_dim_of_mesh(m), false, function_expr);
+                                 ref_elt_dim_of_mesh(m,rg),false,function_expr);
             // GA_TOCTIC("Analysis after Derivative time");
             // cout << "after analysis "  << ga_tree_to_string(dtree) << endl;
             add_tree(dtree, m, mim, rg, expr, add_derivative_order,
@@ -561,7 +561,7 @@ namespace getfem {
     }
     // cout << "read : " << ga_tree_to_string(ltrees[0])  << endl;
     ga_semantic_analysis(ltrees[0], *this, mim.linked_mesh(),
-                         ref_elt_dim_of_mesh(mim.linked_mesh()),
+                         ref_elt_dim_of_mesh(mim.linked_mesh(),rg),
                          false, false, 1);
     // cout << "analysed : " << ga_tree_to_string(ltrees[0]) << endl;
     GA_TOC("First analysis time");
@@ -578,7 +578,7 @@ namespace getfem {
             if (ntest2 > 0) selected_test2 = t2;
             // cout << "analysis with " << selected_test1.first << endl;
             ga_semantic_analysis(*ltree, *this, mim.linked_mesh(),
-                                 ref_elt_dim_of_mesh(mim.linked_mesh()),
+                                 ref_elt_dim_of_mesh(mim.linked_mesh(),rg),
                                  false, false, 2);
             // cout <<"split: "<< ga_tree_to_string(*ltree) << endl;
             if (ltree != ltrees.end()) ++ltree;
@@ -618,7 +618,7 @@ namespace getfem {
     const mesh_region &rg = register_region(m, rg_);
     ga_tree tree;
     ga_read_string(expr, tree, macro_dictionary());
-    ga_semantic_analysis(tree, *this, m, ref_elt_dim_of_mesh(m),
+    ga_semantic_analysis(tree, *this, m, ref_elt_dim_of_mesh(m,rg),
                          false, false);
     if (tree.root) {
       // GMM_ASSERT1(tree.root->nb_test_functions() == 0,
@@ -635,7 +635,7 @@ namespace getfem {
     const mesh_region &rg = register_region(m, rg_);
     ga_tree tree;
     ga_read_string(expr, tree, macro_dictionary());
-    ga_semantic_analysis(tree, *this, m, ref_elt_dim_of_mesh(m),
+    ga_semantic_analysis(tree, *this, m, ref_elt_dim_of_mesh(m,rg),
                          false, false);
     if (tree.root) {
       GMM_ASSERT1(tree.root->nb_test_functions() == 0,
@@ -655,7 +655,7 @@ namespace getfem {
     const mesh_region &rg = register_region(m, rg_);
     ga_tree tree;
     ga_read_string(expr, tree, macro_dictionary());
-    ga_semantic_analysis(tree, *this, m, ref_elt_dim_of_mesh(m), false, false);
+    ga_semantic_analysis(tree, *this, m, ref_elt_dim_of_mesh(m,rg),false,false);
     if (tree.root) {
       GMM_ASSERT1(tree.root->nb_test_functions() == 0,
                   "Invalid expression containing test functions");
@@ -1062,7 +1062,7 @@ namespace getfem {
           ga_node_extract_constant_term(local_tree, local_tree.root, *this, m);
         if (local_tree.root)
           ga_semantic_analysis(local_tree, *this, m,
-                               ref_elt_dim_of_mesh(m), false, false);
+                               ref_elt_dim_of_mesh(m,-1), false, false);
         if (local_tree.root && local_tree.root->node_type != GA_NODE_ZERO) {
           constant_term += "-("+ga_tree_to_string(local_tree)+")";
         }

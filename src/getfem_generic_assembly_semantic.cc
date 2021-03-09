@@ -4044,11 +4044,11 @@ namespace getfem {
         ga_tree trans_tree;
         ga_read_string(expr_trans, trans_tree, workspace.macro_dictionary());
         ga_semantic_analysis(trans_tree, workspace, m,
-                             ref_elt_dim_of_mesh(m), false, false, 1);
+                             ref_elt_dim_of_mesh(m, -1), false, false, 1);
         if (trans_tree.root) {
           ga_node_grad(trans_tree, workspace, m, trans_tree.root);
           ga_semantic_analysis(trans_tree, workspace, m,
-                               ref_elt_dim_of_mesh(m), false, false, 1);
+                               ref_elt_dim_of_mesh(m, -1), false, false, 1);
 
           GMM_ASSERT1(trans_tree.root->tensor().sizes().size() == 2,
                       "Problem in transformation" << tname);

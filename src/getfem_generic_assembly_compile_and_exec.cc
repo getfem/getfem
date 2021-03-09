@@ -7292,7 +7292,7 @@ namespace getfem {
         const mesh *m = td.m;
         GMM_ASSERT1(m, "Internal error");
         ga_semantic_analysis(gis.trees.back(), workspace, *m,
-                             ref_elt_dim_of_mesh(*m), true, false);
+                             ref_elt_dim_of_mesh(*m, *(td.rg)), true, false);
         pga_tree_node root = gis.trees.back().root;
         if (root) {
           // Compile tree
@@ -7374,8 +7374,8 @@ namespace getfem {
           continue;
         ga_tree tree(*(td.ptree)); // temporary tree (not used later)
         ga_semantic_analysis(tree, workspace, td.mim->linked_mesh(),
-                             ref_elt_dim_of_mesh(td.mim->linked_mesh()),
-                             true, false);
+                            ref_elt_dim_of_mesh(td.mim->linked_mesh(),*(td.rg)),
+                            true, false);
         pga_tree_node root = tree.root;
         if (root) {
           const bool
@@ -7478,8 +7478,8 @@ namespace getfem {
           trees.push_back(*(td.ptree));
           // Semantic analysis mainly to evaluate fixed size variables and data
           ga_semantic_analysis(trees.back(), workspace, td.mim->linked_mesh(),
-                               ref_elt_dim_of_mesh(td.mim->linked_mesh()),
-                               true, false);
+                            ref_elt_dim_of_mesh(td.mim->linked_mesh(),*(td.rg)),
+                            true, false);
           pga_tree_node root = trees.back().root;
           if (root) {
             // Compile tree

@@ -105,9 +105,9 @@ namespace getfem {
                     const std::string &interpolatename);
   
   // Function of internal use
-  inline size_type ref_elt_dim_of_mesh(const mesh &m) {
-    return m.convex_index().card() ?
-      m.trans_of_convex(m.convex_index().first())->dim() : size_type(0);
+  inline size_type ref_elt_dim_of_mesh(const mesh &m, const mesh_region &rg) {
+    auto v = getfem::mr_visitor(rg, m, true);
+    return v.finished() ? size_type(0) : m.trans_of_convex(v.cv())->dim();
   }
   
 
