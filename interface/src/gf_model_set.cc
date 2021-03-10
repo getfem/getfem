@@ -2883,7 +2883,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        );
 
     /*@SET ('add Newmark scheme', @str varname, @scalar beta, @scalar gamma)
-      Attach a theta method for the time discretization of the variable
+      Attach a Newmark method for the time discretization of the variable
       `varname`. Valid only if there is at most second order time derivative
       of the variable. @*/
     sub_command
@@ -2894,7 +2894,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        getfem::add_Newmark_scheme(*md, varname, beta, gamma);
        );
 
-    /*@SET ('add_Houbolt_scheme', @str varname)
+    /*@SET ('add Houbolt scheme', @str varname)
       Attach a Houbolt method for the time discretization of the variable
       `varname`. Valid only if there is at most second order time derivative
       of the variable  @*/
@@ -2902,6 +2902,19 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       ("add Houbolt scheme", 1, 1, 0, 0,
        std::string varname = in.pop().to_string();
        getfem::add_Houbolt_scheme(*md, varname);
+       );
+
+    /*@SET ('add Hilber Hughes Taylor scheme', @str varname, @scalar alpha, @scalar beta, @scalar gamma)
+      Attach a Hilber Hughes Taylor method for the time discretization of the variable
+      `varname`. Valid only if there is at most second order time derivative
+      of the variable. @*/
+    sub_command
+      ("add Hilber Hughes Taylor scheme", 4, 4, 0, 0,
+       std::string varname = in.pop().to_string();
+       double alpha = in.pop().to_scalar();
+       double beta = in.pop().to_scalar();
+       double gamma = in.pop().to_scalar();
+       getfem::add_Hilber_Hughes_Taylor_scheme(*md, varname, alpha, beta, gamma);
        );
 
      /*@SET ('disable bricks', @ivec bricks_indices)

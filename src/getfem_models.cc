@@ -1463,8 +1463,8 @@ namespace getfem {
       scalar_type beta, gamma;
 
     public:
-      // V = (U-U0)/(theta*dt) - dt*(1-theta)*V0
-      // A = (U-U0)/(theta^2*dt^2) - V0/(theta^2*dt) - dt*(1-theta)*A0
+      // V = (1-gamma/beta)*V0+(1-gamma/(2*beta))*dt*A0+gamma/(beta*dt)*(U-U0)
+      // A = (1-1/(2.0*beta))*A0-1/(beta*dt)*V0+1/(beta*dt*dt)*(U-U0)
       virtual void init_affine_dependent_variables(model &md) const {
         scalar_type dt = md.get_time_step();
         scalar_type a0 = scalar_type(1)/(beta*dt*dt), a1 =  dt*a0;
@@ -1497,7 +1497,6 @@ namespace getfem {
                    md.set_real_constant_part(A));
           gmm::add(gmm::scaled(md.real_variable(A0), -a2),
                    md.set_real_constant_part(A));
-
         }
       }
 
@@ -1580,7 +1579,6 @@ namespace getfem {
           if (!(md.variable_exists(A0))) md.add_fixed_size_data(A0, s);
         }
       }
-
 
     };
 
@@ -1704,7 +1702,142 @@ namespace getfem {
     md.add_time_integration_scheme(varname, ptsc);
   }
 
+  // ----------------------------------------------------------------------
+  //
+  // Hilber Hughes Taylor (HHT) method
+  //
+  // ----------------------------------------------------------------------
 
+    class APIDECL Hilber_Hughes_Taylor_scheme
+      : public virtual_time_scheme {
+
+      std::string U, U0, V, V0, A, A0;
+      scalar_type alpha, beta, gamma;
+
+    public:
+      // V = V0 + (1+alpha)*dt*gamma*C - (1+alpha)*dt*dt*beta*K
+      // U = U0 + dt*V0 + (1+alpha)*dt*dt*(0.5-beta)*A0
+      virtual void init_affine_dependent_variables(model &md) const {
+        scalar_type dt = md.get_time_step();
+
+        md.set_factor_of_variable(U, -(scalar_type(1)+alpha)*dt*dt*beta);
+        md.set_factor_of_variable(V, -(scalar_type(1)+alpha)*dt*gamma);
+        md.set_factor_of_variable(A, scalar_type(1));
+        if (md.is_complex()) {
+          gmm::add(gmm::scaled(md.complex_variable(V0), complex_type(scalar_type(1))),
+                   gmm::scaled(md.complex_variable(A0), complex_type(dt*(scalar_type(1)-gamma))),
+                   md.set_complex_constant_part(V));
+          gmm::add(gmm::scaled(md.complex_variable(A), complex_type(dt*gamma)),
+                   md.set_complex_constant_part(V));
+          gmm::add(gmm::scaled(md.complex_variable(U0), complex_type(scalar_type(1))),
+                   gmm::scaled(md.complex_variable(V0), complex_type(dt)),
+                   md.set_complex_constant_part(U));
+          gmm::add(gmm::scaled(md.complex_variable(A0), complex_type(dt*dt*(scalar_type(0.5)-beta))),
+                   md.set_complex_constant_part(U));
+          gmm::add(gmm::scaled(md.complex_variable(A), complex_type(dt*dt*beta)),
+                   md.set_complex_constant_part(U));
+        } else {
+          gmm::add(gmm::scaled(md.real_variable(V0), scalar_type(1)),
+                   gmm::scaled(md.real_variable(A0), scalar_type(1)-gamma),
+                   md.set_real_constant_part(V));
+          gmm::add(gmm::scaled(md.real_variable(A), dt*gamma),
+                   md.set_real_constant_part(V));
+          gmm::add(gmm::scaled(md.real_variable(U0), scalar_type(1)),
+                   gmm::scaled(md.real_variable(V0), dt),
+                   md.set_real_constant_part(U));
+          gmm::add(gmm::scaled(md.real_variable(A0), dt*dt*(scalar_type(0.5)-beta)),
+                   md.set_real_constant_part(U));
+          gmm::add(gmm::scaled(md.real_variable(A), dt*dt*beta),
+                   md.set_real_constant_part(U));
+        }
+      }
+
+      // V = (U-U0)/dt (backward Euler for precomputation)
+      // U = U0
+      virtual void init_affine_dependent_variables_precomputation(model &md)
+        const {
+        scalar_type dt = md.get_time_step();
+        md.set_factor_of_variable(V, scalar_type(1)/dt);
+        md.set_factor_of_variable(A, scalar_type(1)/(dt*dt));
+        if (md.is_complex()) {
+          gmm::copy(gmm::scaled(md.complex_variable(U0),
+                                -complex_type(1)/dt),
+                    md.set_complex_constant_part(V));
+          gmm::copy(md.complex_variable(U0),
+                    md.set_complex_constant_part(U));
+        } else {
+          gmm::copy(gmm::scaled(md.real_variable(U0),
+                                -scalar_type(1)/dt),
+                    md.set_real_constant_part(V));
+          gmm::copy(md.real_variable(U0),
+                    md.set_real_constant_part(U));
+        }
+      }
+
+      virtual void time_derivative_to_be_initialized
+      (std::string &name_v, std::string &name_previous_v) const {
+        if (beta != scalar_type(0.5) || gamma != scalar_type(1))
+          { name_v = A; name_previous_v = A0; }
+      }
+
+      virtual void shift_variables(model &md) const {
+        if (md.is_complex()) {
+          gmm::copy(md.complex_variable(U), md.set_complex_variable(U0));
+          gmm::copy(md.complex_variable(V), md.set_complex_variable(V0));
+          gmm::copy(md.complex_variable(A), md.set_complex_variable(A0));
+        } else {
+          gmm::copy(md.real_variable(U), md.set_real_variable(U0));
+          gmm::copy(md.real_variable(V), md.set_real_variable(V0));
+          gmm::copy(md.real_variable(A), md.set_real_variable(A0));
+        }
+      }
+
+      Hilber_Hughes_Taylor_scheme(model &md, std::string varname,
+                                  scalar_type al, scalar_type be,
+                                  scalar_type ga) {
+        GMM_ASSERT1(varname.compare(0, 5, "Dot2_") == 0,
+                    "Prefix Dot2_ is need for the Hilber Hughes Taylor scheme varname");
+        U = varname.substr(5);
+        U0 = "Previous_" + U;
+        V = "Dot_" + U;
+        V0 = "Previous_Dot_" + U;
+        A = "Dot2_" + U;
+        A0 = "Previous_Dot2_" + U;
+        alpha = al; beta = be; gamma = ga;
+        GMM_ASSERT1(alpha >= -scalar_type(1) && alpha <= scalar_type(0)
+                    && beta > scalar_type(0) && beta <= scalar_type(1)
+                    && gamma >= scalar_type(0.5) && gamma <= scalar_type(1),
+                    "Invalid parameter values for the Hilber Hughes Taylor scheme");
+
+        if (!(md.variable_exists(U)))
+          md.add_affine_dependent_variable(U, A);
+        if (!(md.variable_exists(V)))
+          md.add_affine_dependent_variable(V, A);
+
+        const mesh_fem *mf = md.pmesh_fem_of_variable(U);
+        size_type s = md.is_complex() ? gmm::vect_size(md.complex_variable(U))
+          : gmm::vect_size(md.real_variable(U));
+
+        if (mf) {
+          if (!(md.variable_exists(U0))) md.add_fem_data(U0, *mf);
+          if (!(md.variable_exists(V0))) md.add_fem_data(V0, *mf);
+          if (!(md.variable_exists(A0))) md.add_fem_data(A0, *mf);
+        } else {
+          if (!(md.variable_exists(U0))) md.add_fixed_size_data(U0, s);
+          if (!(md.variable_exists(V0))) md.add_fixed_size_data(V0, s);
+          if (!(md.variable_exists(A0))) md.add_fixed_size_data(A0, s);
+        }
+      }
+
+    };
+
+  void add_Hilber_Hughes_Taylor_scheme(model &md, const std::string &varname,
+                                       scalar_type alpha, scalar_type beta,
+                                       scalar_type gamma) {
+    ptime_scheme ptsc = std::make_shared<Hilber_Hughes_Taylor_scheme>
+      (md, varname, alpha, beta, gamma);
+    md.add_time_integration_scheme(varname, ptsc);
+  }
 
 
 

@@ -1246,6 +1246,9 @@ namespace getfem {
 
   void add_Houbolt_scheme(model &md, const std::string &varname);
 
+  void add_Hilber_Hughes_Taylor_scheme(model &md, const std::string &varname,
+                                       scalar_type alpha, scalar_type beta,
+                                       scalar_type gamma);
 
 
   //=========================================================================
