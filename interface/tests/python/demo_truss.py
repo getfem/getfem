@@ -1,12 +1,12 @@
 #!/usr/bin/env python
-# coding: utf-8
-# Python GetFEM++ interface
+# -*- coding: utf-8 -*-
+# Python GetFEM interface
 #
-# Copyright (C) 2020-2020 Tetsuo Koyama.
+# Copyright (C) 2021-2021 Tetsuo Koyama.
 #
-# This file is a part of GetFEM++
+# This file is a part of GetFEM
 #
-# GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+# GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
 # under  the  terms  of the  GNU  Lesser General Public License as published
 # by  the  Free Software Foundation;  either version 2.1 of the License,  or
 # (at your option) any later version.
@@ -16,14 +16,13 @@
 # License for more details.
 # You  should  have received a copy of the GNU Lesser General Public License
 # along  with  this program;  if not, write to the Free Software Foundation,
-
 # Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 #
 ############################################################################
 """ 1D Truss problem test
 
   This program is used to check that python-getfem is working. This is
-  also a good example of use of GetFEM++.
+  also a good example of use of python-getfem..
 
   |-> x
 //|        EA         |-> u0
@@ -35,79 +34,79 @@
 
   $Id$
 """
-# Import basic modules
 import getfem as gf
 import numpy as np
 
-# Parameters
+#
+# Physical parameters
+#
 E = 21E6               # Young Modulus (N/cm^2)
-A = 900.0              # Area (cm)
-L = 200.0              # Length of element (cm)
-P = 2.0                # Force
+A = 9000.0             # Section Area (cm^2)
+L = 2000.0             # Length of element (cm)
+P = 200.0              # Force (N)
 
-# Create a 1D mesh
-mesh = gf.Mesh("cartesian", np.arange(0.0, 2*L, L))
+#
+# Numerical parameters
+#
 
-# Create a MeshFem for u and rhs fields of dimension 1 (i.e. a scalar field)
-mfu = gf.MeshFem(mesh, 1)
-mfrhs = gf.MeshFem(mesh, 1)
-# assign the Classical Fem
-elements_degree = 1
-mfu.set_classical_fem(elements_degree)
-mfrhs.set_classical_fem(elements_degree)
+elements_degree = 1       # Degree of the finite element methods
 
-#  Integration method used
-mim = gf.MeshIm(mesh, pow(elements_degree,2))
+#
+# Mesh generation.
+#
+mesh = gf.Mesh("cartesian", np.array([0, L, 2*L]))
 
+#
 # Boundary selection
+#
+
 fleft = mesh.outer_faces_with_direction(v=[-1.0], angle=0.01)
 fright = mesh.outer_faces_with_direction(v=[+1.0], angle=0.01)
-
-# Mark it as boundary
 NEUMANN_BOUNDARY = 1
 DIRICHLET_BOUNDARY = 2
 mesh.set_region(NEUMANN_BOUNDARY, fright)
 mesh.set_region(DIRICHLET_BOUNDARY, fleft)
+#
+# Definition of finite elements methods and integration method
+#
+
+mfu = gf.MeshFem(mesh, 1)  # Finite element for the elastic displacement
+mfu.set_classical_fem(elements_degree)
+mim = gf.MeshIm(mesh, elements_degree*2)   # Integration method
+
+#
+# Model definition
+#
+
+md = gf.Model("real")
+md.add_fem_variable("u", mfu)       # Displacement of the structure
+
+# Truss problem
+md.add_initialized_data("E", [E])
+md.add_initialized_data("A", [A])
+md.add_linear_term(mim, "(E*A*Grad_u).Grad_Test_u")
+
+F = mfu.eval(str(P))
+md.add_initialized_fem_data("ForceData", mfu, F)
+md.add_source_term_brick(mim, "u", "ForceData", NEUMANN_BOUNDARY)
+
+md.add_Dirichlet_condition_with_multipliers(mim, "u", elements_degree - 1, DIRICHLET_BOUNDARY)
+
+#
+# Model solve
+#
+md.solve()
+
+
+#
+# Solution export
+#
+U = md.variable("u")
 
 # Interpolate the exact solution (Assuming mfu is a Lagrange fem)
 Ue = mfu.eval("(" + str(P) + "*x)/(" + str(E) +"*" + str(A) + ")")
 
-# Interpolate the source term
-F = mfrhs.eval(str(P))
-
-# Model
-md = gf.Model("real")
-
-# Main unknown
-md.add_fem_variable("u", mfu)
-
-# Truss term on u
-md.add_Truss_brick(mim, "u", "E", "A")
-
-# Force term
-md.add_initialized_fem_data("ForceData", mfrhs, F)
-md.add_source_term_brick(mim, "u", "ForceData")
-
-# Dirichlet condition on the boundary.
-md.add_Dirichlet_condition_with_multipliers(mim, "u", elements_degree - 1, DIRICHLET_BOUNDARY)
-
-# Assembly of the linear system and solve.
-md.solve()
-
-# Main unknown
-U = md.variable("u")
-L2error = gf.compute(mfu, U-Ue, "L2 norm", mim)
-H1error = gf.compute(mfu, U-Ue, "H1 norm", mim)
-print("Error in L2 norm : ", L2error)
-print("Error in H1 norm : ", H1error)
-
-# Export data
-mfu.export_to_vtk("truss.vtk", Ue,"Exact solution",
+mfu.export_to_vtu("truss.vtu", Ue,"Exact solution",
                                U,"Computed solution")
-print("You can view the solution with (for example):")
-print("You can view solutions with for instance:\nmayavi2 -d truss.vtk -f WarpVector -m Surface")
+assert np.allclose(U, Ue)
 
-
-if (H1error > 1e-3):
-    print("Error too large !")
-    exit(1)
