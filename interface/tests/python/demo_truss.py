@@ -82,9 +82,8 @@ md = gf.Model("real")
 md.add_fem_variable("u", mfu)       # Displacement of the structure
 
 # Truss problem
-md.add_initialized_data("E", [E])
-md.add_initialized_data("A", [A])
-md.add_linear_term(mim, "(E*A*Grad_u).Grad_Test_u")
+md.add_initialized_data("D", [E*A])
+md.add_generic_elliptic_brick(mim, "u", "D")
 
 F = mfu.eval(str(P))
 md.add_initialized_fem_data("ForceData", mfu, F)
@@ -105,8 +104,5 @@ U = md.variable("u")
 
 # Interpolate the exact solution (Assuming mfu is a Lagrange fem)
 Ue = mfu.eval("(" + str(P) + "*x)/(" + str(E) +"*" + str(A) + ")")
-
-mfu.export_to_vtu("truss.vtu", Ue,"Exact solution",
-                               U,"Computed solution")
 assert np.allclose(U, Ue)
 
