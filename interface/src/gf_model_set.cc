@@ -2816,6 +2816,29 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        );
 
 
+    /*@SET ind = ('add lumped mass brick for first order', @tmim mim, @str varname[, @str dataexpr_rho[, @int region]])
+      Add lumped mass for first order term to the model relatively to the variable `varname`.
+      If specified, the data `dataexpr_rho` is the
+      density (1 if omitted). `region` is an optional mesh region on
+      which the term is added. If it is not specified, it
+      is added on the whole mesh. Return the brick index in the model.@*/
+    sub_command
+      ("add lumped mass brick for first order", 2, 4, 0, 1,
+       getfem::mesh_im *mim = to_meshim_object(in.pop());
+       std::string varname = in.pop().to_string();
+       std::string dataname_rho;
+       if (in.remaining()) dataname_rho = in.pop().to_string();
+       size_type region = size_type(-1);
+       if (in.remaining()) region = in.pop().to_integer();
+       size_type ind
+       = getfem::add_lumped_mass_brick_for_first_order
+       (*md, *mim, varname, dataname_rho, region)
+       + config::base_index();
+       workspace().set_dependence(md, mim);
+       out.pop().from_integer(int(ind));
+       );
+
+
     /*@SET ('shift variables for time integration')
       Function used to shift the variables of a model to the data
       corresponding of ther value on the previous time step for time
