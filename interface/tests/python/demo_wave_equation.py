@@ -80,7 +80,7 @@ md.add_Houbolt_scheme('u1')
 md.add_Newmark_scheme('u2', beta, gamma)
 md.add_mass_brick(mim, 'Dot2_u')
 md.add_mass_brick(mim, 'Dot2_u1')
-md.add_lumped_mass_brick_for_first_order(mim, 'Dot2_u2')
+md.add_lumped_mass_for_first_order_brick(mim, 'Dot2_u2')
 md.set_time_step(dt)
 
 ## Initial data.
