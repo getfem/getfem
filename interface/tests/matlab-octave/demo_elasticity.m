@@ -93,11 +93,11 @@ if (option == 1)
 elseif (option == 2)
   gf_model_set(md, 'add initialized data', 'E', [E]);
   gf_model_set(md, 'add initialized data', 'nu', [nu]);
-  gf_model_set(md, 'add isotropic linearized elasticity brick pstrain', mim, 'u', 'E', 'nu');
+  gf_model_set(md, 'add isotropic linearized elasticity pstrain brick', mim, 'u', 'E', 'nu');
 elseif (option == 3)
   gf_model_set(md, 'add initialized data', 'E', [E]);
   gf_model_set(md, 'add initialized data', 'nu', [nu]);
-  gf_model_set(md, 'add isotropic linearized elasticity brick pstress', mim, 'u', 'E', 'nu');
+  gf_model_set(md, 'add isotropic linearized elasticity pstress brick', mim, 'u', 'E', 'nu');
 end
 
 if (incompressible)

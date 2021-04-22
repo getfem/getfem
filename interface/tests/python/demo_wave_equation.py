@@ -57,10 +57,13 @@ V0 = 0.*U0
 md=gf.Model('real');
 md.add_fem_variable('u', mf);
 md.add_fem_variable('u1', mf);
+md.add_fem_variable('u2', mf);
 md.add_Laplacian_brick(mim, 'u');
 md.add_Laplacian_brick(mim, 'u1');
+md.add_Laplacian_brick(mim, 'u2');
 md.add_Dirichlet_condition_with_multipliers(mim, 'u', mf, 1);
 md.add_Dirichlet_condition_with_multipliers(mim, 'u1', mf, 1);
+md.add_Dirichlet_condition_with_multipliers(mim, 'u2', mf, 1);
 # md.add_Dirichlet_condition_with_penalization(mim, 'u', 1E9, 1);
 # md.add_Dirichlet_condition_with_simplification('u', 1);
 
@@ -74,8 +77,10 @@ gamma = 0.5;
 
 md.add_Newmark_scheme('u', beta, gamma)
 md.add_Houbolt_scheme('u1')
+md.add_Newmark_scheme('u2', beta, gamma)
 md.add_mass_brick(mim, 'Dot2_u')
 md.add_mass_brick(mim, 'Dot2_u1')
+md.add_lumped_mass_for_first_order_brick(mim, 'Dot2_u2')
 md.set_time_step(dt)
 
 ## Initial data.
@@ -84,6 +89,8 @@ md.set_variable('Previous_Dot_u',  V0)
 md.set_variable('Previous_u1', U0)
 md.set_variable('Previous2_u1', U0)
 md.set_variable('Previous3_u1', U0)
+md.set_variable('Previous_u2',  U0)
+md.set_variable('Previous_Dot_u2',  V0)
 
 ## Initialisation of the acceleration 'Previous_Dot2_u'
 md.perform_init_time_derivative(dt/2.)
@@ -115,6 +122,10 @@ for t in np.arange(0.,T,dt):
   U = md.variable('u1')
   V = md.variable('Dot_u1')
   A = md.variable('Dot2_u1')
+
+  U = md.variable('u2')
+  V = md.variable('Dot_u2')
+  A = md.variable('Dot2_u2')
 
   n += 1
   md.shift_variables_for_time_integration()

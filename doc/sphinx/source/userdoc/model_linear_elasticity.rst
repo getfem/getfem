@@ -56,13 +56,13 @@ representing the |Lame| coefficients.
 
 The function which adds this brick to a model and parametrized with Young modulus and Poisson ratio is::
 
-  ind_brick = getfem::add_isotropic_linearized_elasticity_brick_pstrain
+  ind_brick = getfem::add_isotropic_linearized_elasticity_pstrain_brick
               (md, mim, varname, data_E, data_nu, region = size_type(-1));
 
 
 This brick represent a plane strain approximation when it is applied to a 2D mesh (and a standard model on a 3D mesh). In order to obtain a plane stress approximation for 2D meshes, one can use::
 
-  ind_brick = getfem::add_isotropic_linearized_elasticity_brick_pstress
+  ind_brick = getfem::add_isotropic_linearized_elasticity_pstress_brick
               (md, mim, varname, data_E, data_nu, region = size_type(-1));
 
 For 3D meshes, the two previous bricks give the same result.

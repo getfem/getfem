@@ -6124,7 +6124,7 @@ namespace getfem {
     }
   }
 
-  size_type add_isotropic_linearized_elasticity_brick_pstrain
+  size_type add_isotropic_linearized_elasticity_pstrain_brick
   (model &md, const mesh_im &mim, const std::string &varname,
    const std::string &data_E, const std::string &data_nu,
    size_type region) {
@@ -6153,7 +6153,7 @@ namespace getfem {
     }
   }
 
-  size_type add_isotropic_linearized_elasticity_brick_pstress
+  size_type add_isotropic_linearized_elasticity_pstress_brick
   (model &md, const mesh_im &mim, const std::string &varname,
    const std::string &data_E, const std::string &data_nu,
    size_type region) {
@@ -6543,7 +6543,7 @@ namespace getfem {
   //
   // ----------------------------------------------------------------------
 
-  struct lumped_mass_brick_for_first_order : public virtual_brick {
+  struct lumped_mass_for_first_order_brick : public virtual_brick {
 
     virtual void asm_real_tangent_terms(const model &md, size_type,
                                         const model::varnamelist &vl,
@@ -6589,7 +6589,7 @@ namespace getfem {
 
     }
 
-    lumped_mass_brick_for_first_order() {
+    lumped_mass_for_first_order_brick() {
       set_flags("Lumped mass brick", true /* is linear*/,
                 true /* is symmetric */, true /* is coercive */,
                 true /* is real */, false /* no complex version */,
@@ -6598,10 +6598,10 @@ namespace getfem {
 
   };
 
-  size_type add_lumped_mass_brick_for_first_order
+  size_type add_lumped_mass_for_first_order_brick
   (model & md, const mesh_im &mim, const std::string &varname,
    const std::string &dataexpr_rho, size_type region) {
-    pbrick pbr = std::make_shared<lumped_mass_brick_for_first_order>();
+    pbrick pbr = std::make_shared<lumped_mass_for_first_order_brick>();
     model::termlist tl;
     tl.push_back(model::term_description(varname, varname, true));
     model::varnamelist dl;
