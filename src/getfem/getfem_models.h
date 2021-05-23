@@ -241,9 +241,12 @@ namespace getfem {
         return 0;
       }
 
-      size_type size() const // Should control that the variable is
-                             // indeed initialized by actualize_sizes() ...
-      { return is_complex ? complex_value[0].size() : real_value[0].size(); }
+      size_type size() const { // Should control that the variable is
+                               // indeed initialized by actualize_sizes() ...
+        return is_complex ? complex_value[0].size()
+                          : real_value[0].size();
+      }
+      inline bool is_enabled() const { return !is_disabled; }
 
       void set_size();
     }; // struct var_description

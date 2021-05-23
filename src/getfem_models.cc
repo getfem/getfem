@@ -247,7 +247,7 @@ namespace getfem {
   bool model::is_internal_variable(const std::string &name) const {
     if (is_old(name)) return false;
     const auto &var_descr = variable_description(name);
-    return var_descr.is_internal && !var_descr.is_disabled;
+    return var_descr.is_internal && var_descr.is_enabled();
   }
 
   bool model::is_affine_dependent_variable(const std::string &name) const {
@@ -318,7 +318,7 @@ namespace getfem {
     size_type primary_size = full_size;
 
     for (auto &&v : variables)
-      if (v.second.is_internal && !v.second.is_disabled) { // is_internal_variable()
+      if (v.second.is_internal && v.second.is_enabled()) { // is_internal_variable()
         v.second.I = gmm::sub_interval(full_size, v.second.size());
         full_size += v.second.size();
       }
@@ -2411,166 +2411,145 @@ namespace getfem {
 
         if (cplx) { // complex term in complex model
           if (term.is_matrix_term && (version & BUILD_MATRIX) && !isprevious
-              && (isg || (!(var1->is_disabled) && !(var2->is_disabled)))) {
+              && (isg || (var1->is_enabled() && var2->is_enabled()))) {
             gmm::add(gmm::scaled(brick.cmatlist[j], alpha),
                      gmm::sub_matrix(cTM, I1, I2));
-            if (term.is_symmetric && I1.first() != I2.first()) {
+            if (term.is_symmetric && I1.first() != I2.first())
               gmm::add(gmm::scaled(gmm::transposed(brick.cmatlist[j]), alpha),
                        gmm::sub_matrix(cTM, I2, I1));
-            }
           }
           if (version & BUILD_RHS) {
-            if (isg || !(var1->is_disabled)) {
-              if (brick.pdispatch) {
+            if (isg || var1->is_enabled()) {
+              if (brick.pdispatch)
                 for (size_type k = 0; k < brick.nbrhs; ++k)
                   gmm::add(gmm::scaled(brick.cveclist[k][j],
                                        brick.coeffs[k]),
                            gmm::sub_vector(crhs, I1));
-              }
-              else {
+              else
                 gmm::add(gmm::scaled(brick.cveclist[0][j],
                                      complex_type(alpha1)),
                          gmm::sub_vector(crhs, I1));
-              }
             }
             if (term.is_matrix_term && brick.pbr->is_linear() && is_linear()) {
-              if (var2->is_affine_dependent
-                  && !(var1->is_disabled))
+              if (var2->is_affine_dependent && var1->is_enabled())
                 gmm::mult_add(brick.cmatlist[j],
                               gmm::scaled(var2->affine_complex_value,
                                           complex_type(-alpha1)),
                               gmm::sub_vector(crhs, I1));
               if (term.is_symmetric && I1.first() != I2.first()
-                  && var1->is_affine_dependent
-                  && !(var2->is_disabled)) {
+                  && var1->is_affine_dependent && var2->is_enabled())
                 gmm::mult_add(gmm::conjugated(brick.cmatlist[j]),
                               gmm::scaled(var1->affine_complex_value,
                                           complex_type(-alpha2)),
                               gmm::sub_vector(crhs, I2));
-              }
             }
             if (term.is_matrix_term && brick.pbr->is_linear()
-                && (!is_linear() || (version & BUILD_WITH_LIN))) {
-              if (!(var1->is_disabled))
-                gmm::mult_add(brick.cmatlist[j],
-                              gmm::scaled(var2->complex_value[0],
-                                          complex_type(-alpha1)),
-                              gmm::sub_vector(crhs, I1));
-            }
-            if (term.is_symmetric && I1.first() != I2.first() &&
-                !(var2->is_disabled)) {
-              if (brick.pdispatch) {
+                && (!is_linear() || (version & BUILD_WITH_LIN))
+                && var1->is_enabled())
+              gmm::mult_add(brick.cmatlist[j],
+                            gmm::scaled(var2->complex_value[0],
+                                        complex_type(-alpha1)),
+                            gmm::sub_vector(crhs, I1));
+            if (term.is_symmetric && I1.first() != I2.first()
+                && var2->is_enabled()) {
+              if (brick.pdispatch)
                 for (size_type k = 0; k < brick.nbrhs; ++k)
                   gmm::add(gmm::scaled(brick.cveclist_sym[k][j],
                                        brick.coeffs[k]),
                            gmm::sub_vector(crhs, I2));
-              } else {
+              else
                 gmm::add(gmm::scaled(brick.cveclist_sym[0][j],
                                      complex_type(alpha2)),
                          gmm::sub_vector(crhs, I2));
-              }
-               if (brick.pbr->is_linear()
-                   && (!is_linear() || (version & BUILD_WITH_LIN))) {
+              if (brick.pbr->is_linear()
+                  && (!is_linear() || (version & BUILD_WITH_LIN)))
                  gmm::mult_add(gmm::conjugated(brick.cmatlist[j]),
-                            gmm::scaled(var1->complex_value[0],
-                                        complex_type(-alpha2)),
-                            gmm::sub_vector(crhs, I2));
-               }
+                               gmm::scaled(var1->complex_value[0],
+                                           complex_type(-alpha2)),
+                               gmm::sub_vector(crhs, I2));
             }
           }
         } else if (is_complex()) { // real term in complex model
           if (term.is_matrix_term && (version & BUILD_MATRIX) && !isprevious
-              && (isg || (!(var1->is_disabled) && !(var2->is_disabled)))) {
+              && (isg || (var1->is_enabled() && var2->is_enabled()))) {
             gmm::add(gmm::scaled(brick.rmatlist[j], alpha),
                      gmm::sub_matrix(cTM, I1, I2));
-            if (term.is_symmetric && I1.first() != I2.first()) {
+            if (term.is_symmetric && I1.first() != I2.first())
               gmm::add(gmm::scaled(gmm::transposed(brick.rmatlist[j]), alpha),
                        gmm::sub_matrix(cTM, I2, I1));
-            }
           }
           if (version & BUILD_RHS) {
-            if (isg || !(var1->is_disabled)) {
-              if (brick.pdispatch) {
+            if (isg || var1->is_enabled()) {
+              if (brick.pdispatch)
                 for (size_type k = 0; k < brick.nbrhs; ++k)
                   gmm::add(gmm::scaled(brick.rveclist[k][j],
                                        brick.coeffs[k]),
                            gmm::sub_vector(crhs, I1));
-              }
-              else {
+              else
                 gmm::add(gmm::scaled(brick.rveclist[0][j], alpha1),
                          gmm::sub_vector(crhs, I1));
-              }
             }
             if (term.is_matrix_term && brick.pbr->is_linear() && is_linear()) {
-              if (var2->is_affine_dependent
-                  && !(var1->is_disabled))
+              if (var2->is_affine_dependent && var1->is_enabled())
                 gmm::mult_add(brick.rmatlist[j],
                               gmm::scaled(var2->affine_complex_value,
                                           complex_type(-alpha1)),
                               gmm::sub_vector(crhs, I1));
               if (term.is_symmetric && I1.first() != I2.first()
-                  && var1->is_affine_dependent
-                  && !(var2->is_disabled)) {
+                  && var1->is_affine_dependent && var2->is_enabled())
                 gmm::mult_add(gmm::transposed(brick.rmatlist[j]),
                               gmm::scaled(var1->affine_complex_value,
                                           complex_type(-alpha2)),
                               gmm::sub_vector(crhs, I2));
-              }
             }
             if (term.is_matrix_term && brick.pbr->is_linear()
-                && (!is_linear() || (version & BUILD_WITH_LIN))) {
-              if (!(var1->is_disabled))
-                gmm::mult_add(brick.rmatlist[j],
-                              gmm::scaled(var2->complex_value[0],
-                                          complex_type(-alpha1)),
-                              gmm::sub_vector(crhs, I1));
-            }
-            if (term.is_symmetric && I1.first() != I2.first() &&
-                !(var2->is_disabled)) {
-              if (brick.pdispatch) {
+                && (!is_linear() || (version & BUILD_WITH_LIN))
+                && var1->is_enabled())
+              gmm::mult_add(brick.rmatlist[j],
+                            gmm::scaled(var2->complex_value[0],
+                                        complex_type(-alpha1)),
+                            gmm::sub_vector(crhs, I1));
+            if (term.is_symmetric && I1.first() != I2.first()
+                && var2->is_enabled()) {
+              if (brick.pdispatch)
                 for (size_type k = 0; k < brick.nbrhs; ++k)
                   gmm::add(gmm::scaled(brick.rveclist_sym[k][j],
                                        brick.coeffs[k]),
                            gmm::sub_vector(crhs, I2));
-              }
-              else {
+              else
                 gmm::add(gmm::scaled(brick.rveclist_sym[0][j], alpha2),
                          gmm::sub_vector(crhs, I2));
-              }
+
               if (brick.pbr->is_linear()
-                  && (!is_linear() || (version & BUILD_WITH_LIN))) {
+                  && (!is_linear() || (version & BUILD_WITH_LIN)))
                 gmm::mult_add(gmm::transposed(brick.rmatlist[j]),
                               gmm::scaled(var1->complex_value[0],
                                           complex_type(-alpha2)),
                               gmm::sub_vector(crhs, I2));
-              }
             }
           }
         } else { // real term in real model
           if (term.is_matrix_term && (version & BUILD_MATRIX) && !isprevious
-              && (isg || (!(var1->is_disabled)
-                          && !(var2->is_disabled)))) {
+              && (isg || (var1->is_enabled() && var2->is_enabled()))) {
             gmm::add(gmm::scaled(brick.rmatlist[j], alpha),
                      gmm::sub_matrix(rTM, I1, I2));
-            if (term.is_symmetric && I1.first() != I2.first()) {
+            if (term.is_symmetric && I1.first() != I2.first())
               gmm::add(gmm::scaled(gmm::transposed(brick.rmatlist[j]), alpha),
                        gmm::sub_matrix(rTM, I2, I1));
-            }
           }
           if (version & BUILD_RHS) {
             // Contributions to interval I1 of var1
-            if (isg || !(var1->is_disabled)) {
-              if (brick.pdispatch) {
+            if (isg || var1->is_enabled()) {
+              if (brick.pdispatch)
                 for (size_type k = 0; k < brick.nbrhs; ++k)
                   gmm::add(gmm::scaled(brick.rveclist[k][j],
                                        brick.coeffs[k]),
                            gmm::sub_vector(rrhs, I1));
-              }
               else
                 gmm::add(gmm::scaled(brick.rveclist[0][j], alpha1),
                          gmm::sub_vector(rrhs, I1));
             }
-            if (!(var1->is_disabled)) {
+            if (var1->is_enabled()) {
               // Contributions from affine dependent variables
               if (term.is_matrix_term && brick.pbr->is_linear() && is_linear()
                   && var2->is_affine_dependent)
@@ -2584,15 +2563,15 @@ namespace getfem {
                               gmm::scaled(var2->real_value[0], -alpha1),
                               gmm::sub_vector(rrhs, I1));
             }
+
             // Contributions to interval I2 of var2 due to symmetric terms
             if (term.is_symmetric && I1.first() != I2.first() &&
-                !(var2->is_disabled)) {
-              if (brick.pdispatch) {
+                var2->is_enabled()) {
+              if (brick.pdispatch)
                 for (size_type k = 0; k < brick.nbrhs; ++k)
                   gmm::add(gmm::scaled(brick.rveclist_sym[k][j],
                                        brick.coeffs[k]),
                            gmm::sub_vector(rrhs, I2));
-              }
               else
                 gmm::add(gmm::scaled(brick.rveclist_sym[0][j], alpha2),
                          gmm::sub_vector(rrhs, I2));
