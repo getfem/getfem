@@ -2845,7 +2845,9 @@ namespace getfem {
     }
 
     if (version & BUILD_RHS) {
-      approx_external_load_ = MPI_SUM_SCALAR(approx_external_load_);
+       // some contributions are added only in the master process
+       // send the correct result to all other processes
+       MPI_BCAST0_SCALAR(approx_external_load_);
     }
 
     #if GETFEM_PARA_LEVEL > 1
@@ -3281,10 +3283,14 @@ namespace getfem {
       gmm::clear(vecl[0]);
 
       if (expr.size()) {
+        const mesh_im &mim = *mims[0];
+        mesh_region rg(region);
+        mim.linked_mesh().intersect_with_mpi_region(rg);
+
         // reenables disabled variables
         ga_workspace workspace(md, ga_workspace::inherit::ALL);
         GMM_TRACE2(name << ": generic source term assembly");
-        workspace.add_expression(expr, *(mims[0]), region, 1, secondary_domain);
+        workspace.add_expression(expr, mim, rg, 1, secondary_domain);
         workspace.assembly(1);
         const auto &V=workspace.assembled_vector();
         for (size_type i = 0; i < vl_test1.size(); ++i) {
