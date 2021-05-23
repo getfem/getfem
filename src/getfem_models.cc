@@ -2339,6 +2339,9 @@ namespace getfem {
                 "Invalid assembly version BUILD_WITH_INTERNAL");
 #if GETFEM_PARA_LEVEL > 1
     double t_ref = MPI_Wtime();
+    int rk=0, nbp=1;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rk);
+    MPI_Comm_size(MPI_COMM_WORLD, &nbp);
 #endif
 
     context_check(); if (act_size_to_be_done) actualize_sizes();
@@ -2419,6 +2422,7 @@ namespace getfem {
                        gmm::sub_matrix(cTM, I2, I1));
           }
           if (version & BUILD_RHS) {
+            //FIXME MPI_SUM_VECTOR(crhs)
             if (isg || var1->is_enabled()) {
               if (brick.pdispatch)
                 for (size_type k = 0; k < brick.nbrhs; ++k)
@@ -2479,6 +2483,7 @@ namespace getfem {
                        gmm::sub_matrix(cTM, I2, I1));
           }
           if (version & BUILD_RHS) {
+            //FIXME MPI_SUM_VECTOR(crhs)
             if (isg || var1->is_enabled()) {
               if (brick.pdispatch)
                 for (size_type k = 0; k < brick.nbrhs; ++k)
@@ -2539,54 +2544,77 @@ namespace getfem {
           }
           if (version & BUILD_RHS) {
             // Contributions to interval I1 of var1
+            auto vec_out1 = gmm::sub_vector(rrhs, I1);
             if (isg || var1->is_enabled()) {
               if (brick.pdispatch)
                 for (size_type k = 0; k < brick.nbrhs; ++k)
                   gmm::add(gmm::scaled(brick.rveclist[k][j],
                                        brick.coeffs[k]),
-                           gmm::sub_vector(rrhs, I1));
+                           vec_out1);
               else
                 gmm::add(gmm::scaled(brick.rveclist[0][j], alpha1),
-                         gmm::sub_vector(rrhs, I1));
+                         vec_out1);
             }
-            if (var1->is_enabled()) {
-              // Contributions from affine dependent variables
-              if (term.is_matrix_term && brick.pbr->is_linear() && is_linear()
-                  && var2->is_affine_dependent)
-                gmm::mult_add(brick.rmatlist[j],
-                              gmm::scaled(var2->affine_real_value, -alpha1),
-                              gmm::sub_vector(rrhs, I1));
-              // Contributions from linear terms
-              if (term.is_matrix_term && brick.pbr->is_linear()
-                  && (!is_linear() || (version & BUILD_WITH_LIN)))
-                gmm::mult_add(brick.rmatlist[j],
-                              gmm::scaled(var2->real_value[0], -alpha1),
-                              gmm::sub_vector(rrhs, I1));
+            if (var1->is_enabled()
+                && term.is_matrix_term && brick.pbr->is_linear()) {
+              bool affine_contrib(is_linear() && var2->is_affine_dependent);
+              bool linear_contrib(!is_linear() || (version & BUILD_WITH_LIN));
+              const auto &matj = brick.rmatlist[j];
+              const auto vec_affine2 = gmm::scaled(var2->affine_real_value,
+                                                   -alpha1);
+              const auto vec_linear2 = gmm::scaled(var2->real_value[0],
+                                                   -alpha1);
+              if (nbp > 1) {
+                model_real_plain_vector vec_tmp1(I1.size(), 0.);
+                if (affine_contrib) // Affine dependent variable contribution
+                  gmm::mult(matj, vec_affine2, vec_tmp1);
+                if (linear_contrib) // Linear term contribution
+                  gmm::mult_add(matj, vec_linear2, vec_tmp1);
+                MPI_SUM_VECTOR(vec_tmp1);
+                gmm::add(vec_tmp1, vec_out1);
+              } else { // nbp == 1
+                if (affine_contrib) // Affine dependent variable contribution
+                  gmm::mult_add(matj, vec_affine2, vec_out1);
+                if (linear_contrib) // Linear term contribution
+                  gmm::mult_add(matj, vec_linear2, vec_out1);
+              }
             }
 
             // Contributions to interval I2 of var2 due to symmetric terms
             if (term.is_symmetric && I1.first() != I2.first() &&
                 var2->is_enabled()) {
+              auto vec_out2 = gmm::sub_vector(rrhs, I2);
               if (brick.pdispatch)
                 for (size_type k = 0; k < brick.nbrhs; ++k)
                   gmm::add(gmm::scaled(brick.rveclist_sym[k][j],
                                        brick.coeffs[k]),
-                           gmm::sub_vector(rrhs, I2));
+                           vec_out2);
               else
                 gmm::add(gmm::scaled(brick.rveclist_sym[0][j], alpha2),
-                         gmm::sub_vector(rrhs, I2));
-              // Contributions from affine dependent variables
-              if (term.is_matrix_term && brick.pbr->is_linear() && is_linear()
-                  && var1->is_affine_dependent)
-                  gmm::mult_add(gmm::transposed(brick.rmatlist[j]),
-                                gmm::scaled(var1->affine_real_value, -alpha2),
-                                gmm::sub_vector(rrhs, I2));
-              // Contributions from linear terms
-              if (brick.pbr->is_linear()
-                  && (!is_linear() || (version & BUILD_WITH_LIN)))
-                gmm::mult_add(gmm::transposed(brick.rmatlist[j]),
-                              gmm::scaled(var1->real_value[0], -alpha2),
-                              gmm::sub_vector(rrhs, I2));
+                         vec_out2);
+              if (term.is_matrix_term && brick.pbr->is_linear()) {
+                bool affine_contrib(is_linear() && var1->is_affine_dependent);
+                bool linear_contrib(!is_linear() || (version & BUILD_WITH_LIN));
+                const auto matj_trans = gmm::transposed(brick.rmatlist[j]);
+                const auto vec_affine1 = gmm::scaled(var1->affine_real_value,
+                                                     -alpha2);
+                const auto vec_linear1 = gmm::scaled(var1->real_value[0],
+                                                     -alpha2);
+                if (nbp > 1) {
+                  model_real_plain_vector vec_tmp2(I2.size(),0.);
+                  if (affine_contrib) // Affine dependent variable contribution
+                    gmm::mult(matj_trans, vec_affine1, vec_tmp2);
+                  if (linear_contrib) // Linear term contribution
+                    gmm::mult_add(matj_trans, vec_linear1, vec_tmp2);
+                  MPI_SUM_VECTOR(vec_tmp2);
+                  gmm::add(vec_tmp2, vec_out2);
+                } else { // nbp == 1
+                  if (affine_contrib) // Affine dependent variable contribution
+                    gmm::mult_add(matj_trans, vec_affine1, vec_out2);
+                  if (linear_contrib) // Linear term contribution
+                    gmm::mult_add(matj_trans, vec_linear1, vec_out2);
+                }
+              }
             }
           }
         }
