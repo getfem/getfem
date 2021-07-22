@@ -239,7 +239,7 @@ namespace getfem {
     enum { NOCUTOFF = -1,
            EXPONENTIAL_CUTOFF = 0,
            POLYNOMIAL_CUTOFF = 1,
-           POLYNOMIAL2_CUTOFF=2 };
+           POLYNOMIAL2_CUTOFF= 2 };
     int fun;
     scalar_type a4, r1, r0;
     virtual scalar_type val(scalar_type x, scalar_type y) const;

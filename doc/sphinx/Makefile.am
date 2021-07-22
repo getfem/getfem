@@ -160,7 +160,10 @@ upload:
 	make html
 	-rm -fr homepage *.tar.gz
 	-mv build/html homepage
-	(export srcdir=$(srcdir) && $(top_srcdir)/bin/upload_html --delete homepage)
+	-(export srcdir=$(srcdir) && $(top_srcdir)/bin/upload_html --delete homepage)
+	-test ! -d "getfem_site" && git clone "git\@plmlab.math.cnrs.fr:renard/getfem_site.git"
+	-(cd homepage && rsync --delete  -rlptDv . ../getfem_site/public)
+	-(cd getfem_site && git add . && git commit -m "update" && git push origin master)
 	-rm -fr getfem-$(DISTVERSION)-docs-html
 	-mv homepage getfem-$(DISTVERSION)-docs-html
 	tar -cf getfem-$(DISTVERSION)-docs-html.tar getfem-$(DISTVERSION)-docs-html

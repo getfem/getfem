@@ -13,6 +13,7 @@ Makefile
 *~
 /sequential/
 /parallel/
+/doc/sphinx/getfem_site/
 /aclocal.m4
 /autom4te.cache/
 /compile

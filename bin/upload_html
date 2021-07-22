@@ -73,10 +73,3 @@ if [ "$do_mrproper" != 0 ]; then
   # rsync --delete  -rlptDv --rsh="ssh" "." "getfe806916@ftp.getfem.org:/$where/"
   rm -rf /tmp/toto00
 fi
-
-if [ "$f" != "" ]; then
-  echo "uploading directory $f to download.savannah.nongnu.org:/releases/getfem/$where/"
-  chmod -R a+rw $f
-  rsync $options  -rlptDv --rsh="ssh" "$f" "$me@download.savannah.nongnu.org:/releases/getfem/$where/"
-  (cd $f && rsync $options -rlptDv --rsh="ssh" "." "$me@cms.math.cnrs.fr:getfem")
-fi
