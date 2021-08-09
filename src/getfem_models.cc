@@ -2337,9 +2337,10 @@ namespace getfem {
                 "Invalid assembly version BUILD_WITH_LIN");
     GMM_ASSERT1(version != BUILD_WITH_INTERNAL,
                 "Invalid assembly version BUILD_WITH_INTERNAL");
+    int nbp=1;
 #if GETFEM_PARA_LEVEL > 1
     double t_ref = MPI_Wtime();
-    int rk=0, nbp=1;
+    int rk=0;
     MPI_Comm_rank(MPI_COMM_WORLD, &rk);
     MPI_Comm_size(MPI_COMM_WORLD, &nbp);
 #endif
