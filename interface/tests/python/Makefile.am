@@ -44,6 +44,7 @@ EXTRA_DIST= 						\
 	demo_plate.py 					\
 	demo_unit_disk.py 				\
         demo_truss.py                                   \
+        demo_truss_2D.py                                \
 	demo_static_contact.py 				\
 	demo_dynamic_contact_1D.py			\
 	demo_Mindlin_Reissner_plate.py 			\
@@ -73,6 +74,7 @@ TESTS = 						\
 	check_secondary_domain.py 			\
 	check_mixed_mesh.py  				\
 	demo_truss.py                                   \
+	demo_truss_2D.py                                \
 	demo_wave.py					\
 	demo_wave_equation.py				\
 	demo_laplacian.py				\
