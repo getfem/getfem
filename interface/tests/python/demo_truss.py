@@ -22,7 +22,7 @@
 """ 1D Truss problem test
 
   This program is used to check that python-getfem is working. This is
-  also a good example of use of python-getfem..
+  also a good example of use of python-getfem.
 
   |-> x
 //|        EA         |-> u0
@@ -59,17 +59,16 @@ mesh = gf.Mesh("cartesian", np.array([0, L, 2*L]))
 #
 # Boundary selection
 #
-
 fleft = mesh.outer_faces_with_direction(v=[-1.0], angle=0.01)
 fright = mesh.outer_faces_with_direction(v=[+1.0], angle=0.01)
 NEUMANN_BOUNDARY = 1
 DIRICHLET_BOUNDARY = 2
 mesh.set_region(NEUMANN_BOUNDARY, fright)
 mesh.set_region(DIRICHLET_BOUNDARY, fleft)
+
 #
 # Definition of finite elements methods and integration method
 #
-
 mfu = gf.MeshFem(mesh, 1)  # Finite element for the elastic displacement
 mfu.set_classical_fem(elements_degree)
 mim = gf.MeshIm(mesh, elements_degree*2)   # Integration method
@@ -77,7 +76,6 @@ mim = gf.MeshIm(mesh, elements_degree*2)   # Integration method
 #
 # Model definition
 #
-
 md = gf.Model("real")
 md.add_fem_variable("u", mfu)       # Displacement of the structure
 
@@ -95,7 +93,6 @@ md.add_Dirichlet_condition_with_multipliers(mim, "u", elements_degree - 1, DIRIC
 # Model solve
 #
 md.solve()
-
 
 #
 # Solution export
