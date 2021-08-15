@@ -34,15 +34,15 @@ import numpy as np
 #
 E = 21e6  # Young Modulus (N/cm^2)
 A = 9000.0  # Section Area (cm^2)
-L = 2000.0  # Length of element (cm)
+L = 2.0  # Length of element (cm)
 P = 200.0  # Force (N)
 
 #
 # Numerical parameters
 #
 elements_degree = 1  # Degree of the finite element methods
-b = 1.0
-h = 2.0
+b = L
+h = L/np.sqrt(2.0)
 x1 = 0.0
 y1 = 0.0
 z1 = 0.0
@@ -55,8 +55,8 @@ z3 = 0.0
 x4 = b
 y4 = b
 z4 = 0.0
-x5 = 0.0
-y5 = 0.0
+x5 = b/2.0
+y5 = b/2.0
 z5 = h
 
 #
@@ -134,7 +134,5 @@ U = md.variable("u")
 #
 # Exact solution
 #
-SM = md.tangent_matrix()
-print(SM.full())
-rhs = md.rhs()
-print(U)
+Ue = np.array([0.0, 0.0, 0.0, 0.0, 0.0, -P*L/(4.0*E*A*h*h), 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+assert np.allclose(U, Ue)
