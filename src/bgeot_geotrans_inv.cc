@@ -238,7 +238,7 @@ namespace bgeot
         factor *= 0.5;
       }
       else {
-        if (factor < 1.0-IN_EPS) factor = 2.0;
+        if (factor < 1.0-IN_EPS) factor *= 2.0;
         res0 = res;
       }
       pgt->poly_vector_grad(x, pc);
