@@ -591,9 +591,9 @@ namespace getfem {
     enum class inherit { NONE, ENABLED, ALL };
 
     explicit ga_workspace(const getfem::model &md_,
-                 const inherit var_inherit=inherit::ENABLED);
-    explicit ga_workspace(const ga_workspace &gaw,// compulsory 2nd arg to avoid
-                 const inherit var_inherit); // conflict with copy constructor
+                          const inherit var_inherit=inherit::ENABLED);
+    explicit ga_workspace(const ga_workspace &gaw,    // compulsory 2nd arg to avoid
+                          const inherit var_inherit); // conflict with copy constructor
     ga_workspace();
     ~ga_workspace();
 

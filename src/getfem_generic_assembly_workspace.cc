@@ -837,7 +837,8 @@ namespace getfem {
 
     if (order == 1 || (order == 2 && condensation)) {
       if (order == 2 && condensation) {
-        GMM_ASSERT1(V->size() == nb_tot_dof, "Wrong size");
+        GMM_ASSERT1(V->size() == nb_tot_dof,
+                    "Wrong size of assembled vector in workspace");
         gmm::resize(cached_V, nb_tot_dof);
         gmm::copy(*V, cached_V); // current residual is used in condensation
         gmm::fill(*V, scalar_type(0));
@@ -845,7 +846,8 @@ namespace getfem {
         gmm::clear(*V);
         gmm::resize(*V, nb_tot_dof);
       } else
-        GMM_ASSERT1(V->size() == nb_tot_dof, "Wrong size");
+        GMM_ASSERT1(V->size() == nb_tot_dof,
+                    "Wrong size of assembled vector in workspace");
       gmm::clear(unreduced_V);
       gmm::resize(unreduced_V, nb_tmp_dof);
     }
