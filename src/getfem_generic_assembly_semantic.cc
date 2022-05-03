@@ -1606,6 +1606,15 @@ namespace getfem {
           for (int i = int(mi.size()-1); i >= to_add; --i)
             mi[i] = mi[i-to_add];
           for (int i = 0; i < to_add; ++i) mi[i] = 2;
+          if (pnode->test_function_type & 1 &&
+              !(workspace.associated_mf(pnode->name_test1))
+              && !(workspace.associated_im_data(pnode->name_test1)))
+            mi[0] = gmm::vect_size(workspace.value(pnode->name_test1));
+          if (pnode->test_function_type & 2 &&
+              !(workspace.associated_mf(pnode->name_test2))
+              && !(workspace.associated_im_data(pnode->name_test2)))
+            mi[(pnode->test_function_type & 1) ? 1 : 0]
+              = gmm::vect_size(workspace.value(pnode->name_test2));
           pnode->tensor().adjust_sizes(mi);
         }
 

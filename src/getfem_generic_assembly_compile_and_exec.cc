@@ -2598,8 +2598,8 @@ namespace getfem {
     base_tensor &t, &tc1, &tc2;
     size_type q;
     virtual int exec() {
-      GA_DEBUG_INFO("Instruction: unrolled contraction operation of size " << N*q
-                    << " optimized for vectorized second tensor of type 2");
+     GA_DEBUG_INFO("Instruction: unrolled contraction of size " << N*q <<
+                    " optimized for vectorized second tensor of type 2");
       size_type nn = N*q, s1 = tc1.size()/nn, s2 = tc2.size()/nn, s2_q = s2/q;
       size_type s1_qq = s1*q, s2_qq = s2*q;
       GA_DEBUG_ASSERT(t.size() == s1*s2, "Internal error");
@@ -2632,7 +2632,7 @@ namespace getfem {
   struct ga_instruction_contraction_opt0_2_dunrolled : public ga_instruction {
     base_tensor &t, &tc1, &tc2;
     virtual int exec() {
-      GA_DEBUG_INFO("Instruction: unrolled contraction operation of size " << N*Q
+      GA_DEBUG_INFO("Instruction: unrolled contraction of size " << N*Q
                     << " optimized for vectorized second tensor of type 2");
       size_type s1 = tc1.size()/(N*Q), s2 = tc2.size()/(N*Q), s2_q = s2/Q;
       size_type s1_qq = s1*Q, s2_qq = s2*Q;
@@ -2700,7 +2700,7 @@ namespace getfem {
     base_tensor &t, &tc1, &tc2;
     size_type q;
     virtual int exec() {
-      GA_DEBUG_INFO("Instruction: unrolled contraction operation of size " << N*q
+      GA_DEBUG_INFO("Instruction: unrolled contraction of size " << N*q
                     << " optimized for vectorized second tensor of type 2");
       size_type nn = N*q, s1 = tc1.size()/nn, s2 = tc2.size()/nn;
       size_type s1_q = s1/q, s1_qq = s1*q, s2_qq = s2*q;
@@ -2731,7 +2731,7 @@ namespace getfem {
   struct ga_instruction_contraction_opt2_0_dunrolled : public ga_instruction {
     base_tensor &t, &tc1, &tc2;
     virtual int exec() {
-      GA_DEBUG_INFO("Instruction: unrolled contraction operation of size " << N*Q
+      GA_DEBUG_INFO("Instruction: unrolled contraction of size " << N*Q
                     << " optimized for vectorized second tensor of type 2");
       size_type s1 = tc1.size()/(N*Q), s2 = tc2.size()/(N*Q);
       size_type s1_q = s1/Q, s1_qq = s1*Q, s2_qq = s2*Q;
@@ -4547,7 +4547,7 @@ namespace getfem {
     const mesh_fem *const&mf1, *const&mf2, *const mf1__, *const mf2__;
     const bool &reduced_mf1, &reduced_mf2; // refs to mf1/2->is_reduced()
     virtual int exec() {
-      GA_DEBUG_INFO("Instruction: matrix term assembly");
+      GA_DEBUG_INFO("Instruction: matrix term assembly mf-mf");
       if (!ctx1.is_convex_num_valid() || !ctx2.is_convex_num_valid()) return 0;
 
       bool initialize = (ipt == 0 || interpolate);
@@ -4666,7 +4666,8 @@ namespace getfem {
     const mesh_fem * const mf2__, * const &mf2;
     const bool &reduced_mf2; // ref to mf2->is_reduced()
     virtual int exec() {
-      GA_DEBUG_INFO("Instruction: matrix term assembly");
+      GA_DEBUG_INFO("Instruction: matrix term assembly "
+                    "(imdata or fixed size)-mf");
       if (!ctx1.is_convex_num_valid() || !ctx2.is_convex_num_valid()) return 0;
 
       bool empty_weight = (coeff == scalar_type(0));
@@ -4727,7 +4728,8 @@ namespace getfem {
     const bool &reduced_mf1; // ref to mf1->is_reduced()
     const im_data *imd2;
     virtual int exec() {
-      GA_DEBUG_INFO("Instruction: matrix term assembly");
+      GA_DEBUG_INFO("Instruction: matrix term assembly "
+                    "mf-(imdata or fixed size)");
       if (!ctx1.is_convex_num_valid() || !ctx2.is_convex_num_valid()) return 0;
 
       bool empty_weight = (coeff == scalar_type(0));
@@ -4788,7 +4790,8 @@ namespace getfem {
     const gmm::sub_interval &I1, &I2;
     const im_data *imd1, *imd2;
     virtual int exec() {
-      GA_DEBUG_INFO("Instruction: matrix term assembly");
+      GA_DEBUG_INFO("Instruction: matrix term assembly "
+                    "(imdata or fixed size)-(imdata or fixed size)");
       GA_DEBUG_ASSERT(I1.size() && I2.size(), "Internal error");
 
       bool empty_weight = (coeff == scalar_type(0));
