@@ -3982,7 +3982,7 @@ namespace getfem {
     ga_instruction_set::interpolate_info &inin;
     pinterpolate_transformation trans;
     fem_interpolation_context &ctx;
-    base_small_vector &Normal;
+    base_small_vector dummy_normal;
     const mesh &m;
     size_type &ipt;
     papprox_integration &pai;
@@ -4077,9 +4077,10 @@ namespace getfem {
         size_type cv;
         short_type face_num;
         gmm::clear(inin.Normal);
-        inin.pt_type = trans->transform(workspace, m, ctx, Normal, &(inin.m),
-                                        cv, face_num, P_ref, inin.Normal,
-                                        inin.derivatives, false);
+        inin.pt_type = trans->transform(workspace, m, ctx, dummy_normal,
+                                        &(inin.m), cv, face_num, P_ref,
+                                        dummy_normal, inin.derivatives,
+                                        false);
         if (inin.pt_type) {
           if (cv != size_type(-1)) {
             inin.m->points_of_convex(cv, inin.G);
@@ -4111,10 +4112,10 @@ namespace getfem {
     ga_instruction_neighbor_transformation_call
     (const ga_workspace &w, ga_instruction_set::interpolate_info &i,
      pinterpolate_transformation t, fem_interpolation_context &ctxx,
-     base_small_vector &No, const mesh &mm, size_type &ipt_,
-     papprox_integration &pai_, bgeot::geotrans_precomp_pool &gp_pool_,
+     const mesh &mm, size_type &ipt_, papprox_integration &pai_,
+     bgeot::geotrans_precomp_pool &gp_pool_,
      std::map<gauss_pt_corresp, bgeot::pstored_point_tab> &neighbor_corresp_)
-      : workspace(w), inin(i), trans(t), ctx(ctxx), Normal(No), m(mm),
+      : workspace(w), inin(i), trans(t), ctx(ctxx), m(mm),
         ipt(ipt_), pai(pai_), gp_pool(gp_pool_),
         neighbor_corresp(neighbor_corresp_) {}
   };
@@ -7257,8 +7258,7 @@ namespace getfem {
           pgai = std::make_shared<ga_instruction_neighbor_transformation_call>
             (workspace, rmi.interpolate_infos[transname],
              workspace.interpolate_transformation(transname), gis.ctx,
-             gis.Normal, m, gis.ipt, gis.pai, gis.gp_pool,
-             gis.neighbor_corresp);
+             m, gis.ipt, gis.pai, gis.gp_pool, gis.neighbor_corresp);
         } else {
           pgai = std::make_shared<ga_instruction_transformation_call>
             (workspace, rmi.interpolate_infos[transname],
