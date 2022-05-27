@@ -2598,7 +2598,7 @@ namespace getfem {
     base_tensor &t, &tc1, &tc2;
     size_type q;
     virtual int exec() {
-     GA_DEBUG_INFO("Instruction: unrolled contraction of size " << N*q <<
+      GA_DEBUG_INFO("Instruction: unrolled contraction of size " << N*q <<
                     " optimized for vectorized second tensor of type 2");
       size_type nn = N*q, s1 = tc1.size()/nn, s2 = tc2.size()/nn, s2_q = s2/q;
       size_type s1_qq = s1*q, s2_qq = s2*q;
@@ -4299,7 +4299,8 @@ namespace getfem {
   inline void add_elem_matrix
   (MAT &K, const std::vector<size_type> &dofs1,
    const std::vector<size_type> &dofs2, std::vector<size_type> &/*dofs1_sort*/,
-   base_vector &elem, scalar_type threshold, size_type /* N */) {
+   const base_vector &elem, scalar_type threshold, size_type /* N */) {
+
     base_vector::const_iterator it = elem.cbegin();
     for (const size_type &dof2 : dofs2)
       for (const size_type &dof1 : dofs1) {
@@ -4320,7 +4321,7 @@ namespace getfem {
   (gmm::col_matrix<gmm::rsvector<scalar_type>> &K,
    const std::vector<size_type> &dofs1, const std::vector<size_type> &dofs2,
    std::vector<size_type> &dofs1_sort,
-   base_vector &elem, scalar_type threshold, size_type N) {
+   const base_vector &elem, scalar_type threshold, size_type N) {
 
     size_type s1 = dofs1.size();
 
@@ -4350,8 +4351,7 @@ namespace getfem {
 
       if (nb == 0) {
         col.reserve(maxest);
-        for (size_type i = 0; i < s1; ++i) {
-          size_type k = dofs1_sort[i];
+        for (size_type k : dofs1_sort) {
           ev.e = *(it+k);
           if (gmm::abs(ev.e) > threshold) {
             ev.c=dofs1[k];
@@ -4360,8 +4360,7 @@ namespace getfem {
         }
       } else { // column merge
         size_type ind = 0;
-        for (size_type i = 0; i < s1; ++i) {
-          size_type k = dofs1_sort[i];
+        for (size_type k : dofs1_sort) {
           ev.e = *(it+k);
           if (gmm::abs(ev.e) > threshold) {
             ev.c = dofs1[k];
@@ -4408,7 +4407,7 @@ namespace getfem {
   (gmm::col_matrix<gmm::rsvector<scalar_type>> &K,
    const size_type &i1, const size_type &s1,
    const std::vector<size_type> &dofs2,
-   base_vector &elem, scalar_type threshold) {
+   const base_vector &elem, scalar_type threshold) {
 
     gmm::elt_rsvector_<scalar_type> ev;
 
