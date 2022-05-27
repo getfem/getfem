@@ -99,6 +99,8 @@ namespace getfem {
         pnode->node_type == GA_NODE_INTERPOLATE_HESS_TEST ||
         pnode->node_type == GA_NODE_INTERPOLATE_DIVERG_TEST ||
         pnode->node_type == GA_NODE_INTERPOLATE_X ||
+        pnode->node_type == GA_NODE_INTERPOLATE_ELT_K ||
+        pnode->node_type == GA_NODE_INTERPOLATE_ELT_B ||
         pnode->node_type == GA_NODE_INTERPOLATE_NORMAL) {
       workspace.interpolate_transformation(pnode->interpolate_name)
         ->extract_variables(workspace, vars, ignore_data, m,
@@ -160,6 +162,8 @@ namespace getfem {
 
     if (interpolate_node || interpolate_test_node ||
         pnode->node_type == GA_NODE_INTERPOLATE_X ||
+        pnode->node_type == GA_NODE_INTERPOLATE_ELT_K ||
+        pnode->node_type == GA_NODE_INTERPOLATE_ELT_B ||
         pnode->node_type == GA_NODE_INTERPOLATE_NORMAL) {
       std::set<var_trans_pair> vars;
       workspace.interpolate_transformation(pnode->interpolate_name)
@@ -381,7 +385,9 @@ namespace getfem {
     case GA_NODE_XFEM_MINUS_HESS_TEST: case GA_NODE_XFEM_MINUS_DIVERG_TEST:
       c += 1.33*(1.22+ga_hash_code(pnode->name));
       break;
-    case GA_NODE_INTERPOLATE_X: case GA_NODE_INTERPOLATE_NORMAL:
+    case GA_NODE_INTERPOLATE_X:
+    case GA_NODE_INTERPOLATE_ELT_K: case GA_NODE_INTERPOLATE_ELT_B:
+    case GA_NODE_INTERPOLATE_NORMAL:
     case GA_NODE_SECONDARY_DOMAIN_X: case GA_NODE_SECONDARY_DOMAIN_NORMAL:
       c += M_PI*1.33*ga_hash_code(pnode->interpolate_name);
       break;
@@ -450,6 +456,7 @@ namespace getfem {
     case GA_NODE_RESHAPE: case GA_NODE_CROSS_PRODUCT:
     case GA_NODE_IND_MOVE_LAST: case GA_NODE_SWAP_IND:
     case GA_NODE_CONTRACT: case GA_NODE_INTERPOLATE_X:
+    case GA_NODE_INTERPOLATE_ELT_K: case GA_NODE_INTERPOLATE_ELT_B:
     case GA_NODE_INTERPOLATE_NORMAL: case GA_NODE_SECONDARY_DOMAIN_X:
     case GA_NODE_SECONDARY_DOMAIN_NORMAL:
       pnode->test_function_type = 0; break;
@@ -581,6 +588,23 @@ namespace getfem {
           auto psd = workspace.secondary_domain(tree.secondary_domain);
           pnode->node_type = GA_NODE_SECONDARY_DOMAIN_NORMAL;
           pnode->init_vector_tensor(psd->mim().linked_mesh().dim());
+        }
+        break;
+      }
+      if (pnode->name.compare("element_K") == 0) {
+        if (pnode->node_type == GA_NODE_INTERPOLATE) {
+          pnode->node_type = GA_NODE_INTERPOLATE_ELT_K;
+          if (ref_elt_dim == 1)
+            pnode->init_vector_tensor(meshdim);
+          else
+            pnode->init_matrix_tensor(meshdim, ref_elt_dim);
+        }
+        break;
+      }
+      if (pnode->name.compare("element_B") == 0) {
+        if (pnode->node_type == GA_NODE_INTERPOLATE) {
+          pnode->node_type = GA_NODE_INTERPOLATE_ELT_B;
+          pnode->init_matrix_tensor(ref_elt_dim, meshdim);
         }
         break;
       }
@@ -2976,6 +3000,7 @@ namespace getfem {
     case GA_NODE_INTERPOLATE_DIVERG_TEST:
     case GA_NODE_INTERPOLATE_HESS_TEST:
     case GA_NODE_INTERPOLATE_X:
+    case GA_NODE_INTERPOLATE_ELT_K: case GA_NODE_INTERPOLATE_ELT_B:
     case GA_NODE_INTERPOLATE_NORMAL:
     case GA_NODE_INTERPOLATE_DERIVATIVE:
       {
@@ -3450,6 +3475,14 @@ namespace getfem {
         pnode_der->interpolate_name_der = pnode_der->interpolate_name;
         pnode_der->interpolate_name = interpolatename;
       }
+      break;
+
+    case GA_NODE_INTERPOLATE_ELT_K:
+      GMM_ASSERT1(false, "Sorry, cannot derive the interpolated element_K");
+      break;
+
+    case GA_NODE_INTERPOLATE_ELT_B:
+      GMM_ASSERT1(false, "Sorry, cannot derive the interpolated element_B");
       break;
 
     case GA_NODE_INTERPOLATE_NORMAL:
@@ -3967,6 +4000,8 @@ namespace getfem {
         (workspace.associated_mf(pnode->name) != 0)) marked = true;
       
     if (pnode->node_type == GA_NODE_INTERPOLATE_X ||
+        pnode->node_type == GA_NODE_INTERPOLATE_ELT_K ||
+        pnode->node_type == GA_NODE_INTERPOLATE_ELT_B ||
         pnode->node_type == GA_NODE_INTERPOLATE_NORMAL) marked = true;
 
     pnode->marked = marked;
@@ -4149,6 +4184,11 @@ namespace getfem {
     case GA_NODE_NORMAL:
     case GA_NODE_INTERPOLATE_NORMAL:
       GMM_ASSERT1(false, "Sorry, Gradient of Normal vector not implemented");
+
+    case GA_NODE_ELT_K: case GA_NODE_ELT_B:
+    case GA_NODE_INTERPOLATE_ELT_K: case GA_NODE_INTERPOLATE_ELT_B:
+      GMM_ASSERT1(false, "Sorry, Gradient of element_K or element_B "
+                         "not implemented");
 
     case GA_NODE_INTERPOLATE_DERIVATIVE:
       GMM_ASSERT1(false, "Sorry, gradient of the derivative of a "

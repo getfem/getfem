@@ -552,8 +552,11 @@ namespace getfem {
           pnode1->nbc1 != pnode2->nbc1)
         return false;
       break;
-    case GA_NODE_INTERPOLATE_X: case GA_NODE_SECONDARY_DOMAIN_X:
-    case GA_NODE_INTERPOLATE_NORMAL: case GA_NODE_SECONDARY_DOMAIN_NORMAL:
+    case GA_NODE_INTERPOLATE_X:
+    case GA_NODE_SECONDARY_DOMAIN_X:
+    case GA_NODE_INTERPOLATE_ELT_K: case GA_NODE_INTERPOLATE_ELT_B:
+    case GA_NODE_INTERPOLATE_NORMAL:
+    case GA_NODE_SECONDARY_DOMAIN_NORMAL:
       if (pnode1->interpolate_name.compare(pnode2->interpolate_name))
         return false;
       break;
@@ -787,6 +790,7 @@ namespace getfem {
     switch(pnode->node_type) {
     case GA_NODE_INTERPOLATE:
     case GA_NODE_INTERPOLATE_X:
+    case GA_NODE_INTERPOLATE_ELT_K: case GA_NODE_INTERPOLATE_ELT_B:
     case GA_NODE_INTERPOLATE_NORMAL:
     case GA_NODE_INTERPOLATE_VAL:
     case GA_NODE_INTERPOLATE_GRAD:
@@ -988,6 +992,12 @@ namespace getfem {
       break;
     case GA_NODE_INTERPOLATE_NORMAL: case GA_NODE_SECONDARY_DOMAIN_NORMAL:
       str << "Normal";
+      break;
+    case GA_NODE_INTERPOLATE_ELT_K:
+      str << "element_K";
+      break;
+    case GA_NODE_INTERPOLATE_ELT_B:
+      str << "element_B";
       break;
     case GA_NODE_INTERPOLATE_DERIVATIVE:
       str << (pnode->test_function_type == 1 ? "Test_" : "Test2_")

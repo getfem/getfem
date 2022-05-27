@@ -5577,6 +5577,21 @@ namespace getfem {
       rmi.instructions.push_back(std::move(pgai));
       break;
 
+    case GA_NODE_INTERPOLATE_ELT_K:
+    case GA_NODE_INTERPOLATE_ELT_B:
+      GMM_ASSERT1(!function_case,
+                  "No use of Interpolate is allowed in functions");
+      if (pnode->node_type == GA_NODE_INTERPOLATE_ELT_K)
+        pgai = std::make_shared<ga_instruction_element_K>
+               (pnode->tensor(),
+                rmi.interpolate_infos[pnode->interpolate_name].ctx);
+      else if (pnode->node_type == GA_NODE_INTERPOLATE_ELT_B)
+        pgai = std::make_shared<ga_instruction_element_B>
+               (pnode->tensor(),
+                rmi.interpolate_infos[pnode->interpolate_name].ctx);
+      rmi.instructions.push_back(std::move(pgai));
+      break;
+
     case GA_NODE_SECONDARY_DOMAIN_X:
     case GA_NODE_SECONDARY_DOMAIN_NORMAL:
       {
