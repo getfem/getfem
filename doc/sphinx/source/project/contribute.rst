@@ -25,13 +25,13 @@ How to contribute / Git repository on Savannah
 .. _tfweb: https://www.transifex.com
 
 .. |tfwebteam| replace:: Getfem translation team on Transifex
-.. _tfwebteam: https://www.transifex.com/getfem-doc
+.. _tfwebteam: https://www.transifex.com/tkoyama010/getfem-doc/dashboard
 
 .. |cfvlang| replace:: Currently supported languages by Sphinx are
-.. _cfvlang: https://www.sphinx-doc.org/en/latest/usage/configuration.html#confval-language
+.. _cfvlang: https://www.sphinx-doc.org/en/master/usage/configuration.html#confval-language
 
 .. |sphintl| replace:: Sphinx Internationalization
-.. _sphintl: http://www.sphinx-doc.org/en/stable/intl.html
+.. _sphintl: http://www.sphinx-doc.org/en/master/intl.html
 
 .. |readthedocs| replace:: Read the Docs
 .. _readthedocs: https://getfem.readthedocs.io
