@@ -221,8 +221,7 @@ namespace getfem {
       const base_matrix &di2_ = grad_i2();
       const base_matrix &di3_ = grad_i3();
       scalar_type coeff1 = scalar_type(2) / (scalar_type(3)*i3());
-      scalar_type coeff2 = scalar_type(5) * coeff1 * coeff1 * i2()
-                           / scalar_type(2);
+      scalar_type coeff2 = scalar_type(5)*coeff1*coeff1*i2() / scalar_type(2);
       ddj2 = sym_grad_grad_i2();
       gmm::add(gmm::scaled(sym_grad_grad_i3().as_vector(), -i2() * coeff1),
                ddj2.as_vector());
@@ -1467,7 +1466,7 @@ namespace getfem {
       for (size_type j = 0; j < N; ++j)
         for (size_type i = 0; i < N; ++i, ++it)
           *it = (((i == j) ? tr : scalar_type(0)) - t[j+N*i]
-                 - scalar_type(2)*i2*M(j,i)/scalar_type(3))
+                 - scalar_type(2)*i2*M(j,i)/(det*scalar_type(3)))
             / pow(det, scalar_type(2)/scalar_type(3));
       GMM_ASSERT1(it == result.end(), "Internal error");
     }
@@ -1494,11 +1493,11 @@ namespace getfem {
             for (size_type i = 0; i < N; ++i, ++it)
               *it = ( ((i==j) ? 1. : 0.) * ((k==l) ? 1. : 0.)
                       - ((i==l) ? 1. : 0.) * ((k==j) ? 1. : 0.)
-                      - 2.*tr*M(j,i)*((k==l) ? 1. : 0.)/3.
-                      + 2.*tr*M(j,i)*M(l,k)/3.
-                      - 2.*i2*M(i,k)*M(l,j)/3.
+                      - 2.*tr*M(j,i)*((k==l) ? 1. : 0.)/(3.*det)
+                      + 2.*tr*M(j,i)*M(l,k)/(3.*det)
+                      - 2.*i2*M(i,k)*M(l,j)/(3.*det)
                       - 2.*((tr*((i==j) ? 1. : 0.))-t[j+N*i]
-                            - 2.*i2*M(j,i)/3)*M(l,k)/3.)
+                            - 2.*i2*M(j,i)/(3.*det))*M(l,k)/(3.*det))
                 / pow(det, scalar_type(2)/scalar_type(3));
     }
   };
