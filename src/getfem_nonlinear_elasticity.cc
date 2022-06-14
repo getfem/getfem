@@ -1315,12 +1315,12 @@ namespace getfem {
       for (size_type i = 0; i < N; ++i)
         for (size_type j = 0; j < N; ++j)
           tr2 += t[i+ j*N] * t[j + i*N];
-      result[0] = (tr*tr - tr2)/2;
+      result[0] = (tr*tr-tr2)/scalar_type(2);
     }
 
     // Derivative : Trace(M)I - M^T
     void derivative(const arg_list &args, size_type,
-                    base_tensor &result) const { // to be verified
+                    base_tensor &result) const {
       size_type N = args[0]->sizes()[0];
       const base_tensor &t = *args[0];
       scalar_type tr = scalar_type(0);
@@ -1334,7 +1334,7 @@ namespace getfem {
 
     // Second derivative : I@I - \delta_{il}\delta_{jk}
     void second_derivative(const arg_list &args, size_type, size_type,
-                           base_tensor &result) const { // To be verified
+                           base_tensor &result) const {
       size_type N = args[0]->sizes()[0];
       gmm::clear(result.as_vector());
        for (size_type i = 0; i < N; ++i)
@@ -1371,7 +1371,7 @@ namespace getfem {
 
     // Derivative : (I-Trace(M)*M^{-T}/3)/(det(M)^1/3)
     void derivative(const arg_list &args, size_type,
-                    base_tensor &result) const { // to be verified
+                    base_tensor &result) const {
       size_type N = args[0]->sizes()[0];
       base_matrix M(N, N);
       gmm::copy(args[0]->as_vector(), M.as_vector());
@@ -1393,7 +1393,7 @@ namespace getfem {
     // Second derivative : (-M^{-T}@I + Trace(M)*M^{-T}_{ik}M^{-T}_{lj}
     //                      -I@M^{-T} + Trace(M)*M^{-T}@M^{-T}/3)/(3det(M)^1/3)
     void second_derivative(const arg_list &args, size_type, size_type,
-                           base_tensor &result) const { // To be verified
+                           base_tensor &result) const {
       size_type N = args[0]->sizes()[0];
       base_matrix M(N, N);
       gmm::copy(args[0]->as_vector(), M.as_vector());
@@ -1440,7 +1440,6 @@ namespace getfem {
           tr2 += M(i,j)*M(j,i);
       scalar_type i2 = (tr*tr-tr2)/scalar_type(2);
       scalar_type det = bgeot::lu_det(&(*(M.begin())), N);
-
       if (det > 0)
         result[0] = i2 / pow(det, scalar_type(2)/scalar_type(3));
       else
@@ -1449,7 +1448,7 @@ namespace getfem {
 
     // Derivative : (Trace(M)*I-M^T-2i2(M)M^{-T}/3)/(det(M)^2/3)
     void derivative(const arg_list &args, size_type,
-                    base_tensor &result) const { // to be verified
+                    base_tensor &result) const {
       size_type N = args[0]->sizes()[0];
       const base_tensor &t = *args[0];
       base_matrix M(N, N);
@@ -1466,14 +1465,14 @@ namespace getfem {
       for (size_type j = 0; j < N; ++j)
         for (size_type i = 0; i < N; ++i, ++it)
           *it = (((i == j) ? tr : scalar_type(0)) - t[j+N*i]
-                 - scalar_type(2)*i2*M(j,i)/(det*scalar_type(3)))
+                 - scalar_type(2)*i2*M(j,i)/(scalar_type(3)))
             / pow(det, scalar_type(2)/scalar_type(3));
       GMM_ASSERT1(it == result.end(), "Internal error");
     }
 
     // Second derivative
     void second_derivative(const arg_list &args, size_type, size_type,
-                           base_tensor &result) const { // To be verified
+                           base_tensor &result) const {
       size_type N = args[0]->sizes()[0];
       const base_tensor &t = *args[0];
       base_matrix M(N, N);
@@ -1491,13 +1490,12 @@ namespace getfem {
         for (size_type k = 0; k < N; ++k)
           for (size_type j = 0; j < N; ++j)
             for (size_type i = 0; i < N; ++i, ++it)
-              *it = ( ((i==j) ? 1. : 0.) * ((k==l) ? 1. : 0.)
-                      - ((i==l) ? 1. : 0.) * ((k==j) ? 1. : 0.)
-                      - 2.*tr*M(j,i)*((k==l) ? 1. : 0.)/(3.*det)
-                      + 2.*tr*M(j,i)*M(l,k)/(3.*det)
-                      - 2.*i2*M(i,k)*M(l,j)/(3.*det)
-                      - 2.*((tr*((i==j) ? 1. : 0.))-t[j+N*i]
-                            - 2.*i2*M(j,i)/(3.*det))*M(l,k)/(3.*det))
+              *it = ( + (((i==j) && (k==l)) ? 1. : 0.)
+                      - (((i==l) && (k==j)) ? 1. : 0.)
+                      + 10.*i2*M(j,i)*M(l,k)/(9.)
+                      - 2.*(M(j,i)*(tr*((k==l) ? 1.:0.)-t[l+N*k]))/(3.)
+                      - 2.*(M(l,k)*(tr*((i==j) ? 1.:0.)-t[j+N*i]))/(3.)
+                      - 2.*i2*(M(j,i)*M(l,k)-M(j,k)*M(l,i))/(3.))
                 / pow(det, scalar_type(2)/scalar_type(3));
     }
   };
@@ -1587,7 +1585,7 @@ namespace getfem {
     // Derivative : F{jl}delta{ik}+F{il}delta{kj}
     // (comes from H -> HF^{T} + FH^{T})
     void derivative(const arg_list &args, size_type,
-                    base_tensor &result) const { // to be verified
+                    base_tensor &result) const {
       size_type m = args[0]->sizes()[0], n = args[0]->sizes()[1];
       base_tensor::iterator it = result.begin();
       for (size_type l = 0; l < n; ++l)
@@ -1605,7 +1603,7 @@ namespace getfem {
     // A{ijklop}=delta{ki}delta{lp}delta{oj} + delta{oi}delta{pl}delta{kj}
     // comes from (H,K) -> HK^{T} + KH^{T}
     void second_derivative(const arg_list &args, size_type, size_type,
-                           base_tensor &result) const { // to be verified
+                           base_tensor &result) const {
       size_type m = args[0]->sizes()[0], n = args[0]->sizes()[1];
       base_tensor::iterator it = result.begin();
       for (size_type p = 0; p < n; ++p)
