@@ -1,0 +1,17 @@
+.. include:: ../replaces.txt
+
+**************************
+  What's New in |gf| 5.4.1
+**************************
+
+|gf| 5.4.2 is a patch version.
+
+Released version, 2022/07/01.
+
+The main changes are:
+
+   * Improvements in the vtu format exporting
+     
+   * Bug and memory leak fixes
+     
+   * New examples under contrib/continuum_mechanics and interface/tests/python
