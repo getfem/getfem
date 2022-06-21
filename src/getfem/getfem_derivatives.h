@@ -231,7 +231,7 @@ namespace getfem
     
     GMM_ASSERT1(!mf_vm.is_reduced(), "Sorry, to be done");
 
-    scalar_type vm_min, vm_max;
+    scalar_type vm_min = 0., vm_max = 0.;
     for (dal::bv_visitor i(mf_vm_dofs); !i.finished(); ++i) {
       VM[i] = 0;
       scalar_type sdiag = 0.;

@@ -522,7 +522,7 @@ namespace getfem {
               if (term.is_matrix_term) {
                 if (term.is_global) {
                   bool varc = false, multc = false;
-                  for (const std::string var : brick.vlist) {
+                  for (const std::string &var : brick.vlist) {
                     if (multname.compare(var) == 0) multc = true;
                     if (vname.compare(var) == 0) varc = true;
                   }
@@ -691,7 +691,7 @@ namespace getfem {
             << vargroup.first;
         if (vargroup.second.size()) {
           bool first(true);
-          for (const std::string vname : vargroup.second) {
+          for (const std::string &vname : vargroup.second) {
             ost << (first ? " " : ", ") << vname;
             first = false;
           }

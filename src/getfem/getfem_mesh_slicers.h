@@ -429,7 +429,8 @@ namespace getfem {
       scalar_type Fd = gmm::vect_sp(F,d);
       scalar_type Dd = gmm::vect_sp(D,d);
       scalar_type a = gmm::vect_norm2_sqr(D) - gmm::sqr(Dd);
-      if (a < EPS) return pt_bin.is_in(iA) ? 0. : 1./EPS; assert(a> -EPS);
+      if (a < EPS) return pt_bin.is_in(iA) ? 0. : 1./EPS;
+      assert(a> -EPS);
       scalar_type b = 2*(gmm::vect_sp(F,D) - Fd*Dd);
       scalar_type c = gmm::vect_norm2_sqr(F) - gmm::sqr(Fd) - gmm::sqr(R);
       return slicer_volume::trinom(a,b,c);

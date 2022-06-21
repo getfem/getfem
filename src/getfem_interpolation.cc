@@ -44,7 +44,7 @@ namespace getfem {
 
   size_type mesh_trans_inv::point_on_convex(size_type cv, size_type i) const {
     set_iterator it = pts_cvx[cv].begin();
-    for (size_type j = 0; it != pts_cvx[cv].end() && j < i; ++it, ++j);
+    for (size_type j = 0; it != pts_cvx[cv].end() && j < i; ++it, ++j) {}
     GMM_ASSERT1(it != pts_cvx[cv].end(), "internal error");    
     return *it;
   }
