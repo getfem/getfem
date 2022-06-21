@@ -241,9 +241,12 @@ namespace getfem {
         return 0;
       }
 
-      size_type size() const // Should control that the variable is
-                             // indeed initialized by actualize_sizes() ...
-      { return is_complex ? complex_value[0].size() : real_value[0].size(); }
+      size_type size() const { // Should control that the variable is
+                               // indeed initialized by actualize_sizes() ...
+        return is_complex ? complex_value[0].size()
+                          : real_value[0].size();
+      }
+      inline bool is_enabled() const { return !is_disabled; }
 
       void set_size();
     }; // struct var_description
@@ -2373,7 +2376,7 @@ namespace getfem {
       ( @f$ \lambda = E\nu/((1+\nu)(1-2\nu)), \mu = E/(2(1+\nu)) @f$ ).
       Corresponds to the standard model for three-dimensional problems.
   */
-  size_type APIDECL add_isotropic_linearized_elasticity_brick_pstrain
+  size_type APIDECL add_isotropic_linearized_elasticity_pstrain_brick
   (model &md, const mesh_im &mim, const std::string &varname,
    const std::string &data_E, const std::string &data_nu,
    size_type region);
@@ -2386,7 +2389,7 @@ namespace getfem {
       ( @f$ \lambda^* = E\nu/(1-\nu^2), \mu = E/(2(1+\nu)) @f$ ).
       Corresponds to the standard model for three-dimensional problems.
   */
-  size_type APIDECL add_isotropic_linearized_elasticity_brick_pstress
+  size_type APIDECL add_isotropic_linearized_elasticity_pstress_brick
   (model &md, const mesh_im &mim, const std::string &varname,
    const std::string &data_E, const std::string &data_nu,
    size_type region);
@@ -2470,7 +2473,7 @@ namespace getfem {
       Add a lumped mass matix for first order on a variable (eventually with a specified region).
       If the parameter $\rho$ is omitted it is assumed to be equal to 1.
   */
-  size_type APIDECL add_lumped_mass_brick_for_first_order
+  size_type APIDECL add_lumped_mass_for_first_order_brick
   (model &md, const mesh_im &mim, const std::string &varname,
    const std::string &dataexpr_rho = std::string(),
    size_type region = size_type(-1));

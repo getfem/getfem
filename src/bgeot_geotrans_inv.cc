@@ -27,15 +27,6 @@
 
 namespace bgeot
 {
-
-  bool point_in_convex(const geometric_trans &geoTrans,
-                       const base_node &x,
-                       scalar_type res,
-                       scalar_type IN_EPS) {
-    // Test un peu sevère peut-être en ce qui concerne res.
-    return (geoTrans.convex_ref()->is_in(x) < IN_EPS) && (res < IN_EPS);
-  }
-
   void project_into_convex(base_node &x, const pgeometric_trans pgt) {
 
     for (auto &coord : x) {
@@ -96,7 +87,8 @@ namespace bgeot
     y = pgt->transform(n_ref, G);
     add(gmm::scaled(n, -1.0), y);
 
-    return point_in_convex(*pgt, n_ref, gmm::vect_norm2(y), IN_EPS);
+    return (pgt->convex_ref()->is_in(n_ref) < IN_EPS) &&
+           (gmm::vect_norm2(y) < IN_EPS);
   }
 
   void geotrans_inv_convex::update_B() {
@@ -191,7 +183,6 @@ namespace bgeot
                                           bool /* throw_except */,
                                           bool project_into_element) {
     converged = true;
-
     base_node x0_ref(P), diff(N);
 
     { // find initial guess
@@ -220,17 +211,17 @@ namespace bgeot
       if (res < IN_EPS)
         x *= 0.999888783; // For pyramid element to avoid the singularity
     }
-
+    
     add(pgt->transform(x, G), gmm::scaled(xreal, -1.0), diff);
-    auto res = gmm::vect_norm2(diff);
-    auto res0 = std::numeric_limits<scalar_type>::max();
-    double factor = 1.0;
+    scalar_type res = gmm::vect_norm2(diff);
+    scalar_type res0 = std::numeric_limits<scalar_type>::max();
+    scalar_type factor = 1.0;
 
     base_node x0_real(N);
-    while (res > IN_EPS) {
-      if ((gmm::abs(res - res0) < IN_EPS) || (factor < IN_EPS)) {
+    while (res > IN_EPS/100.) {
+      if ((gmm::abs(res - res0) < IN_EPS/100.) || (factor < IN_EPS)) {
         converged = false;
-        return point_in_convex(*pgt, x, res, IN_EPS);
+        return (pgt->convex_ref()->is_in(x) < IN_EPS) && (res < IN_EPS);
       }
       if (res > res0) {
         add(gmm::scaled(x0_ref, factor), x);
@@ -239,20 +230,19 @@ namespace bgeot
         factor *= 0.5;
       }
       else {
-        if (factor < 1.0-IN_EPS) factor = 2.0;
+        if (factor < 1.0-IN_EPS) factor *= 2.0;
         res0 = res;
       }
       pgt->poly_vector_grad(x, pc);
       update_B();
       mult(transposed(B), diff, x0_ref);
-      add(gmm::scaled(x0_ref, -1.0 * factor), x);
+      add(gmm::scaled(x0_ref, -factor), x);
       if (project_into_element) project_into_convex(x, pgt);
       x0_real = pgt->transform(x, G);
       add(x0_real, gmm::scaled(xreal, -1.0), diff);
       res = gmm::vect_norm2(diff);
     }
-
-    return point_in_convex(*pgt, x, res, IN_EPS);
+    return (pgt->convex_ref()->is_in(x) < IN_EPS) && (res < IN_EPS);
   }
 
 }  /* end of namespace bgeot.                                             */

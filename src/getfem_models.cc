@@ -247,7 +247,7 @@ namespace getfem {
   bool model::is_internal_variable(const std::string &name) const {
     if (is_old(name)) return false;
     const auto &var_descr = variable_description(name);
-    return var_descr.is_internal && !var_descr.is_disabled;
+    return var_descr.is_internal && var_descr.is_enabled();
   }
 
   bool model::is_affine_dependent_variable(const std::string &name) const {
@@ -318,7 +318,7 @@ namespace getfem {
     size_type primary_size = full_size;
 
     for (auto &&v : variables)
-      if (v.second.is_internal && !v.second.is_disabled) { // is_internal_variable()
+      if (v.second.is_internal && v.second.is_enabled()) { // is_internal_variable()
         v.second.I = gmm::sub_interval(full_size, v.second.size());
         full_size += v.second.size();
       }
@@ -661,39 +661,43 @@ namespace getfem {
       ost << "Model with no variable nor data" << endl;
     else {
       ost << "List of model variables and data:" << endl;
-      for (const auto &v : variables) {
-        const var_description &vdescr = v.second;
-        if (vdescr.is_variable) ost << "Variable       ";
-        else ost << "Data           ";
-        ost << std::setw(30) << std::left << v.first;
-        if (vdescr.n_iter == 1)
-          ost << " 1 copy   ";
-        else
-          ost << std::setw(2) << std::right << vdescr.n_iter << " copies ";
-        if (vdescr.is_fem_dofs) ost << "fem dependant ";
-        else ost << "constant size ";
-        size_type si = vdescr.size();
-        ost << std::setw(8) << std::right << si;
-        if (is_complex()) ost << " complex";
-        ost << " double" << ((si > 1) ? "s." : ".");
-        if (vdescr.is_variable &&
-            is_disabled_variable(v.first)) ost << "\t (disabled)";
-        else                               ost << "\t           ";
-        if (vdescr.imd != 0) ost << "\t (is im_data)";
-        if (vdescr.is_affine_dependent) ost << "\t (is affine dependent)";
-        ost << endl;
-      }
+      for (int vartype=0; vartype < 3; ++vartype)
+        for (const auto &v : variables) {
+          const var_description &vdescr = v.second;
+          bool is_variable = vdescr.is_variable;
+          bool is_disabled = is_variable && is_disabled_variable(v.first);
+          if (vartype == 0) {      // Only enabled variables
+            if (!is_variable || is_disabled) continue;
+          } else if (vartype == 1) { // Only disabled variables
+            if (!is_disabled) continue;
+          } else if (vartype == 2) { // Only data
+            if (is_variable) continue;
+          }
+          ost << (is_variable ? "Variable       " : "Data           ");
+          ost << std::setw(30) << std::left << v.first;
+          ost << std::setw(2) << std::right << vdescr.n_iter;
+          ost << ((vdescr.n_iter == 1) ? " copy   " : " copies ");
+          ost << (vdescr.is_fem_dofs ? "fem dependant " : "constant size ");
+          ost << std::setw(8) << std::right << vdescr.size();
+          if (is_complex()) ost << " complex";
+          ost << ((vdescr.size() > 1) ? " doubles." : " double.");
+          ost << (is_disabled ? "\t (disabled)" : "\t           ");
+          if (vdescr.imd != 0) ost << "\t (is im_data)";
+          if (vdescr.is_affine_dependent) ost << "\t (is affine dependent)";
+          ost << endl;
+        }
       for (const auto &vargroup : variable_groups) {
         ost << "Variable group " << std::setw(30) << std::left
             << vargroup.first;
         if (vargroup.second.size()) {
           bool first(true);
           for (const std::string vname : vargroup.second) {
-            if (!first) ost << ","; else first = false;
-            ost << " " << vname;
+            ost << (first ? " " : ", ") << vname;
+            first = false;
           }
           ost << endl;
-        } else ost << " empty" << endl;
+        } else
+          ost << " empty" << endl;
       }
     }
   }
@@ -2333,8 +2337,12 @@ namespace getfem {
                 "Invalid assembly version BUILD_WITH_LIN");
     GMM_ASSERT1(version != BUILD_WITH_INTERNAL,
                 "Invalid assembly version BUILD_WITH_INTERNAL");
+    int nbp=1;
 #if GETFEM_PARA_LEVEL > 1
     double t_ref = MPI_Wtime();
+    int rk=0;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rk);
+    MPI_Comm_size(MPI_COMM_WORLD, &nbp);
 #endif
 
     context_check(); if (act_size_to_be_done) actualize_sizes();
@@ -2407,203 +2415,207 @@ namespace getfem {
 
         if (cplx) { // complex term in complex model
           if (term.is_matrix_term && (version & BUILD_MATRIX) && !isprevious
-              && (isg || (!(var1->is_disabled) && !(var2->is_disabled)))) {
+              && (isg || (var1->is_enabled() && var2->is_enabled()))) {
             gmm::add(gmm::scaled(brick.cmatlist[j], alpha),
                      gmm::sub_matrix(cTM, I1, I2));
-            if (term.is_symmetric && I1.first() != I2.first()) {
+            if (term.is_symmetric && I1.first() != I2.first())
               gmm::add(gmm::scaled(gmm::transposed(brick.cmatlist[j]), alpha),
                        gmm::sub_matrix(cTM, I2, I1));
-            }
           }
           if (version & BUILD_RHS) {
-            if (isg || !(var1->is_disabled)) {
-              if (brick.pdispatch) {
+            //FIXME MPI_SUM_VECTOR(crhs)
+            if (isg || var1->is_enabled()) {
+              if (brick.pdispatch)
                 for (size_type k = 0; k < brick.nbrhs; ++k)
                   gmm::add(gmm::scaled(brick.cveclist[k][j],
                                        brick.coeffs[k]),
                            gmm::sub_vector(crhs, I1));
-              }
-              else {
+              else
                 gmm::add(gmm::scaled(brick.cveclist[0][j],
                                      complex_type(alpha1)),
                          gmm::sub_vector(crhs, I1));
-              }
             }
             if (term.is_matrix_term && brick.pbr->is_linear() && is_linear()) {
-              if (var2->is_affine_dependent
-                  && !(var1->is_disabled))
+              if (var2->is_affine_dependent && var1->is_enabled())
                 gmm::mult_add(brick.cmatlist[j],
                               gmm::scaled(var2->affine_complex_value,
                                           complex_type(-alpha1)),
                               gmm::sub_vector(crhs, I1));
               if (term.is_symmetric && I1.first() != I2.first()
-                  && var1->is_affine_dependent
-                  && !(var2->is_disabled)) {
+                  && var1->is_affine_dependent && var2->is_enabled())
                 gmm::mult_add(gmm::conjugated(brick.cmatlist[j]),
                               gmm::scaled(var1->affine_complex_value,
                                           complex_type(-alpha2)),
                               gmm::sub_vector(crhs, I2));
-              }
             }
             if (term.is_matrix_term && brick.pbr->is_linear()
-                && (!is_linear() || (version & BUILD_WITH_LIN))) {
-              if (!(var1->is_disabled))
-                gmm::mult_add(brick.cmatlist[j],
-                              gmm::scaled(var2->complex_value[0],
-                                          complex_type(-alpha1)),
-                              gmm::sub_vector(crhs, I1));
-            }
-            if (term.is_symmetric && I1.first() != I2.first() &&
-                !(var2->is_disabled)) {
-              if (brick.pdispatch) {
+                && (!is_linear() || (version & BUILD_WITH_LIN))
+                && var1->is_enabled())
+              gmm::mult_add(brick.cmatlist[j],
+                            gmm::scaled(var2->complex_value[0],
+                                        complex_type(-alpha1)),
+                            gmm::sub_vector(crhs, I1));
+            if (term.is_symmetric && I1.first() != I2.first()
+                && var2->is_enabled()) {
+              if (brick.pdispatch)
                 for (size_type k = 0; k < brick.nbrhs; ++k)
                   gmm::add(gmm::scaled(brick.cveclist_sym[k][j],
                                        brick.coeffs[k]),
                            gmm::sub_vector(crhs, I2));
-              } else {
+              else
                 gmm::add(gmm::scaled(brick.cveclist_sym[0][j],
                                      complex_type(alpha2)),
                          gmm::sub_vector(crhs, I2));
-              }
-               if (brick.pbr->is_linear()
-                   && (!is_linear() || (version & BUILD_WITH_LIN))) {
+              if (brick.pbr->is_linear()
+                  && (!is_linear() || (version & BUILD_WITH_LIN)))
                  gmm::mult_add(gmm::conjugated(brick.cmatlist[j]),
-                            gmm::scaled(var1->complex_value[0],
-                                        complex_type(-alpha2)),
-                            gmm::sub_vector(crhs, I2));
-               }
+                               gmm::scaled(var1->complex_value[0],
+                                           complex_type(-alpha2)),
+                               gmm::sub_vector(crhs, I2));
             }
           }
         } else if (is_complex()) { // real term in complex model
           if (term.is_matrix_term && (version & BUILD_MATRIX) && !isprevious
-              && (isg || (!(var1->is_disabled) && !(var2->is_disabled)))) {
+              && (isg || (var1->is_enabled() && var2->is_enabled()))) {
             gmm::add(gmm::scaled(brick.rmatlist[j], alpha),
                      gmm::sub_matrix(cTM, I1, I2));
-            if (term.is_symmetric && I1.first() != I2.first()) {
+            if (term.is_symmetric && I1.first() != I2.first())
               gmm::add(gmm::scaled(gmm::transposed(brick.rmatlist[j]), alpha),
                        gmm::sub_matrix(cTM, I2, I1));
-            }
           }
           if (version & BUILD_RHS) {
-            if (isg || !(var1->is_disabled)) {
-              if (brick.pdispatch) {
+            //FIXME MPI_SUM_VECTOR(crhs)
+            if (isg || var1->is_enabled()) {
+              if (brick.pdispatch)
                 for (size_type k = 0; k < brick.nbrhs; ++k)
                   gmm::add(gmm::scaled(brick.rveclist[k][j],
                                        brick.coeffs[k]),
                            gmm::sub_vector(crhs, I1));
-              }
-              else {
+              else
                 gmm::add(gmm::scaled(brick.rveclist[0][j], alpha1),
                          gmm::sub_vector(crhs, I1));
-              }
             }
             if (term.is_matrix_term && brick.pbr->is_linear() && is_linear()) {
-              if (var2->is_affine_dependent
-                  && !(var1->is_disabled))
+              if (var2->is_affine_dependent && var1->is_enabled())
                 gmm::mult_add(brick.rmatlist[j],
                               gmm::scaled(var2->affine_complex_value,
                                           complex_type(-alpha1)),
                               gmm::sub_vector(crhs, I1));
               if (term.is_symmetric && I1.first() != I2.first()
-                  && var1->is_affine_dependent
-                  && !(var2->is_disabled)) {
+                  && var1->is_affine_dependent && var2->is_enabled())
                 gmm::mult_add(gmm::transposed(brick.rmatlist[j]),
                               gmm::scaled(var1->affine_complex_value,
                                           complex_type(-alpha2)),
                               gmm::sub_vector(crhs, I2));
-              }
             }
             if (term.is_matrix_term && brick.pbr->is_linear()
-                && (!is_linear() || (version & BUILD_WITH_LIN))) {
-              if (!(var1->is_disabled))
-                gmm::mult_add(brick.rmatlist[j],
-                              gmm::scaled(var2->complex_value[0],
-                                          complex_type(-alpha1)),
-                              gmm::sub_vector(crhs, I1));
-            }
-            if (term.is_symmetric && I1.first() != I2.first() &&
-                !(var2->is_disabled)) {
-              if (brick.pdispatch) {
+                && (!is_linear() || (version & BUILD_WITH_LIN))
+                && var1->is_enabled())
+              gmm::mult_add(brick.rmatlist[j],
+                            gmm::scaled(var2->complex_value[0],
+                                        complex_type(-alpha1)),
+                            gmm::sub_vector(crhs, I1));
+            if (term.is_symmetric && I1.first() != I2.first()
+                && var2->is_enabled()) {
+              if (brick.pdispatch)
                 for (size_type k = 0; k < brick.nbrhs; ++k)
                   gmm::add(gmm::scaled(brick.rveclist_sym[k][j],
                                        brick.coeffs[k]),
                            gmm::sub_vector(crhs, I2));
-              }
-              else {
+              else
                 gmm::add(gmm::scaled(brick.rveclist_sym[0][j], alpha2),
                          gmm::sub_vector(crhs, I2));
-              }
+
               if (brick.pbr->is_linear()
-                  && (!is_linear() || (version & BUILD_WITH_LIN))) {
+                  && (!is_linear() || (version & BUILD_WITH_LIN)))
                 gmm::mult_add(gmm::transposed(brick.rmatlist[j]),
                               gmm::scaled(var1->complex_value[0],
                                           complex_type(-alpha2)),
                               gmm::sub_vector(crhs, I2));
-              }
             }
           }
         } else { // real term in real model
           if (term.is_matrix_term && (version & BUILD_MATRIX) && !isprevious
-              && (isg || (!(var1->is_disabled)
-                          && !(var2->is_disabled)))) {
+              && (isg || (var1->is_enabled() && var2->is_enabled()))) {
             gmm::add(gmm::scaled(brick.rmatlist[j], alpha),
                      gmm::sub_matrix(rTM, I1, I2));
-            if (term.is_symmetric && I1.first() != I2.first()) {
+            if (term.is_symmetric && I1.first() != I2.first())
               gmm::add(gmm::scaled(gmm::transposed(brick.rmatlist[j]), alpha),
                        gmm::sub_matrix(rTM, I2, I1));
-            }
           }
           if (version & BUILD_RHS) {
             // Contributions to interval I1 of var1
-            if (isg || !(var1->is_disabled)) {
-              if (brick.pdispatch) {
+            auto vec_out1 = gmm::sub_vector(rrhs, I1);
+            if (isg || var1->is_enabled()) {
+              if (brick.pdispatch)
                 for (size_type k = 0; k < brick.nbrhs; ++k)
                   gmm::add(gmm::scaled(brick.rveclist[k][j],
                                        brick.coeffs[k]),
-                           gmm::sub_vector(rrhs, I1));
-              }
+                           vec_out1);
               else
                 gmm::add(gmm::scaled(brick.rveclist[0][j], alpha1),
-                         gmm::sub_vector(rrhs, I1));
+                         vec_out1);
             }
-            if (!(var1->is_disabled)) {
-              // Contributions from affine dependent variables
-              if (term.is_matrix_term && brick.pbr->is_linear() && is_linear()
-                  && var2->is_affine_dependent)
-                gmm::mult_add(brick.rmatlist[j],
-                              gmm::scaled(var2->affine_real_value, -alpha1),
-                              gmm::sub_vector(rrhs, I1));
-              // Contributions from linear terms
-              if (term.is_matrix_term && brick.pbr->is_linear()
-                  && (!is_linear() || (version & BUILD_WITH_LIN)))
-                gmm::mult_add(brick.rmatlist[j],
-                              gmm::scaled(var2->real_value[0], -alpha1),
-                              gmm::sub_vector(rrhs, I1));
+            if (var1->is_enabled()
+                && term.is_matrix_term && brick.pbr->is_linear()) {
+              bool affine_contrib(is_linear() && var2->is_affine_dependent);
+              bool linear_contrib(!is_linear() || (version & BUILD_WITH_LIN));
+              const auto &matj = brick.rmatlist[j];
+              const auto vec_affine2 = gmm::scaled(var2->affine_real_value,
+                                                   -alpha1);
+              const auto vec_linear2 = gmm::scaled(var2->real_value[0],
+                                                   -alpha1);
+              if (nbp > 1) {
+                model_real_plain_vector vec_tmp1(I1.size(), 0.);
+                if (affine_contrib) // Affine dependent variable contribution
+                  gmm::mult(matj, vec_affine2, vec_tmp1);
+                if (linear_contrib) // Linear term contribution
+                  gmm::mult_add(matj, vec_linear2, vec_tmp1);
+                MPI_SUM_VECTOR(vec_tmp1);
+                gmm::add(vec_tmp1, vec_out1);
+              } else { // nbp == 1
+                if (affine_contrib) // Affine dependent variable contribution
+                  gmm::mult_add(matj, vec_affine2, vec_out1);
+                if (linear_contrib) // Linear term contribution
+                  gmm::mult_add(matj, vec_linear2, vec_out1);
+              }
             }
+
             // Contributions to interval I2 of var2 due to symmetric terms
             if (term.is_symmetric && I1.first() != I2.first() &&
-                !(var2->is_disabled)) {
-              if (brick.pdispatch) {
+                var2->is_enabled()) {
+              auto vec_out2 = gmm::sub_vector(rrhs, I2);
+              if (brick.pdispatch)
                 for (size_type k = 0; k < brick.nbrhs; ++k)
                   gmm::add(gmm::scaled(brick.rveclist_sym[k][j],
                                        brick.coeffs[k]),
-                           gmm::sub_vector(rrhs, I2));
-              }
+                           vec_out2);
               else
                 gmm::add(gmm::scaled(brick.rveclist_sym[0][j], alpha2),
-                         gmm::sub_vector(rrhs, I2));
-              // Contributions from affine dependent variables
-              if (term.is_matrix_term && brick.pbr->is_linear() && is_linear()
-                  && var1->is_affine_dependent)
-                  gmm::mult_add(gmm::transposed(brick.rmatlist[j]),
-                                gmm::scaled(var1->affine_real_value, -alpha2),
-                                gmm::sub_vector(rrhs, I2));
-              // Contributions from linear terms
-              if (brick.pbr->is_linear()
-                  && (!is_linear() || (version & BUILD_WITH_LIN)))
-                gmm::mult_add(gmm::transposed(brick.rmatlist[j]),
-                              gmm::scaled(var1->real_value[0], -alpha2),
-                              gmm::sub_vector(rrhs, I2));
+                         vec_out2);
+              if (term.is_matrix_term && brick.pbr->is_linear()) {
+                bool affine_contrib(is_linear() && var1->is_affine_dependent);
+                bool linear_contrib(!is_linear() || (version & BUILD_WITH_LIN));
+                const auto matj_trans = gmm::transposed(brick.rmatlist[j]);
+                const auto vec_affine1 = gmm::scaled(var1->affine_real_value,
+                                                     -alpha2);
+                const auto vec_linear1 = gmm::scaled(var1->real_value[0],
+                                                     -alpha2);
+                if (nbp > 1) {
+                  model_real_plain_vector vec_tmp2(I2.size(),0.);
+                  if (affine_contrib) // Affine dependent variable contribution
+                    gmm::mult(matj_trans, vec_affine1, vec_tmp2);
+                  if (linear_contrib) // Linear term contribution
+                    gmm::mult_add(matj_trans, vec_linear1, vec_tmp2);
+                  MPI_SUM_VECTOR(vec_tmp2);
+                  gmm::add(vec_tmp2, vec_out2);
+                } else { // nbp == 1
+                  if (affine_contrib) // Affine dependent variable contribution
+                    gmm::mult_add(matj_trans, vec_affine1, vec_out2);
+                  if (linear_contrib) // Linear term contribution
+                    gmm::mult_add(matj_trans, vec_linear1, vec_out2);
+                }
+              }
             }
           }
         }
@@ -2862,7 +2874,9 @@ namespace getfem {
     }
 
     if (version & BUILD_RHS) {
-      approx_external_load_ = MPI_SUM_SCALAR(approx_external_load_);
+       // some contributions are added only in the master process
+       // send the correct result to all other processes
+       MPI_BCAST0_SCALAR(approx_external_load_);
     }
 
     #if GETFEM_PARA_LEVEL > 1
@@ -2902,9 +2916,6 @@ namespace getfem {
       return mi;
     } else if (imd) {
       bgeot::multi_index mi = imd->tensor_size();
-      size_type q = n * imd->nb_filtered_index();
-      GMM_ASSERT1(q % imd->nb_tensor_elem() == 0,
-                  "Invalid mesh im data vector");
       if (n > 1 || it->second.qdims.size() > 1) {
         size_type i = 0;
         if (mi.back() == 1) { mi.back() *= it->second.qdims[0]; ++i; }
@@ -3301,10 +3312,14 @@ namespace getfem {
       gmm::clear(vecl[0]);
 
       if (expr.size()) {
+        const mesh_im &mim = *mims[0];
+        mesh_region rg(region);
+        mim.linked_mesh().intersect_with_mpi_region(rg);
+
         // reenables disabled variables
         ga_workspace workspace(md, ga_workspace::inherit::ALL);
         GMM_TRACE2(name << ": generic source term assembly");
-        workspace.add_expression(expr, *(mims[0]), region, 1, secondary_domain);
+        workspace.add_expression(expr, mim, rg, 1, secondary_domain);
         workspace.assembly(1);
         const auto &V=workspace.assembled_vector();
         for (size_type i = 0; i < vl_test1.size(); ++i) {
@@ -6123,7 +6138,7 @@ namespace getfem {
     }
   }
 
-  size_type add_isotropic_linearized_elasticity_brick_pstrain
+  size_type add_isotropic_linearized_elasticity_pstrain_brick
   (model &md, const mesh_im &mim, const std::string &varname,
    const std::string &data_E, const std::string &data_nu,
    size_type region) {
@@ -6152,7 +6167,7 @@ namespace getfem {
     }
   }
 
-  size_type add_isotropic_linearized_elasticity_brick_pstress
+  size_type add_isotropic_linearized_elasticity_pstress_brick
   (model &md, const mesh_im &mim, const std::string &varname,
    const std::string &data_E, const std::string &data_nu,
    size_type region) {
@@ -6542,7 +6557,7 @@ namespace getfem {
   //
   // ----------------------------------------------------------------------
 
-  struct lumped_mass_brick_for_first_order : public virtual_brick {
+  struct lumped_mass_for_first_order_brick : public virtual_brick {
 
     virtual void asm_real_tangent_terms(const model &md, size_type,
                                         const model::varnamelist &vl,
@@ -6588,7 +6603,7 @@ namespace getfem {
 
     }
 
-    lumped_mass_brick_for_first_order() {
+    lumped_mass_for_first_order_brick() {
       set_flags("Lumped mass brick", true /* is linear*/,
                 true /* is symmetric */, true /* is coercive */,
                 true /* is real */, false /* no complex version */,
@@ -6597,10 +6612,10 @@ namespace getfem {
 
   };
 
-  size_type add_lumped_mass_brick_for_first_order
+  size_type add_lumped_mass_for_first_order_brick
   (model & md, const mesh_im &mim, const std::string &varname,
    const std::string &dataexpr_rho, size_type region) {
-    pbrick pbr = std::make_shared<lumped_mass_brick_for_first_order>();
+    pbrick pbr = std::make_shared<lumped_mass_for_first_order_brick>();
     model::termlist tl;
     tl.push_back(model::term_description(varname, varname, true));
     model::varnamelist dl;

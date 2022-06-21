@@ -30,13 +30,15 @@ gf.util_trace_level(1)
 
 dirichlet_version = 2          # 1 = simplification, 2 = penalisation
 test_tangent_matrix = False    # Test or not tangent system validity
-incompressible = False;        # Incompressibility option
-explicit_potential = False;    # Elasticity law with explicit potential
+incompressible = False         # Incompressibility option
+explicit_potential = False     # Elasticity law with explicit potential
 
 # lawname = 'Ciarlet Geymonat'
 # params = [1.,1.,0.25]
-lawname = 'SaintVenant Kirchhoff'
-params = [1.,1.]
+# lawname = 'SaintVenant Kirchhoff'
+# params = [1.,1.]
+lawname = 'Compressible Mooney Rivlin'
+params = [1.,1.,2.]
 if (incompressible):
     lawname = 'Incompressible Mooney Rivlin'
     params = [1.,1.]
@@ -89,10 +91,11 @@ else:
     md.add_macro('be_', 'Left_Cauchy_Green(F_)')
     md.add_initialized_data('K',  [K])
     md.add_initialized_data('mu', [mu])
+    md.add_initialized_data('paramsIMR', [1,1,2])
     _expr_1 = "(K/2)*sqr(log(J_))+(mu/2)*(Matrix_j1(be_)-3)";
     _expr_2 = "(K/2)*sqr(log(J_))+(mu/2)*(pow(Det(be_),-1./3.)*Trace(be_)-3)"
-    md.add_nonlinear_term(mim, _expr_2);
-
+    _expr_3 = "paramsIMR(1)*(Matrix_j1(Right_Cauchy_Green(F_))-3)+ paramsIMR(2)*(Matrix_j2(Right_Cauchy_Green(F_)) - 3)+paramsIMR(3)*sqr(J_-1)"
+    md.add_nonlinear_term(mim, _expr_3);
 
 # md.add_nonlinear_term(mim, 'sqr(Trace(Green_Lagrangian(Id(meshdim)+Grad_u)))/8 + Norm_sqr(Green_Lagrangian(Id(meshdim)+Grad_u))/4')
 # md.add_nonlinear_term(mim, '((Id(meshdim)+Grad_u)*(params(1)*Trace(Green_Lagrangian(Id(meshdim)+Grad_u))*Id(meshdim)+2*params(2)*Green_Lagrangian(Id(meshdim)+Grad_u))):Grad_Test_u')

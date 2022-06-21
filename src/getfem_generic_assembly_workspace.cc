@@ -492,7 +492,7 @@ namespace getfem {
           ftree.root->children.resize(2, nullptr);
           ftree.copy_node(tree.root, ftree.root, ftree.root->children[1]);
           ga_semantic_analysis(ftree, *this, m,
-                               ref_elt_dim_of_mesh(m), false, function_expr);
+                               ref_elt_dim_of_mesh(m,rg), false, function_expr);
           found = true;
           break;
         }
@@ -532,7 +532,7 @@ namespace getfem {
             // cout << "Result : " << ga_tree_to_string(dtree) << endl;
             // GA_TOCTIC("Derivative time");
             ga_semantic_analysis(dtree, *this, m,
-                                 ref_elt_dim_of_mesh(m), false, function_expr);
+                                 ref_elt_dim_of_mesh(m,rg),false,function_expr);
             // GA_TOCTIC("Analysis after Derivative time");
             // cout << "after analysis "  << ga_tree_to_string(dtree) << endl;
             add_tree(dtree, m, mim, rg, expr, add_derivative_order,
@@ -561,7 +561,7 @@ namespace getfem {
     }
     // cout << "read : " << ga_tree_to_string(ltrees[0])  << endl;
     ga_semantic_analysis(ltrees[0], *this, mim.linked_mesh(),
-                         ref_elt_dim_of_mesh(mim.linked_mesh()),
+                         ref_elt_dim_of_mesh(mim.linked_mesh(),rg),
                          false, false, 1);
     // cout << "analysed : " << ga_tree_to_string(ltrees[0]) << endl;
     GA_TOC("First analysis time");
@@ -578,7 +578,7 @@ namespace getfem {
             if (ntest2 > 0) selected_test2 = t2;
             // cout << "analysis with " << selected_test1.first << endl;
             ga_semantic_analysis(*ltree, *this, mim.linked_mesh(),
-                                 ref_elt_dim_of_mesh(mim.linked_mesh()),
+                                 ref_elt_dim_of_mesh(mim.linked_mesh(),rg),
                                  false, false, 2);
             // cout <<"split: "<< ga_tree_to_string(*ltree) << endl;
             if (ltree != ltrees.end()) ++ltree;
@@ -618,7 +618,7 @@ namespace getfem {
     const mesh_region &rg = register_region(m, rg_);
     ga_tree tree;
     ga_read_string(expr, tree, macro_dictionary());
-    ga_semantic_analysis(tree, *this, m, ref_elt_dim_of_mesh(m),
+    ga_semantic_analysis(tree, *this, m, ref_elt_dim_of_mesh(m,rg),
                          false, false);
     if (tree.root) {
       // GMM_ASSERT1(tree.root->nb_test_functions() == 0,
@@ -635,7 +635,7 @@ namespace getfem {
     const mesh_region &rg = register_region(m, rg_);
     ga_tree tree;
     ga_read_string(expr, tree, macro_dictionary());
-    ga_semantic_analysis(tree, *this, m, ref_elt_dim_of_mesh(m),
+    ga_semantic_analysis(tree, *this, m, ref_elt_dim_of_mesh(m,rg),
                          false, false);
     if (tree.root) {
       GMM_ASSERT1(tree.root->nb_test_functions() == 0,
@@ -655,7 +655,7 @@ namespace getfem {
     const mesh_region &rg = register_region(m, rg_);
     ga_tree tree;
     ga_read_string(expr, tree, macro_dictionary());
-    ga_semantic_analysis(tree, *this, m, ref_elt_dim_of_mesh(m), false, false);
+    ga_semantic_analysis(tree, *this, m, ref_elt_dim_of_mesh(m,rg),false,false);
     if (tree.root) {
       GMM_ASSERT1(tree.root->nb_test_functions() == 0,
                   "Invalid expression containing test functions");
@@ -837,7 +837,8 @@ namespace getfem {
 
     if (order == 1 || (order == 2 && condensation)) {
       if (order == 2 && condensation) {
-        GMM_ASSERT1(V->size() == nb_tot_dof, "Wrong size");
+        GMM_ASSERT1(V->size() == nb_tot_dof,
+                    "Wrong size of assembled vector in workspace");
         gmm::resize(cached_V, nb_tot_dof);
         gmm::copy(*V, cached_V); // current residual is used in condensation
         gmm::fill(*V, scalar_type(0));
@@ -845,7 +846,8 @@ namespace getfem {
         gmm::clear(*V);
         gmm::resize(*V, nb_tot_dof);
       } else
-        GMM_ASSERT1(V->size() == nb_tot_dof, "Wrong size");
+        GMM_ASSERT1(V->size() == nb_tot_dof,
+                    "Wrong size of assembled vector in workspace");
       gmm::clear(unreduced_V);
       gmm::resize(unreduced_V, nb_tmp_dof);
     }
@@ -898,22 +900,22 @@ namespace getfem {
                   uI2 = temporary_interval_of_variable(vname2),
                   I1 = interval_of_variable(vname1),
                   I2 = interval_of_variable(vname2);
-                if (mf1 && mf1->is_reduced() && mf2 && mf2->is_reduced()) {
-                  model_real_sparse_matrix aux(I1.size(), uI2.size());
-                  model_real_row_sparse_matrix M(I1.size(), I2.size());
-                  gmm::mult(gmm::transposed(mf1->extension_matrix()),
-                            gmm::sub_matrix(row_col_unreduced_K, uI1, uI2),
-                            aux);
-                  gmm::mult(aux, mf2->extension_matrix(), M);
-                  gmm::add(M, gmm::sub_matrix(*K, I1, I2));
-                } else if (mf1 && mf1->is_reduced()) {
+                if (mf1 && mf1->is_reduced()) {
                   if (condensation && vars_vec_done.count(vname1) == 0) {
                     gmm::mult_add(gmm::transposed(mf1->extension_matrix()),
                                   gmm::sub_vector(unreduced_V, uI1),
                                   gmm::sub_vector(*V, I1));
                     vars_vec_done.insert(vname1);
                   }
-                  if (I2.first() < nb_prim_dof) { // !is_internal_variable(vname2)
+                  if (mf2 && mf2->is_reduced()) {
+                    model_real_sparse_matrix aux(I1.size(), uI2.size());
+                    model_real_row_sparse_matrix M(I1.size(), I2.size());
+                    gmm::mult(gmm::transposed(mf1->extension_matrix()),
+                              gmm::sub_matrix(row_col_unreduced_K, uI1, uI2),
+                              aux);
+                    gmm::mult(aux, mf2->extension_matrix(), M);
+                    gmm::add(M, gmm::sub_matrix(*K, I1, I2));
+                  } else if (I2.first() < nb_prim_dof) { // !is_internal_variable(vname2)
                     model_real_sparse_matrix M(I1.size(), I2.size());
                     gmm::mult(gmm::transposed(mf1->extension_matrix()),
                               gmm::sub_matrix(row_unreduced_K, uI1, I2), M);
@@ -1062,7 +1064,7 @@ namespace getfem {
           ga_node_extract_constant_term(local_tree, local_tree.root, *this, m);
         if (local_tree.root)
           ga_semantic_analysis(local_tree, *this, m,
-                               ref_elt_dim_of_mesh(m), false, false);
+                               ref_elt_dim_of_mesh(m,-1), false, false);
         if (local_tree.root && local_tree.root->node_type != GA_NODE_ZERO) {
           constant_term += "-("+ga_tree_to_string(local_tree)+")";
         }

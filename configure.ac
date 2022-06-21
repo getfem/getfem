@@ -31,6 +31,9 @@ AC_INIT(getfem, 5.4.1)
 MAJOR_VERSION="5"
 MINOR_VERSION="4"
 PATCH_VERSION="1"
+AC_DEFINE_UNQUOTED([MAJOR_VERSION],$MAJOR_VERSION,[Major version number])
+AC_DEFINE_UNQUOTED([MINOR_VERSION],$MINOR_VERSION,[Minor version number])
+AC_DEFINE_UNQUOTED([PATCH_VERSION],$PATCH_VERSION,[Patch version number])
 
 AC_CONFIG_SRCDIR([install-sh])
 AC_CONFIG_MACRO_DIR([m4])
@@ -1192,6 +1195,7 @@ contrib/level_set_contact/Makefile                                      \
 contrib/static_contact_gears/Makefile                                   \
 contrib/test_plasticity/Makefile                                        \
 contrib/opt_assembly/Makefile                                           \
+contrib/continuum_mechanics/Makefile                                    \
 bin/Makefile                                                            \
 interface/Makefile                                                      \
 interface/src/Makefile                                                  \

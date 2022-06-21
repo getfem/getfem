@@ -70,8 +70,8 @@ namespace getfem {
     }
 
     pb_base(PLSOLVER linsolv, const MATRIX &K_, VECTOR &rhs_)
-      : linear_solver(linsolv), K(K_), rhs(rhs_), state(gmm::vect_size(rhs_))
-    {}
+      : linear_solver(linsolv), K(K_), rhs(rhs_), state(gmm::vect_size(rhs_)) {}
+    virtual ~pb_base() {}
   };
 
   /* ***************************************************************** */

@@ -141,6 +141,10 @@ namespace getfem {
     /** return the list of convexes of the projected mesh_fem which
      *  contain at least one gauss point (should be all convexes)! */
     dal::bit_vector projected_convexes() const;
+    
+    /** faces and convexes from the target region
+     *  that contain at least one Gauss point that is projected by the source */
+    mesh_region projected_target_region() const;    
 
     /** return the min/max/mean number of gauss points in the convexes
      *  of the projected mesh_fem */

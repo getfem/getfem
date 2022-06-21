@@ -42,7 +42,7 @@ mxClassID2string(mxClassID id) {
     case mxUINT32_CLASS:  return "UINT32";
     case mxINT64_CLASS:   return "INT64";
     case mxUINT64_CLASS:  return "UINT64";
-    case mxSPARSE_CLASS:  return "SPARSE";
+      // case mxSPARSE_CLASS:  return "SPARSE"; // Deprecated
 #ifdef LOGICAL_IS_A_TYPE
     case mxLOGICAL_CLASS: return "LOGICAL";
 #endif
@@ -104,7 +104,7 @@ mxarray_to_gfi_array(const mxArray *mx, gfi_array *t)
       t->storage.gfi_storage_u.data_uint32.data_uint32_len = n;
       t->storage.gfi_storage_u.data_uint32.data_uint32_val = mxGetData(mx);
     } break;
-    case mxSPARSE_CLASS: /* for older (i.e. 6.1) matlab versions... */
+      // case mxSPARSE_CLASS: /* for older (i.e. 6.1) matlab versions. deprecated*/
     case mxDOUBLE_CLASS: {
       int is_complex = mxIsComplex(mx);
       

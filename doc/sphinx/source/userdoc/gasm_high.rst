@@ -750,6 +750,8 @@ Once a transformation is defined in the workspace/model, one can interpolate a v
 
   Interpolate(Normal, transname)
   Interpolate(X, transname)
+  Interpolate(element_K, transname)
+  Interpolate(element_B, transname)
   Interpolate(u, transname)
   Interpolate(Grad_u, transname)
   Interpolate(Div_u, transname)

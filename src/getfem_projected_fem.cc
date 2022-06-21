@@ -364,7 +364,8 @@ namespace getfem {
         bgeot::geotrans_precomp(pgt, pai->pintegration_points(), 0);
       size_type last_cv = size_type(-1); // refers to the source mesh
       short_type last_f = short_type(-1); // refers to the source mesh
-      size_type nb_pts = i.is_face() ? pai->nb_points_on_face(f) : pai->nb_points();
+      size_type nb_pts = i.is_face() ? pai->nb_points_on_face(f)
+                                     : pai->nb_points_on_convex();
       size_type start_pt = i.is_face() ? pai->ind_first_point_on_face(f) : 0;
       elt_projection_data &e = elements[cv];
       base_node gpt(N);
@@ -792,6 +793,28 @@ namespace getfem {
       }
     }
     return bv;
+  }
+
+  mesh_region projected_fem::projected_target_region() const {
+    context_check();
+    mesh_region projected_target;
+    for (mr_visitor v(rg_target); !v.finished(); ++v) {
+      pintegration_method pim = mim_target.int_method_of_element(v.cv());
+      papprox_integration pai = pim->approx_method();
+      size_type start_pt = v.is_face() ? pai->ind_first_point_on_face(v.f()) : 0;
+      size_type nb_pts = v.is_face() ? pai->nb_points_on_face(v.f())
+                                     : pai->nb_points_on_convex();
+      bool isProjectedOn = false;
+      for (size_type ip = 0; ip != nb_pts; ++ip) {
+        auto &proj_data = elements.at(v.cv()).gausspt[start_pt + ip];
+        if (proj_data.iflags) {
+          isProjectedOn = true;
+          break;
+        }
+      }
+      if (isProjectedOn) projected_target.add(v.cv(), v.f());
+    }
+    return projected_target;
   }
 
   void projected_fem::gauss_pts_stats(unsigned &ming, unsigned &maxg,
