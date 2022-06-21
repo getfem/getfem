@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # Python GetFEM interface
 #
-# Copyright (C) 2004-2020 Julien Pommier.
+# Copyright (C) 2004-2022 Julien Pommier.
 #
 # This file is a part of GetFEM
 #
@@ -68,7 +68,7 @@ getfemmod = Extension('_getfem',
 
 setup (name = 'getfem-interface',
        license='LGPL',
-       version = '5.4.1',
+       version = '5.4.2',
        maintainer="Yves Renard",
        maintainer_email="Yves.Renard@insa-lyon.fr",
        description = "This is the getfem-python-interface module",

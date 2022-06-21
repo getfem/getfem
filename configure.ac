@@ -27,10 +27,10 @@ dnl thus, updating cache ./config.cache avoided.
 define([AC_CACHE_LOAD], )dnl
 define([AC_CACHE_SAVE], )dnl
 
-AC_INIT(getfem, 5.4.1)
+AC_INIT(getfem, 5.4.2)
 MAJOR_VERSION="5"
 MINOR_VERSION="4"
-PATCH_VERSION="1"
+PATCH_VERSION="2"
 AC_DEFINE_UNQUOTED([MAJOR_VERSION],$MAJOR_VERSION,[Major version number])
 AC_DEFINE_UNQUOTED([MINOR_VERSION],$MINOR_VERSION,[Minor version number])
 AC_DEFINE_UNQUOTED([PATCH_VERSION],$PATCH_VERSION,[Patch version number])
