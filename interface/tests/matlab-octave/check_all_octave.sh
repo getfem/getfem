@@ -32,7 +32,7 @@ echo "  srcdir='$srcdir'"
 
 # s=$(echo "s=getenv('MATLABPATH'); while (length(s)), [a,s]=strtok(s,':'); addpath(a); end; disp(pwd); check_all; pause(1)" | ${MLAB} 2>&1);
 
-s=$(echo "addpath('../../src/octave'); addpath('${srcdir}/../../src/octave'); disp(pwd); pause(1);" | octave check_all.m 2>&1);
+s=$(echo "addpath('../../src/octave'); addpath('${srcdir}/../../src/octave'); disp(pwd); pause(1); check_all; pause(1);" | octave 2>&1);
 
 # echo $s
 

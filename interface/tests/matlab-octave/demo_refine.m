@@ -68,7 +68,7 @@ gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'u', mfu, 1);
 
 
 
-for step=1:8,
+for step=1:7,
   gf_model_get(md, 'solve');
   U = gf_model_get(md, 'variable', 'u');
   
