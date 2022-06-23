@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # Python GetFEM interface
 #
-# Copyright (C) 2015 Konstantinos Poulios.
+# Copyright (C) 2022 Yves Renard.
 #
 # This file is a part of GetFEM
 #
@@ -34,33 +34,27 @@ import numpy as np
 import getfem as gf
 gf.util('trace level', 0)
 
-# TODO
-# 4 - Faire le schéma en temps pour la balle
-# 5 - Nitsche pour le Dirichlet fluide sur le pourtour de la balle
-#     (pénalisation de l'intrieur, un peu)
-# 6 - possiblité de couplage total avec schéma implicite ?
-# 7 - Dessin ? couper éventuellement (ou pas). Vorticité ?
-
 # Phisical parameters (à ajuster pour être physique ...)
 nu = 0.002        # cinematic viscosity
-rho = 1.          # Fluid density      
+rho = 1.          # fluid density      
 mu = rho * nu     # dynamic viscosity
 g = 9.81          # gravity
-in_velocity = 1.  # in velocity at the center bottom
+in_velocity = 1.  # inward velocity at the center bottom
 ball_radius = 0.1
-ball_mass = 0.035 
-ball_init_pos = [0, 0.2]
+ball_mass = 0.032
+ball_init_pos = np.array([0., 0.2])
 
-# Time discretization parameters
-dt = 0.01
-T = 5.
+# Discretization parameters
+dt = 0.01       # Time step
+T = 40.         # Final time
+gamma0 = 1E3    # Nitsche's method parameter
 
 # Geometry and Mesh of the cavity
 W1 = 0.1          #       ____________
 W2 = 0.45         #   H2 |_          _|
 W = W1+2.*W2      #      |            |
-H1 = 0.95         #      |            |
-H2 = 0.05         #   H1 |            |
+H1 = 0.8          #      |            |
+H2 = 0.2          #   H1 |            |
 H = H2+H1         #      |            |
                   #      |____|__|____|
                   #        W2  W1  W2
@@ -81,11 +75,12 @@ m = gf.Mesh("import", "structured",
             "GT='%s';ORG=[%f,%f];SIZES=[%f,%f];NSUBDIV=[%i,%i]"
             % (geotrans, -W/2., 0., W, H, NW, NH))
 
-# Mesh regions (can be imported from a gmsh file for instance)
+# Mesh regions
 IN_RG = 1
 OUT_RG1 = 2
 OUT_RG2 = 3
 WALL_RG = 4
+INTERNAL_EDGES = 5;
 in_rg   = m.outer_faces_in_box([-W1/2.-1e-8,-1e-8],[W1/2+1e-8,1e-8])
 out_rg1 = m.outer_faces_in_box([-W/2.-1e-8,H1-1e-8],[-W/2+1e-8,H+1e-8])
 out_rg2 = m.outer_faces_in_box([W/2.-1e-8,H1-1e-8],[W/2+1e-8,H+1e-8])
@@ -98,31 +93,25 @@ m.region_subtract(WALL_RG, IN_RG)
 m.region_subtract(WALL_RG, OUT_RG1)
 m.region_subtract(WALL_RG, OUT_RG2)
 
+innerf = m.inner_faces()
+m.set_region(INTERNAL_EDGES, innerf)
+
 # Finite element spaces and integration methods
-mfv_ = gf.MeshFem(m, 2)
-mfv_.set_classical_fem(2)
+mfv = gf.MeshFem(m, 2)
+mfv.set_classical_fem(2)
+nbdofv = mfv.nb_basic_dof()
 
-#Il faudra éliminer les ddl sous la balle pour v et p
-#kept_dofs = np.setdiff1d(np.arange(mfv_.nb_basic_dof()),
-#                         mfv_.basic_dof_on_region(WALL_RG))
-#mfv = gf.MeshFem("partial", mfv_, kept_dofs)
-
-mfp_ = gf.MeshFem(m, 1)
-mfp_.set_classical_fem(1)
-# kept_dofs = np.setdiff1d(np.arange(mfp_.nb_basic_dof()),
-#                         mfp_.basic_dof_on_region(OUT_RG))
-# mfp = gf.MeshFem("partial", mfp_, kept_dofs)
+mfp = gf.MeshFem(m, 1)
+mfp.set_classical_fem(1)
+nbdofp = mfp.nb_basic_dof()
 
 mim = gf.MeshIm(m, 4)
-
 
 # Levelset definition and adapted integration methods
 
 ls = gf.LevelSet(m,2)
 mf_ls = ls.mf()
-P = mf_ls.basic_dof_nodes()
-x = P[0,:]
-y = P[1,:]
+P = mf_ls.basic_dof_nodes(); x = P[0,:]; y = P[1,:]
 ULS = ((x - ball_init_pos[0])**2 + (y - ball_init_pos[1])**2) - ball_radius**2
 ls.set_values(ULS)
 mls = gf.MeshLevelSet(m)
@@ -137,44 +126,59 @@ mim_out.set_integ(4)
 # Model definition
 
 md = gf.Model("real")
-md.add_fem_variable("v", mfv_)
-md.add_fem_data("v0", mfv_)
+md.add_fem_variable("v", mfv)
+md.add_fem_data("v0", mfv)
 md.add_fem_data("ls", mf_ls)
-md.add_fem_variable("p", mfp_)
-md.add_fem_data("p_in", mfp_)
-md.add_initialized_data("f", [0, -rho*g])
-md.add_initialized_data("v_in", [0, in_velocity])
-md.add_initialized_data("v_out1", [-out_velocity, 0])
-md.add_initialized_data("v_out2", [out_velocity, 0])
+md.add_fem_variable("p", mfp)
+md.add_fem_data("p_in", mfp)
+md.add_initialized_data("f", [0., -rho*g])
+md.add_initialized_data("ball_v", [0., 0.])
+md.add_initialized_data("v_in", [0., in_velocity])
+md.add_initialized_data("v_out1", [-out_velocity, 0.])
+md.add_initialized_data("v_out2", [out_velocity, 0.])
 md.add_initialized_data("rho", rho)
+md.add_initialized_data("gamma", gamma0/DW)
 md.add_initialized_data("dt", [dt])
 md.add_initialized_data("mu", [mu])
 
-md.add_Dirichlet_condition_with_multipliers(mim, "p", mfp_, IN_RG)
-md.add_Dirichlet_condition_with_multipliers(mim, "v", mfv_, IN_RG, "v_in")
-md.add_Dirichlet_condition_with_multipliers(mim, "v", mfv_, OUT_RG1, "v_out1")
-md.add_Dirichlet_condition_with_multipliers(mim, "v", mfv_, OUT_RG2, "v_out2")
-md.add_Dirichlet_condition_with_multipliers(mim, "v", mfv_, WALL_RG)
-md.add_Dirichlet_condition_with_penalization(mim_bound, "v", 1E9, -1)
+md.add_Dirichlet_condition_with_multipliers(mim, "p", mfp, IN_RG)
+md.add_Dirichlet_condition_with_multipliers(mim, "v", mfv, IN_RG, "v_in")
+md.add_Dirichlet_condition_with_multipliers(mim, "v", mfv, OUT_RG1, "v_out1")
+md.add_Dirichlet_condition_with_multipliers(mim, "v", mfv, OUT_RG2, "v_out2")
+md.add_Dirichlet_condition_with_multipliers(mim, "v", mfv, WALL_RG)
 
 # Diffusive terms
-md.add_linear_term(mim, "(1/dt)*rho*(v-v0).Test_v + mu*Grad_v:Grad_Test_v")
+md.add_nonlinear_term(mim_out, "(1/dt)*rho*(v-v0).Test_v + mu*Grad_v:Grad_Test_v")
 # Nonlinear convective term
-md.add_nonlinear_term(mim, "0.25*rho*((Grad_v+Grad_v0)*(v+v0)).Test_v")
+md.add_nonlinear_term(mim_out, "0.25*rho*((Grad_v+Grad_v0)*(v+v0)).Test_v")
 # Pressure terms
-md.add_linear_term(mim, "-p*Div_Test_v - 0.5*Test_p*(Div_v+Div_v0)")
+md.add_nonlinear_term(mim_out, "-p*Div_Test_v - 0.5*Test_p*(Div_v+Div_v0)")
 # Gravity term
-md.add_linear_term(mim, "- f.Test_v")
+md.add_nonlinear_term(mim_out, "-f.Test_v")
+# Small ghost penalty term
+md.add_linear_term(mim, "1E-4*(Grad_v-Interpolate(Grad_v, neighbor_element)):(Grad_Test_v-Interpolate(Grad_Test_v, neighbor_element))", INTERNAL_EDGES)
+# md.add_linear_term(mim, "1E-7*(p-Interpolate(p, neighbor_element))*(Test_p-Interpolate(Test_p, neighbor_element))", INTERNAL_EDGES)
+# Penalty term on internal dofs
+Bv = gf.Spmat('empty',nbdofv)
+ibv = md.add_explicit_matrix("v", "v", Bv)
+Bp = gf.Spmat('empty',nbdofp)
+ibp = md.add_explicit_matrix("p", "p", Bp)
+# Nitsche's term on the FS interface
+md.add_nonlinear_term(mim_bound, "-(mu*Grad_v-p*Id(meshdim))*Normalized(Grad_ls).Test_v + gamma * (v-ball_v).Test_v - (mu*Grad_Test_v)*Normalized(Grad_ls).(v-ball_v)")
 
 t = 0
 step = 0
 ball_pos = ball_init_pos
+ball_pos_prec = ball_init_pos
+ball_v = np.array([0., 0.])
 os.system('mkdir -p FSI_results');
 while t < T+1e-8:
    print("Solving step at t=%f" % t)
    md.set_variable("v0", md.variable("v"))
-   # levelset update
+   md.set_variable("ball_v", ball_v)
    
+   # levelset update
+   P = mf_ls.basic_dof_nodes(); x = P[0,:]; y = P[1,:]
    ULS = ((x - ball_pos[0])**2 + (y - ball_pos[1])**2) - ball_radius**2
    ls.set_values(ULS)
    md.set_variable('ls', ULS)
@@ -182,29 +186,56 @@ while t < T+1e-8:
    mim_bound.adapt()
    mim_in.adapt()
    mim_out.adapt()
+
+   # Penalization of ball internal dofs with no contribution on the boundary
+   idofv = np.setdiff1d(np.arange(nbdofv), mfv.dof_from_im(mim_out))
+   idofp = np.setdiff1d(np.arange(nbdofp), mfp.dof_from_im(mim_out))
+   Bv = gf.Spmat('empty', nbdofv)
+   for i in idofv: Bv.add(i,i,1.)
+   md.set_private_matrix(ibv, Bv)
+   Bp = gf.Spmat('empty', nbdofp)
+   for i in idofp: Bp.add(i,i,1.)
+   md.set_private_matrix(ibp, Bp)
+   
    # Solve
    # md.solve("noisy", "lsolver", "mumps", "max_res", 1e-8)
-   md.solve("lsolver", "mumps", "max_res", 1e-8)
+   md.solve("max_res", 1e-8, "max_iter", 25)
 
-   # Balance of forces on the ball and verlet scheme
+   # Balance of forces on the ball and Verlet's scheme
    R = gf.asm('generic', mim_bound, 0,
               '(2*mu*Sym(Grad_v)-p*Id(meshdim))*Normalized(Grad_ls)', -1, md)
    # R = gf.asm('generic', mim_bound, 0, 'Normalized(Grad_ls)', -1, md)
-   ball_pos += dt * (R/ball_mass - [0, g]) # pas bon, juste pour voir
-   # Enforce the ball to remain inside the cavity (cancel the velocity ?)
-   if (ball_pos[0] < -W/2+ball_radius) : ball_pos[0] = -W/2+ball_radius
-   if (ball_pos[0] >  W/2-ball_radius) : ball_pos[0] =  W/2-ball_radius
-   if (ball_pos[1] <  ball_radius)     : ball_pos[1] =  ball_radius
-   if (ball_pos[1] >  H-ball_radius)   : ball_pos[1] =  H-ball_radius
-   print ("ball_position = ", ball_pos)
- 
+   ball_pos_next = 2*ball_pos - ball_pos_prec + dt*dt*(R/ball_mass - [0, g])
+   ball_v = (ball_pos_next - ball_pos_prec) / (2*dt)
+   ball_pos_prec = ball_pos
+   ball_pos = ball_pos_next
    
-   mfv_.export_to_vtk("FSI_results/FSI_%i.vtk" % step,
-                     mfv_, md.variable("v"), "Velocity",
-                     mfp_, md.variable("p"), "Pressure")
+   # Enforce the ball to remain inside the cavity
+   if (ball_pos[0] < -W/2+ball_radius) :
+      ball_pos_prec[0] = ball_pos[0] = -W/2+ball_radius; ball_v[0] *= 0.
+   if (ball_pos[0] >  W/2-ball_radius) :
+      ball_pos_prec[0] = ball_pos[0] =  W/2-ball_radius; ball_v[0] *= 0.
+   if (ball_pos[1] <  ball_radius)     :
+      ball_pos_prec[1] = ball_pos[1] =  ball_radius; ball_v[1] *= 0.
+   if (ball_pos[1] >  H-ball_radius)   :
+      ball_pos_prec[1] = ball_pos[1] =  H-ball_radius; ball_v[1] *= 0.
+   print ("ball position = ", ball_pos, " ball velocity = ", ball_v)
+
+   # Post-processing
+   cut_m = mls.cut_mesh();
+   mfd = gf.MeshFem(cut_m, 1)
+   mfd.set_classical_discontinuous_fem(0)
+   P = mfd.basic_dof_nodes(); x = P[0,:]; y = P[1,:]
+   UB = (((x - ball_pos_prec[0])**2 + (y - ball_pos_prec[1])**2)
+         - ball_radius**2) >= 0.
+   mfd.export_to_vtk("FSI_results/FSI_%i.vtk" % step,
+                      mfv, md.variable("v"), "Velocity",
+                      mfp, md.variable("p"), "Pressure",
+                      mfd, UB, "Ball position")
    t += dt
    step += 1
 
 print("See for instance with ")
 print("paraview FSI_results/FSI_..vtk")
-print("You can add Glyph1, 2D Glyph, scale Array Velocity, scale factor 0.3 ...q")
+print("You can add Glyph for velocity.")
+print("The field 'Ball position' allows to locate the ball.")
