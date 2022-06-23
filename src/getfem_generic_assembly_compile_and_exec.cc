@@ -5660,7 +5660,7 @@ namespace getfem {
                         "Wrong context for elementary transformation");
             GMM_ASSERT1(&(mfo->linked_mesh()) == &(m),
                         "The finite element of variable " << pnode->name
-                        << " has to be defined on the same mesh than the "
+                        << " has to be defined on the same mesh as the "
                         << "integration method or interpolation used");
           }
           
@@ -5679,7 +5679,7 @@ namespace getfem {
             GMM_ASSERT1(&(mf->linked_mesh()) == &(m),
                         "The finite element of variable " <<
                         (is_elementary ? pnode->elementary_target : pnode->name)
-                        << " has to be defined on the same mesh than the "
+                        << " has to be defined on the same mesh as the "
                         << "integration method or interpolation used");
 
             // An instruction for extracting local dofs of the variable.
@@ -5949,7 +5949,7 @@ namespace getfem {
           GMM_ASSERT1(mf, "Internal error");
           GMM_ASSERT1(&(mf->linked_mesh()) == &(psd->mim().linked_mesh()),
                       "The finite element of variable " << pnode->name <<
-                      " has to be defined on the same mesh than the "
+                      " has to be defined on the same mesh as the "
                       "integration method or interpolation used on the "
                       "secondary domain");
 
@@ -6121,13 +6121,13 @@ namespace getfem {
                       "Wrong context for elementary transformation");
           GMM_ASSERT1(&(mfo->linked_mesh()) == &(m),
                       "The finite element of variable " << pnode->name
-                      << " has to be defined on the same mesh than the "
+                      << " has to be defined on the same mesh as the "
                       << "integration method or interpolation used");
         }
         
         if (mf) {
           GMM_ASSERT1(&(mf->linked_mesh()) == &(m),
-                      "The finite element of variable " << pnode->name <<
+                      "The finite element of variable " <<
                       (is_elementary ? pnode->elementary_target : pnode->name)
                       << " and the applied integration method have to be"
                       << " defined on the same mesh");
